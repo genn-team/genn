@@ -1,0 +1,10 @@
+#! /bin/bash
+
+export WD=$(pwd);
+export GNNMODELNAME=$1;
+export GNNMODELINCLUDE=\"\\\"$WD/$GNNMODELNAME.cc\\\"\"
+cd $GNNPATH/lib/src;
+make clean && make;
+linux/release/generateALL $WD;
+echo "Model build complete ..."
+cd $WD;

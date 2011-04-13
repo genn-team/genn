@@ -1,0 +1,76 @@
+INSTALLATION OF GNN:
+
+(i) unpack GNN.zip in a convenient location 
+
+(ii) define the environment variable "GNNPATH" to point to the main GNN 
+     directory, e.g. if you extracted GNN to /usr/local/GNN, then you can add
+     "export GNNPATH=/usr/local/GNN"
+     to your login script.
+
+(iii) define the environment variable "NVIDIASDKPATH" to point to the main 
+      directory of an installation of the NVidia Computing SDK (install one
+      if necessary). E.g. if the SDK resides in 
+      "/usr/local/NVIDIA_GPU_Computing_SDK/" then you can add
+      "export NVIDIASDKPATH=/usr/local/NVIDIA_GPU_Computing_SDK/"
+      to your login script.
+
+(iv) add $GNNPATH/lib/bin to your PATH variable, e.g.
+     "export PATH=$PATH:$GNNPATH/lib/bin"
+
+This completes the installation. If you use the example Makefile in 
+"userproject", then the ROOTDIR and include line for common.mk also need to be 
+adjusted.
+
+
+HOW TO USE GNN:
+
+for a first test the system is best used with a full driver program
+like tools/generate_run. To use it, navigate to the "test" directory and type
+"../tools/generate_run 1 100 1000 20 100 0.0009 t1".
+
+What this program does is: 
+a) use some other tools to generate the appropriate connectivity
+matrices and store them in files.
+
+b) build the source code for the model by writing neuron numbers into
+userproject/sizes.h, and executing "buildmodel MBody1".  
+
+c) compile the generated code by invoking "make clean && make" d)
+running the code, e.g. "linux/release/classol_sim r1 1".
+
+This is already a quite highly integrated example. If one was to use
+the library for GPU code generation only, the following would be done:
+
+a) The model in question is defined in a file, say "Model1.cc".  
+
+b) this file needs to 
+  (i) define "DT" 
+  (ii) include "modelSpec.h" and "modelSpec.cc"
+  (iii) contains the model's definition in the form of a function 
+  "void modelDefinition(NNmodel &model)" 
+  ("MBody1.cc") shows a typical example)
+
+c) The programmer defines his/her own modeling code along similar lines as
+"map_classol.*" together with "classol_sim.*". In this code, 
+
+- she defines the connectivity matrices between neuron groups. (In the
+example here those are read from files).  
+
+- she defines input patterns (e.g. for Poisson neurons like in the
+example) 
+
+- she uses "stepTimeGPU(x, y, z);" to run one time step on the GPU or
+"stepTimeCPU(x, y, z);" to run one on the CPU. (both versions are
+always compiled). However, mixing the two does not make too much
+sense. The host version uses the same memory whereto results from the
+GPU version are copied (see next point) 
+
+- she uses functions like "copyStateFromDevice();" etc to obtain
+results from GPU calculations.
+
+- the simulation code is then produced in two steps:
+"buildmodel Model1" and
+"make clean && make"
+
+... more explanations to be added ...
+
