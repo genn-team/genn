@@ -142,7 +142,9 @@ class NNmodel
   NNmodel();
   ~NNmodel();
   void setName(const string);
+  void addNeuronPopulation(const char *, unsigned int, unsigned int, float *, float *);
   void addNeuronPopulation(const string, unsigned int, unsigned int, float *, float *);
+  void addSynapsePopulation(const char *, unsigned int, unsigned int, unsigned int, const char *, const char *, float *);
   void addSynapsePopulation(const string, unsigned int, unsigned int, unsigned int, const string, const string, float *);
   void setSynapseG(const string, float);
 };

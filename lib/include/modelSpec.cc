@@ -148,6 +148,13 @@ unsigned int NNmodel::findSynapseGrp(const string sName)
   exit(1);
 }
 
+
+void NNmodel::addNeuronPopulation(const char *name, unsigned int nNo, unsigned int type, float *p, float *ini)
+{
+  addNeuronPopulation(toString(name), nNo, type, p, ini);
+}
+
+
 void NNmodel::addNeuronPopulation(const string name, unsigned int nNo, unsigned int type, float *p, float *ini)
 {
   unsigned int i= neuronGrpN++;
@@ -168,6 +175,11 @@ void NNmodel::addNeuronPopulation(const string name, unsigned int nNo, unsigned 
   vector<unsigned int> tv;
   inSyn.push_back(tv);  // empty list of input synapse groups for neurons i
   initDerivedNeuronPara(i);
+}
+
+void NNmodel::addSynapsePopulation(const char *name, unsigned int syntype, unsigned int conntype, unsigned int gtype, const char *src, const char *trg, float *p) 
+{
+  addSynapsePopulation(toString(name), syntype, conntype, gtype, toString(src), toString(trg), p);
 }
 
 void NNmodel::addSynapsePopulation(const string name, unsigned int syntype, unsigned int conntype, unsigned int gtype, const string src, const string trg, float *p)
