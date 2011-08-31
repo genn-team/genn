@@ -17,7 +17,7 @@ int main(int argc, char *argv[])
 {
   if (argc != 3)
   {
-    cerr << "usage: classol_sim <basename> <CPU=0, GPU=1" << endl;
+    cerr << "usage: classol_sim <basename> <CPU=0, GPU=1>" << endl;
     return 1;
   }
   int which= atoi(argv[2]);

@@ -54,7 +54,7 @@ verbose=1
 HOME		:= /home/t/tn/tn41/
 ROOTDIR		:= $(NVIDIASDKPATH)/C/src
 ROOTBINDIR      := .
-INCLUDES  	+= -I../include -I$(GNNPATH)/lib/include/numlib
+INCLUDES  	+= -I../include -I$(GeNNPATH)/lib/include/numlib
 
 # Add source files here
 EXECUTABLE	:= generateALL
@@ -62,7 +62,7 @@ EXECUTABLE	:= generateALL
 CUFILES		:= generateALL.cu
 # C/C++ source files (compiled with gcc / c++)
 CCFILES		:= 
-CUDACCFLAGS 	:= -DGNNMODELNAME=$(CUNNMODELNAME) -DGNNMODELINCLUDE=$(GNNMODELINCLUDE)
+CUDACCFLAGS 	:= -DGeNNMODELNAME=$(GeNNMODELNAME) -DGeNNMODELINCLUDE=$(GeNNMODELINCLUDE)
 # -keep --ptxas-options=-v
 # -keep to keep all compile stages
 

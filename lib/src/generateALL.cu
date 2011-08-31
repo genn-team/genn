@@ -14,7 +14,7 @@
 #include "global.h"
 #include "utils.h"
 
-#include GNNMODELINCLUDE
+#include GeNNMODELINCLUDE
 
 #include "generateKernels.cc"
 #include "generateRunner.cc"
