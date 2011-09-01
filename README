@@ -72,5 +72,31 @@ results from GPU calculations.
 "buildmodel Model1" and
 "make clean && make"
 
-... more explanations to be added ...
+-----
 
+QUICKSTART
+
+In order to get a quick start and run the provided example model, go to 
+GeNN/tools
+
+type "make"
+
+type "./generate_run"
+
+This will show you the command line parameters needed.
+
+The tool generate_run will generate connectivity files for the model
+MBody1, compiles this model for the GPU and executes it. The command
+line parameters are the numbers of neurons in the different neuropils
+of the model and an overall synaptic strength. A typical call would
+for example be
+
+./generate_run 1 500 50000 20 500 0.1 test1
+
+which would generate a model, and run it on the GPU, with 500 antennal
+lobe neurons, 50000 mushroom body Kenyon cells, 20 lateral horn
+interneurons ans 500 mushroom body output neurons.
+
+For more about this example model see 
+
+T. Nowotny, R. Huerta, H. D. I. Abarbanel, and M. I. Rabinovich Self-organization in the olfactory system: One shot odor recognition in insects, Biol Cyber, 93 (6): 436-446 (2005), doi:10.1007/s00422-005-0019-7 
