@@ -16,9 +16,12 @@ using namespace std;
 #include <iostream>
 #include <fstream>
 #include <stdlib.h>
-#include "gendef.h"
+#include "randomGen.h"
+#include "randomGen.cc"
 
 typedef float real;
+
+randomGen R;
 
 int main(int argc, char *argv[])
 {

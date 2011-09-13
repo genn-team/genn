@@ -54,7 +54,7 @@ verbose=1
 HOME		:= /home/t/tn/tn41/
 ROOTDIR		:= $(NVIDIASDKPATH)/C/src
 ROOTBINDIR      := .
-INCLUDES  	+= -I./include  -I$(GNNPATH)/lib/include
+INCLUDES  	+= -I./include  -I$(GeNNPATH)/lib/include
 
 # Add source files here
 EXECUTABLE	:= classol_sim

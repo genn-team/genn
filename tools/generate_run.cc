@@ -58,7 +58,7 @@ int main(int argc, char *argv[])
   string cmd;
 
   // generate pnkc synapses
-  cmd= toString("$GNNPATH/tools/gen_pnkc_syns ");
+  cmd= toString("$GeNNPATH/tools/gen_pnkc_syns ");
   cmd+= toString(nAL) + toString(" ") ;
   cmd+= toString(nMB) + toString(" ") ;
   cmd+= toString("0.5 ") ;
@@ -69,7 +69,7 @@ int main(int argc, char *argv[])
   system(cmd.c_str()); 
 
   // generate kcdn synapses
-  cmd= toString("$GNNPATH/tools/gen_kcdn_syns ");
+  cmd= toString("$GeNNPATH/tools/gen_kcdn_syns ");
   cmd+= toString(nMB) + toString(" ") ;
   cmd+= toString(nLB) + toString(" ") ;
   cmd+= toString(kcdn_gsyn) + toString(" ") ;
@@ -80,7 +80,7 @@ int main(int argc, char *argv[])
   system(cmd.c_str());
 
   // generate pnlhi synapses
-  cmd= toString("$GNNPATH/tools/gen_pnlhi_syns ");
+  cmd= toString("$GeNNPATH/tools/gen_pnlhi_syns ");
   cmd+= toString(nAL) + toString(" ") ;
   cmd+= toString(nLHI) + toString(" ") ;
   cmd+= toString(pnlhi_theta) + toString(" 15 ") ;
@@ -89,7 +89,7 @@ int main(int argc, char *argv[])
   system(cmd.c_str());
 
   // generate input patterns
-  cmd= toString("$GNNPATH/tools/gen_input_fixfixfixno_struct ");
+  cmd= toString("$GeNNPATH/tools/gen_input_fixfixfixno_struct ");
   cmd+= toString(nAL) + toString(" ") ;
   cmd+= toString("10 10 0.1 0.1 32768 17 ") ;
   cmd+= toString(argv[7]) + toString(".inpat");

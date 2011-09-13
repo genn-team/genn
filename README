@@ -1,10 +1,10 @@
-INSTALLATION OF GNN:
+INSTALLATION OF GeNN:
 
-(i) unpack GNN.zip in a convenient location 
+(i) unpack GeNN.zip in a convenient location 
 
-(ii) define the environment variable "GNNPATH" to point to the main GNN 
-     directory, e.g. if you extracted GNN to /usr/local/GNN, then you can add
-     "export GNNPATH=/usr/local/GNN"
+(ii) define the environment variable "GeNNPATH" to point to the main GeNN 
+     directory, e.g. if you extracted GeNN to /usr/local/GeNN, then you can add
+     "export GeNNPATH=/usr/local/GeNN"
      to your login script.
 
 (iii) define the environment variable "NVIDIASDKPATH" to point to the main 
@@ -14,15 +14,15 @@ INSTALLATION OF GNN:
       "export NVIDIASDKPATH=/usr/local/NVIDIA_GPU_Computing_SDK/"
       to your login script.
 
-(iv) add $GNNPATH/lib/bin to your PATH variable, e.g.
-     "export PATH=$PATH:$GNNPATH/lib/bin"
+(iv) add $GeNNPATH/lib/bin to your PATH variable, e.g.
+     "export PATH=$PATH:$GeNNPATH/lib/bin"
 
 This completes the installation. If you use the example Makefile in 
 "userproject", then the ROOTDIR and include line for common.mk also need to be 
 adjusted.
 
 
-HOW TO USE GNN:
+HOW TO USE GeNN:
 
 for a first test the system is best used with a full driver program
 like tools/generate_run. To use it, navigate to the "test" directory and type
