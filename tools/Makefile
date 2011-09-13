@@ -14,13 +14,8 @@
 C++ = g++
 C = gcc
 RM= rm -f
-HOME= /home/t/tn/tn41/
 
-NLB= $(HOME)/include/neurlib
-DATA= $(HOME)/include/datalib
-NUM= $(HOME)/include/numlib
-ISAAC= $(HOME)/include/ISAAC_C++
-INCLUDE= -I$(DATA) -I$(NUM) -I$(ISAAC) -I$(NLB)
+INCLUDE= -I$(GeNNPATH)/lib/include/numlib
 
 FLAGS= -Wall -Winline
 #-O2 -march=athlon
