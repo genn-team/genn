@@ -1,0 +1,76 @@
+/*--------------------------------------------------------------------------
+   Author: Thomas Nowotny
+  
+   Institute: Institute for Nonlinear Dynamics
+              University of California San Diego
+              La Jolla, CA 92093-0402
+  
+   email to:  tnowotny@ucsd.edu
+  
+   initial version: 2002-09-26
+  
+--------------------------------------------------------------------------*/
+
+using namespace std;
+
+#include <iostream>
+#include <fstream>
+#include <stdlib.h>
+#include "randomGen.h"
+#include "gauss.h"
+#include "simpleBit.h"
+
+#include "randomGen.cc"
+
+randomGen R;
+randomGauss RG;
+
+int main(int argc, char *argv[])
+{
+  if (argc != 5)
+  {
+    cerr << "usage: gen_pnkc_syns_indivID <nAL> <nMB> ";
+    cerr << "<prob. of PN-KC syn> ";
+    cerr << "<outfile>" << endl;
+    exit(1);
+  }
+
+  int nAL= atoi(argv[1]);
+  int nMB= atoi(argv[2]);
+  float psyn= atof(argv[3]);
+  ofstream os(argv[4], ios::binary);
+  unsigned int UIntSz= sizeof(unsigned int)*8;  // in bit!
+  unsigned int logUIntSz= (int) (logf((float) UIntSz)/logf(2.0f)+1e-5f);
+  unsigned int tmp= nAL*nMB;
+  unsigned int size= tmp >> logUIntSz;
+  if (tmp > (size << logUIntSz)) size++;
+  unsigned int *g= new unsigned int[size];
+  float tt;
+
+  cerr << "# call was: ";
+  for (int i= 0; i < argc; i++) cerr << argv[i] << " ";
+  cerr << endl;
+
+  for (unsigned int i= 0; i < size; i++) {
+    g[i]= 0;
+  }
+  
+  for (int i= 0; i < nAL; i++) {
+    for (int j= 0; j < nMB; j++) {
+      tt= R.n(); 
+      //      cerr << tt << " " << psyn << endl;
+      if (tt < psyn) {
+	setB(g[(i*nMB+j) >> logUIntSz], (i*nMB+j)%UIntSz);
+	//	cerr << ((i*nMB+j) >> logUIntSz) << " " << (i*nMB+j)%UIntSz << " ";
+	//	cerr << g[(i*nMB+j) >> logUIntSz] << endl;
+      }
+    }
+  }
+  
+  os.write((char *)g, size*sizeof(unsigned int));
+  os.close();
+  delete[] g;
+  
+  return 0;
+}
+
