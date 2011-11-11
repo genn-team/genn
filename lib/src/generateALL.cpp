@@ -30,6 +30,7 @@ void generate_model_runner(NNmodel &model, string path)
 
   // general/ shared code for GPU and CPU versions
   name= path + toString("/") + model.name + toString("_CODE/runner.cc");
+  // cerr << name.c_str() << endl;
   ofstream os(name.c_str());
   genRunner(model, os, cerr);
   os.close();
