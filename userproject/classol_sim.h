@@ -13,12 +13,12 @@
 
 using namespace std;
 
-#include <iostream>
-#include <fstream>
-#include <sstream>
 #include <cassert>
 #include <cutil.h>
 #include "hr_time.h"
+
+#define DT 0.5
+#define RAND(Y,X) Y = Y * 1103515245 +12345;X= (unsigned int)(Y >> 16) & 32767
 
 // we will hard-code some stuff ... because at the end of the day that is 
 // what we will do for the CUDA version

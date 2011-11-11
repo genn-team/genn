@@ -11,6 +11,9 @@
   
 --------------------------------------------------------------------------*/
 
+#ifndef _MODELSPEC_CC_
+#define _MODELSPEC_CC_
+
 // class NNmodel for specifying a neuronal network model
 
 NNmodel::NNmodel() 
@@ -53,12 +56,12 @@ void NNmodel::initDerivedNeuronPara(unsigned int i)
   if (i == 0) {
     sumNeuronN.push_back(neuronN[i]);
     padSumNeuronN.push_back(padnN);
-    cerr <<  padSumNeuronN[i] << endl;
+    fprintf(stderr, "%d\n", padSumNeuronN[i]);
   }
   else {
     sumNeuronN.push_back(sumNeuronN[i-1] + neuronN[i]); 
     padSumNeuronN.push_back(padSumNeuronN[i-1] + padnN); 
-    cerr <<  padSumNeuronN[i] << endl;
+    fprintf(stderr, "%d\n", padSumNeuronN[i]);
   }
   neuronNeedSt.push_back(0);  // by default last spike times are not saved
 }
@@ -117,12 +120,12 @@ void NNmodel::initDerivedSynapsePara(unsigned int i)
   if (i == 0) {
     sumSynapseTrgN.push_back(nN);
     padSumSynapseTrgN.push_back(padnN);
-    cerr <<  padSumSynapseTrgN[i] << endl;
+    fprintf(stderr, "%d\n", padSumSynapseTrgN[i]);
   }
   else {
     sumSynapseTrgN.push_back(sumSynapseTrgN[i-1]+nN);
     padSumSynapseTrgN.push_back(padSumSynapseTrgN[i-1]+padnN);
-    cerr <<  padSumSynapseTrgN[i] << endl;
+    fprintf(stderr, "%d\n", padSumSynapseTrgN[i]);
   }
 }
 
@@ -133,7 +136,7 @@ unsigned int NNmodel::findNeuronGrp(const string nName)
       return j;
     }
   }
-  cerr << "neuron group " << nName << " not found, aborting ..." << endl;
+  fprintf(stderr, "neuron group %s not found, aborting ... \n", nName.c_str());
   exit(1);
 }
 
@@ -144,7 +147,7 @@ unsigned int NNmodel::findSynapseGrp(const string sName)
       return j;
     }
   }
-  cerr << "synapse group " << sName << " not found, aborting ..." << endl;
+  fprintf(stderr, "synapse group %s not found, aborting ...\n", sName.c_str());
   exit(1);
 }
 
@@ -209,3 +212,5 @@ void NNmodel::setSynapseG(const string sName, float g)
   if (g0.size() < found+1) g0.resize(found+1);
   g0[found]= g;
 }
+
+#endif

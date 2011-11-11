@@ -20,7 +20,7 @@ classol::classol()
 {
   modelDefinition(model);
   pattern= new unsigned int[model.neuronN[0]*PATTERNNO];
-  baserates= new unsigned int[model.neuronN[0]];
+  baserates= (unsigned int[model.neuronN[0]];
   allocateMem();
   initialize();
   sumPN= 0;
@@ -49,7 +49,7 @@ void classol::allocate_device_mem_patterns()
   // allocate device memory for input patterns
   size= model.neuronN[0]*PATTERNNO*sizeof(unsigned int);
   CUDA_SAFE_CALL(cudaMalloc((void**) &d_pattern, size));
-  cerr << "allocated " << size/sizeof(unsigned int) << " elements for pattern" << endl;
+  fprintf(stderr, "allocated %u elements for pattern.\n", size/sizeof(unsigned int));
   CUDA_SAFE_CALL(cudaMemcpy(d_pattern, pattern, size, cudaMemcpyHostToDevice));
   size= model.neuronN[0]*sizeof(unsigned int);
   CUDA_SAFE_CALL(cudaMalloc((void**) &d_baserates, size));
@@ -68,16 +68,16 @@ void classol::free_device_mem()
 
 classol::~classol()
 {
-  delete[] pattern;
-  delete[] baserates;
+  free(pattern);
+  free(baserates);
 }
 
 
-void classol::read_pnkcsyns(istream &is)
+void classol::read_pnkcsyns(FILE *f)
 {
   // version 1
-  cerr << model.neuronN[0]*model.neuronN[1]*sizeof(float) << endl;
-  is.read((char *)gpPNKC, model.neuronN[0]*model.neuronN[1]*sizeof(float));
+  fprintf(stderr, "%u\n", model.neuronN[0]*model.neuronN[1]*sizeof(float));
+  fread(gpPNKC, model.neuronN[0]*model.neuronN[1]*sizeof(float),1,f);
   // version 2
   /*  unsigned int UIntSz= sizeof(unsigned int)*8;   // in bit!
   unsigned int logUIntSz= (int) (logf((float) UIntSz)/logf(2.0f)+1e-5f);
@@ -88,73 +88,70 @@ void classol::read_pnkcsyns(istream &is)
   is.read((char *)gpPNKC, size);*/
 
   // general:
-  assert(is.good());
-  cerr << "read pnkc ... " << endl;
-  cerr << "values start with: ";
+  //assert(is.good());
+  fprintf(stderr,"read pnkc ... \n");
+  fprintf(stderr, "values start with: \n");
   for(int i= 0; i < 20; i++) {
-    cerr << gpPNKC[i] << " ";
+    fprintf(stderr, "%f ", gpPNKC[i]);
   }
-  cerr << endl << endl;
+  fprintf(stderr,"\n\n");
 }
 
 
-void classol::write_pnkcsyns(ostream &os)
+void classol::write_pnkcsyns(FILE *f)
 {
-  os.write((char *)gpPNKC, model.neuronN[0]*model.neuronN[1]*sizeof(float));
-  cerr << "wrote pnkc ... " << endl;
+  fwrite(gpPNKC, model.neuronN[0]*model.neuronN[1]*sizeof(float),1,f);
+  fprintf(stderr, "wrote pnkc ... \n");
 }
 
 
-void classol::read_pnlhisyns(istream &is)
+void classol::read_pnlhisyns(FILE *f)
 {
-  is.read((char *)gpPNLHI, model.neuronN[0]*model.neuronN[2]*sizeof(float));
-  assert(is.good());
-  cerr << "read pnlhi ... " << endl;
-  cerr << "values start with: ";
+  fread(gpPNLHI, model.neuronN[0]*model.neuronN[2]*sizeof(float),1,f);
+  fprintf(stderr,"read pnlhi ... \n");
+  fprintf(stderr, "values start with: \n");
   for(int i= 0; i < 20; i++) {
-    cerr << gpPNLHI[i] << " ";
+    fprintf(stderr, "%f ", gpPNLHI[i]);
   }
-  cerr << endl << endl;
+  fprintf(stderr, "\n\n");
 }
 
-void classol::write_pnlhisyns(ostream &os)
+void classol::write_pnlhisyns(FILE *f)
 {
-  os.write((char *)gpPNLHI, model.neuronN[0]*model.neuronN[2]*sizeof(float));
-  cerr << "wrote pnlhi ... " << endl;
+  fwrite(gpPNLHI, model.neuronN[0]*model.neuronN[2]*sizeof(float),1,f);
+  fprintf(stderr, "wrote pnlhi ... \n");
 }
 
 
-void classol::read_kcdnsyns(istream &is)
+void classol::read_kcdnsyns(FILE *f)
 {
-  is.read((char *)gpKCDN, model.neuronN[1]*model.neuronN[3]*sizeof(float));
-  assert(is.good());
-  cerr << "read kcdn ... " << endl;
-  cerr << "values start with: ";
+  fread(gpKCDN, model.neuronN[1]*model.neuronN[3]*sizeof(float),1,f);
+  fprintf(stderr, "read kcdn ... \n");
+  fprintf(stderr, "values start with: \n");
   for(int i= 0; i < 20; i++) {
-    cerr << gpKCDN[i] << " ";
+    fprintf(stderr, "%f ", gpKCDN[i]);
   }
-  cerr << endl << endl;
+  fprintf(stderr, "\n\n");
 }
 
 
-void classol::write_kcdnsyns(ostream &os)
+void classol::write_kcdnsyns(FILE *f)
 {
-  os.write((char *)gpKCDN, model.neuronN[1]*model.neuronN[3]*sizeof(float));
-  cerr << "wrote kcdn ... " << endl;
+  fwrite(gpKCDN, model.neuronN[1]*model.neuronN[3]*sizeof(float),1,f);
+  fprintf(stderr, "wrote kcdn ... \n");
 }
 
 
-void classol::read_input_patterns(istream &is)
+void classol::read_input_patterns(FILE *f)
 {
   // we use a predefined pattern number
-  is.read((char *)pattern, model.neuronN[0]*PATTERNNO*sizeof(unsigned int));
-  assert(is.good());
-  cerr << "read patterns ... " << endl;
-  cerr << "values start with: ";
+  fread(pattern, model.neuronN[0]*PATTERNNO*sizeof(unsigned int),1,f);
+  fprintf(stderr, "read patterns ... \n");
+  fprintf(stderr, "values start with: \n");
   for(int i= 0; i < 20; i++) {
-    cerr << pattern[i] << " ";
+    fprintf(stderr, "%d ", pattern[i]);
   }
-  cerr << endl << endl;
+  fprintf(stderr, "\n\n");
 }
 
 void classol::generate_baserates()
@@ -163,9 +160,9 @@ void classol::generate_baserates()
   for (int i= 0; i < model.neuronN[0]; i++) {
     baserates[i]= INPUTBASERATE;
   }
-  cerr << "generated basereates ... " << endl;
-  cerr << "baserate value: " << INPUTBASERATE;
-  cerr << endl << endl;  
+  fprintf(stderr, "generated basereates ... \n");
+  fprintf(stderr, "baserate value: %d ", INPUTBASERATE);
+  fprintf(stderr, "\n\n");  
 }
 
 void classol::run(float runtime, unsigned int which)
@@ -182,7 +179,7 @@ void classol::run(float runtime, unsigned int which)
       if (which == GPU)
 	theRates= d_pattern;
       offset= pno*model.neuronN[0];
-      cerr << "setting pattern, pattern offset:" << offset << endl;
+      fprintf(stderr, "setting pattern, pattern offset: %d\n", offset);
     }
     if (iT%PAT_SETTIME == PAT_FIRETIME) {
       if (which == CPU)
@@ -197,21 +194,21 @@ void classol::run(float runtime, unsigned int which)
        stepTimeCPU(theRates, offset, t);
     t+= DT;
     iT++;
-    //    cerr << t << endl;
+    //    fprintf(stderr, "%f\n", t);
   }
 }
 
 //--------------------------------------------------------------------------
 // output functions
 
-void classol::output_state(ostream &os, unsigned int which)
+void classol::output_state(FILE *f, unsigned int which)
 {
   if (which == GPU) 
     copyStateFromDevice();
 
-  os << t << " ";
+  fprintf(f, "%f ", t);
   for (int i= 0; i < model.neuronN[0]; i++) {
-     os << VPN[i] << " ";
+    fprintf(f, "%f ", VPN[i]);
    }
   // for (int i= 0; i < model.neuronN[0]; i++) {
   //   os << seedsPN[i] << " ";
@@ -243,7 +240,7 @@ void classol::output_state(ostream &os, unsigned int which)
  //   os << VKC[i] << " ";
  // }
    for (int i= 0; i < model.neuronN[1]; i++) {
-     os << VKC[i] << " ";
+     fprintf(f, "%f ", VKC[i]);
    }
   //os << " * ";
   //for (int i= 0; i < model.neuronN[1]; i++) {
@@ -267,12 +264,12 @@ void classol::output_state(ostream &os, unsigned int which)
   //    os << inSynDN1[i] << " ";
   //  }
   for (int i= 0; i < model.neuronN[2]; i++) {
-    os << VLHI[i] << " ";
+    fprintf(f, "%f ", VLHI[i]);
   }
   for (int i= 0; i < model.neuronN[3]; i++) {
-    os << VDN[i] << " ";
+    fprintf(f, "%f ", VDN[i]);
   }
-  os << endl;
+  fprintf(f,"\n");
 }
 
 void classol::getSpikesFromGPU()
@@ -285,22 +282,21 @@ void classol::getSpikeNumbersFromGPU()
   copySpikeNFromDevice();
 }
 
-void classol::output_spikes(ostream &os, unsigned int which)
+void classol::output_spikes(FILE *f, unsigned int which)
 {
 
-  //    cerr << t << " " << glbscntPN << " " << glbscntKC << " ";
-  //    cerr << glbscntLHI << " " << glbscntDN << endl;
+  //    fprintf(stderr, "%f %f %f %f %f\n", t, glbscntPN, glbscntKC, glbscntLHI,glbscntDN);
   for (int i= 0; i < glbscntPN; i++) {
-    os << t << " " << glbSpkPN[i] << endl;
+    fprintf(f, "%f %d\n", t, glbSpkPN[i]);
   }
   for (int i= 0; i < glbscntKC; i++) {
-    os << t << " " << model.sumNeuronN[0]+glbSpkKC[i] << endl;
+    fprintf(f,  "%f %d\n", t, model.sumNeuronN[0]+glbSpkKC[i]);
   }
   for (int i= 0; i < glbscntLHI; i++) {
-    os << t << " " << model.sumNeuronN[1]+glbSpkLHI[i] << endl;
+    fprintf(f, "%f %d\n", t, model.sumNeuronN[1]+glbSpkLHI[i]);
   }
   for (int i= 0; i < glbscntDN; i++) {
-    os << t << " " << model.sumNeuronN[2]+glbSpkDN[i] << endl;
+    fprintf(f, "%f %d\n", t, model.sumNeuronN[2]+glbSpkDN[i]);
   }
 }
 

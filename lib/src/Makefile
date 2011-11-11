@@ -59,10 +59,10 @@ INCLUDES  	+= -I../include -I$(GeNNPATH)/lib/include/numlib
 # Add source files here
 EXECUTABLE	:= generateALL
 # Cuda source files (compiled with cudacc)
-CUFILES		:= generateALL.cu
+CUFILES		:= 
 # C/C++ source files (compiled with gcc / c++)
-CCFILES		:= 
-CUDACCFLAGS 	:= -DGeNNMODELNAME=$(GeNNMODELNAME) -DGeNNMODELINCLUDE=$(GeNNMODELINCLUDE)
+CCFILES		:= generateALL.cpp
+CXXFLAGS 	:= -DGeNNMODELNAME=$(GeNNMODELNAME) -DGeNNMODELINCLUDE=$(GeNNMODELINCLUDE)
 # -keep --ptxas-options=-v
 # -keep to keep all compile stages
 
