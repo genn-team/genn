@@ -112,7 +112,7 @@ int main(int argc, char *argv[])
   system(cmd.c_str());
 
   // run it!
-  cmd= toString("../userproject/$GeNNOSTYPE/release/classol_sim ")+  toString(argv[7]) + toString(" ") + toString(which);
+  cmd= toString("GeNNOSTYPE=$(echo $(uname) | tr A-Z a-z); ../userproject/$GeNNOSTYPE/release/classol_sim ")+  toString(argv[7]) + toString(" ") + toString(which);
   system(cmd.c_str());
    
   return 0;

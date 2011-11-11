@@ -20,7 +20,7 @@ classol::classol()
 {
   modelDefinition(model);
   pattern= new unsigned int[model.neuronN[0]*PATTERNNO];
-  baserates= (unsigned int[model.neuronN[0]];
+  baserates= new unsigned int[model.neuronN[0]];
   allocateMem();
   initialize();
   sumPN= 0;
