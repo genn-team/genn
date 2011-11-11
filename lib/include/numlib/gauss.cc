@@ -18,9 +18,9 @@ randomGauss::randomGauss()
   time_t t0= time(NULL);
   assert (t0 != -1);
 
-  ulong seed1= t0;
-  ulong seed2= t0%131313;
-  ulong seed3= t0%171717;
+  unsigned long seed1= t0;
+  unsigned long seed2= t0%131313;
+  unsigned long seed3= t0%171717;
   UniGen.srand(seed1, seed2, seed3);
 
   s= 0.449871;
@@ -32,7 +32,7 @@ randomGauss::randomGauss()
   r2= 0.27846;
 }
 
-randomGauss::randomGauss(ulong seed1, ulong seed2, ulong seed3)
+randomGauss::randomGauss(unsigned long seed1, unsigned long seed2, unsigned long seed3)
 {
   UniGen.srand(seed1, seed2, seed3);
 

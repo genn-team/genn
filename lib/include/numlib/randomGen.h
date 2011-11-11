@@ -32,12 +32,12 @@
 class randomGen
 {
  private:
-  QTIsaac<8, ulong> TheGen;
+  QTIsaac<8, unsigned long> TheGen;
   double a;
   
  public:
   explicit randomGen();
-  randomGen(ulong, ulong, ulong);
+  randomGen(unsigned long, unsigned long, unsigned long);
   ~randomGen() { }
   double n();
 };
@@ -52,7 +52,7 @@ class stdRG
   stdRG(unsigned int);
   ~stdRG() { }
   double n();
-  ulong nlong();
+  unsigned long nlong();
 };
 
 //#include "randomGen.cc"
