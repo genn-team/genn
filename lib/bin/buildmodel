@@ -5,6 +5,8 @@ export GeNNMODELNAME=$1;
 export GeNNMODELINCLUDE=\"\\\"$WD/$GeNNMODELNAME.cc\\\"\"
 cd $GeNNPATH/lib/src;
 make clean && make;
-linux/release/generateALL $WD;
+OSTYPE=$(uname);
+export GeNNOSTYPE=${OSTYPE,,?};
+$GeNNOSTYPE/release/generateALL $WD;
 echo "Model build complete ..."
 cd $WD;

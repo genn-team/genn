@@ -102,14 +102,17 @@ int main(int argc, char *argv[])
   os << "#define _NLHI " << nLHI << endl;
   os << "#define _NLB " << nLB << endl;
   os.close();
-  cmd= toString("cd ../userproject/ && buildmodel MBody1");
+  cmd= toString("cd ../userproject/ && . buildmodel MBody1");
   system(cmd.c_str());
   cmd= toString("cd ../userproject && ");
   cmd+= toString("make clean && make");
   system(cmd.c_str());
 
+  cmd= toString("echo $GeNNOSTYPE");
+  system(cmd.c_str());
+
   // run it!
-  cmd= toString("../userproject/linux/release/classol_sim ")+  toString(argv[7]) + toString(" ") + toString(which);
+  cmd= toString("../userproject/$GeNNOSTYPE/release/classol_sim ")+  toString(argv[7]) + toString(" ") + toString(which);
   system(cmd.c_str());
    
   return 0;
