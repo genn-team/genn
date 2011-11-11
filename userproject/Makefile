@@ -59,7 +59,7 @@ INCLUDES  	+= -I./include  -I$(GeNNPATH)/lib/include
 # Add source files here
 EXECUTABLE	:= classol_sim
 # Cuda source files (compiled with cudacc)
-CUFILES_sm_13		:= classol_sim.cu
+CUFILES_sm_12		:= classol_sim.cu
 # C/C++ source files (compiled with gcc / c++)
 CCFILES		:= 
 CUDACCFLAGS 	:= --ptxas-options=-v

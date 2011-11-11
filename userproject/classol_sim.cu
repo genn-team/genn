@@ -17,55 +17,55 @@ int main(int argc, char *argv[])
 {
   if (argc != 3)
   {
-    cerr << "usage: classol_sim <basename> <CPU=0, GPU=1>" << endl;
+    fprintf(stderr, "usage: classol_sim <basename> <CPU=0, GPU=1> \n");
     return 1;
   }
   int which= atoi(argv[2]);
   string name;
   name= toString(argv[1]) + toString(".time");
-  ofstream timeos(name.c_str());  
+  FILE *timef= fopen(name.c_str(),"w");  
 
   timer.startTimer();
   
-  cerr << "# DT " << DT << endl;
-  cerr << "# T_REPORT_TME " << T_REPORT_TME << endl;
-  cerr << "# SYN_OUT_TME " << SYN_OUT_TME << endl;
-  cerr << "# PATFTIME " << PATFTIME << endl; 
-  cerr << "# PAT_FIRETIME " << PAT_FIRETIME << endl;
-  cerr << "# PAT_TIME " << PAT_TIME << endl;
-  cerr << "# PAT_SETTIME " << PAT_SETTIME << endl;
-  cerr << "# TOTAL_TME " << TOTAL_TME << endl;
+
+  fprintf(stderr, "# DT %f \n", DT);
+  fprintf(stderr, "# T_REPORT_TME %f \n", T_REPORT_TME);
+  fprintf(stderr, "# SYN_OUT_TME %f \n",  SYN_OUT_TME);
+  fprintf(stderr, "# PATFTIME %f \n", PATFTIME); 
+  fprintf(stderr, "# PAT_FIRETIME %d \n", PAT_FIRETIME);
+  fprintf(stderr, "# PAT_TIME %f \n", PAT_TIME);
+  fprintf(stderr, "# PAT_SETTIME %d \n", PAT_SETTIME);
+  fprintf(stderr, "# TOTAL_TME %d \n", TOTAL_TME);
   
   name= toString(argv[1]) + toString(".out.st"); 
-  ofstream os(name.c_str());
+  FILE *osf= fopen(name.c_str(),"w");
 
   //-----------------------------------------------------------------
   // build the neuronal circuitery
   classol locust;
 
-  cerr << "# reading PN-KC synapses ..." << endl;
+  fprintf(stderr, "# reading PN-KC synapses ... \n");
   name= toString(argv[1]) + toString(".pnkc");
-  ifstream pnkcsis(name.c_str(), ios::binary);
-  assert(pnkcsis.good());	   
-  locust.read_pnkcsyns(pnkcsis);   
+  FILE *f= fopen(name.c_str(),"r");
+  locust.read_pnkcsyns(f);
+  fclose(f);   
  
-  cerr << "# reading PN-LHI synapses ..." << endl;
+  fprintf(stderr, "# reading PN-LHI synapses ... \n");
   name= toString(argv[1]) + toString(".pnlhi");
-  ifstream pnlhisis(name.c_str(), ios::binary);
-  assert(pnlhisis.good());	   
-  locust.read_pnlhisyns(pnlhisis);   
+  f= fopen(name.c_str(), "r");
+  locust.read_pnlhisyns(f);
+  fclose(f);   
   
-  cerr << "# reading KC-DN synapses ..." << endl;
+  fprintf(stderr, "# reading KC-DN synapses ... \n");
   name= toString(argv[1]) + toString(".kcdn");
-  ifstream kcdnsis(name.c_str(), ios::binary);
-  assert(kcdnsis.good());
-  locust.read_kcdnsyns(kcdnsis);
+  f= fopen(name.c_str(), "r");
+  locust.read_kcdnsyns(f);
    
-  cerr << "# reading input patterns ..." << endl;
+  fprintf(stderr, "# reading input patterns ... \n");
   name= toString(argv[1]) + toString(".inpat");
-  ifstream patis(name.c_str(), ios::binary);
-  assert(patis.good());
-  locust.read_input_patterns(patis);
+  f= fopen(name.c_str(), "r");
+  locust.read_input_patterns(f);
+  fclose(f);
   locust.generate_baserates();
 
   if (which == GPU) {
@@ -73,13 +73,13 @@ int main(int argc, char *argv[])
   }
   locust.init(which);         // this includes copying g's for the GPU version
 
-  cerr << "# neuronal circuitery built, start computation ..." << endl << endl;
+  fprintf(stderr, "# neuronal circuitery built, start computation ... \n\n");
 
   //------------------------------------------------------------------
   // output general parameters to output file and start the simulation
 
-  cerr << "# We are running with fixed time step " << DT << endl;
-  cerr << "# initial wait time execution ... " << endl;
+  fprintf(stderr, "# We are running with fixed time step %f \n", DT);
+  fprintf(stderr, "# initial wait time execution ... \n");
 
   t= 0.0;
   void *devPtr;
@@ -93,7 +93,6 @@ int main(int argc, char *argv[])
 //  float synwriteT= 0.0f;
 //  int synwrite= 0;
 unsigned int sum= 0;
-	 os.precision(10);
   while (!done) 
   {
 //   if (which == GPU) locust.getSpikesFromGPU();
@@ -106,17 +105,17 @@ unsigned int sum= 0;
 //    locust.sum_spikes();
 //    locust.output_spikes(os, which);
 //   locust.output_state(os, which);  // while outputting the current one ...
-   os << t << " ";
+   fprintf(osf, "%f ", t);
    for (int i= 0; i < 10; i++) {
-     os << VDN[i] << " ";
+     fprintf(osf, "%f ", VDN[i]);
    }
-   os << endl;
+   fprintf(osf,"\n");
 //      cudaThreadSynchronize();
 
-    // report progress
+   // report progress
     if (t - last_t_report >= T_REPORT_TME)
     {
-      cerr << "time " << t << endl;
+      fprintf(stderr, "time %f \n", t);
       last_t_report= t;
       //locust.output_state(os);
     }
@@ -125,8 +124,9 @@ unsigned int sum= 0;
     //   lastsynwrite= synwriteT;
     //   name= toString(argv[1]) + toString(".") + toString((int) synwriteT);
     //   name+= toString(".syn");
-    //   ofstream kcdnsynos(name.c_str());
-    //   locust.write_kcdnsyns(kcdnsynos);
+    //   f= fopen(name.c_str(),"w");
+    //   locust.write_kcdnsyns(f);
+    //   fclose(f);
     //   synwrite= 0;
     // }
     // if (t - lastsynwrite >= SYN_OUT_TME) {
@@ -143,17 +143,14 @@ unsigned int sum= 0;
   //   lastsynwrite= t;
   //   name= toString(argv[1]) + toString(".") + toString((int) t);
   //   name+= toString(".syn");
-  //   ofstream kcdnsynos(name.c_str());
-  //   locust.write_kcdnsyns(kcdnsynos);
+  //   f= fopen(name.c_str());
+  //   locust.write_kcdnsyns(f);
+  // fclose(f);
   //   synwrite= 0;
   // }
 
   timer.stopTimer();
-  timeos << locust.sumPN << " ";
-  timeos << locust.sumKC << " ";
-  timeos << locust.sumLHI << " ";
-  timeos << locust.sumDN << " ";
-  timeos << " " << timer.getElapsedTime() << endl;
+  fprintf(timef, "%d %d %d %d %f \n", locust.sumPN, locust.sumKC, locust.sumLHI, locust.sumDN, timer.getElapsedTime());
 
   return 0;
 }

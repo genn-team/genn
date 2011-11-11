@@ -20,6 +20,9 @@ using namespace std;
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <cuda.h>
+#include <cuda_runtime_api.h>
+#include <cutil_inline.h>
 
 cudaDeviceProp *deviceProp;
 int devN;
