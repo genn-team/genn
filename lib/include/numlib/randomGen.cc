@@ -21,13 +21,13 @@ randomGen::randomGen()
   time_t t0= time(NULL);
   assert (t0 != -1);
 
-  ulong seed1= t0;
-  ulong seed2= t0%131313;
-  ulong seed3= t0%171717;
+  unsigned long seed1= t0;
+  unsigned long seed2= t0%131313;
+  unsigned long seed3= t0%171717;
   TheGen.srand(seed1, seed2, seed3);
 }
 
-randomGen::randomGen(ulong seed1, ulong seed2, ulong seed3)
+randomGen::randomGen(unsigned long seed1, unsigned long seed2, unsigned long seed3)
 {
   TheGen.srand(seed1, seed2, seed3);
 }
@@ -40,7 +40,7 @@ double randomGen::n()
   return a;
 }
 
-//ulong randomGen::nlong()
+//unsigned long randomGen::nlong()
 //{
 //  return TheGen.rand();
 //}

@@ -36,7 +36,7 @@
 class randomGauss
 {
 private:
-  QTIsaac<8, ulong> UniGen;
+  QTIsaac<8, unsigned long> UniGen;
   double s, t, a, b, r1, r2; 
   double u, v;
   double x, y, q;
@@ -44,7 +44,7 @@ private:
   
  public:
   explicit randomGauss();
-  randomGauss(ulong, ulong, ulong);
+  randomGauss(unsigned long, unsigned long, unsigned long);
   ~randomGauss() { }
   double n();
 };
