@@ -99,9 +99,10 @@ unsigned int sum= 0;
 //    if (which == GPU) locust.getSpikeNumbersFromGPU();
     locust.run(DT, which); // run next batch
     if (which == GPU) {  
-      cudaGetSymbolAddress(&devPtr, "d_VDN");
-      CUDA_SAFE_CALL(cudaMemcpy(VDN, devPtr, 10*sizeof(float), cudaMemcpyDeviceToHost));
-    }
+      cudaGetSymbolAddress(&devPtr, d_VDN);
+      //CUDA_SAFE_CALL(cudaMemcpy(VDN, devPtr, 10*sizeof(float), cudaMemcpyDeviceToHost));
+      checkCudaErrors(cudaMemcpy(VDN, devPtr, 10*sizeof(float), cudaMemcpyDeviceToHost));
+	}
 //    locust.sum_spikes();
 //    locust.output_spikes(os, which);
 //   locust.output_state(os, which);  // while outputting the current one ...

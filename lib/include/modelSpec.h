@@ -18,6 +18,8 @@
 #include "toString.h"
 
 #define NTYPENO 3
+
+//neuronType
 #define MAPNEURON 0
 #define POISSONNEURON 1
 #define TRAUBMILES 2
@@ -73,11 +75,11 @@ unsigned int SYNPNO[SYNTYPENO]= {
 // class for specifying a neuron model
 struct neuronModel
 {
-  string simCode; // needs to contain $(ISYN) if to receive input
+  string simCode; // needs to contain $(ISYN) if to receive input. This is where the neuron model code is defined.
   vector<string> varNames;
-  vector<string> tmpVarNames;
+  vector<string> tmpVarNames; //never used
   vector<string> varTypes;
-  vector<string> tmpVarTypes;
+  vector<string> tmpVarTypes; //never used
   vector<string> pNames;
   vector<string> dpNames;
 };
@@ -121,7 +123,7 @@ class NNmodel
   vector<vector<float> >dsp;  // derived synapse parameters
 
  private:
-  void setNeuronName(unsigned int, const string);
+  void setNeuronName(unsigned int, const string); //never used
   void setSynapseName(unsigned int, const string);
   void setNeuronN(unsigned int, unsigned int);
   void setNeuronType(unsigned int, unsigned int);

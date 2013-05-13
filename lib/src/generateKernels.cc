@@ -241,7 +241,7 @@ void genSynapseKernel(NNmodel &model, ostream &os, ostream &mos)
 
   for (int i= 0; i < model.synapseGrpN; i++) {
     if (i == 0) {
-      os << "  if (id < " << model.padSumSynapseTrgN[i] << ") {" << endl;
+      os << "  if (id < " << model.padSumSynapseTrgN[i] << ") { " << endl;
       localID= string("id");
     }
     else {
@@ -255,8 +255,12 @@ void genSynapseKernel(NNmodel &model, ostream &os, ostream &mos)
     unsigned int nN= model.neuronN[trg];
     unsigned int src= model.synapseSource[i];
     float Epre= model.synapsePara[i][1];
-    float Vslope= model.synapsePara[i][3];
+    float Vslope;
+    if (model.synapseType[i] == NGRADSYNAPSE) {
+	   Vslope= model.synapsePara[i][3]; //fails here
+	}
     unsigned int inSynNo= model.synapseInSynNo[i];
+
     os << "    // only do this for existing neurons" << endl;
     os << "    if (" << localID << " < " << nN <<") {" << endl;
     os << "      linSyn= d_inSyn" << model.neuronName[trg] << inSynNo << "[" << localID << "];" << endl;

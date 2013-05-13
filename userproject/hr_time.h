@@ -1,7 +1,7 @@
 #ifndef __HR_TIME_H
 #define __HR_TIME_H
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <windows.h>
 
 typedef struct {
@@ -24,7 +24,6 @@ public:
 
 #else
 #include <sys/time.h>
-
 typedef struct {
 	timeval start;
 	timeval stop;

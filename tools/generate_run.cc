@@ -102,7 +102,9 @@ int main(int argc, char *argv[])
   os << "#define _NLHI " << nLHI << endl;
   os << "#define _NLB " << nLB << endl;
   os.close();
-  cmd= toString("cd ../userproject/ && . buildmodel MBody1");
+  cmd= toString("cd ../userproject/ && buildmodel MBody1");
+  
+cout << "script call was:" << cmd.c_str() << endl;
   system(cmd.c_str());
   cmd= toString("cd ../userproject && ");
   cmd+= toString("make clean && make");
@@ -112,9 +114,17 @@ int main(int argc, char *argv[])
   system(cmd.c_str());
 
   // run it!
-  cmd= toString("GeNNOSTYPE=$(echo $(uname) | tr A-Z a-z); ../userproject/$GeNNOSTYPE/release/classol_sim ")+  toString(argv[7]) + toString(" ") + toString(which);
+  cout << "running test..." <<endl;
+#if defined _WIN32 || defined __CYGWIN__
+  //cout << "win32" <<endl;
+  cmd= toString("GeNNOSTYPE=Win32; ../userproject/bin/$GeNNOSTYPE/release/classol_sim ")+  toString(argv[7]) + toString(" ") + toString(which);
+#else
+  //cout << "not win" <<endl;
+  //cmd= toString("GeNNOSTYPE=$(echo $(uname) | tr A-Z a-z); ../userproject/$GeNNOSTYPE/release/classol_sim ")+  toString(argv[7]) + toString(" ") + toString(which);
+  cmd= toString("GeNNOSTYPE=$(echo $(uname) | tr A-Z a-z); ../userproject/bin/$GeNNOSTYPE/release/classol_sim ")+  toString(argv[7]) + toString(" ") + toString(which);
+#endif
+  cout << cmd << endl;
   system(cmd.c_str());
-   
   return 0;
   
 }

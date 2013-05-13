@@ -1,5 +1,3 @@
-This is the README of the development branch
-
 INSTALLATION OF GeNN:
 
 (i) unpack GeNN.zip in a convenient location 
@@ -12,16 +10,15 @@ INSTALLATION OF GeNN:
 (iii) define the environment variable "NVIDIASDKPATH" to point to the main 
       directory of an installation of the NVidia Computing SDK (install one
       if necessary). E.g. if the SDK resides in 
-      "/usr/local/NVIDIA_GPU_Computing_SDK/" then you can add
-      "export NVIDIASDKPATH=/usr/local/NVIDIA_GPU_Computing_SDK/"
+      "/usr/local/cuda-5.0/samples" then you can add
+      "export NVIDIASDKPATH=/usr/local/cuda-5.0/samples/"
       to your login script.
 
 (iv) add $GeNNPATH/lib/bin to your PATH variable, e.g.
      "export PATH=$PATH:$GeNNPATH/lib/bin"
 
 This completes the installation. If you use the example Makefile in 
-"userproject", then the ROOTDIR and include line for common.mk also need to be 
-adjusted.
+"userproject", then the HOME, ROOTDIR and include line for Makefile also need to be adjusted.
 
 
 HOW TO USE GeNN:

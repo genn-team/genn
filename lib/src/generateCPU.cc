@@ -127,7 +127,10 @@ void genSynapseFunction(NNmodel &model, ostream &os, ostream &mos)
 	unsigned int synID= model.inSyn[i][j];
 	unsigned int src= model.synapseSource[synID];
 	float Epre= model.synapsePara[synID][1];
-	float Vslope= model.synapsePara[synID][3];
+	float Vslope;
+	if (model.synapseType[synID] == NGRADSYNAPSE) {
+		Vslope= model.synapsePara[synID][3];
+	}
 	
 	os << "  for (int j= 0; j < glbscnt" << model.neuronName[src] << "; j++) {" << endl;
 	os << "    for (int n= 0; n < " << model.neuronN[i] <<"; n++) {" << endl;

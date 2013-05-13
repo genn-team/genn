@@ -11,10 +11,15 @@
   
 --------------------------------------------------------------------------*/
 
+#include <cstdlib> 
+
+//#define GeNNMODELINCLUDE getenv("GeNNMODELINCLUDE")
+
 #include "global.h"
 #include "utils.h"
 
-#include GeNNMODELINCLUDE
+
+#include "currentModel.cc"
 
 #include "generateKernels.cc"
 #include "generateRunner.cc"
@@ -24,7 +29,11 @@ void generate_model_runner(NNmodel &model, string path)
 {
   string cmd, name;
   
+  #ifdef _WIN32
+  cmd= toString("mkdir ")+ path + toString("\\") + model.name + toString("_CODE");
+#else
   cmd= toString("mkdir -p ")+ path + toString("/") + model.name + toString("_CODE");
+#endif
   cerr << cmd << endl;
   system(cmd.c_str());
 
@@ -94,3 +103,4 @@ int main(int argc, char *argv[])
   
   return 0;
 }
+

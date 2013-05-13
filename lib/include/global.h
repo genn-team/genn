@@ -15,14 +15,16 @@
 #define _GLOBAL_H_
 
 
-using namespace std;
-
 #include <iostream>
+using namespace std; // replaced these two lines : problem with visual studio
 #include <fstream>
 #include <sstream>
 #include <cuda.h>
-#include <cuda_runtime_api.h>
-#include <cutil_inline.h>
+//#include <cuda_runtime_api.h>
+#include <cuda_runtime.h> //EY
+//#include <cutil_inline.h> // does not exist anymore in CUDA 5.0
+#include <helper_cuda.h>
+//#include <helper_cuda_drvapi.h>
 
 cudaDeviceProp *deviceProp;
 int devN;
