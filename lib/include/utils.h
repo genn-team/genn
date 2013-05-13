@@ -1,20 +1,5 @@
-/*--------------------------------------------------------------------------
-   Author: Thomas Nowotny
-  
-   Institute: Center for Computational Neuroscience and Robotics
-              University of Sussex
-	      Falmer, Brighton BN1 9QJ, UK 
-  
-   email to:  T.Nowotny@sussex.ac.uk
-  
-   initial version: 2010-02-07
-  
---------------------------------------------------------------------------*/
-
-/* parts of the source code obtained and modified from NVIDIA developer 
- * kit under the condtions below:
- *
- * Copyright 1993-2010 NVIDIA Corporation.  All rights reserved.
+/*
+ * Copyright 1993-2012 NVIDIA Corporation.  All rights reserved.
  *
  * Please refer to the NVIDIA end user license agreement (EULA) associated
  * with this source code for terms and conditions that govern your use of
@@ -30,14 +15,38 @@
 
 #include "toString.h"
 
-// utilities and system includes
-#include <shrUtils.h>
+// Shared Utilities (QA Testing)
+
+// std::system includes
+#include <memory>
+#include <iostream>
 
 // CUDA-C includes
-#include <cuda_runtime_api.h>
+#include <cuda.h>
+#include <cuda_runtime.h>
 
+#include <helper_cuda.h>
+
+//GeNN-related
 #include <vector>
 #include "modelSpec.h"
+
+int *pArgc = NULL;
+char **pArgv = NULL;
+
+// This function wraps the CUDA Driver API into a template function
+template <class T>
+inline void getCudaAttribute(T *attribute, CUdevice_attribute device_attribute, int device)
+{
+    CUresult error =    cuDeviceGetAttribute(attribute, device_attribute, device);
+
+    if (CUDA_SUCCESS != error)
+    {
+        fprintf(stderr, "cuSafeCallNoSync() Driver API error = %04d from file <%s>, line %i.\n",
+                error, __FILE__, __LINE__);
+        exit(EXIT_FAILURE);
+    }
+}
 
 // Function to output an error code and exit
 
@@ -58,183 +67,258 @@ void writeHeader(ostream &os)
   }
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////
 // Function to check devices and capabilities
 ////////////////////////////////////////////////////////////////////////////////
-int
-checkDevices(ostream &mos) 
-{
-  int deviceCount = 0;
-  if (cudaGetDeviceCount(&deviceCount) != cudaSuccess) {
-    mos << "cudaGetDeviceCount FAILED CUDA Driver and Runtime version may be mismatched.\n";
-    return -1;
-  }
-  
-  // This function call returns 0 if there are no CUDA capable devices.
-  if (deviceCount == 0) {
-    mos << "There is no device supporting CUDA\n";
-    return 0;
-  }
+//int main(int argc, char **argv)
+int checkDevices(ostream &mos) {
+    //D pArgc = &argc;
+    //D pArgv = argv;
 
-  deviceProp= new cudaDeviceProp[deviceCount];
-  int dev;
-  int driverVersion = 0, runtimeVersion = 0;     
-  for (dev = 0; dev < deviceCount; ++dev) {
-    cudaGetDeviceProperties(&(deviceProp[dev]), dev);
-    
-    if (dev == 0) {
-      // This function call returns 9999 for both major & minor fields, 
-      // if no CUDA capable devices are present
-      if (deviceProp[dev].major == 9999 && deviceProp[dev].minor == 9999) {
-	mos << "There is no device supporting CUDA.\n";
-	return 0;
-      }
-      else if (deviceCount == 1)
-	mos << "There is 1 device supporting CUDA\n";
-      else
-	mos << "There are " << deviceCount << " devices supporting CUDA\n";
+    //D printf("%s Starting...\n\n", argv[0]);
+    printf(" CUDA Device Query (Runtime API) version (CUDART static linking)\n\n");
+
+    int deviceCount = 0;
+    cudaError_t error_id = cudaGetDeviceCount(&deviceCount);
+
+    if (error_id != cudaSuccess)
+    {
+        printf("cudaGetDeviceCount returned %d\n-> %s\n", (int)error_id, cudaGetErrorString(error_id));
+        exit(EXIT_FAILURE);
     }
-    mos << "\nDevice " << dev << ": \"" << deviceProp[dev].name << "\"\n";
-    
-#if CUDART_VERSION >= 2020
-    // Console log
-    cudaDriverGetVersion(&driverVersion);
-    mos << "  CUDA Driver Version: " << driverVersion/1000 << ".";
-    mos << driverVersion%100 << endl;
-    cudaRuntimeGetVersion(&runtimeVersion);
-    mos << "  CUDA Runtime Version: " << runtimeVersion/1000 << ".";
-    mos << runtimeVersion%100 << endl;
-#endif
-    mos << "  CUDA Capability Major/Minor version number: ";
-    mos << deviceProp[dev].major << "." << deviceProp[dev].minor << endl;
 
-    mos << "  Total amount of global memory: ";
-    mos << (unsigned long long) deviceProp[dev].totalGlobalMem << " bytes\n";
-		
-#if CUDART_VERSION >= 2000
-    mos << "  Multiprocessors x Cores/MP = Cores: ";
-    mos << deviceProp[dev].multiProcessorCount << "(MP) x ";
-    mos << ConvertSMVer2Cores(deviceProp[dev].major, deviceProp[dev].minor);
-    mos << " (Cores/MP) = ";
-    mos << ConvertSMVer2Cores(deviceProp[dev].major, deviceProp[dev].minor) * deviceProp[dev].multiProcessorCount << " (Cores)\n"; 
-#endif
-    mos << "  Total amount of constant memory: " << deviceProp[dev].totalConstMem; 
-    mos << " bytes\n";
-    mos << "  Total amount of shared memory per block: ";
-    mos << deviceProp[dev].sharedMemPerBlock << " bytes\n";
-    mos << "  Total number of registers available per block: ";
-    mos << deviceProp[dev].regsPerBlock << endl;
-    mos << "  Warp size: " << deviceProp[dev].warpSize << endl;
-    mos << "  Maximum number of threads per block: ";
-    mos << deviceProp[dev].maxThreadsPerBlock << endl;
-    mos << "  Maximum sizes of each dimension of a block: ";
-    mos << deviceProp[dev].maxThreadsDim[0] << " x ";
-    mos << deviceProp[dev].maxThreadsDim[1] << " x ";
-    mos << deviceProp[dev].maxThreadsDim[2] << endl;
-    mos << "  Maximum sizes of each dimension of a grid: ";
-    mos << deviceProp[dev].maxGridSize[0] << " x ";
-    mos << deviceProp[dev].maxGridSize[1] << " x ";
-    mos << deviceProp[dev].maxGridSize[2] << endl;
-    mos << "  Maximum memory pitch: " << deviceProp[dev].memPitch;
-    mos << " bytes\n";
-    mos << "  Texture alignment: " << deviceProp[dev].textureAlignment;
-    mos << " bytes\n";
-    mos << "  Clock rate: " << deviceProp[dev].clockRate * 1e-6f;
-    mos << " GHz\n";
-#if CUDART_VERSION >= 2000
-    mos << "  Concurrent copy and execution: ";
-    if( deviceProp[dev].deviceOverlap) 
-      mos <<  "Yes\n";
-    else mos << "No\n";
-#endif
-#if CUDART_VERSION >= 2020
-    mos << "  Run time limit on kernels: ";
-    if ( deviceProp[dev].kernelExecTimeoutEnabled)
-      mos << "Yes\n";
-    else mos << "No\n";
-    mos << "  Integrated: ";
-    if (deviceProp[dev].integrated) 
-      mos << "Yes\n";
-    else mos << "No\n";
-    mos << "  Support host page-locked memory mapping: ";
-    if (deviceProp[dev].canMapHostMemory)
-      mos << "Yes\n";
-    else mos << "No\n";
-    mos << "  Compute mode: ";
-    if (deviceProp[dev].computeMode == cudaComputeModeDefault)
-      mos << "Default (multiple host threads can use this device simultaneously)\n";
-    else if (deviceProp[dev].computeMode == cudaComputeModeExclusive) 
-      mos << "Exclusive (only one host thread at a time can use this device)\n";
-    else if (deviceProp[dev].computeMode == cudaComputeModeProhibited)
-      mos << "Prohibited (no host thread can use this device)\n";
-    else mos << "Unknown\n";
-#endif
-#if CUDART_VERSION >= 3000
-    mos << "  Concurrent kernel execution: ";
-    if ( deviceProp[dev].concurrentKernels)
-      mos << "Yes\n";
-    else mos << "No\n";
-#endif
-#if CUDART_VERSION >= 3010
-    mos << "  Device has ECC support enabled: ";
-    if (deviceProp[dev].ECCEnabled)
-      mos << "Yes\n" ;
-    else mos << "No\n";
-#endif
-#if CUDART_VERSION >= 3020
-    mos << "  Device is using TCC driver mode: ";
-    if (deviceProp[dev].tccDriver) 
-      mos << "Yes\n";
-    else mos << "No\n" << endl;
-#endif
-  }
-  
-  // csv masterlog info
-  // *****************************
-  // exe and CUDA driver name 
-  shrLog("\n");    
-  std::string sProfileString = "deviceQuery, CUDA Driver = CUDART";        
-  char cTemp[10];
-    
-  // driver version
-  sProfileString += ", CUDA Driver Version = ";
-#ifdef WIN32
-  sprintf_s(cTemp, 10, "%d.%d", driverVersion/1000, driverVersion%100);    
+    // This function call returns 0 if there are no CUDA capable devices.
+    if (deviceCount == 0)
+    {
+		mos << "There is no device supporting CUDA.\n";
+        //D printf("There are no available device(s) that support CUDA\n");
+		return 0;
+    }
+    else
+    {
+		mos << "Detected " << deviceCount << "CUDA Capable device(s)\n";
+        //D printf("Detected %d CUDA Capable device(s)\n", deviceCount);
+    }
+
+	deviceProp= new cudaDeviceProp[deviceCount];
+    int dev, driverVersion = 0, runtimeVersion = 0;
+
+    for (dev = 0; dev < deviceCount; ++dev)
+    {
+        cudaSetDevice(dev);
+        //D cudaDeviceProp deviceProp;
+        cudaGetDeviceProperties(&(deviceProp[dev]), dev);
+		mos << "\nDevice" << dev << ": \""  << deviceProp[dev].name << "\"\n";
+        //D printf("\nDevice %d: \"%s\"\n", dev, deviceProp.name);
+
+        // Console log
+        cudaDriverGetVersion(&driverVersion);
+        cudaRuntimeGetVersion(&runtimeVersion);
+
+		mos << "  CUDA Driver Version: " << driverVersion/1000 << ".";
+		mos << driverVersion%100 << endl;
+
+		mos << "  CUDA Runtime Version: " << runtimeVersion/1000 << ".";
+        mos << runtimeVersion%100 << endl;
+
+		mos << "  CUDA Capability Major/Minor version number: ";
+		mos << deviceProp[dev].major << "." << deviceProp[dev].minor << endl;
+
+
+        //D printf("  CUDA Driver Version / Runtime Version          %d.%d / %d.%d\n", driverVersion/1000, (driverVersion%100)/10, runtimeVersion/1000, (runtimeVersion%100)/10);
+        //D printf("  CUDA Capability Major/Minor version number:    %d.%d\n", deviceProp.major, deviceProp.minor);
+
+        //
+		char msg[256];
+        sprintf(msg, "  Total amount of global memory:                 %.0f MBytes (%llu bytes)\n",
+                (float)deviceProp[dev].totalGlobalMem/1048576.0f, (unsigned long long) deviceProp[dev].totalGlobalMem);
+        printf("%s", msg);
+		//
+		mos << "  Total amount of global memory: ";
+		mos << (unsigned long long) deviceProp[dev].totalGlobalMem/1048576.0f << " bytes\n";
+
+		//
+        printf("  (%2d) Multiprocessors x (%3d) CUDA Cores/MP:    %d CUDA Cores\n",
+               deviceProp[dev].multiProcessorCount,
+               _ConvertSMVer2Cores(deviceProp[dev].major, deviceProp[dev].minor),
+               _ConvertSMVer2Cores(deviceProp[dev].major, deviceProp[dev].minor) * deviceProp[dev].multiProcessorCount);
+		//
+		mos << "  Multiprocessors x Cores/MP = Cores: ";
+		mos << deviceProp[dev].multiProcessorCount << "(MP) x ";
+		mos << _ConvertSMVer2Cores(deviceProp[dev].major, deviceProp[dev].minor);
+		mos << " (Cores/MP) = ";
+		mos << _ConvertSMVer2Cores(deviceProp[dev].major, deviceProp[dev].minor) * 
+
+		printf("  GPU Clock rate:                                %.0f MHz (%0.2f GHz)\n", deviceProp[dev].clockRate * 1e-3f, deviceProp[dev].clockRate * 1e-6f);
+
+		// these may not work -- they don't exist in v5.0 of the code
+		mos << "  Total amount of constant memory: " << deviceProp[dev].totalConstMem; 
+	    mos << " bytes\n";
+		mos << "  Total amount of shared memory per block: ";
+		mos << deviceProp[dev].sharedMemPerBlock << " bytes\n";
+		mos << "  Total number of registers available per block: ";
+		mos << deviceProp[dev].regsPerBlock << endl;
+		mos << "  Warp size: " << deviceProp[dev].warpSize << endl;
+		mos << "  Maximum number of threads per block: ";
+		mos << deviceProp[dev].maxThreadsPerBlock << endl;
+		mos << "  Maximum sizes of each dimension of a block: ";
+		mos << deviceProp[dev].maxThreadsDim[0] << " x ";
+		mos << deviceProp[dev].maxThreadsDim[1] << " x ";
+		mos << deviceProp[dev].maxThreadsDim[2] << endl;
+		mos << "  Maximum sizes of each dimension of a grid: ";
+		mos << deviceProp[dev].maxGridSize[0] << " x ";
+		mos << deviceProp[dev].maxGridSize[1] << " x ";
+		mos << deviceProp[dev].maxGridSize[2] << endl;
+		mos << "  Maximum memory pitch: " << deviceProp[dev].memPitch;
+		mos << " bytes\n";
+		mos << "  Texture alignment: " << deviceProp[dev].textureAlignment;
+		mos << " bytes\n";
+		mos << "  Clock rate: " << deviceProp[dev].clockRate * 1e-6f;
+		mos << " GHz\n";
+
+
+#if CUDART_VERSION >= 5000
+        // This is supported in CUDA 5.0 (runtime API device properties)
+        printf("  Memory Clock rate:                             %.0f Mhz\n", deviceProp[dev].memoryClockRate * 1e-3f);
+        printf("  Memory Bus Width:                              %d-bit\n",   deviceProp[dev].memoryBusWidth);
+
+		mos << "Memory Clock rate: " << deviceProp[dev].memoryClockRate * 1e-3f << "Mhz \n" ;
+        mos << "Memory Bus Width: "<< deviceProp[dev].memoryBusWidth <<"\n";
+
+        if (deviceProp[dev].l2CacheSize)
+        {
+            printf("  L2 Cache Size:                                 %d bytes\n", deviceProp[dev].l2CacheSize);
+			mos << "L2 Cache Size:" << deviceProp[dev].l2CacheSize << " bytes\n";
+        }
 #else
-  sprintf(cTemp, "%d.%d", driverVersion/1000, driverVersion%100);	
+        // This only available in CUDA 4.0-4.2 (but these were only exposed in the CUDA Driver API)
+        int memoryClock;
+        getCudaAttribute<int>(&memoryClock, CU_DEVICE_ATTRIBUTE_MEMORY_CLOCK_RATE, dev);
+        printf("  Memory Clock rate:                             %.0f Mhz\n", memoryClock * 1e-3f);
+        mos << "  Memory Clock rate:" << memoryClock * 1e-3f <<" Mhz\n";
+        
+		int memBusWidth;
+        getCudaAttribute<int>(&memBusWidth, CU_DEVICE_ATTRIBUTE_GLOBAL_MEMORY_BUS_WIDTH, dev);
+        printf("  Memory Bus Width:                              %d-bit\n", memBusWidth);
+        mos << "  Memory Bus Width:" << memBusWidth << " -bit\n";
+        int L2CacheSize;
+        getCudaAttribute<int>(&L2CacheSize, CU_DEVICE_ATTRIBUTE_L2_CACHE_SIZE, dev);
+
+        if (L2CacheSize)
+        {
+            printf("  L2 Cache Size:                                 %d bytes\n", L2CacheSize);
+			mos << "  L2 Cache Size: " << L2CacheSize << " bytes\n";
+        }
 #endif
-  sProfileString +=  cTemp;
+		//HERE
+        printf("  Max Texture Dimension Size (x,y,z)             1D=(%d), 2D=(%d,%d), 3D=(%d,%d,%d)\n",
+               deviceProp[dev].maxTexture1D   , deviceProp[dev].maxTexture2D[0], deviceProp[dev].maxTexture2D[1],
+			   deviceProp[dev].maxTexture3D[0], deviceProp[dev].maxTexture3D[1], deviceProp[dev].maxTexture3D[2]);
+        printf("  Max Layered Texture Size (dim) x layers        1D=(%d) x %d, 2D=(%d,%d) x %d\n",
+               deviceProp[dev].maxTexture1DLayered[0], deviceProp[dev].maxTexture1DLayered[1],
+               deviceProp[dev].maxTexture2DLayered[0], deviceProp[dev].maxTexture2DLayered[1], deviceProp[dev].maxTexture2DLayered[2]);
+
+        printf("  Total amount of constant memory:               %lu bytes\n", deviceProp[dev].totalConstMem);
+        printf("  Total amount of shared memory per block:       %lu bytes\n", deviceProp[dev].sharedMemPerBlock);
+        printf("  Total number of registers available per block: %d\n", deviceProp[dev].regsPerBlock);
+        printf("  Warp size:                                     %d\n", deviceProp[dev].warpSize);
+        printf("  Maximum number of threads per multiprocessor:  %d\n", deviceProp[dev].maxThreadsPerMultiProcessor);
+        printf("  Maximum number of threads per block:           %d\n", deviceProp[dev].maxThreadsPerBlock);
+        printf("  Maximum sizes of each dimension of a block:    %d x %d x %d\n",
+               deviceProp[dev].maxThreadsDim[0],
+               deviceProp[dev].maxThreadsDim[1],
+               deviceProp[dev].maxThreadsDim[2]);
+        printf("  Maximum sizes of each dimension of a grid:     %d x %d x %d\n",
+               deviceProp[dev].maxGridSize[0],
+               deviceProp[dev].maxGridSize[1],
+               deviceProp[dev].maxGridSize[2]);
+        printf("  Maximum memory pitch:                          %lu bytes\n", deviceProp[dev].memPitch);
+        printf("  Texture alignment:                             %lu bytes\n", deviceProp[dev].textureAlignment);
+        printf("  Concurrent copy and kernel execution:          %s with %d copy engine(s)\n", (deviceProp[dev].deviceOverlap ? "Yes" : "No"), deviceProp[dev].asyncEngineCount);
+        printf("  Run time limit on kernels:                     %s\n", deviceProp[dev].kernelExecTimeoutEnabled ? "Yes" : "No");
+        printf("  Integrated GPU sharing Host Memory:            %s\n", deviceProp[dev].integrated ? "Yes" : "No");
+        printf("  Support host page-locked memory mapping:       %s\n", deviceProp[dev].canMapHostMemory ? "Yes" : "No");
+        printf("  Alignment requirement for Surfaces:            %s\n", deviceProp[dev].surfaceAlignment ? "Yes" : "No");
+        printf("  Device has ECC support:                        %s\n", deviceProp[dev].ECCEnabled ? "Enabled" : "Disabled");
+#ifdef WIN32
+        printf("  CUDA Device Driver Mode (TCC or WDDM):         %s\n", deviceProp[dev].tccDriver ? "TCC (Tesla Compute Cluster Driver)" : "WDDM (Windows Display Driver Model)");
+#endif
+        printf("  Device supports Unified Addressing (UVA):      %s\n", deviceProp[dev].unifiedAddressing ? "Yes" : "No");
+        printf("  Device PCI Bus ID / PCI location ID:           %d / %d\n", deviceProp[dev].pciBusID, deviceProp[dev].pciDeviceID);
+
+        const char *sComputeMode[] =
+        {
+            "Default (multiple host threads can use ::cudaSetDevice() with device simultaneously)",
+            "Exclusive (only one host thread in one process is able to use ::cudaSetDevice() with this device)",
+            "Prohibited (no host thread can use ::cudaSetDevice() with this device)",
+            "Exclusive Process (many threads in one process is able to use ::cudaSetDevice() with this device)",
+            "Unknown",
+            NULL
+        };
+        printf("  Compute Mode:\n");
+        printf("     < %s >\n", sComputeMode[deviceProp[dev].computeMode]);
+    }
+
+    // csv masterlog info
+    // *****************************
+    // exe and CUDA driver name
+    printf("\n");
+    std::string sProfileString = "deviceQuery, CUDA Driver = CUDART";
+    char cTemp[16];
+
+    // driver version
+    sProfileString += ", CUDA Driver Version = ";
+#ifdef WIN32
+    sprintf_s(cTemp, 10, "%d.%d", driverVersion/1000, (driverVersion%100)/10);
+#else
+    sprintf(cTemp, "%d.%d", driverVersion/1000, (driverVersion%100)/10);
+#endif
+    sProfileString +=  cTemp;
+
+    // Runtime version
+    sProfileString += ", CUDA Runtime Version = ";
+#ifdef WIN32
+    sprintf_s(cTemp, 10, "%d.%d", runtimeVersion/1000, (runtimeVersion%100)/10);
+#else
+    sprintf(cTemp, "%d.%d", runtimeVersion/1000, (runtimeVersion%100)/10);
+#endif
+    sProfileString +=  cTemp;
+
+    // Device count
+    sProfileString += ", NumDevs = ";
+#ifdef WIN32
+    sprintf_s(cTemp, 10, "%d", deviceCount);
+#else
+    sprintf(cTemp, "%d", deviceCount);
+#endif
+    sProfileString += cTemp;
+
+    // Print Out all device Names
+    for (dev = 0; dev < deviceCount; ++dev)
+    {
+#ifdef _WIN32
+    sprintf_s(cTemp, 13, ", Device%d = ", dev);
+#else
+    sprintf(cTemp, ", Device%d = ", dev);
+#endif
 	    
-  // Runtime version
-  sProfileString += ", CUDA Runtime Version = ";
-#ifdef WIN32
-  sprintf_s(cTemp, 10, "%d.%d", runtimeVersion/1000, runtimeVersion%100);
-#else
-  sprintf(cTemp, "%d.%d", runtimeVersion/1000, runtimeVersion%100);
-#endif
-  sProfileString +=  cTemp;  
-  
-  // Device count      
-  sProfileString += ", NumDevs = ";
-#ifdef WIN32
-  sprintf_s(cTemp, 10, "%d", deviceCount);
-#else
-  sprintf(cTemp, "%d", deviceCount);
-#endif
-  sProfileString += cTemp;
-  
-  // First 2 device names, if any
-  for (dev = 0; dev < ((deviceCount > 2) ? 2 : deviceCount); ++dev)  {
-    sProfileString += ", Device = ";
-    sProfileString += deviceProp[dev].name;
-  }
-  sProfileString += "\n";
-  mos << sProfileString.c_str();
-  
-  return deviceCount;
-  }
+	//    deviceProp= new cudaDeviceProp[deviceCount]; 
+        //cudaDeviceProp deviceProp;
 
+	//		cudaGetDeviceProperties(&deviceProp[dev], dev);
+			sProfileString += cTemp;
+			sProfileString += deviceProp[dev].name;
+    }
+
+    sProfileString += "\n";
+    printf("%s", sProfileString.c_str());
+
+	return deviceCount;
+    // finish
+    //exit(EXIT_SUCCESS);
+}
+
+//TO HERE
 
 ////////////////////////////////////////////////////////////////////////////////
 // Tools for templae matching/cod expansion 
@@ -368,8 +452,6 @@ void prepareStandardModels()
     }\n");
   nModels.push_back(n);
 }
-
-
 
 // bit tool macros
 #include "simpleBit.h"

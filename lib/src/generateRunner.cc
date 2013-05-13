@@ -13,11 +13,17 @@
 
 #include "utils.h"
 #include <string>
-
+////////////////////////////////////////////////////////////////////////////////
+//!
+//!
+//!
+//!
+////////////////////////////////////////////////////////////////////////////////
 void prepare(ostream &mos)
 {
+	cout << "prepare starts" << endl;
   devN= checkDevices(mos);
-  
+  cout << "checkdevices ends" << endl;
   if (devN > 0) {
     neuronBlkSz= 0;
     theDev= 0;
@@ -39,6 +45,7 @@ void prepare(ostream &mos)
 	theDev= i;
       }
     }
+	mos << "I am in generate_run" << endl;
     mos << "We are using CUDA device " << theDev << endl;
     mos << "max logNeuronBlkSz: " << logNeuronBlkSz << endl;
     mos << "max neuronBlkSz: " << neuronBlkSz << endl;
@@ -63,7 +70,8 @@ void genRunner(NNmodel &model, ostream &os, ostream &mos)
 
   writeHeader(os);
   os << endl;
-  os << "#include <cutil_inline.h>" << endl;
+  //os << "#include <cutil_inline.h>" << endl;
+  os << "#include <helper_cuda.h>" << endl;
 
   // ------------------------------------------------------------------------
   // gloabl host variables (matching some of the device ones)
@@ -101,8 +109,11 @@ void genRunner(NNmodel &model, ostream &os, ostream &mos)
   // Also estimating memory usage on device ...
   os << "void allocateMem()" << endl;
   os << "{" << endl;
-  os << "  cutilSafeCall(cudaSetDevice(theDev));" << endl;
-  os << "  cutilCheckMsg(\"CUDA setDevice failed.\\n\");" << endl;
+  //if cuda v <5 os << "  cutilSafeCall(cudaSetDevice(theDev));" << endl;
+  os << "  checkCudaErrors(cudaSetDevice(theDev));" << endl;
+  //if cuda v <5 os << "  cutilCheckMsg(\"CUDA setDevice failed.\\n\");" << endl;
+  os << "  getLastCudaError(\"CUDA setDevice failed.\\n\");" << endl;
+  cerr << "model.neuronGroupN " << model.neuronGrpN << endl;
   for (int i= 0; i < model.neuronGrpN; i++) {
     nt= model.neuronType[i];
     os << "  glbSpk" << model.neuronName[i] << "= new unsigned int[";
@@ -250,6 +261,7 @@ void genRunner(NNmodel &model, ostream &os, ostream &mos)
 
   mos << "Global memory required for core model: " << mem/1e6;
   mos << " MB" << endl;
+cerr << deviceProp[theDev].totalGlobalMem << " theDev " << theDev << endl;  
   if (0.5*deviceProp[theDev].totalGlobalMem < mem) {
     mos << "memory required for core model (" << mem/1e6;
     mos << "MB) is more than 50% of global memory on the chosen device";
@@ -264,7 +276,10 @@ void genRunnerGPU(NNmodel &model, ostream &os, ostream &mos)
 
   if (devN > 0) {
     writeHeader(os);
-    os << "#include <cutil.h>" << endl;
+    //os << "#include <cutil.h>" << endl;
+	os << "#include <cuda_runtime.h>" << endl;//EY
+    os << "#include <helper_cuda.h>" << endl;//EY
+    os << "#include <helper_timer.h>" << endl;//EY
     os << "#define RAND(Y,X) Y = Y * 1103515245 +12345;";
     os << "X= (unsigned int)(Y >> 16) & 32767" << endl;
     os << endl;
@@ -283,22 +298,33 @@ void genRunnerGPU(NNmodel &model, ostream &os, ostream &mos)
     os << "  void *devPtr;" << endl;
     for (int i= 0; i < model.synapseGrpN; i++) {
       if (model.synapseGType[i] == INDIVIDUALG) {
-	os << "  cudaGetSymbolAddress(&devPtr, \"d_gp" << model.synapseName[i] << "\");" << endl;
-	os << "  CUDA_SAFE_CALL(cudaMemcpy(devPtr, gp" << model.synapseName[i];
+    /**
+	/	from CUDA 5.0 release notes:
+	/	The use of a character string to indicate a device symbol, which was possible with
+	/	certain API functions, is no longer supported. Instead, the symbol should be used
+	/	directly.
+	/	Therefore, call of cudaGetSymboAddress inthis file is modified wrt GeNN 0.3.
+	/	
+	*/
+	os << "  cudaGetSymbolAddress(&devPtr, d_gp" << model.synapseName[i] << ");" << endl;
+	//if cuda version <5 os << "  CUDA_SAFE_CALL(cudaMemcpy(devPtr, gp" << model.synapseName[i];
+	os << "  checkCudaErrors(cudaMemcpy(devPtr, gp" << model.synapseName[i];
 	os << ", ";
 	size= model.neuronN[model.synapseSource[i]]*model.neuronN[model.synapseTarget[i]]*sizeof(float);
 	os << size << ", cudaMemcpyHostToDevice));" << endl;
 	if (model.synapseType[i] == LEARN1SYNAPSE) {
-	  os << "  cudaGetSymbolAddress(&devPtr, \"d_grawp" << model.synapseName[i] << "\");" << endl;
-	  os << "  CUDA_SAFE_CALL(cudaMemcpy(devPtr, grawp" << model.synapseName[i];
+	  os << "  cudaGetSymbolAddress(&devPtr, d_grawp" << model.synapseName[i] << ");" << endl;
+	  //if cuda version <5 os << "  CUDA_SAFE_CALL(cudaMemcpy(devPtr, grawp" << model.synapseName[i];
+	  os << "  checkCudaErrors(cudaMemcpy(devPtr, grawp" << model.synapseName[i];
 	  os << ", ";
 	  size= model.neuronN[model.synapseSource[i]]*model.neuronN[model.synapseTarget[i]]*sizeof(float);
 	  os << size << ", cudaMemcpyHostToDevice));" << endl;
 	} 
       }
       if (model.synapseGType[i] == INDIVIDUALID) {
-	os << "  cudaGetSymbolAddress(&devPtr, \"d_gp" << model.synapseName[i] << "\");" << endl;
-	os << "  CUDA_SAFE_CALL(cudaMemcpy(devPtr, gp" << model.synapseName[i];
+	os << "  cudaGetSymbolAddress(&devPtr, d_gp" << model.synapseName[i] << ");" << endl;
+	//os << "  CUDA_SAFE_CALL(cudaMemcpy(devPtr, gp" << model.synapseName[i];
+	os << "  checkCudaErrors(cudaMemcpy(devPtr, gp" << model.synapseName[i];
 	os << ", ";
 	unsigned int tmp= model.neuronN[model.synapseSource[i]]*model.neuronN[model.synapseTarget[i]];
 	size= (tmp >> logUIntSz);
@@ -317,20 +343,23 @@ void genRunnerGPU(NNmodel &model, ostream &os, ostream &mos)
     os << "  void *devPtr;" << endl;
     for (int i= 0; i < model.synapseGrpN; i++) {
       if (model.synapseGType[i] == INDIVIDUALG) {
-	os << "  cudaGetSymbolAddress(&devPtr, \"d_gp" << model.synapseName[i] << "\");" << endl;
-	os << "  CUDA_SAFE_CALL(cudaMemcpy(gp" << model.synapseName[i] << ", devPtr,";
+	os << "  cudaGetSymbolAddress(&devPtr, d_gp" << model.synapseName[i] << ");" << endl;
+	//os << "  CUDA_SAFE_CALL(cudaMemcpy(gp" << model.synapseName[i] << ", devPtr,";
+	os << "  checkCudaErrors(cudaMemcpy(gp" << model.synapseName[i] << ", devPtr,";
 	size= model.neuronN[model.synapseSource[i]]*model.neuronN[model.synapseTarget[i]]*sizeof(float);
 	os << size << ", cudaMemcpyDeviceToHost));" << endl;
 	if (model.synapseType[i] == LEARN1SYNAPSE) {
-	  os << "  cudaGetSymbolAddress(&devPtr, \"d_grawp" << model.synapseName[i] << "\");" << endl;
-	  os << "  CUDA_SAFE_CALL(cudaMemcpy(grawp" << model.synapseName[i] << ", devPtr,";
+	  os << "  cudaGetSymbolAddress(&devPtr, d_grawp" << model.synapseName[i] << ");" << endl;
+	  //os << "  CUDA_SAFE_CALL(cudaMemcpy(grawp" << model.synapseName[i] << ", devPtr,";
+	  os << "  checkCudaErrors(cudaMemcpy(grawp" << model.synapseName[i] << ", devPtr,";
 	  size= model.neuronN[model.synapseSource[i]]*model.neuronN[model.synapseTarget[i]]*sizeof(float);
 	  os << size << ", cudaMemcpyDeviceToHost));" << endl;
 	}
       }
       if (model.synapseGType[i] == INDIVIDUALID) {
-	os << "  cudaGetSymbolAddress(&devPtr, \"d_gp" << model.synapseName[i] << "\");" << endl;
-	os << "  CUDA_SAFE_CALL(cudaMemcpy(gp" << model.synapseName[i] << ", devPtr,";
+	os << "  cudaGetSymbolAddress(&devPtr, d_gp" << model.synapseName[i] << ");" << endl;
+	//os << "  CUDA_SAFE_CALL(cudaMemcpy(gp" << model.synapseName[i] << ", devPtr,";
+	os << "  checkCudaErrors(cudaMemcpy(gp" << model.synapseName[i] << ", devPtr,";
 	unsigned int tmp= model.neuronN[model.synapseSource[i]]*model.neuronN[model.synapseTarget[i]];
 	size= (tmp >> logUIntSz);
 	if (tmp > (size << logUIntSz)) size++;
@@ -360,29 +389,33 @@ void genRunnerGPU(NNmodel &model, ostream &os, ostream &mos)
       os << "  cudaMemcpyToSymbol(\"d_glbscnt" << model.neuronName[i] << "\",";
       os << " &glbscnt" << model.neuronName[i] << ", sizeof(unsigned int), 0,";
       os << " cudaMemcpyHostToDevice);" << endl;
-      os << "  cudaGetSymbolAddress(&devPtr, \"d_glbSpk" << model.neuronName[i] << "\");" << endl;
-      os << "  CUDA_SAFE_CALL(cudaMemcpy(devPtr, " << "glbSpk" << model.neuronName[i] << ",";
+      os << "  cudaGetSymbolAddress(&devPtr, d_glbSpk" << model.neuronName[i] << ");" << endl;
+      //os << "  CUDA_SAFE_CALL(cudaMemcpy(devPtr, " << "glbSpk" << model.neuronName[i] << ",";
+      os << "  checkCudaErrors(cudaMemcpy(devPtr, " << "glbSpk" << model.neuronName[i] << ",";
       size= model.neuronN[i]*sizeof(unsigned int);
       os << size << ", cudaMemcpyHostToDevice));" << endl;
       for (int j= 0; j < model.inSyn[i].size(); j++) {
-	os << "  cudaGetSymbolAddress(&devPtr, \"d_inSyn";
-	os << model.neuronName[i] << j << "\");" << endl;
-	os << "  CUDA_SAFE_CALL(cudaMemcpy(devPtr, ";
+	os << "  cudaGetSymbolAddress(&devPtr, d_inSyn";
+	os << model.neuronName[i] << j << ");" << endl;
+	//os << "  CUDA_SAFE_CALL(cudaMemcpy(devPtr, ";
+	os << "  checkCudaErrors(cudaMemcpy(devPtr, ";
 	os << "inSyn" << model.neuronName[i] << j << ",";
 	size= model.neuronN[i]*sizeof(float);
 	os << size << ", cudaMemcpyHostToDevice));" << endl;
       }
       for (int k= 0, l= nModels[nt].varNames.size(); k < l; k++) {
-	os << "  cudaGetSymbolAddress(&devPtr, \"d_";
-	os << nModels[nt].varNames[k] << model.neuronName[i] << "\");" << endl;
-	os << "  CUDA_SAFE_CALL(cudaMemcpy(devPtr, ";
+	os << "  cudaGetSymbolAddress(&devPtr, d_";
+	os << nModels[nt].varNames[k] << model.neuronName[i] << ");" << endl;
+	//os << "  CUDA_SAFE_CALL(cudaMemcpy(devPtr, ";
+	os << "  checkCudaErrors(cudaMemcpy(devPtr, ";
 	os << nModels[nt].varNames[k] << model.neuronName[i] << ",";
 	os << model.neuronN[i] << "*sizeof(" << nModels[nt].varTypes[k];
 	os << "), cudaMemcpyHostToDevice));" << endl;
       }
       if (model.neuronNeedSt[i]) {
-	os << "  cudaGetSymbolAddress(&devPtr, \"d_sT" << model.neuronName[i] << "\");" << endl;
-	os << "  CUDA_SAFE_CALL(cudaMemcpy(devPtr, " << "sT" << model.neuronName[i] << ",";
+	os << "  cudaGetSymbolAddress(&devPtr, d_sT" << model.neuronName[i] << ");" << endl;
+	//os << "  CUDA_SAFE_CALL(cudaMemcpy(devPtr, " << "sT" << model.neuronName[i] << ",";
+	os << "  checkCudaErrors(cudaMemcpy(devPtr, " << "sT" << model.neuronName[i] << ",";
 	size= model.neuronN[i]*sizeof(float);
 	os << size << ", cudaMemcpyHostToDevice));" << endl;
       }
@@ -400,30 +433,34 @@ void genRunnerGPU(NNmodel &model, ostream &os, ostream &mos)
       os << "  cudaMemcpyFromSymbol(&glbscnt" << model.neuronName[i];
       os << ", \"d_glbscnt" << model.neuronName[i] << "\", sizeof(unsigned int), 0, ";
       os << " cudaMemcpyDeviceToHost);" << endl;
-      os << "  cudaGetSymbolAddress(&devPtr, \"d_glbSpk" << model.neuronName[i] << "\");" << endl;
-      os << "  CUDA_SAFE_CALL(cudaMemcpy(glbSpk" << model.neuronName[i] << ", devPtr, ";
+      os << "  cudaGetSymbolAddress(&devPtr, d_glbSpk" << model.neuronName[i] << ");" << endl;
+      //os << "  CUDA_SAFE_CALL(cudaMemcpy(glbSpk" << model.neuronName[i] << ", devPtr, ";
+      os << "  checkCudaErrors(cudaMemcpy(glbSpk" << model.neuronName[i] << ", devPtr, ";
       size= model.neuronN[i]*sizeof(unsigned int);
       os << size << ", cudaMemcpyDeviceToHost));" << endl;
 
       for (int j= 0; j < model.inSyn[i].size(); j++) {
-	os << "  cudaGetSymbolAddress(&devPtr, \"d_inSyn";
-	os << model.neuronName[i] << j << "\");" << endl;
-	os << "  CUDA_SAFE_CALL(cudaMemcpy(";
+	os << "  cudaGetSymbolAddress(&devPtr, d_inSyn";
+	os << model.neuronName[i] << j << ");" << endl;
+	//os << "  CUDA_SAFE_CALL(cudaMemcpy(";
+	os << "  checkCudaErrors(cudaMemcpy(";
 	os << "inSyn" << model.neuronName[i] << j << ", devPtr,";
 	size= model.neuronN[i]*sizeof(float);
 	os << size << ", cudaMemcpyDeviceToHost));" << endl;
       }
       for (int k= 0, l= nModels[nt].varNames.size(); k < l; k++) {
-	os << "  cudaGetSymbolAddress(&devPtr, \"d_";
-	os << nModels[nt].varNames[k] << model.neuronName[i] << "\");" << endl;
-	os << "  CUDA_SAFE_CALL(cudaMemcpy(";
+	os << "  cudaGetSymbolAddress(&devPtr, d_";
+	os << nModels[nt].varNames[k] << model.neuronName[i] << ");" << endl;
+	//os << "  CUDA_SAFE_CALL(cudaMemcpy(";
+	os << "  checkCudaErrors(cudaMemcpy(";
 	os << nModels[nt].varNames[k] << model.neuronName[i] << ", devPtr, ";
 	os << model.neuronN[i] << "*sizeof(" << nModels[nt].varTypes[k];
 	os << "), cudaMemcpyDeviceToHost));" << endl;
       }
       if (model.neuronNeedSt[i]) {
-	os << "  cudaGetSymbolAddress(&devPtr, \"d_sT" << model.neuronName[i] << "\");" << endl;
-	os << "  CUDA_SAFE_CALL(cudaMemcpy(sT" << model.neuronName[i] << ", devPtr, ";
+	os << "  cudaGetSymbolAddress(&devPtr, d_sT" << model.neuronName[i] << ");" << endl;
+	//os << "  CUDA_SAFE_CALL(cudaMemcpy(sT" << model.neuronName[i] << ", devPtr, ";
+	os << "  checkCudaErrors(cudaMemcpy(sT" << model.neuronName[i] << ", devPtr, ";
 	size= model.neuronN[i]*sizeof(float);
 	os << size << ", cudaMemcpyDeviceToHost));" << endl;
       }
@@ -440,9 +477,10 @@ void genRunnerGPU(NNmodel &model, ostream &os, ostream &mos)
       os << "  cudaMemcpyFromSymbol(&glbscnt" << model.neuronName[i];
       os << ", \"d_glbscnt" << model.neuronName[i] << "\", sizeof(unsigned int), 0, ";
       os << " cudaMemcpyDeviceToHost);" << endl;
-      os << "  cudaGetSymbolAddress(&devPtr, \"d_glbSpk" << model.neuronName[i] << "\");";
+      os << "  cudaGetSymbolAddress(&devPtr, d_glbSpk" << model.neuronName[i] << ");";
       os << endl;
-      os << "  CUDA_SAFE_CALL(cudaMemcpy(glbSpk" << model.neuronName[i] << ", devPtr, ";
+      //os << "  CUDA_SAFE_CALL(cudaMemcpy(glbSpk" << model.neuronName[i] << ", devPtr, ";
+      os << "  checkCudaErrors(cudaMemcpy(glbSpk" << model.neuronName[i] << ", devPtr, ";
       os << "glbscnt" << model.neuronName[i] << "*sizeof(unsigned int), ";
       os << "cudaMemcpyDeviceToHost));" << endl;
     }
@@ -528,7 +566,9 @@ void genRunnerGPU(NNmodel &model, ostream &os, ostream &mos)
 void genRunnerCPU(NNmodel &model, ostream &os, ostream &mos)
 {
   writeHeader(os);
-  os << "#include <cutil.h>" << endl;
+  //os << "#include <cutil.h>" << endl;
+  os << "#include <cuda_runtime.h>" << endl;//EY
+  os << "#include <helper_cuda.h>" << endl;//EY
   os << "#ifndef RAND" << endl;
   os << "#define RAND(Y,X) Y = Y * 1103515245 +12345;";
   os << "X= (unsigned int)(Y >> 16) & 32767" << endl;

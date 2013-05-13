@@ -157,7 +157,10 @@ void NNmodel::addNeuronPopulation(const char *name, unsigned int nNo, unsigned i
   addNeuronPopulation(toString(name), nNo, type, p, ini);
 }
 
-
+/*/////////////////////////////////////////////////////////////////////////////////////////////
+/	Following procedure adds a neuron population, assighing the name, the number of neurons in 
+/	the group, neuron type respectively
+*//////////////////////////////////////////////////////////////////////////////////////////////
 void NNmodel::addNeuronPopulation(const string name, unsigned int nNo, unsigned int type, float *p, float *ini)
 {
   unsigned int i= neuronGrpN++;

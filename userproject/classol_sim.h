@@ -14,8 +14,12 @@
 using namespace std;
 
 #include <cassert>
-#include <cutil.h>
+//#include <cutil.h>
 #include "hr_time.h"
+
+#include <cuda_runtime.h>
+
+#include <helper_cuda.h>
 
 #define DT 0.5
 #define RAND(Y,X) Y = Y * 1103515245 +12345;X= (unsigned int)(Y >> 16) & 32767
