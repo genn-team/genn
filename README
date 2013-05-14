@@ -17,6 +17,10 @@ INSTALLATION OF GeNN:
 (iv) add $GeNNPATH/lib/bin to your PATH variable, e.g.
      "export PATH=$PATH:$GeNNPATH/lib/bin"
 
+(v)  modify Makefile examples under $GeNNPATH/lib/src/ and $GeNNPATH/userproject/ 
+     (if you use the example) to include the correct SMVERSIONFLAGS of your GPU. 
+     Also check the directories under the INCLUDES and LIB variables.
+
 This completes the installation. If you use the example Makefile in 
 "userproject", then the HOME, ROOTDIR and include line for Makefile also need to be adjusted.
 
