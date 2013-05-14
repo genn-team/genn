@@ -19,6 +19,7 @@
 //!
 //!
 ////////////////////////////////////////////////////////////////////////////////
+unsigned int globalMem0;
 void prepare(ostream &mos)
 {
 	cout << "prepare starts" << endl;
@@ -26,26 +27,30 @@ void prepare(ostream &mos)
   cout << "checkdevices ends" << endl;
   if (devN > 0) {
     neuronBlkSz= 0;
+    globalMem0 = 0;
     theDev= 0;
-    // choose the device with largest block size for the time being
+    // choose the device with the largest block size for the time being
+    // CHANGED: choose the device with the largest total Global Memory
     // among equals we use the last device
     for (int i= 0; i < devN; i++) {
-      if (deviceProp[i].maxThreadsPerBlock >= neuronBlkSz) {
-	neuronBlkSz= deviceProp[i].maxThreadsPerBlock;
-	logNeuronBlkSz= (int) (logf((float)neuronBlkSz)/logf(2.0f)+1e-5f);
-	logNeuronBlkSz-= 1; // for HH neurons (need a better solution for this!)
-	neuronBlkSz= 1 << logNeuronBlkSz;
-	synapseBlkSz= deviceProp[i].maxThreadsPerBlock;
-	logSynapseBlkSz= (int) (logf((float)synapseBlkSz)/logf(2.0f)+1e-5f);
-	logSynapseBlkSz-= 1; // for learning syns (need a better solution for this!) 
-	synapseBlkSz= 1 << logSynapseBlkSz;
-	learnBlkSz= deviceProp[i].maxThreadsPerBlock;
-	logLearnBlkSz= (int) (logf((float)learnBlkSz)/logf(2.0f)+1e-5f);
-	learnBlkSz= 1 << logLearnBlkSz;
-	theDev= i;
+      if (deviceProp[i].totalGlobalMem >= globalMem0) {
+      	mos << "device " << i << " has a global memory of " << deviceProp[i].totalGlobalMem << " bytes" << endl;
+      	globalMem0 = deviceProp[i].totalGlobalMem;
+	 		neuronBlkSz= deviceProp[i].maxThreadsPerBlock;
+	 		logNeuronBlkSz= (int) (logf((float)neuronBlkSz)/logf(2.0f)+1e-5f);
+	 		logNeuronBlkSz-= 1; // for HH neurons (need a better solution for this!)
+			neuronBlkSz= 1 << logNeuronBlkSz;
+	 		synapseBlkSz= deviceProp[i].maxThreadsPerBlock;
+	 		logSynapseBlkSz= (int) (logf((float)synapseBlkSz)/logf(2.0f)+1e-5f);
+	 		logSynapseBlkSz-= 1; // for learning syns (need a better solution for this!) 
+	 		synapseBlkSz= 1 << logSynapseBlkSz;
+	 		learnBlkSz= deviceProp[i].maxThreadsPerBlock;
+	 		logLearnBlkSz= (int) (logf((float)learnBlkSz)/logf(2.0f)+1e-5f);
+	 		learnBlkSz= 1 << logLearnBlkSz;
+	 		theDev= i;
       }
     }
-	mos << "I am in generate_run" << endl;
+
     mos << "We are using CUDA device " << theDev << endl;
     mos << "max logNeuronBlkSz: " << logNeuronBlkSz << endl;
     mos << "max neuronBlkSz: " << neuronBlkSz << endl;

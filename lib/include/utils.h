@@ -129,13 +129,10 @@ int checkDevices(ostream &mos) {
         //D printf("  CUDA Capability Major/Minor version number:    %d.%d\n", deviceProp.major, deviceProp.minor);
 
         //
-		char msg[256];
-        sprintf(msg, "  Total amount of global memory:                 %.0f MBytes (%llu bytes)\n",
-                (float)deviceProp[dev].totalGlobalMem/1048576.0f, (unsigned long long) deviceProp[dev].totalGlobalMem);
-        printf("%s", msg);
+
 		//
 		mos << "  Total amount of global memory: ";
-		mos << (unsigned long long) deviceProp[dev].totalGlobalMem/1048576.0f << " bytes\n";
+		mos << (unsigned long long) deviceProp[dev].totalGlobalMem/1048576.0f << " Mbytes\n";
 
 		//
         printf("  (%2d) Multiprocessors x (%3d) CUDA Cores/MP:    %d CUDA Cores\n",

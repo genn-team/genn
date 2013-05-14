@@ -56,7 +56,7 @@ endif
 
 .SUFFIXES : .cu .cu_dbg.o .c_dbg.o .cpp_dbg.o .cu_rel.o .c_rel.o .cpp_rel.o .cubin .ptx
 # Add new SM Versions here as devices with new Compute Capability are released
-SM_VERSIONS := sm_10 sm_11 sm_12 sm_13 sm_20 sm_21
+#SM_VERSIONS := sm_10 sm_11 sm_12 sm_13 sm_20 sm_21
 
 #CUDA_INSTALL_PATH ?= /cygdrive/c/Program\$(_SPACE_)Files/NVIDIA\$(_SPACE_)GPU\$(_SPACE_)Computing\$(_SPACE_)Toolkit/CUDA/v5.0 #CHECK
 CUDA_INSTALL_PATH ?= $(CUDA_PATH)
@@ -85,17 +85,17 @@ CUDADIR    := $(CUDA_INSTALL_PATH)
 SDKDIR     := $(NVIDIASDKPATH)
 BINDIR     := bin/$(OSREAL)
 ROOTOBJDIR := obj
-CUDAINC := "$(CUDADIR)include"
-CUDASDKINC := "$(SDKDIR)common/inc"
+CUDAINC := "$(CUDADIR)/include"
+CUDASDKINC := "$(SDKDIR)/common/inc"
 GeNNPATH_WIN := C:\cygwin\home\esin\genn-0.3\genn
-NVIDIASAMPLIB := $(NVIDIASDKPATH)common/lib/$(OSLOWER)/x86_64
+NVIDIASAMPLIB := $(NVIDIASDKPATH)/common/lib/$(OSLOWER)/x86_64
 
 # -L"$(cygpath -u SDKDIR)/lib" -L"$(cygpath -u SDKDIR)/common/lib/$(OSLOWER)/x86_64"
 # Includes
-INCLUDES  += -I. -I $(CUDAINC) -I $(CUDASDKINC) -I$(GeNNPATH)lib/include/numlib -I"$(GeNNPATH)lib/include" 
+INCLUDES  += -I. -I $(CUDAINC) -I $(CUDASDKINC) -I$(GeNNPATH)/lib/include/numlib -I"$(GeNNPATH)/lib/include" 
 #-I"$(GeNNPATH_WIN)\lib\include" -I"$(GeNNPATH_WIN)\lib\include\numlib"  -I../include 
 ifdef ON_WINDOWS
-	INCLUDES_UNIX  += -I. -I" $(CUDADIR)/include" -I "$(NVIDIASAMPPATH)common/inc" $(INCLUDES) #-I$(GeNNPATH)/lib/include/numlib
+	INCLUDES_UNIX  += -I. -I" $(CUDADIR)/include" -I "$(NVIDIASAMPPATH)/common/inc" $(INCLUDES) #-I$(GeNNPATH)/lib/include/numlib
 else
 	INCLUDES_UNIX  += $(INCLUDES)
 endif
@@ -106,13 +106,13 @@ ifdef ON_WINDOWS
 	CC         := cl #-fPIC -m32 #gcc
 	LINK       := cl #-fPIC -m32 #g++
 else
-	CXX        := g++ #-fPIC -m32 #g++
-	CC         := gcc #-fPIC -m32 #gcc
+	CXX        := g++ -fPIC #-m32 #g++
+	CC         := gcc -fPIC #-m32 #gcc
 	LINK       := g++ -fPIC #-m32 #g++
 endif
 # architecture flag for cubin build
 CUBIN_ARCH_FLAG := #-m32
-SMVERSIONFLAGS := #-arch sm_21
+SMVERSIONFLAGS := -arch sm_20
 
 # Compiler-specific flags
 NVCCFLAGS := #-idp /cygwin/ --machine 32
@@ -143,7 +143,7 @@ ifdef ON_WINDOWS
 	export LIB       := $(LIB);"$(CUDADIR)lib\$(OSREAL)\ ";"$(VCINSTALLDIR)\lib\ " #"$(CUDADIR)lib\$(OSREAL)\cudart.lib" "$(VCINSTALLDIR)\lib\libcpmt.lib" 
 	LLIB := "$(CUDADIR)lib/$(OSREAL)/cudart.lib"
 else
-	LIB       := -L$(CUDADIR)lib64 -L $(NVIDIASDKPATH)lib -L$(NVIDIASAMPLIB) 
+	LIB       := -L$(CUDADIR)/lib64 -L $(NVIDIASDKPATH)/lib -L$(NVIDIASAMPLIB) 
 endif
 
 #export LIBPATH:= "C:\Windows\Microsoft.NET\Framework\v3.5";"C:\Windows\Microsoft.NET\Framework\v2.0.50727";"C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\LIB";
