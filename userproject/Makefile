@@ -112,7 +112,10 @@ else
 endif
 # architecture flag for cubin build
 CUBIN_ARCH_FLAG := #-m32 
-SMVERSIONFLAGS := -arch sm_20
+#SMVERSIONFLAGS := -arch sm_20
+include $(GeNNPATH)/lib/src/sm_Version.mk
+#SMVERSIONFLAGS := -arch sm_13
+
 # Compiler-specific flags
 NVCCFLAGS := #-idp /cygwin/ --use-local-env --cl-version 2008 #-ccbin "C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin" 
 CXXFLAGS  :=  
