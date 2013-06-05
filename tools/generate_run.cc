@@ -20,6 +20,11 @@ using namespace std;
 #include <cstdlib>
 #include <cmath>
 
+#ifdef _WIN32
+#include <direct.h>
+#else
+#include <sys/stat.h> //needed for mkdir
+#endif
 ////////////////////////////////////////////////////////////////////////////////
 // Template function for string conversion 
 ////////////////////////////////////////////////////////////////////////////////
@@ -48,7 +53,8 @@ int main(int argc, char *argv[])
   int nLHI= atoi(argv[4]);
   int nLB= atoi(argv[5]);
   float g0= atof(argv[6]);
-
+  string OutDir = toString(argv[7]) +"_output";  
+  
   float pnkc_gsyn= 100.0f/nAL*g0;
   float pnkc_gsyn_sigma= 100.0f/nAL*g0/15.0f; 
   float kcdn_gsyn= 2500.0f/nMB*0.12f*g0/0.9; 
@@ -57,6 +63,14 @@ int main(int argc, char *argv[])
 
   string cmd;
 
+  #ifdef _WIN32
+  _mkdir(OutDir.c_str());
+  #else 
+  if (mkdir(OutDir.c_str(), S_IRWXU | S_IRWXG | S_IXOTH)==-1){
+  	cerr << "directory cannot be created" << endl;
+  	}; 
+  #endif
+  
   // generate pnkc synapses
   cmd= toString("$GeNNPATH/tools/gen_pnkc_syns ");
   cmd+= toString(nAL) + toString(" ") ;
@@ -65,7 +79,7 @@ int main(int argc, char *argv[])
   cmd+= toString(pnkc_gsyn) + toString(" ") ;
   cmd+= toString(pnkc_gsyn_sigma) + toString(" ") ;
   cmd+= toString(argv[7]) + toString(".pnkc");
-  cmd+= toString(" &> ") + toString(argv[7]) + toString(".pnkc.msg");
+  cmd+= toString(" &> ") + OutDir+ "/"+ toString(argv[7]) + toString(".pnkc.msg");
   system(cmd.c_str()); 
 
   // generate kcdn synapses
@@ -76,7 +90,7 @@ int main(int argc, char *argv[])
   cmd+= toString(kcdn_gsyn_sigma) + toString(" ");
   cmd+= toString(kcdn_gsyn_sigma) + toString(" ");
   cmd+= toString(argv[7]) + toString(".kcdn");
-  cmd+= toString(" &> ") + toString(argv[7]) + toString(".kcdn.msg");
+  cmd+= toString(" &> ") + OutDir+ "/"+ toString(argv[7]) + toString(".kcdn.msg");
   system(cmd.c_str());
 
   // generate pnlhi synapses
@@ -85,7 +99,7 @@ int main(int argc, char *argv[])
   cmd+= toString(nLHI) + toString(" ") ;
   cmd+= toString(pnlhi_theta) + toString(" 15 ") ;
   cmd+= toString(argv[7]) + toString(".pnlhi");
-  cmd+= toString(" &> ") + toString(argv[7]) + toString(".pnlhi.msg");
+  cmd+= toString(" &> ") + OutDir+ "/"+ toString(argv[7]) + toString(".pnlhi.msg");
   system(cmd.c_str());
 
   // generate input patterns
@@ -93,10 +107,10 @@ int main(int argc, char *argv[])
   cmd+= toString(nAL) + toString(" ") ;
   cmd+= toString("10 10 0.1 0.1 32768 17 ") ;
   cmd+= toString(argv[7]) + toString(".inpat");
-  cmd+= toString(" &> ") + toString(argv[7]) + toString(".inpat.msg");
+  cmd+= toString(" &> ") + OutDir+ "/"+ toString(argv[7]) + toString(".inpat.msg");
   system(cmd.c_str());
 
-  ofstream os("../userproject/sizes.h");
+  ofstream os("../userproject/include/sizes.h");
   os << "#define _NAL " << nAL << endl;
   os << "#define _NMB " << nMB << endl;
   os << "#define _NLHI " << nLHI << endl;
@@ -108,6 +122,7 @@ cout << "script call was:" << cmd.c_str() << endl;
   system(cmd.c_str());
   cmd= toString("cd ../userproject && ");
   cmd+= toString("make clean && make");
+  //cmd+= toString("make clean && make dbg=1");
   system(cmd.c_str());
 
   cmd= toString("echo $GeNNOSTYPE");
@@ -122,6 +137,7 @@ cout << "script call was:" << cmd.c_str() << endl;
   //cout << "not win" <<endl;
   //cmd= toString("GeNNOSTYPE=$(echo $(uname) | tr A-Z a-z); ../userproject/$GeNNOSTYPE/release/classol_sim ")+  toString(argv[7]) + toString(" ") + toString(which);
   cmd= toString("GeNNOSTYPE=$(echo $(uname) | tr A-Z a-z); ../userproject/bin/$GeNNOSTYPE/release/classol_sim ")+  toString(argv[7]) + toString(" ") + toString(which);
+  //cmd= toString("GeNNOSTYPE=$(echo $(uname) | tr A-Z a-z); cuda-gdb -tui ../userproject/bin/$GeNNOSTYPE/debug/classol_sim ")+  toString(argv[7]) + toString(" ") + toString(which);
 #endif
   cout << cmd << endl;
   system(cmd.c_str());

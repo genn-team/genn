@@ -133,7 +133,7 @@ float myDNDN_p[4]= {
 //float gDNDN= 0.04;
 float gDNDN= 0.01;
 
-#include "../../userproject/sizes.h"
+#include "../../userproject/include/sizes.h"
 
 void modelDefinition(NNmodel &model) 
 {

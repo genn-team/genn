@@ -15,7 +15,7 @@ using namespace std;
 
 #include <cassert>
 //#include <cutil.h>
-#include "hr_time.h"
+#include "include/hr_time.h"
 
 #include <cuda_runtime.h>
 
@@ -52,6 +52,6 @@ unsigned int iT= 0;
 
 CStopWatch timer;
 
-#include "hr_time.cpp"
+#include "include/hr_time.cpp"
 #include "map_classol.h"
 #include "map_classol.cc"

@@ -128,7 +128,8 @@ COMMONFLAGSG++ += $(INCLUDES_UNIX) -lcudart #-DUNIX -O2 -lcudart
 # Debug/release configuration
 ifeq ($(dbg),1)
 	COMMONFLAGS += -g
-	NVCCFLAGS   += -D_DEBUG
+	COMMONFLAGSG++ += -g
+	NVCCFLAGS   += -g -G
 	BINSUBDIR   := debug
 	LIBSUFFIX   := D
 else 

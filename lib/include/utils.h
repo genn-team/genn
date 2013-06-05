@@ -9,6 +9,7 @@
  *
  */
 /* This sample queries the properties of the CUDA devices present in the system via CUDA Runtime API. */
+/** Standard neuron model definitions are at the end of the code. */
 
 #ifndef _UTILS_H_
 #define _UTILS_H_
@@ -448,8 +449,29 @@ void prepareStandardModels()
       $(V)+= Imem/$(C)*mdt;\n\
     }\n");
   nModels.push_back(n);
-}
-
+  
+ //Izhikevich neurons
+  n.varNames.clear();
+  n.varTypes.clear();
+  n.varNames.push_back(tS("V"));
+  n.varTypes.push_back(tS("float"));  
+  n.varNames.push_back(tS("U"));
+  n.varTypes.push_back(tS("float"));
+  n.pNames.push_back(tS("Vspike"));
+  n.pNames.push_back(tS("a")); // time scale of U
+  n.pNames.push_back(tS("b")); // sensitivity of U
+  n.pNames.push_back(tS("c")); // after-spike reset value of V
+  n.pNames.push_back(tS("d")); // after-spike reset value of U
+  n.dpNames.clear(); 
+  n.simCode= tS(" $(V)+=0.5f*(0.04*$(V)*$(V)+5*$(V)+140-$(U)+$(Isyn)); //at two times for numerical stability \n\
+  $(V)+=0.5f*(0.04*$(V)*$(V)+5*$(V)+140-$(U)+$(Isyn));\n\
+  $(U)+=$(a)*($(b)*$(V)-$(U));\n\\n\
+  if ($(V) > 30){\n\
+		$(V)=$(c);\n\
+		$(U)+=$(d);  \n\	
+  	} \n\
+}\n");
+  nModels.push_back(n);}
 // bit tool macros
 #include "simpleBit.h"
 

@@ -8,6 +8,8 @@
    email to:  T.Nowotny@sussex.ac.uk
   
    initial version: 2010-02-07
+   
+   This file contains neuron model declarations.
   
 --------------------------------------------------------------------------*/
 
@@ -23,6 +25,7 @@
 #define MAPNEURON 0
 #define POISSONNEURON 1
 #define TRAUBMILES 2
+#define IZHIKEVICH 3
 
 unsigned int NPNO[NTYPENO]= {
   4,        // MAPNEURON_PNO 
@@ -37,9 +40,11 @@ unsigned int NININO[NTYPENO]= {
 };
 
 #define SYNTYPENO 3
-#define NSYNAPSE 0
-#define NGRADSYNAPSE 1
-#define LEARN1SYNAPSE 2
+
+//synapseType
+#define NSYNAPSE 0 // no learning
+#define NGRADSYNAPSE 1 // graded synapse wrt the presynaptic voltage
+#define LEARN1SYNAPSE 2 // learning by spike timing: a primitive STDP rule
 
 unsigned int SYNPNO[SYNTYPENO]= {
   3,        // NSYNAPSE_PNO 
@@ -47,10 +52,12 @@ unsigned int SYNPNO[SYNTYPENO]= {
   13        // LEARN1SYNAPSE_PNO 
 };
 
+//connectivity of the network (synapseConnType)
 #define ALLTOALL 0
 #define DENSE 1
 //#define SPARSE 2
 
+//conductance type (synapseGType)
 #define INDIVIDUALG 0
 #define GLOBALG 1
 #define INDIVIDUALID 2
@@ -124,17 +131,17 @@ class NNmodel
 
  private:
   void setNeuronName(unsigned int, const string); //never used
-  void setSynapseName(unsigned int, const string);
-  void setNeuronN(unsigned int, unsigned int);
-  void setNeuronType(unsigned int, unsigned int);
-  void setNeuronPara(unsigned int, float*);
-  void setNeuronIni(unsigned int, float*);
-  void setSynapseType(unsigned int, unsigned int);
-  void setSynapseSource(unsigned int, unsigned int);
-  void setSynapseTarget(unsigned int, unsigned int);
-  void setSynapsePara(unsigned int, float*);
-  void setSynapseConnType(unsigned int, unsigned int);
-  void setSynapseGType(unsigned int, unsigned int);
+  void setSynapseName(unsigned int, const string);//never used
+  void setNeuronN(unsigned int, unsigned int);//never used
+  void setNeuronType(unsigned int, unsigned int);//never used
+  void setNeuronPara(unsigned int, float*);//never used
+  void setNeuronIni(unsigned int, float*);//never used
+  void setSynapseType(unsigned int, unsigned int);//never used
+  void setSynapseSource(unsigned int, unsigned int);//never used
+  void setSynapseTarget(unsigned int, unsigned int);//never used
+  void setSynapsePara(unsigned int, float*);//never used
+  void setSynapseConnType(unsigned int, unsigned int);//never used
+  void setSynapseGType(unsigned int, unsigned int);//never used
   void initDerivedNeuronPara(unsigned int);
   void initDerivedSynapsePara(unsigned int);
   unsigned int findNeuronGrp(const string);
