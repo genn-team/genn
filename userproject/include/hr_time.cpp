@@ -1,6 +1,6 @@
 
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <windows.h>
 #endif
 
@@ -10,7 +10,7 @@
 
 
 
-#ifdef WIN32
+#ifdef _WIN32
 double CStopWatch::LIToSecs( LARGE_INTEGER & L) {
 	return ((double)L.QuadPart /(double)frequency.QuadPart);
 }
