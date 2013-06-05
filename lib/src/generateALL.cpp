@@ -11,6 +11,13 @@
   
 --------------------------------------------------------------------------*/
 
+/*! \file generateALL.cpp
+  \brief Main file combining the code for code generation. 
+
+  The file includes separate files for generating kernels (generateKernels.cc),
+  generating the CPU side code for running simulations on either the CPU or GPU (generateRunner.cc) and for CPU-only simulation code (generateCPU.cc).
+*/
+
 #include <cstdlib> 
 
 //#define GeNNMODELINCLUDE getenv("GeNNMODELINCLUDE")
@@ -25,7 +32,14 @@
 #include "generateRunner.cc"
 #include "generateCPU.cc"
 
-void generate_model_runner(NNmodel &model, string path)
+/*! \brief This function will call the necessary sub-functions to generate the code for simulating a model.
+
+ */
+
+void generate_model_runner(NNmodel &model, //!< Model description
+
+			   string path) //!< Path where the generated code
+			               //!< will be deposited
 {
   string cmd, name;
   
@@ -77,8 +91,18 @@ void generate_model_runner(NNmodel &model, string path)
   os.close();
 }
 
+/*! \brief Main entry point for the generateALL executable that generates
+  the code for GPU and CPU.
 
-int main(int argc, char *argv[])
+  The main function is the entry point for the code generation engine. It 
+  prepares the system and then invokes generate_model_runner to inititate
+  the different parts of actual code generation.
+*/
+
+int main(int argc, //!< number of arguments; expected to be 2
+	 char *argv[] //!< Arguments; expected to contain the name of the  
+	              //!< target directory for code generation.
+	 )
 {
   if (argc != 2) {
     cerr << "usage: generateALL <target dir>" << endl;
