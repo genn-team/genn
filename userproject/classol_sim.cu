@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
   fprintf(stderr, "# PAT_SETTIME %d \n", PAT_SETTIME);
   fprintf(stderr, "# TOTAL_TME %d \n", TOTAL_TME);
   
-  name= toString(argv[1]) + toString(".out.st"); 
+  name= toString(argv[1]) + "_output/" + toString(argv[1]) + toString(".out.st"); 
   FILE *osf= fopen(name.c_str(),"w");
 
   //-----------------------------------------------------------------
@@ -151,6 +151,7 @@ unsigned int sum= 0;
   // }
 
   timer.stopTimer();
+  cerr << "output files are created under the current directory." << endl;
   fprintf(timef, "%d %d %d %d %f \n", locust.sumPN, locust.sumKC, locust.sumLHI, locust.sumDN, timer.getElapsedTime());
 
   return 0;

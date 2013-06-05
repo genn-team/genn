@@ -8,6 +8,8 @@
    email to:  T.Nowotny@sussex.ac.uk
   
    initial version: 2010-02-07
+   
+   This file contains neuron model definitions.
   
 --------------------------------------------------------------------------*/
 
@@ -103,6 +105,8 @@ void NNmodel::initDerivedSynapsePara(unsigned int i)
     lrnSynGrp.push_back(i);
     lrnGroups++;
   }
+ 
+  
   if ((synapseType[i] == NSYNAPSE) || (synapseType[i] == NGRADSYNAPSE)) {
     tmpP.push_back(expf(-DT/synapsePara[i][2]));              // kdecay
   }
@@ -158,7 +162,7 @@ void NNmodel::addNeuronPopulation(const char *name, unsigned int nNo, unsigned i
 }
 
 /*/////////////////////////////////////////////////////////////////////////////////////////////
-/	Following procedure adds a neuron population, assighing the name, the number of neurons in 
+/	Following procedure adds a neuron population, assigning the name, the number of neurons in 
 /	the group, neuron type respectively
 *//////////////////////////////////////////////////////////////////////////////////////////////
 void NNmodel::addNeuronPopulation(const string name, unsigned int nNo, unsigned int type, float *p, float *ini)

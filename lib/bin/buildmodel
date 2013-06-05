@@ -10,5 +10,8 @@ cd $GeNNPATH/lib/src;
 make clean && make;
 export GeNNOSTYPE=$(echo $(uname) | tr A-Z a-z);
 bin/$GeNNOSTYPE/release/generateALL $WD;
+
+#debugging: call it as "run $wd" once you are in cuda-gdb
+#cuda-gdb -tui --directory=$GeNNPATH/lib/src bin/$GeNNOSTYPE/debug/generateALL;
 echo " Model build complete ..." 
 cd $WD;
