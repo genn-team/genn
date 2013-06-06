@@ -13,7 +13,26 @@
 
 #include <string>
 
-void genNeuronFunction(NNmodel &model, ostream &os, ostream &mos)
+//--------------------------------------------------------------------------
+/*! \file generateCPU.cc
+
+  \brief Functions for generating code that will run the neuron and synapse simulations on the CPU.
+
+*/
+//--------------------------------------------------------------------------
+
+
+//--------------------------------------------------------------------------
+/*!
+  \brief Function that generates the code of the function the will simulate all neurons on the CPU.
+
+*/
+//--------------------------------------------------------------------------
+
+void genNeuronFunction(NNmodel &model, //!< Model description 
+		       ostream &os, //!< output stream for code
+		       ostream &mos //!< output stream for messages
+		       )
 {
   // write header content
   string s, localID;
@@ -99,7 +118,17 @@ void genNeuronFunction(NNmodel &model, ostream &os, ostream &mos)
 } 
 
 
-void genSynapseFunction(NNmodel &model, ostream &os, ostream &mos)
+//--------------------------------------------------------------------------
+/*!
+  \brief Function that generates code that will simulate all synapses of the model on the CPU.
+
+*/
+//--------------------------------------------------------------------------
+
+void genSynapseFunction(NNmodel &model, //!< Model description
+			ostream &os, //!< output stream for code
+			ostream &mos //!< output stream for messages
+			)
 {
   // write header content
   string s, localID, theLG;
