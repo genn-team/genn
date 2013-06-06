@@ -15,10 +15,30 @@
 #include "utils.h"
 #include <string>
 
-#define SAVEP(X) "(" << X << ")"
+//------------------------------------------------------------------------
+/*! \file generateKernels.cc
+
+  \brief Contains functions that generate code for CUDA kernels
+*/
+//-------------------------------------------------------------------------
 
 
-void genNeuronKernel(NNmodel &model, ostream &os, ostream &mos)
+//! Macro for a "safe" output of a parameter into generated code by essentially just adding a bracket around the parameter value in the generated code.
+#define SAVEP(X) "(" << X << ")" 
+
+
+//-------------------------------------------------------------------------
+/*!
+  \brief Function for generating the CUDA kernel that simulates all neurons in the model.
+
+The code generated upon execution of this function is for defining GPU side global variables that will hold model state in the GPU global memory and for the actual kernel function for simulating the neurons for one time step.
+*/
+//-------------------------------------------------------------------------
+
+void genNeuronKernel(NNmodel &model, //!< Model description 
+		     ostream &os,  //!< output stream for code
+		     ostream &mos //!< output stream for messages
+		     )
 {
   // write header content
   string s, localID;
@@ -177,8 +197,18 @@ void genNeuronKernel(NNmodel &model, ostream &os, ostream &mos)
   os << "#endif" << endl;
 }
 
+//-------------------------------------------------------------------------
+/*!
+  \brief Function for generating a CUDA kernel for simulating all synapses.
 
-void genSynapseKernel(NNmodel &model, ostream &os, ostream &mos)
+  This functions generates code for global variables on the GPU side that are synapse-related and the actual CUDA kernel for simulating one time step of the synapses.
+*/
+//-------------------------------------------------------------------------
+
+void genSynapseKernel(NNmodel &model, //!< Model description 
+		      ostream &os, //!< output stream for code
+		      ostream &mos //!< output stream for messages
+		      )
 {
   // write header content
   string s, localID, theLG;
