@@ -22,8 +22,9 @@ using namespace std;
 
 #ifdef _WIN32
 #include <direct.h>
+#include <stdlib.h>
 #else
-#include <sys/stat.h> //needed for mkdir
+#include <sys/stat.h> //needed for mkdir?
 #endif
 ////////////////////////////////////////////////////////////////////////////////
 // Template function for string conversion 
@@ -47,6 +48,9 @@ int main(int argc, char *argv[])
     exit(1);
   }
 
+  int DBGMODE =0; //set this to 1 if you want to enable gdb and cuda-gdb debugging to 0 for release
+  string cmd;
+  string execname = "classol_sim-simple";
   int which= atoi(argv[1]);
   int nAL= atoi(argv[2]);
   int nMB= atoi(argv[3]);
@@ -61,13 +65,11 @@ int main(int argc, char *argv[])
   float kcdn_gsyn_sigma= 2500.0f/nMB*0.025f*g0/0.9; 
   float pnlhi_theta= 200.0f/nAL*7.0f*g0/0.9;
 
-  string cmd;
-
   #ifdef _WIN32
   _mkdir(OutDir.c_str());
   #else 
   if (mkdir(OutDir.c_str(), S_IRWXU | S_IRWXG | S_IXOTH)==-1){
-  	cerr << "directory cannot be created" << endl;
+  	cerr << "Directory cannot be created. It may exist already." << endl;
   	}; 
   #endif
   
@@ -116,13 +118,21 @@ int main(int argc, char *argv[])
   os << "#define _NLHI " << nLHI << endl;
   os << "#define _NLB " << nLB << endl;
   os.close();
-  cmd= toString("cd ../userproject/ && buildmodel MBody1");
   
-cout << "script call was:" << cmd.c_str() << endl;
+  cmd= toString("cd ../userproject/ && buildmodel IzhEx ") + toString(DBGMODE);
+
+  
+  cout << "Debug mode " << DBGMODE << endl;
+
+  cout << "script call was:" << cmd.c_str() << endl;
   system(cmd.c_str());
   cmd= toString("cd ../userproject && ");
-  cmd+= toString("make clean && make");
-  //cmd+= toString("make clean && make dbg=1");
+  if(DBGMODE==1) {
+		cmd+= toString("make clean dbg=1 && make dbg=1");
+  }
+  else{
+		cmd+= toString("make clean && make");  
+  	}	
   system(cmd.c_str());
 
   cmd= toString("echo $GeNNOSTYPE");
@@ -132,12 +142,25 @@ cout << "script call was:" << cmd.c_str() << endl;
   cout << "running test..." <<endl;
 #if defined _WIN32 || defined __CYGWIN__
   //cout << "win32" <<endl;
-  cmd= toString("GeNNOSTYPE=Win32; ../userproject/bin/$GeNNOSTYPE/release/classol_sim ")+  toString(argv[7]) + toString(" ") + toString(which);
+  if(DBGMODE==1) {
+		cmd= toString("GeNNOSTYPE=Win32; cuda-gdb -tui ../userproject/bin/$GeNNOSTYPE/debug/")+ execname + toString(" ")+  toString(argv[7]) + toString(" ") + toString(which);
+	}
+	else {
+  		cmd= toString("GeNNOSTYPE=Win32; ../userproject/bin/$GeNNOSTYPE/release/")+execname + toString(" ")+  toString(argv[7]) + toString(" ") + toString(which);
+	}
+
 #else
   //cout << "not win" <<endl;
   //cmd= toString("GeNNOSTYPE=$(echo $(uname) | tr A-Z a-z); ../userproject/$GeNNOSTYPE/release/classol_sim ")+  toString(argv[7]) + toString(" ") + toString(which);
-  cmd= toString("GeNNOSTYPE=$(echo $(uname) | tr A-Z a-z); ../userproject/bin/$GeNNOSTYPE/release/classol_sim ")+  toString(argv[7]) + toString(" ") + toString(which);
-  //cmd= toString("GeNNOSTYPE=$(echo $(uname) | tr A-Z a-z); cuda-gdb -tui ../userproject/bin/$GeNNOSTYPE/debug/classol_sim ")+  toString(argv[7]) + toString(" ") + toString(which);
+   if(DBGMODE==1) {
+  //debug 
+  cmd= toString("GeNNOSTYPE=$(echo $(uname) | tr A-Z a-z); cuda-gdb -tui --args ../userproject/bin/$GeNNOSTYPE/debug/")+execname + toString(" ")+  toString(argv[7]) + toString(" ") + toString(which);
+  }
+  else
+  {
+//release  
+  cmd= toString("GeNNOSTYPE=$(echo $(uname) | tr A-Z a-z); ../userproject/bin/$GeNNOSTYPE/release/")+execname + toString(" ")+  toString(argv[7]) + toString(" ") + toString(which);
+  	}
 #endif
   cout << cmd << endl;
   system(cmd.c_str());

@@ -19,7 +19,7 @@
 #include <vector>
 #include "toString.h"
 
-#define NTYPENO 3
+#define NTYPENO 4
 
 //neuronType
 #define MAPNEURON 0
@@ -30,13 +30,15 @@
 unsigned int NPNO[NTYPENO]= {
   4,        // MAPNEURON_PNO 
   4,         // POISSONNEURON_PNO 
-  7
+  7,			// TRAUBMILES PNO
+  5			// IZHIKEVICH PNO
 };
 
 unsigned int NININO[NTYPENO]= {
   2,        // MAPNEURON_ININO
   3,        // POISSONNEURON_ININO
-  4
+  4,			// TRAUBMILES ININO
+  2			// IZHIKEVICH ININO			
 };
 
 #define SYNTYPENO 3
