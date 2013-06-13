@@ -41,4 +41,4 @@ gen_input_fixfixfixno_struct: gen_input_fixfixfixno_struct.cc
 	$(C++) $(FLAGS) -g $(INCLUDE) -o gen_input_fixfixfixno_struct gen_input_fixfixfixno_struct.cc
 
 clean:
-	$(RM) *.o generate_run gen_pnkc_syns gen_pnkc_syns_indivID gen_pnlhi_syns gen_kcdn_syns gen_input_fixfixfixno_struct
+	$(RM) *.o generate_run gen_pnkc_syns \gen_pnkc_syns_indivID gen_pnlhi_syns gen_kcdn_syns gen_input_fixfixfixno_struct

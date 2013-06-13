@@ -427,6 +427,9 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 
     // ------------------------------------------------------------------------
     // copying values to device
+    
+    
+    os << "//comment 0 here" << endl;   
     os << "void copyStateToDevice()" << endl;
     os << "{" << endl;
     os << "  void *devPtr;" << endl;
@@ -475,6 +478,8 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     
     // ------------------------------------------------------------------------
     // copying values from device
+      
+      
     os << "void copyStateFromDevice()" << endl;
     os << "{" << endl;
     os << "  void *devPtr;" << endl;
@@ -519,7 +524,7 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     os << endl;
 
     // ------------------------------------------------------------------------
-    // copying spikes from device                                               
+    // copying spikes from device                                            
     os << "void copySpikesFromDevice()" << endl;
     os << "{" << endl;
     os << "  void *devPtr;" << endl;
@@ -565,10 +570,17 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     os << "float t)" << endl;
     os << "{" << endl;
     unsigned int gridSz= model.padSumNeuronN[model.neuronGrpN-1];
-    gridSz= gridSz >> logNeuronBlkSz;
+    os << "//comment 1 here" << endl;  
+    gridSz= gridSz >> logNeuronBlkSz;	 
+    os << "//comment 2 here" << endl;  
     unsigned int sgridSz= model.padSumSynapseTrgN[model.synapseGrpN-1];
+  	 os << "//comment 3 here" << endl;  
     sgridSz= sgridSz >> logSynapseBlkSz;
-    unsigned int lgridSz= model.padSumLearnN[model.lrnGroups-1];
+  
+    unsigned int lgridSz=0;
+    if (model.lrnGroups > 0) {
+    	lgridSz= model.padSumLearnN[model.lrnGroups-1];
+    	}
     lgridSz= lgridSz >> logLearnBlkSz;
     unsigned int blkSz= neuronBlkSz;
     unsigned int sblkSz= synapseBlkSz;
