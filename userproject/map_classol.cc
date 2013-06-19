@@ -48,14 +48,10 @@ void classol::allocate_device_mem_patterns()
 
   // allocate device memory for input patterns
   size= model.neuronN[0]*PATTERNNO*sizeof(unsigned int);
-  //CUDA_SAFE_CALL(cudaMalloc((void**) &d_pattern, size));
   checkCudaErrors(cudaMalloc((void**) &d_pattern, size));
   fprintf(stderr, "allocated %u elements for pattern.\n", size/sizeof(unsigned int));
-  //CUDA_SAFE_CALL(cudaMemcpy(d_pattern, pattern, size, cudaMemcpyHostToDevice));
   checkCudaErrors(cudaMemcpy(d_pattern, pattern, size, cudaMemcpyHostToDevice));
   size= model.neuronN[0]*sizeof(unsigned int);
-  //CUDA_SAFE_CALL(cudaMalloc((void**) &d_baserates, size));
-  //CUDA_SAFE_CALL(cudaMemcpy(d_baserates, baserates, size, cudaMemcpyHostToDevice)); 
   checkCudaErrors(cudaMalloc((void**) &d_baserates, size));
   checkCudaErrors(cudaMemcpy(d_baserates, baserates, size, cudaMemcpyHostToDevice)); 
 }
@@ -63,9 +59,7 @@ void classol::allocate_device_mem_patterns()
 
 void classol::free_device_mem()
 {
-  // clean up memory                                                            
-  //CUDA_SAFE_CALL(cudaFree(d_pattern));
-  //CUDA_SAFE_CALL(cudaFree(d_baserates));
+  // clean up memory                          
                                        
   checkCudaErrors(cudaFree(d_pattern));
   checkCudaErrors(cudaFree(d_baserates));
@@ -319,9 +313,6 @@ void classol::get_kcdnsyns()
 {
   void *devPtr;
   cudaGetSymbolAddress(&devPtr, "d_gpKCDN");
-  //CUDA_SAFE_CALL(cudaMemcpy(gpKCDN, devPtr, 
-  //model.neuronN[1]*model.neuronN[3]*sizeof(float), 
-  //  cudaMemcpyDeviceToHost));
   checkCudaErrors(cudaMemcpy(gpKCDN, devPtr,
     model.neuronN[1]*model.neuronN[3]*sizeof(float), 
     cudaMemcpyDeviceToHost));

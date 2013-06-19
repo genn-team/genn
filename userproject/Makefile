@@ -150,9 +150,9 @@ else
 	LIB       := -L$(CUDADIR)/lib64 -L $(NVIDIASDKPATH)/lib -L$(NVIDIASAMPLIB) 
 endif
 # Add source files here
-EXECUTABLE	:= classol_sim-simple
+EXECUTABLE	:= classol_sim
 # Cuda source files (compiled with cudacc)
-CUFILES		:= classol_sim-simple.cu
+CUFILES		:= classol_sim.cu
 # C/C++ source files (compiled with gcc / c++)
 CCFILES		:= 
 
@@ -201,7 +201,7 @@ $(OBJDIR)/%.c_o : $(SRCDIR)%.c $(C_DEPS)
 
 ifdef ON_WINDOWS
 $(OBJDIR)/%.obj : $(SRCDIR)%.cpp $(C_DEPS) 	
-	$(VERBOSE)$(CXX) $(CXXFLAGS) $< /c /Fo$(OBJDIR)/classol_sim-simple	#was $(VERBOSE)$(CXX) $(CXXFLAGS) -o $@ -c $< before
+	$(VERBOSE)$(CXX) $(CXXFLAGS) $< /c /Fo$(OBJDIR)/classol_sim	#was $(VERBOSE)$(CXX) $(CXXFLAGS) -o $@ -c $< before
 else
 $(OBJDIR)/%.obj : $(SRCDIR)%.cpp $(C_DEPS) 	
 	$(VERBOSE)$(CXX) $(CXXFLAGS) -o $@ -c $< 
