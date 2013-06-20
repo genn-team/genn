@@ -16,7 +16,7 @@
 //--------------------------------------------------------------------------
 /*! \file generateCPU.cc
 
-  \brief Functions for generating code that will run the neuron and synapse simulations on the CPU.
+  \brief Functions for generating code that will run the neuron and synapse simulations on the CPU. Part of the code generation section.
 
 */
 //--------------------------------------------------------------------------

@@ -1,4 +1,7 @@
 /*
+ * IN PART COPYRIGHTED AS BELOW BECAUSE IT'S ADAPTED FROM NVIDIA CUDA SOFTWARE DEVELOPMENT TOOLKIT:
+ *
+ *
  * Copyright 1993-2012 NVIDIA Corporation.  All rights reserved.
  *
  * Please refer to the NVIDIA end user license agreement (EULA) associated
@@ -8,11 +11,31 @@
  * is strictly prohibited.
  *
  */
-/* This sample queries the properties of the CUDA devices present in the system via CUDA Runtime API. */
-/** Standard neuron model definitions are at the end of the code. */
+
+/*--------------------------------------------------------------------------
+   Author/Modifier: Thomas Nowotny
+  
+   Institute: Center for Computational Neuroscience and Robotics
+              University of Sussex
+	      Falmer, Brighton BN1 9QJ, UK 
+  
+   email to:  T.Nowotny@sussex.ac.uk
+  
+   initial version: 2010-02-07
+   
+   This file contains neuron model definitions.
+  
+--------------------------------------------------------------------------*/
 
 #ifndef _UTILS_H_
-#define _UTILS_H_
+#define _UTILS_H_ //!< macro for avoiding multiple inclusion during compilation
+
+//--------------------------------------------------------------------------
+/*! \file utils.h
+
+\brief This file contains standard utility functions provide within the NVIDIA CUDA software development toolkit (SDK). The remainder of the file contains a function that defines the standard neuron models.
+*/
+//--------------------------------------------------------------------------
 
 #include "toString.h"
 
@@ -35,7 +58,10 @@
 int *pArgc = NULL;
 char **pArgv = NULL;
 
-// This function wraps the CUDA Driver API into a template function
+//--------------------------------------------------------------------------
+//! \brief CUDA SDK: This function wraps the CUDA Driver API into a template function
+//--------------------------------------------------------------------------
+
 template <class T>
 inline void getCudaAttribute(T *attribute, CUdevice_attribute device_attribute, int device)
 {
@@ -49,13 +75,22 @@ inline void getCudaAttribute(T *attribute, CUdevice_attribute device_attribute, 
     }
 }
 
-// Function to output an error code and exit
+//--------------------------------------------------------------------------
+//! \brief CUDA SDK: Function to output an error code and exit
+//--------------------------------------------------------------------------
 
 void error(const char *msg) 
 {
   cerr << msg << endl;
   exit(1);
 }
+
+/
+
+//--------------------------------------------------------------------------
+/* \brief Function to write the comment header denoting file authorship and contact details into the generated code.
+ */
+//--------------------------------------------------------------------------
 
 void writeHeader(ostream &os) 
 {
@@ -68,10 +103,10 @@ void writeHeader(ostream &os)
   }
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// Function to check devices and capabilities
-////////////////////////////////////////////////////////////////////////////////
-//int main(int argc, char **argv)
+//--------------------------------------------------------------------------
+//! \bief Function to check devices and capabilities (modified from CUDA SDK)
+//--------------------------------------------------------------------------
+
 int checkDevices(ostream &mos) {
     //D pArgc = &argc;
     //D pArgv = argv;
@@ -316,11 +351,10 @@ int checkDevices(ostream &mos) {
     //exit(EXIT_SUCCESS);
 }
 
-//TO HERE
 
-////////////////////////////////////////////////////////////////////////////////
-// Tools for templae matching/cod expansion 
-////////////////////////////////////////////////////////////////////////////////
+//--------------------------------------------------------------------------
+//! \brief Tool for substituting strings in the neuron code strings or other templates
+//--------------------------------------------------------------------------
 
 void substitute(string &s, const string trg, const string rep)
 {
@@ -331,22 +365,28 @@ void substitute(string &s, const string trg, const string rep)
   }
 }
 
+//--------------------------------------------------------------------------
+//! \brief Tool for determining the size of variable types on the current architecture
+//--------------------------------------------------------------------------
+
 unsigned int theSize(string type) 
 {
   unsigned int sz= sizeof(int);
   if (type == tS("float")) sz= sizeof(float);
-  if (type == tS("usigned int")) sz= sizeof(unsigned int);
+  if (type == tS("unsigned int")) sz= sizeof(unsigned int);
   if (type == tS("int")) sz= sizeof(int);
   return sz;
 }
 
 
+vector<neuronModel> nModels; //!< Global c++ vector containing all neuron model descriptions
 
-////////////////////////////////////////////////////////////////////////////////
-// Standard neuron model definitions 
-////////////////////////////////////////////////////////////////////////////////
+//--------------------------------------------------------------------------
+/*! \brief FUnction that defines standard neuron models
 
-vector<neuronModel> nModels;
+The neuron models are defined and added to the C++ vector nModels that is holding all neuron model descriptions. User defined neuron models can be appended to this vector later in (a) separate function(s).
+*/
+//--------------------------------------------------------------------------
 
 void prepareStandardModels()
 {
@@ -475,7 +515,11 @@ void prepareStandardModels()
 // bit tool macros
 #include "simpleBit.h"
 
-#endif // _UTILS_H_
+#endif  // _UTILS_H_
+
+
+// REPEAT FROM HERE ON?!?!?
+
 /*
  * Copyright 1993-2012 NVIDIA Corporation.  All rights reserved.
  *

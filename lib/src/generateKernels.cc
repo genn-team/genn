@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------
 /*! \file generateKernels.cc
 
-  \brief Contains functions that generate code for CUDA kernels
+  \brief Contains functions that generate code for CUDA kernels. Part of the code generation section.
 */
 //-------------------------------------------------------------------------
 
@@ -36,19 +36,30 @@ The code generated upon execution of this function is for defining GPU side glob
 //-------------------------------------------------------------------------
 
 void genNeuronKernel(NNmodel &model, //!< Model description 
-		     ostream &os,  //!< output stream for code
+		     string &path,  //!< path for code output
 		     ostream &mos //!< output stream for messages
 		     )
 {
-  // write header content
-  string s, localID;
+   // write header content
+  string name, s, localID;
   unsigned int nt;
+  ofstream os;
+
+  name= path + toString("/") + model.name + toString("_CODE/neuronKrnl.cc");
+  os.open(name.c_str());
   
   writeHeader(os);
   // compiler/include control (include once)
   os << "#ifndef _" << model.name << "_neuronKrnl_cc" << endl;
   os << "#define _" << model.name << "_neuronKrnl_cc" << endl;
   
+  // write doxygen comment
+  os << "//-------------------------------------------------------------------------" << endl;
+  os << "/*! \file neuronKrnl.cc" << endl << endl;
+  os << "File generated from GeNN for the model " << model.name << " containing the neuron kernel function." << endl;
+  os << "*/" << endl;
+  os << //-------------------------------------------------------------------------" << endl << endl;
+
   // global device variables
  
   os << "// relevant neuron variables" << endl;
@@ -195,6 +206,7 @@ void genNeuronKernel(NNmodel &model, //!< Model description
   }
   os << "}" << endl << endl;
   os << "#endif" << endl;
+  os.close();
 }
 
 //-------------------------------------------------------------------------
@@ -206,20 +218,30 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 //-------------------------------------------------------------------------
 
 void genSynapseKernel(NNmodel &model, //!< Model description 
-		      ostream &os, //!< output stream for code
+		      string &path, //!< Path for code output
 		      ostream &mos //!< output stream for messages
 		      )
 {
-  // write header content
-  string s, localID, theLG;
-
+  string name, s, localID, theLG;
   unsigned int BlkNo;
+  ofstream os;
 
   // count how many blocks to use: one thread for each synapse target
   // targets of several input groups are counted multiply
   BlkNo= model.padSumSynapseTrgN[model.synapseGrpN-1] >> logSynapseBlkSz;
 
+  name= path + toString("/") + model.name + toString("_CODE/synapseKrnl.cc");
+  os.open(name.c_str());
+  // write header content
   writeHeader(os);
+
+  // write doxygen comment
+  os << "//-------------------------------------------------------------------------" << endl;
+  os << "/*! \file neuronKrnl.cc" << endl << endl;
+  os << "File generated from GeNN for the model " << model.name << " containing the synapse kernel and learning kernel functions." << endl;
+  os << "*/" << endl;
+  os << //-------------------------------------------------------------------------" << endl << endl;
+
   // compiler/include control (include once)
   os << "#ifndef _" << model.name << "_synapseKrnl_cc" << endl;
   os << "#define _" << model.name << "_synapseKrnl_cc" << endl;
@@ -493,5 +515,6 @@ void genSynapseKernel(NNmodel &model, //!< Model description
   }
   os << endl;
   os << "#endif" << endl;
+  os.close();
 }
 

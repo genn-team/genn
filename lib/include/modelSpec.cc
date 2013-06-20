@@ -14,7 +14,7 @@
 --------------------------------------------------------------------------*/
 
 #ifndef _MODELSPEC_CC_
-#define _MODELSPEC_CC_
+#define _MODELSPEC_CC_ //!< macro for avoiding multiple inclusion during compilation
 
 // class NNmodel for specifying a neuronal network model
 
@@ -37,13 +37,18 @@ void NNmodel::setName(const string inname)
 }
 
 
+//--------------------------------------------------------------------------
+/*! \brief Method for calculating dependent parameter values from independent parameters.
+
+This method is to invoked when all independent parameters have been set.
+It should also should only be called once and right after a population has been added. The method appends the derived values of dependent parameters to the corresponding vector (dnp) without checking for multiple calls. If called repeatedly, multiple copies of dependent parameters would be added leading to potential errors in the model execution.
+
+This method also saves the neuron numbers of the populations rounded to the next multiple of the block size as well as the sums s(i) = sum_{1...i} n_i of the rounded population sizes. These are later used to determine the branching structure for the generated neuron kernel code. 
+*/
+//--------------------------------------------------------------------------
 
 void NNmodel::initDerivedNeuronPara(unsigned int i)
 {
-  // to be called when all para have been set!
-  // also, call this only once and right after a population has been added
-  // as values are appended to vectors indiscriminantly
-  // derived neuron parameters (dnp)
   vector<float> tmpP;
   if (neuronType[i] == MAPNEURON) {
     tmpP.push_back(neuronPara[i][0]*neuronPara[i][0]*neuronPara[i][1]); // ip0

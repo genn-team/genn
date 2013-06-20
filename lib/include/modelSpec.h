@@ -14,162 +14,179 @@
 --------------------------------------------------------------------------*/
 
 #ifndef _MODELSPEC_H_
-#define _MODELSPEC_H_
+#define _MODELSPEC_H_ //!< macro for avoiding multiple inclusion during compilation
+
+//--------------------------------------------------------------------------
+/*! \file modelSpec.h
+
+\brief Header file that contains the class (struct) definition of neuronModel for defining a neuron model and the class definition of NNmodel for defining a neuronal network model. Part of the code generation and generated code sections.
+*/
+//--------------------------------------------------------------------------
 
 #include <vector>
 #include "toString.h"
 
-#define NTYPENO 4
+#define NTYPENO 4 //!< Macro defining the number of predefined neuron types
 
 //neuronType
-#define MAPNEURON 0
-#define POISSONNEURON 1
-#define TRAUBMILES 2
-#define IZHIKEVICH 3
+#define MAPNEURON 0 //!< Macro attaching the name "MAPNEURON" to neuron type 0
+#define POISSONNEURON 1 //!< Macro attaching the name "POISSONNEURON" to neuron type 1
+#define TRAUBMILES 2 //!< Macro attaching the name "TRAUBMILES" to neuron type 2
+#define IZHIKEVICH 3 //!< Macro attaching the name "IZHIKEVICH" to neuron type 3
 
 unsigned int NPNO[NTYPENO]= {
   4,        // MAPNEURON_PNO 
   4,         // POISSONNEURON_PNO 
   7,			// TRAUBMILES PNO
   5			// IZHIKEVICH PNO
-};
+}; //!< Global constant integer array containing the number of parameters of each predefined neuron type
 
 unsigned int NININO[NTYPENO]= {
   2,        // MAPNEURON_ININO
   3,        // POISSONNEURON_ININO
   4,			// TRAUBMILES ININO
   2			// IZHIKEVICH ININO			
-};
+}; //!< Global constant integer array containing the number of variables (= number of initial values) of each predefined neuron type
 
 #define SYNTYPENO 3
 
 //synapseType
-#define NSYNAPSE 0 // no learning
-#define NGRADSYNAPSE 1 // graded synapse wrt the presynaptic voltage
-#define LEARN1SYNAPSE 2 // learning by spike timing: a primitive STDP rule
+#define NSYNAPSE 0 //!< Macro attaching  the name NSYNAPSE to predefined synapse type 0, which is a non-learning synapse
+
+#define NGRADSYNAPSE 1 //!< Macro attaching  the name NGRADSYNAPSE to predefined synapse type 1 which is a graded synapse wrt the presynaptic voltage
+
+#define LEARN1SYNAPSE 2 //!< Macro attaching  the name LEARN1SYNAPSE to the predefined synapse type 2 which is a learning using spike timing; uses a primitive STDP rule for learning
 
 unsigned int SYNPNO[SYNTYPENO]= {
   3,        // NSYNAPSE_PNO 
   4,        // NGRADSYNAPSE_PNO 
   13        // LEARN1SYNAPSE_PNO 
-};
+}; //!< Global constant integer array containing the number of parameters of each of the predefined synapse types
 
 //connectivity of the network (synapseConnType)
-#define ALLTOALL 0
-#define DENSE 1
-//#define SPARSE 2
+#define ALLTOALL 0  //!< Macro attaching the label "ALLTOALL" to connectivity type 0 
+#define DENSE 1 //!< Macro attaching the label "DENSE" to connectivity type 1
+#define SPARSE 2//!< Macro attaching the label "SPARSE" to connectivity type 2
 
 //conductance type (synapseGType)
-#define INDIVIDUALG 0
-#define GLOBALG 1
-#define INDIVIDUALID 2
+#define INDIVIDUALG 0  //!< Macro attaching the label "INDIVIDUALG" to method 0 for the definition of synaptic conductances
 
-#define NOLEARNING 0
-#define LEARNING 1
+#define GLOBALG 1 //!< Macro attaching the label "GLOBALG" to method 1 for the definition of synaptic conductances
 
-#define EXITSYN 0
-#define INHIBSYN 1
+#define INDIVIDUALID 2 //!< Macro attaching the label "INDIVIDUALID" to method 2 for the definition of synaptic conductances
 
-#define TRUE 1
-#define FALSE 0
+#define NOLEARNING 0 //!< Macro attaching the label "NOLEARNING" to flag 0
+#define LEARNING 1 //!< Macro attaching the label "LEARNING" to flag 1
 
-#define CPU 0
-#define GPU 1
+#define EXITSYN 0 //!< Macro attaching the label "EXITSYN" to flag 0 (excitatory synapse)
+#define INHIBSYN 1 //!< Macro attaching the label "INHIBSYN" to flag 1 (inhibitory synapse)
+
+#define TRUE 1 //!< Macro attaching the label "TRUE" to value 1
+#define FALSE 0 //!< Macro attaching the label "FALSE" to value 1
+
+#define CPU 0 //!< Macro attaching the label "CPU" to flag 0
+#define GPU 1 //!< Macro attaching the label "GPU" to flag 1
 
 // for purposes of STDP
-#define SPK_THRESH 0.0f
+#define SPK_THRESH 0.0f //!< Macro defining the spiking threshold for the purposes of STDP 
 //#define MAXSPKCNT 50000
 
 
-// class for specifying a neuron model
+//! \brief class (struct) for specifying a neuron model.
 struct neuronModel
 {
-  string simCode; // needs to contain $(ISYN) if to receive input. This is where the neuron model code is defined.
-  vector<string> varNames;
-  vector<string> tmpVarNames; //never used
-  vector<string> varTypes;
-  vector<string> tmpVarTypes; //never used
-  vector<string> pNames;
-  vector<string> dpNames;
+  string simCode; /*!< \brief Code that defines the execution of one timestep of integration of the neuron model
+		    
+		    The code will refer to $(NN) for the value of the variable with name "NN". It needs to refer to the predefined variable "ISYN", i.e. contain $(ISYN), if it is to receive input. 
+		  */
+  vector<string> varNames; //!< Names of the variables in the neuron model
+  vector<string> tmpVarNames; //!< never used
+  vector<string> varTypes; //!< Types of the variable named above, e.g. "float". Names and types are matched by their order of occurrence in the vector.
+  vector<string> tmpVarTypes; //!< never used
+  vector<string> pNames; //!< Names of (independent) parameters of the model. These are assumed to be always of type "float"
+  vector<string> dpNames; /*!< \brief Names of dependent parameters of the model. These are assumed to be always of type "float"
+			    
+			    The dependent parameters are functions of independent parameters that enter into the neuron model. To avoid unecessary computational overhead, these parameters are calculated at compile time and inserted as explicit values into the generated code. See method NNmodel::initDerivedNeuronPara for how this is done.
+			  */ 
 };
 
 
-// class NNmodel for specifying a neuronal network model
+//! \brief class NNmodel for specifying a neuronal network model.
 
 class NNmodel
 {
  public:
-  string name;
-  int valid;
-  unsigned int needSt;
-  unsigned int neuronGrpN; // number of neuron groups
-  vector<string> neuronName; // names of neuron groups
-  vector<unsigned int>neuronN; // number of neurons in group
-  vector<unsigned int>sumNeuronN; // summed neuron numbers
-  vector<unsigned int>padSumNeuronN; // padded summed neuron numbers
-  vector<unsigned int>neuronType; // type of neurons
-  vector<vector<float> >neuronPara; // parameters of neurons
-  vector<unsigned int>neuronNeedSt; // whether last spike time needs to be saved
-  vector<vector<float> >dnp; // derived neuron parameters
-  vector<vector<float> >neuronIni; // parameters of neurons
-  vector<vector<unsigned int> >inSyn; // the ids of the incoming synapse groups
-  vector<float>nThresh; // neuron threshold for spiking
-  unsigned int synapseGrpN; // number of synapse groups
-  unsigned int lrnGroups; // number of synapse groups with learning
-  vector<string> synapseName; // names of synapse groups
-  vector<unsigned int>sumSynapseTrgN; // summed target neuron numbers
-  vector<unsigned int>padSumSynapseTrgN; // padded summed target neuron numbers
-  vector<unsigned int>padSumLearnN; // padded saummed neurons numbers of learn group srcs
-  vector<unsigned int>lrnSynGrp; // enumeration of syn groups that learn
-  vector<unsigned int>synapseType; // type of synapses
-  vector<unsigned int>synapseSource; // presynaptic neuron group
-  vector<unsigned int>synapseTarget; // postsynaptic neuron group
-  vector<vector<float> >synapsePara; // parameters of neurons
-  vector<unsigned int>synapseConnType; // connectivity type of synapses
-  vector<unsigned int>synapseGType; // connectivity type of synapses
-  vector<float>g0; // synapse conductance if GLOBALG
-  vector<unsigned int>synapseInSynNo; // id of the target neurons incoming synapse variables for each synapse group
-  vector<vector<float> >dsp;  // derived synapse parameters
+  string name; //!< Name of the neuronal newtwork model
+  int valid; //!< Flag for whether the model has been validated (unused?)
+  unsigned int needSt; //!< Whether last spike times are needed at all in this network model (related to STDP)
+  unsigned int neuronGrpN; //!< Number of neuron groups
+  vector<string> neuronName; //!< Names of neuron groups
+  vector<unsigned int>neuronN; //!< Number of neurons in group
+  vector<unsigned int>sumNeuronN; //!< Summed neuron numbers
+  vector<unsigned int>padSumNeuronN; //!< Padded summed neuron numbers
+  vector<unsigned int>neuronType; //!< Types of neurons
+  vector<vector<float> >neuronPara; //!< Parameters of neurons
+  vector<unsigned int>neuronNeedSt; //!< Whether last spike time needs to be saved for each indivual neuron type
+  vector<vector<float> >dnp; //!< Derived neuron parameters
+  vector<vector<float> >neuronIni; //!< Initial values of neurons
+  vector<vector<unsigned int> >inSyn; //!< The ids of the incoming synapse groups
+  vector<float>nThresh; //!< Threshold for spiking for each neuron type
+  unsigned int synapseGrpN; //!< Number of synapse groups
+  unsigned int lrnGroups; //!< Number of synapse groups with learning
+  vector<string> synapseName; //!< Names of synapse groups
+  vector<unsigned int>sumSynapseTrgN; //!< Summed naumber of target neurons
+  vector<unsigned int>padSumSynapseTrgN; //!< "Padded" summed target neuron numbers
+  vector<unsigned int>padSumLearnN; //!< Padded summed neuron numbers of learn group source populations
+  vector<unsigned int>lrnSynGrp; //!< Enumeration of the IDs of synapse groups that learn
+  vector<unsigned int>synapseType; //!< Types of synapses
+  vector<unsigned int>synapseSource; //!< Presynaptic neuron groups
+  vector<unsigned int>synapseTarget; //!< Postsynaptic neuron groups
+  vector<vector<float> >synapsePara; //!< parameters of synapses
+  vector<unsigned int>synapseConnType; //!< Connectivity type of synapses
+  vector<unsigned int>synapseGType; //!< Type of specification method for synaptic conductance
+  vector<float>g0; //!< Global synapse conductance if GLOBALG is chosen.
+  vector<unsigned int>synapseInSynNo; //!< IDs of the target neurons' incoming synapse variables for each synapse group
+  vector<vector<float> >dsp;  //!> Derived synapse parameters
 
  private:
-  void setNeuronName(unsigned int, const string); //never used
-  void setSynapseName(unsigned int, const string);//never used
-  void setNeuronN(unsigned int, unsigned int);//never used
-  void setNeuronType(unsigned int, unsigned int);//never used
-  void setNeuronPara(unsigned int, float*);//never used
-  void setNeuronIni(unsigned int, float*);//never used
-  void setSynapseType(unsigned int, unsigned int);//never used
-  void setSynapseSource(unsigned int, unsigned int);//never used
-  void setSynapseTarget(unsigned int, unsigned int);//never used
-  void setSynapsePara(unsigned int, float*);//never used
-  void setSynapseConnType(unsigned int, unsigned int);//never used
-  void setSynapseGType(unsigned int, unsigned int);//never used
-  void initDerivedNeuronPara(unsigned int);
-  void initDerivedSynapsePara(unsigned int);
-  unsigned int findNeuronGrp(const string);
-  unsigned int findSynapseGrp(const string);
+  void setNeuronName(unsigned int, const string); //!< Never used
+  void setSynapseName(unsigned int, const string); //!< Never used
+  void setNeuronN(unsigned int, unsigned int); //!< Never used
+  void setNeuronType(unsigned int, unsigned int); //!< Never used
+  void setNeuronPara(unsigned int, float*); //!< Never used
+  void setNeuronIni(unsigned int, float*); //!< Never used
+  void setSynapseType(unsigned int, unsigned int); //!< Never used
+  void setSynapseSource(unsigned int, unsigned int); //!< Never used
+  void setSynapseTarget(unsigned int, unsigned int); //!< Never used
+  void setSynapsePara(unsigned int, float*); //!< Never used
+  void setSynapseConnType(unsigned int, unsigned int); //!< Never used
+  void setSynapseGType(unsigned int, unsigned int); //!< Never used
+  void initDerivedNeuronPara(unsigned int); //!< Method for calculating the values of derived neuron parameters.
+  void initDerivedSynapsePara(unsigned int); //!< Method for calculating the values of derived synapse parameters.
+  unsigned int findNeuronGrp(const string); //!< Find the the ID number of a neuron group by its name 
+  unsigned int findSynapseGrp(const string); //< Find the the ID number of a synapse group by its name  
 
  public:
   NNmodel();
   ~NNmodel();
-  void setName(const string);
-  void addNeuronPopulation(const char *, unsigned int, unsigned int, float *, float *);
-  void addNeuronPopulation(const string, unsigned int, unsigned int, float *, float *);
-  void addSynapsePopulation(const char *, unsigned int, unsigned int, unsigned int, const char *, const char *, float *);
-  void addSynapsePopulation(const string, unsigned int, unsigned int, unsigned int, const string, const string, float *);
-  void setSynapseG(const string, float);
+  void setName(const string); //!< Method to set the neuronal network model name
+  void addNeuronPopulation(const char *, unsigned int, unsigned int, float *, float *); //!< Method for adding a neuron population to a neuronal network model, using C style character array for the name of the population
+  void addNeuronPopulation(const string, unsigned int, unsigned int, float *, float *); //!< Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population
+  void addSynapsePopulation(const char *, unsigned int, unsigned int, unsigned int, const char *, const char *, float *); //!< Method for adding a synapse population to a neuronal network model, using C style character array for the name of the population
+  void addSynapsePopulation(const string, unsigned int, unsigned int, unsigned int, const string, const string, float *); //!< Method for adding a synapse population to a neuronal network model, using C++ string for the name of the population
+  void setSynapseG(const string, float); //!< Mehthod for setting the condy=uctance (g) value for a synapse population with "GLOBALG" charactertistic
 };
 
 
 // global variables
-unsigned int neuronBlkSz;
-unsigned int logNeuronBlkSz;
-unsigned int synapseBlkSz;
-unsigned int logSynapseBlkSz;
-unsigned int learnBlkSz;
-unsigned int logLearnBlkSz;
-unsigned int UIntSz;
-unsigned int logUIntSz;
-unsigned int theDev;
+unsigned int neuronBlkSz; //!< Global variable that contains the block size for the neuron kernel function
+unsigned int logNeuronBlkSz; //!< Global variable that contains the logarithm of the block size for the neuron kernel function
+unsigned int synapseBlkSz; //!< Global variable that contains the block size for the synapse kernel function
+unsigned int logSynapseBlkSz; //!< Global variable that contains the logarithm of the block size for the synapse kernel function
+unsigned int learnBlkSz; //!< Global variable that contains the block size for the kernel performing learning updates for plastic synapses
+unsigned int logLearnBlkSz; //!< Global variable that contains the logarithm of the learning kernel block size
+unsigned int UIntSz; //!< size of the unsigned int variable type on the local architecture
+unsigned int logUIntSz; //!< logarithm of the size of the unsigned int variable type on the local architecture
+unsigned int theDev; //!< ID number of the chosen GPU device
 
 #endif

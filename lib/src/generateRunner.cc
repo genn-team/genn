@@ -19,7 +19,7 @@
   
   \brief Contains functions to generate code for running the
   simulation on the GPU, and for I/O convenience functions between GPU
-  and CPU space.
+  and CPU space. Part of the code generation section.
 */
 //--------------------------------------------------------------------------
 
@@ -34,7 +34,7 @@ unsigned int globalMem0; //!< Global variable that makes available the size of t
 */
 //--------------------------------------------------------------------------
 
-void prepare(ostream &mos)
+void prepare(ostream &mos //!< output stream for messages)
 {
   devN= checkDevices(mos);
   if (devN > 0) {
