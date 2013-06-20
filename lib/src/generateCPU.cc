@@ -51,7 +51,7 @@ void genNeuronFunction(NNmodel &model, //!< Model description
     // write doxygen comment
   os << "//-------------------------------------------------------------------------" << endl;
   os << "/*! \\file neuronFnct.cc" << endl << endl;
-  os << "File generated from GeNN for the model " << model.name << " containing the the equivalent of neuron kernel function for the CPU-only version." << endl;
+  os << "\\brief File generated from GeNN for the model " << model.name << " containing the the equivalent of neuron kernel function for the CPU-only version." << endl;
   os << "*/" << endl;
   os << "//-------------------------------------------------------------------------" << endl << endl;
 
@@ -156,8 +156,8 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 
   // write doxygen comment
   os << "//-------------------------------------------------------------------------" << endl;
-  os << "/*! \\file synapseFcnt.cc" << endl << endl;
-  os << "File generated from GeNN for the model " << model.name << " containing the equivalent of the synapse kernel and learning kernel functions for the CPU only version." << endl;
+  os << "/*! \\file synapseFnct.cc" << endl << endl;
+  os << "\\brief File generated from GeNN for the model " << model.name << " containing the equivalent of the synapse kernel and learning kernel functions for the CPU only version." << endl;
   os << "*/" << endl;
   os << "//-------------------------------------------------------------------------" << endl << endl;
 

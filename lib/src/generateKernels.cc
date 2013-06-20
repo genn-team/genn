@@ -56,7 +56,7 @@ void genNeuronKernel(NNmodel &model, //!< Model description
   // write doxygen comment
   os << "//-------------------------------------------------------------------------" << endl;
   os << "/*! \\file neuronKrnl.cc" << endl << endl;
-  os << "File generated from GeNN for the model " << model.name << " containing the neuron kernel function." << endl;
+  os << "\\brief File generated from GeNN for the model " << model.name << " containing the neuron kernel function." << endl;
   os << "*/" << endl;
   os << "//-------------------------------------------------------------------------" << endl << endl;
 
@@ -243,7 +243,7 @@ void genSynapseKernel(NNmodel &model, //!< Model description
   // write doxygen comment
   os << "//-------------------------------------------------------------------------" << endl;
   os << "/*! \\file synapseKrnl.cc" << endl << endl;
-  os << "File generated from GeNN for the model " << model.name << " containing the synapse kernel and learning kernel functions." << endl;
+  os << "\\brief File generated from GeNN for the model " << model.name << " containing the synapse kernel and learning kernel functions." << endl;
   os << "*/" << endl;
   os << "//-------------------------------------------------------------------------" << endl << endl;
 
