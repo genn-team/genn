@@ -11,6 +11,9 @@
   
 --------------------------------------------------------------------------*/
 
+#ifndef GAUSS_H
+#define GAUSS_H //!< macro for avoiding multiple inclusion during compilation
+
 //-----------------------------------------------------------------------
 /*!  \file gauss.h
 
@@ -25,9 +28,6 @@ This random number generator is based on the ratio of uniforms method by A.J. Ki
   by Bob Jenkins Jr.).
 */
 //-----------------------------------------------------------------------
-
-#ifndef GAUSS_H
-#define GAUSS_H
 
 #include <cmath>
 #include "randomGen.h"
