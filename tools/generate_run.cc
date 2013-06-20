@@ -41,17 +41,17 @@ std::string toString(T t)
 
 int main(int argc, char *argv[])
 {
-  if (argc != 8)
+  if (argc != 11)
   {
-    cerr << "usage: generate_run <CPU=0, GPU=1> <nAL> <nMB> <nLHI> <nLb> ";
+    cerr << "usage: generate_run <CPU=0, GPU=1> <nAL> <nMB> <nLHI> <nLb> <executable name> <model name> <debug mode? (0/1)>";
     cerr << "<gPNKC_base> <basename>" << endl;
     exit(1);
   }
 
-  int DBGMODE =0; //set this to 1 if you want to enable gdb and cuda-gdb debugging to 0 for release
+  int DBGMODE = atoi(argv[10]); //set this to 1 if you want to enable gdb and cuda-gdb debugging to 0 for release
   string cmd;
-  string execName = "classol_sim";
-  string modelName = "MBody1";
+  string execName = argv[8];
+  string modelName = argv[9];
   
   int which= atoi(argv[1]);
   int nAL= atoi(argv[2]);
