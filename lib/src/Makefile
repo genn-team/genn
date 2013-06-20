@@ -152,9 +152,9 @@ ifdef ON_WINDOWS
 	LLIB := "$(CUDADIR)lib/$(OSREAL)/cudart.lib"
 else
 ifdef ON_MAC
-	LIB       := -L$(CUDADIR)/lib -L $(NVIDIASDKPATH)/lib -L$(NVIDIASAMPLIB) 
+	LIB       := -L$(CUDADIR)/lib -L$(NVIDIASDKPATH)/lib -L$(NVIDIASAMPLIB) 
 else
-	LIB       := -L$(CUDADIR)/lib64 -L $(NVIDIASDKPATH)/lib -L$(NVIDIASAMPLIB) 
+	LIB       := -L$(CUDADIR)/lib64 -L$(NVIDIASDKPATH)/lib -L$(NVIDIASAMPLIB) 
 endif
 endif
 
