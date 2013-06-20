@@ -1,0 +1,56 @@
+/*--------------------------------------------------------------------------
+   Author: Thomas Nowotny
+  
+   Institute: Center for Computational Neuroscience and Robotics
+              University of Sussex
+	      Falmer, Brighton BN1 9QJ, UK 
+  
+   email to:  T.Nowotny@sussex.ac.uk
+  
+   initial version: 2010-02-07
+  
+--------------------------------------------------------------------------*/
+
+
+//----------------------------------------------------------------------------
+/*! \page Ideas TODO list 
+\section Ideas for GeNN development:
+
+- add error checking in addNeuronPopulations:
+  - maximum number of neuron populations? Or estimating resources beyound what is done at code generation stage?
+  - check for missing minimal 1 neuron population?
+  - check for name equality of neuron populations and throw error message?
+
+- add error checking for addSynapsePopulations:
+  - maximal number / resource checking?
+  - minimal number check - revisit, should 0 be allowed?
+  - check whether neuron populations exist. 
+  - check for unique name
+
+- There is a global flag int optimiseBlockSize= 1; this should be
+  passed through to users or replaced by some approriate logic. This
+  goes together with improving block size optimisation in my mind. (global.h)
+
+- Is the macro for the number of predefined neuron types (NTYPENO in
+  modelSpec.h) really necessary?
+
+- do something meaningful for sparse connectivity(!)
+
+- #define SPK_THRESH 0.0f (in modelSpec.h) is this really the way to do it? User
+   control? global settings somewhere?
+
+- in modelSpec.cc: void NNmodel::initDerivedNeuronPara(unsigned int i)
+  - error checking for if it is called twice OR allowing multiple
+  - calls but setting DNP values by index instead of simply appending.
+
+- GeNN currently only supports parameter-homogeneous populations of
+  neurons. An interesting extension could be individual parameters
+  (this is a major change though, as parameters would need to become
+  variables in the CUDA angle of things (and stored in device
+  memory?).
+
+- Omissions in code documentation: ModelSpec.cc (does it need more details?)
+
+
+*/
+//----------------------------------------------------------------------------
