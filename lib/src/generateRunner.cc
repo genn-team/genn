@@ -118,7 +118,7 @@ void genRunner(NNmodel &model, //!< Model description
     // write doxygen comment
   os << "//-------------------------------------------------------------------------" << endl;
   os << "/*! \\file runner.cc" << endl << endl;
-  os << "File generated from GeNN for the model " << model.name << " containing general control code used for both GPU amd CPU versions." << endl;
+  os << "\\brief File generated from GeNN for the model " << model.name << " containing general control code used for both GPU amd CPU versions." << endl;
   os << "*/" << endl;
   os << "//-------------------------------------------------------------------------" << endl << endl;
 
@@ -348,7 +348,7 @@ void genRunnerGPU(NNmodel &model, //!< Model description
   // write doxygen comment
   os << "//-------------------------------------------------------------------------" << endl;
   os << "/*! \\file runnerGPU.cc" << endl << endl;
-  os << "File generated from GeNN for the model " << model.name << " containing the host side code for a GPU simulator version." << endl;
+  os << "\\brief File generated from GeNN for the model " << model.name << " containing the host side code for a GPU simulator version." << endl;
   os << "*/" << endl;
   os << "//-------------------------------------------------------------------------" << endl << endl;
 
@@ -657,7 +657,7 @@ void genRunnerCPU(NNmodel &model, //!< Neuronal network model description
   // write doxygen comment
   os << "//-------------------------------------------------------------------------" << endl;
   os << "/*! \\file runnerCPU.cc" << endl << endl;
-  os << "File generated from GeNN for the model " << model.name << " containing the control code for running a CPU only simulator version." << endl;
+  os << "\\brief File generated from GeNN for the model " << model.name << " containing the control code for running a CPU only simulator version." << endl;
   os << "*/" << endl;
   os << "//-------------------------------------------------------------------------" << endl << endl;
 
