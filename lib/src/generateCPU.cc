@@ -30,20 +30,30 @@
 //--------------------------------------------------------------------------
 
 void genNeuronFunction(NNmodel &model, //!< Model description 
-		       ostream &os, //!< output stream for code
+		       string &path, //!< output stream for code
 		       ostream &mos //!< output stream for messages
 		       )
 {
-  // write header content
-  string s, localID;
+  string name, s, localID;
   unsigned int nt;
+  ofstream os;
 
+  name= path + toString("/") + model.name + toString("_CODE/neuronFnct.cc");
+  os.open(name.c_str());
+  // write header content
   writeHeader(os);
   os << endl;
   // compiler/include control (include once)
   os << "#ifndef _" << model.name << "_neuronFnct_cc" << endl;
   os << "#define _" << model.name << "_neuronFnct_cc" << endl;
   os << endl;
+
+    // write doxygen comment
+  os << "//-------------------------------------------------------------------------" << endl;
+  os << "/*! \\file neuronFnct.cc" << endl << endl;
+  os << "File generated from GeNN for the model " << model.name << " containing the the equivalent of neuron kernel function for the CPU-only version." << endl;
+  os << "*/" << endl;
+  os << "//-------------------------------------------------------------------------" << endl << endl;
 
   // CPU function for calculating neuron states
   // header
@@ -115,6 +125,7 @@ void genNeuronFunction(NNmodel &model, //!< Model description
   os << endl;
   os << "}" << endl << endl;
   os << "#endif" << endl;
+  os.close();
 } 
 
 
@@ -126,19 +137,29 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 //--------------------------------------------------------------------------
 
 void genSynapseFunction(NNmodel &model, //!< Model description
-			ostream &os, //!< output stream for code
+			string &path, //!< Path for code generation
 			ostream &mos //!< output stream for messages
 			)
 {
-  // write header content
-  string s, localID, theLG;
+  string name, s, localID, theLG;
+  ofstream os;
 
+  name= path + toString("/") + model.name + toString("_CODE/synapseFnct.cc");
+  os.open(name.c_str());
+  // write header content
   writeHeader(os);
   os << endl;
   // compiler/include control (include once)
   os << "#ifndef _" << model.name << "_synapseFnct_cc" << endl;
   os << "#define _" << model.name << "_synapseFnct_cc" << endl;
   os << endl;
+
+  // write doxygen comment
+  os << "//-------------------------------------------------------------------------" << endl;
+  os << "/*! \\file synapseFcnt.cc" << endl << endl;
+  os << "File generated from GeNN for the model " << model.name << " containing the equivalent of the synapse kernel and learning kernel functions for the CPU only version." << endl;
+  os << "*/" << endl;
+  os << "//-------------------------------------------------------------------------" << endl << endl;
 
   // Function for calculating synapse input to neurons
   // Function header
@@ -290,5 +311,6 @@ void genSynapseFunction(NNmodel &model, //!< Model description
   os << endl;
 
   os << "#endif" << endl;
+  os.close();
 }
 
