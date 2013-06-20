@@ -75,10 +75,10 @@ void generate_model_runner(NNmodel &model,  //!< Model description
   genRunnerCPU(model, path, cerr);
 
   // Generate the equivalent of neuron kernel
-  genNeuronFunction(model, os, cerr);
+  genNeuronFunction(model, path, cerr);
   
   // Generate the equivalent of synapse and learning kernel
-  genSynapseFunction(model, os, cerr);
+  genSynapseFunction(model, path, cerr);
 }
 
 /*! \brief Main entry point for the generateALL executable that generates
