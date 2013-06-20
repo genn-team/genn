@@ -60,38 +60,25 @@ void generate_model_runner(NNmodel &model,  //!< Model description
 
 
   // general/ shared code for GPU and CPU versions
-  name= path + toString("/") + model.name + toString("_CODE/runner.cc");
-  // cerr << name.c_str() << endl;
-  ofstream os(name.c_str());
-  genRunner(model, os, cerr);
-  os.close();
+  genRunner(model, path, cerr);
 
   // GPU specific code generation
-  name= path + toString("/") + model.name + toString("_CODE/runnerGPU.cc");
-  os.open(name.c_str());
-  genRunnerGPU(model, os, cerr);
-  os.close();
+  genRunnerGPU(model, path, cerr);
   
   // generate neuron kernels
-  genNeuronKernel(model, os, cerr);
+  genNeuronKernel(model, path, cerr);
+
   // generate synapse and learning kernels
-  genSynapseKernel(model, os, cerr);
+  genSynapseKernel(model, path, cerr);
 
   // CPU specific code generation
-  name= path + toString("/") + model.name + toString("_CODE/runnerCPU.cc");
-  os.open(name.c_str());
-  genRunnerCPU(model, os, cerr);
-  os.close();
+  genRunnerCPU(model, path, cerr);
 
-  name= path + toString("/") + model.name + toString("_CODE/neuronFnct.cc");
-  os.open(name.c_str());
+  // Generate the equivalent of neuron kernel
   genNeuronFunction(model, os, cerr);
-  os.close();
   
-  name= path + toString("/") + model.name + toString("_CODE/synapseFnct.cc");
-  os.open(name.c_str());
+  // Generate the equivalent of synapse and learning kernel
   genSynapseFunction(model, os, cerr);
-  os.close();
 }
 
 /*! \brief Main entry point for the generateALL executable that generates

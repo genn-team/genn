@@ -34,7 +34,8 @@ unsigned int globalMem0; //!< Global variable that makes available the size of t
 */
 //--------------------------------------------------------------------------
 
-void prepare(ostream &mos //!< output stream for messages)
+void prepare(ostream &mos //!< output stream for messages
+	     )
 {
   devN= checkDevices(mos);
   if (devN > 0) {
@@ -98,17 +99,28 @@ void prepare(ostream &mos //!< output stream for messages)
 //--------------------------------------------------------------------------
 
 void genRunner(NNmodel &model, //!< Model description
-	       ostream &os, //!< output stream for the code 
+	       string path, //!< path for code generation
 	       ostream &mos //!< output stream for messages
 	       )
 {
+  string name;
   unsigned int nt;
   unsigned int mem= 0;
+  ofstream os;
 
+  name= path + toString("/") + model.name + toString("_CODE/runner.cc");
+  os.open(name.c_str());
+  
   writeHeader(os);
   os << endl;
-  //os << "#include <cutil_inline.h>" << endl;
   os << "#include <helper_cuda.h>" << endl;
+
+    // write doxygen comment
+  os << "//-------------------------------------------------------------------------" << endl;
+  os << "/*! \\file runner.cc" << endl << endl;
+  os << "File generated from GeNN for the model " << model.name << " containing general control code used for both GPU amd CPU versions." << endl;
+  os << "*/" << endl;
+  os << "//-------------------------------------------------------------------------" << endl << endl;
 
   // ------------------------------------------------------------------------
   // gloabl host variables (matching some of the device ones)
@@ -303,6 +315,7 @@ cerr << deviceProp[theDev].totalGlobalMem << " theDev " << theDev << endl;
     mos << "(" << deviceProp[theDev].totalGlobalMem/1e6 << "MB)." << endl;
     mos << "Experience shows that this is UNLIKELY TO WORK ... " << endl;
   }
+  os.close();
 }
 
 //----------------------------------------------------------------------------
@@ -314,17 +327,31 @@ The function generates functions that will spawn kernel grids onto the GPU (but 
 //----------------------------------------------------------------------------
 
 void genRunnerGPU(NNmodel &model, //!< Model description 
-		  ostream &os, //!< output stream for code
+		  string &path, //!< pathe for code generation
 		  ostream &mos //!< output stream for messages
 		  )
 {
+  string name;
   unsigned int nt;
+  ofstream os;
 
+  
   if (devN > 0) {
+    name= path + toString("/") + model.name + toString("_CODE/runnerGPU.cc");
+    os.open(name.c_str());
+    
     writeHeader(os);
-	os << "#include <cuda_runtime.h>" << endl;//EY
+    os << "#include <cuda_runtime.h>" << endl;//EY
     os << "#include <helper_cuda.h>" << endl;//EY
-    os << "#include <helper_timer.h>" << endl;//EY
+    os << "#include <helper_timer.h>" << endl << endl;//EY
+
+  // write doxygen comment
+  os << "//-------------------------------------------------------------------------" << endl;
+  os << "/*! \\file runnerGPU.cc" << endl << endl;
+  os << "File generated from GeNN for the model " << model.name << " containing the host side code for a GPU simulator version." << endl;
+  os << "*/" << endl;
+  os << "//-------------------------------------------------------------------------" << endl << endl;
+
     os << "#define RAND(Y,X) Y = Y * 1103515245 +12345;";
     os << "X= (unsigned int)(Y >> 16) & 32767" << endl;
     os << endl;
@@ -596,11 +623,11 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     }
     os << "t);" << endl;
     os << "}" << endl;
+    os.close();
   }
   else {
     mos << "No CUDA enabled device deteced - cowardly refusing to";
     mos << " generate GPU code." << endl;
-    os << endl;
   }
 }
 
@@ -613,11 +640,27 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 //----------------------------------------------------------------------------
 
 
-void genRunnerCPU(NNmodel &model, ostream &os, ostream &mos)
+void genRunnerCPU(NNmodel &model, //!< Neuronal network model description 
+		  string &path, //!< Path for code generation
+		  ostream &mos) //!< Output stream for messages
 {
+  string name;
+  ofstream os;
+
+  name= path + toString("/") + model.name + toString("_CODE/runnerCPU.cc");
+  os.open(name.c_str());
+
   writeHeader(os);
   os << "#include <cuda_runtime.h>" << endl;//EY
-  os << "#include <helper_cuda.h>" << endl;//EY
+  os << "#include <helper_cuda.h>" << endl << endl;//EY
+
+  // write doxygen comment
+  os << "//-------------------------------------------------------------------------" << endl;
+  os << "/*! \\file runnerCPU.cc" << endl << endl;
+  os << "File generated from GeNN for the model " << model.name << " containing the control code for running a CPU only simulator version." << endl;
+  os << "*/" << endl;
+  os << "//-------------------------------------------------------------------------" << endl << endl;
+
   os << "#ifndef RAND" << endl;
   os << "#define RAND(Y,X) Y = Y * 1103515245 +12345;";
   os << "X= (unsigned int)(Y >> 16) & 32767" << endl;
@@ -659,4 +702,5 @@ void genRunnerCPU(NNmodel &model, ostream &os, ostream &mos)
   }
   os << "t);" << endl;
   os << "}" << endl;
+  os.close();
 }

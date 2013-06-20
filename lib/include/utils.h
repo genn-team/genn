@@ -85,7 +85,6 @@ void error(const char *msg)
   exit(1);
 }
 
-/
 
 //--------------------------------------------------------------------------
 /* \brief Function to write the comment header denoting file authorship and contact details into the generated code.
@@ -509,9 +508,11 @@ void prepareStandardModels()
   $(U)+=$(a)*($(b)*$(V)-$(U));\n\
   if ($(V) > 30){\n\
 		$(V)=$(c);\n\
-		$(U)+=$(d);\n\	
-}\n");
-  nModels.push_back(n);}
+		$(U)+=$(d);\n\
+  }\n");
+  nModels.push_back(n);
+}
+
 // bit tool macros
 #include "simpleBit.h"
 
@@ -550,7 +551,7 @@ void prepareStandardModels()
 
 #include <helper_cuda.h>
 
-//GeNN-related
+// GeNN-related
 #include <vector>
 #include "modelSpec.h"
 
@@ -990,9 +991,11 @@ void prepareStandardModels()
   $(U)+=$(a)*($(b)*$(V)-$(U));\n\
   if ($(V) > 30){\n\
 		$(V)=$(c);\n\
-		$(U)+=$(d);\n\	
-}\n");
-  nModels.push_back(n);}
+		$(U)+=$(d);\n\
+  }\n");
+  nModels.push_back(n);
+}
+
 // bit tool macros
 #include "simpleBit.h"
 

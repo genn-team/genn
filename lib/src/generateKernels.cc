@@ -55,10 +55,10 @@ void genNeuronKernel(NNmodel &model, //!< Model description
   
   // write doxygen comment
   os << "//-------------------------------------------------------------------------" << endl;
-  os << "/*! \file neuronKrnl.cc" << endl << endl;
+  os << "/*! \\file neuronKrnl.cc" << endl << endl;
   os << "File generated from GeNN for the model " << model.name << " containing the neuron kernel function." << endl;
   os << "*/" << endl;
-  os << //-------------------------------------------------------------------------" << endl << endl;
+  os << "//-------------------------------------------------------------------------" << endl << endl;
 
   // global device variables
  
@@ -235,17 +235,17 @@ void genSynapseKernel(NNmodel &model, //!< Model description
   // write header content
   writeHeader(os);
 
-  // write doxygen comment
-  os << "//-------------------------------------------------------------------------" << endl;
-  os << "/*! \file neuronKrnl.cc" << endl << endl;
-  os << "File generated from GeNN for the model " << model.name << " containing the synapse kernel and learning kernel functions." << endl;
-  os << "*/" << endl;
-  os << //-------------------------------------------------------------------------" << endl << endl;
-
   // compiler/include control (include once)
   os << "#ifndef _" << model.name << "_synapseKrnl_cc" << endl;
   os << "#define _" << model.name << "_synapseKrnl_cc" << endl;
   os << endl;
+
+  // write doxygen comment
+  os << "//-------------------------------------------------------------------------" << endl;
+  os << "/*! \\file synapseKrnl.cc" << endl << endl;
+  os << "File generated from GeNN for the model " << model.name << " containing the synapse kernel and learning kernel functions." << endl;
+  os << "*/" << endl;
+  os << "//-------------------------------------------------------------------------" << endl << endl;
 
   for (int i= 0; i < model.synapseGrpN; i++) {
     if (model.synapseGType[i] == INDIVIDUALG) {
