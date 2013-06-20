@@ -12,7 +12,16 @@
 --------------------------------------------------------------------------*/
 
 #ifndef _GLOBAL_H_
-#define _GLOBAL_H_
+#define _GLOBAL_H_ //!< macro for avoiding multiple inclusion during compilation
+
+//--------------------------------------------------------------------------
+/*! \file global.h
+
+\brief Global header file containing a few global variables. Part of the code generation section.
+
+This global header file also takes care of including some generally used cuda support header files.
+*/
+//--------------------------------------------------------------------------
 
 
 #include <iostream>
@@ -26,8 +35,8 @@ using namespace std; // replaced these two lines : problem with visual studio
 #include <helper_cuda.h>
 //#include <helper_cuda_drvapi.h>
 
-cudaDeviceProp *deviceProp;
-int devN;
-int optimiseBlockSize= 1;
+cudaDeviceProp *deviceProp; //!< Global variable that contains the detected properties of all CUDA-enabled devices
+int devN; //!< Global variable that contains the number of detected CUDA-enabled devices
+int optimiseBlockSize= 1; //!< Flag that regulates whether BlockSize optimisation shall be attempted
 
 #endif  // _GLOBAL_H_

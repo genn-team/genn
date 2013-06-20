@@ -16,6 +16,40 @@
 
 GeNN is a software package to enable neuronal network simulations on GPUs.
 
+\section download_sec Download
+You can download GeNN either as a zip file of a stable release or a
+snapshot of the
+most recent stable version or the unstable, potentially buggy
+development version using the Mercurial version control system.
+
+\subsection subsect_DS1 Downloading a release
+Point your browser to
+\a http://sourceforge.net/projects/genn/
+and download the latest release using the green download button. The
+continue as described in the \ref install_sec section.
+
+\subsection subsect_DS2 Obtaining a Mercurial snapshot
+
+Install mercurial (\a http://mercurial.selenic.com/) on your system.
+Then point your browser to http://sourceforge.net/p/genn/code/ and use
+the suggested command line to clone a copy of the mercurial snapshot:
+\code
+hg clone http://hg.code.sf.net/p/genn/code genn-default
+\endcode
+This will clone the default branch which always contains a working
+(though unlikely bug free) version. If you want the bleeding edge
+development version (which may or may not be fully functional at any
+given time), use
+\code
+hg clone http://hg.code.sf.net/p/genn/code genn-development -b development
+\endcode
+In both cases, "genn-default" and "genn-development" are the target
+directory name which you can choose to your liking.
+
+Alternatively you can click the "Download snapshot" button
+(http://sourceforge.net/p/genn/code/ci/default/tarball).
+You can then skip the unzip step and continue as described in \ref install_sec.
+
 \section install_sec Installation
 
 Installation of GeNN:

@@ -12,7 +12,7 @@
 --------------------------------------------------------------------------*/
 
 /*! \file generateALL.cpp
-  \brief Main file combining the code for code generation. 
+  \brief Main file combining the code for code generation. Part of the code generation section.
 
   The file includes separate files for generating kernels (generateKernels.cc),
   generating the CPU side code for running simulations on either the CPU or GPU (generateRunner.cc) and for CPU-only simulation code (generateCPU.cc).
@@ -72,15 +72,10 @@ void generate_model_runner(NNmodel &model,  //!< Model description
   genRunnerGPU(model, os, cerr);
   os.close();
   
-  name= path + toString("/") + model.name + toString("_CODE/neuronKrnl.cc");
-  os.open(name.c_str());
+  // generate neuron kernels
   genNeuronKernel(model, os, cerr);
-  os.close();
-  
-  name= path + toString("/") + model.name + toString("_CODE/synapseKrnl.cc");
-  os.open(name.c_str());
+  // generate synapse and learning kernels
   genSynapseKernel(model, os, cerr);
-  os.close();
 
   // CPU specific code generation
   name= path + toString("/") + model.name + toString("_CODE/runnerCPU.cc");

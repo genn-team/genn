@@ -18,7 +18,25 @@
 \tableofcontents
 
 \section sIntro Introduction
+GeNN is a software library for facilitating the simulation of neuronal
+network models on NVIDIA CUDA enable GPU hardware. It was designed
+with computational neuroscience models in mind rather than artificial
+neural networks. The main philosophy of GeNN is two-fold:
+- GeNN relies heavily on code generation to make it very flexible and
+allow adjusting simulation code to the model of interest and the GPU
+hardware that is detected at compile time.
+- GeNN is lightweight in that it provides code for running models of
+neuronal networks on GPU hardware but it leaves it to the user to
+write a final simulation engine. It so allows maximal flexibility to
+the user who can use any of the provided code but can fully choose,
+inspect, extend or otherwise modify the generated code. She can also
+introduce her own optimisations and in particular control the data
+flow from and to the GPU in any desired granularity.
 
+This User guide gives an overview how to use GeNN for a novice user and
+tries to lead the user to more expert use later on. With this we jump
+right in.
+ 
 \section sect1 Defining a model
 A model is defined by the user by providing the function 
 \code{.cc}
@@ -30,7 +48,18 @@ in this function the following tasks must be completed:
 model.setName("MyModel");
 \endcode
 
-- neuron populations (at least one) must be added:
+- neuron populations (at least one) must be added (see \ref subsect11). The
+  user may add as many neuron population as she wishes. If resources
+  run out, there will not be a warning but GeNN will fail. All
+  populations should have a unique name.
+
+- synapse populations (at least one) must be added (see \ref subsect12). Again,
+  the number of synaptic connection populationsis unlimited other than
+  by resources.
+
+\subsection subsect11 Defining neuron populations
+
+Neuron populations are added using the function
 \code{.cc}
 model.addNeuronPopulation("PN", _NAL, POISSONNEURON, myPOI_p, myPOI_ini);
 \endcode
@@ -41,21 +70,102 @@ where the arguments are:
 \arg \c float *para: Parameters of this neuron type
 \arg \c float *ini: Initial values of this neuron type 
 
-
 The user may add as many neuron populations as the model necessitates. They should all have unique names.
 
+\subsection subsect12 Defining synapse populations
+
+Synapse populations are added with the command
+\code{.cc}
+model.addSynapsePopulation("PNKC", NSYNAPSE, DENSE, INDIVIDUALG, "PN",
+"KC", myPNKC_p);
+\endcode
+where the arguments are
+\arg \c const \c char* name: The name of the synapse population, here
+"PNKC"
+\arg \c int \c sType: The type of synapse to be added, here the
+predefined type "NSYNAPSE". See below for the available predefined
+synapse types.
+\arg \c int \c sConn: The type of synaptic connectivity, here the
+predefined constant "DENSE"; the options currently are "ALLTOALL",
+"DENSE", "SPARSE"
+\arg \c int \c gType: The way how the synaptic conductivity g will be
+defined, here the predefined constant "INDIVIDUALG"; options are
+"INDIVIDUALG", "GLOBALG", "INDIVIDUALID". For their meaning, see \ref
+subsect33 below.
+\arg \c char* \c preName: Name of the (existing!) per-synaptic neuron
+population, here "PN".
+\arg \c char* \c postName: Name of the (existing!) post-synaptic neuron
+population, here "KC".
+\arg \c float* \c sParam: A C-type array of floats that contains
+parameter values (common to all synapses of the population) which will
+be used for the defined synapses. The array must contain the right
+number of parameters in the right order for the chosen synapse
+type. If too few, segmentation faults will occur, if too many, excess
+will be ignored. 
+
+Warnings: 1. If the synapse conductance definition type is "GLOBALG" the
+global value of the synapse conductances must be set with
+setSynapseG().
+
+
 \section sect2 Predefined neuron types
+There is a number of predefined models which can be chosen in the \c
+addNeuronGroup function by their unique cardinal number, starting from
+0. For convenience, C constants with readable names are predefined:
+- 0: \ref sect21 "MAPNEURON" 
+- 1: \ref sect22 "POISSONNEURON"
+- 2: \ref sect23 "TRAUBMILES"
+- 3: \ref sect24 "IZHIKEVICH"
+
+\subsection sect21 Map Neurons
+The MAPNEURON type is a map based neuron model as defined in \cite
+Rulkov2002 .
+
+It has 2 variables:
+- 0: V - the membrane potential
+- 1: preV - the membrane potential at the previous time step
+
+and it has 4 parameters:
+- 0: Vspike - the membrane potential at the top of the spike
+- 1: alpha - determines the shape of the iteration function
+- 2: y - also determines the iteration function
+- 3: beta - roughly regulates the scale of the input into the neuron
 
 
-\section sect3 Predefined synapose models
+\section sect3 Predefined synapse models
+\subsection subsect31 Models
+\subsection subsect32 Connectivity types
+\subsection subsect33 Conductance definition methods
+The available options work as follows:
+- INDIVIDUALG: When this option is chosen in the \c
+addSynapsePopulation command, GeNN reserves an array of size n_pre x
+n_post float for individual conductance values for each combination of
+pre and postsynaptic neuron. The actual values of teh conductances are
+passed at runtime from the user side code, using the \c copyGToDevice
+function.
 
-\section sect4 Defining your own neuron model
+- GLOBALG: When this option is chosen, the \c addSynapsePopulation
+  command must be followed within the \c modelDefinition function by a
+  call to \c setSynapseG for this synapse population. This option can
+  only be sensibly combined with connectivity type ALLTOALL. 
+
+- INDIVIDUALID: When this option is chosen, GeNN expects to use the
+same maximal conductance for all existing synaptic connections but
+which synapses exist will be defined at runtime from the user side
+code.
+
+
+\section sect4 Defining your own neuron model 
+
 */
 //----------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------
 /*! \page Credits Credits
  
+GeNN was created by Thomas Nowotny. 
+
+Addition of Izhikevich model and debugging modes by Esin Yavuz
 
 */
 //----------------------------------------------------------------------------
