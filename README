@@ -17,6 +17,8 @@ INSTALLATION OF GeNN:
 (iv) add $GeNNPATH/lib/bin to your PATH variable, e.g.
      "export PATH=$PATH:$GeNNPATH/lib/bin"
 
+(v) if not done by the CUDA install scripts, define and export the path to NVIDIA CUDA, e.g. "export CUDA_PATH=/usr/local/cuda"
+
 (v)  modify Makefile examples under $GeNNPATH/lib/src/ and $GeNNPATH/userproject/ 
      (if you use the example) to include the correct SMVERSIONFLAGS of your GPU. 
      Also check the directories under the INCLUDES and LIB variables.
