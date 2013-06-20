@@ -75,8 +75,11 @@ else
 	OSUPPER = $(shell uname -s 2>/dev/null | tr [:lower:] [:upper:])
 	OSLOWER = $(shell uname -s 2>/dev/null | tr [:upper:] [:lower:])
 	OSREAL = $(OSLOWER)
-	# 'linux' is output for Linux system, 'darwin' for OS X
+        # 'linux' is output for Linux system, 'darwin' for OS X
 	DARWIN = $(strip $(findstring DARWIN, $(OSUPPER)))
+	ifneq "$(DARWIN)" ""
+		ON_MAC = 1
+	endif
 endif
 
 # Basic directory setup for SDK
@@ -88,7 +91,11 @@ ROOTOBJDIR := obj
 CUDAINC := "$(CUDADIR)/include"
 CUDASDKINC := "$(SDKDIR)/common/inc"
 GeNNPATH_WIN := C:\cygwin\home\esin\genn-0.3\genn
-NVIDIASAMPLIB := $(NVIDIASDKPATH)/common/lib/$(OSLOWER)/x86_64
+ifdef ON_MAC
+	NVIDIASAMPLIB := $(NVIDIASDKPATH)/common/lib/$(OSLOWER)
+else
+	NVIDIASAMPLIB := $(NVIDIASDKPATH)/common/lib/$(OSLOWER)/x86_64
+endif
 
 # -L"$(cygpath -u SDKDIR)/lib" -L"$(cygpath -u SDKDIR)/common/lib/$(OSLOWER)/x86_64"
 # Includes
@@ -126,7 +133,7 @@ COMMONFLAGSG++ += $(INCLUDES_UNIX) -lcudart #-DUNIX -O2 -lcudart
 # Debug/release configuration
 ifeq ($(dbg),1)
 	COMMONFLAGS += -g
-   	COMMONFLAGSG++ += -g
+	COMMONFLAGSG++ += -g
 	NVCCFLAGS   += -g -G --compiler-options
 	BINSUBDIR   :=debug
 	LIBSUFFIX   := D
@@ -144,7 +151,11 @@ ifdef ON_WINDOWS
 	export LIB       := $(LIB);"$(CUDADIR)lib\$(OSREAL)\ ";"$(VCINSTALLDIR)\lib\ " #"$(CUDADIR)lib\$(OSREAL)\cudart.lib" "$(VCINSTALLDIR)\lib\libcpmt.lib" 
 	LLIB := "$(CUDADIR)lib/$(OSREAL)/cudart.lib"
 else
+ifdef ON_MAC
+	LIB       := -L$(CUDADIR)/lib -L $(NVIDIASDKPATH)/lib -L$(NVIDIASAMPLIB) 
+else
 	LIB       := -L$(CUDADIR)/lib64 -L $(NVIDIASDKPATH)/lib -L$(NVIDIASAMPLIB) 
+endif
 endif
 
 #export LIBPATH:= "C:\Windows\Microsoft.NET\Framework\v3.5";"C:\Windows\Microsoft.NET\Framework\v2.0.50727";"C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\LIB";
@@ -217,7 +228,7 @@ $(OBJDIR)/%.cu_o : $(SRCDIR)%.cu $(CU_DEPS)
 endif
 $(CUBINDIR)/%.cubin : $(SRCDIR)%.cu cubindirectory
 	$(VERBOSE)$(NVCC) $(CUBIN_ARCH_FLAG) $(NVCCFLAGS) $(SMVERSIONFLAGS) -o $@ -cubin $<
-	
+
 $(TARGET): makedirectories $(OBJS) $(CUBINS) Makefile
 	$(VERBOSE)$(LINKLINE)
 
@@ -243,10 +254,10 @@ clean : tidy
 #
 #%.o : %.cpp
 #	$(NVCC) -c %^ $(CFLAGS) -o $@
-	#$(NVCC) -M %^ $(CFLAGS) > $@.dep
+        #$(NVCC) -M %^ $(CFLAGS) > $@.dep
 #%.o : %.c
-	#$(NVCC) -c %^ $(CFLAGS) -o $@
-	#$(NVCC) -M %^ $(CFLAGS) > $@.dep
+        #$(NVCC) -c %^ $(CFLAGS) -o $@
+        #$(NVCC) -M %^ $(CFLAGS) > $@.dep
 #%.o : %.cu
 #	$(NVCC) -c %^ $(CFLAGS) -o $@
 #	$(NVCC) -M %^ $(CFLAGS) > $@.dep
