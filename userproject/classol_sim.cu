@@ -1,7 +1,7 @@
 /*--------------------------------------------------------------------------
    Author: Thomas Nowotny
   
-   Institute: Institute for Nonlinear Dynamics
+   Institute: Institute for Nonlinear Science
               University of California San Diego
               La Jolla, CA 92093-0402
   
@@ -11,7 +11,21 @@
   
 --------------------------------------------------------------------------*/
 
+//--------------------------------------------------------------------------
+/*! \file classol_sim.cu
+
+\brief Main entry point for the classol (CLASSification in OLfaction) model simulation. Provided as a part of the complete example of simulating the MBody1 mushroom body model. 
+*/
+//--------------------------------------------------------------------------
+
+
 #include "classol_sim.h"
+
+//--------------------------------------------------------------------------
+/*! \brief This function is the entry point for running the simulation of the MBody1 model network.
+*/
+//--------------------------------------------------------------------------
+
 
 int main(int argc, char *argv[])
 {

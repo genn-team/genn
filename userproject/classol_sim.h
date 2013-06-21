@@ -11,6 +11,13 @@
   
 --------------------------------------------------------------------------*/
 
+//--------------------------------------------------------------------------
+/*! \file classol_sim.h
+
+\brief Header file containing global variables and macros used in running the classol / MBody1 model.
+*/
+//--------------------------------------------------------------------------
+
 using namespace std;
 
 #include <cassert>
@@ -47,8 +54,6 @@ unsigned int iT= 0;
 #define PAT_FIRETIME 2
 
 #define TOTAL_TME 500000
-
-//#define RAND(Y,X) Y = Y * 1103515245 +12345; X= (unsigned int)(Y / 65536) % 32768;
 
 CStopWatch timer;
 
