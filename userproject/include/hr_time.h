@@ -1,3 +1,10 @@
+//--------------------------------------------------------------------------
+/*! \file hr_time.h
+
+\brief This header file contains the definition of the CStopWatch class that implements a simple timing tool using the system clock.
+*/
+//--------------------------------------------------------------------------
+
 #ifndef __HR_TIME_H
 #define __HR_TIME_H
 

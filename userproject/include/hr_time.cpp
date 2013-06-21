@@ -1,3 +1,9 @@
+//--------------------------------------------------------------------------
+/*! \file hr_time.cpp
+
+\brief This  file contains the implementation of the CStopWatch class that provides a simple timing tool based on the system clock.
+*/
+//--------------------------------------------------------------------------
 
 
 #ifdef _WIN32
@@ -7,8 +13,6 @@
 #include <cstdio> // NULL
 
 #include "hr_time.h"
-
-
 
 #ifdef _WIN32
 double CStopWatch::LIToSecs( LARGE_INTEGER & L) {
@@ -37,13 +41,28 @@ double CStopWatch::getElapsedTime() {
 }
 #else
 
+//--------------------------------------------------------------------------
+/*! \brief This method starts the timer
+ */
+//--------------------------------------------------------------------------
+
 void CStopWatch::startTimer( ) {
 	gettimeofday(&(timer.start),NULL);
 }
 
+//--------------------------------------------------------------------------
+/*! \brief This method stops the timer
+ */
+//--------------------------------------------------------------------------
+
 void CStopWatch::stopTimer( ) {
 	gettimeofday(&(timer.stop),NULL);
 }
+
+//--------------------------------------------------------------------------
+/*! \brief This method returns the time elapsed between start and stop of the timer in seconds.
+ */
+//--------------------------------------------------------------------------
 
 double CStopWatch::getElapsedTime() {	
 	timeval res;

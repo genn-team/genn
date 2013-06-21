@@ -1,7 +1,7 @@
 /*--------------------------------------------------------------------------
    Author: Thomas Nowotny
   
-   Institute: Institute for Nonlinear Dynamics
+   Institute: Institute for Nonlinear Science
               University of California San Diego
               La Jolla, CA 92093-0402
   
@@ -12,9 +12,20 @@
 --------------------------------------------------------------------------*/
 
 #ifndef _MAP_CLASSOL_CC_
-#define _MAP_CLASSOL_CC_
+#define _MAP_CLASSOL_CC_ //!< macro for avoiding multiple inclusion during compilation
+
+
+//--------------------------------------------------------------------------
+/*! \file map_classol.cc
+
+\brief Implementation of the classol class.
+*/
+//--------------------------------------------------------------------------
 
 #include "MBody1_CODE/runner.cc"
+
+//--------------------------------------------------------------------------
+//--------------------------------------------------------------------------
 
 classol::classol()
 {
@@ -29,7 +40,13 @@ classol::classol()
   sumDN= 0;
 }
 
-void classol::init(unsigned int which)
+//--------------------------------------------------------------------------
+/*! \brief Method for initialising variables
+ */
+//--------------------------------------------------------------------------
+
+void classol::init(unsigned int which //!< Flag defining whether GPU or CPU only version is run
+		   )
 {
   initGRaw();
   if (which == CPU) {
@@ -41,6 +58,11 @@ void classol::init(unsigned int which)
     theRates= d_baserates;
   }
 }
+
+//--------------------------------------------------------------------------
+/*! \brief Method for allocating memory on the GPU device to hold the input patterns
+ */
+//--------------------------------------------------------------------------
 
 void classol::allocate_device_mem_patterns()
 {
@@ -56,6 +78,10 @@ void classol::allocate_device_mem_patterns()
   checkCudaErrors(cudaMemcpy(d_baserates, baserates, size, cudaMemcpyHostToDevice)); 
 }
 
+//--------------------------------------------------------------------------
+/*! \brief Methods for unallocating the memory for input patterns on the GPU device
+*/
+//--------------------------------------------------------------------------
 
 void classol::free_device_mem()
 {
@@ -66,6 +92,8 @@ void classol::free_device_mem()
 }
 
 
+//--------------------------------------------------------------------------
+//--------------------------------------------------------------------------
 
 classol::~classol()
 {
@@ -74,7 +102,13 @@ classol::~classol()
 }
 
 
-void classol::read_pnkcsyns(FILE *f)
+//--------------------------------------------------------------------------
+/*! \brief Method for reading the connectivity between PNs and KCs from a file
+ */
+//--------------------------------------------------------------------------
+
+void classol::read_pnkcsyns(FILE *f //!< File handle for a file containing PN to KC conductivity values
+			    )
 {
   // version 1
   fprintf(stderr, "%u\n", model.neuronN[0]*model.neuronN[1]*sizeof(float));
@@ -99,14 +133,27 @@ void classol::read_pnkcsyns(FILE *f)
 }
 
 
-void classol::write_pnkcsyns(FILE *f)
+//--------------------------------------------------------------------------
+/*! \brief Method for writing the conenctivity between PNs and KCs back into file
+ */
+//--------------------------------------------------------------------------
+
+
+void classol::write_pnkcsyns(FILE *f //!< File handle for a file to write PN to KC conductivity values to
+			     )
 {
   fwrite(gpPNKC, model.neuronN[0]*model.neuronN[1]*sizeof(float),1,f);
   fprintf(stderr, "wrote pnkc ... \n");
 }
 
 
-void classol::read_pnlhisyns(FILE *f)
+//--------------------------------------------------------------------------
+/*! \brief Method for reading the connectivity between PNs and LHIs from a file
+ */
+//--------------------------------------------------------------------------
+
+void classol::read_pnlhisyns(FILE *f //!< File handle for a file containing PN to LHI conductivity values
+			     )
 {
   fread(gpPNLHI, model.neuronN[0]*model.neuronN[2]*sizeof(float),1,f);
   fprintf(stderr,"read pnlhi ... \n");
@@ -117,14 +164,26 @@ void classol::read_pnlhisyns(FILE *f)
   fprintf(stderr, "\n\n");
 }
 
-void classol::write_pnlhisyns(FILE *f)
+//--------------------------------------------------------------------------
+/*! \brief Method for writing the connectivity between PNs and LHIs to a file
+ */
+//--------------------------------------------------------------------------
+
+void classol::write_pnlhisyns(FILE *f //!< File handle for a file to write PN to LHI conductivity values to
+			      )
 {
   fwrite(gpPNLHI, model.neuronN[0]*model.neuronN[2]*sizeof(float),1,f);
   fprintf(stderr, "wrote pnlhi ... \n");
 }
 
 
-void classol::read_kcdnsyns(FILE *f)
+//--------------------------------------------------------------------------
+/*! \brief Method for reading the connectivity between KCs and DNs (detector neurons) from a file
+ */
+//--------------------------------------------------------------------------
+
+void classol::read_kcdnsyns(FILE *f //!< File handle for a file containing KC to DN (detector neuron) conductivity values 
+			    )
 {
   fread(gpKCDN, model.neuronN[1]*model.neuronN[3]*sizeof(float),1,f);
   fprintf(stderr, "read kcdn ... \n");
@@ -136,14 +195,26 @@ void classol::read_kcdnsyns(FILE *f)
 }
 
 
-void classol::write_kcdnsyns(FILE *f)
+//--------------------------------------------------------------------------
+/*! \brief Method to write the connectivity between KCs and DNs (detector neurons) to a file 
+ */
+//--------------------------------------------------------------------------
+
+void classol::write_kcdnsyns(FILE *f //!< File handle for a file to write KC to DN (detectore neuron) conductivity values to
+			     )
 {
   fwrite(gpKCDN, model.neuronN[1]*model.neuronN[3]*sizeof(float),1,f);
   fprintf(stderr, "wrote kcdn ... \n");
 }
 
 
-void classol::read_input_patterns(FILE *f)
+//--------------------------------------------------------------------------
+/*! \brief Method for reading the input patterns from a file
+ */
+//--------------------------------------------------------------------------
+
+void classol::read_input_patterns(FILE *f //!< File handle for a file containing input patterns
+				  )
 {
   // we use a predefined pattern number
   fread(pattern, model.neuronN[0]*PATTERNNO*sizeof(unsigned int),1,f);
@@ -154,6 +225,11 @@ void classol::read_input_patterns(FILE *f)
   }
   fprintf(stderr, "\n\n");
 }
+
+//--------------------------------------------------------------------------
+/*! \brief Method for calculating the baseline rates of the Poisson input neurons
+ */
+//--------------------------------------------------------------------------
 
 void classol::generate_baserates()
 {
@@ -166,7 +242,14 @@ void classol::generate_baserates()
   fprintf(stderr, "\n\n");  
 }
 
-void classol::run(float runtime, unsigned int which)
+//--------------------------------------------------------------------------
+/*! \brief Method for simulating the model for a given period of time
+ */
+//--------------------------------------------------------------------------
+
+void classol::run(float runtime, //!< Duration of time to run the model for 
+		  unsigned int which //!< Flag determining whether to run on GPU or CPU only
+		  )
 {
   unsigned int pno;
   unsigned int offset= 0;
@@ -202,7 +285,14 @@ void classol::run(float runtime, unsigned int which)
 //--------------------------------------------------------------------------
 // output functions
 
-void classol::output_state(FILE *f, unsigned int which)
+//--------------------------------------------------------------------------
+/*! \brief Method for copying from device and writing out to file of the entire state of the model
+ */
+//--------------------------------------------------------------------------
+
+void classol::output_state(FILE *f, //!< File handle for a file to write the model state to 
+			   unsigned int which //!< Flag determining whether using GPU or CPU only
+			   )
 {
   if (which == GPU) 
     copyStateFromDevice();
@@ -273,17 +363,38 @@ void classol::output_state(FILE *f, unsigned int which)
   fprintf(f,"\n");
 }
 
+//--------------------------------------------------------------------------
+/*! \brief Method for copying all spikes of the last time step from the GPU
+ 
+  This is a simple wrapper for the convenience function copySpikesFromDevice() which is provided by GeNN.
+*/
+//--------------------------------------------------------------------------
+
 void classol::getSpikesFromGPU()
 {
   copySpikesFromDevice();
 }
+
+//--------------------------------------------------------------------------
+/*! \brief Method for copying the number of spikes in all neuron populations that have occurred during the last time step
+ 
+This method is a simple wrapper for the convenience function copySpikeNFromDevice() provided by GeNN.
+*/
+//--------------------------------------------------------------------------
 
 void classol::getSpikeNumbersFromGPU() 
 {
   copySpikeNFromDevice();
 }
 
-void classol::output_spikes(FILE *f, unsigned int which)
+//--------------------------------------------------------------------------
+/*! \brief Method for writing the spikes occurred in the last time step to a file
+ */
+//--------------------------------------------------------------------------
+
+void classol::output_spikes(FILE *f, //!< File handle for a file to write spike times to
+			    unsigned int which //!< Flag determining whether using GPU or CPU only
+			    )
 {
 
   //    fprintf(stderr, "%f %f %f %f %f\n", t, glbscntPN, glbscntKC, glbscntLHI,glbscntDN);
@@ -301,6 +412,11 @@ void classol::output_spikes(FILE *f, unsigned int which)
   }
 }
 
+//--------------------------------------------------------------------------
+/*! \brief Method for summing up spike numbers
+ */
+//--------------------------------------------------------------------------
+
 void classol::sum_spikes()
 {
   sumPN+= glbscntPN;
@@ -308,6 +424,11 @@ void classol::sum_spikes()
   sumLHI+= glbscntLHI;
   sumDN+= glbscntDN;
 }
+
+//--------------------------------------------------------------------------
+/*! \brief Method for copying the synaptic conductances of the learning synapses between KCs and DNs (detector neurons) back to the CPU memory
+ */
+//--------------------------------------------------------------------------
 
 void classol::get_kcdnsyns()
 {
