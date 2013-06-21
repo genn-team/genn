@@ -11,6 +11,14 @@
   
 --------------------------------------------------------------------------*/
 
+//--------------------------------------------------------------------------
+/*! \file generate_run.cc
+
+\brief This file is part of a tool chain for running the classol/MBody1 example model.
+
+This file compiles to a tool that wraps all the other tools into one chain of tasks, including running all the gen_* tools for generating connectivity, providing the population size information through ../userproject/include/sizes.h to the MBody1 model definition, running the GeNN code generation and compilation steps, executing the model and collecting some timing information. This tool is the recommended way to quickstart using GeNN as it only requires a single command line to execute all necessary tasks.
+*/ 
+//--------------------------------------------------------------------------
 
 using namespace std;
 #include <iostream>
@@ -26,9 +34,11 @@ using namespace std;
 #else
 #include <sys/stat.h> //needed for mkdir?
 #endif
-////////////////////////////////////////////////////////////////////////////////
-// Template function for string conversion 
-////////////////////////////////////////////////////////////////////////////////
+
+//--------------------------------------------------------------------------
+/*! \brief Template function for string conversion 
+ */
+//--------------------------------------------------------------------------
 
 template<typename T>
 std::string toString(T t)
