@@ -112,6 +112,10 @@ ifdef ON_WINDOWS
 	CXX        := cl #-fPIC -m32 #g++
 	CC         := cl #-fPIC -m32 #gcc
 	LINK       := cl #-fPIC -m32 #g++
+else ifdef ON_MAC
+	CXX        := g++ -fPIC -arch i386 #-m32 #g++
+	CC         := gcc -fPIC -arch i386  #-m32 #gcc
+	LINK       := g++ -fPIC -arch i386  #-m32 #g++
 else
 	CXX        := g++ -fPIC #-m32 #g++
 	CC         := gcc -fPIC #-m32 #gcc
@@ -122,7 +126,11 @@ CUBIN_ARCH_FLAG := #-m32
 SMVERSIONFLAGS := -arch sm_20
 
 # Compiler-specific flags
-NVCCFLAGS := #-idp /cygwin/ --machine 32
+ifdef ON_MAC
+	NVCCFLAGS := #-idp /cygwin/ --use-local-env --cl-version 2008 #-ccbin "C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin" 
+else
+	NVCCFLAGS := #-idp /cygwin/ --use-local-env --cl-version 2008 #-ccbin "C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin" 
+endif
 CXXFLAGS  :=  
 CFLAGS    := 
 
