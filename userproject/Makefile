@@ -60,7 +60,7 @@ endif
 
 CUDA_INSTALL_PATH ?= $(CUDA_PATH)
 
-HOME		:= /home/ey50
+HOME		:= /Users/alex/
 #ROOTDIR		:= $(NVIDIASDKPATH)/C/src
 ROOTDIR		:= $(NVIDIASDKPATH)/common/inc
 ROOTBINDIR      := .
@@ -76,6 +76,9 @@ else
 	OSREAL = $(OSLOWER)
 	# 'linux' is output for Linux system, 'darwin' for OS X
 	DARWIN = $(strip $(findstring DARWIN, $(OSUPPER)))
+	ifneq "$(DARWIN)" ""
+		ON_MAC = 1
+	endif
 endif
 
 # Basic directory setup for SDK
@@ -88,7 +91,11 @@ ROOTOBJDIR := obj
 CUDAINC := "$(CUDADIR)/include"
 CUDASDKINC := "$(SDKDIR)/common/inc"
 GeNNPATH_WIN := C:\cygwin\home\esin\genn-0.3\genn
-NVIDIASAMPLIB := $(NVIDIASDKPATH)/common/lib/$(OSLOWER)/x86_64
+ifdef ON_MAC
+	NVIDIASAMPLIB := $(NVIDIASDKPATH)/common/lib/$(OSLOWER)
+else
+	NVIDIASAMPLIB := $(NVIDIASDKPATH)/common/lib/$(OSLOWER)/x86_64
+endif
 
 # -L"$(cygpath -u SDKDIR)/lib" -L"$(cygpath -u SDKDIR)/common/lib/$(OSLOWER)"
 # Includes
@@ -105,6 +112,10 @@ ifdef ON_WINDOWS
 	CXX        := cl #-fPIC -m32 #g++
 	CC         := cl #-fPIC -m32 #gcc
 	LINK       := cl #-fPIC -m32 #g++
+else ifdef ON_MAC
+	CXX        := g++ -fPIC -arch i386 #-m32 #g++
+	CC         := gcc -fPIC -arch i386  #-m32 #gcc
+	LINK       := g++ -fPIC -arch i386  #-m32 #g++
 else
 	CXX        := g++ -fPIC #-m32 #g++
 	CC         := gcc -fPIC #-m32 #gcc
@@ -117,7 +128,11 @@ include $(GeNNPATH)/lib/src/sm_Version.mk
 #SMVERSIONFLAGS := -arch sm_13
 
 # Compiler-specific flags
-NVCCFLAGS := #-idp /cygwin/ --use-local-env --cl-version 2008 #-ccbin "C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin" 
+ifdef ON_MAC
+	NVCCFLAGS := #-idp /cygwin/ --use-local-env --cl-version 2008 #-ccbin "C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin" 
+else
+	NVCCFLAGS := #-idp /cygwin/ --use-local-env --cl-version 2008 #-ccbin "C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin" 
+endif
 CXXFLAGS  :=  
 CFLAGS    := 
 
@@ -147,7 +162,11 @@ ifdef ON_WINDOWS
 	export LIB       := $(LIB);"$(CUDADIR)lib\$(OSREAL)\ ";"$(VCINSTALLDIR)\lib\ " #"$(CUDADIR)lib\$(OSREAL)\cudart.lib" "$(VCINSTALLDIR)\lib\libcpmt.lib" 
 	LLIB := "$(CUDADIR)lib/$(OSREAL)/cudart.lib"
 else
-	LIB       := -L$(CUDADIR)/lib64 -L $(NVIDIASDKPATH)/lib -L$(NVIDIASAMPLIB) 
+ifdef ON_MAC
+	LIB       := -L$(CUDADIR)/lib -L$(NVIDIASDKPATH)/lib -L$(NVIDIASAMPLIB) 
+else
+	LIB       := -L$(CUDADIR)/lib64 -L$(NVIDIASDKPATH)/lib -L$(NVIDIASAMPLIB) 
+endif
 endif
 # Add source files here
 EXECUTABLE	:= classol_sim
