@@ -31,8 +31,7 @@ HOW TO USE GeNN:
 
 for a first test the system is best used with a full driver program
 like tools/generate_run. To use it, navigate to the "test" directory and type
-"../tools/generate_run 1 100 1000 20 100 0.0009 t1".
-
+"../tools/generate_run 1 100 1000 20 100 0.0009 outdir classol_sim MBody1 0" 
 What this program does is: 
 a) use some other tools to generate the appropriate connectivity
 matrices and store them in files.
