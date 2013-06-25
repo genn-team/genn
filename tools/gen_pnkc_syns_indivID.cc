@@ -1,7 +1,7 @@
 /*--------------------------------------------------------------------------
    Author: Thomas Nowotny
   
-   Institute: Institute for Nonlinear Dynamics
+   Institute: Institute for Nonlinear Science
               University of California San Diego
               La Jolla, CA 92093-0402
   
@@ -10,6 +10,15 @@
    initial version: 2002-09-26
   
 --------------------------------------------------------------------------*/
+
+//--------------------------------------------------------------------------
+/*! \file gen_pnkc_syns_indivID.cc
+
+\brief This file is part of a tool chain for running the classol/MBody1 example model.
+
+This file compiles to a tool to generate appropriate connectivity patterns between PNs and KCs in the model. In contrast to the gen_pnkc_syns.cc tool, here the output is in a format that is suited for the "INDIVIDUALID" method for specifying connectivity. The connectivity is saved to file and can then be read by the classol method for reading this connectivity.
+*/ 
+//--------------------------------------------------------------------------
 
 using namespace std;
 
