@@ -14,7 +14,7 @@
 #include <string>
 
 //--------------------------------------------------------------------------
-/*! \file generateCPU.cc
+/*! \file generateCPU.cc 
 
   \brief Functions for generating code that will run the neuron and synapse simulations on the CPU. Part of the code generation section.
 
@@ -247,11 +247,11 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 	  os << "          else {" << endl;
 	  os << "            dg= -" << SAVEP(model.dsp[i][7]) << ";" << endl;
 	  os << "          }" << endl;
-	  os << "          grawp" << model.synapseName[i] << "[glbSpk" << model.neuronName[src];
+	  os << "          grawp" << model.synapseName[synID] << "[glbSpk" << model.neuronName[src];
 	  os << "[j]*" << model.neuronN[i] << " + n]+= dg;" << endl;
-	  os << "          gp" << model.synapseName[i] << "[glbSpk" << model.neuronName[src];
+	  os << "          gp" << model.synapseName[synID] << "[glbSpk" << model.neuronName[src];
 	  os << "[j]*" << model.neuronN[i] << " + n]= ";
-	  os << "gFunc" << model.synapseName[i] << "(grawp" << model.synapseName[i] << "[glbSpk" << model.neuronName[src];
+	  os << "gFunc" << model.synapseName[synID] << "(grawp" << model.synapseName[synID] << "[glbSpk" << model.neuronName[src];
 	  os << "[j]*" << model.neuronN[i] << " + n]);" << endl; 
 	}
 	if ((model.neuronType[src] != POISSONNEURON) ||
