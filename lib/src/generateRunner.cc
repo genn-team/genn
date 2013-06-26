@@ -189,7 +189,7 @@ void genRunner(NNmodel &model, //!< Model description
       unsigned int size= model.neuronN[model.synapseSource[i]]
 	*model.neuronN[model.synapseTarget[i]];
       os << size;
-      os << "];      // synaptic conductances of group " << model.neuronName[i];
+      os << "];      // synaptic conductances of group " << model.synapseName[i];
       os << endl;
       mem+= size*sizeof(float);
       if (model.synapseType[i] == LEARN1SYNAPSE) {
@@ -197,7 +197,7 @@ void genRunner(NNmodel &model, //!< Model description
 	unsigned int size= model.neuronN[model.synapseSource[i]]
 	  *model.neuronN[model.synapseTarget[i]];
 	os << size;
-	os << "];      // raw synaptic conductances of group " << model.neuronName[i];
+	os << "];      // raw synaptic conductances of group " << model.synapseName[i];
 	os << endl;
 	mem+= size*sizeof(float);
       }
@@ -208,7 +208,7 @@ void genRunner(NNmodel &model, //!< Model description
       unsigned int size= tmp >> logUIntSz;
       if (tmp > (size << logUIntSz)) size++;
       os << size;
-      os << "];     // synaptic connectivity of group " << model.neuronName[i];
+      os << "];     // synaptic connectivity of group " << model.synapseName[i];
       os << endl;
       mem+= size*sizeof(unsigned int);
     }
@@ -341,9 +341,9 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     os.open(name.c_str());
     
     writeHeader(os);
-    os << "#include <cuda_runtime.h>" << endl;//EY
-    os << "#include <helper_cuda.h>" << endl;//EY
-    os << "#include <helper_timer.h>" << endl << endl;//EY
+    os << "#include <cuda_runtime.h>" << endl;
+    os << "#include <helper_cuda.h>" << endl;
+    os << "#include <helper_timer.h>" << endl << endl;
 
   // write doxygen comment
   os << "//-------------------------------------------------------------------------" << endl;
@@ -375,7 +375,7 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 	/	The use of a character string to indicate a device symbol, which was possible with
 	/	certain API functions, is no longer supported. Instead, the symbol should be used
 	/	directly.
-	/	Therefore, call of cudaGetSymboAddress inthis file is modified wrt GeNN 0.3.
+	/	Therefore, call of cudaGetSymboAddress in this file is modified wrt GeNN 0.3.
 	/	
 	*/
 	os << "  cudaGetSymbolAddress(&devPtr, d_gp" << model.synapseName[i] << ");" << endl;
@@ -444,8 +444,7 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     // ------------------------------------------------------------------------
     // copying values to device
     
-    
-    os << "//comment 0 here" << endl;   
+      
     os << "void copyStateToDevice()" << endl;
     os << "{" << endl;
     os << "  void *devPtr;" << endl;
@@ -577,11 +576,8 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     os << "float t)" << endl;
     os << "{" << endl;
     unsigned int gridSz= model.padSumNeuronN[model.neuronGrpN-1];
-    os << "//comment 1 here" << endl;  
     gridSz= gridSz >> logNeuronBlkSz;	 
-    os << "//comment 2 here" << endl;  
     unsigned int sgridSz= model.padSumSynapseTrgN[model.synapseGrpN-1];
-  	 os << "//comment 3 here" << endl;  
     sgridSz= sgridSz >> logSynapseBlkSz;
   
     unsigned int lgridSz=0;
