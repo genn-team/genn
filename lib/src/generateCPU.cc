@@ -210,7 +210,7 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 	if (model.synapseGType[synID] == INDIVIDUALG) {
 	  theLG= toString("gp")+model.synapseName[synID]+toString("[glbSpk");
 	  theLG+= model.neuronName[src]+toString("[j]*")+toString(model.neuronN[i]);
-	  theLG+= toString(" + n];");
+	  theLG+= toString(" + n]");
 	}
 	if ((model.synapseGType[synID] == GLOBALG) ||
 	    (model.synapseGType[synID] == INDIVIDUALID)) {
