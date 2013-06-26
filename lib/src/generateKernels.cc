@@ -252,12 +252,12 @@ void genSynapseKernel(NNmodel &model, //!< Model description
       // (cases necessary here when considering sparse reps as well)
       os << "__device__ float d_gp" << model.synapseName[i] << "[";
       os << model.neuronN[model.synapseSource[i]]*model.neuronN[model.synapseTarget[i]];
-      os << "];     // synaptic conductances of group " << model.neuronName[i];
+      os << "];     // synaptic conductances of group " << model.synapseName[i];
       os << endl;
       if (model.synapseType[i] == LEARN1SYNAPSE) {
 	os << "__device__ float d_grawp" << model.synapseName[i] << "[";
 	os << model.neuronN[model.synapseSource[i]]*model.neuronN[model.synapseTarget[i]];
-	os << "];     // raw synaptic conductances of group " << model.neuronName[i];
+	os << "];     // raw synaptic conductances of group " << model.synapseName[i];
 	os << endl;
       }
     }
@@ -268,7 +268,7 @@ void genSynapseKernel(NNmodel &model, //!< Model description
       unsigned int size= tmp >> logUIntSz;
       if (tmp > (size << logUIntSz)) size++;
       os << size;
-      os << "];     // synaptic connectivity of group " << model.neuronName[i];
+      os << "];     // synaptic connectivity of group " << model.synapseName[i];
       os << endl;
     }
   }
