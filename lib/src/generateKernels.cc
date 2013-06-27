@@ -377,13 +377,13 @@ void genSynapseKernel(NNmodel &model, //!< Model description
     }
     if (model.synapseType[i] == NGRADSYNAPSE) {
       if (model.neuronType[src] == POISSONNEURON) {
-	os << "            linSyn= linSyn+" << theLG << "*tanh((";
+	os << "            linSyn= linSyn+" << theLG << "*tanh((float)((";
 	os << SAVEP(model.neuronPara[src][2]) << "-" << SAVEP(Epre);
       }
       else {
-	os << "            linSyn= linSyn+" << theLG << "*tanh((shSpkV[j]-" << SAVEP(Epre);
+	os << "            linSyn= linSyn+" << theLG << "*tanh((float)((shSpkV[j]-" << SAVEP(Epre);
       }
-      os << ")/" << Vslope << ");" << endl;
+      os << ")/" << Vslope << "));" << endl;
     }
     // if needed, do some learning (this is for pre-synaptic spikes)
     if (model.synapseType[i] == LEARN1SYNAPSE) {
