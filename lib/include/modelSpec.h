@@ -26,29 +26,13 @@
 #include <vector>
 #include "toString.h"
 
-#define NTYPENO 4 //!< Macro defining the number of predefined neuron types
-
 //neuronType
 #define MAPNEURON 0 //!< Macro attaching the name "MAPNEURON" to neuron type 0
 #define POISSONNEURON 1 //!< Macro attaching the name "POISSONNEURON" to neuron type 1
 #define TRAUBMILES 2 //!< Macro attaching the name "TRAUBMILES" to neuron type 2
 #define IZHIKEVICH 3 //!< Macro attaching the name "IZHIKEVICH" to neuron type 3
 
-unsigned int NPNO[NTYPENO]= {
-  4,        // MAPNEURON_PNO 
-  4,         // POISSONNEURON_PNO 
-  7,			// TRAUBMILES PNO
-  5			// IZHIKEVICH PNO
-}; //!< Global constant integer array containing the number of parameters of each predefined neuron type
-
-unsigned int NININO[NTYPENO]= {
-  2,        // MAPNEURON_ININO
-  3,        // POISSONNEURON_ININO
-  4,			// TRAUBMILES ININO
-  2			// IZHIKEVICH ININO			
-}; //!< Global constant integer array containing the number of variables (= number of initial values) of each predefined neuron type
-
-#define SYNTYPENO 3
+#define SYNTYPENO 3 //!< Macro defining the number of predefined synapse types
 
 //synapseType
 #define NSYNAPSE 0 //!< Macro attaching  the name NSYNAPSE to predefined synapse type 0, which is a non-learning synapse

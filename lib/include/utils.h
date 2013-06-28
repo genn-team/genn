@@ -53,7 +53,12 @@
 
 //GeNN-related
 #include <vector>
+
+#include "global.h"
 #include "modelSpec.h"
+
+
+vector<neuronModel> nModels; //!< Global c++ vector containing all neuron model descriptions
 
 int *pArgc = NULL;
 char **pArgv = NULL;
@@ -377,11 +382,8 @@ unsigned int theSize(string type)
   return sz;
 }
 
-
-vector<neuronModel> nModels; //!< Global c++ vector containing all neuron model descriptions
-
 //--------------------------------------------------------------------------
-/*! \brief FUnction that defines standard neuron models
+/*! \brief Function that defines standard neuron models
 
 The neuron models are defined and added to the C++ vector nModels that is holding all neuron model descriptions. User defined neuron models can be appended to this vector later in (a) separate function(s).
 */
