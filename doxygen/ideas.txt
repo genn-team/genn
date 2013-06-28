@@ -51,6 +51,10 @@
 
 - Omissions in code documentation: ModelSpec.cc (does it need more details?)
 
+- transition synapses from explicit standard models supported during code generation to more generic type that would allo user additions similar to the nModels vector for neurons
+
+- If synapses are defined in a nSynapses vector, remove the explicit parameter numbers etc from modelSpec.h.
+
 
 */
 //----------------------------------------------------------------------------
