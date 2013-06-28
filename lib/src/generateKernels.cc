@@ -103,6 +103,9 @@ void genNeuronKernel(NNmodel &model, //!< Model description
       os << "unsigned int offset" << model.neuronName[i] << ", // poisson ";
       os << "\"rates\" offset of grp " << model.neuronName[i] << endl;
     }
+    if (model.receivesInputCurrent[i]) {
+		os << "float *inputI" << model.neuronName[i] << ", // input current of grp " << model.neuronName[i] << endl;    	
+    	}
   }
   os << "float t // absolute time" << endl; 
   os << ")" << endl;
@@ -158,6 +161,15 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 	}
       }
     }
+    /*if (INJECTCURRENT==1){
+      os << " 	 if (t>10000 && t<20000) {" << endl;
+  	 	os << " 	 $(Isyn)+=10; " << endl; 
+  	 	os << " 	 } " << endl;
+    	}*/
+if (model.receivesInputCurrent[i]) {
+	os << "    $(Isyn)+= inputI" << model.neuronName[i] << "[" << localID << "];" << endl;
+}    	
+    	
     os << "    // calculate membrane potential" << endl;
     //new way of doing it
     string code= nModels[nt].simCode;

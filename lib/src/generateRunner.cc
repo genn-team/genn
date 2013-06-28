@@ -246,6 +246,7 @@ void genRunner(NNmodel &model, //!< Model description
   os << "srand(101);" << endl;
   for (int i= 0; i < model.neuronGrpN; i++) {
     nt= model.neuronType[i];
+  
     os << "  glbscnt" << model.neuronName[i] << "= 0;" << endl;
     os << "  for (int i= 0; i < " << model.neuronN[i] << "; i++) {" << endl;
     os << "    glbSpk" << model.neuronName[i] << "[i]= 0;" << endl;
@@ -258,11 +259,16 @@ void genRunner(NNmodel &model, //!< Model description
     }
     if (model.neuronType[i] == POISSONNEURON) {
       os << "    seed" << model.neuronName[i] << "[i]= rand();" << endl;
-    }
+    } 
+    
     if (model.neuronNeedSt[i]) {
       os << "    sT" <<  model.neuronName[i] << "[i]= -10000.0;" << endl;
     }
     os << "  }" << endl;
+
+    if ((model.neuronType[i] == IZHIKEVICH) && (DT!=1)){
+    	os << "   fprintf(stderr,\"WARNING: You use a time step different than 1 ms. Izhikevich model behaviour may not be robust.\\n\"); "<< endl;
+    }
   }
   os << "}" << endl;
 

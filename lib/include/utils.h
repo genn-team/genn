@@ -505,13 +505,13 @@ void prepareStandardModels()
   n.pNames.push_back(tS("c")); // after-spike reset value of V
   n.pNames.push_back(tS("d")); // after-spike reset value of U
   n.dpNames.clear(); 
-  n.simCode= tS(" $(V)+=0.5f*(0.04f*$(V)*$(V)+5*$(V)+140-$(U)+$(Isyn)); //at two times for numerical stability \n\
-  $(V)+=0.5f*(0.04f*$(V)*$(V)+5*$(V)+140-$(U)+$(Isyn));\n\
-  $(U)+=$(a)*($(b)*$(V)-$(U));\n\
-  if ($(V) > 30){\n\
+  n.simCode= tS(" 	 $(V)+=0.5f*(0.04f*$(V)*$(V)+5*$(V)+140-$(U)+$(Isyn))*DT; //at two times for numerical stability\n\
+  	 $(V)+=0.5f*(0.04f*$(V)*$(V)+5*$(V)+140-$(U)+$(Isyn))*DT;\n\
+  	 $(U)+=$(a)*($(b)*$(V)-$(U))*DT;\n\
+  	 if ($(V) > 30){\n\
 		$(V)=$(c);\n\
 		$(U)+=$(d);\n\
-  }\n");
+  		}\n");
   nModels.push_back(n);
 }
 
@@ -519,4 +519,3 @@ void prepareStandardModels()
 #include "simpleBit.h"
 
 #endif  // _UTILS_H_
-

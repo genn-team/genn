@@ -32,6 +32,12 @@ HOW TO USE GeNN:
 for a first test the system is best used with a full driver program
 like tools/generate_run. To use it, navigate to the "test" directory and type
 "../tools/generate_run 1 100 1000 20 100 0.00117 outname classol_sim MBody1 0" 
+for a multiple population locust olfactory system model or 
+"../tools/generate_run 1 100 1000 20 100 0.002 outname PoissonIzh_sim IzhEx 0"
+for a simpler two population model with 100 poisson input 1000 Izhikevich phasic bursting output
+network. In this case, args defining other populations will be discarded.
+ATTENTION: if this second example is to be used, userproject/Makefile should be modified to include PoissonIzh_sim instead of classol_sim.
+
 What this program does is: 
 a) use some other tools to generate the appropriate connectivity
 matrices and store them in files.

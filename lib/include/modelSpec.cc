@@ -216,8 +216,15 @@ void NNmodel::addNeuronPopulation(const string name, unsigned int nNo, unsigned 
   }
   neuronIni.push_back(tmpP);
   vector<unsigned int> tv;
-  inSyn.push_back(tv);  // empty list of input synapse groups for neurons i
+  receivesInputCurrent.push_back(0);
+  inSyn.push_back(tv);  // empty list of input synapse groups for neurons i 
   initDerivedNeuronPara(i);
+}
+
+void NNmodel::activateDirectInput(string name)
+{
+	unsigned int i= findNeuronGrp(name);
+	receivesInputCurrent[i]= 1;	
 }
 
 //--------------------------------------------------------------------------

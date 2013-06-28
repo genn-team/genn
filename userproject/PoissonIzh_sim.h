@@ -11,17 +11,9 @@
   
 --------------------------------------------------------------------------*/
 
-//--------------------------------------------------------------------------
-/*! \file classol_sim.h
-
-\brief Header file containing global variables and macros used in running the classol / MBody1 model.
-*/
-//--------------------------------------------------------------------------
-
 using namespace std;
 
 #include <cassert>
-//#include <cutil.h>
 #include "include/hr_time.h"
 
 #include <cuda_runtime.h>
@@ -29,11 +21,13 @@ using namespace std;
 #include <helper_cuda.h>
 
 #define RAND(Y,X) Y = Y * 1103515245 +12345;X= (unsigned int)(Y >> 16) & 32767
+#define INJECTCURRENT 0
 
 // we will hard-code some stuff ... because at the end of the day that is 
 // what we will do for the CUDA version
 
 #define DBG_SIZE 10000
+#define INJECTCURRENT 0 //define
 
 // and some global variables
 float t= 0.0f;
@@ -57,5 +51,5 @@ unsigned int iT= 0;
 CStopWatch timer;
 
 #include "include/hr_time.cpp"
-#include "map_classol.h"
-#include "map_classol.cc"
+#include "PoissonIzh.h"
+#include "PoissonIzh.cc"
