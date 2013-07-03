@@ -45,12 +45,16 @@ unsigned int iT= 0;
 // other stuff:
 #define T_REPORT_TME 1000.0
 #define SYN_OUT_TME 20000.0
+
+int patSetTime;
 // reset input every 100 steps == 50ms
-#define PAT_TIME 50.0
-#define PAT_SETTIME 200
+#define PAT_TIME 100.0
+
 // pattern goes off at 2 steps == 1 ms
 #define PATFTIME 1.0
-#define PAT_FIRETIME 2
+
+int patFireTime;
+
 
 #define TOTAL_TME 500000
 
