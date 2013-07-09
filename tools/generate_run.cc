@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
 {
   if (argc != 11)
   {
-    cerr << "usage: generate_run <CPU=0, GPU=1> <nAL> <nMB> <nLHI> <nLb> <executable name> <model name> <debug mode? (0/1)>";
+    cerr << "usage: generate_run <CPU=0, GPU=1> <nAL> <nMB> <nLHI> <nLb> <gscale> <executable name> <model name> <debug mode? (0/1)>";
     cerr << "<gPNKC_base> <basename>" << endl;
     exit(1);
   }
@@ -68,14 +68,14 @@ int main(int argc, char *argv[])
   int nMB= atoi(argv[3]);
   int nLHI= atoi(argv[4]);
   int nLB= atoi(argv[5]);
-  float g0= atof(argv[6]);
+  float gscale= atof(argv[6]);
   string OutDir = toString(argv[7]) +"_output";  
   
-  float pnkc_gsyn= 100.0f/nAL*g0;
-  float pnkc_gsyn_sigma= 100.0f/nAL*g0/15.0f; 
-  float kcdn_gsyn= 2500.0f/nMB*0.12f*g0/0.9; 
-  float kcdn_gsyn_sigma= 2500.0f/nMB*0.025f*g0/0.9; 
-  float pnlhi_theta= 200.0f/nAL*7.0f*g0/0.9;
+  float pnkc_gsyn= 100.0f/nAL*gscale;
+  float pnkc_gsyn_sigma= 100.0f/nAL*gscale/15.0f; 
+  float kcdn_gsyn= 2500.0f/nMB*0.12f*gscale/0.9; 
+  float kcdn_gsyn_sigma= 2500.0f/nMB*0.025f*gscale/0.9; 
+  float pnlhi_theta= 200.0f/nAL*7.0f*gscale/0.9;
 
   #ifdef _WIN32
   _mkdir(OutDir.c_str());
@@ -92,7 +92,7 @@ int main(int argc, char *argv[])
   cmd+= toString("0.5 ") ;
   cmd+= toString(pnkc_gsyn) + toString(" ") ;
   cmd+= toString(pnkc_gsyn_sigma) + toString(" ") ;
-  cmd+= toString(argv[7]) + toString(".pnkc");
+  cmd+= OutDir+ "/"+toString(argv[7]) + toString(".pnkc");
   cmd+= toString(" &> ") + OutDir+ "/"+ toString(argv[7]) + toString(".pnkc.msg");
   system(cmd.c_str()); 
 
@@ -103,7 +103,7 @@ int main(int argc, char *argv[])
   cmd+= toString(kcdn_gsyn) + toString(" ") ;
   cmd+= toString(kcdn_gsyn_sigma) + toString(" ");
   cmd+= toString(kcdn_gsyn_sigma) + toString(" ");
-  cmd+= toString(argv[7]) + toString(".kcdn");
+  cmd+= OutDir+ "/"+toString(argv[7]) + toString(".kcdn");
   cmd+= toString(" &> ") + OutDir+ "/"+ toString(argv[7]) + toString(".kcdn.msg");
   system(cmd.c_str());
 
@@ -112,7 +112,7 @@ int main(int argc, char *argv[])
   cmd+= toString(nAL) + toString(" ") ;
   cmd+= toString(nLHI) + toString(" ") ;
   cmd+= toString(pnlhi_theta) + toString(" 15 ") ;
-  cmd+= toString(argv[7]) + toString(".pnlhi");
+  cmd+= OutDir+ "/"+ toString(argv[7]) + toString(".pnlhi");
   cmd+= toString(" &> ") + OutDir+ "/"+ toString(argv[7]) + toString(".pnlhi.msg");
   system(cmd.c_str());
 
@@ -120,7 +120,7 @@ int main(int argc, char *argv[])
   cmd= toString("$GeNNPATH/tools/gen_input_fixfixfixno_struct ");
   cmd+= toString(nAL) + toString(" ") ;
   cmd+= toString("10 10 0.1 0.1 32768 17 ") ;
-  cmd+= toString(argv[7]) + toString(".inpat");
+  cmd+= OutDir+ "/"+ toString(argv[7]) + toString(".inpat");
   cmd+= toString(" &> ") + OutDir+ "/"+ toString(argv[7]) + toString(".inpat.msg");
   system(cmd.c_str());
 
