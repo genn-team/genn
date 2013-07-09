@@ -21,8 +21,9 @@ int main(int argc, char *argv[])
     return 1;
   }
   int which= atoi(argv[2]);
+  string OutDir = toString(argv[1]) +"_output";
   string name;
-  name= toString(argv[1]) + toString(".time");
+  name= OutDir+ "/"+toString(argv[1]) + toString(".time");
   FILE *timef= fopen(name.c_str(),"w");  
 
   timer.startTimer();
@@ -37,22 +38,23 @@ int main(int argc, char *argv[])
   fprintf(stderr, "# PAT_SETTIME %d \n", PAT_SETTIME);
   fprintf(stderr, "# TOTAL_TME %d \n", TOTAL_TME);
   
-  name= toString(argv[1]) + "_output/" + toString(argv[1]) + toString(".out.Vm"); 
+  name= OutDir+ "/"+ toString(argv[1]) + "_output/" + toString(argv[1]) + toString(".out.Vm"); 
   FILE *osf= fopen(name.c_str(),"w");
-  name= toString(argv[1]) + "_output/" + toString(argv[1]) + toString(".outPN.Vm"); 
+  name= OutDir+ "/"+ toString(argv[1]) + "_output/" + toString(argv[1]) + toString(".outPN.Vm"); 
   FILE *osfpn= fopen(name.c_str(),"w");
   //-----------------------------------------------------------------
   // build the neuronal circuitery
   classol locust;
+ 
     
   fprintf(stderr, "# reading PN-Izh1 synapses ... \n");
-  name= toString(argv[1]) + toString(".pnkc");
+  name= OutDir+ "/"+ toString(argv[1]) + toString(".pnkc");
   FILE *f= fopen(name.c_str(),"r");
   locust.read_PNIzh1syns(f);
   fclose(f);   
  
   fprintf(stderr, "# reading input patterns ... \n");
-  name= toString(argv[1]) + toString(".inpat");
+  name= OutDir+ "/"+ toString(argv[1]) + toString(".inpat");
   f= fopen(name.c_str(), "r");
   locust.read_input_patterns(f);
   fclose(f);
@@ -75,6 +77,7 @@ int main(int argc, char *argv[])
   void *devPtr;
   int done= 0;
   float last_t_report=  t;
+  locust.run(DT, which);
   unsigned int sum= 0;
   while (!done) 
   {

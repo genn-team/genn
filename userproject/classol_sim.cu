@@ -35,8 +35,9 @@ int main(int argc, char *argv[])
     return 1;
   }
   int which= atoi(argv[2]);
+  string OutDir = toString(argv[1]) +"_output";
   string name;
-  name= toString(argv[1]) + toString(".time");
+  name= OutDir+ "/"+ toString(argv[1]) + toString(".time");
   FILE *timef= fopen(name.c_str(),"w");  
 
   timer.startTimer();
@@ -51,7 +52,7 @@ int main(int argc, char *argv[])
   fprintf(stderr, "# patSetTime %d \n", patSetTime);
   fprintf(stderr, "# TOTAL_TME %d \n", TOTAL_TME);
   
-  name= toString(argv[1]) + "_output/" + toString(argv[1]) + toString(".out.st"); 
+  name= OutDir+ "/"+ toString(argv[1]) + "_output/" + toString(argv[1]) + toString(".out.st"); 
   FILE *osf= fopen(name.c_str(),"w");
 
   //-----------------------------------------------------------------
@@ -59,24 +60,24 @@ int main(int argc, char *argv[])
   classol locust;
 
   fprintf(stderr, "# reading PN-KC synapses ... \n");
-  name= toString(argv[1]) + toString(".pnkc");
+  name= OutDir+ "/"+ toString(argv[1]) + toString(".pnkc");
   FILE *f= fopen(name.c_str(),"r");
   locust.read_pnkcsyns(f);
   fclose(f);   
  
   fprintf(stderr, "# reading PN-LHI synapses ... \n");
-  name= toString(argv[1]) + toString(".pnlhi");
+  name= OutDir+ "/"+ toString(argv[1]) + toString(".pnlhi");
   f= fopen(name.c_str(), "r");
   locust.read_pnlhisyns(f);
   fclose(f);   
   
   fprintf(stderr, "# reading KC-DN synapses ... \n");
-  name= toString(argv[1]) + toString(".kcdn");
+  name= OutDir+ "/"+ toString(argv[1]) + toString(".kcdn");
   f= fopen(name.c_str(), "r");
   locust.read_kcdnsyns(f);
    
   fprintf(stderr, "# reading input patterns ... \n");
-  name= toString(argv[1]) + toString(".inpat");
+  name= OutDir+ "/"+ toString(argv[1]) + toString(".inpat");
   f= fopen(name.c_str(), "r");
   locust.read_input_patterns(f);
   fclose(f);
