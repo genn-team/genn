@@ -74,7 +74,7 @@ else
 	OSUPPER = $(shell uname -s 2>/dev/null | tr [:lower:] [:upper:])
 	OSLOWER = $(shell uname -s 2>/dev/null | tr [:upper:] [:lower:])
 	OSREAL = $(OSLOWER)
-	# 'linux' is output for Linux system, 'darwin' for OS X
+        # 'linux' is output for Linux system, 'darwin' for OS X
 	DARWIN = $(strip $(findstring DARWIN, $(OSUPPER)))
 	ifneq "$(DARWIN)" ""
 		ON_MAC = 1
@@ -151,7 +151,7 @@ else
 	COMMONFLAGS += #-O3 
 	BINSUBDIR   := release
 	LIBSUFFIX   :=
-	NVCCFLAGS   += --compiler-options #-fno-strict-aliasing
+	NVCCFLAGS   += #--compiler-options -fno-strict-aliasing
 	CXXFLAGS    += #-fno-strict-aliasing
 	CFLAGS      += #-fno-strict-aliasing
 endif
@@ -175,7 +175,7 @@ CUFILES		:= classol_sim.cu
 # C/C++ source files (compiled with gcc / c++)
 CCFILES		:= 
 
-CUDACCFLAGS 	:= --ptxas-options=-v
+NVCCFLAGS += --ptxas-options=-v
 # -keep to keep all compile stages
 
 TARGETDIR := $(BINDIR)/$(BINSUBDIR)
@@ -246,7 +246,7 @@ $(OBJDIR)/%.cu_o : $(SRCDIR)%.cu $(CU_DEPS)
 
 $(CUBINDIR)/%.cubin : $(SRCDIR)%.cu cubindirectory
 	$(VERBOSE)$(NVCC) $(CUBIN_ARCH_FLAG) $(NVCCFLAGS) $(SMVERSIONFLAGS) -o $@ -cubin $<
-	
+
 $(TARGET): makedirectories $(OBJS) $(CUBINS) Makefile
 	$(VERBOSE)$(LINKLINE)
 
