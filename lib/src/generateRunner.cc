@@ -349,7 +349,7 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     writeHeader(os);
     os << "#include <cuda_runtime.h>" << endl;
     os << "#include <helper_cuda.h>" << endl;
-    os << "#include <helper_timer.h>" << endl << endl;
+    os << "//#include <helper_timer.h>" << endl << endl;
 
   // write doxygen comment
   os << "//-------------------------------------------------------------------------" << endl;
