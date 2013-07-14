@@ -74,7 +74,7 @@ else
 	OSUPPER = $(shell uname -s 2>/dev/null | tr [:lower:] [:upper:])
 	OSLOWER = $(shell uname -s 2>/dev/null | tr [:upper:] [:lower:])
 	OSREAL = $(OSLOWER)
-	# 'linux' is output for Linux system, 'darwin' for OS X
+# 	'linux' is output for Linux system, 'darwin' for OS X
 	DARWIN = $(strip $(findstring DARWIN, $(OSUPPER)))
 	ifneq "$(DARWIN)" ""
 		ON_MAC = 1
@@ -99,7 +99,7 @@ endif
 
 # -L"$(cygpath -u SDKDIR)/lib" -L"$(cygpath -u SDKDIR)/common/lib/$(OSLOWER)"
 # Includes
-INCLUDES  += -I. -I $(CUDAINC) -I $(CUDASDKINC) -I$(GeNNPATH)/lib/include/numlib -I"$(GeNNPATH)/lib/include" 
+INCLUDES  += -I. -I $(CUDAINC) -I $(CUDASDKINC) -I$(GeNNPATH)/lib/include/numlib -I"$(GeNNPATH)/lib/include"
 #-I"$(GeNNPATH_WIN)\lib\include" -I"$(GeNNPATH_WIN)\lib\include\numlib"  -I../include
 ifdef ON_WINDOWS
 	INCLUDES_UNIX  += -I. -I" $(CUDADIR)/include" -I "$(NVIDIASAMPPATH)/common/inc" $(INCLUDES) #-I$(GeNNPATH)/lib/include/numlib
@@ -117,9 +117,9 @@ else ifdef ON_MAC
 	CC         := gcc -fPIC -arch i386  #-m32 #gcc
 	LINK       := g++ -fPIC -arch i386  #-m32 #g++
 else
-	CXX        := g++ -fPIC #-m32 #g++
-	CC         := gcc -fPIC #-m32 #gcc
-	LINK       := g++ -fPIC #-m32 #g++
+	CXX        := g++ #-fPIC #-m32 #g++
+	CC         := gcc #-fPIC #-m32 #gcc
+	LINK       := g++ #-fPIC #-m32 #g++
 endif
 # architecture flag for cubin build
 CUBIN_ARCH_FLAG := #-m32 
@@ -246,7 +246,7 @@ $(OBJDIR)/%.cu_o : $(SRCDIR)%.cu $(CU_DEPS)
 
 $(CUBINDIR)/%.cubin : $(SRCDIR)%.cu cubindirectory
 	$(VERBOSE)$(NVCC) $(CUBIN_ARCH_FLAG) $(NVCCFLAGS) $(SMVERSIONFLAGS) -o $@ -cubin $<
-	
+
 $(TARGET): makedirectories $(OBJS) $(CUBINS) Makefile
 	$(VERBOSE)$(LINKLINE)
 

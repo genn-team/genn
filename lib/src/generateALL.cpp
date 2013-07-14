@@ -21,7 +21,6 @@
 #include "global.h"
 #include "utils.h"
 
-
 #include "currentModel.cc"
 
 #include "generateKernels.cc"

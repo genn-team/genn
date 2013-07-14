@@ -18,6 +18,7 @@
 
 #include "utils.h"
 
+
 // class NNmodel for specifying a neuronal network model
 
 NNmodel::NNmodel() 

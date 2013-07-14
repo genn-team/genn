@@ -19,14 +19,13 @@
 //--------------------------------------------------------------------------
 
 using namespace std;
-
 #include <cassert>
-//#include <cutil.h>
-#include "include/hr_time.h"
+#include "include/hr_time.cpp"
+
+#include "utils.h" // for CHECK_CUDA_ERRORS
 
 #include <cuda_runtime.h>
 
-#include <helper_cuda.h>
 
 #define DT 0.5
 #define RAND(Y,X) Y = Y * 1103515245 +12345;X= (unsigned int)(Y >> 16) & 32767
@@ -57,6 +56,4 @@ unsigned int iT= 0;
 
 CStopWatch timer;
 
-#include "include/hr_time.cpp"
-#include "map_classol.h"
 #include "map_classol.cc"
