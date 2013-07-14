@@ -114,20 +114,19 @@ unsigned int sum= 0;
     locust.run(DT, which); // run next batch
     if (which == GPU) {  
       cudaGetSymbolAddress(&devPtr, d_VDN);
-      //CUDA_SAFE_CALL(cudaMemcpy(VDN, devPtr, 10*sizeof(float), cudaMemcpyDeviceToHost));
-      checkCudaErrors(cudaMemcpy(VDN, devPtr, 10*sizeof(float), cudaMemcpyDeviceToHost));
-	}
+      CHECK_CUDA_ERRORS(cudaMemcpy(VDN, devPtr, 10*sizeof(float), cudaMemcpyDeviceToHost));
+    }
 //    locust.sum_spikes();
 //    locust.output_spikes(os, which);
-//   locust.output_state(os, which);  // while outputting the current one ...
-   fprintf(osf, "%f ", t);
-   for (int i= 0; i < 10; i++) {
-     fprintf(osf, "%f ", VDN[i]);
-   }
-   fprintf(osf,"\n");
+//    locust.output_state(os, which);  // while outputting the current one ...
+    fprintf(osf, "%f ", t);
+    for (int i= 0; i < 10; i++) {
+      fprintf(osf, "%f ", VDN[i]);
+    }
+    fprintf(osf,"\n");
 //      cudaThreadSynchronize();
 
-   // report progress
+    // report progress
     if (t - last_t_report >= T_REPORT_TME)
     {
       fprintf(stderr, "time %f \n", t);

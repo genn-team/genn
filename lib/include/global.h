@@ -26,7 +26,6 @@ This global header file also takes care of including some generally used cuda su
 
 #include <iostream>
 using namespace std; // replaced these two lines : problem with visual studio
-#include <fstream>
 #include <sstream>
 
 #include <cuda_runtime.h>

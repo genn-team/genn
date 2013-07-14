@@ -6,15 +6,12 @@
 //--------------------------------------------------------------------------
 
 
-#ifdef _WIN32
-#include <windows.h>
-#endif
-
 #include <cstdio> // NULL
-
 #include "hr_time.h"
 
 #ifdef _WIN32
+#include <windows.h>
+
 double CStopWatch::LIToSecs( LARGE_INTEGER & L) {
 	return ((double)L.QuadPart /(double)frequency.QuadPart);
 }

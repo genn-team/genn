@@ -24,13 +24,17 @@
 */
 //--------------------------------------------------------------------------
 
-#include <iostream>
 #include <cstdlib> // for exit() and EXIT_FAIL / _SUCCESS
+#include <iostream>
+#include <string>
 #include <vector>
 #include <memory>
-#include <cuda_runtime.h>
+#include <fstream>
+
 #include "modelSpec.h"
 #include "toString.h"
+
+#include <cuda_runtime.h>
 
 
 //--------------------------------------------------------------------------
@@ -67,6 +71,7 @@ void writeHeader(ostream &os)
     os << s << endl;
     getline(is, s);
   }
+  os << endl;
 }
 
 //--------------------------------------------------------------------------
