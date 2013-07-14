@@ -96,7 +96,7 @@ int main(int argc, //!< number of arguments; expected to be 2
 {
   if (argc != 2) {
     cerr << "usage: generateALL <target dir>" << endl;
-    exit(1);
+    exit(EXIT_FAILURE);
   }
   cerr << "call was ";
   for (int i= 0; i < argc; i++) {
@@ -115,6 +115,6 @@ int main(int argc, //!< number of arguments; expected to be 2
 	
   generate_model_runner(model, path);
   
-  return 0;
+  return EXIT_SUCCESS;
 }
 
