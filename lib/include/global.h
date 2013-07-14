@@ -28,15 +28,10 @@ This global header file also takes care of including some generally used cuda su
 using namespace std; // replaced these two lines : problem with visual studio
 #include <fstream>
 #include <sstream>
-#include <cuda.h>
-//#include <cuda_runtime_api.h>
-#include <cuda_runtime.h> //EY
-//#include <cutil_inline.h> // does not exist anymore in CUDA 5.0
-#include <helper_cuda.h>
-//#include <helper_cuda_drvapi.h>
+
+#include <cuda_runtime.h>
 
 cudaDeviceProp *deviceProp; //!< Global variable that contains the detected properties of all CUDA-enabled devices
-int devN; //!< Global variable that contains the number of detected CUDA-enabled devices
 int optimiseBlockSize= 1; //!< Flag that regulates whether BlockSize optimisation shall be attempted
 
 #endif  // _GLOBAL_H_
