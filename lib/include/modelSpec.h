@@ -32,7 +32,7 @@
 #define TRAUBMILES 2 //!< Macro attaching the name "TRAUBMILES" to neuron type 2
 #define IZHIKEVICH 3 //!< Macro attaching the name "IZHIKEVICH" to neuron type 3
 
-#define SYNTYPENO 3 //!< Macro defining the number of predefined synapse types
+#define SYNTYPENO 4
 
 //synapseType
 #define NSYNAPSE 0 //!< Macro attaching  the name NSYNAPSE to predefined synapse type 0, which is a non-learning synapse
@@ -41,10 +41,18 @@
 
 #define LEARN1SYNAPSE 2 //!< Macro attaching  the name LEARN1SYNAPSE to the predefined synapse type 2 which is a learning using spike timing; uses a primitive STDP rule for learning
 
+#define USERDEFSYNAPSE 3 //!< Macro attaching  the name USERDEFSYNAPSE to the predefined synapse type 3 which is a user-defined synapse
+
+//input type
+#define NOINP 0 //!< Macro attaching  the name NOINP (no input) to 0
+#define CONSTINP 1 //!< Macro attaching  the name CONSTINP (constant input) to 1
+#define MATINP 2 //!< Macro attaching  the name MATINP (individual input defined as a matrix) to 2
+
 unsigned int SYNPNO[SYNTYPENO]= {
   3,        // NSYNAPSE_PNO 
   4,        // NGRADSYNAPSE_PNO 
-  13        // LEARN1SYNAPSE_PNO 
+  13,       // LEARN1SYNAPSE_PNO 
+  1			// USERDEFSYNAPSE_PNO 
 }; //!< Global constant integer array containing the number of parameters of each of the predefined synapse types
 
 //connectivity of the network (synapseConnType)
@@ -59,8 +67,8 @@ unsigned int SYNPNO[SYNTYPENO]= {
 
 #define INDIVIDUALID 2 //!< Macro attaching the label "INDIVIDUALID" to method 2 for the definition of synaptic conductances
 
-#define NOLEARNING 0 //!< Macro attaching the label "NOLEARNING" to flag 0
-#define LEARNING 1 //!< Macro attaching the label "LEARNING" to flag 1
+#define NOLEARNING 0 //!< Macro attaching the label "NOLEARNING" to flag 0 
+#define LEARNING 1 //!< Macro attaching the label "LEARNING" to flag 1 
 
 #define EXITSYN 0 //!< Macro attaching the label "EXITSYN" to flag 0 (excitatory synapse)
 #define INHIBSYN 1 //!< Macro attaching the label "INHIBSYN" to flag 1 (inhibitory synapse)
@@ -113,6 +121,7 @@ class NNmodel
   vector<unsigned int>neuronNeedSt; //!< Whether last spike time needs to be saved for each indivual neuron type
   vector<vector<float> >dnp; //!< Derived neuron parameters
   vector<vector<float> >neuronIni; //!< Initial values of neurons
+  vector<int> receivesInputCurrent; //!< flags whether neurons of a population receive explicit input currents
   vector<vector<unsigned int> >inSyn; //!< The ids of the incoming synapse groups
   vector<float>nThresh; //!< Threshold for spiking for each neuron type
   unsigned int synapseGrpN; //!< Number of synapse groups
@@ -129,6 +138,7 @@ class NNmodel
   vector<unsigned int>synapseConnType; //!< Connectivity type of synapses
   vector<unsigned int>synapseGType; //!< Type of specification method for synaptic conductance
   vector<float>g0; //!< Global synapse conductance if GLOBALG is chosen.
+  vector<float>globalInp; //!< Global explicit input if CONSTINP is chosen.
   vector<unsigned int>synapseInSynNo; //!< IDs of the target neurons' incoming synapse variables for each synapse group
   vector<vector<float> >dsp;  //!> Derived synapse parameters
 
@@ -156,9 +166,12 @@ class NNmodel
   void setName(const string); //!< Method to set the neuronal network model name
   void addNeuronPopulation(const char *, unsigned int, unsigned int, float *, float *); //!< Method for adding a neuron population to a neuronal network model, using C style character array for the name of the population
   void addNeuronPopulation(const string, unsigned int, unsigned int, float *, float *); //!< Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population
+  //void activateDirectInput(const char *, unsigned int);  
+  void activateDirectInput(const string, unsigned int);  
   void addSynapsePopulation(const char *, unsigned int, unsigned int, unsigned int, const char *, const char *, float *); //!< Method for adding a synapse population to a neuronal network model, using C style character array for the name of the population
   void addSynapsePopulation(const string, unsigned int, unsigned int, unsigned int, const string, const string, float *); //!< Method for adding a synapse population to a neuronal network model, using C++ string for the name of the population
-  void setSynapseG(const string, float); //!< Mehthod for setting the condy=uctance (g) value for a synapse population with "GLOBALG" charactertistic
+  void setSynapseG(const string, float); //!< Method for setting the conductance (g) value for a synapse population with "GLOBALG" charactertistic
+  void setConstInp(const string, float); //!< Method for setting the global input value for a neuron population if CONSTINP
 };
 
 

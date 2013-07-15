@@ -96,15 +96,15 @@ void genNeuronKernel(NNmodel &model, //!< Model description
   os << "calcNeurons(";
   for (int i= 0; i < model.neuronGrpN; i++) {
     if (model.neuronType[i] == POISSONNEURON) {
-      // Note: Poisson neurons only used as input neurons; they do not 
+      // Note: Poisson neurons only used as input neurons; they do not \
       // receive any inputs
       os << "unsigned int *d_rates" << model.neuronName[i] << ", // poisson ";
       os << "\"rates\" of grp " << model.neuronName[i] << endl;
       os << "unsigned int offset" << model.neuronName[i] << ", // poisson ";
       os << "\"rates\" offset of grp " << model.neuronName[i] << endl;
     }
-    if (model.receivesInputCurrent[i]) {
-		os << "float *inputI" << model.neuronName[i] << ", // input current of grp " << model.neuronName[i] << endl;    	
+    if (model.receivesInputCurrent[i]==2) {
+		os << "float *inputI" << model.neuronName[i] << ", // explicit input current to grp " << model.neuronName[i] << endl;    	
     	}
   }
   os << "float t // absolute time" << endl; 
@@ -161,15 +161,14 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 	}
       }
     }
-    /*if (INJECTCURRENT==1){
-      os << " 	 if (t>10000 && t<20000) {" << endl;
-  	 	os << " 	 $(Isyn)+=10; " << endl; 
-  	 	os << " 	 } " << endl;
-    	}*/
-if (model.receivesInputCurrent[i]) {
-	os << "    $(Isyn)+= inputI" << model.neuronName[i] << "[" << localID << "];" << endl;
+
+if (model.receivesInputCurrent[i]==1) { //receives constant  input
+	os << "    Isyn+= " << model.globalInp[i] << ";" << endl;
 }    	
-    	
+
+if (model.receivesInputCurrent[i]==2) { //receives custom input
+	os << "    Isyn+= inputI" << model.neuronName[i] << "[" << localID << "];" << endl;
+} 	
     os << "    // calculate membrane potential" << endl;
     //new way of doing it
     string code= nModels[nt].simCode;

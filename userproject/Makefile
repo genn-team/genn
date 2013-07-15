@@ -60,7 +60,6 @@ endif
 
 CUDA_INSTALL_PATH ?= $(CUDA_PATH)
 
-HOME		:= /Users/alex/
 #ROOTDIR		:= $(NVIDIASDKPATH)/C/src
 ROOTDIR		:= $(NVIDIASDKPATH)/common/inc
 ROOTBINDIR      := .

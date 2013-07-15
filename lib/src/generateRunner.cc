@@ -366,7 +366,7 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     os << "#include \"neuronKrnl.cc\"" << endl;
     os << "#include \"synapseKrnl.cc\"" << endl;
     os << endl;
-
+    os << "cudaError_t errort;" << endl;
     unsigned int size;     
 
     // ------------------------------------------------------------------------
@@ -455,14 +455,14 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     os << "{" << endl;
     os << "  void *devPtr;" << endl;
     os << "  unsigned int tmp= 0;" << endl;
-    os << "  cudaMemcpyToSymbol(\"d_done\",";
+    os << "  checkCudaErrors(cudaMemcpyToSymbol(d_done,";
     os << " &tmp, sizeof(unsigned int), 0,";
-    os << " cudaMemcpyHostToDevice);" << endl;
+    os << " cudaMemcpyHostToDevice));" << endl;
     for (int i= 0; i < model.neuronGrpN; i++) {
       nt= model.neuronType[i];
-      os << "  cudaMemcpyToSymbol(\"d_glbscnt" << model.neuronName[i] << "\",";
+      os << " checkCudaErrors(cudaMemcpyToSymbol(d_glbscnt" << model.neuronName[i] << ",";
       os << " &glbscnt" << model.neuronName[i] << ", sizeof(unsigned int), 0,";
-      os << " cudaMemcpyHostToDevice);" << endl;
+      os << " cudaMemcpyHostToDevice));" << endl;
       os << "  cudaGetSymbolAddress(&devPtr, d_glbSpk" << model.neuronName[i] << ");" << endl;
       os << "  checkCudaErrors(cudaMemcpy(devPtr, " << "glbSpk" << model.neuronName[i] << ",";
       size= model.neuronN[i]*sizeof(unsigned int);
@@ -488,6 +488,9 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 	os << "  checkCudaErrors(cudaMemcpy(devPtr, " << "sT" << model.neuronName[i] << ",";
 	size= model.neuronN[i]*sizeof(float);
 	os << size << ", cudaMemcpyHostToDevice));" << endl;
+	os << "  errort=cudaGetLastError();" << endl;
+	os << "  if (errort != cudaSuccess) {" << endl;
+	os << "    cerr << \"CUDA Error:\" << cudaGetErrorString(errort) << endl; }" << endl; 
       }
     }            
     os << "}" << endl;
@@ -503,7 +506,7 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     for (int i= 0; i < model.neuronGrpN; i++) {
       nt= model.neuronType[i];
       os << "  cudaMemcpyFromSymbol(&glbscnt" << model.neuronName[i];
-      os << ", \"d_glbscnt" << model.neuronName[i] << "\", sizeof(unsigned int), 0, ";
+      os << ", d_glbscnt" << model.neuronName[i] << ", sizeof(unsigned int), 0, ";
       os << " cudaMemcpyDeviceToHost);" << endl;
       os << "  cudaGetSymbolAddress(&devPtr, d_glbSpk" << model.neuronName[i] << ");" << endl;
       os << "  checkCudaErrors(cudaMemcpy(glbSpk" << model.neuronName[i] << ", devPtr, ";
@@ -543,7 +546,7 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     os << "  void *devPtr;" << endl;
     for (int i= 0; i < model.neuronGrpN; i++) {
       os << "  cudaMemcpyFromSymbol(&glbscnt" << model.neuronName[i];
-      os << ", \"d_glbscnt" << model.neuronName[i] << "\", sizeof(unsigned int), 0, ";
+      os << ", d_glbscnt" << model.neuronName[i] << ", sizeof(unsigned int), 0, ";
       os << " cudaMemcpyDeviceToHost);" << endl;
       os << "  cudaGetSymbolAddress(&devPtr, d_glbSpk" << model.neuronName[i] << ");";
       os << endl;
@@ -560,7 +563,7 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     os << "{" << endl;
     for (int i= 0; i < model.neuronGrpN; i++) {
       os << "  cudaMemcpyFromSymbol(&glbscnt" << model.neuronName[i];
-      os << ", \"d_glbscnt" << model.neuronName[i] << "\", sizeof(unsigned int), 0, ";
+      os << ", d_glbscnt" << model.neuronName[i] << ", sizeof(unsigned int), 0, ";
       os << " cudaMemcpyDeviceToHost);" << endl;
     }
     os << "}" << endl;
@@ -577,6 +580,11 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 	os << "unsigned int offset" << model.neuronName[i];
 	os << ",   // offset on pointer to the rates in grp ";
 	os << model.neuronName[i] << endl;
+      }
+      if (model.receivesInputCurrent[i]==2) {
+	os << "float *inputI" << model.neuronName[i];
+	os << ",   // pointer to the explicit input to neurons in grp ";
+	os << model.neuronName[i] << "," << endl;
       }
     }
     os << "float t)" << endl;
@@ -621,6 +629,9 @@ void genRunnerGPU(NNmodel &model, //!< Model description
       if (model.neuronType[i] == POISSONNEURON) {
 	os << "rates" << model.neuronName[i] << ", ";
 	os << "offset" << model.neuronName[i] << ",";
+      }
+      if (model.receivesInputCurrent[i]==2) {
+   os << "inputI" << model.neuronName[i] << ", ";
       }
     }
     os << "t);" << endl;
@@ -685,6 +696,11 @@ void genRunnerCPU(NNmodel &model, //!< Neuronal network model description
       os << ",   // offset on pointer to the rates in grp ";
       os << model.neuronName[i] << endl;
     }
+    if (model.receivesInputCurrent[i]==2) {
+	   os << "float *inputI" << model.neuronName[i];
+   	os << ",   // pointer to the explicit input to neurons in grp ";
+	   os << model.neuronName[i] << "," << endl;
+    }
   }
   os << "float t)" << endl;
   os << "{" << endl;
@@ -700,6 +716,9 @@ void genRunnerCPU(NNmodel &model, //!< Neuronal network model description
     if (model.neuronType[i] == POISSONNEURON) {
       os << "rates" << model.neuronName[i] << ", ";
       os << "offset" << model.neuronName[i] << ",";
+    }
+    if (model.receivesInputCurrent[i]==2) {
+      os << "inputI" << model.neuronName[i] << ", ";
     }
   }
   os << "t);" << endl;

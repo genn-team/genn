@@ -36,6 +36,7 @@ class classol
   ~classol();
   void init(unsigned int);
   void allocate_device_mem_patterns();
+  void allocate_device_mem_input();
   void free_device_mem();
   void read_PNIzh1syns(FILE *);
   void write_PNIzh1syns(FILE *);

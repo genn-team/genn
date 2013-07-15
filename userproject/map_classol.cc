@@ -188,7 +188,7 @@ void classol::read_kcdnsyns(FILE *f //!< File handle for a file containing KC to
   fread(gpKCDN, model.neuronN[1]*model.neuronN[3]*sizeof(float),1,f);
   fprintf(stderr, "read kcdn ... \n");
   fprintf(stderr, "values start with: \n");
-  for(int i= 0; i < 20; i++) {
+  for(int i= 0; i < 100; i++) {
     fprintf(stderr, "%f ", gpKCDN[i]);
   }
   fprintf(stderr, "\n\n");
@@ -219,8 +219,8 @@ void classol::read_input_patterns(FILE *f //!< File handle for a file containing
   // we use a predefined pattern number
   fread(pattern, model.neuronN[0]*PATTERNNO*sizeof(unsigned int),1,f);
   fprintf(stderr, "read patterns ... \n");
-  fprintf(stderr, "values start with: \n");
-  for(int i= 0; i < 20; i++) {
+  fprintf(stderr, "input pattern values start with: \n");
+  for(int i= 0; i < 100; i++) {
     fprintf(stderr, "%d ", pattern[i]);
   }
   fprintf(stderr, "\n\n");
@@ -265,7 +265,7 @@ void classol::run(float runtime, //!< Duration of time to run the model for
       offset= pno*model.neuronN[0];
       fprintf(stderr, "setting pattern, pattern offset: %d\n", offset);
     }
-    if (iT%patSetTime == PAT_FIRETIME) {
+    if (iT%patSetTime == patFireTime) {
       if (which == CPU)
 	theRates= baserates;
       if (which == GPU)

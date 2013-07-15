@@ -50,6 +50,7 @@ float myPNIzh1_p[4]= {
   20.0         // 3 - Vslope: Activation slope of graded release - needed if NGRADSYNAPSE
 };
 
+float inpIzh1 = 10.0;
 
 #include "../../userproject/include/sizes.h"
 
@@ -58,6 +59,11 @@ void modelDefinition(NNmodel &model)
   model.setName("IzhEx");
   model.addNeuronPopulation("PN", _NAL, POISSONNEURON, myPOI_p, myPOI_ini);
   model.addNeuronPopulation("Izh1", _NMB, IZHIKEVICH, exIzh_p, exIzh_ini);
+  
+  printf("const inp=%d ",CONSTINP);
+  model.activateDirectInput("Izh1", CONSTINP);
+  model.setConstInp("Izh1",inpIzh1);
 
   model.addSynapsePopulation("PNIzh1", NGRADSYNAPSE, ALLTOALL, INDIVIDUALG, "PN", "Izh1", myPNIzh1_p);
+  model.setSynapseG("PNIzh1", inpIzh1);
 }

@@ -68,7 +68,7 @@ void genNeuronFunction(NNmodel &model, //!< Model description
       os << "unsigned int offset" << model.neuronName[i] << ", // poisson ";
       os << "\"rates\" offset of grp " << model.neuronName[i] << endl;
     }
-  if (model.receivesInputCurrent[i]) {
+  if (model.receivesInputCurrent[i]==2) {
 		os << "float *inputI" << model.neuronName[i] << ", // input current of grp " << model.neuronName[i] << endl;    	
     	}
   }
@@ -92,8 +92,12 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 	else os << ";" << endl;
       }
     }
-    if (model.receivesInputCurrent[i]) {
-	 	os << "    $(Isyn)+= inputI" << model.neuronName[i] << "[" << localID << "];" << endl;
+    if (model.receivesInputCurrent[i]==1) { //receives constant  input
+	os << "    Isyn+= " << model.globalInp[i] << ";" << endl;
+	}    	
+
+    if (model.receivesInputCurrent[i]==2) {
+	 	os << "    Isyn+= inputI" << model.neuronName[i] << "[" << localID << "];" << endl;
 	 } 
     os << "    // calculate membrane potential" << endl;
     string code= nModels[nt].simCode;

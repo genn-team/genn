@@ -217,14 +217,16 @@ void NNmodel::addNeuronPopulation(const string name, unsigned int nNo, unsigned 
   neuronIni.push_back(tmpP);
   vector<unsigned int> tv;
   receivesInputCurrent.push_back(0);
+  //inputType.push_back(0);
   inSyn.push_back(tv);  // empty list of input synapse groups for neurons i 
   initDerivedNeuronPara(i);
 }
 
-void NNmodel::activateDirectInput(string name)
+void NNmodel::activateDirectInput(const string name, unsigned int type)
 {
 	unsigned int i= findNeuronGrp(name);
-	receivesInputCurrent[i]= 1;	
+	receivesInputCurrent[i]= type;	//1 if common input, 2 if custom input
+	//inputType[i]= type;
 }
 
 //--------------------------------------------------------------------------
@@ -276,4 +278,10 @@ void NNmodel::setSynapseG(const string sName, float g)
   g0[found]= g;
 }
 
+void NNmodel::setConstInp(const string sName, float globalInp0)
+{
+  unsigned int found= findNeuronGrp(sName);
+  if (globalInp.size() < found+1) globalInp.resize(found+1);
+  globalInp[found]= globalInp0;
+}
 #endif
