@@ -126,7 +126,6 @@ void genRunner(NNmodel &model, //!< Model description
   
   writeHeader(os);
   os << endl;
-  //os << "#include <helper_cuda.h>" << endl;
 
     // write doxygen comment
   os << "//-------------------------------------------------------------------------" << endl;
@@ -352,8 +351,6 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 
   writeHeader(os);
   os << "#include <cuda_runtime.h>" << endl;
-  //os << "#include <helper_cuda.h>" << endl;
-  //os << "#include <helper_timer.h>" << endl << endl;
 
   // write doxygen comment
   os << "//-------------------------------------------------------------------------" << endl;
@@ -652,7 +649,6 @@ void genRunnerCPU(NNmodel &model, //!< Neuronal network model description
 
   writeHeader(os);
   os << "#include <cuda_runtime.h>" << endl;//EY
-  //os << "#include <helper_cuda.h>" << endl << endl;//EY
 
   // write doxygen comment
   os << "//-------------------------------------------------------------------------" << endl;
