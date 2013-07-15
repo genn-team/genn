@@ -38,9 +38,9 @@ int main(int argc, char *argv[])
   fprintf(stderr, "# PAT_SETTIME %d \n", PAT_SETTIME);
   fprintf(stderr, "# TOTAL_TME %d \n", TOTAL_TME);
   
-  name= OutDir+ "/"+ toString(argv[1]) + "_output/" + toString(argv[1]) + toString(".out.Vm"); 
+  name= OutDir+ "/" + toString(argv[1]) + toString(".out.Vm"); 
   FILE *osf= fopen(name.c_str(),"w");
-  name= OutDir+ "/"+ toString(argv[1]) + "_output/" + toString(argv[1]) + toString(".outPN.Vm"); 
+  name= OutDir+ "/" + toString(argv[1]) + toString(".outPN.Vm"); 
   FILE *osfpn= fopen(name.c_str(),"w");
   //-----------------------------------------------------------------
   // build the neuronal circuitery

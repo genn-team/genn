@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
   fprintf(stderr, "# patSetTime %d \n", patSetTime);
   fprintf(stderr, "# TOTAL_TME %d \n", TOTAL_TME);
   
-  name= OutDir+ "/"+ toString(argv[1]) + "_output/" + toString(argv[1]) + toString(".out.st"); 
+  name= OutDir+ "/"+ toString(argv[1]) + toString(".out.Vm"); 
   FILE *osf= fopen(name.c_str(),"w");
 
   //-----------------------------------------------------------------
@@ -115,7 +115,6 @@ unsigned int sum= 0;
     locust.run(DT, which); // run next batch
     if (which == GPU) {  
       cudaGetSymbolAddress(&devPtr, d_VDN);
-      //CUDA_SAFE_CALL(cudaMemcpy(VDN, devPtr, 10*sizeof(float), cudaMemcpyDeviceToHost));
       checkCudaErrors(cudaMemcpy(VDN, devPtr, 10*sizeof(float), cudaMemcpyDeviceToHost));
 	}
 //    locust.sum_spikes();

@@ -53,8 +53,7 @@ int main(int argc, char *argv[])
 {
   if (argc != 11)
   {
-    cerr << "usage: generate_run <CPU=0, GPU=1> <nAL> <nMB> <nLHI> <nLb> <gscale> <executable name> <model name> <debug mode? (0/1)>";
-    cerr << "<gPNKC_base> <basename>" << endl;
+    cerr << "usage: generate_run <CPU=0, GPU=1> <nAL> <nMB> <nLHI> <nLb> <gscale> <outdir> <executable name> <model name> <debug mode? (0/1)>";
     exit(1);
   }
 

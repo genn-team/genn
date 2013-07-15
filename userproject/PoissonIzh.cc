@@ -53,6 +53,19 @@ void classol::allocate_device_mem_patterns()
   checkCudaErrors(cudaMemcpy(d_baserates, baserates, size, cudaMemcpyHostToDevice)); 
 }
 
+void classol::allocate_device_mem_input()
+{
+  unsigned int size;
+
+  // allocate device memory for explicit input
+  size= model.neuronN[0]*PATTERNNO*sizeof(unsigned int);
+  checkCudaErrors(cudaMalloc((void**) &d_pattern, size));
+  fprintf(stderr, "allocated %u elements for pattern.\n", size/sizeof(unsigned int));
+  checkCudaErrors(cudaMemcpy(d_pattern, pattern, size, cudaMemcpyHostToDevice));
+  size= model.neuronN[0]*sizeof(unsigned int);
+  checkCudaErrors(cudaMalloc((void**) &d_baserates, size));
+  checkCudaErrors(cudaMemcpy(d_baserates, baserates, size, cudaMemcpyHostToDevice)); 
+}
 
 void classol::free_device_mem()
 {
@@ -89,7 +102,7 @@ void classol::read_PNIzh1syns(FILE *f)
   //assert(is.good());
   fprintf(stderr,"read PNIzh1 ... \n");
   fprintf(stderr, "values start with: \n");
-  for(int i= 0; i < 20; i++) {
+  for(int i= 0; i < 100; i++) {
     fprintf(stderr, "%f ", gpPNIzh1[i]);
   }
   fprintf(stderr,"\n\n");
@@ -108,8 +121,8 @@ void classol::read_input_patterns(FILE *f)
   // we use a predefined pattern number
   fread(pattern, model.neuronN[0]*PATTERNNO*sizeof(unsigned int),1,f);
   fprintf(stderr, "read patterns ... \n");
-  fprintf(stderr, "values start with: \n");
-  for(int i= 0; i < 20; i++) {
+  fprintf(stderr, "input pattern values start with: \n");
+  for(int i= 0; i < 100; i++) {
     fprintf(stderr, "%d ", pattern[i]);
   }
   fprintf(stderr, "\n\n");
@@ -133,8 +146,8 @@ void classol::run(float runtime, unsigned int which)
   int riT= (int) (runtime/DT);
 
   for (int i= 0; i < riT; i++) {
-    if (iT%PAT_SETTIME == 0) {
-      pno= (iT/PAT_SETTIME)%PATTERNNO;
+    if (iT%patSetTime == 0) {
+      pno= (iT/patSetTime)%PATTERNNO;
       if (which == CPU)
 	theRates= pattern;
       if (which == GPU)
@@ -142,7 +155,7 @@ void classol::run(float runtime, unsigned int which)
       offset= pno*model.neuronN[0];
       fprintf(stderr, "setting pattern, pattern offset: %d\n", offset);
     }
-    if (iT%PAT_SETTIME == PAT_FIRETIME) {
+    if (iT%patSetTime == patFireTime) {
       if (which == CPU)
 	theRates= baserates;
       if (which == GPU)
