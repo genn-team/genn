@@ -117,9 +117,9 @@ else ifdef ON_MAC
 	CC         := gcc -fPIC -arch i386  #-m32 #gcc
 	LINK       := g++ -fPIC -arch i386  #-m32 #g++
 else
-	CXX        := g++ -fPIC #-m32 #g++
-	CC         := gcc -fPIC #-m32 #gcc
-	LINK       := g++ -fPIC #-m32 #g++
+	CXX        := g++ #-fPIC #-m32 #g++
+	CC         := gcc #-fPIC #-m32 #gcc
+	LINK       := g++ #-fPIC #-m32 #g++
 endif
 # architecture flag for cubin build
 CUBIN_ARCH_FLAG := #-m32

@@ -31,6 +31,7 @@ public:
 
 #else
 #include <sys/time.h>
+
 typedef struct {
 	timeval start;
 	timeval stop;
