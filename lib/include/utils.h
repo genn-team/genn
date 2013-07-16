@@ -234,6 +234,6 @@ void prepareStandardModels()
 }
 
 // bit tool macros
-#include "simpleBit.h"
+#include "numlib/simpleBit.h"
 
 #endif  // _UTILS_H_
