@@ -1,31 +1,28 @@
 INSTALLATION OF GeNN:
 
-(i) unpack GeNN.zip in a convenient location 
+(i) Unpack GeNN.zip in a convenient location.
 
-(ii) define the environment variable "GeNNPATH" to point to the main GeNN 
+(ii) Define the environment variable "GeNNPATH" to point to the main GeNN 
      directory, e.g. if you extracted GeNN to /usr/local/GeNN, then you can add
-     "export GeNNPATH=/usr/local/GeNN"
-     to your login script.
+     "export GeNNPATH=/usr/local/GeNN" to your login script.
 
-(iii) define the environment variable "NVIDIASDKPATH" to point to the main 
-      directory of an installation of the NVidia Computing SDK (install one
-      if necessary). E.g. if the SDK resides in 
-      "/usr/local/cuda-5.0/samples" then you can add
-      "export NVIDIASDKPATH=/usr/local/cuda-5.0/samples/"
-      to your login script.
+(iii) Add $GeNNPATH/lib/bin to your PATH variable, e.g.
+      "export PATH=$PATH:$GeNNPATH/lib/bin".
 
-(iv) add $GeNNPATH/lib/bin to your PATH variable, e.g.
-     "export PATH=$PATH:$GeNNPATH/lib/bin"
+(iv) Get a fresh installation of the Nvidia cuda toolkit from
+     https://developer.nvidia.com/cuda-downloads
 
-(v) if not done by the CUDA install scripts, define and export the path to NVIDIA CUDA, e.g. "export CUDA_PATH=/usr/local/cuda"
+(v) Set the CUDA_PATH variable in $GeNNPATH/lib/include/makefile_common.mk to
+    the location of your Nvidia cuda toolkit installation.
+    For most people, the default value of /usr/local/cuda is fine.
 
-(v)  modify Makefile examples under $GeNNPATH/lib/src/ and $GeNNPATH/userproject/ 
-     (if you use the example) to include the correct SMVERSIONFLAGS of your GPU. 
-     Also check the directories under the INCLUDES and LIB variables.
+(vi) Modify Makefile examples under $GeNNPATH/lib/src/ and $GeNNPATH/userproject/
+     to add extra linker, include and compiler flags on a per-project basis, or
+     modify global default flags in $GeNNPATH/lib/include/makefile_common.mk.
 
-This completes the installation. If you use the example Makefile in 
-"userproject", then the HOME, ROOTDIR and include line for Makefile also need to be adjusted.
+This completes the installation.
 
+------
 
 HOW TO USE GeNN:
 
