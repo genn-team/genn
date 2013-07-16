@@ -78,11 +78,11 @@ void prepare(ostream &mos //!< output stream for messages
     }
   }
 
-  mos << "We are using CUDA device " << theDev << endl;
   ofstream sm_os("sm_Version.mk");
-  sm_os << "SMVERSIONFLAGS := -arch sm_" << deviceProp[theDev].major << deviceProp[theDev].minor << endl;
+  sm_os << "NVCCFLAGS += -arch sm_" << deviceProp[theDev].major << deviceProp[theDev].minor << endl;
   sm_os.close();
 
+  mos << "We are using CUDA device " << theDev << endl;
   mos << "max logNeuronBlkSz: " << logNeuronBlkSz << endl;
   mos << "max neuronBlkSz: " << neuronBlkSz << endl;
   mos << "max logSynapseBlkSz: " << logSynapseBlkSz << endl;
