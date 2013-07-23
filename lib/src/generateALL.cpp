@@ -32,8 +32,7 @@
  */
 
 void generate_model_runner(NNmodel &model,  //!< Model description
-			   string path //!< Path where the generated code
-			               //!< will be deposited
+			   string path //!< Path where the generated code will be deposited
 			   )
 {
   string cmd, name;

@@ -11,8 +11,6 @@
   
 --------------------------------------------------------------------------*/
 
-#include <string>
-
 //-----------------------------------------------------------------------
 /*!  \file generateRunner.cc 
   
@@ -22,43 +20,42 @@
 */
 //--------------------------------------------------------------------------
 
-
-unsigned int globalMem0; //!< Global variable that makes available the size of the global memory on the chosen GPU device (the device with the largest memory).  
+#include <string>
 
 //--------------------------------------------------------------------------
 /*! 
   \brief Helper function that prepares data structures and detects the hardware properties to enable the code generation code that follows.
 
-  The main tasks in this function are the detection and characterization of the GPU device present (if any), choosing which GPU device to use, finding and appropriate block size, taking note of the major and minor version of the CUDA enabled device chosen for use, and populating the list of standard neuron models.
+  The main tasks in this function are the detection and characterization of the GPU device present (if any), choosing which GPU device to use, finding an appropriate block size, taking note of the major and minor version of the CUDA enabled device chosen for use, and populating the list of standard neuron models.
 */
 //--------------------------------------------------------------------------
+
+unsigned int globalMem0; //!< Global variable that makes available the size of the global memory on the chosen GPU device.
 
 void prepare(ostream &mos //!< output stream for messages
 	     )
 {
-  // NOTE: should put device choosing and block optimisation in one loop later
+  // first we get the specifications of all available devices and work out which one we will use
 
-  // first we get the specifications of all available cuda devices
-  // NOTE: deviceCount > 0 check is unnecessary. missing device is handled by CHECK_CUDA_ERRORS
-  int deviceCount = 0;
-  CHECK_CUDA_ERRORS(cudaGetDeviceCount(&deviceCount));
-  deviceProp = new cudaDeviceProp[deviceCount];
-  for (int dev = 0; dev < deviceCount; dev++)
-  {
-    cudaSetDevice(dev);
-    cudaGetDeviceProperties(&(deviceProp[dev]), dev);
-  }
 
-  // then we work out which of our devices we will use
-  // BLOCK OPTIMISATION CODE GOES HERE: use formulae from the cuda occupancy calculator or ptx log info
-  neuronBlkSz = 0;
-  globalMem0 = 0;
-  theDev = 0;
+
   // choose the device with the largest block size for the time being
   // CHANGED: choose the device with the largest total Global Memory
   // among equals we use the last device
+
+
+
+
+  int deviceCount = 0;
+  CHECK_CUDA_ERRORS(cudaGetDeviceCount(&deviceCount));
+  deviceProp = new cudaDeviceProp[deviceCount];
+  theDev = 0;
+  globalMem0 = 0;
+  neuronBlkSz = 0;
   for (int dev = 0; dev < deviceCount; dev++)
   {
+    CHECK_CUDA_ERRORS(cudaSetDevice(dev));
+    CHECK_CUDA_ERRORS(cudaGetDeviceProperties(&(deviceProp[dev]), dev));
     if (deviceProp[dev].totalGlobalMem >= globalMem0)
     {
       mos << "device " << dev << " has a global memory of " << deviceProp[dev].totalGlobalMem << " bytes" << endl;
@@ -78,10 +75,12 @@ void prepare(ostream &mos //!< output stream for messages
     }
   }
 
-  ofstream sm_os("sm_Version.mk");
-  sm_os << "NVCCFLAGS += -arch sm_" << deviceProp[theDev].major << deviceProp[theDev].minor << endl;
-  sm_os.close();
 
+
+
+
+
+  // print some information about our chosen CUDA device to the message ostream
   mos << "We are using CUDA device " << theDev << endl;
   mos << "max logNeuronBlkSz: " << logNeuronBlkSz << endl;
   mos << "max neuronBlkSz: " << neuronBlkSz << endl;
@@ -94,8 +93,17 @@ void prepare(ostream &mos //!< output stream for messages
   mos << "logUIntSz: " << logUIntSz << endl;
   mos << "UIntSz: " << UIntSz << endl;
   if (optimiseBlockSize) {
+
+    // here we optionally optimise thread block size to maximise thrroughput on our chosen cuda device
     mos << "optimising block size ..." << endl;
+    
+    // BLOCK OPTIMISATION CODE GOES HERE: use formulae from the cuda occupancy calculator or ptx log info
   }
+
+  // finally we write the nvcc compiler SM architecture flags for our cuda device to ./sn_Version.mk
+  ofstream sm_os("sm_Version.mk");
+  sm_os << "NVCCFLAGS += -arch sm_" << deviceProp[theDev].major << deviceProp[theDev].minor << endl;
+  sm_os.close();
 }
 
 //--------------------------------------------------------------------------

@@ -24,7 +24,7 @@
 */
 //--------------------------------------------------------------------------
 
-#include <cstdlib> // for exit() and EXIT_FAIL / _SUCCESS
+#include <cstdlib> // for exit() and EXIT_FAIL / EXIT_SUCCESS
 #include <iostream>
 #include <string>
 #include <vector>
