@@ -26,7 +26,10 @@ OS_ARCH = $(shell uname -m | sed -e "s/i386/i686/")
 # C / C++ compiler, cuda compiler, include flags and link flags. Specify
 # additional lib and include paths by defining LINK_FLAGS and INCLUDE_FLAGS in
 # a project's main Makefile.  Declare cuda's install directory with CUDA_PATH.
-CUDA_PATH        := /usr/local/cuda
+ifndef CUDA_PATH
+	CUDA_PATH        := /usr/local/cuda
+endif
+
 COMPILER         := g++
 NVCC             := $(CUDA_PATH)/bin/nvcc
 INCLUDE_FLAGS    += -I$(CUDA_PATH)/include -I$(GeNNPATH)/lib/include -I. 
