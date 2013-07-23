@@ -27,6 +27,13 @@
 #include "generateRunner.cc"
 #include "generateCPU.cc"
 
+#ifdef _WIN32
+#include <direct.h>
+#include <stdlib.h>
+#else
+#include <sys/stat.h> //needed for mkdir
+#endif
+
 /*! \brief This function will call the necessary sub-functions to generate the code for simulating a model.
 
  */
@@ -39,13 +46,15 @@ void generate_model_runner(NNmodel &model,  //!< Model description
   string cmd, name;
   
   #ifdef _WIN32
-  cmd= toString("mkdir ")+ path + toString("\\") + model.name + toString("_CODE");
-#else
+  //cmd= toString("mkdir ")+ path + toString("\\") + model.name + toString("_CODE");
+  cmd= path + toString("\\") + model.name + toString("_CODE");
+  _mkdir(cmd.c_str());
+  #else
   cmd= toString("mkdir -p ")+ path + toString("/") + model.name + toString("_CODE");
-#endif
+  system(cmd.c_str());
+  #endif
 
   cerr << cmd << endl;
-  system(cmd.c_str());
   
 /* TODO: change the code above to direct system calls 
   #ifdef _WIN32
