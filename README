@@ -22,6 +22,9 @@ INSTALLATION OF GeNN:
 
 This completes the installation.
 
+If you are using GeNN under CYGWIN with cl, you have to source vscvsrs.bat script under Visual Studio directory first.
+Note that the debugging option is not available under CYGWIN.
+
 ------
 
 HOW TO USE GeNN:

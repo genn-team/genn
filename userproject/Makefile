@@ -20,4 +20,8 @@ LINK_FLAGS	:=
 CCFLAGS		:= 
 NVCCFLAGS	:= 
 
-include $(GeNNPATH)/lib/include/makefile_common.mk
+ifdef COMSPEC
+	include	$(GeNNPATH)/lib/include/makefile_common_cygwin.mk
+else
+	include	$(GeNNPATH)/lib/include/makefile_common.mk
+endif
