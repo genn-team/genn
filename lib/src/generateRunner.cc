@@ -370,7 +370,14 @@ void genRunnerGPU(NNmodel &model, //!< Model description
   os << endl;
 
   os << "#include \"neuronKrnl.cc\"" << endl;
-  os << "#include \"synapseKrnl.cc\"" << endl;
+  if (model.synapseGrpN>0) os << "#include \"synapseKrnl.cc\"" << endl;
+  
+  for (int i= 0; i < model.neuronGrpN; i++) {
+    if (model.receivesInputCurrent[i]>=2) {
+    os << "#include <string>" << endl;
+    break;
+   }
+  }
   os << endl;
   os << "cudaError_t errort;" << endl;
   unsigned int size;
@@ -387,7 +394,7 @@ void genRunnerGPU(NNmodel &model, //!< Model description
       /	The use of a character string to indicate a device symbol, which was possible with
       /	certain API functions, is no longer supported. Instead, the symbol should be used
       /	directly.
-      /	Therefore, call of cudaGetSymboAddress in this file is modified wrt GeNN 0.3.
+      /	Therefore, call of cudaGetSymbolAddress in this file is modified to support CUDA 5.0.
       /	
       */
       os << "  cudaGetSymbolAddress(&devPtr, d_gp" << model.synapseName[i] << ");" << endl;
@@ -417,6 +424,14 @@ void genRunnerGPU(NNmodel &model, //!< Model description
   os << "}" << endl;
   os << endl;
 
+// ------------------------------------------------------------------------
+  // copying explicit input(if any) to device
+  /*
+  os << "void copyInpToDevice()" << endl;
+  os << "{" << endl;
+  
+  os << "}" << endl;
+  os << endl;*/
   // ------------------------------------------------------------------------
   // copying conductances from device
   os << "void copyGFromDevice()" << endl;
@@ -433,11 +448,6 @@ void genRunnerGPU(NNmodel &model, //!< Model description
         os << "  CHECK_CUDA_ERRORS(cudaMemcpy(grawp" << model.synapseName[i] << ", devPtr,";
         size= model.neuronN[model.synapseSource[i]]*model.neuronN[model.synapseTarget[i]]*sizeof(float);
         os << size << ", cudaMemcpyDeviceToHost));" << endl;
-      }
-      if (model.receivesInputCurrent[i]==2) {
-	os << "float *inputI" << model.neuronName[i];
-	os << ",   // pointer to the explicit input to neurons in grp ";
-	os << model.neuronName[i] << "," << endl;
       }
     }
     if (model.synapseGType[i] == INDIVIDUALID) {
@@ -466,12 +476,12 @@ void genRunnerGPU(NNmodel &model, //!< Model description
   os << "{" << endl;
   os << "  void *devPtr;" << endl;
   os << "  unsigned int tmp= 0;" << endl;
-  os << "  cudaMemcpyToSymbol(\"d_done\",";
+  os << "  cudaMemcpyToSymbol(d_done,";
   os << " &tmp, sizeof(unsigned int), 0,";
   os << " cudaMemcpyHostToDevice);" << endl;
   for (int i= 0; i < model.neuronGrpN; i++) {
     nt= model.neuronType[i];
-    os << "  cudaMemcpyToSymbol(\"d_glbscnt" << model.neuronName[i] << "\",";
+    os << "  cudaMemcpyToSymbol(d_glbscnt" << model.neuronName[i] << ",";
     os << " &glbscnt" << model.neuronName[i] << ", sizeof(unsigned int), 0,";
     os << " cudaMemcpyHostToDevice);" << endl;
     os << "  cudaGetSymbolAddress(&devPtr, d_glbSpk" << model.neuronName[i] << ");" << endl;
@@ -499,6 +509,19 @@ void genRunnerGPU(NNmodel &model, //!< Model description
       os << "  CHECK_CUDA_ERRORS(cudaMemcpy(devPtr, " << "sT" << model.neuronName[i] << ",";
       size= model.neuronN[i]*sizeof(float);
       os << size << ", cudaMemcpyHostToDevice));" << endl;
+
+
+  if (model.receivesInputCurrent[i]>=2) {
+	//os << "float *inputI" << model.neuronName[i]; 	
+	//os << ",   // pointer to the explicit input to neurons in grp ";
+	//os << model.neuronName[i] << ";" << endl;
+	os << "  void *devInp;" << endl;
+        os << "  cudaGetSymbolAddress(&devInp, d_inputI" << model.neuronName[i] << ");" << endl;
+        os << "  CHECK_CUDA_ERRORS(cudaMemcpy(devInp, inputI" << model.neuronName[i];
+        os << ", ";
+        size= model.neuronN[model.synapseSource[i]]*sizeof(float);
+        os << size << ", cudaMemcpyHostToDevice));" << endl;
+}
     }
   }            
   os << "}" << endl;
@@ -588,13 +611,16 @@ void genRunnerGPU(NNmodel &model, //!< Model description
       os << ",   // offset on pointer to the rates in grp ";
       os << model.neuronName[i] << endl;
     }
-  }
+   if (model.receivesInputCurrent[i]>=2) {
+      os << "float *d_inputI" << model.neuronName[i];
+      os << ",   // Explicit input to the neurons in grp ";
+      os << model.neuronName[i] << endl;
+      }
+}
   os << "float t)" << endl;
   os << "{" << endl;
   unsigned int gridSz= model.padSumNeuronN[model.neuronGrpN-1];
   gridSz= gridSz >> logNeuronBlkSz;	 
-  unsigned int sgridSz= model.padSumSynapseTrgN[model.synapseGrpN-1];
-  sgridSz= sgridSz >> logSynapseBlkSz;
 
   unsigned int lgridSz=0;
   if (model.lrnGroups > 0) {
@@ -606,34 +632,45 @@ void genRunnerGPU(NNmodel &model, //!< Model description
   unsigned int lblkSz= learnBlkSz;
 
   os << "  dim3 sThreads(" << sblkSz << ", 1);" << endl;
-  os << "  dim3 sGrid(" << sgridSz << ", 1);" << endl;
-  os << endl;
+  if (model.synapseGrpN>0) 
+  { 
+    unsigned int sgridSz= model.padSumSynapseTrgN[model.synapseGrpN-1];
+    sgridSz= sgridSz >> logSynapseBlkSz;
+    os << "  dim3 sGrid(" << sgridSz << ", 1);" << endl;
+    os << endl;
+  }
   os << "  dim3 nThreads(" << blkSz << ", 1);" << endl;
   os << "  dim3 nGrid(" << gridSz << ", 1);" << endl;
+  os << endl;
+
   os << endl;
   if (model.lrnGroups > 0) {
     os << "  dim3 lThreads(" << lblkSz << ", 1);" << endl;
     os << "  dim3 lGrid(" << lgridSz << ", 1);" << endl;
     os << endl;
   }
+  if (model.synapseGrpN>0) 
+  {
   os << "  if (t > 0.0) {" << endl; 
-  os << "    calcSynapses <<< sGrid, sThreads >>> (";
-  if (model.needSt) {
-    os << "t";
+
+    os << "    calcSynapses <<< sGrid, sThreads >>> (";
+    if (model.needSt) {
+      os << "t";
+    }
+    os << ");" << endl;
+    if (model.lrnGroups > 0) {
+      os << "    learnSynapsesPost <<< lGrid, lThreads >>> (t);";
+    }
+    os << "  }" << endl;
   }
-  os << ");" << endl;
-  if (model.lrnGroups > 0) {
-    os << "    learnSynapsesPost <<< lGrid, lThreads >>> (t);";
-  }
-  os << "  }" << endl;
   os << "  calcNeurons <<< nGrid, nThreads >>> (";
   for (int i= 0; i < model.neuronGrpN; i++) {
     if (model.neuronType[i] == POISSONNEURON) {
       os << "rates" << model.neuronName[i] << ", ";
       os << "offset" << model.neuronName[i] << ",";
     }
-    if (model.receivesInputCurrent[i]==2) {
-      os << "inputI" << model.neuronName[i] << ", ";
+    if (model.receivesInputCurrent[i]>=2) {
+      os << "d_inputI" << model.neuronName[i] << ", ";
     }
   }
   os << "t);" << endl;
@@ -677,7 +714,7 @@ void genRunnerCPU(NNmodel &model, //!< Neuronal network model description
   os << endl;
   
   os << "#include \"neuronFnct.cc\"" << endl;
-  os << "#include \"synapseFnct.cc\"" << endl;
+  if (model.synapseGrpN>0) os << "#include \"synapseFnct.cc\"" << endl;
   os << endl;
 
   // ------------------------------------------------------------------------
@@ -692,7 +729,7 @@ void genRunnerCPU(NNmodel &model, //!< Neuronal network model description
       os << ",   // offset on pointer to the rates in grp ";
       os << model.neuronName[i] << endl;
     }
-    if (model.receivesInputCurrent[i]==2) {
+    if (model.receivesInputCurrent[i]>=2) {
 	   os << "float *inputI" << model.neuronName[i];
    	os << ",   // pointer to the explicit input to neurons in grp ";
 	   os << model.neuronName[i] << "," << endl;
@@ -700,6 +737,7 @@ void genRunnerCPU(NNmodel &model, //!< Neuronal network model description
   }
   os << "float t)" << endl;
   os << "{" << endl;
+  if (model.synapseGrpN>0){
   os << "  if (t > 0.0) {" << endl; 
   os << "    calcSynapsesCPU();";
   os << endl;
@@ -707,13 +745,14 @@ void genRunnerCPU(NNmodel &model, //!< Neuronal network model description
     os << "learnSynapsesPostHost(t);" << endl;
   }
   os << "  }" << endl;
+}
   os << "  calcNeuronsCPU(";
   for (int i= 0; i < model.neuronGrpN; i++) {
     if (model.neuronType[i] == POISSONNEURON) {
       os << "rates" << model.neuronName[i] << ", ";
       os << "offset" << model.neuronName[i] << ",";
     }
-    if (model.receivesInputCurrent[i]==2) {
+    if (model.receivesInputCurrent[i]>=2) {
       os << "inputI" << model.neuronName[i] << ", ";
     }
   }

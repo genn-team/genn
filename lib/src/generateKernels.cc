@@ -101,8 +101,8 @@ void genNeuronKernel(NNmodel &model, //!< Model description
       os << "unsigned int offset" << model.neuronName[i] << ", // poisson ";
       os << "\"rates\" offset of grp " << model.neuronName[i] << endl;
     }
-    if (model.receivesInputCurrent[i]==2) {
-		os << "float *inputI" << model.neuronName[i] << ", // explicit input current to grp " << model.neuronName[i] << endl;    	
+    if (model.receivesInputCurrent[i]>=2) {
+		os << "float *d_inputI" << model.neuronName[i] << ", // explicit input current to grp " << model.neuronName[i] << endl;    	
     	}
   }
   os << "float t // absolute time" << endl; 
@@ -148,8 +148,9 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 	os << "    float linSyn" << j << "= d_inSyn" << model.neuronName[i] << j << "[";
 	os << localID << "];" << endl;
       }
+      os << "    float Isyn=0;" << endl;
       if (model.inSyn[i].size() > 0) {
-	os << "    float Isyn=";
+	os << "    Isyn=";
 	for (int j= 0; j < model.inSyn[i].size(); j++) {
 	  os << " linSyn" << j << "*(";
 	  os << SAVEP(model.synapsePara[model.inSyn[i][j]][0]);
@@ -164,9 +165,10 @@ if (model.receivesInputCurrent[i]==1) { //receives constant  input
 	os << "    Isyn+= " << model.globalInp[i] << ";" << endl;
 }    	
 
-if (model.receivesInputCurrent[i]==2) { //receives custom input
-	os << "    Isyn+= inputI" << model.neuronName[i] << "[" << localID << "];" << endl;
+if (model.receivesInputCurrent[i]>=2) { //receives explicit input from file
+	os << "    Isyn+= d_inputI" << model.neuronName[i] << "[" << localID << "];" << endl;
 } 	
+
     os << "    // calculate membrane potential" << endl;
     //new way of doing it
     string code= nModels[nt].simCode;

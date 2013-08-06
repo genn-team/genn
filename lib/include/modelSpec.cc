@@ -218,20 +218,21 @@ void NNmodel::addNeuronPopulation(const string name, unsigned int nNo, unsigned 
   neuronIni.push_back(tmpP);
   vector<unsigned int> tv;
   receivesInputCurrent.push_back(0);
-  //inputType.push_back(0);
   inSyn.push_back(tv);  // empty list of input synapse groups for neurons i 
   initDerivedNeuronPara(i);
 }
-
+//--------------------------------------------------------------------------
+/*! \brief This function defines the type of the explicit input to the neuron model. Current options are common constant input to all neurons, input  from a file and input defines as a rule.
+*/ 
+//--------------------------------------------------------------------------
 void NNmodel::activateDirectInput(const string name, unsigned int type)
 {
 	unsigned int i= findNeuronGrp(name);
-	receivesInputCurrent[i]= type;	//1 if common input, 2 if custom input
-	//inputType[i]= type;
+	receivesInputCurrent[i]= type;	//1 if common input, 2 if custom input from file, 3 if custom input as a rule
 }
 
 //--------------------------------------------------------------------------
-/*! \brief This function is an alternative method to the standard addSynapsePopulation that allows the use of constant character arrays instead of C++ strings
+/*! \brief This function is an alternative method to the standard addSynapsePopulation that allows the use of constant character arrays instead of C++ strings.
  */
 //--------------------------------------------------------------------------
 
