@@ -86,7 +86,7 @@ int main(int argc, char *argv[])
     locust.run(DT, which); // run next batch
     if (which == GPU) {  
       cudaGetSymbolAddress(&devPtr, d_VIzh1);
-      checkCudaErrors(cudaMemcpy(VIzh1, devPtr, 10*sizeof(float), cudaMemcpyDeviceToHost));
+      CHECK_CUDA_ERRORS(cudaMemcpy(VIzh1, devPtr, 10*sizeof(float), cudaMemcpyDeviceToHost));
 	} 
 //    locust.sum_spikes();
 //    locust.output_spikes(os, which);

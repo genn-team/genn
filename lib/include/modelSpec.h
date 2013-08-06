@@ -46,7 +46,8 @@
 //input type
 #define NOINP 0 //!< Macro attaching  the name NOINP (no input) to 0
 #define CONSTINP 1 //!< Macro attaching  the name CONSTINP (constant input) to 1
-#define MATINP 2 //!< Macro attaching  the name MATINP (individual input defined as a matrix) to 2
+#define MATINP 2 //!< Macro attaching  the name MATINP (explicit input defined as a matrix) to 2
+#define INPRULE 3 //!< Macro attaching  the name INPRULE (explicit dynamic input defined as a rule) to 3
 
 unsigned int SYNPNO[SYNTYPENO]= {
   3,        // NSYNAPSE_PNO 

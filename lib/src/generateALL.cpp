@@ -77,7 +77,7 @@ void generate_model_runner(NNmodel &model,  //!< Model description
   genNeuronKernel(model, path, cerr);
 
   // generate synapse and learning kernels
-  genSynapseKernel(model, path, cerr);
+  if (model.synapseGrpN>0) genSynapseKernel(model, path, cerr);
 
   // CPU specific code generation
   genRunnerCPU(model, path, cerr);
@@ -86,7 +86,7 @@ void generate_model_runner(NNmodel &model,  //!< Model description
   genNeuronFunction(model, path, cerr);
   
   // Generate the equivalent of synapse and learning kernel
-  genSynapseFunction(model, path, cerr);
+  if (model.synapseGrpN>0) genSynapseFunction(model, path, cerr);
 }
 
 /*! \brief Main entry point for the generateALL executable that generates

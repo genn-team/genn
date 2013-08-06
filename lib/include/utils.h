@@ -233,6 +233,8 @@ void prepareStandardModels()
   nModels.push_back(n);
 }
 
+void prepareSynapseModels(){
+}
 // bit tool macros
 #include "numlib/simpleBit.h"
 
