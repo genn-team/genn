@@ -75,7 +75,10 @@ int main(int argc, char *argv[])
   	}; 
   #endif
   
-  ofstream os("../../userproject/include/sizes.h");
+  string GeNNPath= getenv("GeNNPATH");
+  cerr << GeNNPath << endl;
+  string fname= GeNNPath+string("/userproject/include/sizes.h");
+  ofstream os(fname.c_str());
   os << "#define _NC1 " << nC1 << endl;
   os.close();
   
