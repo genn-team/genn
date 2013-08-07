@@ -123,7 +123,10 @@ int main(int argc, char *argv[])
   cmd+= toString(" &> ") + OutDir+ "/"+ toString(argv[7]) + toString(".inpat.msg");
   system(cmd.c_str());
 
-  ofstream os("../../userproject/include/sizes.h");
+  string GeNNPath= getenv("GeNNPATH");
+  cerr << GeNNPath << endl;
+  string fname= GeNNPath+string("/userproject/include/sizes.h");
+  ofstream os(fname.c_str());
   os << "#define _NAL " << nAL << endl;
   os << "#define _NMB " << nMB << endl;
   os << "#define _NLHI " << nLHI << endl;
