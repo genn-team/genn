@@ -60,6 +60,10 @@ void NNmodel::initDerivedNeuronPara(unsigned int i)
 		   +neuronPara[i][0]*neuronPara[i][2]); 
   }
   dnp.push_back(tmpP);
+}
+
+void NNmodel::initNeuronSpecs(unsigned int i)
+{
   nThresh.push_back(200.0f);
   unsigned int padnN= (neuronN[i] >> logNeuronBlkSz) << logNeuronBlkSz;
   if (padnN < neuronN[i]) padnN+= neuronBlkSz;
@@ -220,6 +224,7 @@ void NNmodel::addNeuronPopulation(const string name, unsigned int nNo, unsigned 
   receivesInputCurrent.push_back(0);
   inSyn.push_back(tv);  // empty list of input synapse groups for neurons i 
   initDerivedNeuronPara(i);
+  initNeuronSpecs(i);
 }
 //--------------------------------------------------------------------------
 /*! \brief This function defines the type of the explicit input to the neuron model. Current options are common constant input to all neurons, input  from a file and input defines as a rule.

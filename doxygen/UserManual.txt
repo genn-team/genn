@@ -154,8 +154,71 @@ same maximal conductance for all existing synaptic connections but
 which synapses exist will be defined at runtime from the user side
 code.
 
-
 \section sect4 Defining your own neuron model 
+
+In order to define a new neuron model for use in a GeNN application,
+it is necessary to populate an object of class \c neuronModel and
+append it to the global vector \c nModels. The \c neuronModel class
+has several data members that make up the full description of the
+neuron model:
+
+- \c simCode of type \c string: This needs to be assigned a C++ string
+  that contains the code for executing the integration of the model
+  for one time step. Within this code string, variables need to be
+  referred to by $(NAME), where NAME is the name of the variable as
+  defined in the vector varNames. The code may refer to the predefined
+  primitives "DT" for the
+  time step size and "Isyn" for the total incoming synaptic current.
+
+- \c varNames of type \c vector<string>: This vector needs to be
+  filled with the names of variables that make up the neuron
+  state. The variables defined here as "NAME" can then be used in the
+  syntax $(NAME) in the code string.
+
+- \c varTypes of type \c vector<string>: This vector needs to be
+  filled with the variable type (e.g. "float", "double", etc) for the
+  variables defined in \c varNames. Types and variables are matched to
+  each other by position in the respective vectors.
+
+- \c pNames of type \c vector<string>: This vector will contain the names
+ of parameters relevant to the model. If defined as "NAME" here, they
+ can then be referenced as "$(NAME)" in the code string. The length of
+ this vector determines the expected number of parameters in the
+ initialisation of the neuron model. Parameters are currently assumed
+ to be always of type float.
+
+- \c dpNames of type \c vector<string>: Names of dependant
+  parameters. This is a mechanism for enhanced efficiency for running
+  neuron models. If parameters with model-side meaning, such as time
+  constants or conductances always appear in a certain combination in
+  the model, then it is more efficient to pre-compute the combination
+  and define it as a dependent parameter. This vector contains the
+  names of such dependent parameters.
+
+- \c tmpVarNames of type \c vector<string>: This vector can be used to
+  request additional variables that are not part of the state of the
+  neuron but used only as temporary storage during evaluation of the
+  integration time step. 
+
+- \c tmpVarTypes of type \c vector<string>: This vector will contain
+  the variable types of the temporary variables.
+
+Once the completed \c neuronModel object is appended to the \c nModels
+vector it can be used in network descriptions by referring to its
+cardinal number in the nModels vector. I.e., if the model is added as
+the 4th entry, it would be model "3" (counting starts at 0 in usual C
+convention). The information of the cardinal number of a new model can
+be obtained by referring to \c nModels.size() right before appending
+the new model. 
+
+For dependent parameters in a user-defined model, it is the user's
+responsibility to intitialize the derived parameters from the relevant
+entries of the global \c neuronPara vector entries, to store them in a
+vector and append this vector to the global vector \c dnp. This needs
+to be done right after the call to addNeuronPopulation that involves
+the neuron model in questions. For an
+example of what needs to be done, refer to the member function \c
+initDerivedNeuronPara() of class \c NNmodel which does this for Rulkov map neurons.
 
 \section sect5 Explicit inputs to neurons 
 User can decide whether a neuron group receives external input current or not 
@@ -164,13 +227,17 @@ External input to a neuron group is activated by calling
 \c activateDirectInput function. It receives two arguments: The first argument is 
 the name of the neuron group to receive input current. The second parameter defines 
 the type of input. Current options are:
--0 : NOINP: Neuron group receives no input. This is the value by default
+
+- 0: NOINP: Neuron group receives no input. This is the value by default
  when the explicit input is not activated.
--1 : CONSTINP: All the neurons receive a constant input value. This value may also be
+
+- 1: CONSTINP: All the neurons receive a constant input value. This value may also be
 defined as a variable.
--2 : MATINP: Input is read from a fine containing the input matrix.
--3 : INPRULE: Input is defined as a rule. It differs from CONSTINP by the way that the
-input is injected: CONSTINP creates a value which is modified real time, hence complex 
+
+- 2: MATINP: Input is read from a file containing the input matrix.
+
+- 3: INPRULE: Input is defined as a rule. It differs from CONSTINP by the way that the
+input is injected: CONSTINP creates a value which is modified in real time, hence complex 
 instructions are limited. INPRULE creates an input array which will be copied into 
 the device memory.   
 

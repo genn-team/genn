@@ -157,6 +157,7 @@ class NNmodel
   void setSynapseConnType(unsigned int, unsigned int); //!< Never used
   void setSynapseGType(unsigned int, unsigned int); //!< Never used
   void initDerivedNeuronPara(unsigned int); //!< Method for calculating the values of derived neuron parameters.
+  void initNeuronSpecs(unsigned int); //!< Method for calculating neuron IDs, taking into account the blocksize padding between neuron populations; also initializes nThresh and neuronNeedSt for a population of neurons.
   void initDerivedSynapsePara(unsigned int); //!< Method for calculating the values of derived synapse parameters.
   unsigned int findNeuronGrp(const string); //!< Find the the ID number of a neuron group by its name 
   unsigned int findSynapseGrp(const string); //< Find the the ID number of a synapse group by its name  
