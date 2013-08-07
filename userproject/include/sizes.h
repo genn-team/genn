@@ -1,1 +1,1 @@
-#define _NC1 100
+#define _NC1 1000
