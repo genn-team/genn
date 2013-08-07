@@ -123,21 +123,21 @@ int main(int argc, char *argv[])
   cmd+= toString(" &> ") + OutDir+ "/"+ toString(argv[7]) + toString(".inpat.msg");
   system(cmd.c_str());
 
-  ofstream os("../userproject/include/sizes.h");
+  ofstream os("../../userproject/include/sizes.h");
   os << "#define _NAL " << nAL << endl;
   os << "#define _NMB " << nMB << endl;
   os << "#define _NLHI " << nLHI << endl;
   os << "#define _NLB " << nLB << endl;
   os.close();
   
-  cmd= toString("cd ../userproject/ && buildmodel ")+ toString(modelName)+ toString(" ") + toString(DBGMODE);
+  cmd= toString("cd $GeNNPATH/userproject/")+toString(modelName)+("_project && buildmodel ")+ toString(modelName)+ toString(" ") + toString(DBGMODE);
 
   
   cout << "Debug mode " << DBGMODE << endl;
 
   cout << "script call was:" << cmd.c_str() << endl;
   system(cmd.c_str());
-  cmd= toString("cd ../userproject && ");
+  cmd= toString("cd $GeNNPATH/userproject/")+modelName+("_project && ");
   if(DBGMODE==1) {
 		cmd+= toString("make clean debug && make debug");
   }
@@ -154,10 +154,10 @@ int main(int argc, char *argv[])
 #if defined _WIN32 || defined __CYGWIN__
   //cout << "win32" <<endl;
   if(DBGMODE==1) {
-		cmd= toString("GeNNOSTYPE=$(echo $(uname) | tr A-Z a-z); cuda-gdb -tui ../userproject/bin/$GeNNOSTYPE/debug/")+ execName + toString(" ")+  toString(argv[7]) + toString(" ") + toString(which);
+	cerr << "Debugging with gdb is not possible on cl platform." << endl;
 	}
 	else {
-  		cmd= toString("GeNNOSTYPE=$(echo $(uname) | tr A-Z a-z); ../userproject/bin/$GeNNOSTYPE/release/")+execName + toString(" ")+  toString(argv[7]) + toString(" ") + toString(which);
+  		cmd= toString("GeNNOSTYPE=$(echo $(uname) | tr A-Z a-z); $GeNNPATH/userproject/")+modelName+("_project/bin/$GeNNOSTYPE/release/")+execName + toString(" ")+  toString(argv[7]) + toString(" ") + toString(which);
 	}
 
 #else
@@ -165,12 +165,12 @@ int main(int argc, char *argv[])
   //cmd= toString("GeNNOSTYPE=$(echo $(uname) | tr A-Z a-z); ../userproject/$GeNNOSTYPE/release/classol_sim ")+  toString(argv[7]) + toString(" ") + toString(which);
    if(DBGMODE==1) {
   //debug 
-  cmd= toString("GeNNOSTYPE=$(echo $(uname) | tr A-Z a-z); cuda-gdb -tui --args ../userproject/bin/$GeNNOSTYPE/debug/")+execName + toString(" ")+  toString(argv[7]) + toString(" ") + toString(which);
+  cmd= toString("GeNNOSTYPE=$(echo $(uname) | tr A-Z a-z); cuda-gdb -tui --args $GeNNPATH/userproject/")+modelName+("_project/bin/$GeNNOSTYPE/debug/")+execName + toString(" ")+  toString(argv[7]) + toString(" ") + toString(which);
   }
   else
   {
 //release  
-  cmd= toString("GeNNOSTYPE=$(echo $(uname) | tr A-Z a-z); ../userproject/bin/$GeNNOSTYPE/release/")+execName + toString(" ")+  toString(argv[7]) + toString(" ") + toString(which);
+  cmd= toString("GeNNOSTYPE=$(echo $(uname) | tr A-Z a-z); $GeNNPATH/userproject/")+modelName+("_project/bin/$GeNNOSTYPE/release/")+execName + toString(" ")+  toString(argv[7]) + toString(" ") + toString(which);
   	}
 #endif
   cout << cmd << endl;

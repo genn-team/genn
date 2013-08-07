@@ -14,7 +14,7 @@
 #ifndef _ONECOMP_MODEL_CC_
 #define _ONECOMP_MODEL_CC_
 
-#include "IzhEx_CODE/runner.cc"
+#include "OneComp_CODE/runner.cc"
 
 classol::classol()
 {
