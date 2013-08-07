@@ -11,7 +11,7 @@
 ##  
 ##--------------------------------------------------------------------------
 
-ROOTDIR		:= $(GeNNPATH)/userproject
+ROOTDIR		:= $(GeNNPATH)/userproject/OneComp_project
 EXECUTABLE	:= OneComp_sim
 SOURCES		:= OneComp_sim.cu
 
@@ -19,7 +19,7 @@ INCLUDE_FLAGS	:=
 LINK_FLAGS	:= 
 CCFLAGS		:= 
 NVCCFLAGS	:= 
-@echo $(EXEC)
+
 ifdef COMSPEC
 	include	$(GeNNPATH)/lib/include/makefile_common_cygwin.mk
 else

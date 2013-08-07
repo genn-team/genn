@@ -27,15 +27,15 @@ int main(int argc, char *argv[])
   FILE *timef= fopen(name.c_str(),"w");  
 
   timer.startTimer();
- 
-
+  patSetTime= (int) (PAT_TIME/DT);
+  patFireTime= (int) (PATFTIME/DT);
   fprintf(stderr, "# DT %f \n", DT);
   fprintf(stderr, "# T_REPORT_TME %f \n", T_REPORT_TME);
   fprintf(stderr, "# SYN_OUT_TME %f \n",  SYN_OUT_TME);
   fprintf(stderr, "# PATFTIME %f \n", PATFTIME); 
-  fprintf(stderr, "# PAT_FIRETIME %d \n", PAT_FIRETIME);
+  fprintf(stderr, "# patFireTime %d \n", patFireTime);
   fprintf(stderr, "# PAT_TIME %f \n", PAT_TIME);
-  fprintf(stderr, "# PAT_SETTIME %d \n", PAT_SETTIME);
+  fprintf(stderr, "# patSetTime %d \n", patSetTime);
   fprintf(stderr, "# TOTAL_TME %d \n", TOTAL_TME);
   
   name= OutDir+ "/" + toString(argv[1]) + toString(".out.Vm"); 

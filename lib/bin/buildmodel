@@ -1,10 +1,10 @@
 #! /bin/bash
+export GeNNMODELNAME=$1;
 if [[ -n "$COMSPEC" ]]; then #This is to check if we are on a Windows environment
 	export WD=$(cygpath -w $(pwd))
 else
 	export WD=$(pwd)
 fi
-export GeNNMODELNAME=$1;
 export DBGMODE=$2; # 1 if debugging, 0 if release
 echo "genn model name:" $1
 echo "wd: " $WD

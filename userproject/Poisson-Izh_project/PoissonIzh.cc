@@ -45,12 +45,12 @@ void classol::allocate_device_mem_patterns()
 
   // allocate device memory for input patterns
   size= model.neuronN[0]*PATTERNNO*sizeof(unsigned int);
-  checkCudaErrors(cudaMalloc((void**) &d_pattern, size));
+  CHECK_CUDA_ERRORS(cudaMalloc((void**) &d_pattern, size));
   fprintf(stderr, "allocated %u elements for pattern.\n", size/sizeof(unsigned int));
-  checkCudaErrors(cudaMemcpy(d_pattern, pattern, size, cudaMemcpyHostToDevice));
+  CHECK_CUDA_ERRORS(cudaMemcpy(d_pattern, pattern, size, cudaMemcpyHostToDevice));
   size= model.neuronN[0]*sizeof(unsigned int);
-  checkCudaErrors(cudaMalloc((void**) &d_baserates, size));
-  checkCudaErrors(cudaMemcpy(d_baserates, baserates, size, cudaMemcpyHostToDevice)); 
+  CHECK_CUDA_ERRORS(cudaMalloc((void**) &d_baserates, size));
+  CHECK_CUDA_ERRORS(cudaMemcpy(d_baserates, baserates, size, cudaMemcpyHostToDevice)); 
 }
 
 void classol::allocate_device_mem_input()
@@ -59,20 +59,20 @@ void classol::allocate_device_mem_input()
 
   // allocate device memory for explicit input
   size= model.neuronN[0]*PATTERNNO*sizeof(unsigned int);
-  checkCudaErrors(cudaMalloc((void**) &d_pattern, size));
+  CHECK_CUDA_ERRORS(cudaMalloc((void**) &d_pattern, size));
   fprintf(stderr, "allocated %u elements for pattern.\n", size/sizeof(unsigned int));
-  checkCudaErrors(cudaMemcpy(d_pattern, pattern, size, cudaMemcpyHostToDevice));
+  CHECK_CUDA_ERRORS(cudaMemcpy(d_pattern, pattern, size, cudaMemcpyHostToDevice));
   size= model.neuronN[0]*sizeof(unsigned int);
-  checkCudaErrors(cudaMalloc((void**) &d_baserates, size));
-  checkCudaErrors(cudaMemcpy(d_baserates, baserates, size, cudaMemcpyHostToDevice)); 
+  CHECK_CUDA_ERRORS(cudaMalloc((void**) &d_baserates, size));
+  CHECK_CUDA_ERRORS(cudaMemcpy(d_baserates, baserates, size, cudaMemcpyHostToDevice)); 
 }
 
 void classol::free_device_mem()
 {
   // clean up memory                          
                                        
-  checkCudaErrors(cudaFree(d_pattern));
-  checkCudaErrors(cudaFree(d_baserates));
+  CHECK_CUDA_ERRORS(cudaFree(d_pattern));
+  CHECK_CUDA_ERRORS(cudaFree(d_baserates));
 }
 
 

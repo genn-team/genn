@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
       if (locust.model.receivesInputCurrent[k]==2) 
       {
         FILE * ff;
-        ff=fopen("../tools/expoutf","r");
+        ff=fopen("../../tools/expoutf","r");
         locust.read_input_values(ff);
         fclose(ff);
       }
