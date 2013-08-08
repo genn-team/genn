@@ -1,0 +1,11 @@
+#! /bin/bash
+
+export WD=$(pwd);
+export GeNNMODELNAME=$1;
+export GeNNMODELINCLUDE=\"\\\"$WD/$GeNNMODELNAME.cc\\\"\"
+cd $GeNNPATH/lib/src;
+make clean && make;
+export GeNNOSTYPE=$(echo $(uname) | tr A-Z a-z);
+$GeNNOSTYPE/release/generateALL $WD;
+echo "Model build complete ..."
+cd $WD;
