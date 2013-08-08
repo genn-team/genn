@@ -11,32 +11,39 @@
   
 --------------------------------------------------------------------------*/
 
-/*--------------------------------------------------------------------------
+#ifndef GAUSS_H
+#define GAUSS_H //!< macro for avoiding multiple inclusion during compilation
 
-  Random number generator for Gaussian RV with mean 0 and standard
-  deviation 1. Based on the ratio of uniforms method by A.J. Kinderman
+//-----------------------------------------------------------------------
+/*!  \file gauss.h
+
+\brief Random number generator for Gaussian random variable with mean 0 and standard
+  deviation 1. 
+
+This random number generator is based on the ratio of uniforms method by A.J. Kinderman
   and J.F. Monahan and improved with quadratic boundind curves by
   J.L. Leva. Taken from Algorithm 712 ACM Trans. Math. Softw. 18 p. 454.
-  (the necessary uniform RV are obtained from the ISAAC random number
+  (the necessary uniform random variables are obtained from the ISAAC random number
   generator; C++ Implementation by Quinn Tyler Jackson of the RG invented
-  by Bob Jenkins Jr.)
-
---------------------------------------------------------------------------*/
-
-
-
-#ifndef GAUSS_H
-#define GAUSS_H
-
-
+  by Bob Jenkins Jr.).
+*/
+//-----------------------------------------------------------------------
 
 #include <cmath>
 #include "randomGen.h"
 
+//-----------------------------------------------------------------------
+/*! 
+\brief Class random Gauss encapsulates the methods for generating random neumbers with Gaussian distribution.
+
+A random number from a Gaussian distribution of mean 0 and standard deviation 1 is obtained by calling the method randomGauss::n().
+*/
+//-----------------------------------------------------------------------
+
 class randomGauss
 {
 private:
-  QTIsaac<8, unsigned long> UniGen;
+  QTIsaac<8, unsigned long> UniGen;  //!< the underlying ISAAC random number generator
   double s, t, a, b, r1, r2; 
   double u, v;
   double x, y, q;
@@ -46,7 +53,7 @@ private:
   explicit randomGauss();
   randomGauss(unsigned long, unsigned long, unsigned long);
   ~randomGauss() { }
-  double n();
+  double n();  //!< Method for obtaining a random number with Gaussian distribution
 };
 
 #include "randomGen.cc"

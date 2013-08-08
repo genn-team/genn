@@ -12,10 +12,10 @@
 --------------------------------------------------------------------------*/
 
 
-#ifndef CLASSOL_H
-#define CLASSOL_H
+#ifndef POISSONIZH_H 
+#define POISSONIZH_H
 
-#include "MBody1.cc"
+#include "Poisson-Izh.cc"
 
 class classol
 {
@@ -29,20 +29,17 @@ class classol
   unsigned int *d_pattern;
   unsigned int *d_baserates;
   //------------------------------------------------------------------------
-  unsigned int sumPN, sumKC, sumLHI, sumDN;
+  unsigned int sumPN, sumIzh1;
   // end of data fields 
 
   classol();
   ~classol();
   void init(unsigned int);
   void allocate_device_mem_patterns();
+  void allocate_device_mem_input();
   void free_device_mem();
-  void read_pnkcsyns(FILE *);
-  void write_pnkcsyns(FILE *);
-  void read_pnlhisyns(FILE *);
-  void write_pnlhisyns(FILE *);
-  void read_kcdnsyns(FILE *);
-  void write_kcdnsyns(FILE *);
+  void read_PNIzh1syns(FILE *);
+  void write_PNIzh1syns(FILE *);
   void read_input_patterns(FILE *);
   void generate_baserates();
   void run(float, unsigned int);
@@ -51,7 +48,6 @@ class classol
   void getSpikeNumbersFromGPU();
   void output_spikes(FILE *, unsigned int);
   void sum_spikes();
-  void get_kcdnsyns();
 };
 
 #endif

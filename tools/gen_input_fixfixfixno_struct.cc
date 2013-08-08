@@ -1,7 +1,7 @@
 /*--------------------------------------------------------------------------
    Author: Thomas Nowotny
   
-   Institute: Institute for Nonlinear Dynamics
+   Institute: Institute for Nonlinear Science
               University of California San Diego
               La Jolla, CA 92093-0402
   
@@ -10,6 +10,16 @@
    initial version: 2002-09-26
   
 --------------------------------------------------------------------------*/
+
+//--------------------------------------------------------------------------
+/*! \file gen_input_fixfixfixno_struct.cc
+
+\brief This file is part of a tool chain for running the classol/MBody1 example model.
+
+This file compiles to a tool to generate appropriate input patterns for the antennal lobe in the model. The triple "fix" in the filename refers to a three-fold control for having the same number of active inputs for each pattern, even if changing patterns by adding noise.
+*/ 
+//--------------------------------------------------------------------------
+
 
 using namespace std;
 
