@@ -11,6 +11,15 @@
   
 --------------------------------------------------------------------------*/
 
+//--------------------------------------------------------------------------
+/*! \file gen_pnlhi_syns.cc
+
+\brief This file is part of a tool chain for running the classol/MBody1 example model.
+
+This file compiles to a tool to generate appropriate connectivity patterns between PNs and LHIs (lateral horn interneurons) in the model. The connectivity is saved to file and can then be read by the classol method for reading this connectivity.
+*/ 
+//--------------------------------------------------------------------------
+
 using namespace std;
 
 #include <iostream>

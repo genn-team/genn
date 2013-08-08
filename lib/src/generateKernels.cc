@@ -11,24 +11,53 @@
   
 --------------------------------------------------------------------------*/
 
-#include "global.h"
-#include "utils.h"
 #include <string>
 
-#define SAVEP(X) "(" << X << ")"
+//------------------------------------------------------------------------
+/*! \file generateKernels.cc
+
+  \brief Contains functions that generate code for CUDA kernels. Part of the code generation section.
+*/
+//-------------------------------------------------------------------------
 
 
-void genNeuronKernel(NNmodel &model, ostream &os, ostream &mos)
+//! Macro for a "safe" output of a parameter into generated code by essentially just adding a bracket around the parameter value in the generated code.
+#define SAVEP(X) "(" << X << ")" 
+
+
+//-------------------------------------------------------------------------
+/*!
+  \brief Function for generating the CUDA kernel that simulates all neurons in the model.
+
+The code generated upon execution of this function is for defining GPU side global variables that will hold model state in the GPU global memory and for the actual kernel function for simulating the neurons for one time step.
+*/
+//-------------------------------------------------------------------------
+
+void genNeuronKernel(NNmodel &model, //!< Model description 
+		     string &path,  //!< path for code output
+		     ostream &mos //!< output stream for messages
+		     )
 {
-  // write header content
-  string s, localID;
+   // write header content
+  string name, s, localID;
   unsigned int nt;
+  ofstream os;
+
+  name= path + toString("/") + model.name + toString("_CODE/neuronKrnl.cc");
+  os.open(name.c_str());
   
   writeHeader(os);
   // compiler/include control (include once)
   os << "#ifndef _" << model.name << "_neuronKrnl_cc" << endl;
   os << "#define _" << model.name << "_neuronKrnl_cc" << endl;
   
+  // write doxygen comment
+  os << "//-------------------------------------------------------------------------" << endl;
+  os << "/*! \\file neuronKrnl.cc" << endl << endl;
+  os << "\\brief File generated from GeNN for the model " << model.name << " containing the neuron kernel function." << endl;
+  os << "*/" << endl;
+  os << "//-------------------------------------------------------------------------" << endl << endl;
+
   // global device variables
  
   os << "// relevant neuron variables" << endl;
@@ -65,13 +94,16 @@ void genNeuronKernel(NNmodel &model, ostream &os, ostream &mos)
   os << "calcNeurons(";
   for (int i= 0; i < model.neuronGrpN; i++) {
     if (model.neuronType[i] == POISSONNEURON) {
-      // Note: Poisson neurons only used as input neurons; they do not 
+      // Note: Poisson neurons only used as input neurons; they do not \
       // receive any inputs
       os << "unsigned int *d_rates" << model.neuronName[i] << ", // poisson ";
       os << "\"rates\" of grp " << model.neuronName[i] << endl;
       os << "unsigned int offset" << model.neuronName[i] << ", // poisson ";
       os << "\"rates\" offset of grp " << model.neuronName[i] << endl;
     }
+    if (model.receivesInputCurrent[i]>=2) {
+		os << "float *d_inputI" << model.neuronName[i] << ", // explicit input current to grp " << model.neuronName[i] << endl;    	
+    	}
   }
   os << "float t // absolute time" << endl; 
   os << ")" << endl;
@@ -116,8 +148,9 @@ void genNeuronKernel(NNmodel &model, ostream &os, ostream &mos)
 	os << "    float linSyn" << j << "= d_inSyn" << model.neuronName[i] << j << "[";
 	os << localID << "];" << endl;
       }
+      os << "    float Isyn=0;" << endl;
       if (model.inSyn[i].size() > 0) {
-	os << "    float Isyn=";
+	os << "    Isyn=";
 	for (int j= 0; j < model.inSyn[i].size(); j++) {
 	  os << " linSyn" << j << "*(";
 	  os << SAVEP(model.synapsePara[model.inSyn[i][j]][0]);
@@ -127,6 +160,15 @@ void genNeuronKernel(NNmodel &model, ostream &os, ostream &mos)
 	}
       }
     }
+
+if (model.receivesInputCurrent[i]==1) { //receives constant  input
+	os << "    Isyn+= " << model.globalInp[i] << ";" << endl;
+}    	
+
+if (model.receivesInputCurrent[i]>=2) { //receives explicit input from file
+	os << "    Isyn+= d_inputI" << model.neuronName[i] << "[" << localID << "];" << endl;
+} 	
+
     os << "    // calculate membrane potential" << endl;
     //new way of doing it
     string code= nModels[nt].simCode;
@@ -175,37 +217,58 @@ void genNeuronKernel(NNmodel &model, ostream &os, ostream &mos)
   }
   os << "}" << endl << endl;
   os << "#endif" << endl;
+  os.close();
 }
 
+//-------------------------------------------------------------------------
+/*!
+  \brief Function for generating a CUDA kernel for simulating all synapses.
 
-void genSynapseKernel(NNmodel &model, ostream &os, ostream &mos)
+  This functions generates code for global variables on the GPU side that are synapse-related and the actual CUDA kernel for simulating one time step of the synapses.
+*/
+//-------------------------------------------------------------------------
+
+void genSynapseKernel(NNmodel &model, //!< Model description 
+		      string &path, //!< Path for code output
+		      ostream &mos //!< output stream for messages
+		      )
 {
-  // write header content
-  string s, localID, theLG;
-
+  string name, s, localID, theLG;
   unsigned int BlkNo;
+  ofstream os;
 
   // count how many blocks to use: one thread for each synapse target
   // targets of several input groups are counted multiply
   BlkNo= model.padSumSynapseTrgN[model.synapseGrpN-1] >> logSynapseBlkSz;
 
+  name= path + toString("/") + model.name + toString("_CODE/synapseKrnl.cc");
+  os.open(name.c_str());
+  // write header content
   writeHeader(os);
+
   // compiler/include control (include once)
   os << "#ifndef _" << model.name << "_synapseKrnl_cc" << endl;
   os << "#define _" << model.name << "_synapseKrnl_cc" << endl;
   os << endl;
+
+  // write doxygen comment
+  os << "//-------------------------------------------------------------------------" << endl;
+  os << "/*! \\file synapseKrnl.cc" << endl << endl;
+  os << "\\brief File generated from GeNN for the model " << model.name << " containing the synapse kernel and learning kernel functions." << endl;
+  os << "*/" << endl;
+  os << "//-------------------------------------------------------------------------" << endl << endl;
 
   for (int i= 0; i < model.synapseGrpN; i++) {
     if (model.synapseGType[i] == INDIVIDUALG) {
       // (cases necessary here when considering sparse reps as well)
       os << "__device__ float d_gp" << model.synapseName[i] << "[";
       os << model.neuronN[model.synapseSource[i]]*model.neuronN[model.synapseTarget[i]];
-      os << "];     // synaptic conductances of group " << model.neuronName[i];
+      os << "];     // synaptic conductances of group " << model.synapseName[i];
       os << endl;
       if (model.synapseType[i] == LEARN1SYNAPSE) {
 	os << "__device__ float d_grawp" << model.synapseName[i] << "[";
 	os << model.neuronN[model.synapseSource[i]]*model.neuronN[model.synapseTarget[i]];
-	os << "];     // raw synaptic conductances of group " << model.neuronName[i];
+	os << "];     // raw synaptic conductances of group " << model.synapseName[i];
 	os << endl;
       }
     }
@@ -216,7 +279,7 @@ void genSynapseKernel(NNmodel &model, ostream &os, ostream &mos)
       unsigned int size= tmp >> logUIntSz;
       if (tmp > (size << logUIntSz)) size++;
       os << size;
-      os << "];     // synaptic connectivity of group " << model.neuronName[i];
+      os << "];     // synaptic connectivity of group " << model.synapseName[i];
       os << endl;
     }
   }
@@ -241,7 +304,7 @@ void genSynapseKernel(NNmodel &model, ostream &os, ostream &mos)
 
   for (int i= 0; i < model.synapseGrpN; i++) {
     if (i == 0) {
-      os << "  if (id < " << model.padSumSynapseTrgN[i] << ") {" << endl;
+      os << "  if (id < " << model.padSumSynapseTrgN[i] << ") { " << endl;
       localID= string("id");
     }
     else {
@@ -255,8 +318,12 @@ void genSynapseKernel(NNmodel &model, ostream &os, ostream &mos)
     unsigned int nN= model.neuronN[trg];
     unsigned int src= model.synapseSource[i];
     float Epre= model.synapsePara[i][1];
-    float Vslope= model.synapsePara[i][3];
+    float Vslope;
+    if (model.synapseType[i] == NGRADSYNAPSE) {
+	   Vslope= model.synapsePara[i][3]; //fails here
+	}
     unsigned int inSynNo= model.synapseInSynNo[i];
+
     os << "    // only do this for existing neurons" << endl;
     os << "    if (" << localID << " < " << nN <<") {" << endl;
     os << "      linSyn= d_inSyn" << model.neuronName[trg] << inSynNo << "[" << localID << "];" << endl;
@@ -321,13 +388,13 @@ void genSynapseKernel(NNmodel &model, ostream &os, ostream &mos)
     }
     if (model.synapseType[i] == NGRADSYNAPSE) {
       if (model.neuronType[src] == POISSONNEURON) {
-	os << "            linSyn= linSyn+" << theLG << "*tanh((";
+	os << "            linSyn= linSyn+" << theLG << "*tanh((float)((";
 	os << SAVEP(model.neuronPara[src][2]) << "-" << SAVEP(Epre);
       }
       else {
-	os << "            linSyn= linSyn+" << theLG << "*tanh((shSpkV[j]-" << SAVEP(Epre);
+	os << "            linSyn= linSyn+" << theLG << "*tanh((float)((shSpkV[j]-" << SAVEP(Epre);
       }
-      os << ")/" << Vslope << ");" << endl;
+      os << ")/" << Vslope << "));" << endl;
     }
     // if needed, do some learning (this is for pre-synaptic spikes)
     if (model.synapseType[i] == LEARN1SYNAPSE) {
@@ -459,5 +526,6 @@ void genSynapseKernel(NNmodel &model, ostream &os, ostream &mos)
   }
   os << endl;
   os << "#endif" << endl;
+  os.close();
 }
 

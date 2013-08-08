@@ -1,9 +1,11 @@
 #ifndef __ISAAC_HPP
-#define __ISAAC_HPP
+#define __ISAAC_HPP //!< macro for avoiding multiple inclusion during compilation
 
-#include <stdlib.h>
+//--------------------------------------------------------------------------
+/*! \file isaac.hpp
 
-/*
+\brief Header file and implementation of the ISAAC random number generator. 
+
 
     C++ TEMPLATE VERSION OF Robert J. Jenkins Jr.'s
     ISAAC Random Number Generator.
@@ -31,7 +33,9 @@
         2^^2097263
 
 */
+//--------------------------------------------------------------------------
 
+#include <stdlib.h>
 
 #ifndef __ISAAC64
 typedef unsigned long int UINT32;
