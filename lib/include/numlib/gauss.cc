@@ -11,7 +11,22 @@
   
 --------------------------------------------------------------------------*/
 
+#ifndef GAUSS_CC
+#define GAUSS_CC //!< macro for avoiding multiple inclusion during compilation
+
 #include "gauss.h"
+//-----------------------------------------------------------------------
+/*! \file gauss.cc
+\brief Contains the implementation of the Gaussian random number generator class randomGauss
+*/
+//-----------------------------------------------------------------------
+
+//-----------------------------------------------------------------------
+/*! \brief Constructor for the Gaussian random number generator class without giving explicit seeds.
+
+The seeds for random number generation are generated from the internal clock of the computer during execution.
+ */
+//-----------------------------------------------------------------------
 
 randomGauss::randomGauss()
 {
@@ -32,6 +47,13 @@ randomGauss::randomGauss()
   r2= 0.27846;
 }
 
+//-----------------------------------------------------------------------
+/*! \brief Constructor for the Gaussian random number generator class when seeds are provided explicitly.
+
+The seeds are three arbitrary unsigned long integers.
+ */
+//-----------------------------------------------------------------------
+
 randomGauss::randomGauss(unsigned long seed1, unsigned long seed2, unsigned long seed3)
 {
   UniGen.srand(seed1, seed2, seed3);
@@ -45,6 +67,10 @@ randomGauss::randomGauss(unsigned long seed1, unsigned long seed2, unsigned long
   r2= 0.27846;
 }
 
+//-----------------------------------------------------------------------
+/*! \brief Function for generating a pseudo random number from a Gaussian distribution
+ */
+//-----------------------------------------------------------------------
 
 double randomGauss::n()
 {
@@ -63,3 +89,5 @@ double randomGauss::n()
     
   return v/u;
 }
+
+#endif

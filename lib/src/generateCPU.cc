@@ -13,18 +13,47 @@
 
 #include <string>
 
-void genNeuronFunction(NNmodel &model, ostream &os, ostream &mos)
-{
-  // write header content
-  string s, localID;
-  unsigned int nt;
+//--------------------------------------------------------------------------
+/*! \file generateCPU.cc 
 
+  \brief Functions for generating code that will run the neuron and synapse simulations on the CPU. Part of the code generation section.
+
+*/
+//--------------------------------------------------------------------------
+
+
+//--------------------------------------------------------------------------
+/*!
+  \brief Function that generates the code of the function the will simulate all neurons on the CPU.
+
+*/
+//--------------------------------------------------------------------------
+
+void genNeuronFunction(NNmodel &model, //!< Model description 
+		       string &path, //!< output stream for code
+		       ostream &mos //!< output stream for messages
+		       )
+{
+  string name, s, localID;
+  unsigned int nt;
+  ofstream os;
+
+  name= path + toString("/") + model.name + toString("_CODE/neuronFnct.cc");
+  os.open(name.c_str());
+  // write header content
   writeHeader(os);
   os << endl;
   // compiler/include control (include once)
   os << "#ifndef _" << model.name << "_neuronFnct_cc" << endl;
   os << "#define _" << model.name << "_neuronFnct_cc" << endl;
   os << endl;
+
+    // write doxygen comment
+  os << "//-------------------------------------------------------------------------" << endl;
+  os << "/*! \\file neuronFnct.cc" << endl << endl;
+  os << "\\brief File generated from GeNN for the model " << model.name << " containing the the equivalent of neuron kernel function for the CPU-only version." << endl;
+  os << "*/" << endl;
+  os << "//-------------------------------------------------------------------------" << endl << endl;
 
   // CPU function for calculating neuron states
   // header
@@ -39,6 +68,9 @@ void genNeuronFunction(NNmodel &model, ostream &os, ostream &mos)
       os << "unsigned int offset" << model.neuronName[i] << ", // poisson ";
       os << "\"rates\" offset of grp " << model.neuronName[i] << endl;
     }
+  if (model.receivesInputCurrent[i]>=2) {
+		os << "float *inputI" << model.neuronName[i] << ", // input current of grp " << model.neuronName[i] << endl;    	
+    	}
   }
   os << "float t // absolute time" << endl; 
   os << ")" << endl;
@@ -50,8 +82,9 @@ void genNeuronFunction(NNmodel &model, ostream &os, ostream &mos)
     os << "  glbscnt" << model.neuronName[i] << "= 0;" << endl;
     os << "  for (int n= 0; n < " <<  model.neuronN[i] << "; n++) {" << endl;
     // Rulkov map neurons
+    os << "    float Isyn=0;" << endl;
     if (model.inSyn[i].size() > 0) {
-      os << "    float Isyn=";
+      os << "    Isyn=";
       for (int j= 0; j < model.inSyn[i].size(); j++) {
 	os << " inSyn" << model.neuronName[i] << j << "[n]*(";
 	os << SAVEP(model.synapsePara[model.inSyn[i][j]][0]);
@@ -60,6 +93,13 @@ void genNeuronFunction(NNmodel &model, ostream &os, ostream &mos)
 	else os << ";" << endl;
       }
     }
+    if (model.receivesInputCurrent[i]==1) { //receives constant  input
+	os << "    Isyn+= " << model.globalInp[i] << ";" << endl;
+	}    	
+
+    if (model.receivesInputCurrent[i]>=2) {
+	 	os << "    Isyn+= inputI" << model.neuronName[i] << "[n];" << endl;
+	 } 
     os << "    // calculate membrane potential" << endl;
     string code= nModels[nt].simCode;
     for (int k= 0, l= nModels[nt].varNames.size(); k < l; k++) {
@@ -96,20 +136,41 @@ void genNeuronFunction(NNmodel &model, ostream &os, ostream &mos)
   os << endl;
   os << "}" << endl << endl;
   os << "#endif" << endl;
+  os.close();
 } 
 
 
-void genSynapseFunction(NNmodel &model, ostream &os, ostream &mos)
-{
-  // write header content
-  string s, localID, theLG;
+//--------------------------------------------------------------------------
+/*!
+  \brief Function that generates code that will simulate all synapses of the model on the CPU.
 
+*/
+//--------------------------------------------------------------------------
+
+void genSynapseFunction(NNmodel &model, //!< Model description
+			string &path, //!< Path for code generation
+			ostream &mos //!< output stream for messages
+			)
+{
+  string name, s, localID, theLG;
+  ofstream os;
+
+  name= path + toString("/") + model.name + toString("_CODE/synapseFnct.cc");
+  os.open(name.c_str());
+  // write header content
   writeHeader(os);
   os << endl;
   // compiler/include control (include once)
   os << "#ifndef _" << model.name << "_synapseFnct_cc" << endl;
   os << "#define _" << model.name << "_synapseFnct_cc" << endl;
   os << endl;
+
+  // write doxygen comment
+  os << "//-------------------------------------------------------------------------" << endl;
+  os << "/*! \\file synapseFnct.cc" << endl << endl;
+  os << "\\brief File generated from GeNN for the model " << model.name << " containing the equivalent of the synapse kernel and learning kernel functions for the CPU only version." << endl;
+  os << "*/" << endl;
+  os << "//-------------------------------------------------------------------------" << endl << endl;
 
   // Function for calculating synapse input to neurons
   // Function header
@@ -127,7 +188,10 @@ void genSynapseFunction(NNmodel &model, ostream &os, ostream &mos)
 	unsigned int synID= model.inSyn[i][j];
 	unsigned int src= model.synapseSource[synID];
 	float Epre= model.synapsePara[synID][1];
-	float Vslope= model.synapsePara[synID][3];
+	float Vslope;
+	if (model.synapseType[synID] == NGRADSYNAPSE) {
+		Vslope= model.synapsePara[synID][3];
+	}
 	
 	os << "  for (int j= 0; j < glbscnt" << model.neuronName[src] << "; j++) {" << endl;
 	os << "    for (int n= 0; n < " << model.neuronN[i] <<"; n++) {" << endl;
@@ -157,7 +221,7 @@ void genSynapseFunction(NNmodel &model, ostream &os, ostream &mos)
 	if (model.synapseGType[synID] == INDIVIDUALG) {
 	  theLG= toString("gp")+model.synapseName[synID]+toString("[glbSpk");
 	  theLG+= model.neuronName[src]+toString("[j]*")+toString(model.neuronN[i]);
-	  theLG+= toString(" + n];");
+	  theLG+= toString(" + n]");
 	}
 	if ((model.synapseGType[synID] == GLOBALG) ||
 	    (model.synapseGType[synID] == INDIVIDUALID)) {
@@ -194,11 +258,11 @@ void genSynapseFunction(NNmodel &model, ostream &os, ostream &mos)
 	  os << "          else {" << endl;
 	  os << "            dg= -" << SAVEP(model.dsp[i][7]) << ";" << endl;
 	  os << "          }" << endl;
-	  os << "          grawp" << model.synapseName[i] << "[glbSpk" << model.neuronName[src];
+	  os << "          grawp" << model.synapseName[synID] << "[glbSpk" << model.neuronName[src];
 	  os << "[j]*" << model.neuronN[i] << " + n]+= dg;" << endl;
-	  os << "          gp" << model.synapseName[i] << "[glbSpk" << model.neuronName[src];
+	  os << "          gp" << model.synapseName[synID] << "[glbSpk" << model.neuronName[src];
 	  os << "[j]*" << model.neuronN[i] << " + n]= ";
-	  os << "gFunc" << model.synapseName[i] << "(grawp" << model.synapseName[i] << "[glbSpk" << model.neuronName[src];
+	  os << "gFunc" << model.synapseName[synID] << "(grawp" << model.synapseName[synID] << "[glbSpk" << model.neuronName[src];
 	  os << "[j]*" << model.neuronN[i] << " + n]);" << endl; 
 	}
 	if ((model.neuronType[src] != POISSONNEURON) ||
@@ -258,5 +322,6 @@ void genSynapseFunction(NNmodel &model, ostream &os, ostream &mos)
   os << endl;
 
   os << "#endif" << endl;
+  os.close();
 }
 

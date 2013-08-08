@@ -11,7 +11,14 @@
   
 --------------------------------------------------------------------------*/
 
-#define DT 0.5
+//--------------------------------------------------------------------------
+/*! \file MBody1.cc
+
+\brief This file contains the model definition of the mushroom body "MBody1" model. It is used in both the GeNN code generation and the user side simulation code (class classol, file classol_sim).
+*/
+//--------------------------------------------------------------------------
+
+#define DT 0.5  //!< This defines the global time step at which the simulation will run
 #include "modelSpec.h"
 #include "modelSpec.cc"
 
@@ -133,7 +140,12 @@ float myDNDN_p[4]= {
 //float gDNDN= 0.04;
 float gDNDN= 0.01;
 
-#include "sizes.h"
+#include "../../userproject/include/sizes.h"
+
+//--------------------------------------------------------------------------
+/*! \brief This function defines the MBody1 model
+ */
+//--------------------------------------------------------------------------
 
 void modelDefinition(NNmodel &model) 
 {

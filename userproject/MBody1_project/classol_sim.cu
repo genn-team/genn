@@ -1,7 +1,7 @@
 /*--------------------------------------------------------------------------
    Author: Thomas Nowotny
   
-   Institute: Institute for Nonlinear Dynamics
+   Institute: Institute for Nonlinear Science
               University of California San Diego
               La Jolla, CA 92093-0402
   
@@ -11,7 +11,21 @@
   
 --------------------------------------------------------------------------*/
 
+//--------------------------------------------------------------------------
+/*! \file classol_sim.cu
+
+\brief Main entry point for the classol (CLASSification in OLfaction) model simulation. Provided as a part of the complete example of simulating the MBody1 mushroom body model. 
+*/
+//--------------------------------------------------------------------------
+
+
 #include "classol_sim.h"
+
+//--------------------------------------------------------------------------
+/*! \brief This function is the entry point for running the simulation of the MBody1 model network.
+*/
+//--------------------------------------------------------------------------
+
 
 int main(int argc, char *argv[])
 {
@@ -21,23 +35,24 @@ int main(int argc, char *argv[])
     return 1;
   }
   int which= atoi(argv[2]);
+  string OutDir = toString(argv[1]) +"_output";
   string name;
-  name= toString(argv[1]) + toString(".time");
+  name= OutDir+ "/"+ toString(argv[1]) + toString(".time");
   FILE *timef= fopen(name.c_str(),"w");  
 
   timer.startTimer();
-  
-
+  patSetTime= (int) (PAT_TIME/DT);
+  patFireTime= (int) (PATFTIME/DT);
   fprintf(stderr, "# DT %f \n", DT);
   fprintf(stderr, "# T_REPORT_TME %f \n", T_REPORT_TME);
   fprintf(stderr, "# SYN_OUT_TME %f \n",  SYN_OUT_TME);
   fprintf(stderr, "# PATFTIME %f \n", PATFTIME); 
-  fprintf(stderr, "# PAT_FIRETIME %d \n", PAT_FIRETIME);
+  fprintf(stderr, "# patFireTime %d \n", patFireTime);
   fprintf(stderr, "# PAT_TIME %f \n", PAT_TIME);
-  fprintf(stderr, "# PAT_SETTIME %d \n", PAT_SETTIME);
+  fprintf(stderr, "# patSetTime %d \n", patSetTime);
   fprintf(stderr, "# TOTAL_TME %d \n", TOTAL_TME);
   
-  name= toString(argv[1]) + toString(".out.st"); 
+  name= OutDir+ "/"+ toString(argv[1]) + toString(".out.Vm"); 
   FILE *osf= fopen(name.c_str(),"w");
 
   //-----------------------------------------------------------------
@@ -45,24 +60,24 @@ int main(int argc, char *argv[])
   classol locust;
 
   fprintf(stderr, "# reading PN-KC synapses ... \n");
-  name= toString(argv[1]) + toString(".pnkc");
+  name= OutDir+ "/"+ toString(argv[1]) + toString(".pnkc");
   FILE *f= fopen(name.c_str(),"r");
   locust.read_pnkcsyns(f);
   fclose(f);   
  
   fprintf(stderr, "# reading PN-LHI synapses ... \n");
-  name= toString(argv[1]) + toString(".pnlhi");
+  name= OutDir+ "/"+ toString(argv[1]) + toString(".pnlhi");
   f= fopen(name.c_str(), "r");
   locust.read_pnlhisyns(f);
   fclose(f);   
   
   fprintf(stderr, "# reading KC-DN synapses ... \n");
-  name= toString(argv[1]) + toString(".kcdn");
+  name= OutDir+ "/"+ toString(argv[1]) + toString(".kcdn");
   f= fopen(name.c_str(), "r");
   locust.read_kcdnsyns(f);
    
   fprintf(stderr, "# reading input patterns ... \n");
-  name= toString(argv[1]) + toString(".inpat");
+  name= OutDir+ "/"+ toString(argv[1]) + toString(".inpat");
   f= fopen(name.c_str(), "r");
   locust.read_input_patterns(f);
   fclose(f);
@@ -99,20 +114,20 @@ unsigned int sum= 0;
 //    if (which == GPU) locust.getSpikeNumbersFromGPU();
     locust.run(DT, which); // run next batch
     if (which == GPU) {  
-      cudaGetSymbolAddress(&devPtr, "d_VDN");
-      CUDA_SAFE_CALL(cudaMemcpy(VDN, devPtr, 10*sizeof(float), cudaMemcpyDeviceToHost));
+      cudaGetSymbolAddress(&devPtr, d_VDN);
+      CHECK_CUDA_ERRORS(cudaMemcpy(VDN, devPtr, 10*sizeof(float), cudaMemcpyDeviceToHost));
     }
 //    locust.sum_spikes();
 //    locust.output_spikes(os, which);
-//   locust.output_state(os, which);  // while outputting the current one ...
-   fprintf(osf, "%f ", t);
-   for (int i= 0; i < 10; i++) {
-     fprintf(osf, "%f ", VDN[i]);
-   }
-   fprintf(osf,"\n");
+//    locust.output_state(os, which);  // while outputting the current one ...
+    fprintf(osf, "%f ", t);
+    for (int i= 0; i < 10; i++) {
+      fprintf(osf, "%f ", VDN[i]);
+    }
+    fprintf(osf,"\n");
 //      cudaThreadSynchronize();
 
-   // report progress
+    // report progress
     if (t - last_t_report >= T_REPORT_TME)
     {
       fprintf(stderr, "time %f \n", t);
@@ -150,6 +165,7 @@ unsigned int sum= 0;
   // }
 
   timer.stopTimer();
+  cerr << "output files are created under the current directory." << endl;
   fprintf(timef, "%d %d %d %d %f \n", locust.sumPN, locust.sumKC, locust.sumLHI, locust.sumDN, timer.getElapsedTime());
 
   return 0;
