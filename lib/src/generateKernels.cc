@@ -234,12 +234,11 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 		      )
 {
   string name, s, localID, theLG;
-  unsigned int BlkNo;
   ofstream os;
 
   // count how many blocks to use: one thread for each synapse target
   // targets of several input groups are counted multiply
-  BlkNo= model.padSumSynapseTrgN[model.synapseGrpN-1] >> logSynapseBlkSz;
+  numOfBlocks = model.padSumSynapseTrgN[model.synapseGrpN - 1] / synapseBlkSz;
 
   name= path + toString("/") + model.name + toString("_CODE/synapseKrnl.cc");
   os.open(name.c_str());
@@ -434,7 +433,7 @@ void genSynapseKernel(NNmodel &model, //!< Model description
     os << "    __syncthreads();" << endl;
     os << "    if ( threadIdx.x == 0) {" << endl;
     os << "      j= atomicAdd((unsigned int*)&d_done, 1);" << endl;
-    os << "      if (j == " << BlkNo-1 << ") {" << endl;
+    os << "      if (j == " << numOfBlocks-1 << ") {" << endl;
     for (int j= 0; j < model.neuronGrpN; j++) {
       os << "        d_glbscnt" << model.neuronName[j] << "= 0;" << endl;
     }
