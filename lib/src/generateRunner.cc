@@ -389,14 +389,6 @@ void genRunnerGPU(NNmodel &model, //!< Model description
   os << "  void *devPtr;" << endl;
   for (int i= 0; i < model.synapseGrpN; i++) {
     if (model.synapseGType[i] == INDIVIDUALG) {
-      /**
-      /	from CUDA 5.0 release notes:
-      /	The use of a character string to indicate a device symbol, which was possible with
-      /	certain API functions, is no longer supported. Instead, the symbol should be used
-      /	directly.
-      /	Therefore, call of cudaGetSymbolAddress in this file is modified to support CUDA 5.0.
-      /	
-      */
       os << "  cudaGetSymbolAddress(&devPtr, d_gp" << model.synapseName[i] << ");" << endl;
       os << "  CHECK_CUDA_ERRORS(cudaMemcpy(devPtr, gp" << model.synapseName[i];
       os << ", ";
@@ -611,48 +603,40 @@ void genRunnerGPU(NNmodel &model, //!< Model description
       os << ",   // offset on pointer to the rates in grp ";
       os << model.neuronName[i] << endl;
     }
-   if (model.receivesInputCurrent[i]>=2) {
+    if (model.receivesInputCurrent[i]>=2) {
       os << "float *d_inputI" << model.neuronName[i];
       os << ",   // Explicit input to the neurons in grp ";
       os << model.neuronName[i] << endl;
-      }
-}
+    }
+  }
   os << "float t)" << endl;
   os << "{" << endl;
-  unsigned int gridSz= model.padSumNeuronN[model.neuronGrpN-1];
-  gridSz= gridSz >> logNeuronBlkSz;	 
 
-  unsigned int lgridSz=0;
-  if (model.lrnGroups > 0) {
-    lgridSz= model.padSumLearnN[model.lrnGroups-1];
-  }
-  lgridSz= lgridSz >> logLearnBlkSz;
-  unsigned int blkSz= neuronBlkSz;
-  unsigned int sblkSz= synapseBlkSz;
-  unsigned int lblkSz= learnBlkSz;
-
-  os << "  dim3 sThreads(" << sblkSz << ", 1);" << endl;
-  if (model.synapseGrpN>0) 
-  { 
-    unsigned int sgridSz= model.padSumSynapseTrgN[model.synapseGrpN-1];
-    sgridSz= sgridSz >> logSynapseBlkSz;
-    os << "  dim3 sGrid(" << sgridSz << ", 1);" << endl;
+  if (model.synapseGrpN > 0) { 
+    unsigned int synapseGridSz = model.padSumSynapseTrgN[model.synapseGrpN - 1];
+    synapseGridSz = synapseGridSz / synapseBlkSz;
+    os << "  dim3 sThreads(" << synapseBlkSz << ", 1);" << endl;
+    os << "  dim3 sGrid(" << synapseGridSz << ", 1);" << endl;
     os << endl;
   }
-  os << "  dim3 nThreads(" << blkSz << ", 1);" << endl;
-  os << "  dim3 nGrid(" << gridSz << ", 1);" << endl;
-  os << endl;
 
-  os << endl;
   if (model.lrnGroups > 0) {
-    os << "  dim3 lThreads(" << lblkSz << ", 1);" << endl;
-    os << "  dim3 lGrid(" << lgridSz << ", 1);" << endl;
+    unsigned int learnGridSz = model.padSumLearnN[model.lrnGroups - 1];
+    learnGridSz = learnGridSz / learnBlkSz;
+    os << "  dim3 lThreads(" << learnBlkSz << ", 1);" << endl;
+    os << "  dim3 lGrid(" << learnGridSz << ", 1);" << endl;
     os << endl;
   }
-  if (model.synapseGrpN>0) 
+
+  unsigned int neuronGridSz = model.padSumNeuronN[model.neuronGrpN - 1];
+  neuronGridSz = neuronGridSz / neuronBlkSz;
+  os << "  dim3 nThreads(" << neuronBlkSz << ", 1);" << endl;
+  os << "  dim3 nGrid(" << neuronGridSz << ", 1);" << endl;
+  os << endl;
+
+  if (model.synapseGrpN > 0) 
   {
-  os << "  if (t > 0.0) {" << endl; 
-
+    os << "  if (t > 0.0) {" << endl; 
     os << "    calcSynapses <<< sGrid, sThreads >>> (";
     if (model.needSt) {
       os << "t";
@@ -675,8 +659,10 @@ void genRunnerGPU(NNmodel &model, //!< Model description
   }
   os << "t);" << endl;
   os << "}" << endl;
+
   os.close();
 }
+
 
 //----------------------------------------------------------------------------
 /*!
