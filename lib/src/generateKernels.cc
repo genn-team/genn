@@ -235,6 +235,7 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 {
   string name, s, localID, theLG;
   ofstream os;
+  unsigned int numOfBlocks;
 
   // count how many blocks to use: one thread for each synapse target
   // targets of several input groups are counted multiply
