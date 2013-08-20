@@ -298,7 +298,7 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 
   os << "  __shared__ unsigned int shSpk[" << synapseBlkSz << "];" << endl;
   os << "  __shared__ float shSpkV[" << synapseBlkSz << "];" << endl;
-  os << "  unsigned int lscnt, lrpt, lmax, j, r;" << endl;
+  os << "  unsigned int lscnt, paddedNumSpikes, numSpikeSubsets, lmax, j, r;" << endl;
   os << "  float linSyn, lg;" << endl;
   os << endl;
 
@@ -329,15 +329,14 @@ void genSynapseKernel(NNmodel &model, //!< Model description
     os << "      linSyn= d_inSyn" << model.neuronName[trg] << inSynNo << "[" << localID << "];" << endl;
     os << "    }" << endl;
     os << "    lscnt= d_glbscnt" << model.neuronName[src] << ";" << endl;
-    os << "    lrpt= lscnt >> " << logSynapseBlkSz << ";" << endl;
-    os << "    if ((lrpt << " << logSynapseBlkSz <<") < lscnt) lrpt= lrpt+1;" << endl;
-    os << "    for (r= 0; r < lrpt; r++) {" << endl;
-    os << "      if (r == lrpt-1) lmax= lscnt-((lrpt-1) << " << logSynapseBlkSz << ");";
-    os << endl;
-    os << "      else lmax= " << synapseBlkSz << ";" << endl; 
+    os << "    paddedNumSpikes= lscnt + " << (synapseBlkSz - 1) << " - (lscnt - 1) % " << synapseBlkSz << ";" << endl;
+    os << "    numSpikeSubsets= paddedNumSpikes / " << synapseBlkSz << ";" << endl;
+    os << "    for (r = 0; r < numSpikeSubsets; r++) {" << endl;
+    os << "      if (r == numSpikeSubsets - 1) lmax = lscnt % " << synapseBlkSz << ";" << endl;
+    os << "      else lmax= " << synapseBlkSz << ";" << endl;
     os << "      if (threadIdx.x < lmax) {" << endl;
     os << "        shSpk[threadIdx.x]= d_glbSpk" << model.neuronName[src];
-    os << "[(r << " << logSynapseBlkSz << ") + threadIdx.x];" << endl;
+    os << "[(r * " << synapseBlkSz << ") + threadIdx.x];" << endl;
     if (model.neuronType[src] != POISSONNEURON) {
       os << "        shSpkV[threadIdx.x]= d_V" << model.neuronName[src];
       os << "[shSpk[threadIdx.x]];" << endl;
@@ -455,7 +454,7 @@ void genSynapseKernel(NNmodel &model, //!< Model description
     os << "  unsigned int id= " << learnBlkSz << "*blockIdx.x + threadIdx.x;" << endl;
     os << "  __shared__ unsigned int shSpk[" << learnBlkSz << "];" << endl;
     os << "  __shared__ float shSpkV[" << learnBlkSz << "];" << endl;
-    os << "  unsigned int lscnt, lrpt, lmax, j, r;" << endl;
+    os << "  unsigned int lscnt, paddedNumSpikes, numSpikeSubsets, lmax, j, r;" << endl;
     os << "  float lg;" << endl;
     os << endl;
 
@@ -476,16 +475,16 @@ void genSynapseKernel(NNmodel &model, //!< Model description
       unsigned int nN= model.neuronN[src];
       unsigned int trg= model.synapseTarget[k];
       float Epre= model.synapsePara[k][1];
+
       os << "    lscnt= d_glbscnt" << model.neuronName[trg] << ";" << endl;
-      os << "    lrpt= lscnt >> " << logLearnBlkSz << ";" << endl;
-      os << "    if ((lrpt << " << logLearnBlkSz <<") < lscnt) lrpt= lrpt+1;" << endl;
-      os << "    for (r= 0; r < lrpt; r++) {" << endl;
-      os << "      if (r == lrpt-1) lmax= lscnt-((lrpt-1) << " << logLearnBlkSz << ");";
-      os << endl;
-      os << "      else lmax= " << learnBlkSz << ";" << endl; 
+      os << "    paddedNumSpikes= lscnt + " << (learnBlkSz - 1) << " - (lscnt - 1) % " << learnBlkSz << ";" << endl;
+      os << "    numSpikeSubsets= paddedNumSpikes / " << learnBlkSz << ";" << endl;
+      os << "    for (r= 0; r < numSpikeSubsets; r++) {" << endl;
+      os << "      if (r == numSpikeSubsets - 1) lmax= lscnt % " << learnBlkSz << ";" << endl;
+      os << "      else lmax= " << learnBlkSz << ";" << endl;
       os << "      if (threadIdx.x < lmax) {" << endl;
       os << "        shSpk[threadIdx.x]= d_glbSpk" << model.neuronName[trg];
-      os << "[(r << " << logLearnBlkSz << ") + threadIdx.x];" << endl;
+      os << "[(r * " << learnBlkSz << ") + threadIdx.x];" << endl;
       os << "        shSpkV[threadIdx.x]= d_V" << model.neuronName[trg];
       os << "[shSpk[threadIdx.x]];" << endl;
       os << "      }" << endl;

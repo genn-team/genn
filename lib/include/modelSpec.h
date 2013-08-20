@@ -179,11 +179,8 @@ class NNmodel
 
 // global variables
 unsigned int neuronBlkSz; //!< Global variable that contains the block size for the neuron kernel function
-unsigned int logNeuronBlkSz; //!< Global variable that contains the logarithm of the block size for the neuron kernel function
 unsigned int synapseBlkSz; //!< Global variable that contains the block size for the synapse kernel function
-unsigned int logSynapseBlkSz; //!< Global variable that contains the logarithm of the block size for the synapse kernel function
 unsigned int learnBlkSz; //!< Global variable that contains the block size for the kernel performing learning updates for plastic synapses
-unsigned int logLearnBlkSz; //!< Global variable that contains the logarithm of the learning kernel block size
 unsigned int UIntSz; //!< size of the unsigned int variable type on the local architecture
 unsigned int logUIntSz; //!< logarithm of the size of the unsigned int variable type on the local architecture
 unsigned int theDev; //!< ID number of the chosen GPU device

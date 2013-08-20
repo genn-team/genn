@@ -36,45 +36,25 @@ unsigned int globalMem0; //!< Global variable that makes available the size of t
 void prepare(ostream &mos //!< output stream for messages
 	     )
 {
-  // NOTE: should put device choosing and block optimisation in one loop later
+  // here we get the specifications of all available cuda devices and work out which one we will use
+  // CHANGED AGAIN: chose the device which supports the highest warp occupancy
 
-  // first we get the specifications of all available cuda devices
-  // NOTE: deviceCount > 0 check is unnecessary. missing device is handled by CHECK_CUDA_ERRORS
   int deviceCount = 0;
   CHECK_CUDA_ERRORS(cudaGetDeviceCount(&deviceCount));
   deviceProp = new cudaDeviceProp[deviceCount];
-  for (int dev = 0; dev < deviceCount; dev++)
-  {
-    cudaSetDevice(dev);
-    cudaGetDeviceProperties(&(deviceProp[dev]), dev);
-  }
 
-  // then we work out which of our devices we will use
-  // BLOCK OPTIMISATION CODE GOES HERE: use formulae from the cuda occupancy calculator or ptx log info
-  neuronBlkSz = 0;
-  globalMem0 = 0;
-  theDev = 0;
-  // choose the device with the largest block size for the time being
-  // CHANGED: choose the device with the largest total Global Memory
-  // among equals we use the last device
-  for (int dev = 0; dev < deviceCount; dev++)
-  {
-    if (deviceProp[dev].totalGlobalMem >= globalMem0)
-    {
-      mos << "device " << dev << " has a global memory of " << deviceProp[dev].totalGlobalMem << " bytes" << endl;
-      globalMem0 = deviceProp[dev].totalGlobalMem;
-      neuronBlkSz= deviceProp[dev].maxThreadsPerBlock;
-      logNeuronBlkSz= (int) (logf((float)neuronBlkSz)/logf(2.0f)+1e-5f);
-      logNeuronBlkSz-= 1; // for HH neurons (need a better solution for this!)
-      neuronBlkSz= 1 << logNeuronBlkSz;
-      synapseBlkSz= deviceProp[dev].maxThreadsPerBlock;
-      logSynapseBlkSz= (int) (logf((float)synapseBlkSz)/logf(2.0f)+1e-5f);
-      logSynapseBlkSz-= 1; // for learning syns (need a better solution for this!) 
-      synapseBlkSz= 1 << logSynapseBlkSz;
-      learnBlkSz= deviceProp[dev].maxThreadsPerBlock;
-      logLearnBlkSz= (int) (logf((float)learnBlkSz)/logf(2.0f)+1e-5f);
-      learnBlkSz= 1 << logLearnBlkSz;
-      theDev= dev;
+  if (optimiseBlockSize) {
+    mos << "optimising block size ..." << endl;
+    
+  }
+  else {
+    int mostMemory = 0;
+    for (int dev = 0; dev < deviceCount; dev++) {
+      CHECK_CUDA_ERRORS(cudaSetDevice(dev));
+      CHECK_CUDA_ERRORS(cudaGetDeviceProperties(&(deviceProp[dev]), dev));
+      if (deviceProp[dev].totalGlobalMem >= mostMemory) {
+	theDev = dev;
+      }
     }
   }
 
@@ -83,19 +63,14 @@ void prepare(ostream &mos //!< output stream for messages
   sm_os.close();
 
   mos << "We are using CUDA device " << theDev << endl;
-  mos << "max logNeuronBlkSz: " << logNeuronBlkSz << endl;
-  mos << "max neuronBlkSz: " << neuronBlkSz << endl;
-  mos << "max logSynapseBlkSz: " << logSynapseBlkSz << endl;
-  mos << "max synapseBlkSz: " << synapseBlkSz << endl;
-  mos << "max logLearnBlkSz: " << logLearnBlkSz << endl;
-  mos << "max learnBlkSz: " << learnBlkSz << endl;
+  mos << "global memory:  " << deviceProp[theDev].totalGlobalMem << endl;
+  mos << "neuronBlkSz: " << neuronBlkSz << endl;
+  mos << "synapseBlkSz: " << synapseBlkSz << endl;
+  mos << "learnBlkSz: " << learnBlkSz << endl;
   UIntSz= sizeof(unsigned int)*8;   // in bit!
   logUIntSz= (int) (logf((float) UIntSz)/logf(2.0f)+1e-5f);
   mos << "logUIntSz: " << logUIntSz << endl;
   mos << "UIntSz: " << UIntSz << endl;
-  if (optimiseBlockSize) {
-    mos << "optimising block size ..." << endl;
-  }
 }
 
 //--------------------------------------------------------------------------
