@@ -66,7 +66,8 @@ void NNmodel::initNeuronSpecs(unsigned int i)
 {
   nThresh.push_back(200.0f);
   // padnN is the lowest multiple of neuronBlkSz >= neuronN[i]
-  unsigned int padnN = neuronN[i] + neuronBlkSz - 1 - (neuronN[i] - 1) % neuronBlkSz;
+  unsigned int padnN = 0;
+  if (neuronBlkSz != 0) padnN = neuronN[i] + neuronBlkSz - 1 - (neuronN[i] - 1) % neuronBlkSz;
   if (i == 0) {
     sumNeuronN.push_back(neuronN[i]);
     padSumNeuronN.push_back(padnN);
@@ -111,7 +112,8 @@ void NNmodel::initDerivedSynapsePara(unsigned int i)
     needSt= 1;
     // padnN is the lowest multiple of learnBlkSz >= neuronN[synapseSource[i]]
     unsigned int nN = neuronN[synapseSource[i]];
-    unsigned int padnN = nN + learnBlkSz - 1 - (nN - 1) % learnBlkSz;
+    unsigned int padnN = 0;
+    if (learnBlkSz != 0) padnN = nN + learnBlkSz - 1 - (nN - 1) % learnBlkSz;
     if (lrnGroups == 0) {
       padSumLearnN.push_back(padnN);
     }
@@ -134,7 +136,8 @@ void NNmodel::initDerivedSynapsePara(unsigned int i)
   }
   // padnN is the lowest multiple of synapseBlkSz >= neuronN[synapseTarget[i]]
   unsigned int nN = neuronN[synapseTarget[i]];
-  unsigned int padnN = nN + synapseBlkSz - 1 - (nN - 1) % synapseBlkSz;
+  unsigned int padnN = 0;
+  if (synapseBlkSz != 0) padnN = nN + synapseBlkSz - 1 - (nN - 1) % synapseBlkSz;
   if (i == 0) {
     sumSynapseTrgN.push_back(nN);
     padSumSynapseTrgN.push_back(padnN);
