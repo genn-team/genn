@@ -23,8 +23,6 @@
 //--------------------------------------------------------------------------
 
 
-unsigned int globalMem0; //!< Global variable that makes available the size of the global memory on the chosen GPU device (the device with the largest memory).  
-
 //--------------------------------------------------------------------------
 /*! 
   \brief Helper function that prepares data structures and detects the hardware properties to enable the code generation code that follows.
@@ -45,7 +43,8 @@ void prepare(ostream &mos //!< output stream for messages
 
   if (optimiseBlockSize) {
     mos << "optimising block size ..." << endl;
-    
+
+
   }
   else {
     int mostMemory = 0;
@@ -54,8 +53,15 @@ void prepare(ostream &mos //!< output stream for messages
       CHECK_CUDA_ERRORS(cudaGetDeviceProperties(&(deviceProp[dev]), dev));
       if (deviceProp[dev].totalGlobalMem >= mostMemory) {
 	theDev = dev;
+        mostMemory = deviceProp[dev].totalGlobalMem;
       }
     }
+    //neuronBlkSz = deviceProp[theDev].maxThreadsPerBlock;
+    //synapseBlkSz = deviceProp[theDev].maxThreadsPerBlock;
+    //learnBlkSz = deviceProp[theDev].maxThreadsPerBlock;
+    neuronBlkSz = 192;
+    synapseBlkSz = 192;
+    learnBlkSz = 192;
   }
 
   ofstream sm_os("sm_Version.mk");

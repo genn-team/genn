@@ -31,6 +31,6 @@ using namespace std; // replaced these two lines : problem with visual studio
 #include <cuda_runtime.h>
 
 cudaDeviceProp *deviceProp; //!< Global variable that contains the detected properties of all CUDA-enabled devices
-int optimiseBlockSize= 1; //!< Flag that regulates whether BlockSize optimisation shall be attempted
+int optimiseBlockSize= 0; //!< Flag that regulates whether BlockSize optimisation shall be attempted
 
 #endif  // _GLOBAL_H_
