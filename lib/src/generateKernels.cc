@@ -59,7 +59,6 @@ void genNeuronKernel(NNmodel &model, //!< Model description
   os << "//-------------------------------------------------------------------------" << endl << endl;
 
   // global device variables
- 
   os << "// relevant neuron variables" << endl;
   os << "__device__ volatile unsigned int d_done;" << endl;
   for (int i= 0; i < model.neuronGrpN; i++) {

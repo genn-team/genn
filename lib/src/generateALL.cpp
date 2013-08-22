@@ -39,8 +39,7 @@
  */
 
 void generate_model_runner(NNmodel &model,  //!< Model description
-			   string path //!< Path where the generated code
-			               //!< will be deposited
+			   string path //!< Path where the generated code will be deposited
 			   )
 {
   string cmd, name;
@@ -112,15 +111,14 @@ int main(int argc, //!< number of arguments; expected to be 2
   }
   cerr << endl;
 
-  string path= toString(argv[1]);
-  prepare(cerr);
-  prepareStandardModels();
+  theDev = prepare(cerr);
 
   NNmodel model;
-  	  
+  prepareStandardModels();
   modelDefinition(model);
   cerr << "model allocated" << endl;
 	
+  string path= toString(argv[1]);
   generate_model_runner(model, path);
   
   return EXIT_SUCCESS;

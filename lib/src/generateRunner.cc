@@ -27,56 +27,72 @@
 /*! 
   \brief Helper function that prepares data structures and detects the hardware properties to enable the code generation code that follows.
 
-  The main tasks in this function are the detection and characterization of the GPU device present (if any), choosing which GPU device to use, finding and appropriate block size, taking note of the major and minor version of the CUDA enabled device chosen for use, and populating the list of standard neuron models.
+  The main tasks in this function are the detection and characterization of the GPU device present (if any), choosing which GPU device to use, finding and appropriate block size, taking note of the major and minor version of the CUDA enabled device chosen for use, and populating the list of standard neuron models. The chosen device number is returned.
 */
 //--------------------------------------------------------------------------
 
-void prepare(ostream &mos //!< output stream for messages
+int prepare(ostream &mos //!< output stream for messages
 	     )
 {
-  // here we get the specifications of all available cuda devices and work out which one we will use
-  // CHANGED AGAIN: chose the device which supports the highest warp occupancy
-
-  int deviceCount = 0;
+  // Get the specifications of all available cuda devices, then work out which one we will use.
+  int deviceCount;
   CHECK_CUDA_ERRORS(cudaGetDeviceCount(&deviceCount));
   deviceProp = new cudaDeviceProp[deviceCount];
+  int chosenDevice = 0;
 
-  if (optimiseBlockSize) {
-    mos << "optimising block size ..." << endl;
+  int warpOccupancy;
+  int bestWarpOccupancy = 0;
+
+  int globalMem;
+  int mostGlobalMem = 0;
+
+  neuronBlkSz = 256;
+  synapseBlkSz = 256;
+  learnBlkSz = 256;
+
+  for (int dev = 0; dev < deviceCount; dev++) {
+    CHECK_CUDA_ERRORS(cudaSetDevice(dev));
+    CHECK_CUDA_ERRORS(cudaGetDeviceProperties(&(deviceProp[dev]), dev));
+    if (optimiseBlockSize) {
+      // If optimisation is on: choose the device which supports the highest warp occupancy
 
 
-  }
-  else {
-    int mostMemory = 0;
-    for (int dev = 0; dev < deviceCount; dev++) {
-      CHECK_CUDA_ERRORS(cudaSetDevice(dev));
-      CHECK_CUDA_ERRORS(cudaGetDeviceProperties(&(deviceProp[dev]), dev));
-      if (deviceProp[dev].totalGlobalMem >= mostMemory) {
-	theDev = dev;
-        mostMemory = deviceProp[dev].totalGlobalMem;
+
+
+
+
+      mos << "device " << dev << " supports a max warp occupancy of " << warpOccupancy << endl;
+      if (warpOccupancy >= bestWarpOccupancy) {
+	bestWarpOccupancy = warpOccupancy;
+	chosenDevice = dev;
       }
     }
-    //neuronBlkSz = deviceProp[theDev].maxThreadsPerBlock;
-    //synapseBlkSz = deviceProp[theDev].maxThreadsPerBlock;
-    //learnBlkSz = deviceProp[theDev].maxThreadsPerBlock;
-    neuronBlkSz = 192;
-    synapseBlkSz = 192;
-    learnBlkSz = 192;
+    else {
+      // If optimisation is off: choose the device with the most global memory
+      globalMem = deviceProp[dev].totalGlobalMem;
+      mos << "device " << dev << " has " << globalMem << " bytes of global memory" << endl;
+      if (globalMem >= mostGlobalMem) {
+	mostGlobalMem = globalMem;
+	chosenDevice = dev;
+      }
+    }
   }
 
   ofstream sm_os("sm_Version.mk");
-  sm_os << "NVCCFLAGS += -arch sm_" << deviceProp[theDev].major << deviceProp[theDev].minor << endl;
+  sm_os << "NVCCFLAGS += -arch sm_" << deviceProp[chosenDevice].major << deviceProp[chosenDevice].minor << endl;
   sm_os.close();
 
-  mos << "We are using CUDA device " << theDev << endl;
-  mos << "global memory:  " << deviceProp[theDev].totalGlobalMem << endl;
+  mos << "We are using CUDA device " << chosenDevice << endl;
+  mos << "global memory: " << deviceProp[chosenDevice].totalGlobalMem << " bytes" << endl;
   mos << "neuronBlkSz: " << neuronBlkSz << endl;
   mos << "synapseBlkSz: " << synapseBlkSz << endl;
   mos << "learnBlkSz: " << learnBlkSz << endl;
   UIntSz= sizeof(unsigned int)*8;   // in bit!
+  mos << "UIntSz: " << UIntSz << endl;
   logUIntSz= (int) (logf((float) UIntSz)/logf(2.0f)+1e-5f);
   mos << "logUIntSz: " << logUIntSz << endl;
-  mos << "UIntSz: " << UIntSz << endl;
+
+  return chosenDevice;
 }
 
 //--------------------------------------------------------------------------
@@ -151,7 +167,7 @@ void genRunner(NNmodel &model, //!< Model description
   // Also estimating memory usage on device ...
   os << "void allocateMem()" << endl;
   os << "{" << endl;
-  os << "  CHECK_CUDA_ERRORS(cudaSetDevice(theDev));" << endl;
+  os << "  CHECK_CUDA_ERRORS(cudaSetDevice(" << theDev << "));" << endl;
   cerr << "model.neuronGroupN " << model.neuronGrpN << endl;
   for (int i= 0; i < model.neuronGrpN; i++) {
     nt= model.neuronType[i];
@@ -304,9 +320,8 @@ void genRunner(NNmodel &model, //!< Model description
   os << "#include \"runnerCPU.cc\"" << endl;
   os << endl;
 
-  mos << "Global memory required for core model: " << mem/1e6;
-  mos << " MB" << endl;
-cerr << deviceProp[theDev].totalGlobalMem << " theDev " << theDev << endl;  
+  mos << "Global memory required for core model: " << mem/1e6 << " MB" << endl;
+  mos << deviceProp[theDev].totalGlobalMem << " theDev " << theDev << endl;  
   if (0.5*deviceProp[theDev].totalGlobalMem < mem) {
     mos << "memory required for core model (" << mem/1e6;
     mos << "MB) is more than 50% of global memory on the chosen device";
@@ -346,8 +361,10 @@ void genRunnerGPU(NNmodel &model, //!< Model description
   os << "*/" << endl;
   os << "//-------------------------------------------------------------------------" << endl << endl;
 
+  os << "#ifndef RAND" << endl;
   os << "#define RAND(Y,X) Y = Y * 1103515245 +12345;";
   os << "X= (unsigned int)(Y >> 16) & 32767" << endl;
+  os << "#endif" << endl;
   os << endl;
 
   os << "#include \"neuronKrnl.cc\"" << endl;
@@ -365,6 +382,7 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 
   // ------------------------------------------------------------------------
   // copying conductances to device
+
   os << "void copyGToDevice()" << endl;
   os << "{" << endl;
   os << "  void *devPtr;" << endl;
@@ -443,7 +461,6 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 
   // ------------------------------------------------------------------------
   // copying values to device
-
 
   os << "void copyStateToDevice()" << endl;
   os << "{" << endl;
@@ -673,13 +690,13 @@ void genRunnerCPU(NNmodel &model, //!< Neuronal network model description
   os << "\\brief File generated from GeNN for the model " << model.name << " containing the control code for running a CPU only simulator version." << endl;
   os << "*/" << endl;
   os << "//-------------------------------------------------------------------------" << endl << endl;
-
+  
   os << "#ifndef RAND" << endl;
   os << "#define RAND(Y,X) Y = Y * 1103515245 +12345;";
   os << "X= (unsigned int)(Y >> 16) & 32767" << endl;
   os << "#endif" << endl;
   os << endl;
-  
+
   os << "#include \"neuronFnct.cc\"" << endl;
   if (model.synapseGrpN>0) os << "#include \"synapseFnct.cc\"" << endl;
   os << endl;
@@ -706,7 +723,7 @@ void genRunnerCPU(NNmodel &model, //!< Neuronal network model description
   os << "{" << endl;
   if (model.synapseGrpN>0){
   os << "  if (t > 0.0) {" << endl; 
-  os << "    calcSynapsesCPU();";
+  os << "    calcSynapsesCPU(t);";
   os << endl;
   if (model.lrnGroups > 0) {
     os << "learnSynapsesPostHost(t);" << endl;
