@@ -57,8 +57,7 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 
   // CPU function for calculating neuron states
   // header
-  os << "void" << endl;
-  os << "calcNeuronsCPU(";
+  os << "void calcNeuronsCPU(";
   for (int i= 0; i < model.neuronGrpN; i++) {
     if (model.neuronType[i] == POISSONNEURON) {
       // Note: Poisson neurons only used as input neurons; they do not 
@@ -75,14 +74,13 @@ void genNeuronFunction(NNmodel &model, //!< Model description
   os << "float t // absolute time" << endl; 
   os << ")" << endl;
   os << "{" << endl;
-  os << endl;
 
+  os << "  float Isyn= 0;" << endl;
   for (int i= 0; i < model.neuronGrpN; i++) {
     nt= model.neuronType[i];
     os << "  glbscnt" << model.neuronName[i] << "= 0;" << endl;
     os << "  for (int n= 0; n < " <<  model.neuronN[i] << "; n++) {" << endl;
     // Rulkov map neurons
-    os << "    float Isyn=0;" << endl;
     if (model.inSyn[i].size() > 0) {
       os << "    Isyn=";
       for (int j= 0; j < model.inSyn[i].size(); j++) {
@@ -174,8 +172,7 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 
   // Function for calculating synapse input to neurons
   // Function header
-  os << "void" << endl;
-  os << "calcSynapsesCPU()" << endl;
+  os << "void calcSynapsesCPU(float t)" << endl;
   os << "{" << endl;
   if (model.lrnGroups > 0) {
     os << "  float dt, dg;" << endl;
@@ -279,8 +276,7 @@ void genSynapseFunction(NNmodel &model, //!< Model description
   if (model.lrnGroups > 0) {
     // function for learning synapses, post-synaptic spikes
     // function header
-    os << "void" << endl;
-    os << "learnSynapsesPostHost(float t)" << endl;
+    os << "void learnSynapsesPostHost(float t)" << endl;
     os << "{" << endl;
     os << "  float dt, dg;" << endl;
     os << endl;

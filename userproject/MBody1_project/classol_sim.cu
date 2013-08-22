@@ -104,13 +104,13 @@ int main(int argc, char *argv[])
 //  locust.output_state(os, which);  
 //  locust.output_spikes(os, which);  
   locust.run(DT, which);
-//locust.output_state(os, which);  
+//  locust.output_state(os, which);  
 //  float synwriteT= 0.0f;
 //  int synwrite= 0;
-unsigned int sum= 0;
+//  unsigned int sum= 0;
   while (!done) 
   {
-//   if (which == GPU) locust.getSpikesFromGPU();
+//    if (which == GPU) locust.getSpikesFromGPU();
 //    if (which == GPU) locust.getSpikeNumbersFromGPU();
     locust.run(DT, which); // run next batch
     if (which == GPU) {  
@@ -125,14 +125,14 @@ unsigned int sum= 0;
       fprintf(osf, "%f ", VDN[i]);
     }
     fprintf(osf,"\n");
-//      cudaThreadSynchronize();
+//    cudaThreadSynchronize();
 
     // report progress
     if (t - last_t_report >= T_REPORT_TME)
     {
       fprintf(stderr, "time %f \n", t);
       last_t_report= t;
-      //locust.output_state(os);
+//      locust.output_state(os);
     }
     // output synapses occasionally
     // if (synwrite) {
