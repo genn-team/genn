@@ -25,6 +25,8 @@ This global header file also takes care of including some generally used cuda su
 
 
 #include <iostream>
+#include <cstring>
+#include <string>
 #include <sstream>
 #include <cuda_runtime.h>
 
