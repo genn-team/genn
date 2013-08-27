@@ -11,9 +11,9 @@
 ##  
 ##--------------------------------------------------------------------------
 
-ROOTDIR		:= $(GeNNPATH)/userproject
-EXECUTABLE	:= classol_sim
-SOURCES		:= classol_sim.cu
+ROOTDIR		:= $(GeNNPATH)/userproject/OneComp_project
+EXECUTABLE	:= OneComp_sim
+SOURCES		:= OneComp_sim.cu
 
 INCLUDE_FLAGS	:= 
 LINK_FLAGS	:= 

@@ -21,17 +21,17 @@ int main(int argc, char *argv[])
     return 1;
   }
   int which= atoi(argv[2]);
-  string OutDir = toString(argv[1]) +"_output";
+  string OutDir = toString(argv[1]) +toString("_output");
   string name, name2; 
 
   timer.startTimer();
   fprintf(stderr, "# DT %f \n", DT);
   fprintf(stderr, "# T_REPORT_TME %f \n", T_REPORT_TME);
   fprintf(stderr, "# TOTAL_TME %d \n", TOTAL_TME);
-  
-  name= OutDir+ "/" + toString(argv[1]) + toString(".out.Vm"); 
+ 
+  name= OutDir+ toString("/") + toString(argv[1]) + toString(".out.Vm"); 
   FILE *osf= fopen(name.c_str(),"w");
-  name2= OutDir+ "/" + toString(argv[1]) + toString(".explinp"); 
+  name2= OutDir+ toString("/") + toString(argv[1]) + toString(".explinp"); 
   FILE *osf2= fopen(name2.c_str(),"w");
   //-----------------------------------------------------------------
   // build the neuronal circuitry
@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
       if (locust.model.receivesInputCurrent[k]==2) 
       {
         FILE * ff;
-        ff=fopen("../tools/expoutf","r");
+        ff=fopen("../../tools/expoutf","r");
         locust.read_input_values(ff);
         fclose(ff);
       }

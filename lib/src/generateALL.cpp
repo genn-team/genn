@@ -34,40 +34,21 @@
 #include <sys/stat.h> //needed for mkdir
 #endif
 
-/*! \brief This function will call the necessary sub-functions to generate the code for simulating a model.
 
- */
+/*! \brief This function will call the necessary sub-functions to generate the code for simulating a model. */
 
 void generate_model_runner(NNmodel &model,  //!< Model description
-			   string path //!< Path where the generated code
-			               //!< will be deposited
+			   string path //!< Path where the generated code will be deposited
 			   )
 {
-  string cmd, name;
-  
-  #ifdef _WIN32
-  //cmd= toString("mkdir ")+ path + toString("\\") + model.name + toString("_CODE");
-  cmd= path + toString("\\") + model.name + toString("_CODE");
-  _mkdir(cmd.c_str());
-  #else
-  cmd= toString("mkdir -p ")+ path + toString("/") + model.name + toString("_CODE");
-  system(cmd.c_str());
-  #endif
 
-  cerr << cmd << endl;
-  
-/* TODO: change the code above to direct system calls 
-  #ifdef _WIN32
-  cmd= path + toString("\\") + model.name + toString("_CODE");
-  _mkdir(cmd.c_str());
-  #else 
-  cmd= path + toString("/") + model.name + toString("_CODE");
-  mkdir(cmd.c_str(), 0777); 
-  #endif
-*/  
+#ifdef _WIN32
+  _mkdir((path + "\\" + model.name + "_CODE").c_str());
+#else // UNIX
+  mkdir((path + "/" + model.name + "_CODE").c_str(), 0777); 
+#endif
 
-
-  // general/ shared code for GPU and CPU versions
+  // general shared code for GPU and CPU versions
   genRunner(model, path, cerr);
 
   // GPU specific code generation
@@ -88,6 +69,134 @@ void generate_model_runner(NNmodel &model,  //!< Model description
   // Generate the equivalent of synapse and learning kernel
   if (model.synapseGrpN>0) genSynapseFunction(model, path, cerr);
 }
+
+
+//--------------------------------------------------------------------------
+/*! 
+  \brief Helper function that prepares data structures and detects the hardware properties to enable the code generation code that follows.
+
+  The main tasks in this function are the detection and characterization of the GPU device present (if any), choosing which GPU device to use, finding and appropriate block size, taking note of the major and minor version of the CUDA enabled device chosen for use, and populating the list of standard neuron models. The chosen device number is returned.
+*/
+//--------------------------------------------------------------------------
+
+int chooseDevice(ostream &mos, //!< output stream for messages
+		 NNmodel &model, //!< the nn model we are generating code for
+		 string path //!< path the generated code will be deposited
+		 )
+{
+  // Get the specifications of all available cuda devices, then work out which one we will use.
+  int deviceCount;
+  int chosenDevice = 0;
+  CHECK_CUDA_ERRORS(cudaGetDeviceCount(&deviceCount));
+  deviceProp = new cudaDeviceProp[deviceCount];
+  int warpOccupancy;
+  int bestWarpOccupancy = 0;
+  int globalMem;
+  int mostGlobalMem = 0;
+  for (int dev = 0; dev < deviceCount; dev++) {
+    CHECK_CUDA_ERRORS(cudaSetDevice(dev));
+    CHECK_CUDA_ERRORS(cudaGetDeviceProperties(&(deviceProp[dev]), dev));
+
+    if (optimiseBlockSize) { // IF OPTIMISATION IS ON
+      // Choose the device which supports the highest warp occupancy.
+      generate_model_runner(model, path);
+      stringstream command;
+      command << "nvcc -x cu -cubin -Xptxas=-v -arch=sm_" << deviceProp[dev].major
+	      << deviceProp[dev].minor << " -DDT -D\"CHECK_CUDA_ERRORS(call){call;}\" "; 
+
+      // Run NVCC and pipe stderr to this process to get kernel resource requirements.
+#ifdef _WIN32
+      command << path << "\\" << model.name << "_CODE\\runner.cc 2>&1";
+      FILE *nvccPipe = _popen(command.str().c_str(), "r");
+#else // UNIX
+      command << path << "/" << model.name << "_CODE/runner.cc 2>&1";
+      FILE *nvccPipe = popen(command.str().c_str(), "r");
+#endif
+      if (!nvccPipe) {
+	mos << "ERROR: faied to open nvcc pipe" << endl;
+	exit(EXIT_FAILURE);
+      }
+
+      // Store each kernel's resource usage in separate stringstreams.
+      char pipeBuffer[128];
+      stringstream ptxInfo[3];
+      int ptxInfoPtr; // 0 = calcSynapses, 1 = learnSynapses, 2 = calcNeurons
+      while (fgets(pipeBuffer, 128, nvccPipe) != NULL) {
+	if (strstr(pipeBuffer, "calcSynapses") != NULL) {
+	  ptxInfoPtr = 0;
+	}
+	else if (strstr(pipeBuffer, "learnSynapses") != NULL) {
+	  ptxInfoPtr = 1;
+	}
+	else if (strstr(pipeBuffer, "calcNeurons") != NULL) {
+	  ptxInfoPtr = 2;
+	}
+	// If ptxas info is found, store it in its own stringstream.
+	if (strncmp(pipeBuffer, "ptxas info    : Used", 20) == 0) {
+	  ptxInfo[ptxInfoPtr] << pipeBuffer;
+	}
+      }
+
+      // Close the NVCC pipe.
+#ifdef _WIN32
+      _pclose(nvccPipe);
+#else // UNIX
+      pclose(nvccPipe);
+#endif
+
+      // Parsing the PTX info string retrieved from the NVCC pipe.
+      int registers, sharedMem;
+      string junk;
+      for (int i = 0; i < 3; i++) {
+	ptxInfo[i] >> junk >> junk >> junk >> junk;  // ptxas info    : Used 
+	ptxInfo[i] >> registers >> junk;             // [registers] registers, 
+	ptxInfo[i] >> sharedMem;                     // [sharedMem] bytes smem, 
+	mos << "kernel " << i << " " << ptxInfo[i].str();
+	mos << "registers needed: " << registers << endl;
+	mos << "shared mem needed: " << sharedMem << endl;
+
+
+
+
+
+
+      }
+
+      mos << "device " << dev << " supports a max warp occupancy of " << warpOccupancy << endl;
+      if (warpOccupancy >= bestWarpOccupancy) {
+	bestWarpOccupancy = warpOccupancy;
+	chosenDevice = dev;
+      }
+    }
+
+    else { // IF OPTIMISATION IS OFF
+      // Simply choose the device with the most global memory.
+      globalMem = deviceProp[dev].totalGlobalMem;
+      mos << "device " << dev << " has " << globalMem << " bytes of global memory" << endl;
+      if (globalMem >= mostGlobalMem) {
+	mostGlobalMem = globalMem;
+	chosenDevice = dev;
+      }
+    }
+  }
+
+  ofstream sm_os("sm_Version.mk");
+  sm_os << "NVCCFLAGS += -arch sm_" << deviceProp[chosenDevice].major << deviceProp[chosenDevice].minor << endl;
+  sm_os.close();
+
+  mos << "We are using CUDA device " << chosenDevice << endl;
+  mos << "global memory: " << deviceProp[chosenDevice].totalGlobalMem << " bytes" << endl;
+  mos << "neuron block size: " << neuronBlkSz << endl;
+  mos << "synapse block size: " << synapseBlkSz << endl;
+  mos << "learn block size: " << learnBlkSz << endl;
+  UIntSz= sizeof(unsigned int)*8; // in bits
+  logUIntSz= (int) (logf((float) UIntSz)/logf(2.0f)+1e-5f);
+  mos << "UIntSz: " << UIntSz << endl;
+  mos << "logUIntSz: " << logUIntSz << endl;
+
+  return chosenDevice;
+}
+
 
 /*! \brief Main entry point for the generateALL executable that generates
   the code for GPU and CPU.
@@ -112,15 +221,13 @@ int main(int argc, //!< number of arguments; expected to be 2
   }
   cerr << endl;
 
-  string path= toString(argv[1]);
-  prepare(cerr);
-  prepareStandardModels();
-
   NNmodel model;
-  	  
+  prepareStandardModels();
   modelDefinition(model);
   cerr << "model allocated" << endl;
-	
+
+  string path= toString(argv[1]);
+  theDev = chooseDevice(cerr, model, path);	
   generate_model_runner(model, path);
   
   return EXIT_SUCCESS;

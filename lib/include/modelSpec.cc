@@ -65,8 +65,9 @@ void NNmodel::initDerivedNeuronPara(unsigned int i)
 void NNmodel::initNeuronSpecs(unsigned int i)
 {
   nThresh.push_back(200.0f);
-  unsigned int padnN= (neuronN[i] >> logNeuronBlkSz) << logNeuronBlkSz;
-  if (padnN < neuronN[i]) padnN+= neuronBlkSz;
+  // padnN is the lowest multiple of neuronBlkSz >= neuronN[i]
+  unsigned int padnN = 0;
+  if (neuronBlkSz != 0) padnN = neuronN[i] + neuronBlkSz - 1 - (neuronN[i] - 1) % neuronBlkSz;
   if (i == 0) {
     sumNeuronN.push_back(neuronN[i]);
     padSumNeuronN.push_back(padnN);
@@ -83,16 +84,12 @@ void NNmodel::initNeuronSpecs(unsigned int i)
 //--------------------------------------------------------------------------
 /*! \brief This function calculates derived synapse parameters from primary synapse parameters. 
 
-This function needs to be invoked after all primary parameters have been set and before code for synapse evaluation is generated.
+This function needs to be invoked each time a synapse population is added, after all primary parameters have been set, and before code for synapse evaluation is generated. It should be invoked only once per population, as derived synapse parameters (dsp) are appended to mpdel parameter vectors indiscriminantly.
 */
 //--------------------------------------------------------------------------
 
 void NNmodel::initDerivedSynapsePara(unsigned int i)
 {
-  // to be called when all para have been set!
-  // also, call this only once and right after a population has been added
-  // as values are appended to vectors indiscriminantly
-  // derived synapse parameters (dsp)
   vector<float> tmpP;
   if (synapseType[i] == LEARN1SYNAPSE) {
     tmpP.push_back(expf(-DT/synapsePara[i][2]));              // kdecay
@@ -113,8 +110,10 @@ void NNmodel::initDerivedSynapsePara(unsigned int i)
     neuronNeedSt[synapseTarget[i]]= 1;
     neuronNeedSt[synapseSource[i]]= 1;
     needSt= 1;
-    unsigned int padnN= (neuronN[synapseSource[i]] >> logLearnBlkSz) << logLearnBlkSz;
-    if (padnN < neuronN[synapseSource[i]]) padnN+= learnBlkSz;
+    // padnN is the lowest multiple of learnBlkSz >= neuronN[synapseSource[i]]
+    unsigned int nN = neuronN[synapseSource[i]];
+    unsigned int padnN = 0;
+    if (learnBlkSz != 0) padnN = nN + learnBlkSz - 1 - (nN - 1) % learnBlkSz;
     if (lrnGroups == 0) {
       padSumLearnN.push_back(padnN);
     }
@@ -124,7 +123,6 @@ void NNmodel::initDerivedSynapsePara(unsigned int i)
     lrnSynGrp.push_back(i);
     lrnGroups++;
   }
- 
   
   if ((synapseType[i] == NSYNAPSE) || (synapseType[i] == NGRADSYNAPSE)) {
     tmpP.push_back(expf(-DT/synapsePara[i][2]));              // kdecay
@@ -136,10 +134,10 @@ void NNmodel::initDerivedSynapsePara(unsigned int i)
   if (nThresh[synapseSource[i]] > synapsePara[i][1]) {
     nThresh[synapseSource[i]]= synapsePara[i][1];
   }
-  // update synapse target neuron numbers etc
-  unsigned int nN= neuronN[synapseTarget[i]];
-  unsigned int padnN= (nN >> logSynapseBlkSz) << logSynapseBlkSz;
-  if (padnN < nN) padnN+= synapseBlkSz;
+  // padnN is the lowest multiple of synapseBlkSz >= neuronN[synapseTarget[i]]
+  unsigned int nN = neuronN[synapseTarget[i]];
+  unsigned int padnN = 0;
+  if (synapseBlkSz != 0) padnN = nN + synapseBlkSz - 1 - (nN - 1) % synapseBlkSz;
   if (i == 0) {
     sumSynapseTrgN.push_back(nN);
     padSumSynapseTrgN.push_back(padnN);
