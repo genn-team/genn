@@ -32,7 +32,7 @@ float exIzh_ini[2]={
 
 void modelDefinition(NNmodel &model) 
 {
-  model.setName("IzhEx");
+  model.setName("OneComp");
   model.addNeuronPopulation("Izh1", _NC1, IZHIKEVICH, exIzh_p, exIzh_ini);
   
   model.activateDirectInput("Izh1", INPRULE);

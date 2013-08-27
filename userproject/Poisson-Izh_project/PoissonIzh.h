@@ -15,7 +15,7 @@
 #ifndef POISSONIZH_H 
 #define POISSONIZH_H
 
-#include "IzhEx.cc"
+#include "Poisson-Izh.cc"
 
 class classol
 {

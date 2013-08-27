@@ -1,37 +1,33 @@
-##--------------------------------------------------------------------------                                                               
-##   Author: Thomas Nowotny                                                                                                                
-##                                                                                                                                         
-##   Institute: Center for Computational Neuroscience and Robotics                                                                         
+##--------------------------------------------------------------------------
+##   Author: Thomas Nowotny
+##
+##   Institute: Center for Computational Neuroscience and Robotics
 ##              University of Sussex                                                                                                       
-##            Falmer, Brighton BN1 9QJ, UK                                                                                                 
-##                                                                                                                                         
-##   email to:  T.Nowotny@sussex.ac.uk                                                                                                     
-##                                                                                                                                         
-##   initial version: 2010-02-07                                                                                                           
-##                                                                                                                                         
-##--------------------------------------------------------------------------                                                               
-
+##            	Falmer, Brighton BN1 9QJ, UK
+##
+##   email to:  T.Nowotny@sussex.ac.uk
+##
+##   initial version: 2010-02-07
+##
+##--------------------------------------------------------------------------
 
 ##################################################################################
 # Makefile include for all projects
 ##################################################################################
 
 # OS name (Linux or Darwin) and architecture (32 bit or 64 bit).
-OSUPPER = $(shell uname -s 2>/dev/null | tr [:lower:] [:upper:])
-OSLOWER = $(shell uname -s 2>/dev/null | tr [:upper:] [:lower:])
-DARWIN  = $(strip $(findstring DARWIN, $(OSUPPER)))
-OS_SIZE = $(shell uname -m | sed -e "s/i.86/32/" -e "s/x86_64/64/")
-OS_ARCH = $(shell uname -m | sed -e "s/i386/i686/")
+OSUPPER 	:= $(shell uname -s 2>/dev/null | tr [:lower:] [:upper:])
+OSLOWER 	:= $(shell uname -s 2>/dev/null | tr [:upper:] [:lower:])
+DARWIN  	:= $(strip $(findstring DARWIN, $(OSUPPER)))
+OS_SIZE 	:= $(shell uname -m | sed -e "s/i.86/32/" -e "s/x86_64/64/")
+OS_ARCH 	:= $(shell uname -m | sed -e "s/i386/i686/")
 
 # C / C++ compiler, cuda compiler, include flags and link flags. Specify
 # additional lib and include paths by defining LINK_FLAGS and INCLUDE_FLAGS in
 # a project's main Makefile.  Declare cuda's install directory with CUDA_PATH.
-ifndef CUDA_PATH
-	CUDA_PATH        := /usr/local/cuda
-endif
-
-COMPILER         := g++
-NVCC             := $(CUDA_PATH)/bin/nvcc
+CUDA_PATH        ?= /usr/local/cuda
+COMPILER         ?= g++
+NVCC             ?= $(CUDA_PATH)/bin/nvcc
 INCLUDE_FLAGS    += -I$(CUDA_PATH)/include -I$(GeNNPATH)/lib/include -I. 
 ifeq ($(DARWIN),DARWIN)
   LINK_FLAGS     += -Xlinker -rpath $(CUDA_PATH)/lib -L$(CUDA_PATH)/lib -lcudart 

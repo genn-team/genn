@@ -11,8 +11,6 @@
   
 --------------------------------------------------------------------------*/
 
-#include <string>
-
 //-----------------------------------------------------------------------
 /*!  \file generateRunner.cc 
   
@@ -21,82 +19,6 @@
   and CPU space. Part of the code generation section.
 */
 //--------------------------------------------------------------------------
-
-
-unsigned int globalMem0; //!< Global variable that makes available the size of the global memory on the chosen GPU device (the device with the largest memory).  
-
-//--------------------------------------------------------------------------
-/*! 
-  \brief Helper function that prepares data structures and detects the hardware properties to enable the code generation code that follows.
-
-  The main tasks in this function are the detection and characterization of the GPU device present (if any), choosing which GPU device to use, finding and appropriate block size, taking note of the major and minor version of the CUDA enabled device chosen for use, and populating the list of standard neuron models.
-*/
-//--------------------------------------------------------------------------
-
-void prepare(ostream &mos //!< output stream for messages
-	     )
-{
-  // NOTE: should put device choosing and block optimisation in one loop later
-
-  // first we get the specifications of all available cuda devices
-  // NOTE: deviceCount > 0 check is unnecessary. missing device is handled by CHECK_CUDA_ERRORS
-  int deviceCount = 0;
-  CHECK_CUDA_ERRORS(cudaGetDeviceCount(&deviceCount));
-  deviceProp = new cudaDeviceProp[deviceCount];
-  for (int dev = 0; dev < deviceCount; dev++)
-  {
-    cudaSetDevice(dev);
-    cudaGetDeviceProperties(&(deviceProp[dev]), dev);
-  }
-
-  // then we work out which of our devices we will use
-  // BLOCK OPTIMISATION CODE GOES HERE: use formulae from the cuda occupancy calculator or ptx log info
-  neuronBlkSz = 0;
-  globalMem0 = 0;
-  theDev = 0;
-  // choose the device with the largest block size for the time being
-  // CHANGED: choose the device with the largest total Global Memory
-  // among equals we use the last device
-  for (int dev = 0; dev < deviceCount; dev++)
-  {
-    if (deviceProp[dev].totalGlobalMem >= globalMem0)
-    {
-      mos << "device " << dev << " has a global memory of " << deviceProp[dev].totalGlobalMem << " bytes" << endl;
-      globalMem0 = deviceProp[dev].totalGlobalMem;
-      neuronBlkSz= deviceProp[dev].maxThreadsPerBlock;
-      logNeuronBlkSz= (int) (logf((float)neuronBlkSz)/logf(2.0f)+1e-5f);
-      logNeuronBlkSz-= 1; // for HH neurons (need a better solution for this!)
-      neuronBlkSz= 1 << logNeuronBlkSz;
-      synapseBlkSz= deviceProp[dev].maxThreadsPerBlock;
-      logSynapseBlkSz= (int) (logf((float)synapseBlkSz)/logf(2.0f)+1e-5f);
-      logSynapseBlkSz-= 1; // for learning syns (need a better solution for this!) 
-      synapseBlkSz= 1 << logSynapseBlkSz;
-      learnBlkSz= deviceProp[dev].maxThreadsPerBlock;
-      logLearnBlkSz= (int) (logf((float)learnBlkSz)/logf(2.0f)+1e-5f);
-      learnBlkSz= 1 << logLearnBlkSz;
-      theDev= dev;
-    }
-  }
-
-  ofstream sm_os("sm_Version.mk");
-  sm_os << "NVCCFLAGS += -arch sm_" << deviceProp[theDev].major << deviceProp[theDev].minor << endl;
-  sm_os.close();
-
-  mos << "We are using CUDA device " << theDev << endl;
-  mos << "max logNeuronBlkSz: " << logNeuronBlkSz << endl;
-  mos << "max neuronBlkSz: " << neuronBlkSz << endl;
-  mos << "max logSynapseBlkSz: " << logSynapseBlkSz << endl;
-  mos << "max synapseBlkSz: " << synapseBlkSz << endl;
-  mos << "max logLearnBlkSz: " << logLearnBlkSz << endl;
-  mos << "max learnBlkSz: " << learnBlkSz << endl;
-  UIntSz= sizeof(unsigned int)*8;   // in bit!
-  logUIntSz= (int) (logf((float) UIntSz)/logf(2.0f)+1e-5f);
-  mos << "logUIntSz: " << logUIntSz << endl;
-  mos << "UIntSz: " << UIntSz << endl;
-  if (optimiseBlockSize) {
-    mos << "optimising block size ..." << endl;
-  }
-}
 
 //--------------------------------------------------------------------------
 /*!
@@ -170,7 +92,7 @@ void genRunner(NNmodel &model, //!< Model description
   // Also estimating memory usage on device ...
   os << "void allocateMem()" << endl;
   os << "{" << endl;
-  os << "  CHECK_CUDA_ERRORS(cudaSetDevice(theDev));" << endl;
+  os << "  CHECK_CUDA_ERRORS(cudaSetDevice(" << theDev << "));" << endl;
   cerr << "model.neuronGroupN " << model.neuronGrpN << endl;
   for (int i= 0; i < model.neuronGrpN; i++) {
     nt= model.neuronType[i];
@@ -323,9 +245,8 @@ void genRunner(NNmodel &model, //!< Model description
   os << "#include \"runnerCPU.cc\"" << endl;
   os << endl;
 
-  mos << "Global memory required for core model: " << mem/1e6;
-  mos << " MB" << endl;
-cerr << deviceProp[theDev].totalGlobalMem << " theDev " << theDev << endl;  
+  mos << "Global memory required for core model: " << mem/1e6 << " MB" << endl;
+  mos << deviceProp[theDev].totalGlobalMem << " theDev " << theDev << endl;  
   if (0.5*deviceProp[theDev].totalGlobalMem < mem) {
     mos << "memory required for core model (" << mem/1e6;
     mos << "MB) is more than 50% of global memory on the chosen device";
@@ -365,8 +286,10 @@ void genRunnerGPU(NNmodel &model, //!< Model description
   os << "*/" << endl;
   os << "//-------------------------------------------------------------------------" << endl << endl;
 
+  os << "#ifndef RAND" << endl;
   os << "#define RAND(Y,X) Y = Y * 1103515245 +12345;";
   os << "X= (unsigned int)(Y >> 16) & 32767" << endl;
+  os << "#endif" << endl;
   os << endl;
 
   os << "#include \"neuronKrnl.cc\"" << endl;
@@ -384,19 +307,12 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 
   // ------------------------------------------------------------------------
   // copying conductances to device
+
   os << "void copyGToDevice()" << endl;
   os << "{" << endl;
   os << "  void *devPtr;" << endl;
   for (int i= 0; i < model.synapseGrpN; i++) {
     if (model.synapseGType[i] == INDIVIDUALG) {
-      /**
-      /	from CUDA 5.0 release notes:
-      /	The use of a character string to indicate a device symbol, which was possible with
-      /	certain API functions, is no longer supported. Instead, the symbol should be used
-      /	directly.
-      /	Therefore, call of cudaGetSymbolAddress in this file is modified to support CUDA 5.0.
-      /	
-      */
       os << "  cudaGetSymbolAddress(&devPtr, d_gp" << model.synapseName[i] << ");" << endl;
       os << "  CHECK_CUDA_ERRORS(cudaMemcpy(devPtr, gp" << model.synapseName[i];
       os << ", ";
@@ -470,7 +386,6 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 
   // ------------------------------------------------------------------------
   // copying values to device
-
 
   os << "void copyStateToDevice()" << endl;
   os << "{" << endl;
@@ -611,48 +526,40 @@ void genRunnerGPU(NNmodel &model, //!< Model description
       os << ",   // offset on pointer to the rates in grp ";
       os << model.neuronName[i] << endl;
     }
-   if (model.receivesInputCurrent[i]>=2) {
+    if (model.receivesInputCurrent[i]>=2) {
       os << "float *d_inputI" << model.neuronName[i];
       os << ",   // Explicit input to the neurons in grp ";
       os << model.neuronName[i] << endl;
-      }
-}
+    }
+  }
   os << "float t)" << endl;
   os << "{" << endl;
-  unsigned int gridSz= model.padSumNeuronN[model.neuronGrpN-1];
-  gridSz= gridSz >> logNeuronBlkSz;	 
 
-  unsigned int lgridSz=0;
-  if (model.lrnGroups > 0) {
-    lgridSz= model.padSumLearnN[model.lrnGroups-1];
-  }
-  lgridSz= lgridSz >> logLearnBlkSz;
-  unsigned int blkSz= neuronBlkSz;
-  unsigned int sblkSz= synapseBlkSz;
-  unsigned int lblkSz= learnBlkSz;
-
-  os << "  dim3 sThreads(" << sblkSz << ", 1);" << endl;
-  if (model.synapseGrpN>0) 
-  { 
-    unsigned int sgridSz= model.padSumSynapseTrgN[model.synapseGrpN-1];
-    sgridSz= sgridSz >> logSynapseBlkSz;
-    os << "  dim3 sGrid(" << sgridSz << ", 1);" << endl;
+  if (model.synapseGrpN > 0) { 
+    unsigned int synapseGridSz = model.padSumSynapseTrgN[model.synapseGrpN - 1];
+    synapseGridSz = synapseGridSz / synapseBlkSz;
+    os << "  dim3 sThreads(" << synapseBlkSz << ", 1);" << endl;
+    os << "  dim3 sGrid(" << synapseGridSz << ", 1);" << endl;
     os << endl;
   }
-  os << "  dim3 nThreads(" << blkSz << ", 1);" << endl;
-  os << "  dim3 nGrid(" << gridSz << ", 1);" << endl;
-  os << endl;
 
-  os << endl;
   if (model.lrnGroups > 0) {
-    os << "  dim3 lThreads(" << lblkSz << ", 1);" << endl;
-    os << "  dim3 lGrid(" << lgridSz << ", 1);" << endl;
+    unsigned int learnGridSz = model.padSumLearnN[model.lrnGroups - 1];
+    learnGridSz = learnGridSz / learnBlkSz;
+    os << "  dim3 lThreads(" << learnBlkSz << ", 1);" << endl;
+    os << "  dim3 lGrid(" << learnGridSz << ", 1);" << endl;
     os << endl;
   }
-  if (model.synapseGrpN>0) 
+
+  unsigned int neuronGridSz = model.padSumNeuronN[model.neuronGrpN - 1];
+  neuronGridSz = neuronGridSz / neuronBlkSz;
+  os << "  dim3 nThreads(" << neuronBlkSz << ", 1);" << endl;
+  os << "  dim3 nGrid(" << neuronGridSz << ", 1);" << endl;
+  os << endl;
+
+  if (model.synapseGrpN > 0) 
   {
-  os << "  if (t > 0.0) {" << endl; 
-
+    os << "  if (t > 0.0) {" << endl; 
     os << "    calcSynapses <<< sGrid, sThreads >>> (";
     if (model.needSt) {
       os << "t";
@@ -675,8 +582,10 @@ void genRunnerGPU(NNmodel &model, //!< Model description
   }
   os << "t);" << endl;
   os << "}" << endl;
+
   os.close();
 }
+
 
 //----------------------------------------------------------------------------
 /*!
@@ -706,13 +615,13 @@ void genRunnerCPU(NNmodel &model, //!< Neuronal network model description
   os << "\\brief File generated from GeNN for the model " << model.name << " containing the control code for running a CPU only simulator version." << endl;
   os << "*/" << endl;
   os << "//-------------------------------------------------------------------------" << endl << endl;
-
+  
   os << "#ifndef RAND" << endl;
   os << "#define RAND(Y,X) Y = Y * 1103515245 +12345;";
   os << "X= (unsigned int)(Y >> 16) & 32767" << endl;
   os << "#endif" << endl;
   os << endl;
-  
+
   os << "#include \"neuronFnct.cc\"" << endl;
   if (model.synapseGrpN>0) os << "#include \"synapseFnct.cc\"" << endl;
   os << endl;
@@ -739,7 +648,7 @@ void genRunnerCPU(NNmodel &model, //!< Neuronal network model description
   os << "{" << endl;
   if (model.synapseGrpN>0){
   os << "  if (t > 0.0) {" << endl; 
-  os << "    calcSynapsesCPU();";
+  os << "    calcSynapsesCPU(t);";
   os << endl;
   if (model.lrnGroups > 0) {
     os << "learnSynapsesPostHost(t);" << endl;
