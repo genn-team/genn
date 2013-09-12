@@ -79,9 +79,9 @@ void generate_model_runner(NNmodel &model,  //!< Model description
 */
 //--------------------------------------------------------------------------
 
-int chooseDevice(ostream &mos, //!< output stream for messages
+int chooseDevice(ostream &mos,   //!< output stream for messages
 		 NNmodel &model, //!< the nn model we are generating code for
-		 string path //!< path the generated code will be deposited
+		 string path     //!< path the generated code will be deposited
 		 )
 {
   // Get the specifications of all available cuda devices, then work out which one we will use.
@@ -89,22 +89,29 @@ int chooseDevice(ostream &mos, //!< output stream for messages
   int chosenDevice = 0;
   CHECK_CUDA_ERRORS(cudaGetDeviceCount(&deviceCount));
   deviceProp = new cudaDeviceProp[deviceCount];
-  int warpOccupancy;
-  int bestWarpOccupancy = 0;
-  int globalMem;
-  int mostGlobalMem = 0;
-  for (int dev = 0; dev < deviceCount; dev++) {
-    CHECK_CUDA_ERRORS(cudaSetDevice(dev));
-    CHECK_CUDA_ERRORS(cudaGetDeviceProperties(&(deviceProp[dev]), dev));
 
-    if (optimiseBlockSize) { // IF OPTIMISATION IS ON
-      // Choose the device which supports the highest warp occupancy.
+  if (optimiseBlockSize) { // IF OPTIMISATION IS ON: Choose the device which supports the highest warp occupancy.
+    mos << "optimiting block size..." << endl;
+    stringstream command;
+    char pipeBuffer[128];
+    stringstream ptxInfo;
+    string junk;
+    int reqRegs, reqSmem;
+
+    unsigned int bestSynBlkSz, bestLrnBlkSz, bestNrnBlkSz;
+    unsigned int *blockSizePointer;
+    int blockLimit, bestOccupancy = 0;
+    int deviceOccupancy, bestDeviceOccupancy = 0;
+    int limitThreads, limitRegs, limitSmem;
+
+    for (int device = 0; device < deviceCount; device++) {
+      CHECK_CUDA_ERRORS(cudaSetDevice(device));
+      CHECK_CUDA_ERRORS(cudaGetDeviceProperties(&(deviceProp[device]), device));      
       generate_model_runner(model, path);
-      stringstream command;
-      command << "nvcc -x cu -cubin -Xptxas=-v -arch=sm_" << deviceProp[dev].major
-	      << deviceProp[dev].minor << " -DDT -D\"CHECK_CUDA_ERRORS(call){call;}\" "; 
 
-      // Run NVCC and pipe stderr to this process to get kernel resource requirements.
+      // Run NVCC and pipe output to this process.
+      command << "nvcc -x cu -cubin -Xptxas=-v -arch=sm_" << deviceProp[device].major
+	      << deviceProp[device].minor << " -DDT -D\"CHECK_CUDA_ERRORS(call){call;}\" "; 
 #ifdef _WIN32
       command << path << "\\" << model.name << "_CODE\\runner.cc 2>&1";
       FILE *nvccPipe = _popen(command.str().c_str(), "r");
@@ -112,28 +119,92 @@ int chooseDevice(ostream &mos, //!< output stream for messages
       command << path << "/" << model.name << "_CODE/runner.cc 2>&1";
       FILE *nvccPipe = popen(command.str().c_str(), "r");
 #endif
+      mos << "dry-run compile for device " << device << endl;
+      mos << command.str() << endl;
       if (!nvccPipe) {
 	mos << "ERROR: faied to open nvcc pipe" << endl;
 	exit(EXIT_FAILURE);
       }
 
-      // Store each kernel's resource usage in separate stringstreams.
-      char pipeBuffer[128];
-      stringstream ptxInfo[3];
-      int ptxInfoPtr; // 0 = calcSynapses, 1 = learnSynapses, 2 = calcNeurons
+      // Read pipe until reg / smem usage is found, then calculate optimum block size for each kernel.
       while (fgets(pipeBuffer, 128, nvccPipe) != NULL) {
 	if (strstr(pipeBuffer, "calcSynapses") != NULL) {
-	  ptxInfoPtr = 0;
+	  blockSizePointer = &bestSynBlkSz;
 	}
 	else if (strstr(pipeBuffer, "learnSynapses") != NULL) {
-	  ptxInfoPtr = 1;
+	  blockSizePointer = &bestLrnBlkSz;
 	}
 	else if (strstr(pipeBuffer, "calcNeurons") != NULL) {
-	  ptxInfoPtr = 2;
+	  blockSizePointer = &bestNrnBlkSz;
 	}
-	// If ptxas info is found, store it in its own stringstream.
 	if (strncmp(pipeBuffer, "ptxas info    : Used", 20) == 0) {
-	  ptxInfo[ptxInfoPtr] << pipeBuffer;
+	  ptxInfo << pipeBuffer;
+	  ptxInfo >> junk >> junk >> junk >> junk >> reqRegs >> junk >> reqSmem;
+	  ptxInfo.str("");
+	  mos << "regs needed: " << reqRegs << ", smem needed: " << reqSmem << endl;
+
+	  // Test all block sizes up to [max warps per block], in increments of 32.
+	  for (int blockSize = 32; blockSize <= deviceProp[device].maxThreadsPerBlock; blockSize += 32) {
+
+	    // BLOCK LIMIT DUE TO THREADS
+	    limitThreads = floor(deviceProp[device].maxThreadsPerMultiProcessor / blockSize);
+	    if (limitThreads > 8) limitThreads = 8; // mind the blocks per SM limit
+	    blockLimit = limitThreads;
+
+	    // BLOCK LIMIT DUE TO REGISTERS
+	    if (deviceProp[device].major == 1) { // if per-block register allocation
+	      // (warpSize = 32) * (warpAllocGranularity = 2) = 64
+	      limitRegs = (blockSize + 63 - (blockSize - 1) % 64) * reqRegs;
+	      if (deviceProp[device].minor < 2) { // if register allocation granularity is 256
+		limitRegs = limitRegs + 255 - (limitRegs - 1) % 256;
+	      }
+	      else { // if register allocation granularity is 512
+		limitRegs = limitRegs + 511 - (limitRegs - 1) % 512;
+	      }
+	      limitRegs = floor(deviceProp[device].regsPerBlock / limitRegs);
+	    }
+	    else { // if per-warp register allocation
+	      limitRegs = reqRegs * 32;
+	      if (deviceProp[device].major == 2) { // if register allocation granularity is 64
+		limitRegs = limitRegs + 63 - (limitRegs - 1) % 64;
+	      }
+	      else { // if register allocation granularity is 256
+		limitRegs = limitRegs + 255 - (limitRegs - 1) % 256;
+	      }
+	      limitRegs = deviceProp[device].regsPerBlock / limitRegs;
+	      if (deviceProp[device].major == 2) { // if warp allocation granularity is 2
+		limitRegs = limitRegs - limitRegs % 2;
+	      }
+	      else { // if warp allocation granularity is 4
+		limitRegs = limitRegs - limitRegs % 4;
+	      }
+	    }
+	    limitRegs = floor(limitRegs * 32 / blockSize);
+	    if (limitRegs < blockLimit) blockLimit = limitRegs;
+
+	    // BLOCK LIMIT DUE TO SHARED MEMORY
+	    if (deviceProp[device].major == 1) { // if shared mem allocation granularity is 512
+	      limitSmem = reqSmem + 511 - (reqSmem - 1) % 512;
+	    }
+	    else if (deviceProp[device].major == 2) { // if shared mem allocation granularity is 128
+	      limitSmem = reqSmem + 127 - (reqSmem - 1) % 128;
+	    }
+	    else { // if shared mem allocation granularity is 256
+	      limitSmem = reqSmem + 255 - (reqSmem - 1) % 256;
+	    }
+	    limitSmem = floor(deviceProp[device].sharedMemPerBlock / limitSmem);
+	    if (limitSmem < blockLimit) blockLimit = limitSmem;
+
+	    // Update best block size.
+	    if ((blockSize * blockLimit) > bestOccupancy) {
+	      bestOccupancy = blockSize * blockLimit;
+	      *blockSizePointer = (unsigned int)blockSize;
+	      if (blockSizePointer == &bestNrnBlkSz) {
+		deviceOccupancy = bestOccupancy * deviceProp[device].multiProcessorCount;
+	      }
+	    }
+	  }
+	  bestOccupancy = 0;
 	}
       }
 
@@ -144,38 +215,29 @@ int chooseDevice(ostream &mos, //!< output stream for messages
       pclose(nvccPipe);
 #endif
 
-      // Parsing the PTX info string retrieved from the NVCC pipe.
-      int registers, sharedMem;
-      string junk;
-      for (int i = 0; i < 3; i++) {
-	ptxInfo[i] >> junk >> junk >> junk >> junk;  // ptxas info    : Used 
-	ptxInfo[i] >> registers >> junk;             // [registers] registers, 
-	ptxInfo[i] >> sharedMem;                     // [sharedMem] bytes smem, 
-	mos << "kernel " << i << " " << ptxInfo[i].str();
-	mos << "registers needed: " << registers << endl;
-	mos << "shared mem needed: " << sharedMem << endl;
-
-
-
-
-
-
-      }
-
-      mos << "device " << dev << " supports a max warp occupancy of " << warpOccupancy << endl;
-      if (warpOccupancy >= bestWarpOccupancy) {
-	bestWarpOccupancy = warpOccupancy;
-	chosenDevice = dev;
+      // Choose this device and set optimal block sizes if it enables higher thread occupancy.
+      mos << "device " << device << " supports a neuron kernel occupancy of " << deviceOccupancy << endl;
+      if (deviceOccupancy >= bestDeviceOccupancy) {
+	bestDeviceOccupancy = deviceOccupancy;
+	chosenDevice = device;
+	synapseBlkSz = bestSynBlkSz;
+	learnBlkSz = bestLrnBlkSz;
+	neuronBlkSz = bestNrnBlkSz;
       }
     }
+  }
 
-    else { // IF OPTIMISATION IS OFF
-      // Simply choose the device with the most global memory.
-      globalMem = deviceProp[dev].totalGlobalMem;
-      mos << "device " << dev << " has " << globalMem << " bytes of global memory" << endl;
+  else { // IF OPTIMISATION IS OFF: Simply choose the device with the most global memory.
+    mos << "skipping block size optimisation..." << endl;
+    size_t globalMem, mostGlobalMem = 0;
+    for (int device = 0; device < deviceCount; device++) {
+      CHECK_CUDA_ERRORS(cudaSetDevice(device));
+      CHECK_CUDA_ERRORS(cudaGetDeviceProperties(&(deviceProp[device]), device));
+      globalMem = deviceProp[device].totalGlobalMem;
+      mos << "device " << device << " has " << globalMem << " bytes of global memory" << endl;
       if (globalMem >= mostGlobalMem) {
 	mostGlobalMem = globalMem;
-	chosenDevice = dev;
+	chosenDevice = device;
       }
     }
   }
@@ -185,10 +247,10 @@ int chooseDevice(ostream &mos, //!< output stream for messages
   sm_os.close();
 
   mos << "We are using CUDA device " << chosenDevice << endl;
-  mos << "global memory: " << deviceProp[chosenDevice].totalGlobalMem << " bytes" << endl;
-  mos << "neuron block size: " << neuronBlkSz << endl;
   mos << "synapse block size: " << synapseBlkSz << endl;
   mos << "learn block size: " << learnBlkSz << endl;
+  mos << "neuron block size: " << neuronBlkSz << endl;
+  mos << "global memory: " << deviceProp[chosenDevice].totalGlobalMem << " bytes" << endl;
   UIntSz= sizeof(unsigned int)*8; // in bits
   logUIntSz= (int) (logf((float) UIntSz)/logf(2.0f)+1e-5f);
   mos << "UIntSz: " << UIntSz << endl;
@@ -206,9 +268,8 @@ int chooseDevice(ostream &mos, //!< output stream for messages
   the different parts of actual code generation.
 */
 
-int main(int argc, //!< number of arguments; expected to be 2
-	 char *argv[]  //!< Arguments; expected to contain the name of the  
-	               //!< target directory for code generation.
+int main(int argc,     //!< number of arguments; expected to be 2
+	 char *argv[]  //!< Arguments; expected to contain the target directory for code generation.
 )
 {
   if (argc != 2) {
@@ -220,6 +281,10 @@ int main(int argc, //!< number of arguments; expected to be 2
     cerr << argv[i] << " ";
   }
   cerr << endl;
+
+  synapseBlkSz = 256;
+  learnBlkSz = 256;
+  neuronBlkSz = 256;
 
   NNmodel model;
   prepareStandardModels();
