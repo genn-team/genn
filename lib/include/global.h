@@ -33,7 +33,7 @@ This global header file also takes care of including some generally used cuda su
 using namespace std; // replaced these two lines : problem with visual studio
 
 cudaDeviceProp *deviceProp; //!< Global variable that contains the detected properties of all CUDA-enabled devices
-int optimiseBlockSize = 0; //!< Flag that regulates whether BlockSize optimisation shall be attempted
+int optimiseBlockSize = 1; //!< Flag that regulates whether BlockSize optimisation shall be attempted
 int theDev; //!< Global variable that contains the id number of the chosen CUDA device
  
 #endif  // _GLOBAL_H_

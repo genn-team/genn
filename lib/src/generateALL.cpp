@@ -38,7 +38,7 @@
 /*! \brief This function will call the necessary sub-functions to generate the code for simulating a model. */
 
 void generate_model_runner(NNmodel &model,  //!< Model description
-			   string path //!< Path where the generated code will be deposited
+			   string path      //!< Path where the generated code will be deposited
 			   )
 {
 
@@ -85,29 +85,35 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
 		 )
 {
   // Get the specifications of all available cuda devices, then work out which one we will use.
-  int deviceCount;
-  int chosenDevice = 0;
+  int deviceCount, chosenDevice = 0;
   CHECK_CUDA_ERRORS(cudaGetDeviceCount(&deviceCount));
   deviceProp = new cudaDeviceProp[deviceCount];
 
   if (optimiseBlockSize) { // IF OPTIMISATION IS ON: Choose the device which supports the highest warp occupancy.
     mos << "optimiting block size..." << endl;
+
     stringstream command;
     char pipeBuffer[128];
     stringstream ptxInfo;
-    string junk;
+    string kernelName, junk;
     int reqRegs, reqSmem;
+    bool ptxInfoFound = false;
 
-    unsigned int bestSynBlkSz, bestLrnBlkSz, bestNrnBlkSz;
-    unsigned int *blockSizePointer;
-    int blockLimit, bestOccupancy = 0;
+    unsigned int bestSynBlkSz[deviceCount];
+    unsigned int bestLrnBlkSz[deviceCount];
+    unsigned int bestNrnBlkSz[deviceCount];
+    unsigned int (*blockSizePointer)[deviceCount];
+    float warpAllocGran, regAllocGran, smemAllocGran;
+    float blockLimit, mainBlockLimit, bestOccupancy;
     int deviceOccupancy, bestDeviceOccupancy = 0;
-    int limitThreads, limitRegs, limitSmem;
 
     for (int device = 0; device < deviceCount; device++) {
       CHECK_CUDA_ERRORS(cudaSetDevice(device));
       CHECK_CUDA_ERRORS(cudaGetDeviceProperties(&(deviceProp[device]), device));      
       generate_model_runner(model, path);
+      bestSynBlkSz[device] = 0;
+      bestLrnBlkSz[device] = 0;
+      bestNrnBlkSz[device] = 0;
 
       // Run NVCC and pipe output to this process.
       command << "nvcc -x cu -cubin -Xptxas=-v -arch=sm_" << deviceProp[device].major
@@ -120,7 +126,8 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
       FILE *nvccPipe = popen(command.str().c_str(), "r");
 #endif
       mos << "dry-run compile for device " << device << endl;
-      mos << command.str() << endl;
+      //mos << command.str() << endl;
+      command.str("");
       if (!nvccPipe) {
 	mos << "ERROR: faied to open nvcc pipe" << endl;
 	exit(EXIT_FAILURE);
@@ -130,101 +137,102 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
       while (fgets(pipeBuffer, 128, nvccPipe) != NULL) {
 	if (strstr(pipeBuffer, "calcSynapses") != NULL) {
 	  blockSizePointer = &bestSynBlkSz;
+	  kernelName = "synapse";
 	}
 	else if (strstr(pipeBuffer, "learnSynapses") != NULL) {
 	  blockSizePointer = &bestLrnBlkSz;
+	  kernelName = "learn";
 	}
 	else if (strstr(pipeBuffer, "calcNeurons") != NULL) {
 	  blockSizePointer = &bestNrnBlkSz;
+	  kernelName = "neuron";
 	}
 	if (strncmp(pipeBuffer, "ptxas info    : Used", 20) == 0) {
+	  ptxInfoFound = true;
+	  bestOccupancy = 0;
 	  ptxInfo << pipeBuffer;
 	  ptxInfo >> junk >> junk >> junk >> junk >> reqRegs >> junk >> reqSmem;
 	  ptxInfo.str("");
-	  mos << "regs needed: " << reqRegs << ", smem needed: " << reqSmem << endl;
+	  mos << "kernel: " << kernelName << ", regs needed: " << reqRegs << ", smem needed: " << reqSmem << endl;
 
-	  // Test all block sizes up to [max warps per block], in increments of 32.
-	  for (int blockSize = 32; blockSize <= deviceProp[device].maxThreadsPerBlock; blockSize += 32) {
+	  // This data is required for block size optimisation, but cannot be found in deviceProp.
+	  if (deviceProp[device].major == 1) {
+	    smemAllocGran = 512;
+	    warpAllocGran = 2;
+	    regAllocGran = (deviceProp[device].minor < 2) ? 256 : 512;
+	  }
+	  else if (deviceProp[device].major == 2) {
+	    smemAllocGran = 128;
+	    warpAllocGran = 2;
+	    regAllocGran = 64;
+	  }
+	  else { // major == 3
+	    smemAllocGran = 256;
+	    warpAllocGran = 4;
+	    regAllocGran = 256;
+	  }
+
+	  // Test all block sizes (in warps) up to [max warps per block].
+	  for (int blockSize = 1; blockSize <= deviceProp[device].maxThreadsPerBlock / 32; blockSize++) {
 
 	    // BLOCK LIMIT DUE TO THREADS
-	    limitThreads = floor(deviceProp[device].maxThreadsPerMultiProcessor / blockSize);
-	    if (limitThreads > 8) limitThreads = 8; // mind the blocks per SM limit
-	    blockLimit = limitThreads;
+	    blockLimit = floor(deviceProp[device].maxThreadsPerMultiProcessor / 32 / blockSize);
+	    if (blockLimit > 8) blockLimit = 8; // mind the blocks per SM limit
+	    mainBlockLimit = blockLimit;
 
 	    // BLOCK LIMIT DUE TO REGISTERS
-	    if (deviceProp[device].major == 1) { // if per-block register allocation
-	      // (warpSize = 32) * (warpAllocGranularity = 2) = 64
-	      limitRegs = (blockSize + 63 - (blockSize - 1) % 64) * reqRegs;
-	      if (deviceProp[device].minor < 2) { // if register allocation granularity is 256
-		limitRegs = limitRegs + 255 - (limitRegs - 1) % 256;
-	      }
-	      else { // if register allocation granularity is 512
-		limitRegs = limitRegs + 511 - (limitRegs - 1) % 512;
-	      }
-	      limitRegs = floor(deviceProp[device].regsPerBlock / limitRegs);
+	    if (deviceProp[device].major == 1) { // if register allocation is per block
+	      blockLimit = ceil(blockSize / warpAllocGran) * warpAllocGran;
+	      blockLimit = ceil(blockLimit * reqRegs * 32 / regAllocGran) * regAllocGran;
+	      blockLimit = floor(deviceProp[device].regsPerBlock / blockLimit);
 	    }
-	    else { // if per-warp register allocation
-	      limitRegs = reqRegs * 32;
-	      if (deviceProp[device].major == 2) { // if register allocation granularity is 64
-		limitRegs = limitRegs + 63 - (limitRegs - 1) % 64;
-	      }
-	      else { // if register allocation granularity is 256
-		limitRegs = limitRegs + 255 - (limitRegs - 1) % 256;
-	      }
-	      limitRegs = deviceProp[device].regsPerBlock / limitRegs;
-	      if (deviceProp[device].major == 2) { // if warp allocation granularity is 2
-		limitRegs = limitRegs - limitRegs % 2;
-	      }
-	      else { // if warp allocation granularity is 4
-		limitRegs = limitRegs - limitRegs % 4;
-	      }
+	    else { // if register allocation is per warp
+	      blockLimit = ceil(reqRegs * 32 / regAllocGran) * regAllocGran;
+	      blockLimit = floor(deviceProp[device].regsPerBlock / blockLimit / warpAllocGran) * warpAllocGran;
+	      blockLimit = floor(blockLimit / blockSize);
 	    }
-	    limitRegs = floor(limitRegs * 32 / blockSize);
-	    if (limitRegs < blockLimit) blockLimit = limitRegs;
+	    if (blockLimit < mainBlockLimit) mainBlockLimit = blockLimit;
 
 	    // BLOCK LIMIT DUE TO SHARED MEMORY
-	    if (deviceProp[device].major == 1) { // if shared mem allocation granularity is 512
-	      limitSmem = reqSmem + 511 - (reqSmem - 1) % 512;
-	    }
-	    else if (deviceProp[device].major == 2) { // if shared mem allocation granularity is 128
-	      limitSmem = reqSmem + 127 - (reqSmem - 1) % 128;
-	    }
-	    else { // if shared mem allocation granularity is 256
-	      limitSmem = reqSmem + 255 - (reqSmem - 1) % 256;
-	    }
-	    limitSmem = floor(deviceProp[device].sharedMemPerBlock / limitSmem);
-	    if (limitSmem < blockLimit) blockLimit = limitSmem;
+	    blockLimit = ceil(reqSmem / smemAllocGran) * smemAllocGran;
+	    blockLimit = floor(deviceProp[device].sharedMemPerBlock / blockLimit);
+	    if (blockLimit < mainBlockLimit) mainBlockLimit = blockLimit;
 
-	    // Update best block size.
-	    if ((blockSize * blockLimit) > bestOccupancy) {
-	      bestOccupancy = blockSize * blockLimit;
-	      *blockSizePointer = (unsigned int)blockSize;
+	    // Update the best thread occupancy and the block size which enables it.
+	    if ((blockSize * 32 * mainBlockLimit) > bestOccupancy) {
+	      bestOccupancy = blockSize * 32 * mainBlockLimit;
+	      (*blockSizePointer)[device] = (unsigned int)blockSize * 32;
+
+	      // Choose this device and set optimal block sizes if it enables higher neuron kernel occupancy.
 	      if (blockSizePointer == &bestNrnBlkSz) {
 		deviceOccupancy = bestOccupancy * deviceProp[device].multiProcessorCount;
+		if (deviceOccupancy >= bestDeviceOccupancy) {
+		  bestDeviceOccupancy = deviceOccupancy;
+		  chosenDevice = device;
+		}
 	      }
 	    }
 	  }
-	  bestOccupancy = 0;
 	}
       }
 
-      // Close the NVCC pipe.
+      // Close the NVCC pipe after each invocation.
 #ifdef _WIN32
       _pclose(nvccPipe);
 #else // UNIX
       pclose(nvccPipe);
 #endif
 
-      // Choose this device and set optimal block sizes if it enables higher thread occupancy.
-      mos << "device " << device << " supports a neuron kernel occupancy of " << deviceOccupancy << endl;
-      if (deviceOccupancy >= bestDeviceOccupancy) {
-	bestDeviceOccupancy = deviceOccupancy;
-	chosenDevice = device;
-	synapseBlkSz = bestSynBlkSz;
-	learnBlkSz = bestLrnBlkSz;
-	neuronBlkSz = bestNrnBlkSz;
-      }
     }
+    if (!ptxInfoFound) {
+      mos << "ERROR: did not find any PTX info (is nvcc on your $PATH ?)" << endl;
+      exit(EXIT_FAILURE);
+    }
+    synapseBlkSz = bestSynBlkSz[chosenDevice];
+    learnBlkSz = bestLrnBlkSz[chosenDevice];
+    neuronBlkSz = bestNrnBlkSz[chosenDevice];
+    mos << "Using device " << chosenDevice << ", with a neuron kernel occupancy of "
+	<< bestDeviceOccupancy << " threads." << endl;
   }
 
   else { // IF OPTIMISATION IS OFF: Simply choose the device with the most global memory.
@@ -234,23 +242,22 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
       CHECK_CUDA_ERRORS(cudaSetDevice(device));
       CHECK_CUDA_ERRORS(cudaGetDeviceProperties(&(deviceProp[device]), device));
       globalMem = deviceProp[device].totalGlobalMem;
-      mos << "device " << device << " has " << globalMem << " bytes of global memory" << endl;
       if (globalMem >= mostGlobalMem) {
 	mostGlobalMem = globalMem;
 	chosenDevice = device;
       }
     }
+    mos << "Using device " << chosenDevice << ", which has "
+	<< mostGlobalMem << " bytes of global memory." << endl;
   }
 
   ofstream sm_os("sm_Version.mk");
   sm_os << "NVCCFLAGS += -arch sm_" << deviceProp[chosenDevice].major << deviceProp[chosenDevice].minor << endl;
   sm_os.close();
 
-  mos << "We are using CUDA device " << chosenDevice << endl;
   mos << "synapse block size: " << synapseBlkSz << endl;
   mos << "learn block size: " << learnBlkSz << endl;
   mos << "neuron block size: " << neuronBlkSz << endl;
-  mos << "global memory: " << deviceProp[chosenDevice].totalGlobalMem << " bytes" << endl;
   UIntSz= sizeof(unsigned int)*8; // in bits
   logUIntSz= (int) (logf((float) UIntSz)/logf(2.0f)+1e-5f);
   mos << "UIntSz: " << UIntSz << endl;
