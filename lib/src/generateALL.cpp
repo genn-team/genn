@@ -164,7 +164,7 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
 	  else if (deviceProp[device].major == 2) {
 	    smemAllocGran = 128;
 	    warpAllocGran = 2;
-	    regAllocGran = 64;
+	    regAllocGran = 128;
 	  }
 	  else { // major == 3
 	    smemAllocGran = 256;
