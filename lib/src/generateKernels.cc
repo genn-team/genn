@@ -236,10 +236,6 @@ void genSynapseKernel(NNmodel &model, //!< Model description
   ofstream os;
   unsigned int numOfBlocks;
 
-  // count how many blocks to use: one thread for each synapse target
-  // targets of several input groups are counted multiply
-  numOfBlocks = model.padSumSynapseTrgN[model.synapseGrpN - 1] / synapseBlkSz;
-
   name= path + toString("/") + model.name + toString("_CODE/synapseKrnl.cc");
   os.open(name.c_str());
   // write header content
@@ -283,6 +279,11 @@ void genSynapseKernel(NNmodel &model, //!< Model description
     }
   }
   os << endl;
+
+
+  // count how many neuron blocks to use: one thread for each synapse target
+  // targets of several input groups are counted multiply
+  numOfBlocks = model.padSumSynapseTrgN[model.synapseGrpN - 1] / synapseBlkSz;
 
   // Kernel for calculating synapse input to neurons
   // Kernel header
@@ -429,22 +430,29 @@ void genSynapseKernel(NNmodel &model, //!< Model description
     os << "    if (" << localID << " < " << model.neuronN[trg] <<") {" << endl;
     os << "      d_inSyn" << model.neuronName[trg] << inSynNo << "[" << localID << "]= linSyn;" << endl;
     os << "    }" << endl;
-    os << "    __syncthreads();" << endl;
-    os << "    if ( threadIdx.x == 0) {" << endl;
-    os << "      j= atomicAdd((unsigned int*)&d_done, 1);" << endl;
-    os << "      if (j == " << numOfBlocks-1 << ") {" << endl;
-    for (int j= 0; j < model.neuronGrpN; j++) {
-      os << "        d_glbscnt" << model.neuronName[j] << "= 0;" << endl;
+    if (model.lrnGroups == 0) {
+      os << "    __syncthreads();" << endl;
+      os << "    if (threadIdx.x == 0) {" << endl;
+      os << "      j= atomicAdd((unsigned int*)&d_done, 1);" << endl;
+      os << "      if (j == " << numOfBlocks-1 << ") {" << endl;
+      for (int j= 0; j < model.neuronGrpN; j++) {
+	os << "        d_glbscnt" << model.neuronName[j] << "= 0;" << endl;
+      }
+      os << "        d_done= 0;" << endl;
+      os << "      }" << endl;
+      os << "    }" << endl;
     }
-    os << "          d_done= 0;" << endl;
-    os << "      }" << endl;
-    os << "    }" << endl;
     os << "  }" << endl;
     os << endl;
   }
   os << "}" << endl << endl;
 
+
   if (model.lrnGroups > 0) {
+    // count how many learn blocks to use: one thread for each synapse source
+    // sources of several output groups are counted multiply
+    numOfBlocks = model.padSumLearnN[model.lrnGroups - 1] / learnBlkSz;
+
     // Kernel for learning synapses, post-synaptic spikes
     // Kernel header
     os << "__global__ void" << endl;
@@ -516,6 +524,16 @@ void genSynapseKernel(NNmodel &model, //!< Model description
       os << model.neuronN[trg] << " + shSpk[j]]= gFunc" << model.synapseName[k] << "(lg);" << endl; 
       os << "          }" << endl;
       os << "        }" << endl;
+      os << "      }" << endl;
+      os << "    }" << endl;
+      os << "    __syncthreads();" << endl;
+      os << "    if (threadIdx.x == 0) {" << endl;
+      os << "      j= atomicAdd((unsigned int*)&d_done, 1);" << endl;
+      os << "      if (j == " << numOfBlocks-1 << ") {" << endl;
+      for (int j= 0; j < model.neuronGrpN; j++) {
+	os << "        d_glbscnt" << model.neuronName[j] << "= 0;" << endl;
+      }
+      os << "        d_done= 0;" << endl;
       os << "      }" << endl;
       os << "    }" << endl;
       os << "  }" << endl;
