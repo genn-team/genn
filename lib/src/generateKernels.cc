@@ -298,7 +298,7 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 
   os << "  __shared__ unsigned int shSpk[" << synapseBlkSz << "];" << endl;
   os << "  __shared__ float shSpkV[" << synapseBlkSz << "];" << endl;
-  os << "  unsigned int lscnt, paddedNumSpikes, numSpikeSubsets, lmax, j, r;" << endl;
+  os << "  unsigned int lscnt, numSpikeSubsets, lmax, j, r;" << endl;
   os << "  float linSyn, lg;" << endl;
   os << endl;
 
@@ -329,8 +329,7 @@ void genSynapseKernel(NNmodel &model, //!< Model description
     os << "      linSyn= d_inSyn" << model.neuronName[trg] << inSynNo << "[" << localID << "];" << endl;
     os << "    }" << endl;
     os << "    lscnt= d_glbscnt" << model.neuronName[src] << ";" << endl;
-    os << "    paddedNumSpikes= lscnt + " << (synapseBlkSz - 1) << " - (lscnt - 1) % " << synapseBlkSz << ";" << endl;
-    os << "    numSpikeSubsets= paddedNumSpikes / " << synapseBlkSz << ";" << endl;
+    os << "    numSpikeSubsets= (unsigned int)(ceilf((float)lscnt / " << synapseBlkSz << ".0f));" << endl;
     os << "    for (r = 0; r < numSpikeSubsets; r++) {" << endl;
     os << "      if (r == numSpikeSubsets - 1) lmax = lscnt % " << synapseBlkSz << ";" << endl;
     os << "      else lmax= " << synapseBlkSz << ";" << endl;
@@ -461,7 +460,7 @@ void genSynapseKernel(NNmodel &model, //!< Model description
     os << "  unsigned int id= " << learnBlkSz << "*blockIdx.x + threadIdx.x;" << endl;
     os << "  __shared__ unsigned int shSpk[" << learnBlkSz << "];" << endl;
     os << "  __shared__ float shSpkV[" << learnBlkSz << "];" << endl;
-    os << "  unsigned int lscnt, paddedNumSpikes, numSpikeSubsets, lmax, j, r;" << endl;
+    os << "  unsigned int lscnt, numSpikeSubsets, lmax, j, r;" << endl;
     os << "  float lg;" << endl;
     os << endl;
 
@@ -484,8 +483,7 @@ void genSynapseKernel(NNmodel &model, //!< Model description
       float Epre= model.synapsePara[k][1];
 
       os << "    lscnt= d_glbscnt" << model.neuronName[trg] << ";" << endl;
-      os << "    paddedNumSpikes= lscnt + " << (learnBlkSz - 1) << " - (lscnt - 1) % " << learnBlkSz << ";" << endl;
-      os << "    numSpikeSubsets= paddedNumSpikes / " << learnBlkSz << ";" << endl;
+      os << "    numSpikeSubsets= (unsigned int)(ceilf((float)lscnt / " << learnBlkSz << ".0f));" << endl;
       os << "    for (r= 0; r < numSpikeSubsets; r++) {" << endl;
       os << "      if (r == numSpikeSubsets - 1) lmax= lscnt % " << learnBlkSz << ";" << endl;
       os << "      else lmax= " << learnBlkSz << ";" << endl;
