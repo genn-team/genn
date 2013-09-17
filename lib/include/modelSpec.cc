@@ -66,18 +66,16 @@ void NNmodel::initNeuronSpecs(unsigned int i)
 {
   nThresh.push_back(200.0f);
   // padnN is the lowest multiple of neuronBlkSz >= neuronN[i]
-  unsigned int padnN = 0;
-  if (neuronBlkSz != 0) padnN = neuronN[i] + neuronBlkSz - 1 - (neuronN[i] - 1) % neuronBlkSz;
+  unsigned int padnN = ceil((float)neuronN[i] / (float)neuronBlkSz) * (float)neuronBlkSz;
   if (i == 0) {
     sumNeuronN.push_back(neuronN[i]);
     padSumNeuronN.push_back(padnN);
-    fprintf(stderr, "%d\n", padSumNeuronN[i]);
   }
   else {
     sumNeuronN.push_back(sumNeuronN[i-1] + neuronN[i]); 
     padSumNeuronN.push_back(padSumNeuronN[i-1] + padnN); 
-    fprintf(stderr, "%d\n", padSumNeuronN[i]);
   }
+  fprintf(stderr, "%d\n", padSumNeuronN[i]);
   neuronNeedSt.push_back(0);  // by default last spike times are not saved
 }
 
@@ -112,8 +110,7 @@ void NNmodel::initDerivedSynapsePara(unsigned int i)
     needSt= 1;
     // padnN is the lowest multiple of learnBlkSz >= neuronN[synapseSource[i]]
     unsigned int nN = neuronN[synapseSource[i]];
-    unsigned int padnN = 0;
-    if (learnBlkSz != 0) padnN = nN + learnBlkSz - 1 - (nN - 1) % learnBlkSz;
+    unsigned int padnN = ceil((float)nN / (float)learnBlkSz) * (float)learnBlkSz;
     if (lrnGroups == 0) {
       padSumLearnN.push_back(padnN);
     }
@@ -136,18 +133,16 @@ void NNmodel::initDerivedSynapsePara(unsigned int i)
   }
   // padnN is the lowest multiple of synapseBlkSz >= neuronN[synapseTarget[i]]
   unsigned int nN = neuronN[synapseTarget[i]];
-  unsigned int padnN = 0;
-  if (synapseBlkSz != 0) padnN = nN + synapseBlkSz - 1 - (nN - 1) % synapseBlkSz;
+  unsigned int padnN = ceil((float)nN / (float)synapseBlkSz) * (float)synapseBlkSz;
   if (i == 0) {
     sumSynapseTrgN.push_back(nN);
     padSumSynapseTrgN.push_back(padnN);
-    fprintf(stderr, "%d\n", padSumSynapseTrgN[i]);
   }
   else {
     sumSynapseTrgN.push_back(sumSynapseTrgN[i-1]+nN);
     padSumSynapseTrgN.push_back(padSumSynapseTrgN[i-1]+padnN);
-    fprintf(stderr, "%d\n", padSumSynapseTrgN[i]);
   }
+  fprintf(stderr, "%d\n", padSumSynapseTrgN[i]);
 }
 
 //--------------------------------------------------------------------------
