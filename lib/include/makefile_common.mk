@@ -30,7 +30,7 @@ COMPILER         ?= g++
 NVCC             ?= $(CUDA_PATH)/bin/nvcc
 INCLUDE_FLAGS    += -I$(CUDA_PATH)/include -I$(GeNNPATH)/lib/include -I. 
 ifeq ($(DARWIN),DARWIN)
-  LINK_FLAGS     += -Xlinker -rpath $(CUDA_PATH)/lib -L$(CUDA_PATH)/lib -lcudart 
+  LINK_FLAGS     += -Xlinker -L$(CUDA_PATH)/lib -lcudart 
 else
   ifeq ($(OS_SIZE),32)
     LINK_FLAGS   += -L$(CUDA_PATH)/lib -lcudart 
