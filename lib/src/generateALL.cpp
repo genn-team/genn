@@ -80,7 +80,7 @@ void generate_model_runner(NNmodel &model,  //!< Model description
 //--------------------------------------------------------------------------
 
 int chooseDevice(ostream &mos,   //!< output stream for messages
-		 NNmodel &model, //!< the nn model we are generating code for
+		 NNmodel *model, //!< the nn model we are generating code for
 		 string path     //!< path the generated code will be deposited
 		 )
 {
@@ -110,19 +110,18 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
     for (int device = 0; device < deviceCount; device++) {
       CHECK_CUDA_ERRORS(cudaSetDevice(device));
       CHECK_CUDA_ERRORS(cudaGetDeviceProperties(&(deviceProp[device]), device));      
-      generate_model_runner(model, path);
+      generate_model_runner(*model, path);
       bestSynBlkSz[device] = 0;
       bestLrnBlkSz[device] = 0;
       bestNrnBlkSz[device] = 0;
 
       // Run NVCC and pipe output to this process.
       command << "nvcc -x cu -cubin -Xptxas=-v -arch=sm_" << deviceProp[device].major
-	      << deviceProp[device].minor << " -DDT -D\"CHECK_CUDA_ERRORS(call){call;}\" "; 
+	      << deviceProp[device].minor << " -DDT -D\"CHECK_CUDA_ERRORS(call){call;}\" "
+	      << path << "/" << (*model).name << "_CODE/runner.cc 2>&1";
 #ifdef _WIN32
-      command << path << "\\" << model.name << "_CODE\\runner.cc 2>&1";
       FILE *nvccPipe = _popen(command.str().c_str(), "r");
 #else // UNIX
-      command << path << "/" << model.name << "_CODE/runner.cc 2>&1";
       FILE *nvccPipe = popen(command.str().c_str(), "r");
 #endif
       mos << "dry-run compile for device " << device << endl;
@@ -231,6 +230,10 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
     synapseBlkSz = bestSynBlkSz[chosenDevice];
     learnBlkSz = bestLrnBlkSz[chosenDevice];
     neuronBlkSz = bestNrnBlkSz[chosenDevice];
+    delete model;
+    model = new NNmodel();
+    modelDefinition(*model);
+
     mos << "Using device " << chosenDevice << ", with a neuron kernel occupancy of "
 	<< bestDeviceOccupancy << " threads." << endl;
   }
@@ -293,14 +296,12 @@ int main(int argc,     //!< number of arguments; expected to be 2
   learnBlkSz = 256;
   neuronBlkSz = 256;
 
-  NNmodel model;
+  NNmodel *model = new NNmodel();
   prepareStandardModels();
-  modelDefinition(model);
-  cerr << "model allocated" << endl;
-
+  modelDefinition(*model);
   string path= toString(argv[1]);
-  theDev = chooseDevice(cerr, model, path);	
-  generate_model_runner(model, path);
+  theDev = chooseDevice(cerr, model, path);
+  generate_model_runner(*model, path);
   
   return EXIT_SUCCESS;
 }
