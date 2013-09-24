@@ -90,8 +90,9 @@ struct neuronModel
 {
   string simCode; /*!< \brief Code that defines the execution of one timestep of integration of the neuron model
 		    
-		    The code will refer to $(NN) for the value of the variable with name "NN". It needs to refer to the predefined variable "ISYN", i.e. contain $(ISYN), if it is to receive input. 
-		  */
+		    The code will refer to $(NN) for the value of the variable with name "NN". It needs to refer to the predefined variable "ISYN", i.e. contain $(ISYN), if it is to receive input. */
+  string thresholdCode; /*!< \brief Code that defines the threshold condition for spikes in the described neuron model */
+  string resetCode; /*!< \brief Code that defines the reset action taken after a spike occurred. This can be empty */
   vector<string> varNames; //!< Names of the variables in the neuron model
   vector<string> tmpVarNames; //!< never used
   vector<string> varTypes; //!< Types of the variable named above, e.g. "float". Names and types are matched by their order of occurrence in the vector.
