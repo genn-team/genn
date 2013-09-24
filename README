@@ -21,7 +21,7 @@ INSTALLATION OF GeNN:
     For most people, the default value of /usr/local/cuda is fine.
 
 (vi) Modify Makefile examples under $GeNNPATH/lib/src/ and $GeNNPATH/userproject/
-     to add extra linker, include and compiler flags on a per-project basis, or
+     to add extra linker-, include- and compiler-flags on a per-project basis, or
      modify global default flags in $GeNNPATH/lib/include/makefile_common.mk.
 
 This completes the installation.
