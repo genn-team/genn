@@ -77,21 +77,21 @@ int main(int argc, char *argv[])
     if (which == GPU) locust.copy_device_mem_input();
     locust.run(DT, which); // run next batch
     if (which == GPU) {  
-      cudaGetSymbolAddress(&devPtr, d_VIzh1);
-      CHECK_CUDA_ERRORS(cudaMemcpy(VIzh1, devPtr, outno*sizeof(float), cudaMemcpyDeviceToHost));
-	} 
-   fprintf(osf, "%f ", t);
-   locust.write_input_to_file(osf2);
+        cudaGetSymbolAddress(&devPtr, d_VIzh1);
+    	CHECK_CUDA_ERRORS(cudaMemcpy(VIzh1, devPtr, outno*sizeof(float), cudaMemcpyDeviceToHost));
+    } 
+    fprintf(osf, "%f ", t);
+    locust.write_input_to_file(osf2);
    
-   for(int i=0;i<outno;i++) {
-     fprintf(osf, "%f ", VIzh1[i]);
+    for(int i=0;i<outno;i++) {
+      fprintf(osf, "%f ", VIzh1[i]);
     }
   
-   fprintf(osf, "\n");
-   cudaThreadSynchronize();
+    fprintf(osf, "\n");
+//  cudaThreadSynchronize();
    
 
-   // report progress
+    // report progress
     if (t - last_t_report >= T_REPORT_TME)
     {
       fprintf(stderr, "time %f \n", t);
@@ -102,7 +102,8 @@ int main(int argc, char *argv[])
   }
 
   timer.stopTimer();
-  cerr << "Output files are created under the current directory." << endl;
+//  cerr << "Output files are created under the current directory." << endl;
+    cout << timer.getElapsedTime() << endl;
   fclose(osf);
   fclose(osf2);
   return 0;

@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
   string OutDir = toString(argv[1]) +"_output";
   string name;
   name= OutDir+ "/"+ toString(argv[1]) + toString(".time");
-  FILE *timef= fopen(name.c_str(),"w");  
+  FILE *timef= fopen(name.c_str(),"a");  
 
   timer.startTimer();
   patSetTime= (int) (PAT_TIME/DT);
@@ -110,21 +110,21 @@ int main(int argc, char *argv[])
 //  unsigned int sum= 0;
   while (!done) 
   {
-//    if (which == GPU) locust.getSpikesFromGPU();
+    if (which == GPU) locust.getSpikesFromGPU();
 //    if (which == GPU) locust.getSpikeNumbersFromGPU();
     locust.run(DT, which); // run next batch
     if (which == GPU) {  
-      cudaGetSymbolAddress(&devPtr, d_VDN);
-      CHECK_CUDA_ERRORS(cudaMemcpy(VDN, devPtr, 10*sizeof(float), cudaMemcpyDeviceToHost));
+//     cudaGetSymbolAddress(&devPtr, d_VPN);
+//      CHECK_CUDA_ERRORS(cudaMemcpy(VPN, devPtr, 100*sizeof(float), cudaMemcpyDeviceToHost));
     }
-//    locust.sum_spikes();
-//    locust.output_spikes(os, which);
+    locust.sum_spikes();
+//    locust.output_spikes(osf, which);
 //    locust.output_state(os, which);  // while outputting the current one ...
-    fprintf(osf, "%f ", t);
-    for (int i= 0; i < 10; i++) {
-      fprintf(osf, "%f ", VDN[i]);
-    }
-    fprintf(osf,"\n");
+//    fprintf(osf, "%f ", t);
+//    for (int i= 0; i < 100; i++) {
+//     fprintf(osf, "%f ", VPN[i]);
+//    }
+//    fprintf(osf,"\n");
 //    cudaThreadSynchronize();
 
     // report progress
@@ -147,7 +147,7 @@ int main(int argc, char *argv[])
     // if (t - lastsynwrite >= SYN_OUT_TME) {
     //   locust.get_kcdnsyns();
     //   synwrite= 1;
-    //   synwriteT= t;
+    // ¯  synwriteT= t;
     // }
     done= (t >= TOTAL_TME);
   }
