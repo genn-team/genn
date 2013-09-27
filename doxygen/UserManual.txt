@@ -251,5 +251,6 @@ GeNN was created by Thomas Nowotny.
 
 Addition of Izhikevich model and debugging modes by Esin Yavuz
 
+Block size optimisations by James Turner
 */
 //----------------------------------------------------------------------------

@@ -185,10 +185,48 @@ if (model.receivesInputCurrent[i]>=2) { //receives explicit input from file
 		 tS(model.dnp[i][k]));
     }
     os << code;
-    os << "    if (lV >= " << model.nThresh[i] << ") {" << endl;
+    if (nModels[nt].thresholdCode != tS("")) {
+      code= nModels[nt].thresholdCode;
+      for (int k= 0, l= nModels[nt].varNames.size(); k < l; k++) {
+	substitute(code, tS("$(")+nModels[nt].varNames[k]+tS(")"), 
+		   tS("l")+ nModels[nt].varNames[k]);
+      }
+      substitute(code, tS("$(Isyn)"), tS("Isyn"));
+      for (int k= 0, l= nModels[nt].pNames.size(); k < l; k++) {
+	substitute(code, tS("$(")+nModels[nt].pNames[k]+tS(")"), 
+		   tS(model.neuronPara[i][k]));
+      }
+      for (int k= 0, l= nModels[nt].dpNames.size(); k < l; k++) {
+	substitute(code, tS("$(")+nModels[nt].dpNames[k]+tS(")"), 
+		   tS(model.dnp[i][k]));
+      }
+      os << code << endl;
+      os << "    if (_cond) {" << endl;
+    }
+    else {
+      os << "    if (lV >= " << model.nThresh[i] << ") {" << endl;
+    }
     os << "      // register a spike type event" << endl;
     os << "      sidx= atomicAdd((unsigned int*)&scnt,1);" << endl;
     os << "      shSpk[sidx]= " << localID << ";" << endl;
+    if (nModels[nt].resetCode != tS("")) {
+      code= nModels[nt].resetCode;
+      for (int k= 0, l= nModels[nt].varNames.size(); k < l; k++) {
+	substitute(code, tS("$(")+nModels[nt].varNames[k]+tS(")"), 
+		   tS("l")+ nModels[nt].varNames[k]);
+      }
+      substitute(code, tS("$(Isyn)"), tS("Isyn"));
+      for (int k= 0, l= nModels[nt].pNames.size(); k < l; k++) {
+	substitute(code, tS("$(")+nModels[nt].pNames[k]+tS(")"), 
+		   tS(model.neuronPara[i][k]));
+      }
+      for (int k= 0, l= nModels[nt].dpNames.size(); k < l; k++) {
+	substitute(code, tS("$(")+nModels[nt].dpNames[k]+tS(")"), 
+		   tS(model.dnp[i][k]));
+      }
+      os << "      // spike reset code" << endl;
+     os << "      " << code << endl;
+    }
     os << "    }" << endl;
     for (int k= 0, l= nModels[nt].varNames.size(); k < l; k++) {
       os << "    d_" << nModels[nt].varNames[k] <<  model.neuronName[i];
