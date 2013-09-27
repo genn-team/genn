@@ -55,7 +55,7 @@ int patSetTime;
 int patFireTime;
 
 
-#define TOTAL_TME 500000
+#define TOTAL_TME 5000
 
 CStopWatch timer;
 

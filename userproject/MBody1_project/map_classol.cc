@@ -263,7 +263,7 @@ void classol::run(float runtime, //!< Duration of time to run the model for
       if (which == GPU)
 	theRates= d_pattern;
       offset= pno*model.neuronN[0];
-      fprintf(stderr, "setting pattern, pattern offset: %d\n", offset);
+      //      fprintf(stderr, "setting pattern, pattern offset: %d\n", offset);
     }
     if (iT%patSetTime == patFireTime) {
       if (which == CPU)

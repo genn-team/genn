@@ -160,13 +160,13 @@ void genNeuronKernel(NNmodel &model, //!< Model description
       }
     }
 
-if (model.receivesInputCurrent[i]==1) { //receives constant  input
-	os << "    Isyn+= " << model.globalInp[i] << ";" << endl;
-}    	
-
-if (model.receivesInputCurrent[i]>=2) { //receives explicit input from file
-	os << "    Isyn+= d_inputI" << model.neuronName[i] << "[" << localID << "];" << endl;
-} 	
+    if (model.receivesInputCurrent[i]==1) { //receives constant  input
+      os << "    Isyn+= " << model.globalInp[i] << ";" << endl;
+    }    	
+    
+    if (model.receivesInputCurrent[i]>=2) { //receives explicit input from file
+      os << "    Isyn+= d_inputI" << model.neuronName[i] << "[" << localID << "];" << endl;
+    } 	
 
     os << "    // calculate membrane potential" << endl;
     //new way of doing it
