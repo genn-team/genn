@@ -117,11 +117,49 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 		 tS(model.dnp[i][k]));
     }
     os << code;
-    os << "    if (V" << model.neuronName[i] << "[n] >= " << model.nThresh[i] << ") {" << endl;
+    if (nModels[nt].thresholdCode != tS("")) {
+      code= nModels[nt].thresholdCode;
+      for (int k= 0, l= nModels[nt].varNames.size(); k < l; k++) {
+	substitute(code, tS("$(")+nModels[nt].varNames[k]+tS(")"), 
+		   nModels[nt].varNames[k]+model.neuronName[i]+tS("[n]"));
+      }
+      substitute(code, tS("$(Isyn)"), tS("Isyn"));
+      for (int k= 0, l= nModels[nt].pNames.size(); k < l; k++) {
+	substitute(code, tS("$(")+nModels[nt].pNames[k]+tS(")"), 
+		   tS(model.neuronPara[i][k]));
+      }
+      for (int k= 0, l= nModels[nt].dpNames.size(); k < l; k++) {
+	substitute(code, tS("$(")+nModels[nt].dpNames[k]+tS(")"), 
+		   tS(model.dnp[i][k]));
+      }
+      os << code << endl;
+      os << "    if (_cond) {" << endl;
+    }
+    else {
+      os << "    if (V" << model.neuronName[i] << "[n] >= " << model.nThresh[i] << ") {" << endl;
+    }
     os << "      // register a spike type event" << endl;
     os << "      glbSpk" << model.neuronName[i] << "[glbscnt" << model.neuronName[i] << "++]= n;" << endl;
     if (model.neuronNeedSt[i]) {
       os << "      sT" << model.neuronName[i] << "[n]= t;" << endl;
+    }
+    if (nModels[nt].resetCode != tS("")) {
+      code= nModels[nt].resetCode;
+      for (int k= 0, l= nModels[nt].varNames.size(); k < l; k++) {
+	substitute(code, tS("$(")+nModels[nt].varNames[k]+tS(")"), 
+		   nModels[nt].varNames[k]+model.neuronName[i]+tS("[n]"));
+      }
+      substitute(code, tS("$(Isyn)"), tS("Isyn"));
+      for (int k= 0, l= nModels[nt].pNames.size(); k < l; k++) {
+	substitute(code, tS("$(")+nModels[nt].pNames[k]+tS(")"), 
+		   tS(model.neuronPara[i][k]));
+      }
+      for (int k= 0, l= nModels[nt].dpNames.size(); k < l; k++) {
+	substitute(code, tS("$(")+nModels[nt].dpNames[k]+tS(")"), 
+		   tS(model.dnp[i][k]));
+      }
+      os << "      // spike reset code" << endl;
+      os << "      " << code << endl;
     }
     os << "    }" << endl;
     for (int j= 0; j < model.inSyn[i].size(); j++) {
