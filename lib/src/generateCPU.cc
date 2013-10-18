@@ -280,18 +280,18 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 	if (model.synapseType[synID] == LEARN1SYNAPSE) {
 	  // simply assume INDIVIDUALG for now
 	  os << "          dt= sT" << model.neuronName[i] << "[n] - t - ";
-	  os << SAVEP(model.synapsePara[i][11]) << ";" << endl;
-	  os << "          if (dt > " << model.dsp[i][1] << ") {" << endl;
-	  os << "            dg= -" << SAVEP(model.dsp[i][5]) << ";" << endl;
+	  os << SAVEP(model.synapsePara[synID][11]) << ";" << endl;
+	  os << "          if (dt > " << model.dsp[synID][1] << ") {" << endl;
+	  os << "            dg= -" << SAVEP(model.dsp[synID][5]) << ";" << endl;
 	  os << "          }" << endl;
 	  os << "          else if (dt > 0.0) {" << endl;
-	  os << "            dg= " << SAVEP(model.dsp[i][3]) << "*dt+" << SAVEP(model.dsp[i][6]) << ";" << endl;
+	  os << "            dg= " << SAVEP(model.dsp[synID][3]) << "*dt+" << SAVEP(model.dsp[synID][6]) << ";" << endl;
 	  os << "          }" << endl;
-	  os << "          else if (dt > " << model.dsp[i][2] << ") {" << endl;
-	  os << "            dg= " << SAVEP(model.dsp[i][4]) << "*dt+" << SAVEP(model.dsp[i][6]) << ";" << endl;
+	  os << "          else if (dt > " << model.dsp[synID][2] << ") {" << endl;
+	  os << "            dg= " << SAVEP(model.dsp[synID][4]) << "*dt+" << SAVEP(model.dsp[synID][6]) << ";" << endl;
 	  os << "          }" << endl;
 	  os << "          else {" << endl;
-	  os << "            dg= -" << SAVEP(model.dsp[i][7]) << ";" << endl;
+	  os << "            dg= -" << SAVEP(model.dsp[synID][7]) << ";" << endl;
 	  os << "          }" << endl;
 	  os << "          grawp" << model.synapseName[synID] << "[glbSpk" << model.neuronName[src];
 	  os << "[j]*" << model.neuronN[i] << " + n]+= dg;" << endl;
