@@ -32,7 +32,7 @@
 The code generated upon execution of this function is for defining GPU side global variables that will hold model state in the GPU global memory and for the actual kernel function for simulating the neurons for one time step.
 */
 //-------------------------------------------------------------------------
-
+unsigned int nt;
 void genNeuronKernel(NNmodel &model, //!< Model description 
 		     string &path,  //!< path for code output
 		     ostream &mos //!< output stream for messages
@@ -40,7 +40,6 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 {
    // write header content
   string name, s, localID;
-  unsigned int nt;
   ofstream os;
 
   name= path + toString("/") + model.name + toString("_CODE/neuronKrnl.cc");
@@ -75,24 +74,20 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 	os << "    // summed input for neurons" << " in grp" << model.neuronName[i] << endl;
       }
     }
-    for (int k= 0, l= nModels[nt].varNames.size(); k < l; k++) {
-      os << "__device__ " << nModels[nt].varTypes[k];
-      os << " d_" << nModels[nt].varNames[k] << model.neuronName[i];
-      os << "[" << model.neuronN[i] << "]; " << endl;
-    }
+    
     os << endl;
     if (model.neuronNeedSt[i]) {
       os << "__device__ volatile float d_sT" << model.neuronName[i] << "[";
       os << model.neuronN[i] << "];" << endl;
     }
-  }
-  
+}
   // Kernel for calculating neuron states
   // kernel header
   os << "__global__ void" << endl;
   os << "calcNeurons(";
   for (int i= 0; i < model.neuronGrpN; i++) {
-    if (model.neuronType[i] == POISSONNEURON) {
+  	nt= model.neuronType[i];
+    if (nt == POISSONNEURON) {
       // Note: Poisson neurons only used as input neurons; they do not \
       // receive any inputs
       os << "unsigned int *d_rates" << model.neuronName[i] << ", // poisson ";
@@ -103,11 +98,22 @@ void genNeuronKernel(NNmodel &model, //!< Model description
     if (model.receivesInputCurrent[i]>=2) {
 		os << "float *d_inputI" << model.neuronName[i] << ", // explicit input current to grp " << model.neuronName[i] << endl;    	
     	}
+    for (int k= 0, l= nModels[nt].varNames.size(); k < l; k++) {
+    os << nModels[nt].varTypes[k] << " * d_" << nModels[nt].varNames[k] << model.neuronName[i]<< ", " << endl;
+    }
   }
   os << "float t // absolute time" << endl; 
   os << ")" << endl;
   os << "{" << endl;
+  
+  unsigned int neuronGridSz = model.padSumNeuronN[model.neuronGrpN - 1];
+  neuronGridSz = neuronGridSz / neuronBlkSz;
+  if (neuronGridSz < deviceProp[theDev].maxGridSize[1]){
   os << "  unsigned int id= " << neuronBlkSz << "*blockIdx.x + threadIdx.x;" << endl;
+  }
+  else{
+		os << "  unsigned int id= " << neuronBlkSz << "*(blockIdx.x*"<< ceil(sqrt(neuronGridSz)) <<"+blockIdx.y) + threadIdx.x;" << endl;  	
+  	}
   os << "  __shared__ volatile unsigned int scnt;" << endl;
   os << "  __shared__ volatile unsigned int pos;" << endl;
   os << "  __shared__ unsigned int shSpk[" << neuronBlkSz << "];" << endl;
@@ -115,6 +121,7 @@ void genNeuronKernel(NNmodel &model, //!< Model description
   os << endl;
 
   os << "  if (threadIdx.x == 0) scnt= 0;" << endl;
+  os << "  __syncthreads();" << endl;
   for (int i= 0; i < model.neuronGrpN; i++) {
     nt= model.neuronType[i];
     if (i == 0) {
@@ -291,7 +298,8 @@ void genSynapseKernel(NNmodel &model, //!< Model description
   os << "*/" << endl;
   os << "//-------------------------------------------------------------------------" << endl << endl;
 
-  for (int i= 0; i < model.synapseGrpN; i++) {
+//following chunk allocates memory statically. It is removed to provide dynamical allocation in generateRunner.
+ /* for (int i= 0; i < model.synapseGrpN; i++) {
     if (model.synapseGType[i] == INDIVIDUALG) {
       // (cases necessary here when considering sparse reps as well)
       os << "__device__ float d_gp" << model.synapseName[i] << "[";
@@ -316,7 +324,7 @@ void genSynapseKernel(NNmodel &model, //!< Model description
       os << endl;
     }
   }
-  os << endl;
+  os << endl;*/
 
 
   // count how many neuron blocks to use: one thread for each synapse target
@@ -325,12 +333,34 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 
   // Kernel for calculating synapse input to neurons
   // Kernel header
+  unsigned int src;
   os << "__global__ void" << endl;
   os << "calcSynapses(";
-  if (model.needSt) {
-    os << "float t";
+  
+  for (int i= 0; i < model.synapseGrpN; i++) {
+  	if (model.synapseGType[i] == (INDIVIDUALG )) {
+		os << " float * d_gp" << model.synapseName[i] << ",";	
+   }
+   if (model.synapseGType[i] == (INDIVIDUALID )) {
+		os << " unsigned int * d_gp" << model.synapseName[i] << ",";	
+   }
+   if (model.synapseType[i] == LEARN1SYNAPSE) {
+   		os << "float * d_grawp"  << model.synapseName[i] << ",";	
+  	}   	
   }
-  os << ")" << endl;
+  for (int i= 0; i < model.neuronGrpN; i++) {
+  		nt= model.neuronType[i];
+      os << nModels[nt].varTypes[0] << " * d_" << nModels[nt].varNames[0] << model.neuronName[i];  	//this is supposed to be Vm		
+      if (model.needSt||i<(model.neuronGrpN-1)) {
+			os << ",";
+  		}  		
+  }
+  if (model.needSt) {
+    os << "float t)";
+  }
+  else{
+  	os << ")" << endl;
+  }
   os << "{" << endl;
   os << "  unsigned int id= " << synapseBlkSz << "*blockIdx.x + threadIdx.x;" << endl;
 
@@ -354,7 +384,7 @@ void genSynapseKernel(NNmodel &model, //!< Model description
     }
     unsigned int trg= model.synapseTarget[i];
     unsigned int nN= model.neuronN[trg];
-    unsigned int src= model.synapseSource[i];
+    src= model.synapseSource[i];
     float Epre= model.synapsePara[i][1];
     float Vslope;
     if (model.synapseType[i] == NGRADSYNAPSE) {
@@ -493,7 +523,24 @@ void genSynapseKernel(NNmodel &model, //!< Model description
     // Kernel for learning synapses, post-synaptic spikes
     // Kernel header
     os << "__global__ void" << endl;
-    os << "learnSynapsesPost(float t)" << endl;
+    os << "learnSynapsesPost(";
+     for (int i= 0; i < model.synapseGrpN; i++) {
+  	if (model.synapseGType[i] == (INDIVIDUALG )) {
+		os << " float * d_gp" << model.synapseName[i] << ",";	
+   }
+   if (model.synapseGType[i] == (INDIVIDUALID )) {
+		os << " unsigned int * d_gp" << model.synapseName[i] << ",";	
+   }
+   if (model.synapseType[i] == LEARN1SYNAPSE) {
+   		os << "float * d_grawp"  << model.synapseName[i] << ",";	
+  	}   	
+  }
+  for (int i= 0; i < model.neuronGrpN; i++) {
+  		nt= model.neuronType[i];
+      os << nModels[nt].varTypes[0] << " * d_" << nModels[nt].varNames[0] << model.neuronName[i] << ",";  	//this is supposed to be Vm 		
+  }    
+    
+    os << "float t)" << endl;
     os << "{" << endl;
     os << "  unsigned int id= " << learnBlkSz << "*blockIdx.x + threadIdx.x;" << endl;
     os << "  __shared__ unsigned int shSpk[" << learnBlkSz << "];" << endl;

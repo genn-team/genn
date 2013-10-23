@@ -11,3 +11,5 @@ pthreads
 mpi
 
 migrate from pre-allocated memory structures to dynamically allocated ones?
+
+Calculate explicit input from the input role on the GPU

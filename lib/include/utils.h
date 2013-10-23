@@ -106,7 +106,7 @@ unsigned int theSize(string type)
 The neuron models are defined and added to the C++ vector nModels that is holding all neuron model descriptions. User defined neuron models can be appended to this vector later in (a) separate function(s).
 */
 //--------------------------------------------------------------------------
-
+//NOTE: calcSynapses takes the first variable of each model.neuronName[src] as an argument, of type float. If you add a neuron model, keep this in mind. 
 void prepareStandardModels()
 {
   neuronModel n;

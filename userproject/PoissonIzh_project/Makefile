@@ -11,7 +11,7 @@
 ##  
 ##--------------------------------------------------------------------------
 
-ROOTDIR		:= $(GeNNPATH)/userproject/Poisson-Izh_project
+ROOTDIR		:= $(GeNNPATH)/userproject/PoissonIzh_project
 EXECUTABLE	:= PoissonIzh_sim
 SOURCES		:= PoissonIzh_sim.cu
 
