@@ -72,7 +72,7 @@ void classol::allocate_device_mem_patterns()
   // allocate device memory for input patterns
   size= model.neuronN[0]*PATTERNNO*sizeof(unsigned int);
   CHECK_CUDA_ERRORS(cudaMalloc((void**) &d_pattern, size));
-  fprintf(stderr, "allocated %u elements for pattern.\n", size/sizeof(unsigned int));
+  fprintf(stderr, "allocated %lu elements for pattern.\n", size/sizeof(unsigned int));
   CHECK_CUDA_ERRORS(cudaMemcpy(d_pattern, pattern, size, cudaMemcpyHostToDevice));
   size= model.neuronN[0]*sizeof(unsigned int);
   CHECK_CUDA_ERRORS(cudaMalloc((void**) &d_baserates, size));

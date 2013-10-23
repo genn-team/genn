@@ -24,6 +24,9 @@ int main(int argc, char *argv[])
   string OutDir = toString(argv[1]) +toString("_output");
   string name, name2; 
 
+  name= OutDir+ toString("/") + toString(argv[1])+ toString(".time");
+  FILE *timef= fopen(name.c_str(),"a"); 
+
   timer.startTimer();
   fprintf(stderr, "# DT %f \n", DT);
   fprintf(stderr, "# T_REPORT_TME %f \n", T_REPORT_TME);
@@ -45,7 +48,6 @@ int main(int argc, char *argv[])
   outno=10;
   else outno=locust.model.neuronN[0];
 
-  if (which == GPU) locust.allocate_device_mem_input(); 
   //------------------------------------------------------------------
   // output general parameters to output file and start the simulation
 
@@ -59,6 +61,7 @@ int main(int argc, char *argv[])
   locust.run(DT, which);
   while (!done) 
   {
+    if (which == GPU) locust.getSpikesFromGPU(); 
     for (int k=0;k<locust.model.neuronGrpN;k++)
     {
       if (locust.model.receivesInputCurrent[k]==2) 
@@ -67,19 +70,19 @@ int main(int argc, char *argv[])
         ff=fopen("../../tools/expoutf","r");
         locust.read_input_values(ff);
         fclose(ff);
+	locust.copy_device_mem_input();
       }
       if (locust.model.receivesInputCurrent[k]==3)
       {
-        FILE * ff;
-	locust.create_input_values(ff, t);
+	locust.create_input_values(t);
+	locust.copy_device_mem_input();
       }
     } 
-    if (which == GPU) locust.copy_device_mem_input();
     locust.run(DT, which); // run next batch
     if (which == GPU) {  
-        cudaGetSymbolAddress(&devPtr, d_VIzh1);
-    	CHECK_CUDA_ERRORS(cudaMemcpy(VIzh1, devPtr, outno*sizeof(float), cudaMemcpyDeviceToHost));
+    	CHECK_CUDA_ERRORS(cudaMemcpy(VIzh1, d_VIzh1, outno*sizeof(float), cudaMemcpyDeviceToHost));
     } 
+    locust.sum_spikes();
     fprintf(osf, "%f ", t);
     locust.write_input_to_file(osf2);
    
@@ -88,7 +91,6 @@ int main(int argc, char *argv[])
     }
   
     fprintf(osf, "\n");
-//  cudaThreadSynchronize();
    
 
     // report progress
@@ -102,9 +104,11 @@ int main(int argc, char *argv[])
   }
 
   timer.stopTimer();
+  fprintf(timef, "%d %d %u %f %f \n",which, locust.model.neuronN[0], locust.sumIzh1, timer.getElapsedTime(),VIzh1[0]);
 //  cerr << "Output files are created under the current directory." << endl;
     cout << timer.getElapsedTime() << endl;
   fclose(osf);
   fclose(osf2);
+  fclose(timef);
   return 0;
 }

@@ -50,7 +50,7 @@ MBody1, compile and run it on the GPU, with 100 antennal lobe neurons, 1000 mush
 will be prefixed with "outname" and will be created under the "outname" directory.
 
 Alternatively, navigate to the "userproject/Poisson-Izh_project" directory and type
-"../../tools/generate_run 1 100 1000 20 100 0.002 TestOutdir PoissonIzh_sim Poisson-Izh 0"
+"../../tools/generate_run 1 100 1000 20 100 0.007 TestOutdir PoissonIzh_sim PoissonIzh 0"
 for a simpler two population model with 100 poisson input 1000 Izhikevich phasic bursting output
 network. In this case, args defining other populations will be discarded.
 
@@ -103,11 +103,16 @@ For a first minimal test, the system may be used with
 tools/generate_run_1comp [CPU/GPU] [n] [nKC] [DIR] [EXE] [MODEL] [DEBUG OFF/ON].
 
 This would create a set of tonic spiking Izhikevich neurons with no connectivity, 
-receiving an external sine wave current input. 
+receiving a constant identical 4 nA input. 
 To use it, navigate to the "userproject/OneComp_project" directory and type
 "../../tools/generate_run_1comp 1 1 Outdir OneComp_sim OneComp 0".
-This would create one neuron receiving 5 nA oscillating input at 5 Hz. Input and output values 
-are written under Outdir. 
+
+DEBUGGING
+The last argument to generate_run and generate_run_1comp enables the debugging flags 
+while compiling generateAll.cc under lib/src/ and *.cu under individual user project directory, 
+and will run the corresponding executables with cuda-gdb consecutively. If you want to skip one of these, 
+simply press r while on the debugging screen.
+ 
 -----
 
 For more about this example model provided by generate_run see 

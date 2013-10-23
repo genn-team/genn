@@ -97,7 +97,6 @@ int main(int argc, char *argv[])
   fprintf(stderr, "# initial wait time execution ... \n");
 
   t= 0.0;
-  void *devPtr;
 //  float lastsynwrite= t;
   int done= 0;
   float last_t_report=  t;
@@ -114,17 +113,16 @@ int main(int argc, char *argv[])
 //    if (which == GPU) locust.getSpikeNumbersFromGPU();
     locust.run(DT, which); // run next batch
     if (which == GPU) {  
-//     cudaGetSymbolAddress(&devPtr, d_VPN);
-//      CHECK_CUDA_ERRORS(cudaMemcpy(VPN, devPtr, 100*sizeof(float), cudaMemcpyDeviceToHost));
+     CHECK_CUDA_ERRORS(cudaMemcpy(VDN, d_VDN, 10*sizeof(float), cudaMemcpyDeviceToHost));
     }
     locust.sum_spikes();
 //    locust.output_spikes(osf, which);
 //    locust.output_state(os, which);  // while outputting the current one ...
-//    fprintf(osf, "%f ", t);
-//    for (int i= 0; i < 100; i++) {
-//     fprintf(osf, "%f ", VPN[i]);
-//    }
-//    fprintf(osf,"\n");
+    fprintf(osf, "%f ", t);
+    for (int i= 0; i < 10; i++) {
+    fprintf(osf, "%f ", VDN[i]);
+   }
+    fprintf(osf,"\n");
 //    cudaThreadSynchronize();
 
     // report progress
@@ -167,6 +165,6 @@ int main(int argc, char *argv[])
   timer.stopTimer();
   cerr << "output files are created under the current directory." << endl;
   fprintf(timef, "%d %d %d %d %f \n", locust.sumPN, locust.sumKC, locust.sumLHI, locust.sumDN, timer.getElapsedTime());
-
+  fcloseall();
   return 0;
 }
