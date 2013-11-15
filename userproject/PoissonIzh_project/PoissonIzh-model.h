@@ -12,10 +12,10 @@
 --------------------------------------------------------------------------*/
 
 
-#ifndef POISSONIZH_H 
-#define POISSONIZH_H
+#ifndef POISSONIZHMODEL_H 
+#define POISSONIZHMODEL_H
 
-#include "Poisson-Izh.cc"
+#include "PoissonIzh.cc"
 
 class classol
 {

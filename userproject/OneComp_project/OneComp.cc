@@ -28,12 +28,24 @@ float exIzh_ini[2]={
 	-20	//1 - U
 };
 
+float myIzh_p[3]= {
+  0.0,           // 0 - Erev: Reversal potential
+  -30.0,         // 1 - Epre: Presynaptic threshold potential
+  1.0            // 2 - tau_S: decay time constant for S [ms]
+};
+
 #include "../../userproject/include/sizes.h"
+
+float inpIzh1 = 4.0;
+//float gIzh1= 0.01;
 
 void modelDefinition(NNmodel &model) 
 {
   model.setName("OneComp");
-  model.addNeuronPopulation("Izh1", _NC1, IZHIKEVICH, exIzh_p, exIzh_ini);
+  model.addNeuronPopulation("Izh1", _NC1, IZHIKEVICH, exIzh_p, exIzh_ini);        	 
+ // model.addSynapsePopulation("IzhIzh", NSYNAPSE, ALLTOALL, INDIVIDUALG, "Izh1", "Izh1", myIzh_p);
+ // model.setSynapseG("IzhIzh", gIzh1);
   
-  model.activateDirectInput("Izh1", INPRULE);
+  model.activateDirectInput("Izh1", CONSTINP);
+  model.setConstInp("Izh1", inpIzh1);
 }
