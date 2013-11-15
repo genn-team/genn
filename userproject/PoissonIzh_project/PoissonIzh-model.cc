@@ -11,10 +11,10 @@
   
 --------------------------------------------------------------------------*/
 
-#ifndef _POISSONIZH_CC_
-#define _POISSONIZH_CC_
+#ifndef _POISSONIZHMODEL_CC_
+#define _POISSONIZHMODEL_CC_
 
-#include "IzhEx_CODE/runner.cc"
+#include "PoissonIzh_CODE/runner.cc"
 
 classol::classol()
 {

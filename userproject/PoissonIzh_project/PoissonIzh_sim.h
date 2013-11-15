@@ -52,5 +52,5 @@ int patFireTime;
 
 CStopWatch timer;
 
-#include "PoissonIzh.h"
-#include "PoissonIzh.cc"
+#include "PoissonIzh-model.h"
+#include "PoissonIzh-model.cc"

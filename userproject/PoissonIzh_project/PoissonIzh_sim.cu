@@ -74,7 +74,6 @@ int main(int argc, char *argv[])
   fprintf(stderr, "# initial wait time execution ... \n");
 
   t= 0.0;
-  void *devPtr;
   int done= 0;
   float last_t_report=  t;
   locust.run(DT, which);
@@ -85,8 +84,7 @@ int main(int argc, char *argv[])
 //    if (which == GPU) locust.getSpikeNumbersFromGPU();
     locust.run(DT, which); // run next batch
     if (which == GPU) {  
-      cudaGetSymbolAddress(&devPtr, d_VIzh1);
-      CHECK_CUDA_ERRORS(cudaMemcpy(VIzh1, devPtr, 10*sizeof(float), cudaMemcpyDeviceToHost));
+      CHECK_CUDA_ERRORS(cudaMemcpy(VIzh1, d_VIzh1, 10*sizeof(float), cudaMemcpyDeviceToHost));
 	} 
 //    locust.sum_spikes();
 //    locust.output_spikes(os, which);

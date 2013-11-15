@@ -92,11 +92,21 @@ void genNeuronFunction(NNmodel &model, //!< Model description
       }
     }
     if (model.receivesInputCurrent[i]==1) { //receives constant  input
+   if (model.synapseGrpN==0) {
+   	os << "    Isyn= " << model.globalInp[i] << ";" << endl;
+   	}
+   else{
 	os << "    Isyn+= " << model.globalInp[i] << ";" << endl;
+	}
 	}    	
 
     if (model.receivesInputCurrent[i]>=2) {
+    	 if (model.synapseGrpN==0) {
+    	 	os << "    Isyn= inputI" << model.neuronName[i] << "[n];" << endl;
+    	 }
+   else{
 	 	os << "    Isyn+= inputI" << model.neuronName[i] << "[n];" << endl;
+	 }
 	 } 
     os << "    // calculate membrane potential" << endl;
     string code= nModels[nt].simCode;
