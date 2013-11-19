@@ -28,6 +28,7 @@ NNmodel::NNmodel()
   synapseGrpN= 0;
   lrnGroups= 0;
   needSt= 0;
+  needSynapseDelay = 0;
 }
 
 NNmodel::~NNmodel() 
@@ -234,9 +235,9 @@ void NNmodel::activateDirectInput(const string name, unsigned int type)
  */
 //--------------------------------------------------------------------------
 
-void NNmodel::addSynapsePopulation(const char *name, unsigned int syntype, unsigned int conntype, unsigned int gtype, const char *src, const char *trg, float *p) 
+void NNmodel::addSynapsePopulation(const char *name, unsigned int syntype, unsigned int conntype, unsigned int gtype, float delayType, const char *src, const char *trg, float *p) 
 {
-  addSynapsePopulation(toString(name), syntype, conntype, gtype, toString(src), toString(trg), p);
+  addSynapsePopulation(toString(name), syntype, conntype, gtype, delayType, toString(src), toString(trg), p);
 }
 
 //--------------------------------------------------------------------------
@@ -244,7 +245,7 @@ void NNmodel::addSynapsePopulation(const char *name, unsigned int syntype, unsig
  */
 //--------------------------------------------------------------------------
 
-void NNmodel::addSynapsePopulation(const string name, unsigned int syntype, unsigned int conntype, unsigned int gtype, const string src, const string trg, float *p)
+void NNmodel::addSynapsePopulation(const string name, unsigned int syntype, unsigned int conntype, unsigned int gtype, float delayType, const string src, const string trg, float *p)
 {
   unsigned int i= synapseGrpN++;
   unsigned int found;
@@ -253,6 +254,7 @@ void NNmodel::addSynapsePopulation(const string name, unsigned int syntype, unsi
   synapseType.push_back(syntype);
   synapseConnType.push_back(conntype);
   synapseGType.push_back(gtype);
+  synapseDelayType.push_back(delayType);
   found= findNeuronGrp(src);
   synapseSource.push_back(found);
   found= findNeuronGrp(trg);

@@ -155,11 +155,11 @@ void modelDefinition(NNmodel &model)
   model.addNeuronPopulation("LHI", _NLHI, TRAUBMILES, stdTM_p, stdTM_ini);
   model.addNeuronPopulation("DN", _NLB, TRAUBMILES, stdTM_p, stdTM_ini);
 
-  model.addSynapsePopulation("PNKC", NSYNAPSE, DENSE, INDIVIDUALG, "PN", "KC", myPNKC_p);
-  model.addSynapsePopulation("PNLHI", NSYNAPSE, ALLTOALL, INDIVIDUALG, "PN", "LHI", myPNLHI_p);
-  model.addSynapsePopulation("LHIKC", NGRADSYNAPSE, ALLTOALL, GLOBALG, "LHI", "KC", myLHIKC_p);
+  model.addSynapsePopulation("PNKC", NSYNAPSE, DENSE, INDIVIDUALG, DELAY_GLOBAL, "PN", "KC", myPNKC_p);
+  model.addSynapsePopulation("PNLHI", NSYNAPSE, ALLTOALL, INDIVIDUALG, DELAY_GLOBAL, "PN", "LHI", myPNLHI_p);
+  model.addSynapsePopulation("LHIKC", NGRADSYNAPSE, ALLTOALL, GLOBALG, DELAY_GLOBAL, "LHI", "KC", myLHIKC_p);
   model.setSynapseG("LHIKC", gLHIKC);
-  model.addSynapsePopulation("KCDN", LEARN1SYNAPSE, ALLTOALL, INDIVIDUALG, "KC", "DN", myKCDN_p);
-  model.addSynapsePopulation("DNDN", NGRADSYNAPSE, ALLTOALL, GLOBALG, "DN", "DN", myDNDN_p);
+  model.addSynapsePopulation("KCDN", LEARN1SYNAPSE, ALLTOALL, INDIVIDUALG, DELAY_GLOBAL, "KC", "DN", myKCDN_p);
+  model.addSynapsePopulation("DNDN", NGRADSYNAPSE, ALLTOALL, GLOBALG, DELAY_GLOBAL, "DN", "DN", myDNDN_p);
   model.setSynapseG("DNDN", gDNDN);
 }
