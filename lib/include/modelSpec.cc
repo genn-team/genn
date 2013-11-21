@@ -279,7 +279,7 @@ void NNmodel::setSynapseG(const string sName, float g)
   g0[found]= g;
 }
 
-void setSynapseMaxDelay(const string sName, float maxDelay)
+void NNmodel::setSynapseMaxDelay(const string sName, float maxDelay)
 {
   unsigned int found = findSynapseGrp(sName);
   if (synapseMaxDelay.size() < found + 1) synapseMaxDelay.resize(found + 1);

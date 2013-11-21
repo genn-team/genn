@@ -95,7 +95,6 @@ void genRunner(NNmodel &model, //!< Model description
       os << nModels[nt].varTypes[k] << " * "<< "d_" << nModels[nt].varNames[k] << model.neuronName[i]<<";"<< endl;
     }      
   }
-  
   for (int i= 0; i < model.synapseGrpN; i++) {
     if (model.synapseGType[i] == INDIVIDUALG) {
       os << "float * d_gp" << model.synapseName[i] << ";" <<endl;
