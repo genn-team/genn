@@ -64,9 +64,9 @@ unsigned int SYNPNO[SYNTYPENO]= {
 #define INDIVIDUALID 2 //!< Macro attaching the label "INDIVIDUALID" to method 2 for the definition of synaptic conductances
 
 // delayed synapse parameter definition
-#define DELAY_INDIVIDUAL 0 //!< Macro attaching the label "DELAY_INDIVIDUAL" to method 0 for the definition of synaptic delay
-#define DELAY_GLOBAL 1 //!< Macro attaching the label "DELAY_GLOBAL" to method 1 for the definition of synaptic delay
-
+#define DELAY_NONE 0 //!< Macro used to declare that there is no delay for this synapse group (spike queues should not be generated)
+#define DELAY_INDIVIDUAL 1 //!< Macro used to declare that delay for a synapse is assigned individually (per-synapse delay)
+#define DELAY_GLOBAL 2 //!< Macro used to declare that synaptic delay is declared using a single global value (per-group delay)
 
 #define NOLEARNING 0 //!< Macro attaching the label "NOLEARNING" to flag 0 
 #define LEARNING 1 //!< Macro attaching the label "LEARNING" to flag 1 
