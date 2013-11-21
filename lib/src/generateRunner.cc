@@ -90,22 +90,26 @@ void genRunner(NNmodel &model, //!< Model description
   
   //device memory
   for (int i= 0; i < model.neuronGrpN; i++) {
-  	nt= model.neuronType[i];
-  	for (int k= 0, l= nModels[nt].varNames.size(); k < l; k++) {
-   	os << nModels[nt].varTypes[k] << " * "<< "d_" << nModels[nt].varNames[k] << model.neuronName[i]<<";"<< endl;
-   }      
+    nt= model.neuronType[i];
+    for (int k= 0, l= nModels[nt].varNames.size(); k < l; k++) {
+      os << nModels[nt].varTypes[k] << " * "<< "d_" << nModels[nt].varNames[k] << model.neuronName[i]<<";"<< endl;
+    }      
   }
   
   for (int i= 0; i < model.synapseGrpN; i++) {
-   if (model.synapseGType[i] == INDIVIDUALG) {
-   	os << "float * d_gp" << model.synapseName[i] << ";" <<endl;  	
-   	os << "float * d_grawp" << model.synapseName[i] << ";" <<endl;
-   }
-   if (model.synapseGType[i] == INDIVIDUALID) {
-   	os << "unsigned int * d_gp" << model.synapseName[i] << ";" <<endl;
-   } 
- }
-os << endl;  
+    if (model.synapseGType[i] == INDIVIDUALG) {
+      os << "float * d_gp" << model.synapseName[i] << ";" <<endl;
+      if (model.synapseType[i] == LEARN1SYNAPSE) {
+	os << "float * d_grawp" << model.synapseName[i] << ";" <<endl;
+      }
+    }
+    if (model.synapseGType[i] == INDIVIDUALID) {
+      os << "unsigned int * d_gp" << model.synapseName[i] << ";" <<endl;
+    } 
+  }
+  os << endl;
+
+
   // ------------------------------------------------------------------------
   // Code for setting the CUDA device and
   // setting up the host's global variables.
