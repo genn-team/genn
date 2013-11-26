@@ -214,11 +214,13 @@ void NNmodel::addNeuronPopulation(const string name, unsigned int nNo, unsigned 
   }
   neuronIni.push_back(tmpP);
   vector<unsigned int> tv;
+  neuronDelaySlots.push_back(1);
   receivesInputCurrent.push_back(0);
   inSyn.push_back(tv);  // empty list of input synapse groups for neurons i 
   initDerivedNeuronPara(i);
   initNeuronSpecs(i);
 }
+
 //--------------------------------------------------------------------------
 /*! \brief This function defines the type of the explicit input to the neuron model. Current options are common constant input to all neurons, input  from a file and input defines as a rule.
 */ 
@@ -266,7 +268,6 @@ void NNmodel::addSynapsePopulation(const string name, unsigned int syntype, unsi
   initDerivedSynapsePara(i);
 }
 
-
 //--------------------------------------------------------------------------
 /*! \brief This functions sets the global value of the maximal synaptic conductance for a synapse population that was idfentified as conductance specifcation method "GLOBALG" 
  */
@@ -279,18 +280,25 @@ void NNmodel::setSynapseG(const string sName, float g)
   g0[found]= g;
 }
 
-void NNmodel::setSynapseMaxDelay(const string sName, float maxDelay)
-{
-  unsigned int found = findSynapseGrp(sName);
-  if (synapseMaxDelay.size() < found + 1) synapseMaxDelay.resize(found + 1);
-  synapseMaxDelay[found] = maxDelay;
-}
-
 void NNmodel::setConstInp(const string sName, float globalInp0)
 {
   unsigned int found= findNeuronGrp(sName);
   if (globalInp.size() < found+1) globalInp.resize(found+1);
   globalInp[found]= globalInp0;
+}
+
+void NNmodel::setSynapseMaxDelay(const string sName, float maxDelay)
+{
+  // Store maxDelay as a global synapse group delay value (used by DELAY_GLOBAL).
+  unsigned int found = findSynapseGrp(sName);
+  if (synapseMaxDelay.size() < found + 1) synapseMaxDelay.resize(found + 1);
+  synapseMaxDelay[found] = maxDelay;
+
+  // Modify the presynaptic neuron group's spike queue size, if necessary.
+  unsigned int source = synapseSource[found];
+  if (maxDelay / DT > neuronDelaySlots[source]) {
+    neuronDelaySlots[source] = maxDelay / DT;
+  }
 }
 
 #endif

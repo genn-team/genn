@@ -115,36 +115,37 @@ class NNmodel
   unsigned int needSt; //!< Whether last spike times are needed at all in this network model (related to STDP)
   unsigned int neuronGrpN; //!< Number of neuron groups
   vector<string> neuronName; //!< Names of neuron groups
-  vector<unsigned int>neuronN; //!< Number of neurons in group
-  vector<unsigned int>sumNeuronN; //!< Summed neuron numbers
-  vector<unsigned int>padSumNeuronN; //!< Padded summed neuron numbers
-  vector<unsigned int>neuronType; //!< Types of neurons
-  vector<vector<float> >neuronPara; //!< Parameters of neurons
-  vector<unsigned int>neuronNeedSt; //!< Whether last spike time needs to be saved for each indivual neuron type
-  vector<vector<float> >dnp; //!< Derived neuron parameters
-  vector<vector<float> >neuronIni; //!< Initial values of neurons
+  vector<unsigned int> neuronN; //!< Number of neurons in group
+  vector<unsigned int> sumNeuronN; //!< Summed neuron numbers
+  vector<unsigned int> padSumNeuronN; //!< Padded summed neuron numbers
+  vector<unsigned int> neuronType; //!< Types of neurons
+  vector<vector<float> > neuronPara; //!< Parameters of neurons
+  vector<unsigned int> neuronNeedSt; //!< Whether last spike time needs to be saved for each indivual neuron type
+  vector<vector<float> > dnp; //!< Derived neuron parameters
+  vector<vector<float> > neuronIni; //!< Initial values of neurons
   vector<int> receivesInputCurrent; //!< flags whether neurons of a population receive explicit input currents
-  vector<vector<unsigned int> >inSyn; //!< The ids of the incoming synapse groups
-  vector<float>nThresh; //!< Threshold for spiking for each neuron type
+  vector<unsigned int> neuronDelaySlots; //!< The number of slots needed in the synapse delay queues of a neuron group
+  vector<vector<unsigned int> > inSyn; //!< The ids of the incoming synapse groups
+  vector<float> nThresh; //!< Threshold for spiking for each neuron type
   unsigned int synapseGrpN; //!< Number of synapse groups
   unsigned int lrnGroups; //!< Number of synapse groups with learning
   vector<string> synapseName; //!< Names of synapse groups
-  vector<unsigned int>sumSynapseTrgN; //!< Summed naumber of target neurons
-  vector<unsigned int>padSumSynapseTrgN; //!< "Padded" summed target neuron numbers
-  vector<unsigned int>padSumLearnN; //!< Padded summed neuron numbers of learn group source populations
-  vector<unsigned int>lrnSynGrp; //!< Enumeration of the IDs of synapse groups that learn
-  vector<unsigned int>synapseType; //!< Types of synapses
-  vector<unsigned int>synapseSource; //!< Presynaptic neuron groups
-  vector<unsigned int>synapseTarget; //!< Postsynaptic neuron groups
-  vector<vector<float> >synapsePara; //!< parameters of synapses
-  vector<unsigned int>synapseConnType; //!< Connectivity type of synapses
-  vector<unsigned int>synapseGType; //!< Type of specification method for synaptic conductance
-  vector<float>g0; //!< Global synapse conductance if GLOBALG is chosen.
+  vector<unsigned int> sumSynapseTrgN; //!< Summed naumber of target neurons
+  vector<unsigned int> padSumSynapseTrgN; //!< "Padded" summed target neuron numbers
+  vector<unsigned int> padSumLearnN; //!< Padded summed neuron numbers of learn group source populations
+  vector<unsigned int> lrnSynGrp; //!< Enumeration of the IDs of synapse groups that learn
+  vector<unsigned int> synapseType; //!< Types of synapses
+  vector<unsigned int> synapseSource; //!< Presynaptic neuron groups
+  vector<unsigned int> synapseTarget; //!< Postsynaptic neuron groups
+  vector<vector<float> > synapsePara; //!< parameters of synapses
+  vector<unsigned int> synapseConnType; //!< Connectivity type of synapses
+  vector<unsigned int> synapseGType; //!< Type of specification method for synaptic conductance
+  vector<float> g0; //!< Global synapse conductance if GLOBALG is chosen.
   vector<unsigned int> synapseDelayType; //!< Specification method for synaptic delay
-  vector<float> synapseMaxDelay; //!< The longest synapse delay in a group.
-  vector<float>globalInp; //!< Global explicit input if CONSTINP is chosen.
-  vector<unsigned int>synapseInSynNo; //!< IDs of the target neurons' incoming synapse variables for each synapse group
-  vector<vector<float> >dsp;  //!> Derived synapse parameters
+  vector<float> synapseMaxDelay; //!< The longest delay in the synapse group.
+  vector<float> globalInp; //!< Global explicit input if CONSTINP is chosen.
+  vector<unsigned int> synapseInSynNo; //!< IDs of the target neurons' incoming synapse variables for each synapse group
+  vector<vector<float> > dsp;  //!< Derived synapse parameters
 
  private:
   void setNeuronName(unsigned int, const string); //!< Never used
