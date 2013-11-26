@@ -62,8 +62,24 @@ void genRunner(NNmodel &model, //!< Model description
   
   for (int i= 0; i < model.neuronGrpN; i++) {
     nt= model.neuronType[i];
-    os << "unsigned int glbscnt" << model.neuronName[i] << ";" << endl;
-    os << "unsigned int *glbSpk" << model.neuronName[i] << ";" << endl;
+
+
+
+
+
+    if (model.neuronDelaySlots[i] == 1) {
+      os << "unsigned int *glbSpk" << model.neuronName[i] << ";" << endl;
+      os << "unsigned int glbscnt" << model.neuronName[i] << ";" << endl;
+    }
+    else {
+      os << "unsigned int **glbSpk" << model.neuronName[i] << ";" << endl;
+      os << "unsigned int *glbscnt" << model.neuronName[i] << ";" << endl;      
+    }
+
+
+
+
+
     for (int j= 0; j < model.inSyn[i].size(); j++) {
       os << "float *inSyn" << model.neuronName[i] << j << ";" << endl;
     } 
@@ -123,9 +139,29 @@ void genRunner(NNmodel &model, //!< Model description
   os << "  size_t size;" << endl;
   for (int i= 0; i < model.neuronGrpN; i++) {
     nt= model.neuronType[i];
-    os << "  glbSpk" << model.neuronName[i] << "= new unsigned int[";
-    os << model.neuronN[i] << "];" << endl;
-    mem+= model.neuronN[i]*sizeof(unsigned int);
+
+
+
+
+
+
+    if (model.neuronDelaySlots[i] > 1) {
+      os << "  glbscnt" << model.neuronName[i] << " = new unsigned int[" << model.neuronDelaySlots[i] << "];" << endl;
+      os << "  glbSpk" << model.neuronName[i] << " = new unsigned int*[" << model.neuronDelaySlots[i] << "];" << endl;
+      os << "  for (int i = 0; i < " << model.neuronDelaySlots[i] << "; i++) {" << endl;
+      os << "    glbSpk[i] = new unsigned int[" << model.neuronN[i] << "];" << endl;
+      os << "  }" << endl;
+      mem += model.neuronN[i] * model.neuronDelaySlots[i] * sizeof(unsigned int);
+    }
+    else {
+      os << "  glbSpk" << model.neuronName[i] << " = new unsigned int[" << model.neuronN[i] << "];" << endl;
+      mem += model.neuronN[i] * sizeof(unsigned int);
+    }
+
+
+
+
+
     for (int j= 0; j < model.inSyn[i].size(); j++) {
       os << "  inSyn" << model.neuronName[i] << j << "= new float[";
       os << model.neuronN[i] << "];" << endl;
@@ -240,10 +276,31 @@ void genRunner(NNmodel &model, //!< Model description
   os << "  //neuron variables" << endl;
   for (int i= 0; i < model.neuronGrpN; i++) {
     nt= model.neuronType[i];
-  
-    os << "  glbscnt" << model.neuronName[i] << "= 0;" << endl;
-    os << "  for (int i= 0; i < " << model.neuronN[i] << "; i++) {" << endl;
-    os << "    glbSpk" << model.neuronName[i] << "[i]= 0;" << endl;
+
+
+
+
+    if (model.neuronDelaySlots[i] == 1) {
+      os << "  glbscnt" << model.neuronName[i] << " = 0;" << endl;
+    }
+    else {
+      os << "  for (int i = 0; i < " << model.neuronDelaySlots[i] << "; i++) {" << endl;
+      os << "    glbscnt" << model.neuronName[i] << "[i] = 0;" << endl;
+      os << "  }" << endl;
+    }
+    os << "  for (int i = 0; i < " << model.neuronN[i] << "; i++) {" << endl;
+    if (model.neuronDelaySlots[i] == 1) {
+      os << "    glbSpk" << model.neuronName[i] << "[i] = 0;" << endl;
+    }
+    else {
+      os << "    for (int j = 0; j < " << model.neuronDelaySlots[i] << "; j++) {" << endl;
+      os << "      glbSpk" << model.neuronName[i] << "[j][i] = 0;" << endl;
+      os << "    }" << endl;
+    }
+
+
+
+
     for (int j= 0; j < model.inSyn[i].size(); j++) {
       os << "    inSyn" << model.neuronName[i] << j << "[i]= 0.0f;" << endl;
     } 
