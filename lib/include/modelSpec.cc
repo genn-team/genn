@@ -227,8 +227,8 @@ void NNmodel::addNeuronPopulation(const string name, unsigned int nNo, unsigned 
 //--------------------------------------------------------------------------
 void NNmodel::activateDirectInput(const string name, unsigned int type)
 {
-	unsigned int i= findNeuronGrp(name);
-	receivesInputCurrent[i]= type;	//1 if common input, 2 if custom input from file, 3 if custom input as a rule
+  unsigned int i= findNeuronGrp(name);
+  receivesInputCurrent[i]= type;	//1 if common input, 2 if custom input from file, 3 if custom input as a rule
 }
 
 //--------------------------------------------------------------------------
@@ -236,9 +236,9 @@ void NNmodel::activateDirectInput(const string name, unsigned int type)
  */
 //--------------------------------------------------------------------------
 
-void NNmodel::addSynapsePopulation(const char *name, unsigned int syntype, unsigned int conntype, unsigned int gtype, unsigned int delayType, const char *src, const char *trg, float *p) 
+void NNmodel::addSynapsePopulation(const char *name, unsigned int syntype, unsigned int conntype, unsigned int gtype, float delay, const char *src, const char *trg, float *p) 
 {
-  addSynapsePopulation(toString(name), syntype, conntype, gtype, delayType, toString(src), toString(trg), p);
+  addSynapsePopulation(toString(name), syntype, conntype, gtype, delay, toString(src), toString(trg), p);
 }
 
 //--------------------------------------------------------------------------
@@ -246,21 +246,24 @@ void NNmodel::addSynapsePopulation(const char *name, unsigned int syntype, unsig
  */
 //--------------------------------------------------------------------------
 
-void NNmodel::addSynapsePopulation(const string name, unsigned int syntype, unsigned int conntype, unsigned int gtype, unsigned int delayType, const string src, const string trg, float *p)
+void NNmodel::addSynapsePopulation(const string name, unsigned int syntype, unsigned int conntype, unsigned int gtype, float delay, const string src, const string trg, float *p)
 {
   unsigned int i= synapseGrpN++;
-  unsigned int found;
+  unsigned int srcNumber, trgNumber;
+  vector<float> tmpP;
 
   synapseName.push_back(name);
   synapseType.push_back(syntype);
   synapseConnType.push_back(conntype);
   synapseGType.push_back(gtype);
-  synapseDelayType.push_back(delayType);
-  found= findNeuronGrp(src);
-  synapseSource.push_back(found);
-  found= findNeuronGrp(trg);
-  synapseTarget.push_back(found);
-  vector<float> tmpP;
+  synapseDelay.push_back(delay);
+  srcNumber = findNeuronGrp(src);
+  synapseSource.push_back(srcNumber);
+  trgNumber = findNeuronGrp(trg);
+  synapseTarget.push_back(trgNumber);
+  if (delay / DT > neuronDelaySlots[synapseSource[srcNumber]]) {
+    neuronDelaySlots[synapseSource[srcNumber]] = delay / DT;
+  }
   for (int j= 0; j < SYNPNO[synapseType[i]]; j++) {
     tmpP.push_back(p[j]);
   }
@@ -285,20 +288,6 @@ void NNmodel::setConstInp(const string sName, float globalInp0)
   unsigned int found= findNeuronGrp(sName);
   if (globalInp.size() < found+1) globalInp.resize(found+1);
   globalInp[found]= globalInp0;
-}
-
-void NNmodel::setSynapseMaxDelay(const string sName, float maxDelay)
-{
-  // Store maxDelay as a global synapse group delay value (used by DELAY_GLOBAL).
-  unsigned int found = findSynapseGrp(sName);
-  if (synapseMaxDelay.size() < found + 1) synapseMaxDelay.resize(found + 1);
-  synapseMaxDelay[found] = maxDelay;
-
-  // Modify the presynaptic neuron group's spike queue size, if necessary.
-  unsigned int source = synapseSource[found];
-  if (maxDelay / DT > neuronDelaySlots[source]) {
-    neuronDelaySlots[source] = maxDelay / DT;
-  }
 }
 
 #endif

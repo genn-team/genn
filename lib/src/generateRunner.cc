@@ -213,20 +213,18 @@ void genRunner(NNmodel &model, //!< Model description
       os << endl;
       mem+= size*sizeof(unsigned int);
     }
-	
  
     if (model.synapseGType[i] == INDIVIDUALG) {
       // (cases necessary here when considering sparse reps as well)
       os << "  size = sizeof(float)*" << model.neuronN[model.synapseSource[i]] << "*" << model.neuronN[model.synapseTarget[i]] << "; " << endl;
       os << "  cudaMalloc((void **)&d_gp" << model.synapseName[i] << ", size);" << endl;
       if (model.synapseType[i] == LEARN1SYNAPSE) {
-   		os << "cudaMalloc((void **)&d_grawp" << model.synapseName[i] << ", size);     // raw synaptic conductances of group " << model.synapseName[i];
-	   	os << endl;
+	os << "  cudaMalloc((void **)&d_grawp" << model.synapseName[i] << ", size);     // raw synaptic conductances of group " << model.synapseName[i];
+	os << endl;
       }
     }
     // note, if GLOBALG we put the value at compile time
     if (model.synapseGType[i] == INDIVIDUALID) {
-    	
       unsigned int tmp= model.neuronN[model.synapseSource[i]]*model.neuronN[model.synapseTarget[i]];
       os << "  size = sizeof(unsigned int)*" << tmp << "; " << endl;
       os << "cudaMalloc((void **)&d_gp" << model.synapseName[i] << ",";      
@@ -236,10 +234,8 @@ void genRunner(NNmodel &model, //!< Model description
       os << ");     // synaptic connectivity of group " << model.synapseName[i];
       os << endl;
     }
-  os << endl;    		
-    	  
-    	}  
-  
+    os << endl;  
+  }  
   os << "}" << endl;
   os << endl;
   
@@ -249,11 +245,32 @@ void genRunner(NNmodel &model, //!< Model description
   os << "{" << endl;
   for (int i= 0; i < model.neuronGrpN; i++) {
     nt= model.neuronType[i];
+
+
+
+
+    if (model.neuronDelaySlots[i] == 1) {
+      os << "  delete[] glbSpk" << model.neuronName[i] << ";" << endl;
+    }
+    else {
+      os << "  delete[] glbscnt" << model.neuronName[i] << ";" << endl;
+      os << "  for (int i = 0; i < " << model.neuronDelaySlots[i] << "; i++) {" << endl;
+      os << "    delete[] glbSpk" << model.neuronName[i] << "[i];" << endl;
+      os << "    delete[] glbSpk" << model.neuronName[i] << ";" << endl;
+      os << "  }" << endl;
+    }
+
+
+
+
     for (int j= 0; j < model.inSyn[i].size(); j++) {
       os << "  delete[] inSyn" << model.neuronName[i] << j << ";" << endl;
     } 
     for (int k= 0, l= nModels[nt].varNames.size(); k < l; k++) {
       os << "  delete[] " << nModels[nt].varNames[k] << model.neuronName[i] << ";" << endl;
+    }
+    if (model.neuronNeedSt[i]) {
+      os << "  delete[] sT" << model.neuronName[i] << ";" << endl;
     }
   }
   for (int i= 0; i < model.synapseGrpN; i++) {
