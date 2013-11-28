@@ -63,10 +63,7 @@ unsigned int SYNPNO[SYNTYPENO]= {
 #define GLOBALG 1 //!< Macro attaching the label "GLOBALG" to method 1 for the definition of synaptic conductances
 #define INDIVIDUALID 2 //!< Macro attaching the label "INDIVIDUALID" to method 2 for the definition of synaptic conductances
 
-// delayed synapse parameter definition
-#define DELAY_NONE 0 //!< Macro used to declare that there is no delay for this synapse group (spike queues should not be generated)
-#define DELAY_INDIVIDUAL 1 //!< Macro used to declare that delay for a synapse is assigned individually (per-synapse delay)
-#define DELAY_GLOBAL 2 //!< Macro used to declare that synaptic delay is declared using a single global value (per-group delay)
+#define NO_DELAY 0.0 //!< Macro used to indicate no synapse delay for the group (spike queues will not be generated)
 
 #define NOLEARNING 0 //!< Macro attaching the label "NOLEARNING" to flag 0 
 #define LEARNING 1 //!< Macro attaching the label "LEARNING" to flag 1 
@@ -121,10 +118,10 @@ class NNmodel
   vector<unsigned int> neuronType; //!< Types of neurons
   vector<vector<float> > neuronPara; //!< Parameters of neurons
   vector<unsigned int> neuronNeedSt; //!< Whether last spike time needs to be saved for each indivual neuron type
+  vector<unsigned int> neuronDelaySlots; //!< The number of slots needed in the synapse delay queues of a neuron group
   vector<vector<float> > dnp; //!< Derived neuron parameters
   vector<vector<float> > neuronIni; //!< Initial values of neurons
   vector<int> receivesInputCurrent; //!< flags whether neurons of a population receive explicit input currents
-  vector<unsigned int> neuronDelaySlots; //!< The number of slots needed in the synapse delay queues of a neuron group
   vector<vector<unsigned int> > inSyn; //!< The ids of the incoming synapse groups
   vector<float> nThresh; //!< Threshold for spiking for each neuron type
   unsigned int synapseGrpN; //!< Number of synapse groups
@@ -141,8 +138,7 @@ class NNmodel
   vector<unsigned int> synapseConnType; //!< Connectivity type of synapses
   vector<unsigned int> synapseGType; //!< Type of specification method for synaptic conductance
   vector<float> g0; //!< Global synapse conductance if GLOBALG is chosen.
-  vector<unsigned int> synapseDelayType; //!< Specification method for synaptic delay
-  vector<float> synapseMaxDelay; //!< The longest delay in the synapse group.
+  vector<float> synapseDelay; //!< Global synaptic conductance delay for the group
   vector<float> globalInp; //!< Global explicit input if CONSTINP is chosen.
   vector<unsigned int> synapseInSynNo; //!< IDs of the target neurons' incoming synapse variables for each synapse group
   vector<vector<float> > dsp;  //!< Derived synapse parameters
@@ -174,10 +170,9 @@ class NNmodel
   void addNeuronPopulation(const string, unsigned int, unsigned int, float *, float *); //!< Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population
   //void activateDirectInput(const char *, unsigned int);  
   void activateDirectInput(const string, unsigned int);  
-  void addSynapsePopulation(const char *, unsigned int, unsigned int, unsigned int, unsigned int, const char *, const char *, float *); //!< Method for adding a synapse population to a neuronal network model, using C style character array for the name of the population
-  void addSynapsePopulation(const string, unsigned int, unsigned int, unsigned int, unsigned int, const string, const string, float *); //!< Method for adding a synapse population to a neuronal network model, using C++ string for the name of the population
+  void addSynapsePopulation(const char *, unsigned int, unsigned int, unsigned int, float, const char *, const char *, float *); //!< Method for adding a synapse population to a neuronal network model, using C style character array for the name of the population
+  void addSynapsePopulation(const string, unsigned int, unsigned int, unsigned int, float, const string, const string, float *); //!< Method for adding a synapse population to a neuronal network model, using C++ string for the name of the population
   void setSynapseG(const string, float); //!< Method for setting the conductance (g) value for a synapse population with "GLOBALG" charactertistic
-  void setSynapseMaxDelay(const string, float); //!< Set the maximum required delay for a synapse group (determines the size of spike queues)
   void setConstInp(const string, float); //!< Method for setting the global input value for a neuron population if CONSTINP
 };
 
