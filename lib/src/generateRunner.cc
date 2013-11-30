@@ -68,12 +68,13 @@ void genRunner(NNmodel &model, //!< Model description
 
 
     if (model.neuronDelaySlots[i] == 1) {
-      os << "unsigned int *glbSpk" << model.neuronName[i] << ";" << endl;
       os << "unsigned int glbscnt" << model.neuronName[i] << ";" << endl;
+      os << "unsigned int *glbSpk" << model.neuronName[i] << ";" << endl;
     }
     else {
-      os << "unsigned int **glbSpk" << model.neuronName[i] << ";" << endl;
+      os << "unsigned int spkQuePtr" << model.neuronName[i] << ";" << endl;
       os << "unsigned int *glbscnt" << model.neuronName[i] << ";" << endl;      
+      os << "unsigned int **glbSpk" << model.neuronName[i] << ";" << endl;
     }
 
 
@@ -301,6 +302,7 @@ void genRunner(NNmodel &model, //!< Model description
       os << "  glbscnt" << model.neuronName[i] << " = 0;" << endl;
     }
     else {
+      os << "  spkQuePtr" << model.neuronName[i] << " = 0;" << endl;
       os << "  for (int i = 0; i < " << model.neuronDelaySlots[i] << "; i++) {" << endl;
       os << "    glbscnt" << model.neuronName[i] << "[i] = 0;" << endl;
       os << "  }" << endl;

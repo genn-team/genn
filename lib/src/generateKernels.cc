@@ -62,11 +62,27 @@ void genNeuronKernel(NNmodel &model, //!< Model description
   os << "__device__ volatile unsigned int d_done;" << endl;
   for (int i= 0; i < model.neuronGrpN; i++) {
     nt= model.neuronType[i];
-    os << "__device__ volatile unsigned int d_glbscnt";
-    os << model.neuronName[i] << ";" << endl;
-    os << "__device__ volatile unsigned int d_glbSpk" << model.neuronName[i] << "[";
-    os << model.neuronN[i] << "];" << endl;
-    os << endl;
+
+
+
+
+
+    if (model.neuronDelaySlots[i] == 1) {
+      os << "__device__ volatile unsigned int d_glbscnt" << model.neuronName[i] << ";" << endl;
+      os << "__device__ volatile unsigned int d_glbSpk" << model.neuronName[i] << "[";
+      os << model.neuronN[i] << "];" << endl;
+    }
+    else {
+      os << "__device__ volatile unsigned int d_spkQuePtr" << model.neuronName[i] << ";" << endl;
+      os << "__device__ volatile unsigned int *d_glbscnt" << model.neuronName[i] << ";" << endl;
+      os << "__device__ volatile unsigned int **d_glbSpk" << model.neuronName[i] << "[";
+      os << model.neuronN[i] << "];" << endl;
+    }
+
+
+
+
+
     if (model.neuronType[i] != POISSONNEURON) {
       for (int j= 0; j < model.inSyn[i].size(); j++) {
 	os << "__device__ float d_inSyn" << model.neuronName[i] << j;
