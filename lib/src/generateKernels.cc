@@ -74,9 +74,9 @@ void genNeuronKernel(NNmodel &model, //!< Model description
     }
     else {
       os << "__device__ volatile unsigned int d_spkQuePtr" << model.neuronName[i] << ";" << endl;
-      os << "__device__ volatile unsigned int *d_glbscnt" << model.neuronName[i] << ";" << endl;
-      os << "__device__ volatile unsigned int **d_glbSpk" << model.neuronName[i] << "[";
-      os << model.neuronN[i] << "];" << endl;
+      os << "__device__ volatile unsigned int d_glbscnt" << model.neuronName[i] << ";" << endl;
+      os << "__device__ volatile unsigned int d_glbSpk" << model.neuronName[i] << "[";
+      os << model.neuronN[i] * model.neuronDelaySlots[i] << "];" << endl;
     }
 
 
