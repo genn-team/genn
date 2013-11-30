@@ -74,7 +74,7 @@ void genRunner(NNmodel &model, //!< Model description
     else {
       os << "unsigned int spkQuePtr" << model.neuronName[i] << ";" << endl;
       os << "unsigned int *glbscnt" << model.neuronName[i] << ";" << endl;      
-      os << "unsigned int **glbSpk" << model.neuronName[i] << ";" << endl;
+      os << "unsigned int *glbSpk" << model.neuronName[i] << ";" << endl;
     }
 
 
@@ -146,17 +146,14 @@ void genRunner(NNmodel &model, //!< Model description
 
 
 
-    if (model.neuronDelaySlots[i] > 1) {
-      os << "  glbscnt" << model.neuronName[i] << " = new unsigned int[" << model.neuronDelaySlots[i] << "];" << endl;
-      os << "  glbSpk" << model.neuronName[i] << " = new unsigned int*[" << model.neuronDelaySlots[i] << "];" << endl;
-      os << "  for (int i = 0; i < " << model.neuronDelaySlots[i] << "; i++) {" << endl;
-      os << "    glbSpk[i] = new unsigned int[" << model.neuronN[i] << "];" << endl;
-      os << "  }" << endl;
-      mem += model.neuronN[i] * model.neuronDelaySlots[i] * sizeof(unsigned int);
-    }
-    else {
+    if (model.neuronDelaySlots == 1) {
       os << "  glbSpk" << model.neuronName[i] << " = new unsigned int[" << model.neuronN[i] << "];" << endl;
       mem += model.neuronN[i] * sizeof(unsigned int);
+    }
+    else {
+      os << "  glbscnt" << model.neuronName[i] << " = new unsigned int[" << model.neuronDelaySlots[i] << "];" << endl;
+      os << "  glbSpk" << model.neuronName[i] << " = new unsigned int*[" << model.neruonN[i] * model.neuronDelaySlots[i] << "];" << endl;
+      mem += model.neuronN[i] * model.neuronDelaySlots[i] * sizeof(unsigned int);
     }
 
 
@@ -255,10 +252,7 @@ void genRunner(NNmodel &model, //!< Model description
     }
     else {
       os << "  delete[] glbscnt" << model.neuronName[i] << ";" << endl;
-      os << "  for (int i = 0; i < " << model.neuronDelaySlots[i] << "; i++) {" << endl;
-      os << "    delete[] glbSpk" << model.neuronName[i] << "[i];" << endl;
-      os << "    delete[] glbSpk" << model.neuronName[i] << ";" << endl;
-      os << "  }" << endl;
+      os << "  delete[] glbSpk" << model.neuronName[i] << ";" << endl;
     }
 
 
@@ -298,6 +292,8 @@ void genRunner(NNmodel &model, //!< Model description
 
 
 
+
+
     if (model.neuronDelaySlots[i] == 1) {
       os << "  glbscnt" << model.neuronName[i] << " = 0;" << endl;
     }
@@ -313,9 +309,10 @@ void genRunner(NNmodel &model, //!< Model description
     }
     else {
       os << "    for (int j = 0; j < " << model.neuronDelaySlots[i] << "; j++) {" << endl;
-      os << "      glbSpk" << model.neuronName[i] << "[j][i] = 0;" << endl;
+      os << "      glbSpk" << model.neuronName[i] << "[(j * " << model.neuronN[i] <<  ") + i] = 0;" << endl;
       os << "    }" << endl;
     }
+
 
 
 
@@ -337,21 +334,21 @@ void genRunner(NNmodel &model, //!< Model description
     os << "  }" << endl;
 
     if ((model.neuronType[i] == IZHIKEVICH) && (DT!=1)){
-    	os << "   fprintf(stderr,\"WARNING: You use a time step different than 1 ms. Izhikevich model behaviour may not be robust.\\n\"); "<< endl;
+    	os << "  fprintf(stderr,\"WARNING: You use a time step different than 1 ms. Izhikevich model behaviour may not be robust.\\n\"); "<< endl;
     }
+
     //copy host to device mem
     //neuron variables
     for (int k= 0, l= nModels[nt].varNames.size(); k < l; k++) {
       os << "  size = sizeof(" << nModels[nt].varTypes[k] << ")*" << model.neuronN[i] << "; " << endl;
-      
       os << "  CHECK_CUDA_ERRORS(cudaMemcpy(d_" << nModels[nt].varNames[k] << model.neuronName[i] << ",";
       os << nModels[nt].varNames[k] << model.neuronName[i] << ",";
       os << model.neuronN[i] << "*sizeof(" << nModels[nt].varTypes[k];
       os << "), cudaMemcpyHostToDevice));" << endl;
-	 }
-	
-	}
-os << "  //synapse variables" << endl;
+    }	
+  }
+
+  os << "  //synapse variables" << endl;
   for (int i= 0; i < model.synapseGrpN; i++) {
   	 unsigned int tmp= model.neuronN[model.synapseSource[i]]*model.neuronN[model.synapseTarget[i]];
     if (model.synapseGType[i] == INDIVIDUALG) {
