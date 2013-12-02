@@ -43,7 +43,7 @@ void modelDefinition(NNmodel &model)
 {
   model.setName("OneComp");
   model.addNeuronPopulation("Izh1", _NC1, IZHIKEVICH, exIzh_p, exIzh_ini);        	 
- // model.addSynapsePopulation("IzhIzh", NSYNAPSE, ALLTOALL, INDIVIDUALG, "Izh1", "Izh1", myIzh_p);
+ // model.addSynapsePopulation("IzhIzh", NSYNAPSE, ALLTOALL, INDIVIDUALG, NO_DELAY, "Izh1", "Izh1", myIzh_p);
  // model.setSynapseG("IzhIzh", gIzh1);
   
   model.activateDirectInput("Izh1", CONSTINP);
