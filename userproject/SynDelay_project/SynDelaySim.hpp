@@ -10,13 +10,14 @@ class SynDelay
 {
 
 private:
-  int which;
   float t;
-  int sumInputIzh;
-  int sumOutputIzh;
+  bool usingGPU;
+  int sumInput;
+  int sumInterneuron;
+  int sumOutput;
 
 public:
-  SynDelay(int whichArg);
+  SynDelay(bool usingGPU_arg);
   ~SynDelay();
   void run();
 

@@ -4,40 +4,43 @@
 #include "modelSpec.h"
 #include "modelSpec.cc"
 
-float inputIzh_p[4] = {
-//Izhikevich model parameters - tonic spiking
-	0.02,	// 0 - a
-	0.2, 	// 1 - b
-	-65, 	// 2 - c
-	6 	// 3 - d
+float input_p[4] = { //Izhikevich model parameters - tonic spiking
+  0.02,	   // 0 - a
+  0.2, 	   // 1 - b
+  -65, 	   // 2 - c
+  6 	   // 3 - d
 };
 
-float inputIzh_ini[2] = {
-//Izhikevich model initial conditions - tonic spiking
-	-65,	//0 - V
-	-20	//1 - U
+float input_ini[2] = { //Izhikevich model initial conditions - tonic spiking
+  -65,	   //0 - V
+  -20	   //1 - U
 };
 
-float synInOut_p[3] = {
-  0.0,           // 0 - Erev: Reversal potential
-  -30.0,         // 1 - Epre: Presynaptic threshold potential
-  1.0            // 2 - tau_S: decay time constant for S [ms]
+float synapses_p[3] = {
+  0.0,     // 0 - Erev: Reversal potential
+  -30.0,   // 1 - Epre: Presynaptic threshold potential
+  1.0      // 2 - tau_S: decay time constant for S [ms]
 };
 
 float constInput = 4.0;
-float synInOutG = 0.01;
+float synG = 0.01;
 
 
 void modelDefinition(NNmodel &model) 
 {
   model.setName("SynDelay");
 
-  model.addNeuronPopulation("inputIzh", 500, IZHIKEVICH, inputIzh_p, inputIzh_ini);
-  model.activateDirectInput("inputIzh", CONSTINP);
-  model.setConstInp("inputIzh", constInput);
+  model.addNeuronPopulation("Input", 500, IZHIKEVICH, input_p, input_ini);
+  model.activateDirectInput("Input", CONSTINP);
+  model.setConstInp("Input", constInput);
 
-  model.addNeuronPopulation("outputIzh", 500, IZHIKEVICH, inputIzh_p, inputIzh_ini);
+  model.addNeuronPopulation("Interneuron", 500, IZHIKEVICH, input_p, input_ini);
+  model.addSynapsePopulation("Input-Interneuron", NSYNAPSE, ALLTOALL, GLOBALG, 4.0f, "Input", "Interneuron", synapses_p);
+  model.setSynapseG("Input-Interneuron", synG);
 
-  model.addSynapsePopulation("InOut", NSYNAPSE, ALLTOALL, INDIVIDUALG, NO_DELAY, "inputIzh", "outputIzh", synInOut_p);
-  model.setSynapseG("InOut", synInOutG);
+  model.addNeuronPopulation("Output", 500, IZHIKEVICH, input_p, input_ini);
+  model.addSynapsePopulation("Input-Output", NSYNAPSE, ALLTOALL, GLOBALG, 5.0f, "Input", "Output", synapses_p);
+  model.setSynapseG("Input-Output", synG);
+  model.addSynapsePopulation("Interneuron-Output", NSYNAPSE, ALLTOALL, GLOBALG, NO_DELAY, "Interneuron", "Output", synapses_p);
+  model.setSynapseG("Interneuron-Output", synG);
 }

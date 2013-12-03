@@ -15,12 +15,13 @@ using namespace std;
 #include "SynDelay_CODE/runner.cc"
 
 
-SynDelay::SynDelay(int whichArg)
+SynDelay::SynDelay(bool usingGPU_arg)
 {
+  usingGPU = usingGPU_arg;
   t = 0.0f;
-  which = whichArg;
-  sumInputIzh = 0;
-  sumOutputIzh = 0;
+  sumInput = 0;
+  sumInterneuron = 0;
+  sumOutput = 0;
   allocateMem();
   initialize();
 
@@ -28,9 +29,8 @@ SynDelay::SynDelay(int whichArg)
   
 
 
-  if (which == 1)
-  { 
-    // copy variables to GPU
+  if (usingGPU)
+  {
     copyGToDevice();
     copyStateToDevice();
   }
@@ -39,12 +39,33 @@ SynDelay::SynDelay(int whichArg)
 SynDelay::~SynDelay()
 {
   freeMem();
-  if (which == 1) freeDeviceMem();
+  if (usingGPU)
+  {
+    freeDeviceMem();
+  }
 }
 
 void SynDelay::run()
 {
-  
+  void *devPtr;
+
+  for (int i = 0; i < (TOTAL_TIME / DT); i++)
+  {
+    if (usingGPU)
+    {
+      stepTimeGPU(t);
+      copyStateFromDevice();
+    }
+    else
+    {
+      stepTimeCPU(t);
+    }
+    
+    
+    
+    t += DT;
+    if (t % REPORT_TIME == 0) cout << "time " << t << endl;
+  }
 }
 
 
@@ -56,7 +77,7 @@ int main(int argc, char *argv[])
 {
   if (argc != 3)
   {
-    cerr << "usage: SynDelaySim <CPU = 0, GPU = 1> <basename>" << endl;
+    cerr << "usage: SynDelaySim <GPU = true, CPU = false> <basename>" << endl;
     return EXIT_FAILURE;
   }
 
