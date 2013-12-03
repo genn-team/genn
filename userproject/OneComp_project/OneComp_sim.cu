@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
   locust.run(DT, which);
   while (!done) 
   {
-    if (which == GPU) locust.getSpikesFromGPU(); 
+    if (which == GPU) locust.getSpikeNumbersFromGPU();
     for (int k=0;k<locust.model.neuronGrpN;k++)
     {
       if (locust.model.receivesInputCurrent[k]==2) 
