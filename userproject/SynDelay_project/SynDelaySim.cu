@@ -24,11 +24,6 @@ SynDelay::SynDelay(bool usingGPU_arg)
   sumOutput = 0;
   allocateMem();
   initialize();
-
-  // constant input current here
-  
-
-
   if (usingGPU)
   {
     copyGToDevice();
@@ -48,7 +43,6 @@ SynDelay::~SynDelay()
 void SynDelay::run()
 {
   void *devPtr;
-
   for (int i = 0; i < (TOTAL_TIME / DT); i++)
   {
     if (usingGPU)
