@@ -261,8 +261,8 @@ void NNmodel::addSynapsePopulation(const string name, unsigned int syntype, unsi
   synapseSource.push_back(srcNumber);
   trgNumber = findNeuronGrp(trg);
   synapseTarget.push_back(trgNumber);
-  if (delay / DT > neuronDelaySlots[synapseSource[srcNumber]]) {
-    neuronDelaySlots[synapseSource[srcNumber]] = delay / DT;
+  if ((delay / DT) > neuronDelaySlots[srcNumber]) {
+    neuronDelaySlots[srcNumber] = (delay / DT);
   }
   for (int j= 0; j < SYNPNO[synapseType[i]]; j++) {
     tmpP.push_back(p[j]);
