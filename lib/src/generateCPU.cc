@@ -77,15 +77,20 @@ void genNeuronFunction(NNmodel &model, //!< Model description
   os << "  float Isyn= 0;" << endl;
   for (int i = 0; i < model.neuronGrpN; i++) {
     nt = model.neuronType[i];
-    os << "  glbscnt" << model.neuronName[i];
 
 
 
 
-    if (model.neuronDelaySlots[i] != 1) {
-      os << "[spkQuePtr" << model.neuronName[i] << "++]" << endl;
+
+    if (model.neuronDelaySlots[i] == 1) {
+      os << "  glbscnt" << model.neuronName[i] << " = 0;" << endl;
     }
-    os << " = 0;" << endl;
+    else {
+      os << "  spkQuePtr" << model.neuronName[i] << " = (spkQuePtr" << model.neuronName[i] << " + 1) % " << model.neuronDelaySlots[i] << ";" << endl;
+      os << "  glbscnt" << model.neuronName[i] << "[spkQuePtr" << model.neuronName[i] << "] = 0;" << endl;
+    }
+
+
 
 
 
@@ -170,7 +175,7 @@ void genNeuronFunction(NNmodel &model, //!< Model description
     }
     os << "glbscnt" << model.neuronName[i];
     if (model.neuronDelaySlots[i] != 1) {
-      os << "[spkQuePtr" << model.neuronName[i] << "]" << endl;
+      os << "[spkQuePtr" << model.neuronName[i] << "]";
     }
     os << "++] = n;" << endl;
 
@@ -253,8 +258,10 @@ void genSynapseFunction(NNmodel &model, //!< Model description
   if (model.lrnGroups > 0) {
     os << "  float dt, dg;" << endl;
   }
+  if (model.needSynapseDelay > 0) {
+    os << "  int delaySlot;" << endl;
+  }
   os << endl;
-
   for (int i= 0; i < model.neuronGrpN; i++) {
     if (model.inSyn[i].size() > 0) { // there is input onto this neuron group
       for (int j= 0; j < model.inSyn[i].size(); j++) {
@@ -265,28 +272,38 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 	if (model.synapseType[synID] == NGRADSYNAPSE) {
 	  Vslope= model.synapsePara[synID][3];
 	}
-	os << "  for (int j= 0; j < glbscnt" << model.neuronName[src];
-
 
 
 
 	if (model.neuronDelaySlots[src] != 1) {
-	  os << "[spkQuePtr" << model.neuronName[src] << "]";
+	  os << "  delaySlot = (spkQuePtr" << model.neuronName[src] << " + ";
+	  os << (int) (model.neuronDelaySlots[src] - model.synapseDelay[synID] + 1);
+	  os << ") % " << model.neuronDelaySlots[src] << ";" << endl;
 	}
 
 
 
+	os << "  for (int j= 0; j < glbscnt" << model.neuronName[src];
+	if (model.neuronDelaySlots[src] != 1) {
+	  os << "[delaySlot]";
+	}
 	os << "; j++) {" << endl;
-	os << "    for (int n= 0; n < " << model.neuronN[i] <<"; n++) {" << endl;
+
+
+
+
+	os << "    for (int n= 0; n < " << model.neuronN[i] << "; n++) {" << endl;
 	if (model.synapseGType[synID] == INDIVIDUALID) {
-	  os << "      unsigned int gid= (glbSpk" << model.neuronName[src] << "[";
+	  os << "      unsigned int gid = (glbSpk" << model.neuronName[src] << "[";
+
 
 
 
 
 	  if (model.neuronDelaySlots[src] != 1) {
-	    os << "(spkQuePtr" << model.neuronName[src] << " * " << model.neuronN[src] << ") + ";
+	    os << "delaySlot * " << model.neuronN[src] << " + ";
 	  }
+
 
 
 
@@ -303,9 +320,12 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 
 
 
+
 	  if (model.neuronDelaySlots[src] != 1) {
-	    os << "(spkQuePtr" << model.neuronName[src] << " * " << model.neuronN[src] << ") + ";
+	    os << "delaySlot * " << model.neuronN[src] << " + ";
 	  }
+
+
 
 
 
@@ -327,10 +347,13 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 
 
 
+
+
 	  if (model.neuronDelaySlots[src] != 1) {
-	    theLG += toString("(spkQuePtr") +  model.neuronName[src];
-	    theLG += toString(" * ") + toString(model.neuronN[src]) + toString(") + ");
+	    theLG += toString("delaySlot * ") + toString(model.neuronN[src]) + toString(" + ");
 	  }
+
+
 
 
 
@@ -356,9 +379,14 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 
 
 
+
+
 	    if (model.neuronDelaySlots[src] != 1) {
-	      os << "(spkQuePtr" << model.neuronName[src] << " * " << model.neuronN[src] << ") + ";
+	      os << "delaySlot * " << model.neuronN[src] << " + ";
 	    }
+
+
+
 
 
 
@@ -383,31 +411,43 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 	  os << "          else {" << endl;
 	  os << "            dg= -" << SAVEP(model.dsp[synID][7]) << ";" << endl;
 	  os << "          }" << endl;
+
+
+
+
 	  os << "          grawp" << model.synapseName[synID] << "[glbSpk" << model.neuronName[src] << "[";
-
-
 	  if (model.neuronDelaySlots[src] != 1) {
-	    os << "(spkQuePtr" << model.neuronName[src] << " * " << model.neuronN[src] << ") + ";
+	    os << "delaySlot * " << model.neuronN[src] << " + ";
 	  }
 	  os << "j]*" << model.neuronN[i] << " + n] += dg;" << endl;
 
 
+
+
+
 	  os << "          gp" << model.synapseName[synID] << "[glbSpk" << model.neuronName[src] << "[";
-
-
-
 	  if (model.neuronDelaySlots[src] != 1) {
-	    os << "(spkQuePtr" << model.neuronName[src] << " * " << model.neuronN[src] << ") + ";
+	    os << "delaySlot * " << model.neuronN[src] << " + ";
 	  }
+
+
+
+
 
 
 	  os << "j]*" << model.neuronN[i] << " + n]= ";
 	  os << "gFunc" << model.synapseName[synID] << "(grawp" << model.synapseName[synID] << "[glbSpk" << model.neuronName[src] << "[";
 
 
+
+
+
+
 	  if (model.neuronDelaySlots[src] != 1) {
-	    os << "(spkQuePtr" << model.neuronName[src] << " * " << model.neuronN[src] << ") + ";
+	    os << "delaySlot * " << model.neuronN[src] << " + ";
 	  }
+
+
 
 
 
@@ -433,6 +473,11 @@ void genSynapseFunction(NNmodel &model, //!< Model description
     os << endl;
 
     for (int i= 0; i < model.lrnGroups; i++) {
+
+
+
+
+
       unsigned int k= model.lrnSynGrp[i];
       unsigned int src= model.synapseSource[k];
       unsigned int nN= model.neuronN[src];
@@ -442,9 +487,12 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 
 
 
+
+
       if (model.neuronDelaySlots[trg] != 1) {
 	os << "[spkQuePtr" << model.neuronName[trg] << "]" << endl;
       }
+
 
 
 
@@ -462,8 +510,11 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 
 
       os << "j]] > " << Epre << ") {" << endl;
-      os << "        dt= t - sT" << model.neuronName[src] << "[n] - ";
-      os << SAVEP(model.synapsePara[k][11]) << ";" << endl;
+      os << "        dt= t - sT" << model.neuronName[src] << "[n]";
+      if (model.neuronDelaySlots[src] != 1) {
+	os << " + " << (DT * model.synapseDelay[k]);
+      }
+      os << " - " << SAVEP(model.synapsePara[k][11]) << ";" << endl;
       os << "        if (dt > " << model.dsp[k][1] << ") {" << endl;
       os << "          dg= -" << SAVEP(model.dsp[k][5]) << ";" << endl;
       os << "        }" << endl;
