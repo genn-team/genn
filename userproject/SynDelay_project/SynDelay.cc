@@ -35,11 +35,11 @@ void modelDefinition(NNmodel &model)
   model.setConstInp("Input", constInput);
 
   model.addNeuronPopulation("Interneuron", 500, IZHIKEVICH, input_p, input_ini);
-  model.addSynapsePopulation("Input-Interneuron", NSYNAPSE, ALLTOALL, GLOBALG, 4.0f, "Input", "Interneuron", synapses_p);
+  model.addSynapsePopulation("Input-Interneuron", NSYNAPSE, ALLTOALL, GLOBALG, 4, "Input", "Interneuron", synapses_p);
   model.setSynapseG("Input-Interneuron", synG);
 
   model.addNeuronPopulation("Output", 500, IZHIKEVICH, input_p, input_ini);
-  model.addSynapsePopulation("Input-Output", NSYNAPSE, ALLTOALL, GLOBALG, 5.0f, "Input", "Output", synapses_p);
+  model.addSynapsePopulation("Input-Output", NSYNAPSE, ALLTOALL, GLOBALG, 5, "Input", "Output", synapses_p);
   model.setSynapseG("Input-Output", synG);
   model.addSynapsePopulation("Interneuron-Output", NSYNAPSE, ALLTOALL, GLOBALG, NO_DELAY, "Interneuron", "Output", synapses_p);
   model.setSynapseG("Interneuron-Output", synG);

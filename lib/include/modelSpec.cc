@@ -28,6 +28,7 @@ NNmodel::NNmodel()
   synapseGrpN= 0;
   lrnGroups= 0;
   needSt= 0;
+  needSynapseDelay = 0;
 }
 
 NNmodel::~NNmodel() 
@@ -236,9 +237,9 @@ void NNmodel::activateDirectInput(const string name, unsigned int type)
  */
 //--------------------------------------------------------------------------
 
-void NNmodel::addSynapsePopulation(const char *name, unsigned int syntype, unsigned int conntype, unsigned int gtype, float delay, const char *src, const char *trg, float *p) 
+void NNmodel::addSynapsePopulation(const char *name, unsigned int syntype, unsigned int conntype, unsigned int gtype, unsigned int delaySteps, const char *src, const char *trg, float *p) 
 {
-  addSynapsePopulation(toString(name), syntype, conntype, gtype, delay, toString(src), toString(trg), p);
+  addSynapsePopulation(toString(name), syntype, conntype, gtype, delaySteps, toString(src), toString(trg), p);
 }
 
 //--------------------------------------------------------------------------
@@ -246,7 +247,7 @@ void NNmodel::addSynapsePopulation(const char *name, unsigned int syntype, unsig
  */
 //--------------------------------------------------------------------------
 
-void NNmodel::addSynapsePopulation(const string name, unsigned int syntype, unsigned int conntype, unsigned int gtype, float delay, const string src, const string trg, float *p)
+void NNmodel::addSynapsePopulation(const string name, unsigned int syntype, unsigned int conntype, unsigned int gtype, unsigned int delaySteps, const string src, const string trg, float *p)
 {
   unsigned int i= synapseGrpN++;
   unsigned int srcNumber, trgNumber;
@@ -256,13 +257,14 @@ void NNmodel::addSynapsePopulation(const string name, unsigned int syntype, unsi
   synapseType.push_back(syntype);
   synapseConnType.push_back(conntype);
   synapseGType.push_back(gtype);
-  synapseDelay.push_back(delay);
   srcNumber = findNeuronGrp(src);
   synapseSource.push_back(srcNumber);
   trgNumber = findNeuronGrp(trg);
   synapseTarget.push_back(trgNumber);
-  if ((delay / DT) > neuronDelaySlots[srcNumber]) {
-    neuronDelaySlots[srcNumber] = (delay / DT);
+  synapseDelay.push_back(delaySteps);
+  if (delaySteps > neuronDelaySlots[srcNumber]) {
+    neuronDelaySlots[srcNumber] = delaySteps;
+    needSynapseDelay = 1;
   }
   for (int j= 0; j < SYNPNO[synapseType[i]]; j++) {
     tmpP.push_back(p[j]);
