@@ -42,7 +42,7 @@ SynDelay::~SynDelay()
 
 void SynDelay::run()
 {
-  void *devPtr;
+  //void *devPtr;
   for (int i = 0; i < (TOTAL_TIME / DT); i++)
   {
     if (usingGPU)
@@ -58,7 +58,7 @@ void SynDelay::run()
     
     
     t += DT;
-    if (t % REPORT_TIME == 0) cout << "time " << t << endl;
+    if ((int) t % (int) REPORT_TIME == 0) cout << "time " << t << endl;
   }
 }
 

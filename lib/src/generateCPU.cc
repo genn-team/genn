@@ -483,38 +483,41 @@ void genSynapseFunction(NNmodel &model, //!< Model description
       unsigned int nN= model.neuronN[src];
       unsigned int trg= model.synapseTarget[k];
       float Epre= model.synapsePara[k][1];
+
+
+
+
+
       os << "  for (int j= 0; j < glbscnt" << model.neuronName[trg];
-
-
-
-
-
       if (model.neuronDelaySlots[trg] != 1) {
 	os << "[spkQuePtr" << model.neuronName[trg] << "]" << endl;
       }
-
-
-
-
       os << "; j++) {" << endl;
-      os << "    for (int n= 0; n < " << model.neuronN[src] <<"; n++) {" << endl;
+
+
+
+
+      os << "    for (int n= 0; n < " << model.neuronN[src] << "; n++) {" << endl;
       os << "      if (V" << model.neuronName[trg] << "[glbSpk" << model.neuronName[trg] << "[";
-
-
-
-
       if (model.neuronDelaySlots[trg] != 1) {
 	os << "(spkQuePtr" << model.neuronName[trg] << " * " << model.neuronN[trg] << ") + ";
       }
-
-
-
       os << "j]] > " << Epre << ") {" << endl;
-      os << "        dt= t - sT" << model.neuronName[src] << "[n]";
+
+
+
+
+
+      os << "        dt = t - sT" << model.neuronName[src] << "[n]";
       if (model.neuronDelaySlots[src] != 1) {
 	os << " + " << (DT * model.synapseDelay[k]);
       }
       os << " - " << SAVEP(model.synapsePara[k][11]) << ";" << endl;
+
+
+
+
+
       os << "        if (dt > " << model.dsp[k][1] << ") {" << endl;
       os << "          dg= -" << SAVEP(model.dsp[k][5]) << ";" << endl;
       os << "        }" << endl;
