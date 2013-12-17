@@ -612,9 +612,9 @@ void genRunnerGPU(NNmodel &model, //!< Model description
       os << size << ", cudaMemcpyDeviceToHost));" << endl;
     }
     for (int k= 0, l= nModels[nt].varNames.size(); k < l; k++) {
-      os << "  CHECK_CUDA_ERRORS(cudaGetSymbolAddress(&devPtr, d_" << nModels[nt].varNames[k] << model.neuronName[i] << "));" << endl;
-      os << "  CHECK_CUDA_ERRORS(cudaMemcpy(" << nModels[nt].varNames[k] << model.neuronName[i] << ", devPtr, ";
-      os << model.neuronN[i] << " * sizeof(" << nModels[nt].varTypes[k] << "), cudaMemcpyDeviceToHost));" << endl;
+      os << "  CHECK_CUDA_ERRORS(cudaMemcpy(" << nModels[nt].varNames[k] << model.neuronName[i] << ", ";
+      os << "d_" << nModels[nt].varNames[k] << model.neuronName[i] << ", " << model.neuronN[i];
+      os << " * sizeof(" << nModels[nt].varTypes[k] << "), cudaMemcpyDeviceToHost));" << endl;
     }
     if (model.neuronNeedSt[i]) {
       os << "  CHECK_CUDA_ERRORS(cudaGetSymbolAddress(&devPtr, d_sT" << model.neuronName[i] << "));" << endl;
