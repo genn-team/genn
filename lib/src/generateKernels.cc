@@ -131,7 +131,7 @@ void genNeuronKernel(NNmodel &model, //!< Model description
   if (neuronGridSz < deviceProp[theDev].maxGridSize[1]){
     os << "  unsigned int id = " << neuronBlkSz << " * blockIdx.x + threadIdx.x;" << endl;
   }
-  else{
+  else {
     os << "  unsigned int id = " << neuronBlkSz << " * (blockIdx.x * " << ceil(sqrt(neuronGridSz));
     os << " + blockIdx.y) + threadIdx.x;" << endl;  	
   }
@@ -165,7 +165,21 @@ void genNeuronKernel(NNmodel &model, //!< Model description
     }
     for (int k = 0, l = nModels[nt].varNames.size(); k < l; k++) {
       os << "      " << nModels[nt].varTypes[k] << " l" << nModels[nt].varNames[k];
-      os << " = d_" <<  nModels[nt].varNames[k] << model.neuronName[i] << "[" << localID << "];" << endl;
+
+
+
+
+
+
+      os << " = d_" <<  nModels[nt].varNames[k] << model.neuronName[i] << "[";
+      if ((nModels[nt].varNames[k] == "V") && (model.neuronDelaySlots[i] != 1)) {
+	os << "(d_spkQuePtr" << model.neuronName[i] << " * " << model.neuronN[i] << ") + ";
+      }
+      os << localID << "];" << endl;
+
+
+
+
     }
     if (nt != POISSONNEURON) {
       os << "      // pull inSyn values in a coalesced access" << endl;
@@ -376,7 +390,9 @@ void genSynapseKernel(NNmodel &model, //!< Model description
   os << "  __shared__ float shSpkV[" << synapseBlkSz << "];" << endl;
   os << "  unsigned int lscnt, numSpikeSubsets, lmax, j, r;" << endl;
   os << "  float linSyn, lg;" << endl;
-  if (model.needSynapseDelay == 1) os << "  int delaySlot;" << endl;
+  if (model.needSynapseDelay == 1) {
+    os << "  int delaySlot;" << endl;
+  }
   os << endl;
 
   for (int i = 0; i < model.synapseGrpN; i++) {
@@ -414,7 +430,6 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 
 
 
-    os << endl;
     os << "    // only do this for existing neurons" << endl;
     os << "    if (" << localID << " < " << nN <<") {" << endl;
     os << "      linSyn = d_inSyn" << model.neuronName[trg] << inSynNo << "[" << localID << "];" << endl;
@@ -449,20 +464,17 @@ void genSynapseKernel(NNmodel &model, //!< Model description
       os << "(delaySlot * " << model.neuronN[src] << ") + ";
     }
     os << "(r * " << synapseBlkSz << ") + threadIdx.x];" << endl;
-
-
-
-
-
-
     if (model.neuronType[src] != POISSONNEURON) {
-      os << "        shSpkV[threadIdx.x] = d_V" << model.neuronName[src] << "[shSpk[threadIdx.x]];" << endl;
+      os << "        shSpkV[threadIdx.x] = d_V" << model.neuronName[src] << "[";
+      if (model.neuronDelaySlots[src] != 1) {
+	os << "(delaySlot * " << model.neuronN[src] << ") + ";
+      }
+      os << "shSpk[threadIdx.x]];" << endl;
+
+
+
+
     }
-
-
-
-
-
     os << "      }" << endl;
     os << "      __syncthreads();" << endl;
     os << "      // only work on existing neurons" << endl;
@@ -677,10 +689,11 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 
 
 
-
-      os << "        shSpkV[threadIdx.x] = d_V" << model.neuronName[trg] << "[shSpk[threadIdx.x]];" << endl;
-
-
+      os << "        shSpkV[threadIdx.x] = d_V" << model.neuronName[trg] << "[";
+      if (model.neuronDelaySlots[trg] != 1) {
+	os << "(d_spkQuePtr" << model.neuronName[trg] << " * " << model.neuronN[trg] << ") + ";
+      }
+      os << "shSpk[threadIdx.x]];" << endl;
 
 
 
@@ -712,7 +725,6 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 
 
 
-
       os << "            if (dt > " << model.dsp[k][1] << ") {" << endl;
       os << "              dt = - " << SAVEP(model.dsp[k][5]) << ";" << endl;
       os << "            }" << endl;
@@ -739,9 +751,6 @@ void genSynapseKernel(NNmodel &model, //!< Model description
       os << "      j = atomicAdd((unsigned int *) &d_done, 1);" << endl;
       os << "      if (j == " << numOfBlocks - 1 << ") {" << endl;
       for (int j = 0; j < model.neuronGrpN; j++) {
-
-
-
 
 
 
