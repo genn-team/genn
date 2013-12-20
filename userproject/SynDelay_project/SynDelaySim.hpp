@@ -8,19 +8,13 @@
 
 class SynDelay
 {
-
 private:
-  float t;
   bool usingGPU;
-  int sumInput;
-  int sumInterneuron;
-  int sumOutput;
 
 public:
-  SynDelay(bool usingGPU_arg);
+  SynDelay(bool usingGPU);
   ~SynDelay();
-  void run();
-
+  void run(float t);
 };
 
 #endif // SYNDELAYSIM_HPP

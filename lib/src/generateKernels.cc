@@ -163,19 +163,20 @@ void genNeuronKernel(NNmodel &model, //!< Model description
       os << "      unsigned int lrate = d_rates" << model.neuronName[i];
       os << "[offset" << model.neuronName[i] << " + " << localID << "];" << endl;
     }
+
+
+
+
+
     for (int k = 0, l = nModels[nt].varNames.size(); k < l; k++) {
       os << "      " << nModels[nt].varTypes[k] << " l" << nModels[nt].varNames[k];
-
-
-
-
-
-
       os << " = d_" <<  nModels[nt].varNames[k] << model.neuronName[i] << "[";
       if ((nModels[nt].varNames[k] == "V") && (model.neuronDelaySlots[i] != 1)) {
-	os << "(d_spkQuePtr" << model.neuronName[i] << " * " << model.neuronN[i] << ") + ";
+	os << "(((d_spkQuePtr" << model.neuronName[i] << " + " << (model.neuronDelaySlots[i] - 1) << ") % ";
+	os << model.neuronDelaySlots[i] << ") * " << model.neuronN[i] << ") + ";
       }
       os << localID << "];" << endl;
+
 
 
 
@@ -259,8 +260,22 @@ void genNeuronKernel(NNmodel &model, //!< Model description
     }
     os << "      }" << endl;
     for (int k = 0, l = nModels[nt].varNames.size(); k < l; k++) {
-      os << "      d_" << nModels[nt].varNames[k] <<  model.neuronName[i];
-      os << "[" << localID << "] = l" << nModels[nt].varNames[k] << ";" << endl;
+
+
+
+
+
+
+      os << "      d_" << nModels[nt].varNames[k] <<  model.neuronName[i] << "[";
+      if ((nModels[nt].varNames[k] == "V") && (model.neuronDelaySlots[i] != 1)) {
+	os << "(d_spkQuePtr" << model.neuronName[i] << " * " << model.neuronN[i] << ") + ";
+      }
+      os << localID << "] = l" << nModels[nt].varNames[k] << ";" << endl;
+
+
+
+
+
     }
     for (int j = 0; j < model.inSyn[i].size(); j++) {
       os << "      d_inSyn"  << model.neuronName[i] << j << "[" << localID << "] = linSyn";

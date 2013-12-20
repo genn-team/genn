@@ -15,13 +15,9 @@ using namespace std;
 #include "SynDelay_CODE/runner.cc"
 
 
-SynDelay::SynDelay(bool usingGPU_arg)
+SynDelay::SynDelay(bool usingGPU)
 {
-  usingGPU = usingGPU_arg;
-  t = 0.0f;
-  sumInput = 0;
-  sumInterneuron = 0;
-  sumOutput = 0;
+  this->usingGPU = usingGPU;
   allocateMem();
   initialize();
   if (usingGPU)
@@ -40,25 +36,16 @@ SynDelay::~SynDelay()
   }
 }
 
-void SynDelay::run()
+void SynDelay::run(float t)
 {
-  //void *devPtr;
-  for (int i = 0; i < (TOTAL_TIME / DT); i++)
+  if (usingGPU)
   {
-    if (usingGPU)
-    {
-      stepTimeGPU(t);
-      copyStateFromDevice();
-    }
-    else
-    {
-      stepTimeCPU(t);
-    }
-    
-    
-    
-    t += DT;
-    if ((int) t % (int) REPORT_TIME == 0) cout << "time " << t << endl;
+    stepTimeGPU(t);
+    copyStateFromDevice();
+  }
+  else
+  {
+    stepTimeCPU(t);
   }
 }
 
@@ -71,34 +58,48 @@ int main(int argc, char *argv[])
 {
   if (argc != 3)
   {
-    cerr << "usage: SynDelaySim <GPU = true, CPU = false> <basename>" << endl;
+    cerr << "usage: SynDelaySim <GPU = 1, CPU = 0> <output label>" << endl;
     return EXIT_FAILURE;
   }
 
+  float t = 0.0f;
   SynDelay *sim = new SynDelay(atoi(argv[1]));
   CStopWatch *timer = new CStopWatch();
+  string outLabel = toString(argv[2]);
+  ofstream fileTime;
+  ofstream fileV;
+  fileTime.open((outLabel + "_time").c_str(), ios::out | ios::app);
+  fileV.open((outLabel + "_Vm").c_str(), ios::out | ios::trunc);
 
-  // open files for storing spikes and spike counts
-  string basename = argv[2];
-  string outDir = basename + "_output/";
-  ofstream fileSpk;
-  ofstream fileSpkCnt;
-  fileSpk.open((outDir + "spikes").c_str(), ios::app);
-  fileSpkCnt.open((outDir + "spike_counts").c_str(), ios::app);
-
-  // begin simulating
   cout << "# DT " << DT << endl;
   cout << "# TOTAL_TIME " << TOTAL_TIME << endl;
   cout << "# REPORT_TIME " << REPORT_TIME << endl;
-  timer -> startTimer();
-  sim -> run();
-  timer -> stopTimer();
-  cout << "done in " << timer -> getElapsedTime() << " seconds" << endl;
-  fileSpk.close();
-  fileSpkCnt.close();
-  cout << "spikes and spike counts are saved in " << outDir << endl;
+  cout << "# begin simulating on " << (argv[1] ? "GPU" : "CPU") << endl;
+  timer->startTimer();
+  for (int i = 0; i < (TOTAL_TIME / DT); i++)
+  {
+    sim->run(t);
+    t += DT;
+
+    fileV << "Time: " << t
+	  << "\t\tInput: " << VInput[spkQuePtrInput * 500]
+	  << "\t\tInter: " << VInterneuron[0]
+	  << "\t\tOutput: " << VOutput[0]
+	  << endl;
+
+    if ((int) t % (int) REPORT_TIME == 0)
+    {
+      cout << "time " << t << endl;
+    }
+  }
+  timer->stopTimer();
+  cout << "# done in " << timer->getElapsedTime() << " seconds" << endl;
+  fileTime << timer->getElapsedTime() << endl;
+  fileTime.close();
+  fileV.close();
 
   delete sim;
+  delete timer;
   return EXIT_SUCCESS;
 }
 
