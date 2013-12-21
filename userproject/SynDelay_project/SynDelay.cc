@@ -59,24 +59,24 @@ float synapses_p[3] = {
   -30.0,   // 1 - Epre: Presynaptic threshold potential
   1.0      // 2 - tau_S: decay time constant for S [ms]
 };
-float synG = 0.01; // global synapse conductance for synapses
+float strongSynG = 0.003; // strong synapse G
+float weakSynG = 0.001;   // weak synapse G
 
 
 void modelDefinition(NNmodel &model) 
 {
   model.setName("SynDelay");
 
-  model.addNeuronPopulation("Input", 500, IZHIKEVICH, input_p, input_ini);
+  model.addNeuronPopulation("Input", 100, IZHIKEVICH, input_p, input_ini);
   model.activateDirectInput("Input", CONSTINP);
   model.setConstInp("Input", constInput);
+  model.addNeuronPopulation("Inter", 100, IZHIKEVICH, inter_p, inter_ini);
+  model.addNeuronPopulation("Output", 100, IZHIKEVICH, output_p, output_ini);
 
-  model.addNeuronPopulation("Interneuron", 500, IZHIKEVICH, inter_p, inter_ini);
-  model.addSynapsePopulation("Input-Interneuron", NSYNAPSE, ALLTOALL, GLOBALG, 4, "Input", "Interneuron", synapses_p);
-  model.setSynapseG("Input-Interneuron", synG);
-
-  model.addNeuronPopulation("Output", 500, IZHIKEVICH, output_p, output_ini);
-  model.addSynapsePopulation("Input-Output", NSYNAPSE, ALLTOALL, GLOBALG, 5, "Input", "Output", synapses_p);
-  model.setSynapseG("Input-Output", synG);
-  model.addSynapsePopulation("Interneuron-Output", NSYNAPSE, ALLTOALL, GLOBALG, NO_DELAY, "Interneuron", "Output", synapses_p);
-  model.setSynapseG("Interneuron-Output", synG);
+  model.addSynapsePopulation("Input-Inter", NSYNAPSE, ALLTOALL, GLOBALG, 3, "Input", "Inter", synapses_p);
+  model.setSynapseG("Input-Inter", strongSynG);
+  model.addSynapsePopulation("Input-Output", NSYNAPSE, ALLTOALL, GLOBALG, 6, "Input", "Output", synapses_p);
+  model.setSynapseG("Input-Output", weakSynG);
+  model.addSynapsePopulation("Inter-Output", NSYNAPSE, ALLTOALL, GLOBALG, NO_DELAY, "Inter", "Output", synapses_p);
+  model.setSynapseG("Inter-Output", weakSynG);
 }
