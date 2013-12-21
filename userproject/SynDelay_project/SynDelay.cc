@@ -59,19 +59,19 @@ float synapses_p[3] = {
   -30.0,   // 1 - Epre: Presynaptic threshold potential
   1.0      // 2 - tau_S: decay time constant for S [ms]
 };
-float strongSynG = 0.003; // strong synapse G
-float weakSynG = 0.001;   // weak synapse G
+float strongSynG = 0.0006; // strong synapse G
+float weakSynG = 0.0002;   // weak synapse G
 
 
 void modelDefinition(NNmodel &model) 
 {
   model.setName("SynDelay");
 
-  model.addNeuronPopulation("Input", 100, IZHIKEVICH, input_p, input_ini);
+  model.addNeuronPopulation("Input", 500, IZHIKEVICH, input_p, input_ini);
   model.activateDirectInput("Input", CONSTINP);
   model.setConstInp("Input", constInput);
-  model.addNeuronPopulation("Inter", 100, IZHIKEVICH, inter_p, inter_ini);
-  model.addNeuronPopulation("Output", 100, IZHIKEVICH, output_p, output_ini);
+  model.addNeuronPopulation("Inter", 500, IZHIKEVICH, inter_p, inter_ini);
+  model.addNeuronPopulation("Output", 500, IZHIKEVICH, output_p, output_ini);
 
   model.addSynapsePopulation("Input-Inter", NSYNAPSE, ALLTOALL, GLOBALG, 3, "Input", "Inter", synapses_p);
   model.setSynapseG("Input-Inter", strongSynG);

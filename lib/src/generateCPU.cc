@@ -74,7 +74,6 @@ void genNeuronFunction(NNmodel &model, //!< Model description
   }
   os << "float t)" << endl;
   os << "{" << endl;
-  os << "  float Isyn = 0;" << endl;
   for (int i = 0; i < model.neuronGrpN; i++) {
     nt = model.neuronType[i];
 
@@ -114,6 +113,7 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 
 
 
+    os << "    float Isyn = 0;" << endl;
     if (model.inSyn[i].size() > 0) {
       os << "    Isyn = ";
       for (int j = 0; j < model.inSyn[i].size(); j++) {
