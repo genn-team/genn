@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
   cout << "# DT " << DT << endl;
   cout << "# TOTAL_TIME " << TOTAL_TIME << endl;
   cout << "# REPORT_TIME " << REPORT_TIME << endl;
-  cout << "# begin simulating on " << (argv[1] ? "GPU" : "CPU") << endl;
+  cout << "# begin simulating on " << (atoi(argv[1]) ? "GPU" : "CPU") << endl;
   timer->startTimer();
   for (int i = 0; i < (TOTAL_TIME / DT); i++)
   {
@@ -82,8 +82,8 @@ int main(int argc, char *argv[])
     t += DT;
 
     fileV << "Time: " << t
-	  << "\t\tInput: " << VInput[spkQuePtrInput * 500]
-	  << "\t\tInter: " << VInterneuron[0]
+	  << "\t\tInput: " << VInput[spkQuePtrInput * 100]
+	  << "\t\tInter: " << VInter[0]
 	  << "\t\tOutput: " << VOutput[0]
 	  << endl;
 

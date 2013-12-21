@@ -327,12 +327,29 @@ void genRunner(NNmodel &model, //!< Model description
 
 
 
-    for (int j= 0; j < model.inSyn[i].size(); j++) {
-      os << "    inSyn" << model.neuronName[i] << j << "[i]= 0.0f;" << endl;
+    for (int k = 0; k < model.inSyn[i].size(); k++) {
+      os << "    inSyn" << model.neuronName[i] << k << "[i] = 0.0f;" << endl;
     } 
-    for (int k= 0, l= nModels[nt].varNames.size(); k < l; k++) {
-      os << "    " << nModels[nt].varNames[k] << model.neuronName[i];
-      os << "[i]= " << model.neuronIni[i][k] << ";" << endl;
+    for (int k = 0; k < nModels[nt].varNames.size(); k++) {
+
+
+
+
+
+      if ((nModels[nt].varNames[k] == "V") && (model.neuronDelaySlots[i] != 1)) {
+	os << "    for (int j = 0; j < " << model.neuronDelaySlots[i] << "; j++) {" << endl;
+	os << "      " << nModels[nt].varNames[k] << model.neuronName[i] << "[(j * ";
+	os << model.neuronN[i] << ") + i] = " << model.neuronIni[i][k] << ";" << endl;
+	os << "    }" << endl;
+      }
+      else {
+	os << "    " << nModels[nt].varNames[k] << model.neuronName[i];
+	os << "[i] = " << model.neuronIni[i][k] << ";" << endl;
+      }
+
+
+
+
     }
     if (model.neuronType[i] == POISSONNEURON) {
       os << "    seed" << model.neuronName[i] << "[i]= rand();" << endl;
