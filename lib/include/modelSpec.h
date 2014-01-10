@@ -80,6 +80,9 @@ unsigned int SYNPNO[SYNTYPENO]= {
 #define CPU 0 //!< Macro attaching the label "CPU" to flag 0
 #define GPU 1 //!< Macro attaching the label "GPU" to flag 1
 
+#define FLOAT 0  //!< Macro attaching the label "FLOAT" to flag 0. Used by NNModel::setPrecision()
+#define DOUBLE 1  //!< Macro attaching the label "DOUBLE" to flag 1. Used by NNModel::setPrecision()
+
 // for purposes of STDP
 #define SPK_THRESH 0.0f //!< Macro defining the spiking threshold for the purposes of STDP 
 //#define MAXSPKCNT 50000
@@ -111,6 +114,7 @@ class NNmodel
 {
  public:
   string name; //!< Name of the neuronal newtwork model
+  string ftype; //!< Numerical precision of the floating point variables 
   int valid; //!< Flag for whether the model has been validated (unused?)
   unsigned int needSt; //!< Whether last spike times are needed at all in this network model (related to STDP)
   unsigned int neuronGrpN; //!< Number of neuron groups
@@ -143,6 +147,7 @@ class NNmodel
   vector<float>globalInp; //!< Global explicit input if CONSTINP is chosen.
   vector<unsigned int>synapseInSynNo; //!< IDs of the target neurons' incoming synapse variables for each synapse group
   vector<vector<float> >dsp;  //!> Derived synapse parameters
+  //vector<unsigned int>synapseNo; // !<numnber of synapses in a synapse group
 
  private:
   void setNeuronName(unsigned int, const string); //!< Never used
@@ -161,7 +166,7 @@ class NNmodel
   void initNeuronSpecs(unsigned int); //!< Method for calculating neuron IDs, taking into account the blocksize padding between neuron populations; also initializes nThresh and neuronNeedSt for a population of neurons.
   void initDerivedSynapsePara(unsigned int); //!< Method for calculating the values of derived synapse parameters.
   unsigned int findNeuronGrp(const string); //!< Find the the ID number of a neuron group by its name 
-  unsigned int findSynapseGrp(const string); //< Find the the ID number of a synapse group by its name  
+  unsigned int findSynapseGrp(const string); //< Find the the ID number of a synapse group by its name
 
  public:
   NNmodel();
@@ -175,6 +180,8 @@ class NNmodel
   void addSynapsePopulation(const string, unsigned int, unsigned int, unsigned int, const string, const string, float *); //!< Method for adding a synapse population to a neuronal network model, using C++ string for the name of the population
   void setSynapseG(const string, float); //!< Method for setting the conductance (g) value for a synapse population with "GLOBALG" charactertistic
   void setConstInp(const string, float); //!< Method for setting the global input value for a neuron population if CONSTINP
+  //void setSynapseNo(unsigned int,unsigned int); // !< Sets the number of connections for sparse matrices  
+  void setPrecision(unsigned int);//< Set numerical precision for floating point
 };
 
 

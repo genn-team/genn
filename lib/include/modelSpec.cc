@@ -28,6 +28,7 @@ NNmodel::NNmodel()
   synapseGrpN= 0;
   lrnGroups= 0;
   needSt= 0;
+  setPrecision(0);
 }
 
 NNmodel::~NNmodel() 
@@ -278,10 +279,40 @@ void NNmodel::setSynapseG(const string sName, float g)
   g0[found]= g;
 }
 
+//--------------------------------------------------------------------------
+/*! \brief This function sets a global input value to the specified neuron group.
+ */
+//--------------------------------------------------------------------------
+
 void NNmodel::setConstInp(const string sName, float globalInp0)
 {
   unsigned int found= findNeuronGrp(sName);
   if (globalInp.size() < found+1) globalInp.resize(found+1);
   globalInp[found]= globalInp0;
+}
+
+//--------------------------------------------------------------------------
+/*! \brief This function sets the numerical precision of floating type variables. By default, it is float.
+ */
+//--------------------------------------------------------------------------
+
+void NNmodel::setPrecision(unsigned int floattype)
+{
+  switch (floattype){
+     case 0:
+	ftype = toString("float");
+	break;
+     case 1:
+	ftype = toString("double"); //not supported by compute capability < 1.3
+	break;
+     case 2:
+	ftype = toString("long double"); // not supported by CUDA at the moment.
+	break;
+     default:
+	ftype = toString("float");
+
+	
+
+  }
 }
 #endif
