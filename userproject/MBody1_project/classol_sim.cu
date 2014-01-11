@@ -109,7 +109,10 @@ int main(int argc, char *argv[])
 //  unsigned int sum= 0;
   while (!done) 
   {
-    if (which == GPU) locust.getSpikesFromGPU();
+    if (which == GPU) {
+      locust.getSpikesFromGPU();
+      locust.getSpikeNumbersFromGPU();
+    }
 //    if (which == GPU) locust.getSpikeNumbersFromGPU();
     locust.run(DT, which); // run next batch
     if (which == GPU) {  

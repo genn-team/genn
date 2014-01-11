@@ -28,6 +28,7 @@ NNmodel::NNmodel()
   synapseGrpN= 0;
   lrnGroups= 0;
   needSt= 0;
+  needSynapseDelay = 0;
   setPrecision(0);
 }
 
@@ -215,19 +216,21 @@ void NNmodel::addNeuronPopulation(const string name, unsigned int nNo, unsigned 
   }
   neuronIni.push_back(tmpP);
   vector<unsigned int> tv;
+  neuronDelaySlots.push_back(1);
   receivesInputCurrent.push_back(0);
   inSyn.push_back(tv);  // empty list of input synapse groups for neurons i 
   initDerivedNeuronPara(i);
   initNeuronSpecs(i);
 }
+
 //--------------------------------------------------------------------------
 /*! \brief This function defines the type of the explicit input to the neuron model. Current options are common constant input to all neurons, input  from a file and input defines as a rule.
 */ 
 //--------------------------------------------------------------------------
 void NNmodel::activateDirectInput(const string name, unsigned int type)
 {
-	unsigned int i= findNeuronGrp(name);
-	receivesInputCurrent[i]= type;	//1 if common input, 2 if custom input from file, 3 if custom input as a rule
+  unsigned int i= findNeuronGrp(name);
+  receivesInputCurrent[i]= type;	//1 if common input, 2 if custom input from file, 3 if custom input as a rule
 }
 
 //--------------------------------------------------------------------------
@@ -235,9 +238,9 @@ void NNmodel::activateDirectInput(const string name, unsigned int type)
  */
 //--------------------------------------------------------------------------
 
-void NNmodel::addSynapsePopulation(const char *name, unsigned int syntype, unsigned int conntype, unsigned int gtype, const char *src, const char *trg, float *p) 
+void NNmodel::addSynapsePopulation(const char *name, unsigned int syntype, unsigned int conntype, unsigned int gtype, unsigned int delaySteps, const char *src, const char *trg, float *p) 
 {
-  addSynapsePopulation(toString(name), syntype, conntype, gtype, toString(src), toString(trg), p);
+  addSynapsePopulation(toString(name), syntype, conntype, gtype, delaySteps, toString(src), toString(trg), p);
 }
 
 //--------------------------------------------------------------------------
@@ -245,27 +248,31 @@ void NNmodel::addSynapsePopulation(const char *name, unsigned int syntype, unsig
  */
 //--------------------------------------------------------------------------
 
-void NNmodel::addSynapsePopulation(const string name, unsigned int syntype, unsigned int conntype, unsigned int gtype, const string src, const string trg, float *p)
+void NNmodel::addSynapsePopulation(const string name, unsigned int syntype, unsigned int conntype, unsigned int gtype, unsigned int delaySteps, const string src, const string trg, float *p)
 {
   unsigned int i= synapseGrpN++;
-  unsigned int found;
+  unsigned int srcNumber, trgNumber;
+  vector<float> tmpP;
 
   synapseName.push_back(name);
   synapseType.push_back(syntype);
   synapseConnType.push_back(conntype);
   synapseGType.push_back(gtype);
-  found= findNeuronGrp(src);
-  synapseSource.push_back(found);
-  found= findNeuronGrp(trg);
-  synapseTarget.push_back(found);
-  vector<float> tmpP;
+  srcNumber = findNeuronGrp(src);
+  synapseSource.push_back(srcNumber);
+  trgNumber = findNeuronGrp(trg);
+  synapseTarget.push_back(trgNumber);
+  synapseDelay.push_back(delaySteps);
+  if (delaySteps > neuronDelaySlots[srcNumber]) {
+    neuronDelaySlots[srcNumber] = delaySteps;
+    needSynapseDelay = 1;
+  }
   for (int j= 0; j < SYNPNO[synapseType[i]]; j++) {
     tmpP.push_back(p[j]);
   }
   synapsePara.push_back(tmpP);
   initDerivedSynapsePara(i);
 }
-
 
 //--------------------------------------------------------------------------
 /*! \brief This functions sets the global value of the maximal synaptic conductance for a synapse population that was idfentified as conductance specifcation method "GLOBALG" 
@@ -298,21 +305,19 @@ void NNmodel::setConstInp(const string sName, float globalInp0)
 
 void NNmodel::setPrecision(unsigned int floattype)
 {
-  switch (floattype){
+  switch (floattype) {
      case 0:
 	ftype = toString("float");
 	break;
      case 1:
-	ftype = toString("double"); //not supported by compute capability < 1.3
+	ftype = toString("double"); // not supported by compute capability < 1.3
 	break;
      case 2:
 	ftype = toString("long double"); // not supported by CUDA at the moment.
 	break;
      default:
 	ftype = toString("float");
-
-	
-
   }
 }
+
 #endif
