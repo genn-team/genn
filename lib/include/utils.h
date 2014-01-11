@@ -17,6 +17,7 @@
 #ifndef _UTILS_H_
 #define _UTILS_H_ //!< macro for avoiding multiple inclusion during compilation
 
+
 //--------------------------------------------------------------------------
 /*! \file utils.h
 
@@ -28,13 +29,14 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <map>
 #include <memory>
 #include <fstream>
 
+#include <cuda_runtime.h>
+
 #include "modelSpec.h"
 #include "toString.h"
-
-#include <cuda_runtime.h>
 
 
 //--------------------------------------------------------------------------
@@ -54,9 +56,6 @@
 }
 
 
-vector<neuronModel> nModels; //!< Global c++ vector containing all neuron model descriptions
-
-
 //--------------------------------------------------------------------------
 /* \brief Function to write the comment header denoting file authorship and contact details into the generated code.
  */
@@ -74,6 +73,7 @@ void writeHeader(ostream &os)
   os << endl;
 }
 
+
 //--------------------------------------------------------------------------
 //! \brief Tool for substituting strings in the neuron code strings or other templates
 //--------------------------------------------------------------------------
@@ -87,18 +87,22 @@ void substitute(string &s, const string trg, const string rep)
   }
 }
 
+
 //--------------------------------------------------------------------------
 //! \brief Tool for determining the size of variable types on the current architecture
 //--------------------------------------------------------------------------
 
 unsigned int theSize(string type) 
 {
-  unsigned int sz= sizeof(int);
-  if (type == tS("float")) sz= sizeof(float);
-  if (type == tS("unsigned int")) sz= sizeof(unsigned int);
-  if (type == tS("int")) sz= sizeof(int);
-  return sz;
+  unsigned int size = 0;
+  if (type == "int") size = sizeof(int);
+  if (type == "unsigned int") size = sizeof(unsigned int);
+  if (type == "float") size = sizeof(float);
+  if (type == "double") size = sizeof(double);
+  if (type == "long double") size = sizeof(long double);
+  return size;
 }
+
 
 //--------------------------------------------------------------------------
 /*! \brief Function that defines standard neuron models
@@ -107,6 +111,9 @@ The neuron models are defined and added to the C++ vector nModels that is holdin
 */
 //--------------------------------------------------------------------------
 //NOTE: calcSynapses takes the first variable of each model.neuronName[src] as an argument, of type float. If you add a neuron model, keep this in mind. 
+
+vector<neuronModel> nModels; //!< Global c++ vector containing all neuron model descriptions
+
 void prepareStandardModels()
 {
   neuronModel n;

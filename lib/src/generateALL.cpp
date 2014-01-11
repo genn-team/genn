@@ -31,9 +31,8 @@
 #include <direct.h>
 #include <stdlib.h>
 #else
-#include <sys/stat.h> //needed for mkdir
+#include <sys/stat.h> // needed for mkdir
 #endif
-
 
 /*! \brief This function will call the necessary sub-functions to generate the code for simulating a model. */
 
@@ -41,7 +40,6 @@ void generate_model_runner(NNmodel &model,  //!< Model description
 			   string path      //!< Path where the generated code will be deposited
 			   )
 {
-
 #ifdef _WIN32
   _mkdir((path + "\\" + model.name + "_CODE").c_str());
 #else // UNIX
@@ -58,7 +56,7 @@ void generate_model_runner(NNmodel &model,  //!< Model description
   genNeuronKernel(model, path, cerr);
 
   // generate synapse and learning kernels
-  if (model.synapseGrpN>0) genSynapseKernel(model, path, cerr);
+  if (model.synapseGrpN > 0) genSynapseKernel(model, path, cerr);
 
   // CPU specific code generation
   genRunnerCPU(model, path, cerr);
@@ -67,7 +65,7 @@ void generate_model_runner(NNmodel &model,  //!< Model description
   genNeuronFunction(model, path, cerr);
   
   // Generate the equivalent of synapse and learning kernel
-  if (model.synapseGrpN>0) genSynapseFunction(model, path, cerr);
+  if (model.synapseGrpN > 0) genSynapseFunction(model, path, cerr);
 }
 
 
@@ -93,7 +91,7 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
     mos << "optimiting block size..." << endl;
 
     stringstream command;
-    char pipeBuffer[128];
+    char pipeBuffer[256];
     stringstream ptxInfo;
     string kernelName, junk;
     int reqRegs, reqSmem;
@@ -116,25 +114,28 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
       bestNrnBlkSz[device] = 0;
 
       // Run NVCC and pipe output to this process.
-      command << "nvcc -x cu -cubin -Xptxas=-v -arch=sm_" << deviceProp[device].major
-	      << deviceProp[device].minor << " -DDT -D\"CHECK_CUDA_ERRORS(call){call;}\" "
-	      << path << "/" << (*model).name << "_CODE/runner.cc 2>&1";
+      command << "nvcc -x cu -cubin -Xptxas=-v -arch=sm_" << deviceProp[device].major;
+      command << deviceProp[device].minor << " -DDT -D\"CHECK_CUDA_ERRORS(call){call;}\" ";
+      command << path << "/" << (*model).name << "_CODE/runner.cc 2>&1";
 #ifdef _WIN32
       FILE *nvccPipe = _popen(command.str().c_str(), "r");
 #else // UNIX
       FILE *nvccPipe = popen(command.str().c_str(), "r");
 #endif
+      command.str("");
       mos << "dry-run compile for device " << device << endl;
       //mos << command.str() << endl;
-      command.str("");
       if (!nvccPipe) {
-	mos << "ERROR: faied to open nvcc pipe" << endl;
+	mos << "ERROR: failed to open nvcc pipe" << endl;
 	exit(EXIT_FAILURE);
       }
 
       // Read pipe until reg / smem usage is found, then calculate optimum block size for each kernel.
-      while (fgets(pipeBuffer, 128, nvccPipe) != NULL) {
-	if (strstr(pipeBuffer, "calcSynapses") != NULL) {
+      while (fgets(pipeBuffer, 256, nvccPipe) != NULL) {
+	if (strstr(pipeBuffer, "error:") != NULL) {
+	  cout << pipeBuffer;
+	}
+	else if (strstr(pipeBuffer, "calcSynapses") != NULL) {
 	  blockSizePointer = &bestSynBlkSz;
 	  kernelName = "synapse";
 	}
@@ -224,7 +225,8 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
 
     }
     if (!ptxInfoFound) {
-      mos << "ERROR: did not find any PTX info (is nvcc on your $PATH ?)" << endl;
+      mos << "ERROR: did not find any PTX info" << endl;
+      mos << "ensure nvcc is on your $PATH, and fix any NVCC errors listed above" << endl;
       exit(EXIT_FAILURE);
     }
     synapseBlkSz = bestSynBlkSz[chosenDevice];
@@ -233,9 +235,7 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
     delete model;
     model = new NNmodel();
     modelDefinition(*model);
-
-    mos << "Using device " << chosenDevice << ", with a neuron kernel occupancy of "
-	<< bestDeviceOccupancy << " threads." << endl;
+    mos << "Using device " << chosenDevice << ", with a neuron kernel occupancy of " << bestDeviceOccupancy << " threads." << endl;
   }
 
   else { // IF OPTIMISATION IS OFF: Simply choose the device with the most global memory.
@@ -250,8 +250,7 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
 	chosenDevice = device;
       }
     }
-    mos << "Using device " << chosenDevice << ", which has "
-	<< mostGlobalMem << " bytes of global memory." << endl;
+    mos << "Using device " << chosenDevice << ", which has " << mostGlobalMem << " bytes of global memory." << endl;
   }
 
   ofstream sm_os("sm_Version.mk");
@@ -261,14 +260,13 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
   mos << "synapse block size: " << synapseBlkSz << endl;
   mos << "learn block size: " << learnBlkSz << endl;
   mos << "neuron block size: " << neuronBlkSz << endl;
-  UIntSz= sizeof(unsigned int)*8; // in bits
-  logUIntSz= (int) (logf((float) UIntSz)/logf(2.0f)+1e-5f);
+  UIntSz = sizeof(unsigned int) * 8; // in bits
+  logUIntSz = (int) (logf((float) UIntSz) / logf(2.0f) + 1e-5f);
   mos << "UIntSz: " << UIntSz << endl;
   mos << "logUIntSz: " << logUIntSz << endl;
 
   return chosenDevice;
 }
-
 
 /*! \brief Main entry point for the generateALL executable that generates
   the code for GPU and CPU.
@@ -291,11 +289,11 @@ int main(int argc,     //!< number of arguments; expected to be 2
     cerr << argv[i] << " ";
   }
   cerr << endl;
-
+  
   synapseBlkSz = 256;
   learnBlkSz = 256;
   neuronBlkSz = 256;
-
+  
   NNmodel *model = new NNmodel();
   prepareStandardModels();
   modelDefinition(*model);
@@ -305,4 +303,3 @@ int main(int argc,     //!< number of arguments; expected to be 2
   
   return EXIT_SUCCESS;
 }
-

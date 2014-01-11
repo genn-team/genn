@@ -37,7 +37,6 @@ float exIzh_p[4]{
 	6	// 3 - d
 };
 
-//
 float exIzh_ini[2]{
 //Izhikevich model initial conditions - tonic spiking
 	-65,	//0 - V
@@ -59,6 +58,6 @@ void modelDefinition(NNmodel &model)
   model.addNeuronPopulation("PN", _NAL, POISSONNEURON, myPOI_p, myPOI_ini);
   model.addNeuronPopulation("Izh1", _NAL, IZHIKEVICH, exIzh_p, exIzh_ini);
 
-  model.addSynapsePopulation("PNIzh1", NSYNAPSE, ALLTOALL, INDIVIDUALG, "PN", "Izh1", myPNKC_p);
+  model.addSynapsePopulation("PNIzh1", NSYNAPSE, ALLTOALL, INDIVIDUALG, NO_DELAY, "PN", "Izh1", myPNKC_p);
   model.setSynapseG("PNIzh1", gPNIzh1);
 }
