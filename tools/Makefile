@@ -20,7 +20,7 @@ INCLUDE= -I$(GeNNPATH)/lib/include/numlib
 FLAGS= -Wall -Winline
 #-O2 -march=athlon
 
-all: generate_run generate_run_1comp gen_pnkc_syns gen_pnkc_syns_sparse gen_pnkc_syns_indivID gen_pnlhi_syns gen_kcdn_syns gen_input_fixfixfixno_struct
+all: generate_run generate_run_1comp gen_input_fixfixfixno_struct gen_pnlhi_syns gen_kcdn_syns gen_pnkc_syns gen_pnkc_syns_indivID #gen_pnkc_syns_sparse 
 
 generate_run: generate_run.cc
 	$(C++) $(FLAGS) -g $(INCLUDE) -o generate_run generate_run.cc
@@ -33,7 +33,7 @@ gen_pnkc_syns: gen_pnkc_syns.cc
 
 gen_pnkc_syns_sparse: gen_pnkc_syns_sparse.cc
 	$(C++) $(FLAGS) -g $(INCLUDE) -o gen_pnkc_syns_sparse gen_pnkc_syns_sparse.cc
-	
+
 gen_pnkc_syns_indivID: gen_pnkc_syns_indivID.cc
 	$(C++) $(FLAGS) -g $(INCLUDE) -o gen_pnkc_syns_indivID gen_pnkc_syns_indivID.cc
 
