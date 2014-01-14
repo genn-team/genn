@@ -375,16 +375,6 @@ void genSynapseFunction(NNmodel &model, //!< Model description
         if ((model.synapseType[synID] == NSYNAPSE) || (model.synapseType[synID] == LEARN1SYNAPSE)) {
 	  os << "        inSyn" << model.neuronName[i] << j << "[ipost] += " << theLG << ";" << endl;
 	}
-
-
-
-
-
-
-
-
-
-
 	if (model.synapseType[synID] == NGRADSYNAPSE) {
 	  if (model.neuronType[src] == POISSONNEURON) {
 	    os << "        inSyn" << model.neuronName[i] << j << "[ipost] += " << theLG << " * tanh((";
