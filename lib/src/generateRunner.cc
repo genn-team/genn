@@ -83,11 +83,10 @@ void genRunner(NNmodel &model, //!< Model description
   os << "  unsigned int *gIndInG;" << endl;
   os << "  unsigned int *gInd;" << endl;
   os << "  unsigned int connN;" << endl; 
-  os << "} ;" << endl; 
-  
+  os << "};" << endl;
   for (int i= 0; i < model.synapseGrpN; i++) {
     if (model.synapseGType[i] == INDIVIDUALG) {
-      if (model.synapseConnType[i]==SPARSE){
+      if (model.synapseConnType[i] == SPARSE){
 	os << "Conductance g" << model.synapseName[i] << ";" << endl;
 	//  os << "  " << model.ftype << " *gp" << model.synapseName[i] << ";" << endl;
 	//  os << "  unsigned int *gp" << model.synapseName[i]  << endl;
@@ -167,10 +166,10 @@ void genRunner(NNmodel &model, //!< Model description
 	os << (model.neuronN[i]);
 	mem += (model.neuronN[i] * sizeof(nModels[nt].varTypes[k]));
       }
-      os << " * sizeof(" << nModels[nt].varTypes[k] << ")];" << endl;
+      os << "];" << endl;
     }
     if (model.neuronNeedSt[i]) {
-      os << "  sT" << model.neuronName[i] << "= new " << model.ftype << "[";
+      os << "  sT" << model.neuronName[i] << " = new " << model.ftype << "[";
       os << model.neuronN[i] << "];" << endl;
     }   
     
@@ -189,7 +188,7 @@ void genRunner(NNmodel &model, //!< Model description
   }
   for (int i= 0; i < model.synapseGrpN; i++) {
     if (model.synapseGType[i] == INDIVIDUALG) {
-      // if (model.synapseConnType[i] == SPARSE){
+      // if (model.synapseConnType[i] == SPARSE) {
       //   os << "  g" << model.synapseName[i] << ".gp= new " << model.ftype << "[";
       //   os << "g" << model.synapseName[i] << ".connN];" << endl;      // synaptic conductances of group " << model.synapseName[i];
       

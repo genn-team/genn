@@ -352,8 +352,8 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 	  os << "        ipost = n;" << endl;
 	}
 	if (model.synapseGType[synID] == INDIVIDUALG) {
-	  if (model.synapseConnType[synID] == SPARSE){
-	    theLG += toString("g") + model.synapseName[synID] + toString(".gp[");
+	  if (model.synapseConnType[synID] == SPARSE) {
+	    theLG = toString("g") + model.synapseName[synID] + toString(".gp[");
 	    theLG += toString("g") + model.synapseName[synID] + toString(".gIndInG[glbSpk");
 	    theLG += toString(model.neuronName[src]) + toString("[");
 	    if (model.neuronDelaySlots[src] != 1) {
@@ -376,12 +376,12 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 	  os << "        inSyn" << model.neuronName[i] << j << "[ipost] += " << theLG << ";" << endl;
 	}
 	if (model.synapseType[synID] == NGRADSYNAPSE) {
+	  os << "        inSyn" << model.neuronName[i] << j << "[ipost] += " << theLG << " * tanh((";
 	  if (model.neuronType[src] == POISSONNEURON) {
-	    os << "        inSyn" << model.neuronName[i] << j << "[ipost] += " << theLG << " * tanh((";
 	    os << SAVEP(model.neuronPara[src][2]) << " - " << SAVEP(Epre);
 	  }
 	  else {
-	    os << "        inSyn" << model.neuronName[i] << j << "[ipost] += " << theLG << " * tanh((V" << model.neuronName[src] << "[";
+	    os << "V" << model.neuronName[src] << "[";
 	    if (model.neuronDelaySlots[src] != 1) {
 	      os << "(delaySlot * " << model.neuronN[src] << ") + ";
 	    }
