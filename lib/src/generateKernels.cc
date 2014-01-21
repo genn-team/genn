@@ -32,8 +32,10 @@
 The code generated upon execution of this function is for defining GPU side global variables that will hold model state in the GPU global memory and for the actual kernel function for simulating the neurons for one time step.
 */
 //-------------------------------------------------------------------------
+
 unsigned int nt;
-short * isGrpVarNeeded;
+short *isGrpVarNeeded;
+
 void genNeuronKernel(NNmodel &model, //!< Model description 
 		     string &path,  //!< path for code output
 		     ostream &mos //!< output stream for messages
@@ -42,7 +44,7 @@ void genNeuronKernel(NNmodel &model, //!< Model description
    // write header content
   string name, s, localID;
   ofstream os;
-  isGrpVarNeeded=new short[model.neuronGrpN];
+  isGrpVarNeeded = new short[model.neuronGrpN];
 
   name= path + toString("/") + model.name + toString("_CODE/neuronKrnl.cc");
   os.open(name.c_str());
@@ -471,21 +473,21 @@ void genSynapseKernel(NNmodel &model, //!< Model description
       }
     }
     if (model.synapseGType[i] == INDIVIDUALG) {
-      if (model.synapseConnType[i]==SPARSE) {
-	os << "            npost = d_gp" << model.synapseName[i] << "_indInG[shSpk[j] + 1] - d_gp";
+      if (model.synapseConnType[i] == SPARSE) {
+	os << "          npost = d_gp" << model.synapseName[i] << "_indInG[shSpk[j] + 1] - d_gp";
 	os << model.synapseName[i] << "_indInG[shSpk[j]];" << endl;
-	os << "            if (id < npost) {" << endl;
-	os << "	             ipost = d_gp" << model.synapseName[i] << "_ind[d_gp";
+	os << "          if (id < npost) {" << endl;
+	os << "            ipost = d_gp" << model.synapseName[i] << "_ind[d_gp";
 	os << model.synapseName[i] << "_indInG[shSpk[j]] + id];" << endl;
 	if (isGrpVarNeeded[model.synapseSource[i]] == 0) {
 	  theLG = toString("shLg[" + localID + "]");
-	  os << "                shLg";
+	  os << "            shLg";
 	}
 	else {
 	  theLG = toString("d_Lg" + model.synapseName[i] + "[" + localID + "]");
-	  os << "                d_Lg" << model.synapseName[i];
+	  os << "            d_Lg" << model.synapseName[i];
         }
-	os << "[ipost] = d_gp" << model.synapseName[i] << "[d_gp" << model.synapseName[i] <<"_indInG[shSpk[j]] + id];" << endl;
+	os << "[ipost] = d_gp" << model.synapseName[i] << "[d_gp" << model.synapseName[i] << "_indInG[shSpk[j]] + id];";
       }
       else {
         os << "            lg = d_gp" << model.synapseName[i] << "[shSpk[j]*" << model.neuronN[trg] << " + " << localID << "];";
@@ -493,32 +495,29 @@ void genSynapseKernel(NNmodel &model, //!< Model description
       }
       os << endl;
     }
-    if (model.synapseConnType[i] == SPARSE) {
-      os << "               }" << endl; // end if (id < npost)
-    }
-    if (model.synapseConnType[i] == SPARSE) { //need to close the parenthesis to synchronize threads
-      os << "            }" << endl;
-      //os << "            __syncthreads();" << endl;
-      os << "            __threadfence();" << endl;
+    if (model.synapseConnType[i] == SPARSE) { // need to close the parenthesis to synchronize threads
+      os << "          }" << endl; // end if (id < npost)
+      //os << "          __syncthreads();" << endl;
+      os << "          __threadfence();" << endl;
     }
     if ((model.synapseGType[i] == GLOBALG) || (model.synapseGType[i] == INDIVIDUALID)) {
       theLG = toString(model.g0[i]);
     }
     if ((model.synapseType[i] == NSYNAPSE) || (model.synapseType[i] == LEARN1SYNAPSE)) {
-      os << "            linSyn = linSyn + " << theLG << ";" << endl;
+      os << "          linSyn = linSyn + " << theLG << ";" << endl;
     }
     if (model.synapseType[i] == NGRADSYNAPSE) {
       if (model.neuronType[src] == POISSONNEURON) {
-	os << "            linSyn = linSyn + " << theLG << " * tanh((";
+	os << "          linSyn = linSyn + " << theLG << " * tanh((";
 	os << SAVEP(model.neuronPara[src][2]) << " - " << SAVEP(Epre);
       }
       else {
-	os << "            linSyn = linSyn + " << theLG << " * tanh((shSpkV[j] - " << SAVEP(Epre);
+	os << "          linSyn = linSyn + " << theLG << " * tanh((shSpkV[j] - " << SAVEP(Epre);
       }
       os << ") / " << Vslope << ");" << endl;
     }
     if (model.synapseConnType[i] == SPARSE) {
-      os << "            " << theLG << " = 0;" << endl;        	
+      os << "          " << theLG << " = 0;" << endl;        	
     }
     // if needed, do some learning (this is for pre-synaptic spikes)
     if (model.synapseType[i] == LEARN1SYNAPSE) {
