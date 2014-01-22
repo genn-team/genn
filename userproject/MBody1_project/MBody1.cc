@@ -156,7 +156,7 @@ void modelDefinition(NNmodel &model)
   model.addNeuronPopulation("DN", _NLB, TRAUBMILES, stdTM_p, stdTM_ini);
 
   model.addSynapsePopulation("PNKC", NSYNAPSE, DENSE, INDIVIDUALG, NO_DELAY, "PN", "KC", myPNKC_p);
-  model.addSynapsePopulation("PNLHI", NSYNAPSE, SPARSE, INDIVIDUALG, NO_DELAY, "PN", "LHI", myPNLHI_p);
+  model.addSynapsePopulation("PNLHI", NSYNAPSE, ALLTOALL, INDIVIDUALG, NO_DELAY, "PN", "LHI", myPNLHI_p);
   model.addSynapsePopulation("LHIKC", NGRADSYNAPSE, ALLTOALL, GLOBALG, NO_DELAY, "LHI", "KC", myLHIKC_p);
   model.setSynapseG("LHIKC", gLHIKC);
   model.addSynapsePopulation("KCDN", LEARN1SYNAPSE, ALLTOALL, INDIVIDUALG, NO_DELAY, "KC", "DN", myKCDN_p);
