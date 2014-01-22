@@ -63,7 +63,7 @@ int main(int argc, char *argv[])
   name= OutDir+ "/"+ toString(argv[1]) + toString(".pnkc");
   FILE *f= fopen(name.c_str(),"r");
   locust.read_pnkcsyns(f);
-  fclose(f);   
+  fclose(f);
  
   fprintf(stderr, "# reading PN-LHI synapses ... \n");
   name= OutDir+ "/"+ toString(argv[1]) + toString(".pnlhi");
@@ -75,7 +75,7 @@ int main(int argc, char *argv[])
   name= OutDir+ "/"+ toString(argv[1]) + toString(".kcdn");
   f= fopen(name.c_str(), "r");
   locust.read_kcdnsyns(f);
-   
+
   fprintf(stderr, "# reading input patterns ... \n");
   name= OutDir+ "/"+ toString(argv[1]) + toString(".inpat");
   f= fopen(name.c_str(), "r");

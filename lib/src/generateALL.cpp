@@ -19,7 +19,7 @@
 */
 
 #include "global.h"
-#include "utils.h"
+//#include "utils.h"
 
 #include "currentModel.cc"
 
@@ -88,7 +88,7 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
   deviceProp = new cudaDeviceProp[deviceCount];
 
   if (optimiseBlockSize) { // IF OPTIMISATION IS ON: Choose the device which supports the highest warp occupancy.
-    mos << "optimiting block size..." << endl;
+    mos << "optimizing block size..." << endl;
 
     stringstream command;
     char pipeBuffer[256];
@@ -296,6 +296,7 @@ int main(int argc,     //!< number of arguments; expected to be 2
   
   NNmodel *model = new NNmodel();
   prepareStandardModels();
+  preparePostSynModels();
   modelDefinition(*model);
   string path= toString(argv[1]);
   theDev = chooseDevice(cerr, model, path);

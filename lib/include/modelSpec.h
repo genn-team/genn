@@ -31,6 +31,7 @@
 #define POISSONNEURON 1 //!< Macro attaching the name "POISSONNEURON" to neuron type 1
 #define TRAUBMILES 2 //!< Macro attaching the name "TRAUBMILES" to neuron type 2
 #define IZHIKEVICH 3 //!< Macro attaching the name "IZHIKEVICH" to neuron type 3
+#define IZHIKEVICH_V 4 //!< Macro attaching the name "IZHIKEVICH_V" to neuron type 4
 
 #define SYNTYPENO 4
 
@@ -84,10 +85,22 @@ unsigned int SYNPNO[SYNTYPENO]= {
 #define SPK_THRESH 0.0f //!< Macro defining the spiking threshold for the purposes of STDP 
 //#define MAXSPKCNT 50000
 
+//postsynaptic parameters
+#define EXPDECAY 0 //default - how it is in the original version
+// currently values >0 will be defined by code generation.
+
+
+class dpclass {
+public:
+	dpclass() {}
+	
+	virtual float calculateDerivedParameter(int index, vector < float > pars, float dt = 1.0) {return -1;}
+};
 
 //! \brief class (struct) for specifying a neuron model.
 struct neuronModel
 {
+
   string simCode; /*!< \brief Code that defines the execution of one timestep of integration of the neuron model
 		    
 		    The code will refer to $(NN) for the value of the variable with name "NN". It needs to refer to the predefined variable "ISYN", i.e. contain $(ISYN), if it is to receive input. */
@@ -99,9 +112,24 @@ struct neuronModel
   vector<string> tmpVarTypes; //!< never used
   vector<string> pNames; //!< Names of (independent) parameters of the model. These are assumed to be always of type "float"
   vector<string> dpNames; /*!< \brief Names of dependent parameters of the model. These are assumed to be always of type "float"
-			    
+  			    
 			    The dependent parameters are functions of independent parameters that enter into the neuron model. To avoid unecessary computational overhead, these parameters are calculated at compile time and inserted as explicit values into the generated code. See method NNmodel::initDerivedNeuronPara for how this is done.
 			  */ 
+  dpclass * dps;
+};
+
+struct postSynModel
+{
+ 
+  string postSyntoCurrent;
+  string postSynDecay;
+  
+  vector<string> varNames; //!< Names of the variables in the postsynaptic model
+  vector<string> varTypes; //!< Types of the variable named above, e.g. "float". Names and types are matched by their order of occurrence in the vector.
+  vector<string> pNames; //!< Names of (independent) parameters of the model. These are assumed to be always of type "float"
+  vector<string> dpNames; /*!< \brief Names of dependent parameters of the model. These are assumed to be always of type "float"*/
+			    
+	dpclass * dps;
 };
 
 
@@ -116,6 +144,7 @@ class NNmodel
   unsigned int needSt; //!< Whether last spike times are needed at all in this network model (related to STDP)
   unsigned int neuronGrpN; //!< Number of neuron groups
   vector<string> neuronName; //!< Names of neuron groups
+  vector<unsigned int> neuronPostSyn; //! Postsynaptic methods to the neuron
   vector<unsigned int> neuronN; //!< Number of neurons in group
   vector<unsigned int> sumNeuronN; //!< Summed neuron numbers
   vector<unsigned int> padSumNeuronN; //!< Padded summed neuron numbers
@@ -148,7 +177,11 @@ class NNmodel
   vector<unsigned int> synapseInSynNo; //!< IDs of the target neurons' incoming synapse variables for each synapse group
   vector<vector<float> > dsp;  //!< Derived synapse parameters
   //vector<unsigned int>synapseNo; // !<numnber of synapses in a synapse group
-
+  
+  vector<unsigned int> postSynapseType; //!< Types of synapses
+	vector < vector < float > > postSynapsePara; //!< parameters of postsynapses
+  vector<vector<float> > dpsp;  //!< Derived postsynapse parameters
+    
  private:
   void setNeuronName(unsigned int, const string); //!< Never used
   void setSynapseName(unsigned int, const string); //!< Never used
@@ -166,6 +199,7 @@ class NNmodel
   void initNeuronSpecs(unsigned int); //!< Method for calculating neuron IDs, taking into account the blocksize padding between neuron populations; also initializes nThresh and neuronNeedSt for a population of neurons.
   void initDerivedSynapsePara(unsigned int); //!< Method for calculating the values of derived synapse parameters.
   unsigned int findNeuronGrp(const string); //!< Find the the ID number of a neuron group by its name 
+  void initDerivedPostSynapsePara(unsigned int); //!< Method for calculating the values of derived postsynapse parameters.
   unsigned int findSynapseGrp(const string); //< Find the the ID number of a synapse group by its name
 
  public:
@@ -175,13 +209,15 @@ class NNmodel
   void addNeuronPopulation(const char *, unsigned int, unsigned int, float *, float *); //!< Method for adding a neuron population to a neuronal network model, using C style character array for the name of the population
   void addNeuronPopulation(const string, unsigned int, unsigned int, float *, float *); //!< Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population
   //void activateDirectInput(const char *, unsigned int);  
+  //void addPostSyntoNeuron(const string,unsigned int); //!< Method for defining postsynaptic dynamics
   void activateDirectInput(const string, unsigned int);  
-  void addSynapsePopulation(const char *, unsigned int, unsigned int, unsigned int, unsigned int, const char *, const char *, float *); //!< Method for adding a synapse population to a neuronal network model, using C style character array for the name of the population
-  void addSynapsePopulation(const string, unsigned int, unsigned int, unsigned int, unsigned int, const string, const string, float *); //!< Method for adding a synapse population to a neuronal network model, using C++ string for the name of the population
+  void addSynapsePopulation(const char *, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, const char *, const char *, float *, float *); //!< Method for adding a synapse population to a neuronal network model, using C style character array for the name of the population
+  void addSynapsePopulation(const string, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, const string, const string, float *, float *); //!< Method for adding a synapse population to a neuronal network model, using C++ string for the name of the population
   void setSynapseG(const string, float); //!< Method for setting the conductance (g) value for a synapse population with "GLOBALG" charactertistic
   void setConstInp(const string, float); //!< Method for setting the global input value for a neuron population if CONSTINP
   //void setSynapseNo(unsigned int,unsigned int); // !< Sets the number of connections for sparse matrices  
   void setPrecision(unsigned int);//< Set numerical precision for floating point
+  void checkSizes(unsigned int *, unsigned int *, unsigned int *); //< Check if the sizes of the initialized neuron and synapse groups are correct.
 };
 
 

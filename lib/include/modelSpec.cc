@@ -55,12 +55,18 @@ This method also saves the neuron numbers of the populations rounded to the next
 void NNmodel::initDerivedNeuronPara(unsigned int i)
 {
   vector<float> tmpP;
+	for (i=0; i < nModels[neuronType[i]].dpNames.size(); ++i) {
+	
+		float retVal = nModels[neuronType[i]].dps->calculateDerivedParameter(i, neuronPara[i], DT);
+		tmpP.push_back(retVal);
+	}
+/*
   if (neuronType[i] == MAPNEURON) {
     tmpP.push_back(neuronPara[i][0]*neuronPara[i][0]*neuronPara[i][1]); // ip0
     tmpP.push_back(neuronPara[i][0]*neuronPara[i][2]);                  // ip1
     tmpP.push_back(neuronPara[i][0]*neuronPara[i][1]                   // ip2
 		   +neuronPara[i][0]*neuronPara[i][2]); 
-  }
+  }*/
   dnp.push_back(tmpP);
 }
 
@@ -79,6 +85,21 @@ void NNmodel::initNeuronSpecs(unsigned int i)
   }
   fprintf(stderr, "%d\n", padSumNeuronN[i]);
   neuronNeedSt.push_back(0);  // by default last spike times are not saved
+}
+
+void NNmodel::initDerivedPostSynapsePara(unsigned int i)
+{
+  vector<float> tmpP;
+  
+	for (int j=0; j < postSynModels[postSynapseType[i]].dpNames.size(); ++j) {
+	
+		float retVal = postSynModels[postSynapseType[i]].dps->calculateDerivedParameter(j, postSynapsePara[i], DT);
+		
+		tmpP.push_back(retVal);
+		
+	}
+	
+  dpsp.push_back(tmpP);
 }
 
 //--------------------------------------------------------------------------
@@ -147,6 +168,7 @@ void NNmodel::initDerivedSynapsePara(unsigned int i)
   fprintf(stderr, "%d\n", padSumSynapseTrgN[i]);
 }
 
+
 //--------------------------------------------------------------------------
 /*! \brief This function is a tool to find the numeric ID of a neuron population based on the name of the neuron population.
  */
@@ -214,6 +236,7 @@ void NNmodel::addNeuronPopulation(const string name, unsigned int nNo, unsigned 
   for (int j= 0; j < nModels[neuronType[i]].varNames.size(); j++) {
     tmpP.push_back(ini[j]);
   }
+
   neuronIni.push_back(tmpP);
   vector<unsigned int> tv;
   neuronDelaySlots.push_back(1);
@@ -221,6 +244,32 @@ void NNmodel::addNeuronPopulation(const string name, unsigned int nNo, unsigned 
   inSyn.push_back(tv);  // empty list of input synapse groups for neurons i 
   initDerivedNeuronPara(i);
   initNeuronSpecs(i);
+}
+
+
+//--------------------------------------------------------------------------
+/*! \brief This function checks if the number of parameters and variables that are defined 
+by the user are of correct size with respect to the selected neuron and synapse type.
+*/ 
+//--------------------------------------------------------------------------
+void NNmodel::checkSizes(unsigned int * NeuronpSize, unsigned int * NeuronvSize, unsigned int * SynpSize)
+{
+  	  for (int j = 0; j < neuronGrpN; j++){
+			if ((NeuronpSize[j]/sizeof(float)) != nModels[neuronType[j]].pNames.size()){
+				   cerr << "Error: Size of parameter values for "<< neuronName[j] <<" neuron group is " << (NeuronpSize[j]/sizeof(float)) << ", while it should be:" << nModels[neuronType[j]].pNames.size() << endl;
+    				exit(0);
+				}
+			if ((NeuronvSize[j]/sizeof(float)) != nModels[neuronType[j]].varNames.size()){
+				   cerr << "Error: Size of initial values for "<< neuronName[j] <<" neuron group is " << (NeuronvSize[j]/sizeof(float)) << ", while it should be:" << nModels[neuronType[j]].varNames.size() << endl;
+    				exit(0);
+				}   	  	
+  	  	}
+  	  	for (int j = 0; j < synapseGrpN; j++){
+  	  		if ((SynpSize[j]/sizeof(float)) != SYNPNO[synapseType[j]]){
+				   cerr << "Error: Size of parameter values for "<< synapseName[j] <<" synapse group is " << (SynpSize[j]/sizeof(float)) << ", while it should be:" << nModels[synapseType[j]].pNames.size() << endl;
+    				exit(0);
+				}
+  	  	}
 }
 
 //--------------------------------------------------------------------------
@@ -238,9 +287,9 @@ void NNmodel::activateDirectInput(const string name, unsigned int type)
  */
 //--------------------------------------------------------------------------
 
-void NNmodel::addSynapsePopulation(const char *name, unsigned int syntype, unsigned int conntype, unsigned int gtype, unsigned int delaySteps, const char *src, const char *trg, float *p) 
+void NNmodel::addSynapsePopulation(const char *name, unsigned int syntype, unsigned int conntype, unsigned int gtype, unsigned int delaySteps, unsigned int postsyn, const char *src, const char *trg, float *p, float *ps) 
 {
-  addSynapsePopulation(toString(name), syntype, conntype, gtype, delaySteps, toString(src), toString(trg), p);
+  addSynapsePopulation(toString(name), syntype, conntype, gtype, delaySteps, postsyn, toString(src), toString(trg), p, ps);
 }
 
 //--------------------------------------------------------------------------
@@ -248,11 +297,14 @@ void NNmodel::addSynapsePopulation(const char *name, unsigned int syntype, unsig
  */
 //--------------------------------------------------------------------------
 
-void NNmodel::addSynapsePopulation(const string name, unsigned int syntype, unsigned int conntype, unsigned int gtype, unsigned int delaySteps, const string src, const string trg, float *p)
+void NNmodel::addSynapsePopulation(const string name, unsigned int syntype, unsigned int conntype, unsigned int gtype, unsigned int delaySteps, unsigned int postsyn, const string src, const string trg, float *p, float *ps)
 {
   unsigned int i= synapseGrpN++;
   unsigned int srcNumber, trgNumber;
   vector<float> tmpP;
+  vector<float> tmpPS;
+  
+  if (postSynModels.size() < 1) preparePostSynModels();
 
   synapseName.push_back(name);
   synapseType.push_back(syntype);
@@ -267,11 +319,27 @@ void NNmodel::addSynapsePopulation(const string name, unsigned int syntype, unsi
     neuronDelaySlots[srcNumber] = delaySteps;
     needSynapseDelay = 1;
   }
+  
+ //TODO: We want to get rid of SYNPNO array for code generation flexibility. It would be useful to predefine synapse models as we do for neurons in utils.h. This would also help for checkSizes.
+ // for (int j= 0; j < nModels[synapseType[i]].pNames.size(); j++) { 
   for (int j= 0; j < SYNPNO[synapseType[i]]; j++) {
     tmpP.push_back(p[j]);
   }
+ 
   synapsePara.push_back(tmpP);
+  postSynapseType.push_back(postsyn);
+
+  for (int j= 0; j <  postSynModels[postSynapseType[i]].pNames.size(); j++) {
+    tmpPS.push_back(ps[j]);
+    //printf("%d th var in group %d is %f \n", j, i, ps[j]);
+    //printf("%s\n", postSynModels[postSynapseType[i]].pNames[j].c_str());
+  }
+   
+  postSynapsePara.push_back(tmpPS); 
   initDerivedSynapsePara(i);
+  
+  initDerivedPostSynapsePara(i);
+  
 }
 
 //--------------------------------------------------------------------------
