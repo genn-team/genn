@@ -32,6 +32,7 @@
 #include <map>
 #include <memory>
 #include <fstream>
+#include <cmath>
 
 #include <cuda_runtime.h>
 
@@ -114,6 +115,32 @@ The neuron models are defined and added to the C++ vector nModels that is holdin
 
 vector<neuronModel> nModels; //!< Global c++ vector containing all neuron model descriptions
 
+class rulkovdp : public dpclass
+{
+public:
+	float calculateDerivedParameter(int index, vector <float> pars, float dt = 1.0) {
+		switch (index) {
+			case 0:
+			return ip0(pars);
+			case 1:
+			return ip1(pars);
+			case 2:
+			return ip2(pars);
+		}
+		return -1;
+	}
+
+	float ip0(vector<float> pars) {
+		return pars[0]*pars[0]*pars[1];
+	}
+	float ip1(vector<float> pars) {
+		return pars[0]*pars[2];
+	}
+	float ip2(vector<float> pars) {
+		return pars[0]*pars[1]+pars[0]*pars[2];
+	}
+};
+
 void prepareStandardModels()
 {
   neuronModel n;
@@ -144,6 +171,7 @@ void prepareStandardModels()
         $(V)= -($(Vspike));\n\
       }\n\
     }\n");
+  n.dps = new rulkovdp();
   nModels.push_back(n);
 
   // Poisson neurons
@@ -238,6 +266,74 @@ void prepareStandardModels()
 		$(U)+=$(d);\n\
   		}\n");
   nModels.push_back(n);
+
+//Izhikevich neurons with variable parameters
+  n.varNames.clear();
+  n.varTypes.clear();
+  n.varNames.push_back(tS("V"));
+  n.varTypes.push_back(tS("float"));  
+  n.varNames.push_back(tS("U"));
+  n.varTypes.push_back(tS("float"));
+  n.varNames.push_back(tS("a")); // time scale of U
+  n.varTypes.push_back(tS("float"));
+  n.varNames.push_back(tS("b")); // sensitivity of U
+  n.varTypes.push_back(tS("float"));
+  n.varNames.push_back(tS("c")); // after-spike reset value of V
+  n.varTypes.push_back(tS("float"));
+  n.varNames.push_back(tS("d")); // after-spike reset value of U
+  n.varTypes.push_back(tS("float"));
+  n.pNames.clear();
+  n.dpNames.clear(); 
+  n.simCode= tS(" 	 $(V)+=0.5f*(0.04f*$(V)*$(V)+5*$(V)+140-$(U)+$(Isyn))*DT; //at two times for numerical stability\n\
+  	 $(V)+=0.5f*(0.04f*$(V)*$(V)+5*$(V)+140-$(U)+$(Isyn))*DT;\n\
+  	 $(U)+=$(a)*($(b)*$(V)-$(U))*DT;\n\
+  	 if ($(V) > 30){\n\
+		$(V)=$(c);\n\
+		$(U)+=$(d);\n\
+  		}\n");
+  nModels.push_back(n);
+
+}
+
+class expDecayDp : public dpclass
+{
+public:
+	float calculateDerivedParameter(int index, vector <float> pars, float dt = 1.0) {
+		switch (index) {
+			case 0:
+			return expDecay(pars, dt);
+		}
+		return -1;
+	}
+
+	float expDecay(vector<float> pars, float dt) {
+		return expf(-dt/pars[0]);
+	}
+};
+
+
+
+vector<postSynModel> postSynModels;
+
+void preparePostSynModels(){
+  postSynModel ps;
+  ps.varNames.clear();
+  ps.varTypes.clear();
+  
+  ps.varNames.push_back(tS(""));
+  ps.pNames.clear();
+  ps.dpNames.clear(); 
+  
+  ps.pNames.push_back(tS("tau")); 
+  ps.pNames.push_back(tS("E"));  
+  ps.dpNames.push_back(tS("expDecay"));
+  
+  ps.postSynDecay=tS(" 	 $(inSyn)*=$(expDecay);\n");
+  ps.postSyntoCurrent=tS("$(inSyn)*($(E)-$(V))");
+  
+  ps.dps = new expDecayDp;
+  
+  postSynModels.push_back(ps);
 }
 
 void prepareSynapseModels(){

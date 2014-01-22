@@ -55,7 +55,7 @@ void genRunner(NNmodel &model, //!< Model description
   os << "*/" << endl;
   os << "//-------------------------------------------------------------------------" << endl << endl;
 
-  // gloabl host variables (matching some of the device ones)  
+  // global host variables (matching some of the device ones)  
   for (int i= 0; i < model.neuronGrpN; i++) {
     nt= model.neuronType[i];
     if (model.neuronDelaySlots[i] == 1) {
@@ -368,15 +368,15 @@ void genRunner(NNmodel &model, //!< Model description
   os << "}" << endl;
   os << endl;
   
-
+ 
   // ------------------------------------------------------------------------
   // initializing variables
 
   os << "void initialize()" << endl;
   os << "{" << endl;
   os << "size_t size;" << endl;
-  os << "//  srand((unsigned int) time(NULL));" << endl;
-  os << "srand(101);" << endl;
+  os << "  srand((unsigned int) time(NULL));" << endl;
+  //os << "srand(101);" << endl;
   os << endl;
   os << "  //neuron variables" << endl;
   for (int i= 0; i < model.neuronGrpN; i++) {

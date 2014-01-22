@@ -97,10 +97,20 @@ float myPNKC_p[3]= {
 };
 //float gPNKC= 0.01;
 
+float postExpPNKC[2]={
+  1.0,            // 0 - tau_S: decay time constant for S [ms]
+  0.0		  // 1 - Erev: Reversal potential
+};
+
 float myPNLHI_p[3]= {
   0.0,           // 0 - Erev: Reversal potential
   -20.0,         // 1 - Epre: Presynaptic threshold potential
   1.0            // 2 - tau_S: decay time constant for S [ms]
+};
+
+float postExpPNLHI[2]={
+  1.0,            // 0 - tau_S: decay time constant for S [ms]
+  0.0		  // 1 - Erev: Reversal potential
 };
 
 float myLHIKC_p[4]= {
@@ -111,6 +121,11 @@ float myLHIKC_p[4]= {
 };
 //float gLHIKC= 0.6;
 float gLHIKC= 0.006;
+
+float postExpLHIKC[2]={
+  3.0,            // 0 - tau_S: decay time constant for S [ms]
+  -92.0		  // 1 - Erev: Reversal potential
+};
 
 float myKCDN_p[13]= {
   0.0,           // 0 - Erev: Reversal potential
@@ -130,6 +145,10 @@ float myKCDN_p[13]= {
 };
 
 //#define KCDNGSYN0 0.006
+float postExpKCDN[2]={
+  5.0,            // 0 - tau_S: decay time constant for S [ms]
+  0.0		  // 1 - Erev: Reversal potential
+};
 
 float myDNDN_p[4]= {
   -92.0,        // 0 - Erev: Reversal potential
@@ -139,6 +158,12 @@ float myDNDN_p[4]= {
 };
 //float gDNDN= 0.04;
 float gDNDN= 0.01;
+
+
+float postExpDNDN[2]={
+  8.0,            // 0 - tau_S: decay time constant for S [ms]
+  -92.0		  // 1 - Erev: Reversal potential
+};
 
 #include "../../userproject/include/sizes.h"
 
@@ -154,12 +179,12 @@ void modelDefinition(NNmodel &model)
   model.addNeuronPopulation("KC", _NMB, TRAUBMILES, stdTM_p, stdTM_ini);
   model.addNeuronPopulation("LHI", _NLHI, TRAUBMILES, stdTM_p, stdTM_ini);
   model.addNeuronPopulation("DN", _NLB, TRAUBMILES, stdTM_p, stdTM_ini);
-
-  model.addSynapsePopulation("PNKC", NSYNAPSE, DENSE, INDIVIDUALG, NO_DELAY, "PN", "KC", myPNKC_p);
-  model.addSynapsePopulation("PNLHI", NSYNAPSE, ALLTOALL, INDIVIDUALG, NO_DELAY, "PN", "LHI", myPNLHI_p);
-  model.addSynapsePopulation("LHIKC", NGRADSYNAPSE, ALLTOALL, GLOBALG, NO_DELAY, "LHI", "KC", myLHIKC_p);
+  
+  model.addSynapsePopulation("PNKC", NSYNAPSE, DENSE, INDIVIDUALG, NO_DELAY, EXPDECAY, "PN", "KC", myPNKC_p, postExpPNKC);
+  model.addSynapsePopulation("PNLHI", NSYNAPSE, ALLTOALL, INDIVIDUALG, NO_DELAY, EXPDECAY, "PN", "LHI", myPNLHI_p, postExpPNLHI);
+  model.addSynapsePopulation("LHIKC", NGRADSYNAPSE, ALLTOALL, GLOBALG, NO_DELAY, EXPDECAY, "LHI", "KC", myLHIKC_p, postExpLHIKC);
   model.setSynapseG("LHIKC", gLHIKC);
-  model.addSynapsePopulation("KCDN", LEARN1SYNAPSE, ALLTOALL, INDIVIDUALG, NO_DELAY, "KC", "DN", myKCDN_p);
-  model.addSynapsePopulation("DNDN", NGRADSYNAPSE, ALLTOALL, GLOBALG, NO_DELAY, "DN", "DN", myDNDN_p);
+  model.addSynapsePopulation("KCDN", LEARN1SYNAPSE, ALLTOALL, INDIVIDUALG, NO_DELAY, EXPDECAY, "KC", "DN", myKCDN_p, postExpKCDN);
+  model.addSynapsePopulation("DNDN", NGRADSYNAPSE, ALLTOALL, GLOBALG, NO_DELAY, EXPDECAY, "DN", "DN", myDNDN_p, postExpDNDN);
   model.setSynapseG("DNDN", gDNDN);
 }

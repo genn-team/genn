@@ -72,7 +72,6 @@ void genNeuronFunction(NNmodel &model, //!< Model description
   }
   os << "float t)" << endl;
   os << "{" << endl;
-  os << "  " << model.ftype << " Isyn= 0;" << endl;
   for (int i = 0; i < model.neuronGrpN; i++) {
     nt = model.neuronType[i];
     if (model.neuronDelaySlots[i] == 1) {
@@ -95,16 +94,40 @@ void genNeuronFunction(NNmodel &model, //!< Model description
     }
     os << "    float Isyn = 0;" << endl;
     if (model.inSyn[i].size() > 0) {
-      os << "    Isyn = ";
+      //os << "    Isyn = ";
       for (int j = 0; j < model.inSyn[i].size(); j++) {
-	os << "inSyn" << model.neuronName[i] << j << "[n] * (";
-	os << SAVEP(model.synapsePara[model.inSyn[i][j]][0]) << " - lV)";
-	if (j < model.inSyn[i].size() - 1) {
+     
+      
+      os << "    Isyn += ";
+      	string psCode = postSynModels[model.postSynapseType[model.inSyn[i][j]]].postSyntoCurrent;
+
+	substitute(psCode, tS("$(inSyn)"), tS("inSyn") + model.neuronName[i]+ tS(j) +tS("[n]"));
+	substitute(psCode, tS("$(V)"), tS("lV"));
+
+	for (int k = 0, l = postSynModels[model.postSynapseType[model.inSyn[i][j]]].pNames.size(); k < l; k++) {
+				substitute(psCode, tS("$(") + postSynModels[model.postSynapseType[model.inSyn[i][j]]].pNames[k] + tS(")"), 
+				tS(model.postSynapsePara[model.inSyn[i][j]][k]));
+		 }  
+		   
+	for (int k = 0; k < postSynModels[model.postSynapseType[model.inSyn[i][j]]].dpNames.size(); ++k)
+		substitute(psCode, tS("$(") + postSynModels[model.postSynapseType[model.inSyn[i][j]]].dpNames[k] + tS(")"), tS(model.dpsp[model.inSyn[i][j]][k]));
+		
+	os << psCode;
+
+	/*os << "inSyn" << model.neuronName[i] << j << "[n] * (";
+	os << SAVEP(model.synapsePara[model.inSyn[i][j]][0]) << " - lV)";*/
+
+
+/*substitute(code, tS("lrate"), 
+		 tS("rates") + model.neuronName[i] + tS("[n + offset") + model.neuronName[i] + tS("]"));
+*/
+
+	/*if (j < model.inSyn[i].size() - 1) {
 	  os << " + ";
 	}
-	else {
+	else {*/
 	  os << ";" << endl;
-	}
+	//}
       }
     }
     if (model.receivesInputCurrent[i] == 1) { //receives constant input
@@ -200,13 +223,28 @@ void genNeuronFunction(NNmodel &model, //!< Model description
       os << "    " << nModels[nt].varNames[k] <<  model.neuronName[i] << "[";
       if ((nModels[nt].varNames[k] == "V") && (model.neuronDelaySlots[i] != 1)) {
 	os << "(spkQuePtr" << model.neuronName[i] << " * " << model.neuronN[i] << ") + ";
-      }
+      };
       os << "n] = l" << nModels[nt].varNames[k] << ";" << endl;
     }
     for (int j = 0; j < model.inSyn[i].size(); j++) {
-      os << "    inSyn"  << model.neuronName[i] << j << "[n] *= ";
+    
+      string psCode = postSynModels[model.postSynapseType[model.inSyn[i][j]]].postSynDecay;
+
+	substitute(psCode, tS("$(inSyn)"), tS("inSyn") + model.neuronName[i]+ tS(j) +tS("[n]"));
+	for (int k = 0, l = postSynModels[model.postSynapseType[model.inSyn[i][j]]].pNames.size(); k < l; k++) {
+		substitute(psCode, tS("$(") + postSynModels[model.postSynapseType[model.inSyn[i][j]]].pNames[k] + tS(")"), 
+		tS(model.postSynapsePara[model.inSyn[i][j]][k]));
+	}  
+		   
+	for (int k = 0; k < postSynModels[model.postSynapseType[model.inSyn[i][j]]].dpNames.size(); ++k){
+		substitute(psCode, tS("$(") + postSynModels[model.postSynapseType[model.inSyn[i][j]]].dpNames[k] + tS(")"), tS(model.dpsp[model.inSyn[i][j]][k]));
+	}
+	
+	os << psCode;
+    
+      /*os << "    inSyn"  << model.neuronName[i] << j << "[n] *= ";
       unsigned int synID = model.inSyn[i][j];
-      os << SAVEP(model.dsp[synID][0]) << ";" << endl;
+      os << SAVEP(model.dsp[synID][0]) << ";" << endl;*/
     }
     os << "  }" << endl;
     os << endl;
@@ -339,6 +377,7 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 	}
 	else {
 	  if (model.synapseGType[synID] == INDIVIDUALID) {
+
 	    /*if (model.synapseConnType[synID] == SPARSE){
 	      os << "          if (B(g" << model.synapseName[synID] << ".gp[gid >> " << logUIntSz << "], gid & ";
 	      }
@@ -444,6 +483,8 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 	    (model.synapseGType[synID] == INDIVIDUALID)) {
 	  os << "      }" << endl;
 	}
+	
+	
 	os << "    }" << endl;
 	os << "  }" << endl;
       }
