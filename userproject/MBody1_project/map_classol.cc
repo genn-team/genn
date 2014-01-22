@@ -155,11 +155,11 @@ void classol::write_pnkcsyns(FILE *f //!< File handle for a file to write PN to 
 void classol::read_pnlhisyns(FILE *f //!< File handle for a file containing PN to LHI conductivity values
 			     )
 {
-  fread(gPNLHI.gp, model.neuronN[0] * model.neuronN[2] * sizeof(float), 1, f);
+  fread(gpPNLHI, model.neuronN[0] * model.neuronN[2] * sizeof(float), 1, f);
   fprintf(stderr,"read pnlhi ... \n");
   fprintf(stderr, "values start with: \n");
   for(int i= 0; i < 20; i++) {
-    fprintf(stderr, "%f ", gPNLHI.gp[i]);
+    fprintf(stderr, "%f ", gpPNLHI[i]);
   }
   fprintf(stderr, "\n\n");
 }
@@ -172,7 +172,7 @@ void classol::read_pnlhisyns(FILE *f //!< File handle for a file containing PN t
 void classol::write_pnlhisyns(FILE *f //!< File handle for a file to write PN to LHI conductivity values to
 			      )
 {
-  fwrite(gPNLHI.gp, model.neuronN[0] * model.neuronN[2] * sizeof(float), 1, f);
+  fwrite(gpPNLHI, model.neuronN[0] * model.neuronN[2] * sizeof(float), 1, f);
   fprintf(stderr, "wrote pnlhi ... \n");
 }
 
