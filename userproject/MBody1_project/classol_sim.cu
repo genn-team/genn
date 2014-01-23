@@ -168,6 +168,7 @@ int main(int argc, char *argv[])
   timer.stopTimer();
   cerr << "output files are created under the current directory." << endl;
   fprintf(timef, "%d %d %d %d %f \n", locust.sumPN, locust.sumKC, locust.sumLHI, locust.sumDN, timer.getElapsedTime());
-  fcloseall();
+  fclose(osf);
+  fclose(timef);
   return 0;
 }
