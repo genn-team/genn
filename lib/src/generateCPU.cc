@@ -102,7 +102,16 @@ void genNeuronFunction(NNmodel &model, //!< Model description
       	string psCode = postSynModels[model.postSynapseType[model.inSyn[i][j]]].postSyntoCurrent;
 
 	substitute(psCode, tS("$(inSyn)"), tS("inSyn") + model.neuronName[i]+ tS(j) +tS("[n]"));
-	substitute(psCode, tS("$(V)"), tS("lV"));
+	
+	for (int k = 0, l = nModels[nt].varNames.size(); k < l; k++) {
+      substitute(psCode, tS("$(") + nModels[nt].varNames[k] + tS(")"),
+		 tS("l") + nModels[nt].varNames[k]);
+    }
+	
+	for (int k = 0, l = nModels[nt].pNames.size(); k < l; k++) {
+      substitute(psCode, tS("$(") + nModels[nt].pNames[k] + tS(")"),
+		 tS("l") + nModels[nt].pNames[k]);
+    }
 
 	for (int k = 0, l = postSynModels[model.postSynapseType[model.inSyn[i][j]]].pNames.size(); k < l; k++) {
 				substitute(psCode, tS("$(") + postSynModels[model.postSynapseType[model.inSyn[i][j]]].pNames[k] + tS(")"), 
@@ -240,6 +249,16 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 		substitute(psCode, tS("$(") + postSynModels[model.postSynapseType[model.inSyn[i][j]]].dpNames[k] + tS(")"), tS(model.dpsp[model.inSyn[i][j]][k]));
 	}
 	
+	for (int k = 0, l = nModels[nt].varNames.size(); k < l; k++) {
+      substitute(psCode, tS("$(") + nModels[nt].varNames[k] + tS(")"),
+		 tS("l") + nModels[nt].varNames[k]);
+    }
+	
+	for (int k = 0, l = nModels[nt].pNames.size(); k < l; k++) {
+      substitute(psCode, tS("$(") + nModels[nt].pNames[k] + tS(")"),
+		 tS("l") + nModels[nt].pNames[k]);
+    }
+    
 	os << psCode;
     
       /*os << "    inSyn"  << model.neuronName[i] << j << "[n] *= ";
