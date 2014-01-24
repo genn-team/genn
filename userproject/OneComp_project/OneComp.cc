@@ -34,6 +34,9 @@ float myIzh_p[3]= {
   1.0            // 2 - tau_S: decay time constant for S [ms]
 };
 
+float postSynV[0]={
+};
+
 #include "../../userproject/include/sizes.h"
 
 float inpIzh1 = 4.0;
@@ -43,7 +46,7 @@ void modelDefinition(NNmodel &model)
 {
   model.setName("OneComp");
   model.addNeuronPopulation("Izh1", _NC1, IZHIKEVICH, exIzh_p, exIzh_ini);        	 
- // model.addSynapsePopulation("IzhIzh", NSYNAPSE, ALLTOALL, INDIVIDUALG, NO_DELAY, "Izh1", "Izh1", myIzh_p);
+ // model.addSynapsePopulation("IzhIzh", NSYNAPSE, ALLTOALL, INDIVIDUALG, NO_DELAY, "Izh1", "Izh1", postSynV,myIzh_p);
  // model.setSynapseG("IzhIzh", gIzh1);
   
   model.activateDirectInput("Izh1", CONSTINP);

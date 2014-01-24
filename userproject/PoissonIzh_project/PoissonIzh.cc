@@ -29,7 +29,7 @@ float myPOI_ini[4]= {
   -10.0       // 2 - SpikeTime
 };
 
-float exIzh_p[4]{
+float exIzh_p[4]={
 //Izhikevich model parameters - tonic spiking
 	0.02,	// 0 - a
 	0.25,	// 1 - b
@@ -37,7 +37,7 @@ float exIzh_p[4]{
 	6	// 3 - d
 };
 
-float exIzh_ini[2]{
+float exIzh_ini[2]={
 //Izhikevich model initial conditions - tonic spiking
 	-65,	//0 - V
 	-20	//1 - U
@@ -53,6 +53,8 @@ float postExp[2]={
   1.0,            // 0 - tau_S: decay time constant for S [ms]
   0.0		  // 1 - Erev: Reversal potential
 };
+float postSynV[0]={
+};
 
 float gPNIzh1= 0.01;
 
@@ -64,6 +66,6 @@ void modelDefinition(NNmodel &model)
   model.addNeuronPopulation("PN", _NAL, POISSONNEURON, myPOI_p, myPOI_ini);
   model.addNeuronPopulation("Izh1", _NAL, IZHIKEVICH, exIzh_p, exIzh_ini);
 
-  model.addSynapsePopulation("PNIzh1", NSYNAPSE, ALLTOALL, INDIVIDUALG, NO_DELAY, EXPDECAY, "PN", "Izh1", myPNKC_p, postExp);
+  model.addSynapsePopulation("PNIzh1", NSYNAPSE, ALLTOALL, INDIVIDUALG, NO_DELAY, EXPDECAY, "PN", "Izh1", myPNKC_p, postSynV, postExp);
   model.setSynapseG("PNIzh1", gPNIzh1);
 }
