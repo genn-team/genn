@@ -93,6 +93,7 @@ void genNeuronFunction(NNmodel &model, //!< Model description
       os << "n];" << endl;
     }
     os << "    float Isyn = 0;" << endl;
+    
     if (model.inSyn[i].size() > 0) {
       //os << "    Isyn = ";
       for (int j = 0; j < model.inSyn[i].size(); j++) {
@@ -275,10 +276,15 @@ void genNeuronFunction(NNmodel &model, //!< Model description
   		}
     
 			os << psCode;
-    
+			
       /*os << "    inSyn"  << model.neuronName[i] << j << "[n] *= ";
       unsigned int synID = model.inSyn[i][j];
       os << SAVEP(model.dsp[synID][0]) << ";" << endl;*/
+      
+
+      	for (int k = 0, l = postSynModels[model.postSynapseType[model.inSyn[i][j]]].varNames.size(); k < l; k++) {
+					os << "    " <<  postSynModels[model.postSynapseType[model.inSyn[i][j]]].varNames[k] << model.synapseName[model.inSyn[i][j]] << "[n]" << " = lps" << postSynModels[model.postSynapseType[model.inSyn[i][j]]].varNames[k] << j << ";" << endl;
+      	}
     }
     os << "  }" << endl;
     os << endl;
