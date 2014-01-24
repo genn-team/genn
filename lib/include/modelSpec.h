@@ -180,6 +180,7 @@ class NNmodel
   
   vector<unsigned int> postSynapseType; //!< Types of synapses
 	vector < vector < float > > postSynapsePara; //!< parameters of postsynapses
+  vector<vector<float> > postSynIni; //!< Initial values of postsynaptic variables
   vector<vector<float> > dpsp;  //!< Derived postsynapse parameters
     
  private:
@@ -211,8 +212,8 @@ class NNmodel
   //void activateDirectInput(const char *, unsigned int);  
   //void addPostSyntoNeuron(const string,unsigned int); //!< Method for defining postsynaptic dynamics
   void activateDirectInput(const string, unsigned int);  
-  void addSynapsePopulation(const char *, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, const char *, const char *, float *, float *); //!< Method for adding a synapse population to a neuronal network model, using C style character array for the name of the population
-  void addSynapsePopulation(const string, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, const string, const string, float *, float *); //!< Method for adding a synapse population to a neuronal network model, using C++ string for the name of the population
+  void addSynapsePopulation(const char *, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, const char *, const char *, float *, float *, float *); //!< Method for adding a synapse population to a neuronal network model, using C style character array for the name of the population
+  void addSynapsePopulation(const string, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, const string, const string, float *, float *, float *); //!< Method for adding a synapse population to a neuronal network model, using C++ string for the name of the population
   void setSynapseG(const string, float); //!< Method for setting the conductance (g) value for a synapse population with "GLOBALG" charactertistic
   void setConstInp(const string, float); //!< Method for setting the global input value for a neuron population if CONSTINP
   //void setSynapseNo(unsigned int,unsigned int); // !< Sets the number of connections for sparse matrices  

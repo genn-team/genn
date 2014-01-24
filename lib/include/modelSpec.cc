@@ -236,7 +236,6 @@ void NNmodel::addNeuronPopulation(const string name, unsigned int nNo, unsigned 
   for (int j= 0; j < nModels[neuronType[i]].varNames.size(); j++) {
     tmpP.push_back(ini[j]);
   }
-
   neuronIni.push_back(tmpP);
   vector<unsigned int> tv;
   neuronDelaySlots.push_back(1);
@@ -287,9 +286,9 @@ void NNmodel::activateDirectInput(const string name, unsigned int type)
  */
 //--------------------------------------------------------------------------
 
-void NNmodel::addSynapsePopulation(const char *name, unsigned int syntype, unsigned int conntype, unsigned int gtype, unsigned int delaySteps, unsigned int postsyn, const char *src, const char *trg, float *p, float *ps) 
+void NNmodel::addSynapsePopulation(const char *name, unsigned int syntype, unsigned int conntype, unsigned int gtype, unsigned int delaySteps, unsigned int postsyn, const char *src, const char *trg, float *p, float * PSVini, float *ps) 
 {
-  addSynapsePopulation(toString(name), syntype, conntype, gtype, delaySteps, postsyn, toString(src), toString(trg), p, ps);
+  addSynapsePopulation(toString(name), syntype, conntype, gtype, delaySteps, postsyn, toString(src), toString(trg), p, PSVini, ps);
 }
 
 //--------------------------------------------------------------------------
@@ -297,12 +296,13 @@ void NNmodel::addSynapsePopulation(const char *name, unsigned int syntype, unsig
  */
 //--------------------------------------------------------------------------
 
-void NNmodel::addSynapsePopulation(const string name, unsigned int syntype, unsigned int conntype, unsigned int gtype, unsigned int delaySteps, unsigned int postsyn, const string src, const string trg, float *p, float *ps)
+void NNmodel::addSynapsePopulation(const string name, unsigned int syntype, unsigned int conntype, unsigned int gtype, unsigned int delaySteps, unsigned int postsyn, const string src, const string trg, float *p, float* PSVini, float *ps)
 {
   unsigned int i= synapseGrpN++;
   unsigned int srcNumber, trgNumber;
   vector<float> tmpP;
   vector<float> tmpPS;
+  vector<float> tmpPV;
   
   if (postSynModels.size() < 1) preparePostSynModels();
 
@@ -325,7 +325,8 @@ void NNmodel::addSynapsePopulation(const string name, unsigned int syntype, unsi
   for (int j= 0; j < SYNPNO[synapseType[i]]; j++) {
     tmpP.push_back(p[j]);
   }
- 
+
+   
   synapsePara.push_back(tmpP);
   postSynapseType.push_back(postsyn);
 
@@ -336,6 +337,14 @@ void NNmodel::addSynapsePopulation(const string name, unsigned int syntype, unsi
   }
    
   postSynapsePara.push_back(tmpPS); 
+  
+  tmpPV.clear();
+  for (int j= 0; j < postSynModels[postSynapseType[i]].varNames.size(); j++) {
+    tmpPV.push_back(PSVini[j]);
+  }
+  
+  postSynIni.push_back(tmpPV);
+  
   initDerivedSynapsePara(i);
   
   initDerivedPostSynapsePara(i);

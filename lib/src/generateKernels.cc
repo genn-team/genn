@@ -119,6 +119,17 @@ void genNeuronKernel(NNmodel &model, //!< Model description
       os << model.neuronName[i]<< ", " << endl;
     }
   }
+  
+   
+  for (int i=0; i< model.postSynapseType.size(); i++){
+    int pst= model.postSynapseType[i];
+    for (int k= 0, l= postSynModels[pst].varNames.size(); k < l; k++) {
+      os << "  " << postSynModels[pst].varTypes[k] << " *d_" << postSynModels[pst].varNames[k];
+      os << model.synapseName[i]<< ", " << endl;
+    }
+  }
+  
+  
   os << model.ftype << " t // absolute time" << endl; 
   os << ")" << endl;
 
@@ -140,6 +151,7 @@ void genNeuronKernel(NNmodel &model, //!< Model description
   os << endl;
   os << "  if (threadIdx.x == 0) scnt = 0;" << endl;
   os << "  __syncthreads();" << endl;
+  
   for (int i= 0; i < model.neuronGrpN; i++) {
     nt= model.neuronType[i];
     if (i == 0) {
@@ -181,6 +193,13 @@ void genNeuronKernel(NNmodel &model, //!< Model description
       if (model.inSyn[i].size() > 0) {
 	for (int j = 0; j < model.inSyn[i].size(); j++) {
 	
+	
+	 for (int k = 0, l = postSynModels[model.postSynapseType[model.inSyn[i][j]]].varNames.size(); k < l; k++) {
+      os << "      " << postSynModels[model.postSynapseType[model.inSyn[i][j]]].varTypes[k] << " lps" << postSynModels[model.postSynapseType[model.inSyn[i][j]]].varNames[k] << j;
+      os << " = d_" <<  postSynModels[model.postSynapseType[model.inSyn[i][j]]].varNames[k] << model.synapseName[i] << "[";
+      os << localID << "];" << endl;
+    }
+	
 	os << "      Isyn += ";
     string psCode = postSynModels[model.postSynapseType[model.inSyn[i][j]]].postSyntoCurrent;
 
@@ -201,6 +220,11 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 				tS(model.postSynapsePara[model.inSyn[i][j]][k]));
 		 }  
 		   
+	for (int k = 0, l = postSynModels[model.postSynapseType[model.inSyn[i][j]]].varNames.size(); k < l; k++) {
+				substitute(psCode, tS("$(") + postSynModels[model.postSynapseType[model.inSyn[i][j]]].varNames[k] + tS(")"), 
+				tS("lps") +tS(postSynModels[model.postSynapseType[model.inSyn[i][j]]].varNames[k])+tS(j));
+		 }  
+		 
 	for (int k = 0; k < postSynModels[model.postSynapseType[model.inSyn[i][j]]].dpNames.size(); ++k)
 		substitute(psCode, tS("$(") + postSynModels[model.postSynapseType[model.inSyn[i][j]]].dpNames[k] + tS(")"), tS(model.dpsp[model.inSyn[i][j]][k]));
 		
@@ -290,6 +314,11 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 			substitute(psCode, tS("$(") + postSynModels[model.postSynapseType[model.inSyn[i][j]]].pNames[k] + tS(")"), 
 			tS(model.postSynapsePara[model.inSyn[i][j]][k]));
 		}  
+		 
+		for (int k = 0, l = postSynModels[model.postSynapseType[model.inSyn[i][j]]].varNames.size(); k < l; k++) {
+				substitute(psCode, tS("$(") + postSynModels[model.postSynapseType[model.inSyn[i][j]]].varNames[k] + tS(")"), 
+				tS("lps") +tS(postSynModels[model.postSynapseType[model.inSyn[i][j]]].varNames[k])+tS(j));
+		 }  
 		       
 		for (int k = 0; k < postSynModels[model.postSynapseType[model.inSyn[i][j]]].dpNames.size(); ++k)
 			substitute(psCode, tS("$(") + postSynModels[model.postSynapseType[model.inSyn[i][j]]].dpNames[k] + tS(")"), tS(model.dpsp[model.inSyn[i][j]][k]));
