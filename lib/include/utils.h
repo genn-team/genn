@@ -320,14 +320,14 @@ void preparePostSynModels(){
   ps.varNames.clear();
   ps.varTypes.clear();
   
- // ps.varNames.push_back(tS("E"));  
- // ps.varTypes.push_back(tS("float"));  
+  ps.varNames.push_back(tS("E"));  
+  ps.varTypes.push_back(tS("float"));  
   
   ps.pNames.clear();
   ps.dpNames.clear(); 
   
   ps.pNames.push_back(tS("tau")); 
-  ps.pNames.push_back(tS("E"));  
+  //ps.pNames.push_back(tS("E"));  
   ps.dpNames.push_back(tS("expDecay"));
   
   ps.postSynDecay=tS(" 	 $(inSyn)*=$(expDecay);\n");

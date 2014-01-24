@@ -118,7 +118,7 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 
 					for (int k = 0, l = postSynModels[model.postSynapseType[model.inSyn[i][j]]].pNames.size(); k < l; k++) {
 						substitute(psCode, tS("$(") + postSynModels[model.postSynapseType[model.inSyn[i][j]]].pNames[k] + tS(")"), 
-						tS(model.postSynapsePara[model.inSyn[i][j]][k])+tS(j));
+						tS(model.postSynapsePara[model.inSyn[i][j]][k]));
 		 			}  
  
 					for (int k = 0, l = postSynModels[model.postSynapseType[model.inSyn[i][j]]].varNames.size(); k < l; k++) {
@@ -252,7 +252,7 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 			
 			for (int k = 0, l = postSynModels[model.postSynapseType[model.inSyn[i][j]]].pNames.size(); k < l; k++) {
 				substitute(psCode, tS("$(") + postSynModels[model.postSynapseType[model.inSyn[i][j]]].pNames[k] + tS(")"), 
-				tS(model.postSynapsePara[model.inSyn[i][j]][k])+tS(j));
+				tS(model.postSynapsePara[model.inSyn[i][j]][k]));
 			}  
 		   
 			for (int k = 0, l = postSynModels[model.postSynapseType[model.inSyn[i][j]]].varNames.size(); k < l; k++) {
