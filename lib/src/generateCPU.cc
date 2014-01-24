@@ -98,7 +98,7 @@ void genNeuronFunction(NNmodel &model, //!< Model description
       for (int j = 0; j < model.inSyn[i].size(); j++) {
       	for (int k = 0, l = postSynModels[model.postSynapseType[model.inSyn[i][j]]].varNames.size(); k < l; k++) {
 					os << "    " << postSynModels[model.postSynapseType[model.inSyn[i][j]]].varTypes[k] << " lps" << postSynModels[model.postSynapseType[model.inSyn[i][j]]].varNames[k] << j;
-    		  os << " =" <<  postSynModels[model.postSynapseType[model.inSyn[i][j]]].varNames[k] << model.synapseName[i] << "[n];" << endl;
+    		  os << " =" <<  postSynModels[model.postSynapseType[model.inSyn[i][j]]].varNames[k] << model.inSyn[i][j] << "[n];" << endl;
 
       	}
 			    os << "    Isyn += ";
