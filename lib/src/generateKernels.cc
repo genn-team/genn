@@ -196,7 +196,7 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 	
 	 for (int k = 0, l = postSynModels[model.postSynapseType[model.inSyn[i][j]]].varNames.size(); k < l; k++) {
       os << "      " << postSynModels[model.postSynapseType[model.inSyn[i][j]]].varTypes[k] << " lps" << postSynModels[model.postSynapseType[model.inSyn[i][j]]].varNames[k] << j;
-      os << " = d_" <<  postSynModels[model.postSynapseType[model.inSyn[i][j]]].varNames[k] << model.inSyn[i][j] << "[";
+      os << " = d_" <<  postSynModels[model.postSynapseType[model.inSyn[i][j]]].varNames[k] << model.synapseName[model.inSyn[i][j]] << "[";
       os << localID << "];" << endl;
     }
 	
