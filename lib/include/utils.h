@@ -292,6 +292,8 @@ void prepareStandardModels()
 		$(U)+=$(d);\n\
   		}\n");
   nModels.push_back(n);
+  
+  #include "extra_neurons.h"
 
 }
 
@@ -320,14 +322,14 @@ void preparePostSynModels(){
   ps.varNames.clear();
   ps.varTypes.clear();
   
-  ps.varNames.push_back(tS("E"));  
-  ps.varTypes.push_back(tS("float"));  
+  //ps.varNames.push_back(tS("E"));  
+  //ps.varTypes.push_back(tS("float"));  
   
   ps.pNames.clear();
   ps.dpNames.clear(); 
   
   ps.pNames.push_back(tS("tau")); 
-  //ps.pNames.push_back(tS("E"));  
+  ps.pNames.push_back(tS("E"));  
   ps.dpNames.push_back(tS("expDecay"));
   
   ps.postSynDecay=tS(" 	 $(inSyn)*=$(expDecay);\n");
@@ -336,6 +338,8 @@ void preparePostSynModels(){
   ps.dps = new expDecayDp;
   
   postSynModels.push_back(ps);
+  
+  #include "extra_postsynapses.h"
 }
 
 void prepareSynapseModels(){
