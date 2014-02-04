@@ -258,13 +258,29 @@ void prepareStandardModels()
   n.pNames.push_back(tS("c")); // after-spike reset value of V
   n.pNames.push_back(tS("d")); // after-spike reset value of U
   n.dpNames.clear(); 
-  n.simCode= tS(" 	 $(V)+=0.5f*(0.04f*$(V)*$(V)+5*$(V)+140-$(U)+$(Isyn))*DT; //at two times for numerical stability\n\
-  	 $(V)+=0.5f*(0.04f*$(V)*$(V)+5*$(V)+140-$(U)+$(Isyn))*DT;\n\
-  	 $(U)+=$(a)*($(b)*$(V)-$(U))*DT;\n\
-  	 if ($(V) > 30){\n\
-		$(V)=$(c);\n\
-		$(U)+=$(d);\n\
-  		}\n");
+  //TODO: replace the resetting in the following with BRIAN-like threshold and resetting 
+  n.simCode= tS("    if ($(V) = 30){\n\
+      $(V)=$(c);\n\
+		  $(U)+=$(d);\n\
+    } \n\
+    $(V)+=0.5f*(0.04f*$(V)*$(V)+5*$(V)+140-$(U)+$(Isyn))*DT; //at two times for numerical stability\n\
+    $(V)+=0.5f*(0.04f*$(V)*$(V)+5*$(V)+140-$(U)+$(Isyn))*DT;\n\
+    $(U)+=$(a)*($(b)*$(V)-$(U))*DT;\n\
+    if ($(V) > 30){\n   //keep this only for visualisation -- not really necessaary otherwise \
+      $(V)=30;\n\
+    }");
+    
+ /* n.thresholdCode=tS("//threshold code is here\n\
+      bool _cond=FALSE;\n \ 
+      if ($(V) >= 30 ){\n\
+      bool _cond=TRUE;\n\
+      $(V)=30;
+    } \n ");
+    
+  n.resetCode=tS("//reset code is here\n ");
+      $(V)=$(c);\n\
+		  $(U)+=$(d);\n\
+  */
   nModels.push_back(n);
 
 //Izhikevich neurons with variable parameters
@@ -284,13 +300,17 @@ void prepareStandardModels()
   n.varTypes.push_back(tS("float"));
   n.pNames.clear();
   n.dpNames.clear(); 
-  n.simCode= tS(" 	 $(V)+=0.5f*(0.04f*$(V)*$(V)+5*$(V)+140-$(U)+$(Isyn))*DT; //at two times for numerical stability\n\
-  	 $(V)+=0.5f*(0.04f*$(V)*$(V)+5*$(V)+140-$(U)+$(Isyn))*DT;\n\
-  	 $(U)+=$(a)*($(b)*$(V)-$(U))*DT;\n\
-  	 if ($(V) > 30){\n\
-		$(V)=$(c);\n\
-		$(U)+=$(d);\n\
-  		}\n");
+  //TODO: replace the resetting in the following with BRIAN-like threshold and resetting 
+  n.simCode= tS("    if ($(V) >= 30){\n\
+      $(V)=$(c);\n\
+		  $(U)+=$(d);\n\
+    } \n\
+    $(V)+=0.5f*(0.04f*$(V)*$(V)+5*$(V)+140-$(U)+$(Isyn))*DT; //at two times for numerical stability\n\
+    $(V)+=0.5f*(0.04f*$(V)*$(V)+5*$(V)+140-$(U)+$(Isyn))*DT;\n\
+    $(U)+=$(a)*($(b)*$(V)-$(U))*DT;\n\
+    if ($(V) > 30){      //keep this only for visualisation -- not really necessaary otherwise \n\
+      $(V)=30; \n\
+    }\n");
   nModels.push_back(n);
   
   #include "extra_neurons.h"
@@ -319,6 +339,8 @@ vector<postSynModel> postSynModels;
 
 void preparePostSynModels(){
   postSynModel ps;
+  
+  //0: Exponential decay
   ps.varNames.clear();
   ps.varTypes.clear();
   
@@ -336,6 +358,19 @@ void preparePostSynModels(){
   ps.postSyntoCurrent=tS("$(inSyn)*($(E)-$(V))");
   
   ps.dps = new expDecayDp;
+  
+  postSynModels.push_back(ps);
+  
+  
+  //1: IZHIKEVICH MODEL (NO POSTSYN RULE)
+  ps.varNames.clear();
+  ps.varTypes.clear();
+  
+  ps.pNames.clear();
+  ps.dpNames.clear(); 
+  
+  ps.postSynDecay=tS("");
+  ps.postSyntoCurrent=tS("$(inSyn); $(inSyn)=0");
   
   postSynModels.push_back(ps);
   
