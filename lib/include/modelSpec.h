@@ -87,7 +87,8 @@ unsigned int SYNPNO[SYNTYPENO]= {
 
 //postsynaptic parameters
 #define EXPDECAY 0 //default - how it is in the original version
-// currently values >0 will be defined by code generation.
+#define IZHIKEVICH_PS 1 //empty postsynaptic rule for the Izhikevich model.
+// currently values >1 will be defined by code generation.
 
 
 class dpclass {
