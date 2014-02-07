@@ -20,6 +20,7 @@ int main(int argc, char *argv[])
     fprintf(stderr, "usage: PoissonIzh_sim <basename> <CPU=0, GPU=1> \n");
     return 1;
   }
+  
   int which= atoi(argv[2]);
   string OutDir = toString(argv[1]) +"_output";
   string name;
@@ -44,26 +45,53 @@ int main(int argc, char *argv[])
   FILE *osfpn= fopen(name.c_str(),"w");
   //-----------------------------------------------------------------
   // build the neuronal circuitery
-  classol locust;
+  classol PNIzhNN;
+  
+  //SPARSE CONNECTIVITY
+  
+    name= OutDir+ "/gPoissonIzh";
+  	fprintf(stderr, "# reading PN-Izh1 synapses from file %s", name.c_str());
+ 		FILE *f= fopen(name.c_str(),"r");
+ 	  name= OutDir+ toString("/gPoissonIzh_info");
+ 	  FILE *f_info= fopen(name.c_str(),"r");
+ 	 	name= OutDir+ toString("/gPoissonIzh_postIndInG");
+	  FILE *f_postIndInG= fopen(name.c_str(),"r");
+	  name= OutDir+ toString("/gPoissonIzh_postind");
+	  FILE *f_postind= fopen(name.c_str(),"r");  
  
-    
-  fprintf(stderr, "# reading PN-Izh1 synapses ... \n");
-  name= OutDir+ "/"+ toString(argv[1]) + toString(".pnkc");
-  FILE *f= fopen(name.c_str(),"r");
-  locust.read_PNIzh1syns(f);
-  fclose(f);   
+  	fread(&gPNIzh1.connN,sizeof(unsigned int),1,f_info);
+  	fprintf(stderr, "read %u times %d bytes \n", gPNIzh1.connN,sizeof(float));
+ 		allocateAllSparseArrays();
+
+ 		PNIzhNN.read_sparsesyns_par(0, gPNIzh1, f_postind,f_postIndInG,f);
+ 		fclose(f); 
+  	fclose(f_info); 
+  	fclose(f_postIndInG); 
+  	fclose(f_postind);   
+  	initializeAllSparseArrays();
+  //SPARSE CONNECTIVITY END */
+  
+  //ALLTOALL CONNECTIVITY
+  /*
+  	name= OutDir+ "/gPoissonIzh_nonopt";
+  	cout << "# reading PN-Izh1 synapses from file "<< name << endl;
+  	FILE *f= fopen(name.c_str(),"r");
+  	PNIzhNN.read_PNIzh1syns(gpPNIzh1 , f);
+  	fclose(f);   
+  //ALLTOALL CONNECTIVITY END */
  
+  
   fprintf(stderr, "# reading input patterns ... \n");
-  name= OutDir+ "/"+ toString(argv[1]) + toString(".inpat");
+  name= OutDir+ "/PoissonIzh.inpat";
   f= fopen(name.c_str(), "r");
-  locust.read_input_patterns(f);
+  PNIzhNN.read_input_patterns(f);
   fclose(f);
-  locust.generate_baserates();
+  PNIzhNN.generate_baserates();
 
   if (which == GPU) {
-    locust.allocate_device_mem_patterns();
+    PNIzhNN.allocate_device_mem_patterns();
   }
-  locust.init(which);         // this includes copying g's for the GPU version
+  PNIzhNN.init(which);         // this includes copying g's for the GPU version
 
   fprintf(stderr, "# neuronal circuitery built, start computation ... \n\n");
 
@@ -76,19 +104,20 @@ int main(int argc, char *argv[])
   t= 0.0;
   int done= 0;
   float last_t_report=  t;
-  locust.run(DT, which);
+  PNIzhNN.run(DT, which);
   unsigned int sum= 0;
   while (!done) 
   {
-//   if (which == GPU) locust.getSpikesFromGPU();
-//    if (which == GPU) locust.getSpikeNumbersFromGPU();
-    locust.run(DT, which); // run next batch
+//   if (which == GPU) PNIzhNN.getSpikesFromGPU();
+//    if (which == GPU) PNIzhNN.getSpikeNumbersFromGPU();
+    PNIzhNN.run(DT, which); // run next batch
     if (which == GPU) {  
       CHECK_CUDA_ERRORS(cudaMemcpy(VIzh1, d_VIzh1, 10*sizeof(float), cudaMemcpyDeviceToHost));
+      CHECK_CUDA_ERRORS(cudaMemcpy(VPN, d_VPN, 10*sizeof(float), cudaMemcpyDeviceToHost));
 	} 
-//    locust.sum_spikes();
-//    locust.output_spikes(os, which);
-//   locust.output_state(os, which);  // while outputting the current one ...
+//    PNIzhNN.sum_spikes();
+//    PNIzhNN.output_spikes(os, which);
+//   PNIzhNN.output_state(os, which);  // while outputting the current one ...
    fprintf(osf, "%f ", t);
    fprintf(osfpn,"%f ",t);
    for(int i=0;i<10;i++) {
@@ -105,7 +134,7 @@ int main(int argc, char *argv[])
     {
       fprintf(stderr, "time %f \n", t);
       last_t_report= t;
-      //locust.output_state(os);
+      //PNIzhNN.output_state(os);
     }
     // output synapses occasionally
     // if (synwrite) {
@@ -113,33 +142,33 @@ int main(int argc, char *argv[])
     //   name= toString(argv[1]) + toString(".") + toString((int) synwriteT);
     //   name+= toString(".syn");
     //   f= fopen(name.c_str(),"w");
-    //   locust.write_kcdnsyns(f);
+    //   PNIzhNN.write_kcdnsyns(f);
     //   fclose(f);
     //   synwrite= 0;
     // }
     // if (t - lastsynwrite >= SYN_OUT_TME) {
-    //   locust.get_kcdnsyns();
+    //   PNIzhNN.get_kcdnsyns();
     //   synwrite= 1;
     //   synwriteT= t;
     // }
     done= (t >= TOTAL_TME);
   }
-//  locust.output_state(os);
-//    if (which == GPU) locust.getSpikesFromGPU();
-//    locust.output_spikes(os, which);
+//  PNIzhNN.output_state(os);
+//    if (which == GPU) PNIzhNN.getSpikesFromGPU();
+//    PNIzhNN.output_spikes(os, which);
   // if (synwrite) {
   //   lastsynwrite= t;
   //   name= toString(argv[1]) + toString(".") + toString((int) t);
   //   name+= toString(".syn");
   //   f= fopen(name.c_str());
-  //   locust.write_kcdnsyns(f);
+  //   PNIzhNN.write_kcdnsyns(f);
   // fclose(f);
   //   synwrite= 0;
   // }
 
   timer.stopTimer();
   cerr << "Output files are created under the current directory." << endl;
-  fprintf(timef, "%d %d %d %d %f \n", locust.sumPN, locust.sumIzh1, timer.getElapsedTime());
+  fprintf(timef, "%d %d %d %d %f \n", PNIzhNN.sumPN, PNIzhNN.sumIzh1, timer.getElapsedTime());
 
   return 0;
 }

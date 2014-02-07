@@ -38,8 +38,8 @@ class classol
   void allocate_device_mem_patterns();
   void allocate_device_mem_input();
   void free_device_mem();
-  void read_PNIzh1syns(FILE *);
-  void write_PNIzh1syns(FILE *);
+  void read_PNIzh1syns(float *, FILE *);
+  void read_sparsesyns_par(int, struct Conductance, FILE *,FILE *,FILE *);
   void read_input_patterns(FILE *);
   void generate_baserates();
   void run(float, unsigned int);
