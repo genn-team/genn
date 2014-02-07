@@ -79,40 +79,54 @@ void classol::free_device_mem()
 
 classol::~classol()
 {
-  free(pattern);
-  free(baserates);
+  delete [] pattern;
+  delete [] baserates;
 }
 
 
-void classol::read_PNIzh1syns(FILE *f)
+void classol::read_PNIzh1syns(float *gp, FILE *f)
 {
-  // version 1
   fprintf(stderr, "%u\n", model.neuronN[0]*model.neuronN[1]*sizeof(float));
-  fread(gpPNIzh1, model.neuronN[0]*model.neuronN[1]*sizeof(float),1,f); //
-  // version 2
-  /*  unsigned int UIntSz= sizeof(unsigned int)*8;   // in bit!
-  unsigned int logUIntSz= (int) (logf((float) UIntSz)/logf(2.0f)+1e-5f);
-  unsigned int tmp= model.neuronN[0]*model.neuronN[1];
-  unsigned size= (tmp >> logUIntSz);
-  if (tmp > (size << logUIntSz)) size++;
-  size= size*sizeof(unsigned int);
-  is.read((char *)gpPNIzh1, size);*/
-
-  // general:
-  //assert(is.good());
+  fread(gp, model.neuronN[0]*model.neuronN[1]*sizeof(float),1,f); //
   fprintf(stderr,"read PNIzh1 ... \n");
   fprintf(stderr, "values start with: \n");
   for(int i= 0; i < 100; i++) {
-    fprintf(stderr, "%f ", gpPNIzh1[i]);
+    fprintf(stderr, "%f ", gp[i]);
   }
   fprintf(stderr,"\n\n");
 }
 
-
-void classol::write_PNIzh1syns(FILE *f)
+void classol::read_sparsesyns_par(int synInd, Conductance C, FILE *f_ind,FILE *f_indInG,FILE *f_g //!< File handle for a file containing sparse conductivity values
+			    )
 {
-  fwrite(gpPNIzh1, model.neuronN[0]*model.neuronN[1]*sizeof(float),1,f);
-  fprintf(stderr, "wrote PNIzh1 ... \n");
+  //allocateSparseArray(synInd,C.connN);
+
+  fread(C.gp, C.connN*sizeof(model.ftype),1,f_g);
+  fprintf(stderr,"%d active synapses. \n",C.connN);
+  fread(C.gIndInG, (model.neuronN[model.synapseSource[synInd]]+1)*sizeof(unsigned int),1,f_indInG);
+  fread(C.gInd, C.connN*sizeof(int),1,f_ind);
+
+
+  // general:
+  fprintf(stderr,"Read conductance ... \n");
+  fprintf(stderr, "Size is %d for synapse group %d. Values start with: \n",C.connN, synInd);
+  for(int i= 0; i < 100; i++) {
+    fprintf(stderr, "%f ", C.gp[i]);
+  }
+  fprintf(stderr,"\n\n");
+  
+  
+  fprintf(stderr, "%d indices read. Index values start with: \n",C.connN);
+  for(int i= 0; i < 100; i++) {
+    fprintf(stderr, "%d ", C.gInd[i]);
+  }  
+  fprintf(stderr,"\n\n");
+  
+  
+  fprintf(stderr, "%d g indices read. Index in g array values start with: \n", model.neuronN[model.synapseSource[synInd]]+1);
+  for(int i= 0; i < 100; i++) {
+    fprintf(stderr, "%d ", C.gIndInG[i]);
+  }  
 }
 
 
@@ -149,11 +163,10 @@ void classol::run(float runtime, unsigned int which)
     if (iT%patSetTime == 0) {
       pno= (iT/patSetTime)%PATTERNNO;
       if (which == CPU)
-	theRates= pattern;
+				theRates= pattern;
       if (which == GPU)
-	theRates= d_pattern;
+				theRates= d_pattern;
       offset= pno*model.neuronN[0];
-      fprintf(stderr, "setting pattern, pattern offset: %d\n", offset);
     }
     if (iT%patSetTime == patFireTime) {
       if (which == CPU)

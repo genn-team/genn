@@ -26,7 +26,7 @@ using namespace std;
 // we will hard-code some stuff ... because at the end of the day that is 
 // what we will do for the CUDA version
 
-#define DBG_SIZE 10000
+#define DBG_SIZE 1000
 #define INJECTCURRENT 0 //define
 
 // and some global variables
@@ -38,7 +38,7 @@ unsigned int iT= 0;
 //----------------------------------------------------------------------
 // other stuff:
 #define T_REPORT_TME 1000.0
-#define SYN_OUT_TME 20000.0
+#define SYN_OUT_TME 2000.0
 
 int patSetTime;
 // reset input every 100 steps == 50ms
@@ -48,7 +48,7 @@ int patSetTime;
 
 int patFireTime;
 
-#define TOTAL_TME 500000
+#define TOTAL_TME 5000
 
 CStopWatch timer;
 
