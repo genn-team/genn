@@ -22,7 +22,7 @@ if [ "$DBGMODE" = "1" ]
 then
 	#debugging: type "break main" or other breakpoint and then "run" once you are in cuda-gdb
 	make clean debug && make debug;
-	cuda-gdb -tui --directory=$GeNNPATH/lib/src --args bin/$GeNNOSTYPE/debug/generateALL $WD;
+	gdb -tui --directory=$GeNNPATH/lib/src --args bin/$GeNNOSTYPE/debug/generateALL $WD;
 else
 	make clean && make
 	bin/$GeNNOSTYPE/release/generateALL $WD;

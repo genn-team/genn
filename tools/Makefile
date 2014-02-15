@@ -20,7 +20,7 @@ INCLUDE= -I$(GeNNPATH)/lib/include/numlib
 FLAGS= -Wall -Winline
 #-O2 -march=athlon
 
-all: generate_run generate_run_1comp generate_run_PoissonIzh gen_input_fixfixfixno_struct gen_pnlhi_syns gen_kcdn_syns gen_pnkc_syns gen_pnkc_syns_indivID gen_syns_sparse 
+all: generate_run generate_run_1comp generate_run_PoissonIzh gen_input_fixfixfixno_struct gen_pnlhi_syns gen_kcdn_syns gen_pnkc_syns gen_pnkc_syns_indivID gen_syns_sparse generate_izhikevich_network_run_bm gen_syns_sparse_izhModel
 
 generate_run: generate_run.cc
 	$(C++) $(FLAGS) -g $(INCLUDE) -o generate_run generate_run.cc
@@ -52,5 +52,12 @@ gen_input_fixfixfixno_struct: gen_input_fixfixfixno_struct.cc
 gen_syns_sparse: gen_syns_sparse.cc
 	$(C++) $(FLAGS) -g $(INCLUDE) -o gen_syns_sparse gen_syns_sparse.cc
 
+generate_izhikevich_network_run_bm: generate_izhikevich_network_run_bm.cc
+	$(C++) $(FLAGS) -g $(INCLUDE) -o generate_izhikevich_network_run_bm generate_izhikevich_network_run_bm.cc
+
+gen_syns_sparse_izhModel: gen_syns_sparse_izhModel.cc
+	$(C++) $(FLAGS) -g $(INCLUDE) -o gen_syns_sparse_izhModel gen_syns_sparse_izhModel.cc
+
+
 clean:
-	$(RM) *.o generate_run generate_run_1comp gen_pnkc_syns gen_pnkc_syns_indivID gen_pnlhi_syns gen_kcdn_syns gen_input_fixfixfixno_struct
+	$(RM) *.o generate_run generate_run_1comp gen_pnkc_syns gen_pnkc_syns_indivID gen_pnlhi_syns gen_kcdn_syns gen_input_fixfixfixno_struct generate_izhikevich_network_run_bm gen_syns_sparse_izhModel
