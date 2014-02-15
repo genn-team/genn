@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
 {
   if (argc != 10)
   {
-    cerr << "usage: generate_run <CPU=0, GPU=1> <nPoisson> <nIzh> <pConn> <gscale> <outdir> <executable name> <model name> <debug mode? (0/1)>";
+    cerr << "usage: generate_run_PoissonIzh <CPU=0, GPU=1> <nPoisson> <nIzh> <pConn> <gscale> <outdir> <executable name> <model name> <debug mode? (0/1)>";
     exit(1);
   }
 
