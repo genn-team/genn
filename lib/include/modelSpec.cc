@@ -157,15 +157,18 @@ void NNmodel::initDerivedSynapsePara(unsigned int i)
   // padnN is the lowest multiple of synapseBlkSz >= neuronN[synapseTarget[i]]
   unsigned int nN = neuronN[synapseTarget[i]];
   unsigned int padnN = ceil((float)nN / (float)synapseBlkSz) * (float)synapseBlkSz;
+
   if (i == 0) {
     sumSynapseTrgN.push_back(nN);
     padSumSynapseTrgN.push_back(padnN);
+    padSumSynapseKrnl.push_back(padnN);
   }
   else {
     sumSynapseTrgN.push_back(sumSynapseTrgN[i-1]+nN);
     padSumSynapseTrgN.push_back(padSumSynapseTrgN[i-1]+padnN);
+    padSumSynapseKrnl.push_back(padSumSynapseKrnl[i-1]+padnN);
   }
-  fprintf(stderr, "%d\n", padSumSynapseTrgN[i]);
+	//fprintf(stderr, " sum of padded postsynaptic neurons for group %u is %u, krnl size is %u\n", i, padSumSynapseTrgN[i],padSumSynapseKrnl[i]);
 }
 
 
@@ -278,7 +281,7 @@ void NNmodel::checkSizes(unsigned int * NeuronpSize, unsigned int * NeuronvSize,
 void NNmodel::activateDirectInput(const string name, unsigned int type)
 {
   unsigned int i= findNeuronGrp(name);
-  receivesInputCurrent[i]= type;	//1 if common input, 2 if custom input from file, 3 if custom input as a rule
+  receivesInputCurrent[i]= type;	//1 if common input, 2 if custom input from file, 3 if custom input as a rule, 4 (TODO) if random input with Gaussian distribution.
 }
 
 //--------------------------------------------------------------------------
@@ -373,6 +376,7 @@ void NNmodel::setConstInp(const string sName, float globalInp0)
   unsigned int found= findNeuronGrp(sName);
   if (globalInp.size() < found+1) globalInp.resize(found+1);
   globalInp[found]= globalInp0;
+
 }
 
 //--------------------------------------------------------------------------
@@ -395,6 +399,55 @@ void NNmodel::setPrecision(unsigned int floattype)
      default:
 	ftype = toString("float");
   }
+}
+//--------------------------------------------------------------------------
+/*! \brief This function defines the maximum number of connections for a neuron in the population
+*/ 
+//--------------------------------------------------------------------------
+void NNmodel::setMaxConn(const string sname, unsigned int maxConnP)
+{
+	unsigned int found= findSynapseGrp(sname);
+	if (padSumSynapseKrnl.size() < found+1) padSumSynapseKrnl.resize(found+1);
+
+	if (synapseConnType[found] == SPARSE){
+  	if (maxConn.size() < found+1) maxConn.resize(found+1);
+  	maxConn[found]= maxConnP;
+
+		// set padnC is the lowest multiple of synapseBlkSz >= maxConn[found]
+		unsigned int padnC = ceil((float)maxConn[found] / (float)synapseBlkSz) * (float)synapseBlkSz;
+
+ 		if (found == 0) {
+			padSumSynapseKrnl[found]=padnC;
+			//fprintf(stderr, "padSumSynapseKrnl[%d] is %u\n", found, padSumSynapseKrnl[found]);
+  	}
+ 		else {
+			unsigned int toOmitK = padSumSynapseKrnl[found]-padSumSynapseKrnl[found-1];
+			//fprintf(stderr, "old padSumSynapseKrnl[%d] is %u\n", found,padSumSynapseKrnl[found]);
+   		padSumSynapseKrnl[found]=padSumSynapseKrnl[found-1]+padnC;
+			//fprintf(stderr, "padSumSynapseKrnl[%d] is %u\n", found,padSumSynapseKrnl[found]);
+			for (int j=found+1;j<padSumSynapseKrnl.size();j++){    	
+				//fprintf(stderr, "old padSumSynapseKrnl[%d] is %u\n",j,padSumSynapseKrnl[j]);
+    		padSumSynapseKrnl[j]=padSumSynapseKrnl[j]-toOmitK+padnC;
+				//fprintf(stderr, "padSumSynapseKrnl[%d] is %u\n", j,padSumSynapseKrnl[j]);
+			}
+  	}
+	}
+	else
+	{
+		fprintf(stderr,"WARNING: Synapse group %u is all-to-all connected. Maxconn variable is not needed in this case. Setting size to %u is not stable. Skipping...\n", found, maxConnP);
+
+		/*unsigned int padnC = ceil((float)maxConnP / (float)synapseBlkSz) * (float)synapseBlkSz;
+		if (found == 0) {
+			padSumSynapseKrnl[found]=padnN;
+		}
+		else{
+			unsigned int toOmitK = padSumSynapseKrnl[found]-padSumSynapseKrnl[found-1];
+   		padSumSynapseKrnl[found]=padSumSynapseKrnl[found-1]+padnC;
+			for (int j=found+1,j<padSumSynapseKrnl.size(),j++){    	
+    	padSumSynapseKrnl[j]=padSumSynapseKrnl[j]-toOmitK+padnC;
+			}
+		}*/
+	}
 }
 
 #endif

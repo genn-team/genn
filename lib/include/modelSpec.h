@@ -46,6 +46,7 @@
 #define CONSTINP 1 //!< Macro attaching  the name CONSTINP (constant input) to 1
 #define MATINP 2 //!< Macro attaching  the name MATINP (explicit input defined as a matrix) to 2
 #define INPRULE 3 //!< Macro attaching  the name INPRULE (explicit dynamic input defined as a rule) to 3
+#define RANDNINP 4 //!< Macro attaching  the name RANDNINP (Random input with Gaussian distribution, calculated real time on the device by the generated code) to 4 (TODO, not implemented yet)
 
 unsigned int SYNPNO[SYNTYPENO]= {
   3,        // NSYNAPSE_PNO 
@@ -163,6 +164,8 @@ class NNmodel
   vector<unsigned int> sumSynapseTrgN; //!< Summed naumber of target neurons
   vector<unsigned int> padSumSynapseTrgN; //!< "Padded" summed target neuron numbers
   vector<unsigned int> padSumLearnN; //!< Padded summed neuron numbers of learn group source populations
+	vector<unsigned int> maxConn; //!< Padded summed maximum number of connections for a neuron in the neuron groups
+	vector<unsigned int> padSumSynapseKrnl; //Combination of padSumSynapseTrgN and padSumMaxConn to support both sparse and all-to-all connectivity in a model
   vector<unsigned int> lrnSynGrp; //!< Enumeration of the IDs of synapse groups that learn
   vector<unsigned int> synapseType; //!< Types of synapses
   vector<unsigned int> synapseSource; //!< Presynaptic neuron groups
@@ -204,6 +207,7 @@ class NNmodel
   void initDerivedPostSynapsePara(unsigned int); //!< Method for calculating the values of derived postsynapse parameters.
   unsigned int findSynapseGrp(const string); //< Find the the ID number of a synapse group by its name
 
+
  public:
   NNmodel();
   ~NNmodel();
@@ -219,6 +223,7 @@ class NNmodel
   void setConstInp(const string, float); //!< Method for setting the global input value for a neuron population if CONSTINP
   //void setSynapseNo(unsigned int,unsigned int); // !< Sets the number of connections for sparse matrices  
   void setPrecision(unsigned int);//< Set numerical precision for floating point
+	void setMaxConn(const string, unsigned int); //< Set maximum connections per neuron for the given group (needed for optimization by sparse connectivity)
   void checkSizes(unsigned int *, unsigned int *, unsigned int *); //< Check if the sizes of the initialized neuron and synapse groups are correct.
 };
 

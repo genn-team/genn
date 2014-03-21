@@ -81,6 +81,7 @@ classol::~classol()
 {
   delete [] pattern;
   delete [] baserates;
+	freeMem;
 }
 
 

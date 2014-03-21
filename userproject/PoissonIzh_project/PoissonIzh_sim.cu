@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
   // build the neuronal circuitery
   classol PNIzhNN;
   
-  //SPARSE CONNECTIVITY
+  /*/SPARSE CONNECTIVITY
   
     name= OutDir+ "/gPoissonIzh";
   	fprintf(stderr, "# reading PN-Izh1 synapses from file %s", name.c_str());
@@ -72,13 +72,13 @@ int main(int argc, char *argv[])
   //SPARSE CONNECTIVITY END */
   
   //ALLTOALL CONNECTIVITY
-  /*
+  
   	name= OutDir+ "/gPoissonIzh_nonopt";
   	cout << "# reading PN-Izh1 synapses from file "<< name << endl;
   	FILE *f= fopen(name.c_str(),"r");
   	PNIzhNN.read_PNIzh1syns(gpPNIzh1 , f);
   	fclose(f);   
-  //ALLTOALL CONNECTIVITY END */
+  //ALLTOALL CONNECTIVITY END 
  
   
   fprintf(stderr, "# reading input patterns ... \n");
@@ -170,5 +170,7 @@ int main(int argc, char *argv[])
   cerr << "Output files are created under the current directory." << endl;
   fprintf(timef, "%d %d %d %d %f \n", PNIzhNN.sumPN, PNIzhNN.sumIzh1, timer.getElapsedTime());
 
+	freeDeviceMem();
+  cudaDeviceReset();
   return 0;
 }

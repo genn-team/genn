@@ -1,7 +1,3 @@
-make sure the chosen device is actually chosen in the generated code (!)
-
-add code to optimise block size (generateRunner)
-
 synaptic plasticity
 
 load optimisation?
@@ -10,4 +6,10 @@ pthreads
 
 mpi
 
-migrate from pre-allocated memory structures to dynamically allocated ones?
+Fix Poisson neuron firing rates (currently depend on the time step & arbitrary scale)
+
+Find a more elegant way to set synapse grid sizes for sparse and mixed sparse/dense connectivities (consider defining grid size values as variables)
+
+Consider the option to use zero-copy memory for g arrays in bigger networks to save from the global memory
+
+

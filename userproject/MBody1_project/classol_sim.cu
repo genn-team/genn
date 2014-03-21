@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
   fprintf(stderr, "# patFireTime %d \n", patFireTime);
   fprintf(stderr, "# PAT_TIME %f \n", PAT_TIME);
   fprintf(stderr, "# patSetTime %d \n", patSetTime);
-  fprintf(stderr, "# TOTAL_TME %d \n", TOTAL_TME);
+  fprintf(stderr, "# TOTAL_TME %f \n", TOTAL_TME);
   
   name= OutDir+ "/"+ toString(argv[1]) + toString(".out.Vm"); 
   FILE *osf= fopen(name.c_str(),"w");
@@ -170,5 +170,7 @@ int main(int argc, char *argv[])
   fprintf(timef, "%d %d %d %d %f \n", locust.sumPN, locust.sumKC, locust.sumLHI, locust.sumDN, timer.getElapsedTime());
   fclose(osf);
   fclose(timef);
+	freeDeviceMem();
+  cudaDeviceReset();
   return 0;
 }

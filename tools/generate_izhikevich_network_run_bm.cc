@@ -14,9 +14,9 @@
 //--------------------------------------------------------------------------
 /*! \file generate_izhikevich_network_run.cc
 
-\brief This file is part of a tool chain for running the classol/MBody1 example model.
+\brief This file is part of a tool chain for running the classIzh/Izh_sparse example model.
 
-This file compiles to a tool that wraps all the other tools into one chain of tasks, including running all the gen_* tools for generating connectivity, providing the population size information through ../userproject/include/sizes.h to the MBody1 model definition, running the GeNN code generation and compilation steps, executing the model and collecting some timing information. This tool is the recommended way to quickstart using GeNN as it only requires a single command line to execute all necessary tasks.
+This file compiles to a tool that wraps all the other tools into one chain of tasks, including running all the gen_* tools for generating connectivity, providing the population size information through ../userproject/include/sizes.h to the model definition, running the GeNN code generation and compilation steps, executing the model and collecting some timing information. This tool is the recommended way to quickstart using GeNN as it only requires a single command line to execute all necessary tasks.
 */ 
 //--------------------------------------------------------------------------
 
@@ -27,6 +27,7 @@ using namespace std;
 #include <sstream>
 #include <cstdlib>
 #include <cmath>
+#include "../userproject/include/sizes.h" //include the written file to get previous values of max conn
 
 #ifdef _WIN32
 #include <direct.h>
@@ -47,8 +48,21 @@ std::string toString(T t)
   s << t;
   return s.str();
 } 
+/////////////////////////
+unsigned int openFileGetMax(unsigned int * array, unsigned int size, string name){
+	FILE * f;
+	unsigned int maxConn =0;
+  f= fopen(name.c_str(),"r");
+  fread(array, (size+1)*sizeof(unsigned int),1,f);
 
-
+	for (unsigned int i=0;i<size;i++){
+		unsigned int connNo = array[i+1]-array[i];
+		if (connNo>maxConn) maxConn=connNo;
+	}
+	fprintf(stderr, " \n maximum postsynaptic connection per neuron in the 1st group is %u \n", maxConn);
+	return maxConn;
+}
+/////////////////////////
 int main(int argc, char *argv[])
 {
   if (argc != 10)
@@ -108,6 +122,25 @@ int main(int argc, char *argv[])
 	  system(cmd.c_str()); 
 	  cout << "connectivity generation script call was:" << cmd.c_str() << endl;
   }
+	
+	//read connectivity patterns to get maximum connection per neuron for each synapse population
+	//population neuron numbers are for sources in the order in currentmodel.cc
+  unsigned int *gIndInG= new unsigned int[nTotal]; //allocate the biggest possible, the we will only use what we need
+
+	string name= toString("inputfiles/g"+toString(argv[7])+"_postIndInG_ee");
+	unsigned int maxN0 = openFileGetMax(gIndInG, nExc, name);
+
+	name= toString("inputfiles/g"+toString(argv[7])+"_postIndInG_ei");
+	unsigned int maxN1 = openFileGetMax(gIndInG, nExc, name);
+
+	name= toString("inputfiles/g"+toString(argv[7])+"_postIndInG_ie");
+	unsigned int maxN2 = openFileGetMax(gIndInG, nInh, name);
+
+	name= toString("inputfiles/g"+toString(argv[7])+"_postIndInG_ii");
+	unsigned int maxN3 = openFileGetMax(gIndInG, nInh, name);
+
+	delete [] gIndInG;
+////////////////////////////////
   
   string GeNNPath= getenv("GeNNPATH");
   cerr << GeNNPath << endl;
@@ -115,6 +148,10 @@ int main(int argc, char *argv[])
   ofstream os(fname.c_str());
   os << "#define _NExc " << nExc << endl;
   os << "#define _NInh " << nInh << endl;
+	os << "#define _NMaxConnP0 " << maxN0 << endl;
+	os << "#define _NMaxConnP1 " << maxN1 << endl;
+	os << "#define _NMaxConnP2 " << maxN2 << endl;
+	os << "#define _NMaxConnP3 " << maxN3 << endl;
   os.close();
   
   cmd= toString("cd $GeNNPATH/userproject/")+toString(modelName)+("_project/ && buildmodel ")+ toString(modelName)+ toString(" ") + toString(DBGMODE);

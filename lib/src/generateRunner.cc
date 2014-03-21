@@ -41,6 +41,7 @@ void genRunner(NNmodel &model, //!< Model description
   string name;
   unsigned int nt;
   unsigned int mem= 0;
+  int trgN;
   ofstream os;
   cerr << "entering genRunner" << endl;
   name= path + toString("/") + model.name + toString("_CODE/runner.cc");
@@ -88,6 +89,7 @@ void genRunner(NNmodel &model, //!< Model description
     }
   }
   
+  os << endl;
   os << "struct Conductance{" << endl;
   os << "  " << model.ftype << " *gp;" << endl;
   os << "  unsigned int *gIndInG;" << endl;
@@ -95,24 +97,25 @@ void genRunner(NNmodel &model, //!< Model description
   os << "  unsigned int connN;" << endl; 
   os << "};" << endl;
   for (int i= 0; i < model.synapseGrpN; i++) {
-    if (model.synapseGType[i] == INDIVIDUALG) {
-      if (model.synapseConnType[i] == SPARSE){
-	os << "Conductance g" << model.synapseName[i] << ";" << endl;
-	//  os << "  " << model.ftype << " *gp" << model.synapseName[i] << ";" << endl;
-	//  os << "  unsigned int *gp" << model.synapseName[i]  << endl;
-	//  os << "  unsigned int *gp" << model.synapseName[i] << "ind;" << endl;
-	//  os << "} ;" << endl;
+	 if (model.synapseConnType[i] == SPARSE){
+		os << "Conductance g" << model.synapseName[i] << ";" << endl;
+		//  os << "  " << model.ftype << " *gp" << model.synapseName[i] << ";" << endl;
+		//  os << "  unsigned int *gp" << model.synapseName[i]  << endl;
+		//  os << "  unsigned int *gp" << model.synapseName[i] << "ind;" << endl;
+		//  os << "} ;" << endl;
+    }
+    else {
+    	if (model.synapseGType[i] == INDIVIDUALG) {
+			os << model.ftype << " *gp" << model.synapseName[i] << ";" << endl;
       }
-      else {
-	os << model.ftype << " *gp" << model.synapseName[i] << ";" << endl;
-      }
-      if (model.synapseType[i] == LEARN1SYNAPSE) {
-	os << model.ftype << " *grawp" << model.synapseName[i] << ";" << endl;
-      }
-    }	 
-    if (model.synapseGType[i] == INDIVIDUALID) {
-      os << "unsigned int *gp" << model.synapseName[i] << ";" << endl;
-    }	 
+       
+   	if (model.synapseGType[i] == INDIVIDUALID) {
+      	os << "unsigned int *gp" << model.synapseName[i] << ";" << endl;
+    	}	 
+    }
+    if (model.synapseType[i] == LEARN1SYNAPSE) {
+	 	os << model.ftype << " *grawp" << model.synapseName[i] << ";" << endl;
+    }
   }
   os << endl;
   
@@ -135,9 +138,12 @@ void genRunner(NNmodel &model, //!< Model description
     if (model.synapseGType[i] == INDIVIDUALG) {
       os << model.ftype << " *d_gp" << model.synapseName[i] << ";" << endl;
       if (model.synapseConnType[i] == SPARSE) {
-	os << "unsigned int *d_gp" << model.synapseName[i] << "_indInG;" << endl;
-	os << "unsigned int *d_gp" << model.synapseName[i] << "_ind;" << endl;
-      }
+			os << "unsigned int *d_gp" << model.synapseName[i] << "_indInG;" << endl;
+			os << "unsigned int *d_gp" << model.synapseName[i] << "_ind;" << endl;
+			trgN = model.neuronN[model.synapseTarget[i]];
+
+    	}
+
       os << model.ftype << " *d_grawp" << model.synapseName[i] << ";" << endl;
     }
     if (model.synapseGType[i] == INDIVIDUALID) {
@@ -202,28 +208,16 @@ void genRunner(NNmodel &model, //!< Model description
       else {
 	os << model.neuronN[i] << ";" << endl;
       }
-      os << "  cudaMalloc((void **)&d_" << nModels[nt].varNames[k] << model.neuronName[i] << ", size);" << endl;
+      os << "  CHECK_CUDA_ERRORS(cudaMalloc((void **)&d_" << nModels[nt].varNames[k] << model.neuronName[i] << ", size));" << endl;
     }
     os << endl; 
   }
   for (int i= 0; i < model.synapseGrpN; i++) {
     if (model.synapseGType[i] == INDIVIDUALG) {
       // if (model.synapseConnType[i] == SPARSE) {
-      //   os << "  g" << model.synapseName[i] << ".gp= new " << model.ftype << "[";
-      //   os << "g" << model.synapseName[i] << ".connN];" << endl;      // synaptic conductances of group " << model.synapseName[i];
-      
-      /*********************If sparse, the arrays will be allocated later.****************/
-      //mem += model.neuronN[model.synapseSource[i]] * model.neuronN[model.synapseTarget[i]] * theSize(model.ftype); //TODO: This is actually less for sparse matrices but we need to find a way
-      
-      //os << "  g" << model.synapseName[i] << ".gIndInG = new unsigned int[";
-      //os << model.neuronN[model.synapseSource[i]] << "+ 1];";      // index where the next neuron starts in the synaptic conductances of group " << model.synapseName[i];
-      //os << endl;
-      //mem += model.neuronN[model.synapseSource[i]] * sizeof(int);
-      
-      //os << "  g" << model.synapseName[i] << ".gInd = new unsigned int[";
-      //os << "g" << model.synapseName[i] << ".connN];";      // postsynaptic neuron index in the synaptic conductances of group " << model.synapseName[i];
-      //os << endl;
-      
+     
+      /*********************If sparse, the arrays will be allocated later. ****************/
+      //mem += model.neuronN[model.synapseSource[i]] * model.neuronN[model.synapseTarget[i]] * theSize(model.ftype); //TODO: This is actually less for sparse matrices but we need to find a way      
       //mem += model.neuronN[model.synapseSource[i]] * model.neuronN[model.synapseTarget[i]] * sizeof(int);
       //}
       //else {
@@ -265,24 +259,32 @@ void genRunner(NNmodel &model, //!< Model description
       }
       else{*/
       if (model.synapseConnType[i]!=SPARSE){
-	os << "  size = sizeof(" << model.ftype << ") * " << model.neuronN[model.synapseSource[i]] << " * " << model.neuronN[model.synapseTarget[i]] << "; " << endl;
-	os << "  cudaMalloc((void **) &d_gp" << model.synapseName[i] << ", size);" << endl;
+				os << "  size = sizeof(" << model.ftype << ") * " << model.neuronN[model.synapseSource[i]] << " * " << model.neuronN[model.synapseTarget[i]] << "; " << endl;
+				os << "  CHECK_CUDA_ERRORS(cudaMalloc((void **) &d_gp" << model.synapseName[i] << ", size));" << endl;
+				if (model.ftype == "float") {
+					mem+= model.neuronN[model.synapseSource[i]]*model.neuronN[model.synapseTarget[i]]*sizeof(float);
+				}
+				else mem+= model.neuronN[model.synapseSource[i]]*model.neuronN[model.synapseTarget[i]]*sizeof(double);
       }
       if (model.synapseType[i] == LEARN1SYNAPSE) {
-	os << "  cudaMalloc((void **) &d_grawp" << model.synapseName[i] << ", size);     // raw synaptic conductances of group " << model.synapseName[i];
+	os << "  size = sizeof(" << model.ftype << ") * " << model.neuronN[model.synapseSource[i]] << " * " << model.neuronN[model.synapseTarget[i]] << "; " << endl; //not sure if correct				
+	os << "  CHECK_CUDA_ERRORS(cudaMalloc((void **) &d_grawp" << model.synapseName[i] << ", size));     // raw synaptic conductances of group " << model.synapseName[i];
 	os << endl;
+			if (model.ftype == "float") mem+= model.neuronN[model.synapseSource[i]]*model.neuronN[model.synapseTarget[i]]*sizeof(float);
+			else  mem+= model.neuronN[model.synapseSource[i]]*model.neuronN[model.synapseTarget[i]]*sizeof(double); 
       }
     }
     // note, if GLOBALG we put the value at compile time
     if (model.synapseGType[i] == INDIVIDUALID) {
       unsigned int tmp= model.neuronN[model.synapseSource[i]]*model.neuronN[model.synapseTarget[i]];
       os << "  size = sizeof(unsigned int)*" << tmp << "; " << endl;
-      os << "cudaMalloc((void **)&d_gp" << model.synapseName[i] << ",";      
+      os << "CHECK_CUDA_ERRORS(cudaMalloc((void **)&d_gp" << model.synapseName[i] << ",";      
       unsigned int size= tmp >> logUIntSz;
       if (tmp > (size << logUIntSz)) size++;
       os << size;
-      os << ");     // synaptic connectivity of group " << model.synapseName[i];
+      os << "));     // synaptic connectivity of group " << model.synapseName[i];
       os << endl;
+			mem += size;
     }
   }  
   
@@ -295,7 +297,7 @@ void genRunner(NNmodel &model, //!< Model description
             
       //allocate device neuron variables
       os << "  size = sizeof(" << postSynModels[pst].varTypes[k] << ") * "<< model.neuronN[model.synapseTarget[i]] << ";" << endl;
-      os << "  cudaMalloc((void **)&d_" << postSynModels[pst].varNames[k] << model.synapseName[i] << ", size);" << endl;      
+      os << "  CHECK_CUDA_ERRORS(cudaMalloc((void **)&d_" << postSynModels[pst].varNames[k] << model.synapseName[i] << ", size));" << endl;      
     }
   }
    
@@ -317,8 +319,9 @@ void genRunner(NNmodel &model, //!< Model description
   	    
   os << "  C->gInd= new unsigned int[C->connN];" << endl;      // postsynaptic neuron index in the synaptic conductances of group " << model.synapseName[i];
 
-  //mem+= gsize*sizeof(int);
+  //mem += gsize*sizeof(int);
   //		}
+  
   os << "}" << endl; 
  
   // ------------------------------------------------------------------------
@@ -329,10 +332,17 @@ void genRunner(NNmodel &model, //!< Model description
     if (model.synapseConnType[i] == SPARSE) {
       os << "  allocateSparseArray(&g" << model.synapseName[i] << ", ";
       os << model.neuronN[model.synapseSource[i]] << ");" << endl;
-      os << "  cudaMalloc((void **) &d_gp" << model.synapseName[i]<< ", sizeof(" << model.ftype << ") * g" << model.synapseName[i] << ".connN);" << endl;
-      os << "  cudaMalloc((void **) &d_gp" << model.synapseName[i]<< "_ind, sizeof(unsigned int) * g" << model.synapseName[i] << ".connN);" << endl;
-      os << "  cudaMalloc((void **) &d_gp" << model.synapseName[i]<< "_indInG, sizeof(unsigned int) * ("<< model.neuronN[model.synapseSource[i]] <<" + 1));" << endl;
-      //mem += gsize * theSize(model.ftype); //TODO: But we need to find a way
+      os << "  CHECK_CUDA_ERRORS(cudaMalloc((void **) &d_gp" << model.synapseName[i]<< ", sizeof(" << model.ftype << ") * g" << model.synapseName[i] << ".connN));" << endl;
+      os << "  CHECK_CUDA_ERRORS(cudaMalloc((void **) &d_gp" << model.synapseName[i]<< "_ind, sizeof(unsigned int) * g" << model.synapseName[i] << ".connN));" << endl;
+      os << "  CHECK_CUDA_ERRORS(cudaMalloc((void **) &d_gp" << model.synapseName[i]<< "_indInG, sizeof(unsigned int) * ("<< model.neuronN[model.synapseSource[i]] <<" + 1)));" << endl;
+      //mem += gsize * theSize(model.ftype); //TODO: We don't know connN at code generation step. But we need to find a way.
+      mem += model.neuronN[model.synapseSource[i]]*1000*sizeof(float);//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!CHANGE THAT BEFORE COMMIT
+      mem += model.neuronN[model.synapseSource[i]]*1000*sizeof(unsigned int);//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!CHANGE THAT BEFORE COMMIT
+       /*trgN = model.neuronN[model.synapseTarget[i]];
+  		 rrr if (trgN > neuronBlkSz) {
+			 os <<  "  cudaMalloc((void **) &d_Lg" << model.synapseName[i] << ",sizeof(" << model.ftype <<")*"<<  trgN << ");" << endl;
+        }*/
+
     }
   }
   os << "}" << endl; 
@@ -962,22 +972,22 @@ void genRunnerGPU(NNmodel &model, //!< Model description
   for (int i= 0; i < model.neuronGrpN; i++) {
     nt= model.neuronType[i];
     for (int k= 0, l= nModels[nt].varNames.size(); k < l; k++) {
-      os << "  cudaFree(d_" << nModels[nt].varNames[k] << model.neuronName[i] << ");" << endl;
+      os << "  CHECK_CUDA_ERRORS(cudaFree(d_" << nModels[nt].varNames[k] << model.neuronName[i] << "));" << endl;
     }
   }
   for (int i= 0; i < model.synapseGrpN; i++) {
     if ((model.synapseGType[i] == (INDIVIDUALG)) || (model.synapseGType[i] == INDIVIDUALID)) {
-      os << "  cudaFree(d_gp" << model.synapseName[i] << ");" <<endl;  	
+      os << "  CHECK_CUDA_ERRORS(cudaFree(d_gp" << model.synapseName[i] << "));" <<endl;  	
     }
     if (model.synapseType[i] == LEARN1SYNAPSE) {
-      os << " cudaFree(d_grawp"  << model.synapseName[i] << ");" <<endl;	
+      os << " CHECK_CUDA_ERRORS(cudaFree(d_grawp"  << model.synapseName[i] << "));" <<endl;	
     }
   }
   
    for (int i=0; i< model.postSynapseType.size(); i++){
     int pst= model.postSynapseType[i];
     for (int k= 0, l= postSynModels[pst].varNames.size(); k < l; k++) {
-      os << "  cudaFree(d_" << postSynModels[pst].varNames[k] << model.synapseName[i] << ");" << endl;
+      os << "  CHECK_CUDA_ERRORS(cudaFree(d_" << postSynModels[pst].varNames[k] << model.synapseName[i] << "));" << endl;
     }
   }
   
@@ -1008,10 +1018,12 @@ void genRunnerGPU(NNmodel &model, //!< Model description
   os << "{" << endl;
 
   if (model.synapseGrpN > 0) { 
-    unsigned int synapseGridSz = model.padSumSynapseTrgN[model.synapseGrpN - 1];
-    synapseGridSz = synapseGridSz / synapseBlkSz;
+    unsigned int synapseGridSz = model.padSumSynapseKrnl[model.synapseGrpN - 1];   
+		os << "//model.padSumSynapseTrgN[model.synapseGrpN - 1] is" << model.padSumSynapseKrnl[model.synapseGrpN - 1] << endl; 
+		synapseGridSz = synapseGridSz / synapseBlkSz;
     os << "  dim3 sThreads(" << synapseBlkSz << ", 1);" << endl;
     os << "  dim3 sGrid(" << synapseGridSz << ", 1);" << endl;
+
     os << endl;
   }
   if (model.lrnGroups > 0) {
@@ -1021,6 +1033,8 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     os << "  dim3 lGrid(" << learnGridSz << ", 1);" << endl;
     os << endl;
   }
+
+
   unsigned int neuronGridSz = model.padSumNeuronN[model.neuronGrpN - 1];
   neuronGridSz = neuronGridSz / neuronBlkSz;
   os << "  dim3 nThreads(" << neuronBlkSz << ", 1);" << endl;
@@ -1033,17 +1047,19 @@ void genRunnerGPU(NNmodel &model, //!< Model description
   }
   os << endl;
   int flag = 0;
+  int trgN;
   if (model.synapseGrpN > 0) {
     os << "  if (t > 0.0) {" << endl; 
     os << "    calcSynapses <<< sGrid, sThreads >>> (";
     for (int i= 0; i < model.synapseGrpN; i++) {
       if ((model.synapseGType[i] == (INDIVIDUALG))  || (model.synapseGType[i] == (INDIVIDUALID))) {
-	os << "  d_gp" << model.synapseName[i] << ",";
-	if (model.synapseConnType[i] == SPARSE) {
-	  os << " d_gp" << model.synapseName[i] << "_ind,";	
-	  os << " d_gp" << model.synapseName[i] << "_indInG,";		
-	}	
-	flag = 1;
+			os << "  d_gp" << model.synapseName[i] << ",";
+			if (model.synapseConnType[i] == SPARSE) {
+	  			os << " d_gp" << model.synapseName[i] << "_ind,";	
+				os << " d_gp" << model.synapseName[i] << "_indInG,";	
+	  			trgN = model.neuronN[model.synapseTarget[i]];
+			}
+			flag = 1;
       }
       if (model.synapseGType[i] == INDIVIDUALID){
 	os << "  d_gp" << model.synapseName[i] << ",";	
@@ -1066,6 +1082,8 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     else {
       os << ");" << endl;
     }
+
+
     if (model.lrnGroups > 0) {
       os << "    learnSynapsesPost <<< lGrid, lThreads >>> (";      
       for (int i= 0; i < model.synapseGrpN; i++) {
@@ -1087,6 +1105,7 @@ void genRunnerGPU(NNmodel &model, //!< Model description
       os << "t);";
     }
     os << "  }" << endl;
+
   }
   os << "  calcNeurons <<< nGrid, nThreads >>> (";
   for (int i= 0; i < model.neuronGrpN; i++) {
