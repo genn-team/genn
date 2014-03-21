@@ -266,9 +266,10 @@ void prepareStandardModels()
     $(V)+=0.5f*(0.04f*$(V)*$(V)+5*$(V)+140-$(U)+$(Isyn))*DT; //at two times for numerical stability\n\
     $(V)+=0.5f*(0.04f*$(V)*$(V)+5*$(V)+140-$(U)+$(Isyn))*DT;\n\
     $(U)+=$(a)*($(b)*$(V)-$(U))*DT;\n\
-    if ($(V) > 30){   //keep this only for visualisation -- not really necessaary otherwise \n\
-      $(V)=30;\n\
-    }\n");
+   // if ($(V) > 30){   //keep this only for visualisation -- not really necessaary otherwise \n\
+    //  $(V)=30; \n\
+   //}\n\
+   ");
     
  /* n.thresholdCode=tS("//threshold code is here\n\
       bool _cond=FALSE;\n \ 

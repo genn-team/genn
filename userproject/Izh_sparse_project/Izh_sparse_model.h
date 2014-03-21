@@ -17,7 +17,7 @@
 
 #include "Izh_sparse.cc"
 
-class classol
+class classIzh
 {
  public:
   NNmodel model;
@@ -27,8 +27,8 @@ class classol
   float *d_input1, *d_input2;
   //------------------------------------------------------------------------
   unsigned int sumPExc, sumPInh;
-  classol();
-  ~classol();
+  classIzh();
+  ~classIzh();
   void init(unsigned int);
   void allocate_device_mem_patterns();
   void allocate_device_mem_input();
@@ -38,7 +38,7 @@ class classol
   void free_device_mem();
   void write_input_to_file(FILE *);
   void read_input_values(FILE *);
-  void create_input_values(float);
+  void create_input_values();
   void run(float, unsigned int);
   void getSpikesFromGPU(); 
   void getSpikeNumbersFromGPU(); 

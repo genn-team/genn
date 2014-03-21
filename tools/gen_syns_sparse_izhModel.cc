@@ -1,16 +1,3 @@
-/*--------------------------------------------------------------------------
-   Author: Thomas Nowotny
-  
-   Institute: Institute for Nonlinear Dynamics
-              University of California San Diego
-              La Jolla, CA 92093-0402
-  
-   email to:  tnowotny@ucsd.edu
-  
-   initial version: 2002-09-26
-  
---------------------------------------------------------------------------*/
-
 //--------------------------------------------------------------------------
 /*! \file gen_syns_sparse_izhModel.cc
 
@@ -30,7 +17,6 @@ using namespace std;
 #include <string.h>
 #include <vector>
 #include "randomGen.h"
-//#include "gauss.h"
 #include "randomGen.cc"
 
 int printVector(vector<unsigned int>&);
@@ -38,7 +24,45 @@ int printVector(vector<float>&);
 
 randomGen R;
 randomGen Rind;
-//randomGauss RG;
+
+float gsyn;
+//  float *gAlltoAll;
+float *garray; 
+//  float *g; 
+unsigned int *postInd; 
+  
+  //exc-exc
+  //float *gAlltoAll_ee;
+  float *garray_ee; 
+  //float *g_ee = new float[nConn*nExc]; //same here for writing to file
+  std::vector<float> g_ee;
+  std::vector<unsigned int> postIndInG_ee;
+  std::vector<unsigned int> postInd_ee;
+  //int maxInColI_ee;
+  
+  //exc-inh
+ // float *gAlltoAll_ei;
+  float *garray_ei;
+  std::vector<float> g_ei;
+  std::vector<unsigned int> postIndInG_ei;
+  std::vector<unsigned int> postInd_ei;
+  //int maxInColI_ei;
+ 
+  //inh-exc
+  //float *gAlltoAll_ie;
+  float *garray_ie;
+  std::vector<float> g_ie;
+  std::vector<unsigned int> postIndInG_ie;
+  std::vector<unsigned int> postInd_ie;
+  //int maxInColI_ie;
+ 
+  //inh-inh
+  //float *gAlltoAll_ii;
+  float *garray_ii;
+  std::vector<float> g_ii;
+  std::vector<unsigned int> postIndInG_ii;
+  std::vector<unsigned int> postInd_ii;
+  //int maxInColI_ii;
 
 int main(int argc, char *argv[])
 {
@@ -51,7 +75,7 @@ int main(int argc, char *argv[])
   
   unsigned int nN= atoi(argv[1]);
   unsigned int nExc= (int)(4*nN/5);
-  unsigned int nInh= nN-nExc;
+  //unsigned int nInh= nN-nExc;
   unsigned int nConn= atoi(argv[2]);
   float meangsynExc= atof(argv[3]);
   float meangsynInh= atof(argv[4]);
@@ -59,43 +83,15 @@ int main(int argc, char *argv[])
 
   //alltogether
   char filename[100];
-  char filename_index[100];
-  char filename_postindex[100]; 
-  char filename_nonopt[100];
-  char filename_info[100];
 
   strcpy(filename,argv[5]);
-  /*strcat(filename,"_n");
-  strcat(filename, argv[1]);
-  strcat(filename,"_c");
-  strcat(filename, argv[2]);*/
-  
-  strcpy(filename_index,filename);
-  strcat(filename_index,"_postind_ee");
 
-  strcpy(filename_postindex,filename);
-  strcat(filename_postindex,"_postIndInG");
-
-  strcpy(filename_nonopt,filename);
-  strcat(filename_nonopt,"_nonopt");
-
-  strcpy(filename_info,filename);
-  strcat(filename_info,"_info");
-  //cerr << filename << endl;
-  //cerr << "not ok here" << endl;
-
-  //ofstream os(argv[5], ios::binary);
-  ofstream os(filename, ios::binary);
-  ofstream os_index(filename_index, ios::binary);
-  ofstream os_postindex(filename_postindex, ios::binary);
-  ofstream os_nonopt(filename_nonopt, ios::binary);
-  
   //ee
     
   char filename_ee[100];
   char filename_index_ee[100];
   char filename_postindex_ee[100]; 
-  char filename_nonopt_ee[100];
+  //char filename_nonopt_ee[100];
   char filename_info_ee[100];  
   
   strcpy(filename_ee,filename);
@@ -107,23 +103,23 @@ int main(int argc, char *argv[])
   strcpy(filename_postindex_ee,filename);
   strcat(filename_postindex_ee,"_postIndInG_ee");
 
-  strcpy(filename_nonopt_ee,filename);
+  /*strcpy(filename_nonopt_ee,filename);
   strcat(filename_nonopt_ee,"_nonopt_ee");
-
+*/
   strcpy(filename_info_ee,filename);
   strcat(filename_info_ee,"_info_ee");
   
   ofstream os_ee(filename_ee, ios::binary);
   ofstream os_index_ee(filename_index_ee, ios::binary);
   ofstream os_postindex_ee(filename_postindex_ee, ios::binary);
-  ofstream os_nonopt_ee(filename_nonopt_ee, ios::binary);
+  //ofstream os_nonopt_ee(filename_nonopt_ee, ios::binary);
   ofstream os_info_ee(filename_info_ee, ios::binary);
   
   //ei
   char filename_ei[100];
   char filename_index_ei[100];
   char filename_postindex_ei[100]; 
-  char filename_nonopt_ei[100];
+  //char filename_nonopt_ei[100];
   char filename_info_ei[100];  
   
   strcpy(filename_ei,filename);
@@ -135,8 +131,8 @@ int main(int argc, char *argv[])
   strcpy(filename_postindex_ei,filename);
   strcat(filename_postindex_ei,"_postIndInG_ei");
 
-  strcpy(filename_nonopt_ei,filename);
-  strcat(filename_nonopt_ei,"_nonopt_ei");
+  /*strcpy(filename_nonopt_ei,filename);
+  strcat(filename_nonopt_ei,"_nonopt_ei");*/
 
   strcpy(filename_info_ei,filename);
   strcat(filename_info_ei,"_info_ei");
@@ -144,14 +140,14 @@ int main(int argc, char *argv[])
   ofstream os_ei(filename_ei, ios::binary);
   ofstream os_index_ei(filename_index_ei, ios::binary);
   ofstream os_postindex_ei(filename_postindex_ei, ios::binary);
-  ofstream os_nonopt_ei(filename_nonopt_ei, ios::binary);
+  //ofstream os_nonopt_ei(filename_nonopt_ei, ios::binary);
   ofstream os_info_ei(filename_info_ei, ios::binary);
   
   //ie
   char filename_ie[100];
   char filename_index_ie[100];
   char filename_postindex_ie[100]; 
-  char filename_nonopt_ie[100];
+  //char filename_nonopt_ie[100];
   char filename_info_ie[100];  
   
   strcpy(filename_ie,filename);
@@ -163,8 +159,8 @@ int main(int argc, char *argv[])
   strcpy(filename_postindex_ie,filename);
   strcat(filename_postindex_ie,"_postIndInG_ie");
 
-  strcpy(filename_nonopt_ie,filename);
-  strcat(filename_nonopt_ie,"_nonopt_ie");
+  /*strcpy(filename_nonopt_ie,filename);
+  strcat(filename_nonopt_ie,"_nonopt_ie");*/
 
   strcpy(filename_info_ie,filename);
   strcat(filename_info_ie,"_info_ie");
@@ -172,14 +168,14 @@ int main(int argc, char *argv[])
   ofstream os_ie(filename_ie, ios::binary);
   ofstream os_index_ie(filename_index_ie, ios::binary);
   ofstream os_postindex_ie(filename_postindex_ie, ios::binary);
-  ofstream os_nonopt_ie(filename_nonopt_ie, ios::binary);
+  //ofstream os_nonopt_ie(filename_nonopt_ie, ios::binary);
   ofstream os_info_ie(filename_info_ie, ios::binary);
     
   //ii
   char filename_ii[100];
   char filename_index_ii[100];
   char filename_postindex_ii[100]; 
-  char filename_nonopt_ii[100];
+  //char filename_nonopt_ii[100];
   char filename_info_ii[100];  
   
       
@@ -192,8 +188,8 @@ int main(int argc, char *argv[])
   strcpy(filename_postindex_ii,filename);
   strcat(filename_postindex_ii,"_postIndInG_ii");
 
-  strcpy(filename_nonopt_ii,filename);
-  strcat(filename_nonopt_ii,"_nonopt_ii");
+  /*strcpy(filename_nonopt_ii,filename);
+  strcat(filename_nonopt_ii,"_nonopt_ii");*/
 
   strcpy(filename_info_ii,filename);
   strcat(filename_info_ii,"_info_ii");
@@ -201,18 +197,17 @@ int main(int argc, char *argv[])
   ofstream os_ii(filename_ii, ios::binary);
   ofstream os_index_ii(filename_index_ii, ios::binary);
   ofstream os_postindex_ii(filename_postindex_ii, ios::binary);
-  ofstream os_nonopt_ii(filename_nonopt_ii, ios::binary);
+  //ofstream os_nonopt_ii(filename_nonopt_ii, ios::binary);
   ofstream os_info_ii(filename_info_ii, ios::binary);  
   
-  float gsyn;
-  float *gAlltoAll = new float[nN*nN];
-  float *garray = new float[nConn]; 
-  float *g = new float[nConn*nN]; 
-  unsigned int *postInd = new unsigned int[nConn*nN]; 
+  //gAlltoAll = new float[nN*nN];
+  garray = new float[nConn]; 
+  //g = new float[nConn*nN]; 
+  postInd = new unsigned int[nConn*nN]; 
   
   //exc-exc
-  float *gAlltoAll_ee = new float[nExc*nExc];
-  float *garray_ee = new float[nConn]; 
+  //gAlltoAll_ee = new float[nExc*nExc];
+  garray_ee = new float[nConn]; 
   //float *g_ee = new float[nConn*nExc]; //same here for writing to file
   std::vector<float> g_ee;
   //unsigned int *postIndInG_ee = new unsigned int[nExc+1];
@@ -222,8 +217,8 @@ int main(int argc, char *argv[])
   //int maxInColI_ee;
   
   //exc-inh
-  float *gAlltoAll_ei = new float[nExc*nInh];
-  float *garray_ei = new float[nConn];
+  //gAlltoAll_ei = new float[nExc*nInh];
+  garray_ei = new float[nConn];
   //float *g_ei = new float[nConn*nExc];
   std::vector<float> g_ei;
   //unsigned int *postIndInG_ei = new unsigned int[nExc+1];
@@ -233,8 +228,8 @@ int main(int argc, char *argv[])
   //int maxInColI_ei;
  
   //inh-exc
-  float *gAlltoAll_ie = new float[nInh*nExc];
-  float *garray_ie = new float[nConn];
+ // gAlltoAll_ie = new float[nInh*nExc];
+  garray_ie = new float[nConn];
   //float *g_ie = new float[nConn*nInh];
   std::vector<float> g_ie;
   //unsigned int *postIndInG_ie = new unsigned int[nInh+1];
@@ -244,8 +239,8 @@ int main(int argc, char *argv[])
   //int maxInColI_ie;
  
   //inh-inh
-  float *gAlltoAll_ii = new float[nInh*nInh];
-  float *garray_ii = new float[nConn];
+ // gAlltoAll_ii = new float[nInh*nInh];
+  garray_ii = new float[nConn];
   //float *g_ii = new float[nConn*nInh];
   std::vector<float> g_ii;
   //unsigned int *postIndInG_ii = new unsigned int[nInh+1];
@@ -275,9 +270,11 @@ int main(int argc, char *argv[])
 
   //number of pre-to-post is controlled but post-to-pre should be controlled by counting the number of connections for each postsynaptic neuron
   unsigned int *precount = new unsigned int[nN]; 
+
   for (unsigned int i= 0; i < nN; i++) {
   	precount[i]=0;
   }
+
 
   for (unsigned int i= 0; i < nN; i++) {
  		//reservoir sampling to choose nConn random connections for each neuron
@@ -292,19 +289,19 @@ int main(int argc, char *argv[])
         	gsyn*=meangsynInh;
         }
     	garray[j]=gsyn;
-    	postInd[i*nConn+j] = j;
-	    gAlltoAll[i*nN+j] = gsyn;
+   	postInd[i*nConn+j] = j;
+	   // gAlltoAll[i*nN+j] = gsyn;*/
 	    precount[j]++;
     }
-    /*for (int j=nConn ; j< nN; j++){
+    for (unsigned int j=nConn ; j< nN; j++){
     	postInd[j]=j;
-    }*/
+    }
     for (unsigned int j=nConn; j< nN; j++){
 			unsigned int rn = (unsigned int)(R.n()*(j+1));
       if (rn<nConn){
-        if (precount[j]>nConn){
+        /*if (precount[j]>nConn){
           cout << "postsynaptic neuron " << j << " has more than " << nConn << " connections..." << endl;
-        }
+        }*/
         gsyn=R.n();
         if (i<nExc) {
         	gsyn*=meangsynExc;
@@ -315,12 +312,12 @@ int main(int argc, char *argv[])
         //cerr << i << ": create a connection for " << j << " to replace " << rn << endl; 
         //if (gAlltoAll[i*nN+postInd[i*nConn+rn]]==0) 
         precount[postInd[i*nConn+rn]]--;
-        gAlltoAll[i*nN+postInd[i*nConn+rn]]=0;
+     //   gAlltoAll[i*nN+postInd[i*nConn+rn]]=0;
         precount[j]++;
         postInd[i*nConn+rn]=j;
 	      garray[rn]=gsyn;
-	      gAlltoAll[i*nN+j]=gsyn;
-	      gAlltoAll[i*nN+rn]=0;
+	   //   gAlltoAll[i*nN+j]=gsyn;
+	   //   gAlltoAll[i*nN+rn]=0;
       }
      /* else{
       	gAlltoAll[i*nN+rn]=gsyn;
@@ -337,28 +334,28 @@ int main(int argc, char *argv[])
     for (unsigned int j=0 ; j< nConn; j++){
       if ((i<nExc)&&(postInd[i*nConn+j]<nExc)){ //exc-exc
         g_ee.push_back(garray[j]);
-        gAlltoAll_ee[i*nExc+postInd[i*nConn+j]]=garray[j];
+        //gAlltoAll_ee[i*nExc+postInd[i*nConn+j]]=garray[j];
         postInd_ee.push_back(postInd[i*nConn+j]);
         sum_ee++;
       }
       
       if ((i<nExc)&&(postInd[i*nConn+j]>=nExc)){ //exc-inh
         g_ei.push_back(garray[j]);
-        gAlltoAll_ei[i*nInh+(postInd[i*nConn+j]-nExc)]=garray[j];
+        //gAlltoAll_ei[i*nInh+(postInd[i*nConn+j]-nExc)]=garray[j];
         postInd_ei.push_back(postInd[i*nConn+j]-nExc);
         sum_ei++;
       }
       
       if ((i>=nExc)&&(postInd[i*nConn+j]<nExc)){ //inh-exc
         g_ie.push_back(garray[j]);
-        gAlltoAll_ie[(i-nExc)*nExc+(postInd[i*nConn+j])]=garray[j];
+        //gAlltoAll_ie[(i-nExc)*nExc+(postInd[i*nConn+j])]=garray[j];
         postInd_ie.push_back(postInd[i*nConn+j]);
         sum_ie++;
       }
       
       if ((i>=nExc)&&(postInd[i*nConn+j]>=nExc)){ //inh-inh
         g_ii.push_back(garray[j]);
-        gAlltoAll_ii[(i-nExc)*nInh+(postInd[i*nConn+j]-nExc)]=garray[j];
+        //gAlltoAll_ii[(i-nExc)*nInh+(postInd[i*nConn+j]-nExc)]=garray[j];
         postInd_ii.push_back(postInd[i*nConn+j]-nExc);
         sum_ii++;
       }
@@ -373,22 +370,22 @@ int main(int argc, char *argv[])
 			postIndInG_ii.push_back(sum_ii);
 		}
 		
-    memcpy(g+i*nConn,garray,nConn*sizeof(float));   
+//    memcpy(g+i*nConn,garray,nConn*sizeof(float));   
 	     //gOld[i*nMB+j]= 0.0f;
   }
  
 
-  os.write((char *)g, nN*nConn*sizeof(float));
+  //os.write((char *)g, nN*nConn*sizeof(float));
   //os_nonopt.write((char *)gOld, nN*nN*sizeof(float));
-  os.close();
+  //os.close();
   
-  os_index.write((char *)postInd, nN*nConn*sizeof(unsigned int));
+  //os_index.write((char *)postInd, nN*nConn*sizeof(unsigned int));
   //os_postindex.write((char *)postIndInG, nN*sizeof(unsigned int));
-  os_nonopt.write((char *)gAlltoAll, nN*nN*sizeof(float));
+  //os_nonopt.write((char *)gAlltoAll, nN*nN*sizeof(float));
   
-  os_index.close();
+ //os_index.close();
   //os_postindex.close();
-  os_nonopt.close();
+  //os_nonopt.close();
  
   /*cout << "\nprinting g:\n" << endl; 
   for (unsigned int j=0;j<nConn*nN;j++){
@@ -404,7 +401,8 @@ int main(int argc, char *argv[])
   std::vector<unsigned int> postIndInG_ee;
   //unsigned int *postInd_ee = new unsigned int[nConn*nExc]; //same here for writing to file
   std::vector<unsigned int> postInd_ee;*/
-  
+ 
+ 
   //ee
   size_t sz = g_ee.size();
   cout << "ee vect.size: " << sz << endl;
@@ -416,12 +414,12 @@ int main(int argc, char *argv[])
   sz = postIndInG_ee.size();
   cout << "ee count size: " << sz << endl;
   os_postindex_ee.write(reinterpret_cast<const char*>(&postIndInG_ee[0]), sz * sizeof(postIndInG_ee[0]));
-  os_nonopt_ee.write((char *)gAlltoAll_ee, nExc*nExc*sizeof(float));
+  //os_nonopt_ee.write((char *)gAlltoAll_ee, nExc*nExc*sizeof(float));
   
   os_ee.close();
   os_index_ee.close();
   os_postindex_ee.close();
-  os_nonopt_ee.close();
+  //os_nonopt_ee.close();
   os_info_ee.close();
   
   //ei
@@ -435,12 +433,12 @@ int main(int argc, char *argv[])
   sz = postIndInG_ei.size();
   cout << "ei count size: " << sz << endl;
   os_postindex_ei.write(reinterpret_cast<const char*>(&postIndInG_ei[0]), sz * sizeof(postIndInG_ei[0]));
-  os_nonopt_ei.write((char *)gAlltoAll_ei, nExc*nInh*sizeof(float));
+  //os_nonopt_ei.write((char *)gAlltoAll_ei, nExc*nInh*sizeof(float));
   
   os_ei.close();
   os_index_ei.close();
   os_postindex_ei.close();
-  os_nonopt_ei.close();
+  //os_nonopt_ei.close();
   os_info_ei.close();
   
   //ie
@@ -454,12 +452,12 @@ int main(int argc, char *argv[])
   sz = postIndInG_ie.size();
   cout << "ie count size: " << sz << endl;
   os_postindex_ie.write(reinterpret_cast<const char*>(&postIndInG_ie[0]), sz * sizeof(postIndInG_ie[0]));
-  os_nonopt_ie.write((char *)gAlltoAll_ie, nInh*nExc*sizeof(float));
+  //os_nonopt_ie.write((char *)gAlltoAll_ie, nInh*nExc*sizeof(float));
   
   os_ie.close();
   os_index_ie.close();
   os_postindex_ie.close();
-  os_nonopt_ie.close();
+  //os_nonopt_ie.close();
   os_info_ie.close();
   
   //ii
@@ -473,23 +471,23 @@ int main(int argc, char *argv[])
   sz = postIndInG_ii.size();
   cout << "ii count size: " << sz << endl;
   os_postindex_ii.write(reinterpret_cast<const char*>(&postIndInG_ii[0]), sz * sizeof(postIndInG_ii[0]));
-  os_nonopt_ii.write((char *)gAlltoAll_ii, nInh*nInh*sizeof(float));
+  //os_nonopt_ii.write((char *)gAlltoAll_ii, nInh*nInh*sizeof(float));
   
   os_ii.close();
   os_index_ii.close();
   os_postindex_ii.close();
-  os_nonopt_ii.close();
+  //os_nonopt_ii.close();
   os_info_ii.close();
   
-  delete[] g;
-  delete[] gAlltoAll;
+ // delete[] g;
+ // delete[] gAlltoAll;
   delete[] garray;
   delete[] postInd;
   
-  delete[] gAlltoAll_ee;
+  /*delete[] gAlltoAll_ee;
   delete[] gAlltoAll_ei;
   delete[] gAlltoAll_ie;
-  delete[] gAlltoAll_ii;
+  delete[] gAlltoAll_ii;*/
   
   delete[] garray_ee;
   delete[] garray_ei;
