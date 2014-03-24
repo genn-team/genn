@@ -12,7 +12,7 @@
 --------------------------------------------------------------------------*/
 
 #include <string>
-
+#include "global.h"
 //------------------------------------------------------------------------
 /*! \file generateKernels.cc
 
@@ -276,7 +276,7 @@ void genNeuronKernel(NNmodel &model, //!< Model description
     os << "        // register a spike type event" << endl;
     os << "        sidx = atomicAdd((unsigned int *) &scnt, 1);" << endl;
     
-    /*if ((model.synapseConnType[i]==SPARSE) && (model.neuronN[model.synapseTarget[i]] > synapseBlkSz)){
+    /*if ((model.synapseConnType[i]==SPARSE) && (model.neuronN[model.synapseTarget[i]] > synapseBlkSz[0])){
       os << "      d_spikeFlag" << model.neuronName[model.synapseSource[i]]<< "[" << localID << "]=1;" << endl;
     }*/
     os << "        shSpk[sidx] = " << localID << ";" << endl;
