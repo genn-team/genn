@@ -38,8 +38,6 @@
 
 #include "modelSpec.h"
 #include "toString.h"
-
-
 //--------------------------------------------------------------------------
 /* \brief Macro for wrapping cuda runtime function calls and catching any errors that may be thrown.
  */
@@ -55,7 +53,6 @@
     exit(EXIT_FAILURE);						           \
   }									   \
 }
-
 
 //--------------------------------------------------------------------------
 /* \brief Function to write the comment header denoting file authorship and contact details into the generated code.
@@ -87,7 +84,6 @@ void substitute(string &s, const string trg, const string rep)
     found= s.find(trg);
   }
 }
-
 
 //--------------------------------------------------------------------------
 //! \brief Tool for determining the size of variable types on the current architecture

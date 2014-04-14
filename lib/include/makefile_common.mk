@@ -48,9 +48,9 @@ endif
 ifeq ($(DARWIN),DARWIN)
 	CCFLAGS          += -arch i386# put your global compiler flags here
 else
-	CCFLAGS          += # put your global compiler flags here
+	CCFLAGS          += -O3 # put your global compiler flags here
 endif
-NVCCFLAGS        += # put your global nvcc flags here
+NVCCFLAGS        += -O3 # put your global nvcc flags here
 
 # Get the OBJECTS rule targets from the files listed by SOURCES (use all source
 # files in a project's root directory by default). Define your own SOURCES
