@@ -413,13 +413,13 @@ void genSynapseKernel(NNmodel &model, //!< Model description
   unsigned int src;
   os << "__global__ void calcSynapses(" << endl;
   for (int i = 0; i < model.synapseGrpN; i++) {
-    if (model.synapseGType[i] == (INDIVIDUALG )) {
+		if (model.synapseConnType[i] == SPARSE){    
+		if (model.synapseGType[i] != GLOBALG) {
       os << " " << model.ftype << " * d_gp" << model.synapseName[i] << "," << endl;	
-      if (model.synapseConnType[i] == SPARSE){
+      }
 			os << " unsigned int * d_gp" << model.synapseName[i] << "_ind," << endl;
 			os << " unsigned int * d_gp" << model.synapseName[i] << "_indInG," << endl;
 			trgN = model.neuronN[model.synapseTarget[i]];
-      }
     }
     if (model.synapseGType[i] == (INDIVIDUALID )) {
       os << "  unsigned int *d_gp" << model.synapseName[i] << "," << endl;	
@@ -553,7 +553,6 @@ if (model.synapseConnType[i] != SPARSE) {
 	os << UIntSz - 1 << ")) {" << endl;
       }
     }
-    if (model.synapseGType[i] == INDIVIDUALG) {
       if (model.synapseConnType[i] == SPARSE) {
 				os << "          npost = d_gp" << model.synapseName[i] << "_indInG[shSpk[j] + 1] - d_gp";
 				os << model.synapseName[i] << "_indInG[shSpk[j]];" << endl;
@@ -562,10 +561,20 @@ if (model.synapseConnType[i] != SPARSE) {
 				os << model.synapseName[i] << "_indInG[shSpk[j]] + "<< localID <<"];" << endl;
 				if (isGrpVarNeeded[model.synapseTarget[i]] == 0) {
 				  theLG = toString("shLg[" + localID + "]");
-	  			os << "            shLg[ipost] += d_gp" << model.synapseName[i] << "[d_gp" << model.synapseName[i] << "_indInG[shSpk[j]] + "<< localID <<"];";
+					if (model.synapseGType[i] == GLOBALG) {
+						os << "            shLg[ipost] += " << model.g0[i] <<"];";
+					}
+	  			else{
+						os << "            shLg[ipost] += d_gp" << model.synapseName[i] << "[d_gp" << model.synapseName[i] << "_indInG[shSpk[j]] + "<< localID <<"];";
+					}
 				}
 				else {
+					if (model.synapseGType[i] == GLOBALG) {
+						os << "            atomicAdd(&d_inSyn" << model.neuronName[trg] << inSynNo << "[ipost]," << model.g0[i] <<");";
+					}
+						else{
 	  			os << "            atomicAdd(&d_inSyn" << model.neuronName[trg] << inSynNo << "[ipost],d_gp" << model.synapseName[i] << "[d_gp" << model.synapseName[i] << "_indInG[shSpk[j]] + "<< localID <<"]);" << endl;
+					}
   			}
 			}
       else {
@@ -573,12 +582,10 @@ if (model.synapseConnType[i] != SPARSE) {
 	theLG = toString("lg");
       }
       os << endl;
-    }
     if (model.synapseConnType[i] == SPARSE) { // need to close the parenthesis to synchronize threads
       os << "          }" << endl; // end if (id < npost)
 		  os << "        }" << endl; // end if (shSpkV[j]>postthreshold)
-    os << "        __syncthreads();" << endl;
-		//	os << "        if (threadIdx.x == 0) unsigned int actr = atomicInc(&count,gridDim.x); " << endl;
+    	os << "        __syncthreads();" << endl;
     }
     if ((model.synapseGType[i] == GLOBALG) || (model.synapseGType[i] == INDIVIDUALID)) {
       theLG = toString(model.g0[i]);
