@@ -1082,10 +1082,11 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     os << "  if (t > 0.0) {" << endl; 
     os << "    calcSynapses <<< sGrid, sThreads >>> (";
     for (int i= 0; i < model.synapseGrpN; i++) {
+     	if (model.synapseGType[i] == INDIVIDUALG) {
+				os << "  d_gp" << model.synapseName[i] << ",";
+			}
 			if (model.synapseConnType[i] == SPARSE) {
-      	if (model.synapseGType[i] != GLOBALG) {
-					os << "  d_gp" << model.synapseName[i] << ",";
-				}
+					
 	  		os << " d_gp" << model.synapseName[i] << "_ind,";	
 				os << " d_gp" << model.synapseName[i] << "_indInG,";	
 	  			trgN = model.neuronN[model.synapseTarget[i]];
@@ -1115,7 +1116,7 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     if (model.lrnGroups > 0) {
       os << "    learnSynapsesPost <<< lGrid, lThreads >>> (";      
       for (int i= 0; i < model.synapseGrpN; i++) {
-  			if (model.synapseGType[i] == (INDIVIDUALG  || INDIVIDUALID )) {
+  			if ((model.synapseGType[i] == INDIVIDUALG)  || (model.synapseGType[i] ==INDIVIDUALID )) {
 	  			os << " d_gp" << model.synapseName[i] << ",";	
 				}
 				if (model.synapseType[i] == LEARN1SYNAPSE) {
@@ -1127,7 +1128,7 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 				os << " d_" << nModels[nt].varNames[0] << model.neuronName[i] << ",";  	//this is supposed to be Vm 		
       }    
         
-      os << "t);";
+      os << "t);" << endl;
     }
     os << "  }" << endl;
 
