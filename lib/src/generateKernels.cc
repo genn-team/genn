@@ -519,12 +519,17 @@ if (model.synapseConnType[i] != SPARSE) {
     }
     os << "      __syncthreads();" << endl;
     os << "      // only work on existing neurons" << endl;
-		if (model.synapseConnType[i] == SPARSE) {
-			os << "      if (" << localID << " < " << model.maxConn[trg] << ") {" << endl;    
+	if (model.synapseConnType[i] == SPARSE) {
+		if(model.maxConn.size()==0) {
+			fprintf(stderr,"Model Generation error: for every SPARSE synapse group used you must also supply (in your model) a max possible number of connections via the model.setMaxConn() function.");
+			exit(1);
 		}
-		else{
-			os << "      if (" << localID << " < " << model.neuronN[trg] << ") {" << endl;
-		}
+		int maxConnections  = model.maxConn[i];
+		os << "      if (" << localID << " < " << maxConnections << ") {" << endl;
+	}
+	else{
+		os << "      if (" << localID << " < " << model.neuronN[trg] << ") {" << endl;
+	}
 
     os << "        // loop through all incoming spikes" << endl;
     os << "        for (j = 0; j < lmax; j++) {" << endl;
@@ -579,7 +584,7 @@ if (model.synapseConnType[i] != SPARSE) {
   			}
 
    			os << "          }" << endl; // end if (id < npost)
-			  os << "        }" << endl; // end if (shSpkV[j]>postthreshold)
+			  //os << "        }" << endl; // end if (shSpkV[j]>postthreshold)
    		 	os << "        __syncthreads();" << endl;
 			}
       else {
