@@ -309,6 +309,25 @@ void NNmodel::activateDirectInput(const string name, unsigned int type)
   receivesInputCurrent[i]= type;	//1 if common input, 2 if custom input from file, 3 if custom input as a rule, 4 (TODO) if random input with Gaussian distribution.
 }
 
+//--------------------------------------------------------------------------
+/*! \brief This deprecated function is provided for compatibility with the previous release of GeNN.
+ * Default values are provide for new parameters, it is strongly recommended these be selected explicity via the new version othe function
+ */
+//--------------------------------------------------------------------------
+void NNmodel::addSynapsePopulation(const string name, unsigned int syntype, unsigned int conntype, unsigned int gtype, const string src, const string target, float *params)
+{
+	fprintf(stderr,"WARNING. Use of deprecated version of fn. addSynapsePopulation(). Some parameters have been supplied with default-only values\n");
+
+	float postSynV[0]={};
+
+	//Tries to borrow these values from the first set of synapse parameters supplied
+	float postExpSynapsePopn[2] = {
+			params[2], 	//tau_S: decay time constant [ms]
+			params[0]	// Erev: Reversal potential
+			};
+
+	addSynapsePopulation(name, syntype, conntype, gtype, NO_DELAY, EXPDECAY, src, target, params, postSynV,postExpSynapsePopn);
+}
 
 //--------------------------------------------------------------------------
 /*! \brief This function is an alternative method to the standard addSynapsePopulation that allows the use of constant character arrays instead of C++ strings.

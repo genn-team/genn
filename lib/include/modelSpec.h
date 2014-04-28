@@ -264,6 +264,7 @@ public:
   // PUBLIC SYNAPSE FUNCTIONS
   //=========================
 
+  void addSynapsePopulation(const string name, unsigned int syntype, unsigned int conntype, unsigned int gtype, const string src, const string trg, float *p)  __attribute__ ((deprecated)); //!< Overload of method for backwards compatibility
   void addSynapsePopulation(const char *, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, const char *, const char *, float *, float *, float *); //!< Method for adding a synapse population to a neuronal network model, using C style character array for the name of the population
   void addSynapsePopulation(const string, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, const string, const string, float *, float *, float *); //!< Method for adding a synapse population to a neuronal network model, using C++ string for the name of the population
   void setSynapseG(const string, float); //!< Method for setting the conductance (g) value for a synapse population with "GLOBALG" charactertistic
