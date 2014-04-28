@@ -55,10 +55,12 @@ This method also saves the neuron numbers of the populations rounded to the next
 void NNmodel::initDerivedNeuronPara(unsigned int i)
 {
   vector<float> tmpP;
-  for (i=0; i < nModels[neuronType[i]].dpNames.size(); ++i) {
-    float retVal = nModels[neuronType[i]].dps->calculateDerivedParameter(i, neuronPara[i], DT);
-    tmpP.push_back(retVal);
-  }
+  int numDpNames = nModels[neuronType[i]].dpNames.size();
+	for (int j=0; j < nModels[neuronType[i]].dpNames.size(); ++j) {
+
+		float retVal = nModels[neuronType[i]].dps->calculateDerivedParameter(j, neuronPara[i], DT);
+		tmpP.push_back(retVal);
+}
 /*
   if (neuronType[i] == MAPNEURON) {
     tmpP.push_back(neuronPara[i][0]*neuronPara[i][0]*neuronPara[i][1]); // ip0
