@@ -323,7 +323,7 @@ void genRunner(NNmodel &model, //!< Model description
   // ------------------------------------------------------------------------
   // allocating conductance arrays for sparse matrices
 
-  os << "void allocateAllSparseArrays() {" << endl;
+  os << "void allocateAllHostSparseArrays() {" << endl;
   for (int i = 0; i < model.synapseGrpN; i++) {
     if (model.synapseConnType[i] == SPARSE) {
       os << "  allocateSparseArray(&g" << model.synapseName[i] << ", ";
@@ -334,6 +334,13 @@ void genRunner(NNmodel &model, //!< Model description
 			else{
 				os << " false);	//individual G" << endl;				
 			}
+    	}
+  	  }
+  os << "}" << endl;
+
+  os << "void allocateAllDeviceSparseArrays() {" << endl;
+  for (int i = 0; i < model.synapseGrpN; i++) {
+    if (model.synapseConnType[i] == SPARSE) {
       if (model.synapseGType[i] != GLOBALG) os << "  CHECK_CUDA_ERRORS(cudaMalloc((void **) &d_gp" << model.synapseName[i]<< ", sizeof(" << model.ftype << ") * g" << model.synapseName[i] << ".connN));" << endl;
       os << "  CHECK_CUDA_ERRORS(cudaMalloc((void **) &d_gp" << model.synapseName[i]<< "_ind, sizeof(unsigned int) * g" << model.synapseName[i] << ".connN));" << endl;
       os << "  CHECK_CUDA_ERRORS(cudaMalloc((void **) &d_gp" << model.synapseName[i]<< "_indInG, sizeof(unsigned int) * ("<< model.neuronN[model.synapseSource[i]] <<" + 1)));" << endl;
@@ -344,10 +351,14 @@ void genRunner(NNmodel &model, //!< Model description
   		 rrr if (trgN > neuronBlkSz) {
 			 os <<  "  cudaMalloc((void **) &d_Lg" << model.synapseName[i] << ",sizeof(" << model.ftype <<")*"<<  trgN << ");" << endl;
         }*/
-
     }
   }
   os << "}" << endl; 
+
+  os << "void allocateAllSparseArrays() {" << endl;
+  os << "\tvoid allocateAllHostSparseArrays();" << endl;
+  os << "\tvoid allocateAllDeviceSparseArrays();" << endl;
+  os << "}" << endl;
 
   // ------------------------------------------------------------------------
   // allocating conductance arrays for sparse matrices
