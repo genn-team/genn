@@ -84,7 +84,7 @@ unsigned int SYNPNO[SYNTYPENO]= {
 #define DOUBLE 1  //!< Macro attaching the label "DOUBLE" to flag 1. Used by NNModel::setPrecision()
 
 // for purposes of STDP
-#define SPK_THRESH 0.0f //!< Macro defining the spiking threshold for the purposes of STDP 
+#define SPK_THRESH_STDP 0.0f //!< Macro defining the spiking threshold for the purposes of STDP
 //#define MAXSPKCNT 50000
 
 //postsynaptic parameters
@@ -106,7 +106,7 @@ struct neuronModel
   string simCode; /*!< \brief Code that defines the execution of one timestep of integration of the neuron model
 		    
 		    The code will refer to $(NN) for the value of the variable with name "NN". It needs to refer to the predefined variable "ISYN", i.e. contain $(ISYN), if it is to receive input. */
-  string thresholdCode; /*!< \brief Code that defines the threshold condition for spikes in the described neuron model */
+  string thresholdConditionCode; /*!< \brief Code evaluating to a bool (e.g. "V > 20") that defines the condition for a true spike in the described neuron model */
   string resetCode; /*!< \brief Code that defines the reset action taken after a spike occurred. This can be empty */
   vector<string> varNames; //!< Names of the variables in the neuron model
   vector<string> tmpVarNames; //!< never used
@@ -165,13 +165,17 @@ public:
   vector<vector<float> > neuronPara; //!< Parameters of neurons
   vector<vector<float> > dnp; //!< Derived neuron parameters
   vector<vector<float> > neuronIni; //!< Initial values of neurons
-  vector<float> nThresh; //!< Threshold for spiking for each neuron type
   vector<vector<unsigned int> > inSyn; //!< The ids of the incoming synapse groups
   vector<int> receivesInputCurrent; //!< flags whether neurons of a population receive explicit input currents
   vector<unsigned int> neuronNeedSt; //!< Whether last spike time needs to be saved for each indivual neuron type
   vector<unsigned int> neuronDelaySlots; //!< The number of slots needed in the synapse delay queues of a neuron group
   vector<int> neuronHostID; //!< The ID of the cluster node which the neuron groups are computed on
   vector<int> neuronDeviceID; //!< The ID of the CUDA device which the neuron groups are comnputed on
+
+  //!< Threshold for detecting a spike event for each neuron type.
+  //NB: This is not directly user controlled, but is decided by, for example,
+  //the pre-spike threshold set for outgoing synapses
+  vector<float> nSpkEvntThreshold;
 
 
   // PUBLIC SYNAPSE VARIABLES
