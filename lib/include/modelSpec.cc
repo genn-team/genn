@@ -74,7 +74,11 @@ void NNmodel::initDerivedNeuronPara(unsigned int i)
 
 void NNmodel::initNeuronSpecs(unsigned int i)
 {
-  nThresh.push_back(200.0f);
+	//default to a high but plausible value. This will usually get lowered by the configuration of any outgoing synapses
+	//but note that if the nerons have no efferent synapses (e.g. the output neurons of a perceptron type setup)
+	//then this value will be the one used.
+	nSpkEvntThreshold.push_back(20.0);
+
   // padnN is the lowest multiple of neuronBlkSz >= neuronN[i]
   unsigned int padnN = ceil((float) neuronN[i] / (float) neuronBlkSz) * (float) neuronBlkSz;
   if (i == 0) {
@@ -123,8 +127,8 @@ void NNmodel::initDerivedSynapsePara(unsigned int i)
     tmpP.push_back(synapsePara[i][8]/synapsePara[i][4]);       // off1
     tmpP.push_back(synapsePara[i][8]/synapsePara[i][6]);       // off2
     // make sure spikes are detected at the post-synaptic neuron as well
-    if (SPK_THRESH < nThresh[synapseTarget[i]]) {
-      nThresh[synapseTarget[i]]= SPK_THRESH;
+    if (SPK_THRESH_STDP < nSpkEvntThreshold[synapseTarget[i]]) {
+      nSpkEvntThreshold[synapseTarget[i]]= SPK_THRESH_STDP;
     }
     neuronNeedSt[synapseTarget[i]]= 1;
     neuronNeedSt[synapseSource[i]]= 1;
@@ -148,8 +152,8 @@ void NNmodel::initDerivedSynapsePara(unsigned int i)
   // figure out at what threshold we need to detect spiking events
   synapseInSynNo.push_back(inSyn[synapseTarget[i]].size());
   inSyn[synapseTarget[i]].push_back(i);
-  if (nThresh[synapseSource[i]] > synapsePara[i][1]) {
-    nThresh[synapseSource[i]]= synapsePara[i][1];
+  if (nSpkEvntThreshold[synapseSource[i]] > synapsePara[i][1]) {
+    nSpkEvntThreshold[synapseSource[i]]= synapsePara[i][1];
   }
   // padnN is the lowest multiple of synapseBlkSz >= neuronN[synapseTarget[i]]
   unsigned int padnN = ceil((float) neuronN[synapseTarget[i]] / (float) synapseBlkSz) * (float) synapseBlkSz;
