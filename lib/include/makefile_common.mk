@@ -39,10 +39,6 @@ else
   endif
 endif
 
-# An auto-generated file containing your cuda device's compute capability.
-# The appropriate -gencode flag is added to NVCCFLAGS (if it exists yet).
--include $(GeNNPATH)/lib/src/sm_Version.mk
-
 # Global compiler flags to be used by all projects. Declate CCFLAGS and NVCCFLAGS
 # in a project's main Makefile to specify compiler flags on a per-project basis.
 ifeq ($(DARWIN),DARWIN)
@@ -52,11 +48,10 @@ else
 endif
 NVCCFLAGS        += --compiler-options "-O3 -ffast-math" # put your global nvcc flags here
 
-# Get the OBJECTS rule targets from the files listed by SOURCES (use all source
-# files in a project's root directory by default). Define your own SOURCES
-# variable in the project's Makefile to specify main source files explicitly.
-SOURCES          ?= $(wildcard *.cc *.cpp *.cu)
-OBJECTS          ?= $(foreach obj, $(SOURCES), obj/$(obj).o)
+# Get object targets from the files listed in SOURCES, also the GeNN code for each device.
+# Define your own SOURCES variable in the project's Makefile to specify these source files.
+OBJECTS          ?= $(foreach obj, $(SOURCES), $(obj).o)
+GENN_CODE        ?= $(wildcard *_CODE*)
 
 
 #################################################################################
@@ -66,20 +61,20 @@ OBJECTS          ?= $(foreach obj, $(SOURCES), obj/$(obj).o)
 .PHONY: all
 all: release
 
-obj/%.cc.o: %.cc
-	mkdir -p $(ROOTDIR)/obj
+%.cc.o: %.cc
 	$(COMPILER) $(CCFLAGS) $(INCLUDE_FLAGS) -o $@ -c $<
 
-obj/%.cpp.o: %.cpp
-	mkdir -p $(ROOTDIR)/obj
+%.cpp.o: %.cpp
 	$(COMPILER) $(CCFLAGS) $(INCLUDE_FLAGS) -o $@ -c $<
 
-obj/%.cu.o: %.cu
-	mkdir -p $(ROOTDIR)/obj
-	$(NVCC) $(NVCCFLAGS) $(GENCODE_FLAGS) $(INCLUDE_FLAGS) -o $@ -c $<
+%.cu.o: %.cu
+	$(NVCC) $(NVCCFLAGS) $(INCLUDE_FLAGS) -o $@ -c $<
 
-$(EXECUTABLE): $(OBJECTS)
-	$(NVCC) $(NVCCFLAGS) -o $@ $+ $(LINK_FLAGS) 
+$(GENN_CODE): $@/*.cc
+	$(NVCC) $(NVCCFLAGS) $(INCLUDE_FLAGS) $(shell cat $@/sm_version) -o $@.o -c $+
+
+$(EXECUTABLE): $(OBJECTS) $(GENN_CODE)
+	$(NVCC) $(NVCCFLAGS) $(LINK_FLAGS) -o $@ $+
 
 .PHONY: release
 release: $(EXECUTABLE)
@@ -95,8 +90,4 @@ debug: $(EXECUTABLE)
 
 .PHONY: clean
 clean:
-	rm -rf $(ROOTDIR)/bin $(ROOTDIR)/obj
-
-.PHONY: purge
-purge: clean
-	rm -rf $(ROOTDIR)/*_CODE sm_Version.mk currentModel.cc
+	rm -rf $(ROOTDIR)/bin $(ROOTDIR)/*.o $(ROOTDIR)/*_CODE*
