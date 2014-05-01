@@ -34,25 +34,13 @@ This global header file also takes care of including some generally used cuda su
 
 using namespace std; // replaced these two lines : problem with visual studio
 
-
-
-// THESE WILL BE REPLACED BY VARIABLES BELOW SOON!!!!!!!
-int neuronBlkSz;
-int synapseBlkSz;
-int learnBlkSz;
-cudaDeviceProp *deviceProp;
-int theDev;
-
-
-
-
-int hostCount; //!< Global variable containing the number of hosts within the local compute cluster
-int deviceCount; //!< Global variable containing the number of CUDA devices found on this host
-int optimiseBlockSize = 1; //!< Flag for signalling whether or not block size optimisation should be performed
-//vector<cudaDeviceProp> deviceProp; //!< Global vector containing the properties of all CUDA-enabled devices
-//vector<int> synapseBlkSz; //!< Global vector containing the optimum synapse kernel block size for each device
-//vector<int> learnBlkSz; //!< Global vector containing the optimum learn kernel block size for each device
-//vector<int> neuronBlkSz; //!< Global vector containing the optimum neuron kernel block size for each device
+int deviceCount = 0; //!< Global variable containing the number of CUDA devices present on this host
+int useAllCudaDevices = 0; //!< Flag that signals whether or not all CUDA devices should be utilised
+int optCudaBlockSize = 1; //!< Flag that signals whether or not block size optimisation should be performed
+vector<cudaDeviceProp> deviceProp; //!< Global vector containing the properties of all CUDA-enabled devices
+vector<int> synapseBlkSz; //!< Global vector containing the optimum synapse kernel block size for each device
+vector<int> learnBlkSz; //!< Global vector containing the optimum learn kernel block size for each device
+vector<int> neuronBlkSz; //!< Global vector containing the optimum neuron kernel block size for each device
 int UIntSz = sizeof(unsigned int) * 8; //!< size of the unsigned int variable type on the local architecture
 int logUIntSz = (int) (logf((float) UIntSz) / logf(2.0f) + 1e-5f); //!< logarithm of the size of the unsigned int variable type on the local architecture
 
