@@ -34,11 +34,9 @@
 
 
 /*! \brief This function will call the necessary sub-functions to generate the code for simulating a model. */
-void generate_model_runner(int deviceID, //!< the ID of the device to generate code for
-			   NNmodel *model, //!< Model description
-			   string path //!< Path where the generated code will be deposited
-			   )
+void generate_model_runner(int deviceID)
 {
+
 #ifdef _WIN32
   _mkdir((path + "/" + model.name + "_CODE" + deviceID).c_str());
 #else // UNIX
@@ -46,25 +44,25 @@ void generate_model_runner(int deviceID, //!< the ID of the device to generate c
 #endif
 
   // general shared code for GPU and CPU versions
-  genRunner(model, path, cerr);
+  genRunner(deviceID);
 
   // GPU specific code generation
-  genRunnerGPU(model, path, cerr);
+  genRunnerGPU(deviceID);
   
   // generate neuron kernels
-  genNeuronKernel(model, path, cerr);
+  genNeuronKernel(deviceID);
 
   // generate synapse and learning kernels
-  if (model.synapseGrpN > 0) genSynapseKernel(model, path, cerr);
+  if (model.synapseGrpN > 0) genSynapseKernel(deviceID);
 
   // CPU specific code generation
-  genRunnerCPU(model, path, cerr);
+  genRunnerCPU(deviceID);
 
   // Generate the equivalent of neuron kernel
-  genNeuronFunction(model, path, cerr);
+  genNeuronFunction(deviceID);
   
   // Generate the equivalent of synapse and learning kernel
-  if (model.synapseGrpN > 0) genSynapseFunction(model, path, cerr);
+  if (model.synapseGrpN > 0) genSynapseFunction(deviceID);
 
   // Generate NVCC compiler flag file
   ofstream sm_os((path + "/" + model.name + "_CODE" + deviceID + "/sm_version").c_str());
@@ -96,29 +94,35 @@ int main(int argc,     //!< number of arguments; expected to be 2
   cerr << endl;
 
   // initialise network model
+  path = toString(argv[1]);
+  model = new NNmodel();
   CHECK_CUDA_ERRORS(cudaGetDeviceCount(&deviceCount));
-  synapseBlkSz.resize(deviceCount);
-  learnBlkSz.resize(deviceCount);
-  neuronBlkSz.resize(deviceCount);
-  deviceProp.resize(deviceCount);
+  synapseBlkSz = new int[deviceCount];
+  learnBlkSz = new int[deviceCount];
+  neuronBlkSz = new int[deviceCount];
+  deviceProp = new cudaDeviceProp[deviceCount];
+
   for (int deviceID = 0; deviceID < deviceCount; deviceID++) {
     CHECK_CUDA_ERRORS(cudaGetDeviceProperties(&(deviceProp[deviceID]), deviceID));
     synapseBlkSz[deviceID] = 256;
     learnBlkSz[deviceID] = 256;
     neuronBlkSz[deviceID] = 256;
   }
-  NNmodel *model = new NNmodel();
-  string path = toString(argv[1]);
   prepareStandardModels();
   preparePostSynModels();
   modelDefinition(*model);
-
   if (useAllCudaDevices) {
-    multiDeviceGenerate(model, path, cout);
+    multiDeviceGenerate();
   }
   else {
-    bestDeviceGenerate(model, path, cout);
+    bestDeviceGenerate();
   }
+
+  delete[] synapseBlkSz;
+  delete[] learnBlkSz;
+  delete[] neuronBlkSz;
+  delete[] deviceProp;
+  delete model;
 
   return EXIT_SUCCESS;
 }
@@ -141,12 +145,12 @@ int main(int argc,     //!< number of arguments; expected to be 2
 */
 //--------------------------------------------------------------------------
 
-void bestDeviceGenerate(NNmodel *model, string path, ostream mos)
+void bestDeviceGenerate()
 {
   int best = 0, current, bestDevice;
   for (int deviceID = 0; deviceID < deviceCount; deviceID++) {
     if (optCudaBlockSize) {
-      current = blockSizeOptimise(mos, model, deviceID); // find the device which supports the highest warp occupancy
+      current = blockSizeOptimise(deviceID); // find the device which supports the highest warp occupancy
     }
     else {
       current = deviceProp[deviceID].totalGlobalMem; // find the device with the most global memory
@@ -161,7 +165,7 @@ void bestDeviceGenerate(NNmodel *model, string path, ostream mos)
   if (optCudaBlockSize) mos << " which supports " << best << " warps of occupancy" << endl;
   else mos << " with " << best << " bytes of global memory" << endl;
 
-  generate_model_runner(model, bestDevice, path);
+  generate_model_runner(bestDevice);
 }
 
 
@@ -172,7 +176,7 @@ void bestDeviceGenerate(NNmodel *model, string path, ostream mos)
 */
 //--------------------------------------------------------------------------
 
-void multiDeviceGenerate(NNmodel *model, string path, ostream mos)
+void multiDeviceGenerate()
 {
   // this needs to split the network evenly (fancy load balancing algorithm will go here, in future),
   // set the hostID:deviceID of each neuron and synapse group accordingly,
@@ -190,29 +194,25 @@ void multiDeviceGenerate(NNmodel *model, string path, ostream mos)
 */
 //--------------------------------------------------------------------------
 
-int blockSizeOptimise(ostream mos, //!< output stream for messages
-		      NNmodel *model, //!< the simulation model
-		      int deviceID //!< the ID of the device being optimised
-		      )
+int blockSizeOptimise(int deviceID)
 {
   mos << "optimizing block sizes for device " << deviceID << endl;
 
   int *blockSizePtr;
   char pipeBuffer[256];
   stringstream command, ptxInfo;
-  string kernelName, junk, tempDir;
+  string kernelName, junk;
   int reqRegs, reqSmem, deviceOccupancy, ptxInfoFound = 0;
   float warpAllocGran, regAllocGran, smemAllocGran;
   float blockLimit, mainBlockLimit, bestOccupancy;
 
   CHECK_CUDA_ERRORS(cudaSetDevice(deviceID));
-  tempDir = "/tmp/genn/" + model.name + "_CODE" + deviceID;
-  generate_model_runner(model, deviceID, tempDir);
+  generate_model_runner(deviceID);
 
   // Run NVCC and pipe output to this process
   command << "nvcc -x cu -cubin -Xptxas=-v -arch=sm_" << deviceProp[deviceID].major;
   command << deviceProp[deviceID].minor << " -DDT -D\"CHECK_CUDA_ERRORS(call){call;}\" ";
-  command << tempDir << "/runner.cc 2>&1 1>/dev/null";
+  command << path << "/" model.name + "_CODE" + deviceID << "/runner.cc 2>&1 1>/dev/null";
 
 #ifdef _WIN32
   FILE *nvccPipe = _popen(command.str().c_str(), "r");

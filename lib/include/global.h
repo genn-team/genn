@@ -34,14 +34,17 @@ This global header file also takes care of including some generally used cuda su
 
 using namespace std; // replaced these two lines : problem with visual studio
 
-int deviceCount = 0; //!< Global variable containing the number of CUDA devices present on this host
+string path; //!< Global string holding the directory in which GeNN code is to be deposited
+ostream mos = cerr; //!< output stream for debugging messages
+int UIntSz = sizeof(unsigned int) * 8; //!< size of the unsigned int variable type on the local architecture
+int logUIntSz = (int) (logf((float) UIntSz) / logf(2.0f) + 1e-5f); //!< logarithm of the size of the unsigned int variaint deviceCount = 0; //!< Global variable containing the number of CUDA devices present on this host
 int useAllCudaDevices = 0; //!< Flag that signals whether or not all CUDA devices should be utilised
 int optCudaBlockSize = 1; //!< Flag that signals whether or not block size optimisation should be performed
-vector<cudaDeviceProp> deviceProp; //!< Global vector containing the properties of all CUDA-enabled devices
-vector<int> synapseBlkSz; //!< Global vector containing the optimum synapse kernel block size for each device
-vector<int> learnBlkSz; //!< Global vector containing the optimum learn kernel block size for each device
-vector<int> neuronBlkSz; //!< Global vector containing the optimum neuron kernel block size for each device
-int UIntSz = sizeof(unsigned int) * 8; //!< size of the unsigned int variable type on the local architecture
-int logUIntSz = (int) (logf((float) UIntSz) / logf(2.0f) + 1e-5f); //!< logarithm of the size of the unsigned int variable type on the local architecture
+ble type on the local architecture
+NNmodel *model; //!< Global object which specifies the structure and properties of the network model
+cudaDeviceProp *deviceProp; //!< Global array containing the properties of all CUDA-enabled devices
+int *synapseBlkSz; //!< Global array containing the optimum synapse kernel block size for each device
+int *learnBlkSz; //!< Global array containing the optimum learn kernel block size for each device
+int *neuronBlkSz; //!< Global array containing the optimum neuron kernel block size for each device
 
 #endif  // _GLOBAL_H_
