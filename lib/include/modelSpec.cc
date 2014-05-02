@@ -16,18 +16,18 @@
 #ifndef _MODELSPEC_CC_
 #define _MODELSPEC_CC_ //!< macro for avoiding multiple inclusion during compilation
 
-#include "utils.h"
+#include "modelSpec.h"
 
 
 // class NNmodel for specifying a neuronal network model
-
 NNmodel::NNmodel() 
 {
-  valid= 0;
-  neuronGrpN= 0;
-  synapseGrpN= 0;
-  lrnGroups= 0;
-  needSt= 0;
+  dt = 1.0f;
+  valid = 0;
+  neuronGrpN = 0;
+  synapseGrpN = 0;
+  lrnGroups = 0;
+  needSt = 0;
   needSynapseDelay = 0;
   setPrecision(0);
 }
@@ -38,7 +38,12 @@ NNmodel::~NNmodel()
 
 void NNmodel::setName(const string inname)
 {
-  name= toString(inname);
+  name = toString(inname);
+}
+
+void NNmodel::setDT(float newDT)
+{
+  dt = newDT;
 }
 
 
@@ -56,17 +61,16 @@ void NNmodel::initDerivedNeuronPara(unsigned int i)
 {
   vector<float> tmpP;
   int numDpNames = nModels[neuronType[i]].dpNames.size();
-	for (int j=0; j < nModels[neuronType[i]].dpNames.size(); ++j) {
-
-		float retVal = nModels[neuronType[i]].dps->calculateDerivedParameter(j, neuronPara[i], DT);
-		tmpP.push_back(retVal);
-}
-/*
+  for (int j=0; j < nModels[neuronType[i]].dpNames.size(); ++j) {
+    float retVal = nModels[neuronType[i]].dps->calculateDerivedParameter(j, neuronPara[i], DT);
+    tmpP.push_back(retVal);
+  }
+  /*
   if (neuronType[i] == MAPNEURON) {
     tmpP.push_back(neuronPara[i][0]*neuronPara[i][0]*neuronPara[i][1]); // ip0
     tmpP.push_back(neuronPara[i][0]*neuronPara[i][2]);                  // ip1
     tmpP.push_back(neuronPara[i][0]*neuronPara[i][1]                   // ip2
-		   +neuronPara[i][0]*neuronPara[i][2]); 
+    +neuronPara[i][0]*neuronPara[i][2]); 
   }*/
   dnp.push_back(tmpP);
 }
@@ -74,13 +78,13 @@ void NNmodel::initDerivedNeuronPara(unsigned int i)
 
 void NNmodel::initNeuronSpecs(unsigned int i)
 {
-	//default to a high but plausible value. This will usually get lowered by the configuration of any outgoing synapses
-	//but note that if the nerons have no efferent synapses (e.g. the output neurons of a perceptron type setup)
-	//then this value will be the one used.
-	nSpkEvntThreshold.push_back(20.0);
+  //default to a high but plausible value. This will usually get lowered by the configuration of any outgoing synapses
+  //but note that if the nerons have no efferent synapses (e.g. the output neurons of a perceptron type setup)
+  //then this value will be the one used.
+  nSpkEvntThreshold.push_back(20.0);
 
   // padnN is the lowest multiple of neuronBlkSz >= neuronN[i]
-  unsigned int padnN = ceil((float) neuronN[i] / (float) neuronBlkSz) * (float) neuronBlkSz;
+  unsigned int padnN = ceil((float) neuronN[i] / (float) neuronBlkSz[neuronDeviceID[i]]) * (float) neuronBlkSz[neuronDeviceID[i]];
   if (i == 0) {
     sumNeuronN.push_back(neuronN[i]);
     padSumNeuronN.push_back(padnN);
@@ -89,7 +93,7 @@ void NNmodel::initNeuronSpecs(unsigned int i)
     sumNeuronN.push_back(sumNeuronN[i - 1] + neuronN[i]); 
     padSumNeuronN.push_back(padSumNeuronN[i - 1] + padnN); 
   }
-  neuronNeedSt.push_back(0);  // by default last spike times are not saved
+  neuronNeedSt.push_back(0); // by default last spike times are not saved
 }
 
 
@@ -134,7 +138,7 @@ void NNmodel::initDerivedSynapsePara(unsigned int i)
     neuronNeedSt[synapseSource[i]]= 1;
     needSt= 1;
     // padnN is the lowest multiple of learnBlkSz >= neuronN[synapseSource[i]]
-    unsigned int padnN = ceil((float) neuronN[synapseSource[i]] / (float) learnBlkSz) * (float) learnBlkSz;
+    unsigned int padnN = ceil((float) neuronN[synapseSource[i]] / (float) learnBlkSz[synapseDeviceID[i]]) * (float) learnBlkSz[synapseDeviceID[i]];
     if (lrnGroups == 0) {
       padSumLearnN.push_back(padnN);
     }
@@ -156,7 +160,7 @@ void NNmodel::initDerivedSynapsePara(unsigned int i)
     nSpkEvntThreshold[synapseSource[i]]= synapsePara[i][1];
   }
   // padnN is the lowest multiple of synapseBlkSz >= neuronN[synapseTarget[i]]
-  unsigned int padnN = ceil((float) neuronN[synapseTarget[i]] / (float) synapseBlkSz) * (float) synapseBlkSz;
+  unsigned int padnN = ceil((float) neuronN[synapseTarget[i]] / (float) synapseBlkSz[synapseDeviceID[i]]) * (float) synapseBlkSz[synapseDeviceID[i]];
   if (i == 0) {
     sumSynapseTrgN.push_back(neuronN[synapseTarget[i]]);
     padSumSynapseTrgN.push_back(padnN);
@@ -270,12 +274,11 @@ void NNmodel::addNeuronPopulation(const string name, unsigned int nNo, unsigned 
   neuronDelaySlots.push_back(1);
   receivesInputCurrent.push_back(0);
   inSyn.push_back(tv);  // empty list of input synapse groups for neurons i 
-  initDerivedNeuronPara(i);
-  initNeuronSpecs(i);
-
-  // initially set neuron group indexing variables to device 0 host 0
   neuronDeviceID.push_back(0);
   neuronHostID.push_back(0);
+
+  initDerivedNeuronPara(i);
+  initNeuronSpecs(i);
 }
 
 
@@ -375,7 +378,7 @@ void NNmodel::addSynapsePopulation(const string name, unsigned int syntype, unsi
     needSynapseDelay = 1;
   }
   
- //TODO: We want to get rid of SYNPNO array for code generation flexibility. It would be useful to predefine synapse models as we do for neurons in utils.h. This would also help for checkSizes.
+  //TODO: We want to get rid of SYNPNO array for code generation flexibility. It would be useful to predefine synapse models as we do for neurons in utils.h. This would also help for checkSizes.
 
   // for (int j= 0; j < nModels[synapseType[i]].pNames.size(); j++) { 
   for (int j= 0; j < SYNPNO[synapseType[i]]; j++) {
@@ -393,13 +396,12 @@ void NNmodel::addSynapsePopulation(const string name, unsigned int syntype, unsi
   for (int j= 0; j < postSynModels[postSynapseType[i]].varNames.size(); j++) {
     tmpPV.push_back(PSVini[j]);
   }
-  postSynIni.push_back(tmpPV);  
-  initDerivedSynapsePara(i);
-  initDerivedPostSynapsePara(i);
-
-  // initially set synapae group indexing variables to device 0 host 0
+  postSynIni.push_back(tmpPV);
   synapseDeviceID.push_back(0);
   synapseHostID.push_back(0);
+
+  initDerivedSynapsePara(i);
+  initDerivedPostSynapsePara(i);
 }
 
 
@@ -427,33 +429,6 @@ void NNmodel::setConstInp(const string sName, float globalInp0)
   if (globalInp.size() < found+1) globalInp.resize(found+1);
   globalInp[found]= globalInp0;
 
-}
-
-
-//--------------------------------------------------------------------------
-/*! \brief This function re-calculates the block-size-padded sum of threads needed to compute the
-  groups of neurons and synapses assigned to each device. Must be called after changing the
-  hostID:deviceID of any neuron or synapse group.
- */
-//--------------------------------------------------------------------------
-
-void NNmodel::resetPaddedSums()
-{
-
-
-
-  // array for each host with arrays for each device goes here
-  //vector<vector<int> > padSum = int[hostCount][deviceCount]
-
-
-
-  for (int synapseGroup = 0; synapseGroup < synapseGrpN; synapseGroup++) {
-
-
-    // CODE FOR RESETTING PADSUM* VARIABLES GOES HERE (use setMaxConn function)
-
-
-  }
 }
 
 
@@ -495,7 +470,7 @@ void NNmodel::setMaxConn(const string sname, unsigned int maxConnP)
     maxConn[found]= maxConnP;
 
     // set padnC is the lowest multiple of synapseBlkSz >= maxConn[found]
-    unsigned int padnC = ceil((float)maxConn[found] / (float)synapseBlkSz) * (float)synapseBlkSz;
+    unsigned int padnC = ceil((float) maxConn[found] / (float) synapseBlkSz[synapseDeviceID[found]]) * (float) synapseBlkSz[synapseDeviceID[found]];
 
     if (found == 0) {
       padSumSynapseKrnl[found]=padnC;
@@ -527,6 +502,33 @@ void NNmodel::setMaxConn(const string sname, unsigned int maxConnP)
       padSumSynapseKrnl[j]=padSumSynapseKrnl[j]-toOmitK+padnC;
       }
       }*/
+  }
+}
+
+
+//--------------------------------------------------------------------------
+/*! \brief This function re-calculates the block-size-padded sum of threads needed to compute the
+  groups of neurons and synapses assigned to each device. Must be called after changing the
+  hostID:deviceID of any neuron or synapse group.
+ */
+//--------------------------------------------------------------------------
+
+void NNmodel::resetPaddedSums()
+{
+
+
+
+  // array for each host with arrays for each device goes here
+  //vector<vector<int> > padSum = int[hostCount][deviceCount]
+
+
+
+  for (int synapseGroup = 0; synapseGroup < synapseGrpN; synapseGroup++) {
+
+
+    // CODE FOR RESETTING PADSUM* VARIABLES GOES HERE (use setMaxConn function code above)
+
+
   }
 }
 

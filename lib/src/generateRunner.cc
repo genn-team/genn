@@ -33,14 +33,14 @@
 */
 //--------------------------------------------------------------------------
 
-void genRunner(deviceID)
+void genRunner(int deviceID, ostream &mos)
 {
   unsigned int nt;
   unsigned int mem= 0;
   int trgN;
   ofstream os;
   string name;
-  name = path + toString("/") + model->name + toString("_CODE") + deviceID + toString("/runner.cc");
+  name = path + toString("/") + model->name + toString("_CODE_") + toString(deviceID) + toString("/runner.cc");
   mos << "entering genRunner" << endl;
   os.open(name.c_str());  
   writeHeader(os);
@@ -159,7 +159,7 @@ void genRunner(deviceID)
   os << "{" << endl;
   //os << "  " << model->ftype << " free_m,total_m;" << endl;
   //os << "  cudaMemGetInfo((size_t*)&free_m,(size_t*)&total_m);" << endl;
-  os << "  CHECK_CUDA_ERRORS(cudaSetDevice(" << theDev << "));" << endl;
+  os << "  CHECK_CUDA_ERRORS(cudaSetDevice(" << deviceID << "));" << endl;
   cerr << "model->neuronGroupN " << model->neuronGrpN << endl;
   os << "  size_t size;" << endl;
   for (int i= 0; i < model->neuronGrpN; i++) {
@@ -649,11 +649,11 @@ void genRunner(deviceID)
   os << endl;
 
   mos << "Global memory required for core model: " << mem/1e6 << " MB for alltoall connectivity" << endl;
-  mos << deviceProp[theDev].totalGlobalMem << " theDev " << theDev << endl;  
-  if (0.5*deviceProp[theDev].totalGlobalMem < mem) {
+  mos << deviceProp[deviceID].totalGlobalMem << " this device: " << deviceID << endl;  
+  if (0.5 * deviceProp[deviceID].totalGlobalMem < mem) {
     mos << "memory required for core model (" << mem/1e6;
     mos << "MB) is more than 50% of global memory on the chosen device";
-    mos << "(" << deviceProp[theDev].totalGlobalMem/1e6 << "MB)." << endl;
+    mos << "(" << deviceProp[deviceID].totalGlobalMem/1e6 << "MB)." << endl;
     mos << "Experience shows that this is UNLIKELY TO WORK ... " << endl;
   }
   os.close();
@@ -667,13 +667,13 @@ void genRunner(deviceID)
 */
 //----------------------------------------------------------------------------
 
-void genRunnerGPU(deviceID)
+void genRunnerGPU(int deviceID, ostream &mos)
 {
   string name;
   unsigned int nt;
   ofstream os;
   mos << "entering GenRunnerGPU" << endl;
-  name = path + toString("/") + model->name + toString("_CODE") + deviceID + toString("/runnerGPU.cc");
+  name = path + toString("/") + model->name + toString("_CODE_") + toString(deviceID) + toString("/runnerGPU.cc");
   os.open(name.c_str());
 
   writeHeader(os);
@@ -1083,7 +1083,7 @@ void genRunnerGPU(deviceID)
   unsigned int neuronGridSz = model->padSumNeuronN[model->neuronGrpN - 1];
   neuronGridSz = neuronGridSz / neuronBlkSz[deviceID];
   os << "  dim3 nThreads(" << neuronBlkSz[deviceID] << ", 1);" << endl;
-  if (neuronGridSz < deviceProp[theDev].maxGridSize[1]) {
+  if (neuronGridSz < deviceProp[deviceID].maxGridSize[1]) {
     os << "  dim3 nGrid(" << neuronGridSz << ", 1);" << endl;
   }
   else {
@@ -1177,11 +1177,11 @@ void genRunnerGPU(deviceID)
 */
 //----------------------------------------------------------------------------
 
-void genRunnerCPU(deviceID)
+void genRunnerCPU(int deviceID, ostream &mos)
 {
   string name;
   ofstream os;
-  name = path + toString("/") + model->name + toString("_CODE") + deviceID + toString("/runnerCPU.cc");
+  name = path + toString("/") + model->name + toString("_CODE_") + toString(deviceID) + toString("/runnerCPU.cc");
   os.open(name.c_str());
   
   writeHeader(os);

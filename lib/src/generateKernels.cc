@@ -29,14 +29,14 @@
 unsigned int nt;
 short *isGrpVarNeeded;
 
-void genNeuronKernel(deviceID)
+void genNeuronKernel(int deviceID, ostream &mos)
 {
   // write header content
   string name, s, localID;
   ofstream os;
   isGrpVarNeeded = new short[model->neuronGrpN];
 
-  name = path + toString("/") + model->name + toString("_CODE") + deviceID + toString("/neuronKrnl.cc");
+  name = path + toString("/") + model->name + toString("_CODE_") + toString(deviceID) + toString("/neuronKrnl.cc");
   os.open(name.c_str());
   
   writeHeader(os);
@@ -130,7 +130,7 @@ void genNeuronKernel(deviceID)
   os << "{" << endl;
   unsigned int neuronGridSz = model->padSumNeuronN[model->neuronGrpN - 1];
   neuronGridSz = neuronGridSz / neuronBlkSz[deviceID];
-  if (neuronGridSz < deviceProp[theDev].maxGridSize[1]){
+  if (neuronGridSz < deviceProp[deviceID].maxGridSize[1]){
     os << "  unsigned int id = " << neuronBlkSz[deviceID] << " * blockIdx.x + threadIdx.x;" << endl;
   }
   else {
@@ -395,17 +395,17 @@ void genNeuronKernel(deviceID)
 */
 //-------------------------------------------------------------------------
 
-void genSynapseKernel(deviceID)
+void genSynapseKernel(int deviceID, ostream &mos)
 {
   string name, s, localID, theLG;
-  ofstream os;
   unsigned int numOfBlocks,trgN;
+  ofstream os;
 
   // count how many neuron blocks to use: one thread for each synapse target
   // targets of several input groups are counted multiply
   numOfBlocks = model->padSumSynapseKrnl[model->synapseGrpN - 1] / synapseBlkSz[deviceID];
 
-  name = path + toString("/") + model->name + toString("_CODE") + deviceID + toString("/synapseKrnl.cc");
+  name = path + toString("/") + model->name + toString("_CODE_") + toString(deviceID) + toString("/synapseKrnl.cc");
   os.open(name.c_str());
   writeHeader(os);  // write header content
   // compiler/include control (include once)

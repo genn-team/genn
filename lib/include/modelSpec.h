@@ -23,9 +23,10 @@
 */
 //--------------------------------------------------------------------------
 
-#include <vector>
 #include "global.h"
+#include "utils.h"
 
+using namespace std;
 
 //neuronType
 #define MAPNEURON 0 //!< Macro attaching the name "MAPNEURON" to neuron type 0
@@ -49,11 +50,11 @@
 #define INPRULE 3 //!< Macro attaching  the name INPRULE (explicit dynamic input defined as a rule) to 3
 #define RANDNINP 4 //!< Macro attaching  the name RANDNINP (Random input with Gaussian distribution, calculated real time on the device by the generated code) to 4 (TODO, not implemented yet)
 
-unsigned int SYNPNO[SYNTYPENO]= {
+unsigned int SYNPNO[SYNTYPENO] = {
   3,        // NSYNAPSE_PNO 
   4,        // NGRADSYNAPSE_PNO 
   13,       // LEARN1SYNAPSE_PNO 
-  1			// USERDEFSYNAPSE_PNO 
+  1	    // USERDEFSYNAPSE_PNO 
 }; //!< Global constant integer array containing the number of parameters of each of the predefined synapse types
 
 //connectivity of the network (synapseConnType)
@@ -93,45 +94,6 @@ unsigned int SYNPNO[SYNTYPENO]= {
 // currently values >1 will be defined by code generation.
 
 
-class dpclass {
-public:
-  dpclass() {}  
-  virtual float calculateDerivedParameter(int index, vector < float > pars, float dt = 1.0) {return -1;}
-};
-
-
-//! \brief class (struct) for specifying a neuron model.
-struct neuronModel
-{
-  string simCode; /*!< \brief Code that defines the execution of one timestep of integration of the neuron model
-		    
-		    The code will refer to $(NN) for the value of the variable with name "NN". It needs to refer to the predefined variable "ISYN", i.e. contain $(ISYN), if it is to receive input. */
-  string thresholdConditionCode; /*!< \brief Code evaluating to a bool (e.g. "V > 20") that defines the condition for a true spike in the described neuron model */
-  string resetCode; /*!< \brief Code that defines the reset action taken after a spike occurred. This can be empty */
-  vector<string> varNames; //!< Names of the variables in the neuron model
-  vector<string> tmpVarNames; //!< never used
-  vector<string> varTypes; //!< Types of the variable named above, e.g. "float". Names and types are matched by their order of occurrence in the vector.
-  vector<string> tmpVarTypes; //!< never used
-  vector<string> pNames; //!< Names of (independent) parameters of the model. These are assumed to be always of type "float"
-  vector<string> dpNames; /*!< \brief Names of dependent parameters of the model. These are assumed to be always of type "float"
-  			    
-			    The dependent parameters are functions of independent parameters that enter into the neuron model. To avoid unecessary computational overhead, these parameters are calculated at compile time and inserted as explicit values into the generated code. See method NNmodel::initDerivedNeuronPara for how this is done.*/ 
-  dpclass * dps;
-};
-
-
-struct postSynModel
-{
-  string postSyntoCurrent;
-  string postSynDecay;
-  vector<string> varNames; //!< Names of the variables in the postsynaptic model
-  vector<string> varTypes; //!< Types of the variable named above, e.g. "float". Names and types are matched by their order of occurrence in the vector.
-  vector<string> pNames; //!< Names of (independent) parameters of the model. These are assumed to be always of type "float"
-  vector<string> dpNames; /*!< \brief Names of dependent parameters of the model. These are assumed to be always of type "float"*/
-  dpclass * dps;
-};
-
-
 /*===============================================================
 //! \brief class NNmodel for specifying a neuronal network model.
 //
@@ -139,18 +101,17 @@ struct postSynModel
 
 class NNmodel
 {
-
 public:
 
   // PUBLIC MODEL VARIABLES
   //========================
 
   string name; //!< Name of the neuronal newtwork model
+  float dt; //!< Time step of the simulation in milliseconds
   string ftype; //!< Numerical precision of the floating point variables 
   int valid; //!< Flag for whether the model has been validated (unused?)
   unsigned int needSt; //!< Whether last spike times are needed at all in this network model (related to STDP)
   unsigned int needSynapseDelay; //!< Whether delayed synapse conductance is required in the network
-
 
   // PUBLIC NEURON VARIABLES
   //========================
@@ -176,7 +137,6 @@ public:
   //NB: This is not directly user controlled, but is decided by, for example,
   //the pre-spike threshold set for outgoing synapses
   vector<float> nSpkEvntThreshold;
-
 
   // PUBLIC SYNAPSE VARIABLES
   //=========================
@@ -208,7 +168,6 @@ public:
   vector<unsigned int> synapseDelay; //!< Global synaptic conductance delay for the group (in time steps)
   vector<int> synapseHostID; //!< The ID of the cluster node which the synapse groups are computed on
   vector<int> synapseDeviceID; //!< The ID of the CUDA device which the synapse groups are comnputed on
-
     
 private:
 
@@ -224,7 +183,6 @@ private:
   void initDerivedNeuronPara(unsigned int); //!< Method for calculating the values of derived neuron parameters.
   void initNeuronSpecs(unsigned int); //!< Method for calculating neuron IDs, taking into account the blocksize padding between neuron populations; also initializes nThresh and neuronNeedSt for a population of neurons.
 
-
   // PRIVATE SYNAPSE FUNCTIONS
   //==========================
 
@@ -239,7 +197,6 @@ private:
   void initDerivedSynapsePara(unsigned int); //!< Method for calculating the values of derived synapse parameters.
   void initDerivedPostSynapsePara(unsigned int); //!< Method for calculating the values of derived postsynapse parameters.
 
-
 public:
 
   // PUBLIC MODEL FUNCTIONS
@@ -248,10 +205,10 @@ public:
   NNmodel();
   ~NNmodel();
   void setName(const string); //!< Method to set the neuronal network model name
-  void setPrecision(unsigned int);//< Set numerical precision for floating point
+  void setDT(float newDT); //!< Sets the amount of simulated time per step
+  void setPrecision(unsigned int); //< Set numerical precision for floating point
   void checkSizes(unsigned int *, unsigned int *, unsigned int *); //< Check if the sizes of the initialized neuron and synapse groups are correct.
   void resetPaddedSums(); //!< Re-calculates the block-size-padded sum of threads needed to compute the groups of neurons and synapses assigned to each device. Must be called after changing the hostID:deviceID of any group.
-
 
   // PUBLIC NEURON FUNCTIONS
   //========================
@@ -263,7 +220,6 @@ public:
   void activateDirectInput(const string, unsigned int);  
   void setConstInp(const string, float); //!< Method for setting the global input value for a neuron population if CONSTINP
   void setNeuronClusterIndex(const string neuronGroup, int hostID, int deviceID); //!< Function for setting which host and which device a neuron group will be simulated on
-
 
   // PUBLIC SYNAPSE FUNCTIONS
   //=========================
@@ -277,5 +233,327 @@ public:
   void setSynapseClusterIndex(const string synapseGroup, int hostID, int deviceID); //!< Function for setting which host and which device a synapse group will be simulated on
 
 };
+
+
+//=====================================
+//      Neuron and synapse models
+//=====================================
+
+class dpclass {
+public:
+  dpclass() {}  
+  virtual float calculateDerivedParameter(int index, vector < float > pars, float dt = 1.0) {return -1;}
+};
+
+
+//! \brief class (struct) for specifying a neuron model.
+struct neuronModel
+{
+  string simCode; /*!< \brief Code that defines the execution of one timestep of integration of the neuron model
+		    The code will refer to $(NN) for the value of the variable with name "NN". It needs to refer to the predefined variable "ISYN", i.e. contain $(ISYN), if it is to receive input. */
+  string thresholdConditionCode; /*!< \brief Code evaluating to a bool (e.g. "V > 20") that defines the condition for a true spike in the described neuron model */
+  string resetCode; /*!< \brief Code that defines the reset action taken after a spike occurred. This can be empty */
+  vector<string> varNames; //!< Names of the variables in the neuron model
+  vector<string> tmpVarNames; //!< never used
+  vector<string> varTypes; //!< Types of the variable named above, e.g. "float". Names and types are matched by their order of occurrence in the vector.
+  vector<string> tmpVarTypes; //!< never used
+  vector<string> pNames; //!< Names of (independent) parameters of the model. These are assumed to be always of type "float"
+  vector<string> dpNames; /*!< \brief Names of dependent parameters of the model. These are assumed to be always of type "float"
+			    The dependent parameters are functions of independent parameters that enter into the neuron model. To avoid unecessary computational overhead, these parameters are calculated at compile time and inserted as explicit values into the generated code. See method NNmodel::initDerivedNeuronPara for how this is done.*/ 
+  dpclass * dps;
+};
+
+
+struct postSynModel
+{
+  string postSyntoCurrent;
+  string postSynDecay;
+  vector<string> varNames; //!< Names of the variables in the postsynaptic model
+  vector<string> varTypes; //!< Types of the variable named above, e.g. "float". Names and types are matched by their order of occurrence in the vector.
+  vector<string> pNames; //!< Names of (independent) parameters of the model. These are assumed to be always of type "float"
+  vector<string> dpNames; /*!< \brief Names of dependent parameters of the model. These are assumed to be always of type "float"*/
+  dpclass * dps;
+};
+
+
+//--------------------------------------------------------------------------
+/*! \brief Function that defines standard neuron models
+
+The neuron models are defined and added to the C++ vector nModels that is holding all neuron model descriptions. User defined neuron models can be appended to this vector later in (a) separate function(s).
+*/
+//--------------------------------------------------------------------------
+//NOTE: calcSynapses takes the first variable of each model.neuronName[src] as an argument, of type float. If you add a neuron model, keep this in mind. 
+
+vector<neuronModel> nModels; //!< Global c++ vector containing all neuron model descriptions
+
+class rulkovdp : public dpclass
+{
+public:
+  float calculateDerivedParameter(int index, vector <float> pars, float dt = 1.0) {
+    switch (index) {
+    case 0:
+      return ip0(pars);
+    case 1:
+      return ip1(pars);
+    case 2:
+      return ip2(pars);
+    }
+    return -1;
+  }
+  
+  float ip0(vector<float> pars) {
+    return pars[0]*pars[0]*pars[1];
+  }
+  float ip1(vector<float> pars) {
+    return pars[0]*pars[2];
+  }
+  float ip2(vector<float> pars) {
+    return pars[0]*pars[1]+pars[0]*pars[2];
+  }
+};
+
+void prepareStandardModels()
+{
+  neuronModel n;
+
+  //Rulkov neurons
+  n.varNames.push_back(tS("V"));
+  n.varTypes.push_back(tS("float"));
+  n.varNames.push_back(tS("preV"));
+  n.varTypes.push_back(tS("float"));
+  n.pNames.push_back(tS("Vspike"));
+  n.pNames.push_back(tS("alpha"));
+  n.pNames.push_back(tS("y"));
+  n.pNames.push_back(tS("beta"));
+  n.dpNames.push_back(tS("ip0"));
+  n.dpNames.push_back(tS("ip1"));
+  n.dpNames.push_back(tS("ip2"));
+  n.simCode= tS("    if ($(V) <= 0.0) {\n\
+      $(preV)= $(V);\n\
+      $(V)= $(ip0)/(($(Vspike)) - $(V) - ($(beta))*$(Isyn)) +($(ip1));\n\
+    }\n\
+    else {\n\
+      if (($(V) < $(ip2)) && ($(preV) <= 0.0)) {\n\
+        $(preV)= $(V);\n\
+        $(V)= $(ip2);\n\
+      }\n\
+      else {\n\
+        $(preV)= $(V);\n\
+        $(V)= -($(Vspike));\n\
+      }\n\
+    }\n");
+
+  n.thresholdConditionCode = tS("$(V) > $(ip2) - 0.01");
+
+  n.dps = new rulkovdp();
+
+  nModels.push_back(n);
+
+  // Poisson neurons
+  n.varNames.clear();
+  n.varTypes.clear();
+  n.varNames.push_back(tS("V"));
+  n.varTypes.push_back(tS("float"));
+  n.varNames.push_back(tS("seed"));
+  n.varTypes.push_back(tS("unsigned int"));
+  n.varNames.push_back(tS("spikeTime"));
+  n.varTypes.push_back(tS("float"));
+  n.pNames.clear();
+  n.pNames.push_back(tS("therate"));
+  n.pNames.push_back(tS("trefract"));
+  n.pNames.push_back(tS("Vspike"));
+  n.pNames.push_back(tS("Vrest"));
+  n.dpNames.clear();
+  n.simCode= tS("    unsigned int theRnd;\n\
+    if ($(V) > $(Vrest)) {\n\
+      $(V)= $(Vrest);\n\
+    }\n\
+    else {\n\
+      if (t - $(spikeTime) > ($(trefract))) {\n\
+        RAND($(seed),theRnd);\n\
+        if (theRnd < lrate) {\n\
+          $(V)= $(Vspike);\n\
+          $(spikeTime)= t;\n\
+        }\n\
+      }\n\
+    }\n");
+
+  n.thresholdConditionCode = tS("$(V) > $(Vspike) - 0.01");
+  nModels.push_back(n);
+
+  // Traub and Miles HH neurons
+  n.varNames.clear();
+  n.varTypes.clear();
+  n.varNames.push_back(tS("V"));
+  n.varTypes.push_back(tS("float"));
+  n.varNames.push_back(tS("m"));
+  n.varTypes.push_back(tS("float"));
+  n.varNames.push_back(tS("h"));
+  n.varTypes.push_back(tS("float"));
+  n.varNames.push_back(tS("n"));
+  n.varTypes.push_back(tS("float"));
+  n.pNames.clear();
+  n.pNames.push_back(tS("gNa"));
+  n.pNames.push_back(tS("ENa"));
+  n.pNames.push_back(tS("gK"));
+  n.pNames.push_back(tS("EK"));
+  n.pNames.push_back(tS("gl"));
+  n.pNames.push_back(tS("El"));
+  n.pNames.push_back(tS("C"));
+  n.dpNames.clear();
+  n.simCode= tS("   float Imem;\n\
+    unsigned int mt;\n\
+    float mdt= DT/25.0f;\n\
+    for (mt=0; mt < 25; mt++) {\n\
+      Imem= -($(m)*$(m)*$(m)*$(h)*$(gNa)*($(V)-($(ENa)))+\n\
+              $(n)*$(n)*$(n)*$(n)*$(gK)*($(V)-($(EK)))+\n\
+              $(gl)*($(V)-($(El)))-Isyn);\n\
+      float _a= 0.32f*(-52.0f-$(V)) / (exp((-52.0f-$(V))/4.0f)-1.0f);\n\
+      float _b= 0.28f*($(V)+25.0f)/(exp(($(V)+25.0f)/5.0f)-1.0f);\n\
+      $(m)+= (_a*(1.0f-$(m))-_b*$(m))*mdt;\n\
+      _a= 0.128*expf((-48.0f-$(V))/18.0f);\n\
+      _b= 4.0f / (expf((-25.0f-$(V))/5.0f)+1.0f);\n\
+      $(h)+= (_a*(1.0f-$(h))-_b*$(h))*mdt;\n\
+      _a= .032f*(-50.0f-$(V)) / (expf((-50.0f-$(V))/5.0f)-1.0f); \n\
+      _b= 0.5f*expf((-55.0f-$(V))/40.0f);\n\
+      $(n)+= (_a*(1.0-$(n))-_b*$(n))*mdt;\n\
+      $(V)+= Imem/$(C)*mdt;\n\
+    }\n");
+
+  n.thresholdConditionCode = tS("$(V) > 20");//TODO check this, to get better value
+  nModels.push_back(n);
+  
+  //Izhikevich neurons
+  n.varNames.clear();
+  n.varTypes.clear();
+  n.varNames.push_back(tS("V"));
+  n.varTypes.push_back(tS("float"));  
+  n.varNames.push_back(tS("U"));
+  n.varTypes.push_back(tS("float"));
+  n.pNames.clear();
+  //n.pNames.push_back(tS("Vspike"));
+  n.pNames.push_back(tS("a")); // time scale of U
+  n.pNames.push_back(tS("b")); // sensitivity of U
+  n.pNames.push_back(tS("c")); // after-spike reset value of V
+  n.pNames.push_back(tS("d")); // after-spike reset value of U
+  n.dpNames.clear(); 
+  //TODO: replace the resetting in the following with BRIAN-like threshold and resetting 
+  n.simCode= tS("    if ($(V) >= 30){\n\
+      $(V)=$(c);\n\
+		  $(U)+=$(d);\n\
+    } \n\
+    $(V)+=0.5f*(0.04f*$(V)*$(V)+5*$(V)+140-$(U)+$(Isyn))*DT; //at two times for numerical stability\n\
+    $(V)+=0.5f*(0.04f*$(V)*$(V)+5*$(V)+140-$(U)+$(Isyn))*DT;\n\
+    $(U)+=$(a)*($(b)*$(V)-$(U))*DT;\n\
+   // if ($(V) > 30){   //keep this only for visualisation -- not really necessaary otherwise \n\
+    //  $(V)=30; \n\
+   //}\n\
+   ");
+    
+  n.thresholdConditionCode = tS("$(V) >= 29.99");
+  /*  n.resetCode=tS("//reset code is here\n ");
+      $(V)=$(c);\n\
+      $(U)+=$(d);\n\
+  */
+  nModels.push_back(n);
+
+  //Izhikevich neurons with variable parameters
+  n.varNames.clear();
+  n.varTypes.clear();
+  n.varNames.push_back(tS("V"));
+  n.varTypes.push_back(tS("float"));  
+  n.varNames.push_back(tS("U"));
+  n.varTypes.push_back(tS("float"));
+  n.varNames.push_back(tS("a")); // time scale of U
+  n.varTypes.push_back(tS("float"));
+  n.varNames.push_back(tS("b")); // sensitivity of U
+  n.varTypes.push_back(tS("float"));
+  n.varNames.push_back(tS("c")); // after-spike reset value of V
+  n.varTypes.push_back(tS("float"));
+  n.varNames.push_back(tS("d")); // after-spike reset value of U
+  n.varTypes.push_back(tS("float"));
+  n.pNames.clear();
+  n.dpNames.clear(); 
+  //TODO: replace the resetting in the following with BRIAN-like threshold and resetting 
+  n.simCode= tS("    if ($(V) >= 30){\n\
+      $(V)=$(c);\n\
+		  $(U)+=$(d);\n\
+    } \n\
+    $(V)+=0.5f*(0.04f*$(V)*$(V)+5*$(V)+140-$(U)+$(Isyn))*DT; //at two times for numerical stability\n\
+    $(V)+=0.5f*(0.04f*$(V)*$(V)+5*$(V)+140-$(U)+$(Isyn))*DT;\n\
+    $(U)+=$(a)*($(b)*$(V)-$(U))*DT;\n\
+    //if ($(V) > 30){      //keep this only for visualisation -- not really necessaary otherwise \n\
+    //  $(V)=30; \n\
+    //}\n\
+    ");
+  n.thresholdConditionCode = tS("$(V) > 29.99");
+  nModels.push_back(n);
+  
+  #include "extra_neurons.h"
+}
+
+
+class expDecayDp : public dpclass
+{
+public:
+  float calculateDerivedParameter(int index, vector <float> pars, float dt = 1.0) {
+    switch (index) {
+    case 0:
+      return expDecay(pars, dt);
+    }
+    return -1;
+  }
+  
+  float expDecay(vector<float> pars, float dt) {
+    return expf(-dt/pars[0]);
+  }
+};
+
+
+vector<postSynModel> postSynModels;
+
+void preparePostSynModels(){
+  postSynModel ps;
+  
+  //0: Exponential decay
+  ps.varNames.clear();
+  ps.varTypes.clear();
+  
+  //ps.varNames.push_back(tS("E"));  
+  //ps.varTypes.push_back(tS("float"));  
+  
+  ps.pNames.clear();
+  ps.dpNames.clear(); 
+  
+  ps.pNames.push_back(tS("tau")); 
+  ps.pNames.push_back(tS("E"));  
+  ps.dpNames.push_back(tS("expDecay"));
+  
+  ps.postSynDecay=tS(" 	 $(inSyn)*=$(expDecay);\n");
+  ps.postSyntoCurrent=tS("$(inSyn)*($(E)-$(V))");
+  
+  ps.dps = new expDecayDp;
+  
+  postSynModels.push_back(ps);
+  
+  
+  //1: IZHIKEVICH MODEL (NO POSTSYN RULE)
+  ps.varNames.clear();
+  ps.varTypes.clear();
+  
+  ps.pNames.clear();
+  ps.dpNames.clear(); 
+  
+  ps.postSynDecay=tS("");
+  ps.postSyntoCurrent=tS("$(inSyn); $(inSyn)=0");
+  
+  postSynModels.push_back(ps);
+  
+  #include "extra_postsynapses.h"
+}
+
+
+void prepareSynapseModels(){
+}
 
 #endif

@@ -13,7 +13,7 @@
 
 ROOTDIR		:= $(GeNNPATH)/userproject/SynDelay_project
 EXECUTABLE	:= syn_delay
-SOURCES		:= SynDelaySim.cu
+SOURCES		:= SynDelaySim.cpp
 
 INCLUDE_FLAGS	:= 
 LINK_FLAGS	:= 

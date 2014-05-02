@@ -28,7 +28,7 @@ OS_ARCH 	:= $(shell uname -m | sed -e "s/i386/i686/")
 CUDA_PATH        ?= /usr/local/cuda
 COMPILER         ?= g++
 NVCC             ?= $(CUDA_PATH)/bin/nvcc
-INCLUDE_FLAGS    += -I$(CUDA_PATH)/include -I$(GeNNPATH)/lib/include -I. 
+INCLUDE_FLAGS    += -I$(CUDA_PATH)/include -I$(GeNNPATH)/lib/include -I. -include cuda_runtime.h
 ifeq ($(DARWIN),DARWIN)
   LINK_FLAGS     += -Xlinker -L$(CUDA_PATH)/lib -lcudart 
 else
@@ -51,7 +51,7 @@ NVCCFLAGS        += --compiler-options "-O3 -ffast-math" # put your global nvcc 
 # Get object targets from the files listed in SOURCES, also the GeNN code for each device.
 # Define your own SOURCES variable in the project's Makefile to specify these source files.
 OBJECTS          ?= $(foreach obj, $(SOURCES), $(obj).o)
-GENN_CODE        ?= $(wildcard *_CODE*)
+GENN_CODE        ?= $(wildcard *_CODE_*)
 
 
 #################################################################################
@@ -61,17 +61,15 @@ GENN_CODE        ?= $(wildcard *_CODE*)
 .PHONY: all
 all: release
 
+.PHONY: $(GENN_CODE)
+$(GENN_CODE):
+	$(NVCC) $(NVCCFLAGS) $(INCLUDE_FLAGS) $(shell cat $@/sm_version) -o $@.o -c $@/runner.cc
+
 %.cc.o: %.cc
 	$(COMPILER) $(CCFLAGS) $(INCLUDE_FLAGS) -o $@ -c $<
 
 %.cpp.o: %.cpp
 	$(COMPILER) $(CCFLAGS) $(INCLUDE_FLAGS) -o $@ -c $<
-
-%.cu.o: %.cu
-	$(NVCC) $(NVCCFLAGS) $(INCLUDE_FLAGS) -o $@ -c $<
-
-$(GENN_CODE): $@/*.cc
-	$(NVCC) $(NVCCFLAGS) $(INCLUDE_FLAGS) $(shell cat $@/sm_version) -o $@.o -c $+
 
 $(EXECUTABLE): $(OBJECTS) $(GENN_CODE)
 	$(NVCC) $(NVCCFLAGS) $(LINK_FLAGS) -o $@ $+
@@ -90,4 +88,4 @@ debug: $(EXECUTABLE)
 
 .PHONY: clean
 clean:
-	rm -rf $(ROOTDIR)/bin $(ROOTDIR)/*.o $(ROOTDIR)/*_CODE*
+	rm -rf $(ROOTDIR)/bin $(ROOTDIR)/*.o $(ROOTDIR)/*_CODE_*

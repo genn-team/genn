@@ -28,7 +28,7 @@ CUDA_PATH	?= "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v5.0\ "
 COMPILER	?= cl
 NVCC		?= $(CUDA_PATH)\bin\nvcc
 INCLUDE_FLAGS 	+= -I"$(shell cygpath -m '$(CUDA_PATH)')include" -I"$(GeNNPATH)/lib/include" -I"$(GeNNPATH)/lib/include/numlib" -I.
-
+INCLUDE_FLAGS   += -include cuda_runtime.h
 LLIB 		:= "$(shell cygpath -m '$(CUDA_PATH)')lib/$(OSWIN)/cudart.lib"
 LINK_FLAGS   	+= -L"$(shell cygpath -m '$(CUDA_PATH)')lib" -lcudart 
 
@@ -40,7 +40,7 @@ NVCCFLAGS        += -idp /cygwin/ --machine 32 # put your global nvcc flags here
 # Get object targets from the files listed in SOURCES, also the GeNN code for each device.
 # Define your own SOURCES variable in the project's Makefile to specify these source files.
 OBJECTS          ?= $(foreach obj, $(SOURCES), $(obj).o)
-GENN_CODE        ?= $(wildcard *_CODE*)
+GENN_CODE        ?= $(wildcard *_CODE_*)
 
 
 #################################################################################
@@ -50,17 +50,15 @@ GENN_CODE        ?= $(wildcard *_CODE*)
 .PHONY: all
 all: release
 
+.PHONY: $(GENN_CODE)
+$(GENN_CODE):
+	$(NVCC) $(NVCCFLAGS) $(INCLUDE_FLAGS) $(shell cat $@/sm_version) -o $@.o -c $@/runner.cc
+
 %.cc.o: %.cc
 	$(COMPILER) $(CCFLAGS) $(INCLUDE_FLAGS)  /Fe$@ -c $<
 
 %.cpp.o: %.cpp
 	$(COMPILER) $(CCFLAGS) $(INCLUDE_FLAGS) $< /c /Fo$@
-
-%.cu.o: %.cu
-	$(NVCC) $(NVCCFLAGS) $(GENCODE_FLAGS) $(INCLUDE_FLAGS) -o $@ -c $< #/Fe$@ -c $<
-
-$(GENN_CODE): $@/*.cc
-	$(NVCC) $(NVCCFLAGS) $(INCLUDE_FLAGS) $(shell cat $@/sm_version) -o $@.o -c $+
 
 $(EXECUTABLE): $(OBJECTS) $(GENN_CODE)
 	$(NVCC) $(NVCCFLAGS) $(LINK_FLAGS) $(LLIB) -o $@ $+
@@ -79,4 +77,4 @@ debug: $(EXECUTABLE)
 
 .PHONY: clean
 clean:
-	rm -rf $(ROOTDIR)/bin $(ROOTDIR)/*.o $(ROOTDIR)/*_CODE*
+	rm -rf $(ROOTDIR)/bin $(ROOTDIR)/*.o $(ROOTDIR)/*_CODE_*

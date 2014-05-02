@@ -26,12 +26,12 @@
 */
 //--------------------------------------------------------------------------
 
-void genNeuronFunction(deviceID)
+void genNeuronFunction(int deviceID, ostream &mos)
 {
   string name, s, localID;
   unsigned int nt;
   ofstream os;
-  name = path + toString("/") + model->name + toString("_CODE") + deviceID + toString("/neuronFnct.cc");
+  name = path + toString("/") + model->name + toString("_CODE_") + toString(deviceID) + toString("/neuronFnct.cc");
   os.open(name.c_str());
   // write header content
   writeHeader(os);
@@ -305,11 +305,11 @@ void genNeuronFunction(deviceID)
 */
 //--------------------------------------------------------------------------
 
-void genSynapseFunction(deviceID)
+void genSynapseFunction(int deviceID, ostream &mos)
 {
   string name, s, localID, theLG;
   ofstream os;
-  name = path + toString("/") + model->name + toString("_CODE") + deviceID + toString("/synapseFnct.cc");
+  name = path + toString("/") + model->name + toString("_CODE_") + toString(deviceID) + toString("/synapseFnct.cc");
   os.open(name.c_str());
   // write header content
   writeHeader(os);

@@ -1,21 +1,20 @@
 
-#ifndef SYNDELAYSIM_CU
-#define SYNDELAYSIM_CU
+#ifndef SYNDELAYSIM_CPP
+#define SYNDELAYSIM_CPP
 
 #include <cstdlib>
 #include <iostream>
 #include <fstream>
 
-using namespace std;
-
 #include "utils.h"
 #include "hr_time.cpp"
-
 #include "SynDelaySim.hpp"
-#include "SynDelay_CODE/runner.cc"
+//#include "SynDelay_CODE_0/runner.cc"
+
+using namespace std;
 
 
-SynDelay::SynDelay(bool usingGPU)
+SynDelay::SynDelay(int usingGPU)
 {
   this->usingGPU = usingGPU;
   allocateMem();
@@ -103,4 +102,4 @@ int main(int argc, char *argv[])
   return EXIT_SUCCESS;
 }
 
-#endif // SYNDELAYSIM_CU
+#endif // SYNDELAYSIM_CPP
