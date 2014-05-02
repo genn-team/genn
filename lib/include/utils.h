@@ -38,6 +38,17 @@
 
 #include "modelSpec.h"
 #include "toString.h"
+
+
+//--------------------------------------------------------------------------
+/* \brief Macro for a "safe" output of a parameter into generated code by essentially just
+   adding a bracket around the parameter value in the generated code.
+ */
+//--------------------------------------------------------------------------
+ 
+#define SAVEP(X) "(" << X << ")" 
+
+
 //--------------------------------------------------------------------------
 /* \brief Macro for wrapping cuda runtime function calls and catching any errors that may be thrown.
  */
