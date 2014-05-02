@@ -217,6 +217,7 @@ int main(int argc, char *argv[])
   while (!done) 
   {
   	 if (which == GPU){ 
+  	 PCNN.getSpikeNumbersFromGPU();
      PCNN.getSpikesFromGPU();
     
   	 generate_random_gpuInput_xorwow<<<sGrid0,sThreads>>>(devStates, PCNN.d_input1, PCNN.model.neuronN[0], 5.0, 0.0);
