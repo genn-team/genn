@@ -108,8 +108,8 @@ int main(int argc, char *argv[])
   unsigned int sum= 0;
   while (!done) 
   {
-//   if (which == GPU) PNIzhNN.getSpikesFromGPU();
 //    if (which == GPU) PNIzhNN.getSpikeNumbersFromGPU();
+//   if (which == GPU) PNIzhNN.getSpikesFromGPU();
     PNIzhNN.run(DT, which); // run next batch
     if (which == GPU) {  
       CHECK_CUDA_ERRORS(cudaMemcpy(VIzh1, d_VIzh1, 10*sizeof(float), cudaMemcpyDeviceToHost));
@@ -154,6 +154,7 @@ int main(int argc, char *argv[])
     done= (t >= TOTAL_TME);
   }
 //  PNIzhNN.output_state(os);
+//    if (which == GPU) PNIzhNN.getSpikeNumbersFromGPU();
 //    if (which == GPU) PNIzhNN.getSpikesFromGPU();
 //    PNIzhNN.output_spikes(os, which);
   // if (synwrite) {

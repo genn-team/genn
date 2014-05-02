@@ -705,6 +705,7 @@ if (model.synapseConnType[i] != SPARSE) {
       os << "      j = atomicAdd((unsigned int *) &d_done, 1);" << endl;
       os << "      if (j == " << numOfBlocks - 1 << ") {" << endl;
       for (int j = 0; j < model.neuronGrpN; j++) {
+   	  os << "        d_glbscnt" << model.neuronName[j] << " = 0;" << endl;
 	if (model.neuronDelaySlots[j] != 1) {
 	  os << "        d_spkEvntQuePtr" << model.neuronName[j] << " = (d_spkEvntQuePtr";
 	  os << model.neuronName[j] << " + 1) % " << model.neuronDelaySlots[j] << ";" << endl;
@@ -713,7 +714,6 @@ if (model.synapseConnType[i] != SPARSE) {
 	}
 	else {
 	  os << "        d_glbSpkEvntCnt" << model.neuronName[j] << " = 0;" << endl;
-	  os << "        d_glbscnt" << model.neuronName[j] << " = 0;" << endl;
 	}
       }
       os << "        d_done = 0;" << endl;
@@ -842,6 +842,7 @@ os << "          __threadfence();" << endl;
       os << "      j = atomicAdd((unsigned int *) &d_done, 1);" << endl;
       os << "      if (j == " << numOfBlocks - 1 << ") {" << endl;
       for (int j = 0; j < model.neuronGrpN; j++) {
+   	  os << "        d_glbscnt" << model.neuronName[j] << " = 0;" << endl;
 	if (model.neuronDelaySlots[j] != 1) {
 	  os << "        d_spkEvntQuePtr" << model.neuronName[j] << " = (d_spkEvntQuePtr";
 	  os << model.neuronName[j] << " + 1) % " << model.neuronDelaySlots[j] << ";" << endl;
