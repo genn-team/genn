@@ -67,7 +67,7 @@ void generate_model_runner(int deviceID)
 
   // Generate NVCC compiler flag file
   ofstream sm_os((path + "/" + model->name + "_CODE_" + toString(deviceID) + "/sm_version").c_str());
-  sm_os << " -arch sm_" << deviceProp[deviceID].major << deviceProp[deviceID].minor << endl;
+  sm_os << "-arch sm_" << deviceProp[deviceID].major << deviceProp[deviceID].minor << endl;
   sm_os.close();
 }
 
@@ -258,11 +258,13 @@ void bestDeviceGenerate()
 
 void multiDeviceGenerate()
 {
+
   // this needs to split the network evenly (fancy load balancing algorithm will go here, in future),
   // set the hostID:deviceID of each neuron and synapse group accordingly,
   // perform block size optimisation (if requested) for each hostID:deviceID included in the computation,
   // and finally update the padSum* variables of the NNmodel to reflect the new block sizes
 
+  model->calcPaddedThreadSums();
 }
 
 

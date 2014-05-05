@@ -130,8 +130,8 @@ public:
   vector<int> receivesInputCurrent; //!< flags whether neurons of a population receive explicit input currents
   vector<unsigned int> neuronNeedSt; //!< Whether last spike time needs to be saved for each indivual neuron type
   vector<unsigned int> neuronDelaySlots; //!< The number of slots needed in the synapse delay queues of a neuron group
-  vector<int> neuronHostID; //!< The ID of the cluster node which the neuron groups are computed on
-  vector<int> neuronDeviceID; //!< The ID of the CUDA device which the neuron groups are comnputed on
+  vector<int> nrnHostID; //!< The ID of the cluster node which the neuron groups are computed on
+  vector<int> nrnDevID; //!< The ID of the CUDA device which the neuron groups are comnputed on
   vector<float> nSpkEvntThreshold; //!< Threshold for detecting a spike event for each neuron type.
                                    // NB: This is not directly user controlled, but is decided by, for example,
                                    // the pre-spike threshold set for outgoing synapses
@@ -141,10 +141,10 @@ public:
 
   vector<string> synapseName; //!< Names of synapse groups
   unsigned int synapseGrpN; //!< Number of synapse groups
-  //vector<unsigned int>synapseNo; // !<numnber of synapses in a synapse group
-  vector<unsigned int> maxConn; //!< Padded summed maximum number of connections for a neuron in the neuron groups
+  //vector<unsigned int>synapseNo; // !< numnber of synapses in a synapse group
+  vector<unsigned int> maxConn; //!< maximum number of connections for a neuron in the neuron groups
   vector<unsigned int> sumSynapseTrgN; //!< Summed naumber of target neurons
-  vector<unsigned int> padSumSynapseKrnl; //!< Padded summed thread count for sparse and all-to-all synapse groups
+  vector<unsigned int> padSumSynapseKrnl; //!< Padded summed thread count for sparse or all-to-all synapse groups
   vector<unsigned int> synapseType; //!< Types of synapses
   vector<unsigned int> synapseConnType; //!< Connectivity type of synapses
   vector<unsigned int> synapseGType; //!< Type of specification method for synaptic conductance
@@ -163,8 +163,8 @@ public:
   vector<unsigned int> padSumLearnN; //!< Padded summed neuron numbers of learn group source populations
   vector<unsigned int> lrnSynGrp; //!< Enumeration of the IDs of synapse groups that learn
   vector<unsigned int> synapseDelay; //!< Global synaptic conductance delay for the group (in time steps)
-  vector<int> synapseHostID; //!< The ID of the cluster node which the synapse groups are computed on
-  vector<int> synapseDeviceID; //!< The ID of the CUDA device which the synapse groups are comnputed on
+  vector<int> synHostID; //!< The ID of the cluster node which the synapse groups are computed on
+  vector<int> synDevID; //!< The ID of the CUDA device which the synapse groups are comnputed on
     
 private:
 
@@ -205,7 +205,7 @@ public:
   void setDT(float newDT); //!< Sets the amount of simulated time per step
   void setPrecision(unsigned int); //< Set numerical precision for floating point
   void checkSizes(unsigned int *, unsigned int *, unsigned int *); //< Check if the sizes of the initialized neuron and synapse groups are correct.
-  void resetPaddedSums(); //!< Re-calculates the block-size-padded sum of threads needed to compute the groups of neurons and synapses assigned to each device. Must be called after changing the hostID:deviceID of any group.
+  void calcPaddedThreadSums(); //!< Calculate the blocksize-padded total threads required to compute neuron and synapse groups on each device. Must be called AFTER setting the deviceID of the neuron and synapse groups.
 
   // PUBLIC NEURON FUNCTIONS
   //========================
