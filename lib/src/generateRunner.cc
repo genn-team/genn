@@ -1066,7 +1066,6 @@ void genRunnerGPU(int deviceID, ostream &mos)
 
   if (model->synapseGrpN > 0) { 
     unsigned int synapseGridSz = model->padSumSynapseKrnl[model->synapseGrpN - 1];   
-    os << "//model->padSumSynapseTrgN[model->synapseGrpN - 1] is" << model->padSumSynapseKrnl[model->synapseGrpN - 1] << endl; 
     synapseGridSz = synapseGridSz / synapseBlkSz[deviceID];
     os << "  dim3 sThreads(" << synapseBlkSz[deviceID] << ", 1);" << endl;
     os << "  dim3 sGrid(" << synapseGridSz << ", 1);" << endl;

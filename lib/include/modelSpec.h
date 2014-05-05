@@ -132,11 +132,9 @@ public:
   vector<unsigned int> neuronDelaySlots; //!< The number of slots needed in the synapse delay queues of a neuron group
   vector<int> neuronHostID; //!< The ID of the cluster node which the neuron groups are computed on
   vector<int> neuronDeviceID; //!< The ID of the CUDA device which the neuron groups are comnputed on
-
-  //!< Threshold for detecting a spike event for each neuron type.
-  //NB: This is not directly user controlled, but is decided by, for example,
-  //the pre-spike threshold set for outgoing synapses
-  vector<float> nSpkEvntThreshold;
+  vector<float> nSpkEvntThreshold; //!< Threshold for detecting a spike event for each neuron type.
+                                   // NB: This is not directly user controlled, but is decided by, for example,
+                                   // the pre-spike threshold set for outgoing synapses
 
   // PUBLIC SYNAPSE VARIABLES
   //=========================
@@ -144,10 +142,9 @@ public:
   vector<string> synapseName; //!< Names of synapse groups
   unsigned int synapseGrpN; //!< Number of synapse groups
   //vector<unsigned int>synapseNo; // !<numnber of synapses in a synapse group
-  vector<unsigned int> sumSynapseTrgN; //!< Summed naumber of target neurons
-  vector<unsigned int> padSumSynapseTrgN; //!< "Padded" summed target neuron numbers
   vector<unsigned int> maxConn; //!< Padded summed maximum number of connections for a neuron in the neuron groups
-  vector<unsigned int> padSumSynapseKrnl; //Combination of padSumSynapseTrgN and padSumMaxConn to support both sparse and all-to-all connectivity in a model
+  vector<unsigned int> sumSynapseTrgN; //!< Summed naumber of target neurons
+  vector<unsigned int> padSumSynapseKrnl; //!< Padded summed thread count for sparse and all-to-all synapse groups
   vector<unsigned int> synapseType; //!< Types of synapses
   vector<unsigned int> synapseConnType; //!< Connectivity type of synapses
   vector<unsigned int> synapseGType; //!< Type of specification method for synaptic conductance
