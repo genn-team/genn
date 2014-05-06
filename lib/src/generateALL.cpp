@@ -30,6 +30,7 @@
 #include <direct.h>
 #include <stdlib.h>
 #else
+#include <dirent.h> // for directory removal
 #include <sys/stat.h> // needed for mkdir
 #endif
 
@@ -207,11 +208,27 @@ int blockSizeOptimise(int deviceID)
   pclose(nvccPipe);
 #endif
 
+  // Delete dry-run code
+  char filepath[256];
+  struct dirent *file;
+  const char *dirpath = (path + "/" + model->name + "_CODE_" + toString(deviceID) + "/").c_str();
+  DIR *dir = opendir(dirpath);
+  if (dir != NULL) {
+    while ((file = readdir(dir)) != NULL) {
+      if (strcmp(file->d_name, ".") && strcmp(file->d_name, "..")) {
+	remove(strcat(strcpy(filepath, dirpath), file->d_name));
+      }
+    }
+  }
+  remove(dirpath);
+  closedir(dir);
+
   if (!ptxInfoFound) {
     cerr << "ERROR: did not find any PTX info" << endl;
     cerr << "ensure nvcc is on your $PATH, and fix any NVCC errors listed above" << endl;
     exit(EXIT_FAILURE);
   }
+
   return deviceOccupancy;
 }
 
