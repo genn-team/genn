@@ -36,7 +36,7 @@ void genNeuronKernel(int deviceID, ostream &mos)
   ofstream os;
   isGrpVarNeeded = new short[model->neuronGrpN];
 
-  name = path + toString("/") + model->name + toString("_CODE_") + toString(deviceID) + toString("/neuronKrnl.cc");
+  name = path + toString("/") + model->name + toString("_CODE_CUDA_") + toString(deviceID) + toString("/neuronKrnl.cc");
   os.open(name.c_str());
   
   writeHeader(os);
@@ -405,7 +405,7 @@ void genSynapseKernel(int deviceID, ostream &mos)
   // targets of several input groups are counted multiply
   numOfBlocks = model->padSumSynapseKrnl[model->synapseGrpN - 1] / synapseBlkSz[deviceID];
 
-  name = path + toString("/") + model->name + toString("_CODE_") + toString(deviceID) + toString("/synapseKrnl.cc");
+  name = path + toString("/") + model->name + toString("_CODE_CUDA_") + toString(deviceID) + toString("/synapseKrnl.cc");
   os.open(name.c_str());
   writeHeader(os);  // write header content
   // compiler/include control (include once)

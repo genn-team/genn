@@ -35,39 +35,52 @@
 #endif
 
 
-/*! \brief This function will call the necessary sub-functions to generate the code for simulating a model. */
-void generate_model_runner(int deviceID)
+/*
+! \brief This function will call the necessary sub-functions to generate host-side code for simulating a model.
+*/
+void generate_host_code(ostream &mos)
 {
 
 #ifdef _WIN32
-  _mkdir((path + "/" + model->name + "_CODE_" + toString(deviceID)).c_str());
+  _mkdir((path + "/" + model->name + "_CODE_HOST").c_str());
 #else // UNIX
-  mkdir((path + "/" + model->name + "_CODE_" + toString(deviceID)).c_str(), 0777); 
+  mkdir((path + "/" + model->name + "_CODE_HOST").c_str(), 0777); 
 #endif
 
-  // general shared code for GPU and CPU versions
-  genRunner(deviceID, cerr);
+  // Generate the main host-side code
+  genHostCode(mos);
 
-  // GPU specific code generation
-  genRunnerGPU(deviceID, cerr);
-  
-  // generate neuron kernels
-  genNeuronKernel(deviceID, cerr);
+  // Generate the host-side neuron function
+  genHostNeuron(mos);
 
-  // generate synapse and learning kernels
-  if (model->synapseGrpN > 0) genSynapseKernel(deviceID, cerr);
+  // Generate the host-side synapse and learning functions
+  if (model->synapseGrpN > 0) genHostSynapse(mos);
+}
 
-  // CPU specific code generation
-  genRunnerCPU(deviceID, cerr);
 
-  // Generate the equivalent of neuron kernel
-  genNeuronFunction(deviceID, cerr);
-  
-  // Generate the equivalent of synapse and learning kernel
-  if (model->synapseGrpN > 0) genSynapseFunction(deviceID, cerr);
+/*
+! \brief This function will call the necessary sub-functions to generate CUDA device code for simulating a model.
+*/
+void generate_cuda_code(int deviceID, ostream &mos)
+{
 
-  // Generate NVCC compiler flag file
-  ofstream sm_os((path + "/" + model->name + "_CODE_" + toString(deviceID) + "/sm_version").c_str());
+#ifdef _WIN32
+  _mkdir((path + "/" + model->name + "_CODE_CUDA_" + toString(deviceID)).c_str());
+#else // UNIX
+  mkdir((path + "/" + model->name + "_CODE_CUDA_" + toString(deviceID)).c_str(), 0777); 
+#endif
+
+  // Generate the main CUDA device code
+  genCudaCode(deviceID, mos);
+
+  // generate the CUDA device neuron kernel
+  genCudaNeuron(deviceID, mos);
+
+  // generate CUDA synapse and learning kernels
+  if (model->synapseGrpN > 0) genCudaSynapse(deviceID, mos);
+
+  // Generate CUDA NVCC compiler flag file
+  ofstream sm_os((path + "/" + model->name + "_CODE_CUDA_" + toString(deviceID) + "/sm_version").c_str());
   sm_os << "-arch sm_" << deviceProp[deviceID].major << deviceProp[deviceID].minor << endl;
   sm_os.close();
 }
@@ -94,12 +107,12 @@ int blockSizeOptimise(int deviceID)
   float blockLimit, mainBlockLimit, bestOccupancy;
 
   CHECK_CUDA_ERRORS(cudaSetDevice(deviceID));
-  generate_model_runner(deviceID);
+  generate_cuda_code(deviceID, cerr);
 
   // Run NVCC and pipe output to this process
   command << "nvcc -x cu -cubin -Xptxas=-v -arch=sm_" << deviceProp[deviceID].major;
   command << deviceProp[deviceID].minor << " -DDT -D\"CHECK_CUDA_ERRORS(call){call;}\" ";
-  command << path << "/" << model->name << "_CODE_" << deviceID << "/runner.cc 2>&1 1>/dev/null";
+  command << path << "/" << model->name << "_CODE_CUDA_" << deviceID << "/runner.cc 2>&1 1>/dev/null";
 
 #ifdef _WIN32
   FILE *nvccPipe = _popen(command.str().c_str(), "r");
@@ -211,7 +224,7 @@ int blockSizeOptimise(int deviceID)
   // Delete dry-run code
   char filepath[256];
   struct dirent *file;
-  const char *dirpath = (path + "/" + model->name + "_CODE_" + toString(deviceID) + "/").c_str();
+  const char *dirpath = (path + "/" + model->name + "_CODE_CUDA_" + toString(deviceID) + "/").c_str();
   DIR *dir = opendir(dirpath);
   if (dir != NULL) {
     while ((file = readdir(dir)) != NULL) {
@@ -244,6 +257,8 @@ int blockSizeOptimise(int deviceID)
 
 void bestDeviceGenerate()
 {
+  generate_host_code(cerr);
+
   int best = 0, current, bestDevice;
   for (int deviceID = 0; deviceID < deviceCount; deviceID++) {
     if (optCudaBlockSize) {
@@ -262,7 +277,7 @@ void bestDeviceGenerate()
   if (optCudaBlockSize) cerr << " which supports " << best << " warps of occupancy" << endl;
   else cerr << " with " << best << " bytes of global memory" << endl;
 
-  generate_model_runner(bestDevice);
+  generate_cuda_code(bestDevice, cerr);
 }
 
 
@@ -289,7 +304,7 @@ void multiDeviceGenerate()
   the code for GPU and CPU.
 
   The main function is the entry point for the code generation engine. It 
-  prepares the system and then invokes generate_model_runner to inititate
+  prepares the system and then invokes generate_[host|cuda]_code to inititate
   the different parts of actual code generation.
 */
 
