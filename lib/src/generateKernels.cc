@@ -29,14 +29,13 @@
 unsigned int nt;
 short *isGrpVarNeeded;
 
-void genNeuronKernel(int deviceID, ostream &mos)
+void genCudaNeuron(int deviceID, ostream &mos)
 {
   // write header content
   string name, s, localID;
   ofstream os;
   isGrpVarNeeded = new short[model->neuronGrpN];
-
-  name = path + toString("/") + model->name + toString("_CODE_CUDA_") + toString(deviceID) + toString("/neuronKrnl.cc");
+  name = path + toString("/") + model->name + toString("_CODE_CUDA_") + toString(deviceID) + toString("/neuron.cu");
   os.open(name.c_str());
   
   writeHeader(os);
@@ -395,7 +394,7 @@ void genNeuronKernel(int deviceID, ostream &mos)
 */
 //-------------------------------------------------------------------------
 
-void genSynapseKernel(int deviceID, ostream &mos)
+void genCudaSynapse(int deviceID, ostream &mos)
 {
   string name, s, localID, theLG;
   unsigned int numOfBlocks,trgN;
@@ -404,8 +403,7 @@ void genSynapseKernel(int deviceID, ostream &mos)
   // count how many neuron blocks to use: one thread for each synapse target
   // targets of several input groups are counted multiply
   numOfBlocks = model->padSumSynapseKrnl[model->synapseGrpN - 1] / synapseBlkSz[deviceID];
-
-  name = path + toString("/") + model->name + toString("_CODE_CUDA_") + toString(deviceID) + toString("/synapseKrnl.cc");
+  name = path + toString("/") + model->name + toString("_CODE_CUDA_") + toString(deviceID) + toString("/synapse.cu");
   os.open(name.c_str());
   writeHeader(os);  // write header content
   // compiler/include control (include once)
