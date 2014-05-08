@@ -111,9 +111,9 @@ int blockSizeOptimise(int deviceID)
   generate_cuda_code(deviceID, cerr);
 
   // Run NVCC and pipe output to this process
-  command << "nvcc -x cu -cubin -Xptxas=-v -arch=sm_" << deviceProp[deviceID].major;
-  command << deviceProp[deviceID].minor << " -DDT -D\"CHECK_CUDA_ERRORS(call){call;}\" ";
-  command << path << "/" << model->name << "_CODE_CUDA_" << deviceID << "/runner.cc 2>&1 1>/dev/null";
+  command << "nvcc -cubin -Xptxas=-v -I$GeNNPATH/lib/include -arch=sm_";
+  command << deviceProp[deviceID].major << deviceProp[deviceID].minor << " ";
+  command << path << "/" << model->name << "_CODE_CUDA_" << deviceID << "/control.cu 2>&1 1>/dev/null";
 
 #ifdef _WIN32
   FILE *nvccPipe = _popen(command.str().c_str(), "r");
@@ -223,19 +223,20 @@ int blockSizeOptimise(int deviceID)
 #endif
 
   // Delete dry-run code
-  char filepath[256];
-  struct dirent *file;
-  const char *dirpath = (path + "/" + model->name + "_CODE_CUDA_" + toString(deviceID) + "/").c_str();
-  DIR *dir = opendir(dirpath);
+  char temp[256];
+  string codeRoot = path + "/" + model->name + "_CODE_CUDA_" + toString(deviceID) + "/";
+  DIR *dir = opendir(codeRoot.c_str());
+  struct dirent *codeFile;
   if (dir != NULL) {
-    while ((file = readdir(dir)) != NULL) {
-      if (strcmp(file->d_name, ".") && strcmp(file->d_name, "..")) {
-	remove(strcat(strcpy(filepath, dirpath), file->d_name));
+    while ((codeFile = readdir(dir)) != NULL) {
+      if (strcmp(codeFile->d_name, ".") && strcmp(codeFile->d_name, "..")) {
+	strcat(strcpy(temp, codeRoot.c_str()), codeFile->d_name);
+	remove(temp);
       }
     }
   }
-  remove(dirpath);
   closedir(dir);
+  remove(codeRoot.c_str());
 
   if (!ptxInfoFound) {
     cerr << "ERROR: did not find any PTX info" << endl;

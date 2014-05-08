@@ -400,7 +400,7 @@ void prepareStandardModels()
   n.dpNames.clear();
   n.simCode= tS("   float Imem;\n\
     unsigned int mt;\n\
-    float mdt= DT/25.0f;\n\
+    float mdt= $(DT)/25.0f;\n\
     for (mt=0; mt < 25; mt++) {\n\
       Imem= -($(m)*$(m)*$(m)*$(h)*$(gNa)*($(V)-($(ENa)))+\n\
               $(n)*$(n)*$(n)*$(n)*$(gK)*($(V)-($(EK)))+\n\
@@ -439,9 +439,9 @@ void prepareStandardModels()
       $(V)=$(c);\n\
 		  $(U)+=$(d);\n\
     } \n\
-    $(V)+=0.5f*(0.04f*$(V)*$(V)+5*$(V)+140-$(U)+$(Isyn))*DT; //at two times for numerical stability\n\
-    $(V)+=0.5f*(0.04f*$(V)*$(V)+5*$(V)+140-$(U)+$(Isyn))*DT;\n\
-    $(U)+=$(a)*($(b)*$(V)-$(U))*DT;\n\
+    $(V)+=0.5f*(0.04f*$(V)*$(V)+5*$(V)+140-$(U)+$(Isyn))*$(DT); //at two times for numerical stability\n\
+    $(V)+=0.5f*(0.04f*$(V)*$(V)+5*$(V)+140-$(U)+$(Isyn))*$(DT);\n\
+    $(U)+=$(a)*($(b)*$(V)-$(U))*$(DT);\n\
    // if ($(V) > 30){   //keep this only for visualisation -- not really necessaary otherwise \n\
     //  $(V)=30; \n\
    //}\n\
@@ -476,9 +476,9 @@ void prepareStandardModels()
       $(V)=$(c);\n\
 		  $(U)+=$(d);\n\
     } \n\
-    $(V)+=0.5f*(0.04f*$(V)*$(V)+5*$(V)+140-$(U)+$(Isyn))*DT; //at two times for numerical stability\n\
-    $(V)+=0.5f*(0.04f*$(V)*$(V)+5*$(V)+140-$(U)+$(Isyn))*DT;\n\
-    $(U)+=$(a)*($(b)*$(V)-$(U))*DT;\n\
+    $(V)+=0.5f*(0.04f*$(V)*$(V)+5*$(V)+140-$(U)+$(Isyn))*$(DT); //at two times for numerical stability\n\
+    $(V)+=0.5f*(0.04f*$(V)*$(V)+5*$(V)+140-$(U)+$(Isyn))*$(DT);\n\
+    $(U)+=$(a)*($(b)*$(V)-$(U))*$(DT);\n\
     //if ($(V) > 30){      //keep this only for visualisation -- not really necessaary otherwise \n\
     //  $(V)=30; \n\
     //}\n\

@@ -340,7 +340,7 @@ void genHostCode(ostream &mos)
       os << "    sT" <<  model->neuronName[i] << "[i] = -10000.0;" << endl;
     }
     os << "  }" << endl;
-    if ((model->neuronType[i] == IZHIKEVICH) && (DT != 1)) {
+    if ((model->neuronType[i] == IZHIKEVICH) && (model->dt != 1)) {
       os << "  fprintf(stderr,\"WARNING: You use a time step different than 1 ms. Izhikevich model behaviour may not be robust.\\n\"); "<< endl;
     }
   }

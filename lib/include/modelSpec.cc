@@ -22,7 +22,7 @@
 // class NNmodel for specifying a neuronal network model
 NNmodel::NNmodel() 
 {
-  dt = 1.0f;
+  dt = DT;
   valid = 0;
   neuronGrpN = 0;
   synapseGrpN = 0;
@@ -62,7 +62,7 @@ void NNmodel::initDerivedNeuronPara(unsigned int i)
   vector<float> tmpP;
   int numDpNames = nModels[neuronType[i]].dpNames.size();
   for (int j=0; j < nModels[neuronType[i]].dpNames.size(); ++j) {
-    float retVal = nModels[neuronType[i]].dps->calculateDerivedParameter(j, neuronPara[i], DT);
+    float retVal = nModels[neuronType[i]].dps->calculateDerivedParameter(j, neuronPara[i], dt);
     tmpP.push_back(retVal);
   }
   /*
@@ -101,7 +101,7 @@ void NNmodel::initDerivedPostSynapsePara(unsigned int i)
 {
   vector<float> tmpP;
   for (int j=0; j < postSynModels[postSynapseType[i]].dpNames.size(); ++j) {
-    float retVal = postSynModels[postSynapseType[i]].dps->calculateDerivedParameter(j, postSynapsePara[i], DT);
+    float retVal = postSynModels[postSynapseType[i]].dps->calculateDerivedParameter(j, postSynapsePara[i], dt);
     tmpP.push_back(retVal);
   }	
   dpsp.push_back(tmpP);
@@ -119,7 +119,7 @@ void NNmodel::initDerivedSynapsePara(unsigned int i)
 {
   vector<float> tmpP;
   if (synapseType[i] == LEARN1SYNAPSE) {
-    tmpP.push_back(expf(-DT / synapsePara[i][2]));               // kdecay
+    tmpP.push_back(expf(-dt / synapsePara[i][2]));               // kdecay
     tmpP.push_back((1.0f / synapsePara[i][7] + 1.0f / synapsePara[i][4])
 		   * synapsePara[i][3] / (2.0f / synapsePara[i][4]));      // lim0
     tmpP.push_back(-(1.0f / synapsePara[i][6] + 1.0f / synapsePara[i][4])
@@ -150,7 +150,7 @@ void NNmodel::initDerivedSynapsePara(unsigned int i)
   }
   
   if ((synapseType[i] == NSYNAPSE) || (synapseType[i] == NGRADSYNAPSE)) {
-    tmpP.push_back(expf(-DT / synapsePara[i][2]));              // kdecay
+    tmpP.push_back(expf(-dt / synapsePara[i][2]));              // kdecay
   }
   dsp.push_back(tmpP);
   // figure out at what threshold we need to detect spiking events

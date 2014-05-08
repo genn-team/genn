@@ -149,6 +149,7 @@ void genHostNeuron(ostream &mos)
     }
     os << "    // calculate membrane potential" << endl;
     string code = nModels[nt].simCode;
+    substitute(code, tS("$(DT)"), tS(model->dt));
     for (int k = 0, l = nModels[nt].varNames.size(); k < l; k++) {
       substitute(code, tS("$(") + nModels[nt].varNames[k] + tS(")"),
 		 tS("l") + nModels[nt].varNames[k]);
@@ -535,7 +536,7 @@ void genHostSynapse(ostream &mos)
       os << "j]] > " << Epre << ") {" << endl;
       os << "        dt = t - sT" << model->neuronName[src] << "[n]";
       if (model->neuronDelaySlots[src] != 1) {
-	os << " + " << (DT * model->synapseDelay[k]);
+	os << " + " << (model->dt * model->synapseDelay[k]);
       }
       os << " - " << SAVEP(model->synapsePara[k][11]) << ";" << endl;
       os << "        if (dt > " << model->dsp[k][1] << ") {" << endl;

@@ -93,7 +93,7 @@ void genCudaNeuron(int deviceID, ostream &mos)
   }
   
   // kernel header
-  os << "__global__ void calcNeurons(" << endl;
+  os << "__global__ void calcNeuronsCuda" << deviceID << "(" << endl;
 
   for (int i= 0; i < model->neuronGrpN; i++) {
     nt = model->neuronType[i];
@@ -240,6 +240,7 @@ void genCudaNeuron(int deviceID, ostream &mos)
     os << "      // calculate membrane potential" << endl;
     //new way of doing it
     string code = nModels[nt].simCode;
+    substitute(code, tS("$(DT)"), tS(model->dt));
     for (int k = 0, l = nModels[nt].varNames.size(); k < l; k++) {
       substitute(code, tS("$(") + nModels[nt].varNames[k] + tS(")"), tS("l")+ nModels[nt].varNames[k]);
     }
@@ -422,7 +423,7 @@ void genCudaSynapse(int deviceID, ostream &mos)
   
   // Kernel header
   unsigned int src;
-  os << "__global__ void calcSynapses(" << endl;
+  os << "__global__ void calcSynapsesCuda" << deviceID << "(" << endl;
   for (int i = 0; i < model->synapseGrpN; i++) {    
     if (model->synapseGType[i] == INDIVIDUALG) {
       os << " " << model->ftype << " * d_gp" << model->synapseName[i] << "," << endl;	
@@ -705,7 +706,7 @@ void genCudaSynapse(int deviceID, ostream &mos)
     numOfBlocks = model->padSumLearnN[model->lrnGroups - 1] / learnBlkSz[deviceID];
 
     // Kernel header
-    os << "__global__ void learnSynapsesPost(" << endl;
+    os << "__global__ void learnSynapsesPostCuda" << deviceID << "(" << endl;
     for (int i = 0; i < model->synapseGrpN; i++) {
       if (model->synapseGType[i] == (INDIVIDUALG )) {
 	os << "  " << model->ftype << " *d_gp" << model->synapseName[i] << "," << endl;	
@@ -780,7 +781,7 @@ void genCudaSynapse(int deviceID, ostream &mos)
       os << model->neuronN[trg] << " + shSpkEvnt[j]];" << endl;
       os << "            " << model->ftype << " dt = t - d_sT" << model->neuronName[src] << "[" << localID << "]";
       if (model->neuronDelaySlots[src] != 1) {
-	os << " + " << (DT * model->synapseDelay[k]);
+	os << " + " << (model->dt * model->synapseDelay[k]);
       }
       os << " - " << SAVEP(model->synapsePara[k][11]) << ";" << endl;
       os << "            if (dt > " << model->dsp[k][1] << ") {" << endl;

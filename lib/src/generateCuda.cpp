@@ -77,6 +77,7 @@ void genCudaCode(int deviceID, ostream &mos)
 
   os << "#include \"utils.h\"" << endl;
   os << "#include \"cuda" << deviceID << ".hpp\"" << endl;
+  os << "#include \"../" << model->name << "_CODE_HOST/host.hpp\"" << endl;
   os << "#include \"neuron.cu\"" << endl;
   if (model->synapseGrpN>0) os << "#include \"synapse.cu\"" << endl;
   os << "#ifndef RAND" << endl;
@@ -440,7 +441,7 @@ void genCudaCode(int deviceID, ostream &mos)
       else {
 	os << model->neuronN[i] * theSize(nModels[type].varTypes[j]);
       }
-      os << "), cudaMemcpyHostToDevice));" << endl;
+      os << ", cudaMemcpyHostToDevice));" << endl;
     }
     if (model->neuronNeedSt[i]) {
       os << "  CHECK_CUDA_ERRORS(cudaGetSymbolAddress(&devPtr, d_sT" << model->neuronName[i] << "));" << endl;
@@ -523,7 +524,7 @@ void genCudaCode(int deviceID, ostream &mos)
       else {
 	os << model->neuronN[i] * theSize(nModels[type].varTypes[j]);
       }
-      os << "), cudaMemcpyDeviceToHost));" << endl;
+      os << ", cudaMemcpyDeviceToHost));" << endl;
     }
     if (model->neuronNeedSt[i]) {
       os << "  CHECK_CUDA_ERRORS(cudaGetSymbolAddress(&devPtr, d_sT" << model->neuronName[i] << "));" << endl;
@@ -686,7 +687,7 @@ void genCudaCode(int deviceID, ostream &mos)
     }
     for (int i = 0; i < model->neuronGrpN; i++) {
       type = model->neuronType[i];
-      os << " d_" << nModels[type].varNames[0] << model->neuronName[i]; // this is supposed to be Vm
+      os << "d_" << nModels[type].varNames[0] << model->neuronName[i]; // this is supposed to be Vm
       if (model->needSt || i < (model->neuronGrpN - 1)) {
 	os << ", ";
       }    		
@@ -701,7 +702,7 @@ void genCudaCode(int deviceID, ostream &mos)
       os << "    learnSynapsesPostCuda" << deviceID << " <<< lGridCuda" << deviceID << ", lThreadsCuda" << deviceID << " >>> (";      
       for (int i = 0; i < model->synapseGrpN; i++) {
 	if ((model->synapseGType[i] == INDIVIDUALG) || (model->synapseGType[i] == INDIVIDUALID)) {
-	  os << " d_gp" << model->synapseName[i] << ", ";
+	  os << "d_gp" << model->synapseName[i] << ", ";
 	}
 	if (model->synapseType[i] == LEARN1SYNAPSE) {
 	  os << "d_grawp"  << model->synapseName[i] << ", ";
@@ -709,7 +710,7 @@ void genCudaCode(int deviceID, ostream &mos)
       }
       for (int i = 0; i < model->neuronGrpN; i++) {
 	type = model->neuronType[i];
-	os << " d_" << nModels[type].varNames[0] << model->neuronName[i] << ", "; // this is supposed to be Vm
+	os << "d_" << nModels[type].varNames[0] << model->neuronName[i] << ", "; // this is supposed to be Vm
       }
       os << "t);" << endl;
     }
@@ -726,13 +727,13 @@ void genCudaCode(int deviceID, ostream &mos)
       os << "d_inputI" << model->neuronName[i] << ", ";
     }
     for (int j = 0; j < nModels[type].varNames.size(); j++) {
-      os << " d_" << nModels[type].varNames[j] << model->neuronName[i]<< ", ";
+      os << "d_" << nModels[type].varNames[j] << model->neuronName[i]<< ", ";
     }
   }
   for (int i = 0; i < model->postSynapseType.size(); i++) {
     type = model->postSynapseType[i];
     for (int j = 0; j < postSynModels[type].varNames.size(); j++) {
-      os << " d_" << postSynModels[type].varNames[j];
+      os << "d_" << postSynModels[type].varNames[j];
       os << model->synapseName[i] << ", ";
     }
   }
