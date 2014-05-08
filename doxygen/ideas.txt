@@ -34,9 +34,7 @@
 - Is the macro for the number of predefined neuron types (NTYPENO in
   modelSpec.h) really necessary?
 
-- do something meaningful for sparse connectivity(!)
-
-- #define SPK_THRESH 0.0f (in modelSpec.h) is this really the way to do it? User
+- \#define SPK_THRESH 0.0f (in modelSpec.h) is this really the way to do it? User
    control? global settings somewhere?
 
 - in modelSpec.cc: void NNmodel::initDerivedNeuronPara(unsigned int i)
@@ -61,5 +59,7 @@ lV * exp(-(DT) / 0.01) - 40.0 * 0.001 + 40.0 * 0.001 * exp(-(DT) / 0.01);
 \endcode
 Here, DT is known at compile time, and hence \code{.cpp} exp(-(DT) / 0.01) \endcode could be a dependent parameter and fully explicit, as could be the entire \code{.cc} - 40.0 * 0.001 + 40.0 * 0.001 * exp(-(DT) / 0.01)\endcode.
 We need to make an additional optimising step that identifies dependent parameters automatically. This could be a part of the genn device.py in the interface. Direct users of GeNN are responsible for their own designs.
+
+-Make use of CURAND possible for Poisson neurons
 */
 //----------------------------------------------------------------------------
