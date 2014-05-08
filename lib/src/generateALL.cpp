@@ -22,9 +22,10 @@
 #include "global.h"
 #include "utils.h"
 #include "currentModel.cc"
-#include "generateKernels.cc"
-#include "generateRunner.cc"
+#include "generateHost.cpp"
 #include "generateCPU.cc"
+#include "generateCuda.cpp"
+#include "generateKernels.cc"
 
 #ifdef _WIN32
 #include <direct.h>

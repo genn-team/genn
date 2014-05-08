@@ -24,10 +24,10 @@
   \brief A function that generates host-side code.
 
   In this function host-side functions and other code are generated,
-  including: Global host variables, "allocatedMem()" function for
-  allocating memories, "freeMem" function for freeing the allocated
-  memories, "initialize" for initializing host variables, "gFunc" and
-  "initGRaw()" for use with plastic synapses if such synapses exist in
+  including: Global host variables, "allocatedMemHost()" function for
+  allocating memories, "freeMemHost" function for freeing the allocated
+  memories, "initializeHost" for initializing host variables, "gFuncHost" and
+  "initGRawHost()" for use with plastic synapses if such synapses exist in
   the model.  
 */
 //--------------------------------------------------------------------------
@@ -37,8 +37,7 @@ void genHostCode(ostream &mos)
   mos << "entering genHostCode" << endl;
   string cppFile, hppFile;
   ofstream os, osh;
-  unsigned int type;
-
+  unsigned int type, tmp, size, mem = 0;
 
   //------------------------
   // open and setup host.hpp
@@ -87,8 +86,8 @@ void genHostCode(ostream &mos)
   // host neuron variables
 
   for (int i = 0; i < model->neuronGrpN; i++) {
+    osh << "// neuron variables" << endl;
     type = model->neuronType[i];
-    osh << "// host " << model->neuronName[i] << " neuron group variables" << endl;
     osh << "unsigned int glbscnt" << model->neuronName[i] << ";" << endl;
     osh << "unsigned int *glbSpk" << model->neuronName[i] << ";" << endl;
     if (model->neuronDelaySlots[i] == 1) {
@@ -117,8 +116,8 @@ void genHostCode(ostream &mos)
   // host synase variables
 
   for (int i = 0; i < model->postSynapseType.size(); i++) {
+    osh << "// synapse variables" << endl;
     type = model->postSynapseType[i];
-    osh << "// host " << model->synapseName[i] << " synapse group variables" << endl;
     for (int j = 0; j < postSynModels[type].varNames.size(); j++) {
       osh << postSynModels[type].varTypes[j] << " *";
       osh << postSynModels[type].varNames[j] << model->synapseName[i] << ";" << endl;
@@ -154,15 +153,21 @@ void genHostCode(ostream &mos)
   }
   osh << endl;
 
+  osh << "// host functions" << endl;
 
-  //---------------------------------------------
-  // Code for setting the host's global variables
+
+  //----------------------------------------------------
+  // host variable allocation code and memory estimation
   
+  osh << "void allocateMemHost();" << endl;
   os << "void allocateMemHost()" << endl;
   os << "{" << endl;
+
   os << "  // neuron variables" << endl;
   for (int i = 0; i < model->neuronGrpN; i++) {
     type = model->neuronType[i];
+
+    // allocate host neuron variables
     os << "  glbSpk" << model->neuronName[i] << " = new unsigned int[" << model->neuronN[i] << "];" << endl;
     if (model->neuronDelaySlots[i] == 1) {
       os << "  glbSpkEvnt" << model->neuronName[i] << " = new unsigned int[" << model->neuronN[i] << "];" << endl;
@@ -190,6 +195,8 @@ void genHostCode(ostream &mos)
     }   
     os << endl; 
   }
+
+  // allocate host synapse variables
   os << "  // synapse variables" << endl;
   for (int i = 0; i < model->synapseGrpN; i++) {
     if (model->synapseGType[i] == INDIVIDUALG) {
@@ -213,8 +220,8 @@ void genHostCode(ostream &mos)
     // note, if GLOBALG we put the value at compile time
     if (model->synapseGType[i] == INDIVIDUALID) {
       os << "  gp" << model->synapseName[i] << " = new unsigned int[";
-      unsigned long int tmp = model->neuronN[model->synapseSource[i]] * model->neuronN[model->synapseTarget[i]];
-      unsigned long int size = tmp >> logUIntSz;
+      tmp = model->neuronN[model->synapseSource[i]] * model->neuronN[model->synapseTarget[i]];
+      size = tmp >> logUIntSz;
       if (tmp > (size << logUIntSz)) size++;
       os << size << "]; // synaptic connectivity of group " << model->synapseName[i] << endl;
     }
@@ -228,11 +235,26 @@ void genHostCode(ostream &mos)
   os << "}" << endl;
   os << endl;
 
+  // memory usage estimation needs to be re-added!!!
+  /*
+  mos << "Global memory required for core model: " << mem/1e6 << " MB for all-to-all connectivity" << endl;
+  mos << deviceProp[deviceID].totalGlobalMem << " this device: " << deviceID << endl;  
+  if (0.5 * deviceProp[deviceID].totalGlobalMem < mem) {
+    mos << "memory required for core model (" << mem/1e6;
+    mos << "MB) is more than 50% of global memory on the chosen device";
+    mos << "(" << deviceProp[deviceID].totalGlobalMem/1e6 << "MB)." << endl;
+    mos << "Experience shows that this is UNLIKELY TO WORK ... " << endl;
+  */
+  }
+
 
   //--------------------------------------------------
   // allocating conductance arrays for sparse matrices
 
-  os << "void allocateSparseArray(Conductance *C, unsigned int preN, bool isGlobalG) {" << endl;
+  osh << "void allocateSparseArrayHost(Conductance *C, unsigned int preN, bool isGlobalG);" << endl;
+  os << "void allocateSparseArrayHost(Conductance *C, unsigned int preN, bool isGlobalG)" << endl;
+  os << "{" << endl;
+
   os << "  if (isGlobalG == false) C->gp = new " << model->ftype << "[C->connN];" << endl; // synaptic conductances of group " << model->synapseName[i];
   //mem += gsize * theSize(model->ftype); //TODO: But we need to find a way
   os << "  C->gIndInG = new unsigned int[preN + 1];" << endl; // model->neuronN[model->synapseSource[i]] index where the next neuron starts in the synaptic conductances of group " << model->synapseName[i];
@@ -245,7 +267,10 @@ void genHostCode(ostream &mos)
   //--------------------------------------------------
   // allocating conductance arrays for sparse matrices
 
-  os << "void allocateAllSparseArraysHost() {" << endl;
+  osh << "void allocateAllSparseArraysHost();" << endl;
+  os << "void allocateAllSparseArraysHost()" << endl;
+  os << "{" << endl;
+
   for (int i = 0; i < model->synapseGrpN; i++) {
     if (model->synapseConnType[i] == SPARSE) {
       os << "  allocateSparseArray(&g" << model->synapseName[i] << ", ";
@@ -265,9 +290,11 @@ void genHostCode(ostream &mos)
   //--------------------------
   // initialize host variables
 
-  // neuron variables
+  osh << "void initializeHost();" << endl;
   os << "void initializeHost()" << endl;
   os << "{" << endl;
+
+  // neuron variables
   os << "  srand((unsigned int) time(NULL));" << endl;
   //os << "srand(101);" << endl;
   os << endl;
@@ -322,7 +349,7 @@ void genHostCode(ostream &mos)
   }
   os << endl;
 
-  // postsynapse variables
+  // synapse variables
   os << "  // postsynapse variables" << endl;
   for (int i = 0; i < model->postSynapseType.size(); i++){
     type = model->postSynapseType[i];
@@ -336,59 +363,16 @@ void genHostCode(ostream &mos)
   os << "}" << endl;
   os << endl;
 
-  // learning helper functions
-  if (model->lrnGroups > 0) {
-    for (int i = 0; i < model->synapseGrpN; i++) {
-      if (model->synapseType[i] == LEARN1SYNAPSE) {
-	os << model->ftype << " gFunc" << model->synapseName[i] << "(" << model->ftype << " graw)" << endl;
-	os << "{" << endl;
-	os << "  return " << SAVEP(model->synapsePara[i][8]/2.0) << " * (tanh(";
-	os << SAVEP(model->synapsePara[i][10]) << " * (graw - ";
-	os << SAVEP(model->synapsePara[i][9]) << ")) + 1.0);" << endl;
-	os << "}" << endl;
-	os << endl;
-	os << model->ftype << " invGFunc" << model->synapseName[i] << "(" << model->ftype << " g)" << endl;
-	os << "{" << endl;
-	os << model->ftype << " tmp = g / " << SAVEP(model->synapsePara[i][8]*2.0) << " - 1.0;" << endl;
-	os << "return 0.5 * log((1.0 + tmp) / (1.0 - tmp)) /" << SAVEP(model->synapsePara[i][10]);
-	os << " + " << SAVEP(model->synapsePara[i][9]) << ";" << endl;
-	os << "}" << endl;
-	os << endl;
-      }
-    }
-    os << "void initGRaw()" << endl;
-    os << "{" << endl;
-    for (int i = 0; i < model->synapseGrpN; i++) {
-      if (model->synapseType[i] == LEARN1SYNAPSE) {
-	os << "  for (int i = 0; i < ";
-	os << model->neuronN[model->synapseSource[i]] * model->neuronN[model->synapseTarget[i]] << "; i++) {" << endl;
-	os << "    grawp"  << model->synapseName[i] << "[i] = invGFunc" << model->synapseName[i];
-	if (model->synapseGType[i] != GLOBALG) {
-	  if (model->synapseConnType[i] == SPARSE) {
-	    os << "(g" << model->synapseName[i] << ".gp[i]);" << endl;
-	  }
-	  else {
-	    os << "(gp" << model->synapseName[i] << "[i]);" << endl;
-	  }
-	  os << "  }" << endl;
-      	}
-	else { // can be optimised: no need to create an array, a constant would be enough (TODO)
-	  os << "(" << model->g0[i] << ");" << endl;
-	}
-      }
-    }
-    os << "}" << endl;
-    os << endl;
-  }
 
+  //---------------------------------------
+  // free dynamically allocated host memory
 
-  //---------------------------------
-  // freeing global memory structures
-
+  osh << "void freeMemHost();" << endl;
   os << "void freeMemHost()" << endl;
   os << "{" << endl;
+
   for (int i = 0; i < model->neuronGrpN; i++) {
-    nt = model->neuronType[i];
+    type = model->neuronType[i];
     os << "  delete[] glbSpk" << model->neuronName[i] << ";" << endl;
     if (model->neuronDelaySlots[i] == 1) {
       os << "  delete[] glbSpkEvnt" << model->neuronName[i] << ";" << endl;
@@ -400,8 +384,8 @@ void genHostCode(ostream &mos)
     for (int j = 0; j < model->inSyn[i].size(); j++) {
       os << "  delete[] inSyn" << model->neuronName[i] << j << ";" << endl;
     } 
-    for (int j = 0; j < nModels[nt].varNames.size(); j++) {
-      os << "  delete[] " << nModels[nt].varNames[j] << model->neuronName[i] << ";" << endl;
+    for (int j = 0; j < nModels[type].varNames.size(); j++) {
+      os << "  delete[] " << nModels[type].varNames[j] << model->neuronName[i] << ";" << endl;
     }
     if (model->neuronNeedSt[i]) {
       os << "  delete[] sT" << model->neuronName[i] << ";" << endl;
@@ -429,25 +413,84 @@ void genHostCode(ostream &mos)
   os << endl;
 
 
+  //--------------------------
+  // learning helper functions
+
+  if (model->lrnGroups > 0) {
+    for (int i = 0; i < model->synapseGrpN; i++) {
+      if (model->synapseType[i] == LEARN1SYNAPSE) {
+
+	osh << model->ftype << " gFunc" << model->synapseName[i] << "Host(" << model->ftype << " graw);" << endl;
+	os << model->ftype << " gFunc" << model->synapseName[i] << "Host(" << model->ftype << " graw)" << endl;
+	os << "{" << endl;
+	os << "  return " << SAVEP(model->synapsePara[i][8]/2.0) << " * (tanh(";
+	os << SAVEP(model->synapsePara[i][10]) << " * (graw - ";
+	os << SAVEP(model->synapsePara[i][9]) << ")) + 1.0);" << endl;
+	os << "}" << endl;
+	os << endl;
+
+	osh << model->ftype << " invGFunc" << model->synapseName[i] << "Host(" << model->ftype << " g);" << endl;
+	os << model->ftype << " invGFunc" << model->synapseName[i] << "Host(" << model->ftype << " g)" << endl;
+	os << "{" << endl;
+	os << model->ftype << " tmp = g / " << SAVEP(model->synapsePara[i][8]*2.0) << " - 1.0;" << endl;
+	os << "return 0.5 * log((1.0 + tmp) / (1.0 - tmp)) /" << SAVEP(model->synapsePara[i][10]);
+	os << " + " << SAVEP(model->synapsePara[i][9]) << ";" << endl;
+	os << "}" << endl;
+	os << endl;
+      }
+    }
+
+    osh << "void initGRawHost();" << endl;
+    os << "void initGRawHost()" << endl;
+    os << "{" << endl;
+    for (int i = 0; i < model->synapseGrpN; i++) {
+      if (model->synapseType[i] == LEARN1SYNAPSE) {
+	os << "  for (int i = 0; i < ";
+	os << model->neuronN[model->synapseSource[i]] * model->neuronN[model->synapseTarget[i]] << "; i++) {" << endl;
+	os << "    grawp"  << model->synapseName[i] << "[i] = invGFunc" << model->synapseName[i];
+	if (model->synapseGType[i] != GLOBALG) {
+	  if (model->synapseConnType[i] == SPARSE) {
+	    os << "(g" << model->synapseName[i] << ".gp[i]);" << endl;
+	  }
+	  else {
+	    os << "(gp" << model->synapseName[i] << "[i]);" << endl;
+	  }
+	  os << "  }" << endl;
+      	}
+	else { // can be optimised: no need to create an array, a constant would be enough (TODO)
+	  os << "(" << model->g0[i] << ");" << endl;
+	}
+      }
+    }
+    os << "}" << endl;
+    os << endl;
+  }
+
+
   // ----------------------------------
   // the actual time stepping procedure
 
+  osh << "void stepTimeHost(";
   os << "void stepTimeHost(";
   for (int i = 0; i < model->neuronGrpN; i++) {
     if (model->neuronType[i] == POISSONNEURON) {
+      osh << "unsigned int *rates" << model->neuronName[i] << ", ";
       os << "unsigned int *rates" << model->neuronName[i];
       os << ", // pointer to the rates of the Poisson neurons in grp " << model->neuronName[i] << endl;
+      osh << "unsigned int offset" << model->neuronName[i] << ", ";
       os << "unsigned int offset" << model->neuronName[i];
       os << ", // offset on pointer to the rates in grp " << model->neuronName[i] << endl;
     }
     if (model->receivesInputCurrent[i] >= 2) {
+      osh << "float *inputI" << model->neuronName[i] << ", ";
       os << "float *inputI" << model->neuronName[i];
-      os << ", // pointer to the explicit input to neurons in grp ";
-      os << model->neuronName[i] << "," << endl;
+      os << ", // pointer to the explicit input to neurons in grp " << model->neuronName[i] << ", " << endl;
     }
   }
+  osh << model->ftype << " t);" << endl;
   os << model->ftype << " t)" << endl;
   os << "{" << endl;
+
   if (model->synapseGrpN>0) {
     os << "  if (t > 0.0) {" << endl; 
     os << "    calcSynapsesHost(t);" << endl;

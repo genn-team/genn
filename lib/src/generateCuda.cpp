@@ -26,9 +26,9 @@
 
   The function generates functions that will spawn kernel grids onto the GPU
   (but not the actual kernel code which is generated in "genNeuronKernel()"
-  and "genSynpaseKernel()"). Generated functions include "copyGToDevice()",
-  "copyGFromDevice()", "copyStateToDevice()", "copyStateFromDevice()",
-  "copySpikesFromDevice()", "copySpikeNFromDevice()" and "stepTimeGPU()". The 
+  and "genSynpaseKernel()"). Generated functions include "copyGToCuda#()",
+  "copyGFromCuda#()", "copyStateToCuda#()", "copyStateFromCuda#()",
+  "copySpikesFromCuda#()", "copySpikeNFromCuda#()" and "stepTimeCuda#()". The 
   last mentioned function is the function that will initialize the execution
   on the GPU in the generated simulation engine. All other generated functions
   are "convenience functions" to handle data transfer from and to the GPU.
@@ -40,8 +40,7 @@ void genCudaCode(int deviceID, ostream &mos)
   mos << "entering genCudaCode" << endl;
   string cppFile, hppFile;
   ofstream os, osh;
-  unsigned int type, size, trgN, mem = 0;
-
+  unsigned int type, tmp, size;
 
   //----------------------------------
   // open and setup cuda[deviceID].hpp
@@ -88,20 +87,20 @@ void genCudaCode(int deviceID, ostream &mos)
   // device neuron variables
 
   for (int i = 0; i < model->neuronGrpN; i++) {
+    osh << "// neuron variables" << endl;
     type = model->neuronType[i];
-    osh << "// device " << model->neuronName[i] << " neuron group variables" << endl;
     for (int j = 0; j < nModels[type].varNames.size(); j++) {
       osh << nModels[type].varTypes[j] << " *" << "d_" << nModels[type].varNames[j] << model->neuronName[i] << ";" << endl;
     }
   }
-
+  osh << endl;
 
   //-------------------------
   // device synapse variables
 
   for (int i = 0; i< model->postSynapseType.size(); i++){
+    osh << "// synapse variables" << endl;
     type = model->postSynapseType[i];
-    osh << "// device " << model->neuronName[i] << " synapse group variables" << endl;
     for (int j = 0; j < postSynModels[type].varNames.size(); j++) {
       osh << postSynModels[type].varTypes[j] << " *d_" << postSynModels[type].varNames[j] << model->synapseName[i] << ";" << endl;
       // should work at the moment but if we make postsynapse vectors independent of synapses this may change
@@ -120,7 +119,6 @@ void genCudaCode(int deviceID, ostream &mos)
     if (model->synapseConnType[i] == SPARSE) {
       osh << "unsigned int *d_gp" << model->synapseName[i] << "_indInG;" << endl;
       osh << "unsigned int *d_gp" << model->synapseName[i] << "_ind;" << endl;
-      trgN = model->neuronN[model->synapseTarget[i]];
     } 
   }
   osh << endl;
@@ -129,6 +127,7 @@ void genCudaCode(int deviceID, ostream &mos)
   //----------------------------
   // device block and grid sizes
 
+  osh << "// CUDA block and grid sizes" << endl;
   if (model->synapseGrpN > 0) { 
     unsigned int synapseGridSz = model->padSumSynapseKrnl[model->synapseGrpN - 1];   
     synapseGridSz = synapseGridSz / synapseBlkSz[deviceID];
@@ -155,195 +154,94 @@ void genCudaCode(int deviceID, ostream &mos)
   }
   osh << endl;
 
+  osh << "// CUDA device functions" << endl;
 
 
+  //------------------------------
+  // CUDA device memory allocation
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  // BELOW: needs sorting to find only cuda memory allocation
-
-
-
-  //----------------------------------------------------
-  // Code for setting the CUDA device's global variables
-  // Also estimating memory usage on device ...
-
+  osh << "void allocateMemCuda" << deviceID << "();" << endl;
   os << "void allocateMemCuda" << deviceID << "()" << endl;
   os << "{" << endl;
-  //os << "  " << model->ftype << " free_m,total_m;" << endl;
-  //os << "  cudaMemGetInfo((size_t*)&free_m,(size_t*)&total_m);" << endl;
-  os << "  size_t size;" << endl;
+
+  // allocate CUDA neuron variables
+  os << "  // neuron variables" << endl;
   for (int i = 0; i < model->neuronGrpN; i++) {
-    nt = model->neuronType[i];
-    os << "  glbSpk" << model->neuronName[i] << " = new unsigned int[" << model->neuronN[i] << "];" << endl;
-    if (model->neuronDelaySlots[i] == 1) {
-      os << "  glbSpkEvnt" << model->neuronName[i] << " = new unsigned int[" << model->neuronN[i] << "];" << endl;
-      mem += model->neuronN[i] * sizeof(unsigned int);
-    }
-    else {
-      os << "  glbSpkEvntCnt" << model->neuronName[i] << " = new unsigned int[" << model->neuronDelaySlots[i] << "];" << endl;
-      os << "  glbSpkEvnt" << model->neuronName[i] << " = new unsigned int[" << model->neuronN[i] * model->neuronDelaySlots[i] << "];" << endl;
-      mem += model->neuronN[i] * model->neuronDelaySlots[i] * sizeof(unsigned int);
-    }
-    for (int j = 0; j < model->inSyn[i].size(); j++) {
-      os << "  inSyn" << model->neuronName[i] << j << " = new " << model->ftype << "[";
-      os << model->neuronN[i] << "];" << endl;
-      mem += model->neuronN[i] * theSize(model->ftype);
-    } 
-    for (int j = 0; j < nModels[nt].varNames.size(); j++) {
-      os << "  " << nModels[nt].varNames[j] << model->neuronName[i] << " = new " << nModels[nt].varTypes[j] << "[";
-      if ((nModels[nt].varNames[j] == "V") && (model->neuronDelaySlots[i] != 1)) {
-	os << (model->neuronDelaySlots[i] * model->neuronN[i]);
-	mem += (model->neuronDelaySlots[i] * model->neuronN[i] * sizeof(nModels[nt].varTypes[j]));
+    type = model->neuronType[i];
+    for (int j = 0; j < nModels[type].varNames.size(); j++) {
+      if ((nModels[type].varNames[j] == "V") && (model->neuronDelaySlots[i] != 1)) {
+	size = theSize(nModels[type].varTypes[j]) * model->neuronN[i] * model->neuronDelaySlots[i];
       }
       else {
-	os << (model->neuronN[i]);
-	mem += (model->neuronN[i] * sizeof(nModels[nt].varTypes[j]));
+	size = theSize(nModels[type].varTypes[j]) * model->neuronN[i];
       }
-      os << "];" << endl;
-    }
-    if (model->neuronNeedSt[i]) {
-      os << "  sT" << model->neuronName[i] << " = new " << model->ftype << "[" << model->neuronN[i] << "];" << endl;
-    }   
-    
-    // allocate device neuron variables
-    for (int j = 0; j < nModels[nt].varNames.size(); j++) {
-      os << "  size = sizeof(" << nModels[nt].varTypes[j] << ") * ";
-      if ((nModels[nt].varNames[j] == "V") && (model->neuronDelaySlots[i] != 1)) {
-	os << model->neuronN[i] * model->neuronDelaySlots[i] << ";" << endl;
-      }
-      else {
-	os << model->neuronN[i] << ";" << endl;
-      }
-      os << "  CHECK_CUDA_ERRORS(cudaMalloc((void **) &d_" << nModels[nt].varNames[j] << model->neuronName[i] << ", size));" << endl;
+      os << "  CHECK_CUDA_ERRORS(cudaMalloc((void **) &d_" << nModels[type].varNames[j];
+      os << model->neuronName[i] << ", " << size << "));" << endl;
     }
     os << endl; 
   }
+
+  // allocate CUDA synapse variables
+  os << "  // synapse variables" << endl;
   for (int i = 0; i < model->synapseGrpN; i++) {
     if (model->synapseGType[i] == INDIVIDUALG) {
-      // if (model->synapseConnType[i] == SPARSE) {
-      /*********************If sparse, the arrays will be allocated later. ****************/
-      //mem += model->neuronN[model->synapseSource[i]] * model->neuronN[model->synapseTarget[i]] * theSize(model->ftype); //TODO: This is actually less for sparse matrices but we need to find a way      
-      //mem += model->neuronN[model->synapseSource[i]] * model->neuronN[model->synapseTarget[i]] * sizeof(int);
-      //}
-      //else {
-      if (model->synapseConnType[i] != SPARSE) { 
-	os << "  gp" << model->synapseName[i] << " = new " << model->ftype << "[";
-	os << model->neuronN[model->synapseSource[i]] << " * " << model->neuronN[model->synapseTarget[i]];
-      	os << "];      // synaptic conductances of group " << model->synapseName[i] << endl;
-      	mem += model->neuronN[model->synapseSource[i]] * model->neuronN[model->synapseTarget[i]] * theSize(model->ftype);
-      }
-      if (model->synapseType[i] == LEARN1SYNAPSE) {
-	os << "  grawp" << model->synapseName[i] << " = new " << model->ftype << "[";
-	os << model->neuronN[model->synapseSource[i]] << " * " << model->neuronN[model->synapseTarget[i]];
-	os << "]; // raw synaptic conductances of group " << model->synapseName[i] << endl;
-	mem += model->neuronN[model->synapseSource[i]] * model->neuronN[model->synapseTarget[i]] * theSize(model->ftype);
-      }
-    }
-    // note, if GLOBALG we put the value at compile time
-    if (model->synapseGType[i] == INDIVIDUALID) {
-      os << "  gp" << model->synapseName[i] << " = new unsigned int[";
-      unsigned long int tmp = model->neuronN[model->synapseSource[i]] * model->neuronN[model->synapseTarget[i]];
-      unsigned long int size = tmp >> logUIntSz;
-      if (tmp > (size << logUIntSz)) size++;
-      os << size << "]; // synaptic connectivity of group " << model->synapseName[i] << endl;
-      mem += size * sizeof(unsigned int);
-    }
-    if (model->synapseGType[i] == INDIVIDUALG) {
       // (cases necessary here when considering sparse reps as well)
-      //os << "  size =" << model->neuronN[model->synapseSource[i]] << "*" << model->neuronN[model->synapseTarget[i]] << "; " << endl;
-      //os << "  cudaMalloc((void **)&d_gp" << model->synapseName[i] << ", sizeof(" << model->ftype << ")*size);" << endl;
-      /*if (model->synapseConnType[i]==SPARSE){
-	os << "  cudaMalloc((void **)&d_gp" << model->synapseName[i] << "_ind, sizeof(unsigned int)*size);" << endl;
-	os << "  cudaMalloc((void **)&d_gp" << model->synapseName[i] << "_indInG, sizeof(unsigned int)*("<< model->neuronN[model->synapseSource[i]] << "+1));" << endl;
-	os << "  size = sizeof(" << model->ftype << ")*" << "  g" << model->synapseName[i] << ".connN; " << endl;
+      //os << "  size = " << model->neuronN[model->synapseSource[i]] << " * " << model->neuronN[model->synapseTarget[i]] << ";" << endl;
+      //os << "  cudaMalloc((void **) &d_gp" << model->synapseName[i] << ", sizeof(" << model->ftype << ") * size);" << endl;
+      /*if (model->synapseConnType[i] == SPARSE){
+	os << "  cudaMalloc((void **) &d_gp" << model->synapseName[i] << "_ind, sizeof(unsigned int) * size);" << endl;
+	os << "  cudaMalloc((void **) &d_gp" << model->synapseName[i] << "_indInG, sizeof(unsigned int) * ("<< model->neuronN[model->synapseSource[i]] << " + 1));" << endl;
+	os << "  size = sizeof(" << model->ftype << ") * g" << model->synapseName[i] << ".connN; " << endl;
 	}
 	else{*/
-      if (model->synapseConnType[i]!=SPARSE) {
-	os << "  size = sizeof(" << model->ftype << ") * " << model->neuronN[model->synapseSource[i]] << " * " << model->neuronN[model->synapseTarget[i]] << "; " << endl;
-	os << "  CHECK_CUDA_ERRORS(cudaMalloc((void **) &d_gp" << model->synapseName[i] << ", size));" << endl;
-	if (model->ftype == "float") {
-	  mem += model->neuronN[model->synapseSource[i]] * model->neuronN[model->synapseTarget[i]] * sizeof(float);
-	}
-	else {
-	  mem += model->neuronN[model->synapseSource[i]] * model->neuronN[model->synapseTarget[i]] * sizeof(double);
-	}
+      if (model->synapseConnType[i] != SPARSE) {
+	size = theSize(model->ftype) * model->neuronN[model->synapseSource[i]] * model->neuronN[model->synapseTarget[i]];
+	os << "  CHECK_CUDA_ERRORS(cudaMalloc((void **) &d_gp" << model->synapseName[i] << ", " << size << "));" << endl;
       }
       if (model->synapseType[i] == LEARN1SYNAPSE) {
-	os << "  size = sizeof(" << model->ftype << ") * " << model->neuronN[model->synapseSource[i]] << " * " << model->neuronN[model->synapseTarget[i]] << "; " << endl; // not sure if correct				
-	os << "  CHECK_CUDA_ERRORS(cudaMalloc((void **) &d_grawp" << model->synapseName[i] << ", size)); // raw synaptic conductances of group " << model->synapseName[i] << endl;
-	if (model->ftype == "float") {
-	  mem += model->neuronN[model->synapseSource[i]] * model->neuronN[model->synapseTarget[i]] * sizeof(float);
-	}
-	else {
-	  mem += model->neuronN[model->synapseSource[i]] * model->neuronN[model->synapseTarget[i]] * sizeof(double); 
-	}
+	size = theSize(model->ftype) * model->neuronN[model->synapseSource[i]] * model->neuronN[model->synapseTarget[i]]; // not sure if correct
+	os << "  CHECK_CUDA_ERRORS(cudaMalloc((void **) &d_grawp" << model->synapseName[i] << ", " << size;
+	os << ")); // raw synaptic conductances of group " << model->synapseName[i] << endl;
       }
     }
     // note, if GLOBALG we put the value at compile time
     if (model->synapseGType[i] == INDIVIDUALID) {
-      unsigned int tmp = model->neuronN[model->synapseSource[i]] * model->neuronN[model->synapseTarget[i]];
-      os << "  size = sizeof(unsigned int) * " << tmp << ";" << endl;
-      os << "  CHECK_CUDA_ERRORS(cudaMalloc((void **) &d_gp" << model->synapseName[i] << ",";      
-      unsigned int size = tmp >> logUIntSz;
+      tmp = model->neuronN[model->synapseSource[i]] * model->neuronN[model->synapseTarget[i]];
+      size = tmp >> logUIntSz;
       if (tmp > (size << logUIntSz)) size++;
+      os << "  CHECK_CUDA_ERRORS(cudaMalloc((void **) &d_gp" << model->synapseName[i] << ", ";
       os << size << ")); // synaptic connectivity of group " << model->synapseName[i] << endl;
-      mem += size;
     }
-  }  
+  }
   for (int i = 0; i < model->postSynapseType.size(); i++) {
-    int pst = model->postSynapseType[i];
-    for (int j = 0; j < postSynModels[pst].varNames.size(); j++) {
-      os << "  " << postSynModels[pst].varNames[j] << model->synapseName[i] << " = new " << postSynModels[pst].varTypes[j] << "[" << (model->neuronN[model->synapseTarget[i]]) <<  "];" << endl;
+    type = model->postSynapseType[i];
+    for (int j = 0; j < postSynModels[type].varNames.size(); j++) {
+      os << "  " << postSynModels[type].varNames[j] << model->synapseName[i] << " = new ";
+      os << postSynModels[type].varTypes[j] << "[" << (model->neuronN[model->synapseTarget[i]]) <<  "];" << endl;
     }
   }
   os << "}" << endl;
   os << endl;
-  
 
 
+  //-----------------------------
+  // allocate sparse array memory
 
+  osh << "void allocateAllSparseArraysCuda" << deviceID << "();" << endl;
+  os << "void allocateAllSparseArraysCuda" << deviceID << "()" << endl;
+  os << "{" << endl;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  os << "void allocateAllSparseArraysCuda" << deviceID << "() {" << endl;
   for (int i = 0; i < model->synapseGrpN; i++) {
     if (model->synapseConnType[i] == SPARSE) {
-      if (model->synapseGType[i] != GLOBALG) os << "  CHECK_CUDA_ERRORS(cudaMalloc((void **) &d_gp" << model->synapseName[i]<< ", sizeof(" << model->ftype << ") * g" << model->synapseName[i] << ".connN));" << endl;
-      os << "  CHECK_CUDA_ERRORS(cudaMalloc((void **) &d_gp" << model->synapseName[i] << "_ind, sizeof(unsigned int) * g" << model->synapseName[i] << ".connN));" << endl;
-      os << "  CHECK_CUDA_ERRORS(cudaMalloc((void **) &d_gp" << model->synapseName[i] << "_indInG, sizeof(unsigned int) * (" << model->neuronN[model->synapseSource[i]] << " + 1)));" << endl;
-      //mem += gsize * theSize(model->ftype); //TODO: We don't know connN at code generation step. But we need to find a way.
-      mem += model->neuronN[model->synapseSource[i]]*1000*sizeof(float);//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!CHANGE THAT BEFORE COMMIT
-      mem += model->neuronN[model->synapseSource[i]]*1000*sizeof(unsigned int);//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!CHANGE THAT BEFORE COMMIT
-      /*trgN = model->neuronN[model->synapseTarget[i]];
-	rrr if (trgN > neuronBlkSz[deviceID]) {
-	os <<  "  cudaMalloc((void **) &d_Lg" << model->synapseName[i] << ",sizeof(" << model->ftype <<")*"<<  trgN << ");" << endl;
-        }*/
+      if (model->synapseGType[i] != GLOBALG) {
+	os << "  CHECK_CUDA_ERRORS(cudaMalloc((void **) &d_gp" << model->synapseName[i];
+	os << ", " theSize(model->ftype) << " * g" << model->synapseName[i] << ".connN));" << endl;
+      }
+      os << "  CHECK_CUDA_ERRORS(cudaMalloc((void **) &d_gp" << model->synapseName[i];
+      os << "_ind, " << sizeof(unsigned int) << " * g" << model->synapseName[i] << ".connN));" << endl;
+      os << "  CHECK_CUDA_ERRORS(cudaMalloc((void **) &d_gp" << model->synapseName[i];
+      os << "_indInG, " << sizeof(unsigned int) << " * (" << model->neuronN[model->synapseSource[i]];
+      os << " + 1)));" << endl;
     }
   }
   os << "}" << endl; 
@@ -372,81 +270,57 @@ void genCudaCode(int deviceID, ostream &mos)
     }}*/
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  // INITIALISE
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   //-------------------------------
   // copying conductances to device
 
+  osh << "void copyGToCuda" << deviceID << "();" << endl;
   os << "void copyGToCuda" << deviceID << "()" << endl;
   os << "{" << endl;
-  for (int i= 0; i < model->synapseGrpN; i++) {
+
+  for (int i = 0; i < model->synapseGrpN; i++) {
     if (model->synapseGType[i] == INDIVIDUALG) {
       if (model->synapseConnType[i] == SPARSE){          
 	os << "  CHECK_CUDA_ERRORS(cudaMemcpy(d_gp" << model->synapseName[i] << ", g" << model->synapseName[i];
-	os << ".gp, g" << model->synapseName[i] << ".connN*sizeof(" << model->ftype << "), cudaMemcpyHostToDevice));" << endl;
+	os << ".gp, g" << model->synapseName[i] << ".connN * " << theSize(model->ftype);
+	os << ", cudaMemcpyHostToDevice));" << endl;
       }
       else {
 	os << "  CHECK_CUDA_ERRORS(cudaMemcpy(d_gp" << model->synapseName[i] << ", gp" << model->synapseName[i];
-      	size= model->neuronN[model->synapseSource[i]] * model->neuronN[model->synapseTarget[i]];
-      	os << ", " << model->neuronN[model->synapseSource[i]] << " * " << model->neuronN[model->synapseTarget[i]]<< " * sizeof(" << model->ftype << "), cudaMemcpyHostToDevice));" << endl;
+      	os << ", " << model->neuronN[model->synapseSource[i]] * model->neuronN[model->synapseTarget[i]] * theSize(model->ftype);
+	os << ", cudaMemcpyHostToDevice));" << endl;
       }
       if (model->synapseType[i] == LEARN1SYNAPSE) {
         os << "  CHECK_CUDA_ERRORS(cudaMemcpy(d_grawp" << model->synapseName[i]<< ", grawp" << model->synapseName[i];
 	if (model->synapseConnType[i] == SPARSE) {
-          os << ", " << model->neuronN[model->synapseSource[i]] * model->neuronN[model->synapseTarget[i]] << " * sizeof(" << model->ftype << "), cudaMemcpyHostToDevice));" << endl;}
+          os << ", " << model->neuronN[model->synapseSource[i]] * model->neuronN[model->synapseTarget[i]] * theSize(model->ftype);
+	  os << ", cudaMemcpyHostToDevice));" << endl;}
 	else {
-          os << ", " << model->neuronN[model->synapseSource[i]] * model->neuronN[model->synapseTarget[i]] << " * sizeof(" << model->ftype << "), cudaMemcpyHostToDevice));" << endl;
+          os << ", " << model->neuronN[model->synapseSource[i]] * model->neuronN[model->synapseTarget[i]] * theSize(model->ftype);
+	  os << ", cudaMemcpyHostToDevice));" << endl;
 	}
       } 
     }
     if (model->synapseGType[i] == INDIVIDUALID) {
       if (model->synapseConnType[i] == SPARSE) {
-      	os << "  CHECK_CUDA_ERRORS(cudaMemcpy(d_gp" << model->synapseName[i] << ", g" << model->synapseName[i];
-	os << ".gp, ";
+      	os << "  CHECK_CUDA_ERRORS(cudaMemcpy(d_gp" << model->synapseName[i] << ", g" << model->synapseName[i] << ".gp, ";
       }
       else {
-	os << "  CHECK_CUDA_ERRORS(cudaMemcpy(d_gp" << model->synapseName[i] << ", gp" << model->synapseName[i];
-	os << ", ";
+	os << "  CHECK_CUDA_ERRORS(cudaMemcpy(d_gp" << model->synapseName[i] << ", gp" << model->synapseName[i] << ", ";
       }
-      unsigned int tmp = model->neuronN[model->synapseSource[i]] * model->neuronN[model->synapseTarget[i]];
+      tmp = model->neuronN[model->synapseSource[i]] * model->neuronN[model->synapseTarget[i]];
       size = (tmp >> logUIntSz);
       if (tmp > (size << logUIntSz)) size++;
       size = size * sizeof(unsigned int);
-      os << "," << size << ", cudaMemcpyHostToDevice));" << endl;
+      os << ", " << size << ", cudaMemcpyHostToDevice));" << endl;
       if (model->synapseType[i] == LEARN1SYNAPSE) {
         os << "  CHECK_CUDA_ERRORS(cudaMemcpy(d_grawp" << model->synapseName[i]<< ", grawp" << model->synapseName[i];
 	if (model->synapseConnType[i]==SPARSE) {
-          os << ", " << model->neuronN[model->synapseSource[i]] * model->neuronN[model->synapseTarget[i]] << " * sizeof(" << model->ftype << "), cudaMemcpyHostToDevice));" << endl;
+          os << ", " << model->neuronN[model->synapseSource[i]] * model->neuronN[model->synapseTarget[i]] * theSize(model->ftype);
+	  os << ", cudaMemcpyHostToDevice));" << endl;
 	}
 	else {
-          os << ", " << model->neuronN[model->synapseSource[i]] * model->neuronN[model->synapseTarget[i]] << " * sizeof(" << model->ftype << "), cudaMemcpyHostToDevice));" << endl;
+          os << ", " << model->neuronN[model->synapseSource[i]] * model->neuronN[model->synapseTarget[i]] * theSize(model->ftype);
+	  os << ", cudaMemcpyHostToDevice));" << endl;
 	}
       }
     }
@@ -457,39 +331,42 @@ void genCudaCode(int deviceID, ostream &mos)
 
   // ------------------------------------------------------------------------
   // copying explicit input(if any) to device
-  /*
-    os << "void copyInpToDevice()" << endl;
-    os << "{" << endl;
-    os << "}" << endl;
-    os << endl;*/
+
+  osh << "void copyInpToDeviceCuda" << deviceID << "();" << endl;
+  os << "void copyInpToDeviceCuda" << deviceID << "()" << endl;
+  os << "{" << endl;
+  os << "}" << endl;
+  os << endl;
 
 
   // ------------------------------------------------------------------------
   // copying conductances from device
 
+  osh << "void copyGFromCuda" << deviceID << "();" << endl;
   os << "void copyGFromCuda" << deviceID << "()" << endl;
   os << "{" << endl;
-  for (int i= 0; i < model->synapseGrpN; i++) {
+
+  for (int i = 0; i < model->synapseGrpN; i++) {
     if (model->synapseGType[i] == INDIVIDUALG) {
       if (model->synapseConnType[i]==SPARSE){
-	//size = model->neuronN[model->synapseSource[i]]*model->neuronN[model->synapseTarget[i]];
 	os << "  CHECK_CUDA_ERRORS(cudaMemcpy(g" << model->synapseName[i] << ".gp, d_gp" << model->synapseName[i];
-	os << ", g" << model->synapseName[i] << ".connN * sizeof(" << model->ftype << "), cudaMemcpyDeviceToHost));" << endl;
+	os << ", g" << model->synapseName[i] << ".connN * " << theSize(model->ftype) << ", cudaMemcpyDeviceToHost));" << endl;
       }
       else {
 	os << "  CHECK_CUDA_ERRORS(cudaMemcpy(gp" << model->synapseName[i] << ", d_gp" << model->synapseName[i];      
       	size = model->neuronN[model->synapseSource[i]] * model->neuronN[model->synapseTarget[i]] * theSize(model->ftype);
-	os << ", " << model->neuronN[model->synapseSource[i]] << " * " << model->neuronN[model->synapseTarget[i]]<< " * sizeof(" << model->ftype << "), cudaMemcpyDeviceToHost));" << endl;
+	os << ", " << model->neuronN[model->synapseSource[i]] * model->neuronN[model->synapseTarget[i]] * theSize(model->ftype);
+	os << ", cudaMemcpyDeviceToHost));" << endl;
       }  
       if (model->synapseType[i] == LEARN1SYNAPSE) {
         os << "  CHECK_CUDA_ERRORS(cudaMemcpy(grawp" << model->synapseName[i]<< ", d_grawp" << model->synapseName[i];
         size = model->neuronN[model->synapseSource[i]] * model->neuronN[model->synapseTarget[i]] * theSize(model->ftype);
-        os << "," << size << ", cudaMemcpyDeviceToHost));" << endl;
+        os << ", " << size << ", cudaMemcpyDeviceToHost));" << endl;
       }
     }
     if (model->synapseGType[i] == INDIVIDUALID) {
       os << "  CHECK_CUDA_ERRORS(cudaMemcpy(gp" << model->synapseName[i] << ", d_gp" << model->synapseName[i];
-      unsigned int tmp = model->neuronN[model->synapseSource[i]]*model->neuronN[model->synapseTarget[i]];
+      tmp = model->neuronN[model->synapseSource[i]] * model->neuronN[model->synapseTarget[i]];
       size = (tmp >> logUIntSz);
       if (tmp > (size << logUIntSz)) size++;
       size = size * sizeof(unsigned int);
@@ -497,193 +374,187 @@ void genCudaCode(int deviceID, ostream &mos)
       if (model->synapseType[i] == LEARN1SYNAPSE) {
         os << "  CHECK_CUDA_ERRORS(cudaMemcpy(grawp" << model->synapseName[i]<< ", d_grawp" << model->synapseName[i];
         size = model->neuronN[model->synapseSource[i]] * model->neuronN[model->synapseTarget[i]] * theSize(model->ftype);
-        os << "," << size << ", cudaMemcpyDeviceToHost));" << endl;
+        os << ", " << size << ", cudaMemcpyDeviceToHost));" << endl;
       }
     }
   }
   os << "}" << endl;
   os << endl;
 
-
-  // ------------------------------------------------------------------------
-  // copying particular conductances group from device
-  // ------------------------------------------------------------------------
 
   // ------------------------------------------------------------------------
   // copying values to device
 
+  osh << "void copyStateToCuda" << deviceID << "();" << endl;
   os << "void copyStateToCuda" << deviceID << "()" << endl;
   os << "{" << endl;
+
   os << "  void *devPtr;" << endl;
-  os << "  unsigned int tmp= 0;" << endl;
+  os << "  unsigned int tmp = 0;" << endl;
   os << "  CHECK_CUDA_ERRORS(cudaGetSymbolAddress(&devPtr, d_done));" << endl;
-  os << "  CHECK_CUDA_ERRORS(cudaMemcpy(devPtr, &tmp, sizeof(int), cudaMemcpyHostToDevice));" << endl;
-  for (int i= 0; i < model->neuronGrpN; i++) {
-    nt= model->neuronType[i];
+  os << "  CHECK_CUDA_ERRORS(cudaMemcpy(devPtr, &tmp, " << sizeof(int) << ", cudaMemcpyHostToDevice));" << endl;
+  for (int i = 0; i < model->neuronGrpN; i++) {
+    type = model->neuronType[i];
     if (model->neuronDelaySlots[i] != 1) {
       os << "  CHECK_CUDA_ERRORS(cudaGetSymbolAddress(&devPtr, d_spkEvntQuePtr" << model->neuronName[i] << "));" << endl;
       os << "  CHECK_CUDA_ERRORS(cudaMemcpy(devPtr, &spkEvntQuePtr" << model->neuronName[i] << ", ";
-      size = sizeof(unsigned int);
-      os << size << ", cudaMemcpyHostToDevice));" << endl;
+      os << sizeof(unsigned int) << ", cudaMemcpyHostToDevice));" << endl;
     }
     os << "  CHECK_CUDA_ERRORS(cudaGetSymbolAddress(&devPtr, d_glbscnt" << model->neuronName[i] << "));" << endl;
     os << "  CHECK_CUDA_ERRORS(cudaMemcpy(devPtr, &glbscnt" << model->neuronName[i] << ", ";
-    size = sizeof(unsigned int);
-    os << size << ", cudaMemcpyHostToDevice));" << endl;
+    os << sizeof(unsigned int) << ", cudaMemcpyHostToDevice));" << endl;
     os << "  CHECK_CUDA_ERRORS(cudaGetSymbolAddress(&devPtr, d_glbSpkEvntCnt" << model->neuronName[i] << "));" << endl;
     if (model->neuronDelaySlots[i] == 1) {
       os << "  CHECK_CUDA_ERRORS(cudaMemcpy(devPtr, &glbSpkEvntCnt" << model->neuronName[i] << ", ";
-      size = sizeof(unsigned int);
+      os << sizeof(unsigned int);
     }
     else {
       os << "  CHECK_CUDA_ERRORS(cudaMemcpy(devPtr, glbSpkEvntCnt" << model->neuronName[i] << ", ";
-      size = model->neuronDelaySlots[i] * sizeof(unsigned int);
+      os = model->neuronDelaySlots[i] * sizeof(unsigned int);
     }
-    os << size << ", cudaMemcpyHostToDevice));" << endl;
+    os << ", cudaMemcpyHostToDevice));" << endl;
     os << "  CHECK_CUDA_ERRORS(cudaGetSymbolAddress(&devPtr, d_glbSpk" << model->neuronName[i] << "));" << endl;
     os << "  CHECK_CUDA_ERRORS(cudaMemcpy(devPtr, glbSpk" << model->neuronName[i] << ", ";
-    size = model->neuronN[i] * sizeof(unsigned int);
-    os << size << ", cudaMemcpyHostToDevice));" << endl;
+    os << model->neuronN[i] * sizeof(unsigned int) << ", cudaMemcpyHostToDevice));" << endl;
     os << "  CHECK_CUDA_ERRORS(cudaGetSymbolAddress(&devPtr, d_glbSpkEvnt" << model->neuronName[i] << "));" << endl;
     os << "  CHECK_CUDA_ERRORS(cudaMemcpy(devPtr, glbSpkEvnt" << model->neuronName[i] << ", ";
-    size = model->neuronN[i] * sizeof(unsigned int);
     if (model->neuronDelaySlots[i] != 1) {
-      size *= model->neuronDelaySlots[i];
+      os << model->neuronN[i] * sizeof(unsigned int) * model->neuronDelaySlots[i];
     }
-    os << size << ", cudaMemcpyHostToDevice));" << endl;      
-    for (int j= 0; j < model->inSyn[i].size(); j++) {
+    else {
+      os << model->neuronN[i] * sizeof(unsigned int);
+    }
+    os << ", cudaMemcpyHostToDevice));" << endl;      
+    for (int j = 0; j < model->inSyn[i].size(); j++) {
       os << "  CHECK_CUDA_ERRORS(cudaGetSymbolAddress(&devPtr, d_inSyn" << model->neuronName[i] << j << "));" << endl;
       os << "  CHECK_CUDA_ERRORS(cudaMemcpy(devPtr, inSyn" << model->neuronName[i] << j << ", ";
-      os << model->neuronN[i] << " * sizeof(" << model->ftype << "), cudaMemcpyHostToDevice));" << endl;
+      os << model->neuronN[i] * theSize(model->ftype) << ", cudaMemcpyHostToDevice));" << endl;
     }
-    for (int k = 0, l = nModels[nt].varNames.size(); k < l; k++) {   
-      os << "  CHECK_CUDA_ERRORS(cudaMemcpy(d_" << nModels[nt].varNames[k] << model->neuronName[i]<< ", ";
-      os << nModels[nt].varNames[k] << model->neuronName[i] << ", ";
-      if ((nModels[nt].varNames[k] == "V") && (model->neuronDelaySlots[i] != 1)) {
-	size = model->neuronN[i] * model->neuronDelaySlots[i];
+    for (int j = 0; j < nModels[type].varNames.size(); j++) {
+      os << "  CHECK_CUDA_ERRORS(cudaMemcpy(d_" << nModels[type].varNames[j] << model->neuronName[i]<< ", ";
+      os << nModels[type].varNames[j] << model->neuronName[i] << ", ";
+      if ((nModels[type].varNames[j] == "V") && (model->neuronDelaySlots[i] != 1)) {
+	os << model->neuronN[i] * model->neuronDelaySlots[i] * theSize(nModels[type].varTypes[j]);
       }
       else {
-	size = model->neuronN[i];
+	os << model->neuronN[i] * theSize(nModels[type].varTypes[j]);
       }
-      os << size << " * sizeof(" << nModels[nt].varTypes[k] << "), cudaMemcpyHostToDevice));" << endl;
+      os << "), cudaMemcpyHostToDevice));" << endl;
     }
     if (model->neuronNeedSt[i]) {
       os << "  CHECK_CUDA_ERRORS(cudaGetSymbolAddress(&devPtr, d_sT" << model->neuronName[i] << "));" << endl;
       os << "  CHECK_CUDA_ERRORS(cudaMemcpy(devPtr, " << "sT" << model->neuronName[i] << ", ";
-      size = model->neuronN[i] * theSize(model->ftype);
-      os << size << ", cudaMemcpyHostToDevice));" << endl;
-      mos << "model->receivesInputCurrent[i]: " << model->receivesInputCurrent[i] << endl;
+      os << model->neuronN[i] * theSize(model->ftype) << ", cudaMemcpyHostToDevice));" << endl;
     }
   }
-  for (int i=0; i< model->postSynapseType.size(); i++){
-    int pst= model->postSynapseType[i];
-    for (int k= 0, l= postSynModels[pst].varNames.size(); k < l; k++) {
-      
-      os << "  CHECK_CUDA_ERRORS(cudaMemcpy(d_" << postSynModels[pst].varNames[k] << model->synapseName[i]<< ", ";
-      os << postSynModels[pst].varNames[k] << model->synapseName[i] << ", ";
-      size = model->neuronN[model->synapseTarget[i]];
-      os << size << " * sizeof(" << postSynModels[pst].varTypes[k] << "), cudaMemcpyHostToDevice));" << endl;
+  for (int i = 0; i < model->postSynapseType.size(); i++) {
+    type = model->postSynapseType[i];
+    for (int j = 0; j < postSynModels[type].varNames.size(); j++) {
+      os << "  CHECK_CUDA_ERRORS(cudaMemcpy(d_" << postSynModels[type].varNames[j] << model->synapseName[i]<< ", ";
+      os << postSynModels[type].varNames[j] << model->synapseName[i] << ", ";
+      os << model->neuronN[model->synapseTarget[i]] * theSize(postSynModels[type].varTypes[j]);
+      os << ", cudaMemcpyHostToDevice));" << endl;
     }
   }
   os << "}" << endl;
   os << endl;
 
 
-  // ------------------------------------------------------------------------
+  //---------------------------
   // copying values from device
 
+  osh << "void copyStateFromCuda" << deviceID << "();" << endl;
   os << "void copyStateFromCuda" << deviceID << "()" << endl;
   os << "{" << endl;
+
   os << "  void *devPtr;" << endl;
-  for (int i= 0; i < model->neuronGrpN; i++) {
-    nt= model->neuronType[i];
+  for (int i = 0; i < model->neuronGrpN; i++) {
+    type = model->neuronType[i];
     if (model->neuronDelaySlots[i] != 1) {
       os << "  CHECK_CUDA_ERRORS(cudaGetSymbolAddress(&devPtr, d_spkEvntQuePtr" << model->neuronName[i] << "));" << endl;
       os << "  CHECK_CUDA_ERRORS(cudaMemcpy(&spkEvntQuePtr" << model->neuronName[i] << ", devPtr, ";
-      size = sizeof(unsigned int);
-      os << size << ", cudaMemcpyDeviceToHost));" << endl;
+      os << sizeof(unsigned int) << ", cudaMemcpyDeviceToHost));" << endl;
     }
 
     //glbscnt
     os << "  CHECK_CUDA_ERRORS(cudaGetSymbolAddress(&devPtr, d_glbscnt" << model->neuronName[i] << "));" << endl;
     os << "  CHECK_CUDA_ERRORS(cudaMemcpy(&glbscnt" << model->neuronName[i] << ", devPtr, ";
-    size = sizeof(unsigned int);
-    os << size << ", cudaMemcpyDeviceToHost));" << endl;
+    os << sizeof(unsigned int) << ", cudaMemcpyDeviceToHost));" << endl;
 
     //glbSpkEvntCnt
     os << "  CHECK_CUDA_ERRORS(cudaGetSymbolAddress(&devPtr, d_glbSpkEvntCnt" << model->neuronName[i] << "));" << endl;
     if (model->neuronDelaySlots[i] == 1) {
       os << "  CHECK_CUDA_ERRORS(cudaMemcpy(&glbSpkEvntCnt" << model->neuronName[i] << ", devPtr, ";
-      size = sizeof(unsigned int);
+      os << sizeof(unsigned int);
     }
     else {
       os << "  CHECK_CUDA_ERRORS(cudaMemcpy(glbSpkEvntCnt" << model->neuronName[i] << ", devPtr, ";
-      size = model->neuronDelaySlots[i] * sizeof(unsigned int);
+      os << model->neuronDelaySlots[i] * sizeof(unsigned int);
     }
-    os << size << ", cudaMemcpyDeviceToHost));" << endl;
+    os << ", cudaMemcpyDeviceToHost));" << endl;
 
     //glbSpk
     os << "  CHECK_CUDA_ERRORS(cudaGetSymbolAddress(&devPtr, d_glbSpk" << model->neuronName[i] << "));" << endl;
     os << "  CHECK_CUDA_ERRORS(cudaMemcpy(glbSpk" << model->neuronName[i] << ", devPtr, ";
-    size = model->neuronN[i] * sizeof(unsigned int);
-    os << size << ", cudaMemcpyDeviceToHost));" << endl;
-
+    os << model->neuronN[i] * sizeof(unsigned int) << ", cudaMemcpyDeviceToHost));" << endl;
 
     //glbSpkEvnt
     os << "  CHECK_CUDA_ERRORS(cudaGetSymbolAddress(&devPtr, d_glbSpkEvnt" << model->neuronName[i] << "));" << endl;
     os << "  CHECK_CUDA_ERRORS(cudaMemcpy(glbSpkEvnt" << model->neuronName[i] << ", devPtr, ";
-    size = model->neuronN[i] * sizeof(unsigned int);
-    if (model->neuronDelaySlots[i] != 1) size *= model->neuronDelaySlots[i];
-    os << size << ", cudaMemcpyDeviceToHost));" << endl;
-    for (int j= 0; j < model->inSyn[i].size(); j++) {
+    if (model->neuronDelaySlots[i] != 1) {
+      os << model->neuronN[i] * sizeof(unsigned int) * model->neuronDelaySlots[i];
+    }
+    else {
+      os << model->neuronN[i] * sizeof(unsigned int);
+    }
+    os << ", cudaMemcpyDeviceToHost));" << endl;
+    for (int j = 0; j < model->inSyn[i].size(); j++) {
       os << "  CHECK_CUDA_ERRORS(cudaGetSymbolAddress(&devPtr, d_inSyn" << model->neuronName[i] << j << "));" << endl;
       os << "  CHECK_CUDA_ERRORS(cudaMemcpy(inSyn" << model->neuronName[i] << j << ", devPtr, ";
-      os << model->neuronN[i] << " * sizeof(" << model->ftype << "), cudaMemcpyDeviceToHost));" << endl;
+      os << model->neuronN[i] * theSize(model->ftype) << ", cudaMemcpyDeviceToHost));" << endl;
     }
-    for (int k= 0, l= nModels[nt].varNames.size(); k < l; k++) {
-      os << "  CHECK_CUDA_ERRORS(cudaMemcpy(" << nModels[nt].varNames[k] << model->neuronName[i] << ", ";
-      os << "d_" << nModels[nt].varNames[k] << model->neuronName[i] << ", ";
-      if ((nModels[nt].varNames[k] == "V") && (model->neuronDelaySlots[i] != 1)) {
-	size = model->neuronN[i] * model->neuronDelaySlots[i];
+    for (int j = 0; j < nModels[type].varNames.size(); j++) {
+      os << "  CHECK_CUDA_ERRORS(cudaMemcpy(" << nModels[type].varNames[j] << model->neuronName[i] << ", ";
+      os << "d_" << nModels[type].varNames[j] << model->neuronName[i] << ", ";
+      if ((nModels[type].varNames[j] == "V") && (model->neuronDelaySlots[i] != 1)) {
+	os << model->neuronN[i] * model->neuronDelaySlots[i] * theSize(nModels[type].varTypes[j]);
       }
       else {
-	size = model->neuronN[i];
+	os << model->neuronN[i] * theSize(nModels[type].varTypes[j]);
       }
-      os << size << " * sizeof(" << nModels[nt].varTypes[k] << "), cudaMemcpyDeviceToHost));" << endl;
+      os << "), cudaMemcpyDeviceToHost));" << endl;
     }
-    
     if (model->neuronNeedSt[i]) {
       os << "  CHECK_CUDA_ERRORS(cudaGetSymbolAddress(&devPtr, d_sT" << model->neuronName[i] << "));" << endl;
       os << "  CHECK_CUDA_ERRORS(cudaMemcpy(sT" << model->neuronName[i] << ", devPtr, ";
-      os << model->neuronN[i] << " * sizeof(" << model->ftype << "), cudaMemcpyDeviceToHost));" << endl;
+      os << model->neuronN[i] * theSize(model->ftype) << ", cudaMemcpyDeviceToHost));" << endl;
     }
   }
-  
-  for (int i=0; i< model->postSynapseType.size(); i++){
-    int pst= model->postSynapseType[i];
-    for (int k= 0, l= postSynModels[pst].varNames.size(); k < l; k++) {
-      //os << postSynModels[pst].varTypes[k] << " *";
-      //os << postSynModels[pst].varNames[k] << model->synapseName[i] << ";" << endl;
-      os << "  CHECK_CUDA_ERRORS(cudaMemcpy(" << postSynModels[pst].varNames[k] << model->synapseName[i] << ", ";
-      os << "d_" << postSynModels[pst].varNames[k] << model->synapseName[i] << ", ";
-      size = model->neuronN[model->synapseTarget[i]];
-      os << size << " * sizeof(" << postSynModels[pst].varTypes[k] << "), cudaMemcpyDeviceToHost));" << endl;
+  for (int i = 0; i < model->postSynapseType.size(); i++) {
+    type = model->postSynapseType[i];
+    for (int j = 0; j < postSynModels[type].varNames.size(); j++) {
+      os << "  CHECK_CUDA_ERRORS(cudaMemcpy(" << postSynModels[type].varNames[j] << model->synapseName[i] << ", ";
+      os << "d_" << postSynModels[type].varNames[j] << model->synapseName[i] << ", ";
+      os << model->neuronN[model->synapseTarget[i]] * theSize(postSynModels[type].varTypes[j]);
+      os << ", cudaMemcpyDeviceToHost));" << endl;
     }
   }
   os << "}" << endl;
   os << endl;
 
+
   // --------------------------
   // copying spikes from device                                            
 
+  osh << "void copySpikesFromCuda" << deviceID << "();" << endl;
   os << "void copySpikesFromCuda" << deviceID << "()" << endl;
   os << "{" << endl;
+
   os << "  void *devPtr;" << endl;
-  for (int i= 0; i < model->neuronGrpN; i++) {
+  for (int i = 0; i < model->neuronGrpN; i++) {
     os << "  CHECK_CUDA_ERRORS(cudaGetSymbolAddress(&devPtr, d_glbSpk" << model->neuronName[i] << "));" << endl;
     os << "  CHECK_CUDA_ERRORS(cudaMemcpy(glbSpk" << model->neuronName[i] << ", devPtr, ";
-    os << "glbscnt" << model->neuronName[i] << " * " << sizeof(unsigned int);
-    os << ", cudaMemcpyDeviceToHost));" << endl;
+    os << "glbscnt" << model->neuronName[i] << " * " << sizeof(unsigned int) << ", cudaMemcpyDeviceToHost));" << endl;
   }
   os << "}" << endl;
   os << endl;
@@ -692,165 +563,181 @@ void genCudaCode(int deviceID, ostream &mos)
   // ---------------------------------
   // copying spike numbers from device
 
+  osh << "void copySpikeNFromCuda" << deviceID << "();" << endl;
   os << "void copySpikeNFromCuda" << deviceID << "()" << endl;
   os << "{" << endl;
+
   os << "  void *devPtr;" << endl;
-  for (int i= 0; i < model->neuronGrpN; i++) {
+  for (int i = 0; i < model->neuronGrpN; i++) {
     os << "  CHECK_CUDA_ERRORS(cudaGetSymbolAddress(&devPtr, d_glbscnt" << model->neuronName[i] << "));" << endl;
     os << "  CHECK_CUDA_ERRORS(cudaMemcpy(&glbscnt" << model->neuronName[i] << ", devPtr, ";
-    size = sizeof(unsigned int);
-    os << size << ", cudaMemcpyDeviceToHost));" << endl;
+    os << sizeof(unsigned int) << ", cudaMemcpyDeviceToHost));" << endl;
   }
   os << "}" << endl;
   os << endl;
 
  
-  // ----------------------------------------------------
-  // clean device memory that was allocated from the host
+  // ---------------------------------------------
+  // free dynamically allocated cuda device memory
 
+  osh << "void freeMemCuda" << deviceID << "();" << endl;
   os << "void freeMemCuda" << deviceID << "()" << endl;
   os << "{" << endl;
-  for (int i= 0; i < model->neuronGrpN; i++) {
-    nt= model->neuronType[i];
-    for (int k= 0, l= nModels[nt].varNames.size(); k < l; k++) {
-      os << "  CHECK_CUDA_ERRORS(cudaFree(d_" << nModels[nt].varNames[k] << model->neuronName[i] << "));" << endl;
+
+  for (int i = 0; i < model->neuronGrpN; i++) {
+    type = model->neuronType[i];
+    for (int j = 0; j < nModels[type].varNames.size(); j++) {
+      os << "  CHECK_CUDA_ERRORS(cudaFree(d_" << nModels[type].varNames[j] << model->neuronName[i] << "));" << endl;
     }
   }
-  for (int i= 0; i < model->synapseGrpN; i++) {
+  for (int i = 0; i < model->synapseGrpN; i++) {
     if ((model->synapseGType[i] == (INDIVIDUALG)) || (model->synapseGType[i] == INDIVIDUALID)) {
-      os << "  CHECK_CUDA_ERRORS(cudaFree(d_gp" << model->synapseName[i] << "));" <<endl;  	
+      os << "  CHECK_CUDA_ERRORS(cudaFree(d_gp" << model->synapseName[i] << "));" << endl;  	
     }
     if (model->synapseType[i] == LEARN1SYNAPSE) {
-      os << " CHECK_CUDA_ERRORS(cudaFree(d_grawp"  << model->synapseName[i] << "));" <<endl;	
+      os << "  CHECK_CUDA_ERRORS(cudaFree(d_grawp"  << model->synapseName[i] << "));" << endl;	
     }
   }
-  for (int i=0; i< model->postSynapseType.size(); i++){
-    int pst= model->postSynapseType[i];
-    for (int k= 0, l= postSynModels[pst].varNames.size(); k < l; k++) {
-      os << "  CHECK_CUDA_ERRORS(cudaFree(d_" << postSynModels[pst].varNames[k] << model->synapseName[i] << "));" << endl;
+  for (int i = 0; i < model->postSynapseType.size(); i++) {
+    type = model->postSynapseType[i];
+    for (int j = 0; j < postSynModels[type].varNames.size(); j++) {
+      os << "  CHECK_CUDA_ERRORS(cudaFree(d_" << postSynModels[type].varNames[j] << model->synapseName[i] << "));" << endl;
     }
   }
   os << "}" << endl;
   os << endl;
 
 
+  //--------------------------
+  // learning helper functions
 
+  if (model->lrnGroups > 0) {
+    for (int i = 0; i < model->synapseGrpN; i++) {
+      if (model->synapseType[i] == LEARN1SYNAPSE) {
 
+	osh << "__device__ " << model->ftype << " gFunc" << model->synapseName[i] << "Cuda" << deviceID;
+	osh << "(" << model->ftype << " graw);" << endl;
+	os << "__device__ " << model->ftype << " gFunc" << model->synapseName[i] << "Cuda" << deviceID;
+	os << "(" << model->ftype << " graw)" << endl;
+	os << "{" << endl;
+	os << "  return " << SAVEP(model->synapsePara[i][8]/2.0) << " * (tanh(";
+	os << SAVEP(model->synapsePara[i][10]) << " * (graw - ";
+	os << SAVEP(model->synapsePara[i][9]) << ")) + 1.0);" << endl;
+	os << "}" << endl;
+	os << endl;
 
-
-
-
-
-
-
-
+	osh << "__device__ " << model->ftype << " invGFunc" << model->synapseName[i] << "Cuda" << deviceID;
+	osh << "(" << model->ftype << " g);" << endl;
+	os << "__device__ " << model->ftype << " invGFunc" << model->synapseName[i] << "Cuda" << deviceID;
+	os<< "(" << model->ftype << " g)" << endl;
+	os << "{" << endl;
+	os << model->ftype << " tmp = g / " << SAVEP(model->synapsePara[i][8]*2.0) << " - 1.0;" << endl;
+	os << "return 0.5 * log((1.0 + tmp) / (1.0 - tmp)) /" << SAVEP(model->synapsePara[i][10]);
+	os << " + " << SAVEP(model->synapsePara[i][9]) << ";" << endl;
+	os << "}" << endl;
+	os << endl;
+      }
+    }
+  }
 
 
   // ------------------------------------------------------------------------
   // the actual time stepping procedure
 
+  osh << "void stepTimeCuda" << deviceID << "(";
   os << "void stepTimeCuda" << deviceID << "(";
   for (int i = 0; i < model->neuronGrpN; i++) {
     if (model->neuronType[i] == POISSONNEURON) {
+      osh << "unsigned int *rates" << model->neuronName[i] << ", ";
       os << "unsigned int *rates" << model->neuronName[i];
-      os << ", // pointer to the rates of the Poisson neurons in grp ";
-      os << model->neuronName[i] << endl;
+      os << ", // pointer to the rates of the Poisson neurons in grp " << model->neuronName[i] << endl;
+      osh << "unsigned int offset" << model->neuronName[i] << ", ";
       os << "unsigned int offset" << model->neuronName[i];
-      os << ", // offset on pointer to the rates in grp ";
-      os << model->neuronName[i] << endl;
+      os << ", // offset on pointer to the rates in grp " << model->neuronName[i] << endl;
     }
-    if (model->receivesInputCurrent[i]>=2) {
+    if (model->receivesInputCurrent[i] >= 2) {
+      osh << "float *d_inputI" << model->neuronName[i] << ", ";
       os << "float *d_inputI" << model->neuronName[i];
-      os << ", // Explicit input to the neurons in grp ";
-      os << model->neuronName[i] << endl;
+      os << ", // Explicit input to the neurons in grp " << model->neuronName[i] << endl;
     }
   }
+  osh << "float t);" << endl;
   os << "float t)" << endl;
   os << "{" << endl;
-  int trgN;
+
   if (model->synapseGrpN > 0) {
     os << "  if (t > 0.0) {" << endl; 
-    os << "    calcSynapsesCuda" << deviceID << " <<< sGrid, sThreads >>> (";
-    for (int i= 0; i < model->synapseGrpN; i++) {
+    os << "    calcSynapsesCuda" << deviceID << " <<< sGridCuda" << deviceID << ", sThreadsCuda" << deviceID << " >>> (";
+    for (int i = 0; i < model->synapseGrpN; i++) {
       if (model->synapseGType[i] == INDIVIDUALG) {
-	os << "  d_gp" << model->synapseName[i] << ", ";
+	os << "d_gp" << model->synapseName[i] << ", ";
       }
       if (model->synapseConnType[i] == SPARSE) {
-	os << " d_gp" << model->synapseName[i] << "_ind, ";	
-	os << " d_gp" << model->synapseName[i] << "_indInG, ";	
-	trgN = model->neuronN[model->synapseTarget[i]];
+	os << "d_gp" << model->synapseName[i] << "_ind, ";	
+	os << "d_gp" << model->synapseName[i] << "_indInG, ";
       }
-      if (model->synapseGType[i] == INDIVIDUALID){
-	os << "  d_gp" << model->synapseName[i] << ",";	
+      if (model->synapseGType[i] == INDIVIDUALID) {
+	os << "d_gp" << model->synapseName[i] << ", ";	
       }
       if (model->synapseType[i] == LEARN1SYNAPSE) {
-	os << "d_grawp"  << model->synapseName[i] << ","; 	
+	os << "d_grawp"  << model->synapseName[i] << ", ";
       }
     }
-    for (int i= 0; i < model->neuronGrpN; i++) {
-      nt= model->neuronType[i];
-      os << " d_" << nModels[nt].varNames[0] << model->neuronName[i];  	// this is supposed to be Vm		
-      if (model->needSt||i<(model->neuronGrpN-1)) {
-	os << ",";
+    for (int i = 0; i < model->neuronGrpN; i++) {
+      type = model->neuronType[i];
+      os << " d_" << nModels[type].varNames[0] << model->neuronName[i]; // this is supposed to be Vm
+      if (model->needSt || i < (model->neuronGrpN - 1)) {
+	os << ", ";
       }    		
     }
     if (model->needSt) {
-      os << "t);"<< endl;
+      os << "t);" << endl;
     }
     else {
       os << ");" << endl;
     }
     if (model->lrnGroups > 0) {
-      os << "    learnSynapsesPostCuda" << deviceID << " <<< lGrid, lThreads >>> (";      
-      for (int i= 0; i < model->synapseGrpN; i++) {
-	if ((model->synapseGType[i] == INDIVIDUALG)  || (model->synapseGType[i] == INDIVIDUALID )) {
-	  os << " d_gp" << model->synapseName[i] << ",";	
+      os << "    learnSynapsesPostCuda" << deviceID << " <<< lGridCuda" << deviceID << ", lThreadsCuda" << deviceID << " >>> (";      
+      for (int i = 0; i < model->synapseGrpN; i++) {
+	if ((model->synapseGType[i] == INDIVIDUALG) || (model->synapseGType[i] == INDIVIDUALID)) {
+	  os << " d_gp" << model->synapseName[i] << ", ";
 	}
 	if (model->synapseType[i] == LEARN1SYNAPSE) {
-	  os << "d_grawp"  << model->synapseName[i] << ",";	
+	  os << "d_grawp"  << model->synapseName[i] << ", ";
 	}
       }
-      for (int i= 0; i < model->neuronGrpN; i++) {
-	nt= model->neuronType[i];
-	os << " d_" << nModels[nt].varNames[0] << model->neuronName[i] << ","; // this is supposed to be Vm
+      for (int i = 0; i < model->neuronGrpN; i++) {
+	type = model->neuronType[i];
+	os << " d_" << nModels[type].varNames[0] << model->neuronName[i] << ", "; // this is supposed to be Vm
       }
       os << "t);" << endl;
     }
     os << "  }" << endl;
   }
-  os << "  calcNeuronsCuda" << deviceID << " <<< nGrid, nThreads >>> (";
-  for (int i= 0; i < model->neuronGrpN; i++) {
-    nt= model->neuronType[i];
-    if (nt == POISSONNEURON) {
+  os << "  calcNeuronsCuda" << deviceID << " <<< nGridCuda" << deviceID << ", nThreadsCuda" << deviceID << " >>> (";
+  for (int i = 0; i < model->neuronGrpN; i++) {
+    type = model->neuronType[i];
+    if (type == POISSONNEURON) {
       os << "rates" << model->neuronName[i] << ", ";
-      os << "offset" << model->neuronName[i] << ",";
+      os << "offset" << model->neuronName[i] << ", ";
     }
-    if (model->receivesInputCurrent[i]>=2) {
+    if (model->receivesInputCurrent[i] >= 2) {
       os << "d_inputI" << model->neuronName[i] << ", ";
     }
-    for (int k= 0, l= nModels[nt].varNames.size(); k < l; k++) {
-      os << " d_" << nModels[nt].varNames[k] << model->neuronName[i]<< ", ";
+    for (int j = 0; j < nModels[type].varNames.size(); j++) {
+      os << " d_" << nModels[type].varNames[j] << model->neuronName[i]<< ", ";
     }
   }
-  for (int i=0; i< model->postSynapseType.size(); i++){
-    int pst= model->postSynapseType[i];
-    for (int k= 0, l= postSynModels[pst].varNames.size(); k < l; k++) {
-      os << " d_" << postSynModels[pst].varNames[k];
-      os << model->synapseName[i]<< ", ";
+  for (int i = 0; i < model->postSynapseType.size(); i++) {
+    type = model->postSynapseType[i];
+    for (int j = 0; j < postSynModels[type].varNames.size(); j++) {
+      os << " d_" << postSynModels[type].varNames[j];
+      os << model->synapseName[i] << ", ";
     }
   }
   os << "t);" << endl;
   os << "}" << endl;
+
   osh.close();
   os.close();
-
-
-  mos << "Global memory required for core model: " << mem/1e6 << " MB for all-to-all connectivity" << endl;
-  mos << deviceProp[deviceID].totalGlobalMem << " this device: " << deviceID << endl;  
-  if (0.5 * deviceProp[deviceID].totalGlobalMem < mem) {
-    mos << "memory required for core model (" << mem/1e6;
-    mos << "MB) is more than 50% of global memory on the chosen device";
-    mos << "(" << deviceProp[deviceID].totalGlobalMem/1e6 << "MB)." << endl;
-    mos << "Experience shows that this is UNLIKELY TO WORK ... " << endl;
-  }
 }
