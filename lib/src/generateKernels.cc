@@ -621,7 +621,7 @@ if (model.synapseConnType[i] != SPARSE) {
   			}
 
    			os << "          }" << endl; // end if (id < npost)
-			  //os << "        }" << endl; // end if (shSpkEvntV[j]>postthreshold)
+			  os << "        }" << endl; // end if (shSpkEvntV[j]>postthreshold)
    		 	os << "        __syncthreads();" << endl;
 			}
       else {
