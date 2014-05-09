@@ -57,7 +57,7 @@ This method also saves the neuron numbers of the populations rounded to the next
 */
 //--------------------------------------------------------------------------
 
-void NNmodel::initDerivedNeuronPara(unsigned int i)
+void NNmodel::initDerivedNeuronPara(unsigned int i /**< index of the neuron population */)
 {
   vector<float> tmpP;
   int numDpNames = nModels[neuronType[i]].dpNames.size();
@@ -76,7 +76,7 @@ void NNmodel::initDerivedNeuronPara(unsigned int i)
 }
 
 
-void NNmodel::initNeuronSpecs(unsigned int i)
+void NNmodel::initNeuronSpecs(unsigned int i /**< index of the neuron population */)
 {
   //default to a high but plausible value. This will usually get lowered by the configuration of any outgoing synapses
   //but note that if the nerons have no efferent synapses (e.g. the output neurons of a perceptron type setup)
@@ -115,7 +115,7 @@ This function needs to be invoked each time a synapse population is added, after
 */
 //--------------------------------------------------------------------------
 
-void NNmodel::initDerivedSynapsePara(unsigned int i)
+void NNmodel::initDerivedSynapsePara(unsigned int i /**< index of the synapse population */)
 {
   vector<float> tmpP;
   if (synapseType[i] == LEARN1SYNAPSE) {
@@ -177,7 +177,7 @@ void NNmodel::initDerivedSynapsePara(unsigned int i)
  */
 //--------------------------------------------------------------------------
 
-unsigned int NNmodel::findNeuronGrp(const string nName)
+unsigned int NNmodel::findNeuronGrp(const string nName /**< Name of the neuron population */)
 {
   for (int j= 0; j < neuronGrpN; j++) {
     if (nName == neuronName[j]) {
@@ -194,7 +194,9 @@ unsigned int NNmodel::findNeuronGrp(const string nName)
  */
 //--------------------------------------------------------------------------
 
-void NNmodel::setNeuronClusterIndex(const string neuronGroup, int hostID, int deviceID)
+void NNmodel::setNeuronClusterIndex(const string neuronGroup, /**< Name of the neuron population */
+                                    int hostID, /**< ID of the host */
+                                    int deviceID /**< ID of the device */)
 {
   int groupNo = findNeuronGrp(neuronGroup);
   nrnHostID[groupNo] = hostID;
@@ -207,7 +209,7 @@ void NNmodel::setNeuronClusterIndex(const string neuronGroup, int hostID, int de
  */
 //--------------------------------------------------------------------------
 
-unsigned int NNmodel::findSynapseGrp(const string sName)
+unsigned int NNmodel::findSynapseGrp(const string sName /**< Name of the synapse population */)
 {
   for (int j= 0; j < synapseGrpN; j++) {
     if (sName == synapseName[j]) {
@@ -224,7 +226,9 @@ unsigned int NNmodel::findSynapseGrp(const string sName)
  */
 //--------------------------------------------------------------------------
 
-void NNmodel::setSynapseClusterIndex(const string synapseGroup, int hostID, int deviceID)
+void NNmodel::setSynapseClusterIndex(const string synapseGroup, /**< Name of the synapse population */
+                                     int hostID, /**< ID of the host */
+                                     int deviceID /**< ID of the device */)
 {
   int groupNo = findSynapseGrp(synapseGroup);
   synHostID[groupNo] = hostID;
@@ -233,11 +237,15 @@ void NNmodel::setSynapseClusterIndex(const string synapseGroup, int hostID, int 
 
 
 //--------------------------------------------------------------------------
-/*! \brief This function is an alternative method to the standard addNeuronPopulation that allows the use of constant character arrays instead of C++ strings
+/*! \overload This function is an alternative method to the standard addNeuronPopulation that allows the use of constant character arrays instead of C++ strings
  */
 //--------------------------------------------------------------------------
 
-void NNmodel::addNeuronPopulation(const char *name, unsigned int nNo, unsigned int type, float *p, float *ini)
+void NNmodel::addNeuronPopulation(const char *name, /**< Name of the neuron population */
+                                  unsigned int nNo, /**< Number of neurons in the population  */
+                                  unsigned int type, /**< Type of the neurons, refers to either a standard type or user-defined type */
+                                  float *p, /**< Parameters of this neuron type */
+                                  float *ini /**< Initial values for variables of this neuron type */)
 {
   addNeuronPopulation(toString(name), nNo, type, p, ini);
 }
@@ -248,7 +256,11 @@ void NNmodel::addNeuronPopulation(const char *name, unsigned int nNo, unsigned i
  */
 //--------------------------------------------------------------------------
 
-void NNmodel::addNeuronPopulation(const string name, unsigned int nNo, unsigned int type, float *p, float *ini)
+void NNmodel::addNeuronPopulation(const string name, /**<  The name of the neuron population*/
+                                  unsigned int nNo, /**<  Number of neurons in the population */
+                                  unsigned int type, /**<  Type of the neurons, refers to either a standard type or user-defined type*/
+                                  float *p, /**< Parameters of this neuron type */
+                                  float *ini /**< Initial values for variables of this neuron type */)
 {
   if (nModels.size() < 1) prepareStandardModels();
 
@@ -284,7 +296,9 @@ void NNmodel::addNeuronPopulation(const string name, unsigned int nNo, unsigned 
 by the user are of correct size with respect to the selected neuron and synapse type.
 */ 
 //--------------------------------------------------------------------------
-void NNmodel::checkSizes(unsigned int * NeuronpSize, unsigned int * NeuronvSize, unsigned int * SynpSize)
+void NNmodel::checkSizes(unsigned int * NeuronpSize, /**< Array containing the number of neuron population parameters for each neuron population added, in the adding order */
+                         unsigned int * NeuronvSize, /**< Array containing the number of neuron population variables for each neuron population added, in the adding order */
+                         unsigned int * SynpSize /**< Array containing the number of synapse population parameters for each neuron population added, in the adding order */)
 {
   for (int j = 0; j < neuronGrpN; j++){
     if ((NeuronpSize[j]/sizeof(float)) != nModels[neuronType[j]].pNames.size()){
@@ -309,18 +323,25 @@ void NNmodel::checkSizes(unsigned int * NeuronpSize, unsigned int * NeuronvSize,
 /*! \brief This function defines the type of the explicit input to the neuron model. Current options are common constant input to all neurons, input  from a file and input defines as a rule.
 */ 
 //--------------------------------------------------------------------------
-void NNmodel::activateDirectInput(const string name, unsigned int type)
+void NNmodel::activateDirectInput(const string name, /**< Name of the neuron population */
+                                  unsigned int type /**< Type of input: 1 if common input, 2 if custom input from file, 3 if custom input as a rule*/)
 {
   unsigned int i= findNeuronGrp(name);
-  receivesInputCurrent[i]= type;	//1 if common input, 2 if custom input from file, 3 if custom input as a rule, 4 (TODO) if random input with Gaussian distribution.
+  receivesInputCurrent[i]= type;	// (TODO) 4 if random input with Gaussian distribution.
 }
 
 //--------------------------------------------------------------------------
-/*! \brief This deprecated function is provided for compatibility with the previous release of GeNN.
+/*! \overload This deprecated function is provided for compatibility with the previous release of GeNN.
  * Default values are provide for new parameters, it is strongly recommended these be selected explicity via the new version othe function
  */
 //--------------------------------------------------------------------------
-void NNmodel::addSynapsePopulation(const string name, unsigned int syntype, unsigned int conntype, unsigned int gtype, const string src, const string target, float *params)
+void NNmodel::addSynapsePopulation(const string name, /**<  The name of the synapse population*/
+                                   unsigned int syntype, /**< The type of synapse to be added (i.e. learning mode) */
+                                   unsigned int conntype, /**< The type of synaptic connectivity*/ 
+                                   unsigned int gtype, /**< The way how the synaptic conductivity g will be defined*/
+                                   const string src, /**< Name of the (existing!) pre-synaptic neuron population*/
+                                   const string target, /**< Name of the (existing!) post-synaptic neuron population*/
+                                   float *params/**< A C-type array of floats that contains synapse parameter values (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored.*/)
 {
   fprintf(stderr,"WARNING. Use of deprecated version of fn. addSynapsePopulation(). Some parameters have been supplied with default-only values\n");
 
@@ -336,11 +357,21 @@ void NNmodel::addSynapsePopulation(const string name, unsigned int syntype, unsi
 }
 
 //--------------------------------------------------------------------------
-/*! \brief This function is an alternative method to the standard addSynapsePopulation that allows the use of constant character arrays instead of C++ strings.
+/*! \overload This function is an alternative method to the standard addSynapsePopulation that allows the use of constant character arrays instead of C++ strings.
  */
 //--------------------------------------------------------------------------
 
-void NNmodel::addSynapsePopulation(const char *name, unsigned int syntype, unsigned int conntype, unsigned int gtype, unsigned int delaySteps, unsigned int postsyn, const char *src, const char *trg, float *p, float * PSVini, float *ps) 
+void NNmodel::addSynapsePopulation(const char *name, /**<  The name of the synapse population*/
+                                   unsigned int syntype, /**< The type of synapse to be added (i.e. learning mode) */
+                                   unsigned int conntype, /**< The type of synaptic connectivity*/
+                                   unsigned int gtype, /**< The way how the synaptic conductivity g will be defined*/
+                                   unsigned int delaySteps, /**< Number of delay slots*/
+                                   unsigned int postsyn, /**< Postsynaptic integration method*/
+                                   const char *src, /**< Name of the (existing!) pre-synaptic neuron population*/
+                                   const char *trg, /**< Name of the (existing!) post-synaptic neuron population*/
+                                   float *p, /**< A C-type array of floats that contains synapse parameter values (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored.*/
+                                   float * PSVini, /**< A C-type array of floats that contains the initial values for postsynaptic mechanism variables (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored.*/
+                                   float *ps/**< A C-type array of floats that contains postsynaptic mechanism parameter values (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored.*/) 
 {
   addSynapsePopulation(toString(name), syntype, conntype, gtype, delaySteps, postsyn, toString(src), toString(trg), p, PSVini, ps);
 }
@@ -351,7 +382,17 @@ void NNmodel::addSynapsePopulation(const char *name, unsigned int syntype, unsig
  */
 //--------------------------------------------------------------------------
 
-void NNmodel::addSynapsePopulation(const string name, unsigned int syntype, unsigned int conntype, unsigned int gtype, unsigned int delaySteps, unsigned int postsyn, const string src, const string trg, float *p, float* PSVini, float *ps)
+void NNmodel::addSynapsePopulation(const string name, /**<  The name of the synapse population*/
+                                   unsigned int syntype, /**< The type of synapse to be added (i.e. learning mode) */
+                                   unsigned int conntype, /**< The type of synaptic connectivity*/
+                                   unsigned int gtype, /**< The way how the synaptic conductivity g will be defined*/
+                                   unsigned int delaySteps, /**< Number of delay slots*/
+                                   unsigned int postsyn, /**< Postsynaptic integration method*/
+                                   const string src, /**< Name of the (existing!) pre-synaptic neuron population*/
+                                   const string trg, /**< Name of the (existing!) post-synaptic neuron population*/
+                                   float *p, /**< A C-type array of floats that contains synapse parameter values (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored.*/
+                                   float* PSVini, /**< A C-type array of floats that contains the initial values for postsynaptic mechanism variables (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored.*/
+                                   float *ps /**< A C-type array of floats that contains postsynaptic mechanism parameter values (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored.*/ )
 {
   unsigned int i= synapseGrpN++;
   unsigned int srcNumber, trgNumber;
@@ -407,7 +448,8 @@ void NNmodel::addSynapsePopulation(const string name, unsigned int syntype, unsi
  */
 //--------------------------------------------------------------------------
 
-void NNmodel::setSynapseG(const string sName, float g)
+void NNmodel::setSynapseG(const string sName, /**<  */
+                          float g /**<  */)
 {
   unsigned int found= findSynapseGrp(sName);
   if (g0.size() < found+1) g0.resize(found+1);
@@ -420,7 +462,8 @@ void NNmodel::setSynapseG(const string sName, float g)
  */
 //--------------------------------------------------------------------------
 
-void NNmodel::setConstInp(const string sName, float globalInp0)
+void NNmodel::setConstInp(const string sName, /**<  */
+                          float globalInp0 /**<  */)
 {
   unsigned int found= findNeuronGrp(sName);
   if (globalInp.size() < found+1) globalInp.resize(found+1);
@@ -434,7 +477,7 @@ void NNmodel::setConstInp(const string sName, float globalInp0)
  */
 //--------------------------------------------------------------------------
 
-void NNmodel::setPrecision(unsigned int floattype)
+void NNmodel::setPrecision(unsigned int floattype /**<  */)
 {
   switch (floattype) {
      case 0:
@@ -457,7 +500,8 @@ void NNmodel::setPrecision(unsigned int floattype)
 */ 
 //--------------------------------------------------------------------------
 
-void NNmodel::setMaxConn(const string sname, unsigned int maxConnP)
+void NNmodel::setMaxConn(const string sname, /**<  */
+                         unsigned int maxConnP /**<  */)
 {
   unsigned int found = findSynapseGrp(sname);
   if (synapseConnType[found] == SPARSE) {
