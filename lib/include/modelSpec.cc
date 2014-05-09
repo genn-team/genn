@@ -16,6 +16,9 @@
 #ifndef _MODELSPEC_CC_
 #define _MODELSPEC_CC_ //!< macro for avoiding multiple inclusion during compilation
 
+#include <cstdlib>
+#include <cstdio>
+
 #include "modelSpec.h"
 
 
@@ -184,8 +187,8 @@ unsigned int NNmodel::findNeuronGrp(const string nName /**< Name of the neuron p
       return j;
     }
   }
-  fprintf(stderr, "neuron group %s not found, aborting ... \n", nName.c_str());
-  exit(1);
+  cerr << "neuron group " << nName << " not found, aborting ..." << endl;
+  exit(EXIT_FAILURE);
 }
 
 
@@ -216,8 +219,8 @@ unsigned int NNmodel::findSynapseGrp(const string sName /**< Name of the synapse
       return j;
     }
   }
-  fprintf(stderr, "synapse group %s not found, aborting ...\n", sName.c_str());
-  exit(1);
+  cerr << "synapse group " << sName << " not found, aborting ..." << endl;
+  exit(EXIT_FAILURE);
 }
 
 
@@ -343,8 +346,7 @@ void NNmodel::addSynapsePopulation(const string name, /**<  The name of the syna
                                    const string target, /**< Name of the (existing!) post-synaptic neuron population*/
                                    float *params/**< A C-type array of floats that contains synapse parameter values (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored.*/)
 {
-  fprintf(stderr,"WARNING. Use of deprecated version of fn. addSynapsePopulation(). Some parameters have been supplied with default-only values\n");
-
+  cerr << "WARNING. Use of deprecated version of fn. addSynapsePopulation(). Some parameters have been supplied with default-only values" << endl;
   float postSynV[0]={};
 
   //Tries to borrow these values from the first set of synapse parameters supplied

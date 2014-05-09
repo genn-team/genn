@@ -9,7 +9,8 @@
 #include "utils.h"
 #include "hr_time.cpp"
 #include "SynDelaySim.hpp"
-//#include "SynDelay_CODE_0/runner.cc"
+#include "SynDelay_CODE_HOST/host.hpp"
+#include "SynDelay_CODE_CUDA0/cuda0.hpp" // later use host header only
 
 using namespace std;
 
@@ -17,21 +18,21 @@ using namespace std;
 SynDelay::SynDelay(int usingGPU)
 {
   this->usingGPU = usingGPU;
-  allocateMem();
-  initialize();
+  allocateMemHost();
+  initializeHost();
   if (usingGPU)
   {
-    copyGToDevice();
-    copyStateToDevice();
+    copyGToCuda0();
+    copyStateToCuda0();
   }
 }
 
 SynDelay::~SynDelay()
 {
-  freeMem();
+  freeMemHost();
   if (usingGPU)
   {
-    freeDeviceMem();
+    freeMemCuda0();
   }
 }
 
@@ -39,12 +40,12 @@ void SynDelay::run(float t)
 {
   if (usingGPU)
   {
-    stepTimeGPU(t);
-    copyStateFromDevice();
+    stepTimeCuda0(t);
+    copyStateFromCuda0();
   }
   else
   {
-    stepTimeCPU(t);
+    stepTimeHost(t);
   }
 }
 
@@ -81,7 +82,7 @@ int main(int argc, char *argv[])
     t += DT;
 
     fileV << "Time: " << t
-	  << "\t\tInput: " << VInput[spkQuePtrInput * 500]
+	  << "\t\tInput: " << VInput[spkEvntQuePtrInput * 500]
 	  << "\t\tInter: " << VInter[0]
 	  << "\t\tOutput: " << VOutput[0]
 	  << endl;

@@ -11,7 +11,7 @@
   
 --------------------------------------------------------------------------*/
 
-/*! \file generateALL.cpp
+/*! \file generateALL.cc
   \brief Main file combining the code for code generation. Part of the code generation section.
 
   The file includes separate files for generating kernels (generateKernels.cc),
@@ -22,9 +22,9 @@
 #include "global.h"
 #include "utils.h"
 #include "currentModel.cc"
-#include "generateHost.cpp"
+#include "generateHost.cc"
 #include "generateCPU.cc"
-#include "generateCuda.cpp"
+#include "generateCuda.cc"
 #include "generateKernels.cc"
 
 #ifdef _WIN32
@@ -66,9 +66,9 @@ void generate_cuda_code(int deviceID, ostream &mos)
 {
 
 #ifdef _WIN32
-  _mkdir((path + "/" + model->name + "_CODE_CUDA_" + toString(deviceID)).c_str());
+  _mkdir((path + "/" + model->name + "_CODE_CUDA" + toString(deviceID)).c_str());
 #else // UNIX
-  mkdir((path + "/" + model->name + "_CODE_CUDA_" + toString(deviceID)).c_str(), 0777); 
+  mkdir((path + "/" + model->name + "_CODE_CUDA" + toString(deviceID)).c_str(), 0777); 
 #endif
 
   // Generate the main CUDA device code
@@ -81,7 +81,7 @@ void generate_cuda_code(int deviceID, ostream &mos)
   if (model->synapseGrpN > 0) genCudaSynapse(deviceID, mos);
 
   // Generate CUDA NVCC compiler flag file
-  ofstream sm_os((path + "/" + model->name + "_CODE_CUDA_" + toString(deviceID) + "/sm_version").c_str());
+  ofstream sm_os((path + "/" + model->name + "_CODE_CUDA" + toString(deviceID) + "/sm_version").c_str());
   sm_os << "-arch sm_" << deviceProp[deviceID].major << deviceProp[deviceID].minor << endl;
   sm_os.close();
 }
@@ -113,7 +113,8 @@ int blockSizeOptimise(int deviceID)
   // Run NVCC and pipe output to this process
   command << "nvcc -cubin -Xptxas=-v -I$GeNNPATH/lib/include -arch=sm_";
   command << deviceProp[deviceID].major << deviceProp[deviceID].minor << " ";
-  command << path << "/" << model->name << "_CODE_CUDA_" << deviceID << "/control.cu 2>&1 1>/dev/null";
+  command << path << "/" << model->name << "_CODE_CUDA" << deviceID;
+  command << "/cuda" << deviceID << ".cu 2>&1 1>/dev/null";
 
 #ifdef _WIN32
   FILE *nvccPipe = _popen(command.str().c_str(), "r");
@@ -224,7 +225,7 @@ int blockSizeOptimise(int deviceID)
 
   // Delete dry-run code
   char temp[256];
-  string codeRoot = path + "/" + model->name + "_CODE_CUDA_" + toString(deviceID) + "/";
+  string codeRoot = path + "/" + model->name + "_CODE_CUDA" + toString(deviceID) + "/";
   DIR *dir = opendir(codeRoot.c_str());
   struct dirent *codeFile;
   if (dir != NULL) {

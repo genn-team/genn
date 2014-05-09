@@ -1,4 +1,3 @@
-
 /*--------------------------------------------------------------------------
    Author/Modifier: Thomas Nowotny
   
@@ -21,20 +20,11 @@
 //--------------------------------------------------------------------------
 /*! \file utils.h
 
-\brief This file contains standard utility functions provide within the NVIDIA CUDA software development toolkit (SDK). The remainder of the file contains a function that defines the standard neuron models.
+\brief This file contains the declarations of standard utility functions, templates and macros provided within the NVIDIA CUDA software development toolkit (SDK).
 */
 //--------------------------------------------------------------------------
 
-#include <cstdlib>
-#include <iostream>
-#include <string>
 #include <sstream>
-#include <vector>
-#include <map>
-#include <memory>
-#include <fstream>
-#include <cmath>
-#include <cuda_runtime.h>
 
 using namespace std;
 
@@ -57,12 +47,21 @@ using namespace std;
 
 
 //--------------------------------------------------------------------------
+/* \brief Macro for a "safe" output of a parameter into generated code by essentially just
+   adding a bracket around the parameter value in the generated code.
+ */
+//--------------------------------------------------------------------------
+ 
+#define SAVEP(X) "(" << X << ")"
+
+
+//--------------------------------------------------------------------------
 /* \brief template function for string conversion from const char* to C++ string
  */
 //--------------------------------------------------------------------------
 
 template<typename T>
-std::string toString(T t)
+string toString(T t)
 {
   std::stringstream s;
   s << t;
@@ -77,17 +76,7 @@ std::string toString(T t)
  */
 //--------------------------------------------------------------------------
 
-void writeHeader(ostream &os) 
-{
-  string s;
-  ifstream is("header.src");
-  getline(is, s);
-  while (is.good()) {
-    os << s << endl;
-    getline(is, s);
-  }
-  os << endl;
-}
+void writeHeader(ostream &os);
 
 
 //--------------------------------------------------------------------------
@@ -95,14 +84,7 @@ void writeHeader(ostream &os)
  */
 //--------------------------------------------------------------------------
 
-void substitute(string &s, const string trg, const string rep)
-{
-  size_t found= s.find(trg);
-  while (found != string::npos) {
-    s.replace(found,trg.length(),rep);
-    found= s.find(trg);
-  }
-}
+void substitute(string &s, const string trg, const string rep);
 
 
 //--------------------------------------------------------------------------
@@ -110,25 +92,7 @@ void substitute(string &s, const string trg, const string rep)
  */
 //--------------------------------------------------------------------------
 
-unsigned int theSize(string type) 
-{
-  unsigned int size = 0;
-  if (type == "int") size = sizeof(int);
-  if (type == "unsigned int") size = sizeof(unsigned int);
-  if (type == "float") size = sizeof(float);
-  if (type == "double") size = sizeof(double);
-  if (type == "long double") size = sizeof(long double);
-  return size;
-}
-
-
-//--------------------------------------------------------------------------
-/* \brief Macro for a "safe" output of a parameter into generated code by essentially just
-   adding a bracket around the parameter value in the generated code.
- */
-//--------------------------------------------------------------------------
- 
-#define SAVEP(X) "(" << X << ")" 
+unsigned int theSize(string type);
 
 
 #endif  // _UTILS_H_
