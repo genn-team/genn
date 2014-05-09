@@ -597,7 +597,7 @@ void genCudaSynapse(int deviceID, ostream &mos)
       }
 
       os << "          }" << endl; // end if (id < npost)
-      if (model.neuronType[src] != POISSONNEURON) {
+      if (model->neuronType[src] != POISSONNEURON) {
         os << "        }" << endl; // end if (shSpkEvntV[j]>postthreshold)
       }		 	
     os << "        __syncthreads();" << endl;
