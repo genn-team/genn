@@ -362,8 +362,8 @@ void genRunner(NNmodel &model, //!< Model description
   os << "}" << endl; 
 
   os << "void allocateAllSparseArrays() {" << endl;
-  os << "\tvoid allocateAllHostSparseArrays();" << endl;
-  os << "\tvoid allocateAllDeviceSparseArrays();" << endl;
+  os << "\t allocateAllHostSparseArrays();" << endl;
+  os << "\t allocateAllDeviceSparseArrays();" << endl;
   os << "}" << endl;
 
   // ------------------------------------------------------------------------
