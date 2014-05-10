@@ -216,7 +216,8 @@ public:
   //void addPostSyntoNeuron(const string,unsigned int); //!< Method for defining postsynaptic dynamics
   void activateDirectInput(const string, unsigned int);  
   void setConstInp(const string, float); //!< Method for setting the global input value for a neuron population if CONSTINP
-  void setNeuronClusterIndex(const string neuronGroup, int hostID, int deviceID); //!< Function for setting which host and which device a neuron group will be simulated on
+  void setNeuronClusterIndex(unsigned int neuronID, int hostID, int deviceID); //!< Overload function for setting which host and device the neuron group of ID [neuronID] will simulate on
+  void setNeuronClusterIndex(const string neuronName, int hostID, int deviceID); //!< Function for setting which host and device the neuron group named [neuronName] will simulate on.
 
   // PUBLIC SYNAPSE FUNCTIONS
   //=========================
@@ -227,7 +228,8 @@ public:
   void setSynapseG(const string, float); //!< Method for setting the conductance (g) value for a synapse population with "GLOBALG" charactertistic
   //void setSynapseNo(unsigned int,unsigned int); // !< Sets the number of connections for sparse matrices  
   void setMaxConn(const string, unsigned int); //< Set maximum connections per neuron for the given group (needed for optimization by sparse connectivity)
-  void setSynapseClusterIndex(const string synapseGroup, int hostID, int deviceID); //!< Function for setting which host and which device a synapse group will be simulated on
+  void setSynapseClusterIndex(unsigned int synapseID, int hostID, int deviceID); //!< Overload function for setting which host and device the synapse group of ID [synapseID] will simulate on
+  void setSynapseClusterIndex(const string synapseName, int hostID, int deviceID); //!< Function for setting which host and device the synapse group named [synapseName] will simulate on.
 
 };
 

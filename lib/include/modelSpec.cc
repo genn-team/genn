@@ -193,17 +193,29 @@ unsigned int NNmodel::findNeuronGrp(const string nName /**< Name of the neuron p
 
 
 //--------------------------------------------------------------------------
-/*! \brief This function is for setting which host and which device a neuron group will be simulated on
+/*! \brief Function for setting which host and device the neuron group of ID [neuronID] will simulate on.
  */
 //--------------------------------------------------------------------------
 
-void NNmodel::setNeuronClusterIndex(const string neuronGroup, /**< Name of the neuron population */
+void NNmodel::setNeuronClusterIndex(unsigned int neuronID, /**< ID number of the neuron population */
                                     int hostID, /**< ID of the host */
                                     int deviceID /**< ID of the device */)
 {
-  int groupNo = findNeuronGrp(neuronGroup);
-  nrnHostID[groupNo] = hostID;
-  nrnDevID[groupNo] = deviceID;
+  nrnHostID[neuronID] = hostID;
+  nrnDevID[neuronID] = deviceID;
+}
+
+
+//--------------------------------------------------------------------------
+/*! \brief Overload function for setting which host and device the neuron group named [neuronName] will simulate on
+ */
+//--------------------------------------------------------------------------
+
+void NNmodel::setNeuronClusterIndex(const string neuronName, /**< Name of the neuron population */
+                                    int hostID, /**< ID of the host */
+                                    int deviceID /**< ID of the device */)
+{
+  setNeuronClusterIndex(findNeuronGrp(neuronName), hostID, deviceID);
 }
 
 
@@ -225,17 +237,29 @@ unsigned int NNmodel::findSynapseGrp(const string sName /**< Name of the synapse
 
 
 //--------------------------------------------------------------------------
-/*! \brief This function is for setting which host and which device a synapse group will be simulated on
+/*! \brief Function for setting which host and device the synapse group of ID [synapseID] will simulate on.
  */
 //--------------------------------------------------------------------------
 
-void NNmodel::setSynapseClusterIndex(const string synapseGroup, /**< Name of the synapse population */
-                                     int hostID, /**< ID of the host */
-                                     int deviceID /**< ID of the device */)
+void NNmodel::setSynapseClusterIndex(unsigned int synapseID, /**< ID number of the synapse population */
+                                    int hostID, /**< ID of the host */
+                                    int deviceID /**< ID of the device */)
 {
-  int groupNo = findSynapseGrp(synapseGroup);
-  synHostID[groupNo] = hostID;
-  synDevID[groupNo] = deviceID;  
+  synHostID[synapseID] = hostID;
+  synDevID[synapseID] = deviceID;
+}
+
+
+//--------------------------------------------------------------------------
+/*! \brief Overload function for setting which host and device the synapse group named [synapseName] will simulate on
+ */
+//--------------------------------------------------------------------------
+
+void NNmodel::setSynapseClusterIndex(const string synapseName, /**< Name of the synapse population */
+                                    int hostID, /**< ID of the host */
+                                    int deviceID /**< ID of the device */)
+{
+  setSynapseClusterIndex(findSynapseGrp(synapseName), hostID, deviceID);
 }
 
 

@@ -259,15 +259,18 @@ int blockSizeOptimise(int deviceID)
 
 void bestDeviceGenerate()
 {
-  generate_host_code(cerr);
-
   int best = 0, current, bestDevice;
+  generate_host_code(cerr);
   for (int deviceID = 0; deviceID < deviceCount; deviceID++) {
     if (optCudaBlockSize) {
-      current = blockSizeOptimise(deviceID); // find the device which supports the highest warp occupancy
+
+      // find the device which supports the highest warp occupancy
+      current = blockSizeOptimise(deviceID);
     }
     else {
-      current = deviceProp[deviceID].totalGlobalMem; // find the device with the most global memory
+
+      // find the device with the most global memory
+      current = deviceProp[deviceID].totalGlobalMem;
     }
     if (current > best) {
       best = current;
@@ -278,7 +281,6 @@ void bestDeviceGenerate()
   cerr << "using device " << bestDevice;
   if (optCudaBlockSize) cerr << " which supports " << best << " warps of occupancy" << endl;
   else cerr << " with " << best << " bytes of global memory" << endl;
-
   generate_cuda_code(bestDevice, cerr);
 }
 
@@ -292,13 +294,45 @@ void bestDeviceGenerate()
 
 void multiDeviceGenerate()
 {
-
   // this needs to split the network evenly (fancy load balancing algorithm will go here, in future),
-  // set the hostID:deviceID of each neuron and synapse group accordingly,
+  // set the hostID:deviceID of each neuron and incoming synapse group accordingly,
   // perform block size optimisation (if requested) for each hostID:deviceID included in the computation,
   // and finally update the padSum* variables of the NNmodel to reflect the new block sizes
 
+  // change below so that neuron groups are sent to devices with the lowest PADDED neuron number
+
+  vector<unsigned int> nrnPerDevice(deviceCount, 0);
+  unsigned int leastBusy = 0;
+  unsigned int warpOccupancy[deviceCount];
+  for (int nrnGroup = 0; nrnGroup < model->neuronGrpN; nrnGroup++) {
+
+    // send this neuron group to the device with the least 
+    for (int deviceID = 0; deviceID < deviceCount; deviceID++) {
+      if (nrnPerDevice[deviceID] < nrnPerDevice[leastBusy]) {
+	leastBusy = deviceID;
+      }
+    }
+    nrnPerDevice[leastBusy] += model->neuronN[nrnGroup];
+    model->setNeuronClusterIndex(nrnGroup, 0, leastBusy);
+
+    // send the incoming synapse groups to this device
+    for (int inSynGrp = 0; inSynGrp < model->inSyn[nrnGroup].size(); inSynGrp++) {
+      model->setSynapseClusterIndex(model->inSyn[nrnGroup][inSynGrp], 0, leastBusy);
+    }
+  }
+
+ // optimise block size, reset padded thread sums and generate final code
+  generate_host_code(cerr);
+  if (optCudaBlockSize) { 
+    for (int deviceID = 0; deviceID < deviceCount; deviceID++) {
+      warpOccupancy[deviceID] = blockSizeOptimise(deviceID);
+      cerr << "device " << deviceID << " has " << warpOccupancy[deviceID] << " warps occupancy" << endl;
+    }
+  }
   model->calcPaddedThreadSums();
+  for (int deviceID = 0; deviceID < deviceCount; deviceID++) {
+    generate_cuda_code(deviceID, cerr);
+  }
 }
 
 
@@ -319,7 +353,7 @@ int main(int argc,     //!< number of arguments; expected to be 2
     exit(EXIT_FAILURE);
   }
   cerr << "call was ";
-  for (int i= 0; i < argc; i++) {
+  for (int i = 0; i < argc; i++) {
     cerr << argv[i] << " ";
   }
   cerr << endl;
