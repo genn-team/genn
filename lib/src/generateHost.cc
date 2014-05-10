@@ -292,7 +292,7 @@ void genHostCode(ostream &mos)
   os << "{" << endl;
 
   // neuron variables
-  os << "  srand((unsigned int) time(NULL));" << endl;
+  //os << "  srand((unsigned int) time(NULL));" << endl;
   //os << "srand(101);" << endl;
   os << endl;
   os << "  // neuron variables" << endl;

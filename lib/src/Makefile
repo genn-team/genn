@@ -11,7 +11,6 @@
 ##
 ##--------------------------------------------------------------------------
 
-ROOTDIR         := $(GeNNPATH)/lib/src
 EXECUTABLE      := generateALL
 SOURCES         := generateALL.cc utils.cc
 

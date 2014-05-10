@@ -11,7 +11,6 @@
 ##  
 ##--------------------------------------------------------------------------
 
-ROOTDIR		:= $(GeNNPATH)/userproject/SynDelay_project
 EXECUTABLE	:= syn_delay
 SOURCES		:= SynDelaySim.cpp
 
