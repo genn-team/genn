@@ -546,9 +546,9 @@ void NNmodel::setMaxConn(const string sname, /**<  */
 
 void NNmodel::calcPaddedThreadSums()
 {
-  int padN;
-  vector<int> padSum(synapseGrpN);
-  vector<int> sumSoFar(deviceCount, 0);
+  unsigned int padN;
+  vector<unsigned int> padSum(synapseGrpN);
+  vector<unsigned int> sumSoFar(deviceCount, 0);
   for (int i = 0; i < synapseGrpN; i++) {
     if (synapseConnType[i] == SPARSE) {
       // sparse synapse kernel thread sum
@@ -561,6 +561,7 @@ void NNmodel::calcPaddedThreadSums()
     sumSoFar[synDevID[i]] = sumSoFar[synDevID[i]] + padN;
     padSum[i] = sumSoFar[synDevID[i]];
   }
+  padSumSynapseKrnl = padSum;
 
   padSum.resize(lrnGroups);
   sumSoFar.assign(deviceCount, 0);
@@ -570,6 +571,7 @@ void NNmodel::calcPaddedThreadSums()
     sumSoFar[synDevID[i]] = sumSoFar[synDevID[i]] + padN;
     padSum[i] = sumSoFar[synDevID[i]];
   }
+  padSumLearnN = padSum;
 
   padSum.resize(neuronGrpN);
   sumSoFar.assign(deviceCount, 0);
@@ -579,6 +581,7 @@ void NNmodel::calcPaddedThreadSums()
     sumSoFar[nrnDevID[i]] = sumSoFar[nrnDevID[i]] + padN;
     padSum[i] = sumSoFar[nrnDevID[i]];
   }
+  padSumNeuronN = padSum;
 }
 
 

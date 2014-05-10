@@ -100,7 +100,7 @@ int blockSizeOptimise(int deviceID)
   cerr << "optimizing block sizes for device " << deviceID << endl;
 
   int *blockSizePtr;
-  char pipeBuffer[256];
+  char buffer[256];
   stringstream command, ptxInfo;
   string kernelName, junk;
   int reqRegs, reqSmem, deviceOccupancy, ptxInfoFound = 0;
@@ -131,26 +131,26 @@ int blockSizeOptimise(int deviceID)
   }
 
   // Read pipe until reg / smem usage is found, then calculate optimum block size for each kernel
-  while (fgets(pipeBuffer, 256, nvccPipe) != NULL) {
-    if (strstr(pipeBuffer, "error:") != NULL) {
-      cout << pipeBuffer;
+  while (fgets(buffer, 256, nvccPipe) != NULL) {
+    if (strstr(buffer, "error:") != NULL) {
+      cout << buffer;
     }
-    else if (strstr(pipeBuffer, "calcSynapses") != NULL) {
+    else if (strstr(buffer, "calcSynapses") != NULL) {
       blockSizePtr = &synapseBlkSz[deviceID];
       kernelName = "synapse";
     }
-    else if (strstr(pipeBuffer, "learnSynapses") != NULL) {
+    else if (strstr(buffer, "learnSynapses") != NULL) {
       blockSizePtr = &learnBlkSz[deviceID];
       kernelName = "learn";
     }
-    else if (strstr(pipeBuffer, "calcNeurons") != NULL) {
+    else if (strstr(buffer, "calcNeurons") != NULL) {
       blockSizePtr = &neuronBlkSz[deviceID];
       kernelName = "neuron";
     }
-    if (strncmp(pipeBuffer, "ptxas info    : Used", 20) == 0) {
+    if (strncmp(buffer, "ptxas info    : Used", 20) == 0) {
       ptxInfoFound = 1;
       bestOccupancy = 0;
-      ptxInfo << pipeBuffer;
+      ptxInfo << buffer;
       ptxInfo >> junk >> junk >> junk >> junk >> reqRegs >> junk >> reqSmem;
       ptxInfo.str("");
       cerr << "kernel: " << kernelName << ", regs needed: " << reqRegs << ", smem needed: " << reqSmem << endl;
@@ -224,15 +224,14 @@ int blockSizeOptimise(int deviceID)
 #endif
 
   // Delete dry-run code
-  char temp[256];
+  struct dirent *codeFile;
   string codeRoot = path + "/" + model->name + "_CODE_CUDA" + toString(deviceID) + "/";
   DIR *dir = opendir(codeRoot.c_str());
-  struct dirent *codeFile;
   if (dir != NULL) {
     while ((codeFile = readdir(dir)) != NULL) {
       if (strcmp(codeFile->d_name, ".") && strcmp(codeFile->d_name, "..")) {
-	strcat(strcpy(temp, codeRoot.c_str()), codeFile->d_name);
-	remove(temp);
+	strcat(strcpy(buffer, codeRoot.c_str()), codeFile->d_name);
+	remove(buffer);
       }
     }
   }
