@@ -40,7 +40,7 @@ void genHostCode(ostream &mos)
   unsigned int type, tmp, size, mem = 0;
 
 
-  //------------------------
+  //----------------------
   // open and setup host.h
 
   hFile = path + tS("/") + model->name + tS("_CODE_HOST/host.h");
@@ -54,7 +54,74 @@ void genHostCode(ostream &mos)
   osh << endl;
 
 
-  //------------------------
+  //------------------------------
+  // declare host neuron variables
+
+  osh << "// neuron variable declarations" << endl;
+  for (int i = 0; i < model->neuronGrpN; i++) {
+    type = model->neuronType[i];
+    osh << "extern unsigned int glbscnt" << model->neuronName[i] << ";" << endl;
+    osh << "extern unsigned int *glbSpk" << model->neuronName[i] << ";" << endl;
+    if (model->neuronDelaySlots[i] == 1) {
+      osh << "extern unsigned int glbSpkEvntCnt" << model->neuronName[i] << ";" << endl;
+    }
+    else {
+      osh << "extern unsigned int spkEvntQuePtr" << model->neuronName[i] << ";" << endl;
+      osh << "extern unsigned int *glbSpkEvntCnt" << model->neuronName[i] << ";" << endl;
+    }
+    osh << "extern unsigned int *glbSpkEvnt" << model->neuronName[i] << ";" << endl;
+    for (int j = 0; j < model->inSyn[i].size(); j++) {
+      osh << "extern " << model->ftype << " *inSyn" << model->neuronName[i] << j << ";" << endl;
+    } 
+    for (int j = 0; j < nModels[type].varNames.size(); j++) {
+      osh << "extern " << nModels[type].varTypes[j] << " *" << nModels[type].varNames[j];
+      osh << model->neuronName[i] << ";" << endl;
+    }
+    if (model->neuronNeedSt[i]) {
+      osh << "extern " << model->ftype << " *sT" << model->neuronName[i] << ";" << endl;
+    }
+  }
+  osh << endl;
+
+
+  //------------------------------
+  // declare host synase variables
+
+  osh << "// synapse variable declarations" << endl;
+  for (int i = 0; i < model->postSynapseType.size(); i++) {
+    type = model->postSynapseType[i];
+    for (int j = 0; j < postSynModels[type].varNames.size(); j++) {
+      osh << "extern " << postSynModels[type].varTypes[j] << " *";
+      osh << postSynModels[type].varNames[j] << model->synapseName[i] << ";" << endl;
+    }
+  }
+  osh << "struct Conductance {" << endl;
+  osh << "  " << model->ftype << " *gp;" << endl; // only if !globalg
+  osh << "  unsigned int *gIndInG;" << endl;
+  osh << "  unsigned int *gInd;" << endl;
+  osh << "  unsigned int connN;" << endl; 
+  osh << "};" << endl;
+  for (int i = 0; i < model->synapseGrpN; i++) {
+    if (model->synapseConnType[i] == SPARSE) {
+      osh << "extern Conductance g" << model->synapseName[i] << ";" << endl;
+    }
+    else {
+      if (model->synapseGType[i] == INDIVIDUALG) {
+	osh << "extern " << model->ftype << " *gp" << model->synapseName[i] << ";" << endl;
+      }
+      if (model->synapseGType[i] == INDIVIDUALID) {
+      	osh << "extern unsigned int *gp" << model->synapseName[i] << ";" << endl;
+      }	 
+    }
+    if (model->synapseType[i] == LEARN1SYNAPSE) {
+      osh << "extern " << model->ftype << " *grawp" << model->synapseName[i] << ";" << endl;
+    }
+  }
+  osh << endl;
+  osh << "// host function declarations" << endl;
+
+
+  //-----------------------
   // open and setup host.cc
 
   ccFile = path + tS("/") + model->name + tS("_CODE_HOST/host.cc");
@@ -67,8 +134,7 @@ void genHostCode(ostream &mos)
   os << "//-------------------------------------------------------------------------" << endl << endl;
   os << endl;
 
-
-  //----------------------
+  //---------------------
   // add host.cc includes
 
   os << "#include \"utils.h\"" << endl;
@@ -81,76 +147,69 @@ void genHostCode(ostream &mos)
   os << endl;
 
 
-  //----------------------
-  // host neuron variables
+  //-----------------------------
+  // define host neuron variables
 
-  osh << "// neuron variables" << endl;
+  os << "// neuron variable definitions" << endl;
   for (int i = 0; i < model->neuronGrpN; i++) {
     type = model->neuronType[i];
-    osh << "unsigned int glbscnt" << model->neuronName[i] << ";" << endl;
-    osh << "unsigned int *glbSpk" << model->neuronName[i] << ";" << endl;
+    os << "unsigned int glbscnt" << model->neuronName[i] << ";" << endl;
+    os << "unsigned int *glbSpk" << model->neuronName[i] << ";" << endl;
     if (model->neuronDelaySlots[i] == 1) {
-      osh << "unsigned int glbSpkEvntCnt" << model->neuronName[i] << ";" << endl;
+      os << "unsigned int glbSpkEvntCnt" << model->neuronName[i] << ";" << endl;
     }
     else {
-      osh << "unsigned int spkEvntQuePtr" << model->neuronName[i] << ";" << endl;
-      osh << "unsigned int *glbSpkEvntCnt" << model->neuronName[i] << ";" << endl;
+      os << "unsigned int spkEvntQuePtr" << model->neuronName[i] << ";" << endl;
+      os << "unsigned int *glbSpkEvntCnt" << model->neuronName[i] << ";" << endl;
     }
-    osh << "unsigned int *glbSpkEvnt" << model->neuronName[i] << ";" << endl;
+    os << "unsigned int *glbSpkEvnt" << model->neuronName[i] << ";" << endl;
     for (int j = 0; j < model->inSyn[i].size(); j++) {
-      osh << model->ftype << " *inSyn" << model->neuronName[i] << j << ";" << endl;
+      os << model->ftype << " *inSyn" << model->neuronName[i] << j << ";" << endl;
     } 
     for (int j = 0; j < nModels[type].varNames.size(); j++) {
-      osh << nModels[type].varTypes[j] << " *";
-      osh << nModels[type].varNames[j] << model->neuronName[i] << ";" << endl;
+      os << nModels[type].varTypes[j] << " *";
+      os << nModels[type].varNames[j] << model->neuronName[i] << ";" << endl;
     }
     if (model->neuronNeedSt[i]) {
-      osh << model->ftype << " *sT" << model->neuronName[i] << ";" << endl;
+      os << model->ftype << " *sT" << model->neuronName[i] << ";" << endl;
     }
   }
-  osh << endl;
+  os << endl;
 
 
-  //----------------------
-  // host synase variables
+  //-----------------------------
+  // define host synase variables
 
-  osh << "// synapse variables" << endl;
+  os << "// synapse variable definitions" << endl;
   for (int i = 0; i < model->postSynapseType.size(); i++) {
     type = model->postSynapseType[i];
     for (int j = 0; j < postSynModels[type].varNames.size(); j++) {
-      osh << postSynModels[type].varTypes[j] << " *";
-      osh << postSynModels[type].varNames[j] << model->synapseName[i] << ";" << endl;
+      os << postSynModels[type].varTypes[j] << " *";
+      os << postSynModels[type].varNames[j] << model->synapseName[i] << ";" << endl;
     }
   }
-  osh << "struct Conductance {" << endl;
-  osh << "  " << model->ftype << " *gp;" << endl; // only if !globalg
-  osh << "  unsigned int *gIndInG;" << endl;
-  osh << "  unsigned int *gInd;" << endl;
-  osh << "  unsigned int connN;" << endl; 
-  osh << "};" << endl;
   for (int i = 0; i < model->synapseGrpN; i++) {
     if (model->synapseConnType[i] == SPARSE) {
-      osh << "Conductance g" << model->synapseName[i] << ";" << endl;
-      //  osh << "  " << model->ftype << " *gp" << model->synapseName[i] << ";" << endl;
-      //  osh << "  unsigned int *gp" << model->synapseName[i]  << endl;
-      //  osh << "  unsigned int *gp" << model->synapseName[i] << "ind;" << endl;
-      //  osh << "} ;" << endl;
+      os << "Conductance g" << model->synapseName[i] << ";" << endl;
+      //  os << "  " << model->ftype << " *gp" << model->synapseName[i] << ";" << endl;
+      //  os << "  unsigned int *gp" << model->synapseName[i]  << endl;
+      //  os << "  unsigned int *gp" << model->synapseName[i] << "ind;" << endl;
+      //  os << "} ;" << endl;
     }
     else {
       if (model->synapseGType[i] == INDIVIDUALG) {
-	osh << model->ftype << " *gp" << model->synapseName[i] << ";" << endl;
+	os << model->ftype << " *gp" << model->synapseName[i] << ";" << endl;
       }
       if (model->synapseGType[i] == INDIVIDUALID) {
-      	osh << "unsigned int *gp" << model->synapseName[i] << ";" << endl;
+      	os << "unsigned int *gp" << model->synapseName[i] << ";" << endl;
       }	 
     }
     if (model->synapseType[i] == LEARN1SYNAPSE) {
-      osh << model->ftype << " *grawp" << model->synapseName[i] << ";" << endl;
+      os << model->ftype << " *grawp" << model->synapseName[i] << ";" << endl;
     }
   }
-  osh << endl;
-
-  osh << "// host functions" << endl;
+  os << endl;
+  os << "// host function definitions" << endl << endl;
 
 
   //----------------------------------------------------

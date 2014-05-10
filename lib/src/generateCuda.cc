@@ -43,7 +43,7 @@ void genCudaCode(int deviceID, ostream &mos)
   unsigned int type, tmp, size;
 
 
-  //----------------------------------
+  //--------------------------------
   // open and setup cuda[deviceID].h
 
   hFile = path + tS("/") + model->name + tS("_CODE_CUDA") + tS(deviceID) + tS("/cuda") + tS(deviceID) + tS(".h");
@@ -55,6 +55,74 @@ void genCudaCode(int deviceID, ostream &mos)
   osh << "*/" << endl;
   osh << "//-------------------------------------------------------------------------" << endl << endl;
   osh << endl;
+
+
+  //------------------------------
+  // add cuda[deviceID].h includes
+
+  osh << "#include <cuda_runtime.h>" << endl;
+
+
+  //--------------------------------
+  // declare device neuron variables
+
+  osh << "// neuron variables" << endl;
+  for (int i = 0; i < model->neuronGrpN; i++) {
+    type = model->neuronType[i];
+    for (int j = 0; j < nModels[type].varNames.size(); j++) {
+      osh << "extern " << nModels[type].varTypes[j] << " *d_" << nModels[type].varNames[j];
+      osh << model->neuronName[i] << deviceID << ";" << endl;
+    }
+  }
+  osh << endl;
+
+
+  //---------------------------------
+  // declare device synapse variables
+
+  osh << "// synapse variables" << endl;
+  for (int i = 0; i< model->postSynapseType.size(); i++){
+    type = model->postSynapseType[i];
+    for (int j = 0; j < postSynModels[type].varNames.size(); j++) {
+      osh << "extern " << postSynModels[type].varTypes[j] << " *d_" << postSynModels[type].varNames[j];
+      osh << model->synapseName[i] << deviceID << ";" << endl;
+      // should work at the moment but if we make postsynapse vectors independent of synapses this may change
+    }
+  }
+  for (int i = 0; i < model->synapseGrpN; i++) {
+    if (model->synapseGType[i] == INDIVIDUALG) {
+      osh << "extern " << model->ftype << " *d_gp" << model->synapseName[i] << deviceID << ";" << endl;
+      if (model->synapseType[i] == LEARN1SYNAPSE) {
+	osh << "extern " << model->ftype << " *d_grawp" << model->synapseName[i] << deviceID << ";" << endl;
+      }
+    }
+    if (model->synapseGType[i] == INDIVIDUALID) {
+      osh << "extern unsigned int *d_gp" << model->synapseName[i] << deviceID << ";" << endl;
+    }
+    if (model->synapseConnType[i] == SPARSE) {
+      osh << "extern unsigned int *d_gp" << model->synapseName[i] << deviceID << "_indInG;" << endl;
+      osh << "extern unsigned int *d_gp" << model->synapseName[i] << deviceID << "_ind;" << endl;
+    } 
+  }
+  osh << endl;
+
+
+  //---------------------------------------------
+  // declare device block and grid size variables
+
+  osh << "// CUDA block and grid sizes" << endl;
+  if (model->synapseGrpN > 0) { 
+    osh << "extern dim3 sThreadsCuda" << deviceID << ";" << endl;
+    osh << "extern dim3 sGridCuda" << deviceID << ";" << endl;
+  }
+  if (model->lrnGroups > 0) {
+    osh << "extern dim3 lThreadsCuda" << deviceID << ";" << endl;
+    osh << "extern dim3 lGridCuda" << deviceID << ";" << endl;
+  }
+  osh << "extern dim3 nThreadsCuda" << deviceID << ";" << endl;
+  osh << "extern dim3 nGridCuda" << deviceID << ";" << endl;
+  osh << endl;
+  osh << "// CUDA device functions" << endl;
 
 
   //---------------------------------
@@ -76,7 +144,6 @@ void genCudaCode(int deviceID, ostream &mos)
   // add cuda[deviceID].cu includes
 
   os << "#include <cstdio>" << endl;
-  //os << "#include <>" << endl;
   os << "#include \"utils.h\"" << endl;
   os << "#include \"cuda" << deviceID << ".h\"" << endl;
   os << "#include \"../" << model->name << "_CODE_HOST/host.h\"" << endl;
@@ -88,79 +155,78 @@ void genCudaCode(int deviceID, ostream &mos)
   os << endl;
 
 
-  //------------------------
-  // device neuron variables
+  //-------------------------------
+  // define device neuron variables
 
-  osh << "// neuron variables" << endl;
+  os << "// neuron variables" << endl;
   for (int i = 0; i < model->neuronGrpN; i++) {
     type = model->neuronType[i];
     for (int j = 0; j < nModels[type].varNames.size(); j++) {
-      osh << nModels[type].varTypes[j] << " *d_" << nModels[type].varNames[j];
-      osh << model->neuronName[i] << deviceID << ";" << endl;
+      os << nModels[type].varTypes[j] << " *d_" << nModels[type].varNames[j];
+      os << model->neuronName[i] << deviceID << ";" << endl;
     }
   }
-  osh << endl;
+  os << endl;
 
 
-  //-------------------------
-  // device synapse variables
+  //--------------------------------
+  // define device synapse variables
 
-  osh << "// synapse variables" << endl;
+  os << "// synapse variables" << endl;
   for (int i = 0; i< model->postSynapseType.size(); i++){
     type = model->postSynapseType[i];
     for (int j = 0; j < postSynModels[type].varNames.size(); j++) {
-      osh << postSynModels[type].varTypes[j] << " *d_" << postSynModels[type].varNames[j];
-      osh << model->synapseName[i] << deviceID << ";" << endl;
+      os << postSynModels[type].varTypes[j] << " *d_" << postSynModels[type].varNames[j];
+      os << model->synapseName[i] << deviceID << ";" << endl;
       // should work at the moment but if we make postsynapse vectors independent of synapses this may change
     }
   }
   for (int i = 0; i < model->synapseGrpN; i++) {
     if (model->synapseGType[i] == INDIVIDUALG) {
-      osh << model->ftype << " *d_gp" << model->synapseName[i] << deviceID << ";" << endl;
+      os << model->ftype << " *d_gp" << model->synapseName[i] << deviceID << ";" << endl;
       if (model->synapseType[i] == LEARN1SYNAPSE) {
-	osh << model->ftype << " *d_grawp" << model->synapseName[i] << deviceID << ";" << endl;
+	os << model->ftype << " *d_grawp" << model->synapseName[i] << deviceID << ";" << endl;
       }
     }
     if (model->synapseGType[i] == INDIVIDUALID) {
-      osh << "unsigned int *d_gp" << model->synapseName[i] << deviceID << ";" << endl;
+      os << "unsigned int *d_gp" << model->synapseName[i] << deviceID << ";" << endl;
     }
     if (model->synapseConnType[i] == SPARSE) {
-      osh << "unsigned int *d_gp" << model->synapseName[i] << deviceID << "_indInG;" << endl;
-      osh << "unsigned int *d_gp" << model->synapseName[i] << deviceID << "_ind;" << endl;
+      os << "unsigned int *d_gp" << model->synapseName[i] << deviceID << "_indInG;" << endl;
+      os << "unsigned int *d_gp" << model->synapseName[i] << deviceID << "_ind;" << endl;
     } 
   }
-  osh << endl;
+  os << endl;
 
 
-  //----------------------------
-  // device block and grid sizes
+  //--------------------------------------------
+  // define device block and grid size variables
 
-  osh << "// CUDA block and grid sizes" << endl;
+  os << "// CUDA block and grid sizes" << endl;
   if (model->synapseGrpN > 0) { 
     unsigned int synapseGridSz = model->padSumSynapseKrnl[model->synapseGrpN - 1];   
     synapseGridSz = synapseGridSz / synapseBlkSz[deviceID];
-    osh << "dim3 sThreadsCuda" << deviceID << "(" << synapseBlkSz[deviceID] << ", 1);" << endl;
-    osh << "dim3 sGridCuda" << deviceID << "(" << synapseGridSz << ", 1);" << endl;
+    os << "dim3 sThreadsCuda" << deviceID << "(" << synapseBlkSz[deviceID] << ", 1);" << endl;
+    os << "dim3 sGridCuda" << deviceID << "(" << synapseGridSz << ", 1);" << endl;
   }
   if (model->lrnGroups > 0) {
     unsigned int learnGridSz = model->padSumLearnN[model->lrnGroups - 1];
     learnGridSz = learnGridSz / learnBlkSz[deviceID];
-    osh << "dim3 lThreadsCuda" << deviceID << "(" << learnBlkSz[deviceID] << ", 1);" << endl;
-    osh << "dim3 lGridCuda" << deviceID << "(" << learnGridSz << ", 1);" << endl;
+    os << "dim3 lThreadsCuda" << deviceID << "(" << learnBlkSz[deviceID] << ", 1);" << endl;
+    os << "dim3 lGridCuda" << deviceID << "(" << learnGridSz << ", 1);" << endl;
   }
   unsigned int neuronGridSz = model->padSumNeuronN[model->neuronGrpN - 1];
   neuronGridSz = neuronGridSz / neuronBlkSz[deviceID];
-  osh << "dim3 nThreadsCuda" << deviceID << "(" << neuronBlkSz[deviceID] << ", 1);" << endl;
+  os << "dim3 nThreadsCuda" << deviceID << "(" << neuronBlkSz[deviceID] << ", 1);" << endl;
   if (neuronGridSz < deviceProp[deviceID].maxGridSize[1]) {
-    osh << "dim3 nGridCuda" << deviceID << "(" << neuronGridSz << ", 1);" << endl;
+    os << "dim3 nGridCuda" << deviceID << "(" << neuronGridSz << ", 1);" << endl;
   }
   else {
     int sqGridSize = ceil(sqrt(neuronGridSz));
-    osh << "dim3 nGridCuda" << deviceID << "(" << sqGridSize << ", " << sqGridSize << ");" << endl;
+    os << "dim3 nGridCuda" << deviceID << "(" << sqGridSize << ", " << sqGridSize << ");" << endl;
   }
-  osh << endl;
-
-  osh << "// CUDA device functions" << endl;
+  os << endl;
+  os << "// CUDA device functions" << endl << endl;
 
 
   //------------------------------

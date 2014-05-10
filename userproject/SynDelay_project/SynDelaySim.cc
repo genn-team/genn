@@ -8,9 +8,9 @@
 
 #include "utils.h"
 #include "hr_time.cpp"
-#include "SynDelaySim.hpp"
-#include "SynDelay_CODE_HOST/host.hpp"
-#include "SynDelay_CODE_CUDA0/cuda0.hpp" // later use host header only
+#include "SynDelaySim.h"
+#include "SynDelay_CODE_HOST/host.h"
+#include "SynDelay_CODE_CUDA0/cuda0.h"
 
 using namespace std;
 
@@ -22,6 +22,7 @@ SynDelay::SynDelay(int usingGPU)
   initializeHost();
   if (usingGPU)
   {
+    allocateMemCuda0();
     copyGToCuda0();
     copyStateToCuda0();
   }

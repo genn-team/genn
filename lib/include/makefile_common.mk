@@ -25,7 +25,7 @@ OS_ARCH 	:= $(shell uname -m | sed -e "s/i386/i686/")
 # C / C++ compiler, cuda compiler, include flags and link flags. Specify
 # additional lib and include paths by defining LINK_FLAGS and INCLUDE_FLAGS in
 # a project's main Makefile.  Declare cuda's install directory with CUDA_PATH.
-ROOTDIR		?= $(shell pwd)
+ROOTDIR		?= $(CURDIR)
 COMPILER	?= g++
 CUDA_PATH	?= /usr/local/cuda
 NVCC		?= $(CUDA_PATH)/bin/nvcc
@@ -51,7 +51,7 @@ NVCCFLAGS	+= --compiler-options "-O3 -ffast-math" # put your global NVCC flags h
 
 # Get object targets from the files listed in SOURCES, also the GeNN code for each device.
 # Define your own SOURCES variable in the project's Makefile to specify these source files.
-USER_OBJECTS	?= $(patsubst %.cc,%.o,$(SOURCES))
+USER_OBJECTS	?= $(patsubst %.cpp,%.o,$(patsubst %.cc,%.o,$(SOURCES)))
 HOST_OBJECTS	?= $(patsubst %.cc,%.o,$(wildcard *_CODE_HOST/host.cc))
 CUDA_OBJECTS	?= $(foreach obj,$(wildcard *_CODE_CUDA*/cuda*.cu),$(patsubst %.cu,%.o,$(obj)))
 
@@ -59,7 +59,6 @@ CUDA_OBJECTS	?= $(foreach obj,$(wildcard *_CODE_CUDA*/cuda*.cu),$(patsubst %.cu,
 #################################################################################
 #                                Target rules                                   #
 #################################################################################
-
 
 .PHONY: all
 all: release
@@ -93,7 +92,7 @@ debug: $(EXECUTABLE)
 
 .PHONY: clean
 clean:
-	rm -rf $(ROOTDIR)/bin $(ROOTDIR)/*.o
+	rm -rf $(ROOTDIR)/bin $(ROOTDIR)/*.o $(ROOTDIR)/*_CODE_*/*.o
 
 .PHONY: purge
 purge: clean
