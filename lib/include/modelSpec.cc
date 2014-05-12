@@ -535,7 +535,7 @@ void NNmodel::calcPaddedThreadSums()
   unsigned int padN;
 
   // sparse or non-sparse padded synapse kernel thread sum
-  padSumNeuronN.assign(deviceCount, vector<unsigned int>());
+  padSumSynapseKrnl.assign(deviceCount, vector<unsigned int>());
   for (int deviceID = 0; deviceID < deviceCount; deviceID++) padSumSynapseKrnl.push_back(vector<unsigned int>());
   localSynapseID.resize(synapseGrpN);
   for (int synGrp = 0; synGrp < synapseGrpN; synGrp++) {

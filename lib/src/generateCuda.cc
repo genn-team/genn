@@ -35,7 +35,7 @@
 */
 //----------------------------------------------------------------------------
 
-void genCudaCode(int deviceID, ostream &mos)
+void genCudaCode(unsigned int deviceID, ostream &mos)
 {
   mos << "entering genCudaCode for device " << deviceID << endl;
 
@@ -64,40 +64,18 @@ void genCudaCode(int deviceID, ostream &mos)
   osh << "#include <cuda_runtime.h>" << endl << endl;
 
 
-
-
-
-
-
-
-
-
-
-  // neuron vars
-  //  if (model->nrnDevID[i] == deviceID) {}
-
-  // neuron and presynaptic spike vars
-  //  if ((model->nrnDevID[i] == deviceID) || deviceRecvSpikes[deviceID][i]) {}
-
-  // synapse vars
-  //  if (model->synDevID[i] == deviceID) {}
-
-
-
-
-
-
-
-
-
-
-
-
   //--------------------------------
   // declare device neuron variables
 
   osh << "// neuron variables" << endl;
   for (int i = 0; i < model->neuronGrpN; i++) {
+    // conditional skip if neuron group is not on this device
+    if ((model->nrnHostID[i] != hostID) || (model->nrnDevID[i] != deviceID)) {
+      // ... but not if this host and device recieves this group's spikes
+      if ((!model->hostRecvSpkFrom[hostID][i]) || (!model->deviceRecvSpkFrom[deviceID][i])) {
+	continue;
+      }
+    }
     type = model->neuronType[i];
     for (int j = 0; j < nModels[type].varNames.size(); j++) {
       osh << "extern " << nModels[type].varTypes[j] << " *d_" << nModels[type].varNames[j];
@@ -111,15 +89,17 @@ void genCudaCode(int deviceID, ostream &mos)
   // declare device synapse variables
 
   osh << "// synapse variables" << endl;
-  for (int i = 0; i< model->postSynapseType.size(); i++) {
+  for (int i = 0; i < model->synapseGrpN; i++) {
+    // conditional skip if synapse group is not on this device
+    if ((model->synHostID[i] != hostID) || (model->synDevID[i] != deviceID)) {
+      continue;
+    }
     type = model->postSynapseType[i];
     for (int j = 0; j < postSynModels[type].varNames.size(); j++) {
       osh << "extern " << postSynModels[type].varTypes[j] << " *d_" << postSynModels[type].varNames[j];
       osh << model->synapseName[i] << deviceID << ";" << endl;
       // should work at the moment but if we make postsynapse vectors independent of synapses this may change
     }
-  }
-  for (int i = 0; i < model->synapseGrpN; i++) {
     if (model->synapseGType[i] == INDIVIDUALG) {
       osh << "extern " << model->ftype << " *d_gp" << model->synapseName[i] << deviceID << ";" << endl;
       if (model->synapseType[i] == LEARN1SYNAPSE) {
@@ -192,6 +172,13 @@ void genCudaCode(int deviceID, ostream &mos)
 
   os << "// neuron variables" << endl;
   for (int i = 0; i < model->neuronGrpN; i++) {
+    // conditional skip if neuron group is not on this device
+    if ((model->nrnHostID[i] != hostID) || (model->nrnDevID[i] != deviceID)) {
+      // ... but not if this host and device recieves this group's spikes
+      if ((!model->hostRecvSpkFrom[hostID][i]) || (!model->deviceRecvSpkFrom[deviceID][i])) {
+	continue;
+      }
+    }
     type = model->neuronType[i];
     for (int j = 0; j < nModels[type].varNames.size(); j++) {
       os << nModels[type].varTypes[j] << " *d_" << nModels[type].varNames[j];
@@ -205,15 +192,17 @@ void genCudaCode(int deviceID, ostream &mos)
   // define device synapse variables
 
   os << "// synapse variables" << endl;
-  for (int i = 0; i< model->postSynapseType.size(); i++) {
+  for (int i = 0; i < model->synapseGrpN; i++) {
+    // conditional skip if synapse group is not on this device
+    if ((model->synHostID[i] != hostID) || (model->synDevID[i] != deviceID)) {
+      continue;
+    }
     type = model->postSynapseType[i];
     for (int j = 0; j < postSynModels[type].varNames.size(); j++) {
       os << postSynModels[type].varTypes[j] << " *d_" << postSynModels[type].varNames[j];
       os << model->synapseName[i] << deviceID << ";" << endl;
       // should work at the moment but if we make postsynapse vectors independent of synapses this may change
     }
-  }
-  for (int i = 0; i < model->synapseGrpN; i++) {
     if (model->synapseGType[i] == INDIVIDUALG) {
       os << model->ftype << " *d_gp" << model->synapseName[i] << deviceID << ";" << endl;
       if (model->synapseType[i] == LEARN1SYNAPSE) {
@@ -271,6 +260,13 @@ void genCudaCode(int deviceID, ostream &mos)
   // allocate CUDA neuron variables
   os << "  // neuron variables" << endl;
   for (int i = 0; i < model->neuronGrpN; i++) {
+    // conditional skip if neuron group is not on this device
+    if ((model->nrnHostID[i] != hostID) || (model->nrnDevID[i] != deviceID)) {
+      // ... but not if this host and device recieves this group's spikes
+      if ((!model->hostRecvSpkFrom[hostID][i]) || (!model->deviceRecvSpkFrom[deviceID][i])) {
+	continue;
+      }
+    }
     type = model->neuronType[i];
     for (int j = 0; j < nModels[type].varNames.size(); j++) {
       if ((nModels[type].varNames[j] == "V") && (model->neuronDelaySlots[i] != 1)) {
@@ -282,12 +278,21 @@ void genCudaCode(int deviceID, ostream &mos)
       os << "  CHECK_CUDA_ERRORS(cudaMalloc((void **) &d_" << nModels[type].varNames[j];
       os << model->neuronName[i] << deviceID << ", " << size << "));" << endl;
     }
-    os << endl; 
   }
+  os << endl; 
 
   // allocate CUDA synapse variables
   os << "  // synapse variables" << endl;
   for (int i = 0; i < model->synapseGrpN; i++) {
+    // conditional skip if synapse group is not on this device
+    if ((model->synHostID[i] != hostID) || (model->synDevID[i] != deviceID)) {
+      continue;
+    }
+    type = model->postSynapseType[i];
+    for (int j = 0; j < postSynModels[type].varNames.size(); j++) {
+      os << "  " << postSynModels[type].varNames[j] << model->synapseName[i] << " = new ";
+      os << postSynModels[type].varTypes[j] << "[" << (model->neuronN[model->synapseTarget[i]]) <<  "];" << endl;
+    }
     if (model->synapseGType[i] == INDIVIDUALG) {
       // (cases necessary here when considering sparse reps as well)
       //os << "  size = " << model->neuronN[model->synapseSource[i]] << " * " << model->neuronN[model->synapseTarget[i]] << ";" << endl;
@@ -318,13 +323,6 @@ void genCudaCode(int deviceID, ostream &mos)
       os << size << ")); // synaptic connectivity of group " << model->synapseName[i] << endl;
     }
   }
-  for (int i = 0; i < model->postSynapseType.size(); i++) {
-    type = model->postSynapseType[i];
-    for (int j = 0; j < postSynModels[type].varNames.size(); j++) {
-      os << "  " << postSynModels[type].varNames[j] << model->synapseName[i] << " = new ";
-      os << postSynModels[type].varTypes[j] << "[" << (model->neuronN[model->synapseTarget[i]]) <<  "];" << endl;
-    }
-  }
   os << "}" << endl;
   os << endl;
 
@@ -337,6 +335,10 @@ void genCudaCode(int deviceID, ostream &mos)
   os << "{" << endl;
 
   for (int i = 0; i < model->synapseGrpN; i++) {
+    // conditional skip if synapse group is not on this device
+    if ((model->synHostID[i] != hostID) || (model->synDevID[i] != deviceID)) {
+      continue;
+    }
     if (model->synapseConnType[i] == SPARSE) {
       if (model->synapseGType[i] != GLOBALG) {
 	os << "  CHECK_CUDA_ERRORS(cudaMalloc((void **) &d_gp" << model->synapseName[i] << deviceID;
@@ -383,6 +385,10 @@ void genCudaCode(int deviceID, ostream &mos)
   os << "{" << endl;
 
   for (int i = 0; i < model->synapseGrpN; i++) {
+    // conditional skip if synapse group is not on this device
+    if ((model->synHostID[i] != hostID) || (model->synDevID[i] != deviceID)) {
+      continue;
+    }
     if (model->synapseGType[i] == INDIVIDUALG) {
       if (model->synapseConnType[i] == SPARSE) {          
 	os << "  CHECK_CUDA_ERRORS(cudaMemcpy(d_gp" << model->synapseName[i] << deviceID << ", g";
@@ -453,6 +459,10 @@ void genCudaCode(int deviceID, ostream &mos)
   os << "{" << endl;
 
   for (int i = 0; i < model->synapseGrpN; i++) {
+    // conditional skip if synapse group is not on this device
+    if ((model->synHostID[i] != hostID) || (model->synDevID[i] != deviceID)) {
+      continue;
+    }
     if (model->synapseGType[i] == INDIVIDUALG) {
       if (model->synapseConnType[i] == SPARSE) {
 	os << "  CHECK_CUDA_ERRORS(cudaMemcpy(g" << model->synapseName[i] << ".gp, d_gp" << model->synapseName[i] << deviceID;
@@ -500,6 +510,13 @@ void genCudaCode(int deviceID, ostream &mos)
   os << "  CHECK_CUDA_ERRORS(cudaGetSymbolAddress(&devPtr, d_done" << deviceID << "));" << endl;
   os << "  CHECK_CUDA_ERRORS(cudaMemcpy(devPtr, &tmp, " << sizeof(int) << ", cudaMemcpyHostToDevice));" << endl;
   for (int i = 0; i < model->neuronGrpN; i++) {
+    // conditional skip if neuron group is not on this device
+    if ((model->nrnHostID[i] != hostID) || (model->nrnDevID[i] != deviceID)) {
+      // ... but not if this host and device recieves this group's spikes
+      if ((!model->hostRecvSpkFrom[hostID][i]) || (!model->deviceRecvSpkFrom[deviceID][i])) {
+	continue;
+      }
+    }
     type = model->neuronType[i];
     if (model->neuronDelaySlots[i] != 1) {
       os << "  CHECK_CUDA_ERRORS(cudaGetSymbolAddress(&devPtr, d_spkEvntQuePtr" << model->neuronName[i] << deviceID << "));" << endl;
@@ -553,7 +570,11 @@ void genCudaCode(int deviceID, ostream &mos)
       os << model->neuronN[i] * theSize(model->ftype) << ", cudaMemcpyHostToDevice));" << endl;
     }
   }
-  for (int i = 0; i < model->postSynapseType.size(); i++) {
+  for (int i = 0; i < model->synapseGrpN; i++) {
+    // conditional skip if synapse group is not on this device
+    if ((model->synHostID[i] != hostID) || (model->synDevID[i] != deviceID)) {
+      continue;
+    }
     type = model->postSynapseType[i];
     for (int j = 0; j < postSynModels[type].varNames.size(); j++) {
       os << "  CHECK_CUDA_ERRORS(cudaMemcpy(d_" << postSynModels[type].varNames[j] << model->synapseName[i] << deviceID << ", ";
@@ -575,19 +596,28 @@ void genCudaCode(int deviceID, ostream &mos)
 
   os << "  void *devPtr;" << endl;
   for (int i = 0; i < model->neuronGrpN; i++) {
+    // conditional skip if neuron group is not on this device
+    if ((model->nrnHostID[i] != hostID) || (model->nrnDevID[i] != deviceID)) {
+      // ... but not if this host and device recieves this group's spikes
+      if ((!model->hostRecvSpkFrom[hostID][i]) || (!model->deviceRecvSpkFrom[deviceID][i])) {
+	continue;
+      }
+    }
     type = model->neuronType[i];
+
+    // spkEvntQuePtr
     if (model->neuronDelaySlots[i] != 1) {
       os << "  CHECK_CUDA_ERRORS(cudaGetSymbolAddress(&devPtr, d_spkEvntQuePtr" << model->neuronName[i] << deviceID << "));" << endl;
       os << "  CHECK_CUDA_ERRORS(cudaMemcpy(&spkEvntQuePtr" << model->neuronName[i] << ", devPtr, ";
       os << sizeof(unsigned int) << ", cudaMemcpyDeviceToHost));" << endl;
     }
 
-    //glbscnt
+    // glbscnt
     os << "  CHECK_CUDA_ERRORS(cudaGetSymbolAddress(&devPtr, d_glbscnt" << model->neuronName[i] << deviceID << "));" << endl;
     os << "  CHECK_CUDA_ERRORS(cudaMemcpy(&glbscnt" << model->neuronName[i] << ", devPtr, ";
     os << sizeof(unsigned int) << ", cudaMemcpyDeviceToHost));" << endl;
 
-    //glbSpkEvntCnt
+    // glbSpkEvntCnt
     os << "  CHECK_CUDA_ERRORS(cudaGetSymbolAddress(&devPtr, d_glbSpkEvntCnt" << model->neuronName[i] << deviceID << "));" << endl;
     if (model->neuronDelaySlots[i] == 1) {
       os << "  CHECK_CUDA_ERRORS(cudaMemcpy(&glbSpkEvntCnt" << model->neuronName[i] << ", devPtr, ";
@@ -599,12 +629,12 @@ void genCudaCode(int deviceID, ostream &mos)
     }
     os << ", cudaMemcpyDeviceToHost));" << endl;
 
-    //glbSpk
+    // glbSpk
     os << "  CHECK_CUDA_ERRORS(cudaGetSymbolAddress(&devPtr, d_glbSpk" << model->neuronName[i] << deviceID << "));" << endl;
     os << "  CHECK_CUDA_ERRORS(cudaMemcpy(glbSpk" << model->neuronName[i] << ", devPtr, ";
     os << model->neuronN[i] * sizeof(unsigned int) << ", cudaMemcpyDeviceToHost));" << endl;
 
-    //glbSpkEvnt
+    // glbSpkEvnt
     os << "  CHECK_CUDA_ERRORS(cudaGetSymbolAddress(&devPtr, d_glbSpkEvnt" << model->neuronName[i] << deviceID << "));" << endl;
     os << "  CHECK_CUDA_ERRORS(cudaMemcpy(glbSpkEvnt" << model->neuronName[i] << ", devPtr, ";
     if (model->neuronDelaySlots[i] != 1) {
@@ -614,11 +644,15 @@ void genCudaCode(int deviceID, ostream &mos)
       os << model->neuronN[i] * sizeof(unsigned int);
     }
     os << ", cudaMemcpyDeviceToHost));" << endl;
+
+    // inSyn
     for (int j = 0; j < model->inSyn[i].size(); j++) {
       os << "  CHECK_CUDA_ERRORS(cudaGetSymbolAddress(&devPtr, d_inSyn" << model->neuronName[i] << j << deviceID << "));" << endl;
       os << "  CHECK_CUDA_ERRORS(cudaMemcpy(inSyn" << model->neuronName[i] << j << ", devPtr, ";
       os << model->neuronN[i] * theSize(model->ftype) << ", cudaMemcpyDeviceToHost));" << endl;
     }
+
+    // neuron variables
     for (int j = 0; j < nModels[type].varNames.size(); j++) {
       os << "  CHECK_CUDA_ERRORS(cudaMemcpy(" << nModels[type].varNames[j] << model->neuronName[i] << ", ";
       os << "d_" << nModels[type].varNames[j] << model->neuronName[i] << deviceID << ", ";
@@ -630,14 +664,23 @@ void genCudaCode(int deviceID, ostream &mos)
       }
       os << ", cudaMemcpyDeviceToHost));" << endl;
     }
+
+    // sT
     if (model->neuronNeedSt[i]) {
       os << "  CHECK_CUDA_ERRORS(cudaGetSymbolAddress(&devPtr, d_sT" << model->neuronName[i] << deviceID << "));" << endl;
       os << "  CHECK_CUDA_ERRORS(cudaMemcpy(sT" << model->neuronName[i] << ", devPtr, ";
       os << model->neuronN[i] * theSize(model->ftype) << ", cudaMemcpyDeviceToHost));" << endl;
     }
   }
-  for (int i = 0; i < model->postSynapseType.size(); i++) {
+
+  for (int i = 0; i < model->synapseGrpN; i++) {
+    // conditional skip if synapse group is not on this device
+    if ((model->synHostID[i] != hostID) || (model->synDevID[i] != deviceID)) {
+      continue;
+    }
     type = model->postSynapseType[i];
+
+    // postsynapse variables
     for (int j = 0; j < postSynModels[type].varNames.size(); j++) {
       os << "  CHECK_CUDA_ERRORS(cudaMemcpy(" << postSynModels[type].varNames[j] << model->synapseName[i] << ", ";
       os << "d_" << postSynModels[type].varNames[j] << model->synapseName[i] << deviceID << ", ";
@@ -658,6 +701,13 @@ void genCudaCode(int deviceID, ostream &mos)
 
   os << "  void *devPtr;" << endl;
   for (int i = 0; i < model->neuronGrpN; i++) {
+    // conditional skip if neuron group is not on this device
+    if ((model->nrnHostID[i] != hostID) || (model->nrnDevID[i] != deviceID)) {
+      // ... but not if this host and device recieves this group's spikes
+      if ((!model->hostRecvSpkFrom[hostID][i]) || (!model->deviceRecvSpkFrom[deviceID][i])) {
+	continue;
+      }
+    }
     os << "  CHECK_CUDA_ERRORS(cudaGetSymbolAddress(&devPtr, d_glbSpk" << model->neuronName[i] << deviceID << "));" << endl;
     os << "  CHECK_CUDA_ERRORS(cudaMemcpy(glbSpk" << model->neuronName[i] << ", devPtr, ";
     os << "glbscnt" << model->neuronName[i] << " * " << sizeof(unsigned int) << ", cudaMemcpyDeviceToHost));" << endl;
@@ -675,6 +725,13 @@ void genCudaCode(int deviceID, ostream &mos)
 
   os << "  void *devPtr;" << endl;
   for (int i = 0; i < model->neuronGrpN; i++) {
+    // conditional skip if neuron group is not on this device
+    if ((model->nrnHostID[i] != hostID) || (model->nrnDevID[i] != deviceID)) {
+      // ... but not if this host and device recieves this group's spikes
+      if ((!model->hostRecvSpkFrom[hostID][i]) || (!model->deviceRecvSpkFrom[deviceID][i])) {
+	continue;
+      }
+    }
     os << "  CHECK_CUDA_ERRORS(cudaGetSymbolAddress(&devPtr, d_glbscnt" << model->neuronName[i] << deviceID << "));" << endl;
     os << "  CHECK_CUDA_ERRORS(cudaMemcpy(&glbscnt" << model->neuronName[i] << ", devPtr, ";
     os << sizeof(unsigned int) << ", cudaMemcpyDeviceToHost));" << endl;
@@ -691,23 +748,32 @@ void genCudaCode(int deviceID, ostream &mos)
   os << "{" << endl;
 
   for (int i = 0; i < model->neuronGrpN; i++) {
+    // conditional skip if neuron group is not on this device
+    if ((model->nrnHostID[i] != hostID) || (model->nrnDevID[i] != deviceID)) {
+      // ... but not if this host and device recieves this group's spikes
+      if ((!model->hostRecvSpkFrom[hostID][i]) || (!model->deviceRecvSpkFrom[deviceID][i])) {
+	continue;
+      }
+    }
     type = model->neuronType[i];
     for (int j = 0; j < nModels[type].varNames.size(); j++) {
       os << "  CHECK_CUDA_ERRORS(cudaFree(d_" << nModels[type].varNames[j] << model->neuronName[i] << deviceID << "));" << endl;
     }
   }
   for (int i = 0; i < model->synapseGrpN; i++) {
+    // conditional skip if synapse group is not on this device
+    if ((model->synHostID[i] != hostID) || (model->synDevID[i] != deviceID)) {
+      continue;
+    }
+    type = model->postSynapseType[i];
+    for (int j = 0; j < postSynModels[type].varNames.size(); j++) {
+      os << "  CHECK_CUDA_ERRORS(cudaFree(d_" << postSynModels[type].varNames[j] << model->synapseName[i] << deviceID << "));" << endl;
+    }
     if ((model->synapseGType[i] == (INDIVIDUALG)) || (model->synapseGType[i] == INDIVIDUALID)) {
       os << "  CHECK_CUDA_ERRORS(cudaFree(d_gp" << model->synapseName[i] << deviceID << "));" << endl;  	
     }
     if (model->synapseType[i] == LEARN1SYNAPSE) {
       os << "  CHECK_CUDA_ERRORS(cudaFree(d_grawp"  << model->synapseName[i] << deviceID << "));" << endl;	
-    }
-  }
-  for (int i = 0; i < model->postSynapseType.size(); i++) {
-    type = model->postSynapseType[i];
-    for (int j = 0; j < postSynModels[type].varNames.size(); j++) {
-      os << "  CHECK_CUDA_ERRORS(cudaFree(d_" << postSynModels[type].varNames[j] << model->synapseName[i] << deviceID << "));" << endl;
     }
   }
   os << "}" << endl;
@@ -719,8 +785,11 @@ void genCudaCode(int deviceID, ostream &mos)
 
   if ((model->lrnGroups > 0) && (!model->padSumLearnN[deviceID].empty())) {
     for (int i = 0; i < model->synapseGrpN; i++) {
+      // conditional skip if synapse group is not on this device
+      if ((model->synHostID[i] != hostID) || (model->synDevID[i] != deviceID)) {
+	continue;
+      }
       if (model->synapseType[i] == LEARN1SYNAPSE) {
-
 	osh << "__device__ " << model->ftype << " gFunc" << model->synapseName[i] << "Cuda" << deviceID;
 	osh << "(" << model->ftype << " graw);" << endl;
 	os << "__device__ " << model->ftype << " gFunc" << model->synapseName[i] << "Cuda" << deviceID;
@@ -731,7 +800,6 @@ void genCudaCode(int deviceID, ostream &mos)
 	os << SAVEP(model->synapsePara[i][9]) << ")) + 1.0);" << endl;
 	os << "}" << endl;
 	os << endl;
-
 	osh << "__device__ " << model->ftype << " invGFunc" << model->synapseName[i] << "Cuda" << deviceID;
 	osh << "(" << model->ftype << " g);" << endl;
 	os << "__device__ " << model->ftype << " invGFunc" << model->synapseName[i] << "Cuda" << deviceID;
@@ -753,6 +821,10 @@ void genCudaCode(int deviceID, ostream &mos)
   osh << "void stepTimeCuda" << deviceID << "(";
   os << "void stepTimeCuda" << deviceID << "(";
   for (int i = 0; i < model->neuronGrpN; i++) {
+    // conditional skip if neuron group is not on this device
+    if ((model->nrnHostID[i] != hostID) || (model->nrnDevID[i] != deviceID)) {
+      continue;
+    }
     if (model->neuronType[i] == POISSONNEURON) {
       osh << "unsigned int *rates" << model->neuronName[i] << ", ";
       os << "unsigned int *rates" << model->neuronName[i];
@@ -770,11 +842,14 @@ void genCudaCode(int deviceID, ostream &mos)
   osh << "float t);" << endl;
   os << "float t)" << endl;
   os << "{" << endl;
-
   if ((model->synapseGrpN > 0) && (!model->padSumSynapseKrnl[deviceID].empty())) {
     os << "  if (t > 0.0) {" << endl; 
     os << "    calcSynapsesCuda" << deviceID << " <<< sGridCuda" << deviceID << ", sThreadsCuda" << deviceID << " >>> (";
     for (int i = 0; i < model->synapseGrpN; i++) {
+      // conditional skip if synapse group is not on this device
+      if ((model->synHostID[i] != hostID) || (model->synDevID[i] != deviceID)) {
+	continue;
+      }
       if (model->synapseGType[i] == INDIVIDUALG) {
 	os << "d_gp" << model->synapseName[i] << deviceID << ", ";
       }
@@ -790,6 +865,13 @@ void genCudaCode(int deviceID, ostream &mos)
       }
     }
     for (int i = 0; i < model->neuronGrpN; i++) {
+      // conditional skip if neuron group is not on this device
+      if ((model->nrnHostID[i] != hostID) || (model->nrnDevID[i] != deviceID)) {
+	// ... but not if this host and device recieves this group's spikes
+	if ((!model->hostRecvSpkFrom[hostID][i]) || (!model->deviceRecvSpkFrom[deviceID][i])) {
+	  continue;
+	}
+      }
       type = model->neuronType[i];
       os << "d_" << nModels[type].varNames[0] << model->neuronName[i] << deviceID; // this is supposed to be Vm
       if (model->needSt || i < (model->neuronGrpN - 1)) {
@@ -805,6 +887,10 @@ void genCudaCode(int deviceID, ostream &mos)
     if ((model->lrnGroups > 0) && (!model->padSumLearnN[deviceID].empty())) {
       os << "    learnSynapsesPostCuda" << deviceID << " <<< lGridCuda" << deviceID << ", lThreadsCuda" << deviceID << " >>> (";      
       for (int i = 0; i < model->synapseGrpN; i++) {
+	// conditional skip if synapse group is not on this device
+	if ((model->synHostID[i] != hostID) || (model->synDevID[i] != deviceID)) {
+	  continue;
+	}
 	if ((model->synapseGType[i] == INDIVIDUALG) || (model->synapseGType[i] == INDIVIDUALID)) {
 	  os << "d_gp" << model->synapseName[i] << deviceID << ", ";
 	}
@@ -813,6 +899,10 @@ void genCudaCode(int deviceID, ostream &mos)
 	}
       }
       for (int i = 0; i < model->neuronGrpN; i++) {
+	// conditional skip if neuron group is not on this device
+	if ((model->nrnHostID[i] != hostID) || (model->nrnDevID[i] != deviceID)) {
+	  continue;
+	}
 	type = model->neuronType[i];
 	os << "d_" << nModels[type].varNames[0] << model->neuronName[i] << deviceID << ", "; // this is supposed to be Vm
       }
@@ -822,6 +912,10 @@ void genCudaCode(int deviceID, ostream &mos)
   }
   os << "  calcNeuronsCuda" << deviceID << " <<< nGridCuda" << deviceID << ", nThreadsCuda" << deviceID << " >>> (";
   for (int i = 0; i < model->neuronGrpN; i++) {
+    // conditional skip if neuron group is not on this device
+    if ((model->nrnHostID[i] != hostID) || (model->nrnDevID[i] != deviceID)) {
+      continue;
+    }
     type = model->neuronType[i];
     if (type == POISSONNEURON) {
       os << "rates" << model->neuronName[i] << ", ";
@@ -834,10 +928,16 @@ void genCudaCode(int deviceID, ostream &mos)
       os << "d_" << nModels[type].varNames[j] << model->neuronName[i] << deviceID << ", ";
     }
   }
-  for (int i = 0; i < model->postSynapseType.size(); i++) {
-    type = model->postSynapseType[i];
-    for (int j = 0; j < postSynModels[type].varNames.size(); j++) {
-      os << "d_" << postSynModels[type].varNames[j] << model->synapseName[i] << deviceID << ", ";
+  if ((model->synapseGrpN > 0) && (!model->padSumSynapseKrnl[deviceID].empty())) {
+    for (int i = 0; i < model->synapseGrpN; i++) {
+      // conditional skip if synapse group is not on this device
+      if ((model->synHostID[i] != hostID) || (model->synDevID[i] != deviceID)) {
+	continue;
+      }
+      type = model->postSynapseType[i];
+      for (int j = 0; j < postSynModels[type].varNames.size(); j++) {
+	os << "d_" << postSynModels[type].varNames[j] << model->synapseName[i] << deviceID << ", ";
+      }
     }
   }
   os << "t);" << endl;

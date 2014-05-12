@@ -38,6 +38,7 @@ using namespace std;
 
 string path; //!< Global string holding the directory in which GeNN code is to be deposited
 NNmodel *model; //!< Global model object which specifies the structure and properties of the network model
+int hostID = 0; //!< Global variable containing the ID of this cluster node
 int hostCount; //!< Global variable containing the number of host nodes in this cluster
 int deviceCount; //!< Global variable containing the number of CUDA devices present on this host
 cudaDeviceProp *deviceProp; //!< Global array listing the properties of each CUDA device on this host

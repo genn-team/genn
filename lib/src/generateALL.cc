@@ -62,7 +62,7 @@ void generate_host_code(ostream &mos)
 /*
 ! \brief This function will call the necessary sub-functions to generate CUDA device code for simulating a model.
 */
-void generate_cuda_code(int deviceID, ostream &mos)
+void generate_cuda_code(unsigned int deviceID, ostream &mos)
 {
 
 #ifdef _WIN32
@@ -95,7 +95,7 @@ void generate_cuda_code(int deviceID, ostream &mos)
 */
 //--------------------------------------------------------------------------
 
-int blockSizeOptimise(int deviceID)
+int blockSizeOptimise(unsigned int deviceID)
 {
   cerr << "optimizing block sizes for device " << deviceID << endl;
 
@@ -259,16 +259,22 @@ int blockSizeOptimise(int deviceID)
 
 void bestDeviceGenerate()
 {
-  int best = 0, current, bestDevice;
+  unsigned int best = 0, current, bestDevice;
   generate_host_code(cerr);
+  model->calcPaddedThreadSums();
+  model->padSumSynapseKrnl.assign(deviceCount, model->padSumSynapseKrnl[0]);
+  model->padSumLearnN.assign(deviceCount, model->padSumLearnN[0]);
+  model->padSumNeuronN.assign(deviceCount, model->padSumNeuronN[0]);
   for (int deviceID = 0; deviceID < deviceCount; deviceID++) {
+    model->nrnDevID.assign(model->nrnDevID.size(), deviceID);
+    model->synDevID.assign(model->synDevID.size(), deviceID);
     if (optCudaBlockSize) {
-
       // find the device which supports the highest warp occupancy
       current = blockSizeOptimise(deviceID);
+
+      cout << current << endl;
     }
     else {
-
       // find the device with the most global memory
       current = deviceProp[deviceID].totalGlobalMem;
     }
@@ -277,11 +283,14 @@ void bestDeviceGenerate()
       bestDevice = deviceID;
     }
   }
+  model->nrnDevID.assign(model->nrnDevID.size(), bestDevice);
+  model->synDevID.assign(model->synDevID.size(), bestDevice);
+  model->calcPaddedThreadSums();
+  generate_cuda_code(bestDevice, cerr);
 
   cerr << "using device " << bestDevice;
   if (optCudaBlockSize) cerr << " which supports " << best << " warps of occupancy" << endl;
   else cerr << " with " << best << " bytes of global memory" << endl;
-  generate_cuda_code(bestDevice, cerr);
 }
 
 

@@ -11,6 +11,7 @@
 #include "SynDelaySim.h"
 #include "SynDelay_CODE_HOST/host.h"
 #include "SynDelay_CODE_CUDA0/cuda0.h"
+#include "SynDelay_CODE_CUDA1/cuda1.h"
 
 using namespace std;
 
@@ -25,6 +26,9 @@ SynDelay::SynDelay(int usingGPU)
     allocateMemCuda0();
     copyGToCuda0();
     copyStateToCuda0();
+    allocateMemCuda1();
+    copyGToCuda1();
+    copyStateToCuda1();
   }
 }
 
@@ -34,6 +38,7 @@ SynDelay::~SynDelay()
   if (usingGPU)
   {
     freeMemCuda0();
+    freeMemCuda1();
   }
 }
 
@@ -43,6 +48,8 @@ void SynDelay::run(float t)
   {
     stepTimeCuda0(t);
     copyStateFromCuda0();
+    stepTimeCuda1(t);
+    copyStateFromCuda1();
   }
   else
   {
