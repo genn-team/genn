@@ -321,8 +321,9 @@ void multiDeviceGenerate()
     }
   }
 
- // optimise block size, reset padded thread sums and generate final code
+  // optimise block size, reset padded thread sums and generate final code
   generate_host_code(cerr);
+  model->calcPaddedThreadSums();
   if (optCudaBlockSize) { 
     for (int deviceID = 0; deviceID < deviceCount; deviceID++) {
       warpOccupancy[deviceID] = blockSizeOptimise(deviceID);
@@ -357,15 +358,16 @@ int main(int argc,     //!< number of arguments; expected to be 2
     cerr << argv[i] << " ";
   }
   cerr << endl;
+  path = toString(argv[1]);
 
   // initialise network model
-  path = toString(argv[1]);
-  model = new NNmodel();
+  hostCount = 1;
   CHECK_CUDA_ERRORS(cudaGetDeviceCount(&deviceCount));
   synapseBlkSz = new int[deviceCount];
   learnBlkSz = new int[deviceCount];
   neuronBlkSz = new int[deviceCount];
   deviceProp = new cudaDeviceProp[deviceCount];
+  model = new NNmodel();
 
   for (int deviceID = 0; deviceID < deviceCount; deviceID++) {
     CHECK_CUDA_ERRORS(cudaGetDeviceProperties(&(deviceProp[deviceID]), deviceID));

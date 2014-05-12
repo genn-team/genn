@@ -23,10 +23,8 @@
 */
 //--------------------------------------------------------------------------
 
-#include "global.h"
 #include "utils.h"
 
-using namespace std;
 
 //neuronType
 #define MAPNEURON 0 //!< Macro attaching the name "MAPNEURON" to neuron type 0
@@ -120,7 +118,8 @@ public:
   unsigned int neuronGrpN; //!< Number of neuron groups
   vector<unsigned int> neuronN; //!< Number of neurons in group
   vector<unsigned int> sumNeuronN; //!< Summed neuron numbers
-  vector<unsigned int> padSumNeuronN; //!< Padded summed neuron numbers
+  vector<vector<unsigned int> > padSumNeuronN; //!< Padded summed neuron numbers
+  vector<unsigned int> localNeuronID; //!< The per-device ID number of each neuron group
   vector<unsigned int> neuronPostSyn; //! Postsynaptic methods to the neuron
   vector<unsigned int> neuronType; //!< Types of neurons
   vector<vector<float> > neuronPara; //!< Parameters of neurons
@@ -130,11 +129,13 @@ public:
   vector<int> receivesInputCurrent; //!< flags whether neurons of a population receive explicit input currents
   vector<unsigned int> neuronNeedSt; //!< Whether last spike time needs to be saved for each indivual neuron type
   vector<unsigned int> neuronDelaySlots; //!< The number of slots needed in the synapse delay queues of a neuron group
-  vector<int> nrnHostID; //!< The ID of the cluster node which the neuron groups are computed on
-  vector<int> nrnDevID; //!< The ID of the CUDA device which the neuron groups are comnputed on
   vector<float> nSpkEvntThreshold; //!< Threshold for detecting a spike event for each neuron type.
                                    // NB: This is not directly user controlled, but is decided by, for example,
                                    // the pre-spike threshold set for outgoing synapses
+  vector<vector<unsigned int> > hostRecvSpkFrom; //!< Flag that a host will need to recieve a neuron group's spikes
+  vector<vector<unsigned int> > deviceRecvSpkFrom; //!< Flag that a device will need to recieve a neuron group's spikes
+  vector<unsigned int> nrnHostID; //!< The ID of the cluster node which the neuron groups are computed on
+  vector<unsigned int> nrnDevID; //!< The ID of the CUDA device which the neuron groups are comnputed on
 
   // PUBLIC SYNAPSE VARIABLES
   //=========================
@@ -144,7 +145,8 @@ public:
   //vector<unsigned int>synapseNo; // !< numnber of synapses in a synapse group
   vector<unsigned int> maxConn; //!< maximum number of connections for a neuron in the neuron groups
   vector<unsigned int> sumSynapseTrgN; //!< Summed naumber of target neurons
-  vector<unsigned int> padSumSynapseKrnl; //!< Padded summed thread count for sparse or all-to-all synapse groups
+  vector<vector<unsigned int> > padSumSynapseKrnl; //!< Padded summed sparse or all-to-all synapse thread count
+  vector<unsigned int> localSynapseID; //!< The per-device ID number of each synapse group
   vector<unsigned int> synapseType; //!< Types of synapses
   vector<unsigned int> synapseConnType; //!< Connectivity type of synapses
   vector<unsigned int> synapseGType; //!< Type of specification method for synaptic conductance
@@ -160,12 +162,13 @@ public:
   vector<float> g0; //!< Global synapse conductance if GLOBALG is chosen.
   vector<float> globalInp; //!< Global explicit input if CONSTINP is chosen.
   unsigned int lrnGroups; //!< Number of synapse groups with learning
-  vector<unsigned int> padSumLearnN; //!< Padded summed neuron numbers of learn group source populations
+  vector<vector<unsigned int> > padSumLearnN; //!< Padded summed neuron numbers of learn group source populations
+  vector<unsigned int> localLearnID; //!< The per-device ID number of each learn group
   vector<unsigned int> lrnSynGrp; //!< Enumeration of the IDs of synapse groups that learn
   vector<unsigned int> synapseDelay; //!< Global synaptic conductance delay for the group (in time steps)
-  vector<int> synHostID; //!< The ID of the cluster node which the synapse groups are computed on
-  vector<int> synDevID; //!< The ID of the CUDA device which the synapse groups are comnputed on
-    
+  vector<unsigned int> synHostID; //!< The ID of the cluster node which the synapse groups are computed on
+  vector<unsigned int> synDevID; //!< The ID of the CUDA device which the synapse groups are comnputed on
+
 private:
 
   // PRIVATE NEURON FUNCTIONS
@@ -205,7 +208,7 @@ public:
   void setDT(float newDT); //!< Sets the amount of simulated time per step
   void setPrecision(unsigned int); //< Set numerical precision for floating point
   void checkSizes(unsigned int *, unsigned int *, unsigned int *); //< Check if the sizes of the initialized neuron and synapse groups are correct.
-  void calcPaddedThreadSums(); //!< Calculate the blocksize-padded total threads required to compute neuron and synapse groups on each device. Must be called AFTER setting the deviceID of the neuron and synapse groups.
+  void calcPaddedThreadSums(); //!< Calculate the blocksize-padded total threads required to compute neuron and synapse groups on each device. MUST be called AFTER setting the hostID and deviceID of all neuron and synapse groups.
 
   // PUBLIC NEURON FUNCTIONS
   //========================
@@ -216,8 +219,8 @@ public:
   //void addPostSyntoNeuron(const string,unsigned int); //!< Method for defining postsynaptic dynamics
   void activateDirectInput(const string, unsigned int);  
   void setConstInp(const string, float); //!< Method for setting the global input value for a neuron population if CONSTINP
-  void setNeuronClusterIndex(unsigned int neuronID, int hostID, int deviceID); //!< Overload function for setting which host and device the neuron group of ID [neuronID] will simulate on
-  void setNeuronClusterIndex(const string neuronName, int hostID, int deviceID); //!< Function for setting which host and device the neuron group named [neuronName] will simulate on.
+  void setNeuronClusterIndex(unsigned int neuronID, int hostID, int deviceID); //!< Function for setting which host and device the neuron group of ID [neuronID] will simulate on
+  void setNeuronClusterIndex(const string neuronName, int hostID, int deviceID); //!< Overload function for setting which host and device the neuron group named [neuronName] will simulate on.
 
   // PUBLIC SYNAPSE FUNCTIONS
   //=========================
@@ -228,8 +231,8 @@ public:
   void setSynapseG(const string, float); //!< Method for setting the conductance (g) value for a synapse population with "GLOBALG" charactertistic
   //void setSynapseNo(unsigned int,unsigned int); // !< Sets the number of connections for sparse matrices  
   void setMaxConn(const string, unsigned int); //< Set maximum connections per neuron for the given group (needed for optimization by sparse connectivity)
-  void setSynapseClusterIndex(unsigned int synapseID, int hostID, int deviceID); //!< Overload function for setting which host and device the synapse group of ID [synapseID] will simulate on
-  void setSynapseClusterIndex(const string synapseName, int hostID, int deviceID); //!< Function for setting which host and device the synapse group named [synapseName] will simulate on.
+  void setSynapseClusterIndex(unsigned int synapseID, int hostID, int deviceID); //!< Function for setting which host and device the synapse group of ID [synapseID] will simulate on
+  void setSynapseClusterIndex(const string synapseName, int hostID, int deviceID); //!< Overload function for setting which host and device the synapse group named [synapseName] will simulate on.
 
 };
 

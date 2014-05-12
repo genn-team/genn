@@ -37,7 +37,8 @@
 
 void genCudaCode(int deviceID, ostream &mos)
 {
-  mos << "entering genCudaCode" << endl;
+  mos << "entering genCudaCode for device " << deviceID << endl;
+
   string ccFile, hFile;
   ofstream os, osh;
   unsigned int type, tmp, size;
@@ -60,7 +61,36 @@ void genCudaCode(int deviceID, ostream &mos)
   //------------------------------
   // add cuda[deviceID].h includes
 
-  osh << "#include <cuda_runtime.h>" << endl;
+  osh << "#include <cuda_runtime.h>" << endl << endl;
+
+
+
+
+
+
+
+
+
+
+
+  // neuron vars
+  //  if (model->nrnDevID[i] == deviceID) {}
+
+  // neuron and presynaptic spike vars
+  //  if ((model->nrnDevID[i] == deviceID) || deviceRecvSpikes[deviceID][i]) {}
+
+  // synapse vars
+  //  if (model->synDevID[i] == deviceID) {}
+
+
+
+
+
+
+
+
+
+
 
 
   //--------------------------------
@@ -81,7 +111,7 @@ void genCudaCode(int deviceID, ostream &mos)
   // declare device synapse variables
 
   osh << "// synapse variables" << endl;
-  for (int i = 0; i< model->postSynapseType.size(); i++){
+  for (int i = 0; i< model->postSynapseType.size(); i++) {
     type = model->postSynapseType[i];
     for (int j = 0; j < postSynModels[type].varNames.size(); j++) {
       osh << "extern " << postSynModels[type].varTypes[j] << " *d_" << postSynModels[type].varNames[j];
@@ -111,11 +141,11 @@ void genCudaCode(int deviceID, ostream &mos)
   // declare device block and grid size variables
 
   osh << "// CUDA block and grid sizes" << endl;
-  if (model->synapseGrpN > 0) { 
+  if ((model->synapseGrpN > 0) && (!model->padSumSynapseKrnl[deviceID].empty())) { 
     osh << "extern dim3 sThreadsCuda" << deviceID << ";" << endl;
     osh << "extern dim3 sGridCuda" << deviceID << ";" << endl;
   }
-  if (model->lrnGroups > 0) {
+  if ((model->lrnGroups > 0) && (!model->padSumLearnN[deviceID].empty())) {
     osh << "extern dim3 lThreadsCuda" << deviceID << ";" << endl;
     osh << "extern dim3 lGridCuda" << deviceID << ";" << endl;
   }
@@ -148,7 +178,9 @@ void genCudaCode(int deviceID, ostream &mos)
   os << "#include \"cuda" << deviceID << ".h\"" << endl;
   os << "#include \"../" << model->name << "_CODE_HOST/host.h\"" << endl;
   os << "#include \"neuron.cu\"" << endl;
-  if (model->synapseGrpN>0) os << "#include \"synapse.cu\"" << endl;
+  if ((model->synapseGrpN > 0) && (!model->padSumSynapseKrnl[deviceID].empty())) {
+    os << "#include \"synapse.cu\"" << endl;
+  }
   os << "#ifndef RAND" << endl;
   os << "#define RAND(Y, X) Y = Y * 1103515245 + 12345; X = (unsigned int) (Y >> 16) & 32767" << endl;
   os << "#endif" << endl;
@@ -173,7 +205,7 @@ void genCudaCode(int deviceID, ostream &mos)
   // define device synapse variables
 
   os << "// synapse variables" << endl;
-  for (int i = 0; i< model->postSynapseType.size(); i++){
+  for (int i = 0; i< model->postSynapseType.size(); i++) {
     type = model->postSynapseType[i];
     for (int j = 0; j < postSynModels[type].varNames.size(); j++) {
       os << postSynModels[type].varTypes[j] << " *d_" << postSynModels[type].varNames[j];
@@ -203,19 +235,19 @@ void genCudaCode(int deviceID, ostream &mos)
   // define device block and grid size variables
 
   os << "// CUDA block and grid sizes" << endl;
-  if (model->synapseGrpN > 0) { 
-    unsigned int synapseGridSz = model->padSumSynapseKrnl[model->synapseGrpN - 1];   
+  if ((model->synapseGrpN > 0) && (!model->padSumSynapseKrnl[deviceID].empty())) {
+    unsigned int synapseGridSz = model->padSumSynapseKrnl[deviceID][model->localSynapseID.back()];
     synapseGridSz = synapseGridSz / synapseBlkSz[deviceID];
     os << "dim3 sThreadsCuda" << deviceID << "(" << synapseBlkSz[deviceID] << ", 1);" << endl;
     os << "dim3 sGridCuda" << deviceID << "(" << synapseGridSz << ", 1);" << endl;
   }
-  if (model->lrnGroups > 0) {
-    unsigned int learnGridSz = model->padSumLearnN[model->lrnGroups - 1];
+  if ((model->lrnGroups > 0) && (!model->padSumLearnN[deviceID].empty())) {
+    unsigned int learnGridSz = model->padSumLearnN[deviceID][model->localLearnID.back()];
     learnGridSz = learnGridSz / learnBlkSz[deviceID];
     os << "dim3 lThreadsCuda" << deviceID << "(" << learnBlkSz[deviceID] << ", 1);" << endl;
     os << "dim3 lGridCuda" << deviceID << "(" << learnGridSz << ", 1);" << endl;
   }
-  unsigned int neuronGridSz = model->padSumNeuronN[model->neuronGrpN - 1];
+  unsigned int neuronGridSz = model->padSumNeuronN[deviceID][model->localNeuronID.back()];
   neuronGridSz = neuronGridSz / neuronBlkSz[deviceID];
   os << "dim3 nThreadsCuda" << deviceID << "(" << neuronBlkSz[deviceID] << ", 1);" << endl;
   if (neuronGridSz < deviceProp[deviceID].maxGridSize[1]) {
@@ -260,7 +292,7 @@ void genCudaCode(int deviceID, ostream &mos)
       // (cases necessary here when considering sparse reps as well)
       //os << "  size = " << model->neuronN[model->synapseSource[i]] << " * " << model->neuronN[model->synapseTarget[i]] << ";" << endl;
       //os << "  cudaMalloc((void **) &d_gp" << model->synapseName[i] << deviceID << ", sizeof(" << model->ftype << ") * size);" << endl;
-      /*if (model->synapseConnType[i] == SPARSE){
+      /*if (model->synapseConnType[i] == SPARSE) {
 	os << "  cudaMalloc((void **) &d_gp" << model->synapseName[i] << "_ind" << deviceID << ", sizeof(unsigned int) * size);" << endl;
 	os << "  cudaMalloc((void **) &d_gp" << model->synapseName[i] << "_indInG" << deviceID << ", sizeof(unsigned int) * ("<< model->neuronN[model->synapseSource[i]] << " + 1));" << endl;
 	os << "  size = sizeof(" << model->ftype << ") * g" << model->synapseName[i] << ".connN; " << endl;
@@ -323,14 +355,14 @@ void genCudaCode(int deviceID, ostream &mos)
   // ------------------------------------------------------------------------
   // allocating conductance arrays for sparse matrices
   /*
-    for (int i= 0; i < model->synapseGrpN; i++) {
-    if (model->synapseConnType[i] == SPARSE){
+    for (int i = 0; i < model->synapseGrpN; i++) {
+    if (model->synapseConnType[i] == SPARSE) {
     os << "void allocateSparseArray" << model->synapseName[i] << "(unsigned int i, unsigned int gsize)" << endl; //i=synapse index
     os << "{" << endl;
-    os << "  g" << model->synapseName[i] << ".gp= new " << model->ftype << "[gsize];" << endl; // synaptic conductances of group " << model->synapseName[i];
+    os << "  g" << model->synapseName[i] << ".gp = new " << model->ftype << "[gsize];" << endl; // synaptic conductances of group " << model->synapseName[i];
     //mem += gsize * theSize(model->ftype); //TODO: But we need to find a way
-    os << "  g" << model->synapseName[i] << ".gIndInG= new unsigned int[";
-    os << model->neuronN[model->synapseSource[i]] << "+ 1];"; // index where the next neuron starts in the synaptic conductances of group " << model->synapseName[i];
+    os << "  g" << model->synapseName[i] << ".gIndInG = new unsigned int[";
+    os << model->neuronN[model->synapseSource[i]] << " + 1];"; // index where the next neuron starts in the synaptic conductances of group " << model->synapseName[i];
     os << endl;
     mem+= model->neuronN[model->synapseSource[i]]*sizeof(int);
     os << "  g" << model->synapseName[i] << ".gInd= new unsigned int[gsize];" << endl; // postsynaptic neuron index in the synaptic conductances of group " << model->synapseName[i];
@@ -352,7 +384,7 @@ void genCudaCode(int deviceID, ostream &mos)
 
   for (int i = 0; i < model->synapseGrpN; i++) {
     if (model->synapseGType[i] == INDIVIDUALG) {
-      if (model->synapseConnType[i] == SPARSE){          
+      if (model->synapseConnType[i] == SPARSE) {          
 	os << "  CHECK_CUDA_ERRORS(cudaMemcpy(d_gp" << model->synapseName[i] << deviceID << ", g";
 	os << model->synapseName[i] << ".gp, g" << model->synapseName[i] << ".connN * " << theSize(model->ftype);
 	os << ", cudaMemcpyHostToDevice));" << endl;
@@ -388,7 +420,7 @@ void genCudaCode(int deviceID, ostream &mos)
       os << ", " << size << ", cudaMemcpyHostToDevice));" << endl;
       if (model->synapseType[i] == LEARN1SYNAPSE) {
         os << "  CHECK_CUDA_ERRORS(cudaMemcpy(d_grawp" << model->synapseName[i] << deviceID << ", grawp" << model->synapseName[i];
-	if (model->synapseConnType[i]==SPARSE) {
+	if (model->synapseConnType[i] == SPARSE) {
           os << ", " << model->neuronN[model->synapseSource[i]] * model->neuronN[model->synapseTarget[i]] * theSize(model->ftype);
 	  os << ", cudaMemcpyHostToDevice));" << endl;
 	}
@@ -422,7 +454,7 @@ void genCudaCode(int deviceID, ostream &mos)
 
   for (int i = 0; i < model->synapseGrpN; i++) {
     if (model->synapseGType[i] == INDIVIDUALG) {
-      if (model->synapseConnType[i]==SPARSE){
+      if (model->synapseConnType[i] == SPARSE) {
 	os << "  CHECK_CUDA_ERRORS(cudaMemcpy(g" << model->synapseName[i] << ".gp, d_gp" << model->synapseName[i] << deviceID;
 	os << ", g" << model->synapseName[i] << ".connN * " << theSize(model->ftype) << ", cudaMemcpyDeviceToHost));" << endl;
       }
@@ -685,7 +717,7 @@ void genCudaCode(int deviceID, ostream &mos)
   //--------------------------
   // learning helper functions
 
-  if (model->lrnGroups > 0) {
+  if ((model->lrnGroups > 0) && (!model->padSumLearnN[deviceID].empty())) {
     for (int i = 0; i < model->synapseGrpN; i++) {
       if (model->synapseType[i] == LEARN1SYNAPSE) {
 
@@ -739,7 +771,7 @@ void genCudaCode(int deviceID, ostream &mos)
   os << "float t)" << endl;
   os << "{" << endl;
 
-  if (model->synapseGrpN > 0) {
+  if ((model->synapseGrpN > 0) && (!model->padSumSynapseKrnl[deviceID].empty())) {
     os << "  if (t > 0.0) {" << endl; 
     os << "    calcSynapsesCuda" << deviceID << " <<< sGridCuda" << deviceID << ", sThreadsCuda" << deviceID << " >>> (";
     for (int i = 0; i < model->synapseGrpN; i++) {
@@ -770,7 +802,7 @@ void genCudaCode(int deviceID, ostream &mos)
     else {
       os << ");" << endl;
     }
-    if (model->lrnGroups > 0) {
+    if ((model->lrnGroups > 0) && (!model->padSumLearnN[deviceID].empty())) {
       os << "    learnSynapsesPostCuda" << deviceID << " <<< lGridCuda" << deviceID << ", lThreadsCuda" << deviceID << " >>> (";      
       for (int i = 0; i < model->synapseGrpN; i++) {
 	if ((model->synapseGType[i] == INDIVIDUALG) || (model->synapseGType[i] == INDIVIDUALID)) {
@@ -810,7 +842,8 @@ void genCudaCode(int deviceID, ostream &mos)
   }
   os << "t);" << endl;
   os << "}" << endl;
-
   osh.close();
   os.close();
+
+  mos << "leaving genCudaCode for device " << deviceID << endl;
 }

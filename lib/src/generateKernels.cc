@@ -127,7 +127,7 @@ void genCudaNeuron(int deviceID, ostream &mos)
 
   // kernel code
   os << "{" << endl;
-  unsigned int neuronGridSz = model->padSumNeuronN[model->neuronGrpN - 1];
+  unsigned int neuronGridSz = model->padSumNeuronN[deviceID].back();
   neuronGridSz = neuronGridSz / neuronBlkSz[deviceID];
   if (neuronGridSz < deviceProp[deviceID].maxGridSize[1]){
     os << "  unsigned int id = " << neuronBlkSz[deviceID] << " * blockIdx.x + threadIdx.x;" << endl;
@@ -155,14 +155,14 @@ void genCudaNeuron(int deviceID, ostream &mos)
   for (int i= 0; i < model->neuronGrpN; i++) {
     nt= model->neuronType[i];
     if (i == 0) {
-      os << "  if (id < " << model->padSumNeuronN[i] << ") {" << endl;
+      os << "  if (id < " << model->padSumNeuronN[deviceID][i] << ") {" << endl;
       localID = string("id");
     }
     else {
-      os << "  if ((id >= " << model->padSumNeuronN[i-1] << ") && ";
-      os << "(id < " << model->padSumNeuronN[i] << ")) {" << endl;
+      os << "  if ((id >= " << model->padSumNeuronN[deviceID][i - 1] << ") && ";
+      os << "(id < " << model->padSumNeuronN[deviceID][i] << ")) {" << endl;
       os << "    unsigned int lid;" << endl;
-      os << "    lid = id - " << model->padSumNeuronN[i-1] << ";" << endl;
+      os << "    lid = id - " << model->padSumNeuronN[deviceID][i - 1] << ";" << endl;
       localID = string("lid");
     }
     os << "    // only do this for existing neurons" << endl;
@@ -397,16 +397,21 @@ void genCudaNeuron(int deviceID, ostream &mos)
 
 void genCudaSynapse(int deviceID, ostream &mos)
 {
+  // abort if no synapse groups are on this device
+  if (model->padSumSynapseKrnl[deviceID].empty()) return;
+
   string name, s, localID, theLG;
-  unsigned int numOfBlocks,trgN;
+  unsigned int numOfBlocks, trgN;
   ofstream os;
 
   // count how many neuron blocks to use: one thread for each synapse target
   // targets of several input groups are counted multiply
-  numOfBlocks = model->padSumSynapseKrnl[model->synapseGrpN - 1] / synapseBlkSz[deviceID];
+  numOfBlocks = model->padSumSynapseKrnl[deviceID].back() / synapseBlkSz[deviceID];
+
   name = path + toString("/") + model->name + toString("_CODE_CUDA") + toString(deviceID) + toString("/synapse.cu");
   os.open(name.c_str());
-  writeHeader(os);  // write header content
+  writeHeader(os); // write header content
+
   // compiler/include control (include once)
   os << "#ifndef _" << model->name << "_synapseKrnl_cc" << endl;
   os << "#define _" << model->name << "_synapseKrnl_cc" << endl;
@@ -471,14 +476,14 @@ void genCudaSynapse(int deviceID, ostream &mos)
   os << "  ipost = 0;" << endl;
   for (int i = 0; i < model->synapseGrpN; i++) {
     if (i == 0) {
-      os << "  if (id < " << model->padSumSynapseKrnl[i] << ") {  //synapse group " << model->synapseName[i] << endl;
+      os << "  if (id < " << model->padSumSynapseKrnl[deviceID][i] << ") {  //synapse group " << model->synapseName[i] << endl;
       localID = string("id");
     }
     else {
-      os << "  if ((id >= " << model->padSumSynapseKrnl[i - 1] << ") && ";
-      os << "(id < " << model->padSumSynapseKrnl[i] << ")) {  //synapse group " << model->synapseName[i] << endl;
+      os << "  if ((id >= " << model->padSumSynapseKrnl[deviceID][i - 1] << ") && ";
+      os << "(id < " << model->padSumSynapseKrnl[deviceID][i] << ")) {  //synapse group " << model->synapseName[i] << endl;
       os << "    unsigned int lid;" << endl;
-      os << "    lid = id - " << model->padSumSynapseKrnl[i - 1] << ";" << endl;
+      os << "    lid = id - " << model->padSumSynapseKrnl[deviceID][i - 1] << ";" << endl;
       localID = string("lid");
     }
     unsigned int trg = model->synapseTarget[i];
@@ -702,11 +707,11 @@ void genCudaSynapse(int deviceID, ostream &mos)
   ///////////////////////////////////////////////////////////////
   // Kernel for learning synapses, post-synaptic spikes
 
-  if (model->lrnGroups > 0) {
+  if ((model->lrnGroups > 0) && (!model->padSumLearnN[deviceID].empty())) {
 
     // count how many learn blocks to use: one thread for each synapse source
     // sources of several output groups are counted multiply
-    numOfBlocks = model->padSumLearnN[model->lrnGroups - 1] / learnBlkSz[deviceID];
+    numOfBlocks = model->padSumLearnN[deviceID].back() / learnBlkSz[deviceID];
 
     // Kernel header
     os << "__global__ void learnSynapsesPostCuda" << deviceID << "(" << endl;
@@ -739,14 +744,14 @@ void genCudaSynapse(int deviceID, ostream &mos)
 
     for (int i = 0; i < model->lrnGroups; i++) {
       if (i == 0) {
-	os << "  if (id < " << model->padSumLearnN[i] << ") {" << endl;
+	os << "  if (id < " << model->padSumLearnN[deviceID][i] << ") {" << endl;
 	localID = string("id");
       }
       else {
-	os << "  if ((id >= " << model->padSumLearnN[i - 1] << ") && ";
-	os << "(id < " << model->padSumLearnN[i] << ")) {" << endl;
+	os << "  if ((id >= " << model->padSumLearnN[deviceID][i - 1] << ") && ";
+	os << "(id < " << model->padSumLearnN[deviceID][i] << ")) {" << endl;
 	os << "    unsigned int lid;" << endl;
-	os << "    lid = id - " << model->padSumLearnN[i - 1] << ";" << endl;
+	os << "    lid = id - " << model->padSumLearnN[deviceID][i - 1] << ";" << endl;
 	localID = string("lid");
       }
       unsigned int k = model->lrnSynGrp[i];

@@ -18,21 +18,25 @@
 
 #include <cstdlib>
 #include <cstdio>
-
 #include "modelSpec.h"
+
+using namespace std;
 
 
 // class NNmodel for specifying a neuronal network model
 NNmodel::NNmodel() 
 {
+  valid = 0; // unused?
+
   dt = DT;
-  valid = 0;
+  setPrecision(0);
   neuronGrpN = 0;
   synapseGrpN = 0;
   lrnGroups = 0;
   needSt = 0;
   needSynapseDelay = 0;
-  setPrecision(0);
+  hostRecvSpkFrom.assign(hostCount, vector<unsigned int>());
+  deviceRecvSpkFrom.assign(deviceCount, vector<unsigned int>());
 }
 
 NNmodel::~NNmodel() 
@@ -64,7 +68,7 @@ void NNmodel::initDerivedNeuronPara(unsigned int i /**< index of the neuron popu
 {
   vector<float> tmpP;
   int numDpNames = nModels[neuronType[i]].dpNames.size();
-  for (int j=0; j < nModels[neuronType[i]].dpNames.size(); ++j) {
+  for (int j = 0; j < nModels[neuronType[i]].dpNames.size(); ++j) {
     float retVal = nModels[neuronType[i]].dps->calculateDerivedParameter(j, neuronPara[i], dt);
     tmpP.push_back(retVal);
   }
@@ -86,17 +90,8 @@ void NNmodel::initNeuronSpecs(unsigned int i /**< index of the neuron population
   //then this value will be the one used.
   nSpkEvntThreshold.push_back(20.0);
 
-  // padnN is the lowest multiple of neuronBlkSz >= neuronN[i]
-  unsigned int padnN = ceil((float) neuronN[i] / (float) neuronBlkSz[nrnDevID[i]]) * (float) neuronBlkSz[nrnDevID[i]];
-  if (i == 0) {
-    sumNeuronN.push_back(neuronN[i]);
-    padSumNeuronN.push_back(padnN);
-  }
-  else {
-    sumNeuronN.push_back(sumNeuronN[i - 1] + neuronN[i]); 
-    padSumNeuronN.push_back(padSumNeuronN[i - 1] + padnN); 
-  }
-  neuronNeedSt.push_back(0); // by default last spike times are not saved
+  // by default last spike times are not saved
+  neuronNeedSt.push_back(0);
 }
 
 
@@ -140,14 +135,6 @@ void NNmodel::initDerivedSynapsePara(unsigned int i /**< index of the synapse po
     neuronNeedSt[synapseTarget[i]] = 1;
     neuronNeedSt[synapseSource[i]] = 1;
     needSt = 1;
-    // padnN is the lowest multiple of learnBlkSz >= neuronN[synapseSource[i]]
-    unsigned int padnN = ceil((float) neuronN[synapseSource[i]] / (float) learnBlkSz[synDevID[i]]) * (float) learnBlkSz[synDevID[i]];
-    if (lrnGroups == 0) {
-      padSumLearnN.push_back(padnN);
-    }
-    else {
-      padSumLearnN.push_back(padSumLearnN[lrnGroups - 1] + padnN); 
-    }
     lrnSynGrp.push_back(i);
     lrnGroups++;
   }
@@ -161,16 +148,6 @@ void NNmodel::initDerivedSynapsePara(unsigned int i /**< index of the synapse po
   inSyn[synapseTarget[i]].push_back(i);
   if (nSpkEvntThreshold[synapseSource[i]] > synapsePara[i][1]) {
     nSpkEvntThreshold[synapseSource[i]] = synapsePara[i][1];
-  }
-  // padnN is the lowest multiple of synapseBlkSz >= neuronN[synapseTarget[i]]
-  unsigned int padnN = ceil((float) neuronN[synapseTarget[i]] / (float) synapseBlkSz[synDevID[i]]) * (float) synapseBlkSz[synDevID[i]];
-  if (i == 0) {
-    sumSynapseTrgN.push_back(neuronN[synapseTarget[i]]);
-    padSumSynapseKrnl.push_back(padnN);
-  }
-  else {
-    sumSynapseTrgN.push_back(sumSynapseTrgN[i - 1] + neuronN[synapseTarget[i]]);
-    padSumSynapseKrnl.push_back(padSumSynapseKrnl[i - 1] + padnN);
   }
 }
 
@@ -247,6 +224,10 @@ void NNmodel::setSynapseClusterIndex(unsigned int synapseID, /**< ID number of t
 {
   synHostID[synapseID] = hostID;
   synDevID[synapseID] = deviceID;
+
+  // set flags to indicate that presynaptic spike variables will be required on the chosen host and device
+  hostRecvSpkFrom[hostID][synapseSource[synapseID]] = 1;
+  deviceRecvSpkFrom[deviceID][synapseSource[synapseID]] = 1;
 }
 
 
@@ -291,18 +272,18 @@ void NNmodel::addNeuronPopulation(const string name, /**<  The name of the neuro
 {
   if (nModels.size() < 1) prepareStandardModels();
 
-  unsigned int i= neuronGrpN++;
+  unsigned int i = neuronGrpN++;
 
   neuronName.push_back(toString(name));
   neuronN.push_back(nNo);
   neuronType.push_back(type);
   vector<float> tmpP;
-  for (int j= 0; j < nModels[neuronType[i]].pNames.size(); j++) {
+  for (int j = 0; j < nModels[neuronType[i]].pNames.size(); j++) {
     tmpP.push_back(p[j]);
   }
   neuronPara.push_back(tmpP);
   tmpP.clear();
-  for (int j= 0; j < nModels[neuronType[i]].varNames.size(); j++) {
+  for (int j = 0; j < nModels[neuronType[i]].varNames.size(); j++) {
     tmpP.push_back(ini[j]);
   }
   neuronIni.push_back(tmpP);
@@ -310,6 +291,8 @@ void NNmodel::addNeuronPopulation(const string name, /**<  The name of the neuro
   neuronDelaySlots.push_back(1);
   receivesInputCurrent.push_back(0);
   inSyn.push_back(tv);  // empty list of input synapse groups for neurons i 
+  for (int j = 0; j < hostCount; j++) hostRecvSpkFrom[j].push_back(0);
+  for (int j = 0; j < deviceCount; j++) deviceRecvSpkFrom[j].push_back(0);
   nrnDevID.push_back(0);
   nrnHostID.push_back(0);
 
@@ -533,27 +516,6 @@ void NNmodel::setMaxConn(const string sname, /**<  */
   if (synapseConnType[found] == SPARSE) {
     if (maxConn.size() < found + 1) maxConn.resize(found + 1);
     maxConn[found] = maxConnP;
-
-    // set padnC is the lowest multiple of synapseBlkSz >= maxConn[found]
-    unsigned int padnC = ceil((float) maxConn[found] / (float) synapseBlkSz[synDevID[found]]) * (float) synapseBlkSz[synDevID[found]];
-
-    unsigned int toOmitK;
-    if (found == 0) {
-      toOmitK = padSumSynapseKrnl[found];
-      padSumSynapseKrnl[found] = padnC;
-      //fprintf(stderr, "padSumSynapseKrnl[%d] is %u\n", found, padSumSynapseKrnl[found]);
-    }
-    else {
-      toOmitK = padSumSynapseKrnl[found] - padSumSynapseKrnl[found - 1];
-      //fprintf(stderr, "old padSumSynapseKrnl[%d] is %u\n", found,padSumSynapseKrnl[found]);
-      padSumSynapseKrnl[found] = padSumSynapseKrnl[found - 1] + padnC;
-      //fprintf(stderr, "padSumSynapseKrnl[%d] is %u\n", found,padSumSynapseKrnl[found]);
-      for (int j = found + 1; j < padSumSynapseKrnl.size(); j++) {
-	//fprintf(stderr, "old padSumSynapseKrnl[%d] is %u\n",j,padSumSynapseKrnl[j]);
-	padSumSynapseKrnl[j] = padSumSynapseKrnl[j] - toOmitK + padnC;
-	//fprintf(stderr, "padSumSynapseKrnl[%d] is %u\n", j,padSumSynapseKrnl[j]);
-      }
-    }
   }
   else {
     fprintf(stderr, "WARNING: Synapse group %u is all-to-all connected. Maxconn variable is not needed in this case. Setting size to %u is not stable. Skipping...\n", found, maxConnP);
@@ -562,50 +524,65 @@ void NNmodel::setMaxConn(const string sname, /**<  */
 
 
 //--------------------------------------------------------------------------
-/*! \brief This function re-calculates the block-size-padded sum of threads needed to compute the
-  groups of neurons and synapses assigned to each device. Must be called AFTER setting the deviceID
-  of the neuron and synapse groups.
+/*! \brief This function calculates the block-size-padded sum of threads needed to compute the
+  groups of neurons and synapses assigned to each device. MUST be called AFTER setting the hostID
+  and deviceID of all neuron and synapse groups.
  */
 //--------------------------------------------------------------------------
 
 void NNmodel::calcPaddedThreadSums()
 {
   unsigned int padN;
-  vector<unsigned int> padSum(synapseGrpN);
-  vector<unsigned int> sumSoFar(deviceCount, 0);
-  for (int i = 0; i < synapseGrpN; i++) {
-    if (synapseConnType[i] == SPARSE) {
-      // sparse synapse kernel thread sum
-      padN = ceil((float) maxConn[i] / (float) synapseBlkSz[synDevID[i]]) * (float) synapseBlkSz[synDevID[i]];
+
+  // sparse or non-sparse padded synapse kernel thread sum
+  padSumNeuronN.assign(deviceCount, vector<unsigned int>());
+  for (int deviceID = 0; deviceID < deviceCount; deviceID++) padSumSynapseKrnl.push_back(vector<unsigned int>());
+  localSynapseID.resize(synapseGrpN);
+  for (int synGrp = 0; synGrp < synapseGrpN; synGrp++) {
+    if (synapseConnType[synGrp] == SPARSE) {
+      padN = ceil((float) maxConn[synGrp] / (float) synapseBlkSz[synDevID[synGrp]]) * (float) synapseBlkSz[synDevID[synGrp]];
     }
     else {
-      // non-sparse synapse kernel thread sum
-      padN = ceil((float) neuronN[synapseTarget[i]] / (float) synapseBlkSz[synDevID[i]]) * (float) synapseBlkSz[synDevID[i]];
+      padN = ceil((float) neuronN[synapseTarget[synGrp]] / (float) synapseBlkSz[synDevID[synGrp]]) * (float) synapseBlkSz[synDevID[synGrp]];
     }
-    sumSoFar[synDevID[i]] = sumSoFar[synDevID[i]] + padN;
-    padSum[i] = sumSoFar[synDevID[i]];
+    localSynapseID[synGrp] = padSumSynapseKrnl[synDevID[synGrp]].size();
+    if (localSynapseID[synGrp] == 0) {
+      padSumSynapseKrnl[synDevID[synGrp]].push_back(padN);
+    }
+    else {
+      padSumSynapseKrnl[synDevID[synGrp]].push_back(padN + padSumSynapseKrnl[synDevID[synGrp]].back());
+    }
   }
-  padSumSynapseKrnl = padSum;
 
-  padSum.resize(lrnGroups);
-  sumSoFar.assign(deviceCount, 0);
-  for (int i = 0; i < lrnGroups; i++) {
-    // learning kernel thread sum
-    padN = ceil((float) neuronN[synapseSource[i]] / (float) learnBlkSz[synDevID[i]]) * (float) learnBlkSz[synDevID[i]];
-    sumSoFar[synDevID[i]] = sumSoFar[synDevID[i]] + padN;
-    padSum[i] = sumSoFar[synDevID[i]];
+  // padded learning kernel thread sums
+  padSumLearnN.assign(deviceCount, vector<unsigned int>());
+  for (int deviceID = 0; deviceID < deviceCount; deviceID++) padSumLearnN.push_back(vector<unsigned int>());
+  localLearnID.resize(lrnGroups);
+  for (int lrnGrp = 0; lrnGrp < lrnGroups; lrnGrp++) {
+    padN = ceil((float) neuronN[synapseSource[lrnGrp]] / (float) learnBlkSz[synDevID[lrnGrp]]) * (float) learnBlkSz[synDevID[lrnGrp]];
+    localLearnID[lrnGrp] = padSumLearnN[synDevID[lrnSynGrp[lrnGrp]]].size();
+    if (localLearnID[lrnGrp] == 0) {
+      padSumLearnN[synDevID[lrnSynGrp[lrnGrp]]].push_back(padN);
+    }
+    else {
+      padSumLearnN[synDevID[lrnSynGrp[lrnGrp]]].push_back(padN + padSumLearnN[synDevID[lrnSynGrp[lrnGrp]]].back());
+    }
   }
-  padSumLearnN = padSum;
 
-  padSum.resize(neuronGrpN);
-  sumSoFar.assign(deviceCount, 0);
-  for (int i = 0; i < neuronGrpN; i++) {
-    // neuron kernel thread sum
-    padN = ceil((float) neuronN[i] / (float) neuronBlkSz[nrnDevID[i]]) * (float) neuronBlkSz[nrnDevID[i]];
-    sumSoFar[nrnDevID[i]] = sumSoFar[nrnDevID[i]] + padN;
-    padSum[i] = sumSoFar[nrnDevID[i]];
+  // padded neuron kernel thread sums
+  padSumNeuronN.assign(deviceCount, vector<unsigned int>());
+  for (int deviceID = 0; deviceID < deviceCount; deviceID++) padSumLearnN.push_back(vector<unsigned int>());
+  localNeuronID.resize(neuronGrpN);
+  for (int nrnGrp = 0; nrnGrp < neuronGrpN; nrnGrp++) {
+    padN = ceil((float) neuronN[nrnGrp] / (float) neuronBlkSz[nrnDevID[nrnGrp]]) * (float) neuronBlkSz[nrnDevID[nrnGrp]];
+    localNeuronID[nrnGrp] = padSumNeuronN[nrnDevID[nrnGrp]].size();
+    if (localNeuronID[nrnGrp] == 0) {
+      padSumNeuronN[nrnDevID[nrnGrp]].push_back(padN);
+    }
+    else {
+      padSumNeuronN[nrnDevID[nrnGrp]].push_back(padN + padSumNeuronN[nrnDevID[nrnGrp]].back());
+    }
   }
-  padSumNeuronN = padSum;
 }
 
 

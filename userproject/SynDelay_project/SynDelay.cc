@@ -86,8 +86,8 @@ void modelDefinition(NNmodel &model)
 
   model.addSynapsePopulation("InputInter", NSYNAPSE, ALLTOALL, GLOBALG, 3, EXPDECAY, "Input", "Inter", synapses_p, postSynV, postExpInp);
   model.setSynapseG("InputInter", strongSynG);
-  model.addSynapsePopulation("InputOutput", NSYNAPSE, ALLTOALL, GLOBALG, 6, EXPDECAY, "Input", "Output", synapses_p, postSynV, postExpOut);
-  model.setSynapseG("InputOutput", weakSynG);
+  //model.addSynapsePopulation("InputOutput", NSYNAPSE, ALLTOALL, GLOBALG, 6, EXPDECAY, "Input", "Output", synapses_p, postSynV, postExpOut);
+  //model.setSynapseG("InputOutput", weakSynG);
   model.addSynapsePopulation("InterOutput", NSYNAPSE, ALLTOALL, GLOBALG, NO_DELAY, EXPDECAY, "Inter", "Output", synapses_p, postSynV, postExpInt);
   model.setSynapseG("InterOutput", weakSynG);
 }
