@@ -155,6 +155,9 @@ void genCudaCode(unsigned int deviceID, ostream &mos)
 
   os << "#include <cstdio>" << endl;
   os << "#include \"utils.h\"" << endl;
+  os << "#ifndef RAND" << endl;
+  os << "#define RAND(Y, X) Y = Y * 1103515245 + 12345; X = (unsigned int) (Y >> 16) & 32767" << endl;
+  os << "#endif" << endl;
   os << "#include \"cuda" << deviceID << ".h\"" << endl;
   os << "#include \"../" << model->name << "_CODE_HOST/host.h\"" << endl;
   os << "#include \"neuron.cu\"" << endl;

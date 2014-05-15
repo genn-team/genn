@@ -135,16 +135,21 @@ void genHostCode(ostream &mos)
   os << "//-------------------------------------------------------------------------" << endl << endl;
   os << endl;
 
+
   //---------------------
   // add host.cc includes
 
+  os << "#include <cstdlib>" << endl;
+  os << "#include <cmath>" << endl;
   os << "#include \"utils.h\"" << endl;
-  os << "#include \"host.h\"" << endl;
-  os << "#include \"neuron.cc\"" << endl;
-  if (model->synapseGrpN>0) os << "#include \"synapse.cc\"" << endl;
   os << "#ifndef RAND" << endl;
   os << "#define RAND(Y, X) Y = Y * 1103515245 + 12345; X = (unsigned int) (Y >> 16) & 32767" << endl;
   os << "#endif" << endl;
+  os << "#include \"host.h\"" << endl;
+  os << "#include \"neuron.cc\"" << endl;
+  if (model->synapseGrpN > 0) {
+    os << "#include \"synapse.cc\"" << endl;
+  }
   os << endl;
 
 
@@ -504,7 +509,7 @@ void genHostCode(ostream &mos)
       if (model->synapseType[i] == LEARN1SYNAPSE) {
 	os << "  for (int i = 0; i < ";
 	os << model->neuronN[model->synapseSource[i]] * model->neuronN[model->synapseTarget[i]] << "; i++) {" << endl;
-	os << "    grawp"  << model->synapseName[i] << "[i] = invGFunc" << model->synapseName[i];
+	os << "    grawp"  << model->synapseName[i] << "[i] = invGFunc" << model->synapseName[i] << "Host";
 	if (model->synapseGType[i] != GLOBALG) {
 	  if (model->synapseConnType[i] == SPARSE) {
 	    os << "(g" << model->synapseName[i] << ".gp[i]);" << endl;

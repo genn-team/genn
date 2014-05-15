@@ -679,7 +679,7 @@ void genCudaSynapse(unsigned int deviceID, ostream &mos)
       os << "            lg = lg + dt;" << endl;
       os << "            d_grawp" << model->synapseName[i] << deviceID << "[shSpkEvnt[j] * " << model->neuronN[trg] << " + " << localID << "] = lg;" << endl;
       os << "            d_gp" << model->synapseName[i] << deviceID << "[shSpkEvnt[j] * " << model->neuronN[trg] << " + " << localID << "] = ";
-      os << "gFunc" << model->synapseName[i] << "(lg);" << endl; 
+      os << "gFunc" << model->synapseName[i] << "Cuda" << deviceID << "(lg);" << endl; 
     }
     if (model->synapseConnType[i] != SPARSE) {
       if ((model->neuronType[src] != POISSONNEURON) || (model->synapseGType[i] == INDIVIDUALID)) {
@@ -839,7 +839,7 @@ void genCudaSynapse(unsigned int deviceID, ostream &mos)
       os << "            d_grawp" << model->synapseName[k] << deviceID << "[" << localID << " * ";
       os << model->neuronN[trg] << " + shSpkEvnt[j]] = lg;" << endl;
       os << "            d_gp" << model->synapseName[k] << deviceID << "[" << localID << " * ";
-      os << model->neuronN[trg] << " + shSpkEvnt[j]] = gFunc" << model->synapseName[k] << "(lg);" << endl;
+      os << model->neuronN[trg] << " + shSpkEvnt[j]] = gFunc" << model->synapseName[k] << "Cuda" << deviceID << "(lg);" << endl;
       os << "          }" << endl;
       os << "        }" << endl;
       os << "      }" << endl;

@@ -485,7 +485,7 @@ void genHostSynapse(ostream &mos)
 	    os << "delaySlot * " << model->neuronN[src] << " + ";
 	  }
 	  os << "j] * " << model->neuronN[i] << " + n] = ";
-	  os << "gFunc" << model->synapseName[synID] << "(grawp" << model->synapseName[synID];
+	  os << "gFunc" << model->synapseName[synID] << "Host(grawp" << model->synapseName[synID];
 	  os << "[glbSpkEvnt" << model->neuronName[src] << "[";
 	  if (model->neuronDelaySlots[src] != 1) {
 	    os << "delaySlot * " << model->neuronN[src] << " + ";
@@ -567,7 +567,7 @@ void genHostSynapse(ostream &mos)
       if (model->neuronDelaySlots[trg] != 1) {
 	os << "(spkEvntQuePtr" << model->neuronName[trg] << " * " << model->neuronN[trg] << ") + ";
       }
-      os << "j]] = gFunc" << model->synapseName[k] << "(grawp" << model->synapseName[k] << "[n * ";
+      os << "j]] = gFunc" << model->synapseName[k] << "Host(grawp" << model->synapseName[k] << "[n * ";
       os << model->neuronN[trg] << " + glbSpkEvnt" << model->neuronName[trg] << "[";
       if (model->neuronDelaySlots[trg] != 1) {
 	os << "(spkEvntQuePtr" << model->neuronName[trg] << " * " << model->neuronN[trg] << ") + ";
