@@ -97,10 +97,10 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
     int reqRegs, reqSmem;
     bool ptxInfoFound = false;
 
-    unsigned int bestSynBlkSz[deviceCount];
-    unsigned int bestLrnBlkSz[deviceCount];
-    unsigned int bestNrnBlkSz[deviceCount];
-    unsigned int (*blockSizePointer)[deviceCount];
+    unsigned int *bestSynBlkSz= new unsigned int[deviceCount];
+    unsigned int *bestLrnBlkSz= new unsigned int[deviceCount];
+    unsigned int *bestNrnBlkSz= new unsigned int[deviceCount];
+    unsigned int **blockSizePointer;
     float warpAllocGran, regAllocGran, smemAllocGran;
     float blockLimit, mainBlockLimit, bestOccupancy;
     int deviceOccupancy, bestDeviceOccupancy = 0;
@@ -236,6 +236,9 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
     model = new NNmodel();
     modelDefinition(*model);
     mos << "Using device " << chosenDevice << ", with a neuron kernel occupancy of " << bestDeviceOccupancy << " threads." << endl;
+    delete[] bestSynBlkSz;
+    delete[] bestLrnBlkSz;
+    delete[] bestNrnBlkSz;
   }
 
   else { // IF OPTIMISATION IS OFF: Simply choose the device with the most global memory.
