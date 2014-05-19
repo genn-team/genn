@@ -78,7 +78,7 @@ void generate_model_runner(NNmodel &model,  //!< Model description
 //--------------------------------------------------------------------------
 
 int chooseDevice(ostream &mos,   //!< output stream for messages
-		 NNmodel *model, //!< the nn model we are generating code for
+		 NNmodel *&model, //!< the nn model we are generating code for
 		 string path     //!< path the generated code will be deposited
 		 )
 {
