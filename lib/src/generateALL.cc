@@ -291,6 +291,9 @@ void bestDeviceGenerate()
   cerr << "using device " << bestDevice;
   if (optCudaBlockSize) cerr << " which supports " << best << " warps of occupancy" << endl;
   else cerr << " with " << best << " bytes of global memory" << endl;
+  cerr << "synapse block size " << synapseBlkSz[bestDevice] << endl;
+  cerr << "learn block size " << learnBlkSz[bestDevice] << endl;
+  cerr << "neuron block size " << neuronBlkSz[bestDevice] << endl;
 }
 
 
@@ -337,6 +340,9 @@ void multiDeviceGenerate()
     for (int deviceID = 0; deviceID < deviceCount; deviceID++) {
       warpOccupancy[deviceID] = blockSizeOptimise(deviceID);
       cerr << "device " << deviceID << " has " << warpOccupancy[deviceID] << " warps occupancy" << endl;
+      cerr << "synapse block size " << synapseBlkSz[deviceID] << endl;
+      cerr << "learn block size " << learnBlkSz[deviceID] << endl;
+      cerr << "neuron block size " << neuronBlkSz[deviceID] << endl;
     }
   }
   model->calcPaddedThreadSums();

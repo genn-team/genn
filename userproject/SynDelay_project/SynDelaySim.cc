@@ -48,8 +48,8 @@ void SynDelay::run(float t)
   {
     stepTimeCuda0(t);
     copyStateFromCuda0();
-    stepTimeCuda1(t);
-    copyStateFromCuda1();
+    //stepTimeCuda1(t);
+    //copyStateFromCuda1();
   }
   else
   {

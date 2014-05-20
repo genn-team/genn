@@ -166,7 +166,18 @@ void genCudaNeuron(unsigned int deviceID, ostream &mos)
   os << "  __shared__ volatile unsigned int spkCount;" << endl; //was scnt
 
   os << endl;
-  os << "  if (threadIdx.x == 0) { spkEvntCount = 0; spkCount = 0;}" << endl;
+  os << "  if (threadIdx.x == 0) {" << endl;
+  os << "    spkCount = 0;" << endl;
+  os << "    spkEvntCount = 0;" << endl;
+
+  // increment spike queue pointers, if applicable
+  for (int i = 0; i < model->neuronGrpN; i++) {
+    if (model->neuronDelaySlots[i] != 1) {
+      os << "    d_spkEvntQuePtr" << model->neuronName[i] << deviceID << " = (d_spkEvntQuePtr";
+      os << model->neuronName[i] << deviceID << " + 1) % " << model->neuronDelaySlots[i] << ";" << endl;
+    }
+  }
+  os << "  }" << endl;
   os << "  __syncthreads();" << endl;
   
   for (int i = 0; i < model->neuronGrpN; i++) {
@@ -703,8 +714,6 @@ void genCudaSynapse(unsigned int deviceID, ostream &mos)
       for (int j = 0; j < model->neuronGrpN; j++) {
 	os << "        d_glbscnt" << model->neuronName[j] << deviceID << " = 0;" << endl;
 	if (model->neuronDelaySlots[j] != 1) {
-	  os << "        d_spkEvntQuePtr" << model->neuronName[j] << deviceID << " = (d_spkEvntQuePtr";
-	  os << model->neuronName[j] << deviceID << " + 1) % " << model->neuronDelaySlots[j] << ";" << endl;
 	  os << "        d_glbSpkEvntCnt" << model->neuronName[j] << deviceID << "[d_spkEvntQuePtr";
 	  os << model->neuronName[j] << deviceID << "] = 0;" << endl;
 	}

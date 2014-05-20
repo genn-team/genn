@@ -37,7 +37,7 @@
 
 void genCudaCode(unsigned int deviceID, ostream &mos)
 {
-  mos << "entering genCudaCode for device " << deviceID << endl;
+  //mos << "entering genCudaCode for device " << deviceID << endl;
 
   string ccFile, hFile;
   ofstream os, osh;
@@ -228,19 +228,41 @@ void genCudaCode(unsigned int deviceID, ostream &mos)
 
   os << "// CUDA block and grid sizes" << endl;
   if ((model->synapseGrpN > 0) && (!model->padSumSynapseKrnl[deviceID].empty())) {
-    unsigned int synapseGridSz = model->padSumSynapseKrnl[deviceID][model->localSynapseID.back()];
+    unsigned int synapseGridSz = model->padSumSynapseKrnl[deviceID].back();
+    //unsigned int synapseGridSz = model->padSumSynapseKrnl[deviceID][model->localSynapseID.back()];
     synapseGridSz = synapseGridSz / synapseBlkSz[deviceID];
     os << "dim3 sThreadsCuda" << deviceID << "(" << synapseBlkSz[deviceID] << ", 1);" << endl;
     os << "dim3 sGridCuda" << deviceID << "(" << synapseGridSz << ", 1);" << endl;
   }
   if ((model->lrnGroups > 0) && (!model->padSumLearnN[deviceID].empty())) {
-    unsigned int learnGridSz = model->padSumLearnN[deviceID][model->localLearnID.back()];
+    unsigned int learnGridSz = model->padSumLearnN[deviceID].back();
+    //unsigned int learnGridSz = model->padSumLearnN[deviceID][model->localLearnID.back()];
     learnGridSz = learnGridSz / learnBlkSz[deviceID];
     os << "dim3 lThreadsCuda" << deviceID << "(" << learnBlkSz[deviceID] << ", 1);" << endl;
     os << "dim3 lGridCuda" << deviceID << "(" << learnGridSz << ", 1);" << endl;
   }
-  unsigned int neuronGridSz = model->padSumNeuronN[deviceID][model->localNeuronID.back()];
+
+
+
+
+
+
+
+
+
+  unsigned int neuronGridSz = model->padSumNeuronN[deviceID].back();
+  //unsigned int neuronGridSz = model->padSumNeuronN[deviceID][model->localNeuronID.back()];
+  cout << "DEEEEEEEEEEBUUUUGGG1 " << neuronGridSz << endl;
   neuronGridSz = neuronGridSz / neuronBlkSz[deviceID];
+  cout << "DEEEEEEEEEEBUUUUGGG1 " << neuronGridSz << endl;
+
+
+
+
+
+
+
+
   os << "dim3 nThreadsCuda" << deviceID << "(" << neuronBlkSz[deviceID] << ", 1);" << endl;
   if (neuronGridSz < deviceProp[deviceID].maxGridSize[1]) {
     os << "dim3 nGridCuda" << deviceID << "(" << neuronGridSz << ", 1);" << endl;
@@ -948,5 +970,5 @@ void genCudaCode(unsigned int deviceID, ostream &mos)
   osh.close();
   os.close();
 
-  mos << "leaving genCudaCode for device " << deviceID << endl;
+  //mos << "leaving genCudaCode for device " << deviceID << endl;
 }

@@ -73,9 +73,9 @@ void genHostNeuron(ostream &mos)
       os << "  glbSpkEvntCnt" << model->neuronName[i] << " = 0;" << endl;
     }
     else {
+      os << "  glbSpkEvntCnt" << model->neuronName[i] << "[spkEvntQuePtr" << model->neuronName[i] << "] = 0;" << endl;
       os << "  spkEvntQuePtr" << model->neuronName[i] << " = (spkEvntQuePtr" << model->neuronName[i] << " + 1) % ";
       os << model->neuronDelaySlots[i] << ";" << endl;
-      os << "  glbSpkEvntCnt" << model->neuronName[i] << "[spkEvntQuePtr" << model->neuronName[i] << "] = 0;" << endl;
     }
     os << "  for (int n = 0; n < " <<  model->neuronN[i] << "; n++) {" << endl;
     for (int k = 0; k < nModels[nt].varNames.size(); k++) {
