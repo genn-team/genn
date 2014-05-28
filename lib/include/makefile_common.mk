@@ -31,7 +31,7 @@ CUDA_PATH	?= /usr/local/cuda
 NVCC		?= $(CUDA_PATH)/bin/nvcc
 INCLUDE_FLAGS	+= -I$(CUDA_PATH)/include -I$(GeNNPATH)/lib/include -I.
 ifeq ($(DARWIN),DARWIN)
-  LINK_FLAGS	+= -Xlinker -L$(CUDA_PATH)/lib -lcudart 
+  LINK_FLAGS	+= -Xlinker -lstdc++ -lc++ -L$(CUDA_PATH)/lib -lcudart 
 else
   ifeq ($(OS_SIZE),32)
     LINK_FLAGS	+= -L$(CUDA_PATH)/lib -lcudart
@@ -43,11 +43,11 @@ endif
 # Global compiler flags to be used by all projects. Declate CCFLAGS and NVCCFLAGS
 # in a project's main Makefile to specify compiler flags on a per-project basis.
 ifeq ($(DARWIN),DARWIN)
-  CCFLAGS	+= -arch i386 # put your global C++ compiler flags here
+  CCFLAGS       += # put your global compiler flags here
 else
   CCFLAGS	+= -O3 -ffast-math # put your global C++ compiler flags here
 endif
-NVCCFLAGS	+= --compiler-options "-O3 -ffast-math" # put your global NVCC flags here
+NVCCFLAGS       += --compiler-options "-O3 -ffast-math" # put your global NVCC flags here
 
 # Get object targets from the files listed in SOURCES, also the GeNN code for each device.
 # Define your own SOURCES variable in the project's Makefile to specify these source files.

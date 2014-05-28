@@ -99,7 +99,7 @@ int blockSizeOptimise(unsigned int deviceID)
 {
   cerr << "optimizing block sizes for device " << deviceID << endl;
 
-  int *blockSizePtr;
+  unsigned int *blockSizePtr;
   char buffer[256];
   stringstream command, ptxInfo;
   string kernelName, junk;
@@ -378,9 +378,9 @@ int main(int argc,     //!< number of arguments; expected to be 2
   // initialise network model
   hostCount = 1;
   CHECK_CUDA_ERRORS(cudaGetDeviceCount(&deviceCount));
-  synapseBlkSz = new int[deviceCount];
-  learnBlkSz = new int[deviceCount];
-  neuronBlkSz = new int[deviceCount];
+  synapseBlkSz = new unsigned int[deviceCount];
+  learnBlkSz = new unsigned int[deviceCount];
+  neuronBlkSz = new unsigned int[deviceCount];
   deviceProp = new cudaDeviceProp[deviceCount];
   model = new NNmodel();
 
