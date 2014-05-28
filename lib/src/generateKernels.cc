@@ -26,33 +26,37 @@
 */
 //-------------------------------------------------------------------------
 
-unsigned int nt;
 short *isGrpVarNeeded;
 
-void genCudaNeuron(unsigned int deviceID, ostream &mos)
+void genCudaNeuron(unsigned int deviceID, //!< device number to generate code for
+		   ostream &mos //!< output stream for messages
+		   )
 {
-  // write header content
-  string name, s, localID;
+  unsigned int nt;
+  string name, localID;
   ofstream os;
   isGrpVarNeeded = new short[model->neuronGrpN];
   name = path + toString("/") + model->name + toString("_CODE_CUDA") + toString(deviceID) + toString("/neuron.cu");
   os.open(name.c_str());
   
+  // write header content
   writeHeader(os);
+
   // compiler/include control (include once)
-  os << "#ifndef _" << model->name << "_neuronKrnl_cc" << endl;
-  os << "#define _" << model->name << "_neuronKrnl_cc" << endl;
-  
+  os << "#ifndef _" << model->name << "_neuronKrnl_cc" << ENDL;
+  os << "#define _" << model->name << "_neuronKrnl_cc" << ENDL;
+  os << ENDL;
+
   // write doxygen comment
-  os << "//-------------------------------------------------------------------------" << endl;
-  os << "/*! \\file neuronKrnl.cc" << endl << endl;
-  os << "\\brief File generated from GeNN for the model " << model->name << " containing the neuron kernel function." << endl;
-  os << "*/" << endl;
-  os << "//-------------------------------------------------------------------------" << endl << endl;
+  os << "//-------------------------------------------------------------------------" << ENDL;
+  os << "/*! \\file neuronKrnl.cc" << ENDL << ENDL;
+  os << "\\brief File generated from GeNN for the model " << model->name << " containing the neuron kernel function." << ENDL;
+  os << "*/" << ENDL;
+  os << "//-------------------------------------------------------------------------" << ENDL << ENDL;
 
   // global device variables
-  os << "// relevant neuron variables" << endl;
-  os << "__device__ volatile unsigned int d_done" << deviceID << ";" << endl;
+  os << "// relevant neuron variables" << ENDL;
+  os << "__device__ volatile unsigned int d_done" << deviceID << ";" << ENDL;
 
   for (int i = 0; i < model->neuronGrpN; i++) {
     // conditional skip if neuron group is not on this device
@@ -66,29 +70,29 @@ void genCudaNeuron(unsigned int deviceID, ostream &mos)
     isGrpVarNeeded[i] = 0;
 
     // these now hold just true spikes for benefit of the user (raster plots etc)
-    os << "__device__ volatile unsigned int d_glbscnt" << model->neuronName[i] << deviceID << ";" << endl;
-    os << "__device__ volatile unsigned int d_glbSpk" << model->neuronName[i] << deviceID << "[" << model->neuronN[i] << "];" << endl;
+    os << "__device__ volatile unsigned int d_glbscnt" << model->neuronName[i] << deviceID << ";" << ENDL;
+    os << "__device__ volatile unsigned int d_glbSpk" << model->neuronName[i] << deviceID << "[" << model->neuronN[i] << "];" << ENDL;
     if (model->neuronDelaySlots[i] == 1) { // i.e. no delay
-      os << "__device__ volatile unsigned int d_glbSpkEvntCnt" << model->neuronName[i] << deviceID << ";" << endl;
-      os << "__device__ volatile unsigned int d_glbSpkEvnt" << model->neuronName[i] << deviceID << "[" << model->neuronN[i] << "];" << endl;
+      os << "__device__ volatile unsigned int d_glbSpkEvntCnt" << model->neuronName[i] << deviceID << ";" << ENDL;
+      os << "__device__ volatile unsigned int d_glbSpkEvnt" << model->neuronName[i] << deviceID << "[" << model->neuronN[i] << "];" << ENDL;
     }
     else {
-      os << "__device__ volatile unsigned int d_spkEvntQuePtr" << model->neuronName[i] << deviceID << ";" << endl;
+      os << "__device__ volatile unsigned int d_spkEvntQuePtr" << model->neuronName[i] << deviceID << ";" << ENDL;
       os << "__device__ volatile unsigned int d_glbSpkEvntCnt" << model->neuronName[i] << deviceID << "[";
-      os << model->neuronDelaySlots[i] << "];" << endl;
+      os << model->neuronDelaySlots[i] << "];" << ENDL;
       os << "__device__ volatile unsigned int d_glbSpkEvnt" << model->neuronName[i] << deviceID << "[";
-      os << model->neuronN[i] * model->neuronDelaySlots[i] << "];" << endl;
+      os << model->neuronN[i] * model->neuronDelaySlots[i] << "];" << ENDL;
     }
     if (model->neuronType[i] != POISSONNEURON) {
       for (int j = 0; j < model->inSyn[i].size(); j++) {
 	os << "__device__ " << model->ftype << " d_inSyn" << model->neuronName[i] << j << deviceID << "[" << model->neuronN[i];
-	os << "]; // summed input for neurons in grp " << model->neuronName[i] << endl;
+	os << "]; // summed input for neurons in grp " << model->neuronName[i] << ENDL;
       }
     }
-    if (model->neuronNeedSt[i]) { 
-      os << "__device__ volatile " << model->ftype << " d_sT" << model->neuronName[i] << deviceID << "[" << model->neuronN[i] << "];" << endl;
+    if (model->neuronNeedSt[i]) {
+      os << "__device__ volatile " << model->ftype << " d_sT" << model->neuronName[i] << deviceID << "[" << model->neuronN[i] << "];" << ENDL;
     }
-    os << endl;
+    os << ENDL;
   }
 
   //! Binary spike flag for sparse synapse sources. This is necessary for parallelisation of the synapse kernel for postsynaptic spike queue.  
@@ -98,14 +102,13 @@ void genCudaNeuron(unsigned int deviceID, ostream &mos)
       continue;
     }
     if ((model->synapseConnType[i] == SPARSE) && (model->neuronN[model->synapseTarget[i]] > neuronBlkSz[deviceID]) && (isGrpVarNeeded[model->synapseTarget[i]] == 0)) {
-      os << "__device__ short d_spikeFlag" << model->neuronName[model->synapseTarget[i]] << deviceID << "[" << model->neuronN[model->synapseTarget[i]] << "];" << endl;
+      os << "__device__ short d_spikeFlag" << model->neuronName[model->synapseTarget[i]] << deviceID << "[" << model->neuronN[model->synapseTarget[i]] << "];" << ENDL;
       isGrpVarNeeded[model->synapseTarget[i]] = 1;
     }		
   }
 
   // kernel header
-  os << "__global__ void calcNeuronsCuda" << deviceID << "(" << endl;
-
+  os << "__global__ void calcNeuronsCuda" << deviceID << "(" << ENDL;
   for (int i = 0; i < model->neuronGrpN; i++) {
     // conditional skip if neuron group is not on this device
     if ((model->nrnHostID[i] != hostID) || (model->nrnDevID[i] != deviceID)) {
@@ -114,18 +117,18 @@ void genCudaNeuron(unsigned int deviceID, ostream &mos)
     nt = model->neuronType[i];
     if (nt == POISSONNEURON) {
       // Note: Poisson neurons only used as input neurons; they do not receive any inputs
-      os << "  unsigned int *d_rates" << model->neuronName[i] << deviceID;
-      os << ", // poisson \"rates\" of grp " << model->neuronName[i] << endl;
-      os << "  unsigned int offset" << model->neuronName[i];
-      os << ", // poisson \"rates\" offset of grp " << model->neuronName[i] << endl;
+      os << "unsigned int *d_rates" << model->neuronName[i] << deviceID;
+      os << ", // poisson \"rates\" of grp " << model->neuronName[i] << ENDL;
+      os << "unsigned int offset" << model->neuronName[i];
+      os << ", // poisson \"rates\" offset of grp " << model->neuronName[i] << ENDL;
     }
     if (model->receivesInputCurrent[i] > 1) {
-      os << "  float *d_inputI" << model->neuronName[i] << deviceID;
-      os << ", // explicit input current to grp " << model->neuronName[i] << endl;    	
+      os << "float *d_inputI" << model->neuronName[i] << deviceID;
+      os << ", // explicit input current to grp " << model->neuronName[i] << ENDL;    	
     }
     for (int j = 0; j < nModels[nt].varNames.size(); j++) {
-      os << "  " << nModels[nt].varTypes[j] << " *d_" << nModels[nt].varNames[j];
-      os << model->neuronName[i] << deviceID << ", " << endl;
+      os << nModels[nt].varTypes[j] << " *d_" << nModels[nt].varNames[j];
+      os << model->neuronName[i] << deviceID << ", " << ENDL;
     }
   }
   for (int i = 0; i < model->synapseName.size(); i++) {
@@ -135,51 +138,50 @@ void genCudaNeuron(unsigned int deviceID, ostream &mos)
     }
     int pst = model->postSynapseType[i];
     for (int j = 0; j < postSynModels[pst].varNames.size(); j++) {
-      os << "  " << postSynModels[pst].varTypes[j] << " *d_" << postSynModels[pst].varNames[j];
-      os << model->synapseName[i] << deviceID << ", " << endl;
+      os << postSynModels[pst].varTypes[j] << " *d_" << postSynModels[pst].varNames[j];
+      os << model->synapseName[i] << deviceID << ", " << ENDL;
     }
   }
-  os << "  " << model->ftype << " t // absolute time" << endl;
-  os << ")" << endl;
+  os << model->ftype << " t // absolute time" << ENDL;
+  os << ")" << ENDL;
 
   // kernel code
-  os << "{" << endl;
+  os << OB(10);
   unsigned int neuronGridSz = model->padSumNeuronN[deviceID].back();
   neuronGridSz = neuronGridSz / neuronBlkSz[deviceID];
-  if (neuronGridSz < deviceProp[deviceID].maxGridSize[1]){
-    os << "  unsigned int id = " << neuronBlkSz[deviceID] << " * blockIdx.x + threadIdx.x;" << endl;
+  if (neuronGridSz < deviceProp[deviceID].maxGridSize[1]) {
+    os << "unsigned int id = " << neuronBlkSz[deviceID] << " * blockIdx.x + threadIdx.x;" << ENDL;
   }
   else {
-    os << "  unsigned int id = " << neuronBlkSz[deviceID] << " * (blockIdx.x * " << ceil(sqrt(neuronGridSz));
-    os << " + blockIdx.y) + threadIdx.x;" << endl;  	
+    os << "unsigned int id = " << neuronBlkSz[deviceID] << " * (blockIdx.x * " << ceil(sqrt(neuronGridSz));
+    os << " + blockIdx.y) + threadIdx.x;" << ENDL;  	
   }
   //these variables deal with high V "spike type events"
-  os << "  __shared__ volatile unsigned int posSpkEvnt;" << endl;
-  os << "  __shared__ unsigned int shSpkEvnt[" << neuronBlkSz[deviceID] << "];" << endl;
-  os << "  unsigned int spkEvntIdx;" << endl;
-  os << "  __shared__ volatile unsigned int spkEvntCount;" << endl; //was scnt
+  os << "__shared__ volatile unsigned int posSpkEvnt;" << ENDL;
+  os << "__shared__ unsigned int shSpkEvnt[" << neuronBlkSz[deviceID] << "];" << ENDL;
+  os << "unsigned int spkEvntIdx;" << ENDL;
+  os << "__shared__ volatile unsigned int spkEvntCount;" << ENDL; //was scnt
 
   //these variables now deal only with true spikes , not high V "events"
-  os << "  __shared__ unsigned int shSpk[" << neuronBlkSz[deviceID] << "];" << endl;
-  os << "  __shared__ volatile unsigned int posSpk;" << endl;
-  os << "  unsigned int spkIdx;" << endl; //was sidx
-  os << "  __shared__ volatile unsigned int spkCount;" << endl; //was scnt
+  os << "__shared__ unsigned int shSpk[" << neuronBlkSz[deviceID] << "];" << ENDL;
+  os << "__shared__ volatile unsigned int posSpk;" << ENDL;
+  os << "unsigned int spkIdx;" << ENDL; //was sidx
+  os << "__shared__ volatile unsigned int spkCount;" << ENDL; //was scnt
+  os << ENDL;
 
-  os << endl;
-  os << "  if (threadIdx.x == 0) {" << endl;
-  os << "    spkCount = 0;" << endl;
-  os << "    spkEvntCount = 0;" << endl;
-
-  // increment spike queue pointers, if applicable
+  // reset spike counts and increment spike queue pointers
+  os << "if (threadIdx.x == 0) " << OB(20);
+  os << "spkCount = 0;" << ENDL;
+  os << "spkEvntCount = 0;" << ENDL;
   for (int i = 0; i < model->neuronGrpN; i++) {
     if (model->neuronDelaySlots[i] != 1) {
-      os << "    d_spkEvntQuePtr" << model->neuronName[i] << deviceID << " = (d_spkEvntQuePtr";
-      os << model->neuronName[i] << deviceID << " + 1) % " << model->neuronDelaySlots[i] << ";" << endl;
+      os << "d_spkEvntQuePtr" << model->neuronName[i] << deviceID << " = (d_spkEvntQuePtr";
+      os << model->neuronName[i] << deviceID << " + 1) % " << model->neuronDelaySlots[i] << ";" << ENDL;
     }
   }
-  os << "  }" << endl;
-  os << "  __syncthreads();" << endl;
-  
+  os << CB(20);
+
+  os << "__syncthreads();" << ENDL;
   for (int i = 0; i < model->neuronGrpN; i++) {
     // conditional skip if neuron group is not on this device
     if ((model->nrnHostID[i] != hostID) || (model->nrnDevID[i] != deviceID)) {
@@ -187,50 +189,49 @@ void genCudaNeuron(unsigned int deviceID, ostream &mos)
     }
     nt = model->neuronType[i];
     if (model->localNeuronID[i] == 0) {
-      os << "  if (id < " << model->padSumNeuronN[deviceID][model->localNeuronID[i]] << ") {" << endl;
+      os << "if (id < " << model->padSumNeuronN[deviceID][model->localNeuronID[i]] << ") " << OB(30);
       localID = string("id");
     }
     else {
-      os << "  if ((id >= " << model->padSumNeuronN[deviceID][model->localNeuronID[i - 1]] << ") && ";
-      os << "(id < " << model->padSumNeuronN[deviceID][model->localNeuronID[i]] << ")) {" << endl;
-      os << "    unsigned int lid;" << endl;
-      os << "    lid = id - " << model->padSumNeuronN[deviceID][model->localNeuronID[i - 1]] << ";" << endl;
+      os << "if ((id >= " << model->padSumNeuronN[deviceID][model->localNeuronID[i - 1]] << ") && ";
+      os << "(id < " << model->padSumNeuronN[deviceID][model->localNeuronID[i]] << ")) " << OB(30);
+      os << "unsigned int lid;" << ENDL;
+      os << "lid = id - " << model->padSumNeuronN[deviceID][model->localNeuronID[i - 1]] << ";" << ENDL;
       localID = string("lid");
     }
-
-    os << "    // only do this for existing neurons" << endl;
-    os << "    if (" << localID << " < " << model->neuronN[i] << ") {" << endl;
-    os << "      // pull V values in a coalesced access" << endl;
+    os << "// only do this for existing neurons" << ENDL;
+    os << "if (" << localID << " < " << model->neuronN[i] << ") " << OB(40);
+    os << "// pull V values in a coalesced access" << ENDL;
     if (nt == POISSONNEURON) {
-      os << "      unsigned int lrate = d_rates" << model->neuronName[i] << deviceID;
-      os << "[offset" << model->neuronName[i] << " + " << localID << "];" << endl;
+      os << "unsigned int lrate = d_rates" << model->neuronName[i] << deviceID;
+      os << "[offset" << model->neuronName[i] << " + " << localID << "];" << ENDL;
     }
     for (int k = 0, l = nModels[nt].varNames.size(); k < l; k++) {
-      os << "      " << nModels[nt].varTypes[k] << " l" << nModels[nt].varNames[k];
+      os << nModels[nt].varTypes[k] << " l" << nModels[nt].varNames[k];
       os << " = d_" <<  nModels[nt].varNames[k] << model->neuronName[i] << deviceID << "[";
       if ((nModels[nt].varNames[k] == "V") && (model->neuronDelaySlots[i] != 1)) {
 	os << "(((d_spkEvntQuePtr" << model->neuronName[i] << deviceID << " + " << (model->neuronDelaySlots[i] - 1) << ") % ";
 	os << model->neuronDelaySlots[i] << ") * " << model->neuronN[i] << ") + ";
       }
-      os << localID << "];" << endl;
+      os << localID << "];" << ENDL;
     }
     if (nt != POISSONNEURON) {
-      os << "      // pull inSyn values in a coalesced access" << endl;
+      os << "// pull inSyn values in a coalesced access" << ENDL;
       for (int j = 0; j < model->inSyn[i].size(); j++) {
-      	os << "      " << model->ftype << " linSyn" << j << " = d_inSyn" << model->neuronName[i] << j << deviceID << "[" << localID << "];" << endl;
+      	os << model->ftype << " linSyn" << j << " = d_inSyn" << model->neuronName[i] << j << deviceID << "[" << localID << "];" << ENDL;
       }
-      os << "    " << model->ftype << " Isyn = 0;" << endl;
-      if (isGrpVarNeeded[i]==1) {
-      	os << "    d_spikeFlag" << model->neuronName[i] << deviceID << "[" << localID << "] = 0;" << endl;
+      os << model->ftype << " Isyn = 0;" << ENDL;
+      if (isGrpVarNeeded[i] == 1) {
+      	os << "d_spikeFlag" << model->neuronName[i] << deviceID << "[" << localID << "] = 0;" << ENDL;
       }
       if (model->inSyn[i].size() > 0) {
 	for (int j = 0; j < model->inSyn[i].size(); j++) {
 	  for (int k = 0, l = postSynModels[model->postSynapseType[model->inSyn[i][j]]].varNames.size(); k < l; k++) {
-	    os << "      " << postSynModels[model->postSynapseType[model->inSyn[i][j]]].varTypes[k] << " lps" << postSynModels[model->postSynapseType[model->inSyn[i][j]]].varNames[k] << j;
+	    os << postSynModels[model->postSynapseType[model->inSyn[i][j]]].varTypes[k] << " lps" << postSynModels[model->postSynapseType[model->inSyn[i][j]]].varNames[k] << j;
 	    os << " = d_" <<  postSynModels[model->postSynapseType[model->inSyn[i][j]]].varNames[k] << model->synapseName[model->inSyn[i][j]] << deviceID << "[";
-	    os << localID << "];" << endl;
+	    os << localID << "];" << ENDL;
 	  }
-	  os << "      Isyn += ";
+	  os << "Isyn += ";
 	  string psCode = postSynModels[model->postSynapseType[model->inSyn[i][j]]].postSyntoCurrent;
 	  substitute(psCode, tS("$(inSyn)"), tS("linSyn")+tS(j));
 	  for (int k = 0, l = nModels[nt].varNames.size(); k < l; k++) {
@@ -252,19 +253,19 @@ void genCudaNeuron(unsigned int deviceID, ostream &mos)
 	  for (int k = 0; k < postSynModels[model->postSynapseType[model->inSyn[i][j]]].dpNames.size(); ++k)
 	    substitute(psCode, tS("$(") + postSynModels[model->postSynapseType[model->inSyn[i][j]]].dpNames[k] + tS(")"), tS(model->dpsp[model->inSyn[i][j]][k]));
 	  os << psCode;
-	  os << ";" << endl;
+	  os << ";" << ENDL;
 	}
       }
     }
-    if (model->receivesInputCurrent[i] == 1) { // receives constant  input
-      os << "      Isyn += " << model->globalInp[i] << ";" << endl;
+    if (model->receivesInputCurrent[i] == 1) { // receives constant input
+      os << "Isyn += " << model->globalInp[i] << ";" << ENDL;
     }    	
     if (model->receivesInputCurrent[i] >= 2) { // receives explicit input from file
-      os << "    Isyn += (" << model->ftype<< ") d_inputI" << model->neuronName[i] << deviceID << "[" << localID << "];" << endl;
+      os << "Isyn += (" << model->ftype<< ") d_inputI" << model->neuronName[i] << deviceID << "[" << localID << "];" << ENDL;
     }
-    os << "      // calculate membrane potential" << endl;
+    os << "// calculate membrane potential" << ENDL;
 
-    //new way of doing it
+    // insert the provided neuron model code
     string code = nModels[nt].simCode;
     substitute(code, tS("$(DT)"), tS(model->dt));
     for (int k = 0, l = nModels[nt].varNames.size(); k < l; k++) {
@@ -277,15 +278,15 @@ void genCudaNeuron(unsigned int deviceID, ostream &mos)
     for (int k = 0, l = nModels[nt].dpNames.size(); k < l; k++) {
       substitute(code, tS("$(") + nModels[nt].dpNames[k] + tS(")"), tS(model->dnp[i][k]));
     }
-    os << code;
+    os << code << ENDL;
 
-    //insert condition code provided that tests for a true spike
-    if (nModels[nt].thresholdConditionCode  == tS("")) { //no condition provided
+    // insert condition code provided that tests for a true spike
+    if (nModels[nt].thresholdConditionCode  == tS("")) { // no condition provided
       cerr << "Generation Error: You must provide thresholdConditionCode for neuron type :  " << model->neuronType[i]  << " used for " << model->name[i];
       exit(1);
     }
     else {
-      code= nModels[nt].thresholdConditionCode;
+      code = nModels[nt].thresholdConditionCode;
       for (int k = 0, l = nModels[nt].varNames.size(); k < l; k++) {
 	substitute(code, tS("$(") + nModels[nt].varNames[k] + tS(")"), tS("l")+ nModels[nt].varNames[k]);
       }
@@ -296,13 +297,13 @@ void genCudaNeuron(unsigned int deviceID, ostream &mos)
       for (int k = 0, l = nModels[nt].dpNames.size(); k < l; k++) {
 	substitute(code, tS("$(") + nModels[nt].dpNames[k] + tS(")"), tS(model->dnp[i][k]));
       }
-      os << "      if (" << code << ") {" << endl;
-      os << "        // register a true spike" << endl;
-      os << "        spkIdx = atomicAdd((unsigned int *) &spkCount, 1);" << endl;
-      os << "        shSpk[spkIdx] = " << localID << ";" << endl;
+      os << "if (" << code << ") " << OB(50);
+      os << "// register a true spike" << ENDL;
+      os << "spkIdx = atomicAdd((unsigned int *) &spkCount, 1);" << ENDL;
+      os << "shSpk[spkIdx] = " << localID << ";" << ENDL;
     }
 
-    //add optional reset code after a true spike, if provided
+    // add optional reset code after a true spike, if provided
     if (nModels[nt].resetCode != tS("")) {
       code = nModels[nt].resetCode;
       for (int k = 0, l = nModels[nt].varNames.size(); k < l; k++) {
@@ -315,25 +316,25 @@ void genCudaNeuron(unsigned int deviceID, ostream &mos)
       for (int k = 0, l = nModels[nt].dpNames.size(); k < l; k++) {
 	substitute(code, tS("$(") + nModels[nt].dpNames[k] + tS(")"), tS(model->dnp[i][k]));
       }
-      os << "        // spike reset code" << endl;
-      os << "        " << code << endl;
+      os << "// spike reset code" << ENDL;
+      os << code << ENDL;
     }
-    os << "      }" << endl;
+    os << CB(50);
 
-    //test if a spike type event occurred
-    os << "      if (lV >= " << model->nSpkEvntThreshold[i] << ") {" << endl;
-    os << "        // register a spike type event" << endl;
-    os << "        spkEvntIdx = atomicAdd((unsigned int *) &spkEvntCount, 1);" << endl;
-    os << "        shSpkEvnt[spkEvntIdx] = " << localID << ";" << endl;
-    os << "      }" << endl;
+    // test if a spike type event occurred
+    os << "if (lV >= " << model->nSpkEvntThreshold[i] << ") " << OB(60);
+    os << "// register a spike type event" << ENDL;
+    os << "spkEvntIdx = atomicAdd((unsigned int *) &spkEvntCount, 1);" << ENDL;
+    os << "shSpkEvnt[spkEvntIdx] = " << localID << ";" << ENDL;
+    os << CB(60);
 
-    //store the defined parts of the neuron state into the global state variables d_V.. etc
+    // store the defined parts of the neuron state into the global state variables d_V.. etc
     for (int k = 0, l = nModels[nt].varNames.size(); k < l; k++) {
-      os << "      d_" << nModels[nt].varNames[k] <<  model->neuronName[i] << deviceID << "[";
+      os << "d_" << nModels[nt].varNames[k] <<  model->neuronName[i] << deviceID << "[";
       if ((nModels[nt].varNames[k] == "V") && (model->neuronDelaySlots[i] != 1)) {
 	os << "(d_spkEvntQuePtr" << model->neuronName[i] << deviceID << " * " << model->neuronN[i] << ") + ";
       }
-      os << localID << "] = l" << nModels[nt].varNames[k] << ";" << endl;
+      os << localID << "] = l" << nModels[nt].varNames[k] << ";" << ENDL;
     }
     for (int j = 0; j < model->inSyn[i].size(); j++) {
       string psCode = postSynModels[model->postSynapseType[model->inSyn[i][j]]].postSynDecay;
@@ -357,45 +358,50 @@ void genCudaNeuron(unsigned int deviceID, ostream &mos)
 		   tS("l") + nModels[nt].pNames[k]);
       }
       os << psCode;
-      os << "      d_inSyn"  << model->neuronName[i] << j << deviceID << "[" << localID << "] = linSyn"<< j << ";" << endl;
+      os << "d_inSyn"  << model->neuronName[i] << j << deviceID << "[" << localID << "] = linSyn"<< j << ";" << ENDL;
       for (int k = 0, l = postSynModels[model->postSynapseType[model->inSyn[i][j]]].varNames.size(); k < l; k++) {
-	os << "      " << "d_" <<  postSynModels[model->postSynapseType[model->inSyn[i][j]]].varNames[k] << model->synapseName[model->inSyn[i][j]] << deviceID << "[";
-	os << localID << "] = lps" << postSynModels[model->postSynapseType[model->inSyn[i][j]]].varNames[k] << j << ";"<< endl;
+	os << "d_" <<  postSynModels[model->postSynapseType[model->inSyn[i][j]]].varNames[k] << model->synapseName[model->inSyn[i][j]] << deviceID << "[";
+	os << localID << "] = lps" << postSynModels[model->postSynapseType[model->inSyn[i][j]]].varNames[k] << j << ";"<< ENDL;
       }
     }
-    os << "    }" << endl;
-    os << "    __syncthreads();" << endl;
-    os << "    if (threadIdx.x == 0) {" << endl;
-    os << "      posSpkEvnt = atomicAdd((unsigned int *) &d_glbSpkEvntCnt" << model->neuronName[i] << deviceID;
+    os << CB(40);
+
+    os << "__syncthreads();" << ENDL;
+    os << "if (threadIdx.x == 0) " << OB(70);
+    os << "posSpkEvnt = atomicAdd((unsigned int *) &d_glbSpkEvntCnt" << model->neuronName[i] << deviceID;
     if (model->neuronDelaySlots[i] != 1) {
       os << "[d_spkEvntQuePtr" << model->neuronName[i] << deviceID << "]";
     }
-    os << ", spkEvntCount);" << endl;
-    os << "      posSpk = atomicAdd((unsigned int *) &d_glbscnt" << model->neuronName[i] << deviceID << ", spkCount);" << endl;
-    os << "    }" << endl;  //end if (threadIdx.x == 0)
-    os << "    __syncthreads();" << endl;
-    os << "    if (threadIdx.x < spkEvntCount) {" << endl;
-    os << "      d_glbSpkEvnt" << model->neuronName[i] << deviceID << "[";
+    os << ", spkEvntCount);" << ENDL;
+    os << "posSpk = atomicAdd((unsigned int *) &d_glbscnt" << model->neuronName[i] << deviceID << ", spkCount);" << ENDL;
+    os << CB(70);
+
+    os << "__syncthreads();" << ENDL;
+    os << "if (threadIdx.x < spkEvntCount) " << OB(80);
+    os << "d_glbSpkEvnt" << model->neuronName[i] << deviceID << "[";
     if (model->neuronDelaySlots[i] != 1) {
       os << "(d_spkEvntQuePtr" << model->neuronName[i] << deviceID << " * " << model->neuronN[i] << ") + ";
     }
-    os << "posSpkEvnt + threadIdx.x] = shSpkEvnt[threadIdx.x];" << endl;
-    os << "    }" << endl;
-    os << "    if (threadIdx.x < spkCount) {" << endl;
-    os << "      d_glbSpk" << model->neuronName[i] << deviceID << "[";
-    os << "posSpk + threadIdx.x] = shSpk[threadIdx.x];" << endl;
+    os << "posSpkEvnt + threadIdx.x] = shSpkEvnt[threadIdx.x];" << ENDL;
+    os << CB(80);
+
+    os << "if (threadIdx.x < spkCount) " << OB(90);
+    os << "d_glbSpk" << model->neuronName[i] << deviceID << "[";
+    os << "posSpk + threadIdx.x] = shSpk[threadIdx.x];" << ENDL;
     if (model->neuronNeedSt[i]) {
-      os << "      d_sT" << model->neuronName[i] << deviceID << "[shSpk[threadIdx.x]] = t;" << endl;
+      os << "d_sT" << model->neuronName[i] << deviceID << "[shSpk[threadIdx.x]] = t;" << ENDL;
     }
-    os << "    }" << endl;
-    os << "  }" << endl;
-    os << endl;
+    os << CB(90);
+
+    os << CB(30);
+    os << ENDL;
   }
-  os << "}" << endl;
-  os << endl;
-  os << "#endif" << endl;
+  os << CB(10);
+  os << ENDL;
+  os << "#endif" << ENDL;
   os.close();
 }
+
 
 //-------------------------------------------------------------------------
 /*!
@@ -405,58 +411,62 @@ void genCudaNeuron(unsigned int deviceID, ostream &mos)
 */
 //-------------------------------------------------------------------------
 
-void genCudaSynapse(unsigned int deviceID, ostream &mos)
+void genCudaSynapse(unsigned int deviceID, //!< device number to generate code for
+		    ostream &mos //!< output stream for messages
+		    )
 {
   // abort if no synapse groups are on this device
   if (model->padSumSynapseKrnl[deviceID].empty()) return;
 
-  string name, s, localID, theLG;
-  unsigned int numOfBlocks, trgN;
+  string name, localID, theLG;
+  unsigned int numOfBlocks, trgN, nt;
   ofstream os;
+
+  name = path + toString("/") + model->name + toString("_CODE_CUDA") + toString(deviceID) + toString("/synapse.cu");
+  os.open(name.c_str());
+
+  // write header content
+  writeHeader(os);
 
   // count how many neuron blocks to use: one thread for each synapse target
   // targets of several input groups are counted multiply
   numOfBlocks = model->padSumSynapseKrnl[deviceID].back() / synapseBlkSz[deviceID];
 
-  name = path + toString("/") + model->name + toString("_CODE_CUDA") + toString(deviceID) + toString("/synapse.cu");
-  os.open(name.c_str());
-  writeHeader(os); // write header content
-
   // compiler/include control (include once)
-  os << "#ifndef _" << model->name << "_synapseKrnl_cc" << endl;
-  os << "#define _" << model->name << "_synapseKrnl_cc" << endl;
-  os << endl;
+  os << "#ifndef _" << model->name << "_synapseKrnl_cc" << ENDL;
+  os << "#define _" << model->name << "_synapseKrnl_cc" << ENDL;
+  os << ENDL;
 
   // write doxygen comment
-  os << "//-------------------------------------------------------------------------" << endl;
-  os << "/*! \\file synapseKrnl.cc" << endl << endl;
+  os << "//-------------------------------------------------------------------------" << ENDL;
+  os << "/*! \\file synapseKrnl.cc" << ENDL << ENDL;
   os << "\\brief File generated from GeNN for the model " << model->name;
-  os << " containing the synapse kernel and learning kernel functions." << endl;
-  os << "*/" << endl;
-  os << "//-------------------------------------------------------------------------" << endl << endl;
-  os << endl;
+  os << " containing the synapse kernel and learning kernel functions." << ENDL;
+  os << "*/" << ENDL;
+  os << "//-------------------------------------------------------------------------" << ENDL << ENDL;
+  os << ENDL;
   
   // Kernel header
   unsigned int src;
-  os << "__global__ void calcSynapsesCuda" << deviceID << "(" << endl;
+  os << "__global__ void calcSynapsesCuda" << deviceID << "(" << ENDL;
   for (int i = 0; i < model->synapseGrpN; i++) {
     // conditional skip if synapse group is not on this device
     if ((model->synHostID[i] != hostID) || (model->synDevID[i] != deviceID)) {
       continue;
     }
     if (model->synapseGType[i] == INDIVIDUALG) {
-      os << " " << model->ftype << " * d_gp" << model->synapseName[i] << deviceID << ", " << endl;	
+      os << model->ftype << " * d_gp" << model->synapseName[i] << deviceID << ", " << ENDL;	
     }
-    if (model->synapseConnType[i] == SPARSE){
-      os << " unsigned int * d_gp" << model->synapseName[i] << "_ind" << deviceID << ", " << endl;
-      os << " unsigned int * d_gp" << model->synapseName[i] << "_indInG" << deviceID << ", " << endl;
+    if (model->synapseConnType[i] == SPARSE) {
+      os << "unsigned int * d_gp" << model->synapseName[i] << "_ind" << deviceID << ", " << ENDL;
+      os << "unsigned int * d_gp" << model->synapseName[i] << "_indInG" << deviceID << ", " << ENDL;
       trgN = model->neuronN[model->synapseTarget[i]];
     }
     if (model->synapseGType[i] == (INDIVIDUALID )) {
-      os << "  unsigned int *d_gp" << model->synapseName[i] << deviceID << ", " << endl;	
+      os << "unsigned int *d_gp" << model->synapseName[i] << deviceID << ", " << ENDL;	
     }
     if (model->synapseType[i] == LEARN1SYNAPSE) {
-      os << model->ftype << " * d_grawp" << model->synapseName[i] << deviceID << ", " << endl;
+      os << model->ftype << " * d_grawp" << model->synapseName[i] << deviceID << ", " << ENDL;
     }   	
   }
   for (int i = 0; i < model->neuronGrpN; i++) {
@@ -468,37 +478,52 @@ void genCudaSynapse(unsigned int deviceID, ostream &mos)
       }
     }
     nt = model->neuronType[i];
-    os << "  " << nModels[nt].varTypes[0] << " *d_" << nModels[nt].varNames[0] << model->neuronName[i] << deviceID; // Vm
-    if (i < (model->neuronGrpN - 1) || model->needSt) os << "," << endl;
+    os << nModels[nt].varTypes[0] << " *d_" << nModels[nt].varNames[0] << model->neuronName[i] << deviceID; // Vm
+    if (i < (model->neuronGrpN - 1) || model->needSt) os << "," << ENDL;
   }
   if (model->needSt) {
-    os << "  " << model->ftype << " t";
+    os << model->ftype << " t";
   }
-  os << endl << ")";
-  os << endl;
+  os << ENDL << ")";
+  os << ENDL;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   // kernel code
-  os << "{" << endl;
-  os << "  unsigned int id = " << synapseBlkSz[deviceID] << " * blockIdx.x + threadIdx.x;" << endl;
-  os << "  __shared__ unsigned int shSpkEvnt[" << synapseBlkSz[deviceID] << "];" << endl;
-  os << "  __shared__ " << model->ftype << " shSpkEvntV[" << synapseBlkSz[deviceID] << "];" << endl;
-  os << "  volatile __shared__ " << model->ftype << " shLg[" << neuronBlkSz[deviceID] << "];" << endl;
-  os << "  unsigned int lscnt, numSpikeSubsets, lmax, j, p, r, ipost, npost;" << endl;
+  os << OB(100);
+  os << "unsigned int id = " << synapseBlkSz[deviceID] << " * blockIdx.x + threadIdx.x;" << ENDL;
+  os << "__shared__ unsigned int shSpkEvnt[" << synapseBlkSz[deviceID] << "];" << ENDL;
+  os << "__shared__ " << model->ftype << " shSpkEvntV[" << synapseBlkSz[deviceID] << "];" << ENDL;
+  os << "volatile __shared__ " << model->ftype << " shLg[" << neuronBlkSz[deviceID] << "];" << ENDL;
+  os << "unsigned int lscnt, numSpikeSubsets, lmax, j, p, r, ipost, npost;" << ENDL;
   for (int i = 0; i < model->synapseGrpN; i++) {
     // conditional skip if synapse group is not on this device
     if ((model->synHostID[i] != hostID) || (model->synDevID[i] != deviceID)) {
       continue;
     }
     if (model->synapseConnType[i] != SPARSE) {
-      os << "  " << model->ftype << " linSyn, lg;" << endl;
+      os << model->ftype << " linSyn, lg;" << ENDL;
       break;
     }
   }
   if (model->needSynapseDelay == 1) {
-    os << "  int delaySlot;" << endl;
+    os << "int delaySlot;" << ENDL;
   }
-  os << endl;
-  os << "  ipost = 0;" << endl;
+  os << ENDL;
+  os << "ipost = 0;" << ENDL;
 
   for (int i = 0; i < model->synapseGrpN; i++) {
     // conditional skip if synapse group is not on this device
@@ -506,17 +531,18 @@ void genCudaSynapse(unsigned int deviceID, ostream &mos)
       continue;
     }
     if (model->localSynapseID[i] == 0) {
-      os << "  if (id < " << model->padSumSynapseKrnl[deviceID][model->localSynapseID[i]] << ") { // synapse group " << model->synapseName[i] << endl;
+      os << "if (id < " << model->padSumSynapseKrnl[deviceID][model->localSynapseID[i]] << ") " << OB(110);
+      os << " // synapse group " << model->synapseName[i] << ENDL;
       localID = string("id");
     }
     else {
-      os << "  if ((id >= " << model->padSumSynapseKrnl[deviceID][model->localSynapseID[i - 1]] << ") && ";
-      os << "(id < " << model->padSumSynapseKrnl[deviceID][model->localSynapseID[i]] << ")) { // synapse group " << model->synapseName[i] << endl;
-      os << "    unsigned int lid;" << endl;
-      os << "    lid = id - " << model->padSumSynapseKrnl[deviceID][model->localSynapseID[i - 1]] << ";" << endl;
+      os << "if ((id >= " << model->padSumSynapseKrnl[deviceID][model->localSynapseID[i - 1]] << ") && ";
+      os << "(id < " << model->padSumSynapseKrnl[deviceID][model->localSynapseID[i]] << ")) " << OB(110);
+      os << " // synapse group " << model->synapseName[i] << ENDL;
+      os << "unsigned int lid;" << ENDL;
+      os << "lid = id - " << model->padSumSynapseKrnl[deviceID][model->localSynapseID[i - 1]] << ";" << ENDL;
       localID = string("lid");
     }
-
     unsigned int trg = model->synapseTarget[i];
     unsigned int nN = model->neuronN[trg];
     src = model->synapseSource[i];
@@ -527,66 +553,64 @@ void genCudaSynapse(unsigned int deviceID, ostream &mos)
     }
     unsigned int inSynNo = model->synapseInSynNo[i];
     if (model->neuronDelaySlots[src] != 1) {
-      os << "    delaySlot = (d_spkEvntQuePtr" << model->neuronName[src] << deviceID << " + ";
+      os << "delaySlot = (d_spkEvntQuePtr" << model->neuronName[src] << deviceID << " + ";
       os << (int) (model->neuronDelaySlots[src] - model->synapseDelay[i] + 1);
-      os << ") % " << model->neuronDelaySlots[src] << ";" << endl;
+      os << ") % " << model->neuronDelaySlots[src] << ";" << ENDL;
     }
     if (model->synapseConnType[i] != SPARSE) {
-      os << "    // only do this for existing neurons" << endl;
-      os << "    if (" << localID << " < " << nN <<") {" << endl;
-      os << "      linSyn = d_inSyn" << model->neuronName[trg] << inSynNo << deviceID << "[" << localID << "];" << endl;
-
-      os << "    }" << endl;
-      os << "    __threadfence();" << endl;
+      os << "// only do this for existing neurons" << ENDL;
+      os << "if (" << localID << " < " << nN << ") " << OB(120);
+      os << "linSyn = d_inSyn" << model->neuronName[trg] << inSynNo << deviceID << "[" << localID << "];" << ENDL;
+      os << CB(120);
+      os << "__threadfence();" << ENDL;
     }
-    os << "    lscnt = d_glbSpkEvntCnt" << model->neuronName[src] << deviceID;
+    os << "lscnt = d_glbSpkEvntCnt" << model->neuronName[src] << deviceID;
     if (model->neuronDelaySlots[src] != 1) {
       os << "[delaySlot]";
     }
-    os << ";" << endl;
-    os << "    numSpikeSubsets = (unsigned int) (ceilf((float) lscnt / " << synapseBlkSz[deviceID] << ".0f));" << endl;
-    os << "    for (r = 0; r < numSpikeSubsets; r++) {" << endl;
-    os << "      if (r == numSpikeSubsets - 1) lmax = lscnt % " << synapseBlkSz[deviceID] << ";" << endl;
-    os << "      else lmax = " << synapseBlkSz[deviceID] << ";" << endl;
-    os << "      if (threadIdx.x < lmax) {" << endl;
-    os << "        shSpkEvnt[threadIdx.x] = d_glbSpkEvnt" << model->neuronName[src] << deviceID << "[";
+    os << ";" << ENDL;
+    os << "numSpikeSubsets = (unsigned int) (ceilf((float) lscnt / " << synapseBlkSz[deviceID] << ".0f));" << ENDL;
+    os << "for (r = 0; r < numSpikeSubsets; r++) " << OB(130);
+    os << "if (r == numSpikeSubsets - 1) lmax = lscnt % " << synapseBlkSz[deviceID] << ";" << ENDL;
+    os << "else lmax = " << synapseBlkSz[deviceID] << ";" << ENDL;
+    os << "if (threadIdx.x < lmax) " << OB(140);
+    os << "shSpkEvnt[threadIdx.x] = d_glbSpkEvnt" << model->neuronName[src] << deviceID << "[";
     if (model->neuronDelaySlots[src] != 1) {
       os << "(delaySlot * " << model->neuronN[src] << ") + ";
     }
-    os << "(r * " << synapseBlkSz[deviceID] << ") + threadIdx.x];" << endl;
+    os << "(r * " << synapseBlkSz[deviceID] << ") + threadIdx.x];" << ENDL;
     if (model->neuronType[src] != POISSONNEURON) {
-      os << "        shSpkEvntV[threadIdx.x] = d_V" << model->neuronName[src] << deviceID << "[";
+      os << "shSpkEvntV[threadIdx.x] = d_V" << model->neuronName[src] << deviceID << "[";
       if (model->neuronDelaySlots[src] != 1) {
 	os << "(delaySlot * " << model->neuronN[src] << ") + ";
       }
-      os << "shSpkEvnt[threadIdx.x]];" << endl;
+      os << "shSpkEvnt[threadIdx.x]];" << ENDL;
     }
-    os << "      }" << endl;
+    os << CB(140);
     if ((model->synapseConnType[i] == SPARSE) && (model->neuronN[trg] <= neuronBlkSz[deviceID])) {
-      os << "        if (threadIdx.x < " << neuronBlkSz[deviceID] << ") shLg[threadIdx.x] = 0;" << endl;
+      os << "if (threadIdx.x < " << neuronBlkSz[deviceID] << ") shLg[threadIdx.x] = 0;" << ENDL;
     }
-    os << "      __syncthreads();" << endl;
-    os << "      // only work on existing neurons" << endl;
+    os << "__syncthreads();" << ENDL;
+    os << "// only work on existing neurons" << ENDL;
     if (model->synapseConnType[i] == SPARSE) {
-      if(model->maxConn.size()==0) {
+      if (model->maxConn.size() == 0) {
 	fprintf(stderr,"Model Generation error: for every SPARSE synapse group used you must also supply (in your model) a max possible number of connections via the model->setMaxConn() function.");
 	exit(1);
       }
-      int maxConnections  = model->maxConn[i];
-      os << "      if (" << localID << " < " << maxConnections << ") {" << endl;
+      int maxConnections = model->maxConn[i];
+      os << "if (" << localID << " < " << maxConnections << ") " << OB(150);
     }
     else {
-      os << "      if (" << localID << " < " << model->neuronN[trg] << ") {" << endl;
+      os << "if (" << localID << " < " << model->neuronN[trg] << ") " << OB(150);
     }
-
-    os << "        // loop through all incoming spikes" << endl;
-    os << "        for (j = 0; j < lmax; j++) {" << endl;
+    os << "// loop through all incoming spikes" << ENDL;
+    os << "for (j = 0; j < lmax; j++) " << OB(160);
     if (model->synapseGType[i] == INDIVIDUALID) {
-      os << "          unsigned int gid = (shSpkEvnt[j] * " << model->neuronN[trg];
-      os << " + " << localID << ");" << endl;
+      os << "unsigned int gid = (shSpkEvnt[j] * " << model->neuronN[trg];
+      os << " + " << localID << ");" << ENDL;
     }
     if (model->neuronType[src] != POISSONNEURON) {
-      os << "          if ";
+      os << "if ";
       if (model->synapseGType[i] == INDIVIDUALID) {
 	// Note: we will just access global mem. For compute >= 1.2
 	// simultaneous access to same global mem in the (half-)warp
@@ -598,138 +622,136 @@ void genCudaSynapse(unsigned int deviceID, ostream &mos)
       if (model->synapseGType[i] == INDIVIDUALID) {
 	os << ")";
       }
-      os << " {" << endl;
+      os << " " << OB(170);
     }
     else {
       if (model->synapseGType[i] == INDIVIDUALID) {
-	os << "          if (B(d_gp" << model->synapseName[i] << deviceID << "[gid >> " << logUIntSz << "], gid & ";
-	os << UIntSz - 1 << ")) {" << endl;
+	os << "if (B(d_gp" << model->synapseName[i] << deviceID << "[gid >> " << logUIntSz << "], gid & ";
+	os << UIntSz - 1 << ")) " << OB(180);
       }
     }
-
     if (model->synapseConnType[i] == SPARSE) {
-      os << "          npost = d_gp" << model->synapseName[i] << "_indInG" << deviceID << "[shSpkEvnt[j] + 1] - d_gp";
-      os << model->synapseName[i] << "_indInG" << deviceID << "[shSpkEvnt[j]];" << endl;
-      os << "          if ("<< localID <<" < npost) {" << endl;
-      os << "            ipost = d_gp" << model->synapseName[i] << "_ind" << deviceID << "[d_gp";
-      os << model->synapseName[i] << "_indInG" << deviceID << "[shSpkEvnt[j]] + " << localID << "];" << endl;
+      os << "npost = d_gp" << model->synapseName[i] << "_indInG" << deviceID << "[shSpkEvnt[j] + 1] - d_gp";
+      os << model->synapseName[i] << "_indInG" << deviceID << "[shSpkEvnt[j]];" << ENDL;
+      os << "if (" << localID << " < npost) " << OB(190);
+      os << "ipost = d_gp" << model->synapseName[i] << "_ind" << deviceID << "[d_gp";
+      os << model->synapseName[i] << "_indInG" << deviceID << "[shSpkEvnt[j]] + " << localID << "];" << ENDL;
       if (isGrpVarNeeded[model->synapseTarget[i]] == 0) {
 	theLG = toString("shLg[" + localID + "]");
 	if (model->synapseGType[i] != INDIVIDUALG) {
-	  os << "            shLg[ipost] += " << model->g0[i] <<"];";
+	  os << "shLg[ipost] += " << model->g0[i] << "];";
 	}
 	else {
-	  os << "            shLg[ipost] += d_gp" << model->synapseName[i] << deviceID << "[d_gp" << model->synapseName[i] << "_indInG" << deviceID << "[shSpkEvnt[j]] + " << localID << "];";
+	  os << "shLg[ipost] += d_gp" << model->synapseName[i] << deviceID << "[d_gp" << model->synapseName[i] << "_indInG" << deviceID << "[shSpkEvnt[j]] + " << localID << "];";
 	}
       }
       else {
 	if (model->synapseGType[i] != INDIVIDUALG) {
-	  os << "            atomicAdd(&d_inSyn" << model->neuronName[trg] << inSynNo << deviceID << "[ipost], " << model->g0[i] <<");";
+	  os << "atomicAdd(&d_inSyn" << model->neuronName[trg] << inSynNo << deviceID << "[ipost], " << model->g0[i] << ");";
 	}
 	else{
-	  os << "            atomicAdd(&d_inSyn" << model->neuronName[trg] << inSynNo << deviceID << "[ipost], d_gp";
-	  os << model->synapseName[i] << deviceID << "[d_gp" << model->synapseName[i] << "_indInG" << deviceID << "[shSpkEvnt[j]] + " << localID << "]);" << endl;
+	  os << "atomicAdd(&d_inSyn" << model->neuronName[trg] << inSynNo << deviceID << "[ipost], d_gp";
+	  os << model->synapseName[i] << deviceID << "[d_gp" << model->synapseName[i] << "_indInG" << deviceID << "[shSpkEvnt[j]] + " << localID << "]);" << ENDL;
 	}
       }
-
-      os << "          }" << endl; // end if (id < npost)
+      os << CB(190); // end if (id < npost)
       if (model->neuronType[src] != POISSONNEURON) {
-        os << "        }" << endl; // end if (shSpkEvntV[j]>postthreshold)
+        os << CB(180); // end if (shSpkEvntV[j] > postthreshold)
       }		 	
-    os << "        __syncthreads();" << endl;
+    os << "__syncthreads();" << ENDL;
     }
     else {
-      if (model->synapseGType[i] == INDIVIDUALG){
-	os << "            lg = d_gp" << model->synapseName[i] << deviceID << "[shSpkEvnt[j]*" << model->neuronN[trg] << " + " << localID << "];";
+      if (model->synapseGType[i] == INDIVIDUALG) {
+	os << "lg = d_gp" << model->synapseName[i] << deviceID << "[shSpkEvnt[j]*" << model->neuronN[trg] << " + " << localID << "];";
 	theLG = toString("lg");
       }
     }
-    os << endl;
+    os << ENDL;
     //if (model->synapseConnType[i] == SPARSE) { // need to close the parenthesis to synchronize threads
-    //os << "          }" << endl; // end if (id < npost)
-    //os << "        }" << endl; // end if (shSpkEvntV[j]>postthreshold)
-    //os << "        __syncthreads();" << endl;
+    //os << "}" << ENDL; // end if (id < npost)
+    //os << "}" << ENDL; // end if (shSpkEvntV[j]>postthreshold)
+    //os << "__syncthreads();" << ENDL;
     //}
     if ((model->synapseGType[i] == GLOBALG) || (model->synapseGType[i] == INDIVIDUALID)) {
       theLG = toString(model->g0[i]);
     }
-
     if (model->synapseConnType[i] != SPARSE) {
       if ((model->synapseType[i] == NSYNAPSE) || (model->synapseType[i] == LEARN1SYNAPSE)) {
-	os << "          linSyn = linSyn + " << theLG << "; " << endl;
+	os << "linSyn = linSyn + " << theLG << "; " << ENDL;
       }
       if (model->synapseType[i] == NGRADSYNAPSE) {
       	if (model->neuronType[src] == POISSONNEURON) {
-	  os << "          linSyn = linSyn + " << theLG << " * tanh((";
+	  os << "linSyn = linSyn + " << theLG << " * tanh((";
 	  os << SAVEP(model->neuronPara[src][2]) << " - " << SAVEP(Epre);
       	}
       	else {
-	  os << "          linSyn = linSyn + " << theLG << " * tanh((shSpkEvntV[j] - " << SAVEP(Epre);
+	  os << "linSyn = linSyn + " << theLG << " * tanh((shSpkEvntV[j] - " << SAVEP(Epre);
       	}
-      	os << ") / " << Vslope << ");" << endl;
+      	os << ") / " << Vslope << ");" << ENDL;
       }
     }
     // if needed, do some learning (this is for pre-synaptic spikes)
     if (model->synapseType[i] == LEARN1SYNAPSE) {
       // simply assume INDIVIDUALG for now
-      os << "            lg = d_grawp" << model->synapseName[i] << deviceID << "[shSpkEvnt[j] * " << model->neuronN[trg] << " + " << localID << "];" << endl;
-      os << "            " << model->ftype << " dt = d_sT" << model->neuronName[trg] << deviceID << "[" << localID << "] - t - ";
-      os << SAVEP(model->synapsePara[i][11]) << ";" << endl;
-      os << "            if (dt > " << model->dsp[i][1] << ") {" << endl;
-      os << "              dt = - " << SAVEP(model->dsp[i][5]) << ";" << endl;
-      os << "            }" << endl;
-      os << "            else if (dt > 0.0) {" << endl;
-      os << "              dt = " << SAVEP(model->dsp[i][3]) << " * dt + " << SAVEP(model->dsp[i][6]) << ";" << endl;
-      os << "            }" << endl;
-      os << "            else if (dt > " << model->dsp[i][2] << ") {" << endl;
-      os << "              dt = " << SAVEP(model->dsp[i][4]) << " * dt + " << SAVEP(model->dsp[i][6]) << ";" << endl;
-      os << "            }" << endl;
-      os << "            else {" << endl;
-      os << "              dt = - " << SAVEP(model->dsp[i][7]) << ";" << endl;
-      os << "            }" << endl;
-      os << "            lg = lg + dt;" << endl;
-      os << "            d_grawp" << model->synapseName[i] << deviceID << "[shSpkEvnt[j] * " << model->neuronN[trg] << " + " << localID << "] = lg;" << endl;
-      os << "            d_gp" << model->synapseName[i] << deviceID << "[shSpkEvnt[j] * " << model->neuronN[trg] << " + " << localID << "] = ";
-      os << "gFunc" << model->synapseName[i] << "Cuda" << deviceID << "(lg);" << endl; 
+      os << "lg = d_grawp" << model->synapseName[i] << deviceID << "[shSpkEvnt[j] * " << model->neuronN[trg] << " + " << localID << "];" << ENDL;
+      os << model->ftype << " dt = d_sT" << model->neuronName[trg] << deviceID << "[" << localID << "] - t - ";
+      os << SAVEP(model->synapsePara[i][11]) << ";" << ENDL;
+      os << "if (dt > " << model->dsp[i][1] << ") " << OB(200);
+      os << "dt = - " << SAVEP(model->dsp[i][5]) << ";" << ENDL;
+      os << CB(200);
+      os << "else if (dt > 0.0) " << OB(210);
+      os << "dt = " << SAVEP(model->dsp[i][3]) << " * dt + " << SAVEP(model->dsp[i][6]) << ";" << ENDL;
+      os << CB(210);
+      os << "else if (dt > " << model->dsp[i][2] << ") " << OB(220);
+      os << "dt = " << SAVEP(model->dsp[i][4]) << " * dt + " << SAVEP(model->dsp[i][6]) << ";" << ENDL;
+      os << CB(220);
+      os << "else " << OB(230);
+      os << "dt = - " << SAVEP(model->dsp[i][7]) << ";" << ENDL;
+      os << CB(230);
+      os << "lg = lg + dt;" << ENDL;
+      os << "d_grawp" << model->synapseName[i] << deviceID << "[shSpkEvnt[j] * " << model->neuronN[trg] << " + " << localID << "] = lg;" << ENDL;
+      os << "d_gp" << model->synapseName[i] << deviceID << "[shSpkEvnt[j] * " << model->neuronN[trg] << " + " << localID << "] = ";
+      os << "gFunc" << model->synapseName[i] << "Cuda" << deviceID << "(lg);" << ENDL; 
     }
     if (model->synapseConnType[i] != SPARSE) {
       if ((model->neuronType[src] != POISSONNEURON) || (model->synapseGType[i] == INDIVIDUALID)) {
-        os << "          }" << endl;////1 end if (shSpkEvntV[j]>postthreshold) !!!!!! is INDIVIDUALID part correct?
+        os << CB(170); //// 1 end if (shSpkEvntV[j] > postthreshold) !!!!!! is INDIVIDUALID part correct?
       }
     }
-    os << "        }" << endl; ////2 for (j = 0; j < lmax; j++)
-    os << "      }" << endl; ////3 if (id < Npre)
-    os << "    }" << endl; ////4 for (r = 0; r < numSpikeSubsets; r++)
+    os << CB(160); //// 2 for (j = 0; j < lmax; j++)
+    os << CB(150); //// 3 if (id < Npre)
+    os << CB(130); //// 4 for (r = 0; r < numSpikeSubsets; r++)
 
     if (model->synapseConnType[i] != SPARSE) {
-      os << "    // only do this for existing neurons" << endl;
-      os << "    if (" << localID << " < " << model->neuronN[trg] <<") {" << endl;
-      os << "      d_inSyn" << model->neuronName[trg] << inSynNo << deviceID << "[" << localID << "] = linSyn;" << endl;
-      os << "    }" << endl;
+      os << "// only do this for existing neurons" << ENDL;
+      os << "if (" << localID << " < " << model->neuronN[trg] << ") " << OB(240);
+      os << "d_inSyn" << model->neuronName[trg] << inSynNo << deviceID << "[" << localID << "] = linSyn;" << ENDL;
+      os << CB(240);
     }
     if (model->lrnGroups == 0) {
-      os << "    if (threadIdx.x == 0) {" << endl;
-      os << "      j = atomicAdd((unsigned int *) &d_done" << deviceID << ", 1);" << endl;
-      os << "      if (j == " << numOfBlocks - 1 << ") {" << endl;
+      os << "if (threadIdx.x == 0) " << OB(250);
+      os << "j = atomicAdd((unsigned int *) &d_done" << deviceID << ", 1);" << ENDL;
+      os << "if (j == " << numOfBlocks - 1 << ") " << OB(260);
       for (int j = 0; j < model->neuronGrpN; j++) {
-	os << "        d_glbscnt" << model->neuronName[j] << deviceID << " = 0;" << endl;
+	os << "d_glbscnt" << model->neuronName[j] << deviceID << " = 0;" << ENDL;
 	if (model->neuronDelaySlots[j] != 1) {
-	  os << "        d_glbSpkEvntCnt" << model->neuronName[j] << deviceID << "[d_spkEvntQuePtr";
-	  os << model->neuronName[j] << deviceID << "] = 0;" << endl;
+	  os << "d_glbSpkEvntCnt" << model->neuronName[j] << deviceID << "[d_spkEvntQuePtr";
+	  os << model->neuronName[j] << deviceID << "] = 0;" << ENDL;
 	}
 	else {
-	  os << "        d_glbSpkEvntCnt" << model->neuronName[j] << deviceID << " = 0;" << endl;
+	  os << "d_glbSpkEvntCnt" << model->neuronName[j] << deviceID << " = 0;" << ENDL;
 	}
       }
-      os << "        d_done" << deviceID << " = 0;" << endl;
-      os << "      }" << endl;
-      os << "    }" << endl;
+      os << "d_done" << deviceID << " = 0;" << ENDL;
+      os << CB(260);
+      os << CB(250);
     }
-    os << "  }" << endl;
-    os << endl;
+    os << CB(110);
+    os << ENDL;
   }
-  os << "}" << endl;
-  os << endl;
+  os << CB(100);
+  os << ENDL;
+
 
 
   ///////////////////////////////////////////////////////////////
@@ -742,20 +764,20 @@ void genCudaSynapse(unsigned int deviceID, ostream &mos)
     numOfBlocks = model->padSumLearnN[deviceID].back() / learnBlkSz[deviceID];
 
     // Kernel header
-    os << "__global__ void learnSynapsesPostCuda" << deviceID << "(" << endl;
+    os << "__global__ void learnSynapsesPostCuda" << deviceID << "(" << ENDL;
     for (int i = 0; i < model->synapseGrpN; i++) {
       // conditional skip if synapse group is not on this device
       if ((model->synHostID[i] != hostID) || (model->synDevID[i] != deviceID)) {
 	continue;
       }
       if (model->synapseGType[i] == (INDIVIDUALG )) {
-	os << "  " << model->ftype << " *d_gp" << model->synapseName[i] << deviceID << ", " << endl;	
+	os << model->ftype << " *d_gp" << model->synapseName[i] << deviceID << ", " << ENDL;	
       }
       if (model->synapseGType[i] == (INDIVIDUALID )) {
-	os << "  unsigned int *d_gp" << model->synapseName[i] << deviceID << ", " << endl;	
+	os << "unsigned int *d_gp" << model->synapseName[i] << deviceID << ", " << ENDL;	
       }
       if (model->synapseType[i] == LEARN1SYNAPSE) {
-	os << "  " << model->ftype << " *d_grawp"  << model->synapseName[i] << deviceID << ", " << endl;
+	os << model->ftype << " *d_grawp"  << model->synapseName[i] << deviceID << ", " << ENDL;
       }
     }
     for (int i = 0; i < model->neuronGrpN; i++) {
@@ -766,17 +788,17 @@ void genCudaSynapse(unsigned int deviceID, ostream &mos)
       nt = model->neuronType[i];
       os << nModels[nt].varTypes[0] << " *d_" << nModels[nt].varNames[0] << model->neuronName[i] << deviceID << ", "; // Vm
     }
-    os << "  " << model->ftype << " t" << endl;
-    os << ")" << endl;
+    os << model->ftype << " t" << ENDL;
+    os << ")" << ENDL;
 
     // kernel code
-    os << "{" << endl;
-    os << "  unsigned int id = " << learnBlkSz[deviceID] << " * blockIdx.x + threadIdx.x;" << endl;
-    os << "  __shared__ unsigned int shSpkEvnt[" << learnBlkSz[deviceID] << "];" << endl;
-    os << "  __shared__ " << model->ftype << " shSpkEvntV[" << learnBlkSz[deviceID] << "];" << endl;
-    os << "  unsigned int lscnt, numSpikeSubsets, lmax, j, r;" << endl;
-    os << "  " << model->ftype << " lg;" << endl;
-    os << endl;
+    os << OB(270);
+    os << "unsigned int id = " << learnBlkSz[deviceID] << " * blockIdx.x + threadIdx.x;" << ENDL;
+    os << "__shared__ unsigned int shSpkEvnt[" << learnBlkSz[deviceID] << "];" << ENDL;
+    os << "__shared__ " << model->ftype << " shSpkEvntV[" << learnBlkSz[deviceID] << "];" << ENDL;
+    os << "unsigned int lscnt, numSpikeSubsets, lmax, j, r;" << ENDL;
+    os << model->ftype << " lg;" << ENDL;
+    os << ENDL;
 
     for (int i = 0; i < model->lrnGroups; i++) {
       // conditional skip if plastic synapse group is not on this device
@@ -784,101 +806,99 @@ void genCudaSynapse(unsigned int deviceID, ostream &mos)
 	continue;
       }
       if (model->localLearnID[i] == 0) {
-	os << "  if (id < " << model->padSumLearnN[deviceID][model->localLearnID[i]] << ") {" << endl;
+	os << "if (id < " << model->padSumLearnN[deviceID][model->localLearnID[i]] << ") " << OB(280);
 	localID = string("id");
       }
       else {
-	os << "  if ((id >= " << model->padSumLearnN[deviceID][model->localLearnID[i - 1]] << ") && ";
-	os << "(id < " << model->padSumLearnN[deviceID][model->localLearnID[i]] << ")) {" << endl;
-	os << "    unsigned int lid;" << endl;
-	os << "    lid = id - " << model->padSumLearnN[deviceID][model->localLearnID[i - 1]] << ";" << endl;
+	os << "if ((id >= " << model->padSumLearnN[deviceID][model->localLearnID[i - 1]] << ") && ";
+	os << "(id < " << model->padSumLearnN[deviceID][model->localLearnID[i]] << ")) " << OB(280);
+	os << "unsigned int lid;" << ENDL;
+	os << "lid = id - " << model->padSumLearnN[deviceID][model->localLearnID[i - 1]] << ";" << ENDL;
 	localID = string("lid");
       }
-
       unsigned int k = model->lrnSynGrp[i];
       unsigned int src = model->synapseSource[k];
       unsigned int nN = model->neuronN[src];
       unsigned int trg = model->synapseTarget[k];
       float Epre = model->synapsePara[k][1];
-      os << "    lscnt = d_glbSpkEvntCnt" << model->neuronName[trg] << deviceID;
+      os << "lscnt = d_glbSpkEvntCnt" << model->neuronName[trg] << deviceID;
       if (model->neuronDelaySlots[trg] != 1) os << "[d_spkEvntQuePtr" << model->neuronName[trg] << deviceID << "]";
-      os << ";" << endl;
-      os << "    numSpikeSubsets = (unsigned int) (ceilf((float) lscnt / " << learnBlkSz[deviceID] << ".0f));" << endl;
-      os << "    for (r = 0; r < numSpikeSubsets; r++) {" << endl;
-      os << "      if (r == numSpikeSubsets - 1) lmax = lscnt % " << learnBlkSz[deviceID] << ";" << endl;
-      os << "      else lmax = " << learnBlkSz[deviceID] << ";" << endl;
-      os << "      if (threadIdx.x < lmax) {" << endl;
-      os << "        shSpkEvnt[threadIdx.x] = d_glbSpkEvnt" << model->neuronName[trg] << deviceID << "[";
+      os << ";" << ENDL;
+      os << "numSpikeSubsets = (unsigned int) (ceilf((float) lscnt / " << learnBlkSz[deviceID] << ".0f));" << ENDL;
+      os << "for (r = 0; r < numSpikeSubsets; r++) " << OB(290);
+      os << "if (r == numSpikeSubsets - 1) lmax = lscnt % " << learnBlkSz[deviceID] << ";" << ENDL;
+      os << "else lmax = " << learnBlkSz[deviceID] << ";" << ENDL;
+      os << "if (threadIdx.x < lmax) " << OB(300);
+      os << "shSpkEvnt[threadIdx.x] = d_glbSpkEvnt" << model->neuronName[trg] << deviceID << "[";
       if (model->neuronDelaySlots[trg] != 1) {
 	os << "(d_spkEvntQuePtr" << model->neuronName[trg] << deviceID << " * " << model->neuronN[trg] << ") + ";
       }
-      os << "(r * " << learnBlkSz[deviceID] << ") + threadIdx.x];" << endl;
-      os << "        shSpkEvntV[threadIdx.x] = d_V" << model->neuronName[trg] << deviceID << "[";
+      os << "(r * " << learnBlkSz[deviceID] << ") + threadIdx.x];" << ENDL;
+      os << "shSpkEvntV[threadIdx.x] = d_V" << model->neuronName[trg] << deviceID << "[";
       if (model->neuronDelaySlots[trg] != 1) {
 	os << "(d_spkEvntQuePtr" << model->neuronName[trg] << deviceID << " * " << model->neuronN[trg] << ") + ";
       }
-      os << "shSpkEvnt[threadIdx.x]];" << endl;
-      os << "      }" << endl;
-      os << "      __syncthreads();" << endl;
-      os << "      // only work on existing neurons" << endl;
-      os << "      if (" << localID << " < " << model->neuronN[src] << ") {" << endl;
-      os << "        // loop through all incoming spikes for learning" << endl;
-      os << "        for (j = 0; j < lmax; j++) {" << endl;
-      os << "          if (shSpkEvntV[j] > " << Epre << ") {" << endl;
-      os << "            lg = d_grawp" << model->synapseName[k] << deviceID << "[" << localID << " * ";
-      os << model->neuronN[trg] << " + shSpkEvnt[j]];" << endl;
-      os << "            " << model->ftype << " dt = t - d_sT" << model->neuronName[src] << deviceID << "[" << localID << "]";
+      os << "shSpkEvnt[threadIdx.x]];" << ENDL;
+      os << CB(300);
+      os << "__syncthreads();" << ENDL;
+      os << "// only work on existing neurons" << ENDL;
+      os << "if (" << localID << " < " << model->neuronN[src] << ") " << OB(310);
+      os << "// loop through all incoming spikes for learning" << ENDL;
+      os << "for (j = 0; j < lmax; j++) " << OB(320);
+      os << "if (shSpkEvntV[j] > " << Epre << ") " << OB(330);
+      os << "lg = d_grawp" << model->synapseName[k] << deviceID << "[" << localID << " * ";
+      os << model->neuronN[trg] << " + shSpkEvnt[j]];" << ENDL;
+      os << model->ftype << " dt = t - d_sT" << model->neuronName[src] << deviceID << "[" << localID << "]";
       if (model->neuronDelaySlots[src] != 1) {
 	os << " + " << (model->dt * model->synapseDelay[k]);
       }
-      os << " - " << SAVEP(model->synapsePara[k][11]) << ";" << endl;
-      os << "            if (dt > " << model->dsp[k][1] << ") {" << endl;
-      os << "              dt = - " << SAVEP(model->dsp[k][5]) << ";" << endl;
-      os << "            }" << endl;
-      os << "            else if (dt > 0.0) {" << endl;
-      os << "              dt = " << SAVEP(model->dsp[k][3]) << " * dt + " << SAVEP(model->dsp[k][6]) << ";" << endl;
-      os << "            }" << endl;
-      os << "            else if (dt > " << model->dsp[k][2] << ") {" << endl;
-      os << "              dt = " << SAVEP(model->dsp[k][4]) << " * dt + " << SAVEP(model->dsp[k][6]) << ";" << endl;
-      os << "            }" << endl;
-      os << "            else {" << endl;
-      os << "              dt = - " << SAVEP(model->dsp[k][7]) << ";" << endl;
-      os << "            }" << endl;
-      os << "            lg = lg + dt;" << endl;
-      os << "            d_grawp" << model->synapseName[k] << deviceID << "[" << localID << " * ";
-      os << model->neuronN[trg] << " + shSpkEvnt[j]] = lg;" << endl;
-      os << "            d_gp" << model->synapseName[k] << deviceID << "[" << localID << " * ";
-      os << model->neuronN[trg] << " + shSpkEvnt[j]] = gFunc" << model->synapseName[k] << "Cuda" << deviceID << "(lg);" << endl;
-      os << "          }" << endl;
-      os << "        }" << endl;
-      os << "      }" << endl;
-      os << "    }" << endl;
-      //os << "    __syncthreads();" << endl;
-      os << "          __threadfence();" << endl;
-      os << "    if (threadIdx.x == 0) {" << endl;
-      os << "      j = atomicAdd((unsigned int *) &d_done" << deviceID << ", 1);" << endl;
-      os << "      if (j == " << numOfBlocks - 1 << ") {" << endl;
+      os << " - " << SAVEP(model->synapsePara[k][11]) << ";" << ENDL;
+      os << "if (dt > " << model->dsp[k][1] << ") " << OB(340);
+      os << "dt = - " << SAVEP(model->dsp[k][5]) << ";" << ENDL;
+      os << CB(340);
+      os << "else if (dt > 0.0) " << OB(350);
+      os << "dt = " << SAVEP(model->dsp[k][3]) << " * dt + " << SAVEP(model->dsp[k][6]) << ";" << ENDL;
+      os << CB(350);
+      os << "else if (dt > " << model->dsp[k][2] << ") " << OB(360);
+      os << "dt = " << SAVEP(model->dsp[k][4]) << " * dt + " << SAVEP(model->dsp[k][6]) << ";" << ENDL;
+      os << CB(360);
+      os << "else " << OB(370);
+      os << "dt = - " << SAVEP(model->dsp[k][7]) << ";" << ENDL;
+      os << CB(370);
+      os << "lg = lg + dt;" << ENDL;
+      os << "d_grawp" << model->synapseName[k] << deviceID << "[" << localID << " * ";
+      os << model->neuronN[trg] << " + shSpkEvnt[j]] = lg;" << ENDL;
+      os << "d_gp" << model->synapseName[k] << deviceID << "[" << localID << " * ";
+      os << model->neuronN[trg] << " + shSpkEvnt[j]] = gFunc" << model->synapseName[k] << "Cuda" << deviceID << "(lg);" << ENDL;
+      os << CB(330);
+      os << CB(320);
+      os << CB(310);
+      os << CB(290);
+      os << "__threadfence();" << ENDL;
+      os << "if (threadIdx.x == 0) " << OB(380);
+      os << "j = atomicAdd((unsigned int *) &d_done" << deviceID << ", 1);" << ENDL;
+      os << "if (j == " << numOfBlocks - 1 << ") " << OB(390);
       for (int j = 0; j < model->neuronGrpN; j++) {
-	os << "        d_glbscnt" << model->neuronName[j] << deviceID << " = 0;" << endl;
+	os << "d_glbscnt" << model->neuronName[j] << deviceID << " = 0;" << ENDL;
 	if (model->neuronDelaySlots[j] != 1) {
-	  os << "        d_spkEvntQuePtr" << model->neuronName[j] << deviceID << " = (d_spkEvntQuePtr";
-	  os << model->neuronName[j] << deviceID << " + 1) % " << model->neuronDelaySlots[j] << ";" << endl;
-	  os << "        d_glbSpkEvntCnt" << model->neuronName[j] << deviceID << "[d_spkEvntQuePtr";
-	  os << model->neuronName[j] << deviceID << "] = 0;" << endl;
+	  os << "d_spkEvntQuePtr" << model->neuronName[j] << deviceID << " = (d_spkEvntQuePtr";
+	  os << model->neuronName[j] << deviceID << " + 1) % " << model->neuronDelaySlots[j] << ";" << ENDL;
+	  os << "d_glbSpkEvntCnt" << model->neuronName[j] << deviceID << "[d_spkEvntQuePtr";
+	  os << model->neuronName[j] << deviceID << "] = 0;" << ENDL;
 	}
 	else {
-	  os << "        d_glbSpkEvntCnt" << model->neuronName[j] << deviceID << " = 0;" << endl;
+	  os << "d_glbSpkEvntCnt" << model->neuronName[j] << deviceID << " = 0;" << ENDL;
 	}
       }
-      os << "        d_done" << deviceID << " = 0;" << endl;
-      os << "      }" << endl;
-      os << "    }" << endl;
-      os << "  }" << endl;
+      os << "d_done" << deviceID << " = 0;" << ENDL;
+      os << CB(390);
+      os << CB(380);
+      os << CB(280);
     }
-    os << "}" << endl;
+    os << CB(270);
   }
-  os << endl;
+  os << ENDL;
 
-  os << "#endif" << endl;
+  os << "#endif" << ENDL;
   os.close();
 }

@@ -440,18 +440,16 @@ void prepareStandardModels()
   n.pNames.push_back(tS("d")); // after-spike reset value of U
   n.dpNames.clear(); 
   //TODO: replace the resetting in the following with BRIAN-like threshold and resetting 
-  n.simCode= tS("    if ($(V) >= 30){\n\
-      $(V)=$(c);\n\
-		  $(U)+=$(d);\n\
-    } \n\
-    $(V)+=0.5f*(0.04f*$(V)*$(V)+5*$(V)+140-$(U)+$(Isyn))*$(DT); //at two times for numerical stability\n\
-    $(V)+=0.5f*(0.04f*$(V)*$(V)+5*$(V)+140-$(U)+$(Isyn))*$(DT);\n\
-    $(U)+=$(a)*($(b)*$(V)-$(U))*$(DT);\n\
-   // if ($(V) > 30){   //keep this only for visualisation -- not really necessaary otherwise \n\
-    //  $(V)=30; \n\
-   //}\n\
-   ");
-    
+  n.simCode= tS("if ($(V) >= 30) {\n\
+\t\t\t\t$(V)=$(c);\n\
+\t\t\t\t$(U)+=$(d);\n\
+\t\t\t}\n\
+\t\t\t$(V)+=0.5f*(0.04f*$(V)*$(V)+5*$(V)+140-$(U)+$(Isyn))*$(DT); // at two times for numerical stability\n\
+\t\t\t$(V)+=0.5f*(0.04f*$(V)*$(V)+5*$(V)+140-$(U)+$(Isyn))*$(DT);\n\
+\t\t\t$(U)+=$(a)*($(b)*$(V)-$(U))*$(DT);\n\
+\t\t\t//if ($(V) > 30) { // keep this only for visualisation -- not really necessaary otherwise \n\
+\t\t\t\t//$(V)=30; \n\
+\t\t\t//}\n");
   n.thresholdConditionCode = tS("$(V) >= 29.99");
   /*  n.resetCode=tS("//reset code is here\n ");
       $(V)=$(c);\n\
@@ -477,17 +475,16 @@ void prepareStandardModels()
   n.pNames.clear();
   n.dpNames.clear(); 
   //TODO: replace the resetting in the following with BRIAN-like threshold and resetting 
-  n.simCode= tS("    if ($(V) >= 30){\n\
-      $(V)=$(c);\n\
-		  $(U)+=$(d);\n\
-    } \n\
-    $(V)+=0.5f*(0.04f*$(V)*$(V)+5*$(V)+140-$(U)+$(Isyn))*$(DT); //at two times for numerical stability\n\
-    $(V)+=0.5f*(0.04f*$(V)*$(V)+5*$(V)+140-$(U)+$(Isyn))*$(DT);\n\
-    $(U)+=$(a)*($(b)*$(V)-$(U))*$(DT);\n\
-    //if ($(V) > 30){      //keep this only for visualisation -- not really necessaary otherwise \n\
-    //  $(V)=30; \n\
-    //}\n\
-    ");
+  n.simCode= tS("if ($(V) >= 30) {\n\
+\t\t\t\t$(V)=$(c);\n\
+\t\t\t\t$(U)+=$(d);\n\
+\t\t\t}\n\
+\t\t\t$(V)+=0.5f*(0.04f*$(V)*$(V)+5*$(V)+140-$(U)+$(Isyn))*$(DT); // at two times for numerical stability\n\
+\t\t\t$(V)+=0.5f*(0.04f*$(V)*$(V)+5*$(V)+140-$(U)+$(Isyn))*$(DT);\n\
+\t\t\t$(U)+=$(a)*($(b)*$(V)-$(U))*$(DT);\n\
+\t\t\t//if ($(V) > 30) { // keep this only for visualisation -- not really necessaary otherwise \n\
+\t\t\t\t//$(V)=30; \n\
+\t\t\t//}\n");
   n.thresholdConditionCode = tS("$(V) > 29.99");
   nModels.push_back(n);
   

@@ -34,7 +34,7 @@
 
 void genHostCode(ostream &mos)
 {
-  mos << "entering genHostCode" << endl;
+  //mos << "entering genHostCode" << endl;
 
   string ccFile, hFile;
   ofstream os, osh;
@@ -576,5 +576,5 @@ void genHostCode(ostream &mos)
   osh.close();
   os.close();
 
-  mos << "leaving genHostCode" << endl;
+  //mos << "leaving genHostCode" << endl;
 }

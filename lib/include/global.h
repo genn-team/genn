@@ -32,9 +32,13 @@ This global header file also takes care of including some generally used cuda su
 #include <cmath>
 #include <cuda_runtime.h>
 #include "modelSpec.h"
+#include "CodeHelper.cc"
 
 using namespace std;
 
+
+CodeHelper hlp; //!< Global helper class to assist with bracket pairing and indentation during code generation
+//hlp.setVerbose(true); // this will show the generation of bracketing (brace) levels. Helps to debug a bracketing issue
 
 string path; //!< Global string holding the directory in which GeNN code is to be deposited
 NNmodel *model; //!< Global model object which specifies the structure and properties of the network model

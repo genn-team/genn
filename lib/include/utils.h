@@ -47,15 +47,6 @@ using namespace std;
 
 
 //--------------------------------------------------------------------------
-/* \brief Macro for a "safe" output of a parameter into generated code by essentially just
-   adding a bracket around the parameter value in the generated code.
- */
-//--------------------------------------------------------------------------
- 
-#define SAVEP(X) "(" << X << ")"
-
-
-//--------------------------------------------------------------------------
 /* \brief template function for string conversion from const char* to C++ string
  */
 //--------------------------------------------------------------------------
