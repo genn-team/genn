@@ -38,22 +38,22 @@ float inhIzh_p[0]={};
 
 float IzhExc_ini[6]={
 //Izhikevich model initial conditions - excitatory population
-	-65,	//0 - V
-	 0,	//1 - U
+	-65.0,	//0 - V
+	 0.0,	//1 - U
 	 0.02,	// 0 - a
 	0.2, 	// 1 - b
-	-65, 	// 2 - c
-	 8 	// 3 - d
+	-65.0, 	// 2 - c
+	 8.0 	// 3 - d
 };
 
 float IzhInh_ini[6]={
 //Izhikevich model initial conditions - inhibitory population
 	-65,	//0 - V
-	 0,	//1 - U
+	 0.0,	//1 - U
 	 0.02,	// 0 - a
 	0.25, 	// 1 - b
-	-65, 	// 2 - c
-	 2 	// 3 - d 
+	-65.0, 	// 2 - c
+	 2.0 	// 3 - d 
 };
 
 float SynIzh_p[3]= {
@@ -63,8 +63,8 @@ float SynIzh_p[3]= {
 };
 
 float postExpP[2]={
-  0,            // 0 - tau_S: decay time constant for S [ms]
-  0		  // 1 - Erev: Reversal potential
+  0.0,            // 0 - tau_S: decay time constant for S [ms]
+  0.0		  // 1 - Erev: Reversal potential
 };
 
 float postSynV[0]={
@@ -72,7 +72,7 @@ float postSynV[0]={
 
 
 //float inpIzh1 = 4.0;
-//float gIzh1= 0.01;
+//float gIzh1= 0.05;
 //float * input1, *input2;
 #include "../../userproject/include/sizes.h"
 
@@ -89,26 +89,31 @@ void modelDefinition(NNmodel &model)
   neuronVSize.push_back(sizeof IzhInh_ini);
   
   model.addSynapsePopulation("Exc_Exc", NSYNAPSE, SPARSE, INDIVIDUALG, NO_DELAY, IZHIKEVICH_PS, "PExc", "PExc", SynIzh_p, postSynV, postExpP); 
- //model.setSynapseG("IzhIzh", gIzh1);
+  //model.setSynapseG("Exc_Exc", gIzh1);
   synapsePSize.push_back(sizeof SynIzh_p);
   
   
   model.addSynapsePopulation("Exc_Inh", NSYNAPSE, SPARSE, INDIVIDUALG, NO_DELAY, IZHIKEVICH_PS, "PExc", "PInh", SynIzh_p, postSynV, postExpP); 
- //model.setSynapseG("IzhIzh", gIzh1);
+ //model.setSynapseG("Exc_Inh", gIzh1);
   synapsePSize.push_back(sizeof SynIzh_p);
   
   
   model.addSynapsePopulation("Inh_Exc", NSYNAPSE, SPARSE, INDIVIDUALG, NO_DELAY, IZHIKEVICH_PS, "PInh", "PExc", SynIzh_p, postSynV, postExpP); 
- //model.setSynapseG("IzhIzh", gIzh1);
+  //model.setSynapseG("Inh_Exc", gIzh1);
   synapsePSize.push_back(sizeof SynIzh_p);
   
   
   model.addSynapsePopulation("Inh_Inh", NSYNAPSE, SPARSE, INDIVIDUALG, NO_DELAY, IZHIKEVICH_PS, "PInh", "PInh", SynIzh_p, postSynV, postExpP); 
- //model.setSynapseG("IzhIzh", gIzh1);
+ //model.setSynapseG("Inh_Inh", gIzh1);
   synapsePSize.push_back(sizeof SynIzh_p);
-  
+  fprintf(stderr, "#model created.\n"); 
+
   model.activateDirectInput("PExc", INPRULE);
   model.activateDirectInput("PInh", INPRULE);
+	model.setMaxConn("Exc_Exc", _NMaxConnP0);
+	model.setMaxConn("Exc_Inh", _NMaxConnP1);
+	model.setMaxConn("Inh_Exc", _NMaxConnP2);
+	model.setMaxConn("Inh_Inh", _NMaxConnP3);
   //model.setConstInp("Izh1", input1);
   model.setPrecision(FLOAT);
   

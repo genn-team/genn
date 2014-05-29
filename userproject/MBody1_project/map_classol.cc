@@ -99,6 +99,7 @@ classol::~classol()
 {
   free(pattern);
   free(baserates);
+	freeMem;
 }
 
 
@@ -111,7 +112,7 @@ void classol::read_pnkcsyns(FILE *f //!< File handle for a file containing PN to
 			    )
 {
   // version 1
-  fprintf(stderr, "%u\n", model.neuronN[0]*model.neuronN[1]*sizeof(float));
+  fprintf(stderr, "%lu\n", model.neuronN[0]*model.neuronN[1]*sizeof(float));
   fread(gpPNKC, model.neuronN[0]*model.neuronN[1]*sizeof(float),1,f);
   // version 2
   /*  unsigned int UIntSz= sizeof(unsigned int)*8;   // in bit!

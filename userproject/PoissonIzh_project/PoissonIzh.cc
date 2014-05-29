@@ -66,6 +66,6 @@ void modelDefinition(NNmodel &model)
   model.addNeuronPopulation("PN", _NPoisson, POISSONNEURON, myPOI_p, myPOI_ini);
   model.addNeuronPopulation("Izh1", _NIzh, IZHIKEVICH, exIzh_p, exIzh_ini);
 
-  model.addSynapsePopulation("PNIzh1", NSYNAPSE, SPARSE, INDIVIDUALG, NO_DELAY, IZHIKEVICH_PS, "PN", "Izh1", mySyn_p, postSynV, postExp);
+  model.addSynapsePopulation("PNIzh1", NSYNAPSE, ALLTOALL, INDIVIDUALG, NO_DELAY, IZHIKEVICH_PS, "PN", "Izh1", mySyn_p, postSynV, postExp);
   //model.setSynapseG("PNIzh1", gPNIzh1);
 }

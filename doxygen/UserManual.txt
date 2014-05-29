@@ -13,13 +13,11 @@
 
 
 //----------------------------------------------------------------------------
-/*!  \page Manual User Manual
-
-\tableofcontents
+/*!  \page Manual
 
 \section sIntro Introduction
 GeNN is a software library for facilitating the simulation of neuronal
-network models on NVIDIA CUDA enable GPU hardware. It was designed
+network models on NVIDIA CUDA enabled GPU hardware. It was designed
 with computational neuroscience models in mind rather than artificial
 neural networks. The main philosophy of GeNN is two-fold:
 - GeNN relies heavily on code generation to make it very flexible and
@@ -33,42 +31,42 @@ inspect, extend or otherwise modify the generated code. She can also
 introduce her own optimisations and in particular control the data
 flow from and to the GPU in any desired granularity.
 
-This User guide gives an overview how to use GeNN for a novice user and
+This User guide gives an overview of how to use GeNN for a novice user and
 tries to lead the user to more expert use later on. With this we jump
 right in.
  
 \section sect1 Defining a model
-A model is defined by the user by providing the function 
+A network model is defined by the user by providing the function 
 \code{.cc}
 void modelDefinition(NNmodel &model) 
 \endcode
-in this function the following tasks must be completed:
+In this function, the following tasks must be completed:
 - The name of the model must be defined:
 \code{.cc}
 model.setName("MyModel");
 \endcode
 
 - neuron populations (at least one) must be added (see \ref subsect11). The
-  user may add as many neuron population as she wishes. If resources
+  user may add as many neuron populations as she wishes. If resources
   run out, there will not be a warning but GeNN will fail. All
   populations should have a unique name.
 
 - synapse populations (at least one) must be added (see \ref subsect12). Again,
-  the number of synaptic connection populationsis unlimited other than
+  the number of synaptic connection populations is unlimited other than
   by resources.
 
 \subsection subsect11 Defining neuron populations
 
 Neuron populations are added using the function
 \code{.cc}
-model.addNeuronPopulation("PN", _NAL, POISSONNEURON, myPOI_p, myPOI_ini);
+model.addNeuronPopulation("name", n, TYPE, para, ini);
 \endcode
 where the arguments are:
 \arg \c const \c char* name: Name of the neuron population
 \arg \c int n: number of neurons in the population
-\arg \c int TYPE: Type of the neurons, refers to either a standard type (see below) or user-defined type
+\arg \c int TYPE: Type of the neurons, refers to either a standard type (see \ref sect2) or user-defined type
 \arg \c float *para: Parameters of this neuron type
-\arg \c float *ini: Initial values of this neuron type 
+\arg \c float *ini: Initial values for variables of this neuron type 
 
 The user may add as many neuron populations as the model necessitates. They should all have unique names.
 
@@ -76,26 +74,23 @@ The user may add as many neuron populations as the model necessitates. They shou
 
 Synapse populations are added with the command
 \code{.cc}
-model.addSynapsePopulation("PNKC", NSYNAPSE, DENSE, INDIVIDUALG, "PN",
-"KC", myPNKC_p);
+model.addSynapsePopulation("name", sType, sConn, gType, delaySteps, postSyn, "preName", "postName", sParam, VpostSyn,PpostSyn);
 \endcode
 where the arguments are
-\arg \c const \c char* name: The name of the synapse population, here
-"PNKC"
-\arg \c int \c sType: The type of synapse to be added, here the
-predefined type "NSYNAPSE". See below for the available predefined
-synapse types.
-\arg \c int \c sConn: The type of synaptic connectivity, here the
-predefined constant "DENSE"; the options currently are "ALLTOALL",
-"DENSE", "SPARSE"
+\arg \c const \c char* name: The name of the synapse population
+\arg \c int \c sType: The type of synapse to be added (i.e. learning mode). See \ref subsect31 below for the available predefined synapse types.
+\arg \c int \c sConn: The type of synaptic connectivity. the options currently are "ALLTOALL",
+"DENSE", "SPARSE" (see \ref subsect32 )
 \arg \c int \c gType: The way how the synaptic conductivity g will be
-defined, here the predefined constant "INDIVIDUALG"; options are
+defined. Options are
 "INDIVIDUALG", "GLOBALG", "INDIVIDUALID". For their meaning, see \ref
 subsect33 below.
+\arg \c int \c delaySteps:  Number of delay slots.
+\arg \c int \c postSyn: Postsynaptic integration method. See \ref sect_postsyn for predefined types.
 \arg \c char* \c preName: Name of the (existing!) per-synaptic neuron
-population, here "PN".
+population.
 \arg \c char* \c postName: Name of the (existing!) post-synaptic neuron
-population, here "KC".
+population.
 \arg \c float* \c sParam: A C-type array of floats that contains
 parameter values (common to all synapses of the population) which will
 be used for the defined synapses. The array must contain the right
@@ -116,25 +111,155 @@ addNeuronGroup function by their unique cardinal number, starting from
 - 1: \ref sect22 "POISSONNEURON"
 - 2: \ref sect23 "TRAUBMILES"
 - 3: \ref sect24 "IZHIKEVICH"
+- 4: \ref sect25 "IZHIKEVICH_V"
 
-\subsection sect21 Map Neurons
-The MAPNEURON type is a map based neuron model as defined in \cite
-Rulkov2002 .
+\subsection sect21 MAPNEURON (Map Neurons)
+The MAPNEURON type is a map based neuron model as defined in \cite Rulkov2002 .
 
 It has 2 variables:
-- 0: V - the membrane potential
-- 1: preV - the membrane potential at the previous time step
+- \c V - the membrane potential
+- \c preV - the membrane potential at the previous time step
 
 and it has 4 parameters:
-- 0: Vspike - the membrane potential at the top of the spike
-- 1: alpha - determines the shape of the iteration function
-- 2: y - also determines the iteration function
-- 3: beta - roughly regulates the scale of the input into the neuron
+- \c Vspike - the membrane potential at the top of the spike
+- \c alpha - determines the shape of the iteration function
+- \c y - "shift / excitation" parameter, also determines the iteration function
+- \c beta - roughly regulates the scale of the input into the neuron
 
+\subsection sect22 POISSONNEURON (Poisson Neurons)
+
+Poisson neurons have constant membrane potential (\c Vrest) unless they are 
+activated randomly to the \c Vspike value if (t- \c SpikeTime ) > \c trefract.
+
+It has 3 variables:
+
+- \c V - Membrane potential
+- \c Seed - Seed for random number generation
+- \c SpikeTime - Time at which the neuron spiked for the last time
+
+and 4 parameters:
+
+- \c therate - Firing rate
+- \c trefract - Refractory period
+- \c Vspike - Membrane potential at spike (mV)
+- \c Vrest - Membrane potential at rest (mV)
+
+\subsection sect23 TRAUBMILES (Hodgkin-Huxley neurons with Traub & Miles algorithm)
+
+It has 4 variables:
+
+- \c V - membrane potential E
+- \c m - probability for Na channel activation m
+- \c h - probability for not Na channel blocking h
+- \c n - probability for K channel activation n
+
+and 7 parameters:
+
+- \c gNa - Na conductance in 1/(mOhms * cm^2)
+- \c ENa - Na equi potential in mV
+- \c gK - K conductance in 1/(mOhms * cm^2)
+- \c EK - K equi potential in mV
+- \c gl - Leak conductance in 1/(mOhms * cm^2)
+- \c El - Leak equi potential in mV
+- \c Cmem - Membrane capacity density in muF/cm^2
+
+\subsection sect24 IZHIKEVICH (Izhikevich neurons with fixed parameters)
+This is the Izhikevich model with fixed parameters (\cite izhikevich2003simple).
+
+Variables are:
+
+- \c V - Membrane potential
+- \c U - Membrane recovery variable
+
+Parameters are:
+- \c a - time scale of U
+- \c b - sensitivity of U
+- \c c - after-spike reset value of V
+- \c d - after-spike reset value of U
+
+\subsection sect25 IZHIKEVICH_V (Izhikevich neurons with variable parameters)
+This is the same model as \ref sect24 IZHIKEVICH but parameters defined as variables 
+in order to provide a parameter range instead of fixed values for every neuron in the
+population. 
 
 \section sect3 Predefined synapse models
 \subsection subsect31 Models
+Currently 3 predefined synapse models are available: 
+- 0: \ref sect31 "NSYNAPSE" 
+- 1: \ref sect32 "NGRADSYNAPSE"
+- 2: \ref sect33 "LEARN1SYNAPSE"
+
+\subsubsection sect31 NSYNAPSE (No Learning)
+If this model is selected, no learning rule is applied to the synapse. 
+The model has 3 parameters:
+- \c tau_S* - decay time constant for S [ms] 
+- \c Epre: Presynaptic threshold potential
+- \c Erev* - Reversal potential
+
+(* DEPRECATED: Decay time constant and reversal potential in synapse parameters are not used anymore and they will be removed in the next release. They should be defined in the postsynaptic mechanisms.)
+
+\subsubsection sect32 NGRADSYNAPSE (Graded Synapse)
+In a graded synapse, the conductance is updated gradually with the rule: 
+
+\f[ gSyn= g * tanh((E - E_{pre}) / V_{slope} \f]
+
+The parameters are:
+- \c Erev*: Reversal potential
+- \c Epre: Presynaptic threshold potential 
+- \c tau_S*: Decay time constant for S [ms]
+- \c Vslope: Activation slope of graded release 
+
+(* DEPRECATED: Decay time constant and reversal potential in synapse parameters are not used anymore and they will be removed in the next release. They should be defined in the postsynaptic mechanisms.)
+
+\subsubsection sect33 LEARN1SYNAPSE (Learning Synapse with a Primitive Role)
+This is a simple STDP rule including a time delay for the finite transmission speed of the synapse, defined as a piecewise function.
+
+<!--
+If no spikes at t: \f$ g_{raw}(t+dt) = g_0 + (g_{raw}(t)-g_0)*\exp(-dt/\tau_{decay}) \f$
+If pre or postsynaptic spike at t: \f$ g_{raw}(t+dt) = g_0 + (g_{raw}(t)-g_0)*\exp(-dt/\tau_{decay})
++A(t_{post}-t_{pre}-\tau_{decay}) \f$ 
+-->
+This model has 13 parameters:
+- \c Erev: Reversal potential
+- \c Epre: Presynaptic threshold potential
+- \c tau_S: Decay time constant for S [ms]
+- \c TLRN: Time scale of learning changes
+- \c TCHNG: Width of learning window
+- \c TDECAY: Time scale of synaptic strength decay
+- \c TPUNISH10: Time window of suppression in response to 1/0
+- \c TPUNISH01: Time window of suppression in response to 0/1
+- \c GMAX: Maximal conductance achievable
+- \c GMID: Midpoint of sigmoid g filter curve
+- \c GSLOPE: Slope of sigmoid g filter curve
+- \c TAUSHiFT: Shift of learning curve
+- \c GSYN0: Value of syn conductance g decays to
+
+For more details, see \cite nowotny2005self.
 \subsection subsect32 Connectivity types
+If INDIVIDUALG is used with ALLTOALL connectivity, the conductance values are stored 
+in an array called "floattype * gp<synapseName>", defined and initialised in runner.cc 
+in the generated code.
+
+If INDIVIDUALID is used with ALLTOALL connectivity, the connectivity matrix is stored 
+in an array called "unsigned int * gp<synapseName>"
+
+If connectivity is of SPARSE type, connectivity and conductance values are stored in a 
+struct in order to occupy minimum memory needed. The struct Conductance contains 
+3 array members and one integer member:
+	1: unsigned int connN: number of connections in the population. This value is needed for allocaton of arrays. 
+	2: floattype * gp: Values of conductances. 
+	The indices that correspond to these values are defined in a pre-to-post basis by the following arrays:
+	4: unsigned int gInd, of size connN: Indices of corresponding postsynaptic neurons concatenated for each presynaptic neuron.
+	3: unsigned int *gIndInG, of size model.neuronN[model.synapseSource[synInd]]+1: This array defines from which index in the gp array the indices in gInd would correspond to the presynaptic neuron that corresponds to the index of the gIndInG array, with the number of connections being the size of gInd. More specifically, gIndIng[n+1]-gIndIng[n] would give the number of postsynaptic connections for neuron n, and the conductance values are stored in gp[gIndIng[n]] to gp[gIndIng[n]+1]. if there are no connections for a presynaptic neuron, then gp[gIndIng[n]]=gp[gIndIng[n]+1].
+	
+For example, consider a network of two presynaptic neurons connected to three postsynaptic neurons: 0th presynaptic neuron connected to 1st and 2nd postsynaptic neurons, the 1st presynaptic neuron connected to 0th and 2nd neurons. The struct Conductance should have these members, with indexing from 0:
+	ConnN = 4
+	gp= gPre0-Post1 gpre0-post2 gpre1-post0 gpre1-post2
+	gInd= 1 2 0 1
+	gIndIng= 0 2 4  
+
+ See tools/gen_syns_sparse_IzhModel used in Izh_sparse project to see a working example.	
+
 \subsection subsect33 Conductance definition methods
 The available options work as follows:
 - INDIVIDUALG: When this option is chosen in the \c
@@ -153,8 +278,13 @@ function.
 same maximal conductance for all existing synaptic connections but
 which synapses exist will be defined at runtime from the user side
 code.
+\section sect_postsyn Predefined post-synaptic integration types
 
-\section sect4 Defining your own neuron model 
+The shape of the postsynaptic current can be defined by either using a predefined method or by a user-defined model. 
+
+- EXPDECAY: Exponential decay. Decay time constant and reversal potential parameters are needed for this postsynaptic mechanism.
+
+\section sect_own Defining your own neuron model 
 
 In order to define a new neuron model for use in a GeNN application,
 it is necessary to populate an object of class \c neuronModel and
@@ -220,7 +350,7 @@ the neuron model in questions. For an
 example of what needs to be done, refer to the member function \c
 initDerivedNeuronPara() of class \c NNmodel which does this for Rulkov map neurons.
 
-\section sect5 Explicit inputs to neurons 
+\section sect_explinput Explicit inputs to neurons 
 User can decide whether a neuron group receives external input current or not 
 in addition to the synaptic input that it receives from the network.
 External input to a neuron group is activated by calling 
@@ -249,8 +379,8 @@ the device memory.
  
 GeNN was created by Thomas Nowotny. 
 
-Addition of Izhikevich model and debugging modes by Esin Yavuz
+Addition of Izhikevich model, debugging modes and sparse connectivity by Esin Yavuz
 
-Block size optimisations by James Turner
+Block size optimisations and delayed synapses by James Turner
 */
 //----------------------------------------------------------------------------

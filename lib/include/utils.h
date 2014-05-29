@@ -38,8 +38,6 @@
 
 #include "modelSpec.h"
 #include "toString.h"
-
-
 //--------------------------------------------------------------------------
 /* \brief Macro for wrapping cuda runtime function calls and catching any errors that may be thrown.
  */
@@ -55,7 +53,6 @@
     exit(EXIT_FAILURE);						           \
   }									   \
 }
-
 
 //--------------------------------------------------------------------------
 /* \brief Function to write the comment header denoting file authorship and contact details into the generated code.
@@ -87,7 +84,6 @@ void substitute(string &s, const string trg, const string rep)
     found= s.find(trg);
   }
 }
-
 
 //--------------------------------------------------------------------------
 //! \brief Tool for determining the size of variable types on the current architecture
@@ -171,7 +167,11 @@ void prepareStandardModels()
         $(V)= -($(Vspike));\n\
       }\n\
     }\n");
+
+  n.thresholdConditionCode = tS("$(V) > $(ip2) - 0.01");
+
   n.dps = new rulkovdp();
+
   nModels.push_back(n);
 
   // Poisson neurons
@@ -202,6 +202,9 @@ void prepareStandardModels()
         }\n\
       }\n\
     }\n");
+
+  n.thresholdConditionCode = tS("$(V) > $(Vspike) - 0.01");
+
   nModels.push_back(n);
 
 // Traub and Miles HH neurons
@@ -242,6 +245,9 @@ void prepareStandardModels()
       $(n)+= (_a*(1.0-$(n))-_b*$(n))*mdt;\n\
       $(V)+= Imem/$(C)*mdt;\n\
     }\n");
+
+  n.thresholdConditionCode = tS("$(V) > 20");//TODO check this, to get better value
+
   nModels.push_back(n);
   
  //Izhikevich neurons
@@ -266,18 +272,14 @@ void prepareStandardModels()
     $(V)+=0.5f*(0.04f*$(V)*$(V)+5*$(V)+140-$(U)+$(Isyn))*DT; //at two times for numerical stability\n\
     $(V)+=0.5f*(0.04f*$(V)*$(V)+5*$(V)+140-$(U)+$(Isyn))*DT;\n\
     $(U)+=$(a)*($(b)*$(V)-$(U))*DT;\n\
-    if ($(V) > 30){   //keep this only for visualisation -- not really necessaary otherwise \n\
-      $(V)=30;\n\
-    }\n");
+   // if ($(V) > 30){   //keep this only for visualisation -- not really necessaary otherwise \n\
+    //  $(V)=30; \n\
+   //}\n\
+   ");
     
- /* n.thresholdCode=tS("//threshold code is here\n\
-      bool _cond=FALSE;\n \ 
-      if ($(V) >= 30 ){\n\
-      bool _cond=TRUE;\n\
-      $(V)=30;
-    } \n ");
-    
-  n.resetCode=tS("//reset code is here\n ");
+  n.thresholdConditionCode = tS("$(V) >= 29.99");
+
+ /*  n.resetCode=tS("//reset code is here\n ");
       $(V)=$(c);\n\
 		  $(U)+=$(d);\n\
   */
@@ -312,6 +314,7 @@ void prepareStandardModels()
     //  $(V)=30; \n\
     //}\n\
     ");
+  n.thresholdConditionCode = tS("$(V) > 29.99");
   nModels.push_back(n);
   
   #include "extra_neurons.h"
