@@ -47,10 +47,11 @@ endif
 # in a project's main Makefile to specify compiler flags on a per-project basis.
 ifeq ($(DARWIN),DARWIN)
 	CCFLAGS          += # -arch i386# put your global compiler flags here
+	NVCCFLAGS        += -lstdc++ -lc++ 
 else
 	CCFLAGS          += -O3 -ffast-math # put your global compiler flags here
 endif
-NVCCFLAGS        += --compiler-options "-O3 -ffast-math" -lstdc++ -lc++ # put your global nvcc flags here
+NVCCFLAGS        += --compiler-options "-O3 -ffast-math" # put your global nvcc flags here
 
 # Get the OBJECTS rule targets from the files listed by SOURCES (use all source
 # files in a project's root directory by default). Define your own SOURCES

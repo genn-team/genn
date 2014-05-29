@@ -206,6 +206,7 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 			}
 			if (model.inSyn[i].size() > 0) {
 				for (int j = 0; j < model.inSyn[i].size(); j++) {
+					os << "// Synapse " << j << " of Population " << i << ENDL;
 					for (int k = 0, l = postSynModels[model.postSynapseType[model.inSyn[i][j]]].varNames.size(); k < l; k++) {
 						os << postSynModels[model.postSynapseType[model.inSyn[i][j]]].varTypes[k] << " lps" << postSynModels[model.postSynapseType[model.inSyn[i][j]]].varNames[k] << j;
 						os << " = d_" <<  postSynModels[model.postSynapseType[model.inSyn[i][j]]].varNames[k] << model.synapseName[model.inSyn[i][j]] << "[";
@@ -625,8 +626,17 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 
 			os << CB(140); // end if (id < npost)
 			if (model.neuronType[src] != POISSONNEURON) {
-			  	os << CB(135) << ENDL; // end if (shSpkEvntV[j]>postthreshold)
+			  	os << CB(130) << ENDL; // end if (shSpkEvntV[j]>postthreshold)
 			}
+			else {
+				if (model.synapseGType[i] == INDIVIDUALID) {
+					os << CB(135) << ENDL; // end if (B(d_gp" << model.synapseName[i] << "[gid >> " << logUIntSz << "], gid 
+				}
+			}
+			
+			
+			
+			
 			os << "__syncthreads();" << ENDL;
 		}
 		else {
@@ -680,8 +690,13 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 			os << "gFunc" << model.synapseName[i] << "(lg);" << ENDL;
 		}
 		if (model.synapseConnType[i] != SPARSE) {
-			if ((model.neuronType[src] != POISSONNEURON) || (model.synapseGType[i] == INDIVIDUALID)) {
-				os << CB(130);////1 end if (shSpkEvntV[j]>postthreshold) !!!!!! is INDIVIDUALID part correct?
+			if (model.neuronType[src] != POISSONNEURON) {
+			  	os << CB(130) << ENDL; // end if (shSpkEvntV[j]>postthreshold)
+			}
+			else {
+				if (model.synapseGType[i] == INDIVIDUALID) {
+					os << CB(135) << ENDL; // end if (B(d_gp" << model.synapseName[i] << "[gid >> " << logUIntSz << "], gid 
+				}
 			}
 		}
 
