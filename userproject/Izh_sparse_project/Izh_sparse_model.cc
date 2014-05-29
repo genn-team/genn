@@ -21,7 +21,7 @@
 randomGauss RG;
 randomGen R;
 
-classol::classol()
+classIzh::classIzh()
 {
   modelDefinition(model);
   input1=new float[model.neuronN[0]];
@@ -34,7 +34,7 @@ classol::classol()
 
 }
 
-void classol::randomizeVar(float * Var, float strength, unsigned int neuronGrp)
+void classIzh::randomizeVar(float * Var, float strength, unsigned int neuronGrp)
 {
 	//kernel if gpu?
   
@@ -43,7 +43,7 @@ void classol::randomizeVar(float * Var, float strength, unsigned int neuronGrp)
   	}
 }
 
-void classol::randomizeVarSq(float * Var, float strength, unsigned int neuronGrp)
+void classIzh::randomizeVarSq(float * Var, float strength, unsigned int neuronGrp)
 {
 	//kernel if gpu?
   //randomGen R;
@@ -55,7 +55,7 @@ void classol::randomizeVarSq(float * Var, float strength, unsigned int neuronGrp
 }
 
 
-void classol::initializeAllVars(unsigned int which)
+void classIzh::initializeAllVars(unsigned int which)
 {
 	randomizeVar(aPInh,0.08,1);	
 	randomizeVar(bPInh,-0.05,1);
@@ -81,7 +81,7 @@ void classol::initializeAllVars(unsigned int which)
   	}
 }
 	
-void classol::init(unsigned int which)
+void classIzh::init(unsigned int which)
 {
   if (which == CPU) {
   }
@@ -92,7 +92,7 @@ void classol::init(unsigned int which)
 }
 
 
-void classol::allocate_device_mem_input()
+void classIzh::allocate_device_mem_input()
 {
   unsigned int size;
 
@@ -102,12 +102,12 @@ void classol::allocate_device_mem_input()
   size= model.neuronN[1]*sizeof(float);
   CHECK_CUDA_ERRORS(cudaMalloc((void**) &d_input2, size));
 }
-void classol::copy_device_mem_input()
+void classIzh::copy_device_mem_input()
 {
-  cudaMemcpy(d_input1,input1, model.neuronN[0]*sizeof(float), cudaMemcpyHostToDevice);
-  cudaMemcpy(d_input2,input2, model.neuronN[1]*sizeof(float), cudaMemcpyHostToDevice);
+  CHECK_CUDA_ERRORS(cudaMemcpy(d_input1,input1, model.neuronN[0]*sizeof(float), cudaMemcpyHostToDevice));
+  CHECK_CUDA_ERRORS(cudaMemcpy(d_input2,input2, model.neuronN[1]*sizeof(float), cudaMemcpyHostToDevice));
 }
-void classol::free_device_mem()
+void classIzh::free_device_mem()
 {
   // clean up memory                          
   printf("input is const, no need to copy");                                     
@@ -117,14 +117,15 @@ void classol::free_device_mem()
 
 
 
-classol::~classol()
+classIzh::~classIzh()
 {
   free(input1);
   free(input2);
+	freeMem();
 }
 
-
-void classol::write_input_to_file(FILE *f)
+// Functions related to explicit input
+void classIzh::write_input_to_file(FILE *f)
 {
   printf("input is const, no need to write");
   unsigned int outno;
@@ -139,30 +140,33 @@ void classol::write_input_to_file(FILE *f)
   fprintf(f,"\n");
 }
 
-void classol::read_input_values(FILE *f)
+void classIzh::read_input_values(FILE *f)
 {
   fread(input1, model.neuronN[0]*sizeof(float),1,f);
 }
 
 
-void classol::create_input_values(float t) //define your explicit input rule here
+void classIzh::create_input_values() //define your explicit input rule here
 {
-  for (int x= 0; x < model.neuronN[0]; x++) {
-    input1[x]= 5*RG.n();
-  }
+
+  		for (int x= 0; x < model.neuronN[0]; x++) {
+   		input1[x]= 5.0*RG.n();
+ 		 }
   
-  for (int x= 0; x < model.neuronN[1]; x++) {
-    input2[x]= 2*RG.n();
-  }
+ 		for (int x= 0; x < model.neuronN[1]; x++) {
+   		input2[x]= 2.0*RG.n();
+  		}
+
+
 }
 
-void classol::read_sparsesyns_par(int synInd, Conductance C, FILE *f_ind,FILE *f_indInG,FILE *f_g //!< File handle for a file containing sparse conductivity values
+void classIzh::read_sparsesyns_par(int synInd, Conductance C, FILE *f_ind,FILE *f_indInG,FILE *f_g //!< File handle for a file containing sparse conductivity values
 			    )
 {
   //allocateSparseArray(synInd,C.connN);
 
-  fread(C.gp, C.connN*sizeof(model.ftype),1,f_g);
-  fprintf(stderr,"%d active synapses. \n",C.connN);
+  fread(C.gp, C.connN*sizeof(float),1,f_g);
+  fprintf(stderr,"%d active synapses in group %d. \n",C.connN,synInd);
   fread(C.gIndInG, (model.neuronN[model.synapseSource[synInd]]+1)*sizeof(unsigned int),1,f_indInG);
   fread(C.gInd, C.connN*sizeof(int),1,f_ind);
 
@@ -170,26 +174,27 @@ void classol::read_sparsesyns_par(int synInd, Conductance C, FILE *f_ind,FILE *f
   // general:
   fprintf(stderr,"Read conductance ... \n");
   fprintf(stderr, "Size is %d for synapse group %d. Values start with: \n",C.connN, synInd);
-  for(int i= 0; i < 100; i++) {
+  for(int i= 0; i < 20; i++) {
     fprintf(stderr, "%f ", C.gp[i]);
   }
   fprintf(stderr,"\n\n");
   
   
   fprintf(stderr, "%d indices read. Index values start with: \n",C.connN);
-  for(int i= 0; i < 100; i++) {
+  for(int i= 0; i < 20; i++) {
     fprintf(stderr, "%d ", C.gInd[i]);
   }  
   fprintf(stderr,"\n\n");
   
   
   fprintf(stderr, "%d g indices read. Index in g array values start with: \n", model.neuronN[model.synapseSource[synInd]]+1);
-  for(int i= 0; i < 100; i++) {
+  for(int i= 0; i < 20; i++) {
     fprintf(stderr, "%d ", C.gIndInG[i]);
   }  
+	fprintf(stderr,"\n\n");
 }
 
-void classol::gen_alltoall_syns( float * g, unsigned int nPre, unsigned int nPost, float gscale//!< Generate random conductivity values for an all to all network
+void classIzh::gen_alltoall_syns( float * g, unsigned int nPre, unsigned int nPost, float gscale//!< Generate random conductivity values for an all to all network
 			    )
 {
   //randomGen R;
@@ -201,13 +206,15 @@ void classol::gen_alltoall_syns( float * g, unsigned int nPre, unsigned int nPos
   fprintf(stderr,"\n\n");
 }
 
-void classol::setInput(unsigned int which)
+void classIzh::setInput(unsigned int which)
 {
-	create_input_values(t);
-	if (which == GPU) copy_device_mem_input();
+	create_input_values();
+	//if (which == GPU) copy_device_mem_input();
 }
 
-void classol::run(float runtime, unsigned int which)
+
+
+void classIzh::run(float runtime, unsigned int which)
 {
   int riT= (int) (runtime/DT);
 
@@ -220,9 +227,10 @@ void classol::run(float runtime, unsigned int which)
     t+= DT;
     iT++;
   }
+
 }
 
-void classol::sum_spikes()
+void classIzh::sum_spikes()
 {
   sumPExc+= glbscntPExc;
   sumPInh+= glbscntPInh;
@@ -231,7 +239,7 @@ void classol::sum_spikes()
 //--------------------------------------------------------------------------
 // output functions
 
-void classol::output_state(FILE *f, unsigned int which)
+void classIzh::output_state(FILE *f, unsigned int which)
 {
   if (which == GPU) 
     copyStateFromDevice();
@@ -249,7 +257,7 @@ void classol::output_state(FILE *f, unsigned int which)
   fprintf(f,"\n");
 }
 
-void classol::output_params(FILE *f, FILE *f2)
+void classIzh::output_params(FILE *f, FILE *f2)
 {
 	
 	for (int i= 0; i < model.neuronN[0]-1; i++) {
@@ -269,24 +277,6 @@ void classol::output_params(FILE *f, FILE *f2)
 		fprintf(f,"\n");
 		
 	}
-	
-	for (int i= 0; i < gExc_Exc.connN; i++) {
-	  fprintf(f2,"%f ", gExc_Exc.gp[i]);
-	  fprintf(f2,"\n");
-	}
-	for (int i= 0; i < gExc_Inh.connN; i++) {
-	  fprintf(f2,"%f ", gExc_Inh.gp[i]);
-	  fprintf(f2,"\n");
-	}
-	for (int i= 0; i < gInh_Exc.connN; i++) {
-	  fprintf(f2,"%f ", gInh_Exc.gp[i]);
-	  fprintf(f2,"\n");
-	}
-	for (int i= 0; i < gInh_Inh.connN; i++) {
-	  fprintf(f2,"%f ", gInh_Inh.gp[i]);
- 		fprintf(f2,"\n");
-	}
-	fprintf(stderr, "4...\n");
 }
 //--------------------------------------------------------------------------
 /*! \brief Method for copying all spikes of the last time step from the GPU
@@ -295,7 +285,7 @@ void classol::output_params(FILE *f, FILE *f2)
 */
 //--------------------------------------------------------------------------
 
-void classol::getSpikesFromGPU()
+void classIzh::getSpikesFromGPU()
 {
   copySpikesFromDevice();
 }
@@ -307,13 +297,13 @@ This method is a simple wrapper for the convenience function copySpikeNFromDevic
 */
 //--------------------------------------------------------------------------
 
-void classol::getSpikeNumbersFromGPU() 
+void classIzh::getSpikeNumbersFromGPU() 
 {
   copySpikeNFromDevice();
 }
 
 
-void classol::output_spikes(FILE *f, unsigned int which)
+void classIzh::output_spikes(FILE *f, unsigned int which)
 {
 	if (which == GPU) {
 		getSpikesFromGPU();
