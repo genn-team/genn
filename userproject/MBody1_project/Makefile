@@ -11,7 +11,6 @@
 ##  
 ##--------------------------------------------------------------------------
 
-ROOTDIR		:= $(GeNNPATH)/userproject/MBody1_project
 EXECUTABLE	:= classol_sim
 SOURCES		:= classol_sim.cu
 
