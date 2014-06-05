@@ -37,7 +37,7 @@ In order to get a quick start and run one of the the provided example models, go
 
 type "make".
 
-At the moment, there are 4 example projects provided with GeNN.
+At the moment, there are 5 example projects provided with GeNN.
 
 1: Locust olfactory system example (Nowotny et al. 2005):
 For a first complete test, the system is best used with a full driver program such as
@@ -127,8 +127,19 @@ tools/generate_run_1comp generate_izhikevich_network_bm [CPU/GPU] [nNeurons] [nC
 
 This example creates a pulse-coupled network with 80% excitatory 20% inhibitory connections, each connecting to nConn neurons with sparse connectivity.
 
-To use an example, navigate to the "userproject/OneComp_project" directory and type
-"../../tools/generate_izhikevich_network_run_bm 1 10000 1000 1 Outdir Izh_sim_sparse Izh_sparse 0 1"
+To use an example, navigate to the "userproject/Izh_sparse_project" directory and type
+"../../tools/generate_izhikevich_network_run 1 10000 1000 1 Outdir Izh_sim_sparse Izh_sparse 0 1"
+
+5:Izhikevich network with delayed synapses
+
+This example project demonstrates the delayed synapse feature of GeNN. It creates
+a network of three Izhikevich neuron groups, connected all-to-all with fast, medium
+and slow synapse groups. Neurons in the output group only spike if they are
+simultaneously innervated by the input neurons, via slow synapses, and the
+interneurons, via faster synapses. 
+
+To run this example project, cd to "$GeNNPATH/userproject/SynDelay_project" and type
+"buildmodel SynDelay && make clean && make && ./bin/release/syn_delay 1 output"
 
 DEBUGGING
 The last argument to generate_run or similar files enables the debugging flags while compiling 

@@ -173,7 +173,7 @@ float postSynV[0]={
 #include "../../userproject/include/sizes.h"
 
 //--------------------------------------------------------------------------
-/*! \brief This function defines the MBody1 model
+/*! \brief This function defines the MBody1 model, and it is a good example of how networks should be defined.
  */
 //--------------------------------------------------------------------------
 

@@ -58,13 +58,13 @@ To use it, navigate to the "userproject/OneComp_project" directory and type
 
 Can be used as: 
 \code{.cc}
-tools/generate_run_1comp generate_izhikevich_network_bm [CPU/GPU] [#n] [#Conn] [gscale] [outdir] [executable name] [model name] [debug OFF/ON] [use previous connectivity OFF/ON]
+tools/generate_run_1comp generate_izhikevich_network_run [CPU/GPU] [#n] [#Conn] [gscale] [outdir] [executable name] [model name] [debug OFF/ON] [use previous connectivity OFF/ON]
 \endcode
 This example creates a pulse-coupled network \cite izhikevich2003simple with 80% excitatory 20% inhibitory neurons, each connecting to #Conn neurons with sparse connectivity.
 
 To use an example, navigate to the "userproject/Izh_Sparse_project" directory and type
 \code{.cc}
-../../tools/generate_izhikevich_network_run_bm 1 10000 1000 1 Outdir Izh_sim_sparse Izh_sparse 0 1
+../../tools/generate_izhikevich_network_run 1 10000 1000 1 Outdir Izh_sim_sparse Izh_sparse 0 0
 \endcode
 
 \section ex_izhdelay Izhikevich network with delayed synapses
