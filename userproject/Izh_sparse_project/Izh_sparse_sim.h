@@ -30,11 +30,10 @@ unsigned int iT= 0;
 
 //----------------------------------------------------------------------
 // other stuff:
-#define T_REPORT_TME 10000.0
-#define TOTAL_TME 50000.0
+#define T_REPORT_TME 1000.0
+#define TOTAL_TME 5000.0
 
 CStopWatch timer;
 
 #include "Izh_sparse_model.h"
 #include "Izh_sparse_model.cc"
-

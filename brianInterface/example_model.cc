@@ -1,3 +1,8 @@
+//--------------------------------------------------------------------------
+/*! \sa{modelDefinition(NNmodel &model)}
+ */
+//--------------------------------------------------------------------------
+
 void modelDefinition(NNmodel &model) 
 {
   neruonModel n;
@@ -10,7 +15,7 @@ void modelDefinition(NNmodel &model)
   n.varNames.push_back(tS("m"));
   n.varTypes.push_back(tS("float"));
   n.varNames.push_back(tS("h"));
-  n.varTypes.push_back(tS("float"));
+  n.varTypesz.push_back(tS("float"));
   n.varNames.push_back(tS("n"));
   n.varTypes.push_back(tS("float"));
   n.pNames.clear();

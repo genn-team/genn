@@ -217,15 +217,20 @@ void classIzh::setInput(unsigned int which)
 void classIzh::run(float runtime, unsigned int which)
 {
   int riT= (int) (runtime/DT);
-
-  for (int i= 0; i < riT; i++) {
-    if (which == GPU){
-       stepTimeGPU(d_input1,d_input2, t);
+  if (which == GPU){
+    for (int i= 0; i < riT; i++) {
+      stepTimeGPU(d_input1,d_input2, t);
+      t+= DT;
+      iT++;
     }
-    if (which == CPU)
-       stepTimeCPU(input1, input2,t);
-    t+= DT;
-    iT++;
+  }
+  
+  if (which == CPU){
+    for (int i= 0; i < riT; i++) {
+      stepTimeCPU(input1, input2,t);
+      t+= DT;
+      iT++;
+		}
   }
 
 }

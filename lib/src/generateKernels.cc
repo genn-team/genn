@@ -367,7 +367,7 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 		}
 		os << CB(20);
 
-		os << "__syncthreads();" << ENDL;
+		os << "__syncthreads();" << ENDL; 
 
 		os << "if (threadIdx.x == 0)" << OB(50);
 		os << "posSpkEvnt = atomicAdd((unsigned int *) &d_glbSpkEvntCnt" << model.neuronName[i];
@@ -486,7 +486,7 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 	os << "volatile __shared__ " << model.ftype << " shLg[" << neuronBlkSz << "];" << ENDL;
 	os << "unsigned int lscnt, numSpikeSubsets, lmax, j, p, r, ipost, npost;" << ENDL;
 	for (int i = 0; i < model.synapseGrpN; i++) {
-		if (model.synapseConnType[i] != SPARSE){
+		if ((model.synapseConnType[i] != SPARSE) || (isGrpVarNeeded[model.synapseTarget[i]] == 0)){
 			os << model.ftype << " linSyn, lg;" << ENDL;
 			break;
 		}
@@ -524,13 +524,12 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 			os << (int) (model.neuronDelaySlots[src] - model.synapseDelay[i] + 1);
 			os << ") % " << model.neuronDelaySlots[src] << ";" << ENDL;
 		}
-		if (model.synapseConnType[i] != SPARSE) {
+		if ((model.synapseConnType[i] != SPARSE) || (isGrpVarNeeded[model.synapseTarget[i]] == 0)){
 			os << "// only do this for existing neurons" << ENDL;
 			os << "if (" << localID << " < " << nN <<")" << OB(80);
 			os << "linSyn = d_inSyn" << model.neuronName[trg] << inSynNo << "[" << localID << "];" << ENDL;
 
 			os << CB(80);
-			os << "__threadfence();" << ENDL;
 		}
 		os << "lscnt = d_glbSpkEvntCnt" << model.neuronName[src];
 		if (model.neuronDelaySlots[src] != 1) {
@@ -555,12 +554,12 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 			os << "shSpkEvnt[threadIdx.x]];" << ENDL;
 		}
 		os << CB(100);
-		if ((model.synapseConnType[i] == SPARSE) && (model.neuronN[trg] <= neuronBlkSz)) {
+		if ((model.synapseConnType[i] == SPARSE) && (isGrpVarNeeded[model.synapseTarget[i]] == 0)) {
 			os << "if (threadIdx.x < " << neuronBlkSz << ") shLg[threadIdx.x] = 0;" << ENDL;
 		}
 		os << "__syncthreads();" << ENDL;
 		os << "// only work on existing neurons" << ENDL;
-		if (model.synapseConnType[i] == SPARSE) {
+		if ((model.synapseConnType[i] == SPARSE) && (isGrpVarNeeded[model.synapseTarget[i]] == 1)) {
 			if(model.maxConn.size()==0) {
 				fprintf(stderr,"Model Generation error: for every SPARSE synapse group used you must also supply (in your model) a max possible number of connections via the model.setMaxConn() function.");
 				exit(1);
@@ -633,9 +632,7 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 					os << CB(135) << ENDL; // end if (B(d_gp" << model.synapseName[i] << "[gid >> " << logUIntSz << "], gid 
 				}
 			}
-			
-			
-			
+
 			
 			os << "__syncthreads();" << ENDL;
 		}
@@ -647,11 +644,12 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 		}
 		os << ENDL;
 
+
 		if ((model.synapseGType[i] == GLOBALG) || (model.synapseGType[i] == INDIVIDUALID)) {
 			theLG = toString(model.g0[i]);
 		}
 
-		if (model.synapseConnType[i] != SPARSE) {
+		if ((model.synapseConnType[i] != SPARSE) || (isGrpVarNeeded[model.synapseTarget[i]] == 0)) {
 			if ((model.synapseType[i] == NSYNAPSE) || (model.synapseType[i] == LEARN1SYNAPSE)) {
 				os << "linSyn = linSyn + " << theLG << "; " << ENDL;
 			}
@@ -666,7 +664,11 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 				os << ") / " << Vslope << ");" << ENDL;
 			}
 		}
-		// if needed, do some learning (this is for pre-synaptic spikes)
+    if ((model.synapseConnType[i] == SPARSE) && (isGrpVarNeeded[model.synapseTarget[i]] == 0)) {
+			os << theLG << " = 0;" << ENDL; 
+			os << "__syncthreads();" << ENDL;
+		}
+    // if needed, do some learning (this is for pre-synaptic spikes)
 		if (model.synapseType[i] == LEARN1SYNAPSE) {
 			// simply assume INDIVIDUALG for now
 			os << "lg = d_grawp" << model.synapseName[i] << "[shSpkEvnt[j] * " << model.neuronN[trg] << " + " << localID << "];" << ENDL;
@@ -707,7 +709,7 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 
 
 
-		if (model.synapseConnType[i] != SPARSE) {
+		if ((model.synapseConnType[i] != SPARSE)|| (isGrpVarNeeded[model.synapseTarget[i]] == 0)) {
 
 
 			os << "// only do this for existing neurons" << ENDL;
