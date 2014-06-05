@@ -32,6 +32,7 @@
 #define TRAUBMILES 2 //!< Macro attaching the name "TRAUBMILES" to neuron type 2
 #define IZHIKEVICH 3 //!< Macro attaching the name "IZHIKEVICH" to neuron type 3
 #define IZHIKEVICH_V 4 //!< Macro attaching the name "IZHIKEVICH_V" to neuron type 4
+#define MAXNRN 5 // maximum number of neuron types: SpineML needs to know this
 
 #define SYNTYPENO 4
 
@@ -90,7 +91,7 @@ unsigned int SYNPNO[SYNTYPENO] = {
 #define EXPDECAY 0 //default - how it is in the original version
 #define IZHIKEVICH_PS 1 //empty postsynaptic rule for the Izhikevich model.
 // currently values >1 will be defined by code generation.
-
+#define MAXPOSTSYN 2 // maximum number of postsynaptic integration: SpineML needs to know this
 
 /*===============================================================
 //! \brief class NNmodel for specifying a neuronal network model.
