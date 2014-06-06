@@ -633,8 +633,9 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 				}
 			}
 
-			
+		if ((model.synapseConnType[i] != SPARSE) || (isGrpVarNeeded[model.synapseTarget[i]] == 0)) {	
 			os << "__syncthreads();" << ENDL;
+		}
 		}
 		else {
 			if (model.synapseGType[i] == INDIVIDUALG){
