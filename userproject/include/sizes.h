@@ -1,6 +1,6 @@
-#define _NExc 800
-#define _NInh 200
-#define _NMaxConnP0 90
-#define _NMaxConnP1 32
-#define _NMaxConnP2 91
-#define _NMaxConnP3 28
+#define _NExc 80000
+#define _NInh 20000
+#define _NMaxConnP0 94
+#define _NMaxConnP1 38
+#define _NMaxConnP2 94
+#define _NMaxConnP3 38

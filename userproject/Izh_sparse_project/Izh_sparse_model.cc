@@ -311,8 +311,8 @@ void classIzh::getSpikeNumbersFromGPU()
 void classIzh::output_spikes(FILE *f, unsigned int which)
 {
 	if (which == GPU) {
-		getSpikesFromGPU();
 	 	getSpikeNumbersFromGPU();
+		getSpikesFromGPU();
 	}
  
   for (int i= 0; i < glbscntPExc; i++) {
