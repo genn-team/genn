@@ -92,16 +92,16 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 		if (model.neuronNeedSt[i]) {
 			os << "__device__ volatile " << model.ftype << " d_sT" << model.neuronName[i] << "[" << model.neuronN[i] << "];" << ENDL;
 		}
+    os << "__device__ short d_spikeFlag" << model.neuronName[i] << "[" << model.neuronN[i] << "];" << ENDL;
 	}
 
-	//! Binary spike flag for sparse synapse sources. This is necessary for parallelisation of the synapse kernel for postsynaptic spike queue.
+
 	for (int i= 0; i < model.synapseGrpN; i++) {
-		if ((model.synapseConnType[i] == SPARSE)&& (model.neuronN[model.synapseTarget[i]] > neuronBlkSz) && (isGrpVarNeeded[model.synapseTarget[i]] == 0)) {
-			os << "__device__ short d_spikeFlag" << model.neuronName[model.synapseTarget[i]] << "[" << model.neuronN[model.synapseTarget[i]] << "];" << ENDL;
-			isGrpVarNeeded[model.synapseTarget[i]] = 1;
+		if ((model.synapseConnType[i] == SPARSE)&& (model.neuronN[model.synapseTarget[i]] > synapseBlkSz)) {
+			isGrpVarNeeded[model.synapseTarget[i]] = 1; //! Binary flag for the sparse synapses to use atomic operations when the number of connections is bigger than the block size, and shared variables otherwise
 		}
 	}
-
+  
 	// kernel header
 	os << "__global__ void calcNeurons(" << ENDL;
 
@@ -201,9 +201,7 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 				os << model.ftype << " linSyn" << j << " = d_inSyn" << model.neuronName[i] << j << "[" << localID << "];" << ENDL;
 			}
 			os << model.ftype << " Isyn = 0;" << ENDL;
-			if (isGrpVarNeeded[i]==1) {
-				os << "d_spikeFlag" << model.neuronName[i] << "[" << localID << "]=0;" << ENDL;
-			}
+			
 			if (model.inSyn[i].size() > 0) {
 				for (int j = 0; j < model.inSyn[i].size(); j++) {
 					os << "// Synapse " << j << " of Population " << i << ENDL;
@@ -291,8 +289,10 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 			}
 			os << "if (" << code << ")" << OB(30);
 			os << "// register a true spike" << ENDL;
+      os << "if (d_spikeFlag" << model.neuronName[i] << "[" << localID << "]==0)" << OB(31);
 			os << "spkIdx = atomicAdd((unsigned int *) &spkCount, 1);" << ENDL;
 			os << "shSpk[spkIdx] = " << localID << ";" << ENDL;
+			os << "d_spikeFlag" << model.neuronName[i] << "[" << localID << "]=1;" << ENDL;
 		}
 
 		//add optional reset code after a true spike, if provided
@@ -311,13 +311,16 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 			os << "// spike reset code" << ENDL;
 			os << code << ENDL;
 		}
+		os << CB(31);
 		os << CB(30);
+		os << "else if (d_spikeFlag" << model.neuronName[i] << "[" << localID << "]==1) d_spikeFlag" << model.neuronName[i] << "[" << localID << "]=0;" << ENDL;
 
 		//test if a spike type event occurred
 		os << "if (lV >= " << model.nSpkEvntThreshold[i] << ")" << OB(40);
 		os << "// register a spike type event" << ENDL;
 		os << "spkEvntIdx = atomicAdd((unsigned int *) &spkEvntCount, 1);" << ENDL;
 		os << "shSpkEvnt[spkEvntIdx] = " << localID << ";" << ENDL;
+
 		os << CB(40);
 
 		//store the defined parts of the neuron state into the global state variables d_V.. etc

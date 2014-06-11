@@ -54,7 +54,9 @@ void genNeuronFunction(NNmodel &model, //!< Model description
   os << " containing the the equivalent of neuron kernel function for the CPU-only version." << endl;
   os << "*/" << endl;
   os << "//-------------------------------------------------------------------------" << endl << endl;
-
+  for (int i = 0; i < model.neuronGrpN; i++) {
+    os << "short spikeFlag" << model.neuronName[i] << "[" << model.neuronN[i] << "];" << endl;
+  }
   // header
   os << "void calcNeuronsCPU(";
   for (int i = 0; i < model.neuronGrpN; i++) {
@@ -208,10 +210,12 @@ void genNeuronFunction(NNmodel &model, //!< Model description
     }
       os << "    if (" << code << ") {" << endl;
     os << "      // register a true spike" << endl;
-    os << "      glbSpk" << model.neuronName[i] << "[";
+    os << "      if (spikeFlag" << model.neuronName[i] << "[n]==0){" << endl;
+    os << "        glbSpk" << model.neuronName[i] << "[";
     os << "glbscnt" << model.neuronName[i] << "++] = n;" << endl;
+    os << "spikeFlag" << model.neuronName[i] << "[n]=1;" << ENDL;
     if (model.neuronNeedSt[i]) {
-      os << "      sT" << model.neuronName[i] << "[n] = t;" << endl;
+      os << "        sT" << model.neuronName[i] << "[n] = t;" << endl;
     }
     if (nModels[nt].resetCode != tS("")) {
       code = nModels[nt].resetCode;
@@ -228,10 +232,12 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 				substitute(code, tS("$(") + nModels[nt].dpNames[k] + tS(")"), 
 		    tS(model.dnp[i][k]));
       }
-      os << "      // spike reset code" << endl;
-      os << "      " << code << endl;
+      os << "        // spike reset code" << endl;
+      os << "        " << code << endl;
     }
+    os << "      }" << endl;
     os << "    }" << endl;
+    os << "    else if (spikeFlag" << model.neuronName[i] << "[n]==1) spikeFlag" << model.neuronName[i] << "[n]=0;" << endl;
 
     os << "    if (lV >= " << model.nSpkEvntThreshold[i] << ") {" << endl;
     os << "      // register a spike type event " << endl;
