@@ -9,10 +9,10 @@
 class SynDelay
 {
 private:
-  bool usingGPU;
+  int usingGPU;
 
 public:
-  SynDelay(bool usingGPU);
+  SynDelay(int usingGPU);
   ~SynDelay();
   void run(float t);
 };

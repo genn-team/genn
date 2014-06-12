@@ -1,6 +1,8 @@
 
 #ifndef __CODE_HELPER_CC
-#define  __CODE_HELPER_CC
+#define __CODE_HELPER_CC
+
+#include <cstdlib>
 #include <iostream>
 #include <cstring>
 #include <string>
@@ -11,7 +13,8 @@
 
 #define OB(X) hlp.openBrace(X) //shortcut nomenclature to open the Xth curly brace { plus a new line
 #define CB(X) hlp.closeBrace(X) //shortcut nomenclature to close the Xth curly brace } plus a new line
-#define ENDL hlp.endl()//shortcut nomenclature to generate a newline followed correct number of indentation characters for the current level
+#define ENDL hlp.endl() //shortcut nomenclature to generate a newline followed correct number of indentation characters for the current level
+
 
 class CodeHelper {
 public:
@@ -28,7 +31,7 @@ public:
 	string openBrace(unsigned int level) {
 		braces.push_back(level);
 		if (verbose) printf("%sopen %u.\n",indentBy(braces.size() - 1).c_str(),level);
-		string result  = " {\n";
+		string result  = "{\n";
 		result.append(indentBy(braces.size() - 1));
 		return  result;
 	}
@@ -47,7 +50,7 @@ public:
 	}
 
 	string endl() {
-		string result =  "\n";
+		string result = "\n";
 		//put out right number of tabs for level depth
 		result.append(indentBy(braces.size() - 1));
 		return result;
@@ -55,7 +58,7 @@ public:
 
 private:
 	string indentBy(unsigned int numIndents) {
-		string result =  ""; ///toString(numIndents);
+		string result = ""; ///toString(numIndents);
 		for (int i = 0; i < numIndents; i++) {
 			result.append("\t");
 		}

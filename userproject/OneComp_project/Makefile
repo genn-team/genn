@@ -11,7 +11,6 @@
 ##  
 ##--------------------------------------------------------------------------
 
-ROOTDIR		:= $(GeNNPATH)/userproject/OneComp_project
 EXECUTABLE	:= OneComp_sim
 SOURCES		:= OneComp_sim.cu
 

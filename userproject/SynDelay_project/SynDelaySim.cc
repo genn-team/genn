@@ -1,38 +1,44 @@
 
-#ifndef SYNDELAYSIM_CU
-#define SYNDELAYSIM_CU
+#ifndef SYNDELAYSIM_CPP
+#define SYNDELAYSIM_CPP
 
 #include <cstdlib>
 #include <iostream>
 #include <fstream>
 
-using namespace std;
-
 #include "utils.h"
 #include "hr_time.cpp"
+#include "SynDelaySim.h"
+#include "SynDelay_CODE_HOST/host.h"
+#include "SynDelay_CODE_CUDA0/cuda0.h"
+#include "SynDelay_CODE_CUDA1/cuda1.h"
 
-#include "SynDelaySim.hpp"
-#include "SynDelay_CODE/runner.cc"
+using namespace std;
 
 
-SynDelay::SynDelay(bool usingGPU)
+SynDelay::SynDelay(int usingGPU)
 {
   this->usingGPU = usingGPU;
-  allocateMem();
-  initialize();
+  allocateMemHost();
+  initializeHost();
   if (usingGPU)
   {
-    copyGToDevice();
-    copyStateToDevice();
+    allocateMemCuda0();
+    copyGToCuda0();
+    copyStateToCuda0();
+    allocateMemCuda1();
+    copyGToCuda1();
+    copyStateToCuda1();
   }
 }
 
 SynDelay::~SynDelay()
 {
-  freeMem();
+  freeMemHost();
   if (usingGPU)
   {
-    freeDeviceMem();
+    freeMemCuda0();
+    freeMemCuda1();
   }
 }
 
@@ -40,12 +46,17 @@ void SynDelay::run(float t)
 {
   if (usingGPU)
   {
-    stepTimeGPU(t);
-    copyStateFromDevice();
+    stepTimeCuda0(t);
+    copyStateFromCuda0();
+    stepTimeCuda1(t);
+    copyStateFromCuda1();
+
+    // temporary solution - use peer-to-peer memory copies soon
+    //copyStateToCuda1();
   }
   else
   {
-    stepTimeCPU(t);
+    stepTimeHost(t);
   }
 }
 
@@ -82,7 +93,7 @@ int main(int argc, char *argv[])
     t += DT;
 
     fileV << "Time: " << t
-	  << "\t\tInput: " << VInput[spkQuePtrInput * 500]
+	  << "\t\tInput: " << VInput[spkEvntQuePtrInput * 500]
 	  << "\t\tInter: " << VInter[0]
 	  << "\t\tOutput: " << VOutput[0]
 	  << endl;
@@ -103,4 +114,4 @@ int main(int argc, char *argv[])
   return EXIT_SUCCESS;
 }
 
-#endif // SYNDELAYSIM_CU
+#endif // SYNDELAYSIM_CPP
