@@ -536,54 +536,53 @@ void NNmodel::calcPaddedThreadSums()
 
   // sparse or non-sparse padded synapse kernel thread sum
   padSumSynapseKrnl.assign(deviceCount, vector<unsigned int>());
-  for (int deviceID = 0; deviceID < deviceCount; deviceID++) padSumSynapseKrnl.push_back(vector<unsigned int>());
+  //for (int deviceID = 0; deviceID < deviceCount; deviceID++) padSumSynapseKrnl.push_back(vector<unsigned int>());
   localSynapseID.resize(synapseGrpN);
-  for (int synGrp = 0; synGrp < synapseGrpN; synGrp++) {
-    if (synapseConnType[synGrp] == SPARSE) {
-      padN = ceil((float) maxConn[synGrp] / (float) synapseBlkSz[synDevID[synGrp]]) * (float) synapseBlkSz[synDevID[synGrp]];
+  for (int group = 0; group < synapseGrpN; group++) {
+    if (synapseConnType[group] == SPARSE) {
+      padN = ceil((float) maxConn[group] / (float) synapseBlkSz[synDevID[group]]) * (float) synapseBlkSz[synDevID[group]];
     }
     else {
-      padN = ceil((float) neuronN[synapseTarget[synGrp]] / (float) synapseBlkSz[synDevID[synGrp]]) * (float) synapseBlkSz[synDevID[synGrp]];
+      padN = ceil((float) neuronN[synapseTarget[group]] / (float) synapseBlkSz[synDevID[group]]) * (float) synapseBlkSz[synDevID[group]];
     }
-    localSynapseID[synGrp] = padSumSynapseKrnl[synDevID[synGrp]].size();
-    if (localSynapseID[synGrp] == 0) {
-      padSumSynapseKrnl[synDevID[synGrp]].push_back(padN);
+    localSynapseID[group] = padSumSynapseKrnl[synDevID[group]].size();
+    if (localSynapseID[group] == 0) {
+      padSumSynapseKrnl[synDevID[group]].push_back(padN);
     }
     else {
-      padSumSynapseKrnl[synDevID[synGrp]].push_back(padN + padSumSynapseKrnl[synDevID[synGrp]].back());
+      padSumSynapseKrnl[synDevID[group]].push_back(padN + padSumSynapseKrnl[synDevID[group]].back());
     }
   }
 
   // padded learning kernel thread sums
   padSumLearnN.assign(deviceCount, vector<unsigned int>());
-  for (int deviceID = 0; deviceID < deviceCount; deviceID++) padSumLearnN.push_back(vector<unsigned int>());
+  //for (int deviceID = 0; deviceID < deviceCount; deviceID++) padSumLearnN.push_back(vector<unsigned int>());
   localLearnID.resize(lrnGroups);
-  for (int lrnGrp = 0; lrnGrp < lrnGroups; lrnGrp++) {
-    padN = ceil((float) neuronN[synapseSource[lrnGrp]] / (float) learnBlkSz[synDevID[lrnGrp]]) * (float) learnBlkSz[synDevID[lrnGrp]];
-    localLearnID[lrnGrp] = padSumLearnN[synDevID[lrnSynGrp[lrnGrp]]].size();
-    if (localLearnID[lrnGrp] == 0) {
-      padSumLearnN[synDevID[lrnSynGrp[lrnGrp]]].push_back(padN);
+  for (int group = 0; group < lrnGroups; group++) {
+    padN = ceil((float) neuronN[synapseSource[lrnSynGrp[group]]] / (float) learnBlkSz[synDevID[group]]) * (float) learnBlkSz[synDevID[group]];
+    localLearnID[group] = padSumLearnN[synDevID[lrnSynGrp[group]]].size();
+    if (localLearnID[group] == 0) {
+      padSumLearnN[synDevID[lrnSynGrp[group]]].push_back(padN);
     }
     else {
-      padSumLearnN[synDevID[lrnSynGrp[lrnGrp]]].push_back(padN + padSumLearnN[synDevID[lrnSynGrp[lrnGrp]]].back());
+      padSumLearnN[synDevID[lrnSynGrp[group]]].push_back(padN + padSumLearnN[synDevID[lrnSynGrp[group]]].back());
     }
   }
 
   // padded neuron kernel thread sums
   padSumNeuronN.assign(deviceCount, vector<unsigned int>());
-  for (int deviceID = 0; deviceID < deviceCount; deviceID++) padSumLearnN.push_back(vector<unsigned int>());
+  //for (int deviceID = 0; deviceID < deviceCount; deviceID++) padSumLearnN.push_back(vector<unsigned int>());
   localNeuronID.resize(neuronGrpN);
-  for (int nrnGrp = 0; nrnGrp < neuronGrpN; nrnGrp++) {
-    padN = ceil((float) neuronN[nrnGrp] / (float) neuronBlkSz[nrnDevID[nrnGrp]]) * (float) neuronBlkSz[nrnDevID[nrnGrp]];
-    localNeuronID[nrnGrp] = padSumNeuronN[nrnDevID[nrnGrp]].size();
-    if (localNeuronID[nrnGrp] == 0) {
-      padSumNeuronN[nrnDevID[nrnGrp]].push_back(padN);
+  for (int group = 0; group < neuronGrpN; group++) {
+    padN = ceil((float) neuronN[group] / (float) neuronBlkSz[nrnDevID[group]]) * (float) neuronBlkSz[nrnDevID[group]];
+    localNeuronID[group] = padSumNeuronN[nrnDevID[group]].size();
+    if (localNeuronID[group] == 0) {
+      padSumNeuronN[nrnDevID[group]].push_back(padN);
     }
     else {
-      padSumNeuronN[nrnDevID[nrnGrp]].push_back(padN + padSumNeuronN[nrnDevID[nrnGrp]].back());
+      padSumNeuronN[nrnDevID[group]].push_back(padN + padSumNeuronN[nrnDevID[group]].back());
     }
   }
 }
-
 
 #endif

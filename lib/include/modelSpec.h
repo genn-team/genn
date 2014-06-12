@@ -93,6 +93,7 @@ unsigned int SYNPNO[SYNTYPENO] = {
 // currently values >1 will be defined by code generation.
 #define MAXPOSTSYN 2 // maximum number of postsynaptic integration: SpineML needs to know this
 
+
 /*===============================================================
 //! \brief class NNmodel for specifying a neuronal network model.
 //
@@ -143,9 +144,7 @@ public:
 
   vector<string> synapseName; //!< Names of synapse groups
   unsigned int synapseGrpN; //!< Number of synapse groups
-  //vector<unsigned int>synapseNo; // !< numnber of synapses in a synapse group
   vector<unsigned int> maxConn; //!< maximum number of connections for a neuron in the neuron groups
-  vector<unsigned int> sumSynapseTrgN; //!< Summed naumber of target neurons
   vector<vector<unsigned int> > padSumSynapseKrnl; //!< Padded summed sparse or all-to-all synapse thread count
   vector<unsigned int> localSynapseID; //!< The per-device ID number of each synapse group
   vector<unsigned int> synapseType; //!< Types of synapses

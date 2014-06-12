@@ -99,22 +99,24 @@ int blockSizeOptimise(unsigned int deviceID)
 {
   cerr << "optimizing block sizes for device " << deviceID << endl;
 
-  unsigned int *blockSizePtr;
+  unsigned int *blockSizePtr, requiredBlocks, deviceBlockLimit;
+  vector<unsigned int> *groupSizePtr;
   char buffer[256];
   stringstream command, ptxInfo;
   string kernelName, junk;
   int reqRegs, reqSmem, deviceOccupancy, ptxInfoFound = 0;
-  float warpAllocGran, regAllocGran, smemAllocGran;
   float blockLimit, mainBlockLimit, bestOccupancy;
 
   CHECK_CUDA_ERRORS(cudaSetDevice(deviceID));
   generate_cuda_code(deviceID, cerr);
 
   // Run NVCC and pipe output to this process
+  command.str("");
   command << "nvcc -cubin -Xptxas=-v -I$GeNNPATH/lib/include -arch=sm_";
   command << deviceProp[deviceID].major << deviceProp[deviceID].minor << " ";
   command << path << "/" << model->name << "_CODE_CUDA" << deviceID;
   command << "/cuda" << deviceID << ".cu 2>&1 1>/dev/null";
+  //cerr << command.str() << endl;
 
 #ifdef _WIN32
   FILE *nvccPipe = _popen(command.str().c_str(), "r");
@@ -122,66 +124,91 @@ int blockSizeOptimise(unsigned int deviceID)
   FILE *nvccPipe = popen(command.str().c_str(), "r");
 #endif
 
-  command.str("");
-  cerr << "dry-run compile for device " << deviceID << endl;
-  //cerr << command.str() << endl;
   if (!nvccPipe) {
     cerr << "ERROR: failed to open nvcc pipe" << endl;
     exit(EXIT_FAILURE);
   }
 
+  // Get the sizes of each synapse / learn / neuron group present on this host and device
+  vector<unsigned int> localSynapseN, localLearnN, localNeuronN;
+  for (int group = 0; group < model->synapseGrpN; group++) {
+    if ((model->synHostID[group] == hostID) && (model->synDevID[group] == deviceID)) {
+      if (model->synapseConnType[group] == SPARSE) {
+	localSynapseN.push_back(model->maxConn[group]);
+      }
+      else {
+	localSynapseN.push_back(model->neuronN[model->synapseTarget[group]]);
+      }
+      if (model->synapseType[group] == LEARN1SYNAPSE) {
+	localLearnN.push_back(model->neuronN[model->synapseSource[group]]);
+      }
+    }
+  }
+  for (int group = 0; group < model->neuronGrpN; group++) {
+    if ((model->nrnHostID[group] == hostID) && (model->nrnDevID[group] == deviceID)) {
+      localNeuronN.push_back(model->neuronN[group]);
+    }
+  }
+
+  // This data is required for block size optimisation, but cannot be found in deviceProp
+  float warpAllocGran, regAllocGran, smemAllocGran, maxBlocksPerSM;
+  if (deviceProp[deviceID].major == 1) {
+    smemAllocGran = 512;
+    warpAllocGran = 2;
+    regAllocGran = (deviceProp[deviceID].minor < 2) ? 256 : 512;
+    maxBlocksPerSM = 8;
+  }
+  else if (deviceProp[deviceID].major == 2) {
+    smemAllocGran = 128;
+    warpAllocGran = 2;
+    regAllocGran = 128;
+    maxBlocksPerSM = 8;
+  }
+  else if (deviceProp[deviceID].major == 3) {
+    smemAllocGran = 256;
+    warpAllocGran = 4;
+    regAllocGran = 256;
+    maxBlocksPerSM = 16;
+  }
+  else {
+    cerr << "Error: unsupported CUDA device major version: " << deviceProp[deviceID].major << endl;
+    exit(EXIT_FAILURE);
+  }
+
   // Read pipe until reg / smem usage is found, then calculate optimum block size for each kernel
   while (fgets(buffer, 256, nvccPipe) != NULL) {
-    if (strstr(buffer, "error:") != NULL) {
+    if (strstr(buffer, "error") != NULL) {
       cout << buffer;
     }
     else if (strstr(buffer, "calcSynapses") != NULL) {
-      blockSizePtr = &synapseBlkSz[deviceID];
       kernelName = "synapse";
+      blockSizePtr = &synapseBlkSz[deviceID];
+      groupSizePtr = &localSynapseN;
     }
     else if (strstr(buffer, "learnSynapses") != NULL) {
-      blockSizePtr = &learnBlkSz[deviceID];
       kernelName = "learn";
+      blockSizePtr = &learnBlkSz[deviceID];
+      groupSizePtr = &localLearnN;
     }
     else if (strstr(buffer, "calcNeurons") != NULL) {
-      blockSizePtr = &neuronBlkSz[deviceID];
       kernelName = "neuron";
+      blockSizePtr = &neuronBlkSz[deviceID];
+      groupSizePtr = &localNeuronN;
     }
     if (strncmp(buffer, "ptxas info    : Used", 20) == 0) {
       ptxInfoFound = 1;
       bestOccupancy = 0;
+      ptxInfo.str("");
       ptxInfo << buffer;
       ptxInfo >> junk >> junk >> junk >> junk >> reqRegs >> junk >> reqSmem;
-      ptxInfo.str("");
       cerr << "kernel: " << kernelName << ", regs needed: " << reqRegs << ", smem needed: " << reqSmem << endl;
-
-      // This data is required for block size optimisation, but cannot be found in deviceProp
-      if (deviceProp[deviceID].major == 1) {
-	smemAllocGran = 512;
-	warpAllocGran = 2;
-	regAllocGran = (deviceProp[deviceID].minor < 2) ? 256 : 512;
-      }
-      else if (deviceProp[deviceID].major == 2) {
-	smemAllocGran = 128;
-	warpAllocGran = 2;
-	regAllocGran = 128;
-      }
-      else if (deviceProp[deviceID].major == 3) {
-	smemAllocGran = 256;
-	warpAllocGran = 4;
-	regAllocGran = 256;
-      }
-      else {
-	cerr << "Error: unsupported CUDA device major version: " << deviceProp[deviceID].major << endl;
-	exit(EXIT_FAILURE);
-      }
 
       // Test all block sizes (in warps) up to [max warps per block]
       for (int blockSize = 1; blockSize <= deviceProp[deviceID].maxThreadsPerBlock / 32; blockSize++) {
 
 	// BLOCK LIMIT DUE TO THREADS
 	blockLimit = floor(deviceProp[deviceID].maxThreadsPerMultiProcessor / 32 / blockSize);
-	if (blockLimit > 8) blockLimit = 8; // mind the blocks per SM limit
+	if (blockLimit > maxBlocksPerSM) blockLimit = maxBlocksPerSM;
 	mainBlockLimit = blockLimit;
 
 	// BLOCK LIMIT DUE TO REGISTERS
@@ -202,17 +229,37 @@ int blockSizeOptimise(unsigned int deviceID)
 	blockLimit = floor(deviceProp[deviceID].sharedMemPerBlock / blockLimit);
 	if (blockLimit < mainBlockLimit) mainBlockLimit = blockLimit;
 
+	// The number of [blockSize] padded thread blocks required to simulate all groups
+	requiredBlocks = 0;
+	for (int group = 0; group < groupSizePtr->size(); group++) {
+	  requiredBlocks += ceil((float) (*groupSizePtr)[group] / (float) (blockSize * 32));
+	}
+
+	// Use a small block size if it allows all groups to occupy the device concurrently
+	if (requiredBlocks <= (mainBlockLimit * deviceProp[deviceID].multiProcessorCount)) {
+	  *blockSizePtr = (unsigned int) blockSize * 32;
+	  deviceOccupancy = requiredBlocks * blockSize;
+	  break;
+	}
+
 	// Update the best warp occupancy and the block size which enables it
 	if ((blockSize * mainBlockLimit) > bestOccupancy) {
 	  bestOccupancy = blockSize * mainBlockLimit;
-	  *blockSizePtr = (int) blockSize * 32;
+	  *blockSizePtr = (unsigned int) blockSize * 32;
 
-	  // Update the neuron kernel warp occupancy for this deviuce
+	  // Update the neuron kernel warp occupancy for this device
 	  if (blockSizePtr == &neuronBlkSz[deviceID]) {
-	    deviceOccupancy = bestOccupancy * deviceProp[deviceID].multiProcessorCount;
+	    deviceOccupancy = requiredBlocks * blockSize;
 	  }
+
+	  // Update the synapse kernel warp occupancy for this device
+	  //if (blockSizePtr == &synapseBlkSz[deviceID]) {
+	  //  deviceOccupancy = requiredBlocks * blockSize;
+	  //}
 	}
       }
+
+      cerr << "optimum block size: " << *blockSizePtr << endl;
     }
   }
 
@@ -271,8 +318,6 @@ void bestDeviceGenerate()
     if (optCudaBlockSize) {
       // find the device which supports the highest warp occupancy
       current = blockSizeOptimise(deviceID);
-
-      cout << current << endl;
     }
     else {
       // find the device with the most global memory
@@ -291,9 +336,6 @@ void bestDeviceGenerate()
   cerr << "using device " << bestDevice;
   if (optCudaBlockSize) cerr << " which supports " << best << " warps of occupancy" << endl;
   else cerr << " with " << best << " bytes of global memory" << endl;
-  cerr << "synapse block size " << synapseBlkSz[bestDevice] << endl;
-  cerr << "learn block size " << learnBlkSz[bestDevice] << endl;
-  cerr << "neuron block size " << neuronBlkSz[bestDevice] << endl;
 }
 
 
@@ -340,9 +382,6 @@ void multiDeviceGenerate()
     for (int deviceID = 0; deviceID < deviceCount; deviceID++) {
       warpOccupancy[deviceID] = blockSizeOptimise(deviceID);
       cerr << "device " << deviceID << " has " << warpOccupancy[deviceID] << " warps occupancy" << endl;
-      cerr << "synapse block size " << synapseBlkSz[deviceID] << endl;
-      cerr << "learn block size " << learnBlkSz[deviceID] << endl;
-      cerr << "neuron block size " << neuronBlkSz[deviceID] << endl;
     }
   }
   model->calcPaddedThreadSums();
