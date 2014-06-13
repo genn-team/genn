@@ -13,7 +13,7 @@
 
 ROOTDIR         := $(GeNNPATH)/lib/src
 EXECUTABLE      := generateALL
-SOURCES         := generateALL.cpp
+SOURCES         := generateALL.cc
 
 INCLUDE_FLAGS   :=
 LINK_FLAGS      :=
