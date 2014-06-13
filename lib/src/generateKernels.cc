@@ -184,7 +184,11 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 		os << "// pull V values in a coalesced access" << ENDL;
 		if (nt == POISSONNEURON) {
 			os << "unsigned int lrate = d_rates" << model.neuronName[i];
-			os << "[offset" << model.neuronName[i] << " + " << localID << "];" << ENDL;
+			os << "[offset" << model.neuronName[i] << " + " << localID << "]";
+			if (DT != 0.5) {
+			  os << "*" << DT/0.5;
+			}
+			os << ";" << ENDL;
 		}
 		for (int k = 0, l = nModels[nt].varNames.size(); k < l; k++) {
 			os << nModels[nt].varTypes[k] << " l" << nModels[nt].varNames[k];
