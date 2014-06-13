@@ -1,0 +1,17 @@
+make sure the chosen device is actually chosen in the generated code (!)
+
+add code to optimise block size (generateRunner)
+
+synaptic plasticity
+
+load optimisation?
+
+pthreads
+
+mpi
+
+migrate from pre-allocated memory structures to dynamically allocated ones?
+
+Calculate explicit input from the input role on the GPU
+
+If learning is used with globalg, initgraw can be optimised (using an array now while one val derived from globalg would be enough)
