@@ -491,7 +491,7 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 	os << "__shared__ unsigned int shSpkEvnt[" << "BLOCKSZ_SYN" << "];" << ENDL;
 	os << "__shared__ " << model.ftype << " shSpkEvntV[" << "BLOCKSZ_SYN" << "];" << ENDL;
 	os << "volatile __shared__ " << model.ftype << " shLg[" << neuronBlkSz << "];" << ENDL;
-	os << "unsigned int lscnt, numSpikeSubsets, lmax, j, p, r, ipost, npost;" << ENDL;
+	os << "unsigned int lscntEvnt, numSpikeEvntSubsets, lmax, j, p, r, ipost, npost;" << ENDL;
 	for (int i = 0; i < model.synapseGrpN; i++) {
 		if ((model.synapseConnType[i] != SPARSE) || (isGrpVarNeeded[model.synapseTarget[i]] == 0)){
 			os << model.ftype << " linSyn, lg;" << ENDL;
@@ -502,6 +502,7 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 	  if (model.synapseType[i] == LEARN1SYNAPSE) {  
 	    os << "__shared__ unsigned int shSpk[" << "BLOCKSZ_SYN" << "];" << ENDL;
 	    os << "__shared__ " << model.ftype << " shSpkV[" << "BLOCKSZ_SYN" << "];" << ENDL;
+	    os << "unsigned int lscnt, numSpikeSubsets;" << ENDL;
       break;
     }
   }
@@ -545,14 +546,24 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 
 			os << CB(80);
 		}
-		os << "lscnt = d_glbSpkEvntCnt" << model.neuronName[src];
+		os << "lscntEvnt = d_glbSpkEvntCnt" << model.neuronName[src];
 		if (model.neuronDelaySlots[src] != 1) {
 			os << "[delaySlot]";
 		}
 		os << ";" << ENDL;
-		os << "numSpikeSubsets = (unsigned int) (ceilf((float) lscnt / " << "((float)BLOCKSZ_SYN)" << "));" << ENDL;
-		os << "for (r = 0; r < numSpikeSubsets; r++)" << OB(90);
-		os << "if (r == numSpikeSubsets - 1) lmax = lscnt % " << "BLOCKSZ_SYN" << ";" << ENDL;
+		os << "numSpikeEvntSubsets = (unsigned int) (ceilf((float) lscntEvnt / " << "((float)BLOCKSZ_SYN)" << "));" << ENDL;
+
+   	if (model.synapseType[i] == LEARN1SYNAPSE) {
+        os << "lscnt = d_glbscnt" << model.neuronName[src];	
+        if (model.neuronDelaySlots[src] != 1) {
+			os << "[delaySlot]";
+		  }	
+        os << ";" << ENDL;		
+        os << "numSpikeSubsets = (unsigned int) (ceilf((float) lscntEvnt / " << "((float)BLOCKSZ_SYN)" << "));" << ENDL;
+		}
+				
+		os << "for (r = 0; r < numSpikeEvntSubsets; r++)" << OB(90);
+		os << "if (r == numSpikeEvntSubsets - 1) lmax = lscntEvnt % " << "BLOCKSZ_SYN" << ";" << ENDL;
 		os << "else lmax = " << "BLOCKSZ_SYN" << ";" << ENDL;
 		os << "if (threadIdx.x < lmax)" << OB(100);
 		os << "shSpkEvnt[threadIdx.x] = d_glbSpkEvnt" << model.neuronName[src] << "[";
@@ -714,10 +725,91 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 			}
 		}
 
-
+    os << CB(120) << ENDL;
+    os << CB(110) << ENDL;
+    os << CB(90) << ENDL;
 
     // if needed, do some learning (this is for pre-synaptic spikes)
 		if (model.synapseType[i] == LEARN1SYNAPSE) {
+			
+			
+			
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+os << "for (r = 0; r < numSpikeEvntSubsets; r++)" << OB(2090);
+		os << "if (r == numSpikeEvntSubsets - 1) lmax = lscntEvnt % " << "BLOCKSZ_SYN" << ";" << ENDL;
+		os << "else lmax = " << "BLOCKSZ_SYN" << ";" << ENDL;
+		os << "if (threadIdx.x < lmax)" << OB(2100);
+		os << "shSpkEvnt[threadIdx.x] = d_glbSpkEvnt" << model.neuronName[src] << "[";
+		if (model.neuronDelaySlots[src] != 1) {
+			os << "(delaySlot * " << model.neuronN[src] << ") + ";
+		}
+		os << "(r * " << "BLOCKSZ_SYN" << ") + threadIdx.x];" << ENDL;
+    if (model.synapseType[i] == LEARN1SYNAPSE) {
+      os << "shSpk[threadIdx.x] = d_glbSpk" << model.neuronName[src] << "[";
+		  if (model.neuronDelaySlots[src] != 1) {
+			  os << "(delaySlot * " << model.neuronN[src] << ") + ";
+		  }
+		  os << "(r * " << "BLOCKSZ_SYN" << ") + threadIdx.x];" << ENDL;
+
+    }
+
+		if (model.neuronType[src] != POISSONNEURON) {
+			os << "shSpkEvntV[threadIdx.x] = d_V" << model.neuronName[src] << "[";
+			if (model.neuronDelaySlots[src] != 1) {
+				os << "(delaySlot * " << model.neuronN[src] << ") + ";
+			}
+			os << "shSpkEvnt[threadIdx.x]];" << ENDL;
+
+      if (model.synapseType[i] == LEARN1SYNAPSE) {
+        os << "shSpkV[threadIdx.x] = d_V" << model.neuronName[src] << "[";
+			if (model.neuronDelaySlots[src] != 1) {
+				os << "(delaySlot * " << model.neuronN[src] << ") + ";
+			}
+			os << "shSpk[threadIdx.x]];" << ENDL;
+      }
+		}
+    
+
+		os << CB(2100);
+		if ((model.synapseConnType[i] == SPARSE) && (isGrpVarNeeded[model.synapseTarget[i]] == 0)) {
+			os << "if (threadIdx.x < " << neuronBlkSz << ") shLg[threadIdx.x] = 0;" << ENDL;
+		}
+		os << "__syncthreads();" << ENDL;
+		os << "// only work on existing neurons" << ENDL;
+		if ((model.synapseConnType[i] == SPARSE) && (isGrpVarNeeded[model.synapseTarget[i]] == 1)) {
+			if(model.maxConn.size()==0) {
+				fprintf(stderr,"Model Generation error: for every SPARSE synapse group used you must also supply (in your model) a max possible number of connections via the model.setMaxConn() function.");
+				exit(1);
+			}
+			int maxConnections  = model.maxConn[i];
+			os << "if (" << localID << " < " << maxConnections << ")" << OB(2110);
+		}
+		else{
+			os << "if (" << localID << " < " << model.neuronN[trg] << ")" << OB(2110);
+		}
+
+		os << "// loop through all incoming spikes" << ENDL;
+		os << "for (j = 0; j < lmax; j++)" << OB(2120);
+		if (model.synapseGType[i] == INDIVIDUALID) {
+			os << "unsigned int gid = (shSpkEvnt[j] * " << model.neuronN[trg];
+			os << " + " << localID << ");" << ENDL;
+		}
+
       if (model.neuronType[src] != POISSONNEURON) {
 		  	os << "if ";
 		  	if (model.synapseGType[i] == INDIVIDUALID) {
@@ -739,7 +831,18 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 				os << UIntSz - 1 << "))" << OB(1135);
 			}
 		}
-
+         //we may need something like the following, if sparse:
+         /*
+    		if (model.synapseConnType[i] == SPARSE) {
+			os << "npost = d_gp" << model.synapseName[i] << "_indInG[shSpkEvnt[j] + 1] - d_gp";
+			os << model.synapseName[i] << "_indInG[shSpkEvnt[j]];" << ENDL;
+			os << "if ("<< localID <<" < npost)" << OB(140);
+			os << "ipost = d_gp" << model.synapseName[i] << "_ind[d_gp";
+			os << model.synapseName[i] << "_indInG[shSpkEvnt[j]] + "<< localID <<"];" << ENDL;
+			if (isGrpVarNeeded[model.synapseTarget[i]] == 0) {
+				theLG = toString("shLg[" + localID + "]");         
+         */
+         
 			// simply assume INDIVIDUALG for now
 			os << "lg = d_grawp" << model.synapseName[i] << "[shSpk[j] * " << model.neuronN[trg] << " + " << localID << "];" << ENDL;
 			os << model.ftype << " dt = d_sT" << model.neuronName[trg] << "[" << localID << "] - t - ";
@@ -771,14 +874,11 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 				  }
 		  	}
 		  }
+		  os << CB(2120); ////2 for (j = 0; j < lmax; j++)
+
+		  os << CB(2110); ////3 if (id < Npre)   
+		  os << CB(2090); ////4 for (r = 0; r < numSpikeEvntSubsets; r++)
 		}
-
-		os << CB(120); ////2 for (j = 0; j < lmax; j++)
-
-		os << CB(110); ////3 if (id < Npre)
-		os << CB(90); ////4 for (r = 0; r < numSpikeSubsets; r++)
-
-
 
 		if ((model.synapseConnType[i] != SPARSE)|| (isGrpVarNeeded[model.synapseTarget[i]] == 0)) {
 

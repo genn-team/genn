@@ -15,3 +15,5 @@ migrate from pre-allocated memory structures to dynamically allocated ones?
 Calculate explicit input from the input role on the GPU
 
 If learning is used with globalg, initgraw can be optimised (using an array now while one val derived from globalg would be enough)
+
+test delayed synapses with learning
