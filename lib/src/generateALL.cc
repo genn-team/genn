@@ -84,6 +84,7 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
 {
   // Get the specifications of all available cuda devices, then work out which one we will use.
   int deviceCount, chosenDevice = 0;
+  size_t globalMem, mostGlobalMem = 0;
   CHECK_CUDA_ERRORS(cudaGetDeviceCount(&deviceCount));
   deviceProp = new cudaDeviceProp[deviceCount];
 
@@ -101,9 +102,10 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
     unsigned int **blockSizePtr;
     vector<unsigned int> *groupSizePtr;
     float blockLimit, mainBlockLimit, bestOccupancy;
-    int deviceOccupancy, bestDeviceOccupancy = 0;
+    int deviceOccupancy, bestDeviceOccupancy = 0, smallModel = 0;
 
     for (int device = 0; device < deviceCount; device++) {
+      theDev = device;
       CHECK_CUDA_ERRORS(cudaSetDevice(device));
       CHECK_CUDA_ERRORS(cudaGetDeviceProperties(&(deviceProp[device]), device));      
       generate_model_runner(*model, path);
@@ -114,10 +116,10 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
       // Run NVCC and pipe output to this process.
       mos << "dry-run compile for device " << device << endl;
       command.str("");
-      command << "nvcc -x cu -cubin -Xptxas=-v -arch=sm_" << deviceProp[device].major;
+      command << string(NVCC) << " -x cu -cubin -Xptxas=-v -arch=sm_" << deviceProp[device].major;
       command << deviceProp[device].minor << " -DDT -D\"CHECK_CUDA_ERRORS(call){call;}\" ";
       command << path << "/" << (*model).name << "_CODE/runner.cc 2>&1";
-      //mos << command.str() << endl;
+      mos << command.str() << endl;
 
 #ifdef _WIN32
       FILE *nvccPipe = _popen(command.str().c_str(), "r");
@@ -231,20 +233,25 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
 
 	    // Use a small block size if it allows all groups to occupy the device concurrently
 	    if (requiredBlocks <= (mainBlockLimit * deviceProp[device].multiProcessorCount)) {
-	      (*blockSizePtr)[device] = (unsigned int) blockSize * 32;
-	      bestDeviceOccupancy = requiredBlocks * blockSize;
-	      chosenDevice = device;
+	      smallModel = 1;
+	      globalMem = deviceProp[device].totalGlobalMem;
+	      if (globalMem >= mostGlobalMem) {
+		mostGlobalMem = globalMem;
+		chosenDevice = device;
+		(*blockSizePtr)[device] = (unsigned int) blockSize * 32;
+		bestDeviceOccupancy = blockSize * mainBlockLimit;
+	      }
 	      break;
 	    }
 
 	    // Update the best warp occupancy and the block size which enables it.
-	    if ((blockSize * mainBlockLimit) > bestOccupancy) {
+	    if ((!smallModel) && ((blockSize * mainBlockLimit) > bestOccupancy)) {
 	      bestOccupancy = blockSize * mainBlockLimit;
 	      (*blockSizePtr)[device] = (unsigned int) blockSize * 32;
 
 	      // Choose this device and set optimal block sizes if it enables higher neuron kernel occupancy.
 	      if (blockSizePtr == &bestNrnBlkSz) {
-		deviceOccupancy = bestOccupancy * deviceProp[device].multiProcessorCount;
+		deviceOccupancy = bestOccupancy;
 		if (deviceOccupancy >= bestDeviceOccupancy) {
 		  bestDeviceOccupancy = deviceOccupancy;
 		  chosenDevice = device;
@@ -263,18 +270,20 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
 #endif
 
     }
+
     if (!ptxInfoFound) {
       mos << "ERROR: did not find any PTX info" << endl;
       mos << "ensure nvcc is on your $PATH, and fix any NVCC errors listed above" << endl;
       exit(EXIT_FAILURE);
     }
+
     synapseBlkSz = bestSynBlkSz[chosenDevice];
     learnBlkSz = bestLrnBlkSz[chosenDevice];
     neuronBlkSz = bestNrnBlkSz[chosenDevice];
     delete model;
     model = new NNmodel();
     modelDefinition(*model);
-    mos << "Using device " << chosenDevice << ", with a neuron kernel occupancy of " << bestDeviceOccupancy << " threads." << endl;
+    mos << "Using device " << chosenDevice << ", with up to " << bestDeviceOccupancy << " warps of neuron kernel occupancy per SM." << endl;
     delete[] bestSynBlkSz;
     delete[] bestLrnBlkSz;
     delete[] bestNrnBlkSz;
@@ -282,7 +291,6 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
 
   else { // IF OPTIMISATION IS OFF: Simply choose the device with the most global memory.
     mos << "skipping block size optimisation..." << endl;
-    size_t globalMem, mostGlobalMem = 0;
     for (int device = 0; device < deviceCount; device++) {
       CHECK_CUDA_ERRORS(cudaSetDevice(device));
       CHECK_CUDA_ERRORS(cudaGetDeviceProperties(&(deviceProp[device]), device));
@@ -302,10 +310,6 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
   mos << "synapse block size: " << synapseBlkSz << endl;
   mos << "learn block size: " << learnBlkSz << endl;
   mos << "neuron block size: " << neuronBlkSz << endl;
-  UIntSz = sizeof(unsigned int) * 8; // in bits
-  logUIntSz = (int) (logf((float) UIntSz) / logf(2.0f) + 1e-5f);
-  mos << "UIntSz: " << UIntSz << endl;
-  mos << "logUIntSz: " << logUIntSz << endl;
 
   return chosenDevice;
 }
