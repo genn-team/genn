@@ -11,7 +11,6 @@
 ##  
 ##--------------------------------------------------------------------------
 
-ROOTDIR		:= $(GeNNPATH)/userproject/Izh_sparse_project
 EXECUTABLE	:= Izh_sim_sparse
 SOURCES		:= Izh_sim_sparse.cu
 

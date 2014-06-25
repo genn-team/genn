@@ -310,7 +310,7 @@ void classol::run(float runtime, //!< Duration of time to run the model for
        stepTimeCPU(theRates, offset, t);
     iT++;
     t= iT*DT;
-    fprintf(stderr, "%f %f \n", t, DT);
+    fprintf(stderr, "%f %f\n", t, DT);
   }
 }
 

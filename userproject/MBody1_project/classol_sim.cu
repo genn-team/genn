@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
   
   name= OutDir+ "/"+ toString(argv[1]) + toString(".out.Vm"); 
   FILE *osf= fopen(name.c_str(),"w");
-  name= OutDir+ "/"+ toString(argv[1]) + toString(".out.St"); 
+  name= OutDir+ "/"+ toString(argv[1]) + toString(".out.St");
   FILE *osf2= fopen(name.c_str(),"w");
 
   //-----------------------------------------------------------------
@@ -123,10 +123,7 @@ int main(int argc, char *argv[])
     locust.sum_spikes();
 //    locust.output_spikes(osf, which);
 //    locust.output_state(os, which);  // while outputting the current one ...
-
-   
     locust.output_spikes(osf2, which);
-
     fprintf(osf, "%f ", t);
     for (int i= 0; i < 10; i++) {
     fprintf(osf, "%f ", VDN[i]);
@@ -177,7 +174,7 @@ int main(int argc, char *argv[])
   fclose(osf);
   fclose(osf2);
   fclose(timef);
-	freeDeviceMem();
+  freeDeviceMem();
   cudaDeviceReset();
   return 0;
 }
