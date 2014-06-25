@@ -18,7 +18,7 @@
 */
 //--------------------------------------------------------------------------
 
-#define DT 0.5  //!< This defines the global time step at which the simulation will run
+#define DT 0.1  //!< This defines the global time step at which the simulation will run
 #include "modelSpec.h"
 #include "modelSpec.cc"
 

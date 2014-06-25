@@ -112,7 +112,7 @@ int blockSizeOptimise(unsigned int deviceID)
 
   // Run NVCC and pipe output to this process
   command.str("");
-  command << "nvcc -cubin -Xptxas=-v -I$GeNNPATH/lib/include -arch=sm_";
+  command << string(NVCC) << " -cubin -Xptxas=-v -I$GeNNPATH/lib/include -arch=sm_";
   command << deviceProp[deviceID].major << deviceProp[deviceID].minor << " ";
   command << path << "/" << model->name << "_CODE_CUDA" << deviceID;
   command << "/cuda" << deviceID << ".cu 2>&1 1>/dev/null";
@@ -238,7 +238,7 @@ int blockSizeOptimise(unsigned int deviceID)
 	// Use a small block size if it allows all groups to occupy the device concurrently
 	if (requiredBlocks <= (mainBlockLimit * deviceProp[deviceID].multiProcessorCount)) {
 	  *blockSizePtr = (unsigned int) blockSize * 32;
-	  deviceOccupancy = requiredBlocks * blockSize;
+	  deviceOccupancy = 0;
 	  break;
 	}
 
@@ -306,7 +306,7 @@ int blockSizeOptimise(unsigned int deviceID)
 
 void bestDeviceGenerate()
 {
-  unsigned int best = 0, current, bestDevice;
+  int current, best = 0, bestDevice = 0, smallModel = 0;
   generate_host_code(cerr);
   model->calcPaddedThreadSums();
   model->padSumSynapseKrnl.assign(deviceCount, model->padSumSynapseKrnl[0]);
@@ -318,6 +318,15 @@ void bestDeviceGenerate()
     if (optCudaBlockSize) {
       // find the device which supports the highest warp occupancy
       current = blockSizeOptimise(deviceID);
+      // or the device with the latest architecture, if the model is small enough to fit anyway
+      if (!current) {
+	smallModel = 1;
+	current = deviceProp[deviceID].major;
+      }
+      // ignore if the device cannot fit all warps concurrently (when another device can)
+      else if (smallModel) {
+	current = 0;
+      }
     }
     else {
       // find the device with the most global memory
@@ -334,8 +343,15 @@ void bestDeviceGenerate()
   generate_cuda_code(bestDevice, cerr);
 
   cerr << "using device " << bestDevice;
-  if (optCudaBlockSize) cerr << " which supports " << best << " warps of occupancy" << endl;
-  else cerr << " with " << best << " bytes of global memory" << endl;
+  if (smallModel) {
+    cerr << " with CUDA architecture version " << best << endl;
+  }
+  else if (optCudaBlockSize) {
+    cerr << " which supports up to " << best << " concurrent warps" << endl;
+  }
+  else {
+    cerr << " with " << best << " bytes of global memory" << endl;
+  }
 }
 
 
@@ -381,7 +397,13 @@ void multiDeviceGenerate()
   if (optCudaBlockSize) { 
     for (int deviceID = 0; deviceID < deviceCount; deviceID++) {
       warpOccupancy[deviceID] = blockSizeOptimise(deviceID);
-      cerr << "device " << deviceID << " has " << warpOccupancy[deviceID] << " warps occupancy" << endl;
+      cerr << "device " << deviceID;
+      if (warpOccupancy[deviceID] > 0) {
+	cerr << " has " << warpOccupancy[deviceID] << " warps occupancy" << endl;
+      }
+      else {
+	cerr << " can execute all of its warps concurrently" << endl;
+      }
     }
   }
   model->calcPaddedThreadSums();

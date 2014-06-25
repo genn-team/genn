@@ -45,9 +45,9 @@ endif
 ifeq ($(DARWIN),DARWIN)
   CCFLAGS       += # put your global compiler flags here
 else
-  CCFLAGS	+= -O3 -ffast-math # put your global C++ compiler flags here
+  CCFLAGS	+= # put your global C++ compiler flags here
 endif
-NVCCFLAGS       += --compiler-options "-O3 -ffast-math" # put your global NVCC flags here
+NVCCFLAGS       += # put your global NVCC flags here
 
 # Get object targets from the files listed in SOURCES, also the GeNN code for each device.
 # Define your own SOURCES variable in the project's Makefile to specify these source files.
@@ -79,6 +79,8 @@ $(EXECUTABLE): $(USER_OBJECTS) $(HOST_OBJECTS) $(CUDA_OBJECTS)
 	$(NVCC) $(NVCCFLAGS) $(LINK_FLAGS) -o $@ $+
 
 .PHONY: release
+release: CCFLAGS += -O3 -ffast-math
+release: NVCCFLAGS += --compiler-options "-O3 -ffast-math"
 release: $(EXECUTABLE)
 	mkdir -p "$(ROOTDIR)/bin/$(OSLOWER)/release"
 	mv $(EXECUTABLE) $(ROOTDIR)/bin/$(OSLOWER)/release

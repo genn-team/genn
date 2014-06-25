@@ -16,7 +16,7 @@ SOURCES         := generateALL.cc utils.cc
 
 INCLUDE_FLAGS   :=
 LINK_FLAGS      :=
-CCFLAGS         :=
+CCFLAGS          = -DNVCC=\"$(NVCC)\"
 NVCCFLAGS       :=
 
 ifdef COMSPEC

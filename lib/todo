@@ -12,4 +12,6 @@ Find a more elegant way to set synapse grid sizes for sparse and mixed sparse/de
 
 Consider the option to use zero-copy memory for g arrays in bigger networks to save from the global memory
 
+There is no point in using an Epre (in synapse parameter) which is smaller than Vspike (which is the case with the MBody example).
 
+Do STDP in reverse order, as it cannot enter the first two cases (or use switch-case).

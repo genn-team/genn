@@ -67,6 +67,8 @@ $(EXECUTABLE): $(USER_OBJECTS) $(HOST_OBJECTS) $(CUDA_OBJECTS)
 	$(NVCC) $(NVCCFLAGS) $(LINK_FLAGS) -o $@ $+
 
 .PHONY: release
+release: CCFLAGS += -O3 -ffast-math
+release: NVCCFLAGS += --compiler-options "-O3 -ffast-math"
 release: $(EXECUTABLE)
 	mkdir -p "$(ROOTDIR)/bin/$(OSVAR)/release"
 	mv $(EXECUTABLE) $(ROOTDIR)/bin/$(OSVAR)/release

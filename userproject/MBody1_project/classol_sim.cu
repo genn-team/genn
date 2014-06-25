@@ -54,6 +54,8 @@ int main(int argc, char *argv[])
   
   name= OutDir+ "/"+ toString(argv[1]) + toString(".out.Vm"); 
   FILE *osf= fopen(name.c_str(),"w");
+  name= OutDir+ "/"+ toString(argv[1]) + toString(".out.St");
+  FILE *osf2= fopen(name.c_str(),"w");
 
   //-----------------------------------------------------------------
   // build the neuronal circuitery
@@ -121,6 +123,7 @@ int main(int argc, char *argv[])
     locust.sum_spikes();
 //    locust.output_spikes(osf, which);
 //    locust.output_state(os, which);  // while outputting the current one ...
+    locust.output_spikes(osf2, which);
     fprintf(osf, "%f ", t);
     for (int i= 0; i < 10; i++) {
     fprintf(osf, "%f ", VDN[i]);
@@ -169,8 +172,9 @@ int main(int argc, char *argv[])
   cerr << "output files are created under the current directory." << endl;
   fprintf(timef, "%d %d %d %d %f \n", locust.sumPN, locust.sumKC, locust.sumLHI, locust.sumDN, timer.getElapsedTime());
   fclose(osf);
+  fclose(osf2);
   fclose(timef);
-	freeDeviceMem();
+  freeDeviceMem();
   cudaDeviceReset();
   return 0;
 }

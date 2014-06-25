@@ -308,9 +308,9 @@ void classol::run(float runtime, //!< Duration of time to run the model for
        stepTimeGPU(theRates, offset, t);
     if (which == CPU)
        stepTimeCPU(theRates, offset, t);
-    t+= DT;
     iT++;
-    //    fprintf(stderr, "%f\n", t);
+    t= iT*DT;
+    fprintf(stderr, "%f %f\n", t, DT);
   }
 }
 
