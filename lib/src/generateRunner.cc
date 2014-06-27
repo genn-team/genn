@@ -78,6 +78,11 @@ void genRunner(NNmodel &model, //!< Model description
       os << nModels[nt].varTypes[k] << " *";
       os << nModels[nt].varNames[k] << model.neuronName[i] << ";" << endl;
     }
+    // write globale variables for the extrqa global neurona kernel parameters; these are assumed not to be pointers, if they are the uswr needs to take care of allocation etc
+    for (int k= 0, l= nModels[nt].extraGlobalNeuronKernelParameters.size(); k < l; k++) {
+      os << nModels[nt].extraGlobalNeuronKernelParameterTypes[k] << " ";
+      os << nModels[nt].extraGlobalNeuronKernelParameters[k] << model.neuronName[i] << ";" << endl;
+    }
     
     if (model.neuronNeedSt[i]) {
       os << model.ftype << " *sT" << model.neuronName[i] << ";" << endl;
@@ -1188,14 +1193,17 @@ void genRunnerGPU(NNmodel &model, //!< Model description
       os << "d_inputI" << model.neuronName[i] << ", ";
     }
     for (int k= 0, l= nModels[nt].varNames.size(); k < l; k++) {
-    os << " d_" << nModels[nt].varNames[k] << model.neuronName[i]<< ", ";
+      os << " d_" << nModels[nt].varNames[k] << model.neuronName[i]<< ", ";
     }
+    for (int k= 0, l= nModels[nt].extraGlobalNeuronKernelParameters.size(); k < l; k++) {
+      os << nModels[nt].extraGlobalNeuronKernelParameters[k] << model.neuronName[i]<< ", ";
+    }    
   }
   for (int i=0; i< model.postSynapseType.size(); i++){
   	int pst= model.postSynapseType[i];
   	for (int k= 0, l= postSynModels[pst].varNames.size(); k < l; k++) {
     	os << " d_" << postSynModels[pst].varNames[k];
-      os << model.synapseName[i]<< ", ";
+	os << model.synapseName[i]<< ", ";
     }
   }
   os << "t);" << endl;
