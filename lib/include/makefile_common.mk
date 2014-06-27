@@ -28,7 +28,7 @@ OS_ARCH 	:= $(shell uname -m | sed -e "s/i386/i686/")
 CUDA_PATH        ?= /usr/local/cuda
 COMPILER         ?= g++
 NVCC             ?= $(CUDA_PATH)/bin/nvcc
-INCLUDE_FLAGS    += -I$(CUDA_PATH)/include -I$(GeNNPATH)/lib/include -I. 
+INCLUDE_FLAGS    += -I$(CUDA_PATH)/include -I$(GeNNPATH)/lib/include -I$(GeNNPATH)/userproject/include -I. 
 ifeq ($(DARWIN),DARWIN)
   LINK_FLAGS     += -Xlinker -L$(CUDA_PATH)/lib -lcudart 
 else

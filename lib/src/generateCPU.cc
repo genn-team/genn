@@ -69,10 +69,10 @@ void genNeuronFunction(NNmodel &model, //!< Model description
       os << "\"rates\" offset of grp " << model.neuronName[i] << ENDL;
     }
     if (model.receivesInputCurrent[i] >= 2) {
-      os << "float *inputI" << model.neuronName[i] << ", // input current of grp " << model.neuronName[i] << ENDL;
+      os << model.ftype << " *inputI" << model.neuronName[i] << ", // input current of grp " << model.neuronName[i] << ENDL;
     }
   }
-  os << "float t)" << ENDL;
+  os << model.ftype << " t)" << ENDL;
   os << OB(51) << ENDL;
   for (int i = 0; i < model.neuronGrpN; i++) {
     nt = model.neuronType[i];
@@ -95,7 +95,7 @@ void genNeuronFunction(NNmodel &model, //!< Model description
       }
       os << "n];" << ENDL;
     }
-    os << "    float Isyn = 0;" << ENDL;
+    os << "    " << model.ftype << " Isyn = 0;" << ENDL;
     
     if (model.inSyn[i].size() > 0) {
       //os << "    Isyn = ";
@@ -185,6 +185,10 @@ void genNeuronFunction(NNmodel &model, //!< Model description
     for (int k = 0, l = nModels[nt].dpNames.size(); k < l; k++) {
       substitute(code, tS("$(") + nModels[nt].dpNames[k] + tS(")"), 
 		 tS(model.dnp[i][k]));
+    }
+    for (int k = 0, l = nModels[nt].extraGlobalNeuronKernelParameters.size(); k < l; k++) {
+      substitute(code, tS("$(") + nModels[nt].extraGlobalNeuronKernelParameters[k] + tS(")"), 
+		 nModels[nt].extraGlobalNeuronKernelParameters[k]+model.neuronName[i]);
     }
     os << code;
 
@@ -344,10 +348,10 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 
   // Function for calculating synapse input to neurons
   // Function header
-  os << "void calcSynapsesCPU(float t)" << ENDL;
+  os << "void calcSynapsesCPU(" << model.ftype << " t)" << ENDL;
   os << OB(1001);
   if (model.lrnGroups > 0) {
-    os << "float dt, dg;" << ENDL;
+    os << model.ftype << " dt, dg;" << ENDL;
   }
   os << "int ipost, npost";
   if (model.needSynapseDelay) {
@@ -575,9 +579,9 @@ void genSynapseFunction(NNmodel &model, //!< Model description
   if (model.lrnGroups > 0) {
     // function for learning synapses, post-synaptic spikes
     // function header
-    os << "void learnSynapsesPostHost(float t)" << ENDL;
+    os << "void learnSynapsesPostHost(" << model.ftype << " t)" << ENDL;
     os << OB(811);
-    os << "float dt, dg;" << ENDL;
+    os << model.ftype << " dt, dg;" << ENDL;
     os << ENDL;
 
     for (int i = 0; i < model.lrnGroups; i++) {

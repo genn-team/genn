@@ -27,7 +27,7 @@ OS_ARCH 	:= $(shell uname -m | sed -e "s/i386/i686/")
 CUDA_PATH	?= "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v5.0\ "
 COMPILER	?= cl
 NVCC		?= $(CUDA_PATH)\bin\nvcc
-INCLUDE_FLAGS 	+= -I"$(shell cygpath -m '$(CUDA_PATH)')include" -I"$(GeNNPATH)/lib/include" -I"$(GeNNPATH)/lib/include/numlib" -I.
+INCLUDE_FLAGS 	+= -I"$(shell cygpath -m '$(CUDA_PATH)')include" -I"$(GeNNPATH)/lib/include" -I"$(GeNNPATH)/lib/include/numlib" -I"$(GeNNPATH)/userproject/include" -I.
 
 LLIB 		:= "$(shell cygpath -m '$(CUDA_PATH)')lib/$(OSWIN)/cudart.lib"
 LINK_FLAGS   	+= -L"$(shell cygpath -m '$(CUDA_PATH)')lib" -lcudart 

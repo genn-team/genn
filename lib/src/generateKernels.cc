@@ -122,6 +122,11 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 			os << nModels[nt].varTypes[k] << " *d_" << nModels[nt].varNames[k];
 			os << model.neuronName[i]<< ", " << ENDL;
 		}
+		for (int k= 0, l= nModels[nt].extraGlobalNeuronKernelParameters.size(); k < l; k++) {
+		  os << nModels[nt].extraGlobalNeuronKernelParameterTypes[k];
+		  os << " " << nModels[nt].extraGlobalNeuronKernelParameters[k];
+		  os << model.neuronName[i] << ", " << ENDL;
+		}
 	}
 
 
@@ -271,6 +276,9 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 		for (int k = 0, l = nModels[nt].dpNames.size(); k < l; k++) {
 			substitute(code, tS("$(") + nModels[nt].dpNames[k] + tS(")"), tS(model.dnp[i][k]));
 		}
+		for (int k = 0, l = nModels[nt].extraGlobalNeuronKernelParameters.size(); k < l; k++) {
+		  substitute(code, tS("$(") + nModels[nt].extraGlobalNeuronKernelParameters[k] + tS(")"), nModels[nt].extraGlobalNeuronKernelParameters[k]+model.neuronName[i]);
+		}		
 		os << code;
 		os << ENDL;
 
