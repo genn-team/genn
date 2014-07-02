@@ -26,8 +26,8 @@ using namespace std;
 #include <cuda_runtime.h>
 #include "HHVClamp.cc"
 #include "HHVClamp_CODE/runner.cc"
-#include "/Volumes/LocalDataHD/tn41/include/numlib/randomGen.h"
-#include "/Volumes/LocalDataHD/tn41/include/numlib/gauss.h"
+#include "../../../lib/include/numlib/randomGen.h"
+#include "../../../lib/include/numlib/gauss.h"
 randomGen R;
 randomGauss RG;
 #include "helper.h"

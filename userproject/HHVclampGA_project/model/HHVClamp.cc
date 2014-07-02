@@ -101,7 +101,7 @@ void modelDefinition(NNmodel &model)
     }\n\
     $(err)+= abs(Isyn-$(IsynG));\n");
 
-  n.thresholdConditionCode = tS("$(V) > 20");//TODO check this, to get better value
+  n.thresholdConditionCode = tS("$(V) > 100");//TODO check this, to get better value
   int HHV= nModels.size();
   nModels.push_back(n);
 
