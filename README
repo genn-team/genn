@@ -21,7 +21,7 @@ INSTALLATION OF GeNN:
     For most people, the default value of /usr/local/cuda is fine.
 
 (vi) Modify Makefile examples under $GeNNPATH/lib/src/ and $GeNNPATH/userproject/
-     to add extra linker, include and compiler flags on a per-project basis, or
+     to add extra linker-, include- and compiler-flags on a per-project basis, or
      modify global default flags in $GeNNPATH/lib/include/makefile_common.mk.
 
 This completes the installation.
@@ -33,13 +33,16 @@ Note that the debugging option is not available under CYGWIN.
 
 HOW TO USE GeNN: 
 
+In order to get a quick start and run one of the the provided example models, go to GeNN/tools
+
+type "make".
+
+At the moment, there are 5 example projects provided with GeNN.
+
+1: Locust olfactory system example (Nowotny et al. 2005):
 For a first complete test, the system is best used with a full driver program such as
  
 tools/generate_run [CPU/GPU] [nAL] [nKC] [nLH] [nDN] [gscale] [DIR] [EXE] [MODEL] [DEBUG OFF/ON]. 
-
-In order to get a quick start and run the provided example model, go to GeNN/tools
-
-type "make"
 
 To use it, navigate to the "userproject/MBody1_project" directory and type
 "../../tools/generate_run 1 100 1000 20 100 0.00117 outname classol_sim MBody1 0" 
@@ -48,11 +51,6 @@ The tool generate_run will generate connectivity files for the model
 MBody1, compile and run it on the GPU, with 100 antennal lobe neurons, 1000 mushroom body Kenyon cells, 
 20 lateral horn interneurons and 100 mushroom body output neurons. All output files 
 will be prefixed with "outname" and will be created under the "outname" directory.
-
-Alternatively, navigate to the "userproject/Poisson-Izh_project" directory and type
-"../../tools/generate_run 1 100 1000 20 100 0.002 TestOutdir PoissonIzh_sim Poisson-Izh 0"
-for a simpler two population model with 100 poisson input 1000 Izhikevich phasic bursting output
-network. In this case, args defining other populations will be discarded.
 
 In more details, what generate_run program does is: 
 a) use some other tools to generate the appropriate connectivity
@@ -98,18 +96,59 @@ results from GPU calculations.
 "buildmodel Model1 [DEBUG OFF/ON]" and
 "make clean && make"
 
+2: Izhikevich network receiving Poisson input spike trains:
+
+Can be used as:
+tools/generate_run_PoissonIzh [CPU/GPU] [nPoisson] [nIzhikevich] [pConn] [gscale] [DIR] [EXE] [MODEL] [DEBUG OFF/ON]
+
+Navigate to the "userproject/PoissonIzh_project" directory and type
+"../../tools/generate_run_PoissonIzh 1 100 10 0.5 2 Outdir PoissonIzh_sim PoissonIzh 0"
+
+This will generate a network of 100 Poisson neurons connected to 10 Izhikevich neurons with a 0.4 probability. The same network 
+with sparse connectivity can be used by addind the synapse population with sparse connectivity in PoissonIzh.cc and by
+uncommenting the lines following the "//SPARSE CONNECTIVITY" tag in PoissonIzh.cu.
+
+3: Single compartment Izhikevich neuron(s)
+
 For a first minimal test, the system may be used with 
 
 tools/generate_run_1comp [CPU/GPU] [n] [nKC] [DIR] [EXE] [MODEL] [DEBUG OFF/ON].
 
 This would create a set of tonic spiking Izhikevich neurons with no connectivity, 
-receiving an external sine wave current input. 
+receiving a constant identical 4 nA input. 
 To use it, navigate to the "userproject/OneComp_project" directory and type
 "../../tools/generate_run_1comp 1 1 Outdir OneComp_sim OneComp 0".
-This would create one neuron receiving 5 nA oscillating input at 5 Hz. Input and output values 
-are written under Outdir. 
+
+4: Pulse-coupled Izhikevich network
+
+Can be used as: 
+tools/generate_run_1comp generate_izhikevich_network_bm [CPU/GPU] [nNeurons] [nConn] [gscale] [outdir] [executable name] [model name] [debug OFF/ON] [use previous connectivity OFF/ON]
+
+
+This example creates a pulse-coupled network with 80% excitatory 20% inhibitory connections, each connecting to nConn neurons with sparse connectivity.
+
+To use an example, navigate to the "userproject/Izh_sparse_project" directory and type
+"../../tools/generate_izhikevich_network_run 1 10000 1000 1 Outdir Izh_sim_sparse Izh_sparse 0 1"
+
+5:Izhikevich network with delayed synapses
+
+This example project demonstrates the delayed synapse feature of GeNN. It creates
+a network of three Izhikevich neuron groups, connected all-to-all with fast, medium
+and slow synapse groups. Neurons in the output group only spike if they are
+simultaneously innervated by the input neurons, via slow synapses, and the
+interneurons, via faster synapses. 
+
+To run this example project, cd to "$GeNNPATH/userproject/SynDelay_project" and type
+"buildmodel SynDelay && make clean && make && ./bin/release/syn_delay 1 output"
+
+DEBUGGING
+The last argument to generate_run or similar files enables the debugging flags while compiling 
+generateAll.cc under lib/src/ and *.cu under individual user project directory, 
+and will run the corresponding executables with cuda-gdb consecutively. 
+If you want to skip one of these debugging steps, simply press r while on the debugging screen.
+ 
 -----
 
-For more about this example model provided by generate_run see 
+For more about the complete example model provided by generate_run see 
 
 T. Nowotny, R. Huerta, H. D. I. Abarbanel, and M. I. Rabinovich Self-organization in the olfactory system: One shot odor recognition in insects, Biol Cyber, 93 (6): 436-446 (2005), doi:10.1007/s00422-005-0019-7 

@@ -72,7 +72,7 @@ void classol::allocate_device_mem_patterns()
   // allocate device memory for input patterns
   size= model.neuronN[0]*PATTERNNO*sizeof(unsigned int);
   CHECK_CUDA_ERRORS(cudaMalloc((void**) &d_pattern, size));
-  fprintf(stderr, "allocated %u elements for pattern.\n", size/sizeof(unsigned int));
+  fprintf(stderr, "allocated %lu elements for pattern.\n", size/sizeof(unsigned int));
   CHECK_CUDA_ERRORS(cudaMemcpy(d_pattern, pattern, size, cudaMemcpyHostToDevice));
   size= model.neuronN[0]*sizeof(unsigned int);
   CHECK_CUDA_ERRORS(cudaMalloc((void**) &d_baserates, size));
@@ -99,6 +99,7 @@ classol::~classol()
 {
   free(pattern);
   free(baserates);
+	freeMem;
 }
 
 
@@ -111,7 +112,7 @@ void classol::read_pnkcsyns(FILE *f //!< File handle for a file containing PN to
 			    )
 {
   // version 1
-  fprintf(stderr, "%u\n", model.neuronN[0]*model.neuronN[1]*sizeof(float));
+  fprintf(stderr, "%lu\n", model.neuronN[0]*model.neuronN[1]*sizeof(float));
   fread(gpPNKC, model.neuronN[0]*model.neuronN[1]*sizeof(float),1,f);
   // version 2
   /*  unsigned int UIntSz= sizeof(unsigned int)*8;   // in bit!
@@ -132,7 +133,6 @@ void classol::read_pnkcsyns(FILE *f //!< File handle for a file containing PN to
   fprintf(stderr,"\n\n");
 }
 
-
 //--------------------------------------------------------------------------
 /*! \brief Method for writing the conenctivity between PNs and KCs back into file
  */
@@ -142,7 +142,7 @@ void classol::read_pnkcsyns(FILE *f //!< File handle for a file containing PN to
 void classol::write_pnkcsyns(FILE *f //!< File handle for a file to write PN to KC conductivity values to
 			     )
 {
-  fwrite(gpPNKC, model.neuronN[0]*model.neuronN[1]*sizeof(float),1,f);
+  fwrite(gpPNKC, model.neuronN[0] * model.neuronN[1] * sizeof(float), 1, f);
   fprintf(stderr, "wrote pnkc ... \n");
 }
 
@@ -155,7 +155,7 @@ void classol::write_pnkcsyns(FILE *f //!< File handle for a file to write PN to 
 void classol::read_pnlhisyns(FILE *f //!< File handle for a file containing PN to LHI conductivity values
 			     )
 {
-  fread(gpPNLHI, model.neuronN[0]*model.neuronN[2]*sizeof(float),1,f);
+  fread(gpPNLHI, model.neuronN[0] * model.neuronN[2] * sizeof(float), 1, f);
   fprintf(stderr,"read pnlhi ... \n");
   fprintf(stderr, "values start with: \n");
   for(int i= 0; i < 20; i++) {
@@ -172,7 +172,7 @@ void classol::read_pnlhisyns(FILE *f //!< File handle for a file containing PN t
 void classol::write_pnlhisyns(FILE *f //!< File handle for a file to write PN to LHI conductivity values to
 			      )
 {
-  fwrite(gpPNLHI, model.neuronN[0]*model.neuronN[2]*sizeof(float),1,f);
+  fwrite(gpPNLHI, model.neuronN[0] * model.neuronN[2] * sizeof(float), 1, f);
   fprintf(stderr, "wrote pnlhi ... \n");
 }
 
@@ -207,6 +207,38 @@ void classol::write_kcdnsyns(FILE *f //!< File handle for a file to write KC to 
   fprintf(stderr, "wrote kcdn ... \n");
 }
 
+void classol::read_sparsesyns_par(int synInd, Conductance C, FILE *f_ind,FILE *f_indInG,FILE *f_g //!< File handle for a file containing sparse conductivity values
+			    )
+{
+  //allocateSparseArray(synInd,C.connN);
+
+  fread(C.gp, C.connN*sizeof(float),1,f_g);
+  fprintf(stderr,"%d active synapses. \n",C.connN);
+  fread(C.gIndInG, (model.neuronN[model.synapseSource[synInd]]+1)*sizeof(unsigned int),1,f_indInG);
+  fread(C.gInd, C.connN*sizeof(int),1,f_ind);
+
+
+  // general:
+  fprintf(stderr,"Read conductance ... \n");
+  fprintf(stderr, "Size is %d for synapse group %d. Values start with: \n",C.connN, synInd);
+  for(int i= 0; i < 100; i++) {
+    fprintf(stderr, "%f ", C.gp[i]);
+  }
+  fprintf(stderr,"\n\n");
+  
+  
+  fprintf(stderr, "%d indices read. Index values start with: \n",C.connN);
+  for(int i= 0; i < 100; i++) {
+    fprintf(stderr, "%d ", C.gInd[i]);
+  }  
+  fprintf(stderr,"\n\n");
+  
+  
+  fprintf(stderr, "%d g indices read. Index in g array values start with: \n", model.neuronN[model.synapseSource[synInd]]+1);
+  for(int i= 0; i < 100; i++) {
+    fprintf(stderr, "%d ", C.gIndInG[i]);
+  }  
+}
 
 //--------------------------------------------------------------------------
 /*! \brief Method for reading the input patterns from a file
@@ -263,7 +295,7 @@ void classol::run(float runtime, //!< Duration of time to run the model for
       if (which == GPU)
 	theRates= d_pattern;
       offset= pno*model.neuronN[0];
-      fprintf(stderr, "setting pattern, pattern offset: %d\n", offset);
+      //      fprintf(stderr, "setting pattern, pattern offset: %d\n", offset);
     }
     if (iT%patSetTime == patFireTime) {
       if (which == CPU)
@@ -276,9 +308,9 @@ void classol::run(float runtime, //!< Duration of time to run the model for
        stepTimeGPU(theRates, offset, t);
     if (which == CPU)
        stepTimeCPU(theRates, offset, t);
-    t+= DT;
     iT++;
-    //    fprintf(stderr, "%f\n", t);
+    t= iT*DT;
+    fprintf(stderr, "%f %f \n", t, DT);
   }
 }
 

@@ -25,7 +25,7 @@ development version using the Mercurial version control system.
 \subsection subsect_DS1 Downloading a release
 Point your browser to
 \a http://sourceforge.net/projects/genn/
-and download the latest release using the green download button. The
+and download the latest release using the green download button. Then
 continue as described in the \ref install_sec section.
 
 \subsection subsect_DS2 Obtaining a Mercurial snapshot
@@ -54,61 +54,103 @@ You can then skip the unzip step and continue as described in \ref install_sec.
 
 Installation of GeNN:
 
-(i) unpack GeNN.zip in a convenient location 
+(i) Unpack GeNN.zip in a convenient location.
 
-(ii) define the environment variable "GeNNPATH" to point to the main GeNN 
+(ii) Define the environment variable "GeNNPATH" to point to the main GeNN 
      directory, e.g. if you extracted GeNN to /usr/local/GeNN, then you can add
-     "export GeNNPATH=/usr/local/GeNN"
-     to your login script.
+     "export GeNNPATH=/usr/local/GeNN" to your login script. If you are using CYGWIN,
+     the path should be a windows path or a mixed path (i.e. with normal slashes
+     instead of backslashes) as it will be interpreted by cl.
 
-(iii) define the environment variable "NVIDIASDKPATH" to point to the main 
-      directory of an installation of the NVidia Computing SDK (install one
-      if necessary). E.g. if the SDK resides in 
-      "/usr/local/cuda-5.0/samples" then you can add
-      "export NVIDIASDKPATH=/usr/local/cuda-5.0/samples/"
-      to your login script.
+(iii) Add $GeNNPATH/lib/bin to your PATH variable, e.g.
+      "export PATH=$PATH:$GeNNPATH/lib/bin". Under CYGWIN, it is safer to enter full 
+      linux path (such as: export PATH=$PATH:/usr/local/GeNN/lib/bin) 
 
-(iv) add $GeNNPATH/lib/bin to your PATH variable, e.g.
-     "export PATH=$PATH:$GeNNPATH/lib/bin"
+(iv) Get a fresh installation of the Nvidia cuda toolkit from
+     https://developer.nvidia.com/cuda-downloads
 
-(v)  modify Makefile examples under $GeNNPATH/lib/src/ and 
-     $GeNNPATH/userproject/ 
-     (if you use the example) to include the correct SMVERSIONFLAGS of your 
-     GPU. 
-     Also check the directories under the INCLUDES and LIB variables.
+(v) Set the CUDA_PATH variable in $GeNNPATH/lib/include/makefile_common.mk to
+    the location of your Nvidia cuda toolkit installation, if it is not already
+    set by the system.
+    For most people, the default value of /usr/local/cuda is fine.
 
-This completes the installation. If you use the example Makefile in 
-"userproject", then the HOME, ROOTDIR and include line for Makefile also 
-need to be adjusted.
+(vi) Modify Makefile examples under $GeNNPATH/lib/src/ and $GeNNPATH/userproject/
+     to add extra linker-, include- and compiler-flags on a per-project basis, or
+     modify global default flags in $GeNNPATH/lib/include/makefile_common.mk.
+
+This completes the installation.
+
+If you are using GeNN under CYGWIN with cl, you have to source vscvsrs.bat script under Visual Studio directory first.
+Note that the debugging option is not available under CYGWIN, as it uses cuda-gdb.
+
+
+\section quick_sec Quickstart
+
+In order to get a quick start and run a provided model, go to GeNN/tools
+
+type "make". 
+
+This will compile additional tools for creating and running example projects.
+
+For a first complete test, the system is best used with a full driver program such as in the 
+\ref ex_mbody example:
+\code{.cc} 
+tools/generate_run [CPU/GPU] [#AL] [#KC] [#LH] [#DN] [gscale] [DIR] [EXE] [MODEL] [DEBUG OFF/ON]. 
+\endcode
+To use it, navigate to the "userproject/MBody1_project" directory and type
+\code{.cc} 
+../../tools/generate_run
+n 1 100 1000 20 100 0.00117 outname classol_sim MBody1 0 
+\endcode
+which would generate a model of the locust olfactory system. 
+
+The tool generate_run will generate connectivity files for the model
+MBody1, compile and run it on the GPU, with 100 antennal lobe neurons, 1000 mushroom body Kenyon cells, 
+20 lateral horn interneurons and 100 mushroom body output neurons. All output files 
+will be prefixed with "outname" and will be created under the "outname" directory. 
+
+This is already a quite highly integrated example.
+
+\link Manual More in the User Manual \endlink
 
 \section how_to How to use GeNN
 
-for a first test the system is best used with a full driver program
-like tools/generate_run. To use it, navigate to the "test" directory and type
-"../tools/generate_run 1 100 1000 20 100 0.0009 t1".
+The conventional way to use GeNN is to use a program such as tools/generate_run.
 
-What this program does is: 
+In more details, what tools/generate_run and similar programs do is: 
 a) use some other tools to generate the appropriate connectivity
 matrices and store them in files.
 
 b) build the source code for the model by writing neuron numbers into
-userproject/sizes.h, and executing "buildmodel MBody1".  
+userproject/include/sizes.h, and executing "buildmodel MBody1 [DEBUG OFF/ON]".  
 
-c) compile the generated code by invoking "make clean && make" d)
+c) compile the generated code by invoking "make clean && make" 
 running the code, e.g. "linux/release/classol_sim r1 1".
 
-This is already a quite highly integrated example. If one was to use
-the library for GPU code generation only, the following would be done:
+- the simulation code is then produced in two steps:
+"buildmodel Model1 [DEBUG OFF/ON]" and
+"make clean && make"
+
+\section exs Example projects
+GeNN comes with several example projects which show how to use some basic features. 
+These can be found in \link Examples Example projects\endlink.
+
+\section ownmodel Defining your own model
+If one was to use the library for GPU code generation only, the following would be done:
 
 a) The model in question is defined in a file, say "Model1.cc".  
 
 b) this file needs to 
-  (i) define "DT" 
-  (ii) include "modelSpec.h" and "modelSpec.cc"
-  (iii) contains the model's definition in the form of a function 
-  "void modelDefinition(NNmodel &model)" 
-  ("MBody1.cc") shows a typical example)
-
+	<ol type='i'>
+  <li> define "DT" 
+  <li> include "modelSpec.h" and "modelSpec.cc"
+  <li> define the values for initial variables and parameters for neuron and synapse populations
+  <li> contain the model's definition in the form of a function 
+\code{.cc}
+  void modelDefinition(NNmodel &model); 
+\endcode  
+	"MBody1.cc" shows a typical example.
+	</ol>
 c) The programmer defines his/her own modeling code along similar lines as
 "map_classol.*" together with "classol_sim.*". In this code, 
 
@@ -126,40 +168,6 @@ GPU version are copied (see next point)
 
 - she uses functions like "copyStateFromDevice();" etc to obtain
 results from GPU calculations.
-
-- the simulation code is then produced in two steps:
-"buildmodel Model1" and
-"make clean && make"
-
-\link Manual More in the User Manual \endlink
-
-\section quick_sec Quickstart
-
-In order to get a quick start and run the provided example model, go to 
-GeNN/tools
-
-type "make"
-
-type "./generate_run"
-
-This will show you the command line parameters needed.
-
-The tool generate_run will generate connectivity files for the model
-MBody1, compiles this model for the GPU and executes it. The command
-line parameters are the numbers of neurons in the different neuropils
-of the model and an overall synaptic strength. A typical call would
-for example be
-
-./generate_run 1 100 1000 20 100 0.0009 test1
-
-which would generate a model, and run it on the GPU, with 100 antennal
-lobe neurons, 1000 mushroom body Kenyon cells, 20 lateral horn
-interneurons and 100 mushroom body output neurons. All output files 
-will be prefixed with "test1".
-
-For more about this example model see 
-
-T. Nowotny, R. Huerta, H. D. I. Abarbanel, and M. I. Rabinovich Self-organization in the olfactory system: One shot odor recognition in insects, Biol Cyber, 93 (6): 436-446 (2005), doi:10.1007/s00422-005-0019-7 
 
 */
 //----------------------------------------------------------------------------

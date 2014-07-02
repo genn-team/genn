@@ -12,42 +12,44 @@
 --------------------------------------------------------------------------*/
 
 
-#ifndef POISSONIZH_H 
-#define POISSONIZH_H
+#ifndef IZH_SPARSE_MODEL_H 
+#define IZH_SPARSE_MODEL_H
 
-#include "Poisson-Izh.cc"
+#include "Izh_sparse.cc"
 
-class classol
+class classIzh
 {
  public:
   NNmodel model;
-  unsigned int *theRates;
-  unsigned int *pattern;
-  unsigned int *baserates;
+  float *input1, *input2;
   //------------------------------------------------------------------------
   // on the device:
-  unsigned int *d_pattern;
-  unsigned int *d_baserates;
+  float *d_input1, *d_input2;
   //------------------------------------------------------------------------
-  unsigned int sumPN, sumIzh1;
-  // end of data fields 
-
-  classol();
-  ~classol();
+  unsigned int sumPExc, sumPInh;
+  classIzh();
+  ~classIzh();
   void init(unsigned int);
   void allocate_device_mem_patterns();
   void allocate_device_mem_input();
+  void copy_device_mem_input();
+  void read_sparsesyns_par(int, struct Conductance, FILE *,FILE *,FILE *); 
+  void gen_alltoall_syns(float *, unsigned int, unsigned int, float);
   void free_device_mem();
-  void read_PNIzh1syns(FILE *);
-  void write_PNIzh1syns(FILE *);
-  void read_input_patterns(FILE *);
-  void generate_baserates();
+  void write_input_to_file(FILE *);
+  void read_input_values(FILE *);
+  void create_input_values();
   void run(float, unsigned int);
+  void getSpikesFromGPU(); 
+  void getSpikeNumbersFromGPU(); 
   void output_state(FILE *, unsigned int);
-  void getSpikesFromGPU();
-  void getSpikeNumbersFromGPU();
   void output_spikes(FILE *, unsigned int);
+  void output_params(FILE *, FILE *);
   void sum_spikes();
+  void setInput(unsigned int);
+  void randomizeVar(float *, float, unsigned int);
+  void randomizeVarSq(float *, float, unsigned int);
+  void initializeAllVars(unsigned int);
 };
 
 #endif

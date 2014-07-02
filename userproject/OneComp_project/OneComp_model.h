@@ -26,7 +26,7 @@ class classol
   // on the device:
   float *d_input1;
   //------------------------------------------------------------------------
-
+  unsigned int sumIzh1;
   classol();
   ~classol();
   void init(unsigned int);
@@ -36,9 +36,13 @@ class classol
   void free_device_mem();
   void write_input_to_file(FILE *);
   void read_input_values(FILE *);
-  void create_input_values(FILE * f, float t);
+  void create_input_values(float t);
   void run(float, unsigned int);
+  void getSpikesFromGPU(); 
+  void getSpikeNumbersFromGPU(); 
   void output_state(FILE *, unsigned int);
+  void output_spikes(FILE *, unsigned int);
+  void sum_spikes();
 };
 
 #endif
