@@ -1,40 +1,36 @@
-##--------------------------------------------------------------------------                                                               
-##   Author: Thomas Nowotny                                                                                                                
-##                                                                                                                                         
-##   Institute: Center for Computational Neuroscience and Robotics                                                                         
+##--------------------------------------------------------------------------
+##   Author: Thomas Nowotny
+##
+##   Institute: Center for Computational Neuroscience and Robotics
 ##              University of Sussex                                                                                                       
-##            Falmer, Brighton BN1 9QJ, UK                                                                                                 
-##                                                                                                                                         
-##   email to:  T.Nowotny@sussex.ac.uk                                                                                                     
-##                                                                                                                                         
-##   initial version: 2010-02-07                                                                                                           
-##                                                                                                                                         
-##--------------------------------------------------------------------------                                                               
-
+##            	Falmer, Brighton BN1 9QJ, UK
+##
+##   email to:  T.Nowotny@sussex.ac.uk
+##
+##   initial version: 2010-02-07
+##
+##--------------------------------------------------------------------------
 
 ##################################################################################
 # Makefile include for all projects
 ##################################################################################
 
 # OS name (Linux or Darwin) and architecture (32 bit or 64 bit).
-OSUPPER = $(shell uname -s 2>/dev/null | tr [:lower:] [:upper:])
-OSLOWER = $(shell uname -s 2>/dev/null | tr [:upper:] [:lower:])
-DARWIN  = $(strip $(findstring DARWIN, $(OSUPPER)))
-OS_SIZE = $(shell uname -m | sed -e "s/i.86/32/" -e "s/x86_64/64/")
-OS_ARCH = $(shell uname -m | sed -e "s/i386/i686/")
+OSUPPER 	:= $(shell uname -s 2>/dev/null | tr [:lower:] [:upper:])
+OSLOWER 	:= $(shell uname -s 2>/dev/null | tr [:upper:] [:lower:])
+DARWIN  	:= $(strip $(findstring DARWIN, $(OSUPPER)))
+OS_SIZE 	:= $(shell uname -m | sed -e "s/i.86/32/" -e "s/x86_64/64/")
+OS_ARCH 	:= $(shell uname -m | sed -e "s/i386/i686/")
 
 # C / C++ compiler, cuda compiler, include flags and link flags. Specify
 # additional lib and include paths by defining LINK_FLAGS and INCLUDE_FLAGS in
 # a project's main Makefile.  Declare cuda's install directory with CUDA_PATH.
-ifndef CUDA_PATH
-	CUDA_PATH        := /usr/local/cuda
-endif
-
-COMPILER         := g++
-NVCC             := $(CUDA_PATH)/bin/nvcc
-INCLUDE_FLAGS    += -I$(CUDA_PATH)/include -I$(GeNNPATH)/lib/include -I. 
+CUDA_PATH        ?= /usr/local/cuda
+COMPILER         ?= g++
+NVCC             ?= $(CUDA_PATH)/bin/nvcc
+INCLUDE_FLAGS    += -I$(CUDA_PATH)/include -I$(GeNNPATH)/lib/include -I$(GeNNPATH)/userproject/include -I. 
 ifeq ($(DARWIN),DARWIN)
-  LINK_FLAGS     += -Xlinker -rpath $(CUDA_PATH)/lib -L$(CUDA_PATH)/lib -lcudart 
+  LINK_FLAGS     += -Xlinker -L$(CUDA_PATH)/lib -lcudart 
 else
   ifeq ($(OS_SIZE),32)
     LINK_FLAGS   += -L$(CUDA_PATH)/lib -lcudart 
@@ -49,7 +45,12 @@ endif
 
 # Global compiler flags to be used by all projects. Declate CCFLAGS and NVCCFLAGS
 # in a project's main Makefile to specify compiler flags on a per-project basis.
-CCFLAGS          += # put your global compiler flags here
+ifeq ($(DARWIN),DARWIN)
+  CCFLAGS        += # -arch i386# put your global compiler flags here
+  NVCCFLAGS      += -lstdc++ -lc++ 
+else
+  CCFLAGS        += # put your global compiler flags here
+endif
 NVCCFLAGS        += # put your global nvcc flags here
 
 # Get the OBJECTS rule targets from the files listed by SOURCES (use all source
@@ -82,6 +83,8 @@ $(EXECUTABLE): $(OBJECTS)
 	$(NVCC) $(NVCCFLAGS) -o $@ $+ $(LINK_FLAGS) 
 
 .PHONY: release
+release: CCFLAGS += -O3 -ffast-math
+release: NVCCFLAGS += --compiler-options "-O3 -ffast-math"
 release: $(EXECUTABLE)
 	mkdir -p $(ROOTDIR)/bin/$(OSLOWER)/release
 	mv $(EXECUTABLE) $(ROOTDIR)/bin/$(OSLOWER)/release
