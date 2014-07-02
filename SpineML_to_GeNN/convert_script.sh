@@ -18,6 +18,9 @@ echo "Done"
 echo "Creating extra_postsynapses.h file with new postsynapse components..."
 xsltproc -o extra_postsynapses.h SpineML_2_GeNN_postsynapses.xsl model/experiment.xml
 echo "Done"
+echo "Creating extra_weightupdates.h file with new weightupdate components..."
+xsltproc -o extra_weightupdates.h SpineML_2_GeNN_weightupdates.xsl model/experiment.xml
+echo "Done"
 echo "Creating model.cc file..."
 xsltproc -o model.cc SpineML_2_GeNN_model.xsl model/experiment.xml
 echo "Done"
@@ -43,10 +46,10 @@ cd $GeNNPATH/userproject/model_project
 ../../lib/bin/buildmodel model $DBGMODE
 make clean
 make
-if mv *.bin bin/linux/release/; then
+if mv *.bin bin/darwin/release/; then
 	echo "Moving binary data..."	
 fi
-cd bin/linux/release
+cd bin/darwin/release
 ./sim
 #rm *.bin
 echo "Done"
