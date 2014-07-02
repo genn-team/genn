@@ -61,9 +61,9 @@ Error: WeightUpdates cannot contain TimeDerivatives
   <xsl:for-each select="//SMLCL:Parameter">
   wu.pNames.push_back(tS("<xsl:value-of select="@name"/>_WU"));<!---->
   </xsl:for-each>
-  wu.dpNames.clear();
+  //wu.dpNames.clear();
 
-  wu.simcode = tS(" \
+  wu.simCode = tS(" \
      <!-- LIMIT SCOPE --> { \n \
     <!-- USE TEMP VARIABLE TO GET DATA FROM OTHER COMPONENTS -->
      <xsl:for-each select="//SMLCL:AnalogReceivePort">

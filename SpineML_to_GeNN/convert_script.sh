@@ -46,6 +46,7 @@ error_exit "The system environment is not correctly configured"
 fi
 cp extra_neurons.h $GeNNPATH/lib/include/
 cp extra_postsynapses.h $GeNNPATH/lib/include/
+cp extra_weightupdates.h $GeNNPATH/lib/include/
 cp model.cc $GeNNPATH/userproject/model_project/model.cc
 cp sim.cu $GeNNPATH/userproject/model_project/sim.cu
 if cp model/*.bin $GeNNPATH/userproject/model_project/; then
