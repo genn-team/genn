@@ -1,0 +1,3 @@
+#! /bin/bash
+
+scp -r documentation/html tnowotny@web.sourceforge.net:/home/project-web/genn/htdocs/documentation/
