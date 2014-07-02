@@ -696,24 +696,32 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 			}
 			os << "//add code here" << ENDL;
 			
-			
-		unsigned int synt = model.synapseType[i];
-			
+		
+		if (model.synapseType[i]>=3){
+			os << "//here it goes" << ENDL;	
+			unsigned int synt = 0; //model.synapseType[i]-MAXSYN;
+			os << "//here it goes 1" << ENDL;	
 			string code = weightUpdateModels[synt].simCode;
-		for (int k = 0, l = weightUpdateModels[synt].varNames.size(); k < l; k++) {
-			substitute(code, tS("$(") + weightUpdateModels[synt].varNames[k] + tS(")"), tS("l")+ weightUpdateModels[synt].varNames[k]);
-		}
-		substitute(code, tS("$(Isyn)"), tS("Isyn"));
-		for (int k = 0, l = weightUpdateModels[synt].pNames.size(); k < l; k++) {
-			substitute(code, tS("$(") + weightUpdateModels[synt].pNames[k] + tS(")"), tS(model.neuronPara[i][k]));
-		}
+			os << "//here it goes 2" << ENDL;	
+			for (int k = 0, l = weightUpdateModels[synt].varNames.size(); k < l; k++) {
+				substitute(code, tS("$(") + weightUpdateModels[synt].varNames[k] + tS(")"), tS("l")+ weightUpdateModels[synt].varNames[k]);
+			  os << "//here it goes 3" << ENDL;	
+			}
+			substitute(code, tS("$(inSyn)"), tS("inSyn"));
+			for (int k = 0, l = weightUpdateModels[synt].pNames.size(); k < l; k++) {
+				substitute(code, tS("$(") + weightUpdateModels[synt].pNames[k] + tS(")"), tS(model.neuronPara[i][k]));
+				os << "//here it goes 4" << ENDL;	
+			}
 		/*for (int k = 0, l = nModels[nt].dpNames.size(); k < l; k++) {
 			substitute(code, tS("$(") + weightUpdateModels[synt].dpNames[k] + tS(")"), tS(model.dnp[i][k]));
 		}
 		for (int k = 0, l = nModels[nt].extraGlobalNeuronKernelParameters.size(); k < l; k++) {
 		  substitute(code, tS("$(") + nModels[nt].extraGlobalNeuronKernelParameters[k] + tS(")"), nModels[nt].extraGlobalNeuronKernelParameters[k]+model.neuronName[i]);
 		}*/		
-		os << code;
+		  //before code
+			os << code;
+			//after code
+		}
 			
 			
 			

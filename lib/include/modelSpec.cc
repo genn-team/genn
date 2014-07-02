@@ -401,6 +401,7 @@ void NNmodel::addSynapsePopulation(const string name, /**<  The name of the syna
   vector<float> tmpPV;
   
   if (postSynModels.size() < 1) preparePostSynModels();
+  if (syntype >= MAXSYN-1) prepareWeightUpdateModels();
 
   synapseName.push_back(name);
   synapseType.push_back(syntype);
@@ -442,6 +443,13 @@ void NNmodel::addSynapsePopulation(const string name, /**<  The name of the syna
   synapseDeviceID.push_back(0);
   synapseHostID.push_back(0);
 }
+
+// void NNmodel::addWeightUpdate(const string name, /**<  The name of the synapse population*/
+//                              unsigned int syntype, /**< The type of synapse to be added (i.e. learning mode) */
+//                                   ){
+////
+//}
+
 
 
 //--------------------------------------------------------------------------

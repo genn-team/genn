@@ -139,7 +139,7 @@ struct postSynModel
 
 struct weightUpdateModel
 {
-  string simcode;
+  string simCode;
   vector<string> varNames; //!< Names of the variables in the postsynaptic model
   vector<string> varTypes; //!< Types of the variable named above, e.g. "float". Names and types are matched by their order of occurrence in the vector.
   vector<string> pNames; //!< Names of (independent) parameters of the model. These are assumed to be always of type "float"
