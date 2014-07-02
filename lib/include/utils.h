@@ -381,6 +381,8 @@ void preparePostSynModels(){
   #include "extra_postsynapses.h"
 }
 
+vector<weightUpdateModel> weightUpdateModels;
+
 void prepareSynapseModels(){
 }
 // bit tool macros

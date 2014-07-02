@@ -42,6 +42,8 @@
 #define NGRADSYNAPSE 1 //!< Macro attaching  the name NGRADSYNAPSE to predefined synapse type 1 which is a graded synapse wrt the presynaptic voltage
 #define LEARN1SYNAPSE 2 //!< Macro attaching  the name LEARN1SYNAPSE to the predefined synapse type 2 which is a learning using spike timing; uses a primitive STDP rule for learning
 #define USERDEFSYNAPSE 3 //!< Macro attaching  the name USERDEFSYNAPSE to the predefined synapse type 3 which is a user-defined synapse
+#define MAXSYN 4 // maximum number of synapse types: SpineML needs to know this
+
 
 //input type
 #define NOINP 0 //!< Macro attaching  the name NOINP (no input) to 0
@@ -135,7 +137,15 @@ struct postSynModel
   dpclass * dps;
 };
 
+struct weightUpdateModel
+{
+  string simcode;
+  vector<string> varNames; //!< Names of the variables in the postsynaptic model
+  vector<string> varTypes; //!< Types of the variable named above, e.g. "float". Names and types are matched by their order of occurrence in the vector.
+  vector<string> pNames; //!< Names of (independent) parameters of the model. These are assumed to be always of type "float"
+  vector<string> dpNames; /*!< \brief Names of dependent parameters of the model. These are assumed to be always of type "float"*/
 
+};
 /*===============================================================
 //! \brief class NNmodel for specifying a neuronal network model.
 //

@@ -694,6 +694,33 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 				os << "lg = d_gp" << model.synapseName[i] << "[shSpkEvnt[j]*" << model.neuronN[trg] << " + " << localID << "];";
 				theLG = toString("lg");
 			}
+			os << "//add code here" << ENDL;
+			
+			
+		unsigned int synt = model.synapseType[i];
+			
+			string code = weightUpdateModels[synt].simCode;
+		for (int k = 0, l = weightUpdateModels[synt].varNames.size(); k < l; k++) {
+			substitute(code, tS("$(") + weightUpdateModels[synt].varNames[k] + tS(")"), tS("l")+ weightUpdateModels[synt].varNames[k]);
+		}
+		substitute(code, tS("$(Isyn)"), tS("Isyn"));
+		for (int k = 0, l = weightUpdateModels[synt].pNames.size(); k < l; k++) {
+			substitute(code, tS("$(") + weightUpdateModels[synt].pNames[k] + tS(")"), tS(model.neuronPara[i][k]));
+		}
+		/*for (int k = 0, l = nModels[nt].dpNames.size(); k < l; k++) {
+			substitute(code, tS("$(") + weightUpdateModels[synt].dpNames[k] + tS(")"), tS(model.dnp[i][k]));
+		}
+		for (int k = 0, l = nModels[nt].extraGlobalNeuronKernelParameters.size(); k < l; k++) {
+		  substitute(code, tS("$(") + nModels[nt].extraGlobalNeuronKernelParameters[k] + tS(")"), nModels[nt].extraGlobalNeuronKernelParameters[k]+model.neuronName[i]);
+		}*/		
+		os << code;
+			
+			
+			
+			
+			
+			
+			
 		}
 		os << ENDL;
 
