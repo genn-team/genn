@@ -7,6 +7,15 @@
 #exit on first error
 set -e
 
+# What OS are we?
+if [ $(uname) = 'Linux' ]; then
+    OS='Linux'
+elif [ $(uname) = 'Windows_NT' ] || [ $(uname) = 'MINGW32_NT-6.1' ]; then
+    OS='Windows'
+else
+    OS='OSX'
+fi
+
 echo ""
 echo "Converting SpineML to GeNN"
 echo "Alex Cope             2013"
@@ -46,10 +55,19 @@ cd $GeNNPATH/userproject/model_project
 ../../lib/bin/buildmodel model $DBGMODE
 make clean
 make
+
+if [ $(OS) = 'Linux' ]
+if mv *.bin bin/linux/release/; then
+	echo "Moving binary data..."	
+fi
+cd bin/linux/release
+fi
+if [ $(OS) = 'OSX' ]
 if mv *.bin bin/darwin/release/; then
 	echo "Moving binary data..."	
 fi
 cd bin/darwin/release
+fi
 ./sim
 #rm *.bin
 echo "Done"
