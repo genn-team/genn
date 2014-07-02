@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<SpineML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.shef.ac.uk/SpineMLComponentLayer" xsi:schemaLocation="http://www.shef.ac.uk/SpineMLComponentLayer SpineMLComponentLayer.xsd">
+ <ComponentClass type="weight_update" name="GeNNNativeSynapse">
+  <Dynamics initial_regime="dummy">
+   <Regime name="dummy">
+    <OnEvent target_regime="dummy" src_port="in">
+     <ImpulseOut port="g"/>
+    </OnEvent>
+   </Regime>
+  </Dynamics>
+  <EventReceivePort name="in"/>
+  <ImpulseSendPort name="g"/>
+  <Parameter dimension="?" name="g"/>
+ </ComponentClass>
+</SpineML>
