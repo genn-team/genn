@@ -11,9 +11,9 @@
 ##  
 ##--------------------------------------------------------------------------
 
-ROOTDIR		:= $(GeNNPATH)/userproject/Poisson-Izh_project
-EXECUTABLE	:= PoissonIzh_sim
-SOURCES		:= PoissonIzh_sim.cu
+ROOTDIR		:= $(GeNNPATH)/userproject/SynDelay_project
+EXECUTABLE	:= syn_delay
+SOURCES		:= SynDelaySim.cu
 
 INCLUDE_FLAGS	:= 
 LINK_FLAGS	:= 
