@@ -1,0 +1,107 @@
+<modelMetaData>
+ <population name="Population">
+  <xPos value="-2.8026e-45"/>
+  <yPos value="0.490382"/>
+  <animSpeed value="0.2"/>
+  <aspectRatio value="1.66667"/>
+  <colour red="19" blue="249" green="28"/>
+  <size value="1"/>
+  <tag value="1"/>
+  <x3D value="0"/>
+  <y3D value="0"/>
+  <z3D value="0"/>
+  <is_visualised value="1"/>
+ </population>
+ <population name="Population 1">
+  <xPos value="-2.44181"/>
+  <yPos value="3.38"/>
+  <animSpeed value="0.2"/>
+  <aspectRatio value="1.66667"/>
+  <colour red="87" blue="24" green="253"/>
+  <size value="1"/>
+  <tag value="2"/>
+  <x3D value="0"/>
+  <y3D value="0"/>
+  <z3D value="0"/>
+  <is_visualised value="1"/>
+ </population>
+ <projection destination="Population" source="Population 1">
+  <start x="-2.441453456878662" y="2.879228115081787"/>
+  <curves>
+   <curve>
+    <C1 ypos="1.879201769828796" xpos="-2.441480875015259"/>
+    <C2 ypos="1.990361452102661" xpos="-2.755457999120139e-16"/>
+    <end ypos="0.9903599619865417" xpos="1.739448462627872e-31"/>
+   </curve>
+  </curves>
+  <synapseConnection name="Population 1 to Population Synapse 0 weight_update"/>
+ </projection>
+ <genericInput srcPort="V" destination="Population 1 to Population Synapse 0 postsynapse" dstPort="v" source="Population">
+  <start x="0.2886751592159271" y="0.9903819561004639"/>
+  <curves>
+   <curve>
+    <C1 ypos="1.876022577285767" xpos="0.800000011920929"/>
+    <C2 ypos="2.090382099151611" xpos="5.566480147471451e-31"/>
+    <end ypos="0.9903599619865417" xpos="1.739448462627872e-31"/>
+   </curve>
+  </curves>
+  <connection/>
+ </genericInput>
+ <projection destination="Population 2" source="Population 1">
+  <start x="-1.608274459838867" y="3.286371469497681"/>
+  <curves>
+   <curve>
+    <C1 ypos="3.286371469497681" xpos="0.5550580620765686"/>
+    <C2 ypos="2.849094152450562" xpos="0.337159276008606"/>
+    <end ypos="2.849094152450562" xpos="2.107158422470093"/>
+   </curve>
+  </curves>
+  <synapseConnection name="Population 1 to Population 2 Synapse 0 weight_update"/>
+ </projection>
+ <genericInput srcPort="V" destination="Population 1 to Population 2 Synapse 0 postsynapse" dstPort="v" source="Population 2">
+  <start x="2.25372576713562" y="3.260580062866211"/>
+  <curves>
+   <curve>
+    <C1 ypos="3.702493169405718" xpos="1.646922393155701"/>
+    <C2 ypos="2.92961695075847" xpos="1.349244239316349"/>
+    <end ypos="2.849094152450562" xpos="2.107158422470093"/>
+   </curve>
+  </curves>
+  <connection/>
+ </genericInput>
+ <population name="Population 2">
+  <xPos value="2.94029"/>
+  <yPos value="2.76058"/>
+  <animSpeed value="0.2"/>
+  <aspectRatio value="1.66667"/>
+  <colour red="0" blue="0" green="0"/>
+  <size value="1"/>
+  <tag value="1"/>
+  <x3D value="0"/>
+  <y3D value="0"/>
+  <z3D value="0"/>
+  <is_visualised value="0"/>
+ </population>
+ <projection destination="Population" source="Population 2">
+  <start x="2.221014738082886" y="2.260574817657471"/>
+  <curves>
+   <curve>
+    <C1 ypos="1.488759279251099" xpos="2.221014738082886"/>
+    <C2 ypos="1.608184456825256" xpos="0.6298952698707581"/>
+    <end ypos="0.9903819561004639" xpos="0.6298952698707581"/>
+   </curve>
+  </curves>
+  <synapseConnection name="Population 2 to Population Synapse 0 weight_update"/>
+ </projection>
+ <genericInput srcPort="V" destination="Population 2 to Population Synapse 0 postsynapse" dstPort="v" source="Population">
+  <start x="0.8333349823951721" y="0.6140615344047546"/>
+  <curves>
+   <curve>
+    <C1 ypos="0.7252733707427979" xpos="1.582664251327515"/>
+    <C2 ypos="1.485136032104492" xpos="1.25318169593811"/>
+    <end ypos="0.9903819561004639" xpos="0.6298952698707581"/>
+   </curve>
+  </curves>
+  <connection/>
+ </genericInput>
+</modelMetaData>

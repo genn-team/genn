@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<!DOCTYPE SpineML>
+<SpineML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.shef.ac.uk/SpineMLComponentLayer" xsi:schemaLocation="http://www.shef.ac.uk/SpineMLComponentLayer SpineMLComponentLayer.xsd">
+ <ComponentClass type="neuron_body" name="GeNNNativePoisson">
+  <Dynamics initial_regime="dummy">
+   <Regime name="dummy"/>
+   <StateVariable dimension="mV" name="V"/>
+   <StateVariable dimension="?" name="seed"/>
+   <StateVariable dimension="ms" name="spikeTime"/>
+  </Dynamics>
+  <Parameter dimension="Hz" name="therate"/>
+  <Parameter dimension="ms" name="trefract"/>
+  <Parameter dimension="mV" name="Vspike"/>
+  <Parameter dimension="mV" name="Vrest"/>
+ </ComponentClass>
+</SpineML>
