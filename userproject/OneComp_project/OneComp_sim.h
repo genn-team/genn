@@ -30,8 +30,8 @@ unsigned int iT= 0;
 
 //----------------------------------------------------------------------
 // other stuff:
-#define T_REPORT_TME 1000.0
-#define TOTAL_TME 500000
+#define T_REPORT_TME 100.0
+#define TOTAL_TME 5000
 
 CStopWatch timer;
 

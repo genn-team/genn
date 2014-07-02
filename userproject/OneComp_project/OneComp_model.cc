@@ -19,10 +19,10 @@
 classol::classol()
 {
   modelDefinition(model);
- input1=new float[model.neuronN[0]];
+  input1=new float[model.neuronN[0]];
   allocateMem();
   initialize();
-
+  sumIzh1 = 0;
 }
 
 void classol::init(unsigned int which)
@@ -59,6 +59,7 @@ void classol::free_device_mem()
 classol::~classol()
 {
   free(input1);
+	freeMem;
 }
 
 
@@ -82,7 +83,7 @@ void classol::read_input_values(FILE *f)
 }
 
 
-void classol::create_input_values(FILE * f, float t) //define your explicit input rule here
+void classol::create_input_values(float t) //define your explicit input rule here
 {
   const double pi = 4*atan(1.);
   float frequency =5;
@@ -98,13 +99,18 @@ void classol::run(float runtime, unsigned int which)
 
   for (int i= 0; i < riT; i++) {
     if (which == GPU){
-       stepTimeGPU(d_input1,t);
+       stepTimeGPU(t);
     }
     if (which == CPU)
-       stepTimeCPU(input1,t);
+       stepTimeCPU(t);
     t+= DT;
     iT++;
   }
+}
+
+void classol::sum_spikes()
+{
+  sumIzh1+= glbscntIzh1;
 }
 
 //--------------------------------------------------------------------------
@@ -124,5 +130,39 @@ void classol::output_state(FILE *f, unsigned int which)
   fprintf(f,"\n");
 }
 
+
+//--------------------------------------------------------------------------
+/*! \brief Method for copying all spikes of the last time step from the GPU
+ 
+  This is a simple wrapper for the convenience function copySpikesFromDevice() which is provided by GeNN.
+*/
+//--------------------------------------------------------------------------
+
+void classol::getSpikesFromGPU()
+{
+  copySpikesFromDevice();
+}
+
+//--------------------------------------------------------------------------
+/*! \brief Method for copying the number of spikes in all neuron populations that have occurred during the last time step
+ 
+This method is a simple wrapper for the convenience function copySpikeNFromDevice() provided by GeNN.
+*/
+//--------------------------------------------------------------------------
+
+void classol::getSpikeNumbersFromGPU() 
+{
+  copySpikeNFromDevice();
+}
+
+
+void classol::output_spikes(FILE *f, unsigned int which)
+{
+
+   for (int i= 0; i < glbscntIzh1; i++) {
+     fprintf(f, "%f %d\n", t, glbSpkIzh1[i]);
+   }
+
+}
 #endif	
 
