@@ -198,10 +198,11 @@ void genNeuronFunction(NNmodel &model, //!< Model description
     }
 
     code= nModels[nt].thresholdConditionCode;
+  
     for (int k = 0, l = nModels[nt].varNames.size(); k < l; k++) {
-		substitute(code, tS("$(") + nModels[nt].varNames[k] + tS(")"),
-	    nModels[nt].varNames[k] + model.neuronName[i] + tS("[n]"));
-    }
+			substitute(code, tS("$(") + nModels[nt].varNames[k] + tS(")"), tS("l")+ nModels[nt].varNames[k]);
+		}
+  
     substitute(code, tS("$(Isyn)"), tS("Isyn"));
     for (int k = 0, l = nModels[nt].pNames.size(); k < l; k++) {
 		substitute(code, tS("$(") + nModels[nt].pNames[k] + tS(")"),
@@ -511,7 +512,7 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 	        os << "j]];" << ENDL;
 	        os << "for (int l = 0; l < npost; l++)" << OB(2021);
 	        os << "ipost = g" << model.synapseName[synID] << ".gInd[g" << model.synapseName[synID];
-	        os << ".gIndInG[glbSpkEvnt" << model.neuronName[src] << "[";
+	        os << ".gIndInG[glbSpk" << model.neuronName[src] << "[";
 	        if (model.neuronDelaySlots[src] != 1) {
 	          os << "delaySlot * " << model.neuronN[src] << " + ";
 	        }
