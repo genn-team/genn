@@ -56,13 +56,13 @@ cd $GeNNPATH/userproject/model_project
 make clean
 make
 
-if [ $(OS) = 'Linux' ]
+if [ $(OS) = 'Linux' ]; then
 if mv *.bin bin/linux/release/; then
 	echo "Moving binary data..."	
 fi
 cd bin/linux/release
 fi
-if [ $(OS) = 'OSX' ]
+if [ $(OS) = 'OSX' ]; then
 if mv *.bin bin/darwin/release/; then
 	echo "Moving binary data..."	
 fi
