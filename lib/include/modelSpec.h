@@ -209,6 +209,7 @@ public:
   vector<unsigned int> synapseTarget; //!< Postsynaptic neuron groups
   vector<unsigned int> synapseInSynNo; //!< IDs of the target neurons' incoming synapse variables for each synapse group
   vector<vector<float> > synapsePara; //!< parameters of synapses
+  vector<vector<float> > synapseIni; //!< Initial values of synapse variables
   vector<vector<float> > dsp;  //!< Derived synapse parameters
   vector<unsigned int> postSynapseType; //!< Types of synapses
   vector<vector<float> > postSynapsePara; //!< parameters of postsynapses
@@ -284,7 +285,8 @@ public:
 
   void addSynapsePopulation(const string name, unsigned int syntype, unsigned int conntype, unsigned int gtype, const string src, const string trg, float *p)  __attribute__ ((deprecated)); //!< Overload of method for backwards compatibility
   void addSynapsePopulation(const char *, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, const char *, const char *, float *, float *, float *); //!< Method for adding a synapse population to a neuronal network model, using C style character array for the name of the population
-  void addSynapsePopulation(const string, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, const string, const string, float *, float *, float *); //!< Method for adding a synapse population to a neuronal network model, using C++ string for the name of the population
+  void addSynapsePopulation(const string, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, const string, const string, float *, float *, float *); //!< Overloaded version without initial variables for synapses
+  void addSynapsePopulation(const string, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, const string, const string, float *,float *, float *, float *); //!< Method for adding a synapse population to a neuronal network model, using C++ string for the name of the population
   void setSynapseG(const string, float); //!< Method for setting the conductance (g) value for a synapse population with "GLOBALG" charactertistic
   //void setSynapseNo(unsigned int,unsigned int); // !< Sets the number of connections for sparse matrices  
   void setMaxConn(const string, unsigned int); //< Set maximum connections per neuron for the given group (needed for optimization by sparse connectivity)

@@ -423,7 +423,6 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 	os << "#endif" << ENDL;
 	os.close();
 }
-
 //-------------------------------------------------------------------------
 /*!
   \brief Function for generating a CUDA kernel for simulating all synapses.
@@ -440,7 +439,6 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 	string name, s, localID, theLG;
 	ofstream os;
 	unsigned int numOfBlocks,trgN;
-
 	// count how many neuron blocks to use: one thread for each synapse target
 	// targets of several input groups are counted multiply
 	numOfBlocks = model.padSumSynapseKrnl[model.synapseGrpN - 1] / synapseBlkSz;
@@ -487,6 +485,18 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 		os << nModels[nt].varTypes[0] << " *d_" << nModels[nt].varNames[0] << model.neuronName[i]; // Vm
 		if (i < (model.neuronGrpN - 1) || model.needSt) os << "," << ENDL;
 	}
+	
+	
+	for (int i=0; i< model.synapseName.size(); i++){
+		int st= model.synapseType[i];
+		if (st >= MAXSYN){
+		  for (int k= 0, l= weightUpdateModels[st-MAXSYN].varNames.size(); k < l; k++) {
+			  os << weightUpdateModels[st-MAXSYN].varTypes[k] << " *d_" << weightUpdateModels[st-MAXSYN].varNames[k];
+			  os << model.synapseName[i]<< ", " << ENDL;
+		  }
+		}
+	}
+	
 	if (model.needSt) {
 		os << model.ftype << " t";
 	}
@@ -697,20 +707,15 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 			os << "//add code here" << ENDL;
 			
 		
-		if (model.synapseType[i]>=3){
-			os << "//here it goes" << ENDL;	
-			unsigned int synt = 0; //model.synapseType[i]-MAXSYN;
-			os << "//here it goes 1" << ENDL;	
+		if (model.synapseType[i]>=MAXSYN){
+			unsigned int synt = model.synapseType[i]-MAXSYN;
 			string code = weightUpdateModels[synt].simCode;
-			os << "//here it goes 2" << ENDL;	
 			for (int k = 0, l = weightUpdateModels[synt].varNames.size(); k < l; k++) {
-				substitute(code, tS("$(") + weightUpdateModels[synt].varNames[k] + tS(")"), tS("l")+ weightUpdateModels[synt].varNames[k]);
-			  os << "//here it goes 3" << ENDL;	
+				substitute(code, tS("$(") + weightUpdateModels[synt].varNames[k] + tS(")"), tS("d_")+weightUpdateModels[synt].varNames[k]+model.synapseName[i]+tS("[shSpkEvnt[j]") + tS("*") + tS(model.neuronN[trg]) + tS("+") + localID + tS(" ]"));
 			}
 			substitute(code, tS("$(inSyn)"), tS("inSyn"));
 			for (int k = 0, l = weightUpdateModels[synt].pNames.size(); k < l; k++) {
-				substitute(code, tS("$(") + weightUpdateModels[synt].pNames[k] + tS(")"), tS(model.neuronPara[i][k]));
-				os << "//here it goes 4" << ENDL;	
+				substitute(code, tS("$(") + weightUpdateModels[synt].pNames[k] + tS(")"), tS(model.synapsePara[i][k]));
 			}
 		/*for (int k = 0, l = nModels[nt].dpNames.size(); k < l; k++) {
 			substitute(code, tS("$(") + weightUpdateModels[synt].dpNames[k] + tS(")"), tS(model.dnp[i][k]));
@@ -722,13 +727,7 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 			os << code;
 			//after code
 		}
-			
-			
-			
-			
-			
-			
-			
+		
 		}
 		os << ENDL;
 
