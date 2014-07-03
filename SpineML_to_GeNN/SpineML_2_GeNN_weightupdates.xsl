@@ -49,9 +49,13 @@ Error: WeightUpdates cannot contain TimeDerivatives
   // Add new weightupdate type - <xsl:value-of select="//SMLCL:ComponentClass/@name"/>: 
   wu.varNames.clear();
   wu.varTypes.clear();
-  <xsl:for-each select="//SMLCL:StateVariable">
+  <xsl:for-each select="//SMLCL:StateVariable | //SMLCL:Parameter">
+  	<xsl:variable name="curr_par_name" select="@name"/>
+  	<xsl:variable name="curr_par_type" select="local-name(.) = 'Parameter'"/>
+  	<xsl:if test="not(count($curr_wu//SMLNL:Property[@name=$curr_par_name]/SMLNL:FixedValue)=1 and ($curr_par_type))">
   wu.varNames.push_back(tS("<xsl:value-of select="@name"/>_WU));
   wu.varTypes.push_back(tS("float"));<!---->
+  	</xsl:if>
   </xsl:for-each>
   <xsl:if test="not(count(//SMLCL:Regime)=1)">
   wu.varNames.push_back(tS("__regime_val"));
@@ -59,7 +63,10 @@ Error: WeightUpdates cannot contain TimeDerivatives
   </xsl:if>
   wu.pNames.clear();
   <xsl:for-each select="//SMLCL:Parameter">
+  	<xsl:variable name="curr_par_name" select="@name"/>
+  	<xsl:if test="count($curr_wu//SMLNL:Property[@name=$curr_par_name]/SMLNL:FixedValue)=1">
   wu.pNames.push_back(tS("<xsl:value-of select="@name"/>_WU"));<!---->
+  	</xsl:if>
   </xsl:for-each>
   //wu.dpNames.clear();
 
