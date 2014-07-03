@@ -89,6 +89,16 @@ void genRunner(NNmodel &model, //!< Model description
     }
   }
   
+  for (int i=0; i< model.synapseName.size(); i++){
+		  int st= model.synapseType[i];
+		  if (st >= MAXSYN){
+		    for (int k= 0, l= weightUpdateModels[st-MAXSYN].varNames.size(); k < l; k++) {
+			    os << weightUpdateModels[st-MAXSYN].varTypes[k] << " *" << weightUpdateModels[st-MAXSYN].varNames[k];
+			    os << model.synapseName[i]<< ";" << ENDL;
+		    }
+		  }
+	}
+  
   for (int i=0; i< model.postSynapseType.size(); i++){
     int pst= model.postSynapseType[i];
     for (int k= 0, l= postSynModels[pst].varNames.size(); k < l; k++) {
@@ -156,6 +166,15 @@ void genRunner(NNmodel &model, //!< Model description
 			trgN = model.neuronN[model.synapseTarget[i]];
 
    	} 
+   	
+    int st= model.synapseType[i];
+    if (st >= MAXSYN){
+    	for (int k= 0, l= weightUpdateModels[st-MAXSYN].varNames.size(); k < l; k++) {
+      	os << weightUpdateModels[st-MAXSYN].varTypes[k] << " *" << "d_" << weightUpdateModels[st-MAXSYN].varNames[k] << model.synapseName[i] << ";" << endl; 
+    	}
+    }
+   	
+   	
   }
   os << endl;
 
@@ -258,6 +277,15 @@ void genRunner(NNmodel &model, //!< Model description
       os << endl;
       mem+= size*sizeof(unsigned int);
     }
+    
+		  int st= model.synapseType[i];
+		  if (st >= MAXSYN){
+		    for (int k= 0, l= weightUpdateModels[st-MAXSYN].varNames.size(); k < l; k++) {
+			    os  << weightUpdateModels[st-MAXSYN].varNames[k];
+			    os << model.synapseName[i]<< "= new " << weightUpdateModels[st-MAXSYN].varTypes[k] << "["<< model.neuronN[model.synapseSource[i]]*model.neuronN[model.synapseTarget[i]] << "];" << ENDL;
+		    }
+		  }
+	  
     if (model.synapseGType[i] == INDIVIDUALG) {
       // (cases necessary here when considering sparse reps as well)
       //os << "  size =" << model.neuronN[model.synapseSource[i]] << "*" << model.neuronN[model.synapseTarget[i]] << "; " << endl;
@@ -296,6 +324,17 @@ void genRunner(NNmodel &model, //!< Model description
       os << endl;
 			mem += size;
     }
+    
+    st= model.synapseType[i];
+    if (st >= MAXSYN){
+    	for (int k= 0, l= weightUpdateModels[st-MAXSYN].varNames.size(); k < l; k++) {
+      	os << "CHECK_CUDA_ERRORS(cudaMalloc((void **)&d_" << weightUpdateModels[st-MAXSYN].varNames[k] << model.synapseName[i] << ", sizeof("  << weightUpdateModels[st-MAXSYN].varTypes[k] << ")*" << model.neuronN[model.synapseSource[i]] << "*" << model.neuronN[model.synapseTarget[i]] << "));" << endl; 
+    	}
+    }
+    
+    
+    os << endl;
+    
   }  
   
   for (int i=0; i< model.postSynapseType.size(); i++){
@@ -310,6 +349,9 @@ void genRunner(NNmodel &model, //!< Model description
   }
    
 	os << endl; 
+	
+	
+	
     
   os << "}" << endl;
   os << endl;
@@ -323,7 +365,6 @@ void genRunner(NNmodel &model, //!< Model description
 
   os << "  C->gIndInG= new unsigned int[preN + 1];";      // model.neuronN[model.synapseSource[i]] index where the next neuron starts in the synaptic conductances of group " << model.synapseName[i];
   os << endl;
-  	    
   os << "  C->gInd= new unsigned int[C->connN];" << endl;      // postsynaptic neuron index in the synaptic conductances of group " << model.synapseName[i];
 
   //mem += gsize*sizeof(int);
@@ -554,6 +595,15 @@ void genRunner(NNmodel &model, //!< Model description
 				os << endl;
       }
     }
+    
+    int st= model.synapseType[i];
+    if (st >= MAXSYN){
+    	for (int k= 0, l= weightUpdateModels[st-MAXSYN].varNames.size(); k < l; k++) {
+      	os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << weightUpdateModels[st-MAXSYN].varNames[k] << model.synapseName[i] << ", "  << weightUpdateModels[st-MAXSYN].varNames[k] << model.synapseName[i] << ", sizeof(" << weightUpdateModels[st-MAXSYN].varTypes[k] << ") * " << model.neuronN[model.synapseSource[i]]<< " * " << model.neuronN[model.synapseTarget[i]] << ",cudaMemcpyHostToDevice));" << endl; 
+    	}
+    }
+    
+    
   }
   
   os << "  //postsynapse variables" << endl;
@@ -1154,6 +1204,17 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 	os << ",";
       }    		
     }
+    
+    for (int i=0; i< model.synapseName.size(); i++){
+		  int st= model.synapseType[i];
+		  if (st >= MAXSYN){
+		    for (int k= 0, l= weightUpdateModels[st-MAXSYN].varNames.size(); k < l; k++) {
+			    os <<  " d_" << weightUpdateModels[st-MAXSYN].varNames[k];
+			    os << model.synapseName[i]<< ", " << ENDL;
+		    }
+		  }
+	  }
+    
     if (model.needSt) {
       os << "t);"<< endl;
     }
