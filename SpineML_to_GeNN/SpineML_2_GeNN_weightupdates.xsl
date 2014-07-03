@@ -53,7 +53,7 @@ Error: WeightUpdates cannot contain TimeDerivatives
   	<xsl:variable name="curr_par_name" select="@name"/>
   	<xsl:variable name="curr_par_type" select="local-name(.) = 'Parameter'"/>
   	<xsl:if test="not(count($curr_wu//SMLNL:Property[@name=$curr_par_name]/SMLNL:FixedValue)=1 and ($curr_par_type))">
-  wu.varNames.push_back(tS("<xsl:value-of select="@name"/>_WU));
+  wu.varNames.push_back(tS("<xsl:value-of select="@name"/>_WU"));
   wu.varTypes.push_back(tS("float"));<!---->
   	</xsl:if>
   </xsl:for-each>
