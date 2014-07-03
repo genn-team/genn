@@ -18,7 +18,7 @@
 */
 //--------------------------------------------------------------------------
 
-#define DT 0.1  //!< This defines the global time step at which the simulation will run
+#define DT 0.5  //!< This defines the global time step at which the simulation will run
 #include "modelSpec.h"
 #include "modelSpec.cc"
 #include "HHVClampParameters.h"
@@ -84,7 +84,7 @@ void modelDefinition(NNmodel &model)
     unsigned int mt;\n\
     double mdt= DT/100.0;\n\
     for (mt=0; mt < 100; mt++) {\n\
-      Isyn= 1000.0*($(stepVG)-$(V));\n\
+      Isyn= 200.0*($(stepVG)-$(V));\n\
       Imem= -($(m)*$(m)*$(m)*$(h)*$(gNa)*($(V)-($(ENa)))+\n\
               $(n)*$(n)*$(n)*$(n)*$(gK)*($(V)-($(EK)))+\n\
               $(gl)*($(V)-($(El)))-Isyn);\n\

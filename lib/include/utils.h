@@ -85,6 +85,18 @@ void substitute(string &s, const string trg, const string rep)
   }
 }
 
+
+//--------------------------------------------------------------------------
+//! \brief Tool for finding strings in another string
+//--------------------------------------------------------------------------
+
+bool find(string &s, const string trg)
+{
+  size_t found= s.find(trg);
+  return (found != string::npos);
+}
+
+
 //--------------------------------------------------------------------------
 //! \brief Tool for determining the size of variable types on the current architecture
 //--------------------------------------------------------------------------
