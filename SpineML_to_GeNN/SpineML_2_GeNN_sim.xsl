@@ -126,12 +126,28 @@ Error: This should be a native type - so I'm not implementing it for now
 <!---->		<!---->	}
 		</xsl:when>
 		<xsl:when test="SMLNL:AllToAllConnection">
-			<!-- Nothing to do as handled natively, unless we have INDIVIDUALG -->
-				<xsl:if test="SMLLOWNL:WeightUpdate/SMLNL:Property[@name='g']/SMLNL:ValueList">
-					<xsl:message terminate="yes">
-Error: I'm on the case, but this is not done for now as it'll become redundant shortly if I do it
-					</xsl:message>
-				</xsl:if>
+			<xsl:for-each select="SMLLOWNL:WeightUpdate/SMLNL:Property">
+				<xsl:if test="SMLNL:UniformDistribution">
+					<!-- loop connections and fill in memory array -->
+					<!---->	for (int i = 0; i &lt; <xsl:value-of select="concat($src_size,'*',$dst_size)"/>; ++i) {
+<!---->				<!----><xsl:text>		</xsl:text><xsl:value-of select="$synapse_array_name"/>[i] = <!---->
+					<!---->uniformRand(<xsl:value-of select="SMLNL:UniformDistribution/@minimum"/>,<xsl:value-of select="SMLNL:UniformDistribution/@maximum"/>);			
+<!---->				<!---->	}
+<!---->			</xsl:if>
+				<xsl:if test="SMLNL:NormalDistribution">
+					<!-- loop connections and fill in memory array -->
+					<!---->	for (int i = 0; i &lt; <xsl:value-of select="concat($src_size,'*',$dst_size)"/>; ++i) {
+<!---->				<!----><xsl:text>		</xsl:text><xsl:value-of select="$synapse_array_name"/>[i] = <!---->
+					<!---->normalRand(<xsl:value-of select="SMLNL:NormalDistribution/@mean"/>,<xsl:value-of select="SMLNL:NormalDistribution/@variance"/>);			
+<!---->				<!---->	}
+<!---->			</xsl:if>
+				<xsl:if test="SMLNL:PoissonDistribution">
+					<!-- loop connections and fill in memory array -->
+					<!---->	for (int i = 0; i &lt; <xsl:value-of select="concat($src_size,'*',$dst_size)"/>; ++i) {
+<!---->				<!----><xsl:text>		</xsl:text><xsl:value-of select="$synapse_array_name"/>[i] = poissonRand();			
+<!---->				<!---->	}
+<!---->			</xsl:if>
+			</xsl:for-each>
 		</xsl:when>
 		<xsl:when test="SMLNL:ConnectionList">
 			<!-- zero memory -->
