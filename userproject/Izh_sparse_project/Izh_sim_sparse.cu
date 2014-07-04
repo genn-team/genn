@@ -253,7 +253,7 @@ int main(int argc, char *argv[])
 
     done= (t >= TOTAL_TME);
    if (which == GPU) {
-    CHECK_CUDA_ERRORS(cudaMemcpy(VPExc,d_VPExc, 10*sizeof(PCNN.model.ftype), cudaMemcpyDeviceToHost));
+    CHECK_CUDA_ERRORS(cudaMemcpy(VPExc,d_VPExc, 2*sizeof(PCNN.model.ftype), cudaMemcpyDeviceToHost));
   }
   }
 	

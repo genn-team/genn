@@ -279,10 +279,18 @@ void genRunner(NNmodel &model, //!< Model description
     }
     
 		  int st= model.synapseType[i];
+
 		  if (st >= MAXSYN){
+		    os << "size = ";
+		    if (model.synapseConnType[i] != SPARSE){
+		      os << model.neuronN[model.synapseSource[i]]*model.neuronN[model.synapseTarget[i]] << ";" << ENDL;
+		    }
+		  else{ 
+		      os << "g" << model.synapseName[i] << ".connN;" << ENDL;
+		    }
 		    for (int k= 0, l= weightUpdateModels[st-MAXSYN].varNames.size(); k < l; k++) {
 			    os  << weightUpdateModels[st-MAXSYN].varNames[k];
-			    os << model.synapseName[i]<< "= new " << weightUpdateModels[st-MAXSYN].varTypes[k] << "["<< model.neuronN[model.synapseSource[i]]*model.neuronN[model.synapseTarget[i]] << "];" << ENDL;
+			    os << model.synapseName[i]<< "= new " << weightUpdateModels[st-MAXSYN].varTypes[k] << "[size];" << ENDL;
 		    }
 		  }
 	  
@@ -598,8 +606,15 @@ void genRunner(NNmodel &model, //!< Model description
     
     int st= model.synapseType[i];
     if (st >= MAXSYN){
-    	for (int k= 0, l= weightUpdateModels[st-MAXSYN].varNames.size(); k < l; k++) {
-      	os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << weightUpdateModels[st-MAXSYN].varNames[k] << model.synapseName[i] << ", "  << weightUpdateModels[st-MAXSYN].varNames[k] << model.synapseName[i] << ", sizeof(" << weightUpdateModels[st-MAXSYN].varTypes[k] << ") * " << model.neuronN[model.synapseSource[i]]<< " * " << model.neuronN[model.synapseTarget[i]] << ",cudaMemcpyHostToDevice));" << endl; 
+      os << "size = ";
+		  if (model.synapseConnType[i] != SPARSE){
+		    os << model.neuronN[model.synapseSource[i]]*model.neuronN[model.synapseTarget[i]] << ";" << ENDL;
+		  }
+		  else{ 
+		    os << "g" << model.synapseName[i] << ".connN;" << ENDL;
+		  }
+		  for (int k= 0, l= weightUpdateModels[st-MAXSYN].varNames.size(); k < l; k++) {
+      	os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << weightUpdateModels[st-MAXSYN].varNames[k] << model.synapseName[i] << ", "  << weightUpdateModels[st-MAXSYN].varNames[k] << model.synapseName[i] << ", sizeof(" << weightUpdateModels[st-MAXSYN].varTypes[k] << ") * size , cudaMemcpyHostToDevice));" << endl; 
     	}
     }
     
