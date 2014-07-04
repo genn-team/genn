@@ -144,16 +144,27 @@ void NNmodel::initDerivedSynapsePara(unsigned int i /**< index of the synapse po
     lrnSynGrp.push_back(i);
     lrnGroups++;
   }
-  
+  if (synapseType[i] < MAXSYN ){
   if ((synapseType[i] == NSYNAPSE) || (synapseType[i] == NGRADSYNAPSE)) {
     tmpP.push_back(expf(-DT/synapsePara[i][2]));              // kdecay
   }
+  }
+  else{
+  tmpP.push_back(1);
+  }
+  
   dsp.push_back(tmpP);
+
   // figure out at what threshold we need to detect spiking events
   synapseInSynNo.push_back(inSyn[synapseTarget[i]].size());
   inSyn[synapseTarget[i]].push_back(i);
+  if (synapseType[i] < MAXSYN ){
   if (nSpkEvntThreshold[synapseSource[i]] > synapsePara[i][1]) {
     nSpkEvntThreshold[synapseSource[i]]= synapsePara[i][1];
+  }
+  }
+  else{
+  nSpkEvntThreshold[synapseSource[i]]= 10000;
   }
   // padnN is the lowest multiple of synapseBlkSz >= neuronN[synapseTarget[i]]
   unsigned int padnN = ceil((float) neuronN[synapseTarget[i]] / (float) synapseBlkSz) * (float) synapseBlkSz;
@@ -477,6 +488,7 @@ void NNmodel::addSynapsePopulation(const string name, /**<  The name of the syna
   }
   
   postSynIni.push_back(tmpPV);  
+  cout << double(syntype) << "< syntype : MAXSYN >" << double(MAXSYN) << endl;
   initDerivedSynapsePara(i);
   initDerivedPostSynapsePara(i);
   

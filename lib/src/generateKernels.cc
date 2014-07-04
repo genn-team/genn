@@ -491,14 +491,15 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 		int st= model.synapseType[i];
 		if (st >= MAXSYN){
 		  for (int k= 0, l= weightUpdateModels[st-MAXSYN].varNames.size(); k < l; k++) {
+		    os << ", ";
 			  os << weightUpdateModels[st-MAXSYN].varTypes[k] << " *d_" << weightUpdateModels[st-MAXSYN].varNames[k];
-			  os << model.synapseName[i]<< ", " << ENDL;
+			  os << model.synapseName[i];
 		  }
 		}
 	}
 	
 	if (model.needSt) {
-		os << model.ftype << " t";
+		os << model.ftype << ", t";
 	}
 	os << ENDL << ")";
 	os << ENDL;
@@ -546,7 +547,8 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 		unsigned int trg = model.synapseTarget[i];
 		unsigned int nN = model.neuronN[trg];
 		src = model.synapseSource[i];
-		float Epre = model.synapsePara[i][1];
+		float Epre = 0;
+		if (model.synapseType[i]< MAXSYN) Epre = model.synapsePara[i][1];
 		float Vslope;
 		if (model.synapseType[i] == NGRADSYNAPSE) {
 			Vslope = model.synapsePara[i][3];
@@ -703,9 +705,7 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 			if (model.synapseGType[i] == INDIVIDUALG){
 				os << "lg = d_gp" << model.synapseName[i] << "[shSpkEvnt[j]*" << model.neuronN[trg] << " + " << localID << "];";
 				theLG = toString("lg");
-			}
-			os << "//add code here" << ENDL;
-			
+			}			
 		
 		if (model.synapseType[i]>=MAXSYN){
 			unsigned int synt = model.synapseType[i]-MAXSYN;
@@ -851,7 +851,7 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 		}
          //we may need something like the following, if sparse:
          /*
-    		if (model.synapseConnType[i] == SPARSE) {
+    		if (model.synapseConnnType[i] == SPARSE) {
 			os << "npost = d_gp" << model.synapseName[i] << "_indInG[shSpkEvnt[j] + 1] - d_gp";
 			os << model.synapseName[i] << "_indInG[shSpkEvnt[j]];" << ENDL;
 			os << "if ("<< localID <<" < npost)" << OB(140);
@@ -865,6 +865,7 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 			os << "lg = d_grawp" << model.synapseName[i] << "[shSpk[j] * " << model.neuronN[trg] << " + " << localID << "];" << ENDL;
 			os << model.ftype << " dt = d_sT" << model.neuronName[trg] << "[" << localID << "] - t - ";
 			os << SAVEP(model.synapsePara[i][11]) << ";" << ENDL;
+			os << "//sdfsfsdgfsdg" << endl;
 			os << "if (dt > " << model.dsp[i][1] << ")" << OB(150);
 			os << "dt = - " << SAVEP(model.dsp[i][5]) << ";" << ENDL;
 			os << CB(150);

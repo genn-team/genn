@@ -365,7 +365,9 @@ void genSynapseFunction(NNmodel &model, //!< Model description
       for (int j = 0; j < model.inSyn[i].size(); j++) {
 	     unsigned int synID = model.inSyn[i][j];
 	     unsigned int src = model.synapseSource[synID];
-	     float Epre = model.synapsePara[synID][1];
+	     
+	     float Epre = 0;
+	     if (model.synapseType[i] < MAXSYN) model.synapsePara[synID][1];
 	     float Vslope;
 	     if (model.synapseType[synID] == NGRADSYNAPSE) {
 	       Vslope = model.synapsePara[synID][3];

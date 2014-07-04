@@ -1209,14 +1209,15 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 		  int st= model.synapseType[i];
 		  if (st >= MAXSYN){
 		    for (int k= 0, l= weightUpdateModels[st-MAXSYN].varNames.size(); k < l; k++) {
+		    	os << ", ";
 			    os <<  " d_" << weightUpdateModels[st-MAXSYN].varNames[k];
-			    os << model.synapseName[i]<< ", " << ENDL;
+			    os << model.synapseName[i];
 		    }
 		  }
 	  }
     
     if (model.needSt) {
-      os << "t);"<< endl;
+      os << ", t);"<< endl;
     }
     else {
       os << ");" << endl;
