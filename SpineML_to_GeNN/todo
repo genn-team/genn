@@ -1,4 +1,6 @@
-- Weight updates / learning rules
+- Weight updates / learning rules -- implemented, but needs to be tested
+
+- sparse connectivity
 
 - Generic inputs
 
