@@ -46,7 +46,7 @@
                     <Connection src_neuron="1" dst_neuron="0" delay="0"/>
                     <Connection src_neuron="2" dst_neuron="0" delay="0"/>
                 </ConnectionList>
-                <LL:WeightUpdate name="Population 1 to Population Synapse 0 weight_update" url="static_weight.xml" input_src_port="spike" input_dst_port="spike">
+                <LL:WeightUpdate name="Population 1 to Population Synapse 0 weight_update" url="GeNNNativeSynapse.xml" input_src_port="spike" input_dst_port="in">
                     <Property name="g" dimension="?">
                         <UniformDistribution minimum="0.08" maximum="0.15" seed="0"/>
                     </Property>
@@ -80,7 +80,7 @@
                 </AllToAllConnection>
                 <LL:WeightUpdate name="Population 1 to Population 2 Synapse 0 weight_update" url="static_weight.xml" input_src_port="spike" input_dst_port="spike">
                     <Property name="g" dimension="?">
-                        <UniformDistribution minimum="0" maximum="1" seed="123"/>
+                        <UniformDistribution minimum="0.08" maximum="0.15" seed="0"/>
                     </Property>
                 </LL:WeightUpdate>
                 <LL:PostSynapse name="Population 1 to Population 2 Synapse 0 postsynapse" url="Exp_Decay.xml" input_src_port="g" input_dst_port="g_in" output_src_port="I_syn" output_dst_port="Isyn">
