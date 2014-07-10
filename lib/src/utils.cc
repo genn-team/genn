@@ -84,7 +84,7 @@ unsigned int theSize(string type)
 //! \brief Tool for finding strings in another string
 //--------------------------------------------------------------------------
 
-bool find(string &s, const string trg);
+bool find(string &s, const string trg)
 {
   size_t found = s.find(trg);
   return (found != string::npos);

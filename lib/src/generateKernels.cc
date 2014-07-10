@@ -180,30 +180,6 @@ void genCudaNeuron(unsigned int deviceID, //!< device number to generate code fo
   os << "spkCount = 0;" << ENDL;
   os << CB(8);
 
-
-
-
-
-
-
-  /*           MOVE THIS BACK!!!!!!!!!!!!!
-  for (int i = 0; i < model->neuronGrpN; i++) {
-    if (model->neuronDelaySlots[i] != 1) {
-      os << "d_spkEvntQuePtr" << model->neuronName[i] << deviceID << " = (d_spkEvntQuePtr";
-      os << model->neuronName[i] << deviceID << " + 1) % " << model->neuronDelaySlots[i] << ";" << ENDL;
-    }
-  }
-  os << CB(7);
-  */
-
-
-
-
-
-
-
-
-
   os << "__syncthreads();" << ENDL;
   for (int i = 0; i < model->neuronGrpN; i++) {
     // conditional skip if neuron group is not on this device
@@ -892,6 +868,8 @@ void genCudaSynapse(unsigned int deviceID, //!< device number to generate code f
       for (int j = 0; j < model->neuronGrpN; j++) {
 	os << "d_glbscnt" << model->neuronName[j] << deviceID << " = 0;" << ENDL;
 	if (model->neuronDelaySlots[j] != 1) {
+	  os << "d_spkEvntQuePtr" << model->neuronName[j] << deviceID << " = (d_spkEvntQuePtr";
+	  os << model->neuronName[j] << deviceID << " + 1) % " << model->neuronDelaySlots[j] << ";" << ENDL;
 	  os << "d_glbSpkEvntCnt" << model->neuronName[j] << deviceID << "[d_spkEvntQuePtr";
 	  os << model->neuronName[j] << deviceID << "] = 0;" << ENDL;
 	}
@@ -908,7 +886,6 @@ void genCudaSynapse(unsigned int deviceID, //!< device number to generate code f
   }
   os << CB(75);
   os << ENDL;
-
 
 
   ///////////////////////////////////////////////////////////////
@@ -1038,7 +1015,7 @@ void genCudaSynapse(unsigned int deviceID, //!< device number to generate code f
       for (int j = 0; j < model->neuronGrpN; j++) {
 	os << "d_glbscnt" << model->neuronName[j] << deviceID << " = 0;" << ENDL;
 	if (model->neuronDelaySlots[j] != 1) {
-	  os << "d_spkQuePtr" << model->neuronName[j] << deviceID << " = (d_spkQuePtr";
+	  os << "d_spkEvntQuePtr" << model->neuronName[j] << deviceID << " = (d_spkEvntQuePtr";
 	  os << model->neuronName[j] << deviceID << " + 1) % " << model->neuronDelaySlots[j] << ";" << ENDL;
 	  os << "d_glbSpkEvntCnt" << model->neuronName[j] << deviceID << "[d_spkQuePtr";
 	  os << model->neuronName[j] << deviceID << "] = 0;" << ENDL;

@@ -80,9 +80,9 @@ void genHostCode(ostream &mos)
     }
     // write variables for the extra global neurona kernel parameters; these are assumed
     // not to be pointers, if they are the user needs to take care of allocation etc
-    for (int j = 0; j < nModels[nt].extraGlobalNeuronKernelParameters.size(); j++) {
-      osh << "extern " << nModels[nt].extraGlobalNeuronKernelParameterTypes[j] << " ";
-      osh << nModels[nt].extraGlobalNeuronKernelParameters[j] << model->neuronName[i] << ";" << endl;
+    for (int j = 0; j < nModels[type].extraGlobalNeuronKernelParameters.size(); j++) {
+      osh << "extern " << nModels[type].extraGlobalNeuronKernelParameterTypes[j] << " ";
+      osh << nModels[type].extraGlobalNeuronKernelParameters[j] << model->neuronName[i] << ";" << endl;
     }
     if (model->neuronNeedSt[i]) {
       osh << "extern " << model->ftype << " *sT" << model->neuronName[i] << ";" << endl;
@@ -184,9 +184,9 @@ void genHostCode(ostream &mos)
     }
     // write variables for the extra global neurona kernel parameters; these are assumed
     // not to be pointers, if they are the user needs to take care of allocation etc
-    for (int j = 0; j < nModels[nt].extraGlobalNeuronKernelParameters.size(); j++) {
-      os << nModels[nt].extraGlobalNeuronKernelParameterTypes[j] << " ";
-      os << nModels[nt].extraGlobalNeuronKernelParameters[j] << model->neuronName[i] << ";" << endl;
+    for (int j = 0; j < nModels[type].extraGlobalNeuronKernelParameters.size(); j++) {
+      os << nModels[type].extraGlobalNeuronKernelParameterTypes[j] << " ";
+      os << nModels[type].extraGlobalNeuronKernelParameters[j] << model->neuronName[i] << ";" << endl;
     }
     if (model->neuronNeedSt[i]) {
       os << model->ftype << " *sT" << model->neuronName[i] << ";" << endl;

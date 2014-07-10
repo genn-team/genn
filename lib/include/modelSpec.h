@@ -136,12 +136,6 @@ public:
                                    // the pre-spike threshold set for outgoing synapses
   vector<vector<unsigned int> > hostRecvSpkFrom; //!< Flag that a host will need to recieve a neuron group's spikes
   vector<vector<unsigned int> > deviceRecvSpkFrom; //!< Flag that a device will need to recieve a neuron group's spikes
-  vector<string> extraGlobalNeuronKernelParameters; //!< Additional parameter in the neuron kernel; it is translated
-                                                    // to a population specific name but otherwise assumed to be one
-                                                    // parameter per population rather than per neuron.
-  vector<string> extraGlobalNeuronKernelParameterTypes; //!< Additional parameters in the neuron kernel; they are 
-                                                        // translated to a population specific name but otherwise assumed
-                                                        // to be one parameter per population rather than per neuron.
   vector<unsigned int> nrnHostID; //!< The ID of the cluster node which the neuron groups are computed on
   vector<unsigned int> nrnDevID; //!< The ID of the CUDA device which the neuron groups are comnputed on
 
@@ -268,6 +262,8 @@ struct neuronModel
   vector<string> pNames; //!< Names of (independent) parameters of the model. These are assumed to be always of type "float"
   vector<string> dpNames; /*!< \brief Names of dependent parameters of the model. These are assumed to be always of type "float"
 			    The dependent parameters are functions of independent parameters that enter into the neuron model. To avoid unecessary computational overhead, these parameters are calculated at compile time and inserted as explicit values into the generated code. See method NNmodel::initDerivedNeuronPara for how this is done.*/ 
+  vector<string> extraGlobalNeuronKernelParameters; //!< Additional parameter in the neuron kernel; it is translated to a population specific name but otherwise assumed to be one parameter per population rather than per neuron.
+  vector<string> extraGlobalNeuronKernelParameterTypes; //!< Additional parameters in the neuron kernel; they are translated to a population specific name but otherwise assumed to be one parameter per population rather than per neuron.
   dpclass * dps;
 };
 
