@@ -53,16 +53,17 @@ int main(int argc, char *argv[])
 {
   if (argc != 6)
   {
-    cerr << "usage: generate_run <CPU=0, GPU=1> <nPop> <totalT> <outdir> <debug mode? (0/1)>" << endl;
+    cerr << "usage: generate_run <CPU=0, GPU=1> <protocol> <nPop> <totalT> <outdir> <debug mode? (0/1)>" << endl;
     exit(1);
   }
 
-  int DBGMODE = atoi(argv[5]); // set this to 1 if you want to enable gdb and 
+  int DBGMODE = atoi(argv[6]); // set this to 1 if you want to enable gdb and 
                                // cuda-gdb debugging to 0 for release
   int which= atoi(argv[1]);
-  int nPop= atoi(argv[2]);
-  double totalT= atof(argv[3]);
-  string OutDir = toString(argv[4]) +"_output";  
+  int protocol= atoi(argv[2]);
+  int nPop= atoi(argv[3]);
+  double totalT= atof(argv[4]);
+  string OutDir = toString(argv[5]) +"_output";  
   string cmd;
  
   #ifdef _WIN32
@@ -104,18 +105,18 @@ int main(int argc, char *argv[])
     cerr << "Debugging with gdb is not possible on cl platform." << endl;
   }
   else {
-    cmd= toString("GeNNOSTYPE=$(echo $(uname) | tr A-Z a-z); model/bin/$GeNNOSTYPE/release/VClampGA "+  toString(argv[4]) + toString(" ") + toString(which);
+    cmd= toString("GeNNOSTYPE=$(echo $(uname) | tr A-Z a-z); model/bin/$GeNNOSTYPE/release/VClampGA "+  toString(argv[5]) + toString(" ") + toString(which) + toString(" ") + toString(protocol);
   }
 
 #else
    if(DBGMODE == 1) {
   //debug 
-     cmd= toString("GeNNOSTYPE=$(echo $(uname) | tr A-Z a-z); cuda-gdb -tui --args model/bin/$GeNNOSTYPE/debug/VClampGA ") + toString(argv[4]) + toString(" ") + toString(which);
+     cmd= toString("GeNNOSTYPE=$(echo $(uname) | tr A-Z a-z); cuda-gdb -tui --args model/bin/$GeNNOSTYPE/debug/VClampGA ") + toString(argv[5]) + toString(" ") + toString(which) + toString(" ") + toString(protocol);
   }
   else
   {
 //release  
-  cmd= toString("GeNNOSTYPE=$(echo $(uname) | tr A-Z a-z); model/bin/$GeNNOSTYPE/release/VClampGA ") + toString(argv[4]) + toString(" ") + toString(which);
+    cmd= toString("GeNNOSTYPE=$(echo $(uname) | tr A-Z a-z); model/bin/$GeNNOSTYPE/release/VClampGA ") + toString(argv[5]) + toString(" ") + toString(which) + toString(" ") + toString(protocol);
   	}
 #endif
   cerr << cmd << endl;

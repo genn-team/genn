@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<!DOCTYPE SpineML>
+<SpineML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.shef.ac.uk/SpineMLComponentLayer" xsi:schemaLocation="http://www.shef.ac.uk/SpineMLComponentLayer SpineMLComponentLayer.xsd">
+ <ComponentClass type="weight_update" name="GeNNNativeLearningSynapse">
+  <Dynamics initial_regime="dummy">
+   <Regime name="dummy"/>
+  </Dynamics>
+  <Parameter dimension="?" name="Erev"/>
+  <Parameter dimension="?" name="Epre"/>
+  <Parameter dimension="?" name="tau_S"/>
+  <Parameter dimension="?" name="TLRN"/>
+  <Parameter dimension="?" name="TCHNG"/>
+  <Parameter dimension="?" name="TDECAY"/>
+  <Parameter dimension="?" name="TPUNISH10"/>
+  <Parameter dimension="?" name="TPUNISH01"/>
+  <Parameter dimension="?" name="GMAX"/>
+  <Parameter dimension="?" name="GMID"/>
+  <Parameter dimension="?" name="GSLOPE"/>
+  <Parameter dimension="?" name="TAUSHIFT"/>
+  <Parameter dimension="?" name="GSYN0"/>
+ </ComponentClass>
+</SpineML>

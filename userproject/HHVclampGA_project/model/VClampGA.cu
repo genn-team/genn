@@ -27,12 +27,13 @@
 
 int main(int argc, char *argv[])
 {
-  if (argc != 3)
+  if (argc != 4)
   {
-    fprintf(stderr, "usage: VClampGA <basename> <CPU=0, GPU=1> \n");
+    fprintf(stderr, "usage: VClampGA <basename> <CPU=0, GPU=1> <protocol> \n");
     return 1;
   }
   int which= atoi(argv[2]);
+  int protocol= atoi(argv[3]);    
   string OutDir = toString(argv[1]) +"_output";
   string name;
   name= OutDir+ "/"+ toString(argv[1]) + toString(".time");
@@ -58,6 +59,15 @@ int main(int argc, char *argv[])
   var_reinit(1.0);         // this includes copying vars for the GPU version
   initexpHH();
   fprintf(stderr, "# neuronal circuitery built, start computation ... \n\n");
+  
+  double *theExp_p[7];
+  theExp_p[0]= &gNaexp;
+  theExp_p[1]= &ENaexp;
+  theExp_p[2]= &gKexp;
+  theExp_p[3]= &EKexp;
+  theExp_p[4]= &glexp;
+  theExp_p[5]= &Elexp;
+  theExp_p[6]= &Cexp;
 
   //------------------------------------------------------------------
   // output general parameters to output file and start the simulation
@@ -90,10 +100,12 @@ int main(int argc, char *argv[])
       }
       t+= DT;	
       lt+= DT;
-      // CHECK_CUDA_ERRORS(cudaMemcpy(VHH, d_VHH, VSize, cudaMemcpyDeviceToHost));
+      // if (which == 1) {       
+      //   CHECK_CUDA_ERRORS(cudaMemcpy(VHH, d_VHH, VSize, cudaMemcpyDeviceToHost));
+      // }
       // fprintf(osf,"%f %f %f ", t, stepVGHH, IsynGHH);
       // for (int i= 0; i < NPOP; i++) {
-      //   fprintf(osf, "%f ", 1000.0*(stepVGHH-VHH[i]));
+      //     fprintf(osf, "%f ", 1000.0*(stepVGHH-VHH[i]));
       // }
       // fprintf(osf, "\n");
       if ((sn < I.N) && (oldt < I.st[sn]) && (lt >= I.st[sn])) {
@@ -101,7 +113,9 @@ int main(int argc, char *argv[])
 	sn++;
       }
     }
-    CHECK_CUDA_ERRORS(cudaMemcpy(errHH, d_errHH, VSize, cudaMemcpyDeviceToHost));
+    if (which == 1) {
+       CHECK_CUDA_ERRORS(cudaMemcpy(errHH, d_errHH, VSize, cudaMemcpyDeviceToHost));
+    }   
     fprintf(ose,"%f ", t);
     for (int i= 0; i < NPOP; i++) {
        fprintf(ose, "%f ", errHH[i]);
@@ -109,8 +123,23 @@ int main(int argc, char *argv[])
     fprintf(ose,"\n");
     fprintf(osb, "%f %f %f %f %f %f %f ", gNaexp, ENaexp, gKexp, EKexp, glexp, Elexp, Cexp);
     procreatePop(osb);
-    gNaexp= myHH_ini[4]+40*sin(3.1415927*t/40000);
-//    ENaexp= myHH_ini[5]+40*sin(3.1415927*t/40000);
+    if (protocol < 7) {
+       *(theExp_p[protocol])=  myHH_ini[protocol+4]+40*sin(3.1415927*t/40000);
+    }
+    else {    
+       if (protocol == 7) {
+	  int pn= (int) (R.n()*6.0);
+	  double fac;
+	  if (pn%2 == 0) {
+	       fac= 1+0.04*RG.n();
+	   *(theExp_p[pn])*= fac;
+	  }
+	  else {
+	     fac= RG.n();
+	       *(theExp_p[pn])+= fac;
+	  }
+       }
+    }
     cerr << "% " << t << endl;
     done= (t >= TOTALT);
   }

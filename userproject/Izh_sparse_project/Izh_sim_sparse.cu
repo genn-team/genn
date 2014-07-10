@@ -28,11 +28,7 @@ int main(int argc, char *argv[])
   name= OutDir+ toString("/") + toString(argv[1])+ toString(".time");
   FILE *timef= fopen(name.c_str(),"a");  
   
-  timer.startTimer();
-  fprintf(stderr, "# DT %f \n", DT);
-  fprintf(stderr, "# T_REPORT_TME %f \n", T_REPORT_TME);
-  fprintf(stderr, "# TOTAL_TME %f \n", TOTAL_TME);
- 
+  
   name= OutDir+ toString("/") + toString(argv[1]) + toString(".out.Vm"); 
   cerr << name << endl;
   FILE *osf= fopen(name.c_str(),"w");
@@ -206,6 +202,11 @@ int main(int argc, char *argv[])
   
   //------------------------------------------------------------------
   // output general parameters to output file and start the simulation
+  
+    timer.startTimer();
+  fprintf(stderr, "# DT %f \n", DT);
+  fprintf(stderr, "# T_REPORT_TME %f \n", T_REPORT_TME);
+  fprintf(stderr, "# TOTAL_TME %f \n", TOTAL_TME);
 
   fprintf(stderr, "# We are running with fixed time step %f \n", DT);
   fprintf(stderr, "# initial wait time execution ... \n");

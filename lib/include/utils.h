@@ -86,4 +86,11 @@ void substitute(string &s, const string trg, const string rep);
 unsigned int theSize(string type);
 
 
+//--------------------------------------------------------------------------
+//! \brief Tool for finding strings in another string
+//--------------------------------------------------------------------------
+
+bool find(string &s, const string trg);
+
+
 #endif  // _UTILS_H_

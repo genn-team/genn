@@ -133,7 +133,7 @@ void runexpHH(float t)
   unsigned int mt;
   double mdt= DT/100.0;
   for (mt=0; mt < 100; mt++) {
-    IsynGHH= 1000.0*(stepVGHH-Vexp);
+    IsynGHH= 200.0*(stepVGHH-Vexp);
     //    cerr << IsynGHH << " " << Vexp << endl;
     Imem= -(mexp*mexp*mexp*hexp*gNaexp*(Vexp-(ENaexp))+
 	    nexp*nexp*nexp*nexp*gKexp*(Vexp-(EKexp))+

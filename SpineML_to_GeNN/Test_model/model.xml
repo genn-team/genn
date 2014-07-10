@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LL:SpineML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.shef.ac.uk/SpineMLNetworkLayer" xmlns:LL="http://www.shef.ac.uk/SpineMLLowLevelNetworkLayer" xsi:schemaLocation="http://www.shef.ac.uk/SpineMLLowLevelNetworkLayer SpineMLLowLevelNetworkLayer.xsd http://www.shef.ac.uk/SpineMLNetworkLayer SpineMLNetworkLayer.xsd" name="Untitled Project">
+    <LL:Population>
+        <LL:Neuron name="Population" size="100" url="LIntF.xml">
+            <Property name="VReset" dimension="?">
+                <FixedValue value="-70"/>
+            </Property>
+            <Property name="VThresh" dimension="?">
+                <FixedValue value="20"/>
+            </Property>
+            <Property name="tRefrac" dimension="?">
+                <FixedValue value="10"/>
+            </Property>
+            <Property name="VRest" dimension="?">
+                <FixedValue value="-50"/>
+            </Property>
+            <Property name="TAUm" dimension="?">
+                <FixedValue value="20"/>
+            </Property>
+            <Property name="Cm" dimension="?">
+                <FixedValue value="1"/>
+            </Property>
+            <Property name="V" dimension="?">
+                <FixedValue value="-60"/>
+            </Property>
+            <Property name="tSpike" dimension="?">
+                <FixedValue value="0"/>
+            </Property>
+        </LL:Neuron>
+        <Layout url="none.xml" seed="123" minimum_distance="0"/>
+    </LL:Population>
+    <LL:Population>
+        <LL:Neuron name="Population 1" size="100" url="regular_spike.xml">
+            <Property name="max_t" dimension="mS">
+                <FixedValue value="20"/>
+            </Property>
+            <Property name="count_t" dimension="mS">
+                <FixedValue value="0"/>
+            </Property>
+        </LL:Neuron>
+        <Layout url="none.xml" seed="123" minimum_distance="0"/>
+        <LL:Projection dst_population="Population">
+            <LL:Synapse>
+                <ConnectionList>
+                    <Connection src_neuron="0" dst_neuron="1" delay="0"/>
+                    <Connection src_neuron="1" dst_neuron="0" delay="0"/>
+                    <Connection src_neuron="2" dst_neuron="0" delay="0"/>
+                </ConnectionList>
+                <LL:WeightUpdate name="Population 1 to Population Synapse 0 weight_update" url="GeNNNativeSynapse.xml" input_src_port="spike" input_dst_port="in">
+                    <Property name="g" dimension="?">
+                        <UniformDistribution minimum="0.08" maximum="0.15" seed="0"/>
+                    </Property>
+                </LL:WeightUpdate>
+                <LL:PostSynapse name="Population 1 to Population Synapse 0 postsynapse" url="Exp_Decay.xml" input_src_port="g" input_dst_port="g_in" output_src_port="I_syn" output_dst_port="Isyn">
+                    <Property name="tau_syn" dimension="ms">
+                        <FixedValue value="9"/>
+                    </Property>
+                    <Property name="E" dimension="mV">
+                        <FixedValue value="10"/>
+                    </Property>
+                    <Property name="g" dimension="nS">
+                        <FixedValue value="2"/>
+                    </Property>
+                    <LL:Input src="Population" src_port="V" dst_port="v">
+                        <OneToOneConnection>
+                            <Delay Dimension="ms">
+                                <FixedValue value="0"/>
+                            </Delay>
+                        </OneToOneConnection>
+                    </LL:Input>
+                </LL:PostSynapse>
+            </LL:Synapse>
+        </LL:Projection>
+        <LL:Projection dst_population="Population 2">
+            <LL:Synapse>
+                <AllToAllConnection>
+                    <Delay Dimension="ms">
+                        <FixedValue value="0"/>
+                    </Delay>
+                </AllToAllConnection>
+                <LL:WeightUpdate name="Population 1 to Population 2 Synapse 0 weight_update" url="GeNNNativeSynapse.xml" input_src_port="spike" input_dst_port="in">
+                    <Property name="g" dimension="?">
+                        <UniformDistribution minimum="0.08" maximum="0.15" seed="0"/>
+                    </Property>
+                </LL:WeightUpdate>
+                <LL:PostSynapse name="Population 1 to Population 2 Synapse 0 postsynapse" url="Exp_Decay.xml" input_src_port="g" input_dst_port="g_in" output_src_port="I_syn" output_dst_port="Isyn">
+                    <Property name="tau_syn" dimension="ms">
+                        <FixedValue value="2"/>
+                    </Property>
+                    <Property name="E" dimension="mV">
+                        <FixedValue value="4"/>
+                    </Property>
+                    <Property name="g" dimension="nS">
+                        <FixedValue value="0"/>
+                    </Property>
+                    <LL:Input src="Population 2" src_port="V" dst_port="v">
+                        <OneToOneConnection>
+                            <Delay Dimension="ms">
+                                <FixedValue value="0"/>
+                            </Delay>
+                        </OneToOneConnection>
+                    </LL:Input>
+                </LL:PostSynapse>
+            </LL:Synapse>
+        </LL:Projection>
+    </LL:Population>
+    <LL:Population>
+        <LL:Neuron name="Population 2" size="1" url="LInt.xml">
+            <Property name="VReset" dimension="?">
+                <FixedValue value="-70"/>
+            </Property>
+            <Property name="VThresh" dimension="?">
+                <FixedValue value="20"/>
+            </Property>
+            <Property name="tRefrac" dimension="?">
+                <FixedValue value="10"/>
+            </Property>
+            <Property name="VRest" dimension="?">
+                <FixedValue value="-50"/>
+            </Property>
+            <Property name="TAUm" dimension="?">
+                <FixedValue value="20"/>
+            </Property>
+            <Property name="Cm" dimension="?">
+                <FixedValue value="1"/>
+            </Property>
+            <Property name="V" dimension="?">
+                <FixedValue value="-60"/>
+            </Property>
+            <Property name="tSpike" dimension="?">
+                <FixedValue value="0"/>
+            </Property>
+        </LL:Neuron>
+        <Layout url="none.xml" seed="123" minimum_distance="0"/>
+        <LL:Projection dst_population="Population">
+            <LL:Synapse>
+                <AllToAllConnection>
+                    <Delay Dimension="ms">
+                        <FixedValue value="0"/>
+                    </Delay>
+                </AllToAllConnection>
+                <LL:WeightUpdate name="Population 2 to Population Synapse 0 weight_update" url="GeNNNativeSynapse.xml" input_src_port="spike" input_dst_port="in">
+                    <Property name="g" dimension="?">
+                        <FixedValue value="0.01"/>
+                    </Property>
+                </LL:WeightUpdate>
+                <LL:PostSynapse name="Population 2 to Population Synapse 0 postsynapse" url="Exp_Decay.xml" input_src_port="g" input_dst_port="g_in" output_src_port="I_syn" output_dst_port="Isyn">
+                    <Property name="tau_syn" dimension="ms">
+                        <FixedValue value="20"/>
+                    </Property>
+                    <Property name="E" dimension="mV">
+                        <FixedValue value="-40"/>
+                    </Property>
+                    <Property name="g" dimension="nS">
+                        <FixedValue value="0"/>
+                    </Property>
+                    <LL:Input src="Population" src_port="V" dst_port="v">
+                        <OneToOneConnection>
+                            <Delay Dimension="ms">
+                                <FixedValue value="0"/>
+                            </Delay>
+                        </OneToOneConnection>
+                    </LL:Input>
+                </LL:PostSynapse>
+            </LL:Synapse>
+        </LL:Projection>
+    </LL:Population>
+</LL:SpineML>
