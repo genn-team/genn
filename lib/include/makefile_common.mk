@@ -29,7 +29,7 @@ ROOTDIR		?= $(CURDIR)
 COMPILER	?= g++
 CUDA_PATH	?= /usr/local/cuda
 NVCC		?= $(CUDA_PATH)/bin/nvcc
-INCLUDE_FLAGS	+= -I$(CUDA_PATH)/include -I$(GeNNPATH)/lib/include -I.
+INCLUDE_FLAGS	+= -I$(CUDA_PATH)/include -I$(GeNNPATH)/lib/include -I$(GeNNPATH)/userproject/include -I.
 ifeq ($(DARWIN),DARWIN)
   LINK_FLAGS	+= -Xlinker -lstdc++ -lc++ -L$(CUDA_PATH)/lib -lcudart 
 else

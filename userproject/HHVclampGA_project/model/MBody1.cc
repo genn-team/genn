@@ -18,7 +18,7 @@
 */
 //--------------------------------------------------------------------------
 
-#define DT 0.5  //!< This defines the global time step at which the simulation will run
+#define DT 0.1  //!< This defines the global time step at which the simulation will run
 #include "modelSpec.h"
 #include "modelSpec.cc"
 
@@ -179,6 +179,60 @@ float postSynV[0]={
 
 void modelDefinition(NNmodel &model) 
 {
+  neuronModel n;
+  // HH neurons with adjustable parameters (introduced as variables)
+  n.varNames.clear();
+  n.varTypes.clear();
+  n.varNames.push_back(tS("V"));
+  n.varTypes.push_back(tS("double"));
+  n.varNames.push_back(tS("m"));
+  n.varTypes.push_back(tS("double"));
+  n.varNames.push_back(tS("h"));
+  n.varTypes.push_back(tS("double"));
+  n.varNames.push_back(tS("n"));
+  n.varTypes.push_back(tS("double"));
+  n.varNames.push_back(tS("gNa"));
+  n.varTypes.push_back(tS("double"));
+  n.varNames.push_back(tS("ENa"));
+  n.varTypes.push_back(tS("double"));
+  n.varNames.push_back(tS("gK"));
+  n.varTypes.push_back(tS("double"));
+  n.varNames.push_back(tS("Ek"));
+  n.varTypes.push_back(tS("double"));
+  n.varNames.push_back(tS("gl"));
+  n.varTypes.push_back(tS("double"));
+  n.varNames.push_back(tS("El"));
+  n.varTypes.push_back(tS("double"));
+  n.varNames.push_back(tS("C"));
+  n.varTypes.push_back(tS("double"));
+
+  n.simCode= tS("   float Imem;\n\
+    unsigned int mt;\n\
+    double mdt= DT/25.0;\n\
+    __shared__ double shStepVG;
+    if (threadIdx.x == 0) shStepVG= d_stepVG;
+    __syncthreads();
+    for (mt=0; mt < 25; mt++) {\n\
+      Isyn= 1000.0*(shStepVG-$(V));
+      Imem= -($(m)*$(m)*$(m)*$(h)*$(gNa)*($(V)-($(ENa)))+\n\
+              $(n)*$(n)*$(n)*$(n)*$(gK)*($(V)-($(EK)))+\n\
+              $(gl)*($(V)-($(El)))-Isyn);\n\
+      double _a= (3.5+0.1*$(V)) / (1.0-exp(-3.5-0.1*$(V)));\n\
+      double _b= 4.0*exp(-($(V)+60.0)/18.0);\n\
+      $(m)+= (_a*(1.0-$(m))-_b*$(m))*mdt;\n\
+      _a= 0.07*exp(-$(V)/20.0-3.0);\n\
+      _b= 1.0 / (exp(-3.0-0.1*$(V))+1.0);\n\
+      $(h)+= (_a*(1.0-$(h))-_b*$(h))*mdt;\n\
+      _a= (-0.5-0.01*$(V)) / (exp(-5.0-0.1*$(V))-1.0)\n\
+      _b= 0.125*exp(-($(V)+60.0)/80.0);\n\
+      $(n)+= (_a*(1.0-$(n))-_b*$(n))*mdt;\n\
+      $(V)+= Imem/$(C)*mdt;\n\
+    }\n");
+
+  n.thresholdConditionCode = tS("$(V) > 20");//TODO check this, to get better value
+
+  nModels.push_back(n);
+
   model.setName("MBody1");
   model.addNeuronPopulation("PN", _NAL, POISSONNEURON, myPOI_p, myPOI_ini);
   model.addNeuronPopulation("KC", _NMB, TRAUBMILES, stdTM_p, stdTM_ini);

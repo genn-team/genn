@@ -64,10 +64,10 @@ void genHostNeuron(ostream &mos)
       os << "\"rates\" offset of grp " << model->neuronName[i] << ENDL;
     }
     if (model->receivesInputCurrent[i] >= 2) {
-      os << "float *inputI" << model->neuronName[i] << ", // input current of grp " << model->neuronName[i] << ENDL;
+      os << model->ftype << " *inputI" << model->neuronName[i] << ", // input current of grp " << model->neuronName[i] << ENDL;
     }
   }
-  os << "float t)" << ENDL;
+  os << model->ftype << " t)" << ENDL;
   os << OB(51);
   for (int i = 0; i < model->neuronGrpN; i++) {
     nt = model->neuronType[i];
@@ -90,7 +90,7 @@ void genHostNeuron(ostream &mos)
       }
       os << "n];" << ENDL;
     }
-    os << "float Isyn = 0;" << ENDL;
+    os << model->ftype << " Isyn = 0;" << ENDL;
     if (model->inSyn[i].size() > 0) {
       for (int j = 0; j < model->inSyn[i].size(); j++) {
       	for (int k = 0, l = postSynModels[model->postSynapseType[model->inSyn[i][j]]].varNames.size(); k < l; k++) {
@@ -169,15 +169,19 @@ void genHostNeuron(ostream &mos)
       substitute(code, tS("$(") + nModels[nt].dpNames[k] + tS(")"), 
 		 tS(model->dnp[i][k]));
     }
+    for (int k = 0, l = nModels[nt].extraGlobalNeuronKernelParameters.size(); k < l; k++) {
+      substitute(code, tS("$(") + nModels[nt].extraGlobalNeuronKernelParameters[k] + tS(")"),
+		 nModels[nt].extraGlobalNeuronKernelParameters[k] + model->neuronName[i]);
+    }
     os << code;
+
     if (nModels[nt].thresholdConditionCode  == tS("")) { // no condition provided
       cerr << "Generation Error: You must provide thresholdConditionCode for neuron type :  " << model->neuronType[i]  << " used for " << model->name[i];
       exit(1);
     }
     code= nModels[nt].thresholdConditionCode;
     for (int k = 0, l = nModels[nt].varNames.size(); k < l; k++) {
-      substitute(code, tS("$(") + nModels[nt].varNames[k] + tS(")"),
-		 nModels[nt].varNames[k] + model->neuronName[i] + tS("[n]"));
+      substitute(code, tS("$(") + nModels[nt].varNames[k] + tS(")"), tS("l")+ nModels[nt].varNames[k]);
     }
     substitute(code, tS("$(Isyn)"), tS("Isyn"));
     for (int k = 0, l = nModels[nt].pNames.size(); k < l; k++) {
@@ -310,10 +314,10 @@ void genHostSynapse(ostream &mos)
 
   // Function for calculating synapse input to neurons
   // Function header
-  os << "void calcSynapsesHost(float t)" << ENDL;
+  os << "void calcSynapsesHost(" << model->ftype << " t)" << ENDL;
   os << OB(1001);
   if (model->lrnGroups > 0) {
-    os << "float dt, dg;" << ENDL;
+    os << model->ftype << " dt, dg;" << ENDL;
   }
   os << "int ipost, npost";
   if (model->needSynapseDelay) {
@@ -468,7 +472,7 @@ void genHostSynapse(ostream &mos)
 	    os << "j]];" << ENDL;
 	    os << "for (int l = 0; l < npost; l++) " << OB(2021);
 	    os << "ipost = g" << model->synapseName[synID] << ".gInd[g" << model->synapseName[synID];
-	    os << ".gIndInG[glbSpkEvnt" << model->neuronName[src] << "[";
+	    os << ".gIndInG[glbSpk" << model->neuronName[src] << "[";
 	    if (model->neuronDelaySlots[src] != 1) {
 	      os << "delaySlot * " << model->neuronN[src] << " + ";
 	    }
@@ -535,9 +539,9 @@ void genHostSynapse(ostream &mos)
 
   if (model->lrnGroups > 0) {
     // function for learning synapses, post-synaptic spikes
-    os << "void learnSynapsesPostHost(float t)" << ENDL;
+    os << "void learnSynapsesPostHost(" << model->ftype << " t)" << ENDL;
     os << OB(811);
-    os << "float dt, dg;" << ENDL;
+    os << model->ftype << " dt, dg;" << ENDL;
     os << ENDL;
 
     for (int i = 0; i < model->lrnGroups; i++) {

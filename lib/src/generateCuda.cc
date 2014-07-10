@@ -918,6 +918,9 @@ void genCudaCode(unsigned int deviceID, ostream &mos)
     for (int j = 0; j < nModels[type].varNames.size(); j++) {
       os << "d_" << nModels[type].varNames[j] << model->neuronName[i] << deviceID << ", ";
     }
+    for (int j = 0; j < nModels[nt].extraGlobalNeuronKernelParameters.size(); j++) {
+      os << nModels[nt].extraGlobalNeuronKernelParameters[j] << model->neuronName[i]<< ", ";
+    }
   }
   if ((model->synapseGrpN > 0) && (!model->padSumSynapseKrnl[deviceID].empty())) {
     for (int i = 0; i < model->synapseGrpN; i++) {
