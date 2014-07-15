@@ -301,9 +301,16 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 	os << code;
 	os << ENDL;
 
+	//test if a spike type event occurred
+	os << "if (lV >= " << model.nSpkEvntThreshold[i] << ")" << OB(30);
+	os << "// register a spike type event" << ENDL;
+	os << "spkEvntIdx = atomicAdd((unsigned int *) &spkEvntCount, 1);" << ENDL;
+	os << "shSpkEvnt[spkEvntIdx] = " << localID << ";" << ENDL;
+	os << CB(30);
+
 	//insert condition code provided that tests for a true spike
 	if (thcode != tS("")) {
-	    os << "if ((" << thcode << ") && !(oldSpike)) " << OB(30);
+	    os << "if ((" << thcode << ") && !(oldSpike)) " << OB(40);
 	    os << "// register a true spike" << ENDL;
 	    os << "spkIdx = atomicAdd((unsigned int *) &spkCount, 1);" << ENDL;
 	    os << "shSpk[spkIdx] = " << localID << ";" << ENDL;
@@ -324,15 +331,8 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 		os << "// spike reset code" << ENDL;
 		os << code << ENDL;
 	    }
-	    os << CB(30);
+	    os << CB(40);
 	}
-	//test if a spike type event occurred
-	os << "if (lV >= " << model.nSpkEvntThreshold[i] << ")" << OB(40);
-	os << "// register a spike type event" << ENDL;
-	os << "spkEvntIdx = atomicAdd((unsigned int *) &spkEvntCount, 1);" << ENDL;
-	os << "shSpkEvnt[spkEvntIdx] = " << localID << ";" << ENDL;
-
-	os << CB(40);
 
 	//store the defined parts of the neuron state into the global state variables d_V.. etc
 	for (int k = 0, l = nModels[nt].varNames.size(); k < l; k++) {
