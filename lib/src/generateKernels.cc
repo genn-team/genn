@@ -165,6 +165,25 @@ void genNeuronKernel(NNmodel &model, //!< Model description
     os << "__shared__ volatile unsigned int spkCount;" << ENDL; //was scnt
 
     os << ENDL;
+    // Reset global spike counting vars here if there are no synapses at all
+    if (model.synapseGrpN == 0) {
+	os << "if (id == 0)" << OB(6);
+	for (int j = 0; j < model.neuronGrpN; j++) {
+	    os << "d_glbscnt" << model.neuronName[j] << " = 0;" << ENDL;
+	    if (model.neuronDelaySlots[j] != 1) {
+		os << "d_spkEvntQuePtr" << model.neuronName[j] << " = (d_spkEvntQuePtr";
+		os << model.neuronName[j] << " + 1) % " << model.neuronDelaySlots[j] << ";" << ENDL;
+		os << "d_glbSpkEvntCnt" << model.neuronName[j] << "[d_spkEvntQuePtr";
+		os << model.neuronName[j] << "] = 0;" << ENDL;
+	    }
+	    else {
+		os << "d_glbSpkEvntCnt" << model.neuronName[j] << " = 0;" << ENDL;
+	    }
+	}
+	os << CB(6);
+	os << "__threadfence();" << ENDL;
+    }
+    
     os << "if (threadIdx.x == 0)" << OB(7) ;
     os << "spkEvntCount = 0;" << ENDL ;
     os << CB(7);
