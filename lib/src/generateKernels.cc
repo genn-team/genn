@@ -114,7 +114,7 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 	    os << ", // poisson \"rates\" offset of grp " << model.neuronName[i] << ENDL;
 	}
 	if (model.receivesInputCurrent[i] > 1) {
-	    os << "float *d_inputI" << model.neuronName[i];
+	    os << model.ftype << " *d_inputI" << model.neuronName[i];
 	    os << ", // explicit input current to grp " << model.neuronName[i] << ENDL;
 	}
 	for (int k= 0, l= nModels[nt].varNames.size(); k < l; k++) {

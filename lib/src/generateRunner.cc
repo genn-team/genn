@@ -1089,12 +1089,12 @@ void genRunnerGPU(NNmodel &model, //!< Model description
       os << model.neuronName[i] << endl;
     }
     if (model.receivesInputCurrent[i]>=2) {
-      os << "float *d_inputI" << model.neuronName[i];
+	os << model.ftype << " *d_inputI" << model.neuronName[i];
       os << ",   // Explicit input to the neurons in grp ";
       os << model.neuronName[i] << endl;
     }
   }
-  os << "float t)" << endl;
+  os << model.ftype << " t)" << endl;
   os << "{" << endl;
 
   if (model.synapseGrpN > 0) { 
@@ -1264,7 +1264,7 @@ void genRunnerCPU(NNmodel &model, //!< Neuronal network model description
       os << model.neuronName[i] << endl;
     }
     if (model.receivesInputCurrent[i] >= 2) {
-      os << "float *inputI" << model.neuronName[i];
+	os << model.ftype << " *inputI" << model.neuronName[i];
       os << ",   // pointer to the explicit input to neurons in grp ";
       os << model.neuronName[i] << "," << endl;
     }
