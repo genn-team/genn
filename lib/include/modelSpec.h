@@ -84,6 +84,8 @@ unsigned int SYNPNO[SYNTYPENO]= {
 #define FLOAT 0  //!< Macro attaching the label "FLOAT" to flag 0. Used by NNModel::setPrecision()
 #define DOUBLE 1  //!< Macro attaching the label "DOUBLE" to flag 1. Used by NNModel::setPrecision()
 
+#define AUTODEVICE -1  //!< Macro attaching the label AUTODEVICE to flag -1. Used by setGPUDevice
+
 // for purposes of STDP
 #define SPK_THRESH_STDP 0.0f //!< Macro defining the spiking threshold for the purposes of STDP
 //#define MAXSPKCNT 50000
@@ -154,7 +156,7 @@ public:
   int valid; //!< Flag for whether the model has been validated (unused?)
   unsigned int needSt; //!< Whether last spike times are needed at all in this network model (related to STDP)
   unsigned int needSynapseDelay; //!< Whether delayed synapse conductance is required in the network
-
+  int chooseGPUDevice;
 
   // PUBLIC NEURON VARIABLES
   //========================
@@ -255,7 +257,7 @@ public:
   void setPrecision(unsigned int);//< Set numerical precision for floating point
   void checkSizes(unsigned int *, unsigned int *, unsigned int *); //< Check if the sizes of the initialized neuron and synapse groups are correct.
   void resetPaddedSums(); //!< Re-calculates the block-size-padded sum of threads needed to compute the groups of neurons and synapses assigned to each device. Must be called after changing the hostID:deviceID of any group.
-
+  void setGPUDevice(int); //!< Method to choose the GPU to be used for the model. If "AUTODEVICE' (-1), GeNN will choose the device based on a heuristic rule.
 
   // PUBLIC NEURON FUNCTIONS
   //========================

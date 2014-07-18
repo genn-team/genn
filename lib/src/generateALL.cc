@@ -103,8 +103,17 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
     vector<unsigned int> *groupSizePtr;
     float blockLimit, mainBlockLimit, bestOccupancy;
     int deviceOccupancy, bestDeviceOccupancy = 0, smallModel = 0;
+    int devstart, devcount;
 
-    for (int device = 0; device < deviceCount; device++) {
+    if (model->chooseGPUDevice == AUTODEVICE) {
+      devstart= 0; 
+      devcount= deviceCount;
+    }
+    else {
+      devstart= model->chooseGPUDevice;
+      devcount= devstart+1;
+    }
+    for (int device = devstart; device < devcount; device++) {
       theDev = device;
       CHECK_CUDA_ERRORS(cudaSetDevice(device));
       CHECK_CUDA_ERRORS(cudaGetDeviceProperties(&(deviceProp[device]), device));      
