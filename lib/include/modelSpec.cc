@@ -30,6 +30,7 @@ NNmodel::NNmodel()
   needSt= 0;
   needSynapseDelay = 0;
   setPrecision(0);
+  setGPUDevice(AUTODEVICE);
 }
 
 NNmodel::~NNmodel() 
@@ -482,19 +483,12 @@ void NNmodel::setConstInp(const string sName, /**<  */
 
 void NNmodel::resetPaddedSums()
 {
-
-
-
   // array for each host with arrays for each device goes here
   //vector<vector<int> > padSum = int[hostCount][deviceCount]
 
-
-
   for (int synapseGroup = 0; synapseGroup < synapseGrpN; synapseGroup++) {
 
-
     // CODE FOR RESETTING PADSUM* VARIABLES GOES HERE (use setMaxConn function)
-
 
   }
 }
@@ -573,5 +567,20 @@ void NNmodel::setMaxConn(const string sname, /**<  */
       }*/
   }
 }
+
+//--------------------------------------------------------------------------
+/*! \brief This function defines the way how the GPU is chosen. If "AUTODEVICE" (-1) is given as the argument, GeNN will use internal heuristics to choose the device. Otherwise the argument is the device number and the indicated device will be used.
+*/ 
+//--------------------------------------------------------------------------
+
+void NNmodel::setGPUDevice(int device)
+{
+  int deviceCount;
+  CHECK_CUDA_ERRORS(cudaGetDeviceCount(&deviceCount));
+  assert(device >= -1);
+  assert(device < deviceCount);
+  chooseGPUDevice= device;
+}
+
 
 #endif
