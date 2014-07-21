@@ -101,10 +101,10 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
     unsigned int *bestNrnBlkSz= new unsigned int[deviceCount];
     unsigned int **blockSizePtr;
     vector<unsigned int> *groupSizePtr;
-    float blockLimit, mainBlockLimit, bestOccupancy;
+    float blockLimit, mainBlockLimit;
     int deviceOccupancy, bestDeviceOccupancy = 0, smallModel = 0;
-    int devstart, devcount;
 
+    int devstart, devcount;
     if (model->chooseGPUDevice == AUTODEVICE) {
       devstart= 0; 
       devcount= deviceCount;
@@ -113,6 +113,7 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
       devstart= model->chooseGPUDevice;
       devcount= devstart+1;
     }
+
     for (int device = devstart; device < devcount; device++) {
       theDev = device;
       CHECK_CUDA_ERRORS(cudaSetDevice(device));
@@ -166,7 +167,7 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
       else if (deviceProp[device].major == 2) {
 	smemAllocGran = 128;
 	warpAllocGran = 2;
-	regAllocGran = 128;
+	regAllocGran = 64;
 	maxBlocksPerSM = 8;
       }
       else if (deviceProp[device].major == 3) {
@@ -202,7 +203,7 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
 	}
 	if (strncmp(buffer, "ptxas info    : Used", 20) == 0) {
 	  ptxInfoFound = 1;
-	  bestOccupancy = 0;
+	  deviceOccupancy = 0;
 	  ptxInfo.str("");
 	  ptxInfo << buffer;
 	  ptxInfo >> junk >> junk >> junk >> junk >> reqRegs >> junk >> reqSmem;
@@ -254,13 +255,12 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
 	    }
 
 	    // Update the best warp occupancy and the block size which enables it.
-	    if ((!smallModel) && ((blockSize * mainBlockLimit) > bestOccupancy)) {
-	      bestOccupancy = blockSize * mainBlockLimit;
+	    if ((!smallModel) && ((blockSize * mainBlockLimit * deviceProp[device].multiProcessorCount) > deviceOccupancy)) {
+	      deviceOccupancy = blockSize * mainBlockLimit * deviceProp[device].multiProcessorCount;
 	      (*blockSizePtr)[device] = (unsigned int) blockSize * 32;
 
 	      // Choose this device and set optimal block sizes if it enables higher neuron kernel occupancy.
 	      if (blockSizePtr == &bestNrnBlkSz) {
-		deviceOccupancy = bestOccupancy;
 		if (deviceOccupancy >= bestDeviceOccupancy) {
 		  bestDeviceOccupancy = deviceOccupancy;
 		  chosenDevice = device;
@@ -292,7 +292,8 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
     delete model;
     model = new NNmodel();
     modelDefinition(*model);
-    mos << "Using device " << chosenDevice << ", with up to " << bestDeviceOccupancy << " warps of neuron kernel occupancy per SM." << endl;
+    mos << "Using device " << chosenDevice << " (" << deviceProp[chosenDevice].name << "), with up to ";
+    mos << bestDeviceOccupancy << " warps of neuron kernel occupancy." << endl;
     delete[] bestSynBlkSz;
     delete[] bestLrnBlkSz;
     delete[] bestNrnBlkSz;

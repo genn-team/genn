@@ -75,7 +75,7 @@ int main(int argc, char *argv[])
   fprintf(stderr, "# We are running with fixed time step %f \n", DT);
 
   int done= 0, sn;
-  unsigned int VSize= NPOP*sizeof(double);
+  unsigned int VSize= NPOP*theSize(model.ftype);
   double lt, oldt;
   inputSpec I;
   initI(I);
