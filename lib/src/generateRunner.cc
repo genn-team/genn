@@ -334,7 +334,6 @@ void genRunner(NNmodel &model, //!< Model description
       os << "  CHECK_CUDA_ERRORS(cudaMalloc((void **) &d_gp" << model.synapseName[i]<< "_indInG, sizeof(unsigned int) * ("<< model.neuronN[model.synapseSource[i]] <<" + 1)));" << endl;
       mem += model.neuronN[model.synapseSource[i]]*sizeof(unsigned int);     
       memremsparse = deviceProp[theDev].totalGlobalMem - float(mem);
-      mos << "Mem is currently " << mem/1e6 << " for dev. " << theDev << ". Remaining mem is " << memremsparse/1e6 << ", max global memory is " << deviceProp[theDev].totalGlobalMem/1e6<< endl;
     }
   }
   os << "}" << endl; 
@@ -606,13 +605,14 @@ void genRunner(NNmodel &model, //!< Model description
   os << "#include \"runnerCPU.cc\"" << endl;
   os << endl;
 
-  mos << "Global memory required for core model: " << mem/1e6 << " MB. remaining mem is " << memremsparse/1e6 << " MB." << endl;
+  mos << "Global memory required for core model: " << mem/1e6 << " MB. " << endl;
   mos << deviceProp[theDev].totalGlobalMem << " for the device " << theDev << endl;  
   
   
   if  (memremsparse !=0){
   	 int connEstim = int((memremsparse)/(theSize(model.ftype)+sizeof(unsigned int)));
-  	 mos << "You may run into memory problems if the total number of synapses is bigger than " << connEstim << ", which roughly stands for " << int(connEstim/model.sumNeuronN[model.neuronGrpN - 1])<< " connections per neuron, without considering any other dynamic memory load." << endl;
+  	 mos << "Remaining mem is " << memremsparse/1e6 << " MB." << endl;
+  	 mos << "You may run into memory problems on device" << theDev << " if the total number of synapses is bigger than " << connEstim << ", which roughly stands for " << int(connEstim/model.sumNeuronN[model.neuronGrpN - 1])<< " connections per neuron, without considering any other dynamic memory load." << endl;
   }
   else{
     if (0.5*deviceProp[theDev].totalGlobalMem < mem) {

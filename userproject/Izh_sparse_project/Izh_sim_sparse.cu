@@ -24,6 +24,7 @@ int main(int argc, char *argv[])
   int which= atoi(argv[2]);
   string OutDir = toString(argv[1]) +toString("_output");
   string name; 
+  unsigned int retval = 0; //make the compiler happy
 
   name= OutDir+ toString("/") + toString(argv[1])+ toString(".time");
   FILE *timef= fopen(name.c_str(),"a");  
@@ -55,87 +56,83 @@ int main(int argc, char *argv[])
 	fprintf(flog,"Izh_sparse_sim, ");	
 	if (which == GPU ) fprintf(flog,"GPU simulation\n"); else fprintf(flog,"CPU simulation\n");
 	fprintf(flog, "# DT %f \n", DT);
-  fprintf(flog, "# T_REPORT_TME %f \n", T_REPORT_TME);
-  fprintf(flog, "# TOTAL_TME %f \n", TOTAL_TME);
+   fprintf(flog, "# T_REPORT_TME %f \n", T_REPORT_TME);
+   fprintf(flog, "# TOTAL_TME %f \n", TOTAL_TME);
 
-  //name= OutDir+ toString("/") + toString(argv[1])+ toString(".params");
-  //FILE *fparams = fopen(name.c_str(),"w");
-  //name= OutDir+ toString("/") + toString(argv[1])+ toString(".fg");
-  //FILE *fg = fopen(name.c_str(),"w");
-  PCNN.initializeAllVars(which); 
- 	unsigned int sumSynapses=0;
+   unsigned int sumSynapses=0;
   
-  fprintf(stderr, "#reading synapses ... \n");
+   fprintf(stderr, "#reading synapses ... \n");
  	FILE *f_info, *f, *f_postIndInG,*f_postind;
- 		//ee
-    name= toString("inputfiles/gIzh_sparse_info_ee");
- 	  f_info= fopen(name.c_str(),"r");
-  	fread(&gExc_Exc.connN,sizeof(unsigned int),1,f_info);
+ 	
+ 	//ee
+   name= toString("inputfiles/gIzh_sparse_info_ee");
+   f_info= fopen(name.c_str(),"r");
+  	retval = fread(&gExc_Exc.connN,1,sizeof(unsigned int),f_info);
   	//gExc_Exc.connN=sizeof(unsigned int)*(PCNN.model.neuronN[0]+PCNN.model.neuronN[1]);
   	fprintf(stderr, "read %u times %lu bytes \n",gExc_Exc.connN,sizeof(unsigned int));
   	fprintf(flog, "%u connections in gExc_Exc\n",gExc_Exc.connN);
-		sumSynapses+=gExc_Exc.connN;
- 		fclose(f_info);
+	sumSynapses+=gExc_Exc.connN;
+	fclose(f_info);
   	
   	//ei
-    name= toString("inputfiles/gIzh_sparse_info_ei");
- 	  f_info= fopen(name.c_str(),"r");
-  	fread(&gExc_Inh.connN,sizeof(unsigned int),1,f_info);
+   name= toString("inputfiles/gIzh_sparse_info_ei");
+   f_info= fopen(name.c_str(),"r");
+  	retval = fread(&gExc_Inh.connN,1,sizeof(unsigned int),f_info);
   	//gExc_Inh.connN=sizeof(unsigned int)*(PCNN.model.neuronN[0]+PCNN.model.neuronN[1]);
   	fprintf(stderr, "read %u times %lu bytes \n",gExc_Inh.connN,sizeof(unsigned int));
   	fprintf(flog, "%u connections in gExc_Inh\n",gExc_Inh.connN);
-		sumSynapses+=gExc_Inh.connN;
- 		fclose(f_info);
+	sumSynapses+=gExc_Inh.connN;
+ 	fclose(f_info);
   	
   	//ie
-    name= toString("inputfiles/gIzh_sparse_info_ie");
- 	  f_info= fopen(name.c_str(),"r");
-  	fread(&gInh_Exc.connN,sizeof(unsigned int),1,f_info);
+   name= toString("inputfiles/gIzh_sparse_info_ie");
+ 	f_info= fopen(name.c_str(),"r");
+  	retval = fread(&gInh_Exc.connN,1,sizeof(unsigned int),f_info);
   	//gExc_Exc.connN=sizeof(unsigned int)*(PCNN.model.neuronN[0]+PCNN.model.neuronN[1]);
   	fprintf(stderr, "read %u times %lu bytes \n",gInh_Exc.connN,sizeof(unsigned int));
   	fprintf(flog, "%u connections in gInh_Exc\n",gInh_Exc.connN);
-		sumSynapses+=gInh_Exc.connN;
- 		fclose(f_info);
+	sumSynapses+=gInh_Exc.connN;
+ 	fclose(f_info);
   	
   	//ii
-    name= toString("inputfiles/gIzh_sparse_info_ii");
- 	  f_info= fopen(name.c_str(),"r");
-  	fread(&gInh_Inh.connN,sizeof(unsigned int),1,f_info);
+   name= toString("inputfiles/gIzh_sparse_info_ii");
+ 	f_info= fopen(name.c_str(),"r");
+  	retval = fread(&gInh_Inh.connN,1, sizeof(unsigned int),f_info);
   	//gExc_Exc.connN=sizeof(unsigned int)*(PCNN.model.neuronN[0]+PCNN.model.neuronN[1]);
   	fprintf(stderr, "read %u times %lu bytes \n",gInh_Inh.connN,sizeof(unsigned int));
   	fprintf(flog, "%u connections in gInh_Inh\n",gInh_Inh.connN);
-		sumSynapses+=gInh_Inh.connN;
- 		fclose(f_info);
+	sumSynapses+=gInh_Inh.connN;
+ 	fclose(f_info);
   	
   	allocateAllSparseArrays();
 
-	  //ee
+	//ee
   	name= toString("inputfiles/gIzh_sparse_ee");
- 		f= fopen(name.c_str(),"r"); 
+ 	f= fopen(name.c_str(),"r"); 
   	name= toString("inputfiles/gIzh_sparse_postIndInG_ee");
   	f_postIndInG= fopen(name.c_str(),"r");
   	name= toString("inputfiles/gIzh_sparse_postind_ee");
   	f_postind= fopen(name.c_str(),"r");  
-		PCNN.read_sparsesyns_par(0, gExc_Exc, f_postind,f_postIndInG,f);
+	PCNN.read_sparsesyns_par(0, gExc_Exc, f_postind,f_postIndInG,f);
   	fclose(f); 
   	fclose(f_postIndInG); 
   	fclose(f_postind);   
   	
-	  //ei
+	//ei
   	name= toString("inputfiles/gIzh_sparse_ei");
- 		f= fopen(name.c_str(),"r"); 
+ 	f= fopen(name.c_str(),"r"); 
   	name= toString("inputfiles/gIzh_sparse_postIndInG_ei");
   	f_postIndInG= fopen(name.c_str(),"r");
   	name= toString("inputfiles/gIzh_sparse_postind_ei");
   	f_postind= fopen(name.c_str(),"r");  
-		PCNN.read_sparsesyns_par(1, gExc_Inh, f_postind,f_postIndInG,f);
+	PCNN.read_sparsesyns_par(1, gExc_Inh, f_postind,f_postIndInG,f);
   	fclose(f); 
   	fclose(f_postIndInG); 
   	fclose(f_postind);   
   	
-	  //ie
+	//ie
   	name= toString("inputfiles/gIzh_sparse_ie");
- 		f= fopen(name.c_str(),"r"); 
+ 	f= fopen(name.c_str(),"r"); 
   	name= toString("inputfiles/gIzh_sparse_postIndInG_ie");
   	f_postIndInG= fopen(name.c_str(),"r");
   	name= toString("inputfiles/gIzh_sparse_postind_ie");
@@ -145,14 +142,14 @@ int main(int argc, char *argv[])
   	fclose(f_postIndInG); 
   	fclose(f_postind);   
   	
-	  //ii
+	//ii
   	name= toString("inputfiles/gIzh_sparse_ii");
- 		f= fopen(name.c_str(),"r"); 
+ 	f= fopen(name.c_str(),"r"); 
   	name= toString("inputfiles/gIzh_sparse_postIndInG_ii");
   	f_postIndInG= fopen(name.c_str(),"r");
   	name= toString("inputfiles/gIzh_sparse_postind_ii");
   	f_postind= fopen(name.c_str(),"r");  
-		PCNN.read_sparsesyns_par(3, gInh_Inh, f_postind,f_postIndInG,f);
+	PCNN.read_sparsesyns_par(3, gInh_Inh, f_postind,f_postIndInG,f);
   	fclose(f); 
   	fclose(f_postIndInG); 
   	fclose(f_postind);   
@@ -191,7 +188,7 @@ int main(int argc, char *argv[])
   		 CHECK_CUDA_ERRORS(cudaMalloc((void **)&devStates, PCNN.model.neuronN[0]*sizeof(curandState)));
   	   xorwow_setup(devStates, PCNN.model.neuronN[0]); //setup the prng for the bigger network only
 
-  		 generate_random_gpuInput_xorwow<<<sGrid0,sThreads>>>(devStates, PCNN.d_input1, PCNN.model.neuronN[0], 10.0, 0.0);
+  		 generate_random_gpuInput_xorwow<<<sGrid0,sThreads>>>(devStates, PCNN.d_input1, PCNN.model.neuronN[0], 5.0, 0.0);
   		 generate_random_gpuInput_xorwow<<<sGrid1,sThreads>>>(devStates, PCNN.d_input2, PCNN.model.neuronN[1], 2.0, 0.0); 
 
   	}  
@@ -223,13 +220,13 @@ int main(int argc, char *argv[])
  
   if (which == GPU){ 
     while (!done) {
-  	  generate_random_gpuInput_xorwow<<<sGrid0,sThreads>>>(devStates, PCNN.d_input1, PCNN.model.neuronN[0], 10.0, 0.0);
+  	  generate_random_gpuInput_xorwow<<<sGrid0,sThreads>>>(devStates, PCNN.d_input1, PCNN.model.neuronN[0], 5.0, 0.0);
   	  generate_random_gpuInput_xorwow<<<sGrid1,sThreads>>>(devStates, PCNN.d_input2, PCNN.model.neuronN[1], 2.0, 0.0); 
      
       stepTimeGPU(PCNN.d_input1,PCNN.d_input2, t);
       t+= DT;
       //PCNN.output_spikes(osf2, which);
-  	  copySpikeNFromDevice();
+  	   copySpikeNFromDevice();
       copySpikesFromDevice();
       PCNN.sum_spikes();
 
