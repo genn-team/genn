@@ -96,13 +96,16 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
     string kernelName, junk;
     int reqRegs, reqSmem, requiredBlocks, ptxInfoFound = 0;
 
+    unsigned int **blockSizePtr;
     unsigned int *bestSynBlkSz= new unsigned int[deviceCount];
     unsigned int *bestLrnBlkSz= new unsigned int[deviceCount];
     unsigned int *bestNrnBlkSz= new unsigned int[deviceCount];
-    unsigned int **blockSizePtr;
+    int *smallModel;
+    int smallSyn = 0, smallLrn = 0, smallNrn = 0;
     vector<unsigned int> *groupSizePtr;
+    float smVersion, bestSmVersion = 0;
+    int deviceOccupancy, bestDeviceOccupancy = 0;
     float blockLimit, mainBlockLimit;
-    int deviceOccupancy, bestDeviceOccupancy = 0, smallModel = 0;
 
     int devstart, devcount;
     if (model->chooseGPUDevice == AUTODEVICE) {
@@ -112,6 +115,20 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
     else {
       devstart= model->chooseGPUDevice;
       devcount= devstart+1;
+    }
+
+    // Get the sizes of each synapse / learn group present on this host and device
+    vector<unsigned int> synapseN, learnN;
+    for (int group = 0; group < model->synapseGrpN; group++) {
+      if (model->synapseConnType[group] == SPARSE) {
+	synapseN.push_back(model->maxConn[group]);
+      }
+      else {
+	synapseN.push_back(model->neuronN[model->synapseTarget[group]]);
+      }
+      if (model->synapseType[group] == LEARN1SYNAPSE) {
+	learnN.push_back(model->neuronN[model->synapseSource[group]]);
+      }
     }
 
     for (int device = devstart; device < devcount; device++) {
@@ -128,8 +145,8 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
       command.str("");
       command << string(NVCC) << " -x cu -cubin -Xptxas=-v -arch=sm_" << deviceProp[device].major;
       command << deviceProp[device].minor << " -DDT -D\"CHECK_CUDA_ERRORS(call){call;}\" ";
-      command << path << "/" << (*model).name << "_CODE/runner.cc 2>&1";
-      mos << command.str() << endl;
+      command << path << "/" << model->name << "_CODE/runner.cc 2>&1";
+      //mos << command.str() << endl;
 
 #ifdef _WIN32
       FILE *nvccPipe = _popen(command.str().c_str(), "r");
@@ -140,20 +157,6 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
       if (!nvccPipe) {
 	mos << "ERROR: failed to open nvcc pipe" << endl;
 	exit(EXIT_FAILURE);
-      }
-
-      // Get the sizes of each synapse / learn / neuron group present on this host and device
-      vector<unsigned int> synapseN, learnN;
-      for (int group = 0; group < (*model).synapseGrpN; group++) {
-	if ((*model).synapseConnType[group] == SPARSE) {
-	  synapseN.push_back((*model).maxConn[group]);
-	}
-	else {
-	  synapseN.push_back((*model).neuronN[(*model).synapseTarget[group]]);
-	}
-	if ((*model).synapseType[group] == LEARN1SYNAPSE) {
-	  learnN.push_back((*model).neuronN[(*model).synapseSource[group]]);
-	}
       }
 
       // This data is required for block size optimisation, but cannot be found in deviceProp.
@@ -190,16 +193,19 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
 	  kernelName = "synapse";
 	  blockSizePtr = &bestSynBlkSz;
 	  groupSizePtr = &synapseN;
+	  smallModel = &smallSyn;
 	}
 	else if (strstr(buffer, "learnSynapses") != NULL) {
 	  kernelName = "learn";
 	  blockSizePtr = &bestLrnBlkSz;
 	  groupSizePtr = &learnN;
+	  smallModel = &smallLrn;
 	}
 	else if (strstr(buffer, "calcNeurons") != NULL) {
 	  kernelName = "neuron";
 	  blockSizePtr = &bestNrnBlkSz;
-	  groupSizePtr = &(*model).neuronN;
+	  groupSizePtr = &model->neuronN;
+	  smallModel = &smallNrn;
 	}
 	if (strncmp(buffer, "ptxas info    : Used", 20) == 0) {
 	  ptxInfoFound = 1;
@@ -235,7 +241,7 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
 	    blockLimit = floor(deviceProp[device].sharedMemPerBlock / blockLimit);
 	    if (blockLimit < mainBlockLimit) mainBlockLimit = blockLimit;
 
-	    // The number of [blockSize] padded thread blocks required to simulate all groups
+	    // The number of thread blocks required to simulate all groups
 	    requiredBlocks = 0;
 	    for (int group = 0; group < groupSizePtr->size(); group++) {
 	      requiredBlocks += ceil((float) (*groupSizePtr)[group] / (float) (blockSize * 32));
@@ -243,28 +249,26 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
 
 	    // Use a small block size if it allows all groups to occupy the device concurrently
 	    if (requiredBlocks <= (mainBlockLimit * deviceProp[device].multiProcessorCount)) {
-	      smallModel = 1;
-	      globalMem = deviceProp[device].totalGlobalMem;
-	      if (globalMem >= mostGlobalMem) {
-		mostGlobalMem = globalMem;
+	      *smallModel = 1;
+	      (*blockSizePtr)[device] = (unsigned int) blockSize * 32;
+	      smVersion = deviceProp[device].major + (deviceProp[device].minor / 10);
+	      if ((blockSizePtr == &bestNrnBlkSz) && (smVersion >= bestSmVersion)) { // SM version is tiebreaker
+		bestSmVersion = smVersion;
+		bestDeviceOccupancy = blockSize * mainBlockLimit * deviceProp[device].multiProcessorCount;
 		chosenDevice = device;
-		(*blockSizePtr)[device] = (unsigned int) blockSize * 32;
-		bestDeviceOccupancy = blockSize * mainBlockLimit;
 	      }
 	      break;
 	    }
 
 	    // Update the best warp occupancy and the block size which enables it.
-	    if ((!smallModel) && ((blockSize * mainBlockLimit * deviceProp[device].multiProcessorCount) > deviceOccupancy)) {
+	    if ((!*smallModel) && ((blockSize * mainBlockLimit * deviceProp[device].multiProcessorCount) > deviceOccupancy)) {
 	      deviceOccupancy = blockSize * mainBlockLimit * deviceProp[device].multiProcessorCount;
 	      (*blockSizePtr)[device] = (unsigned int) blockSize * 32;
 
-	      // Choose this device and set optimal block sizes if it enables higher neuron kernel occupancy.
-	      if (blockSizePtr == &bestNrnBlkSz) {
-		if (deviceOccupancy >= bestDeviceOccupancy) {
-		  bestDeviceOccupancy = deviceOccupancy;
-		  chosenDevice = device;
-		}
+	      // Choose this device and record occupancy if it enables higher neuron kernel occupancy.
+	      if ((blockSizePtr == &bestNrnBlkSz) && (deviceOccupancy >= bestDeviceOccupancy)) {
+		bestDeviceOccupancy = deviceOccupancy;
+		chosenDevice = device;
 	      }
 	    }
 	  }
