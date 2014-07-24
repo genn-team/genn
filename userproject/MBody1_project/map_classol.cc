@@ -99,7 +99,7 @@ classol::~classol()
 {
   free(pattern);
   free(baserates);
-	freeMem;
+  freeMem;
 }
 
 
@@ -113,7 +113,7 @@ void classol::read_pnkcsyns(FILE *f //!< File handle for a file containing PN to
 {
   // version 1
   fprintf(stderr, "%lu\n", model.neuronN[0]*model.neuronN[1]*sizeof(float));
-  fread(gpPNKC, model.neuronN[0]*model.neuronN[1]*sizeof(float),1,f);
+  unsigned int retval = fread(gpPNKC, 1, model.neuronN[0]*model.neuronN[1]*sizeof(float),f);
   // version 2
   /*  unsigned int UIntSz= sizeof(unsigned int)*8;   // in bit!
   unsigned int logUIntSz= (int) (logf((float) UIntSz)/logf(2.0f)+1e-5f);
@@ -126,7 +126,7 @@ void classol::read_pnkcsyns(FILE *f //!< File handle for a file containing PN to
   // general:
   //assert(is.good());
   fprintf(stderr,"read pnkc ... \n");
-  fprintf(stderr, "values start with: \n");
+  fprintf(stderr, "%u bytes, values start with: \n", retval);
   for(int i= 0; i < 20; i++) {
     fprintf(stderr, "%f ", gpPNKC[i]);
   }
@@ -155,9 +155,9 @@ void classol::write_pnkcsyns(FILE *f //!< File handle for a file to write PN to 
 void classol::read_pnlhisyns(FILE *f //!< File handle for a file containing PN to LHI conductivity values
 			     )
 {
-  fread(gpPNLHI, model.neuronN[0] * model.neuronN[2] * sizeof(float), 1, f);
+  unsigned int retval = fread(gpPNLHI, 1, model.neuronN[0] * model.neuronN[2] * sizeof(float),  f);
   fprintf(stderr,"read pnlhi ... \n");
-  fprintf(stderr, "values start with: \n");
+  fprintf(stderr, "%u bytes, values start with: \n", retval);
   for(int i= 0; i < 20; i++) {
     fprintf(stderr, "%f ", gpPNLHI[i]);
   }
@@ -185,9 +185,9 @@ void classol::write_pnlhisyns(FILE *f //!< File handle for a file to write PN to
 void classol::read_kcdnsyns(FILE *f //!< File handle for a file containing KC to DN (detector neuron) conductivity values 
 			    )
 {
-  fread(gpKCDN, model.neuronN[1]*model.neuronN[3]*sizeof(float),1,f);
+  unsigned int retval =fread(gpKCDN, 1, model.neuronN[1]*model.neuronN[3]*sizeof(float),f);
   fprintf(stderr, "read kcdn ... \n");
-  fprintf(stderr, "values start with: \n");
+  fprintf(stderr, "%u bytes, values start with: \n", retval);
   for(int i= 0; i < 100; i++) {
     fprintf(stderr, "%f ", gpKCDN[i]);
   }
@@ -212,12 +212,12 @@ void classol::read_sparsesyns_par(int synInd, Conductance C, FILE *f_ind,FILE *f
 {
   //allocateSparseArray(synInd,C.connN);
 
-  fread(C.gp, C.connN*sizeof(float),1,f_g);
+  unsigned int retval =fread(C.gp, 1, C.connN*sizeof(float),f_g);
   fprintf(stderr,"%d active synapses. \n",C.connN);
-  fread(C.gIndInG, (model.neuronN[model.synapseSource[synInd]]+1)*sizeof(unsigned int),1,f_indInG);
-  fread(C.gInd, C.connN*sizeof(int),1,f_ind);
+  retval = fread(C.gIndInG, 1, (model.neuronN[model.synapseSource[synInd]]+1)*sizeof(unsigned int),f_indInG);
+  retval = fread(C.gInd, 1, C.connN*sizeof(int),f_ind);
 
-
+  
   // general:
   fprintf(stderr,"Read conductance ... \n");
   fprintf(stderr, "Size is %d for synapse group %d. Values start with: \n",C.connN, synInd);
@@ -249,9 +249,9 @@ void classol::read_input_patterns(FILE *f //!< File handle for a file containing
 				  )
 {
   // we use a predefined pattern number
-  fread(pattern, model.neuronN[0]*PATTERNNO*sizeof(unsigned int),1,f);
+  unsigned int retval = fread(pattern, 1, model.neuronN[0]*PATTERNNO*sizeof(unsigned int),f);
   fprintf(stderr, "read patterns ... \n");
-  fprintf(stderr, "input pattern values start with: \n");
+  fprintf(stderr, "%u bytes, input pattern values start with: \n", retval);
   for(int i= 0; i < 100; i++) {
     fprintf(stderr, "%d ", pattern[i]);
   }
@@ -290,12 +290,9 @@ void classol::run(float runtime, //!< Duration of time to run the model for
   for (int i= 0; i < riT; i++) {
     if (iT%patSetTime == 0) {
       pno= (iT/patSetTime)%PATTERNNO;
-      if (which == CPU)
-	theRates= pattern;
-      if (which == GPU)
-	theRates= d_pattern;
+      if (which == CPU) theRates= pattern;
+      if (which == GPU)	theRates= d_pattern;
       offset= pno*model.neuronN[0];
-      //      fprintf(stderr, "setting pattern, pattern offset: %d\n", offset);
     }
     if (iT%patSetTime == patFireTime) {
       if (which == CPU)
@@ -310,7 +307,6 @@ void classol::run(float runtime, //!< Duration of time to run the model for
        stepTimeCPU(theRates, offset, t);
     iT++;
     t= iT*DT;
-    fprintf(stderr, "%f %f \n", t, DT);
   }
 }
 

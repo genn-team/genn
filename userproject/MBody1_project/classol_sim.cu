@@ -99,7 +99,6 @@ int main(int argc, char *argv[])
   fprintf(stderr, "# initial wait time execution ... \n");
 
   t= 0.0;
-//  float lastsynwrite= t;
   int done= 0;
   float last_t_report=  t;
 //  locust.output_state(os, which);  
@@ -132,14 +131,12 @@ int main(int argc, char *argv[])
     fprintf(osf, "%f ", VDN[i]);
    }
     fprintf(osf,"\n");
-//    cudaThreadSynchronize();
 
     // report progress
     if (t - last_t_report >= T_REPORT_TME)
     {
       fprintf(stderr, "time %f \n", t);
       last_t_report= t;
-//      locust.output_state(os);
     }
     // output synapses occasionally
     // if (synwrite) {
