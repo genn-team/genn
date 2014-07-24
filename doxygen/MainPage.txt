@@ -99,8 +99,7 @@ tools/generate_run [CPU/GPU] [#AL] [#KC] [#LH] [#DN] [gscale] [DIR] [EXE] [MODEL
 \endcode
 To use it, navigate to the "userproject/MBody1_project" directory and type
 \code{.cc} 
-../../tools/generate_run
-n 1 100 1000 20 100 0.00117 outname classol_sim MBody1 0 
+../../tools/generate_run 1 100 1000 20 100 0.00117 outname classol_sim MBody1 0 
 \endcode
 which would generate a model of the locust olfactory system. 
 
