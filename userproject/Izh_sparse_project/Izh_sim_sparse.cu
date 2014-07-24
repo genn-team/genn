@@ -32,7 +32,8 @@ int main(int argc, char *argv[])
   name= OutDir+ toString("/") + toString(argv[1]) + toString(".out.Vm"); 
   cerr << name << endl;
   FILE *osf= fopen(name.c_str(),"w");
-  name= OutDir+ toString("/") + toString(argv[1]) + toString(".out.St"); 
+  if (which == 0) name= OutDir+ toString("/") + toString(argv[1]) + toString(".out.St.CPU");
+  if (which == 1) name= OutDir+ toString("/") + toString(argv[1]) + toString(".out.St.GPU"); 
   FILE *osf2= fopen(name.c_str(),"w");
   
   //-----------------------------------------------------------------
@@ -57,10 +58,10 @@ int main(int argc, char *argv[])
   fprintf(flog, "# T_REPORT_TME %f \n", T_REPORT_TME);
   fprintf(flog, "# TOTAL_TME %f \n", TOTAL_TME);
 
-  name= OutDir+ toString("/") + toString(argv[1])+ toString(".params");
-  FILE *fparams = fopen(name.c_str(),"w");
-  name= OutDir+ toString("/") + toString(argv[1])+ toString(".fg");
-  FILE *fg = fopen(name.c_str(),"w");
+  //name= OutDir+ toString("/") + toString(argv[1])+ toString(".params");
+  //FILE *fparams = fopen(name.c_str(),"w");
+  //name= OutDir+ toString("/") + toString(argv[1])+ toString(".fg");
+  //FILE *fg = fopen(name.c_str(),"w");
   PCNN.initializeAllVars(which); 
  	unsigned int sumSynapses=0;
   
@@ -167,12 +168,12 @@ int main(int argc, char *argv[])
   */
   fprintf(stderr, "\nThere are %u synapses in the model.\n", sumSynapses);
   fprintf(stderr, "# neuronal circuitry built, start computation ... \n\n");
-  unsigned int outno;
   curandState * devStates;
+  /*unsigned int outno;
   if (PCNN.model.neuronN[0]>10) 
   outno=10;
   else outno=PCNN.model.neuronN[0];
-
+*/
   if (which == GPU) PCNN.allocate_device_mem_input(); 
 
 	fprintf(stderr, "set input...\n");
@@ -190,79 +191,129 @@ int main(int argc, char *argv[])
   		 CHECK_CUDA_ERRORS(cudaMalloc((void **)&devStates, PCNN.model.neuronN[0]*sizeof(curandState)));
   	   xorwow_setup(devStates, PCNN.model.neuronN[0]); //setup the prng for the bigger network only
 
-  		 generate_random_gpuInput_xorwow<<<sGrid0,sThreads>>>(devStates, PCNN.d_input1, PCNN.model.neuronN[0], 5.0, 0.0);
+  		 generate_random_gpuInput_xorwow<<<sGrid0,sThreads>>>(devStates, PCNN.d_input1, PCNN.model.neuronN[0], 10.0, 0.0);
   		 generate_random_gpuInput_xorwow<<<sGrid1,sThreads>>>(devStates, PCNN.d_input2, PCNN.model.neuronN[1], 2.0, 0.0); 
 
   	}  
   
-  PCNN.output_params(fparams, fg);
-  fclose(fparams); 
-  fclose(fg);
+  //PCNN.output_params(fparams, fg);
+  //fclose(fparams); 
+  //fclose(fg);
 
   
   //------------------------------------------------------------------
   // output general parameters to output file and start the simulation
   
-    timer.startTimer();
-  fprintf(stderr, "# DT %f \n", DT);
-  fprintf(stderr, "# T_REPORT_TME %f \n", T_REPORT_TME);
-  fprintf(stderr, "# TOTAL_TME %f \n", TOTAL_TME);
 
-  fprintf(stderr, "# We are running with fixed time step %f \n", DT);
-  fprintf(stderr, "# initial wait time execution ... \n");
+  fprintf(stdout, "# DT %f \n", DT);
+  fprintf(stdout, "# T_REPORT_TME %f \n", T_REPORT_TME);
+  fprintf(stdout, "# TOTAL_TME %f \n", TOTAL_TME);
+
+  fprintf(stdout, "# We are running with fixed time step %f \n", DT);
+  fprintf(stdout, "# initial wait time execution ... \n");
+  timer.startTimer();
 
   t= 0.0;
   int done= 0;
   float last_t_report=  t;
   PCNN.run(DT, which);
-  while (!done) 
-  {
-  	 if (which == GPU){ 
-  	 PCNN.getSpikeNumbersFromGPU();
-     PCNN.getSpikesFromGPU();
-    
-  	 generate_random_gpuInput_xorwow<<<sGrid0,sThreads>>>(devStates, PCNN.d_input1, PCNN.model.neuronN[0], 5.0, 0.0);
-  	 generate_random_gpuInput_xorwow<<<sGrid1,sThreads>>>(devStates, PCNN.d_input2, PCNN.model.neuronN[1], 2.0, 0.0); 
+  copySpikeNFromDevice();
+  copySpikesFromDevice();
+  PCNN.sum_spikes();
+ 
+  if (which == GPU){ 
+    while (!done) {
+  	  generate_random_gpuInput_xorwow<<<sGrid0,sThreads>>>(devStates, PCNN.d_input1, PCNN.model.neuronN[0], 10.0, 0.0);
+  	  generate_random_gpuInput_xorwow<<<sGrid1,sThreads>>>(devStates, PCNN.d_input2, PCNN.model.neuronN[1], 2.0, 0.0); 
+     
+      stepTimeGPU(PCNN.d_input1,PCNN.d_input2, t);
+      t+= DT;
+      //PCNN.output_spikes(osf2, which);
+  	  copySpikeNFromDevice();
+      copySpikesFromDevice();
+      PCNN.sum_spikes();
 
+      for (int i= 0; i < glbscntPExc; i++) {
+		    fprintf(osf2,"%f %d\n", t, glbSpkPExc[i]);
+      }
+
+      for (int i= 0; i < glbscntPInh; i++) {
+        fprintf(osf2, "%f %d\n", t, PCNN.model.sumNeuronN[0]+glbSpkPInh[i]);
+      }
+      //end output_spikes
+      
+      //fprintf(osf, "%f ", t);
+  
+      /*for(int i=0;i<outno;i++) {
+        fprintf(osf, "%f ", VPExc[i]);
+      }*/
+  
+      //fprintf(osf, "\n");
+
+       // report progress
+      if (t - last_t_report >= T_REPORT_TME)
+      {
+        fprintf(stderr, "time %f \n", t);
+        last_t_report= t;
+      }
+
+      done= (t >= TOTAL_TME);
+		  }
+    }
+	if (which == CPU){
+    while (!done) {
+  		PCNN.setInput(which);
+      stepTimeCPU(PCNN.input1, PCNN.input2,t);
+      t+= DT;
+      
+      PCNN.sum_spikes();
+      //PCNN.output_spikes(osf2, which);
+ 
+      for (int i= 0; i < glbscntPExc; i++) {
+		    fprintf(osf2,"%f %d\n", t, glbSpkPExc[i]);
+      }
+
+      for (int i= 0; i < glbscntPInh; i++) {
+        fprintf(osf2, "%f %d\n", t, PCNN.model.sumNeuronN[0]+glbSpkPInh[i]);
+      }
+      //end output_spikes
+      //fprintf(osf, "%f ", t);
+      //PCNN.write_input_to_file(osf2);
+   
+      /*for(int i=0;i<outno;i++) {
+        fprintf(osf, "%f ", VPExc[i]);
+      }*/
+  
+      //fprintf(osf, "\n");
+
+      // report progress
+      if (t - last_t_report >= T_REPORT_TME)
+        {
+          fprintf(stderr, "time %f \n", t);
+          last_t_report= t;
+        }
+
+      done= (t >= TOTAL_TME);
+    }
 		}
-		if (which == CPU){
-		PCNN.setInput(which);
-		}
-     PCNN.run(DT, which); // run next batch
+     //PCNN.run(DT, which); // run next batch
      /*if (which == GPU) { 
      CHECK_CUDA_ERRORS(cudaMemcpy(VPExc,d_VPExc, outno*sizeof(PCNN.model.ftype), cudaMemcpyDeviceToHost));
 	} */
-   PCNN.sum_spikes();
-   PCNN.output_spikes(osf2, which);
+  
    
    //PCNN.output_state(os, which);
-   fprintf(osf, "%f ", t);
-   //PCNN.write_input_to_file(osf2);
    
-   for(int i=0;i<outno;i++) {
-     fprintf(osf, "%f ", VPExc[i]);
-    }
-  
-   fprintf(osf, "\n");
-
-   // report progress
-    if (t - last_t_report >= T_REPORT_TME)
-    {
-      fprintf(stderr, "time %f \n", t);
-      last_t_report= t;
-    }
-
-    done= (t >= TOTAL_TME);
-   if (which == GPU) {
+   /*if (which == GPU) {
     CHECK_CUDA_ERRORS(cudaMemcpy(VPExc,d_VPExc, 10*sizeof(PCNN.model.ftype), cudaMemcpyDeviceToHost));
-  }
-  }
+  }*/
+
 	
   timer.stopTimer();
 	
   cerr << "Output files are created under the current directory. Output and parameters are logged in: " << logname << endl;
   fprintf(timef, "%d %d %u %u %.4f %.2f %.1f %.2f %u %s\n",which, PCNN.model.sumNeuronN[PCNN.model.neuronGrpN-1], PCNN.sumPExc, PCNN.sumPInh, timer.getElapsedTime(),VPExc[0], TOTAL_TME, DT, sumSynapses, logname.c_str());
-  fprintf(flog, "%d neurons in total\n%u spikes in the excitatory population\n%u spikes in the inhibitory population\nElapsed time is %.4f\nLast Vm value of the 1st neuron is %.2f\nTotal number of synapses in the model is %u\n\n#################\n", PCNN.model.sumNeuronN[PCNN.model.neuronGrpN-1], PCNN.sumPExc, PCNN.sumPInh, timer.getElapsedTime(),VPExc[0], TOTAL_TME, DT, sumSynapses);
+  fprintf(flog, "%u neurons in total\n%u spikes in the excitatory population\n%u spikes in the inhibitory population\nElapsed time is %.4f\nLast Vm value of the 1st neuron is %.2f\nTotal number of synapses in the model is %u\n\n#################\n", PCNN.model.sumNeuronN[PCNN.model.neuronGrpN-1], PCNN.sumPExc, PCNN.sumPInh, timer.getElapsedTime(),VPExc[0], TOTAL_TME, DT, sumSynapses);
   fclose(osf);
   fclose(timef);
   fclose(osf2);

@@ -379,8 +379,12 @@ the device memory.
  
 GeNN was created by Thomas Nowotny. 
 
-Addition of Izhikevich model, debugging modes and sparse connectivity by Esin Yavuz
+Addition of Izhikevich model, debugging modes and sparse connectivity by Esin Yavuz.
 
-Block size optimisations and delayed synapses by James Turner
+Block size optimisations and delayed synapses by James Turner.
+
+Automatic brackets and dense to sparse network conversion by Alan Diamond.
+
+User-defined synaptic and postsynaptic update methods by Alex Cope and Esin Yavuz.
 */
 //----------------------------------------------------------------------------
