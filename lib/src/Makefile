@@ -1,23 +1,23 @@
-##--------------------------------------------------------------------------                                                                                                                                      
-##   Author: Thomas Nowotny                                                                                                                                                                                       
-##                                                                                                                                                                                                                
-##   Institute: Center for Computational Neuroscience and Robotics                                                                                                                                                
-##              University of Sussex                                                                                                                                                                              
-##            Falmer, Brighton BN1 9QJ, UK                                                                                                                                                                        
-##                                                                                                                                                                                                                
-##   email to:  T.Nowotny@sussex.ac.uk                                                                                                                                                                            
-##                                                                                                                                                                                                                
-##   initial version: 2010-02-07                                                                                                                                                                                  
-##                                                                                                                                                                                                                
-##--------------------------------------------------------------------------                                                                                                                                      
+##--------------------------------------------------------------------------
+##   Author: Thomas Nowotny
+##
+##   Institute: Center for Computational Neuroscience and Robotics
+##              University of Sussex
+##            Falmer, Brighton BN1 9QJ, UK
+##
+##   email to:  T.Nowotny@sussex.ac.uk
+##
+##   initial version: 2010-02-07
+##
+##--------------------------------------------------------------------------
 
 ROOTDIR         := $(GeNNPATH)/lib/src
 EXECUTABLE      := generateALL
-SOURCES         := generateALL.cpp
+SOURCES         := generateALL.cc
 
 INCLUDE_FLAGS   :=
 LINK_FLAGS      :=
-CCFLAGS         :=
+CCFLAGS          = -DNVCC=\"$(NVCC)\"
 NVCCFLAGS       :=
 
 ifdef COMSPEC

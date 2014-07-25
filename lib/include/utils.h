@@ -17,6 +17,7 @@
 #ifndef _UTILS_H_
 #define _UTILS_H_ //!< macro for avoiding multiple inclusion during compilation
 
+
 //--------------------------------------------------------------------------
 /*! \file utils.h
 
@@ -24,19 +25,19 @@
 */
 //--------------------------------------------------------------------------
 
-#include <cstdlib> // for exit() and EXIT_FAIL / _SUCCESS
+#include <cstdlib> // for exit() and EXIT_FAIL / EXIT_SUCCESS
 #include <iostream>
 #include <string>
 #include <vector>
+#include <map>
 #include <memory>
 #include <fstream>
-
-#include "modelSpec.h"
-#include "toString.h"
+#include <cmath>
 
 #include <cuda_runtime.h>
 
-
+#include "modelSpec.h"
+#include "toString.h"
 //--------------------------------------------------------------------------
 /* \brief Macro for wrapping cuda runtime function calls and catching any errors that may be thrown.
  */
@@ -52,10 +53,6 @@
     exit(EXIT_FAILURE);						           \
   }									   \
 }
-
-
-vector<neuronModel> nModels; //!< Global c++ vector containing all neuron model descriptions
-
 
 //--------------------------------------------------------------------------
 /* \brief Function to write the comment header denoting file authorship and contact details into the generated code.
@@ -74,6 +71,7 @@ void writeHeader(ostream &os)
   os << endl;
 }
 
+
 //--------------------------------------------------------------------------
 //! \brief Tool for substituting strings in the neuron code strings or other templates
 //--------------------------------------------------------------------------
@@ -87,18 +85,33 @@ void substitute(string &s, const string trg, const string rep)
   }
 }
 
+
+//--------------------------------------------------------------------------
+//! \brief Tool for finding strings in another string
+//--------------------------------------------------------------------------
+
+bool find(string &s, const string trg)
+{
+  size_t found= s.find(trg);
+  return (found != string::npos);
+}
+
+
 //--------------------------------------------------------------------------
 //! \brief Tool for determining the size of variable types on the current architecture
 //--------------------------------------------------------------------------
 
 unsigned int theSize(string type) 
 {
-  unsigned int sz= sizeof(int);
-  if (type == tS("float")) sz= sizeof(float);
-  if (type == tS("unsigned int")) sz= sizeof(unsigned int);
-  if (type == tS("int")) sz= sizeof(int);
-  return sz;
+  unsigned int size = 0;
+  if (type == "int") size = sizeof(int);
+  if (type == "unsigned int") size = sizeof(unsigned int);
+  if (type == "float") size = sizeof(float);
+  if (type == "double") size = sizeof(double);
+  if (type == "long double") size = sizeof(long double);
+  return size;
 }
+
 
 //--------------------------------------------------------------------------
 /*! \brief Function that defines standard neuron models
@@ -106,6 +119,35 @@ unsigned int theSize(string type)
 The neuron models are defined and added to the C++ vector nModels that is holding all neuron model descriptions. User defined neuron models can be appended to this vector later in (a) separate function(s).
 */
 //--------------------------------------------------------------------------
+//NOTE: calcSynapses takes the first variable of each model.neuronName[src] as an argument, of type float. If you add a neuron model, keep this in mind. 
+
+vector<neuronModel> nModels; //!< Global c++ vector containing all neuron model descriptions
+
+class rulkovdp : public dpclass
+{
+public:
+	float calculateDerivedParameter(int index, vector <float> pars, float dt = 1.0) {
+		switch (index) {
+			case 0:
+			return ip0(pars);
+			case 1:
+			return ip1(pars);
+			case 2:
+			return ip2(pars);
+		}
+		return -1;
+	}
+
+	float ip0(vector<float> pars) {
+		return pars[0]*pars[0]*pars[1];
+	}
+	float ip1(vector<float> pars) {
+		return pars[0]*pars[2];
+	}
+	float ip2(vector<float> pars) {
+		return pars[0]*pars[1]+pars[0]*pars[2];
+	}
+};
 
 void prepareStandardModels()
 {
@@ -137,6 +179,11 @@ void prepareStandardModels()
         $(V)= -($(Vspike));\n\
       }\n\
     }\n");
+
+  n.thresholdConditionCode = tS("$(V) > $(ip2) - 0.01");
+
+  n.dps = new rulkovdp();
+
   nModels.push_back(n);
 
   // Poisson neurons
@@ -167,6 +214,9 @@ void prepareStandardModels()
         }\n\
       }\n\
     }\n");
+
+  n.thresholdConditionCode = tS("$(V) > $(Vspike) - 0.01");
+
   nModels.push_back(n);
 
 // Traub and Miles HH neurons
@@ -207,6 +257,9 @@ void prepareStandardModels()
       $(n)+= (_a*(1.0-$(n))-_b*$(n))*mdt;\n\
       $(V)+= Imem/$(C)*mdt;\n\
     }\n");
+
+  n.thresholdConditionCode = tS("$(V) > 20");//TODO check this, to get better value
+
   nModels.push_back(n);
   
  //Izhikevich neurons
@@ -223,14 +276,121 @@ void prepareStandardModels()
   n.pNames.push_back(tS("c")); // after-spike reset value of V
   n.pNames.push_back(tS("d")); // after-spike reset value of U
   n.dpNames.clear(); 
-  n.simCode= tS(" 	 $(V)+=0.5f*(0.04f*$(V)*$(V)+5*$(V)+140-$(U)+$(Isyn))*DT; //at two times for numerical stability\n\
-  	 $(V)+=0.5f*(0.04f*$(V)*$(V)+5*$(V)+140-$(U)+$(Isyn))*DT;\n\
-  	 $(U)+=$(a)*($(b)*$(V)-$(U))*DT;\n\
-  	 if ($(V) > 30){\n\
-		$(V)=$(c);\n\
-		$(U)+=$(d);\n\
-  		}\n");
+  //TODO: replace the resetting in the following with BRIAN-like threshold and resetting 
+  n.simCode= tS("    if ($(V) >= 30){\n\
+      $(V)=$(c);\n\
+		  $(U)+=$(d);\n\
+    } \n\
+    $(V)+=0.5f*(0.04f*$(V)*$(V)+5*$(V)+140-$(U)+$(Isyn))*DT; //at two times for numerical stability\n\
+    $(V)+=0.5f*(0.04f*$(V)*$(V)+5*$(V)+140-$(U)+$(Isyn))*DT;\n\
+    $(U)+=$(a)*($(b)*$(V)-$(U))*DT;\n\
+   // if ($(V) > 30){   //keep this only for visualisation -- not really necessaary otherwise \n\
+    //  $(V)=30; \n\
+   //}\n\
+   ");
+    
+  n.thresholdConditionCode = tS("$(V) >= 29.99");
+
+ /*  n.resetCode=tS("//reset code is here\n ");
+      $(V)=$(c);\n\
+		  $(U)+=$(d);\n\
+  */
   nModels.push_back(n);
+
+//Izhikevich neurons with variable parameters
+  n.varNames.clear();
+  n.varTypes.clear();
+  n.varNames.push_back(tS("V"));
+  n.varTypes.push_back(tS("float"));  
+  n.varNames.push_back(tS("U"));
+  n.varTypes.push_back(tS("float"));
+  n.varNames.push_back(tS("a")); // time scale of U
+  n.varTypes.push_back(tS("float"));
+  n.varNames.push_back(tS("b")); // sensitivity of U
+  n.varTypes.push_back(tS("float"));
+  n.varNames.push_back(tS("c")); // after-spike reset value of V
+  n.varTypes.push_back(tS("float"));
+  n.varNames.push_back(tS("d")); // after-spike reset value of U
+  n.varTypes.push_back(tS("float"));
+  n.pNames.clear();
+  n.dpNames.clear(); 
+  //TODO: replace the resetting in the following with BRIAN-like threshold and resetting 
+  n.simCode= tS("    if ($(V) >= 30){\n\
+      $(V)=$(c);\n\
+		  $(U)+=$(d);\n\
+    } \n\
+    $(V)+=0.5f*(0.04f*$(V)*$(V)+5*$(V)+140-$(U)+$(Isyn))*DT; //at two times for numerical stability\n\
+    $(V)+=0.5f*(0.04f*$(V)*$(V)+5*$(V)+140-$(U)+$(Isyn))*DT;\n\
+    $(U)+=$(a)*($(b)*$(V)-$(U))*DT;\n\
+    //if ($(V) > 30){      //keep this only for visualisation -- not really necessaary otherwise \n\
+    //  $(V)=30; \n\
+    //}\n\
+    ");
+  n.thresholdConditionCode = tS("$(V) > 29.99");
+  nModels.push_back(n);
+  
+  #include "extra_neurons.h"
+
+}
+
+class expDecayDp : public dpclass
+{
+public:
+	float calculateDerivedParameter(int index, vector <float> pars, float dt = 1.0) {
+		switch (index) {
+			case 0:
+			return expDecay(pars, dt);
+		}
+		return -1;
+	}
+
+	float expDecay(vector<float> pars, float dt) {
+		return expf(-dt/pars[0]);
+	}
+};
+
+
+
+vector<postSynModel> postSynModels;
+
+void preparePostSynModels(){
+  postSynModel ps;
+  
+  //0: Exponential decay
+  ps.varNames.clear();
+  ps.varTypes.clear();
+  
+  //ps.varNames.push_back(tS("E"));  
+  //ps.varTypes.push_back(tS("float"));  
+  
+  ps.pNames.clear();
+  ps.dpNames.clear(); 
+  
+  ps.pNames.push_back(tS("tau")); 
+  ps.pNames.push_back(tS("E"));  
+  ps.dpNames.push_back(tS("expDecay"));
+  
+  ps.postSynDecay=tS(" 	 $(inSyn)*=$(expDecay);\n");
+  ps.postSyntoCurrent=tS("$(inSyn)*($(E)-$(V))");
+  
+  ps.dps = new expDecayDp;
+  
+  postSynModels.push_back(ps);
+  
+  
+  //1: IZHIKEVICH MODEL (NO POSTSYN RULE)
+  ps.varNames.clear();
+  ps.varTypes.clear();
+  
+  ps.pNames.clear();
+  ps.dpNames.clear(); 
+  
+  ps.postSynDecay=tS("");
+  ps.postSyntoCurrent=tS("$(inSyn); $(inSyn)=0");
+  
+  postSynModels.push_back(ps);
+  
+  #include "extra_postsynapses.h"
 }
 
 void prepareSynapseModels(){
