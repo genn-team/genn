@@ -47,6 +47,7 @@ class classol
   unsigned int *d_baserates;
   //------------------------------------------------------------------------
   unsigned int sumPN, sumKC, sumLHI, sumDN;
+  unsigned int size_g; //number of connections
   // end of data fields 
 
   classol();
@@ -54,7 +55,8 @@ class classol
   void init(unsigned int); 
   void allocate_device_mem_patterns(); 
   void free_device_mem(); 
-  void read_pnkcsyns(FILE *); 
+  void read_pnkcsyns(FILE *);
+  void read_sparsesyns_par(int, struct Conductance, FILE *,FILE *,FILE *); 
   void write_pnkcsyns(FILE *); 
   void read_pnlhisyns(FILE *); 
   void write_pnlhisyns(FILE *); 
