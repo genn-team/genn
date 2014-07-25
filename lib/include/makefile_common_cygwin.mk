@@ -74,6 +74,7 @@ $(EXECUTABLE): $(OBJECTS)
 release: CCFLAGS += -O3 -ffast-math
 release: NVCCFLAGS += --compiler-options "-O3 -ffast-math"
 release: $(EXECUTABLE)
+	echo "WARNING CYGWIN SUPPORT IS AN EXPERIMENTAL FEATURE AND MAY NOT WORK AS INTENDED" 
 	mkdir -p "$(ROOTDIR)/bin/$(OSVAR)/release"
 	mv $(EXECUTABLE) $(ROOTDIR)/bin/$(OSVAR)/release
 
