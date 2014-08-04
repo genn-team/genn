@@ -35,7 +35,7 @@ This User guide gives an overview of how to use GeNN for a novice user and
 tries to lead the user to more expert use later on. With this we jump
 right in.
  
-\section sect1 Defining a model
+\section sect1 Defining a network model
 A network model is defined by the user by providing the function 
 \code{.cc}
 void modelDefinition(NNmodel &model) 
@@ -103,7 +103,7 @@ global value of the synapse conductances must be set with
 setSynapseG().
 
 
-\section sect2 Predefined neuron types
+\section sect2 Neuron models
 There is a number of predefined models which can be chosen in the \c
 addNeuronGroup function by their unique cardinal number, starting from
 0. For convenience, C constants with readable names are predefined:
@@ -164,7 +164,7 @@ and 7 parameters:
 - \c Cmem - Membrane capacity density in muF/cm^2
 
 \subsection sect24 IZHIKEVICH (Izhikevich neurons with fixed parameters)
-This is the Izhikevich model with fixed parameters (\cite izhikevich2003simple).
+This is the Izhikevich model with fixed parameters \cite izhikevich2003simple.
 
 Variables are:
 
@@ -180,111 +180,9 @@ Parameters are:
 \subsection sect25 IZHIKEVICH_V (Izhikevich neurons with variable parameters)
 This is the same model as \ref sect24 IZHIKEVICH but parameters defined as variables 
 in order to provide a parameter range instead of fixed values for every neuron in the
-population. 
+population.
 
-\section sect3 Predefined synapse models
-\subsection subsect31 Models
-Currently 3 predefined synapse models are available: 
-- 0: \ref sect31 "NSYNAPSE" 
-- 1: \ref sect32 "NGRADSYNAPSE"
-- 2: \ref sect33 "LEARN1SYNAPSE"
-
-\subsubsection sect31 NSYNAPSE (No Learning)
-If this model is selected, no learning rule is applied to the synapse. 
-The model has 3 parameters:
-- \c tau_S* - decay time constant for S [ms] 
-- \c Epre: Presynaptic threshold potential
-- \c Erev* - Reversal potential
-
-(* DEPRECATED: Decay time constant and reversal potential in synapse parameters are not used anymore and they will be removed in the next release. They should be defined in the postsynaptic mechanisms.)
-
-\subsubsection sect32 NGRADSYNAPSE (Graded Synapse)
-In a graded synapse, the conductance is updated gradually with the rule: 
-
-\f[ gSyn= g * tanh((E - E_{pre}) / V_{slope} \f]
-
-The parameters are:
-- \c Erev*: Reversal potential
-- \c Epre: Presynaptic threshold potential 
-- \c tau_S*: Decay time constant for S [ms]
-- \c Vslope: Activation slope of graded release 
-
-(* DEPRECATED: Decay time constant and reversal potential in synapse parameters are not used anymore and they will be removed in the next release. They should be defined in the postsynaptic mechanisms.)
-
-\subsubsection sect33 LEARN1SYNAPSE (Learning Synapse with a Primitive Role)
-This is a simple STDP rule including a time delay for the finite transmission speed of the synapse, defined as a piecewise function.
-
-<!--
-If no spikes at t: \f$ g_{raw}(t+dt) = g_0 + (g_{raw}(t)-g_0)*\exp(-dt/\tau_{decay}) \f$
-If pre or postsynaptic spike at t: \f$ g_{raw}(t+dt) = g_0 + (g_{raw}(t)-g_0)*\exp(-dt/\tau_{decay})
-+A(t_{post}-t_{pre}-\tau_{decay}) \f$ 
--->
-This model has 13 parameters:
-- \c Erev: Reversal potential
-- \c Epre: Presynaptic threshold potential
-- \c tau_S: Decay time constant for S [ms]
-- \c TLRN: Time scale of learning changes
-- \c TCHNG: Width of learning window
-- \c TDECAY: Time scale of synaptic strength decay
-- \c TPUNISH10: Time window of suppression in response to 1/0
-- \c TPUNISH01: Time window of suppression in response to 0/1
-- \c GMAX: Maximal conductance achievable
-- \c GMID: Midpoint of sigmoid g filter curve
-- \c GSLOPE: Slope of sigmoid g filter curve
-- \c TAUSHiFT: Shift of learning curve
-- \c GSYN0: Value of syn conductance g decays to
-
-For more details, see \cite nowotny2005self.
-\subsection subsect32 Connectivity types
-If INDIVIDUALG is used with ALLTOALL connectivity, the conductance values are stored 
-in an array called "floattype * gp<synapseName>", defined and initialised in runner.cc 
-in the generated code.
-
-If INDIVIDUALID is used with ALLTOALL connectivity, the connectivity matrix is stored 
-in an array called "unsigned int * gp<synapseName>"
-
-If connectivity is of SPARSE type, connectivity and conductance values are stored in a 
-struct in order to occupy minimum memory needed. The struct Conductance contains 
-3 array members and one integer member:
-	1: unsigned int connN: number of connections in the population. This value is needed for allocaton of arrays. 
-	2: floattype * gp: Values of conductances. 
-	The indices that correspond to these values are defined in a pre-to-post basis by the following arrays:
-	4: unsigned int gInd, of size connN: Indices of corresponding postsynaptic neurons concatenated for each presynaptic neuron.
-	3: unsigned int *gIndInG, of size model.neuronN[model.synapseSource[synInd]]+1: This array defines from which index in the gp array the indices in gInd would correspond to the presynaptic neuron that corresponds to the index of the gIndInG array, with the number of connections being the size of gInd. More specifically, gIndIng[n+1]-gIndIng[n] would give the number of postsynaptic connections for neuron n, and the conductance values are stored in gp[gIndIng[n]] to gp[gIndIng[n]+1]. if there are no connections for a presynaptic neuron, then gp[gIndIng[n]]=gp[gIndIng[n]+1].
-	
-For example, consider a network of two presynaptic neurons connected to three postsynaptic neurons: 0th presynaptic neuron connected to 1st and 2nd postsynaptic neurons, the 1st presynaptic neuron connected to 0th and 2nd neurons. The struct Conductance should have these members, with indexing from 0:
-	ConnN = 4
-	gp= gPre0-Post1 gpre0-post2 gpre1-post0 gpre1-post2
-	gInd= 1 2 0 1
-	gIndIng= 0 2 4  
-
- See tools/gen_syns_sparse_IzhModel used in Izh_sparse project to see a working example.	
-
-\subsection subsect33 Conductance definition methods
-The available options work as follows:
-- INDIVIDUALG: When this option is chosen in the \c
-addSynapsePopulation command, GeNN reserves an array of size n_pre x
-n_post float for individual conductance values for each combination of
-pre and postsynaptic neuron. The actual values of teh conductances are
-passed at runtime from the user side code, using the \c copyGToDevice
-function.
-
-- GLOBALG: When this option is chosen, the \c addSynapsePopulation
-  command must be followed within the \c modelDefinition function by a
-  call to \c setSynapseG for this synapse population. This option can
-  only be sensibly combined with connectivity type ALLTOALL. 
-
-- INDIVIDUALID: When this option is chosen, GeNN expects to use the
-same maximal conductance for all existing synaptic connections but
-which synapses exist will be defined at runtime from the user side
-code.
-\section sect_postsyn Predefined post-synaptic integration types
-
-The shape of the postsynaptic current can be defined by either using a predefined method or by a user-defined model. 
-
-- EXPDECAY: Exponential decay. Decay time constant and reversal potential parameters are needed for this postsynaptic mechanism.
-
-\section sect_own Defining your own neuron model 
+\subsection sect_own Defining your own neuron model 
 
 In order to define a new neuron model for use in a GeNN application,
 it is necessary to populate an object of class \c neuronModel and
@@ -350,8 +248,8 @@ the neuron model in questions. For an
 example of what needs to be done, refer to the member function \c
 initDerivedNeuronPara() of class \c NNmodel which does this for Rulkov map neurons.
 
-\section sect_explinput Explicit inputs to neurons 
-User can decide whether a neuron group receives external input current or not 
+\section sect_explinput Explicit current input to neurons 
+The user can decide whether a neuron group receives external input current or not 
 in addition to the synaptic input that it receives from the network.
 External input to a neuron group is activated by calling 
 \c activateDirectInput function. It receives two arguments: The first argument is 
@@ -369,7 +267,117 @@ defined as a variable.
 - 3: INPRULE: Input is defined as a rule. It differs from CONSTINP by the way that the
 input is injected: CONSTINP creates a value which is modified in real time, hence complex 
 instructions are limited. INPRULE creates an input array which will be copied into 
-the device memory.   
+the device memory. 
+
+\section sect3 Synapse models
+\subsection subsect31 Models
+Currently 3 predefined synapse models are available: 
+- 0: \ref sect31 "NSYNAPSE" 
+- 1: \ref sect32 "NGRADSYNAPSE"
+- 2: \ref sect33 "LEARN1SYNAPSE"
+
+\subsubsection sect31 NSYNAPSE (No Learning)
+If this model is selected, no learning rule is applied to the synapse. 
+The model has 3 parameters:
+- \c tau_S* - decay time constant for S [ms] 
+- \c Epre: Presynaptic threshold potential
+- \c Erev* - Reversal potential
+
+(* DEPRECATED: Decay time constant and reversal potential in synapse parameters are not used anymore and they will be removed in the next release. They should be defined in the postsynaptic mechanisms.)
+
+\subsubsection sect32 NGRADSYNAPSE (Graded Synapse)
+In a graded synapse, the conductance is updated gradually with the rule: 
+
+\f[ gSyn= g * tanh((E - E_{pre}) / V_{slope} \f]
+
+The parameters are:
+- \c Erev*: Reversal potential
+- \c Epre: Presynaptic threshold potential 
+- \c tau_S*: Decay time constant for S [ms]
+- \c Vslope: Activation slope of graded release 
+
+(* DEPRECATED: Decay time constant and reversal potential in synapse parameters are not used anymore and they will be removed in the next release. They should be defined in the postsynaptic mechanisms.)
+
+\subsubsection sect33 LEARN1SYNAPSE (Learning Synapse with a Primitive Role)
+This is a simple STDP rule including a time delay for the finite transmission speed of the synapse, defined as a piecewise function.
+
+<!--
+If no spikes at t: \f$ g_{raw}(t+dt) = g_0 + (g_{raw}(t)-g_0)*\exp(-dt/\tau_{decay}) \f$
+If pre or postsynaptic spike at t: \f$ g_{raw}(t+dt) = g_0 + (g_{raw}(t)-g_0)*\exp(-dt/\tau_{decay})
++A(t_{post}-t_{pre}-\tau_{decay}) \f$ 
+-->
+This model has 13 parameters:
+- \c Erev: Reversal potential
+- \c Epre: Presynaptic threshold potential
+- \c tau_S: Decay time constant for S [ms]
+- \c TLRN: Time scale of learning changes
+- \c TCHNG: Width of learning window
+- \c TDECAY: Time scale of synaptic strength decay
+- \c TPUNISH10: Time window of suppression in response to 1/0
+- \c TPUNISH01: Time window of suppression in response to 0/1
+- \c GMAX: Maximal conductance achievable
+- \c GMID: Midpoint of sigmoid g filter curve
+- \c GSLOPE: Slope of sigmoid g filter curve
+- \c TAUSHiFT: Shift of learning curve
+- \c GSYN0: Value of syn conductance g decays to
+
+For more details, see \cite nowotny2005self.
+
+\subsubsection sect34 Defining a new synapse model
+There is a way to define a synapse model the same way as a neuronModel can be defined. This feature is still
+experimental and supported only with the SpineML and development branches. 
+
+
+\subsection subsect32 Connectivity types
+If INDIVIDUALG is used with ALLTOALL connectivity, the conductance values are stored 
+in an array called "floattype * gp<synapseName>", defined and initialised in runner.cc 
+in the generated code.
+
+If INDIVIDUALID is used with ALLTOALL connectivity, the connectivity matrix is stored 
+in an array called "unsigned int * gp<synapseName>"
+
+If connectivity is of SPARSE type, connectivity and conductance values are stored in a 
+struct in order to occupy minimum memory needed. The struct Conductance contains 
+3 array members and one integer member:
+	1: unsigned int connN: number of connections in the population. This value is needed for allocaton of arrays. 
+	2: floattype * gp: Values of conductances. 
+	The indices that correspond to these values are defined in a pre-to-post basis by the following arrays:
+	4: unsigned int gInd, of size connN: Indices of corresponding postsynaptic neurons concatenated for each presynaptic neuron.
+	3: unsigned int *gIndInG, of size model.neuronN[model.synapseSource[synInd]]+1: This array defines from which index in the gp array the indices in gInd would correspond to the presynaptic neuron that corresponds to the index of the gIndInG array, with the number of connections being the size of gInd. More specifically, gIndIng[n+1]-gIndIng[n] would give the number of postsynaptic connections for neuron n, and the conductance values are stored in gp[gIndIng[n]] to gp[gIndIng[n]+1]. if there are no connections for a presynaptic neuron, then gp[gIndIng[n]]=gp[gIndIng[n]+1].
+	
+For example, consider a network of two presynaptic neurons connected to three postsynaptic neurons: 0th presynaptic neuron connected to 1st and 2nd postsynaptic neurons, the 1st presynaptic neuron connected to 0th and 2nd neurons. The struct Conductance should have these members, with indexing from 0:
+	ConnN = 4
+	gp= gPre0-Post1 gpre0-post2 gpre1-post0 gpre1-post2
+	gInd= 1 2 0 2
+	gIndIng= 0 2 4  
+
+ See tools/gen_syns_sparse_IzhModel used in Izh_sparse project to see a working example.	
+
+\subsection subsect33 Conductance definition methods
+The available options work as follows:
+- INDIVIDUALG: When this option is chosen in the \c
+addSynapsePopulation command, GeNN reserves an array of size n_pre x
+n_post float for individual conductance values for each combination of
+pre and postsynaptic neuron. The actual values of teh conductances are
+passed at runtime from the user side code, using the \c copyGToDevice
+function.
+
+- GLOBALG: When this option is chosen, the \c addSynapsePopulation
+  command must be followed within the \c modelDefinition function by a
+  call to \c setSynapseG for this synapse population. This option can
+  only be sensibly combined with connectivity type ALLTOALL. 
+
+- INDIVIDUALID: When this option is chosen, GeNN expects to use the
+same maximal conductance for all existing synaptic connections but
+which synapses exist will be defined at runtime from the user side
+code.
+\section sect_postsyn Post-synaptic integration methods
+
+The shape of the postsynaptic current can be defined by either using a predefined method or by adding a 
+new postSynModel object. 
+
+- EXPDECAY: Exponential decay. Decay time constant and reversal potential parameters are needed for this postsynaptic mechanism.
+  
 
 */
 //----------------------------------------------------------------------------
@@ -385,6 +393,6 @@ Block size optimisations and delayed synapses by James Turner.
 
 Automatic brackets and dense to sparse network conversion by Alan Diamond.
 
-User-defined synaptic and postsynaptic update methods by Alex Cope and Esin Yavuz.
+User-defined synaptic and postsynaptic methods by Alex Cope and Esin Yavuz.
 */
 //----------------------------------------------------------------------------

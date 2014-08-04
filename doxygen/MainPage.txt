@@ -14,7 +14,9 @@
 //----------------------------------------------------------------------------
 /*! \mainpage 
 
-GeNN is a software package to enable neuronal network simulations on GPUs.
+GeNN is a software package to enable neuronal network simulations on NVIDIA GPUs by code generation.
+
+This documentation is under construction. If you cannot find what you are looking for, please contact the project developers.
 
 \section download_sec Download
 You can download GeNN either as a zip file of a stable release or a
@@ -80,8 +82,13 @@ Installation of GeNN:
 
 This completes the installation.
 
-If you are using GeNN under CYGWIN with cl, you have to source vscvsrs.bat script under Visual Studio directory first.
-Note that the debugging option is not available under CYGWIN, as it uses cuda-gdb.
+If you are using GeNN under CYGWIN, you need cl which comes with Visual Studio. 
+You need a Visual Studio version that is supported by your CUDA Toolkit.
+Before launching CYGWIN, you have to source vscvsrs.bat script under Visual Studio directory first.
+Note that the debugging option is not available under CYGWIN, as it uses cuda-gdb. 
+
+CYGWIN compatibility is still experimental at the moment. 
+We are currently working on this point, please refer to this page later if you experience any issues and/or contact the developers. 
 
 
 \section quick_sec Quickstart
