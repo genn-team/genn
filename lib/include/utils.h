@@ -393,8 +393,13 @@ void preparePostSynModels(){
   #include "extra_postsynapses.h"
 }
 
-void prepareSynapseModels(){
+vector<weightUpdateModel> weightUpdateModels;
+
+void prepareWeightUpdateModels(){
+	weightUpdateModel wu;
+	#include "extra_weightupdates.h"
 }
+
 // bit tool macros
 #include "numlib/simpleBit.h"
 
