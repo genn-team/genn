@@ -1,0 +1,5 @@
+in order to change between INDIVIDUALID and INDIVIDUALG connections, one needs to consider:
+
+change the definition in the model definition (modelDefinition.cc)
+change/ add a global conductance to be set for INDIVIDUALID
+provide the right type of connectivity array, i.e., in the current hackky version load a float* from disk (INDIVIDUALG) or read a unsigned int* from disk (INDIVIDUALID) within map_classol (!).
