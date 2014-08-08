@@ -192,8 +192,14 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 		       tS("l") + nModels[nt].varNames[k]);
 	}
 	if (nt == POISSONNEURON) {
-	    substitute(code, tS("lrate"), 
-		       tS("rates") + model.neuronName[i] + tS("[n + offset") + model.neuronName[i] + tS("]"));
+		if (DT == 0.5) {
+        substitute(code, tS("lrate"), 
+		  tS("rates") + model.neuronName[i] + tS("[n + offset") + model.neuronName[i] + tS("]"));
+	     }
+	   else{
+	     substitute(code, tS("lrate"), 
+		  tS("rates") + model.neuronName[i] + tS("[n + offset") + model.neuronName[i] + tS("]*")+tS(DT/0.5));
+	   }
 	}
 	substitute(code, tS("$(Isyn)"), tS("Isyn"));
 	for (int k = 0, l = nModels[nt].pNames.size(); k < l; k++) {
@@ -358,7 +364,9 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 	    for (int j = 0; j < model.inSyn[i].size(); j++) {
 		unsigned int synID = model.inSyn[i][j];
 		unsigned int src = model.synapseSource[synID];
-		float Epre = model.synapsePara[synID][1];
+	     
+	     float Epre = 0;
+	     if (model.synapseType[i] < MAXSYN) model.synapsePara[synID][1];
 		float Vslope;
 		if (model.synapseType[synID] == NGRADSYNAPSE) {
 		    Vslope = model.synapsePara[synID][3];
