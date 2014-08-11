@@ -366,7 +366,8 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 		unsigned int src = model.synapseSource[synID];
 	     
 	     float Epre = 0;
-	     if (model.synapseType[i] < MAXSYN) model.synapsePara[synID][1];
+	     // What the hell is this?!?!?!
+	     // if (model.synapseType[i] < MAXSYN) model.synapsePara[synID][1];
 		float Vslope;
 		if (model.synapseType[synID] == NGRADSYNAPSE) {
 		    Vslope = model.synapsePara[synID][3];
@@ -575,7 +576,7 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 		}
 	    }
 	}
-    }  
+    }
     os << CB(1001);
 
     if (model.lrnGroups > 0) {
