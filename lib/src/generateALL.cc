@@ -534,9 +534,9 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
 
 	    // Use a small block size if it allows all groups to occupy the device concurrently
 	    if (requiredBlocks <= (mainBlockLimit*deviceProp[device].multiProcessorCount)) {
-	      smallModel[kernel][device] = 1;
 	      bestBlkSz[kernel][device] = (unsigned int) blkSz*warpSize;
 	      deviceOccupancy[kernel][device]= blkSz*mainBlockLimit*deviceProp[device].multiProcessorCount;
+	      smallModel[kernel][device] = 1;
 #ifdef BLOCKSZ_DEBUG
 	      cerr << "Small model situation detected; bestBlkSz: " << bestBlkSz[kernel][device] << endl;
 #endif
@@ -546,11 +546,11 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
 	    // Update the best warp occupancy and the block size which enables it.
 	    int newOccupancy= blkSz*mainBlockLimit*deviceProp[device].multiProcessorCount;
 	    if (newOccupancy > deviceOccupancy[kernel][device]) {
+	      bestBlkSz[kernel][device] = (unsigned int) blkSz*warpSize; 
 	      deviceOccupancy[kernel][device]= newOccupancy;
 #ifdef BLOCKSZ_DEBUG
 	      cerr << "Small model not enabled; device occupancy criterion; deviceOccupancy " << deviceOccupancy[kernel][device] << "; blocksize for " << kernelName[kernel] << ": " << (unsigned int) blkSz * warpSize << endl;
 #endif
-	      bestBlkSz[kernel][device] = (unsigned int) blkSz*warpSize; 
 	    }
 	  }
 	}
@@ -567,7 +567,7 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
 
     if (!ptxInfoFound) {
       mos << "ERROR: did not find any PTX info" << endl;
-      mos << "ensure nvcc is on your $PATH, and fix any NVCC errors listed above" << endl;
+      mos << "Fix any NVCC errors listed above" << endl;
       exit(EXIT_FAILURE);
     }
 
@@ -579,7 +579,9 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
     for (int device = devstart; device < devcount; device++) {
       smallModelCnt[device]= 0;
       for (int kernel= 0; kernel < 3; kernel++) {
+#ifdef BLOCKSZ_DEBUG
 	cerr << "smallModel[" << kernel << "][" << device << "]= " << smallModel[kernel][device] << endl;
+#endif
 	if (smallModel[kernel][device]) {
 	  smallModelCnt[device]++;
 	}

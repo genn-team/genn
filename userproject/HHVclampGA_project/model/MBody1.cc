@@ -165,8 +165,7 @@ float postExpDNDN[2]={
   -92.0		  // 1 - Erev: Reversal potential
 };
 
-float postSynV[0]={
-};
+float *postSynV = NULL;
 
 
 

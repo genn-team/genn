@@ -53,8 +53,7 @@ float postExp[2]={
   1.0,            // 0 - tau_S: decay time constant for S [ms]
   0.0		  // 1 - Erev: Reversal potential
 };
-float postSynV[0]={
-};
+float *postSynV = NULL;
 
 //float gPNIzh1= 0.001;
 

@@ -19,7 +19,7 @@ std::vector<unsigned int> neuronPSize;
 std::vector<unsigned int> neuronVSize;
 std::vector<unsigned int> synapsePSize; 
 
-float excIzh_p[0]={};
+float *excIzh_p = NULL;
 //Izhikevich model parameters - tonic spiking
 /*	0.02,	// 0 - a
 	0.2, 	// 1 - b
@@ -28,7 +28,7 @@ float excIzh_p[0]={};
 };*/
 
 
-float inhIzh_p[0]={};
+float *inhIzh_p = NULL;
 //Izhikevich model parameters - tonic spiking
 /*	0.02,	// 0 - a
 	0.25, 	// 1 - b
@@ -67,8 +67,7 @@ float postExpP[2]={
   0.0		  // 1 - Erev: Reversal potential
 };
 
-float postSynV[0]={
-};
+float *postSynV = NULL;
 
 
 //float inpIzh1 = 4.0;
