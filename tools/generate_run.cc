@@ -72,8 +72,8 @@ int main(int argc, char *argv[])
   
   float pnkc_gsyn= 100.0f/nAL*gscale;
   float pnkc_gsyn_sigma= 100.0f/nAL*gscale/15.0f; 
-  float kcdn_gsyn= 2500.0f/nMB*0.08f*gscale/0.9; 
-  float kcdn_gsyn_sigma= 2500.0f/nMB*0.025f*gscale/0.9; 
+  float kcdn_gsyn= 2500.0f/nMB*0.024f*gscale/0.9; 
+  float kcdn_gsyn_sigma= 2500.0f/nMB*0.06f*gscale/0.9; 
   float pnlhi_theta= 200.0f/nAL*7.0f*gscale/0.9;
 
   #ifdef _WIN32
