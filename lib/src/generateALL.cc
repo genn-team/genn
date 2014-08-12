@@ -35,7 +35,7 @@
 #endif
 
 // switch this on to debug problems in the Blocksize logic
-#define BLOCKSZ_DEBUG
+//#define BLOCKSZ_DEBUG
 
 /*! \brief This function will call the necessary sub-functions to generate the code for simulating a model. */
 
