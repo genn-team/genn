@@ -68,8 +68,7 @@ float synapses_p[3] = {
   -30.0,   // 1 - Epre: Presynaptic threshold potential
   1.0      // 2 - tau_S: decay time constant for S [ms]
 };
-float postSynV[0] = {
-};
+float *postSynV = NULL;
 float strongSynG = 0.0006; // strong synapse G
 float weakSynG = 0.0002;   // weak synapse G
 

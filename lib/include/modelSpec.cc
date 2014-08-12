@@ -346,7 +346,7 @@ void NNmodel::addSynapsePopulation(const string name, /**<  The name of the syna
 {
 	fprintf(stderr,"WARNING. Use of deprecated version of fn. addSynapsePopulation(). Some parameters have been supplied with default-only values\n");
 
-	float postSynV[0]={};
+	float *postSynV = NULL;
 
 	//Tries to borrow these values from the first set of synapse parameters supplied
 	float postExpSynapsePopn[2] = {
@@ -354,7 +354,7 @@ void NNmodel::addSynapsePopulation(const string name, /**<  The name of the syna
 			params[0]	// Erev: Reversal potential
 			};
 
-	addSynapsePopulation(name, syntype, conntype, gtype, NO_DELAY, EXPDECAY, src, target, params, postSynV,postExpSynapsePopn);
+	addSynapsePopulation(name, syntype, conntype, gtype, NO_DELAY, EXPDECAY, src, target, params, postSynV, postExpSynapsePopn);
 }
 
 //--------------------------------------------------------------------------
