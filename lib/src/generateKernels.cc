@@ -149,8 +149,8 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 	os << "unsigned int id = " << neuronBlkSz << " * blockIdx.x + threadIdx.x;" << ENDL;
     }
     else {
-	os << "unsigned int id = " << neuronBlkSz << " * (blockIdx.x * " << ceil(sqrt(neuronGridSz));
-	os << " + blockIdx.y) + threadIdx.x;" << ENDL;
+      os << "unsigned int id = " << neuronBlkSz << " * (blockIdx.x * " << ceil(sqrt((float) neuronGridSz));
+      os << " + blockIdx.y) + threadIdx.x;" << ENDL;
     }
     //these variables deal with high V "spike type events"
     os << "__shared__ volatile unsigned int posSpkEvnt;" << ENDL;
