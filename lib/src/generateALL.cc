@@ -415,10 +415,13 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
       CHECK_CUDA_ERRORS(cudaGetDeviceProperties(&(deviceProp[device]), device));      
       generate_model_runner(*model, path);
 
+#define STR1(x) #x
+#define STR2(x) STR1(x)
+
       // Run NVCC and pipe output to this process.
       mos << "dry-run compile for device " << device << endl;
       command.str("");
-      command << string(NVCC) << " -x cu -cubin -Xptxas=-v -arch=sm_" << deviceProp[device].major;
+      command << STR2(NVCC) << " -x cu -cubin -Xptxas=-v -arch=sm_" << deviceProp[device].major;
       command << deviceProp[device].minor << " -DDT -D\"CHECK_CUDA_ERRORS(call){call;}\" ";
       command << path << "/" << model->name << "_CODE/runner.cc 2>&1";
       //mos << command.str() << endl;
@@ -489,7 +492,7 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
 	    cerr << "Candidate block size: " << blkSz*warpSize << endl;
 #endif
 	    // BLOCK LIMIT DUE TO THREADS
-	    blockLimit = floor(deviceProp[device].maxThreadsPerMultiProcessor/warpSize/blkSz);
+	    blockLimit = floor((float) deviceProp[device].maxThreadsPerMultiProcessor/warpSize/blkSz);
 #ifdef BLOCKSZ_DEBUG
 	    cerr << "Block limit due to maxThreadsPerMultiProcessor: " << blockLimit << endl;
 #endif

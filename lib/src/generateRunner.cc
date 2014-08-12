@@ -1061,7 +1061,7 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     os << "  dim3 nGrid(" << neuronGridSz << ", 1);" << endl;
   }
   else {
-    int sqGridSize=ceil(sqrt(neuronGridSz));
+    int sqGridSize=ceil(sqrt((float) neuronGridSz));
     os << "  dim3 nGrid(" << sqGridSize << ","<< sqGridSize <<");" << endl;
   }
   os << endl;
@@ -1070,15 +1070,15 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     os << "  if (t > 0.0) {" << endl; 
     os << "    calcSynapses <<< sGrid, sThreads >>> (";
     for (int i= 0; i < model.synapseGrpN; i++) {
-     	if (model.synapseGType[i] == INDIVIDUALG) {
-				os << "  d_gp" << model.synapseName[i] << ",";
-			}
-			if (model.synapseConnType[i] == SPARSE) {
+      if (model.synapseGType[i] == INDIVIDUALG) {
+	os << "  d_gp" << model.synapseName[i] << ",";
+      }
+      if (model.synapseConnType[i] == SPARSE) {
 					
-	  		os << " d_gp" << model.synapseName[i] << "_ind,";	
-				os << " d_gp" << model.synapseName[i] << "_indInG,";	
-	  			trgN = model.neuronN[model.synapseTarget[i]];
-			}
+	os << " d_gp" << model.synapseName[i] << "_ind,";	
+	os << " d_gp" << model.synapseName[i] << "_indInG,";	
+	trgN = model.neuronN[model.synapseTarget[i]];
+      }
       if (model.synapseGType[i] == INDIVIDUALID){
 	os << "  d_gp" << model.synapseName[i] << ",";	
       }
