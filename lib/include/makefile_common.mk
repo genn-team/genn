@@ -77,7 +77,7 @@ obj/%.cpp.o: %.cpp
 
 obj/%.cu.o: %.cu
 	mkdir -p $(ROOTDIR)/obj
-	$(NVCC) $(NVCCFLAGS) $(GENCODE_FLAGS) $(INCLUDE_FLAGS) -o $@ -c $<
+	$(NVCC) $(NVCCFLAGS) $(GENCODE_FLAGS) $(INCLUDE_FLAGS) -o $@ -c $< &> /dev/null
 
 $(EXECUTABLE): $(OBJECTS)
 	$(NVCC) $(NVCCFLAGS) -o $@ $+ $(LINK_FLAGS) 
