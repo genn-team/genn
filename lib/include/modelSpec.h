@@ -78,7 +78,7 @@ unsigned int SYNPNO[SYNTYPENO]= {
 #define INHIBSYN 1 //!< Macro attaching the label "INHIBSYN" to flag 1 (inhibitory synapse)
 
 #define TRUE 1 //!< Macro attaching the label "TRUE" to value 1
-#define FALSE 0 //!< Macro attaching the label "FALSE" to value 1
+#define FALSE 0 //!< Macro attaching the label "FALSE" to value 0
 
 #define CPU 0 //!< Macro attaching the label "CPU" to flag 0
 #define GPU 1 //!< Macro attaching the label "GPU" to flag 1
@@ -141,12 +141,15 @@ struct postSynModel
 
 struct weightUpdateModel
 {
-  string simCode;
-  vector<string> varNames; //!< Names of the variables in the postsynaptic model
-  vector<string> varTypes; //!< Types of the variable named above, e.g. "float". Names and types are matched by their order of occurrence in the vector.
-  vector<string> pNames; //!< Names of (independent) parameters of the model. These are assumed to be always of type "float"
+  string simCode; // !< \brief Simulation code that is used for true spikes (only one point after Vthresh)
+  string simCodeEvnt; // !< \brief Simulation code that is used for spike events (all the instances where Vm > Vthres)
+  string simLearnPost; // !< \brief Simulation code which is used in the learnSynapsesPost kernel/function, where postsynaptic neuron spikes before the presynaptic neuron in the STDP window.
+  string evntThreshold; // !< \brief Simulation code for spike event detection.
+  vector<string> varNames; // !< \brief Names of the variables in the postsynaptic model
+  vector<string> varTypes; // !< \brief Types of the variable named above, e.g. "float". Names and types are matched by their order of occurrence in the vector.
+  vector<string> pNames; // !< \brief Names of (independent) parameters of the model. These are assumed to be always of type "float"
   vector<string> dpNames; /*!< \brief Names of dependent parameters of the model. These are assumed to be always of type "float"*/
-
+  dpclass * dps;
 };
 /*===============================================================
 //! \brief class NNmodel for specifying a neuronal network model.
@@ -210,6 +213,9 @@ public:
   vector<unsigned int> synapseSource; //!< Presynaptic neuron groups
   vector<unsigned int> synapseTarget; //!< Postsynaptic neuron groups
   vector<unsigned int> synapseInSynNo; //!< IDs of the target neurons' incoming synapse variables for each synapse group
+  vector<unsigned int> usesRealSpikes; //!< Defines if synapse update is done after detection of real spikes (only one point after threshold)
+  vector<unsigned int> usesSpikeEvents; //!< Defines if synapse update is done after detection of spike events (every point above threshold)
+  vector<unsigned int> usesPostLearning; //!< Defines if anything is done in case of postsynaptic neuron spiking before presynaptic neuron (punishment in STDP etc.) 
   vector<vector<float> > synapsePara; //!< parameters of synapses
   vector<vector<float> > synapseIni; //!< Initial values of synapse variables
   vector<vector<float> > dsp;  //!< Derived synapse parameters
