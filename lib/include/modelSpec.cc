@@ -499,6 +499,12 @@ void NNmodel::addSynapsePopulation(const string name, /**<  The name of the syna
   synapseDeviceID.push_back(0);
   synapseHostID.push_back(0);
   
+  if (syntype==NGRADSYNAPSE) usesRealSpikes.push_back(0); 
+  else usesRealSpikes.push_back(1);  //use true spikes by default
+  if (syntype==NGRADSYNAPSE) usesSpikeEvents.push_back(1);
+  else usesSpikeEvents.push_back(0);
+  if (syntype==LEARN1SYNAPSE) usesPostLearning.push_back(1);
+  else usesPostLearning.push_back(0);
 }
 
 
