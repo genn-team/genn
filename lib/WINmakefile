@@ -1,0 +1,19 @@
+##--------------------------------------------------------------------------
+##   Author: Thomas Nowotny
+##
+##   Institute: Center for Computational Neuroscience and Robotics
+##              University of Sussex
+##              Falmer, Brighton BN1 9QJ, UK
+##
+##   email to:  T.Nowotny@sussex.ac.uk
+##
+##   initial version: 2010-02-07
+##
+##--------------------------------------------------------------------------
+
+
+# Makefile for the GeNN "generateALL" binary
+# This is a Windows Makefile, to be used by the MS nmake build system
+#--------------------------------------------------------------------
+
+# OS architecture (32 bit or 64 bit).

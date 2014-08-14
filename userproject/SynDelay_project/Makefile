@@ -21,7 +21,7 @@ CCFLAGS		:=
 NVCCFLAGS	:= 
 
 ifdef COMSPEC
-	include	$(GeNNPATH)/lib/include/makefile_common_cygwin.mk
+	include	$(GeNNPATH)/userproject/include/makefile_common_win.mk
 else
-	include	$(GeNNPATH)/lib/include/makefile_common.mk
+	include	$(GeNNPATH)/userproject/include/makefile_common_gnu.mk
 endif

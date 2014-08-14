@@ -11,9 +11,17 @@
 ##
 ##--------------------------------------------------------------------------
 
-##################################################################################
-# Makefile include for all projects
-##################################################################################
+
+# Makefile include for all GeNN projects
+# This is a Windows Makefile, to be used by the MS nmake build system
+#--------------------------------------------------------------------
+
+
+
+
+
+# REPLACE ALL BELOW VVVVVVVVVVVVVVVVVVVVVVV
+
 
 # OS name (Windows) and architecture (32 bit or 64 bit).
 OSWIN		:= Win32
@@ -34,7 +42,7 @@ LINK_FLAGS   	+= -L"$(shell cygpath -m '$(CUDA_PATH)')lib" -lcudart
 
 # An auto-generated file containing your cuda device's compute capability.
 # The appropriate -gencode flag is added to NVCCFLAGS (if it exists yet).
--include $(GeNNPATH)/lib/src/sm_Version.mk
+-include $(GeNNPATH)/lib/src/sm_version.mk
 
 # Global compiler flags to be used by all projects. Declate CCFLAGS and NVCCFLAGS
 # in a project's main Makefile to specify compiler flags on a per-project basis.

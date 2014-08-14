@@ -8,24 +8,20 @@ fi
 export DBGMODE=$2; # 1 if debugging, 0 if release
 echo "genn model name:" $1
 echo "wd: " $WD
-if [ "$DBGMODE" = "1" ]
-then
-	echo "debugging mode ON"
-fi
 export GeNNMODELINCLUDE=$WD/$GeNNMODELNAME.cc\ 
 cp $GeNNMODELINCLUDE $GeNNPATH/lib/src/currentModel.cc
 echo " GeNNMODELINCLUDE" = $GeNNMODELINCLUDE
-cd $GeNNPATH/lib/src;
-export GeNNOSTYPE=$(echo $(uname) | tr A-Z a-z);
+cd $GeNNPATH/lib;
 
 if [ "$DBGMODE" = "1" ]
 then
 	#debugging: type "break main" or other breakpoint and then "run" once you are in cuda-gdb
-	make clean debug && make debug;
-	gdb -tui --directory=$GeNNPATH/lib/src --args bin/$GeNNOSTYPE/debug/generateALL $WD;
+	echo "debugging mode ON"
+	make clean && make debug;
+	gdb -tui --directory=$GeNNPATH/lib --args bin/generateALL $WD;
 else
-	make clean && make
-	bin/$GeNNOSTYPE/release/generateALL $WD;
+	make clean && make;
+	bin/generateALL $WD;
 fi
 echo " Model build complete ..." 
 cd $WD;

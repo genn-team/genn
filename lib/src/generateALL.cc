@@ -391,8 +391,8 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
     mos << "Using device " << chosenDevice << ", which has " << mostGlobalMem << " bytes of global memory." << endl;
   }
 
-  ofstream sm_os("sm_Version.mk");
-  sm_os << "NVCCFLAGS += -arch sm_" << deviceProp[chosenDevice].major << deviceProp[chosenDevice].minor << endl;
+  ofstream sm_os((path + "/sm_version.mk").c_str());
+  sm_os << "NVCCFLAGS +=-arch sm_" << deviceProp[chosenDevice].major << deviceProp[chosenDevice].minor << endl;
   sm_os.close();
 
   mos << "synapse block size: " << synapseBlkSz << endl;
