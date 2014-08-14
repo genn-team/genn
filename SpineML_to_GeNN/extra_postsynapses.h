@@ -1,4 +1,4 @@
-
+//This file will be rewritten & copied into lib/include by SpineML. The one used by GeNN at the end is the one in lib/include.
 			
   // Add new postsynapse type - Exp Decay: 
   ps.varNames.clear();

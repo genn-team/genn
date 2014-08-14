@@ -180,9 +180,9 @@ Error: Explicit list of state variable values used for '<xsl:value-of select="$c
 		
 		<!-- ### PARAMETERS FOR WU ### -->
 		<!-- ADD ARRAY WITH NAME AND SIZE DERIVED FROM COMPONENT FOR WU -->
-		<!---->float p__<xsl:value-of select="concat('WeightUpdate',position())"/>[<xsl:value-of select="count(document(./SMLLOWNL:WeightUpdate/@url)//SMLCL:Parameter[not(@name='g')])"/>]={
+		<!---->float p__<xsl:value-of select="concat('WeightUpdate',position())"/>[<!-- EMPTY BRACKETS AS C++ DOES NOT REQUIRE A NUMBER -->]={
 		<!-- IMPORTANT - - - - - - IN THE NEXT LINE WE EXCLUDE G FROM THE PARS - THIS WILL NEED UNDOING  -->
-		<xsl:for-each select="document(SMLLOWNL:WeightUpdate/@url)//SMLCL:Parameter[not(@name='g')]"> <!-- ENTER CURRENT POPULATION COMPONENT PARAMETERS -->
+		<xsl:for-each select="document(SMLLOWNL:WeightUpdate/@url)//SMLCL:Parameter"> <!-- ENTER CURRENT POPULATION COMPONENT PARAMETERS -->
 			<xsl:variable name="curr_par_name" select="@name"/>
 			<xsl:choose>
 				<!-- IF THERE EXISTS A FIXED PROPERTY FOR THIS PARAMETER -->
@@ -196,8 +196,8 @@ Error: Explicit list of state variable values used for '<xsl:value-of select="$c
 					<!-- NOT CURRENTLY SUPPORTED--> // <xsl:value-of select="position()-1"/> - <xsl:value-of select="$curr_par_name"/>
 					<xsl:text>
 		</xsl:text>
-					<xsl:message terminate="yes">
-Error: Random parameter value for '<xsl:value-of select="$curr_par_name"/>' used in model - this is not currently supported by GeNN
+					<xsl:message terminate="no">
+Error: Random parameter value for '<xsl:value-of select="$curr_par_name"/>' used in model - this is not supported by GeNN
 					</xsl:message>
 				</xsl:when>
 				<!-- IF THERE EXISTS A PROPERTY LIST FOR THIS PARAMETER -->
@@ -206,7 +206,7 @@ Error: Random parameter value for '<xsl:value-of select="$curr_par_name"/>' used
 					<xsl:text>
 		</xsl:text>
 					<xsl:message terminate="yes">
-Error: Explicit list of parameter values for '<xsl:value-of select="$curr_par_name"/>' used in model - this is not currently supported by GeNN
+Error: Explicit list of parameter values for '<xsl:value-of select="$curr_par_name"/>' used in model - this is not supported by GeNN
 					</xsl:message>
 				</xsl:when>
 				<!-- IF NO PROPERTY FOR THIS PARAMETER -->
@@ -222,15 +222,17 @@ Error: Explicit list of parameter values for '<xsl:value-of select="$curr_par_na
 
 		<!-- ### STATE VARIABLES FOR WU ### -->
 		<!-- ADD ARRAY WITH NAME AND SIZE DERIVED FROM COMPONENT -->
-		<!---->float ini__<xsl:value-of select="concat('WeightUpdate',position())"/>[<xsl:value-of select="count(document(./SMLLOWNL:WeightUpdate/@url)//SMLCL:StateVariable)"/>]={
-		<xsl:for-each select="document(SMLLOWNL:WeightUpdate/@url)//SMLCL:StateVariable"> <!-- ENTER CURRENT POPULATION COMPONENT STATE VARIABLE -->
+		<!---->float ini__<xsl:value-of select="concat('WeightUpdate',position())"/>[<!-- EMPTY BRACKETS AS C++ DOES NOT REQUIRE A NUMBER -->]={
+		<xsl:for-each select="document(SMLLOWNL:WeightUpdate/@url)//SMLCL:StateVariable | document(SMLLOWNL:WeightUpdate/@url)//SMLCL:Parameter"> <!-- ENTER CURRENT POPULATION COMPONENT STATE VARIABLE -->
 				<xsl:message terminate="no">
 Warning: State variable in Synapses are not currently supported by GeNN
 				</xsl:message>		
 			<xsl:variable name="curr_par_name" select="@name"/>
+			<xsl:variable name="curr_par_type" select="local-name(.) = 'Parameter'"/>
 			<xsl:choose>
 				<!-- IF THERE EXISTS A FIXED PROPERTY FOR THIS STATE VARIABLES -->
-				<xsl:when test="$curr_props[@name=$curr_par_name]/SMLNL:FixedValue">
+				<xsl:when test="count($curr_props[@name=$curr_par_name]/SMLNL:FixedValue)=1 and not($curr_par_type)">
+				<xsl:value-of select="$curr_par_type"/>
 					<!----><xsl:value-of select="$curr_props[@name=$curr_par_name]/SMLNL:FixedValue/@value"/>, // <xsl:value-of select="position()-1"/> - <xsl:value-of select="$curr_par_name"/>
 					<xsl:text>
 		</xsl:text>				
@@ -240,7 +242,7 @@ Warning: State variable in Synapses are not currently supported by GeNN
 					<!-- NOT CURRENTLY SUPPORTED--> // <xsl:value-of select="position()-1"/> - <xsl:value-of select="$curr_par_name"/>
 					<xsl:text>
 		</xsl:text>
-					<xsl:message terminate="yes">
+					<xsl:message terminate="no">
 Error: Random state variable value for '<xsl:value-of select="$curr_par_name"/>' used in model - this is not currently supported by GeNN
 					</xsl:message>
 				</xsl:when>
@@ -249,15 +251,17 @@ Error: Random state variable value for '<xsl:value-of select="$curr_par_name"/>'
 					<!-- NOT CURRENTLY SUPPORTED --> // <xsl:value-of select="position()-1"/> - <xsl:value-of select="$curr_par_name"/>
 					<xsl:text>
 		</xsl:text>
-					<xsl:message terminate="yes">
+					<xsl:message terminate="no">
 Error: Explicit list of state variable values used for '<xsl:value-of select="$curr_par_name"/>' in model - this is not currently supported by GeNN
 					</xsl:message>
 				</xsl:when>
 				<!-- IF NO PROPERTY FOR THIS STATE VARIABLES -->
-				<xsl:otherwise>
+				<xsl:when test="not($curr_par_type)">
 					<!---->0.0, // <xsl:value-of select="position()-1"/> - <xsl:value-of select="$curr_par_name"/>
 					<xsl:text>
 		</xsl:text>
+				</xsl:when>
+				<xsl:otherwise>
 				</xsl:otherwise>
 			</xsl:choose>
 		</xsl:for-each> <!-- END ENTER CURRENT POPULATION COMPONENT STATE VARIABLES -->
@@ -388,13 +392,13 @@ Error: Explicit list of state variable values used for '<xsl:value-of select="$c
 Error: A WeightUpdate component is lacking a value 'g', which is required for GeNN currently... 
 			</xsl:message>
 		</xsl:if>
-		<xsl:if test="count(SMLLOWNL:WeightUpdate/SMLNL:Property[@name='g']/SMLNL:FixedValue)=1 and count(SMLNL:AllToAllConnection)=1">
+		<xsl:if test="count(SMLLOWNL:WeightUpdate/SMLNL:Property/SMLNL:FixedValue)=count(SMLLOWNL:WeightUpdate/SMLNL:Property) and count(SMLNL:AllToAllConnection)=1">
 			<!---->GLOBALG, <!---->
 		</xsl:if>
-		<xsl:if test="count(SMLLOWNL:WeightUpdate/SMLNL:Property[@name='g']/SMLNL:FixedValue)=1 and count(SMLNL:AllToAllConnection)=0">
+		<xsl:if test="count(SMLLOWNL:WeightUpdate/SMLNL:Property/SMLNL:FixedValue)=count(SMLLOWNL:WeightUpdate/SMLNL:Property) and count(SMLNL:AllToAllConnection)=0">
 			<!---->INDIVIDUALID, <!---->
 		</xsl:if>
-		<xsl:if test="SMLLOWNL:WeightUpdate/SMLNL:Property[@name='g']/SMLNL:ValueList | SMLLOWNL:WeightUpdate/SMLNL:Property[@name='g']/SMLNL:UniformDistribution | SMLLOWNL:WeightUpdate/SMLNL:Property[@name='g']/SMLNL:NormalDistribution | SMLLOWNL:WeightUpdate/SMLNL:Property[@name='g']/SMLNL:PoissonDistribution">
+		<xsl:if test="not(count(SMLLOWNL:WeightUpdate/SMLNL:Property/SMLNL:FixedValue)=count(SMLLOWNL:WeightUpdate/SMLNL:Property))">
 			<!---->INDIVIDUALG, <!---->
 		</xsl:if>
 		<!-- NOW HANDLE THE GLOBAL DELAY - FOR NOW WE'LL HARD CODE IT BUT SHOULD DETECT AND FILL THIS IN -->
@@ -404,6 +408,8 @@ Error: A WeightUpdate component is lacking a value 'g', which is required for Ge
 		<!-- SOURCE AND DESTINATION POPULATIONS-->
 		<!---->"<xsl:value-of select="translate(../../SMLLOWNL:Neuron/@name,' -','SH')"/>", <!---->
 		<!---->"<xsl:value-of select="translate(../@dst_population,' -','SH')"/>", <!---->
+		<!-- VARIABLES FOR WEIGHT UPDATE -->
+		<!---->ini__<xsl:value-of select="concat('WeightUpdate',position())"/>, <!---->
 		<!-- PARAMETERS FOR WEIGHT UPDATE -->
 		<!---->p__<xsl:value-of select="concat('WeightUpdate',position())"/>, <!---->
 		<!-- VARIABLES FOR POSTSYNAPSE -->
@@ -489,7 +495,7 @@ Error: High level schema support not currently implemented for GeNN
 
 <!-- TEMPLATE TO GET THE NUMBER OR NAME OF THE POSTSYNAPSE TYPE WE HAVE -->
 <xsl:template name="get_postsynapse_type">
-	<!--- NOTE - WE SHOULD BE IN A POPULATION TAG -->
+	<!--- NOTE - WE SHOULD BE IN A SYNAPSE TAG -->
 	<xsl:variable name="network_file" select="/"/>
 	<xsl:variable name="curr_ps" select="SMLLOWNL:PostSynapse"/>
 	<!-- EXTRACT NEURON TYPES FROM CURRENT POSTSYNAPSE -->
@@ -538,6 +544,7 @@ Error: High level schema support not currently implemented for GeNN
 <xsl:template name="get_synapse_type">
 	<!--- NOTE - WE SHOULD BE IN A SYNAPSE TAG -->
 	<xsl:variable name="network_file" select="/"/>
+	<xsl:variable name="curr_wu" select="SMLLOWNL:WeightUpdate"/>
 	<!-- EXTRACT SYNAPSE TYPES FROM CURRENT POPULATION -->
 	<xsl:for-each select="document(SMLLOWNL:WeightUpdate/@url)">
 		<xsl:choose>
@@ -557,7 +564,8 @@ Error: High level schema support not currently implemented for GeNN
 				<!-- GET BACK INTO NETWORK FILE FOR THIS -->
 				<xsl:for-each select="$network_file">
 					<xsl:call-template name="get_synapse_type_number">
-						<xsl:with-param name="curr_component" select="$curr_component"/>
+						<xsl:with-param name="curr_component" select="$curr_wu"/>
+						<xsl:with-param name="neurons" select="//SMLLOWNL:Neuron"/>
 					</xsl:call-template>
 				</xsl:for-each>
 			</xsl:otherwise>
@@ -567,43 +575,22 @@ Error: High level schema support not currently implemented for GeNN
 </xsl:template>
 
 <xsl:template name="get_synapse_type_number">
-	<xsl:param name="number" select="number(3)"/> <!-- START ON THE NUMBER OF NATIVE SYNAPSES -->
-	<xsl:param name="components" select="//SMLLOWNL:Synapse/SMLLOWNL:WeightUpdate/@url"/>
+	<xsl:param name="number" select="number(-1)"/> <!-- START ON -1 -->
 	<xsl:param name="curr_component"/>
-	<!--- NOTE - WE SHOULD BE IN THE NL ROOT TAG -->
-	<xsl:variable name="network_file" select="/"/>
-	<!-- EXTRACT SYNAPSE TYPES FROM CURRENT POPULATION -->
-	<xsl:for-each select="document($components[1])">
-		<xsl:choose>
-			<xsl:when test="/SMLCL:SpineML/SMLCL:ComponentClass[@name = 'GeNNNativeSynapse'] | /SMLCL:SpineML/SMLCL:ComponentClass[@name = 'GeNNNativeGradedSynapse'] | /SMLCL:SpineML/SMLCL:ComponentClass[@name = 'GeNNNativeLearningSynapse']">
-			<!-- FIRST HANDLE THE EXISTING SYNAPSE TYPES BY RECOGNISING THEM -->
-				<!-- GET BACK INTO NETWORK FILE FOR THIS -->
-				<xsl:for-each select="$network_file">
-					<xsl:call-template name="get_synapse_type_number">
-						<xsl:with-param name="number" select="$number"/>
-						<xsl:with-param name="components" select="$components[position() > 1]"/>
-						<xsl:with-param name="curr_component" select="$curr_component"/>
-					</xsl:call-template>
-				</xsl:for-each>
-			</xsl:when>
-			<!-- IF COMPONENT IS THE ONE WE WANT -->
-			<xsl:when test="/SMLCL:SpineML/SMLCL:ComponentClass[@name = $curr_component]">
-				<!-- OUTPUT NUMBER -->
-				<xsl:value-of select="$number"/>
-			</xsl:when>
-			<!-- IF COMPONENT IS NOT THE ONE WE WANT OR NATIVE -->
-			<xsl:otherwise>
-				<!-- GET BACK INTO NETWORK FILE FOR THIS -->
-				<xsl:for-each select="$network_file">
-					<xsl:call-template name="get_synapse_type_number">
-						<xsl:with-param name="number" select="$number + 1"/>
-						<xsl:with-param name="components" select="$components[position() > 1]"/>
-						<xsl:with-param name="curr_component" select="$curr_component"/>
-					</xsl:call-template>
-				</xsl:for-each>
-			</xsl:otherwise>
-		</xsl:choose>
+	<xsl:param name="neurons"/>
+	<xsl:variable name="curr_nrn" select="$neurons[1]"/>
+	<xsl:for-each select="//SMLLOWNL:WeightUpdate[../../@dst_population=$curr_nrn/@name and not(document(@url)//SMLCL:ComponentClass/@name='GeNNNativeGradedSynapse' or document(@url)//SMLCL:ComponentClass/@name='GeNNNativeLearningSynapse' or document(@url)//SMLCL:ComponentClass/@name='GeNNNativeSynapse')]">
+		<xsl:if test="generate-id(.) = generate-id($curr_component)">
+			<!---->MAXSYN+<xsl:value-of select="position()+$number"/>
+		</xsl:if>			
 	</xsl:for-each>
+	<xsl:if test="not(count($neurons)=0)">
+		<xsl:call-template name="get_synapse_type_number">
+			<xsl:with-param name="number" select="$number+count(//SMLLOWNL:WeightUpdate[../../@dst_population=$curr_nrn/@name and not(document(@url)//SMLCL:ComponentClass/@name='GeNNNativeGradedSynapse' or document(@url)//SMLCL:ComponentClass/@name='GeNNNativeLearningSynapse' or document(@url)//SMLCL:ComponentClass/@name='GeNNNativeSynapse')])"/>
+			<xsl:with-param name="neurons" select="$neurons[position()>1]"/>
+			<xsl:with-param name="curr_component" select="$curr_component"/>
+		</xsl:call-template>
+	</xsl:if>
 </xsl:template>
 
 <xsl:include href="model_file_code.xsl"/>

@@ -42,6 +42,8 @@
 #define NGRADSYNAPSE 1 //!< Macro attaching  the name NGRADSYNAPSE to predefined synapse type 1 which is a graded synapse wrt the presynaptic voltage
 #define LEARN1SYNAPSE 2 //!< Macro attaching  the name LEARN1SYNAPSE to the predefined synapse type 2 which is a learning using spike timing; uses a primitive STDP rule for learning
 #define USERDEFSYNAPSE 3 //!< Macro attaching  the name USERDEFSYNAPSE to the predefined synapse type 3 which is a user-defined synapse
+#define MAXSYN 4 // maximum number of synapse types: SpineML needs to know this
+
 
 //input type
 #define NOINP 0 //!< Macro attaching  the name NOINP (no input) to 0
@@ -76,7 +78,7 @@ unsigned int SYNPNO[SYNTYPENO]= {
 #define INHIBSYN 1 //!< Macro attaching the label "INHIBSYN" to flag 1 (inhibitory synapse)
 
 #define TRUE 1 //!< Macro attaching the label "TRUE" to value 1
-#define FALSE 0 //!< Macro attaching the label "FALSE" to value 1
+#define FALSE 0 //!< Macro attaching the label "FALSE" to value 0
 
 #define CPU 0 //!< Macro attaching the label "CPU" to flag 0
 #define GPU 1 //!< Macro attaching the label "GPU" to flag 1
@@ -138,7 +140,18 @@ struct postSynModel
   dpclass * dps;
 };
 
-
+struct weightUpdateModel
+{
+  string simCode; // !< \brief Simulation code that is used for true spikes (only one point after Vthresh)
+  string simCodeEvnt; // !< \brief Simulation code that is used for spike events (all the instances where Vm > Vthres)
+  string simLearnPost; // !< \brief Simulation code which is used in the learnSynapsesPost kernel/function, where postsynaptic neuron spikes before the presynaptic neuron in the STDP window.
+  string evntThreshold; // !< \brief Simulation code for spike event detection.
+  vector<string> varNames; // !< \brief Names of the variables in the postsynaptic model
+  vector<string> varTypes; // !< \brief Types of the variable named above, e.g. "float". Names and types are matched by their order of occurrence in the vector.
+  vector<string> pNames; // !< \brief Names of (independent) parameters of the model. These are assumed to be always of type "float"
+  vector<string> dpNames; /*!< \brief Names of dependent parameters of the model. These are assumed to be always of type "float"*/
+  dpclass * dps;
+};
 /*===============================================================
 //! \brief class NNmodel for specifying a neuronal network model.
 //
@@ -201,7 +214,11 @@ public:
   vector<unsigned int> synapseSource; //!< Presynaptic neuron groups
   vector<unsigned int> synapseTarget; //!< Postsynaptic neuron groups
   vector<unsigned int> synapseInSynNo; //!< IDs of the target neurons' incoming synapse variables for each synapse group
+  vector<unsigned int> usesTrueSpikes; //!< Defines if synapse update is done after detection of real spikes (only one point after threshold)
+  vector<unsigned int> usesSpikeEvents; //!< Defines if synapse update is done after detection of spike events (every point above threshold)
+  vector<unsigned int> usesPostLearning; //!< Defines if anything is done in case of postsynaptic neuron spiking before presynaptic neuron (punishment in STDP etc.) 
   vector<vector<float> > synapsePara; //!< parameters of synapses
+  vector<vector<float> > synapseIni; //!< Initial values of synapse variables
   vector<vector<float> > dsp;  //!< Derived synapse parameters
   vector<unsigned int> postSynapseType; //!< Types of synapses
   vector<vector<float> > postSynapsePara; //!< parameters of postsynapses
@@ -286,8 +303,8 @@ public:
   void addSynapsePopulation(const string name, unsigned int syntype, unsigned int conntype, unsigned int gtype, const string src, const string trg, float *p)  __attribute__ ((deprecated)); //!< Overload of method for backwards compatibility
 
   void addSynapsePopulation(const char *, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, const char *, const char *, float *, float *, float *); //!< Method for adding a synapse population to a neuronal network model, using C style character array for the name of the population
-
-  void addSynapsePopulation(const string, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, const string, const string, float *, float *, float *); //!< Method for adding a synapse population to a neuronal network model, using C++ string for the name of the population
+  void addSynapsePopulation(const string, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, const string, const string, float *, float *, float *); //!< Overloaded version without initial variables for synapses
+  void addSynapsePopulation(const string, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, const string, const string, float *,float *, float *, float *); //!< Method for adding a synapse population to a neuronal network model, using C++ string for the name of the population
 
   void setSynapseG(const string, float); //!< Method for setting the conductance (g) value for a synapse population with "GLOBALG" charactertistic
   //void setSynapseNo(unsigned int,unsigned int); // !< Sets the number of connections for sparse matrices  

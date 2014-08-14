@@ -78,7 +78,7 @@
                         <FixedValue value="0"/>
                     </Delay>
                 </AllToAllConnection>
-                <LL:WeightUpdate name="Population 1 to Population 2 Synapse 0 weight_update" url="GeNNNativeSynapse.xml" input_src_port="spike" input_dst_port="in">
+                <LL:WeightUpdate name="Population 1 to Population 2 Synapse 0 weight_update" url="static_weight.xml" input_src_port="spike" input_dst_port="spike">
                     <Property name="g" dimension="?">
                         <UniformDistribution minimum="0.08" maximum="0.15" seed="0"/>
                     </Property>
