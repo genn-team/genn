@@ -150,6 +150,10 @@ struct weightUpdateModel
   vector<string> varTypes; // !< \brief Types of the variable named above, e.g. "float". Names and types are matched by their order of occurrence in the vector.
   vector<string> pNames; // !< \brief Names of (independent) parameters of the model. These are assumed to be always of type "float"
   vector<string> dpNames; /*!< \brief Names of dependent parameters of the model. These are assumed to be always of type "float"*/
+
+  vector<string> extraGlobalSynapseKernelParameters; //!< Additional parameter in the neuron kernel; it is translated to a population specific name but otherwise assumed to be one parameter per population rather than per neuron.
+
+  vector<string> extraGlobalSynapseKernelParameterTypes; //!< Additional parameters in the neuron kernel; they are translated to a population specific name but otherwise assumed to be one parameter per population rather than per neuron.
   dpclass * dps;
 };
 /*===============================================================
