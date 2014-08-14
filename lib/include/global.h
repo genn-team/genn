@@ -48,7 +48,7 @@ int theDev;
 
 int hostCount; //!< Global variable containing the number of hosts within the local compute cluster
 int deviceCount; //!< Global variable containing the number of CUDA devices found on this host
-int optimiseBlockSize = 0; //!< Flag for signalling whether or not block size optimisation should be performed
+int optimiseBlockSize = 1; //!< Flag for signalling whether or not block size optimisation should be performed
 //vector<cudaDeviceProp> deviceProp; //!< Global vector containing the properties of all CUDA-enabled devices
 //vector<int> synapseBlkSz; //!< Global vector containing the optimum synapse kernel block size for each device
 //vector<int> learnBlkSz; //!< Global vector containing the optimum learn kernel block size for each device
