@@ -145,16 +145,27 @@ void NNmodel::initDerivedSynapsePara(unsigned int i /**< index of the synapse po
     lrnSynGrp.push_back(i);
     lrnGroups++;
   }
-  
+  if (synapseType[i] < MAXSYN ){
   if ((synapseType[i] == NSYNAPSE) || (synapseType[i] == NGRADSYNAPSE)) {
     tmpP.push_back(expf(-DT/synapsePara[i][2]));              // kdecay
   }
+  }
+  else{
+  tmpP.push_back(1);
+  }
+  
   dsp.push_back(tmpP);
+
   // figure out at what threshold we need to detect spiking events
   synapseInSynNo.push_back(inSyn[synapseTarget[i]].size());
   inSyn[synapseTarget[i]].push_back(i);
+  if (synapseType[i] < MAXSYN ){
   if (nSpkEvntThreshold[synapseSource[i]] > synapsePara[i][1]) {
     nSpkEvntThreshold[synapseSource[i]]= synapsePara[i][1];
+  }
+  }
+  else{
+  nSpkEvntThreshold[synapseSource[i]]= 10000;
   }
   // padnN is the lowest multiple of synapseBlkSz >= neuronN[synapseTarget[i]]
   unsigned int padnN = ceil((float) neuronN[synapseTarget[i]] / (float) synapseBlkSz) * (float) synapseBlkSz;
@@ -353,8 +364,10 @@ void NNmodel::addSynapsePopulation(const string name, /**<  The name of the syna
 			params[2], 	//tau_S: decay time constant [ms]
 			params[0]	// Erev: Reversal potential
 			};
-
-	addSynapsePopulation(name, syntype, conntype, gtype, NO_DELAY, EXPDECAY, src, target, params, postSynV,postExpSynapsePopn);
+  if (syntype >= MAXSYN) {
+  	cerr << "WARNING: You use the overloaded method which passes a null pointer for the initial values of weight update variables. If you use a method that uses synapse variables, please add a pointer to this vector in the function call, like:\n  	addSynapsePopulation(name, syntype, conntype, gtype, NO_DELAY, EXPDECAY, src, target, float * SYNVARINI, params, postSynV,postExpSynapsePopn);" << endl;
+  }
+	addSynapsePopulation(name, syntype, conntype, gtype, NO_DELAY, EXPDECAY, src, target, NULL, params, postSynV,postExpSynapsePopn);
 }
 
 //--------------------------------------------------------------------------
@@ -379,8 +392,8 @@ void NNmodel::addSynapsePopulation(const char *name, /**<  The name of the synap
 
 
 //--------------------------------------------------------------------------
-/*! \brief This function adds a synapse population to a neuronal network model, assigning the name, the synapse type, the connectivity type, the type of conductance specification, the source and destination neuron populations, and the synaptic parameters.
- */
+/*! \brief Overloaded old version 
+*/
 //--------------------------------------------------------------------------
 
 void NNmodel::addSynapsePopulation(const string name, /**<  The name of the synapse population*/
@@ -395,13 +408,42 @@ void NNmodel::addSynapsePopulation(const string name, /**<  The name of the syna
                                    float* PSVini, /**< A C-type array of floats that contains the initial values for postsynaptic mechanism variables (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored.*/
                                    float *ps /**< A C-type array of floats that contains postsynaptic mechanism parameter values (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored.*/ )
 {
+  if (syntype >= MAXSYN) {
+  	cerr << "!!!!!!GeNN WARNING: You use the overloaded method which passes a null pointer for the initial values of weight update variables. If you use a method that uses synapse variables, please add a pointer to this vector in the function call, like:\n  	addSynapsePopulation(name, syntype, conntype, gtype, NO_DELAY, EXPDECAY, src, target, float * SYNVARINI, params, postSynV,postExpSynapsePopn);" << endl;
+  }
+  float iniv[0]={};
+  addSynapsePopulation(name, syntype, conntype, gtype, delaySteps, postsyn, src, trg, iniv, p, PSVini, ps);
+}
+
+//--------------------------------------------------------------------------
+/*! \brief This function adds a synapse population to a neuronal network model, assigning the name, the synapse type, the connectivity type, the type of conductance specification, the source and destination neuron populations, and the synaptic parameters.
+ */
+//--------------------------------------------------------------------------
+
+void NNmodel::addSynapsePopulation(const string name, /**<  The name of the synapse population*/
+                                   unsigned int syntype, /**< The type of synapse to be added (i.e. learning mode) */
+                                   unsigned int conntype, /**< The type of synaptic connectivity*/
+                                   unsigned int gtype, /**< The way how the synaptic conductivity g will be defined*/
+                                   unsigned int delaySteps, /**< Number of delay slots*/
+                                   unsigned int postsyn, /**< Postsynaptic integration method*/
+                                   const string src, /**< Name of the (existing!) pre-synaptic neuron population*/
+                                   const string trg, /**< Name of the (existing!) post-synaptic neuron population*/
+                                   float* synini, /**< A C-type array of floats that contains the initial values for synapse variables (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored.*/
+                                   float *p, /**< A C-type array of floats that contains synapse parameter values (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored.*/
+                                   float* PSVini, /**< A C-type array of floats that contains the initial values for postsynaptic mechanism variables (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored.*/
+                                   float *ps /**< A C-type array of floats that contains postsynaptic mechanism parameter values (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored.*/ )
+{
   unsigned int i= synapseGrpN++;
   unsigned int srcNumber, trgNumber;
   vector<float> tmpP;
+  vector<float> tmpV;
   vector<float> tmpPS;
   vector<float> tmpPV;
   
   if (postSynModels.size() < 1) preparePostSynModels();
+  
+  if (syntype >= MAXSYN) prepareWeightUpdateModels();
+
 
   synapseName.push_back(name);
   synapseType.push_back(syntype);
@@ -420,29 +462,52 @@ void NNmodel::addSynapsePopulation(const string name, /**<  The name of the syna
  //TODO: We want to get rid of SYNPNO array for code generation flexibility. It would be useful to predefine synapse models as we do for neurons in utils.h. This would also help for checkSizes.
 
   // for (int j= 0; j < nModels[synapseType[i]].pNames.size(); j++) { 
-  for (int j= 0; j < SYNPNO[synapseType[i]]; j++) {
+  int maxp;
+  if (syntype >= MAXSYN) maxp= weightUpdateModels[syntype-MAXSYN].pNames.size(); else maxp= SYNPNO[synapseType[i]];
+  for (int j= 0; j < maxp; j++) {
     tmpP.push_back(p[j]);
   }
   synapsePara.push_back(tmpP);
+  
+  if (syntype>=MAXSYN){
+  for (int j= 0; j < weightUpdateModels[syntype-MAXSYN].varNames.size(); j++) {
+    tmpV.push_back(synini[j]);
+  }
+  synapseIni.push_back(tmpV);
+  }
+  
   postSynapseType.push_back(postsyn);
   for (int j= 0; j <  postSynModels[postSynapseType[i]].pNames.size(); j++) {
     tmpPS.push_back(ps[j]);
     //printf("%d th var in group %d is %f \n", j, i, ps[j]);
     //printf("%s\n", postSynModels[postSynapseType[i]].pNames[j].c_str());
   }
+  
   postSynapsePara.push_back(tmpPS);  
   tmpPV.clear();
   for (int j= 0; j < postSynModels[postSynapseType[i]].varNames.size(); j++) {
     tmpPV.push_back(PSVini[j]);
   }
+  
   postSynIni.push_back(tmpPV);  
+  cout << double(syntype) << "< syntype : MAXSYN >" << double(MAXSYN) << endl;
   initDerivedSynapsePara(i);
   initDerivedPostSynapsePara(i);
+  
 
-  // initially set synapae group indexing variables to device 0 host 0
+  // initially set synapase group indexing variables to device 0 host 0
   synapseDeviceID.push_back(0);
   synapseHostID.push_back(0);
+  
+  //initialise synapse by default calues: no post learning, use true spikes but not events. Users can set these values manually later.
+  if (syntype==NGRADSYNAPSE) usesTrueSpikes.push_back(0); 
+  else usesTrueSpikes.push_back(1);  //use true spikes by default
+  if (syntype==NGRADSYNAPSE) usesSpikeEvents.push_back(1);
+  else usesSpikeEvents.push_back(0);
+  if (syntype==LEARN1SYNAPSE) usesPostLearning.push_back(1);
+  else usesPostLearning.push_back(0);
 }
+
 
 
 //--------------------------------------------------------------------------
