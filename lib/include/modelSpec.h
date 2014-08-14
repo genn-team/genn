@@ -213,7 +213,7 @@ public:
   vector<unsigned int> synapseSource; //!< Presynaptic neuron groups
   vector<unsigned int> synapseTarget; //!< Postsynaptic neuron groups
   vector<unsigned int> synapseInSynNo; //!< IDs of the target neurons' incoming synapse variables for each synapse group
-  vector<unsigned int> usesRealSpikes; //!< Defines if synapse update is done after detection of real spikes (only one point after threshold)
+  vector<unsigned int> usesTrueSpikes; //!< Defines if synapse update is done after detection of real spikes (only one point after threshold)
   vector<unsigned int> usesSpikeEvents; //!< Defines if synapse update is done after detection of spike events (every point above threshold)
   vector<unsigned int> usesPostLearning; //!< Defines if anything is done in case of postsynaptic neuron spiking before presynaptic neuron (punishment in STDP etc.) 
   vector<vector<float> > synapsePara; //!< parameters of synapses
