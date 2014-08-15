@@ -1043,8 +1043,8 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 		for (int k = 0, l =  weightUpdateModels[synt].dpNames.size(); k < l; k++) {
 		  substitute(code, tS("$(") + weightUpdateModels[synt].dpNames[k] + tS(")"), tS(model.dsp[i][k]));
 		  }		
-		for (int k = 0, l = nModels[nt].extraGlobalSynapseKernelParameters.size(); k < l; k++) {
-		    substitute(code, tS("$(") + nModels[nt].extraGlobalSynapseKernelParameters[k] + tS(")"), nModels[nt].extraGlobalSynapseKernelParameters[k]+model.neuronName[i]);
+		for (int k = 0, l = weightUpdateModels[synt].extraGlobalSynapseKernelParameters.size(); k < l; k++) {
+		    substitute(code, tS("$(") + weightUpdateModels[synt].extraGlobalSynapseKernelParameters[k] + tS(")"), weightUpdateModels[synt].extraGlobalSynapseKernelParameters[k]+model.synapseName[i]);
 		}
 		substitute(code, tS("$(G)"), theLG);
 		substitute(code, tS("$(preSpike)"), preSpike);
