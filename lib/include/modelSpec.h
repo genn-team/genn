@@ -118,9 +118,10 @@ struct neuronModel
   vector<string> pNames; //!< Names of (independent) parameters of the model. These are assumed to be always of type "float"
   vector<string> dpNames; /*!< \brief Names of dependent parameters of the model. These are assumed to be always of type "float"
   			    
-			    The dependent parameters are functions of independent parameters that enter into the neuron model. To avoid unecessary computational overhead, these parameters are calculated at compile time and inserted as explicit values into the generated code. See method NNmodel::initDerivedNeuronPara for how this is done.*/ 
+The dependent parameters are functions of independent parameters that enter into the neuron model. To avoid unecessary computational overhead, these parameters are calculated at compile time and inserted as explicit values into the generated code. See method NNmodel::initDerivedNeuronPara for how this is done.*/ 
 
   vector<string> extraGlobalNeuronKernelParameters; //!< Additional parameter in the neuron kernel; it is translated to a population specific name but otherwise assumed to be one parameter per population rather than per neuron.
+
   vector<string> extraGlobalNeuronKernelParameterTypes; //!< Additional parameters in the neuron kernel; they are translated to a population specific name but otherwise assumed to be one parameter per population rather than per neuron.
   dpclass * dps;
 };
@@ -254,20 +255,28 @@ public:
   NNmodel();
   ~NNmodel();
   void setName(const string); //!< Method to set the neuronal network model name
+
   void setPrecision(unsigned int);//< Set numerical precision for floating point
+
   void checkSizes(unsigned int *, unsigned int *, unsigned int *); //< Check if the sizes of the initialized neuron and synapse groups are correct.
+
   void resetPaddedSums(); //!< Re-calculates the block-size-padded sum of threads needed to compute the groups of neurons and synapses assigned to each device. Must be called after changing the hostID:deviceID of any group.
+
   void setGPUDevice(int); //!< Method to choose the GPU to be used for the model. If "AUTODEVICE' (-1), GeNN will choose the device based on a heuristic rule.
 
   // PUBLIC NEURON FUNCTIONS
   //========================
 
   void addNeuronPopulation(const char *, unsigned int, unsigned int, float *, float *); //!< Method for adding a neuron population to a neuronal network model, using C style character array for the name of the population
+
   void addNeuronPopulation(const string, unsigned int, unsigned int, float *, float *); //!< Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population
   //void activateDirectInput(const char *, unsigned int);  
   //void addPostSyntoNeuron(const string,unsigned int); //!< Method for defining postsynaptic dynamics
+
   void activateDirectInput(const string, unsigned int);  
+
   void setConstInp(const string, float); //!< Method for setting the global input value for a neuron population if CONSTINP
+
   void setNeuronClusterIndex(const string neuronGroup, int hostID, int deviceID); //!< Function for setting which host and which device a neuron group will be simulated on
 
 
@@ -275,11 +284,16 @@ public:
   //=========================
 
   void addSynapsePopulation(const string name, unsigned int syntype, unsigned int conntype, unsigned int gtype, const string src, const string trg, float *p); //!< Overload of method for backwards compatibility
+
   void addSynapsePopulation(const char *, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, const char *, const char *, float *, float *, float *); //!< Method for adding a synapse population to a neuronal network model, using C style character array for the name of the population
+
   void addSynapsePopulation(const string, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, const string, const string, float *, float *, float *); //!< Method for adding a synapse population to a neuronal network model, using C++ string for the name of the population
+
   void setSynapseG(const string, float); //!< Method for setting the conductance (g) value for a synapse population with "GLOBALG" charactertistic
   //void setSynapseNo(unsigned int,unsigned int); // !< Sets the number of connections for sparse matrices  
+
   void setMaxConn(const string, unsigned int); //< Set maximum connections per neuron for the given group (needed for optimization by sparse connectivity)
+
   void setSynapseClusterIndex(const string synapseGroup, int hostID, int deviceID); //!< Function for setting which host and which device a synapse group will be simulated on
 
 };

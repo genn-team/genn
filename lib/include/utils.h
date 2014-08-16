@@ -112,16 +112,10 @@ unsigned int theSize(string type)
   return size;
 }
 
-
 //--------------------------------------------------------------------------
-/*! \brief Function that defines standard neuron models
-
-The neuron models are defined and added to the C++ vector nModels that is holding all neuron model descriptions. User defined neuron models can be appended to this vector later in (a) separate function(s).
-*/
+//! \brief Class defining the dependent parameters of teh Rulkov map neuron.
 //--------------------------------------------------------------------------
-//NOTE: calcSynapses takes the first variable of each model.neuronName[src] as an argument, of type float. If you add a neuron model, keep this in mind. 
 
-vector<neuronModel> nModels; //!< Global c++ vector containing all neuron model descriptions
 
 class rulkovdp : public dpclass
 {
@@ -148,6 +142,36 @@ public:
 		return pars[0]*pars[1]+pars[0]*pars[2];
 	}
 };
+
+//--------------------------------------------------------------------------
+//! \brief Class defining the dependent parameter for exponential decay.
+//--------------------------------------------------------------------------
+
+class expDecayDp : public dpclass
+{
+public:
+	float calculateDerivedParameter(int index, vector <float> pars, float dt = 1.0) {
+		switch (index) {
+			case 0:
+			return expDecay(pars, dt);
+		}
+		return -1;
+	}
+
+	float expDecay(vector<float> pars, float dt) {
+		return expf(-dt/pars[0]);
+	}
+};
+
+vector<neuronModel> nModels; //!< Global c++ vector containing all neuron model descriptions
+
+//--------------------------------------------------------------------------
+/*! \brief Function that defines standard neuron models
+
+The neuron models are defined and added to the C++ vector nModels that is holding all neuron model descriptions. User defined neuron models can be appended to this vector later in (a) separate function(s).
+*/
+//--------------------------------------------------------------------------
+//NOTE: calcSynapses takes the first variable of each model.neuronName[src] as an argument, of type float. If you add a neuron model, keep this in mind. 
 
 void prepareStandardModels()
 {
@@ -333,25 +357,15 @@ void prepareStandardModels()
 
 }
 
-class expDecayDp : public dpclass
-{
-public:
-	float calculateDerivedParameter(int index, vector <float> pars, float dt = 1.0) {
-		switch (index) {
-			case 0:
-			return expDecay(pars, dt);
-		}
-		return -1;
-	}
-
-	float expDecay(vector<float> pars, float dt) {
-		return expf(-dt/pars[0]);
-	}
-};
 
 
 
 vector<postSynModel> postSynModels;
+
+//--------------------------------------------------------------------------
+/* \brief Function that prepares the standard post-synaptic models, including their variables, parameters, dependent parameters and code strings.
+ */
+//--------------------------------------------------------------------------
 
 void preparePostSynModels(){
   postSynModel ps;
@@ -392,6 +406,11 @@ void preparePostSynModels(){
   
   #include "extra_postsynapses.h"
 }
+
+//--------------------------------------------------------------------------
+/* \brief Function that prepares the standard (pre) synaptic models, including their variables, parameters, dependent parameters and code strings.
+ */
+//--------------------------------------------------------------------------
 
 void prepareSynapseModels(){
 }
