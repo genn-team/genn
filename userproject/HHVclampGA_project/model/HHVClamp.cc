@@ -12,9 +12,9 @@
 --------------------------------------------------------------------------*/
 
 //--------------------------------------------------------------------------
-/*! \file MBody1.cc
+/*! \file HHVClamp.cc
 
-\brief This file contains the model definition of the mushroom body "MBody1" model. It is used in both the GeNN code generation and the user side simulation code (class classol, file classol_sim).
+\brief This file contains the model definition of HHVClamp model. It is used in both the GeNN code generation and the user side simulation code. The HHVClamp model implements a population of unconnected Hodgkin-Huxley neurons that evolve to mimick a model run on the CPU, using genetic algorithm techniques.
 */
 //--------------------------------------------------------------------------
 
