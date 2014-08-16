@@ -30,7 +30,7 @@ CXX		?=g++
 CXXFLAGS	+=-DNVCC=\"$(NVCC)\"
 
 # Global include flags and link flags.
-INCLUDE_FLAGS	:=-I$(CUDA_PATH)/include -I$(GeNNPATH)/lib/include
+INCLUDE_FLAGS	+=-I$(CUDA_PATH)/include -I$(GeNNPATH)/lib/include
 ifeq ($(DARWIN),DARWIN)
   LINK_FLAGS	+=-Xlinker -L$(CUDA_PATH)/lib -lcudart -lstdc++ -lc++
 else
@@ -41,17 +41,28 @@ else
   endif
 endif
 
+# Locations of src, obj and bin directories.
+SRCDIR		=src
+OBJDIR		=obj
+BINDIR		=bin
+
 # Target rules.
 .PHONY: all
-all: bin/generateALL
+all: $(BINDIR)/generateALL
+
+$(OBJDIR)/generateALL.o: $(SRCDIR)/generateALL.cc $(OBJDIR)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_FLAGS) -o $(OBJDIR)/generateALL.o $(SRCDIR)/generateALL.cc -c
+
+$(BINDIR)/generateALL: $(OBJDIR)/generateALL.o
+	$(CXX) $(CXXFLAGS) $(LINK_FLAGS) -o $(BINDIR)/generateALL $(OBJDIR)/generateALL.o
 
 .PHONY: debug
 debug: CXXFLAGS +=-g
 debug: all
 
-bin/generateALL: src/generateALL.cc src/generateRunner.cc src/generateCPU.cc src/generateKernels.cc src/currentModel.cc src/CodeHelper.cc
-	$(CXX) $(CXXFLAGS) $(INCLUDE_FLAGS) $(LINK_FLAGS) -o bin/generateALL src/generateALL.cc
+$(OBJDIR):
+	mkdir -p $(OBJDIR)
 
 .PHONY: clean
 clean:
-	rm -rf bin/generateALL
+	rm -rf $(OBJDIR) $(BINDIR)/generateALL

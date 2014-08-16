@@ -16,4 +16,37 @@
 # This is a Windows Makefile, to be used by the MS nmake build system
 #--------------------------------------------------------------------
 
-# OS architecture (32 bit or 64 bit).
+# Global C++ / CUDA compiler settings and CUDA SDK directory.
+NVCC		=$(CUDA_PATH)\bin\nvcc.exe
+NVCCFLAGS	=$(NVCCFLAGS)
+CXX		=cl.exe
+CXXFLAGS	=$(CXXFLAGS) /nologo /EHsc /DNVCC="\"$(NVCC:\=/)\""
+
+# Global include flags and link flags.
+INCLUDE_FLAGS	=/I"$(CUDA_PATH)\include" /I"$(GENNPATH)\lib\include"
+!IF "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
+LINK_FLAGS	="$(CUDA_PATH)\lib\x64\cudart.lib"
+!ELSE
+LINK_FLAGS	="$(CUDA_PATH)\lib\Win32\cudart.lib"
+!ENDIF
+
+# Locations of src, obj and bin directories.
+SRCDIR		=src
+OBJDIR		=obj
+BINDIR		=bin
+
+# Target rules.
+all: $(BINDIR)\generateALL.exe
+
+$(OBJDIR)\generateALL.obj: $(SRCDIR)\generateALL.cc $(OBJDIR)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_FLAGS) /Fo$(OBJDIR)\generateALL.obj $(SRCDIR)\generateALL.cc /c
+
+$(BINDIR)\generateALL.exe: $(OBJDIR)\generateALL.obj
+	$(CXX) $(CXXFLAGS) $(LINK_FLAGS) /Fe$(BINDIR)\generateALL.exe $(OBJDIR)\generateALL.obj
+
+$(OBJDIR):
+	mkdir $(OBJDIR)
+
+clean:
+	rd /s /q $(OBJDIR) 2>nul
+	del $(BINDIR)\generateALL.exe 2>nul
