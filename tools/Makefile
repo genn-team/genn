@@ -30,7 +30,7 @@ generate_run_1comp: generate_run_1comp.cc
 
 generate_run_PoissonIzh: generate_run_PoissonIzh.cc
 	$(C++) $(FLAGS) -g $(INCLUDE) -o generate_run_PoissonIzh generate_run_PoissonIzh.cc
-	
+
 gen_pnkc_syns: gen_pnkc_syns.cc
 	$(C++) $(FLAGS) -g $(INCLUDE) -o gen_pnkc_syns gen_pnkc_syns.cc
 

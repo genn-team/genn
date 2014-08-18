@@ -11,17 +11,7 @@
 ##  
 ##--------------------------------------------------------------------------
 
-ROOTDIR		:= $(GeNNPATH)/userproject/MBody1_project
 EXECUTABLE	:= classol_sim
 SOURCES		:= classol_sim.cu
 
-INCLUDE_FLAGS	:= 
-LINK_FLAGS	:= 
-CCFLAGS		:= 
-NVCCFLAGS	:= 
-
-ifdef COMSPEC
-	include	$(GeNNPATH)/lib/include/makefile_common_cygwin.mk
-else
-	include	$(GeNNPATH)/lib/include/makefile_common.mk
-endif
+include	$(GeNNPATH)/userproject/include/makefile_common_gnu.mk
