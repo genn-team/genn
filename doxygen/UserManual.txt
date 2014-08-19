@@ -102,7 +102,8 @@ Warnings: 1. If the synapse conductance definition type is "GLOBALG" the
 global value of the synapse conductances must be set with
 setSynapseG().
 
-
+Synaptic update can be done by using true spikes (one point per spike after the threshold) or by using spike events (all points above the threshold). 
+ 
 \section sect2 Neuron models
 There is a number of predefined models which can be chosen in the \c
 addNeuronGroup function by their unique cardinal number, starting from
@@ -324,13 +325,24 @@ This model has 13 parameters:
 For more details, see \cite nowotny2005self.
 
 \subsubsection sect34 Defining a new synapse model
-There is a way to define a synapse model the same way as a neuronModel can be defined. This feature is still
+There is a way to define a synapse model the same way a neuronModel can be defined. This feature is still
 experimental and supported only with the SpineML and development branches. 
+
+A synapse model is a weightUpdateModel object which consists of variables, parameters, and three string objects which will be 
+substituted in the code. These three strings are:
+
+- \c simCode: Simulation code that is used when a true spike is detected (only one point after Vthresh)
+- \c simCodeEvnt: Simulation code that is used for spike events (all the instances where Vm > Vthres)
+- \c simLearnPost: Simulation code which is used in the learnSynapsesPost kernel/function, where postsynaptic neuron spikes before
+the presynaptic neuron in the STDP window. Usually this is simply the conductance update rule defined by the other simCode elements above, with negative timing. This code is needed as simCode and simCodeEnvt are used after spanning the presynaptic spikes, where it is not possible to detect where a postsynaptic
+neuron fired before the presynaptic neuron.
+
+These codes would include update functions for adding up conductances for that neuron model and for changes in conductances for the next time step (learning). Condutance in this code should be referred to as $("G") 
 
 
 \subsection subsect32 Connectivity types
 If INDIVIDUALG is used with ALLTOALL connectivity, the conductance values are stored 
-in an array called "floattype * gp<synapseName>", defined and initialised in runner.cc 
+in an array called "ftype * gp<synapseName>", defined and initialised in runner.cc 
 in the generated code.
 
 If INDIVIDUALID is used with ALLTOALL connectivity, the connectivity matrix is stored 
