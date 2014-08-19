@@ -541,7 +541,7 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 	}
     }
     for (int i = 0; i < model.synapseGrpN; i++) {
-	if (model.synapseType[i] == LEARN1SYNAPSE) {  
+	if (model.usesTrueSpikes[i] == TRUE || model.usesPostLearning[i] == TRUE) {  
 	    os << "__shared__ unsigned int shSpk[" << "BLOCKSZ_SYN" << "];" << ENDL;
 	    os << "__shared__ " << model.ftype << " shSpkV[" << "BLOCKSZ_SYN" << "];" << ENDL;
 	    os << "unsigned int lscnt, numSpikeSubsets;" << ENDL;
