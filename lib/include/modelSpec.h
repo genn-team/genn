@@ -317,6 +317,7 @@ public:
 
   void setSynapseClusterIndex(const string synapseGroup, int hostID, int deviceID); //!< Function for setting which host and which device a synapse group will be simulated on
 
+  void initLearnGrps();
 };
 
 #endif

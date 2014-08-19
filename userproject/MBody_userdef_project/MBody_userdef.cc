@@ -35,42 +35,6 @@ float myPOI_ini[4]= {
   -10.0,       // 2 - SpikeTime
 };
 
-// float stdMAP_p[4]= {
-//   60.0,          // 0 - Vspike: spike Amplitude factor
-//   3.0,           // 1 - alpha: "steepness / size" parameter
-//   -2.468,        // 2 - y: "shift / excitation" parameter
-//   0.0165         // 3 - beta: input sensitivity
-// };
-
-// float stdMAP_ini[2]= {
-//   -60.0,         // 0 - V: initial value for membrane potential
-//   -60.0          // 1 - preV: initial previous value
-// };
-
-// float myLHI_p[4]= {
-//   60.0,          // 0 - Vspike: spike Amplitude factor
-//   3.0,           // 1 - alpha: "steepness / size" parameter
-//   -2.468,        // 2 - y: "shift / excitation" parameter
-//   0.0165         // 3 - beta: input sensitivity
-// };
-
-// float myLHI_ini[2]= {
-//   -60.0,         // 0 - V: initial value for membrane potential
-//   -60.0          // 1 - preV: initial previous value
-// };
-
-// float myLB_p[4]= {
-//   60.0,          // 0 - Vspike: spike Amplitude factor
-//   3.0,           // 1 - alpha: "steepness / size" parameter
-//   -2.468,        // 2 - y: "shift / excitation" parameter
-//   0.0165         // 3 - beta: input sensitivity
-// };
-
-// float myLB_ini[2]= {
-//   -60.0,         // 0 - V: initial value for membrane potential
-//   -60.0          // 1 - preV: initial previous value
-// };
-
 float stdTM_p[7]= {
   7.15,          // 0 - gNa: Na conductance in 1/(mOhms * cm^2)
   50.0,          // 1 - ENa: Na equi potential in mV
@@ -168,18 +132,16 @@ float postExpDNDN[2]={
 float postSynV[0]={
 };
 
-
-
 #include "../../userproject/include/sizes.h"
 
 //--------------------------------------------------------------------------
-/*! \brief This function defines the MBody1 model, and it is a good example of how networks should be defined.
+/*! \brief This function defines the MBody1 model with user defined synapses. 
  */
 //--------------------------------------------------------------------------
 
 void modelDefinition(NNmodel &model) 
-{
-			
+{	
+  /******************************************************************/		
   // redefine nsynapse as a user-defined syapse type 
   weightUpdateModel nsynapse;
   nsynapse.varNames.clear();
@@ -193,6 +155,8 @@ void modelDefinition(NNmodel &model)
   weightUpdateModels.push_back(nsynapse);
   unsigned int NSYNAPSE_userdef=weightUpdateModels.size()+MAXSYN-1; //this is the synapse index to be used in addSynapsePopulation
 
+
+  /******************************************************************/
   // redefine ngradsynapse as a user-defined syapse type: 
   weightUpdateModel ngradsynapse;
   ngradsynapse.varNames.clear();
@@ -208,6 +172,140 @@ void modelDefinition(NNmodel &model)
   weightUpdateModels.push_back(ngradsynapse);
   unsigned int NGRADSYNAPSE_userdef=weightUpdateModels.size()+MAXSYN-1; //this is the synapse index to be used in addSynapsePopulation
 
+  /******************************************************************/
+  // redefine learn1synapse as a user-defined syapse type: 
+  weightUpdateModel learn1synapse;
+
+  //define derived parameters for learn1synapse
+  class pwSTDP : public dpclass  //!TODO This class definition may be code-generated in a future release
+  {
+    public:
+	  //float calculateDerivedParameter(int index, vector <float> pars, float dt = DT) {
+    float calculateDerivedParameter(int index, vector<float> pars, float dt = DT){		
+			switch (index) {
+				//case 0:
+				//return kdecay(pars, dt); //seems like this is done in expdecay?
+				case 0:
+				return lim0(pars, dt);
+				case 1:
+				return lim1(pars, dt);
+				case 2:
+				return slope0(pars, dt);
+				case 3:
+				return slope1(pars, dt);
+				case 4:
+				return off0(pars, dt);
+				case 5:
+				return off1(pars, dt);
+				case 6:
+				return off2(pars, dt);
+			}
+			return -1;
+		}
+
+		//float kdecay(vector<float> pars, float dt) {
+		//	return expf(-dt/pars[0]);
+		//}
+		float lim0(vector<float> pars, float dt) {
+			//return 1.0f/$(TPUNISH01) + 1.0f/$(TCHNG) *$(TLRN) / (2.0f/$(TCHNG));
+			return 1.0f/pars[5] + 1.0f/pars[2] * pars[1] / (2.0f/pars[2]);
+		}
+		float lim1(vector<float> pars, float dt) {
+			//return 1.0f/$(TPUNISH10) + 1.0f/$(TCHNG) *$(TLRN) / (2.0f/$(TCHNG));
+			return 1.0f/pars[4] + 1.0f/pars[2] * pars[1] / (2.0f/pars[2]);
+		}
+		float slope0(vector<float> pars, float dt) {
+			//return -2.0f*$(gmax)/ ($(TCHNG)*$(TLRN)); 
+			return -2.0f*pars[6]/(pars[2]*pars[1]); 
+		}
+		float slope1(vector<float> pars, float dt) {
+			//return -1*slope0(pars, dt);
+			return -1*slope0(pars, dt);
+		}
+		float off0(vector<float> pars, float dt) {
+			//return $(gmax)/$(TPUNISH01);
+			return pars[6]/pars[5];
+		}
+		float off1(vector<float> pars, float dt) {
+			//return $(gmax)/$(TCHNG);
+			return pars[6]/pars[2];
+		}
+		float off2(vector<float> pars, float dt) {
+			//return $(gmax)/$(TPUNISH10);
+			return pars[6]/pars[4];
+		}
+	};
+
+  learn1synapse.varNames.clear();
+  learn1synapse.varTypes.clear();
+  learn1synapse.varTypes.push_back(tS(model.ftype));
+  learn1synapse.varNames.push_back(tS("gRaw")); 
+  //learn1synapse.varTypes.push_back(tS(model.ftype));
+  //learn1synapse.varNames.push_back(tS("sT")); 
+  learn1synapse.pNames.clear();
+  learn1synapse.pNames.push_back(tS("Epre")); 
+  learn1synapse.pNames.push_back(tS("tLrn"));  
+  learn1synapse.pNames.push_back(tS("tChng")); 
+  learn1synapse.pNames.push_back(tS("tDecay")); 
+  learn1synapse.pNames.push_back(tS("tPunish10")); 
+  learn1synapse.pNames.push_back(tS("tPunish01")); 
+  learn1synapse.pNames.push_back(tS("gMax")); 
+  learn1synapse.pNames.push_back(tS("gMid")); 
+  learn1synapse.pNames.push_back(tS("gSlope")); 
+  learn1synapse.pNames.push_back(tS("tauShift")); 
+  learn1synapse.pNames.push_back(tS("gSyn0"));
+  learn1synapse.dpNames.clear(); 
+  learn1synapse.dpNames.push_back(tS("lim0"));
+  learn1synapse.dpNames.push_back(tS("lim1"));
+  learn1synapse.dpNames.push_back(tS("slope0"));
+  learn1synapse.dpNames.push_back(tS("slope1"));
+  learn1synapse.dpNames.push_back(tS("off0"));
+  learn1synapse.dpNames.push_back(tS("off1"));
+  learn1synapse.dpNames.push_back(tS("off2"));
+  learn1synapse.dps = new pwSTDP;
+  learn1synapse.simCode = tS(" \
+  	 	linSyn += $(G); //try to see if it works\n \
+  	 	$(G) = $(gRaw); \n \
+			float dt = $(sT) - t - $(tauShift); \n \
+			if (dt > $(lim0))  \n \
+			dt = - $(off0) ; \n \
+			else if (dt > 0.0)  \n \
+      dt = $(slope0) * dt + $(off1); \n \
+      else if (dt > $(lim1))  \n \
+			dt = $(slope1) * dt + $(off1); \n \
+			else dt = - $(off2) ; \n \
+			$(G) = $(G) + dt; \n \
+			$(gRaw) = $(G); \n \
+      $(G)=$(gMax)/2.0 *(tanh((gSlope)*($(G) - $(gMid)))+1.0); \n \
+  ");     
+    // d_gp" << model.synapseName[i] << "[shSpk[j] * " << model.neuronN[trg] << " + " << localID << "] = "; \n \
+    //os << "  return " << SAVEP(model.synapsePara[i][8]/2.0) << " * (tanh(";
+		//os << SAVEP(model.synapsePara[i][10]) << " * (graw - ";
+		//os << SAVEP(model.synapsePara[i][9]) << ")) + 1.0);" << endl;
+    //$(gFunc)" << model.synapseName[i] << "(lg);" << ENDL; 
+		 //gFunc" << model.synapseName[i] << "(lg);" << ENDL; \n \
+//d_grawp" << model.synapseName[i] << "[shSpk[j] * " << model.neuronN[trg] << " + " << localID << "] = lg;" << ENDL; \n \		
+ 
+
+float myKCDN_p_userdef[13]= {
+  -20.0,         // 0 1 - Epre: Presynaptic threshold potential
+  25.0,          // 1 3 - TLRN: time scale of learning changes
+  100.0,         // 2 4 - TCHNG: width of learning window
+  50000.0,       // 3 5 - TDECAY: time scale of synaptic strength decay
+  100000.0,      // 4 6 - TPUNISH10: Time window of suppression in response to 1/0
+  100.0,         // 5 7 - TPUNISH01: Time window of suppression in response to 0/1
+  0.06,          // 6 8 - GMAX: Maximal conductance achievable
+  0.03,          // 7 9 - GMID: Midpoint of sigmoid g filter curve
+  33.33,         // 8 10 - GSLOPE: slope of sigmoid g filter curve
+  10.0,          // 9 11 - TAUSHiFT: shift of learning curve
+  0.00006        // 10 12 - GSYN0: value of syn conductance g decays to
+};
+  learn1synapse.simCodeEvnt = tS(" \
+  	 	linSyn += $(G)* tanh(float( $(preSpikeV) - ($(Epre)))/$(Vslope)); //try to see if it works\n \
+  ");
+
+  weightUpdateModels.push_back(learn1synapse);
+  unsigned int LEARN1SYNAPSE_userdef=weightUpdateModels.size()+MAXSYN-1; //this is the synapse index to be used in addSynapsePopulation
 
   model.setName("MBody_userdef");
   model.addNeuronPopulation("PN", _NAL, POISSONNEURON, myPOI_p, myPOI_ini);
@@ -228,7 +326,7 @@ void modelDefinition(NNmodel &model)
   model.usesSpikeEvents[2]=TRUE;
   model.usesTrueSpikes[2]=FALSE;
 
-  model.addSynapsePopulation("KCDN", LEARN1SYNAPSE, ALLTOALL, INDIVIDUALG, NO_DELAY, EXPDECAY, "KC", "DN",  init,  myKCDN_p, postSynV, postExpKCDN);
+  model.addSynapsePopulation("KCDN", LEARN1SYNAPSE_userdef, ALLTOALL, INDIVIDUALG, NO_DELAY, EXPDECAY, "KC", "DN",  init,  myKCDN_p_userdef, postSynV, postExpKCDN);
   model.usesPostLearning[3]=TRUE;
 
   model.addSynapsePopulation("DNDN", NGRADSYNAPSE, ALLTOALL, GLOBALG, NO_DELAY, EXPDECAY, "DN", "DN",  init, myDNDN_p, postSynV, postExpDNDN);

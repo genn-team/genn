@@ -135,6 +135,8 @@ void NNmodel::initDerivedSynapsePara(unsigned int i /**< index of the synapse po
     neuronNeedSt[synapseSource[i]]= 1;
     needSt= 1;
     // padnN is the lowest multiple of learnBlkSz >= neuronN[synapseSource[i]]
+    //following is done in initLearnGrps in genRunner from now on.    
+    /*
     unsigned int padnN = ceil((float) neuronN[synapseSource[i]] / (float) learnBlkSz) * (float) learnBlkSz;
     if (lrnGroups == 0) {
       padSumLearnN.push_back(padnN);
@@ -144,6 +146,7 @@ void NNmodel::initDerivedSynapsePara(unsigned int i /**< index of the synapse po
     }
     lrnSynGrp.push_back(i);
     lrnGroups++;
+    */
   }
   if (synapseType[i] < MAXSYN ){
   if ((synapseType[i] == NSYNAPSE) || (synapseType[i] == NGRADSYNAPSE)) {
@@ -214,7 +217,32 @@ void NNmodel::setNeuronClusterIndex(const string neuronGroup, /**< Name of the n
   neuronDeviceID[groupNo] = deviceID;
 }
 
-
+void NNmodel::initLearnGrps()
+{
+	for (int i=0; i< synapseName.size(); i++){
+		unsigned int padnN = ceil((float) neuronN[synapseSource[i]] / (float) learnBlkSz) * (float) learnBlkSz;
+		if (usesPostLearning[i]==TRUE){
+			fprintf(stdout, "#########################################detected learning synapse at %d \n", i);
+			if (SPK_THRESH_STDP < nSpkEvntThreshold[synapseTarget[i]]) {
+				nSpkEvntThreshold[synapseTarget[i]]= SPK_THRESH_STDP;
+			}
+    		neuronNeedSt[synapseTarget[i]]= 1;
+    		neuronNeedSt[synapseSource[i]]= 1;
+    		needSt= 1;
+			if (lrnGroups == 0) {
+				padSumLearnN.push_back(padnN);
+			}
+			else {
+				padSumLearnN.push_back(padSumLearnN[i - 1] + padnN); 
+			}
+			lrnSynGrp.push_back(i);
+			lrnGroups++;
+		}	
+	}	
+	
+	
+	
+}
 //--------------------------------------------------------------------------
 /*! \brief This function is a tool to find the numeric ID of a synapse population based on the name of the synapse population.
  */

@@ -20,6 +20,7 @@
 */
 //--------------------------------------------------------------------------
 
+
 //--------------------------------------------------------------------------
 /*!
   \brief A function that generates predominantly host-side code.
@@ -44,6 +45,10 @@ void genRunner(NNmodel &model, //!< Model description
     float memremsparse= 0;
     int trgN;
     ofstream os;
+    
+    //initializing learning parameters to start
+    model.initLearnGrps();  //Putting this here for the moment. Makes more sense to call it at the end of ModelDefinition, but this leaves the initialization to the user.
+    
     cerr << "entering genRunner" << endl;
     name= path + toString("/") + model.name + toString("_CODE/runner.cc");
     os.open(name.c_str());  

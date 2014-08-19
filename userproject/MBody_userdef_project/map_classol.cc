@@ -49,7 +49,17 @@ classol::classol()
 void classol::init(unsigned int which //!< Flag defining whether GPU or CPU only version is run
 		   )
 {
-  initGRaw();
+  //initGRaw();
+  //following is to initialise user-defined learn1synapse graw variable. Equivalent to initGRaw();
+  //for (int i=0;i<gCKDN.connN;i++){ //sparse
+  /*
+  for (int i=0;i<model.neuronN[1]*model.neuronN[3];i++){ //alltoall
+    float tmp = gpKCDN[i] / (gMax)*2.0- 1.0;
+    gRawKCDN=0.5 * log((1.0 + tmp) / (1.0 - tmp)) /(gSlope) + (gMid); 
+    //float tmp = gpKCDN[i] / (p0.12)- 1.0;
+    //gRawKCDN=0.5 * log((1.0 + tmp) / (1.0 - tmp)) /(33.33) + (0.03) 
+  }
+  */
   if (which == CPU) {
     theRates= baserates;
   }
