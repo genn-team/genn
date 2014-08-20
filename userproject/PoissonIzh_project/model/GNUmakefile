@@ -3,7 +3,7 @@
 ##  
 ##   Institute: Center for Computational Neuroscience and Robotics
 ##              University of Sussex
-##            Falmer, Brighton BN1 9QJ, UK 
+##              Falmer, Brighton BN1 9QJ, UK 
 ##  
 ##   email to:  T.Nowotny@sussex.ac.uk
 ##  
@@ -11,17 +11,7 @@
 ##  
 ##--------------------------------------------------------------------------
 
-ROOTDIR		:= $(GeNNPATH)/userproject/PoissonIzh_project
 EXECUTABLE	:= PoissonIzh_sim
 SOURCES		:= PoissonIzh_sim.cu
 
-INCLUDE_FLAGS	:= 
-LINK_FLAGS	:= 
-CCFLAGS		:= 
-NVCCFLAGS	:= 
-
-ifdef COMSPEC
-	include	$(GeNNPATH)/lib/include/makefile_common_cygwin.mk
-else
-	include	$(GeNNPATH)/lib/include/makefile_common.mk
-endif
+include	$(GENNPATH)/userproject/include/makefile_common_gnu.mk

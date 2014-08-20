@@ -82,16 +82,16 @@ int main(int argc, char *argv[])
   float kcdn_gsyn_sigma = 2500.0f / nMB * 0.06f * gscale / 0.9; 
   float pnlhi_theta = 200.0f / nAL * 7.0f * gscale / 0.9;
 
-  #ifdef _WIN32
+#ifdef _WIN32
   _mkdir(outdir.c_str());
-  #else 
+#else 
   if (mkdir(outdir.c_str(), S_IRWXU | S_IRWXG | S_IXOTH) == -1) {
     cerr << "Directory cannot be created. It may exist already." << endl;
-  } 
-  #endif
+  }
+#endif
   
   // generate pnkc synapses
-  cmd = "$GeNNPATH/userproject/" + toString(modelName) + "_project/gen_pnkc_syns ";
+  cmd = "$GENNPATH/userproject/" + modelName + "_project/gen_pnkc_syns ";
   cmd += toString(nAL) + " ";
   cmd += toString(nMB) + " ";
   cmd += "0.5 ";
@@ -102,7 +102,7 @@ int main(int argc, char *argv[])
   system(cmd.c_str()); 
 
   // generate kcdn synapses
-  cmd = "$GeNNPATH/userproject/" + toString(modelName) + "_project/gen_kcdn_syns ";
+  cmd = "$GENNPATH/userproject/" + modelName + "_project/gen_kcdn_syns ";
   cmd += toString(nMB) + " ";
   cmd += toString(nLB) + " ";
   cmd += toString(kcdn_gsyn) + " ";
@@ -113,7 +113,7 @@ int main(int argc, char *argv[])
   system(cmd.c_str());
 
   // generate pnlhi synapses
-  cmd = "$GeNNPATH/userproject/" + toString(modelName) + "_project/gen_pnlhi_syns ";
+  cmd = "$GENNPATH/userproject/" + modelName + "_project/gen_pnlhi_syns ";
   cmd += toString(nAL) + " ";
   cmd += toString(nLHI) + " ";
   cmd += toString(pnlhi_theta) + " 15 ";
@@ -122,16 +122,16 @@ int main(int argc, char *argv[])
   system(cmd.c_str());
 
   // generate input patterns
-  cmd = "$GeNNPATH/userproject/" + toString(modelName) + "_project/gen_input_structured ";
+  cmd = "$GENNPATH/userproject/" + modelName + "_project/gen_input_structured ";
   cmd += toString(nAL) + " ";
   cmd += "10 10 0.1 0.1 32768 17 ";
   cmd += outdir + "/" + toString(argv[7]) + ".inpat";
   cmd += " &> " + outdir + "/" + toString(argv[7]) + ".inpat.msg";
   system(cmd.c_str());
 
-  string GeNNPath = getenv("GeNNPATH");
-  cerr << GeNNPath << endl;
-  string fname = GeNNPath + string("/userproject/include/sizes.h");
+  string gennPath = getenv("GENNPATH");
+  cerr << gennPath << endl;
+  string fname = gennPath + "/userproject/include/sizes.h";
   ofstream os(fname.c_str());
   os << "#define _NAL " << nAL << endl;
   os << "#define _NMB " << nMB << endl;
@@ -139,11 +139,11 @@ int main(int argc, char *argv[])
   os << "#define _NLB " << nLB << endl;
   os.close();
   
-  cmd = "cd $GeNNPATH/userproject/" + toString(modelName) + "_project/model && " + BUILDMODEL + " " + toString(modelName) + " " + toString(DBGMODE);
+  cmd = "cd $GENNPATH/userproject/" + modelName + "_project/model && " + BUILDMODEL + " " + modelName + " " + toString(DBGMODE);
   cout << "Debug mode " << DBGMODE << endl;
-  cout << "script call was:" << cmd.c_str() << endl;
+  cout << "script call was: " << cmd.c_str() << endl;
   system(cmd.c_str());
-  cmd = "cd $GeNNPATH/userproject/" + toString(modelName) + "_project/model && ";
+  cmd = "cd $GENNPATH/userproject/" + modelName + "_project/model && ";
   if(DBGMODE == 1) {
     cmd += "make clean && make debug";
   }
@@ -160,15 +160,15 @@ int main(int argc, char *argv[])
     cerr << "Debugging with gdb is not possible on cl platform." << endl;
   }
   else { // release
-    cmd = "$GeNNPATH/userproject/" + toString(modelName) + "_project/model/bin/" + toString(execName) + " " + toString(argv[7]) + " " + toString(which);
+    cmd = "$GENNPATH/userproject/" + modelName + "_project/model/bin/" + execName + " " + toString(argv[7]) + " " + toString(which);
   }
 
-#else
+#else // UNIX
   if(DBGMODE == 1) { // debug
-    cmd = "cuda-gdb -tui --args $GeNNPATH/userproject/" + toString(modelName) + "_project/model/bin/" + toString(execName) + " " + toString(argv[7]) + " " + toString(which);
+    cmd = "cuda-gdb -tui --args $GENNPATH/userproject/" + modelName + "_project/model/bin/" + execName + " " + toString(argv[7]) + " " + toString(which);
   }
   else { // release
-    cmd = "$GeNNPATH/userproject/" + toString(modelName) + "_project/model/bin/" + toString(execName) + " " + toString(argv[7]) + " " + toString(which);
+    cmd = "$GENNPATH/userproject/" + modelName + "_project/model/bin/" + execName + " " + toString(argv[7]) + " " + toString(which);
   }
 
 #endif

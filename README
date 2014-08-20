@@ -144,25 +144,6 @@ c) The programmer defines their own modeling code along similar lines as
 
 
 
-
-2: Izhikevich network receiving Poisson input spike trains:
-
-Can be used as:
-tools/generate_run_PoissonIzh [CPU/GPU] [nPoisson] [nIzhikevich] [pConn] [gscale] [DIR] [EXE] [MODEL] [DEBUG OFF/ON]
-
-Navigate to the "userproject/PoissonIzh_project" directory and type
-"../../tools/generate_run_PoissonIzh 1 100 10 0.5 2 Outdir PoissonIzh_sim PoissonIzh 0"
-
-This will generate a network of 100 Poisson neurons connected to 10 Izhikevich neurons with a 0.4 probability. The same network 
-with sparse connectivity can be used by addind the synapse population with sparse connectivity in PoissonIzh.cc and by
-uncommenting the lines following the "//SPARSE CONNECTIVITY" tag in PoissonIzh.cu.
-
-
-
-
-
-
-
 3: Single compartment Izhikevich neuron(s)
 
 For a first minimal test, the system may be used with 
