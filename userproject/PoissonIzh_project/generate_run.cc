@@ -80,7 +80,7 @@ int main(int argc, char *argv[])
 
 #ifdef _WIN32
   _mkdir(outdir.c_str());
-#else 
+#else // UNIX
   if (mkdir(outdir.c_str(), S_IRWXU | S_IRWXG | S_IXOTH) == -1) {
     cerr << "Directory cannot be created. It may exist already." << endl;
   }

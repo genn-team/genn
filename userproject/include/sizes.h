@@ -1,2 +1,1 @@
-#define _NPoisson 100
-#define _NIzh 10
+#define _NC1 1
