@@ -1,71 +1,108 @@
-WARNING: CYGWIN SUPPORT IS AN EXPERIMENTAL FEATURE AND MAY NOT WORK AS INTENDED
 
-INSTALLATION OF GeNN:
+  GPU enhanced Neuronal Network (GeNN)
+  ====================================
 
-(i) Unpack GeNN.zip in a convenient location.
+GeNN is a GPU enhanced Neuronal Network simulation environment based on code
+generation for Nvidia CUDA.
 
-(ii) Define the environment variable "GeNNPATH" to point to the main GeNN 
-     directory, e.g. if you extracted GeNN to /usr/local/GeNN, then you can add
-     "export GeNNPATH=/usr/local/GeNN" to your login script. If you are using CYGWIN,
-     the path should be a windows path or a mixed path (i.e. with normal slashes
-     instead of backslashes) as it will be interpreted by cl.
 
-(iii) Add $GeNNPATH/lib/bin to your PATH variable, e.g.
-      "export PATH=$PATH:$GeNNPATH/lib/bin". Under CYGWIN, it is safer to enter full 
-      linux path (such as: export PATH=$PATH:/usr/local/GeNN/lib/bin) 
+  [1] INSTALLING GeNN
+  ===================
 
-(iv) Get a fresh installation of the Nvidia cuda toolkit from
-     https://developer.nvidia.com/cuda-downloads
+    [1.1] WINDOWS INSTALL
+    ---------------------
 
-(v) Set the CUDA_PATH variable in $GeNNPATH/lib/include/makefile_common.mk to
-    the location of your Nvidia cuda toolkit installation, if it is not already
-    set by the system.
-    For most people, the default value of /usr/local/cuda is fine.
+(1) Download and unpack GeNN.zip to a convenient location, then download and
+    install the Microsoft Visual C++ compiler and IDE from:
+      http://www.visualstudio.com/en-us/downloads
+    then download and install the Nvidia CUDA toolkit from: 
+      https://developer.nvidia.com/cuda-downloads
 
-(vi) Modify Makefile examples under $GeNNPATH/lib/src/ and $GeNNPATH/userproject/
-     to add extra linker-, include- and compiler-flags on a per-project basis, or
-     modify global default flags in $GeNNPATH/lib/include/makefile_common.mk.
+(2) Ensure that the "CUDA_PATH" environment variable is defined, and points
+    to the location of the Nvidia CUDA toolkit installation, by using:
+      ECHO %CUDA_PATH%
+    This variable is usully set during most CUDA installations on Windows
+    systems. if not, correct this using:
+      SETX CUDA_PATH "[drive]\Program Files\NVIDIA GPU Computing Toolkit\CUDA\[version]"
+
+(3) Define the environment variable "GENNPATH" to point to the directory
+    in which GeNN was located. For example, use:
+      SETX GENNPATH "\path\to\genn\"
+
+(4) Add "%GENNPATH%\lib\bin" to your %PATH% variable. For example, use:
+      SETX PATH "%PATH%;%GENNPATH%\lib\bin"
 
 This completes the installation.
 
-If you are using GeNN under CYGWIN with cl, you have to source vscvsrs.bat script under Visual Studio directory first.
-Note that the debugging option is not available under CYGWIN.
+NOTE:
+  The Windows version of GeNN uses the Microsoft Visual C++ cl.exe compiler.
+  You must run the vscvsrsall.bat script under Visual C++ directory before
+  projects can be compiled and run in a given cmd.exe terminal window.
 
-------
+  Alternatively, one can use the shortcut link in:
+    start menu -> all programs -> Microsoft Visual Studio ->
+    Visual Studio Tools -> Visual Studio Command Prompt
+  which will launch an instance of cmd.exe in which the vcvarsall.bat compiler
+  setup script has already been executed.
 
-HOW TO USE GeNN: 
 
-In order to get a quick start and run one of the the provided example models, go to GeNN/tools
+    [1.2] LINUX / MAC INSTALL
+    -------------------------
 
-type "make".
+(1) Unpack GeNN.zip in a convenient location, then download and install the
+    Nvidia CUDA toolkit from:
+      https://developer.nvidia.com/cuda-downloads
+    and install the GNU GCC compiler collection and GNU Make build environment
+    if it is not already present on the system.
 
-At the moment, there are 5 example projects provided with GeNN.
+(2) Set the environment variable "CUDA_PATH" to the location of your Nvidia
+    CUDA toolkit installation. For example, if your CUDA toolkit was installed
+    to "/usr/local/cuda", you can use:
+      echo "export CUDA_PATH=/usr/local/cuda" >> ~/.bashrc
+
+(3) Set the environment variable "GENNPATH" to point to the extracted GeNN 
+    directory. For example, if you extracted GeNN to "/home/me/genn", then you
+    can use:
+      echo "export GENNPATH=/home/me/genn" >> ~/.bashrc
+
+(4) Add "$GENNPATH/lib/bin" to your $PATH variable. For example, you can use:
+      echo "export PATH=$PATH:$GENNPATH/lib/bin" >> ~/.bashrc
+
+This completes the installation.
+
+
+  [2] USING GeNN
+  ==============
+
+    [2.1] SAMPLE PROJECTS
+    ---------------------
+
+At the moment, the following example projects are provided with GeNN:
 
 1: Locust olfactory system example (Nowotny et al. 2005):
-For a first complete test, the system is best used with a full driver program such as
- 
-tools/generate_run [CPU/GPU] [nAL] [nKC] [nLH] [nDN] [gscale] [DIR] [EXE] [MODEL] [DEBUG OFF/ON]. 
+2: Izhikevich network receiving Poisson input spike trains:
+3: Single compartment Izhikevich neuron(s)
+4: Pulse-coupled Izhikevich network
+5: Izhikevich network with delayed synapses
 
-To use it, navigate to the "userproject/MBody1_project" directory and type
-"../../tools/generate_run 1 100 1000 20 100 0.00117 outname classol_sim MBody1 0" 
-which would generate a model of the locust olfactory system. 
-The tool generate_run will generate connectivity files for the model
-MBody1, compile and run it on the GPU, with 100 antennal lobe neurons, 1000 mushroom body Kenyon cells, 
-20 lateral horn interneurons and 100 mushroom body output neurons. All output files 
-will be prefixed with "outname" and will be created under the "outname" directory.
+In order to get a quick start and run one of the the provided example models,
+navigate to one of the example project directories in $GENNPATH/userproject/,
+and then follow the instructions in the README file contained within.
 
-In more details, what generate_run program does is: 
-a) use some other tools to generate the appropriate connectivity
-matrices and store them in files.
+DEBUGGING:
+  The last argument to "generate_run" helper binary, or similar file, enables
+  the debugging flags while compiling generateAll.cc under lib/src/ and *.cu
+  under individual user project directory, and will run the corresponding
+  executables with cuda-gdb consecutively. If you want to skip one of these
+  debugging steps, simply press r while on the debugging screen.
 
-b) build the source code for the model by writing neuron numbers into
-userproject/include/sizes.h, and executing "buildmodel MBody1 [DEBUG OFF/ON]".  
 
-c) compile the generated code by invoking "make clean && make" 
-running the code, e.g. "linux/release/classol_sim r1 1".
+    [2.2] SIMULATING A NEW MODEL
+    ----------------------------
 
-This is already a quite highly integrated example. If one was to use
-the library for GPU code generation only, the following would be done:
+The sample projects listed above are already quite highly integrated
+examples. If one was to use the library for GPU code generation of their
+own model, the following would be done:
 
 a) The model in question is defined in a file, say "Model1.cc".  
 
@@ -76,27 +113,37 @@ b) this file needs to
   "void modelDefinition(NNmodel &model)" 
   ("MBody1.cc") shows a typical example)
 
-c) The programmer defines his/her own modeling code along similar lines as
-"map_classol.*" together with "classol_sim.*". In this code, 
+c) The programmer defines their own modeling code along similar lines as
+"map_classol.*" together with "classol_sim.*", etcetera. In this code, 
 
-- she defines the connectivity matrices between neuron groups. (In the
-example here those are read from files).  
+  - they define the connectivity matrices between neuron groups. (In the
+    example here those are read from files).  
 
-- she defines input patterns (e.g. for Poisson neurons like in the
-example) 
+  - they define input patterns (e.g. for Poisson neurons like in the
+    example) 
 
-- she uses "stepTimeGPU(x, y, z);" to run one time step on the GPU or
-"stepTimeCPU(x, y, z);" to run one on the CPU. (both versions are
-always compiled). However, mixing the two does not make too much
-sense. The host version uses the same memory whereto results from the
-GPU version are copied (see next point) 
+  - they use "stepTimeGPU(x, y, z);" to run one time step on the GPU or
+    "stepTimeCPU(x, y, z);" to run one on the CPU. (both versions are
+    always compiled). However, mixing the two does not make too much
+    sense. The host version uses the same memory whereto results from the
+    GPU version are copied (see next point) 
 
-- she uses functions like "copyStateFromDevice();" etc to obtain
-results from GPU calculations.
+  - they use functions like "copyStateFromDevice();" etcetera to obtain
+    results from GPU calculations.
 
-- the simulation code is then produced in two steps:
-"buildmodel Model1 [DEBUG OFF/ON]" and
-"make clean && make"
+  - the simulation code is then produced in the following two steps:
+    "buildmodel.[sh/bat] Model1 [DEBUG OFF/ON]" and "make clean && make"
+
+
+
+
+
+
+
+
+
+
+
 
 2: Izhikevich network receiving Poisson input spike trains:
 
@@ -110,6 +157,12 @@ This will generate a network of 100 Poisson neurons connected to 10 Izhikevich n
 with sparse connectivity can be used by addind the synapse population with sparse connectivity in PoissonIzh.cc and by
 uncommenting the lines following the "//SPARSE CONNECTIVITY" tag in PoissonIzh.cu.
 
+
+
+
+
+
+
 3: Single compartment Izhikevich neuron(s)
 
 For a first minimal test, the system may be used with 
@@ -120,6 +173,12 @@ This would create a set of tonic spiking Izhikevich neurons with no connectivity
 receiving a constant identical 4 nA input. 
 To use it, navigate to the "userproject/OneComp_project" directory and type
 "../../tools/generate_run_1comp 1 1 Outdir OneComp_sim OneComp 0".
+
+
+
+
+
+
 
 4: Pulse-coupled Izhikevich network
 
@@ -132,6 +191,11 @@ This example creates a pulse-coupled network with 80% excitatory 20% inhibitory 
 To use an example, navigate to the "userproject/Izh_sparse_project" directory and type
 "../../tools/generate_izhikevich_network_run 1 10000 1000 1 Outdir Izh_sim_sparse Izh_sparse 0 0"
 
+
+
+
+
+
 5:Izhikevich network with delayed synapses
 
 This example project demonstrates the delayed synapse feature of GeNN. It creates
@@ -140,17 +204,5 @@ and slow synapse groups. Neurons in the output group only spike if they are
 simultaneously innervated by the input neurons, via slow synapses, and the
 interneurons, via faster synapses. 
 
-To run this example project, cd to "$GeNNPATH/userproject/SynDelay_project" and type
+To run this example project, cd to "$GENNPATH/userproject/SynDelay_project" and type
 "buildmodel SynDelay && make clean && make && ./bin/release/syn_delay 1 output"
-
-DEBUGGING
-The last argument to generate_run or similar files enables the debugging flags while compiling 
-generateAll.cc under lib/src/ and *.cu under individual user project directory, 
-and will run the corresponding executables with cuda-gdb consecutively. 
-If you want to skip one of these debugging steps, simply press r while on the debugging screen.
- 
------
-
-For more about the complete example model provided by generate_run see 
-
-T. Nowotny, R. Huerta, H. D. I. Abarbanel, and M. I. Rabinovich Self-organization in the olfactory system: One shot odor recognition in insects, Biol Cyber, 93 (6): 436-446 (2005), doi:10.1007/s00422-005-0019-7 
