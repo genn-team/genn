@@ -132,50 +132,6 @@ float postExpDNDN[2]={
 float postSynV[0]={
 };
 
-#include "../../userproject/include/sizes.h"
-
-//--------------------------------------------------------------------------
-/*! \brief This function defines the MBody1 model with user defined synapses. 
- */
-//--------------------------------------------------------------------------
-
-void modelDefinition(NNmodel &model) 
-{	
-  /******************************************************************/		
-  // redefine nsynapse as a user-defined syapse type 
-  weightUpdateModel nsynapse;
-  nsynapse.varNames.clear();
-  nsynapse.varTypes.clear();
-  nsynapse.pNames.clear();
-  nsynapse.dpNames.clear();
-  nsynapse.simCode = tS(" \
-  	 	linSyn += $(G); //try to see if it works\n \
-  ");
-
-  weightUpdateModels.push_back(nsynapse);
-  unsigned int NSYNAPSE_userdef=weightUpdateModels.size()+MAXSYN-1; //this is the synapse index to be used in addSynapsePopulation
-
-
-  /******************************************************************/
-  // redefine ngradsynapse as a user-defined syapse type: 
-  weightUpdateModel ngradsynapse;
-  ngradsynapse.varNames.clear();
-  ngradsynapse.varTypes.clear();
-  ngradsynapse.pNames.clear();
-  ngradsynapse.pNames.push_back(tS("Epre")); 
-  ngradsynapse.pNames.push_back(tS("Vslope")); 
-  ngradsynapse.dpNames.clear();
-  ngradsynapse.simCodeEvnt = tS(" \
-  	 	linSyn += $(G)* tanh(float( $(preSpikeV) - ($(Epre)))/$(Vslope)); //try to see if it works\n \
-  ");
-
-  weightUpdateModels.push_back(ngradsynapse);
-  unsigned int NGRADSYNAPSE_userdef=weightUpdateModels.size()+MAXSYN-1; //this is the synapse index to be used in addSynapsePopulation
-
-  /******************************************************************/
-  // redefine learn1synapse as a user-defined syapse type: 
-  weightUpdateModel learn1synapse;
-
   //define derived parameters for learn1synapse
   class pwSTDP : public dpclass  //!TODO This class definition may be code-generated in a future release
   {
@@ -236,6 +192,50 @@ void modelDefinition(NNmodel &model)
 		}
 	};
 
+#include "../../userproject/include/sizes.h"
+
+//--------------------------------------------------------------------------
+/*! \brief This function defines the MBody1 model with user defined synapses. 
+ */
+//--------------------------------------------------------------------------
+
+void modelDefinition(NNmodel &model) 
+{	
+  /******************************************************************/		
+  // redefine nsynapse as a user-defined syapse type 
+  weightUpdateModel nsynapse;
+  nsynapse.varNames.clear();
+  nsynapse.varTypes.clear();
+  nsynapse.pNames.clear();
+  nsynapse.dpNames.clear();
+  nsynapse.simCode = tS(" \
+  	 	linSyn += $(G); //try to see if it works\n \
+  ");
+
+  weightUpdateModels.push_back(nsynapse);
+  unsigned int NSYNAPSE_userdef=weightUpdateModels.size()+MAXSYN-1; //this is the synapse index to be used in addSynapsePopulation
+
+
+  /******************************************************************/
+  // redefine ngradsynapse as a user-defined syapse type: 
+  weightUpdateModel ngradsynapse;
+  ngradsynapse.varNames.clear();
+  ngradsynapse.varTypes.clear();
+  ngradsynapse.pNames.clear();
+  ngradsynapse.pNames.push_back(tS("Epre")); 
+  ngradsynapse.pNames.push_back(tS("Vslope")); 
+  ngradsynapse.dpNames.clear();
+  ngradsynapse.simCodeEvnt = tS(" \
+  	 	linSyn += $(G)* tanh(float( $(preSpikeV) - ($(Epre)))/$(Vslope)); //try to see if it works\n \
+  ");
+
+  weightUpdateModels.push_back(ngradsynapse);
+  unsigned int NGRADSYNAPSE_userdef=weightUpdateModels.size()+MAXSYN-1; //this is the synapse index to be used in addSynapsePopulation
+
+  /******************************************************************/
+  // redefine learn1synapse as a user-defined syapse type: 
+  weightUpdateModel learn1synapse;
+
   learn1synapse.varNames.clear();
   learn1synapse.varTypes.clear();
   learn1synapse.varTypes.push_back(tS(model.ftype));
@@ -262,9 +262,8 @@ void modelDefinition(NNmodel &model)
   learn1synapse.dpNames.push_back(tS("off0"));
   learn1synapse.dpNames.push_back(tS("off1"));
   learn1synapse.dpNames.push_back(tS("off2"));
-  learn1synapse.dps = new pwSTDP;
   learn1synapse.simCode = tS(" \
-  	 	linSyn += $(G); //try to see if it works\n \
+  	 	$(inSyn) += $(G); //try to see if it works\n \
   	 	$(G) = $(gRaw); \n \
 			float dt = $(sT) - t - $(tauShift); \n \
 			if (dt > $(lim0))  \n \
@@ -276,7 +275,7 @@ void modelDefinition(NNmodel &model)
 			else dt = - $(off2) ; \n \
 			$(G) = $(G) + dt; \n \
 			$(gRaw) = $(G); \n \
-      $(G)=$(gMax)/2.0 *(tanh((gSlope)*($(G) - $(gMid)))+1.0); \n \
+      $(G)=$(gMax)/2.0 *(tanh($(gSlope)*($(G) - $(gMid)))+1.0); \n \
   ");     
     // d_gp" << model.synapseName[i] << "[shSpk[j] * " << model.neuronN[trg] << " + " << localID << "] = "; \n \
     //os << "  return " << SAVEP(model.synapsePara[i][8]/2.0) << " * (tanh(";
@@ -300,10 +299,25 @@ float myKCDN_p_userdef[13]= {
   10.0,          // 9 11 - TAUSHiFT: shift of learning curve
   0.00006        // 10 12 - GSYN0: value of syn conductance g decays to
 };
+
+  learn1synapse.dps = new pwSTDP;
   learn1synapse.simCodeEvnt = tS(" \
   	 	linSyn += $(G)* tanh(float( $(preSpikeV) - ($(Epre)))/$(Vslope)); //try to see if it works\n \
   ");
-
+  learn1synapse.simLearnPost = tS(" \
+  	 	$(G) = $(gRaw); \n \
+			float dt = $(sT) - t - $(tauShift); \n \
+			if (dt > $(lim0))  \n \
+			dt = - $(off0) ; \n \
+			else if (dt > 0.0)  \n \
+      dt = $(slope0) * dt + $(off1); \n \
+      else if (dt > $(lim1))  \n \
+			dt = $(slope1) * dt + $(off1); \n \
+			else dt = - $(off2) ; \n \
+			$(G) = $(G) + dt; \n \
+			$(gRaw) = $(G); \n \
+      $(G)=$(gMax)/2.0 *(tanh($(gSlope)*($(G) - $(gMid)))+1.0); \n \
+  ");     
   weightUpdateModels.push_back(learn1synapse);
   unsigned int LEARN1SYNAPSE_userdef=weightUpdateModels.size()+MAXSYN-1; //this is the synapse index to be used in addSynapsePopulation
 

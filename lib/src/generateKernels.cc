@@ -1033,7 +1033,12 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 		string code = weightUpdateModels[synt].simCode;
 		for (int k = 0, l = weightUpdateModels[synt].varNames.size(); k < l; k++) {
 		    //os << "linSyn=d_inSyn" << model.neuronName[trg] << inSynNo << "[ipost];";
-		    substitute(code, tS("$(") + weightUpdateModels[synt].varNames[k] + tS(")"), tS("d_")+weightUpdateModels[synt].varNames[k]+model.synapseName[i]+ tS("[d_gp")+ model.synapseName[i] + tS("_indInG[shSpkEvnt[j]] + ") + localID +tS("];"));
+		    if (model.synapseConnType[i] == SPARSE){
+		      substitute(code, tS("$(") + weightUpdateModels[synt].varNames[k] + tS(")"), tS("d_")+weightUpdateModels[synt].varNames[k]+model.synapseName[i]+ tS("[d_gp")+ model.synapseName[i] + tS("_indInG[shSpk[j]] + ") + localID +tS("]]"));
+		    }
+		    else{ 
+		      substitute(code, tS("$(") + weightUpdateModels[synt].varNames[k] + tS(")"), tS("d_")+weightUpdateModels[synt].varNames[k]+model.synapseName[i]+ tS("[shSpk[j] * ") + tS(model.neuronN[trg]) + tS("+")+ localID +tS("]"));
+		    }
 		    substitute(code, tS("$(inSyn)"), tS("linSyn"));
 		}
 			
@@ -1049,9 +1054,16 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 		substitute(code, tS("$(G)"), theLG);
 		substitute(code, tS("$(preSpike)"), preSpike);
 		substitute(code, tS("$(preSpikeV)"), preSpikeV);
+		string sTpost = tS("d_sT")+ model.neuronName[trg] + tS("[") + localID +tS("]");
+		substitute(code, tS("$(sT)"),sTpost);
 
 		os << code;
-	  		    	
+	  
+	  if (model.usesPostLearning[i]==TRUE){ //!TODO check if thisis correct. setting back the g valiue if learning 
+	    if (model.synapseGType[i] == INDIVIDUALG){
+		    os << "d_gp" << model.synapseName[i] << "[shSpk[j]*" << model.neuronN[trg] << " + " << localID << "] =" << theLG << ";" ;
+		}
+	  }		    	
 	    }
 	    if (model.synapseConnType[i] != SPARSE) { 
 		if (model.neuronType[src] != POISSONNEURON) {
@@ -1113,7 +1125,7 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 	// count how many learn blocks to use: one thread for each synapse source
 	// sources of several output groups are counted multiply
 	numOfBlocks = model.padSumLearnN[model.lrnGroups - 1] / learnBlkSz;
-
+  
 	// Kernel header
 	os << "__global__ void learnSynapsesPost(" << ENDL;
 	for (int i = 0; i < model.synapseGrpN; i++) {
@@ -1161,6 +1173,11 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 	    unsigned int trg = model.synapseTarget[k];
 	    float Epre = model.synapsePara[k][1];
 
+if (model.synapseGType[k] == INDIVIDUALG){
+		    os << "lg = d_gp" << model.synapseName[k] << "[shSpk[j]*" << model.neuronN[trg] << " + " << localID << "];";
+		    theLG = toString("lg");
+		}
+		
 	    os << "lscnt = d_glbscnt" << model.neuronName[trg];
 	    if (model.neuronDelaySlots[trg] != 1) os << "[d_spkQuePtr" << model.neuronName[trg] << "]";
 	    os << ";" << ENDL;
@@ -1186,7 +1203,9 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 	    os << "if (" << localID << " < " << model.neuronN[src] << ")" << OB(250);
 	    os << "// loop through all incoming spikes for learning" << ENDL;
 	    os << "for (j = 0; j < lmax; j++)" << OB(260);
-	    os << "if (shSpkV[j] > " << Epre << ")" << OB(270); //!TODO: shouldn't that be something equivalent to Epost???
+	    os << "if (shSpkV[j] > " << Epre << ")" << OB(270); 
+	    
+	    if (model.synapseType[k] ==LEARN1SYNAPSE){
 	    os << "lg = d_grawp" << model.synapseName[k] << "[" << localID << " * ";
 	    os << model.neuronN[trg] << " + shSpk[j]];" << ENDL;
 	    os << model.ftype << " dt = t - d_sT" << model.neuronName[src] << "[" << localID << "]";
@@ -1211,6 +1230,49 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 	    os << model.neuronN[trg] << " + shSpk[j]] = lg;" << ENDL;
 	    os << "d_gp" << model.synapseName[k] << "[" << localID << " * ";
 	    os << model.neuronN[trg] << " + shSpk[j]] = gFunc" << model.synapseName[k] << "(lg);" << ENDL;
+	  }
+	    	    if (model.synapseType[k] >= MAXSYN) {
+		unsigned int synt = model.synapseType[k]-MAXSYN;
+		string code = weightUpdateModels[synt].simLearnPost;
+		for (int p = 0, l = weightUpdateModels[synt].varNames.size(); p < l; p++) {
+		    //os << "linSyn=d_inSyn" << model.neuronName[trg] << inSynNo << "[ipost];";
+		    if (model.synapseConnType[k] == SPARSE){
+		      substitute(code, tS("$(") + weightUpdateModels[synt].varNames[p] + tS(")"), tS("d_")+weightUpdateModels[synt].varNames[p]+model.synapseName[k]+ tS("[d_gp")+ model.synapseName[k] + tS("_indInG[shSpk[j]] + ") + localID +tS("]]"));
+		    }
+		    else{ 
+		      substitute(code, tS("$(") + weightUpdateModels[synt].varNames[p] + tS(")"), tS("d_")+weightUpdateModels[synt].varNames[p]+model.synapseName[k]+ tS("[shSpk[j] * ") + tS(model.neuronN[trg]) + tS("+")+ localID +tS("]"));
+		    }
+		    substitute(code, tS("$(inSyn)"), tS("linSyn"));
+		}
+			
+		for (int p = 0, l = weightUpdateModels[synt].pNames.size(); p < l; p++) {
+		    substitute(code, tS("$(") + weightUpdateModels[synt].pNames[p] + tS(")"), tS(model.synapsePara[k][p]));
+		}
+		for (int p = 0, l =  weightUpdateModels[synt].dpNames.size(); p < l; p++) {
+		  substitute(code, tS("$(") + weightUpdateModels[synt].dpNames[p] + tS(")"), tS(model.dsp[k][p]));
+		  }		
+		for (int p = 0, l = weightUpdateModels[synt].extraGlobalSynapseKernelParameters.size(); p < l; p++) {
+		    substitute(code, tS("$(") + weightUpdateModels[synt].extraGlobalSynapseKernelParameters[p] + tS(")"), weightUpdateModels[synt].extraGlobalSynapseKernelParameters[p]+model.synapseName[k]);
+		}
+		substitute(code, tS("$(G)"), theLG);
+		substitute(code, tS("$(preSpike)"), preSpike);
+		substitute(code, tS("$(preSpikeV)"), preSpikeV);
+		string sTpost = tS("d_sT")+ model.neuronName[trg] + tS("[") + localID +tS("]");
+		substitute(code, tS("$(sT)"),sTpost);
+
+		os << code;
+	  
+	  if (model.usesPostLearning[i]==TRUE){ //!TODO check if thisis correct. setting back the g valiue if learning 
+	    if (model.synapseGType[i] == INDIVIDUALG){
+		    os << "d_gp" << model.synapseName[i] << "[shSpk[j]*" << model.neuronN[trg] << " + " << localID << "] =" << theLG << ";" ;
+		}
+	  }		    	
+	    }
+	    
+	    
+	    
+	    
+	    
 	    os << CB(270);
 	    os << CB(260);
 	    os << CB(250);
