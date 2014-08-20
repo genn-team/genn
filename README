@@ -144,22 +144,6 @@ c) The programmer defines their own modeling code along similar lines as
 
 
 
-3: Single compartment Izhikevich neuron(s)
-
-For a first minimal test, the system may be used with 
-
-tools/generate_run_1comp [CPU/GPU] [n] [nKC] [DIR] [EXE] [MODEL] [DEBUG OFF/ON].
-
-This would create a set of tonic spiking Izhikevich neurons with no connectivity, 
-receiving a constant identical 4 nA input. 
-To use it, navigate to the "userproject/OneComp_project" directory and type
-"../../tools/generate_run_1comp 1 1 Outdir OneComp_sim OneComp 0".
-
-
-
-
-
-
 
 4: Pulse-coupled Izhikevich network
 
