@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<SpineML xsi:schemaLocation="http://www.shef.ac.uk/SpineMLComponentLayer SpineMLComponentLayer.xsd" xmlns="http://www.shef.ac.uk/SpineMLComponentLayer" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<SpineML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.shef.ac.uk/SpineMLComponentLayer" xsi:schemaLocation="http://www.shef.ac.uk/SpineMLComponentLayer SpineMLComponentLayer.xsd">
  <ComponentClass type="neuron_body" name="LIF">
   <Dynamics initial_regime="integration">
    <Regime name="integration">
@@ -13,7 +13,7 @@
    <StateVariable dimension="V" name="a"/>
   </Dynamics>
   <AnalogSendPort name="out"/>
-  <AnalogReducePort dimension="?" name="in" reduce_op="+"/>
+  <AnalogReducePort dimension="?" reduce_op="+" name="in"/>
   <Parameter dimension="s" name="tau"/>
   <Parameter dimension="?" name="m"/>
   <Parameter dimension="?" name="c"/>

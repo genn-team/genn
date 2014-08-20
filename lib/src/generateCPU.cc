@@ -587,12 +587,13 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 	os << ENDL;
 
 	for (int i = 0; i < model.lrnGroups; i++) {
+	  
 	    unsigned int k = model.lrnSynGrp[i];
 	    unsigned int src = model.synapseSource[k];
 	    unsigned int nN = model.neuronN[src];
 	    unsigned int trg = model.synapseTarget[k];
 	    float Epre = model.synapsePara[k][1];
-
+if (model.synapseType[k] == LEARN1SYNAPSE){ //!TODO only inactivating at the moment
 	    os << "for (int j = 0; j < glbscnt" << model.neuronName[trg];
 	    if (model.neuronDelaySlots[trg] != 1) {
 		os << "[spkQuePtr" << model.neuronName[trg] << "]" << ENDL;
@@ -650,8 +651,10 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 	    os << CB(131);
 	    os << CB(121);
 	    os << CB(910);
+	    }
 	}
 	os << CB(811);
+	
     }
     os << ENDL;
     os << "#endif" << ENDL;
