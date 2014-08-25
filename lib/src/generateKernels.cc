@@ -1141,9 +1141,30 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 	}
 	for (int i = 0; i < model.neuronGrpN; i++) {
 	    nt = model.neuronType[i];
-	    os << nModels[nt].varTypes[0] << " *d_" << nModels[nt].varNames[0] << model.neuronName[i] << ","; // Vm
+	    os << nModels[nt].varTypes[0] << " *d_" << nModels[nt].varNames[0] << model.neuronName[i]; // Vm
+	    if (i < model.neuronGrpN-1) {
+		    os << ",";
+	    }  
 	}
-	os << model.ftype << " t" << ENDL;
+	
+	for (int i=0; i< model.synapseName.size(); i++){
+	int st= model.synapseType[i];
+	if (st >= MAXSYN){
+	    for (int k= 0, l= weightUpdateModels[st-MAXSYN].varNames.size(); k < l; k++) {
+		os << ", " << weightUpdateModels[st-MAXSYN].varTypes[k] << " *d_" << weightUpdateModels[st-MAXSYN].varNames[k];
+		os << model.synapseName[i];
+	    }
+	    for (int k= 0, l= weightUpdateModels[st-MAXSYN].extraGlobalSynapseKernelParameters.size(); k < l; k++) {
+		os << ", " << weightUpdateModels[st-MAXSYN].extraGlobalSynapseKernelParameterTypes[k] << " d_" << weightUpdateModels[st-MAXSYN].extraGlobalSynapseKernelParameters[k];
+		os << model.synapseName[i];
+	    }
+	}	
+    }
+	
+	
+	if (model.needSt) {
+	os << ", " << model.ftype << " t";
+    }
 	os << ")" << ENDL;
 
 	// kernel code

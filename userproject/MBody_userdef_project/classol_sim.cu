@@ -56,6 +56,8 @@ int main(int argc, char *argv[])
   FILE *osf= fopen(name.c_str(),"w");
   name= OutDir+ "/"+ toString(argv[1]) + toString(".out.St"); 
   FILE *osf2= fopen(name.c_str(),"w");
+  
+
 
   //-----------------------------------------------------------------
   // build the neuronal circuitery
