@@ -179,6 +179,12 @@ void genRunner(NNmodel &model, //!< Model description
 		os << weightUpdateModels[st-MAXSYN].varTypes[k] << " *" << "d_" << weightUpdateModels[st-MAXSYN].varNames[k] << model.synapseName[i] << ";" << endl; 
 	    }
 	}
+   
+   
+   
+
+   
+   
    	
    	
     }
@@ -1202,10 +1208,29 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 	    }
 	    for (int i= 0; i < model.neuronGrpN; i++) {
 		nt= model.neuronType[i];
-		os << " d_" << nModels[nt].varNames[0] << model.neuronName[i] << ",";  	//this is supposed to be Vm 		
+		os << " d_" << nModels[nt].varNames[0] << model.neuronName[i];  	//this is supposed to be Vm 		
+		if (i < model.neuronGrpN-1) {
+		os << ",";
+	    }  
 	    }    
+    
+    
+    
+    	for (int i=0; i< model.synapseName.size(); i++){
+	    int st= model.synapseType[i];
+	    if (st >= MAXSYN){
+		for (int k= 0, l= weightUpdateModels[st-MAXSYN].varNames.size(); k < l; k++) {
+		    os <<  ", " << " d_" << weightUpdateModels[st-MAXSYN].varNames[k];
+		    os << model.synapseName[i];
+		}
+		for (int k= 0, l= weightUpdateModels[st-MAXSYN].extraGlobalSynapseKernelParameters.size(); k < l; k++) {
+		    os <<  ", " << weightUpdateModels[st-MAXSYN].extraGlobalSynapseKernelParameters[k];
+		    os << model.synapseName[i];
+		}
+	    }
+	}
         
-	    os << "t);" << endl;
+	    os << ", t);" << endl;
 	}
 	os << "  }" << endl;
 

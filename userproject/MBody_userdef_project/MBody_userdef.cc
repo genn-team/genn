@@ -286,7 +286,7 @@ void modelDefinition(NNmodel &model)
 //d_grawp" << model.synapseName[i] << "[shSpk[j] * " << model.neuronN[trg] << " + " << localID << "] = lg;" << ENDL; \n \		
  
 
-float myKCDN_p_userdef[13]= {
+float myKCDN_p_userdef[11]= {
   -20.0,         // 0 1 - Epre: Presynaptic threshold potential
   25.0,          // 1 3 - TLRN: time scale of learning changes
   100.0,         // 2 4 - TCHNG: width of learning window
