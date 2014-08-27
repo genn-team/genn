@@ -22,15 +22,14 @@ OS_UPPER 	:=$(shell uname -s 2>/dev/null | tr [:lower:] [:upper:])
 OS_LOWER 	:=$(shell uname -s 2>/dev/null | tr [:upper:] [:lower:])
 DARWIN  	:=$(strip $(findstring DARWIN, $(OS_UPPER)))
 
-# Global C++ / CUDA compiler settings and CUDA SDK directory.
+# Global C++ and CUDA compiler settings.
 CUDA_PATH	?=/usr/local/cuda
-NVCC		?=$(CUDA_PATH)/bin/nvcc
+NVCC		:=$(CUDA_PATH)/bin/nvcc
 NVCCFLAGS	+=
-CXX		?=g++
 CXXFLAGS	+=
 
 # Global include flags and link flags.
-INCLUDE_FLAGS	+=-I$(CUDA_PATH)/include -I$(GeNNPATH)/lib/include -I$(GeNNPATH)/userproject/include
+INCLUDE_FLAGS	+=-I$(CUDA_PATH)/include -I$(GENNPATH)/lib/include -I$(GENNPATH)/userproject/include
 ifeq ($(DARWIN),DARWIN)
   LINK_FLAGS	+=-Xlinker -L$(CUDA_PATH)/lib -lcudart -lstdc++ -lc++
 else
@@ -41,54 +40,43 @@ else
   endif
 endif
 
-# An auto-generated file containing your cuda device's compute version.
--include sm_version.mk
-
-# Locations of src, obj and bin directories.
-SRCDIR		:=.
-OBJDIR		:=obj
-BINDIR		:=bin
+# An auto-generated file containing your cuda device's compute capability.
+include sm_version.mk
 
 # Enumerate all source and object files (if they have not already been listed).
-SOURCES		?=$(wildcard $(SRCDIR)/*.cc $(SRCDIR)/*.cpp $(SRCDIR)/*.cu)
-OBJECTS		?=$(foreach obj, $(SOURCES), $(OBJDIR)/$(obj).o)
+SOURCES		?=$(wildcard *.cc *.cpp *.cu)
+OBJECTS		:=$(foreach obj,$(basename $(SOURCES)),$(obj).o)
 
 # Target rules.
 .PHONY: all
 all: release
 
-$(OBJDIR)/%.cc.o: $(SRCDIR)/%.cc $(OBJDIR)
-	$(CXX) $(CXXFLAGS) $(INCLUDE_FLAGS) -o $@ -c $<
+%.o: %.cc
+	$(CXX) $(CXXFLAGS) $(INCLUDE_FLAGS) $< -o $@ -c
 
-$(OBJDIR)/%.cpp.o: $(SRCDIR)/%.cpp $(OBJDIR)
-	$(CXX) $(CXXFLAGS) $(INCLUDE_FLAGS) -o $@ -c $<
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) $(INCLUDE_FLAGS) $< -o $@ -c
 
-$(OBJDIR)/%.cu.o: $(SRCDIR)/%.cu $(OBJDIR)
-	$(NVCC) $(NVCCFLAGS) $(GENCODE_FLAGS) $(INCLUDE_FLAGS) -o $@ -c $<
+%.o: %.cu
+	$(NVCC) $(NVCCFLAGS) $(INCLUDE_FLAGS) $(GENCODE_FLAGS) $< -o $@ -c
 
-$(BINDIR)/$(EXECUTABLE): $(OBJECTS) $(BINDIR)
-	$(NVCC) $(NVCCFLAGS) -o $@ $(OBJECTS) $(LINK_FLAGS) 
+$(EXECUTABLE): $(OBJECTS)
+	$(CXX) $(CXXFLAGS) $(LINK_FLAGS) $(OBJECTS) -o $@
 
 .PHONY: release
 release: CXXFLAGS +=-O3 -ffast-math
 release: NVCCFLAGS +=--compiler-options "-O3 -ffast-math"
-release: $(BINDIR)/$(EXECUTABLE)
+release: $(EXECUTABLE)
 
 .PHONY: debug
 debug: CXXFLAGS +=-g
 debug: NVCCFLAGS +=-g -G
-debug: $(BINDIR)/$(EXECUTABLE)
-
-$(OBJDIR):
-	mkdir -p $(OBJDIR)
-
-$(BINDIR):
-	mkdir -p $(BINDIR)
+debug: $(EXECUTABLE)
 
 .PHONY: clean
 clean:
-	rm -rf $(OBJDIR) $(BINDIR)
+	rm -rf $(EXECUTABLE) *.o
 
 .PHONY: purge
 purge: clean
-	rm -rf ./*_CODE
+	rm -rf *_CODE sm_version.mk

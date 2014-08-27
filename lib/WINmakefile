@@ -16,10 +16,9 @@
 # This is a Windows Makefile, to be used by the MS nmake build system
 #--------------------------------------------------------------------
 
-# Global C++ / CUDA compiler settings and CUDA SDK directory.
+# Global C++ and CUDA compiler settings.
 NVCC		=$(CUDA_PATH)\bin\nvcc.exe
 NVCCFLAGS	=$(NVCCFLAGS)
-CXX		=cl.exe
 CXXFLAGS	=$(CXXFLAGS) /nologo /EHsc /DNVCC="\"$(NVCC:\=/)\""
 
 # Global include flags and link flags.
@@ -39,10 +38,10 @@ BINDIR		=bin
 all: $(BINDIR)\generateALL.exe
 
 $(OBJDIR)\generateALL.obj: $(SRCDIR)\generateALL.cc $(OBJDIR)
-	$(CXX) $(CXXFLAGS) $(INCLUDE_FLAGS) /Fo$(OBJDIR)\generateALL.obj $(SRCDIR)\generateALL.cc /c
+	$(CXX) $(CXXFLAGS) $(INCLUDE_FLAGS) $(SRCDIR)\generateALL.cc /Fo$(OBJDIR)\generateALL.obj /c
 
 $(BINDIR)\generateALL.exe: $(OBJDIR)\generateALL.obj
-	$(CXX) $(CXXFLAGS) $(LINK_FLAGS) /Fe$(BINDIR)\generateALL.exe $(OBJDIR)\generateALL.obj
+	$(CXX) $(CXXFLAGS) $(LINK_FLAGS) $(OBJDIR)\generateALL.obj /Fe$(BINDIR)\generateALL.exe
 
 $(OBJDIR):
 	mkdir $(OBJDIR)

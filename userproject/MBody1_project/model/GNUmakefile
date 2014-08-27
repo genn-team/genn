@@ -11,7 +11,7 @@
 ##  
 ##--------------------------------------------------------------------------
 
-EXECUTABLE	:= classol_sim
-SOURCES		:= classol_sim.cu
+EXECUTABLE	:=classol_sim
+SOURCES		:=classol_sim.cu
 
-include	$(GeNNPATH)/userproject/include/makefile_common_gnu.mk
+include	$(GENNPATH)/userproject/include/makefile_common_gnu.mk

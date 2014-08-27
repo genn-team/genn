@@ -11,7 +11,7 @@ using namespace std;
 #include "utils.h"
 #include "hr_time.cpp"
 
-#include "SynDelaySim.hpp"
+#include "SynDelaySim.h"
 #include "SynDelay_CODE/runner.cc"
 
 
