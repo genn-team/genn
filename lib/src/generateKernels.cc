@@ -1195,11 +1195,6 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 	    unsigned int nN = model.neuronN[src];
 	    unsigned int trg = model.synapseTarget[k];
 	    float Epre = model.synapsePara[k][1];
-
-if (model.synapseGType[k] == INDIVIDUALG){
-		    os << "lg = d_gp" << model.synapseName[k] << "[shSpk[j]*" << model.neuronN[trg] << " + " << localID << "];";
-		    theLG = toString("lg");
-		}
 		
 	    os << "lscnt = d_glbscnt" << model.neuronName[trg];
 	    if (model.neuronDelaySlots[trg] != 1) os << "[d_spkQuePtr" << model.neuronName[trg] << "]";
@@ -1254,8 +1249,12 @@ if (model.synapseGType[k] == INDIVIDUALG){
 	    os << "d_gp" << model.synapseName[k] << "[" << localID << " * ";
 	    os << model.neuronN[trg] << " + shSpk[j]] = gFunc" << model.synapseName[k] << "(lg);" << ENDL;
 	  }
-	    	    if (model.synapseType[k] >= MAXSYN) {
-		unsigned int synt = model.synapseType[k]-MAXSYN;
+	  if (model.synapseType[k] >= MAXSYN) {
+		if (model.synapseGType[k] == INDIVIDUALG){
+	    os << "lg = d_gp" << model.synapseName[k] << "[shSpk[j]*" << model.neuronN[trg] << " + " << localID << "];";
+	    theLG = toString("lg");
+		}
+	  	unsigned int synt = model.synapseType[k]-MAXSYN;
 		string code = weightUpdateModels[synt].simLearnPost;
 		for (int p = 0, l = weightUpdateModels[synt].varNames.size(); p < l; p++) {
 		    //os << "linSyn=d_inSyn" << model.neuronName[trg] << inSynNo << "[ipost];";
