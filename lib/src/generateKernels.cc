@@ -515,7 +515,7 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 		os << model.synapseName[i];
 	    }
 	    for (int k= 0, l= weightUpdateModels[st-MAXSYN].extraGlobalSynapseKernelParameters.size(); k < l; k++) {
-		os << ", " << weightUpdateModels[st-MAXSYN].extraGlobalSynapseKernelParameterTypes[k] << " d_" << weightUpdateModels[st-MAXSYN].extraGlobalSynapseKernelParameters[k];
+		os << ", " << weightUpdateModels[st-MAXSYN].extraGlobalSynapseKernelParameterTypes[k] << " " << weightUpdateModels[st-MAXSYN].extraGlobalSynapseKernelParameters[k];
 		os << model.synapseName[i];
 	    }
 	}	
@@ -734,7 +734,7 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 		    substitute(code, tS("$(preSpikeV)"), preSpikeV);
 		    		
 		    for (int k = 0, l = weightUpdateModels[synt].extraGlobalSynapseKernelParameters.size(); k < l; k++) {
-			substitute(code, tS("$(") + weightUpdateModels[synt].extraGlobalSynapseKernelParameters[k] + tS(")"), tS("d_")+weightUpdateModels[synt].extraGlobalSynapseKernelParameters[k]+model.synapseName[i]);
+			substitute(code, tS("$(") + weightUpdateModels[synt].extraGlobalSynapseKernelParameters[k] + tS(")"), weightUpdateModels[synt].extraGlobalSynapseKernelParameters[k]+model.synapseName[i]);
 		    }
 		    os << code;
 		    if (isGrpVarNeeded[model.synapseTarget[i]] == 0) {
@@ -786,7 +786,7 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 		    }
 			
 		    for (int k = 0, l = weightUpdateModels[synt].extraGlobalSynapseKernelParameters.size(); k < l; k++) {
-			substitute(wCode, tS("$(") + weightUpdateModels[synt].extraGlobalSynapseKernelParameters[k] + tS(")"), tS("d_")+weightUpdateModels[synt].extraGlobalSynapseKernelParameters[k]+model.synapseName[i]);
+			substitute(wCode, tS("$(") + weightUpdateModels[synt].extraGlobalSynapseKernelParameters[k] + tS(")"), weightUpdateModels[synt].extraGlobalSynapseKernelParameters[k]+model.synapseName[i]);
 		    }
 		    substitute(wCode, tS("$(G)"), theLG);
 		    substitute(wCode, tS("$(preSpike)"), preSpike);
@@ -1050,7 +1050,7 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 		  }		
 
 		for (int k = 0, l = weightUpdateModels[synt].extraGlobalSynapseKernelParameters.size(); k < l; k++) {
-			substitute(code, tS("$(") + weightUpdateModels[synt].extraGlobalSynapseKernelParameters[k] + tS(")"), tS("d_")+weightUpdateModels[synt].extraGlobalSynapseKernelParameters[k]+model.synapseName[i]);
+			substitute(code, tS("$(") + weightUpdateModels[synt].extraGlobalSynapseKernelParameters[k] + tS(")"), weightUpdateModels[synt].extraGlobalSynapseKernelParameters[k]+model.synapseName[i]);
 	    }
 		substitute(code, tS("$(G)"), theLG);
 		substitute(code, tS("$(preSpike)"), preSpike);
@@ -1157,7 +1157,7 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 		os << model.synapseName[i];
 	    }
 	    for (int k= 0, l= weightUpdateModels[st-MAXSYN].extraGlobalSynapseKernelParameters.size(); k < l; k++) {
-		os << ", " << weightUpdateModels[st-MAXSYN].extraGlobalSynapseKernelParameterTypes[k] << " d_" << weightUpdateModels[st-MAXSYN].extraGlobalSynapseKernelParameters[k];
+		os << ", " << weightUpdateModels[st-MAXSYN].extraGlobalSynapseKernelParameterTypes[k] << " " << weightUpdateModels[st-MAXSYN].extraGlobalSynapseKernelParameters[k];
 		os << model.synapseName[i];
 	    }
 	}	
@@ -1275,7 +1275,7 @@ if (model.synapseGType[k] == INDIVIDUALG){
 		  substitute(code, tS("$(") + weightUpdateModels[synt].dpNames[p] + tS(")"), tS(model.dsp[k][p]));
 		  }		
 		for (int p = 0, l = weightUpdateModels[synt].extraGlobalSynapseKernelParameters.size(); p < l; p++) {
-		    substitute(code, tS("$(") + weightUpdateModels[synt].extraGlobalSynapseKernelParameters[p] + tS(")"), tS("d_")+weightUpdateModels[synt].extraGlobalSynapseKernelParameters[p]+model.synapseName[k]);
+		    substitute(code, tS("$(") + weightUpdateModels[synt].extraGlobalSynapseKernelParameters[p] + tS(")"), weightUpdateModels[synt].extraGlobalSynapseKernelParameters[p]+model.synapseName[k]);
 		}
 		substitute(code, tS("$(G)"), theLG);
 		substitute(code, tS("$(preSpike)"), preSpike);
