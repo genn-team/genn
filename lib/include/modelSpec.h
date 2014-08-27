@@ -224,6 +224,7 @@ public:
   vector<vector<float> > synapsePara; //!< parameters of synapses
   vector<vector<float> > synapseIni; //!< Initial values of synapse variables
   vector<vector<float> > dsp;  //!< Derived synapse parameters
+  vector<vector<float> > dsp_w;  //!< Derived synapse parameters (weightUpdateModel only)
   vector<unsigned int> postSynapseType; //!< Types of synapses
   vector<vector<float> > postSynapsePara; //!< parameters of postsynapses
   vector<vector<float> > postSynIni; //!< Initial values of postsynaptic variables

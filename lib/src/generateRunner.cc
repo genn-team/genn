@@ -107,12 +107,13 @@ void genRunner(NNmodel &model, //!< Model description
     			os << weightUpdateModels[st-MAXSYN].extraGlobalSynapseKernelParameters[k] << model.synapseName[i] << ";" << endl;
     		}
     		
-    		/*vector<float> tmpP;
+    		vector<float> tmpP;
     		for (int j=0; j < weightUpdateModels[st-MAXSYN].dpNames.size(); ++j) {
-    			float retVal = weightUpdateModels[st-MAXSYN].dwp->calculateDerivedParameter(j, model.synapsePara[i], DT);
+    			float retVal = weightUpdateModels[st-MAXSYN].dps->calculateDerivedParameter(j, model.synapsePara[i], DT);
     			tmpP.push_back(retVal);
-    		}	
-    		weightUpdateModels[st-MAXSYN].dwp.push_back(tmpP);*/
+    		}
+    		//dsp[i].clear();
+    		model.dsp[i].swap(tmpP);	
     	}
     }
   
