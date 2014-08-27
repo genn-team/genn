@@ -307,7 +307,7 @@ float myKCDN_p_userdef[11]= {
   ");
   learn1synapse.simLearnPost = tS(" \
   	 	$(G) = $(gRaw); \n \
-			float dt = $(sTpre) - t - $(tauShift); \n \
+			float dt = t - ($(sTpre)) - ($(tauShift)); \n \
 			if (dt > $(lim0))  \n \
 			dt = - $(off0) ; \n \
 			else if (dt > 0.0)  \n \
