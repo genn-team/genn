@@ -11,7 +11,7 @@
 ##  
 ##--------------------------------------------------------------------------
 
-EXECUTABLE	:= OneComp_sim
-SOURCES		:= OneComp_sim.cu
+EXECUTABLE	:=OneComp_sim
+SOURCES		:=OneComp_sim.cu
 
-include	$(GENNPATH)/userproject/include/makefile_common_gnu.mk
+include $(GENNPATH)/userproject/include/makefile_common_gnu.mk

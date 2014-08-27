@@ -28,11 +28,9 @@ This file compiles to a tool that wraps all the other tools into one chain of ta
 #include <cmath>
 
 #ifdef _WIN32
-#define BUILDMODEL "buildmodel.bat"
 #include <direct.h>
 #include <stdlib.h>
 #else // UNIX
-#define BUILDMODEL "buildmodel.sh"
 #include <sys/stat.h> // needed for mkdir
 #endif
 
@@ -64,9 +62,17 @@ int main(int argc, char *argv[])
   }
 
   string cmd;
+  string gennPath = getenv("GENNPATH");
+  string outdir = toString(argv[7]) + "_output";  
   string execName = argv[8];
   string modelName = argv[9];
-  int DBGMODE = atoi(argv[10]); // set this to 1 if you want to enable gdb and cuda-gdb debugging to 0 for release
+  int dbgMode = atoi(argv[10]); // set this to 1 if you want to enable gdb and cuda-gdb debugging to 0 for release
+
+#ifdef _WIN32
+  const string buildModel = "buildmodel.bat";
+#else // UNIX
+  const string buildModel = "buildmodel.sh";
+#endif
   
   int which = atoi(argv[1]);
   int nAL = atoi(argv[2]);
@@ -74,7 +80,6 @@ int main(int argc, char *argv[])
   int nLHI = atoi(argv[4]);
   int nLB = atoi(argv[5]);
   float gscale = atof(argv[6]);
-  string outdir = toString(argv[7]) + "_output";  
   
   float pnkc_gsyn = 100.0f / nAL * gscale;
   float pnkc_gsyn_sigma = 100.0f / nAL * gscale / 15.0f; 
@@ -91,7 +96,7 @@ int main(int argc, char *argv[])
 #endif
   
   // generate pnkc synapses
-  cmd = "$GENNPATH/userproject/" + modelName + "_project/gen_pnkc_syns ";
+  cmd = gennPath + "/userproject/tools/gen_pnkc_syns ";
   cmd += toString(nAL) + " ";
   cmd += toString(nMB) + " ";
   cmd += "0.5 ";
@@ -102,7 +107,7 @@ int main(int argc, char *argv[])
   system(cmd.c_str()); 
 
   // generate kcdn synapses
-  cmd = "$GENNPATH/userproject/" + modelName + "_project/gen_kcdn_syns ";
+  cmd = gennPath + "/userproject/tools/gen_kcdn_syns ";
   cmd += toString(nMB) + " ";
   cmd += toString(nLB) + " ";
   cmd += toString(kcdn_gsyn) + " ";
@@ -113,7 +118,7 @@ int main(int argc, char *argv[])
   system(cmd.c_str());
 
   // generate pnlhi synapses
-  cmd = "$GENNPATH/userproject/" + modelName + "_project/gen_pnlhi_syns ";
+  cmd = gennPath + "/userproject/tools/gen_pnlhi_syns ";
   cmd += toString(nAL) + " ";
   cmd += toString(nLHI) + " ";
   cmd += toString(pnlhi_theta) + " 15 ";
@@ -122,15 +127,13 @@ int main(int argc, char *argv[])
   system(cmd.c_str());
 
   // generate input patterns
-  cmd = "$GENNPATH/userproject/" + modelName + "_project/gen_input_structured ";
+  cmd = gennPath + "/userproject/tools/gen_input_structured ";
   cmd += toString(nAL) + " ";
   cmd += "10 10 0.1 0.1 32768 17 ";
   cmd += outdir + "/" + toString(argv[7]) + ".inpat";
   cmd += " &> " + outdir + "/" + toString(argv[7]) + ".inpat.msg";
   system(cmd.c_str());
 
-  string gennPath = getenv("GENNPATH");
-  cerr << gennPath << endl;
   string fname = gennPath + "/userproject/include/sizes.h";
   ofstream os(fname.c_str());
   os << "#define _NAL " << nAL << endl;
@@ -138,41 +141,46 @@ int main(int argc, char *argv[])
   os << "#define _NLHI " << nLHI << endl;
   os << "#define _NLB " << nLB << endl;
   os.close();
-  
-  cmd = "cd $GENNPATH/userproject/" + modelName + "_project/model && " + BUILDMODEL + " " + modelName + " " + toString(DBGMODE);
-  cout << "Debug mode " << DBGMODE << endl;
-  cout << "script call was: " << cmd.c_str() << endl;
+
+  // build it  
+  cmd = "cd model && " + buildModel + " " + modelName + " " + toString(dbgMode);
   system(cmd.c_str());
-  cmd = "cd $GENNPATH/userproject/" + modelName + "_project/model && ";
-  if(DBGMODE == 1) {
-    cmd += "make clean && make debug";
+#ifdef _WIN32
+  if (dbgMode == 1) {
+    cmd = "cd model && nmake /f WINmakefile clean && nmake /f WINmakefile debug";
   }
   else {
-    cmd += "make clean && make";
+    cmd = "cd model && nmake /f WINmakefile clean && nmake /f WINmakefile";
   }
+#else // UNIX
+  if (dbgMode == 1) {
+    cmd = "cd model && make clean && make debug";
+  }
+  else {
+    cmd = "cd model && make clean && make";
+  }
+#endif
   system(cmd.c_str());
 
   // run it!
   cout << "running test..." << endl;
-
 #ifdef _WIN32
-  if (DBGMODE == 1) { // debug
-    cerr << "Debugging with gdb is not possible on cl platform." << endl;
+  if (dbgMode == 1) {
+    cerr << "Debugging mode is not yet supported on Windows." << endl;
+    exit(1);
   }
-  else { // release
-    cmd = "$GENNPATH/userproject/" + modelName + "_project/model/bin/" + execName + " " + toString(argv[7]) + " " + toString(which);
+  else {
+    cmd = "model/" + execName + " " + toString(argv[7]) + " " + toString(which);
   }
-
 #else // UNIX
-  if(DBGMODE == 1) { // debug
-    cmd = "cuda-gdb -tui --args $GENNPATH/userproject/" + modelName + "_project/model/bin/" + execName + " " + toString(argv[7]) + " " + toString(which);
+  if (dbgMode == 1) {
+    cmd = "cuda-gdb -tui --args model/" + execName + " " + toString(argv[7]) + " " + toString(which);
   }
-  else { // release
-    cmd = "$GENNPATH/userproject/" + modelName + "_project/model/bin/" + execName + " " + toString(argv[7]) + " " + toString(which);
+  else {
+    cmd = "model/" + execName + " " + toString(argv[7]) + " " + toString(which);
   }
-
 #endif
-  cout << cmd << endl;
   system(cmd.c_str());
+
   return 0;
 }

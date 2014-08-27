@@ -1,25 +1,19 @@
 #--------------------------------------------------------------------------
-# Author: Thomas Nowotny
-#
-# Institute: Institute for Nonlinear Dynamics
-#            University of California San Diego
-#            La Jolla, CA 92093-0402
-#
-# email to:  tnowotny@ucsd.edu
-#
-# initial version: 2002-01-24
-#
+#  Author: Thomas Nowotny
+#  
+#  Institute: Center for Computational Neuroscience and Robotics
+#             University of Sussex
+#             Falmer, Brighton BN1 9QJ, UK
+#  
+#  email to:  T.Nowotny@sussex.ac.uk
+#  
+#  initial version: 2010-02-07
+#  
 #--------------------------------------------------------------------------
 
-CXX	=g++
-RM	=rm -f
-INCLUDE	=-I$(GENNPATH)/lib/include/numlib
-FLAGS	=-Wall -Winline -O3 #-O2 -march=athlon
+CXXFLAGS	=-Wall -Winline -O3 -g
 
 all: generate_run
-
-generate_run: generate_run.cc
-	$(CXX) $(FLAGS) -g $(INCLUDE) -o generate_run generate_run.cc
 
 clean:
 	$(RM) generate_run

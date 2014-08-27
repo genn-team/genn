@@ -22,15 +22,14 @@ OS_LOWER 	:=$(shell uname -s 2>/dev/null | tr [:upper:] [:lower:])
 OS_UPPER 	:=$(shell uname -s 2>/dev/null | tr [:lower:] [:upper:])
 DARWIN  	:=$(strip $(findstring DARWIN, $(OS_UPPER)))
 
-# Global C++ / CUDA compiler settings and CUDA SDK directory.
+# Global C++ and CUDA compiler settings.
 CUDA_PATH	?=/usr/local/cuda
-NVCC		?=$(CUDA_PATH)/bin/nvcc
+NVCC		:=$(CUDA_PATH)/bin/nvcc
 NVCCFLAGS	+=
-CXX		?=g++
 CXXFLAGS	+=-DNVCC=\"$(NVCC)\"
 
 # Global include flags and link flags.
-INCLUDE_FLAGS	+=-I$(CUDA_PATH)/include -I$(GeNNPATH)/lib/include
+INCLUDE_FLAGS	+=-I$(CUDA_PATH)/include -I$(GENNPATH)/lib/include
 ifeq ($(DARWIN),DARWIN)
   LINK_FLAGS	+=-Xlinker -L$(CUDA_PATH)/lib -lcudart -lstdc++ -lc++
 else
@@ -51,10 +50,10 @@ BINDIR		=bin
 all: $(BINDIR)/generateALL
 
 $(OBJDIR)/generateALL.o: $(SRCDIR)/generateALL.cc $(OBJDIR)
-	$(CXX) $(CXXFLAGS) $(INCLUDE_FLAGS) -o $(OBJDIR)/generateALL.o $(SRCDIR)/generateALL.cc -c
+	$(CXX) $(CXXFLAGS) $(INCLUDE_FLAGS) $(SRCDIR)/generateALL.cc -o $(OBJDIR)/generateALL.o -c
 
 $(BINDIR)/generateALL: $(OBJDIR)/generateALL.o
-	$(CXX) $(CXXFLAGS) $(LINK_FLAGS) -o $(BINDIR)/generateALL $(OBJDIR)/generateALL.o
+	$(CXX) $(CXXFLAGS) $(LINK_FLAGS) $(OBJDIR)/generateALL.o -o $(BINDIR)/generateALL
 
 .PHONY: debug
 debug: CXXFLAGS +=-g

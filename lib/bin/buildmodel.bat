@@ -7,8 +7,8 @@ echo "model name:" %MODELNAME%
 set DBGMODE=%2
 if "%DBGMODE%"=="" set DBGMODE=0
 
-copy "%MODELPATH%\%MODELNAME%.cc" "%GeNNPATH%\lib\src\currentModel.cc"
-cd "%GeNNPATH%\lib"
+copy "%MODELPATH%\%MODELNAME%.cc" "%GENNPATH%\lib\src\currentModel.cc"
+cd "%GENNPATH%\lib"
 
 if "%DBGMODE%"=="0" (
   nmake /nologo /f WINmakefile clean
@@ -18,6 +18,6 @@ if "%DBGMODE%"=="0" (
   echo "Debugging mode ON"
   rem "Windows debug commands will go here ..."
 )
-
 cd "%MODELPATH%"
+
 echo Model build complete ...

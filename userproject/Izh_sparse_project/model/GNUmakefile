@@ -3,7 +3,7 @@
 ##  
 ##   Institute: Center for Computational Neuroscience and Robotics
 ##              University of Sussex
-##              Falmer, Brighton BN1 9QJ, UK 
+##            Falmer, Brighton BN1 9QJ, UK 
 ##  
 ##   email to:  T.Nowotny@sussex.ac.uk
 ##  
@@ -11,7 +11,7 @@
 ##  
 ##--------------------------------------------------------------------------
 
-EXECUTABLE	:=PoissonIzh_sim
-SOURCES		:=PoissonIzh_sim.cu
+EXECUTABLE	:=Izh_sim_sparse
+SOURCES		:=Izh_sim_sparse.cu
 
 include	$(GENNPATH)/userproject/include/makefile_common_gnu.mk
