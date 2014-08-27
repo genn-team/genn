@@ -1275,7 +1275,7 @@ if (model.synapseGType[k] == INDIVIDUALG){
 		  substitute(code, tS("$(") + weightUpdateModels[synt].dpNames[p] + tS(")"), tS(model.dsp[k][p]));
 		  }		
 		for (int p = 0, l = weightUpdateModels[synt].extraGlobalSynapseKernelParameters.size(); p < l; p++) {
-		    substitute(code, tS("$(") + weightUpdateModels[synt].extraGlobalSynapseKernelParameters[p] + tS(")"), weightUpdateModels[synt].extraGlobalSynapseKernelParameters[p]+model.synapseName[k]);
+		    substitute(code, tS("$(") + weightUpdateModels[synt].extraGlobalSynapseKernelParameters[p] + tS(")"), tS("d_")+weightUpdateModels[synt].extraGlobalSynapseKernelParameters[p]+model.synapseName[k]);
 		}
 		substitute(code, tS("$(G)"), theLG);
 		substitute(code, tS("$(preSpike)"), preSpike);
