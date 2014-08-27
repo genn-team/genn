@@ -96,17 +96,24 @@ void genRunner(NNmodel &model, //!< Model description
     }
   
     for (int i=0; i< model.synapseName.size(); i++){
-	int st= model.synapseType[i];
-	if (st >= MAXSYN){
-	    for (int k= 0, l= weightUpdateModels[st-MAXSYN].varNames.size(); k < l; k++) {
-		os << weightUpdateModels[st-MAXSYN].varTypes[k] << " *" << weightUpdateModels[st-MAXSYN].varNames[k];
-		os << model.synapseName[i]<< ";" << ENDL;
-	    }
-	    for (int k= 0, l= weightUpdateModels[st-MAXSYN].extraGlobalSynapseKernelParameters.size(); k < l; k++) {
-		os << weightUpdateModels[st-MAXSYN].extraGlobalSynapseKernelParameterTypes[k] << " ";
-		os << weightUpdateModels[st-MAXSYN].extraGlobalSynapseKernelParameters[k] << model.synapseName[i] << ";" << endl;
-	    }
-	}
+    	int st= model.synapseType[i];
+    	if (st >= MAXSYN){
+    		for (int k= 0, l= weightUpdateModels[st-MAXSYN].varNames.size(); k < l; k++) {
+    			os << weightUpdateModels[st-MAXSYN].varTypes[k] << " *" << weightUpdateModels[st-MAXSYN].varNames[k];
+    			os << model.synapseName[i]<< ";" << ENDL;
+    		}
+    		for (int k= 0, l= weightUpdateModels[st-MAXSYN].extraGlobalSynapseKernelParameters.size(); k < l; k++) {
+    			os << weightUpdateModels[st-MAXSYN].extraGlobalSynapseKernelParameterTypes[k] << " ";
+    			os << weightUpdateModels[st-MAXSYN].extraGlobalSynapseKernelParameters[k] << model.synapseName[i] << ";" << endl;
+    		}
+    		
+    		/*vector<float> tmpP;
+    		for (int j=0; j < weightUpdateModels[st-MAXSYN].dpNames.size(); ++j) {
+    			float retVal = weightUpdateModels[st-MAXSYN].dwp->calculateDerivedParameter(j, model.synapsePara[i], DT);
+    			tmpP.push_back(retVal);
+    		}	
+    		weightUpdateModels[st-MAXSYN].dwp.push_back(tmpP);*/
+    	}
     }
   
     for (int i=0; i< model.postSynapseType.size(); i++){

@@ -104,7 +104,6 @@ void NNmodel::initDerivedPostSynapsePara(unsigned int i)
   dpsp.push_back(tmpP);
 }
 
-
 //--------------------------------------------------------------------------
 /*! \brief This function calculates derived synapse parameters from primary synapse parameters. 
 
@@ -222,7 +221,7 @@ void NNmodel::initLearnGrps()
 	for (int i=0; i< synapseName.size(); i++){
 		unsigned int padnN = ceil((float) neuronN[synapseSource[i]] / (float) learnBlkSz) * (float) learnBlkSz;
 		if (usesPostLearning[i]==TRUE){
-			fprintf(stdout, "#########################################detected learning synapse at %d \n", i);
+			fprintf(stdout, "detected learning synapse at %d \n", i);
 			if (SPK_THRESH_STDP < nSpkEvntThreshold[synapseTarget[i]]) {
 				nSpkEvntThreshold[synapseTarget[i]]= SPK_THRESH_STDP;
 			}

@@ -164,11 +164,11 @@ float postSynV[0]={
 		//}
 		float lim0(vector<float> pars, float dt) {
 			//return 1.0f/$(TPUNISH01) + 1.0f/$(TCHNG) *$(TLRN) / (2.0f/$(TCHNG));
-			return 1.0f/pars[5] + 1.0f/pars[2] * pars[1] / (2.0f/pars[2]);
+			return (1.0f/pars[5] + 1.0f/pars[2]) * pars[1] / (2.0f/pars[2]);
 		}
 		float lim1(vector<float> pars, float dt) {
 			//return 1.0f/$(TPUNISH10) + 1.0f/$(TCHNG) *$(TLRN) / (2.0f/$(TCHNG));
-			return 1.0f/pars[4] + 1.0f/pars[2] * pars[1] / (2.0f/pars[2]);
+			return (1.0f/pars[4] + 1.0f/pars[2]) * pars[1] / (2.0f/pars[2]);
 		}
 		float slope0(vector<float> pars, float dt) {
 			//return -2.0f*$(gmax)/ ($(TCHNG)*$(TLRN)); 
@@ -203,6 +203,7 @@ void modelDefinition(NNmodel &model)
 {	
   /******************************************************************/		
   // redefine nsynapse as a user-defined syapse type 
+  model.setGPUDevice(0); //returns quadro for the model and it is not possible to debug on the GPU used for display.
   weightUpdateModel nsynapse;
   nsynapse.varNames.clear();
   nsynapse.varTypes.clear();
@@ -265,7 +266,7 @@ void modelDefinition(NNmodel &model)
   learn1synapse.simCode = tS(" \
   	 	$(inSyn) += $(G); //try to see if it works\n \
   	 	$(G) = $(gRaw); \n \
-			float dt = $(sT) - t - $(tauShift); \n \
+			float dt = $(sTpost) - t - $(tauShift); \n \
 			if (dt > $(lim0))  \n \
 			dt = - $(off0) ; \n \
 			else if (dt > 0.0)  \n \
@@ -306,7 +307,7 @@ float myKCDN_p_userdef[11]= {
   ");
   learn1synapse.simLearnPost = tS(" \
   	 	$(G) = $(gRaw); \n \
-			float dt = $(sT) - t - $(tauShift); \n \
+			float dt = $(sTpre) - t - $(tauShift); \n \
 			if (dt > $(lim0))  \n \
 			dt = - $(off0) ; \n \
 			else if (dt > 0.0)  \n \
