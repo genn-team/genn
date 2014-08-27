@@ -1048,15 +1048,17 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 		for (int k = 0, l =  weightUpdateModels[synt].dpNames.size(); k < l; k++) {
 		  substitute(code, tS("$(") + weightUpdateModels[synt].dpNames[k] + tS(")"), tS(model.dsp[i][k]));
 		  }		
+
 		for (int k = 0, l = weightUpdateModels[synt].extraGlobalSynapseKernelParameters.size(); k < l; k++) {
-		    substitute(code, tS("$(") + weightUpdateModels[synt].extraGlobalSynapseKernelParameters[k] + tS(")"), weightUpdateModels[synt].extraGlobalSynapseKernelParameters[k]+model.synapseName[i]);
-		}
+			substitute(code, tS("$(") + weightUpdateModels[synt].extraGlobalSynapseKernelParameters[k] + tS(")"), tS("d_")+weightUpdateModels[synt].extraGlobalSynapseKernelParameters[k]+model.synapseName[i]);
+	    }
 		substitute(code, tS("$(G)"), theLG);
 		substitute(code, tS("$(preSpike)"), preSpike);
 		substitute(code, tS("$(preSpikeV)"), preSpikeV);
 		string sTpost = tS("d_sT")+ model.neuronName[trg] + tS("[") + localID +tS("]");
-		substitute(code, tS("$(sT)"),sTpost);
-
+		substitute(code, tS("$(sTpre)"),sTpost);
+		string sTpre = tS("d_sT")+ model.neuronName[src] + tS("[") + localID +tS("]");
+		substitute(code, tS("$(sTpost)"),sTpost);
 		os << code;
 	  
 	  if (model.usesPostLearning[i]==TRUE){ //!TODO check if thisis correct. setting back the g valiue if learning 
@@ -1279,7 +1281,9 @@ if (model.synapseGType[k] == INDIVIDUALG){
 		substitute(code, tS("$(preSpike)"), preSpike);
 		substitute(code, tS("$(preSpikeV)"), preSpikeV);
 		string sTpost = tS("d_sT")+ model.neuronName[trg] + tS("[") + localID +tS("]");
-		substitute(code, tS("$(sT)"),sTpost);
+		substitute(code, tS("$(sTpost)"),sTpost);
+		string sTpre = tS("d_sT")+ model.neuronName[src] + tS("[") + localID +tS("]");
+		substitute(code, tS("$(sTpre)"),sTpre);
 
 		os << code;
 	  
