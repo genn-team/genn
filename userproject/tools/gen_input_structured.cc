@@ -54,9 +54,10 @@ int main(int argc, char *argv[])
   unsigned int lambdaOn= atoi(argv[6]);
   unsigned int lambdaOff= atoi(argv[7]);
   int patternNo= single_pNo*classNo;
-  int pat[nNo], patp[nNo];
+  int *pat = new int[nNo];
+  int *patp = new int[nNo];
   int nact= (int) (pact*nNo);
-  int patns[nact];
+  int *patns = new int[nact];
   int npert= (int) (pperturb*nact);
   int theno, newno;
   ofstream os(argv[8], ios::binary);

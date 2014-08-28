@@ -11,10 +11,10 @@
 #  
 #--------------------------------------------------------------------------
 
-CXXFLAGS	=
+CFLAGS		=/nologo /EHsc
 RM		=del 2>nul
 
-all: generate_run
+all: generate_run.exe
 
 clean:
-	$(RM) generate_run
+	$(RM) generate_run.exe
