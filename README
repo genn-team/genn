@@ -30,7 +30,7 @@ generation for Nvidia CUDA.
       SETX GENNPATH "\path\to\genn\"
 
 (4) Add "%GENNPATH%\lib\bin" to your %PATH% variable. For example, use:
-      SETX PATH "%PATH%;%GENNPATH%\lib\bin"
+      SETX PATH "%GENNPATH%\lib\bin;%PATH%"
 
 This completes the installation.
 
