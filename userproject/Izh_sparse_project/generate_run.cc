@@ -72,9 +72,9 @@ unsigned int openFileGetMax(unsigned int * array, unsigned int size, string name
 
 int main(int argc, char *argv[])
 {
-  if (argc != 10)
+  if (argc != 9)
   {
-    cerr << "usage: generate_izhikevich_network_run <CPU=0, GPU=1> <nNeurons> <nConn> <gscale> <outdir> <executable name> <model name> <debug mode? (0/1)> <use previous connectivity? (0/1)>";
+    cerr << "usage: generate_run <CPU=0, GPU=1> <nNeurons> <nConn> <gscale> <outdir> <model name> <debug mode? (0/1)> <use previous connectivity? (0/1)>" << endl;
     exit(1);
   }
 
@@ -83,16 +83,9 @@ int main(int argc, char *argv[])
   string outName = toString(argv[5]);
   string outDir = outName + "_output";  
   string outDir_g = "inputfiles";  
-  string execName = argv[6];
-  string modelName = argv[7];
-  int dbgMode = atoi(argv[8]); // set this to 1 if you want to enable gdb and cuda-gdb debugging to 0 for release
-  int fixsynapse = atoi(argv[9]); // same synapse patterns should be used to compare CPU to GPU
-
-#ifdef _WIN32
-  const string buildModel = "buildmodel.bat";
-#else // UNIX
-  const string buildModel = "buildmodel.sh";
-#endif
+  string modelName = argv[6];
+  int dbgMode = atoi(argv[7]); // set this to 1 if you want to enable gdb and cuda-gdb debugging to 0 for release
+  int fixsynapse = atoi(argv[8]); // same synapse patterns should be used to compare CPU to GPU
 
   int which = atoi(argv[1]);
   int nTotal = atoi(argv[2]);
@@ -157,44 +150,43 @@ int main(int argc, char *argv[])
   os << "#define _NMaxConnP3 " << maxN3 << endl;
   os.close();
   
-  cmd = "cd model && " + buildModel + " " + modelName + " " + toString(dbgMode);
-  system(cmd.c_str());
+  // build it
 #ifdef _WIN32
+  cmd = "cd model && buildmodel.bat " + modelName + " " + toString(dbgMode);
   if (dbgMode == 1) {
-    cmd = "cd model && nmake /f WINmakefile clean && nmake /f WINmakefile debug";
+    cmd += " && nmake /f WINmakefile clean && nmake /f WINmakefile debug";
   }
   else {
-    cmd = "cd model && nmake /f WINmakefile clean && nmake /f WINmakefile";
+    cmd += " && nmake /f WINmakefile clean && nmake /f WINmakefile";
   }
 #else // UNIX
+  cmd = "cd model && buildmodel.sh " + modelName + " " + toString(dbgMode);
   if (dbgMode == 1) {
-    cmd = "cd model && make clean && make debug";
+    cmd += " && make clean && make debug";
   }
   else {
-    cmd = "cd model && make clean && make";
+    cmd += " && make clean && make";
   }
 #endif
   system(cmd.c_str());
 
   // run it!
-  cout << "running test..." <<endl;
+  cout << "running test..." << endl;
 #ifdef _WIN32
   if (dbgMode == 1) {
     cerr << "Debugging mode is not yet supported on Windows." << endl;
     exit(1);
   }
   else {
-    cmd = "model/" + execName + " " + toString(argv[5]) + " " + toString(which);
+    cmd = "model/Izh_sim_sparse.exe " + toString(argv[5]) + " " + toString(which);
   }
-  cout << "1..." << endl;
 #else // UNIX
   if (dbgMode == 1) {
-    cmd = "cuda-gdb -tui --args model/" + execName + " " + toString(argv[5]) + " " + toString(which);
+    cmd = "cuda-gdb -tui --args model/Izh_sim_sparse " + toString(argv[5]) + " " + toString(which);
   }
   else {
-    cmd = "model/" + execName + " " + toString(argv[5]) + " " + toString(which);
+    cmd = "model/Izh_sim_sparse " + toString(argv[5]) + " " + toString(which);
   }
-  cout << "2..." << endl;
 #endif
   system(cmd.c_str());
 

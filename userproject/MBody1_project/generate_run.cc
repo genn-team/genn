@@ -55,25 +55,18 @@ template<typename T> std::string toString(T t)
 
 int main(int argc, char *argv[])
 {
-  if (argc != 11)
+  if (argc != 10)
   {
-    cerr << "usage: generate_run <CPU=0, GPU=1> <nAL> <nMB> <nLHI> <nLb> <gscale> <outdir> <executable name> <model name> <debug mode? (0/1)>";
+    cerr << "usage: generate_run <CPU=0, GPU=1> <nAL> <nMB> <nLHI> <nLb> <gscale> <outdir> <model name> <debug mode? (0/1)>" << endl;
     exit(1);
   }
 
   string cmd;
   string gennPath = getenv("GENNPATH");
   string outdir = toString(argv[7]) + "_output";  
-  string execName = argv[8];
-  string modelName = argv[9];
-  int dbgMode = atoi(argv[10]); // set this to 1 if you want to enable gdb and cuda-gdb debugging to 0 for release
+  string modelName = argv[8];
+  int dbgMode = atoi(argv[9]); // set this to 1 if you want to enable gdb and cuda-gdb debugging to 0 for release
 
-#ifdef _WIN32
-  const string buildModel = "buildmodel.bat";
-#else // UNIX
-  const string buildModel = "buildmodel.sh";
-#endif
-  
   int which = atoi(argv[1]);
   int nAL = atoi(argv[2]);
   int nMB = atoi(argv[3]);
@@ -142,22 +135,22 @@ int main(int argc, char *argv[])
   os << "#define _NLB " << nLB << endl;
   os.close();
 
-  // build it  
-  cmd = "cd model && " + buildModel + " " + modelName + " " + toString(dbgMode);
-  system(cmd.c_str());
+  // build it
 #ifdef _WIN32
+  cmd = "cd model && buildmodel.bat " + modelName + " " + toString(dbgMode);
   if (dbgMode == 1) {
-    cmd = "cd model && nmake /f WINmakefile clean && nmake /f WINmakefile debug";
+    cmd += " && nmake /f WINmakefile clean && nmake /f WINmakefile debug";
   }
   else {
-    cmd = "cd model && nmake /f WINmakefile clean && nmake /f WINmakefile";
+    cmd += " && nmake /f WINmakefile clean && nmake /f WINmakefile";
   }
 #else // UNIX
+  cmd = "cd model && buildmodel.sh " + modelName + " " + toString(dbgMode);
   if (dbgMode == 1) {
-    cmd = "cd model && make clean && make debug";
+    cmd += " && make clean && make debug";
   }
   else {
-    cmd = "cd model && make clean && make";
+    cmd += " && make clean && make";
   }
 #endif
   system(cmd.c_str());
@@ -170,14 +163,14 @@ int main(int argc, char *argv[])
     exit(1);
   }
   else {
-    cmd = "model/" + execName + " " + toString(argv[7]) + " " + toString(which);
+    cmd = "model/classol_sim.exe " + toString(argv[7]) + " " + toString(which);
   }
 #else // UNIX
   if (dbgMode == 1) {
-    cmd = "cuda-gdb -tui --args model/" + execName + " " + toString(argv[7]) + " " + toString(which);
+    cmd = "cuda-gdb -tui --args model/classol_sim " + toString(argv[7]) + " " + toString(which);
   }
   else {
-    cmd = "model/" + execName + " " + toString(argv[7]) + " " + toString(which);
+    cmd = "model/classol_sim " + toString(argv[7]) + " " + toString(which);
   }
 #endif
   system(cmd.c_str());
