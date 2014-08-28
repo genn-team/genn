@@ -572,6 +572,16 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 	src = model.synapseSource[i];
 	float Epre = 0;
 	if (model.synapseType[i]< MAXSYN) Epre = model.synapsePara[i][1];
+	else{
+		unsigned int synt = model.synapseType[i]-MAXSYN;
+		for (int k = 0, l = weightUpdateModels[synt].pNames.size(); k < l; k++) {
+		    if (weightUpdateModels[synt].pNames[k] == "Epre") {
+		    	Epre = model.synapsePara[i][k];
+	    		break;
+	    	}
+	    	if (k==l-1) mos << "!!! WARNING: You did not provide a synapse parameter named Epre. Presynaptic threshold potential is set to 0" << endl;
+		}
+	}
 	float Vslope;
 	if (model.synapseType[i] == NGRADSYNAPSE) {
 	    Vslope = model.synapsePara[i][3];
