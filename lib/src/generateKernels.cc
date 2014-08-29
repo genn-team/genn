@@ -700,7 +700,6 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 		os << "if ("<< localID <<" < npost)" << OB(140);
 		os << "ipost = d_gp" << model.synapseName[i] << "_ind[d_gp";
 		os << model.synapseName[i] << "_indInG[shSpkEvnt[j]] + "<< localID <<"];" << ENDL;
-		os << "// type is " << model.synapseType[i] << ENDL;
 		
 
 		if (model.synapseType[i] < MAXSYN){
@@ -726,7 +725,6 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 		    theLG = toString("shLg[" + localID + "]");
 		    unsigned int synt = model.synapseType[i]-MAXSYN;
 		    string code = weightUpdateModels[synt].simCodeEvnt;
-		    os << "// type is " << synt << endl;
 		    for (int k = 0, l = weightUpdateModels[synt].varNames.size(); k < l; k++) {
 			// os << "linSyn=d_inSyn" << model.neuronName[trg] << inSynNo << "[ipost];";
 			substitute(code, tS("$(") + weightUpdateModels[synt].varNames[k] + tS(")"), tS("d_")+weightUpdateModels[synt].varNames[k]+model.synapseName[i]+ tS("[d_gp")+ model.synapseName[i] + tS("_indInG[shSpkEvnt[j]] + ") + localID +tS("]"));
@@ -777,7 +775,7 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 		    theLG = toString("lg");
 		}
 		if (model.synapseType[i] < MAXSYN) {
-		    if (model.synapseGType[i] == INDIVIDUALG) os << "lg = d_gp" << model.synapseName[i] << "[shSpkEvnt[j]*" << model.neuronN[trg] << " + " << localID << "];";		
+		    if (model.synapseGType[i] == INDIVIDUALG) os << "lg = d_gp" << model.synapseName[i] << "[shSpkEvnt[j]*" << model.neuronN[trg] << " + " << localID << "];" << ENDL;		
 		}
 		else{
 		    unsigned int synt = model.synapseType[i]-MAXSYN;
@@ -968,7 +966,7 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 	    }
 	    else {
 		if (model.synapseGType[i] == INDIVIDUALG){
-		    os << "lg = d_gp" << model.synapseName[i] << "[shSpk[j]*" << model.neuronN[trg] << " + " << localID << "];";
+		    os << "lg = d_gp" << model.synapseName[i] << "[shSpk[j]*" << model.neuronN[trg] << " + " << localID << "];" << ENDL;
 		    theLG = toString("lg");
 		}
 	    }
@@ -1066,8 +1064,8 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 		substitute(code, tS("$(preSpike)"), preSpike);
 		substitute(code, tS("$(preSpikeV)"), preSpikeV);
 		string sTpost = tS("d_sT")+ model.neuronName[trg] + tS("[") + localID +tS("]");
-		substitute(code, tS("$(sTpre)"),sTpost);
-		string sTpre = tS("d_sT")+ model.neuronName[src] + tS("[") + localID +tS("]");
+		string sTpre = tS("d_sT")+ model.neuronName[src] + tS("[") + localID +tS("]");		
+		substitute(code, tS("$(sTpre)"),sTpre);
 		substitute(code, tS("$(sTpost)"),sTpost);
 		os << code;
 	  
@@ -1307,8 +1305,8 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 
 			os << code;
 	  
-	  		if (model.usesPostLearning[i]==TRUE){ //!TODO check if thisis correct. setting back the g valiue if learning 
-	    		if (model.synapseGType[i] == INDIVIDUALG){
+	  		if (model.usesPostLearning[k]==TRUE){ //!TODO check if thisis correct. setting back the g valiue if learning 
+	    		if (model.synapseGType[k] == INDIVIDUALG){
 		    		os << "d_gp" << model.synapseName[i] << "[shSpk[j]*" << model.neuronN[trg] << " + " << localID << "] =" << theLG << ";" ;
 				}
 	  		}		    	
