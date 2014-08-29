@@ -104,6 +104,7 @@ void NNmodel::initDerivedPostSynapsePara(unsigned int i)
   dpsp.push_back(tmpP);
 }
 
+
 //--------------------------------------------------------------------------
 /*! \brief This function calculates derived synapse parameters from primary synapse parameters. 
 
@@ -167,7 +168,7 @@ void NNmodel::initDerivedSynapsePara(unsigned int i /**< index of the synapse po
   }
   }
   else{
-  nSpkEvntThreshold[synapseSource[i]]= 10000;
+  if (nSpkEvntThreshold[synapseSource[i]]>10000) nSpkEvntThreshold[synapseSource[i]]= 10000;
   }
   // padnN is the lowest multiple of synapseBlkSz >= neuronN[synapseTarget[i]]
   unsigned int padnN = ceil((float) neuronN[synapseTarget[i]] / (float) synapseBlkSz) * (float) synapseBlkSz;
