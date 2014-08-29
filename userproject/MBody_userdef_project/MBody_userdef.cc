@@ -267,14 +267,15 @@ void modelDefinition(NNmodel &model)
   	 	$(inSyn) += $(G); //try to see if it works\n \
   	 	$(G) = $(gRaw); \n \
 			float dt = $(sTpost) - t - $(tauShift); \n \
+			float dg = 0;\n \
 			if (dt > $(lim0))  \n \
-			dt = - $(off0) ; \n \
+			dg = - $(off0) ; \n \
 			else if (dt > 0.0)  \n \
-      dt = $(slope0) * dt + $(off1); \n \
+      dg = $(slope0) * dt + $(off1); \n \
       else if (dt > $(lim1))  \n \
-			dt = $(slope1) * dt + $(off1); \n \
-			else dt = - $(off2) ; \n \
-			$(G) = $(G) + dt; \n \
+			dg = $(slope1) * dt + $(off1); \n \
+			else dg = - $(off2) ; \n \
+			$(G) = $(G) + dg; \n \
 			$(gRaw) = $(G); \n \
       $(G)=$(gMax)/2.0 *(tanh($(gSlope)*($(G) - $(gMid)))+1.0); \n \
   ");     
@@ -308,14 +309,15 @@ float myKCDN_p_userdef[11]= {
   learn1synapse.simLearnPost = tS(" \
   	 	$(G) = $(gRaw); \n \
 			float dt = t - ($(sTpre)) - ($(tauShift)); \n \
+			float dg =0; \n \
 			if (dt > $(lim0))  \n \
-			dt = - $(off0) ; \n \
+			dg = - $(off0) ; \n \
 			else if (dt > 0.0)  \n \
-      dt = $(slope0) * dt + $(off1); \n \
+      dg = $(slope0) * dt + $(off1); \n \
       else if (dt > $(lim1))  \n \
-			dt = $(slope1) * dt + $(off1); \n \
-			else dt = - $(off2) ; \n \
-			$(G) = $(G) + dt; \n \
+			dg = $(slope1) * dt + $(off1); \n \
+			else dg = - $(off2) ; \n \
+			$(G) = $(G) + dg; \n \
 			$(gRaw) = $(G); \n \
       $(G)=$(gMax)/2.0 *(tanh($(gSlope)*($(G) - $(gMid)))+1.0); \n \
   ");     
