@@ -96,7 +96,7 @@ int main(int argc, char *argv[])
   cmd += toString(pnkc_gsyn) + " ";
   cmd += toString(pnkc_gsyn_sigma) + " ";
   cmd += outdir + "/" + toString(argv[7]) + ".pnkc";
-  cmd += " &> " + outdir + "/" + toString(argv[7]) + ".pnkc.msg";
+  cmd += " 1> " + outdir + "/" + toString(argv[7]) + ".pnkc.msg 2>&1";
   system(cmd.c_str()); 
 
   // generate kcdn synapses
@@ -107,7 +107,7 @@ int main(int argc, char *argv[])
   cmd += toString(kcdn_gsyn_sigma) + " ";
   cmd += toString(kcdn_gsyn_sigma) + " ";
   cmd += outdir + "/" + toString(argv[7]) + ".kcdn";
-  cmd += " &> " + outdir + "/" + toString(argv[7]) + ".kcdn.msg";
+  cmd += " 1> " + outdir + "/" + toString(argv[7]) + ".kcdn.msg 2>&1";
   system(cmd.c_str());
 
   // generate pnlhi synapses
@@ -116,7 +116,7 @@ int main(int argc, char *argv[])
   cmd += toString(nLHI) + " ";
   cmd += toString(pnlhi_theta) + " 15 ";
   cmd += outdir + "/" + toString(argv[7]) + ".pnlhi";
-  cmd += " &> " + outdir + "/" + toString(argv[7]) + ".pnlhi.msg";
+  cmd += " 1> " + outdir + "/" + toString(argv[7]) + ".pnlhi.msg 2>&1";
   system(cmd.c_str());
 
   // generate input patterns
@@ -124,9 +124,10 @@ int main(int argc, char *argv[])
   cmd += toString(nAL) + " ";
   cmd += "10 10 0.1 0.1 32768 17 ";
   cmd += outdir + "/" + toString(argv[7]) + ".inpat";
-  cmd += " &> " + outdir + "/" + toString(argv[7]) + ".inpat.msg";
+  cmd += " 1> " + outdir + "/" + toString(argv[7]) + ".inpat.msg 2>&1";
   system(cmd.c_str());
 
+  // write neuron population sizes
   string fname = gennPath + "/userproject/include/sizes.h";
   ofstream os(fname.c_str());
   os << "#define _NAL " << nAL << endl;
@@ -138,19 +139,15 @@ int main(int argc, char *argv[])
   // build it
 #ifdef _WIN32
   cmd = "cd model && buildmodel.bat " + modelName + " " + toString(dbgMode);
+  cmd += " && nmake /nologo /f WINmakefile clean && nmake /nologo /f WINmakefile";
   if (dbgMode == 1) {
-    cmd += " && nmake /f WINmakefile clean && nmake /f WINmakefile debug";
-  }
-  else {
-    cmd += " && nmake /f WINmakefile clean && nmake /f WINmakefile";
+    cmd += " DEBUG=1";
   }
 #else // UNIX
   cmd = "cd model && buildmodel.sh " + modelName + " " + toString(dbgMode);
+  cmd += " && make clean && make";
   if (dbgMode == 1) {
-    cmd += " && make clean && make debug";
-  }
-  else {
-    cmd += " && make clean && make";
+    cmd += " debug";
   }
 #endif
   system(cmd.c_str());
@@ -159,11 +156,10 @@ int main(int argc, char *argv[])
   cout << "running test..." << endl;
 #ifdef _WIN32
   if (dbgMode == 1) {
-    cerr << "Debugging mode is not yet supported on Windows." << endl;
-    exit(1);
+    cmd = "devenv /debugexe model\\classol_sim.exe " + toString(argv[7]) + " " + toString(which);
   }
   else {
-    cmd = "model/classol_sim.exe " + toString(argv[7]) + " " + toString(which);
+    cmd = "model\\classol_sim.exe " + toString(argv[7]) + " " + toString(which);
   }
 #else // UNIX
   if (dbgMode == 1) {

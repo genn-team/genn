@@ -96,7 +96,7 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
   if (optimiseBlockSize) { // IF OPTIMISATION IS ON: Choose the device which supports the highest warp occupancy.
     mos << "optimizing block size..." << endl;
 
-    char buffer[256];
+    char buffer[1024];
     stringstream command, ptxInfo;
     string junk;
     int reqRegs, reqSmem, requiredBlocks, ptxInfoFound = 0;
@@ -155,10 +155,16 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
       // Run NVCC and pipe output to this process.
       mos << "dry-run compile for device " << device << endl;
       command.str("");
-      command << NVCC << " -x cu -cubin -Xptxas=-v -arch=sm_" << deviceProp[device].major;
-      command << deviceProp[device].minor << " -DDT -D\"CHECK_CUDA_ERRORS(call){call;}\" ";
+#ifdef _WIN32
+      command << "\"";
+#endif
+      command << "\"" << NVCC << "\" -x cu -cubin -Xptxas=-v -DDT -arch=sm_";
+      command << deviceProp[device].major << deviceProp[device].minor << " ";
       command << path << "/" << model->name << "_CODE/runner.cc 2>&1";
-      //mos << command.str() << endl;
+#ifdef _WIN32
+      command << "\"";
+#endif
+      mos << command.str() << endl;
 
 #ifdef _WIN32
       FILE *nvccPipe = _popen(command.str().c_str(), "r");
@@ -192,17 +198,15 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
 	maxBlocksPerSM = 16;
       }
       else {
-	cerr << "Error: unsupported CUDA device major version: " << deviceProp[device].major << endl;
+	mos << "Error: unsupported CUDA device major version: " << deviceProp[device].major << endl;
 	exit(EXIT_FAILURE);
       }
 
       // Read pipe until reg / smem usage is found, then calculate optimum block size for each kernel.
       int kernel= 0;
-      while (fgets(buffer, 256, nvccPipe) != NULL) {
-	if (strstr(buffer, "error:") != NULL) {
-	  cout << buffer;
-	}
-	else if (strstr(buffer, "calcSynapses") != NULL) {
+      while (fgets(buffer, 1024, nvccPipe) != NULL) {
+	mos << buffer;
+	if (strstr(buffer, "calcSynapses") != NULL) {
 	  kernel= 0;
 	}
 	else if (strstr(buffer, "learnSynapses") != NULL) {
@@ -211,19 +215,27 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
 	else if (strstr(buffer, "calcNeurons") != NULL) {
 	  kernel= 2;
 	}
+
+#ifdef _WIN32
+	if (strncmp(buffer, "ptxas : info : Used", 19) == 0) {
+#else // UNIX
 	if (strncmp(buffer, "ptxas info    : Used", 20) == 0) {
+#endif
 	  ptxInfoFound = 1;
 	  ptxInfo.str("");
 	  ptxInfo << buffer;
+#ifdef _WIN32
+	  ptxInfo >> junk >> junk >> junk >> junk >> junk >> reqRegs >> junk >> reqSmem;
+#else // UNIX
 	  ptxInfo >> junk >> junk >> junk >> junk >> reqRegs >> junk >> reqSmem;
+#endif
 	  mos << "kernel: " << kernelName[kernel] << ", regs needed: " << reqRegs << ", smem needed: " << reqSmem << endl;
 
 	  // Test all block sizes (in warps) up to [max warps per block].
-	  for (int blkSz = 1, mx= deviceProp[device].maxThreadsPerBlock / warpSize; 
-	       blkSz <= mx; blkSz++) {
+	  for (int blkSz = 1, mx= deviceProp[device].maxThreadsPerBlock / warpSize; blkSz <= mx; blkSz++) {
 
 #ifdef BLOCKSZ_DEBUG
-	    cerr << "Candidate block size: " << blkSz*warpSize << endl;
+	    cerr << "Candidate block size: " << blkSz * warpSize << endl;
 #endif
 	    // BLOCK LIMIT DUE TO THREADS
 	    blockLimit = floor((float) deviceProp[device].maxThreadsPerMultiProcessor/warpSize/blkSz);
@@ -392,7 +404,13 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
   }
 
   ofstream sm_os((path + "/sm_version.mk").c_str());
-  sm_os << "NVCCFLAGS +=-arch sm_" << deviceProp[chosenDevice].major << deviceProp[chosenDevice].minor << endl;
+#ifdef _WIN32
+  sm_os << "NVCCFLAGS =$(NVCCFLAGS) -arch sm_";
+#else // UNIX
+  sm_os << "NVCCFLAGS += -arch sm_";
+#endif
+  sm_os << deviceProp[chosenDevice].major << deviceProp[chosenDevice].minor << endl;
+
   sm_os.close();
 
   mos << "synapse block size: " << synapseBlkSz << endl;
