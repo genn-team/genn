@@ -99,7 +99,7 @@ classol::~classol()
 {
   free(pattern);
   free(baserates);
-  freeMem;
+  freeMem();
 }
 
 

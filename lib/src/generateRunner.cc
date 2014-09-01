@@ -44,7 +44,7 @@ void genRunner(NNmodel &model, //!< Model description
   float memremsparse= 0;
   int trgN;
   ofstream os;
-  cerr << "entering genRunner" << endl;
+  //cerr << "entering genRunner" << endl;
   name= path + toString("/") + model.name + toString("_CODE/runner.cc");
   os.open(name.c_str());  
   writeHeader(os);
@@ -56,6 +56,23 @@ void genRunner(NNmodel &model, //!< Model description
   os << "\\brief File generated from GeNN for the model " << model.name << " containing general control code used for both GPU amd CPU versions." << endl;
   os << "*/" << endl;
   os << "//-------------------------------------------------------------------------" << endl << endl;
+
+  os << "#include <cstdio>" << endl << endl;
+
+  // write CUDA error handler macro
+  os << "/*" << endl;
+  os << "  CUDA error handling macro" << endl;
+  os << "  -------------------------" << endl;
+  os << "*/" << endl;
+  os << "#ifndef CHECK_CUDA_ERRORS" << endl;
+  os << "#define CHECK_CUDA_ERRORS(call) {\\" << endl;
+  os << "  cudaError_t error = call;\\" << endl;
+  os << "  if (error != cudaSuccess) {\\" << endl;
+  os << "    fprintf(stderr, \"%s: %i: cuda error %i: %s\\n\", __FILE__, __LINE__, (int) error, cudaGetErrorString(error));\\" << endl;
+  os << "    exit(EXIT_FAILURE);\\" << endl;
+  os << "  }\\" << endl;
+  os << "}" << endl;
+  os << "#endif" << endl << endl;
 
   // global host variables (matching some of the device ones)  
   for (int i= 0; i < model.neuronGrpN; i++) {
@@ -166,7 +183,7 @@ void genRunner(NNmodel &model, //!< Model description
   //os << "  " << model.ftype << " free_m,total_m;" << endl;
   //os << "  cudaMemGetInfo((size_t*)&free_m,(size_t*)&total_m);" << endl; //
   os << "  CHECK_CUDA_ERRORS(cudaSetDevice(" << theDev << "));" << endl;
-  cerr << "model.neuronGroupN " << model.neuronGrpN << endl;
+  //cerr << "model.neuronGroupN " << model.neuronGrpN << endl;
   os << "  size_t size;" << endl;
   for (int i= 0; i < model.neuronGrpN; i++) {
     nt = model.neuronType[i];
@@ -642,7 +659,7 @@ void genRunnerGPU(NNmodel &model, //!< Model description
   unsigned int nt;
   ofstream os;
 
-  cerr << "entering GenRunnerGPU" << endl;
+  //cerr << "entering GenRunnerGPU" << endl;
   name= path + toString("/") + model.name + toString("_CODE/runnerGPU.cc");
   os.open(name.c_str());
 
@@ -842,7 +859,7 @@ void genRunnerGPU(NNmodel &model, //!< Model description
       os << "  CHECK_CUDA_ERRORS(cudaMemcpy(devPtr, " << "sT" << model.neuronName[i] << ", ";
       size = model.neuronN[i] * theSize(model.ftype);
       os << size << ", cudaMemcpyHostToDevice));" << endl;
-      cerr << "model.receivesInputCurrent[i]: " << model.receivesInputCurrent[i] << endl;
+      //cerr << "model.receivesInputCurrent[i]: " << model.receivesInputCurrent[i] << endl;
     }
   }
   
@@ -1039,7 +1056,7 @@ void genRunnerGPU(NNmodel &model, //!< Model description
   if (model.synapseGrpN > 0) { 
     unsigned int synapseGridSz = model.padSumSynapseKrnl[model.synapseGrpN - 1];   
 		os << "//model.padSumSynapseTrgN[model.synapseGrpN - 1] is " << model.padSumSynapseKrnl[model.synapseGrpN - 1] << endl; 
-		synapseGridSz = synapseGridSz / synapseBlkSz;
+		synapseGridSz = synapseGridSz / synapseBlkSz; // integer divide by zero HERE <<<<<<<<<<<<<<<<<<<
     os << "  dim3 sThreads(" << synapseBlkSz << ", 1);" << endl;
     os << "  dim3 sGrid(" << synapseGridSz << ", 1);" << endl;
 

@@ -32,6 +32,11 @@ LINK_FLAGS	="$(CUDA_PATH)\lib\Win32\cudart.lib"
 # An auto-generated file containing your cuda device's compute capability.
 !INCLUDE sm_version.mk
 
+# Infer object file names from source file names.
+OBJECTS		=$(SOURCES:.cc=.obj)
+OBJECTS		=$(OBJECTS:.cpp=.obj)
+OBJECTS		=$(OBJECTS:.cu=.obj)
+
 # Target rules.
 .SUFFIXES: .cu
 
@@ -44,7 +49,7 @@ all: $(EXECUTABLE)
 	$(CXX) $(CXXFLAGS) $(INCLUDE_FLAGS) $< /Fo$@ /c
 
 .cu.obj:
-	$(NVCC) $(NVCCFLAGS) $(INCLUDE_FLAGS) $(GENCODE_FLAGS) $< /Fo$@ /c
+	$(NVCC) $(NVCCFLAGS) $(INCLUDE_FLAGS:/I=-I) $(GENCODE_FLAGS) $< /Fo$@ -c
 
 $(EXECUTABLE): $(OBJECTS)
 	$(CXX) $(CXXFLAGS) $(LINK_FLAGS) $(OBJECTS) /Fe$@

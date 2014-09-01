@@ -20,6 +20,9 @@
 NVCC		=$(CUDA_PATH)\bin\nvcc.exe
 NVCCFLAGS	=$(NVCCFLAGS)
 CXXFLAGS	=$(CXXFLAGS) /nologo /EHsc /DNVCC="\"$(NVCC:\=/)\""
+!IFDEF DEBUG
+CXXFLAGS	=$(CXXFLAGS) /Zi
+!ENDIF
 
 # Global include flags and link flags.
 INCLUDE_FLAGS	=/I"$(CUDA_PATH)\include" /I"$(GENNPATH)\lib\include"
@@ -47,5 +50,4 @@ $(OBJDIR):
 	mkdir $(OBJDIR)
 
 clean:
-	rd /s /q $(OBJDIR) 2>nul
-	del $(BINDIR)\generateALL.exe 2>nul
+	del $(OBJDIR)\*.obj $(BINDIR)\generateALL.exe 2>nul
