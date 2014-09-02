@@ -25,7 +25,7 @@ CXXFLAGS	=$(CXXFLAGS) /Zi
 !ENDIF
 
 # Global include flags and link flags.
-INCLUDE_FLAGS	=/I"$(CUDA_PATH)\include" /I"$(GENNPATH)\lib\include"
+INCLUDE_FLAGS	=/I"$(CUDA_PATH)\include" /I"$(GENN_PATH)\lib\include"
 !IF "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
 LINK_FLAGS	="$(CUDA_PATH)\lib\x64\cudart.lib"
 !ELSE

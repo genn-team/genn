@@ -14,4 +14,4 @@
 EXECUTABLE	=Izh_sim_sparse.exe
 SOURCES		=Izh_sim_sparse.cu
 
-!include $(GENNPATH)\userproject\include\makefile_common_win.mk
+!include $(GENN_PATH)\userproject\include\makefile_common_win.mk

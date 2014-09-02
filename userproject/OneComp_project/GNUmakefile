@@ -13,7 +13,11 @@
 
 CXXFLAGS	=-Wall -Winline -O3 -g
 
-all: generate_run
+all: generate_run tools
 
 clean:
 	$(RM) generate_run
+	cd ../tools && make clean
+
+tools:
+	cd ../tools && make

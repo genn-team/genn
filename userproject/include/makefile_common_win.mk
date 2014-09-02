@@ -22,7 +22,7 @@ NVCCFLAGS	=$(NVCCFLAGS)
 CXXFLAGS	=$(CXXFLAGS) /nologo /EHsc
 
 # Global include flags and link flags.
-INCLUDE_FLAGS	=/I"$(CUDA_PATH)\include" /I"$(GENNPATH)\lib\include" /I"$(GENNPATH)\userproject\include"
+INCLUDE_FLAGS	=/I"$(CUDA_PATH)\include" /I"$(GENN_PATH)\lib\include" /I"$(GENN_PATH)\userproject\include"
 !IF "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
 LINK_FLAGS	="$(CUDA_PATH)\lib\x64\cudart.lib"
 !ELSE

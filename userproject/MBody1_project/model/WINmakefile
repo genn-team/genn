@@ -14,4 +14,4 @@
 EXECUTABLE	=classol_sim.exe
 SOURCES		=classol_sim.cu
 
-!include $(GENNPATH)\userproject\include\makefile_common_win.mk
+!include $(GENN_PATH)\userproject\include\makefile_common_win.mk
