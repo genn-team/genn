@@ -25,12 +25,12 @@ generation for Nvidia CUDA.
     systems. if not, correct this using:
       SETX CUDA_PATH "[drive]\Program Files\NVIDIA GPU Computing Toolkit\CUDA\[version]"
 
-(3) Define the environment variable "GENNPATH" to point to the directory
+(3) Define the environment variable "GENN_PATH" to point to the directory
     in which GeNN was located. For example, use:
-      SETX GENNPATH "\path\to\genn\"
+      SETX GENN_PATH "\path\to\genn\"
 
-(4) Add "%GENNPATH%\lib\bin" to your %PATH% variable. For example, use:
-      SETX PATH "%GENNPATH%\lib\bin;%PATH%"
+(4) Add "%GENN_PATH%\lib\bin" to your %PATH% variable. For example, use:
+      SETX PATH "%GENN_PATH%\lib\bin;%PATH%"
 
 This completes the installation.
 
@@ -58,15 +58,15 @@ NOTE:
 (2) Set the environment variable "CUDA_PATH" to the location of your Nvidia
     CUDA toolkit installation. For example, if your CUDA toolkit was installed
     to "/usr/local/cuda", you can use:
-      echo "export CUDA_PATH=/usr/local/cuda" >> ~/.bashrc
+      echo "export CUDA_PATH=/usr/local/cuda" >> ~/.bash_profile
 
-(3) Set the environment variable "GENNPATH" to point to the extracted GeNN 
+(3) Set the environment variable "GENN_PATH" to point to the extracted GeNN 
     directory. For example, if you extracted GeNN to "/home/me/genn", then you
     can use:
-      echo "export GENNPATH=/home/me/genn" >> ~/.bashrc
+      echo "export GENN_PATH=/home/me/genn" >> ~/.bash_profile
 
-(4) Add "$GENNPATH/lib/bin" to your $PATH variable. For example, you can use:
-      echo "export PATH=$PATH:$GENNPATH/lib/bin" >> ~/.bashrc
+(4) Add "$GENN_PATH/lib/bin" to your $PATH variable. For example, you can use:
+      echo "export PATH=$PATH:$GENN_PATH/lib/bin" >> ~/.bash_profile
 
 This completes the installation.
 
@@ -86,7 +86,7 @@ At the moment, the following example projects are provided with GeNN:
 5: Izhikevich network with delayed synapses
 
 In order to get a quick start and run one of the the provided example models,
-navigate to one of the example project directories in $GENNPATH/userproject/,
+navigate to one of the example project directories in $GENN_PATH/userproject/,
 and then follow the instructions in the README file contained within.
 
 DEBUGGING:

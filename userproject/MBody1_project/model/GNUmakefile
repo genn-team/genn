@@ -14,4 +14,4 @@
 EXECUTABLE	:=classol_sim
 SOURCES		:=classol_sim.cu
 
-include	$(GENNPATH)/userproject/include/makefile_common_gnu.mk
+include	$(GENN_PATH)/userproject/include/makefile_common_gnu.mk

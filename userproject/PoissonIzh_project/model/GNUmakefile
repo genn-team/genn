@@ -14,4 +14,4 @@
 EXECUTABLE	:=PoissonIzh_sim
 SOURCES		:=PoissonIzh_sim.cu
 
-include	$(GENNPATH)/userproject/include/makefile_common_gnu.mk
+include	$(GENN_PATH)/userproject/include/makefile_common_gnu.mk

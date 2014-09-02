@@ -62,7 +62,7 @@ int main(int argc, char *argv[])
   }
 
   string cmd;
-  string gennPath = getenv("GENNPATH");
+  string gennPath = getenv("GENN_PATH");
   string outdir = toString(argv[7]) + "_output";  
   string modelName = argv[8];
   int dbgMode = atoi(argv[9]); // set this to 1 if you want to enable gdb and cuda-gdb debugging to 0 for release
@@ -80,6 +80,23 @@ int main(int argc, char *argv[])
   float kcdn_gsyn_sigma = 2500.0f / nMB * 0.06f * gscale / 0.9; 
   float pnlhi_theta = 200.0f / nAL * 7.0f * gscale / 0.9;
 
+  // build it
+#ifdef _WIN32
+  cmd = "cd model && buildmodel.bat " + modelName + " " + toString(dbgMode);
+  cmd += " && nmake /nologo /f WINmakefile clean && nmake /nologo /f WINmakefile";
+  if (dbgMode == 1) {
+    cmd += " DEBUG=1";
+  }
+#else // UNIX
+  cmd = "cd model && buildmodel.sh " + modelName + " " + toString(dbgMode);
+  cmd += " && make clean && make";
+  if (dbgMode == 1) {
+    cmd += " debug";
+  }
+#endif
+  system(cmd.c_str());
+
+  // create output directory
 #ifdef _WIN32
   _mkdir(outdir.c_str());
 #else // UNIX
@@ -135,22 +152,6 @@ int main(int argc, char *argv[])
   os << "#define _NLHI " << nLHI << endl;
   os << "#define _NLB " << nLB << endl;
   os.close();
-
-  // build it
-#ifdef _WIN32
-  cmd = "cd model && buildmodel.bat " + modelName + " " + toString(dbgMode);
-  cmd += " && nmake /nologo /f WINmakefile clean && nmake /nologo /f WINmakefile";
-  if (dbgMode == 1) {
-    cmd += " DEBUG=1";
-  }
-#else // UNIX
-  cmd = "cd model && buildmodel.sh " + modelName + " " + toString(dbgMode);
-  cmd += " && make clean && make";
-  if (dbgMode == 1) {
-    cmd += " debug";
-  }
-#endif
-  system(cmd.c_str());
 
   // run it!
   cout << "running test..." << endl;

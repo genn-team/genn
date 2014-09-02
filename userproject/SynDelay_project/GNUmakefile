@@ -14,4 +14,4 @@
 EXECUTABLE	:=syn_delay
 SOURCES		:=SynDelaySim.cu
 
-include	$(GENNPATH)/userproject/include/makefile_common_gnu.mk
+include	$(GENN_PATH)/userproject/include/makefile_common_gnu.mk
