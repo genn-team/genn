@@ -62,14 +62,31 @@ int main(int argc, char *argv[])
   }
 
   string cmd;
-  string gennPath = getenv("GENNPATH");
+  string gennPath = getenv("GENN_PATH");
   string outdir = toString(argv[3]) + "_output";  
   string modelName = argv[4];
   int dbgMode = atoi(argv[5]); // set this to 1 if you want to enable gdb and cuda-gdb debugging to 0 for release
 
   int which = atoi(argv[1]);
   int nC1 = atoi(argv[2]);
-  
+
+  // build it  
+#ifdef _WIN32
+  cmd = "cd model && buildmodel.bat " + modelName + " " + toString(dbgMode);
+  cmd += " && nmake /nologo /f WINmakefile clean && nmake /nologo /f WINmakefile";
+  if (dbgMode == 1) {
+    cmd += " DEBUG=1";
+  }
+#else // UNIX
+  cmd = "cd model && buildmodel.sh " + modelName + " " + toString(dbgMode);
+  cmd += " && make clean && make";
+  if (dbgMode == 1) {
+    cmd += " debug";
+  }
+#endif
+  system(cmd.c_str());
+
+  // create output directory
 #ifdef _WIN32
   _mkdir(outdir.c_str());
 #else // UNIX
@@ -78,40 +95,20 @@ int main(int argc, char *argv[])
   }
 #endif
   
+  // write neuron population sizes
   string fname = gennPath + "/userproject/include/sizes.h";
   ofstream os(fname.c_str());
   os << "#define _NC1 " << nC1 << endl;
   os.close();
 
-  // build it  
-#ifdef _WIN32
-  cmd = "cd model && buildmodel.bat " + modelName + " " + toString(dbgMode);
-  if (dbgMode == 1) {
-    cmd += " && nmake /f WINmakefile clean && nmake /f WINmakefile debug";
-  }
-  else {
-    cmd += " && nmake /f WINmakefile clean && nmake /f WINmakefile";
-  }
-#else // UNIX
-  cmd = "cd model && buildmodel.sh " + modelName + " " + toString(dbgMode);
-  if (dbgMode == 1) {
-    cmd += " && make clean && make debug";
-  }
-  else {
-    cmd += " && make clean && make";
-  }
-#endif
-  system(cmd.c_str());
-
   // run it!
   cout << "running test..." << endl;
 #ifdef _WIN32
   if (dbgMode == 1) {
-    cerr << "Debugging mode is not yet supported on Windows." << endl;
-    exit(1);
+    cmd = "devenv /debugexe model\\OneComp_sim.exe " + toString(argv[7]) + " " + toString(which);
   }
   else {
-    cmd = "model/OneComp_sim.exe " + toString(argv[3]) + " " + toString(which);
+    cmd = "model\\OneComp_sim.exe " + toString(argv[3]) + " " + toString(which);
   }
 #else // UNIX
   if (dbgMode == 1) {
