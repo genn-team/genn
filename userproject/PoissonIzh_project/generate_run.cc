@@ -1,4 +1,4 @@
-/*--------------------------------------------------------------------------
+x/*--------------------------------------------------------------------------
    Author: Thomas Nowotny
   
    Institute: Center for Computational Neuroscience and Robotics
@@ -62,7 +62,7 @@ int main(int argc, char *argv[])
   }
 
   string cmd;
-  string gennPath = getenv("GENNPATH");
+  string gennPath = getenv("GENN_PATH");
   string outdir = toString(argv[6]) + "_output";  
   string modelName = argv[7];
   int dbgMode = atoi(argv[8]); // set this to 1 if you want to enable gdb and cuda-gdb debugging to 0 for release
@@ -76,6 +76,23 @@ int main(int argc, char *argv[])
   float meangsyn = 100.0f / nPoisson * gscale;
   float gsyn_sigma = 100.0f / nPoisson * gscale / 15.0f; 
 
+  // build it
+#ifdef _WIN32
+  cmd = "cd model && buildmodel.bat " + modelName + " " + toString(dbgMode);
+  cmd += " && nmake /nologo /f WINmakefile clean && nmake /nologo /f WINmakefile";
+  if (dbgMode == 1) {
+    cmd += " DEBUG=1";
+  }
+#else // UNIX
+  cmd = "cd model && buildmodel.sh " + modelName + " " + toString(dbgMode);
+  cmd += " && make clean && make";
+  if (dbgMode == 1) {
+    cmd += " debug";
+  }
+#endif
+  system(cmd.c_str());
+
+  // create output directory
 #ifdef _WIN32
   _mkdir(outdir.c_str());
 #else // UNIX
@@ -93,7 +110,6 @@ int main(int argc, char *argv[])
   cmd += toString(gsyn_sigma) + " ";
   cmd += outdir + "/g" + toString(argv[8]);
   system(cmd.c_str());
-  cout << "connectivity generation script call was: " << cmd.c_str() << endl;
 
   // generate input patterns
   cmd = gennPath + "/userproject/tools/gen_input_structured ";
@@ -103,41 +119,21 @@ int main(int argc, char *argv[])
   cmd += " &> " + outdir + "/" + toString(argv[8]) + ".inpat.msg";
   system(cmd.c_str());
 
+  // write neuron population sizes
   string fname = gennPath + "/userproject/include/sizes.h";
   ofstream os(fname.c_str());
   os << "#define _NPoisson " << nPoisson << endl;
   os << "#define _NIzh " << nIzh << endl;
   os.close();
 
-  // build it
-#ifdef _WIN32
-  cmd = "cd model && buildmodel.bat " + modelName + " " + toString(dbgMode);
-  if (dbgMode == 1) {
-    cmd += " && nmake /f WINmakefile clean && nmake /f WINmakefile debug";
-  }
-  else {
-    cmd += " && nmake /f WINmakefile clean && nmake /f WINmakefile";
-  }
-#else // UNIX
-  cmd = "cd model && buildmodel.sh " + modelName + " " + toString(dbgMode);
-  if (dbgMode == 1) {
-    cmd += " && make clean && make debug";
-  }
-  else {
-    cmd += " && make clean && make";
-  }
-#endif
-  system(cmd.c_str());
-
   // run it!
   cout << "running test..." << endl;
 #ifdef _WIN32
   if (dbgMode == 1) {
-    cerr << "Debugging mode is not yet supported on Windows." << endl;
-    exit(1);
+    cmd = "devenv /debugexe model\\PoissonIzh_sim.exe " + toString(argv[7]) + " " + toString(which);
   }
   else {
-    cmd = "model/PoissonIzh_sim.exe " + toString(argv[6]) + " " + toString(which);
+    cmd = "model\\PoissonIzh_sim.exe " + toString(argv[6]) + " " + toString(which);
   }
 #else // UNIX
   if (dbgMode == 1) {

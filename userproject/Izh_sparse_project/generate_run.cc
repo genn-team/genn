@@ -79,7 +79,7 @@ int main(int argc, char *argv[])
   }
 
   string cmd;
-  string gennPath= getenv("GENNPATH");
+  string gennPath= getenv("GENN_PATH");
   string outName = toString(argv[5]);
   string outDir = outName + "_output";  
   string outDir_g = "inputfiles";  
@@ -96,7 +96,24 @@ int main(int argc, char *argv[])
   
   float meangExc = 0.5 * gscale;
   float meangInh = -1.0 * gscale;
-    
+
+  // build it
+#ifdef _WIN32
+  cmd = "cd model && buildmodel.bat " + modelName + " " + toString(dbgMode);
+  cmd += " && nmake /nologo /f WINmakefile clean && nmake /nologo /f WINmakefile";
+  if (dbgMode == 1) {
+    cmd += " DEBUG=1";
+  }
+#else // UNIX
+  cmd = "cd model && buildmodel.sh " + modelName + " " + toString(dbgMode);
+  cmd += " && make clean && make";
+  if (dbgMode == 1) {
+    cmd += " debug";
+  }
+#endif
+  system(cmd.c_str());
+
+  // create output directories
 #ifdef _WIN32
   _mkdir(outDir.c_str());
   _mkdir(outDir_g.c_str());
@@ -118,7 +135,6 @@ int main(int argc, char *argv[])
     cmd += toString(meangInh) + " ";
     cmd += "inputfiles/g" + modelName;
     system(cmd.c_str());
-    cout << "connectivity generation script call was:" << cmd.c_str() << endl;
   }
 
   //read connectivity patterns to get maximum connection per neuron for each synapse population
@@ -139,7 +155,8 @@ int main(int argc, char *argv[])
 
   delete [] gIndInG;
   ////////////////////////////////
-  
+
+  // write neuron population sizes
   string fname = gennPath + "/userproject/include/sizes.h";
   ofstream os(fname.c_str());
   os << "#define _NExc " << nExc << endl;
@@ -150,35 +167,14 @@ int main(int argc, char *argv[])
   os << "#define _NMaxConnP3 " << maxN3 << endl;
   os.close();
   
-  // build it
-#ifdef _WIN32
-  cmd = "cd model && buildmodel.bat " + modelName + " " + toString(dbgMode);
-  if (dbgMode == 1) {
-    cmd += " && nmake /f WINmakefile clean && nmake /f WINmakefile debug";
-  }
-  else {
-    cmd += " && nmake /f WINmakefile clean && nmake /f WINmakefile";
-  }
-#else // UNIX
-  cmd = "cd model && buildmodel.sh " + modelName + " " + toString(dbgMode);
-  if (dbgMode == 1) {
-    cmd += " && make clean && make debug";
-  }
-  else {
-    cmd += " && make clean && make";
-  }
-#endif
-  system(cmd.c_str());
-
   // run it!
   cout << "running test..." << endl;
 #ifdef _WIN32
   if (dbgMode == 1) {
-    cerr << "Debugging mode is not yet supported on Windows." << endl;
-    exit(1);
+    cmd = "devenv /debugexe model\\Izh_sim_sparse.exe " + toString(argv[7]) + " " + toString(which);
   }
   else {
-    cmd = "model/Izh_sim_sparse.exe " + toString(argv[5]) + " " + toString(which);
+    cmd = "model\\Izh_sim_sparse.exe " + toString(argv[5]) + " " + toString(which);
   }
 #else // UNIX
   if (dbgMode == 1) {
