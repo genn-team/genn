@@ -8,8 +8,8 @@
 
 using namespace std;
 
-#include "utils.h"
 #include "hr_time.cpp"
+#include "utils.h"
 
 #include "SynDelaySim.h"
 #include "SynDelay_CODE/runner.cc"

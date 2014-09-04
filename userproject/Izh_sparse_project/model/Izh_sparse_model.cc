@@ -30,55 +30,51 @@ classIzh::classIzh()
   initialize();
   sumPExc = 0;
   sumPInh = 0;
-
-
 }
 
 void classIzh::randomizeVar(float * Var, float strength, unsigned int neuronGrp)
 {
-	//kernel if gpu?
-  
+  //kernel if gpu?
   for (int j=0; j< model.neuronN[neuronGrp]; j++){
-      	Var[j]=Var[j]+strength*R.n();
-  	}
+    Var[j]=Var[j]+strength*R.n();
+  }
 }
 
 void classIzh::randomizeVarSq(float * Var, float strength, unsigned int neuronGrp)
 {
-	//kernel if gpu?
+  //kernel if gpu?
   //randomGen R;
   float randNbr;
   for (int j=0; j< model.neuronN[neuronGrp]; j++){
-  	      randNbr=R.n();
-      	Var[j]=Var[j]+strength*randNbr*randNbr;
-  	}
+    randNbr=R.n();
+    Var[j]=Var[j]+strength*randNbr*randNbr;
+  }
 }
 
 
 void classIzh::initializeAllVars(unsigned int which)
 {
-	randomizeVar(aPInh,0.08,1);	
-	randomizeVar(bPInh,-0.05,1);
-	randomizeVarSq(cPExc,15.0,0);
-	randomizeVarSq(dPExc,-6.0,0);
-	
-	
-	for (int j=0; j< model.neuronN[1]; j++){
-		UPExc[j]=bPExc[j]*VPExc[j];
-		UPInh[j]=bPInh[j]*VPInh[j];	
-	}
-	for (int j=model.neuronN[1]; j< model.neuronN[0]; j++){
-		UPExc[j]=bPExc[j]*VPExc[j];
-	}
-	
-  	if (which == GPU) {
-		CHECK_CUDA_ERRORS(cudaMemcpy(d_aPInh, aPInh, sizeof(float)*model.neuronN[1], cudaMemcpyHostToDevice));
-		CHECK_CUDA_ERRORS(cudaMemcpy(d_bPInh, bPInh, sizeof(float)*model.neuronN[1], cudaMemcpyHostToDevice));
-		CHECK_CUDA_ERRORS(cudaMemcpy(d_cPExc, cPExc, sizeof(float)*model.neuronN[0], cudaMemcpyHostToDevice));
-		CHECK_CUDA_ERRORS(cudaMemcpy(d_dPExc, dPExc, sizeof(float)*model.neuronN[0], cudaMemcpyHostToDevice));
-		CHECK_CUDA_ERRORS(cudaMemcpy(d_UPExc, UPExc, sizeof(float)*model.neuronN[0], cudaMemcpyHostToDevice));
-		CHECK_CUDA_ERRORS(cudaMemcpy(d_UPInh, UPInh, sizeof(float)*model.neuronN[1], cudaMemcpyHostToDevice));
-  	}
+  randomizeVar(aPInh,0.08,1);	
+  randomizeVar(bPInh,-0.05,1);
+  randomizeVarSq(cPExc,15.0,0);
+  randomizeVarSq(dPExc,-6.0,0);	
+
+  for (int j=0; j< model.neuronN[1]; j++){
+    UPExc[j]=bPExc[j]*VPExc[j];
+    UPInh[j]=bPInh[j]*VPInh[j];	
+  }
+  for (int j=model.neuronN[1]; j< model.neuronN[0]; j++){
+    UPExc[j]=bPExc[j]*VPExc[j];
+  }
+
+  if (which == GPU) {
+    CHECK_CUDA_ERRORS(cudaMemcpy(d_aPInh, aPInh, sizeof(float)*model.neuronN[1], cudaMemcpyHostToDevice));
+    CHECK_CUDA_ERRORS(cudaMemcpy(d_bPInh, bPInh, sizeof(float)*model.neuronN[1], cudaMemcpyHostToDevice));
+    CHECK_CUDA_ERRORS(cudaMemcpy(d_cPExc, cPExc, sizeof(float)*model.neuronN[0], cudaMemcpyHostToDevice));
+    CHECK_CUDA_ERRORS(cudaMemcpy(d_dPExc, dPExc, sizeof(float)*model.neuronN[0], cudaMemcpyHostToDevice));
+    CHECK_CUDA_ERRORS(cudaMemcpy(d_UPExc, UPExc, sizeof(float)*model.neuronN[0], cudaMemcpyHostToDevice));
+    CHECK_CUDA_ERRORS(cudaMemcpy(d_UPInh, UPInh, sizeof(float)*model.neuronN[1], cudaMemcpyHostToDevice));
+  }
 }
 	
 void classIzh::init(unsigned int which)
@@ -102,11 +98,13 @@ void classIzh::allocate_device_mem_input()
   size= model.neuronN[1]*sizeof(float);
   CHECK_CUDA_ERRORS(cudaMalloc((void**) &d_input2, size));
 }
+
 void classIzh::copy_device_mem_input()
 {
   CHECK_CUDA_ERRORS(cudaMemcpy(d_input1,input1, model.neuronN[0]*sizeof(float), cudaMemcpyHostToDevice));
   CHECK_CUDA_ERRORS(cudaMemcpy(d_input2,input2, model.neuronN[1]*sizeof(float), cudaMemcpyHostToDevice));
 }
+
 void classIzh::free_device_mem()
 {
   // clean up memory                          
@@ -115,13 +113,11 @@ void classIzh::free_device_mem()
   CHECK_CUDA_ERRORS(cudaFree(d_input2));
 }
 
-
-
 classIzh::~classIzh()
 {
   free(input1);
   free(input2);
-	freeMem();
+  freeMem();
 }
 
 // Functions related to explicit input

@@ -59,7 +59,7 @@ void classol::free_device_mem()
 classol::~classol()
 {
   free(input1);
-	freeMem;
+  freeMem();
 }
 
 

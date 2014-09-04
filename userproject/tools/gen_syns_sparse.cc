@@ -1,7 +1,7 @@
 //--------------------------------------------------------------------------
 /*! \file gen_syns_sparse.cc
 
-\brief This file generates the arrays needed for sparse connectivity. The connectivity is saved to a file for each variable and can then be read to fill the struct of connectivity.
+  \brief This file generates the arrays needed for sparse connectivity. The connectivity is saved to a file for each variable and can then be read to fill the struct of connectivity.
 */ 
 //--------------------------------------------------------------------------
 //gdb -tui --args ./gen_syns_sparse 10 10 0.5 0.001 0.0001 include/g
@@ -23,13 +23,13 @@ randomGauss RG;
 int main(int argc, char *argv[])
 {
   if (argc != 7)
-  {
-    cerr << "usage: gen_syns_sparse <n1> <n2> ";
-    cerr << "<prob. of connection> ";
-    cerr << "<mean strength> ";
-    cerr << "<strength jitter> <outfile>" << endl;
-    exit(1);
-  }
+    {
+      cerr << "usage: gen_syns_sparse <n1> <n2> ";
+      cerr << "<prob. of connection> ";
+      cerr << "<mean strength> ";
+      cerr << "<strength jitter> <outfile>" << endl;
+      exit(1);
+    }
   
   int n1= atoi(argv[1]);
   int n2= atoi(argv[2]);
@@ -72,22 +72,22 @@ int main(int argc, char *argv[])
   int maxInColI;
   postIndInG.push_back(0);  
   for (int i= 0; i < n1; i++) {
-  	 maxInColI=0;
+    maxInColI=0;
     for (int j= 0; j < n2; j++) {
       if (R.n() < psyn) {
-         gsyn= meangsyn+jitter*RG.n();
-         g.push_back(gsyn);
-         postIndex.push_back(j);
-         maxInColI++;
-         g_alltoall[i*n2+j]= gsyn;
-         //cout << "g for" << i << " to "<< j<< " is " << gsyn <<endl;
+	gsyn= meangsyn+jitter*RG.n();
+	g.push_back(gsyn);
+	postIndex.push_back(j);
+	maxInColI++;
+	g_alltoall[i*n2+j]= gsyn;
+	//cout << "g for" << i << " to "<< j<< " is " << gsyn <<endl;
       }      
       else {
-	     g_alltoall[i*n2+j]= 0.0f;
+	g_alltoall[i*n2+j]= 0.0f;
       }
-  	 }
-  ctr=ctr+maxInColI;
-  postIndInG.push_back(ctr);
+    }
+    ctr=ctr+maxInColI;
+    postIndInG.push_back(ctr);
   }
   
   size_t sz = g.size();
@@ -112,4 +112,3 @@ int main(int argc, char *argv[])
   
   return 0;
 }
-
