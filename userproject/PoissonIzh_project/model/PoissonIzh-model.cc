@@ -69,26 +69,22 @@ void classol::allocate_device_mem_input()
 
 void classol::free_device_mem()
 {
-  // clean up memory                          
-                                       
+  // clean up memory
   CHECK_CUDA_ERRORS(cudaFree(d_pattern));
   CHECK_CUDA_ERRORS(cudaFree(d_baserates));
 }
-
-
 
 classol::~classol()
 {
   delete [] pattern;
   delete [] baserates;
-	freeMem;
+  freeMem();
 }
-
 
 void classol::read_PNIzh1syns(float *gp, FILE *f)
 {
   fprintf(stderr, "%u\n", model.neuronN[0]*model.neuronN[1]*sizeof(float));
-  fread(gp, model.neuronN[0]*model.neuronN[1]*sizeof(float),1,f); //
+  fread(gp, model.neuronN[0]*model.neuronN[1]*sizeof(float),1,f);
   fprintf(stderr,"read PNIzh1 ... \n");
   fprintf(stderr, "values start with: \n");
   for(int i= 0; i < 100; i++) {
@@ -98,7 +94,7 @@ void classol::read_PNIzh1syns(float *gp, FILE *f)
 }
 
 void classol::read_sparsesyns_par(int synInd, Conductance C, FILE *f_ind,FILE *f_indInG,FILE *f_g //!< File handle for a file containing sparse conductivity values
-			    )
+				  )
 {
   //allocateSparseArray(synInd,C.connN);
 

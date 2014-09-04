@@ -70,6 +70,12 @@ int main(int argc, char *argv[])
   int which = atoi(argv[1]);
   int nC1 = atoi(argv[2]);
 
+  // write neuron population sizes
+  string fname = gennPath + "/userproject/include/sizes.h";
+  ofstream os(fname.c_str());
+  os << "#define _NC1 " << nC1 << endl;
+  os.close();
+
   // build it  
 #ifdef _WIN32
   cmd = "cd model && buildmodel.bat " + modelName + " " + toString(dbgMode);
@@ -95,17 +101,11 @@ int main(int argc, char *argv[])
   }
 #endif
   
-  // write neuron population sizes
-  string fname = gennPath + "/userproject/include/sizes.h";
-  ofstream os(fname.c_str());
-  os << "#define _NC1 " << nC1 << endl;
-  os.close();
-
   // run it!
   cout << "running test..." << endl;
 #ifdef _WIN32
   if (dbgMode == 1) {
-    cmd = "devenv /debugexe model\\OneComp_sim.exe " + toString(argv[7]) + " " + toString(which);
+    cmd = "devenv /debugexe model\\OneComp_sim.exe " + toString(argv[3]) + " " + toString(which);
   }
   else {
     cmd = "model\\OneComp_sim.exe " + toString(argv[3]) + " " + toString(which);

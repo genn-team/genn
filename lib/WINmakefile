@@ -18,14 +18,13 @@
 
 # Global C++ and CUDA compiler settings.
 NVCC		=$(CUDA_PATH)\bin\nvcc.exe
-NVCCFLAGS	=$(NVCCFLAGS)
 CXXFLAGS	=$(CXXFLAGS) /nologo /EHsc /DNVCC="\"$(NVCC:\=/)\""
 !IFDEF DEBUG
 CXXFLAGS	=$(CXXFLAGS) /Zi
 !ENDIF
 
 # Global include flags and link flags.
-INCLUDE_FLAGS	=/I"$(CUDA_PATH)\include" /I"$(GENN_PATH)\lib\include"
+INCLUDE_FLAGS	=/FI"$(MODEL)" /I"$(CUDA_PATH)\include" /I"$(GENN_PATH)\lib\include"
 !IF "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
 LINK_FLAGS	="$(CUDA_PATH)\lib\x64\cudart.lib"
 !ELSE
@@ -50,4 +49,4 @@ $(OBJDIR):
 	mkdir $(OBJDIR)
 
 clean:
-	del $(OBJDIR)\*.obj $(BINDIR)\generateALL.exe 2>nul
+	-del $(OBJDIR)\*.obj $(BINDIR)\generateALL.exe 2>nul

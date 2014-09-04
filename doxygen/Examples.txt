@@ -75,7 +75,7 @@ and slow synapse groups. Neurons in the output group only spike if they are
 simultaneously innervated by the input neurons, via slow synapses, and the
 interneurons, via faster synapses. 
 
-To run this example project, cd to "$GeNNPATH/userproject/SynDelay_project" and type
+To run this example project, cd to "$GENN_PATH/userproject/SynDelay_project" and type
 \code{.cc}
 buildmodel SynDelay && make clean && make && ./bin/release/syn_delay 1 output
 \endcode

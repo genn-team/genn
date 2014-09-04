@@ -1,4 +1,4 @@
-x/*--------------------------------------------------------------------------
+/*--------------------------------------------------------------------------
    Author: Thomas Nowotny
   
    Institute: Center for Computational Neuroscience and Robotics
@@ -76,6 +76,13 @@ int main(int argc, char *argv[])
   float meangsyn = 100.0f / nPoisson * gscale;
   float gsyn_sigma = 100.0f / nPoisson * gscale / 15.0f; 
 
+  // write neuron population sizes
+  string fname = gennPath + "/userproject/include/sizes.h";
+  ofstream os(fname.c_str());
+  os << "#define _NPoisson " << nPoisson << endl;
+  os << "#define _NIzh " << nIzh << endl;
+  os.close();
+
   // build it
 #ifdef _WIN32
   cmd = "cd model && buildmodel.bat " + modelName + " " + toString(dbgMode);
@@ -108,29 +115,22 @@ int main(int argc, char *argv[])
   cmd += toString(pConn) + " ";
   cmd += toString(meangsyn) + " ";
   cmd += toString(gsyn_sigma) + " ";
-  cmd += outdir + "/g" + toString(argv[8]);
+  cmd += outdir + "/g" + toString(argv[7]);
   system(cmd.c_str());
 
   // generate input patterns
   cmd = gennPath + "/userproject/tools/gen_input_structured ";
   cmd += toString(nPoisson) + " ";
   cmd += "10 10 0.1 0.1 32768 17 ";
-  cmd += outdir + "/" + toString(argv[8]) + ".inpat";
-  cmd += " &> " + outdir + "/" + toString(argv[8]) + ".inpat.msg";
+  cmd += outdir + "/" + toString(argv[7]) + ".inpat";
+  cmd += " &> " + outdir + "/" + toString(argv[7]) + ".inpat.msg";
   system(cmd.c_str());
-
-  // write neuron population sizes
-  string fname = gennPath + "/userproject/include/sizes.h";
-  ofstream os(fname.c_str());
-  os << "#define _NPoisson " << nPoisson << endl;
-  os << "#define _NIzh " << nIzh << endl;
-  os.close();
 
   // run it!
   cout << "running test..." << endl;
 #ifdef _WIN32
   if (dbgMode == 1) {
-    cmd = "devenv /debugexe model\\PoissonIzh_sim.exe " + toString(argv[7]) + " " + toString(which);
+    cmd = "devenv /debugexe model\\PoissonIzh_sim.exe " + toString(argv[6]) + " " + toString(which);
   }
   else {
     cmd = "model\\PoissonIzh_sim.exe " + toString(argv[6]) + " " + toString(which);

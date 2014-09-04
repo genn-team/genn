@@ -58,27 +58,27 @@ Installation of GeNN:
 
 (i) Unpack GeNN.zip in a convenient location.
 
-(ii) Define the environment variable "GeNNPATH" to point to the main GeNN 
+(ii) Define the environment variable "GENN_PATH" to point to the main GeNN 
      directory, e.g. if you extracted GeNN to /usr/local/GeNN, then you can add
-     "export GeNNPATH=/usr/local/GeNN" to your login script. If you are using CYGWIN,
+     "export GENN_PATH=/usr/local/GeNN" to your login script. If you are using CYGWIN,
      the path should be a windows path or a mixed path (i.e. with normal slashes
      instead of backslashes) as it will be interpreted by cl.
 
-(iii) Add $GeNNPATH/lib/bin to your PATH variable, e.g.
-      "export PATH=$PATH:$GeNNPATH/lib/bin". Under CYGWIN, it is safer to enter full 
+(iii) Add $GENN_PATH/lib/bin to your PATH variable, e.g.
+      "export PATH=$PATH:$GENN_PATH/lib/bin". Under CYGWIN, it is safer to enter full 
       linux path (such as: export PATH=$PATH:/usr/local/GeNN/lib/bin) 
 
 (iv) Get a fresh installation of the Nvidia cuda toolkit from
      https://developer.nvidia.com/cuda-downloads
 
-(v) Set the CUDA_PATH variable in $GeNNPATH/lib/include/makefile_common.mk to
+(v) Set the CUDA_PATH variable in $GENN_PATH/lib/include/makefile_common.mk to
     the location of your Nvidia cuda toolkit installation, if it is not already
     set by the system.
     For most people, the default value of /usr/local/cuda is fine.
 
-(vi) Modify Makefile examples under $GeNNPATH/lib/src/ and $GeNNPATH/userproject/
+(vi) Modify Makefile examples under $GENN_PATH/lib/src/ and $GENN_PATH/userproject/
      to add extra linker-, include- and compiler-flags on a per-project basis, or
-     modify global default flags in $GeNNPATH/lib/include/makefile_common.mk.
+     modify global default flags in $GENN_PATH/lib/include/makefile_common.mk.
 
 This completes the installation.
 

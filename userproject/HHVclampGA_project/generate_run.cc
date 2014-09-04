@@ -1,20 +1,20 @@
 /*--------------------------------------------------------------------------
-   Author: Thomas Nowotny
+  Author: Thomas Nowotny
   
-   Institute: Center for Computational Neuroscience and Robotics
-              University of Sussex
-	      Falmer, Brighton BN1 9QJ, UK 
+  Institute: Center for Computational Neuroscience and Robotics
+  University of Sussex
+  Falmer, Brighton BN1 9QJ, UK 
   
-   email to:  T.Nowotny@sussex.ac.uk
+  email to:  T.Nowotny@sussex.ac.uk
   
-   initial version: 2010-02-07
+  initial version: 2010-02-07
   
---------------------------------------------------------------------------*/
+  --------------------------------------------------------------------------*/
 
 //--------------------------------------------------------------------------
 /*! \file generate_run.cc
 
-\brief This file is used to run the HHVclampGA model with a single command line.
+  \brief This file is used to run the HHVclampGA model with a single command line.
 
 
 */ 
@@ -26,28 +26,32 @@
 #include <sstream>
 #include <cstdlib>
 #include <cmath>
-using namespace std;
 
 #ifdef _WIN32
 #include <direct.h>
 #include <stdlib.h>
-#else
-#include <sys/stat.h> //needed for mkdir
+#else // UNIX
+#include <sys/stat.h> // needed for mkdir
 #endif
+
+using namespace std;
 
 //--------------------------------------------------------------------------
 /*! \brief Template function for string conversion 
  */
 //--------------------------------------------------------------------------
 
-template<typename T>
-std::string toString(T t)
+template<typename T> std::string toString(T t)
 {
   std::stringstream s;
   s << t;
   return s.str();
 } 
 
+//--------------------------------------------------------------------------
+/*! \brief Main entry point for generate_run.
+ */
+//--------------------------------------------------------------------------
 
 int main(int argc, char *argv[])
 {
@@ -57,70 +61,66 @@ int main(int argc, char *argv[])
     exit(1);
   }
 
-  int DBGMODE = atoi(argv[6]); // set this to 1 if you want to enable gdb and 
-                               // cuda-gdb debugging to 0 for release
-  int which= atoi(argv[1]);
-  int protocol= atoi(argv[2]);
-  int nPop= atoi(argv[3]);
-  double totalT= atof(argv[4]);
-  string OutDir = toString(argv[5]) +"_output";  
   string cmd;
- 
-  #ifdef _WIN32
-  _mkdir(OutDir.c_str());
-  #else 
-  if (mkdir(OutDir.c_str(), S_IRWXU | S_IRWXG | S_IXOTH)==-1){
-  	cerr << "Directory cannot be created. It may exist already." << endl;
-  	}; 
-  #endif
-  
-  string GeNNPath= getenv("GeNNPATH");
-  cerr << GeNNPath << endl;
-  string fname= GeNNPath+string("/userproject/include/HHVClampParameters.h");
+  string gennPath = getenv("GENN_PATH");
+  string outDir = toString(argv[5]) + "_output";  
+  int dbgMode = atoi(argv[6]); // set this to 1 if you want to enable gdb and cuda-gdb debugging to 0 for release
+
+  int which = atoi(argv[1]);
+  int protocol = atoi(argv[2]);
+  int nPop = atoi(argv[3]);
+  double totalT = atof(argv[4]);
+
+  // write model parameters
+  string fname = gennPath + "/userproject/include/HHVClampParameters.h";
   ofstream os(fname.c_str());
   os << "#define NPOP " << nPop << endl;
   os << "#define TOTALT " << totalT << endl;
   os.close();
-  
-  cmd= toString("cd model && buildmodel ")+ toString("HHVClamp ")+ toString(DBGMODE);
-  cerr << "Debug mode: " << DBGMODE << endl;
-  cerr << "Script call was:" << cmd.c_str() << endl;
-  system(cmd.c_str());
-  if(DBGMODE==1) {
-    cmd= toString("cd model && make clean debug && make debug");
+
+  // build it
+#ifdef _WIN32
+  cmd = "cd model && buildmodel.bat HHVClamp " + toString(dbgMode);
+  cmd += " && nmake /nologo /f WINmakefile clean && nmake /nologo /f WINmakefile";
+  if (dbgMode == 1) {
+    cmd += " DEBUG=1";
   }
-  else{
-    cmd= toString("cd model && make clean && make");  
-  }	
+#else // UNIX
+  cmd = "cd model && buildmodel.sh HHVClamp " + toString(dbgMode);
+  cmd += " && make clean && make";
+  if (dbgMode == 1) {
+    cmd += " debug";
+  }
+#endif
   system(cmd.c_str());
 
-  cmd= toString("echo $GeNNOSTYPE");
-  system(cmd.c_str());
+  // create output directory
+#ifdef _WIN32
+  _mkdir(outDir.c_str());
+#else // UNIX
+  if (mkdir(outDir.c_str(), S_IRWXU | S_IRWXG | S_IXOTH) == -1) {
+    cerr << "Directory cannot be created. It may exist already." << endl;
+  }
+#endif
 
   // run it!
-  cout << "running test..." <<endl;
-#if defined _WIN32 || defined __CYGWIN__
-  //cout << "win32" <<endl;
-  if(DBGMODE==1) {
-    cerr << "Debugging with gdb is not possible on cl platform." << endl;
+  cout << "running test..." << endl;
+#ifdef _WIN32
+  if (dbgMode == 1) {
+    cmd = "devenv /debugexe model\\VClampGA.exe " + toString(argv[5]) + " " + toString(which) + " " + toString(protocol);
   }
   else {
-    cmd= toString("GeNNOSTYPE=$(echo $(uname) | tr A-Z a-z); model/bin/$GeNNOSTYPE/release/VClampGA "+  toString(argv[5]) + toString(" ") + toString(which) + toString(" ") + toString(protocol);
+    cmd = "model\\VClampGA.exe " + toString(argv[5]) + " " + toString(which) + " " + toString(protocol);
   }
-
-#else
-   if(DBGMODE == 1) {
-  //debug 
-     cmd= toString("GeNNOSTYPE=$(echo $(uname) | tr A-Z a-z); cuda-gdb -tui --args model/bin/$GeNNOSTYPE/debug/VClampGA ") + toString(argv[5]) + toString(" ") + toString(which) + toString(" ") + toString(protocol);
+#else // UNIX
+  if (dbgMode == 1) {
+    cmd = "cuda-gdb -tui --args model/VClampGA " + toString(argv[5]) + " " + toString(which) + " " + toString(protocol);
   }
-  else
-  {
-//release  
-  cmd= toString("GeNNOSTYPE=$(echo $(uname) | tr A-Z a-z); model/bin/$GeNNOSTYPE/release/VClampGA ") + toString(argv[5]) + toString(" ") + toString(which) + toString(" ") + toString(protocol);
-  	}
+  else {
+    cmd = "model/VClampGA " + toString(argv[5]) + " " + toString(which) + " " + toString(protocol);
+  }
 #endif
-  cerr << cmd << endl;
   system(cmd.c_str());
+
   return 0;
 }
-
