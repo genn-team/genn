@@ -123,7 +123,7 @@ int main(int argc, char *argv[])
   cmd += toString(nPoisson) + " ";
   cmd += "10 10 0.1 0.1 32768 17 ";
   cmd += outdir + "/" + toString(argv[7]) + ".inpat";
-  cmd += " &> " + outdir + "/" + toString(argv[7]) + ".inpat.msg";
+  cmd += " 1> " + outdir + "/" + toString(argv[7]) + ".inpat.msg 2>&1";
   system(cmd.c_str());
 
   // run it!
