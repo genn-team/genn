@@ -19,10 +19,8 @@
 */
 
 #include "global.h"
-//#include "utils.h"
-
-#include "currentModel.cc"
-
+#include "modelSpec.h"
+#include "modelSpec.cc"
 #include "generateKernels.cc"
 #include "generateRunner.cc"
 #include "generateCPU.cc"

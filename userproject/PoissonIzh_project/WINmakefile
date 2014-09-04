@@ -11,13 +11,12 @@
 #  
 #--------------------------------------------------------------------------
 
-CFLAGS		=/nologo /EHsc /Zi
-RM		=del 2>nul
+CFLAGS		=/nologo /EHsc
 
 all: generate_run.exe tools
 
 clean:
-	$(RM) generate_run.exe
+	-del generate_run.exe generate_run.obj 2>nul
 	cd ..\tools && nmake /nologo /f WINmakefile clean
 
 tools:

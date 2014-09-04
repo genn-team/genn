@@ -11,9 +11,9 @@
 #  
 #--------------------------------------------------------------------------
 
-CXXFLAGS =-Wall -Winline -O3 -g -I$(GENNPATH)/lib/include/numlib
+CFLAGS		=/nologo /EHsc
 
-all: generate_run
+all: generate_run.exe
 
 clean:
-	$(RM) generate_run
+	-del generate_run.exe generate_run.obj 2>nul 

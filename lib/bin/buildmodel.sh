@@ -15,18 +15,16 @@ if [ "$GENN_PATH" = "" ]; then
     export GENN_PATH=$GeNNPATH
 fi
 
-cp $MODELPATH/$MODELNAME.cc $GENN_PATH/lib/src/currentModel.cc;
 cd $GENN_PATH/lib;
-
 make clean
 if [ "$DBGMODE" = "1" ]; then
     echo "debugging mode ON"
-    make debug;
+    make debug MODEL=$MODELPATH/$MODELNAME.cc;
     gdb -tui --directory=bin --args generateALL $MODELPATH;
 else
-    make;
+    make MODEL=$MODELPATH/$MODELNAME.cc;
     bin/generateALL $MODELPATH;
 fi
-
 cd $MODELPATH;
+
 echo "Model build complete ..."

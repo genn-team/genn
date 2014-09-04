@@ -55,8 +55,8 @@ $(EXECUTABLE): $(OBJECTS)
 	$(CXX) $(CXXFLAGS) $(LINK_FLAGS) $(OBJECTS) /Fe$@
 
 clean:
-	del $(EXECUTABLE) *.obj 2>nul
+	-del $(EXECUTABLE) *.obj *.ilk *.pdb 2>nul
 
 purge: clean
-	del sm_version.mk 2>nul
-	rd /s /q *_CODE 2>nul
+	-del sm_version.mk 2>nul
+	-rd /s /q *_CODE 2>nul

@@ -25,21 +25,21 @@ echo "Creating sim.cu file..."
 xsltproc -o sim.cu SpineML_2_GeNN_sim.xsl model/experiment.xml
 echo "Done"
 echo "Running GeNN code generation..."
-if [[ -z ${GeNNPATH+x} ]]; then
+if [[ -z ${GENN_PATH+x} ]]; then
 echo "Sourcing .bashrc as environment does not seem to be correct"
 source ~/.bashrc
 fi
-if [[ -z ${GeNNPATH+x} ]]; then
+if [[ -z ${GENN_PATH+x} ]]; then
 error_exit "The system environment is not correctly configured"
 fi
-cp extra_neurons.h $GeNNPATH/lib/include/
-cp extra_postsynapses.h $GeNNPATH/lib/include/
-cp model.cc $GeNNPATH/userproject/model_project/model.cc
-cp sim.cu $GeNNPATH/userproject/model_project/sim.cu
-if cp model/*.bin $GeNNPATH/userproject/model_project/; then
+cp extra_neurons.h $GENN_PATH/lib/include/
+cp extra_postsynapses.h $GENN_PATH/lib/include/
+cp model.cc $GENN_PATH/userproject/model_project/model.cc
+cp sim.cu $GENN_PATH/userproject/model_project/sim.cu
+if cp model/*.bin $GENN_PATH/userproject/model_project/; then
 	echo "Copying binary data..."	
 fi
-cd $GeNNPATH/userproject/model_project
+cd $GENN_PATH/userproject/model_project
 ../../lib/bin/buildmodel model $DBGMODE
 make clean
 make

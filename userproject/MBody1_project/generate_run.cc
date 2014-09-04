@@ -80,6 +80,15 @@ int main(int argc, char *argv[])
   float kcdn_gsyn_sigma = 2500.0f / nMB * 0.06f * gscale / 0.9; 
   float pnlhi_theta = 200.0f / nAL * 7.0f * gscale / 0.9;
 
+  // write neuron population sizes
+  string fname = gennPath + "/userproject/include/sizes.h";
+  ofstream os(fname.c_str());
+  os << "#define _NAL " << nAL << endl;
+  os << "#define _NMB " << nMB << endl;
+  os << "#define _NLHI " << nLHI << endl;
+  os << "#define _NLB " << nLB << endl;
+  os.close();
+
   // build it
 #ifdef _WIN32
   cmd = "cd model && buildmodel.bat " + modelName + " " + toString(dbgMode);
@@ -143,15 +152,6 @@ int main(int argc, char *argv[])
   cmd += outdir + "/" + toString(argv[7]) + ".inpat";
   cmd += " 1> " + outdir + "/" + toString(argv[7]) + ".inpat.msg 2>&1";
   system(cmd.c_str());
-
-  // write neuron population sizes
-  string fname = gennPath + "/userproject/include/sizes.h";
-  ofstream os(fname.c_str());
-  os << "#define _NAL " << nAL << endl;
-  os << "#define _NMB " << nMB << endl;
-  os << "#define _NLHI " << nLHI << endl;
-  os << "#define _NLB " << nLB << endl;
-  os.close();
 
   // run it!
   cout << "running test..." << endl;

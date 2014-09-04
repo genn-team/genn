@@ -41,8 +41,7 @@ using namespace std;
  */
 //--------------------------------------------------------------------------
 
-template<typename T>
-std::string toString(T t)
+template<typename T> std::string toString(T t)
 {
   std::stringstream s;
   s << t;
@@ -51,14 +50,12 @@ std::string toString(T t)
 
 /////////////////////////
 unsigned int openFileGetMax(unsigned int * array, unsigned int size, string name) {
-  FILE * f;
-  unsigned int maxConn =0;
-  f= fopen(name.c_str(),"r");
-  fread(array, (size+1)*sizeof(unsigned int),1,f);
-
-  for (unsigned int i=0;i<size;i++){
-    unsigned int connNo = array[i+1]-array[i];
-    if (connNo>maxConn) maxConn=connNo;
+  unsigned int maxConn = 0;
+  FILE *f = fopen(name.c_str(), "r");
+  fread(array, (size + 1) * sizeof(unsigned int), 1, f);
+  for (unsigned int i = 0; i < size; i++) {
+    unsigned int connNo = array[i + 1] - array[i];
+    if (connNo > maxConn) maxConn = connNo;
   }
   fprintf(stderr, " \n maximum postsynaptic connection per neuron in the 1st group is %u \n", maxConn);
   return maxConn;
@@ -80,8 +77,7 @@ int main(int argc, char *argv[])
 
   string cmd;
   string gennPath= getenv("GENN_PATH");
-  string outName = toString(argv[5]);
-  string outDir = outName + "_output";  
+  string outDir = toString(argv[5]) + "_output";  
   string outDir_g = "inputfiles";  
   string modelName = argv[6];
   int dbgMode = atoi(argv[7]); // set this to 1 if you want to enable gdb and cuda-gdb debugging to 0 for release
@@ -89,29 +85,13 @@ int main(int argc, char *argv[])
 
   int which = atoi(argv[1]);
   int nTotal = atoi(argv[2]);
-  int nExc = ceil(4 * nTotal / 5);
+  int nExc = ceil((float) 4 * nTotal / 5);
   int nInh = nTotal - nExc;
   int nConn = atoi(argv[3]);
   float gscale = atof(argv[4]);
   
   float meangExc = 0.5 * gscale;
   float meangInh = -1.0 * gscale;
-
-  // build it
-#ifdef _WIN32
-  cmd = "cd model && buildmodel.bat " + modelName + " " + toString(dbgMode);
-  cmd += " && nmake /nologo /f WINmakefile clean && nmake /nologo /f WINmakefile";
-  if (dbgMode == 1) {
-    cmd += " DEBUG=1";
-  }
-#else // UNIX
-  cmd = "cd model && buildmodel.sh " + modelName + " " + toString(dbgMode);
-  cmd += " && make clean && make";
-  if (dbgMode == 1) {
-    cmd += " debug";
-  }
-#endif
-  system(cmd.c_str());
 
   // create output directories
 #ifdef _WIN32
@@ -133,27 +113,22 @@ int main(int argc, char *argv[])
     cmd += toString(nConn) + " ";
     cmd += toString(meangExc) + " ";
     cmd += toString(meangInh) + " ";
-    cmd += "inputfiles/g" + modelName;
+    cmd += outDir_g + "/g" + modelName;
     system(cmd.c_str());
   }
 
-  //read connectivity patterns to get maximum connection per neuron for each synapse population
-  //population neuron numbers are for sources in the order in currentmodel.cc
-  unsigned int *gIndInG = new unsigned int[nTotal]; //allocate the biggest possible, the we will only use what we need
-
-  string name = toString("inputfiles/g" + modelName + "_postIndInG_ee");
+  // read connectivity patterns to get maximum connection per neuron for each synapse population
+  // population neuron numbers are for sources in the order in currentmodel.cc
+  unsigned int *gIndInG = new unsigned int[nTotal]; // allocate the biggest possible, the we will only use what we need
+  string name = outDir_g + "/g" + modelName + "_postIndInG_ee";
   unsigned int maxN0 = openFileGetMax(gIndInG, nExc, name);
-
-  name = toString("inputfiles/g" + modelName + "_postIndInG_ei");
+  name = outDir_g + "/g" + modelName + "_postIndInG_ei";
   unsigned int maxN1 = openFileGetMax(gIndInG, nExc, name);
-
-  name = toString("inputfiles/g" + modelName + "_postIndInG_ie");
+  name = outDir_g + "/g" + modelName + "_postIndInG_ie";
   unsigned int maxN2 = openFileGetMax(gIndInG, nInh, name);
-
-  name = toString("inputfiles/g" + modelName + "_postIndInG_ii");
+  name = outDir_g + "/g" + modelName + "_postIndInG_ii";
   unsigned int maxN3 = openFileGetMax(gIndInG, nInh, name);
-
-  delete [] gIndInG;
+  delete[] gIndInG;
   ////////////////////////////////
 
   // write neuron population sizes
@@ -167,11 +142,27 @@ int main(int argc, char *argv[])
   os << "#define _NMaxConnP3 " << maxN3 << endl;
   os.close();
   
+  // build it
+#ifdef _WIN32
+  cmd = "cd model && buildmodel.bat " + modelName + " " + toString(dbgMode);
+  cmd += " && nmake /nologo /f WINmakefile clean && nmake /nologo /f WINmakefile";
+  if (dbgMode == 1) {
+    cmd += " DEBUG=1";
+  }
+#else // UNIX
+  cmd = "cd model && buildmodel.sh " + modelName + " " + toString(dbgMode);
+  cmd += " && make clean && make";
+  if (dbgMode == 1) {
+    cmd += " debug";
+  }
+#endif
+  system(cmd.c_str());
+
   // run it!
   cout << "running test..." << endl;
 #ifdef _WIN32
   if (dbgMode == 1) {
-    cmd = "devenv /debugexe model\\Izh_sim_sparse.exe " + toString(argv[7]) + " " + toString(which);
+    cmd = "devenv /debugexe model\\Izh_sim_sparse.exe " + toString(argv[5]) + " " + toString(which);
   }
   else {
     cmd = "model\\Izh_sim_sparse.exe " + toString(argv[5]) + " " + toString(which);
