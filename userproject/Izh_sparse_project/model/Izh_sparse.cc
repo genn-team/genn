@@ -79,12 +79,12 @@ void modelDefinition(NNmodel &model)
 {
   model.setName("Izh_sparse");
   model.addNeuronPopulation("PExc", _NExc, IZHIKEVICH_V, excIzh_p, IzhExc_ini);
-  neuronPSize.push_back(sizeof excIzh_p);
+  neuronPSize.push_back(0);
   neuronVSize.push_back(sizeof IzhExc_ini);
   
 
   model.addNeuronPopulation("PInh", _NInh, IZHIKEVICH_V, inhIzh_p, IzhInh_ini);
-  neuronPSize.push_back(sizeof inhIzh_p);
+  neuronPSize.push_back(0);
   neuronVSize.push_back(sizeof IzhInh_ini);
   
   model.addSynapsePopulation("Exc_Exc", NSYNAPSE, SPARSE, INDIVIDUALG, NO_DELAY, IZHIKEVICH_PS, "PExc", "PExc", SynIzh_p, postSynV, postExpP); 
