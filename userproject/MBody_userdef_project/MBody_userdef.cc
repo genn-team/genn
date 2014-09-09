@@ -266,18 +266,18 @@ void modelDefinition(NNmodel &model)
   learn1synapse.simCode = tS(" \
   	 	$(inSyn) += $(G); //try to see if it works\n \
   	 	$(G) = $(gRaw); \n \
-			float dt = $(sTpost) - t - $(tauShift); \n \
+			float dt = $(sTpost) - t - ($(tauShift)); \n \
 			float dg = 0;\n \
 			if (dt > $(lim0))  \n \
-			dg = - $(off0) ; \n \
+			  dg = - $(off0) ; \n \
 			else if (dt > 0.0)  \n \
-      dg = $(slope0) * dt + $(off1); \n \
-      else if (dt > $(lim1))  \n \
-			dg = $(slope1) * dt + $(off1); \n \
+           dg = $(slope0) * dt + $(off1); \n \
+         else if (dt > $(lim1))  \n \
+			  dg = $(slope1) * dt + $(off1); \n \
 			else dg = - $(off2) ; \n \
 			$(G) = $(G) + dg; \n \
 			$(gRaw) = $(G); \n \
-      $(G)=$(gMax)/2.0 *(tanh($(gSlope)*($(G) - $(gMid)))+1.0); \n \
+      $(G)=$(gMax)/2.0 *(tanh($(gSlope)*($(G) - ($(gMid))))+1.0); \n \
   ");     
     // d_gp" << model.synapseName[i] << "[shSpk[j] * " << model.neuronN[trg] << " + " << localID << "] = "; \n \
     //os << "  return " << SAVEP(model.synapsePara[i][8]/2.0) << " * (tanh(";
@@ -311,11 +311,11 @@ float myKCDN_p_userdef[11]= {
 			float dt = t - ($(sTpre)) - ($(tauShift)); \n \
 			float dg =0; \n \
 			if (dt > $(lim0))  \n \
-			dg = - $(off0) ; \n \
+			  dg = - $(off0) ; \n \
 			else if (dt > 0.0)  \n \
-      dg = $(slope0) * dt + $(off1); \n \
-      else if (dt > $(lim1))  \n \
-			dg = $(slope1) * dt + $(off1); \n \
+           dg = $(slope0) * dt + $(off1); \n \
+         else if (dt > $(lim1))  \n \
+			  dg = $(slope1) * dt + $(off1); \n \
 			else dg = - $(off2) ; \n \
 			$(G) = $(G) + dg; \n \
 			$(gRaw) = $(G); \n \

@@ -1270,7 +1270,7 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 		}
 		if (model.synapseType[k] >= MAXSYN) {
 			if (model.synapseGType[k] == INDIVIDUALG){
-				os << "lg = d_gp" << model.synapseName[k] << "[shSpk[j]*" << model.neuronN[trg] << " + " << localID << "];";
+				os << "lg = d_gp" << model.synapseName[k] << "[shSpk[j] +" << model.neuronN[trg] << " * " << localID << "];" << ENDL;
 				theLG = toString("lg");
 			}
 	  		unsigned int synt = model.synapseType[k]-MAXSYN;
@@ -1281,7 +1281,7 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 		      	substitute(code, tS("$(") + weightUpdateModels[synt].varNames[p] + tS(")"), tS("d_")+weightUpdateModels[synt].varNames[p]+model.synapseName[k]+ tS("[d_gp")+ model.synapseName[k] + tS("_indInG[shSpk[j]] + ") + localID +tS("]]"));
 		    	}
 		    	else{ 
-		      	substitute(code, tS("$(") + weightUpdateModels[synt].varNames[p] + tS(")"), tS("d_")+weightUpdateModels[synt].varNames[p]+model.synapseName[k]+ tS("[shSpk[j] * ") + tS(model.neuronN[trg]) + tS("+")+ localID +tS("]"));
+		      	substitute(code, tS("$(") + weightUpdateModels[synt].varNames[p] + tS(")"), tS("d_")+weightUpdateModels[synt].varNames[p]+model.synapseName[k] + tS("[")+ localID + tS(" * ") + tS(model.neuronN[trg]) +tS(" + shSpk[j]]"));
 		    	}
 		    	substitute(code, tS("$(inSyn)"), tS("linSyn"));
 			}
@@ -1305,9 +1305,9 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 
 			os << code;
 	  
-	  		if (model.usesPostLearning[k]==TRUE){ //!TODO check if thisis correct. setting back the g valiue if learning 
+	  		if (model.usesPostLearning[k]==TRUE){ //!TODO check if this is correct. setting back the g valiue if learning 
 	    		if (model.synapseGType[k] == INDIVIDUALG){
-		    		os << "d_gp" << model.synapseName[i] << "[shSpk[j]*" << model.neuronN[trg] << " + " << localID << "] =" << theLG << ";" ;
+		    		os << "d_gp" << model.synapseName[i] << "[" << localID << " * " << model.neuronN[trg] << " + shSpk[j]] =" << theLG << ";" ;
 				}
 	  		}		    	
 	  	}
