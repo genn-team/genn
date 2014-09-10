@@ -612,15 +612,6 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 
 	os << "numSpikeSubsets = (unsigned int) (ceilf((float) lscnt / " << "((float)BLOCKSZ_SYN)" << "));" << ENDL;
 		
-		
-	if (model.synapseType[i] == LEARN1SYNAPSE) {
-	    os << "lscnt = d_glbscnt" << model.neuronName[src];	
-	    if (model.neuronDelaySlots[src] != 1) {
-		os << "[delaySlot]";
-	    }	
-	    os << ";" << ENDL;		
-	    os << "numSpikeSubsets = (unsigned int) (ceilf((float) lscnt / " << "((float)BLOCKSZ_SYN)" << "));" << ENDL;
-	}
 	if ((model.synapseGType[i] == GLOBALG) || (model.synapseGType[i] == INDIVIDUALID)) {
 	    theLG = toString(model.g0[i]);
 	}
@@ -1307,7 +1298,7 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 	  
 	  		if (model.usesPostLearning[k]==TRUE){ //!TODO check if this is correct. setting back the g valiue if learning 
 	    		if (model.synapseGType[k] == INDIVIDUALG){
-		    		os << "d_gp" << model.synapseName[i] << "[" << localID << " * " << model.neuronN[trg] << " + shSpk[j]] =" << theLG << ";" ;
+		    		os << "d_gp" << model.synapseName[k] << "[" << localID << " * " << model.neuronN[trg] << " + shSpk[j]] =" << theLG << ";" ;
 				}
 	  		}		    	
 	  	}

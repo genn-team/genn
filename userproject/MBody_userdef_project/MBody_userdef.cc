@@ -209,8 +209,7 @@ void modelDefinition(NNmodel &model)
   nsynapse.varTypes.clear();
   nsynapse.pNames.clear();
   nsynapse.dpNames.clear();
-  nsynapse.simCode = tS(" \
-  	 	$(inSyn) += $(G); //try to see if it works\n \
+  nsynapse.simCode = tS("$(inSyn) += $(G); //try to see if it works\n \
   ");
 
   weightUpdateModels.push_back(nsynapse);
@@ -226,8 +225,7 @@ void modelDefinition(NNmodel &model)
   ngradsynapse.pNames.push_back(tS("Epre")); 
   ngradsynapse.pNames.push_back(tS("Vslope")); 
   ngradsynapse.dpNames.clear();
-  ngradsynapse.simCodeEvnt = tS(" \
-  	 	$(inSyn) += $(G)* tanh(float( $(preSpikeV) - ($(Epre)))*DT*2/$(Vslope)); //try to see if it works\n \
+  ngradsynapse.simCodeEvnt = tS("$(inSyn) += $(G)* tanh(float( $(preSpikeV) - ($(Epre)))*DT*2/$(Vslope)); //try to see if it works\n \
   ");
 
   weightUpdateModels.push_back(ngradsynapse);
@@ -263,22 +261,21 @@ void modelDefinition(NNmodel &model)
   learn1synapse.dpNames.push_back(tS("off0"));
   learn1synapse.dpNames.push_back(tS("off1"));
   learn1synapse.dpNames.push_back(tS("off2"));
-  learn1synapse.simCode = tS(" \
-  	 	$(inSyn) += $(G); //try to see if it works\n \
-  	 	$(G) = $(gRaw); \n \
-			float dt = $(sTpost) - t - ($(tauShift)); \n \
-			float dg = 0;\n \
-			if (dt > $(lim0))  \n \
-			  dg = - $(off0) ; \n \
-			else if (dt > 0.0)  \n \
-           dg = $(slope0) * dt + $(off1); \n \
-         else if (dt > $(lim1))  \n \
-			  dg = $(slope1) * dt + $(off1); \n \
-			else dg = - $(off2) ; \n \
-			$(G) = $(G) + dg; \n \
-			$(gRaw) = $(G); \n \
-      $(G)=$(gMax)/2.0 *(tanh($(gSlope)*($(G) - ($(gMid))))+1.0); \n \
-  ");     
+  learn1synapse.simCode = tS("$(inSyn) += $(G); //try to see if it works\n \
+					$(G) = $(gRaw); \n \
+					float dt = $(sTpost) - t - ($(tauShift)); \n \
+					float dg = 0;\n \
+					if (dt > $(lim0))  \n \
+					dg = -($(off0)) ; \n \
+					else if (dt > 0.0)  \n \
+					dg = $(slope0) * dt + ($(off1)); \n \
+					else if (dt > $(lim1))  \n \
+					dg = $(slope1) * dt + ($(off1)); \n \
+					else dg = - ($(off2)) ; \n \
+					$(G) = $(G) + dg; \n \
+					$(gRaw) = $(G); \n \
+					$(G)=$(gMax)/2.0 *(tanh($(gSlope)*($(G) - ($(gMid))))+1.0); \n \
+					");     
     // d_gp" << model.synapseName[i] << "[shSpk[j] * " << model.neuronN[trg] << " + " << localID << "] = "; \n \
     //os << "  return " << SAVEP(model.synapsePara[i][8]/2.0) << " * (tanh(";
 		//os << SAVEP(model.synapsePara[i][10]) << " * (graw - ";
@@ -303,24 +300,22 @@ float myKCDN_p_userdef[11]= {
 };
 
   learn1synapse.dps = new pwSTDP;
-  learn1synapse.simCodeEvnt = tS(" \
-  	 	$(inSyn) += $(G)* tanh(float( $(preSpikeV) - ($(Epre)))*DT*2/$(Vslope)); //try to see if it works\n \
+  learn1synapse.simCodeEvnt = tS("$(inSyn) += $(G)* tanh(float( $(preSpikeV) - ($(Epre)))*DT*2/$(Vslope)); //try to see if it works\n \
   ");
-  learn1synapse.simLearnPost = tS(" \
-  	 	$(G) = $(gRaw); \n \
-			float dt = t - ($(sTpre)) - ($(tauShift)); \n \
-			float dg =0; \n \
-			if (dt > $(lim0))  \n \
-			  dg = - $(off0) ; \n \
-			else if (dt > 0.0)  \n \
-           dg = $(slope0) * dt + $(off1); \n \
-         else if (dt > $(lim1))  \n \
-			  dg = $(slope1) * dt + $(off1); \n \
-			else dg = - $(off2) ; \n \
-			$(G) = $(G) + dg; \n \
-			$(gRaw) = $(G); \n \
-      $(G)=$(gMax)/2.0 *(tanh($(gSlope)*($(G) - $(gMid)))+1.0); \n \
-  ");     
+  learn1synapse.simLearnPost = tS("$(G) = $(gRaw); \n \
+						float dt = t - ($(sTpre)) - ($(tauShift)); \n \
+						float dg =0; \n \
+						if (dt > $(lim0))  \n \
+						dg = -($(off0)) ; \n \
+						else if (dt > 0.0)  \n \
+						dg = $(slope0) * dt + ($(off1)); \n \
+						else if (dt > $(lim1))  \n \
+						dg = $(slope1) * dt + ($(off1)); \n \
+						else dg = -($(off2)) ; \n \
+						$(G) = $(G) + dg; \n \
+						$(gRaw) = $(G); \n \
+						$(G)=$(gMax)/2.0 *(tanh($(gSlope)*($(G) - ($(gMid))))+1.0); \n \
+					");     
   weightUpdateModels.push_back(learn1synapse);
   unsigned int LEARN1SYNAPSE_userdef=weightUpdateModels.size()+MAXSYN-1; //this is the synapse index to be used in addSynapsePopulation
 

@@ -352,9 +352,10 @@ void genSynapseFunction(NNmodel &model, //!< Model description
     os << "void calcSynapsesCPU(" << model.ftype << " t)" << ENDL;
     os << OB(1001);
 		for (int i = 0; i < model.synapseGrpN; i++){
-			if (model.synapseType[i] == LEARN1SYNAPSE) 
+			if (model.synapseType[i] == LEARN1SYNAPSE){ 
 				os << model.ftype << " dt, dg;" << ENDL;
 				break;
+			}
 		}
     os << "int ipost, npost";
     if (model.needSynapseDelay) {
@@ -794,9 +795,10 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 	os << "void learnSynapsesPostHost(" << model.ftype << " t)" << ENDL;
 	os << OB(811);
 	for (int i = 0; i < model.synapseGrpN; i++){
-		if (model.synapseType[i] == LEARN1SYNAPSE) 
+		if (model.synapseType[i] == LEARN1SYNAPSE){ 
 			os << model.ftype << " dt, dg;" << ENDL;
 			break;
+		}
 	}
 	os << model.ftype << " lg;" << ENDL;
 	os << ENDL;
