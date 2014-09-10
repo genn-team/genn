@@ -935,6 +935,25 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     }
   
   
+  
+ for (int i= 0; i < model.synapseGrpN; i++) {
+ 	if (model.synapseType[i]>=MAXSYN){
+	unsigned int st= model.synapseType[i] - MAXSYN;
+	unsigned int src = model.synapseSource[i];
+	unsigned int trg = model.synapseTarget[i];
+	for (int k = 0, l = weightUpdateModels[st].varNames.size(); k < l; k++) {
+		size = model.neuronN[src] * model.neuronN[trg]; //! TODO This is for alltoall only 
+		os << "  CHECK_CUDA_ERRORS(cudaMemcpy(d_" << weightUpdateModels[st].varNames[k] << model.synapseName[i]<< ", ";
+		os << weightUpdateModels[st].varNames[k] << model.synapseName[i] << ", ";
+		os << size << " * sizeof(" << weightUpdateModels[st].varTypes[k] << "), cudaMemcpyHostToDevice));" << endl;
+	}
+	/*if ((model.usesPostLearning[i] == TRUE) && (model.synapseConnType[i] == SPARSE)) {
+	    //!TODO create post-to-pre matrices here
+	}*/
+    }  
+ } 
+  
+  
     for (int i=0; i< model.postSynapseType.size(); i++){
 	int pst= model.postSynapseType[i];
 	for (int k= 0, l= postSynModels[pst].varNames.size(); k < l; k++) {
