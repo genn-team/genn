@@ -54,8 +54,8 @@ void classol::init(unsigned int which //!< Flag defining whether GPU or CPU only
   //for (int i=0;i<gCKDN.connN;i++){ //sparse
   
   for (int i=0;i<model.neuronN[1]*model.neuronN[3];i++){ //alltoall
-    float tmp = gpKCDN[i] / model.synapsePara[3][6]*2.0- 1.0;
-    gRawKCDN[i]=0.5 * log((1.0 + tmp) / (1.0 - tmp)) /(model.synapsePara[3][8] + model.synapsePara[3][7]); 
+    float tmp = gpKCDN[i] / (model.synapsePara[3][6]*2.0) - 1.0;
+    gRawKCDN[i]=0.5 * log((1.0 + tmp) / (1.0 - tmp)) /model.synapsePara[3][8] + model.synapsePara[3][7]; 
   }
   
   if (which == CPU) {
