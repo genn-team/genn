@@ -83,8 +83,8 @@ $(EXECUTABLE): $(OBJECTS)
 	$(NVCC) $(NVCCFLAGS) -o $@ $+ $(LINK_FLAGS) 
 
 .PHONY: release
-release: CCFLAGS += -O3 -ffast-math
-release: NVCCFLAGS += #--compiler-options "-O3 -ffast-math"
+release: CCFLAGS += -O2 -ffast-math
+release: NVCCFLAGS += #--compiler-options "-O2 -ffast-math"
 release: $(EXECUTABLE)
 	mkdir -p $(ROOTDIR)/bin/$(OSLOWER)/release
 	mv $(EXECUTABLE) $(ROOTDIR)/bin/$(OSLOWER)/release
