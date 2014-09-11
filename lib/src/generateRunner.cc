@@ -932,10 +932,8 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 	    os << size << ", cudaMemcpyHostToDevice));" << endl;
 	    cerr << "model.receivesInputCurrent[i]: " << model.receivesInputCurrent[i] << endl;
 	}
-    }
-  
-  
-  
+  }
+   
  for (int i= 0; i < model.synapseGrpN; i++) {
  	if (model.synapseType[i]>=MAXSYN){
 	unsigned int st= model.synapseType[i] - MAXSYN;
@@ -953,8 +951,7 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     }  
  } 
   
-  
-    for (int i=0; i< model.postSynapseType.size(); i++){
+ for (int i=0; i< model.postSynapseType.size(); i++){
 	int pst= model.postSynapseType[i];
 	for (int k= 0, l= postSynModels[pst].varNames.size(); k < l; k++) {
       
@@ -963,7 +960,7 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 	    size = model.neuronN[model.synapseTarget[i]];
 	    os << size << " * sizeof(" << postSynModels[pst].varTypes[k] << "), cudaMemcpyHostToDevice));" << endl;
 	}
-    }
+ }
   
   
     os << "}" << endl;
@@ -1042,10 +1039,25 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 	    os << "  CHECK_CUDA_ERRORS(cudaMemcpy(sT" << model.neuronName[i] << ", devPtr, ";
 	    os << model.neuronN[i] << " * sizeof(" << model.ftype << "), cudaMemcpyDeviceToHost));" << endl;
 	}
-    }
+ }
   
-  
-    for (int i=0; i< model.postSynapseType.size(); i++){
+ for (int i= 0; i < model.synapseGrpN; i++) {
+ 	if (model.synapseType[i]>=MAXSYN){
+		unsigned int st= model.synapseType[i] - MAXSYN;
+		unsigned int src = model.synapseSource[i];
+		unsigned int trg = model.synapseTarget[i];
+		for (int k = 0, l = weightUpdateModels[st].varNames.size(); k < l; k++) {
+			size = model.neuronN[src] * model.neuronN[trg]; //! TODO This is for alltoall only 
+			os << "  CHECK_CUDA_ERRORS(cudaMemcpy(" <<  weightUpdateModels[st].varNames[k] << model.synapseName[i] <<", ";
+			os << "d_" << weightUpdateModels[st].varNames[k] << model.synapseName[i]<< ", ";
+			os << size << " * sizeof(" << weightUpdateModels[st].varTypes[k] << "), cudaMemcpyDeviceToHost));" << endl;
+		}
+	/*if ((model.usesPostLearning[i] == TRUE) && (model.synapseConnType[i] == SPARSE)) {
+	    //!TODO create post-to-pre matrices here
+	}*/
+   }  
+ }
+  for (int i=0; i< model.postSynapseType.size(); i++){
 	int pst= model.postSynapseType[i];
 	for (int k= 0, l= postSynModels[pst].varNames.size(); k < l; k++) {      
 	    os << "  CHECK_CUDA_ERRORS(cudaMemcpy(" << postSynModels[pst].varNames[k] << model.synapseName[i] << ", ";

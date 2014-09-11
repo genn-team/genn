@@ -18,7 +18,6 @@ RM= rm -f
 INCLUDE= -I$(GeNNPATH)/lib/include/numlib
 
 FLAGS= -Wall -Winline -O3
-#-O2 -march=athlon
 
 all: generate_run generate_run_1comp generate_run_PoissonIzh gen_input_fixfixfixno_struct gen_pnlhi_syns gen_kcdn_syns gen_pnkc_syns gen_pnkc_syns_indivID gen_syns_sparse generate_izhikevich_network_run gen_syns_sparse_izhModel
 
