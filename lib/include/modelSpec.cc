@@ -518,7 +518,6 @@ void NNmodel::addSynapsePopulation(const string name, /**<  The name of the syna
   }
   
   postSynIni.push_back(tmpPV);  
-  cout << double(syntype) << "< syntype : MAXSYN >" << double(MAXSYN) << endl;
   initDerivedSynapsePara(i);
   initDerivedPostSynapsePara(i);
   

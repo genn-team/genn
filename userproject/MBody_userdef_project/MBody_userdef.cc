@@ -53,7 +53,6 @@ float stdTM_ini[4]= {
   0.5961207                    // 3 - prob. for K channel activation n
 };
 
-
 float myPNKC_p[3]= {
   5.0,           // 0 - Erev: Reversal potential
   -20.0,         // 1 - Epre: Presynaptic threshold potential
@@ -193,7 +192,8 @@ float postSynV[0]={
 	};
 
 #include "../../userproject/include/sizes.h"
-
+//for sparse only
+float * gpPNKC = new float[_NAL*_NMB];
 //--------------------------------------------------------------------------
 /*! \brief This function defines the MBody1 model with user defined synapses. 
  */
@@ -209,7 +209,8 @@ void modelDefinition(NNmodel &model)
   nsynapse.varTypes.clear();
   nsynapse.pNames.clear();
   nsynapse.dpNames.clear();
-  nsynapse.simCode = tS("$(inSyn) += $(G); //try to see if it works\n \
+  nsynapse.simCode = tS("$(addtoinSyn) = $(G);\n \
+						$(updatelinsyn); \n \
   ");
 
   weightUpdateModels.push_back(nsynapse);
@@ -225,7 +226,8 @@ void modelDefinition(NNmodel &model)
   ngradsynapse.pNames.push_back(tS("Epre")); 
   ngradsynapse.pNames.push_back(tS("Vslope")); 
   ngradsynapse.dpNames.clear();
-  ngradsynapse.simCodeEvnt = tS("$(inSyn) += $(G)* tanh(float( $(preSpikeV) - ($(Epre)))*DT*2/$(Vslope)); //try to see if it works\n \
+  ngradsynapse.simCodeEvnt = tS("$(addtoinSyn) = $(G)* tanh(($(preSpikeV) - ($(Epre)))*DT*2/$(Vslope));\n \
+ 						$(updatelinsyn); \n \
   ");
 
   weightUpdateModels.push_back(ngradsynapse);
@@ -261,7 +263,8 @@ void modelDefinition(NNmodel &model)
   learn1synapse.dpNames.push_back(tS("off0"));
   learn1synapse.dpNames.push_back(tS("off1"));
   learn1synapse.dpNames.push_back(tS("off2"));
-  learn1synapse.simCode = tS("$(inSyn) += $(G); //try to see if it works\n \
+  learn1synapse.simCode = tS("$(addtoinSyn) = $(G);\n \
+					$(updatelinsyn); \n \
 					$(G) = $(gRaw); \n \
 					float dt = $(sTpost) - t - ($(tauShift)); \n \
 					float dg = 0;\n \
@@ -285,7 +288,7 @@ void modelDefinition(NNmodel &model)
 //d_grawp" << model.synapseName[i] << "[shSpk[j] * " << model.neuronN[trg] << " + " << localID << "] = lg;" << ENDL; \n \		
  
 
-float myKCDN_p_userdef[11]= {
+float myKCDN_userdef_p[11]= {
   -20.0,         // 0 1 - Epre: Presynaptic threshold potential
   25.0,          // 1 3 - TLRN: time scale of learning changes
   100.0,         // 2 4 - TCHNG: width of learning window
@@ -300,7 +303,8 @@ float myKCDN_p_userdef[11]= {
 };
 
   learn1synapse.dps = new pwSTDP;
-  learn1synapse.simCodeEvnt = tS("$(inSyn) += $(G)* tanh(float( $(preSpikeV) - ($(Epre)))*DT*2/$(Vslope)); //try to see if it works\n \
+  learn1synapse.simCodeEvnt = tS("$(addtoinSyn) = $(G)* tanh(float( $(preSpikeV) - ($(Epre)))*DT*2/$(Vslope)); //try to see if it works2\n \
+  						$(updatelinsyn); \n \
   ");
   learn1synapse.simLearnPost = tS("$(G) = $(gRaw); \n \
 						float dt = t - ($(sTpre)) - ($(tauShift)); \n \
@@ -330,8 +334,9 @@ float myKCDN_p_userdef[11]= {
   model.nSpkEvntThreshold[2]=-40;
   model.nSpkEvntThreshold[3]=-20;
   float init[0]={};
-  model.addSynapsePopulation("PNKC", NSYNAPSE_userdef, DENSE, INDIVIDUALG, NO_DELAY, EXPDECAY, "PN", "KC", init, myPNKC_p, postSynV,postExpPNKC);
-  model.addSynapsePopulation("PNLHI", NSYNAPSE_userdef, ALLTOALL, INDIVIDUALG, NO_DELAY, EXPDECAY, "PN", "LHI",  init, myPNLHI_p, postSynV, postExpPNLHI);
+  model.addSynapsePopulation("PNKC", NSYNAPSE_userdef, SPARSE, INDIVIDUALG, NO_DELAY, EXPDECAY, "PN", "KC", init, myPNKC_p, postSynV,postExpPNKC);
+	model.setMaxConn("PNKC", _NMB);  
+	model.addSynapsePopulation("PNLHI", NSYNAPSE_userdef, ALLTOALL, INDIVIDUALG, NO_DELAY, EXPDECAY, "PN", "LHI",  init, myPNLHI_p, postSynV, postExpPNLHI);
   
   float myLHIKC_userdef_p[2]= {
     -40.0,          // 1 - Epre: Presynaptic threshold potential
@@ -343,9 +348,11 @@ float myKCDN_p_userdef[11]= {
   model.usesSpikeEvents[2]=TRUE;
   model.usesTrueSpikes[2]=FALSE;
 
-  model.addSynapsePopulation("KCDN", LEARN1SYNAPSE_userdef, ALLTOALL, INDIVIDUALG, NO_DELAY, EXPDECAY, "KC", "DN",  init,  myKCDN_p_userdef, postSynV, postExpKCDN);
+  model.addSynapsePopulation("KCDN", LEARN1SYNAPSE_userdef, ALLTOALL, INDIVIDUALG, NO_DELAY, EXPDECAY, "KC", "DN",  init,  myKCDN_userdef_p, postSynV, postExpKCDN);
   model.usesPostLearning[3]=TRUE;
-
-  model.addSynapsePopulation("DNDN", NGRADSYNAPSE, ALLTOALL, GLOBALG, NO_DELAY, EXPDECAY, "DN", "DN",  init, myDNDN_p, postSynV, postExpDNDN);
+  model.usesSpikeEvents[3]=FALSE;
+  model.usesTrueSpikes[3]=TRUE;
+  
+  model.addSynapsePopulation("DNDN", NGRADSYNAPSE_userdef, ALLTOALL, GLOBALG, NO_DELAY, EXPDECAY, "DN", "DN",  init, myDNDN_p, postSynV, postExpDNDN);
   model.setSynapseG("DNDN", gDNDN);
 }

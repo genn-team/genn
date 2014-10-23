@@ -49,7 +49,7 @@ void genRunner(NNmodel &model, //!< Model description
     //initializing learning parameters to start
     model.initLearnGrps();  //Putting this here for the moment. Makes more sense to call it at the end of ModelDefinition, but this leaves the initialization to the user.
     
-    cerr << "entering genRunner" << endl;
+    cout << "entering genRunner" << endl;
     name= path + toString("/") + model.name + toString("_CODE/runner.cc");
     os.open(name.c_str());  
     writeHeader(os);
@@ -208,7 +208,7 @@ void genRunner(NNmodel &model, //!< Model description
     //os << "  " << model.ftype << " free_m,total_m;" << endl;
     //os << "  cudaMemGetInfo((size_t*)&free_m,(size_t*)&total_m);" << endl; //
     os << "  CHECK_CUDA_ERRORS(cudaSetDevice(" << theDev << "));" << endl;
-    cerr << "model.neuronGroupN " << model.neuronGrpN << endl;
+    cout << "model.neuronGroupN " << model.neuronGrpN << endl;
     os << "  size_t size;" << endl;
     for (int i= 0; i < model.neuronGrpN; i++) {
 	nt = model.neuronType[i];
@@ -399,14 +399,19 @@ void genRunner(NNmodel &model, //!< Model description
     os << "}" << endl;
 
     os << "void allocateAllDeviceSparseArrays() {" << endl;
-    for (int i = 0; i < model.synapseGrpN; i++) {
-	if (model.synapseConnType[i] == SPARSE) {
-	    if (model.synapseGType[i] != GLOBALG) os << "  CHECK_CUDA_ERRORS(cudaMalloc((void **) &d_gp" << model.synapseName[i]<< ", sizeof(" << model.ftype << ") * g" << model.synapseName[i] << ".connN));" << endl;
-	    os << "  CHECK_CUDA_ERRORS(cudaMalloc((void **) &d_gp" << model.synapseName[i]<< "_ind, sizeof(unsigned int) * g" << model.synapseName[i] << ".connN));" << endl;
-	    os << "  CHECK_CUDA_ERRORS(cudaMalloc((void **) &d_gp" << model.synapseName[i]<< "_indInG, sizeof(unsigned int) * ("<< model.neuronN[model.synapseSource[i]] <<" + 1)));" << endl;
-	    mem += model.neuronN[model.synapseSource[i]]*sizeof(unsigned int);     
-	    memremsparse = deviceProp[theDev].totalGlobalMem - float(mem);
-	}
+	for (int i = 0; i < model.synapseGrpN; i++) {
+		if (model.synapseConnType[i] == SPARSE) {
+			if (model.synapseGType[i] != GLOBALG) os << "  CHECK_CUDA_ERRORS(cudaMalloc((void **) &d_gp" << model.synapseName[i]<< ", sizeof(" << model.ftype << ") * g" << model.synapseName[i] << ".connN));" << endl;
+			os << "  CHECK_CUDA_ERRORS(cudaMalloc((void **) &d_gp" << model.synapseName[i]<< "_ind, sizeof(unsigned int) * g" << model.synapseName[i] << ".connN));" << endl;
+			os << "  CHECK_CUDA_ERRORS(cudaMalloc((void **) &d_gp" << model.synapseName[i]<< "_indInG, sizeof(unsigned int) * ("<< model.neuronN[model.synapseSource[i]] <<" + 1)));" << endl;
+			mem += model.neuronN[model.synapseSource[i]]*sizeof(unsigned int);     
+			memremsparse = deviceProp[theDev].totalGlobalMem - float(mem);
+			if (model.usesPostLearning[i]==TRUE) {
+				string learncode = weightUpdateModels[model.synapseType[i]-MAXSYN].simLearnPost;
+				cout << endl << "learn code is: " << endl << learncode << endl;			
+//				size_t found = learncode.find
+			}
+		}
     }
     os << "}" << endl; 
 
@@ -730,7 +735,7 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     unsigned int nt;
     ofstream os;
 
-    cerr << "entering GenRunnerGPU" << endl;
+    mos << "entering GenRunnerGPU" << endl;
     name= path + toString("/") + model.name + toString("_CODE/runnerGPU.cc");
     os.open(name.c_str());
 
@@ -930,7 +935,7 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 	    os << "  CHECK_CUDA_ERRORS(cudaMemcpy(devPtr, " << "sT" << model.neuronName[i] << ", ";
 	    size = model.neuronN[i] * theSize(model.ftype);
 	    os << size << ", cudaMemcpyHostToDevice));" << endl;
-	    cerr << "model.receivesInputCurrent[i]: " << model.receivesInputCurrent[i] << endl;
+	    cout << "model.receivesInputCurrent[i]: " << model.receivesInputCurrent[i] << endl;
 	}
   }
    

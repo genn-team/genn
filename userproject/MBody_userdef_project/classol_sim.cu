@@ -20,6 +20,7 @@
 
 
 #include "classol_sim.h"
+#include "sparseUtils.cc"
 
 //--------------------------------------------------------------------------
 /*! \brief This function is the entry point for running the simulation of the MBody1 model network.
@@ -69,6 +70,7 @@ int main(int argc, char *argv[])
   locust.read_pnkcsyns(f);
   fclose(f);
  
+
   fprintf(stdout, "# reading PN-LHI synapses ... \n");
   name= OutDir+ "/"+ toString(argv[1]) + toString(".pnlhi");
   f= fopen(name.c_str(), "r");
@@ -87,6 +89,12 @@ int main(int argc, char *argv[])
   fclose(f);
   locust.generate_baserates();
 
+  createSparseConnectivityFromDense(locust.model.neuronN[0],locust.model.neuronN[1],gpPNKC, &gPNKC, false);
+  cout << "connN is " << gPNKC.connN << endl; 
+  
+  allocateAllDeviceSparseArrays();
+  initializeAllSparseArrays();
+  
   if (which == GPU) {
     locust.allocate_device_mem_patterns();
   }
