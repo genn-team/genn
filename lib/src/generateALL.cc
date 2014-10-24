@@ -326,8 +326,9 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
     for (int device = devstart; device < devcount; device++) {
       smallModelCnt[device]= 0;
       for (int kernel= 0; kernel < 3; kernel++) {
-	cout << "smallModel[" << kernel << "][" << device << "]= " << smallModel[kernel][device] << endl;
-#endif
+        #ifdef BLOCKSZ_DEBUG	
+          cout << "smallModel[" << kernel << "][" << device << "]= " << smallModel[kernel][device] << endl;
+        #endif
 	if (smallModel[kernel][device]) {
 	  smallModelCnt[device]++;
 	}
