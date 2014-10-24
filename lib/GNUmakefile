@@ -51,7 +51,7 @@ $(OBJDIR)/generateALL.o: $(SRCDIR)/generateALL.cc $(OBJDIR)
 	$(CXX) $(CXXFLAGS) $(INCLUDE_FLAGS) $(SRCDIR)/generateALL.cc -o $(OBJDIR)/generateALL.o -c
 
 $(BINDIR)/generateALL: $(OBJDIR)/generateALL.o
-	$(CXX) $(CXXFLAGS) $(LINK_FLAGS) $(OBJDIR)/generateALL.o -o $(BINDIR)/generateALL
+	$(CXX) $(CXXFLAGS) $(OBJDIR)/generateALL.o -o $(BINDIR)/generateALL $(LINK_FLAGS) 
 
 .PHONY: debug
 debug: CXXFLAGS +=-g
