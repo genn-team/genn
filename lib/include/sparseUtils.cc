@@ -42,7 +42,7 @@ float getG(Conductance  * sparseStruct, int x, int y)
 /*---------------------------------------------------------------------
  Utility to generate the SPARSE connectivity structure from a simple all-to-all array
  ---------------------------------------------------------------------*/
-void createSparseConnectivityFromDense(int preN,int postN,float * tmp_gRNPN, Conductance  * sparseStruct, bool runTest) {
+void createSparseConnectivityFromDense(int preN,int postN,float * tmp_gRNPN, Conductance * sparseStruct, bool runTest) {
 
 	float asGoodAsZero = 0.0001f;//as far as we are concerned. Remember floating point errors.
 	sparseStruct->connN = countEntriesAbove(tmp_gRNPN, preN * postN, asGoodAsZero);
@@ -82,4 +82,49 @@ void createSparseConnectivityFromDense(int preN,int postN,float * tmp_gRNPN, Con
 }
 
 
+
+/*---------------------------------------------------------------------
+ Utility to generate the SPARSE array structure with post-to-pre arrangement from the original pre-to-post arrangement where postsynaptic feedback is necessary (learning etc)
+ ---------------------------------------------------------------------*/
+void createPosttoPreArray(int preN,int postN, Conductance * sparseStruct, Conductance * sparseStructPost) {
+  float * posttoprearray = new float[sparseStruct->connN];
+  vector<vector<unsigned int> > tempvectInd(postN); //temporary vector to keep indices
+  vector<vector<float> > tempvectG(postN); //temporary vector to keep conductance values
+	unsigned int glbcounter = 0;
+
+	sparseStructPost->connN=sparseStruct->connN;
+	for (int i = 0; i< preN; i++){ //i : index of presynaptic neuron
+		for (int j = 0; j < (sparseStruct->gIndInG[i+1]-sparseStruct->gIndInG[i]); j++){ //for every postsynaptic neuron c
+			tempvectInd[sparseStruct->gInd[sparseStruct->gIndInG[i]+j]].push_back(i); //sparseStruct->gInd[sparseStruct->gIndInG[i]+j]: index of postsynaptic neuron
+			tempvectG[sparseStruct->gInd[sparseStruct->gIndInG[i]+j]].push_back(sparseStruct->gp[sparseStruct->gIndInG[i]+j]);
+			glbcounter++;
+      //fprintf(stdout,"i:%d j:%d val pushed to G is:%f , sparseStruct->gIndInG[i]=%d\n", i, j, sparseStruct->gp[sparseStruct->gIndInG[i]+j],sparseStruct->gIndInG[i]);
+		}
+	}
+	fprintf(stdout,"that's it");
+  //which one makes more s?ense - probably the one on top
+  //float posttoprearray = new float[glbcounter];
+	unsigned int lcounter =0;
+
+	sparseStructPost->gIndInG[0]=0;
+	for (int k = 0; k < postN; k++){
+		sparseStructPost->gIndInG[k+1]=sparseStructPost->gIndInG[k]+tempvectInd[k].size();
+		for (int p = 0; p< tempvectInd[k].size(); p++){ //if k=0?
+			sparseStructPost->gInd[lcounter]=tempvectInd[k][p];
+			sparseStructPost->gp[lcounter]=tempvectG[k][p];
+			lcounter++;
+		}
+	}
+}
+
+
+
+//!!!!!find var to check if a string is used in a code (atm it is used to create post-to-pre arrays)
+void strsearch(string &s, const string trg)
+{
+  size_t found= s.find(trg);
+  if (found != string::npos) {
+    //createPosttoPreArray(var)...
+  }
+}
 #endif

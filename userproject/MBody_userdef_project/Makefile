@@ -11,7 +11,17 @@
 ##  
 ##--------------------------------------------------------------------------
 
-EXECUTABLE	=OneComp_sim.exe
-SOURCES		=OneComp_sim.cu
+ROOTDIR		:= .
+EXECUTABLE	:= classol_sim
+SOURCES		:= classol_sim.cu
 
-!include $(GENN_PATH)\userproject\include\makefile_common_win.mk
+INCLUDE_FLAGS	:= 
+LINK_FLAGS	:= 
+CCFLAGS		:= 
+NVCCFLAGS	:= 
+
+ifdef COMSPEC
+	include	$(GeNNPATH)/lib/include/makefile_common_cygwin.mk
+else
+	include	$(GeNNPATH)/lib/include/makefile_common.mk
+endif

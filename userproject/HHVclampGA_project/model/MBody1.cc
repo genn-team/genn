@@ -208,11 +208,11 @@ void modelDefinition(NNmodel &model)
   n.simCode= tS("   float Imem;\n\
     unsigned int mt;\n\
     double mdt= DT/25.0;\n\
-    __shared__ double shStepVG;
-    if (threadIdx.x == 0) shStepVG= d_stepVG;
-    __syncthreads();
+    __shared__ double shStepVG;\n\
+    if (threadIdx.x == 0) shStepVG= d_stepVG;\n\
+    __syncthreads();\n\
     for (mt=0; mt < 25; mt++) {\n\
-      Isyn= 1000.0*(shStepVG-$(V));
+      Isyn= 1000.0*(shStepVG-$(V));\n\
       Imem= -($(m)*$(m)*$(m)*$(h)*$(gNa)*($(V)-($(ENa)))+\n\
               $(n)*$(n)*$(n)*$(n)*$(gK)*($(V)-($(EK)))+\n\
               $(gl)*($(V)-($(El)))-Isyn);\n\

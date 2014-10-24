@@ -10,6 +10,6 @@
   </Dynamics>
   <EventReceivePort name="spike"/>
   <ImpulseSendPort name="g"/>
-  <Parameter dimension="nS" name="g"/>
+  <Parameter dimension="?" name="g"/>
  </ComponentClass>
 </SpineML>

@@ -7,6 +7,15 @@
 #exit on first error
 set -e
 
+# What OS are we?
+if [ $(uname) = 'Linux' ]; then
+    OS='Linux'
+elif [ $(uname) = 'Windows_NT' ] || [ $(uname) = 'MINGW32_NT-6.1' ]; then
+    OS='Windows'
+else
+    OS='OSX'
+fi
+
 echo ""
 echo "Converting SpineML to GeNN"
 echo "Alex Cope             2013"
@@ -17,6 +26,9 @@ xsltproc -o extra_neurons.h SpineML_2_GeNN_neurons.xsl model/experiment.xml
 echo "Done"
 echo "Creating extra_postsynapses.h file with new postsynapse components..."
 xsltproc -o extra_postsynapses.h SpineML_2_GeNN_postsynapses.xsl model/experiment.xml
+echo "Done"
+echo "Creating extra_weightupdates.h file with new weightupdate components..."
+xsltproc -o extra_weightupdates.h SpineML_2_GeNN_weightupdates.xsl model/experiment.xml
 echo "Done"
 echo "Creating model.cc file..."
 xsltproc -o model.cc SpineML_2_GeNN_model.xsl model/experiment.xml
@@ -34,7 +46,7 @@ error_exit "The system environment is not correctly configured"
 fi
 cp extra_neurons.h $GENN_PATH/lib/include/
 cp extra_postsynapses.h $GENN_PATH/lib/include/
-cp model.cc $GENN_PATH/userproject/model_project/model.cc
+cp extra_weightupdates.h $GeNNPATH/lib/include/
 cp sim.cu $GENN_PATH/userproject/model_project/sim.cu
 if cp model/*.bin $GENN_PATH/userproject/model_project/; then
 	echo "Copying binary data..."	
@@ -43,10 +55,19 @@ cd $GENN_PATH/userproject/model_project
 ../../lib/bin/buildmodel model $DBGMODE
 make clean
 make
+
+if [ $OS = 'Linux' ]; then
 if mv *.bin bin/linux/release/; then
 	echo "Moving binary data..."	
 fi
 cd bin/linux/release
+fi
+if [ $OS = 'OSX' ]; then
+if mv *.bin bin/darwin/release/; then
+	echo "Moving binary data..."	
+fi
+cd bin/darwin/release
+fi
 ./sim
 #rm *.bin
 echo "Done"

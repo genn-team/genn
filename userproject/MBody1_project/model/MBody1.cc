@@ -50,7 +50,7 @@ float myPOI_ini[4]= {
 // float myLHI_p[4]= {
 //   60.0,          // 0 - Vspike: spike Amplitude factor
 //   3.0,           // 1 - alpha: "steepness / size" parameter
-//   -2.468,        // 2 - y: "shift / excitation" parameter
+//   -2.468,        // 2 - y: "shi/home/esin/genn-SpineML/lib/include/modelSpec.cc:461:22:ft / excitation" parameter
 //   0.0165         // 3 - beta: input sensitivity
 // };
 
@@ -91,7 +91,7 @@ float stdTM_ini[4]= {
 
 
 float myPNKC_p[3]= {
-  0.0,           // 0 - Erev: Reversal potential
+  5.0,           // 0 - Erev: Reversal potential
   -20.0,         // 1 - Epre: Presynaptic threshold potential
   1.0            // 2 - tau_S: decay time constant for S [ms]
 };
@@ -184,11 +184,12 @@ void modelDefinition(NNmodel &model)
   model.addNeuronPopulation("LHI", _NLHI, TRAUBMILES, stdTM_p, stdTM_ini);
   model.addNeuronPopulation("DN", _NLB, TRAUBMILES, stdTM_p, stdTM_ini);
   
-  model.addSynapsePopulation("PNKC", NSYNAPSE, DENSE, INDIVIDUALG, NO_DELAY, EXPDECAY, "PN", "KC", myPNKC_p, postSynV,postExpPNKC);
-  model.addSynapsePopulation("PNLHI", NSYNAPSE, ALLTOALL, INDIVIDUALG, NO_DELAY, EXPDECAY, "PN", "LHI", myPNLHI_p, postSynV, postExpPNLHI);
-  model.addSynapsePopulation("LHIKC", NGRADSYNAPSE, ALLTOALL, GLOBALG, NO_DELAY, EXPDECAY, "LHI", "KC", myLHIKC_p, postSynV, postExpLHIKC);
+  float init[0]={};
+  model.addSynapsePopulation("PNKC", NSYNAPSE, DENSE, INDIVIDUALG, NO_DELAY, EXPDECAY, "PN", "KC", init, myPNKC_p, postSynV,postExpPNKC);
+  model.addSynapsePopulation("PNLHI", NSYNAPSE, ALLTOALL, INDIVIDUALG, NO_DELAY, EXPDECAY, "PN", "LHI",  init, myPNLHI_p, postSynV, postExpPNLHI);
+  model.addSynapsePopulation("LHIKC", NGRADSYNAPSE, ALLTOALL, GLOBALG, NO_DELAY, EXPDECAY, "LHI", "KC",  init, myLHIKC_p, postSynV, postExpLHIKC);
   model.setSynapseG("LHIKC", gLHIKC);
-  model.addSynapsePopulation("KCDN", LEARN1SYNAPSE, ALLTOALL, INDIVIDUALG, NO_DELAY, EXPDECAY, "KC", "DN", myKCDN_p, postSynV, postExpKCDN);
-  model.addSynapsePopulation("DNDN", NGRADSYNAPSE, ALLTOALL, GLOBALG, NO_DELAY, EXPDECAY, "DN", "DN", myDNDN_p, postSynV, postExpDNDN);
+  model.addSynapsePopulation("KCDN", LEARN1SYNAPSE, ALLTOALL, INDIVIDUALG, NO_DELAY, EXPDECAY, "KC", "DN",  init,  myKCDN_p, postSynV, postExpKCDN);
+  model.addSynapsePopulation("DNDN", NGRADSYNAPSE, ALLTOALL, GLOBALG, NO_DELAY, EXPDECAY, "DN", "DN",  init, myDNDN_p, postSynV, postExpDNDN);
   model.setSynapseG("DNDN", gDNDN);
 }

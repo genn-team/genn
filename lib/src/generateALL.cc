@@ -48,25 +48,25 @@ void generate_model_runner(NNmodel &model,  //!< Model description
 #endif
 
   // general shared code for GPU and CPU versions
-  genRunner(model, path, cerr);
+  genRunner(model, path, cout);
 
   // GPU specific code generation
-  genRunnerGPU(model, path, cerr);
+  genRunnerGPU(model, path, cout);
   
   // generate neuron kernels
-  genNeuronKernel(model, path, cerr);
+  genNeuronKernel(model, path, cout);
 
   // generate synapse and learning kernels
-  if (model.synapseGrpN > 0) genSynapseKernel(model, path, cerr);
+  if (model.synapseGrpN > 0) genSynapseKernel(model, path, cout);
 
   // CPU specific code generation
-  genRunnerCPU(model, path, cerr);
+  genRunnerCPU(model, path, cout);
 
   // Generate the equivalent of neuron kernel
-  genNeuronFunction(model, path, cerr);
+  genNeuronFunction(model, path, cout);
   
   // Generate the equivalent of synapse and learning kernel
-  if (model.synapseGrpN > 0) genSynapseFunction(model, path, cerr);
+  if (model.synapseGrpN > 0) genSynapseFunction(model, path, cout);
 }
 
 
@@ -171,7 +171,7 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
 #endif
 
       if (!nvccPipe) {
-	mos << "ERROR: failed to open nvcc pipe" << endl;
+	cerr << "ERROR: failed to open nvcc pipe" << endl;
 	exit(EXIT_FAILURE);
       }
 
@@ -233,16 +233,16 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
 	  for (int blkSz = 1, mx= deviceProp[device].maxThreadsPerBlock / warpSize; blkSz <= mx; blkSz++) {
 
 #ifdef BLOCKSZ_DEBUG
-	    cerr << "Candidate block size: " << blkSz * warpSize << endl;
+	    cout << "Candidate block size: " << blkSz*warpSize << endl;
 #endif
 	    // BLOCK LIMIT DUE TO THREADS
 	    blockLimit = floor((float) deviceProp[device].maxThreadsPerMultiProcessor/warpSize/blkSz);
 #ifdef BLOCKSZ_DEBUG
-	    cerr << "Block limit due to maxThreadsPerMultiProcessor: " << blockLimit << endl;
+	    cout << "Block limit due to maxThreadsPerMultiProcessor: " << blockLimit << endl;
 #endif
 	    if (blockLimit > maxBlocksPerSM) blockLimit = maxBlocksPerSM;
 #ifdef BLOCKSZ_DEBUG
-	    cerr << "Block limit corrected for maxBlocksPerSM: " << blockLimit << endl;
+	    cout << "Block limit corrected for maxBlocksPerSM: " << blockLimit << endl;
 #endif
 	    mainBlockLimit = blockLimit;
 
@@ -258,7 +258,7 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
 	      blockLimit = floor(blockLimit/blkSz);
 	    }
 #ifdef BLOCKSZ_DEBUG
-	    cerr << "Block limit due to registers (device major " << deviceProp[device].major << "): " << blockLimit << endl;
+	    cout << "Block limit due to registers (device major " << deviceProp[device].major << "): " << blockLimit << endl;
 #endif
 	    if (blockLimit < mainBlockLimit) mainBlockLimit= blockLimit;
 
@@ -266,7 +266,7 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
 	    blockLimit = ceil(reqSmem/smemAllocGran)*smemAllocGran;
 	    blockLimit = floor(deviceProp[device].sharedMemPerBlock/blockLimit);
 #ifdef BLOCKSZ_DEBUG
-	    cerr << "Block limit due to shared memory: " << blockLimit << endl;
+	    cout << "Block limit due to shared memory: " << blockLimit << endl;
 #endif
 	    if (blockLimit < mainBlockLimit) mainBlockLimit= blockLimit;
 
@@ -276,7 +276,7 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
 	      requiredBlocks+= ceil(((float) groupSize[kernel][group])/(blkSz*warpSize));
 	    }
 #ifdef BLOCKSZ_DEBUG
-	    cerr << "Required blocks (according to padded sum): " << requiredBlocks << endl;
+	    cout << "Required blocks (according to padded sum): " << requiredBlocks << endl;
 #endif
 
 	    // Use a small block size if it allows all groups to occupy the device concurrently
@@ -285,7 +285,7 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
 	      deviceOccupancy[kernel][device]= blkSz*mainBlockLimit*deviceProp[device].multiProcessorCount;
 	      smallModel[kernel][device] = 1;
 #ifdef BLOCKSZ_DEBUG
-	      cerr << "Small model situation detected; bestBlkSz: " << bestBlkSz[kernel][device] << endl;
+	      cout << "Small model situation detected; bestBlkSz: " << bestBlkSz[kernel][device] << endl;
 #endif
 	      break; // for small model the first (smallest) block size allowing it is chosen
 	    }
@@ -296,7 +296,7 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
 	      bestBlkSz[kernel][device] = (unsigned int) blkSz*warpSize; 
 	      deviceOccupancy[kernel][device]= newOccupancy;
 #ifdef BLOCKSZ_DEBUG
-	      cerr << "Small model not enabled; device occupancy criterion; deviceOccupancy " << deviceOccupancy[kernel][device] << "; blocksize for " << kernelName[kernel] << ": " << (unsigned int) blkSz * warpSize << endl;
+	      cout << "Small model not enabled; device occupancy criterion; deviceOccupancy " << deviceOccupancy[kernel][device] << "; blocksize for " << kernelName[kernel] << ": " << (unsigned int) blkSz * warpSize << endl;
 #endif
 	    }
 	  }
@@ -313,8 +313,8 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
     }
 
     if (!ptxInfoFound) {
-      mos << "ERROR: did not find any PTX info" << endl;
-      mos << "Fix any NVCC errors listed above" << endl;
+      cerr << "ERROR: did not find any PTX info" << endl;
+      cerr << "ensure nvcc is on your $PATH, and fix any NVCC errors listed above" << endl;
       exit(EXIT_FAILURE);
     }
 
@@ -326,8 +326,7 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
     for (int device = devstart; device < devcount; device++) {
       smallModelCnt[device]= 0;
       for (int kernel= 0; kernel < 3; kernel++) {
-#ifdef BLOCKSZ_DEBUG
-	cerr << "smallModel[" << kernel << "][" << device << "]= " << smallModel[kernel][device] << endl;
+	cout << "smallModel[" << kernel << "][" << device << "]= " << smallModel[kernel][device] << endl;
 #endif
 	if (smallModel[kernel][device]) {
 	  smallModelCnt[device]++;
@@ -339,7 +338,7 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
 	bestDeviceOccupancy= deviceOccupancy[2][device];
 	chosenDevice= device;
 #ifdef BLOCKSZ_DEBUG
-	cerr << "Choosing based on larger small model count;  bestSmallModelCnt: " <<  bestSmallModelCnt << endl;
+	cout << "Choosing based on larger small model count;  bestSmallModelCnt: " <<  bestSmallModelCnt << endl;
 #endif
       }
       else {
@@ -350,7 +349,7 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
 	    bestDeviceOccupancy= deviceOccupancy[2][device];
 	    chosenDevice= device;
 #ifdef BLOCKSZ_DEBUG
-	    cerr << "Choosing based on equal small model count but better device;  bestSmallModelCnt: " <<  bestSmallModelCnt << "; bestSmVersion: " << bestSmVersion << endl;
+	    cout << "Choosing based on equal small model count but better device;  bestSmallModelCnt: " <<  bestSmallModelCnt << "; bestSmVersion: " << bestSmVersion << endl;
 #endif
 	  }
 	}
@@ -361,7 +360,7 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
       for (int device = devstart; device < devcount; device++) {
 	if (deviceOccupancy[2][device] > bestDeviceOccupancy) {
 #ifdef BLOCKSZ_DEBUG
-	  cerr << "Choose device based on occupancy; device: " << device << "; bestDeviceOccupancy: " << 	deviceOccupancy[2][device] << endl;
+	  cout << "Choose device based on occupancy; device: " << device << "; bestDeviceOccupancy: " << 	deviceOccupancy[2][device] << endl;
 #endif	
 	  bestDeviceOccupancy = deviceOccupancy[2][device];
 	  chosenDevice= device;
@@ -394,8 +393,8 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
       CHECK_CUDA_ERRORS(cudaGetDeviceProperties(&(deviceProp[device]), device));
       globalMem = deviceProp[device].totalGlobalMem;
       if (globalMem >= mostGlobalMem) {
-	mostGlobalMem = globalMem;
-	chosenDevice = device;
+			mostGlobalMem = globalMem;
+			chosenDevice = device;
       }
     }
     mos << "Using device " << chosenDevice << ", which has " << mostGlobalMem << " bytes of global memory." << endl;
@@ -435,11 +434,11 @@ int main(int argc,     //!< number of arguments; expected to be 2
     cerr << "usage: generateALL <target dir>" << endl;
     exit(EXIT_FAILURE);
   }
-  cerr << "call was ";
+  cout << "call was ";
   for (int i= 0; i < argc; i++) {
-    cerr << argv[i] << " ";
+    cout << argv[i] << " ";
   }
-  cerr << endl;
+  cout << endl;
   
   synapseBlkSz = 256;
   learnBlkSz = 256;
@@ -450,7 +449,7 @@ int main(int argc,     //!< number of arguments; expected to be 2
   preparePostSynModels();
   modelDefinition(*model);
   string path= toString(argv[1]);
-  theDev = chooseDevice(cerr, model, path);
+  theDev = chooseDevice(cout, model, path);
   generate_model_runner(*model, path);
   
   return EXIT_SUCCESS;
