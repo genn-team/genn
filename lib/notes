@@ -3,3 +3,13 @@ in order to change between INDIVIDUALID and INDIVIDUALG connections, one needs t
 change the definition in the model definition (modelDefinition.cc)
 change/ add a global conductance to be set for INDIVIDUALID
 provide the right type of connectivity array, i.e., in the current hackky version load a float* from disk (INDIVIDUALG) or read a unsigned int* from disk (INDIVIDUALID) within map_classol (!).
+
+----
+notes on delay implementation (24-10-2014)
+- circular spike queues are defined for spike events (not true spikes)
+- there is a fixed number of delay slots (in time steps)
+
+
+for future Brian interface:
+- allow time delay queue granularity to differ from single time steps
+- could write preprocessing software to analyse delay distributions and define delayslots and time granularity of the delay slots automatically

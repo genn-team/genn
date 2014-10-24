@@ -72,11 +72,11 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 	os << "__device__ volatile unsigned int d_glbSpk" << model.neuronName[i] << "[" << model.neuronN[i] << "];" << ENDL;
 
 
-	if (model.neuronDelaySlots[i] == 1) {//i.e. no delay
+	if (model.neuronDelaySlots[i] == 1) {// no delays
 	    os << "__device__ volatile unsigned int d_glbSpkEvntCnt" << model.neuronName[i] << ";" << ENDL;
 	    os << "__device__ volatile unsigned int d_glbSpkEvnt" << model.neuronName[i] << "[" << model.neuronN[i] << "];" << ENDL;
 	}
-	else {
+	else { // with delays
 	    os << "__device__ volatile unsigned int d_spkEvntQuePtr" << model.neuronName[i] << ";" << ENDL;
 	    os << "__device__ volatile unsigned int d_glbSpkEvntCnt" << model.neuronName[i] << "[";
 	    os << model.neuronDelaySlots[i] << "];" << ENDL;
@@ -972,13 +972,13 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 	    os << "if (j == " << numOfBlocks - 1 << ")" << OB(210);
 	    for (int j = 0; j < model.neuronGrpN; j++) {
 		os << "d_glbscnt" << model.neuronName[j] << " = 0;" << ENDL;
-		if (model.neuronDelaySlots[j] != 1) {
+		if (model.neuronDelaySlots[j] != 1) { // with delays
 		    os << "d_spkEvntQuePtr" << model.neuronName[j] << " = (d_spkEvntQuePtr";
 		    os << model.neuronName[j] << " + 1) % " << model.neuronDelaySlots[j] << ";" << ENDL;
 		    os << "d_glbSpkEvntCnt" << model.neuronName[j] << "[d_spkEvntQuePtr";
 		    os << model.neuronName[j] << "] = 0;" << ENDL;
 		}
-		else {
+		else { // no delays
 		    os << "d_glbSpkEvntCnt" << model.neuronName[j] << " = 0;" << ENDL;
 		}
 	    }
@@ -1207,13 +1207,13 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 	    os << "if (j == " << numOfBlocks - 1 << ")" << OB(330);
 	    for (int j = 0; j < model.neuronGrpN; j++) {
 		os << "d_glbscnt" << model.neuronName[j] << " = 0;" << ENDL;
-		if (model.neuronDelaySlots[j] != 1) {
+		if (model.neuronDelaySlots[j] != 1) { // with delay
 		    os << "d_spkQuePtr" << model.neuronName[j] << " = (d_spkQuePtr";
 		    os << model.neuronName[j] << " + 1) % " << model.neuronDelaySlots[j] << ";" << ENDL;
 		    os << "d_glbSpkEvntCnt" << model.neuronName[j] << "[d_spkQuePtr";
 		    os << model.neuronName[j] << "] = 0;" << ENDL;
 		}
-		else {
+		else { // no delay
 		    os << "d_glbSpkEvntCnt" << model.neuronName[j] << " = 0;" << ENDL;
 		}
 	    }
