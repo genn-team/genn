@@ -359,7 +359,7 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 	    break;
 	}
     }
-    os << "int ipost, npost";
+    os << "unsigned int ipost, npost";
     if (model.needSynapseDelay) {
 	os << ", delaySlot";
     }

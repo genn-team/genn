@@ -636,14 +636,11 @@ void generate_process_presynaptic_events_code(
 	}
     }
     else { //not sparse
-		
-	/*if (model.synapseGType[i] == INDIVIDUALG){
-	  theLG = toString("lg");
-	  }*/
-	if (model.synapseType[i] < MAXSYN) {
-	    if (model.synapseGType[i] == INDIVIDUALG) os << "lg = d_gp" << model.synapseName[i] << "[shSpk" << postfix << "[j]*" << model.neuronN[trg] << " + " << localID << "];" << ENDL;		
-	}
-	else{
+
+	
+	if (model.synapseGType[i] == INDIVIDUALG) os << "lg = d_gp" << model.synapseName[i] << "[shSpk" << postfix << "[j]*" << model.neuronN[trg] << " + " << localID << "];" << ENDL;		
+	
+	if (model.synapseType[i] >= MAXSYN) {
 	    unsigned int synt = model.synapseType[i]-MAXSYN;
 	    string wCode;
 	    if (Evnt) {
@@ -678,6 +675,10 @@ void generate_process_presynaptic_events_code(
 	    string sTpre = tS("d_sT")+ model.neuronName[src] + tS("[") + localID +tS("]");
 	    substitute(wCode, tS("$(sTpre)"),sTpre);		    
 	    os << wCode;
+	    
+       if (model.usesPostLearning[i]==TRUE){ //!TODO check if this is correct. setting back the g valiue if learning 
+			os << "d_gp" << model.synapseName[i] << "[" << localID << " + " << model.neuronN[trg] << " * shSpk[j]] =" << theLG << ";" ;
+		}		
 	}
     }		
     os << ENDL;

@@ -355,4 +355,6 @@ float myKCDN_userdef_p[11]= {
   
   model.addSynapsePopulation("DNDN", NGRADSYNAPSE_userdef, ALLTOALL, GLOBALG, NO_DELAY, EXPDECAY, "DN", "DN",  init, myDNDN_p, postSynV, postExpDNDN);
   model.setSynapseG("DNDN", gDNDN);
+  model.usesSpikeEvents[4]=TRUE;
+  model.usesTrueSpikes[4]=FALSE;
 }
