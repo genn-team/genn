@@ -87,7 +87,7 @@ void modelDefinition(NNmodel &model)
   neuronPSize.push_back(0);
   neuronVSize.push_back(sizeof IzhInh_ini);
   
-  model.addSynapsePopulation("Exc_Exc", 4, SPARSE, INDIVIDUALG, NO_DELAY, IZHIKEVICH_PS, "PExc", "PExc", SynIzh_p, postSynV, postExpP); 
+  model.addSynapsePopulation("Exc_Exc", NSYNAPSE, SPARSE, INDIVIDUALG, NO_DELAY, IZHIKEVICH_PS, "PExc", "PExc", SynIzh_p, postSynV, postExpP); 
   //model.setSynapseG("Exc_Exc", gIzh1);
   synapsePSize.push_back(sizeof SynIzh_p);
   

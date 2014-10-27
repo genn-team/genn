@@ -527,12 +527,12 @@ void NNmodel::addSynapsePopulation(const string name, /**<  The name of the syna
   synapseHostID.push_back(0);
   
   //initialise synapse by default calues: no post learning, use true spikes but not events. Users can set these values manually later.
-  if (syntype==NGRADSYNAPSE) usesTrueSpikes.push_back(0); 
-  else usesTrueSpikes.push_back(1);  //use true spikes by default
-  if (syntype==NGRADSYNAPSE) usesSpikeEvents.push_back(1);
-  else usesSpikeEvents.push_back(0);
-  if (syntype==LEARN1SYNAPSE) usesPostLearning.push_back(1);
-  else usesPostLearning.push_back(0);
+  if (syntype==NGRADSYNAPSE) usesTrueSpikes.push_back(FALSE); 
+  else usesTrueSpikes.push_back(TRUE);  //use true spikes by default
+  if (syntype==NGRADSYNAPSE) usesSpikeEvents.push_back(TRUE);
+  else usesSpikeEvents.push_back(FALSE);
+  if (syntype==LEARN1SYNAPSE) usesPostLearning.push_back(TRUE);
+  else usesPostLearning.push_back(FALSE);
 }
 
 
