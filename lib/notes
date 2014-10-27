@@ -13,3 +13,21 @@ notes on delay implementation (24-10-2014)
 for future Brian interface:
 - allow time delay queue granularity to differ from single time steps
 - could write preprocessing software to analyse delay distributions and define delayslots and time granularity of the delay slots automatically
+
+-----
+Questions:
+- do we have one consistent mechanism for choosing a fixed device or doing autodevice detection?
+
+- what are the differential roles of a predefine "Epre" parameter and the explicit model.nSpkEvntThreshold[*] values? 
+
+GeNN synapse model scheme:
+- two model parts (that can be combined arbitrarily):
+1 postSynModel
+  postSyntoCurrent: Code to convert synaptic state variables (could also be just constants) into an input current to be added to a differential equation for V
+
+  postSynDecay: Code that is applied every time step to the summed input variable to a neuron (?)
+
+
+2 weightUpdateModel
+
+1

@@ -524,7 +524,7 @@ void generate_process_presynaptic_events_code(
 	os << "unsigned int gid = (shSpk" << postfix << "[j] * " << model.neuronN[trg];
 	os << " + " << localID << ");" << ENDL;
     }
-    if (model.neuronType[src] != POISSONNEURON) {
+    if ((Evnt) && (model.neuronType[src] != POISSONNEURON)) {
 	os << "if ";
 	if (model.synapseGType[i] == INDIVIDUALID) {
 	    // Note: we will just access global mem. For compute >= 1.2
@@ -622,7 +622,7 @@ void generate_process_presynaptic_events_code(
 
 
 	os << CB(140); // end if (id < npost)
-	if (model.neuronType[src] != POISSONNEURON) {
+	if ((Evnt) && (model.neuronType[src] != POISSONNEURON)) {
 	    os << CB(130) << ENDL; // end if (shSpkV" << postfix << "[j]>postthreshold)
 	}
 	else {
@@ -728,7 +728,7 @@ void generate_process_presynaptic_events_code(
 	}
     }
     if (model.synapseConnType[i] != SPARSE) {
-	if (model.neuronType[src] != POISSONNEURON) {
+	if ((Evnt) && (model.neuronType[src] != POISSONNEURON)) {
 	    os << CB(130) << ENDL; // end if (shSpkV" << postfix << "[j]>postthreshold)
 	}
 	else {
