@@ -849,7 +849,7 @@ void genSynapseKernel(NNmodel &model, //!< Model description
     
     //case-dependent variables
     for (int i = 0; i < model.synapseGrpN; i++) {
-	if ((model.synapseConnType[i] != SPARSE) || (isGrpVarNeeded[model.synapseTarget[i]] == 0) || (model.synapseType[i] >= MAXSYN)){
+	if ((model.synapseConnType[i] != SPARSE) || (isGrpVarNeeded[model.synapseTarget[i]] == 1) || (model.synapseType[i] >= MAXSYN)){
 	    os << model.ftype << " linSyn, lg;" << ENDL;
 	    break;
 	}
