@@ -131,6 +131,20 @@ float postExpDNDN[2]={
 float postSynV[0]={
 };
 
+float myKCDN_userdef_p[11]= {
+  -20.0,         // 0 1 - Epre: Presynaptic threshold potential
+  25.0,          // 1 3 - TLRN: time scale of learning changes
+  100.0,         // 2 4 - TCHNG: width of learning window
+  50000.0,       // 3 5 - TDECAY: time scale of synaptic strength decay
+  100000.0,      // 4 6 - TPUNISH10: Time window of suppression in response to 1/0
+  100.0,         // 5 7 - TPUNISH01: Time window of suppression in response to 0/1
+  0.06,          // 6 8 - GMAX: Maximal conductance achievable
+  0.03,          // 7 9 - GMID: Midpoint of sigmoid g filter curve
+  33.33,         // 8 10 - GSLOPE: slope of sigmoid g filter curve
+  10.0,          // 9 11 - TAUSHiFT: shift of learning curve
+  0.00006        // 10 12 - GSYN0: value of syn conductance g decays to
+};
+
   //define derived parameters for learn1synapse
   class pwSTDP : public dpclass  //!TODO This class definition may be code-generated in a future release
   {
@@ -209,8 +223,9 @@ void modelDefinition(NNmodel &model)
   nsynapse.varTypes.clear();
   nsynapse.pNames.clear();
   nsynapse.dpNames.clear();
-  nsynapse.simCode = tS("$(addtoinSyn) = $(G);\n \
-						$(updatelinsyn); \n \
+  // code for presynaptic spike:
+  nsynapse.simCode = tS("$(addtoinSyn) = $(G);\n \          
+			 $(updatelinsyn); \n	 \
   ");
 
   weightUpdateModels.push_back(nsynapse);
@@ -226,8 +241,9 @@ void modelDefinition(NNmodel &model)
   ngradsynapse.pNames.push_back(tS("Epre")); 
   ngradsynapse.pNames.push_back(tS("Vslope")); 
   ngradsynapse.dpNames.clear();
+  // code for presynaptic spike event (defined by Epre)
   ngradsynapse.simCodeEvnt = tS("$(addtoinSyn) = $(G)* tanh(($(preSpikeV) - ($(Epre)))*DT*2/$(Vslope));\n \
- 						$(updatelinsyn); \n \
+ 				 $(updatelinsyn); \n \
   ");
 
   weightUpdateModels.push_back(ngradsynapse);
@@ -263,6 +279,7 @@ void modelDefinition(NNmodel &model)
   learn1synapse.dpNames.push_back(tS("off0"));
   learn1synapse.dpNames.push_back(tS("off1"));
   learn1synapse.dpNames.push_back(tS("off2"));
+  // code for presynaptic spike
   learn1synapse.simCode = tS("$(addtoinSyn) = $(G);\n \
 					$(updatelinsyn); \n \
 					$(G) = $(gRaw); \n \
@@ -288,24 +305,12 @@ void modelDefinition(NNmodel &model)
 //d_grawp" << model.synapseName[i] << "[shSpk[j] * " << model.neuronN[trg] << " + " << localID << "] = lg;" << ENDL; \n \		
  
 
-float myKCDN_userdef_p[11]= {
-  -20.0,         // 0 1 - Epre: Presynaptic threshold potential
-  25.0,          // 1 3 - TLRN: time scale of learning changes
-  100.0,         // 2 4 - TCHNG: width of learning window
-  50000.0,       // 3 5 - TDECAY: time scale of synaptic strength decay
-  100000.0,      // 4 6 - TPUNISH10: Time window of suppression in response to 1/0
-  100.0,         // 5 7 - TPUNISH01: Time window of suppression in response to 0/1
-  0.06,          // 6 8 - GMAX: Maximal conductance achievable
-  0.03,          // 7 9 - GMID: Midpoint of sigmoid g filter curve
-  33.33,         // 8 10 - GSLOPE: slope of sigmoid g filter curve
-  10.0,          // 9 11 - TAUSHiFT: shift of learning curve
-  0.00006        // 10 12 - GSYN0: value of syn conductance g decays to
-};
-
   learn1synapse.dps = new pwSTDP;
+  // code for spike type events (defined by Epre)
   learn1synapse.simCodeEvnt = tS("$(addtoinSyn) = $(G)* tanh(float( $(preSpikeV) - ($(Epre)))*DT*2/$(Vslope)); //try to see if it works2\n \
-  						$(updatelinsyn); \n \
+  				 $(updatelinsyn); \n \
   ");
+  // code for post-synaptic spike event
   learn1synapse.simLearnPost = tS("$(G) = $(gRaw); \n \
 						float dt = t - ($(sTpre)) - ($(tauShift)); \n \
 						float dg =0; \n \

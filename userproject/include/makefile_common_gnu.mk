@@ -26,12 +26,15 @@ DARWIN  	:=$(strip $(findstring DARWIN, $(OS_UPPER)))
 CUDA_PATH	?=/usr/local/cuda
 NVCC		:=$(CUDA_PATH)/bin/nvcc
 NVCCFLAGS	+=
-CXXFLAGS	+=
+CXXFLAGS	+= 
+ifeq ($(DARWIN),DARWIN)
+   CXX		= clang++
+endif
 
 # Global include flags and link flags.
 INCLUDE_FLAGS	+=-I$(CUDA_PATH)/include -I$(GENN_PATH)/lib/include -I$(GENN_PATH)/userproject/include
 ifeq ($(DARWIN),DARWIN)
-  LINK_FLAGS	+=-Xlinker -L$(CUDA_PATH)/lib -lcudart -lstdc++ -lc++
+  LINK_FLAGS	+=-L$(CUDA_PATH)/lib -lcudart -stdlib=libstdc++ -lstdc++
 else
   ifeq ($(OS_SIZE),32)
     LINK_FLAGS	+=-L$(CUDA_PATH)/lib -lcudart 
@@ -61,7 +64,7 @@ all: release
 	$(NVCC) $(NVCCFLAGS) $(INCLUDE_FLAGS) $(GENCODE_FLAGS) $< -o $@ -c
 
 $(EXECUTABLE): $(OBJECTS)
-	$(CXX) $(CXXFLAGS) $(OBJECTS) -o $@ $(LINK_FLAGS)
+	$(CXX) -v $(CXXFLAGS) $(OBJECTS) -o $@ $(LINK_FLAGS)
 
 .PHONY: release
 release: CXXFLAGS +=-O3 -ffast-math
