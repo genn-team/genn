@@ -927,19 +927,21 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 
 	    os << CB(80);
 	}
-	os << "lscntEvnt = d_glbSpkEvntCnt" << model.neuronName[src];
-	if (model.neuronDelaySlots[src] != 1) {
+	if (model.usesSpikeEvents[i] == TRUE){
+	  os << "lscntEvnt = d_glbSpkEvntCnt" << model.neuronName[src];
+	  if (model.neuronDelaySlots[src] != 1) {
 	    os << "[delaySlot]";
+	  }
+	  os << ";" << ENDL;
+	  os << "numSpikeSubsetsEvnt = (unsigned int) (ceilf((float) lscntEvnt / " << "((float)BLOCKSZ_SYN)" << "));" << ENDL;
+  }
+  
+  if (model.usesTrueSpikes[i] == TRUE || model.usesPostLearning[i] == TRUE){
+	  os << "lscnt = d_glbscnt" << model.neuronName[src];
+	  if (model.neuronDelaySlots[src] != 1) os << "[d_spkQuePtr" << model.neuronName[src] << "]";
+	  os << ";" << ENDL;
+	  os << "numSpikeSubsets = (unsigned int) (ceilf((float) lscnt / " << "((float)BLOCKSZ_SYN)" << "));" << ENDL;
 	}
-	os << ";" << ENDL;
-	os << "numSpikeSubsetsEvnt = (unsigned int) (ceilf((float) lscntEvnt / " << "((float)BLOCKSZ_SYN)" << "));" << ENDL;
-
-	os << "lscnt = d_glbscnt" << model.neuronName[src];
-	if (model.neuronDelaySlots[src] != 1) os << "[d_spkQuePtr" << model.neuronName[src] << "]";
-	os << ";" << ENDL;
-
-	os << "numSpikeSubsets = (unsigned int) (ceilf((float) lscnt / " << "((float)BLOCKSZ_SYN)" << "));" << ENDL;
-	
 	//set theLG	
 	if ((model.synapseGType[i] == GLOBALG) || (model.synapseGType[i] == INDIVIDUALID)) {
 	    theLG = toString(model.g0[i]);
