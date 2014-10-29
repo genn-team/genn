@@ -385,7 +385,7 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 		float Epre = 0;
 		if (model.synapseType[synID]< MAXSYN) Epre = model.synapsePara[synID][1];
 		else{
-		    unsigned int synt = model.synapseType[i]-MAXSYN;
+		    unsigned int synt = model.synapseType[synID]-MAXSYN;
 		    for (int k = 0, l = weightUpdateModels[synt].pNames.size(); k < l; k++) {
 		   	if (weightUpdateModels[synt].pNames[k] == "Epre") {
 			    Epre = model.synapsePara[synID][k];
@@ -413,8 +413,8 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 		}
   		
   		/*if (model.synapseGType[synID] == INDIVIDUALG){
-   		//if sparse, defined below as os << "lg = d_gp" << model.synapseName[i] << "[d_gp" << model.synapseName[i] << "_indInG[shSpk[j]] + "<< localID << "];" << ENDL;
-   		//else, os << "lg = d_gp" << model.synapseName[i] << "[shSpkEvnt[j]*" << model.neuronN[trg] << " + " << localID << "];" << ENDL;	 
+   		//if sparse, defined below as os << "lg = d_gp" << model.synapseName[synID] << "[d_gp" << model.synapseName[synID] << "_indInG[shSpk[j]] + "<< localID << "];" << ENDL;
+   		//else, os << "lg = d_gp" << model.synapseName[synID] << "[shSpkEvnt[j]*" << model.neuronN[trg] << " + " << localID << "];" << ENDL;	 
    		theLG = toString("lg");//!!! check
   		}*/
   		
