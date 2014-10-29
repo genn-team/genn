@@ -633,8 +633,10 @@ void generate_process_presynaptic_events_code(
 
 	if (isGrpVarNeeded[model.synapseTarget[i]] == 0) {	
 	    os << "__syncthreads();" << ENDL;
+	    os << "if (threadIdx.x < " << neuronBlkSz << ")" << OB(136);
 	    os << "linSyn += shLg[" << localID << "];" << ENDL;
 	    os << "shLg[" << localID << "] = 0;" << ENDL;
+	    os << CB(136) << ENDL;
 	    os << "__syncthreads();" << ENDL;
 	}
     }

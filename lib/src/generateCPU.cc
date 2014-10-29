@@ -383,12 +383,12 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 	    
 		os << "//synapse group " << model.synapseName[synID] << ENDL;
 		float Epre = 0;
-		if (model.synapseType[i]< MAXSYN) Epre = model.synapsePara[i][1];
+		if (model.synapseType[synID]< MAXSYN) Epre = model.synapsePara[synID][1];
 		else{
 		    unsigned int synt = model.synapseType[i]-MAXSYN;
 		    for (int k = 0, l = weightUpdateModels[synt].pNames.size(); k < l; k++) {
 		   	if (weightUpdateModels[synt].pNames[k] == "Epre") {
-			    Epre = model.synapsePara[i][k];
+			    Epre = model.synapsePara[synID][k];
 			    break;
 	    		}
 	    		if (k==l-1) mos << "!!! WARNING: You did not provide a synapse parameter named Epre. Presynaptic threshold potential is set to 0" << ENDL;
