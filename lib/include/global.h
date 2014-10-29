@@ -36,7 +36,7 @@ using namespace std; // replaced these two lines : problem with visual studio
 
 
 
-// THESE WILL BE REPLACED BY VARIABLES BELOW SOON!!!!!!!
+// THESE WILL BE REPLACED BY VARIABLES BELOW SOON IF optimiseBlockSize == 1. THEIR INITIAL VALUES ARE SET IN generateAll.cc
 int neuronBlkSz;
 int synapseBlkSz;
 int learnBlkSz;

@@ -77,6 +77,7 @@ float *postSynV = NULL;
 
 void modelDefinition(NNmodel &model) 
 {
+  //model.setGPUDevice(0); //force using device 0
   model.setName("Izh_sparse");
   model.addNeuronPopulation("PExc", _NExc, IZHIKEVICH_V, excIzh_p, IzhExc_ini);
   neuronPSize.push_back(0);

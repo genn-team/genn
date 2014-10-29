@@ -633,6 +633,9 @@ void generate_process_presynaptic_events_code(
 
 	if (isGrpVarNeeded[model.synapseTarget[i]] == 0) {	
 	    os << "__syncthreads();" << ENDL;
+	    os << "linSyn += shLg[" << localID << "];" << ENDL;
+	    os << "shLg[" << localID << "] = 0;" << ENDL;
+	    os << "__syncthreads();" << ENDL;
 	}
     }
     else { //not sparse
@@ -793,45 +796,44 @@ void genSynapseKernel(NNmodel &model, //!< Model description
     unsigned int src;
     os << "__global__ void calcSynapses(" << ENDL;
     for (int i = 0; i < model.synapseGrpN; i++) {
-	if (model.synapseGType[i] == INDIVIDUALG) {
-	    os << " " << model.ftype << " * d_gp" << model.synapseName[i] << "," << ENDL;
-	}
-	if (model.synapseConnType[i] == SPARSE){
-	    os << "unsigned int * d_gp" << model.synapseName[i] << "_ind," << ENDL;
-	    os << "unsigned int * d_gp" << model.synapseName[i] << "_indInG," << ENDL;
-	    trgN = model.neuronN[model.synapseTarget[i]];
-	}
-	if (model.synapseGType[i] == (INDIVIDUALID )) {
-	    os << "unsigned int *d_gp" << model.synapseName[i] << "," << ENDL;
-	}
-	if (model.synapseType[i] == LEARN1SYNAPSE) {
-	    os << model.ftype << " * d_grawp" << model.synapseName[i] << "," << ENDL;
-	}
+	    if (model.synapseGType[i] == INDIVIDUALG) {
+	      os << " " << model.ftype << " * d_gp" << model.synapseName[i] << "," << ENDL;
+	    }
+	    if (model.synapseConnType[i] == SPARSE){
+	      os << "unsigned int * d_gp" << model.synapseName[i] << "_ind," << ENDL;
+	      os << "unsigned int * d_gp" << model.synapseName[i] << "_indInG," << ENDL;
+	      trgN = model.neuronN[model.synapseTarget[i]];
+	    }
+	    if (model.synapseGType[i] == (INDIVIDUALID )) {
+	      os << "unsigned int *d_gp" << model.synapseName[i] << "," << ENDL;
+	    }
+	    if (model.synapseType[i] == LEARN1SYNAPSE) {
+	      os << model.ftype << " * d_grawp" << model.synapseName[i] << "," << ENDL;
+	    }
     }
     for (int i = 0; i < model.neuronGrpN; i++) {
-	nt = model.neuronType[i];
-	os << nModels[nt].varTypes[0] << " *d_" << nModels[nt].varNames[0] << model.neuronName[i]; // Vm
-	if (i < (model.neuronGrpN - 1)) 
-	    os << "," << ENDL;
+	    nt = model.neuronType[i];
+	    os << nModels[nt].varTypes[0] << " *d_" << nModels[nt].varNames[0] << model.neuronName[i]; // Vm
+	    if (i < (model.neuronGrpN - 1)) 
+	      os << "," << ENDL;
     }
-	
-	
+    	
     for (int i=0; i< model.synapseName.size(); i++){
-	int st= model.synapseType[i];
-	if (st >= MAXSYN){
-	    for (int k= 0, l= weightUpdateModels[st-MAXSYN].varNames.size(); k < l; k++) {
-		os << ", " << weightUpdateModels[st-MAXSYN].varTypes[k] << " *d_" << weightUpdateModels[st-MAXSYN].varNames[k];
-		os << model.synapseName[i];
-	    }
-	    for (int k= 0, l= weightUpdateModels[st-MAXSYN].extraGlobalSynapseKernelParameters.size(); k < l; k++) {
-		os << ", " << weightUpdateModels[st-MAXSYN].extraGlobalSynapseKernelParameterTypes[k] << " " << weightUpdateModels[st-MAXSYN].extraGlobalSynapseKernelParameters[k];
-		os << model.synapseName[i];
-	    }
-	}	
+	    int st= model.synapseType[i];
+	    if (st >= MAXSYN){
+	      for (int k= 0, l= weightUpdateModels[st-MAXSYN].varNames.size(); k < l; k++) {
+		      os << ", " << weightUpdateModels[st-MAXSYN].varTypes[k] << " *d_" << weightUpdateModels[st-MAXSYN].varNames[k];
+		      os << model.synapseName[i];
+	      }
+	      for (int k= 0, l= weightUpdateModels[st-MAXSYN].extraGlobalSynapseKernelParameters.size(); k < l; k++) {
+		      os << ", " << weightUpdateModels[st-MAXSYN].extraGlobalSynapseKernelParameterTypes[k] << " " << weightUpdateModels[st-MAXSYN].extraGlobalSynapseKernelParameters[k];
+		      os << model.synapseName[i];
+	      }
+	    }	
     }
 	
     if (model.needSt) {
-	os << ", " << model.ftype << " t";
+	    os << ", " << model.ftype << " t";
     }
     os << ENDL << ")";
     os << ENDL;
@@ -841,40 +843,47 @@ void genSynapseKernel(NNmodel &model, //!< Model description
     
     //common variables for all cases
     os << "unsigned int id = " << "BLOCKSZ_SYN" << " * blockIdx.x + threadIdx.x;" << ENDL;
-    os << "__shared__ unsigned int shSpkEvnt[" << "BLOCKSZ_SYN" << "];" << ENDL;
-    os << "__shared__ " << model.ftype << " shSpkVEvnt[" << "BLOCKSZ_SYN" << "];" << ENDL;
     os << "volatile __shared__ " << model.ftype << " shLg[" << neuronBlkSz << "];" << ENDL;
-    os << "unsigned int lscntEvnt, numSpikeSubsetsEvnt, lmax, j, r;" << ENDL;
+    os << "unsigned int lmax, j, r;" << ENDL;
     
     
     //case-dependent variables
     for (int i = 0; i < model.synapseGrpN; i++) {
-	if ((model.synapseConnType[i] != SPARSE) || (isGrpVarNeeded[model.synapseTarget[i]] == 1) || (model.synapseType[i] >= MAXSYN)){
+	  //if ((model.synapseConnType[i] != SPARSE) || (isGrpVarNeeded[model.synapseTarget[i]] == 1) || (model.synapseType[i] >= MAXSYN)){
 	    os << model.ftype << " linSyn, lg;" << ENDL;
 	    break;
-	}
+	  //}
     }
     for (int i = 0; i < model.synapseGrpN; i++) {  
-	if (model.synapseConnType[i] == SPARSE){
-	    os << "unsigned int  ipost, npost; " << ENDL;		
-	    os << "ipost = 0;" << ENDL;
-	    break; 
-	}    
+	    if (model.synapseConnType[i] == SPARSE){
+	      os << "unsigned int  ipost, npost; " << ENDL;		
+	      os << "ipost = 0;" << ENDL;
+	      break; 
+	    }    
     }  
 
     for (int i = 0; i < model.synapseGrpN; i++) {  
-	if (model.synapseType[i]>= MAXSYN){
-	    os << model.ftype << " addtoinSyn;" << ENDL;  
-	    break;
-	}
+	    if (model.synapseType[i]>= MAXSYN){
+	      os << model.ftype << " addtoinSyn;" << ENDL;  
+	      break;
+	    }
     }
     for (int i = 0; i < model.synapseGrpN; i++) {
-	if (model.usesTrueSpikes[i] == TRUE || model.usesPostLearning[i] == TRUE) {  
-	    os << "__shared__ unsigned int shSpk[" << "BLOCKSZ_SYN" << "];" << ENDL;
-	    os << "__shared__ " << model.ftype << " shSpkV[" << "BLOCKSZ_SYN" << "];" << ENDL;
-	    os << "unsigned int lscnt, numSpikeSubsets;" << ENDL;
-	    break;
-	}
+	    if (model.usesTrueSpikes[i] == TRUE || model.usesPostLearning[i] == TRUE) {  
+	      os << "__shared__ unsigned int shSpk[" << "BLOCKSZ_SYN" << "];" << ENDL;
+	      os << "__shared__ " << model.ftype << " shSpkV[" << "BLOCKSZ_SYN" << "];" << ENDL;
+	      os << "unsigned int lscnt, numSpikeSubsets;" << ENDL;
+	      break;
+	    }
+    }
+    
+    for (int i = 0; i < model.synapseGrpN; i++) {
+      if(model.usesSpikeEvents[i] == TRUE ){
+        os << "__shared__ unsigned int shSpkEvnt[" << "BLOCKSZ_SYN" << "];" << ENDL;
+        os << "__shared__ " << model.ftype << " shSpkVEvnt[" << "BLOCKSZ_SYN" << "];" << ENDL; 
+        os << "unsigned int lscntEvnt, numSpikeSubsetsEvnt;" << ENDL;    
+        break;
+      }
     }
     if (model.needSynapseDelay == 1) {
 	os << "int delaySlot;" << ENDL;
