@@ -40,6 +40,27 @@ float getG(Conductance  * sparseStruct, int x, int y)
 }
 
 /*---------------------------------------------------------------------
+Setting the values of SPARSE connectivity matrix
+----------------------------------------------------------------------*/
+void setSparseConnectivityFromDense(int preN,int postN,float * tmp_gRNPN, Conductance * sparseStruct){
+  int synapse = 0;
+	sparseStruct->gIndInG[0] = 0; //first neuron always gets first synapse listed.
+  float asGoodAsZero = 0.0001f;//as far as we are concerned. Remember floating point errors.
+	
+	for (int pre = 0; pre < preN; ++pre) {
+		for (int post = 0; post < postN; ++post) {
+			float g = tmp_gRNPN[pre * postN + post];
+			if (g > asGoodAsZero) {
+				sparseStruct->gInd[synapse] = post;
+				sparseStruct->gp[synapse] = g;
+				synapse ++;
+			}
+		}
+		sparseStruct->gIndInG[pre + 1] = synapse; //write start of next group
+	}
+}
+
+/*---------------------------------------------------------------------
  Utility to generate the SPARSE connectivity structure from a simple all-to-all array
  ---------------------------------------------------------------------*/
 void createSparseConnectivityFromDense(int preN,int postN,float * tmp_gRNPN, Conductance * sparseStruct, bool runTest) {

@@ -311,19 +311,14 @@ void genRunner(NNmodel &model, //!< Model description
     
 	int st= model.synapseType[i];
 
-	if (st >= MAXSYN){
-	    os << "size = ";
-	    if (model.synapseConnType[i] != SPARSE){
-		os << model.neuronN[model.synapseSource[i]]*model.neuronN[model.synapseTarget[i]] << ";" << ENDL;
-	    }
-	    else{ 
-		os << "g" << model.synapseName[i] << ".connN;" << ENDL;
-	    }
-	    for (int k= 0, l= weightUpdateModels[st-MAXSYN].varNames.size(); k < l; k++) {
-		os  << weightUpdateModels[st-MAXSYN].varNames[k];
-		os << model.synapseName[i]<< "= new " << weightUpdateModels[st-MAXSYN].varTypes[k] << "[size];" << ENDL;
-	    }
-	}
+	if ((st >= MAXSYN) && (model.synapseConnType[i] != SPARSE)){
+	  os << "size = " << model.neuronN[model.synapseSource[i]]*model.neuronN[model.synapseTarget[i]] << ";" << ENDL;
+	    
+	  for (int k= 0, l= weightUpdateModels[st-MAXSYN].varNames.size(); k < l; k++) {
+		  os  << weightUpdateModels[st-MAXSYN].varNames[k];
+		  os << model.synapseName[i]<< "= new " << weightUpdateModels[st-MAXSYN].varTypes[k] << "[size];" << ENDL;
+    } 
+  }
 	  
 	if (model.synapseGType[i] == INDIVIDUALG) {
 	    if (model.synapseConnType[i]!=SPARSE){
@@ -352,27 +347,32 @@ void genRunner(NNmodel &model, //!< Model description
 	    mem += size;
 	}
     
-	st= model.synapseType[i];
-	if (st >= MAXSYN){
-	    for (int k= 0, l= weightUpdateModels[st-MAXSYN].varNames.size(); k < l; k++) {
-		os << "CHECK_CUDA_ERRORS(cudaMalloc((void **)&d_" << weightUpdateModels[st-MAXSYN].varNames[k] << model.synapseName[i] << ", sizeof("  << weightUpdateModels[st-MAXSYN].varTypes[k] << ")*" << model.neuronN[model.synapseSource[i]] << "*" << model.neuronN[model.synapseTarget[i]] << "));" << endl; 
-	    }
+	//allocate user-defined weight model variables
+
+	st= model.synapseType[i];	
+	if ((st >= MAXSYN) && (model.synapseConnType[i] != SPARSE)) { //if they are sparse, allocate later in the allocatesparsearrays function when we know the size of the network
+	  os << "size = " << model.neuronN[model.synapseSource[i]]*model.neuronN[model.synapseTarget[i]] << ";" << ENDL;
+	   
+	  for (int k= 0, l= weightUpdateModels[st-MAXSYN].varNames.size(); k < l; k++) {
+		  os << "CHECK_CUDA_ERRORS(cudaMalloc((void **)&d_" << weightUpdateModels[st-MAXSYN].varNames[k] << model.synapseName[i] << ", sizeof("  << weightUpdateModels[st-MAXSYN].varTypes[k] << ")*size));" << endl; 
+	  }
 	}
     
     
 	os << endl;
     
-    }  
+  }  
   
+    //allocate postsynapse variables 
     for (int i=0; i< model.postSynapseType.size(); i++){
-	int pst= model.postSynapseType[i];
-	for (int k= 0, l= postSynModels[pst].varNames.size(); k < l; k++) {
-	    os << "  " << postSynModels[pst].varNames[k] << model.synapseName[i] << " = new " << postSynModels[pst].varTypes[k] << "[" << (model.neuronN[model.synapseTarget[i]]) <<  "];" << endl;
+	    int pst= model.postSynapseType[i];
+	    for (int k= 0, l= postSynModels[pst].varNames.size(); k < l; k++) {
+	      os << "  " << postSynModels[pst].varNames[k] << model.synapseName[i] << " = new " << postSynModels[pst].varTypes[k] << "[" << (model.neuronN[model.synapseTarget[i]]) <<  "];" << endl;
             
-	    //allocate device neuron variables
-	    os << "  size = sizeof(" << postSynModels[pst].varTypes[k] << ") * "<< model.neuronN[model.synapseTarget[i]] << ";" << endl;
-	    os << "  CHECK_CUDA_ERRORS(cudaMalloc((void **)&d_" << postSynModels[pst].varNames[k] << model.synapseName[i] << ", size));" << endl;      
-	}
+	      //allocate device variables
+	      os << "  size = sizeof(" << postSynModels[pst].varTypes[k] << ") * "<< model.neuronN[model.synapseTarget[i]] << ";" << endl;
+	      os << "  CHECK_CUDA_ERRORS(cudaMalloc((void **)&d_" << postSynModels[pst].varNames[k] << model.synapseName[i] << ", size));" << endl;      
+	    }
     }
    
     os << endl; 
@@ -402,20 +402,41 @@ void genRunner(NNmodel &model, //!< Model description
 
     os << "void allocateAllHostSparseArrays() {" << endl;
     for (int i = 0; i < model.synapseGrpN; i++) {
-	if (model.synapseConnType[i] == SPARSE) {
-	    os << "  allocateSparseArray(&g" << model.synapseName[i] << ", ";
-	    os << model.neuronN[model.synapseSource[i]] << ",";
-	    if (model.synapseGType[i] == GLOBALG) {
-		os << " true);	//globalG" << endl; 
-	    }
-	    else{
-		os << " false);	//individual G" << endl;				
-	    }
-    	}
+		  if ((model.synapseConnType[i] == SPARSE) && (model.synapseType[i] >= MAXSYN)) {
+        os << "size_t size;" << endl;
+        break;
+      }
+    }
+    	
+    for (int i = 0; i < model.synapseGrpN; i++) {
+	    if (model.synapseConnType[i] == SPARSE) {
+	      os << "  allocateSparseArray(&g" << model.synapseName[i] << ", ";
+	      os << model.neuronN[model.synapseSource[i]] << ",";
+	      if (model.synapseGType[i] == GLOBALG) {
+		      os << " true);	//globalG" << endl; 
+	      }
+	      else{
+		      os << " false);	//individual G" << endl;				
+	      }
+	      int st= model.synapseType[i];
+			  if (st >= MAXSYN){
+			    os << "size = g" << model.synapseName[i] << ".connN;" << ENDL;
+			    for (int k= 0, l= weightUpdateModels[st-MAXSYN].varNames.size(); k < l; k++) {
+		        os  << weightUpdateModels[st-MAXSYN].varNames[k];
+		        os << model.synapseName[i]<< "= new " << weightUpdateModels[st-MAXSYN].varTypes[k] << "[size];" << ENDL;
+	        }
+			  }
+      }
     }
     os << "}" << endl;
 
-    os << "void allocateAllDeviceSparseArrays() {" << endl;
+  os << "void allocateAllDeviceSparseArrays() {" << endl;
+  for (int i = 0; i < model.synapseGrpN; i++) {
+		if ((model.synapseConnType[i] == SPARSE) && (model.synapseType[i] >= MAXSYN)) {
+      os << "size_t size;" << endl;
+      break;
+    }
+  }	
 	for (int i = 0; i < model.synapseGrpN; i++) {
 		if (model.synapseConnType[i] == SPARSE) {
 			if (model.synapseGType[i] != GLOBALG) os << "  CHECK_CUDA_ERRORS(cudaMalloc((void **) &d_gp" << model.synapseName[i]<< ", sizeof(" << model.ftype << ") * g" << model.synapseName[i] << ".connN));" << endl;
@@ -423,13 +444,23 @@ void genRunner(NNmodel &model, //!< Model description
 			os << "  CHECK_CUDA_ERRORS(cudaMalloc((void **) &d_gp" << model.synapseName[i]<< "_indInG, sizeof(unsigned int) * ("<< model.neuronN[model.synapseSource[i]] <<" + 1)));" << endl;
 			mem += model.neuronN[model.synapseSource[i]]*sizeof(unsigned int);     
 			memremsparse = deviceProp[theDev].totalGlobalMem - float(mem);
-			if (model.usesPostLearning[i]==TRUE) {
-				string learncode = weightUpdateModels[model.synapseType[i]-MAXSYN].simLearnPost;
-				cout << endl << "learn code is: " << endl << learncode << endl;			
+			
+			int st= model.synapseType[i];
+			if (st >= MAXSYN){
+			  os << "size = g" << model.synapseName[i] << ".connN;" << ENDL;
+			  //weight update variables
+        for (int k= 0, l= weightUpdateModels[st-MAXSYN].varNames.size(); k < l; k++) {
+		      os << "CHECK_CUDA_ERRORS(cudaMalloc((void **)&d_" << weightUpdateModels[st-MAXSYN].varNames[k] << model.synapseName[i] << ", sizeof("  << weightUpdateModels[st-MAXSYN].varTypes[k] << ")*size));" << endl;       
+	      }
+			  //post-to-pre remapped arrays
+			  if (model.usesPostLearning[i]==TRUE) {
+				  string learncode = weightUpdateModels[model.synapseType[i]-MAXSYN].simLearnPost;
+				  cout << endl << "learn code is: " << endl << learncode << endl;			
 //				size_t found = learncode.find
+			  }
 			}
 		}
-    }
+  }
     os << "}" << endl; 
 
     os << "void allocateAllSparseArrays() {" << endl;
@@ -575,7 +606,7 @@ void genRunner(NNmodel &model, //!< Model description
 	// note, if GLOBALG we put the value at compile time
 	if (model.synapseGType[i] == INDIVIDUALID) {
 	    os << "  size = sizeof(unsigned int)*" << tmp << "; " << endl;
-	    if (model.synapseConnType[i]==SPARSE){
+	    if (model.synapseConnType[i] == SPARSE){
 		os << "  CHECK_CUDA_ERRORS(cudaMemcpy(d_gp" << model.synapseName[i] << ", g" << model.synapseName[i] << ".gp,";      
 	    }
 	    else {
@@ -587,25 +618,19 @@ void genRunner(NNmodel &model, //!< Model description
 	    os << ", cudaMemcpyHostToDevice));     // synaptic connectivity of group " << model.synapseName[i];
 	    os << endl;
 	    if (model.synapseType[i] == LEARN1SYNAPSE) {
-		os << "  CHECK_CUDA_ERRORS(cudaMemcpy(d_grawp" << model.synapseName[i];
-		os << ", grawp" << model.synapseName[i] << "," << size << ", cudaMemcpyHostToDevice));" << endl;
-		os << endl;
+		    os << "  CHECK_CUDA_ERRORS(cudaMemcpy(d_grawp" << model.synapseName[i];
+		    os << ", grawp" << model.synapseName[i] << "," << size << ", cudaMemcpyHostToDevice));" << endl;
+		    os << endl;
 	    }
-	}
+	  }
     
-	int st= model.synapseType[i];
-	if (st >= MAXSYN){
-	    os << "size = ";
-	    if (model.synapseConnType[i] != SPARSE){
-		os << model.neuronN[model.synapseSource[i]]*model.neuronN[model.synapseTarget[i]] << ";" << ENDL;
-	    }
-	    else{ 
-		os << "g" << model.synapseName[i] << ".connN;" << ENDL;
-	    }
+	  int st= model.synapseType[i];
+	  if ((st >= MAXSYN) && (model.synapseConnType[i] != SPARSE)){
+	    os << "size = " << model.neuronN[model.synapseSource[i]]*model.neuronN[model.synapseTarget[i]] << ";" << ENDL;
 	    for (int k= 0, l= weightUpdateModels[st-MAXSYN].varNames.size(); k < l; k++) {
-		os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << weightUpdateModels[st-MAXSYN].varNames[k] << model.synapseName[i] << ", "  << weightUpdateModels[st-MAXSYN].varNames[k] << model.synapseName[i] << ", sizeof(" << weightUpdateModels[st-MAXSYN].varTypes[k] << ") * size , cudaMemcpyHostToDevice));" << endl; 
+		    os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << weightUpdateModels[st-MAXSYN].varNames[k] << model.synapseName[i] << ", "  << weightUpdateModels[st-MAXSYN].varNames[k] << model.synapseName[i] << ", sizeof(" << weightUpdateModels[st-MAXSYN].varTypes[k] << ") * size , cudaMemcpyHostToDevice));" << endl; 
 	    }
-	}
+	  }
     
     
     }
@@ -694,19 +719,32 @@ void genRunner(NNmodel &model, //!< Model description
     // ------------------------------------------------------------------------
 
     os << "void initializeAllSparseArrays()" << "{" << endl;
+    for (int i = 0; i < model.synapseGrpN; i++) {
+		  if ((model.synapseConnType[i] == SPARSE) && (model.synapseType[i] >= MAXSYN)) {
+        os << "size_t size;" << endl;
+        break;
+      }
+    }
     for (int i= 0; i < model.synapseGrpN; i++) {
-	if (model.synapseConnType[i]==SPARSE){
-	    if (model.synapseGType[i] == GLOBALG) {
-		os << "  initializeSparseArrayGlobalG(g" << model.synapseName[i] << ",";
+	    if (model.synapseConnType[i]==SPARSE){
+	      if (model.synapseGType[i] == GLOBALG) {
+		      os << "  initializeSparseArrayGlobalG(g" << model.synapseName[i] << ",";
+	      }
+	      else{
+		      os << "  initializeSparseArray(g" << model.synapseName[i] << ",";
+		      os << "  d_gp" << model.synapseName[i] << ",";
+	      }
+	      os << "  d_gp" << model.synapseName[i] << "_ind,";
+	      os << "  d_gp" << model.synapseName[i] << "_indInG,";
+	      os << model.neuronN[model.synapseSource[i]] <<");" << endl;
+	      int st= model.synapseType[i];
+    	  if ((st >= MAXSYN) && (model.synapseConnType[i] == SPARSE)){
+	        os << "size = g" << model.synapseName[i] << ".connN;" << ENDL;
+	        for (int k= 0, l= weightUpdateModels[st-MAXSYN].varNames.size(); k < l; k++) {
+		        os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << weightUpdateModels[st-MAXSYN].varNames[k] << model.synapseName[i] << ", "  << weightUpdateModels[st-MAXSYN].varNames[k] << model.synapseName[i] << ", sizeof(" << weightUpdateModels[st-MAXSYN].varTypes[k] << ") * size , cudaMemcpyHostToDevice));" << endl; 
+	        }
+	      }
 	    }
-	    else{
-		os << "  initializeSparseArray(g" << model.synapseName[i] << ",";
-		os << "  d_gp" << model.synapseName[i] << ",";
-	    }
-	    os << "  d_gp" << model.synapseName[i] << "_ind,";
-	    os << "  d_gp" << model.synapseName[i] << "_indInG,";
-	    os << model.neuronN[model.synapseSource[i]] <<");" << endl;
-	}
     }
     os << "}" << endl; 
     // ------------------------------------------------------------------------
@@ -890,6 +928,14 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     os << "{" << endl;
     os << "  void *devPtr;" << endl;
     os << "  unsigned int tmp= 0;" << endl;
+    for (int i= 0; i < model.synapseGrpN; i++) {
+ 	    if (model.synapseType[i]>=MAXSYN){
+        if (weightUpdateModels[model.synapseType[i]-MAXSYN].varNames.size() > 0) {
+          os << "  size_t size;" << endl;
+          break;
+        }
+      }
+    }
     os << "  CHECK_CUDA_ERRORS(cudaGetSymbolAddress(&devPtr, d_done));" << endl;
     os << "  CHECK_CUDA_ERRORS(cudaMemcpy(devPtr, &tmp, sizeof(int), cudaMemcpyHostToDevice));" << endl;
     for (int i= 0; i < model.neuronGrpN; i++) {
@@ -962,10 +1008,15 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 	unsigned int src = model.synapseSource[i];
 	unsigned int trg = model.synapseTarget[i];
 	for (int k = 0, l = weightUpdateModels[st].varNames.size(); k < l; k++) {
-		size = model.neuronN[src] * model.neuronN[trg]; //! TODO This is for alltoall only 
+	  if (model.synapseConnType[i] != SPARSE){
+		  os << "size = " << model.neuronN[src] * model.neuronN[trg] << ";" <<endl; //! TODO This is for alltoall only 
+		}
+		else{
+		  os << "size = g" << model.synapseName[i] << ".connN;" << ENDL;
+		}
 		os << "  CHECK_CUDA_ERRORS(cudaMemcpy(d_" << weightUpdateModels[st].varNames[k] << model.synapseName[i]<< ", ";
 		os << weightUpdateModels[st].varNames[k] << model.synapseName[i] << ", ";
-		os << size << " * sizeof(" << weightUpdateModels[st].varTypes[k] << "), cudaMemcpyHostToDevice));" << endl;
+		os << "size * sizeof(" << weightUpdateModels[st].varTypes[k] << "), cudaMemcpyHostToDevice));" << endl;
 	}
 	/*if ((model.usesPostLearning[i] == TRUE) && (model.synapseConnType[i] == SPARSE)) {
 	    //!TODO create post-to-pre matrices here
@@ -993,7 +1044,15 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 
     os << "void copyStateFromDevice()" << endl;
     os << "{" << endl;
-    os << "  void *devPtr;" << endl;
+    os << "  void *devPtr;" << endl;    
+    for (int i= 0; i < model.synapseGrpN; i++) {
+ 	    if (model.synapseType[i]>=MAXSYN){
+        if (weightUpdateModels[model.synapseType[i]-MAXSYN].varNames.size() > 0) {
+          os << "  size_t size;" << endl;
+          break;
+        }
+      }
+    }
     for (int i= 0; i < model.neuronGrpN; i++) {
 	nt= model.neuronType[i];
 	if (model.neuronDelaySlots[i] != 1) {
@@ -1069,25 +1128,32 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 		unsigned int src = model.synapseSource[i];
 		unsigned int trg = model.synapseTarget[i];
 		for (int k = 0, l = weightUpdateModels[st].varNames.size(); k < l; k++) {
-			size = model.neuronN[src] * model.neuronN[trg]; //! TODO This is for alltoall only 
+			if (model.synapseConnType[i] != SPARSE){
+		    os << "size = " << model.neuronN[src] * model.neuronN[trg] << ";" <<endl; //! TODO This is for alltoall only 
+		  }
+		  else{
+		    os << "size = g" << model.synapseName[i] << ".connN;" << ENDL;
+	  	}
 			os << "  CHECK_CUDA_ERRORS(cudaMemcpy(" <<  weightUpdateModels[st].varNames[k] << model.synapseName[i] <<", ";
 			os << "d_" << weightUpdateModels[st].varNames[k] << model.synapseName[i]<< ", ";
-			os << size << " * sizeof(" << weightUpdateModels[st].varTypes[k] << "), cudaMemcpyDeviceToHost));" << endl;
+			os <<  "size * sizeof(" << weightUpdateModels[st].varTypes[k] << "), cudaMemcpyDeviceToHost));" << endl;
 		}
 	/*if ((model.usesPostLearning[i] == TRUE) && (model.synapseConnType[i] == SPARSE)) {
 	    //!TODO create post-to-pre matrices here
 	}*/
    }  
  }
+ 
+ 
   for (int i=0; i< model.postSynapseType.size(); i++){
-	int pst= model.postSynapseType[i];
-	for (int k= 0, l= postSynModels[pst].varNames.size(); k < l; k++) {      
+	  int pst= model.postSynapseType[i];
+	  for (int k= 0, l= postSynModels[pst].varNames.size(); k < l; k++) {      
 	    os << "  CHECK_CUDA_ERRORS(cudaMemcpy(" << postSynModels[pst].varNames[k] << model.synapseName[i] << ", ";
 	    os << "d_" << postSynModels[pst].varNames[k] << model.synapseName[i] << ", ";
 	    size = model.neuronN[model.synapseTarget[i]];
 	    os << size << " * sizeof(" << postSynModels[pst].varTypes[k] << "), cudaMemcpyDeviceToHost));" << endl;
-	}
-    }
+	  }
+  }
   
   
               
@@ -1130,28 +1196,36 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     os << "void freeDeviceMem()" << endl;
     os << "{" << endl;
     for (int i= 0; i < model.neuronGrpN; i++) {
-	nt= model.neuronType[i];
-	for (int k= 0, l= nModels[nt].varNames.size(); k < l; k++) {
-	    os << "  CHECK_CUDA_ERRORS(cudaFree(d_" << nModels[nt].varNames[k] << model.neuronName[i] << "));" << endl;
-	}
+	    nt= model.neuronType[i];
+	    for (int k= 0, l= nModels[nt].varNames.size(); k < l; k++) {
+	      os << "  CHECK_CUDA_ERRORS(cudaFree(d_" << nModels[nt].varNames[k] << model.neuronName[i] << "));" << endl;
+	    }
     }
     for (int i= 0; i < model.synapseGrpN; i++) {
-	if ((model.synapseGType[i] == (INDIVIDUALG)) || (model.synapseGType[i] == INDIVIDUALID)) {
-	    os << "  CHECK_CUDA_ERRORS(cudaFree(d_gp" << model.synapseName[i] << "));" <<endl;  	
-	}
-	if (model.synapseType[i] == LEARN1SYNAPSE) {
-	    os << " CHECK_CUDA_ERRORS(cudaFree(d_grawp"  << model.synapseName[i] << "));" <<endl;	
-	}
+	    if ((model.synapseGType[i] == (INDIVIDUALG)) || (model.synapseGType[i] == INDIVIDUALID)) {
+	      os << "  CHECK_CUDA_ERRORS(cudaFree(d_gp" << model.synapseName[i] << "));" <<endl;  	
+	    }
+	    if (model.synapseType[i] == LEARN1SYNAPSE) {
+	      os << " CHECK_CUDA_ERRORS(cudaFree(d_grawp"  << model.synapseName[i] << "));" <<endl;	
+	    }
     }
-  
+    
+    //postsynaptic variavles  
     for (int i=0; i< model.postSynapseType.size(); i++){
-	int pst= model.postSynapseType[i];
-	for (int k= 0, l= postSynModels[pst].varNames.size(); k < l; k++) {
-	    os << "  CHECK_CUDA_ERRORS(cudaFree(d_" << postSynModels[pst].varNames[k] << model.synapseName[i] << "));" << endl;
-	}
+	    int pst= model.postSynapseType[i];
+	    for (int k= 0, l= postSynModels[pst].varNames.size(); k < l; k++) {
+	      os << "  CHECK_CUDA_ERRORS(cudaFree(d_" << postSynModels[pst].varNames[k] << model.synapseName[i] << "));" << endl;
+	    }
     }
-  
-  
+    
+    //weight update variables
+    for (int i= 0; i < model.synapseGrpN; i++) {
+      if (model.synapseType[i] >= MAXSYN){    
+        for (int k= 0, l= weightUpdateModels[model.synapseType[i]-MAXSYN].varNames.size(); k < l; k++) {
+          os << "  CHECK_CUDA_ERRORS(cudaFree(d_" << weightUpdateModels[model.synapseType[i]-MAXSYN].varNames[k] << model.synapseName[i] << "));" << endl;
+	      }
+	    }
+    }
     os << "}" << endl;
     os << endl;
 
