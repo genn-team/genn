@@ -83,7 +83,8 @@ void genRunner(NNmodel &model, //!< Model description
   os << "void deviceMemAllocate(void** hostPtr, const T &devSymbol, size_t size)" << endl;
   os << "{" << endl;
   os << "  void *devptr;" << endl;
-  os << "  CHECK_CUDA_ERRORS(cudaMalloc(hostPtr, size));" << endl;os << "  CHECK_CUDA_ERRORS(cudaGetSymbolAddress(&devptr, devSymbol));" << endl;
+  os << "  CHECK_CUDA_ERRORS(cudaMalloc(hostPtr, size));" << endl;
+  os << "  CHECK_CUDA_ERRORS(cudaGetSymbolAddress(&devptr, devSymbol));" << endl;
   os << "  CHECK_CUDA_ERRORS(cudaMemcpy(devptr, hostPtr, sizeof(void*), cudaMemcpyHostToDevice));" << endl;
   os << "}" << endl << endl;
 
@@ -362,11 +363,9 @@ void genRunner(NNmodel &model, //!< Model description
 
 	st= model.synapseType[i];	
 	if ((st >= MAXSYN) && (model.synapseConnType[i] != SPARSE)) { //if they are sparse, allocate later in the allocatesparsearrays function when we know the size of the network
-	  os << "size = " << model.neuronN[model.synapseSource[i]]*model.neuronN[model.synapseTarget[i]] << ";" << ENDL;
-	   
 	  for (int k= 0, l= weightUpdateModels[st-MAXSYN].varNames.size(); k < l; k++) {
-		  os << "CHECK_CUDA_ERRORS(cudaMalloc((void **)&d_" << weightUpdateModels[st-MAXSYN].varNames[k] << model.synapseName[i] << ", sizeof("  << weightUpdateModels[st-MAXSYN].varTypes[k] << ")*size));" << endl; 
-		os << "  deviceMemAllocate((void **)&d_" << weightUpdateModels[st-MAXSYN].varNames[k] << model.synapseName[i] << ", dd_" << weightUpdateModels[st-MAXSYN].varNames[k] << model.synapseName[i] << ", size);" << endl; 
+	      os << "  size = " << model.neuronN[model.synapseSource[i]]*model.neuronN[model.synapseTarget[i]] << "*sizeof(" << weightUpdateModels[st-MAXSYN].varTypes[k] << ");" << ENDL;
+	      os << "  deviceMemAllocate((void **)&d_" << weightUpdateModels[st-MAXSYN].varNames[k] << model.synapseName[i] << ", dd_" << weightUpdateModels[st-MAXSYN].varNames[k] << model.synapseName[i] << ", size);" << endl; 
 	  }
 	}
 	os << endl;
@@ -377,10 +376,9 @@ void genRunner(NNmodel &model, //!< Model description
 	    int pst= model.postSynapseType[i];
 	    for (int k= 0, l= postSynModels[pst].varNames.size(); k < l; k++) {
 	      os << "  " << postSynModels[pst].varNames[k] << model.synapseName[i] << " = new " << postSynModels[pst].varTypes[k] << "[" << (model.neuronN[model.synapseTarget[i]]) <<  "];" << endl;
-            
 	      //allocate device variables
 	      os << "  size = sizeof(" << postSynModels[pst].varTypes[k] << ") * "<< model.neuronN[model.synapseTarget[i]] << ";" << endl;
-	      os << "  CHECK_CUDA_ERRORS(cudaMalloc((void **)&d_" << postSynModels[pst].varNames[k] << model.synapseName[i] << ", size));" << endl;      
+	      os << "  deviceMemAllocate((void **)&d_" << postSynModels[pst].varNames[k] << model.synapseName[i] << ", dd_" << postSynModels[pst].varNames[k] << model.synapseName[i] << ", size);" << endl;      
 	    }
     }
     os << endl; 	
