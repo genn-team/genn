@@ -168,7 +168,6 @@ float postExpDNDN[2]={
 float *postSynV = NULL;
 
 
-
 #include "../../userproject/include/sizes.h"
 
 //--------------------------------------------------------------------------
@@ -184,7 +183,7 @@ void modelDefinition(NNmodel &model)
   model.addNeuronPopulation("LHI", _NLHI, TRAUBMILES, stdTM_p, stdTM_ini);
   model.addNeuronPopulation("DN", _NLB, TRAUBMILES, stdTM_p, stdTM_ini);
   
-  float init[0]={};
+  float *init = NULL;
   model.addSynapsePopulation("PNKC", NSYNAPSE, DENSE, INDIVIDUALG, NO_DELAY, EXPDECAY, "PN", "KC", init, myPNKC_p, postSynV,postExpPNKC);
   model.addSynapsePopulation("PNLHI", NSYNAPSE, ALLTOALL, INDIVIDUALG, NO_DELAY, EXPDECAY, "PN", "LHI",  init, myPNLHI_p, postSynV, postExpPNLHI);
   model.addSynapsePopulation("LHIKC", NGRADSYNAPSE, ALLTOALL, GLOBALG, NO_DELAY, EXPDECAY, "LHI", "KC",  init, myLHIKC_p, postSynV, postExpLHIKC);

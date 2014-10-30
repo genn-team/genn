@@ -1262,7 +1262,7 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     }
     if (model.lrnGroups > 0) {
 	unsigned int learnGridSz = model.padSumLearnN[model.lrnGroups - 1];
-	learnGridSz = ceil(learnGridSz / learnBlkSz);
+	learnGridSz = ceil((float) learnGridSz / learnBlkSz);
 	os << "  dim3 lThreads(" << learnBlkSz << ", 1);" << endl;
 	os << "  dim3 lGrid(" << learnGridSz << ", 1);" << endl;
 	os << endl;
@@ -1270,13 +1270,13 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 
 
     unsigned int neuronGridSz = model.padSumNeuronN[model.neuronGrpN - 1];
-    neuronGridSz = ceil(neuronGridSz / neuronBlkSz);
+    neuronGridSz = ceil((float) neuronGridSz / neuronBlkSz);
     os << "  dim3 nThreads(" << neuronBlkSz << ", 1);" << endl;
     if (neuronGridSz < deviceProp[theDev].maxGridSize[1]) {
 	os << "  dim3 nGrid(" << neuronGridSz << ", 1);" << endl;
     }
     else {
-    int sqGridSize=ceil(sqrt(neuronGridSz));
+      int sqGridSize = ceil((float) sqrt((float) neuronGridSz));
 	os << "  dim3 nGrid(" << sqGridSize << ","<< sqGridSize <<");" << endl;
     }
     os << endl;
