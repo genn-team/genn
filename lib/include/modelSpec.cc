@@ -439,7 +439,7 @@ void NNmodel::addSynapsePopulation(const string name, /**<  The name of the syna
   if (syntype >= MAXSYN) {
   	cerr << "!!!!!!GeNN WARNING: You use the overloaded method which passes a null pointer for the initial values of weight update variables. If you use a method that uses synapse variables, please add a pointer to this vector in the function call, like:\n  	addSynapsePopulation(name, syntype, conntype, gtype, NO_DELAY, EXPDECAY, src, target, float * SYNVARINI, params, postSynV,postExpSynapsePopn);" << endl;
   }
-  float iniv[0]={};
+  float *iniv = NULL;
   addSynapsePopulation(name, syntype, conntype, gtype, delaySteps, postsyn, src, trg, iniv, p, PSVini, ps);
 }
 
