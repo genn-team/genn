@@ -41,6 +41,7 @@ int main(int argc, char *argv[])
   // build the neuronal circuitry
   fprintf(stderr, "#creating classIzh\n");
 	classIzh PCNN;
+  PCNN.initializeAllVars(which);
   fprintf(stderr, "#classIzh created\n");
 	
 	//open log file
@@ -193,10 +194,14 @@ int main(int argc, char *argv[])
 
   	}  
   
-  //PCNN.output_params(fparams, fg);
-  //fclose(fparams); 
-  //fclose(fg);
-
+  /*name= toString("fparams_tt");
+  FILE *fparams= fopen(name.c_str(),"w");
+  name= toString("fg_tt");
+  FILE *fg= fopen(name.c_str(),"w");
+  PCNN.output_params(fparams, fg);
+  fclose(fparams); 
+  fclose(fg);
+*/
   
   //------------------------------------------------------------------
   // output general parameters to output file and start the simulation

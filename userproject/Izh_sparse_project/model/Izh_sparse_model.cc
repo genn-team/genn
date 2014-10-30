@@ -273,12 +273,12 @@ void classIzh::output_params(FILE *f, FILE *f2)
 		fprintf(f,"\n");
 	}
 	for (int i= 0; i < model.neuronN[1]-1; i++) {
-		fprintf(f, "%f ", aPInh[i]);
-		fprintf(f, "%f ", bPInh[i]);
-		fprintf(f, "%f ", cPInh[i]);
-		fprintf(f, "%f ", dPInh[i]);
-		fprintf(f, "%f ", input2[i]);
-		fprintf(f,"\n");
+		fprintf(f2, "%f ", aPInh[i]);
+		fprintf(f2, "%f ", bPInh[i]);
+		fprintf(f2, "%f ", cPInh[i]);
+		fprintf(f2, "%f ", dPInh[i]);
+		fprintf(f2, "%f ", input2[i]);
+		fprintf(f2,"\n");
 		
 	}
 }

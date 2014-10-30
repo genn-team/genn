@@ -676,6 +676,11 @@ void generate_process_presynaptic_events_code(
 
 	if (isGrpVarNeeded[model.synapseTarget[i]] == 0) {	
 	    os << "__syncthreads();" << ENDL;
+	    os << "if (threadIdx.x < " << neuronBlkSz << ")" << OB(136);
+	    os << "linSyn += shLg[" << localID << "];" << ENDL;
+	    os << "shLg[" << localID << "] = 0;" << ENDL;
+	    os << CB(136) << ENDL;
+	    os << "__syncthreads();" << ENDL;
 	}
     }
     else { //not sparse
@@ -835,15 +840,14 @@ void genSynapseKernel(NNmodel &model, //!< Model description
     // Kernel header
     unsigned int src;
     os << "__global__ void calcSynapses(" << ENDL;
-	
     for (int i=0; i< model.synapseName.size(); i++){
-	int st= model.synapseType[i];
-	if (st >= MAXSYN){
-	    for (int k= 0, l= weightUpdateModels[st-MAXSYN].extraGlobalSynapseKernelParameters.size(); k < l; k++) {
+	    int st= model.synapseType[i];
+	    if (st >= MAXSYN){
+	      for (int k= 0, l= weightUpdateModels[st-MAXSYN].extraGlobalSynapseKernelParameters.size(); k < l; k++) {
 		os << weightUpdateModels[st-MAXSYN].extraGlobalSynapseKernelParameterTypes[k] << " " << weightUpdateModels[st-MAXSYN].extraGlobalSynapseKernelParameters[k];
 		os << model.synapseName[i] << ", ";
-	    }
-	}	
+	      }
+	    }	
     }
 	
     os << model.ftype << " t";
@@ -855,40 +859,47 @@ void genSynapseKernel(NNmodel &model, //!< Model description
     
     //common variables for all cases
     os << "unsigned int id = " << "BLOCKSZ_SYN" << " * blockIdx.x + threadIdx.x;" << ENDL;
-    os << "__shared__ unsigned int shSpkEvnt[" << "BLOCKSZ_SYN" << "];" << ENDL;
-    os << "__shared__ " << model.ftype << " shSpkVEvnt[" << "BLOCKSZ_SYN" << "];" << ENDL;
     os << "volatile __shared__ " << model.ftype << " shLg[" << neuronBlkSz << "];" << ENDL;
-    os << "unsigned int lscntEvnt, numSpikeSubsetsEvnt, lmax, j, r;" << ENDL;
+    os << "unsigned int lmax, j, r;" << ENDL;
     
     
     //case-dependent variables
     for (int i = 0; i < model.synapseGrpN; i++) {
-	if ((model.synapseConnType[i] != SPARSE) || (isGrpVarNeeded[model.synapseTarget[i]] == 1) || (model.synapseType[i] >= MAXSYN)){
+	  //if ((model.synapseConnType[i] != SPARSE) || (isGrpVarNeeded[model.synapseTarget[i]] == 1) || (model.synapseType[i] >= MAXSYN)){
 	    os << model.ftype << " linSyn, lg;" << ENDL;
 	    break;
-	}
+	  //}
     }
     for (int i = 0; i < model.synapseGrpN; i++) {  
-	if (model.synapseConnType[i] == SPARSE){
-	    os << "unsigned int  ipost, npost; " << ENDL;		
-	    os << "ipost = 0;" << ENDL;
-	    break; 
-	}    
+	    if (model.synapseConnType[i] == SPARSE){
+	      os << "unsigned int  ipost, npost; " << ENDL;		
+	      os << "ipost = 0;" << ENDL;
+	      break; 
+	    }    
     }  
 
     for (int i = 0; i < model.synapseGrpN; i++) {  
-	if (model.synapseType[i]>= MAXSYN){
-	    os << model.ftype << " addtoinSyn;" << ENDL;  
-	    break;
-	}
+	    if (model.synapseType[i]>= MAXSYN){
+	      os << model.ftype << " addtoinSyn;" << ENDL;  
+	      break;
+	    }
     }
     for (int i = 0; i < model.synapseGrpN; i++) {
-	if (model.usesTrueSpikes[i] == TRUE || model.usesPostLearning[i] == TRUE) {  
-	    os << "__shared__ unsigned int shSpk[" << "BLOCKSZ_SYN" << "];" << ENDL;
-	    os << "__shared__ " << model.ftype << " shSpkV[" << "BLOCKSZ_SYN" << "];" << ENDL;
-	    os << "unsigned int lscnt, numSpikeSubsets;" << ENDL;
-	    break;
-	}
+	    if (model.usesTrueSpikes[i] == TRUE || model.usesPostLearning[i] == TRUE) {  
+	      os << "__shared__ unsigned int shSpk[" << "BLOCKSZ_SYN" << "];" << ENDL;
+	      os << "__shared__ " << model.ftype << " shSpkV[" << "BLOCKSZ_SYN" << "];" << ENDL;
+	      os << "unsigned int lscnt, numSpikeSubsets;" << ENDL;
+	      break;
+	    }
+    }
+    
+    for (int i = 0; i < model.synapseGrpN; i++) {
+      if(model.usesSpikeEvents[i] == TRUE ){
+        os << "__shared__ unsigned int shSpkEvnt[" << "BLOCKSZ_SYN" << "];" << ENDL;
+        os << "__shared__ " << model.ftype << " shSpkVEvnt[" << "BLOCKSZ_SYN" << "];" << ENDL; 
+        os << "unsigned int lscntEvnt, numSpikeSubsetsEvnt;" << ENDL;    
+        break;
+      }
     }
     if (model.needSynapseDelay == 1) {
 	os << "int delaySlot;" << ENDL;
@@ -941,19 +952,21 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 
 	    os << CB(80);
 	}
-	os << "lscntEvnt = d_glbSpkEvntCnt" << model.neuronName[src];
-	if (model.neuronDelaySlots[src] != 1) {
+	if (model.usesSpikeEvents[i] == TRUE){
+	  os << "lscntEvnt = d_glbSpkEvntCnt" << model.neuronName[src];
+	  if (model.neuronDelaySlots[src] != 1) {
 	    os << "[delaySlot]";
+	  }
+	  os << ";" << ENDL;
+	  os << "numSpikeSubsetsEvnt = (unsigned int) (ceilf((float) lscntEvnt / " << "((float)BLOCKSZ_SYN)" << "));" << ENDL;
+  }
+  
+  if (model.usesTrueSpikes[i] == TRUE || model.usesPostLearning[i] == TRUE){
+	  os << "lscnt = d_glbscnt" << model.neuronName[src];
+	  if (model.neuronDelaySlots[src] != 1) os << "[d_spkQuePtr" << model.neuronName[src] << "]";
+	  os << ";" << ENDL;
+	  os << "numSpikeSubsets = (unsigned int) (ceilf((float) lscnt / " << "((float)BLOCKSZ_SYN)" << "));" << ENDL;
 	}
-	os << ";" << ENDL;
-	os << "numSpikeSubsetsEvnt = (unsigned int) (ceilf((float) lscntEvnt / " << "((float)BLOCKSZ_SYN)" << "));" << ENDL;
-
-	os << "lscnt = d_glbscnt" << model.neuronName[src];
-	if (model.neuronDelaySlots[src] != 1) os << "[d_spkQuePtr" << model.neuronName[src] << "]";
-	os << ";" << ENDL;
-
-	os << "numSpikeSubsets = (unsigned int) (ceilf((float) lscnt / " << "((float)BLOCKSZ_SYN)" << "));" << ENDL;
-	
 	//set theLG	
 	if ((model.synapseGType[i] == GLOBALG) || (model.synapseGType[i] == INDIVIDUALID)) {
 	    theLG = toString(model.g0[i]);

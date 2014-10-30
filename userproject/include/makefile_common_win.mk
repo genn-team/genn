@@ -25,6 +25,8 @@ CXXFLAGS	=$(CXXFLAGS) /nologo /EHsc
 INCLUDE_FLAGS	=/I"$(CUDA_PATH)\include" /I"$(GENN_PATH)\lib\include" /I"$(GENN_PATH)\userproject\include"
 !IF "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
 LINK_FLAGS	="$(CUDA_PATH)\lib\x64\cudart.lib"
+!ELSEIF "$(PROCESSOR_ARCHITEW6432)" == "AMD64"
+LINK_FLAGS	="$(CUDA_PATH)\lib\x64\cudart.lib"
 !ELSE
 LINK_FLAGS	="$(CUDA_PATH)\lib\Win32\cudart.lib"
 !ENDIF
