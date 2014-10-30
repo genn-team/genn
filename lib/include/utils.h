@@ -62,7 +62,7 @@
 void writeHeader(ostream &os) 
 {
   string s;
-  ifstream is("header.src");
+  ifstream is("../src/header.src");
   getline(is, s);
   while (is.good()) {
     os << s << endl;
@@ -418,6 +418,7 @@ void prepareWeightUpdateModels(){
 	weightUpdateModel wu;
 	#include "extra_weightupdates.h"
 }
+
 
 // bit tool macros
 #include "numlib/simpleBit.h"

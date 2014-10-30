@@ -34,7 +34,7 @@ endif
 # Global include flags and link flags.
 INCLUDE_FLAGS	+=-I$(CUDA_PATH)/include -I$(GENN_PATH)/lib/include -I$(GENN_PATH)/userproject/include
 ifeq ($(DARWIN),DARWIN)
-  LINK_FLAGS	+=-L$(CUDA_PATH)/lib -lcudart -stdlib=libstdc++ -lstdc++
+  LINK_FLAGS	+=-L$(CUDA_PATH)/lib -lcudart -stdlib=libstdc++ -lc++ 
 else
   ifeq ($(OS_SIZE),32)
     LINK_FLAGS	+=-L$(CUDA_PATH)/lib -lcudart 

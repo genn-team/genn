@@ -96,6 +96,40 @@ void genNeuronFunction(NNmodel &model, //!< Model description
  	if ((model.inSyn[i].size() > 0) || (model.receivesInputCurrent[i] > 0)) {
 	    os << model.ftype << " Isyn = 0;" << ENDL;
 	}
+
+//untested synapseDynamics
+	for (int j = 0; j < model.inSyn[i].size(); j++) {
+	    unsigned int synPopID=  model.inSyn[i][j];
+	    if (model.synapseType[synPopID] >= MAXSYN) { 
+		unsigned int synt= model.synapseType[synPopID]-MAXSYN;
+		if (weightUpdateModels[synt].synapseDynamics != tS("")) {
+		    weightUpdateModel wu= weightUpdateModels[synt];
+		    string code= wu.synapseDynamics;
+		    unsigned int srcno= model.neuronN[model.synapseSource[synPopID]]; 
+		    if (model.synapseConnType[synPopID] == SPARSE) {
+			os << "for (int k= 0; k < gIndInG" <<  model.synapseName[synPopID] << "[" << srcno << "]; k++) " << OB(24) << ENDL;
+			os << "// loop over all synapses" << ENDL;
+			name_substitutions(code, tS(""), wu.varNames, model.synapseName[synPopID] + tS("[k]"));
+			value_substitutions(code, wu.pNames, model.synapsePara[synPopID]);
+			value_substitutions(code, wu.dpNames, model.dsp_w[synPopID]);
+			os << code << ENDL;
+			os << CB(24);
+		    }
+		    else { // DENSE
+			unsigned int srcno= model.neuronN[model.synapseSource[synPopID]]; 
+			unsigned int trgno= model.neuronN[model.synapseTarget[synPopID]]; 
+			os << "for (int k= 0; k <" <<  srcno*trgno << "; k++) " << OB(25) << ENDL;
+			name_substitutions(code, tS(""), wu.varNames, model.synapseName[synPopID] + tS("[k]"));
+			value_substitutions(code, wu.pNames, model.synapsePara[synPopID]);
+			value_substitutions(code, wu.dpNames, model.dsp_w[synPopID]);
+			os << code << ENDL;
+			os << CB(25);
+		    }
+		}
+	    }
+	}
+// end of untested
+	
    
 	if (model.inSyn[i].size() > 0) {
 	    //os << "    Isyn = ";
@@ -332,11 +366,11 @@ void genSynapseFunction(NNmodel &model, //!< Model description
     string name, s, localID, theLG, preSpike, preSpikeV;
     ofstream os;
 
+    cerr << "entering genSynapseFunction" << endl;
     name = path + toString("/") + model.name + toString("_CODE/synapseFnct.cc");
     os.open(name.c_str());
     // write header content
     writeHeader(os);
- 
     // compiler/include control (include once)
     os << "#ifndef _" << model.name << "_synapseFnct_cc" << ENDL;
     os << "#define _" << model.name << "_synapseFnct_cc" << ENDL;
@@ -371,7 +405,7 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 	    break;
 	}
     }
- 
+
 
     os << ENDL;
     for (int i = 0; i < model.neuronGrpN; i++) {
@@ -383,18 +417,18 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 	    
 		os << "//synapse group " << model.synapseName[synID] << ENDL;
 		float Epre = 0;
-		if (model.synapseType[i]< MAXSYN) Epre = model.synapsePara[i][1];
+
+		if (model.synapseType[synID]< MAXSYN) Epre = model.synapsePara[synID][1];
 		else{
-		    unsigned int synt = model.synapseType[i]-MAXSYN;
+		    unsigned int synt = model.synapseType[synID]-MAXSYN;
 		    for (int k = 0, l = weightUpdateModels[synt].pNames.size(); k < l; k++) {
 		   	if (weightUpdateModels[synt].pNames[k] == "Epre") {
-			    Epre = model.synapsePara[i][k];
+			    Epre = model.synapsePara[synID][k];
 			    break;
 	    		}
 	    		if (k==l-1) mos << "!!! WARNING: You did not provide a synapse parameter named Epre. Presynaptic threshold potential is set to 0" << ENDL;
 		    }
 		}
-
 		float Vslope;
 		if (model.synapseType[synID] == NGRADSYNAPSE) {
 		    Vslope = model.synapsePara[synID][3];
@@ -945,4 +979,6 @@ void genSynapseFunction(NNmodel &model, //!< Model description
     os << ENDL;
     os << "#endif" << ENDL;
     os.close();
+    cerr << "exiting genSynapseFunction" << endl;
+
 }

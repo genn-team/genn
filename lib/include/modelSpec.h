@@ -128,6 +128,8 @@ The dependent parameters are functions of independent parameters that enter into
   dpclass * dps;
 };
 
+/*! \brief Structure to hold the information that defines a post-synaptoic model (a model of how synapses affect post-synaptic neuron variables, classically in the form of a synaptic current). It also allows to define an equation for the dynamics that can be applied to the summed synaptic input variable "insyn".
+ */
 
 struct postSynModel
 {
@@ -140,22 +142,30 @@ struct postSynModel
   dpclass * dps;
 };
 
+/*! \brief Structure to hold the information that defines a weightupdate model (a model of how spikes affect synaptic (and/or) (mostly) post-synaptic neuron variables. It also allows to define changes in response to post-synaptic spikes/spike-like events.
+ */
+
 struct weightUpdateModel
 {
   string simCode; // !< \brief Simulation code that is used for true spikes (only one point after Vthresh)
   string simCodeEvnt; // !< \brief Simulation code that is used for spike events (all the instances where Vm > Vthres)
   string simLearnPost; // !< \brief Simulation code which is used in the learnSynapsesPost kernel/function, where postsynaptic neuron spikes before the presynaptic neuron in the STDP window.
   string evntThreshold; // !< \brief Simulation code for spike event detection.
+    string synapseDynamics;
   vector<string> varNames; // !< \brief Names of the variables in the postsynaptic model
   vector<string> varTypes; // !< \brief Types of the variable named above, e.g. "float". Names and types are matched by their order of occurrence in the vector.
   vector<string> pNames; // !< \brief Names of (independent) parameters of the model. These are assumed to be always of type "float"
   vector<string> dpNames; /*!< \brief Names of dependent parameters of the model. These are assumed to be always of type "float"*/
 
-  vector<string> extraGlobalSynapseKernelParameters; //!< Additional parameter in the neuron kernel; it is translated to a population specific name but otherwise assumed to be one parameter per population rather than per neuron.
+  vector<string> extraGlobalSynapseKernelParameters; //!< Additional parameter in the neuron kernel; it is translated to a population specific name but otherwise assumed to be one parameter per population rather than per synapse.
 
-  vector<string> extraGlobalSynapseKernelParameterTypes; //!< Additional parameters in the neuron kernel; they are translated to a population specific name but otherwise assumed to be one parameter per population rather than per neuron.
+  vector<string> extraGlobalSynapseKernelParameterTypes; //!< Additional parameters in the neuron kernel; they are translated to a population specific name but otherwise assumed to be one parameter per population rather than per synapse.
   dpclass * dps;
 };
+
+/*! \brief Structure to hold the information that defines synapse dynamics (a model of how synapse variables change over time, independent of or in addition to changes when spikes occur).
+ */
+
 /*===============================================================
 //! \brief class NNmodel for specifying a neuronal network model.
 //
@@ -208,7 +218,7 @@ public:
   vector<string> synapseName; //!< Names of synapse groups
   unsigned int synapseGrpN; //!< Number of synapse groups
   //vector<unsigned int>synapseNo; // !<numnber of synapses in a synapse group
-  vector<unsigned int> sumSynapseTrgN; //!< Summed naumber of target neurons
+  vector<unsigned int> sumSynapseTrgN; //!< Summed number of target neurons
   vector<unsigned int> padSumSynapseTrgN; //!< "Padded" summed target neuron numbers
   vector<unsigned int> maxConn; //!< Padded summed maximum number of connections for a neuron in the neuron groups
   vector<unsigned int> padSumSynapseKrnl; //Combination of padSumSynapseTrgN and padSumMaxConn to support both sparse and all-to-all connectivity in a model
@@ -225,7 +235,7 @@ public:
   vector<vector<float> > synapseIni; //!< Initial values of synapse variables
   vector<vector<float> > dsp;  //!< Derived synapse parameters
   vector<vector<float> > dsp_w;  //!< Derived synapse parameters (weightUpdateModel only)
-  vector<unsigned int> postSynapseType; //!< Types of synapses
+  vector<unsigned int> postSynapseType; //!< Types of post-synaptic model
   vector<vector<float> > postSynapsePara; //!< parameters of postsynapses
   vector<vector<float> > postSynIni; //!< Initial values of postsynaptic variables
   vector<vector<float> > dpsp;  //!< Derived postsynapse parameters
@@ -267,7 +277,7 @@ private:
   unsigned int findSynapseGrp(const string); //< Find the the ID number of a synapse group by its name
   void initDerivedSynapsePara(unsigned int); //!< Method for calculating the values of derived synapse parameters.
   void initDerivedPostSynapsePara(unsigned int); //!< Method for calculating the values of derived postsynapse parameters.
-
+  void initDerivedSynapseDynamicsPara(unsigned int); //!< Method for calculating the values of derived synapse dynamics parameters.
 
 public:
 

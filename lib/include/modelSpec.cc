@@ -94,6 +94,10 @@ void NNmodel::initNeuronSpecs(unsigned int i /**< index of the neuron population
 }
 
 
+//--------------------------------------------------------------------------
+/*! \brief This function calculates the derived synaptic parameters in the employed post-synaptic model  based on the given underlying post-synapse parameters */
+//--------------------------------------------------------------------------
+
 void NNmodel::initDerivedPostSynapsePara(unsigned int i)
 {
   vector<float> tmpP;
@@ -103,7 +107,6 @@ void NNmodel::initDerivedPostSynapsePara(unsigned int i)
   }	
   dpsp.push_back(tmpP);
 }
-
 
 //--------------------------------------------------------------------------
 /*! \brief This function calculates derived synapse parameters from primary synapse parameters. 
@@ -149,12 +152,12 @@ void NNmodel::initDerivedSynapsePara(unsigned int i /**< index of the synapse po
     */
   }
   if (synapseType[i] < MAXSYN ){
-  if ((synapseType[i] == NSYNAPSE) || (synapseType[i] == NGRADSYNAPSE)) {
-    tmpP.push_back(expf(-DT/synapsePara[i][2]));              // kdecay
-  }
+      if ((synapseType[i] == NSYNAPSE) || (synapseType[i] == NGRADSYNAPSE)) {
+	  tmpP.push_back(expf(-DT/synapsePara[i][2]));              // kdecay
+      }
   }
   else{
-  tmpP.push_back(1);
+      tmpP.push_back(1);
   }
   
   dsp.push_back(tmpP);
@@ -163,24 +166,24 @@ void NNmodel::initDerivedSynapsePara(unsigned int i /**< index of the synapse po
   synapseInSynNo.push_back(inSyn[synapseTarget[i]].size());
   inSyn[synapseTarget[i]].push_back(i);
   if (synapseType[i] < MAXSYN ){
-  if (nSpkEvntThreshold[synapseSource[i]] > synapsePara[i][1]) {
-    nSpkEvntThreshold[synapseSource[i]]= synapsePara[i][1];
-  }
+      if (nSpkEvntThreshold[synapseSource[i]] > synapsePara[i][1]) {
+	  nSpkEvntThreshold[synapseSource[i]]= synapsePara[i][1];
+      }
   }
   else{
-  if (nSpkEvntThreshold[synapseSource[i]]>10000) nSpkEvntThreshold[synapseSource[i]]= 10000;
+      if (nSpkEvntThreshold[synapseSource[i]]>10000) nSpkEvntThreshold[synapseSource[i]]= 10000;
   }
   // padnN is the lowest multiple of synapseBlkSz >= neuronN[synapseTarget[i]]
   unsigned int padnN = ceil((float) neuronN[synapseTarget[i]] / (float) synapseBlkSz) * (float) synapseBlkSz;
   if (i == 0) {
-    sumSynapseTrgN.push_back(neuronN[synapseTarget[i]]);
-    padSumSynapseTrgN.push_back(padnN);
-    padSumSynapseKrnl.push_back(padnN);
+      sumSynapseTrgN.push_back(neuronN[synapseTarget[i]]);
+      padSumSynapseTrgN.push_back(padnN);
+      padSumSynapseKrnl.push_back(padnN);
   }
   else {
-    sumSynapseTrgN.push_back(sumSynapseTrgN[i - 1] + neuronN[synapseTarget[i]]);
-    padSumSynapseTrgN.push_back(padSumSynapseTrgN[i - 1] + padnN);
-    padSumSynapseKrnl.push_back(padSumSynapseKrnl[i - 1] + padnN);
+      sumSynapseTrgN.push_back(sumSynapseTrgN[i - 1] + neuronN[synapseTarget[i]]);
+      padSumSynapseTrgN.push_back(padSumSynapseTrgN[i - 1] + padnN);
+      padSumSynapseKrnl.push_back(padSumSynapseKrnl[i - 1] + padnN);
   }
   //fprintf(stderr, " sum of padded postsynaptic neurons for group %u is %u, krnl size is %u\n", i, padSumSynapseTrgN[i],padSumSynapseKrnl[i]);
 }
@@ -469,7 +472,6 @@ void NNmodel::addSynapsePopulation(const string name, /**<  The name of the syna
   vector<float> tmpPV;
   
   if (postSynModels.size() < 1) preparePostSynModels();
-  
   if (syntype >= MAXSYN) prepareWeightUpdateModels();
 
 
@@ -493,28 +495,28 @@ void NNmodel::addSynapsePopulation(const string name, /**<  The name of the syna
   int maxp;
   if (syntype >= MAXSYN) maxp= weightUpdateModels[syntype-MAXSYN].pNames.size(); else maxp= SYNPNO[synapseType[i]];
   for (int j= 0; j < maxp; j++) {
-    tmpP.push_back(p[j]);
+      tmpP.push_back(p[j]);
   }
   synapsePara.push_back(tmpP);
   
   if (syntype>=MAXSYN){
-  for (int j= 0; j < weightUpdateModels[syntype-MAXSYN].varNames.size(); j++) {
-    tmpV.push_back(synini[j]);
-  }
-  synapseIni.push_back(tmpV);
+      for (int j= 0; j < weightUpdateModels[syntype-MAXSYN].varNames.size(); j++) {
+	  tmpV.push_back(synini[j]);
+      }
+      synapseIni.push_back(tmpV);
   }
   
   postSynapseType.push_back(postsyn);
   for (int j= 0; j <  postSynModels[postSynapseType[i]].pNames.size(); j++) {
-    tmpPS.push_back(ps[j]);
-    //printf("%d th var in group %d is %f \n", j, i, ps[j]);
-    //printf("%s\n", postSynModels[postSynapseType[i]].pNames[j].c_str());
+      tmpPS.push_back(ps[j]);
+      //printf("%d th var in group %d is %f \n", j, i, ps[j]);
+      //printf("%s\n", postSynModels[postSynapseType[i]].pNames[j].c_str());
   }
   
   postSynapsePara.push_back(tmpPS);  
   tmpPV.clear();
   for (int j= 0; j < postSynModels[postSynapseType[i]].varNames.size(); j++) {
-    tmpPV.push_back(PSVini[j]);
+      tmpPV.push_back(PSVini[j]);
   }
   
   postSynIni.push_back(tmpPV);  
@@ -534,8 +536,6 @@ void NNmodel::addSynapsePopulation(const string name, /**<  The name of the syna
   if (syntype==LEARN1SYNAPSE) usesPostLearning.push_back(TRUE);
   else usesPostLearning.push_back(FALSE);
 }
-
-
 
 //--------------------------------------------------------------------------
 /*! \brief This functions sets the global value of the maximal synaptic conductance for a synapse population that was idfentified as conductance specifcation method "GLOBALG" 
