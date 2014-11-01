@@ -216,7 +216,7 @@ void prepareStandardModels()
   n.varNames.push_back(tS("V"));
   n.varTypes.push_back(tS("float"));
   n.varNames.push_back(tS("seed"));
-  n.varTypes.push_back(tS("unsigned int"));
+  n.varTypes.push_back(tS("uint64_t"));
   n.varNames.push_back(tS("spikeTime"));
   n.varTypes.push_back(tS("float"));
   n.pNames.clear();
@@ -225,14 +225,14 @@ void prepareStandardModels()
   n.pNames.push_back(tS("Vspike"));
   n.pNames.push_back(tS("Vrest"));
   n.dpNames.clear();
-  n.simCode= tS("    unsigned int theRnd;\n\
+  n.simCode= tS("    uint64_t theRnd;\n\
     if ($(V) > $(Vrest)) {\n\
       $(V)= $(Vrest);\n\
     }\n\
     else {\n\
       if (t - $(spikeTime) > ($(trefract))) {\n\
-        RAND($(seed),theRnd);\n\
-        if (theRnd < lrate) {\n\
+        MYRAND($(seed),theRnd);\n\
+        if (theRnd < lrate) {\n			\
           $(V)= $(Vspike);\n\
           $(spikeTime)= t;\n\
         }\n\

@@ -18,7 +18,6 @@
 
 #include "utils.h"
 
-
 // class NNmodel for specifying a neuronal network model
 
 NNmodel::NNmodel() 
@@ -30,6 +29,7 @@ NNmodel::NNmodel()
   needSt= 0;
   needSynapseDelay = 0;
   setPrecision(0);
+  RNtype= tS("uint64_t");
   setGPUDevice(AUTODEVICE);
 }
 

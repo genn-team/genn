@@ -38,13 +38,15 @@ class classol
 {
  public:
   NNmodel model;
-  unsigned int *theRates;
-  unsigned int *pattern;
-  unsigned int *baserates;
+  unsigned int offset;
+  uint64_t *theRates;
+  float *p_pattern;  
+  uint64_t *pattern;
+  uint64_t *baserates;
   //------------------------------------------------------------------------
   // on the device:
-  unsigned int *d_pattern;
-  unsigned int *d_baserates;
+  uint64_t *d_pattern;
+  uint64_t *d_baserates;
   //------------------------------------------------------------------------
   unsigned int sumPN, sumKC, sumLHI, sumDN;
   unsigned int size_g; //number of connections

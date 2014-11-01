@@ -18,9 +18,10 @@
 */
 //--------------------------------------------------------------------------
 
-#define DT 0.5  //!< This defines the global time step at which the simulation will run
+#define DT 0.1  //!< This defines the global time step at which the simulation will run
 #include "modelSpec.h"
 #include "modelSpec.cc"
+#include "../../userproject/include/sizes.h"
 
 float myPOI_p[4]= {
   0.1,        // 0 - firing rate
@@ -116,14 +117,14 @@ float postExpPNLHI[2]={
 float myLHIKC_p[4]= {
   -92.0,          // 0 - Erev: Reversal potential
   -40.0,          // 1 - Epre: Presynaptic threshold potential
-  3.0,            // 2 - tau_S: decay time constant for S [ms]
+  1.5, //3.0,           // 2 - tau_S: decay time constant for S [ms]
   50.0            // 3 - Vslope: Activation slope of graded release 
 };
 //float gLHIKC= 0.6;
-float gLHIKC= 0.006;
+float gLHIKC= 0.35/_NLHI;
 
 float postExpLHIKC[2]={
-  3.0,            // 0 - tau_S: decay time constant for S [ms]
+    1.5, //3.0,            // 0 - tau_S: decay time constant for S [ms]
   -92.0		  // 1 - Erev: Reversal potential
 };
 
@@ -131,13 +132,13 @@ float myKCDN_p[13]= {
   0.0,           // 0 - Erev: Reversal potential
   -20.0,         // 1 - Epre: Presynaptic threshold potential
   5.0,           // 2 - tau_S: decay time constant for S [ms]
-  25.0,          // 3 - TLRN: time scale of learning changes
-  100.0,         // 4 - TCHNG: width of learning window
+  50.0, //25.0,          // 3 - TLRN: time scale of learning changes
+  50.0, //100.0        // 4 - TCHNG: width of learning window
   50000.0,       // 5 - TDECAY: time scale of synaptic strength decay
   100000.0,      // 6 - TPUNISH10: Time window of suppression in response to 1/0
-  100.0,         // 7 - TPUNISH01: Time window of suppression in response to 0/1
-  0.06,          // 8 - GMAX: Maximal conductance achievable
-  0.03,          // 9 - GMID: Midpoint of sigmoid g filter curve
+  200.0, //100.0,         // 7 - TPUNISH01: Time window of suppression in response to 0/1
+  0.03, // 0.06,          // 8 - GMAX: Maximal conductance achievable
+  0.015, // 0.03,          // 9 - GMID: Midpoint of sigmoid g filter curve
   33.33,         // 10 - GSLOPE: slope of sigmoid g filter curve
   10.0,          // 11 - TAUSHiFT: shift of learning curve
   //  0.006          // 12 - GSYN0: value of syn conductance g decays to
@@ -157,7 +158,7 @@ float myDNDN_p[4]= {
   50.0          // 3 - Vslope: Activation slope of graded release 
 };
 //float gDNDN= 0.04;
-float gDNDN= 0.01;
+float gDNDN= 1.0/_NLB;
 
 
 float postExpDNDN[2]={
@@ -168,7 +169,6 @@ float postExpDNDN[2]={
 float *postSynV = NULL;
 
 
-#include "../../userproject/include/sizes.h"
 
 //--------------------------------------------------------------------------
 /*! \brief This function defines the MBody1 model, and it is a good example of how networks should be defined.
