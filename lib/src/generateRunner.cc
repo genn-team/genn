@@ -64,6 +64,7 @@ void genRunner(NNmodel &model, //!< Model description
 
   os << "#include <cstdio>" << endl << endl;
   os << "#include <cassert>" << endl << endl;
+  os << "#include <stdint.h>" << endl << endl;
 
   // write CUDA error handler macro
   os << "/*" << endl;
