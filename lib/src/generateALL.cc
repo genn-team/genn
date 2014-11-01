@@ -213,20 +213,19 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
 	else if (strstr(buffer, "calcNeurons") != NULL) {
 	  kernel= 2;
 	}
-
-#ifdef _WIN32
 	if (strncmp(buffer, "ptxas : info : Used", 19) == 0) {
-#else // UNIX
-	if (strncmp(buffer, "ptxas info    : Used", 20) == 0) {
-#endif
 	  ptxInfoFound = 1;
 	  ptxInfo.str("");
 	  ptxInfo << buffer;
-#ifdef _WIN32
 	  ptxInfo >> junk >> junk >> junk >> junk >> junk >> reqRegs >> junk >> reqSmem;
-#else // UNIX
+	}
+	else if (strncmp(buffer, "ptxas info    : Used", 20) == 0) {
+	  ptxInfoFound = 1;
+	  ptxInfo.str("");
+	  ptxInfo << buffer;
 	  ptxInfo >> junk >> junk >> junk >> junk >> reqRegs >> junk >> reqSmem;
-#endif
+	}
+	if ((strncmp(buffer, "ptxas : info : Used", 19) == 0) || (strncmp(buffer, "ptxas info    : Used", 20)) == 0) {
 	  mos << "kernel: " << kernelName[kernel] << ", regs needed: " << reqRegs << ", smem needed: " << reqSmem << endl;
 
 	  // Test all block sizes (in warps) up to [max warps per block].
