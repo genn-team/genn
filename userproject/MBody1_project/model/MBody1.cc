@@ -23,6 +23,8 @@
 #include "modelSpec.cc"
 #include "../../userproject/include/sizes.h"
 
+int nGPU= 0;
+
 float myPOI_p[4]= {
   0.1,        // 0 - firing rate
   2.5,        // 1 - refratory period
@@ -137,10 +139,10 @@ float myKCDN_p[13]= {
   50000.0,       // 5 - TDECAY: time scale of synaptic strength decay
   100000.0,      // 6 - TPUNISH10: Time window of suppression in response to 1/0
   200.0, //100.0,         // 7 - TPUNISH01: Time window of suppression in response to 0/1
-  0.03, // 0.06,          // 8 - GMAX: Maximal conductance achievable
-  0.015, // 0.03,          // 9 - GMID: Midpoint of sigmoid g filter curve
+  0.015, // 0.06,          // 8 - GMAX: Maximal conductance achievable
+  0.0075, // 0.03,          // 9 - GMID: Midpoint of sigmoid g filter curve
   33.33,         // 10 - GSLOPE: slope of sigmoid g filter curve
-  10.0,          // 11 - TAUSHiFT: shift of learning curve
+  10.0,          // 11 - TAUSHIFT: shift of learning curve
   //  0.006          // 12 - GSYN0: value of syn conductance g decays to
   0.00006          // 12 - GSYN0: value of syn conductance g decays to
 };
@@ -191,4 +193,5 @@ void modelDefinition(NNmodel &model)
   model.addSynapsePopulation("KCDN", LEARN1SYNAPSE, ALLTOALL, INDIVIDUALG, NO_DELAY, EXPDECAY, "KC", "DN",  init,  myKCDN_p, postSynV, postExpKCDN);
   model.addSynapsePopulation("DNDN", NGRADSYNAPSE, ALLTOALL, GLOBALG, NO_DELAY, EXPDECAY, "DN", "DN",  init, myDNDN_p, postSynV, postExpDNDN);
   model.setSynapseG("DNDN", gDNDN);
+  model.setGPUDevice(nGPU);
 }

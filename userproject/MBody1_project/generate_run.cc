@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
 {
   if (argc != 10)
   {
-    cerr << "usage: generate_run <CPU=0, GPU=1> <nAL> <nMB> <nLHI> <nLb> <gscale> <outdir> <model name> <debug mode? (0/1)>" << endl;
+    cerr << "usage: generate_run <CPU=0, AUTO GPU=1, GPU n= \"n+2\"> <nAL> <nMB> <nLHI> <nLb> <gscale> <outdir> <model name> <debug mode? (0/1)>" << endl;
     exit(1);
   }
 
@@ -76,8 +76,8 @@ int main(int argc, char *argv[])
   
   float pnkc_gsyn = 100.0f / nAL * gscale;
   float pnkc_gsyn_sigma = 100.0f / nAL * gscale / 15.0f; 
-  float kcdn_gsyn = 2500.0f / nMB * 0.3f * gscale; 
-  float kcdn_gsyn_sigma = 2500.0f / nMB * 0.15f * gscale; 
+  float kcdn_gsyn = 2500.0f / nMB * 0.35f * gscale; 
+  float kcdn_gsyn_sigma = 2500.0f / nMB * 0.05f * gscale; 
   float pnlhi_theta = 100.0f / nAL * 14.0f * gscale;
 
   // write neuron population sizes
