@@ -66,22 +66,22 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 	    os << "\"rates\" offset of grp " << model.neuronName[i] << ENDL;
 	}
 	if (model.receivesInputCurrent[i] >= 2) {
-	    os << model.ftype << " *inputI" << model.neuronName[i] << ", // input current of grp " << model.neuronName[i] << ENDL;
+	  os << model.ftype << " *inputI" << model.neuronName[i] << ", // input current of grp " << model.neuronName[i] << ENDL;
 	}
     }
     os << model.ftype << " t)" << ENDL;
     os << OB(51);
     for (int i = 0; i < model.neuronGrpN; i++) {
-	nt = model.neuronType[i];
-	os << "glbscnt" << model.neuronName[i] << " = 0;" << ENDL;
-	if (model.neuronDelaySlots[i] == 1) {
-	    os << "glbSpkEvntCnt" << model.neuronName[i] << " = 0;" << ENDL;
-	}
-	else {
-	    os << "spkEvntQuePtr" << model.neuronName[i] << " = (spkEvntQuePtr" << model.neuronName[i] << " + 1) % ";
-	    os << model.neuronDelaySlots[i] << ";" << ENDL;
-	    os << "glbSpkEvntCnt" << model.neuronName[i] << "[spkEvntQuePtr" << model.neuronName[i] << "] = 0;" << ENDL;
-	}
+	    nt = model.neuronType[i];
+	    os << "glbscnt" << model.neuronName[i] << " = 0;" << ENDL;
+	    if (model.neuronDelaySlots[i] == 1) {
+	      os << "glbSpkEvntCnt" << model.neuronName[i] << " = 0;" << ENDL;
+    	}
+	    else {
+	      os << "spkEvntQuePtr" << model.neuronName[i] << " = (spkEvntQuePtr" << model.neuronName[i] << " + 1) % ";
+	      os << model.neuronDelaySlots[i] << ";" << ENDL;
+	      os << "glbSpkEvntCnt" << model.neuronName[i] << "[spkEvntQuePtr" << model.neuronName[i] << "] = 0;" << ENDL;
+	    }
 	os << "for (int n = 0; n < " <<  model.neuronN[i] << "; n++)" << OB(10);
 	for (int k = 0; k < nModels[nt].varNames.size(); k++) {
 	    os << nModels[nt].varTypes[k] << " l" << nModels[nt].varNames[k] << " = ";
@@ -357,7 +357,7 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 			ostream &mos //!< output stream for messages
     )
 {
-    string name, s, localID, theLG, preSpike, preSpikeV;
+    string name, s, localID, theLG, preSpike, preSpikeV, sTpost, sTpre;
     ofstream os;
 
     cerr << "entering genSynapseFunction" << endl;
@@ -448,22 +448,22 @@ void genSynapseFunction(NNmodel &model, //!< Model description
   		}*/
   		
 		if (model.synapseGType[synID] == INDIVIDUALG) {
-		    if (model.synapseConnType[synID] == SPARSE) {
-			theLG = toString("g") + model.synapseName[synID] + toString(".gp[");
-			theLG += toString("g") + model.synapseName[synID] + toString(".gIndInG[glbSpkEvnt");
-			theLG += toString(model.neuronName[src]) + toString("[");
-			if (model.neuronDelaySlots[src] != 1) {
+		  if (model.synapseConnType[synID] == SPARSE) {
+			  theLG = toString("g") + model.synapseName[synID] + toString(".gp[");
+			  theLG += toString("g") + model.synapseName[synID] + toString(".gIndInG[glbSpkEvnt");
+			  theLG += toString(model.neuronName[src]) + toString("[");
+			  if (model.neuronDelaySlots[src] != 1) {
 			    theLG += toString("delaySlot * ") + toString(model.neuronN[src]) + toString(" + ");
-			}
-			theLG += toString("j]] + l]");
-		    }
-		    else {
-			theLG = toString("gp") + model.synapseName[synID] + toString("[glbSpkEvnt") + model.neuronName[src] + toString("[");
-			if (model.neuronDelaySlots[src] != 1) {
+			  }
+			  theLG += toString("j]] + l]");
+		  }
+		  else {
+			  theLG = toString("gp") + model.synapseName[synID] + toString("[glbSpkEvnt") + model.neuronName[src] + toString("[");
+			  if (model.neuronDelaySlots[src] != 1) {
 			    theLG += toString("delaySlot * ") + toString(model.neuronN[src]) + toString(" + ");
-			}
-			theLG += toString("j] * ") + toString(model.neuronN[i]) + toString(" + ipost]");
-		    }
+			  }
+			  theLG += toString("j] * ") + toString(model.neuronN[i]) + toString(" + ipost]");
+		  }
 		}
 
 /*********************/
@@ -527,9 +527,14 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 			}
 			os << OB(2041);
 		    }
-		    else {
-			if (model.synapseGType[synID] == INDIVIDUALID) {
-			    os << "if (B(gp" << model.synapseName[synID] << "[gid >> " << logUIntSz << "], gid & ";
+		  else {
+			  if (model.synapseGType[synID] == INDIVIDUALID) {
+          if (model.synapseConnType[synID] == SPARSE) {     
+			      os << "if (B(g" << model.synapseName[synID] << ".gp[gid >> " << logUIntSz << "], gid & ";
+          }
+          else{
+            os << "if (B(gp" << model.synapseName[synID] << "[gid >> " << logUIntSz << "], gid & ";
+          }			    
 			    os << UIntSz - 1 << "))" << OB(2041);
 			}
 		    }
@@ -540,7 +545,10 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 /**********/
 
 		    if (model.synapseConnType[synID] != SPARSE) {
-			os << "ipost = n;" << ENDL;
+			    os << "ipost = n;" << ENDL;
+		    }
+		    else{
+		      os << "ipost = g" << model.synapseName[synID] << ".gInd[g" << model.synapseName[synID];
 		    }
 
 		    /****************/
@@ -575,7 +583,7 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 			    //os << "linSyn=inSyn" << model.neuronName[trg] << inSynNo << "[ipost];";
 				
 			    if (model.synapseConnType[synID] == SPARSE){
-				substitute(code, tS("$(") + weightUpdateModels[synt].varNames[k] + tS(")"), weightUpdateModels[synt].varNames[k]+model.synapseName[synID]+ tS("[gp")+ model.synapseName[synID] + tS("_indInG[glbSpkEvnt[j]] + ipost]"));
+				substitute(code, tS("$(") + weightUpdateModels[synt].varNames[k] + tS(")"), weightUpdateModels[synt].varNames[k]+model.synapseName[synID]+ tS("[g")+ model.synapseName[synID] + tS(".indInG[glbSpkEvnt[j]] + ipost]]"));
 			    }
 			    else{
 				substitute(code, tS("$(") + weightUpdateModels[synt].varNames[k] + tS(")"), weightUpdateModels[synt].varNames[k]+model.synapseName[synID]+tS("[glbSpkEvnt[j]") + tS("*") + tS(model.neuronN[trg]) + tS("+ ipost ]"));
@@ -594,8 +602,8 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 			substitute(code, tS("$(addtoinSyn)"), tS("addtoinSyn"));
 			substitute(code, tS("$(preSpike)"), preSpike);
 			substitute(code, tS("$(preSpikeV)"), preSpikeV);
-			string sTpost = tS("sT")+ model.neuronName[trg] + tS("[ipost]");
-			string sTpre = tS("sT")+ model.neuronName[src] + tS("[ipost]");
+			sTpost = tS("sT")+ model.neuronName[trg] + tS("[ipost]");
+			sTpre = tS("sT")+ model.neuronName[src] + tS("[ipost]");
 			substitute(code, tS("$(sTpost)"),sTpost);
 			substitute(code, tS("$(sTpre)"),sTpre);
 		    		
@@ -661,8 +669,14 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 		    if (model.neuronType[src] != POISSONNEURON) {
 			os << "if ";
 			if (model.synapseGType[synID] == INDIVIDUALID) {
-			    os << "((B(gp" << model.synapseName[synID] << "[gid >> " << logUIntSz << "], gid & "; 
-			    os << UIntSz - 1 << ")) && ";
+			  if (model.synapseConnType[synID] == SPARSE) {
+			    os << "((B(g" << model.synapseName[synID] << ".gp[gid >> " << logUIntSz << "], gid & "; 
+        }
+        else{			    
+          os << "((B(gp" << model.synapseName[synID] << "[gid >> " << logUIntSz << "], gid & "; 
+			  }
+			  
+			  os << UIntSz - 1 << ")) && ";
 			}
 			os << "(V" << model.neuronName[src] << "[";
 			if (model.neuronDelaySlots[src] != 1) {
@@ -680,8 +694,13 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 		    }
 		    else {
 			if (model.synapseGType[synID] == INDIVIDUALID) {
-			    os << "if (B(gp" << model.synapseName[synID] << "[gid >> " << logUIntSz << "], gid & ";
-			    os << UIntSz - 1 << "))" << OB(2041);
+			  if (model.synapseConnType[synID] == SPARSE) {
+			    os << "if (B(g" << model.synapseName[synID] << ".gp[gid >> " << logUIntSz << "], gid & ";
+			  }
+			  else{
+          os << "if (B(gp" << model.synapseName[synID] << "[gid >> " << logUIntSz << "], gid & ";			  
+			  }  
+			  os << UIntSz - 1 << "))" << OB(2041);
 			}
 		    }
 /**********/
@@ -773,7 +792,13 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 			    os << "delaySlot * " << model.neuronN[src] << " + ";
 			}
 			os << "j] * " << model.neuronN[i] << " + n] += dg;" << ENDL;
-			os << "gp" << model.synapseName[synID] << "[glbSpk" << model.neuronName[src] << "[";
+			
+			if (model.synapseConnType[synID] == SPARSE) { //!!!! probably wrong indexing for sparse
+			  os << "g" << model.synapseName[synID] << ".gp[glbSpk" << model.neuronName[src] << "[";
+			}
+			else{
+			  os << "gp" << model.synapseName[synID] << "[glbSpk" << model.neuronName[src] << "[";
+			}
 			if (model.neuronDelaySlots[src] != 1) {
 			    os << "delaySlot * " << model.neuronN[src] << " + ";
 			}
@@ -794,10 +819,10 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 			    // os << "linSyn=d_inSyn" << model.neuronName[trg] << inSynNo << "[ipost];";
 				
 			    if (model.synapseConnType[synID] == SPARSE){
-				substitute(code, tS("$(") + weightUpdateModels[synt].varNames[k] + tS(")"), weightUpdateModels[synt].varNames[k]+model.synapseName[synID]+ tS("[gp")+ model.synapseName[synID] + tS("_indInG[glbSpk")+ model.neuronName[src] +tS("[j]] + ipost]"));
+				substitute(code, tS("$(") + weightUpdateModels[synt].varNames[k] + tS(")"), weightUpdateModels[synt].varNames[k]+model.synapseName[synID]+ tS("[g")+ model.synapseName[synID] + tS(".gIndInG[glbSpk")+ model.neuronName[src] +tS("[j]] + l]"));
 			    }
 			    else{
-				substitute(code, tS("$(") + weightUpdateModels[synt].varNames[k] + tS(")"), weightUpdateModels[synt].varNames[k]+model.synapseName[synID]+tS("[glbSpk")+ model.neuronName[src]+("[j]") + tS("*") + tS(model.neuronN[trg]) + tS("+ipost ]"));
+				substitute(code, tS("$(") + weightUpdateModels[synt].varNames[k] + tS(")"), weightUpdateModels[synt].varNames[k]+model.synapseName[synID]+tS("[glbSpk")+ model.neuronName[src]+("[j]") + tS("*") + tS(model.neuronN[trg]) + tS("+ l ]"));
 			    }
 
 			}
@@ -815,8 +840,8 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 			substitute(code, tS("$(addtoinSyn)"), tS("addtoinSyn"));
 			substitute(code, tS("$(preSpike)"), preSpike);
 			substitute(code, tS("$(preSpikeV)"), preSpikeV);
-			string sTpost = tS("sT")+ model.neuronName[trg] + tS("[ipost]");
-			string sTpre = tS("sT")+ model.neuronName[src] + tS("[ipost]");
+			sTpost = tS("sT")+ model.neuronName[trg] + tS("[ipost]");
+			sTpre = tS("sT")+ model.neuronName[src] + tS("[ipost]");
 			substitute(code, tS("$(sTpost)"),sTpost);
 			substitute(code, tS("$(sTpre)"),sTpre);
 		    		
@@ -853,22 +878,48 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 	    }
 	}
 	os << model.ftype << " lg;" << ENDL;
+	os << "unsigned int ipre, npre;" <<ENDL;
 	os << ENDL;
 
 	for (int i = 0; i < model.lrnGroups; i++) {
 	  
-	    unsigned int k = model.lrnSynGrp[i];
-	    unsigned int src = model.synapseSource[k];
-	    unsigned int nN = model.neuronN[src];
-	    unsigned int trg = model.synapseTarget[k];
-	    float Epre = model.synapsePara[k][1];
+	  unsigned int k = model.lrnSynGrp[i];
+	  unsigned int src = model.synapseSource[k];
+	  unsigned int nN = model.neuronN[src];
+	  unsigned int trg = model.synapseTarget[k];
+	  float Epre = model.synapsePara[k][1];
 			
-	    os << "for (int j = 0; j < glbscnt" << model.neuronName[trg];
-	    if (model.neuronDelaySlots[trg] != 1) {
-		os << "[spkQuePtr" << model.neuronName[trg] << "]" << ENDL;
+	  os << "for (int j = 0; j < glbscnt" << model.neuronName[trg];
+	  if (model.neuronDelaySlots[trg] != 1) {
+		  os << "[spkQuePtr" << model.neuronName[trg] << "]" << ENDL;
+	  }
+	  os << "; j++)" << OB(910);
+	  if (model.synapseConnType[k] == SPARSE) {
+			os << "npre = g" << model.synapseName[k] << ".gIndInG[glbSpk" << model.neuronName[src] << "[";
+			if (model.neuronDelaySlots[src] != 1) {
+		    os << "delaySlot * " << model.neuronN[src] << " + ";
+			}
+		  os << "j] + 1] - g" << model.synapseName[k] << ".gIndInG[glbSpk" << model.neuronName[src] << "[";
+			if (model.neuronDelaySlots[src] != 1) {
+			  os << "delaySlot * " << model.neuronN[src] << " + ";
+			}
+			os << "j]];" << ENDL;
+			os << "for (int l = 0; l < npre; l++)" << OB(121);
+			os << "ipre = g" << model.synapseName[k] << ".gInd[g" << model.synapseName[k];
+			os << ".gIndInG[glbSpk" << model.neuronName[src] << "[";
+			if (model.neuronDelaySlots[src] != 1) {
+			    os << "delaySlot * " << model.neuronN[src] << " + ";
+			}
+			os << "j]] + l];" << ENDL;
+			//os << "      cerr << \" src queue dest glbSpkEvntCnt npre: \" << j << \" \" << l << \" \" << ipre;
+			//os << \" \" << glbSpkEvntCntPN << \" \" << npre <<  ENDL;" << ENDL;
+		}
+		    
+		    
+		else{
+	      os << "for (int n = 0; n < " << model.neuronN[src] << "; n++)" << OB(121);
+	      os << "ipre = n;" << ENDL;
 	    }
-	    os << "; j++)" << OB(910);
-	    os << "for (int n = 0; n < " << model.neuronN[src] << "; n++)" << OB(121);
 	    os << "if (V" << model.neuronName[trg] << "[";
 	    if (model.neuronDelaySlots[trg] != 1) {
 		os << "(spkQuePtr" << model.neuronName[trg] << " * " << model.neuronN[trg] << ") + ";
@@ -922,16 +973,21 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 	    }
 
 	    if (model.synapseType[k] >= MAXSYN) {
-		if (model.synapseGType[k] == INDIVIDUALG){
-		    os << "lg = gp" << model.synapseName[k] << "[glbSpk" << model.neuronName[trg] << "[j]+"<< model.neuronN[trg] << " *n];" << ENDL;
+		    if (model.synapseGType[k] == INDIVIDUALG){
+		      if (model.synapseConnType[k] == SPARSE) {
+		        os << "lg = g" << model.synapseName[k] << ".gp[g" + model.synapseName[k] + ".gIndInG[glbSpk" << model.neuronName[trg] << "[j]+ l]];" << ENDL; //!TODO post-to-pre
+          }
+          else{
+            os << "lg = gp" << model.synapseName[k] << "[glbSpk" << model.neuronName[trg] << "[j]+"<< model.neuronN[trg] << " *n];" << ENDL;
+          }  		
 		    theLG = toString("lg");
 		}
 	  	unsigned int synt = model.synapseType[k]-MAXSYN;
 		string code = weightUpdateModels[synt].simLearnPost;
 		for (int p = 0, l = weightUpdateModels[synt].varNames.size(); p < l; p++) {
-		    //os << "linSyn=d_inSyn" << model.neuronName[trg] << inSynNo << "[ipost];";
+		    //os << "linSyn=d_inSyn" << model.neuronName[trg] << inSynNo << "[ipre];";
 		    if (model.synapseConnType[k] == SPARSE){
-			substitute(code, tS("$(") + weightUpdateModels[synt].varNames[p] + tS(")"), weightUpdateModels[synt].varNames[p]+model.synapseName[k]+ tS("[gp")+ model.synapseName[k] + tS("_indInG[shSpk[j]] + ipost]]"));
+			substitute(code, tS("$(") + weightUpdateModels[synt].varNames[p] + tS(")"), weightUpdateModels[synt].varNames[p]+model.synapseName[k]+ tS("[g")+ model.synapseName[k] + tS(".gIndInG[glbSpk")+ model.neuronName[trg] + tS("[j] + ipre]]"));//!TODO post-to-pre
 		    }
 		    else{ 
 			substitute(code, tS("$(") + weightUpdateModels[synt].varNames[p] + tS(")"), weightUpdateModels[synt].varNames[p]+model.synapseName[k]+ tS("[glbSpk")+ model.neuronName[trg] + tS("[j] + ") + tS(model.neuronN[trg]) + tS("* n]"));
@@ -950,19 +1006,27 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 		substitute(code, tS("$(G)"), theLG);
 		substitute(code, tS("$(preSpike)"), preSpike);
 		substitute(code, tS("$(preSpikeV)"), preSpikeV);
-		string sTpost = tS("sT")+ model.neuronName[trg] + tS("[n]");
+		
+		sTpost = tS("sT")+ model.neuronName[trg] + tS("[j]");
+		sTpre = tS("sT")+ model.neuronName[src] + tS("[ipre]");    
+	
 		substitute(code, tS("$(sTpost)"),sTpost);
-		string sTpre = tS("sT")+ model.neuronName[src] + tS("[n]");
 		substitute(code, tS("$(sTpre)"),sTpre);
 
 		os << code;
 	  
 		if (model.usesPostLearning[k]==TRUE){ //!TODO check if this is correct. setting back the g value if learning 
-		    if (model.synapseGType[k] == INDIVIDUALG){
-			os << "gp" << model.synapseName[k] << "[ n *" << model.neuronN[trg] << " + glbSpk" << model.neuronName[trg]<< "[j]] =" << theLG << ";" ;
-		    }
+		  if (model.synapseGType[k] == INDIVIDUALG){
+		    if (model.synapseConnType[k] == SPARSE) {
+			    //os << "g" << model.synapseName[k] << ".gp[ n *" << model.neuronN[trg] << " + glbSpk" << model.neuronName[trg]<< "[j]] =" << theLG << ";" ;//!TODO post-to-pre
+          //!TODO: retranslate post-to-pre to pre-to post as well        
+        }
+        else{
+          os << "gp" << model.synapseName[k] << "[ n *" << model.neuronN[trg] << " + glbSpk" << model.neuronName[trg]<< "[j]] =" << theLG << ";" ;
+        }		  
+		  }
 		}		    	
-	    }
+	}
 	    
 	    os << CB(131);
 	    os << CB(121);

@@ -208,6 +208,7 @@ float myKCDN_userdef_p[11]= {
 #include "../../userproject/include/sizes.h"
 //for sparse only
 float * gpPNKC = new float[_NAL*_NMB];
+float * gpKCDN = new float[_NMB*_NLB];
 //--------------------------------------------------------------------------
 /*! \brief This function defines the MBody1 model with user defined synapses. 
  */
@@ -221,11 +222,13 @@ void modelDefinition(NNmodel &model)
   weightUpdateModel nsynapse;
   nsynapse.varNames.clear();
   nsynapse.varTypes.clear();
+  nsynapse.varTypes.push_back(tS(model.ftype));
+  nsynapse.varNames.push_back(tS("gRaw")); 
   nsynapse.pNames.clear();
   nsynapse.dpNames.clear();
   // code for presynaptic spike:
-  nsynapse.simCode = tS("$(addtoinSyn) = $(G);\n \          
-			 $(updatelinsyn); \n	 \
+  nsynapse.simCode = tS("$(addtoinSyn) = $(G);\n\
+			 $(updatelinsyn);\n\
   ");
 
   weightUpdateModels.push_back(nsynapse);
@@ -242,8 +245,8 @@ void modelDefinition(NNmodel &model)
   ngradsynapse.pNames.push_back(tS("Vslope")); 
   ngradsynapse.dpNames.clear();
   // code for presynaptic spike event (defined by Epre)
-  ngradsynapse.simCodeEvnt = tS("$(addtoinSyn) = $(G)* tanh(($(preSpikeV) - ($(Epre)))*DT*2/$(Vslope));\n \
- 				 $(updatelinsyn); \n \
+  ngradsynapse.simCodeEvnt = tS("$(addtoinSyn) = $(G)* tanh(($(preSpikeV) - ($(Epre)))*DT*2/$(Vslope));\n\
+ 				 $(updatelinsyn); \n\
   ");
 
   weightUpdateModels.push_back(ngradsynapse);
@@ -280,21 +283,19 @@ void modelDefinition(NNmodel &model)
   learn1synapse.dpNames.push_back(tS("off1"));
   learn1synapse.dpNames.push_back(tS("off2"));
   // code for presynaptic spike
-  learn1synapse.simCode = tS("$(addtoinSyn) = $(G);\n \
-					$(updatelinsyn); \n \
-					$(G) = $(gRaw); \n \
-					float dt = $(sTpost) - t - ($(tauShift)); \n \
-					float dg = 0;\n \
-					if (dt > $(lim0))  \n \
-					dg = -($(off0)) ; \n \
-					else if (dt > 0.0)  \n \
-					dg = $(slope0) * dt + ($(off1)); \n \
-					else if (dt > $(lim1))  \n \
-					dg = $(slope1) * dt + ($(off1)); \n \
-					else dg = - ($(off2)) ; \n \
-					$(G) = $(G) + dg; \n \
-					$(gRaw) = $(G); \n \
-					$(G)=$(gMax)/2.0 *(tanh($(gSlope)*($(G) - ($(gMid))))+1.0); \n \
+  learn1synapse.simCode = tS("$(addtoinSyn) = $(G);\n\
+					$(updatelinsyn); \n\
+					float dt = $(sTpost) - t - ($(tauShift)); \n\
+					float dg = 0;\n\
+					if (dt > $(lim0))  \n\
+					dg = -($(off0)) ; \n\
+					else if (dt > 0.0)  \n\
+					dg = $(slope0) * dt + ($(off1)); \n\
+					else if (dt > $(lim1))  \n\
+					dg = $(slope1) * dt + ($(off1)); \n\
+					else dg = - ($(off2)) ; \n\
+					$(gRaw) += dg; \n\
+					$(G)=$(gMax)/2.0 *(tanh($(gSlope)*($(gRaw) - ($(gMid))))+1.0); \n\
 					");     
     // d_gp" << model.synapseName[i] << "[shSpk[j] * " << model.neuronN[trg] << " + " << localID << "] = "; \n \
     //os << "  return " << SAVEP(model.synapsePara[i][8]/2.0) << " * (tanh(";
@@ -311,19 +312,18 @@ void modelDefinition(NNmodel &model)
   				 $(updatelinsyn); \n \
   ");
   // code for post-synaptic spike event
-  learn1synapse.simLearnPost = tS("$(G) = $(gRaw); \n \
-						float dt = t - ($(sTpre)) - ($(tauShift)); \n \
-						float dg =0; \n \
-						if (dt > $(lim0))  \n \
+  learn1synapse.simLearnPost = tS("$(G) = $(gRaw); \n\
+						float dt = t - ($(sTpre)) - ($(tauShift)); \n\
+						float dg =0; \n\
+						if (dt > $(lim0))  \n\
 						dg = -($(off0)) ; \n \
-						else if (dt > 0.0)  \n \
-						dg = $(slope0) * dt + ($(off1)); \n \
-						else if (dt > $(lim1))  \n \
-						dg = $(slope1) * dt + ($(off1)); \n \
-						else dg = -($(off2)) ; \n \
-						$(G) = $(G) + dg; \n \
-						$(gRaw) = $(G); \n \
-						$(G)=$(gMax)/2.0 *(tanh($(gSlope)*($(G) - ($(gMid))))+1.0); \n \
+						else if (dt > 0.0)  \n\
+						dg = $(slope0) * dt + ($(off1)); \n\
+						else if (dt > $(lim1))  \n\
+						dg = $(slope1) * dt + ($(off1)); \n\
+						else dg = -($(off2)) ; \n\
+						$(gRaw) += dg; \n\
+						$(G)=$(gMax)/2.0 *(tanh($(gSlope)*($(gRaw) - ($(gMid))))+1.0); \n\
 					");     
   weightUpdateModels.push_back(learn1synapse);
   unsigned int LEARN1SYNAPSE_userdef=weightUpdateModels.size()+MAXSYN-1; //this is the synapse index to be used in addSynapsePopulation
@@ -353,12 +353,17 @@ void modelDefinition(NNmodel &model)
   model.usesSpikeEvents[2]=TRUE;
   model.usesTrueSpikes[2]=FALSE;
 
-  model.addSynapsePopulation("KCDN", LEARN1SYNAPSE_userdef, ALLTOALL, INDIVIDUALG, NO_DELAY, EXPDECAY, "KC", "DN",  init,  myKCDN_userdef_p, postSynV, postExpKCDN);
+  model.addSynapsePopulation("KCDN", LEARN1SYNAPSE_userdef, SPARSE, INDIVIDUALG, NO_DELAY, EXPDECAY, "KC", "DN",  init,  myKCDN_userdef_p, postSynV, postExpKCDN);
   model.usesPostLearning[3]=TRUE;
   model.usesSpikeEvents[3]=FALSE;
   model.usesTrueSpikes[3]=TRUE;
+  model.setMaxConn("KCDN", _NLB); 
   
-  model.addSynapsePopulation("DNDN", NGRADSYNAPSE_userdef, ALLTOALL, GLOBALG, NO_DELAY, EXPDECAY, "DN", "DN",  init, myDNDN_p, postSynV, postExpDNDN);
+  float myDNDN_userdef_p[4]= {
+    -30.0,        // 1 - Epre: Presynaptic threshold potential 
+    50.0          // 3 - Vslope: Activation slope of graded release 
+  };
+  model.addSynapsePopulation("DNDN", NGRADSYNAPSE_userdef, ALLTOALL, GLOBALG, NO_DELAY, EXPDECAY, "DN", "DN",  init, myDNDN_userdef_p, postSynV, postExpDNDN);
   model.setSynapseG("DNDN", gDNDN);
   model.usesSpikeEvents[4]=TRUE;
   model.usesTrueSpikes[4]=FALSE;

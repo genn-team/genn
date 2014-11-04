@@ -445,13 +445,14 @@ os << "}" << endl;
 
   os << "void allocateAllDeviceSparseArrays() {" << endl;
   for (int i = 0; i < model.synapseGrpN; i++) {
-		if ((model.synapseConnType[i] == SPARSE) && (model.synapseType[i] >= MAXSYN)) {
+		if (model.synapseConnType[i] == SPARSE) {
       os << "size_t size;" << endl;
       break;
     }
   }	
 	for (int i = 0; i < model.synapseGrpN; i++) {
 		if (model.synapseConnType[i] == SPARSE) {
+		    os << "size = g" << model.synapseName[i] << ".connN;" << ENDL;
 		    if (model.synapseGType[i] != GLOBALG) {
 			os << "  deviceMemAllocate( &d_gp" << model.synapseName[i] << ", dd_gp" << model.synapseName[i] << ", sizeof(" << model.ftype << ") * g" << model.synapseName[i] << ".connN);" << endl;
 		    }
@@ -462,9 +463,9 @@ os << "}" << endl;
 			
 			int st= model.synapseType[i];
 			if (st >= MAXSYN){
-			  os << "size = g" << model.synapseName[i] << ".connN;" << ENDL;
+			  
 			  //weight update variables
-        for (int k= 0, l= weightUpdateModels[st-MAXSYN].varNames.size(); k < l; k++) {
+        for (int k= 0, l= weightUpdateModels[st-MAXSYN].varNames.size(); k < l; k++) {     
 	    os << "deviceMemAllocate(&d_" << weightUpdateModels[st-MAXSYN].varNames[k] << model.synapseName[i] << ", dd_" << weightUpdateModels[st-MAXSYN].varNames[k] << model.synapseName[i] << "sizeof("  << weightUpdateModels[st-MAXSYN].varTypes[k] << ")*size);" << endl;       
 	      }
 			  //post-to-pre remapped arrays
