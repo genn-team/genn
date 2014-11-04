@@ -34,12 +34,21 @@ int main(int argc, char *argv[])
     fprintf(stderr, "usage: classol_sim <basename> <CPU=0, GPU=1> \n");
     return 1;
   }
-  int which= atoi(argv[2]);
+  int GPUarg= atoi(argv[2]);
   string OutDir = toString(argv[1]) +"_output";
   string name;
   name= OutDir+ "/"+ toString(argv[1]) + toString(".time");
   FILE *timef= fopen(name.c_str(),"a");  
 
+  int which;
+  if (GPUarg > 1) {
+     which= 1;
+     nGPU= GPUarg-2;
+  }    
+  else {
+     which= GPUarg;	
+     nGPU= AUTODEVICE;
+  }
   timer.startTimer();
   patSetTime= (int) (PAT_TIME/DT);
   patFireTime= (int) (PATFTIME/DT);
@@ -54,7 +63,7 @@ int main(int argc, char *argv[])
   
   name= OutDir+ "/"+ toString(argv[1]) + toString(".out.Vm"); 
   FILE *osf= fopen(name.c_str(),"w");
-  name= OutDir+ "/"+ toString(argv[1]) + toString(".out.St"); 
+  name= OutDir+ "/"+ toString(argv[1]) + toString(".out.st"); 
   FILE *osf2= fopen(name.c_str(),"w");
 
   //-----------------------------------------------------------------
@@ -101,36 +110,28 @@ int main(int argc, char *argv[])
   t= 0.0;
   int done= 0;
   float last_t_report=  t;
-//  locust.output_state(os, which);  
-//  locust.output_spikes(os, which);  
   locust.run(DT, which);
-//  locust.output_state(os, which);  
-//  float synwriteT= 0.0f;
-//  int synwrite= 0;
-//  unsigned int sum= 0;
+  float synwriteT= 0.0f;
+  float lastsynwrite= 0.0f;
+  int synwrite= 0;
   while (!done) 
   {
     if (which == GPU) {
       locust.getSpikeNumbersFromGPU();
       locust.getSpikesFromGPU();
     }
-//    if (which == GPU) locust.getSpikeNumbersFromGPU();
     locust.run(DT, which); // run next batch
-    if (which == GPU) {  
-     CHECK_CUDA_ERRORS(cudaMemcpy(VDN, d_VDN, 10*sizeof(float), cudaMemcpyDeviceToHost));
-    }
+//    if (which == GPU) {  
+//        CHECK_CUDA_ERRORS(cudaMemcpy(VDN, d_VDN, 100*sizeof(float), cudaMemcpyDeviceToHost));
+//    }
     locust.sum_spikes();
-//    locust.output_spikes(osf, which);
-//    locust.output_state(os, which);  // while outputting the current one ...
-
-   
     locust.output_spikes(osf2, which);
 
-    fprintf(osf, "%f ", t);
-    for (int i= 0; i < 10; i++) {
-    fprintf(osf, "%f ", VDN[i]);
-   }
-    fprintf(osf,"\n");
+//    fprintf(osf, "%f ", t);
+//    for (int i= 0; i < 100; i++) {
+//    fprintf(osf, "%f ", VDN[i]);
+//   }
+//    fprintf(osf,"\n");
 
     // report progress
     if (t - last_t_report >= T_REPORT_TME)
@@ -139,42 +140,28 @@ int main(int argc, char *argv[])
       last_t_report= t;
     }
     // output synapses occasionally
-    // if (synwrite) {
-    //   lastsynwrite= synwriteT;
-    //   name= toString(argv[1]) + toString(".") + toString((int) synwriteT);
-    //   name+= toString(".syn");
-    //   f= fopen(name.c_str(),"w");
-    //   locust.write_kcdnsyns(f);
-    //   fclose(f);
-    //   synwrite= 0;
-    // }
-    // if (t - lastsynwrite >= SYN_OUT_TME) {
-    //   locust.get_kcdnsyns();
-    //   synwrite= 1;
-    // ¯  synwriteT= t;
-    // }
+    if (synwrite) {
+       lastsynwrite= synwriteT;
+       name= OutDir+ "/"+ tS(argv[1]) + tS(".") + tS((int) synwriteT) + tS(".syn"); 
+       f= fopen(name.c_str(),"w");
+       locust.write_kcdnsyns(f);
+       fclose(f);
+       synwrite= 0;
+    }
+    if (t - lastsynwrite >= SYN_OUT_TME) {
+       locust.get_kcdnsyns();
+       synwrite= 1;
+       synwriteT= t;
+    }
     done= (t >= TOTAL_TME);
   }
-//  locust.output_state(os);
-//    if (which == GPU) locust.getSpikesFromGPU();
-//    locust.output_spikes(os, which);
-  // if (synwrite) {
-  //   lastsynwrite= t;
-  //   name= toString(argv[1]) + toString(".") + toString((int) t);
-  //   name+= toString(".syn");
-  //   f= fopen(name.c_str());
-  //   locust.write_kcdnsyns(f);
-  // fclose(f);
-  //   synwrite= 0;
-  // }
-
   timer.stopTimer();
   cerr << "output files are created under the current directory." << endl;
   fprintf(timef, "%d %u %u %u %u %u %.4f %.2f %.1f %.2f\n",which, locust.model.sumNeuronN[locust.model.neuronGrpN-1], locust.sumPN, locust.sumKC, locust.sumLHI, locust.sumDN, timer.getElapsedTime(),VDN[0], TOTAL_TME, DT);
   fclose(osf);
   fclose(osf2);
   fclose(timef);
-	freeDeviceMem();
+  freeDeviceMem();
   cudaDeviceReset();
   return 0;
 }

@@ -18,7 +18,7 @@ for Linux, Mac and other UNIX users.
 
 An example invocation of generate_run is:
 
-  ./generate_run 1 100 1000 20 100 0.00117 outname MBody1 0
+  ./generate_run 1 100 1000 20 100 0.0025 test1 MBody1 0
 
 Such a command would generate a locust olfaction model with 100 antennal lobe neurons,
 1000 mushroom body Kenyon cells, 20 lateral horn interneurons and 100 mushroom body

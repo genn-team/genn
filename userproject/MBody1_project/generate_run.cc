@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
 {
   if (argc != 10)
   {
-    cerr << "usage: generate_run <CPU=0, GPU=1> <nAL> <nMB> <nLHI> <nLb> <gscale> <outdir> <model name> <debug mode? (0/1)>" << endl;
+    cerr << "usage: generate_run <CPU=0, AUTO GPU=1, GPU n= \"n+2\"> <nAL> <nMB> <nLHI> <nLb> <gscale> <outdir> <model name> <debug mode? (0/1)>" << endl;
     exit(1);
   }
 
@@ -76,9 +76,9 @@ int main(int argc, char *argv[])
   
   float pnkc_gsyn = 100.0f / nAL * gscale;
   float pnkc_gsyn_sigma = 100.0f / nAL * gscale / 15.0f; 
-  float kcdn_gsyn = 2500.0f / nMB * 0.024f * gscale / 0.9; 
-  float kcdn_gsyn_sigma = 2500.0f / nMB * 0.06f * gscale / 0.9; 
-  float pnlhi_theta = 200.0f / nAL * 7.0f * gscale / 0.9;
+  float kcdn_gsyn = 2500.0f / nMB * 0.35f * gscale; 
+  float kcdn_gsyn_sigma = 2500.0f / nMB * 0.05f * gscale; 
+  float pnlhi_theta = 100.0f / nAL * 14.0f * gscale;
 
   // write neuron population sizes
   string fname = gennPath + "/userproject/include/sizes.h";
@@ -148,7 +148,7 @@ int main(int argc, char *argv[])
   // generate input patterns
   cmd = gennPath + "/userproject/tools/gen_input_structured ";
   cmd += toString(nAL) + " ";
-  cmd += "10 10 0.1 0.1 32768 17 ";
+  cmd += "10 10 0.1 0.05 1.0 2e-04 ";
   cmd += outdir + "/" + toString(argv[7]) + ".inpat";
   cmd += " 1> " + outdir + "/" + toString(argv[7]) + ".inpat.msg 2>&1";
   system(cmd.c_str());

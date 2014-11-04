@@ -63,6 +63,8 @@ void genRunner(NNmodel &model, //!< Model description
     os << "//-------------------------------------------------------------------------" << endl << endl;
 
   os << "#include <cstdio>" << endl << endl;
+  os << "#include <cassert>" << endl << endl;
+  os << "#include <stdint.h>" << endl << endl;
 
   // write CUDA error handler macro
   os << "/*" << endl;
@@ -80,13 +82,22 @@ void genRunner(NNmodel &model, //!< Model description
   os << "#endif" << endl << endl;
 
   os << "template<class T>" << endl;
-  os << "void deviceMemAllocate(void** hostPtr, const T &devSymbol, size_t size)" << endl;
+  os << "void deviceMemAllocate(T* hostPtr, const T &devSymbol, size_t size)" << endl;
   os << "{" << endl;
   os << "  void *devptr;" << endl;
   os << "  CHECK_CUDA_ERRORS(cudaMalloc(hostPtr, size));" << endl;
   os << "  CHECK_CUDA_ERRORS(cudaGetSymbolAddress(&devptr, devSymbol));" << endl;
   os << "  CHECK_CUDA_ERRORS(cudaMemcpy(devptr, hostPtr, sizeof(void*), cudaMemcpyHostToDevice));" << endl;
   os << "}" << endl << endl;
+
+  os << "void convertProbabilityToRandomNumberThreshold(float *p_pattern, " << model.RNtype << " *pattern, int N)" << endl;
+os << "{" << endl;
+os << "    double fac= pow(2.0, (int) sizeof(" << model.RNtype << ")*8-16)*DT;" << endl;
+os << "    for (int i= 0; i < N; i++) {" << endl;
+//os << "	assert(p_pattern[i] <= 1.0);" << endl;
+os << "	pattern[i]= (" << model.RNtype << ") (p_pattern[i]*fac);" << endl;
+os << "    }" << endl;
+os << "}" << endl;
 
     // global host variables (matching some of the device ones)  
     for (int i= 0; i < model.neuronGrpN; i++) {
@@ -287,7 +298,7 @@ void genRunner(NNmodel &model, //!< Model description
 	    else {
 		os << model.neuronN[i] << ";" << endl;
 	    }
-	    os << "deviceMemAllocate((void **)&d_" << nModels[nt].varNames[k] << model.neuronName[i] << ", dd_" << nModels[nt].varNames[k] << model.neuronName[i] << ", size);" << endl;
+	    os << "deviceMemAllocate(&d_" << nModels[nt].varNames[k] << model.neuronName[i] << ", dd_" << nModels[nt].varNames[k] << model.neuronName[i] << ", size);" << endl;
 	}
 	os << endl; 
     }
@@ -335,13 +346,13 @@ void genRunner(NNmodel &model, //!< Model description
 	if (model.synapseGType[i] == INDIVIDUALG) {
 	    if (model.synapseConnType[i]!=SPARSE){
 		os << "  size = sizeof(" << model.ftype << ") * " << model.neuronN[model.synapseSource[i]] << " * " << model.neuronN[model.synapseTarget[i]] << "; " << endl;
-		os << "deviceMemAllocate((void **) &d_gp" << model.synapseName[i] << ", dd_gp" << model.synapseName[i] << ", size);" << endl;
+		os << "deviceMemAllocate( &d_gp" << model.synapseName[i] << ", dd_gp" << model.synapseName[i] << ", size);" << endl;
 		mem+= model.neuronN[model.synapseSource[i]]*model.neuronN[model.synapseTarget[i]]*theSize(model.ftype);
       
 	    }
 	    if (model.synapseType[i] == LEARN1SYNAPSE) { //TODO: what if sparse && learning?
 		os << "  size = sizeof(" << model.ftype << ") * " << model.neuronN[model.synapseSource[i]] << " * " << model.neuronN[model.synapseTarget[i]] << "; " << endl; //not sure if correct				
-		os << "deviceMemAllocate((void **) &d_grawp" << model.synapseName[i] << ", dd_grawp" << model.synapseName[i] << ", size);" << endl; // raw synaptic conductances of group " << model.synapseName[i];
+		os << "deviceMemAllocate( &d_grawp" << model.synapseName[i] << ", dd_grawp" << model.synapseName[i] << ", size);" << endl; // raw synaptic conductances of group " << model.synapseName[i];
 		os << endl;
 		mem+= model.neuronN[model.synapseSource[i]]*model.neuronN[model.synapseTarget[i]]*theSize(model.ftype);
 	    }
@@ -350,7 +361,7 @@ void genRunner(NNmodel &model, //!< Model description
 	if (model.synapseGType[i] == INDIVIDUALID) {
 	    unsigned int tmp= model.neuronN[model.synapseSource[i]]*model.neuronN[model.synapseTarget[i]];
 	    os << "  size = sizeof(unsigned int)*" << tmp << "; " << endl;
-	    os << " deviceMemAllocate((void **) &d_gp" << model.synapseName[i] << ", dd_gp" << model.synapseName[i] << ", "; 
+	    os << " deviceMemAllocate( &d_gp" << model.synapseName[i] << ", dd_gp" << model.synapseName[i] << ", "; 
 	    unsigned int size= tmp >> logUIntSz;
 	    if (tmp > (size << logUIntSz)) size++;
 	    os << size;
@@ -365,7 +376,7 @@ void genRunner(NNmodel &model, //!< Model description
 	if ((st >= MAXSYN) && (model.synapseConnType[i] != SPARSE)) { //if they are sparse, allocate later in the allocatesparsearrays function when we know the size of the network
 	  for (int k= 0, l= weightUpdateModels[st-MAXSYN].varNames.size(); k < l; k++) {
 	      os << "  size = " << model.neuronN[model.synapseSource[i]]*model.neuronN[model.synapseTarget[i]] << "*sizeof(" << weightUpdateModels[st-MAXSYN].varTypes[k] << ");" << ENDL;
-	      os << "  deviceMemAllocate((void **)&d_" << weightUpdateModels[st-MAXSYN].varNames[k] << model.synapseName[i] << ", dd_" << weightUpdateModels[st-MAXSYN].varNames[k] << model.synapseName[i] << ", size);" << endl; 
+	      os << "  deviceMemAllocate(&d_" << weightUpdateModels[st-MAXSYN].varNames[k] << model.synapseName[i] << ", dd_" << weightUpdateModels[st-MAXSYN].varNames[k] << model.synapseName[i] << ", size);" << endl; 
 	  }
 	}
 	os << endl;
@@ -378,7 +389,7 @@ void genRunner(NNmodel &model, //!< Model description
 	      os << "  " << postSynModels[pst].varNames[k] << model.synapseName[i] << " = new " << postSynModels[pst].varTypes[k] << "[" << (model.neuronN[model.synapseTarget[i]]) <<  "];" << endl;
 	      //allocate device variables
 	      os << "  size = sizeof(" << postSynModels[pst].varTypes[k] << ") * "<< model.neuronN[model.synapseTarget[i]] << ";" << endl;
-	      os << "  deviceMemAllocate((void **)&d_" << postSynModels[pst].varNames[k] << model.synapseName[i] << ", dd_" << postSynModels[pst].varNames[k] << model.synapseName[i] << ", size);" << endl;      
+	      os << "  deviceMemAllocate(&d_" << postSynModels[pst].varNames[k] << model.synapseName[i] << ", dd_" << postSynModels[pst].varNames[k] << model.synapseName[i] << ", size);" << endl;      
 	    }
     }
     os << endl; 	
@@ -443,10 +454,10 @@ void genRunner(NNmodel &model, //!< Model description
 		if (model.synapseConnType[i] == SPARSE) {
 		    os << "size = g" << model.synapseName[i] << ".connN;" << ENDL;
 		    if (model.synapseGType[i] != GLOBALG) {
-			    os << "  deviceMemAllocate((void **) &d_gp" << model.synapseName[i] << ", dd_gp" << model.synapseName[i] << ", sizeof(" << model.ftype << ") * size);" << endl;
+			os << "  deviceMemAllocate( &d_gp" << model.synapseName[i] << ", dd_gp" << model.synapseName[i] << ", sizeof(" << model.ftype << ") * g" << model.synapseName[i] << ".connN);" << endl;
 		    }
-		    os << "  deviceMemAllocate((void **) &d_gp" << model.synapseName[i] << "_ind, dd_gp" << model.synapseName[i] << "_ind, sizeof(unsigned int) * size);" << endl;
-		    os << "  deviceMemAllocate((void **) &d_gp" << model.synapseName[i] << "_indInG, dd_gp" << model.synapseName[i] << "_indInG, sizeof(unsigned int) * ("<< model.neuronN[model.synapseSource[i]] <<" + 1));" << endl;
+		    os << "  deviceMemAllocate( &d_gp" << model.synapseName[i] << "_ind, dd_gp" << model.synapseName[i] << "_ind, sizeof(unsigned int) * g" << model.synapseName[i] << ".connN);" << endl;
+		    os << "  deviceMemAllocate( &d_gp" << model.synapseName[i] << "_indInG, dd_gp" << model.synapseName[i] << "_indInG, sizeof(unsigned int) * ("<< model.neuronN[model.synapseSource[i]] <<" + 1));" << endl;
 		    mem += model.neuronN[model.synapseSource[i]]*sizeof(unsigned int);     
 		    memremsparse = deviceProp[theDev].totalGlobalMem - float(mem);
 			
@@ -455,7 +466,7 @@ void genRunner(NNmodel &model, //!< Model description
 			  
 			  //weight update variables
         for (int k= 0, l= weightUpdateModels[st-MAXSYN].varNames.size(); k < l; k++) {     
-          os << "deviceMemAllocate((void **)&d_" << weightUpdateModels[st-MAXSYN].varNames[k] << model.synapseName[i] << ", dd_" << weightUpdateModels[st-MAXSYN].varNames[k] << model.synapseName[i] << ", sizeof(" << weightUpdateModels[st-MAXSYN].varTypes[k]<< ") * size);" << endl;
+	    os << "deviceMemAllocate(&d_" << weightUpdateModels[st-MAXSYN].varNames[k] << model.synapseName[i] << ", dd_" << weightUpdateModels[st-MAXSYN].varNames[k] << model.synapseName[i] << "sizeof("  << weightUpdateModels[st-MAXSYN].varTypes[k] << ")*size);" << endl;       
 	      }
 			  //post-to-pre remapped arrays
 			  if (model.usesPostLearning[i]==TRUE) {
@@ -809,9 +820,9 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     os << "*/" << endl;
     os << "//-------------------------------------------------------------------------" << endl << endl;
 
-    os << "#ifndef RAND" << endl;
-    os << "#define RAND(Y,X) Y = Y * 1103515245 +12345;";
-    os << "X= (unsigned int)(Y >> 16) & 32767" << endl;
+    os << "#ifndef MYRAND" << endl;
+    os << "#define MYRAND(Y,X) Y = Y * 1103515245 +12345; ";
+    os << "X= (Y >> 16);" << endl;
     os << "#endif" << endl;
     os << endl;
 
@@ -1240,7 +1251,7 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     os << "void stepTimeGPU(";
     for (int i= 0; i < model.neuronGrpN; i++) {
 	if (model.neuronType[i] == POISSONNEURON) {
-	    os << "unsigned int *rates" << model.neuronName[i];
+	    os << model.RNtype << " *rates" << model.neuronName[i];
 	    os << ",   // pointer to the rates of the Poisson neurons in grp ";
 	    os << model.neuronName[i] << endl;
 	    os << "unsigned int offset" << model.neuronName[i];
@@ -1369,9 +1380,9 @@ void genRunnerCPU(NNmodel &model, //!< Neuronal network model description
     os << "*/" << endl;
     os << "//-------------------------------------------------------------------------" << endl << endl;
   
-    os << "#ifndef RAND" << endl;
-    os << "#define RAND(Y,X) Y = Y * 1103515245 +12345;";
-    os << "X= (unsigned int)(Y >> 16) & 32767" << endl;
+    os << "#ifndef MYRAND" << endl;
+    os << "#define MYRAND(Y,X) Y = Y * 1103515245 +12345; ";
+    os << "X= (Y >> 16);" << endl;
     os << "#endif" << endl;
     os << endl;
 
@@ -1385,7 +1396,7 @@ void genRunnerCPU(NNmodel &model, //!< Neuronal network model description
     os << "void stepTimeCPU(";
     for (int i= 0; i < model.neuronGrpN; i++) {
 	if (model.neuronType[i] == POISSONNEURON) {
-	    os << "unsigned int *rates" << model.neuronName[i];
+	    os << model.RNtype << " *rates" << model.neuronName[i];
 	    os << ",   // pointer to the rates of the Poisson neurons in grp ";
 	    os << model.neuronName[i] << endl;
 	    os << "unsigned int offset" << model.neuronName[i];

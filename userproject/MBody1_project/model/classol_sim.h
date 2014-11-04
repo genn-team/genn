@@ -27,7 +27,7 @@ using namespace std;
 #include <cuda_runtime.h>
 
 
-#define RAND(Y,X) Y = Y * 1103515245 +12345;X= (unsigned int)(Y >> 16) & 32767
+#define MYRAND(Y,X) Y = Y * 1103515245 +12345; X= (Y >> 16);
 
 // we will hard-code some stuff ... because at the end of the day that is 
 // what we will do for the CUDA version
@@ -39,7 +39,7 @@ float t= 0.0f;
 unsigned int iT= 0;
 
 #define PATTERNNO 100
-#define INPUTBASERATE 17
+float InputBaseRate= 2e-04;
 //----------------------------------------------------------------------
 // other stuff:
 #define T_REPORT_TME 1000.0
@@ -50,12 +50,12 @@ int patSetTime;
 #define PAT_TIME 100.0
 
 // pattern goes off at 2 steps == 1 ms
-#define PATFTIME 1.0
+#define PATFTIME 1.5
 
 int patFireTime;
 
 
-#define TOTAL_TME 50000.0
+#define TOTAL_TME 200000.0
 
 CStopWatch timer;
 

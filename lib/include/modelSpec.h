@@ -26,7 +26,6 @@
 #include <vector>
 #include "global.h"
 
-
 //neuronType
 #define MAPNEURON 0 //!< Macro attaching the name "MAPNEURON" to neuron type 0
 #define POISSONNEURON 1 //!< Macro attaching the name "POISSONNEURON" to neuron type 1
@@ -180,7 +179,8 @@ public:
   //========================
 
   string name; //!< Name of the neuronal newtwork model
-  string ftype; //!< Numerical precision of the floating point variables 
+  string ftype; //!< Type of floating point variables (float, double, ...; default: float)
+  string RNtype; //!< Underlying type for random number generation (default: long)
   int valid; //!< Flag for whether the model has been validated (unused?)
   unsigned int needSt; //!< Whether last spike times are needed at all in this network model (related to STDP)
   unsigned int needSynapseDelay; //!< Whether delayed synapse conductance is required in the network

@@ -267,11 +267,11 @@ void classol::read_input_patterns(FILE *f //!< File handle for a file containing
 				  )
 {
   // we use a predefined pattern number
-  unsigned int retval = fread(pattern, 1, model.neuronN[0]*PATTERNNO*sizeof(unsigned int),f);
+  unsigned int retval = fread(p_pattern, 1, model.neuronN[0]*PATTERNNO*sizeof(float),f);
   fprintf(stdout, "read patterns ... \n");
   fprintf(stdout, "%u bytes, input pattern values start with: \n", retval);
   for(int i= 0; i < 100; i++) {
-    fprintf(stdout, "%d ", pattern[i]);
+    fprintf(stdout, "%f ", p_pattern[i]);
   }
   fprintf(stdout, "\n\n");
 }

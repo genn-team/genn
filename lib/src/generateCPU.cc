@@ -60,7 +60,7 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 	if (model.neuronType[i] == POISSONNEURON) {
 	    // Note: Poisson neurons only used as input neurons; they do not 
 	    // receive any inputs
-	    os << "unsigned int *rates" << model.neuronName[i] << ", // poisson ";
+	    os << model.RNtype << " *rates" << model.neuronName[i] << ", // poisson ";
 	    os << "\"rates\" of grp " << model.neuronName[i] << ENDL;
 	    os << "unsigned int offset" << model.neuronName[i] << ", // poisson ";
 	    os << "\"rates\" offset of grp " << model.neuronName[i] << ENDL;
@@ -229,14 +229,8 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 		       tS("l") + nModels[nt].varNames[k]);
 	}
 	if (nt == POISSONNEURON) {
-	    if (DT == 0.5) {
-		substitute(code, tS("lrate"), 
-			   tS("rates") + model.neuronName[i] + tS("[n + offset") + model.neuronName[i] + tS("]"));
-	    }
-	    else{
-		substitute(code, tS("lrate"), 
-			   tS("rates") + model.neuronName[i] + tS("[n + offset") + model.neuronName[i] + tS("]*")+tS(DT/0.5));
-	    }
+	    substitute(code, tS("lrate"), 
+		       tS("rates") + model.neuronName[i] + tS("[n + offset") + model.neuronName[i] + tS("]"));
 	}
 	substitute(code, tS("$(Isyn)"), tS("Isyn"));
 	for (int k = 0, l = nModels[nt].pNames.size(); k < l; k++) {

@@ -122,7 +122,7 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 	nt = model.neuronType[i];
 	if (nt == POISSONNEURON) {
 	    // Note: Poisson neurons only used as input neurons; they do not receive any inputs
-	    os << "unsigned int *d_rates" << model.neuronName[i];
+	    os << model.RNtype << " *d_rates" << model.neuronName[i];
 	    os << ", // poisson \"rates\" of grp " << model.neuronName[i] << ENDL;
 	    os << "unsigned int offset" << model.neuronName[i];
 	    os << ", // poisson \"rates\" offset of grp " << model.neuronName[i] << ENDL;
@@ -208,11 +208,8 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 	os << "if (" << localID << " < " << model.neuronN[i] << ")" << OB(20);
 	os << "// pull V values in a coalesced access" << ENDL;
 	if (nt == POISSONNEURON) {
-	    os << "unsigned int lrate = d_rates" << model.neuronName[i];
+	    os << model.RNtype << " lrate = d_rates" << model.neuronName[i];
 	    os << "[offset" << model.neuronName[i] << " + " << localID << "]";
-	    if (DT != 0.5) {
-		os << "*" << DT/0.5;
-	    }
 	    os << ";" << ENDL;
 	}
 	for (int k = 0, l = nModels[nt].varNames.size(); k < l; k++) {
