@@ -617,7 +617,7 @@ void NNmodel::setPrecision(unsigned int floattype /**<  */)
 
 void NNmodel::setSeed(unsigned int inseed /*!< the new seed  */)
 {
-    model.seed= inseed;
+    seed= inseed;
 }
 
 //--------------------------------------------------------------------------
