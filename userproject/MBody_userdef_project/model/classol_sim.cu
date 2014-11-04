@@ -89,17 +89,24 @@ int main(int argc, char *argv[])
   fclose(f);
   locust.generate_baserates();
 
-  createSparseConnectivityFromDense(locust.model.neuronN[0],locust.model.neuronN[1],gpPNKC, &gPNKC, false);
-  cout << "connN is " << gPNKC.connN << endl; 
-  
-  allocateAllDeviceSparseArrays();
-  initializeAllSparseArrays();
-  
+  //get connN here: breaking down the createSparseConnectivityFromDense in parts, as we want to allocate all sparse variables together in order to create synapse variables
+  float asGoodAsZero = 0.0001f;//as far as we are concerned. Remember floating point errors.
+	gPNKC.connN = countEntriesAbove(gpPNKC, locust.model.neuronN[0] * locust.model.neuronN[1], asGoodAsZero);
+
+	gKCDN.connN = locust.model.neuronN[1] * locust.model.neuronN[3];
+  allocateAllSparseArrays();
+
+  //set values here createSparseConnectivityFromDense(locust.model.neuronN[0],locust.model.neuronN[1],gpPNKC, &gPNKC, false);
+  setSparseConnectivityFromDense(locust.model.neuronN[0],locust.model.neuronN[1],gpPNKC, &gPNKC);
+  cout << "PNKC connN is " << gPNKC.connN << endl; 
+  cout << "KCDN connN is " << gKCDN.connN << endl; 
+  setSparseConnectivityFromDense(locust.model.neuronN[1],locust.model.neuronN[3],gpKCDN, &gKCDN);
+ 
   if (which == GPU) {
     locust.allocate_device_mem_patterns();
   }
   locust.init(which);         // this includes copying g's for the GPU version
-
+  
   fprintf(stdout, "# neuronal circuitery built, start computation ... \n\n");
 
   //------------------------------------------------------------------

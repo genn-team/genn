@@ -451,10 +451,11 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 	    os << "[d_spkEvntQuePtr" << model.neuronName[i] << "]";
 	}
 	os << ", spkEvntCount);" << ENDL;
-
+  os << CB(50);  //end if (threadIdx.x == 0)
+  os << "if (threadIdx.x == 1)" << OB(51);
 	os << "if (spkCount>0) posSpk = atomicAdd((unsigned int *) &d_glbscnt" << model.neuronName[i] << ", spkCount);" << ENDL;
 
-	os << CB(50);  //end if (threadIdx.x == 0)
+	os << CB(51);  //end if (threadIdx.x == 1)
 
 	os << "__syncthreads();" << ENDL;
 
@@ -557,7 +558,7 @@ void generate_process_presynaptic_events_code(
 	}
     }
     else {
-	maxConnections= model.neuronN[trg];
+	    maxConnections= model.neuronN[trg];
     }
     os << "if (" << localID << " < " << maxConnections << ")" << OB(110);
 
@@ -626,14 +627,14 @@ void generate_process_presynaptic_events_code(
 	    }
 		   
 	    if (isGrpVarNeeded[model.synapseTarget[i]] == 0) {
-		substitute(code, tS("$(updatelinsyn)"), tS("$(inSyn)+=$(addtoinSyn)")); //!!!! never used atm		   		
+		substitute(code, tS("$(updatelinsyn)"), tS("$(inSyn)+=$(addtoinSyn)")); 		   		
 	    }
 	    else{
 		substitute(code, tS("$(updatelinsyn)"), tS("atomicAdd(&$(inSyn),$(addtoinSyn))"));
 	    }
 
 	    for (int k = 0, l = weightUpdateModels[synt].varNames.size(); k < l; k++) {
-		substitute(code, tS("$(") + weightUpdateModels[synt].varNames[k] + tS(")"), tS("dd_")+weightUpdateModels[synt].varNames[k]+model.synapseName[i]+ tS("[dd_gp")+ model.synapseName[i] + tS("_indInG[shSpk")+postfix+tS("[j]] + ") + localID +tS("]]"));
+		substitute(code, tS("$(") + weightUpdateModels[synt].varNames[k] + tS(")"), tS("dd_")+weightUpdateModels[synt].varNames[k]+model.synapseName[i]+ tS("[dd_gp")+ model.synapseName[i] + tS("_indInG[shSpk")+postfix+tS("[j]] + ") + localID +tS("]"));
 	    }
 			
 	    for (int k = 0, l = weightUpdateModels[synt].pNames.size(); k < l; k++) {
@@ -1154,7 +1155,7 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 		os << model.neuronN[trg] << " + shSpk[j]] = gFunc" << model.synapseName[k] << "(lg);" << ENDL;
 	    }
 	    if (model.synapseType[k] >= MAXSYN) {
-		if (model.synapseGType[k] == INDIVIDUALG){
+		/*if (model.synapseGType[k] == INDIVIDUALG){ //do I need that?!!!!!!
 		    if (model.synapseConnType[k] == SPARSE){
 			os << "lg = dd_gp" << model.synapseName[i] << "[dd_gp" << model.synapseName[i] << "_indInG[shSpk[j]] + "<< localID <<"]" << ENDL;
 		    }
@@ -1162,13 +1163,13 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 			os << "lg = dd_gp" << model.synapseName[k] << "[shSpk[j] +" << model.neuronN[trg] << " * " << localID << "];" << ENDL;
 		    }
 		    //theLG = toString("lg");
-		}
+		}*/
 		unsigned int synt = model.synapseType[k]-MAXSYN;
 		string code = weightUpdateModels[synt].simLearnPost;
 		for (int p = 0, l = weightUpdateModels[synt].varNames.size(); p < l; p++) {
 		    //os << "linSyn=d_inSyn" << model.neuronName[trg] << inSynNo << "[ipost];";
 		    if (model.synapseConnType[k] == SPARSE){
-		      	substitute(code, tS("$(") + weightUpdateModels[synt].varNames[p] + tS(")"), tS("dd_")+weightUpdateModels[synt].varNames[p]+model.synapseName[k]+ tS("[dd_gp")+ model.synapseName[k] + tS("_indInG[shSpk[j]] + ") + localID +tS("]]"));
+		      	substitute(code, tS("$(") + weightUpdateModels[synt].varNames[p] + tS(")"), tS("dd_")+weightUpdateModels[synt].varNames[p]+model.synapseName[k]+ tS("[dd_gp")+ model.synapseName[k] + tS("_indInG[shSpk[j]] + ") + localID +tS("]"));
 		    }
 		    else{ 
 		      	substitute(code, tS("$(") + weightUpdateModels[synt].varNames[p] + tS(")"), tS("dd_")+weightUpdateModels[synt].varNames[p]+model.synapseName[k] + tS("[")+ localID + tS(" * ") + tS(model.neuronN[trg]) +tS(" + shSpk[j]]"));

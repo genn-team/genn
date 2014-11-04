@@ -434,27 +434,28 @@ void genRunner(NNmodel &model, //!< Model description
 
   os << "void allocateAllDeviceSparseArrays() {" << endl;
   for (int i = 0; i < model.synapseGrpN; i++) {
-		if ((model.synapseConnType[i] == SPARSE) && (model.synapseType[i] >= MAXSYN)) {
+		if (model.synapseConnType[i] == SPARSE) {
       os << "size_t size;" << endl;
       break;
     }
   }	
 	for (int i = 0; i < model.synapseGrpN; i++) {
 		if (model.synapseConnType[i] == SPARSE) {
+		    os << "size = g" << model.synapseName[i] << ".connN;" << ENDL;
 		    if (model.synapseGType[i] != GLOBALG) {
-			os << "  deviceMemAllocate((void **) &d_gp" << model.synapseName[i] << ", dd_gp" << model.synapseName[i] << ", sizeof(" << model.ftype << ") * g" << model.synapseName[i] << ".connN);" << endl;
+			    os << "  deviceMemAllocate((void **) &d_gp" << model.synapseName[i] << ", dd_gp" << model.synapseName[i] << ", sizeof(" << model.ftype << ") * size);" << endl;
 		    }
-		    os << "  deviceMemAllocate((void **) &d_gp" << model.synapseName[i] << "_ind, dd_gp" << model.synapseName[i] << "_ind, sizeof(unsigned int) * g" << model.synapseName[i] << ".connN);" << endl;
+		    os << "  deviceMemAllocate((void **) &d_gp" << model.synapseName[i] << "_ind, dd_gp" << model.synapseName[i] << "_ind, sizeof(unsigned int) * size);" << endl;
 		    os << "  deviceMemAllocate((void **) &d_gp" << model.synapseName[i] << "_indInG, dd_gp" << model.synapseName[i] << "_indInG, sizeof(unsigned int) * ("<< model.neuronN[model.synapseSource[i]] <<" + 1));" << endl;
 		    mem += model.neuronN[model.synapseSource[i]]*sizeof(unsigned int);     
 		    memremsparse = deviceProp[theDev].totalGlobalMem - float(mem);
 			
 			int st= model.synapseType[i];
 			if (st >= MAXSYN){
-			  os << "size = g" << model.synapseName[i] << ".connN;" << ENDL;
+			  
 			  //weight update variables
-        for (int k= 0, l= weightUpdateModels[st-MAXSYN].varNames.size(); k < l; k++) {
-		      os << "CHECK_CUDA_ERRORS(cudaMalloc((void **)&d_" << weightUpdateModels[st-MAXSYN].varNames[k] << model.synapseName[i] << ", sizeof("  << weightUpdateModels[st-MAXSYN].varTypes[k] << ")*size));" << endl;       
+        for (int k= 0, l= weightUpdateModels[st-MAXSYN].varNames.size(); k < l; k++) {     
+          os << "deviceMemAllocate((void **)&d_" << weightUpdateModels[st-MAXSYN].varNames[k] << model.synapseName[i] << ", dd_" << weightUpdateModels[st-MAXSYN].varNames[k] << model.synapseName[i] << ", sizeof(" << weightUpdateModels[st-MAXSYN].varTypes[k]<< ") * size);" << endl;
 	      }
 			  //post-to-pre remapped arrays
 			  if (model.usesPostLearning[i]==TRUE) {
