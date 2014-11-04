@@ -194,4 +194,5 @@ void modelDefinition(NNmodel &model)
   model.addSynapsePopulation("DNDN", NGRADSYNAPSE, ALLTOALL, GLOBALG, NO_DELAY, EXPDECAY, "DN", "DN",  init, myDNDN_p, postSynV, postExpDNDN);
   model.setSynapseG("DNDN", gDNDN);
   model.setGPUDevice(nGPU);
+  model.setSeed(1234);
 }

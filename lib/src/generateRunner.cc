@@ -538,8 +538,12 @@ os << "}" << endl;
     os << "void initialize()" << endl;
     os << "{" << endl;
     os << "size_t size;" << endl;
-    os << "  srand((unsigned int) time(NULL));" << endl;
-    //os << "srand(101);" << endl;
+    if (model.seed != 0) {
+	os << "  srand((unsigned int) time(NULL));" << endl;
+    }
+    else {
+	os << "  srand((insigned int) " << model.seed() << ");" << endl;
+    }
     os << endl;
     os << "  //neuron variables" << endl;
     for (int i= 0; i < model.neuronGrpN; i++) {

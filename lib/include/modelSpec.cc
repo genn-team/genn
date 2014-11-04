@@ -31,6 +31,7 @@ NNmodel::NNmodel()
   setPrecision(0);
   RNtype= tS("uint64_t");
   setGPUDevice(AUTODEVICE);
+  setSeed(0);
 }
 
 NNmodel::~NNmodel() 
@@ -608,6 +609,16 @@ void NNmodel::setPrecision(unsigned int floattype /**<  */)
   }
 }
 
+
+//--------------------------------------------------------------------------
+/*! \brief This function sets the random seed. If the passed argument is > 0, automatic seeding is disabled. If the argument is 0, the underlying seed is obtained from the time() function.
+ */
+//--------------------------------------------------------------------------
+
+void NNmodel::setSeed(unsigned int inseed /*!< the new seed  */)
+{
+    model.seed= inseed;
+}
 
 //--------------------------------------------------------------------------
 /*! \brief This function defines the maximum number of connections for a neuron in the population
