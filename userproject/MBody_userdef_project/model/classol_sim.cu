@@ -35,11 +35,21 @@ int main(int argc, char *argv[])
     fprintf(stderr, "usage: classol_sim <basename> <CPU=0, GPU=1> \n");
     return 1;
   }
-  int which= atoi(argv[2]);
+  int GPUarg= atoi(argv[2]);
   string OutDir = toString(argv[1]) +"_output";
   string name;
   name= OutDir+ "/"+ toString(argv[1]) + toString(".time");
   FILE *timef= fopen(name.c_str(),"a");  
+
+  int which;
+  if (GPUarg > 1) {
+     which= 1;
+     nGPU= GPUarg-2;
+  }    
+  else {
+     which= GPUarg;	
+     nGPU= AUTODEVICE;
+  }
 
   timer.startTimer();
   patSetTime= (int) (PAT_TIME/DT);
@@ -55,7 +65,7 @@ int main(int argc, char *argv[])
   
   name= OutDir+ "/"+ toString(argv[1]) + toString(".out.Vm"); 
   FILE *osf= fopen(name.c_str(),"w");
-  name= OutDir+ "/"+ toString(argv[1]) + toString(".out.St"); 
+  name= OutDir+ "/"+ toString(argv[1]) + toString(".out.st"); 
   FILE *osf2= fopen(name.c_str(),"w");
   
 
@@ -121,6 +131,9 @@ int main(int argc, char *argv[])
 //  locust.output_state(os, which);  
 //  locust.output_spikes(os, which);  
   locust.run(DT, which);
+  float synwriteT= 0.0f;
+  float lastsynwrite= 0.0f;
+  int synwrite= 0;
 //  locust.output_state(os, which);  
 //  float synwriteT= 0.0f;
 //  int synwrite= 0;
@@ -156,20 +169,19 @@ int main(int argc, char *argv[])
       last_t_report= t;
     }
     // output synapses occasionally
-    // if (synwrite) {
-    //   lastsynwrite= synwriteT;
-    //   name= toString(argv[1]) + toString(".") + toString((int) synwriteT);
-    //   name+= toString(".syn");
-    //   f= fopen(name.c_str(),"w");
-    //   locust.write_kcdnsyns(f);
-    //   fclose(f);
-    //   synwrite= 0;
-    // }
-    // if (t - lastsynwrite >= SYN_OUT_TME) {
-    //   locust.get_kcdnsyns();
-    //   synwrite= 1;
-    // ¯  synwriteT= t;
-    // }
+     if (synwrite) {
+       lastsynwrite= synwriteT;
+       name= OutDir + "/" + tS(argv[1]) + tS(".") + tS((int) synwriteT) + tS(".syn");
+       f= fopen(name.c_str(),"w");
+       locust.write_kcdnsyns(f);
+       fclose(f);
+       synwrite= 0;
+     }
+     if (t - lastsynwrite >= SYN_OUT_TME) {
+       locust.get_kcdnsyns();
+       synwrite= 1;
+       synwriteT= t;
+     }
     done= (t >= TOTAL_TME);
   }
 //  locust.output_state(os);

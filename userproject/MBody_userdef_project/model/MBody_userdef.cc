@@ -18,9 +18,13 @@
 */
 //--------------------------------------------------------------------------
 
-#define DT 0.5  //!< This defines the global time step at which the simulation will run
+#define DT 0.1  //!< This defines the global time step at which the simulation will run
 #include "modelSpec.h"
 #include "modelSpec.cc"
+#include "../../userproject/include/sizes.h"
+
+int nGPU= 0;
+
 
 float myPOI_p[4]= {
   0.1,        // 0 - firing rate
@@ -79,14 +83,14 @@ float postExpPNLHI[2]={
 float myLHIKC_p[4]= {
   -92.0,          // 0 - Erev: Reversal potential
   -40.0,          // 1 - Epre: Presynaptic threshold potential
-  3.0,            // 2 - tau_S: decay time constant for S [ms]
+  1.5, //3.0,            // 2 - tau_S: decay time constant for S [ms]
   50.0            // 3 - Vslope: Activation slope of graded release 
 };
 //float gLHIKC= 0.6;
-float gLHIKC= 0.006;
+float gLHIKC= 0.35/_NLHI;
 
 float postExpLHIKC[2]={
-  3.0,            // 0 - tau_S: decay time constant for S [ms]
+  1.5,            // 0 - tau_S: decay time constant for S [ms]
   -92.0		  // 1 - Erev: Reversal potential
 };
 
@@ -94,13 +98,13 @@ float myKCDN_p[13]= {
   0.0,           // 0 - Erev: Reversal potential
   -20.0,         // 1 - Epre: Presynaptic threshold potential
   5.0,           // 2 - tau_S: decay time constant for S [ms]
-  25.0,          // 3 - TLRN: time scale of learning changes
-  100.0,         // 4 - TCHNG: width of learning window
+  50.0,          // 3 - TLRN: time scale of learning changes
+  50.0,         // 4 - TCHNG: width of learning window
   50000.0,       // 5 - TDECAY: time scale of synaptic strength decay
   100000.0,      // 6 - TPUNISH10: Time window of suppression in response to 1/0
-  100.0,         // 7 - TPUNISH01: Time window of suppression in response to 0/1
-  0.06,          // 8 - GMAX: Maximal conductance achievable
-  0.03,          // 9 - GMID: Midpoint of sigmoid g filter curve
+  200.0,         // 7 - TPUNISH01: Time window of suppression in response to 0/1
+  0.015,          // 8 - GMAX: Maximal conductance achievable
+  0.0075,          // 9 - GMID: Midpoint of sigmoid g filter curve
   33.33,         // 10 - GSLOPE: slope of sigmoid g filter curve
   10.0,          // 11 - TAUSHiFT: shift of learning curve
   //  0.006          // 12 - GSYN0: value of syn conductance g decays to
@@ -120,7 +124,7 @@ float myDNDN_p[4]= {
   50.0          // 3 - Vslope: Activation slope of graded release 
 };
 //float gDNDN= 0.04;
-float gDNDN= 0.01;
+float gDNDN= 1.0/_NLB;
 
 
 float postExpDNDN[2]={
@@ -128,18 +132,17 @@ float postExpDNDN[2]={
   -92.0		  // 1 - Erev: Reversal potential
 };
 
-float postSynV[0]={
-};
+float * postSynV = NULL;
 
 float myKCDN_userdef_p[11]= {
   -20.0,         // 0 1 - Epre: Presynaptic threshold potential
-  25.0,          // 1 3 - TLRN: time scale of learning changes
-  100.0,         // 2 4 - TCHNG: width of learning window
+  50.0,          // 1 3 - TLRN: time scale of learning changes
+  50.0,         // 2 4 - TCHNG: width of learning window
   50000.0,       // 3 5 - TDECAY: time scale of synaptic strength decay
   100000.0,      // 4 6 - TPUNISH10: Time window of suppression in response to 1/0
-  100.0,         // 5 7 - TPUNISH01: Time window of suppression in response to 0/1
-  0.06,          // 6 8 - GMAX: Maximal conductance achievable
-  0.03,          // 7 9 - GMID: Midpoint of sigmoid g filter curve
+  200.0,         // 5 7 - TPUNISH01: Time window of suppression in response to 0/1
+  0.015,          // 6 8 - GMAX: Maximal conductance achievable
+  0.0075,          // 7 9 - GMID: Midpoint of sigmoid g filter curve
   33.33,         // 8 10 - GSLOPE: slope of sigmoid g filter curve
   10.0,          // 9 11 - TAUSHiFT: shift of learning curve
   0.00006        // 10 12 - GSYN0: value of syn conductance g decays to
@@ -205,7 +208,6 @@ float myKCDN_userdef_p[11]= {
 		}
 	};
 
-#include "../../userproject/include/sizes.h"
 //for sparse only
 float * gpPNKC = new float[_NAL*_NMB];
 float * gpKCDN = new float[_NMB*_NLB];
@@ -222,8 +224,6 @@ void modelDefinition(NNmodel &model)
   weightUpdateModel nsynapse;
   nsynapse.varNames.clear();
   nsynapse.varTypes.clear();
-  nsynapse.varTypes.push_back(tS(model.ftype));
-  nsynapse.varNames.push_back(tS("gRaw")); 
   nsynapse.pNames.clear();
   nsynapse.dpNames.clear();
   // code for presynaptic spike:
@@ -337,34 +337,35 @@ void modelDefinition(NNmodel &model)
   model.nSpkEvntThreshold[0]=-20;
   model.nSpkEvntThreshold[1]=-20;
   model.nSpkEvntThreshold[2]=-40;
-  model.nSpkEvntThreshold[3]=-20;
+  model.nSpkEvntThreshold[3]=-30;
   float init[0]={};
   model.addSynapsePopulation("PNKC", NSYNAPSE_userdef, SPARSE, INDIVIDUALG, NO_DELAY, EXPDECAY, "PN", "KC", init, myPNKC_p, postSynV,postExpPNKC);
 	model.setMaxConn("PNKC", _NMB);  
 	model.addSynapsePopulation("PNLHI", NSYNAPSE_userdef, ALLTOALL, INDIVIDUALG, NO_DELAY, EXPDECAY, "PN", "LHI",  init, myPNLHI_p, postSynV, postExpPNLHI);
   
-  float myLHIKC_userdef_p[2]= {
+  float myLHIKC_userdef_p[2] = {
     -40.0,          // 1 - Epre: Presynaptic threshold potential
     50.0            // 3 - Vslope: Activation slope of graded release 
   };
 
   model.addSynapsePopulation("LHIKC", NGRADSYNAPSE_userdef, ALLTOALL, GLOBALG, NO_DELAY, EXPDECAY, "LHI", "KC",  init, myLHIKC_userdef_p, postSynV, postExpLHIKC);
   model.setSynapseG("LHIKC", gLHIKC);
-  model.usesSpikeEvents[2]=TRUE;
-  model.usesTrueSpikes[2]=FALSE;
+  model.usesSpikeEvents[2] = TRUE;
+  model.usesTrueSpikes[2] = FALSE;
 
   model.addSynapsePopulation("KCDN", LEARN1SYNAPSE_userdef, SPARSE, INDIVIDUALG, NO_DELAY, EXPDECAY, "KC", "DN",  init,  myKCDN_userdef_p, postSynV, postExpKCDN);
-  model.usesPostLearning[3]=TRUE;
-  model.usesSpikeEvents[3]=FALSE;
-  model.usesTrueSpikes[3]=TRUE;
+  model.usesPostLearning[3] = TRUE;
+  model.usesSpikeEvents[3] = FALSE;
+  model.usesTrueSpikes[3] = TRUE;
   model.setMaxConn("KCDN", _NLB); 
   
-  float myDNDN_userdef_p[4]= {
+  float myDNDN_userdef_p[4] = {
     -30.0,        // 1 - Epre: Presynaptic threshold potential 
     50.0          // 3 - Vslope: Activation slope of graded release 
   };
   model.addSynapsePopulation("DNDN", NGRADSYNAPSE_userdef, ALLTOALL, GLOBALG, NO_DELAY, EXPDECAY, "DN", "DN",  init, myDNDN_userdef_p, postSynV, postExpDNDN);
   model.setSynapseG("DNDN", gDNDN);
-  model.usesSpikeEvents[4]=TRUE;
-  model.usesTrueSpikes[4]=FALSE;
+  model.usesSpikeEvents[4] = TRUE;
+  model.usesTrueSpikes[4] = FALSE;
+  model.setSeed(1234);
 }

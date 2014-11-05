@@ -52,14 +52,14 @@ int main(int argc, char *argv[])
   timer.startTimer();
   patSetTime= (int) (PAT_TIME/DT);
   patFireTime= (int) (PATFTIME/DT);
-  fprintf(stderr, "# DT %f \n", DT);
-  fprintf(stderr, "# T_REPORT_TME %f \n", T_REPORT_TME);
-  fprintf(stderr, "# SYN_OUT_TME %f \n",  SYN_OUT_TME);
-  fprintf(stderr, "# PATFTIME %f \n", PATFTIME); 
-  fprintf(stderr, "# patFireTime %d \n", patFireTime);
-  fprintf(stderr, "# PAT_TIME %f \n", PAT_TIME);
-  fprintf(stderr, "# patSetTime %d \n", patSetTime);
-  fprintf(stderr, "# TOTAL_TME %f \n", TOTAL_TME);
+  fprintf(stdout, "# DT %f \n", DT);
+  fprintf(stdout, "# T_REPORT_TME %f \n", T_REPORT_TME);
+  fprintf(stdout, "# SYN_OUT_TME %f \n",  SYN_OUT_TME);
+  fprintf(stdout, "# PATFTIME %f \n", PATFTIME); 
+  fprintf(stdout, "# patFireTime %d \n", patFireTime);
+  fprintf(stdout, "# PAT_TIME %f \n", PAT_TIME);
+  fprintf(stdout, "# patSetTime %d \n", patSetTime);
+  fprintf(stdout, "# TOTAL_TME %f \n", TOTAL_TME);
   
   name= OutDir+ "/"+ toString(argv[1]) + toString(".out.Vm"); 
   FILE *osf= fopen(name.c_str(),"w");
@@ -70,24 +70,24 @@ int main(int argc, char *argv[])
   // build the neuronal circuitery
   classol locust;
 
-  fprintf(stderr, "# reading PN-KC synapses ... \n");
+  fprintf(stdout, "# reading PN-KC synapses ... \n");
   name= OutDir+ "/"+ toString(argv[1]) + toString(".pnkc");
   FILE *f= fopen(name.c_str(),"r");
   locust.read_pnkcsyns(f);
   fclose(f);
  
-  fprintf(stderr, "# reading PN-LHI synapses ... \n");
+  fprintf(stdout, "# reading PN-LHI synapses ... \n");
   name= OutDir+ "/"+ toString(argv[1]) + toString(".pnlhi");
   f= fopen(name.c_str(), "r");
   locust.read_pnlhisyns(f);
   fclose(f);   
   
-  fprintf(stderr, "# reading KC-DN synapses ... \n");
+  fprintf(stdout, "# reading KC-DN synapses ... \n");
   name= OutDir+ "/"+ toString(argv[1]) + toString(".kcdn");
   f= fopen(name.c_str(), "r");
   locust.read_kcdnsyns(f);
 
-  fprintf(stderr, "# reading input patterns ... \n");
+  fprintf(stdout, "# reading input patterns ... \n");
   name= OutDir+ "/"+ toString(argv[1]) + toString(".inpat");
   f= fopen(name.c_str(), "r");
   locust.read_input_patterns(f);
@@ -99,13 +99,13 @@ int main(int argc, char *argv[])
   }
   locust.init(which);         // this includes copying g's for the GPU version
 
-  fprintf(stderr, "# neuronal circuitery built, start computation ... \n\n");
+  fprintf(stdout, "# neuronal circuitery built, start computation ... \n\n");
 
   //------------------------------------------------------------------
   // output general parameters to output file and start the simulation
 
-  fprintf(stderr, "# We are running with fixed time step %f \n", DT);
-  fprintf(stderr, "# initial wait time execution ... \n");
+  fprintf(stdout, "# We are running with fixed time step %f \n", DT);
+  fprintf(stdout, "# initial wait time execution ... \n");
 
   t= 0.0;
   int done= 0;
@@ -136,7 +136,7 @@ int main(int argc, char *argv[])
     // report progress
     if (t - last_t_report >= T_REPORT_TME)
     {
-      fprintf(stderr, "time %f \n", t);
+      fprintf(stdout, "time %f \n", t);
       last_t_report= t;
     }
     // output synapses occasionally
