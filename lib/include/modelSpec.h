@@ -185,6 +185,7 @@ public:
   unsigned int needSt; //!< Whether last spike times are needed at all in this network model (related to STDP)
   unsigned int needSynapseDelay; //!< Whether delayed synapse conductance is required in the network
   int chooseGPUDevice;
+  unsigned int seed;
 
   // PUBLIC NEURON VARIABLES
   //========================
@@ -288,7 +289,9 @@ public:
   ~NNmodel();
   void setName(const string); //!< Method to set the neuronal network model name
 
-  void setPrecision(unsigned int);//< Set numerical precision for floating point
+  void setPrecision(unsigned int);//!< Set numerical precision for floating point
+
+  void setSeed(unsigned int); //!< Set the random seed (disables automatic seeding if argument not 0).
 
   void checkSizes(unsigned int *, unsigned int *, unsigned int *); //< Check if the sizes of the initialized neuron and synapse groups are correct.
 

@@ -454,9 +454,9 @@ os << "}" << endl;
 		if (model.synapseConnType[i] == SPARSE) {
 		    os << "size = g" << model.synapseName[i] << ".connN;" << ENDL;
 		    if (model.synapseGType[i] != GLOBALG) {
-			os << "  deviceMemAllocate( &d_gp" << model.synapseName[i] << ", dd_gp" << model.synapseName[i] << ", sizeof(" << model.ftype << ") * g" << model.synapseName[i] << ".connN);" << endl;
+			os << "  deviceMemAllocate( &d_gp" << model.synapseName[i] << ", dd_gp" << model.synapseName[i] << ", sizeof(" << model.ftype << ") * size);" << endl;
 		    }
-		    os << "  deviceMemAllocate( &d_gp" << model.synapseName[i] << "_ind, dd_gp" << model.synapseName[i] << "_ind, sizeof(unsigned int) * g" << model.synapseName[i] << ".connN);" << endl;
+		    os << "  deviceMemAllocate( &d_gp" << model.synapseName[i] << "_ind, dd_gp" << model.synapseName[i] << "_ind, sizeof(unsigned int) * size);" << endl;
 		    os << "  deviceMemAllocate( &d_gp" << model.synapseName[i] << "_indInG, dd_gp" << model.synapseName[i] << "_indInG, sizeof(unsigned int) * ("<< model.neuronN[model.synapseSource[i]] <<" + 1));" << endl;
 		    mem += model.neuronN[model.synapseSource[i]]*sizeof(unsigned int);     
 		    memremsparse = deviceProp[theDev].totalGlobalMem - float(mem);
@@ -466,7 +466,7 @@ os << "}" << endl;
 			  
 			  //weight update variables
         for (int k= 0, l= weightUpdateModels[st-MAXSYN].varNames.size(); k < l; k++) {     
-	    os << "deviceMemAllocate(&d_" << weightUpdateModels[st-MAXSYN].varNames[k] << model.synapseName[i] << ", dd_" << weightUpdateModels[st-MAXSYN].varNames[k] << model.synapseName[i] << "sizeof("  << weightUpdateModels[st-MAXSYN].varTypes[k] << ")*size);" << endl;       
+	    os << "deviceMemAllocate(&d_" << weightUpdateModels[st-MAXSYN].varNames[k] << model.synapseName[i] << ", dd_" << weightUpdateModels[st-MAXSYN].varNames[k] << model.synapseName[i] << ", sizeof("  << weightUpdateModels[st-MAXSYN].varTypes[k] << ")*size);" << endl;       
 	      }
 			  //post-to-pre remapped arrays
 			  if (model.usesPostLearning[i]==TRUE) {
@@ -539,8 +539,12 @@ os << "}" << endl;
     os << "void initialize()" << endl;
     os << "{" << endl;
     os << "size_t size;" << endl;
-    os << "  srand((unsigned int) time(NULL));" << endl;
-    //os << "srand(101);" << endl;
+    if (model.seed == 0) {
+	os << "  srand((unsigned int) time(NULL));" << endl;
+    }
+    else {
+	os << "  srand((unsigned int) " << model.seed << ");" << endl;
+    }
     os << endl;
     os << "  //neuron variables" << endl;
     for (int i= 0; i < model.neuronGrpN; i++) {

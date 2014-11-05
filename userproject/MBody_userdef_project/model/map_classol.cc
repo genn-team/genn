@@ -31,14 +31,17 @@
 classol::classol()
 {
   modelDefinition(model);
-  pattern= new unsigned int[model.neuronN[0]*PATTERNNO];
-  baserates= new unsigned int[model.neuronN[0]];
+  p_pattern= new float[model.neuronN[0]*PATTERNNO];
+  pattern= new uint64_t[model.neuronN[0]*PATTERNNO];
+  baserates= new uint64_t[model.neuronN[0]];
+
   allocateMem();
   initialize();
   sumPN= 0;
   sumKC= 0;
   sumLHI= 0;
   sumDN= 0;
+  offset = 0;
 }
 
 //--------------------------------------------------------------------------
@@ -52,14 +55,7 @@ void classol::init(unsigned int which //!< Flag defining whether GPU or CPU only
   //initGRaw();
   //following is to initialise user-defined learn1synapse graw variable. Equivalent to initGRaw();
   //for (int i=0;i<gCKDN.connN;i++){ //sparse
- 
-  for (int i=0;i<gPNKC.connN;i++){ //alltoall
-    gRawPNKC[i]=0.5; 
-  }
- 
-  for (int i=0;i<model.neuronN[0]*model.neuronN[2];i++){ //alltoall
-    gRawPNLHI[i]=0.2; 
-  }
+  offset = 0;
 
   for (int i=0;i<model.neuronN[1]*model.neuronN[3];i++){ //alltoall
     float tmp = gpKCDN[i] / (model.synapsePara[3][6]*2.0) - 1.0;
@@ -88,11 +84,11 @@ void classol::allocate_device_mem_patterns()
   unsigned int size;
 
   // allocate device memory for input patterns
-  size= model.neuronN[0]*PATTERNNO*sizeof(unsigned int);
+  size= model.neuronN[0]*PATTERNNO*sizeof(uint64_t);
   CHECK_CUDA_ERRORS(cudaMalloc((void**) &d_pattern, size));
-  fprintf(stdout, "allocated %lu elements for pattern.\n", size/sizeof(unsigned int));
+  fprintf(stdout, "allocated %lu elements for pattern.\n", size/sizeof(uint64_t));
   CHECK_CUDA_ERRORS(cudaMemcpy(d_pattern, pattern, size, cudaMemcpyHostToDevice));
-  size= model.neuronN[0]*sizeof(unsigned int);
+  size= model.neuronN[0]*sizeof(uint64_t);
   CHECK_CUDA_ERRORS(cudaMalloc((void**) &d_baserates, size));
   CHECK_CUDA_ERRORS(cudaMemcpy(d_baserates, baserates, size, cudaMemcpyHostToDevice)); 
 }
@@ -274,6 +270,7 @@ void classol::read_input_patterns(FILE *f //!< File handle for a file containing
     fprintf(stdout, "%f ", p_pattern[i]);
   }
   fprintf(stdout, "\n\n");
+  convertProbabilityToRandomNumberThreshold(p_pattern, pattern, model.neuronN[0]*PATTERNNO);
 }
 
 //--------------------------------------------------------------------------
@@ -284,13 +281,17 @@ void classol::read_input_patterns(FILE *f //!< File handle for a file containing
 void classol::generate_baserates()
 {
   // we use a predefined pattern number
-  for (int i= 0; i < model.neuronN[0]; i++) {
-    baserates[i]= INPUTBASERATE;
-  }
-  fprintf(stdout, "generated basereates ... \n");
-  fprintf(stdout, "baserate value: %d ", INPUTBASERATE);
-  fprintf(stdout, "\n\n");  
+    uint64_t inputBase;
+    convertProbabilityToRandomNumberThreshold(&InputBaseRate, &inputBase, 1);
+    for (int i= 0; i < model.neuronN[0]; i++) {
+	baserates[i]= inputBase;
+    }
+    fprintf(stdout, "generated basereates ... \n");
+    fprintf(stdout, "baserate value: %f ", InputBaseRate);
+    fprintf(stdout, "\n\n");  
 }
+
+
 
 //--------------------------------------------------------------------------
 /*! \brief Method for simulating the model for a given period of time
@@ -302,7 +303,6 @@ void classol::run(float runtime, //!< Duration of time to run the model for
 		  )
 {
   unsigned int pno;
-  unsigned int offset= 0;
   int riT= (int) (runtime/DT);
 
   for (int i= 0; i < riT; i++) {
@@ -478,11 +478,8 @@ void classol::sum_spikes()
 
 void classol::get_kcdnsyns()
 {
-  void *devPtr;
-  cudaGetSymbolAddress(&devPtr, "d_gpKCDN");
-  CHECK_CUDA_ERRORS(cudaMemcpy(gpKCDN, devPtr,
-    model.neuronN[1]*model.neuronN[3]*sizeof(float), 
-    cudaMemcpyDeviceToHost));
+    CHECK_CUDA_ERRORS(cudaMemcpy(gpKCDN, d_gpKCDN, model.neuronN[1]*model.neuronN[3]*sizeof(float), cudaMemcpyDeviceToHost));
+
 }
 
 
