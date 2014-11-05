@@ -11,7 +11,7 @@
 #  
 #--------------------------------------------------------------------------
 
-CFLAGS		=/nologo /EHsc
+CFLAGS=/nologo /EHsc
 
 all: generate_run.exe tools
 
