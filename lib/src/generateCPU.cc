@@ -135,7 +135,7 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 	    //os << "    Isyn = ";
 	    for (int j = 0; j < model.inSyn[i].size(); j++) {
 		for (int k = 0, l = postSynModels[model.postSynapseType[model.inSyn[i][j]]].varNames.size(); k < l; k++) {
-		    os << postSynModels[model.postSynapseType[model.inSyn[i][j]]].varTypes[k] << " lps" << postSynModels[model.postSynapseType[model.inSyn[i][j]]].varNames[k] << j;
+		    os << postSynModels[model.postSynapseType[model.inSyn[i][j]]].varTypes[k] << " lps" << postSynModels[model.postSynapseType[model.inSyn[i][j]]].varNames[k] << model.synapseName[j];
 		    os << " =" <<  postSynModels[model.postSynapseType[model.inSyn[i][j]]].varNames[k] << model.synapseName[model.inSyn[i][j]] << "[n];" << ENDL;
 
 		}
@@ -161,7 +161,7 @@ void genNeuronFunction(NNmodel &model, //!< Model description
  
 		for (int k = 0, l = postSynModels[model.postSynapseType[model.inSyn[i][j]]].varNames.size(); k < l; k++) {
 		    substitute(psCode, tS("$(") + postSynModels[model.postSynapseType[model.inSyn[i][j]]].varNames[k] + tS(")"), 
-			       tS("lps")+tS(postSynModels[model.postSynapseType[model.inSyn[i][j]]].varNames[k])+tS(j));
+			       tS("lps")+tS(postSynModels[model.postSynapseType[model.inSyn[i][j]]].varNames[k])+model.synapseName[j]);
 		}  
 	
 		for (int k = 0; k < postSynModels[model.postSynapseType[model.inSyn[i][j]]].dpNames.size(); ++k)
@@ -308,7 +308,7 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 		   
 	    for (int k = 0, l = postSynModels[model.postSynapseType[model.inSyn[i][j]]].varNames.size(); k < l; k++) {
 		substitute(psCode, tS("$(") + postSynModels[model.postSynapseType[model.inSyn[i][j]]].varNames[k] + tS(")"), 
-			   tS("lps")+tS(postSynModels[model.postSynapseType[model.inSyn[i][j]]].varNames[k])+tS(j));
+			   tS("lps")+tS(postSynModels[model.postSynapseType[model.inSyn[i][j]]].varNames[k])+model.synapseName[j]);
 	    } 
   		 
 	    for (int k = 0; k < postSynModels[model.postSynapseType[model.inSyn[i][j]]].dpNames.size(); ++k){
@@ -333,7 +333,7 @@ void genNeuronFunction(NNmodel &model, //!< Model description
       
 
 	    for (int k = 0, l = postSynModels[model.postSynapseType[model.inSyn[i][j]]].varNames.size(); k < l; k++) {
-		os << postSynModels[model.postSynapseType[model.inSyn[i][j]]].varNames[k] << model.synapseName[model.inSyn[i][j]] << "[n]" << " = lps" << postSynModels[model.postSynapseType[model.inSyn[i][j]]].varNames[k] << j << ";" << ENDL;
+		os << postSynModels[model.postSynapseType[model.inSyn[i][j]]].varNames[k] << model.synapseName[model.inSyn[i][j]] << "[n]" << " = lps" << postSynModels[model.postSynapseType[model.inSyn[i][j]]].varNames[k] << model.synapseName[j] << ";" << ENDL;
 	    }
 	}
 	os << CB(10) << ENDL;

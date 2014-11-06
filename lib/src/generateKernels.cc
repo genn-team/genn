@@ -266,7 +266,7 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 		    os << "// Synapse " << j << " of Population " << i << ENDL;
 		    postSynModel psm= postSynModels[model.postSynapseType[model.inSyn[i][j]]];
 		    for (int k = 0, l = psm.varNames.size(); k < l; k++) {
-			os << psm.varTypes[k] << " lps" << psm.varNames[k] << j;
+			os << psm.varTypes[k] << " lps" << psm.varNames[k] << model.synapseName[j];
 			os << " = dd_" <<  psm.varNames[k] << model.synapseName[model.inSyn[i][j]] << "[";
 			os << localID << "];" << ENDL;
 		    }
@@ -280,7 +280,7 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 //really? shouldn't parameters be replaced by parameter values?!? - TN 2014-10-28
 //		    name_substitutions(psCode, tS("l"), nModels[nt].pNames, tS(""));    
 		    value_substitutions(psCode, nModels[nt].pNames, model.neuronPara[i]);
-		    name_substitutions(psCode, tS("lps"), psm.varNames, tS(""));
+		    name_substitutions(psCode, tS("lps"), psm.varNames, model.synapseName[j]);
 		    value_substitutions(psCode, psm.pNames, model.postSynapsePara[model.inSyn[i][j]]);
 		    value_substitutions(psCode, psm.dpNames, model.dpsp[model.inSyn[i][j]]);
 		    
@@ -413,7 +413,7 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 
 	    for (int k = 0, l = postSynModels[model.postSynapseType[model.inSyn[i][j]]].varNames.size(); k < l; k++) {
 		substitute(psCode, tS("$(") + postSynModels[model.postSynapseType[model.inSyn[i][j]]].varNames[k] + tS(")"), 
-			   tS("lps") +tS(postSynModels[model.postSynapseType[model.inSyn[i][j]]].varNames[k])+tS(j));
+			   tS("lps") +tS(postSynModels[model.postSynapseType[model.inSyn[i][j]]].varNames[k])+model.synapseName[j]);
 	    }
 
 	    for (int k = 0; k < postSynModels[model.postSynapseType[model.inSyn[i][j]]].dpNames.size(); ++k)
@@ -435,7 +435,7 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 
 	    for (int k = 0, l = postSynModels[model.postSynapseType[model.inSyn[i][j]]].varNames.size(); k < l; k++) {
 		os << "dd_" <<  postSynModels[model.postSynapseType[model.inSyn[i][j]]].varNames[k] << model.synapseName[model.inSyn[i][j]] << "[";
-		os << localID << "] = lps" << postSynModels[model.postSynapseType[model.inSyn[i][j]]].varNames[k] << j << ";"<< ENDL;
+		os << localID << "] = lps" << postSynModels[model.postSynapseType[model.inSyn[i][j]]].varNames[k] << model.synapseName[j] << ";"<< ENDL;
 	    }
 	}
 	os << CB(20);

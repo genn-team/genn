@@ -305,10 +305,11 @@ void NNmodel::addNeuronPopulation(const string name, /**<  The name of the neuro
                                   float *p, /**< Parameters of this neuron type */
                                   float *ini /**< Initial values for variables of this neuron type */)
 {
-  if (nModels.size() < 1) prepareStandardModels();
-
   unsigned int i= neuronGrpN++;
 
+  if (i == 0){ 
+    prepareStandardModels();
+  }  
   neuronName.push_back(toString(name));
   neuronN.push_back(nNo);
   neuronType.push_back(type);
@@ -472,9 +473,10 @@ void NNmodel::addSynapsePopulation(const string name, /**<  The name of the syna
   vector<float> tmpPS;
   vector<float> tmpPV;
   
-  if (postSynModels.size() < 1) preparePostSynModels();
-  if (syntype >= MAXSYN) prepareWeightUpdateModels();
-
+  if (i == 0){
+    preparePostSynModels();
+    if (syntype >= MAXSYN) prepareWeightUpdateModels();
+  }
 
   synapseName.push_back(name);
   synapseType.push_back(syntype);

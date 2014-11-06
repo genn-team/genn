@@ -134,6 +134,10 @@ float postExpDNDN[2]={
 
 float * postSynV = NULL;
 
+float postSynV_EXPDECAY_EVAR[1] = {
+0
+};
+
 float myKCDN_userdef_p[11]= {
   -20.0,         // 0 1 - Epre: Presynaptic threshold potential
   50.0,          // 1 3 - TLRN: time scale of learning changes
@@ -221,6 +225,31 @@ void modelDefinition(NNmodel &model)
   /******************************************************************/		
   // redefine nsynapse as a user-defined syapse type 
   model.setGPUDevice(0); //returns quadro for the model and it is not possible to debug on the GPU used for display.
+
+  /*ATTENTION: FOLLOWING WILL SHIFT POSTSYN INDEXING AS STANDADD MODELS ARE CREATED DURING CREATION OF FIRST SYNAPSE POPULATION*/
+  postSynModel pstest;
+  pstest.varNames.clear();
+  pstest.varTypes.clear();
+
+  pstest.varNames.push_back(tS("EEEE")); 
+  pstest.varTypes.push_back(tS("float"));  
+
+  pstest.pNames.clear();
+  pstest.dpNames.clear(); 
+  
+  pstest.pNames.push_back(tS("tau")); 
+  pstest.dpNames.push_back(tS("expDecay"));
+
+  pstest.postSynDecay=tS(" 	 $(inSyn)*=$(expDecay);\n");
+  pstest.postSyntoCurrent=tS("$(inSyn)*($(EEEE)-$(V))");
+
+  pstest.dps = new expDecayDp;
+  
+  postSynModels.push_back(pstest);
+  unsigned int EXPDECAY_EVAR=postSynModels.size()-1; //this is the synapse index to be used in addSynapsePopulation*/
+
+  /*END ADDING POSTSYNAPTIC METHODS*/
+
   weightUpdateModel nsynapse;
   nsynapse.varNames.clear();
   nsynapse.varTypes.clear();
@@ -339,21 +368,21 @@ void modelDefinition(NNmodel &model)
   model.nSpkEvntThreshold[2]=-40;
   model.nSpkEvntThreshold[3]=-30;
   float init[0]={};
-  model.addSynapsePopulation("PNKC", NSYNAPSE_userdef, SPARSE, INDIVIDUALG, NO_DELAY, EXPDECAY, "PN", "KC", init, myPNKC_p, postSynV,postExpPNKC);
+  model.addSynapsePopulation("PNKC", NSYNAPSE_userdef, SPARSE, INDIVIDUALG, NO_DELAY, EXPDECAY_EVAR, "PN", "KC", init, myPNKC_p, postSynV_EXPDECAY_EVAR,postExpPNKC);
 	model.setMaxConn("PNKC", _NMB);  
-	model.addSynapsePopulation("PNLHI", NSYNAPSE_userdef, ALLTOALL, INDIVIDUALG, NO_DELAY, EXPDECAY, "PN", "LHI",  init, myPNLHI_p, postSynV, postExpPNLHI);
+	model.addSynapsePopulation("PNLHI", NSYNAPSE_userdef, ALLTOALL, INDIVIDUALG, NO_DELAY, EXPDECAY+1, "PN", "LHI",  init, myPNLHI_p, postSynV, postExpPNLHI);
   
   float myLHIKC_userdef_p[2] = {
     -40.0,          // 1 - Epre: Presynaptic threshold potential
     50.0            // 3 - Vslope: Activation slope of graded release 
   };
 
-  model.addSynapsePopulation("LHIKC", NGRADSYNAPSE_userdef, ALLTOALL, GLOBALG, NO_DELAY, EXPDECAY, "LHI", "KC",  init, myLHIKC_userdef_p, postSynV, postExpLHIKC);
+  model.addSynapsePopulation("LHIKC", NGRADSYNAPSE_userdef, ALLTOALL, GLOBALG, NO_DELAY, EXPDECAY+1, "LHI", "KC",  init, myLHIKC_userdef_p, postSynV, postExpLHIKC);
   model.setSynapseG("LHIKC", gLHIKC);
   model.usesSpikeEvents[2] = TRUE;
   model.usesTrueSpikes[2] = FALSE;
 
-  model.addSynapsePopulation("KCDN", LEARN1SYNAPSE_userdef, SPARSE, INDIVIDUALG, NO_DELAY, EXPDECAY, "KC", "DN",  init,  myKCDN_userdef_p, postSynV, postExpKCDN);
+  model.addSynapsePopulation("KCDN", LEARN1SYNAPSE_userdef, SPARSE, INDIVIDUALG, NO_DELAY, EXPDECAY+1, "KC", "DN",  init,  myKCDN_userdef_p, postSynV, postExpKCDN);
   model.usesPostLearning[3] = TRUE;
   model.usesSpikeEvents[3] = FALSE;
   model.usesTrueSpikes[3] = TRUE;
@@ -363,7 +392,7 @@ void modelDefinition(NNmodel &model)
     -30.0,        // 1 - Epre: Presynaptic threshold potential 
     50.0          // 3 - Vslope: Activation slope of graded release 
   };
-  model.addSynapsePopulation("DNDN", NGRADSYNAPSE_userdef, ALLTOALL, GLOBALG, NO_DELAY, EXPDECAY, "DN", "DN",  init, myDNDN_userdef_p, postSynV, postExpDNDN);
+  model.addSynapsePopulation("DNDN", NGRADSYNAPSE_userdef, ALLTOALL, GLOBALG, NO_DELAY, EXPDECAY+1, "DN", "DN",  init, myDNDN_userdef_p, postSynV, postExpDNDN);
   model.setSynapseG("DNDN", gDNDN);
   model.usesSpikeEvents[4] = TRUE;
   model.usesTrueSpikes[4] = FALSE;

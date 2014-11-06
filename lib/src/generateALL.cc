@@ -445,8 +445,8 @@ int main(int argc,     //!< number of arguments; expected to be 2
   neuronBlkSz = 256;
   
   NNmodel *model = new NNmodel();
-  prepareStandardModels();
-  preparePostSynModels();
+  //prepareStandardModels();
+  //preparePostSynModels();
   modelDefinition(*model);
   string path= toString(argv[1]);
   theDev = chooseDevice(cout, model, path);
