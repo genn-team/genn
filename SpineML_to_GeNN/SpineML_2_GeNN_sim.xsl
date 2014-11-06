@@ -45,15 +45,17 @@ float t = 0.0f;
 
 #include "rng.h"
 
+// Some data for the random number generator.
+RngData rngData;
 
 float uniformRand(float min, float max) {
-	return randomUniform*(max-min)+min;
+	return _randomUniform(&amp;rngData)*(max-min)+min;
 }
 float normalRand(float mean, float std) {
-	return randomNormal*std-mean;
+	return _randomNormal(&amp;rngData)*std-mean;
 }
 float poissonRand() {
-	return randomPoisson;
+	return _randomPoisson(&amp;rngData);
 }
 
 #endif
@@ -72,7 +74,7 @@ struct conn_with_delay {
 int main(int argc, char *argv[])
 {
 
-	zigset(123);
+	zigset(&amp;rngData,123);
 
 // safety first:
 if (sizeof(conn) != 8) {
@@ -222,7 +224,7 @@ Error: ValueList 'g' not implemented yet
 <!---->			</xsl:if>
 				<xsl:if test="SMLLOWNL:WeightUpdate/SMLNL:Property[@name='g']/SMLNL:UniformDistribution">
 					<!-- SET THE SEED -->
-					<!---->	seed = <xsl:value-of select="SMLLOWNL:WeightUpdate/SMLNL:Property[@name='g']/SMLNL:UniformDistribution/@seed"/>;
+					<!---->	rngData.seed = <xsl:value-of select="SMLLOWNL:WeightUpdate/SMLNL:Property[@name='g']/SMLNL:UniformDistribution/@seed"/>;
 <!---->				<xsl:for-each select="SMLNL:ConnectionList/SMLNL:Connection">
 <!---->				<!---->	<xsl:value-of select="$synapse_array_name"/>[<xsl:value-of select="number(@src_neuron)*number($dst_size)+number(@dst_neuron)"/>] = uniformRand(<xsl:value-of select="../../SMLLOWNL:WeightUpdate/SMLNL:Property[@name='g']/SMLNL:UniformDistribution/@minimum"/>,<xsl:value-of select="../../SMLLOWNL:WeightUpdate/SMLNL:Property[@name='g']/SMLNL:UniformDistribution/@maximum"/>);
 printf("value of w = %f\n", <xsl:value-of select="$synapse_array_name"/>[<xsl:value-of select="number(@src_neuron)*number($dst_size)+number(@dst_neuron)"/>]);
