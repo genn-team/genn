@@ -1,14 +1,5 @@
-//--------------------------------------------------------------------------
-/*! \brief Template function for string conversion 
- */
-//--------------------------------------------------------------------------
 
-template<typename T> std::string toString(T t)
-{
-  std::stringstream s;
-  s << t;
-  return s.str();
-} 
+#include "toString.h"
 
 //--------------------------------------------------------------------------
 /*! \brief function to detect the architecture of the windows operating 
