@@ -11,7 +11,8 @@
 #  
 #--------------------------------------------------------------------------
 
-CFLAGS		=/nologo /EHsc
+INCLUDE_FLAGS = /I $(GENN_PATH)/lib/include
+CFLAGS		=/nologo /EHsc $(INCLUDE_FLAGS)
 
 all: generate_run.exe tools
 
