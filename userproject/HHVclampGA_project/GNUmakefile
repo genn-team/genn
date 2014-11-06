@@ -11,7 +11,8 @@
 #  
 #--------------------------------------------------------------------------
 
-CXXFLAGS	=-Wall -Winline -O3 -g
+INCLUDE_FLAGS	= -I$(GENN_PATH)/lib/include 
+CXXFLAGS	= $(INCLUDE_FLAGS) -Wall -Winline -O3 -g
 
 all: generate_run
 

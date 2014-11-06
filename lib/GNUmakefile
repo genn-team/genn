@@ -27,7 +27,7 @@ NVCC		:=$(CUDA_PATH)/bin/nvcc
 CXXFLAGS	+=-DNVCC=\"$(NVCC)\"
 
 # Global include flags and link flags.
-INCLUDE_FLAGS	:=-include $(MODEL) -I$(CUDA_PATH)/include -I$(GENN_PATH)/lib/include
+INCLUDE_FLAGS	:=-include $(MODEL) -I$(CUDA_PATH)/include -I$(GENN_PATH)/lib/include -I$(GENN_PATH)/userproject/include
 ifeq ($(DARWIN),DARWIN)
   LINK_FLAGS	:=-Xlinker -L$(CUDA_PATH)/lib -lcudart -lstdc++ -lc++
 else
