@@ -21,11 +21,23 @@ string detectWindowsArch()
 	if (arch == tS("AMD64")) {
 	    archChoice= tS("x64");
 	}
-    }
-    else {
-	archChoice= tS("x86"):
+	else {
+	  archChoice= tS("x86");
+	}
     }
     return archChoice;
+}
+
+string ensureCompilerEnvironmentCmd()
+{
+  string cmd;
+  cmd= tS("where /Q nmake.exe");
+  int res= system(cmd.c_str());
+  if (res != 0) {
+    string archChoice= detectWindowsArch();
+    cmd = tS("\"")+tS(getenv("VS_PATH"))+tS("\\VC\\vcvarsall.bat\" ")+archChoice+tS(" && ");
+  }
+  return cmd;
 }
 
 #endif
