@@ -822,7 +822,7 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 				substitute(code, tS("$(") + weightUpdateModels[synt].varNames[k] + tS(")"), weightUpdateModels[synt].varNames[k]+model.synapseName[synID]+ tS("[g")+ model.synapseName[synID] + tS(".gIndInG[glbSpk")+ model.neuronName[src] +tS("[j]] + l]"));
 			    }
 			    else{
-				substitute(code, tS("$(") + weightUpdateModels[synt].varNames[k] + tS(")"), weightUpdateModels[synt].varNames[k]+model.synapseName[synID]+tS("[glbSpk")+ model.neuronName[src]+("[j]") + tS("*") + tS(model.neuronN[trg]) + tS("+ l ]"));
+				substitute(code, tS("$(") + weightUpdateModels[synt].varNames[k] + tS(")"), weightUpdateModels[synt].varNames[k]+model.synapseName[synID]+tS("[glbSpk")+ model.neuronName[src]+("[j]") + tS("*") + tS(model.neuronN[trg]) + tS("+ n ]"));
 			    }
 
 			}
