@@ -32,19 +32,24 @@ generation for Nvidia CUDA.
 (4) Add "%GENN_PATH%\lib\bin" to your %PATH% variable. For example, use:
       SETX PATH "%GENN_PATH%\lib\bin;%PATH%"
 
-This completes the installation.
+(5) Define VC_PATH as the path to your most recent Visual Studio
+installation, e.g.
+setx VC_PATH "C:\Program Files (x86)\Microsoft Visual Studio 10.0"
 
-NOTE:
-  The Windows version of GeNN uses the Microsoft Visual C++ cl.exe compiler.
-  You must run the vscvsrsall.bat script under Visual C++ directory before
-  projects can be compiled and run in a given cmd.exe terminal window.
+Alternatively you can do one of the following:
 
-  Alternatively, one can use the shortcut link in:
+  i) Run the vscvsrsall.bat script under Visual C++ directory before
+  projects are compiled and run in a given cmd.exe terminal window.
+
+  ii) Alternatively, one can use the shortcut link in:
     start menu -> all programs -> Microsoft Visual Studio ->
     Visual Studio Tools -> Visual Studio Command Prompt
   which will launch an instance of cmd.exe in which the vcvarsall.bat compiler
   setup script has already been executed.
 
+This completes the installation.
+
+NOTE:
 
     [1.2] LINUX / MAC INSTALL
     -------------------------

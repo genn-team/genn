@@ -36,17 +36,7 @@
 
 using namespace std;
 
-//--------------------------------------------------------------------------
-/*! \brief Template function for string conversion 
- */
-//--------------------------------------------------------------------------
-
-template<typename T> std::string toString(T t)
-{
-  std::stringstream s;
-  s << t;
-  return s.str();
-} 
+#include "usertools.h"
 
 //--------------------------------------------------------------------------
 /*! \brief Main entry point for generate_run.
@@ -80,10 +70,13 @@ int main(int argc, char *argv[])
 
   // build it
 #ifdef _WIN32
-  cmd = "cd model && buildmodel.bat HHVClamp " + toString(dbgMode);
+  string archChoice= detectWindowsArch();
+  cmd = tS("\"")+tS(getenv("VS_PATH"))+tS("\\VC\\vcvarsall.bat\" ")+archChoice;
+  cmd += " && cd model && buildmodel.bat HHVClamp " + toString(dbgMode);
   cmd += " && nmake /nologo /f WINmakefile clean && nmake /nologo /f WINmakefile";
   if (dbgMode == 1) {
     cmd += " DEBUG=1";
+    cout << cmd << endl;
   }
 #else // UNIX
   cmd = "cd model && buildmodel.sh HHVClamp " + toString(dbgMode);
