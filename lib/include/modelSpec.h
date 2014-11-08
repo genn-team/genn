@@ -26,22 +26,24 @@
 #include <vector>
 #include "global.h"
 
+void initGeNN();
+
+unsigned int GeNNReady= 0;
+
 //neuronType
-#define MAPNEURON 0 //!< Macro attaching the name "MAPNEURON" to neuron type 0
-#define POISSONNEURON 1 //!< Macro attaching the name "POISSONNEURON" to neuron type 1
-#define TRAUBMILES 2 //!< Macro attaching the name "TRAUBMILES" to neuron type 2
-#define IZHIKEVICH 3 //!< Macro attaching the name "IZHIKEVICH" to neuron type 3
-#define IZHIKEVICH_V 4 //!< Macro attaching the name "IZHIKEVICH_V" to neuron type 4
+unsigned int MAPNEURON; //!< Macro attaching the name "MAPNEURON" to neuron type 0
+unsigned int POISSONNEURON; //!< Macro attaching the name "POISSONNEURON" to neuron type 1
+unsigned int TRAUBMILES; //!< Macro attaching the name "TRAUBMILES" to neuron type 2
+unsigned int IZHIKEVICH; //!< Macro attaching the name "IZHIKEVICH" to neuron type 3
+unsigned int IZHIKEVICH_V; //!< Macro attaching the name "IZHIKEVICH_V" to neuron type 4
 #define MAXNRN 5 // maximum number of neuron types: SpineML needs to know this
 
 #define SYNTYPENO 4
 
 //synapseType
-#define NSYNAPSE 0 //!< Macro attaching  the name NSYNAPSE to predefined synapse type 0, which is a non-learning synapse
-#define NGRADSYNAPSE 1 //!< Macro attaching  the name NGRADSYNAPSE to predefined synapse type 1 which is a graded synapse wrt the presynaptic voltage
-#define LEARN1SYNAPSE 2 //!< Macro attaching  the name LEARN1SYNAPSE to the predefined synapse type 2 which is a learning using spike timing; uses a primitive STDP rule for learning
-#define USERDEFSYNAPSE 3 //!< Macro attaching  the name USERDEFSYNAPSE to the predefined synapse type 3 which is a user-defined synapse
-#define MAXSYN 4 // maximum number of synapse types: SpineML needs to know this
+unsigned int NSYNAPSE;  //!< Variable attaching  the name NSYNAPSE to predefined synapse type 0, which is a non-learning synapse
+unsigned int NGRADSYNAPSE; //!< Variable attaching  the name NGRADSYNAPSE to predefined synapse type 1 which is a graded synapse wrt the presynaptic voltage
+unsigned int LEARN1SYNAPSE; //!< Variable attaching  the name LEARN1SYNAPSE to the predefined synapse type 2 which is a learning using spike timing; uses a primitive STDP rule for learning
 
 
 //input type
@@ -50,13 +52,6 @@
 #define MATINP 2 //!< Macro attaching  the name MATINP (explicit input defined as a matrix) to 2
 #define INPRULE 3 //!< Macro attaching  the name INPRULE (explicit dynamic input defined as a rule) to 3
 #define RANDNINP 4 //!< Macro attaching  the name RANDNINP (Random input with Gaussian distribution, calculated real time on the device by the generated code) to 4 (TODO, not implemented yet)
-
-unsigned int SYNPNO[SYNTYPENO]= {
-  3,        // NSYNAPSE_PNO 
-  4,        // NGRADSYNAPSE_PNO 
-  13,       // LEARN1SYNAPSE_PNO 
-  1			// USERDEFSYNAPSE_PNO 
-}; //!< Global constant integer array containing the number of parameters of each of the predefined synapse types
 
 //connectivity of the network (synapseConnType)
 #define ALLTOALL 0  //!< Macro attaching the label "ALLTOALL" to connectivity type 0 
@@ -92,8 +87,8 @@ unsigned int SYNPNO[SYNTYPENO]= {
 //#define MAXSPKCNT 50000
 
 //postsynaptic parameters
-#define EXPDECAY 0 //default - how it is in the original version
-#define IZHIKEVICH_PS 1 //empty postsynaptic rule for the Izhikevich model.
+unsigned int EXPDECAY; //default - how it is in the original version
+unsigned int IZHIKEVICH_PS; //empty postsynaptic rule for the Izhikevich model.
 // currently values >1 will be defined by code generation.
 #define MAXPOSTSYN 2 // maximum number of postsynaptic integration: SpineML needs to know this
 
@@ -125,6 +120,8 @@ The dependent parameters are functions of independent parameters that enter into
 
   vector<string> extraGlobalNeuronKernelParameterTypes; //!< Additional parameters in the neuron kernel; they are translated to a population specific name but otherwise assumed to be one parameter per population rather than per neuron.
   dpclass * dps;
+    bool needPreSt;
+    bool needPostSt;
 };
 
 /*! \brief Structure to hold the information that defines a post-synaptoic model (a model of how synapses affect post-synaptic neuron variables, classically in the form of a synaptic current). It also allows to define an equation for the dynamics that can be applied to the summed synaptic input variable "insyn".
@@ -144,8 +141,9 @@ struct postSynModel
 /*! \brief Structure to hold the information that defines a weightupdate model (a model of how spikes affect synaptic (and/or) (mostly) post-synaptic neuron variables. It also allows to define changes in response to post-synaptic spikes/spike-like events.
  */
 
-struct weightUpdateModel
+class weightUpdateModel
 {
+public:
   string simCode; // !< \brief Simulation code that is used for true spikes (only one point after Vthresh)
   string simCodeEvnt; // !< \brief Simulation code that is used for spike events (all the instances where Vm > Vthres)
   string simLearnPost; // !< \brief Simulation code which is used in the learnSynapsesPost kernel/function, where postsynaptic neuron spikes before the presynaptic neuron in the STDP window.
@@ -160,6 +158,13 @@ struct weightUpdateModel
 
   vector<string> extraGlobalSynapseKernelParameterTypes; //!< Additional parameters in the neuron kernel; they are translated to a population specific name but otherwise assumed to be one parameter per population rather than per synapse.
   dpclass * dps;
+    bool needPreSt;
+    bool needPostSt;
+
+    weightUpdateModel() {
+	needPreSt= FALSE;
+	needPostSt= FALSE;
+    }
 };
 
 /*! \brief Structure to hold the information that defines synapse dynamics (a model of how synapse variables change over time, independent of or in addition to changes when spikes occur).
@@ -234,7 +239,6 @@ public:
   vector<unsigned int> usesPostLearning; //!< Defines if anything is done in case of postsynaptic neuron spiking before presynaptic neuron (punishment in STDP etc.) 
   vector<vector<float> > synapsePara; //!< parameters of synapses
   vector<vector<float> > synapseIni; //!< Initial values of synapse variables
-  vector<vector<float> > dsp;  //!< Derived synapse parameters
   vector<vector<float> > dsp_w;  //!< Derived synapse parameters (weightUpdateModel only)
   vector<unsigned int> postSynapseType; //!< Types of post-synaptic model
   vector<vector<float> > postSynapsePara; //!< parameters of postsynapses

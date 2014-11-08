@@ -47,24 +47,31 @@ void generate_model_runner(NNmodel &model,  //!< Model description
   mkdir((path + "/" + model.name + "_CODE").c_str(), 0777); 
 #endif
 
+  cerr << 1 << endl;
   // general shared code for GPU and CPU versions
   genRunner(model, path, cout);
 
+  cerr << 2 << endl;
   // GPU specific code generation
   genRunnerGPU(model, path, cout);
   
+  cerr << 3 << endl;
   // generate neuron kernels
   genNeuronKernel(model, path, cout);
 
+  cerr << 4 << endl;
   // generate synapse and learning kernels
   if (model.synapseGrpN > 0) genSynapseKernel(model, path, cout);
 
+  cerr << 5 << endl;
   // CPU specific code generation
   genRunnerCPU(model, path, cout);
 
+  cerr << 6 << endl;
   // Generate the equivalent of neuron kernel
   genNeuronFunction(model, path, cout);
   
+  cerr << 7 << endl;
   // Generate the equivalent of synapse and learning kernel
   if (model.synapseGrpN > 0) genSynapseFunction(model, path, cout);
 }
@@ -143,7 +150,6 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
       }
     }
     groupSize[2]= model->neuronN;
-
     for (int device = devstart; device < devcount; device++) {
       theDev = device;
       CHECK_CUDA_ERRORS(cudaSetDevice(device));
@@ -445,8 +451,6 @@ int main(int argc,     //!< number of arguments; expected to be 2
   neuronBlkSz = 256;
   
   NNmodel *model = new NNmodel();
-  prepareStandardModels();
-  preparePostSynModels();
   modelDefinition(*model);
   string path= toString(argv[1]);
   theDev = chooseDevice(cout, model, path);
