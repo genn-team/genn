@@ -477,65 +477,66 @@ vector<weightUpdateModel> weightUpdateModels;
 
 void prepareWeightUpdateModels()
 {
-    weightUpdateModel wu;
+  weightUpdateModel wuN, wuG, wuL;
     
     // NSYNAPSE weightupdate model: "normal" pulse coupling synapse
-    wu.varNames.clear();
-    wu.varTypes.clear();
-    wu.varNames.push_back(tS("g"));
-    wu.varTypes.push_back(tS("scalar"));
-    wu.pNames.clear();
-    wu.dpNames.clear();
+    wuN.varNames.clear();
+    wuN.varTypes.clear();
+    wuN.varNames.push_back(tS("g"));
+    wuN.varTypes.push_back(tS("scalar"));
+    wuN.pNames.clear();
+    wuN.dpNames.clear();
     // code for presynaptic spike:
-    wu.simCode = tS("  $(addtoinSyn) = $(g);\n\
+    wuN.simCode = tS("  $(addtoinSyn) = $(g);\n\
   $(updatelinsyn);\n");
-    weightUpdateModels.push_back(wu);
+    weightUpdateModels.push_back(wuN);
     NSYNAPSE= weightUpdateModels.size()-1;
     
     // NGRADSYNAPSE weightupdate model: "normal" graded synapse
-    wu.varNames.clear();
-    wu.varTypes.clear();
-    wu.varNames.push_back(tS("g"));
-    wu.varTypes.push_back(tS("scalar"));
-    wu.pNames.clear();
-    wu.pNames.push_back(tS("Epre")); 
-    wu.pNames.push_back(tS("Vslope")); 
-    wu.dpNames.clear();
+    wuG.varNames.clear();
+    wuG.varTypes.clear();
+    wuG.varNames.push_back(tS("g"));
+    wuG.varTypes.push_back(tS("scalar"));
+    wuG.pNames.clear();
+    wuG.pNames.push_back(tS("Epre")); 
+    wuG.pNames.push_back(tS("Vslope")); 
+    wuG.dpNames.clear();
     // code for presynaptic spike event (defined by Epre)
-    wu.simCodeEvnt = tS("    $(addtoinSyn) = $(g)* tanh(($(V_pre)-($(Epre)))*DT*2/$(Vslope));\n\
+    wuG.simCodeEvnt = tS("    $(addtoinSyn) = $(g)* tanh(($(V_pre)-($(Epre)))*DT*2/$(Vslope));\n\
       $(updatelinsyn);\n");
-    weightUpdateModels.push_back(wu);
+    wuG.simCode= tS("");
+    weightUpdateModels.push_back(wuG);
     NGRADSYNAPSE= weightUpdateModels.size()-1; 
 
     // LEARN1SYNAPSE weightupdate model: "normal" synapse with a type of STDP
-    wu.varNames.clear();
-    wu.varTypes.clear();
-    wu.varNames.push_back(tS("g")); 
-    wu.varTypes.push_back(tS("scalar"));
-    wu.varNames.push_back(tS("gRaw")); 
-    wu.varTypes.push_back(tS("scalar"));
-    wu.pNames.clear();
-    wu.pNames.push_back(tS("Epre")); 
-    wu.pNames.push_back(tS("tLrn"));  
-    wu.pNames.push_back(tS("tChng")); 
-    wu.pNames.push_back(tS("tDecay")); 
-    wu.pNames.push_back(tS("tPunish10")); 
-    wu.pNames.push_back(tS("tPunish01")); 
-    wu.pNames.push_back(tS("gMax")); 
-    wu.pNames.push_back(tS("gMid")); 
-    wu.pNames.push_back(tS("gSlope")); 
-    wu.pNames.push_back(tS("tauShift")); 
-    wu.pNames.push_back(tS("gSyn0"));
-    wu.dpNames.clear(); 
-    wu.dpNames.push_back(tS("lim0"));
-    wu.dpNames.push_back(tS("lim1"));
-    wu.dpNames.push_back(tS("slope0"));
-    wu.dpNames.push_back(tS("slope1"));
-    wu.dpNames.push_back(tS("off0"));
-    wu.dpNames.push_back(tS("off1"));
-    wu.dpNames.push_back(tS("off2"));
+    wuL.varNames.clear();
+    wuL.varTypes.clear();
+    wuL.varNames.push_back(tS("g")); 
+    wuL.varTypes.push_back(tS("scalar"));
+    wuL.varNames.push_back(tS("gRaw")); 
+    wuL.varTypes.push_back(tS("scalar"));
+    wuL.pNames.clear();
+    wuL.pNames.push_back(tS("Epre")); 
+    wuL.pNames.push_back(tS("tLrn"));  
+    wuL.pNames.push_back(tS("tChng")); 
+    wuL.pNames.push_back(tS("tDecay")); 
+    wuL.pNames.push_back(tS("tPunish10")); 
+    wuL.pNames.push_back(tS("tPunish01")); 
+    wuL.pNames.push_back(tS("gMax")); 
+    wuL.pNames.push_back(tS("gMid")); 
+    wuL.pNames.push_back(tS("gSlope")); 
+    wuL.pNames.push_back(tS("tauShift")); 
+    wuL.pNames.push_back(tS("gSyn0"));
+    wuL.dpNames.clear(); 
+    wuL.dpNames.push_back(tS("lim0"));
+    wuL.dpNames.push_back(tS("lim1"));
+    wuL.dpNames.push_back(tS("slope0"));
+    wuL.dpNames.push_back(tS("slope1"));
+    wuL.dpNames.push_back(tS("off0"));
+    wuL.dpNames.push_back(tS("off1"));
+    wuL.dpNames.push_back(tS("off2"));
     // code for presynaptic spike
-    wu.simCode = tS("$(addtoinSyn) = $(g);\n\
+    wuL.simCode = tS("$(addtoinSyn) = $(g);\n\
   $(updatelinsyn); \n				\
   float dt = $(sT_post) - t - ($(tauShift)); \n	\
   float dg = 0;\n				\
@@ -548,11 +549,11 @@ void prepareWeightUpdateModels()
   else dg = - ($(off2)) ; \n\
   $(gRaw) += dg; \n\
   $(g)=$(gMax)/2.0 *(tanh($(gSlope)*($(gRaw) - ($(gMid))))+1.0); \n");   
-  wu.dps = new pwSTDP;
+  wuL.dps = new pwSTDP;
   // code for spike type events (defined by Epre)
-  wu.simCodeEvnt = tS("");
+  wuL.simCodeEvnt = tS("");
   // code for post-synaptic spike event
-  wu.simLearnPost = tS("$(g) = $(gRaw); \n\
+  wuL.simLearnPost = tS("$(g) = $(gRaw); \n\
   float dt = t - ($(sT_pre)) - ($(tauShift)); \n\
   float dg =0; \n\
   if (dt > $(lim0))  \n\
@@ -564,15 +565,14 @@ void prepareWeightUpdateModels()
   else dg = -($(off2)) ; \n\
   $(gRaw) += dg; \n\
   $(g)=$(gMax)/2.0 *(tanh($(gSlope)*($(gRaw) - ($(gMid))))+1.0); \n");     
-  wu.needPreSt= TRUE;
-  wu.needPostSt= TRUE;
+  wuL.needPreSt= TRUE;
+  wuL.needPostSt= TRUE;
 
-  weightUpdateModels.push_back(wu);
+  weightUpdateModels.push_back(wuL);
   LEARN1SYNAPSE= weightUpdateModels.size()-1; 
 
 #include "extra_weightupdates.h"
 }
-
 
 // bit tool macros
 #include "numlib/simpleBit.h"

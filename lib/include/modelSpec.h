@@ -244,7 +244,6 @@ public:
   vector<vector<float> > postSynapsePara; //!< parameters of postsynapses
   vector<vector<float> > postSynIni; //!< Initial values of postsynaptic variables
   vector<vector<float> > dpsp;  //!< Derived postsynapse parameters
-  vector<float> g0; //!< Global synapse conductance if GLOBALG is chosen.
   vector<float> globalInp; //!< Global explicit input if CONSTINP is chosen.
   unsigned int lrnGroups; //!< Number of synapse groups with learning
   vector<unsigned int> padSumLearnN; //!< Padded summed neuron numbers of learn group source populations

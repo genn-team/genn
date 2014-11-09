@@ -38,42 +38,6 @@ float myPOI_ini[4]= {
   -10.0,       // 2 - SpikeTime
 };
 
-// float stdMAP_p[4]= {
-//   60.0,          // 0 - Vspike: spike Amplitude factor
-//   3.0,           // 1 - alpha: "steepness / size" parameter
-//   -2.468,        // 2 - y: "shift / excitation" parameter
-//   0.0165         // 3 - beta: input sensitivity
-// };
-
-// float stdMAP_ini[2]= {
-//   -60.0,         // 0 - V: initial value for membrane potential
-//   -60.0          // 1 - preV: initial previous value
-// };
-
-// float myLHI_p[4]= {
-//   60.0,          // 0 - Vspike: spike Amplitude factor
-//   3.0,           // 1 - alpha: "steepness / size" parameter
-//   -2.468,        // 2 - y: "shi/home/esin/genn-SpineML/lib/include/modelSpec.cc:461:22:ft / excitation" parameter
-//   0.0165         // 3 - beta: input sensitivity
-// };
-
-// float myLHI_ini[2]= {
-//   -60.0,         // 0 - V: initial value for membrane potential
-//   -60.0          // 1 - preV: initial previous value
-// };
-
-// float myLB_p[4]= {
-//   60.0,          // 0 - Vspike: spike Amplitude factor
-//   3.0,           // 1 - alpha: "steepness / size" parameter
-//   -2.468,        // 2 - y: "shift / excitation" parameter
-//   0.0165         // 3 - beta: input sensitivity
-// };
-
-// float myLB_ini[2]= {
-//   -60.0,         // 0 - V: initial value for membrane potential
-//   -60.0          // 1 - preV: initial previous value
-// };
-
 float stdTM_p[7]= {
   7.15,          // 0 - gNa: Na conductance in 1/(mOhms * cm^2)
   50.0,          // 1 - ENa: Na equi potential in mV
@@ -92,12 +56,7 @@ float stdTM_ini[4]= {
   0.5961207                    // 3 - prob. for K channel activation n
 };
 
-
-float myPNKC_p[3]= {
-  5.0,           // 0 - Erev: Reversal potential
-  -20.0,         // 1 - Epre: Presynaptic threshold potential
-  1.0            // 2 - tau_S: decay time constant for S [ms]
-};
+float *myPNKC_p= NULL;
 
 float myPNKC_ini[1]= {
   0.01            // 0 - g: initial synaptic conductance
@@ -108,11 +67,7 @@ float postExpPNKC[2]={
   0.0		  // 1 - Erev: Reversal potential
 };
 
-float myPNLHI_p[3]= {
-  0.0,           // 0 - Erev: Reversal potential
-  -20.0,         // 1 - Epre: Presynaptic threshold potential
-  1.0            // 2 - tau_S: decay time constant for S [ms]
-};
+float *myPNLHI_p= NULL;
 
 float myPNLHI_ini[1]= {
     0.0          // 0 - g: initial synaptic conductance
@@ -124,11 +79,10 @@ float postExpPNLHI[2]={
 };
 
 float myLHIKC_p[4]= {
-  -92.0,          // 0 - Erev: Reversal potential
   -40.0,          // 1 - Epre: Presynaptic threshold potential
-  1.5, //3.0,           // 2 - tau_S: decay time constant for S [ms]
   50.0            // 3 - Vslope: Activation slope of graded release 
 };
+
 //float gLHIKC= 0.6;
 float myLHIKC_ini[1] = {
     0.35/_NLHI   // 0 - g: initial synaptic conductance
@@ -139,27 +93,23 @@ float postExpLHIKC[2]={
   -92.0		  // 1 - Erev: Reversal potential
 };
 
-float myKCDN_p[13]= {
-  0.0,           // 0 - Erev: Reversal potential
-  -20.0,         // 1 - Epre: Presynaptic threshold potential
-  5.0,           // 2 - tau_S: decay time constant for S [ms]
-  50.0, //25.0,          // 3 - TLRN: time scale of learning changes
-  50.0, //100.0        // 4 - TCHNG: width of learning window
-  50000.0,       // 5 - TDECAY: time scale of synaptic strength decay
-  100000.0,      // 6 - TPUNISH10: Time window of suppression in response to 1/0
-  200.0, //100.0,         // 7 - TPUNISH01: Time window of suppression in response to 0/1
-  0.015, // 0.06,          // 8 - GMAX: Maximal conductance achievable
-  0.0075, // 0.03,          // 9 - GMID: Midpoint of sigmoid g filter curve
-  33.33,         // 10 - GSLOPE: slope of sigmoid g filter curve
-  10.0,          // 11 - TAUSHIFT: shift of learning curve
-  //  0.006          // 12 - GSYN0: value of syn conductance g decays to
-  0.00006          // 12 - GSYN0: value of syn conductance g decays to
+float myKCDN_p[11]= {
+  -20.0,         // 0 - Epre: Presynaptic threshold potential
+  50.0, //25.0,          // 1 - TLRN: time scale of learning changes
+  50.0, //100.0        // 2 - TCHNG: width of learning window
+  50000.0,       // 3 - TDECAY: time scale of synaptic strength decay
+  100000.0,      // 4 - TPUNISH10: Time window of suppression in response to 1/0
+  200.0, //100.0,  // 5 - TPUNISH01: Time window of suppression in response to 0/1
+  0.015, // 0.06,          // 6 - GMAX: Maximal conductance achievable
+  0.0075, // 0.03,          // 7 - GMID: Midpoint of sigmoid g filter curve
+  33.33,         // 8 - GSLOPE: slope of sigmoid g filter curve
+  10.0,          // 9 - TAUSHIFT: shift of learning curve
+  0.00006 // 0.006   // 10 - GSYN0: value of syn conductance g decays to
 };
 
-float myKCDN_ini[3]={
+float myKCDN_ini[2]={
   0.01,            // 0 - g: synaptic conductance
   0.01,		  // 1 - graw: raw synaptic conductance
-  -1.0            // 2 - sT: time of last spike
 };
 
 //#define KCDNGSYN0 0.006
@@ -169,10 +119,8 @@ float postExpKCDN[2]={
 };
 
 float myDNDN_p[4]= {
-  -92.0,        // 0 - Erev: Reversal potential
-  -30.0,        // 1 - Epre: Presynaptic threshold potential 
-  8.0,          // 2 - tau_S: decay time constant for S [ms]
-  50.0          // 3 - Vslope: Activation slope of graded release 
+  -30.0,        // 0 - Epre: Presynaptic threshold potential 
+  50.0          // 1 - Vslope: Activation slope of graded release 
 };
 //float gDNDN= 0.04;
 
@@ -186,7 +134,6 @@ float postExpDNDN[2]={
 };
 
 float *postSynV = NULL;
-
 
 
 //--------------------------------------------------------------------------

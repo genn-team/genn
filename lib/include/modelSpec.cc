@@ -479,9 +479,10 @@ void NNmodel::addSynapsePopulation(const string name, /**<  The name of the syna
 void NNmodel::setSynapseG(const string sName, /**<  */
                           float g /**<  */)
 {
-  unsigned int found= findSynapseGrp(sName);
-  if (g0.size() < found+1) g0.resize(found+1);
-  g0[found]= g;
+  cerr << "NOTE: This function has been deprecated. Please provide the correct initial values in \"addSynapsePopulation\" for all your variables and they will be the constant values in the GLOBALG mode - global \"G\" not set." << endl; 
+  //  unsigned int found= findSynapseGrp(sName);
+  //  if (g0.size() < found+1) g0.resize(found+1);
+  //  g0[found]= g;
 }
 
 
