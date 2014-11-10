@@ -883,7 +883,7 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 		size++;
 	    }
 	    size = size * sizeof(unsigned int);
-	    os << "," << size << ", cudaMemcpyHostToDevice));" << endl;
+	    os << size << ", cudaMemcpyHostToDevice));" << endl;
 	    if (model.synapseType[i] == LEARN1SYNAPSE) {
 		os << "  CHECK_CUDA_ERRORS(cudaMemcpy(d_grawp" << model.synapseName[i]<< ", grawp" << model.synapseName[i];   
 		if (model.synapseConnType[i]==SPARSE) {
