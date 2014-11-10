@@ -168,8 +168,8 @@ os << "}" << endl;
     os << "struct Conductance{" << endl;
     os << "  unsigned int *indInG;" << endl;
     os << "  unsigned int *ind;" << endl;
-    os << "  unsigned int *postIndInG;" << endl;
-    os << "  unsigned int *postInd;" << endl;
+    os << "  unsigned int *revIndInG;" << endl;
+    os << "  unsigned int *revInd;" << endl;
     os << "  unsigned int *remap;" << endl;
     os << "  unsigned int connN;" << endl; 
     os << "};" << endl;
@@ -215,10 +215,10 @@ os << "}" << endl;
 	    os << "unsigned int *d_ind" << model.synapseName[i] << ";" << endl;
 	    os << "__device__ " << "unsigned int *dd_ind" << model.synapseName[i] << ";" << endl;
 	    // TODO: make conditional on post-spike driven learning actually taking place
-	    os << "unsigned int *d_postIndInG" << model.synapseName[i] << ";" << endl;
-	    os << "__device__ " << "unsigned int *dd_postIndInG" << model.synapseName[i] << ";" << endl;
-	    os << "unsigned int *d_postInd" << model.synapseName[i] << ";" << endl;
-	    os << "__device__ " << "unsigned int *dd_postInd" << model.synapseName[i] << ";" << endl;
+	    os << "unsigned int *d_revIndInG" << model.synapseName[i] << ";" << endl;
+	    os << "__device__ " << "unsigned int *dd_revIndInG" << model.synapseName[i] << ";" << endl;
+	    os << "unsigned int *d_revInd" << model.synapseName[i] << ";" << endl;
+	    os << "__device__ " << "unsigned int *dd_revInd" << model.synapseName[i] << ";" << endl;
 	    os << "unsigned int *d_remap" << model.synapseName[i] << ";" << endl;
 	    os << "__device__ " << "unsigned int *dd_remap" << model.synapseName[i] << ";" << endl;
    	} 
@@ -375,8 +375,8 @@ os << "}" << endl;
     os << "  C->indInG= new unsigned int[preN + 1];" << endl;
     os << "  C->ind= new unsigned int[connN];" << endl;       
     // TODO: should this be done dependent on whether inverse mapping is needed?
-    os << "  C->postIndInG= new unsigned int[preN + 1];" << endl;
-    os << "  C->postInd= new unsigned int[connN];" << endl;       
+    os << "  C->revIndInG= new unsigned int[preN + 1];" << endl;
+    os << "  C->revInd= new unsigned int[connN];" << endl;       
     os << "  C->remap= new unsigned int[connN];" << endl;       
     os << "}" << endl; 
  
@@ -432,11 +432,11 @@ os << "}" << endl;
 		cout << endl << "learn code is: " << endl << learncode << endl;			
 //				size_t found = learncode.find
 		// TODO: make this dependent on existence of any variables in learncode
-		os << "  deviceMemAllocate( &d_postIndInG" << model.synapseName[i] << ", dd_postIndInG" << model.synapseName[i];
+		os << "  deviceMemAllocate( &d_revIndInG" << model.synapseName[i] << ", dd_revIndInG" << model.synapseName[i];
 		os << ", sizeof(unsigned int) * ("<< model.neuronN[model.synapseTarget[i]] <<" + 1));" << endl;
-		os << "  deviceMemAllocate( &d_postInd" << model.synapseName[i] << ", dd_postInd" << model.synapseName[i];
+		os << "  deviceMemAllocate( &d_revInd" << model.synapseName[i] << ", dd_revInd" << model.synapseName[i];
 		os << ", sizeof(unsigned int) * size);" << endl;
-		os << "  deviceMemAllocate( &d_remap" << model.synapseName[i] << ", dd_postIndInG" << model.synapseName[i];
+		os << "  deviceMemAllocate( &d_remap" << model.synapseName[i] << ", dd_revIndInG" << model.synapseName[i];
 		os << ", sizeof(unsigned int) * ("<< model.neuronN[model.synapseTarget[i]] <<" + 1));" << endl;
 		mem += model.neuronN[model.synapseTarget[i]]*sizeof(unsigned int);     
 	    }
@@ -478,8 +478,8 @@ os << "}" << endl;
 	if (model.synapseConnType[i] == SPARSE){
 	    os << "  delete[] C" << model.synapseName[i] << ".indInG;" << endl;
 	    os << "  delete[] C" << model.synapseName[i] << ".ind;" << endl;  
-	    os << "  delete[] C" << model.synapseName[i] << ".postIndInG;" << endl;
-	    os << "  delete[] C" << model.synapseName[i] << ".postInd;" << endl;  
+	    os << "  delete[] C" << model.synapseName[i] << ".revIndInG;" << endl;
+	    os << "  delete[] C" << model.synapseName[i] << ".revInd;" << endl;  
 	    os << "  delete[] C" << model.synapseName[i] << ".remap;" << endl;
 	}
     }
@@ -515,12 +515,12 @@ os << "}" << endl;
 	    os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_indInG" << model.synapseName[i] << ", C" << model.synapseName[i] << ".indInG, sizeof(unsigned int) * size , cudaMemcpyHostToDevice));" << endl; 
 	    if (model.usesPostLearning[i]) {
 		os << "  initializeSparseArrayPost(C" << model.synapseName[i] << ",";
-		os << "  d_postInd" << model.synapseName[i] << ",";
-		os << "  d_postIndInG" << model.synapseName[i] << ",";
+		os << "  d_revInd" << model.synapseName[i] << ",";
+		os << "  d_revIndInG" << model.synapseName[i] << ",";
 		os << "  d_remap" << model.synapseName[i] << ",";
 		os << model.neuronN[model.synapseSource[i]] <<");" << endl;
-		os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_postInd" << model.synapseName[i] << ", C" << model.synapseName[i] << ".postInd, sizeof(unsigned int) * size , cudaMemcpyHostToDevice));" << endl; 
-		os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_postIndInG" << model.synapseName[i] << ", C" << model.synapseName[i] << ".postIndInG, sizeof(unsigned int) * size , cudaMemcpyHostToDevice));" << endl; 
+		os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_revInd" << model.synapseName[i] << ", C" << model.synapseName[i] << ".revInd, sizeof(unsigned int) * size , cudaMemcpyHostToDevice));" << endl; 
+		os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_revIndInG" << model.synapseName[i] << ", C" << model.synapseName[i] << ".revIndInG, sizeof(unsigned int) * size , cudaMemcpyHostToDevice));" << endl; 
 		os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_remap" << model.synapseName[i] << ", C" << model.synapseName[i] << ".remap, sizeof(unsigned int) * size , cudaMemcpyHostToDevice));" << endl; 
 	    }
 	    int st= model.synapseType[i];

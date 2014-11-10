@@ -905,7 +905,7 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 	    os << "// loop through all incoming spikes for learning" << ENDL;
 	    os << "for (j = 0; j < lmax; j++)" << OB(260) << ENDL;
 	    if (sparse) {
-		os << "iprePos = dd_postIndInG" <<  model.synapseName[k];
+		os << "iprePos = dd_revIndInG" <<  model.synapseName[k];
 		os << "[shSpk[j]] + " << localID << ";" << ENDL;
 	    }
 	    // for DENSE, ipre == localID
@@ -927,9 +927,9 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 	    if (model.neuronType[src] == POISSONNEURON) substitute(code, tS("$(V_pre)"), tS(model.neuronPara[src][2]));
 	    if (sparse) {
 		substitute(code, tS("$(sT_pre)"), tS("d_sT") + tS(model.neuronName[src])
-					    +tS("[dd_postInd" + model.synapseName[k] + "[iprePos]]"));
+					    +tS("[dd_revInd" + model.synapseName[k] + "[iprePos]]"));
 		extended_name_substitutions(code, tS("dd_"), nModels[nt_pre].varNames, tS("_pre"), tS(model.neuronName[src])
-					    +tS("[dd_postInd" + model.synapseName[k] + "[iprePos]]"));
+					    +tS("[dd_revInd" + model.synapseName[k] + "[iprePos]]"));
 	    }
 	    else {
 		substitute(code, tS("$(sT_pre)"), tS("d_sT") + tS(model.neuronName[src])

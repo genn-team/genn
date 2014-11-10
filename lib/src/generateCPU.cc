@@ -535,11 +535,11 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 	  os << "; j++)" << OB(910);
 	  if (sparse) { // SPARSE
 	      // TODO: THIS NEEDS CHECKING AND FUNCTIONAL C.POST* ARRAYS
-	      os << "npre = C" << model.synapseName[k] << ".postIndInG[glbSpk" << model.neuronName[trg] << "[j] + 1] - C";
-	      os << model.synapseName[k] << ".postIndInG[glbSpk" << model.neuronName[trg] << "[j]];" << ENDL;
+	      os << "npre = C" << model.synapseName[k] << ".revIndInG[glbSpk" << model.neuronName[trg] << "[j] + 1] - C";
+	      os << model.synapseName[k] << ".revIndInG[glbSpk" << model.neuronName[trg] << "[j]];" << ENDL;
 	      os << "for (int l = 0; l < npre; l++)" << OB(121);
 	      os << "iprePos = C" << model.synapseName[k];
-	      os << ".postIndInG[glbSpk" << model.neuronName[trg] << "[j]] + l;" << ENDL;
+	      os << ".revIndInG[glbSpk" << model.neuronName[trg] << "[j]] + l;" << ENDL;
 	  }
 	  else{ // DENSE
 	      os << "for (int n = 0; n < " << model.neuronN[src] << "; n++)" << OB(121);
@@ -563,9 +563,9 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 	  if (model.neuronType[src] == POISSONNEURON) substitute(code, tS("$(V_pre)"), tS(model.neuronPara[src][2]));
 	  if (sparse) {
 	      substitute(code, tS("$(sT_pre)"), tS("sT") + tS(model.neuronName[src])
-			 +tS("[C") + model.synapseName[k] + tS(".postInd[iprePos]]"));
+			 +tS("[C") + model.synapseName[k] + tS(".revInd[iprePos]]"));
 	      extended_name_substitutions(code, tS(""), nModels[nt_pre].varNames, tS("_pre"), tS(model.neuronName[src])+tS("[C") 
-					  + model.synapseName[k] + tS(".postInd[iprePos]]"));
+					  + model.synapseName[k] + tS(".revInd[iprePos]]"));
 	  }
 	  else {
 	      substitute(code, tS("$(sT_pre)"), tS("sT") + tS(model.neuronName[src])

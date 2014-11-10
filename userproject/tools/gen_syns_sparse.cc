@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
   strcpy(filename_index,argv[6]);
   strcat(filename_index,"_postind");
   strcpy(filename_postcount,argv[6]);
-  strcat(filename_postcount,"_postIndInG");
+  strcat(filename_postcount,"_revIndInG");
   strcpy(filename_nonopt,argv[6]);
   strcat(filename_nonopt,"_nonopt");
   strcpy(filename_info,argv[6]);
@@ -67,17 +67,17 @@ int main(int argc, char *argv[])
   std::vector<unsigned int>maxInColS;
        	
   unsigned long int ctr=0;
-  std::vector<unsigned int> postIndInG;
-  std::vector<unsigned int> postIndex;
+  std::vector<unsigned int> revIndInG;
+  std::vector<unsigned int> revIndex;
   int maxInColI;
-  postIndInG.push_back(0);  
+  revIndInG.push_back(0);  
   for (int i= 0; i < n1; i++) {
     maxInColI=0;
     for (int j= 0; j < n2; j++) {
       if (R.n() < psyn) {
 	gsyn= meangsyn+jitter*RG.n();
 	g.push_back(gsyn);
-	postIndex.push_back(j);
+	revIndex.push_back(j);
 	maxInColI++;
 	g_alltoall[i*n2+j]= gsyn;
 	//cout << "g for" << i << " to "<< j<< " is " << gsyn <<endl;
@@ -87,19 +87,19 @@ int main(int argc, char *argv[])
       }
     }
     ctr=ctr+maxInColI;
-    postIndInG.push_back(ctr);
+    revIndInG.push_back(ctr);
   }
   
   size_t sz = g.size();
   cout << "vect.size: " << sz << endl;
   os_info.write((char *)&sz,sizeof(size_t));
   os.write(reinterpret_cast<const char*>(&g[0]), sz * sizeof(g[0]));
-  sz = postIndex.size();
+  sz = revIndex.size();
   cout << "ind size: " << sz << endl;
-  os_index.write(reinterpret_cast<const char*>(&postIndex[0]), sz * sizeof(postIndex[0]));
-  sz = postIndInG.size();
+  os_index.write(reinterpret_cast<const char*>(&revIndex[0]), sz * sizeof(revIndex[0]));
+  sz = revIndInG.size();
   cout << "count size: " << sz << endl;
-  os_postcount.write(reinterpret_cast<const char*>(&postIndInG[0]), sz * sizeof(postIndInG[0]));
+  os_postcount.write(reinterpret_cast<const char*>(&revIndInG[0]), sz * sizeof(revIndInG[0]));
 
   os_nonopt.write((char *)g_alltoall, n1*n2*sizeof(float));
   os.close();
