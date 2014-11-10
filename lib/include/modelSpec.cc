@@ -309,9 +309,6 @@ void NNmodel::addNeuronPopulation(const string name, /**<  The name of the neuro
     
     unsigned int i= neuronGrpN++;
     
-  if (i == 0){ 
-    prepareStandardModels();
-  }  
     neuronName.push_back(toString(name));
     neuronN.push_back(nNo);
     neuronType.push_back(type);

@@ -198,6 +198,9 @@ void genNeuronKernel(NNmodel &model, //!< Model description
     os << "__syncthreads();" << ENDL;
 
     for (int i= 0; i < model.neuronGrpN; i++) {
+	cerr <<  model.padSumNeuronN[i] << endl;
+    }
+    for (int i= 0; i < model.neuronGrpN; i++) {
 	nt= model.neuronType[i];
 	if (i == 0) {
 	    os << "if (id < " << model.padSumNeuronN[i] << ")" << OB(10);
@@ -268,41 +271,37 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 	    }
 	}
 	if (nt != POISSONNEURON) {
-	    os << "// pull inSyn values in a coalesced access" << ENDL;
-	    for (int j = 0; j < model.inSyn[i].size(); j++) {
-		os << model.ftype << " linSyn" << j << " = dd_inSyn" << model.synapseName[model.inSyn[i][j]] << "[" << localID << "];" << ENDL;
-	    }
 	    os << model.ftype << " Isyn = 0;" << ENDL;
 	    
-	    if (model.inSyn[i].size() > 0) {
-		for (int j = 0; j < model.inSyn[i].size(); j++) {
-		    os << "// Synapse " << j << " of Population " << i << ENDL;
-		    postSynModel psm= postSynModels[model.postSynapseType[model.inSyn[i][j]]];
-		    unsigned int synPopID= model.inSyn[i][j]; // number of (post)synapse group 
-		    if (model.synapseGType[synPopID] == INDIVIDUALG) {
-		      for (int k = 0, l = psm.varNames.size(); k < l; k++) {
-			os << psm.varTypes[k] << " lps" << psm.varNames[k] << model.synapseName[j];
-			os << " = dd_" <<  psm.varNames[k] << model.synapseName[synPopID] << "[";
+	    for (int j = 0; j < model.inSyn[i].size(); j++) {
+		unsigned int synPopID= model.inSyn[i][j]; // number of (post)synapse group 
+		postSynModel psm= postSynModels[model.postSynapseType[synPopID]];
+		string sName= model.synapseName[synPopID];
+		os << "// pull inSyn values in a coalesced access" << ENDL;
+		os << model.ftype << " linSyn" << sName << " = dd_inSyn" << sName << "[" << localID << "];" << ENDL;
+		if (model.synapseGType[synPopID] == INDIVIDUALG) {
+		    for (int k = 0, l = psm.varNames.size(); k < l; k++) {
+			os << psm.varTypes[k] << " lps" << psm.varNames[k] << sName;
+			os << " = dd_" <<  psm.varNames[k] << sName << "[";
 			os << localID << "];" << ENDL;
-		      }
 		    }
-		    os << "Isyn += ";
-		    string psCode = psm.postSyntoCurrent;
-		    substitute(psCode, tS("$(inSyn)"), tS("linSyn")+tS(j));
-		    name_substitutions(psCode, tS("l"), nModels[nt].varNames, tS(""));
-		    value_substitutions(psCode, nModels[nt].pNames, model.neuronPara[i]);
-		    value_substitutions(psCode, nModels[nt].dpNames, model.dnp[i]);
-		    if (model.synapseGType[synPopID] == INDIVIDUALG) {
-		      name_substitutions(psCode, tS("lps"), psm.varNames, tS(""));
-		    }
-		    else {
-		      value_substitutions(psCode, psm.varNames, model.postSynIni[synPopID]);
-		    }
-		    value_substitutions(psCode, psm.pNames, model.postSynapsePara[synPopID]);
-		    value_substitutions(psCode, psm.dpNames, model.dpsp[synPopID]);
-		    os << psCode;
-		    os << ";" << ENDL;	    
 		}
+		os << "Isyn += ";
+		string psCode = psm.postSyntoCurrent;
+		substitute(psCode, tS("$(inSyn)"), tS("linSyn")+sName);
+		name_substitutions(psCode, tS("l"), nModels[nt].varNames, tS(""));
+		value_substitutions(psCode, nModels[nt].pNames, model.neuronPara[i]);
+		value_substitutions(psCode, nModels[nt].dpNames, model.dnp[i]);
+		if (model.synapseGType[synPopID] == INDIVIDUALG) {
+		    name_substitutions(psCode, tS("lps"), psm.varNames, sName);
+		}
+		else {
+		    value_substitutions(psCode, psm.varNames, model.postSynIni[synPopID]);
+		}
+		value_substitutions(psCode, psm.pNames, model.postSynapsePara[synPopID]);
+		value_substitutions(psCode, psm.dpNames, model.dpsp[synPopID]);
+		os << psCode;
+		os << ";" << ENDL;	    
 	    }
 	}
 	if (model.receivesInputCurrent[i] == 1) { // receives constant  input
@@ -382,9 +381,10 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 	}
 	for (int j = 0; j < model.inSyn[i].size(); j++) {
 	    postSynModel psModel= postSynModels[model.postSynapseType[model.inSyn[i][j]]];
+	    string sName= model.synapseName[model.inSyn[i][j]];
 	    string psCode = psModel.postSynDecay;
-	    substitute(psCode, tS("$(inSyn)"), tS("linSyn") + tS(j));
-	    name_substitutions(psCode, tS("lps"), psModel.varNames, tS(j));
+	    substitute(psCode, tS("$(inSyn)"), tS("linSyn") + sName);
+	    name_substitutions(psCode, tS("lps"), psModel.varNames, sName);
 	    value_substitutions(psCode, psModel.pNames, model.postSynapsePara[model.inSyn[i][j]]);
 	    value_substitutions(psCode, psModel.dpNames, model.dpsp[model.inSyn[i][j]]);
 	    name_substitutions(psCode, tS("l"), nModels[nt].varNames, tS(""));
@@ -392,7 +392,7 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 	    value_substitutions(psCode, nModels[nt].dpNames, model.dnp[i]);
 	    os << "// the post-synaptic dynamics" << ENDL;
 	    os << psCode << ENDL;
-	    os << "dd_inSyn"  << model.synapseName[model.inSyn[i][j]] << "[" << localID << "] = linSyn"<< j << ";" << ENDL;
+	    os << "dd_inSyn"  << sName << "[" << localID << "] = linSyn"<< sName << ";" << ENDL;
 	    for (int k = 0, l = psModel.varNames.size(); k < l; k++) {
 		os << "dd_" <<  psModel.varNames[k] << model.synapseName[model.inSyn[i][j]] << "[";
 		os << localID << "] = lps" << psModel.varNames[k] << j << ";"<< ENDL;
