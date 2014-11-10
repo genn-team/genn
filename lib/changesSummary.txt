@@ -1,0 +1,50 @@
+(user side) Changes in this large revision:
+
+- Users are now required to call "initGeNN()" before adding any
+  populations. Ideally we could also force them to do so before
+  changing any of the nModels etc queues - maybe we should make a few
+  wrappers instead of letting users push_back on those queues without
+  control.
+
+- glbscnt is now call glbSpkCnt for consistency
+
+- There is no longer a privileged parameter "Epre" - spike type events
+  are now defined by a code string - spkEvntThreshold.
+
+- The function setSynapseG is deprecated. In a GLOBALG scenario, the
+  variables of a synapse group are fixed to the initial values
+  provided in modeldefinition.
+
+- Due to the split of synaptic models into weightUpdateModel and
+  postSynModel, the parameter arrays used during model definition need
+  to be carefully split as well so that each side gets the right
+  parameters.
+
+---
+
+(developer side)
+- I have changed the allocateSparseArrays to take the connN as an
+argument. (Sorry, the previous way of first setting it and the using
+the function was just too awkward for me).
+
+- There is some placeholder code that uses (so far non-initialised)
+  reverse lookup arrays for the post-to pre mapping in sparse
+  arrays. I am assuming the existence of a "remap" array that
+  indicates the positions of relevant entries in the value arrays.
+
+- There is definitely some confusion with the delays now. I think I
+  would like to discuss this further and see whether we can do
+  something more systematic
+
+- In the long run I would like to get rid of SpkEvnt code whenever it
+  is not actually used. This should not be a problem other than that
+  at the moment delay queues generally depend on SpkEvnt ... need to
+  have a choice of queues for either SpkEvnt or Spk.
+
+- I would like to introduce some rule checking about the allowed
+  combinations of ALLTOALL DENSE and SPARSE, with INDIVIDUALG,
+  INDIVIDUALID, GLOBALG. This could happen at each
+  adSynapsPopulation.
+
+  
+

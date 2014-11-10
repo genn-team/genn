@@ -38,42 +38,6 @@ float myPOI_ini[4]= {
   -10.0,       // 2 - SpikeTime
 };
 
-// float stdMAP_p[4]= {
-//   60.0,          // 0 - Vspike: spike Amplitude factor
-//   3.0,           // 1 - alpha: "steepness / size" parameter
-//   -2.468,        // 2 - y: "shift / excitation" parameter
-//   0.0165         // 3 - beta: input sensitivity
-// };
-
-// float stdMAP_ini[2]= {
-//   -60.0,         // 0 - V: initial value for membrane potential
-//   -60.0          // 1 - preV: initial previous value
-// };
-
-// float myLHI_p[4]= {
-//   60.0,          // 0 - Vspike: spike Amplitude factor
-//   3.0,           // 1 - alpha: "steepness / size" parameter
-//   -2.468,        // 2 - y: "shi/home/esin/genn-SpineML/lib/include/modelSpec.cc:461:22:ft / excitation" parameter
-//   0.0165         // 3 - beta: input sensitivity
-// };
-
-// float myLHI_ini[2]= {
-//   -60.0,         // 0 - V: initial value for membrane potential
-//   -60.0          // 1 - preV: initial previous value
-// };
-
-// float myLB_p[4]= {
-//   60.0,          // 0 - Vspike: spike Amplitude factor
-//   3.0,           // 1 - alpha: "steepness / size" parameter
-//   -2.468,        // 2 - y: "shift / excitation" parameter
-//   0.0165         // 3 - beta: input sensitivity
-// };
-
-// float myLB_ini[2]= {
-//   -60.0,         // 0 - V: initial value for membrane potential
-//   -60.0          // 1 - preV: initial previous value
-// };
-
 float stdTM_p[7]= {
   7.15,          // 0 - gNa: Na conductance in 1/(mOhms * cm^2)
   50.0,          // 1 - ENa: Na equi potential in mV
@@ -92,23 +56,21 @@ float stdTM_ini[4]= {
   0.5961207                    // 3 - prob. for K channel activation n
 };
 
+float *myPNKC_p= NULL;
 
-float myPNKC_p[3]= {
-  5.0,           // 0 - Erev: Reversal potential
-  -20.0,         // 1 - Epre: Presynaptic threshold potential
-  1.0            // 2 - tau_S: decay time constant for S [ms]
+float myPNKC_ini[1]= {
+  0.01            // 0 - g: initial synaptic conductance
 };
-//float gPNKC= 0.01;
 
 float postExpPNKC[2]={
   1.0,            // 0 - tau_S: decay time constant for S [ms]
   0.0		  // 1 - Erev: Reversal potential
 };
 
-float myPNLHI_p[3]= {
-  0.0,           // 0 - Erev: Reversal potential
-  -20.0,         // 1 - Epre: Presynaptic threshold potential
-  1.0            // 2 - tau_S: decay time constant for S [ms]
+float *myPNLHI_p= NULL;
+
+float myPNLHI_ini[1]= {
+    0.0          // 0 - g: initial synaptic conductance
 };
 
 float postExpPNLHI[2]={
@@ -117,34 +79,37 @@ float postExpPNLHI[2]={
 };
 
 float myLHIKC_p[4]= {
-  -92.0,          // 0 - Erev: Reversal potential
   -40.0,          // 1 - Epre: Presynaptic threshold potential
-  1.5, //3.0,           // 2 - tau_S: decay time constant for S [ms]
   50.0            // 3 - Vslope: Activation slope of graded release 
 };
+
 //float gLHIKC= 0.6;
-float gLHIKC= 0.35/_NLHI;
+float myLHIKC_ini[1] = {
+    0.35/_NLHI   // 0 - g: initial synaptic conductance
+};
 
 float postExpLHIKC[2]={
     1.5, //3.0,            // 0 - tau_S: decay time constant for S [ms]
   -92.0		  // 1 - Erev: Reversal potential
 };
 
-float myKCDN_p[13]= {
-  0.0,           // 0 - Erev: Reversal potential
-  -20.0,         // 1 - Epre: Presynaptic threshold potential
-  5.0,           // 2 - tau_S: decay time constant for S [ms]
-  50.0, //25.0,          // 3 - TLRN: time scale of learning changes
-  50.0, //100.0        // 4 - TCHNG: width of learning window
-  50000.0,       // 5 - TDECAY: time scale of synaptic strength decay
-  100000.0,      // 6 - TPUNISH10: Time window of suppression in response to 1/0
-  200.0, //100.0,         // 7 - TPUNISH01: Time window of suppression in response to 0/1
-  0.015, // 0.06,          // 8 - GMAX: Maximal conductance achievable
-  0.0075, // 0.03,          // 9 - GMID: Midpoint of sigmoid g filter curve
-  33.33,         // 10 - GSLOPE: slope of sigmoid g filter curve
-  10.0,          // 11 - TAUSHIFT: shift of learning curve
-  //  0.006          // 12 - GSYN0: value of syn conductance g decays to
-  0.00006          // 12 - GSYN0: value of syn conductance g decays to
+float myKCDN_p[11]= {
+  -20.0,         // 0 - Epre: Presynaptic threshold potential
+  50.0, //25.0,          // 1 - TLRN: time scale of learning changes
+  50.0, //100.0        // 2 - TCHNG: width of learning window
+  50000.0,       // 3 - TDECAY: time scale of synaptic strength decay
+  100000.0,      // 4 - TPUNISH10: Time window of suppression in response to 1/0
+  200.0, //100.0,  // 5 - TPUNISH01: Time window of suppression in response to 0/1
+  0.015, // 0.06,          // 6 - GMAX: Maximal conductance achievable
+  0.0075, // 0.03,          // 7 - GMID: Midpoint of sigmoid g filter curve
+  33.33,         // 8 - GSLOPE: slope of sigmoid g filter curve
+  10.0,          // 9 - TAUSHIFT: shift of learning curve
+  0.00006 // 0.006   // 10 - GSYN0: value of syn conductance g decays to
+};
+
+float myKCDN_ini[2]={
+  0.01,            // 0 - g: synaptic conductance
+  0.01,		  // 1 - graw: raw synaptic conductance
 };
 
 //#define KCDNGSYN0 0.006
@@ -154,14 +119,14 @@ float postExpKCDN[2]={
 };
 
 float myDNDN_p[4]= {
-  -92.0,        // 0 - Erev: Reversal potential
-  -30.0,        // 1 - Epre: Presynaptic threshold potential 
-  8.0,          // 2 - tau_S: decay time constant for S [ms]
-  50.0          // 3 - Vslope: Activation slope of graded release 
+  -30.0,        // 0 - Epre: Presynaptic threshold potential 
+  50.0          // 1 - Vslope: Activation slope of graded release 
 };
 //float gDNDN= 0.04;
-float gDNDN= 1.0/_NLB;
 
+float myDNDN_ini[1]={
+    1.0/_NLB            // 0 - g: synaptic conductance
+};
 
 float postExpDNDN[2]={
   8.0,            // 0 - tau_S: decay time constant for S [ms]
@@ -171,7 +136,6 @@ float postExpDNDN[2]={
 float *postSynV = NULL;
 
 
-
 //--------------------------------------------------------------------------
 /*! \brief This function defines the MBody1 model, and it is a good example of how networks should be defined.
  */
@@ -179,20 +143,21 @@ float *postSynV = NULL;
 
 void modelDefinition(NNmodel &model) 
 {
-  model.setName("MBody1");
-  model.addNeuronPopulation("PN", _NAL, POISSONNEURON, myPOI_p, myPOI_ini);
-  model.addNeuronPopulation("KC", _NMB, TRAUBMILES, stdTM_p, stdTM_ini);
-  model.addNeuronPopulation("LHI", _NLHI, TRAUBMILES, stdTM_p, stdTM_ini);
-  model.addNeuronPopulation("DN", _NLB, TRAUBMILES, stdTM_p, stdTM_ini);
-  
-  float *init = NULL;
-  model.addSynapsePopulation("PNKC", NSYNAPSE, DENSE, INDIVIDUALG, NO_DELAY, EXPDECAY, "PN", "KC", init, myPNKC_p, postSynV,postExpPNKC);
-  model.addSynapsePopulation("PNLHI", NSYNAPSE, ALLTOALL, INDIVIDUALG, NO_DELAY, EXPDECAY, "PN", "LHI",  init, myPNLHI_p, postSynV, postExpPNLHI);
-  model.addSynapsePopulation("LHIKC", NGRADSYNAPSE, ALLTOALL, GLOBALG, NO_DELAY, EXPDECAY, "LHI", "KC",  init, myLHIKC_p, postSynV, postExpLHIKC);
-  model.setSynapseG("LHIKC", gLHIKC);
-  model.addSynapsePopulation("KCDN", LEARN1SYNAPSE, ALLTOALL, INDIVIDUALG, NO_DELAY, EXPDECAY, "KC", "DN",  init,  myKCDN_p, postSynV, postExpKCDN);
-  model.addSynapsePopulation("DNDN", NGRADSYNAPSE, ALLTOALL, GLOBALG, NO_DELAY, EXPDECAY, "DN", "DN",  init, myDNDN_p, postSynV, postExpDNDN);
-  model.setSynapseG("DNDN", gDNDN);
-  model.setGPUDevice(nGPU);
-  model.setSeed(1234);
+    initGeNN();
+    model.setName("MBody1");
+    model.addNeuronPopulation("PN", _NAL, POISSONNEURON, myPOI_p, myPOI_ini);
+    model.addNeuronPopulation("KC", _NMB, TRAUBMILES, stdTM_p, stdTM_ini);
+    model.addNeuronPopulation("LHI", _NLHI, TRAUBMILES, stdTM_p, stdTM_ini);
+    model.addNeuronPopulation("DN", _NLB, TRAUBMILES, stdTM_p, stdTM_ini);
+    
+    float *init = NULL;
+    model.addSynapsePopulation("PNKC", NSYNAPSE, DENSE, INDIVIDUALG, NO_DELAY, EXPDECAY, "PN", "KC", myPNKC_ini, myPNKC_p, postSynV,postExpPNKC);
+    model.addSynapsePopulation("PNLHI", NSYNAPSE, ALLTOALL, INDIVIDUALG, NO_DELAY, EXPDECAY, "PN", "LHI",  myPNLHI_ini, myPNLHI_p, postSynV, postExpPNLHI);
+    model.addSynapsePopulation("LHIKC", NGRADSYNAPSE, ALLTOALL, GLOBALG, NO_DELAY, EXPDECAY, "LHI", "KC",  myLHIKC_ini, myLHIKC_p, postSynV, postExpLHIKC);
+    model.setSynapseG("LHIKC", myLHIKC_ini[0]);
+    model.addSynapsePopulation("KCDN", LEARN1SYNAPSE, ALLTOALL, INDIVIDUALG, NO_DELAY, EXPDECAY, "KC", "DN",  myKCDN_ini,  myKCDN_p, postSynV, postExpKCDN);
+    model.addSynapsePopulation("DNDN", NGRADSYNAPSE, ALLTOALL, GLOBALG, NO_DELAY, EXPDECAY, "DN", "DN",  myDNDN_ini, myDNDN_p, postSynV, postExpDNDN);     
+   model.setSynapseG("DNDN", myDNDN_ini[0]);
+    model.setGPUDevice(nGPU);
+    model.setSeed(1234);
 }

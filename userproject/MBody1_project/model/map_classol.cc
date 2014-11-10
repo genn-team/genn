@@ -51,13 +51,11 @@ classol::classol()
 void classol::init(unsigned int which //!< Flag defining whether GPU or CPU only version is run
 		   )
 {
-  initGRaw();
   offset= 0;
   if (which == CPU) {
     theRates= baserates;
   }
   if (which == GPU) {
-    copyGToDevice(); 
     copyStateToDevice();
     theRates= d_baserates;
   }
@@ -116,7 +114,7 @@ void classol::read_pnkcsyns(FILE *f //!< File handle for a file containing PN to
 {
   // version 1
   fprintf(stdout, "%lu\n", model.neuronN[0]*model.neuronN[1]*sizeof(float));
-  unsigned int retval = fread(gpPNKC, 1, model.neuronN[0]*model.neuronN[1]*sizeof(float),f);
+  unsigned int retval = fread(gPNKC, 1, model.neuronN[0]*model.neuronN[1]*sizeof(float),f);
   // version 2
   /*  unsigned int UIntSz= sizeof(unsigned int)*8;   // in bit!
   unsigned int logUIntSz= (int) (logf((float) UIntSz)/logf(2.0f)+1e-5f);
@@ -124,14 +122,14 @@ void classol::read_pnkcsyns(FILE *f //!< File handle for a file containing PN to
   unsigned size= (tmp >> logUIntSz);
   if (tmp > (size << logUIntSz)) size++;
   size= size*sizeof(unsigned int);
-  is.read((char *)gpPNKC, size);*/
+  is.read((char *)gPNKC, size);*/
 
   // general:
   //assert(is.good());
   fprintf(stdout,"read pnkc ... \n");
   fprintf(stdout, "%u bytes, values start with: \n", retval);
   for(int i= 0; i < 20; i++) {
-    fprintf(stdout, "%f ", gpPNKC[i]);
+    fprintf(stdout, "%f ", gPNKC[i]);
   }
   fprintf(stdout,"\n\n");
 }
@@ -145,7 +143,7 @@ void classol::read_pnkcsyns(FILE *f //!< File handle for a file containing PN to
 void classol::write_pnkcsyns(FILE *f //!< File handle for a file to write PN to KC conductivity values to
 			     )
 {
-  fwrite(gpPNKC, model.neuronN[0] * model.neuronN[1] * sizeof(float), 1, f);
+  fwrite(gPNKC, model.neuronN[0] * model.neuronN[1] * sizeof(float), 1, f);
   fprintf(stdout, "wrote pnkc ... \n");
 }
 
@@ -158,11 +156,11 @@ void classol::write_pnkcsyns(FILE *f //!< File handle for a file to write PN to 
 void classol::read_pnlhisyns(FILE *f //!< File handle for a file containing PN to LHI conductivity values
 			     )
 {
-  unsigned int retval = fread(gpPNLHI, 1, model.neuronN[0] * model.neuronN[2] * sizeof(float),  f);
+  unsigned int retval = fread(gPNLHI, 1, model.neuronN[0] * model.neuronN[2] * sizeof(float),  f);
   fprintf(stdout,"read pnlhi ... \n");
   fprintf(stdout, "%u bytes, values start with: \n", retval);
   for(int i= 0; i < 20; i++) {
-    fprintf(stdout, "%f ", gpPNLHI[i]);
+    fprintf(stdout, "%f ", gPNLHI[i]);
   }
   fprintf(stdout, "\n\n");
 }
@@ -175,7 +173,7 @@ void classol::read_pnlhisyns(FILE *f //!< File handle for a file containing PN t
 void classol::write_pnlhisyns(FILE *f //!< File handle for a file to write PN to LHI conductivity values to
 			      )
 {
-  fwrite(gpPNLHI, model.neuronN[0] * model.neuronN[2] * sizeof(float), 1, f);
+  fwrite(gPNLHI, model.neuronN[0] * model.neuronN[2] * sizeof(float), 1, f);
   fprintf(stdout, "wrote pnlhi ... \n");
 }
 
@@ -188,11 +186,11 @@ void classol::write_pnlhisyns(FILE *f //!< File handle for a file to write PN to
 void classol::read_kcdnsyns(FILE *f //!< File handle for a file containing KC to DN (detector neuron) conductivity values 
 			    )
 {
-  unsigned int retval =fread(gpKCDN, 1, model.neuronN[1]*model.neuronN[3]*sizeof(float),f);
+  unsigned int retval =fread(gKCDN, 1, model.neuronN[1]*model.neuronN[3]*sizeof(float),f);
   fprintf(stdout, "read kcdn ... \n");
   fprintf(stdout, "%u bytes, values start with: \n", retval);
   for(int i= 0; i < 100; i++) {
-    fprintf(stdout, "%f ", gpKCDN[i]);
+    fprintf(stdout, "%f ", gKCDN[i]);
   }
   fprintf(stdout, "\n\n");
 }
@@ -206,40 +204,39 @@ void classol::read_kcdnsyns(FILE *f //!< File handle for a file containing KC to
 void classol::write_kcdnsyns(FILE *f //!< File handle for a file to write KC to DN (detectore neuron) conductivity values to
 			     )
 {
-  fwrite(gpKCDN, model.neuronN[1]*model.neuronN[3]*sizeof(float),1,f);
+  fwrite(gKCDN, model.neuronN[1]*model.neuronN[3]*sizeof(float),1,f);
   fprintf(stdout, "wrote kcdn ... \n");
 }
 
-void classol::read_sparsesyns_par(int synInd, Conductance C, FILE *f_ind,FILE *f_indInG,FILE *f_g //!< File handle for a file containing sparse conductivity values
+void classol::read_sparsesyns_par(int synInd, Conductance C, float* g, FILE *f_ind,FILE *f_indInG,FILE *f_g //!< File handle for a file containing sparse conductivity values
 			    )
 {
   //allocateSparseArray(synInd,C.connN);
-
-  unsigned int retval =fread(C.gp, 1, C.connN*sizeof(float),f_g);
+  int retval = fread(g, 1, C.connN*sizeof(float),f_g);
   fprintf(stdout,"%d active synapses. \n",C.connN);
-  retval = fread(C.gIndInG, 1, (model.neuronN[model.synapseSource[synInd]]+1)*sizeof(unsigned int),f_indInG);
-  retval = fread(C.gInd, 1, C.connN*sizeof(int),f_ind);
+  retval = fread(C.indInG, 1, (model.neuronN[model.synapseSource[synInd]]+1)*sizeof(unsigned int),f_indInG);
+  retval = fread(C.ind, 1, C.connN*sizeof(int),f_ind);
 
   
   // general:
   fprintf(stdout,"Read conductance ... \n");
   fprintf(stdout, "Size is %d for synapse group %d. Values start with: \n",C.connN, synInd);
   for(int i= 0; i < 100; i++) {
-    fprintf(stdout, "%f ", C.gp[i]);
+      fprintf(stdout, "%d, %d ", C.indInG[i], C.ind[i]);
   }
   fprintf(stdout,"\n\n");
   
   
   fprintf(stdout, "%d indices read. Index values start with: \n",C.connN);
   for(int i= 0; i < 100; i++) {
-    fprintf(stdout, "%d ", C.gInd[i]);
+    fprintf(stdout, "%d ", C.ind[i]);
   }  
   fprintf(stdout,"\n\n");
   
   
   fprintf(stdout, "%d g indices read. Index in g array values start with: \n", model.neuronN[model.synapseSource[synInd]]+1);
   for(int i= 0; i < 100; i++) {
-    fprintf(stdout, "%d ", C.gIndInG[i]);
+    fprintf(stdout, "%d ", C.indInG[i]);
   }  
 }
 
@@ -341,23 +338,23 @@ void classol::output_state(FILE *f, //!< File handle for a file to write the mod
   // for (int i= 0; i < model.neuronN[0]; i++) {
   //   os << spikeTimesPN[i] << " ";
   // }
-  //  os << glbscnt0 << "  ";
-  // for (int i= 0; i < glbscntPN; i++) {
+  //  os << glbSpkCnt0 << "  ";
+  // for (int i= 0; i < glbSpkCntPN; i++) {
   //   os << glbSpkPN[i] << " ";
   // }
   // os << " * ";
-  // os << glbscntKC << "  ";
-  // for (int i= 0; i < glbscntKC; i++) {
+  // os << glbSpkCntKC << "  ";
+  // for (int i= 0; i < glbSpkCntKC; i++) {
   //   os << glbSpkKC[i] << " ";
   // }
   // os << " * ";
-  // os << glbscntLHI << "  ";
-  // for (int i= 0; i < glbscntLHI; i++) {
+  // os << glbSpkCntLHI << "  ";
+  // for (int i= 0; i < glbSpkCntLHI; i++) {
   //   os << glbSpkLHI[i] << " ";
   // }
   // os << " * ";
-  // os << glbscntDN << "  ";
-  // for (int i= 0; i < glbscntDN; i++) {
+  // os << glbSpkCntDN << "  ";
+  // for (int i= 0; i < glbSpkCntDN; i++) {
   //   os << glbSpkDN[i] << " ";
   // }
  //   os << " * ";
@@ -431,17 +428,17 @@ void classol::output_spikes(FILE *f, //!< File handle for a file to write spike 
 			    )
 {
 
-  //    fprintf(stdout, "%f %f %f %f %f\n", t, glbscntPN, glbscntKC, glbscntLHI,glbscntDN);
-  for (int i= 0; i < glbscntPN; i++) {
+  //    fprintf(stdout, "%f %f %f %f %f\n", t, glbSpkCntPN, glbSpkCntKC, glbSpkCntLHI,glbSpkCntDN);
+  for (int i= 0; i < glbSpkCntPN; i++) {
     fprintf(f, "%f %d\n", t, glbSpkPN[i]);
   }
-  for (int i= 0; i < glbscntKC; i++) {
+  for (int i= 0; i < glbSpkCntKC; i++) {
     fprintf(f,  "%f %d\n", t, model.sumNeuronN[0]+glbSpkKC[i]);
   }
-  for (int i= 0; i < glbscntLHI; i++) {
+  for (int i= 0; i < glbSpkCntLHI; i++) {
     fprintf(f, "%f %d\n", t, model.sumNeuronN[1]+glbSpkLHI[i]);
   }
-  for (int i= 0; i < glbscntDN; i++) {
+  for (int i= 0; i < glbSpkCntDN; i++) {
     fprintf(f, "%f %d\n", t, model.sumNeuronN[2]+glbSpkDN[i]);
   }
 }
@@ -453,10 +450,10 @@ void classol::output_spikes(FILE *f, //!< File handle for a file to write spike 
 
 void classol::sum_spikes()
 {
-  sumPN+= glbscntPN;
-  sumKC+= glbscntKC;
-  sumLHI+= glbscntLHI;
-  sumDN+= glbscntDN;
+  sumPN+= glbSpkCntPN;
+  sumKC+= glbSpkCntKC;
+  sumLHI+= glbSpkCntLHI;
+  sumDN+= glbSpkCntDN;
 }
 
 //--------------------------------------------------------------------------
@@ -466,7 +463,7 @@ void classol::sum_spikes()
 
 void classol::get_kcdnsyns()
 {
-    CHECK_CUDA_ERRORS(cudaMemcpy(gpKCDN, d_gpKCDN, model.neuronN[1]*model.neuronN[3]*sizeof(float), cudaMemcpyDeviceToHost));
+    CHECK_CUDA_ERRORS(cudaMemcpy(gKCDN, d_gKCDN, model.neuronN[1]*model.neuronN[3]*sizeof(float), cudaMemcpyDeviceToHost));
 }
 
 

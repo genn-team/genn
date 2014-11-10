@@ -209,6 +209,7 @@ void prepareStandardModels()
   n.dps = new rulkovdp();
 
   nModels.push_back(n);
+  MAPNEURON= nModels.size()-1;
 
   // Poisson neurons
   n.varNames.clear();
@@ -242,6 +243,7 @@ void prepareStandardModels()
   n.thresholdConditionCode = tS("$(V) > $(Vspike) - 0.01");
 
   nModels.push_back(n);
+  POISSONNEURON= nModels.size()-1;
 
 // Traub and Miles HH neurons
   n.varNames.clear();
@@ -285,7 +287,8 @@ void prepareStandardModels()
   n.thresholdConditionCode = tS("$(V) > 20");//TODO check this, to get better value
 
   nModels.push_back(n);
-  
+  TRAUBMILES= nModels.size()-1;
+
  //Izhikevich neurons
   n.varNames.clear();
   n.varTypes.clear();
@@ -320,6 +323,7 @@ void prepareStandardModels()
 		  $(U)+=$(d);\n\
   */
   nModels.push_back(n);
+  IZHIKEVICH= nModels.size()-1;
 
 //Izhikevich neurons with variable parameters
   n.varNames.clear();
@@ -352,6 +356,7 @@ void prepareStandardModels()
     ");
   n.thresholdConditionCode = tS("$(V) > 29.99");
   nModels.push_back(n);
+  IZHIKEVICH_V= nModels.size()-1;
   
   #include "extra_neurons.h"
 
@@ -390,7 +395,7 @@ void preparePostSynModels(){
   ps.dps = new expDecayDp;
   
   postSynModels.push_back(ps);
-  
+  EXPDECAY= postSynModels.size()-1;
   
   //1: IZHIKEVICH MODEL (NO POSTSYN RULE)
   ps.varNames.clear();
@@ -403,9 +408,65 @@ void preparePostSynModels(){
   ps.postSyntoCurrent=tS("$(inSyn); $(inSyn)=0");
   
   postSynModels.push_back(ps);
-  
+  IZHIKEVICH_PS= postSynModels.size()-1;
+ 
   #include "extra_postsynapses.h"
 }
+
+
+//--------------------------------------------------------------------------
+/*! This class defines derived parameters for the learn1synapse standard 
+    weightupdate model 
+*/
+//--------------------------------------------------------------------------
+
+class pwSTDP : public dpclass  //!TODO This class definition may be code-generated in a future release
+{
+public:
+    float calculateDerivedParameter(int index, vector<float> pars, 
+				    float dt)
+    {		
+	switch (index) {
+	case 0:
+	    return lim0(pars, dt);
+	case 1:
+	    return lim1(pars, dt);
+	case 2:
+	    return slope0(pars, dt);
+	case 3:
+	    return slope1(pars, dt);
+	case 4:
+	    return off0(pars, dt);
+	case 5:
+	    return off1(pars, dt);
+	case 6:
+	    return off2(pars, dt);
+	}
+	return -1;
+    }
+    
+    float lim0(vector<float> pars, float dt) {
+	return (1.0f/pars[5] + 1.0f/pars[2]) * pars[1] / (2.0f/pars[2]);
+    }
+    float lim1(vector<float> pars, float dt) {
+	return -((1.0f/pars[4] + 1.0f/pars[2]) * pars[1] / (2.0f/pars[2]));
+    }
+    float slope0(vector<float> pars, float dt) {
+	return -2.0f*pars[6]/(pars[2]*pars[1]); 
+    }
+    float slope1(vector<float> pars, float dt) {
+	return -1*slope0(pars, dt);
+    }
+    float off0(vector<float> pars, float dt) {
+	return pars[6]/pars[5];
+    }
+    float off1(vector<float> pars, float dt) {
+	return pars[6]/pars[2];
+    }
+    float off2(vector<float> pars, float dt) {
+	return pars[6]/pars[4];
+    }
+};
 
 //--------------------------------------------------------------------------
 /* \brief Function that prepares the standard (pre) synaptic models, including their variables, parameters, dependent parameters and code strings.
@@ -414,11 +475,102 @@ void preparePostSynModels(){
 
 vector<weightUpdateModel> weightUpdateModels;
 
-void prepareWeightUpdateModels(){
-	weightUpdateModel wu;
-	#include "extra_weightupdates.h"
-}
+void prepareWeightUpdateModels()
+{
+  weightUpdateModel wuN, wuG, wuL;
+    
+    // NSYNAPSE weightupdate model: "normal" pulse coupling synapse
+    wuN.varNames.clear();
+    wuN.varTypes.clear();
+    wuN.varNames.push_back(tS("g"));
+    wuN.varTypes.push_back(tS("scalar"));
+    wuN.pNames.clear();
+    wuN.dpNames.clear();
+    // code for presynaptic spike:
+    wuN.simCode = tS("  $(addtoinSyn) = $(g);\n\
+  $(updatelinsyn);\n");
+    weightUpdateModels.push_back(wuN);
+    NSYNAPSE= weightUpdateModels.size()-1;
+    
+    // NGRADSYNAPSE weightupdate model: "normal" graded synapse
+    wuG.varNames.clear();
+    wuG.varTypes.clear();
+    wuG.varNames.push_back(tS("g"));
+    wuG.varTypes.push_back(tS("scalar"));
+    wuG.pNames.clear();
+    wuG.pNames.push_back(tS("Epre")); 
+    wuG.pNames.push_back(tS("Vslope")); 
+    wuG.dpNames.clear();
+    // code for presynaptic spike event 
+    wuG.simCodeEvnt = tS("    $(addtoinSyn) = $(g)* tanh(($(V_pre)-($(Epre)))*DT*2/$(Vslope));\n\
+      $(updatelinsyn);\n");
+    // definition of presynaptic spike event 
+    wuG.evntThreshold = tS("    $(V_pre) > $(Epre)");
+    weightUpdateModels.push_back(wuG);
+    NGRADSYNAPSE= weightUpdateModels.size()-1; 
 
+    // LEARN1SYNAPSE weightupdate model: "normal" synapse with a type of STDP
+    wuL.varNames.clear();
+    wuL.varTypes.clear();
+    wuL.varNames.push_back(tS("g")); 
+    wuL.varTypes.push_back(tS("scalar"));
+    wuL.varNames.push_back(tS("gRaw")); 
+    wuL.varTypes.push_back(tS("scalar"));
+    wuL.pNames.clear();
+    wuL.pNames.push_back(tS("Epre")); 
+    wuL.pNames.push_back(tS("tLrn"));  
+    wuL.pNames.push_back(tS("tChng")); 
+    wuL.pNames.push_back(tS("tDecay")); 
+    wuL.pNames.push_back(tS("tPunish10")); 
+    wuL.pNames.push_back(tS("tPunish01")); 
+    wuL.pNames.push_back(tS("gMax")); 
+    wuL.pNames.push_back(tS("gMid")); 
+    wuL.pNames.push_back(tS("gSlope")); 
+    wuL.pNames.push_back(tS("tauShift")); 
+    wuL.pNames.push_back(tS("gSyn0"));
+    wuL.dpNames.clear(); 
+    wuL.dpNames.push_back(tS("lim0"));
+    wuL.dpNames.push_back(tS("lim1"));
+    wuL.dpNames.push_back(tS("slope0"));
+    wuL.dpNames.push_back(tS("slope1"));
+    wuL.dpNames.push_back(tS("off0"));
+    wuL.dpNames.push_back(tS("off1"));
+    wuL.dpNames.push_back(tS("off2"));
+    // code for presynaptic spike
+    wuL.simCode = tS("$(addtoinSyn) = $(g);\n\
+  $(updatelinsyn); \n				\
+  float dt = $(sT_post) - t - ($(tauShift)); \n	\
+  float dg = 0;\n				\
+  if (dt > $(lim0))  \n				\
+      dg = -($(off0)) ; \n			\
+  else if (dt > 0.0)  \n			\
+      dg = $(slope0) * dt + ($(off1)); \n\
+  else if (dt > $(lim1))  \n			\
+      dg = $(slope1) * dt + ($(off1)); \n\
+  else dg = - ($(off2)) ; \n\
+  $(gRaw) += dg; \n\
+  $(g)=$(gMax)/2.0 *(tanh($(gSlope)*($(gRaw) - ($(gMid))))+1.0); \n");   
+  wuL.dps = new pwSTDP;
+  // code for post-synaptic spike 
+  wuL.simLearnPost = tS("float dt = t - ($(sT_pre)) - ($(tauShift)); \n\
+  float dg =0; \n\
+  if (dt > $(lim0))  \n\
+      dg = -($(off0)) ; \n \
+  else if (dt > 0.0)  \n\
+      dg = $(slope0) * dt + ($(off1)); \n\
+  else if (dt > $(lim1))  \n\
+      dg = $(slope1) * dt + ($(off1)); \n\
+  else dg = -($(off2)) ; \n\
+  $(gRaw) += dg; \n\
+  $(g)=$(gMax)/2.0 *(tanh($(gSlope)*($(gRaw) - ($(gMid))))+1.0); \n");     
+  wuL.needPreSt= TRUE;
+  wuL.needPostSt= TRUE;
+
+  weightUpdateModels.push_back(wuL);
+  LEARN1SYNAPSE= weightUpdateModels.size()-1; 
+
+#include "extra_weightupdates.h"
+}
 
 // bit tool macros
 #include "numlib/simpleBit.h"

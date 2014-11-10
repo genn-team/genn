@@ -11,7 +11,7 @@
   
 --------------------------------------------------------------------------*/
 
-/*! \file generateALL.cpp
+/*! \file generateALL.cc
   \brief Main file combining the code for code generation. Part of the code generation section.
 
   The file includes separate files for generating kernels (generateKernels.cc),
@@ -143,7 +143,6 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
       }
     }
     groupSize[2]= model->neuronN;
-
     for (int device = devstart; device < devcount; device++) {
       theDev = device;
       CHECK_CUDA_ERRORS(cudaSetDevice(device));
@@ -445,8 +444,6 @@ int main(int argc,     //!< number of arguments; expected to be 2
   neuronBlkSz = 256;
   
   NNmodel *model = new NNmodel();
-  //prepareStandardModels();
-  //preparePostSynModels();
   modelDefinition(*model);
   string path= toString(argv[1]);
   theDev = chooseDevice(cout, model, path);
