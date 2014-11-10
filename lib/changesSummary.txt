@@ -20,6 +20,11 @@
   to be carefully split as well so that each side gets the right
   parameters.
 
+- users can now define variables as type "scalar" which will at code
+  generation be translated to the model's ftype (typically float or
+  double).
+
+
 ---
 
 (developer side)

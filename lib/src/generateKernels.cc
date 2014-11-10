@@ -395,7 +395,7 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 	    os << "dd_inSyn"  << sName << "[" << localID << "] = linSyn"<< sName << ";" << ENDL;
 	    for (int k = 0, l = psModel.varNames.size(); k < l; k++) {
 		os << "dd_" <<  psModel.varNames[k] << model.synapseName[model.inSyn[i][j]] << "[";
-		os << localID << "] = lps" << psModel.varNames[k] << j << ";"<< ENDL;
+		os << localID << "] = lps" << psModel.varNames[k] << sName << ";"<< ENDL;
 	    }
 	}
 	os << CB(20);
@@ -905,7 +905,7 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 	    os << "// loop through all incoming spikes for learning" << ENDL;
 	    os << "for (j = 0; j < lmax; j++)" << OB(260) << ENDL;
 	    if (sparse) {
-		os << "iprePos = dd_revIndInG" <<  model.synapseName[k];
+		os << "unsigned int iprePos = dd_revIndInG" <<  model.synapseName[k];
 		os << "[shSpk[j]] + " << localID << ";" << ENDL;
 	    }
 	    // for DENSE, ipre == localID

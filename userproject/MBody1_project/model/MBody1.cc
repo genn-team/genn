@@ -32,10 +32,10 @@ float myPOI_p[4]= {
   -60.0       // 3 - Vrest
 };
 
-float myPOI_ini[4]= {
+float myPOI_ini[3]= {
  -60.0,        // 0 - V
   0,           // 1 - seed
-  -10.0,       // 2 - SpikeTime
+  -10.0        // 2 - SpikeTime
 };
 
 float stdTM_p[7]= {
@@ -43,9 +43,9 @@ float stdTM_p[7]= {
   50.0,          // 1 - ENa: Na equi potential in mV
   1.43,          // 2 - gK: K conductance in 1/(mOhms * cm^2)
   -95.0,         // 3 - EK: K equi potential in mV
-  0.02672,         // 4 - gl: leak conductance in 1/(mOhms * cm^2)
-  -63.563,         // 5 - El: leak equi potential in mV
-  0.143        // 6 - Cmem: membr. capacity density in muF/cm^2
+  0.02672,       // 4 - gl: leak conductance in 1/(mOhms * cm^2)
+  -63.563,       // 5 - El: leak equi potential in mV
+  0.143          // 6 - Cmem: membr. capacity density in muF/cm^2
 };
 
 
@@ -78,9 +78,9 @@ float postExpPNLHI[2]={
   0.0		  // 1 - Erev: Reversal potential
 };
 
-float myLHIKC_p[4]= {
-  -40.0,          // 1 - Epre: Presynaptic threshold potential
-  50.0            // 3 - Vslope: Activation slope of graded release 
+float myLHIKC_p[2]= {
+  -40.0,          // 0 - Epre: Presynaptic threshold potential
+  50.0            // 1 - Vslope: Activation slope of graded release 
 };
 
 //float gLHIKC= 0.6;
@@ -118,7 +118,7 @@ float postExpKCDN[2]={
   0.0		  // 1 - Erev: Reversal potential
 };
 
-float myDNDN_p[4]= {
+float myDNDN_p[2]= {
   -30.0,        // 0 - Epre: Presynaptic threshold potential 
   50.0          // 1 - Vslope: Activation slope of graded release 
 };
@@ -154,10 +154,8 @@ void modelDefinition(NNmodel &model)
     model.addSynapsePopulation("PNKC", NSYNAPSE, DENSE, INDIVIDUALG, NO_DELAY, EXPDECAY, "PN", "KC", myPNKC_ini, myPNKC_p, postSynV,postExpPNKC);
     model.addSynapsePopulation("PNLHI", NSYNAPSE, ALLTOALL, INDIVIDUALG, NO_DELAY, EXPDECAY, "PN", "LHI",  myPNLHI_ini, myPNLHI_p, postSynV, postExpPNLHI);
     model.addSynapsePopulation("LHIKC", NGRADSYNAPSE, ALLTOALL, GLOBALG, NO_DELAY, EXPDECAY, "LHI", "KC",  myLHIKC_ini, myLHIKC_p, postSynV, postExpLHIKC);
-    model.setSynapseG("LHIKC", myLHIKC_ini[0]);
     model.addSynapsePopulation("KCDN", LEARN1SYNAPSE, ALLTOALL, INDIVIDUALG, NO_DELAY, EXPDECAY, "KC", "DN",  myKCDN_ini,  myKCDN_p, postSynV, postExpKCDN);
-    model.addSynapsePopulation("DNDN", NGRADSYNAPSE, ALLTOALL, GLOBALG, NO_DELAY, EXPDECAY, "DN", "DN",  myDNDN_ini, myDNDN_p, postSynV, postExpDNDN);     
-   model.setSynapseG("DNDN", myDNDN_ini[0]);
+    model.addSynapsePopulation("DNDN", NGRADSYNAPSE, ALLTOALL, GLOBALG, NO_DELAY, EXPDECAY, "DN", "DN", myDNDN_ini, myDNDN_p, postSynV, postExpDNDN);     
     model.setGPUDevice(nGPU);
     model.setSeed(1234);
 }
