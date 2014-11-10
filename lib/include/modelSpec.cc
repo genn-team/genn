@@ -43,6 +43,7 @@ NNmodel::NNmodel()
   RNtype= tS("uint64_t");
   setGPUDevice(AUTODEVICE);
   setSeed(0);
+  needSpkEvnt= FALSE;
 }
 
 NNmodel::~NNmodel() 
@@ -79,11 +80,6 @@ void NNmodel::initDerivedNeuronPara(unsigned int i /**< index of the neuron popu
 
 void NNmodel::initNeuronSpecs(unsigned int i /**< index of the neuron population */)
 {
-    //default to a high but plausible value. This will usually get lowered by the configuration of any outgoing synapses
-    //but note that if the nerons have no efferent synapses (e.g. the output neurons of a perceptron type setup)
-    //then this value will be the one used.
-    nSpkEvntThreshold.push_back(20.0);
-    
     // padnN is the lowest multiple of neuronBlkSz >= neuronN[i]
     unsigned int padnN = ceil((float) neuronN[i] / (float) neuronBlkSz) * (float) neuronBlkSz;
     if (i == 0) {
@@ -94,9 +90,27 @@ void NNmodel::initNeuronSpecs(unsigned int i /**< index of the neuron population
 	sumNeuronN.push_back(sumNeuronN[i - 1] + neuronN[i]); 
 	padSumNeuronN.push_back(padSumNeuronN[i - 1] + padnN); 
     }
-    neuronNeedSt.push_back(0);  // by default last spike times are not saved
 }
 
+//--------------------------------------------------------------------------
+/*! \brief This function calculates derived synapse parameters from primary synapse parameters. 
+
+This function needs to be invoked each time a synapse population is added, after all primary parameters have been set, and before code for synapse evaluation is generated. It should be invoked only once per population and in order population by population.
+*/
+//--------------------------------------------------------------------------
+
+void NNmodel::initDerivedSynapsePara(unsigned int i /**< index of the synapse population */)
+{
+    vector<float> tmpP;
+    unsigned int synt= synapseType[i];
+    for (int j= 0; j < weightUpdateModels[synt].dpNames.size(); ++j) {
+	float retVal = weightUpdateModels[synt].dps->calculateDerivedParameter(j, synapsePara[i], DT);
+	cerr << j << " " << retVal << endl;
+	tmpP.push_back(retVal);
+    }
+    assert(dsp_w.size() == i);
+    dsp_w.push_back(tmpP);	
+}
 
 //--------------------------------------------------------------------------
 /*! \brief This function calculates the derived synaptic parameters in the employed post-synaptic model  based on the given underlying post-synapse parameters */
@@ -105,29 +119,32 @@ void NNmodel::initNeuronSpecs(unsigned int i /**< index of the neuron population
 void NNmodel::initDerivedPostSynapsePara(unsigned int i)
 {
     vector<float> tmpP;
-    for (int j=0; j < postSynModels[postSynapseType[i]].dpNames.size(); ++j) {
-	float retVal = postSynModels[postSynapseType[i]].dps->calculateDerivedParameter(j, postSynapsePara[i], DT);
+    unsigned int psynt= postSynapseType[i];
+    for (int j=0; j < postSynModels[psynt].dpNames.size(); ++j) {
+	float retVal = postSynModels[psynt].dps->calculateDerivedParameter(j, postSynapsePara[i], DT);
 	tmpP.push_back(retVal);
     }	
+    assert(dpsp.size() == i);
     dpsp.push_back(tmpP);
 }
 
 //--------------------------------------------------------------------------
-/*! \brief This function calculates derived synapse parameters from primary synapse parameters. 
+/*! \brief This function generates the necessary entries so that a synapse population is known to source and target neuron groups.
 
 This function needs to be invoked each time a synapse population is added, after all primary parameters have been set, and before code for synapse evaluation is generated. It should be invoked only once per population.
 */
 //--------------------------------------------------------------------------
 
-void NNmodel::initDerivedSynapsePara(unsigned int i /**< index of the synapse population */)
+void NNmodel::registerSynapsePopulation(unsigned int i /**< index of the synapse population */)
 {
     // figure out at what threshold we need to detect spiking events
     synapseInSynNo.push_back(inSyn[synapseTarget[i]].size());
     inSyn[synapseTarget[i]].push_back(i);
-    
-    if (nSpkEvntThreshold[synapseSource[i]]>10000) nSpkEvntThreshold[synapseSource[i]]= 10000;
+    synapseOutSynNo.push_back(outSyn[synapseSource[i]].size());
+    outSyn[synapseSource[i]].push_back(i);
 
     // padnN is the lowest multiple of synapseBlkSz >= neuronN[synapseTarget[i]]
+    // TODO: are these sums and padded sums used anywhere at all???
     unsigned int padnN = ceil((float) neuronN[synapseTarget[i]] / (float) synapseBlkSz) * (float) synapseBlkSz;
     if (i == 0) {
 	sumSynapseTrgN.push_back(neuronN[synapseTarget[i]]);
@@ -181,18 +198,37 @@ void NNmodel::initLearnGrps()
     usesPostLearning.resize(synapseGrpN);
     for (int i=0; i< synapseGrpN; i++){
 	unsigned int padnN = ceil((float) neuronN[synapseSource[i]] / (float) learnBlkSz) * (float) learnBlkSz;
-	if (weightUpdateModels[synapseType[i]].simCode != tS("")) {
+	weightUpdateModel wu= weightUpdateModels[synapseType[i]];
+	if (wu.simCode != tS("")) {
 	    usesTrueSpikes[i]= TRUE;
 	}
-	if (weightUpdateModels[synapseType[i]].simCodeEvnt != tS("")) {
+	if (wu.simCodeEvnt != tS("")) {
+	    assert(wu.evntThreshold != tS(""));
+	    cerr << synapseName[i] << " uses events." << endl;
 	    usesSpikeEvents[i]= TRUE;
+            // find the necessary pre-synaptic variables contained in Threshold condition
+	    vector<string> vars= nModels[neuronType[synapseSource[i]]].varNames;
+	    for (int j= 0; j < vars.size(); j++) {
+		size_t found= wu.evntThreshold.find(vars[j]+tS("_pre"));
+		if (found != string::npos) {
+		    synapseSpkEvntVars[i].push_back(vars[j]);
+		    cerr << "synapsepop: " << i << ", neuronGrpNo: " << synapseSource[i] << ", added variable: " << vars[j] << endl;
+		}
+	    }
+	    // add to the source population spike event condition
+	    unsigned int src= synapseSource[i];
+	    if (neuronNeedSpkEvnt[src]) {
+		neuronSpkEvntCondition[src]+= tS(" || (")+wu.evntThreshold+tS(")");
+	    }
+	    else {
+		neuronNeedSpkEvnt[src]= TRUE;
+		needSpkEvnt= TRUE;
+		neuronSpkEvntCondition[src]= tS("(")+wu.evntThreshold+tS(")");
+	    }
 	}
 	if (weightUpdateModels[synapseType[i]].simLearnPost != tS("")){
 	    usesPostLearning[i]=TRUE;
 	    fprintf(stdout, "detected learning synapse at %d \n", i);
-	    if (SPK_THRESH_STDP < nSpkEvntThreshold[synapseTarget[i]]) {
-		nSpkEvntThreshold[synapseTarget[i]]= SPK_THRESH_STDP;
-	    }
 	    if (lrnGroups == 0) {
 		padSumLearnN.push_back(padnN);
 	    }
@@ -287,9 +323,14 @@ void NNmodel::addNeuronPopulation(const string name, /**<  The name of the neuro
     }
     neuronIni.push_back(tmpP);
     vector<unsigned int> tv;
-    neuronDelaySlots.push_back(1);
-    receivesInputCurrent.push_back(0);
     inSyn.push_back(tv);  // empty list of input synapse groups for neurons i 
+    outSyn.push_back(tv);  // empty list of input synapse groups for neurons i 
+    receivesInputCurrent.push_back(0);
+    neuronNeedSt.push_back(FALSE);
+    neuronNeedSpkEvnt.push_back(FALSE);
+    string tmp= tS("");
+    neuronSpkEvntCondition.push_back(tmp);
+    neuronDelaySlots.push_back(1);
     initDerivedNeuronPara(i);
     initNeuronSpecs(i);
     
@@ -458,9 +499,10 @@ void NNmodel::addSynapsePopulation(const string name, /**<  The name of the syna
     
     postSynIni.push_back(tmpPV);  
     
-    tmpDsp.clear();
-    dsp_w.push_back(tmpDsp);
+    vector<string> tmpS;
+    synapseSpkEvntVars.push_back(tmpS); 
 
+    registerSynapsePopulation(i);
     initDerivedSynapsePara(i);
     initDerivedPostSynapsePara(i);
 

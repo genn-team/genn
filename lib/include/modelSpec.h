@@ -135,7 +135,7 @@ struct postSynModel
   vector<string> varTypes; //!< Types of the variable named above, e.g. "float". Names and types are matched by their order of occurrence in the vector.
   vector<string> pNames; //!< Names of (independent) parameters of the model. These are assumed to be always of type "float"
   vector<string> dpNames; /*!< \brief Names of dependent parameters of the model. These are assumed to be always of type "float"*/
-  dpclass * dps;
+  dpclass *dps;
 };
 
 /*! \brief Structure to hold the information that defines a weightupdate model (a model of how spikes affect synaptic (and/or) (mostly) post-synaptic neuron variables. It also allows to define changes in response to post-synaptic spikes/spike-like events.
@@ -148,7 +148,7 @@ public:
   string simCodeEvnt; // !< \brief Simulation code that is used for spike events (all the instances where Vm > Vthres)
   string simLearnPost; // !< \brief Simulation code which is used in the learnSynapsesPost kernel/function, where postsynaptic neuron spikes before the presynaptic neuron in the STDP window.
   string evntThreshold; // !< \brief Simulation code for spike event detection.
-    string synapseDynamics;
+  string synapseDynamics;
   vector<string> varNames; // !< \brief Names of the variables in the postsynaptic model
   vector<string> varTypes; // !< \brief Types of the variable named above, e.g. "float". Names and types are matched by their order of occurrence in the vector.
   vector<string> pNames; // !< \brief Names of (independent) parameters of the model. These are assumed to be always of type "float"
@@ -157,11 +157,12 @@ public:
   vector<string> extraGlobalSynapseKernelParameters; //!< Additional parameter in the neuron kernel; it is translated to a population specific name but otherwise assumed to be one parameter per population rather than per synapse.
 
   vector<string> extraGlobalSynapseKernelParameterTypes; //!< Additional parameters in the neuron kernel; they are translated to a population specific name but otherwise assumed to be one parameter per population rather than per synapse.
-  dpclass * dps;
+  dpclass *dps;
     bool needPreSt;
     bool needPostSt;
 
     weightUpdateModel() {
+	dps= NULL;
 	needPreSt= FALSE;
 	needPostSt= FALSE;
     }
@@ -191,6 +192,7 @@ public:
   unsigned int needSynapseDelay; //!< Whether delayed synapse conductance is required in the network
   int chooseGPUDevice;
   unsigned int seed;
+  bool needSpkEvnt;
 
   // PUBLIC NEURON VARIABLES
   //========================
@@ -206,17 +208,14 @@ public:
   vector<vector<float> > dnp; //!< Derived neuron parameters
   vector<vector<float> > neuronIni; //!< Initial values of neurons
   vector<vector<unsigned int> > inSyn; //!< The ids of the incoming synapse groups
-  vector<int> receivesInputCurrent; //!< flags whether neurons of a population receive explicit input currents
-  vector<unsigned int> neuronNeedSt; //!< Whether last spike time needs to be saved for each indivual neuron type
+  vector<vector<unsigned int> > outSyn; //!< The ids of the outgoing synapse groups
+  vector<unsigned int> receivesInputCurrent; //!< flags whether neurons of a population receive explicit input currents
+  vector<bool> neuronNeedSt; //!< Whether last spike time needs to be saved for each indivual neuron type
+  vector<bool> neuronNeedSpkEvnt; //!< Whether this neuron group needs to record spike like events
+  vector<string> neuronSpkEvntCondition; //!< Will contain the spike event condition code when spike events are used
   vector<unsigned int> neuronDelaySlots; //!< The number of slots needed in the synapse delay queues of a neuron group
   vector<int> neuronHostID; //!< The ID of the cluster node which the neuron groups are computed on
   vector<int> neuronDeviceID; //!< The ID of the CUDA device which the neuron groups are comnputed on
-
-  //!< Threshold for detecting a spike event for each neuron type.
-  //NB: This is not directly user controlled, but is decided by, for example,
-  //the pre-spike threshold set for outgoing synapses
-  vector<float> nSpkEvntThreshold;
-
 
   // PUBLIC SYNAPSE VARIABLES
   //=========================
@@ -234,8 +233,10 @@ public:
   vector<unsigned int> synapseSource; //!< Presynaptic neuron groups
   vector<unsigned int> synapseTarget; //!< Postsynaptic neuron groups
   vector<unsigned int> synapseInSynNo; //!< IDs of the target neurons' incoming synapse variables for each synapse group
+  vector<unsigned int> synapseOutSynNo; //!< The target neurons' outgoing synapse for each synapse group
   vector<unsigned int> usesTrueSpikes; //!< Defines if synapse update is done after detection of real spikes (only one point after threshold)
   vector<unsigned int> usesSpikeEvents; //!< Defines if synapse update is done after detection of spike events (every point above threshold)
+  vector<vector<string> > synapseSpkEvntVars; //!< Defines variable names that are needed in the SpkEvnt condition and that are pre-fetched for that purpose into shared memory
   vector<unsigned int> usesPostLearning; //!< Defines if anything is done in case of postsynaptic neuron spiking before presynaptic neuron (punishment in STDP etc.) 
   vector<vector<float> > synapsePara; //!< parameters of synapses
   vector<vector<float> > synapseIni; //!< Initial values of synapse variables
@@ -281,7 +282,7 @@ private:
   unsigned int findSynapseGrp(const string); //< Find the the ID number of a synapse group by its name
   void initDerivedSynapsePara(unsigned int); //!< Method for calculating the values of derived synapse parameters.
   void initDerivedPostSynapsePara(unsigned int); //!< Method for calculating the values of derived postsynapse parameters.
-  void initDerivedSynapseDynamicsPara(unsigned int); //!< Method for calculating the values of derived synapse dynamics parameters.
+  void registerSynapsePopulation(unsigned int); //!< Method to register a new synapse population with the inSyn list of the target neuron population
 
 public:
 

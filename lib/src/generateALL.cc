@@ -11,7 +11,7 @@
   
 --------------------------------------------------------------------------*/
 
-/*! \file generateALL.cpp
+/*! \file generateALL.cc
   \brief Main file combining the code for code generation. Part of the code generation section.
 
   The file includes separate files for generating kernels (generateKernels.cc),
@@ -47,31 +47,24 @@ void generate_model_runner(NNmodel &model,  //!< Model description
   mkdir((path + "/" + model.name + "_CODE").c_str(), 0777); 
 #endif
 
-  cerr << 1 << endl;
   // general shared code for GPU and CPU versions
   genRunner(model, path, cout);
 
-  cerr << 2 << endl;
   // GPU specific code generation
   genRunnerGPU(model, path, cout);
   
-  cerr << 3 << endl;
   // generate neuron kernels
   genNeuronKernel(model, path, cout);
 
-  cerr << 4 << endl;
   // generate synapse and learning kernels
   if (model.synapseGrpN > 0) genSynapseKernel(model, path, cout);
 
-  cerr << 5 << endl;
   // CPU specific code generation
   genRunnerCPU(model, path, cout);
 
-  cerr << 6 << endl;
   // Generate the equivalent of neuron kernel
   genNeuronFunction(model, path, cout);
   
-  cerr << 7 << endl;
   // Generate the equivalent of synapse and learning kernel
   if (model.synapseGrpN > 0) genSynapseFunction(model, path, cout);
 }

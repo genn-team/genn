@@ -154,13 +154,6 @@ os << "}" << endl;
 	    os << weightUpdateModels[st].extraGlobalSynapseKernelParameterTypes[k] << " ";
 	    os << weightUpdateModels[st].extraGlobalSynapseKernelParameters[k] << model.synapseName[i] << ";" << endl;
 	}
-	vector<float> tmpP;
-	for (int j= 0; j < weightUpdateModels[st].dpNames.size(); ++j) {
-	    float retVal = weightUpdateModels[st].dps->calculateDerivedParameter(j, model.synapsePara[i], DT);
-	    cerr << j << " " << retVal << endl;
-	    tmpP.push_back(retVal);
-	}
-	model.dsp_w[i].swap(tmpP);	
     }
   
     for (int i=0; i< model.postSynapseType.size(); i++){

@@ -501,10 +501,11 @@ void prepareWeightUpdateModels()
     wuG.pNames.push_back(tS("Epre")); 
     wuG.pNames.push_back(tS("Vslope")); 
     wuG.dpNames.clear();
-    // code for presynaptic spike event (defined by Epre)
+    // code for presynaptic spike event 
     wuG.simCodeEvnt = tS("    $(addtoinSyn) = $(g)* tanh(($(V_pre)-($(Epre)))*DT*2/$(Vslope));\n\
       $(updatelinsyn);\n");
-    wuG.simCode= tS("");
+    // definition of presynaptic spike event 
+    wuG.evntThreshold = tS("    $(V_pre) > $(Epre)");
     weightUpdateModels.push_back(wuG);
     NGRADSYNAPSE= weightUpdateModels.size()-1; 
 
@@ -550,11 +551,8 @@ void prepareWeightUpdateModels()
   $(gRaw) += dg; \n\
   $(g)=$(gMax)/2.0 *(tanh($(gSlope)*($(gRaw) - ($(gMid))))+1.0); \n");   
   wuL.dps = new pwSTDP;
-  // code for spike type events (defined by Epre)
-  wuL.simCodeEvnt = tS("");
-  // code for post-synaptic spike event
-  wuL.simLearnPost = tS("$(g) = $(gRaw); \n\
-  float dt = t - ($(sT_pre)) - ($(tauShift)); \n\
+  // code for post-synaptic spike 
+  wuL.simLearnPost = tS("float dt = t - ($(sT_pre)) - ($(tauShift)); \n\
   float dg =0; \n\
   if (dt > $(lim0))  \n\
       dg = -($(off0)) ; \n \

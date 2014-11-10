@@ -57,7 +57,7 @@ private:
 	string indentBy(unsigned int numIndents) {
 		string result =  ""; ///toString(numIndents);
 		for (int i = 0; i < numIndents; i++) {
-			result.append("\t");
+			result.append("    ");
 		}
 		return result;
 	}
