@@ -329,7 +329,7 @@ void generate_process_presynaptic_events_code_CPU(
 	os << "j]] + l];" << ENDL;
     }
     else {
-	os << "for (int n = 0; n < " << model.neuronN[i] << "; n++)" << OB(202);
+	os << "for (int n = 0; n < " << model.neuronN[trg] << "; n++)" << OB(202);
 	os << "ipost= n;" << endl;
     }
     
