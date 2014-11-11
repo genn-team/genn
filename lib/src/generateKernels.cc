@@ -464,6 +464,10 @@ void generate_process_presynaptic_events_code(
     unsigned int synt = model.synapseType[i];
     bool needSpkEvnt= (weightUpdateModels[synt].evntThreshold != tS(""));
     if ((Evnt && needSpkEvnt) || !Evnt) {
+	string dSlot;
+	if (model.neuronDelaySlots[src] != 1) { 
+	    dSlot= tS("(delaySlot * ") + tS(model.neuronN[src]) + tS(") +");
+	}
 	// Detect spike events or spikes and do the update
 	os << "// process presynaptic events:";
 	if (Evnt) {
@@ -476,19 +480,11 @@ void generate_process_presynaptic_events_code(
 	os << "if (r == numSpikeSubsets" << postfix << " - 1) lmax = lscnt" << postfix << " % " << "BLOCKSZ_SYN" << ";" << ENDL;
 	os << "else lmax = " << "BLOCKSZ_SYN" << ";" << ENDL;
 	os << "if (threadIdx.x < lmax)" << OB(100);
-	os << "shSpk" << postfix << "[threadIdx.x] = d_glbSpk" << postfix << "" << model.neuronName[src] << "[";
-	if (model.neuronDelaySlots[src] != 1) {
-	    os << "(delaySlot * " << model.neuronN[src] << ") + ";
-	}
-	os << "(r * " << "BLOCKSZ_SYN" << ") + threadIdx.x];" << ENDL;
+	os << "shSpk" << postfix << "[threadIdx.x] = d_glbSpk" << postfix << "" << model.neuronName[src] << "[" << dSlot << "(r * BLOCKSZ_SYN) + threadIdx.x];" << ENDL;
 	if (Evnt && (model.neuronType[src] != POISSONNEURON)) {     
 	    vector<string> vars= model.synapseSpkEvntVars[i];
 	    for (int j= 0; j < vars.size(); j++) {
-		os << "shSpkEvnt" << vars[j] << "[threadIdx.x] = dd_" << vars[j] << model.neuronName[src] << "[";          
-		if (model.neuronDelaySlots[src] != 1) {                                         
-		    os << "(delaySlot * " << model.neuronN[src] << ") + ";                      
-		}                                                                               
-		os << "shSpk" << postfix << "[threadIdx.x]];" << ENDL;                                       
+		os << "shSpkEvnt" << vars[j] << "[threadIdx.x] = dd_" << vars[j] << model.neuronName[src] << "[" << dSlot << " shSpk" << postfix << "[threadIdx.x]];" << ENDL;
 	    }                                                                                   
 	}
 	os << CB(100);

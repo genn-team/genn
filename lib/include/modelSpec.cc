@@ -196,18 +196,34 @@ void NNmodel::initLearnGrps()
     usesTrueSpikes.resize(synapseGrpN);
     usesSpikeEvents.resize(synapseGrpN);
     usesPostLearning.resize(synapseGrpN);
+    neuronVarNeedSpkEvnt.resize(neuronGrpN);
+    neuronVarNeedSpk.resize(neuronGrpN);
+    neuronNeedSpkEvnt.resize(neuronGrpN);
     for (int i=0; i< synapseGrpN; i++){
 	unsigned int padnN = ceil((float) neuronN[synapseSource[i]] / (float) learnBlkSz) * (float) learnBlkSz;
 	weightUpdateModel wu= weightUpdateModels[synapseType[i]];
 	if (wu.simCode != tS("")) {
 	    usesTrueSpikes[i]= TRUE;
+	    // analyze which neuron variables need spk queues
+	    unsigned int src= synapseSource[i];
+	    vector<string> vars= nModels[neuronType[src]].varNames;
+	    neuronVarNeedSpk[src].resize(vars.size());
+	    for (int j= 0; j < vars.size(); j++) {
+		if (wu.simCode.find(vars[j]+tS("_pre")) != string::npos) {
+		    neuronVarNeedSpk[src][j]= TRUE;
+		}
+		else {
+		    neuronVarNeedSpk[src][j]= FALSE;		    
+		} 
+	    }
 	}
 	if (wu.simCodeEvnt != tS("")) {
 	    assert(wu.evntThreshold != tS(""));
 	    cerr << synapseName[i] << " uses events." << endl;
 	    usesSpikeEvents[i]= TRUE;
             // find the necessary pre-synaptic variables contained in Threshold condition
-	    vector<string> vars= nModels[neuronType[synapseSource[i]]].varNames;
+	    unsigned int src= synapseSource[i];
+	    vector<string> vars= nModels[neuronType[src]].varNames;
 	    for (int j= 0; j < vars.size(); j++) {
 		size_t found= wu.evntThreshold.find(vars[j]+tS("_pre"));
 		if (found != string::npos) {
@@ -216,7 +232,6 @@ void NNmodel::initLearnGrps()
 		}
 	    }
 	    // add to the source population spike event condition
-	    unsigned int src= synapseSource[i];
 	    if (neuronNeedSpkEvnt[src]) {
 		neuronSpkEvntCondition[src]+= tS(" || (")+wu.evntThreshold+tS(")");
 	    }
@@ -225,8 +240,20 @@ void NNmodel::initLearnGrps()
 		needSpkEvnt= TRUE;
 		neuronSpkEvntCondition[src]= tS("(")+wu.evntThreshold+tS(")");
 	    }
+	    // analyze which neuron variables need spkEvnt queues
+	    neuronVarNeedSpkEvnt[src].resize(vars.size());
+	    for (int j= 0; j < vars.size(); j++) {
+		if (wu.simCodeEvnt.find(vars[j]+tS("_pre")) != string::npos) {
+		    neuronVarNeedSpkEvnt[src][j]= TRUE;
+		    neuronNeedSpkEvnt[src]= TRUE;
+		}
+		else {
+		    neuronVarNeedSpkEvnt[src][j]= FALSE;		    
+		} 
+	    }
+		
 	}
-	if (weightUpdateModels[synapseType[i]].simLearnPost != tS("")){
+	if (wu.simLearnPost != tS("")){
 	    usesPostLearning[i]=TRUE;
 	    fprintf(stdout, "detected learning synapse at %d \n", i);
 	    if (lrnGroups == 0) {
