@@ -369,85 +369,47 @@ os << "}" << endl;
     
     // ------------------------------------------------------------------------
     // allocating conductance arrays for sparse matrices
-
-    os << "void allocateSparseArray(Conductance *C, unsigned int connN, unsigned int preN, bool isGlobalG)" << "{" << endl;
-    os << "  C->connN= connN;" << endl;
-    os << "  C->indInG= new unsigned int[preN + 1];" << endl;
-    os << "  C->ind= new unsigned int[connN];" << endl;       
-    // TODO: should this be done dependent on whether inverse mapping is needed?
-    os << "  C->revIndInG= new unsigned int[preN + 1];" << endl;
-    os << "  C->revInd= new unsigned int[connN];" << endl;       
-    os << "  C->remap= new unsigned int[connN];" << endl;       
-    os << "}" << endl; 
- 
-    // ------------------------------------------------------------------------
-    // allocating conductance arrays for sparse matrices
-
-    os << "void allocateAllHostSparseArrays() {" << endl;
-    for (int i = 0; i < model.synapseGrpN; i++) {
+    for (int i= 0; i < model.synapseGrpN; i++) {	
 	if (model.synapseConnType[i] == SPARSE) {
-	    os << "size_t size;" << endl;
-	    break;
-	}
-    }
-    	
-    for (int i = 0; i < model.synapseGrpN; i++) {
-	if (model.synapseConnType[i] == SPARSE) {
+	    os << "void allocate" << model.synapseName[i] << "(unsigned int connN)" << "{" << endl;
+	    os << "// Allocate host side variables" << endl;
+		os << "  C" << model.synapseName[i] << ".connN= connN;" << endl;
+		os << "  C" << model.synapseName[i] << ".indInG= new unsigned int[" << model.neuronN[model.synapseSource[i]] + 1 << "];" << endl;
+		os << "  C" << model.synapseName[i] << ".ind= new unsigned int[connN];" << endl;   
+	    if (model.usesPostLearning[i]) {
+		os << "  C" << model.synapseName[i] << ".revIndInG= new unsigned int[preN + 1];" << endl;
+		os << "  C" << model.synapseName[i] << ".revInd= new unsigned int[connN];" << endl;       
+		os << "  C" << model.synapseName[i] << ".remap= new unsigned int[connN];" << endl;       
+	    }
 	    int st= model.synapseType[i];
-	    os << "size = C" << model.synapseName[i] << ".connN;" << ENDL;
+	    string size = "C" + model.synapseName[i]+".connN";
 	    for (int k= 0, l= weightUpdateModels[st].varNames.size(); k < l; k++) {
 		os  << weightUpdateModels[st].varNames[k];
-		os << model.synapseName[i]<< "= new " << weightUpdateModels[st].varTypes[k] << "[size];" << ENDL;
+		os << model.synapseName[i]<< "= new " << weightUpdateModels[st].varTypes[k] << "[" << size << "];" << ENDL;
 	    }
-	}
-    }
-    os << "}" << endl;
-
-    os << "void allocateAllDeviceSparseArrays() {" << endl;
-    for (int i = 0; i < model.synapseGrpN; i++) {
-	if (model.synapseConnType[i] == SPARSE) {
-	    os << "size_t size;" << endl;
-	    break;
-	}
-    }	
-    for (int i = 0; i < model.synapseGrpN; i++) {
-	if (model.synapseConnType[i] == SPARSE) {
-	    os << "size = C" << model.synapseName[i] << ".connN;" << ENDL;
+	    os << "// Allocate device side variables" << endl;
 	    os << "  deviceMemAllocate( &d_indInG" << model.synapseName[i] << ", dd_indInG" << model.synapseName[i];
-	    os << ", sizeof(unsigned int) * ("<< model.neuronN[model.synapseSource[i]] <<" + 1));" << endl;
+	    os << ", sizeof(unsigned int) * ("<< model.neuronN[model.synapseSource[i]] + 1 <<"));" << endl;
 	    os << "  deviceMemAllocate( &d_ind" << model.synapseName[i] << ", dd_ind" << model.synapseName[i];
-	    os << ", sizeof(unsigned int) * size);" << endl;
-	    mem += model.neuronN[model.synapseSource[i]]*sizeof(unsigned int);     
-	    memremsparse = deviceProp[theDev].totalGlobalMem - float(mem);			
-	    int st= model.synapseType[i];
-	    //weight update variables
+	    os << ", sizeof(unsigned int) * (" << size << "));" << endl;
+	    if (model.usesPostLearning[i]) {
+		os << "  deviceMemAllocate( &d_revIndInG" << model.synapseName[i] << ", dd_revIndInG" << model.synapseName[i];
+		os << ", sizeof(unsigned int) * ("<< model.neuronN[model.synapseTarget[i]] + 1 <<"));" << endl;
+		os << "  deviceMemAllocate( &d_revInd" << model.synapseName[i] << ", dd_revInd" << model.synapseName[i];
+		os << ", sizeof(unsigned int) * (" << size <<"));" << endl;
+		os << "  deviceMemAllocate( &d_remap" << model.synapseName[i] << ", dd_remap" << model.synapseName[i];
+		os << ", sizeof(unsigned int) * ("<< size << "));" << endl;
+	    }
 	    for (int k= 0, l= weightUpdateModels[st].varNames.size(); k < l; k++) {     
 		os << "deviceMemAllocate(&d_" << weightUpdateModels[st].varNames[k] << model.synapseName[i];
 		os << ", dd_" << weightUpdateModels[st].varNames[k] << model.synapseName[i];
-		os << ", sizeof("  << weightUpdateModels[st].varTypes[k] << ")*size);" << endl;       
+		os << ", sizeof("  << weightUpdateModels[st].varTypes[k] << ")*(" << size << "));" << endl;       
 	    }
-	    //post-to-pre remapped arrays
-	    if (model.usesPostLearning[i] == TRUE) {
-		string learncode = weightUpdateModels[model.synapseType[i]].simLearnPost;
-		cout << endl << "learn code is: " << endl << learncode << endl;			
-//				size_t found = learncode.find
-		// TODO: make this dependent on existence of any variables in learncode
-		os << "  deviceMemAllocate( &d_revIndInG" << model.synapseName[i] << ", dd_revIndInG" << model.synapseName[i];
-		os << ", sizeof(unsigned int) * ("<< model.neuronN[model.synapseTarget[i]] <<" + 1));" << endl;
-		os << "  deviceMemAllocate( &d_revInd" << model.synapseName[i] << ", dd_revInd" << model.synapseName[i];
-		os << ", sizeof(unsigned int) * size);" << endl;
-		os << "  deviceMemAllocate( &d_remap" << model.synapseName[i] << ", dd_revIndInG" << model.synapseName[i];
-		os << ", sizeof(unsigned int) * ("<< model.neuronN[model.synapseTarget[i]] <<" + 1));" << endl;
-		mem += model.neuronN[model.synapseTarget[i]]*sizeof(unsigned int);     
-	    }
+	    os << "}" << endl; 
+	    os << endl;
 	}
     }
-    os << "}" << endl; 
-
-    os << "void allocateAllSparseArrays() {" << endl;
-    os << "\t allocateAllHostSparseArrays();" << endl;
-    os << "\t allocateAllDeviceSparseArrays();" << endl;
-    os << "}" << endl;
+ 
 
     // ------------------------------------------------------------------------
     // freeing global memory structures
@@ -478,9 +440,11 @@ os << "}" << endl;
 	if (model.synapseConnType[i] == SPARSE){
 	    os << "  delete[] C" << model.synapseName[i] << ".indInG;" << endl;
 	    os << "  delete[] C" << model.synapseName[i] << ".ind;" << endl;  
-	    os << "  delete[] C" << model.synapseName[i] << ".revIndInG;" << endl;
-	    os << "  delete[] C" << model.synapseName[i] << ".revInd;" << endl;  
-	    os << "  delete[] C" << model.synapseName[i] << ".remap;" << endl;
+	    if (model.usesPostLearning[i]) {
+		os << "  delete[] C" << model.synapseName[i] << ".revIndInG;" << endl;
+		os << "  delete[] C" << model.synapseName[i] << ".revInd;" << endl;  
+		os << "  delete[] C" << model.synapseName[i] << ".remap;" << endl;
+	    }
 	}
     }
   
@@ -495,6 +459,20 @@ os << "}" << endl;
     os << endl;
   
  
+    // ------------------------------------------------------------------------
+    // initializing conductance arrays for sparse matrices
+
+    os << "void initializeSparseArray(Conductance C,  unsigned int * dInd, unsigned int * dIndInG, unsigned int preN)" << "{" << endl;
+    os << "  CHECK_CUDA_ERRORS(cudaMemcpy(dInd, C.ind, C.connN*sizeof(unsigned int), cudaMemcpyHostToDevice));" << endl;
+    os << "  CHECK_CUDA_ERRORS(cudaMemcpy(dIndInG, C.indInG, (preN+1)*sizeof(unsigned int), cudaMemcpyHostToDevice));" << endl;
+    os << "}" << endl; 
+ 	
+    os << "void initializeSparseArrayRev(Conductance C,  unsigned int * dRevInd, unsigned int * dRevIndInG, unsigned int * dRemap, unsigned int preN)" << "{" << endl;
+    os << "  CHECK_CUDA_ERRORS(cudaMemcpy(dRevInd, C.revInd, C.connN*sizeof(unsigned int), cudaMemcpyHostToDevice));" << endl;
+    os << "  CHECK_CUDA_ERRORS(cudaMemcpy(dRevIndInG, C.revIndInG, (preN+1)*sizeof(unsigned int), cudaMemcpyHostToDevice));" << endl;
+    os << "  CHECK_CUDA_ERRORS(cudaMemcpy(dRemap, C.remap, C.connN*sizeof(unsigned int), cudaMemcpyHostToDevice));" << endl;
+    os << "}" << endl; 
+
     // ------------------------------------------------------------------------
     // initializing sparse arrays
     os << "void initializeAllSparseArrays()" << "{" << endl;
@@ -511,17 +489,12 @@ os << "}" << endl;
 	    os << "  d_ind" << model.synapseName[i] << ",";
 	    os << "  d_indInG" << model.synapseName[i] << ",";
 	    os << model.neuronN[model.synapseSource[i]] <<");" << endl;
-	    os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_ind" << model.synapseName[i] << ", C" << model.synapseName[i] << ".ind, sizeof(unsigned int) * size , cudaMemcpyHostToDevice));" << endl; 
-	    os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_indInG" << model.synapseName[i] << ", C" << model.synapseName[i] << ".indInG, sizeof(unsigned int) * size , cudaMemcpyHostToDevice));" << endl; 
 	    if (model.usesPostLearning[i]) {
-		os << "  initializeSparseArrayPost(C" << model.synapseName[i] << ",";
+		os << "  initializeSparseArrayRev(C" << model.synapseName[i] << ",";
 		os << "  d_revInd" << model.synapseName[i] << ",";
 		os << "  d_revIndInG" << model.synapseName[i] << ",";
 		os << "  d_remap" << model.synapseName[i] << ",";
 		os << model.neuronN[model.synapseSource[i]] <<");" << endl;
-		os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_revInd" << model.synapseName[i] << ", C" << model.synapseName[i] << ".revInd, sizeof(unsigned int) * size , cudaMemcpyHostToDevice));" << endl; 
-		os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_revIndInG" << model.synapseName[i] << ", C" << model.synapseName[i] << ".revIndInG, sizeof(unsigned int) * size , cudaMemcpyHostToDevice));" << endl; 
-		os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_remap" << model.synapseName[i] << ", C" << model.synapseName[i] << ".remap, sizeof(unsigned int) * size , cudaMemcpyHostToDevice));" << endl; 
 	    }
 	    int st= model.synapseType[i];
 	    for (int k= 0, l= weightUpdateModels[st].varNames.size(); k < l; k++) {

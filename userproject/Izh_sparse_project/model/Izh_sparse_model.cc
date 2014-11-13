@@ -82,7 +82,6 @@ void classIzh::init(unsigned int which)
   if (which == CPU) {
   }
   if (which == GPU) {
-    copyGToDevice(); 
     copyStateToDevice();
   }
 }
@@ -156,41 +155,35 @@ void classIzh::create_input_values() //define your explicit input rule here
 
 }
 
-void classIzh::read_sparsesyns_par(int synInd, Conductance C, FILE *f_ind,FILE *f_indInG,FILE *f_g //!< File handle for a file containing sparse conductivity values
+void classIzh::read_sparsesyns_par(int synInd, Conductance C, FILE *f_ind, FILE *f_indInG, FILE *f_g, float *g //!< File handle for a file containing sparse conductivity values
 			    )
 {
-  //allocateSparseArray(synInd,C.connN);
   unsigned int retval=0; //to make the compiler happy
-  retval=fread(C.gp, 1, C.connN*sizeof(float),f_g);
+  retval=fread(g, 1, C.connN*sizeof(float),f_g);
   if (retval!=C.connN*sizeof(float)) fprintf(stderr, "ERROR: Number of elements read is different than it should be.");
   fprintf(stdout,"%d active synapses in group %d. \n",C.connN,synInd);
-  retval=fread(C.gIndInG, 1, (model.neuronN[model.synapseSource[synInd]]+1)*sizeof(unsigned int),f_indInG);
+  retval=fread(C.indInG, 1, (model.neuronN[model.synapseSource[synInd]]+1)*sizeof(unsigned int),f_indInG);
   if (retval!=(model.neuronN[model.synapseSource[synInd]]+1)*sizeof(unsigned int)) fprintf(stderr, "ERROR: Number of elements read is different than it should be.");
-  retval=fread(C.gInd, 1, C.connN*sizeof(int),f_ind);
+  retval=fread(C.ind, 1, C.connN*sizeof(int),f_ind);
   if (retval!=C.connN*sizeof(int)) fprintf(stderr, "ERROR: Number of elements read is different than it should be.");
 
   // general:
   fprintf(stdout,"Read conductance ... \n");
   fprintf(stdout, "Size is %d for synapse group %d. Values start with: \n",C.connN, synInd);
   for(int i= 0; i < 20; i++) {
-    fprintf(stdout, "%f ", C.gp[i]);
+    fprintf(stdout, "%f ", g[i]);
   }
   fprintf(stdout,"\n\n");
-  
-  
   fprintf(stdout, "%d indices read. Index values start with: \n",C.connN);
   for(int i= 0; i < 20; i++) {
-    fprintf(stdout, "%d ", C.gInd[i]);
+    fprintf(stdout, "%d ", C.ind[i]);
   }  
-  fprintf(stdout,"\n\n");
-  
-  
+  fprintf(stdout,"\n\n");  
   fprintf(stdout, "%d g indices read. Index in g array values start with: \n", model.neuronN[model.synapseSource[synInd]]+1);
   for(int i= 0; i < 20; i++) {
-    fprintf(stdout, "%d ", C.gIndInG[i]);
+    fprintf(stdout, "%d ", C.indInG[i]);
   }  
 	fprintf(stdout,"\n\n");
-  
 }
 
 void classIzh::gen_alltoall_syns( float * g, unsigned int nPre, unsigned int nPost, float gscale//!< Generate random conductivity values for an all to all network
@@ -236,8 +229,8 @@ void classIzh::run(float runtime, unsigned int which)
 
 void classIzh::sum_spikes()
 {
-  sumPExc+= glbscntPExc;
-  sumPInh+= glbscntPInh;
+  sumPExc+= glbSpkCntPExc;
+  sumPInh+= glbSpkCntPInh;
 }
 
 //--------------------------------------------------------------------------
@@ -314,11 +307,11 @@ void classIzh::output_spikes(FILE *f, unsigned int which)
 		getSpikesFromGPU();
 	}
  
-  for (int i= 0; i < glbscntPExc; i++) {
+  for (int i= 0; i < glbSpkCntPExc; i++) {
 		fprintf(f,"%f %d\n", t, glbSpkPExc[i]);
   }
 
-  for (int i= 0; i < glbscntPInh; i++) {
+  for (int i= 0; i < glbSpkCntPInh; i++) {
     fprintf(f, "%f %d\n", t, model.sumNeuronN[0]+glbSpkPInh[i]);
   }
 }

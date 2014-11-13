@@ -64,49 +64,48 @@ int main(int argc, char *argv[])
   
    fprintf(stderr, "#reading synapses ... \n");
  	FILE *f_info, *f, *f_postIndInG,*f_postind;
- 	
+ 	unsigned int connN;
  	//ee
    name= toString("inputfiles/gIzh_sparse_info_ee");
    f_info= fopen(name.c_str(),"r");
-  	retval = fread(&gExc_Exc.connN,1,sizeof(unsigned int),f_info);
-  	//gExc_Exc.connN=sizeof(unsigned int)*(PCNN.model.neuronN[0]+PCNN.model.neuronN[1]);
-  	fprintf(stderr, "read %u times %lu bytes \n",gExc_Exc.connN,sizeof(unsigned int));
-  	fprintf(flog, "%u connections in gExc_Exc\n",gExc_Exc.connN);
-	sumSynapses+=gExc_Exc.connN;
+  	retval = fread(&connN,1,sizeof(unsigned int),f_info);
+	allocateExc_Exc(connN);
+  	fprintf(stderr, "read %u times %lu bytes \n",CExc_Exc.connN,sizeof(unsigned int));
+  	fprintf(flog, "%u connections in gExc_Exc\n",CExc_Exc.connN);
+	sumSynapses+=connN;
 	fclose(f_info);
   	
   	//ei
    name= toString("inputfiles/gIzh_sparse_info_ei");
    f_info= fopen(name.c_str(),"r");
-  	retval = fread(&gExc_Inh.connN,1,sizeof(unsigned int),f_info);
-  	//gExc_Inh.connN=sizeof(unsigned int)*(PCNN.model.neuronN[0]+PCNN.model.neuronN[1]);
-  	fprintf(stderr, "read %u times %lu bytes \n",gExc_Inh.connN,sizeof(unsigned int));
-  	fprintf(flog, "%u connections in gExc_Inh\n",gExc_Inh.connN);
-	sumSynapses+=gExc_Inh.connN;
+  	retval = fread(&connN,1,sizeof(unsigned int),f_info);
+ 	allocateExc_Inh(connN);
+ 	fprintf(stderr, "read %u times %lu bytes \n",CExc_Inh.connN,sizeof(unsigned int));
+  	fprintf(flog, "%u connections in gExc_Inh\n",CExc_Inh.connN);
+	sumSynapses+=connN;
  	fclose(f_info);
   	
   	//ie
    name= toString("inputfiles/gIzh_sparse_info_ie");
  	f_info= fopen(name.c_str(),"r");
-  	retval = fread(&gInh_Exc.connN,1,sizeof(unsigned int),f_info);
-  	//gExc_Exc.connN=sizeof(unsigned int)*(PCNN.model.neuronN[0]+PCNN.model.neuronN[1]);
-  	fprintf(stderr, "read %u times %lu bytes \n",gInh_Exc.connN,sizeof(unsigned int));
-  	fprintf(flog, "%u connections in gInh_Exc\n",gInh_Exc.connN);
-	sumSynapses+=gInh_Exc.connN;
+  	retval = fread(&connN,1,sizeof(unsigned int),f_info);
+  	allocateInh_Exc(connN);
+  	fprintf(stderr, "read %u times %lu bytes \n",CInh_Exc.connN,sizeof(unsigned int));
+  	fprintf(flog, "%u connections in gInh_Exc\n",CInh_Exc.connN);
+	sumSynapses+=connN;
  	fclose(f_info);
   	
   	//ii
    name= toString("inputfiles/gIzh_sparse_info_ii");
  	f_info= fopen(name.c_str(),"r");
-  	retval = fread(&gInh_Inh.connN,1, sizeof(unsigned int),f_info);
-  	//gExc_Exc.connN=sizeof(unsigned int)*(PCNN.model.neuronN[0]+PCNN.model.neuronN[1]);
-  	fprintf(stderr, "read %u times %lu bytes \n",gInh_Inh.connN,sizeof(unsigned int));
-  	fprintf(flog, "%u connections in gInh_Inh\n",gInh_Inh.connN);
-	sumSynapses+=gInh_Inh.connN;
+  	retval = fread(&connN,1, sizeof(unsigned int),f_info);
+  	allocateInh_Inh(connN);
+  	fprintf(stderr, "read %u times %lu bytes \n",CInh_Inh.connN,sizeof(unsigned int));
+  	fprintf(flog, "%u connections in gInh_Inh\n",CInh_Inh.connN);
+	sumSynapses+=connN;
  	fclose(f_info);
   	
-  	allocateAllSparseArrays();
-
+ 
 	//ee
   	name= toString("inputfiles/gIzh_sparse_ee");
  	f= fopen(name.c_str(),"r"); 
@@ -114,7 +113,7 @@ int main(int argc, char *argv[])
   	f_postIndInG= fopen(name.c_str(),"r");
   	name= toString("inputfiles/gIzh_sparse_postind_ee");
   	f_postind= fopen(name.c_str(),"r");  
-	PCNN.read_sparsesyns_par(0, gExc_Exc, f_postind,f_postIndInG,f);
+	PCNN.read_sparsesyns_par(0, CExc_Exc, f_postind, f_postIndInG,f,gExc_Exc);
   	fclose(f); 
   	fclose(f_postIndInG); 
   	fclose(f_postind);   
@@ -126,7 +125,7 @@ int main(int argc, char *argv[])
   	f_postIndInG= fopen(name.c_str(),"r");
   	name= toString("inputfiles/gIzh_sparse_postind_ei");
   	f_postind= fopen(name.c_str(),"r");  
-	PCNN.read_sparsesyns_par(1, gExc_Inh, f_postind,f_postIndInG,f);
+	PCNN.read_sparsesyns_par(1, CExc_Inh, f_postind,f_postIndInG,f,gExc_Inh);
   	fclose(f); 
   	fclose(f_postIndInG); 
   	fclose(f_postind);   
@@ -138,7 +137,7 @@ int main(int argc, char *argv[])
   	f_postIndInG= fopen(name.c_str(),"r");
   	name= toString("inputfiles/gIzh_sparse_postind_ie");
   	f_postind= fopen(name.c_str(),"r");  
-		PCNN.read_sparsesyns_par(2, gInh_Exc, f_postind,f_postIndInG,f);
+        PCNN.read_sparsesyns_par(2, CInh_Exc, f_postind,f_postIndInG,f,gInh_Exc);
   	fclose(f); 
   	fclose(f_postIndInG); 
   	fclose(f_postind);   
@@ -150,7 +149,7 @@ int main(int argc, char *argv[])
   	f_postIndInG= fopen(name.c_str(),"r");
   	name= toString("inputfiles/gIzh_sparse_postind_ii");
   	f_postind= fopen(name.c_str(),"r");  
-	PCNN.read_sparsesyns_par(3, gInh_Inh, f_postind,f_postIndInG,f);
+	PCNN.read_sparsesyns_par(3, CInh_Inh, f_postind,f_postIndInG,f,gInh_Inh);
   	fclose(f); 
   	fclose(f_postIndInG); 
   	fclose(f_postind);   
@@ -174,7 +173,7 @@ int main(int argc, char *argv[])
 */
   if (which == GPU) PCNN.allocate_device_mem_input(); 
 
-	fprintf(stderr, "set input...\n");
+  fprintf(stderr, "set input...\n");
   int sampleBlkNo0 = ceil(float((PCNN.model.neuronN[0])/float(BlkSz)));
   int sampleBlkNo1 = ceil(float((PCNN.model.neuronN[1])/float(BlkSz)));
   dim3 sThreads(BlkSz,1);
@@ -235,11 +234,11 @@ int main(int argc, char *argv[])
       copySpikesFromDevice();
       PCNN.sum_spikes();
 
-      for (int i= 0; i < glbscntPExc; i++) {
+      for (int i= 0; i < glbSpkCntPExc; i++) {
 		    fprintf(osf2,"%f %d\n", t, glbSpkPExc[i]);
       }
 
-      for (int i= 0; i < glbscntPInh; i++) {
+      for (int i= 0; i < glbSpkCntPInh; i++) {
         fprintf(osf2, "%f %d\n", t, PCNN.model.sumNeuronN[0]+glbSpkPInh[i]);
       }
       //end output_spikes
@@ -271,11 +270,11 @@ int main(int argc, char *argv[])
       PCNN.sum_spikes();
       //PCNN.output_spikes(osf2, which);
  
-      for (int i= 0; i < glbscntPExc; i++) {
+      for (int i= 0; i < glbSpkCntPExc; i++) {
 		    fprintf(osf2,"%f %d\n", t, glbSpkPExc[i]);
       }
 
-      for (int i= 0; i < glbscntPInh; i++) {
+      for (int i= 0; i < glbSpkCntPInh; i++) {
         fprintf(osf2, "%f %d\n", t, PCNN.model.sumNeuronN[0]+glbSpkPInh[i]);
       }
       //end output_spikes
@@ -315,7 +314,7 @@ int main(int argc, char *argv[])
 	
   cerr << "Output files are created under the current directory. Output and parameters are logged in: " << logname << endl;
   fprintf(timef, "%d %d %u %u %.4f %.2f %.1f %.2f %u %s\n",which, PCNN.model.sumNeuronN[PCNN.model.neuronGrpN-1], PCNN.sumPExc, PCNN.sumPInh, timer.getElapsedTime(),VPExc[0], TOTAL_TME, DT, sumSynapses, logname.c_str());
-  fprintf(flog, "%u neurons in total\n%u spikes in the excitatory population\n%u spikes in the inhibitory population\nElapsed time is %.4f\nLast Vm value of the 1st neuron is %.2f\nTotal number of synapses in the model is %u\n\n#################\n", PCNN.model.sumNeuronN[PCNN.model.neuronGrpN-1], PCNN.sumPExc, PCNN.sumPInh, timer.getElapsedTime(),VPExc[0], TOTAL_TME, DT, sumSynapses);
+  fprintf(flog, "%u neurons in total\n%u spikes in the excitatory population\n%u spikes in the inhibitory population\nElapsed time is %.4f\nLast Vm value of the 1st neuron is %.2f\nTotal time %f at DT+%f \nTotal number of synapses in the model is %u\n\n#################\n", PCNN.model.sumNeuronN[PCNN.model.neuronGrpN-1], PCNN.sumPExc, PCNN.sumPInh, timer.getElapsedTime(),VPExc[0], TOTAL_TME, DT, sumSynapses);
   fclose(osf);
   fclose(timef);
   fclose(osf2);
