@@ -88,6 +88,8 @@ void genNeuronKernel(NNmodel &model, //!< Model description
     os << "*/" << ENDL;
     os << "//-------------------------------------------------------------------------" << ENDL << ENDL;
 
+    os << "__device__ __host__ float exp(int i) { return exp((float) i); }" << endl;
+
     // global device variables
     os << "// relevant neuron variables" << ENDL;
     os << "__device__ volatile unsigned int d_done;" << ENDL;
