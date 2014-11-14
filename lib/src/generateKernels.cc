@@ -549,11 +549,11 @@ void generate_process_presynaptic_events_code(
 
 	bool sparse= (model.synapseConnType[i] == SPARSE);
 	if (sparse) {
-	    os << "npost = dd_indInG" << model.synapseName[i] << "[shSpk" << postfix << "[j] + 1] - dd_indInG";
-	    os << model.synapseName[i] << "[shSpk" << postfix << "[j]];" << ENDL;
+	    os << "prePos= dd_indInG" << model.synapseName[i] << "[shSpk" << postfix << "[j]];" << ENDL;
+	    os << "npost = dd_indInG" << model.synapseName[i] << "[shSpk" << postfix << "[j] + 1] - prePos;" << ENDL;
 	    os << "if ("<< localID <<" < npost)" << OB(140);
-	    os << "ipost = dd_ind" << model.synapseName[i] << "[dd_indInG";
-	    os << model.synapseName[i] << "[shSpk" << postfix << "[j]] + "<< localID <<"];" << ENDL;
+	    os << "prePos+= " << localID << ";" << ENDL;
+	    os << "ipost = dd_ind" << model.synapseName[i] << "[prePos];" << ENDL;
 	}
 	else {
 	    os << "ipost= " << localID << ";" << ENDL;
@@ -576,8 +576,7 @@ void generate_process_presynaptic_events_code(
 		substitute(wCode, tS("$(inSyn)"), tS("shLg[ipost]"));
 	    }
 	    if (model.synapseGType[i] == INDIVIDUALG) {
-		name_substitutions(wCode, tS("dd_"), weightUpdateModels[synt].varNames, model.synapseName[i]+ tS("[dd_indInG")+
-				   model.synapseName[i] + tS("[shSpk")+postfix+tS("[j]] + ") + localID +tS("]"));
+		name_substitutions(wCode, tS("dd_"), weightUpdateModels[synt].varNames, model.synapseName[i]+ tS("[prePos]"));
 	    }
 	    else {
 		value_substitutions(wCode, weightUpdateModels[synt].varNames, model.synapseIni[i]);
@@ -717,6 +716,7 @@ void genSynapseKernel(NNmodel &model, //!< Model description
     os << "unsigned int ipost;" << ENDL;
     for (int i = 0; i < model.synapseGrpN; i++) {  
 	if (model.synapseConnType[i] == SPARSE){
+	    os << "unsigned int prePos; " << ENDL;		
 	    os << "unsigned int npost; " << ENDL;		
 	    break; 
 	}    

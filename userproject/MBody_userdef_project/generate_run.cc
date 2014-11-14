@@ -76,8 +76,8 @@ int main(int argc, char *argv[])
   
   float pnkc_gsyn = 100.0f / nAL * gscale;
   float pnkc_gsyn_sigma = 100.0f / nAL * gscale / 15.0f; 
-  float kcdn_gsyn = 2500.0f / nMB * 0.35f * gscale; 
-  float kcdn_gsyn_sigma = 2500.0f / nMB * 0.05f * gscale; 
+  float kcdn_gsyn = 2500.0f / nMB * 0.1f * gscale; 
+  float kcdn_gsyn_sigma = 2500.0f / nMB * 0.01f * gscale; 
   float pnlhi_theta = 100.0f / nAL * 14.0f * gscale;
 
   // write neuron population sizes

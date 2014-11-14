@@ -125,7 +125,7 @@ float myDNDN_p[2]= {
 //float gDNDN= 0.04;
 
 float myDNDN_ini[1]={
-    1.0/_NLB            // 0 - g: synaptic conductance
+    5.0/_NLB            // 0 - g: synaptic conductance
 };
 
 float postExpDNDN[2]={
