@@ -377,7 +377,7 @@ os << "}" << endl;
 		os << "  C" << model.synapseName[i] << ".indInG= new unsigned int[" << model.neuronN[model.synapseSource[i]] + 1 << "];" << endl;
 		os << "  C" << model.synapseName[i] << ".ind= new unsigned int[connN];" << endl;   
 	    if (model.usesPostLearning[i]) {
-		os << "  C" << model.synapseName[i] << ".revIndInG= new unsigned int[preN + 1];" << endl;
+		os << "  C" << model.synapseName[i] << ".revIndInG= new unsigned int[" << model.neuronN[model.synapseSource[i]] + 1 << "];" << endl;
 		os << "  C" << model.synapseName[i] << ".revInd= new unsigned int[connN];" << endl;       
 		os << "  C" << model.synapseName[i] << ".remap= new unsigned int[connN];" << endl;       
 	    }
@@ -467,9 +467,9 @@ os << "}" << endl;
     os << "  CHECK_CUDA_ERRORS(cudaMemcpy(dIndInG, C.indInG, (preN+1)*sizeof(unsigned int), cudaMemcpyHostToDevice));" << endl;
     os << "}" << endl; 
  	
-    os << "void initializeSparseArrayRev(Conductance C,  unsigned int * dRevInd, unsigned int * dRevIndInG, unsigned int * dRemap, unsigned int preN)" << "{" << endl;
+    os << "void initializeSparseArrayRev(Conductance C,  unsigned int * dRevInd, unsigned int * dRevIndInG, unsigned int * dRemap, unsigned int postN)" << "{" << endl;
     os << "  CHECK_CUDA_ERRORS(cudaMemcpy(dRevInd, C.revInd, C.connN*sizeof(unsigned int), cudaMemcpyHostToDevice));" << endl;
-    os << "  CHECK_CUDA_ERRORS(cudaMemcpy(dRevIndInG, C.revIndInG, (preN+1)*sizeof(unsigned int), cudaMemcpyHostToDevice));" << endl;
+    os << "  CHECK_CUDA_ERRORS(cudaMemcpy(dRevIndInG, C.revIndInG, (postN+1)*sizeof(unsigned int), cudaMemcpyHostToDevice));" << endl;
     os << "  CHECK_CUDA_ERRORS(cudaMemcpy(dRemap, C.remap, C.connN*sizeof(unsigned int), cudaMemcpyHostToDevice));" << endl;
     os << "}" << endl; 
 
@@ -494,7 +494,7 @@ os << "}" << endl;
 		os << "  d_revInd" << model.synapseName[i] << ",";
 		os << "  d_revIndInG" << model.synapseName[i] << ",";
 		os << "  d_remap" << model.synapseName[i] << ",";
-		os << model.neuronN[model.synapseSource[i]] <<");" << endl;
+		os << model.neuronN[model.synapseTarget[i]] <<");" << endl;
 	    }
 	    int st= model.synapseType[i];
 	    for (int k= 0, l= weightUpdateModels[st].varNames.size(); k < l; k++) {

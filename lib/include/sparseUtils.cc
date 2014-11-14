@@ -7,12 +7,14 @@
 /*---------------------------------------------------------------------
  Utility to count how many entries above a specified value exist in a float array
  ---------------------------------------------------------------------*/
-int  countEntriesAbove(float * floatArray, int sz, float includeAbove)
+template <class DATATYPE>
+unsigned int countEntriesAbove(DATATYPE * Array, int sz, DATATYPE includeAbove)
 {
 	int count = 0;
 	for (int i = 0; i < sz; i++) {
-		if (floatArray[i] > includeAbove) count++;
+		if (abs(Array[i]) > includeAbove) count++;
 	}
+	fprintf(stdout, "\nCounted %u nonzero entries\n\n", count);
 	return count;
 
 }
@@ -22,16 +24,27 @@ int  countEntriesAbove(float * floatArray, int sz, float includeAbove)
  NB: as the Conductance struct doesnt hold the preN size (it should!) it is not possible
  to check the parameter validity. This fn may therefore crash unless user knows max poss X
  ---------------------------------------------------------------------*/
-float getG(Conductance  * sparseStruct, int x, int y)
+template <class DATATYPE>
+DATATYPE getG(DATATYPE * wuvar, Conductance  * sparseStruct, int x, int y)
 {
-	float g = 0.0f; //default return value implies zero weighted for x,y
+  fprintf(stderr,"WARNING: This function is deprecated. Conductance structure has changed \n\
+  by the latest revision to date (12/11/14), and this function is modified to use \n\
+  a template to support variables of different data types. Replacement function is \n\
+  getSparseVar(DATATYPE * wuvar, Conductance  * sparseStruct, int x, int y).\n");
+  getSparseVar(wuvar, &sparseStruct, x, y);
+}
+template <class DATATYPE>
+float getSparseVar(DATATYPE * wuvar, Conductance  * sparseStruct, int x, int y)
+{
+  fprintf(stderr,"WARNING: Conductance structure has changed by the latest revision to date (12/11/14), this function is modified to use a template to provide multiple data types.\n");
+	DATATYPE g = 0.0; //default return value implies zero weighted for x,y
 
-	int startSynapse = sparseStruct->gIndInG[x];
-	int endSynapse = sparseStruct->gIndInG[x+1];
+	int startSynapse = sparseStruct->indInG[x];
+	int endSynapse = sparseStruct->indInG[x+1];
 
 	for (int syn = startSynapse; syn < endSynapse; syn++) {
-		if (sparseStruct->gInd[syn]==y) {//look for index y
-			g = sparseStruct->gp[syn]; //set the real g
+		if (sparseStruct->ind[syn]==y) {//look for index y
+			g = wuvar[syn]; //set the real g
 			break; //stop looking
 		}
 	}
@@ -42,46 +55,51 @@ float getG(Conductance  * sparseStruct, int x, int y)
 /*---------------------------------------------------------------------
 Setting the values of SPARSE connectivity matrix
 ----------------------------------------------------------------------*/
-void setSparseConnectivityFromDense(int preN,int postN,float * tmp_gRNPN, Conductance * sparseStruct){
+template <class DATATYPE>
+void setSparseConnectivityFromDense(DATATYPE * wuvar, int preN,int postN,DATATYPE * tmp_gRNPN, Conductance * sparseStruct){
+  fprintf(stderr,"WARNING: Conductance structure has changed bt the latest revision to date (12/11/14), this function is modified to use a template to provide multiple data types.\n");
   int synapse = 0;
-	sparseStruct->gIndInG[0] = 0; //first neuron always gets first synapse listed.
+	sparseStruct->indInG[0] = 0; //first neuron always gets first synapse listed.
   float asGoodAsZero = 0.0001f;//as far as we are concerned. Remember floating point errors.
 	
 	for (int pre = 0; pre < preN; ++pre) {
 		for (int post = 0; post < postN; ++post) {
-			float g = tmp_gRNPN[pre * postN + post];
+			DATATYPE g = tmp_gRNPN[pre * postN + post];
 			if (g > asGoodAsZero) {
-				sparseStruct->gInd[synapse] = post;
-				sparseStruct->gp[synapse] = g;
+				sparseStruct->ind[synapse] = post;
+				wuvar[synapse] = g;
 				synapse ++;
 			}
 		}
-		sparseStruct->gIndInG[pre + 1] = synapse; //write start of next group
+		sparseStruct->indInG[pre + 1] = synapse; //write start of next group
 	}
 }
 
 /*---------------------------------------------------------------------
  Utility to generate the SPARSE connectivity structure from a simple all-to-all array
  ---------------------------------------------------------------------*/
-void createSparseConnectivityFromDense(int preN,int postN,float * tmp_gRNPN, Conductance * sparseStruct, bool runTest) {
-
+template <class DATATYPE>
+void createSparseConnectivityFromDense(DATATYPE * wuvar, int preN,int postN,DATATYPE * tmp_gRNPN, Conductance * sparseStruct, bool runTest) {
+  fprintf(stderr,"WARNING: Conductance structure has changed by the latest revision to date (12/11/14), this function is modified to use a template to provide multiple data types.\n");
+	
 	float asGoodAsZero = 0.0001f;//as far as we are concerned. Remember floating point errors.
 	sparseStruct->connN = countEntriesAbove(tmp_gRNPN, preN * postN, asGoodAsZero);
-	allocateSparseArray(sparseStruct, preN, false);
+	//sorry -- this is not functional anymore 
+	//allocateSparseArray(sparseStruct, sparseStruct.connN, preN, false);
 
 	int synapse = 0;
-	sparseStruct->gIndInG[0] = 0; //first neuron always gets first synapse listed.
+	sparseStruct->indInG[0] = 0; //first neuron always gets first synapse listed.
 
 	for (int pre = 0; pre < preN; ++pre) {
 		for (int post = 0; post < postN; ++post) {
-			float g = tmp_gRNPN[pre * postN + post];
+			DATATYPE g = tmp_gRNPN[pre * postN + post];
 			if (g > asGoodAsZero) {
-				sparseStruct->gInd[synapse] = post;
-				sparseStruct->gp[synapse] = g;
+				sparseStruct->ind[synapse] = post;
+				wuvar[synapse] = g;
 				synapse ++;
 			}
 		}
-		sparseStruct->gIndInG[pre + 1] = synapse; //write start of next group
+		sparseStruct->indInG[pre + 1] = synapse; //write start of next group
 	}
 	if (!runTest) return;
 
@@ -91,7 +109,7 @@ void createSparseConnectivityFromDense(int preN,int postN,float * tmp_gRNPN, Con
 		int randX = rand() % preN;
 		int randY = rand() % postN;
 		float denseResult = tmp_gRNPN[randX * postN + randY];
-		float sparseResult = getG(sparseStruct,randX,randY);
+		float sparseResult = getG(wuvar, sparseStruct,randX,randY);
 		if (abs(denseResult-sparseResult) > asGoodAsZero) fails++;
 	}
 	if (fails > 0 ) {
@@ -107,32 +125,30 @@ void createSparseConnectivityFromDense(int preN,int postN,float * tmp_gRNPN, Con
 /*---------------------------------------------------------------------
  Utility to generate the SPARSE array structure with post-to-pre arrangement from the original pre-to-post arrangement where postsynaptic feedback is necessary (learning etc)
  ---------------------------------------------------------------------*/
-void createPosttoPreArray(int preN,int postN, Conductance * sparseStruct, Conductance * sparseStructPost) {
-  float * posttoprearray = new float[sparseStruct->connN];
+void createPosttoPreArray(unsigned int preN, unsigned int postN, Conductance * sparseStruct) {
   vector<vector<unsigned int> > tempvectInd(postN); //temporary vector to keep indices
-  vector<vector<float> > tempvectG(postN); //temporary vector to keep conductance values
+  vector<vector<unsigned int> > tempvectV(postN); //temporary vector to keep conductance values
 	unsigned int glbcounter = 0;
 
-	sparseStructPost->connN=sparseStruct->connN;
 	for (int i = 0; i< preN; i++){ //i : index of presynaptic neuron
-		for (int j = 0; j < (sparseStruct->gIndInG[i+1]-sparseStruct->gIndInG[i]); j++){ //for every postsynaptic neuron c
-			tempvectInd[sparseStruct->gInd[sparseStruct->gIndInG[i]+j]].push_back(i); //sparseStruct->gInd[sparseStruct->gIndInG[i]+j]: index of postsynaptic neuron
-			tempvectG[sparseStruct->gInd[sparseStruct->gIndInG[i]+j]].push_back(sparseStruct->gp[sparseStruct->gIndInG[i]+j]);
+		for (int j = 0; j < (sparseStruct->indInG[i+1]-sparseStruct->indInG[i]); j++){ //for every postsynaptic neuron c
+			tempvectInd[sparseStruct->ind[sparseStruct->indInG[i]+j]].push_back(i); //sparseStruct->ind[sparseStruct->indInG[i]+j]: index of postsynaptic neuron
+			//old way : tempvectG[sparseStruct->ind[sparseStruct->indInG[i]+j]].push_back(sparseStruct->gp[sparseStruct->indInG[i]+j]);
+			tempvectV[sparseStruct->ind[sparseStruct->indInG[i]+j]].push_back(sparseStruct->indInG[i]+j); //this should give where we can find the value in the array
 			glbcounter++;
       //fprintf(stdout,"i:%d j:%d val pushed to G is:%f , sparseStruct->gIndInG[i]=%d\n", i, j, sparseStruct->gp[sparseStruct->gIndInG[i]+j],sparseStruct->gIndInG[i]);
 		}
 	}
-	fprintf(stdout,"that's it");
-  //which one makes more s?ense - probably the one on top
+	//which one makes more s?ense - probably the one on top
   //float posttoprearray = new float[glbcounter];
 	unsigned int lcounter =0;
 
-	sparseStructPost->gIndInG[0]=0;
+	sparseStruct->revIndInG[0]=0;
 	for (int k = 0; k < postN; k++){
-		sparseStructPost->gIndInG[k+1]=sparseStructPost->gIndInG[k]+tempvectInd[k].size();
+		sparseStruct->revIndInG[k+1]=sparseStruct->revIndInG[k]+tempvectInd[k].size();
 		for (int p = 0; p< tempvectInd[k].size(); p++){ //if k=0?
-			sparseStructPost->gInd[lcounter]=tempvectInd[k][p];
-			sparseStructPost->gp[lcounter]=tempvectG[k][p];
+			sparseStruct->revInd[lcounter]=tempvectInd[k][p];
+			sparseStruct->remap[lcounter]=tempvectV[k][p];
 			lcounter++;
 		}
 	}

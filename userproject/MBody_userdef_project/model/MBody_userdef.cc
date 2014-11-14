@@ -193,6 +193,11 @@ float postSynV_EXPDECAY_EVAR[1] = {
       }
   };
 
+//for sparse only -- we need to set them by hand if we want to do dense to sparse conversion. Sparse connectivity will only create sparse arrays.
+float * gpPNKC = new float[_NAL*_NMB];
+float * gpKCDN = new float[_NMB*_NLB];
+//-------------------------------------
+
 //--------------------------------------------------------------------------
 /*! \brief This function defines the MBody1 model with user defined synapses. 
  */
@@ -202,7 +207,6 @@ void modelDefinition(NNmodel &model)
 {	
     // initialize standard models
     initGeNN();
-    
  /******************************************************************/		
   // redefine nsynapse as a user-defined syapse type 
   model.setGPUDevice(0); //returns quadro for the model and it is not possible to debug on the GPU used for display.
@@ -337,7 +341,7 @@ void modelDefinition(NNmodel &model)
   model.addNeuronPopulation("LHI", _NLHI, TRAUBMILES, stdTM_p, stdTM_ini);
   model.addNeuronPopulation("DN", _NLB, TRAUBMILES, stdTM_p, stdTM_ini);
   
-  float *init= NULL;
+  //float *init= NULL;
   model.addSynapsePopulation("PNKC", NSYNAPSE_userdef, SPARSE, INDIVIDUALG, NO_DELAY, EXPDECAY_EVAR, "PN", "KC", myPNKC_ini, myPNKC_p, postSynV_EXPDECAY_EVAR,postExpPNKC);
   model.setMaxConn("PNKC", _NMB);  
 
