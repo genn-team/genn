@@ -11,6 +11,8 @@
   
 --------------------------------------------------------------------------*/
 
+#include <iostream>
+#include <fstream>
 #include "Izh_sparse_sim.h"
 #include "../GeNNHelperKrnls.cu"
 
@@ -57,102 +59,102 @@ int main(int argc, char *argv[])
 	fprintf(flog,"Izh_sparse_sim, ");	
 	if (which == GPU ) fprintf(flog,"GPU simulation\n"); else fprintf(flog,"CPU simulation\n");
 	fprintf(flog, "# DT %f \n", DT);
-   fprintf(flog, "# T_REPORT_TME %f \n", T_REPORT_TME);
-   fprintf(flog, "# TOTAL_TME %f \n", TOTAL_TME);
+  fprintf(flog, "# T_REPORT_TME %f \n", T_REPORT_TME);
+  fprintf(flog, "# TOTAL_TME %f \n", TOTAL_TME);
 
-   unsigned int sumSynapses=0;
+  unsigned int sumSynapses=0;
   
-   fprintf(stderr, "#reading synapses ... \n");
- 	FILE *f_info, *f, *f_postIndInG,*f_postind;
+  fprintf(stderr, "#reading synapses ... \n");
+ 	FILE *f_info, *f, *f_indInG,*f_ind;
  	unsigned int connN;
  	//ee
-   name= toString("inputfiles/gIzh_sparse_info_ee");
-   f_info= fopen(name.c_str(),"r");
-  	retval = fread(&connN,1,sizeof(unsigned int),f_info);
+  name= toString("inputfiles/gIzh_sparse_info_ee");
+  f_info= fopen(name.c_str(),"r");
+ 	retval = fread((void *) &connN,sizeof(unsigned int),1,f_info);
 	allocateExc_Exc(connN);
-  	fprintf(stderr, "read %u times %lu bytes \n",CExc_Exc.connN,sizeof(unsigned int));
-  	fprintf(flog, "%u connections in gExc_Exc\n",CExc_Exc.connN);
+  fprintf(stderr, "%u connN, read %u times %lu bytes \n", connN, CExc_Exc.connN,sizeof(unsigned int));
+  fprintf(flog, "%u connections in gExc_Exc\n",CExc_Exc.connN);
 	sumSynapses+=connN;
 	fclose(f_info);
   	
   	//ei
-   name= toString("inputfiles/gIzh_sparse_info_ei");
-   f_info= fopen(name.c_str(),"r");
-  	retval = fread(&connN,1,sizeof(unsigned int),f_info);
+  name= toString("inputfiles/gIzh_sparse_info_ei");
+  f_info= fopen(name.c_str(),"r");
+  retval = fread(&connN,1,sizeof(unsigned int),f_info);
  	allocateExc_Inh(connN);
  	fprintf(stderr, "read %u times %lu bytes \n",CExc_Inh.connN,sizeof(unsigned int));
-  	fprintf(flog, "%u connections in gExc_Inh\n",CExc_Inh.connN);
+  fprintf(flog, "%u connections in gExc_Inh\n",CExc_Inh.connN);
 	sumSynapses+=connN;
  	fclose(f_info);
   	
-  	//ie
-   name= toString("inputfiles/gIzh_sparse_info_ie");
+  //ie
+  name= toString("inputfiles/gIzh_sparse_info_ie");
  	f_info= fopen(name.c_str(),"r");
-  	retval = fread(&connN,1,sizeof(unsigned int),f_info);
-  	allocateInh_Exc(connN);
-  	fprintf(stderr, "read %u times %lu bytes \n",CInh_Exc.connN,sizeof(unsigned int));
-  	fprintf(flog, "%u connections in gInh_Exc\n",CInh_Exc.connN);
+  retval = fread(&connN,1,sizeof(unsigned int),f_info);
+  allocateInh_Exc(connN);
+  fprintf(stderr, "read %u times %lu bytes \n",CInh_Exc.connN,sizeof(unsigned int));
+  fprintf(flog, "%u connections in gInh_Exc\n",CInh_Exc.connN);
 	sumSynapses+=connN;
  	fclose(f_info);
   	
   	//ii
-   name= toString("inputfiles/gIzh_sparse_info_ii");
+  name= toString("inputfiles/gIzh_sparse_info_ii");
  	f_info= fopen(name.c_str(),"r");
-  	retval = fread(&connN,1, sizeof(unsigned int),f_info);
-  	allocateInh_Inh(connN);
-  	fprintf(stderr, "read %u times %lu bytes \n",CInh_Inh.connN,sizeof(unsigned int));
-  	fprintf(flog, "%u connections in gInh_Inh\n",CInh_Inh.connN);
+  retval = fread(&connN,1, sizeof(unsigned int),f_info);
+  allocateInh_Inh(connN);
+  fprintf(stderr, "read %u times %lu bytes \n",CInh_Inh.connN,sizeof(unsigned int));
+  fprintf(flog, "%u connections in gInh_Inh\n",CInh_Inh.connN);
 	sumSynapses+=connN;
  	fclose(f_info);
   	
- 
+  //open and read conductance arrays from files
 	//ee
-  	name= toString("inputfiles/gIzh_sparse_ee");
+  name= toString("inputfiles/gIzh_sparse_ee");
  	f= fopen(name.c_str(),"r"); 
-  	name= toString("inputfiles/gIzh_sparse_postIndInG_ee");
-  	f_postIndInG= fopen(name.c_str(),"r");
-  	name= toString("inputfiles/gIzh_sparse_postind_ee");
-  	f_postind= fopen(name.c_str(),"r");  
-	PCNN.read_sparsesyns_par(0, CExc_Exc, f_postind, f_postIndInG,f,gExc_Exc);
+  name= toString("inputfiles/gIzh_sparse_indInG_ee");
+  f_indInG= fopen(name.c_str(),"r");
+  name= toString("inputfiles/gIzh_sparse_ind_ee");
+  	f_ind= fopen(name.c_str(),"r");  
+	PCNN.read_sparsesyns_par(0, CExc_Exc, f_ind, f_indInG,f,gExc_Exc);
   	fclose(f); 
-  	fclose(f_postIndInG); 
-  	fclose(f_postind);   
+  	fclose(f_indInG); 
+  	fclose(f_ind);   
   	
 	//ei
   	name= toString("inputfiles/gIzh_sparse_ei");
  	f= fopen(name.c_str(),"r"); 
-  	name= toString("inputfiles/gIzh_sparse_postIndInG_ei");
-  	f_postIndInG= fopen(name.c_str(),"r");
-  	name= toString("inputfiles/gIzh_sparse_postind_ei");
-  	f_postind= fopen(name.c_str(),"r");  
-	PCNN.read_sparsesyns_par(1, CExc_Inh, f_postind,f_postIndInG,f,gExc_Inh);
+  	name= toString("inputfiles/gIzh_sparse_indInG_ei");
+  	f_indInG= fopen(name.c_str(),"r");
+  	name= toString("inputfiles/gIzh_sparse_ind_ei");
+  	f_ind= fopen(name.c_str(),"r");  
+	PCNN.read_sparsesyns_par(1, CExc_Inh, f_ind,f_indInG,f,gExc_Inh);
   	fclose(f); 
-  	fclose(f_postIndInG); 
-  	fclose(f_postind);   
+  	fclose(f_indInG); 
+  	fclose(f_ind);   
   	
 	//ie
   	name= toString("inputfiles/gIzh_sparse_ie");
  	f= fopen(name.c_str(),"r"); 
-  	name= toString("inputfiles/gIzh_sparse_postIndInG_ie");
-  	f_postIndInG= fopen(name.c_str(),"r");
-  	name= toString("inputfiles/gIzh_sparse_postind_ie");
-  	f_postind= fopen(name.c_str(),"r");  
-        PCNN.read_sparsesyns_par(2, CInh_Exc, f_postind,f_postIndInG,f,gInh_Exc);
+  	name= toString("inputfiles/gIzh_sparse_indInG_ie");
+  	f_indInG= fopen(name.c_str(),"r");
+  	name= toString("inputfiles/gIzh_sparse_ind_ie");
+  	f_ind= fopen(name.c_str(),"r");  
+        PCNN.read_sparsesyns_par(2, CInh_Exc, f_ind,f_indInG,f,gInh_Exc);
   	fclose(f); 
-  	fclose(f_postIndInG); 
-  	fclose(f_postind);   
+  	fclose(f_indInG); 
+  	fclose(f_ind);   
   	
 	//ii
   	name= toString("inputfiles/gIzh_sparse_ii");
  	f= fopen(name.c_str(),"r"); 
-  	name= toString("inputfiles/gIzh_sparse_postIndInG_ii");
-  	f_postIndInG= fopen(name.c_str(),"r");
-  	name= toString("inputfiles/gIzh_sparse_postind_ii");
-  	f_postind= fopen(name.c_str(),"r");  
-	PCNN.read_sparsesyns_par(3, CInh_Inh, f_postind,f_postIndInG,f,gInh_Inh);
+  	name= toString("inputfiles/gIzh_sparse_indInG_ii");
+  	f_indInG= fopen(name.c_str(),"r");
+  	name= toString("inputfiles/gIzh_sparse_ind_ii");
+  	f_ind= fopen(name.c_str(),"r");  
+	PCNN.read_sparsesyns_par(3, CInh_Inh, f_ind,f_indInG,f,gInh_Inh);
   	fclose(f); 
-  	fclose(f_postIndInG); 
-  	fclose(f_postind);   
+  	fclose(f_indInG); 
+  	fclose(f_ind);   
   	
   	initializeAllSparseArrays();
 

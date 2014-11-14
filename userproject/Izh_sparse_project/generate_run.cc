@@ -119,16 +119,16 @@ int main(int argc, char *argv[])
 
   // read connectivity patterns to get maximum connection per neuron for each synapse population
   // population neuron numbers are for sources in the order in currentmodel.cc
-  unsigned int *gIndInG = new unsigned int[nTotal]; // allocate the biggest possible, the we will only use what we need
-  string name = outDir_g + "/g" + modelName + "_revIndInG_ee";
-  unsigned int maxN0 = openFileGetMax(gIndInG, nExc, name);
-  name = outDir_g + "/g" + modelName + "_revIndInG_ei";
-  unsigned int maxN1 = openFileGetMax(gIndInG, nExc, name);
-  name = outDir_g + "/g" + modelName + "_revIndInG_ie";
-  unsigned int maxN2 = openFileGetMax(gIndInG, nInh, name);
-  name = outDir_g + "/g" + modelName + "_revIndInG_ii";
-  unsigned int maxN3 = openFileGetMax(gIndInG, nInh, name);
-  delete[] gIndInG;
+  unsigned int *indInG = new unsigned int[nTotal]; // allocate the biggest possible, the we will only use what we need
+  string name = outDir_g + "/g" + modelName + "_indInG_ee";
+  unsigned int maxN0 = openFileGetMax(indInG, nExc, name);
+  name = outDir_g + "/g" + modelName + "_indInG_ei";
+  unsigned int maxN1 = openFileGetMax(indInG, nExc, name);
+  name = outDir_g + "/g" + modelName + "_indInG_ie";
+  unsigned int maxN2 = openFileGetMax(indInG, nInh, name);
+  name = outDir_g + "/g" + modelName + "_indInG_ii";
+  unsigned int maxN3 = openFileGetMax(indInG, nInh, name);
+  delete[] indInG;
   ////////////////////////////////
 
   // write neuron population sizes
