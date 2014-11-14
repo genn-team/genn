@@ -125,7 +125,7 @@ os << "}" << endl;
 	    os << "unsigned int *glbSpkEvnt" << model.neuronName[i] << ";" << endl;
 	}
 	else {
-	    os << "unsigned int spkEvntQuePtr" << model.neuronName[i] << ";" << endl;
+	    os << "unsigned int spkQuePtr" << model.neuronName[i] << ";" << endl;
 	    os << "unsigned int *glbSpkCntEvnt" << model.neuronName[i] << ";" << endl;
 	    os << "unsigned int *glbSpkEvnt" << model.neuronName[i] << ";" << endl;
 	}
@@ -526,7 +526,7 @@ os << "}" << endl;
 	    os << "  glbSpkCntEvnt" << model.neuronName[i] << " = 0;" << endl;
 	}
 	else {
-	    os << "  spkEvntQuePtr" << model.neuronName[i] << " = 0;" << endl;
+	    os << "  spkQuePtr" << model.neuronName[i] << " = 0;" << endl;
 	    os << "  for (int i = 0; i < " << model.neuronDelaySlots[i] << "; i++) {" << endl;
 	    os << "    glbSpkCntEvnt" << model.neuronName[i] << "[i] = 0;" << endl;
 	    os << "  }" << endl;
@@ -843,8 +843,8 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     for (int i= 0; i < model.neuronGrpN; i++) {
 	nt= model.neuronType[i];
 	if (model.neuronDelaySlots[i] != 1) {
-	    os << "  CHECK_CUDA_ERRORS(cudaGetSymbolAddress(&devPtr, d_spkEvntQuePtr" << model.neuronName[i] << "));" << endl;
-	    os << "  CHECK_CUDA_ERRORS(cudaMemcpy(devPtr, &spkEvntQuePtr" << model.neuronName[i] << ", ";
+	    os << "  CHECK_CUDA_ERRORS(cudaGetSymbolAddress(&devPtr, d_spkQuePtr" << model.neuronName[i] << "));" << endl;
+	    os << "  CHECK_CUDA_ERRORS(cudaMemcpy(devPtr, &spkQuePtr" << model.neuronName[i] << ", ";
 	    size = sizeof(unsigned int);
 	    os << size << ", cudaMemcpyHostToDevice));" << endl;
 	}
@@ -903,8 +903,8 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     for (int i= 0; i < model.neuronGrpN; i++) {
 	nt= model.neuronType[i];
 	if (model.neuronDelaySlots[i] != 1) {
-	    os << "  CHECK_CUDA_ERRORS(cudaGetSymbolAddress(&devPtr, d_spkEvntQuePtr" << model.neuronName[i] << "));" << endl;
-	    os << "  CHECK_CUDA_ERRORS(cudaMemcpy(&spkEvntQuePtr" << model.neuronName[i] << ", devPtr, ";
+	    os << "  CHECK_CUDA_ERRORS(cudaGetSymbolAddress(&devPtr, d_spkQuePtr" << model.neuronName[i] << "));" << endl;
+	    os << "  CHECK_CUDA_ERRORS(cudaMemcpy(&spkQuePtr" << model.neuronName[i] << ", devPtr, ";
 	    size = sizeof(unsigned int);
 	    os << size << ", cudaMemcpyDeviceToHost));" << endl;
 	}
