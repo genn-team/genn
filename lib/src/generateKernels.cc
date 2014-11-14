@@ -492,7 +492,7 @@ void generate_process_presynaptic_events_code(
 	os << CB(100);
 
 	if ((model.synapseConnType[i] == SPARSE) && (!isGrpVarNeeded[model.synapseTarget[i]])) {
-	    os << "if (threadIdx.x < " << neuronBlkSz << ") shLg[threadIdx.x] = 0;" << ENDL;  // what happens if neuronBlkSz > synapseBlkSz?!?
+	    os << "if (threadIdx.x < " << model.neuronN[model.synapseTarget[i]] << ") shLg[threadIdx.x] = 0;" << ENDL;  // set shLg to 0 for all postsynaptic neurons; is ok as model.neuronN[model.synapseTarget[i]] <= synapseBlkSz
 	}
 	os << "__syncthreads();" << ENDL;
 		
@@ -626,12 +626,13 @@ void generate_process_presynaptic_events_code(
 	}
 	if ((sparse) && (!isGrpVarNeeded[model.synapseTarget[i]])) {	
 	    os << "__syncthreads();" << ENDL;
-	    os << "if (threadIdx.x < " << neuronBlkSz << ")" << OB(136);
+	    os << "if (threadIdx.x < " << model.neuronN[model.synapseTarget[i]] << ")" << OB(136); // need to write back results
 	    os << "linSyn += shLg[" << localID << "];" << ENDL;
 	    os << "shLg[" << localID << "] = 0;" << ENDL;
 	    os << CB(136) << ENDL;
 	    os << "__syncthreads();" << ENDL;
-	    os << "linSyn+=shLg[" << localID << "];" << ENDL;
+// This seems a duplication that is not correct:
+//	    os << "linSyn+=shLg[" << localID << "];" << ENDL;
 	}
 	os << CB(120) << ENDL;
 	os << CB(110) << ENDL;

@@ -377,7 +377,7 @@ os << "}" << endl;
 		os << "  C" << model.synapseName[i] << ".indInG= new unsigned int[" << model.neuronN[model.synapseSource[i]] + 1 << "];" << endl;
 		os << "  C" << model.synapseName[i] << ".ind= new unsigned int[connN];" << endl;   
 	    if (model.usesPostLearning[i]) {
-		os << "  C" << model.synapseName[i] << ".revIndInG= new unsigned int[preN + 1];" << endl;
+		os << "  C" << model.synapseName[i] << ".revIndInG= new unsigned int[" << model.neuronN[model.synapseSource[i]] + 1 <<"];" << endl;
 		os << "  C" << model.synapseName[i] << ".revInd= new unsigned int[connN];" << endl;       
 		os << "  C" << model.synapseName[i] << ".remap= new unsigned int[connN];" << endl;       
 	    }
