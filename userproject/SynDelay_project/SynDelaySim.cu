@@ -82,7 +82,7 @@ int main(int argc, char *argv[])
     t += DT;
 
     fileV << "Time: " << t
-	  << "\t\tInput: " << VInput[spkEvntQuePtrInput * 500]
+	  << "\t\tInput: " << VInput[spkQuePtrInput * 500]
 	  << "\t\tInter: " << VInter[0]
 	  << "\t\tOutput: " << VOutput[0]
 	  << endl;
