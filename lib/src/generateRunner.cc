@@ -626,7 +626,7 @@ os << "}" << endl;
       }
     }
     
-    os << "initializeAllSparseArrays();" << endl;
+    os << "//initializeAllSparseArrays(); //I comment this out instead of removing to keep in mind that sparse arrays need to be initialised manually by hand later" << endl;
     os << "}" << endl;
     os << endl;
 
