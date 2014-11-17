@@ -1,7 +1,7 @@
 function plotRaster(name, nPN, nKC, nLHI, nDN, tRange)
   path(path, '../../matlab');
   disp(path)
-  offset= 1;
+  offset= 0;
   dataname= [ '../' name '_output/' name '.out.st' ]
   plotStc(dataname, tRange, [ offset offset+nPN-1 ], [ 1 0 0 ]);
   offset= offset+nPN;

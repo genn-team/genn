@@ -284,7 +284,7 @@ void prepareStandardModels()
       $(V)+= Imem/$(C)*mdt;\n\
     }\n");
 
-  n.thresholdConditionCode = tS("$(V) > 20");//TODO check this, to get better value
+  n.thresholdConditionCode = tS("$(V) > 0.0");//TODO check this, to get better value
 
   nModels.push_back(n);
   TRAUBMILES= nModels.size()-1;
