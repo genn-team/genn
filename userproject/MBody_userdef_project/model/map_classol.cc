@@ -24,6 +24,7 @@
 
 #include "map_classol.h"
 #include "MBody_userdef_CODE/runner.cc"
+#include "sparseUtils.cc"
 
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
@@ -57,11 +58,6 @@ void classol::init(unsigned int which //!< Flag defining whether GPU or CPU only
   //for (int i=0;i<gCKDN.connN;i++){ //sparse
   offset = 0;
 
-  for (int i=0;i<model.neuronN[1]*model.neuronN[3];i++){ //alltoall
-    float tmp = gKCDN[i] / (model.synapsePara[3][6]*2.0) - 1.0;
-    gRawKCDN[i]=0.5 * log((1.0 + tmp) / (1.0 - tmp)) /model.synapsePara[3][8] + model.synapsePara[3][7]; 
-  }
-  
   initializeAllSparseArrays();
 
   if (which == CPU) {
@@ -144,6 +140,12 @@ void classol::read_pnkcsyns(FILE *f //!< File handle for a file containing PN to
     fprintf(stdout, "%f ", gpPNKC[i]);
   }
   fprintf(stdout,"\n\n");
+  float asGoodAsZero = 0.0001f;//as far as we are concerned. Remember floating point errors.
+	unsigned int connN = countEntriesAbove(gpPNKC, model.neuronN[0] * model.neuronN[1], asGoodAsZero);
+  allocatePNKC(connN);
+  setSparseConnectivityFromDense(gPNKC, model.neuronN[0], model.neuronN[1], gpPNKC, &CPNKC);
+  cout << "PNKC connN is " << CPNKC.connN << endl; 
+  delete[] gpPNKC;
 }
 
 //--------------------------------------------------------------------------
@@ -205,6 +207,21 @@ void classol::read_kcdnsyns(FILE *f //!< File handle for a file containing KC to
     fprintf(stdout, "%f ", gpKCDN[i]);
   }
   fprintf(stdout, "\n\n");
+
+  float asGoodAsZero = 0.0001f;//as far as we are concerned. Remember floating point errors.
+
+	unsigned int connN = countEntriesAbove(gpKCDN, model.neuronN[1] * model.neuronN[3], asGoodAsZero);
+//  connN = locust.model.neuronN[1] * locust.model.neuronN[3];
+  allocateKCDN(connN);
+  cout << "KCDN connN is " << CKCDN.connN << endl; 
+  setSparseConnectivityFromDense(gKCDN, model.neuronN[1],model.neuronN[3],gpKCDN, &CKCDN);
+  createPosttoPreArray(model.neuronN[1],model.neuronN[3], &CKCDN);
+  delete[] gpKCDN;
+
+  for (int i= 0; i < connN; i++) {	
+      float tmp = gKCDN[i] / myKCDN_p[6]*2.0 - 1.0;
+      gRawKCDN[i]=  0.5 * log((1.0 + tmp) / (1.0 - tmp)) /myKCDN_p[8] + myKCDN_p[7];
+  }
 }
 
 

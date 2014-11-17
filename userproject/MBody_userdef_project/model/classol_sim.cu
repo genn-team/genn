@@ -20,7 +20,6 @@
 
 
 #include "classol_sim.h"
-#include "sparseUtils.cc"
 
 //--------------------------------------------------------------------------
 /*! \brief This function is the entry point for running the simulation of the MBody1 model network.
@@ -99,22 +98,9 @@ int main(int argc, char *argv[])
   fclose(f);
   locust.generate_baserates();
 
-  //get connN here: breaking down the createSparseConnectivityFromDense in parts, as we want to allocate all sparse variables together in order to create synapse variables
-  float asGoodAsZero = 0.0001f;//as far as we are concerned. Remember floating point errors.
-	unsigned int connN = countEntriesAbove(gpPNKC, locust.model.neuronN[0] * locust.model.neuronN[1], asGoodAsZero);
-  allocatePNKC(connN);
-	connN = countEntriesAbove(gpKCDN, locust.model.neuronN[1] * locust.model.neuronN[3], asGoodAsZero);
-//  connN = locust.model.neuronN[1] * locust.model.neuronN[3];
-  allocateKCDN(connN);
 
   //set values here createSparseConnectivityFromDense(locust.model.neuronN[0],locust.model.neuronN[1],gpPNKC, &gPNKC, false);
-  setSparseConnectivityFromDense(gPNKC, locust.model.neuronN[0],locust.model.neuronN[1], gpPNKC, &CPNKC);
-  cout << "PNKC connN is " << CPNKC.connN << endl; 
-  cout << "KCDN connN is " << CKCDN.connN << endl; 
-  setSparseConnectivityFromDense(gKCDN, locust.model.neuronN[1],locust.model.neuronN[3],gpKCDN, &CKCDN);
-  createPosttoPreArray(locust.model.neuronN[1],locust.model.neuronN[3], &CKCDN);
-
-  if (which == GPU) {
+   if (which == GPU) {
     locust.allocate_device_mem_patterns();
   }
   locust.init(which);         // this includes copying g's for the GPU version

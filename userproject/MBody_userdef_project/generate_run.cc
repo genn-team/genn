@@ -55,9 +55,9 @@ template<typename T> std::string toString(T t)
 
 int main(int argc, char *argv[])
 {
-  if (argc != 10)
+  if (!(argc == 10 || argc == 11))
   {
-    cerr << "usage: generate_run <CPU=0, AUTO GPU=1, GPU n= \"n+2\"> <nAL> <nMB> <nLHI> <nLb> <gscale> <outdir> <model name> <debug mode? (0/1)>" << endl;
+    cerr << "usage: generate_run <CPU=0, AUTO GPU=1, GPU n= \"n+2\"> <nAL> <nMB> <nLHI> <nLb> <gscale> <outdir> <model name> <debug mode? (0/1)> <use previous connectivity?(optional atm) (0/1)>" << endl;
     exit(1);
   }
 
@@ -66,7 +66,9 @@ int main(int argc, char *argv[])
   string outdir = toString(argv[7]) + "_output";  
   string modelName = argv[8];
   int dbgMode = atoi(argv[9]); // set this to 1 if you want to enable gdb and cuda-gdb debugging to 0 for release
-
+  int fixsynapse;
+  if (argc == 10) fixsynapse = 0;
+  if (argc == 11) fixsynapse = atoi(argv[10]); // if this is not 0 network generation is skipped
   int which = atoi(argv[1]);
   int nAL = atoi(argv[2]);
   int nMB = atoi(argv[3]);
@@ -114,6 +116,7 @@ int main(int argc, char *argv[])
   }
 #endif
   
+  if (fixsynapse == 0){
   // generate pnkc synapses
   cmd = gennPath + "/userproject/tools/gen_pnkc_syns ";
   cmd += toString(nAL) + " ";
@@ -153,6 +156,10 @@ int main(int argc, char *argv[])
   cmd += " 1> " + outdir + "/" + toString(argv[7]) + ".inpat.msg 2>&1";
   system(cmd.c_str());
 
+  }
+  else{
+    cout << "Skipping network generation...." << endl;
+  }
   // run it!
   cout << "running test..." << endl;
 #ifdef _WIN32
