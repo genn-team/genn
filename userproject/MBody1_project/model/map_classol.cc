@@ -193,9 +193,14 @@ void classol::read_kcdnsyns(FILE *f //!< File handle for a file containing KC to
     fprintf(stdout, "%f ", gKCDN[i]);
   }
   fprintf(stdout, "\n\n");
-  for (int i= 0; i < model.neuronN[1]*model.neuronN[3]; i++) {	
-      float tmp = gKCDN[i] / myKCDN_p[6]*2.0 - 1.0;
-      gRawKCDN[i]=  0.5 * log((1.0 + tmp) / (1.0 - tmp)) /myKCDN_p[8] + myKCDN_p[7];
+  float asGoodAsZero = 0.00001f;//float epsilon
+  for (int i= 0; i < model.neuronN[1]*model.neuronN[3]; i++) {
+	  if (gKCDN[i]< asGoodAsZero){
+      gKCDN[i] = asGoodAsZero; //to avoid log(0)/0 below
+      fprintf(stdout, "very small conductance value is detected and set to epsilon at index %d \n", i);
+    }
+    float tmp = gKCDN[i] / myKCDN_p[6]*2.0 - 1.0;
+    gRawKCDN[i]=  0.5 * log((1.0 + tmp) / (1.0 - tmp)) /myKCDN_p[8] + myKCDN_p[7];
   }
 }
 

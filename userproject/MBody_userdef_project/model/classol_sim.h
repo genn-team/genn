@@ -44,7 +44,7 @@ float InputBaseRate= 2e-04;
 
 //----------------------------------------------------------------------
 // other stuff:
-#define T_REPORT_TME 1000.0
+#define T_REPORT_TME 10000.0
 #define SYN_OUT_TME 20000.0
 
 int patSetTime;
