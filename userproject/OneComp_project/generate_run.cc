@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
     cerr << "usage: generate_run <CPU=0, GPU=1> <nC1> <outdir> <model name> <debug mode? (0/1)>" << endl;
     exit(1);
   }
-
+  int retval;
   string cmd;
   string gennPath = getenv("GENN_PATH");
   string outdir = toString(argv[3]) + "_output";  
@@ -90,7 +90,12 @@ int main(int argc, char *argv[])
     cmd += " debug";
   }
 #endif
-  system(cmd.c_str());
+  retval=system(cmd.c_str());
+  if (retval != 0){
+    cerr << "ERROR: Following call failed with status " << retval << ":" << endl << cmd << endl;
+    cerr << "Exiting..." << endl;
+    exit(1);
+  }
 
   // create output directory
 #ifdef _WIN32
@@ -118,7 +123,12 @@ int main(int argc, char *argv[])
     cmd = "model/OneComp_sim " + toString(argv[3]) + " " + toString(which);
   }
 #endif
-  system(cmd.c_str());
+  retval=system(cmd.c_str());
+  if (retval != 0){
+    cerr << "ERROR: Following call failed with status " << retval << ":" << endl << cmd << endl;
+    cerr << "Exiting..." << endl;
+    exit(1);
+  }
 
   return 0;
 }

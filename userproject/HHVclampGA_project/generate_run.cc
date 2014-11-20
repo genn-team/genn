@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
     cerr << "usage: generate_run <CPU=0, GPU=1> <protocol> <nPop> <totalT> <outdir> <debug mode? (0/1)>" << endl;
     exit(1);
   }
-
+  int retval;
   string cmd;
   string gennPath = getenv("GENN_PATH");
   string outDir = toString(argv[5]) + "_output";  
@@ -85,7 +85,12 @@ int main(int argc, char *argv[])
   }
 #endif
   cerr << cmd << endl;
-  system(cmd.c_str());
+  retval=system(cmd.c_str());
+  if (retval != 0){
+    cerr << "ERROR: Following call failed with status " << retval << ":" << endl << cmd << endl;
+    cerr << "Exiting..." << endl;
+    exit(1);
+  }
 
   // create output directory
 #ifdef _WIN32
@@ -113,7 +118,12 @@ int main(int argc, char *argv[])
     cmd = "model/VClampGA " + toString(argv[5]) + " " + toString(which) + " " + toString(protocol);
   }
 #endif
-  system(cmd.c_str());
+  retval=system(cmd.c_str());
+  if (retval != 0){
+    cerr << "ERROR: Following call failed with status " << retval << ":" << endl << cmd << endl;
+    cerr << "Exiting..." << endl;
+    exit(1);
+  }
 
   return 0;
 }

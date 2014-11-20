@@ -61,6 +61,7 @@ int main(int argc, char *argv[])
     exit(1);
   }
 
+  int retval;
   string cmd;
   string gennPath = getenv("GENN_PATH");
   string outdir = toString(argv[7]) + "_output";  
@@ -103,8 +104,12 @@ int main(int argc, char *argv[])
     cmd += " debug";
   }
 #endif
-  system(cmd.c_str());
-
+  retval=system(cmd.c_str());
+  if (retval != 0){
+    cerr << "ERROR: Following call failed with status " << retval << ":" << endl << cmd << endl;
+    cerr << "Exiting..." << endl;
+    exit(1);
+  }
   // create output directory
 #ifdef _WIN32
   _mkdir(outdir.c_str());
@@ -123,8 +128,12 @@ int main(int argc, char *argv[])
   cmd += toString(pnkc_gsyn_sigma) + " ";
   cmd += outdir + "/" + toString(argv[7]) + ".pnkc";
   cmd += " 1> " + outdir + "/" + toString(argv[7]) + ".pnkc.msg 2>&1";
-  system(cmd.c_str()); 
-
+  retval=system(cmd.c_str());
+  if (retval != 0){
+    cerr << "ERROR: Following call failed with status " << retval << ":" << endl << cmd << endl;
+    cerr << "Exiting..." << endl;
+    exit(1);
+  }
   // generate kcdn synapses
   cmd = gennPath + "/userproject/tools/gen_kcdn_syns ";
   cmd += toString(nMB) + " ";
@@ -134,8 +143,12 @@ int main(int argc, char *argv[])
   cmd += toString(kcdn_gsyn_sigma) + " ";
   cmd += outdir + "/" + toString(argv[7]) + ".kcdn";
   cmd += " 1> " + outdir + "/" + toString(argv[7]) + ".kcdn.msg 2>&1";
-  system(cmd.c_str());
-
+  retval=system(cmd.c_str());
+  if (retval != 0){
+    cerr << "ERROR: Following call failed with status " << retval << ":" << endl << cmd << endl;
+    cerr << "Exiting..." << endl;
+    exit(1);
+  }
   // generate pnlhi synapses
   cmd = gennPath + "/userproject/tools/gen_pnlhi_syns ";
   cmd += toString(nAL) + " ";
@@ -143,16 +156,24 @@ int main(int argc, char *argv[])
   cmd += toString(pnlhi_theta) + " 15 ";
   cmd += outdir + "/" + toString(argv[7]) + ".pnlhi";
   cmd += " 1> " + outdir + "/" + toString(argv[7]) + ".pnlhi.msg 2>&1";
-  system(cmd.c_str());
-
+  retval = system(cmd.c_str());
+  if (retval != 0){
+    cerr << "ERROR: Following call failed with status " << retval << ":" << endl << cmd << endl;
+    cerr << "Exiting..." << endl;
+    exit(1);
+  }
   // generate input patterns
   cmd = gennPath + "/userproject/tools/gen_input_structured ";
   cmd += toString(nAL) + " ";
   cmd += "10 10 0.1 0.05 1.0 2e-04 ";
   cmd += outdir + "/" + toString(argv[7]) + ".inpat";
   cmd += " 1> " + outdir + "/" + toString(argv[7]) + ".inpat.msg 2>&1";
-  system(cmd.c_str());
-
+  retval = system(cmd.c_str());
+  if (retval != 0){
+    cerr << "ERROR: Following call failed with status " << retval << ":" << endl << cmd << endl;
+    cerr << "Exiting..." << endl;
+    exit(1);
+  }
   // run it!
   cout << "running test..." << endl;
 #ifdef _WIN32
@@ -170,7 +191,11 @@ int main(int argc, char *argv[])
     cmd = "model/classol_sim " + toString(argv[7]) + " " + toString(which);
   }
 #endif
-  system(cmd.c_str());
-
+  retval = system(cmd.c_str());
+  if (retval != 0){
+    cerr << "ERROR: Following call failed with status " << retval << ":" << endl << cmd << endl;
+    cerr << "Exiting..." << endl;
+    exit(1);
+  }
   return 0;
 }

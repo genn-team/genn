@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
     cerr << "usage: generate_run <CPU=0, GPU=1> <nPoisson> <nIzh> <pConn> <gscale> <outdir> <model name> <debug mode? (0/1)>" << endl;
     exit(1);
   }
-
+  int retval;
   string cmd;
   string gennPath = getenv("GENN_PATH");
   string outdir = toString(argv[6]) + "_output";  
@@ -97,7 +97,12 @@ int main(int argc, char *argv[])
     cmd += " debug";
   }
 #endif
-  system(cmd.c_str());
+  retval=system(cmd.c_str());
+  if (retval != 0){
+    cerr << "ERROR: Following call failed with status " << retval << ":" << endl << cmd << endl;
+    cerr << "Exiting..." << endl;
+    exit(1);
+  }
 
   // create output directory
 #ifdef _WIN32
@@ -116,7 +121,12 @@ int main(int argc, char *argv[])
   cmd += toString(meangsyn) + " ";
   cmd += toString(gsyn_sigma) + " ";
   cmd += outdir + "/g" + toString(argv[7]);
-  system(cmd.c_str());
+  retval=system(cmd.c_str());
+  if (retval != 0){
+    cerr << "ERROR: Following call failed with status " << retval << ":" << endl << cmd << endl;
+    cerr << "Exiting..." << endl;
+    exit(1);
+  }
 
   // generate input patterns
   cmd = gennPath + "/userproject/tools/gen_input_structured ";
@@ -124,7 +134,12 @@ int main(int argc, char *argv[])
   cmd += "10 10 0.1 0.1 32768 17 ";
   cmd += outdir + "/" + toString(argv[7]) + ".inpat";
   cmd += " 1> " + outdir + "/" + toString(argv[7]) + ".inpat.msg 2>&1";
-  system(cmd.c_str());
+  retval=system(cmd.c_str());
+  if (retval != 0){
+    cerr << "ERROR: Following call failed with status " << retval << ":" << endl << cmd << endl;
+    cerr << "Exiting..." << endl;
+    exit(1);
+  }
 
   // run it!
   cout << "running test..." << endl;
@@ -143,7 +158,12 @@ int main(int argc, char *argv[])
     cmd = "model/PoissonIzh_sim " + toString(argv[6]) + " " + toString(which);
   }
 #endif
-  system(cmd.c_str());
+  retval=system(cmd.c_str());
+  if (retval != 0){
+    cerr << "ERROR: Following call failed with status " << retval << ":" << endl << cmd << endl;
+    cerr << "Exiting..." << endl;
+    exit(1);
+  }
 
   return 0;
 }

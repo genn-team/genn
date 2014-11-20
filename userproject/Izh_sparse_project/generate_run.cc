@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
     cerr << "usage: generate_run <CPU=0, GPU=1> <nNeurons> <nConn> <gscale> <outdir> <model name> <debug mode? (0/1)> <use previous connectivity? (0/1)>" << endl;
     exit(1);
   }
-
+  int retval;
   string cmd;
   string gennPath= getenv("GENN_PATH");
   string outDir = toString(argv[5]) + "_output";  
@@ -114,7 +114,12 @@ int main(int argc, char *argv[])
     cmd += toString(meangExc) + " ";
     cmd += toString(meangInh) + " ";
     cmd += outDir_g + "/g" + modelName;
-    system(cmd.c_str());
+    retval=system(cmd.c_str());
+    if (retval != 0){
+      cerr << "ERROR: Following call failed with status " << retval << ":" << endl << cmd << endl;
+      cerr << "Exiting..." << endl;
+      exit(1);
+    }
   }
 
   // read connectivity patterns to get maximum connection per neuron for each synapse population
@@ -156,7 +161,12 @@ int main(int argc, char *argv[])
     cmd += " debug";
   }
 #endif
-  system(cmd.c_str());
+  retval=system(cmd.c_str());
+  if (retval != 0){
+    cerr << "ERROR: Following call failed with status " << retval << ":" << endl << cmd << endl;
+    cerr << "Exiting..." << endl;
+    exit(1);
+  }
 
   // run it!
   cout << "running test..." << endl;
@@ -175,7 +185,12 @@ int main(int argc, char *argv[])
     cmd = "model/Izh_sim_sparse " + toString(argv[5]) + " " + toString(which);
   }
 #endif
-  system(cmd.c_str());
+  retval=system(cmd.c_str());
+  if (retval != 0){
+    cerr << "ERROR: Following call failed with status " << retval << ":" << endl << cmd << endl;
+    cerr << "Exiting..." << endl;
+    exit(1);
+  }
 
   return 0;
 }
