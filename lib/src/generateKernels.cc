@@ -81,6 +81,7 @@ void genNeuronKernel(NNmodel &model, //!< Model description
     os << "#ifndef _" << model.name << "_neuronKrnl_cc" << ENDL;
     os << "#define _" << model.name << "_neuronKrnl_cc" << ENDL;
 
+    os << "#include <cfloat>" << ENDL << ENDL;
     // write doxygen comment
     os << "//-------------------------------------------------------------------------" << ENDL;
     os << "/*! \\file neuronKrnl.cc" << ENDL << ENDL;

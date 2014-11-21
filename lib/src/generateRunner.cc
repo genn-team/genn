@@ -47,21 +47,57 @@ void genRunner(NNmodel &model, //!< Model description
     
     //initializing learning parameters to start
     model.initLearnGrps();  //Putting this here for the moment. Makes more sense to call it at the end of ModelDefinition, but this leaves the initialization to the user.
+    
+    string scalar_MIN;
+    string scalar_MAX;
+    if (model.ftype == tS("float")) {
+	scalar_MIN= tS("FLT_MIN");
+	scalar_MAX= tS("FLT_MAX");
+    }
+
+    if (model.ftype == tS("double")) {
+	scalar_MIN= tS("DBL_MIN");
+	scalar_MAX= tS("DBL_MAX");
+    }
 
     for (int i= 0; i < nModels.size(); i++) {
 	for (int k= 0; k < nModels[i].varTypes.size(); k++) {
 	    substitute(nModels[i].varTypes[k], "scalar", model.ftype);
 	}
+	substitute(nModels[i].simCode, "scalar_MIN", scalar_MIN);
+	substitute(nModels[i].resetCode, "scalar_MIN", scalar_MIN);
+	substitute(nModels[i].simCode, "scalar_MAX", scalar_MAX);
+	substitute(nModels[i].resetCode, "scalar_MAX", scalar_MAX);
+	substitute(nModels[i].simCode, "scalar", model.ftype);
+	substitute(nModels[i].resetCode, "scalar", model.ftype);
     }
     for (int i= 0; i < weightUpdateModels.size(); i++) {
 	for (int k= 0; k < weightUpdateModels[i].varTypes.size(); k++) {
 	    substitute(weightUpdateModels[i].varTypes[k], "scalar", model.ftype);
 	}
+	substitute(weightUpdateModels[i].simCode, "scalar_MIN", scalar_MIN);
+	substitute(weightUpdateModels[i].simCodeEvnt, "scalar_MIN", scalar_MIN);
+	substitute(weightUpdateModels[i].simLearnPost, "scalar_MIN", scalar_MIN);
+	substitute(weightUpdateModels[i].synapseDynamics, "scalar_MIN", scalar_MIN);
+	substitute(weightUpdateModels[i].simCode, "scalar_MAX", scalar_MAX);
+	substitute(weightUpdateModels[i].simCodeEvnt, "scalar_MAX", scalar_MAX);
+	substitute(weightUpdateModels[i].simLearnPost, "scalar_MAX", scalar_MAX);
+	substitute(weightUpdateModels[i].synapseDynamics, "scalar_MAX", scalar_MAX);
+	substitute(weightUpdateModels[i].simCode, "scalar", model.ftype);
+	substitute(weightUpdateModels[i].simCodeEvnt, "scalar", model.ftype);
+	substitute(weightUpdateModels[i].simLearnPost, "scalar", model.ftype);
+	substitute(weightUpdateModels[i].synapseDynamics, "scalar", model.ftype);
     }
     for (int i= 0; i < postSynModels.size(); i++) {
 	for (int k= 0; k < postSynModels[i].varTypes.size(); k++) {
 	    substitute(postSynModels[i].varTypes[k], "scalar", model.ftype);
 	}
+	substitute(postSynModels[i].postSyntoCurrent, "scalar_MIN", scalar_MIN);
+	substitute(postSynModels[i].postSynDecay, "scalar_MIN", scalar_MIN);
+	substitute(postSynModels[i].postSyntoCurrent, "scalar_MAX", scalar_MAX);
+	substitute(postSynModels[i].postSynDecay, "scalar_MAX", scalar_MAX);
+	substitute(postSynModels[i].postSyntoCurrent, "scalar", model.ftype);
+	substitute(postSynModels[i].postSynDecay, "scalar", model.ftype);
     }
     
     cout << "entering genRunner" << endl;

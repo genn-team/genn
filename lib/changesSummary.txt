@@ -22,7 +22,9 @@
 
 - users can now define variables as type "scalar" which will at code
   generation be translated to the model's ftype (typically float or
-  double).
+  double). This works for defining variables as well as in all code
+  snippets. Users can also use the expressions "scalar_MAX" and
+  "scalar_MIN" for "FLT_MIN", "FLT_MAX", "DBL_MIN" and "DBL_MAX"
 
 
 ---

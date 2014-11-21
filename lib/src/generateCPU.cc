@@ -47,6 +47,8 @@ void genNeuronFunction(NNmodel &model, //!< Model description
     os << "#define _" << model.name << "_neuronFnct_cc" << ENDL;
     os << ENDL;
 
+    os << "#include <cfloat>" << ENDL << ENDL;
+
     // write doxygen comment
     os << "//-------------------------------------------------------------------------" << ENDL;
     os << "/*! \\file neuronFnct.cc" << ENDL << ENDL;

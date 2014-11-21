@@ -265,21 +265,21 @@ void prepareStandardModels()
   n.pNames.push_back(tS("El"));
   n.pNames.push_back(tS("C"));
   n.dpNames.clear();
-  n.simCode= tS("   float Imem;\n\
+  n.simCode= tS("   scalar Imem;\n\
     unsigned int mt;\n\
-    float mdt= DT/25.0f;\n\
+    scalar mdt= DT/25.0;\n\
     for (mt=0; mt < 25; mt++) {\n\
       Imem= -($(m)*$(m)*$(m)*$(h)*$(gNa)*($(V)-($(ENa)))+\n\
               $(n)*$(n)*$(n)*$(n)*$(gK)*($(V)-($(EK)))+\n\
               $(gl)*($(V)-($(El)))-Isyn);\n\
-      float _a= 0.32f*(-52.0f-$(V)) / (exp((-52.0f-$(V))/4.0f)-1.0f);\n\
-      float _b= 0.28f*($(V)+25.0f)/(exp(($(V)+25.0f)/5.0f)-1.0f);\n\
-      $(m)+= (_a*(1.0f-$(m))-_b*$(m))*mdt;\n\
-      _a= 0.128*expf((-48.0f-$(V))/18.0f);\n\
-      _b= 4.0f / (expf((-25.0f-$(V))/5.0f)+1.0f);\n\
-      $(h)+= (_a*(1.0f-$(h))-_b*$(h))*mdt;\n\
-      _a= .032f*(-50.0f-$(V)) / (expf((-50.0f-$(V))/5.0f)-1.0f); \n\
-      _b= 0.5f*expf((-55.0f-$(V))/40.0f);\n\
+      scalar _a= (lV == -52.0)?1.28:0.32*(-52.0-$(V)) / (exp((-52.0-$(V))/4.0)-1.0);\n\
+      scalar _b= (lV == -25.0)?1.4:0.28*($(V)+25.0)/(exp(($(V)+25.0)/5.0)-1.0);\n\
+      $(m)+= (_a*(1.0-$(m))-_b*$(m))*mdt;\n\
+      _a= 0.128*exp((-48.0-$(V))/18.0);\n\
+      _b= 4.0 / (exp((-25.0-$(V))/5.0)+1.0);\n\
+      $(h)+= (_a*(1.0-$(h))-_b*$(h))*mdt;\n\
+      _a= (lV == -50.0)?0.16:0.032*(-50.0-$(V)) / (exp((-50.0-$(V))/5.0)-1.0); \n\
+      _b= 0.5*exp((-55.0-$(V))/40.0);\n\
       $(n)+= (_a*(1.0-$(n))-_b*$(n))*mdt;\n\
       $(V)+= Imem/$(C)*mdt;\n\
     }\n");
@@ -293,9 +293,9 @@ void prepareStandardModels()
   n.varNames.clear();
   n.varTypes.clear();
   n.varNames.push_back(tS("V"));
-  n.varTypes.push_back(tS("float"));  
+  n.varTypes.push_back(tS("scalar"));  
   n.varNames.push_back(tS("U"));
-  n.varTypes.push_back(tS("float"));
+  n.varTypes.push_back(tS("scalar"));
   n.pNames.clear();
   //n.pNames.push_back(tS("Vspike"));
   n.pNames.push_back(tS("a")); // time scale of U
@@ -308,8 +308,8 @@ void prepareStandardModels()
       $(V)=$(c);\n\
 		  $(U)+=$(d);\n\
     } \n\
-    $(V)+=0.5f*(0.04f*$(V)*$(V)+5*$(V)+140-$(U)+$(Isyn))*DT; //at two times for numerical stability\n\
-    $(V)+=0.5f*(0.04f*$(V)*$(V)+5*$(V)+140-$(U)+$(Isyn))*DT;\n\
+    $(V)+=0.5*(0.04*$(V)*$(V)+5*$(V)+140-$(U)+$(Isyn))*DT; //at two times for numerical stability\n\
+    $(V)+=0.5*(0.04*$(V)*$(V)+5*$(V)+140-$(U)+$(Isyn))*DT;\n\
     $(U)+=$(a)*($(b)*$(V)-$(U))*DT;\n\
    // if ($(V) > 30){   //keep this only for visualisation -- not really necessaary otherwise \n\
     //  $(V)=30; \n\
@@ -329,17 +329,17 @@ void prepareStandardModels()
   n.varNames.clear();
   n.varTypes.clear();
   n.varNames.push_back(tS("V"));
-  n.varTypes.push_back(tS("float"));  
+  n.varTypes.push_back(tS("scalar"));  
   n.varNames.push_back(tS("U"));
-  n.varTypes.push_back(tS("float"));
+  n.varTypes.push_back(tS("scalar"));
   n.varNames.push_back(tS("a")); // time scale of U
-  n.varTypes.push_back(tS("float"));
+  n.varTypes.push_back(tS("scalar"));
   n.varNames.push_back(tS("b")); // sensitivity of U
-  n.varTypes.push_back(tS("float"));
+  n.varTypes.push_back(tS("scalar"));
   n.varNames.push_back(tS("c")); // after-spike reset value of V
-  n.varTypes.push_back(tS("float"));
+  n.varTypes.push_back(tS("scalar"));
   n.varNames.push_back(tS("d")); // after-spike reset value of U
-  n.varTypes.push_back(tS("float"));
+  n.varTypes.push_back(tS("scalar"));
   n.pNames.clear();
   n.dpNames.clear(); 
   //TODO: replace the resetting in the following with BRIAN-like threshold and resetting 
@@ -347,8 +347,8 @@ void prepareStandardModels()
       $(V)=$(c);\n\
 		  $(U)+=$(d);\n\
     } \n\
-    $(V)+=0.5f*(0.04f*$(V)*$(V)+5*$(V)+140-$(U)+$(Isyn))*DT; //at two times for numerical stability\n\
-    $(V)+=0.5f*(0.04f*$(V)*$(V)+5*$(V)+140-$(U)+$(Isyn))*DT;\n\
+    $(V)+=0.5*(0.04*$(V)*$(V)+5*$(V)+140-$(U)+$(Isyn))*DT; //at two times for numerical stability\n\
+    $(V)+=0.5*(0.04*$(V)*$(V)+5*$(V)+140-$(U)+$(Isyn))*DT;\n\
     $(U)+=$(a)*($(b)*$(V)-$(U))*DT;\n\
     //if ($(V) > 30){      //keep this only for visualisation -- not really necessaary otherwise \n\
     //  $(V)=30; \n\
