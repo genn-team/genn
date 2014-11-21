@@ -1,12 +1,12 @@
 #!/bin/bash
 #call this as:
-#$ bash testprojects.sh 2>&1 |tee outputtestscript
+#$ bash testprojects.sh "what is new in this run" 2>&1 |tee outputtestscript
 #then:
 #$ grep -i warning outputtestscript
 #$ grep -i error outputtestscript
 #$ grep -i seg outputtestscript
 #
-
+custommsg=$1 #Reminder about what is being tried, to be written in the .time file
 set -e #exit if error or segfault
 BmDir=$GENN_PATH/userproject/refProjFiles
 
@@ -33,6 +33,7 @@ cd MBody1_project
 make clean && make
 printf "\n\n####################### MBody1 GPU ######################\n"
 if [ "$firstrun" = false ]; then
+  echo ${custommsg} >> testing_output/testing.time
   printf "With new setup... \n"  >> testing_output/testing.time
 fi
 ./generate_run 1 100 1000 20 100 0.0025 testing MBody1 0 
@@ -45,6 +46,7 @@ printf "\n\n*********************** Testing MBody_userdef **********************
 cd ../MBody_userdef_project
 make clean && make
 if [ "$firstrun" = false ]; then
+  echo ${custommsg} >> testing_output/testing.time
   printf "With new setup... \n"  >> testing_output/testing.time
 fi
 printf "\n\n####################### MBody_userdef GPU ######################\n"
@@ -57,6 +59,7 @@ printf "\n\n*********************** Testing Izh_sparse 10K neurons**************
 cd ../Izh_sparse_project
 make clean && make
 if [ "$firstrun" = false ]; then
+  echo ${custommsg} >> testing_output/testing.time
   printf "With new setup... \n"  >> testing_output/testing.time
 fi
 printf "\n\n####################### Izh_sparse 10K GPU ######################\n"
@@ -109,12 +112,16 @@ printf "\nTEST 2: TEST BY USING REFERENCE INPUT PATTERNS\n"
 cd MBody1_project
 cp -R $BmDir/MBody1/* testing_output/
 printf "With reference setup... \n"  >> testing_output/testing.time
+printf "\n\n####################### MBody1 GPU TEST 2 ######################\n"
 model/classol_sim testing 1
+printf "\n\n####################### MBody1 CPU TEST 2 ######################\n"
 model/classol_sim testing 0
 cd ../MBody_userdef_project
 cp -R $BmDir/MBody_userdef/* testing_output/
 printf "With reference setup (same as MBody1 as well)... \n"  >> testing_output/testing.time
+printf "\n\n####################### MBody_userdef GPU TEST 2 ######################\n"
 model/classol_sim testing 1
+printf "\n\n####################### MBody_userdef CPU TEST 2 ######################\n"
 model/classol_sim testing 0
 cd ../Izh_sparse_project
 cp -R $BmDir/Izh_sparse/* testing_output/
@@ -132,10 +139,10 @@ cp MBody_userdef_project/testing_output/testing.time $BmDir/MBody_userdef/testin
 cp Izh_sparse_project/testing_output/testing.time $BmDir/Izh_sparse/testing.time
 
 printf "\nMBody1 time tail\n"
-tail -n 10 MBody1_project/testing_output/testing.time
+tail -n 18 MBody1_project/testing_output/testing.time
 printf "\nMBody_userdef time tail\n"
-tail -n 10 MBody_userdef_project/testing_output/testing.time
+tail -n 15 MBody_userdef_project/testing_output/testing.time
 printf "\nIzh_sparse time tail\n"
-tail -n 10 Izh_sparse_project/testing_output/testing.time
+tail -n 15 Izh_sparse_project/testing_output/testing.time
   
 echo "Test complete!"
