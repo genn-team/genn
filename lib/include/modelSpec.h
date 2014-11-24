@@ -31,12 +31,13 @@ void initGeNN();
 unsigned int GeNNReady= 0;
 
 //neuronType
-unsigned int MAPNEURON; //!< Macro attaching the name "MAPNEURON" to neuron type 0
-unsigned int POISSONNEURON; //!< Macro attaching the name "POISSONNEURON" to neuron type 1
-unsigned int TRAUBMILES; //!< Macro attaching the name "TRAUBMILES" to neuron type 2
-unsigned int IZHIKEVICH; //!< Macro attaching the name "IZHIKEVICH" to neuron type 3
-unsigned int IZHIKEVICH_V; //!< Macro attaching the name "IZHIKEVICH_V" to neuron type 4
-#define MAXNRN 5 // maximum number of neuron types: SpineML needs to know this
+unsigned int MAPNEURON; //!< variable attaching the name "MAPNEURON" 
+unsigned int POISSONNEURON; //!< variable attaching the name "POISSONNEURON" 
+unsigned int TRAUBMILES; //!< varianle attaching the name "TRAUBMILES" 
+unsigned int TRAUBMILES_PEDANTIC; //!< varianle attaching the name "TRAUBMILES_PEDANTIC" 
+unsigned int IZHIKEVICH; //!< variable attaching the name "IZHIKEVICH" 
+unsigned int IZHIKEVICH_V; //!< variable attaching the name "IZHIKEVICH_V" 
+#define MAXNRN 6 // maximum number of neuron types: SpineML needs to know this
 
 #define SYNTYPENO 4
 
