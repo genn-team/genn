@@ -27,17 +27,19 @@ unsigned int countEntriesAbove(DATATYPE * Array, int sz, DATATYPE includeAbove)
 template <class DATATYPE>
 DATATYPE getG(DATATYPE * wuvar, Conductance  * sparseStruct, int x, int y)
 {
-  fprintf(stderr,"WARNING: This function is deprecated. Conductance structure has changed \n\
-  by the latest revision to date (12/11/14), and this function is modified to use \n\
-  a template to support variables of different data types. Replacement function is \n\
-  getSparseVar(DATATYPE * wuvar, Conductance  * sparseStruct, int x, int y).\n");
+  fprintf(stderr,"WARNING: This function is deprecated, and if you are still using it \n\
+  you are probably trying to use the old sparse structures containing g array.  \n\
+  Conductance structures have changed: conductance values should be defined as synapse variable now; \n\
+  the structure contains only indexing arrays. \n\n\
+  Replacement function for getG is \n\
+  getSparseVar(DATATYPE * wuvar, Conductance  * sparseStruct, int x, int y).\n\n\
+  calling getSparseVar...");
   getSparseVar(wuvar, &sparseStruct, x, y);
 }
 template <class DATATYPE>
 float getSparseVar(DATATYPE * wuvar, Conductance  * sparseStruct, int x, int y)
 {
-  fprintf(stderr,"WARNING: Conductance structure has changed by the latest revision to date (12/11/14), this function is modified to use a template to provide multiple data types.\n");
-	DATATYPE g = 0.0; //default return value implies zero weighted for x,y
+  DATATYPE g = 0.0; //default return value implies zero weighted for x,y
 
 	int startSynapse = sparseStruct->indInG[x];
 	int endSynapse = sparseStruct->indInG[x+1];
@@ -57,7 +59,6 @@ Setting the values of SPARSE connectivity matrix
 ----------------------------------------------------------------------*/
 template <class DATATYPE>
 void setSparseConnectivityFromDense(DATATYPE * wuvar, int preN,int postN,DATATYPE * tmp_gRNPN, Conductance * sparseStruct){
-  fprintf(stderr,"WARNING: Conductance structure has changed bt the latest revision to date (12/11/14), this function is modified to use a template to provide multiple data types.\n");
   int synapse = 0;
 	sparseStruct->indInG[0] = 0; //first neuron always gets first synapse listed.
   float asGoodAsZero = 0.0001f;//as far as we are concerned. Remember floating point errors.
@@ -80,7 +81,7 @@ void setSparseConnectivityFromDense(DATATYPE * wuvar, int preN,int postN,DATATYP
  ---------------------------------------------------------------------*/
 template <class DATATYPE>
 void createSparseConnectivityFromDense(DATATYPE * wuvar, int preN,int postN,DATATYPE * tmp_gRNPN, Conductance * sparseStruct, bool runTest) {
-  fprintf(stderr,"WARNING: Conductance structure has changed by the latest revision to date (12/11/14), this function is modified to use a template to provide multiple data types.\n");
+
 	
 	float asGoodAsZero = 0.0001f;//as far as we are concerned. Remember floating point errors.
 	sparseStruct->connN = countEntriesAbove(tmp_gRNPN, preN * postN, asGoodAsZero);

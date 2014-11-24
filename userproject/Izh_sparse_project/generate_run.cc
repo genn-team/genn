@@ -52,12 +52,12 @@ template<typename T> std::string toString(T t)
 unsigned int openFileGetMax(unsigned int * array, unsigned int size, string name) {
   unsigned int maxConn = 0;
   FILE *f = fopen(name.c_str(), "r");
-  fread(array, (size + 1) * sizeof(unsigned int), 1, f);
+  int retval = fread(array, (size + 1) * sizeof(unsigned int), 1, f);
   for (unsigned int i = 0; i < size; i++) {
     unsigned int connNo = array[i + 1] - array[i];
     if (connNo > maxConn) maxConn = connNo;
   }
-  fprintf(stderr, " \n maximum postsynaptic connection per neuron in the 1st group is %u \n", maxConn);
+  fprintf(stderr, " \n maximum postsynaptic connection per neuron in the 1st group is %u , fread returned %d values\n", maxConn, retval);
   return maxConn;
 }
 /////////////////////////

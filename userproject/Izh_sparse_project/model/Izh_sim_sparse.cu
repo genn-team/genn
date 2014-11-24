@@ -72,7 +72,7 @@ int main(int argc, char *argv[])
   f_info= fopen(name.c_str(),"r");
  	retval = fread((void *) &connN,sizeof(unsigned int),1,f_info);
 	allocateExc_Exc(connN);
-  fprintf(stderr, "%u connN, read %u times %lu bytes \n", connN, CExc_Exc.connN,sizeof(unsigned int));
+  fprintf(stderr, "%u connN, read %u times %lu bytes, fread returned %d values \n", connN, CExc_Exc.connN,sizeof(unsigned int), retval);
   fprintf(flog, "%u connections in gExc_Exc\n",CExc_Exc.connN);
 	sumSynapses+=connN;
 	fclose(f_info);

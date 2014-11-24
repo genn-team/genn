@@ -1158,7 +1158,7 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     os << "t);" << endl;
     os << "}" << endl;
     os.close();
-    cerr << "done with generateGPU" << endl;
+    //cout << "done with generating GPU runner" << endl;
 }
 
 

@@ -139,10 +139,10 @@ cp MBody_userdef_project/testing_output/testing.time $BmDir/MBody_userdef/testin
 cp Izh_sparse_project/testing_output/testing.time $BmDir/Izh_sparse/testing.time
 
 printf "\nMBody1 time tail\n"
-tail -n 18 MBody1_project/testing_output/testing.time
+tail -n 23 MBody1_project/testing_output/testing.time
 printf "\nMBody_userdef time tail\n"
-tail -n 15 MBody_userdef_project/testing_output/testing.time
+tail -n 18 MBody_userdef_project/testing_output/testing.time
 printf "\nIzh_sparse time tail\n"
-tail -n 15 Izh_sparse_project/testing_output/testing.time
+tail -n 18 Izh_sparse_project/testing_output/testing.time
   
 echo "Test complete!"

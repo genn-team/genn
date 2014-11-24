@@ -480,7 +480,14 @@ void genSynapseFunction(NNmodel &model, //!< Model description
     // Function header
     os << "void calcSynapsesCPU(" << model.ftype << " t)" << ENDL;
     os << OB(1001);
-    os << "unsigned int ipost, npost";
+    os << "unsigned int ipost;" << ENDL; 
+    for (int i = 0; i < model.synapseGrpN; i++) {  
+	    if (model.synapseConnType[i] == SPARSE){
+        os << "unsigned int  npost;" << ENDL;
+        break;
+      }
+    }
+    
     if (model.needSynapseDelay) {
 	os << ", delaySlot";
     }
@@ -517,9 +524,12 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 	// function header
 	os << "void learnSynapsesPostHost(" << model.ftype << " t)" << ENDL;
 	os << OB(811);
-	os << "unsigned int npre;" <<ENDL;
-	os << ENDL;
-
+  for (int i = 0; i < model.synapseGrpN; i++) {  
+    if (model.synapseConnType[i] == SPARSE){
+    	os << "unsigned int npre;" <<ENDL;
+	    break;
+    }
+  }
 	for (int i = 0; i < model.lrnGroups; i++) {
 	  
 	  unsigned int k = model.lrnSynGrp[i];
