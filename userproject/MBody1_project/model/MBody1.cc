@@ -146,9 +146,9 @@ void modelDefinition(NNmodel &model)
     initGeNN();
     model.setName("MBody1");
     model.addNeuronPopulation("PN", _NAL, POISSONNEURON, myPOI_p, myPOI_ini);
-    model.addNeuronPopulation("KC", _NMB, TRAUBMILES_PEDANTIC, stdTM_p, stdTM_ini);
-    model.addNeuronPopulation("LHI", _NLHI, TRAUBMILES_PEDANTIC, stdTM_p, stdTM_ini);
-    model.addNeuronPopulation("DN", _NLB, TRAUBMILES_PEDANTIC, stdTM_p, stdTM_ini);
+    model.addNeuronPopulation("KC", _NMB, TRAUBMILES_FAST, stdTM_p, stdTM_ini);
+    model.addNeuronPopulation("LHI", _NLHI, TRAUBMILES_FAST, stdTM_p, stdTM_ini);
+    model.addNeuronPopulation("DN", _NLB, TRAUBMILES_FAST, stdTM_p, stdTM_ini);
     
     float *init = NULL;
     model.addSynapsePopulation("PNKC", NSYNAPSE, DENSE, INDIVIDUALG, NO_DELAY, EXPDECAY, "PN", "KC", myPNKC_ini, myPNKC_p, postSynV,postExpPNKC);
@@ -158,4 +158,6 @@ void modelDefinition(NNmodel &model)
     model.addSynapsePopulation("DNDN", NGRADSYNAPSE, ALLTOALL, GLOBALG, NO_DELAY, EXPDECAY, "DN", "DN", myDNDN_ini, myDNDN_p, postSynV, postExpDNDN);     
     model.setGPUDevice(nGPU);
     model.setSeed(1234);
+    model.setPrecision(FLOAT);
+    model.setTiming(FALSE);
 }

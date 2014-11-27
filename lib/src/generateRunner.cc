@@ -117,6 +117,11 @@ void genRunner(NNmodel &model, //!< Model description
   os << "#include <cassert>" << endl << endl;
   os << "#include <stdint.h>" << endl << endl;
 
+  if (model.timing) {
+      os << "#include <helper_timer.h>" << endl;
+      os << "StopWatchInterface *timer_neuron, *timer_synapse, *timer_learning;" << endl;
+  } 
+
   // write CUDA error handler macro
   os << "/*" << endl;
   os << "  CUDA error handling macro" << endl;
@@ -280,6 +285,12 @@ os << "}" << endl;
   
     os << "void allocateMem()" << endl;
     os << "{" << endl;
+    if (model.timing) {
+	os << "    sdkCreateTimer(&timer_neuron);" << endl;
+	os << "    sdkCreateTimer(&timer_synapse);" << endl;
+	os << "    sdkCreateTimer(&timer_learning);" << endl;
+    }
+
     //os << "  " << model.ftype << " free_m,total_m;" << endl;
     //os << "  cudaMemGetInfo((size_t*)&free_m,(size_t*)&total_m);" << endl; //
     os << "  CHECK_CUDA_ERRORS(cudaSetDevice(" << theDev << "));" << endl;
@@ -1114,7 +1125,8 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     }
     os << endl;
     if (model.synapseGrpN > 0) {
-	os << "  if (t > 0.0) {" << endl; 
+	os << "  if (t > 0.0) {" << endl;
+	if (model.timing) os << "     sdkStartTimer(&timer_synapse);" << endl; 
 	os << "    calcSynapses <<< sGrid, sThreads >>> (";
 	for (int i= 0; i < model.synapseGrpN; i++) {
 	    
@@ -1127,8 +1139,12 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 	    }
 	}
 	os << "t);"<< endl;
-	
+	if (model.timing) {
+	    os << "     cudaDeviceSynchronize();    // force kernel completion for time measurement" << endl;
+	    os << "     sdkStopTimer(&timer_synapse);" << endl;
+	} 
 	if (model.lrnGroups > 0) {
+	    if (model.timing) os << "     sdkStartTimer(&timer_learning);" << endl;
 	    os << "    learnSynapsesPost <<< lGrid, lThreads >>> (";         
 	    for (int i=0; i< model.synapseName.size(); i++){
 		int st= model.synapseType[i];
@@ -1138,9 +1154,14 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 		}
 	    }
 	    os << "t);" << endl;
+	    if (model.timing) {
+		os << "     cudaDeviceSynchronize();    // force kernel completion for time measurement" << endl;
+		os << "     sdkStopTimer(&timer_learning);" << endl;
+	    } 
 	}
 	os << "  }" << endl;
     }
+	    if (model.timing) os << "     sdkStartTimer(&timer_neuron);" << endl;
     os << "  calcNeurons <<< nGrid, nThreads >>> (";
     for (int i= 0; i < model.neuronGrpN; i++) {
 	nt= model.neuronType[i];
@@ -1156,6 +1177,10 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 	}    
     }
     os << "t);" << endl;
+    if (model.timing) {
+	os << "     cudaDeviceSynchronize();    // force kernel completion for time measurement" << endl;
+	os << "     sdkStopTimer(&timer_neuron);" << endl;
+    }
     os << "}" << endl;
     os.close();
     //cout << "done with generating GPU runner" << endl;
@@ -1222,13 +1247,18 @@ void genRunnerCPU(NNmodel &model, //!< Neuronal network model description
     os << model.ftype << " t)" << endl;
     os << "{" << endl;
     if (model.synapseGrpN>0) {
-	os << "  if (t > 0.0) {" << endl; 
+	os << "  if (t > 0.0) {" << endl;
+	if (model.timing) os << "    sdkStartTimer(&timer_synapse);" << endl;
 	os << "    calcSynapsesCPU(t);" << endl;
+	if (model.timing) os << "    sdkStopTimer(&timer_synapse);" << endl;
 	if (model.lrnGroups > 0) {
-	    os << "learnSynapsesPostHost(t);" << endl;
+	    if (model.timing) os << "    sdkStartTimer(&timer_learning);" << endl;
+	    os << "    learnSynapsesPostHost(t);" << endl;
+	    if (model.timing) os << "    sdkStopTimer(&timer_learning);" << endl;
 	}
 	os << "  }" << endl;
     }
+    if (model.timing) os << "    sdkStartTimer(&timer_neuron);" << endl;
     os << "  calcNeuronsCPU(";
     for (int i= 0; i < model.neuronGrpN; i++) {
 	if (model.neuronType[i] == POISSONNEURON) {
@@ -1240,6 +1270,7 @@ void genRunnerCPU(NNmodel &model, //!< Neuronal network model description
 	}
     }
     os << "t);" << endl;
+    if (model.timing) os << "    sdkStopTimer(&timer_neuron);" << endl;
     os << "}" << endl;
     os.close();
 }

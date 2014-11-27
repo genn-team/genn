@@ -33,8 +33,9 @@ unsigned int GeNNReady= 0;
 //neuronType
 unsigned int MAPNEURON; //!< variable attaching the name "MAPNEURON" 
 unsigned int POISSONNEURON; //!< variable attaching the name "POISSONNEURON" 
-unsigned int TRAUBMILES; //!< varianle attaching the name "TRAUBMILES" 
-unsigned int TRAUBMILES_PEDANTIC; //!< varianle attaching the name "TRAUBMILES_PEDANTIC" 
+unsigned int TRAUBMILES_FAST; //!< varianle attaching the name "TRAUBMILES_FSAT" 
+unsigned int TRAUBMILES_ALTERNATIVE; //!< varianle attaching the name "TRAUBMILES_FSAT" 
+unsigned int TRAUBMILES_SAFE; //!< varianle attaching the name "TRAUBMILES_PEDANTIC" 
 unsigned int IZHIKEVICH; //!< variable attaching the name "IZHIKEVICH" 
 unsigned int IZHIKEVICH_V; //!< variable attaching the name "IZHIKEVICH_V" 
 #define MAXNRN 6 // maximum number of neuron types: SpineML needs to know this
@@ -192,6 +193,7 @@ public:
   unsigned int needSt; //!< Whether last spike times are needed at all in this network model (related to STDP)
   unsigned int needSynapseDelay; //!< Whether delayed synapse conductance is required in the network
   int chooseGPUDevice;
+  bool timing;
   unsigned int seed;
   bool needSpkEvnt;
 
@@ -297,6 +299,8 @@ public:
   void setName(const string); //!< Method to set the neuronal network model name
 
   void setPrecision(unsigned int);//!< Set numerical precision for floating point
+
+  void setTiming(bool); //!< Set whether timers and timing commands are to be included
 
   void setSeed(unsigned int); //!< Set the random seed (disables automatic seeding if argument not 0).
 

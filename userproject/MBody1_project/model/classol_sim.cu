@@ -66,38 +66,88 @@ int main(int argc, char *argv[])
   name= OutDir+ "/"+ toString(argv[1]) + toString(".out.st"); 
   FILE *osf2= fopen(name.c_str(),"w");
 
+#ifdef TIMING
+  name= OutDir+ "/"+ toString(argv[1]) + toString(".timingprofile"); 
+  FILE *timeros= fopen(name.c_str(),"w");
+  sdkCreateTimer(&timer_gen);
+  float tme;
+#endif
+
   //-----------------------------------------------------------------
   // build the neuronal circuitery
   classol locust;
+
+#ifdef TIMING
+  sdkStartTimer(&timer_gen);
+#endif
 
   fprintf(stdout, "# reading PN-KC synapses ... \n");
   name= OutDir+ "/"+ toString(argv[1]) + toString(".pnkc");
   FILE *f= fopen(name.c_str(),"r");
   locust.read_pnkcsyns(f);
   fclose(f);
- 
+
+#ifdef TIMING
+  sdkStopTimer(&timer_gen);
+  tme= sdkGetTimerValue(&timer_gen);
+  fprintf(timeros, "%% Reading PN-KC synapses: %f \n", tme);
+  sdkResetTimer(&timer_gen);
+  sdkStartTimer(&timer_gen);
+#endif
+
   fprintf(stdout, "# reading PN-LHI synapses ... \n");
   name= OutDir+ "/"+ toString(argv[1]) + toString(".pnlhi");
   f= fopen(name.c_str(), "r");
   locust.read_pnlhisyns(f);
   fclose(f);   
+
+#ifdef TIMING
+  sdkStopTimer(&timer_gen);
+  tme= sdkGetTimerValue(&timer_gen);
+  fprintf(timeros, "%% Reading PN-LHI synapses: %f \n", tme);
+  sdkResetTimer(&timer_gen);
+  sdkStartTimer(&timer_gen);
+#endif
   
   fprintf(stdout, "# reading KC-DN synapses ... \n");
   name= OutDir+ "/"+ toString(argv[1]) + toString(".kcdn");
   f= fopen(name.c_str(), "r");
   locust.read_kcdnsyns(f);
 
+#ifdef TIMING
+  sdkStopTimer(&timer_gen);
+  tme= sdkGetTimerValue(&timer_gen);
+  fprintf(timeros, "%% Reading KC-DN synapses: %f \n", tme);
+  sdkResetTimer(&timer_gen);
+  sdkStartTimer(&timer_gen);
+#endif
+
   fprintf(stdout, "# reading input patterns ... \n");
   name= OutDir+ "/"+ toString(argv[1]) + toString(".inpat");
   f= fopen(name.c_str(), "r");
   locust.read_input_patterns(f);
   fclose(f);
-  locust.generate_baserates();
 
+#ifdef TIMING
+  sdkStopTimer(&timer_gen);
+  tme= sdkGetTimerValue(&timer_gen);
+  fprintf(timeros, "%% Reading input patterns: %f \n", tme);
+  sdkResetTimer(&timer_gen);
+  sdkStartTimer(&timer_gen);
+#endif
+
+  locust.generate_baserates();
   if (which == GPU) {
     locust.allocate_device_mem_patterns();
   }
   locust.init(which);         // this includes copying g's for the GPU version
+
+#ifdef TIMING
+  sdkStopTimer(&timer_gen);
+  tme= sdkGetTimerValue(&timer_gen);
+  fprintf(timeros, "%% Initialisation: %f \n", tme);
+  sdkResetTimer(&timer_gen);
+#endif
 
   fprintf(stdout, "# neuronal circuitery built, start computation ... \n\n");
 
@@ -121,17 +171,22 @@ int main(int argc, char *argv[])
       locust.getSpikesFromGPU();
     }
     locust.run(DT, which); // run next batch
-//    if (which == GPU) {  
-//        CHECK_CUDA_ERRORS(cudaMemcpy(VDN, d_VDN, 100*sizeof(float), cudaMemcpyDeviceToHost));
-//    }
+    if (which == GPU) {  
+        CHECK_CUDA_ERRORS(cudaMemcpy(VDN, d_VDN, 100*sizeof(float), cudaMemcpyDeviceToHost));
+    }
+    
+#ifdef TIMING
+    fprintf(timeros, "%f %f %f \n", sdkGetTimerValue(&timer_neuron), sdkGetTimerValue(&timer_synapse), sdkGetTimerValue(&timer_learning));
+#endif
+
     locust.sum_spikes();
     locust.output_spikes(osf2, which);
 
-//    fprintf(osf, "%f ", t);
-//    for (int i= 0; i < 100; i++) {
-//    fprintf(osf, "%f ", VDN[i]);
-//   }
-//    fprintf(osf,"\n");
+    fprintf(osf, "%f ", t);
+    for (int i= 0; i < 100; i++) {
+        fprintf(osf, "%f ", VDN[i]);
+    }
+    fprintf(osf,"\n");
 
     // report progress
     if (t - last_t_report >= T_REPORT_TME)
@@ -163,5 +218,10 @@ int main(int argc, char *argv[])
   fclose(timef);
   freeDeviceMem();
   cudaDeviceReset();
+
+#ifdef TIMING
+  fclose(timeros);
+#endif
+
   return 0;
 }

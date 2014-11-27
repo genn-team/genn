@@ -32,7 +32,7 @@ ifeq ($(DARWIN),DARWIN)
 endif
 
 # Global include flags and link flags.
-INCLUDE_FLAGS	+=-I$(CUDA_PATH)/include -I$(GENN_PATH)/lib/include -I$(GENN_PATH)/userproject/include
+INCLUDE_FLAGS	+=-I$(CUDA_PATH)/include -I$(CUDA_PATH)/samples/common/inc -I$(GENN_PATH)/lib/include -I$(GENN_PATH)/userproject/include
 ifeq ($(DARWIN),DARWIN)
   LINK_FLAGS	+=-L$(CUDA_PATH)/lib -lcudart -stdlib=libstdc++ -lc++ 
 else

@@ -272,16 +272,59 @@ void prepareStandardModels()
       Imem= -($(m)*$(m)*$(m)*$(h)*$(gNa)*($(V)-($(ENa)))+\n\
               $(n)*$(n)*$(n)*$(n)*$(gK)*($(V)-($(EK)))+\n\
               $(gl)*($(V)-($(El)))-Isyn);\n\
-      scalar volatile _a= exp((-52.0-$(V))/4.0)-1.0;\n\
-       _a= 0.32*(-52.0-$(V))/(_a+scalar_MIN);\n\
-      scalar volatile _b= exp(($(V)+25.0)/5.0)-1.0;\n\
-       _b= 0.28*($(V)+25.0)/(_b+scalar_MIN);\n\
+      scalar _a= 0.32*(-52.0-$(V))/(exp((-52.0-$(V))/4.0)-1.0);\n\
+      scalar _b= 0.28*($(V)+25.0)/(exp(($(V)+25.0)/5.0)-1.0);\n\
       $(m)+= (_a*(1.0-$(m))-_b*$(m))*mdt;\n\
       _a= 0.128*exp((-48.0-$(V))/18.0);\n\
       _b= 4.0 / (exp((-25.0-$(V))/5.0)+1.0);\n\
       $(h)+= (_a*(1.0-$(h))-_b*$(h))*mdt;\n\
-      _a= exp((-50.0-$(V))/5.0)-1.0;\n\
-      _a= 0.032*(-50.0-$(V))/(_a+scalar_MIN); \n\
+      _a= 0.032*(-50.0-$(V))/(exp((-50.0-$(V))/5.0)-1.0);\n\
+      _b= 0.5*exp((-55.0-$(V))/40.0);\n\
+      $(n)+= (_a*(1.0-$(n))-_b*$(n))*mdt;\n\
+      $(V)+= Imem/$(C)*mdt;\n\
+    }\n");
+
+  n.thresholdConditionCode = tS("$(V) > 0.0");//TODO check this, to get better value
+  nModels.push_back(n);
+  TRAUBMILES_FAST= nModels.size()-1;
+
+// Traub and Miles HH neurons
+  n.varNames.clear();
+  n.varTypes.clear();
+  n.varNames.push_back(tS("V"));
+  n.varTypes.push_back(tS("float"));
+  n.varNames.push_back(tS("m"));
+  n.varTypes.push_back(tS("float"));
+  n.varNames.push_back(tS("h"));
+  n.varTypes.push_back(tS("float"));
+  n.varNames.push_back(tS("n"));
+  n.varTypes.push_back(tS("float"));
+  n.pNames.clear();
+  n.pNames.push_back(tS("gNa"));
+  n.pNames.push_back(tS("ENa"));
+  n.pNames.push_back(tS("gK"));
+  n.pNames.push_back(tS("EK"));
+  n.pNames.push_back(tS("gl"));
+  n.pNames.push_back(tS("El"));
+  n.pNames.push_back(tS("C"));
+  n.dpNames.clear();
+  n.simCode= tS("   scalar Imem;\n\
+    unsigned int mt;\n\
+    scalar mdt= DT/25.0;\n\
+    for (mt=0; mt < 25; mt++) {\n\
+      Imem= -($(m)*$(m)*$(m)*$(h)*$(gNa)*($(V)-($(ENa)))+\n\
+              $(n)*$(n)*$(n)*$(n)*$(gK)*($(V)-($(EK)))+\n\
+              $(gl)*($(V)-($(El)))-Isyn);\n\
+      scalar volatile _tmp= exp((-52.0-$(V))/4.0)-1.0;\n\
+      scalar _a= 0.32*(-52.0-$(V))/(_tmp+scalar_MIN);\n\
+      _tmp= exp(($(V)+25.0)/5.0)-1.0;\n\
+      scalar _b= 0.28*($(V)+25.0)/(_tmp+scalar_MIN);\n\
+      $(m)+= (_a*(1.0-$(m))-_b*$(m))*mdt;\n\
+      _a= 0.128*exp((-48.0-$(V))/18.0);\n\
+      _b= 4.0 / (exp((-25.0-$(V))/5.0)+1.0);\n\
+      $(h)+= (_a*(1.0-$(h))-_b*$(h))*mdt;\n\
+      _tmp= exp((-50.0-$(V))/5.0)-1.0;\n\
+      _a= 0.032*(-50.0-$(V))/(_tmp+scalar_MIN); \n\
       _b= 0.5*exp((-55.0-$(V))/40.0);\n\
       $(n)+= (_a*(1.0-$(n))-_b*$(n))*mdt;\n\
       $(V)+= Imem/$(C)*mdt;\n\
@@ -290,7 +333,7 @@ void prepareStandardModels()
   n.thresholdConditionCode = tS("$(V) > 0.0");//TODO check this, to get better value
 
   nModels.push_back(n);
-  TRAUBMILES= nModels.size()-1;
+  TRAUBMILES_ALTERNATIVE= nModels.size()-1;
 
 // Traub and Miles HH neurons
   n.varNames.clear();
@@ -338,7 +381,7 @@ void prepareStandardModels()
 
   n.thresholdConditionCode = tS("$(V) > 0.0");//TODO check this, to get better value
   nModels.push_back(n);
-  TRAUBMILES_PEDANTIC= nModels.size()-1;
+  TRAUBMILES_SAFE= nModels.size()-1;
 
  //Izhikevich neurons
   n.varNames.clear();

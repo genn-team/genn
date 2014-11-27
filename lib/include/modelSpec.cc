@@ -40,6 +40,7 @@ NNmodel::NNmodel()
   needSt= 0;
   needSynapseDelay = 0;
   setPrecision(0);
+  setTiming(FALSE);
   RNtype= tS("uint64_t");
   setGPUDevice(AUTODEVICE);
   setSeed(0);
@@ -613,6 +614,15 @@ void NNmodel::setPrecision(unsigned int floattype /**<  */)
   }
 }
 
+//--------------------------------------------------------------------------
+/*! \brief This function sets a flag to determine whether timers and timing commands are to be included in generated code.
+ */
+//--------------------------------------------------------------------------
+
+void NNmodel::setTiming(bool theTiming /**<  */)
+{
+    timing= theTiming;
+}
 
 //--------------------------------------------------------------------------
 /*! \brief This function sets the random seed. If the passed argument is > 0, automatic seeding is disabled. If the argument is 0, the underlying seed is obtained from the time() function.

@@ -20,6 +20,9 @@
 
 using namespace std;
 #include <cassert>
+
+//#define TIMING
+
 #include "hr_time.cpp"
 
 #include "utils.h" // for CHECK_CUDA_ERRORS
@@ -55,7 +58,7 @@ int patSetTime;
 int patFireTime;
 
 
-#define TOTAL_TME 200000.0
+#define TOTAL_TME 3000.0
 
 CStopWatch timer;
 
