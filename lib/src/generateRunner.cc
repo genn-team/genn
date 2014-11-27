@@ -117,6 +117,14 @@ void genRunner(NNmodel &model, //!< Model description
   os << "#include <cassert>" << endl << endl;
   os << "#include <stdint.h>" << endl << endl;
 
+  os << "#ifndef SCALAR_MIN" << endl;
+  os << "#define SCALAR_MIN " << scalar_MIN << endl;
+  os << "#endif" << endl;
+  
+  os << "#ifndef SCALAR_MAX" << endl;
+  os << "#define SCALAR_MAX " << scalar_MAX << endl;
+  os << "#endif" << endl;
+
   if (model.timing) {
       os << "#include <helper_timer.h>" << endl;
       os << "StopWatchInterface *timer_neuron, *timer_synapse, *timer_learning;" << endl;

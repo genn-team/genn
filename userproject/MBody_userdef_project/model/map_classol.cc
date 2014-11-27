@@ -208,7 +208,7 @@ void classol::read_kcdnsyns(FILE *f //!< File handle for a file containing KC to
   }
   fprintf(stdout, "\n\n");
 
-  float asGoodAsZero = 0.00002f;//as far as we are concerned. Remember floating point errors (2 * epsilon)
+  float asGoodAsZero = 2.0*SCALAR_MIN;//as far as we are concerned. Remember floating point errors (2 * epsilon)
 
 	unsigned int connN = countEntriesAbove(gpKCDN, model.neuronN[1] * model.neuronN[3], asGoodAsZero);
 //  connN = locust.model.neuronN[1] * locust.model.neuronN[3];
@@ -219,8 +219,8 @@ void classol::read_kcdnsyns(FILE *f //!< File handle for a file containing KC to
   delete[] gpKCDN;
 
   for (int i= 0; i < connN; i++) {	
-      float tmp = gKCDN[i] / myKCDN_p[6]*2.0 - 1.0;
-      gRawKCDN[i]=  0.5 * log((1.0 + tmp) / (1.0 - tmp)) /myKCDN_p[8] + myKCDN_p[7];
+      float tmp = gKCDN[i] / myKCDN_p[6]*2.0;
+      gRawKCDN[i]=  0.5 * log(tmp / (2.0 - tmp)) /myKCDN_p[8] + myKCDN_p[7];
   }
 }
 
