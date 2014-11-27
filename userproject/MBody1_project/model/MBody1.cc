@@ -146,9 +146,9 @@ void modelDefinition(NNmodel &model)
     initGeNN();
     model.setName("MBody1");
     model.addNeuronPopulation("PN", _NAL, POISSONNEURON, myPOI_p, myPOI_ini);
-    model.addNeuronPopulation("KC", _NMB, TRAUBMILES_FAST, stdTM_p, stdTM_ini);
-    model.addNeuronPopulation("LHI", _NLHI, TRAUBMILES_FAST, stdTM_p, stdTM_ini);
-    model.addNeuronPopulation("DN", _NLB, TRAUBMILES_FAST, stdTM_p, stdTM_ini);
+    model.addNeuronPopulation("KC", _NMB, TRAUBMILES_SAFE, stdTM_p, stdTM_ini);
+    model.addNeuronPopulation("LHI", _NLHI, TRAUBMILES_SAFE, stdTM_p, stdTM_ini);
+    model.addNeuronPopulation("DN", _NLB, TRAUBMILES_SAFE, stdTM_p, stdTM_ini);
     
     float *init = NULL;
     model.addSynapsePopulation("PNKC", NSYNAPSE, DENSE, INDIVIDUALG, NO_DELAY, EXPDECAY, "PN", "KC", myPNKC_ini, myPNKC_p, postSynV,postExpPNKC);

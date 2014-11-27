@@ -382,6 +382,7 @@ void prepareStandardModels()
   n.thresholdConditionCode = tS("$(V) > 0.0");//TODO check this, to get better value
   nModels.push_back(n);
   TRAUBMILES_SAFE= nModels.size()-1;
+  TRAUBMILES= TRAUBMILES_SAFE;
 
  //Izhikevich neurons
   n.varNames.clear();
