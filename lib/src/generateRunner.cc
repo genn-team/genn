@@ -48,26 +48,26 @@ void genRunner(NNmodel &model, //!< Model description
     //initializing learning parameters to start
     model.initLearnGrps();  //Putting this here for the moment. Makes more sense to call it at the end of ModelDefinition, but this leaves the initialization to the user.
     
-    string scalar_MIN;
-    string scalar_MAX;
+    string SCALAR_MIN;
+    string SCALAR_MAX;
     if (model.ftype == tS("float")) {
-	scalar_MIN= tS("FLT_MIN");
-	scalar_MAX= tS("FLT_MAX");
+	SCALAR_MIN= tS("FLT_MIN");
+	SCALAR_MAX= tS("FLT_MAX");
     }
 
     if (model.ftype == tS("double")) {
-	scalar_MIN= tS("DBL_MIN");
-	scalar_MAX= tS("DBL_MAX");
+	SCALAR_MIN= tS("DBL_MIN");
+	SCALAR_MAX= tS("DBL_MAX");
     }
 
     for (int i= 0; i < nModels.size(); i++) {
 	for (int k= 0; k < nModels[i].varTypes.size(); k++) {
 	    substitute(nModels[i].varTypes[k], "scalar", model.ftype);
 	}
-	substitute(nModels[i].simCode, "scalar_MIN", scalar_MIN);
-	substitute(nModels[i].resetCode, "scalar_MIN", scalar_MIN);
-	substitute(nModels[i].simCode, "scalar_MAX", scalar_MAX);
-	substitute(nModels[i].resetCode, "scalar_MAX", scalar_MAX);
+	substitute(nModels[i].simCode, "SCALAR_MIN", SCALAR_MIN);
+	substitute(nModels[i].resetCode, "SCALAR_MIN", SCALAR_MIN);
+	substitute(nModels[i].simCode, "SCALAR_MAX", SCALAR_MAX);
+	substitute(nModels[i].resetCode, "SCALAR_MAX", SCALAR_MAX);
 	substitute(nModels[i].simCode, "scalar", model.ftype);
 	substitute(nModels[i].resetCode, "scalar", model.ftype);
     }
@@ -75,14 +75,14 @@ void genRunner(NNmodel &model, //!< Model description
 	for (int k= 0; k < weightUpdateModels[i].varTypes.size(); k++) {
 	    substitute(weightUpdateModels[i].varTypes[k], "scalar", model.ftype);
 	}
-	substitute(weightUpdateModels[i].simCode, "scalar_MIN", scalar_MIN);
-	substitute(weightUpdateModels[i].simCodeEvnt, "scalar_MIN", scalar_MIN);
-	substitute(weightUpdateModels[i].simLearnPost, "scalar_MIN", scalar_MIN);
-	substitute(weightUpdateModels[i].synapseDynamics, "scalar_MIN", scalar_MIN);
-	substitute(weightUpdateModels[i].simCode, "scalar_MAX", scalar_MAX);
-	substitute(weightUpdateModels[i].simCodeEvnt, "scalar_MAX", scalar_MAX);
-	substitute(weightUpdateModels[i].simLearnPost, "scalar_MAX", scalar_MAX);
-	substitute(weightUpdateModels[i].synapseDynamics, "scalar_MAX", scalar_MAX);
+	substitute(weightUpdateModels[i].simCode, "SCALAR_MIN", SCALAR_MIN);
+	substitute(weightUpdateModels[i].simCodeEvnt, "SCALAR_MIN", SCALAR_MIN);
+	substitute(weightUpdateModels[i].simLearnPost, "SCALAR_MIN", SCALAR_MIN);
+	substitute(weightUpdateModels[i].synapseDynamics, "SCALAR_MIN", SCALAR_MIN);
+	substitute(weightUpdateModels[i].simCode, "SCALAR_MAX", SCALAR_MAX);
+	substitute(weightUpdateModels[i].simCodeEvnt, "SCALAR_MAX", SCALAR_MAX);
+	substitute(weightUpdateModels[i].simLearnPost, "SCALAR_MAX", SCALAR_MAX);
+	substitute(weightUpdateModels[i].synapseDynamics, "SCALAR_MAX", SCALAR_MAX);
 	substitute(weightUpdateModels[i].simCode, "scalar", model.ftype);
 	substitute(weightUpdateModels[i].simCodeEvnt, "scalar", model.ftype);
 	substitute(weightUpdateModels[i].simLearnPost, "scalar", model.ftype);
@@ -92,10 +92,10 @@ void genRunner(NNmodel &model, //!< Model description
 	for (int k= 0; k < postSynModels[i].varTypes.size(); k++) {
 	    substitute(postSynModels[i].varTypes[k], "scalar", model.ftype);
 	}
-	substitute(postSynModels[i].postSyntoCurrent, "scalar_MIN", scalar_MIN);
-	substitute(postSynModels[i].postSynDecay, "scalar_MIN", scalar_MIN);
-	substitute(postSynModels[i].postSyntoCurrent, "scalar_MAX", scalar_MAX);
-	substitute(postSynModels[i].postSynDecay, "scalar_MAX", scalar_MAX);
+	substitute(postSynModels[i].postSyntoCurrent, "SCALAR_MIN", SCALAR_MIN);
+	substitute(postSynModels[i].postSynDecay, "SCALAR_MIN", SCALAR_MIN);
+	substitute(postSynModels[i].postSyntoCurrent, "SCALAR_MAX", SCALAR_MAX);
+	substitute(postSynModels[i].postSynDecay, "SCALAR_MAX", SCALAR_MAX);
 	substitute(postSynModels[i].postSyntoCurrent, "scalar", model.ftype);
 	substitute(postSynModels[i].postSynDecay, "scalar", model.ftype);
     }
@@ -117,12 +117,16 @@ void genRunner(NNmodel &model, //!< Model description
   os << "#include <cassert>" << endl << endl;
   os << "#include <stdint.h>" << endl << endl;
 
+  os << "#ifndef scalar" << endl;
+  os << "typdef scalar " << model.ftype << ";" << endl;
+  os << "#endif" << endl;
+  
   os << "#ifndef SCALAR_MIN" << endl;
-  os << "#define SCALAR_MIN " << scalar_MIN << endl;
+  os << "#define SCALAR_MIN " << SCALAR_MIN << endl;
   os << "#endif" << endl;
   
   os << "#ifndef SCALAR_MAX" << endl;
-  os << "#define SCALAR_MAX " << scalar_MAX << endl;
+  os << "#define SCALAR_MAX " << SCALAR_MAX << endl;
   os << "#endif" << endl;
 
   if (model.timing) {

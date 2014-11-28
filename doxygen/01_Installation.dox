@@ -1,19 +1,19 @@
 //----------------------------------------------------------------------------
-/*! \page Installation_sec Installation
+/*! \page Installation Installation
 
 You can download GeNN either as a zip file of a stable release or a
 snapshot of the most recent stable version or the unstable development
 version using the Git version control system.
 
-\section Downloading_sec Downloading a release
+\section Downloading Downloading a release
 Point your browser to \a https://github.com/genn-team/genn/releases
 and download a release from the list by clicking the relevant source
 code button. Note that GeNN is only distributed in the form of source
 code due to its code generation design. Binary distributions would not
 make sense in this framework and are not provided. 
-After downloading continue to install GeNN as described in the \ref install_sec section below.
+After downloading continue to install GeNN as described in the \ref install section below.
 
-\section GitSnapshot_sec Obtaining a Git snapshot
+\section GitSnapshot Obtaining a Git snapshot
 
 If it is not yet installed on your system, download and install Git
 (\a http://git-scm.com/). Then clone the GeNN repository from Github
@@ -38,7 +38,7 @@ Alternatively to using git you can also download the full content of
 GeNN sources clicking on the "Download ZIP" button on the bottom right
 of the GeNN Github page (\a https://github.com/genn-team/genn).
 
-\section installing_sec Installing GeNN
+\section installing Installing GeNN
 
 Installing GeNN comprises a few simple steps to create the GeNN
 development environment.
@@ -126,9 +126,14 @@ GeNN also has experimental CYGWIN support. However, with the
 introduction of native Windows support in GeNN 1.1.3, this is not
 being developed further and should be considered as deprecated.
 
-\section testInstall_sec Testing Your Installation
+\section testInstall Testing Your Installation
 
-To test your installation, follow the example in the \link Quickstart_sec Quickstart section\endlink.
+To test your installation, follow the example in the \link Quickstart Quickstart section\endlink.
+
+<br />
+
+-----
+\link Contents Previous\endlink | \link Installation Top\endlink | \link Quickstart Next\endlink
 
 */
 //----------------------------------------------------------------------------

@@ -1,85 +1,129 @@
 //----------------------------------------------------------------------------
-/*! \page Examples_sec Examples
+/*! \page Examples Examples
 
-At the moment, there are 5 example projects provided with GeNN.
+GeNN comes with a number of complete examples. At the moment, there are seven such example projects provided with GeNN.
+
+<br />
+
+\section Ex_OneComp Single compartment Izhikevich neuron(s)
+
+This is a minimal example, with only one neuron population (with more or less neurons depending on the command line, but without any synapses). The neurons are Izhikevich neurons \cite izhikevich2003simple with homogeneous parameters across the neuron population. The model can be used by navigating to the `userproject/OneComp_project` directory and entering a command line 
+\code{.cc}
+./generate_run [CPU/GPU] [n] [DIR] [EXE] [MODEL] [DEBUG OFF/ON].
+\endcode
+This would create `n`  tonic spiking Izhikevich neuron(s) with no connectivity, 
+receiving a constant, identical 4 nA input current. 
+
+For example, navigate to the `userproject/OneComp_project` directory and type
+\code{.cc}
+make all
+./generate_run 1 1 Outdir OneComp_sim OneComp 0.
+\endcode
+to model a single neuron which output will be saved in the `Outdir_output` directory.
+
+<br />
 
 \section ex_mbody Insect Olfaction Model
 
-Navigate to userproject/MBody1_project and type "../../tools/generate_run"
+This project implements the insect olfaction model by Nowotny et
+al. \cite nowotny2005self that demonstrates self-organized clustering of odours in a
+simulation of the insect antennal lobe and mushroom body. As provided
+the model works with conductance based Hodgkin-Huxley neurons \cite Traub1991 and
+several different synapse types, conductance based (but pulse-coupled)
+excitatory synapses, graded inhibitory synapses and synapses with a
+type of STDP rule. 
 
-This will show you the command line parameters needed:
+To explore the model navigate to `userproject/MBody1_project/` and type
+\code
+make all
+./generate_run 
+\endcode
+This will show you the command line parameters that are needed,
 \code{.cc}
 tools/generate_run [CPU/GPU] [#AL] [#KC] [#LHI] [#DN] [gscale] [DIR] [EXE] [MODEL] [DEBUG OFF/ON]
 \endcode
 The tool generate_run will generate connectivity files for the model
-MBody1, compile this model for the GPU and execute it. The command
+`MBody1`, compile this model for the CPU and GPU and execute it. The command
 line parameters are the numbers of neurons in the different neuropils
-of the model and an overall synaptic strength scaling factor. A typical call would
-for example be
+of the model and an overall synaptic strength scaling factor. A typical call would be, e.g.,
 \code{.cc}
-../../tools/generate_run 1 100 1000 20 100 0.00117 outname classol_sim MBody1 0
+../../tools/generate_run 1 100 1000 20 100 0.0025 test1 MBody1 0
 \endcode
-which would generate a model, and run it on the GPU, with 100 antennal
+which would generate a model, and run it on the GPU (first parameter), with 100 antennal
 lobe neurons, 1000 mushroom body Kenyon cells, 20 lateral horn
 interneurons and 100 mushroom body output neurons. All output files 
-will be prefixed with "outname".
+will be prefixed with `test1` and stored in `test1_output`. The model that is run is defined in `model/MBody1.cc` and debugging is switched off (the final command line parameter of 0).
 
-For more about this example model see \cite nowotny2005self.
+As provided, the model outputs a file `test1.out.st` that contains the spiking activity observed in the simulation, where there are two columns in this ASCII file, the first one containing the time of a spike and the second one the ID of the neuron that spiked. Users of matlab can use the scripts in the `matlab` directory to plot the results of a simulation.
+For more about the model itself and the scientific insights gained from it see \cite nowotny2005self.
 
-\section ex_poissonizh Izhikevich network driven by Poisson input spike trains:
+<br />
 
-Can be used as:
-\code{.cc}
-tools/generate_run_PoissonIzh [CPU/GPU] [#Poisson] [#Izhikevich] [pConn] [gscale] [DIR] [EXE] [MODEL] [DEBUG OFF/ON]
+\section ex_poissonizh Izhikevich Network Driven by Poisson Input Spike Trains:
+
+In this example project there is again a pool of non-connected Izhikevich model neurons \cite izhikevich2003simple that are connected to a pool of Poisson input neurons with a fixed probability.
+
+The model can be compiled by navigating to the `userproject\PoissonIzh_project` directory and typing 
+\code
+make all
 \endcode
-Navigate to the "userproject/PoissonIzh_project" directory and type
+Subsequently it can be invoked using the following command line
 \code{.cc}
-../../tools/generate_run_PoissonIzh 1 100 10 0.5 2 Outdir PoissonIzh_sim PoissonIzh 0
+./generate_run [CPU/GPU] [#Poisson] [#Izhikevich] [pConn] [gscale] [DIR] [EXE] [MODEL] [DEBUG OFF/ON]
 \endcode
-This will generate a network of 100 Poisson neurons connected to 10 Izhikevich neurons with a 0.5 probability. The same network 
-with sparse connectivity can be used by addind the synapse population with sparse connectivity in PoissonIzh.cc and by
-uncommenting the lines following the "//SPARSE CONNECTIVITY" tag in PoissonIzh.cu.
-
-\section Ex_OneComp Single compartment Izhikevich neuron(s)
-
-This is a minimal example, with only one neuron population (with more or more neurons without any synapses). The model may be used with 
+For example, navigate to the `userproject/PoissonIzh_project` directory and type
 \code{.cc}
-tools/generate_run_1comp [CPU/GPU] [#n] [DIR] [EXE] [MODEL] [DEBUG OFF/ON].
+./generate_run 1 100 10 0.5 2 Outdir PoissonIzh_sim PoissonIzh 0
 \endcode
-This would create one/a set of tonic spiking Izhikevich neuron(s) with no connectivity, 
-receiving a constant identical 4 nA input. 
+This will generate a network of 100 Poisson neurons connected to 10 Izhikevich neurons with a 0.5 probability. The same example network can be used with 
+sparse connectivity (i.e. sparse matrix representations for the connectivity within GeNN) by using the keyword `SPARSE` in the addSynapsePopulation instead of `DENSE` in PoissonIzh.cc and by
+uncommenting the lines following the comment `//SPARSE CONNECTIVITY` in the file PoissonIzh.cu.
 
-To use it, navigate to the "userproject/OneComp_project" directory and type
+<br />
+
+\section ex_izhnetwork Pulse-coupled Izhikevich Network
+
+This example model is inspired by simple thalamo-cortical network of Izhikevich 
+\cite izhikevich2003simple with an excitatory and an inhibitory population of spiking neurons that are randomly connected. 
+
+The model can be built by navigating to the `userproject/Izh_Sparse_project` directory and typing 
+\code
+make all
+\endcode
+It can then be used as 
 \code{.cc}
-../../tools/generate_run_1comp 1 1 Outdir OneComp_sim OneComp 0.
+./generate_run [CPU/GPU] [#n] [#Conn] [gscale] [outdir] [model name] [debug OFF/ON] [use previous connectivity OFF/ON]
 \endcode
+The model creates a pulse-coupled network \cite izhikevich2003simple with 80% excitatory 20% inhibitory neurons, each connecting to #Conn neurons using the sparse matrix connectivity methods of GeNN.
 
-\section ex_izhnetwork Pulse-coupled Izhikevich network
-
-Can be used as: 
+For example, typing
 \code{.cc}
-tools/generate_run_1comp generate_izhikevich_network_run [CPU/GPU] [#n] [#Conn] [gscale] [outdir] [executable name] [model name] [debug OFF/ON] [use previous connectivity OFF/ON]
+./tools/generate_izhikevich_network_run 1 10000 1000 1 Outdir Izh_sim_sparse Izh_sparse 0 0
 \endcode
-This example creates a pulse-coupled network \cite izhikevich2003simple with 80% excitatory 20% inhibitory neurons, each connecting to #Conn neurons with sparse connectivity.
+generates a random network of 8000 excitatory and 2000 inhibitory neurons which each have 1000 outgoing synapses to randomly chosen post-synaptic target neurons. The synapses are of a simple pulse-coupling type. The results of the simulation are saved in the directory `Outdir_output`, debugging is switched off, and the connectivity is generated afresh (rather than being read from existing files).
+\note
+If connectivity were to be read from files, the connectivity files would have to be in the `inputfiles` sub-directory and be named according to the names of the synapse populations involved, e.g., `gIzh_sparse_ee` ([variable name]=`g` [model name]=`Izh_sparse` _[synapse population]=`ee`). These name conventions are not part of the core GeNN definitions and it is the privilege (or burden) of the user to find their own in their own versions of `generate_run`.
 
-To use an example, navigate to the "userproject/Izh_Sparse_project" directory and type
-\code{.cc}
-../../tools/generate_izhikevich_network_run 1 10000 1000 1 Outdir Izh_sim_sparse Izh_sparse 0 0
-\endcode
+<br />
 
 \section ex_izhdelay Izhikevich network with delayed synapses
 
-This example project demonstrates the delayed synapse feature of GeNN. It creates
-a network of three Izhikevich neuron groups, connected all-to-all with fast, medium
-and slow synapse groups. Neurons in the output group only spike if they are
-simultaneously innervated by the input neurons, via slow synapses, and the
-interneurons, via faster synapses. 
+This example project demonstrates the feature of synaptic delays in
+GeNN. It creates a network of three Izhikevich neuron groups,
+connected all-to-all with short, medium and long delay synapse
+groups. Neurons in the output group only spike if they are
+simultaneously innervated by the input neurons, via synapses with long
+delay, and the interneurons, via synapses with shorter delay.
 
-To run this example project, cd to "$GENN_PATH/userproject/SynDelay_project" and type
+To run this example project, navigate to `userproject/SynDelay_project` and type
 \code{.cc}
 buildmodel SynDelay && make clean && make && ./bin/release/syn_delay 1 output
 \endcode
 
+<br />
+
+-----
+\link Quickstart Previous\endlink | \link Examples Top\endlink | \link UserManual Next\endlink
 
 */
 //----------------------------------------------------------------------------

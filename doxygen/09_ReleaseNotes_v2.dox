@@ -1,3 +1,5 @@
+/*! \page ReleaseNotes Release Notes for GeNN v2.0
+
 (user side) Changes in this large revision:
 
 - Users are now required to call "initGeNN()" before adding any
@@ -18,14 +20,29 @@
 - Due to the split of synaptic models into weightUpdateModel and
   postSynModel, the parameter arrays used during model definition need
   to be carefully split as well so that each side gets the right
-  parameters.
+  parameters. The correct parameter lists are listed for all defined
+  types in the \link UserManual User Manual\endlink
 
-- users can now define variables as type "scalar" which will at code
-  generation be translated to the model's ftype (typically float or
-  double). This works for defining variables as well as in all code
-  snippets. Users can also use the expressions "scalar_MAX" and
-  "scalar_MIN" for "FLT_MIN", "FLT_MAX", "DBL_MIN" and "DBL_MAX"
+- Advanced users can now define variables as type "scalar" when
+  introducing new neuron or synapse types. This will at the code
+  generation stage be translated to the model's floating point type
+  (ftype), float or double. This works for defining variables as well
+  as in all code snippets. Users can also use the expressions
+  "SCALAR_MAX" and "scalar_MIN" for "FLT_MIN", "FLT_MAX", "DBL_MIN"
+  and "DBL_MAX", respectively. Corresponding definitions of `scalar`,
+  `SCALAR_MIN` and `SCALAR_MAX` are also available for user-side
+  code whenever the code-generated file `runner.cc` is included.
 
+- the example projects have been re-organized so that wrapper scripts
+  of the `generate_run` type are now all located together with the
+  models they run instead of in a common `tools` directory. Generally
+  the structure now is that each example project contains the wrapper
+  script `generate_run` and a `model` subdirectory which contains the
+  model description file and the user side code complete with
+  Makefiles for Unix and Windows operating systems. The generated code
+  will be deposited in the `model` subdirectory in its own
+  `modelname_CODE` folder. Simulation results will always be deposited
+  in a new sub-folder of the main project directory.
 
 ---
 
@@ -55,3 +72,5 @@ the function was just too awkward for me).
 
   
 
+*/
+//-------------------------------------------------------------------------
