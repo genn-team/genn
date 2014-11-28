@@ -1,39 +1,57 @@
 /*! \page ReleaseNotes Release Notes for GeNN v2.0
 
-(user side) Changes in this large revision:
+Version 2.0 of GeNN comes with a lot of improvements and added features, some of which have necessitated some changes to the structure of parameter arrays among others.
 
-- Users are now required to call "initGeNN()" before adding any
-  populations. Ideally we could also force them to do so before
-  changing any of the nModels etc queues - maybe we should make a few
-  wrappers instead of letting users push_back on those queues without
-  control.
+\section UserChange User Side Changes 
 
-- glbscnt is now call glbSpkCnt for consistency
+1. Users are now required to call "initGeNN()" in theri model definition function before adding any populations to the neuronal network model. 
 
-- There is no longer a privileged parameter "Epre" - spike type events
-  are now defined by a code string - spkEvntThreshold.
+2. glbscnt is now call glbSpkCnt for consistency with glbSpkEvntCnt.
 
-- The function setSynapseG is deprecated. In a GLOBALG scenario, the
-  variables of a synapse group are fixed to the initial values
+3. There is no longer a privileged parameter `Epre`.  Spike type events
+  are now defined by a code string `spkEvntThreshold` like proper spikes. The only difference ism that Spike type events are specific to a synapse type rather than a neuron type.
+
+4. The function setSynapseG has been deprecated. In a `GLOBALG` scenario, the
+  variables of a synapse group are set to the initial values
   provided in modeldefinition.
 
-- Due to the split of synaptic models into weightUpdateModel and
+5. Due to the split of synaptic models into weightUpdateModel and
   postSynModel, the parameter arrays used during model definition need
   to be carefully split as well so that each side gets the right
-  parameters. The correct parameter lists are listed for all defined
-  types in the \link UserManual User Manual\endlink
+  parameters. For example, previously
+\code
+float myPNKC_p[3]= {
+  0.0,           // 0 - Erev: Reversal potential
+  -20.0,         // 1 - Epre: Presynaptic threshold potential
+  1.0            // 2 - tau_S: decay time constant for S [ms]
+};
+\endcode
+would define the parameter array of three parameters, `Erev`, `Epre`, and `tau_S` for a synapse of type `NSYNAPSE`.
+This now needs to be "split" into
+\code
+float *myPNKC_p= NULL;
+float postExpPNKC[2]={
+  1.0,            // 0 - tau_S: decay time constant for S [ms]
+  0.0		  // 1 - Erev: Reversal potential
+};
+\endcode
+i.e. parameters `Erev` and `tau_S` are moved to the post-synaptic model and its parameter array of two parameters. `Epre` is discontinued as a parameter for `NSYNAPSE`. As a consequence the weightupdate model of `NSYNAPSE` has no parameters and one can pass `NULL` for the parameter array in `addSynapsePopulation`. <br />
+The correct parameter lists for all defined neuron and synapse
+  model types are listed in the \link UserManual User Manual\endlink.
+\note
+If the parameters are not redefined appropriately this will lead to uncontrolled behaviour of models and likely to sgementation faults and crashes.
 
-- Advanced users can now define variables as type "scalar" when
+6. Advanced users can now define variables as type "scalar" when
   introducing new neuron or synapse types. This will at the code
   generation stage be translated to the model's floating point type
-  (ftype), float or double. This works for defining variables as well
+  (ftype), `float` or `double`. This works for defining variables as well
   as in all code snippets. Users can also use the expressions
-  "SCALAR_MAX" and "scalar_MIN" for "FLT_MIN", "FLT_MAX", "DBL_MIN"
+  "SCALAR_MAX" and "SCALAR_MIN" for "FLT_MIN", "FLT_MAX", "DBL_MIN"
   and "DBL_MAX", respectively. Corresponding definitions of `scalar`,
   `SCALAR_MIN` and `SCALAR_MAX` are also available for user-side
-  code whenever the code-generated file `runner.cc` is included.
+  code whenever the code-generated file `runner.cc` has been included.
 
-- the example projects have been re-organized so that wrapper scripts
+7. The example projects have been re-organized so that wrapper scripts
   of the `generate_run` type are now all located together with the
   models they run instead of in a common `tools` directory. Generally
   the structure now is that each example project contains the wrapper
@@ -44,33 +62,29 @@
   `modelname_CODE` folder. Simulation results will always be deposited
   in a new sub-folder of the main project directory.
 
----
+8. The `addSynapsePopulation(...)` function has now more mandatory
+   parameters relating to the introduction of separate weightupdate
+   models (pre-synaptic models) and postynaptic models. The correct
+   syntax for the `addSynapsePopulation(...)` can be found with
+   detailed explanations in teh \link UserManual User Manual\endlink.
 
-(developer side)
-- I have changed the allocateSparseArrays to take the connN as an
-argument. (Sorry, the previous way of first setting it and the using
-the function was just too awkward for me).
+\section developerChange Developer Side Changes
 
-- There is some placeholder code that uses (so far non-initialised)
-  reverse lookup arrays for the post-to pre mapping in sparse
-  arrays. I am assuming the existence of a "remap" array that
-  indicates the positions of relevant entries in the value arrays.
 
-- There is definitely some confusion with the delays now. I think I
-  would like to discuss this further and see whether we can do
-  something more systematic
+1. `allocateSparseArrays()` has been changed to take the number of
+connections, connN, as an argument rather than expecting it to have
+been set in the Connetion struct before the function is called as was
+the arrangement previously.
 
-- In the long run I would like to get rid of SpkEvnt code whenever it
-  is not actually used. This should not be a problem other than that
-  at the moment delay queues generally depend on SpkEvnt ... need to
-  have a choice of queues for either SpkEvnt or Spk.
+2. For the case of sparse connectivity, there is now a reverse mapping implemented with revers index arrays and a remap array that points to the original positions of variable values in teh forward array. By this mechanism, revers lookups from post to pre synaptic indices are possible but value changes in the sparse array values do only need to be done once.
 
-- I would like to introduce some rule checking about the allowed
-  combinations of ALLTOALL DENSE and SPARSE, with INDIVIDUALG,
-  INDIVIDUALID, GLOBALG. This could happen at each
-  adSynapsPopulation.
+3. SpkEvnt code is no longer generated whenever it
+  is not actually used. That is also true on a somewhat finer granularity where variable queues for synapse delays are only maintained of the corresponding variables are used in synaptic code. True spikes on the other hand are always detected in case the user is interested in them.
 
-  
+<br />
+
+-----
+\link Examples Previous\endlink | \link ReleaseNotes Top\endlink | \link UserManual Next\endlink
 
 */
 //-------------------------------------------------------------------------

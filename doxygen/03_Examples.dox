@@ -123,7 +123,7 @@ buildmodel SynDelay && make clean && make && ./bin/release/syn_delay 1 output
 <br />
 
 -----
-\link Quickstart Previous\endlink | \link Examples Top\endlink | \link UserManual Next\endlink
+\link Quickstart Previous\endlink | \link Examples Top\endlink | \link ReleaseNotes Next\endlink
 
 */
 //----------------------------------------------------------------------------
