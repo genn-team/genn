@@ -21,7 +21,7 @@
 #define DT 0.1  //!< This defines the global time step at which the simulation will run
 #include "modelSpec.h"
 #include "modelSpec.cc"
-#include "../../userproject/include/sizes.h"
+#include "sizes.h"
 
 int nGPU= 0;
 
