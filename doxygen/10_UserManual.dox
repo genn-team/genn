@@ -13,7 +13,7 @@
 
 
 //----------------------------------------------------------------------------
-/*!  \page Manual
+/*!  \page UserManual_sec User Manual
 
 \section sIntro Introduction
 GeNN is a software library for facilitating the simulation of neuronal

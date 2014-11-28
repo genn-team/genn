@@ -1,4 +1,4 @@
-/*!  \page List of Variables
+/*!  \page ListOfVariables_sec List of GeNN Variables
 There are some variables that are built-in and modified in a predefined way by GeNN. These variables are used for intermediary calculations and communication between different parts of the generated code. They can be used in the user defined code but no other variables should be defined with these names.
 
 \c V as neuronModel variable is a special variable that corresponds the the membrane potential. It will be used in certain conditions such as exceeding the threshold etc. 

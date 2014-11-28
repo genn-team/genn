@@ -1,0 +1,134 @@
+//----------------------------------------------------------------------------
+/*! \page Installation_sec Installation
+
+You can download GeNN either as a zip file of a stable release or a
+snapshot of the most recent stable version or the unstable development
+version using the Git version control system.
+
+\section Downloading_sec Downloading a release
+Point your browser to \a https://github.com/genn-team/genn/releases
+and download a release from the list by clicking the relevant source
+code button. Note that GeNN is only distributed in the form of source
+code due to its code generation design. Binary distributions would not
+make sense in this framework and are not provided. 
+After downloading continue to install GeNN as described in the \ref install_sec section below.
+
+\section GitSnapshot_sec Obtaining a Git snapshot
+
+If it is not yet installed on your system, download and install Git
+(\a http://git-scm.com/). Then clone the GeNN repository from Github
+\code
+git clone https://github.com/genn-team/genn.git
+\endcode
+The github url of GeNN in the command above can be copied from the
+HTTPS clone URL displayed on the GeNN Github page (\a https://github.com/genn-team/genn).
+
+This will clone the entire repository, including all open branches.
+By default git will check out the master branch which contains the
+source version upon which the latest release is based. If you want the
+most recent (but unstable) development version (which may or may not be fully functional at any
+given time), checkout the development branch
+\code
+git checkout development
+\endcode
+There are other branches in the repository that are used for specific
+development purposes and are opened and closed without warning.
+
+Alternatively to using git you can also download the full content of
+GeNN sources clicking on the "Download ZIP" button on the bottom right
+of the GeNN Github page (\a https://github.com/genn-team/genn).
+
+\section installing_sec Installing GeNN
+
+Installing GeNN comprises a few simple steps to create the GeNN
+development environment.
+
+(i) If you have downloaded a zip file, unpack GeNN.zip in a convenient
+location. Otherwise enter the directory where you downloaded the Git
+repository.
+
+(ii) Define the environment variable "GENN_PATH" to point to the main
+     GeNN directory, e.g. if you extracted/downloaded GeNN to
+     /usr/local/GeNN, then you can add "export
+     GENN_PATH=/usr/local/GeNN" to your login script (e.g. `.profile`
+     or `.bashrc`. If you are using
+     WINDOWS, the path should be a windows path as it will be
+     interpreted by the Visual C++ compiler `cl`, and enciront
+     variables are best set using `setx` in a Windows cmd window.
+To do so, open a Windows cmd window byt typing `cmd` in the search
+     field of the start menu, followed by the `enter` key.
+In the `cmd` window type
+\code
+setx GENN_PATH "C:\Users\me\GeNN"
+\endcode
+where `C:\Users\me\GeNN` is the path to your GeNN directory.
+
+(iii) Add $GENN_PATH/lib/bin to your PATH variable, e.g.
+\code
+      export PATH=$PATH:$GENN_PATH/lib/bin
+\endcode
+in your login script, or in windows,
+\code
+	setx PATH=%PATH%;%GENN_PATH%/lib/bin
+\endcode 
+
+(iv) If you haven't installed CUDA on your machine, obtain a fresh installation of the NVIDIA CUDA toolkit from
+    \a https://developer.nvidia.com/cuda-downloads
+
+(v) Set the `CUDA_PATH` variable if it is not already
+    set by the system, by putting
+\code
+export CUDA_PATH=/usr/local/cuda
+\endcode
+in your login script (or, if CUDA is installed in a non-standard
+    location, the appropriate path to the main CUDA directory). 
+    For most people, this will be done by the CUDA install script and
+    the default value of /usr/local/cuda is fine. In Windows, use
+    `setx` to set this variable,
+\code
+setx CUDA_PATH 
+\endcode
+
+This normally completes the installation.
+
+Depending on the needs of your own projects, e.g., depencies on other
+     libraries or non-standard installation paths of libraries used by
+     GeNN, you may want to modify Makefile examples under
+     `$GENN_PATH/userproject/xxx_project` and
+     `$GENN_PATH/userproject/xxx_project/model` 
+     to add extra linker-, include- and compiler-flags on a per-project basis, or
+     modify global default flags in $GENN_PATH/lib/include/makefile_common.mk.
+
+     For all makefiles there are separate makefiles for Unix-style
+     operating systems (GNUmakefile) such as Linux or MacOS and for
+     Windows (WINmakefile). 
+
+If you are using GeNN in Windows, you can use make.bat to build
+examples which will attempt to setup your
+development environment by executing `vcvarsall.bat` which is part of
+every Visual Studio distribution. For this to work properly, GeNN must
+be able to locate the Visual Studio install directory, which should be
+contained in the `VS_PATH` environment variable. You can set this
+variable by hand if it is not already set by the Visual C++ installer
+by typing
+\code
+setx VS_PATH "C:\Program Files (x86)\Microsoft Visual Studio 10.0"
+\endcode
+
+\note 
+- The exact path and name of Visual C++ installations will vary
+between systems.
+- Double quotation marks like in the above example are necessary
+whenever a path contains spaces.
+
+
+GeNN also has experimental CYGWIN support. However, with the
+introduction of native Windows support in GeNN 1.1.3, this is not
+being developed further and should be considered as deprecated.
+
+\section testInstall_sec Testing Your Installation
+
+To test your installation, follow the example in the \link Quickstart_sec Quickstart section\endlink.
+
+*/
+//----------------------------------------------------------------------------
