@@ -20,10 +20,10 @@ GeNN is a software library for facilitating the simulation of neuronal
 network models on NVIDIA CUDA enabled GPU hardware. It was designed
 with computational neuroscience models in mind rather than artificial
 neural networks. The main philosophy of GeNN is two-fold:
-- GeNN relies heavily on code generation to make it very flexible and
-allow adjusting simulation code to the model of interest and the GPU
+1. GeNN relies heavily on code generation to make it very flexible and
+to allow adjusting simulation code to the model of interest and the GPU
 hardware that is detected at compile time.
-- GeNN is lightweight in that it provides code for running models of
+2. GeNN is lightweight in that it provides code for running models of
 neuronal networks on GPU hardware but it leaves it to the user to
 write a final simulation engine. It so allows maximal flexibility to
 the user who can use any of the provided code but can fully choose,
@@ -31,7 +31,7 @@ inspect, extend or otherwise modify the generated code. She can also
 introduce her own optimisations and in particular control the data
 flow from and to the GPU in any desired granularity.
 
-This User guide gives an overview of how to use GeNN for a novice user and
+This manual gives an overview of how to use GeNN for a novice user and
 tries to lead the user to more expert use later on. With this we jump
 right in.
  
@@ -40,26 +40,28 @@ A network model is defined by the user by providing the function
 \code{.cc}
 void modelDefinition(NNmodel &model) 
 \endcode
-In this function, the following tasks must be completed:
-- The name of the model must be defined:
+in a separate file with name `name.cc`, where `name` is the name of the model network under consideration. In this function, the following tasks must be completed:
+1. The name of the model must be defined:
 \code{.cc}
 model.setName("MyModel");
 \endcode
-
-- neuron populations (at least one) must be added (see \ref subsect11). The
+2. Neuron populations (at least one) must be added (see \ref subsect11). The
   user may add as many neuron populations as she wishes. If resources
-  run out, there will not be a warning but GeNN will fail. All
+  run out, there will not be a warning but GeNN will fail. However, before this breaking point is reached, GeNN will make all necessary efforts in terms of block size optimisation to accommodate the defined models. All
   populations should have a unique name.
 
-- synapse populations (at least one) must be added (see \ref subsect12). Again,
+3. Synapse populations (zero or more) can be added (see \ref subsect12). Again,
   the number of synaptic connection populations is unlimited other than
   by resources.
+
+\note
+GeNN uses the convention where C/C++ files end in `.cc`. If this is not adhered to the build script `buildmodel.sh` will not recognise the model definition file.
 
 \subsection subsect11 Defining neuron populations
 
 Neuron populations are added using the function
 \code{.cc}
-model.addNeuronPopulation("name", n, TYPE, para, ini);
+model.addNeuronPopulation(name, n, TYPE, para, ini);
 \endcode
 where the arguments are:
 \arg \c const \c char* name: Name of the neuron population
@@ -68,64 +70,81 @@ where the arguments are:
 \arg \c float *para: Parameters of this neuron type
 \arg \c float *ini: Initial values for variables of this neuron type 
 
-The user may add as many neuron populations as the model necessitates. They should all have unique names.
+The user may add as many neuron populations as the model necessitates. They should all have unique names. The possible values for the arguments, predefined models and their parameters and initial values are detailed \ref sect2 below.
 
 \subsection subsect12 Defining synapse populations
 
 Synapse populations are added with the command
 \code{.cc}
-model.addSynapsePopulation("name", sType, sConn, gType, delaySteps, postSyn, "preName", "postName", sParam, VpostSyn,PpostSyn);
+model.addSynapsePopulation("name", sType, sConn, gType, delay, postSyn, "preName", "postName", sIni, sParam, postSynIni, postSynParam);
 \endcode
 where the arguments are
 \arg \c const \c char* name: The name of the synapse population
-\arg \c int \c sType: The type of synapse to be added (i.e. learning mode). See \ref subsect31 below for the available predefined synapse types.
+\arg \c int \c sType: The type of synapse to be added. See \ref subsect31 below for the available predefined synapse types.
 \arg \c int \c sConn: The type of synaptic connectivity. the options currently are "ALLTOALL",
 "DENSE", "SPARSE" (see \ref subsect32 )
 \arg \c int \c gType: The way how the synaptic conductivity g will be
 defined. Options are
 "INDIVIDUALG", "GLOBALG", "INDIVIDUALID". For their meaning, see \ref
 subsect33 below.
-\arg \c int \c delaySteps:  Number of delay slots.
+\arg \c int \c delay: Synaptic delay (in multiples of the simulation time step `DT`). 
 \arg \c int \c postSyn: Postsynaptic integration method. See \ref sect_postsyn for predefined types.
-\arg \c char* \c preName: Name of the (existing!) per-synaptic neuron
+\arg \c char* \c preName: Name of the (existing!) pre-synaptic neuron
 population.
 \arg \c char* \c postName: Name of the (existing!) post-synaptic neuron
 population.
-\arg \c float* \c sParam: A C-type array of floats that contains
+\arg \c float* \c sIni: A C-array of floats containing initial values for the (pre-) synaptic variables. 
+\arg \c float* \c sParam: A C-array of floats that contains
 parameter values (common to all synapses of the population) which will
 be used for the defined synapses. The array must contain the right
 number of parameters in the right order for the chosen synapse
 type. If too few, segmentation faults will occur, if too many, excess
-will be ignored. 
+will be ignored. For pre-defined synapse types the required parameters and their meaning are listed in \ref sect31 below. 
 
-Warnings: 1. If the synapse conductance definition type is "GLOBALG" the
-global value of the synapse conductances must be set with
-setSynapseG().
+\note
+If the synapse conductance definition type is "GLOBALG" then the
+global value of the synapse conductances is taken from the initial value provided in `sINI`. (The function setSynapseG() from earlier versions of GeNN has been deprecated).
 
-Synaptic update can be done by using true spikes (one point per spike after the threshold) or by using spike events (all points above the threshold). 
+Synaptic updates can occur per "true" spike (i.e at one point per spike, e.g. after a threshold was crossed) or for all "spike type events" (e.g. all points above a given threshold). This is defined within each given synapse type.
  
 \section sect2 Neuron models
 There is a number of predefined models which can be chosen in the \c
-addNeuronGroup function by their unique cardinal number, starting from
-0. For convenience, C constants with readable names are predefined:
+addNeuronGroup(...) function by their unique cardinal number, starting from
+0. For convenience, C variables with readable names are predefined
 - 0: \ref sect21 "MAPNEURON" 
 - 1: \ref sect22 "POISSONNEURON"
 - 2: \ref sect23 "TRAUBMILES"
 - 3: \ref sect24 "IZHIKEVICH"
 - 4: \ref sect25 "IZHIKEVICH_V"
 
-\subsection sect21 MAPNEURON (Map Neurons)
-The MAPNEURON type is a map based neuron model as defined in \cite Rulkov2002 .
+\note
+Ist is best practice to not depend on the unique cardinal numbers but use predefined names. While it is not intended that the numbers will change the unique names are guaranteed to work in all future versions of GeNN.
 
-It has 2 variables:
+\subsection sect21 MAPNEURON (Map Neurons)
+The MAPNEURON type is a map based neuron model based on \cite Rulkov2002 but in the 1-dimensional map form used in \cite nowotny2005self : 
+\f{eqnarray*}{
+V(t+\Delta t) &=& \left\{ \begin{array}{ll}
+V_{\rm spike} \Big(\frac{\alpha V_{\rm spike}}{V_{\rm spike}-V(t) \beta I_{\rm syn}} + y \Big) & V(t) \leq 0 \\
+V_{\rm spike} \big(\alpha+y\big) & V(t) \leq V_{\rm spike} \big(\alpha + y\big) \; \& \; V(t-\Delta t) \leq 0 \\
+-V_{\rm spike} & {\rm otherwise}
+\end{array}
+\right.
+\f}
+\note
+The `MAPNEURON` type only works as intended for the single time step size of `DT`= 0.5.
+
+The `MAPNEURON` type has 2 variables:
 - \c V - the membrane potential
 - \c preV - the membrane potential at the previous time step
 
 and it has 4 parameters:
-- \c Vspike - the membrane potential at the top of the spike
-- \c alpha - determines the shape of the iteration function
-- \c y - "shift / excitation" parameter, also determines the iteration function
-- \c beta - roughly regulates the scale of the input into the neuron
+- \c Vspike - determines the amplitude of spikes, typically -60mV
+- \c alpha - determines the shape of the iteration function, typically \f$\alpha \f$= 3
+- \c y - "shift / excitation" parameter, also determines the iteration function,originally, y= -2.468 
+- \c beta - roughly speaking equivalent to the input resistance, i.e. it regulates the scale of the input into the neuron, typically \f$\beta\f$= 2.64 \f${\rm M}\Omega\f$.
+
+\note
+The initial values array for the `MAPNEURON` type needs two entries for `V` and `Vpre` and the parameter array needs four entries for `Vspike`, `alpha`, `y` and `beta`,  *in that order*.
 
 \subsection sect22 POISSONNEURON (Poisson Neurons)
 
@@ -145,6 +164,24 @@ and 4 parameters:
 - \c Vspike - Membrane potential at spike (mV)
 - \c Vrest - Membrane potential at rest (mV)
 
+\note
+The initial values array for the `POISSONNEURON` type needs three entries for `V`, `Seed` and `SpikeTime` and the parameter array needs four entries for `therate`, `trefract`, `Vspike` and `Vrest`,  *in that order*.
+
+\note Internally, GeNN uses a linear approximation for the probability
+of firing a spike in a given time step of size `DT`, i.e. the
+probability of firing is `therate` times `DT`. This approximation is
+usually very good, especially for typical, quite small time steps and
+moderate firing rates. However, it is worth noting that the
+approximation becomes poor for very high firing rates and large time
+steps. An unrelated problem may occur with very low firing rates and
+small time steps. In that case it can occur that the firing
+probability is so small that the granularity of the 64 bit integer
+based random number generator begins to show. The effect manifests
+itself in that small changes in the firing rate do not seem to have an
+effect on the behaviour of the Poisson neurons because the numbers are
+so small that only if the random number is identical 0 a spike will be
+triggered.
+ 
 \subsection sect23 TRAUBMILES (Hodgkin-Huxley neurons with Traub & Miles algorithm)
 
 It has 4 variables:
