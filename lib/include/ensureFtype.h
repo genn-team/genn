@@ -18,11 +18,10 @@ void doFinal(string &code, unsigned int i, string type, unsigned int &state)
     }
     else {
 	if (type == "float") {
-	    if (i == code.size()-1) code= code+string("f");
-	    else code.insert(i,1,'f');
+	    code.insert(i,1,'f');
 	}
     }
-    if (i < code.size()) {
+    if (i < code.size()-1) {
 	if (op.find(code[i]) == string::npos) {
 	    state= 0;
 	}
@@ -72,8 +71,9 @@ string ensureFtype(string oldcode, string type)
 		state= 4;
 		break;
 	    }
-	    if (digits.find(code[i]) == string::npos) {
-		state= 0; // the number looks like an integer ...
+	    if (digits.find(code[i]) == string::npos) {// the number looks like an integer ...
+		if (op.find(code[i]) != string::npos) state= 1;
+		else state= 0; 
 		break;
 	    }
 	    break;
@@ -87,21 +87,44 @@ string ensureFtype(string oldcode, string type)
 		break;
 	    }
 	    break;
-	case 4: // we have had '.' and/or 'e', 'E', digits only now
+	case 4: // we have had '.' and 'e', 'E', digits only now
+	    if (digits.find(code[i]) != string::npos) {
+		state= 6;
+		break;
+	    }
+	    if ((code[i] != '+') && (code[i] != '-')) {
+		if (op.find(code[i]) != string::npos) state= 1;
+		else state= 0; 
+		break;
+	    }
+	    else {
+		state= 5;
+		break;
+	    }
+	case 5: // now one or more digits or else ...
+	    if (digits.find(code[i]) != string::npos) {
+		state= 6;
+		break;
+	    }
+	    else {
+		if (op.find(code[i]) != string::npos) state= 1;
+		else state= 0; 
+		break;
+	    }
+	case 6: // any non-digit character will trigger action
 	    if (digits.find(code[i]) == string::npos) {
 		doFinal(code, i, type, state);
+		break;
 	    }
 	    break;
 	}
 	i++;
-//	if (i < code.size()) cerr << state << " " << code[i] << endl;
     }
-    if (state > 1) {
-	doFinal(code, i, type, state);
+    if ((state > 1) && (state != 5)) {
+	if (type == "float") {
+	    code= code+string("f");
+	}
     }
-//    cerr << endl;
-//    cerr << code.size();
-//    cerr << code << endl;
     return code;
 }
 
