@@ -30,8 +30,6 @@ This file compiles to a tool to generate appropriate input patterns for the ante
 
 using namespace std;
 
-typedef float scalar;
-
 randomGen R;
 
 int main(int argc, char *argv[])
@@ -50,8 +48,8 @@ int main(int argc, char *argv[])
   int nNo= atoi(argv[1]);
   int classNo= atoi(argv[2]);
   int single_pNo= atoi(argv[3]);
-  scalar pact= atof(argv[4]);
-  scalar pperturb= atof(argv[5]);
+  float pact= atof(argv[4]);
+  float pperturb= atof(argv[5]);
   float lambdaOn= atof(argv[6]);
   float lambdaOff= atof(argv[7]);
   int patternNo= single_pNo*classNo;
@@ -62,7 +60,7 @@ int main(int argc, char *argv[])
   int npert= (int) (pperturb*nact);
   int theno, newno;
   ofstream os(argv[8], ios::binary);
-  scalar *fpt= new scalar[patternNo*nNo];
+  float *fpt= new float[patternNo*nNo];
 
   cerr << "# call was: ";
   for (int i= 0; i < argc; i++) cerr << argv[i] << " ";
@@ -109,7 +107,7 @@ int main(int argc, char *argv[])
     }
   }
 
-  os.write((char *)fpt, patternNo*nNo*sizeof(scalar));
+  os.write((char *)fpt, patternNo*nNo*sizeof(float));
   os.close();
   delete[] fpt;
 

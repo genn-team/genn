@@ -9,13 +9,14 @@
 //g++ -Wall -Winline -g -I../../lib/include/numlib -o gen_syns_sparse_izhModel gen_syns_sparse_izhModel.cc
 
 
-using namespace std;
-
 #include <iostream>
 #include <fstream>
 #include <stdlib.h>
 #include <string.h>
 #include <vector>
+
+using namespace std;
+
 #include "randomGen.h"
 #include "randomGen.cc"
 

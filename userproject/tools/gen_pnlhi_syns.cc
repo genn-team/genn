@@ -20,11 +20,12 @@ This file compiles to a tool to generate appropriate connectivity patterns betwe
 */ 
 //--------------------------------------------------------------------------
 
-using namespace std;
 
 #include <iostream>
 #include <fstream>
 #include <stdlib.h>
+
+using namespace std;
 
 int main(int argc, char *argv[])
 {

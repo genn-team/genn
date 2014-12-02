@@ -172,7 +172,7 @@ int main(int argc, char *argv[])
     }
     locust.run(DT, which); // run next batch
     if (which == GPU) {  
-        CHECK_CUDA_ERRORS(cudaMemcpy(VDN, d_VDN, 100*sizeof(float), cudaMemcpyDeviceToHost));
+	pullDNfromDevice();
     }
     
 #ifdef TIMING

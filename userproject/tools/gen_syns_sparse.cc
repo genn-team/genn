@@ -8,11 +8,13 @@
 //g++ -Wall -Winline -g -I../lib/include/numlib -o gen_syns_sparse gen_syns_sparse.cc
 
 
-using namespace std;
 
 #include <iostream>
 #include <fstream>
 #include <string.h>
+
+using namespace std;
+
 #include "randomGen.h"
 #include "gauss.h"
 #include <vector>
