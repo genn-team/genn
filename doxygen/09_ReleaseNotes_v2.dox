@@ -4,7 +4,7 @@ Version 2.0 of GeNN comes with a lot of improvements and added features, some of
 
 \section UserChange User Side Changes 
 
-1. Users are now required to call "initGeNN()" in theri model definition function before adding any populations to the neuronal network model. 
+1. Users are now required to call "initGeNN()" in the model definition function before adding any populations to the neuronal network model. 
 
 2. glbscnt is now call glbSpkCnt for consistency with glbSpkEvntCnt.
 

@@ -118,7 +118,7 @@ void genRunner(NNmodel &model, //!< Model description
   os << "#include <stdint.h>" << endl << endl;
 
   os << "#ifndef scalar" << endl;
-  os << "typdef scalar " << model.ftype << ";" << endl;
+  os << "typedef " << model.ftype << " scalar;" << endl;
   os << "#endif" << endl;
   
   os << "#ifndef SCALAR_MIN" << endl;

@@ -36,6 +36,7 @@ template<typename T>
 std::string toString(T t)
 {
   std::stringstream s;
+  s << std::showpoint;
   s << t;
   return s.str();
 } 

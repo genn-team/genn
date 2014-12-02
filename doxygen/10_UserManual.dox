@@ -15,6 +15,16 @@
 //----------------------------------------------------------------------------
 /*!  \page UserManual User Manual
 
+\section Contents
+
+\ref sIntro <br />
+\subpage sect1 <br />
+\subpage sect2 <br />
+\subpage sect3 <br />
+\subpage sect_postsyn <br />
+\subpage ListOfVariables <br />
+\subpage Credits <br />
+
 \section sIntro Introduction
 GeNN is a software library for facilitating the simulation of neuronal
 network models on NVIDIA CUDA enabled GPU hardware. It was designed
@@ -34,8 +44,11 @@ flow from and to the GPU in any desired granularity.
 This manual gives an overview of how to use GeNN for a novice user and
 tries to lead the user to more expert use later on. With this we jump
 right in.
- 
-\section sect1 Defining a network model
+*/
+
+//----------------------------------------------------------------------------
+/*!  
+\page sect1 Defining a network model
 A network model is defined by the user by providing the function 
 \code{.cc}
 void modelDefinition(NNmodel &model) 
@@ -57,7 +70,7 @@ model.setName("MyModel");
 \note
 GeNN uses the convention where C/C++ files end in `.cc`. If this is not adhered to the build script `buildmodel.sh` will not recognise the model definition file.
 
-\subsection subsect11 Defining neuron populations
+\section subsect11 Defining neuron populations
 
 Neuron populations are added using the function
 \code{.cc}
@@ -72,7 +85,7 @@ where the arguments are:
 
 The user may add as many neuron populations as the model necessitates. They should all have unique names. The possible values for the arguments, predefined models and their parameters and initial values are detailed \ref sect2 below.
 
-\subsection subsect12 Defining synapse populations
+\section subsect12 Defining synapse populations
 
 Synapse populations are added with the command
 \code{.cc}
@@ -106,8 +119,11 @@ If the synapse conductance definition type is "GLOBALG" then the
 global value of the synapse conductances is taken from the initial value provided in `sINI`. (The function setSynapseG() from earlier versions of GeNN has been deprecated).
 
 Synaptic updates can occur per "true" spike (i.e at one point per spike, e.g. after a threshold was crossed) or for all "spike type events" (e.g. all points above a given threshold). This is defined within each given synapse type.
- 
-\section sect2 Neuron models
+*/
+
+//----------------------------------------------------------------------------
+/*! 
+\page sect2 Neuron models
 There is a number of predefined models which can be chosen in the \c
 addNeuronGroup(...) function by their unique cardinal number, starting from
 0. For convenience, C variables with readable names are predefined
@@ -120,7 +136,7 @@ addNeuronGroup(...) function by their unique cardinal number, starting from
 \note
 Ist is best practice to not depend on the unique cardinal numbers but use predefined names. While it is not intended that the numbers will change the unique names are guaranteed to work in all future versions of GeNN.
 
-\subsection sect21 MAPNEURON (Map Neurons)
+\section sect21 MAPNEURON (Map Neurons)
 The MAPNEURON type is a map based neuron model based on \cite Rulkov2002 but in the 1-dimensional map form used in \cite nowotny2005self : 
 \f{eqnarray*}{
 V(t+\Delta t) &=& \left\{ \begin{array}{ll}
@@ -146,7 +162,7 @@ and it has 4 parameters:
 \note
 The initial values array for the `MAPNEURON` type needs two entries for `V` and `Vpre` and the parameter array needs four entries for `Vspike`, `alpha`, `y` and `beta`,  *in that order*.
 
-\subsection sect22 POISSONNEURON (Poisson Neurons)
+\section sect22 POISSONNEURON (Poisson Neurons)
 
 Poisson neurons have constant membrane potential (\c Vrest) unless they are 
 activated randomly to the \c Vspike value if (t- \c SpikeTime ) > \c trefract.
@@ -169,20 +185,40 @@ The initial values array for the `POISSONNEURON` type needs three entries for `V
 
 \note Internally, GeNN uses a linear approximation for the probability
 of firing a spike in a given time step of size `DT`, i.e. the
-probability of firing is `therate` times `DT`. This approximation is
-usually very good, especially for typical, quite small time steps and
-moderate firing rates. However, it is worth noting that the
-approximation becomes poor for very high firing rates and large time
-steps. An unrelated problem may occur with very low firing rates and
-small time steps. In that case it can occur that the firing
-probability is so small that the granularity of the 64 bit integer
-based random number generator begins to show. The effect manifests
-itself in that small changes in the firing rate do not seem to have an
-effect on the behaviour of the Poisson neurons because the numbers are
-so small that only if the random number is identical 0 a spike will be
-triggered.
+probability of firing is `therate` times `DT`: \f$ p = \lambda \Delta t
+\f$. This approximation is usually very good, especially for typical,
+quite small time steps and moderate firing rates. However, it is worth
+noting that the approximation becomes poor for very high firing rates
+and large time steps. An unrelated problem may occur with very low
+firing rates and small time steps. In that case it can occur that the
+firing probability is so small that the granularity of the 64 bit
+integer based random number generator begins to show. The effect
+manifests itself in that small changes in the firing rate do not seem
+to have an effect on the behaviour of the Poisson neurons because the
+numbers are so small that only if the random number is identical 0 a
+spike will be triggered.
  
-\subsection sect23 TRAUBMILES (Hodgkin-Huxley neurons with Traub & Miles algorithm)
+\section sect23 TRAUBMILES (Hodgkin-Huxley neurons with Traub & Miles algorithm)
+
+This conductance based model has been taken from \ref Traub1991 and can be described by the equations:
+\f{eqnarray*}{
+C \frac{d V}{dt}  &=& -I_{{\rm Na}} -I_K-I_{{\rm leak}}-I_M-I_{i,DC}-I_{i,{\rm syn}}-I_i, \\
+I_{{\rm Na}}(t) &=& g_{{\rm Na}} m_i(t)^3 h_i(t)(V_i(t)-E_{{\rm Na}}) \\
+I_{{\rm K}}(t) &=& g_{{\rm K}} n_i(t)^4(V_i(t)-E_{{\rm K}})  \\
+\frac{dy(t)}{dt} &=& \alpha_y (V(t))(1-y(t))-\beta_y(V(t)) y(t), \f}
+where \f$y_i= m, h, n\f$, and
+\f{eqnarray*}{
+\alpha_n&=& 0.032(-50-V)/\big(\exp((-50-V)/5)-1\big)  \\
+  \beta_n &=& 0.5\exp((-55-V)/40)  \\
+  \alpha_m &=& 0.32(-52-V)/\big(\exp((-52-V)/4)-1\big)  \\
+   \beta_m &=& 0.28(25+V)/\big(\exp((25+V)/5)-1\big)  \\
+   \alpha_h &=& 0.128\exp((-48-V)/18)  \\
+   \beta_h &=& 4/\big(\exp((-25-V)/5)+1\big). 
+\f}
+and typical parameters are \f$C=0.143\f$ nF, \f$g_{{\rm leak}}= 0.02672\f$
+\f$\mu\f$S, \f$E_{{\rm leak}}= -63.563\f$ mV, \f$g_{{\rm Na}}=7.15\f$ \f$\mu\f$S,
+\f$E_{{\rm Na}}= 50\f$ mV, \f$g_{{\rm {\rm K}}}=1.43\f$ \f$\mu\f$S,
+\f$E_{{\rm K}}= -95\f$ mV. 
 
 It has 4 variables:
 
@@ -201,8 +237,17 @@ and 7 parameters:
 - \c El - Leak equi potential in mV
 - \c Cmem - Membrane capacity density in muF/cm^2
 
-\subsection sect24 IZHIKEVICH (Izhikevich neurons with fixed parameters)
+\note
+Internally, the ordinary differential equations defining the model are integrated with a linear Euler algorithm and GeNN integrates 25 internal time steps for each neuron for each network time step. I.e., if the network is simulated at `DT= 0.1` ms, then the neurons are integrated with a linear Euler algorithm with `lDT= 0.004` ms.
+
+\section sect24 IZHIKEVICH (Izhikevich neurons with fixed parameters)
 This is the Izhikevich model with fixed parameters \cite izhikevich2003simple.
+It is usually described as 
+\f{eqnarray*}
+\frac{dV}{dt} &=& 0.04 V^2 + 5 V + 140 - U + I, \\
+\frac{dU}{dt} &=& a (bV-U),
+\f}
+I is an external input current and the voltage V is reset to parameter c and U incremented by parameter d, whenever V >= 30 mV. This is paired with a particular integration procedure of two 0.5 ms Euler time steps for the V equation followed by one 1 ms time step of the U equation. Because of its popularity we provide this model in this form here event though due to the details of the usual implementation it is strictly speaking inconsistent with the displayed equations.
 
 Variables are:
 
@@ -215,14 +260,24 @@ Parameters are:
 - \c c - after-spike reset value of V
 - \c d - after-spike reset value of U
 
-\subsection sect25 IZHIKEVICH_V (Izhikevich neurons with variable parameters)
-This is the same model as \ref sect24 IZHIKEVICH but parameters defined as variables 
-in order to provide a parameter range instead of fixed values for every neuron in the
-population.
+\section sect25 IZHIKEVICH_V (Izhikevich neurons with variable parameters) 
+This is the same model as \ref sect24 IZHIKEVICH but
+parameters are defined as "variables" in order to allow users to provide individual values for each individual neuron instead of fixed values for all neurons across the population.
 
-\subsection sect_own Defining your own neuron model 
+Accordingly, the model has the Variables:
+- \c V - Membrane potential
+- \c U - Membrane recovery variable
+- \c a - time scale of U
+- \c b - sensitivity of U
+- \c c - after-spike reset value of V
+- \c d - after-spike reset value of U
 
-In order to define a new neuron model for use in a GeNN application,
+and no parameters.
+
+
+\section sect_own Defining your own neuron type 
+
+In order to define a new neuron type for use in a GeNN application,
 it is necessary to populate an object of class \c neuronModel and
 append it to the global vector \c nModels. The \c neuronModel class
 has several data members that make up the full description of the
@@ -233,58 +288,106 @@ neuron model:
   for one time step. Within this code string, variables need to be
   referred to by $(NAME), where NAME is the name of the variable as
   defined in the vector varNames. The code may refer to the predefined
-  primitives "DT" for the
-  time step size and "Isyn" for the total incoming synaptic current.
+  primitives `DT` for the
+  time step size and `Isyn` for the total incoming synaptic current. <br />
+  Example:
+\code
+neuronModel model;
+model.simCode=String("$(V)+= (-$(a)$(V)+$(Isyn))*DT;");
+\endcode
+would implement a leaky itegrator \f$\frac{dV}{dt}= -a V + I_{{\rm syn}}\f$.
 
 - \c varNames of type \c vector<string>: This vector needs to be
   filled with the names of variables that make up the neuron
-  state. The variables defined here as "NAME" can then be used in the
-  syntax $(NAME) in the code string.
+  state. The variables defined here as `NAME` can then be used in the
+  syntax `$(NAME)` in the code string. <br />
+  Example:
+\code
+model.varNames.push_back(String("V"));
+\endcode
+would add the variable V as needed by the code string in the example above.
 
 - \c varTypes of type \c vector<string>: This vector needs to be
   filled with the variable type (e.g. "float", "double", etc) for the
   variables defined in \c varNames. Types and variables are matched to
-  each other by position in the respective vectors.
+  each other by position in the respective vectors. <br />
+Example:
+\code
+model.varTypes.push_back(String("float"));
+\endcode
+would designate the variable V to be of type float. 
+\note
+Variable names and variable types are matched by their position in the corresponding arrays `varNames` and `varTypes`, i.e. the 0th entry of `varNames` will have the type stored in the 0th entry of `varTypes` and so on.
 
 - \c pNames of type \c vector<string>: This vector will contain the names
- of parameters relevant to the model. If defined as "NAME" here, they
- can then be referenced as "$(NAME)" in the code string. The length of
+ of parameters relevant to the model. If defined as `NAME` here, they
+ can then be referenced as `$(NAME)` in the code string. The length of
  this vector determines the expected number of parameters in the
  initialisation of the neuron model. Parameters are currently assumed
- to be always of type float.
+ to be always of type float. <br />
+ \code
+model.pNames.push_back(String("a"));
+\endcode
+stores the parameter `a` needed in the code example above.
 
-- \c dpNames of type \c vector<string>: Names of dependant
-  parameters. This is a mechanism for enhanced efficiency for running
+- \c dpNames of type \c vector<string>: Names of "dependent
+  parameters". Dependent parameters are a mechanism for enhanced efficiency when running
   neuron models. If parameters with model-side meaning, such as time
   constants or conductances always appear in a certain combination in
-  the model, then it is more efficient to pre-compute the combination
+  the model, then it is more efficient to pre-compute this combination
   and define it as a dependent parameter. This vector contains the
-  names of such dependent parameters.
+  names of such dependent parameters. <br />
+For example, if in the example above the original model had been \f$\frac{dV}{dt} = -g/C \, V +I_{\rm syn}\f$. Then one could define the code string and parameters as
+\code
+model.simCode=String("$(V)+= (-$(a)$(V)+$(Isyn))*DT;");
+model.varNames.push_back(String("V"));
+model.varTypes.push_back(String("float"));
+model.pNames.push_back(String("g"));
+model.pNames.push_back(String("C"));
+model.dpNames.push_back(String("a"));
+\endcode
+
+- `dps` of type \ref `dpclass`*: The dependent parameter class, i.e. an implementation of \ref `dpclass` which would return the value for dependent parameters when queried for them. E.g. in the example above it would return `a` when queried for dependent parameter 0 through `dpclass::calculateDerivedParameter()`. Examples how this is done can be found in the pre-defined classes, e.g. expDecayDp, pwSTDP, \ref rulkovdp etc. 
 
 - \c tmpVarNames of type \c vector<string>: This vector can be used to
   request additional variables that are not part of the state of the
   neuron but used only as temporary storage during evaluation of the
-  integration time step. 
+  integration time step. <br />
+For example, one could define
+\code
+model.tmpVarNames.push_back(String("a"));
+model.tmpVarNames.push_back(String("float"));
+model.simCode= String("$(a)= $(g)/$(C); \n\
+$(V)+= -$(a)*$(V);\n\");
+\endcode
+which would be equivalent to
+\code
+model.simCode= String("float $(a)= $(g)/$(C); \n\
+$(V)+= -$(a)*$(V);\n\");
+\endcode
 
 - \c tmpVarTypes of type \c vector<string>: This vector will contain
-  the variable types of the temporary variables.
+  the variable types of the temporary variables, matched up by position as usual.
 
 Once the completed \c neuronModel object is appended to the \c nModels
-vector it can be used in network descriptions by referring to its
+vector,
+\code
+nModels.push_back(model);
+\endcode
+ it can be used in network descriptions by referring to its
 cardinal number in the nModels vector. I.e., if the model is added as
 the 4th entry, it would be model "3" (counting starts at 0 in usual C
 convention). The information of the cardinal number of a new model can
 be obtained by referring to \c nModels.size() right before appending
-the new model. 
-
-For dependent parameters in a user-defined model, it is the user's
-responsibility to intitialize the derived parameters from the relevant
-entries of the global \c neuronPara vector entries, to store them in a
-vector and append this vector to the global vector \c dnp. This needs
-to be done right after the call to addNeuronPopulation that involves
-the neuron model in questions. For an
-example of what needs to be done, refer to the member function \c
-initDerivedNeuronPara() of class \c NNmodel which does this for Rulkov map neurons.
+the new model, i.e. a typical use case would be.
+\code
+int myModel= nModels.size();
+nModels.push_back(model);
+\endcode.
+Then one can use the model as
+\code
+networkModel.addNeuronPopulation(..., myModel, ...);
+\endcode
 
 \section sect_explinput Explicit current input to neurons 
 The user can decide whether a neuron group receives external input current or not 
@@ -297,24 +400,27 @@ the type of input. Current options are:
 - 0: NOINP: Neuron group receives no input. This is the value by default
  when the explicit input is not activated.
 
-- 1: CONSTINP: All the neurons receive a constant input value. This value may also be
-defined as a variable.
+- 1: CONSTINP: All the neurons receive a constant input value. This value may also be defined as a variable, i.e. be time-dependent.
 
-- 2: MATINP: Input is read from a file containing the input matrix.
+- 2: MATINP: The input is read from a file containing the input matrix.
 
-- 3: INPRULE: Input is defined as a rule. It differs from CONSTINP by the way that the
-input is injected: CONSTINP creates a value which is modified in real time, hence complex 
-instructions are limited. INPRULE creates an input array which will be copied into 
-the device memory. 
+- 3: INPRULE: The input is defined as a rule. It differs from CONSTINP
+in the way that the input is injected: CONSTINP creates a value which
+is modified in real time, hence complex instructions are
+limited. INPRULE creates an input array which will be copied into the
+device memory.
+*/
 
-\section sect3 Synapse models
-\subsection subsect31 Models
+//----------------------------------------------------------------------------
+/*! 
+\page sect3 Synapse models
+\section subsect31 Models
 Currently 3 predefined synapse models are available: 
 - 0: \ref sect31 "NSYNAPSE" 
 - 1: \ref sect32 "NGRADSYNAPSE"
 - 2: \ref sect33 "LEARN1SYNAPSE"
 
-\subsubsection sect31 NSYNAPSE (No Learning)
+\section sect31 NSYNAPSE (No Learning)
 If this model is selected, no learning rule is applied to the synapse. 
 The model has 3 parameters:
 - \c tau_S* - decay time constant for S [ms] 
@@ -323,7 +429,7 @@ The model has 3 parameters:
 
 (* DEPRECATED: Decay time constant and reversal potential in synapse parameters are not used anymore and they will be removed in the next release. They should be defined in the postsynaptic mechanisms.)
 
-\subsubsection sect32 NGRADSYNAPSE (Graded Synapse)
+\section sect32 NGRADSYNAPSE (Graded Synapse)
 In a graded synapse, the conductance is updated gradually with the rule: 
 
 \f[ gSyn= g * tanh((E - E_{pre}) / V_{slope} \f]
@@ -336,7 +442,7 @@ The parameters are:
 
 (* DEPRECATED: Decay time constant and reversal potential in synapse parameters are not used anymore and they will be removed in the next release. They should be defined in the postsynaptic mechanisms.)
 
-\subsubsection sect33 LEARN1SYNAPSE (Learning Synapse with a Primitive Role)
+\section sect33 LEARN1SYNAPSE (Learning Synapse with a Primitive Role)
 This is a simple STDP rule including a time delay for the finite transmission speed of the synapse, defined as a piecewise function.
 
 <!--
@@ -361,7 +467,7 @@ This model has 13 parameters:
 
 For more details, see \cite nowotny2005self.
 
-\subsubsection sect34 Defining a new synapse model
+\section sect34 Defining a new synapse model
 There is a way to define a synapse model the same way a neuronModel can be defined. This feature is still
 experimental and supported only with the SpineML and development branches. 
 
@@ -377,7 +483,7 @@ neuron fired before the presynaptic neuron.
 These codes would include update functions for adding up conductances for that neuron model and for changes in conductances for the next time step (learning). Condutance in this code should be referred to as $("G") 
 
 
-\subsection subsect32 Connectivity types
+\section subsect32 Connectivity types
 If INDIVIDUALG is used with ALLTOALL connectivity, the conductance values are stored 
 in an array called "ftype * gp<synapseName>", defined and initialised in runner.cc 
 in the generated code.
@@ -402,12 +508,12 @@ For example, consider a network of two presynaptic neurons connected to three po
 
  See tools/gen_syns_sparse_IzhModel used in Izh_sparse project to see a working example.	
 
-\subsection subsect33 Conductance definition methods
+\section subsect33 Conductance definition methods
 The available options work as follows:
 - INDIVIDUALG: When this option is chosen in the \c
 addSynapsePopulation command, GeNN reserves an array of size n_pre x
 n_post float for individual conductance values for each combination of
-pre and postsynaptic neuron. The actual values of teh conductances are
+pre and postsynaptic neuron. The actual values of the conductances are
 passed at runtime from the user side code, using the \c copyGToDevice
 function.
 
@@ -420,17 +526,84 @@ function.
 same maximal conductance for all existing synaptic connections but
 which synapses exist will be defined at runtime from the user side
 code.
-\section sect_postsyn Post-synaptic integration methods
+*/
+
+//----------------------------------------------------------------------------
+/*! 
+\page sect_postsyn Post-synaptic integration methods
 
 The shape of the postsynaptic current can be defined by either using a predefined method or by adding a 
 new postSynModel object. 
 
 - EXPDECAY: Exponential decay. Decay time constant and reversal potential parameters are needed for this postsynaptic mechanism.
-  
-
 */
-//----------------------------------------------------------------------------
 
+//----------------------------------------------------------------------------
+/*! 
+\page ListOfVariables Variables in GeNN
+
+There are different types of variables that users of GeNN should be aware of and should know how to use.
+
+\section modelVars Neuron and Synapse variables
+One type of variables are those that originate from a neuron model type, weightupdate model type or post-synaptic model type. The core name of the variable is defined when the model type is introduced, i.e. with a statement such as
+\code
+neuronModel model;
+model.varNames.push_back(String"x"));
+model.varTypes.push_back(String("double"));
+...
+int myModel= nModels.size();
+nModels.push_back(model);
+\endcode
+This declares that whenever the defined model type of cardinal number `myModel` is used, there will be a variable of core name `x`. The full GeNN name of this variable is obtained by directly concatenating the core name with the name of the neuron population in which the model type has been used, i.e. after a definition
+\code
+networkModel.addNeuronPopulation("EN", n, myModel, ...);
+\endcode
+there will be a variable `xEN` of type `double*` available in the global namespace of the simulation program. GeNN will pre-allocated this C array to the correct size of elements corresponding to the size of the neuron population, `n` in the example above. GeNN will also free these variables when the provided function `freeMem()` is called. Users can otherwise manipulate these variable arrays as they wish.
+For convenience, GeNN provides functions `pullXXfromDevice()` and `pushXXtoDevice()` to copy the variables associated to a neuron population `XX` from the device into host memory and vice versa. E.g.
+\code
+pullENfromDevice();
+\endcode
+would copy the C array xEN from device memory into host memory (and any other variables that the neuron type of the population EN may have). 
+
+The user can also directly use CUDA memory copy commands independent of the provided convenience function. The relevant device pointers for all variables that exist in host memory have the same name prefixed with `d_`. For example, the copy command that would be contained in `pullENfromDevice()` might look like
+\code
+unsigned int size;	
+size = sizeof(double) * nEN;
+cudaMemcpy(xEN, d_xEN, size, cudaMemcpyDeviceToHost);
+\endcode
+where `n` is an integer containing the population size of the EN neuron population.
+
+The same convention as for neuron variables applies for the variables of synapse groups, both for those originating from weightupdate models and from post-synaptic models, e.g. the variables in type `NSYNAPSE` contain the variable `g` of type float. Then, after
+\code
+networkModel.addSynapsePopulation("ENIN", NSYNAPSE, ...);
+\endcode
+there will be a global variable of type `float*` with the name `gENIN` that is pre-allocated to the right size. There will also be a matching device pointer with the name `d_gENIN`. 
+\note
+The content of `gENIN` needs to be interpreted differently for DENSE connectivity and sparse matrix based SPARSE connectivity representations. For DENSE connectivity `gENIN` would contain "n_pre" times "n_post" elements, ordered along the pre-synaptic neuronsas the major dimension, i.e. the value of `gENIN` for the ith pre-synaptic neuron and the jth post-synaptic neuron would be `gENIN[i*n_post+j]`. The arrangement of values in the SPARSE representation is explained in section \ref subsect32
+
+\section predefinedVars Pre-defined Variables in GeNN
+In addition to the explicitly declared neuron, weightupdate and post-synaptic variables there are some variables that are built-in and modified in a predefined way by GeNN. These variables are used for intermediary calculations and communication between different parts of the generated code. They can be used in the user defined code but no other variables should be defined with these names.
+
+- \c addtoinSyn is a local variable which is used for updating synaptic input. The way it is modified is defined by the weightupdate model,
+ therefore if a user defines her own model she should update this variable to contain the input to the post-synaptic model.   
+At the end of the synaptic update, its value is copied back to the d_inSyn<synapsePopulation> variables which will are used in the next step of the neuron update to provide the input to the post-snaptic neurons.
+
+- \c Isyn is a local variable which defines the (summed) input current to a neuron. It is typically the sum of any explicit current input 
+and all synaptic inputs. The way its value is calculated during the update of the postsynaptic neuron is defined by the code provided in the postSynModel. For example, the standard `expDecay` post-synaptic model defines
+ps.postSyntoCurrent= String("$(inSyn)*($(E)-$(V))");
+\endcode
+which implements a conductance based synapse in which the post-synaptic current is given by \f$I_{\rm syn}= g*s*(V_{\rm rev}-V_{\rm post})\f$. 
+\note
+The `addtoinSyn` variables from all incoming synapses are automatically summed and added to the current value of `inSyn`.
+
+The value resulting from the `postSyntoCurrent` code is assigned to `Isyn` and  can then be used in neuron simCode like so:
+\code
+$(V)+= (-$(V)+$(Isyn))*DT 
+\endcode 
+
+- \c sT<neuronName> is the last spike time in a neuron and is automatically generated for pre- and postsynaptic neuron groups of a synapse group i that follows a spike based learning rule (indicated by usesPostLearning[i]= TRUE for the ith synapse population).
+*/
+  
 //----------------------------------------------------------------------------
 /*! \page Credits Credits
  

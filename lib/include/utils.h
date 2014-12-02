@@ -38,8 +38,10 @@
 
 #include "modelSpec.h"
 #include "toString.h"
+#include "ensureFtype.h"
+
 //--------------------------------------------------------------------------
-/* \brief Macro for wrapping cuda runtime function calls and catching any errors that may be thrown.
+/*! \brief Macro for wrapping cuda runtime function calls and catching any errors that may be thrown.
  */
 //--------------------------------------------------------------------------
 
@@ -55,7 +57,7 @@
 }
 
 //--------------------------------------------------------------------------
-/* \brief Function to write the comment header denoting file authorship and contact details into the generated code.
+/*! \brief Function to write the comment header denoting file authorship and contact details into the generated code.
  */
 //--------------------------------------------------------------------------
 
@@ -163,7 +165,7 @@ public:
 	}
 };
 
-vector<neuronModel> nModels; //!< Global c++ vector containing all neuron model descriptions
+vector<neuronModel> nModels; //!< Global C++ vector containing all neuron model descriptions
 
 //--------------------------------------------------------------------------
 /*! \brief Function that defines standard neuron models
@@ -460,10 +462,10 @@ void prepareStandardModels()
 
 
 
-vector<postSynModel> postSynModels;
+vector<postSynModel> postSynModels; //!< Global C++ vector containing all post-synaptic update model descriptions
 
 //--------------------------------------------------------------------------
-/* \brief Function that prepares the standard post-synaptic models, including their variables, parameters, dependent parameters and code strings.
+/*! \brief Function that prepares the standard post-synaptic models, including their variables, parameters, dependent parameters and code strings.
  */
 //--------------------------------------------------------------------------
 
@@ -563,12 +565,13 @@ public:
     }
 };
 
+
+vector<weightUpdateModel> weightUpdateModels; //!< Global C++ vector containing all weightupdate model descriptions
+
 //--------------------------------------------------------------------------
-/* \brief Function that prepares the standard (pre) synaptic models, including their variables, parameters, dependent parameters and code strings.
+/*! \brief Function that prepares the standard (pre) synaptic models, including their variables, parameters, dependent parameters and code strings.
  */
 //--------------------------------------------------------------------------
-
-vector<weightUpdateModel> weightUpdateModels;
 
 void prepareWeightUpdateModels()
 {
