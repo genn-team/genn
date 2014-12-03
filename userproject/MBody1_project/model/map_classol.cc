@@ -107,6 +107,19 @@ classol::~classol()
   freeMem();
 }
 
+void classol::importArray(scalar *dest, double *src, int sz) 
+{
+    for (int i= 0; i < sz; i++) {
+	dest[i]= (scalar) src[i];
+    }
+}
+
+void classol::exportArray(double *dest, scalar *src, int sz) 
+{
+    for (int i= 0; i < sz; i++) {
+	dest[i]= (scalar) src[i];
+    }
+}
 
 //--------------------------------------------------------------------------
 /*! \brief Method for reading the connectivity between PNs and KCs from a file
@@ -117,8 +130,11 @@ void classol::read_pnkcsyns(FILE *f //!< File handle for a file containing PN to
 			    )
 {
   // version 1
-  fprintf(stdout, "%lu\n", model.neuronN[0]*model.neuronN[1]*sizeof(scalar));
-  unsigned int retval = fread(gPNKC, 1, model.neuronN[0]*model.neuronN[1]*sizeof(scalar),f);
+    int sz= model.neuronN[0]*model.neuronN[1];
+    double *tmpg= new double[sz];
+    fprintf(stdout, "%lu\n", sz * sizeof(double));
+    unsigned int retval = fread(tmpg, 1, sz * sizeof(double),f);
+    importArray(gPNKC, tmpg, sz);
   // version 2
   /*  unsigned int UIntSz= sizeof(unsigned int)*8;   // in bit!
   unsigned int logUIntSz= (int) (logf((scalar) UIntSz)/logf(2.0f)+1e-5f);
@@ -136,6 +152,7 @@ void classol::read_pnkcsyns(FILE *f //!< File handle for a file containing PN to
     fprintf(stdout, "%f ", gPNKC[i]);
   }
   fprintf(stdout,"\n\n");
+    delete[] tmpg;
 }
 
 //--------------------------------------------------------------------------
@@ -147,8 +164,12 @@ void classol::read_pnkcsyns(FILE *f //!< File handle for a file containing PN to
 void classol::write_pnkcsyns(FILE *f //!< File handle for a file to write PN to KC conductivity values to
 			     )
 {
-  fwrite(gPNKC, model.neuronN[0] * model.neuronN[1] * sizeof(scalar), 1, f);
-  fprintf(stdout, "wrote pnkc ... \n");
+    int sz= model.neuronN[0]*model.neuronN[1];
+    double *tmpg= new double[sz];
+    exportArray(tmpg, gPNKC, sz);
+    fwrite(tmpg, model.neuronN[0] * model.neuronN[1] * sizeof(double), 1, f);
+    fprintf(stdout, "wrote pnkc ... \n");
+    delete[] tmpg;
 }
 
 
@@ -160,13 +181,17 @@ void classol::write_pnkcsyns(FILE *f //!< File handle for a file to write PN to 
 void classol::read_pnlhisyns(FILE *f //!< File handle for a file containing PN to LHI conductivity values
 			     )
 {
-  unsigned int retval = fread(gPNLHI, 1, model.neuronN[0] * model.neuronN[2] * sizeof(scalar),  f);
-  fprintf(stdout,"read pnlhi ... \n");
-  fprintf(stdout, "%u bytes, values start with: \n", retval);
-  for(int i= 0; i < 20; i++) {
-    fprintf(stdout, "%f ", gPNLHI[i]);
-  }
-  fprintf(stdout, "\n\n");
+    int sz= model.neuronN[0]*model.neuronN[2];
+    double *tmpg= new double[sz];
+    unsigned int retval = fread(tmpg, 1, sz * sizeof(double),  f);
+    importArray(gPNLHI, tmpg, sz);
+    fprintf(stdout,"read pnlhi ... \n");
+    fprintf(stdout, "%u bytes, values start with: \n", retval);
+    for(int i= 0; i < 20; i++) {
+	fprintf(stdout, "%f ", gPNLHI[i]);
+    }
+    fprintf(stdout, "\n\n");
+    delete[] tmpg;
 }
 
 //--------------------------------------------------------------------------
@@ -177,8 +202,12 @@ void classol::read_pnlhisyns(FILE *f //!< File handle for a file containing PN t
 void classol::write_pnlhisyns(FILE *f //!< File handle for a file to write PN to LHI conductivity values to
 			      )
 {
-  fwrite(gPNLHI, model.neuronN[0] * model.neuronN[2] * sizeof(scalar), 1, f);
-  fprintf(stdout, "wrote pnlhi ... \n");
+    int sz= model.neuronN[0]*model.neuronN[2];
+    double *tmpg= new double[sz];
+    exportArray(tmpg, gPNLHI, sz);
+    fwrite(tmpg, sz * sizeof(double), 1, f);
+    fprintf(stdout, "wrote pnlhi ... \n");
+    delete[] tmpg;
 }
 
 
@@ -190,21 +219,28 @@ void classol::write_pnlhisyns(FILE *f //!< File handle for a file to write PN to
 void classol::read_kcdnsyns(FILE *f //!< File handle for a file containing KC to DN (detector neuron) conductivity values 
 			    )
 {
-  unsigned int retval =fread(gKCDN, 1, model.neuronN[1]*model.neuronN[3]*sizeof(scalar),f);
-  fprintf(stdout, "read kcdn ... \n");
-  fprintf(stdout, "%u bytes, values start with: \n", retval);
-  for(int i= 0; i < 100; i++) {
-    fprintf(stdout, "%f ", gKCDN[i]);
-  }
-  fprintf(stdout, "\n\n");
-  for (int i= 0; i < model.neuronN[1]*model.neuronN[3]; i++) {
-      if (gKCDN[i] < 2.0*SCALAR_MIN){
-	  gKCDN[i] = 2.0*SCALAR_MIN; //to avoid log(0)/0 below
-	  fprintf(stdout, "Too low conductance value detected and set to 2*SCALAR_MIN at index %d \n", i);
-      }
-      scalar tmp = gKCDN[i] / myKCDN_p[6]*2.0 ;
-      gRawKCDN[i]=  0.5 * log( tmp / (2.0 - tmp)) /myKCDN_p[8] + myKCDN_p[7];
-  }
+    int sz= model.neuronN[1]*model.neuronN[3];
+    double *tmpg= new double[sz];   
+    unsigned int retval =fread(tmpg, 1, sz *sizeof(double),f);
+    importArray(gKCDN, tmpg, sz);
+    fprintf(stdout, "read kcdn ... \n");
+    fprintf(stdout, "%u bytes, values start with: \n", retval);
+    for(int i= 0; i < 100; i++) {
+	fprintf(stdout, "%f ", gKCDN[i]);
+    }
+    fprintf(stdout, "\n\n");
+    int cnt= 0;
+    for (int i= 0; i < model.neuronN[1]*model.neuronN[3]; i++) {
+	if (gKCDN[i] < 2.0*SCALAR_MIN){
+	    cnt++;
+	    fprintf(stdout, "Too low conductance value %e detected and set to 2*SCALAR_MIN= %e, at index %d \n", gKCDN[i], 2*SCALAR_MIN, i);
+	    gKCDN[i] = 2.0*SCALAR_MIN; //to avoid log(0)/0 below
+	}
+	scalar tmp = gKCDN[i] / myKCDN_p[6]*2.0 ;
+	gRawKCDN[i]=  0.5 * log( tmp / (2.0 - tmp)) /myKCDN_p[8] + myKCDN_p[7];
+    }
+    cerr << "Total number of low value corrections: " << cnt << endl;
+    delete[] tmpg;
 }
 
 
@@ -216,40 +252,42 @@ void classol::read_kcdnsyns(FILE *f //!< File handle for a file containing KC to
 void classol::write_kcdnsyns(FILE *f //!< File handle for a file to write KC to DN (detectore neuron) conductivity values to
 			     )
 {
-  fwrite(gKCDN, model.neuronN[1]*model.neuronN[3]*sizeof(scalar),1,f);
-  fprintf(stdout, "wrote kcdn ... \n");
+    int sz= model.neuronN[1]*model.neuronN[3];
+    double *tmpg= new double[sz];
+     exportArray(tmpg, gKCDN, sz);   
+    fwrite(tmpg, sz*sizeof(double),1,f);
+    fprintf(stdout, "wrote kcdn ... \n");
+    delete[] tmpg;
 }
 
-void classol::read_sparsesyns_par(int synInd, Conductance C, scalar* g, FILE *f_ind,FILE *f_indInG,FILE *f_g //!< File handle for a file containing sparse conductivity values
-			    )
+void classol::read_sparsesyns_par(int synInd, Conductance C, scalar* g, FILE *f_ind,FILE *f_indInG, FILE *f_g //!< File handle for a file containing sparse conductivity values
+    )
 {
-  //allocateSparseArray(synInd,C.connN);
-  int retval = fread(g, 1, C.connN*sizeof(scalar),f_g);
-  fprintf(stdout,"%d active synapses. \n",C.connN);
-  retval = fread(C.indInG, 1, (model.neuronN[model.synapseSource[synInd]]+1)*sizeof(unsigned int),f_indInG);
-  retval = fread(C.ind, 1, C.connN*sizeof(int),f_ind);
-
-  
-  // general:
-  fprintf(stdout,"Read conductance ... \n");
-  fprintf(stdout, "Size is %d for synapse group %d. Values start with: \n",C.connN, synInd);
-  for(int i= 0; i < 100; i++) {
-      fprintf(stdout, "%d, %d ", C.indInG[i], C.ind[i]);
-  }
-  fprintf(stdout,"\n\n");
-  
-  
-  fprintf(stdout, "%d indices read. Index values start with: \n",C.connN);
-  for(int i= 0; i < 100; i++) {
-    fprintf(stdout, "%d ", C.ind[i]);
-  }  
-  fprintf(stdout,"\n\n");
-  
-  
-  fprintf(stdout, "%d g indices read. Index in g array values start with: \n", model.neuronN[model.synapseSource[synInd]]+1);
-  for(int i= 0; i < 100; i++) {
-    fprintf(stdout, "%d ", C.indInG[i]);
-  }  
+    //allocateSparseArray(synInd,C.connN);
+    int sz= C.connN;
+    double *tmpg= new double[sz];
+    int retval = fread(tmpg, 1, sz*sizeof(double),f_g);
+    importArray(g, tmpg, sz);
+    fprintf(stdout,"%d active synapses. \n", sz);
+    retval = fread(C.indInG, 1, (model.neuronN[model.synapseSource[synInd]]+1)*sizeof(unsigned int),f_indInG);
+    retval = fread(C.ind, 1, sz*sizeof(int),f_ind);
+    // general:
+    fprintf(stdout,"Read conductance ... \n");
+    fprintf(stdout, "Size is %d for synapse group %d. Values start with: \n",C.connN, synInd);
+    for(int i= 0; i < 100; i++) {
+	fprintf(stdout, "%d, %d ", C.indInG[i], C.ind[i]);
+    }
+    fprintf(stdout,"\n\n");
+    fprintf(stdout, "%d indices read. Index values start with: \n",C.connN);
+    for(int i= 0; i < 100; i++) {
+	fprintf(stdout, "%d ", C.ind[i]);
+    }  
+    fprintf(stdout,"\n\n");
+    fprintf(stdout, "%d g indices read. Index in g array values start with: \n", model.neuronN[model.synapseSource[synInd]]+1);
+    for(int i= 0; i < 100; i++) {
+	fprintf(stdout, "%d ", C.indInG[i]);
+    }  
+    delete[] tmpg;
 }
 
 //--------------------------------------------------------------------------
@@ -261,14 +299,18 @@ void classol::read_input_patterns(FILE *f //!< File handle for a file containing
 				  )
 {
   // we use a predefined pattern number
-  unsigned int retval = fread(p_pattern, 1, model.neuronN[0]*PATTERNNO*sizeof(scalar),f);
-  fprintf(stdout, "read patterns ... \n");
-  fprintf(stdout, "%u bytes, input pattern values start with: \n", retval);
-  for(int i= 0; i < 100; i++) {
-      fprintf(stdout, "%f ", p_pattern[i]);
-  }
-  fprintf(stdout, "\n\n");
-  convertProbabilityToRandomNumberThreshold(p_pattern, pattern, model.neuronN[0]*PATTERNNO);
+    int sz= model.neuronN[0]*PATTERNNO;
+    double *tmpp= new double[sz];
+    unsigned int retval = fread(tmpp, 1, sz*sizeof(double),f);
+    importArray(p_pattern, tmpp, sz);
+    fprintf(stdout, "read patterns ... \n");
+    fprintf(stdout, "%u bytes, input pattern values start with: \n", retval);
+    for(int i= 0; i < 100; i++) {
+	fprintf(stdout, "%f ", p_pattern[i]);
+    }
+    fprintf(stdout, "\n\n");
+    convertProbabilityToRandomNumberThreshold(p_pattern, pattern, model.neuronN[0]*PATTERNNO);
+    delete[] tmpp;
 }
 
 //--------------------------------------------------------------------------

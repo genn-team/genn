@@ -27,8 +27,6 @@ T. Nowotny, R. Huerta, H. D. I. Abarbanel, and M. I. Rabinovich Self-organizatio
 //--------------------------------------------------------------------------
 
 
-#include "MBody1.cc"
-
 //--------------------------------------------------------------------------
 /*! \brief This class cpontains the methods for running the MBody1 example model.
  */
@@ -36,6 +34,9 @@ T. Nowotny, R. Huerta, H. D. I. Abarbanel, and M. I. Rabinovich Self-organizatio
 
 class classol
 {
+private:
+    void importArray(scalar *, double *, int);
+    void exportArray(double *, scalar *, int);
  public:
   NNmodel model;
   unsigned int offset;

@@ -55,9 +55,9 @@ template<typename T> std::string toString(T t)
 
 int main(int argc, char *argv[])
 {
-  if (!(argc == 10 || argc == 11))
+  if (!(argc == 11 || argc == 12))
   {
-    cerr << "usage: generate_run <CPU=0, AUTO GPU=1, GPU n= \"n+2\"> <nAL> <nMB> <nLHI> <nLb> <gscale> <outdir> <model name> <debug mode? (0/1)> <use previous connectivity?(optional atm) (0/1)>" << endl;
+      cerr << "usage: generate_run <CPU=0, AUTO GPU=1, GPU n= \"n+2\"> <nAL> <nMB> <nLHI> <nLb> <gscale> <outdir> <model name> <debug mode? (0/1)> <ftype \"FLOAT\" or \"DOUBLE\"> <use previous connectivity?(optional atm) (0/1)>" << endl;
     exit(1);
   }
   int retval;
@@ -67,14 +67,15 @@ int main(int argc, char *argv[])
   string modelName = argv[8];
   int dbgMode = atoi(argv[9]); // set this to 1 if you want to enable gdb and cuda-gdb debugging to 0 for release
   int fixsynapse;
-  if (argc == 10) fixsynapse = 0;
-  if (argc == 11) fixsynapse = atoi(argv[10]); // if this is not 0 network generation is skipped
+  if (argc == 11) fixsynapse = 0;
+  if (argc == 12) fixsynapse = atoi(argv[11]); // if this is not 0 network generation is skipped
   int which = atoi(argv[1]);
   int nAL = atoi(argv[2]);
   int nMB = atoi(argv[3]);
   int nLHI = atoi(argv[4]);
   int nLB = atoi(argv[5]);
   float gscale = atof(argv[6]);
+  char *ftype= argv[10];
   
   float pnkc_gsyn = 100.0f / nAL * gscale;
   float pnkc_gsyn_sigma = 100.0f / nAL * gscale / 15.0f; 

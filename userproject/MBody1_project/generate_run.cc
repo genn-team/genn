@@ -26,6 +26,7 @@ This file compiles to a tool that wraps all the other tools into one chain of ta
 #include <sstream>
 #include <cstdlib>
 #include <cmath>
+#include <locale>
 
 #ifdef _WIN32
 #include <direct.h>
@@ -53,6 +54,22 @@ std::string toString(T t)
 #define tS(X) toString(X) //!< Macro providing the abbreviated syntax tS() instead of toString().
 
 
+string toUpper(string s)
+{
+    for (unsigned int i= 0; i < s.length(); i++) {
+	s[i]= toupper(s[i]);
+    }
+    return s;
+}
+
+string toLower(string s)
+{
+    for (unsigned int i= 0; i < s.length(); i++) {
+	s[i]= tolower(s[i]);
+    }
+    return s;
+}
+
 //--------------------------------------------------------------------------
 /*! \brief Main entry point for generate_run.
  */
@@ -60,9 +77,9 @@ std::string toString(T t)
 
 int main(int argc, char *argv[])
 {
-  if (argc != 11)
+  if (argc != 12)
   {
-      cerr << "usage: generate_run <CPU=0, AUTO GPU=1, GPU n= \"n+2\"> <nAL> <nMB> <nLHI> <nLb> <gscale> <outdir> <model name> <debug mode? (0/1)> <ftype \"DOUBLE\" or \"FLOAT\"" << endl;
+      cerr << "usage: generate_run <CPU=0, AUTO GPU=1, GPU n= \"n+2\"> <nAL> <nMB> <nLHI> <nLb> <gscale> <outdir> <model name> <debug mode? (0/1)> <ftype \"DOUBLE\" or \"FLOAT\"> <reuse input&connectivty? 0/1>" << endl;
     exit(1);
   }
 
@@ -73,6 +90,7 @@ int main(int argc, char *argv[])
   string modelName = argv[8];
   int dbgMode = atoi(argv[9]); // set this to 1 if you want to enable gdb and cuda-gdb debugging to 0 for release
   char *ftype= argv[10]; 
+  int fixsynapse= atoi(argv[11]); 
 
   int which = atoi(argv[1]);
   int nAL = atoi(argv[2]);
@@ -94,7 +112,18 @@ int main(int argc, char *argv[])
   os << "#define _NMB " << nMB << endl;
   os << "#define _NLHI " << nLHI << endl;
   os << "#define _NLB " << nLB << endl;
-  os << "#define _FTYPE " << ftype << endl;
+  string tmps= tS(ftype);
+  os << "#define _FTYPE " << toUpper(tmps) << endl;
+  os << "#define scalar " << toLower(tmps) << endl;
+  if (toLower(ftype) == "double") {
+      os << "#define SCALAR_MIN DBL_MIN" << endl;
+      os << "#define SCALAR_MAX DBL_MAX" << endl;
+  }
+  else {
+      os << "#define SCALAR_MIN FLT_MIN" << endl;
+      os << "#define SCALAR_MAX FLT_MAX" << endl;
+  } 
+
   os.close();
 
   // build it
@@ -106,7 +135,7 @@ int main(int argc, char *argv[])
   }
 #else // UNIX
   cmd = "cd model && buildmodel.sh " + modelName + " " + toString(dbgMode);
-  cmd += " && make clean && make classol_sim_"+tS(ftype);
+  cmd += " && make clean && make classol_sim";
  if (dbgMode == 1) {
     cmd += " debug";
   }
@@ -126,77 +155,80 @@ int main(int argc, char *argv[])
     cerr << "Directory cannot be created. It may exist already." << endl;
   }
 #endif
-  
-  // generate pnkc synapses
-  cmd = gennPath + "/userproject/tools/gen_pnkc_syns_"+tS(ftype) + " ";
-  cmd += toString(nAL) + " ";
-  cmd += toString(nMB) + " ";
-  cmd += "0.5 ";
-  cmd += toString(pnkc_gsyn) + " ";
-  cmd += toString(pnkc_gsyn_sigma) + " ";
-  cmd += outdir + "/" + toString(argv[7]) + ".pnkc";
-  cmd += " 1> " + outdir + "/" + toString(argv[7]) + ".pnkc.msg 2>&1";
-  retval=system(cmd.c_str());
-  if (retval != 0){
-    cerr << "ERROR: Following call failed with status " << retval << ":" << endl << cmd << endl;
-    cerr << "Exiting..." << endl;
-    exit(1);
-  }
-  // generate kcdn synapses
-  cmd = gennPath + "/userproject/tools/gen_kcdn_syns_" +tS(ftype) + " ";
-  cmd += toString(nMB) + " ";
-  cmd += toString(nLB) + " ";
-  cmd += toString(kcdn_gsyn) + " ";
-  cmd += toString(kcdn_gsyn_sigma) + " ";
-  cmd += toString(kcdn_gsyn_sigma) + " ";
-  cmd += outdir + "/" + toString(argv[7]) + ".kcdn";
-  cmd += " 1> " + outdir + "/" + toString(argv[7]) + ".kcdn.msg 2>&1";
-  retval=system(cmd.c_str());
-  if (retval != 0){
-    cerr << "ERROR: Following call failed with status " << retval << ":" << endl << cmd << endl;
-    cerr << "Exiting..." << endl;
-    exit(1);
-  }
+
+  if (fixsynapse == 0) {
+      // generate pnkc synapses
+      cmd = gennPath + "/userproject/tools/gen_pnkc_syns ";
+      cmd += toString(nAL) + " ";
+      cmd += toString(nMB) + " ";
+      cmd += "0.5 ";
+      cmd += toString(pnkc_gsyn) + " ";
+      cmd += toString(pnkc_gsyn_sigma) + " ";
+      cmd += outdir + "/" + toString(argv[7]) + ".pnkc";
+      cmd += " 1> " + outdir + "/" + toString(argv[7]) + ".pnkc.msg 2>&1";
+      retval=system(cmd.c_str());
+      if (retval != 0){
+	  cerr << "ERROR: Following call failed with status " << retval << ":" << endl << cmd << endl;
+	  cerr << "Exiting..." << endl;
+	  exit(1);
+      }
+
+      // generate kcdn synapses
+      cmd = gennPath + "/userproject/tools/gen_kcdn_syns ";
+      cmd += toString(nMB) + " ";
+      cmd += toString(nLB) + " ";
+      cmd += toString(kcdn_gsyn) + " ";
+      cmd += toString(kcdn_gsyn_sigma) + " ";
+      cmd += toString(kcdn_gsyn_sigma) + " ";
+      cmd += outdir + "/" + toString(argv[7]) + ".kcdn";
+      cmd += " 1> " + outdir + "/" + toString(argv[7]) + ".kcdn.msg 2>&1";
+      retval=system(cmd.c_str());
+      if (retval != 0){
+	  cerr << "ERROR: Following call failed with status " << retval << ":" << endl << cmd << endl;
+	  cerr << "Exiting..." << endl;
+	  exit(1);
+      }
   // generate pnlhi synapses
-  cmd = gennPath + "/userproject/tools/gen_pnlhi_syns_" + tS(ftype) + " ";
-  cmd += toString(nAL) + " ";
-  cmd += toString(nLHI) + " ";
-  cmd += toString(pnlhi_theta) + " 15 ";
-  cmd += outdir + "/" + toString(argv[7]) + ".pnlhi";
-  cmd += " 1> " + outdir + "/" + toString(argv[7]) + ".pnlhi.msg 2>&1";
-  retval = system(cmd.c_str());
-  if (retval != 0){
-    cerr << "ERROR: Following call failed with status " << retval << ":" << endl << cmd << endl;
-    cerr << "Exiting..." << endl;
-    exit(1);
-  }
+      cmd = gennPath + "/userproject/tools/gen_pnlhi_syns ";
+      cmd += toString(nAL) + " ";
+      cmd += toString(nLHI) + " ";
+      cmd += toString(pnlhi_theta) + " 15 ";
+      cmd += outdir + "/" + toString(argv[7]) + ".pnlhi";
+      cmd += " 1> " + outdir + "/" + toString(argv[7]) + ".pnlhi.msg 2>&1";
+      retval = system(cmd.c_str());
+      if (retval != 0){
+	  cerr << "ERROR: Following call failed with status " << retval << ":" << endl << cmd << endl;
+	  cerr << "Exiting..." << endl;
+	  exit(1);
+      }
   // generate input patterns
-  cmd = gennPath + "/userproject/tools/gen_input_structured_" + tS(ftype) +" ";
-  cmd += toString(nAL) + " ";
-  cmd += "10 10 0.1 0.05 1.0 2e-04 ";
-  cmd += outdir + "/" + toString(argv[7]) + ".inpat";
-  cmd += " 1> " + outdir + "/" + toString(argv[7]) + ".inpat.msg 2>&1";
-  retval = system(cmd.c_str());
-  if (retval != 0){
-    cerr << "ERROR: Following call failed with status " << retval << ":" << endl << cmd << endl;
-    cerr << "Exiting..." << endl;
-    exit(1);
+      cmd = gennPath + "/userproject/tools/gen_input_structured ";
+      cmd += toString(nAL) + " ";
+      cmd += "10 10 0.1 0.05 1.0 2e-04 ";
+      cmd += outdir + "/" + toString(argv[7]) + ".inpat";
+      cmd += " 1> " + outdir + "/" + toString(argv[7]) + ".inpat.msg 2>&1";
+      retval = system(cmd.c_str());
+      if (retval != 0){
+	  cerr << "ERROR: Following call failed with status " << retval << ":" << endl << cmd << endl;
+	  cerr << "Exiting..." << endl;
+	  exit(1);
+      }
   }
   // run it!
   cout << "running test..." << endl;
 #ifdef _WIN32
   if (dbgMode == 1) {
-    cmd = "devenv /debugexe model\\classol_sim.exe " + toString(argv[7]) + " " + toString(which);
+      cmd = "devenv /debugexe model\\classol_sim.exe " + toString(argv[7]) + " " + toString(which);
   }
   else {
     cmd = "model\\classol_sim.exe " + toString(argv[7]) + " " + toString(which);
   }
 #else // UNIX
   if (dbgMode == 1) {
-    cmd = "cuda-gdb -tui --args model/classol_sim_"+tS(ftype) +" " + toString(argv[7]) + " " + toString(which);
+    cmd = "cuda-gdb -tui --args model/classol_sim "+ toString(argv[7]) + " " + toString(which);
   }
   else {
-    cmd = "model/classol_sim_"+ tS(ftype) + " " + toString(argv[7]) + " " + toString(which);
+    cmd = "model/classol_sim "+ toString(argv[7]) + " " + toString(which);
   }
 #endif
   retval = system(cmd.c_str());

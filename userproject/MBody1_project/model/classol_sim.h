@@ -24,11 +24,12 @@ using namespace std;
 //#define TIMING
 
 #include "hr_time.cpp"
-
 #include "utils.h" // for CHECK_CUDA_ERRORS
 
 #include <cuda_runtime.h>
+#include <cfloat>
 
+#include "MBody1.cc"
 
 #define MYRAND(Y,X) Y = Y * 1103515245 +12345; X= (Y >> 16);
 

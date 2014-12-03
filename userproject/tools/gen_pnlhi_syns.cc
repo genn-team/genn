@@ -40,10 +40,10 @@ int main(int argc, char *argv[])
 
   int nAL= atoi(argv[1]);
   int nLHI= atoi(argv[2]);
-  scalar PNLHI_theta= atof(argv[3]);
-  scalar PNLHI_minact= atof(argv[4]);
+  double PNLHI_theta= atof(argv[3]);
+  double PNLHI_minact= atof(argv[4]);
   ofstream os(argv[5], ios::binary);
-  scalar *g= new scalar[nAL*nLHI];
+  double *g= new double[nAL*nLHI];
 
   cerr << "# call was: ";
   for (int i= 0; i < argc; i++) cerr << argv[i] << " ";
@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
     }
   }
   
-  os.write((char *)g, nAL*nLHI*sizeof(scalar));
+  os.write((char *)g, nAL*nLHI*sizeof(double));
   os.close();
   delete[] g;
   

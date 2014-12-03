@@ -11,9 +11,8 @@
 ##  
 ##--------------------------------------------------------------------------
 
-EXECUTABLE_FLOAT	:=classol_sim_FLOAT
-EXECUTABLE_DOUBLE	:=classol_sim_DOUBLE
+EXECUTABLE	:=classol_sim
 
-SOURCES			:=classol_sim.cu
+SOURCES		:=classol_sim.cu
 
 include	$(GENN_PATH)/userproject/include/makefile_common_gnu.mk

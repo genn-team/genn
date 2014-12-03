@@ -35,9 +35,9 @@ int main(int argc, char *argv[])
   
   int n1= atoi(argv[1]);
   int n2= atoi(argv[2]);
-  scalar psyn= atof(argv[3]);
-  scalar meangsyn= atof(argv[4]);
-  scalar jitter= atof(argv[5]);
+  double psyn= atof(argv[3]);
+  double meangsyn= atof(argv[4]);
+  double jitter= atof(argv[5]);
   //ofstream os(argv[6], ios::binary);
   ofstream os(argv[6], ios::binary);
   char filename_index[100];
@@ -57,9 +57,9 @@ int main(int argc, char *argv[])
   ofstream os_nonopt(filename_nonopt, ios::binary);
   ofstream os_info(filename_info);
   
-  scalar gsyn;
-  scalar *g_alltoall= new scalar[n1*n2];
-  std::vector<scalar> g;
+  double gsyn;
+  double *g_alltoall= new double[n1*n2];
+  std::vector<double> g;
 
   cerr << "# call was: ";
   for (int i= 0; i < argc; i++) cerr << argv[i] << " ";
@@ -103,7 +103,7 @@ int main(int argc, char *argv[])
   cout << "count size: " << sz << endl;
   os_postcount.write(reinterpret_cast<const char*>(&revIndInG[0]), sz * sizeof(revIndInG[0]));
 
-  os_nonopt.write((char *)g_alltoall, n1*n2*sizeof(scalar));
+  os_nonopt.write((char *)g_alltoall, n1*n2*sizeof(double));
   os.close();
   os_index.close();
   os_postcount.close();

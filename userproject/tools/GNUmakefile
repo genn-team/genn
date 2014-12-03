@@ -13,12 +13,10 @@
 
 CXXFLAGS	=-Wall -Winline -O3 -g -I$(GENN_PATH)/lib/include/numlib
 
-all: gen_input_structured_FLOAT gen_pnlhi_syns_FLOAT gen_kcdn_syns_FLOAT gen_pnkc_syns_FLOAT gen_pnkc_syns_indivID_FLOAT gen_syns_sparse_FLOAT gen_syns_sparse_izhModel_FLOAT gen_input_structured_DOUBLE gen_pnlhi_syns_DOUBLE gen_kcdn_syns_DOUBLE gen_pnkc_syns_DOUBLE gen_pnkc_syns_indivID_DOUBLE gen_syns_sparse_DOUBLE gen_syns_sparse_izhModel_DOUBLE
+all: gen_input_structured gen_pnlhi_syns gen_kcdn_syns gen_pnkc_syns gen_pnkc_syns_indivID gen_syns_sparse gen_syns_sparse_izhModel 
 
-%_FLOAT: %.cc
-	g++ $(CXXFLAGS) -Dscalar=float -o $@ $<
+%: %.cc
+	g++ $(CXXFLAGS) -o $@ $<
 
-%_DOUBLE: %.cc
-	g++ $(CXXFLAGS) -Dscalar=double -o $@ $<
 clean:
-	$(RM) gen_input_structured_FLOAT gen_pnlhi_syns_FLOAT gen_kcdn_syns_FLOAT gen_pnkc_syns_FLOAT gen_pnkc_syns_indivID_FLOAT gen_syns_sparse_FLOAT gen_syns_sparse_izhModel_FLOAT gen_input_structured_DOUBLE gen_pnlhi_syns_DOUBLE gen_kcdn_syns_DOUBLE gen_pnkc_syns_DOUBLE gen_pnkc_syns_indivID_DOUBLE gen_syns_sparse_DOUBLE gen_syns_sparse_izhModel_DOUBLE
+	$(RM) -rf *.o *.dSYM gen_input_structured gen_pnlhi_syns gen_kcdn_syns gen_pnkc_syns gen_pnkc_syns_indivID gen_syns_sparse gen_syns_sparse_izhModel 

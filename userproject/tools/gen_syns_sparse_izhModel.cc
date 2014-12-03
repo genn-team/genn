@@ -21,46 +21,46 @@ using namespace std;
 #include "randomGen.cc"
 
 int printVector(vector<unsigned int>&);
-int printVector(vector<scalar>&);
+int printVector(vector<double>&);
 
 randomGen R;
 randomGen Rind;
 
-scalar gsyn;
-//  scalar *gAlltoAll;
-scalar *garray; 
-//  scalar *g; 
+double gsyn;
+//  double *gAlltoAll;
+double *garray; 
+//  double *g; 
 unsigned int *ind; 
   
   //exc-exc
-  //scalar *gAlltoAll_ee;
-  scalar *garray_ee; 
-  //scalar *g_ee = new scalar[nConn*nExc]; //same here for writing to file
-  std::vector<scalar> g_ee;
+  //double *gAlltoAll_ee;
+  double *garray_ee; 
+  //double *g_ee = new double[nConn*nExc]; //same here for writing to file
+  std::vector<double> g_ee;
   std::vector<unsigned int> indInG_ee;
   std::vector<unsigned int> ind_ee;
   //int maxInColI_ee;
   
   //exc-inh
- // scalar *gAlltoAll_ei;
-  scalar *garray_ei;
-  std::vector<scalar> g_ei;
+ // double *gAlltoAll_ei;
+  double *garray_ei;
+  std::vector<double> g_ei;
   std::vector<unsigned int> indInG_ei;
   std::vector<unsigned int> ind_ei;
   //int maxInColI_ei;
  
   //inh-exc
-  //scalar *gAlltoAll_ie;
-  scalar *garray_ie;
-  std::vector<scalar> g_ie;
+  //double *gAlltoAll_ie;
+  double *garray_ie;
+  std::vector<double> g_ie;
   std::vector<unsigned int> indInG_ie;
   std::vector<unsigned int> ind_ie;
   //int maxInColI_ie;
  
   //inh-inh
-  //scalar *gAlltoAll_ii;
-  scalar *garray_ii;
-  std::vector<scalar> g_ii;
+  //double *gAlltoAll_ii;
+  double *garray_ii;
+  std::vector<double> g_ii;
   std::vector<unsigned int> indInG_ii;
   std::vector<unsigned int> ind_ii;
   //int maxInColI_ii;
@@ -77,8 +77,8 @@ int main(int argc, char *argv[])
   unsigned int nN= atoi(argv[1]);
   unsigned int nExc= (int)(4*nN/5);
   unsigned int nConn= atoi(argv[2]);
-  scalar meangsynExc= atof(argv[3]);
-  scalar meangsynInh= atof(argv[4]);
+  double meangsynExc= atof(argv[3]);
+  double meangsynInh= atof(argv[4]);
 
 
   //alltogether
@@ -200,36 +200,36 @@ int main(int argc, char *argv[])
   //ofstream os_nonopt_ii(filename_nonopt_ii, ios::binary);
   ofstream os_info_ii(filename_info_ii, ios::binary);  
   
-  //gAlltoAll = new scalar[nN*nN];
-  garray = new scalar[nConn]; 
-  //g = new scalar[nConn*nN]; 
+  //gAlltoAll = new double[nN*nN];
+  garray = new double[nConn]; 
+  //g = new double[nConn*nN]; 
   ind = new unsigned int[nConn*nN]; 
   
   //exc-exc
-  //gAlltoAll_ee = new scalar[nExc*nExc];
-  garray_ee = new scalar[nConn]; 
-  std::vector<scalar> g_ee;
+  //gAlltoAll_ee = new double[nExc*nExc];
+  garray_ee = new double[nConn]; 
+  std::vector<double> g_ee;
   std::vector<unsigned int> indInG_ee;
   std::vector<unsigned int> ind_ee;
   
   //exc-inh
-  //gAlltoAll_ei = new scalar[nExc*nInh];
-  garray_ei = new scalar[nConn];
-  std::vector<scalar> g_ei;
+  //gAlltoAll_ei = new double[nExc*nInh];
+  garray_ei = new double[nConn];
+  std::vector<double> g_ei;
   std::vector<unsigned int> indInG_ei;
   std::vector<unsigned int> ind_ei;
  
   //inh-exc
- // gAlltoAll_ie = new scalar[nInh*nExc];
-  garray_ie = new scalar[nConn];
-  std::vector<scalar> g_ie;
+ // gAlltoAll_ie = new double[nInh*nExc];
+  garray_ie = new double[nConn];
+  std::vector<double> g_ie;
   std::vector<unsigned int> indInG_ie;
   std::vector<unsigned int> ind_ie;
 
   //inh-inh
- // gAlltoAll_ii = new scalar[nInh*nInh];
-  garray_ii = new scalar[nConn];
-  std::vector<scalar> g_ii;
+ // gAlltoAll_ii = new double[nInh*nInh];
+  garray_ii = new double[nConn];
+  std::vector<double> g_ii;
   std::vector<unsigned int> indInG_ii;
   std::vector<unsigned int> ind_ii;
   
@@ -349,18 +349,18 @@ int main(int argc, char *argv[])
 			indInG_ii.push_back(sum_ii);
 		}
 		
-//    memcpy(g+i*nConn,garray,nConn*sizeof(scalar));   
+//    memcpy(g+i*nConn,garray,nConn*sizeof(double));   
 	     //gOld[i*nMB+j]= 0.0f;
   }
  
 
-  //os.write((char *)g, nN*nConn*sizeof(scalar));
-  //os_nonopt.write((char *)gOld, nN*nN*sizeof(scalar));
+  //os.write((char *)g, nN*nConn*sizeof(double));
+  //os_nonopt.write((char *)gOld, nN*nN*sizeof(double));
   //os.close();
   
   //os_index.write((char *)ind, nN*nConn*sizeof(unsigned int));
   //os_indInG.write((char *)indInG, nN*sizeof(unsigned int));
-  //os_nonopt.write((char *)gAlltoAll, nN*nN*sizeof(scalar));
+  //os_nonopt.write((char *)gAlltoAll, nN*nN*sizeof(double));
   
  //os_index.close();
   //os_indInG.close();
@@ -372,9 +372,9 @@ int main(int argc, char *argv[])
   	cout << g[j] << " ";
   }*/
   
-  /*scalar *gAlltoAll_ee = new scalar[nExc*nExc];
-  scalar *garray_ee = new scalar[nConn]; 
-  std::vector<scalar> g_ee;
+  /*double *gAlltoAll_ee = new double[nExc*nExc];
+  double *garray_ee = new double[nConn]; 
+  std::vector<double> g_ee;
   std::vector<unsigned int> indInG_ee;
   std::vector<unsigned int> ind_ee;*/
  
@@ -390,7 +390,7 @@ int main(int argc, char *argv[])
   sz = indInG_ee.size();
   cout << "ee count size: " << sz << endl;
   os_indInG_ee.write(reinterpret_cast<const char*>(&indInG_ee[0]), sz * sizeof(indInG_ee[0]));
-  //os_nonopt_ee.write((char *)gAlltoAll_ee, nExc*nExc*sizeof(scalar));
+  //os_nonopt_ee.write((char *)gAlltoAll_ee, nExc*nExc*sizeof(double));
   
   os_ee.close();
   os_index_ee.close();
@@ -409,7 +409,7 @@ int main(int argc, char *argv[])
   sz = indInG_ei.size();
   cout << "ei count size: " << sz << endl;
   os_indInG_ei.write(reinterpret_cast<const char*>(&indInG_ei[0]), sz * sizeof(indInG_ei[0]));
-  //os_nonopt_ei.write((char *)gAlltoAll_ei, nExc*nInh*sizeof(scalar));
+  //os_nonopt_ei.write((char *)gAlltoAll_ei, nExc*nInh*sizeof(double));
   
   os_ei.close();
   os_index_ei.close();
@@ -428,7 +428,7 @@ int main(int argc, char *argv[])
   sz = indInG_ie.size();
   cout << "ie count size: " << sz << endl;
   os_indInG_ie.write(reinterpret_cast<const char*>(&indInG_ie[0]), sz * sizeof(indInG_ie[0]));
-  //os_nonopt_ie.write((char *)gAlltoAll_ie, nInh*nExc*sizeof(scalar));
+  //os_nonopt_ie.write((char *)gAlltoAll_ie, nInh*nExc*sizeof(double));
   
   os_ie.close();
   os_index_ie.close();
@@ -447,7 +447,7 @@ int main(int argc, char *argv[])
   sz = indInG_ii.size();
   cout << "ii count size: " << sz << endl;
   os_indInG_ii.write(reinterpret_cast<const char*>(&indInG_ii[0]), sz * sizeof(indInG_ii[0]));
-  //os_nonopt_ii.write((char *)gAlltoAll_ii, nInh*nInh*sizeof(scalar));
+  //os_nonopt_ii.write((char *)gAlltoAll_ii, nInh*nInh*sizeof(double));
   
   os_ii.close();
   os_index_ii.close();
@@ -520,7 +520,7 @@ int printVector(vector<unsigned int>& v){
 	return 0;
 }
 
-int printVector(vector<scalar>& v){
+int printVector(vector<double>& v){
   for (unsigned int i=0;i<v.size();i++){
 		cout << v[i] << " ";
 	}
