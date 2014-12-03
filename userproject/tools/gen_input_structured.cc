@@ -48,10 +48,10 @@ int main(int argc, char *argv[])
   int nNo= atoi(argv[1]);
   int classNo= atoi(argv[2]);
   int single_pNo= atoi(argv[3]);
-  float pact= atof(argv[4]);
-  float pperturb= atof(argv[5]);
-  float lambdaOn= atof(argv[6]);
-  float lambdaOff= atof(argv[7]);
+  scalar pact= atof(argv[4]);
+  scalar pperturb= atof(argv[5]);
+  scalar lambdaOn= atof(argv[6]);
+  scalar lambdaOff= atof(argv[7]);
   int patternNo= single_pNo*classNo;
   int *pat = new int[nNo];
   int *patp = new int[nNo];
@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
   int npert= (int) (pperturb*nact);
   int theno, newno;
   ofstream os(argv[8], ios::binary);
-  float *fpt= new float[patternNo*nNo];
+  scalar *fpt= new scalar[patternNo*nNo];
 
   cerr << "# call was: ";
   for (int i= 0; i < argc; i++) cerr << argv[i] << " ";
@@ -107,7 +107,7 @@ int main(int argc, char *argv[])
     }
   }
 
-  os.write((char *)fpt, patternNo*nNo*sizeof(float));
+  os.write((char *)fpt, patternNo*nNo*sizeof(scalar));
   os.close();
   delete[] fpt;
 

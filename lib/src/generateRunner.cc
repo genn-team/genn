@@ -158,7 +158,7 @@ void genRunner(NNmodel &model, //!< Model description
   os << "  CHECK_CUDA_ERRORS(cudaMemcpy(devptr, hostPtr, sizeof(void*), cudaMemcpyHostToDevice));" << endl;
   os << "}" << endl << endl;
 
-  os << "void convertProbabilityToRandomNumberThreshold(float *p_pattern, " << model.RNtype << " *pattern, int N)" << endl;
+  os << "void convertProbabilityToRandomNumberThreshold(" << model.ftype << " *p_pattern, " << model.RNtype << " *pattern, int N)" << endl;
 os << "{" << endl;
 os << "    double fac= pow(2.0, (int) sizeof(" << model.RNtype << ")*8-16)*DT;" << endl;
 os << "    for (int i= 0; i < N; i++) {" << endl;

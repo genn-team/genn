@@ -40,7 +40,7 @@ class classol
   NNmodel model;
   unsigned int offset;
   uint64_t *theRates;
-  float *p_pattern;  
+  scalar *p_pattern;  
   uint64_t *pattern;
   uint64_t *baserates;
   //------------------------------------------------------------------------
@@ -58,7 +58,7 @@ class classol
   void allocate_device_mem_patterns(); 
   void free_device_mem(); 
   void read_pnkcsyns(FILE *);
-  void read_sparsesyns_par(int, struct Conductance, float *, FILE *,FILE *,FILE *); 
+  void read_sparsesyns_par(int, struct Conductance, scalar *, FILE *,FILE *,FILE *); 
   void write_pnkcsyns(FILE *); 
   void read_pnlhisyns(FILE *); 
   void write_pnlhisyns(FILE *); 
@@ -66,7 +66,7 @@ class classol
   void write_kcdnsyns(FILE *); 
   void read_input_patterns(FILE *); 
   void generate_baserates(); 
-  void run(float, unsigned int); 
+  void run(scalar, unsigned int); 
   void output_state(FILE *, unsigned int); 
   void getSpikesFromGPU(); 
   void getSpikeNumbersFromGPU(); 

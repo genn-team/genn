@@ -47,15 +47,15 @@ int main(int argc, char *argv[])
 
   int nAL= atoi(argv[1]);
   int nMB= atoi(argv[2]);
-  float psyn= atof(argv[3]);
+  scalar psyn= atof(argv[3]);
   ofstream os(argv[4], ios::binary);
   unsigned int UIntSz= sizeof(unsigned int)*8;  // in bit!
-  unsigned int logUIntSz= (int) (logf((float) UIntSz)/logf(2.0f)+1e-5f);
+  unsigned int logUIntSz= (int) (logf((scalar) UIntSz)/logf(2.0f)+1e-5f);
   unsigned int tmp= nAL*nMB;
   unsigned int size= tmp >> logUIntSz;
   if (tmp > (size << logUIntSz)) size++;
   unsigned int *g= new unsigned int[size];
-  float tt;
+  scalar tt;
 
   cerr << "# call was: ";
   for (int i= 0; i < argc; i++) cerr << argv[i] << " ";

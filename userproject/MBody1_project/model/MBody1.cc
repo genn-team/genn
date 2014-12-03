@@ -158,6 +158,6 @@ void modelDefinition(NNmodel &model)
     model.addSynapsePopulation("DNDN", NGRADSYNAPSE, ALLTOALL, GLOBALG, NO_DELAY, EXPDECAY, "DN", "DN", myDNDN_ini, myDNDN_p, postSynV, postExpDNDN);     
     model.setGPUDevice(nGPU);
     model.setSeed(1234);
-    model.setPrecision(FLOAT);
+    model.setPrecision(_FTYPE);
     model.setTiming(FALSE);
 }

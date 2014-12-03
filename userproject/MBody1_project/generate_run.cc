@@ -37,16 +37,21 @@ This file compiles to a tool that wraps all the other tools into one chain of ta
 using namespace std;
 
 //--------------------------------------------------------------------------
-/*! \brief Template function for string conversion 
+/*! \brief template function for string conversion from const char* to C++ string
  */
 //--------------------------------------------------------------------------
 
-template<typename T> std::string toString(T t)
+template<typename T>
+std::string toString(T t)
 {
   std::stringstream s;
+  s << std::showpoint;
   s << t;
   return s.str();
 } 
+
+#define tS(X) toString(X) //!< Macro providing the abbreviated syntax tS() instead of toString().
+
 
 //--------------------------------------------------------------------------
 /*! \brief Main entry point for generate_run.
@@ -55,9 +60,9 @@ template<typename T> std::string toString(T t)
 
 int main(int argc, char *argv[])
 {
-  if (argc != 10)
+  if (argc != 11)
   {
-    cerr << "usage: generate_run <CPU=0, AUTO GPU=1, GPU n= \"n+2\"> <nAL> <nMB> <nLHI> <nLb> <gscale> <outdir> <model name> <debug mode? (0/1)>" << endl;
+      cerr << "usage: generate_run <CPU=0, AUTO GPU=1, GPU n= \"n+2\"> <nAL> <nMB> <nLHI> <nLb> <gscale> <outdir> <model name> <debug mode? (0/1)> <ftype \"DOUBLE\" or \"FLOAT\"" << endl;
     exit(1);
   }
 
@@ -67,19 +72,20 @@ int main(int argc, char *argv[])
   string outdir = toString(argv[7]) + "_output";  
   string modelName = argv[8];
   int dbgMode = atoi(argv[9]); // set this to 1 if you want to enable gdb and cuda-gdb debugging to 0 for release
+  char *ftype= argv[10]; 
 
   int which = atoi(argv[1]);
   int nAL = atoi(argv[2]);
   int nMB = atoi(argv[3]);
   int nLHI = atoi(argv[4]);
   int nLB = atoi(argv[5]);
-  float gscale = atof(argv[6]);
+  double gscale = atof(argv[6]);
   
-  float pnkc_gsyn = 100.0f / nAL * gscale;
-  float pnkc_gsyn_sigma = 100.0f / nAL * gscale / 15.0f; 
-  float kcdn_gsyn = 2500.0f / nMB * 0.1f * gscale; 
-  float kcdn_gsyn_sigma = 2500.0f / nMB * 0.01f * gscale; 
-  float pnlhi_theta = 100.0f / nAL * 14.0f * gscale;
+  double pnkc_gsyn = 100.0f / nAL * gscale;
+  double pnkc_gsyn_sigma = 100.0f / nAL * gscale / 15.0f; 
+  double kcdn_gsyn = 2500.0f / nMB * 0.1f * gscale; 
+  double kcdn_gsyn_sigma = 2500.0f / nMB * 0.01f * gscale; 
+  double pnlhi_theta = 100.0f / nAL * 14.0f * gscale;
 
   // write neuron population sizes
   string fname = gennPath + "/userproject/include/sizes.h";
@@ -88,6 +94,7 @@ int main(int argc, char *argv[])
   os << "#define _NMB " << nMB << endl;
   os << "#define _NLHI " << nLHI << endl;
   os << "#define _NLB " << nLB << endl;
+  os << "#define _FTYPE " << ftype << endl;
   os.close();
 
   // build it
@@ -99,11 +106,12 @@ int main(int argc, char *argv[])
   }
 #else // UNIX
   cmd = "cd model && buildmodel.sh " + modelName + " " + toString(dbgMode);
-  cmd += " && make clean && make";
-  if (dbgMode == 1) {
+  cmd += " && make clean && make classol_sim_"+tS(ftype);
+ if (dbgMode == 1) {
     cmd += " debug";
   }
 #endif
+  cerr << cmd << endl;
   retval=system(cmd.c_str());
   if (retval != 0){
     cerr << "ERROR: Following call failed with status " << retval << ":" << endl << cmd << endl;
@@ -120,7 +128,7 @@ int main(int argc, char *argv[])
 #endif
   
   // generate pnkc synapses
-  cmd = gennPath + "/userproject/tools/gen_pnkc_syns ";
+  cmd = gennPath + "/userproject/tools/gen_pnkc_syns_"+tS(ftype) + " ";
   cmd += toString(nAL) + " ";
   cmd += toString(nMB) + " ";
   cmd += "0.5 ";
@@ -135,7 +143,7 @@ int main(int argc, char *argv[])
     exit(1);
   }
   // generate kcdn synapses
-  cmd = gennPath + "/userproject/tools/gen_kcdn_syns ";
+  cmd = gennPath + "/userproject/tools/gen_kcdn_syns_" +tS(ftype) + " ";
   cmd += toString(nMB) + " ";
   cmd += toString(nLB) + " ";
   cmd += toString(kcdn_gsyn) + " ";
@@ -150,7 +158,7 @@ int main(int argc, char *argv[])
     exit(1);
   }
   // generate pnlhi synapses
-  cmd = gennPath + "/userproject/tools/gen_pnlhi_syns ";
+  cmd = gennPath + "/userproject/tools/gen_pnlhi_syns_" + tS(ftype) + " ";
   cmd += toString(nAL) + " ";
   cmd += toString(nLHI) + " ";
   cmd += toString(pnlhi_theta) + " 15 ";
@@ -163,7 +171,7 @@ int main(int argc, char *argv[])
     exit(1);
   }
   // generate input patterns
-  cmd = gennPath + "/userproject/tools/gen_input_structured ";
+  cmd = gennPath + "/userproject/tools/gen_input_structured_" + tS(ftype) +" ";
   cmd += toString(nAL) + " ";
   cmd += "10 10 0.1 0.05 1.0 2e-04 ";
   cmd += outdir + "/" + toString(argv[7]) + ".inpat";
@@ -185,10 +193,10 @@ int main(int argc, char *argv[])
   }
 #else // UNIX
   if (dbgMode == 1) {
-    cmd = "cuda-gdb -tui --args model/classol_sim " + toString(argv[7]) + " " + toString(which);
+    cmd = "cuda-gdb -tui --args model/classol_sim_"+tS(ftype) +" " + toString(argv[7]) + " " + toString(which);
   }
   else {
-    cmd = "model/classol_sim " + toString(argv[7]) + " " + toString(which);
+    cmd = "model/classol_sim_"+ tS(ftype) + " " + toString(argv[7]) + " " + toString(which);
   }
 #endif
   retval = system(cmd.c_str());

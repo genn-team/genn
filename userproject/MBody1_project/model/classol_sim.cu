@@ -70,7 +70,7 @@ int main(int argc, char *argv[])
   name= OutDir+ "/"+ toString(argv[1]) + toString(".timingprofile"); 
   FILE *timeros= fopen(name.c_str(),"w");
   sdkCreateTimer(&timer_gen);
-  float tme;
+  scalar tme;
 #endif
 
   //-----------------------------------------------------------------
@@ -159,10 +159,10 @@ int main(int argc, char *argv[])
 
   t= 0.0;
   int done= 0;
-  float last_t_report=  t;
+  scalar last_t_report=  t;
   locust.run(DT, which);
-  float synwriteT= 0.0f;
-  float lastsynwrite= 0.0f;
+  scalar synwriteT= 0.0f;
+  scalar lastsynwrite= 0.0f;
   int synwrite= 0;
   while (!done) 
   {

@@ -38,11 +38,11 @@ using namespace std;
 #define DBG_SIZE 10000
 
 // and some global variables
-float t= 0.0f;
+scalar t= 0.0f;
 unsigned int iT= 0;
 
 #define PATTERNNO 100
-float InputBaseRate= 2e-04;
+scalar InputBaseRate= 2e-04;
 //----------------------------------------------------------------------
 // other stuff:
 #define T_REPORT_TME 10000.0

@@ -47,12 +47,12 @@ int main(int argc, char *argv[])
 
   int nMB= atoi(argv[1]);
   int nLB= atoi(argv[2]);
-  float pnkc_gsyn= atof(argv[3]);
-  float pnkc_jitter= atof(argv[4]);
-  float EPS= atof(argv[5]);
+  scalar pnkc_gsyn= atof(argv[3]);
+  scalar pnkc_jitter= atof(argv[4]);
+  scalar EPS= atof(argv[5]);
   ofstream os(argv[6],ios::binary);
-  float gsyn;
-  float *g= new float[nMB*nLB];
+  scalar gsyn;
+  scalar *g= new scalar[nMB*nLB];
 
   cerr << "# call was: ";
   for (int i= 0; i < argc; i++) cerr << argv[i] << " ";
@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
       g[i*nLB+j]= gsyn;
     }
   }
-  os.write((char *)g, nMB*nLB*sizeof(float));
+  os.write((char *)g, nMB*nLB*sizeof(scalar));
   os.close();
   delete[] g;
  
