@@ -16,7 +16,7 @@ CXXFLAGS	=-Wall -Winline -O3 -g -I$(GENN_PATH)/lib/include
 all: generate_run tools
 
 generate_run: generate_run.cc 
-	g++  $(CXXFLAGS) -L$(CUDA_PATH)/lib -o generate_run generate_run.cc -lcudart 
+	g++  $(CXXFLAGS) -L$(CUDA_PATH)/lib -o generate_run generate_run.cc 
 
 clean:
 	$(RM) generate_run
