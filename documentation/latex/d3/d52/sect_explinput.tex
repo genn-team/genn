@@ -1,9 +1,0 @@
-The user can decide whether a neuron group receives external input current or not in addition to the synaptic input that it receives from the network. External input to a neuron group is activated by calling {\ttfamily activate\+Direct\+Input} function. It receives two arguments\+: The first argument is the name of the neuron group to receive input current. The second parameter defines the type of input. Current options are\+:
-
-
-\begin{DoxyItemize}
-\item 0\+: N\+O\+I\+N\+P\+: Neuron group receives no input. This is the value by default when the explicit input is not activated.
-\item 1\+: C\+O\+N\+S\+T\+I\+N\+P\+: All the neurons receive a constant input value. This value may also be defined as a variable.
-\item 2\+: M\+A\+T\+I\+N\+P\+: Input is read from a file containing the input matrix.
-\item 3\+: I\+N\+P\+R\+U\+L\+E\+: Input is defined as a rule. It differs from C\+O\+N\+S\+T\+I\+N\+P by the way that the input is injected\+: C\+O\+N\+S\+T\+I\+N\+P creates a value which is modified in real time, hence complex instructions are limited. I\+N\+P\+R\+U\+L\+E creates an input array which will be copied into the device memory. 
-\end{DoxyItemize}
