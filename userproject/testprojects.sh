@@ -36,10 +36,10 @@ if [ "$firstrun" = false ]; then
   echo ${custommsg} >> testing_output/testing.time
   printf "With new setup... \n"  >> testing_output/testing.time
 fi
-./generate_run 1 100 1000 20 100 0.0025 testing MBody1 0 
+./generate_run 1 100 1000 20 100 0.0025 testing MBody1 0 FLOAT 0
 cp testing_output/testing.out.st testing_output/testing.out.st.GPU
 printf "\n\n####################### MBody1 CPU ######################\n"
-./generate_run 0 100 1000 20 100 0.0025 testing MBody1 0 
+./generate_run 0 100 1000 20 100 0.0025 testing MBody1 0 FLOAT 0
 cp testing_output/testing.out.st testing_output/testing.out.st.CPU 
 
 printf "\n\n*********************** Testing MBody_userdef ****************************\n"
@@ -50,10 +50,10 @@ if [ "$firstrun" = false ]; then
   printf "With new setup... \n"  >> testing_output/testing.time
 fi
 printf "\n\n####################### MBody_userdef GPU ######################\n"
-./generate_run 1 100 1000 20 100 0.0025 testing MBody_userdef 0 0
+./generate_run 1 100 1000 20 100 0.0025 testing MBody_userdef 0 FLOAT 0
 cp testing_output/testing.out.st testing_output/testing.out.st.GPU
 printf "\n\n####################### MBody_userdef CPU ######################\n"
-./generate_run 0 100 1000 20 100 0.0025 testing MBody_userdef 0 0
+./generate_run 0 100 1000 20 100 0.0025 testing MBody_userdef 0 FLOAT 0
 cp testing_output/testing.out.st testing_output/testing.out.st.CPU
 printf "\n\n*********************** Testing Izh_sparse 10K neurons****************************\n"
 cd ../Izh_sparse_project
