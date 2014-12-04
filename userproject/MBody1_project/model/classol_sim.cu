@@ -171,22 +171,27 @@ int main(int argc, char *argv[])
       locust.getSpikesFromGPU();
     }
     locust.run(DT, which); // run next batch
-    if (which == GPU) {  
-	pullDNfromDevice();
-    }
+    // if (which == GPU) {  
+//	pullDNfromDevice();
+    //   }
     
 #ifdef TIMING
-    fprintf(timeros, "%f %f %f \n", sdkGetTimerValue(&timer_neuron), sdkGetTimerValue(&timer_synapse), sdkGetTimerValue(&timer_learning));
+    if (which == CPU) {
+	fprintf(timeros, "%f %f %f \n", sdkGetTimerValue(&neuron_timer), sdkGetTimerValue(&synapse_timer), sdkGetTimerValue(&learning_timer));
+    }
+    else {
+	fprintf(timeros, "%f %f %f \n", neuron_tme, synapse_tme, learning_tme);
+    }
 #endif
 
     locust.sum_spikes();
     locust.output_spikes(osf2, which);
 
  /*   fprintf(osf, "%f ", t);
-    for (int i= 0; i < 100; i++) {
-        fprintf(osf, "%f ", VDN[i]);
-    }
-    fprintf(osf,"\n");
+    //  for (int i= 0; i < 100; i++) {
+    //     fprintf(osf, "%f ", VDN[i]);
+    //   }
+    // fprintf(osf,"\n");
 */
     // report progress
     if (t - last_t_report >= T_REPORT_TME)

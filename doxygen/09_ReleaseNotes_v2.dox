@@ -68,6 +68,27 @@ If the parameters are not redefined appropriately this will lead to uncontrolled
    syntax for the `addSynapsePopulation(...)` can be found with
    detailed explanations in teh \link UserManual User Manual\endlink.
 
+9. We have introduced a simple performance profiling method that users can employ to get an overview over the differential use of time by different kernels.
+To enable the timers in GeNN generated code, one needs to declare
+\code
+networkmodel.setTiming(TRUE);
+\endcode
+This will make available and operate GPU-side cudeEvent based timers whose cumulative value can be found in the double precision variables `neuron_tme`, `synapse_tme` and `learning_tme`. They measure the accumulated time that has been spent calculating the neuron kernel, synapse kernel and learning kernel, respectively. CPU-side timers for the simulation functions are also available and their cumulative values can be obtained through 
+\code
+float x= sdkGetTimerValue(&neuron_timer);
+float y= sdkGetTimerValue(&synapse_timer);
+float z= sdkGetTimerValue(&learning_timer);
+\endcode
+The \ref ex_mbody example shows how these can be used in the user-side code. To enable timing profiling in this example, simply enable it for GeNN:
+\code
+model.setTiming(TRUE);
+\endcode
+in `MBody1.cc`'s `modelDefinition` function and define the macro `TIMING` in `classol_sim.h`
+\code
+#define TIMING
+\endcode
+This will have the effect that timing information is output into `OUTNAME_output/OUTNAME.timingprofile`.
+
 \section developerChange Developer Side Changes
 
 
@@ -79,7 +100,7 @@ the arrangement previously.
 2. For the case of sparse connectivity, there is now a reverse mapping implemented with revers index arrays and a remap array that points to the original positions of variable values in teh forward array. By this mechanism, revers lookups from post to pre synaptic indices are possible but value changes in the sparse array values do only need to be done once.
 
 3. SpkEvnt code is no longer generated whenever it
-  is not actually used. That is also true on a somewhat finer granularity where variable queues for synapse delays are only maintained of the corresponding variables are used in synaptic code. True spikes on the other hand are always detected in case the user is interested in them.
+  is not actually used. That is also true on a somewhat finer granularity where variable queues for synapse delays are only maintained if the corresponding variables are used in synaptic code. True spikes on the other hand are always detected in case the user is interested in them.
 
 <br />
 

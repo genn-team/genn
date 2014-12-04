@@ -44,6 +44,12 @@ flow from and to the GPU in any desired granularity.
 This manual gives an overview of how to use GeNN for a novice user and
 tries to lead the user to more expert use later on. With this we jump
 right in.
+
+<br />
+
+-----
+\link ReleaseNotes Previous\endlink | \link UserManual Top\endlink | \link sect1 Next\endlink
+*/
 */
 
 //----------------------------------------------------------------------------
@@ -119,6 +125,11 @@ If the synapse conductance definition type is "GLOBALG" then the
 global value of the synapse conductances is taken from the initial value provided in `sINI`. (The function setSynapseG() from earlier versions of GeNN has been deprecated).
 
 Synaptic updates can occur per "true" spike (i.e at one point per spike, e.g. after a threshold was crossed) or for all "spike type events" (e.g. all points above a given threshold). This is defined within each given synapse type.
+
+<br />
+
+-----
+\link UserManual Previous\endlink | \link sect1 Top\endlink | \link sect3 Next\endlink
 */
 
 //----------------------------------------------------------------------------
@@ -526,6 +537,12 @@ function.
 same maximal conductance for all existing synaptic connections but
 which synapses exist will be defined at runtime from the user side
 code.
+
+<br />
+
+-----
+\link sect2 Previous\endlink | \link sect3 Top\endlink | \link sect_postsyn Next\endlink
+
 */
 
 //----------------------------------------------------------------------------
@@ -536,6 +553,12 @@ The shape of the postsynaptic current can be defined by either using a predefine
 new postSynModel object. 
 
 - EXPDECAY: Exponential decay. Decay time constant and reversal potential parameters are needed for this postsynaptic mechanism.
+
+<br />
+
+-----
+\link sect3 Previous\endlink | \link sect_postsyn  Top\endlink | \link ListOfVariables Next\endlink
+
 */
 
 //----------------------------------------------------------------------------
@@ -602,6 +625,12 @@ $(V)+= (-$(V)+$(Isyn))*DT
 \endcode 
 
 - \c sT<neuronName> is the last spike time in a neuron and is automatically generated for pre- and postsynaptic neuron groups of a synapse group i that follows a spike based learning rule (indicated by usesPostLearning[i]= TRUE for the ith synapse population).
+
+<br />
+
+-----
+\link sect_postsyn Previous\endlink | \link ListOfVariables Top\endlink | \link  Credits Next\endlink
+
 */
   
 //----------------------------------------------------------------------------
@@ -616,5 +645,11 @@ Block size optimisations and delayed synapses by James Turner.
 Automatic brackets and dense to sparse network conversion by Alan Diamond.
 
 User-defined synaptic and postsynaptic methods by Alex Cope and Esin Yavuz.
+
+<br />
+
+-----
+\link ListOfVariables Previous\endlink | \link Credits Top\endlink 
+
 */
 //----------------------------------------------------------------------------
