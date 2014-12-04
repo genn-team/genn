@@ -116,6 +116,9 @@ void genRunner(NNmodel &model, //!< Model description
   os << "#include <cstdio>" << endl << endl;
   os << "#include <cassert>" << endl << endl;
   os << "#include <stdint.h>" << endl << endl;
+  if (model.timing) {
+      os << "#include <helper_timer.h>" << endl << endl;
+  }
 
   os << "#ifndef scalar" << endl;
   os << "typedef " << model.ftype << " scalar;" << endl;
@@ -130,8 +133,9 @@ void genRunner(NNmodel &model, //!< Model description
   os << "#endif" << endl;
 
   if (model.timing) {
-      os << "#include <helper_timer.h>" << endl;
-      os << "StopWatchInterface *timer_neuron, *timer_synapse, *timer_learning;" << endl;
+      os << "cudaEvent_t neuronStart, neuronStop, synapseStart, synapseStop, learningStart, learningStop;" << endl;
+      os << "double neuron_tme, synapse_tme, learning_tme;" << endl;
+      os << "StopWatchInterface *neuron_timer, *synapse_timer, *learning_timer;" << endl;
   } 
 
   // write CUDA error handler macro
@@ -298,10 +302,19 @@ os << "}" << endl;
     os << "void allocateMem()" << endl;
     os << "{" << endl;
     if (model.timing) {
-	os << "    sdkCreateTimer(&timer_neuron);" << endl;
-	os << "    sdkCreateTimer(&timer_synapse);" << endl;
-	os << "    sdkCreateTimer(&timer_learning);" << endl;
-    }
+	os << "    cudaEventCreate(&neuronStart);" << endl;
+	os << "    cudaEventCreate(&neuronStop);" << endl;
+	os << "    cudaEventCreate(&synapseStart);" << endl;
+	os << "    cudaEventCreate(&synapseStop);" << endl;
+	os << "    cudaEventCreate(&learningStart);" << endl;
+	os << "    cudaEventCreate(&learningStop);" << endl;
+	os << "    neuron_tme= 0.0;" << endl;
+	os << "    synapse_tme= 0.0;" << endl;
+	os << "    learning_tme= 0.0;" << endl;
+	os << "    sdkCreateTimer(&neuron_timer);" << endl;
+	os << "    sdkCreateTimer(&synapse_timer);" << endl;
+	os << "    sdkCreateTimer(&learning_timer);" << endl;
+   }
 
     //os << "  " << model.ftype << " free_m,total_m;" << endl;
     //os << "  cudaMemGetInfo((size_t*)&free_m,(size_t*)&total_m);" << endl; //
@@ -1138,7 +1151,7 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     os << endl;
     if (model.synapseGrpN > 0) {
 	os << "  if (t > 0.0) {" << endl;
-	if (model.timing) os << "     sdkStartTimer(&timer_synapse);" << endl; 
+	if (model.timing) os << "     cudaEventRecord(synapseStart);" << endl; 
 	os << "    calcSynapses <<< sGrid, sThreads >>> (";
 	for (int i= 0; i < model.synapseGrpN; i++) {
 	    
@@ -1152,11 +1165,10 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 	}
 	os << "t);"<< endl;
 	if (model.timing) {
-	    os << "     cudaDeviceSynchronize();    // force kernel completion for time measurement" << endl;
-	    os << "     sdkStopTimer(&timer_synapse);" << endl;
+	    os << "     cudaEventRecord(synapseStop);" << endl;
 	} 
 	if (model.lrnGroups > 0) {
-	    if (model.timing) os << "     sdkStartTimer(&timer_learning);" << endl;
+	    if (model.timing) os << "     cudaEventRecord(learningStart);" << endl;
 	    os << "    learnSynapsesPost <<< lGrid, lThreads >>> (";         
 	    for (int i=0; i< model.synapseName.size(); i++){
 		int st= model.synapseType[i];
@@ -1167,13 +1179,12 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 	    }
 	    os << "t);" << endl;
 	    if (model.timing) {
-		os << "     cudaDeviceSynchronize();    // force kernel completion for time measurement" << endl;
-		os << "     sdkStopTimer(&timer_learning);" << endl;
+		os << "     cudaEventRecord(learningStop);" << endl;
 	    } 
 	}
 	os << "  }" << endl;
     }
-	    if (model.timing) os << "     sdkStartTimer(&timer_neuron);" << endl;
+	    if (model.timing) os << "     cudaEventRecord(neuronStart);" << endl;
     os << "  calcNeurons <<< nGrid, nThreads >>> (";
     for (int i= 0; i < model.neuronGrpN; i++) {
 	nt= model.neuronType[i];
@@ -1190,8 +1201,15 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     }
     os << "t);" << endl;
     if (model.timing) {
-	os << "     cudaDeviceSynchronize();    // force kernel completion for time measurement" << endl;
-	os << "     sdkStopTimer(&timer_neuron);" << endl;
+	os << "     cudaEventRecord(neuronStop);" << endl;
+	os << "     cudaEventSynchronize(neuronStop);" << endl;
+	os << "     float tmp;" << endl;
+	os << "     cudaEventElapsedTime(&tmp, synapseStart, synapseStop);" << endl;
+	os << "     synapse_tme+= tmp;" << endl;
+	os << "     cudaEventElapsedTime(&tmp, learningStart, learningStop);" << endl;
+	os << "     learning_tme+= tmp;" << endl;
+	os << "     cudaEventElapsedTime(&tmp, neuronStart, neuronStop);" << endl;
+	os << "     neuron_tme+= tmp;" << endl;
     }
     os << "}" << endl;
     os.close();
@@ -1260,17 +1278,17 @@ void genRunnerCPU(NNmodel &model, //!< Neuronal network model description
     os << "{" << endl;
     if (model.synapseGrpN>0) {
 	os << "  if (t > 0.0) {" << endl;
-	if (model.timing) os << "    sdkStartTimer(&timer_synapse);" << endl;
+	if (model.timing) os << "    sdkStartTimer(&synapse_timer);" << endl;
 	os << "    calcSynapsesCPU(t);" << endl;
-	if (model.timing) os << "    sdkStopTimer(&timer_synapse);" << endl;
+	if (model.timing) os << "    sdkStopTimer(&synapse_timer);" << endl;
 	if (model.lrnGroups > 0) {
-	    if (model.timing) os << "    sdkStartTimer(&timer_learning);" << endl;
+	    if (model.timing) os << "    sdkStartTimer(&learning_timer);" << endl;
 	    os << "    learnSynapsesPostHost(t);" << endl;
-	    if (model.timing) os << "    sdkStopTimer(&timer_learning);" << endl;
+	    if (model.timing) os << "    sdkStopTimer(&learning_timer);" << endl;
 	}
 	os << "  }" << endl;
     }
-    if (model.timing) os << "    sdkStartTimer(&timer_neuron);" << endl;
+    if (model.timing) os << "    sdkStartTimer(&neuron_timer);" << endl;
     os << "  calcNeuronsCPU(";
     for (int i= 0; i < model.neuronGrpN; i++) {
 	if (model.neuronType[i] == POISSONNEURON) {
@@ -1282,7 +1300,7 @@ void genRunnerCPU(NNmodel &model, //!< Neuronal network model description
 	}
     }
     os << "t);" << endl;
-    if (model.timing) os << "    sdkStopTimer(&timer_neuron);" << endl;
+    if (model.timing) os << "    sdkStopTimer(&neuron_timer);" << endl;
     os << "}" << endl;
     os.close();
 }
