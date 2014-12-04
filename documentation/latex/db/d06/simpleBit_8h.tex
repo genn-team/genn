@@ -1,0 +1,72 @@
+\hypertarget{simpleBit_8h}{\section{lib/include/numlib/simple\+Bit.h File Reference}
+\label{simpleBit_8h}\index{lib/include/numlib/simple\+Bit.\+h@{lib/include/numlib/simple\+Bit.\+h}}
+}
+
+
+Contains three macros that allow simple bit manipulations on an (presumably unsigned) 64 bit integer.  
+
+
+{\ttfamily \#include $<$cassert$>$}\\*
+{\ttfamily \#include $<$cmath$>$}\\*
+\subsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \hyperlink{simpleBit_8h_a29e513b5f927332e7e2dec3ae4eacd08}{S\+I\+M\+P\+L\+E\+B\+I\+T\+\_\+\+H}
+\begin{DoxyCompactList}\small\item\em macro for avoiding multiple inclusion during compilation \end{DoxyCompactList}\item 
+\#define \hyperlink{simpleBit_8h_ae6d30aaeb7572325daf782219a9df1ab}{B}(x, i)~((x) \& (0x80000000 $>$$>$ (i)))
+\begin{DoxyCompactList}\small\item\em Extract the bit at the specified position i from x. \end{DoxyCompactList}\item 
+\#define \hyperlink{simpleBit_8h_a85168e9d1f1c6a6a3f0a87dbdc33d404}{set\+B}(x, i)~x= ((x) $\vert$ (0x80000000 $>$$>$ (i)))
+\begin{DoxyCompactList}\small\item\em Set the bit at the specified position i in x to 1. \end{DoxyCompactList}\item 
+\#define \hyperlink{simpleBit_8h_a6e900247bc34d6cbb25b903c4911f0df}{del\+B}(x, i)~x= ((x) \& ($\sim$(0x80000000 $>$$>$ (i))))
+\begin{DoxyCompactList}\small\item\em Set the bit at the specified position i in x to 0. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Contains three macros that allow simple bit manipulations on an (presumably unsigned) 64 bit integer. 
+
+
+
+\subsection{Macro Definition Documentation}
+\hypertarget{simpleBit_8h_ae6d30aaeb7572325daf782219a9df1ab}{\index{simple\+Bit.\+h@{simple\+Bit.\+h}!B@{B}}
+\index{B@{B}!simple\+Bit.\+h@{simple\+Bit.\+h}}
+\subsubsection[{B}]{\setlength{\rightskip}{0pt plus 5cm}\#define B(
+\begin{DoxyParamCaption}
+\item[{}]{x, }
+\item[{}]{i}
+\end{DoxyParamCaption}
+)~((x) \& (0x80000000 $>$$>$ (i)))}}\label{simpleBit_8h_ae6d30aaeb7572325daf782219a9df1ab}
+
+
+Extract the bit at the specified position i from x. 
+
+\hypertarget{simpleBit_8h_a6e900247bc34d6cbb25b903c4911f0df}{\index{simple\+Bit.\+h@{simple\+Bit.\+h}!del\+B@{del\+B}}
+\index{del\+B@{del\+B}!simple\+Bit.\+h@{simple\+Bit.\+h}}
+\subsubsection[{del\+B}]{\setlength{\rightskip}{0pt plus 5cm}\#define del\+B(
+\begin{DoxyParamCaption}
+\item[{}]{x, }
+\item[{}]{i}
+\end{DoxyParamCaption}
+)~x= ((x) \& ($\sim$(0x80000000 $>$$>$ (i))))}}\label{simpleBit_8h_a6e900247bc34d6cbb25b903c4911f0df}
+
+
+Set the bit at the specified position i in x to 0. 
+
+\hypertarget{simpleBit_8h_a85168e9d1f1c6a6a3f0a87dbdc33d404}{\index{simple\+Bit.\+h@{simple\+Bit.\+h}!set\+B@{set\+B}}
+\index{set\+B@{set\+B}!simple\+Bit.\+h@{simple\+Bit.\+h}}
+\subsubsection[{set\+B}]{\setlength{\rightskip}{0pt plus 5cm}\#define set\+B(
+\begin{DoxyParamCaption}
+\item[{}]{x, }
+\item[{}]{i}
+\end{DoxyParamCaption}
+)~x= ((x) $\vert$ (0x80000000 $>$$>$ (i)))}}\label{simpleBit_8h_a85168e9d1f1c6a6a3f0a87dbdc33d404}
+
+
+Set the bit at the specified position i in x to 1. 
+
+\hypertarget{simpleBit_8h_a29e513b5f927332e7e2dec3ae4eacd08}{\index{simple\+Bit.\+h@{simple\+Bit.\+h}!S\+I\+M\+P\+L\+E\+B\+I\+T\+\_\+\+H@{S\+I\+M\+P\+L\+E\+B\+I\+T\+\_\+\+H}}
+\index{S\+I\+M\+P\+L\+E\+B\+I\+T\+\_\+\+H@{S\+I\+M\+P\+L\+E\+B\+I\+T\+\_\+\+H}!simple\+Bit.\+h@{simple\+Bit.\+h}}
+\subsubsection[{S\+I\+M\+P\+L\+E\+B\+I\+T\+\_\+\+H}]{\setlength{\rightskip}{0pt plus 5cm}\#define S\+I\+M\+P\+L\+E\+B\+I\+T\+\_\+\+H}}\label{simpleBit_8h_a29e513b5f927332e7e2dec3ae4eacd08}
+
+
+macro for avoiding multiple inclusion during compilation 
+

@@ -1,0 +1,109 @@
+\hypertarget{sparseUtils_8cc}{\section{lib/include/sparse\+Utils.cc File Reference}
+\label{sparseUtils_8cc}\index{lib/include/sparse\+Utils.\+cc@{lib/include/sparse\+Utils.\+cc}}
+}
+{\ttfamily \#include $<$stdio.\+h$>$}\\*
+{\ttfamily \#include $<$math.\+h$>$}\\*
+\subsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \hyperlink{sparseUtils_8cc_a5aebc16113b61cec6bcd8592677db550}{sparse\+\_\+utils\+\_\+cc}
+\end{DoxyCompactItemize}
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+{\footnotesize template$<$class D\+A\+T\+A\+T\+Y\+P\+E $>$ }\\unsigned int \hyperlink{sparseUtils_8cc_a222e483ac49ae521d952d6a4250a64e0}{count\+Entries\+Above} (D\+A\+T\+A\+T\+Y\+P\+E $\ast$Array, int sz, D\+A\+T\+A\+T\+Y\+P\+E include\+Above)
+\item 
+{\footnotesize template$<$class D\+A\+T\+A\+T\+Y\+P\+E $>$ }\\D\+A\+T\+A\+T\+Y\+P\+E \hyperlink{sparseUtils_8cc_a126a7885a718ead2fe6f546795d97857}{get\+G} (D\+A\+T\+A\+T\+Y\+P\+E $\ast$wuvar, Conductance $\ast$sparse\+Struct, int x, int y)
+\item 
+{\footnotesize template$<$class D\+A\+T\+A\+T\+Y\+P\+E $>$ }\\float \hyperlink{sparseUtils_8cc_ac5615a0844b10137f0388e25c840e8f4}{get\+Sparse\+Var} (D\+A\+T\+A\+T\+Y\+P\+E $\ast$wuvar, Conductance $\ast$sparse\+Struct, int x, int y)
+\item 
+{\footnotesize template$<$class D\+A\+T\+A\+T\+Y\+P\+E $>$ }\\void \hyperlink{sparseUtils_8cc_a18fc86b8df8374e5eecc5cbdc7ed5a6d}{set\+Sparse\+Connectivity\+From\+Dense} (D\+A\+T\+A\+T\+Y\+P\+E $\ast$wuvar, int pre\+N, int post\+N, D\+A\+T\+A\+T\+Y\+P\+E $\ast$tmp\+\_\+g\+R\+N\+P\+N, Conductance $\ast$sparse\+Struct)
+\item 
+{\footnotesize template$<$class D\+A\+T\+A\+T\+Y\+P\+E $>$ }\\void \hyperlink{sparseUtils_8cc_a1463a3d3ed5740ecc718ff4660ba9260}{create\+Sparse\+Connectivity\+From\+Dense} (D\+A\+T\+A\+T\+Y\+P\+E $\ast$wuvar, int pre\+N, int post\+N, D\+A\+T\+A\+T\+Y\+P\+E $\ast$tmp\+\_\+g\+R\+N\+P\+N, Conductance $\ast$sparse\+Struct, bool run\+Test)
+\item 
+void \hyperlink{sparseUtils_8cc_a5e017d12cd0b67849d7b1ce9fd0109ae}{create\+Postto\+Pre\+Array} (unsigned int pre\+N, unsigned int post\+N, Conductance $\ast$sparse\+Struct)
+\item 
+void \hyperlink{sparseUtils_8cc_a7079a381c35016f8f6bc46a74200e02e}{strsearch} (string \&s, const string trg)
+\begin{DoxyCompactList}\small\item\em !!!!find var to check if a string is used in a code (atm it is used to create post-\/to-\/pre arrays) \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{Macro Definition Documentation}
+\hypertarget{sparseUtils_8cc_a5aebc16113b61cec6bcd8592677db550}{\index{sparse\+Utils.\+cc@{sparse\+Utils.\+cc}!sparse\+\_\+utils\+\_\+cc@{sparse\+\_\+utils\+\_\+cc}}
+\index{sparse\+\_\+utils\+\_\+cc@{sparse\+\_\+utils\+\_\+cc}!sparse\+Utils.\+cc@{sparse\+Utils.\+cc}}
+\subsubsection[{sparse\+\_\+utils\+\_\+cc}]{\setlength{\rightskip}{0pt plus 5cm}\#define sparse\+\_\+utils\+\_\+cc}}\label{sparseUtils_8cc_a5aebc16113b61cec6bcd8592677db550}
+
+
+\subsection{Function Documentation}
+\hypertarget{sparseUtils_8cc_a222e483ac49ae521d952d6a4250a64e0}{\index{sparse\+Utils.\+cc@{sparse\+Utils.\+cc}!count\+Entries\+Above@{count\+Entries\+Above}}
+\index{count\+Entries\+Above@{count\+Entries\+Above}!sparse\+Utils.\+cc@{sparse\+Utils.\+cc}}
+\subsubsection[{count\+Entries\+Above}]{\setlength{\rightskip}{0pt plus 5cm}template$<$class D\+A\+T\+A\+T\+Y\+P\+E $>$ unsigned int count\+Entries\+Above (
+\begin{DoxyParamCaption}
+\item[{D\+A\+T\+A\+T\+Y\+P\+E $\ast$}]{Array, }
+\item[{int}]{sz, }
+\item[{D\+A\+T\+A\+T\+Y\+P\+E}]{include\+Above}
+\end{DoxyParamCaption}
+)}}\label{sparseUtils_8cc_a222e483ac49ae521d952d6a4250a64e0}
+\hypertarget{sparseUtils_8cc_a5e017d12cd0b67849d7b1ce9fd0109ae}{\index{sparse\+Utils.\+cc@{sparse\+Utils.\+cc}!create\+Postto\+Pre\+Array@{create\+Postto\+Pre\+Array}}
+\index{create\+Postto\+Pre\+Array@{create\+Postto\+Pre\+Array}!sparse\+Utils.\+cc@{sparse\+Utils.\+cc}}
+\subsubsection[{create\+Postto\+Pre\+Array}]{\setlength{\rightskip}{0pt plus 5cm}void create\+Postto\+Pre\+Array (
+\begin{DoxyParamCaption}
+\item[{unsigned int}]{pre\+N, }
+\item[{unsigned int}]{post\+N, }
+\item[{Conductance $\ast$}]{sparse\+Struct}
+\end{DoxyParamCaption}
+)}}\label{sparseUtils_8cc_a5e017d12cd0b67849d7b1ce9fd0109ae}
+\hypertarget{sparseUtils_8cc_a1463a3d3ed5740ecc718ff4660ba9260}{\index{sparse\+Utils.\+cc@{sparse\+Utils.\+cc}!create\+Sparse\+Connectivity\+From\+Dense@{create\+Sparse\+Connectivity\+From\+Dense}}
+\index{create\+Sparse\+Connectivity\+From\+Dense@{create\+Sparse\+Connectivity\+From\+Dense}!sparse\+Utils.\+cc@{sparse\+Utils.\+cc}}
+\subsubsection[{create\+Sparse\+Connectivity\+From\+Dense}]{\setlength{\rightskip}{0pt plus 5cm}template$<$class D\+A\+T\+A\+T\+Y\+P\+E $>$ void create\+Sparse\+Connectivity\+From\+Dense (
+\begin{DoxyParamCaption}
+\item[{D\+A\+T\+A\+T\+Y\+P\+E $\ast$}]{wuvar, }
+\item[{int}]{pre\+N, }
+\item[{int}]{post\+N, }
+\item[{D\+A\+T\+A\+T\+Y\+P\+E $\ast$}]{tmp\+\_\+g\+R\+N\+P\+N, }
+\item[{Conductance $\ast$}]{sparse\+Struct, }
+\item[{bool}]{run\+Test}
+\end{DoxyParamCaption}
+)}}\label{sparseUtils_8cc_a1463a3d3ed5740ecc718ff4660ba9260}
+\hypertarget{sparseUtils_8cc_a126a7885a718ead2fe6f546795d97857}{\index{sparse\+Utils.\+cc@{sparse\+Utils.\+cc}!get\+G@{get\+G}}
+\index{get\+G@{get\+G}!sparse\+Utils.\+cc@{sparse\+Utils.\+cc}}
+\subsubsection[{get\+G}]{\setlength{\rightskip}{0pt plus 5cm}template$<$class D\+A\+T\+A\+T\+Y\+P\+E $>$ D\+A\+T\+A\+T\+Y\+P\+E get\+G (
+\begin{DoxyParamCaption}
+\item[{D\+A\+T\+A\+T\+Y\+P\+E $\ast$}]{wuvar, }
+\item[{Conductance $\ast$}]{sparse\+Struct, }
+\item[{int}]{x, }
+\item[{int}]{y}
+\end{DoxyParamCaption}
+)}}\label{sparseUtils_8cc_a126a7885a718ead2fe6f546795d97857}
+\hypertarget{sparseUtils_8cc_ac5615a0844b10137f0388e25c840e8f4}{\index{sparse\+Utils.\+cc@{sparse\+Utils.\+cc}!get\+Sparse\+Var@{get\+Sparse\+Var}}
+\index{get\+Sparse\+Var@{get\+Sparse\+Var}!sparse\+Utils.\+cc@{sparse\+Utils.\+cc}}
+\subsubsection[{get\+Sparse\+Var}]{\setlength{\rightskip}{0pt plus 5cm}template$<$class D\+A\+T\+A\+T\+Y\+P\+E $>$ float get\+Sparse\+Var (
+\begin{DoxyParamCaption}
+\item[{D\+A\+T\+A\+T\+Y\+P\+E $\ast$}]{wuvar, }
+\item[{Conductance $\ast$}]{sparse\+Struct, }
+\item[{int}]{x, }
+\item[{int}]{y}
+\end{DoxyParamCaption}
+)}}\label{sparseUtils_8cc_ac5615a0844b10137f0388e25c840e8f4}
+\hypertarget{sparseUtils_8cc_a18fc86b8df8374e5eecc5cbdc7ed5a6d}{\index{sparse\+Utils.\+cc@{sparse\+Utils.\+cc}!set\+Sparse\+Connectivity\+From\+Dense@{set\+Sparse\+Connectivity\+From\+Dense}}
+\index{set\+Sparse\+Connectivity\+From\+Dense@{set\+Sparse\+Connectivity\+From\+Dense}!sparse\+Utils.\+cc@{sparse\+Utils.\+cc}}
+\subsubsection[{set\+Sparse\+Connectivity\+From\+Dense}]{\setlength{\rightskip}{0pt plus 5cm}template$<$class D\+A\+T\+A\+T\+Y\+P\+E $>$ void set\+Sparse\+Connectivity\+From\+Dense (
+\begin{DoxyParamCaption}
+\item[{D\+A\+T\+A\+T\+Y\+P\+E $\ast$}]{wuvar, }
+\item[{int}]{pre\+N, }
+\item[{int}]{post\+N, }
+\item[{D\+A\+T\+A\+T\+Y\+P\+E $\ast$}]{tmp\+\_\+g\+R\+N\+P\+N, }
+\item[{Conductance $\ast$}]{sparse\+Struct}
+\end{DoxyParamCaption}
+)}}\label{sparseUtils_8cc_a18fc86b8df8374e5eecc5cbdc7ed5a6d}
+\hypertarget{sparseUtils_8cc_a7079a381c35016f8f6bc46a74200e02e}{\index{sparse\+Utils.\+cc@{sparse\+Utils.\+cc}!strsearch@{strsearch}}
+\index{strsearch@{strsearch}!sparse\+Utils.\+cc@{sparse\+Utils.\+cc}}
+\subsubsection[{strsearch}]{\setlength{\rightskip}{0pt plus 5cm}void strsearch (
+\begin{DoxyParamCaption}
+\item[{string \&}]{s, }
+\item[{const string}]{trg}
+\end{DoxyParamCaption}
+)}}\label{sparseUtils_8cc_a7079a381c35016f8f6bc46a74200e02e}
+
+
+!!!!find var to check if a string is used in a code (atm it is used to create post-\/to-\/pre arrays) 
+

@@ -1,0 +1,52 @@
+\hypertarget{ensureFtype_8h}{\section{lib/include/ensure\+Ftype.h File Reference}
+\label{ensureFtype_8h}\index{lib/include/ensure\+Ftype.\+h@{lib/include/ensure\+Ftype.\+h}}
+}
+{\ttfamily \#include $<$string$>$}\\*
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \hyperlink{ensureFtype_8h_af44e5e0f7a004b2ae0f987807f72da7d}{do\+Final} (string \&code, unsigned int i, string type, unsigned int \&state)
+\item 
+string \hyperlink{ensureFtype_8h_ad8ea93f3fcfb07e52bce918bd8df7e96}{ensure\+Ftype} (string oldcode, string type)
+\end{DoxyCompactItemize}
+\subsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+string \hyperlink{ensureFtype_8h_abd6ac6d6fb449c8c576eac24c7df3472}{digits} = string(\char`\"{}0123456789\char`\"{})
+\begin{DoxyCompactList}\small\item\em Function for converting code to contain only explicit single precision (float) constants. \end{DoxyCompactList}\item 
+string \hyperlink{ensureFtype_8h_ae046d73e07ff994ef310b25796062838}{op} = string(\char`\"{}+-\/$\ast$/($<$$>$= ,;\char`\"{})+string(\char`\"{}\textbackslash{}n\char`\"{})+string(\char`\"{}\textbackslash{}t\char`\"{})
+\end{DoxyCompactItemize}
+
+
+\subsection{Function Documentation}
+\hypertarget{ensureFtype_8h_af44e5e0f7a004b2ae0f987807f72da7d}{\index{ensure\+Ftype.\+h@{ensure\+Ftype.\+h}!do\+Final@{do\+Final}}
+\index{do\+Final@{do\+Final}!ensure\+Ftype.\+h@{ensure\+Ftype.\+h}}
+\subsubsection[{do\+Final}]{\setlength{\rightskip}{0pt plus 5cm}void do\+Final (
+\begin{DoxyParamCaption}
+\item[{string \&}]{code, }
+\item[{unsigned int}]{i, }
+\item[{string}]{type, }
+\item[{unsigned int \&}]{state}
+\end{DoxyParamCaption}
+)}}\label{ensureFtype_8h_af44e5e0f7a004b2ae0f987807f72da7d}
+\hypertarget{ensureFtype_8h_ad8ea93f3fcfb07e52bce918bd8df7e96}{\index{ensure\+Ftype.\+h@{ensure\+Ftype.\+h}!ensure\+Ftype@{ensure\+Ftype}}
+\index{ensure\+Ftype@{ensure\+Ftype}!ensure\+Ftype.\+h@{ensure\+Ftype.\+h}}
+\subsubsection[{ensure\+Ftype}]{\setlength{\rightskip}{0pt plus 5cm}string ensure\+Ftype (
+\begin{DoxyParamCaption}
+\item[{string}]{oldcode, }
+\item[{string}]{type}
+\end{DoxyParamCaption}
+)}}\label{ensureFtype_8h_ad8ea93f3fcfb07e52bce918bd8df7e96}
+
+
+\subsection{Variable Documentation}
+\hypertarget{ensureFtype_8h_abd6ac6d6fb449c8c576eac24c7df3472}{\index{ensure\+Ftype.\+h@{ensure\+Ftype.\+h}!digits@{digits}}
+\index{digits@{digits}!ensure\+Ftype.\+h@{ensure\+Ftype.\+h}}
+\subsubsection[{digits}]{\setlength{\rightskip}{0pt plus 5cm}string digits = string(\char`\"{}0123456789\char`\"{})}}\label{ensureFtype_8h_abd6ac6d6fb449c8c576eac24c7df3472}
+
+
+Function for converting code to contain only explicit single precision (float) constants. 
+
+\hypertarget{ensureFtype_8h_ae046d73e07ff994ef310b25796062838}{\index{ensure\+Ftype.\+h@{ensure\+Ftype.\+h}!op@{op}}
+\index{op@{op}!ensure\+Ftype.\+h@{ensure\+Ftype.\+h}}
+\subsubsection[{op}]{\setlength{\rightskip}{0pt plus 5cm}string op = string(\char`\"{}+-\/$\ast$/($<$$>$= ,;\char`\"{})+string(\char`\"{}\textbackslash{}n\char`\"{})+string(\char`\"{}\textbackslash{}t\char`\"{})}}\label{ensureFtype_8h_ae046d73e07ff994ef310b25796062838}

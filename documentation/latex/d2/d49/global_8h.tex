@@ -1,0 +1,113 @@
+\hypertarget{global_8h}{\section{lib/include/global.h File Reference}
+\label{global_8h}\index{lib/include/global.\+h@{lib/include/global.\+h}}
+}
+
+
+Global header file containing a few global variables. Part of the code generation section.  
+
+
+{\ttfamily \#include $<$iostream$>$}\\*
+{\ttfamily \#include $<$cstring$>$}\\*
+{\ttfamily \#include $<$string$>$}\\*
+{\ttfamily \#include $<$sstream$>$}\\*
+{\ttfamily \#include $<$vector$>$}\\*
+{\ttfamily \#include $<$cmath$>$}\\*
+{\ttfamily \#include $<$cuda\+\_\+runtime.\+h$>$}\\*
+{\ttfamily \#include \char`\"{}to\+String.\+h\char`\"{}}\\*
+{\ttfamily \#include $<$stdint.\+h$>$}\\*
+\subsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \hyperlink{global_8h_ada6f015aed9ec48e464aec315a71273b}{\+\_\+\+G\+L\+O\+B\+A\+L\+\_\+\+H\+\_\+}
+\begin{DoxyCompactList}\small\item\em macro for avoiding multiple inclusion during compilation \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+int \hyperlink{global_8h_a0374fbd30c8aa1ad09006c78859e7544}{neuron\+Blk\+Sz}
+\item 
+int \hyperlink{global_8h_a1c6d8e35ba0775d90b3ce5d777a6c892}{synapse\+Blk\+Sz}
+\item 
+int \hyperlink{global_8h_a1f16ea6bb3f329500a9f60fb4da7dd46}{learn\+Blk\+Sz}
+\item 
+cuda\+Device\+Prop $\ast$ \hyperlink{global_8h_a9c0bee1772862acc65b81c8a2fe14f28}{device\+Prop}
+\item 
+int \hyperlink{global_8h_a81d96cf5e1975e327528f0822fb35a02}{the\+Dev}
+\item 
+int \hyperlink{global_8h_a3a9b1273e41b6ba85090fca0451c7693}{host\+Count}
+\begin{DoxyCompactList}\small\item\em Global variable containing the number of hosts within the local compute cluster. \end{DoxyCompactList}\item 
+int \hyperlink{global_8h_aeae4d6852439dcd029768b91adabc33b}{device\+Count}
+\begin{DoxyCompactList}\small\item\em Global variable containing the number of C\+U\+D\+A devices found on this host. \end{DoxyCompactList}\item 
+int \hyperlink{global_8h_a3979da82e8d774168c2d6fef6b07f0b3}{optimise\+Block\+Size} = 1
+\begin{DoxyCompactList}\small\item\em Flag for signalling whether or not block size optimisation should be performed. \end{DoxyCompactList}\item 
+int \hyperlink{global_8h_a36bbec086798c87606bdc408a282cda2}{U\+Int\+Sz} = sizeof(unsigned int) $\ast$ 8
+\begin{DoxyCompactList}\small\item\em size of the unsigned int variable type on the local architecture \end{DoxyCompactList}\item 
+int \hyperlink{global_8h_a55a62a3cab839c3ded600b32a02a9a7d}{log\+U\+Int\+Sz} = (int) (logf((float) \hyperlink{global_8h_a36bbec086798c87606bdc408a282cda2}{U\+Int\+Sz}) / logf(2.\+0f) + 1e-\/5f)
+\begin{DoxyCompactList}\small\item\em logarithm of the size of the unsigned int variable type on the local architecture \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Global header file containing a few global variables. Part of the code generation section. 
+
+This global header file also takes care of including some generally used cuda support header files. 
+
+\subsection{Macro Definition Documentation}
+\hypertarget{global_8h_ada6f015aed9ec48e464aec315a71273b}{\index{global.\+h@{global.\+h}!\+\_\+\+G\+L\+O\+B\+A\+L\+\_\+\+H\+\_\+@{\+\_\+\+G\+L\+O\+B\+A\+L\+\_\+\+H\+\_\+}}
+\index{\+\_\+\+G\+L\+O\+B\+A\+L\+\_\+\+H\+\_\+@{\+\_\+\+G\+L\+O\+B\+A\+L\+\_\+\+H\+\_\+}!global.\+h@{global.\+h}}
+\subsubsection[{\+\_\+\+G\+L\+O\+B\+A\+L\+\_\+\+H\+\_\+}]{\setlength{\rightskip}{0pt plus 5cm}\#define \+\_\+\+G\+L\+O\+B\+A\+L\+\_\+\+H\+\_\+}}\label{global_8h_ada6f015aed9ec48e464aec315a71273b}
+
+
+macro for avoiding multiple inclusion during compilation 
+
+
+
+\subsection{Variable Documentation}
+\hypertarget{global_8h_aeae4d6852439dcd029768b91adabc33b}{\index{global.\+h@{global.\+h}!device\+Count@{device\+Count}}
+\index{device\+Count@{device\+Count}!global.\+h@{global.\+h}}
+\subsubsection[{device\+Count}]{\setlength{\rightskip}{0pt plus 5cm}int device\+Count}}\label{global_8h_aeae4d6852439dcd029768b91adabc33b}
+
+
+Global variable containing the number of C\+U\+D\+A devices found on this host. 
+
+\hypertarget{global_8h_a9c0bee1772862acc65b81c8a2fe14f28}{\index{global.\+h@{global.\+h}!device\+Prop@{device\+Prop}}
+\index{device\+Prop@{device\+Prop}!global.\+h@{global.\+h}}
+\subsubsection[{device\+Prop}]{\setlength{\rightskip}{0pt plus 5cm}cuda\+Device\+Prop$\ast$ device\+Prop}}\label{global_8h_a9c0bee1772862acc65b81c8a2fe14f28}
+\hypertarget{global_8h_a3a9b1273e41b6ba85090fca0451c7693}{\index{global.\+h@{global.\+h}!host\+Count@{host\+Count}}
+\index{host\+Count@{host\+Count}!global.\+h@{global.\+h}}
+\subsubsection[{host\+Count}]{\setlength{\rightskip}{0pt plus 5cm}int host\+Count}}\label{global_8h_a3a9b1273e41b6ba85090fca0451c7693}
+
+
+Global variable containing the number of hosts within the local compute cluster. 
+
+\hypertarget{global_8h_a1f16ea6bb3f329500a9f60fb4da7dd46}{\index{global.\+h@{global.\+h}!learn\+Blk\+Sz@{learn\+Blk\+Sz}}
+\index{learn\+Blk\+Sz@{learn\+Blk\+Sz}!global.\+h@{global.\+h}}
+\subsubsection[{learn\+Blk\+Sz}]{\setlength{\rightskip}{0pt plus 5cm}int learn\+Blk\+Sz}}\label{global_8h_a1f16ea6bb3f329500a9f60fb4da7dd46}
+\hypertarget{global_8h_a55a62a3cab839c3ded600b32a02a9a7d}{\index{global.\+h@{global.\+h}!log\+U\+Int\+Sz@{log\+U\+Int\+Sz}}
+\index{log\+U\+Int\+Sz@{log\+U\+Int\+Sz}!global.\+h@{global.\+h}}
+\subsubsection[{log\+U\+Int\+Sz}]{\setlength{\rightskip}{0pt plus 5cm}int log\+U\+Int\+Sz = (int) (logf((float) {\bf U\+Int\+Sz}) / logf(2.\+0f) + 1e-\/5f)}}\label{global_8h_a55a62a3cab839c3ded600b32a02a9a7d}
+
+
+logarithm of the size of the unsigned int variable type on the local architecture 
+
+\hypertarget{global_8h_a0374fbd30c8aa1ad09006c78859e7544}{\index{global.\+h@{global.\+h}!neuron\+Blk\+Sz@{neuron\+Blk\+Sz}}
+\index{neuron\+Blk\+Sz@{neuron\+Blk\+Sz}!global.\+h@{global.\+h}}
+\subsubsection[{neuron\+Blk\+Sz}]{\setlength{\rightskip}{0pt plus 5cm}int neuron\+Blk\+Sz}}\label{global_8h_a0374fbd30c8aa1ad09006c78859e7544}
+\hypertarget{global_8h_a3979da82e8d774168c2d6fef6b07f0b3}{\index{global.\+h@{global.\+h}!optimise\+Block\+Size@{optimise\+Block\+Size}}
+\index{optimise\+Block\+Size@{optimise\+Block\+Size}!global.\+h@{global.\+h}}
+\subsubsection[{optimise\+Block\+Size}]{\setlength{\rightskip}{0pt plus 5cm}int optimise\+Block\+Size = 1}}\label{global_8h_a3979da82e8d774168c2d6fef6b07f0b3}
+
+
+Flag for signalling whether or not block size optimisation should be performed. 
+
+\hypertarget{global_8h_a1c6d8e35ba0775d90b3ce5d777a6c892}{\index{global.\+h@{global.\+h}!synapse\+Blk\+Sz@{synapse\+Blk\+Sz}}
+\index{synapse\+Blk\+Sz@{synapse\+Blk\+Sz}!global.\+h@{global.\+h}}
+\subsubsection[{synapse\+Blk\+Sz}]{\setlength{\rightskip}{0pt plus 5cm}int synapse\+Blk\+Sz}}\label{global_8h_a1c6d8e35ba0775d90b3ce5d777a6c892}
+\hypertarget{global_8h_a81d96cf5e1975e327528f0822fb35a02}{\index{global.\+h@{global.\+h}!the\+Dev@{the\+Dev}}
+\index{the\+Dev@{the\+Dev}!global.\+h@{global.\+h}}
+\subsubsection[{the\+Dev}]{\setlength{\rightskip}{0pt plus 5cm}int the\+Dev}}\label{global_8h_a81d96cf5e1975e327528f0822fb35a02}
+\hypertarget{global_8h_a36bbec086798c87606bdc408a282cda2}{\index{global.\+h@{global.\+h}!U\+Int\+Sz@{U\+Int\+Sz}}
+\index{U\+Int\+Sz@{U\+Int\+Sz}!global.\+h@{global.\+h}}
+\subsubsection[{U\+Int\+Sz}]{\setlength{\rightskip}{0pt plus 5cm}int U\+Int\+Sz = sizeof(unsigned int) $\ast$ 8}}\label{global_8h_a36bbec086798c87606bdc408a282cda2}
+
+
+size of the unsigned int variable type on the local architecture 
+

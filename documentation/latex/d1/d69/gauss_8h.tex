@@ -1,0 +1,37 @@
+\hypertarget{gauss_8h}{\section{lib/include/numlib/gauss.h File Reference}
+\label{gauss_8h}\index{lib/include/numlib/gauss.\+h@{lib/include/numlib/gauss.\+h}}
+}
+
+
+Random number generator for Gaussian random variable with mean 0 and standard deviation 1.  
+
+
+{\ttfamily \#include $<$cmath$>$}\\*
+{\ttfamily \#include \char`\"{}random\+Gen.\+h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}random\+Gen.\+cc\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}gauss.\+cc\char`\"{}}\\*
+\subsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \hyperlink{classrandomGauss}{random\+Gauss}
+\begin{DoxyCompactList}\small\item\em Class random Gauss encapsulates the methods for generating random neumbers with Gaussian distribution. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \hyperlink{gauss_8h_afd4b232f1f3ad32181fb0915b28bcd10}{G\+A\+U\+S\+S\+\_\+\+H}
+\begin{DoxyCompactList}\small\item\em macro for avoiding multiple inclusion during compilation \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Random number generator for Gaussian random variable with mean 0 and standard deviation 1. 
+
+This random number generator is based on the ratio of uniforms method by A.\+J. Kinderman and J.\+F. Monahan and improved with quadratic boundind curves by J.\+L. Leva. Taken from Algorithm 712 A\+C\+M Trans. Math. Softw. 18 p. 454. (the necessary uniform random variables are obtained from the I\+S\+A\+A\+C random number generator; C++ Implementation by Quinn Tyler Jackson of the R\+G invented by Bob Jenkins Jr.). 
+
+\subsection{Macro Definition Documentation}
+\hypertarget{gauss_8h_afd4b232f1f3ad32181fb0915b28bcd10}{\index{gauss.\+h@{gauss.\+h}!G\+A\+U\+S\+S\+\_\+\+H@{G\+A\+U\+S\+S\+\_\+\+H}}
+\index{G\+A\+U\+S\+S\+\_\+\+H@{G\+A\+U\+S\+S\+\_\+\+H}!gauss.\+h@{gauss.\+h}}
+\subsubsection[{G\+A\+U\+S\+S\+\_\+\+H}]{\setlength{\rightskip}{0pt plus 5cm}\#define G\+A\+U\+S\+S\+\_\+\+H}}\label{gauss_8h_afd4b232f1f3ad32181fb0915b28bcd10}
+
+
+macro for avoiding multiple inclusion during compilation 
+

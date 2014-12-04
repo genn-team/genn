@@ -1,0 +1,429 @@
+\hypertarget{index_Contents}{}\section{Contents}\label{index_Contents}
+\hyperlink{UserManual_sIntro}{Introduction} ~\newline
+ \hyperlink{sect1}{Defining a network model} ~\newline
+ \hyperlink{sect2}{Neuron models} ~\newline
+ \hyperlink{sect3}{Synapse models} ~\newline
+ \hyperlink{sect_postsyn}{Post-\/synaptic integration methods} ~\newline
+ \hyperlink{ListOfVariables}{Variables in Ge\+N\+N} ~\newline
+ \hyperlink{Credits}{Credits} ~\newline
+\hypertarget{UserManual_sIntro}{}\section{Introduction}\label{UserManual_sIntro}
+Ge\+N\+N is a software library for facilitating the simulation of neuronal network models on N\+V\+I\+D\+I\+A C\+U\+D\+A enabled G\+P\+U hardware. It was designed with computational neuroscience models in mind rather than artificial neural networks. The main philosophy of Ge\+N\+N is two-\/fold\+:
+\begin{DoxyEnumerate}
+\item Ge\+N\+N relies heavily on code generation to make it very flexible and to allow adjusting simulation code to the model of interest and the G\+P\+U hardware that is detected at compile time.
+\item Ge\+N\+N is lightweight in that it provides code for running models of neuronal networks on G\+P\+U hardware but it leaves it to the user to write a final simulation engine. It so allows maximal flexibility to the user who can use any of the provided code but can fully choose, inspect, extend or otherwise modify the generated code. She can also introduce her own optimisations and in particular control the data flow from and to the G\+P\+U in any desired granularity.
+\end{DoxyEnumerate}
+
+This manual gives an overview of how to use Ge\+N\+N for a novice user and tries to lead the user to more expert use later on. With this we jump right in.
+
+~\newline
+ 
+
+ \hyperlink{ReleaseNotes}{Previous} $\vert$ \hyperlink{UserManual}{Top} $\vert$ \hyperlink{sect1}{Next} \hypertarget{sect1}{}\section{Defining a network model}\label{sect1}
+A network model is defined by the user by providing the function 
+\begin{DoxyCode}
+\textcolor{keywordtype}{void} \hyperlink{tmp_2model_2MBody__userdef_8cc_a9aeaa0a22980484b2c472564fc9f686e}{modelDefinition}(\hyperlink{classNNmodel}{NNmodel} &model) 
+\end{DoxyCode}
+ in a separate file with name {\ttfamily name.\+cc}, where {\ttfamily name} is the name of the model network under consideration. In this function, the following tasks must be completed\+:
+\begin{DoxyEnumerate}
+\item The name of the model must be defined\+: 
+\begin{DoxyCode}
+model.\hyperlink{classNNmodel_a757eff2a5877688e6e5492726df035ee}{setName}(\textcolor{stringliteral}{"MyModel"});
+\end{DoxyCode}
+
+\item Neuron populations (at least one) must be added (see \hyperlink{sect1_subsect11}{Defining neuron populations}). The user may add as many neuron populations as she wishes. If resources run out, there will not be a warning but Ge\+N\+N will fail. However, before this breaking point is reached, Ge\+N\+N will make all necessary efforts in terms of block size optimisation to accommodate the defined models. All populations should have a unique name.
+\item Synapse populations (zero or more) can be added (see \hyperlink{sect1_subsect12}{Defining synapse populations}). Again, the number of synaptic connection populations is unlimited other than by resources.
+\end{DoxyEnumerate}
+
+\begin{DoxyNote}{Note}
+Ge\+N\+N uses the convention where C/\+C++ files end in {\ttfamily .cc}. If this is not adhered to the build script {\ttfamily buildmodel.\+sh} will not recognise the model definition file.
+\end{DoxyNote}
+\hypertarget{sect1_subsect11}{}\subsection{Defining neuron populations}\label{sect1_subsect11}
+Neuron populations are added using the function 
+\begin{DoxyCode}
+model.\hyperlink{classNNmodel_a24532739d3ae98da3e00a9fe5aadd54e}{addNeuronPopulation}(name, n, TYPE, para, ini);
+\end{DoxyCode}
+ where the arguments are\+: \begin{DoxyItemize}
+\item {\ttfamily const} {\ttfamily char$\ast$} name\+: Name of the neuron population \item {\ttfamily int} n\+: number of neurons in the population \item {\ttfamily int} T\+Y\+P\+E\+: Type of the neurons, refers to either a standard type (see \hyperlink{sect2}{Neuron models}) or user-\/defined type \item {\ttfamily float} $\ast$para\+: Parameters of this neuron type \item {\ttfamily float} $\ast$ini\+: Initial values for variables of this neuron type\end{DoxyItemize}
+The user may add as many neuron populations as the model necessitates. They should all have unique names. The possible values for the arguments, predefined models and their parameters and initial values are detailed \hyperlink{sect2}{Neuron models} below.\hypertarget{sect1_subsect12}{}\subsection{Defining synapse populations}\label{sect1_subsect12}
+Synapse populations are added with the command 
+\begin{DoxyCode}
+model.\hyperlink{classNNmodel_a9dceb36a7d36c82adfdb5642df8f25f7}{addSynapsePopulation}(\textcolor{stringliteral}{"name"}, sType, sConn, gType, delay, postSyn, \textcolor{stringliteral}{"preName"}, \textcolor{stringliteral}{"
+      postName"}, sIni, sParam, postSynIni, postSynParam);
+\end{DoxyCode}
+ where the arguments are \begin{DoxyItemize}
+\item {\ttfamily const} {\ttfamily char$\ast$} name\+: The name of the synapse population \item {\ttfamily int} {\ttfamily s\+Type\+:} The type of synapse to be added. See \hyperlink{sect3_subsect31}{Models} below for the available predefined synapse types. \item {\ttfamily int} {\ttfamily s\+Conn\+:} The type of synaptic connectivity. the options currently are \char`\"{}\+A\+L\+L\+T\+O\+A\+L\+L\char`\"{}, \char`\"{}\+D\+E\+N\+S\+E\char`\"{}, \char`\"{}\+S\+P\+A\+R\+S\+E\char`\"{} (see \hyperlink{sect3_subsect32}{Connectivity types} ) \item {\ttfamily int} {\ttfamily g\+Type\+:} The way how the synaptic conductivity g will be defined. Options are \char`\"{}\+I\+N\+D\+I\+V\+I\+D\+U\+A\+L\+G\char`\"{}, \char`\"{}\+G\+L\+O\+B\+A\+L\+G\char`\"{}, \char`\"{}\+I\+N\+D\+I\+V\+I\+D\+U\+A\+L\+I\+D\char`\"{}. For their meaning, see \hyperlink{sect3_subsect33}{Conductance definition methods} below. \item {\ttfamily int} {\ttfamily delay\+:} Synaptic delay (in multiples of the simulation time step {\ttfamily D\+T}). \item {\ttfamily int} {\ttfamily post\+Syn\+:} Postsynaptic integration method. See \hyperlink{sect_postsyn}{Post-\/synaptic integration methods} for predefined types. \item {\ttfamily char$\ast$} {\ttfamily pre\+Name\+:} Name of the (existing!) pre-\/synaptic neuron population. \item {\ttfamily char$\ast$} {\ttfamily post\+Name\+:} Name of the (existing!) post-\/synaptic neuron population. \item {\ttfamily float$\ast$} {\ttfamily s\+Ini\+:} A C-\/array of floats containing initial values for the (pre-\/) synaptic variables. \item {\ttfamily float$\ast$} {\ttfamily s\+Param\+:} A C-\/array of floats that contains parameter values (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored. For pre-\/defined synapse types the required parameters and their meaning are listed in \hyperlink{sect3_sect31}{N\+S\+Y\+N\+A\+P\+S\+E (No Learning)} below.\end{DoxyItemize}
+\begin{DoxyNote}{Note}
+If the synapse conductance definition type is \char`\"{}\+G\+L\+O\+B\+A\+L\+G\char`\"{} then the global value of the synapse conductances is taken from the initial value provided in {\ttfamily s\+I\+N\+I}. (The function set\+Synapse\+G() from earlier versions of Ge\+N\+N has been deprecated).
+\end{DoxyNote}
+Synaptic updates can occur per \char`\"{}true\char`\"{} spike (i.\+e at one point per spike, e.\+g. after a threshold was crossed) or for all \char`\"{}spike type events\char`\"{} (e.\+g. all points above a given threshold). This is defined within each given synapse type.
+
+~\newline
+ 
+
+ \hyperlink{UserManual}{Previous} $\vert$ \hyperlink{sect1}{Top} $\vert$ \hyperlink{sect3}{Next} \hypertarget{sect2}{}\section{Neuron models}\label{sect2}
+There is a number of predefined models which can be chosen in the {\ttfamily add\+Neuron\+Group}(...) function by their unique cardinal number, starting from 0. For convenience, C variables with readable names are predefined
+\begin{DoxyItemize}
+\item 0\+: \hyperlink{sect2_sect21}{M\+A\+P\+N\+E\+U\+R\+O\+N}
+\item 1\+: \hyperlink{sect2_sect22}{P\+O\+I\+S\+S\+O\+N\+N\+E\+U\+R\+O\+N}
+\item 2\+: \hyperlink{sect2_sect23}{T\+R\+A\+U\+B\+M\+I\+L\+E\+S}
+\item 3\+: \hyperlink{sect2_sect24}{I\+Z\+H\+I\+K\+E\+V\+I\+C\+H}
+\item 4\+: \hyperlink{sect2_sect25}{I\+Z\+H\+I\+K\+E\+V\+I\+C\+H\+\_\+\+V}
+\end{DoxyItemize}
+
+\begin{DoxyNote}{Note}
+Ist is best practice to not depend on the unique cardinal numbers but use predefined names. While it is not intended that the numbers will change the unique names are guaranteed to work in all future versions of Ge\+N\+N.
+\end{DoxyNote}
+\hypertarget{sect2_sect21}{}\subsection{M\+A\+P\+N\+E\+U\+R\+O\+N (\+Map Neurons)}\label{sect2_sect21}
+The M\+A\+P\+N\+E\+U\+R\+O\+N type is a map based neuron model based on \cite{Rulkov2002} but in the 1-\/dimensional map form used in \cite{nowotny2005self} \+: \begin{eqnarray*} V(t+\Delta t) &=& \left\{ \begin{array}{ll} V_{\rm spike} \Big(\frac{\alpha V_{\rm spike}}{V_{\rm spike}-V(t) \beta I_{\rm syn}} + y \Big) & V(t) \leq 0 \\ V_{\rm spike} \big(\alpha+y\big) & V(t) \leq V_{\rm spike} \big(\alpha + y\big) \; \& \; V(t-\Delta t) \leq 0 \\ -V_{\rm spike} & {\rm otherwise} \end{array} \right. \end{eqnarray*} \begin{DoxyNote}{Note}
+The {\ttfamily M\+A\+P\+N\+E\+U\+R\+O\+N} type only works as intended for the single time step size of {\ttfamily D\+T}= 0.\+5.
+\end{DoxyNote}
+The {\ttfamily M\+A\+P\+N\+E\+U\+R\+O\+N} type has 2 variables\+:
+\begin{DoxyItemize}
+\item {\ttfamily V} -\/ the membrane potential
+\item {\ttfamily pre\+V} -\/ the membrane potential at the previous time step
+\end{DoxyItemize}
+
+and it has 4 parameters\+:
+\begin{DoxyItemize}
+\item {\ttfamily Vspike} -\/ determines the amplitude of spikes, typically -\/60m\+V
+\item {\ttfamily alpha} -\/ determines the shape of the iteration function, typically $\alpha $= 3
+\item {\ttfamily y} -\/ \char`\"{}shift / excitation\char`\"{} parameter, also determines the iteration function,originally, y= -\/2.\+468
+\item {\ttfamily beta} -\/ roughly speaking equivalent to the input resistance, i.\+e. it regulates the scale of the input into the neuron, typically $\beta$= 2.\+64 ${\rm M}\Omega$.
+\end{DoxyItemize}
+
+\begin{DoxyNote}{Note}
+The initial values array for the {\ttfamily M\+A\+P\+N\+E\+U\+R\+O\+N} type needs two entries for {\ttfamily V} and {\ttfamily Vpre} and the parameter array needs four entries for {\ttfamily Vspike}, {\ttfamily alpha}, {\ttfamily y} and {\ttfamily beta}, {\itshape in that order}.
+\end{DoxyNote}
+\hypertarget{sect2_sect22}{}\subsection{P\+O\+I\+S\+S\+O\+N\+N\+E\+U\+R\+O\+N (\+Poisson Neurons)}\label{sect2_sect22}
+Poisson neurons have constant membrane potential ({\ttfamily Vrest}) unless they are activated randomly to the {\ttfamily Vspike} value if (t-\/ {\ttfamily Spike\+Time} ) $>$ {\ttfamily trefract}.
+
+It has 3 variables\+:
+
+
+\begin{DoxyItemize}
+\item {\ttfamily V} -\/ Membrane potential
+\item {\ttfamily Seed} -\/ Seed for random number generation
+\item {\ttfamily Spike\+Time} -\/ Time at which the neuron spiked for the last time
+\end{DoxyItemize}
+
+and 4 parameters\+:
+
+
+\begin{DoxyItemize}
+\item {\ttfamily therate} -\/ Firing rate
+\item {\ttfamily trefract} -\/ Refractory period
+\item {\ttfamily Vspike} -\/ Membrane potential at spike (m\+V)
+\item {\ttfamily Vrest} -\/ Membrane potential at rest (m\+V)
+\end{DoxyItemize}
+
+\begin{DoxyNote}{Note}
+The initial values array for the {\ttfamily P\+O\+I\+S\+S\+O\+N\+N\+E\+U\+R\+O\+N} type needs three entries for {\ttfamily V}, {\ttfamily Seed} and {\ttfamily Spike\+Time} and the parameter array needs four entries for {\ttfamily therate}, {\ttfamily trefract}, {\ttfamily Vspike} and {\ttfamily Vrest}, {\itshape in that order}.
+
+Internally, Ge\+N\+N uses a linear approximation for the probability of firing a spike in a given time step of size {\ttfamily D\+T}, i.\+e. the probability of firing is {\ttfamily therate} times {\ttfamily D\+T}\+: $ p = \lambda \Delta t $. This approximation is usually very good, especially for typical, quite small time steps and moderate firing rates. However, it is worth noting that the approximation becomes poor for very high firing rates and large time steps. An unrelated problem may occur with very low firing rates and small time steps. In that case it can occur that the firing probability is so small that the granularity of the 64 bit integer based random number generator begins to show. The effect manifests itself in that small changes in the firing rate do not seem to have an effect on the behaviour of the Poisson neurons because the numbers are so small that only if the random number is identical 0 a spike will be triggered.
+\end{DoxyNote}
+\hypertarget{sect2_sect23}{}\subsection{T\+R\+A\+U\+B\+M\+I\+L\+E\+S (\+Hodgkin-\/\+Huxley neurons with Traub \& Miles algorithm)}\label{sect2_sect23}
+This conductance based model has been taken from Traub1991 and can be described by the equations\+: \begin{eqnarray*} C \frac{d V}{dt} &=& -I_{{\rm Na}} -I_K-I_{{\rm leak}}-I_M-I_{i,DC}-I_{i,{\rm syn}}-I_i, \\ I_{{\rm Na}}(t) &=& g_{{\rm Na}} m_i(t)^3 h_i(t)(V_i(t)-E_{{\rm Na}}) \\ I_{{\rm K}}(t) &=& g_{{\rm K}} n_i(t)^4(V_i(t)-E_{{\rm K}}) \\ \frac{dy(t)}{dt} &=& \alpha_y (V(t))(1-y(t))-\beta_y(V(t)) y(t), \end{eqnarray*} where $y_i= m, h, n$, and \begin{eqnarray*} \alpha_n&=& 0.032(-50-V)/\big(\exp((-50-V)/5)-1\big) \\ \beta_n &=& 0.5\exp((-55-V)/40) \\ \alpha_m &=& 0.32(-52-V)/\big(\exp((-52-V)/4)-1\big) \\ \beta_m &=& 0.28(25+V)/\big(\exp((25+V)/5)-1\big) \\ \alpha_h &=& 0.128\exp((-48-V)/18) \\ \beta_h &=& 4/\big(\exp((-25-V)/5)+1\big). \end{eqnarray*} and typical parameters are $C=0.143$ n\+F, $g_{{\rm leak}}= 0.02672$ $\mu$S, $E_{{\rm leak}}= -63.563$ m\+V, $g_{{\rm Na}}=7.15$ $\mu$S, $E_{{\rm Na}}= 50$ m\+V, $g_{{\rm {\rm K}}}=1.43$ $\mu$S, $E_{{\rm K}}= -95$ m\+V.
+
+It has 4 variables\+:
+
+
+\begin{DoxyItemize}
+\item {\ttfamily V} -\/ membrane potential E
+\item {\ttfamily m} -\/ probability for Na channel activation m
+\item {\ttfamily h} -\/ probability for not Na channel blocking h
+\item {\ttfamily n} -\/ probability for K channel activation n
+\end{DoxyItemize}
+
+and 7 parameters\+:
+
+
+\begin{DoxyItemize}
+\item {\ttfamily g\+Na} -\/ Na conductance in 1/(m\+Ohms $\ast$ cm$^\wedge$2)
+\item {\ttfamily E\+Na} -\/ Na equi potential in m\+V
+\item {\ttfamily g\+K} -\/ K conductance in 1/(m\+Ohms $\ast$ cm$^\wedge$2)
+\item {\ttfamily E\+K} -\/ K equi potential in m\+V
+\item {\ttfamily gl} -\/ Leak conductance in 1/(m\+Ohms $\ast$ cm$^\wedge$2)
+\item {\ttfamily El} -\/ Leak equi potential in m\+V
+\item {\ttfamily Cmem} -\/ Membrane capacity density in mu\+F/cm$^\wedge$2
+\end{DoxyItemize}
+
+\begin{DoxyNote}{Note}
+Internally, the ordinary differential equations defining the model are integrated with a linear Euler algorithm and Ge\+N\+N integrates 25 internal time steps for each neuron for each network time step. I.\+e., if the network is simulated at {\ttfamily D\+T= 0.\+1} ms, then the neurons are integrated with a linear Euler algorithm with {\ttfamily l\+D\+T= 0.\+004} ms.
+\end{DoxyNote}
+\hypertarget{sect2_sect24}{}\subsection{I\+Z\+H\+I\+K\+E\+V\+I\+C\+H (\+Izhikevich neurons with fixed parameters)}\label{sect2_sect24}
+This is the Izhikevich model with fixed parameters \cite{izhikevich2003simple}. It is usually described as \begin{eqnarray*} \frac{dV}{dt} &=& 0.04 V^2 + 5 V + 140 - U + I, \\ \frac{dU}{dt} &=& a (bV-U), \end{eqnarray*} I is an external input current and the voltage V is reset to parameter c and U incremented by parameter d, whenever V $>$= 30 m\+V. This is paired with a particular integration procedure of two 0.\+5 ms Euler time steps for the V equation followed by one 1 ms time step of the U equation. Because of its popularity we provide this model in this form here event though due to the details of the usual implementation it is strictly speaking inconsistent with the displayed equations.
+
+Variables are\+:
+
+
+\begin{DoxyItemize}
+\item {\ttfamily V} -\/ Membrane potential
+\item {\ttfamily U} -\/ Membrane recovery variable
+\end{DoxyItemize}
+
+Parameters are\+:
+\begin{DoxyItemize}
+\item {\ttfamily a} -\/ time scale of U
+\item {\ttfamily b} -\/ sensitivity of U
+\item {\ttfamily c} -\/ after-\/spike reset value of V
+\item {\ttfamily d} -\/ after-\/spike reset value of U
+\end{DoxyItemize}\hypertarget{sect2_sect25}{}\subsection{I\+Z\+H\+I\+K\+E\+V\+I\+C\+H\+\_\+\+V (\+Izhikevich neurons with variable parameters)}\label{sect2_sect25}
+This is the same model as \hyperlink{sect2_sect24}{I\+Z\+H\+I\+K\+E\+V\+I\+C\+H (Izhikevich neurons with fixed parameters)} I\+Z\+H\+I\+K\+E\+V\+I\+C\+H but parameters are defined as \char`\"{}variables\char`\"{} in order to allow users to provide individual values for each individual neuron instead of fixed values for all neurons across the population.
+
+Accordingly, the model has the Variables\+:
+\begin{DoxyItemize}
+\item {\ttfamily V} -\/ Membrane potential
+\item {\ttfamily U} -\/ Membrane recovery variable
+\item {\ttfamily a} -\/ time scale of U
+\item {\ttfamily b} -\/ sensitivity of U
+\item {\ttfamily c} -\/ after-\/spike reset value of V
+\item {\ttfamily d} -\/ after-\/spike reset value of U
+\end{DoxyItemize}
+
+and no parameters.\hypertarget{sect2_sect_own}{}\subsection{Defining your own neuron type}\label{sect2_sect_own}
+In order to define a new neuron type for use in a Ge\+N\+N application, it is necessary to populate an object of class {\ttfamily \hyperlink{structneuronModel}{neuron\+Model}} and append it to the global vector {\ttfamily n\+Models}. The {\ttfamily \hyperlink{structneuronModel}{neuron\+Model}} class has several data members that make up the full description of the neuron model\+:
+
+
+\begin{DoxyItemize}
+\item {\ttfamily sim\+Code} of type {\ttfamily string\+:} This needs to be assigned a C++ string that contains the code for executing the integration of the model for one time step. Within this code string, variables need to be referred to by , where N\+A\+M\+E is the name of the variable as defined in the vector var\+Names. The code may refer to the predefined primitives {\ttfamily D\+T} for the time step size and {\ttfamily Isyn} for the total incoming synaptic current. ~\newline
+ Example\+: 
+\begin{DoxyCode}
+\hyperlink{structneuronModel}{neuronModel} model;
+model.\hyperlink{structneuronModel_a9e6536fd15b69fa24b708e41f97df899}{simCode}=String(\textcolor{stringliteral}{"$(V)+= (-$(a)$(V)+$(Isyn))*DT;"});
+\end{DoxyCode}
+ would implement a leaky itegrator $\frac{dV}{dt}= -a V + I_{{\rm syn}}$.
+\item {\ttfamily var\+Names} of type {\ttfamily vector$<$string$>$}\+: This vector needs to be filled with the names of variables that make up the neuron state. The variables defined here as {\ttfamily N\+A\+M\+E} can then be used in the syntax {\ttfamily } in the code string. ~\newline
+ Example\+: 
+\begin{DoxyCode}
+model.\hyperlink{structneuronModel_a9a9156ffb643572fd67f6e585ef79ad0}{varNames}.push\_back(String(\textcolor{stringliteral}{"V"}));
+\end{DoxyCode}
+ would add the variable V as needed by the code string in the example above.
+\item {\ttfamily var\+Types} of type {\ttfamily vector$<$string$>$}\+: This vector needs to be filled with the variable type (e.\+g. \char`\"{}float\char`\"{}, \char`\"{}double\char`\"{}, etc) for the variables defined in {\ttfamily var\+Names}. Types and variables are matched to each other by position in the respective vectors. ~\newline
+ Example\+: 
+\begin{DoxyCode}
+model.\hyperlink{structneuronModel_a86788cb29131da0a26ce79693a076352}{varTypes}.push\_back(String(\textcolor{stringliteral}{"float"}));
+\end{DoxyCode}
+ would designate the variable V to be of type float. \begin{DoxyNote}{Note}
+Variable names and variable types are matched by their position in the corresponding arrays {\ttfamily var\+Names} and {\ttfamily var\+Types}, i.\+e. the 0th entry of {\ttfamily var\+Names} will have the type stored in the 0th entry of {\ttfamily var\+Types} and so on.
+\end{DoxyNote}
+
+\item {\ttfamily p\+Names} of type {\ttfamily vector$<$string$>$}\+: This vector will contain the names of parameters relevant to the model. If defined as {\ttfamily N\+A\+M\+E} here, they can then be referenced as {\ttfamily } in the code string. The length of this vector determines the expected number of parameters in the initialisation of the neuron model. Parameters are currently assumed to be always of type float. ~\newline
+ 
+\begin{DoxyCode}
+model.\hyperlink{structneuronModel_a4a5bf1f757a72b6edc28ad26ed61b2be}{pNames}.push\_back(String(\textcolor{stringliteral}{"a"}));
+\end{DoxyCode}
+ stores the parameter {\ttfamily a} needed in the code example above.
+\item {\ttfamily dp\+Names} of type {\ttfamily vector$<$string$>$}\+: Names of \char`\"{}dependent
+  parameters\char`\"{}. Dependent parameters are a mechanism for enhanced efficiency when running neuron models. If parameters with model-\/side meaning, such as time constants or conductances always appear in a certain combination in the model, then it is more efficient to pre-\/compute this combination and define it as a dependent parameter. This vector contains the names of such dependent parameters. ~\newline
+ For example, if in the example above the original model had been $\frac{dV}{dt} = -g/C \, V +I_{\rm syn}$. Then one could define the code string and parameters as 
+\begin{DoxyCode}
+model.\hyperlink{structneuronModel_a9e6536fd15b69fa24b708e41f97df899}{simCode}=String(\textcolor{stringliteral}{"$(V)+= (-$(a)$(V)+$(Isyn))*DT;"});
+model.\hyperlink{structneuronModel_a9a9156ffb643572fd67f6e585ef79ad0}{varNames}.push\_back(String(\textcolor{stringliteral}{"V"}));
+model.\hyperlink{structneuronModel_a86788cb29131da0a26ce79693a076352}{varTypes}.push\_back(String(\textcolor{stringliteral}{"float"}));
+model.\hyperlink{structneuronModel_a4a5bf1f757a72b6edc28ad26ed61b2be}{pNames}.push\_back(String(\textcolor{stringliteral}{"g"}));
+model.\hyperlink{structneuronModel_a4a5bf1f757a72b6edc28ad26ed61b2be}{pNames}.push\_back(String(\textcolor{stringliteral}{"C"}));
+model.\hyperlink{structneuronModel_a051c0c704ce383c43cdf446accbeb201}{dpNames}.push\_back(String(\textcolor{stringliteral}{"a"}));
+\end{DoxyCode}
+
+\item {\ttfamily dps} of type {\ttfamily dpclass}$\ast$\+: The dependent parameter class, i.\+e. an implementation of {\ttfamily dpclass} which would return the value for dependent parameters when queried for them. E.\+g. in the example above it would return {\ttfamily a} when queried for dependent parameter 0 through {\ttfamily \hyperlink{classdpclass_a4227f736c0ec826d7bda6c98e783d74a}{dpclass\+::calculate\+Derived\+Parameter()}}. Examples how this is done can be found in the pre-\/defined classes, e.\+g. \hyperlink{classexpDecayDp}{exp\+Decay\+Dp}, \hyperlink{classpwSTDP}{pw\+S\+T\+D\+P}, \hyperlink{classrulkovdp}{rulkovdp} etc.
+\item {\ttfamily tmp\+Var\+Names} of type {\ttfamily vector$<$string$>$}\+: This vector can be used to request additional variables that are not part of the state of the neuron but used only as temporary storage during evaluation of the integration time step. ~\newline
+ For example, one could define 
+\begin{DoxyCode}
+model.\hyperlink{structneuronModel_ab193cb434db2df5f1fa9a79fba30af83}{tmpVarNames}.push\_back(String(\textcolor{stringliteral}{"a"}));
+model.\hyperlink{structneuronModel_ab193cb434db2df5f1fa9a79fba30af83}{tmpVarNames}.push\_back(String(\textcolor{stringliteral}{"float"}));
+model.\hyperlink{structneuronModel_a9e6536fd15b69fa24b708e41f97df899}{simCode}= String(\textcolor{stringliteral}{"$(a)= $(g)/$(C); \(\backslash\)n\(\backslash\)}
+\textcolor{stringliteral}{$(V)+= -$(a)*$(V);\(\backslash\)n\(\backslash\)");}
+\end{DoxyCode}
+ which would be equivalent to 
+\begin{DoxyCode}
+model.\hyperlink{structneuronModel_a9e6536fd15b69fa24b708e41f97df899}{simCode}= String(\textcolor{stringliteral}{"float $(a)= $(g)/$(C); \(\backslash\)n\(\backslash\)}
+\textcolor{stringliteral}{$(V)+= -$(a)*$(V);\(\backslash\)n\(\backslash\)");}
+\end{DoxyCode}
+
+\item {\ttfamily tmp\+Var\+Types} of type {\ttfamily vector$<$string$>$}\+: This vector will contain the variable types of the temporary variables, matched up by position as usual.
+\end{DoxyItemize}
+
+Once the completed {\ttfamily \hyperlink{structneuronModel}{neuron\+Model}} object is appended to the {\ttfamily n\+Models} vector, 
+\begin{DoxyCode}
+\hyperlink{utils_8h_a2bd39d11c2cd6cec9bf9b81c183b6cd4}{nModels}.push\_back(model);
+\end{DoxyCode}
+ it can be used in network descriptions by referring to its cardinal number in the n\+Models vector. I.\+e., if the model is added as the 4th entry, it would be model \char`\"{}3\char`\"{} (counting starts at 0 in usual C convention). The information of the cardinal number of a new model can be obtained by referring to {\ttfamily n\+Models.\+size()} right before appending the new model, i.\+e. a typical use case would be. 
+\begin{DoxyCode}
+\textcolor{keywordtype}{int} myModel= \hyperlink{utils_8h_a2bd39d11c2cd6cec9bf9b81c183b6cd4}{nModels}.size();
+\hyperlink{utils_8h_a2bd39d11c2cd6cec9bf9b81c183b6cd4}{nModels}.push\_back(model);
+\end{DoxyCode}
+. Then one can use the model as 
+\begin{DoxyCode}
+networkModel.addNeuronPopulation(..., myModel, ...);
+\end{DoxyCode}
+\hypertarget{sect2_sect_explinput}{}\subsection{Explicit current input to neurons}\label{sect2_sect_explinput}
+The user can decide whether a neuron group receives external input current or not in addition to the synaptic input that it receives from the network. External input to a neuron group is activated by calling {\ttfamily activate\+Direct\+Input} function. It receives two arguments\+: The first argument is the name of the neuron group to receive input current. The second parameter defines the type of input. Current options are\+:
+
+
+\begin{DoxyItemize}
+\item 0\+: N\+O\+I\+N\+P\+: Neuron group receives no input. This is the value by default when the explicit input is not activated.
+\item 1\+: C\+O\+N\+S\+T\+I\+N\+P\+: All the neurons receive a constant input value. This value may also be defined as a variable, i.\+e. be time-\/dependent.
+\item 2\+: M\+A\+T\+I\+N\+P\+: The input is read from a file containing the input matrix.
+\item 3\+: I\+N\+P\+R\+U\+L\+E\+: The input is defined as a rule. It differs from C\+O\+N\+S\+T\+I\+N\+P in the way that the input is injected\+: C\+O\+N\+S\+T\+I\+N\+P creates a value which is modified in real time, hence complex instructions are limited. I\+N\+P\+R\+U\+L\+E creates an input array which will be copied into the device memory. 
+\end{DoxyItemize}\hypertarget{sect3}{}\section{Synapse models}\label{sect3}
+\hypertarget{sect3_subsect31}{}\subsection{Models}\label{sect3_subsect31}
+Currently 3 predefined synapse models are available\+:
+\begin{DoxyItemize}
+\item 0\+: \hyperlink{sect3_sect31}{N\+S\+Y\+N\+A\+P\+S\+E}
+\item 1\+: \hyperlink{sect3_sect32}{N\+G\+R\+A\+D\+S\+Y\+N\+A\+P\+S\+E}
+\item 2\+: \hyperlink{sect3_sect33}{L\+E\+A\+R\+N1\+S\+Y\+N\+A\+P\+S\+E}
+\end{DoxyItemize}\hypertarget{sect3_sect31}{}\subsection{N\+S\+Y\+N\+A\+P\+S\+E (\+No Learning)}\label{sect3_sect31}
+If this model is selected, no learning rule is applied to the synapse. The model has 3 parameters\+:
+\begin{DoxyItemize}
+\item {\ttfamily tau\+\_\+\+S$\ast$} -\/ decay time constant for S \mbox{[}ms\mbox{]}
+\item {\ttfamily Epre\+:} Presynaptic threshold potential
+\item {\ttfamily Erev$\ast$} -\/ Reversal potential
+\end{DoxyItemize}
+
+($\ast$ D\+E\+P\+R\+E\+C\+A\+T\+E\+D\+: Decay time constant and reversal potential in synapse parameters are not used anymore and they will be removed in the next release. They should be defined in the postsynaptic mechanisms.)\hypertarget{sect3_sect32}{}\subsection{N\+G\+R\+A\+D\+S\+Y\+N\+A\+P\+S\+E (\+Graded Synapse)}\label{sect3_sect32}
+In a graded synapse, the conductance is updated gradually with the rule\+:
+
+\[ gSyn= g * tanh((E - E_{pre}) / V_{slope} \]
+
+The parameters are\+:
+\begin{DoxyItemize}
+\item {\ttfamily Erev$\ast$}\+: Reversal potential
+\item {\ttfamily Epre\+:} Presynaptic threshold potential
+\item {\ttfamily tau\+\_\+\+S$\ast$}\+: Decay time constant for S \mbox{[}ms\mbox{]}
+\item {\ttfamily Vslope\+:} Activation slope of graded release
+\end{DoxyItemize}
+
+($\ast$ D\+E\+P\+R\+E\+C\+A\+T\+E\+D\+: Decay time constant and reversal potential in synapse parameters are not used anymore and they will be removed in the next release. They should be defined in the postsynaptic mechanisms.)\hypertarget{sect3_sect33}{}\subsection{L\+E\+A\+R\+N1\+S\+Y\+N\+A\+P\+S\+E (\+Learning Synapse with a Primitive Role)}\label{sect3_sect33}
+This is a simple S\+T\+D\+P rule including a time delay for the finite transmission speed of the synapse, defined as a piecewise function.
+
+This model has 13 parameters\+:
+\begin{DoxyItemize}
+\item {\ttfamily Erev\+:} Reversal potential
+\item {\ttfamily Epre\+:} Presynaptic threshold potential
+\item {\ttfamily tau\+\_\+\+S\+:} Decay time constant for S \mbox{[}ms\mbox{]}
+\item {\ttfamily T\+L\+R\+N\+:} Time scale of learning changes
+\item {\ttfamily T\+C\+H\+N\+G\+:} Width of learning window
+\item {\ttfamily T\+D\+E\+C\+A\+Y\+:} Time scale of synaptic strength decay
+\item {\ttfamily T\+P\+U\+N\+I\+S\+H10\+:} Time window of suppression in response to 1/0
+\item {\ttfamily T\+P\+U\+N\+I\+S\+H01\+:} Time window of suppression in response to 0/1
+\item {\ttfamily G\+M\+A\+X\+:} Maximal conductance achievable
+\item {\ttfamily G\+M\+I\+D\+:} Midpoint of sigmoid g filter curve
+\item {\ttfamily G\+S\+L\+O\+P\+E\+:} Slope of sigmoid g filter curve
+\item {\ttfamily T\+A\+U\+S\+Hi\+F\+T\+:} Shift of learning curve
+\item {\ttfamily G\+S\+Y\+N0\+:} Value of syn conductance g decays to
+\end{DoxyItemize}
+
+For more details, see \cite{nowotny2005self}.\hypertarget{sect3_sect34}{}\subsection{Defining a new synapse model}\label{sect3_sect34}
+There is a way to define a synapse model the same way a \hyperlink{structneuronModel}{neuron\+Model} can be defined. This feature is still experimental and supported only with the Spine\+M\+L and development branches.
+
+A synapse model is a \hyperlink{classweightUpdateModel}{weight\+Update\+Model} object which consists of variables, parameters, and three string objects which will be substituted in the code. These three strings are\+:
+
+
+\begin{DoxyItemize}
+\item {\ttfamily sim\+Code\+:} Simulation code that is used when a true spike is detected (only one point after Vthresh)
+\item {\ttfamily sim\+Code\+Evnt\+:} Simulation code that is used for spike events (all the instances where Vm $>$ Vthres)
+\item {\ttfamily sim\+Learn\+Post\+:} Simulation code which is used in the learn\+Synapses\+Post kernel/function, where postsynaptic neuron spikes before the presynaptic neuron in the S\+T\+D\+P window. Usually this is simply the conductance update rule defined by the other sim\+Code elements above, with negative timing. This code is needed as sim\+Code and sim\+Code\+Envt are used after spanning the presynaptic spikes, where it is not possible to detect where a postsynaptic neuron fired before the presynaptic neuron.
+\end{DoxyItemize}
+
+These codes would include update functions for adding up conductances for that neuron model and for changes in conductances for the next time step (learning). Condutance in this code should be referred to as \$(\char`\"{}\+G\char`\"{})\hypertarget{sect3_subsect32}{}\subsection{Connectivity types}\label{sect3_subsect32}
+If I\+N\+D\+I\+V\+I\+D\+U\+A\+L\+G is used with A\+L\+L\+T\+O\+A\+L\+L connectivity, the conductance values are stored in an array called \char`\"{}ftype $\ast$ gp$<$synapse\+Name$>$\char`\"{}, defined and initialised in runner.\+cc in the generated code.
+
+If I\+N\+D\+I\+V\+I\+D\+U\+A\+L\+I\+D is used with A\+L\+L\+T\+O\+A\+L\+L connectivity, the connectivity matrix is stored in an array called \char`\"{}unsigned int $\ast$ gp$<$synapse\+Name$>$\char`\"{}
+
+If connectivity is of S\+P\+A\+R\+S\+E type, connectivity and conductance values are stored in a struct in order to occupy minimum memory needed. The struct Conductance contains 3 array members and one integer member\+: 1\+: unsigned int conn\+N\+: number of connections in the population. This value is needed for allocaton of arrays. 2\+: floattype $\ast$ gp\+: Values of conductances. The indices that correspond to these values are defined in a pre-\/to-\/post basis by the following arrays\+: 4\+: unsigned int g\+Ind, of size conn\+N\+: Indices of corresponding postsynaptic neurons concatenated for each presynaptic neuron. 3\+: unsigned int $\ast$g\+Ind\+In\+G, of size model.\+neuron\+N\mbox{[}model.\+synapse\+Source\mbox{[}syn\+Ind\mbox{]}\mbox{]}+1\+: This array defines from which index in the gp array the indices in g\+Ind would correspond to the presynaptic neuron that corresponds to the index of the g\+Ind\+In\+G array, with the number of connections being the size of g\+Ind. More specifically, g\+Ind\+Ing\mbox{[}n+1\mbox{]}-\/g\+Ind\+Ing\mbox{[}n\mbox{]} would give the number of postsynaptic connections for neuron n, and the conductance values are stored in gp\mbox{[}g\+Ind\+Ing\mbox{[}n\mbox{]}\mbox{]} to gp\mbox{[}g\+Ind\+Ing\mbox{[}n\mbox{]}+1\mbox{]}. if there are no connections for a presynaptic neuron, then gp\mbox{[}g\+Ind\+Ing\mbox{[}n\mbox{]}\mbox{]}=gp\mbox{[}g\+Ind\+Ing\mbox{[}n\mbox{]}+1\mbox{]}.
+
+For example, consider a network of two presynaptic neurons connected to three postsynaptic neurons\+: 0th presynaptic neuron connected to 1st and 2nd postsynaptic neurons, the 1st presynaptic neuron connected to 0th and 2nd neurons. The struct Conductance should have these members, with indexing from 0\+: Conn\+N = 4 gp= g\+Pre0-\/\+Post1 gpre0-\/post2 gpre1-\/post0 gpre1-\/post2 g\+Ind= 1 2 0 2 g\+Ind\+Ing= 0 2 4
+
+See tools/gen\+\_\+syns\+\_\+sparse\+\_\+\+Izh\+Model used in Izh\+\_\+sparse project to see a working example.\hypertarget{sect3_subsect33}{}\subsection{Conductance definition methods}\label{sect3_subsect33}
+The available options work as follows\+:
+\begin{DoxyItemize}
+\item I\+N\+D\+I\+V\+I\+D\+U\+A\+L\+G\+: When this option is chosen in the {\ttfamily add\+Synapse\+Population} command, Ge\+N\+N reserves an array of size n\+\_\+pre x n\+\_\+post float for individual conductance values for each combination of pre and postsynaptic neuron. The actual values of the conductances are passed at runtime from the user side code, using the {\ttfamily copy\+G\+To\+Device} function.
+\item G\+L\+O\+B\+A\+L\+G\+: When this option is chosen, the {\ttfamily add\+Synapse\+Population} command must be followed within the {\ttfamily model\+Definition} function by a call to {\ttfamily set\+Synapse\+G} for this synapse population. This option can only be sensibly combined with connectivity type A\+L\+L\+T\+O\+A\+L\+L.
+\item I\+N\+D\+I\+V\+I\+D\+U\+A\+L\+I\+D\+: When this option is chosen, Ge\+N\+N expects to use the same maximal conductance for all existing synaptic connections but which synapses exist will be defined at runtime from the user side code.
+\end{DoxyItemize}
+
+~\newline
+ 
+
+ \hyperlink{sect2}{Previous} $\vert$ \hyperlink{sect3}{Top} $\vert$ \hyperlink{sect_postsyn}{Next} \hypertarget{sect_postsyn}{}\section{Post-\/synaptic integration methods}\label{sect_postsyn}
+The shape of the postsynaptic current can be defined by either using a predefined method or by adding a new \hyperlink{structpostSynModel}{post\+Syn\+Model} object.
+
+
+\begin{DoxyItemize}
+\item E\+X\+P\+D\+E\+C\+A\+Y\+: Exponential decay. Decay time constant and reversal potential parameters are needed for this postsynaptic mechanism.
+\end{DoxyItemize}
+
+~\newline
+ 
+
+ \hyperlink{sect3}{Previous} $\vert$ \hyperlink{sect_postsyn}{Top} $\vert$ \hyperlink{ListOfVariables}{Next} \hypertarget{ListOfVariables}{}\section{Variables in Ge\+N\+N}\label{ListOfVariables}
+There are different types of variables that users of Ge\+N\+N should be aware of and should know how to use.\hypertarget{ListOfVariables_modelVars}{}\subsection{Neuron and Synapse variables}\label{ListOfVariables_modelVars}
+One type of variables are those that originate from a neuron model type, weightupdate model type or post-\/synaptic model type. The core name of the variable is defined when the model type is introduced, i.\+e. with a statement such as 
+\begin{DoxyCode}
+\hyperlink{structneuronModel}{neuronModel} model;
+model.\hyperlink{structneuronModel_a9a9156ffb643572fd67f6e585ef79ad0}{varNames}.push\_back(String\textcolor{stringliteral}{"x"}));
+model.\hyperlink{structneuronModel_a86788cb29131da0a26ce79693a076352}{varTypes}.push\_back(String(\textcolor{stringliteral}{"double"}));
+...
+int myModel= \hyperlink{utils_8h_a2bd39d11c2cd6cec9bf9b81c183b6cd4}{nModels}.size();
+\hyperlink{utils_8h_a2bd39d11c2cd6cec9bf9b81c183b6cd4}{nModels}.push\_back(model);
+\end{DoxyCode}
+ This declares that whenever the defined model type of cardinal number {\ttfamily my\+Model} is used, there will be a variable of core name {\ttfamily x}. The full Ge\+N\+N name of this variable is obtained by directly concatenating the core name with the name of the neuron population in which the model type has been used, i.\+e. after a definition 
+\begin{DoxyCode}
+networkModel.addNeuronPopulation(\textcolor{stringliteral}{"EN"}, n, myModel, ...);
+\end{DoxyCode}
+ there will be a variable {\ttfamily x\+E\+N} of type {\ttfamily double$\ast$} available in the global namespace of the simulation program. Ge\+N\+N will pre-\/allocated this C array to the correct size of elements corresponding to the size of the neuron population, {\ttfamily n} in the example above. Ge\+N\+N will also free these variables when the provided function {\ttfamily free\+Mem()} is called. Users can otherwise manipulate these variable arrays as they wish. For convenience, Ge\+N\+N provides functions {\ttfamily pull\+X\+Xfrom\+Device()} and {\ttfamily push\+X\+Xto\+Device()} to copy the variables associated to a neuron population {\ttfamily X\+X} from the device into host memory and vice versa. E.\+g. 
+\begin{DoxyCode}
+pullENfromDevice();
+\end{DoxyCode}
+ would copy the C array x\+E\+N from device memory into host memory (and any other variables that the neuron type of the population E\+N may have).
+
+The user can also directly use C\+U\+D\+A memory copy commands independent of the provided convenience function. The relevant device pointers for all variables that exist in host memory have the same name prefixed with {\ttfamily d\+\_\+}. For example, the copy command that would be contained in {\ttfamily pull\+E\+Nfrom\+Device()} might look like 
+\begin{DoxyCode}
+\textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{int} size;      
+size = \textcolor{keyword}{sizeof}(double) * nEN;
+cudaMemcpy(xEN, d\_xEN, size, cudaMemcpyDeviceToHost);
+\end{DoxyCode}
+ where {\ttfamily n} is an integer containing the population size of the E\+N neuron population.
+
+The same convention as for neuron variables applies for the variables of synapse groups, both for those originating from weightupdate models and from post-\/synaptic models, e.\+g. the variables in type {\ttfamily N\+S\+Y\+N\+A\+P\+S\+E} contain the variable {\ttfamily g} of type float. Then, after 
+\begin{DoxyCode}
+networkModel.addSynapsePopulation(\textcolor{stringliteral}{"ENIN"}, \hyperlink{modelSpec_8h_a1110b98e1962bdb6bcc86b647b1431d4}{NSYNAPSE}, ...);
+\end{DoxyCode}
+ there will be a global variable of type {\ttfamily float$\ast$} with the name {\ttfamily g\+E\+N\+I\+N} that is pre-\/allocated to the right size. There will also be a matching device pointer with the name {\ttfamily d\+\_\+g\+E\+N\+I\+N}. \begin{DoxyNote}{Note}
+The content of {\ttfamily g\+E\+N\+I\+N} needs to be interpreted differently for D\+E\+N\+S\+E connectivity and sparse matrix based S\+P\+A\+R\+S\+E connectivity representations. For D\+E\+N\+S\+E connectivity {\ttfamily g\+E\+N\+I\+N} would contain \char`\"{}n\+\_\+pre\char`\"{} times \char`\"{}n\+\_\+post\char`\"{} elements, ordered along the pre-\/synaptic neuronsas the major dimension, i.\+e. the value of {\ttfamily g\+E\+N\+I\+N} for the ith pre-\/synaptic neuron and the jth post-\/synaptic neuron would be {\ttfamily g\+E\+N\+I\+N\mbox{[}i$\ast$n\+\_\+post+j\mbox{]}}. The arrangement of values in the S\+P\+A\+R\+S\+E representation is explained in section \hyperlink{sect3_subsect32}{Connectivity types}
+\end{DoxyNote}
+\hypertarget{ListOfVariables_predefinedVars}{}\subsection{Pre-\/defined Variables in Ge\+N\+N}\label{ListOfVariables_predefinedVars}
+In addition to the explicitly declared neuron, weightupdate and post-\/synaptic variables there are some variables that are built-\/in and modified in a predefined way by Ge\+N\+N. These variables are used for intermediary calculations and communication between different parts of the generated code. They can be used in the user defined code but no other variables should be defined with these names.
+
+
+\begin{DoxyItemize}
+\item {\ttfamily addtoin\+Syn} is a local variable which is used for updating synaptic input. The way it is modified is defined by the weightupdate model, therefore if a user defines her own model she should update this variable to contain the input to the post-\/synaptic model. At the end of the synaptic update, its value is copied back to the d\+\_\+in\+Syn$<$synapse\+Population$>$ variables which will are used in the next step of the neuron update to provide the input to the post-\/snaptic neurons.
+\item {\ttfamily Isyn} is a local variable which defines the (summed) input current to a neuron. It is typically the sum of any explicit current input and all synaptic inputs. The way its value is calculated during the update of the postsynaptic neuron is defined by the code provided in the \hyperlink{structpostSynModel}{post\+Syn\+Model}. For example, the standard {\ttfamily exp\+Decay} post-\/synaptic model defines ps.\+post\+Synto\+Current= String(\char`\"{}\$(in\+Syn)$\ast$(\$(\+E)-\/\$(\+V))\char`\"{});  which implements a conductance based synapse in which the post-\/synaptic current is given by $I_{\rm syn}= g*s*(V_{\rm rev}-V_{\rm post})$. \begin{DoxyNote}{Note}
+The {\ttfamily addtoin\+Syn} variables from all incoming synapses are automatically summed and added to the current value of {\ttfamily in\+Syn}.
+\end{DoxyNote}
+The value resulting from the {\ttfamily post\+Synto\+Current} code is assigned to {\ttfamily Isyn} and can then be used in neuron sim\+Code like so\+: 
+\begin{DoxyCode}
+$(V)+= (-$(V)+$(Isyn))*\hyperlink{tmp_2model_2MBody__userdef_8cc_a943f07034774ef1261d62cd0d3d1fec9}{DT} 
+\end{DoxyCode}
+
+\item {\ttfamily s\+T$<$neuron\+Name$>$} is the last spike time in a neuron and is automatically generated for pre-\/ and postsynaptic neuron groups of a synapse group i that follows a spike based learning rule (indicated by uses\+Post\+Learning\mbox{[}i\mbox{]}= T\+R\+U\+E for the ith synapse population).
+\end{DoxyItemize}
+
+~\newline
+ 
+
+ \hyperlink{sect_postsyn}{Previous} $\vert$ \hyperlink{ListOfVariables}{Top} $\vert$ \hyperlink{Credits}{Next} \hypertarget{Credits}{}\section{Credits}\label{Credits}
+Ge\+N\+N was created by Thomas Nowotny.
+
+Addition of Izhikevich model, debugging modes and sparse connectivity by Esin Yavuz.
+
+Block size optimisations and delayed synapses by James Turner.
+
+Automatic brackets and dense to sparse network conversion by Alan Diamond.
+
+User-\/defined synaptic and postsynaptic methods by Alex Cope and Esin Yavuz.
+
+~\newline
+ 
+
+ \hyperlink{ListOfVariables}{Previous} $\vert$ \hyperlink{Credits}{Top} 

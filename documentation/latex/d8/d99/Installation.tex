@@ -1,0 +1,74 @@
+You can download Ge\+N\+N either as a zip file of a stable release or a snapshot of the most recent stable version or the unstable development version using the Git version control system.\hypertarget{Installation_Downloading}{}\section{Downloading a release}\label{Installation_Downloading}
+Point your browser to {\itshape \href{https://github.com/genn-team/genn/releases}{\tt https\+://github.\+com/genn-\/team/genn/releases}} and download a release from the list by clicking the relevant source code button. Note that Ge\+N\+N is only distributed in the form of source code due to its code generation design. Binary distributions would not make sense in this framework and are not provided. After downloading continue to install Ge\+N\+N as described in the install section below.\hypertarget{Installation_GitSnapshot}{}\section{Obtaining a Git snapshot}\label{Installation_GitSnapshot}
+If it is not yet installed on your system, download and install Git ({\itshape \href{http://git-scm.com/}{\tt http\+://git-\/scm.\+com/}}). Then clone the Ge\+N\+N repository from Github 
+\begin{DoxyCode}
+git clone https:\textcolor{comment}{//github.com/genn-team/genn.git}
+\end{DoxyCode}
+ The github url of Ge\+N\+N in the command above can be copied from the H\+T\+T\+P\+S clone U\+R\+L displayed on the Ge\+N\+N Github page ({\itshape \href{https://github.com/genn-team/genn}{\tt https\+://github.\+com/genn-\/team/genn}}).
+
+This will clone the entire repository, including all open branches. By default git will check out the master branch which contains the source version upon which the latest release is based. If you want the most recent (but unstable) development version (which may or may not be fully functional at any given time), checkout the development branch 
+\begin{DoxyCode}
+git checkout development
+\end{DoxyCode}
+ There are other branches in the repository that are used for specific development purposes and are opened and closed without warning.
+
+Alternatively to using git you can also download the full content of Ge\+N\+N sources clicking on the \char`\"{}\+Download Z\+I\+P\char`\"{} button on the bottom right of the Ge\+N\+N Github page ({\itshape \href{https://github.com/genn-team/genn}{\tt https\+://github.\+com/genn-\/team/genn}}).\hypertarget{Installation_installing}{}\section{Installing Ge\+N\+N}\label{Installation_installing}
+Installing Ge\+N\+N comprises a few simple steps to create the Ge\+N\+N development environment.
+
+(i) If you have downloaded a zip file, unpack Ge\+N\+N.\+zip in a convenient location. Otherwise enter the directory where you downloaded the Git repository.
+
+(ii) Define the environment variable \char`\"{}\+G\+E\+N\+N\+\_\+\+P\+A\+T\+H\char`\"{} to point to the main Ge\+N\+N directory, e.\+g. if you extracted/downloaded Ge\+N\+N to /usr/local/\+Ge\+N\+N, then you can add \char`\"{}export
+     G\+E\+N\+N\+\_\+\+P\+A\+T\+H=/usr/local/\+Ge\+N\+N\char`\"{} to your login script (e.\+g. {\ttfamily .profile} or {\ttfamily .bashrc}. If you are using W\+I\+N\+D\+O\+W\+S, the path should be a windows path as it will be interpreted by the Visual C++ compiler {\ttfamily cl}, and enciront variables are best set using {\ttfamily setx} in a Windows cmd window. To do so, open a Windows cmd window byt typing {\ttfamily cmd} in the search field of the start menu, followed by the {\ttfamily enter} key. In the {\ttfamily cmd} window type 
+\begin{DoxyCode}
+setx GENN\_PATH \textcolor{stringliteral}{"C:\(\backslash\)Users\(\backslash\)me\(\backslash\)GeNN"}
+\end{DoxyCode}
+ where {\ttfamily C\+:\textbackslash{}Users\textbackslash{}me\textbackslash{}Ge\+N\+N} is the path to your Ge\+N\+N directory.
+
+(iii) Add \$\+G\+E\+N\+N\+\_\+\+P\+A\+T\+H/lib/bin to your P\+A\+T\+H variable, e.\+g. 
+\begin{DoxyCode}
+export PATH=$PATH:$GENN\_PATH/lib/bin
+\end{DoxyCode}
+ in your login script, or in windows, 
+\begin{DoxyCode}
+setx PATH=%PATH%;%GENN\_PATH%/lib/bin
+\end{DoxyCode}
+
+
+(iv) If you haven't installed C\+U\+D\+A on your machine, obtain a fresh installation of the N\+V\+I\+D\+I\+A C\+U\+D\+A toolkit from {\itshape \href{https://developer.nvidia.com/cuda-downloads}{\tt https\+://developer.\+nvidia.\+com/cuda-\/downloads}} 
+
+(v) Set the {\ttfamily C\+U\+D\+A\+\_\+\+P\+A\+T\+H} variable if it is not already set by the system, by putting 
+\begin{DoxyCode}
+export CUDA\_PATH=/usr/local/cuda
+\end{DoxyCode}
+ in your login script (or, if C\+U\+D\+A is installed in a non-\/standard location, the appropriate path to the main C\+U\+D\+A directory). For most people, this will be done by the C\+U\+D\+A install script and the default value of /usr/local/cuda is fine. In Windows, use {\ttfamily setx} to set this variable, 
+\begin{DoxyCode}
+setx CUDA\_PATH 
+\end{DoxyCode}
+
+
+This normally completes the installation.
+
+Depending on the needs of your own projects, e.\+g., depencies on other libraries or non-\/standard installation paths of libraries used by Ge\+N\+N, you may want to modify Makefile examples under {\ttfamily \$\+G\+E\+N\+N\+\_\+\+P\+A\+T\+H/userproject/xxx\+\_\+project} and {\ttfamily \$\+G\+E\+N\+N\+\_\+\+P\+A\+T\+H/userproject/xxx\+\_\+project/model} to add extra linker-\/, include-\/ and compiler-\/flags on a per-\/project basis, or modify global default flags in \$\+G\+E\+N\+N\+\_\+\+P\+A\+T\+H/lib/include/makefile\+\_\+common.mk.
+
+For all makefiles there are separate makefiles for Unix-\/style operating systems (G\+N\+Umakefile) such as Linux or Mac\+O\+S and for Windows (W\+I\+Nmakefile).
+
+If you are using Ge\+N\+N in Windows, you can use make.\+bat to build examples which will attempt to setup your development environment by executing {\ttfamily vcvarsall.\+bat} which is part of every Visual Studio distribution. For this to work properly, Ge\+N\+N must be able to locate the Visual Studio install directory, which should be contained in the {\ttfamily V\+S\+\_\+\+P\+A\+T\+H} environment variable. You can set this variable by hand if it is not already set by the Visual C++ installer by typing 
+\begin{DoxyCode}
+setx VS\_PATH \textcolor{stringliteral}{"C:\(\backslash\)Program Files (x86)\(\backslash\)Microsoft Visual Studio 10.0"}
+\end{DoxyCode}
+
+
+\begin{DoxyNote}{Note}
+
+\begin{DoxyItemize}
+\item The exact path and name of Visual C++ installations will vary between systems.
+\item Double quotation marks like in the above example are necessary whenever a path contains spaces.
+\end{DoxyItemize}
+\end{DoxyNote}
+Ge\+N\+N also has experimental C\+Y\+G\+W\+I\+N support. However, with the introduction of native Windows support in Ge\+N\+N 1.\+1.\+3, this is not being developed further and should be considered as deprecated.\hypertarget{Installation_testInstall}{}\section{Testing Your Installation}\label{Installation_testInstall}
+To test your installation, follow the example in the \hyperlink{Quickstart}{Quickstart section}.
+
+~\newline
+ 
+
+ \hyperlink{index_Contents}{Previous} $\vert$ \hyperlink{Installation}{Top} $\vert$ \hyperlink{Quickstart}{Next} 

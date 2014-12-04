@@ -1,0 +1,304 @@
+\hypertarget{classclassIzh}{\section{class\+Izh Class Reference}
+\label{classclassIzh}\index{class\+Izh@{class\+Izh}}
+}
+
+
+{\ttfamily \#include $<$Izh\+\_\+sparse\+\_\+model.\+h$>$}
+
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hyperlink{classclassIzh_a2b13361aa84b9d2b4d6ed1f8b3a83280}{class\+Izh} ()
+\item 
+\hyperlink{classclassIzh_a06b95847ce84d932d67357ee5f67cdb4}{$\sim$class\+Izh} ()
+\item 
+void \hyperlink{classclassIzh_a9d857d14090cc9ad27376d4430d14097}{init} (unsigned int)
+\item 
+void \hyperlink{classclassIzh_afb7e0ee19c092c388b7c9a892aea5f1c}{allocate\+\_\+device\+\_\+mem\+\_\+patterns} ()
+\item 
+void \hyperlink{classclassIzh_af7e70326650adf3445f7d36e2135a505}{allocate\+\_\+device\+\_\+mem\+\_\+input} ()
+\item 
+void \hyperlink{classclassIzh_aa13d5c82fb1656eb849c0e6235b17050}{copy\+\_\+device\+\_\+mem\+\_\+input} ()
+\item 
+void \hyperlink{classclassIzh_a52cb833ef2ffa20a6bb7be0665394cf2}{read\+\_\+sparsesyns\+\_\+par} (int, struct Conductance, F\+I\+L\+E $\ast$, F\+I\+L\+E $\ast$, F\+I\+L\+E $\ast$, float $\ast$)
+\item 
+void \hyperlink{classclassIzh_aeae590d32336966c62f68489ebdc89bd}{gen\+\_\+alltoall\+\_\+syns} (float $\ast$, unsigned int, unsigned int, float)
+\item 
+void \hyperlink{classclassIzh_a931d1414232340a14769339acbf9a5fb}{free\+\_\+device\+\_\+mem} ()
+\item 
+void \hyperlink{classclassIzh_a27f8e522081a245e42e501436f4763ca}{write\+\_\+input\+\_\+to\+\_\+file} (F\+I\+L\+E $\ast$)
+\item 
+void \hyperlink{classclassIzh_a2e61b42ce2edc2d51899ba450d40ab23}{read\+\_\+input\+\_\+values} (F\+I\+L\+E $\ast$)
+\item 
+void \hyperlink{classclassIzh_af5c816414db830ad5085fa9620435bfe}{create\+\_\+input\+\_\+values} ()
+\item 
+void \hyperlink{classclassIzh_af26eb171e7856ede69d597e17b6bf445}{run} (float, unsigned int)
+\item 
+void \hyperlink{classclassIzh_ad555c603963d93621851a3eaa0dbf8e5}{get\+Spikes\+From\+G\+P\+U} ()
+\begin{DoxyCompactList}\small\item\em Method for copying all spikes of the last time step from the G\+P\+U. \end{DoxyCompactList}\item 
+void \hyperlink{classclassIzh_a45922a013797bb3fc93c8d3c51c619e3}{get\+Spike\+Numbers\+From\+G\+P\+U} ()
+\begin{DoxyCompactList}\small\item\em Method for copying the number of spikes in all neuron populations that have occurred during the last time step. \end{DoxyCompactList}\item 
+void \hyperlink{classclassIzh_a5a52b32cb0d24d7b5eaa7af6b930574f}{output\+\_\+state} (F\+I\+L\+E $\ast$, unsigned int)
+\item 
+void \hyperlink{classclassIzh_a84d0f9ea387dbc8626595f37aa14f01b}{output\+\_\+spikes} (F\+I\+L\+E $\ast$, unsigned int)
+\item 
+void \hyperlink{classclassIzh_a266d6ea6aa52227f4af47c0a7858f556}{output\+\_\+params} (F\+I\+L\+E $\ast$, F\+I\+L\+E $\ast$)
+\item 
+void \hyperlink{classclassIzh_a721c5922909192b3fd23d2907202b5ea}{sum\+\_\+spikes} ()
+\item 
+void \hyperlink{classclassIzh_a75c6b6ea09132daa34d06396dcc7f321}{set\+Input} (unsigned int)
+\item 
+void \hyperlink{classclassIzh_a613b77cd2615916130b2971656eb26d0}{randomize\+Var} (float $\ast$, float, unsigned int)
+\item 
+void \hyperlink{classclassIzh_a8e16c0e84a720b2a9cc6072ecc9efb61}{randomize\+Var\+Sq} (float $\ast$, float, unsigned int)
+\item 
+void \hyperlink{classclassIzh_a52fe8debc76c04e677ede74b5eb17896}{initialize\+All\+Vars} (unsigned int)
+\end{DoxyCompactItemize}
+\subsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\hyperlink{classNNmodel}{N\+Nmodel} \hyperlink{classclassIzh_ad5e7af3f3f65bb85830ce41efff7875e}{model}
+\item 
+float $\ast$ \hyperlink{classclassIzh_acbda3bf4f3357bd233f6fe2294965500}{input1}
+\item 
+float $\ast$ \hyperlink{classclassIzh_a600d51ce808dffee6fbce81f6681791b}{input2}
+\item 
+float $\ast$ \hyperlink{classclassIzh_aeb9e8508d594332f804590f8b59a0f7f}{d\+\_\+input1}
+\item 
+float $\ast$ \hyperlink{classclassIzh_a7eaec632e8a4d4dc55847bbb443ec1dd}{d\+\_\+input2}
+\item 
+unsigned int \hyperlink{classclassIzh_a494e8cf8484db99c98dcdfd8bd3b34d7}{sum\+P\+Exc}
+\item 
+unsigned int \hyperlink{classclassIzh_a031b848aecec82eb395587455fe54860}{sum\+P\+Inh}
+\end{DoxyCompactItemize}
+
+
+\subsection{Constructor \& Destructor Documentation}
+\hypertarget{classclassIzh_a2b13361aa84b9d2b4d6ed1f8b3a83280}{\index{class\+Izh@{class\+Izh}!class\+Izh@{class\+Izh}}
+\index{class\+Izh@{class\+Izh}!class\+Izh@{class\+Izh}}
+\subsubsection[{class\+Izh}]{\setlength{\rightskip}{0pt plus 5cm}class\+Izh\+::class\+Izh (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassIzh_a2b13361aa84b9d2b4d6ed1f8b3a83280}
+\hypertarget{classclassIzh_a06b95847ce84d932d67357ee5f67cdb4}{\index{class\+Izh@{class\+Izh}!````~class\+Izh@{$\sim$class\+Izh}}
+\index{````~class\+Izh@{$\sim$class\+Izh}!class\+Izh@{class\+Izh}}
+\subsubsection[{$\sim$class\+Izh}]{\setlength{\rightskip}{0pt plus 5cm}class\+Izh\+::$\sim$class\+Izh (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassIzh_a06b95847ce84d932d67357ee5f67cdb4}
+
+
+\subsection{Member Function Documentation}
+\hypertarget{classclassIzh_af7e70326650adf3445f7d36e2135a505}{\index{class\+Izh@{class\+Izh}!allocate\+\_\+device\+\_\+mem\+\_\+input@{allocate\+\_\+device\+\_\+mem\+\_\+input}}
+\index{allocate\+\_\+device\+\_\+mem\+\_\+input@{allocate\+\_\+device\+\_\+mem\+\_\+input}!class\+Izh@{class\+Izh}}
+\subsubsection[{allocate\+\_\+device\+\_\+mem\+\_\+input}]{\setlength{\rightskip}{0pt plus 5cm}void class\+Izh\+::allocate\+\_\+device\+\_\+mem\+\_\+input (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassIzh_af7e70326650adf3445f7d36e2135a505}
+\hypertarget{classclassIzh_afb7e0ee19c092c388b7c9a892aea5f1c}{\index{class\+Izh@{class\+Izh}!allocate\+\_\+device\+\_\+mem\+\_\+patterns@{allocate\+\_\+device\+\_\+mem\+\_\+patterns}}
+\index{allocate\+\_\+device\+\_\+mem\+\_\+patterns@{allocate\+\_\+device\+\_\+mem\+\_\+patterns}!class\+Izh@{class\+Izh}}
+\subsubsection[{allocate\+\_\+device\+\_\+mem\+\_\+patterns}]{\setlength{\rightskip}{0pt plus 5cm}void class\+Izh\+::allocate\+\_\+device\+\_\+mem\+\_\+patterns (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassIzh_afb7e0ee19c092c388b7c9a892aea5f1c}
+\hypertarget{classclassIzh_aa13d5c82fb1656eb849c0e6235b17050}{\index{class\+Izh@{class\+Izh}!copy\+\_\+device\+\_\+mem\+\_\+input@{copy\+\_\+device\+\_\+mem\+\_\+input}}
+\index{copy\+\_\+device\+\_\+mem\+\_\+input@{copy\+\_\+device\+\_\+mem\+\_\+input}!class\+Izh@{class\+Izh}}
+\subsubsection[{copy\+\_\+device\+\_\+mem\+\_\+input}]{\setlength{\rightskip}{0pt plus 5cm}void class\+Izh\+::copy\+\_\+device\+\_\+mem\+\_\+input (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassIzh_aa13d5c82fb1656eb849c0e6235b17050}
+\hypertarget{classclassIzh_af5c816414db830ad5085fa9620435bfe}{\index{class\+Izh@{class\+Izh}!create\+\_\+input\+\_\+values@{create\+\_\+input\+\_\+values}}
+\index{create\+\_\+input\+\_\+values@{create\+\_\+input\+\_\+values}!class\+Izh@{class\+Izh}}
+\subsubsection[{create\+\_\+input\+\_\+values}]{\setlength{\rightskip}{0pt plus 5cm}void class\+Izh\+::create\+\_\+input\+\_\+values (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassIzh_af5c816414db830ad5085fa9620435bfe}
+\hypertarget{classclassIzh_a931d1414232340a14769339acbf9a5fb}{\index{class\+Izh@{class\+Izh}!free\+\_\+device\+\_\+mem@{free\+\_\+device\+\_\+mem}}
+\index{free\+\_\+device\+\_\+mem@{free\+\_\+device\+\_\+mem}!class\+Izh@{class\+Izh}}
+\subsubsection[{free\+\_\+device\+\_\+mem}]{\setlength{\rightskip}{0pt plus 5cm}void class\+Izh\+::free\+\_\+device\+\_\+mem (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassIzh_a931d1414232340a14769339acbf9a5fb}
+\hypertarget{classclassIzh_aeae590d32336966c62f68489ebdc89bd}{\index{class\+Izh@{class\+Izh}!gen\+\_\+alltoall\+\_\+syns@{gen\+\_\+alltoall\+\_\+syns}}
+\index{gen\+\_\+alltoall\+\_\+syns@{gen\+\_\+alltoall\+\_\+syns}!class\+Izh@{class\+Izh}}
+\subsubsection[{gen\+\_\+alltoall\+\_\+syns}]{\setlength{\rightskip}{0pt plus 5cm}void class\+Izh\+::gen\+\_\+alltoall\+\_\+syns (
+\begin{DoxyParamCaption}
+\item[{float $\ast$}]{g, }
+\item[{unsigned int}]{n\+Pre, }
+\item[{unsigned int}]{n\+Post, }
+\item[{float}]{gscale}
+\end{DoxyParamCaption}
+)}}\label{classclassIzh_aeae590d32336966c62f68489ebdc89bd}
+
+\begin{DoxyParams}{Parameters}
+{\em gscale} & Generate random conductivity values for an all to all network \\
+\hline
+\end{DoxyParams}
+\hypertarget{classclassIzh_a45922a013797bb3fc93c8d3c51c619e3}{\index{class\+Izh@{class\+Izh}!get\+Spike\+Numbers\+From\+G\+P\+U@{get\+Spike\+Numbers\+From\+G\+P\+U}}
+\index{get\+Spike\+Numbers\+From\+G\+P\+U@{get\+Spike\+Numbers\+From\+G\+P\+U}!class\+Izh@{class\+Izh}}
+\subsubsection[{get\+Spike\+Numbers\+From\+G\+P\+U}]{\setlength{\rightskip}{0pt plus 5cm}void class\+Izh\+::get\+Spike\+Numbers\+From\+G\+P\+U (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassIzh_a45922a013797bb3fc93c8d3c51c619e3}
+
+
+Method for copying the number of spikes in all neuron populations that have occurred during the last time step. 
+
+This method is a simple wrapper for the convenience function copy\+Spike\+N\+From\+Device() provided by Ge\+N\+N. \hypertarget{classclassIzh_ad555c603963d93621851a3eaa0dbf8e5}{\index{class\+Izh@{class\+Izh}!get\+Spikes\+From\+G\+P\+U@{get\+Spikes\+From\+G\+P\+U}}
+\index{get\+Spikes\+From\+G\+P\+U@{get\+Spikes\+From\+G\+P\+U}!class\+Izh@{class\+Izh}}
+\subsubsection[{get\+Spikes\+From\+G\+P\+U}]{\setlength{\rightskip}{0pt plus 5cm}void class\+Izh\+::get\+Spikes\+From\+G\+P\+U (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassIzh_ad555c603963d93621851a3eaa0dbf8e5}
+
+
+Method for copying all spikes of the last time step from the G\+P\+U. 
+
+This is a simple wrapper for the convenience function copy\+Spikes\+From\+Device() which is provided by Ge\+N\+N. \hypertarget{classclassIzh_a9d857d14090cc9ad27376d4430d14097}{\index{class\+Izh@{class\+Izh}!init@{init}}
+\index{init@{init}!class\+Izh@{class\+Izh}}
+\subsubsection[{init}]{\setlength{\rightskip}{0pt plus 5cm}void class\+Izh\+::init (
+\begin{DoxyParamCaption}
+\item[{unsigned int}]{which}
+\end{DoxyParamCaption}
+)}}\label{classclassIzh_a9d857d14090cc9ad27376d4430d14097}
+\hypertarget{classclassIzh_a52fe8debc76c04e677ede74b5eb17896}{\index{class\+Izh@{class\+Izh}!initialize\+All\+Vars@{initialize\+All\+Vars}}
+\index{initialize\+All\+Vars@{initialize\+All\+Vars}!class\+Izh@{class\+Izh}}
+\subsubsection[{initialize\+All\+Vars}]{\setlength{\rightskip}{0pt plus 5cm}void class\+Izh\+::initialize\+All\+Vars (
+\begin{DoxyParamCaption}
+\item[{unsigned int}]{which}
+\end{DoxyParamCaption}
+)}}\label{classclassIzh_a52fe8debc76c04e677ede74b5eb17896}
+\hypertarget{classclassIzh_a266d6ea6aa52227f4af47c0a7858f556}{\index{class\+Izh@{class\+Izh}!output\+\_\+params@{output\+\_\+params}}
+\index{output\+\_\+params@{output\+\_\+params}!class\+Izh@{class\+Izh}}
+\subsubsection[{output\+\_\+params}]{\setlength{\rightskip}{0pt plus 5cm}void class\+Izh\+::output\+\_\+params (
+\begin{DoxyParamCaption}
+\item[{F\+I\+L\+E $\ast$}]{f, }
+\item[{F\+I\+L\+E $\ast$}]{f2}
+\end{DoxyParamCaption}
+)}}\label{classclassIzh_a266d6ea6aa52227f4af47c0a7858f556}
+\hypertarget{classclassIzh_a84d0f9ea387dbc8626595f37aa14f01b}{\index{class\+Izh@{class\+Izh}!output\+\_\+spikes@{output\+\_\+spikes}}
+\index{output\+\_\+spikes@{output\+\_\+spikes}!class\+Izh@{class\+Izh}}
+\subsubsection[{output\+\_\+spikes}]{\setlength{\rightskip}{0pt plus 5cm}void class\+Izh\+::output\+\_\+spikes (
+\begin{DoxyParamCaption}
+\item[{F\+I\+L\+E $\ast$}]{f, }
+\item[{unsigned int}]{which}
+\end{DoxyParamCaption}
+)}}\label{classclassIzh_a84d0f9ea387dbc8626595f37aa14f01b}
+\hypertarget{classclassIzh_a5a52b32cb0d24d7b5eaa7af6b930574f}{\index{class\+Izh@{class\+Izh}!output\+\_\+state@{output\+\_\+state}}
+\index{output\+\_\+state@{output\+\_\+state}!class\+Izh@{class\+Izh}}
+\subsubsection[{output\+\_\+state}]{\setlength{\rightskip}{0pt plus 5cm}void class\+Izh\+::output\+\_\+state (
+\begin{DoxyParamCaption}
+\item[{F\+I\+L\+E $\ast$}]{f, }
+\item[{unsigned int}]{which}
+\end{DoxyParamCaption}
+)}}\label{classclassIzh_a5a52b32cb0d24d7b5eaa7af6b930574f}
+\hypertarget{classclassIzh_a613b77cd2615916130b2971656eb26d0}{\index{class\+Izh@{class\+Izh}!randomize\+Var@{randomize\+Var}}
+\index{randomize\+Var@{randomize\+Var}!class\+Izh@{class\+Izh}}
+\subsubsection[{randomize\+Var}]{\setlength{\rightskip}{0pt plus 5cm}void class\+Izh\+::randomize\+Var (
+\begin{DoxyParamCaption}
+\item[{float $\ast$}]{Var, }
+\item[{float}]{strength, }
+\item[{unsigned int}]{neuron\+Grp}
+\end{DoxyParamCaption}
+)}}\label{classclassIzh_a613b77cd2615916130b2971656eb26d0}
+\hypertarget{classclassIzh_a8e16c0e84a720b2a9cc6072ecc9efb61}{\index{class\+Izh@{class\+Izh}!randomize\+Var\+Sq@{randomize\+Var\+Sq}}
+\index{randomize\+Var\+Sq@{randomize\+Var\+Sq}!class\+Izh@{class\+Izh}}
+\subsubsection[{randomize\+Var\+Sq}]{\setlength{\rightskip}{0pt plus 5cm}void class\+Izh\+::randomize\+Var\+Sq (
+\begin{DoxyParamCaption}
+\item[{float $\ast$}]{Var, }
+\item[{float}]{strength, }
+\item[{unsigned int}]{neuron\+Grp}
+\end{DoxyParamCaption}
+)}}\label{classclassIzh_a8e16c0e84a720b2a9cc6072ecc9efb61}
+\hypertarget{classclassIzh_a2e61b42ce2edc2d51899ba450d40ab23}{\index{class\+Izh@{class\+Izh}!read\+\_\+input\+\_\+values@{read\+\_\+input\+\_\+values}}
+\index{read\+\_\+input\+\_\+values@{read\+\_\+input\+\_\+values}!class\+Izh@{class\+Izh}}
+\subsubsection[{read\+\_\+input\+\_\+values}]{\setlength{\rightskip}{0pt plus 5cm}void class\+Izh\+::read\+\_\+input\+\_\+values (
+\begin{DoxyParamCaption}
+\item[{F\+I\+L\+E $\ast$}]{}
+\end{DoxyParamCaption}
+)}}\label{classclassIzh_a2e61b42ce2edc2d51899ba450d40ab23}
+\hypertarget{classclassIzh_a52cb833ef2ffa20a6bb7be0665394cf2}{\index{class\+Izh@{class\+Izh}!read\+\_\+sparsesyns\+\_\+par@{read\+\_\+sparsesyns\+\_\+par}}
+\index{read\+\_\+sparsesyns\+\_\+par@{read\+\_\+sparsesyns\+\_\+par}!class\+Izh@{class\+Izh}}
+\subsubsection[{read\+\_\+sparsesyns\+\_\+par}]{\setlength{\rightskip}{0pt plus 5cm}void class\+Izh\+::read\+\_\+sparsesyns\+\_\+par (
+\begin{DoxyParamCaption}
+\item[{int}]{syn\+Ind, }
+\item[{struct Conductance}]{C, }
+\item[{F\+I\+L\+E $\ast$}]{f\+\_\+ind, }
+\item[{F\+I\+L\+E $\ast$}]{f\+\_\+ind\+In\+G, }
+\item[{F\+I\+L\+E $\ast$}]{f\+\_\+g, }
+\item[{float $\ast$}]{g}
+\end{DoxyParamCaption}
+)}}\label{classclassIzh_a52cb833ef2ffa20a6bb7be0665394cf2}
+
+\begin{DoxyParams}{Parameters}
+{\em g} & File handle for a file containing sparse conductivity values \\
+\hline
+\end{DoxyParams}
+\hypertarget{classclassIzh_af26eb171e7856ede69d597e17b6bf445}{\index{class\+Izh@{class\+Izh}!run@{run}}
+\index{run@{run}!class\+Izh@{class\+Izh}}
+\subsubsection[{run}]{\setlength{\rightskip}{0pt plus 5cm}void class\+Izh\+::run (
+\begin{DoxyParamCaption}
+\item[{float}]{runtime, }
+\item[{unsigned int}]{which}
+\end{DoxyParamCaption}
+)}}\label{classclassIzh_af26eb171e7856ede69d597e17b6bf445}
+\hypertarget{classclassIzh_a75c6b6ea09132daa34d06396dcc7f321}{\index{class\+Izh@{class\+Izh}!set\+Input@{set\+Input}}
+\index{set\+Input@{set\+Input}!class\+Izh@{class\+Izh}}
+\subsubsection[{set\+Input}]{\setlength{\rightskip}{0pt plus 5cm}void class\+Izh\+::set\+Input (
+\begin{DoxyParamCaption}
+\item[{unsigned int}]{which}
+\end{DoxyParamCaption}
+)}}\label{classclassIzh_a75c6b6ea09132daa34d06396dcc7f321}
+\hypertarget{classclassIzh_a721c5922909192b3fd23d2907202b5ea}{\index{class\+Izh@{class\+Izh}!sum\+\_\+spikes@{sum\+\_\+spikes}}
+\index{sum\+\_\+spikes@{sum\+\_\+spikes}!class\+Izh@{class\+Izh}}
+\subsubsection[{sum\+\_\+spikes}]{\setlength{\rightskip}{0pt plus 5cm}void class\+Izh\+::sum\+\_\+spikes (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassIzh_a721c5922909192b3fd23d2907202b5ea}
+\hypertarget{classclassIzh_a27f8e522081a245e42e501436f4763ca}{\index{class\+Izh@{class\+Izh}!write\+\_\+input\+\_\+to\+\_\+file@{write\+\_\+input\+\_\+to\+\_\+file}}
+\index{write\+\_\+input\+\_\+to\+\_\+file@{write\+\_\+input\+\_\+to\+\_\+file}!class\+Izh@{class\+Izh}}
+\subsubsection[{write\+\_\+input\+\_\+to\+\_\+file}]{\setlength{\rightskip}{0pt plus 5cm}void class\+Izh\+::write\+\_\+input\+\_\+to\+\_\+file (
+\begin{DoxyParamCaption}
+\item[{F\+I\+L\+E $\ast$}]{f}
+\end{DoxyParamCaption}
+)}}\label{classclassIzh_a27f8e522081a245e42e501436f4763ca}
+
+
+\subsection{Member Data Documentation}
+\hypertarget{classclassIzh_aeb9e8508d594332f804590f8b59a0f7f}{\index{class\+Izh@{class\+Izh}!d\+\_\+input1@{d\+\_\+input1}}
+\index{d\+\_\+input1@{d\+\_\+input1}!class\+Izh@{class\+Izh}}
+\subsubsection[{d\+\_\+input1}]{\setlength{\rightskip}{0pt plus 5cm}float$\ast$ class\+Izh\+::d\+\_\+input1}}\label{classclassIzh_aeb9e8508d594332f804590f8b59a0f7f}
+\hypertarget{classclassIzh_a7eaec632e8a4d4dc55847bbb443ec1dd}{\index{class\+Izh@{class\+Izh}!d\+\_\+input2@{d\+\_\+input2}}
+\index{d\+\_\+input2@{d\+\_\+input2}!class\+Izh@{class\+Izh}}
+\subsubsection[{d\+\_\+input2}]{\setlength{\rightskip}{0pt plus 5cm}float $\ast$ class\+Izh\+::d\+\_\+input2}}\label{classclassIzh_a7eaec632e8a4d4dc55847bbb443ec1dd}
+\hypertarget{classclassIzh_acbda3bf4f3357bd233f6fe2294965500}{\index{class\+Izh@{class\+Izh}!input1@{input1}}
+\index{input1@{input1}!class\+Izh@{class\+Izh}}
+\subsubsection[{input1}]{\setlength{\rightskip}{0pt plus 5cm}float$\ast$ class\+Izh\+::input1}}\label{classclassIzh_acbda3bf4f3357bd233f6fe2294965500}
+\hypertarget{classclassIzh_a600d51ce808dffee6fbce81f6681791b}{\index{class\+Izh@{class\+Izh}!input2@{input2}}
+\index{input2@{input2}!class\+Izh@{class\+Izh}}
+\subsubsection[{input2}]{\setlength{\rightskip}{0pt plus 5cm}float $\ast$ class\+Izh\+::input2}}\label{classclassIzh_a600d51ce808dffee6fbce81f6681791b}
+\hypertarget{classclassIzh_ad5e7af3f3f65bb85830ce41efff7875e}{\index{class\+Izh@{class\+Izh}!model@{model}}
+\index{model@{model}!class\+Izh@{class\+Izh}}
+\subsubsection[{model}]{\setlength{\rightskip}{0pt plus 5cm}{\bf N\+Nmodel} class\+Izh\+::model}}\label{classclassIzh_ad5e7af3f3f65bb85830ce41efff7875e}
+\hypertarget{classclassIzh_a494e8cf8484db99c98dcdfd8bd3b34d7}{\index{class\+Izh@{class\+Izh}!sum\+P\+Exc@{sum\+P\+Exc}}
+\index{sum\+P\+Exc@{sum\+P\+Exc}!class\+Izh@{class\+Izh}}
+\subsubsection[{sum\+P\+Exc}]{\setlength{\rightskip}{0pt plus 5cm}unsigned int class\+Izh\+::sum\+P\+Exc}}\label{classclassIzh_a494e8cf8484db99c98dcdfd8bd3b34d7}
+\hypertarget{classclassIzh_a031b848aecec82eb395587455fe54860}{\index{class\+Izh@{class\+Izh}!sum\+P\+Inh@{sum\+P\+Inh}}
+\index{sum\+P\+Inh@{sum\+P\+Inh}!class\+Izh@{class\+Izh}}
+\subsubsection[{sum\+P\+Inh}]{\setlength{\rightskip}{0pt plus 5cm}unsigned int class\+Izh\+::sum\+P\+Inh}}\label{classclassIzh_a031b848aecec82eb395587455fe54860}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+userproject/\+Izh\+\_\+sparse\+\_\+project/model/\hyperlink{Izh__sparse__model_8h}{Izh\+\_\+sparse\+\_\+model.\+h}\item 
+userproject/\+Izh\+\_\+sparse\+\_\+project/model/\hyperlink{Izh__sparse__model_8cc}{Izh\+\_\+sparse\+\_\+model.\+cc}\end{DoxyCompactItemize}

@@ -1,0 +1,52 @@
+\hypertarget{gen__pnkc__syns__indivID_8cc}{\section{userproject/tools/gen\+\_\+pnkc\+\_\+syns\+\_\+indiv\+I\+D.cc File Reference}
+\label{gen__pnkc__syns__indivID_8cc}\index{userproject/tools/gen\+\_\+pnkc\+\_\+syns\+\_\+indiv\+I\+D.\+cc@{userproject/tools/gen\+\_\+pnkc\+\_\+syns\+\_\+indiv\+I\+D.\+cc}}
+}
+
+
+This file is part of a tool chain for running the classol/\+M\+Body1 example model.  
+
+
+{\ttfamily \#include $<$iostream$>$}\\*
+{\ttfamily \#include $<$fstream$>$}\\*
+{\ttfamily \#include $<$stdlib.\+h$>$}\\*
+{\ttfamily \#include \char`\"{}random\+Gen.\+h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}gauss.\+h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}simple\+Bit.\+h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}random\+Gen.\+cc\char`\"{}}\\*
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+int \hyperlink{gen__pnkc__syns__indivID_8cc_a0ddf1224851353fc92bfbff6f499fa97}{main} (int argc, char $\ast$argv\mbox{[}$\,$\mbox{]})
+\end{DoxyCompactItemize}
+\subsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+\hyperlink{classrandomGen}{random\+Gen} \hyperlink{gen__pnkc__syns__indivID_8cc_ac06fcc1e53c6b21275aec67047473a28}{R}
+\item 
+\hyperlink{classrandomGauss}{random\+Gauss} \hyperlink{gen__pnkc__syns__indivID_8cc_af5a7a548a9abc3f675678c8ac3f3d636}{R\+G}
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+This file is part of a tool chain for running the classol/\+M\+Body1 example model. 
+
+This file compiles to a tool to generate appropriate connectivity patterns between P\+Ns and K\+Cs in the model. In contrast to the \hyperlink{gen__pnkc__syns_8cc}{gen\+\_\+pnkc\+\_\+syns.\+cc} tool, here the output is in a format that is suited for the \char`\"{}\+I\+N\+D\+I\+V\+I\+D\+U\+A\+L\+I\+D\char`\"{} method for specifying connectivity. The connectivity is saved to file and can then be read by the classol method for reading this connectivity. 
+
+\subsection{Function Documentation}
+\hypertarget{gen__pnkc__syns__indivID_8cc_a0ddf1224851353fc92bfbff6f499fa97}{\index{gen\+\_\+pnkc\+\_\+syns\+\_\+indiv\+I\+D.\+cc@{gen\+\_\+pnkc\+\_\+syns\+\_\+indiv\+I\+D.\+cc}!main@{main}}
+\index{main@{main}!gen\+\_\+pnkc\+\_\+syns\+\_\+indiv\+I\+D.\+cc@{gen\+\_\+pnkc\+\_\+syns\+\_\+indiv\+I\+D.\+cc}}
+\subsubsection[{main}]{\setlength{\rightskip}{0pt plus 5cm}int main (
+\begin{DoxyParamCaption}
+\item[{int}]{argc, }
+\item[{char $\ast$}]{argv\mbox{[}$\,$\mbox{]}}
+\end{DoxyParamCaption}
+)}}\label{gen__pnkc__syns__indivID_8cc_a0ddf1224851353fc92bfbff6f499fa97}
+
+
+\subsection{Variable Documentation}
+\hypertarget{gen__pnkc__syns__indivID_8cc_ac06fcc1e53c6b21275aec67047473a28}{\index{gen\+\_\+pnkc\+\_\+syns\+\_\+indiv\+I\+D.\+cc@{gen\+\_\+pnkc\+\_\+syns\+\_\+indiv\+I\+D.\+cc}!R@{R}}
+\index{R@{R}!gen\+\_\+pnkc\+\_\+syns\+\_\+indiv\+I\+D.\+cc@{gen\+\_\+pnkc\+\_\+syns\+\_\+indiv\+I\+D.\+cc}}
+\subsubsection[{R}]{\setlength{\rightskip}{0pt plus 5cm}{\bf random\+Gen} R}}\label{gen__pnkc__syns__indivID_8cc_ac06fcc1e53c6b21275aec67047473a28}
+\hypertarget{gen__pnkc__syns__indivID_8cc_af5a7a548a9abc3f675678c8ac3f3d636}{\index{gen\+\_\+pnkc\+\_\+syns\+\_\+indiv\+I\+D.\+cc@{gen\+\_\+pnkc\+\_\+syns\+\_\+indiv\+I\+D.\+cc}!R\+G@{R\+G}}
+\index{R\+G@{R\+G}!gen\+\_\+pnkc\+\_\+syns\+\_\+indiv\+I\+D.\+cc@{gen\+\_\+pnkc\+\_\+syns\+\_\+indiv\+I\+D.\+cc}}
+\subsubsection[{R\+G}]{\setlength{\rightskip}{0pt plus 5cm}{\bf random\+Gauss} R\+G}}\label{gen__pnkc__syns__indivID_8cc_af5a7a548a9abc3f675678c8ac3f3d636}

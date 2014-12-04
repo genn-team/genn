@@ -1,0 +1,82 @@
+\hypertarget{Izh__sparse__project_2model_2izh__sparse__code_2neuronKrnl_8cc}{\section{userproject/\+Izh\+\_\+sparse\+\_\+project/model/izh\+\_\+sparse\+\_\+code/neuron\+Krnl.cc File Reference}
+\label{Izh__sparse__project_2model_2izh__sparse__code_2neuronKrnl_8cc}\index{userproject/\+Izh\+\_\+sparse\+\_\+project/model/izh\+\_\+sparse\+\_\+code/neuron\+Krnl.\+cc@{userproject/\+Izh\+\_\+sparse\+\_\+project/model/izh\+\_\+sparse\+\_\+code/neuron\+Krnl.\+cc}}
+}
+\subsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \hyperlink{Izh__sparse__project_2model_2izh__sparse__code_2neuronKrnl_8cc_abd67260e07e0760eac72e773c964985f}{\+\_\+\+Izh\+\_\+sparse\+\_\+neuron\+Krnl\+\_\+cc}
+\end{DoxyCompactItemize}
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\+\_\+\+\_\+global\+\_\+\+\_\+ void \hyperlink{Izh__sparse__project_2model_2izh__sparse__code_2neuronKrnl_8cc_a2e02e4a7ab31d1623116d39e11cb6d99}{calc\+Neurons} (float $\ast$d\+\_\+input\+I\+P\+Exc, float $\ast$d\+\_\+input\+I\+P\+Inh, float \hyperlink{PoissonIzh__sim_8h_afea36502e9d227ff62c5fb2719a246f2}{t})
+\end{DoxyCompactItemize}
+\subsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+\+\_\+\+\_\+device\+\_\+\+\_\+ volatile unsigned int \hyperlink{Izh__sparse__project_2model_2izh__sparse__code_2neuronKrnl_8cc_ad5e1217f9e0bd7a6acbe6d001e3daaee}{d\+\_\+done}
+\item 
+\+\_\+\+\_\+device\+\_\+\+\_\+ volatile unsigned int \hyperlink{Izh__sparse__project_2model_2izh__sparse__code_2neuronKrnl_8cc_a26af7d2451e90e2c0e46250c57ddb80b}{d\+\_\+glb\+Spk\+Cnt\+P\+Exc}
+\item 
+\+\_\+\+\_\+device\+\_\+\+\_\+ volatile unsigned int \hyperlink{Izh__sparse__project_2model_2izh__sparse__code_2neuronKrnl_8cc_a6d5d4b982a7f0f1fcfe6b0bbddb23bd4}{d\+\_\+glb\+Spk\+P\+Exc} \mbox{[}8000\mbox{]}
+\item 
+\+\_\+\+\_\+device\+\_\+\+\_\+ volatile unsigned int \hyperlink{Izh__sparse__project_2model_2izh__sparse__code_2neuronKrnl_8cc_a3220e50cff502aca89d37090f105ef16}{d\+\_\+glb\+Spk\+Cnt\+Evnt\+P\+Exc}
+\item 
+\+\_\+\+\_\+device\+\_\+\+\_\+ volatile unsigned int \hyperlink{Izh__sparse__project_2model_2izh__sparse__code_2neuronKrnl_8cc_acb31625aa1efda36d7e4dc0f09d4154d}{d\+\_\+glb\+Spk\+Evnt\+P\+Exc} \mbox{[}8000\mbox{]}
+\item 
+\+\_\+\+\_\+device\+\_\+\+\_\+ volatile unsigned int \hyperlink{Izh__sparse__project_2model_2izh__sparse__code_2neuronKrnl_8cc_a364e8acf7c80d34dea314f3a87e253b0}{d\+\_\+glb\+Spk\+Cnt\+P\+Inh}
+\item 
+\+\_\+\+\_\+device\+\_\+\+\_\+ volatile unsigned int \hyperlink{Izh__sparse__project_2model_2izh__sparse__code_2neuronKrnl_8cc_af9b2831a11f840f0d24b6919fcb8b087}{d\+\_\+glb\+Spk\+P\+Inh} \mbox{[}2000\mbox{]}
+\item 
+\+\_\+\+\_\+device\+\_\+\+\_\+ volatile unsigned int \hyperlink{Izh__sparse__project_2model_2izh__sparse__code_2neuronKrnl_8cc_ac168e35ddda98ccd1710d8ad0acd07dd}{d\+\_\+glb\+Spk\+Cnt\+Evnt\+P\+Inh}
+\item 
+\+\_\+\+\_\+device\+\_\+\+\_\+ volatile unsigned int \hyperlink{Izh__sparse__project_2model_2izh__sparse__code_2neuronKrnl_8cc_a04454f288bd5385f4e1ec14c14afac68}{d\+\_\+glb\+Spk\+Evnt\+P\+Inh} \mbox{[}2000\mbox{]}
+\end{DoxyCompactItemize}
+
+
+\subsection{Macro Definition Documentation}
+\hypertarget{Izh__sparse__project_2model_2izh__sparse__code_2neuronKrnl_8cc_abd67260e07e0760eac72e773c964985f}{\index{Izh\+\_\+sparse\+\_\+project/model/izh\+\_\+sparse\+\_\+code/neuron\+Krnl.\+cc@{Izh\+\_\+sparse\+\_\+project/model/izh\+\_\+sparse\+\_\+code/neuron\+Krnl.\+cc}!\+\_\+\+Izh\+\_\+sparse\+\_\+neuron\+Krnl\+\_\+cc@{\+\_\+\+Izh\+\_\+sparse\+\_\+neuron\+Krnl\+\_\+cc}}
+\index{\+\_\+\+Izh\+\_\+sparse\+\_\+neuron\+Krnl\+\_\+cc@{\+\_\+\+Izh\+\_\+sparse\+\_\+neuron\+Krnl\+\_\+cc}!Izh\+\_\+sparse\+\_\+project/model/izh\+\_\+sparse\+\_\+code/neuron\+Krnl.\+cc@{Izh\+\_\+sparse\+\_\+project/model/izh\+\_\+sparse\+\_\+code/neuron\+Krnl.\+cc}}
+\subsubsection[{\+\_\+\+Izh\+\_\+sparse\+\_\+neuron\+Krnl\+\_\+cc}]{\setlength{\rightskip}{0pt plus 5cm}\#define \+\_\+\+Izh\+\_\+sparse\+\_\+neuron\+Krnl\+\_\+cc}}\label{Izh__sparse__project_2model_2izh__sparse__code_2neuronKrnl_8cc_abd67260e07e0760eac72e773c964985f}
+
+
+\subsection{Function Documentation}
+\hypertarget{Izh__sparse__project_2model_2izh__sparse__code_2neuronKrnl_8cc_a2e02e4a7ab31d1623116d39e11cb6d99}{\index{Izh\+\_\+sparse\+\_\+project/model/izh\+\_\+sparse\+\_\+code/neuron\+Krnl.\+cc@{Izh\+\_\+sparse\+\_\+project/model/izh\+\_\+sparse\+\_\+code/neuron\+Krnl.\+cc}!calc\+Neurons@{calc\+Neurons}}
+\index{calc\+Neurons@{calc\+Neurons}!Izh\+\_\+sparse\+\_\+project/model/izh\+\_\+sparse\+\_\+code/neuron\+Krnl.\+cc@{Izh\+\_\+sparse\+\_\+project/model/izh\+\_\+sparse\+\_\+code/neuron\+Krnl.\+cc}}
+\subsubsection[{calc\+Neurons}]{\setlength{\rightskip}{0pt plus 5cm}\+\_\+\+\_\+global\+\_\+\+\_\+ void calc\+Neurons (
+\begin{DoxyParamCaption}
+\item[{float $\ast$}]{d\+\_\+input\+I\+P\+Exc, }
+\item[{float $\ast$}]{d\+\_\+input\+I\+P\+Inh, }
+\item[{float}]{t}
+\end{DoxyParamCaption}
+)}}\label{Izh__sparse__project_2model_2izh__sparse__code_2neuronKrnl_8cc_a2e02e4a7ab31d1623116d39e11cb6d99}
+
+
+\subsection{Variable Documentation}
+\hypertarget{Izh__sparse__project_2model_2izh__sparse__code_2neuronKrnl_8cc_ad5e1217f9e0bd7a6acbe6d001e3daaee}{\index{Izh\+\_\+sparse\+\_\+project/model/izh\+\_\+sparse\+\_\+code/neuron\+Krnl.\+cc@{Izh\+\_\+sparse\+\_\+project/model/izh\+\_\+sparse\+\_\+code/neuron\+Krnl.\+cc}!d\+\_\+done@{d\+\_\+done}}
+\index{d\+\_\+done@{d\+\_\+done}!Izh\+\_\+sparse\+\_\+project/model/izh\+\_\+sparse\+\_\+code/neuron\+Krnl.\+cc@{Izh\+\_\+sparse\+\_\+project/model/izh\+\_\+sparse\+\_\+code/neuron\+Krnl.\+cc}}
+\subsubsection[{d\+\_\+done}]{\setlength{\rightskip}{0pt plus 5cm}\+\_\+\+\_\+device\+\_\+\+\_\+ volatile unsigned int d\+\_\+done}}\label{Izh__sparse__project_2model_2izh__sparse__code_2neuronKrnl_8cc_ad5e1217f9e0bd7a6acbe6d001e3daaee}
+\hypertarget{Izh__sparse__project_2model_2izh__sparse__code_2neuronKrnl_8cc_a3220e50cff502aca89d37090f105ef16}{\index{Izh\+\_\+sparse\+\_\+project/model/izh\+\_\+sparse\+\_\+code/neuron\+Krnl.\+cc@{Izh\+\_\+sparse\+\_\+project/model/izh\+\_\+sparse\+\_\+code/neuron\+Krnl.\+cc}!d\+\_\+glb\+Spk\+Cnt\+Evnt\+P\+Exc@{d\+\_\+glb\+Spk\+Cnt\+Evnt\+P\+Exc}}
+\index{d\+\_\+glb\+Spk\+Cnt\+Evnt\+P\+Exc@{d\+\_\+glb\+Spk\+Cnt\+Evnt\+P\+Exc}!Izh\+\_\+sparse\+\_\+project/model/izh\+\_\+sparse\+\_\+code/neuron\+Krnl.\+cc@{Izh\+\_\+sparse\+\_\+project/model/izh\+\_\+sparse\+\_\+code/neuron\+Krnl.\+cc}}
+\subsubsection[{d\+\_\+glb\+Spk\+Cnt\+Evnt\+P\+Exc}]{\setlength{\rightskip}{0pt plus 5cm}\+\_\+\+\_\+device\+\_\+\+\_\+ volatile unsigned int d\+\_\+glb\+Spk\+Cnt\+Evnt\+P\+Exc}}\label{Izh__sparse__project_2model_2izh__sparse__code_2neuronKrnl_8cc_a3220e50cff502aca89d37090f105ef16}
+\hypertarget{Izh__sparse__project_2model_2izh__sparse__code_2neuronKrnl_8cc_ac168e35ddda98ccd1710d8ad0acd07dd}{\index{Izh\+\_\+sparse\+\_\+project/model/izh\+\_\+sparse\+\_\+code/neuron\+Krnl.\+cc@{Izh\+\_\+sparse\+\_\+project/model/izh\+\_\+sparse\+\_\+code/neuron\+Krnl.\+cc}!d\+\_\+glb\+Spk\+Cnt\+Evnt\+P\+Inh@{d\+\_\+glb\+Spk\+Cnt\+Evnt\+P\+Inh}}
+\index{d\+\_\+glb\+Spk\+Cnt\+Evnt\+P\+Inh@{d\+\_\+glb\+Spk\+Cnt\+Evnt\+P\+Inh}!Izh\+\_\+sparse\+\_\+project/model/izh\+\_\+sparse\+\_\+code/neuron\+Krnl.\+cc@{Izh\+\_\+sparse\+\_\+project/model/izh\+\_\+sparse\+\_\+code/neuron\+Krnl.\+cc}}
+\subsubsection[{d\+\_\+glb\+Spk\+Cnt\+Evnt\+P\+Inh}]{\setlength{\rightskip}{0pt plus 5cm}\+\_\+\+\_\+device\+\_\+\+\_\+ volatile unsigned int d\+\_\+glb\+Spk\+Cnt\+Evnt\+P\+Inh}}\label{Izh__sparse__project_2model_2izh__sparse__code_2neuronKrnl_8cc_ac168e35ddda98ccd1710d8ad0acd07dd}
+\hypertarget{Izh__sparse__project_2model_2izh__sparse__code_2neuronKrnl_8cc_a26af7d2451e90e2c0e46250c57ddb80b}{\index{Izh\+\_\+sparse\+\_\+project/model/izh\+\_\+sparse\+\_\+code/neuron\+Krnl.\+cc@{Izh\+\_\+sparse\+\_\+project/model/izh\+\_\+sparse\+\_\+code/neuron\+Krnl.\+cc}!d\+\_\+glb\+Spk\+Cnt\+P\+Exc@{d\+\_\+glb\+Spk\+Cnt\+P\+Exc}}
+\index{d\+\_\+glb\+Spk\+Cnt\+P\+Exc@{d\+\_\+glb\+Spk\+Cnt\+P\+Exc}!Izh\+\_\+sparse\+\_\+project/model/izh\+\_\+sparse\+\_\+code/neuron\+Krnl.\+cc@{Izh\+\_\+sparse\+\_\+project/model/izh\+\_\+sparse\+\_\+code/neuron\+Krnl.\+cc}}
+\subsubsection[{d\+\_\+glb\+Spk\+Cnt\+P\+Exc}]{\setlength{\rightskip}{0pt plus 5cm}\+\_\+\+\_\+device\+\_\+\+\_\+ volatile unsigned int d\+\_\+glb\+Spk\+Cnt\+P\+Exc}}\label{Izh__sparse__project_2model_2izh__sparse__code_2neuronKrnl_8cc_a26af7d2451e90e2c0e46250c57ddb80b}
+\hypertarget{Izh__sparse__project_2model_2izh__sparse__code_2neuronKrnl_8cc_a364e8acf7c80d34dea314f3a87e253b0}{\index{Izh\+\_\+sparse\+\_\+project/model/izh\+\_\+sparse\+\_\+code/neuron\+Krnl.\+cc@{Izh\+\_\+sparse\+\_\+project/model/izh\+\_\+sparse\+\_\+code/neuron\+Krnl.\+cc}!d\+\_\+glb\+Spk\+Cnt\+P\+Inh@{d\+\_\+glb\+Spk\+Cnt\+P\+Inh}}
+\index{d\+\_\+glb\+Spk\+Cnt\+P\+Inh@{d\+\_\+glb\+Spk\+Cnt\+P\+Inh}!Izh\+\_\+sparse\+\_\+project/model/izh\+\_\+sparse\+\_\+code/neuron\+Krnl.\+cc@{Izh\+\_\+sparse\+\_\+project/model/izh\+\_\+sparse\+\_\+code/neuron\+Krnl.\+cc}}
+\subsubsection[{d\+\_\+glb\+Spk\+Cnt\+P\+Inh}]{\setlength{\rightskip}{0pt plus 5cm}\+\_\+\+\_\+device\+\_\+\+\_\+ volatile unsigned int d\+\_\+glb\+Spk\+Cnt\+P\+Inh}}\label{Izh__sparse__project_2model_2izh__sparse__code_2neuronKrnl_8cc_a364e8acf7c80d34dea314f3a87e253b0}
+\hypertarget{Izh__sparse__project_2model_2izh__sparse__code_2neuronKrnl_8cc_acb31625aa1efda36d7e4dc0f09d4154d}{\index{Izh\+\_\+sparse\+\_\+project/model/izh\+\_\+sparse\+\_\+code/neuron\+Krnl.\+cc@{Izh\+\_\+sparse\+\_\+project/model/izh\+\_\+sparse\+\_\+code/neuron\+Krnl.\+cc}!d\+\_\+glb\+Spk\+Evnt\+P\+Exc@{d\+\_\+glb\+Spk\+Evnt\+P\+Exc}}
+\index{d\+\_\+glb\+Spk\+Evnt\+P\+Exc@{d\+\_\+glb\+Spk\+Evnt\+P\+Exc}!Izh\+\_\+sparse\+\_\+project/model/izh\+\_\+sparse\+\_\+code/neuron\+Krnl.\+cc@{Izh\+\_\+sparse\+\_\+project/model/izh\+\_\+sparse\+\_\+code/neuron\+Krnl.\+cc}}
+\subsubsection[{d\+\_\+glb\+Spk\+Evnt\+P\+Exc}]{\setlength{\rightskip}{0pt plus 5cm}\+\_\+\+\_\+device\+\_\+\+\_\+ volatile unsigned int d\+\_\+glb\+Spk\+Evnt\+P\+Exc\mbox{[}8000\mbox{]}}}\label{Izh__sparse__project_2model_2izh__sparse__code_2neuronKrnl_8cc_acb31625aa1efda36d7e4dc0f09d4154d}
+\hypertarget{Izh__sparse__project_2model_2izh__sparse__code_2neuronKrnl_8cc_a04454f288bd5385f4e1ec14c14afac68}{\index{Izh\+\_\+sparse\+\_\+project/model/izh\+\_\+sparse\+\_\+code/neuron\+Krnl.\+cc@{Izh\+\_\+sparse\+\_\+project/model/izh\+\_\+sparse\+\_\+code/neuron\+Krnl.\+cc}!d\+\_\+glb\+Spk\+Evnt\+P\+Inh@{d\+\_\+glb\+Spk\+Evnt\+P\+Inh}}
+\index{d\+\_\+glb\+Spk\+Evnt\+P\+Inh@{d\+\_\+glb\+Spk\+Evnt\+P\+Inh}!Izh\+\_\+sparse\+\_\+project/model/izh\+\_\+sparse\+\_\+code/neuron\+Krnl.\+cc@{Izh\+\_\+sparse\+\_\+project/model/izh\+\_\+sparse\+\_\+code/neuron\+Krnl.\+cc}}
+\subsubsection[{d\+\_\+glb\+Spk\+Evnt\+P\+Inh}]{\setlength{\rightskip}{0pt plus 5cm}\+\_\+\+\_\+device\+\_\+\+\_\+ volatile unsigned int d\+\_\+glb\+Spk\+Evnt\+P\+Inh\mbox{[}2000\mbox{]}}}\label{Izh__sparse__project_2model_2izh__sparse__code_2neuronKrnl_8cc_a04454f288bd5385f4e1ec14c14afac68}
+\hypertarget{Izh__sparse__project_2model_2izh__sparse__code_2neuronKrnl_8cc_a6d5d4b982a7f0f1fcfe6b0bbddb23bd4}{\index{Izh\+\_\+sparse\+\_\+project/model/izh\+\_\+sparse\+\_\+code/neuron\+Krnl.\+cc@{Izh\+\_\+sparse\+\_\+project/model/izh\+\_\+sparse\+\_\+code/neuron\+Krnl.\+cc}!d\+\_\+glb\+Spk\+P\+Exc@{d\+\_\+glb\+Spk\+P\+Exc}}
+\index{d\+\_\+glb\+Spk\+P\+Exc@{d\+\_\+glb\+Spk\+P\+Exc}!Izh\+\_\+sparse\+\_\+project/model/izh\+\_\+sparse\+\_\+code/neuron\+Krnl.\+cc@{Izh\+\_\+sparse\+\_\+project/model/izh\+\_\+sparse\+\_\+code/neuron\+Krnl.\+cc}}
+\subsubsection[{d\+\_\+glb\+Spk\+P\+Exc}]{\setlength{\rightskip}{0pt plus 5cm}\+\_\+\+\_\+device\+\_\+\+\_\+ volatile unsigned int d\+\_\+glb\+Spk\+P\+Exc\mbox{[}8000\mbox{]}}}\label{Izh__sparse__project_2model_2izh__sparse__code_2neuronKrnl_8cc_a6d5d4b982a7f0f1fcfe6b0bbddb23bd4}
+\hypertarget{Izh__sparse__project_2model_2izh__sparse__code_2neuronKrnl_8cc_af9b2831a11f840f0d24b6919fcb8b087}{\index{Izh\+\_\+sparse\+\_\+project/model/izh\+\_\+sparse\+\_\+code/neuron\+Krnl.\+cc@{Izh\+\_\+sparse\+\_\+project/model/izh\+\_\+sparse\+\_\+code/neuron\+Krnl.\+cc}!d\+\_\+glb\+Spk\+P\+Inh@{d\+\_\+glb\+Spk\+P\+Inh}}
+\index{d\+\_\+glb\+Spk\+P\+Inh@{d\+\_\+glb\+Spk\+P\+Inh}!Izh\+\_\+sparse\+\_\+project/model/izh\+\_\+sparse\+\_\+code/neuron\+Krnl.\+cc@{Izh\+\_\+sparse\+\_\+project/model/izh\+\_\+sparse\+\_\+code/neuron\+Krnl.\+cc}}
+\subsubsection[{d\+\_\+glb\+Spk\+P\+Inh}]{\setlength{\rightskip}{0pt plus 5cm}\+\_\+\+\_\+device\+\_\+\+\_\+ volatile unsigned int d\+\_\+glb\+Spk\+P\+Inh\mbox{[}2000\mbox{]}}}\label{Izh__sparse__project_2model_2izh__sparse__code_2neuronKrnl_8cc_af9b2831a11f840f0d24b6919fcb8b087}

@@ -1,0 +1,165 @@
+\hypertarget{gen__syns__sparse__izhModel_8cc}{\section{userproject/tools/gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.cc File Reference}
+\label{gen__syns__sparse__izhModel_8cc}\index{userproject/tools/gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc@{userproject/tools/gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc}}
+}
+
+
+This file is part of a tool chain for running the Izhikevich network model.  
+
+
+{\ttfamily \#include $<$iostream$>$}\\*
+{\ttfamily \#include $<$fstream$>$}\\*
+{\ttfamily \#include $<$stdlib.\+h$>$}\\*
+{\ttfamily \#include $<$string.\+h$>$}\\*
+{\ttfamily \#include $<$vector$>$}\\*
+{\ttfamily \#include \char`\"{}random\+Gen.\+h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}random\+Gen.\+cc\char`\"{}}\\*
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+int \hyperlink{gen__syns__sparse__izhModel_8cc_a79ea4f51db248f19403e1e311ea076cf}{print\+Vector} (vector$<$ unsigned int $>$ \&)
+\item 
+int \hyperlink{gen__syns__sparse__izhModel_8cc_a70cd4c35258a67dc8bc58914cd7dff48}{print\+Vector} (vector$<$ double $>$ \&)
+\item 
+int \hyperlink{gen__syns__sparse__izhModel_8cc_a0ddf1224851353fc92bfbff6f499fa97}{main} (int argc, char $\ast$argv\mbox{[}$\,$\mbox{]})
+\end{DoxyCompactItemize}
+\subsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+\hyperlink{classrandomGen}{random\+Gen} \hyperlink{gen__syns__sparse__izhModel_8cc_ac06fcc1e53c6b21275aec67047473a28}{R}
+\item 
+\hyperlink{classrandomGen}{random\+Gen} \hyperlink{gen__syns__sparse__izhModel_8cc_a809fe322a4a511b368f07a69f7164a4c}{Rind}
+\item 
+double \hyperlink{gen__syns__sparse__izhModel_8cc_ae19a8f16445da3fa788db0039abf3319}{gsyn}
+\item 
+double $\ast$ \hyperlink{gen__syns__sparse__izhModel_8cc_a5d2e506d6b879a2ff7bc54c7f6810449}{garray}
+\item 
+unsigned int $\ast$ \hyperlink{gen__syns__sparse__izhModel_8cc_a5c88bd5b4e434f79aefe7e9ce760f9ee}{ind}
+\item 
+double $\ast$ \hyperlink{gen__syns__sparse__izhModel_8cc_aebed6a3b7ba00959418903bd76e31693}{garray\+\_\+ee}
+\item 
+std\+::vector$<$ double $>$ \hyperlink{gen__syns__sparse__izhModel_8cc_adbd2758a541137d42398767ac38cd91e}{g\+\_\+ee}
+\item 
+std\+::vector$<$ unsigned int $>$ \hyperlink{gen__syns__sparse__izhModel_8cc_a3e14e121cfacf37895c72d4daf50afc5}{ind\+In\+G\+\_\+ee}
+\item 
+std\+::vector$<$ unsigned int $>$ \hyperlink{gen__syns__sparse__izhModel_8cc_a9c7225db59924fb7930ebf150e5e09c0}{ind\+\_\+ee}
+\item 
+double $\ast$ \hyperlink{gen__syns__sparse__izhModel_8cc_a37bbbbfdccadf273cfd5692e8f5f1be9}{garray\+\_\+ei}
+\item 
+std\+::vector$<$ double $>$ \hyperlink{gen__syns__sparse__izhModel_8cc_a3471fd37c6e0827b55e9aec2a7074806}{g\+\_\+ei}
+\item 
+std\+::vector$<$ unsigned int $>$ \hyperlink{gen__syns__sparse__izhModel_8cc_af2c6aa1ad3f35bcc30ff99aaf3b045f4}{ind\+In\+G\+\_\+ei}
+\item 
+std\+::vector$<$ unsigned int $>$ \hyperlink{gen__syns__sparse__izhModel_8cc_ae558fecaa58942b18a222442c58fa89e}{ind\+\_\+ei}
+\item 
+double $\ast$ \hyperlink{gen__syns__sparse__izhModel_8cc_ab93127c2d3c6acee9e5a1475d84cc3cf}{garray\+\_\+ie}
+\item 
+std\+::vector$<$ double $>$ \hyperlink{gen__syns__sparse__izhModel_8cc_a91d8fc8fd394603b5976d6fe20b4fc71}{g\+\_\+ie}
+\item 
+std\+::vector$<$ unsigned int $>$ \hyperlink{gen__syns__sparse__izhModel_8cc_a7bea201febba8bb8601c66005d8c05ea}{ind\+In\+G\+\_\+ie}
+\item 
+std\+::vector$<$ unsigned int $>$ \hyperlink{gen__syns__sparse__izhModel_8cc_ad315786e690fa98b4ef5b1cc357ffb86}{ind\+\_\+ie}
+\item 
+double $\ast$ \hyperlink{gen__syns__sparse__izhModel_8cc_ab8965e0abf80c26a86b98f828082deba}{garray\+\_\+ii}
+\item 
+std\+::vector$<$ double $>$ \hyperlink{gen__syns__sparse__izhModel_8cc_aa82174538fbf2703149d4d7135b0ac02}{g\+\_\+ii}
+\item 
+std\+::vector$<$ unsigned int $>$ \hyperlink{gen__syns__sparse__izhModel_8cc_a74946f32eda1062ddbf15749e9ecbdb5}{ind\+In\+G\+\_\+ii}
+\item 
+std\+::vector$<$ unsigned int $>$ \hyperlink{gen__syns__sparse__izhModel_8cc_ae68a05464996470eeab47b05f494d029}{ind\+\_\+ii}
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+This file is part of a tool chain for running the Izhikevich network model. 
+
+
+
+\subsection{Function Documentation}
+\hypertarget{gen__syns__sparse__izhModel_8cc_a0ddf1224851353fc92bfbff6f499fa97}{\index{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc@{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc}!main@{main}}
+\index{main@{main}!gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc@{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc}}
+\subsubsection[{main}]{\setlength{\rightskip}{0pt plus 5cm}int main (
+\begin{DoxyParamCaption}
+\item[{int}]{argc, }
+\item[{char $\ast$}]{argv\mbox{[}$\,$\mbox{]}}
+\end{DoxyParamCaption}
+)}}\label{gen__syns__sparse__izhModel_8cc_a0ddf1224851353fc92bfbff6f499fa97}
+\hypertarget{gen__syns__sparse__izhModel_8cc_a79ea4f51db248f19403e1e311ea076cf}{\index{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc@{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc}!print\+Vector@{print\+Vector}}
+\index{print\+Vector@{print\+Vector}!gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc@{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc}}
+\subsubsection[{print\+Vector}]{\setlength{\rightskip}{0pt plus 5cm}int print\+Vector (
+\begin{DoxyParamCaption}
+\item[{vector$<$ unsigned int $>$ \&}]{v}
+\end{DoxyParamCaption}
+)}}\label{gen__syns__sparse__izhModel_8cc_a79ea4f51db248f19403e1e311ea076cf}
+\hypertarget{gen__syns__sparse__izhModel_8cc_a70cd4c35258a67dc8bc58914cd7dff48}{\index{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc@{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc}!print\+Vector@{print\+Vector}}
+\index{print\+Vector@{print\+Vector}!gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc@{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc}}
+\subsubsection[{print\+Vector}]{\setlength{\rightskip}{0pt plus 5cm}int print\+Vector (
+\begin{DoxyParamCaption}
+\item[{vector$<$ double $>$ \&}]{v}
+\end{DoxyParamCaption}
+)}}\label{gen__syns__sparse__izhModel_8cc_a70cd4c35258a67dc8bc58914cd7dff48}
+
+
+\subsection{Variable Documentation}
+\hypertarget{gen__syns__sparse__izhModel_8cc_adbd2758a541137d42398767ac38cd91e}{\index{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc@{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc}!g\+\_\+ee@{g\+\_\+ee}}
+\index{g\+\_\+ee@{g\+\_\+ee}!gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc@{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc}}
+\subsubsection[{g\+\_\+ee}]{\setlength{\rightskip}{0pt plus 5cm}std\+::vector$<$double$>$ g\+\_\+ee}}\label{gen__syns__sparse__izhModel_8cc_adbd2758a541137d42398767ac38cd91e}
+\hypertarget{gen__syns__sparse__izhModel_8cc_a3471fd37c6e0827b55e9aec2a7074806}{\index{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc@{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc}!g\+\_\+ei@{g\+\_\+ei}}
+\index{g\+\_\+ei@{g\+\_\+ei}!gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc@{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc}}
+\subsubsection[{g\+\_\+ei}]{\setlength{\rightskip}{0pt plus 5cm}std\+::vector$<$double$>$ g\+\_\+ei}}\label{gen__syns__sparse__izhModel_8cc_a3471fd37c6e0827b55e9aec2a7074806}
+\hypertarget{gen__syns__sparse__izhModel_8cc_a91d8fc8fd394603b5976d6fe20b4fc71}{\index{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc@{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc}!g\+\_\+ie@{g\+\_\+ie}}
+\index{g\+\_\+ie@{g\+\_\+ie}!gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc@{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc}}
+\subsubsection[{g\+\_\+ie}]{\setlength{\rightskip}{0pt plus 5cm}std\+::vector$<$double$>$ g\+\_\+ie}}\label{gen__syns__sparse__izhModel_8cc_a91d8fc8fd394603b5976d6fe20b4fc71}
+\hypertarget{gen__syns__sparse__izhModel_8cc_aa82174538fbf2703149d4d7135b0ac02}{\index{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc@{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc}!g\+\_\+ii@{g\+\_\+ii}}
+\index{g\+\_\+ii@{g\+\_\+ii}!gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc@{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc}}
+\subsubsection[{g\+\_\+ii}]{\setlength{\rightskip}{0pt plus 5cm}std\+::vector$<$double$>$ g\+\_\+ii}}\label{gen__syns__sparse__izhModel_8cc_aa82174538fbf2703149d4d7135b0ac02}
+\hypertarget{gen__syns__sparse__izhModel_8cc_a5d2e506d6b879a2ff7bc54c7f6810449}{\index{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc@{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc}!garray@{garray}}
+\index{garray@{garray}!gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc@{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc}}
+\subsubsection[{garray}]{\setlength{\rightskip}{0pt plus 5cm}double$\ast$ garray}}\label{gen__syns__sparse__izhModel_8cc_a5d2e506d6b879a2ff7bc54c7f6810449}
+\hypertarget{gen__syns__sparse__izhModel_8cc_aebed6a3b7ba00959418903bd76e31693}{\index{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc@{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc}!garray\+\_\+ee@{garray\+\_\+ee}}
+\index{garray\+\_\+ee@{garray\+\_\+ee}!gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc@{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc}}
+\subsubsection[{garray\+\_\+ee}]{\setlength{\rightskip}{0pt plus 5cm}double$\ast$ garray\+\_\+ee}}\label{gen__syns__sparse__izhModel_8cc_aebed6a3b7ba00959418903bd76e31693}
+\hypertarget{gen__syns__sparse__izhModel_8cc_a37bbbbfdccadf273cfd5692e8f5f1be9}{\index{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc@{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc}!garray\+\_\+ei@{garray\+\_\+ei}}
+\index{garray\+\_\+ei@{garray\+\_\+ei}!gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc@{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc}}
+\subsubsection[{garray\+\_\+ei}]{\setlength{\rightskip}{0pt plus 5cm}double$\ast$ garray\+\_\+ei}}\label{gen__syns__sparse__izhModel_8cc_a37bbbbfdccadf273cfd5692e8f5f1be9}
+\hypertarget{gen__syns__sparse__izhModel_8cc_ab93127c2d3c6acee9e5a1475d84cc3cf}{\index{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc@{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc}!garray\+\_\+ie@{garray\+\_\+ie}}
+\index{garray\+\_\+ie@{garray\+\_\+ie}!gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc@{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc}}
+\subsubsection[{garray\+\_\+ie}]{\setlength{\rightskip}{0pt plus 5cm}double$\ast$ garray\+\_\+ie}}\label{gen__syns__sparse__izhModel_8cc_ab93127c2d3c6acee9e5a1475d84cc3cf}
+\hypertarget{gen__syns__sparse__izhModel_8cc_ab8965e0abf80c26a86b98f828082deba}{\index{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc@{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc}!garray\+\_\+ii@{garray\+\_\+ii}}
+\index{garray\+\_\+ii@{garray\+\_\+ii}!gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc@{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc}}
+\subsubsection[{garray\+\_\+ii}]{\setlength{\rightskip}{0pt plus 5cm}double$\ast$ garray\+\_\+ii}}\label{gen__syns__sparse__izhModel_8cc_ab8965e0abf80c26a86b98f828082deba}
+\hypertarget{gen__syns__sparse__izhModel_8cc_ae19a8f16445da3fa788db0039abf3319}{\index{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc@{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc}!gsyn@{gsyn}}
+\index{gsyn@{gsyn}!gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc@{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc}}
+\subsubsection[{gsyn}]{\setlength{\rightskip}{0pt plus 5cm}double gsyn}}\label{gen__syns__sparse__izhModel_8cc_ae19a8f16445da3fa788db0039abf3319}
+\hypertarget{gen__syns__sparse__izhModel_8cc_a5c88bd5b4e434f79aefe7e9ce760f9ee}{\index{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc@{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc}!ind@{ind}}
+\index{ind@{ind}!gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc@{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc}}
+\subsubsection[{ind}]{\setlength{\rightskip}{0pt plus 5cm}unsigned int$\ast$ ind}}\label{gen__syns__sparse__izhModel_8cc_a5c88bd5b4e434f79aefe7e9ce760f9ee}
+\hypertarget{gen__syns__sparse__izhModel_8cc_a9c7225db59924fb7930ebf150e5e09c0}{\index{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc@{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc}!ind\+\_\+ee@{ind\+\_\+ee}}
+\index{ind\+\_\+ee@{ind\+\_\+ee}!gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc@{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc}}
+\subsubsection[{ind\+\_\+ee}]{\setlength{\rightskip}{0pt plus 5cm}std\+::vector$<$unsigned int$>$ ind\+\_\+ee}}\label{gen__syns__sparse__izhModel_8cc_a9c7225db59924fb7930ebf150e5e09c0}
+\hypertarget{gen__syns__sparse__izhModel_8cc_ae558fecaa58942b18a222442c58fa89e}{\index{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc@{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc}!ind\+\_\+ei@{ind\+\_\+ei}}
+\index{ind\+\_\+ei@{ind\+\_\+ei}!gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc@{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc}}
+\subsubsection[{ind\+\_\+ei}]{\setlength{\rightskip}{0pt plus 5cm}std\+::vector$<$unsigned int$>$ ind\+\_\+ei}}\label{gen__syns__sparse__izhModel_8cc_ae558fecaa58942b18a222442c58fa89e}
+\hypertarget{gen__syns__sparse__izhModel_8cc_ad315786e690fa98b4ef5b1cc357ffb86}{\index{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc@{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc}!ind\+\_\+ie@{ind\+\_\+ie}}
+\index{ind\+\_\+ie@{ind\+\_\+ie}!gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc@{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc}}
+\subsubsection[{ind\+\_\+ie}]{\setlength{\rightskip}{0pt plus 5cm}std\+::vector$<$unsigned int$>$ ind\+\_\+ie}}\label{gen__syns__sparse__izhModel_8cc_ad315786e690fa98b4ef5b1cc357ffb86}
+\hypertarget{gen__syns__sparse__izhModel_8cc_ae68a05464996470eeab47b05f494d029}{\index{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc@{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc}!ind\+\_\+ii@{ind\+\_\+ii}}
+\index{ind\+\_\+ii@{ind\+\_\+ii}!gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc@{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc}}
+\subsubsection[{ind\+\_\+ii}]{\setlength{\rightskip}{0pt plus 5cm}std\+::vector$<$unsigned int$>$ ind\+\_\+ii}}\label{gen__syns__sparse__izhModel_8cc_ae68a05464996470eeab47b05f494d029}
+\hypertarget{gen__syns__sparse__izhModel_8cc_a3e14e121cfacf37895c72d4daf50afc5}{\index{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc@{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc}!ind\+In\+G\+\_\+ee@{ind\+In\+G\+\_\+ee}}
+\index{ind\+In\+G\+\_\+ee@{ind\+In\+G\+\_\+ee}!gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc@{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc}}
+\subsubsection[{ind\+In\+G\+\_\+ee}]{\setlength{\rightskip}{0pt plus 5cm}std\+::vector$<$unsigned int$>$ ind\+In\+G\+\_\+ee}}\label{gen__syns__sparse__izhModel_8cc_a3e14e121cfacf37895c72d4daf50afc5}
+\hypertarget{gen__syns__sparse__izhModel_8cc_af2c6aa1ad3f35bcc30ff99aaf3b045f4}{\index{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc@{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc}!ind\+In\+G\+\_\+ei@{ind\+In\+G\+\_\+ei}}
+\index{ind\+In\+G\+\_\+ei@{ind\+In\+G\+\_\+ei}!gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc@{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc}}
+\subsubsection[{ind\+In\+G\+\_\+ei}]{\setlength{\rightskip}{0pt plus 5cm}std\+::vector$<$unsigned int$>$ ind\+In\+G\+\_\+ei}}\label{gen__syns__sparse__izhModel_8cc_af2c6aa1ad3f35bcc30ff99aaf3b045f4}
+\hypertarget{gen__syns__sparse__izhModel_8cc_a7bea201febba8bb8601c66005d8c05ea}{\index{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc@{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc}!ind\+In\+G\+\_\+ie@{ind\+In\+G\+\_\+ie}}
+\index{ind\+In\+G\+\_\+ie@{ind\+In\+G\+\_\+ie}!gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc@{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc}}
+\subsubsection[{ind\+In\+G\+\_\+ie}]{\setlength{\rightskip}{0pt plus 5cm}std\+::vector$<$unsigned int$>$ ind\+In\+G\+\_\+ie}}\label{gen__syns__sparse__izhModel_8cc_a7bea201febba8bb8601c66005d8c05ea}
+\hypertarget{gen__syns__sparse__izhModel_8cc_a74946f32eda1062ddbf15749e9ecbdb5}{\index{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc@{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc}!ind\+In\+G\+\_\+ii@{ind\+In\+G\+\_\+ii}}
+\index{ind\+In\+G\+\_\+ii@{ind\+In\+G\+\_\+ii}!gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc@{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc}}
+\subsubsection[{ind\+In\+G\+\_\+ii}]{\setlength{\rightskip}{0pt plus 5cm}std\+::vector$<$unsigned int$>$ ind\+In\+G\+\_\+ii}}\label{gen__syns__sparse__izhModel_8cc_a74946f32eda1062ddbf15749e9ecbdb5}
+\hypertarget{gen__syns__sparse__izhModel_8cc_ac06fcc1e53c6b21275aec67047473a28}{\index{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc@{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc}!R@{R}}
+\index{R@{R}!gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc@{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc}}
+\subsubsection[{R}]{\setlength{\rightskip}{0pt plus 5cm}{\bf random\+Gen} R}}\label{gen__syns__sparse__izhModel_8cc_ac06fcc1e53c6b21275aec67047473a28}
+\hypertarget{gen__syns__sparse__izhModel_8cc_a809fe322a4a511b368f07a69f7164a4c}{\index{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc@{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc}!Rind@{Rind}}
+\index{Rind@{Rind}!gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc@{gen\+\_\+syns\+\_\+sparse\+\_\+izh\+Model.\+cc}}
+\subsubsection[{Rind}]{\setlength{\rightskip}{0pt plus 5cm}{\bf random\+Gen} Rind}}\label{gen__syns__sparse__izhModel_8cc_a809fe322a4a511b368f07a69f7164a4c}

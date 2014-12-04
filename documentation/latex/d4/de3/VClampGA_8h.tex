@@ -1,0 +1,60 @@
+\hypertarget{VClampGA_8h}{\section{userproject/\+H\+H\+Vclamp\+G\+A\+\_\+project/model/\+V\+Clamp\+G\+A.h File Reference}
+\label{VClampGA_8h}\index{userproject/\+H\+H\+Vclamp\+G\+A\+\_\+project/model/\+V\+Clamp\+G\+A.\+h@{userproject/\+H\+H\+Vclamp\+G\+A\+\_\+project/model/\+V\+Clamp\+G\+A.\+h}}
+}
+{\ttfamily \#include $<$cassert$>$}\\*
+{\ttfamily \#include \char`\"{}hr\+\_\+time.\+cpp\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}utils.\+h\char`\"{}}\\*
+{\ttfamily \#include $<$cuda\+\_\+runtime.\+h$>$}\\*
+{\ttfamily \#include \char`\"{}H\+H\+V\+Clamp.\+cc\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}H\+H\+V\+Clamp\+\_\+\+C\+O\+D\+E/runner.\+cc\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}../../../lib/include/numlib/random\+Gen.\+h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}../../../lib/include/numlib/gauss.\+h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}helper.\+h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}G\+A.\+cc\char`\"{}}\\*
+\subsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \hyperlink{VClampGA_8h_aba55c5fdcbf1fc0cdaba9b1d2ed2f068}{R\+A\+N\+D}(Y, X)~Y = Y $\ast$ 1103515245 +12345;X= (unsigned int)(Y $>$$>$ 16) \& 32767
+\end{DoxyCompactItemize}
+\subsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+\hyperlink{classrandomGen}{random\+Gen} \hyperlink{VClampGA_8h_ac06fcc1e53c6b21275aec67047473a28}{R}
+\item 
+\hyperlink{classrandomGauss}{random\+Gauss} \hyperlink{VClampGA_8h_af5a7a548a9abc3f675678c8ac3f3d636}{R\+G}
+\item 
+double \hyperlink{VClampGA_8h_a87accd1af8e0aff4b818d891374f7cec}{t} = 0.\+0f
+\item 
+unsigned int \hyperlink{VClampGA_8h_af90823709b88c685c62a727366640633}{i\+T} = 0
+\item 
+\hyperlink{classCStopWatch}{C\+Stop\+Watch} \hyperlink{VClampGA_8h_a5256bd92e0315a4504ed1d8c6bcab9c9}{timer}
+\end{DoxyCompactItemize}
+
+
+\subsection{Macro Definition Documentation}
+\hypertarget{VClampGA_8h_aba55c5fdcbf1fc0cdaba9b1d2ed2f068}{\index{V\+Clamp\+G\+A.\+h@{V\+Clamp\+G\+A.\+h}!R\+A\+N\+D@{R\+A\+N\+D}}
+\index{R\+A\+N\+D@{R\+A\+N\+D}!V\+Clamp\+G\+A.\+h@{V\+Clamp\+G\+A.\+h}}
+\subsubsection[{R\+A\+N\+D}]{\setlength{\rightskip}{0pt plus 5cm}\#define R\+A\+N\+D(
+\begin{DoxyParamCaption}
+\item[{}]{Y, }
+\item[{}]{X}
+\end{DoxyParamCaption}
+)~Y = Y $\ast$ 1103515245 +12345;X= (unsigned int)(Y $>$$>$ 16) \& 32767}}\label{VClampGA_8h_aba55c5fdcbf1fc0cdaba9b1d2ed2f068}
+
+
+\subsection{Variable Documentation}
+\hypertarget{VClampGA_8h_af90823709b88c685c62a727366640633}{\index{V\+Clamp\+G\+A.\+h@{V\+Clamp\+G\+A.\+h}!i\+T@{i\+T}}
+\index{i\+T@{i\+T}!V\+Clamp\+G\+A.\+h@{V\+Clamp\+G\+A.\+h}}
+\subsubsection[{i\+T}]{\setlength{\rightskip}{0pt plus 5cm}unsigned int i\+T = 0}}\label{VClampGA_8h_af90823709b88c685c62a727366640633}
+\hypertarget{VClampGA_8h_ac06fcc1e53c6b21275aec67047473a28}{\index{V\+Clamp\+G\+A.\+h@{V\+Clamp\+G\+A.\+h}!R@{R}}
+\index{R@{R}!V\+Clamp\+G\+A.\+h@{V\+Clamp\+G\+A.\+h}}
+\subsubsection[{R}]{\setlength{\rightskip}{0pt plus 5cm}{\bf random\+Gen} R}}\label{VClampGA_8h_ac06fcc1e53c6b21275aec67047473a28}
+\hypertarget{VClampGA_8h_af5a7a548a9abc3f675678c8ac3f3d636}{\index{V\+Clamp\+G\+A.\+h@{V\+Clamp\+G\+A.\+h}!R\+G@{R\+G}}
+\index{R\+G@{R\+G}!V\+Clamp\+G\+A.\+h@{V\+Clamp\+G\+A.\+h}}
+\subsubsection[{R\+G}]{\setlength{\rightskip}{0pt plus 5cm}{\bf random\+Gauss} R\+G}}\label{VClampGA_8h_af5a7a548a9abc3f675678c8ac3f3d636}
+\hypertarget{VClampGA_8h_a87accd1af8e0aff4b818d891374f7cec}{\index{V\+Clamp\+G\+A.\+h@{V\+Clamp\+G\+A.\+h}!t@{t}}
+\index{t@{t}!V\+Clamp\+G\+A.\+h@{V\+Clamp\+G\+A.\+h}}
+\subsubsection[{t}]{\setlength{\rightskip}{0pt plus 5cm}double t = 0.\+0f}}\label{VClampGA_8h_a87accd1af8e0aff4b818d891374f7cec}
+\hypertarget{VClampGA_8h_a5256bd92e0315a4504ed1d8c6bcab9c9}{\index{V\+Clamp\+G\+A.\+h@{V\+Clamp\+G\+A.\+h}!timer@{timer}}
+\index{timer@{timer}!V\+Clamp\+G\+A.\+h@{V\+Clamp\+G\+A.\+h}}
+\subsubsection[{timer}]{\setlength{\rightskip}{0pt plus 5cm}{\bf C\+Stop\+Watch} timer}}\label{VClampGA_8h_a5256bd92e0315a4504ed1d8c6bcab9c9}

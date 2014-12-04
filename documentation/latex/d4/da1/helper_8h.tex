@@ -1,0 +1,204 @@
+\hypertarget{helper_8h}{\section{userproject/\+H\+H\+Vclamp\+G\+A\+\_\+project/model/helper.h File Reference}
+\label{helper_8h}\index{userproject/\+H\+H\+Vclamp\+G\+A\+\_\+project/model/helper.\+h@{userproject/\+H\+H\+Vclamp\+G\+A\+\_\+project/model/helper.\+h}}
+}
+{\ttfamily \#include $<$vector$>$}\\*
+\subsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+struct \hyperlink{structinputSpec}{input\+Spec}
+\end{DoxyCompactItemize}
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+ostream \& \hyperlink{helper_8h_a1e303240ef871b4830f81795608bd80a}{operator$<$$<$} (ostream \&os, \hyperlink{structinputSpec}{input\+Spec} \&I)
+\item 
+void \hyperlink{helper_8h_ac3afd670c0b80b2166fe1ee4bcad30f1}{write\+\_\+para} ()
+\item 
+void \hyperlink{helper_8h_a38341b7a42bcfb44f7ac5b43a1a6dd95}{single\+\_\+var\+\_\+reinit} (int n, double fac)
+\item 
+void \hyperlink{helper_8h_a9edb559ab0f1a705376bbe4c1631c8be}{copy\+\_\+var} (int src, int trg)
+\item 
+void \hyperlink{helper_8h_a7047db412e8087f01d49ba269751b189}{var\+\_\+reinit} (double fac)
+\item 
+void \hyperlink{helper_8h_a7c3b8a7c78ab272544a49c8c767f8874}{truevar\+\_\+init} ()
+\item 
+void \hyperlink{helper_8h_a662b98908d7188369b9160f4e2dc90c2}{initexp\+H\+H} ()
+\item 
+void \hyperlink{helper_8h_a6d99d6ff8501c8bcabb7a5f309a5d465}{truevar\+\_\+initexp\+H\+H} ()
+\item 
+void \hyperlink{helper_8h_aee94425de5cadadfb5d01755b33b67bc}{runexp\+H\+H} (float \hyperlink{PoissonIzh__sim_8h_afea36502e9d227ff62c5fb2719a246f2}{t})
+\item 
+void \hyperlink{helper_8h_a5964dc86444b200692c39a57171c27fd}{init\+I} (\hyperlink{structinputSpec}{input\+Spec} \&I)
+\end{DoxyCompactItemize}
+\subsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+double \hyperlink{helper_8h_af2973d5096ab1755b9a20a1b04c993c4}{sig\+G\+Na} = 0.\+1
+\item 
+double \hyperlink{helper_8h_ae06823ac6c9708d77f34de1bfc075f22}{sig\+E\+Na} = 10.\+0
+\item 
+double \hyperlink{helper_8h_a148e26ce29a4b77f79d14e41214ec623}{sig\+G\+K} = 0.\+1
+\item 
+double \hyperlink{helper_8h_a19c04828a3d91529645951a6f86f57a9}{sig\+E\+K} = 10.\+0
+\item 
+double \hyperlink{helper_8h_acc6d5ceb3861275f419caeb6c22b9d97}{sig\+Gl} = 0.\+1
+\item 
+double \hyperlink{helper_8h_a53a3bc5948599ef2803d14620056001f}{sig\+El} = 10.\+0
+\item 
+double \hyperlink{helper_8h_a86cdbfaba3a6dacc0f0e69040a642f85}{sig\+C} = 0.\+1
+\item 
+double \hyperlink{helper_8h_a83cf90739c16b19704b98c436a5b798d}{Vexp}
+\item 
+double \hyperlink{helper_8h_a6ddfc8722483b0f79172b6124d704905}{mexp}
+\item 
+double \hyperlink{helper_8h_a7e779242180c99f0614e8403fb9f4b7f}{hexp}
+\item 
+double \hyperlink{helper_8h_a2fd5a25a71b723c93b9cf3d926af2b12}{nexp}
+\item 
+double \hyperlink{helper_8h_a344959a5a5f53cfc8f85ad2f24aae708}{g\+Naexp}
+\item 
+double \hyperlink{helper_8h_a38504d54eb399b663442c535b8c34708}{E\+Naexp}
+\item 
+double \hyperlink{helper_8h_abd75410dc2c8d9242a4136f864ddb9ea}{g\+Kexp}
+\item 
+double \hyperlink{helper_8h_a254b431390e2ef3a2da795bb3a182a61}{E\+Kexp}
+\item 
+double \hyperlink{helper_8h_a6e7ea7e9ad4de5d09575ab8dc10a5dac}{glexp}
+\item 
+double \hyperlink{helper_8h_a6826e63474e8e81555a021dc2ee70421}{Elexp}
+\item 
+double \hyperlink{helper_8h_a2dcb670d4b05ef1ad7c468a7991238cd}{Cexp}
+\end{DoxyCompactItemize}
+
+
+\subsection{Function Documentation}
+\hypertarget{helper_8h_a9edb559ab0f1a705376bbe4c1631c8be}{\index{helper.\+h@{helper.\+h}!copy\+\_\+var@{copy\+\_\+var}}
+\index{copy\+\_\+var@{copy\+\_\+var}!helper.\+h@{helper.\+h}}
+\subsubsection[{copy\+\_\+var}]{\setlength{\rightskip}{0pt plus 5cm}void copy\+\_\+var (
+\begin{DoxyParamCaption}
+\item[{int}]{src, }
+\item[{int}]{trg}
+\end{DoxyParamCaption}
+)}}\label{helper_8h_a9edb559ab0f1a705376bbe4c1631c8be}
+\hypertarget{helper_8h_a662b98908d7188369b9160f4e2dc90c2}{\index{helper.\+h@{helper.\+h}!initexp\+H\+H@{initexp\+H\+H}}
+\index{initexp\+H\+H@{initexp\+H\+H}!helper.\+h@{helper.\+h}}
+\subsubsection[{initexp\+H\+H}]{\setlength{\rightskip}{0pt plus 5cm}void initexp\+H\+H (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{helper_8h_a662b98908d7188369b9160f4e2dc90c2}
+\hypertarget{helper_8h_a5964dc86444b200692c39a57171c27fd}{\index{helper.\+h@{helper.\+h}!init\+I@{init\+I}}
+\index{init\+I@{init\+I}!helper.\+h@{helper.\+h}}
+\subsubsection[{init\+I}]{\setlength{\rightskip}{0pt plus 5cm}void init\+I (
+\begin{DoxyParamCaption}
+\item[{{\bf input\+Spec} \&}]{I}
+\end{DoxyParamCaption}
+)}}\label{helper_8h_a5964dc86444b200692c39a57171c27fd}
+\hypertarget{helper_8h_a1e303240ef871b4830f81795608bd80a}{\index{helper.\+h@{helper.\+h}!operator$<$$<$@{operator$<$$<$}}
+\index{operator$<$$<$@{operator$<$$<$}!helper.\+h@{helper.\+h}}
+\subsubsection[{operator$<$$<$}]{\setlength{\rightskip}{0pt plus 5cm}ostream\& operator$<$$<$ (
+\begin{DoxyParamCaption}
+\item[{ostream \&}]{os, }
+\item[{{\bf input\+Spec} \&}]{I}
+\end{DoxyParamCaption}
+)}}\label{helper_8h_a1e303240ef871b4830f81795608bd80a}
+\hypertarget{helper_8h_aee94425de5cadadfb5d01755b33b67bc}{\index{helper.\+h@{helper.\+h}!runexp\+H\+H@{runexp\+H\+H}}
+\index{runexp\+H\+H@{runexp\+H\+H}!helper.\+h@{helper.\+h}}
+\subsubsection[{runexp\+H\+H}]{\setlength{\rightskip}{0pt plus 5cm}void runexp\+H\+H (
+\begin{DoxyParamCaption}
+\item[{float}]{t}
+\end{DoxyParamCaption}
+)}}\label{helper_8h_aee94425de5cadadfb5d01755b33b67bc}
+\hypertarget{helper_8h_a38341b7a42bcfb44f7ac5b43a1a6dd95}{\index{helper.\+h@{helper.\+h}!single\+\_\+var\+\_\+reinit@{single\+\_\+var\+\_\+reinit}}
+\index{single\+\_\+var\+\_\+reinit@{single\+\_\+var\+\_\+reinit}!helper.\+h@{helper.\+h}}
+\subsubsection[{single\+\_\+var\+\_\+reinit}]{\setlength{\rightskip}{0pt plus 5cm}void single\+\_\+var\+\_\+reinit (
+\begin{DoxyParamCaption}
+\item[{int}]{n, }
+\item[{double}]{fac}
+\end{DoxyParamCaption}
+)}}\label{helper_8h_a38341b7a42bcfb44f7ac5b43a1a6dd95}
+\hypertarget{helper_8h_a7c3b8a7c78ab272544a49c8c767f8874}{\index{helper.\+h@{helper.\+h}!truevar\+\_\+init@{truevar\+\_\+init}}
+\index{truevar\+\_\+init@{truevar\+\_\+init}!helper.\+h@{helper.\+h}}
+\subsubsection[{truevar\+\_\+init}]{\setlength{\rightskip}{0pt plus 5cm}void truevar\+\_\+init (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{helper_8h_a7c3b8a7c78ab272544a49c8c767f8874}
+\hypertarget{helper_8h_a6d99d6ff8501c8bcabb7a5f309a5d465}{\index{helper.\+h@{helper.\+h}!truevar\+\_\+initexp\+H\+H@{truevar\+\_\+initexp\+H\+H}}
+\index{truevar\+\_\+initexp\+H\+H@{truevar\+\_\+initexp\+H\+H}!helper.\+h@{helper.\+h}}
+\subsubsection[{truevar\+\_\+initexp\+H\+H}]{\setlength{\rightskip}{0pt plus 5cm}void truevar\+\_\+initexp\+H\+H (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{helper_8h_a6d99d6ff8501c8bcabb7a5f309a5d465}
+\hypertarget{helper_8h_a7047db412e8087f01d49ba269751b189}{\index{helper.\+h@{helper.\+h}!var\+\_\+reinit@{var\+\_\+reinit}}
+\index{var\+\_\+reinit@{var\+\_\+reinit}!helper.\+h@{helper.\+h}}
+\subsubsection[{var\+\_\+reinit}]{\setlength{\rightskip}{0pt plus 5cm}void var\+\_\+reinit (
+\begin{DoxyParamCaption}
+\item[{double}]{fac}
+\end{DoxyParamCaption}
+)}}\label{helper_8h_a7047db412e8087f01d49ba269751b189}
+\hypertarget{helper_8h_ac3afd670c0b80b2166fe1ee4bcad30f1}{\index{helper.\+h@{helper.\+h}!write\+\_\+para@{write\+\_\+para}}
+\index{write\+\_\+para@{write\+\_\+para}!helper.\+h@{helper.\+h}}
+\subsubsection[{write\+\_\+para}]{\setlength{\rightskip}{0pt plus 5cm}void write\+\_\+para (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{helper_8h_ac3afd670c0b80b2166fe1ee4bcad30f1}
+
+
+\subsection{Variable Documentation}
+\hypertarget{helper_8h_a2dcb670d4b05ef1ad7c468a7991238cd}{\index{helper.\+h@{helper.\+h}!Cexp@{Cexp}}
+\index{Cexp@{Cexp}!helper.\+h@{helper.\+h}}
+\subsubsection[{Cexp}]{\setlength{\rightskip}{0pt plus 5cm}double Cexp}}\label{helper_8h_a2dcb670d4b05ef1ad7c468a7991238cd}
+\hypertarget{helper_8h_a254b431390e2ef3a2da795bb3a182a61}{\index{helper.\+h@{helper.\+h}!E\+Kexp@{E\+Kexp}}
+\index{E\+Kexp@{E\+Kexp}!helper.\+h@{helper.\+h}}
+\subsubsection[{E\+Kexp}]{\setlength{\rightskip}{0pt plus 5cm}double E\+Kexp}}\label{helper_8h_a254b431390e2ef3a2da795bb3a182a61}
+\hypertarget{helper_8h_a6826e63474e8e81555a021dc2ee70421}{\index{helper.\+h@{helper.\+h}!Elexp@{Elexp}}
+\index{Elexp@{Elexp}!helper.\+h@{helper.\+h}}
+\subsubsection[{Elexp}]{\setlength{\rightskip}{0pt plus 5cm}double Elexp}}\label{helper_8h_a6826e63474e8e81555a021dc2ee70421}
+\hypertarget{helper_8h_a38504d54eb399b663442c535b8c34708}{\index{helper.\+h@{helper.\+h}!E\+Naexp@{E\+Naexp}}
+\index{E\+Naexp@{E\+Naexp}!helper.\+h@{helper.\+h}}
+\subsubsection[{E\+Naexp}]{\setlength{\rightskip}{0pt plus 5cm}double E\+Naexp}}\label{helper_8h_a38504d54eb399b663442c535b8c34708}
+\hypertarget{helper_8h_abd75410dc2c8d9242a4136f864ddb9ea}{\index{helper.\+h@{helper.\+h}!g\+Kexp@{g\+Kexp}}
+\index{g\+Kexp@{g\+Kexp}!helper.\+h@{helper.\+h}}
+\subsubsection[{g\+Kexp}]{\setlength{\rightskip}{0pt plus 5cm}double g\+Kexp}}\label{helper_8h_abd75410dc2c8d9242a4136f864ddb9ea}
+\hypertarget{helper_8h_a6e7ea7e9ad4de5d09575ab8dc10a5dac}{\index{helper.\+h@{helper.\+h}!glexp@{glexp}}
+\index{glexp@{glexp}!helper.\+h@{helper.\+h}}
+\subsubsection[{glexp}]{\setlength{\rightskip}{0pt plus 5cm}double glexp}}\label{helper_8h_a6e7ea7e9ad4de5d09575ab8dc10a5dac}
+\hypertarget{helper_8h_a344959a5a5f53cfc8f85ad2f24aae708}{\index{helper.\+h@{helper.\+h}!g\+Naexp@{g\+Naexp}}
+\index{g\+Naexp@{g\+Naexp}!helper.\+h@{helper.\+h}}
+\subsubsection[{g\+Naexp}]{\setlength{\rightskip}{0pt plus 5cm}double g\+Naexp}}\label{helper_8h_a344959a5a5f53cfc8f85ad2f24aae708}
+\hypertarget{helper_8h_a7e779242180c99f0614e8403fb9f4b7f}{\index{helper.\+h@{helper.\+h}!hexp@{hexp}}
+\index{hexp@{hexp}!helper.\+h@{helper.\+h}}
+\subsubsection[{hexp}]{\setlength{\rightskip}{0pt plus 5cm}double hexp}}\label{helper_8h_a7e779242180c99f0614e8403fb9f4b7f}
+\hypertarget{helper_8h_a6ddfc8722483b0f79172b6124d704905}{\index{helper.\+h@{helper.\+h}!mexp@{mexp}}
+\index{mexp@{mexp}!helper.\+h@{helper.\+h}}
+\subsubsection[{mexp}]{\setlength{\rightskip}{0pt plus 5cm}double mexp}}\label{helper_8h_a6ddfc8722483b0f79172b6124d704905}
+\hypertarget{helper_8h_a2fd5a25a71b723c93b9cf3d926af2b12}{\index{helper.\+h@{helper.\+h}!nexp@{nexp}}
+\index{nexp@{nexp}!helper.\+h@{helper.\+h}}
+\subsubsection[{nexp}]{\setlength{\rightskip}{0pt plus 5cm}double nexp}}\label{helper_8h_a2fd5a25a71b723c93b9cf3d926af2b12}
+\hypertarget{helper_8h_a86cdbfaba3a6dacc0f0e69040a642f85}{\index{helper.\+h@{helper.\+h}!sig\+C@{sig\+C}}
+\index{sig\+C@{sig\+C}!helper.\+h@{helper.\+h}}
+\subsubsection[{sig\+C}]{\setlength{\rightskip}{0pt plus 5cm}double sig\+C = 0.\+1}}\label{helper_8h_a86cdbfaba3a6dacc0f0e69040a642f85}
+\hypertarget{helper_8h_a19c04828a3d91529645951a6f86f57a9}{\index{helper.\+h@{helper.\+h}!sig\+E\+K@{sig\+E\+K}}
+\index{sig\+E\+K@{sig\+E\+K}!helper.\+h@{helper.\+h}}
+\subsubsection[{sig\+E\+K}]{\setlength{\rightskip}{0pt plus 5cm}double sig\+E\+K = 10.\+0}}\label{helper_8h_a19c04828a3d91529645951a6f86f57a9}
+\hypertarget{helper_8h_a53a3bc5948599ef2803d14620056001f}{\index{helper.\+h@{helper.\+h}!sig\+El@{sig\+El}}
+\index{sig\+El@{sig\+El}!helper.\+h@{helper.\+h}}
+\subsubsection[{sig\+El}]{\setlength{\rightskip}{0pt plus 5cm}double sig\+El = 10.\+0}}\label{helper_8h_a53a3bc5948599ef2803d14620056001f}
+\hypertarget{helper_8h_ae06823ac6c9708d77f34de1bfc075f22}{\index{helper.\+h@{helper.\+h}!sig\+E\+Na@{sig\+E\+Na}}
+\index{sig\+E\+Na@{sig\+E\+Na}!helper.\+h@{helper.\+h}}
+\subsubsection[{sig\+E\+Na}]{\setlength{\rightskip}{0pt plus 5cm}double sig\+E\+Na = 10.\+0}}\label{helper_8h_ae06823ac6c9708d77f34de1bfc075f22}
+\hypertarget{helper_8h_a148e26ce29a4b77f79d14e41214ec623}{\index{helper.\+h@{helper.\+h}!sig\+G\+K@{sig\+G\+K}}
+\index{sig\+G\+K@{sig\+G\+K}!helper.\+h@{helper.\+h}}
+\subsubsection[{sig\+G\+K}]{\setlength{\rightskip}{0pt plus 5cm}double sig\+G\+K = 0.\+1}}\label{helper_8h_a148e26ce29a4b77f79d14e41214ec623}
+\hypertarget{helper_8h_acc6d5ceb3861275f419caeb6c22b9d97}{\index{helper.\+h@{helper.\+h}!sig\+Gl@{sig\+Gl}}
+\index{sig\+Gl@{sig\+Gl}!helper.\+h@{helper.\+h}}
+\subsubsection[{sig\+Gl}]{\setlength{\rightskip}{0pt plus 5cm}double sig\+Gl = 0.\+1}}\label{helper_8h_acc6d5ceb3861275f419caeb6c22b9d97}
+\hypertarget{helper_8h_af2973d5096ab1755b9a20a1b04c993c4}{\index{helper.\+h@{helper.\+h}!sig\+G\+Na@{sig\+G\+Na}}
+\index{sig\+G\+Na@{sig\+G\+Na}!helper.\+h@{helper.\+h}}
+\subsubsection[{sig\+G\+Na}]{\setlength{\rightskip}{0pt plus 5cm}double sig\+G\+Na = 0.\+1}}\label{helper_8h_af2973d5096ab1755b9a20a1b04c993c4}
+\hypertarget{helper_8h_a83cf90739c16b19704b98c436a5b798d}{\index{helper.\+h@{helper.\+h}!Vexp@{Vexp}}
+\index{Vexp@{Vexp}!helper.\+h@{helper.\+h}}
+\subsubsection[{Vexp}]{\setlength{\rightskip}{0pt plus 5cm}double Vexp}}\label{helper_8h_a83cf90739c16b19704b98c436a5b798d}

@@ -1,0 +1,77 @@
+\hypertarget{structpostSynModel}{\section{post\+Syn\+Model Struct Reference}
+\label{structpostSynModel}\index{post\+Syn\+Model@{post\+Syn\+Model}}
+}
+
+
+Structure to hold the information that defines a post-\/synaptoic model (a model of how synapses affect post-\/synaptic neuron variables, classically in the form of a synaptic current). It also allows to define an equation for the dynamics that can be applied to the summed synaptic input variable \char`\"{}insyn\char`\"{}.  
+
+
+
+
+{\ttfamily \#include $<$model\+Spec.\+h$>$}
+
+\subsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+string \hyperlink{structpostSynModel_a205249bc6ac27c021d3395a9cad6a81b}{post\+Synto\+Current}
+\item 
+string \hyperlink{structpostSynModel_a6fe67c6dc9d43b39e17930e61cbffeb0}{post\+Syn\+Decay}
+\item 
+vector$<$ string $>$ \hyperlink{structpostSynModel_a3ade04dd55a74c018cb3c3c16a0c4a47}{var\+Names}
+\begin{DoxyCompactList}\small\item\em Names of the variables in the postsynaptic model. \end{DoxyCompactList}\item 
+vector$<$ string $>$ \hyperlink{structpostSynModel_a5afb775c8211cb7591bb3c50526267fc}{var\+Types}
+\begin{DoxyCompactList}\small\item\em Types of the variable named above, e.\+g. \char`\"{}float\char`\"{}. Names and types are matched by their order of occurrence in the vector. \end{DoxyCompactList}\item 
+vector$<$ string $>$ \hyperlink{structpostSynModel_ae34333d8fa06e35cb7595a1228cc76ca}{p\+Names}
+\begin{DoxyCompactList}\small\item\em Names of (independent) parameters of the model. These are assumed to be always of type \char`\"{}float\char`\"{}. \end{DoxyCompactList}\item 
+vector$<$ string $>$ \hyperlink{structpostSynModel_a1deddbf488ffa49ec90f084791d9ebe3}{dp\+Names}
+\begin{DoxyCompactList}\small\item\em Names of dependent parameters of the model. These are assumed to be always of type \char`\"{}float\char`\"{}. \end{DoxyCompactList}\item 
+\hyperlink{classdpclass}{dpclass} $\ast$ \hyperlink{structpostSynModel_a5c0093ffd554c603c21cce0c1b440373}{dps}
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Structure to hold the information that defines a post-\/synaptoic model (a model of how synapses affect post-\/synaptic neuron variables, classically in the form of a synaptic current). It also allows to define an equation for the dynamics that can be applied to the summed synaptic input variable \char`\"{}insyn\char`\"{}. 
+
+\subsection{Member Data Documentation}
+\hypertarget{structpostSynModel_a1deddbf488ffa49ec90f084791d9ebe3}{\index{post\+Syn\+Model@{post\+Syn\+Model}!dp\+Names@{dp\+Names}}
+\index{dp\+Names@{dp\+Names}!post\+Syn\+Model@{post\+Syn\+Model}}
+\subsubsection[{dp\+Names}]{\setlength{\rightskip}{0pt plus 5cm}vector$<$string$>$ post\+Syn\+Model\+::dp\+Names}}\label{structpostSynModel_a1deddbf488ffa49ec90f084791d9ebe3}
+
+
+Names of dependent parameters of the model. These are assumed to be always of type \char`\"{}float\char`\"{}. 
+
+\hypertarget{structpostSynModel_a5c0093ffd554c603c21cce0c1b440373}{\index{post\+Syn\+Model@{post\+Syn\+Model}!dps@{dps}}
+\index{dps@{dps}!post\+Syn\+Model@{post\+Syn\+Model}}
+\subsubsection[{dps}]{\setlength{\rightskip}{0pt plus 5cm}{\bf dpclass}$\ast$ post\+Syn\+Model\+::dps}}\label{structpostSynModel_a5c0093ffd554c603c21cce0c1b440373}
+\hypertarget{structpostSynModel_ae34333d8fa06e35cb7595a1228cc76ca}{\index{post\+Syn\+Model@{post\+Syn\+Model}!p\+Names@{p\+Names}}
+\index{p\+Names@{p\+Names}!post\+Syn\+Model@{post\+Syn\+Model}}
+\subsubsection[{p\+Names}]{\setlength{\rightskip}{0pt plus 5cm}vector$<$string$>$ post\+Syn\+Model\+::p\+Names}}\label{structpostSynModel_ae34333d8fa06e35cb7595a1228cc76ca}
+
+
+Names of (independent) parameters of the model. These are assumed to be always of type \char`\"{}float\char`\"{}. 
+
+\hypertarget{structpostSynModel_a6fe67c6dc9d43b39e17930e61cbffeb0}{\index{post\+Syn\+Model@{post\+Syn\+Model}!post\+Syn\+Decay@{post\+Syn\+Decay}}
+\index{post\+Syn\+Decay@{post\+Syn\+Decay}!post\+Syn\+Model@{post\+Syn\+Model}}
+\subsubsection[{post\+Syn\+Decay}]{\setlength{\rightskip}{0pt plus 5cm}string post\+Syn\+Model\+::post\+Syn\+Decay}}\label{structpostSynModel_a6fe67c6dc9d43b39e17930e61cbffeb0}
+\hypertarget{structpostSynModel_a205249bc6ac27c021d3395a9cad6a81b}{\index{post\+Syn\+Model@{post\+Syn\+Model}!post\+Synto\+Current@{post\+Synto\+Current}}
+\index{post\+Synto\+Current@{post\+Synto\+Current}!post\+Syn\+Model@{post\+Syn\+Model}}
+\subsubsection[{post\+Synto\+Current}]{\setlength{\rightskip}{0pt plus 5cm}string post\+Syn\+Model\+::post\+Synto\+Current}}\label{structpostSynModel_a205249bc6ac27c021d3395a9cad6a81b}
+\hypertarget{structpostSynModel_a3ade04dd55a74c018cb3c3c16a0c4a47}{\index{post\+Syn\+Model@{post\+Syn\+Model}!var\+Names@{var\+Names}}
+\index{var\+Names@{var\+Names}!post\+Syn\+Model@{post\+Syn\+Model}}
+\subsubsection[{var\+Names}]{\setlength{\rightskip}{0pt plus 5cm}vector$<$string$>$ post\+Syn\+Model\+::var\+Names}}\label{structpostSynModel_a3ade04dd55a74c018cb3c3c16a0c4a47}
+
+
+Names of the variables in the postsynaptic model. 
+
+\hypertarget{structpostSynModel_a5afb775c8211cb7591bb3c50526267fc}{\index{post\+Syn\+Model@{post\+Syn\+Model}!var\+Types@{var\+Types}}
+\index{var\+Types@{var\+Types}!post\+Syn\+Model@{post\+Syn\+Model}}
+\subsubsection[{var\+Types}]{\setlength{\rightskip}{0pt plus 5cm}vector$<$string$>$ post\+Syn\+Model\+::var\+Types}}\label{structpostSynModel_a5afb775c8211cb7591bb3c50526267fc}
+
+
+Types of the variable named above, e.\+g. \char`\"{}float\char`\"{}. Names and types are matched by their order of occurrence in the vector. 
+
+
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+lib/include/\hyperlink{modelSpec_8h}{model\+Spec.\+h}\end{DoxyCompactItemize}

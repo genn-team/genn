@@ -1,0 +1,1045 @@
+\hypertarget{classNNmodel}{\section{N\+Nmodel Class Reference}
+\label{classNNmodel}\index{N\+Nmodel@{N\+Nmodel}}
+}
+
+
+Structure to hold the information that defines synapse dynamics (a model of how synapse variables change over time, independent of or in addition to changes when spikes occur).  
+
+
+
+
+{\ttfamily \#include $<$model\+Spec.\+h$>$}
+
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hyperlink{classNNmodel_a91216d74536a5871c507af7f40cd2d64}{N\+Nmodel} ()
+\item 
+\hyperlink{classNNmodel_aa9f519391df5f08c4ec5f59578ac5ffc}{$\sim$\+N\+Nmodel} ()
+\item 
+void \hyperlink{classNNmodel_a757eff2a5877688e6e5492726df035ee}{set\+Name} (const string)
+\begin{DoxyCompactList}\small\item\em Method to set the neuronal network model name. \end{DoxyCompactList}\item 
+void \hyperlink{classNNmodel_a44fb38b93216c56254fbbee6175cffd1}{set\+Precision} (unsigned int)
+\begin{DoxyCompactList}\small\item\em Set numerical precision for floating point. \end{DoxyCompactList}\item 
+void \hyperlink{classNNmodel_ab843183abd01171e9a8ab99b219cb2b7}{set\+Timing} (bool)
+\begin{DoxyCompactList}\small\item\em Set whether timers and timing commands are to be included. \end{DoxyCompactList}\item 
+void \hyperlink{classNNmodel_acc6b868fe6383bbea589ba2eddfac679}{set\+Seed} (unsigned int)
+\begin{DoxyCompactList}\small\item\em Set the random seed (disables automatic seeding if argument not 0). \end{DoxyCompactList}\item 
+void \hyperlink{classNNmodel_aa096950a3bb9a7d573df77c26919ab07}{check\+Sizes} (unsigned int $\ast$, unsigned int $\ast$, unsigned int $\ast$)
+\item 
+void \hyperlink{classNNmodel_a836c19f5ebf90740b18f6291b0c03732}{reset\+Padded\+Sums} ()
+\begin{DoxyCompactList}\small\item\em Re-\/calculates the block-\/size-\/padded sum of threads needed to compute the groups of neurons and synapses assigned to each device. Must be called after changing the host\+I\+D\+:device\+I\+D of any group. \end{DoxyCompactList}\item 
+void \hyperlink{classNNmodel_ae44b078dcca0b16ef45978a7fe54d16e}{set\+G\+P\+U\+Device} (int)
+\begin{DoxyCompactList}\small\item\em Method to choose the G\+P\+U to be used for the model. If "A\+U\+T\+O\+D\+E\+V\+I\+C\+E' (-\/1), Ge\+N\+N will choose the device based on a heuristic rule. \end{DoxyCompactList}\item 
+void \hyperlink{classNNmodel_a24532739d3ae98da3e00a9fe5aadd54e}{add\+Neuron\+Population} (const char $\ast$, unsigned int, unsigned int, float $\ast$, float $\ast$)
+\begin{DoxyCompactList}\small\item\em Method for adding a neuron population to a neuronal network model, using C style character array for the name of the population. \end{DoxyCompactList}\item 
+void \hyperlink{classNNmodel_af52eebfac8ff3cd3eaa4f2cfc0918e3a}{add\+Neuron\+Population} (const string, unsigned int, unsigned int, float $\ast$, float $\ast$)
+\begin{DoxyCompactList}\small\item\em Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population. \end{DoxyCompactList}\item 
+void \hyperlink{classNNmodel_a95724e1798bd9ac5642a8fb2484a2f93}{activate\+Direct\+Input} (const string, unsigned int)
+\begin{DoxyCompactList}\small\item\em This function defines the type of the explicit input to the neuron model. Current options are common constant input to all neurons, input from a file and input defines as a rule. \end{DoxyCompactList}\item 
+void \hyperlink{classNNmodel_a9630c120beba41655f1f23e6dd21242e}{set\+Const\+Inp} (const string, float)
+\begin{DoxyCompactList}\small\item\em Method for setting the global input value for a neuron population if C\+O\+N\+S\+T\+I\+N\+P. \end{DoxyCompactList}\item 
+void \hyperlink{classNNmodel_a65aee794c66069cd3e6316ade0c91192}{set\+Neuron\+Cluster\+Index} (const string neuron\+Group, int host\+I\+D, int device\+I\+D)
+\begin{DoxyCompactList}\small\item\em Function for setting which host and which device a neuron group will be simulated on. \end{DoxyCompactList}\item 
+void \hyperlink{classNNmodel_a9dceb36a7d36c82adfdb5642df8f25f7}{add\+Synapse\+Population} (const string \hyperlink{classNNmodel_a7d81556b7b15a4a625b23f965944dae9}{name}, unsigned int syntype, unsigned int conntype, unsigned int gtype, const string src, const string trg, float $\ast$p)
+\begin{DoxyCompactList}\small\item\em Overload of method for backwards compatibility. \end{DoxyCompactList}\item 
+void \hyperlink{classNNmodel_ac82f4463de85aa6e345bc52518eb1f75}{add\+Synapse\+Population} (const char $\ast$, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, const char $\ast$, const char $\ast$, float $\ast$, float $\ast$, float $\ast$)
+\begin{DoxyCompactList}\small\item\em Method for adding a synapse population to a neuronal network model, using C style character array for the name of the population. \end{DoxyCompactList}\item 
+void \hyperlink{classNNmodel_aa31885e04282660f34e452c1310ef20e}{add\+Synapse\+Population} (const string, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, const string, const string, float $\ast$, float $\ast$, float $\ast$)
+\begin{DoxyCompactList}\small\item\em Overloaded version without initial variables for synapses. \end{DoxyCompactList}\item 
+void \hyperlink{classNNmodel_ac84ccb2f8e4dc3e3343fb663adedc460}{add\+Synapse\+Population} (const string, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, const string, const string, float $\ast$, float $\ast$, float $\ast$, float $\ast$)
+\begin{DoxyCompactList}\small\item\em Method for adding a synapse population to a neuronal network model, using C++ string for the name of the population. \end{DoxyCompactList}\item 
+void \hyperlink{classNNmodel_a06dd91d3a28b70b444e0866859a348f7}{set\+Synapse\+G} (const string, float)
+\begin{DoxyCompactList}\small\item\em Method for setting the conductance (g) value for a synapse population with \char`\"{}\+G\+L\+O\+B\+A\+L\+G\char`\"{} charactertistic. \end{DoxyCompactList}\item 
+void \hyperlink{classNNmodel_abcd74b0eb3c2696069320bd929070d4b}{set\+Max\+Conn} (const string, unsigned int)
+\begin{DoxyCompactList}\small\item\em This function defines the maximum number of connections for a neuron in the population. \end{DoxyCompactList}\item 
+void \hyperlink{classNNmodel_a2b7ad279fd8e68d951957f21bbb072c5}{set\+Synapse\+Cluster\+Index} (const string synapse\+Group, int host\+I\+D, int device\+I\+D)
+\begin{DoxyCompactList}\small\item\em Function for setting which host and which device a synapse group will be simulated on. \end{DoxyCompactList}\item 
+void \hyperlink{classNNmodel_a3de3cfc04cb28e939225341ee10e2119}{init\+Learn\+Grps} ()
+\end{DoxyCompactItemize}
+\subsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+string \hyperlink{classNNmodel_a7d81556b7b15a4a625b23f965944dae9}{name}
+\begin{DoxyCompactList}\small\item\em Name of the neuronal newtwork model. \end{DoxyCompactList}\item 
+string \hyperlink{classNNmodel_a917241001f3469a569dbb91aaa6a4039}{ftype}
+\begin{DoxyCompactList}\small\item\em Type of floating point variables (float, double, ...; default\+: float) \end{DoxyCompactList}\item 
+string \hyperlink{classNNmodel_ae02892a44b18e3ce913dc43dc31dd380}{R\+Ntype}
+\begin{DoxyCompactList}\small\item\em Underlying type for random number generation (default\+: long) \end{DoxyCompactList}\item 
+int \hyperlink{classNNmodel_ad09a7a4c3888876f7a95e8d5e344c71e}{valid}
+\begin{DoxyCompactList}\small\item\em Flag for whether the model has been validated (unused?) \end{DoxyCompactList}\item 
+unsigned int \hyperlink{classNNmodel_ab5f42229881455bed0f484b6d0211795}{need\+St}
+\begin{DoxyCompactList}\small\item\em Whether last spike times are needed at all in this network model (related to S\+T\+D\+P) \end{DoxyCompactList}\item 
+unsigned int \hyperlink{classNNmodel_aa6753d648bcac06109f0820349b5d2be}{need\+Synapse\+Delay}
+\begin{DoxyCompactList}\small\item\em Whether delayed synapse conductance is required in the network. \end{DoxyCompactList}\item 
+int \hyperlink{classNNmodel_a79631e0c13cdd5ebed55a16bea15819a}{choose\+G\+P\+U\+Device}
+\item 
+bool \hyperlink{classNNmodel_afae2a91984509205ff07afc948cbf106}{timing}
+\item 
+unsigned int \hyperlink{classNNmodel_ad82f4dbcf4cc6a942965f9ecaa79616a}{seed}
+\item 
+bool \hyperlink{classNNmodel_a17091f9688dbfa4e9f2d83181a1b554a}{need\+Spk\+Evnt}
+\item 
+vector$<$ string $>$ \hyperlink{classNNmodel_af3c7ec6917040e62be5cee3505c330a8}{neuron\+Name}
+\begin{DoxyCompactList}\small\item\em Names of neuron groups. \end{DoxyCompactList}\item 
+unsigned int \hyperlink{classNNmodel_a383562e3f02192f58a6150a4ca0861c5}{neuron\+Grp\+N}
+\begin{DoxyCompactList}\small\item\em Number of neuron groups. \end{DoxyCompactList}\item 
+vector$<$ unsigned int $>$ \hyperlink{classNNmodel_a87d3de14d0d5c7183199fea48c04b949}{neuron\+N}
+\begin{DoxyCompactList}\small\item\em Number of neurons in group. \end{DoxyCompactList}\item 
+vector$<$ unsigned int $>$ \hyperlink{classNNmodel_a84cf2761cf76d70a06f871a77e64c0b4}{sum\+Neuron\+N}
+\begin{DoxyCompactList}\small\item\em Summed neuron numbers. \end{DoxyCompactList}\item 
+vector$<$ unsigned int $>$ \hyperlink{classNNmodel_a08d284601fc39e164ca5aeac399d6a59}{pad\+Sum\+Neuron\+N}
+\begin{DoxyCompactList}\small\item\em Padded summed neuron numbers. \end{DoxyCompactList}\item 
+vector$<$ unsigned int $>$ \hyperlink{classNNmodel_aec217846b4a0eeb38bfec1209319dd81}{neuron\+Post\+Syn}
+\item 
+vector$<$ unsigned int $>$ \hyperlink{classNNmodel_a0e5087ec30e3efb114f8f713759a4abc}{neuron\+Type}
+\begin{DoxyCompactList}\small\item\em Postsynaptic methods to the neuron. \end{DoxyCompactList}\item 
+vector$<$ vector$<$ float $>$ $>$ \hyperlink{classNNmodel_a4711c16ac1dc4bd09255f69a3469a4bd}{neuron\+Para}
+\begin{DoxyCompactList}\small\item\em Parameters of neurons. \end{DoxyCompactList}\item 
+vector$<$ vector$<$ float $>$ $>$ \hyperlink{classNNmodel_a7f834f3863c06a5b2381c0adddb901b8}{dnp}
+\begin{DoxyCompactList}\small\item\em Derived neuron parameters. \end{DoxyCompactList}\item 
+vector$<$ vector$<$ float $>$ $>$ \hyperlink{classNNmodel_a04c2e61ef297c1e0fd3f0acb32f79a17}{neuron\+Ini}
+\begin{DoxyCompactList}\small\item\em Initial values of neurons. \end{DoxyCompactList}\item 
+vector$<$ vector$<$ unsigned int $>$ $>$ \hyperlink{classNNmodel_af3f5459e9438989b12e4b675352dd258}{in\+Syn}
+\begin{DoxyCompactList}\small\item\em The ids of the incoming synapse groups. \end{DoxyCompactList}\item 
+vector$<$ vector$<$ unsigned int $>$ $>$ \hyperlink{classNNmodel_a6ba57b83448ab23eaa5a68d40b2ceac9}{out\+Syn}
+\begin{DoxyCompactList}\small\item\em The ids of the outgoing synapse groups. \end{DoxyCompactList}\item 
+vector$<$ unsigned int $>$ \hyperlink{classNNmodel_acd0592315c59ac3c0e0dbe9bb35d7004}{receives\+Input\+Current}
+\begin{DoxyCompactList}\small\item\em flags whether neurons of a population receive explicit input currents \end{DoxyCompactList}\item 
+vector$<$ bool $>$ \hyperlink{classNNmodel_ad14509938bfeb7f2fc8f011d2ec995ac}{neuron\+Need\+St}
+\begin{DoxyCompactList}\small\item\em Whether last spike time needs to be saved for each indivual neuron type. \end{DoxyCompactList}\item 
+vector$<$ bool $>$ \hyperlink{classNNmodel_abd22d449a48437fbf4e090b553f471f8}{neuron\+Need\+Spk\+Evnt}
+\begin{DoxyCompactList}\small\item\em Whether this neuron group needs to record spike like events. \end{DoxyCompactList}\item 
+vector$<$ string $>$ \hyperlink{classNNmodel_a2107fc30756637a876374ad35d69a19b}{neuron\+Spk\+Evnt\+Condition}
+\begin{DoxyCompactList}\small\item\em Will contain the spike event condition code when spike events are used. \end{DoxyCompactList}\item 
+vector$<$ unsigned int $>$ \hyperlink{classNNmodel_a0801942c5e41585da01b2c341f1e9f55}{neuron\+Delay\+Slots}
+\begin{DoxyCompactList}\small\item\em The number of slots needed in the synapse delay queues of a neuron group. \end{DoxyCompactList}\item 
+vector$<$ int $>$ \hyperlink{classNNmodel_a1ddf63324795faf42f32e4cf4a82a0e2}{neuron\+Host\+I\+D}
+\begin{DoxyCompactList}\small\item\em The I\+D of the cluster node which the neuron groups are computed on. \end{DoxyCompactList}\item 
+vector$<$ int $>$ \hyperlink{classNNmodel_a67ec0b349b4f423712b7636a3cc2fa1e}{neuron\+Device\+I\+D}
+\begin{DoxyCompactList}\small\item\em The I\+D of the C\+U\+D\+A device which the neuron groups are comnputed on. \end{DoxyCompactList}\item 
+vector$<$ vector$<$ bool $>$ $>$ \hyperlink{classNNmodel_a6cd30ae92d9eef399beb66098d016774}{neuron\+Var\+Need\+Spk\+Evnt}
+\begin{DoxyCompactList}\small\item\em indicates whether spk\+Ent values (or delay queues) need to be stored for this variable \end{DoxyCompactList}\item 
+vector$<$ vector$<$ bool $>$ $>$ \hyperlink{classNNmodel_a69a2c9a2317316d0eddf4033779f17cc}{neuron\+Var\+Need\+Spk}
+\begin{DoxyCompactList}\small\item\em indicates whether spk values (or delay queues) need to be stored for this variable \end{DoxyCompactList}\item 
+vector$<$ string $>$ \hyperlink{classNNmodel_a13993564faeb0e67a21b3c9ffababaf1}{synapse\+Name}
+\begin{DoxyCompactList}\small\item\em Names of synapse groups. \end{DoxyCompactList}\item 
+unsigned int \hyperlink{classNNmodel_a1e6209fc2014ab9f1820a614cc246c67}{synapse\+Grp\+N}
+\begin{DoxyCompactList}\small\item\em Number of synapse groups. \end{DoxyCompactList}\item 
+vector$<$ unsigned int $>$ \hyperlink{classNNmodel_a03e34fda1008acf6379f80e8d713d41b}{sum\+Synapse\+Trg\+N}
+\begin{DoxyCompactList}\small\item\em Summed number of target neurons. \end{DoxyCompactList}\item 
+vector$<$ unsigned int $>$ \hyperlink{classNNmodel_a73881a9d190c544cc6add9a19ee6a304}{pad\+Sum\+Synapse\+Trg\+N}
+\begin{DoxyCompactList}\small\item\em \char`\"{}\+Padded\char`\"{} summed target neuron numbers \end{DoxyCompactList}\item 
+vector$<$ unsigned int $>$ \hyperlink{classNNmodel_afd62bf5791467b37ef06b025ae419d36}{max\+Conn}
+\begin{DoxyCompactList}\small\item\em Padded summed maximum number of connections for a neuron in the neuron groups. \end{DoxyCompactList}\item 
+vector$<$ unsigned int $>$ \hyperlink{classNNmodel_a7c0e09e6fe2327601cc9b1e2e995b0e9}{pad\+Sum\+Synapse\+Krnl}
+\item 
+vector$<$ unsigned int $>$ \hyperlink{classNNmodel_a5945dd8a2936f38a5997a5cae51cf706}{synapse\+Type}
+\begin{DoxyCompactList}\small\item\em Types of synapses. \end{DoxyCompactList}\item 
+vector$<$ unsigned int $>$ \hyperlink{classNNmodel_a0b1d2c6f24b8ed9215dce9daf3ca0518}{synapse\+Conn\+Type}
+\begin{DoxyCompactList}\small\item\em Connectivity type of synapses. \end{DoxyCompactList}\item 
+vector$<$ unsigned int $>$ \hyperlink{classNNmodel_a521aa25f9cc763dab52769da0b775470}{synapse\+G\+Type}
+\begin{DoxyCompactList}\small\item\em Type of specification method for synaptic conductance. \end{DoxyCompactList}\item 
+vector$<$ unsigned int $>$ \hyperlink{classNNmodel_a39861eefc8f7b13c21aaf82142520227}{synapse\+Source}
+\begin{DoxyCompactList}\small\item\em Presynaptic neuron groups. \end{DoxyCompactList}\item 
+vector$<$ unsigned int $>$ \hyperlink{classNNmodel_a10c4e0a9d71bbfa6895de30a64f31ca6}{synapse\+Target}
+\begin{DoxyCompactList}\small\item\em Postsynaptic neuron groups. \end{DoxyCompactList}\item 
+vector$<$ unsigned int $>$ \hyperlink{classNNmodel_adc8ccfb003c34fbca10d0fd0e3b26ee0}{synapse\+In\+Syn\+No}
+\begin{DoxyCompactList}\small\item\em I\+Ds of the target neurons' incoming synapse variables for each synapse group. \end{DoxyCompactList}\item 
+vector$<$ unsigned int $>$ \hyperlink{classNNmodel_a7d6d9860957c931725cead04ee0d6d98}{synapse\+Out\+Syn\+No}
+\begin{DoxyCompactList}\small\item\em The target neurons' outgoing synapse for each synapse group. \end{DoxyCompactList}\item 
+vector$<$ unsigned int $>$ \hyperlink{classNNmodel_a5d70d70919f892c66196fdea7cb13a45}{uses\+True\+Spikes}
+\begin{DoxyCompactList}\small\item\em Defines if synapse update is done after detection of real spikes (only one point after threshold) \end{DoxyCompactList}\item 
+vector$<$ unsigned int $>$ \hyperlink{classNNmodel_a5d1a849b688fd0b7fdb999d39b5e049b}{uses\+Spike\+Events}
+\begin{DoxyCompactList}\small\item\em Defines if synapse update is done after detection of spike events (every point above threshold) \end{DoxyCompactList}\item 
+vector$<$ vector$<$ string $>$ $>$ \hyperlink{classNNmodel_a30e4ebc1109de5e7d921b22f1597cbf4}{synapse\+Spk\+Evnt\+Vars}
+\begin{DoxyCompactList}\small\item\em Defines variable names that are needed in the Spk\+Evnt condition and that are pre-\/fetched for that purpose into shared memory. \end{DoxyCompactList}\item 
+vector$<$ unsigned int $>$ \hyperlink{classNNmodel_a81fb25a9fab59e840ef622d469747d69}{uses\+Post\+Learning}
+\begin{DoxyCompactList}\small\item\em Defines if anything is done in case of postsynaptic neuron spiking before presynaptic neuron (punishment in S\+T\+D\+P etc.) \end{DoxyCompactList}\item 
+vector$<$ vector$<$ float $>$ $>$ \hyperlink{classNNmodel_a65795cabef5f0d1f75e8c08530750d0e}{synapse\+Para}
+\begin{DoxyCompactList}\small\item\em parameters of synapses \end{DoxyCompactList}\item 
+vector$<$ vector$<$ float $>$ $>$ \hyperlink{classNNmodel_a0b82703b2b3726e86116767f2bc0c422}{synapse\+Ini}
+\begin{DoxyCompactList}\small\item\em Initial values of synapse variables. \end{DoxyCompactList}\item 
+vector$<$ vector$<$ float $>$ $>$ \hyperlink{classNNmodel_aeb5fa229c8032952feb3440e055f6a85}{dsp\+\_\+w}
+\begin{DoxyCompactList}\small\item\em Derived synapse parameters (\hyperlink{classweightUpdateModel}{weight\+Update\+Model} only) \end{DoxyCompactList}\item 
+vector$<$ unsigned int $>$ \hyperlink{classNNmodel_a4fc23591415ddac76d1d92ab68c018c9}{post\+Synapse\+Type}
+\begin{DoxyCompactList}\small\item\em Types of post-\/synaptic model. \end{DoxyCompactList}\item 
+vector$<$ vector$<$ float $>$ $>$ \hyperlink{classNNmodel_a3b9431104ee496ed084ab549ebf2de10}{post\+Synapse\+Para}
+\begin{DoxyCompactList}\small\item\em parameters of postsynapses \end{DoxyCompactList}\item 
+vector$<$ vector$<$ float $>$ $>$ \hyperlink{classNNmodel_a82827284185d5c39e4e04e14cf612253}{post\+Syn\+Ini}
+\begin{DoxyCompactList}\small\item\em Initial values of postsynaptic variables. \end{DoxyCompactList}\item 
+vector$<$ vector$<$ float $>$ $>$ \hyperlink{classNNmodel_aa03452826c44c9af81eba7a618de7e09}{dpsp}
+\begin{DoxyCompactList}\small\item\em Derived postsynapse parameters. \end{DoxyCompactList}\item 
+vector$<$ float $>$ \hyperlink{classNNmodel_a8df5fd36faa5a56edea7d287fea1f625}{global\+Inp}
+\begin{DoxyCompactList}\small\item\em Global explicit input if C\+O\+N\+S\+T\+I\+N\+P is chosen. \end{DoxyCompactList}\item 
+unsigned int \hyperlink{classNNmodel_aa0e25f384103db3bcc8c8b0425ae01b3}{lrn\+Groups}
+\begin{DoxyCompactList}\small\item\em Number of synapse groups with learning. \end{DoxyCompactList}\item 
+vector$<$ unsigned int $>$ \hyperlink{classNNmodel_a2e6021bca44ea5ec0478e99cc6249295}{pad\+Sum\+Learn\+N}
+\begin{DoxyCompactList}\small\item\em Padded summed neuron numbers of learn group source populations. \end{DoxyCompactList}\item 
+vector$<$ unsigned int $>$ \hyperlink{classNNmodel_acbc44c117c06cf73ab36068eb701e240}{lrn\+Syn\+Grp}
+\begin{DoxyCompactList}\small\item\em Enumeration of the I\+Ds of synapse groups that learn. \end{DoxyCompactList}\item 
+vector$<$ unsigned int $>$ \hyperlink{classNNmodel_a3c7efe131920a17f9292c0d2ffd74d7c}{synapse\+Delay}
+\begin{DoxyCompactList}\small\item\em Global synaptic conductance delay for the group (in time steps) \end{DoxyCompactList}\item 
+vector$<$ int $>$ \hyperlink{classNNmodel_acd3b57fb1ab65b46f3d23a7464e4dcf8}{synapse\+Host\+I\+D}
+\begin{DoxyCompactList}\small\item\em The I\+D of the cluster node which the synapse groups are computed on. \end{DoxyCompactList}\item 
+vector$<$ int $>$ \hyperlink{classNNmodel_a55d5ec678b5ed7756c7dbb4c4c604f51}{synapse\+Device\+I\+D}
+\begin{DoxyCompactList}\small\item\em The I\+D of the C\+U\+D\+A device which the synapse groups are comnputed on. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Structure to hold the information that defines synapse dynamics (a model of how synapse variables change over time, independent of or in addition to changes when spikes occur). 
+
+\subsection{Constructor \& Destructor Documentation}
+\hypertarget{classNNmodel_a91216d74536a5871c507af7f40cd2d64}{\index{N\+Nmodel@{N\+Nmodel}!N\+Nmodel@{N\+Nmodel}}
+\index{N\+Nmodel@{N\+Nmodel}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{N\+Nmodel}]{\setlength{\rightskip}{0pt plus 5cm}N\+Nmodel\+::\+N\+Nmodel (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classNNmodel_a91216d74536a5871c507af7f40cd2d64}
+\hypertarget{classNNmodel_aa9f519391df5f08c4ec5f59578ac5ffc}{\index{N\+Nmodel@{N\+Nmodel}!````~N\+Nmodel@{$\sim$\+N\+Nmodel}}
+\index{````~N\+Nmodel@{$\sim$\+N\+Nmodel}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{$\sim$\+N\+Nmodel}]{\setlength{\rightskip}{0pt plus 5cm}N\+Nmodel\+::$\sim$\+N\+Nmodel (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classNNmodel_aa9f519391df5f08c4ec5f59578ac5ffc}
+
+
+\subsection{Member Function Documentation}
+\hypertarget{classNNmodel_a95724e1798bd9ac5642a8fb2484a2f93}{\index{N\+Nmodel@{N\+Nmodel}!activate\+Direct\+Input@{activate\+Direct\+Input}}
+\index{activate\+Direct\+Input@{activate\+Direct\+Input}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{activate\+Direct\+Input}]{\setlength{\rightskip}{0pt plus 5cm}void N\+Nmodel\+::activate\+Direct\+Input (
+\begin{DoxyParamCaption}
+\item[{const string}]{name, }
+\item[{unsigned int}]{type}
+\end{DoxyParamCaption}
+)}}\label{classNNmodel_a95724e1798bd9ac5642a8fb2484a2f93}
+
+
+This function defines the type of the explicit input to the neuron model. Current options are common constant input to all neurons, input from a file and input defines as a rule. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em name} & Name of the neuron population \\
+\hline
+{\em type} & Type of input\+: 1 if common input, 2 if custom input from file, 3 if custom input as a rule \\
+\hline
+\end{DoxyParams}
+\hypertarget{classNNmodel_a24532739d3ae98da3e00a9fe5aadd54e}{\index{N\+Nmodel@{N\+Nmodel}!add\+Neuron\+Population@{add\+Neuron\+Population}}
+\index{add\+Neuron\+Population@{add\+Neuron\+Population}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{add\+Neuron\+Population}]{\setlength{\rightskip}{0pt plus 5cm}void N\+Nmodel\+::add\+Neuron\+Population (
+\begin{DoxyParamCaption}
+\item[{const char $\ast$}]{name, }
+\item[{unsigned int}]{n\+No, }
+\item[{unsigned int}]{type, }
+\item[{float $\ast$}]{p, }
+\item[{float $\ast$}]{ini}
+\end{DoxyParamCaption}
+)}}\label{classNNmodel_a24532739d3ae98da3e00a9fe5aadd54e}
+
+
+Method for adding a neuron population to a neuronal network model, using C style character array for the name of the population. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em name} & Name of the neuron population \\
+\hline
+{\em n\+No} & Number of neurons in the population \\
+\hline
+{\em type} & Type of the neurons, refers to either a standard type or user-\/defined type \\
+\hline
+{\em p} & Parameters of this neuron type \\
+\hline
+{\em ini} & Initial values for variables of this neuron type \\
+\hline
+\end{DoxyParams}
+\hypertarget{classNNmodel_af52eebfac8ff3cd3eaa4f2cfc0918e3a}{\index{N\+Nmodel@{N\+Nmodel}!add\+Neuron\+Population@{add\+Neuron\+Population}}
+\index{add\+Neuron\+Population@{add\+Neuron\+Population}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{add\+Neuron\+Population}]{\setlength{\rightskip}{0pt plus 5cm}void N\+Nmodel\+::add\+Neuron\+Population (
+\begin{DoxyParamCaption}
+\item[{const string}]{name, }
+\item[{unsigned int}]{n\+No, }
+\item[{unsigned int}]{type, }
+\item[{float $\ast$}]{p, }
+\item[{float $\ast$}]{ini}
+\end{DoxyParamCaption}
+)}}\label{classNNmodel_af52eebfac8ff3cd3eaa4f2cfc0918e3a}
+
+
+Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population. 
+
+This function adds a neuron population to a neuronal network models, assigning the name, the number of neurons in the group, the neuron type, parameters and initial values. 
+\begin{DoxyParams}{Parameters}
+{\em name} & The name of the neuron population \\
+\hline
+{\em n\+No} & Number of neurons in the population \\
+\hline
+{\em type} & Type of the neurons, refers to either a standard type or user-\/defined type \\
+\hline
+{\em p} & Parameters of this neuron type \\
+\hline
+{\em ini} & Initial values for variables of this neuron type \\
+\hline
+\end{DoxyParams}
+\hypertarget{classNNmodel_a9dceb36a7d36c82adfdb5642df8f25f7}{\index{N\+Nmodel@{N\+Nmodel}!add\+Synapse\+Population@{add\+Synapse\+Population}}
+\index{add\+Synapse\+Population@{add\+Synapse\+Population}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{add\+Synapse\+Population}]{\setlength{\rightskip}{0pt plus 5cm}void N\+Nmodel\+::add\+Synapse\+Population (
+\begin{DoxyParamCaption}
+\item[{const string}]{name, }
+\item[{unsigned int}]{syntype, }
+\item[{unsigned int}]{conntype, }
+\item[{unsigned int}]{gtype, }
+\item[{const string}]{src, }
+\item[{const string}]{target, }
+\item[{float $\ast$}]{params}
+\end{DoxyParamCaption}
+)}}\label{classNNmodel_a9dceb36a7d36c82adfdb5642df8f25f7}
+
+
+Overload of method for backwards compatibility. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em name} & The name of the synapse population \\
+\hline
+{\em syntype} & The type of synapse to be added (i.\+e. learning mode) \\
+\hline
+{\em conntype} & The type of synaptic connectivity \\
+\hline
+{\em gtype} & The way how the synaptic conductivity g will be defined \\
+\hline
+{\em src} & Name of the (existing!) pre-\/synaptic neuron population \\
+\hline
+{\em target} & Name of the (existing!) post-\/synaptic neuron population \\
+\hline
+{\em params} & A C-\/type array of floats that contains synapse parameter values (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored. \\
+\hline
+\end{DoxyParams}
+\hypertarget{classNNmodel_ac82f4463de85aa6e345bc52518eb1f75}{\index{N\+Nmodel@{N\+Nmodel}!add\+Synapse\+Population@{add\+Synapse\+Population}}
+\index{add\+Synapse\+Population@{add\+Synapse\+Population}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{add\+Synapse\+Population}]{\setlength{\rightskip}{0pt plus 5cm}void N\+Nmodel\+::add\+Synapse\+Population (
+\begin{DoxyParamCaption}
+\item[{const char $\ast$}]{name, }
+\item[{unsigned int}]{syntype, }
+\item[{unsigned int}]{conntype, }
+\item[{unsigned int}]{gtype, }
+\item[{unsigned int}]{delay\+Steps, }
+\item[{unsigned int}]{postsyn, }
+\item[{const char $\ast$}]{src, }
+\item[{const char $\ast$}]{trg, }
+\item[{float $\ast$}]{p, }
+\item[{float $\ast$}]{P\+S\+Vini, }
+\item[{float $\ast$}]{ps}
+\end{DoxyParamCaption}
+)}}\label{classNNmodel_ac82f4463de85aa6e345bc52518eb1f75}
+
+
+Method for adding a synapse population to a neuronal network model, using C style character array for the name of the population. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em name} & The name of the synapse population \\
+\hline
+{\em syntype} & The type of synapse to be added (i.\+e. learning mode) \\
+\hline
+{\em conntype} & The type of synaptic connectivity \\
+\hline
+{\em gtype} & The way how the synaptic conductivity g will be defined \\
+\hline
+{\em delay\+Steps} & Number of delay slots \\
+\hline
+{\em postsyn} & Postsynaptic integration method \\
+\hline
+{\em src} & Name of the (existing!) pre-\/synaptic neuron population \\
+\hline
+{\em trg} & Name of the (existing!) post-\/synaptic neuron population \\
+\hline
+{\em p} & A C-\/type array of floats that contains synapse parameter values (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored. \\
+\hline
+{\em P\+S\+Vini} & A C-\/type array of floats that contains the initial values for postsynaptic mechanism variables (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored. \\
+\hline
+{\em ps} & A C-\/type array of floats that contains postsynaptic mechanism parameter values (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored. \\
+\hline
+\end{DoxyParams}
+\hypertarget{classNNmodel_aa31885e04282660f34e452c1310ef20e}{\index{N\+Nmodel@{N\+Nmodel}!add\+Synapse\+Population@{add\+Synapse\+Population}}
+\index{add\+Synapse\+Population@{add\+Synapse\+Population}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{add\+Synapse\+Population}]{\setlength{\rightskip}{0pt plus 5cm}void N\+Nmodel\+::add\+Synapse\+Population (
+\begin{DoxyParamCaption}
+\item[{const string}]{name, }
+\item[{unsigned int}]{syntype, }
+\item[{unsigned int}]{conntype, }
+\item[{unsigned int}]{gtype, }
+\item[{unsigned int}]{delay\+Steps, }
+\item[{unsigned int}]{postsyn, }
+\item[{const string}]{src, }
+\item[{const string}]{trg, }
+\item[{float $\ast$}]{p, }
+\item[{float $\ast$}]{P\+S\+Vini, }
+\item[{float $\ast$}]{ps}
+\end{DoxyParamCaption}
+)}}\label{classNNmodel_aa31885e04282660f34e452c1310ef20e}
+
+
+Overloaded version without initial variables for synapses. 
+
+Overloaded old version. 
+\begin{DoxyParams}{Parameters}
+{\em name} & The name of the synapse population \\
+\hline
+{\em syntype} & The type of synapse to be added (i.\+e. learning mode) \\
+\hline
+{\em conntype} & The type of synaptic connectivity \\
+\hline
+{\em gtype} & The way how the synaptic conductivity g will be defined \\
+\hline
+{\em delay\+Steps} & Number of delay slots \\
+\hline
+{\em postsyn} & Postsynaptic integration method \\
+\hline
+{\em src} & Name of the (existing!) pre-\/synaptic neuron population \\
+\hline
+{\em trg} & Name of the (existing!) post-\/synaptic neuron population \\
+\hline
+{\em p} & A C-\/type array of floats that contains synapse parameter values (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored. \\
+\hline
+{\em P\+S\+Vini} & A C-\/type array of floats that contains the initial values for postsynaptic mechanism variables (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored. \\
+\hline
+{\em ps} & A C-\/type array of floats that contains postsynaptic mechanism parameter values (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored. \\
+\hline
+\end{DoxyParams}
+\hypertarget{classNNmodel_ac84ccb2f8e4dc3e3343fb663adedc460}{\index{N\+Nmodel@{N\+Nmodel}!add\+Synapse\+Population@{add\+Synapse\+Population}}
+\index{add\+Synapse\+Population@{add\+Synapse\+Population}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{add\+Synapse\+Population}]{\setlength{\rightskip}{0pt plus 5cm}void N\+Nmodel\+::add\+Synapse\+Population (
+\begin{DoxyParamCaption}
+\item[{const string}]{name, }
+\item[{unsigned int}]{syntype, }
+\item[{unsigned int}]{conntype, }
+\item[{unsigned int}]{gtype, }
+\item[{unsigned int}]{delay\+Steps, }
+\item[{unsigned int}]{postsyn, }
+\item[{const string}]{src, }
+\item[{const string}]{trg, }
+\item[{float $\ast$}]{synini, }
+\item[{float $\ast$}]{p, }
+\item[{float $\ast$}]{P\+S\+Vini, }
+\item[{float $\ast$}]{ps}
+\end{DoxyParamCaption}
+)}}\label{classNNmodel_ac84ccb2f8e4dc3e3343fb663adedc460}
+
+
+Method for adding a synapse population to a neuronal network model, using C++ string for the name of the population. 
+
+This function adds a synapse population to a neuronal network model, assigning the name, the synapse type, the connectivity type, the type of conductance specification, the source and destination neuron populations, and the synaptic parameters. 
+\begin{DoxyParams}{Parameters}
+{\em name} & The name of the synapse population \\
+\hline
+{\em syntype} & The type of synapse to be added (i.\+e. learning mode) \\
+\hline
+{\em conntype} & The type of synaptic connectivity \\
+\hline
+{\em gtype} & The way how the synaptic conductivity g will be defined \\
+\hline
+{\em delay\+Steps} & Number of delay slots \\
+\hline
+{\em postsyn} & Postsynaptic integration method \\
+\hline
+{\em src} & Name of the (existing!) pre-\/synaptic neuron population \\
+\hline
+{\em trg} & Name of the (existing!) post-\/synaptic neuron population \\
+\hline
+{\em synini} & A C-\/type array of floats that contains the initial values for synapse variables (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored. \\
+\hline
+{\em p} & A C-\/type array of floats that contains synapse parameter values (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored. \\
+\hline
+{\em P\+S\+Vini} & A C-\/type array of floats that contains the initial values for postsynaptic mechanism variables (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored. \\
+\hline
+{\em ps} & A C-\/type array of floats that contains postsynaptic mechanism parameter values (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored. \\
+\hline
+\end{DoxyParams}
+\hypertarget{classNNmodel_aa096950a3bb9a7d573df77c26919ab07}{\index{N\+Nmodel@{N\+Nmodel}!check\+Sizes@{check\+Sizes}}
+\index{check\+Sizes@{check\+Sizes}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{check\+Sizes}]{\setlength{\rightskip}{0pt plus 5cm}void N\+Nmodel\+::check\+Sizes (
+\begin{DoxyParamCaption}
+\item[{unsigned int $\ast$}]{, }
+\item[{unsigned int $\ast$}]{, }
+\item[{unsigned int $\ast$}]{}
+\end{DoxyParamCaption}
+)}}\label{classNNmodel_aa096950a3bb9a7d573df77c26919ab07}
+\hypertarget{classNNmodel_a3de3cfc04cb28e939225341ee10e2119}{\index{N\+Nmodel@{N\+Nmodel}!init\+Learn\+Grps@{init\+Learn\+Grps}}
+\index{init\+Learn\+Grps@{init\+Learn\+Grps}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{init\+Learn\+Grps}]{\setlength{\rightskip}{0pt plus 5cm}void N\+Nmodel\+::init\+Learn\+Grps (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classNNmodel_a3de3cfc04cb28e939225341ee10e2119}
+\hypertarget{classNNmodel_a836c19f5ebf90740b18f6291b0c03732}{\index{N\+Nmodel@{N\+Nmodel}!reset\+Padded\+Sums@{reset\+Padded\+Sums}}
+\index{reset\+Padded\+Sums@{reset\+Padded\+Sums}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{reset\+Padded\+Sums}]{\setlength{\rightskip}{0pt plus 5cm}void N\+Nmodel\+::reset\+Padded\+Sums (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classNNmodel_a836c19f5ebf90740b18f6291b0c03732}
+
+
+Re-\/calculates the block-\/size-\/padded sum of threads needed to compute the groups of neurons and synapses assigned to each device. Must be called after changing the host\+I\+D\+:device\+I\+D of any group. 
+
+This function re-\/calculates the block-\/size-\/padded sum of threads needed to compute the groups of neurons and synapses assigned to each device. Must be called after changing the host\+I\+D\+:device\+I\+D of any neuron or synapse group. \hypertarget{classNNmodel_a9630c120beba41655f1f23e6dd21242e}{\index{N\+Nmodel@{N\+Nmodel}!set\+Const\+Inp@{set\+Const\+Inp}}
+\index{set\+Const\+Inp@{set\+Const\+Inp}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{set\+Const\+Inp}]{\setlength{\rightskip}{0pt plus 5cm}void N\+Nmodel\+::set\+Const\+Inp (
+\begin{DoxyParamCaption}
+\item[{const string}]{s\+Name, }
+\item[{float}]{global\+Inp0}
+\end{DoxyParamCaption}
+)}}\label{classNNmodel_a9630c120beba41655f1f23e6dd21242e}
+
+
+Method for setting the global input value for a neuron population if C\+O\+N\+S\+T\+I\+N\+P. 
+
+This function sets a global input value to the specified neuron group. \hypertarget{classNNmodel_ae44b078dcca0b16ef45978a7fe54d16e}{\index{N\+Nmodel@{N\+Nmodel}!set\+G\+P\+U\+Device@{set\+G\+P\+U\+Device}}
+\index{set\+G\+P\+U\+Device@{set\+G\+P\+U\+Device}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{set\+G\+P\+U\+Device}]{\setlength{\rightskip}{0pt plus 5cm}void N\+Nmodel\+::set\+G\+P\+U\+Device (
+\begin{DoxyParamCaption}
+\item[{int}]{device}
+\end{DoxyParamCaption}
+)}}\label{classNNmodel_ae44b078dcca0b16ef45978a7fe54d16e}
+
+
+Method to choose the G\+P\+U to be used for the model. If "A\+U\+T\+O\+D\+E\+V\+I\+C\+E' (-\/1), Ge\+N\+N will choose the device based on a heuristic rule. 
+
+This function defines the way how the G\+P\+U is chosen. If \char`\"{}\+A\+U\+T\+O\+D\+E\+V\+I\+C\+E\char`\"{} (-\/1) is given as the argument, Ge\+N\+N will use internal heuristics to choose the device. Otherwise the argument is the device number and the indicated device will be used. \hypertarget{classNNmodel_abcd74b0eb3c2696069320bd929070d4b}{\index{N\+Nmodel@{N\+Nmodel}!set\+Max\+Conn@{set\+Max\+Conn}}
+\index{set\+Max\+Conn@{set\+Max\+Conn}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{set\+Max\+Conn}]{\setlength{\rightskip}{0pt plus 5cm}void N\+Nmodel\+::set\+Max\+Conn (
+\begin{DoxyParamCaption}
+\item[{const string}]{sname, }
+\item[{unsigned int}]{max\+Conn\+P}
+\end{DoxyParamCaption}
+)}}\label{classNNmodel_abcd74b0eb3c2696069320bd929070d4b}
+
+
+This function defines the maximum number of connections for a neuron in the population. 
+
+\hypertarget{classNNmodel_a757eff2a5877688e6e5492726df035ee}{\index{N\+Nmodel@{N\+Nmodel}!set\+Name@{set\+Name}}
+\index{set\+Name@{set\+Name}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{set\+Name}]{\setlength{\rightskip}{0pt plus 5cm}void N\+Nmodel\+::set\+Name (
+\begin{DoxyParamCaption}
+\item[{const string}]{inname}
+\end{DoxyParamCaption}
+)}}\label{classNNmodel_a757eff2a5877688e6e5492726df035ee}
+
+
+Method to set the neuronal network model name. 
+
+\hypertarget{classNNmodel_a65aee794c66069cd3e6316ade0c91192}{\index{N\+Nmodel@{N\+Nmodel}!set\+Neuron\+Cluster\+Index@{set\+Neuron\+Cluster\+Index}}
+\index{set\+Neuron\+Cluster\+Index@{set\+Neuron\+Cluster\+Index}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{set\+Neuron\+Cluster\+Index}]{\setlength{\rightskip}{0pt plus 5cm}void N\+Nmodel\+::set\+Neuron\+Cluster\+Index (
+\begin{DoxyParamCaption}
+\item[{const string}]{neuron\+Group, }
+\item[{int}]{host\+I\+D, }
+\item[{int}]{device\+I\+D}
+\end{DoxyParamCaption}
+)}}\label{classNNmodel_a65aee794c66069cd3e6316ade0c91192}
+
+
+Function for setting which host and which device a neuron group will be simulated on. 
+
+This function is for setting which host and which device a neuron group will be simulated on. 
+\begin{DoxyParams}{Parameters}
+{\em neuron\+Group} & Name of the neuron population \\
+\hline
+{\em host\+I\+D} & I\+D of the host \\
+\hline
+{\em device\+I\+D} & I\+D of the device \\
+\hline
+\end{DoxyParams}
+\hypertarget{classNNmodel_a44fb38b93216c56254fbbee6175cffd1}{\index{N\+Nmodel@{N\+Nmodel}!set\+Precision@{set\+Precision}}
+\index{set\+Precision@{set\+Precision}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{set\+Precision}]{\setlength{\rightskip}{0pt plus 5cm}void N\+Nmodel\+::set\+Precision (
+\begin{DoxyParamCaption}
+\item[{unsigned int}]{floattype}
+\end{DoxyParamCaption}
+)}}\label{classNNmodel_a44fb38b93216c56254fbbee6175cffd1}
+
+
+Set numerical precision for floating point. 
+
+This function sets the numerical precision of floating type variables. By default, it is float. \hypertarget{classNNmodel_acc6b868fe6383bbea589ba2eddfac679}{\index{N\+Nmodel@{N\+Nmodel}!set\+Seed@{set\+Seed}}
+\index{set\+Seed@{set\+Seed}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{set\+Seed}]{\setlength{\rightskip}{0pt plus 5cm}void N\+Nmodel\+::set\+Seed (
+\begin{DoxyParamCaption}
+\item[{unsigned int}]{inseed}
+\end{DoxyParamCaption}
+)}}\label{classNNmodel_acc6b868fe6383bbea589ba2eddfac679}
+
+
+Set the random seed (disables automatic seeding if argument not 0). 
+
+This function sets the random seed. If the passed argument is $>$ 0, automatic seeding is disabled. If the argument is 0, the underlying seed is obtained from the time() function. 
+\begin{DoxyParams}{Parameters}
+{\em inseed} & the new seed \\
+\hline
+\end{DoxyParams}
+\hypertarget{classNNmodel_a2b7ad279fd8e68d951957f21bbb072c5}{\index{N\+Nmodel@{N\+Nmodel}!set\+Synapse\+Cluster\+Index@{set\+Synapse\+Cluster\+Index}}
+\index{set\+Synapse\+Cluster\+Index@{set\+Synapse\+Cluster\+Index}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{set\+Synapse\+Cluster\+Index}]{\setlength{\rightskip}{0pt plus 5cm}void N\+Nmodel\+::set\+Synapse\+Cluster\+Index (
+\begin{DoxyParamCaption}
+\item[{const string}]{synapse\+Group, }
+\item[{int}]{host\+I\+D, }
+\item[{int}]{device\+I\+D}
+\end{DoxyParamCaption}
+)}}\label{classNNmodel_a2b7ad279fd8e68d951957f21bbb072c5}
+
+
+Function for setting which host and which device a synapse group will be simulated on. 
+
+This function is for setting which host and which device a synapse group will be simulated on. 
+\begin{DoxyParams}{Parameters}
+{\em synapse\+Group} & Name of the synapse population \\
+\hline
+{\em host\+I\+D} & I\+D of the host \\
+\hline
+{\em device\+I\+D} & I\+D of the device \\
+\hline
+\end{DoxyParams}
+\hypertarget{classNNmodel_a06dd91d3a28b70b444e0866859a348f7}{\index{N\+Nmodel@{N\+Nmodel}!set\+Synapse\+G@{set\+Synapse\+G}}
+\index{set\+Synapse\+G@{set\+Synapse\+G}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{set\+Synapse\+G}]{\setlength{\rightskip}{0pt plus 5cm}void N\+Nmodel\+::set\+Synapse\+G (
+\begin{DoxyParamCaption}
+\item[{const string}]{s\+Name, }
+\item[{float}]{g}
+\end{DoxyParamCaption}
+)}}\label{classNNmodel_a06dd91d3a28b70b444e0866859a348f7}
+
+
+Method for setting the conductance (g) value for a synapse population with \char`\"{}\+G\+L\+O\+B\+A\+L\+G\char`\"{} charactertistic. 
+
+This functions sets the global value of the maximal synaptic conductance for a synapse population that was idfentified as conductance specifcation method \char`\"{}\+G\+L\+O\+B\+A\+L\+G\char`\"{}. \hypertarget{classNNmodel_ab843183abd01171e9a8ab99b219cb2b7}{\index{N\+Nmodel@{N\+Nmodel}!set\+Timing@{set\+Timing}}
+\index{set\+Timing@{set\+Timing}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{set\+Timing}]{\setlength{\rightskip}{0pt plus 5cm}void N\+Nmodel\+::set\+Timing (
+\begin{DoxyParamCaption}
+\item[{bool}]{the\+Timing}
+\end{DoxyParamCaption}
+)}}\label{classNNmodel_ab843183abd01171e9a8ab99b219cb2b7}
+
+
+Set whether timers and timing commands are to be included. 
+
+This function sets a flag to determine whether timers and timing commands are to be included in generated code. 
+
+\subsection{Member Data Documentation}
+\hypertarget{classNNmodel_a79631e0c13cdd5ebed55a16bea15819a}{\index{N\+Nmodel@{N\+Nmodel}!choose\+G\+P\+U\+Device@{choose\+G\+P\+U\+Device}}
+\index{choose\+G\+P\+U\+Device@{choose\+G\+P\+U\+Device}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{choose\+G\+P\+U\+Device}]{\setlength{\rightskip}{0pt plus 5cm}int N\+Nmodel\+::choose\+G\+P\+U\+Device}}\label{classNNmodel_a79631e0c13cdd5ebed55a16bea15819a}
+\hypertarget{classNNmodel_a7f834f3863c06a5b2381c0adddb901b8}{\index{N\+Nmodel@{N\+Nmodel}!dnp@{dnp}}
+\index{dnp@{dnp}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{dnp}]{\setlength{\rightskip}{0pt plus 5cm}vector$<$vector$<$float$>$ $>$ N\+Nmodel\+::dnp}}\label{classNNmodel_a7f834f3863c06a5b2381c0adddb901b8}
+
+
+Derived neuron parameters. 
+
+\hypertarget{classNNmodel_aa03452826c44c9af81eba7a618de7e09}{\index{N\+Nmodel@{N\+Nmodel}!dpsp@{dpsp}}
+\index{dpsp@{dpsp}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{dpsp}]{\setlength{\rightskip}{0pt plus 5cm}vector$<$vector$<$float$>$ $>$ N\+Nmodel\+::dpsp}}\label{classNNmodel_aa03452826c44c9af81eba7a618de7e09}
+
+
+Derived postsynapse parameters. 
+
+\hypertarget{classNNmodel_aeb5fa229c8032952feb3440e055f6a85}{\index{N\+Nmodel@{N\+Nmodel}!dsp\+\_\+w@{dsp\+\_\+w}}
+\index{dsp\+\_\+w@{dsp\+\_\+w}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{dsp\+\_\+w}]{\setlength{\rightskip}{0pt plus 5cm}vector$<$vector$<$float$>$ $>$ N\+Nmodel\+::dsp\+\_\+w}}\label{classNNmodel_aeb5fa229c8032952feb3440e055f6a85}
+
+
+Derived synapse parameters (\hyperlink{classweightUpdateModel}{weight\+Update\+Model} only) 
+
+\hypertarget{classNNmodel_a917241001f3469a569dbb91aaa6a4039}{\index{N\+Nmodel@{N\+Nmodel}!ftype@{ftype}}
+\index{ftype@{ftype}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{ftype}]{\setlength{\rightskip}{0pt plus 5cm}string N\+Nmodel\+::ftype}}\label{classNNmodel_a917241001f3469a569dbb91aaa6a4039}
+
+
+Type of floating point variables (float, double, ...; default\+: float) 
+
+\hypertarget{classNNmodel_a8df5fd36faa5a56edea7d287fea1f625}{\index{N\+Nmodel@{N\+Nmodel}!global\+Inp@{global\+Inp}}
+\index{global\+Inp@{global\+Inp}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{global\+Inp}]{\setlength{\rightskip}{0pt plus 5cm}vector$<$float$>$ N\+Nmodel\+::global\+Inp}}\label{classNNmodel_a8df5fd36faa5a56edea7d287fea1f625}
+
+
+Global explicit input if C\+O\+N\+S\+T\+I\+N\+P is chosen. 
+
+\hypertarget{classNNmodel_af3f5459e9438989b12e4b675352dd258}{\index{N\+Nmodel@{N\+Nmodel}!in\+Syn@{in\+Syn}}
+\index{in\+Syn@{in\+Syn}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{in\+Syn}]{\setlength{\rightskip}{0pt plus 5cm}vector$<$vector$<$unsigned int$>$ $>$ N\+Nmodel\+::in\+Syn}}\label{classNNmodel_af3f5459e9438989b12e4b675352dd258}
+
+
+The ids of the incoming synapse groups. 
+
+\hypertarget{classNNmodel_aa0e25f384103db3bcc8c8b0425ae01b3}{\index{N\+Nmodel@{N\+Nmodel}!lrn\+Groups@{lrn\+Groups}}
+\index{lrn\+Groups@{lrn\+Groups}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{lrn\+Groups}]{\setlength{\rightskip}{0pt plus 5cm}unsigned int N\+Nmodel\+::lrn\+Groups}}\label{classNNmodel_aa0e25f384103db3bcc8c8b0425ae01b3}
+
+
+Number of synapse groups with learning. 
+
+\hypertarget{classNNmodel_acbc44c117c06cf73ab36068eb701e240}{\index{N\+Nmodel@{N\+Nmodel}!lrn\+Syn\+Grp@{lrn\+Syn\+Grp}}
+\index{lrn\+Syn\+Grp@{lrn\+Syn\+Grp}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{lrn\+Syn\+Grp}]{\setlength{\rightskip}{0pt plus 5cm}vector$<$unsigned int$>$ N\+Nmodel\+::lrn\+Syn\+Grp}}\label{classNNmodel_acbc44c117c06cf73ab36068eb701e240}
+
+
+Enumeration of the I\+Ds of synapse groups that learn. 
+
+\hypertarget{classNNmodel_afd62bf5791467b37ef06b025ae419d36}{\index{N\+Nmodel@{N\+Nmodel}!max\+Conn@{max\+Conn}}
+\index{max\+Conn@{max\+Conn}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{max\+Conn}]{\setlength{\rightskip}{0pt plus 5cm}vector$<$unsigned int$>$ N\+Nmodel\+::max\+Conn}}\label{classNNmodel_afd62bf5791467b37ef06b025ae419d36}
+
+
+Padded summed maximum number of connections for a neuron in the neuron groups. 
+
+\hypertarget{classNNmodel_a7d81556b7b15a4a625b23f965944dae9}{\index{N\+Nmodel@{N\+Nmodel}!name@{name}}
+\index{name@{name}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{name}]{\setlength{\rightskip}{0pt plus 5cm}string N\+Nmodel\+::name}}\label{classNNmodel_a7d81556b7b15a4a625b23f965944dae9}
+
+
+Name of the neuronal newtwork model. 
+
+\hypertarget{classNNmodel_a17091f9688dbfa4e9f2d83181a1b554a}{\index{N\+Nmodel@{N\+Nmodel}!need\+Spk\+Evnt@{need\+Spk\+Evnt}}
+\index{need\+Spk\+Evnt@{need\+Spk\+Evnt}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{need\+Spk\+Evnt}]{\setlength{\rightskip}{0pt plus 5cm}bool N\+Nmodel\+::need\+Spk\+Evnt}}\label{classNNmodel_a17091f9688dbfa4e9f2d83181a1b554a}
+\hypertarget{classNNmodel_ab5f42229881455bed0f484b6d0211795}{\index{N\+Nmodel@{N\+Nmodel}!need\+St@{need\+St}}
+\index{need\+St@{need\+St}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{need\+St}]{\setlength{\rightskip}{0pt plus 5cm}unsigned int N\+Nmodel\+::need\+St}}\label{classNNmodel_ab5f42229881455bed0f484b6d0211795}
+
+
+Whether last spike times are needed at all in this network model (related to S\+T\+D\+P) 
+
+\hypertarget{classNNmodel_aa6753d648bcac06109f0820349b5d2be}{\index{N\+Nmodel@{N\+Nmodel}!need\+Synapse\+Delay@{need\+Synapse\+Delay}}
+\index{need\+Synapse\+Delay@{need\+Synapse\+Delay}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{need\+Synapse\+Delay}]{\setlength{\rightskip}{0pt plus 5cm}unsigned int N\+Nmodel\+::need\+Synapse\+Delay}}\label{classNNmodel_aa6753d648bcac06109f0820349b5d2be}
+
+
+Whether delayed synapse conductance is required in the network. 
+
+\hypertarget{classNNmodel_a0801942c5e41585da01b2c341f1e9f55}{\index{N\+Nmodel@{N\+Nmodel}!neuron\+Delay\+Slots@{neuron\+Delay\+Slots}}
+\index{neuron\+Delay\+Slots@{neuron\+Delay\+Slots}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{neuron\+Delay\+Slots}]{\setlength{\rightskip}{0pt plus 5cm}vector$<$unsigned int$>$ N\+Nmodel\+::neuron\+Delay\+Slots}}\label{classNNmodel_a0801942c5e41585da01b2c341f1e9f55}
+
+
+The number of slots needed in the synapse delay queues of a neuron group. 
+
+\hypertarget{classNNmodel_a67ec0b349b4f423712b7636a3cc2fa1e}{\index{N\+Nmodel@{N\+Nmodel}!neuron\+Device\+I\+D@{neuron\+Device\+I\+D}}
+\index{neuron\+Device\+I\+D@{neuron\+Device\+I\+D}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{neuron\+Device\+I\+D}]{\setlength{\rightskip}{0pt plus 5cm}vector$<$int$>$ N\+Nmodel\+::neuron\+Device\+I\+D}}\label{classNNmodel_a67ec0b349b4f423712b7636a3cc2fa1e}
+
+
+The I\+D of the C\+U\+D\+A device which the neuron groups are comnputed on. 
+
+\hypertarget{classNNmodel_a383562e3f02192f58a6150a4ca0861c5}{\index{N\+Nmodel@{N\+Nmodel}!neuron\+Grp\+N@{neuron\+Grp\+N}}
+\index{neuron\+Grp\+N@{neuron\+Grp\+N}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{neuron\+Grp\+N}]{\setlength{\rightskip}{0pt plus 5cm}unsigned int N\+Nmodel\+::neuron\+Grp\+N}}\label{classNNmodel_a383562e3f02192f58a6150a4ca0861c5}
+
+
+Number of neuron groups. 
+
+\hypertarget{classNNmodel_a1ddf63324795faf42f32e4cf4a82a0e2}{\index{N\+Nmodel@{N\+Nmodel}!neuron\+Host\+I\+D@{neuron\+Host\+I\+D}}
+\index{neuron\+Host\+I\+D@{neuron\+Host\+I\+D}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{neuron\+Host\+I\+D}]{\setlength{\rightskip}{0pt plus 5cm}vector$<$int$>$ N\+Nmodel\+::neuron\+Host\+I\+D}}\label{classNNmodel_a1ddf63324795faf42f32e4cf4a82a0e2}
+
+
+The I\+D of the cluster node which the neuron groups are computed on. 
+
+\hypertarget{classNNmodel_a04c2e61ef297c1e0fd3f0acb32f79a17}{\index{N\+Nmodel@{N\+Nmodel}!neuron\+Ini@{neuron\+Ini}}
+\index{neuron\+Ini@{neuron\+Ini}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{neuron\+Ini}]{\setlength{\rightskip}{0pt plus 5cm}vector$<$vector$<$float$>$ $>$ N\+Nmodel\+::neuron\+Ini}}\label{classNNmodel_a04c2e61ef297c1e0fd3f0acb32f79a17}
+
+
+Initial values of neurons. 
+
+\hypertarget{classNNmodel_a87d3de14d0d5c7183199fea48c04b949}{\index{N\+Nmodel@{N\+Nmodel}!neuron\+N@{neuron\+N}}
+\index{neuron\+N@{neuron\+N}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{neuron\+N}]{\setlength{\rightskip}{0pt plus 5cm}vector$<$unsigned int$>$ N\+Nmodel\+::neuron\+N}}\label{classNNmodel_a87d3de14d0d5c7183199fea48c04b949}
+
+
+Number of neurons in group. 
+
+\hypertarget{classNNmodel_af3c7ec6917040e62be5cee3505c330a8}{\index{N\+Nmodel@{N\+Nmodel}!neuron\+Name@{neuron\+Name}}
+\index{neuron\+Name@{neuron\+Name}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{neuron\+Name}]{\setlength{\rightskip}{0pt plus 5cm}vector$<$string$>$ N\+Nmodel\+::neuron\+Name}}\label{classNNmodel_af3c7ec6917040e62be5cee3505c330a8}
+
+
+Names of neuron groups. 
+
+\hypertarget{classNNmodel_abd22d449a48437fbf4e090b553f471f8}{\index{N\+Nmodel@{N\+Nmodel}!neuron\+Need\+Spk\+Evnt@{neuron\+Need\+Spk\+Evnt}}
+\index{neuron\+Need\+Spk\+Evnt@{neuron\+Need\+Spk\+Evnt}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{neuron\+Need\+Spk\+Evnt}]{\setlength{\rightskip}{0pt plus 5cm}vector$<$bool$>$ N\+Nmodel\+::neuron\+Need\+Spk\+Evnt}}\label{classNNmodel_abd22d449a48437fbf4e090b553f471f8}
+
+
+Whether this neuron group needs to record spike like events. 
+
+\hypertarget{classNNmodel_ad14509938bfeb7f2fc8f011d2ec995ac}{\index{N\+Nmodel@{N\+Nmodel}!neuron\+Need\+St@{neuron\+Need\+St}}
+\index{neuron\+Need\+St@{neuron\+Need\+St}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{neuron\+Need\+St}]{\setlength{\rightskip}{0pt plus 5cm}vector$<$bool$>$ N\+Nmodel\+::neuron\+Need\+St}}\label{classNNmodel_ad14509938bfeb7f2fc8f011d2ec995ac}
+
+
+Whether last spike time needs to be saved for each indivual neuron type. 
+
+\hypertarget{classNNmodel_a4711c16ac1dc4bd09255f69a3469a4bd}{\index{N\+Nmodel@{N\+Nmodel}!neuron\+Para@{neuron\+Para}}
+\index{neuron\+Para@{neuron\+Para}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{neuron\+Para}]{\setlength{\rightskip}{0pt plus 5cm}vector$<$vector$<$float$>$ $>$ N\+Nmodel\+::neuron\+Para}}\label{classNNmodel_a4711c16ac1dc4bd09255f69a3469a4bd}
+
+
+Parameters of neurons. 
+
+\hypertarget{classNNmodel_aec217846b4a0eeb38bfec1209319dd81}{\index{N\+Nmodel@{N\+Nmodel}!neuron\+Post\+Syn@{neuron\+Post\+Syn}}
+\index{neuron\+Post\+Syn@{neuron\+Post\+Syn}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{neuron\+Post\+Syn}]{\setlength{\rightskip}{0pt plus 5cm}vector$<$unsigned int$>$ N\+Nmodel\+::neuron\+Post\+Syn}}\label{classNNmodel_aec217846b4a0eeb38bfec1209319dd81}
+\hypertarget{classNNmodel_a2107fc30756637a876374ad35d69a19b}{\index{N\+Nmodel@{N\+Nmodel}!neuron\+Spk\+Evnt\+Condition@{neuron\+Spk\+Evnt\+Condition}}
+\index{neuron\+Spk\+Evnt\+Condition@{neuron\+Spk\+Evnt\+Condition}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{neuron\+Spk\+Evnt\+Condition}]{\setlength{\rightskip}{0pt plus 5cm}vector$<$string$>$ N\+Nmodel\+::neuron\+Spk\+Evnt\+Condition}}\label{classNNmodel_a2107fc30756637a876374ad35d69a19b}
+
+
+Will contain the spike event condition code when spike events are used. 
+
+\hypertarget{classNNmodel_a0e5087ec30e3efb114f8f713759a4abc}{\index{N\+Nmodel@{N\+Nmodel}!neuron\+Type@{neuron\+Type}}
+\index{neuron\+Type@{neuron\+Type}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{neuron\+Type}]{\setlength{\rightskip}{0pt plus 5cm}vector$<$unsigned int$>$ N\+Nmodel\+::neuron\+Type}}\label{classNNmodel_a0e5087ec30e3efb114f8f713759a4abc}
+
+
+Postsynaptic methods to the neuron. 
+
+Types of neurons \hypertarget{classNNmodel_a69a2c9a2317316d0eddf4033779f17cc}{\index{N\+Nmodel@{N\+Nmodel}!neuron\+Var\+Need\+Spk@{neuron\+Var\+Need\+Spk}}
+\index{neuron\+Var\+Need\+Spk@{neuron\+Var\+Need\+Spk}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{neuron\+Var\+Need\+Spk}]{\setlength{\rightskip}{0pt plus 5cm}vector$<$vector$<$bool $>$ $>$ N\+Nmodel\+::neuron\+Var\+Need\+Spk}}\label{classNNmodel_a69a2c9a2317316d0eddf4033779f17cc}
+
+
+indicates whether spk values (or delay queues) need to be stored for this variable 
+
+\hypertarget{classNNmodel_a6cd30ae92d9eef399beb66098d016774}{\index{N\+Nmodel@{N\+Nmodel}!neuron\+Var\+Need\+Spk\+Evnt@{neuron\+Var\+Need\+Spk\+Evnt}}
+\index{neuron\+Var\+Need\+Spk\+Evnt@{neuron\+Var\+Need\+Spk\+Evnt}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{neuron\+Var\+Need\+Spk\+Evnt}]{\setlength{\rightskip}{0pt plus 5cm}vector$<$vector$<$bool $>$ $>$ N\+Nmodel\+::neuron\+Var\+Need\+Spk\+Evnt}}\label{classNNmodel_a6cd30ae92d9eef399beb66098d016774}
+
+
+indicates whether spk\+Ent values (or delay queues) need to be stored for this variable 
+
+\hypertarget{classNNmodel_a6ba57b83448ab23eaa5a68d40b2ceac9}{\index{N\+Nmodel@{N\+Nmodel}!out\+Syn@{out\+Syn}}
+\index{out\+Syn@{out\+Syn}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{out\+Syn}]{\setlength{\rightskip}{0pt plus 5cm}vector$<$vector$<$unsigned int$>$ $>$ N\+Nmodel\+::out\+Syn}}\label{classNNmodel_a6ba57b83448ab23eaa5a68d40b2ceac9}
+
+
+The ids of the outgoing synapse groups. 
+
+\hypertarget{classNNmodel_a2e6021bca44ea5ec0478e99cc6249295}{\index{N\+Nmodel@{N\+Nmodel}!pad\+Sum\+Learn\+N@{pad\+Sum\+Learn\+N}}
+\index{pad\+Sum\+Learn\+N@{pad\+Sum\+Learn\+N}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{pad\+Sum\+Learn\+N}]{\setlength{\rightskip}{0pt plus 5cm}vector$<$unsigned int$>$ N\+Nmodel\+::pad\+Sum\+Learn\+N}}\label{classNNmodel_a2e6021bca44ea5ec0478e99cc6249295}
+
+
+Padded summed neuron numbers of learn group source populations. 
+
+\hypertarget{classNNmodel_a08d284601fc39e164ca5aeac399d6a59}{\index{N\+Nmodel@{N\+Nmodel}!pad\+Sum\+Neuron\+N@{pad\+Sum\+Neuron\+N}}
+\index{pad\+Sum\+Neuron\+N@{pad\+Sum\+Neuron\+N}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{pad\+Sum\+Neuron\+N}]{\setlength{\rightskip}{0pt plus 5cm}vector$<$unsigned int$>$ N\+Nmodel\+::pad\+Sum\+Neuron\+N}}\label{classNNmodel_a08d284601fc39e164ca5aeac399d6a59}
+
+
+Padded summed neuron numbers. 
+
+\hypertarget{classNNmodel_a7c0e09e6fe2327601cc9b1e2e995b0e9}{\index{N\+Nmodel@{N\+Nmodel}!pad\+Sum\+Synapse\+Krnl@{pad\+Sum\+Synapse\+Krnl}}
+\index{pad\+Sum\+Synapse\+Krnl@{pad\+Sum\+Synapse\+Krnl}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{pad\+Sum\+Synapse\+Krnl}]{\setlength{\rightskip}{0pt plus 5cm}vector$<$unsigned int$>$ N\+Nmodel\+::pad\+Sum\+Synapse\+Krnl}}\label{classNNmodel_a7c0e09e6fe2327601cc9b1e2e995b0e9}
+\hypertarget{classNNmodel_a73881a9d190c544cc6add9a19ee6a304}{\index{N\+Nmodel@{N\+Nmodel}!pad\+Sum\+Synapse\+Trg\+N@{pad\+Sum\+Synapse\+Trg\+N}}
+\index{pad\+Sum\+Synapse\+Trg\+N@{pad\+Sum\+Synapse\+Trg\+N}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{pad\+Sum\+Synapse\+Trg\+N}]{\setlength{\rightskip}{0pt plus 5cm}vector$<$unsigned int$>$ N\+Nmodel\+::pad\+Sum\+Synapse\+Trg\+N}}\label{classNNmodel_a73881a9d190c544cc6add9a19ee6a304}
+
+
+\char`\"{}\+Padded\char`\"{} summed target neuron numbers 
+
+\hypertarget{classNNmodel_a3b9431104ee496ed084ab549ebf2de10}{\index{N\+Nmodel@{N\+Nmodel}!post\+Synapse\+Para@{post\+Synapse\+Para}}
+\index{post\+Synapse\+Para@{post\+Synapse\+Para}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{post\+Synapse\+Para}]{\setlength{\rightskip}{0pt plus 5cm}vector$<$vector$<$float$>$ $>$ N\+Nmodel\+::post\+Synapse\+Para}}\label{classNNmodel_a3b9431104ee496ed084ab549ebf2de10}
+
+
+parameters of postsynapses 
+
+\hypertarget{classNNmodel_a4fc23591415ddac76d1d92ab68c018c9}{\index{N\+Nmodel@{N\+Nmodel}!post\+Synapse\+Type@{post\+Synapse\+Type}}
+\index{post\+Synapse\+Type@{post\+Synapse\+Type}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{post\+Synapse\+Type}]{\setlength{\rightskip}{0pt plus 5cm}vector$<$unsigned int$>$ N\+Nmodel\+::post\+Synapse\+Type}}\label{classNNmodel_a4fc23591415ddac76d1d92ab68c018c9}
+
+
+Types of post-\/synaptic model. 
+
+\hypertarget{classNNmodel_a82827284185d5c39e4e04e14cf612253}{\index{N\+Nmodel@{N\+Nmodel}!post\+Syn\+Ini@{post\+Syn\+Ini}}
+\index{post\+Syn\+Ini@{post\+Syn\+Ini}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{post\+Syn\+Ini}]{\setlength{\rightskip}{0pt plus 5cm}vector$<$vector$<$float$>$ $>$ N\+Nmodel\+::post\+Syn\+Ini}}\label{classNNmodel_a82827284185d5c39e4e04e14cf612253}
+
+
+Initial values of postsynaptic variables. 
+
+\hypertarget{classNNmodel_acd0592315c59ac3c0e0dbe9bb35d7004}{\index{N\+Nmodel@{N\+Nmodel}!receives\+Input\+Current@{receives\+Input\+Current}}
+\index{receives\+Input\+Current@{receives\+Input\+Current}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{receives\+Input\+Current}]{\setlength{\rightskip}{0pt plus 5cm}vector$<$unsigned int$>$ N\+Nmodel\+::receives\+Input\+Current}}\label{classNNmodel_acd0592315c59ac3c0e0dbe9bb35d7004}
+
+
+flags whether neurons of a population receive explicit input currents 
+
+\hypertarget{classNNmodel_ae02892a44b18e3ce913dc43dc31dd380}{\index{N\+Nmodel@{N\+Nmodel}!R\+Ntype@{R\+Ntype}}
+\index{R\+Ntype@{R\+Ntype}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{R\+Ntype}]{\setlength{\rightskip}{0pt plus 5cm}string N\+Nmodel\+::\+R\+Ntype}}\label{classNNmodel_ae02892a44b18e3ce913dc43dc31dd380}
+
+
+Underlying type for random number generation (default\+: long) 
+
+\hypertarget{classNNmodel_ad82f4dbcf4cc6a942965f9ecaa79616a}{\index{N\+Nmodel@{N\+Nmodel}!seed@{seed}}
+\index{seed@{seed}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{seed}]{\setlength{\rightskip}{0pt plus 5cm}unsigned int N\+Nmodel\+::seed}}\label{classNNmodel_ad82f4dbcf4cc6a942965f9ecaa79616a}
+\hypertarget{classNNmodel_a84cf2761cf76d70a06f871a77e64c0b4}{\index{N\+Nmodel@{N\+Nmodel}!sum\+Neuron\+N@{sum\+Neuron\+N}}
+\index{sum\+Neuron\+N@{sum\+Neuron\+N}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{sum\+Neuron\+N}]{\setlength{\rightskip}{0pt plus 5cm}vector$<$unsigned int$>$ N\+Nmodel\+::sum\+Neuron\+N}}\label{classNNmodel_a84cf2761cf76d70a06f871a77e64c0b4}
+
+
+Summed neuron numbers. 
+
+\hypertarget{classNNmodel_a03e34fda1008acf6379f80e8d713d41b}{\index{N\+Nmodel@{N\+Nmodel}!sum\+Synapse\+Trg\+N@{sum\+Synapse\+Trg\+N}}
+\index{sum\+Synapse\+Trg\+N@{sum\+Synapse\+Trg\+N}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{sum\+Synapse\+Trg\+N}]{\setlength{\rightskip}{0pt plus 5cm}vector$<$unsigned int$>$ N\+Nmodel\+::sum\+Synapse\+Trg\+N}}\label{classNNmodel_a03e34fda1008acf6379f80e8d713d41b}
+
+
+Summed number of target neurons. 
+
+\hypertarget{classNNmodel_a0b1d2c6f24b8ed9215dce9daf3ca0518}{\index{N\+Nmodel@{N\+Nmodel}!synapse\+Conn\+Type@{synapse\+Conn\+Type}}
+\index{synapse\+Conn\+Type@{synapse\+Conn\+Type}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{synapse\+Conn\+Type}]{\setlength{\rightskip}{0pt plus 5cm}vector$<$unsigned int$>$ N\+Nmodel\+::synapse\+Conn\+Type}}\label{classNNmodel_a0b1d2c6f24b8ed9215dce9daf3ca0518}
+
+
+Connectivity type of synapses. 
+
+\hypertarget{classNNmodel_a3c7efe131920a17f9292c0d2ffd74d7c}{\index{N\+Nmodel@{N\+Nmodel}!synapse\+Delay@{synapse\+Delay}}
+\index{synapse\+Delay@{synapse\+Delay}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{synapse\+Delay}]{\setlength{\rightskip}{0pt plus 5cm}vector$<$unsigned int$>$ N\+Nmodel\+::synapse\+Delay}}\label{classNNmodel_a3c7efe131920a17f9292c0d2ffd74d7c}
+
+
+Global synaptic conductance delay for the group (in time steps) 
+
+\hypertarget{classNNmodel_a55d5ec678b5ed7756c7dbb4c4c604f51}{\index{N\+Nmodel@{N\+Nmodel}!synapse\+Device\+I\+D@{synapse\+Device\+I\+D}}
+\index{synapse\+Device\+I\+D@{synapse\+Device\+I\+D}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{synapse\+Device\+I\+D}]{\setlength{\rightskip}{0pt plus 5cm}vector$<$int$>$ N\+Nmodel\+::synapse\+Device\+I\+D}}\label{classNNmodel_a55d5ec678b5ed7756c7dbb4c4c604f51}
+
+
+The I\+D of the C\+U\+D\+A device which the synapse groups are comnputed on. 
+
+\hypertarget{classNNmodel_a1e6209fc2014ab9f1820a614cc246c67}{\index{N\+Nmodel@{N\+Nmodel}!synapse\+Grp\+N@{synapse\+Grp\+N}}
+\index{synapse\+Grp\+N@{synapse\+Grp\+N}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{synapse\+Grp\+N}]{\setlength{\rightskip}{0pt plus 5cm}unsigned int N\+Nmodel\+::synapse\+Grp\+N}}\label{classNNmodel_a1e6209fc2014ab9f1820a614cc246c67}
+
+
+Number of synapse groups. 
+
+\hypertarget{classNNmodel_a521aa25f9cc763dab52769da0b775470}{\index{N\+Nmodel@{N\+Nmodel}!synapse\+G\+Type@{synapse\+G\+Type}}
+\index{synapse\+G\+Type@{synapse\+G\+Type}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{synapse\+G\+Type}]{\setlength{\rightskip}{0pt plus 5cm}vector$<$unsigned int$>$ N\+Nmodel\+::synapse\+G\+Type}}\label{classNNmodel_a521aa25f9cc763dab52769da0b775470}
+
+
+Type of specification method for synaptic conductance. 
+
+\hypertarget{classNNmodel_acd3b57fb1ab65b46f3d23a7464e4dcf8}{\index{N\+Nmodel@{N\+Nmodel}!synapse\+Host\+I\+D@{synapse\+Host\+I\+D}}
+\index{synapse\+Host\+I\+D@{synapse\+Host\+I\+D}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{synapse\+Host\+I\+D}]{\setlength{\rightskip}{0pt plus 5cm}vector$<$int$>$ N\+Nmodel\+::synapse\+Host\+I\+D}}\label{classNNmodel_acd3b57fb1ab65b46f3d23a7464e4dcf8}
+
+
+The I\+D of the cluster node which the synapse groups are computed on. 
+
+\hypertarget{classNNmodel_a0b82703b2b3726e86116767f2bc0c422}{\index{N\+Nmodel@{N\+Nmodel}!synapse\+Ini@{synapse\+Ini}}
+\index{synapse\+Ini@{synapse\+Ini}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{synapse\+Ini}]{\setlength{\rightskip}{0pt plus 5cm}vector$<$vector$<$float$>$ $>$ N\+Nmodel\+::synapse\+Ini}}\label{classNNmodel_a0b82703b2b3726e86116767f2bc0c422}
+
+
+Initial values of synapse variables. 
+
+\hypertarget{classNNmodel_adc8ccfb003c34fbca10d0fd0e3b26ee0}{\index{N\+Nmodel@{N\+Nmodel}!synapse\+In\+Syn\+No@{synapse\+In\+Syn\+No}}
+\index{synapse\+In\+Syn\+No@{synapse\+In\+Syn\+No}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{synapse\+In\+Syn\+No}]{\setlength{\rightskip}{0pt plus 5cm}vector$<$unsigned int$>$ N\+Nmodel\+::synapse\+In\+Syn\+No}}\label{classNNmodel_adc8ccfb003c34fbca10d0fd0e3b26ee0}
+
+
+I\+Ds of the target neurons' incoming synapse variables for each synapse group. 
+
+\hypertarget{classNNmodel_a13993564faeb0e67a21b3c9ffababaf1}{\index{N\+Nmodel@{N\+Nmodel}!synapse\+Name@{synapse\+Name}}
+\index{synapse\+Name@{synapse\+Name}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{synapse\+Name}]{\setlength{\rightskip}{0pt plus 5cm}vector$<$string$>$ N\+Nmodel\+::synapse\+Name}}\label{classNNmodel_a13993564faeb0e67a21b3c9ffababaf1}
+
+
+Names of synapse groups. 
+
+\hypertarget{classNNmodel_a7d6d9860957c931725cead04ee0d6d98}{\index{N\+Nmodel@{N\+Nmodel}!synapse\+Out\+Syn\+No@{synapse\+Out\+Syn\+No}}
+\index{synapse\+Out\+Syn\+No@{synapse\+Out\+Syn\+No}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{synapse\+Out\+Syn\+No}]{\setlength{\rightskip}{0pt plus 5cm}vector$<$unsigned int$>$ N\+Nmodel\+::synapse\+Out\+Syn\+No}}\label{classNNmodel_a7d6d9860957c931725cead04ee0d6d98}
+
+
+The target neurons' outgoing synapse for each synapse group. 
+
+\hypertarget{classNNmodel_a65795cabef5f0d1f75e8c08530750d0e}{\index{N\+Nmodel@{N\+Nmodel}!synapse\+Para@{synapse\+Para}}
+\index{synapse\+Para@{synapse\+Para}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{synapse\+Para}]{\setlength{\rightskip}{0pt plus 5cm}vector$<$vector$<$float$>$ $>$ N\+Nmodel\+::synapse\+Para}}\label{classNNmodel_a65795cabef5f0d1f75e8c08530750d0e}
+
+
+parameters of synapses 
+
+\hypertarget{classNNmodel_a39861eefc8f7b13c21aaf82142520227}{\index{N\+Nmodel@{N\+Nmodel}!synapse\+Source@{synapse\+Source}}
+\index{synapse\+Source@{synapse\+Source}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{synapse\+Source}]{\setlength{\rightskip}{0pt plus 5cm}vector$<$unsigned int$>$ N\+Nmodel\+::synapse\+Source}}\label{classNNmodel_a39861eefc8f7b13c21aaf82142520227}
+
+
+Presynaptic neuron groups. 
+
+\hypertarget{classNNmodel_a30e4ebc1109de5e7d921b22f1597cbf4}{\index{N\+Nmodel@{N\+Nmodel}!synapse\+Spk\+Evnt\+Vars@{synapse\+Spk\+Evnt\+Vars}}
+\index{synapse\+Spk\+Evnt\+Vars@{synapse\+Spk\+Evnt\+Vars}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{synapse\+Spk\+Evnt\+Vars}]{\setlength{\rightskip}{0pt plus 5cm}vector$<$vector$<$string$>$ $>$ N\+Nmodel\+::synapse\+Spk\+Evnt\+Vars}}\label{classNNmodel_a30e4ebc1109de5e7d921b22f1597cbf4}
+
+
+Defines variable names that are needed in the Spk\+Evnt condition and that are pre-\/fetched for that purpose into shared memory. 
+
+\hypertarget{classNNmodel_a10c4e0a9d71bbfa6895de30a64f31ca6}{\index{N\+Nmodel@{N\+Nmodel}!synapse\+Target@{synapse\+Target}}
+\index{synapse\+Target@{synapse\+Target}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{synapse\+Target}]{\setlength{\rightskip}{0pt plus 5cm}vector$<$unsigned int$>$ N\+Nmodel\+::synapse\+Target}}\label{classNNmodel_a10c4e0a9d71bbfa6895de30a64f31ca6}
+
+
+Postsynaptic neuron groups. 
+
+\hypertarget{classNNmodel_a5945dd8a2936f38a5997a5cae51cf706}{\index{N\+Nmodel@{N\+Nmodel}!synapse\+Type@{synapse\+Type}}
+\index{synapse\+Type@{synapse\+Type}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{synapse\+Type}]{\setlength{\rightskip}{0pt plus 5cm}vector$<$unsigned int$>$ N\+Nmodel\+::synapse\+Type}}\label{classNNmodel_a5945dd8a2936f38a5997a5cae51cf706}
+
+
+Types of synapses. 
+
+\hypertarget{classNNmodel_afae2a91984509205ff07afc948cbf106}{\index{N\+Nmodel@{N\+Nmodel}!timing@{timing}}
+\index{timing@{timing}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{timing}]{\setlength{\rightskip}{0pt plus 5cm}bool N\+Nmodel\+::timing}}\label{classNNmodel_afae2a91984509205ff07afc948cbf106}
+\hypertarget{classNNmodel_a81fb25a9fab59e840ef622d469747d69}{\index{N\+Nmodel@{N\+Nmodel}!uses\+Post\+Learning@{uses\+Post\+Learning}}
+\index{uses\+Post\+Learning@{uses\+Post\+Learning}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{uses\+Post\+Learning}]{\setlength{\rightskip}{0pt plus 5cm}vector$<$unsigned int$>$ N\+Nmodel\+::uses\+Post\+Learning}}\label{classNNmodel_a81fb25a9fab59e840ef622d469747d69}
+
+
+Defines if anything is done in case of postsynaptic neuron spiking before presynaptic neuron (punishment in S\+T\+D\+P etc.) 
+
+\hypertarget{classNNmodel_a5d1a849b688fd0b7fdb999d39b5e049b}{\index{N\+Nmodel@{N\+Nmodel}!uses\+Spike\+Events@{uses\+Spike\+Events}}
+\index{uses\+Spike\+Events@{uses\+Spike\+Events}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{uses\+Spike\+Events}]{\setlength{\rightskip}{0pt plus 5cm}vector$<$unsigned int$>$ N\+Nmodel\+::uses\+Spike\+Events}}\label{classNNmodel_a5d1a849b688fd0b7fdb999d39b5e049b}
+
+
+Defines if synapse update is done after detection of spike events (every point above threshold) 
+
+\hypertarget{classNNmodel_a5d70d70919f892c66196fdea7cb13a45}{\index{N\+Nmodel@{N\+Nmodel}!uses\+True\+Spikes@{uses\+True\+Spikes}}
+\index{uses\+True\+Spikes@{uses\+True\+Spikes}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{uses\+True\+Spikes}]{\setlength{\rightskip}{0pt plus 5cm}vector$<$unsigned int$>$ N\+Nmodel\+::uses\+True\+Spikes}}\label{classNNmodel_a5d70d70919f892c66196fdea7cb13a45}
+
+
+Defines if synapse update is done after detection of real spikes (only one point after threshold) 
+
+\hypertarget{classNNmodel_ad09a7a4c3888876f7a95e8d5e344c71e}{\index{N\+Nmodel@{N\+Nmodel}!valid@{valid}}
+\index{valid@{valid}!N\+Nmodel@{N\+Nmodel}}
+\subsubsection[{valid}]{\setlength{\rightskip}{0pt plus 5cm}int N\+Nmodel\+::valid}}\label{classNNmodel_ad09a7a4c3888876f7a95e8d5e344c71e}
+
+
+Flag for whether the model has been validated (unused?) 
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+lib/include/\hyperlink{modelSpec_8h}{model\+Spec.\+h}\item 
+lib/include/\hyperlink{modelSpec_8cc}{model\+Spec.\+cc}\end{DoxyCompactItemize}

@@ -1,0 +1,1394 @@
+\hypertarget{classclassol}{\section{classol Class Reference}
+\label{classclassol}\index{classol@{classol}}
+}
+
+
+This class cpontains the methods for running the M\+Body1 example model.  
+
+
+
+
+{\ttfamily \#include $<$map\+\_\+classol.\+h$>$}
+
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hyperlink{classclassol_a0f4a2bbdd48bcdfcc2abaa58a839232c}{classol} ()
+\item 
+\hyperlink{classclassol_a1273a6a57e2127a7b028bdbd92fed9b4}{$\sim$classol} ()
+\item 
+void \hyperlink{classclassol_ae1d319555e41d814ef2f8407418df8dc}{init} (unsigned int)
+\begin{DoxyCompactList}\small\item\em Method for initialising variables. \end{DoxyCompactList}\item 
+void \hyperlink{classclassol_a224bf755bd74d7512606518ae2658215}{allocate\+\_\+device\+\_\+mem\+\_\+patterns} ()
+\begin{DoxyCompactList}\small\item\em Method for allocating memory on the G\+P\+U device to hold the input patterns. \end{DoxyCompactList}\item 
+void \hyperlink{classclassol_ade653847f5de20fe2f944260d532ddf9}{free\+\_\+device\+\_\+mem} ()
+\begin{DoxyCompactList}\small\item\em Methods for unallocating the memory for input patterns on the G\+P\+U device. \end{DoxyCompactList}\item 
+void \hyperlink{classclassol_a1529539e9d2424d56016ad8e60aa0b79}{read\+\_\+pnkcsyns} (F\+I\+L\+E $\ast$)
+\begin{DoxyCompactList}\small\item\em Method for reading the connectivity between P\+Ns and K\+Cs from a file. \end{DoxyCompactList}\item 
+void \hyperlink{classclassol_a8f2e2c575501aa0bb2c5864adccd6aac}{read\+\_\+sparsesyns\+\_\+par} (int, struct Conductance, F\+I\+L\+E $\ast$, F\+I\+L\+E $\ast$, F\+I\+L\+E $\ast$)
+\item 
+void \hyperlink{classclassol_a272983bc77c8c547310a38fd340c29e4}{write\+\_\+pnkcsyns} (F\+I\+L\+E $\ast$)
+\begin{DoxyCompactList}\small\item\em Method for writing the conenctivity between P\+Ns and K\+Cs back into file. \end{DoxyCompactList}\item 
+void \hyperlink{classclassol_a135ee4ab60d3afa11c5cba74d362fbe6}{read\+\_\+pnlhisyns} (F\+I\+L\+E $\ast$)
+\begin{DoxyCompactList}\small\item\em Method for reading the connectivity between P\+Ns and L\+H\+Is from a file. \end{DoxyCompactList}\item 
+void \hyperlink{classclassol_a661def594f59444eac7a0a08e599ec07}{write\+\_\+pnlhisyns} (F\+I\+L\+E $\ast$)
+\begin{DoxyCompactList}\small\item\em Method for writing the connectivity between P\+Ns and L\+H\+Is to a file. \end{DoxyCompactList}\item 
+void \hyperlink{classclassol_a5530acb74e884fe7b802e2e6eaec9c3a}{read\+\_\+kcdnsyns} (F\+I\+L\+E $\ast$)
+\begin{DoxyCompactList}\small\item\em Method for reading the connectivity between K\+Cs and D\+Ns (detector neurons) from a file. \end{DoxyCompactList}\item 
+void \hyperlink{classclassol_ad409b77aceb2136bbc069b1ec55d7998}{write\+\_\+kcdnsyns} (F\+I\+L\+E $\ast$)
+\begin{DoxyCompactList}\small\item\em Method to write the connectivity between K\+Cs and D\+Ns (detector neurons) to a file. \end{DoxyCompactList}\item 
+void \hyperlink{classclassol_a554e027fafa47fbf9ee68e9e5bd91de2}{read\+\_\+input\+\_\+patterns} (F\+I\+L\+E $\ast$)
+\begin{DoxyCompactList}\small\item\em Method for reading the input patterns from a file. \end{DoxyCompactList}\item 
+void \hyperlink{classclassol_a4e4e5bee0655e84dfee6e98e6a75dc3b}{generate\+\_\+baserates} ()
+\begin{DoxyCompactList}\small\item\em Method for calculating the baseline rates of the Poisson input neurons. \end{DoxyCompactList}\item 
+void \hyperlink{classclassol_ae907498a8660fe41f7d9b41aad6e5d10}{run} (float, unsigned int)
+\begin{DoxyCompactList}\small\item\em Method for simulating the model for a given period of time. \end{DoxyCompactList}\item 
+void \hyperlink{classclassol_a88179d17f4ea568b7b58a329a741eb53}{output\+\_\+state} (F\+I\+L\+E $\ast$, unsigned int)
+\begin{DoxyCompactList}\small\item\em Method for copying from device and writing out to file of the entire state of the model. \end{DoxyCompactList}\item 
+void \hyperlink{classclassol_ae571e028c069103e19bb4975bdb0dd47}{get\+Spikes\+From\+G\+P\+U} ()
+\begin{DoxyCompactList}\small\item\em Method for copying all spikes of the last time step from the G\+P\+U. \end{DoxyCompactList}\item 
+void \hyperlink{classclassol_a08d82fc16288158062aef866a1e29a65}{get\+Spike\+Numbers\+From\+G\+P\+U} ()
+\begin{DoxyCompactList}\small\item\em Method for copying the number of spikes in all neuron populations that have occurred during the last time step. \end{DoxyCompactList}\item 
+void \hyperlink{classclassol_a54d61e7df53d16d7b8e1de46bcca6c6c}{output\+\_\+spikes} (F\+I\+L\+E $\ast$, unsigned int)
+\begin{DoxyCompactList}\small\item\em Method for writing the spikes occurred in the last time step to a file. \end{DoxyCompactList}\item 
+void \hyperlink{classclassol_af9dfaa92f0e4737dbadd9ec9cd203555}{sum\+\_\+spikes} ()
+\begin{DoxyCompactList}\small\item\em Method for summing up spike numbers. \end{DoxyCompactList}\item 
+void \hyperlink{classclassol_af4700403ad71ef8d07c67883ad914f75}{get\+\_\+kcdnsyns} ()
+\begin{DoxyCompactList}\small\item\em Method for copying the synaptic conductances of the learning synapses between K\+Cs and D\+Ns (detector neurons) back to the C\+P\+U memory. \end{DoxyCompactList}\item 
+\hyperlink{classclassol_a0f4a2bbdd48bcdfcc2abaa58a839232c}{classol} ()
+\item 
+\hyperlink{classclassol_a1273a6a57e2127a7b028bdbd92fed9b4}{$\sim$classol} ()
+\item 
+void \hyperlink{classclassol_ae1d319555e41d814ef2f8407418df8dc}{init} (unsigned int)
+\item 
+void \hyperlink{classclassol_a224bf755bd74d7512606518ae2658215}{allocate\+\_\+device\+\_\+mem\+\_\+patterns} ()
+\item 
+void \hyperlink{classclassol_ade653847f5de20fe2f944260d532ddf9}{free\+\_\+device\+\_\+mem} ()
+\item 
+void \hyperlink{classclassol_a1529539e9d2424d56016ad8e60aa0b79}{read\+\_\+pnkcsyns} (F\+I\+L\+E $\ast$)
+\item 
+void \hyperlink{classclassol_a0aa3dc991bd9e89071e9333d32757157}{read\+\_\+sparsesyns\+\_\+par} (int, struct Conductance, \hyperlink{sizes_8h_afad04d16ebd8523dd0d5f74145280a40}{scalar} $\ast$, F\+I\+L\+E $\ast$, F\+I\+L\+E $\ast$, F\+I\+L\+E $\ast$)
+\item 
+void \hyperlink{classclassol_a272983bc77c8c547310a38fd340c29e4}{write\+\_\+pnkcsyns} (F\+I\+L\+E $\ast$)
+\item 
+void \hyperlink{classclassol_a135ee4ab60d3afa11c5cba74d362fbe6}{read\+\_\+pnlhisyns} (F\+I\+L\+E $\ast$)
+\item 
+void \hyperlink{classclassol_a661def594f59444eac7a0a08e599ec07}{write\+\_\+pnlhisyns} (F\+I\+L\+E $\ast$)
+\item 
+void \hyperlink{classclassol_a5530acb74e884fe7b802e2e6eaec9c3a}{read\+\_\+kcdnsyns} (F\+I\+L\+E $\ast$)
+\item 
+void \hyperlink{classclassol_ad409b77aceb2136bbc069b1ec55d7998}{write\+\_\+kcdnsyns} (F\+I\+L\+E $\ast$)
+\item 
+void \hyperlink{classclassol_a554e027fafa47fbf9ee68e9e5bd91de2}{read\+\_\+input\+\_\+patterns} (F\+I\+L\+E $\ast$)
+\item 
+void \hyperlink{classclassol_a4e4e5bee0655e84dfee6e98e6a75dc3b}{generate\+\_\+baserates} ()
+\item 
+void \hyperlink{classclassol_a27128f5afa624f6dc0c6b47d73ce5827}{run} (\hyperlink{sizes_8h_afad04d16ebd8523dd0d5f74145280a40}{scalar}, unsigned int)
+\begin{DoxyCompactList}\small\item\em Method for simulating the model for a given period of time. \end{DoxyCompactList}\item 
+void \hyperlink{classclassol_a88179d17f4ea568b7b58a329a741eb53}{output\+\_\+state} (F\+I\+L\+E $\ast$, unsigned int)
+\item 
+void \hyperlink{classclassol_ae571e028c069103e19bb4975bdb0dd47}{get\+Spikes\+From\+G\+P\+U} ()
+\item 
+void \hyperlink{classclassol_a08d82fc16288158062aef866a1e29a65}{get\+Spike\+Numbers\+From\+G\+P\+U} ()
+\item 
+void \hyperlink{classclassol_a54d61e7df53d16d7b8e1de46bcca6c6c}{output\+\_\+spikes} (F\+I\+L\+E $\ast$, unsigned int)
+\item 
+void \hyperlink{classclassol_af9dfaa92f0e4737dbadd9ec9cd203555}{sum\+\_\+spikes} ()
+\item 
+void \hyperlink{classclassol_af4700403ad71ef8d07c67883ad914f75}{get\+\_\+kcdnsyns} ()
+\item 
+\hyperlink{classclassol_a0f4a2bbdd48bcdfcc2abaa58a839232c}{classol} ()
+\item 
+\hyperlink{classclassol_a1273a6a57e2127a7b028bdbd92fed9b4}{$\sim$classol} ()
+\item 
+void \hyperlink{classclassol_ae1d319555e41d814ef2f8407418df8dc}{init} (unsigned int)
+\item 
+void \hyperlink{classclassol_a224bf755bd74d7512606518ae2658215}{allocate\+\_\+device\+\_\+mem\+\_\+patterns} ()
+\item 
+void \hyperlink{classclassol_ade653847f5de20fe2f944260d532ddf9}{free\+\_\+device\+\_\+mem} ()
+\item 
+void \hyperlink{classclassol_a1529539e9d2424d56016ad8e60aa0b79}{read\+\_\+pnkcsyns} (F\+I\+L\+E $\ast$)
+\item 
+void \hyperlink{classclassol_a8f2e2c575501aa0bb2c5864adccd6aac}{read\+\_\+sparsesyns\+\_\+par} (int, struct Conductance, F\+I\+L\+E $\ast$, F\+I\+L\+E $\ast$, F\+I\+L\+E $\ast$)
+\item 
+void \hyperlink{classclassol_a272983bc77c8c547310a38fd340c29e4}{write\+\_\+pnkcsyns} (F\+I\+L\+E $\ast$)
+\item 
+void \hyperlink{classclassol_a135ee4ab60d3afa11c5cba74d362fbe6}{read\+\_\+pnlhisyns} (F\+I\+L\+E $\ast$)
+\item 
+void \hyperlink{classclassol_a661def594f59444eac7a0a08e599ec07}{write\+\_\+pnlhisyns} (F\+I\+L\+E $\ast$)
+\item 
+void \hyperlink{classclassol_a5530acb74e884fe7b802e2e6eaec9c3a}{read\+\_\+kcdnsyns} (F\+I\+L\+E $\ast$)
+\item 
+void \hyperlink{classclassol_ad409b77aceb2136bbc069b1ec55d7998}{write\+\_\+kcdnsyns} (F\+I\+L\+E $\ast$)
+\item 
+void \hyperlink{classclassol_a554e027fafa47fbf9ee68e9e5bd91de2}{read\+\_\+input\+\_\+patterns} (F\+I\+L\+E $\ast$)
+\item 
+void \hyperlink{classclassol_a4e4e5bee0655e84dfee6e98e6a75dc3b}{generate\+\_\+baserates} ()
+\item 
+void \hyperlink{classclassol_ae907498a8660fe41f7d9b41aad6e5d10}{run} (float, unsigned int)
+\item 
+void \hyperlink{classclassol_a88179d17f4ea568b7b58a329a741eb53}{output\+\_\+state} (F\+I\+L\+E $\ast$, unsigned int)
+\item 
+void \hyperlink{classclassol_ae571e028c069103e19bb4975bdb0dd47}{get\+Spikes\+From\+G\+P\+U} ()
+\item 
+void \hyperlink{classclassol_a08d82fc16288158062aef866a1e29a65}{get\+Spike\+Numbers\+From\+G\+P\+U} ()
+\item 
+void \hyperlink{classclassol_a54d61e7df53d16d7b8e1de46bcca6c6c}{output\+\_\+spikes} (F\+I\+L\+E $\ast$, unsigned int)
+\item 
+void \hyperlink{classclassol_af9dfaa92f0e4737dbadd9ec9cd203555}{sum\+\_\+spikes} ()
+\item 
+void \hyperlink{classclassol_af4700403ad71ef8d07c67883ad914f75}{get\+\_\+kcdnsyns} ()
+\item 
+\hyperlink{classclassol_a0f4a2bbdd48bcdfcc2abaa58a839232c}{classol} ()
+\item 
+\hyperlink{classclassol_a1273a6a57e2127a7b028bdbd92fed9b4}{$\sim$classol} ()
+\item 
+void \hyperlink{classclassol_ae1d319555e41d814ef2f8407418df8dc}{init} (unsigned int)
+\item 
+void \hyperlink{classclassol_a224bf755bd74d7512606518ae2658215}{allocate\+\_\+device\+\_\+mem\+\_\+patterns} ()
+\item 
+void \hyperlink{classclassol_ade653847f5de20fe2f944260d532ddf9}{free\+\_\+device\+\_\+mem} ()
+\item 
+void \hyperlink{classclassol_a1529539e9d2424d56016ad8e60aa0b79}{read\+\_\+pnkcsyns} (F\+I\+L\+E $\ast$)
+\item 
+{\footnotesize template$<$class D\+A\+T\+A\+T\+Y\+P\+E $>$ }\\void \hyperlink{classclassol_a978cae14cbba95f29619c0aacba7ffbe}{read\+\_\+sparsesyns\+\_\+par} (D\+A\+T\+A\+T\+Y\+P\+E $\ast$, int, struct Conductance, F\+I\+L\+E $\ast$, F\+I\+L\+E $\ast$, F\+I\+L\+E $\ast$)
+\item 
+void \hyperlink{classclassol_a272983bc77c8c547310a38fd340c29e4}{write\+\_\+pnkcsyns} (F\+I\+L\+E $\ast$)
+\item 
+void \hyperlink{classclassol_a135ee4ab60d3afa11c5cba74d362fbe6}{read\+\_\+pnlhisyns} (F\+I\+L\+E $\ast$)
+\item 
+void \hyperlink{classclassol_a661def594f59444eac7a0a08e599ec07}{write\+\_\+pnlhisyns} (F\+I\+L\+E $\ast$)
+\item 
+void \hyperlink{classclassol_a5530acb74e884fe7b802e2e6eaec9c3a}{read\+\_\+kcdnsyns} (F\+I\+L\+E $\ast$)
+\item 
+void \hyperlink{classclassol_ad409b77aceb2136bbc069b1ec55d7998}{write\+\_\+kcdnsyns} (F\+I\+L\+E $\ast$)
+\item 
+void \hyperlink{classclassol_a554e027fafa47fbf9ee68e9e5bd91de2}{read\+\_\+input\+\_\+patterns} (F\+I\+L\+E $\ast$)
+\item 
+void \hyperlink{classclassol_a4e4e5bee0655e84dfee6e98e6a75dc3b}{generate\+\_\+baserates} ()
+\item 
+void \hyperlink{classclassol_ae907498a8660fe41f7d9b41aad6e5d10}{run} (float, unsigned int)
+\item 
+void \hyperlink{classclassol_a88179d17f4ea568b7b58a329a741eb53}{output\+\_\+state} (F\+I\+L\+E $\ast$, unsigned int)
+\item 
+void \hyperlink{classclassol_ae571e028c069103e19bb4975bdb0dd47}{get\+Spikes\+From\+G\+P\+U} ()
+\item 
+void \hyperlink{classclassol_a08d82fc16288158062aef866a1e29a65}{get\+Spike\+Numbers\+From\+G\+P\+U} ()
+\item 
+void \hyperlink{classclassol_a54d61e7df53d16d7b8e1de46bcca6c6c}{output\+\_\+spikes} (F\+I\+L\+E $\ast$, unsigned int)
+\item 
+void \hyperlink{classclassol_af9dfaa92f0e4737dbadd9ec9cd203555}{sum\+\_\+spikes} ()
+\item 
+void \hyperlink{classclassol_af4700403ad71ef8d07c67883ad914f75}{get\+\_\+kcdnsyns} ()
+\item 
+\hyperlink{classclassol_a0f4a2bbdd48bcdfcc2abaa58a839232c}{classol} ()
+\item 
+\hyperlink{classclassol_a1273a6a57e2127a7b028bdbd92fed9b4}{$\sim$classol} ()
+\item 
+void \hyperlink{classclassol_ae1d319555e41d814ef2f8407418df8dc}{init} (unsigned int)
+\item 
+void \hyperlink{classclassol_a224bf755bd74d7512606518ae2658215}{allocate\+\_\+device\+\_\+mem\+\_\+patterns} ()
+\item 
+void \hyperlink{classclassol_aec30118b75a92ebca10eb227345cddfe}{allocate\+\_\+device\+\_\+mem\+\_\+input} ()
+\item 
+void \hyperlink{classclassol_aa831eea394ef445a1268f1928b737f27}{copy\+\_\+device\+\_\+mem\+\_\+input} ()
+\item 
+void \hyperlink{classclassol_ade653847f5de20fe2f944260d532ddf9}{free\+\_\+device\+\_\+mem} ()
+\item 
+void \hyperlink{classclassol_a838ec68a127f675e9d993fccd8aacd3f}{write\+\_\+input\+\_\+to\+\_\+file} (F\+I\+L\+E $\ast$)
+\item 
+void \hyperlink{classclassol_a79b3bb160419ce4f1ebb17327f9e77ca}{read\+\_\+input\+\_\+values} (F\+I\+L\+E $\ast$)
+\item 
+void \hyperlink{classclassol_ad02f7613b7db219eaf0edf7429f65475}{create\+\_\+input\+\_\+values} (float \hyperlink{PoissonIzh__sim_8h_afea36502e9d227ff62c5fb2719a246f2}{t})
+\item 
+void \hyperlink{classclassol_ae907498a8660fe41f7d9b41aad6e5d10}{run} (float, unsigned int)
+\item 
+void \hyperlink{classclassol_ae571e028c069103e19bb4975bdb0dd47}{get\+Spikes\+From\+G\+P\+U} ()
+\item 
+void \hyperlink{classclassol_a08d82fc16288158062aef866a1e29a65}{get\+Spike\+Numbers\+From\+G\+P\+U} ()
+\item 
+void \hyperlink{classclassol_a88179d17f4ea568b7b58a329a741eb53}{output\+\_\+state} (F\+I\+L\+E $\ast$, unsigned int)
+\item 
+void \hyperlink{classclassol_a54d61e7df53d16d7b8e1de46bcca6c6c}{output\+\_\+spikes} (F\+I\+L\+E $\ast$, unsigned int)
+\item 
+void \hyperlink{classclassol_af9dfaa92f0e4737dbadd9ec9cd203555}{sum\+\_\+spikes} ()
+\item 
+\hyperlink{classclassol_a0f4a2bbdd48bcdfcc2abaa58a839232c}{classol} ()
+\item 
+\hyperlink{classclassol_a1273a6a57e2127a7b028bdbd92fed9b4}{$\sim$classol} ()
+\item 
+void \hyperlink{classclassol_ae1d319555e41d814ef2f8407418df8dc}{init} (unsigned int)
+\item 
+void \hyperlink{classclassol_a224bf755bd74d7512606518ae2658215}{allocate\+\_\+device\+\_\+mem\+\_\+patterns} ()
+\item 
+void \hyperlink{classclassol_aec30118b75a92ebca10eb227345cddfe}{allocate\+\_\+device\+\_\+mem\+\_\+input} ()
+\item 
+void \hyperlink{classclassol_ade653847f5de20fe2f944260d532ddf9}{free\+\_\+device\+\_\+mem} ()
+\item 
+void \hyperlink{classclassol_a65f0ad084c38a82cde6cffcaf70aea0a}{read\+\_\+\+P\+N\+Izh1syns} (float $\ast$, F\+I\+L\+E $\ast$)
+\item 
+void \hyperlink{classclassol_a8f2e2c575501aa0bb2c5864adccd6aac}{read\+\_\+sparsesyns\+\_\+par} (int, struct Conductance, F\+I\+L\+E $\ast$, F\+I\+L\+E $\ast$, F\+I\+L\+E $\ast$)
+\item 
+void \hyperlink{classclassol_a554e027fafa47fbf9ee68e9e5bd91de2}{read\+\_\+input\+\_\+patterns} (F\+I\+L\+E $\ast$)
+\item 
+void \hyperlink{classclassol_a4e4e5bee0655e84dfee6e98e6a75dc3b}{generate\+\_\+baserates} ()
+\item 
+void \hyperlink{classclassol_ae907498a8660fe41f7d9b41aad6e5d10}{run} (float, unsigned int)
+\item 
+void \hyperlink{classclassol_a88179d17f4ea568b7b58a329a741eb53}{output\+\_\+state} (F\+I\+L\+E $\ast$, unsigned int)
+\item 
+void \hyperlink{classclassol_ae571e028c069103e19bb4975bdb0dd47}{get\+Spikes\+From\+G\+P\+U} ()
+\item 
+void \hyperlink{classclassol_a08d82fc16288158062aef866a1e29a65}{get\+Spike\+Numbers\+From\+G\+P\+U} ()
+\item 
+void \hyperlink{classclassol_a54d61e7df53d16d7b8e1de46bcca6c6c}{output\+\_\+spikes} (F\+I\+L\+E $\ast$, unsigned int)
+\item 
+void \hyperlink{classclassol_af9dfaa92f0e4737dbadd9ec9cd203555}{sum\+\_\+spikes} ()
+\end{DoxyCompactItemize}
+\subsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\hyperlink{classNNmodel}{N\+Nmodel} \hyperlink{classclassol_a9bc46b83d0158325cfdd8721936541d5}{model}
+\item 
+unsigned int $\ast$ \hyperlink{classclassol_ac0966348c8b0301162dfd20abe15720e}{the\+Rates}
+\item 
+unsigned int $\ast$ \hyperlink{classclassol_a808754f723275a8e8e76f456b63eaea3}{pattern}
+\item 
+unsigned int $\ast$ \hyperlink{classclassol_a7aa9c750f4ce5925003cb6b9cd215f8e}{baserates}
+\item 
+unsigned int $\ast$ \hyperlink{classclassol_a99dd2f7af0454b904234df4ac3400445}{d\+\_\+pattern}
+\item 
+unsigned int $\ast$ \hyperlink{classclassol_a0453758295a0bcabf7ae00949a51e717}{d\+\_\+baserates}
+\item 
+unsigned int \hyperlink{classclassol_abd188bdb202d67ec2c1a6316128f9c44}{sum\+P\+N}
+\item 
+unsigned int \hyperlink{classclassol_ad04f16a78fce1de429fc9371380fb15a}{sum\+K\+C}
+\item 
+unsigned int \hyperlink{classclassol_a9157c62195074a9bc34c5570e311315c}{sum\+L\+H\+I}
+\item 
+unsigned int \hyperlink{classclassol_ae8a843f0151b506bd3548c33c9d78c7c}{sum\+D\+N}
+\item 
+unsigned int \hyperlink{classclassol_aa6efbc353061391575387b33639d7961}{size\+\_\+g}
+\item 
+unsigned int \hyperlink{classclassol_a4c91e54037a58e0b286f10a986d46d9c}{offset}
+\item 
+uint64\+\_\+t $\ast$ \hyperlink{classclassol_a0b534a0ff6a56ab9e137f964bcf29d78}{the\+Rates}
+\item 
+\hyperlink{sizes_8h_afad04d16ebd8523dd0d5f74145280a40}{scalar} $\ast$ \hyperlink{classclassol_a39baf7a24fd68df1ba55b6f6dc5e3fd7}{p\+\_\+pattern}
+\item 
+uint64\+\_\+t $\ast$ \hyperlink{classclassol_a16f82061914e21c2724df0c0044f58dc}{pattern}
+\item 
+uint64\+\_\+t $\ast$ \hyperlink{classclassol_afc6650247da3c85e829264ccb5c4f569}{baserates}
+\item 
+uint64\+\_\+t $\ast$ \hyperlink{classclassol_ab864befa4f0f4b067b78933dbfd77ced}{d\+\_\+pattern}
+\item 
+uint64\+\_\+t $\ast$ \hyperlink{classclassol_adee39c3f46e3b1b691b047f7fae179c6}{d\+\_\+baserates}
+\item 
+float $\ast$ \hyperlink{classclassol_ab0eecc893b3ecf89505f2fd31e34403f}{p\+\_\+pattern}
+\item 
+float $\ast$ \hyperlink{classclassol_a5803e52deda310bbadbb22265045b8d9}{input1}
+\item 
+float $\ast$ \hyperlink{classclassol_a29d842c266bb5c84cdc3ef1e7d7d4e06}{d\+\_\+input1}
+\item 
+unsigned int \hyperlink{classclassol_a0cb78768c605c2cc8c3546e9d9e565ef}{sum\+Izh1}
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+This class cpontains the methods for running the M\+Body1 example model. 
+
+\subsection{Constructor \& Destructor Documentation}
+\hypertarget{classclassol_a0f4a2bbdd48bcdfcc2abaa58a839232c}{\index{classol@{classol}!classol@{classol}}
+\index{classol@{classol}!classol@{classol}}
+\subsubsection[{classol}]{\setlength{\rightskip}{0pt plus 5cm}classol\+::classol (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a0f4a2bbdd48bcdfcc2abaa58a839232c}
+\hypertarget{classclassol_a1273a6a57e2127a7b028bdbd92fed9b4}{\index{classol@{classol}!````~classol@{$\sim$classol}}
+\index{````~classol@{$\sim$classol}!classol@{classol}}
+\subsubsection[{$\sim$classol}]{\setlength{\rightskip}{0pt plus 5cm}classol\+::$\sim$classol (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a1273a6a57e2127a7b028bdbd92fed9b4}
+\hypertarget{classclassol_a0f4a2bbdd48bcdfcc2abaa58a839232c}{\index{classol@{classol}!classol@{classol}}
+\index{classol@{classol}!classol@{classol}}
+\subsubsection[{classol}]{\setlength{\rightskip}{0pt plus 5cm}classol\+::classol (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a0f4a2bbdd48bcdfcc2abaa58a839232c}
+\hypertarget{classclassol_a1273a6a57e2127a7b028bdbd92fed9b4}{\index{classol@{classol}!````~classol@{$\sim$classol}}
+\index{````~classol@{$\sim$classol}!classol@{classol}}
+\subsubsection[{$\sim$classol}]{\setlength{\rightskip}{0pt plus 5cm}classol\+::$\sim$classol (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a1273a6a57e2127a7b028bdbd92fed9b4}
+\hypertarget{classclassol_a0f4a2bbdd48bcdfcc2abaa58a839232c}{\index{classol@{classol}!classol@{classol}}
+\index{classol@{classol}!classol@{classol}}
+\subsubsection[{classol}]{\setlength{\rightskip}{0pt plus 5cm}classol\+::classol (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a0f4a2bbdd48bcdfcc2abaa58a839232c}
+\hypertarget{classclassol_a1273a6a57e2127a7b028bdbd92fed9b4}{\index{classol@{classol}!````~classol@{$\sim$classol}}
+\index{````~classol@{$\sim$classol}!classol@{classol}}
+\subsubsection[{$\sim$classol}]{\setlength{\rightskip}{0pt plus 5cm}classol\+::$\sim$classol (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a1273a6a57e2127a7b028bdbd92fed9b4}
+\hypertarget{classclassol_a0f4a2bbdd48bcdfcc2abaa58a839232c}{\index{classol@{classol}!classol@{classol}}
+\index{classol@{classol}!classol@{classol}}
+\subsubsection[{classol}]{\setlength{\rightskip}{0pt plus 5cm}classol\+::classol (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a0f4a2bbdd48bcdfcc2abaa58a839232c}
+\hypertarget{classclassol_a1273a6a57e2127a7b028bdbd92fed9b4}{\index{classol@{classol}!````~classol@{$\sim$classol}}
+\index{````~classol@{$\sim$classol}!classol@{classol}}
+\subsubsection[{$\sim$classol}]{\setlength{\rightskip}{0pt plus 5cm}classol\+::$\sim$classol (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a1273a6a57e2127a7b028bdbd92fed9b4}
+\hypertarget{classclassol_a0f4a2bbdd48bcdfcc2abaa58a839232c}{\index{classol@{classol}!classol@{classol}}
+\index{classol@{classol}!classol@{classol}}
+\subsubsection[{classol}]{\setlength{\rightskip}{0pt plus 5cm}classol\+::classol (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a0f4a2bbdd48bcdfcc2abaa58a839232c}
+\hypertarget{classclassol_a1273a6a57e2127a7b028bdbd92fed9b4}{\index{classol@{classol}!````~classol@{$\sim$classol}}
+\index{````~classol@{$\sim$classol}!classol@{classol}}
+\subsubsection[{$\sim$classol}]{\setlength{\rightskip}{0pt plus 5cm}classol\+::$\sim$classol (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a1273a6a57e2127a7b028bdbd92fed9b4}
+\hypertarget{classclassol_a0f4a2bbdd48bcdfcc2abaa58a839232c}{\index{classol@{classol}!classol@{classol}}
+\index{classol@{classol}!classol@{classol}}
+\subsubsection[{classol}]{\setlength{\rightskip}{0pt plus 5cm}classol\+::classol (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a0f4a2bbdd48bcdfcc2abaa58a839232c}
+\hypertarget{classclassol_a1273a6a57e2127a7b028bdbd92fed9b4}{\index{classol@{classol}!````~classol@{$\sim$classol}}
+\index{````~classol@{$\sim$classol}!classol@{classol}}
+\subsubsection[{$\sim$classol}]{\setlength{\rightskip}{0pt plus 5cm}classol\+::$\sim$classol (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a1273a6a57e2127a7b028bdbd92fed9b4}
+
+
+\subsection{Member Function Documentation}
+\hypertarget{classclassol_aec30118b75a92ebca10eb227345cddfe}{\index{classol@{classol}!allocate\+\_\+device\+\_\+mem\+\_\+input@{allocate\+\_\+device\+\_\+mem\+\_\+input}}
+\index{allocate\+\_\+device\+\_\+mem\+\_\+input@{allocate\+\_\+device\+\_\+mem\+\_\+input}!classol@{classol}}
+\subsubsection[{allocate\+\_\+device\+\_\+mem\+\_\+input}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::allocate\+\_\+device\+\_\+mem\+\_\+input (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_aec30118b75a92ebca10eb227345cddfe}
+\hypertarget{classclassol_aec30118b75a92ebca10eb227345cddfe}{\index{classol@{classol}!allocate\+\_\+device\+\_\+mem\+\_\+input@{allocate\+\_\+device\+\_\+mem\+\_\+input}}
+\index{allocate\+\_\+device\+\_\+mem\+\_\+input@{allocate\+\_\+device\+\_\+mem\+\_\+input}!classol@{classol}}
+\subsubsection[{allocate\+\_\+device\+\_\+mem\+\_\+input}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::allocate\+\_\+device\+\_\+mem\+\_\+input (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_aec30118b75a92ebca10eb227345cddfe}
+\hypertarget{classclassol_a224bf755bd74d7512606518ae2658215}{\index{classol@{classol}!allocate\+\_\+device\+\_\+mem\+\_\+patterns@{allocate\+\_\+device\+\_\+mem\+\_\+patterns}}
+\index{allocate\+\_\+device\+\_\+mem\+\_\+patterns@{allocate\+\_\+device\+\_\+mem\+\_\+patterns}!classol@{classol}}
+\subsubsection[{allocate\+\_\+device\+\_\+mem\+\_\+patterns}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::allocate\+\_\+device\+\_\+mem\+\_\+patterns (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a224bf755bd74d7512606518ae2658215}
+\hypertarget{classclassol_a224bf755bd74d7512606518ae2658215}{\index{classol@{classol}!allocate\+\_\+device\+\_\+mem\+\_\+patterns@{allocate\+\_\+device\+\_\+mem\+\_\+patterns}}
+\index{allocate\+\_\+device\+\_\+mem\+\_\+patterns@{allocate\+\_\+device\+\_\+mem\+\_\+patterns}!classol@{classol}}
+\subsubsection[{allocate\+\_\+device\+\_\+mem\+\_\+patterns}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::allocate\+\_\+device\+\_\+mem\+\_\+patterns (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a224bf755bd74d7512606518ae2658215}
+\hypertarget{classclassol_a224bf755bd74d7512606518ae2658215}{\index{classol@{classol}!allocate\+\_\+device\+\_\+mem\+\_\+patterns@{allocate\+\_\+device\+\_\+mem\+\_\+patterns}}
+\index{allocate\+\_\+device\+\_\+mem\+\_\+patterns@{allocate\+\_\+device\+\_\+mem\+\_\+patterns}!classol@{classol}}
+\subsubsection[{allocate\+\_\+device\+\_\+mem\+\_\+patterns}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::allocate\+\_\+device\+\_\+mem\+\_\+patterns (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a224bf755bd74d7512606518ae2658215}
+
+
+Method for allocating memory on the G\+P\+U device to hold the input patterns. 
+
+\hypertarget{classclassol_a224bf755bd74d7512606518ae2658215}{\index{classol@{classol}!allocate\+\_\+device\+\_\+mem\+\_\+patterns@{allocate\+\_\+device\+\_\+mem\+\_\+patterns}}
+\index{allocate\+\_\+device\+\_\+mem\+\_\+patterns@{allocate\+\_\+device\+\_\+mem\+\_\+patterns}!classol@{classol}}
+\subsubsection[{allocate\+\_\+device\+\_\+mem\+\_\+patterns}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::allocate\+\_\+device\+\_\+mem\+\_\+patterns (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a224bf755bd74d7512606518ae2658215}
+\hypertarget{classclassol_a224bf755bd74d7512606518ae2658215}{\index{classol@{classol}!allocate\+\_\+device\+\_\+mem\+\_\+patterns@{allocate\+\_\+device\+\_\+mem\+\_\+patterns}}
+\index{allocate\+\_\+device\+\_\+mem\+\_\+patterns@{allocate\+\_\+device\+\_\+mem\+\_\+patterns}!classol@{classol}}
+\subsubsection[{allocate\+\_\+device\+\_\+mem\+\_\+patterns}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::allocate\+\_\+device\+\_\+mem\+\_\+patterns (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a224bf755bd74d7512606518ae2658215}
+\hypertarget{classclassol_a224bf755bd74d7512606518ae2658215}{\index{classol@{classol}!allocate\+\_\+device\+\_\+mem\+\_\+patterns@{allocate\+\_\+device\+\_\+mem\+\_\+patterns}}
+\index{allocate\+\_\+device\+\_\+mem\+\_\+patterns@{allocate\+\_\+device\+\_\+mem\+\_\+patterns}!classol@{classol}}
+\subsubsection[{allocate\+\_\+device\+\_\+mem\+\_\+patterns}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::allocate\+\_\+device\+\_\+mem\+\_\+patterns (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a224bf755bd74d7512606518ae2658215}
+\hypertarget{classclassol_aa831eea394ef445a1268f1928b737f27}{\index{classol@{classol}!copy\+\_\+device\+\_\+mem\+\_\+input@{copy\+\_\+device\+\_\+mem\+\_\+input}}
+\index{copy\+\_\+device\+\_\+mem\+\_\+input@{copy\+\_\+device\+\_\+mem\+\_\+input}!classol@{classol}}
+\subsubsection[{copy\+\_\+device\+\_\+mem\+\_\+input}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::copy\+\_\+device\+\_\+mem\+\_\+input (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_aa831eea394ef445a1268f1928b737f27}
+\hypertarget{classclassol_ad02f7613b7db219eaf0edf7429f65475}{\index{classol@{classol}!create\+\_\+input\+\_\+values@{create\+\_\+input\+\_\+values}}
+\index{create\+\_\+input\+\_\+values@{create\+\_\+input\+\_\+values}!classol@{classol}}
+\subsubsection[{create\+\_\+input\+\_\+values}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::create\+\_\+input\+\_\+values (
+\begin{DoxyParamCaption}
+\item[{float}]{t}
+\end{DoxyParamCaption}
+)}}\label{classclassol_ad02f7613b7db219eaf0edf7429f65475}
+\hypertarget{classclassol_ade653847f5de20fe2f944260d532ddf9}{\index{classol@{classol}!free\+\_\+device\+\_\+mem@{free\+\_\+device\+\_\+mem}}
+\index{free\+\_\+device\+\_\+mem@{free\+\_\+device\+\_\+mem}!classol@{classol}}
+\subsubsection[{free\+\_\+device\+\_\+mem}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::free\+\_\+device\+\_\+mem (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_ade653847f5de20fe2f944260d532ddf9}
+\hypertarget{classclassol_ade653847f5de20fe2f944260d532ddf9}{\index{classol@{classol}!free\+\_\+device\+\_\+mem@{free\+\_\+device\+\_\+mem}}
+\index{free\+\_\+device\+\_\+mem@{free\+\_\+device\+\_\+mem}!classol@{classol}}
+\subsubsection[{free\+\_\+device\+\_\+mem}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::free\+\_\+device\+\_\+mem (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_ade653847f5de20fe2f944260d532ddf9}
+\hypertarget{classclassol_ade653847f5de20fe2f944260d532ddf9}{\index{classol@{classol}!free\+\_\+device\+\_\+mem@{free\+\_\+device\+\_\+mem}}
+\index{free\+\_\+device\+\_\+mem@{free\+\_\+device\+\_\+mem}!classol@{classol}}
+\subsubsection[{free\+\_\+device\+\_\+mem}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::free\+\_\+device\+\_\+mem (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_ade653847f5de20fe2f944260d532ddf9}
+
+
+Methods for unallocating the memory for input patterns on the G\+P\+U device. 
+
+\hypertarget{classclassol_ade653847f5de20fe2f944260d532ddf9}{\index{classol@{classol}!free\+\_\+device\+\_\+mem@{free\+\_\+device\+\_\+mem}}
+\index{free\+\_\+device\+\_\+mem@{free\+\_\+device\+\_\+mem}!classol@{classol}}
+\subsubsection[{free\+\_\+device\+\_\+mem}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::free\+\_\+device\+\_\+mem (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_ade653847f5de20fe2f944260d532ddf9}
+\hypertarget{classclassol_ade653847f5de20fe2f944260d532ddf9}{\index{classol@{classol}!free\+\_\+device\+\_\+mem@{free\+\_\+device\+\_\+mem}}
+\index{free\+\_\+device\+\_\+mem@{free\+\_\+device\+\_\+mem}!classol@{classol}}
+\subsubsection[{free\+\_\+device\+\_\+mem}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::free\+\_\+device\+\_\+mem (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_ade653847f5de20fe2f944260d532ddf9}
+\hypertarget{classclassol_ade653847f5de20fe2f944260d532ddf9}{\index{classol@{classol}!free\+\_\+device\+\_\+mem@{free\+\_\+device\+\_\+mem}}
+\index{free\+\_\+device\+\_\+mem@{free\+\_\+device\+\_\+mem}!classol@{classol}}
+\subsubsection[{free\+\_\+device\+\_\+mem}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::free\+\_\+device\+\_\+mem (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_ade653847f5de20fe2f944260d532ddf9}
+\hypertarget{classclassol_a4e4e5bee0655e84dfee6e98e6a75dc3b}{\index{classol@{classol}!generate\+\_\+baserates@{generate\+\_\+baserates}}
+\index{generate\+\_\+baserates@{generate\+\_\+baserates}!classol@{classol}}
+\subsubsection[{generate\+\_\+baserates}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::generate\+\_\+baserates (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a4e4e5bee0655e84dfee6e98e6a75dc3b}
+\hypertarget{classclassol_a4e4e5bee0655e84dfee6e98e6a75dc3b}{\index{classol@{classol}!generate\+\_\+baserates@{generate\+\_\+baserates}}
+\index{generate\+\_\+baserates@{generate\+\_\+baserates}!classol@{classol}}
+\subsubsection[{generate\+\_\+baserates}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::generate\+\_\+baserates (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a4e4e5bee0655e84dfee6e98e6a75dc3b}
+
+
+Method for calculating the baseline rates of the Poisson input neurons. 
+
+\hypertarget{classclassol_a4e4e5bee0655e84dfee6e98e6a75dc3b}{\index{classol@{classol}!generate\+\_\+baserates@{generate\+\_\+baserates}}
+\index{generate\+\_\+baserates@{generate\+\_\+baserates}!classol@{classol}}
+\subsubsection[{generate\+\_\+baserates}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::generate\+\_\+baserates (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a4e4e5bee0655e84dfee6e98e6a75dc3b}
+\hypertarget{classclassol_a4e4e5bee0655e84dfee6e98e6a75dc3b}{\index{classol@{classol}!generate\+\_\+baserates@{generate\+\_\+baserates}}
+\index{generate\+\_\+baserates@{generate\+\_\+baserates}!classol@{classol}}
+\subsubsection[{generate\+\_\+baserates}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::generate\+\_\+baserates (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a4e4e5bee0655e84dfee6e98e6a75dc3b}
+\hypertarget{classclassol_a4e4e5bee0655e84dfee6e98e6a75dc3b}{\index{classol@{classol}!generate\+\_\+baserates@{generate\+\_\+baserates}}
+\index{generate\+\_\+baserates@{generate\+\_\+baserates}!classol@{classol}}
+\subsubsection[{generate\+\_\+baserates}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::generate\+\_\+baserates (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a4e4e5bee0655e84dfee6e98e6a75dc3b}
+\hypertarget{classclassol_af4700403ad71ef8d07c67883ad914f75}{\index{classol@{classol}!get\+\_\+kcdnsyns@{get\+\_\+kcdnsyns}}
+\index{get\+\_\+kcdnsyns@{get\+\_\+kcdnsyns}!classol@{classol}}
+\subsubsection[{get\+\_\+kcdnsyns}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::get\+\_\+kcdnsyns (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_af4700403ad71ef8d07c67883ad914f75}
+
+
+Method for copying the synaptic conductances of the learning synapses between K\+Cs and D\+Ns (detector neurons) back to the C\+P\+U memory. 
+
+\hypertarget{classclassol_af4700403ad71ef8d07c67883ad914f75}{\index{classol@{classol}!get\+\_\+kcdnsyns@{get\+\_\+kcdnsyns}}
+\index{get\+\_\+kcdnsyns@{get\+\_\+kcdnsyns}!classol@{classol}}
+\subsubsection[{get\+\_\+kcdnsyns}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::get\+\_\+kcdnsyns (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_af4700403ad71ef8d07c67883ad914f75}
+\hypertarget{classclassol_af4700403ad71ef8d07c67883ad914f75}{\index{classol@{classol}!get\+\_\+kcdnsyns@{get\+\_\+kcdnsyns}}
+\index{get\+\_\+kcdnsyns@{get\+\_\+kcdnsyns}!classol@{classol}}
+\subsubsection[{get\+\_\+kcdnsyns}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::get\+\_\+kcdnsyns (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_af4700403ad71ef8d07c67883ad914f75}
+\hypertarget{classclassol_af4700403ad71ef8d07c67883ad914f75}{\index{classol@{classol}!get\+\_\+kcdnsyns@{get\+\_\+kcdnsyns}}
+\index{get\+\_\+kcdnsyns@{get\+\_\+kcdnsyns}!classol@{classol}}
+\subsubsection[{get\+\_\+kcdnsyns}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::get\+\_\+kcdnsyns (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_af4700403ad71ef8d07c67883ad914f75}
+\hypertarget{classclassol_a08d82fc16288158062aef866a1e29a65}{\index{classol@{classol}!get\+Spike\+Numbers\+From\+G\+P\+U@{get\+Spike\+Numbers\+From\+G\+P\+U}}
+\index{get\+Spike\+Numbers\+From\+G\+P\+U@{get\+Spike\+Numbers\+From\+G\+P\+U}!classol@{classol}}
+\subsubsection[{get\+Spike\+Numbers\+From\+G\+P\+U}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::get\+Spike\+Numbers\+From\+G\+P\+U (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a08d82fc16288158062aef866a1e29a65}
+\hypertarget{classclassol_a08d82fc16288158062aef866a1e29a65}{\index{classol@{classol}!get\+Spike\+Numbers\+From\+G\+P\+U@{get\+Spike\+Numbers\+From\+G\+P\+U}}
+\index{get\+Spike\+Numbers\+From\+G\+P\+U@{get\+Spike\+Numbers\+From\+G\+P\+U}!classol@{classol}}
+\subsubsection[{get\+Spike\+Numbers\+From\+G\+P\+U}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::get\+Spike\+Numbers\+From\+G\+P\+U (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a08d82fc16288158062aef866a1e29a65}
+\hypertarget{classclassol_a08d82fc16288158062aef866a1e29a65}{\index{classol@{classol}!get\+Spike\+Numbers\+From\+G\+P\+U@{get\+Spike\+Numbers\+From\+G\+P\+U}}
+\index{get\+Spike\+Numbers\+From\+G\+P\+U@{get\+Spike\+Numbers\+From\+G\+P\+U}!classol@{classol}}
+\subsubsection[{get\+Spike\+Numbers\+From\+G\+P\+U}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::get\+Spike\+Numbers\+From\+G\+P\+U (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a08d82fc16288158062aef866a1e29a65}
+
+
+Method for copying the number of spikes in all neuron populations that have occurred during the last time step. 
+
+This method is a simple wrapper for the convenience function copy\+Spike\+N\+From\+Device() provided by Ge\+N\+N. \hypertarget{classclassol_a08d82fc16288158062aef866a1e29a65}{\index{classol@{classol}!get\+Spike\+Numbers\+From\+G\+P\+U@{get\+Spike\+Numbers\+From\+G\+P\+U}}
+\index{get\+Spike\+Numbers\+From\+G\+P\+U@{get\+Spike\+Numbers\+From\+G\+P\+U}!classol@{classol}}
+\subsubsection[{get\+Spike\+Numbers\+From\+G\+P\+U}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::get\+Spike\+Numbers\+From\+G\+P\+U (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a08d82fc16288158062aef866a1e29a65}
+\hypertarget{classclassol_a08d82fc16288158062aef866a1e29a65}{\index{classol@{classol}!get\+Spike\+Numbers\+From\+G\+P\+U@{get\+Spike\+Numbers\+From\+G\+P\+U}}
+\index{get\+Spike\+Numbers\+From\+G\+P\+U@{get\+Spike\+Numbers\+From\+G\+P\+U}!classol@{classol}}
+\subsubsection[{get\+Spike\+Numbers\+From\+G\+P\+U}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::get\+Spike\+Numbers\+From\+G\+P\+U (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a08d82fc16288158062aef866a1e29a65}
+\hypertarget{classclassol_a08d82fc16288158062aef866a1e29a65}{\index{classol@{classol}!get\+Spike\+Numbers\+From\+G\+P\+U@{get\+Spike\+Numbers\+From\+G\+P\+U}}
+\index{get\+Spike\+Numbers\+From\+G\+P\+U@{get\+Spike\+Numbers\+From\+G\+P\+U}!classol@{classol}}
+\subsubsection[{get\+Spike\+Numbers\+From\+G\+P\+U}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::get\+Spike\+Numbers\+From\+G\+P\+U (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a08d82fc16288158062aef866a1e29a65}
+\hypertarget{classclassol_ae571e028c069103e19bb4975bdb0dd47}{\index{classol@{classol}!get\+Spikes\+From\+G\+P\+U@{get\+Spikes\+From\+G\+P\+U}}
+\index{get\+Spikes\+From\+G\+P\+U@{get\+Spikes\+From\+G\+P\+U}!classol@{classol}}
+\subsubsection[{get\+Spikes\+From\+G\+P\+U}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::get\+Spikes\+From\+G\+P\+U (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_ae571e028c069103e19bb4975bdb0dd47}
+\hypertarget{classclassol_ae571e028c069103e19bb4975bdb0dd47}{\index{classol@{classol}!get\+Spikes\+From\+G\+P\+U@{get\+Spikes\+From\+G\+P\+U}}
+\index{get\+Spikes\+From\+G\+P\+U@{get\+Spikes\+From\+G\+P\+U}!classol@{classol}}
+\subsubsection[{get\+Spikes\+From\+G\+P\+U}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::get\+Spikes\+From\+G\+P\+U (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_ae571e028c069103e19bb4975bdb0dd47}
+\hypertarget{classclassol_ae571e028c069103e19bb4975bdb0dd47}{\index{classol@{classol}!get\+Spikes\+From\+G\+P\+U@{get\+Spikes\+From\+G\+P\+U}}
+\index{get\+Spikes\+From\+G\+P\+U@{get\+Spikes\+From\+G\+P\+U}!classol@{classol}}
+\subsubsection[{get\+Spikes\+From\+G\+P\+U}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::get\+Spikes\+From\+G\+P\+U (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_ae571e028c069103e19bb4975bdb0dd47}
+
+
+Method for copying all spikes of the last time step from the G\+P\+U. 
+
+This is a simple wrapper for the convenience function copy\+Spikes\+From\+Device() which is provided by Ge\+N\+N. \hypertarget{classclassol_ae571e028c069103e19bb4975bdb0dd47}{\index{classol@{classol}!get\+Spikes\+From\+G\+P\+U@{get\+Spikes\+From\+G\+P\+U}}
+\index{get\+Spikes\+From\+G\+P\+U@{get\+Spikes\+From\+G\+P\+U}!classol@{classol}}
+\subsubsection[{get\+Spikes\+From\+G\+P\+U}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::get\+Spikes\+From\+G\+P\+U (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_ae571e028c069103e19bb4975bdb0dd47}
+\hypertarget{classclassol_ae571e028c069103e19bb4975bdb0dd47}{\index{classol@{classol}!get\+Spikes\+From\+G\+P\+U@{get\+Spikes\+From\+G\+P\+U}}
+\index{get\+Spikes\+From\+G\+P\+U@{get\+Spikes\+From\+G\+P\+U}!classol@{classol}}
+\subsubsection[{get\+Spikes\+From\+G\+P\+U}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::get\+Spikes\+From\+G\+P\+U (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_ae571e028c069103e19bb4975bdb0dd47}
+\hypertarget{classclassol_ae571e028c069103e19bb4975bdb0dd47}{\index{classol@{classol}!get\+Spikes\+From\+G\+P\+U@{get\+Spikes\+From\+G\+P\+U}}
+\index{get\+Spikes\+From\+G\+P\+U@{get\+Spikes\+From\+G\+P\+U}!classol@{classol}}
+\subsubsection[{get\+Spikes\+From\+G\+P\+U}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::get\+Spikes\+From\+G\+P\+U (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_ae571e028c069103e19bb4975bdb0dd47}
+\hypertarget{classclassol_ae1d319555e41d814ef2f8407418df8dc}{\index{classol@{classol}!init@{init}}
+\index{init@{init}!classol@{classol}}
+\subsubsection[{init}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::init (
+\begin{DoxyParamCaption}
+\item[{unsigned}]{int}
+\end{DoxyParamCaption}
+)}}\label{classclassol_ae1d319555e41d814ef2f8407418df8dc}
+\hypertarget{classclassol_ae1d319555e41d814ef2f8407418df8dc}{\index{classol@{classol}!init@{init}}
+\index{init@{init}!classol@{classol}}
+\subsubsection[{init}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::init (
+\begin{DoxyParamCaption}
+\item[{unsigned}]{int}
+\end{DoxyParamCaption}
+)}}\label{classclassol_ae1d319555e41d814ef2f8407418df8dc}
+\hypertarget{classclassol_ae1d319555e41d814ef2f8407418df8dc}{\index{classol@{classol}!init@{init}}
+\index{init@{init}!classol@{classol}}
+\subsubsection[{init}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::init (
+\begin{DoxyParamCaption}
+\item[{unsigned int}]{which}
+\end{DoxyParamCaption}
+)}}\label{classclassol_ae1d319555e41d814ef2f8407418df8dc}
+
+
+Method for initialising variables. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em which} & Flag defining whether G\+P\+U or C\+P\+U only version is run \\
+\hline
+\end{DoxyParams}
+\hypertarget{classclassol_ae1d319555e41d814ef2f8407418df8dc}{\index{classol@{classol}!init@{init}}
+\index{init@{init}!classol@{classol}}
+\subsubsection[{init}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::init (
+\begin{DoxyParamCaption}
+\item[{unsigned}]{int}
+\end{DoxyParamCaption}
+)}}\label{classclassol_ae1d319555e41d814ef2f8407418df8dc}
+\hypertarget{classclassol_ae1d319555e41d814ef2f8407418df8dc}{\index{classol@{classol}!init@{init}}
+\index{init@{init}!classol@{classol}}
+\subsubsection[{init}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::init (
+\begin{DoxyParamCaption}
+\item[{unsigned}]{int}
+\end{DoxyParamCaption}
+)}}\label{classclassol_ae1d319555e41d814ef2f8407418df8dc}
+\hypertarget{classclassol_ae1d319555e41d814ef2f8407418df8dc}{\index{classol@{classol}!init@{init}}
+\index{init@{init}!classol@{classol}}
+\subsubsection[{init}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::init (
+\begin{DoxyParamCaption}
+\item[{unsigned}]{int}
+\end{DoxyParamCaption}
+)}}\label{classclassol_ae1d319555e41d814ef2f8407418df8dc}
+\hypertarget{classclassol_a54d61e7df53d16d7b8e1de46bcca6c6c}{\index{classol@{classol}!output\+\_\+spikes@{output\+\_\+spikes}}
+\index{output\+\_\+spikes@{output\+\_\+spikes}!classol@{classol}}
+\subsubsection[{output\+\_\+spikes}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::output\+\_\+spikes (
+\begin{DoxyParamCaption}
+\item[{F\+I\+L\+E $\ast$}]{, }
+\item[{unsigned}]{int}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a54d61e7df53d16d7b8e1de46bcca6c6c}
+\hypertarget{classclassol_a54d61e7df53d16d7b8e1de46bcca6c6c}{\index{classol@{classol}!output\+\_\+spikes@{output\+\_\+spikes}}
+\index{output\+\_\+spikes@{output\+\_\+spikes}!classol@{classol}}
+\subsubsection[{output\+\_\+spikes}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::output\+\_\+spikes (
+\begin{DoxyParamCaption}
+\item[{F\+I\+L\+E $\ast$}]{, }
+\item[{unsigned}]{int}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a54d61e7df53d16d7b8e1de46bcca6c6c}
+\hypertarget{classclassol_a54d61e7df53d16d7b8e1de46bcca6c6c}{\index{classol@{classol}!output\+\_\+spikes@{output\+\_\+spikes}}
+\index{output\+\_\+spikes@{output\+\_\+spikes}!classol@{classol}}
+\subsubsection[{output\+\_\+spikes}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::output\+\_\+spikes (
+\begin{DoxyParamCaption}
+\item[{F\+I\+L\+E $\ast$}]{f, }
+\item[{unsigned int}]{which}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a54d61e7df53d16d7b8e1de46bcca6c6c}
+
+
+Method for writing the spikes occurred in the last time step to a file. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em f} & File handle for a file to write spike times to \\
+\hline
+{\em which} & Flag determining whether using G\+P\+U or C\+P\+U only \\
+\hline
+\end{DoxyParams}
+\hypertarget{classclassol_a54d61e7df53d16d7b8e1de46bcca6c6c}{\index{classol@{classol}!output\+\_\+spikes@{output\+\_\+spikes}}
+\index{output\+\_\+spikes@{output\+\_\+spikes}!classol@{classol}}
+\subsubsection[{output\+\_\+spikes}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::output\+\_\+spikes (
+\begin{DoxyParamCaption}
+\item[{F\+I\+L\+E $\ast$}]{, }
+\item[{unsigned}]{int}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a54d61e7df53d16d7b8e1de46bcca6c6c}
+\hypertarget{classclassol_a54d61e7df53d16d7b8e1de46bcca6c6c}{\index{classol@{classol}!output\+\_\+spikes@{output\+\_\+spikes}}
+\index{output\+\_\+spikes@{output\+\_\+spikes}!classol@{classol}}
+\subsubsection[{output\+\_\+spikes}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::output\+\_\+spikes (
+\begin{DoxyParamCaption}
+\item[{F\+I\+L\+E $\ast$}]{, }
+\item[{unsigned}]{int}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a54d61e7df53d16d7b8e1de46bcca6c6c}
+\hypertarget{classclassol_a54d61e7df53d16d7b8e1de46bcca6c6c}{\index{classol@{classol}!output\+\_\+spikes@{output\+\_\+spikes}}
+\index{output\+\_\+spikes@{output\+\_\+spikes}!classol@{classol}}
+\subsubsection[{output\+\_\+spikes}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::output\+\_\+spikes (
+\begin{DoxyParamCaption}
+\item[{F\+I\+L\+E $\ast$}]{, }
+\item[{unsigned}]{int}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a54d61e7df53d16d7b8e1de46bcca6c6c}
+\hypertarget{classclassol_a88179d17f4ea568b7b58a329a741eb53}{\index{classol@{classol}!output\+\_\+state@{output\+\_\+state}}
+\index{output\+\_\+state@{output\+\_\+state}!classol@{classol}}
+\subsubsection[{output\+\_\+state}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::output\+\_\+state (
+\begin{DoxyParamCaption}
+\item[{F\+I\+L\+E $\ast$}]{, }
+\item[{unsigned}]{int}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a88179d17f4ea568b7b58a329a741eb53}
+\hypertarget{classclassol_a88179d17f4ea568b7b58a329a741eb53}{\index{classol@{classol}!output\+\_\+state@{output\+\_\+state}}
+\index{output\+\_\+state@{output\+\_\+state}!classol@{classol}}
+\subsubsection[{output\+\_\+state}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::output\+\_\+state (
+\begin{DoxyParamCaption}
+\item[{F\+I\+L\+E $\ast$}]{, }
+\item[{unsigned}]{int}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a88179d17f4ea568b7b58a329a741eb53}
+\hypertarget{classclassol_a88179d17f4ea568b7b58a329a741eb53}{\index{classol@{classol}!output\+\_\+state@{output\+\_\+state}}
+\index{output\+\_\+state@{output\+\_\+state}!classol@{classol}}
+\subsubsection[{output\+\_\+state}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::output\+\_\+state (
+\begin{DoxyParamCaption}
+\item[{F\+I\+L\+E $\ast$}]{f, }
+\item[{unsigned int}]{which}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a88179d17f4ea568b7b58a329a741eb53}
+
+
+Method for copying from device and writing out to file of the entire state of the model. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em f} & File handle for a file to write the model state to \\
+\hline
+{\em which} & Flag determining whether using G\+P\+U or C\+P\+U only \\
+\hline
+\end{DoxyParams}
+\hypertarget{classclassol_a88179d17f4ea568b7b58a329a741eb53}{\index{classol@{classol}!output\+\_\+state@{output\+\_\+state}}
+\index{output\+\_\+state@{output\+\_\+state}!classol@{classol}}
+\subsubsection[{output\+\_\+state}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::output\+\_\+state (
+\begin{DoxyParamCaption}
+\item[{F\+I\+L\+E $\ast$}]{, }
+\item[{unsigned}]{int}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a88179d17f4ea568b7b58a329a741eb53}
+\hypertarget{classclassol_a88179d17f4ea568b7b58a329a741eb53}{\index{classol@{classol}!output\+\_\+state@{output\+\_\+state}}
+\index{output\+\_\+state@{output\+\_\+state}!classol@{classol}}
+\subsubsection[{output\+\_\+state}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::output\+\_\+state (
+\begin{DoxyParamCaption}
+\item[{F\+I\+L\+E $\ast$}]{, }
+\item[{unsigned}]{int}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a88179d17f4ea568b7b58a329a741eb53}
+\hypertarget{classclassol_a88179d17f4ea568b7b58a329a741eb53}{\index{classol@{classol}!output\+\_\+state@{output\+\_\+state}}
+\index{output\+\_\+state@{output\+\_\+state}!classol@{classol}}
+\subsubsection[{output\+\_\+state}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::output\+\_\+state (
+\begin{DoxyParamCaption}
+\item[{F\+I\+L\+E $\ast$}]{, }
+\item[{unsigned}]{int}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a88179d17f4ea568b7b58a329a741eb53}
+\hypertarget{classclassol_a554e027fafa47fbf9ee68e9e5bd91de2}{\index{classol@{classol}!read\+\_\+input\+\_\+patterns@{read\+\_\+input\+\_\+patterns}}
+\index{read\+\_\+input\+\_\+patterns@{read\+\_\+input\+\_\+patterns}!classol@{classol}}
+\subsubsection[{read\+\_\+input\+\_\+patterns}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::read\+\_\+input\+\_\+patterns (
+\begin{DoxyParamCaption}
+\item[{F\+I\+L\+E $\ast$}]{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a554e027fafa47fbf9ee68e9e5bd91de2}
+\hypertarget{classclassol_a554e027fafa47fbf9ee68e9e5bd91de2}{\index{classol@{classol}!read\+\_\+input\+\_\+patterns@{read\+\_\+input\+\_\+patterns}}
+\index{read\+\_\+input\+\_\+patterns@{read\+\_\+input\+\_\+patterns}!classol@{classol}}
+\subsubsection[{read\+\_\+input\+\_\+patterns}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::read\+\_\+input\+\_\+patterns (
+\begin{DoxyParamCaption}
+\item[{F\+I\+L\+E $\ast$}]{f}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a554e027fafa47fbf9ee68e9e5bd91de2}
+
+
+Method for reading the input patterns from a file. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em f} & File handle for a file containing input patterns \\
+\hline
+\end{DoxyParams}
+\hypertarget{classclassol_a554e027fafa47fbf9ee68e9e5bd91de2}{\index{classol@{classol}!read\+\_\+input\+\_\+patterns@{read\+\_\+input\+\_\+patterns}}
+\index{read\+\_\+input\+\_\+patterns@{read\+\_\+input\+\_\+patterns}!classol@{classol}}
+\subsubsection[{read\+\_\+input\+\_\+patterns}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::read\+\_\+input\+\_\+patterns (
+\begin{DoxyParamCaption}
+\item[{F\+I\+L\+E $\ast$}]{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a554e027fafa47fbf9ee68e9e5bd91de2}
+\hypertarget{classclassol_a554e027fafa47fbf9ee68e9e5bd91de2}{\index{classol@{classol}!read\+\_\+input\+\_\+patterns@{read\+\_\+input\+\_\+patterns}}
+\index{read\+\_\+input\+\_\+patterns@{read\+\_\+input\+\_\+patterns}!classol@{classol}}
+\subsubsection[{read\+\_\+input\+\_\+patterns}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::read\+\_\+input\+\_\+patterns (
+\begin{DoxyParamCaption}
+\item[{F\+I\+L\+E $\ast$}]{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a554e027fafa47fbf9ee68e9e5bd91de2}
+\hypertarget{classclassol_a554e027fafa47fbf9ee68e9e5bd91de2}{\index{classol@{classol}!read\+\_\+input\+\_\+patterns@{read\+\_\+input\+\_\+patterns}}
+\index{read\+\_\+input\+\_\+patterns@{read\+\_\+input\+\_\+patterns}!classol@{classol}}
+\subsubsection[{read\+\_\+input\+\_\+patterns}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::read\+\_\+input\+\_\+patterns (
+\begin{DoxyParamCaption}
+\item[{F\+I\+L\+E $\ast$}]{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a554e027fafa47fbf9ee68e9e5bd91de2}
+\hypertarget{classclassol_a79b3bb160419ce4f1ebb17327f9e77ca}{\index{classol@{classol}!read\+\_\+input\+\_\+values@{read\+\_\+input\+\_\+values}}
+\index{read\+\_\+input\+\_\+values@{read\+\_\+input\+\_\+values}!classol@{classol}}
+\subsubsection[{read\+\_\+input\+\_\+values}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::read\+\_\+input\+\_\+values (
+\begin{DoxyParamCaption}
+\item[{F\+I\+L\+E $\ast$}]{f}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a79b3bb160419ce4f1ebb17327f9e77ca}
+\hypertarget{classclassol_a5530acb74e884fe7b802e2e6eaec9c3a}{\index{classol@{classol}!read\+\_\+kcdnsyns@{read\+\_\+kcdnsyns}}
+\index{read\+\_\+kcdnsyns@{read\+\_\+kcdnsyns}!classol@{classol}}
+\subsubsection[{read\+\_\+kcdnsyns}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::read\+\_\+kcdnsyns (
+\begin{DoxyParamCaption}
+\item[{F\+I\+L\+E $\ast$}]{f}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a5530acb74e884fe7b802e2e6eaec9c3a}
+
+
+Method for reading the connectivity between K\+Cs and D\+Ns (detector neurons) from a file. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em f} & File handle for a file containing K\+C to D\+N (detector neuron) conductivity values \\
+\hline
+\end{DoxyParams}
+\hypertarget{classclassol_a5530acb74e884fe7b802e2e6eaec9c3a}{\index{classol@{classol}!read\+\_\+kcdnsyns@{read\+\_\+kcdnsyns}}
+\index{read\+\_\+kcdnsyns@{read\+\_\+kcdnsyns}!classol@{classol}}
+\subsubsection[{read\+\_\+kcdnsyns}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::read\+\_\+kcdnsyns (
+\begin{DoxyParamCaption}
+\item[{F\+I\+L\+E $\ast$}]{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a5530acb74e884fe7b802e2e6eaec9c3a}
+\hypertarget{classclassol_a5530acb74e884fe7b802e2e6eaec9c3a}{\index{classol@{classol}!read\+\_\+kcdnsyns@{read\+\_\+kcdnsyns}}
+\index{read\+\_\+kcdnsyns@{read\+\_\+kcdnsyns}!classol@{classol}}
+\subsubsection[{read\+\_\+kcdnsyns}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::read\+\_\+kcdnsyns (
+\begin{DoxyParamCaption}
+\item[{F\+I\+L\+E $\ast$}]{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a5530acb74e884fe7b802e2e6eaec9c3a}
+\hypertarget{classclassol_a5530acb74e884fe7b802e2e6eaec9c3a}{\index{classol@{classol}!read\+\_\+kcdnsyns@{read\+\_\+kcdnsyns}}
+\index{read\+\_\+kcdnsyns@{read\+\_\+kcdnsyns}!classol@{classol}}
+\subsubsection[{read\+\_\+kcdnsyns}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::read\+\_\+kcdnsyns (
+\begin{DoxyParamCaption}
+\item[{F\+I\+L\+E $\ast$}]{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a5530acb74e884fe7b802e2e6eaec9c3a}
+\hypertarget{classclassol_a65f0ad084c38a82cde6cffcaf70aea0a}{\index{classol@{classol}!read\+\_\+\+P\+N\+Izh1syns@{read\+\_\+\+P\+N\+Izh1syns}}
+\index{read\+\_\+\+P\+N\+Izh1syns@{read\+\_\+\+P\+N\+Izh1syns}!classol@{classol}}
+\subsubsection[{read\+\_\+\+P\+N\+Izh1syns}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::read\+\_\+\+P\+N\+Izh1syns (
+\begin{DoxyParamCaption}
+\item[{float $\ast$}]{gp, }
+\item[{F\+I\+L\+E $\ast$}]{f}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a65f0ad084c38a82cde6cffcaf70aea0a}
+\hypertarget{classclassol_a1529539e9d2424d56016ad8e60aa0b79}{\index{classol@{classol}!read\+\_\+pnkcsyns@{read\+\_\+pnkcsyns}}
+\index{read\+\_\+pnkcsyns@{read\+\_\+pnkcsyns}!classol@{classol}}
+\subsubsection[{read\+\_\+pnkcsyns}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::read\+\_\+pnkcsyns (
+\begin{DoxyParamCaption}
+\item[{F\+I\+L\+E $\ast$}]{f}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a1529539e9d2424d56016ad8e60aa0b79}
+
+
+Method for reading the connectivity between P\+Ns and K\+Cs from a file. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em f} & File handle for a file containing P\+N to K\+C conductivity values \\
+\hline
+\end{DoxyParams}
+\hypertarget{classclassol_a1529539e9d2424d56016ad8e60aa0b79}{\index{classol@{classol}!read\+\_\+pnkcsyns@{read\+\_\+pnkcsyns}}
+\index{read\+\_\+pnkcsyns@{read\+\_\+pnkcsyns}!classol@{classol}}
+\subsubsection[{read\+\_\+pnkcsyns}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::read\+\_\+pnkcsyns (
+\begin{DoxyParamCaption}
+\item[{F\+I\+L\+E $\ast$}]{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a1529539e9d2424d56016ad8e60aa0b79}
+\hypertarget{classclassol_a1529539e9d2424d56016ad8e60aa0b79}{\index{classol@{classol}!read\+\_\+pnkcsyns@{read\+\_\+pnkcsyns}}
+\index{read\+\_\+pnkcsyns@{read\+\_\+pnkcsyns}!classol@{classol}}
+\subsubsection[{read\+\_\+pnkcsyns}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::read\+\_\+pnkcsyns (
+\begin{DoxyParamCaption}
+\item[{F\+I\+L\+E $\ast$}]{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a1529539e9d2424d56016ad8e60aa0b79}
+\hypertarget{classclassol_a1529539e9d2424d56016ad8e60aa0b79}{\index{classol@{classol}!read\+\_\+pnkcsyns@{read\+\_\+pnkcsyns}}
+\index{read\+\_\+pnkcsyns@{read\+\_\+pnkcsyns}!classol@{classol}}
+\subsubsection[{read\+\_\+pnkcsyns}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::read\+\_\+pnkcsyns (
+\begin{DoxyParamCaption}
+\item[{F\+I\+L\+E $\ast$}]{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a1529539e9d2424d56016ad8e60aa0b79}
+\hypertarget{classclassol_a135ee4ab60d3afa11c5cba74d362fbe6}{\index{classol@{classol}!read\+\_\+pnlhisyns@{read\+\_\+pnlhisyns}}
+\index{read\+\_\+pnlhisyns@{read\+\_\+pnlhisyns}!classol@{classol}}
+\subsubsection[{read\+\_\+pnlhisyns}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::read\+\_\+pnlhisyns (
+\begin{DoxyParamCaption}
+\item[{F\+I\+L\+E $\ast$}]{f}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a135ee4ab60d3afa11c5cba74d362fbe6}
+
+
+Method for reading the connectivity between P\+Ns and L\+H\+Is from a file. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em f} & File handle for a file containing P\+N to L\+H\+I conductivity values \\
+\hline
+\end{DoxyParams}
+\hypertarget{classclassol_a135ee4ab60d3afa11c5cba74d362fbe6}{\index{classol@{classol}!read\+\_\+pnlhisyns@{read\+\_\+pnlhisyns}}
+\index{read\+\_\+pnlhisyns@{read\+\_\+pnlhisyns}!classol@{classol}}
+\subsubsection[{read\+\_\+pnlhisyns}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::read\+\_\+pnlhisyns (
+\begin{DoxyParamCaption}
+\item[{F\+I\+L\+E $\ast$}]{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a135ee4ab60d3afa11c5cba74d362fbe6}
+\hypertarget{classclassol_a135ee4ab60d3afa11c5cba74d362fbe6}{\index{classol@{classol}!read\+\_\+pnlhisyns@{read\+\_\+pnlhisyns}}
+\index{read\+\_\+pnlhisyns@{read\+\_\+pnlhisyns}!classol@{classol}}
+\subsubsection[{read\+\_\+pnlhisyns}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::read\+\_\+pnlhisyns (
+\begin{DoxyParamCaption}
+\item[{F\+I\+L\+E $\ast$}]{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a135ee4ab60d3afa11c5cba74d362fbe6}
+\hypertarget{classclassol_a135ee4ab60d3afa11c5cba74d362fbe6}{\index{classol@{classol}!read\+\_\+pnlhisyns@{read\+\_\+pnlhisyns}}
+\index{read\+\_\+pnlhisyns@{read\+\_\+pnlhisyns}!classol@{classol}}
+\subsubsection[{read\+\_\+pnlhisyns}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::read\+\_\+pnlhisyns (
+\begin{DoxyParamCaption}
+\item[{F\+I\+L\+E $\ast$}]{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a135ee4ab60d3afa11c5cba74d362fbe6}
+\hypertarget{classclassol_a8f2e2c575501aa0bb2c5864adccd6aac}{\index{classol@{classol}!read\+\_\+sparsesyns\+\_\+par@{read\+\_\+sparsesyns\+\_\+par}}
+\index{read\+\_\+sparsesyns\+\_\+par@{read\+\_\+sparsesyns\+\_\+par}!classol@{classol}}
+\subsubsection[{read\+\_\+sparsesyns\+\_\+par}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::read\+\_\+sparsesyns\+\_\+par (
+\begin{DoxyParamCaption}
+\item[{int}]{, }
+\item[{struct Conductance}]{, }
+\item[{F\+I\+L\+E $\ast$}]{, }
+\item[{F\+I\+L\+E $\ast$}]{, }
+\item[{F\+I\+L\+E $\ast$}]{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a8f2e2c575501aa0bb2c5864adccd6aac}
+\hypertarget{classclassol_a8f2e2c575501aa0bb2c5864adccd6aac}{\index{classol@{classol}!read\+\_\+sparsesyns\+\_\+par@{read\+\_\+sparsesyns\+\_\+par}}
+\index{read\+\_\+sparsesyns\+\_\+par@{read\+\_\+sparsesyns\+\_\+par}!classol@{classol}}
+\subsubsection[{read\+\_\+sparsesyns\+\_\+par}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::read\+\_\+sparsesyns\+\_\+par (
+\begin{DoxyParamCaption}
+\item[{int}]{syn\+Ind, }
+\item[{struct Conductance}]{C, }
+\item[{F\+I\+L\+E $\ast$}]{f\+\_\+ind, }
+\item[{F\+I\+L\+E $\ast$}]{f\+\_\+ind\+In\+G, }
+\item[{F\+I\+L\+E $\ast$}]{f\+\_\+g}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a8f2e2c575501aa0bb2c5864adccd6aac}
+
+\begin{DoxyParams}{Parameters}
+{\em f\+\_\+g} & File handle for a file containing sparse conductivity values \\
+\hline
+\end{DoxyParams}
+\hypertarget{classclassol_a8f2e2c575501aa0bb2c5864adccd6aac}{\index{classol@{classol}!read\+\_\+sparsesyns\+\_\+par@{read\+\_\+sparsesyns\+\_\+par}}
+\index{read\+\_\+sparsesyns\+\_\+par@{read\+\_\+sparsesyns\+\_\+par}!classol@{classol}}
+\subsubsection[{read\+\_\+sparsesyns\+\_\+par}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::read\+\_\+sparsesyns\+\_\+par (
+\begin{DoxyParamCaption}
+\item[{int}]{, }
+\item[{struct Conductance}]{, }
+\item[{F\+I\+L\+E $\ast$}]{, }
+\item[{F\+I\+L\+E $\ast$}]{, }
+\item[{F\+I\+L\+E $\ast$}]{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a8f2e2c575501aa0bb2c5864adccd6aac}
+\hypertarget{classclassol_a0aa3dc991bd9e89071e9333d32757157}{\index{classol@{classol}!read\+\_\+sparsesyns\+\_\+par@{read\+\_\+sparsesyns\+\_\+par}}
+\index{read\+\_\+sparsesyns\+\_\+par@{read\+\_\+sparsesyns\+\_\+par}!classol@{classol}}
+\subsubsection[{read\+\_\+sparsesyns\+\_\+par}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::read\+\_\+sparsesyns\+\_\+par (
+\begin{DoxyParamCaption}
+\item[{int}]{syn\+Ind, }
+\item[{struct Conductance}]{C, }
+\item[{{\bf scalar} $\ast$}]{g, }
+\item[{F\+I\+L\+E $\ast$}]{f\+\_\+ind, }
+\item[{F\+I\+L\+E $\ast$}]{f\+\_\+ind\+In\+G, }
+\item[{F\+I\+L\+E $\ast$}]{f\+\_\+g}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a0aa3dc991bd9e89071e9333d32757157}
+
+\begin{DoxyParams}{Parameters}
+{\em f\+\_\+g} & File handle for a file containing sparse conductivity values \\
+\hline
+\end{DoxyParams}
+\hypertarget{classclassol_a978cae14cbba95f29619c0aacba7ffbe}{\index{classol@{classol}!read\+\_\+sparsesyns\+\_\+par@{read\+\_\+sparsesyns\+\_\+par}}
+\index{read\+\_\+sparsesyns\+\_\+par@{read\+\_\+sparsesyns\+\_\+par}!classol@{classol}}
+\subsubsection[{read\+\_\+sparsesyns\+\_\+par}]{\setlength{\rightskip}{0pt plus 5cm}template$<$class D\+A\+T\+A\+T\+Y\+P\+E $>$ void classol\+::read\+\_\+sparsesyns\+\_\+par (
+\begin{DoxyParamCaption}
+\item[{D\+A\+T\+A\+T\+Y\+P\+E $\ast$}]{wuvar, }
+\item[{int}]{syn\+Ind, }
+\item[{struct Conductance}]{C, }
+\item[{F\+I\+L\+E $\ast$}]{f\+\_\+ind, }
+\item[{F\+I\+L\+E $\ast$}]{f\+\_\+ind\+In\+G, }
+\item[{F\+I\+L\+E $\ast$}]{f\+\_\+g}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a978cae14cbba95f29619c0aacba7ffbe}
+
+\begin{DoxyParams}{Parameters}
+{\em f\+\_\+g} & File handle for a file containing sparse conductivity values \\
+\hline
+\end{DoxyParams}
+\hypertarget{classclassol_ae907498a8660fe41f7d9b41aad6e5d10}{\index{classol@{classol}!run@{run}}
+\index{run@{run}!classol@{classol}}
+\subsubsection[{run}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::run (
+\begin{DoxyParamCaption}
+\item[{float}]{, }
+\item[{unsigned}]{int}
+\end{DoxyParamCaption}
+)}}\label{classclassol_ae907498a8660fe41f7d9b41aad6e5d10}
+\hypertarget{classclassol_ae907498a8660fe41f7d9b41aad6e5d10}{\index{classol@{classol}!run@{run}}
+\index{run@{run}!classol@{classol}}
+\subsubsection[{run}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::run (
+\begin{DoxyParamCaption}
+\item[{float}]{, }
+\item[{unsigned}]{int}
+\end{DoxyParamCaption}
+)}}\label{classclassol_ae907498a8660fe41f7d9b41aad6e5d10}
+\hypertarget{classclassol_ae907498a8660fe41f7d9b41aad6e5d10}{\index{classol@{classol}!run@{run}}
+\index{run@{run}!classol@{classol}}
+\subsubsection[{run}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::run (
+\begin{DoxyParamCaption}
+\item[{float}]{runtime, }
+\item[{unsigned int}]{which}
+\end{DoxyParamCaption}
+)}}\label{classclassol_ae907498a8660fe41f7d9b41aad6e5d10}
+
+
+Method for simulating the model for a given period of time. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em runtime} & Duration of time to run the model for \\
+\hline
+{\em which} & Flag determining whether to run on G\+P\+U or C\+P\+U only \\
+\hline
+\end{DoxyParams}
+\hypertarget{classclassol_ae907498a8660fe41f7d9b41aad6e5d10}{\index{classol@{classol}!run@{run}}
+\index{run@{run}!classol@{classol}}
+\subsubsection[{run}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::run (
+\begin{DoxyParamCaption}
+\item[{float}]{, }
+\item[{unsigned}]{int}
+\end{DoxyParamCaption}
+)}}\label{classclassol_ae907498a8660fe41f7d9b41aad6e5d10}
+\hypertarget{classclassol_a27128f5afa624f6dc0c6b47d73ce5827}{\index{classol@{classol}!run@{run}}
+\index{run@{run}!classol@{classol}}
+\subsubsection[{run}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::run (
+\begin{DoxyParamCaption}
+\item[{{\bf scalar}}]{runtime, }
+\item[{unsigned int}]{which}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a27128f5afa624f6dc0c6b47d73ce5827}
+
+
+Method for simulating the model for a given period of time. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em runtime} & Duration of time to run the model for \\
+\hline
+{\em which} & Flag determining whether to run on G\+P\+U or C\+P\+U only \\
+\hline
+\end{DoxyParams}
+\hypertarget{classclassol_ae907498a8660fe41f7d9b41aad6e5d10}{\index{classol@{classol}!run@{run}}
+\index{run@{run}!classol@{classol}}
+\subsubsection[{run}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::run (
+\begin{DoxyParamCaption}
+\item[{float}]{, }
+\item[{unsigned}]{int}
+\end{DoxyParamCaption}
+)}}\label{classclassol_ae907498a8660fe41f7d9b41aad6e5d10}
+\hypertarget{classclassol_af9dfaa92f0e4737dbadd9ec9cd203555}{\index{classol@{classol}!sum\+\_\+spikes@{sum\+\_\+spikes}}
+\index{sum\+\_\+spikes@{sum\+\_\+spikes}!classol@{classol}}
+\subsubsection[{sum\+\_\+spikes}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::sum\+\_\+spikes (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_af9dfaa92f0e4737dbadd9ec9cd203555}
+\hypertarget{classclassol_af9dfaa92f0e4737dbadd9ec9cd203555}{\index{classol@{classol}!sum\+\_\+spikes@{sum\+\_\+spikes}}
+\index{sum\+\_\+spikes@{sum\+\_\+spikes}!classol@{classol}}
+\subsubsection[{sum\+\_\+spikes}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::sum\+\_\+spikes (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_af9dfaa92f0e4737dbadd9ec9cd203555}
+\hypertarget{classclassol_af9dfaa92f0e4737dbadd9ec9cd203555}{\index{classol@{classol}!sum\+\_\+spikes@{sum\+\_\+spikes}}
+\index{sum\+\_\+spikes@{sum\+\_\+spikes}!classol@{classol}}
+\subsubsection[{sum\+\_\+spikes}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::sum\+\_\+spikes (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_af9dfaa92f0e4737dbadd9ec9cd203555}
+
+
+Method for summing up spike numbers. 
+
+\hypertarget{classclassol_af9dfaa92f0e4737dbadd9ec9cd203555}{\index{classol@{classol}!sum\+\_\+spikes@{sum\+\_\+spikes}}
+\index{sum\+\_\+spikes@{sum\+\_\+spikes}!classol@{classol}}
+\subsubsection[{sum\+\_\+spikes}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::sum\+\_\+spikes (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_af9dfaa92f0e4737dbadd9ec9cd203555}
+\hypertarget{classclassol_af9dfaa92f0e4737dbadd9ec9cd203555}{\index{classol@{classol}!sum\+\_\+spikes@{sum\+\_\+spikes}}
+\index{sum\+\_\+spikes@{sum\+\_\+spikes}!classol@{classol}}
+\subsubsection[{sum\+\_\+spikes}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::sum\+\_\+spikes (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_af9dfaa92f0e4737dbadd9ec9cd203555}
+\hypertarget{classclassol_af9dfaa92f0e4737dbadd9ec9cd203555}{\index{classol@{classol}!sum\+\_\+spikes@{sum\+\_\+spikes}}
+\index{sum\+\_\+spikes@{sum\+\_\+spikes}!classol@{classol}}
+\subsubsection[{sum\+\_\+spikes}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::sum\+\_\+spikes (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_af9dfaa92f0e4737dbadd9ec9cd203555}
+\hypertarget{classclassol_a838ec68a127f675e9d993fccd8aacd3f}{\index{classol@{classol}!write\+\_\+input\+\_\+to\+\_\+file@{write\+\_\+input\+\_\+to\+\_\+file}}
+\index{write\+\_\+input\+\_\+to\+\_\+file@{write\+\_\+input\+\_\+to\+\_\+file}!classol@{classol}}
+\subsubsection[{write\+\_\+input\+\_\+to\+\_\+file}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::write\+\_\+input\+\_\+to\+\_\+file (
+\begin{DoxyParamCaption}
+\item[{F\+I\+L\+E $\ast$}]{f}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a838ec68a127f675e9d993fccd8aacd3f}
+\hypertarget{classclassol_ad409b77aceb2136bbc069b1ec55d7998}{\index{classol@{classol}!write\+\_\+kcdnsyns@{write\+\_\+kcdnsyns}}
+\index{write\+\_\+kcdnsyns@{write\+\_\+kcdnsyns}!classol@{classol}}
+\subsubsection[{write\+\_\+kcdnsyns}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::write\+\_\+kcdnsyns (
+\begin{DoxyParamCaption}
+\item[{F\+I\+L\+E $\ast$}]{f}
+\end{DoxyParamCaption}
+)}}\label{classclassol_ad409b77aceb2136bbc069b1ec55d7998}
+
+
+Method to write the connectivity between K\+Cs and D\+Ns (detector neurons) to a file. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em f} & File handle for a file to write K\+C to D\+N (detectore neuron) conductivity values to \\
+\hline
+\end{DoxyParams}
+\hypertarget{classclassol_ad409b77aceb2136bbc069b1ec55d7998}{\index{classol@{classol}!write\+\_\+kcdnsyns@{write\+\_\+kcdnsyns}}
+\index{write\+\_\+kcdnsyns@{write\+\_\+kcdnsyns}!classol@{classol}}
+\subsubsection[{write\+\_\+kcdnsyns}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::write\+\_\+kcdnsyns (
+\begin{DoxyParamCaption}
+\item[{F\+I\+L\+E $\ast$}]{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_ad409b77aceb2136bbc069b1ec55d7998}
+\hypertarget{classclassol_ad409b77aceb2136bbc069b1ec55d7998}{\index{classol@{classol}!write\+\_\+kcdnsyns@{write\+\_\+kcdnsyns}}
+\index{write\+\_\+kcdnsyns@{write\+\_\+kcdnsyns}!classol@{classol}}
+\subsubsection[{write\+\_\+kcdnsyns}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::write\+\_\+kcdnsyns (
+\begin{DoxyParamCaption}
+\item[{F\+I\+L\+E $\ast$}]{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_ad409b77aceb2136bbc069b1ec55d7998}
+\hypertarget{classclassol_ad409b77aceb2136bbc069b1ec55d7998}{\index{classol@{classol}!write\+\_\+kcdnsyns@{write\+\_\+kcdnsyns}}
+\index{write\+\_\+kcdnsyns@{write\+\_\+kcdnsyns}!classol@{classol}}
+\subsubsection[{write\+\_\+kcdnsyns}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::write\+\_\+kcdnsyns (
+\begin{DoxyParamCaption}
+\item[{F\+I\+L\+E $\ast$}]{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_ad409b77aceb2136bbc069b1ec55d7998}
+\hypertarget{classclassol_a272983bc77c8c547310a38fd340c29e4}{\index{classol@{classol}!write\+\_\+pnkcsyns@{write\+\_\+pnkcsyns}}
+\index{write\+\_\+pnkcsyns@{write\+\_\+pnkcsyns}!classol@{classol}}
+\subsubsection[{write\+\_\+pnkcsyns}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::write\+\_\+pnkcsyns (
+\begin{DoxyParamCaption}
+\item[{F\+I\+L\+E $\ast$}]{f}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a272983bc77c8c547310a38fd340c29e4}
+
+
+Method for writing the conenctivity between P\+Ns and K\+Cs back into file. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em f} & File handle for a file to write P\+N to K\+C conductivity values to \\
+\hline
+\end{DoxyParams}
+\hypertarget{classclassol_a272983bc77c8c547310a38fd340c29e4}{\index{classol@{classol}!write\+\_\+pnkcsyns@{write\+\_\+pnkcsyns}}
+\index{write\+\_\+pnkcsyns@{write\+\_\+pnkcsyns}!classol@{classol}}
+\subsubsection[{write\+\_\+pnkcsyns}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::write\+\_\+pnkcsyns (
+\begin{DoxyParamCaption}
+\item[{F\+I\+L\+E $\ast$}]{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a272983bc77c8c547310a38fd340c29e4}
+\hypertarget{classclassol_a272983bc77c8c547310a38fd340c29e4}{\index{classol@{classol}!write\+\_\+pnkcsyns@{write\+\_\+pnkcsyns}}
+\index{write\+\_\+pnkcsyns@{write\+\_\+pnkcsyns}!classol@{classol}}
+\subsubsection[{write\+\_\+pnkcsyns}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::write\+\_\+pnkcsyns (
+\begin{DoxyParamCaption}
+\item[{F\+I\+L\+E $\ast$}]{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a272983bc77c8c547310a38fd340c29e4}
+\hypertarget{classclassol_a272983bc77c8c547310a38fd340c29e4}{\index{classol@{classol}!write\+\_\+pnkcsyns@{write\+\_\+pnkcsyns}}
+\index{write\+\_\+pnkcsyns@{write\+\_\+pnkcsyns}!classol@{classol}}
+\subsubsection[{write\+\_\+pnkcsyns}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::write\+\_\+pnkcsyns (
+\begin{DoxyParamCaption}
+\item[{F\+I\+L\+E $\ast$}]{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a272983bc77c8c547310a38fd340c29e4}
+\hypertarget{classclassol_a661def594f59444eac7a0a08e599ec07}{\index{classol@{classol}!write\+\_\+pnlhisyns@{write\+\_\+pnlhisyns}}
+\index{write\+\_\+pnlhisyns@{write\+\_\+pnlhisyns}!classol@{classol}}
+\subsubsection[{write\+\_\+pnlhisyns}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::write\+\_\+pnlhisyns (
+\begin{DoxyParamCaption}
+\item[{F\+I\+L\+E $\ast$}]{f}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a661def594f59444eac7a0a08e599ec07}
+
+
+Method for writing the connectivity between P\+Ns and L\+H\+Is to a file. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em f} & File handle for a file to write P\+N to L\+H\+I conductivity values to \\
+\hline
+\end{DoxyParams}
+\hypertarget{classclassol_a661def594f59444eac7a0a08e599ec07}{\index{classol@{classol}!write\+\_\+pnlhisyns@{write\+\_\+pnlhisyns}}
+\index{write\+\_\+pnlhisyns@{write\+\_\+pnlhisyns}!classol@{classol}}
+\subsubsection[{write\+\_\+pnlhisyns}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::write\+\_\+pnlhisyns (
+\begin{DoxyParamCaption}
+\item[{F\+I\+L\+E $\ast$}]{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a661def594f59444eac7a0a08e599ec07}
+\hypertarget{classclassol_a661def594f59444eac7a0a08e599ec07}{\index{classol@{classol}!write\+\_\+pnlhisyns@{write\+\_\+pnlhisyns}}
+\index{write\+\_\+pnlhisyns@{write\+\_\+pnlhisyns}!classol@{classol}}
+\subsubsection[{write\+\_\+pnlhisyns}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::write\+\_\+pnlhisyns (
+\begin{DoxyParamCaption}
+\item[{F\+I\+L\+E $\ast$}]{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a661def594f59444eac7a0a08e599ec07}
+\hypertarget{classclassol_a661def594f59444eac7a0a08e599ec07}{\index{classol@{classol}!write\+\_\+pnlhisyns@{write\+\_\+pnlhisyns}}
+\index{write\+\_\+pnlhisyns@{write\+\_\+pnlhisyns}!classol@{classol}}
+\subsubsection[{write\+\_\+pnlhisyns}]{\setlength{\rightskip}{0pt plus 5cm}void classol\+::write\+\_\+pnlhisyns (
+\begin{DoxyParamCaption}
+\item[{F\+I\+L\+E $\ast$}]{}
+\end{DoxyParamCaption}
+)}}\label{classclassol_a661def594f59444eac7a0a08e599ec07}
+
+
+\subsection{Member Data Documentation}
+\hypertarget{classclassol_a7aa9c750f4ce5925003cb6b9cd215f8e}{\index{classol@{classol}!baserates@{baserates}}
+\index{baserates@{baserates}!classol@{classol}}
+\subsubsection[{baserates}]{\setlength{\rightskip}{0pt plus 5cm}unsigned int $\ast$ classol\+::baserates}}\label{classclassol_a7aa9c750f4ce5925003cb6b9cd215f8e}
+\hypertarget{classclassol_afc6650247da3c85e829264ccb5c4f569}{\index{classol@{classol}!baserates@{baserates}}
+\index{baserates@{baserates}!classol@{classol}}
+\subsubsection[{baserates}]{\setlength{\rightskip}{0pt plus 5cm}uint64\+\_\+t$\ast$ classol\+::baserates}}\label{classclassol_afc6650247da3c85e829264ccb5c4f569}
+\hypertarget{classclassol_a0453758295a0bcabf7ae00949a51e717}{\index{classol@{classol}!d\+\_\+baserates@{d\+\_\+baserates}}
+\index{d\+\_\+baserates@{d\+\_\+baserates}!classol@{classol}}
+\subsubsection[{d\+\_\+baserates}]{\setlength{\rightskip}{0pt plus 5cm}unsigned int $\ast$ classol\+::d\+\_\+baserates}}\label{classclassol_a0453758295a0bcabf7ae00949a51e717}
+\hypertarget{classclassol_adee39c3f46e3b1b691b047f7fae179c6}{\index{classol@{classol}!d\+\_\+baserates@{d\+\_\+baserates}}
+\index{d\+\_\+baserates@{d\+\_\+baserates}!classol@{classol}}
+\subsubsection[{d\+\_\+baserates}]{\setlength{\rightskip}{0pt plus 5cm}uint64\+\_\+t$\ast$ classol\+::d\+\_\+baserates}}\label{classclassol_adee39c3f46e3b1b691b047f7fae179c6}
+\hypertarget{classclassol_a29d842c266bb5c84cdc3ef1e7d7d4e06}{\index{classol@{classol}!d\+\_\+input1@{d\+\_\+input1}}
+\index{d\+\_\+input1@{d\+\_\+input1}!classol@{classol}}
+\subsubsection[{d\+\_\+input1}]{\setlength{\rightskip}{0pt plus 5cm}float$\ast$ classol\+::d\+\_\+input1}}\label{classclassol_a29d842c266bb5c84cdc3ef1e7d7d4e06}
+\hypertarget{classclassol_a99dd2f7af0454b904234df4ac3400445}{\index{classol@{classol}!d\+\_\+pattern@{d\+\_\+pattern}}
+\index{d\+\_\+pattern@{d\+\_\+pattern}!classol@{classol}}
+\subsubsection[{d\+\_\+pattern}]{\setlength{\rightskip}{0pt plus 5cm}unsigned int $\ast$ classol\+::d\+\_\+pattern}}\label{classclassol_a99dd2f7af0454b904234df4ac3400445}
+\hypertarget{classclassol_ab864befa4f0f4b067b78933dbfd77ced}{\index{classol@{classol}!d\+\_\+pattern@{d\+\_\+pattern}}
+\index{d\+\_\+pattern@{d\+\_\+pattern}!classol@{classol}}
+\subsubsection[{d\+\_\+pattern}]{\setlength{\rightskip}{0pt plus 5cm}uint64\+\_\+t$\ast$ classol\+::d\+\_\+pattern}}\label{classclassol_ab864befa4f0f4b067b78933dbfd77ced}
+\hypertarget{classclassol_a5803e52deda310bbadbb22265045b8d9}{\index{classol@{classol}!input1@{input1}}
+\index{input1@{input1}!classol@{classol}}
+\subsubsection[{input1}]{\setlength{\rightskip}{0pt plus 5cm}float$\ast$ classol\+::input1}}\label{classclassol_a5803e52deda310bbadbb22265045b8d9}
+\hypertarget{classclassol_a9bc46b83d0158325cfdd8721936541d5}{\index{classol@{classol}!model@{model}}
+\index{model@{model}!classol@{classol}}
+\subsubsection[{model}]{\setlength{\rightskip}{0pt plus 5cm}{\bf N\+Nmodel} classol\+::model}}\label{classclassol_a9bc46b83d0158325cfdd8721936541d5}
+\hypertarget{classclassol_a4c91e54037a58e0b286f10a986d46d9c}{\index{classol@{classol}!offset@{offset}}
+\index{offset@{offset}!classol@{classol}}
+\subsubsection[{offset}]{\setlength{\rightskip}{0pt plus 5cm}unsigned int classol\+::offset}}\label{classclassol_a4c91e54037a58e0b286f10a986d46d9c}
+\hypertarget{classclassol_ab0eecc893b3ecf89505f2fd31e34403f}{\index{classol@{classol}!p\+\_\+pattern@{p\+\_\+pattern}}
+\index{p\+\_\+pattern@{p\+\_\+pattern}!classol@{classol}}
+\subsubsection[{p\+\_\+pattern}]{\setlength{\rightskip}{0pt plus 5cm}float$\ast$ classol\+::p\+\_\+pattern}}\label{classclassol_ab0eecc893b3ecf89505f2fd31e34403f}
+\hypertarget{classclassol_a39baf7a24fd68df1ba55b6f6dc5e3fd7}{\index{classol@{classol}!p\+\_\+pattern@{p\+\_\+pattern}}
+\index{p\+\_\+pattern@{p\+\_\+pattern}!classol@{classol}}
+\subsubsection[{p\+\_\+pattern}]{\setlength{\rightskip}{0pt plus 5cm}float $\ast$ classol\+::p\+\_\+pattern}}\label{classclassol_a39baf7a24fd68df1ba55b6f6dc5e3fd7}
+\hypertarget{classclassol_a808754f723275a8e8e76f456b63eaea3}{\index{classol@{classol}!pattern@{pattern}}
+\index{pattern@{pattern}!classol@{classol}}
+\subsubsection[{pattern}]{\setlength{\rightskip}{0pt plus 5cm}unsigned int $\ast$ classol\+::pattern}}\label{classclassol_a808754f723275a8e8e76f456b63eaea3}
+\hypertarget{classclassol_a16f82061914e21c2724df0c0044f58dc}{\index{classol@{classol}!pattern@{pattern}}
+\index{pattern@{pattern}!classol@{classol}}
+\subsubsection[{pattern}]{\setlength{\rightskip}{0pt plus 5cm}uint64\+\_\+t$\ast$ classol\+::pattern}}\label{classclassol_a16f82061914e21c2724df0c0044f58dc}
+\hypertarget{classclassol_aa6efbc353061391575387b33639d7961}{\index{classol@{classol}!size\+\_\+g@{size\+\_\+g}}
+\index{size\+\_\+g@{size\+\_\+g}!classol@{classol}}
+\subsubsection[{size\+\_\+g}]{\setlength{\rightskip}{0pt plus 5cm}unsigned int classol\+::size\+\_\+g}}\label{classclassol_aa6efbc353061391575387b33639d7961}
+\hypertarget{classclassol_ae8a843f0151b506bd3548c33c9d78c7c}{\index{classol@{classol}!sum\+D\+N@{sum\+D\+N}}
+\index{sum\+D\+N@{sum\+D\+N}!classol@{classol}}
+\subsubsection[{sum\+D\+N}]{\setlength{\rightskip}{0pt plus 5cm}unsigned int classol\+::sum\+D\+N}}\label{classclassol_ae8a843f0151b506bd3548c33c9d78c7c}
+\hypertarget{classclassol_a0cb78768c605c2cc8c3546e9d9e565ef}{\index{classol@{classol}!sum\+Izh1@{sum\+Izh1}}
+\index{sum\+Izh1@{sum\+Izh1}!classol@{classol}}
+\subsubsection[{sum\+Izh1}]{\setlength{\rightskip}{0pt plus 5cm}unsigned int classol\+::sum\+Izh1}}\label{classclassol_a0cb78768c605c2cc8c3546e9d9e565ef}
+\hypertarget{classclassol_ad04f16a78fce1de429fc9371380fb15a}{\index{classol@{classol}!sum\+K\+C@{sum\+K\+C}}
+\index{sum\+K\+C@{sum\+K\+C}!classol@{classol}}
+\subsubsection[{sum\+K\+C}]{\setlength{\rightskip}{0pt plus 5cm}unsigned int classol\+::sum\+K\+C}}\label{classclassol_ad04f16a78fce1de429fc9371380fb15a}
+\hypertarget{classclassol_a9157c62195074a9bc34c5570e311315c}{\index{classol@{classol}!sum\+L\+H\+I@{sum\+L\+H\+I}}
+\index{sum\+L\+H\+I@{sum\+L\+H\+I}!classol@{classol}}
+\subsubsection[{sum\+L\+H\+I}]{\setlength{\rightskip}{0pt plus 5cm}unsigned int classol\+::sum\+L\+H\+I}}\label{classclassol_a9157c62195074a9bc34c5570e311315c}
+\hypertarget{classclassol_abd188bdb202d67ec2c1a6316128f9c44}{\index{classol@{classol}!sum\+P\+N@{sum\+P\+N}}
+\index{sum\+P\+N@{sum\+P\+N}!classol@{classol}}
+\subsubsection[{sum\+P\+N}]{\setlength{\rightskip}{0pt plus 5cm}unsigned int classol\+::sum\+P\+N}}\label{classclassol_abd188bdb202d67ec2c1a6316128f9c44}
+\hypertarget{classclassol_ac0966348c8b0301162dfd20abe15720e}{\index{classol@{classol}!the\+Rates@{the\+Rates}}
+\index{the\+Rates@{the\+Rates}!classol@{classol}}
+\subsubsection[{the\+Rates}]{\setlength{\rightskip}{0pt plus 5cm}unsigned int $\ast$ classol\+::the\+Rates}}\label{classclassol_ac0966348c8b0301162dfd20abe15720e}
+\hypertarget{classclassol_a0b534a0ff6a56ab9e137f964bcf29d78}{\index{classol@{classol}!the\+Rates@{the\+Rates}}
+\index{the\+Rates@{the\+Rates}!classol@{classol}}
+\subsubsection[{the\+Rates}]{\setlength{\rightskip}{0pt plus 5cm}uint64\+\_\+t$\ast$ classol\+::the\+Rates}}\label{classclassol_a0b534a0ff6a56ab9e137f964bcf29d78}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+tmp/model/\hyperlink{tmp_2model_2map__classol_8h}{map\+\_\+classol.\+h}\item 
+userproject/\+One\+Comp\+\_\+project/model/\hyperlink{OneComp__model_8h}{One\+Comp\+\_\+model.\+h}\item 
+userproject/\+Poisson\+Izh\+\_\+project/model/\hyperlink{PoissonIzh-model_8h}{Poisson\+Izh-\/model.\+h}\item 
+tmp/model/\hyperlink{tmp_2model_2map__classol_8cc}{map\+\_\+classol.\+cc}\item 
+userproject/\+One\+Comp\+\_\+project/model/\hyperlink{OneComp__model_8cc}{One\+Comp\+\_\+model.\+cc}\item 
+userproject/\+Poisson\+Izh\+\_\+project/model/\hyperlink{PoissonIzh-model_8cc}{Poisson\+Izh-\/model.\+cc}\end{DoxyCompactItemize}

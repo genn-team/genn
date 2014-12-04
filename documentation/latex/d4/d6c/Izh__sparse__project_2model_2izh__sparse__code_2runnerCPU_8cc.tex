@@ -1,0 +1,39 @@
+\hypertarget{Izh__sparse__project_2model_2izh__sparse__code_2runnerCPU_8cc}{\section{userproject/\+Izh\+\_\+sparse\+\_\+project/model/izh\+\_\+sparse\+\_\+code/runner\+C\+P\+U.cc File Reference}
+\label{Izh__sparse__project_2model_2izh__sparse__code_2runnerCPU_8cc}\index{userproject/\+Izh\+\_\+sparse\+\_\+project/model/izh\+\_\+sparse\+\_\+code/runner\+C\+P\+U.\+cc@{userproject/\+Izh\+\_\+sparse\+\_\+project/model/izh\+\_\+sparse\+\_\+code/runner\+C\+P\+U.\+cc}}
+}
+{\ttfamily \#include $<$cuda\+\_\+runtime.\+h$>$}\\*
+{\ttfamily \#include \char`\"{}neuron\+Fnct.\+cc\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}synapse\+Fnct.\+cc\char`\"{}}\\*
+\subsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \hyperlink{Izh__sparse__project_2model_2izh__sparse__code_2runnerCPU_8cc_ae22bee5ab0274eba2219d11cf354c982}{M\+Y\+R\+A\+N\+D}(Y, X)~Y = Y $\ast$ 1103515245 +12345; X= (Y $>$$>$ 16);
+\end{DoxyCompactItemize}
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \hyperlink{Izh__sparse__project_2model_2izh__sparse__code_2runnerCPU_8cc_a7f1448cbfec65092fed9173887c6f13d}{step\+Time\+C\+P\+U} (float $\ast$input\+I\+P\+Exc, float $\ast$input\+I\+P\+Inh, float \hyperlink{PoissonIzh__sim_8h_afea36502e9d227ff62c5fb2719a246f2}{t})
+\end{DoxyCompactItemize}
+
+
+\subsection{Macro Definition Documentation}
+\hypertarget{Izh__sparse__project_2model_2izh__sparse__code_2runnerCPU_8cc_ae22bee5ab0274eba2219d11cf354c982}{\index{Izh\+\_\+sparse\+\_\+project/model/izh\+\_\+sparse\+\_\+code/runner\+C\+P\+U.\+cc@{Izh\+\_\+sparse\+\_\+project/model/izh\+\_\+sparse\+\_\+code/runner\+C\+P\+U.\+cc}!M\+Y\+R\+A\+N\+D@{M\+Y\+R\+A\+N\+D}}
+\index{M\+Y\+R\+A\+N\+D@{M\+Y\+R\+A\+N\+D}!Izh\+\_\+sparse\+\_\+project/model/izh\+\_\+sparse\+\_\+code/runner\+C\+P\+U.\+cc@{Izh\+\_\+sparse\+\_\+project/model/izh\+\_\+sparse\+\_\+code/runner\+C\+P\+U.\+cc}}
+\subsubsection[{M\+Y\+R\+A\+N\+D}]{\setlength{\rightskip}{0pt plus 5cm}\#define M\+Y\+R\+A\+N\+D(
+\begin{DoxyParamCaption}
+\item[{}]{Y, }
+\item[{}]{X}
+\end{DoxyParamCaption}
+)~Y = Y $\ast$ 1103515245 +12345; X= (Y $>$$>$ 16);}}\label{Izh__sparse__project_2model_2izh__sparse__code_2runnerCPU_8cc_ae22bee5ab0274eba2219d11cf354c982}
+
+
+\subsection{Function Documentation}
+\hypertarget{Izh__sparse__project_2model_2izh__sparse__code_2runnerCPU_8cc_a7f1448cbfec65092fed9173887c6f13d}{\index{Izh\+\_\+sparse\+\_\+project/model/izh\+\_\+sparse\+\_\+code/runner\+C\+P\+U.\+cc@{Izh\+\_\+sparse\+\_\+project/model/izh\+\_\+sparse\+\_\+code/runner\+C\+P\+U.\+cc}!step\+Time\+C\+P\+U@{step\+Time\+C\+P\+U}}
+\index{step\+Time\+C\+P\+U@{step\+Time\+C\+P\+U}!Izh\+\_\+sparse\+\_\+project/model/izh\+\_\+sparse\+\_\+code/runner\+C\+P\+U.\+cc@{Izh\+\_\+sparse\+\_\+project/model/izh\+\_\+sparse\+\_\+code/runner\+C\+P\+U.\+cc}}
+\subsubsection[{step\+Time\+C\+P\+U}]{\setlength{\rightskip}{0pt plus 5cm}void step\+Time\+C\+P\+U (
+\begin{DoxyParamCaption}
+\item[{float $\ast$}]{input\+I\+P\+Exc, }
+\item[{float $\ast$}]{input\+I\+P\+Inh, }
+\item[{float}]{t}
+\end{DoxyParamCaption}
+)}}\label{Izh__sparse__project_2model_2izh__sparse__code_2runnerCPU_8cc_a7f1448cbfec65092fed9173887c6f13d}

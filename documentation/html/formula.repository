@@ -1,0 +1,30 @@
+\form#0:\[ gSyn= g * tanh((E - E_{pre}) / V_{slope} \]
+\form#1:\begin{eqnarray*} V(t+\Delta t) &=& f(V(t)) \\ f(x)= \frac{1}{xyz} \end{eqnarray*}
+\form#2:\begin{eqnarray*} V(t+\Delta t) &=& \left\{ \begin{array}{ll} V_{\rm spike} \Big(\frac{\alpha V_{\rm spike}}{V_{\rm spike}-V(t) \beta I_{\rm syn}} + \gamma \Big) & V(t) \leq 0 \\ V_{\rm spike} \big(\alpha+\gamma\big) & V(t) \leq V_{\rm spike} \big(\alpha + \gamma\big) \; \& \; V(t-\Delta t) \leq 0 \\ -V_{\rm spike} & {\rm otherwise} \end{array} \right. \end{eqnarray*}
+\form#3:\begin{eqnarray*} V(t+\Delta t) &=& \left\{ \begin{array}{ll} V_{\rm spike} \Big(\frac{\alpha V_{\rm spike}}{V_{\rm spike}-V(t) \beta I_{\rm syn}} + y \Big) & V(t) \leq 0 \\ V_{\rm spike} \big(\alpha+y\big) & V(t) \leq V_{\rm spike} \big(\alpha + y\big) \; \& \; V(t-\Delta t) \leq 0 \\ -V_{\rm spike} & {\rm otherwise} \end{array} \right. \end{eqnarray*}
+\form#4:$\alpha $
+\form#5:$\beta$
+\form#6:$\Omega$
+\form#7:$M\Omega$
+\form#8:${\rm M}\Omega$
+\form#9:$ p = \lambda \Delta $
+\form#10:$ p = \lambda \Delta t $
+\form#11:\begin{eqnarray*} C \frac{d V}{dt} =-I_{{\rm Na}} -I_K-I_{{\rm leak}}-I_M-I_{i,DC}-I_{i,{\rm syn}}-I_i, \\ I_{{\rm Na}}(t) &= g_{{\rm Na}} m_i(t)^3 h_i(t)(V_i(t)-E_{{\rm Na}}) \\ I_{{\rm K}}(t) &= g_{{\rm K}} n_i(t)^4(V_i(t)-E_{{\rm K}}) \\ \frac{dy_i(t)}{dt}=\alpha_y (V_i(t))(1-y_i(t))-\beta_y(V_i(t)) y_i(t), \\ \alpha_n&= 0.032(-50-V)/\{\exp[(-50-V)/5]-1\} \\ \beta_n &=0.5\exp((-55-V)/40) \\ \alpha_m &=0.32(-52-V)/(\exp((-52-V)/4)-1) \\ \beta_m &=0.28(25+V)/(\exp((25+V)/5)-1) \\ \alpha_h &=0.128\exp((-48-V)/18) \\ \beta_h &=4/(\exp((-25-V)/5)+1). \end{eqnarray*}
+\form#12:$C=0.143$
+\form#13:$g_{{\rm leak}}= 0.02672$
+\form#14:$\mu$
+\form#15:$E_{{\rm leak}}= -63.563$
+\form#16:$g_{{\rm Na}}=7.15$
+\form#17:$E_{{\rm Na}}= 50$
+\form#18:$g_{{\rm {\rm K}}}=1.43$
+\form#19:$E_{{\rm K}}= -95$
+\form#20:\begin{eqnarray*} C \frac{d V}{dt} =-I_{{\rm Na}} -I_K-I_{{\rm leak}}-I_M-I_{i,DC}-I_{i,{\rm syn}}-I_i, \\ I_{{\rm Na}}(t) &=& g_{{\rm Na}} m_i(t)^3 h_i(t)(V_i(t)-E_{{\rm Na}}) \\ I_{{\rm K}}(t) &=& g_{{\rm K}} n_i(t)^4(V_i(t)-E_{{\rm K}}) \\ \frac{dy(t)}{dt}=\alpha_y (V(t))(1-y(t))-\beta_y(V(t)) y(t), \end{eqnarray*}
+\form#21:$y_i= m, h, n$
+\form#22:\begin{eqnarray*} \alpha_n&=& 0.032(-50-V)/\{\exp[(-50-V)/5]-1\} \\ \beta_n &=& 0.5\exp((-55-V)/40) \\ \alpha_m &=& 0.32(-52-V)/(\exp((-52-V)/4)-1) \\ \beta_m &=& 0.28(25+V)/(\exp((25+V)/5)-1) \\ \alpha_h &=& 0.128\exp((-48-V)/18) \\ \beta_h &=& 4/(\exp((-25-V)/5)+1). \end{eqnarray*}
+\form#23:\begin{eqnarray*} C \frac{d V}{dt} &=& -I_{{\rm Na}} -I_K-I_{{\rm leak}}-I_M-I_{i,DC}-I_{i,{\rm syn}}-I_i, \\ I_{{\rm Na}}(t) &=& g_{{\rm Na}} m_i(t)^3 h_i(t)(V_i(t)-E_{{\rm Na}}) \\ I_{{\rm K}}(t) &=& g_{{\rm K}} n_i(t)^4(V_i(t)-E_{{\rm K}}) \\ \frac{dy(t)}{dt} &=& \alpha_y (V(t))(1-y(t))-\beta_y(V(t)) y(t), \end{eqnarray*}
+\form#24:\begin{eqnarray*} \alpha_n&=& 0.032(-50-V)/\big(\exp((-50-V)/5)-1\big) \\ \beta_n &=& 0.5\exp((-55-V)/40) \\ \alpha_m &=& 0.32(-52-V)/\big(\exp((-52-V)/4)-1\big) \\ \beta_m &=& 0.28(25+V)/\big(\exp((25+V)/5)-1\big) \\ \alpha_h &=& 0.128\exp((-48-V)/18) \\ \beta_h &=& 4/\big(\exp((-25-V)/5)+1\big). \end{eqnarray*}
+\form#25:\begin{eqnarray*} \frac{dV}{dt} = 0.04 V^2 + 5 V + 140 - U + I, \\ \frac{dU}{dt} = a (bV-U), \end{eqnarray*}
+\form#26:\begin{eqnarray*} \frac{dV}{dt} &=& 0.04 V^2 + 5 V + 140 - U + I, \\ \frac{dU}{dt} &=& a (bV-U), \end{eqnarray*}
+\form#27:$\frac{dV}{dt}= -a V + I_{{\rm syn}}$
+\form#28:$\frac{dV}{dt} = -g/C \, V +I_{\rm syn}$
+\form#29:$I_{\rm syn}= g*s*(V_{\rm rev}-V_{\rm post})$

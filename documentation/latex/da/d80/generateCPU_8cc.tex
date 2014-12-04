@@ -1,0 +1,108 @@
+\hypertarget{generateCPU_8cc}{\section{lib/src/generate\+C\+P\+U.cc File Reference}
+\label{generateCPU_8cc}\index{lib/src/generate\+C\+P\+U.\+cc@{lib/src/generate\+C\+P\+U.\+cc}}
+}
+
+
+Functions for generating code that will run the neuron and synapse simulations on the C\+P\+U. Part of the code generation section.  
+
+
+{\ttfamily \#include $<$string$>$}\\*
+{\ttfamily \#include \char`\"{}Code\+Helper.\+cc\char`\"{}}\\*
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \hyperlink{generateCPU_8cc_a15a320ee739b42b1dda39ebd99acdb21}{gen\+Neuron\+Function} (\hyperlink{classNNmodel}{N\+Nmodel} \&model, string \&path, ostream \&mos)
+\begin{DoxyCompactList}\small\item\em Function that generates the code of the function the will simulate all neurons on the C\+P\+U. \end{DoxyCompactList}\item 
+void \hyperlink{generateCPU_8cc_af0f68722173aa844b8ab29e82faf28cb}{generate\+\_\+process\+\_\+presynaptic\+\_\+events\+\_\+code\+\_\+\+C\+P\+U} (ostream \&os, \hyperlink{classNNmodel}{N\+Nmodel} \&model, unsigned int src, unsigned int trg, int i, string \&local\+I\+D, unsigned int in\+Syn\+No, string postfix)
+\begin{DoxyCompactList}\small\item\em Function for generating the C\+U\+D\+A synapse kernel code that handles presynaptic spikes or spike type events. \end{DoxyCompactList}\item 
+void \hyperlink{generateCPU_8cc_ab79c0cea7b9f14c32fe161eb1303fdb0}{gen\+Synapse\+Function} (\hyperlink{classNNmodel}{N\+Nmodel} \&model, string \&path, ostream \&mos)
+\begin{DoxyCompactList}\small\item\em Function that generates code that will simulate all synapses of the model on the C\+P\+U. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Functions for generating code that will run the neuron and synapse simulations on the C\+P\+U. Part of the code generation section. 
+
+
+
+\subsection{Function Documentation}
+\hypertarget{generateCPU_8cc_af0f68722173aa844b8ab29e82faf28cb}{\index{generate\+C\+P\+U.\+cc@{generate\+C\+P\+U.\+cc}!generate\+\_\+process\+\_\+presynaptic\+\_\+events\+\_\+code\+\_\+\+C\+P\+U@{generate\+\_\+process\+\_\+presynaptic\+\_\+events\+\_\+code\+\_\+\+C\+P\+U}}
+\index{generate\+\_\+process\+\_\+presynaptic\+\_\+events\+\_\+code\+\_\+\+C\+P\+U@{generate\+\_\+process\+\_\+presynaptic\+\_\+events\+\_\+code\+\_\+\+C\+P\+U}!generate\+C\+P\+U.\+cc@{generate\+C\+P\+U.\+cc}}
+\subsubsection[{generate\+\_\+process\+\_\+presynaptic\+\_\+events\+\_\+code\+\_\+\+C\+P\+U}]{\setlength{\rightskip}{0pt plus 5cm}void generate\+\_\+process\+\_\+presynaptic\+\_\+events\+\_\+code\+\_\+\+C\+P\+U (
+\begin{DoxyParamCaption}
+\item[{ostream \&}]{os, }
+\item[{{\bf N\+Nmodel} \&}]{model, }
+\item[{unsigned int}]{src, }
+\item[{unsigned int}]{trg, }
+\item[{int}]{i, }
+\item[{string \&}]{local\+I\+D, }
+\item[{unsigned int}]{in\+Syn\+No, }
+\item[{string}]{postfix}
+\end{DoxyParamCaption}
+)}}\label{generateCPU_8cc_af0f68722173aa844b8ab29e82faf28cb}
+
+
+Function for generating the C\+U\+D\+A synapse kernel code that handles presynaptic spikes or spike type events. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em os} & output stream for code \\
+\hline
+{\em model} & the neuronal network model to generate code for \\
+\hline
+{\em src} & the number of the src neuron population \\
+\hline
+{\em trg} & the number of the target neuron population \\
+\hline
+{\em i} & the index of the synapse group being processed \\
+\hline
+{\em local\+I\+D} & the variable name of the local I\+D of the thread within the synapse group \\
+\hline
+{\em in\+Syn\+No} & the I\+D number of the current synapse population as the incoming population to the target neuron population \\
+\hline
+{\em postfix} & whether to generate code for true spikes or spike type events \\
+\hline
+\end{DoxyParams}
+\hypertarget{generateCPU_8cc_a15a320ee739b42b1dda39ebd99acdb21}{\index{generate\+C\+P\+U.\+cc@{generate\+C\+P\+U.\+cc}!gen\+Neuron\+Function@{gen\+Neuron\+Function}}
+\index{gen\+Neuron\+Function@{gen\+Neuron\+Function}!generate\+C\+P\+U.\+cc@{generate\+C\+P\+U.\+cc}}
+\subsubsection[{gen\+Neuron\+Function}]{\setlength{\rightskip}{0pt plus 5cm}void gen\+Neuron\+Function (
+\begin{DoxyParamCaption}
+\item[{{\bf N\+Nmodel} \&}]{model, }
+\item[{string \&}]{path, }
+\item[{ostream \&}]{mos}
+\end{DoxyParamCaption}
+)}}\label{generateCPU_8cc_a15a320ee739b42b1dda39ebd99acdb21}
+
+
+Function that generates the code of the function the will simulate all neurons on the C\+P\+U. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em model} & Model description \\
+\hline
+{\em path} & output stream for code \\
+\hline
+{\em mos} & output stream for messages \\
+\hline
+\end{DoxyParams}
+\hypertarget{generateCPU_8cc_ab79c0cea7b9f14c32fe161eb1303fdb0}{\index{generate\+C\+P\+U.\+cc@{generate\+C\+P\+U.\+cc}!gen\+Synapse\+Function@{gen\+Synapse\+Function}}
+\index{gen\+Synapse\+Function@{gen\+Synapse\+Function}!generate\+C\+P\+U.\+cc@{generate\+C\+P\+U.\+cc}}
+\subsubsection[{gen\+Synapse\+Function}]{\setlength{\rightskip}{0pt plus 5cm}void gen\+Synapse\+Function (
+\begin{DoxyParamCaption}
+\item[{{\bf N\+Nmodel} \&}]{model, }
+\item[{string \&}]{path, }
+\item[{ostream \&}]{mos}
+\end{DoxyParamCaption}
+)}}\label{generateCPU_8cc_ab79c0cea7b9f14c32fe161eb1303fdb0}
+
+
+Function that generates code that will simulate all synapses of the model on the C\+P\+U. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em model} & Model description \\
+\hline
+{\em path} & Path for code generation \\
+\hline
+{\em mos} & output stream for messages \\
+\hline
+\end{DoxyParams}

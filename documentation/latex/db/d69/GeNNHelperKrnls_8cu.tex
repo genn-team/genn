@@ -1,0 +1,55 @@
+\hypertarget{GeNNHelperKrnls_8cu}{\section{userproject/\+Ge\+N\+N\+Helper\+Krnls.cu File Reference}
+\label{GeNNHelperKrnls_8cu}\index{userproject/\+Ge\+N\+N\+Helper\+Krnls.\+cu@{userproject/\+Ge\+N\+N\+Helper\+Krnls.\+cu}}
+}
+{\ttfamily \#include $<$curand\+\_\+kernel.\+h$>$}\\*
+\subsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \hyperlink{GeNNHelperKrnls_8cu_a9a16f85c609abdf08b9d24186215fcae}{Blk\+Sz}~256
+\end{DoxyCompactItemize}
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\+\_\+\+\_\+global\+\_\+\+\_\+ void \hyperlink{GeNNHelperKrnls_8cu_adb85534870a979bdcefda11d2d40de54}{setup\+\_\+kernel} (curand\+State $\ast$state, unsigned long seed, int sizeof\+Result)
+\item 
+\+\_\+\+\_\+global\+\_\+\+\_\+ void \hyperlink{GeNNHelperKrnls_8cu_a122e8a9c8d633ea1584f73849d059e7b}{generate\+\_\+random\+\_\+gpu\+Input\+\_\+xorwow} (curand\+State $\ast$state, float $\ast$result, int sizeof\+Result, float Rstrength, float Rshift)
+\item 
+void \hyperlink{GeNNHelperKrnls_8cu_addeb2120a5db41facb5d99b838c714e5}{xorwow\+\_\+setup} (curand\+State $\ast$dev\+States, long int sample\+Size)
+\end{DoxyCompactItemize}
+
+
+\subsection{Macro Definition Documentation}
+\hypertarget{GeNNHelperKrnls_8cu_a9a16f85c609abdf08b9d24186215fcae}{\index{Ge\+N\+N\+Helper\+Krnls.\+cu@{Ge\+N\+N\+Helper\+Krnls.\+cu}!Blk\+Sz@{Blk\+Sz}}
+\index{Blk\+Sz@{Blk\+Sz}!Ge\+N\+N\+Helper\+Krnls.\+cu@{Ge\+N\+N\+Helper\+Krnls.\+cu}}
+\subsubsection[{Blk\+Sz}]{\setlength{\rightskip}{0pt plus 5cm}\#define Blk\+Sz~256}}\label{GeNNHelperKrnls_8cu_a9a16f85c609abdf08b9d24186215fcae}
+
+
+\subsection{Function Documentation}
+\hypertarget{GeNNHelperKrnls_8cu_a122e8a9c8d633ea1584f73849d059e7b}{\index{Ge\+N\+N\+Helper\+Krnls.\+cu@{Ge\+N\+N\+Helper\+Krnls.\+cu}!generate\+\_\+random\+\_\+gpu\+Input\+\_\+xorwow@{generate\+\_\+random\+\_\+gpu\+Input\+\_\+xorwow}}
+\index{generate\+\_\+random\+\_\+gpu\+Input\+\_\+xorwow@{generate\+\_\+random\+\_\+gpu\+Input\+\_\+xorwow}!Ge\+N\+N\+Helper\+Krnls.\+cu@{Ge\+N\+N\+Helper\+Krnls.\+cu}}
+\subsubsection[{generate\+\_\+random\+\_\+gpu\+Input\+\_\+xorwow}]{\setlength{\rightskip}{0pt plus 5cm}\+\_\+\+\_\+global\+\_\+\+\_\+ void generate\+\_\+random\+\_\+gpu\+Input\+\_\+xorwow (
+\begin{DoxyParamCaption}
+\item[{curand\+State $\ast$}]{state, }
+\item[{float $\ast$}]{result, }
+\item[{int}]{sizeof\+Result, }
+\item[{float}]{Rstrength, }
+\item[{float}]{Rshift}
+\end{DoxyParamCaption}
+)}}\label{GeNNHelperKrnls_8cu_a122e8a9c8d633ea1584f73849d059e7b}
+\hypertarget{GeNNHelperKrnls_8cu_adb85534870a979bdcefda11d2d40de54}{\index{Ge\+N\+N\+Helper\+Krnls.\+cu@{Ge\+N\+N\+Helper\+Krnls.\+cu}!setup\+\_\+kernel@{setup\+\_\+kernel}}
+\index{setup\+\_\+kernel@{setup\+\_\+kernel}!Ge\+N\+N\+Helper\+Krnls.\+cu@{Ge\+N\+N\+Helper\+Krnls.\+cu}}
+\subsubsection[{setup\+\_\+kernel}]{\setlength{\rightskip}{0pt plus 5cm}\+\_\+\+\_\+global\+\_\+\+\_\+ void setup\+\_\+kernel (
+\begin{DoxyParamCaption}
+\item[{curand\+State $\ast$}]{state, }
+\item[{unsigned long}]{seed, }
+\item[{int}]{sizeof\+Result}
+\end{DoxyParamCaption}
+)}}\label{GeNNHelperKrnls_8cu_adb85534870a979bdcefda11d2d40de54}
+\hypertarget{GeNNHelperKrnls_8cu_addeb2120a5db41facb5d99b838c714e5}{\index{Ge\+N\+N\+Helper\+Krnls.\+cu@{Ge\+N\+N\+Helper\+Krnls.\+cu}!xorwow\+\_\+setup@{xorwow\+\_\+setup}}
+\index{xorwow\+\_\+setup@{xorwow\+\_\+setup}!Ge\+N\+N\+Helper\+Krnls.\+cu@{Ge\+N\+N\+Helper\+Krnls.\+cu}}
+\subsubsection[{xorwow\+\_\+setup}]{\setlength{\rightskip}{0pt plus 5cm}void xorwow\+\_\+setup (
+\begin{DoxyParamCaption}
+\item[{curand\+State $\ast$}]{dev\+States, }
+\item[{long int}]{sample\+Size}
+\end{DoxyParamCaption}
+)}}\label{GeNNHelperKrnls_8cu_addeb2120a5db41facb5d99b838c714e5}
