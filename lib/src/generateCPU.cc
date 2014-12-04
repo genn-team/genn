@@ -239,7 +239,7 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 	}
 	
 	if (thCode != tS("")) {
-	    os << "if ((" << thCode << ") && !(oldSpike)) " << OB(40) << ENDL;
+	    os << "if ((" << ensureFtype(thCode, model.ftype) << ") && !(oldSpike)) " << OB(40) << ENDL;
 	    os << "// register a true spike" << ENDL;
 	    os << "glbSpk" << model.neuronName[i] << "[";
 	    os << "glbSpkCnt" << model.neuronName[i] << "++] = n;" << ENDL;
