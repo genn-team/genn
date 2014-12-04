@@ -26,6 +26,7 @@ This file compiles to a tool that wraps all the other tools into one chain of ta
 #include <sstream>
 #include <cstdlib>
 #include <cmath>
+#include <locale>
 
 #ifdef _WIN32
 #include <direct.h>
@@ -44,9 +45,28 @@ using namespace std;
 template<typename T> std::string toString(T t)
 {
   std::stringstream s;
+  s << std::showpoint;
   s << t;
   return s.str();
 } 
+
+#define tS(X) toString(X) //!< Macro providing the abbreviated syntax tS() instead of toString().
+
+string toUpper(string s)
+{
+    for (unsigned int i= 0; i < s.length(); i++) {
+	s[i]= toupper(s[i]);
+    }
+    return s;
+}
+
+string toLower(string s)
+{
+    for (unsigned int i= 0; i < s.length(); i++) {
+	s[i]= tolower(s[i]);
+    }
+    return s;
+}
 
 //--------------------------------------------------------------------------
 /*! \brief Main entry point for generate_run.
@@ -74,14 +94,14 @@ int main(int argc, char *argv[])
   int nMB = atoi(argv[3]);
   int nLHI = atoi(argv[4]);
   int nLB = atoi(argv[5]);
-  float gscale = atof(argv[6]);
+  double gscale = atof(argv[6]);
   char *ftype= argv[10];
   
-  float pnkc_gsyn = 100.0f / nAL * gscale;
-  float pnkc_gsyn_sigma = 100.0f / nAL * gscale / 15.0f; 
-  float kcdn_gsyn = 2500.0f / nMB * 0.1f * gscale; 
-  float kcdn_gsyn_sigma = 2500.0f / nMB * 0.01f * gscale; 
-  float pnlhi_theta = 100.0f / nAL * 14.0f * gscale;
+  double pnkc_gsyn = 100.0f / nAL * gscale;
+  double pnkc_gsyn_sigma = 100.0f / nAL * gscale / 15.0f; 
+  double kcdn_gsyn = 2500.0f / nMB * 0.1f * gscale; 
+  double kcdn_gsyn_sigma = 2500.0f / nMB * 0.01f * gscale; 
+  double pnlhi_theta = 100.0f / nAL * 14.0f * gscale;
 
   // write neuron population sizes
   string fname = gennPath + "/userproject/include/sizes.h";
@@ -90,6 +110,20 @@ int main(int argc, char *argv[])
   os << "#define _NMB " << nMB << endl;
   os << "#define _NLHI " << nLHI << endl;
   os << "#define _NLB " << nLB << endl;
+
+  string tmps= tS(ftype);
+  os << "#define _FTYPE " << toUpper(tmps) << endl;
+  os << "#define scalar " << toLower(tmps) << endl;
+  if (toLower(ftype) == "double") {
+      os << "#define SCALAR_MIN DBL_MIN" << endl;
+      os << "#define SCALAR_MAX DBL_MAX" << endl;
+  }
+  else {
+      os << "#define SCALAR_MIN FLT_MIN" << endl;
+      os << "#define SCALAR_MAX FLT_MAX" << endl;
+  } 
+
+
   os.close();
 
   // build it
@@ -101,11 +135,12 @@ int main(int argc, char *argv[])
   }
 #else // UNIX
   cmd = "cd model && buildmodel.sh " + modelName + " " + toString(dbgMode);
-  cmd += " && make clean && make";
+  cmd += " && make clean && make classol_sim";
   if (dbgMode == 1) {
     cmd += " debug";
   }
 #endif
+  cerr << cmd << endl;
   retval=system(cmd.c_str());
   if (retval != 0){
     cerr << "ERROR: Following call failed with status " << retval << ":" << endl << cmd << endl;

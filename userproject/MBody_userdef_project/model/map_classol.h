@@ -27,7 +27,7 @@ T. Nowotny, R. Huerta, H. D. I. Abarbanel, and M. I. Rabinovich Self-organizatio
 //--------------------------------------------------------------------------
 
 
-#include "MBody_userdef.cc"
+//#include "MBody_userdef.cc"
 
 //--------------------------------------------------------------------------
 /*! \brief This class cpontains the methods for running the MBody1 example model.
@@ -36,11 +36,14 @@ T. Nowotny, R. Huerta, H. D. I. Abarbanel, and M. I. Rabinovich Self-organizatio
 
 class classol
 {
+ private:
+  void importArray(scalar *, double *, int);
+  void exportArray(double *, scalar *, int);
  public:
   NNmodel model;
   unsigned int offset;
   uint64_t *theRates;
-  float *p_pattern;  
+  scalar *p_pattern;  
   uint64_t *pattern;
   uint64_t *baserates;
   //------------------------------------------------------------------------
@@ -67,7 +70,7 @@ class classol
   void write_kcdnsyns(FILE *); 
   void read_input_patterns(FILE *); 
   void generate_baserates(); 
-  void run(float, unsigned int); 
+  void run(scalar, unsigned int); 
   void output_state(FILE *, unsigned int); 
   void getSpikesFromGPU(); 
   void getSpikeNumbersFromGPU(); 

@@ -182,12 +182,12 @@ int main(int argc, char *argv[])
     locust.sum_spikes();
     locust.output_spikes(osf2, which);
 
-    fprintf(osf, "%f ", t);
+ /*   fprintf(osf, "%f ", t);
     for (int i= 0; i < 100; i++) {
         fprintf(osf, "%f ", VDN[i]);
     }
     fprintf(osf,"\n");
-
+*/
     // report progress
     if (t - last_t_report >= T_REPORT_TME)
     {
