@@ -502,7 +502,7 @@ void preparePostSynModels(){
   ps.dpNames.clear(); 
   
   ps.postSynDecay=tS("");
-  ps.postSyntoCurrent=tS("$(inSyn); $(inSyn)=0");
+  ps.postSyntoCurrent=tS("$(inSyn); $(inSyn)=0.0");
   
   postSynModels.push_back(ps);
   IZHIKEVICH_PS= postSynModels.size()-1;
