@@ -9,6 +9,16 @@
 <link href="../../tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="../../jquery.js"></script>
 <script type="text/javascript" src="../../dynsections.js"></script>
+<!--This is Google Analytics Tracking Code-->
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-57354659-1', 'auto');
+  ga('send', 'pageview');
+</script>
+<!--End of Google Analytics Tracking Code-->
 <link href="../../navtree.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="../../resize.js"></script>
 <script type="text/javascript" src="../../navtree.js"></script>
@@ -131,10 +141,16 @@ Macros</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:acd4836da644df996627ecc9823546f8a"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
+<tr class="memitem:acd4836da644df996627ecc9823546f8a"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
 <tr class="memitem:acd4836da644df996627ecc9823546f8a"><td class="memTemplItemLeft" align="right" valign="top">std::string&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../dd/d28/toString_8h.html#acd4836da644df996627ecc9823546f8a">toString</a> (T <a class="el" href="../../d9/d32/PoissonIzh__sim_8h.html#afea36502e9d227ff62c5fb2719a246f2">t</a>)</td></tr>
 <tr class="memdesc:acd4836da644df996627ecc9823546f8a"><td class="mdescLeft">&#160;</td><td class="mdescRight">template function for string conversion from const char* to C++ string  <a href="#acd4836da644df996627ecc9823546f8a">More...</a><br /></td></tr>
 <tr class="separator:acd4836da644df996627ecc9823546f8a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a92e4f315b2f239be3524717fbc0ee571"><td class="memTemplParams" colspan="2">template&lt;&gt; </td></tr>
+<tr class="memitem:a92e4f315b2f239be3524717fbc0ee571"><td class="memTemplItemLeft" align="right" valign="top">std::string&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../dd/d28/toString_8h.html#a92e4f315b2f239be3524717fbc0ee571">toString</a> (float <a class="el" href="../../d9/d32/PoissonIzh__sim_8h.html#afea36502e9d227ff62c5fb2719a246f2">t</a>)</td></tr>
+<tr class="separator:a92e4f315b2f239be3524717fbc0ee571"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac9766c3943b6720c67ecadc9048f829e"><td class="memTemplParams" colspan="2">template&lt;&gt; </td></tr>
+<tr class="memitem:ac9766c3943b6720c67ecadc9048f829e"><td class="memTemplItemLeft" align="right" valign="top">std::string&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../dd/d28/toString_8h.html#ac9766c3943b6720c67ecadc9048f829e">toString</a> (double <a class="el" href="../../d9/d32/PoissonIzh__sim_8h.html#afea36502e9d227ff62c5fb2719a246f2">t</a>)</td></tr>
+<tr class="separator:ac9766c3943b6720c67ecadc9048f829e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Contains a template function for string conversion from const char* to C++ string. </p>
@@ -176,7 +192,7 @@ Functions</h2></td></tr>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T &gt; </div>
+template&lt;class T &gt; </div>
       <table class="memname">
         <tr>
           <td class="memname">std::string toString </td>
@@ -192,13 +208,49 @@ template&lt;typename T &gt; </div>
 
 </div>
 </div>
+<a class="anchor" id="a92e4f315b2f239be3524717fbc0ee571"></a>
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">std::string toString </td>
+          <td>(</td>
+          <td class="paramtype">float&#160;</td>
+          <td class="paramname"><em>t</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="ac9766c3943b6720c67ecadc9048f829e"></a>
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">std::string toString </td>
+          <td>(</td>
+          <td class="paramtype">double&#160;</td>
+          <td class="paramname"><em>t</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dir_97aefd0d527b934f1d99a682da8fe6a9.html">lib</a></li><li class="navelem"><a class="el" href="../../dir_5a30104352ef4255dc24354b02eb2d20.html">include</a></li><li class="navelem"><a class="el" href="../../dd/d28/toString_8h.html">toString.h</a></li>
-    <li class="footer">Generated on Thu Dec 4 2014 14:24:22 for GeNN by
+    <li class="footer">Generated on Fri Dec 5 2014 19:33:02 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.7 </li>
   </ul>

@@ -1,16 +1,15 @@
 var searchData=
 [
-  ['ekexp',['EKexp',['../d4/da1/helper_8h.html#a254b431390e2ef3a2da795bb3a182a61',1,'helper.h']]],
-  ['elexp',['Elexp',['../d4/da1/helper_8h.html#a6826e63474e8e81555a021dc2ee70421',1,'helper.h']]],
-  ['enaexp',['ENaexp',['../d4/da1/helper_8h.html#a38504d54eb399b663442c535b8c34708',1,'helper.h']]],
-  ['err',['err',['../d4/da7/structerrTupel.html#a99cafdc91eea024efa6fa2c501d7ff75',1,'errTupel']]],
-  ['evntthreshold',['evntThreshold',['../dd/db7/classweightUpdateModel.html#acccf120c9b1307f7ee2c5bac43110be1',1,'weightUpdateModel']]],
-  ['excizh_5fp',['excIzh_p',['../d7/d5b/Izh__sparse_8cc.html#a091232fecad2954bd200afb7d5065e32',1,'Izh_sparse.cc']]],
-  ['exizh_5fini',['exIzh_ini',['../db/d47/OneComp_8cc.html#a2f343b0c98bb1a638235d438a394a409',1,'exIzh_ini():&#160;OneComp.cc'],['../dc/d3f/PoissonIzh_8cc.html#a2f343b0c98bb1a638235d438a394a409',1,'exIzh_ini():&#160;PoissonIzh.cc']]],
-  ['exizh_5fp',['exIzh_p',['../db/d47/OneComp_8cc.html#a12f2cac1332ab9e3a092a48d703b495b',1,'exIzh_p():&#160;OneComp.cc'],['../dc/d3f/PoissonIzh_8cc.html#a12f2cac1332ab9e3a092a48d703b495b',1,'exIzh_p():&#160;PoissonIzh.cc']]],
-  ['expdecay',['EXPDECAY',['../dc/de1/modelSpec_8h.html#a49eb71ad1b005eccc948e788d0ae524b',1,'modelSpec.h']]],
-  ['extraglobalneuronkernelparameters',['extraGlobalNeuronKernelParameters',['../d3/d64/structneuronModel.html#a00094db5e89eaa5d8017d83d84c63676',1,'neuronModel']]],
-  ['extraglobalneuronkernelparametertypes',['extraGlobalNeuronKernelParameterTypes',['../d3/d64/structneuronModel.html#a35592a2fad7d926ca664871bd1513f24',1,'neuronModel']]],
-  ['extraglobalsynapsekernelparameters',['extraGlobalSynapseKernelParameters',['../dd/db7/classweightUpdateModel.html#aeab0e4003100c943d2ddcd3481f5f660',1,'weightUpdateModel']]],
-  ['extraglobalsynapsekernelparametertypes',['extraGlobalSynapseKernelParameterTypes',['../dd/db7/classweightUpdateModel.html#a3e8b0003232bcbdf1be31425d87eb233',1,'weightUpdateModel']]]
+  ['d_5fbaserates',['d_baserates',['../d1/d16/classclassol.html#a0453758295a0bcabf7ae00949a51e717',1,'classol::d_baserates()'],['../d1/d16/classclassol.html#adee39c3f46e3b1b691b047f7fae179c6',1,'classol::d_baserates()']]],
+  ['d_5finput1',['d_input1',['../de/dba/classclassIzh.html#aeb9e8508d594332f804590f8b59a0f7f',1,'classIzh::d_input1()'],['../d1/d16/classclassol.html#a29d842c266bb5c84cdc3ef1e7d7d4e06',1,'classol::d_input1()']]],
+  ['d_5finput2',['d_input2',['../de/dba/classclassIzh.html#a7eaec632e8a4d4dc55847bbb443ec1dd',1,'classIzh']]],
+  ['d_5fpattern',['d_pattern',['../d1/d16/classclassol.html#a99dd2f7af0454b904234df4ac3400445',1,'classol::d_pattern()'],['../d1/d16/classclassol.html#ab864befa4f0f4b067b78933dbfd77ced',1,'classol::d_pattern()']]],
+  ['devicecount',['deviceCount',['../d2/d49/global_8h.html#aeae4d6852439dcd029768b91adabc33b',1,'global.h']]],
+  ['deviceprop',['deviceProp',['../d2/d49/global_8h.html#a9c0bee1772862acc65b81c8a2fe14f28',1,'global.h']]],
+  ['digits',['digits',['../d9/d5b/ensureFtype_8h.html#abd6ac6d6fb449c8c576eac24c7df3472',1,'digits():&#160;ensureFtype.h'],['../d9/d9e/stringutils_8h.html#abd6ac6d6fb449c8c576eac24c7df3472',1,'digits():&#160;stringutils.h']]],
+  ['dnp',['dnp',['../dc/de5/classNNmodel.html#a8199af3b9c937784502210645828d2fd',1,'NNmodel']]],
+  ['dpnames',['dpNames',['../d3/d64/structneuronModel.html#a051c0c704ce383c43cdf446accbeb201',1,'neuronModel::dpNames()'],['../d8/dbb/structpostSynModel.html#a1deddbf488ffa49ec90f084791d9ebe3',1,'postSynModel::dpNames()'],['../dd/db7/classweightUpdateModel.html#a508c032f1c92f8d3da42dfa9209f0eb8',1,'weightUpdateModel::dpNames()']]],
+  ['dps',['dps',['../d3/d64/structneuronModel.html#a9b9b9e5e66702eb114b268bbd08d7c34',1,'neuronModel::dps()'],['../d8/dbb/structpostSynModel.html#a5c0093ffd554c603c21cce0c1b440373',1,'postSynModel::dps()'],['../dd/db7/classweightUpdateModel.html#a7f23e71d08ca83e3f5941105b90814d5',1,'weightUpdateModel::dps()']]],
+  ['dpsp',['dpsp',['../dc/de5/classNNmodel.html#a07fecb4ea288e69301af55e93297660c',1,'NNmodel']]],
+  ['dsp_5fw',['dsp_w',['../dc/de5/classNNmodel.html#a285430d63d02f6bc1b339c35c41dda67',1,'NNmodel']]]
 ];

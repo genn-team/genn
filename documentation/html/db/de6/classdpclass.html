@@ -9,6 +9,16 @@
 <link href="../../tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="../../jquery.js"></script>
 <script type="text/javascript" src="../../dynsections.js"></script>
+<!--This is Google Analytics Tracking Code-->
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-57354659-1', 'auto');
+  ga('send', 'pageview');
+</script>
+<!--End of Google Analytics Tracking Code-->
 <link href="../../navtree.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="../../resize.js"></script>
 <script type="text/javascript" src="../../navtree.js"></script>
@@ -134,8 +144,8 @@ Inheritance diagram for dpclass:</div>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a08441ad6ecfc18420fcc9b715b18ae6c"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/de6/classdpclass.html#a08441ad6ecfc18420fcc9b715b18ae6c">dpclass</a> ()</td></tr>
 <tr class="separator:a08441ad6ecfc18420fcc9b715b18ae6c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4227f736c0ec826d7bda6c98e783d74a"><td class="memItemLeft" align="right" valign="top">virtual float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/de6/classdpclass.html#a4227f736c0ec826d7bda6c98e783d74a">calculateDerivedParameter</a> (int index, vector&lt; float &gt; pars, float dt=1.0)</td></tr>
-<tr class="separator:a4227f736c0ec826d7bda6c98e783d74a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a30ec6bebd43f14775541c0394e1d4bab"><td class="memItemLeft" align="right" valign="top">virtual double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/de6/classdpclass.html#a30ec6bebd43f14775541c0394e1d4bab">calculateDerivedParameter</a> (int index, vector&lt; double &gt; pars, double dt=1.0)</td></tr>
+<tr class="separator:a30ec6bebd43f14775541c0394e1d4bab"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a class="anchor" id="a08441ad6ecfc18420fcc9b715b18ae6c"></a>
@@ -162,7 +172,7 @@ Public Member Functions</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a class="anchor" id="a4227f736c0ec826d7bda6c98e783d74a"></a>
+<a class="anchor" id="a30ec6bebd43f14775541c0394e1d4bab"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -170,7 +180,7 @@ Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">virtual float dpclass::calculateDerivedParameter </td>
+          <td class="memname">virtual double dpclass::calculateDerivedParameter </td>
           <td>(</td>
           <td class="paramtype">int&#160;</td>
           <td class="paramname"><em>index</em>, </td>
@@ -178,13 +188,13 @@ Public Member Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">vector&lt; float &gt;&#160;</td>
+          <td class="paramtype">vector&lt; double &gt;&#160;</td>
           <td class="paramname"><em>pars</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">float&#160;</td>
+          <td class="paramtype">double&#160;</td>
           <td class="paramname"><em>dt</em> = <code>1.0</code>&#160;</td>
         </tr>
         <tr>
@@ -200,7 +210,7 @@ Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Reimplemented in <a class="el" href="../../da/d0d/classexpDecayDp.html#adae43a9470a9bf248950fd4bfc31ee04">expDecayDp</a>, <a class="el" href="../../d0/dba/classpwSTDP.html#a29af7a11b93e3617d9da090cc07ad578">pwSTDP</a>, <a class="el" href="../../dd/d4e/classpwSTDP__userdef.html#ab97adaaca41c96af7bcb70cde27f36cf">pwSTDP_userdef</a>, <a class="el" href="../../d6/d9e/classrulkovdp.html#ac05fee8df961da95972c7343e677660e">rulkovdp</a>, and <a class="el" href="../../d0/dba/classpwSTDP.html#a6c0e3e483e484f8805edd58b7fb37507">pwSTDP</a>.</p>
+<p>Reimplemented in <a class="el" href="../../da/d0d/classexpDecayDp.html#a92d066e794b40c8f50802adfdfe8d13e">expDecayDp</a>, <a class="el" href="../../d6/d9e/classrulkovdp.html#a3e1e4be516c6d92fdadcb34a32eca109">rulkovdp</a>, and <a class="el" href="../../d0/dba/classpwSTDP.html#ae2b1d284606988c81dfeb436de37fa6c">pwSTDP</a>.</p>
 
 </div>
 </div>
@@ -213,7 +223,7 @@ Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../db/de6/classdpclass.html">dpclass</a></li>
-    <li class="footer">Generated on Thu Dec 4 2014 14:24:23 for GeNN by
+    <li class="footer">Generated on Fri Dec 5 2014 19:33:04 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.7 </li>
   </ul>

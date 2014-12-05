@@ -9,6 +9,16 @@
 <link href="../../tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="../../jquery.js"></script>
 <script type="text/javascript" src="../../dynsections.js"></script>
+<!--This is Google Analytics Tracking Code-->
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-57354659-1', 'auto');
+  ga('send', 'pageview');
+</script>
+<!--End of Google Analytics Tracking Code-->
 <link href="../../navtree.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="../../resize.js"></script>
 <script type="text/javascript" src="../../navtree.js"></script>
@@ -106,6 +116,7 @@ $(document).ready(function(){initNavTree('df/d18/userproject_2MBody__userdef__pr
 
 <div class="header">
   <div class="summary">
+<a href="#define-members">Macros</a> &#124;
 <a href="#func-members">Functions</a>  </div>
   <div class="headertitle">
 <div class="title">generate_run.cc File Reference</div>  </div>
@@ -117,18 +128,48 @@ $(document).ready(function(){initNavTree('df/d18/userproject_2MBody__userdef__pr
 <code>#include &lt;sstream&gt;</code><br />
 <code>#include &lt;cstdlib&gt;</code><br />
 <code>#include &lt;cmath&gt;</code><br />
+<code>#include &lt;locale&gt;</code><br />
 <code>#include &lt;sys/stat.h&gt;</code><br />
 </div><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="define-members"></a>
+Macros</h2></td></tr>
+<tr class="memitem:a59bb28cdc0693d03c5e7caee444be7db"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d18/userproject_2MBody__userdef__project_2generate__run_8cc.html#a59bb28cdc0693d03c5e7caee444be7db">tS</a>(X)&#160;&#160;&#160;<a class="el" href="../../da/de6/userproject_2PoissonIzh__project_2generate__run_8cc.html#acd4836da644df996627ecc9823546f8a">toString</a>(X)</td></tr>
+<tr class="memdesc:a59bb28cdc0693d03c5e7caee444be7db"><td class="mdescLeft">&#160;</td><td class="mdescRight">Macro providing the abbreviated syntax <a class="el" href="../../df/d18/userproject_2MBody__userdef__project_2generate__run_8cc.html#a59bb28cdc0693d03c5e7caee444be7db" title="Macro providing the abbreviated syntax tS() instead of toString(). ">tS()</a> instead of <a class="el" href="../../df/d75/tmp_2generate__run_8cc.html#acd4836da644df996627ecc9823546f8a" title="Template function for string conversion. ">toString()</a>.  <a href="#a59bb28cdc0693d03c5e7caee444be7db">More...</a><br /></td></tr>
+<tr class="separator:a59bb28cdc0693d03c5e7caee444be7db"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
 <tr class="memitem:acd4836da644df996627ecc9823546f8a"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
 <tr class="memitem:acd4836da644df996627ecc9823546f8a"><td class="memTemplItemLeft" align="right" valign="top">std::string&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../df/d18/userproject_2MBody__userdef__project_2generate__run_8cc.html#acd4836da644df996627ecc9823546f8a">toString</a> (T <a class="el" href="../../d9/d32/PoissonIzh__sim_8h.html#afea36502e9d227ff62c5fb2719a246f2">t</a>)</td></tr>
 <tr class="memdesc:acd4836da644df996627ecc9823546f8a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Template function for string conversion.  <a href="#acd4836da644df996627ecc9823546f8a">More...</a><br /></td></tr>
 <tr class="separator:acd4836da644df996627ecc9823546f8a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a91f81abcd82da4dc033be13b878d9240"><td class="memItemLeft" align="right" valign="top">string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d18/userproject_2MBody__userdef__project_2generate__run_8cc.html#a91f81abcd82da4dc033be13b878d9240">toUpper</a> (string s)</td></tr>
+<tr class="separator:a91f81abcd82da4dc033be13b878d9240"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3dcd5b26fa97f07264b895befa5440e7"><td class="memItemLeft" align="right" valign="top">string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d18/userproject_2MBody__userdef__project_2generate__run_8cc.html#a3dcd5b26fa97f07264b895befa5440e7">toLower</a> (string s)</td></tr>
+<tr class="separator:a3dcd5b26fa97f07264b895befa5440e7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0ddf1224851353fc92bfbff6f499fa97"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d18/userproject_2MBody__userdef__project_2generate__run_8cc.html#a0ddf1224851353fc92bfbff6f499fa97">main</a> (int argc, char *argv[])</td></tr>
 <tr class="memdesc:a0ddf1224851353fc92bfbff6f499fa97"><td class="mdescLeft">&#160;</td><td class="mdescRight">Main entry point for generate_run.  <a href="#a0ddf1224851353fc92bfbff6f499fa97">More...</a><br /></td></tr>
 <tr class="separator:a0ddf1224851353fc92bfbff6f499fa97"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<h2 class="groupheader">Macro Definition Documentation</h2>
+<a class="anchor" id="a59bb28cdc0693d03c5e7caee444be7db"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define tS</td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname">X</td><td>)</td>
+          <td>&#160;&#160;&#160;<a class="el" href="../../da/de6/userproject_2PoissonIzh__project_2generate__run_8cc.html#acd4836da644df996627ecc9823546f8a">toString</a>(X)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Macro providing the abbreviated syntax <a class="el" href="../../df/d18/userproject_2MBody__userdef__project_2generate__run_8cc.html#a59bb28cdc0693d03c5e7caee444be7db" title="Macro providing the abbreviated syntax tS() instead of toString(). ">tS()</a> instead of <a class="el" href="../../df/d75/tmp_2generate__run_8cc.html#acd4836da644df996627ecc9823546f8a" title="Template function for string conversion. ">toString()</a>. </p>
+
+</div>
+</div>
 <h2 class="groupheader">Function Documentation</h2>
 <a class="anchor" id="a0ddf1224851353fc92bfbff6f499fa97"></a>
 <div class="memitem">
@@ -158,6 +199,22 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="a3dcd5b26fa97f07264b895befa5440e7"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">string toLower </td>
+          <td>(</td>
+          <td class="paramtype">string&#160;</td>
+          <td class="paramname"><em>s</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a class="anchor" id="acd4836da644df996627ecc9823546f8a"></a>
 <div class="memitem">
 <div class="memproto">
@@ -178,13 +235,29 @@ template&lt;typename T &gt; </div>
 
 </div>
 </div>
+<a class="anchor" id="a91f81abcd82da4dc033be13b878d9240"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">string toUpper </td>
+          <td>(</td>
+          <td class="paramtype">string&#160;</td>
+          <td class="paramname"><em>s</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dir_66fc3ae5585a02e310a487b6a12e9e11.html">userproject</a></li><li class="navelem"><a class="el" href="../../dir_43de9f6b4ec25e176fc985bb13234990.html">MBody_userdef_project</a></li><li class="navelem"><a class="el" href="../../df/d18/userproject_2MBody__userdef__project_2generate__run_8cc.html">generate_run.cc</a></li>
-    <li class="footer">Generated on Thu Dec 4 2014 14:24:22 for GeNN by
+    <li class="footer">Generated on Fri Dec 5 2014 19:33:02 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.7 </li>
   </ul>

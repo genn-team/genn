@@ -9,6 +9,16 @@
 <link href="../../tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="../../jquery.js"></script>
 <script type="text/javascript" src="../../dynsections.js"></script>
+<!--This is Google Analytics Tracking Code-->
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-57354659-1', 'auto');
+  ga('send', 'pageview');
+</script>
+<!--End of Google Analytics Tracking Code-->
 <link href="../../navtree.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="../../resize.js"></script>
 <script type="text/javascript" src="../../navtree.js"></script>
@@ -131,7 +141,7 @@ How to use GeNN for New Projects</h1>
 <p>The most common way to use GeNN is to create or modify a program such as <code><a class="el" href="../../d7/d80/userproject_2MBody1__project_2generate__run_8cc.html">userproject/MBody1_project/generate_run.cc</a></code> that wraps around other programs that are used for each of the necessary steps listed above. In more detail, what <code>generate_run</code> and similar programs do is:</p>
 <ol type="1">
 <li>To use other tools (programs) to generate connectivity matrices and store them into files.</li>
-<li>To build the source code of a model simulation using GeNN. In the example of the MBody1_project this entails writing neuron numbers into <code><a class="el" href="../../d4/deb/sizes_8h.html">userproject/include/sizes.h</a></code>, and executing <div class="fragment"><div class="line">buildmodel.sh MBody1 [DEBUG OFF/ON]</div>
+<li>To build the source code of a model simulation using GeNN. In the example of the MBody1_project this entails writing neuron numbers into <code>userproject/include/sizes.h</code>, and executing <div class="fragment"><div class="line">buildmodel.sh MBody1 [DEBUG OFF/ON]</div>
 </div><!-- fragment --> The <code>buildmodel.sh</code> script compiles the installed GeNN code generator in conjunction with the user-provided model description (see <a class="el" href="../../d7/d98/Quickstart.html#ownmodel">below</a>), in this example <code>model/MBody1.cc</code>. It then executes the GeNN code generator to generate the complete model simulation code for the MBody1 model.</li>
 <li>To compile the generated model code, that can be found in <code>model/MBody1_CODE/</code> by invoking <code>make clean &amp;&amp; make</code> in the <code>model</code> directory. It is at this stage that GeNN generated model simulation code is combined with user-side run-time code, in this example <code>classol_sim.cu</code> (classify-olfaction-simulation) which uses the <code>map_classol</code> (map-neuron-based-classifier-olfaction) class.</li>
 <li>To finally run the resulting stand-alone simulator executable, in the MBody1 example <code>classol_sim</code> in the <code>model</code> directory.</li>
@@ -158,7 +168,7 @@ Defining a New Model in GeNN</h1>
 <div class="line">};</div>
 </div><!-- fragment --><p> would define the (homogeneous) parameters for a population of Poisson neurons. </p><dl class="section note"><dt>Note</dt><dd>The number of required parameters and their meaning is defined by the neuron or synapse type. Refer to the <a class="el" href="../../dc/d05/UserManual.html">User Manual</a> for details. <br />
  If heterogeneous parameter values are needed for any particular population of neurons (synapses), a new neuron (synapse) type needs to be defined in which these parameters are defined as variables rather than parameters. See the <a class="el" href="../../dc/d05/UserManual.html">User Manual</a> for how to define new neuron (synapse) types.</dd></dl>
-<p>d) the actual network needs to be defined in the form of a function <code>modelDefinition</code>, i.e. </p><div class="fragment"><div class="line"><span class="keywordtype">void</span> <a class="code" href="../../dd/d09/tmp_2model_2MBody__userdef_8cc.html#a9aeaa0a22980484b2c472564fc9f686e">modelDefinition</a>(<a class="code" href="../../dc/de5/classNNmodel.html">NNmodel</a> &amp;model); </div>
+<p>d) the actual network needs to be defined in the form of a function <code>modelDefinition</code>, i.e. </p><div class="fragment"><div class="line"><span class="keywordtype">void</span> <a class="code" href="../../d3/dc0/currentModel_8cc.html#a9aeaa0a22980484b2c472564fc9f686e">modelDefinition</a>(<a class="code" href="../../dc/de5/classNNmodel.html">NNmodel</a> &amp;model); </div>
 </div><!-- fragment --> <dl class="section note"><dt>Note</dt><dd>The name <code>modelDefinition</code> and its parameter of type <code><a class="el" href="../../dc/de5/classNNmodel.html" title="Structure to hold the information that defines synapse dynamics (a model of how synapse variables cha...">NNmodel</a>&amp;</code> are fixed and cannot be changed if GeNN is to recognise it as a model definition.</dd></dl>
 <p><code>MBody1.cc</code> shows a typical example of a model definition function. In its core tt contains calls to <code>model.addNeuronPopulation</code> and <code>model.addSynapsePopulation</code> to build up the network. For a full range of options for defining a network, refer to the <a class="el" href="../../dc/d05/UserManual.html">User Manual</a>.</p>
 </li>
@@ -178,7 +188,7 @@ Defining a New Model in GeNN</h1>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Thu Dec 4 2014 14:24:22 for GeNN by
+    <li class="footer">Generated on Fri Dec 5 2014 19:33:02 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.7 </li>
   </ul>

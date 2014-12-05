@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['calculatederivedparameter',['calculateDerivedParameter',['../db/de6/classdpclass.html#a4227f736c0ec826d7bda6c98e783d74a',1,'dpclass::calculateDerivedParameter()'],['../d6/d9e/classrulkovdp.html#ac05fee8df961da95972c7343e677660e',1,'rulkovdp::calculateDerivedParameter()'],['../da/d0d/classexpDecayDp.html#adae43a9470a9bf248950fd4bfc31ee04',1,'expDecayDp::calculateDerivedParameter()'],['../d0/dba/classpwSTDP.html#a6c0e3e483e484f8805edd58b7fb37507',1,'pwSTDP::calculateDerivedParameter(int index, vector&lt; float &gt; pars, float dt)'],['../d0/dba/classpwSTDP.html#a29af7a11b93e3617d9da090cc07ad578',1,'pwSTDP::calculateDerivedParameter(int index, vector&lt; float &gt; pars, float dt=DT)'],['../dd/d4e/classpwSTDP__userdef.html#ab97adaaca41c96af7bcb70cde27f36cf',1,'pwSTDP_userdef::calculateDerivedParameter()']]],
+  ['calculatederivedparameter',['calculateDerivedParameter',['../db/de6/classdpclass.html#a30ec6bebd43f14775541c0394e1d4bab',1,'dpclass::calculateDerivedParameter()'],['../d6/d9e/classrulkovdp.html#a3e1e4be516c6d92fdadcb34a32eca109',1,'rulkovdp::calculateDerivedParameter()'],['../da/d0d/classexpDecayDp.html#a92d066e794b40c8f50802adfdfe8d13e',1,'expDecayDp::calculateDerivedParameter()'],['../d0/dba/classpwSTDP.html#ae2b1d284606988c81dfeb436de37fa6c',1,'pwSTDP::calculateDerivedParameter(int index, vector&lt; double &gt; pars, double dt)'],['../d0/dba/classpwSTDP.html#a29af7a11b93e3617d9da090cc07ad578',1,'pwSTDP::calculateDerivedParameter(int index, vector&lt; float &gt; pars, float dt=DT)'],['../dd/d4e/classpwSTDP__userdef.html#ab97adaaca41c96af7bcb70cde27f36cf',1,'pwSTDP_userdef::calculateDerivedParameter()']]],
   ['cb',['CB',['../d6/d8a/CodeHelper_8cc.html#a9313437c516d7900d8e17e3053212676',1,'CodeHelper.cc']]],
   ['cexp',['Cexp',['../d4/da1/helper_8h.html#a2dcb670d4b05ef1ad7c468a7991238cd',1,'helper.h']]],
   ['check_5fcuda_5ferrors',['CHECK_CUDA_ERRORS',['../d5/d60/utils_8h.html#a3d4f854b9c80237b6f4c23540a823f47',1,'utils.h']]],
@@ -9,10 +9,10 @@ var searchData=
   ['choosegpudevice',['chooseGPUDevice',['../dc/de5/classNNmodel.html#a79631e0c13cdd5ebed55a16bea15819a',1,'NNmodel']]],
   ['classizh',['classIzh',['../de/dba/classclassIzh.html',1,'classIzh'],['../de/dba/classclassIzh.html#a2b13361aa84b9d2b4d6ed1f8b3a83280',1,'classIzh::classIzh()']]],
   ['classol',['classol',['../d1/d16/classclassol.html',1,'classol'],['../d1/d16/classclassol.html#a0f4a2bbdd48bcdfcc2abaa58a839232c',1,'classol::classol()'],['../d1/d16/classclassol.html#a0f4a2bbdd48bcdfcc2abaa58a839232c',1,'classol::classol()'],['../d1/d16/classclassol.html#a0f4a2bbdd48bcdfcc2abaa58a839232c',1,'classol::classol()'],['../d1/d16/classclassol.html#a0f4a2bbdd48bcdfcc2abaa58a839232c',1,'classol::classol()'],['../d1/d16/classclassol.html#a0f4a2bbdd48bcdfcc2abaa58a839232c',1,'classol::classol()'],['../d1/d16/classclassol.html#a0f4a2bbdd48bcdfcc2abaa58a839232c',1,'classol::classol()']]],
+  ['classol_5fsim_2ecu',['classol_sim.cu',['../de/d89/userproject_2MBody1__project_2model_2classol__sim_8cu.html',1,'']]],
   ['classol_5fsim_2ecu',['classol_sim.cu',['../d4/d2b/userproject_2MBody1__project_2modelcmp_2classol__sim_8cu.html',1,'']]],
   ['classol_5fsim_2ecu',['classol_sim.cu',['../d6/dae/userproject_2MBody__userdef__project_2model_2classol__sim_8cu.html',1,'']]],
   ['classol_5fsim_2ecu',['classol_sim.cu',['../d6/d92/tmp_2model_2classol__sim_8cu.html',1,'']]],
-  ['classol_5fsim_2ecu',['classol_sim.cu',['../de/d89/userproject_2MBody1__project_2model_2classol__sim_8cu.html',1,'']]],
   ['classol_5fsim_2eh',['classol_sim.h',['../d4/d2c/tmp_2model_2classol__sim_8h.html',1,'']]],
   ['classol_5fsim_2eh',['classol_sim.h',['../d8/d70/userproject_2MBody1__project_2model_2classol__sim_8h.html',1,'']]],
   ['classol_5fsim_2eh',['classol_sim.h',['../d6/da4/userproject_2MBody1__project_2modelcmp_2classol__sim_8h.html',1,'']]],
@@ -20,6 +20,9 @@ var searchData=
   ['classol_5fsim_5fdetailed_5foutput_2ecu',['classol_sim_detailed_output.cu',['../d3/dba/classol__sim__detailed__output_8cu.html',1,'']]],
   ['clear',['clear',['../db/d66/extra__neurons_8h.html#a04d5bfff3831fd7a8db51b9033ce5947',1,'clear():&#160;extra_neurons.h'],['../d1/de9/lib_2include_2extra__postsynapses_8h.html#a7d3f558ec6b9bc9a4a78603b6306a416',1,'clear():&#160;extra_postsynapses.h'],['../d9/d1d/SpineML__to__GeNN_2extra__postsynapses_8h.html#a7d3f558ec6b9bc9a4a78603b6306a416',1,'clear():&#160;extra_postsynapses.h']]],
   ['closebrace',['closeBrace',['../d1/d03/classCodeHelper.html#a8329aa6863c34e68683a8767ea296021',1,'CodeHelper']]],
+  ['clust_5fsize_5fan',['CLUST_SIZE_AN',['../d3/dc0/currentModel_8cc.html#a15cea5d29e785f1b08d4ee59ff711843',1,'currentModel.cc']]],
+  ['clust_5fsize_5fpn',['CLUST_SIZE_PN',['../d3/dc0/currentModel_8cc.html#a9191428a416c4183b11e1e5ca95c404c',1,'currentModel.cc']]],
+  ['clust_5fsize_5frn',['CLUST_SIZE_RN',['../d3/dc0/currentModel_8cc.html#a7a973a99e128dc1baf82541f6a37f12d',1,'currentModel.cc']]],
   ['codehelper',['CodeHelper',['../d1/d03/classCodeHelper.html',1,'CodeHelper'],['../d1/d03/classCodeHelper.html#ae3e74fda2c0e82714cac1919d5ae4e77',1,'CodeHelper::CodeHelper()']]],
   ['codehelper_2ecc',['CodeHelper.cc',['../d6/d8a/CodeHelper_8cc.html',1,'']]],
   ['compare',['compare',['../d3/dba/classol__sim__detailed__output_8cu.html#a54fe57cc8072e7ca9c5d912b63e1caa1',1,'classol_sim_detailed_output.cu']]],
@@ -34,5 +37,6 @@ var searchData=
   ['createposttoprearray',['createPosttoPreArray',['../da/d23/sparseUtils_8cc.html#a5e017d12cd0b67849d7b1ce9fd0109ae',1,'sparseUtils.cc']]],
   ['createsparseconnectivityfromdense',['createSparseConnectivityFromDense',['../da/d23/sparseUtils_8cc.html#a1463a3d3ed5740ecc718ff4660ba9260',1,'sparseUtils.cc']]],
   ['credits',['Credits',['../dd/d51/Credits.html',1,'UserManual']]],
-  ['cstopwatch',['CStopWatch',['../d9/de8/classCStopWatch.html',1,'CStopWatch'],['../d9/de8/classCStopWatch.html#a0cdafbed1a8d639c5a0e579ef3dfb408',1,'CStopWatch::CStopWatch()']]]
+  ['cstopwatch',['CStopWatch',['../d9/de8/classCStopWatch.html',1,'CStopWatch'],['../d9/de8/classCStopWatch.html#a0cdafbed1a8d639c5a0e579ef3dfb408',1,'CStopWatch::CStopWatch()']]],
+  ['currentmodel_2ecc',['currentModel.cc',['../d3/dc0/currentModel_8cc.html',1,'']]]
 ];

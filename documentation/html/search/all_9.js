@@ -59,7 +59,7 @@ var searchData=
   ['glhikc',['gLHIKC',['../dd/d09/tmp_2model_2MBody__userdef_8cc.html#a9ba0d9ce507f29f7a73b08a8f5d817e1',1,'gLHIKC():&#160;MBody_userdef.cc'],['../de/d16/HHVclampGA__project_2model_2MBody1_8cc.html#a9ba0d9ce507f29f7a73b08a8f5d817e1',1,'gLHIKC():&#160;MBody1.cc'],['../d8/d56/MBody1__project_2modelcmp_2MBody1_8cc.html#a9ba0d9ce507f29f7a73b08a8f5d817e1',1,'gLHIKC():&#160;MBody1.cc']]],
   ['global_2eh',['global.h',['../d2/d49/global_8h.html',1,'']]],
   ['globalg',['GLOBALG',['../dc/de1/modelSpec_8h.html#a0241851d52e6a088bc3194511a8246b9',1,'modelSpec.h']]],
-  ['globalinp',['globalInp',['../dc/de5/classNNmodel.html#a8df5fd36faa5a56edea7d287fea1f625',1,'NNmodel']]],
+  ['globalinp',['globalInp',['../dc/de5/classNNmodel.html#aac7678ea215faa062e828d727b1f641b',1,'NNmodel']]],
   ['gnaexp',['gNaexp',['../d4/da1/helper_8h.html#a344959a5a5f53cfc8f85ad2f24aae708',1,'helper.h']]],
   ['gpkcdn',['gpKCDN',['../de/d1c/userproject_2MBody__userdef__project_2model_2MBody__userdef_8cc.html#a13773a6db4bc2b334dad9210ddba5f7b',1,'MBody_userdef.cc']]],
   ['gppnkc',['gpPNKC',['../dd/d09/tmp_2model_2MBody__userdef_8cc.html#ad545d3058932b1d8b63ea381c36eb098',1,'gpPNKC():&#160;MBody_userdef.cc'],['../de/d1c/userproject_2MBody__userdef__project_2model_2MBody__userdef_8cc.html#ad545d3058932b1d8b63ea381c36eb098',1,'gpPNKC():&#160;MBody_userdef.cc']]],

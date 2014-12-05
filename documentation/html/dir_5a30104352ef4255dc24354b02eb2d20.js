@@ -14,6 +14,7 @@ var dir_5a30104352ef4255dc24354b02eb2d20 =
     [ "modelSpec.cc", "d7/dfd/modelSpec_8cc.html", "d7/dfd/modelSpec_8cc" ],
     [ "modelSpec.h", "dc/de1/modelSpec_8h.html", "dc/de1/modelSpec_8h" ],
     [ "sparseUtils.cc", "da/d23/sparseUtils_8cc.html", "da/d23/sparseUtils_8cc" ],
+    [ "stringutils.h", "d9/d9e/stringutils_8h.html", "d9/d9e/stringutils_8h" ],
     [ "testi.cc", "d3/da1/testi_8cc.html", "d3/da1/testi_8cc" ],
     [ "toString.h", "dd/d28/toString_8h.html", "dd/d28/toString_8h" ],
     [ "usertools.h", "d6/dd0/usertools_8h.html", null ],

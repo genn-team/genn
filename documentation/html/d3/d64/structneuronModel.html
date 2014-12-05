@@ -9,6 +9,16 @@
 <link href="../../tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="../../jquery.js"></script>
 <script type="text/javascript" src="../../dynsections.js"></script>
+<!--This is Google Analytics Tracking Code-->
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-57354659-1', 'auto');
+  ga('send', 'pageview');
+</script>
+<!--End of Google Analytics Tracking Code-->
 <link href="../../navtree.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="../../resize.js"></script>
 <script type="text/javascript" src="../../navtree.js"></script>
@@ -144,10 +154,10 @@ Public Attributes</h2></td></tr>
 <tr class="memdesc:a3f5668e85624014cd5de97bf00d2b82f"><td class="mdescLeft">&#160;</td><td class="mdescRight">never used  <a href="#a3f5668e85624014cd5de97bf00d2b82f">More...</a><br /></td></tr>
 <tr class="separator:a3f5668e85624014cd5de97bf00d2b82f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4a5bf1f757a72b6edc28ad26ed61b2be"><td class="memItemLeft" align="right" valign="top">vector&lt; string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d64/structneuronModel.html#a4a5bf1f757a72b6edc28ad26ed61b2be">pNames</a></td></tr>
-<tr class="memdesc:a4a5bf1f757a72b6edc28ad26ed61b2be"><td class="mdescLeft">&#160;</td><td class="mdescRight">Names of (independent) parameters of the model. These are assumed to be always of type "float".  <a href="#a4a5bf1f757a72b6edc28ad26ed61b2be">More...</a><br /></td></tr>
+<tr class="memdesc:a4a5bf1f757a72b6edc28ad26ed61b2be"><td class="mdescLeft">&#160;</td><td class="mdescRight">Names of (independent) parameters of the model. These are assumed to be always of type "double".  <a href="#a4a5bf1f757a72b6edc28ad26ed61b2be">More...</a><br /></td></tr>
 <tr class="separator:a4a5bf1f757a72b6edc28ad26ed61b2be"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a051c0c704ce383c43cdf446accbeb201"><td class="memItemLeft" align="right" valign="top">vector&lt; string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d64/structneuronModel.html#a051c0c704ce383c43cdf446accbeb201">dpNames</a></td></tr>
-<tr class="memdesc:a051c0c704ce383c43cdf446accbeb201"><td class="mdescLeft">&#160;</td><td class="mdescRight">Names of dependent parameters of the model. These are assumed to be always of type "float".  <a href="#a051c0c704ce383c43cdf446accbeb201">More...</a><br /></td></tr>
+<tr class="memdesc:a051c0c704ce383c43cdf446accbeb201"><td class="mdescLeft">&#160;</td><td class="mdescRight">Names of dependent parameters of the model. These are assumed to be always of type "double".  <a href="#a051c0c704ce383c43cdf446accbeb201">More...</a><br /></td></tr>
 <tr class="separator:a051c0c704ce383c43cdf446accbeb201"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a00094db5e89eaa5d8017d83d84c63676"><td class="memItemLeft" align="right" valign="top">vector&lt; string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d64/structneuronModel.html#a00094db5e89eaa5d8017d83d84c63676">extraGlobalNeuronKernelParameters</a></td></tr>
 <tr class="memdesc:a00094db5e89eaa5d8017d83d84c63676"><td class="mdescLeft">&#160;</td><td class="mdescRight">Additional parameter in the neuron kernel; it is translated to a population specific name but otherwise assumed to be one parameter per population rather than per neuron.  <a href="#a00094db5e89eaa5d8017d83d84c63676">More...</a><br /></td></tr>
@@ -175,7 +185,7 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Names of dependent parameters of the model. These are assumed to be always of type "float". </p>
+<p>Names of dependent parameters of the model. These are assumed to be always of type "double". </p>
 <p>The dependent parameters are functions of independent parameters that enter into the neuron model. To avoid unecessary computational overhead, these parameters are calculated at compile time and inserted as explicit values into the generated code. See method NNmodel::initDerivedNeuronPara for how this is done. </p>
 
 </div>
@@ -254,7 +264,7 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Names of (independent) parameters of the model. These are assumed to be always of type "float". </p>
+<p>Names of (independent) parameters of the model. These are assumed to be always of type "double". </p>
 
 </div>
 </div>
@@ -366,7 +376,7 @@ Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../d3/d64/structneuronModel.html">neuronModel</a></li>
-    <li class="footer">Generated on Thu Dec 4 2014 14:24:23 for GeNN by
+    <li class="footer">Generated on Fri Dec 5 2014 19:33:05 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.7 </li>
   </ul>

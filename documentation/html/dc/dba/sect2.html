@@ -9,6 +9,16 @@
 <link href="../../tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="../../jquery.js"></script>
 <script type="text/javascript" src="../../dynsections.js"></script>
+<!--This is Google Analytics Tracking Code-->
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-57354659-1', 'auto');
+  ga('send', 'pageview');
+</script>
+<!--End of Google Analytics Tracking Code-->
 <link href="../../navtree.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="../../resize.js"></script>
 <script type="text/javascript" src="../../navtree.js"></script>
@@ -230,7 +240,7 @@ Defining your own neuron type</h1>
 <div class="line">model.<a class="code" href="../../d3/d64/structneuronModel.html#a4a5bf1f757a72b6edc28ad26ed61b2be">pNames</a>.push_back(String(<span class="stringliteral">&quot;C&quot;</span>));</div>
 <div class="line">model.<a class="code" href="../../d3/d64/structneuronModel.html#a051c0c704ce383c43cdf446accbeb201">dpNames</a>.push_back(String(<span class="stringliteral">&quot;a&quot;</span>));</div>
 </div><!-- fragment --></li>
-<li><code>dps</code> of type <code>dpclass</code>*: The dependent parameter class, i.e. an implementation of <code>dpclass</code> which would return the value for dependent parameters when queried for them. E.g. in the example above it would return <code>a</code> when queried for dependent parameter 0 through <code><a class="el" href="../../db/de6/classdpclass.html#a4227f736c0ec826d7bda6c98e783d74a">dpclass::calculateDerivedParameter()</a></code>. Examples how this is done can be found in the pre-defined classes, e.g. <a class="el" href="../../da/d0d/classexpDecayDp.html" title="Class defining the dependent parameter for exponential decay. ">expDecayDp</a>, <a class="el" href="../../d0/dba/classpwSTDP.html" title="TODO This class definition may be code-generated in a future release. ">pwSTDP</a>, <a class="el" href="../../d6/d9e/classrulkovdp.html">rulkovdp</a> etc.</li>
+<li><code>dps</code> of type <code>dpclass</code>*: The dependent parameter class, i.e. an implementation of <code>dpclass</code> which would return the value for dependent parameters when queried for them. E.g. in the example above it would return <code>a</code> when queried for dependent parameter 0 through <code><a class="el" href="../../db/de6/classdpclass.html#a30ec6bebd43f14775541c0394e1d4bab">dpclass::calculateDerivedParameter()</a></code>. Examples how this is done can be found in the pre-defined classes, e.g. <a class="el" href="../../da/d0d/classexpDecayDp.html" title="Class defining the dependent parameter for exponential decay. ">expDecayDp</a>, <a class="el" href="../../d0/dba/classpwSTDP.html" title="TODO This class definition may be code-generated in a future release. ">pwSTDP</a>, <a class="el" href="../../d6/d9e/classrulkovdp.html">rulkovdp</a> etc.</li>
 <li><code>tmpVarNames</code> of type <code>vector&lt;string&gt;</code>: This vector can be used to request additional variables that are not part of the state of the neuron but used only as temporary storage during evaluation of the integration time step. <br />
  For example, one could define <div class="fragment"><div class="line">model.<a class="code" href="../../d3/d64/structneuronModel.html#ab193cb434db2df5f1fa9a79fba30af83">tmpVarNames</a>.push_back(String(<span class="stringliteral">&quot;a&quot;</span>));</div>
 <div class="line">model.<a class="code" href="../../d3/d64/structneuronModel.html#ab193cb434db2df5f1fa9a79fba30af83">tmpVarNames</a>.push_back(String(<span class="stringliteral">&quot;float&quot;</span>));</div>
@@ -260,7 +270,7 @@ Explicit current input to neurons</h1>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dc/d05/UserManual.html">User Manual</a></li>
-    <li class="footer">Generated on Thu Dec 4 2014 14:24:23 for GeNN by
+    <li class="footer">Generated on Fri Dec 5 2014 19:33:02 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.7 </li>
   </ul>
