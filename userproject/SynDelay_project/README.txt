@@ -31,7 +31,7 @@ To run this example project, first build the model into CUDA code by typing:
 
 then compile the project by typing:
 
-  make clean && make
+  make clean && make release
 
 
   USAGE

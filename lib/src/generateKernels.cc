@@ -33,33 +33,7 @@ unsigned int nt;
 short *isGrpVarNeeded;
 CodeHelper hlp;
 
-void name_substitutions(string &code, string prefix, vector<string> &names, string postfix= string(""))
-{
-    for (int k = 0, l = names.size(); k < l; k++) {
-	substitute(code, tS("$(") + names[k] + tS(")"), prefix+names[k]+postfix);
-    }
-}
 
-void value_substitutions(string &code, vector<string> &names, vector<float> &values)
-{
-    for (int k = 0, l = names.size(); k < l; k++) {
-	substitute(code, tS("$(") + names[k] + tS(")"), tS(values[k]));
-    }
-}
-
-void extended_name_substitutions(string &code, string prefix, vector<string> &names, string ext, string postfix= string(""))
-{
-    for (int k = 0, l = names.size(); k < l; k++) {
-	substitute(code, tS("$(") + names[k] + ext + tS(")"), prefix+names[k]+postfix);
-    }
-}
-
-void extended_value_substitutions(string &code, vector<string> &names, string ext, vector<float> &values)
-{
-    for (int k = 0, l = names.size(); k < l; k++) {
-	substitute(code, tS("$(") + names[k] + ext + tS(")"), tS(values[k]));
-    }
-}
 
 void genNeuronKernel(NNmodel &model, //!< Model description 
 		     string &path,  //!< path for code output
@@ -81,7 +55,7 @@ void genNeuronKernel(NNmodel &model, //!< Model description
     os << "#ifndef _" << model.name << "_neuronKrnl_cc" << ENDL;
     os << "#define _" << model.name << "_neuronKrnl_cc" << ENDL;
 
-    os << "#include <cfloat>" << ENDL << ENDL;
+//    os << "#include <cfloat>" << ENDL << ENDL;
     // write doxygen comment
     os << "//-------------------------------------------------------------------------" << ENDL;
     os << "/*! \\file neuronKrnl.cc" << ENDL << ENDL;

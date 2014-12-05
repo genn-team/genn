@@ -25,20 +25,20 @@
 
 int nGPU= 0;
 
-float myPOI_p[4]= {
+double myPOI_p[4]= {
   0.1,        // 0 - firing rate
   2.5,        // 1 - refratory period
   20.0,       // 2 - Vspike
   -60.0       // 3 - Vrest
 };
 
-float myPOI_ini[3]= {
+double myPOI_ini[3]= {
  -60.0,        // 0 - V
   0,           // 1 - seed
   -10.0        // 2 - SpikeTime
 };
 
-float stdTM_p[7]= {
+double stdTM_p[7]= {
   7.15,          // 0 - gNa: Na conductance in 1/(mOhms * cm^2)
   50.0,          // 1 - ENa: Na equi potential in mV
   1.43,          // 2 - gK: K conductance in 1/(mOhms * cm^2)
@@ -49,51 +49,51 @@ float stdTM_p[7]= {
 };
 
 
-float stdTM_ini[4]= {
+double stdTM_ini[4]= {
   -60.0,                       // 0 - membrane potential E
   0.0529324,                   // 1 - prob. for Na channel activation m
   0.3176767,                   // 2 - prob. for not Na channel blocking h
   0.5961207                    // 3 - prob. for K channel activation n
 };
 
-float *myPNKC_p= NULL;
+double *myPNKC_p= NULL;
 
-float myPNKC_ini[1]= {
+double myPNKC_ini[1]= {
   0.01            // 0 - g: initial synaptic conductance
 };
 
-float postExpPNKC[2]={
+double postExpPNKC[2]={
   1.0,            // 0 - tau_S: decay time constant for S [ms]
   0.0		  // 1 - Erev: Reversal potential
 };
 
-float *myPNLHI_p= NULL;
+double *myPNLHI_p= NULL;
 
-float myPNLHI_ini[1]= {
+double myPNLHI_ini[1]= {
     0.0          // 0 - g: initial synaptic conductance
 };
 
-float postExpPNLHI[2]={
+double postExpPNLHI[2]={
   1.0,            // 0 - tau_S: decay time constant for S [ms]
   0.0		  // 1 - Erev: Reversal potential
 };
 
-float myLHIKC_p[2]= {
+double myLHIKC_p[2]= {
   -40.0,          // 0 - Epre: Presynaptic threshold potential
   50.0            // 1 - Vslope: Activation slope of graded release 
 };
 
-//float gLHIKC= 0.6;
-float myLHIKC_ini[1] = {
+//double gLHIKC= 0.6;
+double myLHIKC_ini[1] = {
     0.35/_NLHI   // 0 - g: initial synaptic conductance
 };
 
-float postExpLHIKC[2]={
+double postExpLHIKC[2]={
     1.5, //3.0,            // 0 - tau_S: decay time constant for S [ms]
   -92.0		  // 1 - Erev: Reversal potential
 };
 
-float myKCDN_p[11]= {
+double myKCDN_p[11]= {
   -20.0,         // 0 - Epre: Presynaptic threshold potential
   50.0, //25.0,          // 1 - TLRN: time scale of learning changes
   50.0, //100.0        // 2 - TCHNG: width of learning window
@@ -107,33 +107,33 @@ float myKCDN_p[11]= {
   0.00006 // 0.006   // 10 - GSYN0: value of syn conductance g decays to
 };
 
-float myKCDN_ini[2]={
+double myKCDN_ini[2]={
   0.01,            // 0 - g: synaptic conductance
   0.01,		  // 1 - graw: raw synaptic conductance
 };
 
 //#define KCDNGSYN0 0.006
-float postExpKCDN[2]={
+double postExpKCDN[2]={
   5.0,            // 0 - tau_S: decay time constant for S [ms]
   0.0		  // 1 - Erev: Reversal potential
 };
 
-float myDNDN_p[2]= {
+double myDNDN_p[2]= {
   -30.0,        // 0 - Epre: Presynaptic threshold potential 
   50.0          // 1 - Vslope: Activation slope of graded release 
 };
-//float gDNDN= 0.04;
+//double gDNDN= 0.04;
 
-float myDNDN_ini[1]={
+double myDNDN_ini[1]={
     5.0/_NLB            // 0 - g: synaptic conductance
 };
 
-float postExpDNDN[2]={
+double postExpDNDN[2]={
   8.0,            // 0 - tau_S: decay time constant for S [ms]
   -92.0		  // 1 - Erev: Reversal potential
 };
 
-float *postSynV = NULL;
+double *postSynV = NULL;
 
 
 //--------------------------------------------------------------------------
@@ -150,7 +150,6 @@ void modelDefinition(NNmodel &model)
     model.addNeuronPopulation("LHI", _NLHI, TRAUBMILES_FAST, stdTM_p, stdTM_ini);
     model.addNeuronPopulation("DN", _NLB, TRAUBMILES_FAST, stdTM_p, stdTM_ini);
     
-    float *init = NULL;
     model.addSynapsePopulation("PNKC", NSYNAPSE, DENSE, INDIVIDUALG, NO_DELAY, EXPDECAY, "PN", "KC", myPNKC_ini, myPNKC_p, postSynV,postExpPNKC);
     model.addSynapsePopulation("PNLHI", NSYNAPSE, ALLTOALL, INDIVIDUALG, NO_DELAY, EXPDECAY, "PN", "LHI",  myPNLHI_ini, myPNLHI_p, postSynV, postExpPNLHI);
     model.addSynapsePopulation("LHIKC", NGRADSYNAPSE, ALLTOALL, GLOBALG, NO_DELAY, EXPDECAY, "LHI", "KC",  myLHIKC_ini, myLHIKC_p, postSynV, postExpLHIKC);
@@ -159,5 +158,5 @@ void modelDefinition(NNmodel &model)
     model.setGPUDevice(nGPU);
     model.setSeed(1234);
     model.setPrecision(_FTYPE);
-    model.setTiming(TRUE);
+    model.setTiming(FALSE);
 }

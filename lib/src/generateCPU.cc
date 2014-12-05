@@ -21,6 +21,8 @@
 
 #include <string>
 #include "CodeHelper.cc"
+#include <cfloat>
+
 //--------------------------------------------------------------------------
 /*!
   \brief Function that generates the code of the function the will simulate all neurons on the CPU.
@@ -47,7 +49,7 @@ void genNeuronFunction(NNmodel &model, //!< Model description
     os << "#define _" << model.name << "_neuronFnct_cc" << ENDL;
     os << ENDL;
 
-    os << "#include <cfloat>" << ENDL << ENDL;
+//    os << "#include <cfloat>" << ENDL << ENDL;
 
     // write doxygen comment
     os << "//-------------------------------------------------------------------------" << ENDL;
@@ -239,7 +241,7 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 	}
 	
 	if (thCode != tS("")) {
-	    os << "if ((" << thCode << ") && !(oldSpike)) " << OB(40) << ENDL;
+	    os << "if ((" << ensureFtype(thCode, model.ftype) << ") && !(oldSpike)) " << OB(40) << ENDL;
 	    os << "// register a true spike" << ENDL;
 	    os << "glbSpk" << model.neuronName[i] << "[";
 	    os << "glbSpkCnt" << model.neuronName[i] << "++] = n;" << ENDL;

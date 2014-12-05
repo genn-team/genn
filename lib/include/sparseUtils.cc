@@ -1,8 +1,8 @@
 #ifndef sparse_utils_cc
 #define sparse_utils_cc
 
-#include <stdio.h>
-#include <math.h>
+#include <cstdio>
+#include <cmath>
 
 /*---------------------------------------------------------------------
  Utility to count how many entries above a specified value exist in a float array

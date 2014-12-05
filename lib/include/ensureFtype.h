@@ -125,6 +125,7 @@ string ensureFtype(string oldcode, string type)
 	    code= code+string("f");
 	}
     }
+    ensureMathFunctionFtype(code, type);
     return code;
 }
 

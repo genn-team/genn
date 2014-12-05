@@ -26,6 +26,7 @@ This file compiles to a tool that wraps all the other tools into one chain of ta
 #include <sstream>
 #include <cstdlib>
 #include <cmath>
+#include <cfloat>
 #include <locale>
 
 #ifdef _WIN32
@@ -116,12 +117,12 @@ int main(int argc, char *argv[])
   os << "#define _FTYPE " << toUpper(tmps) << endl;
   os << "#define scalar " << toLower(tmps) << endl;
   if (toLower(ftype) == "double") {
-      os << "#define SCALAR_MIN DBL_MIN" << endl;
-      os << "#define SCALAR_MAX DBL_MAX" << endl;
+      os << "#define SCALAR_MIN " << DBL_MIN << endl;
+      os << "#define SCALAR_MAX " << DBL_MAX << endl;
   }
   else {
-      os << "#define SCALAR_MIN FLT_MIN" << endl;
-      os << "#define SCALAR_MAX FLT_MAX" << endl;
+      os << "#define SCALAR_MIN " << FLT_MIN << "f" << endl;
+      os << "#define SCALAR_MAX " << FLT_MAX << "f" << endl;
   } 
 
   os.close();
@@ -135,7 +136,7 @@ int main(int argc, char *argv[])
   }
 #else // UNIX
   cmd = "cd model && buildmodel.sh " + modelName + " " + toString(dbgMode);
-  cmd += " && make clean && make classol_sim";
+  cmd += " && make clean && make release";
  if (dbgMode == 1) {
     cmd += " debug";
   }

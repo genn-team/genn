@@ -32,14 +32,38 @@ using namespace std;
  */
 //--------------------------------------------------------------------------
 
-template<typename T>
+template<class T>
 std::string toString(T t)
 {
   std::stringstream s;
-  s << std::showpoint;
+  //  s << std::showpoint;
   s << t;
   return s.str();
-} 
+}
+
+template<>
+std::string toString(float t)
+{
+  std::stringstream s;
+  //  s << std::showpoint;
+  s << t;
+  if (floor(t) == t) { // it's a whole number
+      s << ".0";
+  }
+  return s.str();
+}
+
+template<>
+std::string toString(double t)
+{
+  std::stringstream s;
+  //  s << std::showpoint;
+  s << t;
+  if (floor(t) == t) { // it's a whole number
+      s << ".0";
+  }
+  return s.str();
+}
 
 #define tS(X) toString(X) //!< Macro providing the abbreviated syntax tS() instead of toString().
 

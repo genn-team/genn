@@ -49,7 +49,6 @@ int main(int argc, char *argv[])
      which= GPUarg;	
      nGPU= AUTODEVICE;
   }
-  timer.startTimer();
   patSetTime= (int) (PAT_TIME/DT);
   patFireTime= (int) (PATFTIME/DT);
   fprintf(stdout, "# DT %f \n", DT);
@@ -159,11 +158,12 @@ int main(int argc, char *argv[])
 
   t= 0.0;
   int done= 0;
-  double last_t_report=  t;
+  float last_t_report=  t;
   locust.run(DT, which);
-  double synwriteT= 0.0f;
-  double lastsynwrite= 0.0f;
+  float synwriteT= 0.0f;
+  float lastsynwrite= 0.0f;
   int synwrite= 0;
+  timer.startTimer();
   while (!done) 
   {
     if (which == GPU) {
