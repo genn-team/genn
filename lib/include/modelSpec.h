@@ -184,6 +184,7 @@ class NNmodel
 
 public:
 
+
   // PUBLIC MODEL VARIABLES
   //========================
 
@@ -196,13 +197,13 @@ public:
   int chooseGPUDevice;
   bool timing;
   unsigned int seed;
-  bool needSpkEvnt;
+
 
   // PUBLIC NEURON VARIABLES
   //========================
 
-  vector<string> neuronName; //!< Names of neuron groups
   unsigned int neuronGrpN; //!< Number of neuron groups
+  vector<string> neuronName; //!< Names of neuron groups
   vector<unsigned int> neuronN; //!< Number of neurons in group
   vector<unsigned int> sumNeuronN; //!< Summed neuron numbers
   vector<unsigned int> padSumNeuronN; //!< Padded summed neuron numbers
@@ -214,8 +215,10 @@ public:
   vector<vector<unsigned int> > inSyn; //!< The ids of the incoming synapse groups
   vector<vector<unsigned int> > outSyn; //!< The ids of the outgoing synapse groups
   vector<unsigned int> receivesInputCurrent; //!< flags whether neurons of a population receive explicit input currents
-  vector<bool> neuronNeedSt; //!< Whether last spike time needs to be saved for each indivual neuron type
-  vector<bool> neuronNeedSpkEvnt; //!< Whether this neuron group needs to record spike like events
+  vector<bool> neuronNeedSt; //!< Whether last spike time needs to be saved for a group
+  vector<bool> neuronNeedTrueSpk; //!< Whether spike-like events from a group are required
+  vector<bool> neuronNeedSpkEvnt; //!< Whether spike-like events from a group are required
+  vector<vector<bool> > neuronVarNeedQueue; //!< Whether a neuron variable needs queueing for syn code
   vector<string> neuronSpkEvntCondition; //!< Will contain the spike event condition code when spike events are used
   vector<unsigned int> neuronDelaySlots; //!< The number of slots needed in the synapse delay queues of a neuron group
   vector<int> neuronHostID; //!< The ID of the cluster node which the neuron groups are computed on
@@ -223,11 +226,12 @@ public:
   vector<vector<bool > > neuronVarNeedSpkEvnt; //!< indicates whether spkEnt values (or delay queues) need to be stored for this variable
   vector<vector<bool > > neuronVarNeedSpk; //!< indicates whether spk values (or delay queues) need to be stored for this variable
 
+
   // PUBLIC SYNAPSE VARIABLES
   //=========================
 
-  vector<string> synapseName; //!< Names of synapse groups
   unsigned int synapseGrpN; //!< Number of synapse groups
+  vector<string> synapseName; //!< Names of synapse groups
   //vector<unsigned int>synapseNo; // !<numnber of synapses in a synapse group
   vector<unsigned int> sumSynapseTrgN; //!< Summed number of target neurons
   vector<unsigned int> padSumSynapseTrgN; //!< "Padded" summed target neuron numbers
@@ -240,10 +244,10 @@ public:
   vector<unsigned int> synapseTarget; //!< Postsynaptic neuron groups
   vector<unsigned int> synapseInSynNo; //!< IDs of the target neurons' incoming synapse variables for each synapse group
   vector<unsigned int> synapseOutSynNo; //!< The target neurons' outgoing synapse for each synapse group
-  vector<unsigned int> usesTrueSpikes; //!< Defines if synapse update is done after detection of real spikes (only one point after threshold)
-  vector<unsigned int> usesSpikeEvents; //!< Defines if synapse update is done after detection of spike events (every point above threshold)
+  vector<bool> synapseUsesTrueSpikes; //!< Defines if synapse update is done after detection of real spikes (only one point after threshold)
+  vector<bool> synapseUsesSpikeEvents; //!< Defines if synapse update is done after detection of spike events (every point above threshold)
+  vector<bool> synapseUsesPostLearning; //!< Defines if anything is done in case of postsynaptic neuron spiking before presynaptic neuron (punishment in STDP etc.) 
   vector<vector<string> > synapseSpkEvntVars; //!< Defines variable names that are needed in the SpkEvnt condition and that are pre-fetched for that purpose into shared memory
-  vector<unsigned int> usesPostLearning; //!< Defines if anything is done in case of postsynaptic neuron spiking before presynaptic neuron (punishment in STDP etc.) 
   vector<vector<double> > synapsePara; //!< parameters of synapses
   vector<vector<double> > synapseIni; //!< Initial values of synapse variables
   vector<vector<double> > dsp_w;  //!< Derived synapse parameters (weightUpdateModel only)
@@ -261,6 +265,7 @@ public:
 
     
 private:
+
 
   // PRIVATE NEURON FUNCTIONS
   //=========================
@@ -292,6 +297,7 @@ private:
 
 public:
 
+
   // PUBLIC MODEL FUNCTIONS
   //=======================
 
@@ -310,6 +316,7 @@ public:
   void resetPaddedSums(); //!< Re-calculates the block-size-padded sum of threads needed to compute the groups of neurons and synapses assigned to each device. Must be called after changing the hostID:deviceID of any group.
 
   void setGPUDevice(int); //!< Method to choose the GPU to be used for the model. If "AUTODEVICE' (-1), GeNN will choose the device based on a heuristic rule.
+
 
   // PUBLIC NEURON FUNCTIONS
   //========================

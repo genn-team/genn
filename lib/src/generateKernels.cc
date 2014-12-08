@@ -63,40 +63,14 @@ void genNeuronKernel(NNmodel &model, //!< Model description
     os << "*/" << ENDL;
     os << "//-------------------------------------------------------------------------" << ENDL << ENDL;
 
-//    os << "__device__ __host__ float exp(int i) { return exp((float) i); }" << endl;
+    //os << "__device__ __host__ float exp(int i) { return exp((float) i); }" << endl;
 
-    // global device variables
-    os << "// relevant neuron variables" << ENDL;
-    os << "__device__ volatile unsigned int d_done;" << ENDL;
-    for (int i= 0; i < model.neuronGrpN; i++) {
-	nt= model.neuronType[i];
-	isGrpVarNeeded[i] = 0;
-
-	//these now hold just true spikes for benefit of the user (raster plots etc)
-	os << "__device__ volatile unsigned int d_glbSpkCnt" << model.neuronName[i] << ";" << ENDL;
-	os << "__device__ volatile unsigned int d_glbSpk" << model.neuronName[i] << "[" << model.neuronN[i] << "];" << ENDL;
-
-	if (model.neuronDelaySlots[i] == 1) {// no delays
-	    os << "__device__ volatile unsigned int d_glbSpkCntEvnt" << model.neuronName[i] << ";" << ENDL;
-	    os << "__device__ volatile unsigned int d_glbSpkEvnt" << model.neuronName[i] << "[" << model.neuronN[i] << "];" << ENDL;
-	}
-	else { // with delays
-	    os << "__device__ volatile unsigned int d_spkQuePtr" << model.neuronName[i] << ";" << ENDL;
-	    os << "__device__ volatile unsigned int d_glbSpkCntEvnt" << model.neuronName[i] << "[";
-	    os << model.neuronDelaySlots[i] << "];" << ENDL;
-	    os << "__device__ volatile unsigned int d_glbSpkEvnt" << model.neuronName[i] << "[";
-	    os << model.neuronN[i] * model.neuronDelaySlots[i] << "];" << ENDL;
-	}
-	if (model.neuronNeedSt[i]) {
-	    os << "__device__ volatile " << model.ftype << " d_sT" << model.neuronName[i] << "[" << model.neuronN[i] << "];" << ENDL;
-	}
-    }
-    
     for (int i= 0; i < model.synapseGrpN; i++) {
 	if ((model.synapseConnType[i] == SPARSE) && (model.neuronN[model.synapseTarget[i]] > synapseBlkSz)) {
 	    isGrpVarNeeded[model.synapseTarget[i]] = 1; //! Binary flag for the sparse synapses to use atomic operations when the number of connections is bigger than the block size, and shared variables otherwise
 	}
     }
+
   
     // kernel header
     os << "__global__ void calcNeurons(" << ENDL;
@@ -719,7 +693,7 @@ void genSynapseKernel(NNmodel &model, //!< Model description
     }  
     
    for (int i = 0; i < model.synapseGrpN; i++) {
-	if (model.usesTrueSpikes[i] || model.usesPostLearning[i]) {  
+	if (model.synapseUsesTrueSpikes[i] || model.synapseUsesPostLearning[i]) {  
 	    os << "__shared__ unsigned int shSpk[" << "BLOCKSZ_SYN" << "];" << ENDL;
 //	    os << "__shared__ " << model.ftype << " shSpkV[" << "BLOCKSZ_SYN" << "];" << ENDL;
 	    os << "unsigned int lscnt, numSpikeSubsets;" << ENDL;
@@ -728,7 +702,7 @@ void genSynapseKernel(NNmodel &model, //!< Model description
     }
    
     for (int i = 0; i < model.synapseGrpN; i++) {
-	if(model.usesSpikeEvents[i]){
+	if (model.synapseUsesSpikeEvents[i]) {
 	    os << "__shared__ unsigned int shSpkEvnt[" << "BLOCKSZ_SYN" << "];" << ENDL;
 	    vector<string> vars= model.synapseSpkEvntVars[i];
 	    for (int j= 0; j < vars.size(); j++) {
@@ -773,7 +747,7 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 
 	    os << CB(80);
 	}
-	if (model.usesSpikeEvents[i] == TRUE){
+	if (model.synapseUsesSpikeEvents[i]) {
 	    os << "lscntEvnt = d_glbSpkCntEvnt" << model.neuronName[src];
 	    if (model.neuronDelaySlots[src] != 1) {
 		os << "[delaySlot]";
@@ -782,7 +756,7 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 	    os << "numSpikeSubsetsEvnt = (unsigned int) (ceilf((float) lscntEvnt / " << "((float)BLOCKSZ_SYN)" << "));" << ENDL;
 	}
   
-	if ((model.usesTrueSpikes[i]) || (model.usesPostLearning[i])){
+	if ((model.synapseUsesTrueSpikes[i]) || (model.synapseUsesPostLearning[i])) {
 	    os << "lscnt = d_glbSpkCnt" << model.neuronName[src];
 	    if (model.neuronDelaySlots[src] != 1) os << "[d_spkQuePtr" << model.neuronName[src] << "]";
 	    os << ";" << ENDL;
@@ -790,11 +764,11 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 	}
 
 	// generate the code for processing spike like events
-	if (model.usesSpikeEvents[i] == TRUE) {	
+	if (model.synapseUsesSpikeEvents[i]) {	
 	    generate_process_presynaptic_events_code(os, model, src, trg, i, localID, inSynNo, tS("Evnt"));
 	}
 	// generate the code for processing true spike events
-	if (model.usesTrueSpikes[i] == TRUE) {
+	if (model.synapseUsesTrueSpikes[i]) {
 	    generate_process_presynaptic_events_code(os, model, src, trg, i, localID, inSynNo, tS(""));
 	}       
 	   

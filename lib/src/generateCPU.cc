@@ -75,17 +75,59 @@ void genNeuronFunction(NNmodel &model, //!< Model description
     }
     os << model.ftype << " t)" << ENDL;
     os << OB(51);
+
     for (int i = 0; i < model.neuronGrpN; i++) {
-	    nt = model.neuronType[i];
-	    os << "glbSpkCnt" << model.neuronName[i] << " = 0;" << ENDL;
-	    if (model.neuronDelaySlots[i] == 1) {
-	      os << "glbSpkCntEvnt" << model.neuronName[i] << " = 0;" << ENDL;
-    	}
-	    else {
-	      os << "spkQuePtr" << model.neuronName[i] << " = (spkQuePtr" << model.neuronName[i] << " + 1) % ";
-	      os << model.neuronDelaySlots[i] << ";" << ENDL;
-	      os << "glbSpkCntEvnt" << model.neuronName[i] << "[spkQuePtr" << model.neuronName[i] << "] = 0;" << ENDL;
+	nt = model.neuronType[i];
+
+
+
+
+
+
+
+
+
+
+
+
+
+	// NEW CODE
+
+	if (model.neuronDelaySlots[i] > 1) { // with delay
+	    os << "spkQuePtr" << model.neuronName[i] << " = (spkQuePtr" << model.neuronName[i];
+	    os << " + 1) % " << model.neuronDelaySlots[i] << ";" << ENDL;
+	    if (model.neuronNeedSpkEvnt[i]) {
+		os << "glbSpkCntEvnt" << model.neuronName[i] << "[spkQuePtr" << model.neuronName[i] << "] = 0;" << ENDL;
 	    }
+	    if (model.neuronNeedTrueSpk[i]) {
+		os << "glbSpkCnt" << model.neuronName[i] << "[spkQuePtr" << model.neuronName[i] << "] = 0;" << ENDL;
+	    }
+	    else {
+		os << "glbSpkCnt" << model.neuronName[i] << "[0] = 0;" << ENDL;
+	    }
+	}
+	else { // no delay
+	    if (model.neuronNeedSpkEvnt[i]) {
+		os << "glbSpkCntEvnt" << model.neuronName[i] << "[0] = 0;" << ENDL;
+	    }
+	    os << "glbSpkCnt" << model.neuronName[i] << "[0] = 0;" << ENDL;
+	    
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	os << "for (int n = 0; n < " <<  model.neuronN[i] << "; n++)" << OB(10);
 	for (int k = 0; k < nModels[nt].varNames.size(); k++) {
 	    os << nModels[nt].varTypes[k] << " l" << nModels[nt].varNames[k] << " = ";
@@ -511,11 +553,11 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 	}	
 
 	//Detect spike events and do the update
-	if (model.usesSpikeEvents[i] == TRUE) {	
+	if (model.synapseUsesSpikeEvents[i]) {	
 	    generate_process_presynaptic_events_code_CPU(os, model, src, trg, i, localID, inSynNo, tS("Evnt"));
 	}	    
         //Detect true spikes and do the update
-	if (model.usesTrueSpikes[i] == 1) {
+	if (model.synapseUsesTrueSpikes[i]) {
 	    generate_process_presynaptic_events_code_CPU(os, model, src, trg, i, localID, inSynNo, tS(""));
 	}
     }

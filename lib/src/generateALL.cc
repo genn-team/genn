@@ -59,9 +59,6 @@ void generate_model_runner(NNmodel &model,  //!< Model description
   // generate synapse and learning kernels
   if (model.synapseGrpN > 0) genSynapseKernel(model, path, cout);
 
-  // CPU specific code generation
-  genRunnerCPU(model, path, cout);
-
   // Generate the equivalent of neuron kernel
   genNeuronFunction(model, path, cout);
   

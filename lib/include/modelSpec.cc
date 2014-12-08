@@ -44,7 +44,6 @@ NNmodel::NNmodel()
   RNtype= tS("uint64_t");
   setGPUDevice(AUTODEVICE);
   setSeed(0);
-  needSpkEvnt= FALSE;
 }
 
 NNmodel::~NNmodel() 
@@ -192,61 +191,76 @@ void NNmodel::setNeuronClusterIndex(const string neuronGroup, /**< Name of the n
     neuronDeviceID[groupNo] = deviceID;
 }
 
+
+//--------------------------------------------------------------------------
+/*! \brief 
+ */
+//--------------------------------------------------------------------------
+
 void NNmodel::initLearnGrps()
 {
-    usesTrueSpikes.resize(synapseGrpN);
-    usesSpikeEvents.resize(synapseGrpN);
-    usesPostLearning.resize(synapseGrpN);
+    synapseUsesTrueSpikes.assign(synapseGrpN, FALSE);
+    synapseUsesSpikeEvents.assign(synapseGrpN, FALSE);
+    synapseUsesPostLearning.assign(synapseGrpN, FALSE);
+
+    neuronNeedTrueSpk.assign(neuronGrpN, FALSE);
+    neuronNeedSpkEvnt.assign(neuronGrpN, FALSE);
+    neuronVarNeedQueue.resize(neuronGrpN);
+    for (int i = 0; i < neuronGrpN; i++) {
+	neuronVarNeedQueue[i] = vector<bool>(nModels[neuronType[i]].varNames.size(), FALSE);
+    }
+    neuronSpkEvntCondition.assign(neuronGrpN, tS(""));
+
     neuronVarNeedSpkEvnt.resize(neuronGrpN);
     neuronVarNeedSpk.resize(neuronGrpN);
-    neuronNeedSpkEvnt.resize(neuronGrpN);
-    for (int i=0; i< synapseGrpN; i++){
+
+    for (int i = 0; i < synapseGrpN; i++) {
 	unsigned int padnN = ceil((double) neuronN[synapseSource[i]] / (double) learnBlkSz) * (double) learnBlkSz;
-	weightUpdateModel wu= weightUpdateModels[synapseType[i]];
+	weightUpdateModel wu = weightUpdateModels[synapseType[i]];
+	unsigned int src = synapseSource[i];
+	vector<string> vars = nModels[neuronType[src]].varNames;
+
 	if (wu.simCode != tS("")) {
-	    usesTrueSpikes[i]= TRUE;
+	    synapseUsesTrueSpikes[i] = TRUE;
+	    neuronNeedTrueSpk[src] = TRUE;
+
 	    // analyze which neuron variables need spk queues
-	    unsigned int src= synapseSource[i];
-	    vector<string> vars= nModels[neuronType[src]].varNames;
 	    neuronVarNeedSpk[src].resize(vars.size());
-	    for (int j= 0; j < vars.size(); j++) {
-		if (wu.simCode.find(vars[j]+tS("_pre")) != string::npos) {
-		    neuronVarNeedSpk[src][j]= TRUE;
+	    for (int j = 0; j < vars.size(); j++) {
+		if (wu.simCode.find(vars[j] + tS("_pre")) != string::npos) {
+		    neuronVarNeedSpk[src][j] = TRUE;
 		}
 		else {
-		    neuronVarNeedSpk[src][j]= FALSE;		    
-		} 
+		    neuronVarNeedSpk[src][j] = FALSE;		    
+		}
 	    }
 	}
 	if (wu.simCodeEvnt != tS("")) {
-	    assert(wu.evntThreshold != tS(""));
-	    cerr << synapseName[i] << " uses events." << endl;
-	    usesSpikeEvents[i]= TRUE;
+	    synapseUsesSpikeEvents[i] = TRUE;
+	    neuronNeedSpkEvnt[src] = TRUE;
+
             // find the necessary pre-synaptic variables contained in Threshold condition
-	    unsigned int src= synapseSource[i];
-	    vector<string> vars= nModels[neuronType[src]].varNames;
-	    for (int j= 0; j < vars.size(); j++) {
-		size_t found= wu.evntThreshold.find(vars[j]+tS("_pre"));
-		if (found != string::npos) {
+	    assert(wu.evntThreshold != tS(""));
+	    for (int j = 0; j < vars.size(); j++) {
+		if (wu.evntThreshold.find(vars[j] + tS("_pre")) != string::npos) {
 		    synapseSpkEvntVars[i].push_back(vars[j]);
 		    cerr << "synapsepop: " << i << ", neuronGrpNo: " << synapseSource[i] << ", added variable: " << vars[j] << endl;
 		}
 	    }
+
 	    // add to the source population spike event condition
-	    if (neuronNeedSpkEvnt[src]) {
-		neuronSpkEvntCondition[src]+= tS(" || (")+wu.evntThreshold+tS(")");
+	    if (neuronSpkEvntCondition[src] == tS("")) {
+		neuronSpkEvntCondition[src] = tS("(") + wu.evntThreshold + tS(")");
 	    }
 	    else {
-		neuronNeedSpkEvnt[src]= TRUE;
-		needSpkEvnt= TRUE;
-		neuronSpkEvntCondition[src]= tS("(")+wu.evntThreshold+tS(")");
+		neuronSpkEvntCondition[src] += tS(" || (") + wu.evntThreshold + tS(")");
 	    }
+
 	    // analyze which neuron variables need spkEvnt queues
 	    neuronVarNeedSpkEvnt[src].resize(vars.size());
-	    for (int j= 0; j < vars.size(); j++) {
-		if (wu.simCodeEvnt.find(vars[j]+tS("_pre")) != string::npos) {
-		    neuronVarNeedSpkEvnt[src][j]= TRUE;
-		    neuronNeedSpkEvnt[src]= TRUE;
+	    for (int j = 0; j < vars.size(); j++) {
+		if (wu.simCodeEvnt.find(vars[j] + tS("_pre")) != string::npos) {
+		    neuronVarNeedSpkEvnt[src][j] = TRUE;
 		}
 		else {
 		    neuronVarNeedSpkEvnt[src][j]= FALSE;		    
@@ -254,8 +268,9 @@ void NNmodel::initLearnGrps()
 	    }
 		
 	}
-	if (wu.simLearnPost != tS("")){
-	    usesPostLearning[i]=TRUE;
+
+	if (wu.simLearnPost != tS("")) {
+	    synapseUsesPostLearning[i] = TRUE;
 	    fprintf(stdout, "detected learning synapse at %d \n", i);
 	    if (lrnGroups == 0) {
 		padSumLearnN.push_back(padnN);
@@ -265,9 +280,6 @@ void NNmodel::initLearnGrps()
 	    }
 	    lrnSynGrp.push_back(i);
 	    lrnGroups++;
-	}
-	else {
-	    usesPostLearning[i]= FALSE;
 	}
     }
 }
