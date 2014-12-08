@@ -70,7 +70,7 @@ $(EXECUTABLE): $(OBJECTS)
 .PHONY: release
 release: CXXFLAGS +=-O3 
 #-ffast-math
-release: NVCCFLAGS +=--compiler-options "-O3" #"-O3 -ffast-math"
+release: NVCCFLAGS +=--compiler-options "-O3 -ffast-math"
 release: $(EXECUTABLE)
 
 .PHONY: debug

@@ -26,6 +26,7 @@ This file compiles to a tool that wraps all the other tools into one chain of ta
 #include <sstream>
 #include <cstdlib>
 #include <cmath>
+#include <locale>
 
 #ifdef _WIN32
 #include <direct.h>
@@ -48,6 +49,23 @@ template<typename T> std::string toString(T t)
   return s.str();
 }
 
+#define tS(X) toString(X) //!< Macro providing the abbreviated syntax tS() instead of toString().
+
+string toUpper(string s)
+{
+  for (unsigned int i= 0; i < s.length(); i++) {
+	  s[i]= toupper(s[i]);
+  }
+  return s;
+}
+
+string toLower(string s)
+{
+  for (unsigned int i= 0; i < s.length(); i++) {
+	  s[i]= tolower(s[i]);
+  }
+  return s;
+}
 /////////////////////////
 unsigned int openFileGetMax(unsigned int * array, unsigned int size, string name) {
   unsigned int maxConn = 0;
@@ -69,19 +87,13 @@ unsigned int openFileGetMax(unsigned int * array, unsigned int size, string name
 
 int main(int argc, char *argv[])
 {
-  if (argc != 9)
+  if (argc != 10)
   {
-    cerr << "usage: generate_run <CPU=0, GPU=1> <nNeurons> <nConn> <gscale> <outdir> <model name> <debug mode? (0/1)> <use previous connectivity? (0/1)>" << endl;
+    cerr << "usage: generate_run <CPU=0, GPU=1> <nNeurons> <nConn> <gscale> <outdir> <model name> <debug mode? (0/1)> <ftype \"FLOAT\" or \"DOUBLE\"> <use previous connectivity? (0/1)>" << endl;
     exit(1);
   }
   int retval;
   string cmd;
-  string gennPath= getenv("GENN_PATH");
-  string outDir = toString(argv[5]) + "_output";  
-  string outDir_g = "inputfiles";  
-  string modelName = argv[6];
-  int dbgMode = atoi(argv[7]); // set this to 1 if you want to enable gdb and cuda-gdb debugging to 0 for release
-  int fixsynapse = atoi(argv[8]); // same synapse patterns should be used to compare CPU to GPU
 
   int which = atoi(argv[1]);
   int nTotal = atoi(argv[2]);
@@ -90,6 +102,15 @@ int main(int argc, char *argv[])
   int nConn = atoi(argv[3]);
   float gscale = atof(argv[4]);
   
+  string gennPath= getenv("GENN_PATH");
+  string outDir = toString(argv[5]) + "_output";  
+  string outDir_g = "inputfiles";  
+  string modelName = argv[6];
+  int dbgMode = atoi(argv[7]); // set this to 1 if you want to enable gdb and cuda-gdb debugging to 0 for release
+  char *ftype= argv[8];
+  int fixsynapse = atoi(argv[9]); // same synapse patterns should be used to compare CPU to GPU
+
+
   float meangExc = 0.5 * gscale;
   float meangInh = -1.0 * gscale;
 
@@ -145,6 +166,19 @@ int main(int argc, char *argv[])
   os << "#define _NMaxConnP1 " << maxN1 << endl;
   os << "#define _NMaxConnP2 " << maxN2 << endl;
   os << "#define _NMaxConnP3 " << maxN3 << endl;
+
+  string tmps= tS(ftype);
+  os << "#define _FTYPE " << toUpper(tmps) << endl;
+  os << "#define scalar " << toLower(tmps) << endl;
+  if (toLower(ftype) == "double") {
+      os << "#define SCALAR_MIN DBL_MIN" << endl;
+      os << "#define SCALAR_MAX DBL_MAX" << endl;
+  }
+  else {
+      os << "#define SCALAR_MIN FLT_MIN" << endl;
+      os << "#define SCALAR_MAX FLT_MAX" << endl;
+  } 
+
   os.close();
   
   // build it

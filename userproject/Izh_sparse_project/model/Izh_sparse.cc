@@ -14,12 +14,13 @@
 #include "modelSpec.h"
 #include "modelSpec.cc"
 #include <vector>
+#include "sizes.h"
 
 std::vector<unsigned int> neuronPSize;
 std::vector<unsigned int> neuronVSize;
 std::vector<unsigned int> synapsePSize; 
 
-float *excIzh_p = NULL;
+double *excIzh_p = NULL;
 //Izhikevich model parameters - tonic spiking
 /*	0.02,	// 0 - a
 	0.2, 	// 1 - b
@@ -28,7 +29,7 @@ float *excIzh_p = NULL;
 };*/
 
 
-float *inhIzh_p = NULL;
+double *inhIzh_p = NULL;
 //Izhikevich model parameters - tonic spiking
 /*	0.02,	// 0 - a
 	0.25, 	// 1 - b
@@ -36,7 +37,7 @@ float *inhIzh_p = NULL;
 	2 	// 3 - d
 };*/
 
-float IzhExc_ini[6]={
+double IzhExc_ini[6]={
 //Izhikevich model initial conditions - excitatory population
 	-65.0,	//0 - V
 	 0.0,	//1 - U
@@ -46,7 +47,7 @@ float IzhExc_ini[6]={
 	 8.0 	// 3 - d
 };
 
-float IzhInh_ini[6]={
+double IzhInh_ini[6]={
 //Izhikevich model initial conditions - inhibitory population
 	-65,	//0 - V
 	 0.0,	//1 - U
@@ -56,23 +57,22 @@ float IzhInh_ini[6]={
 	 2.0 	// 3 - d 
 };
 
-float *SynIzh_p= NULL;
+double *SynIzh_p= NULL;
 
-float postExpP[2]={
+double postExpP[2]={
   0.0,            // 0 - tau_S: decay time constant for S [ms]
   0.0		  // 1 - Erev: Reversal potential
 };
 
-float *postSynV = NULL;
+double *postSynV = NULL;
 
-float SynIzh_ini[1]= {
+double SynIzh_ini[1]= {
     0.0 // default synaptic conductance
 };
 
-//float inpIzh1 = 4.0;
-//float gIzh1= 0.05;
-//float * input1, *input2;
-#include "../../userproject/include/sizes.h"
+//double inpIzh1 = 4.0;
+//double gIzh1= 0.05;
+//double * input1, *input2;
 
 void modelDefinition(NNmodel &model) 
 {

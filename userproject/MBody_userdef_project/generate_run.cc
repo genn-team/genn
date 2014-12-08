@@ -82,20 +82,19 @@ int main(int argc, char *argv[])
   }
   int retval;
   string cmd;
-  string gennPath = getenv("GENN_PATH");
-  string outdir = toString(argv[7]) + "_output";  
-  string modelName = argv[8];
-  int dbgMode = atoi(argv[9]); // set this to 1 if you want to enable gdb and cuda-gdb debugging to 0 for release
-  int fixsynapse;
-  if (argc == 11) fixsynapse = 0;
-  if (argc == 12) fixsynapse = atoi(argv[11]); // if this is not 0 network generation is skipped
   int which = atoi(argv[1]);
   int nAL = atoi(argv[2]);
   int nMB = atoi(argv[3]);
   int nLHI = atoi(argv[4]);
   int nLB = atoi(argv[5]);
   double gscale = atof(argv[6]);
+  string gennPath = getenv("GENN_PATH");
+  string outdir = toString(argv[7]) + "_output";  
+  string modelName = argv[8];
+  int dbgMode = atoi(argv[9]); // set this to 1 if you want to enable gdb and cuda-gdb debugging to 0 for release
   char *ftype= argv[10];
+  int fixsynapse = atoi(argv[11]); // if this is not 0 network generation is skipped
+  
   
   double pnkc_gsyn = 100.0f / nAL * gscale;
   double pnkc_gsyn_sigma = 100.0f / nAL * gscale / 15.0f; 

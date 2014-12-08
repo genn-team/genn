@@ -26,20 +26,20 @@
 int nGPU= 0;
 
 
-float myPOI_p[4]= {
+double myPOI_p[4]= {
   0.1,        // 0 - firing rate
   2.5,        // 1 - refratory period
   20.0,       // 2 - Vspike
   -60.0       // 3 - Vrest
 };
 
-float myPOI_ini[3]= {
+double myPOI_ini[3]= {
  -60.0,        // 0 - V
   0,           // 1 - seed
   -10.0        // 2 - SpikeTime
 };
 
-float stdTM_p[7]= {
+double stdTM_p[7]= {
   7.15,          // 0 - gNa: Na conductance in 1/(mOhms * cm^2)
   50.0,          // 1 - ENa: Na equi potential in mV
   1.43,          // 2 - gK: K conductance in 1/(mOhms * cm^2)
@@ -50,50 +50,50 @@ float stdTM_p[7]= {
 };
 
 
-float stdTM_ini[4]= {
+double stdTM_ini[4]= {
   -60.0,                       // 0 - membrane potential E
   0.0529324,                   // 1 - prob. for Na channel activation m
   0.3176767,                   // 2 - prob. for not Na channel blocking h
   0.5961207                    // 3 - prob. for K channel activation n
 };
 
-float *myPNKC_p= NULL;
+double *myPNKC_p= NULL;
 
-float myPNKC_ini[1]= {
+double myPNKC_ini[1]= {
   0.01            // 0 - g: initial synaptic conductance
 };
 
-float postExpPNKC[2]={
+double postExpPNKC[2]={
   1.0,            // 0 - tau_S: decay time constant for S [ms]
   0.0		  // 1 - Erev: Reversal potential
 };
 
-float *myPNLHI_p= NULL;
+double *myPNLHI_p= NULL;
 
-float myPNLHI_ini[1]= {
+double myPNLHI_ini[1]= {
     0.0          // 0 - g: initial synaptic conductance
 };
 
-float postExpPNLHI[2]={
+double postExpPNLHI[2]={
   1.0,            // 0 - tau_S: decay time constant for S [ms]
   0.0		  // 1 - Erev: Reversal potential
 };
 
-float myLHIKC_p[2]= {
+double myLHIKC_p[2]= {
   -40.0,          // 0 - Epre: Presynaptic threshold potential
   50.0            // 1 - Vslope: Activation slope of graded release 
 };
 
-float myLHIKC_ini[1] = {
+double myLHIKC_ini[1] = {
     0.35/_NLHI   // 0 - g: initial synaptic conductance
 };
 
-float postExpLHIKC[2]={
+double postExpLHIKC[2]={
   1.5,            // 0 - tau_S: decay time constant for S [ms]
   -92.0		  // 1 - Erev: Reversal potential
 };
 
-float myKCDN_p[11]= {
+double myKCDN_p[11]= {
   -20.0,         // 1 - Epre: Presynaptic threshold potential
   50.0,          // 3 - TLRN: time scale of learning changes
   50.0,         // 4 - TCHNG: width of learning window
@@ -107,33 +107,33 @@ float myKCDN_p[11]= {
   0.00006          // 12 - GSYN0: value of syn conductance g decays to
 };
 
-float myKCDN_ini[2]={
+double myKCDN_ini[2]={
   0.01,            // 0 - g: synaptic conductance
   0.01,		  // 1 - graw: raw synaptic conductance
 };
 
-float postExpKCDN[2]={
+double postExpKCDN[2]={
   5.0,            // 0 - tau_S: decay time constant for S [ms]
   0.0		  // 1 - Erev: Reversal potential
 };
 
-float myDNDN_p[4]= {
+double myDNDN_p[4]= {
   -30.0,         // 0 - Epre: Presynaptic threshold potential 
   50.0           // 1 - Vslope: Activation slope of graded release 
 };
 
-float myDNDN_ini[1]={
+double myDNDN_ini[1]={
     5.0/_NLB      // 0 - g: synaptic conductance
 };
 
-float postExpDNDN[2]={
+double postExpDNDN[2]={
   8.0,            // 0 - tau_S: decay time constant for S [ms]
   -92.0		  // 1 - Erev: Reversal potential
 };
 
-float * postSynV = NULL;
+double * postSynV = NULL;
 
-float postSynV_EXPDECAY_EVAR[1] = {
+double postSynV_EXPDECAY_EVAR[1] = {
 0
 };
 
@@ -142,8 +142,8 @@ float postSynV_EXPDECAY_EVAR[1] = {
   class pwSTDP_userdef : public dpclass  //!TODO This class definition may be code-generated in a future release
   {
     public:
-      //float calculateDerivedParameter(int index, vector <float> pars, float dt = DT) {
-      float calculateDerivedParameter(int index, vector<float> pars, float dt = DT){		
+      //double calculateDerivedParameter(int index, vector <double> pars, double dt = DT) {
+      double calculateDerivedParameter(int index, vector<double> pars, double dt = DT){		
 	  switch (index) {
 	  case 0:
 	      return lim0(pars, dt);
@@ -163,39 +163,39 @@ float postSynV_EXPDECAY_EVAR[1] = {
 	  return -1;
       }
       
-      float lim0(vector<float> pars, float dt) {
+      double lim0(vector<double> pars, double dt) {
 	  //return 1.0f/$(TPUNISH01) + 1.0f/$(TCHNG) *$(TLRN) / (2.0f/$(TCHNG));
 	  return (1.0f/pars[5] + 1.0f/pars[2]) * pars[1] / (2.0f/pars[2]);
       }
-      float lim1(vector<float> pars, float dt) {
+      double lim1(vector<double> pars, double dt) {
 	  //return 1.0f/$(TPUNISH10) + 1.0f/$(TCHNG) *$(TLRN) / (2.0f/$(TCHNG));
 	  return -((1.0f/pars[4] + 1.0f/pars[2]) * pars[1] / (2.0f/pars[2]));
       }
-      float slope0(vector<float> pars, float dt) {
+      double slope0(vector<double> pars, double dt) {
 	  //return -2.0f*$(gmax)/ ($(TCHNG)*$(TLRN)); 
 	  return -2.0f*pars[6]/(pars[2]*pars[1]); 
       }
-      float slope1(vector<float> pars, float dt) {
+      double slope1(vector<double> pars, double dt) {
 	  //return -1*slope0(pars, dt);
 	  return -1*slope0(pars, dt);
       }
-      float off0(vector<float> pars, float dt) {
+      double off0(vector<double> pars, double dt) {
 	  //return $(gmax)/$(TPUNISH01);
 	  return pars[6]/pars[5];
       }
-      float off1(vector<float> pars, float dt) {
+      double off1(vector<double> pars, double dt) {
 	  //return $(gmax)/$(TCHNG);
 	  return pars[6]/pars[2];
       }
-      float off2(vector<float> pars, float dt) {
+      double off2(vector<double> pars, double dt) {
 	  //return $(gmax)/$(TPUNISH10);
 			return pars[6]/pars[4];
       }
   };
 
 //for sparse only -- we need to set them by hand if we want to do dense to sparse conversion. Sparse connectivity will only create sparse arrays.
-float * gpPNKC = new float[_NAL*_NMB];
-float * gpKCDN = new float[_NMB*_NLB];
+scalar * gpPNKC = new scalar[_NAL*_NMB];
+scalar * gpKCDN = new scalar[_NMB*_NLB];
 //-------------------------------------
 
 //--------------------------------------------------------------------------
@@ -216,7 +216,7 @@ void modelDefinition(NNmodel &model)
   pstest.varTypes.clear();
 
   pstest.varNames.push_back(tS("EEEE")); 
-  pstest.varTypes.push_back(tS("float"));  
+  pstest.varTypes.push_back(tS("scalar"));  
 
   pstest.pNames.clear();
   pstest.dpNames.clear(); 
@@ -303,8 +303,8 @@ void modelDefinition(NNmodel &model)
   // code for presynaptic spike
   learn1synapse.simCode = tS("$(addtoinSyn) = $(g);\n\
 					$(updatelinsyn); \n\
-					float dt = $(sT_post) - t - ($(tauShift)); \n\
-					float dg = 0;\n\
+					scalar dt = $(sT_post) - t - ($(tauShift)); \n\
+					scalar dg = 0;\n\
 					if (dt > $(lim0))  \n\
 					dg = -($(off0)) ; \n\
 					else if (dt > 0.0)  \n\
@@ -317,8 +317,8 @@ void modelDefinition(NNmodel &model)
 					");     
   learn1synapse.dps = new pwSTDP_userdef;
   // code for post-synaptic spike event
-  learn1synapse.simLearnPost = tS("float dt = t - ($(sT_pre)) - ($(tauShift)); \n\
-				   float dg =0; \n\
+  learn1synapse.simLearnPost = tS("scalar dt = t - ($(sT_pre)) - ($(tauShift)); \n\
+				   scalar dg =0; \n\
 				   if (dt > $(lim0))  \n\
 				   dg = -($(off0)) ; \n \
 				   else if (dt > 0.0)  \n\
@@ -341,7 +341,6 @@ void modelDefinition(NNmodel &model)
   model.addNeuronPopulation("LHI", _NLHI, TRAUBMILES_FAST, stdTM_p, stdTM_ini);
   model.addNeuronPopulation("DN", _NLB, TRAUBMILES_FAST, stdTM_p, stdTM_ini);
   
-  //float *init= NULL;
   model.addSynapsePopulation("PNKC", NSYNAPSE_userdef, SPARSE, INDIVIDUALG, NO_DELAY, EXPDECAY_EVAR, "PN", "KC", myPNKC_ini, myPNKC_p, postSynV_EXPDECAY_EVAR,postExpPNKC);
   model.setMaxConn("PNKC", _NMB);  
 
