@@ -512,11 +512,12 @@ void genRunner(NNmodel &model, //!< Model description
 	}
 	for (int j = 0; j < nModels[nt].varNames.size(); j++) {
 	    if (model.neuronVarNeedQueue[i][j]) {
-		os << "    for (int i = 0; i < " << model.neuronN[i] * model.neuronDelaySlots[i] << "; i++) {" << endl;
+		size = model.neuronN[i] * model.neuronDelaySlots[i];
 	    }
 	    else {
-		os << "    for (int i = 0; i < " << model.neuronN[i] << "; i++) {" << endl;
+		size = model.neuronN[i];
 	    }
+	    os << "    for (int i = 0; i < " << size << "; i++) {" << endl;
 	    os << "        " << nModels[nt].varNames[j] << model.neuronName[i] << "[i] = " << model.neuronIni[i][j] << ";" << endl;
 	    os << "    }" << endl;
 	}

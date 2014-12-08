@@ -41,15 +41,15 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 
     name = path + toString("/") + model.name + toString("_CODE/neuronFnct.cc");
     os.open(name.c_str());
+
     // write header content
     writeHeader(os);
     os << ENDL;
+
     // compiler/include control (include once)
     os << "#ifndef _" << model.name << "_neuronFnct_cc" << ENDL;
     os << "#define _" << model.name << "_neuronFnct_cc" << ENDL;
     os << ENDL;
-
-//    os << "#include <cfloat>" << ENDL << ENDL;
 
     // write doxygen comment
     os << "//-------------------------------------------------------------------------" << ENDL;
@@ -58,7 +58,8 @@ void genNeuronFunction(NNmodel &model, //!< Model description
     os << " containing the the equivalent of neuron kernel function for the CPU-only version." << ENDL;
     os << "*/" << ENDL;
     os << "//-------------------------------------------------------------------------" << ENDL << ENDL;
-    // header
+
+    // function header
     os << "void calcNeuronsCPU(";
     for (int i = 0; i < model.neuronGrpN; i++) {
 	if (model.neuronType[i] == POISSONNEURON) {
@@ -76,23 +77,11 @@ void genNeuronFunction(NNmodel &model, //!< Model description
     os << model.ftype << " t)" << ENDL;
     os << OB(51);
 
+    // function code
     for (int i = 0; i < model.neuronGrpN; i++) {
 	nt = model.neuronType[i];
 
-
-
-
-
-
-
-
-
-
-
-
-
-	// NEW CODE
-
+	// increment spike queue pointer and reset spike count
 	if (model.neuronDelaySlots[i] > 1) { // with delay
 	    os << "spkQuePtr" << model.neuronName[i] << " = (spkQuePtr" << model.neuronName[i];
 	    os << " + 1) % " << model.neuronDelaySlots[i] << ";" << ENDL;
@@ -111,28 +100,14 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 		os << "glbSpkCntEvnt" << model.neuronName[i] << "[0] = 0;" << ENDL;
 	    }
 	    os << "glbSpkCnt" << model.neuronName[i] << "[0] = 0;" << ENDL;
-	    
 	}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+	os << ENDL;
 
 	os << "for (int n = 0; n < " <<  model.neuronN[i] << "; n++)" << OB(10);
 	for (int k = 0; k < nModels[nt].varNames.size(); k++) {
 	    os << nModels[nt].varTypes[k] << " l" << nModels[nt].varNames[k] << " = ";
 	    os << nModels[nt].varNames[k] << model.neuronName[i] << "[";
-	    if ((nModels[nt].varNames[k] == "V") && (model.neuronDelaySlots[i] != 1)) {
+	    if ((model.neuronVarNeedQueue[i][k]) && (model.neuronDelaySlots[i] > 1)) {
 		os << "(((spkQuePtr" << model.neuronName[i] << " + " << (model.neuronDelaySlots[i] - 1) << ") % ";
 		os << model.neuronDelaySlots[i] << ") * " << model.neuronN[i] << ") + ";
 	    }
@@ -213,14 +188,14 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 		os << ";" << ENDL;
 	    }
 	}
-	if (model.receivesInputCurrent[i] == 1) { //receives constant input
+	if (model.receivesInputCurrent[i] == 1) { // receives constant input
 	    if (model.synapseGrpN == 0) {
 		os << "Isyn= " << model.globalInp[i] << ";" << ENDL;
 	    }
 	    else {
 		os << "Isyn+= " << model.globalInp[i] << ";" << ENDL;
 	    }
-	}    	
+	}
 	if (model.receivesInputCurrent[i] >= 2) {
 	    if (model.synapseGrpN == 0) {
 		os << "Isyn = (" << model.ftype << ") inputI" << model.neuronName[i] << "[n];" << ENDL;
@@ -253,10 +228,8 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 	substitute(code, tS("$(Isyn)"), tS("Isyn"));
 	os << ensureFtype(code, model.ftype) << ENDL;
 
+	// look for spike type events first.
 	if (model.neuronNeedSpkEvnt[i]) {
-	    // look for spike type events first.
-	    os << "// test if a spike event occurred" << ENDL;
-	    os << "if ";
 	    string eCode= model.neuronSpkEvntCondition[i];
 	    // code substitutions ----
 	    extended_name_substitutions(eCode, tS("l"), nModels[model.neuronType[i]].varNames, tS("_pre"), tS(""));
@@ -268,28 +241,42 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 		name_substitutions(eCode, tS(""), weightUpdateModels[synt].extraGlobalSynapseKernelParameters, model.synapseName[synPopID]);
 	    }
 	    // end code substitutions ----
-	    os << "(" + ensureFtype(eCode, model.ftype) + ")" << OB(30);
-	    os << "// register a spike type event " << ENDL;
-	    os << "glbSpkEvnt" << model.neuronName[i] << "[";
-	    if (model.neuronDelaySlots[i] != 1) {
-		os << "(spkQuePtr" << model.neuronName[i] << " * " << model.neuronN[i] << ") + ";
+
+	    os << "// test for and register a spike-like event" << ENDL;
+	    os << "if (" + ensureFtype(eCode, model.ftype) + ")" << OB(30);
+
+	    if (model.neuronDelaySlots[i] > 1) { // with delay
+		os << "glbSpkEvnt" << model.neuronName[i] << "[(spkQuePtr" << model.neuronName[i] << " * " << model.neuronN[i];
+		os << ") + glbSpkCntEvnt" << model.neuronName[i] << "[spkQuePtr" << model.neuronName[i] << "]++] = n;" << ENDL;
 	    }
-	    os << "glbSpkCntEvnt" << model.neuronName[i];
-	    if (model.neuronDelaySlots[i] != 1) {
-		os << "[spkQuePtr" << model.neuronName[i] << "]";
+	    else { // no delay
+		os << "glbSpkEvnt" << model.neuronName[i];
+		os << "[glbSpkCntEvnt" << model.neuronName[i] << "[0]++] = n;" << ENDL;
 	    }
-	    os << "++] = n;" << ENDL;
-	    os << CB(30) << ENDL;
+	    os << CB(30);
+
 	}
-	
+
 	if (thCode != tS("")) {
-	    os << "if ((" << ensureFtype(thCode, model.ftype) << ") && !(oldSpike)) " << OB(40) << ENDL;
-	    os << "// register a true spike" << ENDL;
-	    os << "glbSpk" << model.neuronName[i] << "[";
-	    os << "glbSpkCnt" << model.neuronName[i] << "++] = n;" << ENDL;
-	    if (model.neuronNeedSt[i]) {
-		os << "sT" << model.neuronName[i] << "[n] = t;" << ENDL;
+
+	    os << "// test for and register a true spike" << ENDL;
+	    os << "if ((" << ensureFtype(thCode, model.ftype) << ") && !(oldSpike))" << OB(40);
+
+	    if ((model.neuronDelaySlots[i] > 1) && (model.neuronNeedTrueSpk[i])) { // with delay
+		os << "glbSpk" << model.neuronName[i] << "[(spkQuePtr" << model.neuronName[i] << " * " << model.neuronN[i];
+		os << ") + glbSpkCnt" << model.neuronName[i] << "[spkQuePtr" << model.neuronName[i] << "]++] = n;" << ENDL;
+		if (model.neuronNeedSt[i]) {
+		    os << "sT" << model.neuronName[i] << "[(spkQuePtr" << model.neuronName[i] << " * " << model.neuronN[i] << ") + n] = t;" << ENDL;
+		}
 	    }
+	    else { // no delay
+		os << "glbSpk" << model.neuronName[i];
+		os << "[glbSpkCnt" << model.neuronName[i] << "[0]++] = n;" << ENDL;
+		if (model.neuronNeedSt[i]) {
+		    os << "sT" << model.neuronName[i] << "[n] = t;" << ENDL;
+		}
+	    }
+
 	    if (nModels[nt].resetCode != tS("")) {
 		code = nModels[nt].resetCode;
 		name_substitutions(code, tS("l"), nModels[nt].varNames, tS(""));
@@ -301,13 +288,15 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 	    }
 	    os << CB(40);
 	}
+
 	for (int k = 0, l = nModels[nt].varNames.size(); k < l; k++) {
 	    os << nModels[nt].varNames[k] <<  model.neuronName[i] << "[";
-	    if ((nModels[nt].varNames[k] == "V") && (model.neuronDelaySlots[i] != 1)) {
+	    if ((model.neuronVarNeedQueue[i][k]) && (model.neuronDelaySlots[i] > 1)) {
 		os << "(spkQuePtr" << model.neuronName[i] << " * " << model.neuronN[i] << ") + ";
-	    };
+	    }
 	    os << "n] = l" << nModels[nt].varNames[k] << ";" << ENDL;
 	}
+
 	for (int j = 0; j < model.inSyn[i].size(); j++) {
 	    postSynModel psModel= postSynModels[model.postSynapseType[model.inSyn[i][j]]];
 	    string psCode = psModel.postSynDecay;

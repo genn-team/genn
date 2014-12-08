@@ -211,8 +211,8 @@ void NNmodel::initLearnGrps()
     }
     neuronSpkEvntCondition.assign(neuronGrpN, tS(""));
 
-    neuronVarNeedSpkEvnt.resize(neuronGrpN);
-    neuronVarNeedSpk.resize(neuronGrpN);
+    neuronVarNeedSpkEvnt.resize(neuronGrpN); // what is this used for?
+    neuronVarNeedSpk.resize(neuronGrpN); // what is this used for?
 
     for (int i = 0; i < synapseGrpN; i++) {
 	unsigned int padnN = ceil((double) neuronN[synapseSource[i]] / (double) learnBlkSz) * (double) learnBlkSz;
