@@ -15,16 +15,19 @@
 #ifndef IZH_SPARSE_MODEL_H 
 #define IZH_SPARSE_MODEL_H
 
-#include "Izh_sparse.cc"
+//#include "Izh_sparse.cc"
 
 class classIzh
 {
+ private:
+  void importArray(scalar *, double *, int);
+  void exportArray(double *, scalar *, int);
  public:
   NNmodel model;
-  float *input1, *input2;
+  scalar *input1, *input2;
   //------------------------------------------------------------------------
   // on the device:
-  float *d_input1, *d_input2;
+  scalar *d_input1, *d_input2;
   //------------------------------------------------------------------------
   unsigned int sumPExc, sumPInh;
   classIzh();
@@ -33,13 +36,13 @@ class classIzh
   void allocate_device_mem_patterns();
   void allocate_device_mem_input();
   void copy_device_mem_input();
-  void read_sparsesyns_par(int, struct Conductance, FILE *,FILE *,FILE *, float *); 
-  void gen_alltoall_syns(float *, unsigned int, unsigned int, float);
+  void read_sparsesyns_par(int, struct Conductance, FILE *,FILE *,FILE *, scalar *); 
+  void gen_alltoall_syns(scalar *, unsigned int, unsigned int, scalar);
   void free_device_mem();
   void write_input_to_file(FILE *);
   void read_input_values(FILE *);
   void create_input_values();
-  void run(float, unsigned int);
+  void run(double, unsigned int);
   void getSpikesFromGPU(); 
   void getSpikeNumbersFromGPU(); 
   void output_state(FILE *, unsigned int);
@@ -47,8 +50,8 @@ class classIzh
   void output_params(FILE *, FILE *);
   void sum_spikes();
   void setInput(unsigned int);
-  void randomizeVar(float *, float, unsigned int);
-  void randomizeVarSq(float *, float, unsigned int);
+  void randomizeVar(scalar *, scalar, unsigned int);
+  void randomizeVarSq(scalar *, scalar, unsigned int);
   void initializeAllVars(unsigned int);
 };
 

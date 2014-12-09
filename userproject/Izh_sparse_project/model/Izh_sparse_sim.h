@@ -19,6 +19,8 @@ using namespace std;
 #include "utils.h" // for CHECK_CUDA_ERRORS
 #include <cuda_runtime.h>
 
+#include "Izh_sparse.cc"
+
 // we will hard-code some stuff ... because at the end of the day that is 
 // what we will do for the CUDA version
 
@@ -35,5 +37,5 @@ unsigned int iT= 0;
 
 CStopWatch timer;
 
-#include "Izh_sparse_model.h"
+//#include "Izh_sparse_model.h"
 #include "Izh_sparse_model.cc"

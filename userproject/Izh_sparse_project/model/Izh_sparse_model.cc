@@ -17,6 +17,7 @@
 #include "Izh_sparse_CODE/runner.cc"
 #include "../../lib/include/numlib/randomGen.h"
 #include "../../lib/include/numlib/gauss.h"
+#include "Izh_sparse_model.h"
 
 randomGauss RG;
 randomGen R;
@@ -24,15 +25,29 @@ randomGen R;
 classIzh::classIzh()
 {
   modelDefinition(model);
-  input1=new float[model.neuronN[0]];
-  input2=new float[model.neuronN[1]];
+  input1=new scalar[model.neuronN[0]];
+  input2=new scalar[model.neuronN[1]];
   allocateMem();
   initialize();
   sumPExc = 0;
   sumPInh = 0;
 }
 
-void classIzh::randomizeVar(float * Var, float strength, unsigned int neuronGrp)
+void classIzh::importArray(scalar *dest, double *src, int sz) 
+{
+    for (int i= 0; i < sz; i++) {
+	dest[i]= (scalar) src[i];
+    }
+}
+
+void classIzh::exportArray(double *dest, scalar *src, int sz) 
+{
+    for (int i= 0; i < sz; i++) {
+	dest[i]= (scalar) src[i];
+    }
+}
+
+void classIzh::randomizeVar(scalar * Var, scalar strength, unsigned int neuronGrp)
 {
   //kernel if gpu?
   for (int j=0; j< model.neuronN[neuronGrp]; j++){
@@ -40,11 +55,11 @@ void classIzh::randomizeVar(float * Var, float strength, unsigned int neuronGrp)
   }
 }
 
-void classIzh::randomizeVarSq(float * Var, float strength, unsigned int neuronGrp)
+void classIzh::randomizeVarSq(scalar * Var, scalar strength, unsigned int neuronGrp)
 {
   //kernel if gpu?
   //randomGen R;
-  float randNbr;
+  scalar randNbr;
   for (int j=0; j< model.neuronN[neuronGrp]; j++){
     randNbr=R.n();
     Var[j]=Var[j]+strength*randNbr*randNbr;
@@ -68,12 +83,12 @@ void classIzh::initializeAllVars(unsigned int which)
   }
 
   if (which == GPU) {
-    CHECK_CUDA_ERRORS(cudaMemcpy(d_aPInh, aPInh, sizeof(float)*model.neuronN[1], cudaMemcpyHostToDevice));
-    CHECK_CUDA_ERRORS(cudaMemcpy(d_bPInh, bPInh, sizeof(float)*model.neuronN[1], cudaMemcpyHostToDevice));
-    CHECK_CUDA_ERRORS(cudaMemcpy(d_cPExc, cPExc, sizeof(float)*model.neuronN[0], cudaMemcpyHostToDevice));
-    CHECK_CUDA_ERRORS(cudaMemcpy(d_dPExc, dPExc, sizeof(float)*model.neuronN[0], cudaMemcpyHostToDevice));
-    CHECK_CUDA_ERRORS(cudaMemcpy(d_UPExc, UPExc, sizeof(float)*model.neuronN[0], cudaMemcpyHostToDevice));
-    CHECK_CUDA_ERRORS(cudaMemcpy(d_UPInh, UPInh, sizeof(float)*model.neuronN[1], cudaMemcpyHostToDevice));
+    CHECK_CUDA_ERRORS(cudaMemcpy(d_aPInh, aPInh, sizeof(scalar)*model.neuronN[1], cudaMemcpyHostToDevice));
+    CHECK_CUDA_ERRORS(cudaMemcpy(d_bPInh, bPInh, sizeof(scalar)*model.neuronN[1], cudaMemcpyHostToDevice));
+    CHECK_CUDA_ERRORS(cudaMemcpy(d_cPExc, cPExc, sizeof(scalar)*model.neuronN[0], cudaMemcpyHostToDevice));
+    CHECK_CUDA_ERRORS(cudaMemcpy(d_dPExc, dPExc, sizeof(scalar)*model.neuronN[0], cudaMemcpyHostToDevice));
+    CHECK_CUDA_ERRORS(cudaMemcpy(d_UPExc, UPExc, sizeof(scalar)*model.neuronN[0], cudaMemcpyHostToDevice));
+    CHECK_CUDA_ERRORS(cudaMemcpy(d_UPInh, UPInh, sizeof(scalar)*model.neuronN[1], cudaMemcpyHostToDevice));
   }
 }
 	
@@ -91,17 +106,17 @@ void classIzh::allocate_device_mem_input()
 {
   unsigned int size;
 
-  size= model.neuronN[0]*sizeof(float);
+  size= model.neuronN[0]*sizeof(scalar);
   CHECK_CUDA_ERRORS(cudaMalloc((void**) &d_input1, size));
     
-  size= model.neuronN[1]*sizeof(float);
+  size= model.neuronN[1]*sizeof(scalar);
   CHECK_CUDA_ERRORS(cudaMalloc((void**) &d_input2, size));
 }
 
 void classIzh::copy_device_mem_input()
 {
-  CHECK_CUDA_ERRORS(cudaMemcpy(d_input1,input1, model.neuronN[0]*sizeof(float), cudaMemcpyHostToDevice));
-  CHECK_CUDA_ERRORS(cudaMemcpy(d_input2,input2, model.neuronN[1]*sizeof(float), cudaMemcpyHostToDevice));
+  CHECK_CUDA_ERRORS(cudaMemcpy(d_input1,input1, model.neuronN[0]*sizeof(scalar), cudaMemcpyHostToDevice));
+  CHECK_CUDA_ERRORS(cudaMemcpy(d_input2,input2, model.neuronN[1]*sizeof(scalar), cudaMemcpyHostToDevice));
 }
 
 void classIzh::free_device_mem()
@@ -137,7 +152,7 @@ void classIzh::write_input_to_file(FILE *f)
 
 /*void classIzh::read_input_values(FILE *f)
 {
-  fread(input1, model.neuronN[0]*sizeof(float),1,f);
+  fread(input1, model.neuronN[0]*sizeof(scalar),1,f);
 }*/
 
 
@@ -155,12 +170,20 @@ void classIzh::create_input_values() //define your explicit input rule here
 
 }
 
-void classIzh::read_sparsesyns_par(int synInd, Conductance C, FILE *f_ind, FILE *f_indInG, FILE *f_g, float *g //!< File handle for a file containing sparse conductivity values
+void classIzh::read_sparsesyns_par(int synInd, Conductance C, FILE *f_ind, FILE *f_indInG, FILE *f_g, scalar *g //!< File handle for a file containing sparse conductivity values
 			    )
 {
   unsigned int retval=0; //to make the compiler happy
-  retval=fread(g, 1, C.connN*sizeof(float),f_g);
-  if (retval!=C.connN*sizeof(float)) fprintf(stderr, "ERROR: Number of elements read is different than it should be.");
+  double * gtemp = new double[C.connN]; //we need this now as files will always be generated as double but we may run the model with single precision
+  //retval=fread(g, 1, C.connN*sizeof(double),f_g);
+  fprintf(stdout,"Reading conductance values ... \n");
+  retval=fread(gtemp, 1, C.connN*sizeof(double),f_g);
+
+  importArray(g, gtemp, C.connN);
+  
+  fprintf(stdout,"Conductances are converted. \n");
+
+  if (retval!=C.connN*sizeof(double)) fprintf(stderr, "ERROR: Number of elements read is different than it should be.");
   fprintf(stdout,"%d active synapses in group %d. \n",C.connN,synInd);
   retval=fread(C.indInG, 1, (model.neuronN[model.synapseSource[synInd]]+1)*sizeof(unsigned int),f_indInG);
   if (retval!=(model.neuronN[model.synapseSource[synInd]]+1)*sizeof(unsigned int)) fprintf(stderr, "ERROR: Number of elements read is different than it should be.");
@@ -171,7 +194,7 @@ void classIzh::read_sparsesyns_par(int synInd, Conductance C, FILE *f_ind, FILE 
   fprintf(stdout,"Read conductance ... \n");
   fprintf(stdout, "Size is %d for synapse group %d. Values start with: \n",C.connN, synInd);
   for(int i= 0; i < 20; i++) {
-    fprintf(stdout, "%f ", g[i]);
+    fprintf(stdout, "%f ", float(g[i]));
   }
   fprintf(stdout,"\n\n");
   fprintf(stdout, "%d indices read. Index values start with: \n",C.connN);
@@ -184,9 +207,10 @@ void classIzh::read_sparsesyns_par(int synInd, Conductance C, FILE *f_ind, FILE 
     fprintf(stdout, "%d ", C.indInG[i]);
   }  
 	fprintf(stdout,"\n\n");
+  delete [] gtemp;
 }
 
-void classIzh::gen_alltoall_syns( float * g, unsigned int nPre, unsigned int nPost, float gscale//!< Generate random conductivity values for an all to all network
+void classIzh::gen_alltoall_syns( scalar * g, unsigned int nPre, unsigned int nPost, scalar gscale//!< Generate random conductivity values for an all to all network
 			    )
 {
   //randomGen R;
@@ -206,7 +230,7 @@ void classIzh::setInput(unsigned int which)
 
 
 
-void classIzh::run(float runtime, unsigned int which)
+void classIzh::run(double runtime, unsigned int which)
 {
   int riT= (int) (runtime/DT);
   if (which == GPU){

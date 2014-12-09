@@ -15,6 +15,12 @@ You may consider shortening the duration of simulation in classol_sim.h for the 
 
 firstrun=false;
 
+echo "Making tools..."
+cd tools
+make clean && make
+cd ..
+
+echo "Checking if benchmarking directory exists..."
 if [ -d "$BmDir" ]; then
   echo "benchmarking directory exists. Using input data from" $BmDir 
   printf "\n"
@@ -63,10 +69,10 @@ if [ "$firstrun" = false ]; then
   printf "With new setup... \n"  >> testing_output/testing.time
 fi
 printf "\n\n####################### Izh_sparse 10K GPU ######################\n"
-./generate_run 1 10000 1000 1 testing Izh_sparse 0 0
+./generate_run 1 10000 1000 1 testing Izh_sparse 0 FLOAT 0
 #cp testing_output/testing.out.st testing_output/testing.out.st.GPU
 printf "\n\n####################### Izh_sparse 10K CPU ######################\n"
-./generate_run 0 10000 1000 1 testing Izh_sparse 0 0
+./generate_run 0 10000 1000 1 testing Izh_sparse 0 FLOAT 0
 #cp testing_output/testing.out.st testing_output/testing.out.st.CPU
 if [ "$firstrun" = true ]; then
   cp -R inputfiles inputfiles10K
@@ -145,4 +151,16 @@ tail -n 18 MBody_userdef_project/testing_output/testing.time
 printf "\nIzh_sparse time tail\n"
 tail -n 18 Izh_sparse_project/testing_output/testing.time
   
-echo "Test complete!"
+echo "Test complete! Checking if weekly copy of the output is necessary..."
+
+monthandyear=`date +'%W_%m%y'`
+
+echo ${monthandyear}
+FILE="outputtestscript_"${monthandyear}
+if [ -f $FILE ];
+then
+  echo $FILE" exists."
+else
+  cp outputtestscript $FILE
+  echo "Created a copy of the output message at "${FILE}
+fi
