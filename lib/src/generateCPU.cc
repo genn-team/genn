@@ -97,15 +97,13 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 	    os << "n];" << ENDL;
 	}
 
- 	if ((model.inSyn[i].size() > 0) || (model.receivesInputCurrent[i] > 0)) {
-	    os << model.ftype << " Isyn = 0;" << ENDL;
-	}
-
+        os << "// execute internal synapse dynamics if any" << ENDL;
 	for (int j = 0; j < model.inSyn[i].size(); j++) {
 	    unsigned int synPopID=  model.inSyn[i][j];
 	    unsigned int synt= model.synapseType[synPopID];
 	    if (weightUpdateModels[synt].synapseDynamics != tS("")) {
-		weightUpdateModel wu= weightUpdateModels[synt];
+		// there is some internal synapse dynamics
+	        weightUpdateModel wu= weightUpdateModels[synt];
 		string code= wu.synapseDynamics;
 		unsigned int srcno= model.neuronN[model.synapseSource[synPopID]]; 
 		if (model.synapseConnType[synPopID] == SPARSE) { // SPARSE
@@ -139,9 +137,9 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 		}
 	    }
 	}
-   
-	if (model.inSyn[i].size() > 0) {
-	    //os << "    Isyn = ";
+   	if (nt != POISSONNEURON) {
+	    os << model.ftype << " Isyn = 0;" << ENDL;
+
 	    for (int j = 0; j < model.inSyn[i].size(); j++) {
 		unsigned int synPopID= model.inSyn[i][j]; // number of (post)synapse group
 		postSynModel psm= postSynModels[model.postSynapseType[synPopID]];
