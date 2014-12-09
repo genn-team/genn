@@ -8,6 +8,7 @@ var dir_66fc3ae5585a02e310a487b6a12e9e11 =
     [ "OneComp_project", "dir_14a8d9c23f30b81eb1134f990dcc82dd.html", "dir_14a8d9c23f30b81eb1134f990dcc82dd" ],
     [ "PoissonIzh_project", "dir_b9219757b33301ab6c4dd45ee71692b5.html", "dir_b9219757b33301ab6c4dd45ee71692b5" ],
     [ "SynDelay_project", "dir_ee65ae8b4750ac8e30f5a4eeb81d99b9.html", "dir_ee65ae8b4750ac8e30f5a4eeb81d99b9" ],
+    [ "tenHH_project", "dir_e089cdb28317162107d79299c5496574.html", "dir_e089cdb28317162107d79299c5496574" ],
     [ "tools", "dir_ee47e6d354357d23a1629744cc50d0f1.html", "dir_ee47e6d354357d23a1629744cc50d0f1" ],
     [ "GeNNHelperKrnls.cu", "db/d69/GeNNHelperKrnls_8cu.html", "db/d69/GeNNHelperKrnls_8cu" ]
 ];

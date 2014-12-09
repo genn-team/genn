@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['variables_20in_20genn',['Variables in GeNN',['../de/d4b/ListOfVariables.html',1,'UserManual']]]
+  ['user_20manual',['User Manual',['../dc/d05/UserManual.html',1,'']]]
 ];

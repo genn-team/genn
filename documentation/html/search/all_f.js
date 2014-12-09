@@ -1,9 +1,9 @@
 var searchData=
 [
   ['ob',['OB',['../d6/d8a/CodeHelper_8cc.html#af4ed05e3e248b23010b4104717519160',1,'CodeHelper.cc']]],
-  ['off0',['off0',['../d0/dba/classpwSTDP.html#af27cb5a57ee26d9b420e7d1a56777623',1,'pwSTDP::off0(vector&lt; double &gt; pars, double dt)'],['../d0/dba/classpwSTDP.html#a488fa77803291d76e4e5e62766afb087',1,'pwSTDP::off0(vector&lt; float &gt; pars, float dt)'],['../dd/d4e/classpwSTDP__userdef.html#a45894552b5ce5311656444c4350c6a83',1,'pwSTDP_userdef::off0()']]],
-  ['off1',['off1',['../d0/dba/classpwSTDP.html#a96e1441a99827fc92da147b01c6c7e74',1,'pwSTDP::off1(vector&lt; double &gt; pars, double dt)'],['../d0/dba/classpwSTDP.html#a97f72c888ee9384dd28beb7f551fcb0e',1,'pwSTDP::off1(vector&lt; float &gt; pars, float dt)'],['../dd/d4e/classpwSTDP__userdef.html#a07081d6b97c97073e9c65f48f7a2698b',1,'pwSTDP_userdef::off1()']]],
-  ['off2',['off2',['../d0/dba/classpwSTDP.html#aa98862f3f34767a0d4b69a4e2cc9b7fe',1,'pwSTDP::off2(vector&lt; double &gt; pars, double dt)'],['../d0/dba/classpwSTDP.html#aa019d5962f48763e9468f081d6c5c1f7',1,'pwSTDP::off2(vector&lt; float &gt; pars, float dt)'],['../dd/d4e/classpwSTDP__userdef.html#a20a787ad267031b280618afc0646dc15',1,'pwSTDP_userdef::off2()']]],
+  ['off0',['off0',['../d0/dba/classpwSTDP.html#af27cb5a57ee26d9b420e7d1a56777623',1,'pwSTDP::off0(vector&lt; double &gt; pars, double dt)'],['../d0/dba/classpwSTDP.html#a488fa77803291d76e4e5e62766afb087',1,'pwSTDP::off0(vector&lt; float &gt; pars, float dt)'],['../dd/d4e/classpwSTDP__userdef.html#a95274026847738539920b7a1a73d66e6',1,'pwSTDP_userdef::off0()']]],
+  ['off1',['off1',['../d0/dba/classpwSTDP.html#a96e1441a99827fc92da147b01c6c7e74',1,'pwSTDP::off1(vector&lt; double &gt; pars, double dt)'],['../d0/dba/classpwSTDP.html#a97f72c888ee9384dd28beb7f551fcb0e',1,'pwSTDP::off1(vector&lt; float &gt; pars, float dt)'],['../dd/d4e/classpwSTDP__userdef.html#a11649f2718dcbb92220e586004612c6e',1,'pwSTDP_userdef::off1()']]],
+  ['off2',['off2',['../d0/dba/classpwSTDP.html#aa98862f3f34767a0d4b69a4e2cc9b7fe',1,'pwSTDP::off2(vector&lt; double &gt; pars, double dt)'],['../d0/dba/classpwSTDP.html#aa019d5962f48763e9468f081d6c5c1f7',1,'pwSTDP::off2(vector&lt; float &gt; pars, float dt)'],['../dd/d4e/classpwSTDP__userdef.html#a789ad895f96a8161810297d094870eca',1,'pwSTDP_userdef::off2()']]],
   ['offset',['offset',['../d1/d16/classclassol.html#a4c91e54037a58e0b286f10a986d46d9c',1,'classol']]],
   ['onecomp_2ecc',['OneComp.cc',['../db/d47/OneComp_8cc.html',1,'']]],
   ['onecomp_5fmodel_2ecc',['OneComp_model.cc',['../da/de9/OneComp__model_8cc.html',1,'']]],

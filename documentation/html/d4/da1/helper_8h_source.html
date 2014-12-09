@@ -195,7 +195,7 @@ $(document).ready(function(){initNavTree('d4/da1/helper_8h_source.html','../../'
 <div class="line"><a name="l00074"></a><span class="lineno">   74</span>&#160;  <span class="keywordflow">for</span> (<span class="keywordtype">int</span> n= 0; n &lt; <a class="code" href="../../df/d46/HHVClampParameters_8h.html#a4c7c71797767db112d8dfa2c437a6572">NPOP</a>; n++) {</div>
 <div class="line"><a name="l00075"></a><span class="lineno">   75</span>&#160;    <a class="code" href="../../d4/da1/helper_8h.html#a38341b7a42bcfb44f7ac5b43a1a6dd95">single_var_reinit</a>(n, fac);</div>
 <div class="line"><a name="l00076"></a><span class="lineno">   76</span>&#160;  }</div>
-<div class="line"><a name="l00077"></a><span class="lineno">   77</span>&#160;  copyStateToDevice();  </div>
+<div class="line"><a name="l00077"></a><span class="lineno">   77</span>&#160;  <a class="code" href="../../d9/d1d/runnerGPU_8cc.html#aa6205530665f72a59b66a9b1ab096d5f">copyStateToDevice</a>();  </div>
 <div class="line"><a name="l00078"></a><span class="lineno">   78</span>&#160;}</div>
 <div class="line"><a name="l00079"></a><span class="lineno">   79</span>&#160;</div>
 <div class="line"><a name="l00080"></a><span class="lineno"><a class="line" href="../../d4/da1/helper_8h.html#a7c3b8a7c78ab272544a49c8c767f8874">   80</a></span>&#160;<span class="keywordtype">void</span> <a class="code" href="../../d4/da1/helper_8h.html#a7c3b8a7c78ab272544a49c8c767f8874">truevar_init</a>()</div>
@@ -207,7 +207,7 @@ $(document).ready(function(){initNavTree('d4/da1/helper_8h_source.html','../../'
 <div class="line"><a name="l00086"></a><span class="lineno">   86</span>&#160;    nHH[n]= <a class="code" href="../../d9/dba/HHVClamp_8cc.html#a287cd25b59187b2b41089d2f513c4fd1">myHH_ini</a>[3];</div>
 <div class="line"><a name="l00087"></a><span class="lineno">   87</span>&#160;    errHH[n]= 0.0;</div>
 <div class="line"><a name="l00088"></a><span class="lineno">   88</span>&#160;  }</div>
-<div class="line"><a name="l00089"></a><span class="lineno">   89</span>&#160;  copyStateToDevice();    </div>
+<div class="line"><a name="l00089"></a><span class="lineno">   89</span>&#160;  <a class="code" href="../../d9/d1d/runnerGPU_8cc.html#aa6205530665f72a59b66a9b1ab096d5f">copyStateToDevice</a>();    </div>
 <div class="line"><a name="l00090"></a><span class="lineno">   90</span>&#160;}</div>
 <div class="line"><a name="l00091"></a><span class="lineno">   91</span>&#160;</div>
 <div class="line"><a name="l00092"></a><span class="lineno">   92</span>&#160;</div>
@@ -329,6 +329,7 @@ $(document).ready(function(){initNavTree('d4/da1/helper_8h_source.html','../../'
 <div class="ttc" id="helper_8h_html_ae06823ac6c9708d77f34de1bfc075f22"><div class="ttname"><a href="../../d4/da1/helper_8h.html#ae06823ac6c9708d77f34de1bfc075f22">sigENa</a></div><div class="ttdeci">double sigENa</div><div class="ttdef"><b>Definition:</b> helper.h:25</div></div>
 <div class="ttc" id="helper_8h_html_a53a3bc5948599ef2803d14620056001f"><div class="ttname"><a href="../../d4/da1/helper_8h.html#a53a3bc5948599ef2803d14620056001f">sigEl</a></div><div class="ttdeci">double sigEl</div><div class="ttdef"><b>Definition:</b> helper.h:29</div></div>
 <div class="ttc" id="VClampGA_8h_html_af5a7a548a9abc3f675678c8ac3f3d636"><div class="ttname"><a href="../../d4/de3/VClampGA_8h.html#af5a7a548a9abc3f675678c8ac3f3d636">RG</a></div><div class="ttdeci">randomGauss RG</div><div class="ttdef"><b>Definition:</b> VClampGA.h:32</div></div>
+<div class="ttc" id="runnerGPU_8cc_html_aa6205530665f72a59b66a9b1ab096d5f"><div class="ttname"><a href="../../d9/d1d/runnerGPU_8cc.html#aa6205530665f72a59b66a9b1ab096d5f">copyStateToDevice</a></div><div class="ttdeci">void copyStateToDevice()</div><div class="ttdef"><b>Definition:</b> runnerGPU.cc:174</div></div>
 <div class="ttc" id="structinputSpec_html_a25c637510c26633e00ac5f7704dce559"><div class="ttname"><a href="../../de/dad/structinputSpec.html#a25c637510c26633e00ac5f7704dce559">inputSpec::N</a></div><div class="ttdeci">int N</div><div class="ttdef"><b>Definition:</b> helper.h:19</div></div>
 <div class="ttc" id="classrandomGauss_html_a69a70b10bc65de93f60bfb1c02a16daf"><div class="ttname"><a href="../../d5/d45/classrandomGauss.html#a69a70b10bc65de93f60bfb1c02a16daf">randomGauss::n</a></div><div class="ttdeci">double n()</div><div class="ttdoc">Method for obtaining a random number with Gaussian distribution. </div><div class="ttdef"><b>Definition:</b> gauss.cc:75</div></div>
 <div class="ttc" id="HHVClamp_8cc_html_a287cd25b59187b2b41089d2f513c4fd1"><div class="ttname"><a href="../../d9/dba/HHVClamp_8cc.html#a287cd25b59187b2b41089d2f513c4fd1">myHH_ini</a></div><div class="ttdeci">float myHH_ini[11]</div><div class="ttdef"><b>Definition:</b> HHVClamp.cc:26</div></div>
@@ -356,7 +357,7 @@ $(document).ready(function(){initNavTree('d4/da1/helper_8h_source.html','../../'
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dir_66fc3ae5585a02e310a487b6a12e9e11.html">userproject</a></li><li class="navelem"><a class="el" href="../../dir_a5184933c6533a0aa5b14fed7d933ef3.html">HHVclampGA_project</a></li><li class="navelem"><a class="el" href="../../dir_ebee3d0120a2ad2f40f581ebbc631f99.html">model</a></li><li class="navelem"><a class="el" href="../../d4/da1/helper_8h.html">helper.h</a></li>
-    <li class="footer">Generated on Fri Dec 5 2014 19:33:02 for GeNN by
+    <li class="footer">Generated on Tue Dec 9 2014 20:22:35 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.7 </li>
   </ul>

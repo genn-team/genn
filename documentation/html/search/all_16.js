@@ -10,5 +10,7 @@ var searchData=
   ['vclampga_2ecu',['VClampGA.cu',['../d1/d20/VClampGA_8cu.html',1,'']]],
   ['vclampga_2eh',['VClampGA.h',['../d4/de3/VClampGA_8h.html',1,'']]],
   ['verbose',['verbose',['../d1/d03/classCodeHelper.html#a5afe3ed0547836993784dcdedc35438a',1,'CodeHelper']]],
-  ['vexp',['Vexp',['../d4/da1/helper_8h.html#a83cf90739c16b19704b98c436a5b798d',1,'helper.h']]]
+  ['vexp',['Vexp',['../d4/da1/helper_8h.html#a83cf90739c16b19704b98c436a5b798d',1,'helper.h']]],
+  ['vpexc',['VPExc',['../d1/d2b/runner_8cc.html#ab6173dcdc9bb0458af1eec98fb78071d',1,'runner.cc']]],
+  ['vpinh',['VPInh',['../d1/d2b/runner_8cc.html#aa6dc9c829dde3056116e3ba248a53ea7',1,'runner.cc']]]
 ];

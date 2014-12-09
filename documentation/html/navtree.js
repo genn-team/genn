@@ -27,6 +27,12 @@ var NAVTREE =
       [ "Developer Side Changes", "df/ddb/ReleaseNotes.html#developerChange", null ]
     ] ],
     [ "User Manual", "dc/d05/UserManual.html", "dc/d05/UserManual" ],
+    [ "Tutorial 1", "d5/dbb/Tutorial1.html", [
+      [ "The Model Definition", "d5/dbb/Tutorial1.html#ModelDefinition", null ],
+      [ "User Code", "d5/dbb/Tutorial1.html#userCode", null ],
+      [ "Makefile", "d5/dbb/Tutorial1.html#Makefile", null ],
+      [ "Making and Running the Simulation", "d5/dbb/Tutorial1.html#MakeRun", null ]
+    ] ],
     [ "Bibliography", "d0/de3/citelist.html", null ],
     [ "Classes", null, [
       [ "Class List", "annotated.html", "annotated" ],
@@ -53,10 +59,11 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "annotated.html",
-"d3/dc0/currentModel_8cc.html#a1bcd7d6efc6b974fe798830691e5bbde",
-"d8/d70/userproject_2MBody1__project_2model_2classol__sim_8h.html#ab83f44e4142be41861734e19dfa92c75",
-"dc/de0/MBody1__project_2model_2MBody1_8cc.html#a9482ef7801de91698f108da5565b45f8",
-"de/d1c/userproject_2MBody__userdef__project_2model_2MBody__userdef_8cc.html#a943f07034774ef1261d62cd0d3d1fec9"
+"d1/d2b/runner_8cc.html#aa375a269f054d1628aeeafc84117f9bb",
+"d5/db7/synapseFnct_8cc.html",
+"d9/d9e/stringutils_8h.html#abd6ac6d6fb449c8c576eac24c7df3472",
+"dc/de5/classNNmodel.html#a1c92c912e7f64e870f4d1e01e0eddd6b",
+"df/d0a/Izh__sparse__sim_8h.html#ab83f44e4142be41861734e19dfa92c75"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

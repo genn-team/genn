@@ -176,7 +176,7 @@ Defining a New Model in GeNN</h1>
 <p class="startli">a) she defines the connectivity matrices between neuron groups. (In the MBody1 example those are read from files). Refer to the <a class="el" href="../../dc/d05/UserManual.html">User Manual</a> for the required format of connectivity matrices for dense or sparse connectivities.</p>
 <p class="startli">b) she defines input patterns (e.g. for Poisson neurons like in the MBody1 example) or individual initial values for neuron and/or synapse variables. </p><dl class="section note"><dt>Note</dt><dd>The initial values given in the <code>modelDefinition</code> are automatically applied homogeneously to every individual neuron or synapse in each of the neuron or synapse groups.</dd></dl>
 <p>c) she uses <code>stepTimeGPU(...);</code> to run one time step on the GPU or <code>stepTimeCPU(...);</code> to run one on the CPU. (both GPU and CPU versions are always compiled). </p><dl class="section note"><dt>Note</dt><dd>However, mixing CPU and GPU execution does not make too much sense. Among pother things, The CPU version uses the same host side memory whereto results from the GPU version are copied, which would lead to collisions between what is calculated on the CPU and on the GPU (see next point). However, in certain circumstances, expert users may want to split the calculation and calculate parts (e.g. neurons) on the GPU and parts (e.g. synapses) on the CPU. In such cases the fundamental kernel and function calls contained in <code>stepTimeXXX</code> need to be used and appropriate copies of the data from teh CPU to the GPU and vice versa need to be performed.</dd></dl>
-<p>d) she uses functions like <code>copyStateFromDevice()</code> etc to transfer the results from GPU calculations to the main memory of the host computer for further processing.</p>
+<p>d) she uses functions like <code><a class="el" href="../../d9/d1d/runnerGPU_8cc.html#a981840e554250b9b77a7c3b8b9b1d927">copyStateFromDevice()</a></code> etc to transfer the results from GPU calculations to the main memory of the host computer for further processing.</p>
 <p class="startli">e) she analyzes the results. In the most simple case this could just be writing the relevant data to output files.</p>
 </li>
 </ol>
@@ -188,7 +188,7 @@ Defining a New Model in GeNN</h1>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Fri Dec 5 2014 19:33:02 for GeNN by
+    <li class="footer">Generated on Tue Dec 9 2014 20:22:35 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.7 </li>
   </ul>

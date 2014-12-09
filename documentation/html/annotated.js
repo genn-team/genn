@@ -3,6 +3,7 @@ var annotated =
     [ "classIzh", "de/dba/classclassIzh.html", "de/dba/classclassIzh" ],
     [ "classol", "d1/d16/classclassol.html", "d1/d16/classclassol" ],
     [ "CodeHelper", "d1/d03/classCodeHelper.html", "d1/d03/classCodeHelper" ],
+    [ "Conductance", "d9/d6a/structConductance.html", "d9/d6a/structConductance" ],
     [ "CStopWatch", "d9/de8/classCStopWatch.html", "d9/de8/classCStopWatch" ],
     [ "dpclass", "db/de6/classdpclass.html", "db/de6/classdpclass" ],
     [ "errTupel", "d4/da7/structerrTupel.html", "d4/da7/structerrTupel" ],

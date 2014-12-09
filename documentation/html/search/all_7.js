@@ -11,7 +11,7 @@ var searchData=
   ['errtupel',['errTupel',['../d4/da7/structerrTupel.html',1,'']]],
   ['evntthreshold',['evntThreshold',['../dd/db7/classweightUpdateModel.html#acccf120c9b1307f7ee2c5bac43110be1',1,'weightUpdateModel']]],
   ['examples',['Examples',['../d9/d61/Examples.html',1,'']]],
-  ['excizh_5fp',['excIzh_p',['../d7/d5b/Izh__sparse_8cc.html#a091232fecad2954bd200afb7d5065e32',1,'Izh_sparse.cc']]],
+  ['excizh_5fp',['excIzh_p',['../d7/d5b/Izh__sparse_8cc.html#af621c74cc503772b3a6589272ede67ea',1,'Izh_sparse.cc']]],
   ['exitsyn',['EXITSYN',['../dc/de1/modelSpec_8h.html#a7bb4c29b501ba0e6331d8dea62d139d9',1,'modelSpec.h']]],
   ['exizh_5fini',['exIzh_ini',['../db/d47/OneComp_8cc.html#a2f343b0c98bb1a638235d438a394a409',1,'exIzh_ini():&#160;OneComp.cc'],['../dc/d3f/PoissonIzh_8cc.html#a2f343b0c98bb1a638235d438a394a409',1,'exIzh_ini():&#160;PoissonIzh.cc']]],
   ['exizh_5fp',['exIzh_p',['../db/d47/OneComp_8cc.html#a12f2cac1332ab9e3a092a48d703b495b',1,'exIzh_p():&#160;OneComp.cc'],['../dc/d3f/PoissonIzh_8cc.html#a12f2cac1332ab9e3a092a48d703b495b',1,'exIzh_p():&#160;PoissonIzh.cc']]],

@@ -1,11 +1,11 @@
 var classpwSTDP__userdef =
 [
-    [ "calculateDerivedParameter", "dd/d4e/classpwSTDP__userdef.html#ab97adaaca41c96af7bcb70cde27f36cf", null ],
-    [ "lim0", "dd/d4e/classpwSTDP__userdef.html#a649e7e3b89a6e25d1c967c85256be22b", null ],
-    [ "lim1", "dd/d4e/classpwSTDP__userdef.html#a98ed2b584c1e81b3e2a6b5620d6b3e2b", null ],
-    [ "off0", "dd/d4e/classpwSTDP__userdef.html#a45894552b5ce5311656444c4350c6a83", null ],
-    [ "off1", "dd/d4e/classpwSTDP__userdef.html#a07081d6b97c97073e9c65f48f7a2698b", null ],
-    [ "off2", "dd/d4e/classpwSTDP__userdef.html#a20a787ad267031b280618afc0646dc15", null ],
-    [ "slope0", "dd/d4e/classpwSTDP__userdef.html#ade34631db70b55575170413dd9b57cd0", null ],
-    [ "slope1", "dd/d4e/classpwSTDP__userdef.html#a3a84bdf1197c357c3e7623bee86d42d6", null ]
+    [ "calculateDerivedParameter", "dd/d4e/classpwSTDP__userdef.html#ad4bbaffdab30d0faca8d9d338a060b3b", null ],
+    [ "lim0", "dd/d4e/classpwSTDP__userdef.html#a94b38036298ff83eeb18129d40bd275d", null ],
+    [ "lim1", "dd/d4e/classpwSTDP__userdef.html#ae60f00381ca51c965d74499e1c75fb2b", null ],
+    [ "off0", "dd/d4e/classpwSTDP__userdef.html#a95274026847738539920b7a1a73d66e6", null ],
+    [ "off1", "dd/d4e/classpwSTDP__userdef.html#a11649f2718dcbb92220e586004612c6e", null ],
+    [ "off2", "dd/d4e/classpwSTDP__userdef.html#a789ad895f96a8161810297d094870eca", null ],
+    [ "slope0", "dd/d4e/classpwSTDP__userdef.html#a0dead54cd31d149d6bff6f033744c12c", null ],
+    [ "slope1", "dd/d4e/classpwSTDP__userdef.html#ac0215c6e0b8b959d6ae0be1d11df2ab2", null ]
 ];
