@@ -1,0 +1,151 @@
+//----------------------------------------------------------------------------
+/*! \page Tutorial2 Tutorial 2
+
+In this tutorial we will learn to add synapsePopulations to connect neurons in neuron groups to each other with synatic models. We will as an example connect the ten Hodgkin-Huxley neurons from tutorial 1 in a ring of excitatory synapses.
+
+First, copy the files from Tutorial 1 into a new directory and rename them to new names, e.g.
+\code
+>> cp -r tenHH_project tenHHRing_project
+>> cd tenHHRing_project
+>> mv tenHHModel.cc tenHHRingModel.cc
+>> mv tenHHSimulation.cu tenHHRingSimulation.cu
+\endcode
+Now, we need to add a synapse group to the model that allows to connect neurons from the Pop1 group to connect to other neurons of this group. Open `tenHHRingModel.cc`, change the model name inside,
+\code
+  model.setName("tenHHRing");
+\endcode
+Now we need additional initial values and parameters for the synapse and post-synaptic models. We will use the standard `NSYNAPSE` weightu[adte model and `EXPDECAY` post-synaptic model. They need intial variables and parameters as follows:
+\code
+  double s_ini[1] = {
+    0.0      // 0 - g: the synaptic conductance value
+  };
+  double *s_p= NULL;
+  double *ps_ini= NULL;
+  double ps_p[2]= {
+    1.0,      // 0 - tau_S: decay time constant for S [ms]
+    0.0       // 1 - Erev: Reversal potential
+  };
+\endcode
+If an array is not needed, here there are for example no synaptic parameters and no initial values for the post-synaptic mechanism, we pass in a NULL pointer.
+We can then add a synapse population at the end of the `modelDefinition(...)` function,
+\code
+  model.addSynapsePopulation("Pop1self", NSYNAPSE, DENSE, INDIVIDUALG, NO_DELAY, EXPDECAY, "Pop1", "Pop1", s_ini, s_p, ps_ini, ps_p);
+\endcode
+The addSynapsePopulation parameters are
+\arg `const char *name`: The name of the synapse population, here "Pop1self"
+\arg `int sType`: The type of synapse to be added, we here use the predefined typse `NSYNAPSE`. See \ref subsect31 for all available predefined synapse types.
+\arg `int sConn`: The type of synaptic connectivity, here `DENSE` which means we will provide a full connectivity mtrix later. 
+\arg \c int \c gType: The way how the synaptic conductivity g will be
+defined. With `GLOBALG` we indicate that all conductance are of the same conductance value, which will be the value given in `sPara`. 
+\arg `int delay`: `NO_DELAY` means that there wil be no delays for synaptic signal propagation.
+\arg `int postSyn`: Postsynaptic integration method, we are here using the standard model of an exponential decay of synaptic excitation. 
+\arg `char *preName`: Name of the pre-synaptic neuron
+population, here the `Pop1` population.
+\arg `char *postName`: Name of the post-synaptic neuron
+population, here also `Pop1`.
+\arg `double *sIni`: A C-array of doubles containing initial values for the synaptic variables. 
+\arg `double *sParam`: A C-array of double precision that contains
+parameter values (common to all synapses of the population) 
+\arg `double *psIni`: A C-array of double precision numbers containing initial values for the post-synaptic model variables
+\arg `double *psPara`: A C-array of double precision numbers containing parameters fo the post-snaptic model.
+
+Adding the addSynapsePopulation command to the model definition informs GeNN that there will eb synapses between the named neuron populations. The detailed conenctivity as defined by the variables `g`, we have still to define in the setup of our simulation. At this point our model definition file `tenHHRingModel.cc` should look like this
+\code
+// Model definintion file tenHHModel.cc
+
+#define DT 0.1 
+#include "modelSpec.h"
+#include "modelSpec.cc"
+
+void modelDefinition(NNmodel &model)
+{
+  // definition of tenHHModel
+  initGeNN();
+  model.setName("tenHHRingModel");
+  double p[7]= {
+    7.15,          // 0 - gNa: Na conductance in muS
+    50.0,          // 1 - ENa: Na equi potential in mV
+    1.43,          // 2 - gK: K conductance in muS
+   -95.0,          // 3 - EK: K equi potential in mV 
+    0.02672,       // 4 - gl: leak conductance in muS
+    -63.563,       // 5 - El: leak equi potential in mV
+    0.143          // 6 - Cmem: membr. capacity density in nF
+  }; 
+
+  double ini[4]= {
+    -60.0,         // 0 - membrane potential V
+    0.0529324,     // 1 - prob. for Na channel activation m
+    0.3176767,     // 2 - prob. for not Na channel blocking h
+    0.5961207      // 3 - prob. for K channel activation n
+  };
+  model.addNeuronPopulation("Pop1", 10, TRAUBMILES, p, ini);
+  double s_ini[1] = {
+    0.0       // 0 - g: the synaptic conductance value
+  };
+  double *s_p= NULL;
+  double *ps_ini= NULL;
+  double ps_p[2]= {
+    1.0,      // 0 - tau_S: decay time constant for S [ms]
+    0.0       // 1 - Erev: Reversal potential
+  };
+  model.addSynapsePopulation("Pop1self", NSYNAPSE, DENSE, INDIVIDUALG, NO_DELAY, EXPDECAY, "Pop1", "Pop1", s_ini, s_p, ps_ini, ps_p);
+}
+\endcode
+
+Open the `tenHHRingSimulation,cu` file and update the file names of includes:
+\code
+// tenHHRingModel simulation code
+#include "tenHHRingModel.cc"
+#include "tenHHRingModel_CODE/runner.cc"
+\endcode
+Now we need to add code to generate the desired ring connectivity.
+\code
+  allocateMem();
+  initialize();
+  // define the connectivity
+  int pre, post;
+  for (int i= 0; i < 10; i++) {
+    pre= i;
+    post= (i+1)%10;
+    gPop1self[pre*10+post]= 0.01;
+  }
+  pushPop1selftoDevice();
+\endcode
+After memry allocation and initialization gPop1self will contain only zeros. We then assign in the loop a non-zero conductivity of 0.01 \f$\mu\f$S to all synapses from neuron `i` to `i+1` (and `9` to `8` to close the ring).
+
+After adjusting the GNUmakefile to read
+\code
+EXECUTABLE	:=tenHHRingSimulation
+SOURCES		:=tenHHRingSimulation.cu
+
+include	$(GENN_PATH)/userproject/include/makefile_common_gnu.mk
+\endcode
+we can build the model
+\code
+>> buildmodel.sh tenHHRingModel
+\endcode
+and make it
+\code
+>> make clean all
+\endcode
+After this there should be an exectable `tenHHRingSimulation`, which can be executed,
+\code
+>> ./tenHHRingSimulation
+\endcode
+which should again result in 
+\code
+-63.7838 0.0350042 0.336314 0.563243
+-63.7838 0.0350042 0.336314 0.563243
+-63.7838 0.0350042 0.336314 0.563243
+-63.7838 0.0350042 0.336314 0.563243
+-63.7838 0.0350042 0.336314 0.563243
+-63.7838 0.0350042 0.336314 0.563243
+-63.7838 0.0350042 0.336314 0.563243
+-63.7838 0.0350042 0.336314 0.563243
+-63.7838 0.0350042 0.336314 0.563243
+-63.7838 0.0350042 0.336314 0.563243
+\endcode
+because the neurons never spike and hence the synapses do not contribute.
+
+
+*/
