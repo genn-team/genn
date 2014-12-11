@@ -239,8 +239,8 @@ void NNmodel::initLearnGrps()
 	    synapseUsesSpikeEvents[i] = TRUE;
 	    neuronNeedSpkEvnt[src] = TRUE;
 
-            // find the necessary pre-synaptic variables contained in Threshold condition
 	    assert(wu.evntThreshold != tS(""));
+            // find the necessary pre-synaptic variables contained in Threshold condition
 	    for (int j = 0; j < vars.size(); j++) {
 		if (wu.evntThreshold.find(vars[j] + tS("_pre")) != string::npos) {
 		    synapseSpkEvntVars[i].push_back(vars[j]);
