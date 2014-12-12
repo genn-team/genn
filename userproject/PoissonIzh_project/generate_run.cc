@@ -131,7 +131,7 @@ int main(int argc, char *argv[])
   // generate input patterns
   cmd = gennPath + "/userproject/tools/gen_input_structured ";
   cmd += toString(nPoisson) + " ";
-  cmd += "10 10 0.1 0.1 32768 17 ";
+  cmd += "10 10 0.1 0.05 1.0 2e-04 ";
   cmd += outdir + "/" + toString(argv[7]) + ".inpat";
   cmd += " 1> " + outdir + "/" + toString(argv[7]) + ".inpat.msg 2>&1";
   retval=system(cmd.c_str());

@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
   	name= OutDir+ "/gPoissonIzh_nonopt";
   	cout << "# reading PN-Izh1 synapses from file "<< name << endl;
   	FILE *f= fopen(name.c_str(),"r");
-  	PNIzhNN.read_PNIzh1syns(gpPNIzh1 , f);
+  	PNIzhNN.read_PNIzh1syns(gPNIzh1 , f);
   	fclose(f);   
   //ALLTOALL CONNECTIVITY END 
  
@@ -103,7 +103,7 @@ int main(int argc, char *argv[])
 
   t= 0.0;
   int done= 0;
-  float last_t_report=  t;
+  double last_t_report=  t;
   PNIzhNN.run(DT, which);
   unsigned int sum= 0;
   while (!done) 
@@ -112,8 +112,8 @@ int main(int argc, char *argv[])
 //   if (which == GPU) PNIzhNN.getSpikesFromGPU();
     PNIzhNN.run(DT, which); // run next batch
     if (which == GPU) {  
-      CHECK_CUDA_ERRORS(cudaMemcpy(VIzh1, d_VIzh1, 10*sizeof(float), cudaMemcpyDeviceToHost));
-      CHECK_CUDA_ERRORS(cudaMemcpy(VPN, d_VPN, 10*sizeof(float), cudaMemcpyDeviceToHost));
+      pullIzh1fromDevice();
+      pullPNfromDevice();
 	} 
 //    PNIzhNN.sum_spikes();
 //    PNIzhNN.output_spikes(os, which);
@@ -121,8 +121,8 @@ int main(int argc, char *argv[])
    fprintf(osf, "%f ", t);
    fprintf(osfpn,"%f ",t);
    for(int i=0;i<10;i++) {
-   fprintf(osf, "%f ", VIzh1[i]);
-   fprintf(osfpn, "%f ", VPN[i]);
+   fprintf(osf, "%f ", float(VIzh1[i]));
+   fprintf(osfpn, "%f ", float(VPN[i]));
    	
    	}
    fprintf(osf, "\n");

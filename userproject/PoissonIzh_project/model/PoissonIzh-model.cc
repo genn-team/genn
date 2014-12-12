@@ -13,14 +13,17 @@
 
 #ifndef _POISSONIZHMODEL_CC_
 #define _POISSONIZHMODEL_CC_
-
+#include "PoissonIzh-model.h"
 #include "PoissonIzh_CODE/runner.cc"
+#include "modelSpec.h"
+#include "modelSpec.cc"
 
 classol::classol()
 {
   modelDefinition(model);
-  pattern= new unsigned int[model.neuronN[0]*PATTERNNO];
-  baserates= new unsigned int[model.neuronN[0]];
+  p_pattern= new scalar[model.neuronN[0]*PATTERNNO];
+  pattern= new uint64_t[model.neuronN[0]*PATTERNNO];
+  baserates= new uint64_t[model.neuronN[0]];
   allocateMem();
   initialize();
   sumPN= 0;
@@ -33,7 +36,6 @@ void classol::init(unsigned int which)
     theRates= baserates;
   }
   if (which == GPU) {
-    copyGToDevice(); 
     copyStateToDevice();
     theRates= d_baserates;
   }
@@ -58,11 +60,11 @@ void classol::allocate_device_mem_input()
   unsigned int size;
 
   // allocate device memory for explicit input
-  size= model.neuronN[0]*PATTERNNO*sizeof(unsigned int);
+  size= model.neuronN[0]*PATTERNNO*sizeof(uint64_t);
   CHECK_CUDA_ERRORS(cudaMalloc((void**) &d_pattern, size));
-  fprintf(stderr, "allocated %u elements for pattern.\n", size/sizeof(unsigned int));
+  fprintf(stderr, "allocated %u elements for pattern.\n", size/sizeof(uint64_t));
   CHECK_CUDA_ERRORS(cudaMemcpy(d_pattern, pattern, size, cudaMemcpyHostToDevice));
-  size= model.neuronN[0]*sizeof(unsigned int);
+  size= model.neuronN[0]*sizeof(uint64_t);
   CHECK_CUDA_ERRORS(cudaMalloc((void**) &d_baserates, size));
   CHECK_CUDA_ERRORS(cudaMemcpy(d_baserates, baserates, size, cudaMemcpyHostToDevice)); 
 }
@@ -80,49 +82,67 @@ classol::~classol()
   delete [] baserates;
   freeMem();
 }
-
-void classol::read_PNIzh1syns(float *gp, FILE *f)
+void classol::importArray(scalar *dest, double *src, int sz) 
 {
-  fprintf(stderr, "%u\n", model.neuronN[0]*model.neuronN[1]*sizeof(float));
-  fread(gp, model.neuronN[0]*model.neuronN[1]*sizeof(float),1,f);
+    for (int i= 0; i < sz; i++) {
+	dest[i]= (scalar) src[i];
+    }
+}
+
+void classol::exportArray(double *dest, scalar *src, int sz) 
+{
+    for (int i= 0; i < sz; i++) {
+	dest[i]= (scalar) src[i];
+    }
+}
+
+void classol::read_PNIzh1syns(scalar *gp, FILE *f)
+{
+
+  int sz= model.neuronN[0]*model.neuronN[1];
+    double *tmpg= new double[sz];
+    unsigned int retval = fread(tmpg, 1, sz * sizeof(double),  f);
+    importArray(gp, tmpg, sz);
+  fprintf(stderr, "%u\n", model.neuronN[0]*model.neuronN[1]*sizeof(double));
+  fread(gp, model.neuronN[0]*model.neuronN[1]*sizeof(double),1,f);
   fprintf(stderr,"read PNIzh1 ... \n");
   fprintf(stderr, "values start with: \n");
   for(int i= 0; i < 100; i++) {
-    fprintf(stderr, "%f ", gp[i]);
+    fprintf(stderr, "%f ", float(gp[i]));
   }
   fprintf(stderr,"\n\n");
 }
 
-void classol::read_sparsesyns_par(int synInd, Conductance C, FILE *f_ind,FILE *f_indInG,FILE *f_g //!< File handle for a file containing sparse conductivity values
+void classol::read_sparsesyns_par(int synInd, Conductance C, FILE *f_ind,FILE *f_indInG,FILE *f_g, double * g //!< File handle for a file containing sparse conductivity values
 				  )
 {
   //allocateSparseArray(synInd,C.connN);
 
-  fread(C.gp, C.connN*sizeof(model.ftype),1,f_g);
+  fread(g, C.connN*sizeof(model.ftype),1,f_g);
   fprintf(stderr,"%d active synapses. \n",C.connN);
-  fread(C.gIndInG, (model.neuronN[model.synapseSource[synInd]]+1)*sizeof(unsigned int),1,f_indInG);
-  fread(C.gInd, C.connN*sizeof(int),1,f_ind);
+  fread(C.indInG, (model.neuronN[model.synapseSource[synInd]]+1)*sizeof(unsigned int),1,f_indInG);
+  fread(C.ind, C.connN*sizeof(int),1,f_ind);
 
 
   // general:
   fprintf(stderr,"Read conductance ... \n");
   fprintf(stderr, "Size is %d for synapse group %d. Values start with: \n",C.connN, synInd);
   for(int i= 0; i < 100; i++) {
-    fprintf(stderr, "%f ", C.gp[i]);
+    fprintf(stderr, "%f ", float(g[i]));
   }
   fprintf(stderr,"\n\n");
   
   
   fprintf(stderr, "%d indices read. Index values start with: \n",C.connN);
   for(int i= 0; i < 100; i++) {
-    fprintf(stderr, "%d ", C.gInd[i]);
+    fprintf(stderr, "%d ", C.ind[i]);
   }  
   fprintf(stderr,"\n\n");
   
   
   fprintf(stderr, "%d g indices read. Index in g array values start with: \n", model.neuronN[model.synapseSource[synInd]]+1);
   for(int i= 0; i < 100; i++) {
-    fprintf(stderr, "%d ", C.gIndInG[i]);
+    fprintf(stderr, "%d ", C.indInG[i]);
   }  
 }
 
@@ -130,23 +150,30 @@ void classol::read_sparsesyns_par(int synInd, Conductance C, FILE *f_ind,FILE *f
 void classol::read_input_patterns(FILE *f)
 {
   // we use a predefined pattern number
-  fread(pattern, model.neuronN[0]*PATTERNNO*sizeof(unsigned int),1,f);
+  int sz= model.neuronN[0]*PATTERNNO;
+  double *tmpp= new double[sz];
+  unsigned int retval = fread(tmpp, 1, sz*sizeof(double),f);
+  importArray(p_pattern, tmpp, sz);
   fprintf(stderr, "read patterns ... \n");
   fprintf(stderr, "input pattern values start with: \n");
   for(int i= 0; i < 100; i++) {
-    fprintf(stderr, "%d ", pattern[i]);
+    fprintf(stderr, "%f ", float(p_pattern[i]));
   }
   fprintf(stderr, "\n\n");
+  convertProbabilityToRandomNumberThreshold(p_pattern, pattern, model.neuronN[0]*PATTERNNO);
+    delete[] tmpp;
 }
 
 void classol::generate_baserates()
 {
   // we use a predefined pattern number
+    uint64_t inputBase;
+    convertProbabilityToRandomNumberThreshold(&InputBaseRate, &inputBase, 1);
   for (int i= 0; i < model.neuronN[0]; i++) {
-    baserates[i]= INPUTBASERATE;
+    baserates[i]= inputBase;
   }
   fprintf(stderr, "generated basereates ... \n");
-  fprintf(stderr, "baserate value: %d ", INPUTBASERATE);
+  fprintf(stderr, "baserate value: %f ", InputBaseRate);
   fprintf(stderr, "\n\n");  
 }
 
@@ -213,18 +240,18 @@ void classol::getSpikeNumbersFromGPU()
 
 void classol::output_spikes(FILE *f, unsigned int which)
 {
-  for (int i= 0; i < glbscntPN; i++) {
+  for (int i= 0; i < glbSpkCntPN; i++) {
     fprintf(f, "%f %d\n", t, glbSpkPN[i]);
   }
-  for (int i= 0; i < glbscntIzh1; i++) {
+  for (int i= 0; i < glbSpkCntIzh1; i++) {
     fprintf(f,  "%f %d\n", t, model.sumNeuronN[0]+glbSpkIzh1[i]);
   }
 }
 
 void classol::sum_spikes()
 {
-  sumPN+= glbscntPN;
-  sumIzh1+= glbscntIzh1;
+  sumPN+= glbSpkCntPN;
+  sumIzh1+= glbSpkCntIzh1;
 }
 
 
