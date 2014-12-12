@@ -207,6 +207,60 @@ The output yuo obtain should look like
 -63.7838 0.0350042 0.336314 0.563243
 -63.7838 0.0350042 0.336314 0.563243
 \endcode
-This completes this tutorial. You have created a GeNN model and simulated it successfully! The completed files in this tutorial can be found in `userproject/tenHH_project`.
+This completes this tutorial. You have created a GeNN model and simulated it successfully! 
+
+\section Input Adding External Input
+
+In the example we have created so far, the neurons are not connected and do not receive input. As the TRAUBMILES model is silent in such conditions, the ten neurons simply will simply rest at their resting potential.
+To make things more interesting, let us add a constant input to all neurons, add to the end of the `modelDefinition` function
+\code
+  model.activateDirectInput("Pop1", CONSTINP);
+  model.setConstInp("Pop1", 0.1);
+\endcode
+This will add a constant input of 0.1 nA to all ten neurons. When run with this addition you should observe the output
+\code
+-63.1468 0.0211871 0.987233 0.0423695
+-63.1468 0.0211871 0.987233 0.0423695
+-63.1468 0.0211871 0.987233 0.0423695
+-63.1468 0.0211871 0.987233 0.0423695
+-63.1468 0.0211871 0.987233 0.0423695
+-63.1468 0.0211871 0.987233 0.0423695
+-63.1468 0.0211871 0.987233 0.0423695
+-63.1468 0.0211871 0.987233 0.0423695
+-63.1468 0.0211871 0.987233 0.0423695
+-63.1468 0.0211871 0.987233 0.0423695
+\endcode
+This is still not particularly interesting as we are just observing the final value of the membrane potentials. To see what is going on in the meantime, we need to copy intermediate values from the device and best save them into a file.
+This can be done in many ways but one sensible way of doing this is to replace the line
+\code
+  stepTimeGPU(1000.0);
+\endcode
+in `tenHHSimulation.cu` to something like this:
+\code
+ofstream os("tenHH_output.V.dat");
+double t= 0.0;
+for (int i= 0; i < 5000; i++) {
+  stepTimeGPU(0.2);
+  pullPop1fromDevice();
+  os << t << " ";
+  for (int j= 0; j < 10; j++) {
+    os << VPop1[j] << " ";
+  }
+  os << endl;
+  t+= 0.2;
+}
+os.close();
+\endcode
+After building, making and executing,
+\code
+builmodel.sh tenHHModel
+make clean all
+./tenHHSimulation
+\endcode
+there should a file `tenHH_output.V.dat` in the same directory. If you plot column one (time) against column two (voltage of neuron 0), you should observe dynamics like this:
+\image html tenHHexample.png
+\image latex tenHHexample.png width=10cm
+
+The completed files from this tutorial can be found in `userproject/tenHH_project`.
 
 */

@@ -29,6 +29,22 @@ void initGeNN()
     GeNNReady= 1;
 }
 
+/*template <class T>
+vector<T> vec(int sz, ...)
+{
+    vector<T> tmpV;
+    va_list args;
+    va_start(args, sz);
+    for (int i= 0; i < sz; i++) {
+	tmpV.push_back(va_arg(args, T));
+	cerr << tmpV[i] << endl;
+    }
+    va_end(args);
+    cerr << tmpV.size();
+    return tmpV;
+    }*/
+
+
 // class NNmodel for specifying a neuronal network model
 
 NNmodel::NNmodel() 
@@ -330,6 +346,29 @@ void NNmodel::addNeuronPopulation(const string name, /**<  The name of the neuro
                                   double *p, /**< Parameters of this neuron type */
                                   double *ini /**< Initial values for variables of this neuron type */)
 {
+  vector<double> vp;
+  vector<double> vini;
+  for (int i= 0; i < nModels[type].pNames.size(); i++) {
+    vp.push_back(p[i]);
+  }
+  for (int i= 0; i < nModels[type].varNames.size(); i++) {
+    vini.push_back(ini[i]);
+  }
+  addNeuronPopulation(name, nNo, type, vp, vini);
+}
+  
+
+//--------------------------------------------------------------------------
+/*! \brief This function adds a neuron population to a neuronal network models, assigning the name, the number of neurons in the group, the neuron type, parameters and initial values.
+ */
+//--------------------------------------------------------------------------
+
+void NNmodel::addNeuronPopulation(const string name, /**<  The name of the neuron population*/
+                                  unsigned int nNo, /**<  Number of neurons in the population */
+                                  unsigned int type, /**<  Type of the neurons, refers to either a standard type or user-defined type*/
+                                  vector<double> p, /**< Parameters of this neuron type */
+                                  vector<double> ini /**< Initial values for variables of this neuron type */)
+{
     if (!GeNNReady) {
 	cerr << "You need to call initGeNN first." << endl;
 	exit(1);
@@ -340,16 +379,8 @@ void NNmodel::addNeuronPopulation(const string name, /**<  The name of the neuro
     neuronName.push_back(toString(name));
     neuronN.push_back(nNo);
     neuronType.push_back(type);
-    vector<double> tmpP;
-    for (int j= 0; j < nModels[neuronType[i]].pNames.size(); j++) {
-    tmpP.push_back(p[j]);
-    }
-    neuronPara.push_back(tmpP);
-    tmpP.clear();
-    for (int j= 0; j < nModels[neuronType[i]].varNames.size(); j++) {
-	tmpP.push_back(ini[j]);
-    }
-    neuronIni.push_back(tmpP);
+    neuronPara.push_back(p);
+    neuronIni.push_back(ini);
     vector<unsigned int> tv;
     inSyn.push_back(tv);  // empty list of input synapse groups for neurons i 
     outSyn.push_back(tv);  // empty list of input synapse groups for neurons i 
@@ -465,17 +496,51 @@ void NNmodel::addSynapsePopulation(const string name, /**<  The name of the syna
                                    double* PSVini, /**< A C-type array of doubles that contains the initial values for postsynaptic mechanism variables (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored.*/
                                    double *ps /**< A C-type array of doubles that contains postsynaptic mechanism parameter values (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored.*/ )
 {
+  int maxp;
+  maxp= weightUpdateModels[syntype].pNames.size(); 
+  vector<double> vsynini;
+  for (int j= 0; j < weightUpdateModels[syntype].varNames.size(); j++) {
+    vsynini.push_back(synini[j]);
+  }
+  vector<double> vp;
+  for (int j= 0; j < maxp; j++) {
+    vp.push_back(p[j]);
+  }
+  vector<double> vpsini;
+  for (int j= 0; j < postSynModels[postsyn].varNames.size(); j++) {
+    vpsini.push_back(PSVini[j]);
+  }
+  vector<double> vps;
+  for (int j= 0; j <  postSynModels[postsyn].pNames.size(); j++) {
+    vps.push_back(ps[j]);
+  }
+  addSynapsePopulation(name, syntype, conntype, gtype, delaySteps, postsyn, src, trg, vsynini, vp, vpsini, vps);
+}
+
+//--------------------------------------------------------------------------
+/*! \brief This function adds a synapse population to a neuronal network model, assigning the name, the synapse type, the connectivity type, the type of conductance specification, the source and destination neuron populations, and the synaptic parameters.
+ */
+//--------------------------------------------------------------------------
+
+void NNmodel::addSynapsePopulation(const string name, /**<  The name of the synapse population*/
+                                   unsigned int syntype, /**< The type of synapse to be added (i.e. learning mode) */
+                                   unsigned int conntype, /**< The type of synaptic connectivity*/
+                                   unsigned int gtype, /**< The way how the synaptic conductivity g will be defined*/
+                                   unsigned int delaySteps, /**< Number of delay slots*/
+                                   unsigned int postsyn, /**< Postsynaptic integration method*/
+                                   const string src, /**< Name of the (existing!) pre-synaptic neuron population*/
+                                   const string trg, /**< Name of the (existing!) post-synaptic neuron population*/
+                                   vector<double> synini, /**< A C-type array of doubles that contains the initial values for synapse variables (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored.*/
+                                   vector<double> p, /**< A C-type array of doubles that contains synapse parameter values (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored.*/
+                                   vector<double> PSVini, /**< A C-type array of doubles that contains the initial values for postsynaptic mechanism variables (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored.*/
+                                   vector<double> ps /**< A C-type array of doubles that contains postsynaptic mechanism parameter values (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored.*/ )
+{
     if (!GeNNReady) {
 	cerr << "You need to call initGeNN first." << endl;
 	exit(1);
     }
     unsigned int i= synapseGrpN++;
     unsigned int srcNumber, trgNumber;
-    vector<double> tmpP;
-    vector<double> tmpV;
-    vector<double> tmpPS;
-    vector<double> tmpPV;
-    vector<double> tmpDsp;
     preparePostSynModels();
        
     synapseName.push_back(name);
@@ -499,34 +564,11 @@ void NNmodel::addSynapsePopulation(const string name, /**<  The name of the syna
 	neuronNeedSt[trgNumber]= TRUE;
 	needSt= TRUE;
     }
-
-    //TODO: We want to get rid of SYNPNO array for code generation flexibility. It would be useful to predefine synapse models as we do for neurons in utils.h. This would also help for checkSizes.
-    
-    // for (int j= 0; j < nModels[synapseType[i]].pNames.size(); j++) { 
-    int maxp;
-    maxp= weightUpdateModels[syntype].pNames.size(); 
-    for (int j= 0; j < maxp; j++) {
-	tmpP.push_back(p[j]);
-    }
-    synapsePara.push_back(tmpP);
-    
-    for (int j= 0; j < weightUpdateModels[syntype].varNames.size(); j++) {
-	tmpV.push_back(synini[j]);
-    }
-    synapseIni.push_back(tmpV);
-      
+    synapseIni.push_back(synini);
+    synapsePara.push_back(p);
     postSynapseType.push_back(postsyn);
-    for (int j= 0; j <  postSynModels[postSynapseType[i]].pNames.size(); j++) {
-	tmpPS.push_back(ps[j]);
-    }
-  
-    postSynapsePara.push_back(tmpPS);  
-    tmpPV.clear();
-    for (int j= 0; j < postSynModels[postSynapseType[i]].varNames.size(); j++) {
-	tmpPV.push_back(PSVini[j]);
-  }
-    
-    postSynIni.push_back(tmpPV);  
+    postSynIni.push_back(PSVini);  
+    postSynapsePara.push_back(ps);  
     
     vector<string> tmpS;
     synapseSpkEvntVars.push_back(tmpS); 

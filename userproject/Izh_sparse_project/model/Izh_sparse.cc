@@ -80,32 +80,20 @@ void modelDefinition(NNmodel &model)
   //model.setGPUDevice(0); //force using device 0
   model.setName("Izh_sparse");
   model.addNeuronPopulation("PExc", _NExc, IZHIKEVICH_V, excIzh_p, IzhExc_ini);
-  neuronPSize.push_back(0);
-  neuronVSize.push_back(sizeof IzhExc_ini);
-  
 
   model.addNeuronPopulation("PInh", _NInh, IZHIKEVICH_V, inhIzh_p, IzhInh_ini);
-  neuronPSize.push_back(0);
-  neuronVSize.push_back(sizeof IzhInh_ini);
   
   model.addSynapsePopulation("Exc_Exc", NSYNAPSE, SPARSE, INDIVIDUALG, NO_DELAY, IZHIKEVICH_PS, "PExc", "PExc", SynIzh_ini, SynIzh_p, postSynV, postExpP); 
   //model.setSynapseG("Exc_Exc", gIzh1);
-  synapsePSize.push_back(sizeof SynIzh_p);
-  
   
   model.addSynapsePopulation("Exc_Inh", NSYNAPSE, SPARSE, INDIVIDUALG, NO_DELAY, IZHIKEVICH_PS, "PExc", "PInh", SynIzh_ini, SynIzh_p, postSynV, postExpP); 
  //model.setSynapseG("Exc_Inh", gIzh1);
-  synapsePSize.push_back(sizeof SynIzh_p);
-  
-  
+
   model.addSynapsePopulation("Inh_Exc", NSYNAPSE, SPARSE, INDIVIDUALG, NO_DELAY, IZHIKEVICH_PS, "PInh", "PExc", SynIzh_ini, SynIzh_p, postSynV, postExpP); 
   //model.setSynapseG("Inh_Exc", gIzh1);
-  synapsePSize.push_back(sizeof SynIzh_p);
-  
   
   model.addSynapsePopulation("Inh_Inh", NSYNAPSE, SPARSE, INDIVIDUALG, NO_DELAY, IZHIKEVICH_PS, "PInh", "PInh", SynIzh_ini, SynIzh_p, postSynV, postExpP); 
  //model.setSynapseG("Inh_Inh", gIzh1);
-  synapsePSize.push_back(sizeof SynIzh_p);
   fprintf(stderr, "#model created.\n"); 
 
   model.activateDirectInput("PExc", INPRULE);
@@ -116,6 +104,4 @@ void modelDefinition(NNmodel &model)
 	model.setMaxConn("Inh_Inh", _NMaxConnP3);
   //model.setConstInp("Izh1", input1);
   model.setPrecision(FLOAT);
-  
-  //model.checkSizes(&neuronPSize[0], &neuronVSize[0], &synapsePSize[0]); //it would be better to call this before adding populations as there is a risk of segfault
 }
