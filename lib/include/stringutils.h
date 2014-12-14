@@ -25,7 +25,7 @@ void name_substitutions(string &code, string prefix, vector<string> &names, stri
 void value_substitutions(string &code, vector<string> &names, vector<double> &values)
 {
     for (int k = 0, l = names.size(); k < l; k++) {
-	substitute(code, tS("$(") + names[k] + tS(")"), tS(values[k]));
+	substitute(code, tS("$(") + names[k] + tS(")"), tS("(")+tS(values[k])+ tS(")"));
     }
 }
 
@@ -39,7 +39,7 @@ void extended_name_substitutions(string &code, string prefix, vector<string> &na
 void extended_value_substitutions(string &code, vector<string> &names, string ext, vector<double> &values)
 {
     for (int k = 0, l = names.size(); k < l; k++) {
-	substitute(code, tS("$(") + names[k] + ext + tS(")"), tS(values[k]));
+	substitute(code, tS("$(") + names[k] + ext + tS(")"), tS("(")+tS(values[k])+ tS(")"));
     }
 }
 

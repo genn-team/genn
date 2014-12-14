@@ -27,6 +27,9 @@
 #include "global.h"
 
 void initGeNN();
+/*template <class T> 
+  vector<T> vec(int sz, ...);*/
+
 
 unsigned int GeNNReady= 0;
 
@@ -324,8 +327,8 @@ public:
   void addNeuronPopulation(const char *, unsigned int, unsigned int, double *, double *); //!< Method for adding a neuron population to a neuronal network model, using C style character array for the name of the population
 
   void addNeuronPopulation(const string, unsigned int, unsigned int, double *, double *); //!< Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population
-  //void activateDirectInput(const char *, unsigned int);  
-  //void addPostSyntoNeuron(const string,unsigned int); //!< Method for defining postsynaptic dynamics
+
+  void addNeuronPopulation(const string, unsigned int, unsigned int, vector<double>, vector<double>); //!< Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population
 
   void activateDirectInput(const string, unsigned int);  
 
@@ -342,6 +345,7 @@ public:
   void addSynapsePopulation(const char *, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, const char *, const char *, double *, double *, double *); //!< Method for adding a synapse population to a neuronal network model, using C style character array for the name of the population
   void addSynapsePopulation(const string, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, const string, const string, double *, double *, double *); //!< Overloaded version without initial variables for synapses
   void addSynapsePopulation(const string, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, const string, const string, double *,double *, double *, double *); //!< Method for adding a synapse population to a neuronal network model, using C++ string for the name of the population
+  void addSynapsePopulation(const string, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, const string, const string, vector<double>, vector<double>, vector<double>, vector<double>); //!< Method for adding a synapse population to a neuronal network model, using C++ string for the name of the population
 
   void setSynapseG(const string, double); //!< Method for setting the conductance (g) value for a synapse population with "GLOBALG" charactertistic
   //void setSynapseNo(unsigned int,unsigned int); // !< Sets the number of connections for sparse matrices  

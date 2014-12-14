@@ -142,29 +142,29 @@ void genRunner(NNmodel &model, //!< Model description
     // write CUDA error handler macro
     os << "#ifndef CHECK_CUDA_ERRORS" << endl;
     os << "#define CHECK_CUDA_ERRORS(call) {\\" << endl;
-    os << "  cudaError_t error = call;\\" << endl;
-    os << "  if (error != cudaSuccess) {\\" << endl;
-    os << "    fprintf(stderr, \"%s: %i: cuda error %i: %s\\n\", __FILE__, __LINE__, (int) error, cudaGetErrorString(error));\\" << endl;
-    os << "    exit(EXIT_FAILURE);\\" << endl;
-    os << "  }\\" << endl;
+    os << "    cudaError_t error = call;\\" << endl;
+    os << "    if (error != cudaSuccess) {\\" << endl;
+    os << "        fprintf(stderr, \"%s: %i: cuda error %i: %s\\n\", __FILE__, __LINE__, (int) error, cudaGetErrorString(error));\\" << endl;
+    os << "        exit(EXIT_FAILURE);\\" << endl;
+    os << "    }\\" << endl;
     os << "}" << endl;
     os << "#endif" << endl << endl;
 
     os << "template<class T>" << endl;
     os << "void deviceMemAllocate(T* hostPtr, const T &devSymbol, size_t size)" << endl;
     os << "{" << endl;
-    os << "  void *devptr;" << endl;
-    os << "  CHECK_CUDA_ERRORS(cudaMalloc(hostPtr, size));" << endl;
-    os << "  CHECK_CUDA_ERRORS(cudaGetSymbolAddress(&devptr, devSymbol));" << endl;
-    os << "  CHECK_CUDA_ERRORS(cudaMemcpy(devptr, hostPtr, sizeof(void*), cudaMemcpyHostToDevice));" << endl;
+    os << "    void *devptr;" << endl;
+    os << "    CHECK_CUDA_ERRORS(cudaMalloc(hostPtr, size));" << endl;
+    os << "    CHECK_CUDA_ERRORS(cudaGetSymbolAddress(&devptr, devSymbol));" << endl;
+    os << "    CHECK_CUDA_ERRORS(cudaMemcpy(devptr, hostPtr, sizeof(void*), cudaMemcpyHostToDevice));" << endl;
     os << "}" << endl << endl;
 
     os << "void convertProbabilityToRandomNumberThreshold(" << model.ftype << " *p_pattern, " << model.RNtype << " *pattern, int N)" << endl;
     os << "{" << endl;
-    os << model.ftype << " fac= pow(2.0, (int) sizeof(" << model.RNtype << ")*8-16)*DT;" << endl;
+    os << "    " << model.ftype << " fac= pow(2.0, (int) sizeof(" << model.RNtype << ")*8-16)*DT;" << endl;
     os << "    for (int i= 0; i < N; i++) {" << endl;
-    //os << "	assert(p_pattern[i] <= 1.0);" << endl;
-    os << "	pattern[i]= (" << model.RNtype << ") (p_pattern[i]*fac);" << endl;
+    //os << "        assert(p_pattern[i] <= 1.0);" << endl;
+    os << "        pattern[i]= (" << model.RNtype << ") (p_pattern[i]*fac);" << endl;
     os << "    }" << endl;
     os << "}" << endl << endl;
 

@@ -83,11 +83,11 @@ Neuron populations are added using the function
 model.addNeuronPopulation(name, n, TYPE, para, ini);
 \endcode
 where the arguments are:
-\arg \c const \c char* name: Name of the neuron population
-\arg \c int n: number of neurons in the population
-\arg \c int TYPE: Type of the neurons, refers to either a standard type (see \ref sect2) or user-defined type
-\arg \c float *para: Parameters of this neuron type
-\arg \c float *ini: Initial values for variables of this neuron type 
+\arg `const char* name`: Name of the neuron population
+\arg `int n`: number of neurons in the population
+\arg `int TYPE`: Type of the neurons, refers to either a standard type (see \ref sect2) or user-defined type
+\arg `double *para`: Parameters of this neuron type
+\arg `double *ini`: Initial values for variables of this neuron type 
 
 The user may add as many neuron populations as the model necessitates. They should all have unique names. The possible values for the arguments, predefined models and their parameters and initial values are detailed \ref sect2 below.
 
@@ -112,14 +112,15 @@ subsect33 below.
 population.
 \arg \c char* \c postName: Name of the (existing!) post-synaptic neuron
 population.
-\arg \c float* \c sIni: A C-array of floats containing initial values for the (pre-) synaptic variables. 
-\arg \c float* \c sParam: A C-array of floats that contains
+\arg `double *sIni`: A C-array of doubles containing initial values for the (pre-) synaptic variables. 
+\arg `double *sParam`: A C-array of double precision that contains
 parameter values (common to all synapses of the population) which will
 be used for the defined synapses. The array must contain the right
 number of parameters in the right order for the chosen synapse
 type. If too few, segmentation faults will occur, if too many, excess
 will be ignored. For pre-defined synapse types the required parameters and their meaning are listed in \ref sect31 below. 
-
+\arg \c double * \c psIni: A C-array of double precision numbers containing initial values for the post-synaptic model variables
+\arg \c double * \c psPara: A C-array of double precision numbers containing parameters fo the post-snaptic model.
 \note
 If the synapse conductance definition type is "GLOBALG" then the
 global value of the synapse conductances is taken from the initial value provided in `sINI`. (The function setSynapseG() from earlier versions of GeNN has been deprecated).
@@ -335,7 +336,7 @@ Variable names and variable types are matched by their position in the correspon
  can then be referenced as `$(NAME)` in the code string. The length of
  this vector determines the expected number of parameters in the
  initialisation of the neuron model. Parameters are currently assumed
- to be always of type float. <br />
+ to be always of type double. <br />
  \code
 model.pNames.push_back(String("a"));
 \endcode
@@ -506,7 +507,7 @@ If connectivity is of SPARSE type, connectivity and conductance values are store
 struct in order to occupy minimum memory needed. The struct Conductance contains 
 3 array members and one integer member:
 	1: unsigned int connN: number of connections in the population. This value is needed for allocaton of arrays. 
-	2: floattype * gp: Values of conductances. 
+	2: scalar *gp: Values of conductances. 
 	The indices that correspond to these values are defined in a pre-to-post basis by the following arrays:
 	4: unsigned int gInd, of size connN: Indices of corresponding postsynaptic neurons concatenated for each presynaptic neuron.
 	3: unsigned int *gIndInG, of size model.neuronN[model.synapseSource[synInd]]+1: This array defines from which index in the gp array the indices in gInd would correspond to the presynaptic neuron that corresponds to the index of the gIndInG array, with the number of connections being the size of gInd. More specifically, gIndIng[n+1]-gIndIng[n] would give the number of postsynaptic connections for neuron n, and the conductance values are stored in gp[gIndIng[n]] to gp[gIndIng[n]+1]. if there are no connections for a presynaptic neuron, then gp[gIndIng[n]]=gp[gIndIng[n]+1].

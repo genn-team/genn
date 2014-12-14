@@ -9,7 +9,7 @@ Version 2.0 of GeNN comes with a lot of improvements and added features, some of
 2. glbscnt is now call glbSpkCnt for consistency with glbSpkEvntCnt.
 
 3. There is no longer a privileged parameter `Epre`.  Spike type events
-  are now defined by a code string `spkEvntThreshold` like proper spikes. The only difference ism that Spike type events are specific to a synapse type rather than a neuron type.
+  are now defined by a code string `spkEvntThreshold`, the same way proper spikes are. The only difference is that Spike type events are specific to a synapse type rather than a neuron type.
 
 4. The function setSynapseG has been deprecated. In a `GLOBALG` scenario, the
   variables of a synapse group are set to the initial values

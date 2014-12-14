@@ -15,19 +15,23 @@
 #ifndef POISSONIZHMODEL_H 
 #define POISSONIZHMODEL_H
 
-#include "PoissonIzh.cc"
 
 class classol
 {
+private:
+    void importArray(scalar *, double *, int);
+    void exportArray(double *, scalar *, int);
  public:
   NNmodel model;
-  unsigned int *theRates;
-  unsigned int *pattern;
-  unsigned int *baserates;
+  unsigned int offset;
+  uint64_t *theRates;
+  scalar *p_pattern; 
+  uint64_t *pattern;
+  uint64_t *baserates;
   //------------------------------------------------------------------------
   // on the device:
-  unsigned int *d_pattern;
-  unsigned int *d_baserates;
+  uint64_t *d_pattern;
+  uint64_t *d_baserates;
   //------------------------------------------------------------------------
   unsigned int sumPN, sumIzh1;
   // end of data fields 
@@ -38,8 +42,8 @@ class classol
   void allocate_device_mem_patterns();
   void allocate_device_mem_input();
   void free_device_mem();
-  void read_PNIzh1syns(float *, FILE *);
-  void read_sparsesyns_par(int, struct Conductance, FILE *,FILE *,FILE *);
+  void read_PNIzh1syns(scalar *, FILE *);
+  void read_sparsesyns_par(int, struct Conductance, FILE *,FILE *,FILE *, double *);
   void read_input_patterns(FILE *);
   void generate_baserates();
   void run(float, unsigned int);
