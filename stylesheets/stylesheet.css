@@ -498,7 +498,7 @@ header h2 {
 }
 
 aside#sidebar {
-  width: 200px;
+  width: 150px;
   padding-left: 20px;
   min-height: 504px;
   float: right;
@@ -537,12 +537,15 @@ header a.button {
   background: transparent url(../images/github-button.png) 0 0 no-repeat;
 }
 aside a.button {
-  width: 138px;
-  padding-left: 64px;
+  width: 150px;
+  height: 40px;
+  padding-top: 15px;
+  padding-bottom: 5px;
+  padding-left: 60px;
   display: block;
-  background: transparent url(../images/download-button.png) 0 0 no-repeat;
-  margin-bottom: 20px;
-  font-size: 21px;
+  background: transparent url(../images/download-button2.png) 0 0 no-repeat;
+  margin-bottom: 10px;
+  font-size: 16px;
 }
 
 code, pre {
@@ -589,7 +592,6 @@ hr {
 
 table {
   width: 100%;
-  border: 1px solid #ebebeb;
 }
 
 th {
@@ -597,9 +599,20 @@ th {
 }
 
 td {
-  border: 1px solid #ebebeb;
-  text-align: center;
   font-weight: 300;
+  padding-left: 10px;
+}
+
+tr {
+  vertical-align: top;
+}
+
+tr.grey-top {
+    border-top: 1px solid #efefef;
+}
+
+td.grey-right {
+    border-right: 1px solid #efefef;
 }
 
 form {
@@ -658,7 +671,7 @@ form {
   content: "///";
   color: #9ddcff;
   padding-right: 0.3em;
-  margin-left: -2em;
+/*  margin-left: -2em;*/
 }
 
 #main-content h4 {
