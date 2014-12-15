@@ -498,7 +498,7 @@ header h2 {
 }
 
 aside#sidebar {
-  width: 150px;
+  width: 200px;
   padding-left: 20px;
   min-height: 504px;
   float: right;
@@ -507,8 +507,8 @@ aside#sidebar {
   line-height: 1.3;
 }
 
-aside#sidebar p.repo-owner,
-aside#sidebar p.repo-owner a {
+#main-content p.repo-owner,
+#main-content p.repo-owner a {
   font-weight: bold;
 }
 
@@ -536,12 +536,14 @@ header a.button {
   top: 0;
   background: transparent url(../images/github-button.png) 0 0 no-repeat;
 }
-aside a.button {
-  width: 150px;
+#main-content a.button {
+  width: 90px;
   height: 40px;
   padding-top: 15px;
   padding-bottom: 5px;
   padding-left: 60px;
+  padding-right: 0px;
+  margin-right: -10px;
   display: block;
   background: transparent url(../images/download-button2.png) 0 0 no-repeat;
   margin-bottom: 10px;
