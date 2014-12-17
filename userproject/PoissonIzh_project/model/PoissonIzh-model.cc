@@ -46,23 +46,9 @@ void classol::allocate_device_mem_patterns()
   unsigned int size;
 
   // allocate device memory for input patterns
-  size= model.neuronN[0]*PATTERNNO*sizeof(unsigned int);
-  CHECK_CUDA_ERRORS(cudaMalloc((void**) &d_pattern, size));
-  fprintf(stderr, "allocated %u elements for pattern.\n", size/sizeof(unsigned int));
-  CHECK_CUDA_ERRORS(cudaMemcpy(d_pattern, pattern, size, cudaMemcpyHostToDevice));
-  size= model.neuronN[0]*sizeof(unsigned int);
-  CHECK_CUDA_ERRORS(cudaMalloc((void**) &d_baserates, size));
-  CHECK_CUDA_ERRORS(cudaMemcpy(d_baserates, baserates, size, cudaMemcpyHostToDevice)); 
-}
-
-void classol::allocate_device_mem_input()
-{
-  unsigned int size;
-
-  // allocate device memory for explicit input
   size= model.neuronN[0]*PATTERNNO*sizeof(uint64_t);
   CHECK_CUDA_ERRORS(cudaMalloc((void**) &d_pattern, size));
-  fprintf(stderr, "allocated %u elements for pattern.\n", size/sizeof(uint64_t));
+  fprintf(stderr, "allocated %u elements for pattern.\n", (unsigned int)(size/sizeof(uint64_t)));
   CHECK_CUDA_ERRORS(cudaMemcpy(d_pattern, pattern, size, cudaMemcpyHostToDevice));
   size= model.neuronN[0]*sizeof(uint64_t);
   CHECK_CUDA_ERRORS(cudaMalloc((void**) &d_baserates, size));
@@ -78,8 +64,8 @@ void classol::free_device_mem()
 
 classol::~classol()
 {
-  delete [] pattern;
-  delete [] baserates;
+  free(pattern);
+  free(baserates);
   freeMem();
 }
 void classol::importArray(scalar *dest, double *src, int sz) 
@@ -100,13 +86,13 @@ void classol::read_PNIzh1syns(scalar *gp, FILE *f)
 {
 
   int sz= model.neuronN[0]*model.neuronN[1];
-    double *tmpg= new double[sz];
-    unsigned int retval = fread(tmpg, 1, sz * sizeof(double),  f);
-    importArray(gp, tmpg, sz);
-  fprintf(stderr, "%u\n", model.neuronN[0]*model.neuronN[1]*sizeof(double));
-  fread(gp, model.neuronN[0]*model.neuronN[1]*sizeof(double),1,f);
+  double *tmpg= new double[sz];
+  unsigned int retval = fread(tmpg, 1, sz * sizeof(double),  f);
+  importArray(gp, tmpg, sz);
+  fprintf(stderr, "%lu\n", model.neuronN[0]*model.neuronN[1]*sizeof(double));
+  retval = fread(gp, model.neuronN[0]*model.neuronN[1]*sizeof(double),1,f);
   fprintf(stderr,"read PNIzh1 ... \n");
-  fprintf(stderr, "values start with: \n");
+  fprintf(stderr, "%u bytes, values start with: \n", retval);
   for(int i= 0; i < 100; i++) {
     fprintf(stderr, "%f ", float(gp[i]));
   }
@@ -118,10 +104,10 @@ void classol::read_sparsesyns_par(int synInd, Conductance C, FILE *f_ind,FILE *f
 {
   //allocateSparseArray(synInd,C.connN);
 
-  fread(g, C.connN*sizeof(model.ftype),1,f_g);
+  unsigned int retval = fread(g, C.connN*sizeof(model.ftype),1,f_g);
   fprintf(stderr,"%d active synapses. \n",C.connN);
-  fread(C.indInG, (model.neuronN[model.synapseSource[synInd]]+1)*sizeof(unsigned int),1,f_indInG);
-  fread(C.ind, C.connN*sizeof(int),1,f_ind);
+  retval = fread(C.indInG, (model.neuronN[model.synapseSource[synInd]]+1)*sizeof(unsigned int),1,f_indInG);
+  retval = fread(C.ind, C.connN*sizeof(int),1,f_ind);
 
 
   // general:
@@ -140,7 +126,7 @@ void classol::read_sparsesyns_par(int synInd, Conductance C, FILE *f_ind,FILE *f
   fprintf(stderr,"\n\n");
   
   
-  fprintf(stderr, "%d g indices read. Index in g array values start with: \n", model.neuronN[model.synapseSource[synInd]]+1);
+  fprintf(stderr, "%u bytes of %d g indices read. Index in g array values start with: \n", retval, model.neuronN[model.synapseSource[synInd]]+1);
   for(int i= 0; i < 100; i++) {
     fprintf(stderr, "%d ", C.indInG[i]);
   }  
@@ -155,7 +141,7 @@ void classol::read_input_patterns(FILE *f)
   unsigned int retval = fread(tmpp, 1, sz*sizeof(double),f);
   importArray(p_pattern, tmpp, sz);
   fprintf(stderr, "read patterns ... \n");
-  fprintf(stderr, "input pattern values start with: \n");
+  fprintf(stderr, "%u bytes of input pattern values start with: \n", retval);
   for(int i= 0; i < 100; i++) {
     fprintf(stderr, "%f ", float(p_pattern[i]));
   }
