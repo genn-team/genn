@@ -159,17 +159,19 @@ int main(int argc, char *argv[])
   t= 0.0;
   int done= 0;
   float last_t_report=  t;
+  timer.startTimer();
   locust.run(DT, which);
   float synwriteT= 0.0f;
   float lastsynwrite= 0.0f;
   int synwrite= 0;
-  timer.startTimer();
   while (!done) 
-  {
+  {    
     if (which == GPU) {
       locust.getSpikeNumbersFromGPU();
       locust.getSpikesFromGPU();
     }
+    locust.sum_spikes();
+    locust.output_spikes(osf2, which);
     locust.run(DT, which); // run next batch
     // if (which == GPU) {  
 //	pullDNfromDevice();
@@ -184,8 +186,6 @@ int main(int argc, char *argv[])
     }
 #endif
 
-    locust.sum_spikes();
-    locust.output_spikes(osf2, which);
 
  /*   fprintf(osf, "%f ", t);
     //  for (int i= 0; i < 100; i++) {
