@@ -83,6 +83,9 @@ int main(int argc, char *argv[])
   if (dbgMode == 1) {
     cmd += " debug";
   }
+  else {
+    cmd += " release";
+  }
 #endif
   cerr << cmd << endl;
   retval=system(cmd.c_str());

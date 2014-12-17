@@ -134,9 +134,12 @@ int main(int argc, char *argv[])
   }
 #else // UNIX
   cmd = "cd model && buildmodel.sh " + modelName + " " + toString(dbgMode);
-  cmd += " && make clean && make release";
+  cmd += " && make clean && make";
   if (dbgMode == 1) {
     cmd += " debug";
+  }
+  else {
+    cmd += " release";
   }
 #endif
   cerr << cmd << endl;
