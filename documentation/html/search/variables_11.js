@@ -1,15 +1,7 @@
 var searchData=
 [
-  ['t',['t',['../de/dad/structinputSpec.html#aa82b84b9475da88190cec34e78478908',1,'inputSpec::t()'],['../d4/d2c/tmp_2model_2classol__sim_8h.html#afea36502e9d227ff62c5fb2719a246f2',1,'t():&#160;classol_sim.h'],['../d4/de3/VClampGA_8h.html#a87accd1af8e0aff4b818d891374f7cec',1,'t():&#160;VClampGA.h'],['../df/d0a/Izh__sparse__sim_8h.html#afea36502e9d227ff62c5fb2719a246f2',1,'t():&#160;Izh_sparse_sim.h'],['../d8/d70/userproject_2MBody1__project_2model_2classol__sim_8h.html#a8aa5341922e7fabc709fff9cf14e2e5f',1,'t():&#160;classol_sim.h'],['../d6/da4/userproject_2MBody1__project_2modelcmp_2classol__sim_8h.html#afea36502e9d227ff62c5fb2719a246f2',1,'t():&#160;classol_sim.h'],['../d5/d2f/userproject_2MBody__userdef__project_2model_2classol__sim_8h.html#a8aa5341922e7fabc709fff9cf14e2e5f',1,'t():&#160;classol_sim.h'],['../dc/d20/OneComp__sim_8h.html#afea36502e9d227ff62c5fb2719a246f2',1,'t():&#160;OneComp_sim.h'],['../d9/d32/PoissonIzh__sim_8h.html#afea36502e9d227ff62c5fb2719a246f2',1,'t():&#160;PoissonIzh_sim.h']]],
-  ['thedev',['theDev',['../d2/d49/global_8h.html#a81d96cf5e1975e327528f0822fb35a02',1,'global.h']]],
-  ['therates',['theRates',['../d1/d16/classclassol.html#ac0966348c8b0301162dfd20abe15720e',1,'classol::theRates()'],['../d1/d16/classclassol.html#a0b534a0ff6a56ab9e137f964bcf29d78',1,'classol::theRates()']]],
-  ['thresholdconditioncode',['thresholdConditionCode',['../d3/d64/structneuronModel.html#a9b0fae36963fb760040c3b1d22bee25c',1,'neuronModel']]],
-  ['timer',['timer',['../d4/d2c/tmp_2model_2classol__sim_8h.html#a5256bd92e0315a4504ed1d8c6bcab9c9',1,'timer():&#160;classol_sim.h'],['../d4/de3/VClampGA_8h.html#a5256bd92e0315a4504ed1d8c6bcab9c9',1,'timer():&#160;VClampGA.h'],['../df/d0a/Izh__sparse__sim_8h.html#a5256bd92e0315a4504ed1d8c6bcab9c9',1,'timer():&#160;Izh_sparse_sim.h'],['../d8/d70/userproject_2MBody1__project_2model_2classol__sim_8h.html#a5256bd92e0315a4504ed1d8c6bcab9c9',1,'timer():&#160;classol_sim.h'],['../d6/da4/userproject_2MBody1__project_2modelcmp_2classol__sim_8h.html#a5256bd92e0315a4504ed1d8c6bcab9c9',1,'timer():&#160;classol_sim.h'],['../d5/d2f/userproject_2MBody__userdef__project_2model_2classol__sim_8h.html#a5256bd92e0315a4504ed1d8c6bcab9c9',1,'timer():&#160;classol_sim.h'],['../dc/d20/OneComp__sim_8h.html#a5256bd92e0315a4504ed1d8c6bcab9c9',1,'timer():&#160;OneComp_sim.h'],['../d9/d32/PoissonIzh__sim_8h.html#a5256bd92e0315a4504ed1d8c6bcab9c9',1,'timer():&#160;PoissonIzh_sim.h']]],
-  ['timing',['timing',['../dc/de5/classNNmodel.html#afae2a91984509205ff07afc948cbf106',1,'NNmodel']]],
-  ['tmpvarnames',['tmpVarNames',['../d3/d64/structneuronModel.html#ab193cb434db2df5f1fa9a79fba30af83',1,'neuronModel']]],
-  ['tmpvartypes',['tmpVarTypes',['../d3/d64/structneuronModel.html#a3f5668e85624014cd5de97bf00d2b82f',1,'neuronModel']]],
-  ['traubmiles',['TRAUBMILES',['../dc/de1/modelSpec_8h.html#a5cb672a4c033703aeb1b7ba7350cfbfd',1,'modelSpec.h']]],
-  ['traubmiles_5falternative',['TRAUBMILES_ALTERNATIVE',['../dc/de1/modelSpec_8h.html#aec2c16d09ff375f800eb19e048bdc53b',1,'modelSpec.h']]],
-  ['traubmiles_5ffast',['TRAUBMILES_FAST',['../dc/de1/modelSpec_8h.html#aee4db109db367bd6107ac4802228b6e7',1,'modelSpec.h']]],
-  ['traubmiles_5fsafe',['TRAUBMILES_SAFE',['../dc/de1/modelSpec_8h.html#a0443dbb3d7dd078e1dda2f2977acc0da',1,'modelSpec.h']]]
+  ['uintsz',['UIntSz',['../d2/d49/global_8h.html#a36bbec086798c87606bdc408a282cda2',1,'global.h']]],
+  ['usespostlearning',['usesPostLearning',['../dc/de5/classNNmodel.html#a66bbad0c092b871ff783effad31bf2ae',1,'NNmodel']]],
+  ['usesspikeevents',['usesSpikeEvents',['../dc/de5/classNNmodel.html#ac8bcffd2b7856c6ed15e7992b0ed9dac',1,'NNmodel']]],
+  ['usestruespikes',['usesTrueSpikes',['../dc/de5/classNNmodel.html#ac8115efc561ebb5a2d4d82f0bc06eda7',1,'NNmodel']]]
 ];

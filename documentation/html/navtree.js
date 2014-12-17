@@ -31,7 +31,13 @@ var NAVTREE =
       [ "The Model Definition", "d5/dbb/Tutorial1.html#ModelDefinition", null ],
       [ "User Code", "d5/dbb/Tutorial1.html#userCode", null ],
       [ "Makefile", "d5/dbb/Tutorial1.html#Makefile", null ],
-      [ "Making and Running the Simulation", "d5/dbb/Tutorial1.html#MakeRun", null ]
+      [ "Making and Running the Simulation", "d5/dbb/Tutorial1.html#MakeRun", null ],
+      [ "Adding External Input", "d5/dbb/Tutorial1.html#Input", null ]
+    ] ],
+    [ "Tutorial 2", "dc/d7e/Tutorial2.html", [
+      [ "Adding Synaptic connections", "dc/d7e/Tutorial2.html#addSynapse", null ],
+      [ "Defining the Detailed Synaptic Connections", "dc/d7e/Tutorial2.html#SynapseMatrix", null ],
+      [ "Setting Heterogeneous Initial Conditions", "dc/d7e/Tutorial2.html#initialConditions", null ]
     ] ],
     [ "Bibliography", "d0/de3/citelist.html", null ],
     [ "Classes", null, [
@@ -59,11 +65,11 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "annotated.html",
-"d1/d2b/runner_8cc.html#aa375a269f054d1628aeeafc84117f9bb",
-"d5/db7/synapseFnct_8cc.html",
-"d9/d9e/stringutils_8h.html#abd6ac6d6fb449c8c576eac24c7df3472",
-"dc/de5/classNNmodel.html#a1c92c912e7f64e870f4d1e01e0eddd6b",
-"df/d0a/Izh__sparse__sim_8h.html#ab83f44e4142be41861734e19dfa92c75"
+"d3/dad/generateRunner_8cc.html#a4e1258497d8eb774af810d1700a956d4",
+"d8/d1e/gen__syns__sparse__izhModel_8cc.html#aa82174538fbf2703149d4d7135b0ac02",
+"dc/d05/UserManual.html#sIntro",
+"dc/de5/classNNmodel.html#ada028e87b0dae2133079aaa88298abce",
+"dir_ee47e6d354357d23a1629744cc50d0f1.html"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

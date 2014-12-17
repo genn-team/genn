@@ -6,6 +6,7 @@ var searchData=
   ['generate_5fprocess_5fpresynaptic_5fevents_5fcode',['generate_process_presynaptic_events_code',['../da/d14/generateKernels_8cc.html#aeb536bca727f8a56c32af33b12a8447b',1,'generateKernels.cc']]],
   ['generate_5fprocess_5fpresynaptic_5fevents_5fcode_5fcpu',['generate_process_presynaptic_events_code_CPU',['../da/d80/generateCPU_8cc.html#af0f68722173aa844b8ab29e82faf28cb',1,'generateCPU.cc']]],
   ['generate_5frandom_5fgpuinput_5fxorwow',['generate_random_gpuInput_xorwow',['../db/d69/GeNNHelperKrnls_8cu.html#a122e8a9c8d633ea1584f73849d059e7b',1,'GeNNHelperKrnls.cu']]],
+  ['gennerror',['gennError',['../d5/d60/utils_8h.html#aacfab6dc3c4e2fc5c24f359fe7869132',1,'utils.h']]],
   ['genneuronfunction',['genNeuronFunction',['../da/d80/generateCPU_8cc.html#a15a320ee739b42b1dda39ebd99acdb21',1,'generateCPU.cc']]],
   ['genneuronkernel',['genNeuronKernel',['../da/d14/generateKernels_8cc.html#ab972aea4f97b659de78edd6c6acc74ef',1,'generateKernels.cc']]],
   ['genrunner',['genRunner',['../d3/dad/generateRunner_8cc.html#a4e1258497d8eb774af810d1700a956d4',1,'generateRunner.cc']]],

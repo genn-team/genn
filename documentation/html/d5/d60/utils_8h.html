@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">1.1</span>
+   &#160;<span id="projectnumber">2.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -169,12 +169,12 @@ Macros</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
+<tr class="memitem:aacfab6dc3c4e2fc5c24f359fe7869132"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/d60/utils_8h.html#aacfab6dc3c4e2fc5c24f359fe7869132">gennError</a> (string error)</td></tr>
+<tr class="memdesc:aacfab6dc3c4e2fc5c24f359fe7869132"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function called upon the detection of an error. Outputs an error message and then exits.  <a href="#aacfab6dc3c4e2fc5c24f359fe7869132">More...</a><br /></td></tr>
+<tr class="separator:aacfab6dc3c4e2fc5c24f359fe7869132"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a25920bbe5c1f08854c7162c4cd0b5796"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/d60/utils_8h.html#a25920bbe5c1f08854c7162c4cd0b5796">writeHeader</a> (ostream &amp;os)</td></tr>
 <tr class="memdesc:a25920bbe5c1f08854c7162c4cd0b5796"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function to write the comment header denoting file authorship and contact details into the generated code.  <a href="#a25920bbe5c1f08854c7162c4cd0b5796">More...</a><br /></td></tr>
 <tr class="separator:a25920bbe5c1f08854c7162c4cd0b5796"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af042c1af01f642e35bd0e53b2e38ee32"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/d60/utils_8h.html#af042c1af01f642e35bd0e53b2e38ee32">find</a> (string &amp;s, const string trg)</td></tr>
-<tr class="memdesc:af042c1af01f642e35bd0e53b2e38ee32"><td class="mdescLeft">&#160;</td><td class="mdescRight">Tool for finding strings in another string.  <a href="#af042c1af01f642e35bd0e53b2e38ee32">More...</a><br /></td></tr>
-<tr class="separator:af042c1af01f642e35bd0e53b2e38ee32"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a822620707c96ec8f90da32326cc5fde6"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/d60/utils_8h.html#a822620707c96ec8f90da32326cc5fde6">theSize</a> (string type)</td></tr>
 <tr class="memdesc:a822620707c96ec8f90da32326cc5fde6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Tool for determining the size of variable types on the current architecture.  <a href="#a822620707c96ec8f90da32326cc5fde6">More...</a><br /></td></tr>
 <tr class="separator:a822620707c96ec8f90da32326cc5fde6"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -245,31 +245,21 @@ Variables</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Function Documentation</h2>
-<a class="anchor" id="af042c1af01f642e35bd0e53b2e38ee32"></a>
+<a class="anchor" id="aacfab6dc3c4e2fc5c24f359fe7869132"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">bool find </td>
+          <td class="memname">void gennError </td>
           <td>(</td>
-          <td class="paramtype">string &amp;&#160;</td>
-          <td class="paramname"><em>s</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
+          <td class="paramtype">string&#160;</td>
+          <td class="paramname"><em>error</em></td><td>)</td>
           <td></td>
-          <td class="paramtype">const string&#160;</td>
-          <td class="paramname"><em>trg</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>Tool for finding strings in another string. </p>
+<p>Function called upon the detection of an error. Outputs an error message and then exits. </p>
 
 </div>
 </div>
@@ -410,7 +400,7 @@ Variables</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dir_97aefd0d527b934f1d99a682da8fe6a9.html">lib</a></li><li class="navelem"><a class="el" href="../../dir_5a30104352ef4255dc24354b02eb2d20.html">include</a></li><li class="navelem"><a class="el" href="../../d5/d60/utils_8h.html">utils.h</a></li>
-    <li class="footer">Generated on Tue Dec 9 2014 20:22:35 for GeNN by
+    <li class="footer">Generated on Wed Dec 17 2014 22:06:27 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.7 </li>
   </ul>

@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">1.1</span>
+   &#160;<span id="projectnumber">2.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -126,7 +126,7 @@ $(document).ready(function(){initNavTree('de/d1c/userproject_2MBody__userdef__pr
 <div class="contents">
 <div class="textblock"><code>#include &quot;<a class="el" href="../../dc/de1/modelSpec_8h_source.html">modelSpec.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="../../d7/dfd/modelSpec_8cc.html">modelSpec.cc</a>&quot;</code><br />
-<code>#include &quot;sizes.h&quot;</code><br />
+<code>#include &quot;<a class="el" href="../../d4/deb/sizes_8h_source.html">sizes.h</a>&quot;</code><br />
 </div><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
 Classes</h2></td></tr>
@@ -192,9 +192,9 @@ Variables</h2></td></tr>
 <tr class="separator:a55e3d87f8dd58f8c83dcbf644e429e7d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abf14e54573246f70654a6b346f6edfc7"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d1c/userproject_2MBody__userdef__project_2model_2MBody__userdef_8cc.html#abf14e54573246f70654a6b346f6edfc7">postSynV_EXPDECAY_EVAR</a> [1]</td></tr>
 <tr class="separator:abf14e54573246f70654a6b346f6edfc7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a59bc4b6ef2918c53b5f504898122a587"><td class="memItemLeft" align="right" valign="top">scalar *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d1c/userproject_2MBody__userdef__project_2model_2MBody__userdef_8cc.html#a59bc4b6ef2918c53b5f504898122a587">gpPNKC</a> = new scalar[_NAL*_NMB]</td></tr>
+<tr class="memitem:a59bc4b6ef2918c53b5f504898122a587"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../dc/d3f/PoissonIzh_8cc.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d1c/userproject_2MBody__userdef__project_2model_2MBody__userdef_8cc.html#a59bc4b6ef2918c53b5f504898122a587">gpPNKC</a> = new <a class="el" href="../../dc/d3f/PoissonIzh_8cc.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a>[<a class="el" href="../../d4/deb/sizes_8h.html#a40916b70c2294be62d3b7f7dbdb7ec18">_NAL</a>*<a class="el" href="../../d4/deb/sizes_8h.html#a1bf1d244ae716fd516f37d95a9b682bf">_NMB</a>]</td></tr>
 <tr class="separator:a59bc4b6ef2918c53b5f504898122a587"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac518dcc37dd66acbcb268d28c691e78d"><td class="memItemLeft" align="right" valign="top">scalar *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d1c/userproject_2MBody__userdef__project_2model_2MBody__userdef_8cc.html#ac518dcc37dd66acbcb268d28c691e78d">gpKCDN</a> = new scalar[_NMB*_NLB]</td></tr>
+<tr class="memitem:ac518dcc37dd66acbcb268d28c691e78d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../dc/d3f/PoissonIzh_8cc.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d1c/userproject_2MBody__userdef__project_2model_2MBody__userdef_8cc.html#ac518dcc37dd66acbcb268d28c691e78d">gpKCDN</a> = new <a class="el" href="../../dc/d3f/PoissonIzh_8cc.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a>[<a class="el" href="../../d4/deb/sizes_8h.html#a1bf1d244ae716fd516f37d95a9b682bf">_NMB</a>*<a class="el" href="../../d4/deb/sizes_8h.html#ad31e3513bdcdd2f68bc7a60e11ee874e">_NLB</a>]</td></tr>
 <tr class="separator:ac518dcc37dd66acbcb268d28c691e78d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Macro Definition Documentation</h2>
@@ -237,7 +237,7 @@ Variables</h2></td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">scalar* gpKCDN = new scalar[_NMB*_NLB]</td>
+          <td class="memname"><a class="el" href="../../dc/d3f/PoissonIzh_8cc.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a>* gpKCDN = new <a class="el" href="../../dc/d3f/PoissonIzh_8cc.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a>[<a class="el" href="../../d4/deb/sizes_8h.html#a1bf1d244ae716fd516f37d95a9b682bf">_NMB</a>*<a class="el" href="../../d4/deb/sizes_8h.html#ad31e3513bdcdd2f68bc7a60e11ee874e">_NLB</a>]</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -249,7 +249,7 @@ Variables</h2></td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">scalar* gpPNKC = new scalar[_NAL*_NMB]</td>
+          <td class="memname"><a class="el" href="../../dc/d3f/PoissonIzh_8cc.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a>* gpPNKC = new <a class="el" href="../../dc/d3f/PoissonIzh_8cc.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a>[<a class="el" href="../../d4/deb/sizes_8h.html#a40916b70c2294be62d3b7f7dbdb7ec18">_NAL</a>*<a class="el" href="../../d4/deb/sizes_8h.html#a1bf1d244ae716fd516f37d95a9b682bf">_NMB</a>]</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -266,8 +266,9 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 <b>Initial value:</b><div class="fragment"><div class="line">={</div>
-<div class="line">    5.0/_NLB      </div>
+<div class="line">    5.0/<a class="code" href="../../d4/deb/sizes_8h.html#ad31e3513bdcdd2f68bc7a60e11ee874e">_NLB</a>      </div>
 <div class="line">}</div>
+<div class="ttc" id="sizes_8h_html_ad31e3513bdcdd2f68bc7a60e11ee874e"><div class="ttname"><a href="../../d4/deb/sizes_8h.html#ad31e3513bdcdd2f68bc7a60e11ee874e">_NLB</a></div><div class="ttdeci">#define _NLB</div><div class="ttdef"><b>Definition:</b> sizes.h:4</div></div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -338,8 +339,9 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 <b>Initial value:</b><div class="fragment"><div class="line">= {</div>
-<div class="line">    0.35/_NLHI   </div>
+<div class="line">    0.35/<a class="code" href="../../d4/deb/sizes_8h.html#adae7b6dfa49ce579f325368b9f6b23da">_NLHI</a>   </div>
 <div class="line">}</div>
+<div class="ttc" id="sizes_8h_html_adae7b6dfa49ce579f325368b9f6b23da"><div class="ttname"><a href="../../d4/deb/sizes_8h.html#adae7b6dfa49ce579f325368b9f6b23da">_NLHI</a></div><div class="ttdeci">#define _NLHI</div><div class="ttdef"><b>Definition:</b> sizes.h:3</div></div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -612,7 +614,7 @@ Variables</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dir_66fc3ae5585a02e310a487b6a12e9e11.html">userproject</a></li><li class="navelem"><a class="el" href="../../dir_43de9f6b4ec25e176fc985bb13234990.html">MBody_userdef_project</a></li><li class="navelem"><a class="el" href="../../dir_e923c3501ecfe8b6863627bd003115cd.html">model</a></li><li class="navelem"><a class="el" href="../../de/d1c/userproject_2MBody__userdef__project_2model_2MBody__userdef_8cc.html">MBody_userdef.cc</a></li>
-    <li class="footer">Generated on Tue Dec 9 2014 20:22:35 for GeNN by
+    <li class="footer">Generated on Wed Dec 17 2014 22:06:28 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.7 </li>
   </ul>

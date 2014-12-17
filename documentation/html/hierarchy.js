@@ -3,7 +3,6 @@ var hierarchy =
     [ "classIzh", "de/dba/classclassIzh.html", null ],
     [ "classol", "d1/d16/classclassol.html", null ],
     [ "CodeHelper", "d1/d03/classCodeHelper.html", null ],
-    [ "Conductance", "d9/d6a/structConductance.html", null ],
     [ "CStopWatch", "d9/de8/classCStopWatch.html", null ],
     [ "dpclass", "db/de6/classdpclass.html", [
       [ "expDecayDp", "da/d0d/classexpDecayDp.html", null ],

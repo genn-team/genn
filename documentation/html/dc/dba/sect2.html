@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">1.1</span>
+   &#160;<span id="projectnumber">2.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -222,28 +222,28 @@ Defining your own neuron type</h1>
 <div class="line">model.<a class="code" href="../../d3/d64/structneuronModel.html#a9e6536fd15b69fa24b708e41f97df899">simCode</a>=String(<span class="stringliteral">&quot;$(V)+= (-$(a)$(V)+$(Isyn))*DT;&quot;</span>);</div>
 </div><!-- fragment --> would implement a leaky itegrator <img class="formulaInl" alt="$\frac{dV}{dt}= -a V + I_{{\rm syn}}$" src="../../form_27.png"/>.</li>
 <li><code>varNames</code> of type <code>vector&lt;string&gt;</code>: This vector needs to be filled with the names of variables that make up the neuron state. The variables defined here as <code>NAME</code> can then be used in the syntax <code></code> in the code string. <br />
- Example: <div class="fragment"><div class="line">model.<a class="code" href="../../d3/d64/structneuronModel.html#a9a9156ffb643572fd67f6e585ef79ad0">varNames</a>.push_back(String(<span class="stringliteral">&quot;V&quot;</span>));</div>
+ Example: <div class="fragment"><div class="line">model.<a class="code" href="../../d3/d64/structneuronModel.html#ad364183af0da111f989116e0b8b9d4bd">varNames</a>.push_back(String(<span class="stringliteral">&quot;V&quot;</span>));</div>
 </div><!-- fragment --> would add the variable V as needed by the code string in the example above.</li>
 <li><code>varTypes</code> of type <code>vector&lt;string&gt;</code>: This vector needs to be filled with the variable type (e.g. "float", "double", etc) for the variables defined in <code>varNames</code>. Types and variables are matched to each other by position in the respective vectors. <br />
- Example: <div class="fragment"><div class="line">model.<a class="code" href="../../d3/d64/structneuronModel.html#a86788cb29131da0a26ce79693a076352">varTypes</a>.push_back(String(<span class="stringliteral">&quot;float&quot;</span>));</div>
+ Example: <div class="fragment"><div class="line">model.<a class="code" href="../../d3/d64/structneuronModel.html#a2ae4ddde7aa750cddfff8a4f4491d9c1">varTypes</a>.push_back(String(<span class="stringliteral">&quot;float&quot;</span>));</div>
 </div><!-- fragment --> would designate the variable V to be of type float. <dl class="section note"><dt>Note</dt><dd>Variable names and variable types are matched by their position in the corresponding arrays <code>varNames</code> and <code>varTypes</code>, i.e. the 0th entry of <code>varNames</code> will have the type stored in the 0th entry of <code>varTypes</code> and so on.</dd></dl>
 </li>
-<li><code>pNames</code> of type <code>vector&lt;string&gt;</code>: This vector will contain the names of parameters relevant to the model. If defined as <code>NAME</code> here, they can then be referenced as <code></code> in the code string. The length of this vector determines the expected number of parameters in the initialisation of the neuron model. Parameters are currently assumed to be always of type float. <br />
- <div class="fragment"><div class="line">model.<a class="code" href="../../d3/d64/structneuronModel.html#a4a5bf1f757a72b6edc28ad26ed61b2be">pNames</a>.push_back(String(<span class="stringliteral">&quot;a&quot;</span>));</div>
+<li><code>pNames</code> of type <code>vector&lt;string&gt;</code>: This vector will contain the names of parameters relevant to the model. If defined as <code>NAME</code> here, they can then be referenced as <code></code> in the code string. The length of this vector determines the expected number of parameters in the initialisation of the neuron model. Parameters are currently assumed to be always of type double. <br />
+ <div class="fragment"><div class="line">model.<a class="code" href="../../d3/d64/structneuronModel.html#a1e6287678079ad4d4e65d1df35d83bf2">pNames</a>.push_back(String(<span class="stringliteral">&quot;a&quot;</span>));</div>
 </div><!-- fragment --> stores the parameter <code>a</code> needed in the code example above.</li>
 <li><code>dpNames</code> of type <code>vector&lt;string&gt;</code>: Names of "dependent
   parameters". Dependent parameters are a mechanism for enhanced efficiency when running neuron models. If parameters with model-side meaning, such as time constants or conductances always appear in a certain combination in the model, then it is more efficient to pre-compute this combination and define it as a dependent parameter. This vector contains the names of such dependent parameters. <br />
  For example, if in the example above the original model had been <img class="formulaInl" alt="$\frac{dV}{dt} = -g/C \, V +I_{\rm syn}$" src="../../form_28.png"/>. Then one could define the code string and parameters as <div class="fragment"><div class="line">model.<a class="code" href="../../d3/d64/structneuronModel.html#a9e6536fd15b69fa24b708e41f97df899">simCode</a>=String(<span class="stringliteral">&quot;$(V)+= (-$(a)$(V)+$(Isyn))*DT;&quot;</span>);</div>
-<div class="line">model.<a class="code" href="../../d3/d64/structneuronModel.html#a9a9156ffb643572fd67f6e585ef79ad0">varNames</a>.push_back(String(<span class="stringliteral">&quot;V&quot;</span>));</div>
-<div class="line">model.<a class="code" href="../../d3/d64/structneuronModel.html#a86788cb29131da0a26ce79693a076352">varTypes</a>.push_back(String(<span class="stringliteral">&quot;float&quot;</span>));</div>
-<div class="line">model.<a class="code" href="../../d3/d64/structneuronModel.html#a4a5bf1f757a72b6edc28ad26ed61b2be">pNames</a>.push_back(String(<span class="stringliteral">&quot;g&quot;</span>));</div>
-<div class="line">model.<a class="code" href="../../d3/d64/structneuronModel.html#a4a5bf1f757a72b6edc28ad26ed61b2be">pNames</a>.push_back(String(<span class="stringliteral">&quot;C&quot;</span>));</div>
-<div class="line">model.<a class="code" href="../../d3/d64/structneuronModel.html#a051c0c704ce383c43cdf446accbeb201">dpNames</a>.push_back(String(<span class="stringliteral">&quot;a&quot;</span>));</div>
+<div class="line">model.<a class="code" href="../../d3/d64/structneuronModel.html#ad364183af0da111f989116e0b8b9d4bd">varNames</a>.push_back(String(<span class="stringliteral">&quot;V&quot;</span>));</div>
+<div class="line">model.<a class="code" href="../../d3/d64/structneuronModel.html#a2ae4ddde7aa750cddfff8a4f4491d9c1">varTypes</a>.push_back(String(<span class="stringliteral">&quot;float&quot;</span>));</div>
+<div class="line">model.<a class="code" href="../../d3/d64/structneuronModel.html#a1e6287678079ad4d4e65d1df35d83bf2">pNames</a>.push_back(String(<span class="stringliteral">&quot;g&quot;</span>));</div>
+<div class="line">model.<a class="code" href="../../d3/d64/structneuronModel.html#a1e6287678079ad4d4e65d1df35d83bf2">pNames</a>.push_back(String(<span class="stringliteral">&quot;C&quot;</span>));</div>
+<div class="line">model.<a class="code" href="../../d3/d64/structneuronModel.html#adda4db13eafb6534a6ffbeb065f51b4a">dpNames</a>.push_back(String(<span class="stringliteral">&quot;a&quot;</span>));</div>
 </div><!-- fragment --></li>
 <li><code>dps</code> of type <code>dpclass</code>*: The dependent parameter class, i.e. an implementation of <code>dpclass</code> which would return the value for dependent parameters when queried for them. E.g. in the example above it would return <code>a</code> when queried for dependent parameter 0 through <code><a class="el" href="../../db/de6/classdpclass.html#a30ec6bebd43f14775541c0394e1d4bab">dpclass::calculateDerivedParameter()</a></code>. Examples how this is done can be found in the pre-defined classes, e.g. <a class="el" href="../../da/d0d/classexpDecayDp.html" title="Class defining the dependent parameter for exponential decay. ">expDecayDp</a>, <a class="el" href="../../d0/dba/classpwSTDP.html" title="TODO This class definition may be code-generated in a future release. ">pwSTDP</a>, <a class="el" href="../../d6/d9e/classrulkovdp.html">rulkovdp</a> etc.</li>
 <li><code>tmpVarNames</code> of type <code>vector&lt;string&gt;</code>: This vector can be used to request additional variables that are not part of the state of the neuron but used only as temporary storage during evaluation of the integration time step. <br />
- For example, one could define <div class="fragment"><div class="line">model.<a class="code" href="../../d3/d64/structneuronModel.html#ab193cb434db2df5f1fa9a79fba30af83">tmpVarNames</a>.push_back(String(<span class="stringliteral">&quot;a&quot;</span>));</div>
-<div class="line">model.<a class="code" href="../../d3/d64/structneuronModel.html#ab193cb434db2df5f1fa9a79fba30af83">tmpVarNames</a>.push_back(String(<span class="stringliteral">&quot;float&quot;</span>));</div>
+ For example, one could define <div class="fragment"><div class="line">model.<a class="code" href="../../d3/d64/structneuronModel.html#a99cec64cf03b4b2c22fd9f201027d46d">tmpVarNames</a>.push_back(String(<span class="stringliteral">&quot;a&quot;</span>));</div>
+<div class="line">model.<a class="code" href="../../d3/d64/structneuronModel.html#a99cec64cf03b4b2c22fd9f201027d46d">tmpVarNames</a>.push_back(String(<span class="stringliteral">&quot;float&quot;</span>));</div>
 <div class="line">model.<a class="code" href="../../d3/d64/structneuronModel.html#a9e6536fd15b69fa24b708e41f97df899">simCode</a>= String(<span class="stringliteral">&quot;$(a)= $(g)/$(C); \n\</span></div>
 <div class="line"><span class="stringliteral">$(V)+= -$(a)*$(V);\n\&quot;);</span></div>
 </div><!-- fragment --> which would be equivalent to <div class="fragment"><div class="line">model.<a class="code" href="../../d3/d64/structneuronModel.html#a9e6536fd15b69fa24b708e41f97df899">simCode</a>= String(<span class="stringliteral">&quot;float $(a)= $(g)/$(C); \n\</span></div>
@@ -270,7 +270,7 @@ Explicit current input to neurons</h1>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dc/d05/UserManual.html">User Manual</a></li>
-    <li class="footer">Generated on Tue Dec 9 2014 20:22:36 for GeNN by
+    <li class="footer">Generated on Wed Dec 17 2014 22:06:28 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.7 </li>
   </ul>

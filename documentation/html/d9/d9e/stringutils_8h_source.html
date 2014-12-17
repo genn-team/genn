@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">1.1</span>
+   &#160;<span id="projectnumber">2.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -145,7 +145,7 @@ $(document).ready(function(){initNavTree('d9/d9e/stringutils_8h_source.html','..
 <div class="line"><a name="l00025"></a><span class="lineno"><a class="line" href="../../d9/d9e/stringutils_8h.html#a2ade65c777bcb3c45d95ff77eaed475b">   25</a></span>&#160;<span class="keywordtype">void</span> <a class="code" href="../../d9/d9e/stringutils_8h.html#a2ade65c777bcb3c45d95ff77eaed475b">value_substitutions</a>(<span class="keywordtype">string</span> &amp;code, vector&lt;string&gt; &amp;names, vector&lt;double&gt; &amp;values)</div>
 <div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;{</div>
 <div class="line"><a name="l00027"></a><span class="lineno">   27</span>&#160;    <span class="keywordflow">for</span> (<span class="keywordtype">int</span> k = 0, l = names.size(); k &lt; l; k++) {</div>
-<div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160;        <a class="code" href="../../d9/d9e/stringutils_8h.html#a1176f6ba1f479a7a11dbb0bcfffaa426">substitute</a>(code, <a class="code" href="../../dd/d28/toString_8h.html#a59bb28cdc0693d03c5e7caee444be7db">tS</a>(<span class="stringliteral">&quot;$(&quot;</span>) + names[k] + <a class="code" href="../../dd/d28/toString_8h.html#a59bb28cdc0693d03c5e7caee444be7db">tS</a>(<span class="stringliteral">&quot;)&quot;</span>), <a class="code" href="../../dd/d28/toString_8h.html#a59bb28cdc0693d03c5e7caee444be7db">tS</a>(values[k]));</div>
+<div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160;        <a class="code" href="../../d9/d9e/stringutils_8h.html#a1176f6ba1f479a7a11dbb0bcfffaa426">substitute</a>(code, <a class="code" href="../../dd/d28/toString_8h.html#a59bb28cdc0693d03c5e7caee444be7db">tS</a>(<span class="stringliteral">&quot;$(&quot;</span>) + names[k] + <a class="code" href="../../dd/d28/toString_8h.html#a59bb28cdc0693d03c5e7caee444be7db">tS</a>(<span class="stringliteral">&quot;)&quot;</span>), <a class="code" href="../../dd/d28/toString_8h.html#a59bb28cdc0693d03c5e7caee444be7db">tS</a>(<span class="stringliteral">&quot;(&quot;</span>)+<a class="code" href="../../dd/d28/toString_8h.html#a59bb28cdc0693d03c5e7caee444be7db">tS</a>(values[k])+ <a class="code" href="../../dd/d28/toString_8h.html#a59bb28cdc0693d03c5e7caee444be7db">tS</a>(<span class="stringliteral">&quot;)&quot;</span>));</div>
 <div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;    }</div>
 <div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;}</div>
 <div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160;</div>
@@ -159,7 +159,7 @@ $(document).ready(function(){initNavTree('d9/d9e/stringutils_8h_source.html','..
 <div class="line"><a name="l00039"></a><span class="lineno"><a class="line" href="../../d9/d9e/stringutils_8h.html#a6695a138e731c5fd924a5571bc11599e">   39</a></span>&#160;<span class="keywordtype">void</span> <a class="code" href="../../d9/d9e/stringutils_8h.html#a6695a138e731c5fd924a5571bc11599e">extended_value_substitutions</a>(<span class="keywordtype">string</span> &amp;code, vector&lt;string&gt; &amp;names, <span class="keywordtype">string</span> ext, vector&lt;double&gt; &amp;values)</div>
 <div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160;{</div>
 <div class="line"><a name="l00041"></a><span class="lineno">   41</span>&#160;    <span class="keywordflow">for</span> (<span class="keywordtype">int</span> k = 0, l = names.size(); k &lt; l; k++) {</div>
-<div class="line"><a name="l00042"></a><span class="lineno">   42</span>&#160;        <a class="code" href="../../d9/d9e/stringutils_8h.html#a1176f6ba1f479a7a11dbb0bcfffaa426">substitute</a>(code, <a class="code" href="../../dd/d28/toString_8h.html#a59bb28cdc0693d03c5e7caee444be7db">tS</a>(<span class="stringliteral">&quot;$(&quot;</span>) + names[k] + ext + <a class="code" href="../../dd/d28/toString_8h.html#a59bb28cdc0693d03c5e7caee444be7db">tS</a>(<span class="stringliteral">&quot;)&quot;</span>), <a class="code" href="../../dd/d28/toString_8h.html#a59bb28cdc0693d03c5e7caee444be7db">tS</a>(values[k]));</div>
+<div class="line"><a name="l00042"></a><span class="lineno">   42</span>&#160;        <a class="code" href="../../d9/d9e/stringutils_8h.html#a1176f6ba1f479a7a11dbb0bcfffaa426">substitute</a>(code, <a class="code" href="../../dd/d28/toString_8h.html#a59bb28cdc0693d03c5e7caee444be7db">tS</a>(<span class="stringliteral">&quot;$(&quot;</span>) + names[k] + ext + <a class="code" href="../../dd/d28/toString_8h.html#a59bb28cdc0693d03c5e7caee444be7db">tS</a>(<span class="stringliteral">&quot;)&quot;</span>), <a class="code" href="../../dd/d28/toString_8h.html#a59bb28cdc0693d03c5e7caee444be7db">tS</a>(<span class="stringliteral">&quot;(&quot;</span>)+<a class="code" href="../../dd/d28/toString_8h.html#a59bb28cdc0693d03c5e7caee444be7db">tS</a>(values[k])+ <a class="code" href="../../dd/d28/toString_8h.html#a59bb28cdc0693d03c5e7caee444be7db">tS</a>(<span class="stringliteral">&quot;)&quot;</span>));</div>
 <div class="line"><a name="l00043"></a><span class="lineno">   43</span>&#160;    }</div>
 <div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;}</div>
 <div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160;</div>
@@ -444,7 +444,7 @@ $(document).ready(function(){initNavTree('d9/d9e/stringutils_8h_source.html','..
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dir_97aefd0d527b934f1d99a682da8fe6a9.html">lib</a></li><li class="navelem"><a class="el" href="../../dir_5a30104352ef4255dc24354b02eb2d20.html">include</a></li><li class="navelem"><a class="el" href="../../d9/d9e/stringutils_8h.html">stringutils.h</a></li>
-    <li class="footer">Generated on Tue Dec 9 2014 20:22:34 for GeNN by
+    <li class="footer">Generated on Wed Dec 17 2014 22:06:27 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.7 </li>
   </ul>

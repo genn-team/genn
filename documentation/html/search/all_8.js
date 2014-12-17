@@ -1,10 +1,8 @@
 var searchData=
 [
-  ['false',['FALSE',['../dc/de1/modelSpec_8h.html#aa93f0eb578d23995850d61f7d61c55c1',1,'modelSpec.h']]],
-  ['find',['find',['../d5/d60/utils_8h.html#af042c1af01f642e35bd0e53b2e38ee32',1,'utils.h']]],
-  ['float',['FLOAT',['../dc/de1/modelSpec_8h.html#ae8690abbffa85934d64d545920e2b108',1,'modelSpec.h']]],
+  ['false',['FALSE',['../dc/d25/modelSpec_01_07dhcp-liversidge20_8anu_8edu_8au's_01conflicted_01copy_012014-12-13_08_8h.html#aa93f0eb578d23995850d61f7d61c55c1',1,'FALSE():&#160;modelSpec (dhcp-liversidge20.anu.edu.au&apos;s conflicted copy 2014-12-13).h'],['../dc/de1/modelSpec_8h.html#aa93f0eb578d23995850d61f7d61c55c1',1,'FALSE():&#160;modelSpec.h']]],
+  ['find',['find',['../d4/dfc/stringutils_01_07dhcp-liversidge20_8anu_8edu_8au's_01conflicted_01copy_012014-12-13_08_8h.html#af042c1af01f642e35bd0e53b2e38ee32',1,'stringutils (dhcp-liversidge20.anu.edu.au&apos;s conflicted copy 2014-12-13).h']]],
+  ['float',['FLOAT',['../dc/d25/modelSpec_01_07dhcp-liversidge20_8anu_8edu_8au's_01conflicted_01copy_012014-12-13_08_8h.html#ae8690abbffa85934d64d545920e2b108',1,'FLOAT():&#160;modelSpec (dhcp-liversidge20.anu.edu.au&apos;s conflicted copy 2014-12-13).h'],['../dc/de1/modelSpec_8h.html#ae8690abbffa85934d64d545920e2b108',1,'FLOAT():&#160;modelSpec.h']]],
   ['free_5fdevice_5fmem',['free_device_mem',['../d1/d16/classclassol.html#ade653847f5de20fe2f944260d532ddf9',1,'classol::free_device_mem()'],['../de/dba/classclassIzh.html#a931d1414232340a14769339acbf9a5fb',1,'classIzh::free_device_mem()'],['../d1/d16/classclassol.html#ade653847f5de20fe2f944260d532ddf9',1,'classol::free_device_mem()'],['../d1/d16/classclassol.html#ade653847f5de20fe2f944260d532ddf9',1,'classol::free_device_mem()'],['../d1/d16/classclassol.html#ade653847f5de20fe2f944260d532ddf9',1,'classol::free_device_mem()'],['../d1/d16/classclassol.html#ade653847f5de20fe2f944260d532ddf9',1,'classol::free_device_mem()'],['../d1/d16/classclassol.html#ade653847f5de20fe2f944260d532ddf9',1,'classol::free_device_mem()']]],
-  ['freedevicemem',['freeDeviceMem',['../d9/d1d/runnerGPU_8cc.html#ad4eb4b728ca4159727fae69ebfbeb1e0',1,'runnerGPU.cc']]],
-  ['freemem',['freeMem',['../d1/d2b/runner_8cc.html#a35f1aa6fe94c6c4a0e1bb719ac6bc829',1,'runner.cc']]],
   ['ftype',['ftype',['../dc/de5/classNNmodel.html#a917241001f3469a569dbb91aaa6a4039',1,'NNmodel']]]
 ];

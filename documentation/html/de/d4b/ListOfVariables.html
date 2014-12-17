@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">1.1</span>
+   &#160;<span id="projectnumber">2.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -117,19 +117,19 @@ $(document).ready(function(){initNavTree('de/d4b/ListOfVariables.html','../../')
 <h1><a class="anchor" id="modelVars"></a>
 Neuron and Synapse variables</h1>
 <p>One type of variables are those that originate from a neuron model type, weightupdate model type or post-synaptic model type. The core name of the variable is defined when the model type is introduced, i.e. with a statement such as </p><div class="fragment"><div class="line"><a class="code" href="../../d3/d64/structneuronModel.html">neuronModel</a> model;</div>
-<div class="line">model.<a class="code" href="../../d3/d64/structneuronModel.html#a9a9156ffb643572fd67f6e585ef79ad0">varNames</a>.push_back(String<span class="stringliteral">&quot;x&quot;</span>));</div>
-<div class="line">model.<a class="code" href="../../d3/d64/structneuronModel.html#a86788cb29131da0a26ce79693a076352">varTypes</a>.push_back(String(<span class="stringliteral">&quot;double&quot;</span>));</div>
+<div class="line">model.<a class="code" href="../../d3/d64/structneuronModel.html#ad364183af0da111f989116e0b8b9d4bd">varNames</a>.push_back(String<span class="stringliteral">&quot;x&quot;</span>));</div>
+<div class="line">model.<a class="code" href="../../d3/d64/structneuronModel.html#a2ae4ddde7aa750cddfff8a4f4491d9c1">varTypes</a>.push_back(String(<span class="stringliteral">&quot;double&quot;</span>));</div>
 <div class="line">...</div>
 <div class="line">int myModel= <a class="code" href="../../d5/d60/utils_8h.html#a2bd39d11c2cd6cec9bf9b81c183b6cd4">nModels</a>.size();</div>
 <div class="line"><a class="code" href="../../d5/d60/utils_8h.html#a2bd39d11c2cd6cec9bf9b81c183b6cd4">nModels</a>.push_back(model);</div>
 </div><!-- fragment --><p> This declares that whenever the defined model type of cardinal number <code>myModel</code> is used, there will be a variable of core name <code>x</code>. The full GeNN name of this variable is obtained by directly concatenating the core name with the name of the neuron population in which the model type has been used, i.e. after a definition </p><div class="fragment"><div class="line">networkModel.addNeuronPopulation(<span class="stringliteral">&quot;EN&quot;</span>, n, myModel, ...);</div>
-</div><!-- fragment --><p> there will be a variable <code>xEN</code> of type <code>double*</code> available in the global namespace of the simulation program. GeNN will pre-allocated this C array to the correct size of elements corresponding to the size of the neuron population, <code>n</code> in the example above. GeNN will also free these variables when the provided function <code><a class="el" href="../../d1/d2b/runner_8cc.html#a35f1aa6fe94c6c4a0e1bb719ac6bc829">freeMem()</a></code> is called. Users can otherwise manipulate these variable arrays as they wish. For convenience, GeNN provides functions <code>pullXXfromDevice()</code> and <code>pushXXtoDevice()</code> to copy the variables associated to a neuron population <code>XX</code> from the device into host memory and vice versa. E.g. </p><div class="fragment"><div class="line">pullENfromDevice();</div>
+</div><!-- fragment --><p> there will be a variable <code>xEN</code> of type <code>double*</code> available in the global namespace of the simulation program. GeNN will pre-allocated this C array to the correct size of elements corresponding to the size of the neuron population, <code>n</code> in the example above. GeNN will also free these variables when the provided function <code>freeMem()</code> is called. Users can otherwise manipulate these variable arrays as they wish. For convenience, GeNN provides functions <code>pullXXfromDevice()</code> and <code>pushXXtoDevice()</code> to copy the variables associated to a neuron population <code>XX</code> from the device into host memory and vice versa. E.g. </p><div class="fragment"><div class="line">pullENfromDevice();</div>
 </div><!-- fragment --><p> would copy the C array xEN from device memory into host memory (and any other variables that the neuron type of the population EN may have).</p>
 <p>The user can also directly use CUDA memory copy commands independent of the provided convenience function. The relevant device pointers for all variables that exist in host memory have the same name prefixed with <code>d_</code>. For example, the copy command that would be contained in <code>pullENfromDevice()</code> might look like </p><div class="fragment"><div class="line"><span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> size;      </div>
 <div class="line">size = <span class="keyword">sizeof</span>(double) * nEN;</div>
 <div class="line">cudaMemcpy(xEN, d_xEN, size, cudaMemcpyDeviceToHost);</div>
 </div><!-- fragment --><p> where <code>n</code> is an integer containing the population size of the EN neuron population.</p>
-<p>The same convention as for neuron variables applies for the variables of synapse groups, both for those originating from weightupdate models and from post-synaptic models, e.g. the variables in type <code>NSYNAPSE</code> contain the variable <code>g</code> of type float. Then, after </p><div class="fragment"><div class="line">networkModel.addSynapsePopulation(<span class="stringliteral">&quot;ENIN&quot;</span>, <a class="code" href="../../dc/de1/modelSpec_8h.html#a1110b98e1962bdb6bcc86b647b1431d4">NSYNAPSE</a>, ...);</div>
+<p>The same convention as for neuron variables applies for the variables of synapse groups, both for those originating from weightupdate models and from post-synaptic models, e.g. the variables in type <code>NSYNAPSE</code> contain the variable <code>g</code> of type float. Then, after </p><div class="fragment"><div class="line">networkModel.addSynapsePopulation(<span class="stringliteral">&quot;ENIN&quot;</span>, <a class="code" href="../../dc/d25/modelSpec_01_07dhcp-liversidge20_8anu_8edu_8au's_01conflicted_01copy_012014-12-13_08_8h.html#a1110b98e1962bdb6bcc86b647b1431d4">NSYNAPSE</a>, ...);</div>
 </div><!-- fragment --><p> there will be a global variable of type <code>float*</code> with the name <code>gENIN</code> that is pre-allocated to the right size. There will also be a matching device pointer with the name <code>d_gENIN</code>. </p><dl class="section note"><dt>Note</dt><dd>The content of <code>gENIN</code> needs to be interpreted differently for DENSE connectivity and sparse matrix based SPARSE connectivity representations. For DENSE connectivity <code>gENIN</code> would contain "n_pre" times "n_post" elements, ordered along the pre-synaptic neuronsas the major dimension, i.e. the value of <code>gENIN</code> for the ith pre-synaptic neuron and the jth post-synaptic neuron would be <code>gENIN[i*n_post+j]</code>. The arrangement of values in the SPARSE representation is explained in section <a class="el" href="../../da/d5d/sect3.html#subsect32">Connectivity types</a></dd></dl>
 <h1><a class="anchor" id="predefinedVars"></a>
 Pre-defined Variables in GeNN</h1>
@@ -150,7 +150,7 @@ The value resulting from the <code>postSyntoCurrent</code> code is assigned to <
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dc/d05/UserManual.html">User Manual</a></li>
-    <li class="footer">Generated on Tue Dec 9 2014 20:22:36 for GeNN by
+    <li class="footer">Generated on Wed Dec 17 2014 22:06:28 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.7 </li>
   </ul>

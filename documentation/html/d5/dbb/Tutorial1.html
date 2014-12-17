@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">1.1</span>
+   &#160;<span id="projectnumber">2.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -118,7 +118,7 @@ $(document).ready(function(){initNavTree('d5/dbb/Tutorial1.html','../../');});
 The Model Definition</h1>
 <p>In this tutorial we will use a pre-defined neuron model type (TRAUBMILES) and create a simulation of ten Hodgkin-Huxley neurons <a class="el" href="../../d0/de3/citelist.html#CITEREF_Traub1991">[4]</a> without any synaptic connections. We will run this simulation on a GPU and save the results to stdout.</p>
 <p>The first step is to write a model definition function in a model definition file. Create a new empty file <code><a class="el" href="../../d3/d73/tenHHModel_8cc.html">tenHHModel.cc</a></code> with your favourite editor, e.g. </p><div class="fragment"><div class="line">&gt;&gt; emacs tenHHModel.cc &amp;</div>
-</div><!-- fragment --> <dl class="section note"><dt>Note</dt><dd>The "`&gt;&gt;`" in the example code snippets refers to a shell prompt in a unix shell, do not enter them as part of your shell commands.</dd></dl>
+</div><!-- fragment --> <dl class="section note"><dt>Note</dt><dd>The "&gt;&gt;" in the example code snippets refers to a shell prompt in a unix shell, do not enter them as part of your shell commands.</dd></dl>
 <p>The model definition file contains the definition of the network model we want to simulate. First, we need to define the simulation step size <code>DT</code> and include the GeNN model specification codes <code><a class="el" href="../../dc/de1/modelSpec_8h.html" title="Header file that contains the class (struct) definition of neuronModel for defining a neuron model an...">modelSpec.h</a></code> and modelSpec.cc&lt;tt&gt;. Then the model definition takes the form of a function namedmodelDefinition<code>that takes one argument, passed by reference, of type</code><a class="el" href="../../dc/de5/classNNmodel.html" title="Structure to hold the information that defines synapse dynamics (a model of how synapse variables cha...">NNmodel</a><code>. Type in your</code><a class="el" href="../../d3/d73/tenHHModel_8cc.html">tenHHModel.cc</a>` file: </p><div class="fragment"><div class="line"><span class="comment">// Model definintion file tenHHModel.cc</span></div>
 <div class="line"></div>
 <div class="line"><span class="preprocessor">#define DT 0.1 </span></div>
@@ -130,7 +130,7 @@ The Model Definition</h1>
 <div class="line">  <span class="comment">// definition of tenHHModel</span></div>
 <div class="line">}</div>
 </div><!-- fragment --><p> With this we have fixed the integration time step to <code>0.1</code> in the usual time units. The tyoical units in GeNN are <code>ms</code>, <code>mV</code>, <code>nF</code>, and <code>\form#14S</code>. Therefore, this defines <code>DT= 0.1 ms</code>. Now we need t fill the actual model definition.</p>
-<p>Two standard elements to the `modelDefinition function are initialising GeNN and setting the name of the model: </p><div class="fragment"><div class="line"><a class="code" href="../../d7/dfd/modelSpec_8cc.html#a62ce532f6f7e535adfb9fe151a1c0c6b">initGeNN</a>();</div>
+<p>Two standard elements to the `modelDefinition function are initialising GeNN and setting the name of the model: </p><div class="fragment"><div class="line"><a class="code" href="../../d2/d64/modelSpec_01_07dhcp-liversidge20_8anu_8edu_8au's_01conflicted_01copy_012014-12-13_08_8cc.html#a62ce532f6f7e535adfb9fe151a1c0c6b">initGeNN</a>();</div>
 <div class="line">model.setName(<span class="stringliteral">&quot;tenHHModel&quot;</span>);</div>
 </div><!-- fragment --> <dl class="section note"><dt>Note</dt><dd>The name of the model given in the setName method does not need to match the file name of the model definition file. However, we strongly recommend it and if conflicting the file name of the model definition file will prevail.</dd></dl>
 <p>Making the actual model definition makes use of the <code>addNeuronPopulation</code> and 'addSynapsePopulation<code>member functions of the <a class="el" href="../../dc/de5/classNNmodel.html" title="Structure to hold the information that defines synapse dynamics (a model of how synapse variables cha...">NNmodel</a> object. The arguments to a call to</code>addNeuronPopulations are </p><ul>
@@ -158,7 +158,7 @@ The Model Definition</h1>
 <div class="line">  0.5961207      <span class="comment">// 3 - prob. for K channel activation n</span></div>
 <div class="line">};</div>
 </div><!-- fragment --> <dl class="section note"><dt>Note</dt><dd>The comments are obviously only for clarity, they can in principle be omitted. To avoid any confusion about the meaning of parameters and variables, however, we recommend to always include comments of this type.</dd></dl>
-<p>Having defined the parameter values and initial values we can now create the neuron population, </p><div class="fragment"><div class="line">model.addNeuronPopulation(<span class="stringliteral">&quot;Pop1&quot;</span>, 10, <a class="code" href="../../dc/de1/modelSpec_8h.html#a5cb672a4c033703aeb1b7ba7350cfbfd">TRAUBMILES</a>, p, ini);</div>
+<p>Having defined the parameter values and initial values we can now create the neuron population, </p><div class="fragment"><div class="line">model.addNeuronPopulation(<span class="stringliteral">&quot;Pop1&quot;</span>, 10, <a class="code" href="../../dc/d25/modelSpec_01_07dhcp-liversidge20_8anu_8edu_8au's_01conflicted_01copy_012014-12-13_08_8h.html#a5cb672a4c033703aeb1b7ba7350cfbfd">TRAUBMILES</a>, p, ini);</div>
 </div><!-- fragment --> <dl class="section note"><dt>Note</dt><dd><code>TRAUBMILES</code> is a variable defined in the GeNN model specification that contains the index number of the pre-defined Traub &amp; Miles model <a class="el" href="../../d0/de3/citelist.html#CITEREF_Traub1991">[4]</a>.</dd></dl>
 <p>This completes the model definition in this example. The complete <code><a class="el" href="../../d3/d73/tenHHModel_8cc.html">tenHHModel.cc</a></code> file now should look like this: </p><div class="fragment"><div class="line"><span class="comment">// Model definintion file tenHHModel.cc</span></div>
 <div class="line"></div>
@@ -169,7 +169,7 @@ The Model Definition</h1>
 <div class="line"><span class="keywordtype">void</span> <a class="code" href="../../d3/dc0/currentModel_8cc.html#a9aeaa0a22980484b2c472564fc9f686e">modelDefinition</a>(<a class="code" href="../../dc/de5/classNNmodel.html">NNmodel</a> &amp;model)</div>
 <div class="line">{</div>
 <div class="line">  <span class="comment">// definition of tenHHModel</span></div>
-<div class="line">  <a class="code" href="../../d7/dfd/modelSpec_8cc.html#a62ce532f6f7e535adfb9fe151a1c0c6b">initGeNN</a>();</div>
+<div class="line">  <a class="code" href="../../d2/d64/modelSpec_01_07dhcp-liversidge20_8anu_8edu_8au's_01conflicted_01copy_012014-12-13_08_8cc.html#a62ce532f6f7e535adfb9fe151a1c0c6b">initGeNN</a>();</div>
 <div class="line">  model.<a class="code" href="../../dc/de5/classNNmodel.html#a757eff2a5877688e6e5492726df035ee">setName</a>(<span class="stringliteral">&quot;tenHHModel&quot;</span>);</div>
 <div class="line">  <span class="keywordtype">double</span> p[7]= {</div>
 <div class="line">    7.15,          <span class="comment">// 0 - gNa: Na conductance in muS</span></div>
@@ -187,25 +187,25 @@ The Model Definition</h1>
 <div class="line">    0.3176767,     <span class="comment">// 2 - prob. for not Na channel blocking h</span></div>
 <div class="line">    0.5961207      <span class="comment">// 3 - prob. for K channel activation n</span></div>
 <div class="line">  };</div>
-<div class="line">  model.<a class="code" href="../../dc/de5/classNNmodel.html#a32c254358da2f8c43c91291d24cfd295">addNeuronPopulation</a>(<span class="stringliteral">&quot;Pop1&quot;</span>, 10, <a class="code" href="../../dc/de1/modelSpec_8h.html#a5cb672a4c033703aeb1b7ba7350cfbfd">TRAUBMILES</a>, p, ini);</div>
+<div class="line">  model.<a class="code" href="../../dc/de5/classNNmodel.html#a32c254358da2f8c43c91291d24cfd295">addNeuronPopulation</a>(<span class="stringliteral">&quot;Pop1&quot;</span>, 10, <a class="code" href="../../dc/d25/modelSpec_01_07dhcp-liversidge20_8anu_8edu_8au's_01conflicted_01copy_012014-12-13_08_8h.html#a5cb672a4c033703aeb1b7ba7350cfbfd">TRAUBMILES</a>, p, ini);</div>
 <div class="line">}</div>
 </div><!-- fragment --><p> This model definition suffices to generate code for simulating the ten Hodgkin-Huxley neurons on the a GPU or CPU. The second part of a GeNN simulation is the user code that sets up the simulation, does the data handling for input and output and generally defines the numerical experiment to be run.</p>
 <h1><a class="anchor" id="userCode"></a>
 User Code</h1>
-<p>For the purposes of this tutorial we will initially simply run the model for one simulated second and record the final neuron variables into a file. GeNN provides the code for simulating the model in a function called <code><a class="el" href="../../d2/dbd/runnerCPU_8cc.html#a7f1448cbfec65092fed9173887c6f13d">stepTimeCPU()</a></code> (execution on CPU only) or <code><a class="el" href="../../d9/d1d/runnerGPU_8cc.html#a59ccd39ca3406f7a5f6654d54d2a0c2e">stepTimeGPU()</a></code> (execution on a GPU). To make use of this code we need to define a minimal C/C++ main function. Open a new empty function <code>tenHHSimulation.cc</code> in an editor and type </p><div class="fragment"><div class="line"><span class="comment">// tenHHModel simulation code</span></div>
+<p>For the purposes of this tutorial we will initially simply run the model for one simulated second and record the final neuron variables into a file. GeNN provides the code for simulating the model in a function called <code>stepTimeCPU()</code> (execution on CPU only) or <code>stepTimeGPU()</code> (execution on a GPU). To make use of this code we need to define a minimal C/C++ main function. Open a new empty function <code>tenHHSimulation.cc</code> in an editor and type </p><div class="fragment"><div class="line"><span class="comment">// tenHHModel simulation code</span></div>
 <div class="line"><span class="preprocessor">#include &quot;<a class="code" href="../../d3/d73/tenHHModel_8cc.html">tenHHModel.cc</a>&quot;</span></div>
 <div class="line"><span class="preprocessor">#include &quot;tenHHModel_CODE/runner.cc&quot;</span></div>
 <div class="line"></div>
 <div class="line"><span class="keywordtype">int</span> <a class="code" href="../../d3/da1/testi_8cc.html#ae66f6b31b5ad750f1fe042a706a4e3d4">main</a>()</div>
 <div class="line">{</div>
-<div class="line">  <a class="code" href="../../d1/d2b/runner_8cc.html#a5591628b4661cb99f5d9aa3e41ddc26d">allocateMem</a>();</div>
-<div class="line">  <a class="code" href="../../d1/d2b/runner_8cc.html#a25a40b6614565f755233080a384c35f1">initialize</a>();</div>
+<div class="line">  allocateMem();</div>
+<div class="line">  initialize();</div>
 <div class="line">  </div>
 <div class="line">  <span class="keywordflow">return</span> 0;</div>
 <div class="line">}</div>
-</div><!-- fragment --><p> This boiler plate code includes the relevant model definition file we completed earlier and the entry point to the generated code <code><a class="el" href="../../d1/d2b/runner_8cc.html" title="File generated from GeNN for the model Izh_sparse containing general control code used for both GPU a...">runner.cc</a></code> in the subdirectory <code>tenHHModel_CODE</code> where GeNN deposits all generated code.</p>
-<p>Calling <code><a class="el" href="../../d1/d2b/runner_8cc.html#a5591628b4661cb99f5d9aa3e41ddc26d">allocateMem()</a></code> allocates the memry structures for all neuron variables and <code><a class="el" href="../../d1/d2b/runner_8cc.html#a25a40b6614565f755233080a384c35f1">initialize()</a></code> sets the initial values and copies values to the GPU.</p>
-<p>Now we can use the generated code to execute the integration of the neuron equations provided by GeNN. To do so, we add after <code><a class="el" href="../../d1/d2b/runner_8cc.html#a25a40b6614565f755233080a384c35f1">initialize()</a>;</code> </p><div class="fragment"><div class="line"><a class="code" href="../../d9/d1d/runnerGPU_8cc.html#a59ccd39ca3406f7a5f6654d54d2a0c2e">stepTimeGPU</a>(1000.0);</div>
+</div><!-- fragment --><p> This boiler plate code includes the relevant model definition file we completed earlier and the entry point to the generated code <code>runner.cc</code> in the subdirectory <code>tenHHModel_CODE</code> where GeNN deposits all generated code.</p>
+<p>Calling <code>allocateMem()</code> allocates the memry structures for all neuron variables and <code>initialize()</code> sets the initial values and copies values to the GPU.</p>
+<p>Now we can use the generated code to execute the integration of the neuron equations provided by GeNN. To do so, we add after <code>initialize();</code> </p><div class="fragment"><div class="line">stepTimeGPU(1000.0);</div>
 </div><!-- fragment --><p> and we need to copy the result, and output it to stdout, </p><div class="fragment"><div class="line">pullPop1fromDevice();</div>
 <div class="line"><span class="keywordflow">for</span> (<span class="keywordtype">int</span> i= 0; i &lt; 10; i++) {  </div>
 <div class="line">  cout &lt;&lt; VPop1[i] &lt;&lt; <span class="stringliteral">&quot; &quot;</span>;</div>
@@ -220,9 +220,9 @@ User Code</h1>
 <div class="line"></div>
 <div class="line"><span class="keywordtype">int</span> <a class="code" href="../../d3/da1/testi_8cc.html#ae66f6b31b5ad750f1fe042a706a4e3d4">main</a>()</div>
 <div class="line">{</div>
-<div class="line">  <a class="code" href="../../d1/d2b/runner_8cc.html#a5591628b4661cb99f5d9aa3e41ddc26d">allocateMem</a>();</div>
-<div class="line">  <a class="code" href="../../d1/d2b/runner_8cc.html#a25a40b6614565f755233080a384c35f1">initialize</a>();</div>
-<div class="line">  <a class="code" href="../../d9/d1d/runnerGPU_8cc.html#a59ccd39ca3406f7a5f6654d54d2a0c2e">stepTimeGPU</a>(1000.0);</div>
+<div class="line">  allocateMem();</div>
+<div class="line">  initialize();</div>
+<div class="line">  stepTimeGPU(1000.0);</div>
 <div class="line">  pullPop1fromDevice();</div>
 <div class="line">  <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i= 0; i &lt; 10; i++) {  </div>
 <div class="line">    cout &lt;&lt; VPop1[i] &lt;&lt; <span class="stringliteral">&quot; &quot;</span>;</div>
@@ -243,11 +243,7 @@ Makefile</h1>
 <h1><a class="anchor" id="MakeRun"></a>
 Making and Running the Simulation</h1>
 <p>To build the model and generate the GeNN code, type in a terminal where you are in the directory containing your <code><a class="el" href="../../d3/d73/tenHHModel_8cc.html">tenHHModel.cc</a></code> file, </p><div class="fragment"><div class="line">&gt;&gt; buildmodel.sh tenHHModel</div>
-<div class="line">\endmodel</div>
-<div class="line">If your environment variables `GENN_PATH` and `CUDA_PATH` are correctly configured, you should see some compile output ending in `Model build complete ...`.</div>
-<div class="line">Now type</div>
-<div class="line">\code</div>
-<div class="line">make</div>
+</div><!-- fragment --><p> If your environment variables <code>GENN_PATH</code> and <code>CUDA_PATH</code> are correctly configured, you should see some compile output ending in <code>Model build complete ...</code>. Now type </p><div class="fragment"><div class="line">make</div>
 </div><!-- fragment --><p> This should compile your <code>tenHHSimulation</code> executable and you can execute it with </p><div class="fragment"><div class="line">./tenHHSimulation</div>
 </div><!-- fragment --><p> The output yuo obtain should look like </p><div class="fragment"><div class="line">-63.7838 0.0350042 0.336314 0.563243</div>
 <div class="line">-63.7838 0.0350042 0.336314 0.563243</div>
@@ -259,13 +255,48 @@ Making and Running the Simulation</h1>
 <div class="line">-63.7838 0.0350042 0.336314 0.563243</div>
 <div class="line">-63.7838 0.0350042 0.336314 0.563243</div>
 <div class="line">-63.7838 0.0350042 0.336314 0.563243</div>
-</div><!-- fragment --><p> This completes this tutorial. You have created a GeNN model and simulated it successfully! </p>
+</div><!-- fragment --><p> This completes this tutorial. You have created a GeNN model and simulated it successfully!</p>
+<h1><a class="anchor" id="Input"></a>
+Adding External Input</h1>
+<p>In the example we have created so far, the neurons are not connected and do not receive input. As the TRAUBMILES model is silent in such conditions, the ten neurons simply will simply rest at their resting potential. To make things more interesting, let us add a constant input to all neurons, add to the end of the <code>modelDefinition</code> function </p><div class="fragment"><div class="line">model.<a class="code" href="../../dc/de5/classNNmodel.html#a95724e1798bd9ac5642a8fb2484a2f93">activateDirectInput</a>(<span class="stringliteral">&quot;Pop1&quot;</span>, <a class="code" href="../../dc/d25/modelSpec_01_07dhcp-liversidge20_8anu_8edu_8au's_01conflicted_01copy_012014-12-13_08_8h.html#a921b56858504259e999652795a93f6be">CONSTINP</a>);</div>
+<div class="line">model.<a class="code" href="../../dc/de5/classNNmodel.html#a25ab2e7846813491aff8276a8a1b00b1">setConstInp</a>(<span class="stringliteral">&quot;Pop1&quot;</span>, 0.1);</div>
+</div><!-- fragment --><p> This will add a constant input of 0.1 nA to all ten neurons. When run with this addition you should observe the output </p><div class="fragment"><div class="line">-63.1468 0.0211871 0.987233 0.0423695</div>
+<div class="line">-63.1468 0.0211871 0.987233 0.0423695</div>
+<div class="line">-63.1468 0.0211871 0.987233 0.0423695</div>
+<div class="line">-63.1468 0.0211871 0.987233 0.0423695</div>
+<div class="line">-63.1468 0.0211871 0.987233 0.0423695</div>
+<div class="line">-63.1468 0.0211871 0.987233 0.0423695</div>
+<div class="line">-63.1468 0.0211871 0.987233 0.0423695</div>
+<div class="line">-63.1468 0.0211871 0.987233 0.0423695</div>
+<div class="line">-63.1468 0.0211871 0.987233 0.0423695</div>
+<div class="line">-63.1468 0.0211871 0.987233 0.0423695</div>
+</div><!-- fragment --><p> This is still not particularly interesting as we are just observing the final value of the membrane potentials. To see what is going on in the meantime, we need to copy intermediate values from the device and best save them into a file. This can be done in many ways but one sensible way of doing this is to replace the line </p><div class="fragment"><div class="line">stepTimeGPU(1000.0);</div>
+</div><!-- fragment --><p> in <code><a class="el" href="../../dc/de7/tenHHSimulation_8cu.html">tenHHSimulation.cu</a></code> to something like this: </p><div class="fragment"><div class="line">ofstream os(<span class="stringliteral">&quot;tenHH_output.V.dat&quot;</span>);</div>
+<div class="line"><span class="keywordtype">double</span> <a class="code" href="../../d4/d2c/tmp_2model_2classol__sim_8h.html#afea36502e9d227ff62c5fb2719a246f2">t</a>= 0.0;</div>
+<div class="line"><span class="keywordflow">for</span> (<span class="keywordtype">int</span> i= 0; i &lt; 5000; i++) {</div>
+<div class="line">  stepTimeGPU(0.2);</div>
+<div class="line">  pullPop1fromDevice();</div>
+<div class="line">  os &lt;&lt; t &lt;&lt; <span class="stringliteral">&quot; &quot;</span>;</div>
+<div class="line">  <span class="keywordflow">for</span> (<span class="keywordtype">int</span> j= 0; j &lt; 10; j++) {</div>
+<div class="line">    os &lt;&lt; VPop1[j] &lt;&lt; <span class="stringliteral">&quot; &quot;</span>;</div>
+<div class="line">  }</div>
+<div class="line">  os &lt;&lt; endl;</div>
+<div class="line">  t+= 0.2;</div>
+<div class="line">}</div>
+<div class="line">os.close();</div>
+</div><!-- fragment --><p> After building, making and executing, </p><div class="fragment"><div class="line">builmodel.sh tenHHModel</div>
+<div class="line">make clean all</div>
+<div class="line">./tenHHSimulation</div>
+</div><!-- fragment --><p> there should a file <code>tenHH_output.V.dat</code> in the same directory. If you plot column one (time) against column two (voltage of neuron 0), you should observe dynamics like this: </p><div class="image">
+<img src="../../tenHHexample.png" alt="tenHHexample.png"/>
+</div>
+ <p>The completed files from this tutorial can be found in <code>userproject/tenHH_project</code>. </p>
 </div></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Tue Dec 9 2014 20:22:36 for GeNN by
+    <li class="footer">Generated on Wed Dec 17 2014 22:06:28 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.7 </li>
   </ul>

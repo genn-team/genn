@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">1.1</span>
+   &#160;<span id="projectnumber">2.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -126,6 +126,7 @@ $(document).ready(function(){initNavTree('d9/d32/PoissonIzh__sim_8h.html','../..
 <code>#include &quot;<a class="el" href="../../df/d71/hr__time_8cpp.html">hr_time.cpp</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="../../d5/d60/utils_8h_source.html">utils.h</a>&quot;</code><br />
 <code>#include &lt;cuda_runtime.h&gt;</code><br />
+<code>#include &quot;<a class="el" href="../../dc/d3f/PoissonIzh_8cc.html">PoissonIzh.cc</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="../../df/d16/PoissonIzh-model_8h_source.html">PoissonIzh-model.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="../../d8/d11/PoissonIzh-model_8cc.html">PoissonIzh-model.cc</a>&quot;</code><br />
 </div>
@@ -133,18 +134,14 @@ $(document).ready(function(){initNavTree('d9/d32/PoissonIzh__sim_8h.html','../..
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="define-members"></a>
 Macros</h2></td></tr>
-<tr class="memitem:aba55c5fdcbf1fc0cdaba9b1d2ed2f068"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d32/PoissonIzh__sim_8h.html#aba55c5fdcbf1fc0cdaba9b1d2ed2f068">RAND</a>(Y, X)&#160;&#160;&#160;Y = Y * 1103515245 +12345;X= (unsigned int)(Y &gt;&gt; 16) &amp; 32767</td></tr>
-<tr class="separator:aba55c5fdcbf1fc0cdaba9b1d2ed2f068"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae22bee5ab0274eba2219d11cf354c982"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d32/PoissonIzh__sim_8h.html#ae22bee5ab0274eba2219d11cf354c982">MYRAND</a>(Y, X)&#160;&#160;&#160;Y = Y * 1103515245 +12345;X= (unsigned int)(Y &gt;&gt; 16) &amp; 32767</td></tr>
+<tr class="separator:ae22bee5ab0274eba2219d11cf354c982"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a49569124a23a2fdc7abd6e2597b735ca"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d32/PoissonIzh__sim_8h.html#a49569124a23a2fdc7abd6e2597b735ca">INJECTCURRENT</a>&#160;&#160;&#160;0</td></tr>
 <tr class="separator:a49569124a23a2fdc7abd6e2597b735ca"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af2aa052c33678b98e77e813a818e95e2"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d32/PoissonIzh__sim_8h.html#af2aa052c33678b98e77e813a818e95e2">DBG_SIZE</a>&#160;&#160;&#160;1000</td></tr>
 <tr class="separator:af2aa052c33678b98e77e813a818e95e2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a49569124a23a2fdc7abd6e2597b735ca"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d32/PoissonIzh__sim_8h.html#a49569124a23a2fdc7abd6e2597b735ca">INJECTCURRENT</a>&#160;&#160;&#160;0</td></tr>
-<tr class="separator:a49569124a23a2fdc7abd6e2597b735ca"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aaf25ec5f61586416d586e061a66a7597"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d32/PoissonIzh__sim_8h.html#aaf25ec5f61586416d586e061a66a7597">PATTERNNO</a>&#160;&#160;&#160;100</td></tr>
 <tr class="separator:aaf25ec5f61586416d586e061a66a7597"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4555818aa6af622692b6a046c7f41111"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d32/PoissonIzh__sim_8h.html#a4555818aa6af622692b6a046c7f41111">INPUTBASERATE</a>&#160;&#160;&#160;17</td></tr>
-<tr class="separator:a4555818aa6af622692b6a046c7f41111"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab83f44e4142be41861734e19dfa92c75"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d32/PoissonIzh__sim_8h.html#ab83f44e4142be41861734e19dfa92c75">T_REPORT_TME</a>&#160;&#160;&#160;1000.0</td></tr>
 <tr class="separator:ab83f44e4142be41861734e19dfa92c75"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aac8ddc8e2452ee7f0fa2dc5c4f200337"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d32/PoissonIzh__sim_8h.html#aac8ddc8e2452ee7f0fa2dc5c4f200337">SYN_OUT_TME</a>&#160;&#160;&#160;2000.0</td></tr>
@@ -162,6 +159,8 @@ Variables</h2></td></tr>
 <tr class="separator:afea36502e9d227ff62c5fb2719a246f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af90823709b88c685c62a727366640633"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d32/PoissonIzh__sim_8h.html#af90823709b88c685c62a727366640633">iT</a> = 0</td></tr>
 <tr class="separator:af90823709b88c685c62a727366640633"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5b04369a7558bcf7da0830c978a36bff"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../dc/d3f/PoissonIzh_8cc.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d32/PoissonIzh__sim_8h.html#a5b04369a7558bcf7da0830c978a36bff">InputBaseRate</a> = 2e-04</td></tr>
+<tr class="separator:a5b04369a7558bcf7da0830c978a36bff"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0413cabfdba223c3bb3098f49896cd9b"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d32/PoissonIzh__sim_8h.html#a0413cabfdba223c3bb3098f49896cd9b">patSetTime</a></td></tr>
 <tr class="separator:a0413cabfdba223c3bb3098f49896cd9b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a344fc02d0f9a72f72085a8c5fe191ea9"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d32/PoissonIzh__sim_8h.html#a344fc02d0f9a72f72085a8c5fe191ea9">patFireTime</a></td></tr>
@@ -194,24 +193,26 @@ Variables</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a49569124a23a2fdc7abd6e2597b735ca"></a>
+<a class="anchor" id="ae22bee5ab0274eba2219d11cf354c982"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">#define INJECTCURRENT&#160;&#160;&#160;0</td>
+          <td class="memname">#define MYRAND</td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname">Y, </td>
         </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a class="anchor" id="a4555818aa6af622692b6a046c7f41111"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
         <tr>
-          <td class="memname">#define INPUTBASERATE&#160;&#160;&#160;17</td>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname">X&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td>&#160;&#160;&#160;Y = Y * 1103515245 +12345;X= (unsigned int)(Y &gt;&gt; 16) &amp; 32767</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -248,32 +249,6 @@ Variables</h2></td></tr>
       <table class="memname">
         <tr>
           <td class="memname">#define PATTERNNO&#160;&#160;&#160;100</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a class="anchor" id="aba55c5fdcbf1fc0cdaba9b1d2ed2f068"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">#define RAND</td>
-          <td>(</td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname">Y, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname">X&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td>&#160;&#160;&#160;Y = Y * 1103515245 +12345;X= (unsigned int)(Y &gt;&gt; 16) &amp; 32767</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -317,6 +292,18 @@ Variables</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Variable Documentation</h2>
+<a class="anchor" id="a5b04369a7558bcf7da0830c978a36bff"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="../../dc/d3f/PoissonIzh_8cc.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a> InputBaseRate = 2e-04</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a class="anchor" id="af90823709b88c685c62a727366640633"></a>
 <div class="memitem">
 <div class="memproto">
@@ -383,7 +370,7 @@ Variables</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dir_66fc3ae5585a02e310a487b6a12e9e11.html">userproject</a></li><li class="navelem"><a class="el" href="../../dir_b9219757b33301ab6c4dd45ee71692b5.html">PoissonIzh_project</a></li><li class="navelem"><a class="el" href="../../dir_c42e1a34e113b90fa7d50b0953d3f293.html">model</a></li><li class="navelem"><a class="el" href="../../d9/d32/PoissonIzh__sim_8h.html">PoissonIzh_sim.h</a></li>
-    <li class="footer">Generated on Tue Dec 9 2014 20:22:35 for GeNN by
+    <li class="footer">Generated on Wed Dec 17 2014 22:06:28 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.7 </li>
   </ul>

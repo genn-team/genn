@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">1.1</span>
+   &#160;<span id="projectnumber">2.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -125,11 +125,11 @@ $(document).ready(function(){initNavTree('dd/d11/sect1.html','../../');});
 Defining neuron populations</h1>
 <p>Neuron populations are added using the function </p><div class="fragment"><div class="line">model.<a class="code" href="../../dc/de5/classNNmodel.html#a32c254358da2f8c43c91291d24cfd295">addNeuronPopulation</a>(name, n, TYPE, para, ini);</div>
 </div><!-- fragment --><p> where the arguments are: </p><ul>
-<li><code>const</code> <code>char*</code> name: Name of the neuron population </li>
-<li><code>int</code> n: number of neurons in the population </li>
-<li><code>int</code> TYPE: Type of the neurons, refers to either a standard type (see <a class="el" href="../../dc/dba/sect2.html">Neuron models</a>) or user-defined type </li>
-<li><code>float</code> *para: Parameters of this neuron type </li>
-<li><code>float</code> *ini: Initial values for variables of this neuron type</li>
+<li><code>const char* name</code>: Name of the neuron population </li>
+<li><code>int n</code>: number of neurons in the population </li>
+<li><code>int TYPE</code>: Type of the neurons, refers to either a standard type (see <a class="el" href="../../dc/dba/sect2.html">Neuron models</a>) or user-defined type </li>
+<li><code>double *para</code>: Parameters of this neuron type </li>
+<li><code>double *ini</code>: Initial values for variables of this neuron type</li>
 </ul>
 <p>The user may add as many neuron populations as the model necessitates. They should all have unique names. The possible values for the arguments, predefined models and their parameters and initial values are detailed <a class="el" href="../../dc/dba/sect2.html">Neuron models</a> below.</p>
 <h1><a class="anchor" id="subsect12"></a>
@@ -144,11 +144,12 @@ Defining synapse populations</h1>
 <li><code>int</code> <code>postSyn:</code> Postsynaptic integration method. See <a class="el" href="../../dd/de4/sect_postsyn.html">Post-synaptic integration methods</a> for predefined types. </li>
 <li><code>char*</code> <code>preName:</code> Name of the (existing!) pre-synaptic neuron population. </li>
 <li><code>char*</code> <code>postName:</code> Name of the (existing!) post-synaptic neuron population. </li>
-<li><code>float*</code> <code>sIni:</code> A C-array of floats containing initial values for the (pre-) synaptic variables. </li>
-<li><code>float*</code> <code>sParam:</code> A C-array of floats that contains parameter values (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored. For pre-defined synapse types the required parameters and their meaning are listed in <a class="el" href="../../da/d5d/sect3.html#sect31">NSYNAPSE (No Learning)</a> below.</li>
+<li><code>double *sIni</code>: A C-array of doubles containing initial values for the (pre-) synaptic variables. </li>
+<li><code>double *sParam</code>: A C-array of double precision that contains parameter values (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored. For pre-defined synapse types the required parameters and their meaning are listed in <a class="el" href="../../da/d5d/sect3.html#sect31">NSYNAPSE (No Learning)</a> below. </li>
+<li><code>double</code> * <code>psIni:</code> A C-array of double precision numbers containing initial values for the post-synaptic model variables </li>
+<li><code>double</code> * <code>psPara:</code> A C-array of double precision numbers containing parameters fo the post-snaptic model. <dl class="section note"><dt>Note</dt><dd>If the synapse conductance definition type is "GLOBALG" then the global value of the synapse conductances is taken from the initial value provided in <code>sINI</code>. (The function setSynapseG() from earlier versions of GeNN has been deprecated).</dd></dl>
+Synaptic updates can occur per "true" spike (i.e at one point per spike, e.g. after a threshold was crossed) or for all "spike type events" (e.g. all points above a given threshold). This is defined within each given synapse type.</li>
 </ul>
-<dl class="section note"><dt>Note</dt><dd>If the synapse conductance definition type is "GLOBALG" then the global value of the synapse conductances is taken from the initial value provided in <code>sINI</code>. (The function setSynapseG() from earlier versions of GeNN has been deprecated).</dd></dl>
-<p>Synaptic updates can occur per "true" spike (i.e at one point per spike, e.g. after a threshold was crossed) or for all "spike type events" (e.g. all points above a given threshold). This is defined within each given synapse type.</p>
 <p><br />
  </p><hr/>
 <p> <a class="el" href="../../dc/d05/UserManual.html">Previous</a> | <a class="el" href="../../dd/d11/sect1.html">Top</a> | <a class="el" href="../../da/d5d/sect3.html">Next</a> </p>
@@ -158,7 +159,7 @@ Defining synapse populations</h1>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dc/d05/UserManual.html">User Manual</a></li>
-    <li class="footer">Generated on Tue Dec 9 2014 20:22:36 for GeNN by
+    <li class="footer">Generated on Wed Dec 17 2014 22:06:28 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.7 </li>
   </ul>

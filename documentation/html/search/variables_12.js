@@ -1,9 +1,9 @@
 var searchData=
 [
-  ['uintsz',['UIntSz',['../d2/d49/global_8h.html#a36bbec086798c87606bdc408a282cda2',1,'global.h']]],
-  ['upexc',['UPExc',['../d1/d2b/runner_8cc.html#aaea8c61f3c1e8bf94ae23aa0011222f3',1,'runner.cc']]],
-  ['upinh',['UPInh',['../d1/d2b/runner_8cc.html#a12c4671b8a72d0e8f0de123ecb7f2f12',1,'runner.cc']]],
-  ['usespostlearning',['usesPostLearning',['../dc/de5/classNNmodel.html#a81fb25a9fab59e840ef622d469747d69',1,'NNmodel']]],
-  ['usesspikeevents',['usesSpikeEvents',['../dc/de5/classNNmodel.html#a5d1a849b688fd0b7fdb999d39b5e049b',1,'NNmodel']]],
-  ['usestruespikes',['usesTrueSpikes',['../dc/de5/classNNmodel.html#a5d70d70919f892c66196fdea7cb13a45',1,'NNmodel']]]
+  ['v',['V',['../de/dad/structinputSpec.html#a99484aaff897f3d87d4bbfea19f61766',1,'inputSpec']]],
+  ['valid',['valid',['../dc/de5/classNNmodel.html#ad09a7a4c3888876f7a95e8d5e344c71e',1,'NNmodel']]],
+  ['varnames',['varNames',['../d3/d64/structneuronModel.html#ad364183af0da111f989116e0b8b9d4bd',1,'neuronModel::varNames()'],['../d8/dbb/structpostSynModel.html#a7d1de671b8fe907cf9a48b90fb1ac975',1,'postSynModel::varNames()'],['../dd/db7/classweightUpdateModel.html#a90db929b419cc1e8eb2114880b57b0d7',1,'weightUpdateModel::varNames()']]],
+  ['vartypes',['varTypes',['../d3/d64/structneuronModel.html#a2ae4ddde7aa750cddfff8a4f4491d9c1',1,'neuronModel::varTypes()'],['../d8/dbb/structpostSynModel.html#af3ef4e7d09509cfbaf841b7b8c69a847',1,'postSynModel::varTypes()'],['../dd/db7/classweightUpdateModel.html#a207d9bdb30b99b6377072191bd428763',1,'weightUpdateModel::varTypes()']]],
+  ['verbose',['verbose',['../d1/d03/classCodeHelper.html#a5afe3ed0547836993784dcdedc35438a',1,'CodeHelper']]],
+  ['vexp',['Vexp',['../d4/da1/helper_8h.html#a83cf90739c16b19704b98c436a5b798d',1,'helper.h']]]
 ];
