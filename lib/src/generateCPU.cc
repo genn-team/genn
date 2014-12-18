@@ -252,10 +252,10 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 	    os << "// test for and register a spike-like event" << ENDL;
 	    os << "if (" + ensureFtype(eCode, model.ftype) + ")" << OB(30);
 	    os << "glbSpkEvnt" << model.neuronName[i] << "[" << queueOffset << "glbSpkCntEvnt" << model.neuronName[i];
-	    if (model.neuronDelaySlots[i] > 1) { // with delay
+	    if (model.neuronDelaySlots[i] > 1) { // WITH DELAY
 		os << "[spkQuePtr" << model.neuronName[i] << "]++] = n;" << ENDL;
 	    }
-	    else { // no delay
+	    else { // NO DELAY
 		os << "[0]++] = n;" << ENDL;
 	    }
 	    os << CB(30);
@@ -266,10 +266,10 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 	    os << "// test for and register a true spike" << ENDL;
 	    os << "if ((" << ensureFtype(thCode, model.ftype) << ") && !(oldSpike))" << OB(40);
 	    os << "glbSpk" << model.neuronName[i] << "[" << queueOffsetTrueSpk << "glbSpkCnt" << model.neuronName[i];
-	    if ((model.neuronDelaySlots[i] > 1) && (model.neuronNeedTrueSpk[i])) { // with delay
+	    if ((model.neuronDelaySlots[i] > 1) && (model.neuronNeedTrueSpk[i])) { // WITH DELAY
 		os << "[spkQuePtr" << model.neuronName[i] << "]++] = n;" << ENDL;
 	    }
-	    else { // no delay
+	    else { // NO DELAY
 		os << "[0]++] = n;" << ENDL;
 	    }
 	    if (model.neuronNeedSt[i]) {
@@ -583,8 +583,8 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 	    k = model.lrnSynGrp[i];
 	    src = model.synapseSource[k];
 	    trg = model.synapseTarget[k];
-	    inSynNo = model.synapseInSynNo[k];
 	    synt = model.synapseType[k];
+	    inSynNo = model.synapseInSynNo[k];
 	    unsigned int nN = model.neuronN[src];
 	    bool sparse = model.synapseConnType[k] == SPARSE;
 
@@ -603,7 +603,8 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 	    os << "// synapse group " << model.synapseName[k] << ENDL;
 
 	    if (delayPre) {
-		os << "delaySlot = (spkQuePtr" << model.neuronName[src] << " + " << tS(model.neuronDelaySlots[src] - model.synapseDelay[k] + 1);
+		os << "delaySlot = (spkQuePtr" << model.neuronName[src];
+		os << " + " << tS(model.neuronDelaySlots[src] - model.synapseDelay[k] + 1);
 		os << ") % " << tS(model.neuronDelaySlots[src]) << ";" << ENDL;
 	    }
 
@@ -629,12 +630,10 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 	    string code = weightUpdateModels[synt].simLearnPost;
 	    // Code substitutions ----------------------------------------------------------------------------------
 	    if (sparse) { // SPARSE
-		name_substitutions(code, tS(""), weightUpdateModels[synt].varNames,
-				   model.synapseName[k] + tS("[C") + model.synapseName[k] + tS(".remap[ipre]]"));
+		name_substitutions(code, tS(""), weightUpdateModels[synt].varNames, model.synapseName[k] + tS("[C") + model.synapseName[k] + tS(".remap[ipre]]"));
 	    }
 	    else { // DENSE
-		name_substitutions(code, tS(""), weightUpdateModels[synt].varNames,
-				   model.synapseName[k] + tS("[lSpk + ") + tS(model.neuronN[trg]) + tS(" * ipre]"));
+		name_substitutions(code, tS(""), weightUpdateModels[synt].varNames, model.synapseName[k] + tS("[lSpk + ") + tS(model.neuronN[trg]) + tS(" * ipre]"));
 	    }
 	    value_substitutions(code, weightUpdateModels[synt].pNames, model.synapsePara[k]);
 	    value_substitutions(code, weightUpdateModels[synt].dpNames, model.dsp_w[k]);
@@ -672,7 +671,7 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 	    extended_value_substitutions(code, nModels[nt_pre].dpNames, tS("_pre"), model.dnp[src]);
 
 	    // postsynaptic neuron variables and parameters
-	    substitute(code, tS("$(sT_post)"), tS("d_sT") + model.neuronName[trg] + tS("[lSpk]"));
+	    substitute(code, tS("$(sT_post)"), tS("sT") + model.neuronName[trg] + tS("[") + offsetPost + tS("lSpk]"));
 	    for (int j = 0; j < nModels[nt_post].varNames.size(); j++) {
 		if (model.neuronVarNeedQueue[trg][j]) {
 		    substitute(code, tS("$(") + nModels[nt_post].varNames[j] + tS("_post)"),
@@ -687,7 +686,7 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 	    extended_value_substitutions(code, nModels[nt_post].dpNames, tS("_post"), model.dnp[trg]);
 	    // end Code substitutions ------------------------------------------------------------------------- 
 
-	    os << ensureFtype(code, model.ftype);
+	    os << ensureFtype(code, model.ftype) << ENDL;
 
 	    os << CB(121);
 	    os << CB(910);
