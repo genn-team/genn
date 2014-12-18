@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
   FILE *osf2= fopen(name2.c_str(),"w");
   //-----------------------------------------------------------------
   // build the neuronal circuitry
-  classol locust;
+  neuronpop locust;
     
   locust.init(which);         // this includes copying g's for the GPU version
 
@@ -55,27 +55,31 @@ int main(int argc, char *argv[])
   fprintf(stderr, "# initial wait time execution ... \n");
 
   t= 0.0;
-  void *devPtr;
   int done= 0;
   float last_t_report=  t;
-  locust.run(DT, which);
+  for (int k=0;k<locust.model.neuronGrpN;k++){
+    if (locust.model.receivesInputCurrent[k]>1){
+      locust.allocate_device_mem_input();
+      break;
+    }
+  }
+ locust.run(DT, which);
   while (!done) 
   {
     if (which == GPU) locust.getSpikeNumbersFromGPU();
     for (int k=0;k<locust.model.neuronGrpN;k++)
     {
-      if (locust.model.receivesInputCurrent[k]==2) 
+      /*if (locust.model.receivesInputCurrent[k]==2) 
       {
-        FILE * ff;
-        ff=fopen("../../tools/expoutf","r");
+        FILE * ff=fopen("../../tools/expoutf","r");
         locust.read_input_values(ff);
         fclose(ff);
-	locust.copy_device_mem_input();
-      }
-      if (locust.model.receivesInputCurrent[k]==3)
+	      locust.copy_device_mem_input();
+      }*/
+      if (locust.model.receivesInputCurrent[k]==3)//INPRULE
       {
-	locust.create_input_values(t);
-	locust.copy_device_mem_input();
+	      locust.create_input_values(t);
+	      locust.copy_device_mem_input();
       }
     } 
     locust.run(DT, which); // run next batch

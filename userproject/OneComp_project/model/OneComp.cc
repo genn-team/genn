@@ -14,7 +14,7 @@
 #include "modelSpec.h"
 #include "modelSpec.cc"
 
-float exIzh_p[4]={
+double exIzh_p[4]={
 //Izhikevich model parameters - tonic spiking
 	0.02,	// 0 - a
 	0.2, 	// 1 - b
@@ -22,33 +22,34 @@ float exIzh_p[4]={
 	6 	// 3 - d
 };
 
-float exIzh_ini[2]={
+double exIzh_ini[2]={
 //Izhikevich model initial conditions - tonic spiking
 	-65,	//0 - V
 	-20	//1 - U
 };
 
 
-float mySyn_p[3]= {
+double mySyn_p[3]= {
   0.0,           // 0 - Erev: Reversal potential
   -20.0,         // 1 - Epre: Presynaptic threshold potential
   1.0            // 2 - tau_S: decay time constant for S [ms]
 };
 
-float postExp[2]={
+double postExp[2]={
   1.0,            // 0 - tau_S: decay time constant for S [ms]
   0.0		  // 1 - Erev: Reversal potential
 };
-float *postSynV = NULL;
+double *postSynV = NULL;
 
 
 #include "../../userproject/include/sizes.h"
 
 float inpIzh1 = 4.0;
-//float gIzh1= 0.01;
 
 void modelDefinition(NNmodel &model) 
 {
+  initGeNN();
+    model.setGPUDevice(0);
   model.setName("OneComp");
   model.addNeuronPopulation("Izh1", _NC1, IZHIKEVICH, exIzh_p, exIzh_ini);        	 
  // model.addSynapsePopulation("IzhIzh", NSYNAPSE, ALLTOALL, INDIVIDUALG, NO_DELAY, IZHIKEVICH_PS, "Izh1", "Izh1", mySyn_p, postSynV, postExp);
@@ -56,4 +57,5 @@ void modelDefinition(NNmodel &model)
   
   model.activateDirectInput("Izh1", CONSTINP);
   model.setConstInp("Izh1", inpIzh1);
+  model.setPrecision(FLOAT);
 }

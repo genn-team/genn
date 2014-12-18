@@ -17,7 +17,7 @@
 
 #include "OneComp.cc"
 
-class classol
+class neuronpop
 {
  public:
   NNmodel model;
@@ -27,13 +27,12 @@ class classol
   float *d_input1;
   //------------------------------------------------------------------------
   unsigned int sumIzh1;
-  classol();
-  ~classol();
+  neuronpop();
+  ~neuronpop();
   void init(unsigned int);
   void allocate_device_mem_patterns();
   void allocate_device_mem_input();
   void copy_device_mem_input();
-  void free_device_mem();
   void write_input_to_file(FILE *);
   void read_input_values(FILE *);
   void create_input_values(float t);
