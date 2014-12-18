@@ -23,7 +23,7 @@
 #include "modelSpec.cc"
 #include "HHVClampParameters.h"
 
-float myHH_ini[11]= {
+double myHH_ini[11]= {
   -60.0,         // 0 - membrane potential E
   0.0529324,     // 1 - prob. for Na channel activation m
   0.3176767,     // 2 - prob. for not Na channel blocking h
@@ -37,7 +37,7 @@ float myHH_ini[11]= {
   1.0            // 10 - Cmem: membr. capacity density in muF/cm^2
 };
 
-float *myHH_p= NULL;
+double *myHH_p= NULL;
 
 
 //--------------------------------------------------------------------------
@@ -48,48 +48,50 @@ float *myHH_p= NULL;
 void modelDefinition(NNmodel &model) 
 {
   neuronModel n;
-  // HH neurons with adjustable parameters (introduced as variables)
+  
+  initGeNN();
+// HH neurons with adjustable parameters (introduced as variables)
   n.varNames.clear();
   n.varTypes.clear();
   n.varNames.push_back(tS("V"));
-  n.varTypes.push_back(tS("float"));
+  n.varTypes.push_back(tS("double"));
   n.varNames.push_back(tS("m"));
-  n.varTypes.push_back(tS("float"));
+  n.varTypes.push_back(tS("double"));
   n.varNames.push_back(tS("h"));
-  n.varTypes.push_back(tS("float"));
+  n.varTypes.push_back(tS("double"));
   n.varNames.push_back(tS("n"));
-  n.varTypes.push_back(tS("float"));
+  n.varTypes.push_back(tS("double"));
   n.varNames.push_back(tS("gNa"));
-  n.varTypes.push_back(tS("float"));
+  n.varTypes.push_back(tS("double"));
   n.varNames.push_back(tS("ENa"));
-  n.varTypes.push_back(tS("float"));
+  n.varTypes.push_back(tS("double"));
   n.varNames.push_back(tS("gK"));
-  n.varTypes.push_back(tS("float"));
+  n.varTypes.push_back(tS("double"));
   n.varNames.push_back(tS("EK"));
-  n.varTypes.push_back(tS("float"));
+  n.varTypes.push_back(tS("double"));
   n.varNames.push_back(tS("gl"));
-  n.varTypes.push_back(tS("float"));
+  n.varTypes.push_back(tS("double"));
   n.varNames.push_back(tS("El"));
-  n.varTypes.push_back(tS("float"));
+  n.varTypes.push_back(tS("double"));
   n.varNames.push_back(tS("C"));
-  n.varTypes.push_back(tS("float"));
+  n.varTypes.push_back(tS("double"));
   n.varNames.push_back(tS("err"));
-  n.varTypes.push_back(tS("float"));
+  n.varTypes.push_back(tS("double"));
   n.extraGlobalNeuronKernelParameters.push_back(tS("stepVG"));
-  n.extraGlobalNeuronKernelParameterTypes.push_back(tS("float"));
+  n.extraGlobalNeuronKernelParameterTypes.push_back(tS("double"));
   n.extraGlobalNeuronKernelParameters.push_back(tS("IsynG"));
-  n.extraGlobalNeuronKernelParameterTypes.push_back(tS("float"));
+  n.extraGlobalNeuronKernelParameterTypes.push_back(tS("double"));
 
-  n.simCode= tS("   float Imem;\n\
+  n.simCode= tS("   double Imem;\n\
     unsigned int mt;\n\
-    float mdt= DT/100.0;\n\
+    double mdt= DT/100.0;\n\
     for (mt=0; mt < 100; mt++) {\n\
       Isyn= 200.0*($(stepVG)-$(V));\n\
       Imem= -($(m)*$(m)*$(m)*$(h)*$(gNa)*($(V)-($(ENa)))+\n\
               $(n)*$(n)*$(n)*$(n)*$(gK)*($(V)-($(EK)))+\n\
               $(gl)*($(V)-($(El)))-Isyn);\n\
-      float _a= (3.5+0.1*$(V)) / (1.0-exp(-3.5-0.1*$(V)));\n\
-      float _b= 4.0*exp(-($(V)+60.0)/18.0);\n\
+      double _a= (3.5+0.1*$(V)) / (1.0-exp(-3.5-0.1*$(V)));\n\
+      double _b= 4.0*exp(-($(V)+60.0)/18.0);\n\
       $(m)+= (_a*(1.0-$(m))-_b*$(m))*mdt;\n\
       _a= 0.07*exp(-$(V)/20.0-3.0);\n\
       _b= 1.0 / (exp(-3.0-0.1*$(V))+1.0);\n\
@@ -101,11 +103,11 @@ void modelDefinition(NNmodel &model)
     }\n\
     $(err)+= abs(Isyn-$(IsynG));\n");
 
-  n.thresholdConditionCode = tS("$(V) > 100");//TODO check this, to get better value
+  n.thresholdConditionCode = tS("$(V) > 100");
   int HHV= nModels.size();
   nModels.push_back(n);
 
   model.setName("HHVClamp");
-  model.setPrecision(FLOAT);
+  model.setPrecision(DOUBLE);
   model.addNeuronPopulation("HH", NPOP, HHV, myHH_p, myHH_ini);
 }

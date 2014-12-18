@@ -57,6 +57,17 @@
 }
 
 //--------------------------------------------------------------------------
+/*! \brief Function called upon the detection of an error. Outputs an error message and then exits.
+ */
+//--------------------------------------------------------------------------
+
+void gennError(string error)
+{
+  cerr << "GeNN error: " << error << endl;
+  exit(1);
+}
+
+//--------------------------------------------------------------------------
 /*! \brief Function to write the comment header denoting file authorship and contact details into the generated code.
  */
 //--------------------------------------------------------------------------
@@ -71,17 +82,6 @@ void writeHeader(ostream &os)
     getline(is, s);
   }
   os << endl;
-}
-
-
-//--------------------------------------------------------------------------
-//! \brief Tool for finding strings in another string
-//--------------------------------------------------------------------------
-
-bool find(string &s, const string trg)
-{
-  size_t found= s.find(trg);
-  return (found != string::npos);
 }
 
 
