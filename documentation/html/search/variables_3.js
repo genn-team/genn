@@ -1,7 +1,7 @@
 var searchData=
 [
   ['d_5fbaserates',['d_baserates',['../d1/d16/classclassol.html#a4028c8bce8a13eb2e5d3cbed5f78a0d9',1,'classol::d_baserates()'],['../d1/d16/classclassol.html#adee39c3f46e3b1b691b047f7fae179c6',1,'classol::d_baserates()']]],
-  ['d_5finput1',['d_input1',['../de/dba/classclassIzh.html#a8d076bb1d7159b863572cca0e1f27554',1,'classIzh::d_input1()'],['../d1/d16/classclassol.html#a29d842c266bb5c84cdc3ef1e7d7d4e06',1,'classol::d_input1()']]],
+  ['d_5finput1',['d_input1',['../de/dba/classclassIzh.html#a8d076bb1d7159b863572cca0e1f27554',1,'classIzh::d_input1()'],['../de/d18/classneuronpop.html#ab229af02d2909578d38b99614149c5a4',1,'neuronpop::d_input1()']]],
   ['d_5finput2',['d_input2',['../de/dba/classclassIzh.html#a7b6479298c1c21ae519e5261fc9b67c1',1,'classIzh']]],
   ['d_5fpattern',['d_pattern',['../d1/d16/classclassol.html#ab59e43ece1fe1ebccc45b83e8d91a6f4',1,'classol::d_pattern()'],['../d1/d16/classclassol.html#ab864befa4f0f4b067b78933dbfd77ced',1,'classol::d_pattern()']]],
   ['devicecount',['deviceCount',['../d2/d49/global_8h.html#aeae4d6852439dcd029768b91adabc33b',1,'global.h']]],

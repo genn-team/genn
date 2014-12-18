@@ -10,6 +10,7 @@ var annotated =
     [ "histogram", "d1/d6c/structhistogram.html", "d1/d6c/structhistogram" ],
     [ "inputSpec", "de/dad/structinputSpec.html", "de/dad/structinputSpec" ],
     [ "neuronModel", "d3/d64/structneuronModel.html", "d3/d64/structneuronModel" ],
+    [ "neuronpop", "de/d18/classneuronpop.html", "de/d18/classneuronpop" ],
     [ "NNmodel", "dc/de5/classNNmodel.html", "dc/de5/classNNmodel" ],
     [ "postSynModel", "d8/dbb/structpostSynModel.html", "d8/dbb/structpostSynModel" ],
     [ "pwSTDP", "d0/dba/classpwSTDP.html", "d0/dba/classpwSTDP" ],

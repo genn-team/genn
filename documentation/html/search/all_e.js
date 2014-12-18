@@ -21,6 +21,7 @@ var searchData=
   ['neuronneedspkevnt',['neuronNeedSpkEvnt',['../dc/de5/classNNmodel.html#ad8d0a9425883c89dc5f61b44f7fdba97',1,'NNmodel']]],
   ['neuronneedst',['neuronNeedSt',['../dc/de5/classNNmodel.html#a407761f41279b629abc376e5e7ba3a74',1,'NNmodel']]],
   ['neuronpara',['neuronPara',['../dc/de5/classNNmodel.html#af0c9dda61809041e4d959d85be4c87fc',1,'NNmodel']]],
+  ['neuronpop',['neuronpop',['../de/d18/classneuronpop.html',1,'neuronpop'],['../de/d18/classneuronpop.html#ad02e1027a4f4b0199df2193f04d46f72',1,'neuronpop::neuronpop()']]],
   ['neuronpostsyn',['neuronPostSyn',['../dc/de5/classNNmodel.html#a1773f4f5544adb87cdd493e800fbe5df',1,'NNmodel']]],
   ['neuronpsize',['neuronPSize',['../d7/d5b/Izh__sparse_8cc.html#ad2517cb34af00781d80350884f5d558e',1,'Izh_sparse.cc']]],
   ['neuronspkevntcondition',['neuronSpkEvntCondition',['../dc/de5/classNNmodel.html#a5afd99d0f71d547933154fe17c9c184f',1,'NNmodel']]],

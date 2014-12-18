@@ -15,6 +15,7 @@ var hierarchy =
     [ "histogram", "d1/d6c/structhistogram.html", null ],
     [ "inputSpec", "de/dad/structinputSpec.html", null ],
     [ "neuronModel", "d3/d64/structneuronModel.html", null ],
+    [ "neuronpop", "de/d18/classneuronpop.html", null ],
     [ "NNmodel", "dc/de5/classNNmodel.html", null ],
     [ "postSynModel", "d8/dbb/structpostSynModel.html", null ],
     [ "randomGauss", "d5/d45/classrandomGauss.html", null ],

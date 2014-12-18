@@ -12,7 +12,7 @@ var searchData=
   ['inding_5fii',['indInG_ii',['../d8/d1e/gen__syns__sparse__izhModel_8cc.html#a74946f32eda1062ddbf15749e9ecbdb5',1,'gen_syns_sparse_izhModel.cc']]],
   ['inhizh_5fp',['inhIzh_p',['../d7/d5b/Izh__sparse_8cc.html#a9020cf86b09ad751193dff00fe463270',1,'Izh_sparse.cc']]],
   ['inpizh1',['inpIzh1',['../db/d47/OneComp_8cc.html#a9e4692c6561fc7696e2f40492e773f23',1,'OneComp.cc']]],
-  ['input1',['input1',['../de/dba/classclassIzh.html#ac1c0c249eceb2d61592b9ff531435a14',1,'classIzh::input1()'],['../d1/d16/classclassol.html#a5803e52deda310bbadbb22265045b8d9',1,'classol::input1()']]],
+  ['input1',['input1',['../de/dba/classclassIzh.html#ac1c0c249eceb2d61592b9ff531435a14',1,'classIzh::input1()'],['../de/d18/classneuronpop.html#af880867bf88c2491ea5c1709121e2920',1,'neuronpop::input1()']]],
   ['input2',['input2',['../de/dba/classclassIzh.html#a9a793be6300aecbf730dc7e8d40eebdf',1,'classIzh']]],
   ['input_5fini',['input_ini',['../dd/d0e/SynDelay_8cc.html#a1a4c401643b2ac3407d18c2593b2e483',1,'SynDelay.cc']]],
   ['input_5fp',['input_p',['../dd/d0e/SynDelay_8cc.html#a1d2ca6cc58087d32ddc84bd51293e6c6',1,'SynDelay.cc']]],
