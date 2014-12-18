@@ -22,56 +22,56 @@
 #include "modelSpec.h"
 #include "modelSpec.cc"
 
-float myPOI_p[4]= {
+double myPOI_p[4]= {
   0.1,        // 0 - firing rate
   2.5,        // 1 - refratory period
   20.0,       // 2 - Vspike
   -60.0       // 3 - Vrest
 };
 
-float myPOI_ini[4]= {
+double myPOI_ini[4]= {
  -60.0,        // 0 - V
   0,           // 1 - seed
   -10.0,       // 2 - SpikeTime
 };
 
-// float stdMAP_p[4]= {
+// double stdMAP_p[4]= {
 //   60.0,          // 0 - Vspike: spike Amplitude factor
 //   3.0,           // 1 - alpha: "steepness / size" parameter
 //   -2.468,        // 2 - y: "shift / excitation" parameter
 //   0.0165         // 3 - beta: input sensitivity
 // };
 
-// float stdMAP_ini[2]= {
+// double stdMAP_ini[2]= {
 //   -60.0,         // 0 - V: initial value for membrane potential
 //   -60.0          // 1 - preV: initial previous value
 // };
 
-// float myLHI_p[4]= {
+// double myLHI_p[4]= {
 //   60.0,          // 0 - Vspike: spike Amplitude factor
 //   3.0,           // 1 - alpha: "steepness / size" parameter
 //   -2.468,        // 2 - y: "shift / excitation" parameter
 //   0.0165         // 3 - beta: input sensitivity
 // };
 
-// float myLHI_ini[2]= {
+// double myLHI_ini[2]= {
 //   -60.0,         // 0 - V: initial value for membrane potential
 //   -60.0          // 1 - preV: initial previous value
 // };
 
-// float myLB_p[4]= {
+// double myLB_p[4]= {
 //   60.0,          // 0 - Vspike: spike Amplitude factor
 //   3.0,           // 1 - alpha: "steepness / size" parameter
 //   -2.468,        // 2 - y: "shift / excitation" parameter
 //   0.0165         // 3 - beta: input sensitivity
 // };
 
-// float myLB_ini[2]= {
+// double myLB_ini[2]= {
 //   -60.0,         // 0 - V: initial value for membrane potential
 //   -60.0          // 1 - preV: initial previous value
 // };
 
-float stdTM_p[7]= {
+double stdTM_p[7]= {
   7.15,          // 0 - gNa: Na conductance in 1/(mOhms * cm^2)
   50.0,          // 1 - ENa: Na equi potential in mV
   1.43,          // 2 - gK: K conductance in 1/(mOhms * cm^2)
@@ -82,7 +82,7 @@ float stdTM_p[7]= {
 };
 
 
-float stdTM_ini[4]= {
+double stdTM_ini[4]= {
   -60.0,                       // 0 - membrane potential E
   0.0529324,                   // 1 - prob. for Na channel activation m
   0.3176767,                   // 2 - prob. for not Na channel blocking h
@@ -90,44 +90,44 @@ float stdTM_ini[4]= {
 };
 
 
-float myPNKC_p[3]= {
+double myPNKC_p[3]= {
   0.0,           // 0 - Erev: Reversal potential
   -20.0,         // 1 - Epre: Presynaptic threshold potential
   1.0            // 2 - tau_S: decay time constant for S [ms]
 };
-//float gPNKC= 0.01;
+//double gPNKC= 0.01;
 
-float postExpPNKC[2]={
+double postExpPNKC[2]={
   1.0,            // 0 - tau_S: decay time constant for S [ms]
   0.0		  // 1 - Erev: Reversal potential
 };
 
-float myPNLHI_p[3]= {
+double myPNLHI_p[3]= {
   0.0,           // 0 - Erev: Reversal potential
   -20.0,         // 1 - Epre: Presynaptic threshold potential
   1.0            // 2 - tau_S: decay time constant for S [ms]
 };
 
-float postExpPNLHI[2]={
+double postExpPNLHI[2]={
   1.0,            // 0 - tau_S: decay time constant for S [ms]
   0.0		  // 1 - Erev: Reversal potential
 };
 
-float myLHIKC_p[4]= {
+double myLHIKC_p[4]= {
   -92.0,          // 0 - Erev: Reversal potential
   -40.0,          // 1 - Epre: Presynaptic threshold potential
   3.0,            // 2 - tau_S: decay time constant for S [ms]
   50.0            // 3 - Vslope: Activation slope of graded release 
 };
-//float gLHIKC= 0.6;
-float gLHIKC= 0.006;
+//double gLHIKC= 0.6;
+double gLHIKC= 0.006;
 
-float postExpLHIKC[2]={
+double postExpLHIKC[2]={
   3.0,            // 0 - tau_S: decay time constant for S [ms]
   -92.0		  // 1 - Erev: Reversal potential
 };
 
-float myKCDN_p[13]= {
+double myKCDN_p[13]= {
   0.0,           // 0 - Erev: Reversal potential
   -20.0,         // 1 - Epre: Presynaptic threshold potential
   5.0,           // 2 - tau_S: decay time constant for S [ms]
@@ -145,27 +145,27 @@ float myKCDN_p[13]= {
 };
 
 //#define KCDNGSYN0 0.006
-float postExpKCDN[2]={
+double postExpKCDN[2]={
   5.0,            // 0 - tau_S: decay time constant for S [ms]
   0.0		  // 1 - Erev: Reversal potential
 };
 
-float myDNDN_p[4]= {
+double myDNDN_p[4]= {
   -92.0,        // 0 - Erev: Reversal potential
   -30.0,        // 1 - Epre: Presynaptic threshold potential 
   8.0,          // 2 - tau_S: decay time constant for S [ms]
   50.0          // 3 - Vslope: Activation slope of graded release 
 };
-//float gDNDN= 0.04;
-float gDNDN= 0.01;
+//double gDNDN= 0.04;
+double gDNDN= 0.01;
 
 
-float postExpDNDN[2]={
+double postExpDNDN[2]={
   8.0,            // 0 - tau_S: decay time constant for S [ms]
   -92.0		  // 1 - Erev: Reversal potential
 };
 
-float *postSynV = NULL;
+double *postSynV = NULL;
 
 
 
@@ -205,7 +205,7 @@ void modelDefinition(NNmodel &model)
   n.varNames.push_back(tS("C"));
   n.varTypes.push_back(tS("double"));
 
-  n.simCode= tS("   float Imem;\n\
+  n.simCode= tS("   double Imem;\n\
     unsigned int mt;\n\
     double mdt= DT/25.0;\n\
     __shared__ double shStepVG;\n\
