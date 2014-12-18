@@ -28,15 +28,9 @@ int main(int argc, char *argv[])
   FILE *timef= fopen(name.c_str(),"w");  
 
   timer.startTimer();
-  patSetTime= (int) (PAT_TIME/DT);
-  patFireTime= (int) (PATFTIME/DT);
   fprintf(stderr, "# DT %f \n", DT);
   fprintf(stderr, "# T_REPORT_TME %f \n", T_REPORT_TME);
   fprintf(stderr, "# SYN_OUT_TME %f \n",  SYN_OUT_TME);
-  fprintf(stderr, "# PATFTIME %f \n", PATFTIME); 
-  fprintf(stderr, "# patFireTime %d \n", patFireTime);
-  fprintf(stderr, "# PAT_TIME %f \n", PAT_TIME);
-  fprintf(stderr, "# patSetTime %d \n", patSetTime);
   fprintf(stderr, "# TOTAL_TME %d \n", TOTAL_TME);
   
   name= OutDir+ "/" + toString(argv[1]) + toString(".out.Vm"); 
@@ -80,17 +74,9 @@ int main(int argc, char *argv[])
   	fclose(f);   
   //ALLTOALL CONNECTIVITY END 
  
-  
-  fprintf(stderr, "# reading input patterns ... \n");
-  name= OutDir+ "/PoissonIzh.inpat";
-  f= fopen(name.c_str(), "r");
-  PNIzhNN.read_input_patterns(f);
-  fclose(f);
+
   PNIzhNN.generate_baserates();
 
-  if (which == GPU) {
-    PNIzhNN.allocate_device_mem_patterns();
-  }
   PNIzhNN.init(which);         // this includes copying g's for the GPU version
 
   fprintf(stderr, "# neuronal circuitery built, start computation ... \n\n");

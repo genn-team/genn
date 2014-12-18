@@ -131,19 +131,6 @@ int main(int argc, char *argv[])
     exit(1);
   }
 
-  // generate input patterns
-  cmd = gennPath + "/userproject/tools/gen_input_structured ";
-  cmd += toString(nPoisson) + " ";
-  cmd += "10 10 0.1 0.05 1.0 2e-04 ";
-  cmd += outdir + "/" + toString(argv[7]) + ".inpat";
-  cmd += " 1> " + outdir + "/" + toString(argv[7]) + ".inpat.msg 2>&1";
-  retval=system(cmd.c_str());
-  if (retval != 0){
-    cerr << "ERROR: Following call failed with status " << retval << ":" << endl << cmd << endl;
-    cerr << "Exiting..." << endl;
-    exit(1);
-  }
-
   // run it!
   cout << "running test..." << endl;
 #ifdef _WIN32
