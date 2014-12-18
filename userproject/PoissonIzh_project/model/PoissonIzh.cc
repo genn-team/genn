@@ -70,6 +70,7 @@ double *postSynV = NULL;
 void modelDefinition(NNmodel &model) 
 {
   initGeNN();
+  model.setGPUDevice(0);
   model.setName("PoissonIzh");
   model.addNeuronPopulation("PN", _NPoisson, POISSONNEURON, myPOI_p, myPOI_ini);
   model.addNeuronPopulation("Izh1", _NIzh, IZHIKEVICH, exIzh_p, exIzh_ini);

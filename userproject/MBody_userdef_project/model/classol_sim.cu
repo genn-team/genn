@@ -50,7 +50,6 @@ int main(int argc, char *argv[])
      nGPU= AUTODEVICE;
   }
 
-  timer.startTimer();
   patSetTime= (int) (PAT_TIME/DT);
   patFireTime= (int) (PATFTIME/DT);
   fprintf(stdout, "# DT %f \n", DT);
@@ -165,6 +164,7 @@ int main(int argc, char *argv[])
   t= 0.0;
   int done= 0;
   double last_t_report=  t;
+  timer.startTimer();
 //  locust.output_state(os, which);  
 //  locust.output_spikes(os, which);  
   locust.run(DT, which);

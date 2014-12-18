@@ -38,15 +38,15 @@ int main(int argc, char *argv[])
   FILE *osf2= fopen(name2.c_str(),"w");
   //-----------------------------------------------------------------
   // build the neuronal circuitry
-  classol locust;
+  neuronpop IzhikevichPop;
     
-  locust.init(which);         // this includes copying g's for the GPU version
+  IzhikevichPop.init(which);         // this includes copying g's for the GPU version
 
   fprintf(stderr, "# neuronal circuitry built, start computation ... \n\n");
   unsigned int outno;
-  if (locust.model.neuronN[0]>10) 
+  if (IzhikevichPop.model.neuronN[0]>10) 
   outno=10;
-  else outno=locust.model.neuronN[0];
+  else outno=IzhikevichPop.model.neuronN[0];
 
   //------------------------------------------------------------------
   // output general parameters to output file and start the simulation
@@ -55,36 +55,40 @@ int main(int argc, char *argv[])
   fprintf(stderr, "# initial wait time execution ... \n");
 
   t= 0.0;
-  void *devPtr;
   int done= 0;
   float last_t_report=  t;
-  locust.run(DT, which);
+  for (int k=0;k<IzhikevichPop.model.neuronGrpN;k++){
+    if (IzhikevichPop.model.receivesInputCurrent[k]>1){
+      IzhikevichPop.allocate_device_mem_input();
+      break;
+    }
+  }
+ IzhikevichPop.run(DT, which);
   while (!done) 
   {
-    if (which == GPU) locust.getSpikeNumbersFromGPU();
-    for (int k=0;k<locust.model.neuronGrpN;k++)
+    if (which == GPU) IzhikevichPop.getSpikeNumbersFromGPU();
+    for (int k=0;k<IzhikevichPop.model.neuronGrpN;k++)
     {
-      if (locust.model.receivesInputCurrent[k]==2) 
+      /*if (IzhikevichPop.model.receivesInputCurrent[k]==2) 
       {
-        FILE * ff;
-        ff=fopen("../../tools/expoutf","r");
-        locust.read_input_values(ff);
+        FILE * ff=fopen("../../tools/expoutf","r");
+        IzhikevichPop.read_input_values(ff);
         fclose(ff);
-	locust.copy_device_mem_input();
-      }
-      if (locust.model.receivesInputCurrent[k]==3)
+	      IzhikevichPop.copy_device_mem_input();
+      }*/
+      if (IzhikevichPop.model.receivesInputCurrent[k]==3)//INPRULE
       {
-	locust.create_input_values(t);
-	locust.copy_device_mem_input();
+	      IzhikevichPop.create_input_values(t);
+	      IzhikevichPop.copy_device_mem_input();
       }
     } 
-    locust.run(DT, which); // run next batch
+    IzhikevichPop.run(DT, which); // run next batch
     if (which == GPU) {  
     	CHECK_CUDA_ERRORS(cudaMemcpy(VIzh1, d_VIzh1, outno*sizeof(float), cudaMemcpyDeviceToHost));
     } 
-    locust.sum_spikes();
+    IzhikevichPop.sum_spikes();
     fprintf(osf, "%f ", t);
-    locust.write_input_to_file(osf2);
+    IzhikevichPop.write_input_to_file(osf2);
    
     for(int i=0;i<outno;i++) {
       fprintf(osf, "%f ", VIzh1[i]);
@@ -104,7 +108,7 @@ int main(int argc, char *argv[])
   }
 
   timer.stopTimer();
-  fprintf(timef, "%d %d %u %f %f \n",which, locust.model.neuronN[0], locust.sumIzh1, timer.getElapsedTime(),VIzh1[0]);
+  fprintf(timef, "%d %d %u %f %f \n",which, IzhikevichPop.model.neuronN[0], IzhikevichPop.sumIzh1, timer.getElapsedTime(),VIzh1[0]);
 //  cerr << "Output files are created under the current directory." << endl;
     cout << timer.getElapsedTime() << endl;
   fclose(osf);

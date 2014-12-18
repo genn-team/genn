@@ -562,7 +562,7 @@ void generate_process_presynaptic_events_code(
 	    substitute(wCode, tS("$(inSyn)"), tS("linSyn"));
 	    if (model.synapseGType[i] == INDIVIDUALG) {
 		name_substitutions(wCode, tS("dd_"), weightUpdateModels[synt].varNames, model.synapseName[i] + tS("[shSpk")
-				   + postfix + tS("[j]") + tS(" * ") + tS(model.neuronN[trg]) + tS(" + ") + localID + tS("]"));
+				   + postfix + tS("[j] * ") + tS(model.neuronN[trg]) + tS("+ ipost]"));
 	    }
 	    else {
 		value_substitutions(wCode, weightUpdateModels[synt].varNames, model.synapseIni[i]);

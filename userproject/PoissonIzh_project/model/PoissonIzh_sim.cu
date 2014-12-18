@@ -28,15 +28,9 @@ int main(int argc, char *argv[])
   FILE *timef= fopen(name.c_str(),"w");  
 
   timer.startTimer();
-  patSetTime= (int) (PAT_TIME/DT);
-  patFireTime= (int) (PATFTIME/DT);
   fprintf(stderr, "# DT %f \n", DT);
   fprintf(stderr, "# T_REPORT_TME %f \n", T_REPORT_TME);
   fprintf(stderr, "# SYN_OUT_TME %f \n",  SYN_OUT_TME);
-  fprintf(stderr, "# PATFTIME %f \n", PATFTIME); 
-  fprintf(stderr, "# patFireTime %d \n", patFireTime);
-  fprintf(stderr, "# PAT_TIME %f \n", PAT_TIME);
-  fprintf(stderr, "# patSetTime %d \n", patSetTime);
   fprintf(stderr, "# TOTAL_TME %d \n", TOTAL_TME);
   
   name= OutDir+ "/" + toString(argv[1]) + toString(".out.Vm"); 
@@ -80,17 +74,9 @@ int main(int argc, char *argv[])
   	fclose(f);   
   //ALLTOALL CONNECTIVITY END 
  
-  
-  fprintf(stderr, "# reading input patterns ... \n");
-  name= OutDir+ "/PoissonIzh.inpat";
-  f= fopen(name.c_str(), "r");
-  PNIzhNN.read_input_patterns(f);
-  fclose(f);
+
   PNIzhNN.generate_baserates();
 
-  if (which == GPU) {
-    PNIzhNN.allocate_device_mem_patterns();
-  }
   PNIzhNN.init(which);         // this includes copying g's for the GPU version
 
   fprintf(stderr, "# neuronal circuitery built, start computation ... \n\n");
@@ -105,17 +91,21 @@ int main(int argc, char *argv[])
   int done= 0;
   double last_t_report=  t;
   PNIzhNN.run(DT, which);
-  unsigned int sum= 0;
   while (!done) 
   {
 //    if (which == GPU) PNIzhNN.getSpikeNumbersFromGPU();
-//   if (which == GPU) PNIzhNN.getSpikesFromGPU();
+
     PNIzhNN.run(DT, which); // run next batch
+
     if (which == GPU) {  
+      PNIzhNN.getSpikeNumbersFromGPU();
+      PNIzhNN.getSpikesFromGPU();
       pullIzh1fromDevice();
       pullPNfromDevice();
 	} 
-//    PNIzhNN.sum_spikes();
+
+      PNIzhNN.sum_spikes();
+
 //    PNIzhNN.output_spikes(os, which);
 //   PNIzhNN.output_state(os, which);  // while outputting the current one ...
    fprintf(osf, "%f ", t);
@@ -169,7 +159,9 @@ int main(int argc, char *argv[])
 
   timer.stopTimer();
   cerr << "Output files are created under the current directory." << endl;
-  fprintf(timef, "%d %d %d %d %f \n", PNIzhNN.sumPN, PNIzhNN.sumIzh1, timer.getElapsedTime());
+  float elapsedTime= timer.getElapsedTime();
+  fprintf(timef, "%d %d %f \n", PNIzhNN.sumPN, PNIzhNN.sumIzh1, elapsedTime);
+  fprintf(stdout, "%d Poisson spikes evoked spikes on %d Izhikevich neurons in %f seconds.\n", PNIzhNN.sumPN, PNIzhNN.sumIzh1, elapsedTime);
 
 	freeDeviceMem();
   cudaDeviceReset();

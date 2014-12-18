@@ -17,16 +17,16 @@ for Linux, Mac and other UNIX users.
   USAGE
   -----
 
-  ./generate_run [CPU/GPU] [nAL] [nKC] [nLH] [nDN] [gscale] [DIR] [MODEL] [DEBUG OFF/ON] [SKIP GENERATION OFF/ONN]
+  ./generate_run <0(CPU)/1(GPU)> <nAL> <nKC> <nLH> <nDN> <gscale> <DIR> <MODEL> <DEBUG 0(OFF)/1(ON)> <ftype DOUBLE/FLOAT> <reuse input&connectivty? 0(OFF)/1(ON)>
 
 An example invocation of generate_run is:
 
-  ./generate_run 1 100 1000 20 100 0.0025 outname MBody_userdef 0 0
+  ./generate_run 1 100 1000 20 100 0.0025 outname MBody_userdef 0 FLOAT 0
 
 Such a command would generate a locust olfaction model with 100 antennal lobe neurons,
 1000 mushroom body Kenyon cells, 20 lateral horn interneurons and 100 mushroom body
-output neurons, and launch a simulation of it on a CUDA-enabled GPU. All output files
-will be prefixed with "outname" and will be created under the "outname" directory.
+output neurons, and launch a simulation of it on a CUDA-enabled GPU using single precision floating point numbers. 
+All output files will be prefixed with "outname" and will be created under the "outname" directory.
 
 In more details, what generate_run program does is: 
 a) use some other tools to generate the appropriate connectivity

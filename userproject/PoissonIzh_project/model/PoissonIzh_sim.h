@@ -20,7 +20,7 @@ using namespace std;
 #include <cuda_runtime.h>
 #include "PoissonIzh.cc"
 
-#define MYRAND(Y,X) Y = Y * 1103515245 +12345;X= (unsigned int)(Y >> 16) & 32767
+#define MYRAND(Y,X) Y = Y * 1103515245 +12345; X= (Y >> 16); 
 #define INJECTCURRENT 0
 
 // we will hard-code some stuff ... because at the end of the day that is 
@@ -33,19 +33,12 @@ float t= 0.0f;
 unsigned int iT= 0;
 
 #define PATTERNNO 100
-scalar InputBaseRate= 2e-04;
+scalar InputBaseRate= 2e-02;
 //----------------------------------------------------------------------
 // other stuff:
 #define T_REPORT_TME 1000.0
 #define SYN_OUT_TME 2000.0
 
-int patSetTime;
-// reset input every 100 steps == 50ms
-#define PAT_TIME 100.0
-// pattern goes off at 2 steps == 1 ms
-#define PATFTIME 1.0
-
-int patFireTime;
 
 #define TOTAL_TME 5000
 
