@@ -674,7 +674,7 @@ void genRunner(NNmodel &model, //!< Model description
 	    os << "    delete[] glbSpkCntEvnt" << model.neuronName[i] << ";" << endl;
 	    os << "    CHECK_CUDA_ERRORS(cudaFree(d_glbSpkCntEvnt" << model.neuronName[i] << "));" << endl;
 	    os << "    delete[] glbSpkCntEvnt" << model.neuronName[i] << ";" << endl;
-	    os << "    CHECK_CUDA_ERRORS(cudaFree(d_glbSpkCntEvnt" << model.neuronName[i] << "));" << endl;
+	    os << "    CHECK_CUDA_ERRORS(cudaFree(d_glbSpkEvnt" << model.neuronName[i] << "));" << endl;
 	}
 	if (model.neuronNeedSt[i]) {
 	    os << "    delete[] sT" << model.neuronName[i] << ";" << endl;
