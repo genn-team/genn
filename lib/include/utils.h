@@ -92,13 +92,65 @@ void writeHeader(ostream &os)
 unsigned int theSize(string type) 
 {
   unsigned int size = 0;
+  if (type == "char") size = sizeof(char);
+  //  if (type == "char16_t") size = sizeof(char16_t);
+  //  if (type == "char32_t") size = sizeof(char32_t);
+  if (type == "wchar_t") size = sizeof(wchar_t);
+  if (type == "signed char") size = sizeof(signed char);
+  if (type == "short") size = sizeof(short);
+  if (type == "signed short") size = sizeof(signed short);
+  if (type == "short int") size = sizeof(short int);
+  if (type == "signed short int") size = sizeof(signed short int);
   if (type == "int") size = sizeof(int);
+  if (type == "signed int") size = sizeof(signed int);
+  if (type == "long") size = sizeof(long);
+  if (type == "signed long") size = sizeof(signed long);
+  if (type == "long int") size = sizeof(long int);
+  if (type == "signed long int") size = sizeof(signed long int);
+  if (type == "long long") size = sizeof(long long);
+  if (type == "signed long long") size = sizeof(signed long long);
+  if (type == "long long int") size = sizeof(long long int);
+  if (type == "signed long long int") size = sizeof(signed long long int);
+  if (type == "unsigned char") size = sizeof(unsigned char);
+  if (type == "unsigned short") size = sizeof(unsigned short);
+  if (type == "unsigned short int") size = sizeof(unsigned short int);
+  if (type == "unsigned") size = sizeof(unsigned);
   if (type == "unsigned int") size = sizeof(unsigned int);
+  if (type == "unsigned long") size = sizeof(unsigned long);
+  if (type == "unsigned long int") size = sizeof(unsigned long int);
+  if (type == "unsigned long long") size = sizeof(unsigned long long);
+  if (type == "unsigned long long int") size = sizeof(unsigned long long int);
   if (type == "float") size = sizeof(float);
   if (type == "double") size = sizeof(double);
   if (type == "long double") size = sizeof(long double);
-  if (type == "uint64_t") size= sizeof(uint64_t); 
- return size;
+  if (type == "bool") size = sizeof(bool);
+  if (type == "intmax_t") size= sizeof(intmax_t);
+  if (type == "uintmax_t") size= sizeof(uintmax_t);
+  if (type == "int8_t") size= sizeof(int8_t);
+  if (type == "uint8_t") size= sizeof(uint8_t);
+  if (type == "int16_t") size= sizeof(int16_t);	
+  if (type == "uint16_t") size= sizeof(uint16_t);
+  if (type == "int32_t") size= sizeof(int32_t);
+  if (type == "uint32_t") size= sizeof(uint32_t);
+  if (type == "int64_t") size= sizeof(int64_t);
+  if (type == "uint64_t") size= sizeof(uint64_t);
+  if (type == "int_least8_t") size= sizeof(int_least8_t);
+  if (type == "uint_least8_t") size= sizeof(uint_least8_t);
+  if (type == "int_least16_t") size= sizeof(int_least16_t);
+  if (type == "uint_least16_t") size= sizeof(uint_least16_t);
+  if (type == "int_least32_t") size= sizeof(int_least32_t);
+  if (type == "uint_least32_t") size= sizeof(uint_least32_t);
+  if (type == "int_least64_t") size= sizeof(int_least64_t);
+  if (type == "uint_least64_t") size= sizeof(uint_least64_t);
+  if (type == "int_fast8_t") size= sizeof(int_fast8_t);
+  if (type == "uint_fast8_t") size= sizeof(uint_fast8_t);
+  if (type == "int_fast16_t") size= sizeof(int_fast16_t);
+  if (type == "uint_fast16_t") size= sizeof(uint_fast16_t);
+  if (type == "int_fast32_t") size= sizeof(int_fast32_t);
+  if (type == "uint_fast32_t") size= sizeof(uint_fast32_t);
+  if (type == "int_fast64_t") size= sizeof(int_fast64_t);
+  if (type == "uint_fast64_t") size= sizeof(uint_fast64_t);
+  return size;
 }
 
 //--------------------------------------------------------------------------
