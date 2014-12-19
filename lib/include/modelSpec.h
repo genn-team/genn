@@ -27,9 +27,6 @@
 #include "global.h"
 
 void initGeNN();
-/*template <class T> 
-  vector<T> vec(int sz, ...);*/
-
 
 unsigned int GeNNReady= 0;
 
