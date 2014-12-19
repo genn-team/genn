@@ -14,6 +14,9 @@ void substitute(string &s, const string trg, const string rep)
   }
 }
 
+//--------------------------------------------------------------------------
+//! \brief This function performs a list of name substitutions for variables in code snippets.
+//--------------------------------------------------------------------------
 
 void name_substitutions(string &code, string prefix, vector<string> &names, string postfix= string(""))
 {
@@ -22,12 +25,20 @@ void name_substitutions(string &code, string prefix, vector<string> &names, stri
     }
 }
 
+//--------------------------------------------------------------------------
+//! \brief This function performs a list of value substitutions for parameters in code snippets.
+//--------------------------------------------------------------------------
+
 void value_substitutions(string &code, vector<string> &names, vector<double> &values)
 {
     for (int k = 0, l = names.size(); k < l; k++) {
 	substitute(code, tS("$(") + names[k] + tS(")"), tS("(")+tS(values[k])+ tS(")"));
     }
 }
+
+//--------------------------------------------------------------------------
+//! \brief This function performs a list of name substitutions for variables in code snippets where the variables have a prefix/postfix in their names.
+//--------------------------------------------------------------------------
 
 void extended_name_substitutions(string &code, string prefix, vector<string> &names, string ext, string postfix= string(""))
 {
@@ -36,17 +47,16 @@ void extended_name_substitutions(string &code, string prefix, vector<string> &na
     }
 }
 
+//--------------------------------------------------------------------------
+//! \brief This function performs a list of value substitutions for parameters in code snippets where the parameters have a prefix/postfix in their names.
+//--------------------------------------------------------------------------
+
 void extended_value_substitutions(string &code, vector<string> &names, string ext, vector<double> &values)
 {
     for (int k = 0, l = names.size(); k < l; k++) {
 	substitute(code, tS("$(") + names[k] + ext + tS(")"), tS("(")+tS(values[k])+ tS(")"));
     }
 }
-
-//--------------------------------------------------------------------------
-/*! \brief Function for converting code to contain only explicit single precision (float) constants 
- */
-//--------------------------------------------------------------------------
 
 string digits= string("0123456789");
 string op= string("+-*/(<>= ,;")+string("\n")+string("\t");
@@ -170,6 +180,11 @@ const char *__fnames[__mathFN]= {
   "fmaf"
 };
 
+//--------------------------------------------------------------------------
+/*! \brief This function converts code to contain only explicit single precision (float) function calls (C99 standard)
+ */
+//--------------------------------------------------------------------------
+
 void ensureMathFunctionFtype(string &code, string type) 
 {
   if (type == string("double")) {
@@ -184,6 +199,10 @@ void ensureMathFunctionFtype(string &code, string type)
   }
 }
 
+//--------------------------------------------------------------------------
+/*! \brief This function is part of the parser that converts any floating point constant in a code snippet to a floating point constant with an explicit precision (by appending "f" or removing it). 
+ */
+//--------------------------------------------------------------------------
 
 void doFinal(string &code, unsigned int i, string type, unsigned int &state) 
 {
@@ -207,6 +226,11 @@ void doFinal(string &code, unsigned int i, string type, unsigned int &state)
     }
 }
 
+
+//--------------------------------------------------------------------------
+/*! \brief This function implements a parser that converts any floating point constant in a code snippet to a floating point constant with an explicit precision (by appending "f" or removing it). 
+ */
+//--------------------------------------------------------------------------
 
 string ensureFtype(string oldcode, string type) 
 {

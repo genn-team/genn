@@ -27,9 +27,6 @@
 #include "global.h"
 
 void initGeNN();
-/*template <class T> 
-  vector<T> vec(int sz, ...);*/
-
 
 unsigned int GeNNReady= 0;
 
@@ -93,7 +90,7 @@ unsigned int LEARN1SYNAPSE; //!< Variable attaching  the name LEARN1SYNAPSE to t
 //#define MAXSPKCNT 50000
 
 //postsynaptic parameters
-unsigned int EXPDECAY; //default - how it is in the original version
+unsigned int EXPDECAY; //default - exponential decay
 unsigned int IZHIKEVICH_PS; //empty postsynaptic rule for the Izhikevich model.
 // currently values >1 will be defined by code generation.
 #define MAXPOSTSYN 2 // maximum number of postsynaptic integration: SpineML needs to know this
@@ -117,31 +114,31 @@ struct neuronModel
   vector<string> tmpVarNames; //!< never used
   vector<string> varTypes; //!< Types of the variable named above, e.g. "float". Names and types are matched by their order of occurrence in the vector.
   vector<string> tmpVarTypes; //!< never used
-  vector<string> pNames; //!< Names of (independent) parameters of the model. These are assumed to be always of type "double"
-  vector<string> dpNames; /*!< \brief Names of dependent parameters of the model. These are assumed to be always of type "double"
+  vector<string> pNames; //!< Names of (independent) parameters of the model. 
+  vector<string> dpNames; /*!< \brief Names of dependent parameters of the model. 
   			    
 The dependent parameters are functions of independent parameters that enter into the neuron model. To avoid unecessary computational overhead, these parameters are calculated at compile time and inserted as explicit values into the generated code. See method NNmodel::initDerivedNeuronPara for how this is done.*/ 
 
   vector<string> extraGlobalNeuronKernelParameters; //!< Additional parameter in the neuron kernel; it is translated to a population specific name but otherwise assumed to be one parameter per population rather than per neuron.
 
   vector<string> extraGlobalNeuronKernelParameterTypes; //!< Additional parameters in the neuron kernel; they are translated to a population specific name but otherwise assumed to be one parameter per population rather than per neuron.
-  dpclass * dps;
-    bool needPreSt;
-    bool needPostSt;
+  dpclass * dps; //!< \brief Derived parameters
+  bool needPreSt; //!< \brief Whether presynaptic spike times are needed or not
+  bool needPostSt; //!< \brief Whether postsynaptic spike times are needed or not
 };
 
-/*! \brief Structure to hold the information that defines a post-synaptoic model (a model of how synapses affect post-synaptic neuron variables, classically in the form of a synaptic current). It also allows to define an equation for the dynamics that can be applied to the summed synaptic input variable "insyn".
+/*! \brief Structure to hold the information that defines a post-synaptic model (a model of how synapses affect post-synaptic neuron variables, classically in the form of a synaptic current). It also allows to define an equation for the dynamics that can be applied to the summed synaptic input variable "insyn".
  */
 
 struct postSynModel
 {
-  string postSyntoCurrent;
-  string postSynDecay;
+  string postSyntoCurrent; //!< \brief Code that defines how postsynaptic update is translated to current 
+  string postSynDecay; //!< \brief Code that defines how postsynaptic current decays 
   vector<string> varNames; //!< Names of the variables in the postsynaptic model
   vector<string> varTypes; //!< Types of the variable named above, e.g. "float". Names and types are matched by their order of occurrence in the vector.
-  vector<string> pNames; //!< Names of (independent) parameters of the model. These are assumed to be always of type "double"
-  vector<string> dpNames; /*!< \brief Names of dependent parameters of the model. These are assumed to be always of type "double"*/
-  dpclass *dps;
+  vector<string> pNames; //!< Names of (independent) parameters of the model. 
+  vector<string> dpNames; //!< \brief Names of dependent parameters of the model. 
+  dpclass *dps; //!< \brief Derived parameters 
 };
 
 /*! \brief Structure to hold the information that defines a weightupdate model (a model of how spikes affect synaptic (and/or) (mostly) post-synaptic neuron variables. It also allows to define changes in response to post-synaptic spikes/spike-like events.
@@ -150,22 +147,22 @@ struct postSynModel
 class weightUpdateModel
 {
 public:
-  string simCode; // !< \brief Simulation code that is used for true spikes (only one point after Vthresh)
-  string simCodeEvnt; // !< \brief Simulation code that is used for spike events (all the instances where Vm > Vthres)
-  string simLearnPost; // !< \brief Simulation code which is used in the learnSynapsesPost kernel/function, where postsynaptic neuron spikes before the presynaptic neuron in the STDP window.
-  string evntThreshold; // !< \brief Simulation code for spike event detection.
-  string synapseDynamics;
-  vector<string> varNames; // !< \brief Names of the variables in the postsynaptic model
-  vector<string> varTypes; // !< \brief Types of the variable named above, e.g. "float". Names and types are matched by their order of occurrence in the vector.
-  vector<string> pNames; // !< \brief Names of (independent) parameters of the model. These are assumed to be always of type "double"
-  vector<string> dpNames; /*!< \brief Names of dependent parameters of the model. These are assumed to be always of type "double"*/
+  string simCode; //!< \brief Simulation code that is used for true spikes (only one time step after spike detection)
+  string simCodeEvnt; //!< \brief Simulation code that is used for spike events (all the instances where event threshold condition is met)
+  string simLearnPost; //!< \brief Simulation code which is used in the learnSynapsesPost kernel/function, where postsynaptic neuron spikes before the presynaptic neuron in the STDP window.
+  string evntThreshold; //!< \brief Simulation code for spike event detection.
+  string synapseDynamics; //!< \brief Simulation code for synapse dynamics independent of spike detection
+  vector<string> varNames; //!< \brief Names of the variables in the postsynaptic model
+  vector<string> varTypes; //!< \brief Types of the variable named above, e.g. "float". Names and types are matched by their order of occurrence in the vector.
+  vector<string> pNames; //!< \brief Names of (independent) parameters of the model. 
+  vector<string> dpNames; //!< \brief Names of dependent parameters of the model. 
 
   vector<string> extraGlobalSynapseKernelParameters; //!< Additional parameter in the neuron kernel; it is translated to a population specific name but otherwise assumed to be one parameter per population rather than per synapse.
 
   vector<string> extraGlobalSynapseKernelParameterTypes; //!< Additional parameters in the neuron kernel; they are translated to a population specific name but otherwise assumed to be one parameter per population rather than per synapse.
   dpclass *dps;
-    bool needPreSt;
-    bool needPostSt;
+    bool needPreSt; //!< \brief Whether presynaptic spike times are needed or not
+    bool needPostSt; //!< \brief Whether postsynaptic spike times are needed or not
 
     weightUpdateModel() {
 	dps= NULL;
@@ -330,7 +327,7 @@ public:
 
   void addNeuronPopulation(const string, unsigned int, unsigned int, vector<double>, vector<double>); //!< Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population
 
-  void activateDirectInput(const string, unsigned int);  
+  void activateDirectInput(const string, unsigned int);  //!< Method for activating explicit current input
 
   void setConstInp(const string, double); //!< Method for setting the global input value for a neuron population if CONSTINP
 

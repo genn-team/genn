@@ -18,7 +18,7 @@ GeNN is based on the idea of code generation for the involved GPU or
 CPU simulation code for neuronal network models but leaves a lot of
 freedom how to use the generated code in the final
 application. To facilitate the use of GeNN on the background of this
-philosophy it comes with a number of complete examples containing both
+philosophy, it comes with a number of complete examples containing both
 the model description code that is used by GeNN for code generation
 and the "user side code" to run the generated model and safe the
 results. Running these complete examples should be achievable in a few
