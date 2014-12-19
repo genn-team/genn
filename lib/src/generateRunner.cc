@@ -505,11 +505,6 @@ void genRunner(NNmodel &model, //!< Model description
 	    os << "        sT" <<  model.neuronName[i] << "[i] = -10000.0;" << endl;
 	    os << "    }" << endl;
 	}
-	if (model.neuronType[i] == POISSONNEURON) {
-	    os << "    for (int i = 0; i < " << model.neuronN[i] << "; i++) {" << endl;
-	    os << "        seed" << model.neuronName[i] << "[i] = rand();" << endl;
-	    os << "    }" << endl;
-	}
 	for (int j = 0; j < nModels[nt].varNames.size(); j++) {
 	    if (model.neuronVarNeedQueue[i][j]) {
 		size = model.neuronN[i] * model.neuronDelaySlots[i];
@@ -519,6 +514,11 @@ void genRunner(NNmodel &model, //!< Model description
 	    }
 	    os << "    for (int i = 0; i < " << size << "; i++) {" << endl;
 	    os << "        " << nModels[nt].varNames[j] << model.neuronName[i] << "[i] = " << model.neuronIni[i][j] << ";" << endl;
+	    os << "    }" << endl;
+	}
+	if (model.neuronType[i] == POISSONNEURON) {
+	    os << "    for (int i = 0; i < " << model.neuronN[i] << "; i++) {" << endl;
+	    os << "        seed" << model.neuronName[i] << "[i] = rand();" << endl;
 	    os << "    }" << endl;
 	}
 
@@ -863,10 +863,10 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 	os << OB(1060);
 
 	if (model.neuronNeedTrueSpk[i]) {
-	    size = model.neuronDelaySlots[i];
+	    size = model.neuronDelaySlots[i] * sizeof(unsigned int);
 	}
 	else {
-	    size = 1;
+	    size = sizeof(unsigned int);
 	}
 	os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_glbSpkCnt" << model.neuronName[i];
 	os << ", glbSpkCnt" << model.neuronName[i] << ", " << size << ", cudaMemcpyHostToDevice));" << endl;
@@ -968,10 +968,10 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 	os << OB(1060);
 
 	if (model.neuronNeedTrueSpk[i]) {
-	    size = model.neuronDelaySlots[i];
+	    size = model.neuronDelaySlots[i] * sizeof(unsigned int);
 	}
 	else {
-	    size = 1;
+	    size = sizeof(unsigned int);
 	}
 	os << "CHECK_CUDA_ERRORS(cudaMemcpy(glbSpkCnt" << model.neuronName[i];
 	os << ", d_glbSpkCnt" << model.neuronName[i] << ", " << size << ", cudaMemcpyDeviceToHost));" << endl;

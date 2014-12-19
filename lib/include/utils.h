@@ -97,7 +97,8 @@ unsigned int theSize(string type)
   if (type == "float") size = sizeof(float);
   if (type == "double") size = sizeof(double);
   if (type == "long double") size = sizeof(long double);
-  return size;
+  if (type == "uint64_t") size= sizeof(uint64_t); 
+ return size;
 }
 
 //--------------------------------------------------------------------------
