@@ -18,10 +18,9 @@
 \section Contents
 
 \ref sIntro <br />
-\subpage sect1 <br />
-\subpage sect2 <br />
-\subpage sect3 <br />
-\subpage sect_postsyn <br />
+\subpage sectDefiningNetwork <br />
+\subpage sectNeuronModels <br />
+\subpage sectSynapseModels <br />
 \subpage ListOfVariables <br />
 \subpage Credits <br />
 
@@ -48,13 +47,13 @@ right in.
 <br />
 
 -----
-\link ReleaseNotes Previous\endlink | \link UserManual Top\endlink | \link sect1 Next\endlink
+\link ReleaseNotes Previous\endlink | \link UserManual Top\endlink | \link sectDefiningNetwork Next\endlink
 */
 */
 
 //----------------------------------------------------------------------------
 /*!  
-\page sect1 Defining a network model
+\page sectDefiningNetwork Defining a network model
 A network model is defined by the user by providing the function 
 \code{.cc}
 void modelDefinition(NNmodel &model) 
@@ -85,11 +84,11 @@ model.addNeuronPopulation(name, n, TYPE, para, ini);
 where the arguments are:
 \arg `const char* name`: Name of the neuron population
 \arg `int n`: number of neurons in the population
-\arg `int TYPE`: Type of the neurons, refers to either a standard type (see \ref sect2) or user-defined type
+\arg `int TYPE`: Type of the neurons, refers to either a standard type (see \ref sectNeuronModels) or user-defined type
 \arg `double *para`: Parameters of this neuron type
 \arg `double *ini`: Initial values for variables of this neuron type 
 
-The user may add as many neuron populations as the model necessitates. They should all have unique names. The possible values for the arguments, predefined models and their parameters and initial values are detailed \ref sect2 below.
+The user may add as many neuron populations as the model necessitates. They should all have unique names. The possible values for the arguments, predefined models and their parameters and initial values are detailed \ref sectNeuronModels below.
 
 \section subsect12 Defining synapse populations
 
@@ -130,12 +129,12 @@ Synaptic updates can occur per "true" spike (i.e at one point per spike, e.g. af
 <br />
 
 -----
-\link UserManual Previous\endlink | \link sect1 Top\endlink | \link sect3 Next\endlink
+\link UserManual Previous\endlink | \link sectDefiningNetwork Top\endlink | \link sectSynapseModels Next\endlink
 */
 
 //----------------------------------------------------------------------------
 /*! 
-\page sect2 Neuron models
+\page sectNeuronModels Neuron models
 There is a number of predefined models which can be chosen in the \c
 addNeuronGroup(...) function by their unique cardinal number, starting from
 0. For convenience, C variables with readable names are predefined
@@ -429,7 +428,7 @@ device memory.
 
 //----------------------------------------------------------------------------
 /*! 
-\page sect3 Synapse models
+\page sectSynapseModels Synapse models
 
 A synapse model is a weightUpdateModel object which consists of variables, parameters, and string objects which will be substituted in the code. The three strings that will be substituted in the code for synapse update are:
 
@@ -594,7 +593,7 @@ IZHIKEVICH_PS: Empty postsynaptic rule to be used with Izhikevich neurons.
 <br />
 
 -----
-\link sect3 Previous\endlink | \link sect_postsyn  Top\endlink | \link ListOfVariables Next\endlink
+\link sectSynapseModels Previous\endlink | \link sect_postsyn  Top\endlink | \link ListOfVariables Next\endlink
 
 */
 
@@ -602,10 +601,8 @@ IZHIKEVICH_PS: Empty postsynaptic rule to be used with Izhikevich neurons.
 /*! 
 \page ListOfVariables Variables in GeNN
 
-There are different types of variables that users of GeNN should be aware of and should know how to use.
-
-\section modelVars Neuron and Synapse variables
-One type of variables are those that originate from a neuron model type, weightupdate model type or post-synaptic model type. The core name of the variable is defined when the model type is introduced, i.e. with a statement such as
+\section modelVars Model variables
+User-defined model variables originate from core units such as neuronModel, weightUpdateModel or postSynModel object. The name of the variable is defined when the model type is introduced, i.e. with a statement such as
 \code
 neuronModel model;
 model.varNames.push_back(String"x"));
@@ -641,18 +638,22 @@ there will be a global variable of type `float*` with the name `gENIN` that is p
 \note
 The content of `gENIN` needs to be interpreted differently for DENSE connectivity and sparse matrix based SPARSE connectivity representations. For DENSE connectivity `gENIN` would contain "n_pre" times "n_post" elements, ordered along the pre-synaptic neuronsas the major dimension, i.e. the value of `gENIN` for the ith pre-synaptic neuron and the jth post-synaptic neuron would be `gENIN[i*n_post+j]`. The arrangement of values in the SPARSE representation is explained in section \ref subsect32
 
-\section predefinedVars Pre-defined Variables in GeNN
-In addition to the explicitly declared neuron, weightupdate and post-synaptic variables there are some variables that are built-in and modified in a predefined way by GeNN. These variables are used for intermediary calculations and communication between different parts of the generated code. They can be used in the user defined code but no other variables should be defined with these names.
+\section predefinedVars Built-in Variables in GeNN
 
-- \c addtoinSyn is a local variable which is used for updating synaptic input. The way it is modified is defined by the weightupdate model,
+With GeNN 2.0, there are no more explicitly hard-coded variables. Users are free to call the variable of their models as they want. However, there are some reserved variables that are used for intermediary calculations and communication between different parts of the generated code. They can be used in the user defined code but no other variables should be defined with these names.
+
+- \c addtoinSyn : This variable is used by weightUpdateModel for updating synaptic input. The way it is modified is defined in weightUpdateModel.simCode or weightUpdateModel.simCodeEvnt,
  therefore if a user defines her own model she should update this variable to contain the input to the post-synaptic model.   
-At the end of the synaptic update, its value is copied back to the d_inSyn<synapsePopulation> variables which will are used in the next step of the neuron update to provide the input to the post-snaptic neurons.
 
-- \c Isyn is a local variable which defines the (summed) input current to a neuron. It is typically the sum of any explicit current input 
-and all synaptic inputs. The way its value is calculated during the update of the postsynaptic neuron is defined by the code provided in the postSynModel. For example, the standard `expDecay` post-synaptic model defines
+- \c updatelinsyn : At the end of the synaptic update by \c addtoinSyn, final values are copied back to the d_inSyn<synapsePopulation> variables which will be used in the next step of the neuron update to provide the input to the postsynaptic neurons.
+
+- \c inSyn : This is an intermediary synapse variable which contains everything is transferred from a presynaptic neuron (by using \c addtoinSyn variable) to a postsynaptic neuron. 
+
+- \c Isyn : This is a local variable which defines the (summed) input current to a neuron. It is typically the sum of any explicit current input 
+and all synaptic inputs. The way its value is calculated during the update of the postsynaptic neuron is defined by the code provided in the postSynModel. For example, the standard `EXPDECAY` postsynaptic model defines
 ps.postSyntoCurrent= String("$(inSyn)*($(E)-$(V))");
 \endcode
-which implements a conductance based synapse in which the post-synaptic current is given by \f$I_{\rm syn}= g*s*(V_{\rm rev}-V_{\rm post})\f$. 
+which implements a conductance based synapse in which the postsynaptic current is given by \f$I_{\rm syn}= g*s*(V_{\rm rev}-V_{\rm post})\f$. 
 \note
 The `addtoinSyn` variables from all incoming synapses are automatically summed and added to the current value of `inSyn`.
 
@@ -661,7 +662,12 @@ The value resulting from the `postSyntoCurrent` code is assigned to `Isyn` and  
 $(V)+= (-$(V)+$(Isyn))*DT 
 \endcode 
 
-- \c sT<neuronName> is the last spike time in a neuron and is automatically generated for pre- and postsynaptic neuron groups of a synapse group i that follows a spike based learning rule (indicated by usesPostLearning[i]= TRUE for the ith synapse population).
+- \c sT : As a neuron variable, this is the last spike time in a neuron and is automatically generated for pre and postsynaptic neuron groups of a synapse group i that follows a spike based learning rule (indicated by usesPostLearning[i]= TRUE for the ith synapse population).
+
+- \c sT_pre : Spike time of the presynaptic neuron population.
+
+- \c sT_post : Spike time of the postsynaptic neuron population.
+ 
 
 <br />
 
