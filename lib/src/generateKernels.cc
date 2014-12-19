@@ -1022,7 +1022,6 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 	    os << "if (j == " << numOfBlocks - 1 << ")" << OB(330);
 
 	    for (int j = 0; j < model.neuronGrpN; j++) {
-		os << "dd_glbSpkCnt" << model.neuronName[j] << " = 0;" << ENDL;
 		if (model.neuronDelaySlots[j] > 1) { // WITH DELAY
 		    os << "dd_spkQuePtr" << model.neuronName[j] << " = (dd_spkQuePtr" << model.neuronName[j] << " + 1) % " << model.neuronDelaySlots[j] << ";" << ENDL;
 		    if (model.neuronNeedSpkEvnt[j]) {

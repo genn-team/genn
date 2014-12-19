@@ -483,16 +483,16 @@ void classol::output_spikes(FILE *f, //!< File handle for a file to write spike 
 {
 
   //    fprintf(stdout, "%f %f %f %f %f\n", t, glbSpkCntPN, glbSpkCntKC, glbSpkCntLHI,glbSpkCntDN);
-  for (int i= 0; i < glbSpkCntPN; i++) {
+  for (int i= 0; i < glbSpkCntPN[0]; i++) {
     fprintf(f, "%f %d\n", t, glbSpkPN[i]);
   }
-  for (int i= 0; i < glbSpkCntKC; i++) {
+  for (int i= 0; i < glbSpkCntKC[0]; i++) {
     fprintf(f,  "%f %d\n", t, model.sumNeuronN[0]+glbSpkKC[i]);
   }
-  for (int i= 0; i < glbSpkCntLHI; i++) {
+  for (int i= 0; i < glbSpkCntLHI[0]; i++) {
     fprintf(f, "%f %d\n", t, model.sumNeuronN[1]+glbSpkLHI[i]);
   }
-  for (int i= 0; i < glbSpkCntDN; i++) {
+  for (int i= 0; i < glbSpkCntDN[0]; i++) {
     fprintf(f, "%f %d\n", t, model.sumNeuronN[2]+glbSpkDN[i]);
   }
 }
@@ -504,10 +504,10 @@ void classol::output_spikes(FILE *f, //!< File handle for a file to write spike 
 
 void classol::sum_spikes()
 {
-  sumPN+= glbSpkCntPN;
-  sumKC+= glbSpkCntKC;
-  sumLHI+= glbSpkCntLHI;
-  sumDN+= glbSpkCntDN;
+  sumPN+= glbSpkCntPN[0];
+  sumKC+= glbSpkCntKC[0];
+  sumLHI+= glbSpkCntLHI[0];
+  sumDN+= glbSpkCntDN[0];
 }
 
 //--------------------------------------------------------------------------
