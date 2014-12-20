@@ -1,0 +1,11 @@
+#! /bin/bash
+
+cd model
+buildmodel.sh MBody1
+make clean all
+cd ..
+model/classol_sim testing 1
+mkdir profile_$1
+cp testing_output/*.tim* profile_$1
+cp testing_output/*.out* profile_$1
+

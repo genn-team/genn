@@ -23,6 +23,7 @@ This file compiles to a tool to generate appropriate connectivity patterns betwe
 #include <iostream>
 #include <fstream>
 #include <stdlib.h>
+#include <cstdint>
 
 using namespace std;
 
@@ -49,13 +50,9 @@ int main(int argc, char *argv[])
   int nMB= atoi(argv[2]);
   double psyn= atof(argv[3]);
   ofstream os(argv[4], ios::binary);
-  unsigned int UIntSz= sizeof(unsigned int)*8;  // in bit!
-  unsigned int logUIntSz= (int) (logf((double) UIntSz)/logf(2.0f)+1e-5f);
-  unsigned int tmp= nAL*nMB;
-  unsigned int size= tmp >> logUIntSz;
-  if (tmp > (size << logUIntSz)) size++;
-  unsigned int *g= new unsigned int[size];
-  double tt;
+  unsigned int size= nAL*nMB;
+  size= (size/32+1)*sizeof(uint32_t);
+  uint32_t *g= new uint32_t[size];
 
   cerr << "# call was: ";
   for (int i= 0; i < argc; i++) cerr << argv[i] << " ";
@@ -67,17 +64,15 @@ int main(int argc, char *argv[])
   
   for (int i= 0; i < nAL; i++) {
     for (int j= 0; j < nMB; j++) {
-      tt= R.n(); 
-      //      cerr << tt << " " << psyn << endl;
-      if (tt < psyn) {
-	setB(g[(i*nMB+j) >> logUIntSz], (i*nMB+j)%UIntSz);
-	//	cerr << ((i*nMB+j) >> logUIntSz) << " " << (i*nMB+j)%UIntSz << " ";
-	//	cerr << g[(i*nMB+j) >> logUIntSz] << endl;
+      if (R.n() < psyn) {
+	setB(g[(i*nMB+j) >> 5], (i*nMB+j)&31);
+	//	cerr << ((i*nMB+j) >> 5) << " " << (i*nMB+j)&31 << " ";
+	//	cerr << g[(i*nMB+j) >> 5] << endl;
       }
     }
   }
   
-  os.write((char *)g, size*sizeof(unsigned int));
+  os.write((char *)g, size);
   os.close();
   delete[] g;
   

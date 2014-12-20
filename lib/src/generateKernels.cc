@@ -675,6 +675,7 @@ void genSynapseKernel(NNmodel &model, //!< Model description
     os << " containing the synapse kernel and learning kernel functions." << ENDL;
     os << "*/" << ENDL;
     os << "//-------------------------------------------------------------------------" << ENDL << ENDL;
+    os << "#include \"simpleBit.h\"" << ENDL;
     os << ENDL;
 
     // synapse kernel header

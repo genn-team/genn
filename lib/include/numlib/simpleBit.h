@@ -7,7 +7,7 @@
 //-----------------------------------------------------------------------
 /*! \file simpleBit.h
 
-\brief Contains three macros that allow simple bit manipulations on an (presumably unsigned) 64 bit integer
+\brief Contains three macros that allow simple bit manipulations on an (presumably unsigned) 32 bit integer
 */
 //-----------------------------------------------------------------------
 
