@@ -249,11 +249,10 @@ void genRunner(NNmodel &model, //!< Model description
 	os << model.ftype << " *inSyn" << model.synapseName[i] << ";" << endl;
 	os << model.ftype << " *d_inSyn" << model.synapseName[i] << ";" << endl; 	
 	os << "__device__ " << model.ftype << " *dd_inSyn" << model.synapseName[i] << ";" << endl; 	
-
 	if (model.synapseGType[i] == INDIVIDUALID) {
-	    os << "unsigned int *gp" << model.synapseName[i] << ";" << endl;
-	    os << "unsigned int *d_gp" << model.synapseName[i] << ";" << endl;
-	    os << "__device__ unsigned int *dd_gp" << model.synapseName[i] << ";" << endl;
+	    os << "uint32_t *gp" << model.synapseName[i] << ";" << endl;
+	    os << "uint32_t *d_gp" << model.synapseName[i] << ";" << endl;
+	    os << "__device__ uint32_t *dd_gp" << model.synapseName[i] << ";" << endl;
 	}
 	if (model.synapseConnType[i] == SPARSE) {
 	    os << "Conductance C" << model.synapseName[i] << ";" << endl;
@@ -416,14 +415,12 @@ void genRunner(NNmodel &model, //!< Model description
 
 	// note, if GLOBALG we put the value at compile time
 	if (model.synapseGType[i] == INDIVIDUALID) {
-	    tmp = model.neuronN[model.synapseSource[i]] * model.neuronN[model.synapseTarget[i]];
-	    size = tmp >> logUIntSz;
-	    if (tmp > (size << logUIntSz)) size++;
-	    os << "    gp" << model.synapseName[i] << " = new unsigned int[" << size << "];" << endl;
-	    os << "    deviceMemAllocate( &d_gp" << model.synapseName[i];
+	    size = (model.neuronN[model.synapseSource[i]] * model.neuronN[model.synapseTarget[i]]) / 32 + 1;
+	    os << "    gp" << model.synapseName[i] << " = new uint32_t[" << size << "];" << endl;
+	    os << "    deviceMemAllocate(&d_gp" << model.synapseName[i];
 	    os << ", dd_gp" << model.synapseName[i];
-	    os << ", " << size << " * sizeof(unsigned int));" << endl;
-	    mem += size * sizeof(unsigned int);
+	    os << ", " << size << " * sizeof(uint32_t));" << endl;
+	    mem += size * sizeof(uint32_t);
 	}
 
 	// allocate user-defined weight model variables
@@ -713,6 +710,7 @@ void genRunner(NNmodel &model, //!< Model description
 	    }
 	}
 	if (model.synapseGType[i] == INDIVIDUALID) {
+	    os << "    delete[] gp" << model.synapseName[i] << ";" << endl;
 	    os << "    CHECK_CUDA_ERRORS(cudaFree(d_gp" << model.synapseName[i] << "));" <<endl;  	
 	}
 	if (model.synapseGType[i] == INDIVIDUALG) {
@@ -749,6 +747,7 @@ void genRunner(NNmodel &model, //!< Model description
     }
     os << model.ftype << " t)" << endl;
     os << "{" << endl;
+
     if (model.synapseGrpN > 0) {
 	os << "    if (t > 0.0) {" << endl;
 	if (model.timing) os << "        sdkStartTimer(&synapse_timer);" << endl;
@@ -774,6 +773,7 @@ void genRunner(NNmodel &model, //!< Model description
     }
     os << "t);" << endl;
     if (model.timing) os << "    sdkStopTimer(&neuron_timer);" << endl;
+
     os << "}" << endl;
     os.close();
 
@@ -923,7 +923,7 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 	os << "void push" << model.synapseName[i] << "ToDevice()" << ENDL;
 	os << OB(1100);
 
-	if (model.synapseGType[i] == INDIVIDUALG) {
+	if (model.synapseGType[i] == INDIVIDUALG) { // INDIVIDUALG
 	    if (model.synapseConnType[i] != SPARSE) {
 		os << "size_t size = " << model.neuronN[model.synapseSource[i]] * model.neuronN[model.synapseTarget[i]] << ";" << ENDL;
 	    }
@@ -942,6 +942,13 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 		os << ", " << postSynModels[pst].varNames[k] << model.synapseName[i];
 		os << ", " << size << " * sizeof(" << postSynModels[pst].varTypes[k] << "), cudaMemcpyHostToDevice));" << endl; 
 	    }
+	}
+
+	else if (model.synapseGType[i] == INDIVIDUALID) { // INDIVIDUALID
+	    size = (model.neuronN[model.synapseSource[i]] * model.neuronN[model.synapseTarget[i]]) / 32 + 1;
+	    os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_gp" << model.synapseName[i];
+	    os << ", gp" << model.synapseName[i];
+	    os << ", " << size << " * sizeof(uint32_t), cudaMemcpyHostToDevice));" << endl;
 	}
 
 	size = model.neuronN[model.synapseTarget[i]];
@@ -1034,7 +1041,7 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 	os << "void pull" << model.synapseName[i] << "FromDevice()" << ENDL;
 	os << OB(1100);
 
-	if (model.synapseGType[i] == INDIVIDUALG) {
+	if (model.synapseGType[i] == INDIVIDUALG) { // INDIVIDUALG
 	    if (model.synapseConnType[i] != SPARSE) {
 		os << "size_t size = " << model.neuronN[model.synapseSource[i]] * model.neuronN[model.synapseTarget[i]] << ";" << ENDL;
 	    }
@@ -1053,6 +1060,13 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 		os << ", d_"  << postSynModels[pst].varNames[k] << model.synapseName[i];
 		os << ", " << size << " * sizeof(" << postSynModels[pst].varTypes[k] << "), cudaMemcpyDeviceToHost));" << endl; 
 	    }
+	}
+
+	else if (model.synapseGType[i] == INDIVIDUALID) { // INDIVIDUALID
+	    size = (model.neuronN[model.synapseSource[i]] * model.neuronN[model.synapseTarget[i]]) / 32 + 1;
+	    os << "CHECK_CUDA_ERRORS(cudaMemcpy(gp" << model.synapseName[i];
+	    os << "d_gp" << model.synapseName[i];
+	    os << ", " << size << " * sizeof(uint32_t), cudaMemcpyDeviceToHost));" << endl;
 	}
 
 	size = model.neuronN[model.synapseTarget[i]];

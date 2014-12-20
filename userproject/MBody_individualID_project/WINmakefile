@@ -1,0 +1,24 @@
+#--------------------------------------------------------------------------
+#  Author: Thomas Nowotny
+#  
+#  Institute: Center for Computational Neuroscience and Robotics
+#             University of Sussex
+#             Falmer, Brighton BN1 9QJ, UK
+#  
+#  email to:  T.Nowotny@sussex.ac.uk
+#  
+#  initial version: 2010-02-07
+#  
+#--------------------------------------------------------------------------
+
+INCLUDE_FLAGS = /I $(GENN_PATH)/lib/include
+CFLAGS=/nologo /EHsc $(INCLUDE_FLAGS)
+
+all: generate_run.exe tools
+
+clean:
+	-del generate_run.exe generate_run.obj 2>nul 
+	cd ..\tools && nmake /nologo /f WINmakefile clean
+
+tools:
+	cd ..\tools && nmake /nologo /f WINmakefile
