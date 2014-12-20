@@ -528,14 +528,14 @@ void generate_process_presynaptic_events_code(
 	    os << "if (B(dd_gp" << model.synapseName[i] << "[gid >> " << logUIntSz << "], gid & " << UIntSz - 1 << "))" << OB(135);
 	}
 
-	if (sparse) {
+	if (sparse) { // SPARSE
 	    os << "prePos = dd_indInG" << model.synapseName[i] << "[shSpk" << postfix << "[j]];" << ENDL;
 	    os << "npost = dd_indInG" << model.synapseName[i] << "[shSpk" << postfix << "[j] + 1] - prePos;" << ENDL;
 	    os << "if (" << localID << " < npost)" << OB(140);
 	    os << "prePos += " << localID << ";" << ENDL;
 	    os << "ipost = dd_ind" << model.synapseName[i] << "[prePos];" << ENDL;
 	}
-	else {
+	else { // DENSE
 	    os << "ipost = " << localID << ";" << ENDL;
 	}
 
@@ -790,7 +790,7 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 	if ((model.synapseUsesTrueSpikes[i]) || (model.synapseUsesPostLearning[i])) {
 	    os << "lscnt = dd_glbSpkCnt" << model.neuronName[src];
 	    if (model.neuronDelaySlots[src] > 1) {
-		os << "[delaySlot]" << ENDL;
+		os << "[delaySlot];" << ENDL;
 	    }
 	    else {
 		os << "[0];" << ENDL;

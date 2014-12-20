@@ -100,8 +100,8 @@ int main(int argc, char *argv[])
     if (which == GPU) {  
       PNIzhNN.getSpikeNumbersFromGPU();
       PNIzhNN.getSpikesFromGPU();
-      pullIzh1fromDevice();
-      pullPNfromDevice();
+      pullIzh1StateFromDevice();
+      pullPNStateFromDevice();
 	} 
 
       PNIzhNN.sum_spikes();
@@ -163,7 +163,5 @@ int main(int argc, char *argv[])
   fprintf(timef, "%d %d %f \n", PNIzhNN.sumPN, PNIzhNN.sumIzh1, elapsedTime);
   fprintf(stdout, "%d Poisson spikes evoked spikes on %d Izhikevich neurons in %f seconds.\n", PNIzhNN.sumPN, PNIzhNN.sumIzh1, elapsedTime);
 
-	freeDeviceMem();
-  cudaDeviceReset();
   return 0;
 }

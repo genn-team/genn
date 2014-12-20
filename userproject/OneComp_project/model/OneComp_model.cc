@@ -107,7 +107,7 @@ void neuronpop::run(float runtime, unsigned int which)
 
 void neuronpop::sum_spikes()
 {
-  sumIzh1+= glbSpkCntIzh1;
+  sumIzh1+= glbSpkCntIzh1[0];
 }
 
 //--------------------------------------------------------------------------
@@ -156,7 +156,7 @@ void neuronpop::getSpikeNumbersFromGPU()
 void neuronpop::output_spikes(FILE *f, unsigned int which)
 {
 
-   for (int i= 0; i < glbSpkCntIzh1; i++) {
+   for (int i= 0; i < glbSpkCntIzh1[0]; i++) {
      fprintf(f, "%f %d\n", t, glbSpkIzh1[i]);
    }
 

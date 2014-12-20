@@ -56,7 +56,7 @@ private:
   classol();
   ~classol();
   void init(unsigned int); 
-  void allocate_device_mem_patterns(); 
+  void allocate_device_mem_patterns();
   void free_device_mem(); 
   void read_pnkcsyns(FILE *);
   void read_sparsesyns_par(int, struct Conductance, scalar *, FILE *,FILE *,FILE *); 

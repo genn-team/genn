@@ -246,8 +246,6 @@ int main(int argc, char *argv[])
   fclose(osf);
   fclose(osf2);
   fclose(timef);
-	freeDeviceMem();
-  cudaDeviceReset();
 
 #ifdef TIMING
   fclose(timeros);

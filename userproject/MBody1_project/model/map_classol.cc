@@ -104,7 +104,6 @@ classol::~classol()
 {
   free(pattern);
   free(baserates);
-  free_device_mem();
   freeMem();
 }
 

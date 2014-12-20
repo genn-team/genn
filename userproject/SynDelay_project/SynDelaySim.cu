@@ -20,20 +20,11 @@ SynDelay::SynDelay(bool usingGPU)
   this->usingGPU = usingGPU;
   allocateMem();
   initialize();
-  if (usingGPU)
-  {
-    copyGToDevice();
-    copyStateToDevice();
-  }
 }
 
 SynDelay::~SynDelay()
 {
   freeMem();
-  if (usingGPU)
-  {
-    freeDeviceMem();
-  }
 }
 
 void SynDelay::run(float t)

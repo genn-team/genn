@@ -158,16 +158,12 @@ void classIzh::write_input_to_file(FILE *f)
 
 void classIzh::create_input_values() //define your explicit input rule here
 {
-
-  		for (int x= 0; x < model.neuronN[0]; x++) {
-   		input1[x]= 5.0*RG.n();
- 		 }
-  
- 		for (int x= 0; x < model.neuronN[1]; x++) {
-   		input2[x]= 2.0*RG.n();
-  		}
-
-
+    for (int x= 0; x < model.neuronN[0]; x++) {
+	input1[x]= 5.0*RG.n();
+    }
+    for (int x= 0; x < model.neuronN[1]; x++) {
+	input2[x]= 2.0*RG.n();
+    }
 }
 
 void classIzh::read_sparsesyns_par(int synInd, Conductance C, FILE *f_ind, FILE *f_indInG, FILE *f_g, scalar *g //!< File handle for a file containing sparse conductivity values
@@ -253,8 +249,8 @@ void classIzh::run(double runtime, unsigned int which)
 
 void classIzh::sum_spikes()
 {
-  sumPExc+= glbSpkCntPExc;
-  sumPInh+= glbSpkCntPInh;
+  sumPExc+= glbSpkCntPExc[0];
+  sumPInh+= glbSpkCntPInh[0];
 }
 
 //--------------------------------------------------------------------------
@@ -308,7 +304,7 @@ void classIzh::output_params(FILE *f, FILE *f2)
 
 void classIzh::getSpikesFromGPU()
 {
-  copySpikesFromDevice();
+    copySpikesFromDevice();
 }
 
 //--------------------------------------------------------------------------
@@ -320,25 +316,24 @@ This method is a simple wrapper for the convenience function copySpikeNFromDevic
 
 void classIzh::getSpikeNumbersFromGPU() 
 {
-  copySpikeNFromDevice();
+    copySpikeNFromDevice();
 }
 
 
 void classIzh::output_spikes(FILE *f, unsigned int which)
 {
-	if (which == GPU) {
-	 	getSpikeNumbersFromGPU();
-		getSpikesFromGPU();
-	}
- 
-  for (int i= 0; i < glbSpkCntPExc; i++) {
-		fprintf(f,"%f %d\n", t, glbSpkPExc[i]);
-  }
+    if (which == GPU) {
+	getSpikeNumbersFromGPU();
+	getSpikesFromGPU();
+    }
 
-  for (int i= 0; i < glbSpkCntPInh; i++) {
-    fprintf(f, "%f %d\n", t, model.sumNeuronN[0]+glbSpkPInh[i]);
-  }
+    for (int i= 0; i < glbSpkCntPExc[0]; i++) {
+	fprintf(f,"%f %d\n", t, glbSpkPExc[i]);
+    }
+
+    for (int i= 0; i < glbSpkCntPInh[0]; i++) {
+	fprintf(f, "%f %d\n", t, model.sumNeuronN[0] + glbSpkPInh[i]);
+    }
 }
-#endif	
 
- 
+#endif

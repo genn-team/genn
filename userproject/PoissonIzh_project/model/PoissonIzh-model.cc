@@ -180,18 +180,18 @@ void classol::getSpikeNumbersFromGPU()
 
 void classol::output_spikes(FILE *f, unsigned int which)
 {
-  for (int i= 0; i < glbSpkCntPN; i++) {
+  for (int i= 0; i < glbSpkCntPN[0]; i++) {
     fprintf(f, "%f %d\n", t, glbSpkPN[i]);
   }
-  for (int i= 0; i < glbSpkCntIzh1; i++) {
+  for (int i= 0; i < glbSpkCntIzh1[0]; i++) {
     fprintf(f,  "%f %d\n", t, model.sumNeuronN[0]+glbSpkIzh1[i]);
   }
 }
 
 void classol::sum_spikes()
 {
-  sumPN+= glbSpkCntPN;
-  sumIzh1+= glbSpkCntIzh1;
+  sumPN+= glbSpkCntPN[0];
+  sumIzh1+= glbSpkCntIzh1[0];
 }
 
 

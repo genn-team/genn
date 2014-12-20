@@ -14,11 +14,11 @@ for Linux, Mac and other UNIX users.
   USAGE
   -----
 
-  ./generate_run <0(CPU)/1(GPU)> <nNeurons> <nConn> <gscale> <outdir> <model name> <debug OFF/ON> <use previous connectivity 0(OFF)/1(ON)>
+  ./generate_run <0(CPU)/1(GPU)> <nNeurons> <nConn> <gscale> <outdir> <model name> <debug OFF/ON> <ftype DOUBLE/FLOAT> <use previous connectivity 0(OFF)/1(ON)>
 
 An example invocation of generate_run is:
 
-  ./generate_run 1 10000 1000 1 outdir Izh_sparse 0 0
+  ./generate_run 1 10000 1000 1 outdir Izh_sparse 0 FLOAT 0
 
 This would create a pulse coupled network of 8000 excitatory 2000 inhibitory
 Izhikevich neurons, each making 1000 connections with other neurons, generating

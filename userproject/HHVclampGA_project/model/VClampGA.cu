@@ -150,7 +150,6 @@ int main(int argc, char *argv[])
   fclose(ose);
   fclose(timef);
   fclose(osb);
-  freeDeviceMem();
-  cudaDeviceReset();
+
   return 0;
 }

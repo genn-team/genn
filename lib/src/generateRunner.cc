@@ -203,7 +203,7 @@ void genRunner(NNmodel &model, //!< Model description
 	}
 	if (model.neuronDelaySlots[i] > 1) {
 	    os << "unsigned int spkQuePtr" << model.neuronName[i] << ";" << endl;
-	    os << "__device__ volatile unsigned int spkQuePtr" << model.neuronName[i] << ";" << endl;
+	    os << "__device__ volatile unsigned int dd_spkQuePtr" << model.neuronName[i] << ";" << endl;
 	}
 	if (model.neuronNeedSt[i]) {
 	    os << model.ftype << " *sT" << model.neuronName[i] << ";" << endl;

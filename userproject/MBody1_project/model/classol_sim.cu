@@ -221,11 +221,14 @@ int main(int argc, char *argv[])
   fclose(osf);
   fclose(osf2);
   fclose(timef);
-  //cudaDeviceReset();
 
 #ifdef TIMING
   fclose(timeros);
 #endif
+
+  if (which == GPU) {
+    locust.free_device_mem();
+  }
 
   return 0;
 }

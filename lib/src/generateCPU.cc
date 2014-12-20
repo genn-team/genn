@@ -83,7 +83,7 @@ void genNeuronFunction(NNmodel &model, //!< Model description
     for (int i = 0; i < model.neuronGrpN; i++) {
 	nt = model.neuronType[i];
 
-	string queueOffset = (model.neuronDelaySlots[i] > 1 ? "(dd_spkQuePtr" + model.neuronName[i] + " * " + tS(model.neuronN[i]) + ") + " : "");
+	string queueOffset = (model.neuronDelaySlots[i] > 1 ? "(spkQuePtr" + model.neuronName[i] + " * " + tS(model.neuronN[i]) + ") + " : "");
 	string queueOffsetTrueSpk = (model.neuronNeedTrueSpk[i] ? queueOffset : "");
 
 	// increment spike queue pointer and reset spike count
@@ -361,32 +361,32 @@ void generate_process_presynaptic_events_code_CPU(
 	// Detect spike events or spikes and do the update
 	os << "// process presynaptic events: " << (evnt ? "Spike type events" : "True Spikes") << ENDL;
 	if (delayPre) {
-	    os << "for (ipre = 0; ipre < glbSpkCnt" << postfix << model.neuronName[src] << "[delaySlot]; ipre++)" << OB(201);
+	    os << "for (int i = 0; i < glbSpkCnt" << postfix << model.neuronName[src] << "[delaySlot]; i++)" << OB(201);
 	}
 	else {
-	    os << "for (ipre = 0; ipre < glbSpkCnt" << postfix << model.neuronName[src] << "[0]; ipre++)" << OB(201);
+	    os << "for (int i = 0; i < glbSpkCnt" << postfix << model.neuronName[src] << "[0]; i++)" << OB(201);
 	}
 
-	os << "lSpk = glbSpk" << postfix << model.neuronName[src] << "[" << offsetPre << "ipre];" << ENDL;
+	os << "ipre = glbSpk" << postfix << model.neuronName[src] << "[" << offsetPre << "i];" << ENDL;
 
 	if (sparse) { // SPARSE
-	    os << "npost = C" << model.synapseName[i] << ".indInG[lSpk + 1] - C" << model.synapseName[i] << ".indInG[lSpk];" << ENDL;
-	    os << "for (int l = 0; l < npost; l++)" << OB(202);
-	    os << "ipost = C" << model.synapseName[i] << ".ind[C" << model.synapseName[i] << ".indInG[lSpk] + l];" << ENDL;
+	    os << "npost = C" << model.synapseName[i] << ".indInG[ipre + 1] - C" << model.synapseName[i] << ".indInG[ipre];" << ENDL;
+	    os << "for (int j = 0; j < npost; j++)" << OB(202);
+	    os << "ipost = C" << model.synapseName[i] << ".ind[C" << model.synapseName[i] << ".indInG[ipre] + j];" << ENDL;
 	}
 	else { // DENSE
 	    os << "for (ipost = 0; ipost < " << model.neuronN[trg] << "; ipost++)" << OB(202);
 	}
 
 	if (model.synapseGType[i] == INDIVIDUALID) {
-	    os << "unsigned int gid = (lSpk * " << model.neuronN[i] << " + ipost);" << ENDL;
+	    os << "unsigned int gid = (ipre * " << model.neuronN[i] << " + ipost);" << ENDL;
 	}
 
 	if ((evnt) && (model.neuronType[src] != POISSONNEURON)) { // consider whether POISSON Neurons should be allowed to throw events
 
 	    // code substitutions ----
 	    string eCode = weightUpdateModels[synt].evntThreshold;
-	    extended_name_substitutions(eCode, tS(""), model.synapseSpkEvntVars[i], tS("_pre"), model.neuronName[src] + tS("[") + offsetPre + tS("lSpk]"));
+	    extended_name_substitutions(eCode, tS(""), model.synapseSpkEvntVars[i], tS("_pre"), model.neuronName[src] + tS("[") + offsetPre + tS("ipre]"));
 	    value_substitutions(eCode, weightUpdateModels[synt].pNames, model.synapsePara[i]);
 	    value_substitutions(eCode, weightUpdateModels[synt].dpNames, model.dsp_w[i]);
 	    name_substitutions(eCode, tS(""), weightUpdateModels[synt].extraGlobalSynapseKernelParameters, model.synapseName[i]);
@@ -409,7 +409,7 @@ void generate_process_presynaptic_events_code_CPU(
 	substitute(wCode, tS("$(updatelinsyn)"), tS("$(inSyn) += $(addtoinSyn)"));
 	if (sparse) { // SPARSE
 	    if (model.synapseGType[i] == INDIVIDUALG) {
-		name_substitutions(wCode, tS(""), weightUpdateModels[synt].varNames, model.synapseName[i] + tS("[C") + model.synapseName[i] + tS(".indInG[lSpk] + l]"));
+		name_substitutions(wCode, tS(""), weightUpdateModels[synt].varNames, model.synapseName[i] + tS("[C") + model.synapseName[i] + tS(".indInG[ipre] + j]"));
 	    }
 	    else {
 		value_substitutions(wCode, weightUpdateModels[synt].varNames, model.synapseIni[i]);
@@ -417,7 +417,7 @@ void generate_process_presynaptic_events_code_CPU(
 	}
 	else { // DENSE
 	    if (model.synapseGType[i] == INDIVIDUALG) {
-		name_substitutions(wCode, tS(""), weightUpdateModels[synt].varNames, model.synapseName[i] + tS("[lSpk * ") + tS(model.neuronN[trg]) + tS(" + ipost]"));
+		name_substitutions(wCode, tS(""), weightUpdateModels[synt].varNames, model.synapseName[i] + tS("[ipre * ") + tS(model.neuronN[trg]) + tS(" + ipost]"));
 	    }
 	    else {
 		value_substitutions(wCode, weightUpdateModels[synt].varNames, model.synapseIni[i]);
@@ -431,13 +431,13 @@ void generate_process_presynaptic_events_code_CPU(
 
 	// presynaptic neuron variables and parameters
 	if (model.neuronType[src] == POISSONNEURON) substitute(wCode, tS("$(V_pre)"), tS(model.neuronPara[src][2]));
-	substitute(wCode, tS("$(sT_pre)"), tS("sT") + model.neuronName[src] + tS("[") + offsetPre + tS("lSpk]"));
+	substitute(wCode, tS("$(sT_pre)"), tS("sT") + model.neuronName[src] + tS("[") + offsetPre + tS("ipre]"));
 	for (int j = 0; j < nModels[nt_pre].varNames.size(); j++) {
 	    if (model.neuronVarNeedQueue[src][j]) {
-		substitute(wCode, tS("$(") + nModels[nt_pre].varNames[j] + tS("_pre)"), nModels[nt_pre].varNames[j] + model.neuronName[src] + tS("[") + offsetPre + tS("lSpk]"));
+		substitute(wCode, tS("$(") + nModels[nt_pre].varNames[j] + tS("_pre)"), nModels[nt_pre].varNames[j] + model.neuronName[src] + tS("[") + offsetPre + tS("ipre]"));
 	    }
 	    else {
-		substitute(wCode, tS("$(") + nModels[nt_pre].varNames[j] + tS("_pre)"), nModels[nt_pre].varNames[j] + model.neuronName[src] + tS("[lSpk]"));
+		substitute(wCode, tS("$(") + nModels[nt_pre].varNames[j] + tS("_pre)"), nModels[nt_pre].varNames[j] + model.neuronName[src] + tS("[ipre]"));
 	    }
 	}
 	extended_value_substitutions(wCode, nModels[nt_pre].pNames, tS("_pre"), model.neuronPara[src]);
@@ -462,7 +462,7 @@ void generate_process_presynaptic_events_code_CPU(
 	    os << CB(2041); // end if (eCode)
 	}
 	else if (model.synapseGType[i] == INDIVIDUALID) {
-	    os << CB(2041); // end if (B(dd_gp" << model.synapseName[i] << "[gid >> " << logUIntSz << "], gid 
+	    os << CB(2041); // end if (B(gp" << model.synapseName[i] << "[gid >> " << logUIntSz << "], gid 
 	}
 	os << CB(202);
 	os << CB(201);
@@ -514,8 +514,6 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 
     os << "unsigned int ipost;" << ENDL;
     os << "unsigned int ipre;" << ENDL;
-    os << "unsigned int lSpk;" << ENDL;
-    os << model.ftype << " addtoinSyn;" << ENDL;  
     for (int i = 0; i < model.synapseGrpN; i++) {  
 	if (model.synapseConnType[i] == SPARSE) {
 	    os << "unsigned int npost;" << ENDL;
@@ -525,6 +523,7 @@ void genSynapseFunction(NNmodel &model, //!< Model description
     if (model.needSynapseDelay) {
 	os << "unsigned int delaySlot;" << ENDL;
     }
+    os << model.ftype << " addtoinSyn;" << ENDL;  
     os << ENDL;
 
     for (int i = 0; i < model.synapseGrpN; i++) {
