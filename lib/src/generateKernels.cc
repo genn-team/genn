@@ -682,7 +682,6 @@ void genSynapseKernel(NNmodel &model, //!< Model description
     os << "*/" << ENDL;
     os << "//-------------------------------------------------------------------------" << ENDL << ENDL;
 
-    os << "#include \"numlib/simpleBit.h\"" << ENDL << ENDL;
 
     // synapse kernel header
     os << "__global__ void calcSynapses(" << ENDL;

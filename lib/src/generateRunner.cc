@@ -119,6 +119,7 @@ void genRunner(NNmodel &model, //!< Model description
     os << "#include <cstdio>" << ENDL;
     os << "#include <cassert>" << ENDL;
     os << "#include <stdint.h>" << ENDL;
+    os << "#include \"numlib/simpleBit.h\"" << ENDL << ENDL;
     if (model.timing) os << "#include <helper_timer.h>" << ENDL;
     os << ENDL;
 
@@ -1065,7 +1066,7 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 	else if (model.synapseGType[i] == INDIVIDUALID) { // INDIVIDUALID
 	    size = (model.neuronN[model.synapseSource[i]] * model.neuronN[model.synapseTarget[i]]) / 32 + 1;
 	    os << "CHECK_CUDA_ERRORS(cudaMemcpy(gp" << model.synapseName[i];
-	    os << "d_gp" << model.synapseName[i];
+	    os << ", d_gp" << model.synapseName[i];
 	    os << ", " << size << " * sizeof(uint32_t), cudaMemcpyDeviceToHost));" << endl;
 	}
 
