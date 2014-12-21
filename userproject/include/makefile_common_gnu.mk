@@ -26,9 +26,9 @@ DARWIN  	:=$(strip $(findstring DARWIN, $(OS_UPPER)))
 CUDA_PATH	?=/usr/local/cuda
 NVCC		:=$(CUDA_PATH)/bin/nvcc
 NVCCFLAGS	+= 
-CXXFLAGS	+= -std=c++11
+CXXFLAGS	+=-std=c++11
 ifeq ($(DARWIN),DARWIN)
-   CXX		= clang++
+   CXX		:=clang++
 endif
 
 # Global include flags and link flags.
@@ -69,7 +69,6 @@ $(EXECUTABLE): $(OBJECTS)
 
 .PHONY: release
 release: CXXFLAGS +=-O3 
-#-ffast-math
 release: NVCCFLAGS +=--compiler-options "-O3 -ffast-math"
 release: $(EXECUTABLE)
 

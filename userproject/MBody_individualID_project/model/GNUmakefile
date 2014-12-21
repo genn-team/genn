@@ -14,6 +14,5 @@
 EXECUTABLE	:=classol_sim
 
 SOURCES		:=classol_sim.cu
-INCLUDE_FLAGS   :=-I$(GENN_PATH)/lib/include/numlib
 
 include	$(GENN_PATH)/userproject/include/makefile_common_gnu.mk
