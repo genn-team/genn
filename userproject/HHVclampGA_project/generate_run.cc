@@ -26,6 +26,7 @@
 #include <sstream>
 #include <cstdlib>
 #include <cmath>
+#include "toString.h"
 
 #ifdef _WIN32
 #include <direct.h>
@@ -35,8 +36,6 @@
 #endif
 
 using namespace std;
-
-#include "usertools.h"
 
 //--------------------------------------------------------------------------
 /*! \brief Main entry point for generate_run.
