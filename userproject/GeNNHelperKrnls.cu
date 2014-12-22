@@ -11,10 +11,11 @@ __global__ void setup_kernel(curandState *state, unsigned long seed, int sizeofR
 }
 
 /*********************************/
-__global__ void generate_random_gpuInput_xorwow(curandState * state, float * result, int sizeofResult, float Rstrength, float Rshift)
+template <class T>
+__global__ void generate_random_gpuInput_xorwow(curandState * state, T * result, int sizeofResult, T Rstrength, T Rshift)
 {
 	int id = threadIdx.x+blockIdx.x* BlkSz; //TODO: use neuron kernel params
-	float x;
+	T x;
 	
 	if (id < sizeofResult){
 		curandState localstate = state[id];
@@ -23,6 +24,20 @@ __global__ void generate_random_gpuInput_xorwow(curandState * state, float * res
 		state[id]=localstate;
 	}
 }
+
+/*********************************/
+/*__global__ void generate_random_gpuInput_xorwow(curandState * state, double * result, int sizeofResult, double Rstrength, double Rshift)
+{
+	int id = threadIdx.x+blockIdx.x* BlkSz; //TODO: use neuron kernel params
+	double x;
+	
+	if (id < sizeofResult){
+		curandState localstate = state[id];
+		x =curand_normal(&localstate); 
+		result[id] = x*Rstrength+Rshift;
+		state[id]=localstate;
+	}
+	}*/
 
 /*********************************/
 //function to setup the random number generator using the xorwow algorithm

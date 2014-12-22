@@ -190,7 +190,7 @@ void classIzh::read_sparsesyns_par(int synInd, Conductance C, FILE *f_ind, FILE 
   fprintf(stdout,"Read conductance ... \n");
   fprintf(stdout, "Size is %d for synapse group %d. Values start with: \n",C.connN, synInd);
   for(int i= 0; i < 20; i++) {
-    fprintf(stdout, "%f ", float(g[i]));
+      fprintf(stdout, "%f ", (scalar) g[i]);
   }
   fprintf(stdout,"\n\n");
   fprintf(stdout, "%d indices read. Index values start with: \n",C.connN);

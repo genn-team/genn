@@ -295,13 +295,11 @@ void genRunner(NNmodel &model, //!< Model description
 
 
     // include simulation kernels
+    os << "#include \"runnerGPU.cc\"" << endl << endl;
     os << "#include \"neuronFnct.cc\"" << endl;
-    os << "#include \"neuronKrnl.cc\"" << endl;
     if (model.synapseGrpN > 0) {
 	os << "#include \"synapseFnct.cc\"" << endl;
-	os << "#include \"synapseKrnl.cc\"" << endl;
     }
-    os << "#include \"runnerGPU.cc\"" << endl << endl;
 
 
     // ---------------------------------------------------------------------
@@ -843,6 +841,40 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     }
     os << endl;
 
+    os << "__device__ double atomicAdd(double* address, double val)" << endl;
+    os << "{" << endl;
+    os << "    unsigned long long int* address_as_ull =" << endl;
+    os << "                                          (unsigned long long int*)address;" << endl;
+    os << "    unsigned long long int old = *address_as_ull, assumed;" << endl;
+    os << "    do {" << endl;
+    os << "        assumed = old;" << endl;
+    os << "        old = atomicCAS(address_as_ull, assumed, " << endl;
+    os << "                        __double_as_longlong(val + " << endl;
+    os << "                        __longlong_as_double(assumed)));" << endl;
+    os << "    } while (assumed != old);" << endl;
+    os << "    return __longlong_as_double(old);" << endl;
+    os << "}" << endl << endl;
+
+    if (deviceProp[theDev].major < 2) {
+	os << "__device__ float atomicAdd(float* address, float val)" << endl;
+	os << "{" << endl;
+	os << "    unsigned long long int* address_as_ull =" << endl;
+	os << "                                          (unsigned long long int*)address;" << endl;
+	os << "    unsigned long long int old = *address_as_ull, assumed;" << endl;
+	os << "    do {" << endl;
+	os << "        assumed = old;" << endl;
+	os << "        old = atomicCAS(address_as_ull, assumed, " << endl;
+	os << "                        __double_as_longlong(val + " << endl;
+	os << "                        __longlong_as_double(assumed)));" << endl;
+	os << "    } while (assumed != old);" << endl;
+	os << "    return __longlong_as_float(old);" << endl;
+	os << "}" << endl << endl;
+    }	
+
+    os << "#include \"neuronKrnl.cc\"" << endl;
+    if (model.synapseGrpN > 0) {
+	os << "#include \"synapseKrnl.cc\"" << endl;
+    }
 
     os << "// ------------------------------------------------------------------------" << endl;
     os << "// copying things to device" << endl << endl;
