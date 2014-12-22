@@ -129,47 +129,55 @@ $(document).ready(function(){initNavTree('dd/db7/classweightUpdateModel.html','.
 <p>Structure to hold the information that defines a weightupdate model (a model of how spikes affect synaptic (and/or) (mostly) post-synaptic neuron variables. It also allows to define changes in response to post-synaptic spikes/spike-like events.  
  <a href="../../dd/db7/classweightUpdateModel.html#details">More...</a></p>
 
-<p><code>#include &lt;<a class="el" href="../../dc/d25/modelSpec_01_07dhcp-liversidge20_8anu_8edu_8au's_01conflicted_01copy_012014-12-13_08_8h_source.html">modelSpec (dhcp-liversidge20.anu.edu.au's conflicted copy 2014-12-13).h</a>&gt;</code></p>
+<p><code>#include &lt;<a class="el" href="../../dc/de1/modelSpec_8h_source.html">modelSpec.h</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:ae83d9e39690aaa754ab5be7b72ca60d5"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/db7/classweightUpdateModel.html#ae83d9e39690aaa754ab5be7b72ca60d5">weightUpdateModel</a> ()</td></tr>
-<tr class="separator:ae83d9e39690aaa754ab5be7b72ca60d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae83d9e39690aaa754ab5be7b72ca60d5"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/db7/classweightUpdateModel.html#ae83d9e39690aaa754ab5be7b72ca60d5">weightUpdateModel</a> ()</td></tr>
 <tr class="separator:ae83d9e39690aaa754ab5be7b72ca60d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
 <tr class="memitem:a6f665453175451356bbf14b9f60baed3"><td class="memItemLeft" align="right" valign="top">string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/db7/classweightUpdateModel.html#a6f665453175451356bbf14b9f60baed3">simCode</a></td></tr>
+<tr class="memdesc:a6f665453175451356bbf14b9f60baed3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Simulation code that is used for true spikes (only one time step after spike detection)  <a href="#a6f665453175451356bbf14b9f60baed3">More...</a><br /></td></tr>
 <tr class="separator:a6f665453175451356bbf14b9f60baed3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a758cc3211ae12407583f625418dd5a89"><td class="memItemLeft" align="right" valign="top">string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/db7/classweightUpdateModel.html#a758cc3211ae12407583f625418dd5a89">simCodeEvnt</a></td></tr>
+<tr class="memdesc:a758cc3211ae12407583f625418dd5a89"><td class="mdescLeft">&#160;</td><td class="mdescRight">Simulation code that is used for spike events (all the instances where event threshold condition is met)  <a href="#a758cc3211ae12407583f625418dd5a89">More...</a><br /></td></tr>
 <tr class="separator:a758cc3211ae12407583f625418dd5a89"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9ebdfd1b336b3c40403546deb05cbfc9"><td class="memItemLeft" align="right" valign="top">string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/db7/classweightUpdateModel.html#a9ebdfd1b336b3c40403546deb05cbfc9">simLearnPost</a></td></tr>
+<tr class="memdesc:a9ebdfd1b336b3c40403546deb05cbfc9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Simulation code which is used in the learnSynapsesPost kernel/function, where postsynaptic neuron spikes before the presynaptic neuron in the STDP window.  <a href="#a9ebdfd1b336b3c40403546deb05cbfc9">More...</a><br /></td></tr>
 <tr class="separator:a9ebdfd1b336b3c40403546deb05cbfc9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acccf120c9b1307f7ee2c5bac43110be1"><td class="memItemLeft" align="right" valign="top">string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/db7/classweightUpdateModel.html#acccf120c9b1307f7ee2c5bac43110be1">evntThreshold</a></td></tr>
+<tr class="memdesc:acccf120c9b1307f7ee2c5bac43110be1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Simulation code for spike event detection.  <a href="#acccf120c9b1307f7ee2c5bac43110be1">More...</a><br /></td></tr>
 <tr class="separator:acccf120c9b1307f7ee2c5bac43110be1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8f5c92fc0ca6c1ddf861891bfd751de2"><td class="memItemLeft" align="right" valign="top">string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/db7/classweightUpdateModel.html#a8f5c92fc0ca6c1ddf861891bfd751de2">synapseDynamics</a></td></tr>
+<tr class="memdesc:a8f5c92fc0ca6c1ddf861891bfd751de2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Simulation code for synapse dynamics independent of spike detection.  <a href="#a8f5c92fc0ca6c1ddf861891bfd751de2">More...</a><br /></td></tr>
 <tr class="separator:a8f5c92fc0ca6c1ddf861891bfd751de2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a90db929b419cc1e8eb2114880b57b0d7"><td class="memItemLeft" align="right" valign="top">vector&lt; string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/db7/classweightUpdateModel.html#a90db929b419cc1e8eb2114880b57b0d7">varNames</a></td></tr>
-<tr class="separator:a90db929b419cc1e8eb2114880b57b0d7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a207d9bdb30b99b6377072191bd428763"><td class="memItemLeft" align="right" valign="top">vector&lt; string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/db7/classweightUpdateModel.html#a207d9bdb30b99b6377072191bd428763">varTypes</a></td></tr>
-<tr class="separator:a207d9bdb30b99b6377072191bd428763"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9a3cd9c28ea1862145f7e69ba7827514"><td class="memItemLeft" align="right" valign="top">vector&lt; string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/db7/classweightUpdateModel.html#a9a3cd9c28ea1862145f7e69ba7827514">pNames</a></td></tr>
-<tr class="separator:a9a3cd9c28ea1862145f7e69ba7827514"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a60abe42f64088d48beadcafd43f64c73"><td class="memItemLeft" align="right" valign="top">vector&lt; string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/db7/classweightUpdateModel.html#a60abe42f64088d48beadcafd43f64c73">dpNames</a></td></tr>
-<tr class="memdesc:a60abe42f64088d48beadcafd43f64c73"><td class="mdescLeft">&#160;</td><td class="mdescRight">Names of dependent parameters of the model. These are assumed to be always of type "double".  <a href="#a60abe42f64088d48beadcafd43f64c73">More...</a><br /></td></tr>
-<tr class="separator:a60abe42f64088d48beadcafd43f64c73"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aee8a59212d49bc5f76029f9b66f6617a"><td class="memItemLeft" align="right" valign="top">vector&lt; string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/db7/classweightUpdateModel.html#aee8a59212d49bc5f76029f9b66f6617a">extraGlobalSynapseKernelParameters</a></td></tr>
-<tr class="memdesc:aee8a59212d49bc5f76029f9b66f6617a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Additional parameter in the neuron kernel; it is translated to a population specific name but otherwise assumed to be one parameter per population rather than per synapse.  <a href="#aee8a59212d49bc5f76029f9b66f6617a">More...</a><br /></td></tr>
-<tr class="separator:aee8a59212d49bc5f76029f9b66f6617a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2209416d0353ccac374a2b6819037551"><td class="memItemLeft" align="right" valign="top">vector&lt; string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/db7/classweightUpdateModel.html#a2209416d0353ccac374a2b6819037551">extraGlobalSynapseKernelParameterTypes</a></td></tr>
-<tr class="memdesc:a2209416d0353ccac374a2b6819037551"><td class="mdescLeft">&#160;</td><td class="mdescRight">Additional parameters in the neuron kernel; they are translated to a population specific name but otherwise assumed to be one parameter per population rather than per synapse.  <a href="#a2209416d0353ccac374a2b6819037551">More...</a><br /></td></tr>
-<tr class="separator:a2209416d0353ccac374a2b6819037551"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a36c009dc4f4ace689e286abc1666eef0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../db/de6/classdpclass.html">dpclass</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/db7/classweightUpdateModel.html#a36c009dc4f4ace689e286abc1666eef0">dps</a></td></tr>
-<tr class="separator:a36c009dc4f4ace689e286abc1666eef0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a130dc4796aef818562cd9ab112a6dc98"><td class="memItemLeft" align="right" valign="top">vector&lt; string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/db7/classweightUpdateModel.html#a130dc4796aef818562cd9ab112a6dc98">varNames</a></td></tr>
+<tr class="memdesc:a130dc4796aef818562cd9ab112a6dc98"><td class="mdescLeft">&#160;</td><td class="mdescRight">Names of the variables in the postsynaptic model.  <a href="#a130dc4796aef818562cd9ab112a6dc98">More...</a><br /></td></tr>
+<tr class="separator:a130dc4796aef818562cd9ab112a6dc98"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a77fdb9d1287b883d227f1b50fef9889c"><td class="memItemLeft" align="right" valign="top">vector&lt; string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/db7/classweightUpdateModel.html#a77fdb9d1287b883d227f1b50fef9889c">varTypes</a></td></tr>
+<tr class="memdesc:a77fdb9d1287b883d227f1b50fef9889c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Types of the variable named above, e.g. "float". Names and types are matched by their order of occurrence in the vector.  <a href="#a77fdb9d1287b883d227f1b50fef9889c">More...</a><br /></td></tr>
+<tr class="separator:a77fdb9d1287b883d227f1b50fef9889c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a991eb286139c935b39e0af71e5b85ec6"><td class="memItemLeft" align="right" valign="top">vector&lt; string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/db7/classweightUpdateModel.html#a991eb286139c935b39e0af71e5b85ec6">pNames</a></td></tr>
+<tr class="memdesc:a991eb286139c935b39e0af71e5b85ec6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Names of (independent) parameters of the model.  <a href="#a991eb286139c935b39e0af71e5b85ec6">More...</a><br /></td></tr>
+<tr class="separator:a991eb286139c935b39e0af71e5b85ec6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a508c032f1c92f8d3da42dfa9209f0eb8"><td class="memItemLeft" align="right" valign="top">vector&lt; string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/db7/classweightUpdateModel.html#a508c032f1c92f8d3da42dfa9209f0eb8">dpNames</a></td></tr>
+<tr class="memdesc:a508c032f1c92f8d3da42dfa9209f0eb8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Names of dependent parameters of the model.  <a href="#a508c032f1c92f8d3da42dfa9209f0eb8">More...</a><br /></td></tr>
+<tr class="separator:a508c032f1c92f8d3da42dfa9209f0eb8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aeab0e4003100c943d2ddcd3481f5f660"><td class="memItemLeft" align="right" valign="top">vector&lt; string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/db7/classweightUpdateModel.html#aeab0e4003100c943d2ddcd3481f5f660">extraGlobalSynapseKernelParameters</a></td></tr>
+<tr class="memdesc:aeab0e4003100c943d2ddcd3481f5f660"><td class="mdescLeft">&#160;</td><td class="mdescRight">Additional parameter in the neuron kernel; it is translated to a population specific name but otherwise assumed to be one parameter per population rather than per synapse.  <a href="#aeab0e4003100c943d2ddcd3481f5f660">More...</a><br /></td></tr>
+<tr class="separator:aeab0e4003100c943d2ddcd3481f5f660"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3e8b0003232bcbdf1be31425d87eb233"><td class="memItemLeft" align="right" valign="top">vector&lt; string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/db7/classweightUpdateModel.html#a3e8b0003232bcbdf1be31425d87eb233">extraGlobalSynapseKernelParameterTypes</a></td></tr>
+<tr class="memdesc:a3e8b0003232bcbdf1be31425d87eb233"><td class="mdescLeft">&#160;</td><td class="mdescRight">Additional parameters in the neuron kernel; they are translated to a population specific name but otherwise assumed to be one parameter per population rather than per synapse.  <a href="#a3e8b0003232bcbdf1be31425d87eb233">More...</a><br /></td></tr>
+<tr class="separator:a3e8b0003232bcbdf1be31425d87eb233"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7f23e71d08ca83e3f5941105b90814d5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../db/de6/classdpclass.html">dpclass</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/db7/classweightUpdateModel.html#a7f23e71d08ca83e3f5941105b90814d5">dps</a></td></tr>
+<tr class="separator:a7f23e71d08ca83e3f5941105b90814d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af93f31710e2249afd22c05c4a7e7a28d"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/db7/classweightUpdateModel.html#af93f31710e2249afd22c05c4a7e7a28d">needPreSt</a></td></tr>
+<tr class="memdesc:af93f31710e2249afd22c05c4a7e7a28d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Whether presynaptic spike times are needed or not.  <a href="#af93f31710e2249afd22c05c4a7e7a28d">More...</a><br /></td></tr>
 <tr class="separator:af93f31710e2249afd22c05c4a7e7a28d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1948fc8aa7b2d8b82784cbd09bc741aa"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/db7/classweightUpdateModel.html#a1948fc8aa7b2d8b82784cbd09bc741aa">needPostSt</a></td></tr>
+<tr class="memdesc:a1948fc8aa7b2d8b82784cbd09bc741aa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Whether postsynaptic spike times are needed or not.  <a href="#a1948fc8aa7b2d8b82784cbd09bc741aa">More...</a><br /></td></tr>
 <tr class="separator:a1948fc8aa7b2d8b82784cbd09bc741aa"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
@@ -198,50 +206,27 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="ae83d9e39690aaa754ab5be7b72ca60d5"></a>
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">weightUpdateModel::weightUpdateModel </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
 <h2 class="groupheader">Member Data Documentation</h2>
-<a class="anchor" id="a60abe42f64088d48beadcafd43f64c73"></a>
+<a class="anchor" id="a508c032f1c92f8d3da42dfa9209f0eb8"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">vector&lt; string &gt; weightUpdateModel::dpNames</td>
+          <td class="memname">vector&lt;string&gt; weightUpdateModel::dpNames</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>Names of dependent parameters of the model. These are assumed to be always of type "double". </p>
+<p>Names of dependent parameters of the model. </p>
 
 </div>
 </div>
-<a class="anchor" id="a36c009dc4f4ace689e286abc1666eef0"></a>
+<a class="anchor" id="a7f23e71d08ca83e3f5941105b90814d5"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="../../db/de6/classdpclass.html">dpclass</a> * weightUpdateModel::dps</td>
+          <td class="memname"><a class="el" href="../../db/de6/classdpclass.html">dpclass</a>* weightUpdateModel::dps</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -258,14 +243,16 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
+<p>Simulation code for spike event detection. </p>
+
 </div>
 </div>
-<a class="anchor" id="aee8a59212d49bc5f76029f9b66f6617a"></a>
+<a class="anchor" id="aeab0e4003100c943d2ddcd3481f5f660"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">vector&lt; string &gt; weightUpdateModel::extraGlobalSynapseKernelParameters</td>
+          <td class="memname">vector&lt;string&gt; weightUpdateModel::extraGlobalSynapseKernelParameters</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -274,12 +261,12 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a2209416d0353ccac374a2b6819037551"></a>
+<a class="anchor" id="a3e8b0003232bcbdf1be31425d87eb233"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">vector&lt; string &gt; weightUpdateModel::extraGlobalSynapseKernelParameterTypes</td>
+          <td class="memname">vector&lt;string&gt; weightUpdateModel::extraGlobalSynapseKernelParameterTypes</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -298,6 +285,8 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
+<p>Whether postsynaptic spike times are needed or not. </p>
+
 </div>
 </div>
 <a class="anchor" id="af93f31710e2249afd22c05c4a7e7a28d"></a>
@@ -310,17 +299,21 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
+<p>Whether presynaptic spike times are needed or not. </p>
+
 </div>
 </div>
-<a class="anchor" id="a9a3cd9c28ea1862145f7e69ba7827514"></a>
+<a class="anchor" id="a991eb286139c935b39e0af71e5b85ec6"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">vector&lt; string &gt; weightUpdateModel::pNames</td>
+          <td class="memname">vector&lt;string&gt; weightUpdateModel::pNames</td>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Names of (independent) parameters of the model. </p>
 
 </div>
 </div>
@@ -334,6 +327,8 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
+<p>Simulation code that is used for true spikes (only one time step after spike detection) </p>
+
 </div>
 </div>
 <a class="anchor" id="a758cc3211ae12407583f625418dd5a89"></a>
@@ -345,6 +340,8 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Simulation code that is used for spike events (all the instances where event threshold condition is met) </p>
 
 </div>
 </div>
@@ -358,6 +355,8 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
+<p>Simulation code which is used in the learnSynapsesPost kernel/function, where postsynaptic neuron spikes before the presynaptic neuron in the STDP window. </p>
+
 </div>
 </div>
 <a class="anchor" id="a8f5c92fc0ca6c1ddf861891bfd751de2"></a>
@@ -370,34 +369,39 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
+<p>Simulation code for synapse dynamics independent of spike detection. </p>
+
 </div>
 </div>
-<a class="anchor" id="a90db929b419cc1e8eb2114880b57b0d7"></a>
+<a class="anchor" id="a130dc4796aef818562cd9ab112a6dc98"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">vector&lt; string &gt; weightUpdateModel::varNames</td>
+          <td class="memname">vector&lt;string&gt; weightUpdateModel::varNames</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
+<p>Names of the variables in the postsynaptic model. </p>
+
 </div>
 </div>
-<a class="anchor" id="a207d9bdb30b99b6377072191bd428763"></a>
+<a class="anchor" id="a77fdb9d1287b883d227f1b50fef9889c"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">vector&lt; string &gt; weightUpdateModel::varTypes</td>
+          <td class="memname">vector&lt;string&gt; weightUpdateModel::varTypes</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
+<p>Types of the variable named above, e.g. "float". Names and types are matched by their order of occurrence in the vector. </p>
+
 </div>
 </div>
-<hr/>The documentation for this class was generated from the following files:<ul>
-<li>lib/include/<a class="el" href="../../dc/d25/modelSpec_01_07dhcp-liversidge20_8anu_8edu_8au's_01conflicted_01copy_012014-12-13_08_8h_source.html">modelSpec (dhcp-liversidge20.anu.edu.au's conflicted copy 2014-12-13).h</a></li>
+<hr/>The documentation for this class was generated from the following file:<ul>
 <li>lib/include/<a class="el" href="../../dc/de1/modelSpec_8h_source.html">modelSpec.h</a></li>
 </ul>
 </div><!-- contents -->
@@ -406,7 +410,7 @@ Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dd/db7/classweightUpdateModel.html">weightUpdateModel</a></li>
-    <li class="footer">Generated on Thu Dec 18 2014 21:21:08 for GeNN by
+    <li class="footer">Generated on Mon Dec 22 2014 23:15:38 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.7 </li>
   </ul>

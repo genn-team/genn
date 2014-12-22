@@ -7,12 +7,10 @@ var hierarchy =
     [ "dpclass", "db/de6/classdpclass.html", [
       [ "expDecayDp", "da/d0d/classexpDecayDp.html", null ],
       [ "pwSTDP", "d0/dba/classpwSTDP.html", null ],
-      [ "pwSTDP", "d0/dba/classpwSTDP.html", null ],
       [ "pwSTDP_userdef", "dd/d4e/classpwSTDP__userdef.html", null ],
       [ "rulkovdp", "d6/d9e/classrulkovdp.html", null ]
     ] ],
     [ "errTupel", "d4/da7/structerrTupel.html", null ],
-    [ "histogram", "d1/d6c/structhistogram.html", null ],
     [ "inputSpec", "de/dad/structinputSpec.html", null ],
     [ "neuronModel", "d3/d64/structneuronModel.html", null ],
     [ "neuronpop", "de/d18/classneuronpop.html", null ],

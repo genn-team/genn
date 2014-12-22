@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['release_20notes_20for_20genn_20v2_2e0',['Release Notes for GeNN v2.0',['../df/ddb/ReleaseNotes.html',1,'']]]
+  ['synapse_20models',['Synapse models',['../d5/d24/sectSynapseModels.html',1,'UserManual']]],
+  ['suggestions_20for_20users',['Suggestions for users',['../d0/da6/UserGuide.html',1,'']]]
 ];

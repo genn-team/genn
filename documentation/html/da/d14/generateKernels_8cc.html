@@ -126,12 +126,13 @@ $(document).ready(function(){initNavTree('da/d14/generateKernels_8cc.html','../.
 <p>Contains functions that generate code for CUDA kernels. Part of the code generation section.  
 <a href="#details">More...</a></p>
 <div class="textblock"><code>#include &lt;string&gt;</code><br />
-<code>#include &quot;<a class="el" href="../../d2/d49/global_8h_source.html">global.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="../../d6/d8a/CodeHelper_8cc.html">CodeHelper.cc</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="../../d2/d49/global_8h_source.html">global.h</a>&quot;</code><br />
 </div><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
 <tr class="memitem:ab972aea4f97b659de78edd6c6acc74ef"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d14/generateKernels_8cc.html#ab972aea4f97b659de78edd6c6acc74ef">genNeuronKernel</a> (<a class="el" href="../../dc/de5/classNNmodel.html">NNmodel</a> &amp;model, string &amp;path, ostream &amp;mos)</td></tr>
+<tr class="memdesc:ab972aea4f97b659de78edd6c6acc74ef"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function for generating the CUDA kernel that simulates all neurons in the model.  <a href="#ab972aea4f97b659de78edd6c6acc74ef">More...</a><br /></td></tr>
 <tr class="separator:ab972aea4f97b659de78edd6c6acc74ef"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aeb536bca727f8a56c32af33b12a8447b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d14/generateKernels_8cc.html#aeb536bca727f8a56c32af33b12a8447b">generate_process_presynaptic_events_code</a> (ostream &amp;os, <a class="el" href="../../dc/de5/classNNmodel.html">NNmodel</a> &amp;model, unsigned int src, unsigned int trg, int i, string &amp;localID, unsigned int inSynNo, string postfix)</td></tr>
 <tr class="memdesc:aeb536bca727f8a56c32af33b12a8447b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function for generating the CUDA synapse kernel code that handles presynaptic spikes or spike type events.  <a href="#aeb536bca727f8a56c32af33b12a8447b">More...</a><br /></td></tr>
@@ -142,9 +143,6 @@ Functions</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="var-members"></a>
 Variables</h2></td></tr>
-<tr class="memitem:af198d37883805e3407aa139257c5ec2d"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d14/generateKernels_8cc.html#af198d37883805e3407aa139257c5ec2d">nt</a></td></tr>
-<tr class="memdesc:af198d37883805e3407aa139257c5ec2d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function for generating the CUDA kernel that simulates all neurons in the model.  <a href="#af198d37883805e3407aa139257c5ec2d">More...</a><br /></td></tr>
-<tr class="separator:af198d37883805e3407aa139257c5ec2d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab874b3d8c792b2a5b6657562cdb368de"><td class="memItemLeft" align="right" valign="top">short *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d14/generateKernels_8cc.html#ab874b3d8c792b2a5b6657562cdb368de">isGrpVarNeeded</a></td></tr>
 <tr class="separator:ab874b3d8c792b2a5b6657562cdb368de"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a528456f8f1feca5714ef5cef70156619"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d1/d03/classCodeHelper.html">CodeHelper</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d14/generateKernels_8cc.html#a528456f8f1feca5714ef5cef70156619">hlp</a></td></tr>
@@ -259,6 +257,9 @@ Variables</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Function for generating the CUDA kernel that simulates all neurons in the model. </p>
+<p>The code generated upon execution of this function is for defining GPU side global variables that will hold model state in the GPU global memory and for the actual kernel function for simulating the neurons for one time step. </p>
 <p>Binary flag for the sparse synapses to use atomic operations when the number of connections is bigger than the block size, and shared variables otherwise </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
@@ -340,28 +341,13 @@ Variables</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="af198d37883805e3407aa139257c5ec2d"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">unsigned int nt</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Function for generating the CUDA kernel that simulates all neurons in the model. </p>
-<p>The code generated upon execution of this function is for defining GPU side global variables that will hold model state in the GPU global memory and for the actual kernel function for simulating the neurons for one time step. </p>
-
-</div>
-</div>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dir_97aefd0d527b934f1d99a682da8fe6a9.html">lib</a></li><li class="navelem"><a class="el" href="../../dir_a065c5f60305fee3569f887679366939.html">src</a></li><li class="navelem"><a class="el" href="../../da/d14/generateKernels_8cc.html">generateKernels.cc</a></li>
-    <li class="footer">Generated on Thu Dec 18 2014 21:21:05 for GeNN by
+    <li class="footer">Generated on Mon Dec 22 2014 23:15:36 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.7 </li>
   </ul>

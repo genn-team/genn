@@ -18,7 +18,7 @@ var classclassIzh =
     [ "randomizeVar", "de/dba/classclassIzh.html#a73f8c6d3b1cdce29958888ccf439a409", null ],
     [ "randomizeVarSq", "de/dba/classclassIzh.html#a0bc0ab09f844b4c93b7ad989abaa98f1", null ],
     [ "read_input_values", "de/dba/classclassIzh.html#a2e61b42ce2edc2d51899ba450d40ab23", null ],
-    [ "read_sparsesyns_par", "de/dba/classclassIzh.html#a4728c020dd7d9aa64bdaae87f34507ad", null ],
+    [ "read_sparsesyns_par", "de/dba/classclassIzh.html#aeaf44f0d1febdbabc151633ba1ad6b5b", null ],
     [ "run", "de/dba/classclassIzh.html#a9ec4d259e767d30fbc1b042a30278da3", null ],
     [ "setInput", "de/dba/classclassIzh.html#a75c6b6ea09132daa34d06396dcc7f321", null ],
     [ "sum_spikes", "de/dba/classclassIzh.html#a721c5922909192b3fd23d2907202b5ea", null ],

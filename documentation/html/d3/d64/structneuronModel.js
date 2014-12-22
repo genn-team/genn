@@ -1,17 +1,17 @@
 var structneuronModel =
 [
-    [ "dpNames", "d3/d64/structneuronModel.html#adda4db13eafb6534a6ffbeb065f51b4a", null ],
-    [ "dps", "d3/d64/structneuronModel.html#a325ed45077bf596c0cbf876895eed1b5", null ],
-    [ "extraGlobalNeuronKernelParameters", "d3/d64/structneuronModel.html#a65827e65a7cd0238bdfde1fabf8e6839", null ],
-    [ "extraGlobalNeuronKernelParameterTypes", "d3/d64/structneuronModel.html#a00001e46f3960ed96f67111147e30d88", null ],
+    [ "dpNames", "d3/d64/structneuronModel.html#a051c0c704ce383c43cdf446accbeb201", null ],
+    [ "dps", "d3/d64/structneuronModel.html#a9b9b9e5e66702eb114b268bbd08d7c34", null ],
+    [ "extraGlobalNeuronKernelParameters", "d3/d64/structneuronModel.html#a00094db5e89eaa5d8017d83d84c63676", null ],
+    [ "extraGlobalNeuronKernelParameterTypes", "d3/d64/structneuronModel.html#a35592a2fad7d926ca664871bd1513f24", null ],
     [ "needPostSt", "d3/d64/structneuronModel.html#a633acff33b8b640f7a815f357b144117", null ],
     [ "needPreSt", "d3/d64/structneuronModel.html#aff3d8b2160410c976506e0c4ddf8b6c1", null ],
-    [ "pNames", "d3/d64/structneuronModel.html#a1e6287678079ad4d4e65d1df35d83bf2", null ],
+    [ "pNames", "d3/d64/structneuronModel.html#a4a5bf1f757a72b6edc28ad26ed61b2be", null ],
     [ "resetCode", "d3/d64/structneuronModel.html#ad97df9af00fba946865debf6cd539217", null ],
     [ "simCode", "d3/d64/structneuronModel.html#a9e6536fd15b69fa24b708e41f97df899", null ],
     [ "thresholdConditionCode", "d3/d64/structneuronModel.html#a9b0fae36963fb760040c3b1d22bee25c", null ],
-    [ "tmpVarNames", "d3/d64/structneuronModel.html#a99cec64cf03b4b2c22fd9f201027d46d", null ],
-    [ "tmpVarTypes", "d3/d64/structneuronModel.html#a07286a0ee56d99f2acc257c7279e7da3", null ],
-    [ "varNames", "d3/d64/structneuronModel.html#ad364183af0da111f989116e0b8b9d4bd", null ],
-    [ "varTypes", "d3/d64/structneuronModel.html#a2ae4ddde7aa750cddfff8a4f4491d9c1", null ]
+    [ "tmpVarNames", "d3/d64/structneuronModel.html#ab193cb434db2df5f1fa9a79fba30af83", null ],
+    [ "tmpVarTypes", "d3/d64/structneuronModel.html#a3f5668e85624014cd5de97bf00d2b82f", null ],
+    [ "varNames", "d3/d64/structneuronModel.html#a9a9156ffb643572fd67f6e585ef79ad0", null ],
+    [ "varTypes", "d3/d64/structneuronModel.html#a86788cb29131da0a26ce79693a076352", null ]
 ];

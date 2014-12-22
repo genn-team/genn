@@ -1,7 +1,6 @@
 var NAVTREE =
 [
   [ "GeNN", "index.html", [
-    [ "Contents", "index.html#Contents", null ],
     [ "Installation", "d8/d99/Installation.html", [
       [ "Downloading a release", "d8/d99/Installation.html#Downloading", null ],
       [ "Obtaining a Git snapshot", "d8/d99/Installation.html#GitSnapshot", null ],
@@ -39,6 +38,16 @@ var NAVTREE =
       [ "Defining the Detailed Synaptic Connections", "dc/d7e/Tutorial2.html#SynapseMatrix", null ],
       [ "Setting Heterogeneous Initial Conditions", "dc/d7e/Tutorial2.html#initialConditions", null ]
     ] ],
+    [ "Suggestions for users", "d0/da6/UserGuide.html", [
+      [ "Creating and simulating a network model", "d0/da6/UserGuide.html#CreateAndSimulate", null ],
+      [ "Floating point precision", "d0/da6/UserGuide.html#floatPrecision", null ],
+      [ "Working with variables in GeNN", "d0/da6/UserGuide.html#ListOfVariables", [
+        [ "Model variables", "d0/da6/UserGuide.html#modelVars", null ],
+        [ "Built-in Variables in GeNN", "d0/da6/UserGuide.html#predefinedVars", null ]
+      ] ],
+      [ "Debugging suggestions", "d0/da6/UserGuide.html#Debugging", null ]
+    ] ],
+    [ "Credits", "dd/d51/Credits.html", null ],
     [ "Bibliography", "d0/de3/citelist.html", null ],
     [ "Classes", null, [
       [ "Class List", "annotated.html", "annotated" ],
@@ -65,11 +74,10 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "annotated.html",
-"d3/de7/OneComp__sim_8cu.html",
-"d8/d56/MBody1__project_2modelcmp_2MBody1_8cc.html#a3ad8f05c788d238a8deb7b02983eb5d8",
-"dc/d25/modelSpec_01_07dhcp-liversidge20_8anu_8edu_8au's_01conflicted_01copy_012014-12-13_08_8h.html#a57aaf01a1c5e075bc2ad849b9b48db31",
-"dd/d09/tmp_2model_2MBody__userdef_8cc.html#a89f6d693128dff9cf7a99e0738603fac",
-"functions.html"
+"d3/dcd/MBody__userdef_8cc.html#a0399e5408044f345ed8d29f34d1ede7e",
+"d9/d1d/SpineML__to__GeNN_2extra__postsynapses_8h.html#a7d3f558ec6b9bc9a4a78603b6306a416",
+"dc/de1/modelSpec_8h.html#a4a4e62777219e0a1f16847a32a4b42b6",
+"de/dba/classclassIzh.html#a45922a013797bb3fc93c8d3c51c619e3"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

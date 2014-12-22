@@ -129,7 +129,7 @@ $(document).ready(function(){initNavTree('d1/d16/classclassol.html','../../');})
 <p>This class cpontains the methods for running the MBody1 example model.  
  <a href="../../d1/d16/classclassol.html#details">More...</a></p>
 
-<p><code>#include &lt;<a class="el" href="../../de/df2/tmp_2model_2map__classol_8h_source.html">map_classol.h</a>&gt;</code></p>
+<p><code>#include &lt;<a class="el" href="../../da/dfc/MBody1__project_2model_2map__classol_8h_source.html">map_classol.h</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
@@ -149,8 +149,8 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a1529539e9d2424d56016ad8e60aa0b79"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a1529539e9d2424d56016ad8e60aa0b79">read_pnkcsyns</a> (FILE *)</td></tr>
 <tr class="memdesc:a1529539e9d2424d56016ad8e60aa0b79"><td class="mdescLeft">&#160;</td><td class="mdescRight">Method for reading the connectivity between PNs and KCs from a file.  <a href="#a1529539e9d2424d56016ad8e60aa0b79">More...</a><br /></td></tr>
 <tr class="separator:a1529539e9d2424d56016ad8e60aa0b79"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8f2e2c575501aa0bb2c5864adccd6aac"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a8f2e2c575501aa0bb2c5864adccd6aac">read_sparsesyns_par</a> (int, struct Conductance, FILE *, FILE *, FILE *)</td></tr>
-<tr class="separator:a8f2e2c575501aa0bb2c5864adccd6aac"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4788e79fd6ec3bde287cafb020d5d0cb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a4788e79fd6ec3bde287cafb020d5d0cb">read_sparsesyns_par</a> (int, struct SparseProjection, <a class="el" href="../../dc/d3f/PoissonIzh_8cc.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a> *, FILE *, FILE *, FILE *)</td></tr>
+<tr class="separator:a4788e79fd6ec3bde287cafb020d5d0cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a272983bc77c8c547310a38fd340c29e4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a272983bc77c8c547310a38fd340c29e4">write_pnkcsyns</a> (FILE *)</td></tr>
 <tr class="memdesc:a272983bc77c8c547310a38fd340c29e4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Method for writing the conenctivity between PNs and KCs back into file.  <a href="#a272983bc77c8c547310a38fd340c29e4">More...</a><br /></td></tr>
 <tr class="separator:a272983bc77c8c547310a38fd340c29e4"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -172,9 +172,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a4e4e5bee0655e84dfee6e98e6a75dc3b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a4e4e5bee0655e84dfee6e98e6a75dc3b">generate_baserates</a> ()</td></tr>
 <tr class="memdesc:a4e4e5bee0655e84dfee6e98e6a75dc3b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Method for calculating the baseline rates of the Poisson input neurons.  <a href="#a4e4e5bee0655e84dfee6e98e6a75dc3b">More...</a><br /></td></tr>
 <tr class="separator:a4e4e5bee0655e84dfee6e98e6a75dc3b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae907498a8660fe41f7d9b41aad6e5d10"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#ae907498a8660fe41f7d9b41aad6e5d10">run</a> (float, unsigned int)</td></tr>
-<tr class="memdesc:ae907498a8660fe41f7d9b41aad6e5d10"><td class="mdescLeft">&#160;</td><td class="mdescRight">Method for simulating the model for a given period of time.  <a href="#ae907498a8660fe41f7d9b41aad6e5d10">More...</a><br /></td></tr>
-<tr class="separator:ae907498a8660fe41f7d9b41aad6e5d10"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2a95daf452913b42ba7965d291275c3c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a2a95daf452913b42ba7965d291275c3c">runGPU</a> (<a class="el" href="../../dc/d3f/PoissonIzh_8cc.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a>)</td></tr>
+<tr class="memdesc:a2a95daf452913b42ba7965d291275c3c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Method for simulating the model for a given period of time on the GPU.  <a href="#a2a95daf452913b42ba7965d291275c3c">More...</a><br /></td></tr>
+<tr class="separator:a2a95daf452913b42ba7965d291275c3c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a91972987fdeb56b7d4b7fb15b2619145"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a91972987fdeb56b7d4b7fb15b2619145">runCPU</a> (<a class="el" href="../../dc/d3f/PoissonIzh_8cc.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a>)</td></tr>
+<tr class="memdesc:a91972987fdeb56b7d4b7fb15b2619145"><td class="mdescLeft">&#160;</td><td class="mdescRight">Method for simulating the model for a given period of time on the CPU.  <a href="#a91972987fdeb56b7d4b7fb15b2619145">More...</a><br /></td></tr>
+<tr class="separator:a91972987fdeb56b7d4b7fb15b2619145"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a88179d17f4ea568b7b58a329a741eb53"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a88179d17f4ea568b7b58a329a741eb53">output_state</a> (FILE *, unsigned int)</td></tr>
 <tr class="memdesc:a88179d17f4ea568b7b58a329a741eb53"><td class="mdescLeft">&#160;</td><td class="mdescRight">Method for copying from device and writing out to file of the entire state of the model.  <a href="#a88179d17f4ea568b7b58a329a741eb53">More...</a><br /></td></tr>
 <tr class="separator:a88179d17f4ea568b7b58a329a741eb53"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -205,8 +208,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:ade653847f5de20fe2f944260d532ddf9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1529539e9d2424d56016ad8e60aa0b79"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a1529539e9d2424d56016ad8e60aa0b79">read_pnkcsyns</a> (FILE *)</td></tr>
 <tr class="separator:a1529539e9d2424d56016ad8e60aa0b79"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0aa3dc991bd9e89071e9333d32757157"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a0aa3dc991bd9e89071e9333d32757157">read_sparsesyns_par</a> (int, struct Conductance, <a class="el" href="../../dc/d3f/PoissonIzh_8cc.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a> *, FILE *, FILE *, FILE *)</td></tr>
-<tr class="separator:a0aa3dc991bd9e89071e9333d32757157"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4788e79fd6ec3bde287cafb020d5d0cb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a4788e79fd6ec3bde287cafb020d5d0cb">read_sparsesyns_par</a> (int, struct SparseProjection, <a class="el" href="../../dc/d3f/PoissonIzh_8cc.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a> *, FILE *, FILE *, FILE *)</td></tr>
+<tr class="separator:a4788e79fd6ec3bde287cafb020d5d0cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a272983bc77c8c547310a38fd340c29e4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a272983bc77c8c547310a38fd340c29e4">write_pnkcsyns</a> (FILE *)</td></tr>
 <tr class="separator:a272983bc77c8c547310a38fd340c29e4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a135ee4ab60d3afa11c5cba74d362fbe6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a135ee4ab60d3afa11c5cba74d362fbe6">read_pnlhisyns</a> (FILE *)</td></tr>
@@ -248,51 +251,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:ade653847f5de20fe2f944260d532ddf9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1529539e9d2424d56016ad8e60aa0b79"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a1529539e9d2424d56016ad8e60aa0b79">read_pnkcsyns</a> (FILE *)</td></tr>
 <tr class="separator:a1529539e9d2424d56016ad8e60aa0b79"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8f2e2c575501aa0bb2c5864adccd6aac"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a8f2e2c575501aa0bb2c5864adccd6aac">read_sparsesyns_par</a> (int, struct Conductance, FILE *, FILE *, FILE *)</td></tr>
-<tr class="separator:a8f2e2c575501aa0bb2c5864adccd6aac"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a272983bc77c8c547310a38fd340c29e4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a272983bc77c8c547310a38fd340c29e4">write_pnkcsyns</a> (FILE *)</td></tr>
-<tr class="separator:a272983bc77c8c547310a38fd340c29e4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a135ee4ab60d3afa11c5cba74d362fbe6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a135ee4ab60d3afa11c5cba74d362fbe6">read_pnlhisyns</a> (FILE *)</td></tr>
-<tr class="separator:a135ee4ab60d3afa11c5cba74d362fbe6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a661def594f59444eac7a0a08e599ec07"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a661def594f59444eac7a0a08e599ec07">write_pnlhisyns</a> (FILE *)</td></tr>
-<tr class="separator:a661def594f59444eac7a0a08e599ec07"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5530acb74e884fe7b802e2e6eaec9c3a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a5530acb74e884fe7b802e2e6eaec9c3a">read_kcdnsyns</a> (FILE *)</td></tr>
-<tr class="separator:a5530acb74e884fe7b802e2e6eaec9c3a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad409b77aceb2136bbc069b1ec55d7998"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#ad409b77aceb2136bbc069b1ec55d7998">write_kcdnsyns</a> (FILE *)</td></tr>
-<tr class="separator:ad409b77aceb2136bbc069b1ec55d7998"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a554e027fafa47fbf9ee68e9e5bd91de2"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a554e027fafa47fbf9ee68e9e5bd91de2">read_input_patterns</a> (FILE *)</td></tr>
-<tr class="separator:a554e027fafa47fbf9ee68e9e5bd91de2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4e4e5bee0655e84dfee6e98e6a75dc3b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a4e4e5bee0655e84dfee6e98e6a75dc3b">generate_baserates</a> ()</td></tr>
-<tr class="separator:a4e4e5bee0655e84dfee6e98e6a75dc3b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae907498a8660fe41f7d9b41aad6e5d10"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#ae907498a8660fe41f7d9b41aad6e5d10">run</a> (float, unsigned int)</td></tr>
-<tr class="separator:ae907498a8660fe41f7d9b41aad6e5d10"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a88179d17f4ea568b7b58a329a741eb53"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a88179d17f4ea568b7b58a329a741eb53">output_state</a> (FILE *, unsigned int)</td></tr>
-<tr class="separator:a88179d17f4ea568b7b58a329a741eb53"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae571e028c069103e19bb4975bdb0dd47"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#ae571e028c069103e19bb4975bdb0dd47">getSpikesFromGPU</a> ()</td></tr>
-<tr class="separator:ae571e028c069103e19bb4975bdb0dd47"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a08d82fc16288158062aef866a1e29a65"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a08d82fc16288158062aef866a1e29a65">getSpikeNumbersFromGPU</a> ()</td></tr>
-<tr class="separator:a08d82fc16288158062aef866a1e29a65"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a54d61e7df53d16d7b8e1de46bcca6c6c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a54d61e7df53d16d7b8e1de46bcca6c6c">output_spikes</a> (FILE *, unsigned int)</td></tr>
-<tr class="separator:a54d61e7df53d16d7b8e1de46bcca6c6c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af9dfaa92f0e4737dbadd9ec9cd203555"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#af9dfaa92f0e4737dbadd9ec9cd203555">sum_spikes</a> ()</td></tr>
-<tr class="separator:af9dfaa92f0e4737dbadd9ec9cd203555"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af4700403ad71ef8d07c67883ad914f75"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#af4700403ad71ef8d07c67883ad914f75">get_kcdnsyns</a> ()</td></tr>
-<tr class="separator:af4700403ad71ef8d07c67883ad914f75"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0f4a2bbdd48bcdfcc2abaa58a839232c"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a0f4a2bbdd48bcdfcc2abaa58a839232c">classol</a> ()</td></tr>
-<tr class="separator:a0f4a2bbdd48bcdfcc2abaa58a839232c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1273a6a57e2127a7b028bdbd92fed9b4"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a1273a6a57e2127a7b028bdbd92fed9b4">~classol</a> ()</td></tr>
-<tr class="separator:a1273a6a57e2127a7b028bdbd92fed9b4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae1d319555e41d814ef2f8407418df8dc"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#ae1d319555e41d814ef2f8407418df8dc">init</a> (unsigned int)</td></tr>
-<tr class="separator:ae1d319555e41d814ef2f8407418df8dc"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a224bf755bd74d7512606518ae2658215"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a224bf755bd74d7512606518ae2658215">allocate_device_mem_patterns</a> ()</td></tr>
-<tr class="separator:a224bf755bd74d7512606518ae2658215"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ade653847f5de20fe2f944260d532ddf9"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#ade653847f5de20fe2f944260d532ddf9">free_device_mem</a> ()</td></tr>
-<tr class="separator:ade653847f5de20fe2f944260d532ddf9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1529539e9d2424d56016ad8e60aa0b79"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a1529539e9d2424d56016ad8e60aa0b79">read_pnkcsyns</a> (FILE *)</td></tr>
-<tr class="separator:a1529539e9d2424d56016ad8e60aa0b79"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a978cae14cbba95f29619c0aacba7ffbe"><td class="memTemplParams" colspan="2">template&lt;class DATATYPE &gt; </td></tr>
-<tr class="memitem:a978cae14cbba95f29619c0aacba7ffbe"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a978cae14cbba95f29619c0aacba7ffbe">read_sparsesyns_par</a> (DATATYPE *, int, struct Conductance, FILE *, FILE *, FILE *)</td></tr>
-<tr class="separator:a978cae14cbba95f29619c0aacba7ffbe"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4788e79fd6ec3bde287cafb020d5d0cb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a4788e79fd6ec3bde287cafb020d5d0cb">read_sparsesyns_par</a> (int, struct SparseProjection, <a class="el" href="../../dc/d3f/PoissonIzh_8cc.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a> *, FILE *, FILE *, FILE *)</td></tr>
+<tr class="separator:a4788e79fd6ec3bde287cafb020d5d0cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a272983bc77c8c547310a38fd340c29e4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a272983bc77c8c547310a38fd340c29e4">write_pnkcsyns</a> (FILE *)</td></tr>
 <tr class="separator:a272983bc77c8c547310a38fd340c29e4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a135ee4ab60d3afa11c5cba74d362fbe6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a135ee4ab60d3afa11c5cba74d362fbe6">read_pnlhisyns</a> (FILE *)</td></tr>
@@ -327,14 +287,59 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a1273a6a57e2127a7b028bdbd92fed9b4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae1d319555e41d814ef2f8407418df8dc"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#ae1d319555e41d814ef2f8407418df8dc">init</a> (unsigned int)</td></tr>
 <tr class="separator:ae1d319555e41d814ef2f8407418df8dc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a224bf755bd74d7512606518ae2658215"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a224bf755bd74d7512606518ae2658215">allocate_device_mem_patterns</a> ()</td></tr>
+<tr class="separator:a224bf755bd74d7512606518ae2658215"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ade653847f5de20fe2f944260d532ddf9"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#ade653847f5de20fe2f944260d532ddf9">free_device_mem</a> ()</td></tr>
+<tr class="separator:ade653847f5de20fe2f944260d532ddf9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1529539e9d2424d56016ad8e60aa0b79"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a1529539e9d2424d56016ad8e60aa0b79">read_pnkcsyns</a> (FILE *)</td></tr>
+<tr class="separator:a1529539e9d2424d56016ad8e60aa0b79"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab9c79c6449c01a2bca6280cd408e720b"><td class="memTemplParams" colspan="2">template&lt;class DATATYPE &gt; </td></tr>
+<tr class="memitem:ab9c79c6449c01a2bca6280cd408e720b"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#ab9c79c6449c01a2bca6280cd408e720b">read_sparsesyns_par</a> (DATATYPE *, int, struct SparseProjection, FILE *, FILE *, FILE *)</td></tr>
+<tr class="separator:ab9c79c6449c01a2bca6280cd408e720b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a272983bc77c8c547310a38fd340c29e4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a272983bc77c8c547310a38fd340c29e4">write_pnkcsyns</a> (FILE *)</td></tr>
+<tr class="separator:a272983bc77c8c547310a38fd340c29e4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a135ee4ab60d3afa11c5cba74d362fbe6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a135ee4ab60d3afa11c5cba74d362fbe6">read_pnlhisyns</a> (FILE *)</td></tr>
+<tr class="separator:a135ee4ab60d3afa11c5cba74d362fbe6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a661def594f59444eac7a0a08e599ec07"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a661def594f59444eac7a0a08e599ec07">write_pnlhisyns</a> (FILE *)</td></tr>
+<tr class="separator:a661def594f59444eac7a0a08e599ec07"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5530acb74e884fe7b802e2e6eaec9c3a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a5530acb74e884fe7b802e2e6eaec9c3a">read_kcdnsyns</a> (FILE *)</td></tr>
+<tr class="separator:a5530acb74e884fe7b802e2e6eaec9c3a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad409b77aceb2136bbc069b1ec55d7998"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#ad409b77aceb2136bbc069b1ec55d7998">write_kcdnsyns</a> (FILE *)</td></tr>
+<tr class="separator:ad409b77aceb2136bbc069b1ec55d7998"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a554e027fafa47fbf9ee68e9e5bd91de2"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a554e027fafa47fbf9ee68e9e5bd91de2">read_input_patterns</a> (FILE *)</td></tr>
+<tr class="separator:a554e027fafa47fbf9ee68e9e5bd91de2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4e4e5bee0655e84dfee6e98e6a75dc3b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a4e4e5bee0655e84dfee6e98e6a75dc3b">generate_baserates</a> ()</td></tr>
+<tr class="separator:a4e4e5bee0655e84dfee6e98e6a75dc3b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2a95daf452913b42ba7965d291275c3c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a2a95daf452913b42ba7965d291275c3c">runGPU</a> (<a class="el" href="../../dc/d3f/PoissonIzh_8cc.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a>)</td></tr>
+<tr class="separator:a2a95daf452913b42ba7965d291275c3c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a91972987fdeb56b7d4b7fb15b2619145"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a91972987fdeb56b7d4b7fb15b2619145">runCPU</a> (<a class="el" href="../../dc/d3f/PoissonIzh_8cc.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a>)</td></tr>
+<tr class="separator:a91972987fdeb56b7d4b7fb15b2619145"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a88179d17f4ea568b7b58a329a741eb53"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a88179d17f4ea568b7b58a329a741eb53">output_state</a> (FILE *, unsigned int)</td></tr>
+<tr class="separator:a88179d17f4ea568b7b58a329a741eb53"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae571e028c069103e19bb4975bdb0dd47"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#ae571e028c069103e19bb4975bdb0dd47">getSpikesFromGPU</a> ()</td></tr>
+<tr class="separator:ae571e028c069103e19bb4975bdb0dd47"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a08d82fc16288158062aef866a1e29a65"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a08d82fc16288158062aef866a1e29a65">getSpikeNumbersFromGPU</a> ()</td></tr>
+<tr class="separator:a08d82fc16288158062aef866a1e29a65"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a54d61e7df53d16d7b8e1de46bcca6c6c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a54d61e7df53d16d7b8e1de46bcca6c6c">output_spikes</a> (FILE *, unsigned int)</td></tr>
+<tr class="separator:a54d61e7df53d16d7b8e1de46bcca6c6c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af9dfaa92f0e4737dbadd9ec9cd203555"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#af9dfaa92f0e4737dbadd9ec9cd203555">sum_spikes</a> ()</td></tr>
+<tr class="separator:af9dfaa92f0e4737dbadd9ec9cd203555"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af4700403ad71ef8d07c67883ad914f75"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#af4700403ad71ef8d07c67883ad914f75">get_kcdnsyns</a> ()</td></tr>
+<tr class="separator:af4700403ad71ef8d07c67883ad914f75"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0f4a2bbdd48bcdfcc2abaa58a839232c"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a0f4a2bbdd48bcdfcc2abaa58a839232c">classol</a> ()</td></tr>
+<tr class="separator:a0f4a2bbdd48bcdfcc2abaa58a839232c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1273a6a57e2127a7b028bdbd92fed9b4"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a1273a6a57e2127a7b028bdbd92fed9b4">~classol</a> ()</td></tr>
+<tr class="separator:a1273a6a57e2127a7b028bdbd92fed9b4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae1d319555e41d814ef2f8407418df8dc"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#ae1d319555e41d814ef2f8407418df8dc">init</a> (unsigned int)</td></tr>
+<tr class="separator:ae1d319555e41d814ef2f8407418df8dc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aec30118b75a92ebca10eb227345cddfe"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#aec30118b75a92ebca10eb227345cddfe">allocate_device_mem_input</a> ()</td></tr>
 <tr class="separator:aec30118b75a92ebca10eb227345cddfe"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ade653847f5de20fe2f944260d532ddf9"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#ade653847f5de20fe2f944260d532ddf9">free_device_mem</a> ()</td></tr>
 <tr class="separator:ade653847f5de20fe2f944260d532ddf9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afc7bd28c2e2450f7fa08842538fa8238"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#afc7bd28c2e2450f7fa08842538fa8238">read_PNIzh1syns</a> (<a class="el" href="../../dc/d3f/PoissonIzh_8cc.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a> *, FILE *)</td></tr>
 <tr class="separator:afc7bd28c2e2450f7fa08842538fa8238"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2ef6b9d1a502b1cbd0da6cb5d9c20fb9"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a2ef6b9d1a502b1cbd0da6cb5d9c20fb9">read_sparsesyns_par</a> (int, struct Conductance, FILE *, FILE *, FILE *, double *)</td></tr>
-<tr class="separator:a2ef6b9d1a502b1cbd0da6cb5d9c20fb9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5bfa8d79d2bb2d8e834882f15445d482"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a5bfa8d79d2bb2d8e834882f15445d482">read_sparsesyns_par</a> (int, struct SparseProjection, FILE *, FILE *, FILE *, double *)</td></tr>
+<tr class="separator:a5bfa8d79d2bb2d8e834882f15445d482"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4e4e5bee0655e84dfee6e98e6a75dc3b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a4e4e5bee0655e84dfee6e98e6a75dc3b">generate_baserates</a> ()</td></tr>
 <tr class="separator:a4e4e5bee0655e84dfee6e98e6a75dc3b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae907498a8660fe41f7d9b41aad6e5d10"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#ae907498a8660fe41f7d9b41aad6e5d10">run</a> (float, unsigned int)</td></tr>
@@ -354,15 +359,19 @@ Public Member Functions</h2></td></tr>
 Public Attributes</h2></td></tr>
 <tr class="memitem:a9bc46b83d0158325cfdd8721936541d5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../dc/de5/classNNmodel.html">NNmodel</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a9bc46b83d0158325cfdd8721936541d5">model</a></td></tr>
 <tr class="separator:a9bc46b83d0158325cfdd8721936541d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3787ca459281e7a39a6b9ba8a254e3f1"><td class="memItemLeft" align="right" valign="top">unsigned int *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a3787ca459281e7a39a6b9ba8a254e3f1">theRates</a></td></tr>
+<tr class="memitem:a4c91e54037a58e0b286f10a986d46d9c"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a4c91e54037a58e0b286f10a986d46d9c">offset</a></td></tr>
+<tr class="separator:a4c91e54037a58e0b286f10a986d46d9c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3787ca459281e7a39a6b9ba8a254e3f1"><td class="memItemLeft" align="right" valign="top">uint64_t *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a3787ca459281e7a39a6b9ba8a254e3f1">theRates</a></td></tr>
 <tr class="separator:a3787ca459281e7a39a6b9ba8a254e3f1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a04e4e9090385fe4d58819cc73127d454"><td class="memItemLeft" align="right" valign="top">unsigned int *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a04e4e9090385fe4d58819cc73127d454">pattern</a></td></tr>
+<tr class="memitem:a8e632889d43d2626c506e3f08a76e659"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../dc/d3f/PoissonIzh_8cc.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a8e632889d43d2626c506e3f08a76e659">p_pattern</a></td></tr>
+<tr class="separator:a8e632889d43d2626c506e3f08a76e659"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a04e4e9090385fe4d58819cc73127d454"><td class="memItemLeft" align="right" valign="top">uint64_t *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a04e4e9090385fe4d58819cc73127d454">pattern</a></td></tr>
 <tr class="separator:a04e4e9090385fe4d58819cc73127d454"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6274b206756a62789c2200def03f29c2"><td class="memItemLeft" align="right" valign="top">unsigned int *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a6274b206756a62789c2200def03f29c2">baserates</a></td></tr>
+<tr class="memitem:a6274b206756a62789c2200def03f29c2"><td class="memItemLeft" align="right" valign="top">uint64_t *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a6274b206756a62789c2200def03f29c2">baserates</a></td></tr>
 <tr class="separator:a6274b206756a62789c2200def03f29c2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab59e43ece1fe1ebccc45b83e8d91a6f4"><td class="memItemLeft" align="right" valign="top">unsigned int *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#ab59e43ece1fe1ebccc45b83e8d91a6f4">d_pattern</a></td></tr>
+<tr class="memitem:ab59e43ece1fe1ebccc45b83e8d91a6f4"><td class="memItemLeft" align="right" valign="top">uint64_t *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#ab59e43ece1fe1ebccc45b83e8d91a6f4">d_pattern</a></td></tr>
 <tr class="separator:ab59e43ece1fe1ebccc45b83e8d91a6f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4028c8bce8a13eb2e5d3cbed5f78a0d9"><td class="memItemLeft" align="right" valign="top">unsigned int *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a4028c8bce8a13eb2e5d3cbed5f78a0d9">d_baserates</a></td></tr>
+<tr class="memitem:a4028c8bce8a13eb2e5d3cbed5f78a0d9"><td class="memItemLeft" align="right" valign="top">uint64_t *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a4028c8bce8a13eb2e5d3cbed5f78a0d9">d_baserates</a></td></tr>
 <tr class="separator:a4028c8bce8a13eb2e5d3cbed5f78a0d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abd188bdb202d67ec2c1a6316128f9c44"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#abd188bdb202d67ec2c1a6316128f9c44">sumPN</a></td></tr>
 <tr class="separator:abd188bdb202d67ec2c1a6316128f9c44"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -374,27 +383,12 @@ Public Attributes</h2></td></tr>
 <tr class="separator:ae8a843f0151b506bd3548c33c9d78c7c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa6efbc353061391575387b33639d7961"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#aa6efbc353061391575387b33639d7961">size_g</a></td></tr>
 <tr class="separator:aa6efbc353061391575387b33639d7961"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4c91e54037a58e0b286f10a986d46d9c"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a4c91e54037a58e0b286f10a986d46d9c">offset</a></td></tr>
-<tr class="separator:a4c91e54037a58e0b286f10a986d46d9c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0b534a0ff6a56ab9e137f964bcf29d78"><td class="memItemLeft" align="right" valign="top">uint64_t *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a0b534a0ff6a56ab9e137f964bcf29d78">theRates</a></td></tr>
-<tr class="separator:a0b534a0ff6a56ab9e137f964bcf29d78"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8e632889d43d2626c506e3f08a76e659"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../dc/d3f/PoissonIzh_8cc.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a8e632889d43d2626c506e3f08a76e659">p_pattern</a></td></tr>
-<tr class="separator:a8e632889d43d2626c506e3f08a76e659"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a16f82061914e21c2724df0c0044f58dc"><td class="memItemLeft" align="right" valign="top">uint64_t *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a16f82061914e21c2724df0c0044f58dc">pattern</a></td></tr>
-<tr class="separator:a16f82061914e21c2724df0c0044f58dc"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afc6650247da3c85e829264ccb5c4f569"><td class="memItemLeft" align="right" valign="top">uint64_t *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#afc6650247da3c85e829264ccb5c4f569">baserates</a></td></tr>
-<tr class="separator:afc6650247da3c85e829264ccb5c4f569"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab864befa4f0f4b067b78933dbfd77ced"><td class="memItemLeft" align="right" valign="top">uint64_t *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#ab864befa4f0f4b067b78933dbfd77ced">d_pattern</a></td></tr>
-<tr class="separator:ab864befa4f0f4b067b78933dbfd77ced"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:adee39c3f46e3b1b691b047f7fae179c6"><td class="memItemLeft" align="right" valign="top">uint64_t *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#adee39c3f46e3b1b691b047f7fae179c6">d_baserates</a></td></tr>
-<tr class="separator:adee39c3f46e3b1b691b047f7fae179c6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab0eecc893b3ecf89505f2fd31e34403f"><td class="memItemLeft" align="right" valign="top">float *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#ab0eecc893b3ecf89505f2fd31e34403f">p_pattern</a></td></tr>
-<tr class="separator:ab0eecc893b3ecf89505f2fd31e34403f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0cb78768c605c2cc8c3546e9d9e565ef"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d16/classclassol.html#a0cb78768c605c2cc8c3546e9d9e565ef">sumIzh1</a></td></tr>
 <tr class="separator:a0cb78768c605c2cc8c3546e9d9e565ef"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>This class cpontains the methods for running the MBody1 example model. </p>
+<p>This class cpontains the methods for running the MBody_delayedSyn example model. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a class="anchor" id="a0f4a2bbdd48bcdfcc2abaa58a839232c"></a>
 <div class="memitem">
@@ -652,6 +646,36 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
+</div>
+</div>
+<a class="anchor" id="ade653847f5de20fe2f944260d532ddf9"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void classol::free_device_mem </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="ade653847f5de20fe2f944260d532ddf9"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void classol::free_device_mem </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
 <p>Methods for unallocating the memory for input patterns on the GPU device. </p>
 
 </div>
@@ -671,27 +695,12 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="ade653847f5de20fe2f944260d532ddf9"></a>
+<a class="anchor" id="a4e4e5bee0655e84dfee6e98e6a75dc3b"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">void classol::free_device_mem </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a class="anchor" id="ade653847f5de20fe2f944260d532ddf9"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void classol::free_device_mem </td>
+          <td class="memname">void classol::generate_baserates </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -763,12 +772,27 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a4e4e5bee0655e84dfee6e98e6a75dc3b"></a>
+<a class="anchor" id="af4700403ad71ef8d07c67883ad914f75"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">void classol::generate_baserates </td>
+          <td class="memname">void classol::get_kcdnsyns </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="af4700403ad71ef8d07c67883ad914f75"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void classol::get_kcdnsyns </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -810,12 +834,12 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="af4700403ad71ef8d07c67883ad914f75"></a>
+<a class="anchor" id="a08d82fc16288158062aef866a1e29a65"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">void classol::get_kcdnsyns </td>
+          <td class="memname">void classol::getSpikeNumbersFromGPU </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -825,12 +849,12 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="af4700403ad71ef8d07c67883ad914f75"></a>
+<a class="anchor" id="a08d82fc16288158062aef866a1e29a65"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">void classol::get_kcdnsyns </td>
+          <td class="memname">void classol::getSpikeNumbersFromGPU </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -888,12 +912,12 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a08d82fc16288158062aef866a1e29a65"></a>
+<a class="anchor" id="ae571e028c069103e19bb4975bdb0dd47"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">void classol::getSpikeNumbersFromGPU </td>
+          <td class="memname">void classol::getSpikesFromGPU </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -903,12 +927,12 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a08d82fc16288158062aef866a1e29a65"></a>
+<a class="anchor" id="ae571e028c069103e19bb4975bdb0dd47"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">void classol::getSpikeNumbersFromGPU </td>
+          <td class="memname">void classol::getSpikesFromGPU </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -948,36 +972,6 @@ Public Attributes</h2></td></tr>
 
 <p>Method for copying all spikes of the last time step from the GPU. </p>
 <p>This is a simple wrapper for the convenience function copySpikesFromDevice() which is provided by GeNN. </p>
-
-</div>
-</div>
-<a class="anchor" id="ae571e028c069103e19bb4975bdb0dd47"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void classol::getSpikesFromGPU </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a class="anchor" id="ae571e028c069103e19bb4975bdb0dd47"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void classol::getSpikesFromGPU </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
 
 </div>
 </div>
@@ -1118,6 +1112,58 @@ Public Attributes</h2></td></tr>
           <td class="memname">void classol::output_spikes </td>
           <td>(</td>
           <td class="paramtype">FILE *&#160;</td>
+          <td class="paramname">, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned&#160;</td>
+          <td class="paramname"><em>int</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a54d61e7df53d16d7b8e1de46bcca6c6c"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void classol::output_spikes </td>
+          <td>(</td>
+          <td class="paramtype">FILE *&#160;</td>
+          <td class="paramname">, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned&#160;</td>
+          <td class="paramname"><em>int</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a54d61e7df53d16d7b8e1de46bcca6c6c"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void classol::output_spikes </td>
+          <td>(</td>
+          <td class="paramtype">FILE *&#160;</td>
           <td class="paramname"><em>f</em>, </td>
         </tr>
         <tr>
@@ -1171,12 +1217,12 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a54d61e7df53d16d7b8e1de46bcca6c6c"></a>
+<a class="anchor" id="a88179d17f4ea568b7b58a329a741eb53"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">void classol::output_spikes </td>
+          <td class="memname">void classol::output_state </td>
           <td>(</td>
           <td class="paramtype">FILE *&#160;</td>
           <td class="paramname">, </td>
@@ -1197,12 +1243,12 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a54d61e7df53d16d7b8e1de46bcca6c6c"></a>
+<a class="anchor" id="a88179d17f4ea568b7b58a329a741eb53"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">void classol::output_spikes </td>
+          <td class="memname">void classol::output_state </td>
           <td>(</td>
           <td class="paramtype">FILE *&#160;</td>
           <td class="paramname">, </td>
@@ -1281,58 +1327,6 @@ Public Attributes</h2></td></tr>
   </table>
   </dd>
 </dl>
-
-</div>
-</div>
-<a class="anchor" id="a88179d17f4ea568b7b58a329a741eb53"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void classol::output_state </td>
-          <td>(</td>
-          <td class="paramtype">FILE *&#160;</td>
-          <td class="paramname">, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">unsigned&#160;</td>
-          <td class="paramname"><em>int</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a class="anchor" id="a88179d17f4ea568b7b58a329a741eb53"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void classol::output_state </td>
-          <td>(</td>
-          <td class="paramtype">FILE *&#160;</td>
-          <td class="paramname">, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">unsigned&#160;</td>
-          <td class="paramname"><em>int</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
 
 </div>
 </div>
@@ -1540,6 +1534,22 @@ Public Attributes</h2></td></tr>
           <td class="memname">void classol::read_pnkcsyns </td>
           <td>(</td>
           <td class="paramtype">FILE *&#160;</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a1529539e9d2424d56016ad8e60aa0b79"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void classol::read_pnkcsyns </td>
+          <td>(</td>
+          <td class="paramtype">FILE *&#160;</td>
           <td class="paramname"><em>f</em></td><td>)</td>
           <td></td>
         </tr>
@@ -1553,22 +1563,6 @@ Public Attributes</h2></td></tr>
   </table>
   </dd>
 </dl>
-
-</div>
-</div>
-<a class="anchor" id="a1529539e9d2424d56016ad8e60aa0b79"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void classol::read_pnkcsyns </td>
-          <td>(</td>
-          <td class="paramtype">FILE *&#160;</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
 
 </div>
 </div>
@@ -1676,7 +1670,7 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a2ef6b9d1a502b1cbd0da6cb5d9c20fb9"></a>
+<a class="anchor" id="a5bfa8d79d2bb2d8e834882f15445d482"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -1689,7 +1683,7 @@ Public Attributes</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">struct Conductance&#160;</td>
+          <td class="paramtype">struct SparseProjection&#160;</td>
           <td class="paramname"><em>C</em>, </td>
         </tr>
         <tr>
@@ -1732,7 +1726,7 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a8f2e2c575501aa0bb2c5864adccd6aac"></a>
+<a class="anchor" id="a4788e79fd6ec3bde287cafb020d5d0cb"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -1745,101 +1739,7 @@ Public Attributes</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">struct Conductance&#160;</td>
-          <td class="paramname"><em>C</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">FILE *&#160;</td>
-          <td class="paramname"><em>f_ind</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">FILE *&#160;</td>
-          <td class="paramname"><em>f_indInG</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">FILE *&#160;</td>
-          <td class="paramname"><em>f_g</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">f_g</td><td>File handle for a file containing sparse conductivity values </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a class="anchor" id="a8f2e2c575501aa0bb2c5864adccd6aac"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void classol::read_sparsesyns_par </td>
-          <td>(</td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname">, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">struct Conductance&#160;</td>
-          <td class="paramname">, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">FILE *&#160;</td>
-          <td class="paramname">, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">FILE *&#160;</td>
-          <td class="paramname">, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">FILE *&#160;</td>
-          <td class="paramname">&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a class="anchor" id="a0aa3dc991bd9e89071e9333d32757157"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void classol::read_sparsesyns_par </td>
-          <td>(</td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>synInd</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">struct Conductance&#160;</td>
+          <td class="paramtype">struct SparseProjection&#160;</td>
           <td class="paramname"><em>C</em>, </td>
         </tr>
         <tr>
@@ -1875,14 +1775,114 @@ Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">f_g</td><td>File handle for a file containing sparse conductivity values </td></tr>
+    <tr><td class="paramname">f_g</td><td>File handle for a file containing sparse connectivity values </td></tr>
   </table>
   </dd>
 </dl>
 
 </div>
 </div>
-<a class="anchor" id="a978cae14cbba95f29619c0aacba7ffbe"></a>
+<a class="anchor" id="a4788e79fd6ec3bde287cafb020d5d0cb"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void classol::read_sparsesyns_par </td>
+          <td>(</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname">, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">struct SparseProjection&#160;</td>
+          <td class="paramname">, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="../../dc/d3f/PoissonIzh_8cc.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a> *&#160;</td>
+          <td class="paramname">, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">FILE *&#160;</td>
+          <td class="paramname">, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">FILE *&#160;</td>
+          <td class="paramname">, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">FILE *&#160;</td>
+          <td class="paramname">&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a4788e79fd6ec3bde287cafb020d5d0cb"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void classol::read_sparsesyns_par </td>
+          <td>(</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname">, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">struct SparseProjection&#160;</td>
+          <td class="paramname">, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="../../dc/d3f/PoissonIzh_8cc.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a> *&#160;</td>
+          <td class="paramname">, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">FILE *&#160;</td>
+          <td class="paramname">, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">FILE *&#160;</td>
+          <td class="paramname">, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">FILE *&#160;</td>
+          <td class="paramname">&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="ab9c79c6449c01a2bca6280cd408e720b"></a>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
@@ -1903,7 +1903,7 @@ template&lt;class DATATYPE &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">struct Conductance&#160;</td>
+          <td class="paramtype">struct SparseProjection&#160;</td>
           <td class="paramname"><em>C</em>, </td>
         </tr>
         <tr>
@@ -1948,32 +1948,6 @@ template&lt;class DATATYPE &gt; </div>
           <td class="memname">void classol::run </td>
           <td>(</td>
           <td class="paramtype">float&#160;</td>
-          <td class="paramname">, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">unsigned&#160;</td>
-          <td class="paramname"><em>int</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a class="anchor" id="ae907498a8660fe41f7d9b41aad6e5d10"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void classol::run </td>
-          <td>(</td>
-          <td class="paramtype">float&#160;</td>
           <td class="paramname"><em>runtime</em>, </td>
         </tr>
         <tr>
@@ -1981,41 +1955,6 @@ template&lt;class DATATYPE &gt; </div>
           <td></td>
           <td class="paramtype">unsigned int&#160;</td>
           <td class="paramname"><em>which</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Method for simulating the model for a given period of time. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">runtime</td><td>Duration of time to run the model for </td></tr>
-    <tr><td class="paramname">which</td><td>Flag determining whether to run on GPU or CPU only </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a class="anchor" id="ae907498a8660fe41f7d9b41aad6e5d10"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void classol::run </td>
-          <td>(</td>
-          <td class="paramtype">float&#160;</td>
-          <td class="paramname">, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">unsigned&#160;</td>
-          <td class="paramname"><em>int</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -2082,6 +2021,118 @@ template&lt;class DATATYPE &gt; </div>
           <td></td>
           <td>)</td>
           <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a91972987fdeb56b7d4b7fb15b2619145"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void classol::runCPU </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="../../dc/d3f/PoissonIzh_8cc.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a>&#160;</td>
+          <td class="paramname"><em>runtime</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Method for simulating the model for a given period of time on the CPU. </p>
+<p>Method for simulating the model for a given period of time on th CPU. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">runtime</td><td>Duration of time to run the model for </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a91972987fdeb56b7d4b7fb15b2619145"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void classol::runCPU </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="../../dc/d3f/PoissonIzh_8cc.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a>&#160;</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a2a95daf452913b42ba7965d291275c3c"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void classol::runGPU </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="../../dc/d3f/PoissonIzh_8cc.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a>&#160;</td>
+          <td class="paramname"><em>runtime</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Method for simulating the model for a given period of time on the GPU. </p>
+<p>Method for simulating the model for a given period of time on th GPU. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">runtime</td><td>Duration of time to run the model for </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a2a95daf452913b42ba7965d291275c3c"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void classol::runGPU </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="../../dc/d3f/PoissonIzh_8cc.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a>&#160;</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="af9dfaa92f0e4737dbadd9ec9cd203555"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void classol::sum_spikes </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="af9dfaa92f0e4737dbadd9ec9cd203555"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void classol::sum_spikes </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -2117,36 +2168,6 @@ template&lt;class DATATYPE &gt; </div>
 </div><div class="memdoc">
 
 <p>Method for summing up spike numbers. </p>
-
-</div>
-</div>
-<a class="anchor" id="af9dfaa92f0e4737dbadd9ec9cd203555"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void classol::sum_spikes </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a class="anchor" id="af9dfaa92f0e4737dbadd9ec9cd203555"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void classol::sum_spikes </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
 
 </div>
 </div>
@@ -2245,6 +2266,38 @@ template&lt;class DATATYPE &gt; </div>
           <td class="memname">void classol::write_pnkcsyns </td>
           <td>(</td>
           <td class="paramtype">FILE *&#160;</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a272983bc77c8c547310a38fd340c29e4"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void classol::write_pnkcsyns </td>
+          <td>(</td>
+          <td class="paramtype">FILE *&#160;</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a272983bc77c8c547310a38fd340c29e4"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void classol::write_pnkcsyns </td>
+          <td>(</td>
+          <td class="paramtype">FILE *&#160;</td>
           <td class="paramname"><em>f</em></td><td>)</td>
           <td></td>
         </tr>
@@ -2277,28 +2330,12 @@ template&lt;class DATATYPE &gt; </div>
 
 </div>
 </div>
-<a class="anchor" id="a272983bc77c8c547310a38fd340c29e4"></a>
+<a class="anchor" id="a661def594f59444eac7a0a08e599ec07"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">void classol::write_pnkcsyns </td>
-          <td>(</td>
-          <td class="paramtype">FILE *&#160;</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a class="anchor" id="a272983bc77c8c547310a38fd340c29e4"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void classol::write_pnkcsyns </td>
+          <td class="memname">void classol::write_pnlhisyns </td>
           <td>(</td>
           <td class="paramtype">FILE *&#160;</td>
           <td class="paramname"></td><td>)</td>
@@ -2365,22 +2402,6 @@ template&lt;class DATATYPE &gt; </div>
 
 </div>
 </div>
-<a class="anchor" id="a661def594f59444eac7a0a08e599ec07"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void classol::write_pnlhisyns </td>
-          <td>(</td>
-          <td class="paramtype">FILE *&#160;</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
 <h2 class="groupheader">Member Data Documentation</h2>
 <a class="anchor" id="a6274b206756a62789c2200def03f29c2"></a>
 <div class="memitem">
@@ -2388,18 +2409,6 @@ template&lt;class DATATYPE &gt; </div>
       <table class="memname">
         <tr>
           <td class="memname">uint64_t * classol::baserates</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a class="anchor" id="afc6650247da3c85e829264ccb5c4f569"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">uint64_t* classol::baserates</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -2418,36 +2427,12 @@ template&lt;class DATATYPE &gt; </div>
 
 </div>
 </div>
-<a class="anchor" id="adee39c3f46e3b1b691b047f7fae179c6"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">uint64_t* classol::d_baserates</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
 <a class="anchor" id="ab59e43ece1fe1ebccc45b83e8d91a6f4"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
           <td class="memname">uint64_t * classol::d_pattern</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a class="anchor" id="ab864befa4f0f4b067b78933dbfd77ced"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">uint64_t* classol::d_pattern</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -2478,18 +2463,6 @@ template&lt;class DATATYPE &gt; </div>
 
 </div>
 </div>
-<a class="anchor" id="ab0eecc893b3ecf89505f2fd31e34403f"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">float* classol::p_pattern</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
 <a class="anchor" id="a8e632889d43d2626c506e3f08a76e659"></a>
 <div class="memitem">
 <div class="memproto">
@@ -2508,18 +2481,6 @@ template&lt;class DATATYPE &gt; </div>
       <table class="memname">
         <tr>
           <td class="memname">uint64_t * classol::pattern</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a class="anchor" id="a16f82061914e21c2724df0c0044f58dc"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">uint64_t* classol::pattern</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -2610,22 +2571,10 @@ template&lt;class DATATYPE &gt; </div>
 
 </div>
 </div>
-<a class="anchor" id="a0b534a0ff6a56ab9e137f964bcf29d78"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">uint64_t* classol::theRates</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
 <hr/>The documentation for this class was generated from the following files:<ul>
-<li>tmp/model/<a class="el" href="../../de/df2/tmp_2model_2map__classol_8h_source.html">map_classol.h</a></li>
+<li>userproject/MBody1_project/model/<a class="el" href="../../da/dfc/MBody1__project_2model_2map__classol_8h_source.html">map_classol.h</a></li>
 <li>userproject/PoissonIzh_project/model/<a class="el" href="../../df/d16/PoissonIzh-model_8h_source.html">PoissonIzh-model.h</a></li>
-<li>tmp/model/<a class="el" href="../../d2/d7f/tmp_2model_2map__classol_8cc.html">map_classol.cc</a></li>
+<li>userproject/MBody1_project/model/<a class="el" href="../../d9/de1/MBody1__project_2model_2map__classol_8cc.html">map_classol.cc</a></li>
 <li>userproject/PoissonIzh_project/model/<a class="el" href="../../d8/d11/PoissonIzh-model_8cc.html">PoissonIzh-model.cc</a></li>
 </ul>
 </div><!-- contents -->
@@ -2634,7 +2583,7 @@ template&lt;class DATATYPE &gt; </div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../d1/d16/classclassol.html">classol</a></li>
-    <li class="footer">Generated on Thu Dec 18 2014 21:21:06 for GeNN by
+    <li class="footer">Generated on Mon Dec 22 2014 23:15:37 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.7 </li>
   </ul>

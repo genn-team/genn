@@ -8,9 +8,9 @@ var searchData=
   ['excizh_5fp',['excIzh_p',['../d7/d5b/Izh__sparse_8cc.html#af621c74cc503772b3a6589272ede67ea',1,'Izh_sparse.cc']]],
   ['exizh_5fini',['exIzh_ini',['../db/d47/OneComp_8cc.html#a095626472c86f088893a9dbebc00c49b',1,'exIzh_ini():&#160;OneComp.cc'],['../dc/d3f/PoissonIzh_8cc.html#a095626472c86f088893a9dbebc00c49b',1,'exIzh_ini():&#160;PoissonIzh.cc']]],
   ['exizh_5fp',['exIzh_p',['../db/d47/OneComp_8cc.html#ab0c620eee5f0e828d73b9544b63d3ff8',1,'exIzh_p():&#160;OneComp.cc'],['../dc/d3f/PoissonIzh_8cc.html#ab0c620eee5f0e828d73b9544b63d3ff8',1,'exIzh_p():&#160;PoissonIzh.cc']]],
-  ['expdecay',['EXPDECAY',['../dc/d25/modelSpec_01_07dhcp-liversidge20_8anu_8edu_8au's_01conflicted_01copy_012014-12-13_08_8h.html#a49eb71ad1b005eccc948e788d0ae524b',1,'EXPDECAY():&#160;modelSpec (dhcp-liversidge20.anu.edu.au&apos;s conflicted copy 2014-12-13).h'],['../dc/de1/modelSpec_8h.html#a49eb71ad1b005eccc948e788d0ae524b',1,'EXPDECAY():&#160;modelSpec.h']]],
-  ['extraglobalneuronkernelparameters',['extraGlobalNeuronKernelParameters',['../d3/d64/structneuronModel.html#a65827e65a7cd0238bdfde1fabf8e6839',1,'neuronModel']]],
-  ['extraglobalneuronkernelparametertypes',['extraGlobalNeuronKernelParameterTypes',['../d3/d64/structneuronModel.html#a00001e46f3960ed96f67111147e30d88',1,'neuronModel']]],
-  ['extraglobalsynapsekernelparameters',['extraGlobalSynapseKernelParameters',['../dd/db7/classweightUpdateModel.html#aee8a59212d49bc5f76029f9b66f6617a',1,'weightUpdateModel']]],
-  ['extraglobalsynapsekernelparametertypes',['extraGlobalSynapseKernelParameterTypes',['../dd/db7/classweightUpdateModel.html#a2209416d0353ccac374a2b6819037551',1,'weightUpdateModel']]]
+  ['expdecay',['EXPDECAY',['../dc/de1/modelSpec_8h.html#a49eb71ad1b005eccc948e788d0ae524b',1,'modelSpec.h']]],
+  ['extraglobalneuronkernelparameters',['extraGlobalNeuronKernelParameters',['../d3/d64/structneuronModel.html#a00094db5e89eaa5d8017d83d84c63676',1,'neuronModel']]],
+  ['extraglobalneuronkernelparametertypes',['extraGlobalNeuronKernelParameterTypes',['../d3/d64/structneuronModel.html#a35592a2fad7d926ca664871bd1513f24',1,'neuronModel']]],
+  ['extraglobalsynapsekernelparameters',['extraGlobalSynapseKernelParameters',['../dd/db7/classweightUpdateModel.html#aeab0e4003100c943d2ddcd3481f5f660',1,'weightUpdateModel']]],
+  ['extraglobalsynapsekernelparametertypes',['extraGlobalSynapseKernelParameterTypes',['../dd/db7/classweightUpdateModel.html#a3e8b0003232bcbdf1be31425d87eb233',1,'weightUpdateModel']]]
 ];

@@ -7,7 +7,6 @@ var annotated =
     [ "dpclass", "db/de6/classdpclass.html", "db/de6/classdpclass" ],
     [ "errTupel", "d4/da7/structerrTupel.html", "d4/da7/structerrTupel" ],
     [ "expDecayDp", "da/d0d/classexpDecayDp.html", "da/d0d/classexpDecayDp" ],
-    [ "histogram", "d1/d6c/structhistogram.html", "d1/d6c/structhistogram" ],
     [ "inputSpec", "de/dad/structinputSpec.html", "de/dad/structinputSpec" ],
     [ "neuronModel", "d3/d64/structneuronModel.html", "d3/d64/structneuronModel" ],
     [ "neuronpop", "de/d18/classneuronpop.html", "de/d18/classneuronpop" ],

@@ -133,8 +133,9 @@ Macros</h2></td></tr>
 Functions</h2></td></tr>
 <tr class="memitem:adb85534870a979bdcefda11d2d40de54"><td class="memItemLeft" align="right" valign="top">__global__ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d69/GeNNHelperKrnls_8cu.html#adb85534870a979bdcefda11d2d40de54">setup_kernel</a> (curandState *state, unsigned long seed, int sizeofResult)</td></tr>
 <tr class="separator:adb85534870a979bdcefda11d2d40de54"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a122e8a9c8d633ea1584f73849d059e7b"><td class="memItemLeft" align="right" valign="top">__global__ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d69/GeNNHelperKrnls_8cu.html#a122e8a9c8d633ea1584f73849d059e7b">generate_random_gpuInput_xorwow</a> (curandState *state, float *result, int sizeofResult, float Rstrength, float Rshift)</td></tr>
-<tr class="separator:a122e8a9c8d633ea1584f73849d059e7b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2db3ae938dc2abab2cbaa036846e6b40"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
+<tr class="memitem:a2db3ae938dc2abab2cbaa036846e6b40"><td class="memTemplItemLeft" align="right" valign="top">__global__ void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../db/d69/GeNNHelperKrnls_8cu.html#a2db3ae938dc2abab2cbaa036846e6b40">generate_random_gpuInput_xorwow</a> (curandState *state, T *result, int sizeofResult, T Rstrength, T Rshift)</td></tr>
+<tr class="separator:a2db3ae938dc2abab2cbaa036846e6b40"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:addeb2120a5db41facb5d99b838c714e5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d69/GeNNHelperKrnls_8cu.html#addeb2120a5db41facb5d99b838c714e5">xorwow_setup</a> (curandState *devStates, long int sampleSize)</td></tr>
 <tr class="separator:addeb2120a5db41facb5d99b838c714e5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
@@ -152,9 +153,11 @@ Functions</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Function Documentation</h2>
-<a class="anchor" id="a122e8a9c8d633ea1584f73849d059e7b"></a>
+<a class="anchor" id="a2db3ae938dc2abab2cbaa036846e6b40"></a>
 <div class="memitem">
 <div class="memproto">
+<div class="memtemplate">
+template&lt;class T &gt; </div>
       <table class="memname">
         <tr>
           <td class="memname">__global__ void generate_random_gpuInput_xorwow </td>
@@ -165,7 +168,7 @@ Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">float *&#160;</td>
+          <td class="paramtype">T *&#160;</td>
           <td class="paramname"><em>result</em>, </td>
         </tr>
         <tr>
@@ -177,13 +180,13 @@ Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">float&#160;</td>
+          <td class="paramtype">T&#160;</td>
           <td class="paramname"><em>Rstrength</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">float&#160;</td>
+          <td class="paramtype">T&#160;</td>
           <td class="paramname"><em>Rshift</em>&#160;</td>
         </tr>
         <tr>
@@ -260,7 +263,7 @@ Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dir_66fc3ae5585a02e310a487b6a12e9e11.html">userproject</a></li><li class="navelem"><a class="el" href="../../db/d69/GeNNHelperKrnls_8cu.html">GeNNHelperKrnls.cu</a></li>
-    <li class="footer">Generated on Thu Dec 18 2014 21:21:05 for GeNN by
+    <li class="footer">Generated on Mon Dec 22 2014 23:15:36 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.7 </li>
   </ul>
