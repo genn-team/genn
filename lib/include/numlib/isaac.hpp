@@ -38,13 +38,11 @@
 #include <stdlib.h>
 
 #ifndef __ISAAC64
-typedef unsigned long int UINT32;
-const UINT32 GOLDEN_RATIO = UINT32(0x9e3779b9);
-typedef UINT32 ISAAC_INT;
+typedef unsigned long int ISAAC_INT;
+const ISAAC_INT GOLDEN_RATIO = ISAAC_INT(0x9e3779b9);
 #else   // __ISAAC64
-typedef unsigned __int64 UINT64;
-const UINT64 GOLDEN_RATIO = UINT64(0x9e3779b97f4a7c13);
-typedef UINT64 ISAAC_INT;
+typedef unsigned __int64 ISAAC_INT;
+const ISAAC_INT GOLDEN_RATIO = ISAAC_INT(0x9e3779b97f4a7c13);
 #endif  // __ISAAC64
 
 
