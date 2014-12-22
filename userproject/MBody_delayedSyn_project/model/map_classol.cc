@@ -260,7 +260,7 @@ void classol::write_kcdnsyns(FILE *f //!< File handle for a file to write KC to 
     delete[] tmpg;
 }
 
-void classol::read_sparsesyns_par(int synInd, Conductance C, scalar* g, FILE *f_ind,FILE *f_indInG, FILE *f_g //!< File handle for a file containing sparse conductivity values
+void classol::read_sparsesyns_par(int synInd, struct SparseProjection C, scalar* g, FILE *f_ind,FILE *f_indInG, FILE *f_g //!< File handle for a file containing sparse conductivity values
     )
 {
     //allocateSparseArray(synInd,C.connN);
