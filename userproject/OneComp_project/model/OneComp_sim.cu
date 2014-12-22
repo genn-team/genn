@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
     {
       /*if (IzhikevichPop.model.receivesInputCurrent[k]==2) 
       {
-        FILE * ff=fopen("../../tools/expoutf","r");
+        FILE * ff=fopen("../../tools/expoutf","rb");
         IzhikevichPop.read_input_values(ff);
         fclose(ff);
 	      IzhikevichPop.copy_device_mem_input();
