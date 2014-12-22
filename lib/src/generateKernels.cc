@@ -660,7 +660,7 @@ void genSynapseKernel(NNmodel &model, //!< Model description
     // targets of several input groups are counted multiply
     unsigned int numOfBlocks = model.padSumSynapseKrnl[model.synapseGrpN - 1] / synapseBlkSz;
 
-    cout << "entering genSynapseKernel" << endl;
+//    cout << "entering genSynapseKernel" << endl;
     name = path + toString("/") + model.name + toString("_CODE/synapseKrnl.cc");
     os.open(name.c_str());
 
@@ -1055,5 +1055,5 @@ void genSynapseKernel(NNmodel &model, //!< Model description
     os << "#endif" << ENDL;
     os.close();
 
-    cerr << "exiting genSynapseKernel" << endl;
+//    cout << "exiting genSynapseKernel" << endl;
 }

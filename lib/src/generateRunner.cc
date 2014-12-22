@@ -103,7 +103,7 @@ void genRunner(NNmodel &model, //!< Model description
 	substitute(postSynModels[i].postSynDecay, "scalar", model.ftype);
     }
     
-    cout << "entering genRunner" << endl;
+//    cout << "entering genRunner" << endl;
     name= path + toString("/") + model.name + toString("_CODE/runner.cc");
     os.open(name.c_str());  
     writeHeader(os);

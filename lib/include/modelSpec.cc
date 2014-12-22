@@ -104,7 +104,6 @@ void NNmodel::initDerivedSynapsePara(unsigned int i /**< index of the synapse po
     unsigned int synt= synapseType[i];
     for (int j= 0; j < weightUpdateModels[synt].dpNames.size(); ++j) {
 	double retVal = weightUpdateModels[synt].dps->calculateDerivedParameter(j, synapsePara[i], DT);
-	cerr << j << " " << retVal << endl;
 	tmpP.push_back(retVal);
     }
     assert(dsp_w.size() == i);
@@ -243,7 +242,7 @@ void NNmodel::initLearnGrps()
 	    for (int j = 0; j < vars.size(); j++) {
 		if (wu.evntThreshold.find(vars[j] + tS("_pre")) != string::npos) {
 		    synapseSpkEvntVars[i].push_back(vars[j]);
-		    cerr << "synapsepop: " << i << ", neuronGrpNo: " << synapseSource[i] << ", added variable: " << vars[j] << endl;
+//		    cerr << "synapsepop: " << i << ", neuronGrpNo: " << synapseSource[i] << ", added variable: " << vars[j] << endl;
 		}
 	    }
 
