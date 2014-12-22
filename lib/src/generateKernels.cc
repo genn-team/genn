@@ -456,7 +456,7 @@ void generate_process_presynaptic_events_code(
 
 	unsigned int nt_post = model.neuronType[trg];
 	bool delayPost = model.neuronDelaySlots[trg] > 1;
-	string offsetPost = (delayPost ? "(spkQuePtr" + model.neuronName[trg] + " * " + tS(model.neuronN[trg]) + ") + " : "");
+	string offsetPost = (delayPost ? "(dd_spkQuePtr" + model.neuronName[trg] + " * " + tS(model.neuronN[trg]) + ") + " : "");
 
 	// Detect spike events or spikes and do the update
 	os << "// process presynaptic events: " << (evnt ? "Spike type events" : "True Spikes") << ENDL;
@@ -884,6 +884,9 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 	os << "unsigned int id = " << learnBlkSz << " * blockIdx.x + threadIdx.x;" << ENDL;
 	os << "__shared__ unsigned int shSpk[" << learnBlkSz << "];" << ENDL;
 	os << "unsigned int lscnt, numSpikeSubsets, lmax, j, r;" << ENDL;
+	if (model.needSynapseDelay) {
+	    os << "unsigned int delaySlot;" << ENDL;
+	}
 	os << ENDL;
 
 	for (int i = 0; i < model.lrnGroups; i++) {
@@ -902,7 +905,7 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 
 	    unsigned int nt_post = model.neuronType[trg];
 	    bool delayPost = model.neuronDelaySlots[trg] > 1;
-	    string offsetPost = (delayPost ? "(spkQuePtr" + model.neuronName[trg] + " * " + tS(model.neuronN[trg]) + ") + " : "");
+	    string offsetPost = (delayPost ? "(dd_spkQuePtr" + model.neuronName[trg] + " * " + tS(model.neuronN[trg]) + ") + " : "");
 	    string offsetTrueSpkPost = (model.neuronNeedTrueSpk[trg] ? offsetPost : "");
 
 // NOTE: WE DO NOT USE THE AXONAL DELAY FOR BACKWARDS PROPAGATION - WE CAN TALK ABOUT BACKWARDS DELAYS IF WE WANT THEM		
@@ -920,13 +923,13 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 	    os << "// synapse group " << model.synapseName[k] << ENDL;
 
 	    if (delayPre) {
-		os << "delaySlot = (spkQuePtr" << model.neuronName[src];
+		os << "delaySlot = (dd_spkQuePtr" << model.neuronName[src];
 		os << " + " << tS(model.neuronDelaySlots[src] - model.synapseDelay[k] + 1);
 		os << ") % " << tS(model.neuronDelaySlots[src]) << ";" << ENDL;
 	    }
 
 	    if (delayPost && model.neuronNeedTrueSpk[trg]) {
-		os << "lscnt = dd_glbSpkCnt" << model.neuronName[trg] << "[spkQuePtr" << model.neuronName[trg] << "];" << ENDL;
+		os << "lscnt = dd_glbSpkCnt" << model.neuronName[trg] << "[dd_spkQuePtr" << model.neuronName[trg] << "];" << ENDL;
 	    }
 	    else {
 		os << "lscnt = dd_glbSpkCnt" << model.neuronName[trg] << "[0];" << ENDL;

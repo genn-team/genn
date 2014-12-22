@@ -18,8 +18,8 @@
 
 # Global C++ and CUDA compiler settings.
 NVCC		="$(CUDA_PATH)\bin\nvcc.exe"
-NVCCFLAGS	=$(NVCCFLAGS)
-CXXFLAGS	=$(CXXFLAGS) /nologo /EHsc
+NVCCFLAGS	=$(NVCCFLAGS) -g -G
+CXXFLAGS	=$(CXXFLAGS) /nologo /EHsc /Zi
 
 # Global include flags and link flags.
 INCLUDE_FLAGS	= /I"$(CUDA_PATH)\include" /I$(CUDA_PATH)\samples\common\inc /I"$(GENN_PATH)\lib\include" /I"$(GENN_PATH)\userproject\include" $(EXTRA_INCLUDE) 
