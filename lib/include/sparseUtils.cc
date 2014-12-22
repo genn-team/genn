@@ -32,7 +32,7 @@ DATATYPE getG(DATATYPE * wuvar, SparseProjection  * sparseStruct, int x, int y)
   Conductance structures have changed: conductance values should be defined as synapse variable now; \n\
   the structure is renamed as \"SparseProjection\" and contains only indexing arrays. \n\n\
   Replacement function for getG is \n\
-  getSparseVar(DATATYPE * wuvar, Conductance  * sparseStruct, int x, int y).\n\n\
+  getSparseVar(DATATYPE * wuvar, SparseProjection  * sparseStruct, int x, int y).\n\n\
   calling getSparseVar...");
   getSparseVar(wuvar, &sparseStruct, x, y);
 }
