@@ -39,7 +39,7 @@ private:
   void allocate_device_mem_input();
   void free_device_mem();
   void read_PNIzh1syns(scalar *, FILE *);
-  void read_sparsesyns_par(int, struct Conductance, FILE *,FILE *,FILE *, double *);
+  void read_sparsesyns_par(int, struct SparseProjection, FILE *,FILE *,FILE *, double *);
   void generate_baserates();
   void run(float, unsigned int);
   void output_state(FILE *, unsigned int);

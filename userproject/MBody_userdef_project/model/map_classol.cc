@@ -287,7 +287,7 @@ void classol::write_kcdnsyns(FILE *f //!< File handle for a file to write KC to 
 }
 
 template <class DATATYPE>
-void classol::read_sparsesyns_par(DATATYPE * wuvar, int synInd, Conductance C, FILE *f_ind,FILE *f_indInG,FILE *f_g //!< File handle for a file containing sparse conductivity values
+void classol::read_sparsesyns_par(DATATYPE * wuvar, int synInd, SparseProjection C, FILE *f_ind,FILE *f_indInG,FILE *f_g //!< File handle for a file containing sparse conductivity values
 			    )
 {
   //allocateSparseArray(synInd,C.connN);
@@ -299,7 +299,7 @@ void classol::read_sparsesyns_par(DATATYPE * wuvar, int synInd, Conductance C, F
 
   
   // general:
-  fprintf(stdout,"Read conductance ... \n");
+  fprintf(stdout,"Read Sparse Projection ... \n");
   fprintf(stdout, "Size is %d for synapse group %d. Values start with: \n",C.connN, synInd);
   for(int i= 0; i < 100; i++) {
     fprintf(stdout, "%f ", wuvar[i]);
@@ -364,35 +364,55 @@ void classol::generate_baserates()
 
 
 //--------------------------------------------------------------------------
-/*! \brief Method for simulating the model for a given period of time
+/*! \brief Method for simulating the model for a given period of time on th GPU
  */
 //--------------------------------------------------------------------------
-
-void classol::run(scalar runtime, //!< Duration of time to run the model for 
-		  unsigned int which //!< Flag determining whether to run on GPU or CPU only
+void classol::runGPU(scalar runtime //!< Duration of time to run the model for 
 		  )
 {
+  //runtime arg1
   unsigned int pno;
   int riT= (int) (runtime/DT);
 
   for (int i= 0; i < riT; i++) {
     if (iT%patSetTime == 0) {
       pno= (iT/patSetTime)%PATTERNNO;
-      if (which == CPU) theRates= pattern;
-      if (which == GPU)	theRates= d_pattern;
+      theRates= d_pattern;
       offset= pno*model.neuronN[0];
     }
     if (iT%patSetTime == patFireTime) {
-      if (which == CPU)
-	theRates= baserates;
-      if (which == GPU)
-	theRates= d_baserates;
+	    theRates= d_baserates;
       offset= 0;
     }
-    if (which == GPU)
-       stepTimeGPU(theRates, offset, t);
-    if (which == CPU)
-       stepTimeCPU(theRates, offset, t);
+      stepTimeGPU(theRates, offset, t);
+    iT++;
+    t= iT*DT;
+  }
+}
+//--------------------------------------------------------------------------
+/*! \brief Method for simulating the model for a given period of time on th CPU
+ */
+//--------------------------------------------------------------------------
+
+void classol::runCPU(scalar runtime //!< Duration of time to run the model for 
+		  )
+{
+  //runtime arg1
+  unsigned int pno;
+  int riT= (int) (runtime/DT);
+
+  for (int i= 0; i < riT; i++) {
+    if (iT%patSetTime == 0) {
+      pno= (iT/patSetTime)%PATTERNNO;
+      theRates= pattern;
+      offset= pno*model.neuronN[0];
+    }
+    if (iT%patSetTime == patFireTime) {
+	    theRates= baserates;
+      offset= 0;
+    }
+
+    stepTimeCPU(theRates, offset, t);
     iT++;
     t= iT*DT;
   }

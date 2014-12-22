@@ -59,7 +59,7 @@ private:
   void allocate_device_mem_patterns();
   void free_device_mem(); 
   void read_pnkcsyns(FILE *);
-  void read_sparsesyns_par(int, struct Conductance, scalar *, FILE *,FILE *,FILE *); 
+  void read_sparsesyns_par(int, struct SparseProjection, scalar *, FILE *,FILE *,FILE *); 
   void write_pnkcsyns(FILE *); 
   void read_pnlhisyns(FILE *); 
   void write_pnlhisyns(FILE *); 
@@ -67,7 +67,8 @@ private:
   void write_kcdnsyns(FILE *); 
   void read_input_patterns(FILE *); 
   void generate_baserates(); 
-  void run(scalar, unsigned int); 
+  void runGPU(scalar); 
+  void runCPU(scalar); 
   void output_state(FILE *, unsigned int); 
   void getSpikesFromGPU(); 
   void getSpikeNumbersFromGPU(); 

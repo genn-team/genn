@@ -166,18 +166,17 @@ void classIzh::create_input_values() //define your explicit input rule here
     }
 }
 
-void classIzh::read_sparsesyns_par(int synInd, Conductance C, FILE *f_ind, FILE *f_indInG, FILE *f_g, scalar *g //!< File handle for a file containing sparse conductivity values
+void classIzh::read_sparsesyns_par(int synInd, SparseProjection C, FILE *f_ind, FILE *f_indInG, FILE *f_g, scalar *g //!< File handle for a file containing sparse conductivity values
 			    )
 {
   unsigned int retval=0; //to make the compiler happy
   double * gtemp = new double[C.connN]; //we need this now as files will always be generated as double but we may run the model with single precision
   //retval=fread(g, 1, C.connN*sizeof(double),f_g);
-  fprintf(stdout,"Reading conductance values ... \n");
+  fprintf(stdout,"Reading sparse projection values ... \n");
   retval=fread(gtemp, 1, C.connN*sizeof(double),f_g);
 
   importArray(g, gtemp, C.connN);
   
-  fprintf(stdout,"Conductances are converted. \n");
 
   if (retval!=C.connN*sizeof(double)) fprintf(stderr, "ERROR: Number of elements read is different than it should be.");
   fprintf(stdout,"%d active synapses in group %d. \n",C.connN,synInd);
@@ -187,7 +186,7 @@ void classIzh::read_sparsesyns_par(int synInd, Conductance C, FILE *f_ind, FILE 
   if (retval!=C.connN*sizeof(int)) fprintf(stderr, "ERROR: Number of elements read is different than it should be.");
 
   // general:
-  fprintf(stdout,"Read conductance ... \n");
+  fprintf(stdout,"Read sparse projection ... \n");
   fprintf(stdout, "Size is %d for synapse group %d. Values start with: \n",C.connN, synInd);
   for(int i= 0; i < 20; i++) {
     fprintf(stdout, "%f ", float(g[i]));

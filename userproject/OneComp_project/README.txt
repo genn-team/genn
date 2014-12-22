@@ -1,5 +1,5 @@
 
-  Single compartment Izhikevich neurons
+  Izhikevich neuron(s) without any connections
   =====================================
 
 This example project contains a helper executable called "generate_run", which also
@@ -14,7 +14,7 @@ for Linux, Mac and other UNIX users.
   USAGE
   -----
 
-  ./generate_run <0(CPU)/1(GPU)> <n> <nKC> <DIR> <MODEL> <DEBUG OFF/ON>
+  ./generate_run <0(CPU)/1(GPU)> <n> <DIR> <MODEL> <DEBUG OFF/ON>
 
 For a first minimal test, the system may be used with:
 

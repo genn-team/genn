@@ -82,7 +82,7 @@ void classol::read_PNIzh1syns(scalar *gp, FILE *f)
   fprintf(stderr,"\n\n");
 }
 
-void classol::read_sparsesyns_par(int synInd, Conductance C, FILE *f_ind,FILE *f_indInG,FILE *f_g, double * g //!< File handle for a file containing sparse conductivity values
+void classol::read_sparsesyns_par(int synInd, SparseProjection C, FILE *f_ind,FILE *f_indInG,FILE *f_g, double * g //!< File handle for a file containing sparse conductivity values
 				  )
 {
   //allocateSparseArray(synInd,C.connN);

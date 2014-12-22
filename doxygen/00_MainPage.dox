@@ -31,13 +31,7 @@ Turner](http://www.sussex.ac.uk/informatics/people/peoplelists/person/288366)
 [Prof. Thomas Nowotny](http://www.sussex.ac.uk/informatics/people/peoplelists/person/206151)
 ([contact Thomas](mailto:T.Nowotny@sussex.ac.uk)) <br />
 
-\section Contents Contents
-
-\link Installation 1 Installation\endlink <br />
-\link Quickstart 2 Quickstart\endlink<br />
-\link Examples 3 Examples\endlink<br />
-\link ListOfVariables 4 List of GeNN Variables\endlink<br />
-\link UserManual 5 User Manual \endlink<br />
+\tableofcontents
 
 The development of GeNN is partially supported by the [EPSRC](http://www.epsrc.ac.uk/)  (grant number [EP/J019690/1](http://gow.epsrc.ac.uk/NGBOViewGrant.aspx?GrantRef=EP/J019690/1) - [Green Brain Project](http://greenbrainproject.co.uk/)).
 

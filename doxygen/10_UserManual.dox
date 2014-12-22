@@ -534,24 +534,24 @@ function.
   call to \c setSynapseG for this synapse population. This option can
   only be sensibly combined with connectivity type ALLTOALL. 
 
-- \c INDIVIDUALID (deprecated): When this option is chosen, GeNN expects to use the
+- \c INDIVIDUALID: When this option is chosen, GeNN expects to use the
 same maximal conductance for all existing synaptic connections but
 which synapses exist will be defined at runtime from the user side
-code.
+code, provided as a binary array (see \ref ex_mbody).
 
 \section subsect32 Connectivity types
 If \c INDIVIDUALG is used with \c ALLTOALL connectivity, synapse variables are stored 
 in an array of size npre * npost . 
 
 If connectivity is of SPARSE type, connectivity indices are stored in a 
-struct named Conductance in order to occupy minimum memory needed. The struct Conductance contains 
+struct named SparseProjection in order to occupy minimum memory needed. The struct SparseProjection contains 
 following members:
 	1: unsigned int connN: number of connections in the population. This value is needed for allocation of arrays. 
 	The indices that correspond to these values are defined in a pre-to-post basis by the following arrays:
 	2: unsigned int ind, of size connN: Indices of corresponding postsynaptic neurons concatenated for each presynaptic neuron.
 	3: unsigned int *indInG, of size model.neuronN[model.synapseSource[synInd]]+1: This array defines from which index in the synapse variable array the indices in ind would correspond to the presynaptic neuron that corresponds to the index of the indInG array, with the number of connections being the size of ind. More specifically, indIng[n+1]-indIng[n] would give the number of postsynaptic connections for neuron n. 
 	
-For example, consider a network of two presynaptic neurons connected to three postsynaptic neurons: 0th presynaptic neuron connected to 1st and 2nd postsynaptic neurons, the 1st presynaptic neuron connected to 0th and 2nd neurons. The struct Conductance should have these members, with indexing from 0:
+For example, consider a network of two presynaptic neurons connected to three postsynaptic neurons: 0th presynaptic neuron connected to 1st and 2nd postsynaptic neurons, the 1st presynaptic neuron connected to 0th and 2nd neurons. The struct SparseProjection should have these members, with indexing from 0:
 
 	ConnN = 4
 

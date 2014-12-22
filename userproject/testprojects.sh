@@ -34,7 +34,9 @@ fi
 echo "firstrun " $firstrun
 
 printf "\nTEST 1: TEST BY CREATING NEW INPUT PATTERNS"
-printf "\n\n*********************** Testing MBody1 ****************************\n"
+printf "\n\n*******************************************************************************\n"
+printf "\n\n*********************** Testing MBody1 ****************************************\n"
+printf "\n\n*******************************************************************************\n"
 cd MBody1_project
 make clean && make
 printf "\n\n####################### MBody1 GPU ######################\n"
@@ -48,9 +50,11 @@ printf "\n\n####################### MBody1 CPU ######################\n"
 ./generate_run 0 100 1000 20 100 0.0025 testing MBody1 0 FLOAT 0
 cp testing_output/testing.out.st testing_output/testing.out.st.CPU 
 
-printf "\n\n*********************** Testing MBody_userdef ****************************\n"
+printf "\n\n*******************************************************************************\n"
+printf "\n\n*********************** Testing MBody_userdef *********************************\n"
+printf "\n\n*******************************************************************************\n"
 cd ../MBody_userdef_project
-make clean && make
+make clean && make 
 if [ "$firstrun" = false ]; then
   echo ${custommsg} >> testing_output/testing.time
   printf "With new setup... \n"  >> testing_output/testing.time
@@ -61,7 +65,9 @@ cp testing_output/testing.out.st testing_output/testing.out.st.GPU
 printf "\n\n####################### MBody_userdef CPU ######################\n"
 ./generate_run 0 100 1000 20 100 0.0025 testing MBody_userdef 0 FLOAT 0
 cp testing_output/testing.out.st testing_output/testing.out.st.CPU
+printf "\n\n*******************************************************************************\n"
 printf "\n\n*********************** Testing Izh_sparse 10K neurons****************************\n"
+printf "\n\n*******************************************************************************\n"
 cd ../Izh_sparse_project
 make clean && make
 if [ "$firstrun" = false ]; then
@@ -90,6 +96,52 @@ fi
 #./generate_run 0 1000 1000 1 outdir Izh_sparse 0 0
 #cp testing/testing.out.st testing/testing.out.st.CPU
 
+printf "\n\n*******************************************************************************\n"
+printf "\n\n*********************** Testing PoissonIzh project ****************************\n"
+printf "\n\n*******************************************************************************\n"
+cd ../PoissonIzh_project
+make clean && make
+
+#if [ "$firstrun" = false ]; then
+#  echo ${custommsg} >> testing_output/testing.time
+#  printf "With new setup... \n"  >> testing_output/testing.time
+#fi
+printf "\n\n####################### PoissonIzh GPU test 1 ######################\n"
+./generate_run 1 100 10 0.5 2 testing PoissonIzh 0
+
+printf "\n\n####################### PoissonIzh CPU test 1 ######################\n"
+./generate_run 0 100 10 0.5 2 testing PoissonIzh 0
+
+printf "\n\n*******************************************************************************\n"
+printf "\n\n*********************** Testing OneComp project ****************************\n"
+printf "\n\n*******************************************************************************\n"
+cd ../OneComp_project
+make clean && make
+
+#if [ "$firstrun" = false ]; then
+#  echo ${custommsg} >> testing_output/testing.time
+ # printf "With new setup... \n"  >> testing_output/testing.time
+#fi
+printf "\n\n####################### OneComp GPU test 1 ######################\n"
+./generate_run 1 1 testing OneComp 0
+
+printf "\n\n####################### OneComp CPU test 1 ######################\n"
+./generate_run 0 1 testing OneComp 0
+
+printf "\n\n*******************************************************************************\n"
+printf "\n\n*********************** Testing HHVclampGA project ****************************\n"
+printf "\n\n*******************************************************************************\n"
+cd ../HHVclampGA_project
+make clean && make
+
+#if [ "$firstrun" = false ]; then
+ # echo ${custommsg} >> testing_output/testing.time
+#  printf "With new setup... \n"  >> testing_output/testing.time
+#fi
+printf "\n\n####################### HHVclampGA GPU test 1 ######################\n"
+./generate_run 1 2 5000 1000 testing 0
+printf "\n\n####################### HHVclampGA CPU test 1 ######################\n"
+./generate_run 0 2 5000 1000 testing 0
 cd ..  
 #if this is the first time, copy reference input files into the benchmarking directory
   
@@ -99,9 +151,9 @@ if [ "$firstrun" = true ]; then
   cp -R MBody1_project/testing_output $BmDir/MBody_userdef #use the same input for MBody_userdef and MBody1
   cp -R Izh_sparse_project/testing_output $BmDir/Izh_sparse
   cp -R Izh_sparse_project/inputfiles10K $BmDir/Izh_sparse/inputfiles10K
-  #cp -R PoissonIzh_project/testing $BmDir/PoissonIzh
-  #cp -R OneComp_project/testing $BmDir/PoissonIzh_project
-  #cp -R PoissonIzh_project/testing $BmDir/PoissonIzh_project
+  cp -R PoissonIzh_project/testing_output $BmDir/PoissonIzh
+  cp -R OneComp_project/testing_output $BmDir/OneComp
+  cp -R HHVclampGA_project/testing_output $BmDir/HHVclampGA
   #cp -R SynDelay_project/testing $BmDir/SynDelay
   echo "First run complete!"
   exit 0;
@@ -122,6 +174,7 @@ printf "\n\n####################### MBody1 GPU TEST 2 ######################\n"
 model/classol_sim testing 1
 printf "\n\n####################### MBody1 CPU TEST 2 ######################\n"
 model/classol_sim testing 0
+
 cd ../MBody_userdef_project
 cp -R $BmDir/MBody_userdef/* testing_output/
 printf "With reference setup (same as MBody1 as well)... \n"  >> testing_output/testing.time
@@ -129,12 +182,33 @@ printf "\n\n####################### MBody_userdef GPU TEST 2 ###################
 model/classol_sim testing 1
 printf "\n\n####################### MBody_userdef CPU TEST 2 ######################\n"
 model/classol_sim testing 0
+
 cd ../Izh_sparse_project
 cp -R $BmDir/Izh_sparse/* testing_output/
 printf "With reference setup (input is still random, so the results are not expected to be identical)... \n"  >> testing_output/testing.time
 cp -R $BmDir/Izh_sparse/inputfiles10K/* inputfiles/
+printf "\n\n####################### Izh_sparse GPU TEST 2 ######################\n"
 model/Izh_sim_sparse testing 1
+printf "\n\n####################### Izh_sparse CPU TEST 2 ######################\n"
 model/Izh_sim_sparse testing 0
+
+cd ../PoissonIzh_project
+cp -R $BmDir/PoissonIzh/* testing_output/
+printf "With reference setup... \n"  >> testing_output/testing.time
+printf "\n\n####################### PoissonIzh GPU TEST 2 ######################\n"
+model/PoissonIzh_sim testing 1
+printf "\n\n####################### PoissonIzh CPU TEST 2 ######################\n"
+model/PoissonIzh_sim testing 0
+
+#Skipping OneComp, as test 2 does not make any sense for this project
+
+cd ../HHVclampGA_project
+cp -R $BmDir/HHVclampGA/* testing_output/
+printf "With reference setup... \n"  >> testing_output/testing.time
+printf "\n\n####################### HHVclampGA GPU TEST 2 ######################\n"
+model/VClampGA testing 1 2
+printf "\n\n####################### HHVclampGA CPU TEST 2 ######################\n"
+model/VClampGA testing 0 2
 cd ..
 #cp -R $BmDir/PoissonIzh PoissonIzh_project/testing
 #cp -R $BmDir/OneComp OneComp_project/testing
@@ -143,14 +217,23 @@ cd ..
 cp MBody1_project/testing_output/testing.time $BmDir/MBody1/testing.time
 cp MBody_userdef_project/testing_output/testing.time $BmDir/MBody_userdef/testing.time
 cp Izh_sparse_project/testing_output/testing.time $BmDir/Izh_sparse/testing.time
+cp PoissonIzh_project/testing_output/testing.time $BmDir/PoissonIzh/testing.time
+cp OneComp_project/testing_output/testing.time $BmDir/OneComp/testing.time
+cp HHVclampGA_project/testing_output/testing.time $BmDir/HHVclampGA/testing.time
 
 printf "\nMBody1 time tail\n"
-tail -n 23 MBody1_project/testing_output/testing.time
+tail -n 18 MBody1_project/testing_output/testing.time
 printf "\nMBody_userdef time tail\n"
 tail -n 18 MBody_userdef_project/testing_output/testing.time
 printf "\nIzh_sparse time tail\n"
 tail -n 18 Izh_sparse_project/testing_output/testing.time
-  
+printf "\nPoissonIzh time tail\n"
+tail -n 18 PoissonIzh_project/testing_output/testing.time
+printf "\nOneComp time tail\n"
+tail -n 8 OneComp_project/testing_output/testing.time  
+printf "\nHHVclampGA time tail\n"
+tail -n 18 HHVclampGA_project/testing_output/testing.time
+
 echo "Test complete! Checking if weekly copy of the output is necessary..."
 
 monthandyear=`date +'%W_%m%y'`

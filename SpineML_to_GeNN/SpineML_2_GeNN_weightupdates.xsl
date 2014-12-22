@@ -15,7 +15,7 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:SMLLOWNL="http://www.shef
 
 <!-- LOW LEVEL SCHEMA -->
 <xsl:when test="SMLLOWNL:SpineML">
-
+	weightUpdateModel wu;
 <!-- EXTRACT NEW WEIGHTUPDATE TYPES FROM SYNAPSES -->
 <xsl:for-each select="/SMLLOWNL:SpineML/SMLLOWNL:Population/SMLLOWNL:Neuron">
 	<xsl:variable name="curr_nrn" select="."/>
@@ -26,7 +26,7 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:SMLLOWNL="http://www.shef
   <!-- UNRECOGNISED WEIGHTUPDATE TYPE - GENERATE GeNN CLASS -->
   <!-- Sanity - is the weight update type compatible with GeNN?? -->
   <xsl:if test="not(count(//SMLCL:AnalogSendPort)=0)">
-  	  <xsl:message terminate="yes">
+  	  <xsl:message terminate="no">
 Error: WeightUpdates with AnalogSendPorts are not supported by GeNN
 	</xsl:message>
   </xsl:if>
@@ -75,8 +75,8 @@ Error: WeightUpdates cannot contain TimeDerivatives
     <!-- USE TEMP VARIABLE TO GET DATA FROM OTHER COMPONENTS -->
      <xsl:for-each select="//SMLCL:AnalogReceivePort">
      	<xsl:variable name="curr_port_name" select="@name"/>
-     	<xsl:if test="$curr_wu/SMLLOWNL:Input[@dst_port=$curr_port_name]/@src=$curr_wu/../../@dst_population">
-     		<!---->	float <xsl:value-of select="@name"/>_WU = l<xsl:value-of select="$curr_wu/SMLLOWNL:Input[@dst_port=$curr_port_name]/@src_port"/>_NB; \n \
+     	<xsl:if test="$curr_wu/@input_dst_port=$curr_port_name">
+     		<!---->	float <xsl:value-of select="@name"/>_WU = $(<xsl:value-of select="$curr_wu/@input_src_port"/>_NB_pre); \n \
      	</xsl:if>
      	<!--xsl:if test="not($curr_wu/SMLLOWNL:Input[@dst_port=$curr_port_name]/@src=$curr_wu/../../@dst_population)">
      		<!- MUCH MORE COMPLICATED - LEAVING FOR NOW! ->
@@ -87,16 +87,9 @@ Error: Connections to WeightUpdates from sources other than the destination Neur
      </xsl:for-each>
      <xsl:for-each select="//SMLCL:AnalogReducePort">
      	<xsl:variable name="curr_port_name" select="@name"/>
-     	<xsl:if test="$curr_wu/SMLLOWNL:Input[@dst_port=$curr_port_name]/@src=$curr_wu/../../@dst_population">
-     		<!---->	float <xsl:value-of select="@name"/>_WU = <xsl:for-each select="$curr_wu/SMLLOWNL:Input[@dst_port=$curr_port_name]">l<xsl:value-of select="@src_port"/>_NB <xsl:if test="not(position() = count($curr_wu/SMLLOWNL:Input[@dst_port=$curr_port_name]))"> + </xsl:if></xsl:for-each>; \n \
+     	<xsl:if test="$curr_wu/@input_dst_port=$curr_port_name">
+     		<!---->	float <xsl:value-of select="@name"/>_WU = $(<xsl:value-of select="$curr_wu/@input_src_port"/>_NB_pre); \n \
      	</xsl:if>
-     	\\<xsl:value-of select="$curr_wu/SMLLOWNL:Input[@dst_port=$curr_port_name]/@src"/>\\
-     	<!--xsl:if test="not($curr_wu/SMLLOWNL:Input[@dst_port=$curr_port_name]/@src=$curr_wu/../../@dst_population)">
-     		<!- MUCH MORE COMPLICATED - LEAVING FOR NOW! ->
-     		<xsl:message terminate="yes">
-Error: Connections to WeightUpdates from sources other than the destination Neuron are not supported
-			</xsl:message>	
-     	</xsl:if-->
      </xsl:for-each>
      <xsl:for-each select="//SMLCL:OnImpulse"> <!-- ONIMPULSE FOR INPUT FROM SYNAPSE -->
      <!----> float <xsl:value-of select="@src_port"/>_WU = $(inSyn); \
@@ -116,12 +109,13 @@ Error: Connections to WeightUpdates from sources other than the destination Neur
 		</xsl:call-template>); \n \
 	 <!---->   	 
   	 </xsl:for-each> <!-- END ALIAS EQN -->
-  	 <xsl:for-each select="//SMLCL:Alias[@name=$curr_wu/@output_src_port]"> <!-- ALIAS PORT EQN -->
-  	 	<!----><xsl:value-of select="$curr_wu/@output_dst_port"/>_NB += (<!---->
+  	 <xsl:for-each select="//SMLCL:Alias[@name=$curr_wu/../SMLLOWNL:PostSynapse/@input_src_port]"> <!-- ALIAS PORT EQN -->
+  	 	<!---->$(addtoinSyn) = (<!---->
 		<xsl:call-template name="add_indices">
 			<xsl:with-param name="string" select="SMLCL:MathInline"/>
 			<xsl:with-param name="params" select="//SMLCL:Parameter | //SMLCL:StateVariable | //SMLCL:AnalogReducePort | //SMLCL:AnalogReceivePort"/>
 		</xsl:call-template>); \n \
+		$(updatelinsyn); \n \
 	 <!---->   	 
   	 </xsl:for-each> <!-- END ALIAS PORT EQN -->
   	  <!-- LIMIT SCOPE --> } \n \
@@ -164,7 +158,8 @@ Error: Connections to WeightUpdates from sources other than the destination Neur
 			<!-- EMIT IMPULSE -->
 			<xsl:for-each select="SMLCL:ImpulseOut">
 				<!-- this is the output to the linSyn variable - we need to assign the specified SV or Parameter onto it! -->
-				<!---->	linSyn = $(<xsl:value-of select="@port"/>_WU); \n \
+				<!---->	$(addtoinSyn) = $(<xsl:value-of select="@port"/>_WU); \n \
+				$(updatelinsyn); \n \
 <!---->		</xsl:for-each>
 			<!-- END EMIT IMPULSE -->
 			<!-- REGIME CHANGE -->
@@ -266,7 +261,7 @@ Error: Connections to WeightUpdates from sources other than the destination Neur
 				<xsl:call-template name="add_indices_helper">
 					<xsl:with-param name="params" select="$params"/>
 					<xsl:with-param name="param" select="$param"/>
-					<xsl:with-param name="start" select="concat($startTemp,'$(',$param/@name,'_WU)')"/>
+					<xsl:with-param name="start" select="concat($startTemp,'($(',$param/@name,'_WU))')"/>
 					<xsl:with-param name="end" select="$endTemp"/>
 				</xsl:call-template>
 				</xsl:otherwise>

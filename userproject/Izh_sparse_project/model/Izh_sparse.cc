@@ -77,7 +77,7 @@ double SynIzh_ini[1]= {
 void modelDefinition(NNmodel &model) 
 {
     initGeNN();
-  //model.setGPUDevice(0); //force using device 0
+  model.setGPUDevice(0); //force using device 0
   model.setName("Izh_sparse");
   model.addNeuronPopulation("PExc", _NExc, IZHIKEVICH_V, excIzh_p, IzhExc_ini);
 

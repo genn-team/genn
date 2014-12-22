@@ -134,11 +134,21 @@ void genRunner(NNmodel &model, //!< Model description
     os << "#ifndef SCALAR_MAX" << ENDL;
     os << "#define SCALAR_MAX " << SCLR_MAX << ENDL;
     os << "#endif" << ENDL;
+  os << "#define Conductance SparseProjection" << ENDL;
+  os << "/*struct Conductance is deprecated. \n\
+  By GeNN 2.0, Conductance is renamed as SparseProjection and contains only indexing values. \n\
+  Please consider updating your user code by renaming Conductance as SparseProjection \n\
+  and making g member a synapse variable.*/" << ENDL;
 
     // write MYRAND macro
     os << "#ifndef MYRAND" << ENDL;
     os << "#define MYRAND(Y,X) Y = Y * 1103515245 + 12345; X = (Y >> 16);" << ENDL;
     os << "#endif" << ENDL << ENDL;
+  if (model.timing) {
+      os << "cudaEvent_t neuronStart, neuronStop, synapseStart, synapseStop, learningStart, learningStop;" << endl;
+      os << "double neuron_tme, synapse_tme, learning_tme;" << endl;
+      os << "StopWatchInterface *neuron_timer, *synapse_timer, *learning_timer;" << endl;
+  } 
 
     // write CUDA error handler macro
     os << "#ifndef CHECK_CUDA_ERRORS" << ENDL;
@@ -234,7 +244,7 @@ void genRunner(NNmodel &model, //!< Model description
     // HOST AND DEVICE SYNAPSE VARIABLES
 
     os << "// synapse variables" << endl;
-    os << "struct Conductance {" << endl;
+    os << "struct SparseProjection{" << endl;
     os << "    unsigned int *indInG;" << endl;
     os << "    unsigned int *ind;" << endl;
     os << "    unsigned int *revIndInG;" << endl;
@@ -242,6 +252,7 @@ void genRunner(NNmodel &model, //!< Model description
     os << "    unsigned int *remap;" << endl;
     os << "    unsigned int connN;" << endl; 
     os << "};" << endl;
+    
 
     for (int i = 0; i < model.synapseGrpN; i++) {
     	st = model.synapseType[i];
@@ -256,7 +267,7 @@ void genRunner(NNmodel &model, //!< Model description
 	    os << "__device__ uint32_t *dd_gp" << model.synapseName[i] << ";" << endl;
 	}
 	if (model.synapseConnType[i] == SPARSE) {
-	    os << "Conductance C" << model.synapseName[i] << ";" << endl;
+	    os << "SparseProjection C" << model.synapseName[i] << ";" << endl;
 	    os << "unsigned int *d_indInG" << model.synapseName[i] << ";" << endl;
 	    os << "__device__ unsigned int *dd_indInG" << model.synapseName[i] << ";" << endl;
 	    os << "unsigned int *d_ind" << model.synapseName[i] << ";" << endl;
@@ -618,12 +629,12 @@ void genRunner(NNmodel &model, //!< Model description
     // ------------------------------------------------------------------------
     // initializing conductance arrays for sparse matrices
 
-    os << "void initializeSparseArray(Conductance C,  unsigned int * dInd, unsigned int * dIndInG, unsigned int preN)" << "{" << endl;
+    os << "void initializeSparseArray(SparseProjection C,  unsigned int * dInd, unsigned int * dIndInG, unsigned int preN)" << "{" << endl;
     os << "  CHECK_CUDA_ERRORS(cudaMemcpy(dInd, C.ind, C.connN*sizeof(unsigned int), cudaMemcpyHostToDevice));" << endl;
     os << "  CHECK_CUDA_ERRORS(cudaMemcpy(dIndInG, C.indInG, (preN+1)*sizeof(unsigned int), cudaMemcpyHostToDevice));" << endl;
     os << "}" << endl; 
  	
-    os << "void initializeSparseArrayRev(Conductance C,  unsigned int * dRevInd, unsigned int * dRevIndInG, unsigned int * dRemap, unsigned int postN)" << "{" << endl;
+    os << "void initializeSparseArrayRev(SparseProjection C,  unsigned int * dRevInd, unsigned int * dRevIndInG, unsigned int * dRemap, unsigned int postN)" << "{" << endl;
     os << "  CHECK_CUDA_ERRORS(cudaMemcpy(dRevInd, C.revInd, C.connN*sizeof(unsigned int), cudaMemcpyHostToDevice));" << endl;
     os << "  CHECK_CUDA_ERRORS(cudaMemcpy(dRevIndInG, C.revIndInG, (postN+1)*sizeof(unsigned int), cudaMemcpyHostToDevice));" << endl;
     os << "  CHECK_CUDA_ERRORS(cudaMemcpy(dRemap, C.remap, C.connN*sizeof(unsigned int), cudaMemcpyHostToDevice));" << endl;

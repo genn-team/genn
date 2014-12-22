@@ -21,23 +21,23 @@ unsigned int countEntriesAbove(DATATYPE * Array, int sz, DATATYPE includeAbove)
 
 /*---------------------------------------------------------------------
  Utility to get a synapse weight from a SPARSE structure by x,y coordinates
- NB: as the Conductance struct doesnt hold the preN size (it should!) it is not possible
+ NB: as the SparseProjection struct doesnt hold the preN size (it should!) it is not possible
  to check the parameter validity. This fn may therefore crash unless user knows max poss X
  ---------------------------------------------------------------------*/
 template <class DATATYPE>
-DATATYPE getG(DATATYPE * wuvar, Conductance  * sparseStruct, int x, int y)
+DATATYPE getG(DATATYPE * wuvar, SparseProjection  * sparseStruct, int x, int y)
 {
   fprintf(stderr,"WARNING: This function is deprecated, and if you are still using it \n\
   you are probably trying to use the old sparse structures containing g array.  \n\
   Conductance structures have changed: conductance values should be defined as synapse variable now; \n\
-  the structure contains only indexing arrays. \n\n\
+  the structure is renamed as \"SparseProjection\" and contains only indexing arrays. \n\n\
   Replacement function for getG is \n\
   getSparseVar(DATATYPE * wuvar, Conductance  * sparseStruct, int x, int y).\n\n\
   calling getSparseVar...");
   getSparseVar(wuvar, &sparseStruct, x, y);
 }
 template <class DATATYPE>
-float getSparseVar(DATATYPE * wuvar, Conductance  * sparseStruct, int x, int y)
+float getSparseVar(DATATYPE * wuvar, SparseProjection  * sparseStruct, int x, int y)
 {
   DATATYPE g = 0.0; //default return value implies zero weighted for x,y
 
@@ -58,7 +58,7 @@ float getSparseVar(DATATYPE * wuvar, Conductance  * sparseStruct, int x, int y)
 Setting the values of SPARSE connectivity matrix
 ----------------------------------------------------------------------*/
 template <class DATATYPE>
-void setSparseConnectivityFromDense(DATATYPE * wuvar, int preN,int postN,DATATYPE * tmp_gRNPN, Conductance * sparseStruct){
+void setSparseConnectivityFromDense(DATATYPE * wuvar, int preN,int postN,DATATYPE * tmp_gRNPN, SparseProjection * sparseStruct){
   int synapse = 0;
 	sparseStruct->indInG[0] = 0; //first neuron always gets first synapse listed.
   float asGoodAsZero = 0.0001f;//as far as we are concerned. Remember floating point errors.
@@ -80,7 +80,7 @@ void setSparseConnectivityFromDense(DATATYPE * wuvar, int preN,int postN,DATATYP
  Utility to generate the SPARSE connectivity structure from a simple all-to-all array
  ---------------------------------------------------------------------*/
 template <class DATATYPE>
-void createSparseConnectivityFromDense(DATATYPE * wuvar, int preN,int postN,DATATYPE * tmp_gRNPN, Conductance * sparseStruct, bool runTest) {
+void createSparseConnectivityFromDense(DATATYPE * wuvar, int preN,int postN,DATATYPE * tmp_gRNPN, SparseProjection * sparseStruct, bool runTest) {
 
 	
 	float asGoodAsZero = 0.0001f;//as far as we are concerned. Remember floating point errors.
@@ -126,9 +126,9 @@ void createSparseConnectivityFromDense(DATATYPE * wuvar, int preN,int postN,DATA
 /*---------------------------------------------------------------------
  Utility to generate the SPARSE array structure with post-to-pre arrangement from the original pre-to-post arrangement where postsynaptic feedback is necessary (learning etc)
  ---------------------------------------------------------------------*/
-void createPosttoPreArray(unsigned int preN, unsigned int postN, Conductance * sparseStruct) {
+void createPosttoPreArray(unsigned int preN, unsigned int postN, SparseProjection * sparseStruct) {
   vector<vector<unsigned int> > tempvectInd(postN); //temporary vector to keep indices
-  vector<vector<unsigned int> > tempvectV(postN); //temporary vector to keep conductance values
+  vector<vector<unsigned int> > tempvectV(postN); //temporary vector to keep connectivity values
 	unsigned int glbcounter = 0;
 
 	for (int i = 0; i< preN; i++){ //i : index of presynaptic neuron

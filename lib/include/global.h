@@ -43,9 +43,6 @@ int learnBlkSz;
 cudaDeviceProp *deviceProp;
 int theDev;
 
-
-
-
 int hostCount; //!< Global variable containing the number of hosts within the local compute cluster
 int deviceCount; //!< Global variable containing the number of CUDA devices found on this host
 int optimiseBlockSize = 1; //!< Flag for signalling whether or not block size optimisation should be performed

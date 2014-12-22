@@ -160,32 +160,26 @@ int main(int argc, char *argv[])
   int done= 0;
   float last_t_report=  t;
   timer.startTimer();
-  locust.run(DT, which);
-  float synwriteT= 0.0f;
-  float lastsynwrite= 0.0f;
-  int synwrite= 0;
-  while (!done) 
-  {    
-    if (which == GPU) {
+
+  if (which == GPU){   
+    locust.runGPU(DT);
+    //float synwriteT= 0.0f;
+    //float lastsynwrite= 0.0f;
+    //int synwrite= 0;
+    while (!done) 
+    {    
       locust.getSpikeNumbersFromGPU();
       locust.getSpikesFromGPU();
-    }
-    locust.sum_spikes();
-    locust.output_spikes(osf2, which);
-    locust.run(DT, which); // run next batch
-    // if (which == GPU) {  
+      locust.runGPU(DT); // run next batch
+    
 //	pullDNfromDevice();
     //   }
     
 #ifdef TIMING
-    if (which == CPU) {
-	fprintf(timeros, "%f %f %f \n", sdkGetTimerValue(&neuron_timer), sdkGetTimerValue(&synapse_timer), sdkGetTimerValue(&learning_timer));
-    }
-    else {
 	fprintf(timeros, "%f %f %f \n", neuron_tme, synapse_tme, learning_tme);
-    }
 #endif
-
+      locust.sum_spikes();
+      locust.output_spikes(osf2, which);
 
  /*   fprintf(osf, "%f ", t);
     //  for (int i= 0; i < 100; i++) {
@@ -200,7 +194,7 @@ int main(int argc, char *argv[])
       last_t_report= t;
     }
     // output synapses occasionally
-    if (synwrite) {
+    /*if (synwrite) {
        lastsynwrite= synwriteT;
        name= OutDir+ "/"+ tS(argv[1]) + tS(".") + tS((int) synwriteT) + tS(".syn"); 
        f= fopen(name.c_str(),"w");
@@ -212,9 +206,58 @@ int main(int argc, char *argv[])
        locust.get_kcdnsyns();
        synwrite= 1;
        synwriteT= t;
-    }
+    }*/
     done= (t >= TOTAL_TME);
   }
+}
+  if (which == CPU){   
+    locust.runCPU(DT);
+    //float synwriteT= 0.0f;
+    //float lastsynwrite= 0.0f;
+    //int synwrite= 0;
+    while (!done) 
+    {
+
+      locust.runCPU(DT); // run next batch
+    // if (which == GPU) {  
+//	pullDNfromDevice();
+    //   }
+    
+#ifdef TIMING
+	fprintf(timeros, "%f %f %f \n", sdkGetTimerValue(&neuron_timer), sdkGetTimerValue(&synapse_timer), sdkGetTimerValue(&learning_timer));
+#endif
+
+      locust.sum_spikes();
+      locust.output_spikes(osf2, which);
+ /*   fprintf(osf, "%f ", t);
+    //  for (int i= 0; i < 100; i++) {
+    //     fprintf(osf, "%f ", VDN[i]);
+    //   }
+    // fprintf(osf,"\n");
+*/
+    // report progress
+    if (t - last_t_report >= T_REPORT_TME)
+    {
+      fprintf(stdout, "time %f \n", t);
+      last_t_report= t;
+    }
+    // output synapses occasionally
+    /*if (synwrite) {
+       lastsynwrite= synwriteT;
+       name= OutDir+ "/"+ tS(argv[1]) + tS(".") + tS((int) synwriteT) + tS(".syn"); 
+       f= fopen(name.c_str(),"w");
+       locust.write_kcdnsyns(f);
+       fclose(f);
+       synwrite= 0;
+    }
+    if (t - lastsynwrite >= SYN_OUT_TME) {
+       locust.get_kcdnsyns();
+       synwrite= 1;
+       synwriteT= t;
+    }*/
+    done= (t >= TOTAL_TME);
+  }
+}
   timer.stopTimer();
   cerr << "output files are created under the current directory." << endl;
   fprintf(timef, "%d %u %u %u %u %u %.4f %.2f %.1f %.2f\n",which, locust.model.sumNeuronN[locust.model.neuronGrpN-1], locust.sumPN, locust.sumKC, locust.sumLHI, locust.sumDN, timer.getElapsedTime(),VDN[0], TOTAL_TME, DT);

@@ -153,7 +153,10 @@ $(V)+= (-$(V)+$(Isyn))*DT
 
 - \c sT_post : Spike time of the postsynaptic neuron population.
  
-
+\section Debugging Debugging suggestions
+In Linux, users can use cuda-gdb to debug GPU. Example projects in userproject and lib/bin/buildmodel.sh come with a flag to enable debugging.
+If you are using a project with debugging, the code will be compiled with -g -G flags. In CPU mode the executable will be run in gdb,
+and in GPU mode it will be run in cuda-gdb in tui mode. 
 <br />
 
 -----

@@ -62,7 +62,7 @@ class classol
   void free_device_mem(); 
   void read_pnkcsyns(FILE *);
   template <class DATATYPE> 
-  void read_sparsesyns_par(DATATYPE *, int, struct Conductance, FILE *,FILE *,FILE *); 
+  void read_sparsesyns_par(DATATYPE *, int, struct SparseProjection, FILE *,FILE *,FILE *); 
   void write_pnkcsyns(FILE *); 
   void read_pnlhisyns(FILE *); 
   void write_pnlhisyns(FILE *); 
@@ -70,7 +70,8 @@ class classol
   void write_kcdnsyns(FILE *); 
   void read_input_patterns(FILE *); 
   void generate_baserates(); 
-  void run(scalar, unsigned int); 
+  void runGPU(scalar);
+  void runCPU(scalar); 
   void output_state(FILE *, unsigned int); 
   void getSpikesFromGPU(); 
   void getSpikeNumbersFromGPU(); 

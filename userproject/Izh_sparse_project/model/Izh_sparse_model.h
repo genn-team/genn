@@ -36,7 +36,7 @@ class classIzh
   void allocate_device_mem_patterns();
   void allocate_device_mem_input();
   void copy_device_mem_input();
-  void read_sparsesyns_par(int, struct Conductance, FILE *,FILE *,FILE *, scalar *); 
+  void read_sparsesyns_par(int, struct SparseProjection, FILE *,FILE *,FILE *, scalar *); 
   void gen_alltoall_syns(scalar *, unsigned int, unsigned int, scalar);
   void free_device_mem();
   void write_input_to_file(FILE *);

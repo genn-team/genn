@@ -7,9 +7,15 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:SMLLOWNL="http://www.shef
 
 <!--xsl:call-template name="insert_utils_file_start_code"/-->
 
+<xsl:variable name="expt_root" select="."/>
+
 <!-- since we start in the experiment file we need to use for-each to get to the model file -->
 <xsl:variable name="model_xml" select="//SMLEX:Model/@network_layer_url"/>
 <xsl:for-each select="document($model_xml)"> <!-- GET INTO NETWORK FILE -->
+
+<xsl:variable name="model_root" select="."/>
+
+	neuronModel n;
 
 <xsl:choose> <!-- CHOOSE SCHEMA -->
 
@@ -18,6 +24,7 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:SMLLOWNL="http://www.shef
 
 <!-- EXTRACT POPULATIONS - WE'LL WRITE A NEW NEURON TYPE FOR EACH POPULATION TO ALLOW GENERIC INPUTS ETC -->
 <xsl:for-each select="/SMLLOWNL:SpineML/SMLLOWNL:Population/SMLLOWNL:Neuron">
+	<xsl:variable name="curr_nb" select="."/>
 	<!-- ENTER THE COMPONENT FILE -->
 	<xsl:for-each select="document(@url)">
 	<xsl:choose>
@@ -38,7 +45,7 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:SMLLOWNL="http://www.shef
   <!-- UNRECOGNISED NEURON TYPE - GENERATE GeNN CLASS -->
   <!-- Sanity - is the neuron type compatible with GeNN?? -->
   <xsl:if test="not(count(//SMLCL:EventSendPort)=1)">
-  	  <xsl:message terminate="yes">
+  	  <xsl:message terminate="no">
 Error: Trying to add a neuron with more than one event send port - which really just won't work in GeNN
 (basically I'm flagging this because you don't have just one EventSendPort)
 	</xsl:message>
@@ -47,7 +54,7 @@ Error: Trying to add a neuron with more than one event send port - which really 
   // Add new neuron type - <xsl:value-of select="//SMLCL:ComponentClass/@name"/>: 
   n.varNames.clear();
   n.varTypes.clear();
-  <!-- ADD A VALUE FOR V - WHICH WILL BE USED TO TRIGGER THE EVENT -->
+  <!-- ADD A VALUE FOR V - WHICH WILL BE USED TO TRIGGER THE EVENT - NEEDED? -->
   n.varNames.push_back(tS("<xsl:value-of select="'V'"/>"));
   n.varTypes.push_back(tS("float"));<!---->
   <!--xsl:if test="not(//SMLCL:StateVariable[@name='V'])">
@@ -71,15 +78,35 @@ Error: Trying to add a neuron type without an input 'Isyn'. At the moment this w
   n.pNames.push_back(tS("<xsl:value-of select="concat(@name,'_NB')"/>"));<!---->
   </xsl:for-each>
   n.dpNames.clear();
+  n.resetCode = "";
+  n.thresholdConditionCode = "";
 
   n.simCode = tS(" \
-  	 $(V) = -1000000; \
-  	 <!-- DO ALIASES FIRST -->
+  	 <!-- CREATE UNUSED ANALOG INPUT PORT VARIABLES AND SET TO 0  -->
+  	 <xsl:for-each select="//SMLCL:AnalogReducePort">
+  	 	<xsl:variable name="curr_ap_name" select="@name"/>
+  	 	<xsl:if test="not(count($curr_nb/SMLLOWNL:Input[@dst_port=$curr_ap_name] | $model_root//SMLLOWNL:Projection[@dst_population=$curr_nb/@name]//SMLLOWNL:PostSynapse[@output_dst_port=$curr_ap_name]))">
+  	 		<!---->float <xsl:value-of select="@name"/>_NB = 0; \n\
+<!---->
+			</xsl:if>
+  	 </xsl:for-each>
+  	 <!-- GENERATE INPUTS -->
+  	 <xsl:for-each select="$expt_root//SMLEX:TimeVaryingInput[@target=$curr_nb/@name]">
+  	 	<!-- We know the input port is declared, so we can quickly update the values -->
+  	 	<xsl:for-each select="SMLEX:TimePointValue">
+  	 		<!---->if (t > <xsl:value-of select="@time"/>) { \n \
+<!----> <!----><xsl:value-of select="../@port"/>_NB = <xsl:value-of select="@value"/>; \n \
+<!----> <!---->} \n \
+<!----></xsl:for-each>
+  	 </xsl:for-each>
+<!---->  	 //hack \n \
+  	 float randomNormal = 0; \n \
+  	 <!-- DO ALIASES  -->
   	 <xsl:for-each select="//SMLCL:Alias"> <!-- ALIAS EQN -->
   	 	<!---->float <xsl:value-of select="@name"/> = (<!---->
 		<xsl:call-template name="add_indices">
 			<xsl:with-param name="string" select="SMLCL:MathInline"/>
-			<xsl:with-param name="params" select="//SMLCL:Parameter | //SMLCL:StateVariable | AnalogReducePort"/>
+			<xsl:with-param name="params" select="//SMLCL:Parameter | //SMLCL:StateVariable | //SMLCL:AnalogReducePort"/>
 		</xsl:call-template>); \n \
 	 <!---->   	 
   	 </xsl:for-each> <!-- END ALIAS EQN -->
@@ -96,6 +123,7 @@ Error: Trying to add a neuron type without an input 'Isyn'. At the moment this w
 	 	</xsl:for-each> <!-- END DIFFERENTIAL EQN -->
 	 	<!-- TRANSITIONS -->
 	 	<xsl:for-each select="SMLCL:OnCondition"> <!-- ONCONDITION -->
+	 		<xsl:if test="count(SMLCL:EventOut)=0">
 	 		<!---->if (<xsl:call-template name="add_indices">
 							<xsl:with-param name="string" select="SMLCL:Trigger/SMLCL:MathInline"/>
 							<xsl:with-param name="params" select="//SMLCL:Parameter | //SMLCL:StateVariable | //SMLCL:AnalogReducePort"/>
@@ -108,7 +136,7 @@ Error: Trying to add a neuron type without an input 'Isyn'. At the moment this w
 <!---->		<!----></xsl:for-each> <!-- END STATEASSIGNMENT -->
 <!---->		<!----><xsl:for-each select="SMLCL:EventOut"> <!-- EVENTOUT -->
 				<!-- SINCE THERE CAN ONLY BE ONE EVENTSENDPORT TRIGGER THE SPIKE -->
-<!---->		<!---->		$(V) = 100000; \
+<!---->		<!---->		<!--$(V) = 100000;--> \
 <!---->		<!----></xsl:for-each> <!-- END EVENTOUT -->
 			<!-- REGIME CHANGE -->
 			<xsl:variable name="targ_regime" select="@target_regime"/>
@@ -119,10 +147,52 @@ Error: Trying to add a neuron type without an input 'Isyn'. At the moment this w
 						 </xsl:for-each> <!-- END FIND TARGET REGIME -->
 						 <!---->; \n \
 <!---->} \n \
+					</xsl:if>
 <!----> </xsl:for-each> <!-- END ONCONDITION -->
 <!---->} \n \
 <!----></xsl:for-each> <!-- END REGIMES -->
+  	<xsl:variable name="curr_c" select="/"/>
+  	<xsl:if test="count($curr_nb/../SMLLOWNL:Projection//SMLLOWNL:WeightUpdate[@input_src_port=$curr_c//SMLCL:AnalogSendPort/@name]) > 0">
+<!---->oldSpike = false; \n \
+  	</xsl:if>
   	<!---->");
+  	<!-- IF WE ARE A SPIKING NEURON -->
+  	<xsl:if test="count(//SMLCL:EventSendPort)>0">
+  	n.thresholdConditionCode = tS(" \
+  	   <xsl:for-each select="//SMLCL:Regime"> <!-- REGIMES -->
+  	   <!-- TRANSITIONS -->
+	 		 <xsl:for-each select="SMLCL:OnCondition"> <!-- ONCONDITION -->
+	 		 	<xsl:if test="count(SMLCL:EventOut)=1">
+					<xsl:call-template name="add_indices">
+							<xsl:with-param name="string" select="SMLCL:Trigger/SMLCL:MathInline"/>
+							<xsl:with-param name="params" select="//SMLCL:Parameter | //SMLCL:StateVariable | //SMLCL:AnalogReducePort"/>
+					</xsl:call-template>
+				 </xsl:if>
+<!----> </xsl:for-each> <!-- END ONCONDITION -->
+<!----></xsl:for-each> <!-- END REGIMES -->
+  	<!---->");  
+  	n.resetCode = tS(" \
+  	  <xsl:for-each select="//SMLCL:Regime"> <!-- REGIMES -->
+  	   <!-- TRANSITIONS -->
+	 		 <xsl:for-each select="SMLCL:OnCondition"> <!-- ONCONDITION -->
+	 		 	<xsl:if test="count(SMLCL:EventOut)=1">
+<!---->		<!----><xsl:for-each select="SMLCL:StateAssignment"> <!-- STATEASSIGNMENT -->
+				<!---->$(<xsl:value-of select="@variable"/>_NB) = <xsl:call-template name="add_indices">
+																	<xsl:with-param name="string" select="SMLCL:MathInline"/>
+																	<xsl:with-param name="params" select="//SMLCL:Parameter | //SMLCL:StateVariable | //SMLCL:AnalogReducePort"/>
+																</xsl:call-template>; \n \
+<!---->		<!----></xsl:for-each> <!-- END STATEASSIGNMENT -->
+				 </xsl:if>
+<!----> </xsl:for-each> <!-- END ONCONDITION -->
+<!----></xsl:for-each> <!-- END REGIMES -->
+  	<!---->");  
+  	</xsl:if>
+  	<!-- IF NO EVENT SEND PORTS WE ARE NOT A SPIKING NEURON, SO TRIGGER 
+  			UPDATE EVERY TIME STEP -->	
+  	<xsl:if test="count($curr_nb/../SMLLOWNL:Projection//SMLLOWNL:WeightUpdate[@input_src_port=$curr_c//SMLCL:AnalogSendPort/@name]) > 0">
+  	n.thresholdConditionCode = "true";
+  	n.resetCode = "";
+  	</xsl:if>
 
   nModels.push_back(n);
 
@@ -208,7 +278,7 @@ Error: Trying to add a neuron type without an input 'Isyn'. At the moment this w
 				<xsl:call-template name="add_indices_helper">
 					<xsl:with-param name="params" select="$params"/>
 					<xsl:with-param name="param" select="$param"/>
-					<xsl:with-param name="start" select="concat($startTemp,'$(',$param/@name,'_NB)')"/>
+					<xsl:with-param name="start" select="concat($startTemp,'($(',$param/@name,'_NB))')"/>
 					<xsl:with-param name="end" select="$endTemp"/>
 				</xsl:call-template>
 				</xsl:otherwise>

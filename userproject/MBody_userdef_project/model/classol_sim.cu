@@ -167,29 +167,28 @@ int main(int argc, char *argv[])
   timer.startTimer();
 //  locust.output_state(os, which);  
 //  locust.output_spikes(os, which);  
-  locust.run(DT, which);
-  double synwriteT= 0.0f;
-  double lastsynwrite= 0.0f;
-  int synwrite= 0;
+if (which == GPU){ 
+
+  locust.runGPU(DT);
+ 
+  //double synwriteT= 0.0f;
+  //double lastsynwrite= 0.0f;
+ // int synwrite= 0;
 //  locust.output_state(os, which);  
 //  float synwriteT= 0.0f;
 //  int synwrite= 0;
 //  unsigned int sum= 0;
   while (!done) 
   {
-    if (which == GPU) {
-      locust.getSpikeNumbersFromGPU();
-      locust.getSpikesFromGPU();
-    }
-//    if (which == GPU) locust.getSpikeNumbersFromGPU();
-    locust.run(DT, which); // run next batch
- /*   if (which == GPU) {  
-     pullDNfromDevice();
-    }
-*/
-#ifdef TIMING
-    fprintf(timeros, "%f %f %f \n", sdkGetTimerValue(&timer_neuron), sdkGetTimerValue(&timer_synapse), sdkGetTimerValue(&timer_learning));
-#endif
+    locust.getSpikeNumbersFromGPU();
+    locust.getSpikesFromGPU();
+    locust.runGPU(DT); // run next batch
+ 
+    //pullDNfromDevice();
+    
+    #ifdef TIMING
+      fprintf(timeros, "%f %f %f \n", sdkGetTimerValue(&timer_neuron), sdkGetTimerValue(&timer_synapse), sdkGetTimerValue(&timer_learning));
+    #endif 
 
     locust.sum_spikes();
 //    locust.output_spikes(osf, which);
@@ -206,26 +205,83 @@ int main(int argc, char *argv[])
 */
     // report progress
     if (t - last_t_report >= T_REPORT_TME)
-    {
-      fprintf(stdout, "time %f \n", t);
-      last_t_report= t;
-    }
+      {
+        fprintf(stdout, "time %f \n", t);
+        last_t_report= t;
+      }
     // output synapses occasionally
-     if (synwrite) {
-       lastsynwrite= synwriteT;
-       name= OutDir + "/" + tS(argv[1]) + tS(".") + tS((int) synwriteT) + tS(".syn");
-       f= fopen(name.c_str(),"w");
-       locust.write_kcdnsyns(f);
-       fclose(f);
-       synwrite= 0;
-     }
-     if (t - lastsynwrite >= SYN_OUT_TME) {
-       locust.get_kcdnsyns();
-       synwrite= 1;
-       synwriteT= t;
-     }
+    /*if (synwrite) {
+      lastsynwrite= synwriteT;
+      name= OutDir + "/" + tS(argv[1]) + tS(".") + tS((int) synwriteT) + tS(".syn");
+      f= fopen(name.c_str(),"w");
+      locust.write_kcdnsyns(f);
+      fclose(f);
+      synwrite= 0;
+    }
+  
+    if (t - lastsynwrite >= SYN_OUT_TME) {
+      locust.get_kcdnsyns();
+      synwrite= 1;
+      synwriteT= t;
+    }*/
+    done= (t >= TOTAL_TME);
+    //pullDNStateFromDevice();
+  }
+}
+
+if (which == CPU){ 
+  locust.runCPU(DT);
+ 
+ // double synwriteT= 0.0f;
+ // double lastsynwrite= 0.0f;
+ // int synwrite= 0;
+
+  while (!done) 
+  {
+
+    locust.runCPU(DT); // run next batch
+
+    #ifdef TIMING
+      fprintf(timeros, "%f %f %f \n", sdkGetTimerValue(&timer_neuron), sdkGetTimerValue(&timer_synapse), sdkGetTimerValue(&timer_learning));
+    #endif 
+
+    locust.sum_spikes();
+//    locust.output_spikes(osf, which);
+//    locust.output_state(os, which);  // while outputting the current one ...
+ 
+    locust.output_spikes(osf2, which);
+
+/*    fprintf(osf, "%f ", t);
+    for (int i= 0; i < 100; i++) {
+    fprintf(osf, "%f ", VDN[i]);
+   }
+    fprintf(osf,"\n");
+*/
+    // report progress
+    if (t - last_t_report >= T_REPORT_TME)
+      {
+        fprintf(stdout, "time %f \n", t);
+        last_t_report= t;
+      }
+
+    // output synapses occasionally
+    /*if (synwrite) {
+      lastsynwrite= synwriteT;
+      name= OutDir + "/" + tS(argv[1]) + tS(".") + tS((int) synwriteT) + tS(".syn");
+      f= fopen(name.c_str(),"w");
+      locust.write_kcdnsyns(f);
+      fclose(f);
+      synwrite= 0;
+    }
+  
+    if (t - lastsynwrite >= SYN_OUT_TME) {
+      locust.get_kcdnsyns();
+      synwrite= 1;
+      synwriteT= t;
+    }*/
     done= (t >= TOTAL_TME);
   }
+}
 //  locust.output_state(os);
 //    if (which == GPU) locust.getSpikesFromGPU();
 //    locust.output_spikes(os, which);
@@ -251,5 +307,8 @@ int main(int argc, char *argv[])
   fclose(timeros);
 #endif
 
+if (which == GPU) {
+  locust.free_device_mem();
+}
   return 0;
 }

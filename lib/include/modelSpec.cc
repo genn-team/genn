@@ -19,7 +19,7 @@
 #include "utils.h"
 
 // ------------------------------------------------------------------------
-// Code for GeNN initialisation
+//! \brief Method for GeNN initialisation (by preparing standard models)
     
 void initGeNN()
 {
@@ -636,7 +636,7 @@ void NNmodel::resetPaddedSums()
 
 
 //--------------------------------------------------------------------------
-/*! \brief This function sets the numerical precision of floating type variables. By default, it is float.
+/*! \brief This function sets the numerical precision of floating type variables. By default, it is FLOAT.
  */
 //--------------------------------------------------------------------------
 

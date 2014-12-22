@@ -1,6 +1,279 @@
-//This file will be rewritten & copied into lib/include by SpineML. The one used by GeNN at the end is the one in lib/include.
+
+
+	postSynModel ps;
+
+
 			
-  // Add new postsynapse type - Exp Decay: 
+  // Add new postsynapse type - passthroughPS: 
+  ps.varNames.clear();
+  ps.varTypes.clear();
+  
+  ps.pNames.clear();
+  
+  ps.dpNames.clear();
+
+  ps.postSyntoCurrent = tS(" \
+  0; \n \
+     	float I_sum_NB = 0; \n \
+     	 { \n \
+    	float in_PS = $(inSyn); \n \
+     	I_sum_NB += (in_PS); \n \
+	  } \n \
+");
+  	 
+	ps.postSynDecay = tS(" \
+  	 	$(inSyn) = 0; \
+  	");
+
+  postSynModels.push_back(ps);
+
+	
+			
+  // Add new postsynapse type - passthroughPS: 
+  ps.varNames.clear();
+  ps.varTypes.clear();
+  
+  ps.pNames.clear();
+  
+  ps.dpNames.clear();
+
+  ps.postSyntoCurrent = tS(" \
+  0; \n \
+      { \n \
+    	float in_PS = $(inSyn); \n \
+     	I_sum_NB += (in_PS); \n \
+	  } \n \
+");
+  	 
+	ps.postSynDecay = tS(" \
+  	 	$(inSyn) = 0; \
+  	");
+
+  postSynModels.push_back(ps);
+
+	
+			
+  // Add new postsynapse type - passthroughPS: 
+  ps.varNames.clear();
+  ps.varTypes.clear();
+  
+  ps.pNames.clear();
+  
+  ps.dpNames.clear();
+
+  ps.postSyntoCurrent = tS(" \
+  0; \n \
+      { \n \
+    	float in_PS = $(inSyn); \n \
+     	I_sum_NB += (in_PS); \n \
+	  } \n \
+");
+  	 
+	ps.postSynDecay = tS(" \
+  	 	$(inSyn) = 0; \
+  	");
+
+  postSynModels.push_back(ps);
+
+	
+			
+  // Add new postsynapse type - passthroughPS: 
+  ps.varNames.clear();
+  ps.varTypes.clear();
+  
+  ps.pNames.clear();
+  
+  ps.dpNames.clear();
+
+  ps.postSyntoCurrent = tS(" \
+  0; \n \
+      { \n \
+    	float in_PS = $(inSyn); \n \
+     	I_sum_NB += (in_PS); \n \
+	  } \n \
+");
+  	 
+	ps.postSynDecay = tS(" \
+  	 	$(inSyn) = 0; \
+  	");
+
+  postSynModels.push_back(ps);
+
+	
+			
+  // Add new postsynapse type - passthroughPS: 
+  ps.varNames.clear();
+  ps.varTypes.clear();
+  
+  ps.pNames.clear();
+  
+  ps.dpNames.clear();
+
+  ps.postSyntoCurrent = tS(" \
+  0; \n \
+     	float I_sum_NB = 0; \n \
+     	 { \n \
+    	float in_PS = $(inSyn); \n \
+     	I_sum_NB += (in_PS); \n \
+	  } \n \
+");
+  	 
+	ps.postSynDecay = tS(" \
+  	 	$(inSyn) = 0; \
+  	");
+
+  postSynModels.push_back(ps);
+
+	
+			
+  // Add new postsynapse type - passthroughPS: 
+  ps.varNames.clear();
+  ps.varTypes.clear();
+  
+  ps.pNames.clear();
+  
+  ps.dpNames.clear();
+
+  ps.postSyntoCurrent = tS(" \
+  0; \n \
+      { \n \
+    	float in_PS = $(inSyn); \n \
+     	I_sum_NB += (in_PS); \n \
+	  } \n \
+");
+  	 
+	ps.postSynDecay = tS(" \
+  	 	$(inSyn) = 0; \
+  	");
+
+  postSynModels.push_back(ps);
+
+	
+			
+  // Add new postsynapse type - passthroughPS: 
+  ps.varNames.clear();
+  ps.varTypes.clear();
+  
+  ps.pNames.clear();
+  
+  ps.dpNames.clear();
+
+  ps.postSyntoCurrent = tS(" \
+  0; \n \
+      { \n \
+    	float in_PS = $(inSyn); \n \
+     	I_sum_NB += (in_PS); \n \
+	  } \n \
+");
+  	 
+	ps.postSynDecay = tS(" \
+  	 	$(inSyn) = 0; \
+  	");
+
+  postSynModels.push_back(ps);
+
+	
+			
+  // Add new postsynapse type - passthroughPS: 
+  ps.varNames.clear();
+  ps.varTypes.clear();
+  
+  ps.pNames.clear();
+  
+  ps.dpNames.clear();
+
+  ps.postSyntoCurrent = tS(" \
+  0; \n \
+      { \n \
+    	float in_PS = $(inSyn); \n \
+     	I_sum_NB += (in_PS); \n \
+	  } \n \
+");
+  	 
+	ps.postSynDecay = tS(" \
+  	 	$(inSyn) = 0; \
+  	");
+
+  postSynModels.push_back(ps);
+
+	
+			
+  // Add new postsynapse type - passthroughPS: 
+  ps.varNames.clear();
+  ps.varTypes.clear();
+  
+  ps.pNames.clear();
+  
+  ps.dpNames.clear();
+
+  ps.postSyntoCurrent = tS(" \
+  0; \n \
+     	float I_sum_NB = 0; \n \
+     	 { \n \
+    	float in_PS = $(inSyn); \n \
+     	I_sum_NB += (in_PS); \n \
+	  } \n \
+");
+  	 
+	ps.postSynDecay = tS(" \
+  	 	$(inSyn) = 0; \
+  	");
+
+  postSynModels.push_back(ps);
+
+	
+			
+  // Add new postsynapse type - passthroughPS: 
+  ps.varNames.clear();
+  ps.varTypes.clear();
+  
+  ps.pNames.clear();
+  
+  ps.dpNames.clear();
+
+  ps.postSyntoCurrent = tS(" \
+  0; \n \
+     	float I_sum_NB = 0; \n \
+     	 { \n \
+    	float in_PS = $(inSyn); \n \
+     	I_sum_NB += (in_PS); \n \
+	  } \n \
+");
+  	 
+	ps.postSynDecay = tS(" \
+  	 	$(inSyn) = 0; \
+  	");
+
+  postSynModels.push_back(ps);
+
+	
+			
+  // Add new postsynapse type - passthroughPS: 
+  ps.varNames.clear();
+  ps.varTypes.clear();
+  
+  ps.pNames.clear();
+  
+  ps.dpNames.clear();
+
+  ps.postSyntoCurrent = tS(" \
+  0; \n \
+     	float I_sum_NB = 0; \n \
+     	 { \n \
+    	float in_PS = $(inSyn); \n \
+     	I_sum_NB += (in_PS); \n \
+	  } \n \
+");
+  	 
+	ps.postSynDecay = tS(" \
+  	 	$(inSyn) = 0; \
+  	");
+
+  postSynModels.push_back(ps);
+
+	
+			
+  // Add new postsynapse type - COBA exp: 
   ps.varNames.clear();
   ps.varTypes.clear();
   
@@ -14,17 +287,17 @@
 
   ps.postSyntoCurrent = tS(" \
   0; \n \
-     	float Isyn_NB = 0; \n \
+     	float I_sum_NB = 0; \n \
      	 { \n \
-    	float v_PS = lV_NB; \n \
+    	float v_PS = lv_NB; \n \
      	 float g_in_PS = $(inSyn); \
-$(g_PS) = $(g_PS)+g_in_PS; \n \
-Isyn_NB += ($(g_PS)*($(E_PS)-v_PS)); \n \
+$(g_PS) = ($(g_PS))+g_in_PS; \n \
+I_sum_NB += (($(g_PS))*(($(E_PS))-v_PS)); \n \
 	  } \n \
 ");
   	 
 	ps.postSynDecay = tS(" \
-  	 $(g_PS) += (-$(g_PS)/$(tau_syn_PS))*DT; \n \
+  	 $(g_PS) += (- ($(g_PS)) / ($(tau_syn_PS)))*DT; \n \
 	 		$(inSyn) = 0; \
   	");
 
@@ -32,7 +305,7 @@ Isyn_NB += ($(g_PS)*($(E_PS)-v_PS)); \n \
 
 	
 			
-  // Add new postsynapse type - Exp Decay: 
+  // Add new postsynapse type - COBA exp: 
   ps.varNames.clear();
   ps.varTypes.clear();
   
@@ -47,15 +320,15 @@ Isyn_NB += ($(g_PS)*($(E_PS)-v_PS)); \n \
   ps.postSyntoCurrent = tS(" \
   0; \n \
       { \n \
-    	float v_PS = lV_NB; \n \
+    	float v_PS = lv_NB; \n \
      	 float g_in_PS = $(inSyn); \
-$(g_PS) = $(g_PS)+g_in_PS; \n \
-Isyn_NB += ($(g_PS)*($(E_PS)-v_PS)); \n \
+$(g_PS) = ($(g_PS))+g_in_PS; \n \
+I_sum_NB += (($(g_PS))*(($(E_PS))-v_PS)); \n \
 	  } \n \
 ");
   	 
 	ps.postSynDecay = tS(" \
-  	 $(g_PS) += (-$(g_PS)/$(tau_syn_PS))*DT; \n \
+  	 $(g_PS) += (- ($(g_PS)) / ($(tau_syn_PS)))*DT; \n \
 	 		$(inSyn) = 0; \
   	");
 
@@ -63,7 +336,7 @@ Isyn_NB += ($(g_PS)*($(E_PS)-v_PS)); \n \
 
 	
 			
-  // Add new postsynapse type - Exp Decay: 
+  // Add new postsynapse type - COBA exp: 
   ps.varNames.clear();
   ps.varTypes.clear();
   
@@ -77,17 +350,17 @@ Isyn_NB += ($(g_PS)*($(E_PS)-v_PS)); \n \
 
   ps.postSyntoCurrent = tS(" \
   0; \n \
-     	float Isyn_NB = 0; \n \
+     	float I_sum_NB = 0; \n \
      	 { \n \
-    	float v_PS = lV_NB; \n \
+    	float v_PS = lv_NB; \n \
      	 float g_in_PS = $(inSyn); \
-$(g_PS) = $(g_PS)+g_in_PS; \n \
-Isyn_NB += ($(g_PS)*($(E_PS)-v_PS)); \n \
+$(g_PS) = ($(g_PS))+g_in_PS; \n \
+I_sum_NB += (($(g_PS))*(($(E_PS))-v_PS)); \n \
 	  } \n \
 ");
   	 
 	ps.postSynDecay = tS(" \
-  	 $(g_PS) += (-$(g_PS)/$(tau_syn_PS))*DT; \n \
+  	 $(g_PS) += (- ($(g_PS)) / ($(tau_syn_PS)))*DT; \n \
 	 		$(inSyn) = 0; \
   	");
 
