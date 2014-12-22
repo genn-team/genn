@@ -150,15 +150,15 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
       mos << "dry-run compile for device " << device << endl;
       command.str("");
 #ifdef _WIN32
-      command << "\"";
-#endif
-//      command << "\"" << NVCC << "\" -x cu -cubin -Xptxas=-v -DDT -arch=sm_";
+      command << "\"\"" << NVCC << "\" -x cu -cubin -Xptxas=-v -DDT=" << DT;
+      command << " -I\"%CUDA_PATH%/samples/common/inc\" -I\"%GENN_PATH%/lib/include\"";
+      command << " -arch=sm_" << deviceProp[device].major << deviceProp[device].minor;
+      command << " " << path << "/" << model->name << "_CODE/runner.cc 2>&1\"";
+#else
       command << "\"" << NVCC << "\" -x cu -cubin -Xptxas=-v -DDT=" << DT;
-      command << " -I$CUDA_PATH/samples/common/inc -I$GENN_PATH/lib/include";
+      command << " -I\"$CUDA_PATH/samples/common/inc\" -I\"$GENN_PATH/lib/include\"";
       command << " -arch=sm_" << deviceProp[device].major << deviceProp[device].minor;
       command << " " << path << "/" << model->name << "_CODE/runner.cc 2>&1";
-#ifdef _WIN32
-      command << "\"";
 #endif
       mos << command.str() << endl;
 
