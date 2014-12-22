@@ -73,7 +73,7 @@ int main(int argc, char *argv[])
 #endif
 
   //-----------------------------------------------------------------
-  // build the neuronal circuitery
+  // build the neuronal circuitry
   classol locust;
 
 #ifdef TIMING
@@ -82,7 +82,7 @@ int main(int argc, char *argv[])
 
   fprintf(stdout, "# reading PN-KC synapses ... \n");
   name= OutDir+ "/"+ toString(argv[1]) + toString(".pnkc");
-  FILE *f= fopen(name.c_str(),"r");
+  FILE *f= fopen(name.c_str(),"rb");
   locust.read_pnkcsyns(f);
   fclose(f);
 
@@ -96,7 +96,7 @@ int main(int argc, char *argv[])
 
   fprintf(stdout, "# reading PN-LHI synapses ... \n");
   name= OutDir+ "/"+ toString(argv[1]) + toString(".pnlhi");
-  f= fopen(name.c_str(), "r");
+  f= fopen(name.c_str(), "rb");
   locust.read_pnlhisyns(f);
   fclose(f);   
 
@@ -110,7 +110,7 @@ int main(int argc, char *argv[])
   
   fprintf(stdout, "# reading KC-DN synapses ... \n");
   name= OutDir+ "/"+ toString(argv[1]) + toString(".kcdn");
-  f= fopen(name.c_str(), "r");
+  f= fopen(name.c_str(), "rb");
   locust.read_kcdnsyns(f);
 
 #ifdef TIMING
@@ -123,7 +123,7 @@ int main(int argc, char *argv[])
 
   fprintf(stdout, "# reading input patterns ... \n");
   name= OutDir+ "/"+ toString(argv[1]) + toString(".inpat");
-  f= fopen(name.c_str(), "r");
+  f= fopen(name.c_str(), "rb");
   locust.read_input_patterns(f);
   fclose(f);
 

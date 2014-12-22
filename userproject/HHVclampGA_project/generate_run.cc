@@ -70,8 +70,7 @@ int main(int argc, char *argv[])
 
   // build it
 #ifdef _WIN32
-  cmd= ensureCompilerEnvironmentCmd();
-  cmd += " cd model && buildmodel.bat HHVClamp " + toString(dbgMode);
+  cmd= "cd model && buildmodel.bat HHVClamp " + toString(dbgMode);
   cmd += " && nmake /nologo /f WINmakefile clean && nmake /nologo /f WINmakefile";
   if (dbgMode == 1) {
     cmd += " DEBUG=1";
