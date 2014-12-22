@@ -44,6 +44,14 @@ void genNeuronKernel(NNmodel &model, //!< Model description
     string name, s, localID;
     unsigned int nt;
     ofstream os;
+    string theAtomicAdd;
+
+    if (deviceProp[theDev].major < 2) {
+	theAtomicAdd= tS("atomicAddoldGPU");
+    }
+    else {
+	theAtomicAdd= tS("atomicAdd");
+    }
 
     name = path + toString("/") + model.name + toString("_CODE/neuronKrnl.cc");
     os.open(name.c_str());
@@ -322,7 +330,7 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 
 	    os << "// test for and register a spike-like event" << ENDL;
 	    os << "if (" + ensureFtype(eCode, model.ftype) + ")" << OB(30);
-	    os << "spkEvntIdx = atomicAdd((unsigned int *) &spkEvntCount, 1);" << ENDL;
+	    os << "spkEvntIdx = " << theAtomicAdd << "((unsigned int *) &spkEvntCount, 1);" << ENDL;
 	    os << "shSpkEvnt[spkEvntIdx] = " << localID << ";" << ENDL;
 	    os << CB(30);
 	}
@@ -331,7 +339,7 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 	if (thCode != tS("")) {
 	    os << "// test for and register a true spike" << ENDL;
 	    os << "if ((" << ensureFtype(thCode, model.ftype) << ") && !(oldSpike)) " << OB(40);
-	    os << "spkIdx = atomicAdd((unsigned int *) &spkCount, 1);" << ENDL;
+	    os << "spkIdx = " << theAtomicAdd << "((unsigned int *) &spkCount, 1);" << ENDL;
 	    os << "shSpk[spkIdx] = " << localID << ";" << ENDL;
 
 	    // add after-spike reset if provided
@@ -381,7 +389,7 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 
         if (model.neuronNeedSpkEvnt[i]) {
 	    os << "if (threadIdx.x == 1)" << OB(50);
-	    os << "if (spkEvntCount > 0) posSpkEvnt = atomicAdd((unsigned int *) &dd_glbSpkCntEvnt" << model.neuronName[i];
+	    os << "if (spkEvntCount > 0) posSpkEvnt = " << theAtomicAdd << "((unsigned int *) &dd_glbSpkCntEvnt" << model.neuronName[i];
 	    if (model.neuronDelaySlots[i] > 1) {
 		os << "[dd_spkQuePtr" << model.neuronName[i] << "], spkEvntCount);" << ENDL;
 	    }
@@ -392,7 +400,7 @@ void genNeuronKernel(NNmodel &model, //!< Model description
         }
 
         os << "if (threadIdx.x == 0)" << OB(51);
-	os << "if (spkCount > 0) posSpk = atomicAdd((unsigned int *) &dd_glbSpkCnt" << model.neuronName[i];
+	os << "if (spkCount > 0) posSpk = " << theAtomicAdd << "((unsigned int *) &dd_glbSpkCnt" << model.neuronName[i];
 	if ((model.neuronDelaySlots[i] > 1) && (model.neuronNeedTrueSpk[i])) {
 	    os << "[dd_spkQuePtr" << model.neuronName[i] << "], spkCount);" << ENDL;
 	}
@@ -444,6 +452,15 @@ void generate_process_presynaptic_events_code(
     string postfix //!< whether to generate code for true spikes or spike type events
     )
 {
+    string theAtomicAdd;
+
+    if (deviceProp[theDev].major < 2) {
+	theAtomicAdd= tS("atomicAddoldGPU");
+    }
+    else {
+	theAtomicAdd= tS("atomicAdd");
+    }
+
     bool evnt = postfix == tS("Evnt");
 
     if ((evnt && model.synapseUsesSpikeEvents[i]) || (!evnt && model.synapseUsesTrueSpikes[i])) {
@@ -543,7 +560,7 @@ void generate_process_presynaptic_events_code(
 	string wCode = (evnt ? weightUpdateModels[synt].simCodeEvnt : weightUpdateModels[synt].simCode);
 	if (sparse) { // SPARSE
 	    if (isGrpVarNeeded[model.synapseTarget[i]]) { // SPARSE using atomicAdd
-		substitute(wCode, tS("$(updatelinsyn)"), tS("atomicAdd(&$(inSyn), $(addtoinSyn))"));
+		substitute(wCode, tS("$(updatelinsyn)"), theAtomicAdd+tS("(&$(inSyn), $(addtoinSyn))"));
 		substitute(wCode, tS("$(inSyn)"), tS("dd_inSyn") + model.synapseName[i] + tS("[ipost]")); 
 	    }
 	    else { // SPARSE using shared memory
@@ -655,6 +672,14 @@ void genSynapseKernel(NNmodel &model, //!< Model description
     string localID; //!< "id" if first synapse group, else "lid". lid =(thread index- last thread of the last synapse group)
     unsigned int k, src, trg, synt, inSynNo;
     ofstream os;
+    string theAtomicAdd;
+
+    if (deviceProp[theDev].major < 2) {
+	theAtomicAdd= tS("atomicAddoldGPU");
+    }
+    else {
+	theAtomicAdd= tS("atomicAdd");
+    }
 
     // count how many neuron blocks to use: one thread for each synapse target
     // targets of several input groups are counted multiply
@@ -821,7 +846,7 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 	if (model.lrnGroups == 0) {
 
 	    os << "if (threadIdx.x == 0)" << OB(200);
-	    os << "j = atomicAdd((unsigned int *) &d_done, 1);" << ENDL;
+	    os << "j = " << theAtomicAdd << "((unsigned int *) &d_done, 1);" << ENDL;
 	    os << "if (j == " << numOfBlocks - 1 << ")" << OB(210);
 
 	    for (int j = 0; j < model.neuronGrpN; j++) {
@@ -1021,7 +1046,7 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 
 	    os << "__threadfence();" << ENDL;
 	    os << "if (threadIdx.x == 0)" << OB(320);
-	    os << "j = atomicAdd((unsigned int *) &d_done, 1);" << ENDL;
+	    os << "j = " << theAtomicAdd << "((unsigned int *) &d_done, 1);" << ENDL;
 	    os << "if (j == " << numOfBlocks - 1 << ")" << OB(330);
 
 	    for (int j = 0; j < model.neuronGrpN; j++) {
