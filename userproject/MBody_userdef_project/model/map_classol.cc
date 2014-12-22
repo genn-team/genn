@@ -163,7 +163,7 @@ void classol::read_pnkcsyns(FILE *f //!< File handle for a file containing PN to
     fprintf(stdout, "%f ", gpPNKC[i]);
   }
   fprintf(stdout,"\n\n");
-  float asGoodAsZero = 0.00001f;//float epsilon
+  scalar asGoodAsZero = scalar(0.00001);//float epsilon
 	unsigned int connN = countEntriesAbove(gpPNKC, model.neuronN[0] * model.neuronN[1], asGoodAsZero);
   allocatePNKC(connN);
   setSparseConnectivityFromDense(gPNKC, model.neuronN[0], model.neuronN[1], gpPNKC, &CPNKC);
