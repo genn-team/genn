@@ -783,7 +783,7 @@ void genRunner(NNmodel &model, //!< Model description
     // finish up
 
     mos << "Global memory required for core model: " << mem/1e6 << " MB. " << endl;
-    mos << deviceProp[theDev].totalGlobalMem << " for the device " << theDev << endl;  
+    mos << deviceProp[theDev].totalGlobalMem << " for device " << theDev << endl;  
   
     if (memremsparse != 0) {
 	int connEstim = int(memremsparse / (theSize(model.ftype) + sizeof(unsigned int)));
