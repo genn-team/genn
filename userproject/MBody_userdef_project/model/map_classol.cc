@@ -22,9 +22,10 @@
 */
 //--------------------------------------------------------------------------
 
-#include "map_classol.h"
+
 #include "MBody_userdef_CODE/runner.cc"
 #include "sparseUtils.cc"
+#include "map_classol.h"
 
 #ifdef TIMING
 StopWatchInterface *timer_gen;

@@ -486,7 +486,7 @@ void genSynapseFunction(NNmodel &model, //!< Model description
     unsigned int k, src, trg, synt, inSynNo;
     ofstream os;
 
-    cerr << "entering genSynapseFunction" << endl;
+//    cout << "entering genSynapseFunction" << endl;
     name = path + toString("/") + model.name + toString("_CODE/synapseFnct.cc");
     os.open(name.c_str());
 
@@ -697,5 +697,5 @@ void genSynapseFunction(NNmodel &model, //!< Model description
     os << "#endif" << ENDL;
     os.close();
 
-    cerr << "exiting genSynapseFunction" << endl;
+//  cout << "exiting genSynapseFunction" << endl;
 }

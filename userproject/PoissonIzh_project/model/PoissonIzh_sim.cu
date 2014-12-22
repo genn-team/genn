@@ -45,13 +45,13 @@ int main(int argc, char *argv[])
   
     name= OutDir+ "/gPoissonIzh";
   	fprintf(stderr, "# reading PN-Izh1 synapses from file %s", name.c_str());
- 		FILE *f= fopen(name.c_str(),"r");
+ 		FILE *f= fopen(name.c_str(),"rb");
  	  name= OutDir+ toString("/gPoissonIzh_info");
- 	  FILE *f_info= fopen(name.c_str(),"r");
+ 	  FILE *f_info= fopen(name.c_str(),"rb");
  	 	name= OutDir+ toString("/gPoissonIzh_postIndInG");
-	  FILE *f_postIndInG= fopen(name.c_str(),"r");
+	  FILE *f_postIndInG= fopen(name.c_str(),"rb");
 	  name= OutDir+ toString("/gPoissonIzh_postind");
-	  FILE *f_postind= fopen(name.c_str(),"r");  
+	  FILE *f_postind= fopen(name.c_str(),"rb");  
  
   	fread(&gPNIzh1.connN,sizeof(unsigned int),1,f_info);
   	fprintf(stderr, "read %u times %d bytes \n", gPNIzh1.connN,sizeof(float));
@@ -69,7 +69,7 @@ int main(int argc, char *argv[])
   
   	name= OutDir+ "/gPoissonIzh_nonopt";
   	cout << "# reading PN-Izh1 synapses from file "<< name << endl;
-  	FILE *f= fopen(name.c_str(),"r");
+  	FILE *f= fopen(name.c_str(),"rb");
   	PNIzhNN.read_PNIzh1syns(gPNIzh1 , f);
   	fclose(f);   
   //ALLTOALL CONNECTIVITY END 

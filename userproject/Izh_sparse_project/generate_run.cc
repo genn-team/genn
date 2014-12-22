@@ -69,7 +69,7 @@ string toLower(string s)
 /////////////////////////
 unsigned int openFileGetMax(unsigned int * array, unsigned int size, string name) {
   unsigned int maxConn = 0;
-  FILE *f = fopen(name.c_str(), "r");
+  FILE *f = fopen(name.c_str(), "rb");
   int retval = fread(array, (size + 1) * sizeof(unsigned int), 1, f);
   for (unsigned int i = 0; i < size; i++) {
     unsigned int connNo = array[i + 1] - array[i];
