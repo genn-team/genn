@@ -51,7 +51,7 @@ void classIzh::randomizeVar(scalar * Var, scalar strength, unsigned int neuronGr
 {
   //kernel if gpu?
   for (int j=0; j< model.neuronN[neuronGrp]; j++){
-    Var[j]=Var[j]+strength*R.n();
+    Var[j]=Var[j]+strength*((scalar) R.n());
   }
 }
 
@@ -61,7 +61,7 @@ void classIzh::randomizeVarSq(scalar * Var, scalar strength, unsigned int neuron
   //randomGen R;
   scalar randNbr;
   for (int j=0; j< model.neuronN[neuronGrp]; j++){
-    randNbr=R.n();
+    randNbr=((scalar) R.n());
     Var[j]=Var[j]+strength*randNbr*randNbr;
   }
 }
@@ -159,10 +159,10 @@ void classIzh::write_input_to_file(FILE *f)
 void classIzh::create_input_values() //define your explicit input rule here
 {
     for (int x= 0; x < model.neuronN[0]; x++) {
-	input1[x]= 5.0*RG.n();
+	input1[x]= 5.0*((scalar) RG.n());
     }
     for (int x= 0; x < model.neuronN[1]; x++) {
-	input2[x]= 2.0*RG.n();
+	input2[x]= 2.0*((scalar) RG.n());
     }
 }
 
@@ -189,7 +189,7 @@ void classIzh::read_sparsesyns_par(int synInd, SparseProjection C, FILE *f_ind, 
   fprintf(stdout,"Read sparse projection ... \n");
   fprintf(stdout, "Size is %d for synapse group %d. Values start with: \n",C.connN, synInd);
   for(int i= 0; i < 20; i++) {
-    fprintf(stdout, "%f ", float(g[i]));
+      fprintf(stdout, "%f ", (scalar) g[i]);
   }
   fprintf(stdout,"\n\n");
   fprintf(stdout, "%d indices read. Index values start with: \n",C.connN);
@@ -211,7 +211,7 @@ void classIzh::gen_alltoall_syns( scalar * g, unsigned int nPre, unsigned int nP
   //randomGen R;
   for(int i= 0; i < model.neuronN[nPre]; i++) {
   	 for(int j= 0; j < model.neuronN[nPost]; j++){
-      g[i*model.neuronN[nPost]+j]=gscale*R.n();
+	   g[i*model.neuronN[nPost]+j]=gscale*((scalar) R.n());
     }
   }
   fprintf(stdout,"\n\n");

@@ -444,6 +444,15 @@ void generate_process_presynaptic_events_code(
     string postfix //!< whether to generate code for true spikes or spike type events
     )
 {
+    string theAtomicAdd;
+
+    if (deviceProp[theDev].major < 2) {
+	theAtomicAdd= tS("atomicAddoldGPU");
+    }
+    else {
+	theAtomicAdd= tS("atomicAdd");
+    }
+
     bool evnt = postfix == tS("Evnt");
 
     if ((evnt && model.synapseUsesSpikeEvents[i]) || (!evnt && model.synapseUsesTrueSpikes[i])) {
@@ -543,7 +552,7 @@ void generate_process_presynaptic_events_code(
 	string wCode = (evnt ? weightUpdateModels[synt].simCodeEvnt : weightUpdateModels[synt].simCode);
 	if (sparse) { // SPARSE
 	    if (isGrpVarNeeded[model.synapseTarget[i]]) { // SPARSE using atomicAdd
-		substitute(wCode, tS("$(updatelinsyn)"), tS("atomicAdd(&$(inSyn), $(addtoinSyn))"));
+		substitute(wCode, tS("$(updatelinsyn)"), theAtomicAdd+tS("(&$(inSyn), $(addtoinSyn))"));
 		substitute(wCode, tS("$(inSyn)"), tS("dd_inSyn") + model.synapseName[i] + tS("[ipost]")); 
 	    }
 	    else { // SPARSE using shared memory

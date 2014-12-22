@@ -26,6 +26,7 @@
 #include <sstream>
 #include <cstdlib>
 #include <cmath>
+#include "toString.h"
 
 #ifdef _WIN32
 #include <direct.h>
@@ -35,8 +36,6 @@
 #endif
 
 using namespace std;
-
-#include "usertools.h"
 
 //--------------------------------------------------------------------------
 /*! \brief Main entry point for generate_run.
@@ -70,8 +69,7 @@ int main(int argc, char *argv[])
 
   // build it
 #ifdef _WIN32
-  cmd= ensureCompilerEnvironmentCmd();
-  cmd += " cd model && buildmodel.bat HHVClamp " + toString(dbgMode);
+  cmd= "cd model && buildmodel.bat HHVClamp " + toString(dbgMode);
   cmd += " && nmake /nologo /f WINmakefile clean && nmake /nologo /f WINmakefile";
   if (dbgMode == 1) {
     cmd += " DEBUG=1";
