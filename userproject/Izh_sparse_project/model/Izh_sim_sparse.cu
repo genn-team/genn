@@ -190,8 +190,8 @@ int main(int argc, char *argv[])
   		 CHECK_CUDA_ERRORS(cudaMalloc((void **)&devStates, PCNN.model.neuronN[0]*sizeof(curandState)));
   	   xorwow_setup(devStates, PCNN.model.neuronN[0]); //setup the prng for the bigger network only
 
-  		 generate_random_gpuInput_xorwow<<<sGrid0,sThreads>>>(devStates, PCNN.d_input1, PCNN.model.neuronN[0], 5.0, 0.0);
-  		 generate_random_gpuInput_xorwow<<<sGrid1,sThreads>>>(devStates, PCNN.d_input2, PCNN.model.neuronN[1], 2.0, 0.0); 
+	   generate_random_gpuInput_xorwow<<<sGrid0,sThreads>>>(devStates, PCNN.d_input1, PCNN.model.neuronN[0], (scalar) 5.0, (scalar) 0.0);
+	   generate_random_gpuInput_xorwow<<<sGrid1,sThreads>>>(devStates, PCNN.d_input2, PCNN.model.neuronN[1], (scalar) 2.0, (scalar) 0.0); 
 
   	}  
   
@@ -226,8 +226,8 @@ int main(int argc, char *argv[])
  
   if (which == GPU){ 
     while (!done) {
-  	  generate_random_gpuInput_xorwow<<<sGrid0,sThreads>>>(devStates, PCNN.d_input1, PCNN.model.neuronN[0], 5.0, 0.0);
-  	  generate_random_gpuInput_xorwow<<<sGrid1,sThreads>>>(devStates, PCNN.d_input2, PCNN.model.neuronN[1], 2.0, 0.0); 
+	generate_random_gpuInput_xorwow<<<sGrid0,sThreads>>>(devStates, PCNN.d_input1, PCNN.model.neuronN[0], (scalar) 5.0, (scalar) 0.0);
+	generate_random_gpuInput_xorwow<<<sGrid1,sThreads>>>(devStates, PCNN.d_input2, PCNN.model.neuronN[1], (scalar) 2.0, (scalar) 0.0); 
      
       stepTimeGPU(PCNN.d_input1,PCNN.d_input2, t);
       t+= DT;
