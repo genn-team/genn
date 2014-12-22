@@ -866,8 +866,8 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 	os << "    do {" << endl;
 	os << "        assumed = old;" << endl;
 	os << "        old = atomicCAS(address_as_ull, assumed, " << endl;
-	os << "                        __double_as_longlong(val + " << endl;
-	os << "                        __longlong_as_double(assumed)));" << endl;
+	os << "                        __float_as_longlong(val + " << endl;
+	os << "                        __longlong_as_float(assumed)));" << endl;
 	os << "    } while (assumed != old);" << endl;
 	os << "    return __longlong_as_float(old);" << endl;
 	os << "}" << endl << endl;
