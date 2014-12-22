@@ -209,6 +209,7 @@ void modelDefinition(NNmodel &model)
     initGeNN();
  /******************************************************************/		
   // redefine nsynapse as a user-defined syapse type 
+  model.setPrecision(_FTYPE);
   model.setGPUDevice(0); //returns quadro for the model and it is not possible to debug on the GPU used for display.
 
   postSynModel pstest;
@@ -276,9 +277,9 @@ void modelDefinition(NNmodel &model)
 
   learn1synapse.varNames.clear();
   learn1synapse.varTypes.clear();
-  learn1synapse.varTypes.push_back(tS(model.ftype));
+  learn1synapse.varTypes.push_back(tS("scalar"));
   learn1synapse.varNames.push_back(tS("g")); 
-  learn1synapse.varTypes.push_back(tS(model.ftype));
+  learn1synapse.varTypes.push_back(tS("scalar"));
   learn1synapse.varNames.push_back(tS("gRaw")); 
   learn1synapse.pNames.clear();
   learn1synapse.pNames.push_back(tS("Epre")); 
@@ -353,6 +354,5 @@ void modelDefinition(NNmodel &model)
   
   model.addSynapsePopulation("DNDN", NGRADSYNAPSE_userdef, ALLTOALL, GLOBALG, NO_DELAY, EXPDECAY, "DN", "DN", myDNDN_ini, myDNDN_p, postSynV, postExpDNDN);
   model.setSeed(1234);
-  model.setPrecision(_FTYPE);
   model.setTiming(FALSE);
 }
