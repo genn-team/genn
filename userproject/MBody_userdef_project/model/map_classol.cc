@@ -163,8 +163,8 @@ void classol::read_pnkcsyns(FILE *f //!< File handle for a file containing PN to
     fprintf(stdout, "%f ", gpPNKC[i]);
   }
   fprintf(stdout,"\n\n");
-  scalar asGoodAsZero = scalar(0.00001);//float epsilon
-	unsigned int connN = countEntriesAbove(gpPNKC, model.neuronN[0] * model.neuronN[1], asGoodAsZero);
+  scalar asGoodAsZero = 2.0*SCALAR_MIN;//as far as we are concerned. Remember floating point errors (2 * epsilon)
+  unsigned int connN = countEntriesAbove(gpPNKC, model.neuronN[0] * model.neuronN[1], asGoodAsZero);
   allocatePNKC(connN);
   setSparseConnectivityFromDense(gPNKC, model.neuronN[0], model.neuronN[1], gpPNKC, &CPNKC);
   cout << "PNKC connN is " << CPNKC.connN << endl; 
@@ -247,7 +247,7 @@ void classol::read_kcdnsyns(FILE *f //!< File handle for a file containing KC to
   fprintf(stdout, "read kcdn ... \n");
   fprintf(stdout, "%u bytes, values start with: \n", retval);
   for(int i= 0; i < 100; i++) {
-    fprintf(stdout, "%f ", gpKCDN[i]);
+    fprintf(stdout, "%.8f ", gpKCDN[i]);
   }
   fprintf(stdout, "\n\n");
 
