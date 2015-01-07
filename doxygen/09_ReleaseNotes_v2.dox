@@ -104,8 +104,11 @@ the arrangement previously.
 
 <br />
 
+\htmlonly
 -----
 \link Examples Previous\endlink | \link ReleaseNotes Top\endlink | \link UserManual Next\endlink
+\endhtmlonly
+
 
 */
 //-------------------------------------------------------------------------

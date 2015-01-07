@@ -232,8 +232,10 @@ results from GPU calculations to the main memory of the host computer for furthe
 
 <br />
 
+\htmlonly
 -----
 \link Installation Previous\endlink | \link Quickstart Top\endlink | \link Examples  Next\endlink
+\endhtmlonly
 
 */
 //----------------------------------------------------------------------------

@@ -178,8 +178,10 @@ It is run the same way as \ref ex_mbody, e.g.
 \endcode
 But the way user-defined types are used should be very instructive to advanced users wishing to do the same with their models.
 
+\htmlonly
 -----
 \link Quickstart Previous\endlink | \link Examples Top\endlink | \link ReleaseNotes Next\endlink
+\endhtmlonly
 
 */
 //----------------------------------------------------------------------------

@@ -159,8 +159,10 @@ If you are using a project with debugging, the code will be compiled with -g -G 
 and in GPU mode it will be run in cuda-gdb in tui mode. 
 <br />
 
+\htmlonly
 -----
 \link sect_postsyn Previous\endlink | \link ListOfVariables Top\endlink | \link  Credits Next\endlink
+\endhtmlonly
 
 */
   

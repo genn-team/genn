@@ -132,8 +132,10 @@ To test your installation, follow the example in the \link Quickstart Quickstart
 
 <br />
 
+\htmlonly
 -----
 \link Installation Top\endlink | \link Quickstart Next\endlink
+\endhtmlonly
 
 */
 //----------------------------------------------------------------------------
