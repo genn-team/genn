@@ -406,9 +406,20 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
 		      }
 #endif
 		  }
+#ifdef BLOCKSZ_DEBUG
+		  else {
+		      mos << "BLOCKSZ_DEBUG: Device has inferirior occupancy; chosen device remains: " << chosenDevice << endl;
+		  }
+#endif
+
 	      }
 	  }
-      } 
+#ifdef BLOCKSZ_DEBUG
+	  else {
+	      mos << "BLOCKSZ_DEBUG: Device has inferirior small model count; chosen device remains: " << chosenDevice << endl;
+	  }
+#endif	      
+      }
     }
     synapseBlkSz = bestBlkSz[0][chosenDevice];
     learnBlkSz = bestBlkSz[1][chosenDevice];
@@ -417,7 +428,7 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
     model = new NNmodel();
     modelDefinition(*model);
     mos << "Using device " << chosenDevice << " (" << deviceProp[chosenDevice].name << "), with up to ";
-    mos << bestDeviceOccupancy << " warps of neuron kernel occupancy." << endl;
+    mos << bestDeviceOccupancy << " warps of summed kernel occupancy." << endl;
     for (int kernel= 0; kernel < 3; kernel++) {
       delete[] bestBlkSz[kernel];
       delete[] smallModel[kernel];
