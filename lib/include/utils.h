@@ -446,7 +446,7 @@ void prepareStandardModels()
   n.dpNames.clear();
   n.simCode= tS("   scalar Imem;\n\
     unsigned int mt;\n\
-    scalar mdt= DT/25.0;\n\
+    scalar mdt= DT/scalar($ntimes);\n\
     for (mt=0; mt < $(ntimes); mt++) {\n\
       Imem= -($(m)*$(m)*$(m)*$(h)*$(gNa)*($(V)-($(ENa)))+\n\
               $(n)*$(n)*$(n)*$(n)*$(gK)*($(V)-($(EK)))+\n\
