@@ -33,10 +33,11 @@ unsigned int GeNNReady= 0;
 //neuronType
 unsigned int MAPNEURON; //!< variable attaching the name "MAPNEURON" 
 unsigned int POISSONNEURON; //!< variable attaching the name "POISSONNEURON" 
-unsigned int TRAUBMILES_FAST; //!< varianle attaching the name "TRAUBMILES_FAST" 
-unsigned int TRAUBMILES_ALTERNATIVE; //!< varianle attaching the name "TRAUBMILES_ALTERNATIVE" 
-unsigned int TRAUBMILES_SAFE; //!< varianle attaching the name "TRAUBMILES_SAFE" 
-unsigned int TRAUBMILES; //!< varianle attaching the name "TRAUBMILES" 
+unsigned int TRAUBMILES_FAST; //!< variable attaching the name "TRAUBMILES_FAST" 
+unsigned int TRAUBMILES_ALTERNATIVE; //!< variable attaching the name "TRAUBMILES_ALTERNATIVE" 
+unsigned int TRAUBMILES_SAFE; //!< variable attaching the name "TRAUBMILES_SAFE" 
+unsigned int TRAUBMILES; //!< variable attaching the name "TRAUBMILES" 
+unsigned int TRAUBMILES_PSTEP;//!< variable attaching the name "TRAUBMILES_PSTEP" 
 unsigned int IZHIKEVICH; //!< variable attaching the name "IZHIKEVICH" 
 unsigned int IZHIKEVICH_V; //!< variable attaching the name "IZHIKEVICH_V" 
 #define MAXNRN 6 // maximum number of neuron types: SpineML needs to know this
