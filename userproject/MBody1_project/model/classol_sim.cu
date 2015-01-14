@@ -224,7 +224,12 @@ int main(int argc, char *argv[])
     //   }
     
 #ifdef TIMING
-	fprintf(timeros, "%f %f %f \n", sdkGetTimerValue(&neuron_timer), sdkGetTimerValue(&synapse_timer), sdkGetTimerValue(&learning_timer));
+	if (which == CPU) {
+	    fprintf(timeros, "%f %f %f \n", sdkGetTimerValue(&neuron_timer), sdkGetTimerValue(&synapse_timer), sdkGetTimerValue(&learning_timer));
+	}
+	else {
+	    fprintf(timeros, "%f %f %f \n", neuron_tme, synapse_tme, learning_tme);
+	}
 #endif
 
       locust.sum_spikes();
