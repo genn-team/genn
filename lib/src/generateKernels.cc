@@ -491,7 +491,7 @@ void generate_process_presynaptic_events_code(
 	int maxConnections;
 	os << "// only work on existing neurons" << ENDL;
 	if ((sparse) && (isGrpVarNeeded[model.synapseTarget[i]])) {
-	    if (model.maxConn.size() == 0) {
+	    if (model.maxConn[i] < 1) {
 		fprintf(stderr, "Model Generation warning: for every SPARSE synapse group used you must also supply (in your model)\
  a max possible number of connections via the model.setMaxConn() function.");
 		maxConnections = model.neuronN[trg];

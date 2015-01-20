@@ -119,23 +119,23 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
       smallModel[kernel]= new int[deviceCount];
       deviceOccupancy[kernel]= new int[deviceCount];
       for (int device = 0; device < deviceCount; device++) { // initialise all whether used or not
-	bestBlkSz[kernel][device]= 0;
-	smallModel[kernel][device]= 0;
-	deviceOccupancy[kernel][device]= 0;
+	      bestBlkSz[kernel][device]= 0;
+      	smallModel[kernel][device]= 0;
+	      deviceOccupancy[kernel][device]= 0;
       }
     }
 
     // Get the sizes of each synapse / learn group present on this host and device
     vector<unsigned int> synapseN, learnN;
     for (int group = 0; group < model->synapseGrpN; group++) {
-      if (model->synapseConnType[group] == SPARSE) {
-	groupSize[0].push_back(model->maxConn[group]);
+      if ((model->synapseConnType[group] == SPARSE) && (model->maxConn[group]>0)) {
+	      groupSize[0].push_back(model->maxConn[group]);
       }
       else {
-	groupSize[0].push_back(model->neuronN[model->synapseTarget[group]]);
+	      groupSize[0].push_back(model->neuronN[model->synapseTarget[group]]);
       }
       if (model->synapseType[group] == LEARN1SYNAPSE) {
-	groupSize[1].push_back(model->neuronN[model->synapseSource[group]]);
+	      groupSize[1].push_back(model->neuronN[model->synapseSource[group]]);
       }
     }
     groupSize[2]= model->neuronN;

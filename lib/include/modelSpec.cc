@@ -685,7 +685,7 @@ void NNmodel::setMaxConn(const string sname, /**<  */
   if (padSumSynapseKrnl.size() < found+1) padSumSynapseKrnl.resize(found+1);
 
   if (synapseConnType[found] == SPARSE){
-    if (maxConn.size() < found+1) maxConn.resize(found+1);
+    if (maxConn.size() < synapseGrpN) maxConn.resize(synapseGrpN);
     maxConn[found]= maxConnP;
 
     // set padnC is the lowest multiple of synapseBlkSz >= maxConn[found]
