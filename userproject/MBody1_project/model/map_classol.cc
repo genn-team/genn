@@ -14,7 +14,6 @@
 #ifndef _MAP_CLASSOL_CC_
 #define _MAP_CLASSOL_CC_ //!< macro for avoiding multiple inclusion during compilation
 
-
 //--------------------------------------------------------------------------
 /*! \file map_classol.cc
 

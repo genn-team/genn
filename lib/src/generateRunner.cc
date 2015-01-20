@@ -179,14 +179,6 @@ void genRunner(NNmodel &model, //!< Model description
     os << "    }" << ENDL;
     os << "}" << ENDL << ENDL;
 
-    // simulation timing variables
-    if (model.timing) {
-	os << "cudaEvent_t neuronStart, neuronStop, synapseStart, synapseStop, learningStart, learningStop;" << ENDL;
-	os << "StopWatchInterface *neuron_timer, *synapse_timer, *learning_timer;" << ENDL;
-	os << "double neuron_tme, synapse_tme, learning_tme;" << ENDL << ENDL;
-    }
-
-
     //---------------------------------
     // HOST AND DEVICE NEURON VARIABLES
 
