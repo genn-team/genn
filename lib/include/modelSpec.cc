@@ -145,13 +145,9 @@ void NNmodel::registerSynapsePopulation(unsigned int i /**< index of the synapse
     // TODO: are these sums and padded sums used anywhere at all???
     unsigned int padnN = ceil((double) neuronN[synapseTarget[i]] / (double) synapseBlkSz) * (double) synapseBlkSz;
     if (i == 0) {
-	sumSynapseTrgN.push_back(neuronN[synapseTarget[i]]);
-	padSumSynapseTrgN.push_back(padnN);
 	padSumSynapseKrnl.push_back(padnN);
     }
     else {
-	sumSynapseTrgN.push_back(sumSynapseTrgN[i - 1] + neuronN[synapseTarget[i]]);
-	padSumSynapseTrgN.push_back(padSumSynapseTrgN[i - 1] + padnN);
 	padSumSynapseKrnl.push_back(padSumSynapseKrnl[i - 1] + padnN);
     }
     //fprintf(stderr, " sum of padded postsynaptic neurons for group %u is %u, krnl size is %u\n", i, padSumSynapseTrgN[i],padSumSynapseKrnl[i]);
@@ -701,14 +697,10 @@ void NNmodel::setMaxConn(const string sname, /**<  */
     }
     else {
       unsigned int toOmitK = padSumSynapseKrnl[found]-padSumSynapseKrnl[found-1];
-      //fprintf(stderr, "old padSumSynapseKrnl[%d] is %u\n", found,padSumSynapseKrnl[found]);
       padSumSynapseKrnl[found]=padSumSynapseKrnl[found-1]+padnC;
-      //fprintf(stderr, "padSumSynapseKrnl[%d] is %u\n", found,padSumSynapseKrnl[found]);
       for (int j=found+1;j<padSumSynapseKrnl.size();j++){    	
-	//fprintf(stderr, "old padSumSynapseKrnl[%d] is %u\n",j,padSumSynapseKrnl[j]);
-	padSumSynapseKrnl[j]=padSumSynapseKrnl[j]-toOmitK+padnC;
-	//fprintf(stderr, "padSumSynapseKrnl[%d] is %u\n", j,padSumSynapseKrnl[j]);
-      }
+	      padSumSynapseKrnl[j]=padSumSynapseKrnl[j]-toOmitK+padnC;
+	    }
     }
   }
   else {

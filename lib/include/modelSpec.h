@@ -234,8 +234,6 @@ public:
   unsigned int synapseGrpN; //!< Number of synapse groups
   vector<string> synapseName; //!< Names of synapse groups
   //vector<unsigned int>synapseNo; // !<numnber of synapses in a synapse group
-  vector<unsigned int> sumSynapseTrgN; //!< Summed number of target neurons
-  vector<unsigned int> padSumSynapseTrgN; //!< "Padded" summed target neuron numbers
   vector<unsigned int> maxConn; //!< Padded summed maximum number of connections for a neuron in the neuron groups
   vector<unsigned int> padSumSynapseKrnl; //Combination of padSumSynapseTrgN and padSumMaxConn to support both sparse and all-to-all connectivity in a model
   vector<unsigned int> synapseType; //!< Types of synapses
