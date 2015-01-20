@@ -580,6 +580,8 @@ void NNmodel::addSynapsePopulation(
     // initially set synapase group indexing variables to device 0 host 0
     synapseDeviceID.push_back(0);
     synapseHostID.push_back(0);
+    if (maxConn.size() < synapseGrpN) maxConn.resize(synapseGrpN);
+    maxConn[i]= neuronN[trgNumber];
 
 // TODO set uses*** variables for synaptic populations  
 }
@@ -681,6 +683,7 @@ void NNmodel::setSeed(unsigned int inseed /*!< the new seed  */)
 void NNmodel::setMaxConn(const string sname, /**<  */
                          unsigned int maxConnP /**<  */)
 {
+  cout << "resizing maxConn of " << sname << " to " << maxConnP << "..." << endl;
   unsigned int found= findSynapseGrp(sname);
   if (padSumSynapseKrnl.size() < found+1) padSumSynapseKrnl.resize(found+1);
 
