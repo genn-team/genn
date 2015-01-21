@@ -614,26 +614,6 @@ void NNmodel::setConstInp(const string sName, /**<  */
 
 
 //--------------------------------------------------------------------------
-/*! \brief This function re-calculates the block-size-padded sum of threads needed to compute the
-  groups of neurons and synapses assigned to each device. Must be called after changing the
-  hostID:deviceID of any neuron or synapse group.
- */
-//--------------------------------------------------------------------------
-
-void NNmodel::resetPaddedSums()
-{
-  // array for each host with arrays for each device goes here
-  //vector<vector<int> > padSum = int[hostCount][deviceCount]
-
-  for (int synapseGroup = 0; synapseGroup < synapseGrpN; synapseGroup++) {
-
-    // CODE FOR RESETTING PADSUM* VARIABLES GOES HERE (use setMaxConn function)
-
-  }
-}
-
-
-//--------------------------------------------------------------------------
 /*! \brief This function sets the numerical precision of floating type variables. By default, it is FLOAT.
  */
 //--------------------------------------------------------------------------
