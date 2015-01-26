@@ -683,7 +683,8 @@ void prepareWeightUpdateModels()
     wuG.pNames.push_back(tS("Vslope")); 
     wuG.dpNames.clear();
     // code for presynaptic spike event 
-    wuG.simCodeEvnt = tS("$(addtoinSyn) = $(g) * tanh(($(V_pre) - ($(Epre))) * DT * 2 / $(Vslope));\n\
+    wuG.simCodeEvnt = tS("$(addtoinSyn) = $(g) * tanh(($(V_pre) - $(Epre)) / $(Vslope))* DT;\n\
+    if ($(addtoinSyn) < 0) $(addtoinSyn) = 0.0;\n\
     $(updatelinsyn);\n");
     // definition of presynaptic spike event 
     wuG.evntThreshold = tS("$(V_pre) > $(Epre)");
