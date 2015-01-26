@@ -69,8 +69,8 @@ void classol::init(unsigned int which //!< Flag defining whether GPU or CPU only
     theRates= baserates;
   }
   if (which == GPU) {
-    copyStateToDevice();
     theRates= d_baserates;
+    copyStateToDevice();
   }
 }
 
@@ -443,22 +443,22 @@ void classol::output_state(FILE *f, //!< File handle for a file to write the mod
   // for (int i= 0; i < model.neuronN[0]; i++) {
   //   os << spikeTimesPN[i] << " ";
   // }
-  //  os << glbscnt0 << "  ";
+  //  os << glbSpkCnt0 << "  ";
   // for (int i= 0; i < glbscntPN; i++) {
   //   os << glbSpkPN[i] << " ";
   // }
   // os << " * ";
-  // os << glbscntKC << "  ";
+  // os << glbSpkCntKC << "  ";
   // for (int i= 0; i < glbscntKC; i++) {
   //   os << glbSpkKC[i] << " ";
   // }
   // os << " * ";
-  // os << glbscntLHI << "  ";
+  // os << glbSpkCntLHI << "  ";
   // for (int i= 0; i < glbscntLHI; i++) {
   //   os << glbSpkLHI[i] << " ";
   // }
   // os << " * ";
-  // os << glbscntDN << "  ";
+  // os << glbSpkCntDN << "  ";
   // for (int i= 0; i < glbscntDN; i++) {
   //   os << glbSpkDN[i] << " ";
   // }
@@ -533,7 +533,7 @@ void classol::output_spikes(FILE *f, //!< File handle for a file to write spike 
 			    )
 {
 
-  //    fprintf(stdout, "%f %f %f %f %f\n", t, glbscntPN, glbscntKC, glbscntLHI,glbscntDN);
+  //    fprintf(stdout, "%f %f %f %f %f\n", t, glbSpkCntPN, glbSpkCntKC, glbSpkCntLHI,glbSpkCntDN);
   for (int i= 0; i < glbSpkCntPN[0]; i++) {
     fprintf(f, "%f %d\n", t, glbSpkPN[i]);
   }

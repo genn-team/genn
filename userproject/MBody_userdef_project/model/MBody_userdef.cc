@@ -85,7 +85,7 @@ double myLHIKC_p[2]= {
 };
 
 double myLHIKC_ini[1] = {
-    0.35/_NLHI   // 0 - g: initial synaptic conductance
+    1.0/_NLHI   // 0 - g: initial synaptic conductance
 };
 
 double postExpLHIKC[2]={
@@ -117,7 +117,7 @@ double postExpKCDN[2]={
   0.0		  // 1 - Erev: Reversal potential
 };
 
-double myDNDN_p[4]= {
+double myDNDN_p[2]= {
   -30.0,         // 0 - Epre: Presynaptic threshold potential 
   50.0           // 1 - Vslope: Activation slope of graded release 
 };
@@ -127,7 +127,7 @@ double myDNDN_ini[1]={
 };
 
 double postExpDNDN[2]={
-  8.0,            // 0 - tau_S: decay time constant for S [ms]
+  2.5,            // 0 - tau_S: decay time constant for S [ms]
   -92.0		  // 1 - Erev: Reversal potential
 };
 
@@ -263,9 +263,9 @@ void modelDefinition(NNmodel &model)
   ngradsynapse.pNames.push_back(tS("Vslope")); 
   ngradsynapse.dpNames.clear();
   // code for presynaptic spike event (defined by Epre)
-  ngradsynapse.simCodeEvnt = tS("$(addtoinSyn) = $(g)* tanh(($(V_pre) - ($(Epre)))*DT*2/$(Vslope));\n\
- 				 $(updatelinsyn); \n\
-  ");
+  ngradsynapse.simCodeEvnt = tS("$(addtoinSyn) = $(g) * tanh(($(V_pre) - $(Epre)) / $(Vslope))* DT;\n\
+    if ($(addtoinSyn) < 0) $(addtoinSyn) = 0.0;\n\
+    $(updatelinsyn);\n");
   // definition of presynaptic spike event 
   ngradsynapse.evntThreshold = tS("    $(V_pre) > $(Epre)");
   weightUpdateModels.push_back(ngradsynapse);
@@ -338,9 +338,9 @@ void modelDefinition(NNmodel &model)
 
   model.setName("MBody_userdef");
   model.addNeuronPopulation("PN", _NAL, POISSONNEURON, myPOI_p, myPOI_ini);
-  model.addNeuronPopulation("KC", _NMB, TRAUBMILES_FAST, stdTM_p, stdTM_ini);
-  model.addNeuronPopulation("LHI", _NLHI, TRAUBMILES_FAST, stdTM_p, stdTM_ini);
-  model.addNeuronPopulation("DN", _NLB, TRAUBMILES_FAST, stdTM_p, stdTM_ini);
+  model.addNeuronPopulation("KC", _NMB, TRAUBMILES, stdTM_p, stdTM_ini);
+  model.addNeuronPopulation("LHI", _NLHI, TRAUBMILES, stdTM_p, stdTM_ini);
+  model.addNeuronPopulation("DN", _NLB, TRAUBMILES, stdTM_p, stdTM_ini);
   
   model.addSynapsePopulation("PNKC", NSYNAPSE_userdef, SPARSE, INDIVIDUALG, NO_DELAY, EXPDECAY_EVAR, "PN", "KC", myPNKC_ini, myPNKC_p, postSynV_EXPDECAY_EVAR,postExpPNKC);
   model.setMaxConn("PNKC", _NMB);  

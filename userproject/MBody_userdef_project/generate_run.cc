@@ -26,6 +26,7 @@ This file compiles to a tool that wraps all the other tools into one chain of ta
 #include <sstream>
 #include <cstdlib>
 #include <cmath>
+#include <cfloat>
 #include <locale>
 
 #ifdef _WIN32
@@ -75,7 +76,7 @@ string toLower(string s)
 
 int main(int argc, char *argv[])
 {
-  if (!(argc == 11 || argc == 12))
+  if (argc != 12)
   {
       cerr << "usage: generate_run <CPU=0, AUTO GPU=1, GPU n= \"n+2\"> <nAL> <nMB> <nLHI> <nLb> <gscale> <outdir> <model name> <debug mode? (0/1)> <ftype \"FLOAT\" or \"DOUBLE\"> <use previous connectivity?(optional atm) (0/1)>" << endl;
     exit(1);
@@ -96,10 +97,10 @@ int main(int argc, char *argv[])
   int fixsynapse = atoi(argv[11]); // if this is not 0 network generation is skipped
   
   
-  double pnkc_gsyn = 100.0f / nAL * gscale;
-  double pnkc_gsyn_sigma = 100.0f / nAL * gscale / 15.0f; 
-  double kcdn_gsyn = 2500.0f / nMB * 0.1f * gscale; 
-  double kcdn_gsyn_sigma = 2500.0f / nMB * 0.01f * gscale; 
+  double pnkc_gsyn = 100.0 / nAL * gscale;
+  double pnkc_gsyn_sigma = 100.0 / nAL * gscale / 15.0; 
+  double kcdn_gsyn = 2500.0 / nMB * 0.05 * gscale; 
+  double kcdn_gsyn_sigma = 2500.0 / (sqrt(1000)*sqrt(nMB)) * 0.005 * gscale; 
   double pnlhi_theta = 100.0f / nAL * 14.0f * gscale;
 
   // write neuron population sizes
@@ -114,12 +115,12 @@ int main(int argc, char *argv[])
   os << "#define _FTYPE " << toUpper(tmps) << endl;
   os << "#define scalar " << toLower(tmps) << endl;
   if (toLower(ftype) == "double") {
-      os << "#define SCALAR_MIN DBL_MIN" << endl;
-      os << "#define SCALAR_MAX DBL_MAX" << endl;
+      os << "#define SCALAR_MIN " << DBL_MIN << endl;
+      os << "#define SCALAR_MAX " << DBL_MAX << endl;
   }
   else {
-      os << "#define SCALAR_MIN FLT_MIN" << endl;
-      os << "#define SCALAR_MAX FLT_MAX" << endl;
+      os << "#define SCALAR_MIN " << FLT_MIN << "f" << endl;
+      os << "#define SCALAR_MAX " << FLT_MAX << "f" << endl;
   } 
 
 
@@ -158,7 +159,7 @@ int main(int argc, char *argv[])
   }
 #endif
   
-  if (fixsynapse == 0){
+  if (fixsynapse == 0) {
   // generate pnkc synapses
   cmd = gennPath + "/userproject/tools/gen_pnkc_syns ";
   cmd += toString(nAL) + " ";
@@ -167,7 +168,7 @@ int main(int argc, char *argv[])
   cmd += toString(pnkc_gsyn) + " ";
   cmd += toString(pnkc_gsyn_sigma) + " ";
   cmd += outdir + "/" + toString(argv[7]) + ".pnkc";
-  cmd += " 1> " + outdir + "/" + toString(argv[7]) + ".pnkc.msg 2>&1";
+   cmd += " 2>&1 |tee "+ outdir + "/" + toString(argv[7]) + ".pnkc.msg";
   retval=system(cmd.c_str());
   if (retval != 0){
     cerr << "ERROR: Following call failed with status " << retval << ":" << endl << cmd << endl;
@@ -180,9 +181,9 @@ int main(int argc, char *argv[])
   cmd += toString(nLB) + " ";
   cmd += toString(kcdn_gsyn) + " ";
   cmd += toString(kcdn_gsyn_sigma) + " ";
-  cmd += toString(kcdn_gsyn_sigma) + " ";
+  cmd += "1e-20 ";
   cmd += outdir + "/" + toString(argv[7]) + ".kcdn";
-  cmd += " 1> " + outdir + "/" + toString(argv[7]) + ".kcdn.msg 2>&1";
+  cmd += " 2>&1 |tee "+ outdir + "/" + toString(argv[7]) + ".kcdn.msg";
   retval=system(cmd.c_str());
   if (retval != 0){
     cerr << "ERROR: Following call failed with status " << retval << ":" << endl << cmd << endl;
@@ -196,8 +197,8 @@ int main(int argc, char *argv[])
   cmd += toString(nLHI) + " ";
   cmd += toString(pnlhi_theta) + " 15 ";
   cmd += outdir + "/" + toString(argv[7]) + ".pnlhi";
-  cmd += " 1> " + outdir + "/" + toString(argv[7]) + ".pnlhi.msg 2>&1";
-  retval=system(cmd.c_str());
+  cmd += " 2>&1 |tee "+ outdir + "/" + toString(argv[7]) + ".pnlhi.msg";
+  retval = system(cmd.c_str());
   if (retval != 0){
     cerr << "ERROR: Following call failed with status " << retval << ":" << endl << cmd << endl;
     cerr << "Exiting..." << endl;
@@ -209,7 +210,7 @@ int main(int argc, char *argv[])
   cmd += toString(nAL) + " ";
   cmd += "10 10 0.1 0.05 1.0 2e-04 ";
   cmd += outdir + "/" + toString(argv[7]) + ".inpat";
-  cmd += " 1> " + outdir + "/" + toString(argv[7]) + ".inpat.msg 2>&1";
+  cmd += " 2>&1 |tee "+ outdir + "/" + toString(argv[7]) + ".inpat.msg";
   retval=system(cmd.c_str());
   if (retval != 0){
     cerr << "ERROR: Following call failed with status " << retval << ":" << endl << cmd << endl;
@@ -238,7 +239,7 @@ int main(int argc, char *argv[])
     cmd = "model/classol_sim " + toString(argv[7]) + " " + toString(which);
   }
 #endif
-  retval=system(cmd.c_str());
+  retval = system(cmd.c_str());
   if (retval != 0){
     cerr << "ERROR: Following call failed with status " << retval << ":" << endl << cmd << endl;
     cerr << "Exiting..." << endl;

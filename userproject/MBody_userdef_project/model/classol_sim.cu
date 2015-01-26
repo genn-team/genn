@@ -184,10 +184,10 @@ if (which == GPU){
     locust.getSpikesFromGPU();
     locust.runGPU(DT); // run next batch
  
-    //pullDNfromDevice();
+    //pullDNStateFromDevice();
     
     #ifdef TIMING
-      fprintf(timeros, "%f %f %f \n", sdkGetTimerValue(&timer_neuron), sdkGetTimerValue(&timer_synapse), sdkGetTimerValue(&timer_learning));
+     	fprintf(timeros, "%f %f %f \n", neuron_tme, synapse_tme, learning_tme);
     #endif 
 
     locust.sum_spikes();
@@ -242,7 +242,12 @@ if (which == CPU){
     locust.runCPU(DT); // run next batch
 
     #ifdef TIMING
-      fprintf(timeros, "%f %f %f \n", sdkGetTimerValue(&timer_neuron), sdkGetTimerValue(&timer_synapse), sdkGetTimerValue(&timer_learning));
+    if (which == CPU) {
+	    fprintf(timeros, "%f %f %f \n", sdkGetTimerValue(&neuron_timer), sdkGetTimerValue(&synapse_timer), sdkGetTimerValue(&learning_timer));
+	  }
+	  else {
+	    fprintf(timeros, "%f %f %f \n", neuron_tme, synapse_tme, learning_tme);
+	  }
     #endif 
 
     locust.sum_spikes();
@@ -296,6 +301,7 @@ if (which == CPU){
   // }
 
   timer.stopTimer();
+  if (which == GPU) pullDNStateFromDevice();
   cerr << "output files are created under the current directory." << endl;
   fprintf(timef, "%d %u %u %u %u %u %.4f %.2f %.1f %.2f\n",which, locust.model.sumNeuronN[locust.model.neuronGrpN-1], locust.sumPN, locust.sumKC, locust.sumLHI, locust.sumDN, timer.getElapsedTime(),VDN[0], TOTAL_TME, DT);
   fprintf(stdout, "GPU=%d, %u neurons, %u PN spikes, %u KC spikes, %u LHI spikes, %u DN spikes, simulation took %.4f secs, VDN[0]=%.2f DT=%.1f %.2f\n",which, locust.model.sumNeuronN[locust.model.neuronGrpN-1], locust.sumPN, locust.sumKC, locust.sumLHI, locust.sumDN, timer.getElapsedTime(),VDN[0], TOTAL_TME, DT);

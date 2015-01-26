@@ -172,7 +172,7 @@ int main(int argc, char *argv[])
       locust.getSpikesFromGPU();
       locust.runGPU(DT); // run next batch
     
-//	pullDNfromDevice();
+//	pullDNStateFromDevice();
     //   }
     
 #ifdef TIMING
@@ -264,8 +264,11 @@ int main(int argc, char *argv[])
   }
 }
   timer.stopTimer();
+  if (which == GPU) pullDNStateFromDevice();
   cerr << "output files are created under the current directory." << endl;
   fprintf(timef, "%d %u %u %u %u %u %.4f %.2f %.1f %.2f\n",which, locust.model.sumNeuronN[locust.model.neuronGrpN-1], locust.sumPN, locust.sumKC, locust.sumLHI, locust.sumDN, timer.getElapsedTime(),VDN[0], TOTAL_TME, DT);
+  fprintf(stdout, "GPU=%d, %u neurons, %u PN spikes, %u KC spikes, %u LHI spikes, %u DN spikes, simulation took %.4f secs, VDN[0]=%.2f DT=%.1f %.2f\n",which, locust.model.sumNeuronN[locust.model.neuronGrpN-1], locust.sumPN, locust.sumKC, locust.sumLHI, locust.sumDN, timer.getElapsedTime(),VDN[0], TOTAL_TME, DT);
+
   fclose(osf);
   fclose(osf2);
   fclose(timef);
