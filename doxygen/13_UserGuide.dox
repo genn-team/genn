@@ -125,7 +125,10 @@ The content of `gENIN` needs to be interpreted differently for DENSE connectivit
 
 \subsection predefinedVars Built-in Variables in GeNN
 
-With GeNN 2.0, there are no more explicitly hard-coded variables. Users are free to call the variable of their models as they want. However, there are some reserved variables that are used for intermediary calculations and communication between different parts of the generated code. They can be used in the user defined code but no other variables should be defined with these names.
+With GeNN 2.0, there are no more explicitly hard-coded synapse and neuron variables. Users are free to call the variable of their models as they want. However, there are some reserved variables that are used for intermediary calculations and communication between different parts of the generated code. They can be used in the user defined code but no other variables should be defined with these names.
+
+- \c DT : Time step (in ms) for simulation, supposedly calling neuron and synapse updates to be called for each step.
+Neuron integration can be done in multiple steps for numerical reasons inside the neuron model (see Traub-Miles and Izhikevich neuron model variations in \ref sectNeuronModels).
 
 - \c addtoinSyn : This variable is used by weightUpdateModel for updating synaptic input. The way it is modified is defined in weightUpdateModel.simCode or weightUpdateModel.simCodeEvnt,
  therefore if a user defines her own model she should update this variable to contain the input to the post-synaptic model.   
@@ -149,9 +152,7 @@ $(V)+= (-$(V)+$(Isyn))*DT
 
 - \c sT : As a neuron variable, this is the last spike time in a neuron and is automatically generated for pre and postsynaptic neuron groups of a synapse group i that follows a spike based learning rule (indicated by usesPostLearning[i]= TRUE for the ith synapse population).
 
-- \c sT_pre : Spike time of the presynaptic neuron population.
-
-- \c sT_post : Spike time of the postsynaptic neuron population.
+In addition to these variables, neuron variables can be referred to in the synapse models by calling $(<neuronVarName>_pre) for the presynaptic neuron population, and $(<neuronVarName>_post) for the postsynaptic population. For example, \$(sT_pre), \$(sT_post), \$(V_pre), etc.
  
 \section Debugging Debugging suggestions
 In Linux, users can use cuda-gdb to debug GPU. Example projects in userproject and lib/bin/buildmodel.sh come with a flag to enable debugging.

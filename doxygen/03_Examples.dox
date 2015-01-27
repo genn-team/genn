@@ -42,12 +42,12 @@ make all
 \endcode
 Subsequently it can be invoked using the following command line
 \code{.cc}
-./generate_run <CPU/GPU> <#POISSON> <#IZHIKEVICH> <PCONN> <GSCALE> <OUTNAME> <MODEL> <DEBUG OFF/ON> <FTYPE> <REUSE>
+./generate_run <CPU/GPU> <nPOISSON> <nIZHIKEVICH> <PCONN> <GSCALE> <OUTNAME> <MODEL> <DEBUG OFF/ON> <FTYPE> <REUSE>
 \endcode
 All parameters are mandatory and signify:
 \arg `CPU/GPU`: Choose whether to run the simulation on CPU (`0`) or GPU (`1`).
-\arg `#POISSON`: Number of Poisson input neurons
-\arg `#%IZHIKEVICH`: Number of Izhikevich neurons
+\arg `\nPOISSON`: Number of Poisson input neurons
+\arg `\nIZHIKEVICH`: Number of Izhikevich neurons
 \arg `PCONN`: Probability of connections
 \arg `OUTNAME`: The base name of the output location and output files
 \arg `MODEL`: The name of the model to execute, as provided this would be `PoissonIzh`
@@ -76,13 +76,13 @@ make all
 \endcode
 It can then be used as 
 \code{.cc}
-./generate_run <CPU/GPU> <#N> <#CONN> <GSCALE> <OUTNAME> <MODEL> <DEBUG OFF/ON> 
+./generate_run <CPU/GPU> <nN> <nCONN> <GSCALE> <OUTNAME> <MODEL> <DEBUG OFF/ON> 
  <FTYPE> <REUSE>
 \endcode
 All parameters are mandatory and signify:
 \arg `CPU/GPU`: Choose whether to run the simulation on CPU (`0`) or GPU (`1`).
-\arg `#N`: Number of neurons
-\arg `#CONN`: Number of connections per neuron
+\arg `\nN`: Number of neurons
+\arg `\nCONN`: Number of connections per neuron
 \arg `GSCALE': General scaling of synaptic conductances
 \arg `OUTNAME`: The base name of the output location and output files
 \arg `MODEL`: The name of the model to execute, as provided this would be `Izh_sparse`
@@ -90,7 +90,7 @@ All parameters are mandatory and signify:
 \arg `FTYPE`: Floating point type `%FLOAT` or `%DOUBLE`
 \arg `REUSE`: whether to re-use input files
 
-The model creates a pulse-coupled network \cite izhikevich2003simple with 80% excitatory 20% inhibitory neurons, each connecting to #CONN neurons using the sparse matrix connectivity methods of GeNN.
+The model creates a pulse-coupled network \cite izhikevich2003simple with 80% excitatory 20% inhibitory neurons, each connecting to nCONN neurons using the sparse matrix connectivity methods of GeNN.
 
 For example, typing
 \code{.cc}
@@ -98,7 +98,7 @@ For example, typing
 \endcode
 generates a random network of 8000 excitatory and 2000 inhibitory neurons which each have 1000 outgoing synapses to randomly chosen post-synaptic target neurons. The synapses are of a simple pulse-coupling type. The results of the simulation are saved in the directory `Outdir_output`, debugging is switched off, and the connectivity is generated afresh (rather than being read from existing files).
 \note
-If connectivity were to be read from files, the connectivity files would have to be in the `inputfiles` sub-directory and be named according to the names of the synapse populations involved, e.g., `gIzh_sparse_ee` (<variable name>=`g` <model name>=`Izh_sparse` _<synapse population>=`_ee`). These name conventions are not part of the core GeNN definitions and it is the privilege (or burden) of the user to find their own in their own versions of `generate_XXX_run`.
+If connectivity were to be read from files, the connectivity files would have to be in the `inputfiles` sub-directory and be named according to the names of the synapse populations involved, e.g., `gIzh_sparse_ee` (\<variable name>=`g` \<model name>=`Izh_sparse` \<synapse population>=`_ee`). These name conventions are not part of the core GeNN definitions and it is the privilege (or burden) of the user to find their own in their own versions of `generate_XXX_run`.
 
 <br />
 
@@ -137,14 +137,14 @@ make all
 \endcode
 This will show you the command line parameters that are needed,
 \code{.cc}
-tools/generate_run <CPU/GPU> <#AL> <#KC> <#LHI> <#DN> <GSCALE> <OUTNAME> <MODEL> <DEBUG> <FTYPE> <REUSE>
+tools/generate_run <CPU/GPU> <nAL> <nKC> <nLHI> <nDN> <GSCALE> <OUTNAME> <MODEL> <DEBUG> <FTYPE> <REUSE>
 \endcode
 All parameters are mandatory and signify:
 \arg `CPU/GPU`: Choose whether to run the simulation on CPU (`0`) or GPU (`1`).
-\arg `#AL`: Number of neurons in the antennal lobe (AL), the input neurons to this model
-\arg `#KC`: Number of Kenyon cells (KC) in the "hidden layer"
-\arg `#LH`: Number of lateral horn interneurons, implementing gain control
-\arg `#DN`: Number of decision neurons (DN) in the output layer
+\arg `nAL`: Number of neurons in the antennal lobe (AL), the input neurons to this model
+\arg `nKC`: Number of Kenyon cells (KC) in the "hidden layer"
+\arg `nLH`: Number of lateral horn interneurons, implementing gain control
+\arg `nDN`: Number of decision neurons (DN) in the output layer
 \arg `GSCALE`: A general rescaling factor for snaptic strength
 \arg `OUTNAME`: The base name of the output location and output files
 \arg `MODEL`: The name of the model to execute, as provided this would be `MBody1`

@@ -106,11 +106,11 @@ activity. To fix the GPU used, replace the first argument `1` with the
 device number of the desired GPU plus 2, e.g., `2` for GPU 0. All input and output files will be prefixed with `test1` and will be
 created in a sub-directory with the name `test1_output`. The last
 parameter `0` will switch the debugging mode off, `1` would switch it
-on. More about debugging in the \link Debug debugging section \endlink.
+on. More about debugging in the \link Debugging debugging section \endlink.
 
 The MBody1 example is already a highly integrated example that
 showcases many of the features of GeNN and how to program the
-user-side code for a GeNN application. \link Manual More details in the User Manual \endlink
+user-side code for a GeNN application. \link UserManual More details in the User Manual \endlink
 
 \section how_to How to use GeNN for New Projects
 

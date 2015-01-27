@@ -11,7 +11,7 @@ and download a release from the list by clicking the relevant source
 code button. Note that GeNN is only distributed in the form of source
 code due to its code generation design. Binary distributions would not
 make sense in this framework and are not provided. 
-After downloading continue to install GeNN as described in the \ref install section below.
+After downloading continue to install GeNN as described in the \ref installing section below.
 
 \section GitSnapshot Obtaining a Git snapshot
 

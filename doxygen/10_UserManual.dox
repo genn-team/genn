@@ -108,7 +108,7 @@ where the arguments are
 \arg \c int \c gType: The way how the synaptic conductivity g will be
 defined. Options are
 "INDIVIDUALG", "GLOBALG", "INDIVIDUALID". For their meaning, see \ref
-subsect33 below.
+sect33 below.
 \arg \c int \c delay: Synaptic delay (in multiples of the simulation time step `DT`). 
 \arg \c int \c postSyn: Postsynaptic integration method. See \ref sect_postsyn for predefined types.
 \arg \c char* \c preName: Name of the (existing!) pre-synaptic neuron
@@ -218,7 +218,7 @@ spike will be triggered.
  
 \section sect23 TRAUBMILES (Hodgkin-Huxley neurons with Traub & Miles algorithm)
 
-This conductance based model has been taken from \ref Traub1991 and can be described by the equations:
+This conductance based model has been taken from \cite Traub1991 and can be described by the equations:
 \f{eqnarray*}{
 C \frac{d V}{dt}  &=& -I_{{\rm Na}} -I_K-I_{{\rm leak}}-I_M-I_{i,DC}-I_{i,{\rm syn}}-I_i, \\
 I_{{\rm Na}}(t) &=& g_{{\rm Na}} m_i(t)^3 h_i(t)(V_i(t)-E_{{\rm Na}}) \\
@@ -575,7 +575,7 @@ If there are no connections for a presynaptic neuron, then g[indIng[n]]=gp[indIn
 
  See tools/gen_syns_sparse_IzhModel used in Izh_sparse project to see a working example.	
 
-\section subsect35 Postsynaptic integration methods
+\section sect_postsyn Postsynaptic integration methods
 
 The way that everything comes from the presynaptic inputs are updated by the postsynaptic neuron can be defined by either using a predefined method or by adding a new postSynModel object. 
 
