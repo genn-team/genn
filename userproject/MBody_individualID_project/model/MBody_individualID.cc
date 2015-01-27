@@ -85,7 +85,7 @@ double myLHIKC_p[2]= {
 
 //double gLHIKC= 0.6;
 double myLHIKC_ini[1] = {
-    0.35/_NLHI   // 0 - g: initial synaptic conductance
+    1.0/_NLHI   // 0 - g: initial synaptic conductance
 };
 
 double postExpLHIKC[2]={
@@ -129,7 +129,7 @@ double myDNDN_ini[1]={
 };
 
 double postExpDNDN[2]={
-  8.0,            // 0 - tau_S: decay time constant for S [ms]
+  2.5,            // 0 - tau_S: decay time constant for S [ms]
   -92.0		  // 1 - Erev: Reversal potential
 };
 
@@ -146,9 +146,9 @@ void modelDefinition(NNmodel &model)
     initGeNN();
     model.setName("MBody_individualID");
     model.addNeuronPopulation("PN", _NAL, POISSONNEURON, myPOI_p, myPOI_ini);
-    model.addNeuronPopulation("KC", _NMB, TRAUBMILES_FAST, stdTM_p, stdTM_ini);
-    model.addNeuronPopulation("LHI", _NLHI, TRAUBMILES_FAST, stdTM_p, stdTM_ini);
-    model.addNeuronPopulation("DN", _NLB, TRAUBMILES_FAST, stdTM_p, stdTM_ini);
+    model.addNeuronPopulation("KC", _NMB, TRAUBMILES, stdTM_p, stdTM_ini);
+    model.addNeuronPopulation("LHI", _NLHI, TRAUBMILES, stdTM_p, stdTM_ini);
+    model.addNeuronPopulation("DN", _NLB, TRAUBMILES, stdTM_p, stdTM_ini);
     
     model.addSynapsePopulation("PNKC", NSYNAPSE, DENSE, INDIVIDUALID, NO_DELAY, EXPDECAY, "PN", "KC", myPNKC_ini, myPNKC_p, postSynV, postExpPNKC);
     model.addSynapsePopulation("PNLHI", NSYNAPSE, ALLTOALL, INDIVIDUALG, NO_DELAY, EXPDECAY, "PN", "LHI",  myPNLHI_ini, myPNLHI_p, postSynV, postExpPNLHI);

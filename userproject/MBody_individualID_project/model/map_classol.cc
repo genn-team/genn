@@ -60,8 +60,8 @@ void classol::init(unsigned int which //!< Flag defining whether GPU or CPU only
     theRates= baserates;
   }
   if (which == GPU) {
-    copyStateToDevice();
     theRates= d_baserates;
+    copyStateToDevice();
   }
 }
 
@@ -244,7 +244,7 @@ void classol::write_kcdnsyns(FILE *f //!< File handle for a file to write KC to 
     delete[] tmpg;
 }
 
-void classol::read_sparsesyns_par(int synInd, struct SparseProjection C, scalar* g, FILE *f_ind,FILE *f_indInG, FILE *f_g //!< File handle for a file containing sparse conductivity values
+void classol::read_sparsesyns_par(int synInd, SparseProjection C, scalar* g, FILE *f_ind,FILE *f_indInG, FILE *f_g //!< File handle for a file containing sparse conductivity values
     )
 {
     //allocateSparseArray(synInd,C.connN);
@@ -256,7 +256,7 @@ void classol::read_sparsesyns_par(int synInd, struct SparseProjection C, scalar*
     retval = fread(C.indInG, 1, (model.neuronN[model.synapseSource[synInd]]+1)*sizeof(unsigned int),f_indInG);
     retval = fread(C.ind, 1, sz*sizeof(int),f_ind);
     // general:
-    fprintf(stdout,"Read conductance ... \n");
+    fprintf(stdout,"Read sparse projection indices ... \n");
     fprintf(stdout, "Size is %d for synapse group %d. Values start with: \n",C.connN, synInd);
     for(int i= 0; i < 100; i++) {
 	fprintf(stdout, "%d, %d ", C.indInG[i], C.ind[i]);
