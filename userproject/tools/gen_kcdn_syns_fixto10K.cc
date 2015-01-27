@@ -32,13 +32,12 @@ using namespace std;
 
 #include "randomGen.cc"
 
-randomGen R;
+randomGen R, R2;
 randomGauss RG;
 
 int main(int argc, char *argv[])
 {
   cout << "generating KCDN weights..." << endl;
-
   if (argc != 7)
   {
     cerr << "usage: gen_kcdn_syns <nMB> <nLobes> ";
@@ -56,22 +55,40 @@ int main(int argc, char *argv[])
   double gsyn;
   double *g= new double[nMB*nLB];
 
-  cerr << "# call was: ";
+  cout << "# call was: ";
   for (int i= 0; i < argc; i++) cerr << argv[i] << " ";
-  cerr << endl;
 
+  double psyn = 10000.0/nMB;
+  cout << "psyn = " << psyn << endl;
+  int smallctr = 0;
   for (int i= 0; i < nMB; i++) {
     for (int j= 0; j < nLB; j++) {
-      gsyn= kcdn_gsyn+kcdn_jitter*RG.n();
-      if (gsyn < EPS) gsyn= EPS;
+      if (psyn > 1.0){  
+        gsyn= kcdn_gsyn+kcdn_jitter*RG.n();
+      }
+      else{
+        if (R2.n()<psyn){
+          gsyn= kcdn_gsyn/psyn+kcdn_jitter*sqrt(nMB)/100.0*RG.n(); // scaling stddev by sqrt(n/10000)
+        }
+        else gsyn = 1.0e-25;
+      }
+      if (gsyn < EPS) {
+        //cout <<  "Rand number smaller than min. at "<< i << " " << j << "... Setting to min..." << endl;
+        gsyn= EPS;
+        smallctr++;
+      }
       g[i*nLB+j]= gsyn;
     }
   }
+
   cout << endl;
   os.write((char *)g, nMB*nLB*sizeof(double));
   os.close();
   delete[] g;
- cout << "KCDN weights are created for " << nMB << " KC's and " << nLB << " DN's with mean = " << kcdn_gsyn << ", stddev = " << kcdn_jitter << endl; 
+  cout << "KCDN weights are created for " << nMB << " KC's and " << nLB << " DN's with mean = " << kcdn_gsyn << ", stddev = " << kcdn_jitter << endl;
+  cout.precision(3);
+  if (smallctr >0 ) cout << smallctr << " (\% " << fixed << 100*double(smallctr)/(nMB*nLB) << ") of the weights were too small or negative, so they are set to " << scientific << EPS << endl;
+  cout << endl; 
   return 0;
 }
 
