@@ -728,6 +728,15 @@ void genRunner(NNmodel &model, //!< Model description
     os << "}" << endl << endl;
 
 
+// ------------------------------------------------------------------------
+//! \brief Method for cleaning up and resetting device while quitting GeNN
+
+  os << "void exitGeNN(){" << endl;  
+  os << "  freeMem();" << endl;
+  os << "  cudaDeviceReset();" << endl;
+  os << "}" << endl;
+
+
     // ------------------------------------------------------------------------
     // the actual time stepping procedure
 
