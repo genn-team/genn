@@ -445,8 +445,7 @@ void generate_process_presynaptic_events_code(
     )
 {
     string theAtomicAdd;
-
-    if ((deviceProp[theDev].major < 2) && (model.ftype == "FLOAT")) {
+    if ((deviceProp[theDev].major < 2) && (model.ftype == "float")) {
 	theAtomicAdd= tS("atomicAddoldGPU");
     }
     else {
