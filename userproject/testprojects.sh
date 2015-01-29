@@ -295,7 +295,7 @@ printf "\n\n####################### SynDelay GPU test 1 ######################\n
 printf "\n\n####################### SynDelay CPU test 1 ######################\n"
 ./syn_delay 0 testing
 
-cp -R testing.time $BmDir/SynDelay/testing.time
+cp -R testing_time $BmDir/SynDelay/testing_time
 
 cd ..  
 
