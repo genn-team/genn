@@ -32,7 +32,7 @@ to model a single neuron which output will be saved in the `Outdir_output` direc
 
 <br />
 
-\section ex_poissonizh Izhikevich Network Driven by Poisson Input Spike Trains:
+\section ex_poissonizh Izhikevich neurons driven by Poisson input spike trains:
 
 In this example project there is again a pool of non-connected Izhikevich model neurons \cite izhikevich2003simple that are connected to a pool of Poisson input neurons with a fixed probability.
 
@@ -65,7 +65,7 @@ uncommenting the lines following the comment `//SPARSE CONNECTIVITY` in the file
 
 <br />
 
-\section ex_izhnetwork Pulse-coupled Izhikevich Network
+\section ex_izhnetwork Pulse-coupled Izhikevich network
 
 This example model is inspired by simple thalamo-cortical network of Izhikevich 
 \cite izhikevich2003simple with an excitatory and an inhibitory population of spiking neurons that are randomly connected. 
@@ -94,7 +94,7 @@ The model creates a pulse-coupled network \cite izhikevich2003simple with 80% ex
 
 For example, typing
 \code{.cc}
-./tools/generate_izhikevich_network_run 1 10000 1000 1 Outdir Izh_sparse 0 FLOAT 0 
+./generate_izhikevich_network_run 1 10000 1000 1 Outdir Izh_sparse 0 FLOAT 0 
 \endcode
 generates a random network of 8000 excitatory and 2000 inhibitory neurons which each have 1000 outgoing synapses to randomly chosen post-synaptic target neurons. The synapses are of a simple pulse-coupling type. The results of the simulation are saved in the directory `Outdir_output`, debugging is switched off, and the connectivity is generated afresh (rather than being read from existing files).
 \note
@@ -120,7 +120,7 @@ make clean && make
 
 <br />
 
-\section ex_mbody Insect Olfaction Model
+\section ex_mbody Insect olfaction model
 
 This project implements the insect olfaction model by Nowotny et
 al. \cite nowotny2005self that demonstrates self-organized clustering of odours in a
@@ -157,7 +157,7 @@ The tool generate_run will generate connectivity files for the model
 line parameters are the numbers of neurons in the different neuropils
 of the model and an overall synaptic strength scaling factor. A typical call would be, e.g.,
 \code{.cc}
-../../tools/generate_run 1 100 1000 20 100 0.0025 test1 MBody1 0 FLOAT 0
+./tools/generate_run 1 100 1000 20 100 0.0025 test1 MBody1 0 FLOAT 0
 \endcode
 which would generate a model, and run it on the GPU (first parameter), with 100 antennal
 lobe neurons, 1000 mushroom body Kenyon cells, 20 lateral horn
@@ -169,14 +169,55 @@ For more about the model itself and the scientific insights gained from it see \
 
 <br />
 
-\section ex_mbody_userdef Insect Olfaction Model with User-Defined Types
+\section ex_mbody_userdef Insect olfaction model with user-defined neuron and synapse models
 
 This examples recapitulates the exact same model as \ref ex_mbody above but with user-defined model types for neurons and synapses throughout. 
 It is run the same way as \ref ex_mbody, e.g.
 \code{.cc}
-../../tools/generate_run 1 100 1000 20 100 0.0025 test1 MBody_userdef 0 FLOAT 0
+./generate_run 1 100 1000 20 100 0.0025 test1 MBody_userdef 0 FLOAT 0
 \endcode
 But the way user-defined types are used should be very instructive to advanced users wishing to do the same with their models.
+
+<br />
+\section ex_mbody_indID Insect Olfaction Model using INDIVIDUALID connectivity scheme
+
+This example is very similar to the \ref ex_mbody example. The only difference is that PN to KC connections are defined with the INDIVIDUALID mechanism.
+
+It is run the same way as \ref ex_mbody, e.g.
+\code{.cc}
+./generate_run 1 100 1000 20 100 0.0025 test1 MBody_individualID 0 FLOAT 0
+\endcode
+
+<br />
+\section ex_mbody_indID Insect Olfaction Model using delayed synapses
+A variation of the \ref ex_mbody example using synaptic delays.
+In this example, the Kenyon Cell-Decision Neuron synapses are delayed by (5 * DT) MS, and the Decision Neuron-Decision Neuron synapses are delayed by (3 * DT) MS.
+The example is intended to test the operation of synapses which have a combination of delayed spike propagation and STDP (plasticity).
+
+It is run the same way as \ref ex_mbody, e.g.
+\code{.cc}
+./generate_run 1 100 1000 20 100 0.0025 test1 MBody_delayedSyn 0 FLOAT 0
+\endcode
+
+<br />
+\section ex_Vclamp Voltage clamp simulation to estimate Hodgkin-Huxley parameters
+This example simulates a population of Hodgkin-Huxley neuron models on the GPU and evolves them with a simple 
+guided random search (simple GA) to mimic the dynamics of a separate Hodgkin-Huxley
+neuron that is simulated on the CPU. The parameters of the CPU simulated "true cell" are drifting 
+according to a user-chosen protocol: Either one of the parameters gNa, ENa, gKd, EKd, gleak,
+Eleak, Cmem are modified by a sinusoidal addition (voltage parameters) or factor (conductance or capacitance) - 
+protocol 0-6. For protocol 7 all 7 parameters undergo a random walk concurrently.
+
+An example invocation is:
+\code{.cc}
+ ./generate_run 1 2 5000 1000 test1 0
+\endcode
+
+This will simulate nPop= 5000 Hodgkin-Huxley neurons on the GPU which will for 1000 ms be matched to a
+ Hodgkin-Huxley neuron where the parameter gKd is sinusoidally modulated. 
+The output files will be written into a directory of the name test1_output, which will
+be created if it does not yet exist.
+
 
 \htmlonly
 -----
