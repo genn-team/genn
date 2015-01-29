@@ -12,24 +12,13 @@ BmDir=$GENN_PATH/userproject/refProjFiles
 
 printf "This script may take a while to finish all tests if you use it with default parameters. \n\
 You may consider shortening the duration of simulation in classol_sim.h for the MBody examples.\n\n"
-
 firstrun=false;
+
 
 echo "Making tools..."
 cd tools
-make clean && make
+make clean && make 
 cd ..
-
-echo "Checking if benchmarking directory exists..."
-if [ -d "$BmDir" ]; then
-  echo "benchmarking directory exists. Using input data from" $BmDir 
-  printf "\n"
-else
-  mkdir -p $BmDir
-  echo "Benchmarking directory does not exist. Creating a new one at" $BmDir " and running the test only once (first run for reference)."
-  printf "\n"
-  firstrun=true;
-fi 
 
 echo "firstrun " $firstrun
 
@@ -37,10 +26,21 @@ printf "\nTEST 1: TEST BY CREATING NEW INPUT PATTERNS"
 printf "\n\n*******************************************************************************\n"
 printf "\n\n*********************** Testing MBody1 ****************************************\n"
 printf "\n\n*******************************************************************************\n"
+echo "Checking if benchmarking directory exists..."
+if [ -d "$BmDir/MBody1" ]; then
+  echo "benchmarking directory exists. Using input data from" $BmDir/MBody1 
+  printf "\n"
+  firstrun_MB1=false;
+else
+  echo "Benchmarking directory does not exist. Creating a new one at" $BmDir/MBody1 " and running the test only once (first run for reference)."
+  mkdir -p $BmDir/MBody1
+  printf "\n"
+  firstrun_MB1=true;
+fi 
 cd MBody1_project
-make clean && make
+make clean && make 
 printf "\n\n####################### MBody1 GPU ######################\n"
-if [ "$firstrun" = false ]; then
+if [ -d "testing_output" ]; then
   echo ${custommsg} >> testing_output/testing.time
   printf "With new setup... \n"  >> testing_output/testing.time
 fi
@@ -50,12 +50,64 @@ printf "\n\n####################### MBody1 CPU ######################\n"
 ./generate_run 0 100 1000 20 100 0.0025 testing MBody1 0 FLOAT 0
 cp testing_output/testing.out.st testing_output/testing.out.st.CPU 
 
+if [ "$firstrun_MB1" = true ]; then
+  printf "Benchmarking is run for the first time. Creating reference input files with the results of these runs. \nIf any error occurs please delete the benchmarking directory and run the script after the values are corrected.\nCopying reference files...\n"
+  cp -R ../MBody1_project/testing_output $BmDir/MBody1
+ #other MB variants
+else
+  cp -R testing_output/testing.time $BmDir/MBody1/testing.time
+fi
+
+printf "\n\n*******************************************************************************\n"
+printf "\n\n*********************** Testing MBody_individualID *********************************\n"
+printf "\n\n*******************************************************************************\n"
+
+echo "Checking if benchmarking directory exists..."
+if [ -d "$BmDir/MBody_individualID" ]; then
+  echo "benchmarking directory exists. Using input data from" $BmDir/MBody_individualID 
+  printf "\n"
+  firstrun_MBI=false;
+else
+  echo "Benchmarking directory does not exist. Creating a new one at" $BmDir/MBody_individualID " and running the test only once (first run for reference)."
+  mkdir -p $BmDir/MBody_individualID
+  printf "\n"
+  firstrun_MBI=true;
+fi 
+
+cd ../MBody_individualID_project
+make clean && make
+printf "\n\n####################### MBody_individualID GPU ######################\n"
+if [ -d "testing_output" ]; then
+  echo ${custommsg} >> testing_output/testing.time
+  printf "With new setup... \n"  >> testing_output/testing.time
+fi
+./generate_run 1 100 1000 20 100 0.0025 testing MBody_individualID 0 FLOAT 0
+cp testing_output/testing.out.st testing_output/testing.out.st.GPU
+printf "\n\n####################### MBody_individualID CPU ######################\n"
+./generate_run 0 100 1000 20 100 0.0025 testing MBody_individualID 0 FLOAT 0
+cp testing_output/testing.out.st testing_output/testing.out.st.CPU 
+
+if [ "$firstrun_MBI" = true ]; then
+  printf "Benchmarking is run for the first time. Creating reference input files with the results of these runs. \nIf any error occurs please delete the benchmarking directory and run the script after the values are corrected.\nCopying reference files...\n"
+  cp -R ../MBody_individualID_project/testing_output $BmDir/MBody_individualID
+ #other MB variants
+else
+  cp -R testing_output/testing.time $BmDir/MBody_individualID/testing.time
+fi
+
+#MBody1 reference files will be used in the other variants of the MBody project.
 printf "\n\n*******************************************************************************\n"
 printf "\n\n*********************** Testing MBody_userdef *********************************\n"
 printf "\n\n*******************************************************************************\n"
+if [ ! -d "$BmDir/MBody_userdef" ]; then
+  echo "Benchmarking directory does not exist. Creating a new one at" $BmDir/MBody_userdef 
+  mkdir -p $BmDir/MBody_userdef
+  printf "\n"
+fi 
+
 cd ../MBody_userdef_project
-make clean && make 
-if [ "$firstrun" = false ]; then
+make clean && make
+if [ -d "testing_output" ]; then
   echo ${custommsg} >> testing_output/testing.time
   printf "With new setup... \n"  >> testing_output/testing.time
 fi
@@ -65,12 +117,50 @@ cp testing_output/testing.out.st testing_output/testing.out.st.GPU
 printf "\n\n####################### MBody_userdef CPU ######################\n"
 ./generate_run 0 100 1000 20 100 0.0025 testing MBody_userdef 0 FLOAT 0
 cp testing_output/testing.out.st testing_output/testing.out.st.CPU
+
+cp -R testing_output/testing.time $BmDir/MBody_userdef/testing.time
+
+printf "\n\n*******************************************************************************\n"
+printf "\n\n*********************** Testing MBody_delayedSyn *********************************\n"
+printf "\n\n*******************************************************************************\n"
+if [ ! -d "$BmDir/MBody_delayedSyn" ]; then
+  echo "Benchmarking directory does not exist. Creating a new one at" $BmDir/MBody_delayedSyn 
+  mkdir -p $BmDir/MBody_delayedSyn
+  printf "\n"
+fi 
+
+cd ../MBody_delayedSyn_project
+make clean && make
+if [ -d "testing_output" ]; then
+  echo ${custommsg} >> testing_output/testing.time
+  printf "With new setup... \n"  >> testing_output/testing.time
+fi
+printf "\n\n####################### MBody_delayedSyn GPU ######################\n"
+./generate_run 1 100 1000 20 100 0.0025 testing MBody_delayedSyn 0 FLOAT 0
+cp testing_output/testing.out.st testing_output/testing.out.st.GPU
+printf "\n\n####################### MBody_delayedSyn CPU ######################\n"
+./generate_run 0 100 1000 20 100 0.0025 testing MBody_delayedSyn 0 FLOAT 0
+cp testing_output/testing.out.st testing_output/testing.out.st.CPU
+
+cp -R testing_output/testing.time $BmDir/MBody_delayedSyn/testing.time
+
 printf "\n\n*******************************************************************************\n"
 printf "\n\n*********************** Testing Izh_sparse 10K neurons****************************\n"
 printf "\n\n*******************************************************************************\n"
+if [ -d "$BmDir/Izh_sparse" ]; then
+  echo "benchmarking directory exists at " $BmDir/Izh_sparse 
+  printf "\n"
+  firstrun_IZH=false;
+else
+  mkdir -p $BmDir/Izh_sparse
+  echo "Benchmarking directory does not exist. Creating a new one at" $BmDir/Izh_sparse " and running the test only once (first run for reference)."
+  printf "\n"
+  firstrun_IZH=true;
+fi 
+
 cd ../Izh_sparse_project
 make clean && make
-if [ "$firstrun" = false ]; then
+if [ -d "testing_output" ]; then
   echo ${custommsg} >> testing_output/testing.time
   printf "With new setup... \n"  >> testing_output/testing.time
 fi
@@ -80,9 +170,16 @@ printf "\n\n####################### Izh_sparse 10K GPU ######################\n"
 printf "\n\n####################### Izh_sparse 10K CPU ######################\n"
 ./generate_run 0 10000 1000 1 testing Izh_sparse 0 FLOAT 0
 #cp testing_output/testing.out.st testing_output/testing.out.st.CPU
-if [ "$firstrun" = true ]; then
+if [ "$firstrun_IZH" = true ]; then
   cp -R inputfiles inputfiles10K
 fi  
+if [ "$firstrun_IZH" = true ]; then
+  printf "Benchmarking is run for the first time. Creating reference input files with the results of these runs. \nIf any error occurs please delete the benchmarking directory and run the script after the values are corrected.\nCopying reference files...\n"
+  cp -R testing_output $BmDir/Izh_sparse
+  cp -R inputfiles10K $BmDir/Izh_sparse/inputfiles10K
+else
+  cp -R testing_output/testing.time $BmDir/Izh_sparse/testing.time
+fi
 
 #need to recompile if we want to rerun with different number of neurons. To be revisited...
 #printf "\n\n*********************** Testing Izh_sparse 1K neurons****************************\n"
@@ -99,70 +196,109 @@ fi
 printf "\n\n*******************************************************************************\n"
 printf "\n\n*********************** Testing PoissonIzh project ****************************\n"
 printf "\n\n*******************************************************************************\n"
+
+echo "Checking if benchmarking directory exists..."
+if [ -d "$BmDir/PoissonIzh" ]; then
+  echo "benchmarking directory exists. Using input data from" $BmDir/PoissonIzh 
+  printf "\n"
+  firstrun_PI=false;
+else
+  echo "Benchmarking directory does not exist. Creating a new one at" $BmDir/PoissonIzh " and running the test only once (first run for reference)."
+  mkdir -p $BmDir/PoissonIzh
+  printf "\n"
+  firstrun_PI=true;
+fi 
+
 cd ../PoissonIzh_project
 make clean && make
-
-#if [ "$firstrun" = false ]; then
-#  echo ${custommsg} >> testing_output/testing.time
-#  printf "With new setup... \n"  >> testing_output/testing.time
-#fi
+if [ -d "testing_output" ]; then
+  echo ${custommsg} >> testing_output/testing.time
+  printf "With new setup... \n"  >> testing_output/testing.time
+fi
 printf "\n\n####################### PoissonIzh GPU test 1 ######################\n"
 ./generate_run 1 100 10 0.5 2 testing PoissonIzh 0
 
 printf "\n\n####################### PoissonIzh CPU test 1 ######################\n"
 ./generate_run 0 100 10 0.5 2 testing PoissonIzh 0
 
+cp -R testing_output/testing.time $BmDir/PoissonIzh/testing.time
+if [ "$firstrun_PI" = true ]; then
+  printf "Benchmarking is run for the first time. Creating reference input files with the results of these runs. \nIf any error occurs please delete the benchmarking directory and run the script after the values are corrected.\nCopying reference files...\n"
+  cp -R ../PoissonIzh_project/testing_output $BmDir/PoissonIzh
+ #other MB variants
+else
+  cp -R testing_output/testing.time $BmDir/PoissonIzh/testing.time
+fi
+
 printf "\n\n*******************************************************************************\n"
 printf "\n\n*********************** Testing OneComp project ****************************\n"
 printf "\n\n*******************************************************************************\n"
+if [ ! -d "$BmDir/OneComp" ]; then
+  echo "Benchmarking directory does not exist. Creating a new one at" $BmDir/OneComp
+  mkdir -p $BmDir/OneComp
+  printf "\n"
+fi 
+
 cd ../OneComp_project
 make clean && make
-
-#if [ "$firstrun" = false ]; then
-#  echo ${custommsg} >> testing_output/testing.time
- # printf "With new setup... \n"  >> testing_output/testing.time
-#fi
+if [ -d "testing_output" ]; then
+  echo ${custommsg} >> testing_output/testing.time
+  printf "With new setup... \n"  >> testing_output/testing.time
+fi
 printf "\n\n####################### OneComp GPU test 1 ######################\n"
 ./generate_run 1 1 testing OneComp 0
 
 printf "\n\n####################### OneComp CPU test 1 ######################\n"
 ./generate_run 0 1 testing OneComp 0
 
+cp -R testing_output/testing.time $BmDir/OneComp/testing.time
+
 printf "\n\n*******************************************************************************\n"
 printf "\n\n*********************** Testing HHVclampGA project ****************************\n"
 printf "\n\n*******************************************************************************\n"
+if [ ! -d "$BmDir/HHVclampGA" ]; then
+  echo "Benchmarking directory does not exist. Creating a new one at" $BmDir/HHVclampGA
+  mkdir -p $BmDir/HHVclampGA
+  printf "\n"
+fi
+
 cd ../HHVclampGA_project
 make clean && make
-
-#if [ "$firstrun" = false ]; then
- # echo ${custommsg} >> testing_output/testing.time
-#  printf "With new setup... \n"  >> testing_output/testing.time
-#fi
+if [ -d "testing_output" ]; then
+  echo ${custommsg} >> testing_output/testing.time
+  printf "With new setup... \n"  >> testing_output/testing.time
+fi
 printf "\n\n####################### HHVclampGA GPU test 1 ######################\n"
 ./generate_run 1 2 5000 1000 testing 0
 printf "\n\n####################### HHVclampGA CPU test 1 ######################\n"
 ./generate_run 0 2 5000 1000 testing 0
-cd ..  
-#if this is the first time, copy reference input files into the benchmarking directory
-  
-if [ "$firstrun" = true ]; then
-  printf "Benchmarking is run for the first time. Creating reference input files with the results of these runs. \nIf any error occurs please delete the benchmarking directory and run the script after the values are corrected.\nCopying reference files...\n"
-  cp -R MBody1_project/testing_output $BmDir/MBody1
-  cp -R MBody1_project/testing_output $BmDir/MBody_userdef #use the same input for MBody_userdef and MBody1
-  cp -R Izh_sparse_project/testing_output $BmDir/Izh_sparse
-  cp -R Izh_sparse_project/inputfiles10K $BmDir/Izh_sparse/inputfiles10K
-  cp -R PoissonIzh_project/testing_output $BmDir/PoissonIzh
-  cp -R OneComp_project/testing_output $BmDir/OneComp
-  cp -R HHVclampGA_project/testing_output $BmDir/HHVclampGA
-  #cp -R SynDelay_project/testing $BmDir/SynDelay
-  echo "First run complete!"
-  exit 0;
-else
-  cp MBody1_project/testing_output/testing.time $BmDir/MBody1/testing.time
-  cp MBody_userdef_project/testing_output/testing.time $BmDir/MBody_userdef/testing.time
-  cp Izh_sparse_project/testing_output/testing.time $BmDir/Izh_sparse/testing.time
-  #if you add new tests, don't forget to copy the output to your ref files 
+
+cp -R testing_output/testing.time $BmDir/HHVclampGA/testing.time
+
+printf "\n\n*******************************************************************************\n"
+printf "\n\n*********************** Testing SynDelay project ****************************\n"
+printf "\n\n*******************************************************************************\n"
+if [ ! -d "$BmDir/SynDelay" ]; then
+  echo "Benchmarking directory does not exist. Creating a new one at" $BmDir/SynDelay
+  mkdir -p $BmDir/SynDelay
+  printf "\n"
 fi
+
+cd ../SynDelay_project
+buildmodel.sh SynDelay
+make clean && make release
+if [ -d "testing_output" ]; then
+  echo ${custommsg} >> testing.time
+fi
+printf "\n\n####################### SynDelay GPU test 1 ######################\n"
+./syn_delay 1 testing
+printf "\n\n####################### SynDelay CPU test 1 ######################\n"
+./syn_delay 0 testing
+
+cp -R testing.time $BmDir/SynDelay/testing.time
+
+cd ..  
+
 
 printf "\nTEST 2: TEST BY USING REFERENCE INPUT PATTERNS\n"  
 #be careful with network sizes
@@ -175,12 +311,28 @@ model/classol_sim testing 1
 printf "\n\n####################### MBody1 CPU TEST 2 ######################\n"
 model/classol_sim testing 0
 
+cd ../MBody_individualID_project
+cp -R $BmDir/MBody_individualID/* testing_output/
+printf "With reference setup... \n"  >> testing_output/testing.time
+printf "\n\n####################### MBody_individualID GPU TEST 2 ######################\n"
+model/classol_sim testing 1
+printf "\n\n####################### MBody_individualID CPU TEST 2 ######################\n"
+model/classol_sim testing 0
+
 cd ../MBody_userdef_project
 cp -R $BmDir/MBody_userdef/* testing_output/
 printf "With reference setup (same as MBody1 as well)... \n"  >> testing_output/testing.time
 printf "\n\n####################### MBody_userdef GPU TEST 2 ######################\n"
 model/classol_sim testing 1
 printf "\n\n####################### MBody_userdef CPU TEST 2 ######################\n"
+model/classol_sim testing 0
+
+cd ../MBody_delayedSyn_project
+cp -R $BmDir/MBody_delayedSyn/* testing_output/
+printf "With reference setup (same as MBody1 as well)...\n"  >> testing_output/testing.time
+printf "\n\n####################### MBody_delayedSyn GPU TEST 2 ######################\n"
+model/classol_sim testing 1
+printf "\n\n####################### MBody_delayedSyn CPU TEST 2 ######################\n"
 model/classol_sim testing 0
 
 cd ../Izh_sparse_project
@@ -200,7 +352,7 @@ model/PoissonIzh_sim testing 1
 printf "\n\n####################### PoissonIzh CPU TEST 2 ######################\n"
 model/PoissonIzh_sim testing 0
 
-#Skipping OneComp, as test 2 does not make any sense for this project
+#Skipping OneComp and SynDelay, as test 2 does not make any sense for these project
 
 cd ../HHVclampGA_project
 cp -R $BmDir/HHVclampGA/* testing_output/
@@ -223,16 +375,22 @@ cp HHVclampGA_project/testing_output/testing.time $BmDir/HHVclampGA/testing.time
 
 printf "\nMBody1 time tail\n"
 tail -n 18 MBody1_project/testing_output/testing.time
+printf "\nMBody_individualID time tail\n"
+tail -n 18 MBody_userdef_project/testing_output/testing.time
 printf "\nMBody_userdef time tail\n"
+tail -n 18 MBody_userdef_project/testing_output/testing.time
+printf "\nMBody_delayedSyn time tail\n"
 tail -n 18 MBody_userdef_project/testing_output/testing.time
 printf "\nIzh_sparse time tail\n"
 tail -n 18 Izh_sparse_project/testing_output/testing.time
 printf "\nPoissonIzh time tail\n"
-tail -n 18 PoissonIzh_project/testing_output/testing.time
+tail -n 8 PoissonIzh_project/testing_output/testing.time
 printf "\nOneComp time tail\n"
 tail -n 8 OneComp_project/testing_output/testing.time  
 printf "\nHHVclampGA time tail\n"
-tail -n 18 HHVclampGA_project/testing_output/testing.time
+tail -n 8 HHVclampGA_project/testing_output/testing.time
+printf "\nSynDelay time tail\n"
+tail -n 8 SynDelay_project/testing.time
 
 echo "Test complete! Checking if weekly copy of the output is necessary..."
 
