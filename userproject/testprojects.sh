@@ -390,7 +390,7 @@ tail -n 8 OneComp_project/testing_output/testing.time
 printf "\nHHVclampGA time tail\n"
 tail -n 8 HHVclampGA_project/testing_output/testing.time
 printf "\nSynDelay time tail\n"
-tail -n 8 SynDelay_project/testing.time
+tail -n 8 SynDelay_project/testing_time
 
 echo "Test complete! Checking if weekly copy of the output is necessary..."
 
