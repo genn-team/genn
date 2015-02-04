@@ -25,10 +25,6 @@
 #include "map_classol.h"
 #include "MBody_individualID_CODE/runner.cc"
 
-#ifdef TIMING
-StopWatchInterface *timer_gen;
-#endif
-
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
 
