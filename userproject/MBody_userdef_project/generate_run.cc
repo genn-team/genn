@@ -167,8 +167,10 @@ int main(int argc, char *argv[])
   cmd += "0.5 ";
   cmd += toString(pnkc_gsyn) + " ";
   cmd += toString(pnkc_gsyn_sigma) + " ";
-  cmd += outdir + "/" + toString(argv[7]) + ".pnkc";
-   cmd += " 2>&1 |tee "+ outdir + "/" + toString(argv[7]) + ".pnkc.msg";
+  cmd += outdir + "/" + toString(argv[7]) + ".pnkc 2>&1 ";
+#ifndef _WIN32
+  cmd += "|tee "+ outdir + "/" + toString(argv[7]) + ".pnkc.msg";
+#endif // _WIN32
   retval=system(cmd.c_str());
   if (retval != 0){
     cerr << "ERROR: Following call failed with status " << retval << ":" << endl << cmd << endl;
@@ -182,8 +184,10 @@ int main(int argc, char *argv[])
   cmd += toString(kcdn_gsyn) + " ";
   cmd += toString(kcdn_gsyn_sigma) + " ";
   cmd += "1e-20 ";
-  cmd += outdir + "/" + toString(argv[7]) + ".kcdn";
-  cmd += " 2>&1 |tee "+ outdir + "/" + toString(argv[7]) + ".kcdn.msg";
+  cmd += outdir + "/" + toString(argv[7]) + ".kcdn 2>&1 ";
+#ifndef _WIN32
+  cmd += "|tee "+ outdir + "/" + toString(argv[7]) + ".kcdn.msg";
+#endif // _WIN32
   retval=system(cmd.c_str());
   if (retval != 0){
     cerr << "ERROR: Following call failed with status " << retval << ":" << endl << cmd << endl;
@@ -196,8 +200,10 @@ int main(int argc, char *argv[])
   cmd += toString(nAL) + " ";
   cmd += toString(nLHI) + " ";
   cmd += toString(pnlhi_theta) + " 15 ";
-  cmd += outdir + "/" + toString(argv[7]) + ".pnlhi";
-  cmd += " 2>&1 |tee "+ outdir + "/" + toString(argv[7]) + ".pnlhi.msg";
+  cmd += outdir + "/" + toString(argv[7]) + ".pnlhi 2>&1 ";
+#ifndef _WIN32
+  cmd += "|tee "+ outdir + "/" + toString(argv[7]) + ".pnlhi.msg";
+#endif // _WIN32
   retval = system(cmd.c_str());
   if (retval != 0){
     cerr << "ERROR: Following call failed with status " << retval << ":" << endl << cmd << endl;
@@ -209,8 +215,10 @@ int main(int argc, char *argv[])
   cmd = gennPath + "/userproject/tools/gen_input_structured ";
   cmd += toString(nAL) + " ";
   cmd += "10 10 0.1 0.05 1.0 2e-04 ";
-  cmd += outdir + "/" + toString(argv[7]) + ".inpat";
-  cmd += " 2>&1 |tee "+ outdir + "/" + toString(argv[7]) + ".inpat.msg";
+  cmd += outdir + "/" + toString(argv[7]) + ".inpat 2>&1 ";
+#ifndef _WIN32
+  cmd += "|tee "+ outdir + "/" + toString(argv[7]) + ".inpat.msg";
+#endif // _WIN32
   retval=system(cmd.c_str());
   if (retval != 0){
     cerr << "ERROR: Following call failed with status " << retval << ":" << endl << cmd << endl;
