@@ -23,8 +23,10 @@
 #include "modelSpec.cc"
 #include "sizes.h"
 
-int nGPU= 0;
+//uncomment the following line to turn on timing measures
+#define TIMING   
 
+int nGPU= 0;
 
 double myPOI_p[4]= {
   0.1,        // 0 - firing rate
@@ -354,5 +356,9 @@ void modelDefinition(NNmodel &model)
   
   model.addSynapsePopulation("DNDN", NGRADSYNAPSE_userdef, ALLTOALL, GLOBALG, NO_DELAY, EXPDECAY, "DN", "DN", myDNDN_ini, myDNDN_p, postSynV, postExpDNDN);
   model.setSeed(1234);
-  model.setTiming(FALSE);
+#ifdef TIMING
+    model.setTiming(TRUE);
+#else
+    model.setTiming(FALSE);
+#endif // TIMING
 }

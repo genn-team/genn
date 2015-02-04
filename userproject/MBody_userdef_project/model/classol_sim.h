@@ -21,8 +21,6 @@
 using namespace std;
 #include <cassert>
 
-//#define TIMING
-
 #include "hr_time.cpp"
 
 #include "utils.h" // for CHECK_CUDA_ERRORS
