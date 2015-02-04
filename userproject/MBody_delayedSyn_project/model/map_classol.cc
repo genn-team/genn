@@ -25,9 +25,6 @@
 #include "map_classol.h"
 #include "MBody_delayedSyn_CODE/runner.cc"
 
-#ifdef TIMING
-StopWatchInterface *timer_gen;
-#endif
 
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------

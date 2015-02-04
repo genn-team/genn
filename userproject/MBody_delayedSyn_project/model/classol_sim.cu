@@ -68,7 +68,6 @@ int main(int argc, char *argv[])
 #ifdef TIMING
   name= OutDir+ "/"+ toString(argv[1]) + toString(".timingprofile"); 
   FILE *timeros= fopen(name.c_str(),"w");
-  sdkCreateTimer(&timer_gen);
   double tme;
 #endif
 
@@ -77,7 +76,7 @@ int main(int argc, char *argv[])
   classol locust;
 
 #ifdef TIMING
-  sdkStartTimer(&timer_gen);
+  timer.startTimer();
 #endif
 
   fprintf(stdout, "# reading PN-KC synapses ... \n");
@@ -87,11 +86,10 @@ int main(int argc, char *argv[])
   fclose(f);
 
 #ifdef TIMING
-  sdkStopTimer(&timer_gen);
-  tme= sdkGetTimerValue(&timer_gen);
+  timer.stopTimer();
+  tme= timer.getElapsedTime();
   fprintf(timeros, "%% Reading PN-KC synapses: %f \n", tme);
-  sdkResetTimer(&timer_gen);
-  sdkStartTimer(&timer_gen);
+  timer.startTimer();
 #endif
 
   fprintf(stdout, "# reading PN-LHI synapses ... \n");
@@ -101,11 +99,10 @@ int main(int argc, char *argv[])
   fclose(f);   
 
 #ifdef TIMING
-  sdkStopTimer(&timer_gen);
-  tme= sdkGetTimerValue(&timer_gen);
+  timer.stopTimer();
+  tme= timer.getElapsedTime();
   fprintf(timeros, "%% Reading PN-LHI synapses: %f \n", tme);
-  sdkResetTimer(&timer_gen);
-  sdkStartTimer(&timer_gen);
+  timer.startTimer();
 #endif
   
   fprintf(stdout, "# reading KC-DN synapses ... \n");
@@ -114,11 +111,10 @@ int main(int argc, char *argv[])
   locust.read_kcdnsyns(f);
 
 #ifdef TIMING
-  sdkStopTimer(&timer_gen);
-  tme= sdkGetTimerValue(&timer_gen);
+  timer.stopTimer();
+  tme= timer.getElapsedTime();
   fprintf(timeros, "%% Reading KC-DN synapses: %f \n", tme);
-  sdkResetTimer(&timer_gen);
-  sdkStartTimer(&timer_gen);
+  timer.startTimer();
 #endif
 
   fprintf(stdout, "# reading input patterns ... \n");
@@ -128,11 +124,10 @@ int main(int argc, char *argv[])
   fclose(f);
 
 #ifdef TIMING
-  sdkStopTimer(&timer_gen);
-  tme= sdkGetTimerValue(&timer_gen);
+  timer.stopTimer();
+  tme= timer.getElapsedTime();
   fprintf(timeros, "%% Reading input patterns: %f \n", tme);
-  sdkResetTimer(&timer_gen);
-  sdkStartTimer(&timer_gen);
+  timer.startTimer();
 #endif
 
   locust.generate_baserates();
@@ -142,10 +137,9 @@ int main(int argc, char *argv[])
   locust.init(which);         // this includes copying g's for the GPU version
 
 #ifdef TIMING
-  sdkStopTimer(&timer_gen);
-  tme= sdkGetTimerValue(&timer_gen);
+  timer.stopTimer();
+  tme= timer.getElapsedTime();
   fprintf(timeros, "%% Initialisation: %f \n", tme);
-  sdkResetTimer(&timer_gen);
 #endif
 
   fprintf(stdout, "# neuronal circuitery built, start computation ... \n\n");
@@ -178,12 +172,7 @@ int main(int argc, char *argv[])
     //   }
     
 #ifdef TIMING
-    if (which == CPU) {
-	fprintf(timeros, "%f %f %f \n", sdkGetTimerValue(&neuron_timer), sdkGetTimerValue(&synapse_timer), sdkGetTimerValue(&learning_timer));
-    }
-    else {
 	fprintf(timeros, "%f %f %f \n", neuron_tme, synapse_tme, learning_tme);
-    }
 #endif
 
 

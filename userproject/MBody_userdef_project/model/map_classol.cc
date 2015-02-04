@@ -27,9 +27,6 @@
 #include "sparseUtils.cc"
 #include "map_classol.h"
 
-#ifdef TIMING
-StopWatchInterface *timer_gen;
-#endif
 
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
