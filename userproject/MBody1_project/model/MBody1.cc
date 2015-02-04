@@ -24,7 +24,7 @@
 #include "sizes.h"
 
 //uncomment the following line to turn on timing measures
-//#define TIMING   
+#define TIMING   
 
 int nGPU= 0;
 
@@ -163,5 +163,7 @@ void modelDefinition(NNmodel &model)
     model.setPrecision(_FTYPE);
 #ifdef TIMING
     model.setTiming(TRUE);
+#else
+    model.setTiming(FALSE);
 #endif // TIMING
 }
