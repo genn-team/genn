@@ -23,6 +23,9 @@
 #include "modelSpec.cc"
 #include "sizes.h"
 
+//uncomment the following line to turn on timing measures
+//#define TIMING   
+
 int nGPU= 0;
 
 double myPOI_p[4]= {
@@ -158,5 +161,7 @@ void modelDefinition(NNmodel &model)
     model.setGPUDevice(nGPU);
     model.setSeed(1234);
     model.setPrecision(_FTYPE);
+#ifdef TIMING
     model.setTiming(TRUE);
+#endif // TIMING
 }

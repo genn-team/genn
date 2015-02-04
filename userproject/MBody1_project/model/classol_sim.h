@@ -21,9 +21,6 @@
 using namespace std;
 #include <cassert>
 
-//uncomment the following line to turn on timing measures
-//#define TIMING   
-
 #include "hr_time.cpp"
 #include "utils.h" // for CHECK_CUDA_ERRORS
 
