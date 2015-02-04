@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
   delete[] g;
   cout << "KCDN weights are created for " << nMB << " KC's and " << nLB << " DN's with mean = " << kcdn_gsyn << ", stddev = " << kcdn_jitter << endl;
   cout.precision(3);
-  if (smallctr >0 ) cout << smallctr << " (\% " << fixed << 100*double(smallctr)/(nMB*nLB) << ") of the weights were too small or negative, so they are set to " << scientific << EPS << endl;
+  if (smallctr >0 ) cout << smallctr << " (% " << fixed << 100*double(smallctr)/(nMB*nLB) << ") of the weights were too small or negative, so they are set to " << scientific << EPS << endl;
   cout << endl; 
   return 0;
 }
