@@ -5,6 +5,8 @@
 */
 //--------------------------------------------------------------------------
 
+#ifndef HR_TIMER
+#define HR_TIMER
 
 #include <cstdio> // NULL
 #include "hr_time.h"
@@ -67,4 +69,5 @@ double CStopWatch::getElapsedTime() {
 	return res.tv_sec + res.tv_usec/1000000.0; // 10^6 uSec per second
 }
 
+#endif
 #endif

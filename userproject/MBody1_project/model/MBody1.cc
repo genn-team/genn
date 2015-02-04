@@ -158,5 +158,5 @@ void modelDefinition(NNmodel &model)
     model.setGPUDevice(nGPU);
     model.setSeed(1234);
     model.setPrecision(_FTYPE);
-    model.setTiming(TRUE);
+    model.setTiming(FALSE);
 }

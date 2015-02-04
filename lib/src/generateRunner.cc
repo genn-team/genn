@@ -120,7 +120,7 @@ void genRunner(NNmodel &model, //!< Model description
     os << "#include <cassert>" << ENDL;
     os << "#include <stdint.h>" << ENDL;
     os << "#include \"numlib/simpleBit.h\"" << ENDL << ENDL;
-    if (model.timing) os << "#include <helper_timer.h>" << ENDL;
+    if (model.timing) os << "#include \"hr_time.cpp\"" << ENDL;
     os << ENDL;
 
     os << "#ifndef scalar" << ENDL;
@@ -147,7 +147,7 @@ void genRunner(NNmodel &model, //!< Model description
   if (model.timing) {
       os << "cudaEvent_t neuronStart, neuronStop, synapseStart, synapseStop, learningStart, learningStop;" << endl;
       os << "double neuron_tme, synapse_tme, learning_tme;" << endl;
-      os << "StopWatchInterface *neuron_timer, *synapse_timer, *learning_timer;" << endl;
+      os << "CStopWatch neuron_timer, synapse_timer, learning_timer;" << endl;
   } 
 
     // write CUDA error handler macro
@@ -327,9 +327,6 @@ void genRunner(NNmodel &model, //!< Model description
 	os << "    neuron_tme= 0.0;" << endl;
 	os << "    synapse_tme= 0.0;" << endl;
 	os << "    learning_tme= 0.0;" << endl;
-	os << "    sdkCreateTimer(&neuron_timer);" << endl;
-	os << "    sdkCreateTimer(&synapse_timer);" << endl;
-	os << "    sdkCreateTimer(&learning_timer);" << endl;
     }
 
     // ALLOCATE NEURON VARIABLES
@@ -761,17 +758,23 @@ void genRunner(NNmodel &model, //!< Model description
 
     if (model.synapseGrpN > 0) {
 	os << "    if (t > 0.0) {" << endl;
-	if (model.timing) os << "        sdkStartTimer(&synapse_timer);" << endl;
+	if (model.timing) os << "        synapse_timer.startTimer();" << endl;
 	os << "        calcSynapsesCPU(t);" << endl;
-	if (model.timing) os << "        sdkStopTimer(&synapse_timer);" << endl;
+	if (model.timing) {
+	    os << "        synapse_timer.stopTimer();" << endl;
+	    os << "        synapse_tme+= synapse_timer.getElapsedTime();"<< endl;
+	}
 	if (model.lrnGroups > 0) {
-	    if (model.timing) os << "        sdkStartTimer(&learning_timer);" << endl;
+	    if (model.timing) os << "        learning_timer.startTimer();" << endl;
 	    os << "        learnSynapsesPostHost(t);" << endl;
-	    if (model.timing) os << "        sdkStopTimer(&learning_timer);" << endl;
+	    if (model.timing) {
+		os << "        learning_timer.stopTimer();" << endl;
+		os << "        learning_tme+= learning_timer.getElapsedTime();" << endl;
+	    }
 	}
 	os << "    }" << endl;
     }
-    if (model.timing) os << "    sdkStartTimer(&neuron_timer);" << endl;
+    if (model.timing) os << "    neuron_timer.startTimer();" << endl;
     os << "    calcNeuronsCPU(";
     for (int i = 0; i < model.neuronGrpN; i++) {
 	if (model.neuronType[i] == POISSONNEURON) {
@@ -783,8 +786,10 @@ void genRunner(NNmodel &model, //!< Model description
 	}
     }
     os << "t);" << endl;
-    if (model.timing) os << "    sdkStopTimer(&neuron_timer);" << endl;
-
+    if (model.timing) {
+	os << "    neuron_timer.stopTimer();" << endl;
+	os << "    neuron_tme+= neuron_timer.getElapsedTime();" << endl;
+    }
     os << "}" << endl;
     os.close();
 
