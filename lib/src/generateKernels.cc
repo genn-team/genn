@@ -959,7 +959,12 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 	    os << "for (j = 0; j < lmax; j++)" << OB(260) << ENDL;
 
 	    if (sparse) {
-		os << "unsigned int iprePos = dd_revIndInG" <<  model.synapseName[k] << "[shSpk[j]] + " << localID << ";" << ENDL;
+        os << "unsigned int iprePos = dd_revIndInG" <<  model.synapseName[k] << "[shSpk[j]];" << ENDL;
+        os << "unsigned int npre = dd_revIndInG" << model.synapseName[k] << "[shSpk[j] + 1] - iprePos;" << ENDL;
+        os << "if (" << localID << " < npre)" << OB(1540);
+	      os << "iprePos += " << localID << ";" << ENDL;
+        //Commenting out the next line as it is not used rather than deleting as I'm not sure if it may be used by different learning models 
+	      //os << "unsigned int ipre = dd_revInd" << model.synapseName[i] << "[iprePos];" << ENDL;
 	    }
 
 	    string code = weightUpdateModels[synt].simLearnPost;
@@ -1022,7 +1027,9 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 	    // end Code substitutions ------------------------------------------------------------------------- 
 
 	    os << ensureFtype(code, model.ftype) << ENDL;
-
+	if (sparse) {
+	    os << CB(1540);
+	} 
 	    os << CB(260);
 	    os << CB(250);
 	    os << CB(230);
