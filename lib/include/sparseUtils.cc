@@ -61,8 +61,7 @@ template <class DATATYPE>
 void setSparseConnectivityFromDense(DATATYPE * wuvar, int preN,int postN,DATATYPE * tmp_gRNPN, SparseProjection * sparseStruct){
   int synapse = 0;
 	sparseStruct->indInG[0] = 0; //first neuron always gets first synapse listed.
-  float asGoodAsZero = SCALAR_MIN;//as far as we are concerned. Remember floating point errors.
-	
+  
 	for (int pre = 0; pre < preN; ++pre) {
 		for (int post = 0; post < postN; ++post) {
 			DATATYPE g = tmp_gRNPN[pre * postN + post];
@@ -83,7 +82,6 @@ template <class DATATYPE>
 void createSparseConnectivityFromDense(DATATYPE * wuvar, int preN,int postN,DATATYPE * tmp_gRNPN, SparseProjection * sparseStruct, bool runTest) {
 
 	
-	float asGoodAsZero = SCALAR_MIN;//as far as we are concerned. Remember floating point errors.
 	sparseStruct->connN = countEntriesAbove(tmp_gRNPN, preN * postN, asGoodAsZero);
 	//sorry -- this is not functional anymore 
 	//allocateSparseArray(sparseStruct, sparseStruct.connN, preN, false);
