@@ -43,7 +43,7 @@ __global__ void generate_random_gpuInput_xorwow(curandState * state, T * result,
 //function to setup the random number generator using the xorwow algorithm
 /*********************************/
 void xorwow_setup(curandState * devStates, long int sampleSize){
-    int sampleBlkNo = ceil(float(sampleSize/float(BlkSz)));
+    int sampleBlkNo = ceilf(float(sampleSize/float(BlkSz)));
     dim3 sThreads(BlkSz,1);
     dim3 sGrid(sampleBlkNo,1); 
 

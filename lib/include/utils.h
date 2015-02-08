@@ -200,7 +200,7 @@ public:
 	}
 
 	double expDecay(vector<double> pars, double dt) {
-		return expf(-dt/pars[0]);
+		return exp(-dt/pars[0]);
 	}
 };
 
@@ -407,14 +407,14 @@ void prepareStandardModels()
       scalar _b;\n\
       if (lV == -25.0) _b= 1.4;\n\
       else _b= 0.28*($(V)+25.0)/(exp(($(V)+25.0)/5.0)-1.0);\n\
-      $(m)+= (_a*(1-$(m))-_b*$(m))*mdt;\n\
+      $(m)+= (_a*(1.0-$(m))-_b*$(m))*mdt;\n\
       _a= 0.128*exp((-48.0-$(V))/18.0);\n\
       _b= 4.0 / (exp((-25.0-$(V))/5.0)+1.0);\n\
       $(h)+= (_a*(1.0-$(h))-_b*$(h))*mdt;\n\
       if (lV == -50.0) _a= 0.16;\n\
       else _a= 0.032*(-50.0-$(V))/(exp((-50.0-$(V))/5.0)-1.0);\n\
       _b= 0.5*exp((-55.0-$(V))/40.0);\n\
-      $(n)+= (_a*(1-$(n))-_b*$(n))*mdt;\n\
+      $(n)+= (_a*(1.0-$(n))-_b*$(n))*mdt;\n\
       $(V)+= Imem/$(C)*mdt;\n\
     }\n");
 
@@ -457,14 +457,14 @@ void prepareStandardModels()
       scalar _b;\n\
       if (lV == -25.0) _b= 1.4;\n\
       else _b= 0.28*($(V)+25.0)/(exp(($(V)+25.0)/5.0)-1.0);\n\
-      $(m)+= (_a*(1-$(m))-_b*$(m))*mdt;\n\
+      $(m)+= (_a*(1.0-$(m))-_b*$(m))*mdt;\n\
       _a= 0.128*exp((-48.0-$(V))/18.0);\n\
       _b= 4.0 / (exp((-25.0-$(V))/5.0)+1.0);\n\
       $(h)+= (_a*(1.0-$(h))-_b*$(h))*mdt;\n\
       if (lV == -50.0) _a= 0.16;\n\
       else _a= 0.032*(-50.0-$(V))/(exp((-50.0-$(V))/5.0)-1.0);\n\
       _b= 0.5*exp((-55.0-$(V))/40.0);\n\
-      $(n)+= (_a*(1-$(n))-_b*$(n))*mdt;\n\
+      $(n)+= (_a*(1.0-$(n))-_b*$(n))*mdt;\n\
       $(V)+= Imem/$(C)*mdt;\n\
     }\n");
 
@@ -491,11 +491,11 @@ void prepareStandardModels()
       $(V)=$(c);\n\
 		  $(U)+=$(d);\n\
     } \n\
-    $(V)+=0.5*(0.04*$(V)*$(V)+5*$(V)+140-$(U)+$(Isyn))*DT; //at two times for numerical stability\n\
-    $(V)+=0.5*(0.04*$(V)*$(V)+5*$(V)+140-$(U)+$(Isyn))*DT;\n\
+    $(V)+=0.5*(0.04*$(V)*$(V)+5.0*$(V)+140.0-$(U)+$(Isyn))*DT; //at two times for numerical stability\n\
+    $(V)+=0.5*(0.04*$(V)*$(V)+5.0*$(V)+140.0-$(U)+$(Isyn))*DT;\n\
     $(U)+=$(a)*($(b)*$(V)-$(U))*DT;\n\
-   // if ($(V) > 30){   //keep this only for visualisation -- not really necessaary otherwise \n\
-    //  $(V)=30; \n\
+   // if ($(V) > 30.0){   //keep this only for visualisation -- not really necessaary otherwise \n\
+    //  $(V)=30.0; \n\
    //}\n\
    ");
     
@@ -526,15 +526,15 @@ void prepareStandardModels()
   n.pNames.clear();
   n.dpNames.clear(); 
   //TODO: replace the resetting in the following with BRIAN-like threshold and resetting 
-  n.simCode= tS("    if ($(V) >= 30){\n\
+  n.simCode= tS("    if ($(V) >= 30.0){\n\
       $(V)=$(c);\n\
 		  $(U)+=$(d);\n\
     } \n\
-    $(V)+=0.5*(0.04*$(V)*$(V)+5*$(V)+140-$(U)+$(Isyn))*DT; //at two times for numerical stability\n\
-    $(V)+=0.5*(0.04*$(V)*$(V)+5*$(V)+140-$(U)+$(Isyn))*DT;\n\
+    $(V)+=0.5*(0.04*$(V)*$(V)+5.0*$(V)+140.0-$(U)+$(Isyn))*DT; //at two times for numerical stability\n\
+    $(V)+=0.5*(0.04*$(V)*$(V)+5.0*$(V)+140.0-$(U)+$(Isyn))*DT;\n\
     $(U)+=$(a)*($(b)*$(V)-$(U))*DT;\n\
-    //if ($(V) > 30){      //keep this only for visualisation -- not really necessaary otherwise \n\
-    //  $(V)=30; \n\
+    //if ($(V) > 30.0){      //keep this only for visualisation -- not really necessaary otherwise \n\
+    //  $(V)=30.0; \n\
     //}\n\
     ");
   n.thresholdConditionCode = tS("$(V) > 29.99");

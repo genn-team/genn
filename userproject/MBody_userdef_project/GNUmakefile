@@ -11,7 +11,7 @@
 #  
 #--------------------------------------------------------------------------
 
-CXXFLAGS	=-Wall -Winline -O3 -g
+CXXFLAGS	=-Wall -Winline -O3
 
 all: generate_run tools
 
