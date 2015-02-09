@@ -145,9 +145,19 @@ void genRunner(NNmodel &model, //!< Model description
     os << "#define MYRAND(Y,X) Y = Y * 1103515245 + 12345; X = (Y >> 16);" << ENDL;
     os << "#endif" << ENDL << ENDL;
   if (model.timing) {
-      os << "cudaEvent_t neuronStart, neuronStop, synapseStart, synapseStop, learningStart, learningStop;" << endl;
-      os << "double neuron_tme, synapse_tme, learning_tme;" << endl;
-      os << "CStopWatch neuron_timer, synapse_timer, learning_timer;" << endl;
+      os << "cudaEvent_t neuronStart, neuronStop;" << endl;
+      os << "double neuron_tme;" << endl;
+      os << "CStopWatch neuron_timer;" << endl;
+      if (model.synapseGrpN > 0) {
+	  os << "cudaEvent_t synapseStart, synapseStop;" << endl;
+	  os << "double synapse_tme;" << endl;
+	  os << "CStopWatch synapse_timer;" << endl;
+      }
+      if (model.lrnGroups > 0) {
+	  os << "cudaEvent_t learningStart, learningStop;" << endl;
+	  os << "double learning_tme;" << endl;
+	  os << "CStopWatch learning_timer;" << endl;
+      }
   } 
 
     // write CUDA error handler macro
@@ -320,13 +330,17 @@ void genRunner(NNmodel &model, //!< Model description
     if (model.timing) {
 	os << "    cudaEventCreate(&neuronStart);" << endl;
 	os << "    cudaEventCreate(&neuronStop);" << endl;
-	os << "    cudaEventCreate(&synapseStart);" << endl;
-	os << "    cudaEventCreate(&synapseStop);" << endl;
-	os << "    cudaEventCreate(&learningStart);" << endl;
-	os << "    cudaEventCreate(&learningStop);" << endl;
 	os << "    neuron_tme= 0.0;" << endl;
-	os << "    synapse_tme= 0.0;" << endl;
-	os << "    learning_tme= 0.0;" << endl;
+	if (model.synapseGrpN > 0) {
+	    os << "    cudaEventCreate(&synapseStart);" << endl;
+	    os << "    cudaEventCreate(&synapseStop);" << endl;
+	    os << "    synapse_tme= 0.0;" << endl;
+	}
+	if (model.lrnGroups > 0) {
+	    os << "    cudaEventCreate(&learningStart);" << endl;
+	    os << "    cudaEventCreate(&learningStop);" << endl;
+	    os << "    learning_tme= 0.0;" << endl;
+	}
     }
 
     // ALLOCATE NEURON VARIABLES
@@ -1312,10 +1326,14 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 	os << "cudaEventRecord(neuronStop);" << endl;
 	os << "cudaEventSynchronize(neuronStop);" << endl;
 	os << "float tmp;" << endl;
-	os << "cudaEventElapsedTime(&tmp, synapseStart, synapseStop);" << endl;
-	os << "synapse_tme+= tmp;" << endl;
-	os << "cudaEventElapsedTime(&tmp, learningStart, learningStop);" << endl;
-	os << "learning_tme+= tmp;" << endl;
+	if (model.synapseGrpN > 0) {
+	    os << "cudaEventElapsedTime(&tmp, synapseStart, synapseStop);" << endl;
+	    os << "synapse_tme+= tmp;" << endl;
+	}
+	if (model.lrnGroups > 0) {
+	    os << "cudaEventElapsedTime(&tmp, learningStart, learningStop);" << endl;
+	    os << "learning_tme+= tmp;" << endl;
+	}
 	os << "cudaEventElapsedTime(&tmp, neuronStart, neuronStop);" << endl;
 	os << "neuron_tme+= tmp;" << endl;
     }
