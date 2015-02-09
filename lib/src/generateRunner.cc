@@ -1328,14 +1328,14 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 	os << "float tmp;" << endl;
 	if (model.synapseGrpN > 0) {
 	    os << "cudaEventElapsedTime(&tmp, synapseStart, synapseStop);" << endl;
-	    os << "synapse_tme+= tmp;" << endl;
+	    os << "synapse_tme+= tmp/1000.0;" << endl;
 	}
 	if (model.lrnGroups > 0) {
 	    os << "cudaEventElapsedTime(&tmp, learningStart, learningStop);" << endl;
-	    os << "learning_tme+= tmp;" << endl;
+	    os << "learning_tme+= tmp/1000.0;" << endl;
 	}
 	os << "cudaEventElapsedTime(&tmp, neuronStart, neuronStop);" << endl;
-	os << "neuron_tme+= tmp;" << endl;
+	os << "neuron_tme+= tmp/1000.0;" << endl;
     }
     os << "}" << endl;
     os.close();
