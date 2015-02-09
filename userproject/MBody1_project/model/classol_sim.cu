@@ -218,7 +218,7 @@ int main(int argc, char *argv[])
     //   }
     
 #ifdef TIMING
-	    fprintf(timeros, "%f %f %f \n", neuron_tme, synapse_tme, learning_tme);
+	    fprintf(timeros, "%f %f %f \n", neuron_tme/1000.0, synapse_tme/1000.0, learning_tme/1000.0);
 #endif
 
       locust.sum_spikes();

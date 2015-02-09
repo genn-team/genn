@@ -181,7 +181,7 @@ if (which == GPU){
     //pullDNStateFromDevice();
     
     #ifdef TIMING
-     	fprintf(timeros, "%f %f %f \n", neuron_tme, synapse_tme, learning_tme);
+     	fprintf(timeros, "%f %f %f \n", neuron_tme/1000.0, synapse_tme/1000.0, learning_tme/1000.0);
     #endif 
 
     locust.sum_spikes();
@@ -236,7 +236,7 @@ if (which == CPU){
     locust.runCPU(DT); // run next batch
 
     #ifdef TIMING
-	    fprintf(timeros, "%f %f %f \n", neuron_tme, synapse_tme, learning_tme);
+	    fprintf(timeros, "%f %f %f \n", neuron_tme/1000.0, synapse_tme/1000.0, learning_tme/1000.0);
     #endif 
 
     locust.sum_spikes();
