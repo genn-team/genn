@@ -26,8 +26,6 @@
 //uncomment the following line to turn on timing measures
 #define TIMING   
 
-int nGPU= 0;
-
 double myPOI_p[4]= {
   0.1,        // 0 - firing rate
   2.5,        // 1 - refratory period
@@ -158,7 +156,10 @@ void modelDefinition(NNmodel &model)
     model.addSynapsePopulation("LHIKC", NGRADSYNAPSE, ALLTOALL, GLOBALG, NO_DELAY, EXPDECAY, "LHI", "KC",  myLHIKC_ini, myLHIKC_p, postSynV, postExpLHIKC);
     model.addSynapsePopulation("KCDN", LEARN1SYNAPSE, ALLTOALL, INDIVIDUALG, NO_DELAY, EXPDECAY, "KC", "DN",  myKCDN_ini,  myKCDN_p, postSynV, postExpKCDN);
     model.addSynapsePopulation("DNDN", NGRADSYNAPSE, ALLTOALL, GLOBALG, NO_DELAY, EXPDECAY, "DN", "DN", myDNDN_ini, myDNDN_p, postSynV, postExpDNDN);     
-    model.setGPUDevice(nGPU);
+#ifdef nGPU 
+    cerr << "nGPU: " << nGPU << endl;
+  model.setGPUDevice(nGPU);
+#endif 
     model.setSeed(1234);
     model.setPrecision(_FTYPE);
 #ifdef TIMING
