@@ -8,7 +8,7 @@
  Utility to count how many entries above a specified value exist in a float array
  ---------------------------------------------------------------------*/
 template <class DATATYPE>
-unsigned int countEntriesAbove(DATATYPE * Array, int sz, DATATYPE includeAbove)
+unsigned int countEntriesAbove(DATATYPE * Array, int sz, float includeAbove)
 {
 	int count = 0;
 	for (int i = 0; i < sz; i++) {
