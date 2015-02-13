@@ -26,8 +26,6 @@
 //uncomment the following line to turn on timing measures
 #define TIMING   
 
-int nGPU= 0;
-
 double myPOI_p[4]= {
   0.1,        // 0 - firing rate
   2.5,        // 1 - refratory period
@@ -212,7 +210,6 @@ void modelDefinition(NNmodel &model)
  /******************************************************************/		
   // redefine nsynapse as a user-defined syapse type 
   model.setPrecision(_FTYPE);
-  model.setGPUDevice(0); //returns quadro for the model and it is not possible to debug on the GPU used for display.
 
   postSynModel pstest;
   pstest.varNames.clear();
@@ -355,6 +352,11 @@ void modelDefinition(NNmodel &model)
   model.setMaxConn("KCDN", _NLB); 
   
   model.addSynapsePopulation("DNDN", NGRADSYNAPSE_userdef, ALLTOALL, GLOBALG, NO_DELAY, EXPDECAY, "DN", "DN", myDNDN_ini, myDNDN_p, postSynV, postExpDNDN);
+  
+#ifdef nGPU 
+  cerr << "nGPU: " << nGPU << endl;
+  model.setGPUDevice(nGPU);
+#endif 
   model.setSeed(1234);
 #ifdef TIMING
     model.setTiming(TRUE);

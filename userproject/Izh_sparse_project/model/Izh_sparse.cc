@@ -102,5 +102,10 @@ void modelDefinition(NNmodel &model)
 	model.setMaxConn("Inh_Exc", _NMaxConnP2);
 	model.setMaxConn("Inh_Inh", _NMaxConnP3);
   //model.setConstInp("Izh1", input1);
+  
+  #ifdef nGPU 
+    cerr << "nGPU: " << nGPU << endl;
+    model.setGPUDevice(nGPU);
+  #endif 
   model.setPrecision(_FTYPE);
 }

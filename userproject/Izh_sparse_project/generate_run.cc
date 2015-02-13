@@ -160,6 +160,10 @@ int main(int argc, char *argv[])
   // write neuron population sizes
   string fname = gennPath + "/userproject/include/sizes.h";
   ofstream os(fname.c_str());
+  if (which > 1) {
+    os << "#define nGPU " << which-2 << endl;
+    which= 1;
+  }
   os << "#define _NExc " << nExc << endl;
   os << "#define _NInh " << nInh << endl;
   os << "#define _NMaxConnP0 " << maxN0 << endl;

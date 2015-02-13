@@ -34,21 +34,11 @@ int main(int argc, char *argv[])
     fprintf(stderr, "usage: classol_sim <basename> <CPU=0, GPU=1> \n");
     return 1;
   }
-  int GPUarg= atoi(argv[2]);
+  int which = atoi(argv[2]);
   string OutDir = toString(argv[1]) +"_output";
   string name;
   name= OutDir+ "/"+ toString(argv[1]) + toString(".time");
   FILE *timef= fopen(name.c_str(),"a");  
-
-  int which;
-  if (GPUarg > 1) {
-     which= 1;
-     nGPU= GPUarg-2;
-  }    
-  else {
-     which= GPUarg;	
-     nGPU= AUTODEVICE;
-  }
 
   patSetTime= (int) (PAT_TIME/DT);
   patFireTime= (int) (PATFTIME/DT);

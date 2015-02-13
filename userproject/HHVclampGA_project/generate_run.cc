@@ -63,6 +63,10 @@ int main(int argc, char *argv[])
   // write model parameters
   string fname = gennPath + "/userproject/include/HHVClampParameters.h";
   ofstream os(fname.c_str());
+    if (which > 1) {
+      os << "#define nGPU " << which-2 << endl;
+      which= 1;
+  }
   os << "#define NPOP " << nPop << endl;
   os << "#define TOTALT " << totalT << endl;
   os.close();

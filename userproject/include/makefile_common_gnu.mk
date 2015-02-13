@@ -69,7 +69,7 @@ $(EXECUTABLE): $(OBJECTS)
 
 .PHONY: release
 release: CXXFLAGS +=-O3 
-release: NVCCFLAGS +=--compiler-options "-O3 -ffast-math" #-Wconversion
+release: NVCCFLAGS +=--compiler-options "-O3 -ffast-math" # use -use_fast_math for TRAUBMILES, --compiler-options "-Wconversion" for silent type conversions 
 release: $(EXECUTABLE)
 
 .PHONY: debug
