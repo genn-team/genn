@@ -18,7 +18,7 @@
 */
 //--------------------------------------------------------------------------
 
-#define DT 0.5  //!< This defines the global time step at which the simulation will run
+#define DT 0.25  //!< This defines the global time step at which the simulation will run
 #include "modelSpec.h"
 #include "modelSpec.cc"
 #include "HHVClampParameters.h"
@@ -48,50 +48,49 @@ double *myHH_p= NULL;
 void modelDefinition(NNmodel &model) 
 {
   neuronModel n;
-  
   initGeNN();
-// HH neurons with adjustable parameters (introduced as variables)
+  // HH neurons with adjustable parameters (introduced as variables)
   n.varNames.clear();
   n.varTypes.clear();
   n.varNames.push_back(tS("V"));
-  n.varTypes.push_back(tS("double"));
+  n.varTypes.push_back(tS("scalar"));
   n.varNames.push_back(tS("m"));
-  n.varTypes.push_back(tS("double"));
+  n.varTypes.push_back(tS("scalar"));
   n.varNames.push_back(tS("h"));
-  n.varTypes.push_back(tS("double"));
+  n.varTypes.push_back(tS("scalar"));
   n.varNames.push_back(tS("n"));
-  n.varTypes.push_back(tS("double"));
+  n.varTypes.push_back(tS("scalar"));
   n.varNames.push_back(tS("gNa"));
-  n.varTypes.push_back(tS("double"));
+  n.varTypes.push_back(tS("scalar"));
   n.varNames.push_back(tS("ENa"));
-  n.varTypes.push_back(tS("double"));
+  n.varTypes.push_back(tS("scalar"));
   n.varNames.push_back(tS("gK"));
-  n.varTypes.push_back(tS("double"));
+  n.varTypes.push_back(tS("scalar"));
   n.varNames.push_back(tS("EK"));
-  n.varTypes.push_back(tS("double"));
+  n.varTypes.push_back(tS("scalar"));
   n.varNames.push_back(tS("gl"));
-  n.varTypes.push_back(tS("double"));
+  n.varTypes.push_back(tS("scalar"));
   n.varNames.push_back(tS("El"));
-  n.varTypes.push_back(tS("double"));
+  n.varTypes.push_back(tS("scalar"));
   n.varNames.push_back(tS("C"));
-  n.varTypes.push_back(tS("double"));
+  n.varTypes.push_back(tS("scalar"));
   n.varNames.push_back(tS("err"));
-  n.varTypes.push_back(tS("double"));
+  n.varTypes.push_back(tS("scalar"));
   n.extraGlobalNeuronKernelParameters.push_back(tS("stepVG"));
-  n.extraGlobalNeuronKernelParameterTypes.push_back(tS("double"));
+  n.extraGlobalNeuronKernelParameterTypes.push_back(tS("scalar"));
   n.extraGlobalNeuronKernelParameters.push_back(tS("IsynG"));
-  n.extraGlobalNeuronKernelParameterTypes.push_back(tS("double"));
+  n.extraGlobalNeuronKernelParameterTypes.push_back(tS("scalar"));
 
-  n.simCode= tS("   double Imem;\n\
+  n.simCode= tS("   scalar Imem;\n\
     unsigned int mt;\n\
-    double mdt= DT/100.0;\n\
+    scalar mdt= DT/100.0;\n\
     for (mt=0; mt < 100; mt++) {\n\
       Isyn= 200.0*($(stepVG)-$(V));\n\
       Imem= -($(m)*$(m)*$(m)*$(h)*$(gNa)*($(V)-($(ENa)))+\n\
               $(n)*$(n)*$(n)*$(n)*$(gK)*($(V)-($(EK)))+\n\
               $(gl)*($(V)-($(El)))-Isyn);\n\
-      double _a= (3.5+0.1*$(V)) / (1.0-exp(-3.5-0.1*$(V)));\n\
-      double _b= 4.0*exp(-($(V)+60.0)/18.0);\n\
+      scalar _a= (3.5+0.1*$(V)) / (1.0-exp(-3.5-0.1*$(V)));\n\
+      scalar _b= 4.0*exp(-($(V)+60.0)/18.0);\n\
       $(m)+= (_a*(1.0-$(m))-_b*$(m))*mdt;\n\
       _a= 0.07*exp(-$(V)/20.0-3.0);\n\
       _b= 1.0 / (exp(-3.0-0.1*$(V))+1.0);\n\
@@ -108,10 +107,7 @@ void modelDefinition(NNmodel &model)
   nModels.push_back(n);
 
   model.setName("HHVClamp");
-  model.setPrecision(DOUBLE);
+  model.setPrecision(FLOAT);
+  model.setGPUDevice(fixGPU);
   model.addNeuronPopulation("HH", NPOP, HHV, myHH_p, myHH_ini);
-  #ifdef nGPU 
-    cerr << "nGPU: " << nGPU << endl;
-    model.setGPUDevice(nGPU);
-  #endif 
 }

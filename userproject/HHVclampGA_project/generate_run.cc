@@ -2,8 +2,8 @@
   Author: Thomas Nowotny
   
   Institute: Center for Computational Neuroscience and Robotics
-  University of Sussex
-  Falmer, Brighton BN1 9QJ, UK 
+             University of Sussex
+             Falmer, Brighton BN1 9QJ, UK 
   
   email to:  T.Nowotny@sussex.ac.uk
   
@@ -14,7 +14,7 @@
 //--------------------------------------------------------------------------
 /*! \file generate_run.cc
 
-  \brief This file is used to run the HHVclampGA model with a single command line.
+\brief This file is used to run the HHVclampGA model with a single command line.
 
 
 */ 
@@ -44,31 +44,29 @@ using namespace std;
 
 int main(int argc, char *argv[])
 {
-  if (argc != 7)
+  if (argc != 8)
   {
-    cerr << "usage: generate_run <CPU=0, GPU=1> <protocol> <nPop> <totalT> <outdir> <debug mode? (0/1)>" << endl;
+    cerr << "usage: generate_run <CPU=0, GPU=1> <protocol> <nPop> <totalT> <outdir> <debug mode? (0/1)> <GPU choice>" << endl;
     exit(1);
   }
-  int retval;
-  string cmd;
-  string gennPath = getenv("GENN_PATH");
-  string outDir = toString(argv[5]) + "_output";  
-  int dbgMode = atoi(argv[6]); // set this to 1 if you want to enable gdb and cuda-gdb debugging to 0 for release
-
   int which = atoi(argv[1]);
   int protocol = atoi(argv[2]);
   int nPop = atoi(argv[3]);
   double totalT = atof(argv[4]);
+  string outDir = toString(argv[5]) + "_output";  
+  int dbgMode = atoi(argv[6]); // set this to 1 if you want to enable gdb and cuda-gdb debugging to 0 for release
+  int GPU= atoi(argv[7]);
+  int retval;
+  string cmd;
 
+  string GeNNPath= getenv("GeNNPATH");
+  cerr << GeNNPath << endl;
   // write model parameters
-  string fname = gennPath + "/userproject/include/HHVClampParameters.h";
+  string fname = "model/HHVClampParameters.h";
   ofstream os(fname.c_str());
-    if (which > 1) {
-      os << "#define nGPU " << which-2 << endl;
-      which= 1;
-  }
   os << "#define NPOP " << nPop << endl;
   os << "#define TOTALT " << totalT << endl;
+  os << "#define fixGPU " << GPU << endl;
   os.close();
 
   // build it
@@ -108,19 +106,20 @@ int main(int argc, char *argv[])
 
   // run it!
   cout << "running test..." << endl;
+  cmd= toString(argv[5]) + " " + toString(which) + " " + toString(protocol);
 #ifdef _WIN32
   if (dbgMode == 1) {
-    cmd = "devenv /debugexe model\\VClampGA.exe " + toString(argv[5]) + " " + toString(which) + " " + toString(protocol);
+    cmd = "devenv /debugexe model\\VClampGA.exe " + cmd;
   }
   else {
-    cmd = "model\\VClampGA.exe " + toString(argv[5]) + " " + toString(which) + " " + toString(protocol);
+    cmd = "model\\VClampGA.exe " + cmd);
   }
 #else // UNIX
   if (dbgMode == 1) {
-    cmd = "cuda-gdb -tui --args model/VClampGA " + toString(argv[5]) + " " + toString(which) + " " + toString(protocol);
+    cmd = "cuda-gdb -tui --args model/VClampGA " + cmd;
   }
   else {
-    cmd = "model/VClampGA " + toString(argv[5]) + " " + toString(which) + " " + toString(protocol);
+    cmd = "model/VClampGA " + cmd;
   }
 #endif
   retval=system(cmd.c_str());

@@ -219,10 +219,8 @@ The output files will be written into a directory of the name test1_output, whic
 be created if it does not yet exist.
 
 
-\htmlonly
 -----
 \link Quickstart Previous\endlink | \link Examples Top\endlink | \link ReleaseNotes Next\endlink
-\endhtmlonly
 
 */
 //----------------------------------------------------------------------------

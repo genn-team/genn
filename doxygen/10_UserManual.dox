@@ -47,10 +47,8 @@ right in.
 
 <br />
 
-\htmlonly
 -----
 \link ReleaseNotes Previous\endlink | \link UserManual Top\endlink | \link sectDefiningNetwork Next\endlink
-\endhtmlonly
 
 */
 */
@@ -132,10 +130,8 @@ Synaptic updates can occur per "true" spike (i.e at one point per spike, e.g. af
 
 <br />
 
-\htmlonly
 -----
 \link UserManual Previous\endlink | \link sectDefiningNetwork Top\endlink | \link sectSynapseModels Next\endlink
-\endhtmlonly
 
 */
 
@@ -599,10 +595,10 @@ This model has no variables and two parameters:
 IZHIKEVICH_PS: Empty postsynaptic rule to be used with Izhikevich neurons.
 <br />
 
-\htmlonly
+
 -----
 \link sectSynapseModels Previous\endlink | \link sect_postsyn  Top\endlink | \link ListOfVariables Next\endlink
-\endhtmlonly
+
 
 */
 

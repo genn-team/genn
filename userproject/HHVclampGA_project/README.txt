@@ -12,11 +12,11 @@ protocol 0-6. For protocol 7 all 7 parameters undergo a random walk concurrently
   USAGE
   -----
 
-generate_run <CPU= 0, GPU= 1> <protocol> <nPop> <totalT> <outdir> <debug mode? (0/1)>
+generate_run <CPU=0, GPU=1> <protocol> <nPop> <totalT> <outdir> <debug mode? (0/1)> <GPU choice>
 
 An example invocation of generate_run is:
 
-  ./generate_run 1 2 5000 1000 test1 0
+./generate_run 1 -1 12 200000 test1 0 0
 
 This will simulate nPop= 5000 HH neurons on the GPU which will for 1000 ms be matched to a HH neuron where the parameter
 gKd is sinusoidally modulated. The output files will be written into a directory of the name test1_output, which will
