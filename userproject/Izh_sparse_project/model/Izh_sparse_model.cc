@@ -159,10 +159,10 @@ void classIzh::write_input_to_file(FILE *f)
 void classIzh::create_input_values() //define your explicit input rule here
 {
     for (int x= 0; x < model.neuronN[0]; x++) {
-	input1[x]= 5.0*((scalar) RG.n());
+	input1[x]= meanInpExc*((scalar) RG.n());
     }
     for (int x= 0; x < model.neuronN[1]; x++) {
-	input2[x]= 2.0*((scalar) RG.n());
+	input2[x]= meanInpExc*((scalar) RG.n());
     }
 }
 

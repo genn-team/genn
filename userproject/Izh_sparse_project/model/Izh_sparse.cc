@@ -20,6 +20,9 @@ std::vector<unsigned int> neuronPSize;
 std::vector<unsigned int> neuronVSize;
 std::vector<unsigned int> synapsePSize; 
 
+scalar meanInpExc = 7.5; //5.0 for balanced regime
+scalar meanInpInh = 2.0; //2.0 for balanced regime
+
 double *excIzh_p = NULL;
 //Izhikevich model parameters - tonic spiking
 /*	0.02,	// 0 - a

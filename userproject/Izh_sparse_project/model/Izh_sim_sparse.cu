@@ -33,7 +33,7 @@ int main(int argc, char *argv[])
   
  
   name= OutDir+ toString("/") + toString(argv[1]) + toString(".out.Vm"); 
-  cerr << name << endl;
+  cout << name << endl;
   FILE *osf= fopen(name.c_str(),"w");
   if (which == 0) name= OutDir+ toString("/") + toString(argv[1]) + toString(".out.St.CPU");
   if (which == 1) name= OutDir+ toString("/") + toString(argv[1]) + toString(".out.St.GPU"); 
@@ -41,10 +41,10 @@ int main(int argc, char *argv[])
   
   //-----------------------------------------------------------------
   // build the neuronal circuitry
-  fprintf(stderr, "#creating classIzh\n");
+  fprintf(stdout, "#creating classIzh\n");
 	classIzh PCNN;
   PCNN.initializeAllVars(which);
-  fprintf(stderr, "#classIzh created\n");
+  fprintf(stdout, "#classIzh created\n");
 	
 	//open log file
   string logname=OutDir+ toString("/logfile");	
@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
 
   unsigned int sumSynapses=0;
   
-  fprintf(stderr, "#reading synapses ... \n");
+  fprintf(stdout, "#reading synapses ... \n");
  	FILE *f_info, *f, *f_indInG,*f_ind;
  	unsigned int connN;
  	//ee
@@ -72,7 +72,7 @@ int main(int argc, char *argv[])
   f_info= fopen(name.c_str(),"rb");
  	retval = fread((void *) &connN,sizeof(unsigned int),1,f_info);
 	allocateExc_Exc(connN);
-  fprintf(stderr, "%u connN, read %u times %lu bytes, fread returned %d values \n", connN, CExc_Exc.connN,sizeof(unsigned int), retval);
+  fprintf(stdout, "%u connN, read %u times %lu bytes, fread returned %d values \n", connN, CExc_Exc.connN,sizeof(unsigned int), retval);
   fprintf(flog, "%u connections in gExc_Exc\n",CExc_Exc.connN);
 	sumSynapses+=connN;
 	fclose(f_info);
@@ -82,7 +82,7 @@ int main(int argc, char *argv[])
   f_info= fopen(name.c_str(),"rb");
   retval = fread(&connN,1,sizeof(unsigned int),f_info);
  	allocateExc_Inh(connN);
- 	fprintf(stderr, "read %u times %lu bytes \n",CExc_Inh.connN,sizeof(unsigned int));
+ 	fprintf(stdout, "read %u times %lu bytes \n",CExc_Inh.connN,sizeof(unsigned int));
   fprintf(flog, "%u connections in gExc_Inh\n",CExc_Inh.connN);
 	sumSynapses+=connN;
  	fclose(f_info);
@@ -92,7 +92,7 @@ int main(int argc, char *argv[])
  	f_info= fopen(name.c_str(),"rb");
   retval = fread(&connN,1,sizeof(unsigned int),f_info);
   allocateInh_Exc(connN);
-  fprintf(stderr, "read %u times %lu bytes \n",CInh_Exc.connN,sizeof(unsigned int));
+  fprintf(stdout, "read %u times %lu bytes \n",CInh_Exc.connN,sizeof(unsigned int));
   fprintf(flog, "%u connections in gInh_Exc\n",CInh_Exc.connN);
 	sumSynapses+=connN;
  	fclose(f_info);
@@ -102,7 +102,7 @@ int main(int argc, char *argv[])
  	f_info= fopen(name.c_str(),"rb");
   retval = fread(&connN,1, sizeof(unsigned int),f_info);
   allocateInh_Inh(connN);
-  fprintf(stderr, "read %u times %lu bytes \n",CInh_Inh.connN,sizeof(unsigned int));
+  fprintf(stdout, "read %u times %lu bytes \n",CInh_Inh.connN,sizeof(unsigned int));
   fprintf(flog, "%u connections in gInh_Inh\n",CInh_Inh.connN);
 	sumSynapses+=connN;
  	fclose(f_info);
@@ -165,8 +165,8 @@ int main(int argc, char *argv[])
   	PCNN.gen_alltoall_syns(gpInh_Inh, 1, 1, -1.0); //inh to inh
   	PCNN.init(which);         // this includes copying g's for the GPU version
   */
-  fprintf(stderr, "\nThere are %u synapses in the model.\n", sumSynapses);
-  fprintf(stderr, "# neuronal circuitry built, start computation ... \n\n");
+  fprintf(stdout, "\nThere are %u synapses in the model.\n", sumSynapses);
+  fprintf(stdout, "# neuronal circuitry built, start computation ... \n\n");
   curandState * devStates;
   /*unsigned int outno;
   if (PCNN.model.neuronN[0]>10) 
@@ -175,7 +175,7 @@ int main(int argc, char *argv[])
 */
   if (which == GPU) PCNN.allocate_device_mem_input(); 
 
-  fprintf(stderr, "set input...\n");
+  fprintf(stdout, "set input...\n");
   int sampleBlkNo0 = ceil(float((PCNN.model.neuronN[0])/float(BlkSz)));
   int sampleBlkNo1 = ceil(float((PCNN.model.neuronN[1])/float(BlkSz)));
   dim3 sThreads(BlkSz,1);
@@ -190,8 +190,8 @@ int main(int argc, char *argv[])
   		 CHECK_CUDA_ERRORS(cudaMalloc((void **)&devStates, PCNN.model.neuronN[0]*sizeof(curandState)));
   	   xorwow_setup(devStates, PCNN.model.neuronN[0]); //setup the prng for the bigger network only
 
-	   generate_random_gpuInput_xorwow<<<sGrid0,sThreads>>>(devStates, PCNN.d_input1, PCNN.model.neuronN[0], (scalar) 5.0, (scalar) 0.0);
-	   generate_random_gpuInput_xorwow<<<sGrid1,sThreads>>>(devStates, PCNN.d_input2, PCNN.model.neuronN[1], (scalar) 2.0, (scalar) 0.0); 
+	   generate_random_gpuInput_xorwow<<<sGrid0,sThreads>>>(devStates, PCNN.d_input1, PCNN.model.neuronN[0], meanInpExc, (scalar) 0.0);
+	   generate_random_gpuInput_xorwow<<<sGrid1,sThreads>>>(devStates, PCNN.d_input2, PCNN.model.neuronN[1], meanInpExc, (scalar) 0.0); 
 
   	}  
   
@@ -226,8 +226,8 @@ int main(int argc, char *argv[])
  
   if (which == GPU){ 
     while (!done) {
-	generate_random_gpuInput_xorwow<<<sGrid0,sThreads>>>(devStates, PCNN.d_input1, PCNN.model.neuronN[0], (scalar) 5.0, (scalar) 0.0);
-	generate_random_gpuInput_xorwow<<<sGrid1,sThreads>>>(devStates, PCNN.d_input2, PCNN.model.neuronN[1], (scalar) 2.0, (scalar) 0.0); 
+	generate_random_gpuInput_xorwow<<<sGrid0,sThreads>>>(devStates, PCNN.d_input1, PCNN.model.neuronN[0], meanInpExc, (scalar) 0.0);
+	generate_random_gpuInput_xorwow<<<sGrid1,sThreads>>>(devStates, PCNN.d_input2, PCNN.model.neuronN[1], meanInpInh, (scalar) 0.0); 
      
       stepTimeGPU(PCNN.d_input1,PCNN.d_input2, t);
       t+= DT;
@@ -314,9 +314,10 @@ int main(int argc, char *argv[])
 	
   timer.stopTimer();
 	
-  cerr << "Output files are created under the current directory. Output and parameters are logged in: " << logname << endl;
-  fprintf(timef, "%d %d %u %u %.4f %.2f %.1f %.2f %u %s\n",which, PCNN.model.sumNeuronN[PCNN.model.neuronGrpN-1], PCNN.sumPExc, PCNN.sumPInh, timer.getElapsedTime(),VPExc[0], TOTAL_TME, DT, sumSynapses, logname.c_str());
-  fprintf(flog, "%u neurons in total\n%u spikes in the excitatory population\n%u spikes in the inhibitory population\nElapsed time is %.4f\nLast Vm value of the 1st neuron is %.2f\nTotal time %f at DT+%f \nTotal number of synapses in the model is %u\n\n#################\n", PCNN.model.sumNeuronN[PCNN.model.neuronGrpN-1], PCNN.sumPExc, PCNN.sumPInh, timer.getElapsedTime(),VPExc[0], TOTAL_TME, DT, sumSynapses);
+  cout << "Output files are created under the current directory. Output and parameters are logged in: " << logname << endl;
+  fprintf(timef, "%d %d %u %u %.4f %.2f %.1f %.2f %u %s %s\n",which, PCNN.model.sumNeuronN[PCNN.model.neuronGrpN-1], PCNN.sumPExc, PCNN.sumPInh, timer.getElapsedTime(),VPExc[0], TOTAL_TME, DT, sumSynapses, logname.c_str(), PCNN.model.ftype.c_str());
+  fprintf(flog, "%u neurons in total\n%u spikes in the excitatory population\n%u spikes in the inhibitory population\nElapsed time is %.4f\nLast Vm value of the 1st neuron is %.2f\nTotal time %f at DT+%f \nTotal number of synapses in the model is %u, %s precision\n\n#################\n", PCNN.model.sumNeuronN[PCNN.model.neuronGrpN-1], PCNN.sumPExc, PCNN.sumPInh, timer.getElapsedTime(),VPExc[0], TOTAL_TME, DT, sumSynapses, PCNN.model.ftype.c_str());
+   fprintf(stdout, "%u neurons in total\n%u spikes in the excitatory population\n%u spikes in the inhibitory population\nElapsed time is %.4f\nLast Vm value of the 1st neuron is %.2f\nTotal simulation of %f ms at DT=%f \nTotal number of synapses in the model is %u, %s precision\n\n#################\n", PCNN.model.sumNeuronN[PCNN.model.neuronGrpN-1], PCNN.sumPExc, PCNN.sumPInh, timer.getElapsedTime(),VPExc[0], TOTAL_TME, DT, sumSynapses, PCNN.model.ftype.c_str());
   fclose(osf);
   fclose(timef);
   fclose(osf2);
