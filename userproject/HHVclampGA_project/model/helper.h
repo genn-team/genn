@@ -46,6 +46,26 @@ void write_para()
   fprintf(stderr, "# DT %f \n", DT);
 }
 
+const double limit[7][2]= {{1.0, 200.0}, // gNa
+			   {0.0, 100.0}, // ENa
+			   {1.0, 100.0}, // gKd
+			   {-100.0, -20.0}, // EKd
+			   {1.0, 50.0}, // gleak
+			   {-100.0, -20.0}, // Eleak
+			   {1e-1, 10.0}}; // C
+
+
+void single_var_init_fullrange(int n)
+{
+  gNaHH[n]= limit[0][0]+R.n()*(limit[0][1]-limit[0][0]); // uniform in allowed interval
+  ENaHH[n]= limit[1][0]+R.n()*(limit[1][1]-limit[1][0]); // uniform in allowed interval
+  gKHH[n]= limit[2][0]+R.n()*(limit[2][1]-limit[2][0]); // uniform in allowed interval
+  EKHH[n]= limit[3][0]+R.n()*(limit[3][1]-limit[3][0]); // uniform in allowed interval
+  glHH[n]= limit[4][0]+R.n()*(limit[4][1]-limit[4][0]); // uniform in allowed interval
+  ElHH[n]= limit[5][0]+R.n()*(limit[5][1]-limit[5][0]); // uniform in allowed interval
+  CHH[n]= limit[6][0]+R.n()*(limit[6][1]-limit[6][0]); // uniform in allowed interval
+}
+
 void single_var_reinit(int n, double fac) 
 {
   gNaHH[n]*= (1.0+fac*sigGNa*RG.n()); // multiplicative Gaussian noise
@@ -68,6 +88,14 @@ void copy_var(int src, int trg)
   CHH[trg]= CHH[src];
 }
 
+void var_init_fullrange()
+{
+   for (int n= 0; n < NPOP; n++) {
+   single_var_init_fullrange(n);
+  }
+  copyStateToDevice();	
+}
+ 
 void var_reinit(double fac) 
 {
   // add noise to the parameters

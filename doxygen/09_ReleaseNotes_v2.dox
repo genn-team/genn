@@ -1,12 +1,12 @@
-/*! \page ReleaseNotes Release Notes for GeNN v2.0
+/*! \page ReleaseNotes Release Notes for GeNN v2.1
 
-Version 2.0 of GeNN comes with a lot of improvements and added features, some of which have necessitated some changes to the structure of parameter arrays among others.
+Version 2.0 of GeNN came with a lot of improvements and added features, some of which have necessitated some changes to the structure of parameter arrays among others. Version 2.1 is a minor release that fixes some remaining inconsistencies. Below we describe cumulative changes for both release 2.0 and 2.1.
 
 \section UserChange User Side Changes 
 
 1. Users are now required to call "initGeNN()" in the model definition function before adding any populations to the neuronal network model. 
 
-2. glbscnt is now call glbSpkCnt for consistency with glbSpkEvntCnt.
+2. glbscnt is now called glbSpkCnt for consistency with glbSpkEvntCnt.
 
 3. There is no longer a privileged parameter `Epre`.  Spike type events
   are now defined by a code string `spkEvntThreshold`, the same way proper spikes are. The only difference is that Spike type events are specific to a synapse type rather than a neuron type.
@@ -73,21 +73,12 @@ To enable the timers in GeNN generated code, one needs to declare
 \code
 networkmodel.setTiming(TRUE);
 \endcode
-This will make available and operate GPU-side cudeEvent based timers whose cumulative value can be found in the double precision variables `neuron_tme`, `synapse_tme` and `learning_tme`. They measure the accumulated time that has been spent calculating the neuron kernel, synapse kernel and learning kernel, respectively. CPU-side timers for the simulation functions are also available and their cumulative values can be obtained through 
-\code
-float x= sdkGetTimerValue(&neuron_timer);
-float y= sdkGetTimerValue(&synapse_timer);
-float z= sdkGetTimerValue(&learning_timer);
-\endcode
-The \ref ex_mbody example shows how these can be used in the user-side code. To enable timing profiling in this example, simply enable it for GeNN:
-\code
-model.setTiming(TRUE);
-\endcode
-in `MBody1.cc`'s `modelDefinition` function and define the macro `TIMING` in `classol_sim.h`
+This will make available and operate GPU-side cudaEvent based timers whose cumulative value can be found in the double precision variables `neuron_tme`, `synapse_tme` and `learning_tme`. They measure the accumulated time that has been spent calculating the neuron kernel, synapse kernel and learning kernel, respectively. The same variables are used for CPU-side timers. In an unusual "mixed scenario" of calls to neuron kernels and neuron functions CPU-side, the timer would pick up the sum of the times spent in both.
+The \ref ex_mbody example shows how these can be used in the user-side code. To enable timing profiling in this example, simply uncomment the line 
 \code
 #define TIMING
 \endcode
-This will have the effect that timing information is output into `OUTNAME_output/OUTNAME.timingprofile`.
+in the `MBody1.cc` file which will have the effect of enabling the timing via `model.setTiming(TRUE);` in the modeldefinition function and of including code to output the results into `OUTNAME_output/OUTNAME.timingprofile`.
 
 \section developerChange Developer Side Changes
 
@@ -104,10 +95,8 @@ the arrangement previously.
 
 <br />
 
-\htmlonly
 -----
 \link Examples Previous\endlink | \link ReleaseNotes Top\endlink | \link UserManual Next\endlink
-\endhtmlonly
 
 
 */
