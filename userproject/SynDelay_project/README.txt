@@ -37,4 +37,4 @@ then compile the project by typing:
   USAGE
   -----
 
-  ./bin/syn_delay [CPU = 0 / GPU = 1] [directory to save output]
+  ./syn_delay [CPU = 0 / GPU = 1] [directory to save output]

@@ -536,7 +536,7 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 
 	if (model.neuronDelaySlots[src] > 1) {
 	    os << "delaySlot = (spkQuePtr" << model.neuronName[src];
-	    os << " + " << tS(model.neuronDelaySlots[src] - model.synapseDelay[i] + 1);
+	    os << " + " << tS(model.neuronDelaySlots[src] - model.synapseDelay[i]);
 	    os << ") % " << tS(model.neuronDelaySlots[src]) << ";" << ENDL;
 	}
 
@@ -603,7 +603,7 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 
 	    if (delayPre) {
 		os << "delaySlot = (spkQuePtr" << model.neuronName[src];
-		os << " + " << tS(model.neuronDelaySlots[src] - model.synapseDelay[k] + 1);
+		os << " + " << tS(model.neuronDelaySlots[src] - model.synapseDelay[k]);
 		os << ") % " << tS(model.neuronDelaySlots[src]) << ";" << ENDL;
 	    }
 

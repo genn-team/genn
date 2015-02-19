@@ -103,6 +103,32 @@ void genRunner(NNmodel &model, //!< Model description
 	substitute(postSynModels[i].postSynDecay, "scalar", model.ftype);
     }
     
+    // generate definitions.h
+    // this file contains helpful macros and is separated out so that it can also be used by other code that is compiled separately
+    name= path + toString("/") + model.name + toString("_CODE/definitions.h");
+    os.open(name.c_str());  
+    writeHeader(os);
+    os << ENDL;
+    
+       // write doxygen comment
+    os << "//-------------------------------------------------------------------------" << ENDL;
+    os << "/*! \\file definitions.h" << ENDL << ENDL;
+    os << "\\brief File generated from GeNN for the model " << model.name << " containing useful Macros used for both GPU amd CPU versions." << ENDL;
+    os << "*/" << ENDL;
+    os << "//-------------------------------------------------------------------------" << ENDL << ENDL;
+    
+    for (int i= 0; i < model.neuronGrpN; i++) {
+	os << "#define glbSpkShift" << model.neuronName[i];
+	if (model.neuronDelaySlots[i] > 1) {
+	    os << " spkQuePtr" << model.neuronName[i] << "*" << model.neuronN[i];
+	}
+	else {
+	    os << " 0";
+	}
+	os << ENDL;
+    }
+    os.close();
+    
 //    cout << "entering genRunner" << endl;
     name= path + toString("/") + model.name + toString("_CODE/runner.cc");
     os.open(name.c_str());  
@@ -487,6 +513,9 @@ void genRunner(NNmodel &model, //!< Model description
 
 	if (model.neuronDelaySlots[i] > 1) {
 	    os << "    spkQuePtr" << model.neuronName[i] << " = 0;" << endl;
+	    os << "CHECK_CUDA_ERRORS(cudaMemcpyToSymbol(dd_spkQuePtr" << model.neuronName[i];
+	    os << ", &spkQuePtr" << model.neuronName[i];
+	    os << ", " << "sizeof(unsigned int), 0, cudaMemcpyHostToDevice));" << endl;	
 	}
 
 	if ((model.neuronNeedTrueSpk[i]) && (model.neuronDelaySlots[i] > 1)) {
@@ -1303,6 +1332,11 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 	    }
 	    os << "t);" << endl;
 	    if (model.timing) os << "cudaEventRecord(learningStop);" << endl;
+	}
+	for (int i= 0; i < model.neuronGrpN; i++) { 
+	    if (model.neuronDelaySlots[i] > 1) {
+		os << "spkQuePtr" << model.neuronName[i] << " = (spkQuePtr" << model.neuronName[i] << " + 1) % " << model.neuronDelaySlots[i] << ";" << ENDL;
+	    }
 	}
 	os << "}" << endl;
     }

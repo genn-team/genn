@@ -552,8 +552,8 @@ void NNmodel::addSynapsePopulation(
     trgNumber = findNeuronGrp(trg);
     synapseTarget.push_back(trgNumber);
     synapseDelay.push_back(delaySteps);
-    if (delaySteps > neuronDelaySlots[srcNumber]) {
-	neuronDelaySlots[srcNumber] = delaySteps;
+    if (delaySteps >= neuronDelaySlots[srcNumber]) {
+	neuronDelaySlots[srcNumber] = delaySteps+1;
 	needSynapseDelay = 1;
     }
     if (weightUpdateModels[syntype].needPreSt) {

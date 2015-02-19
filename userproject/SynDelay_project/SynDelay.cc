@@ -62,11 +62,8 @@ double postExpOut[2] = {
 // INPUT-INTER, INPUT-OUTPUT & INTER-OUTPUT SYNAPSES
 //==================================================
 
-double synapses_p[3] = {
-  0.0,     // 0 - Erev: Reversal potential
-  -30.0,   // 1 - Epre: Presynaptic threshold potential
-  1.0      // 2 - tau_S: decay time constant for S [ms]
-};
+double *synapses_p= NULL;
+
 double inputInter_ini[1] = {
   0.06   // 0 - default synaptic conductance
 };
