@@ -149,6 +149,10 @@ void genRunner(NNmodel &model, //!< Model description
     if (model.timing) os << "#include \"hr_time.cpp\"" << ENDL;
     os << ENDL;
 
+    os << "#ifndef int_" << ENDL;
+    os << "#define int_(X) ((int) (X))" << ENDL;
+    os << "#endif" << ENDL;
+
     os << "#ifndef scalar" << ENDL;
     os << "typedef " << model.ftype << " scalar;" << ENDL;
     os << "#endif" << ENDL;
