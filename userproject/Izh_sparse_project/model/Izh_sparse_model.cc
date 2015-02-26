@@ -162,7 +162,7 @@ void classIzh::create_input_values() //define your explicit input rule here
 	input1[x]= meanInpExc*((scalar) RG.n());
     }
     for (int x= 0; x < model.neuronN[1]; x++) {
-	input2[x]= meanInpExc*((scalar) RG.n());
+	input2[x]= meanInpInh*((scalar) RG.n());
     }
 }
 
