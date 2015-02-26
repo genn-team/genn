@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
   int retval;
   string cmd;
 
-  string GeNNPath= getenv("GeNNPATH");
+  string GeNNPath= getenv("GENN_PATH");
   cerr << GeNNPath << endl;
   // write model parameters
   string fname = "model/HHVClampParameters.h";
@@ -112,7 +112,7 @@ int main(int argc, char *argv[])
     cmd = "devenv /debugexe model\\VClampGA.exe " + cmd;
   }
   else {
-    cmd = "model\\VClampGA.exe " + cmd);
+    cmd = "model\\VClampGA.exe " + cmd;
   }
 #else // UNIX
   if (dbgMode == 1) {
