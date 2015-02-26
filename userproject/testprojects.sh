@@ -269,9 +269,9 @@ if [ -d "testing_output" ]; then
   printf "With new setup... \n"  >> testing_output/testing.time
 fi
 printf "\n\n####################### HHVclampGA GPU test 1 ######################\n"
-./generate_run 1 2 5000 1000 testing 0
+./generate_run 1 2 5000 1000 testing 0 0
 printf "\n\n####################### HHVclampGA CPU test 1 ######################\n"
-./generate_run 0 2 5000 1000 testing 0
+./generate_run 0 2 5000 1000 testing 0 0
 
 cp -R testing_output/testing.time $BmDir/HHVclampGA/testing.time
 
