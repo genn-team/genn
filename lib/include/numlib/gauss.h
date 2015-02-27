@@ -54,6 +54,7 @@ private:
   randomGauss(unsigned long, unsigned long, unsigned long);
   ~randomGauss() { }
   double n();  //!< Method for obtaining a random number with Gaussian distribution
+  void srand(unsigned long, unsigned long, unsigned long);
 };
 
 #include "randomGen.cc"

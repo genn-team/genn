@@ -90,4 +90,15 @@ double randomGauss::n()
   return v/u;
 }
 
+//-----------------------------------------------------------------------
+/*! \brief Function for seeding with fixed seeds.
+ */
+//-----------------------------------------------------------------------
+
+void randomGauss::srand(unsigned long seed1, unsigned long seed2, unsigned long seed3)
+{
+  UniGen.srand(seed1, seed2, seed3);
+}
+
+
 #endif

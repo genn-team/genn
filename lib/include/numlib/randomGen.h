@@ -46,6 +46,7 @@ class randomGen
   randomGen(unsigned long, unsigned long, unsigned long);
   ~randomGen() { }
   double n();  //!< Method to obtain a random number from a uniform ditribution on [0,1] 
+  void srand(unsigned long, unsigned long, unsigned long);
 };
 
 class stdRG

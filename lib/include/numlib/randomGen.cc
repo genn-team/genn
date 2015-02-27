@@ -70,6 +70,21 @@ double randomGen::n()
 //  return TheGen.rand();
 //}
 
+//-----------------------------------------------------------------------
+/*! \brief Function for seeding with fixed seeds.
+ */
+//-----------------------------------------------------------------------
+
+void randomGen::srand(unsigned long seed1, unsigned long seed2, unsigned long seed3)
+{
+  TheGen.srand(seed1, seed2, seed3);
+}
+
+//unsigned long randomGen::nlong()
+//{
+//  return TheGen.rand();
+//}
+
 
 //-----------------------------------------------------------------------
 /*! \brief Constructor of the standard random number generator class without explicit seed
