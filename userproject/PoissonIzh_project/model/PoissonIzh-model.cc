@@ -120,12 +120,12 @@ void classol::generate_baserates()
 {
   // we use a predefined pattern number
     uint64_t inputBase;
-    convertProbabilityToRandomNumberThreshold(&InputBaseRate, &inputBase, 1);
+    convertRateToRandomNumberThreshold(&InputBaseRate, &inputBase, 1);
   for (int i= 0; i < model.neuronN[0]; i++) {
     baserates[i]= inputBase;
   }
   fprintf(stderr, "generated baserates ... \n");
-  fprintf(stderr, "baserate value %f, converted random number: %lu ", InputBaseRate, inputBase);
+  fprintf(stderr, "baserate value %f, converted random number: %llu ", InputBaseRate, inputBase);
   fprintf(stderr, "\n\n"); 
   int size= model.neuronN[0]*sizeof(uint64_t);
   CHECK_CUDA_ERRORS(cudaMalloc((void**) &d_baserates, size));

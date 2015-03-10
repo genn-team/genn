@@ -210,12 +210,35 @@ void genRunner(NNmodel &model, //!< Model description
     os << "    CHECK_CUDA_ERRORS(cudaMemcpy(devptr, hostPtr, sizeof(void*), cudaMemcpyHostToDevice));" << ENDL;
     os << "}" << ENDL << ENDL;
 
+    // write doxygen comment
+    os << "//-------------------------------------------------------------------------" << ENDL;
+    os << "/*! \\brief Function to convert a firing probability (per time step) " << ENDL;
+    os << "to an integer of type uint64_t that can be used as a threshold for the GeNN random number generator to generate events with the given probability." << ENDL;
+    os << "*/" << ENDL;
+    os << "//-------------------------------------------------------------------------" << ENDL << ENDL;
+
     os << "void convertProbabilityToRandomNumberThreshold(" << model.ftype << " *p_pattern, " << model.RNtype << " *pattern, int N)" << ENDL;
     os << "{" << ENDL;
-    os << "    " << model.ftype << " fac= pow(2.0, (int) sizeof(" << model.RNtype << ")*8-16)*DT;" << ENDL;
+    os << "    " << model.ftype << " fac= pow(2.0, (int) sizeof(" << model.RNtype << ")*8-16);" << ENDL;
     os << "    for (int i= 0; i < N; i++) {" << ENDL;
     //os << "        assert(p_pattern[i] <= 1.0);" << ENDL;
     os << "        pattern[i]= (" << model.RNtype << ") (p_pattern[i]*fac);" << ENDL;
+    os << "    }" << ENDL;
+    os << "}" << ENDL << ENDL;
+
+    // write doxygen comment
+    os << "//-------------------------------------------------------------------------" << ENDL;
+    os << "/*! \\brief Function to convert a firing rate (in kHz) " << ENDL;
+    os << "to an integer of type uint64_t that can be used as a threshold for the GeNN random number generator to generate events with the given rate." << ENDL;
+    os << "*/" << ENDL;
+    os << "//-------------------------------------------------------------------------" << ENDL << ENDL;
+
+    os << "void convertRateToRandomNumberThreshold(" << model.ftype << " *rateKHz_pattern, " << model.RNtype << " *pattern, int N)" << ENDL;
+    os << "{" << ENDL;
+    os << "    " << model.ftype << " fac= pow(2.0, (int) sizeof(" << model.RNtype << ")*8-16)*DT;" << ENDL;
+    os << "    for (int i= 0; i < N; i++) {" << ENDL;
+    //os << "        assert(rateKHz_pattern[i] <= 1.0);" << ENDL;
+    os << "        pattern[i]= (" << model.RNtype << ") (rateKHz_pattern[i]*fac);" << ENDL;
     os << "    }" << ENDL;
     os << "}" << ENDL << ENDL;
 
@@ -498,6 +521,12 @@ void genRunner(NNmodel &model, //!< Model description
 
     // ------------------------------------------------------------------------
     // initializing variables
+    // write doxygen comment
+    os << "//-------------------------------------------------------------------------" << endl;
+    os << "/*! \\brief Function to (re)set all model variables to their compile-time, homogeneous initial values." << endl;
+    os << " Note that this typically includes synaptic weight values. The function (re)sets host side variables and copies them to the GPU device." << endl;
+    os << "*/" << endl;
+    os << "//-------------------------------------------------------------------------" << endl << endl;
 
     os << "void initialize()" << endl;
     os << "{" << endl;
@@ -747,6 +776,7 @@ void genRunner(NNmodel &model, //!< Model description
 	os << "    delete[] inSyn" << model.synapseName[i] << ";" << endl;
 	os << "    CHECK_CUDA_ERRORS(cudaFree(d_inSyn" << model.synapseName[i] << "));" << endl;
 	if (model.synapseConnType[i] == SPARSE) {
+	    os << "    C" << model.synapseName[i] << ".connN= 0;" << endl;
 	    os << "    delete[] C" << model.synapseName[i] << ".indInG;" << endl;
 	    os << "    delete[] C" << model.synapseName[i] << ".ind;" << endl;  
 	    if (model.synapseUsesPostLearning[i]) {
@@ -761,6 +791,7 @@ void genRunner(NNmodel &model, //!< Model description
 	}
 	if (model.synapseGType[i] == INDIVIDUALG) {
 	    for (int k= 0, l= weightUpdateModels[st].varNames.size(); k < l; k++) {
+		os << "    delete[] " << weightUpdateModels[st].varNames[k] << model.synapseName[i] << ";" << endl;
 		os << "    CHECK_CUDA_ERRORS(cudaFree(d_" << weightUpdateModels[st].varNames[k] << model.synapseName[i] << "));" << endl;
 	    }
 	    for (int k= 0, l= postSynModels[pst].varNames.size(); k < l; k++) {
