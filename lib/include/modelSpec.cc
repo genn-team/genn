@@ -33,7 +33,7 @@ void initGeNN()
 
 NNmodel::NNmodel() 
 {
-  valid= 0;
+  final= 0;
   neuronGrpN= 0;
   synapseGrpN= 0;
   lrnGroups= 0;
@@ -52,7 +52,10 @@ NNmodel::~NNmodel()
 
 void NNmodel::setName(const string inname)
 {
-  name= toString(inname);
+    if (final) {
+	gennError("Trying to set the name of a finalized model.");
+    }
+    name= toString(inname);
 }
 
 
@@ -365,6 +368,9 @@ void NNmodel::addNeuronPopulation(
     if (!GeNNReady) {
       gennError(tS("You need to call initGeNN first."));
     }
+    if (final) {
+	gennError("Trying to add a neuron population to a finalized model.");
+    }
     unsigned int i= neuronGrpN++;
     
     neuronName.push_back(toString(name));
@@ -404,8 +410,11 @@ void NNmodel::activateDirectInput(
   const string name, /**< Name of the neuron population */
   unsigned int type /**< Type of input: 1 if common input, 2 if custom input from file, 3 if custom input as a rule*/)
 {
-  unsigned int i= findNeuronGrp(name);
-  receivesInputCurrent[i]= type;	// (TODO) 4 if random input with Gaussian distribution.
+    if (final) {
+	gennError("Trying to activate inputs in a finalized model.");
+    }
+    unsigned int i= findNeuronGrp(name);
+    receivesInputCurrent[i]= type;	// (TODO) 4 if random input with Gaussian distribution.
 }
 
 //--------------------------------------------------------------------------
@@ -538,8 +547,10 @@ void NNmodel::addSynapsePopulation(
   vector<double> ps /**< A C-type array of doubles that contains postsynaptic mechanism parameter values (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored.*/ )
 {
     if (!GeNNReady) {
-	cerr << "You need to call initGeNN first." << endl;
-	exit(1);
+	gennError("You need to call initGeNN first.");
+    }
+    if (final) {
+	gennError("Trying to add a synapse population to a finalized model.");
     }
     unsigned int i= synapseGrpN++;
     unsigned int srcNumber, trgNumber;       
@@ -606,6 +617,9 @@ void NNmodel::setSynapseG(const string sName, /**<  */
 void NNmodel::setConstInp(const string sName, /**<  */
                           double globalInp0 /**<  */)
 {
+    if (final) {
+	gennError("Trying to add constant inputs in a finalized model.");
+    }
   unsigned int found= findNeuronGrp(sName);
   if (globalInp.size() < found+1) globalInp.resize(found+1);
   globalInp[found]= globalInp0;
@@ -620,6 +634,9 @@ void NNmodel::setConstInp(const string sName, /**<  */
 
 void NNmodel::setPrecision(unsigned int floattype /**<  */)
 {
+    if (final) {
+	gennError("Trying to set the precision of a finalized model.");
+    }
   switch (floattype) {
      case 0:
 	ftype = toString("float");
@@ -642,6 +659,9 @@ void NNmodel::setPrecision(unsigned int floattype /**<  */)
 
 void NNmodel::setTiming(bool theTiming /**<  */)
 {
+    if (final) {
+	gennError("Trying to set timing flag in a finalized model.");
+    }
     timing= theTiming;
 }
 
@@ -652,6 +672,9 @@ void NNmodel::setTiming(bool theTiming /**<  */)
 
 void NNmodel::setSeed(unsigned int inseed /*!< the new seed  */)
 {
+    if (final) {
+	gennError("Trying to set the seed in a finalized model.");
+    }
     seed= inseed;
 }
 
@@ -663,6 +686,9 @@ void NNmodel::setSeed(unsigned int inseed /*!< the new seed  */)
 void NNmodel::setMaxConn(const string sname, /**<  */
                          unsigned int maxConnP /**<  */)
 {
+    if (final) {
+	gennError("Trying to set MaxConn in a finalized model.");
+    }
   cout << "resizing maxConn of " << sname << " to " << maxConnP << "..." << endl;
   unsigned int found= findSynapseGrp(sname);
   if (padSumSynapseKrnl.size() < found+1) padSumSynapseKrnl.resize(found+1);
@@ -717,5 +743,11 @@ void NNmodel::setGPUDevice(int device)
   chooseGPUDevice= device;
 }
 
+void NNmodel::finalize()
+{
+    //initializing learning parameters to start
+    initLearnGrps();
+    final= 1;
+}
 
 #endif

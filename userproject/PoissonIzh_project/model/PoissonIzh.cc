@@ -79,4 +79,5 @@ void modelDefinition(NNmodel &model)
   //model.setSynapseG("PNIzh1", gPNIzh1);
   model.setSeed(1234);
   model.setPrecision(FLOAT);
+  model.finalize();
 }

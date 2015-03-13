@@ -110,4 +110,5 @@ void modelDefinition(NNmodel &model)
   model.setPrecision(FLOAT);
   model.setGPUDevice(fixGPU);
   model.addNeuronPopulation("HH", NPOP, HHV, myHH_p, myHH_ini);
+  model.finalize();
 }

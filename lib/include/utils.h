@@ -64,7 +64,18 @@
 void gennError(string error)
 {
   cerr << "GeNN error: " << error << endl;
-  exit(1);
+  exit(EXIT_FAILURE);
+}
+
+//--------------------------------------------------------------------------
+/*! \brief Function called upon the detection of an error. Outputs an error message and then exits.
+ */
+//--------------------------------------------------------------------------
+
+void gennError(const char *error)
+{
+  cerr << "GeNN error: " << error << endl;
+  exit(EXIT_FAILURE);
 }
 
 //--------------------------------------------------------------------------

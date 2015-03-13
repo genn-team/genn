@@ -51,7 +51,12 @@ parameter values (common to all synapses of the population)
 \arg `double *psIni`: A C-array of double precision numbers containing initial values for the post-synaptic model variables
 \arg `double *psPara`: A C-array of double precision numbers containing parameters fo the post-snaptic model.
 
-Adding the addSynapsePopulation command to the model definition informs GeNN that there will be synapses between the named neuron populations, here between population `Pop1` and itself. The detailed conenctivity as defined by the variables `g`, we have still to define in the setup of our simulation. At this point our model definition file `tenHHRingModel.cc` should look like this
+Adding the addSynapsePopulation command to the model definition informs GeNN that there will be synapses between the named neuron populations, here between population `Pop1` and itself. The detailed conenctivity as defined by the variables `g`, we have still to define in the setup of our simulation. 
+As always, the `modelDefinition` function ends on 
+\code
+  model.finalize();
+\endcode 
+At this point our model definition file `tenHHRingModel.cc` should look like this
 \code
 // Model definintion file tenHHModel.cc
 
@@ -93,6 +98,7 @@ void modelDefinition(NNmodel &model)
     -80.0     // 1 - Erev: Reversal potential
   };
   model.addSynapsePopulation("Pop1self", NSYNAPSE, DENSE, INDIVIDUALG, NO_DELAY, EXPDECAY, "Pop1", "Pop1", s_ini, s_p, ps_ini, ps_p);
+  model.finalize();
 }
 \endcode
 

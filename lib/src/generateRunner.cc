@@ -47,10 +47,7 @@ void genRunner(NNmodel &model, //!< Model description
     unsigned int mem = 0;
     float memremsparse= 0;
     ofstream os;
-    
-    //initializing learning parameters to start
-    model.initLearnGrps();  //Putting this here for the moment. Makes more sense to call it at the end of ModelDefinition, but this leaves the initialization to the user.
-    
+        
     string SCLR_MIN;
     string SCLR_MAX;
     if (model.ftype == tS("float")) {

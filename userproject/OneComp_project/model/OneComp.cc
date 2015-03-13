@@ -58,4 +58,5 @@ void modelDefinition(NNmodel &model)
   model.activateDirectInput("Izh1", CONSTINP);
   model.setConstInp("Izh1", inpIzh1);
   model.setPrecision(FLOAT);
+  model.finalize();
 }

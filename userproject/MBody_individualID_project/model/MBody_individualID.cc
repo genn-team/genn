@@ -170,4 +170,5 @@ void modelDefinition(NNmodel &model)
 #else
     model.setTiming(FALSE);
 #endif // TIMING
+  model.finalize();
 }

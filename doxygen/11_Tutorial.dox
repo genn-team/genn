@@ -74,6 +74,11 @@ Having defined the parameter values and initial values we can now create the neu
 \note
 `TRAUBMILES` is a variable defined in the GeNN model specification that contains the index number of the pre-defined Traub & Miles model \cite Traub1991.
 
+The model definition then needs to end on calling
+\code
+model.finalize();
+\endcode
+
 This completes the model definition in this example. The complete `tenHHModel.cc` file now should look like this:
 \code
 // Model definintion file tenHHModel.cc
@@ -104,6 +109,7 @@ void modelDefinition(NNmodel &model)
     0.5961207      // 3 - prob. for K channel activation n
   };
   model.addNeuronPopulation("Pop1", 10, TRAUBMILES, p, ini);
+  model.finalize();
 }
 \endcode
 This model definition suffices to generate code for simulating the ten Hodgkin-Huxley neurons on the a GPU or CPU. The second part of a GeNN simulation is the user code that sets up the simulation, does the data handling for input and output and generally defines the numerical experiment to be run.

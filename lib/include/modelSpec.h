@@ -192,7 +192,7 @@ public:
   string name; //!< Name of the neuronal newtwork model
   string ftype; //!< Type of floating point variables (float, double, ...; default: float)
   string RNtype; //!< Underlying type for random number generation (default: long)
-  int valid; //!< Flag for whether the model has been validated (unused?)
+  int final; //!< Flag for whether the model has been finalized
   unsigned int needSt; //!< Whether last spike times are needed at all in this network model (related to STDP)
   unsigned int needSynapseDelay; //!< Whether delayed synapse conductance is required in the network
   int chooseGPUDevice;
@@ -349,6 +349,7 @@ public:
   void setSynapseClusterIndex(const string synapseGroup, int hostID, int deviceID); //!< Function for setting which host and which device a synapse group will be simulated on
 
   void initLearnGrps();
+  void finalize();
 };
 
 #endif

@@ -2,7 +2,7 @@
    Author: Thomas Nowotny
   
    Institute: Center for Computational Neuroscience and Robotics
-              University of Sussex
+              University of Susse
 	      Falmer, Brighton BN1 9QJ, UK 
   
    email to:  T.Nowotny@sussex.ac.uk
@@ -425,6 +425,9 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
     delete model;
     model = new NNmodel();
     modelDefinition(*model);
+    if (!model->final) {
+	gennError("Model was not finalized in modelDefinition(). Please call model.finalize().");
+    }
     mos << "Using device " << chosenDevice << " (" << deviceProp[chosenDevice].name << "), with up to ";
     mos << bestDeviceOccupancy << " warps of summed kernel occupancy." << endl;
     for (int kernel= 0; kernel < 3; kernel++) {
@@ -499,6 +502,9 @@ int main(int argc,     //!< number of arguments; expected to be 2
   
   NNmodel *model = new NNmodel();
   modelDefinition(*model);
+  if (!model->final) {
+      gennError("Model was not finalized in modelDefinition(). Please call model.finalize().");
+  }
   string path= toString(argv[1]);
   theDev = chooseDevice(cout, model, path);
   generate_model_runner(*model, path);

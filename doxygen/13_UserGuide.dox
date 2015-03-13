@@ -21,6 +21,8 @@ for each neuron population. Add synapse populations by:
 
 for each synapse population.
 
+The modelDefinition() needs to end with calling NNmodel::finalize().
+
 Other optional functions are explained in NNmodel class reference. At the end the function should look like this:
  
 \code
@@ -31,6 +33,7 @@ void modelDefinition(NNModel &model) {
   ...
   model.addSynapsePopulation(...);
   ...
+  model.finalize();
 }
 \endcode
 
