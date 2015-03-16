@@ -1,0 +1,6 @@
+numRecordings samplesPerRecording numSensors
+200 4 4
+sampleTimesMs
+9 16 23 30
+sensorsSelected
+2 5 7 8
