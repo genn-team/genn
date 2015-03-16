@@ -16,7 +16,7 @@ you may want to consider changing model parameters.
 
 4. The convenience function convertProbabilityToRandomNumberThreshold(float *, uint64_t *, int) was changed so that it actually converts firing probability/timestep into a threshold value for the GeNN random number generator (as its name always suggested). The previous functionality of converting a *rate* in kHz into a firing threshold number for the GeNN random number generator is now provided with the name convertRateToRandomNumberThreshold(float *, uint64_t *, int)
 
-5. Users are now required to run `NNmodel::finalize()` at the end of their model definition. I.e. if they define a model in an object called `model` of type `NNmodel`, then the last line in `modelDefinition(NNmodel &model)` should be `model.finalize()`.
+5. Every model definition function `modelDefinition()` now needs to end with calling `NNmodel::finalize()` for the defined network model. This will lock down the mode and prevent any further changes to it by the supported methods. It also triggers necessary analysis of the model structure that should only be performed once. If the `finalize()` function is not called, GeNN will issue an error and exit before code generation.
 
 Developer Side Changes
 ----

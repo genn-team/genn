@@ -65,8 +65,6 @@ in `MBody1.cc`'s `modelDefinition` function and define the macro `TIMING` in `cl
 ```
 This will have the effect that timing information is output into `OUTNAME_output/OUTNAME.timingprofile`.
 
-10. Every model definition function `modelDefinition()` now needs to end with calling NNmodel::finalize() for the defined network model. This will lock down the mode and prevent any further changes to it by the supported methods. It also triggers necessary analysis of teh model structure that should only be performed once. If the `finalize` function is not called, GeNN will issue an error and exit before code generation.
-
 Developer Side Changes
 ----
 
