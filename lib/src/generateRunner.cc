@@ -142,6 +142,7 @@ void genRunner(NNmodel &model, //!< Model description
     os << "#include <cstdio>" << ENDL;
     os << "#include <cassert>" << ENDL;
     os << "#include <stdint.h>" << ENDL;
+    os << "#include \"utils.h\"" << ENDL << ENDL;
     os << "#include \"numlib/simpleBit.h\"" << ENDL << ENDL;
     if (model.timing) os << "#include \"hr_time.cpp\"" << ENDL;
     os << ENDL;
@@ -357,6 +358,7 @@ void genRunner(NNmodel &model, //!< Model description
     os << endl << endl;
 
 
+    os << "#include \"sparseUtils.cc\"" << ENDL << ENDL;
     // include simulation kernels
     os << "#include \"runnerGPU.cc\"" << endl << endl;
     os << "#include \"neuronFnct.cc\"" << endl;
@@ -680,6 +682,22 @@ void genRunner(NNmodel &model, //!< Model description
 		os << ", dd_" << weightUpdateModels[st].varNames[k] << model.synapseName[i];
 		os << ", sizeof("  << weightUpdateModels[st].varTypes[k] << ")*(" << size << "));" << endl;       
 	    }
+	    os << "}" << endl; 
+	    os << endl;
+	    //setup up helper fn for this (specific) popn to generate sparse from dense 
+	    os << "void createSparseConnectivityFromDense" << model.synapseName[i] << "(int preN,int postN, " << model.ftype << " *denseMatrix)" << "{" << endl;
+	    os << "if (preN != " << model.neuronN[model.synapseSource[i]] << ") {" << endl;
+	    os << "    gennError(\"In createSparseConnectivityFromDense" << model.synapseName[i] << ": preN does not match the number of pre-synaptic neurons (" << model.neuronN[model.synapseSource[i]] << ").\");" << endl;
+	    os << "}" << endl;
+	    os << "if (postN != " << model.neuronN[model.synapseTarget[i]] << ") {" << endl;
+	    os << "    gennError(\"In createSparseConnectivityFromDense" << model.synapseName[i] << ": postN does not match the number of pre-synaptic neurons (" << model.neuronN[model.synapseTarget[i]] << ").\");" << endl;
+	    os << "}" << endl;
+	    
+	    os << "int connN = countEntriesAbove(denseMatrix, preN * postN, " << SCLR_MIN << ");" << endl;
+	    os << "allocate" << model.synapseName[i] << "(connN);" << endl;
+	    string wuvarName = "g" + tS(model.synapseName[i]);
+	    string sparseStructName = "C" + tS(model.synapseName[i]);
+	    os << "setSparseConnectivityFromDense(" << wuvarName << ",preN,postN,denseMatrix,&" << sparseStructName << ");" << endl;
 	    os << "}" << endl; 
 	    os << endl;
 	}
