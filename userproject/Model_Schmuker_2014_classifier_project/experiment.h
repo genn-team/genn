@@ -28,7 +28,7 @@ typedef unsigned int UINT;
 #define TOTAL_RECORDINGS 150 //How many sets of sensor readings will be presented
 #define N_FOLDING 5 //e.g. five fold folding of training vs test data  -> 80:20 split
 #define RECORDING_TIME_MS  1000 //How long is each recording in ms
-#define REPEAT_LEARNING_SET 1 //Repeat the learning set N times, for more exposure to early observations
+#define REPEAT_LEARNING_SET 2 //Repeat the learning set N times, for more exposure to early observations
 
 //learning parameters
 #define SPIKING_ACTIVITY_THRESHOLD_HZ 5 // if rate greater than threshold (set to 35 sp/s in the paper) then we can expect this neuron response to its VR contributed to winning class cluster

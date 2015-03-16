@@ -311,11 +311,6 @@ int main(int argc, char *argv[])
 	//load classes labelling the recording data sets
 	classifier.loadClassLabels();
 
-	#ifndef DEVICE_MEM_ALLOCATED_ON_DEVICE
-		//now that all SPARSE arrays have been set up on device , we can user helper fn to allocate device storage for them
-		allocateAllDeviceSparseArrays();
-	#endif
-
 	// Finally, move all the data arrays initialised across to the device
 	classifier.populateDeviceMemory();
 
@@ -501,7 +496,8 @@ int main(int argc, char *argv[])
 	fclose(overallResultsFile);
 
 	//shut down device before classifier instance destroyed
-	classifier.clearDownDevice();
+	//classifier.clearDownDevice();
+	//This is done in the classifier destructor which also clears CPU memory etc
 
 	printTextFile(overallResultsFilename);
 	printf( "End of Run %s\n", classifier.uniqueRunId.c_str());

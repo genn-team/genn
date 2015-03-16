@@ -34,6 +34,7 @@ Schmuker2014_classifier::Schmuker2014_classifier():
 correctClass(0),winningClass(0),vrData(NULL),inputRatesSize(0),t(0.0f),clearedDownDevice(false)
 {
 
+	d_maxRandomNumber = pow(2.0, (int) sizeof(uint64_t)*8-16); //work this out only once
 	modelDefinition(model);
 
 
@@ -69,7 +70,7 @@ Schmuker2014_classifier::~Schmuker2014_classifier()
 	free(plasticWeights);
 
 
-	//free mem allocated on the CPU
+	//free mem allocated on the CPU and the GENN-created GPU data
 	freeMem();
 
 
@@ -100,6 +101,9 @@ void Schmuker2014_classifier::resetDevice()
 void Schmuker2014_classifier::allocateHostAndDeviceMemory()
 {
 	allocateMem();
+	//initialise host side data (from GeNN 2 onwards, this also copies host data across to device)
+	initialize();
+
 
 	//cant do this now, don't know the sizes yet, will do individually, as connexctivty matrices are generated
 	//allocateAllSparseArrays();
@@ -114,16 +118,9 @@ void Schmuker2014_classifier::populateDeviceMemory()
 
 	printf( "populating data on the device, e.g. synapse weight arrays..\n");
 
-	//initialise host side data (from GeNN 2 onwards, this also copies host data across to device)
-	initialize();
-
 	//the sparse arrays have their own copy fn for some reason
-	#ifndef DEVICE_MEM_ALLOCATED_ON_DEVICE
-		initializeAllSparseArrays();
-	#endif
+	initializeAllSparseArrays();
 
-	//perform explicit copy to maintain compibility with GeNN 1.0 (later versions include this work within initialise() )
-	copyGToDevice();
 	copyStateToDevice();
 
 
@@ -136,11 +133,6 @@ void Schmuker2014_classifier::populateDeviceMemory()
  -------------------------------------------------------------------------- */
 void Schmuker2014_classifier::clearDownDevice()
 {
-	//free mem allocated on the CUDA device from the host i.e. cudaMalloc
-	#ifndef DEVICE_MEM_ALLOCATED_ON_DEVICE
-		freeDeviceMem();
-	#endif
-
 	// clean up memory allocated outside the model
 	CHECK_CUDA_ERRORS(cudaFree((void*)d_inputRates));
 
@@ -167,7 +159,7 @@ void Schmuker2014_classifier::update_input_data_on_device()
   NB: This should move to the device code.
 --------------------------------------------------------------------------*/
 
-UINT  Schmuker2014_classifier::convertToRateCode(float inputRateHz)
+uint64_t  Schmuker2014_classifier::convertToRateCode(float inputRateHz)
 {
 
 	/*
@@ -178,14 +170,13 @@ UINT  Schmuker2014_classifier::convertToRateCode(float inputRateHz)
 
 	 */
 
-	float prob = (float)inputRateHz  * DT/1000.0; //timestep DT is held as ms
+	double prob = (double)inputRateHz  * DT/1000.0; //timestep DT is held as ms
 
 	if (prob > 1.0)  prob = 1.0;
 
-	UINT rateCode  = prob * (float)D_MAX_RANDOM_NUM;
+	uint64_t rateCode = (uint64_t) (prob*d_maxRandomNumber);
 
 	return rateCode;
-
 
 }
 
@@ -462,7 +453,7 @@ void Schmuker2014_classifier::addInputRate(float * samplePoint,UINT timeStep)
 		float rateHz  = param_MIN_FIRING_RATE_HZ + vrResponse * (float)(param_MAX_FIRING_RATE_HZ - param_MIN_FIRING_RATE_HZ);
 
 		//convert Hz to proprietary rate code used on the device ( this code should move to device code)
-		UINT rateCode  = convertToRateCode(rateHz);
+		uint64_t rateCode  = convertToRateCode(rateHz);
 
 
 		//fill in a clusters worth with the same rate (one VR excites one cluster in RN)
@@ -711,20 +702,20 @@ void Schmuker2014_classifier::outputSpikes(FILE *f, string delim )
 {
 
 	/*
-	printf("RN spikes: %u\n",glbscntRN);
-	printf("PN spikes: %u\n",glbscntPN);
-	printf("AN spikes: %u\n",glbscntAN);
+	printf("RN spikes: %u\n",glbSpkCntRN[0]);
+	printf("PN spikes: %u\n",glbSpkCntPN[0]);
+	printf("AN spikes: %u\n",glbSpkCntAN[0]);
 	 */
 
-	for (int i= 0; i < glbscntRN; i++) {
+	for (int i= 0; i < glbSpkCntRN[0]; i++) {
 		fprintf(f, "%f%s%d\n", t, delim.c_str(), glbSpkRN[i]);
 	}
 
-	for (int i= 0; i < glbscntPN; i++) {
+	for (int i= 0; i < glbSpkCntPN[0]; i++) {
 		fprintf(f,  "%f%s%d\n", t, delim.c_str(), countRN + glbSpkPN[i] );
 	}
 
-	for (int i= 0; i < glbscntAN; i++) {
+	for (int i= 0; i < glbSpkCntAN[0]; i++) {
 		fprintf(f, "%f%s%d\n", t, delim.c_str(), countRN + countPN + glbSpkAN[i]);
 	}
 }
@@ -734,7 +725,7 @@ void Schmuker2014_classifier::outputSpikes(FILE *f, string delim )
   -------------------------------------------------------------------------- */
 void Schmuker2014_classifier::updateWeights_PN_AN()
 {
-	memcpy(gpPNAN,plasticWeights,countPNAN * sizeof(float));
+	memcpy(gPNAN,plasticWeights,countPNAN * sizeof(float));
 
 	//update to new weights on the device
 	#ifndef FLAG_RUN_ON_CPU
@@ -749,11 +740,11 @@ void Schmuker2014_classifier::updateWeights_PN_AN_on_device()
 {
 #ifdef DEVICE_MEM_ALLOCATED_ON_DEVICE
 	void *d_ptrPNAN;
-	cudaGetSymbolAddress(&d_ptrPNAN, d_gpPNAN);
-	CHECK_CUDA_ERRORS(cudaMemcpy(d_ptrPNAN, gpPNAN, countPNAN*sizeof(float), cudaMemcpyHostToDevice));
+	cudaGetSymbolAddress(&d_ptrPNAN, d_gPNAN);
+	CHECK_CUDA_ERRORS(cudaMemcpy(d_ptrPNAN, gPNAN, countPNAN*sizeof(float), cudaMemcpyHostToDevice));
 #else
 	//New version. device mem allocated using cudaMalloc from the host side
-	CHECK_CUDA_ERRORS(cudaMemcpy(d_gpPNAN, gpPNAN, countPNAN*sizeof(float), cudaMemcpyHostToDevice));
+	CHECK_CUDA_ERRORS(cudaMemcpy(d_gPNAN, gPNAN, countPNAN*sizeof(float), cudaMemcpyHostToDevice));
 #endif
 }
 
@@ -764,33 +755,23 @@ void Schmuker2014_classifier::updateWeights_PN_AN_on_device()
 void Schmuker2014_classifier::initialiseWeights_SPARSE_RN_PN()
 {
 
-#ifdef USE_SPARSE_ENCODING
-	//We use SPARSE set up because the clusters connect only to the corresponding cluster in the second population
-	//Because the SPARSE format is unintutive, We will start by creatiing an ALL-TO_ALL array which addresses the task
-	// we will then convert this to SPARSE (effectively, this filters out all the zero weight connections)
-	float * tmp_gpRNPN = new float[countRN * countPN]; //put it on the heap, might be v large
-#else
-	float * tmp_gpRNPN = gpRNPN; //for DENSE, point at the predefined all-all-array
-#endif
+
+	float * tmp_gRNPN = gRNPN; //for DENSE, point at the predefined all-all-array
 
 	//for each synapse from population X to pop Y
 	for (UINT x= 0; x < countRN; x++) {
 		for (UINT y= 0; y < countPN; y++) {
 			UINT synapseIdx = x * countPN + y;
-			tmp_gpRNPN[synapseIdx] = 0.0f; //default to no connection
+			tmp_gRNPN[synapseIdx] = 0.0f; //default to no connection
 			if  (getClusterIndex(x,CLUST_SIZE_RN) == getClusterIndex(y,CLUST_SIZE_PN)) { //same cluster
 				if (randomEventOccurred(param_CONNECTIVITY_RN_PN)) {
-					tmp_gpRNPN[synapseIdx]  = param_WEIGHT_RN_PN * param_GLOBAL_WEIGHT_SCALING;
+					tmp_gRNPN[synapseIdx]  = param_WEIGHT_RN_PN * param_GLOBAL_WEIGHT_SCALING;
 				}
 			}
 		}
 	}
-	//checkContents("RNPN Connections",tmp_gpRNPN,countRN * countPN,countPN,data_type_float,2);
+	//checkContents("RNPN Connections",tmp_gRNPN,countRN * countPN,countPN,data_type_float,2);
 
-#ifdef USE_SPARSE_ENCODING
-	createSparseConnectivityFromDense(countRN,countPN,tmp_gpRNPN,&gRNPN, false);
-	delete[] tmp_gpRNPN; //don't need now
-#endif
 
 	printf("Initialised weights for  SPARSE 1:1 subcluster-subcluster synapses RN-PN.\n");
 }
@@ -802,8 +783,8 @@ void Schmuker2014_classifier::initialiseWeights_SPARSE_RN_PN()
   -------------------------------------------------------------------------- */
 void Schmuker2014_classifier::initialiseWeights_WTA_PN_PN()
 {
-	createWTAConnectivity(gpPNPN, countPN, CLUST_SIZE_PN, param_WEIGHT_WTA_PN_PN * param_GLOBAL_WEIGHT_SCALING, param_CONNECTIVITY_PN_PN);
-	//checkContents("PN PN Connections",gpPNPN,countPN*countPN,countPN,data_type_float,1," ");
+	createWTAConnectivity(gPNPN, countPN, CLUST_SIZE_PN, param_WEIGHT_WTA_PN_PN * param_GLOBAL_WEIGHT_SCALING, param_CONNECTIVITY_PN_PN);
+	//checkContents("PN PN Connections",gPNPN,countPN*countPN,countPN,data_type_float,1," ");
 }
 
 /*  -------------------------------------------------------------------------- 
@@ -818,16 +799,16 @@ void Schmuker2014_classifier::initialiseWeights_DENSE_PN_AN()
 			if (randomEventOccurred(param_CONNECTIVITY_PN_AN)) {
 				//set weight randomly between limits
 				float weight  = param_MIN_WEIGHT_PN_AN  +  getRand0to1() * (param_MAX_WEIGHT_PN_AN - param_MIN_WEIGHT_PN_AN);
-				gpPNAN[i*countAN + j] = weight * param_GLOBAL_WEIGHT_SCALING;
+				gPNAN[i*countAN + j] = weight * param_GLOBAL_WEIGHT_SCALING;
 			} else {
-				gpPNAN[i*countAN + j] = 0.0; //zero weighted = no connection
+				gPNAN[i*countAN + j] = 0.0; //zero weighted = no connection
 			}
 		}
 	}
-	//checkContents("PN-AN Connections",gpPNAN,countPN*countAN,countAN,data_type_float,3);
+	//checkContents("PN-AN Connections",gPNAN,countPN*countAN,countAN,data_type_float,3);
 
 	//initialise plastic weights as a copy of PN-AN. These weights are updated periodically during a presention but not used in classifier until end of presentation
-	memcpy(plasticWeights,gpPNAN,countPNAN * sizeof(float));
+	memcpy(plasticWeights,gPNAN,countPNAN * sizeof(float));
 
 }
 /*  --------------------------------------------------------------------------   
@@ -835,7 +816,7 @@ void Schmuker2014_classifier::initialiseWeights_DENSE_PN_AN()
   -------------------------------------------------------------------------- */
 void Schmuker2014_classifier::initialiseWeights_WTA_AN_AN()
 {
-	createWTAConnectivity(gpANAN, countAN, CLUST_SIZE_AN, param_WEIGHT_WTA_AN_AN * param_GLOBAL_WEIGHT_SCALING, param_CONNECTIVITY_AN_AN);
+	createWTAConnectivity(gANAN, countAN, CLUST_SIZE_AN, param_WEIGHT_WTA_AN_AN * param_GLOBAL_WEIGHT_SCALING, param_CONNECTIVITY_AN_AN);
 }
 
 /*  --------------------------------------------------------------------------   
@@ -844,10 +825,10 @@ void Schmuker2014_classifier::initialiseWeights_WTA_AN_AN()
 void Schmuker2014_classifier::initialiseInputData()
 {
 	//allocate storage for the set of input data (rates) to be processed
-	this->inputRatesSize = countRN * sizeof(unsigned int) * timestepsPerRecording;
+	this->inputRatesSize = countRN * sizeof(uint64_t) * timestepsPerRecording;
 
 	//allocate memory on the CPU to hold the current input dataset
-	this->inputRates = new unsigned int[timestepsPerRecording * countRN];
+	this->inputRates = new uint64_t[timestepsPerRecording * countRN];
 
 	//allocate corresponding memory on the GPU device to hold the input dataset
 	CHECK_CUDA_ERRORS(cudaMalloc((void**) &d_inputRates, inputRatesSize));
@@ -1021,7 +1002,7 @@ total up the spikes on every PN neuron during the full run time. Needed for the 
 -------------------------------------------------------------------------- */
 void Schmuker2014_classifier::updateIndividualSpikeCountPN() 
 {
-	for (int i= 0; i < glbscntPN; i++) {
+	for (int i= 0; i < glbSpkCntPN[0]; i++) {
 		UINT neuronIdx = glbSpkPN[i]; //this array lists by index the PN neurons with "spike events" during last timestep
 		individualSpikeCountPN[neuronIdx] = individualSpikeCountPN[neuronIdx]  + 1; //increment count for this neuron
 	}
@@ -1048,7 +1029,7 @@ totals up the spikes within each AN cluster during the plasticity window. Needed
 -------------------------------------------------------------------------- */
 void Schmuker2014_classifier::updateClusterSpikeCountAN() 
 {
-	for (int i= 0; i < glbscntAN; i++) {
+	for (int i= 0; i < glbSpkCntAN[0]; i++) {
 		UINT neuronIdx = glbSpkAN[i]; //this array lists by index the AN neurons that "spiked" during last timestep
 		UINT classId = getClassCluster(neuronIdx);
 		clusterSpikeCountAN[classId] = clusterSpikeCountAN[classId] + 1; //increment count for this cluster/class

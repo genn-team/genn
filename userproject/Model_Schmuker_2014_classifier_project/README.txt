@@ -18,7 +18,7 @@ cd to this project directory (userproject/Model_Schmuker_2014_project)
 
 To build the model using the GENN meta compiler type:-
 
- buildmodel Model_Schmuker_2014_classifier 0
+ buildmodel.sh Model_Schmuker_2014_classifier 0
 
 (change the 0 to 1 for a debug build)
 
@@ -34,11 +34,7 @@ Once it compiles you should be able to run the classifier against the included I
 
 type
 
- ./bin/linux/release/experiment .
-
-or for debug build
-
- ./bin/linux/debug/experiment .
+ ./experiment .
 
 
 This is how it works roughly.

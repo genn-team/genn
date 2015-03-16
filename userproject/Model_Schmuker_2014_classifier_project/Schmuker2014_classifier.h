@@ -27,10 +27,11 @@ See "A neuromorphic network for generic multivariate data classification, Michae
 class Schmuker2014_classifier
 {
  public:
+	double d_maxRandomNumber; //number used to scale correcly scale poission neuron firing probabilities
 	float t; //absolute time elapsed for network
 
 	NNmodel model;
-	unsigned int *inputRates; //dataset (2D array) of required poisson neuron firing rates that represent the input data to the network
+	uint64_t *inputRates; //dataset (2D array) of required poisson neuron firing rates that represent the input data to the network
 	unsigned int inputRatesSize; //cache the size of the input data, this is used at multiple times
 	float * vrData; //2D array of vectors in feature space that will act as the virtual receptor (VR) points
 	unsigned int *classLabel; //array holding set of classes labelling the recordings, indexed by recordingIdx
@@ -42,7 +43,7 @@ class Schmuker2014_classifier
 
 	//------------------------------------------------------------------------
 	// on the device:
-	unsigned int *d_inputRates; //copy of inputRates that will be passed en block to device, which will use a specified offset to select the particular vector of rates
+	uint64_t *d_inputRates; //copy of inputRates that will be passed en block to device, which will use a specified offset to select the particular vector of rates
 
 	//------------------------------------------------------------------------
 	//convenience holders for getting population sizes
@@ -119,7 +120,7 @@ class Schmuker2014_classifier
 	void loadClassLabels();
 
 	void addInputRate(float * samplePoint,UINT timeStep);
-	UINT convertToRateCode(float inputRateHz) ;
+	uint64_t convertToRateCode(float inputRateHz) ;
 	float calculateVrResponse(float * samplePoint, float * vrPoint);
 
 	void setMaxMinSampleDistances();
