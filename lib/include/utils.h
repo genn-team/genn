@@ -291,7 +291,7 @@ void prepareStandardModels()
     }\n");
 
   n.thresholdConditionCode = tS("$(V) >= $(Vspike)");
-
+  n.dps= NULL;
   nModels.push_back(n);
   POISSONNEURON= nModels.size()-1;
 
@@ -335,6 +335,7 @@ void prepareStandardModels()
     }\n");
 
   n.thresholdConditionCode = tS("$(V) > 0.0");//TODO check this, to get better value
+  n.dps= NULL;
   nModels.push_back(n);
   TRAUBMILES_FAST= nModels.size()-1;
 
@@ -381,7 +382,7 @@ void prepareStandardModels()
     }\n");
 
   n.thresholdConditionCode = tS("$(V) > 0");//TODO check this, to get better value
-
+  n.dps= NULL;
   nModels.push_back(n);
   TRAUBMILES_ALTERNATIVE= nModels.size()-1;
 
@@ -429,7 +430,8 @@ void prepareStandardModels()
       $(V)+= Imem/$(C)*mdt;\n\
     }\n");
 
-  n.thresholdConditionCode = tS("$(V) > 0.0");//TODO check this, to get better value
+  n.thresholdConditionCode = tS("$(V) > 0.0");//TODO check this, to get better value.
+  n.dps= NULL;
   nModels.push_back(n);
   TRAUBMILES_SAFE= nModels.size()-1;
   TRAUBMILES= TRAUBMILES_SAFE;
@@ -480,6 +482,7 @@ void prepareStandardModels()
     }\n");
 
   n.thresholdConditionCode = tS("$(V) > 0.0");//TODO check this, to get better value
+  n.dps= NULL;
   nModels.push_back(n);
   TRAUBMILES_PSTEP= nModels.size()-1;
 
@@ -549,9 +552,21 @@ void prepareStandardModels()
     //}\n\
     ");
   n.thresholdConditionCode = tS("$(V) > 29.99");
+  n.dps= NULL;
   nModels.push_back(n);
   IZHIKEVICH_V= nModels.size()-1;
   
+  //Spike Source ("empty" neuron that does nothing - spikes need to be copied in explicitly from host code)
+  n.varNames.clear();
+  n.varTypes.clear();
+  n.pNames.clear();
+  n.dpNames.clear(); 
+  n.simCode= tS("");
+  n.thresholdConditionCode = tS("0");
+  n.dps= NULL;
+  nModels.push_back(n);
+  SPIKESOURCE= nModels.size()-1;
+
   #include "extra_neurons.h"
 
 }

@@ -55,6 +55,6 @@ int optimiseBlockSize = 1; //!< Flag for signalling whether or not block size op
 //vector<int> neuronBlkSz; //!< Global vector containing the optimum neuron kernel block size for each device
 int UIntSz = sizeof(unsigned int) * 8; //!< size of the unsigned int variable type on the local architecture
 int logUIntSz = (int) (logf((float) UIntSz) / logf(2.0f) + 1e-5f); //!< logarithm of the size of the unsigned int variable type on the local architecture
-float asGoodAsZero = 1e-19; //!< Global variable that is used when detecting close to zero values, for example when setting sparse connectivity from a dense matrix
+double asGoodAsZero = 1e-19; //!< Global variable that is used when detecting close to zero values, for example when setting sparse connectivity from a dense matrix
 
 #endif  // _GLOBAL_H_
