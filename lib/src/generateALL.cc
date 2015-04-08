@@ -240,20 +240,30 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
       CHECK_CU_ERRORS(cuModuleLoad(&module, fname.c_str()));
       cudaFuncAttributes krnlAttr[3];
       CUfunction kern;
-      CHECK_CU_ERRORS(cuModuleGetFunction(&kern, module, "calcNeurons"));
-      cudaFuncGetAttributesDriver(&krnlAttr[2], kern);
+#ifdef BLOCKSZ_DEBUG
+      cerr << "BLOCKSZ_DEBUG: ptxas info for calcSynapses ..." << endl;
+#endif
       CHECK_CU_ERRORS(cuModuleGetFunction(&kern, module, "calcSynapses"));
       cudaFuncGetAttributesDriver(&krnlAttr[0], kern);
       CUresult res= cuModuleGetFunction(&kern, module, "learnSynapsesPost");
       int learnKrnl;
       if (res == CUDA_SUCCESS) {
+#ifdef BLOCKSZ_DEBUG
+      cerr << "BLOCKSZ_DEBUG: ptxas info for learnSynapsesPost ..." << endl;
+#endif
 	  cudaFuncGetAttributesDriver(&krnlAttr[1], kern);
 	  learnKrnl= 1;
       }
       else {
 	  learnKrnl= 0;
       }
-     
+#ifdef BLOCKSZ_DEBUG
+      cerr << "BLOCKSZ_DEBUG: ptxas info for calcNeurons ..." << endl;
+#endif
+      CHECK_CU_ERRORS(cuModuleGetFunction(&kern, module, "calcNeurons"));
+      cudaFuncGetAttributesDriver(&krnlAttr[2], kern);
+      CHECK_CU_ERRORS(cuModuleUnload(module));
+    
       // This data is required for block size optimisation, but cannot be found in deviceProp.
       float warpAllocGran, regAllocGran, smemAllocGran, maxBlocksPerSM;
       if (deviceProp[device].major == 1) {
