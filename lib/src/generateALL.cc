@@ -32,6 +32,63 @@
 #include <sys/stat.h> // needed for mkdir
 #endif
 
+#define BLOCKSZ_DEBUG
+
+/*! \brief Macro definition for error checking when using the driver API */
+
+#define CHECK_CU_ERRORS(call)					           \
+{								      	   \
+  CUresult error = call;						   \
+  if (error != CUDA_SUCCESS)						   \
+  {                                                                        \
+    const char *errStr;		                                           \
+    cuGetErrorName(error, &errStr);	       				   \
+    fprintf(stderr, "%s: %i: cuda driver error %i: %s\n",	       	   \
+	    __FILE__, __LINE__, (int)error, errStr);	                   \
+    exit(EXIT_FAILURE);						           \
+  }									   \
+}
+
+CUresult cudaFuncGetAttributesDriver(cudaFuncAttributes *attr, CUfunction kern) {
+    int tmp;
+    CHECK_CU_ERRORS(cuFuncGetAttribute(&tmp, CU_FUNC_ATTRIBUTE_MAX_THREADS_PER_BLOCK, kern));
+#ifdef BLOCKSZ_DEBUG
+      cerr << "BLOCKSZ_DEBUG: CU_FUNC_ATTRIBUTE_MAX_THREADS_PER_BLOCK: " << tmp << endl;
+#endif
+      attr->maxThreadsPerBlock= tmp;
+      CHECK_CU_ERRORS(cuFuncGetAttribute(&tmp, CU_FUNC_ATTRIBUTE_SHARED_SIZE_BYTES, kern));
+#ifdef BLOCKSZ_DEBUG
+      cerr << "BLOCKSZ_DEBUG: CU_FUNC_ATTRIBUTE_SHARED_SIZE_BYTES: " << tmp << endl;
+#endif
+      attr->sharedSizeBytes= tmp;
+      CHECK_CU_ERRORS(cuFuncGetAttribute(&tmp, CU_FUNC_ATTRIBUTE_CONST_SIZE_BYTES, kern));
+#ifdef BLOCKSZ_DEBUG
+      cerr << "BLOCKSZ_DEBUG: CU_FUNC_ATTRIBUTE_CONST_SIZE_BYTES: " << tmp << endl;
+#endif
+      attr->constSizeBytes= tmp;
+      CHECK_CU_ERRORS(cuFuncGetAttribute(&tmp, CU_FUNC_ATTRIBUTE_LOCAL_SIZE_BYTES, kern));
+#ifdef BLOCKSZ_DEBUG
+      cerr << "BLOCKSZ_DEBUG: CU_FUNC_ATTRIBUTE_LOCAL_SIZE_BYTES: " << tmp << endl;
+#endif
+      attr->localSizeBytes= tmp;
+      CHECK_CU_ERRORS(cuFuncGetAttribute(&tmp, CU_FUNC_ATTRIBUTE_NUM_REGS, kern));
+#ifdef BLOCKSZ_DEBUG
+      cerr << "BLOCKSZ_DEBUG: CU_FUNC_ATTRIBUTE_NUM_REGS: " << tmp << endl;
+#endif
+      attr->numRegs= tmp;
+      CHECK_CU_ERRORS(cuFuncGetAttribute(&tmp, CU_FUNC_ATTRIBUTE_PTX_VERSION, kern));
+#ifdef BLOCKSZ_DEBUG
+      cerr << "BLOCKSZ_DEBUG: CU_FUNC_ATTRIBUTE_PTX_VERSION: " << tmp << endl;
+#endif
+      attr->ptxVersion= tmp;
+      CHECK_CU_ERRORS(cuFuncGetAttribute(&tmp, CU_FUNC_ATTRIBUTE_BINARY_VERSION, kern));
+#ifdef BLOCKSZ_DEBUG
+      cerr << "BLOCKSZ_DEBUG: CU_FUNC_ATTRIBUTE_BINARY_VERSION: " << tmp << endl;
+#endif
+      attr->binaryVersion= tmp;
+      return CUDA_SUCCESS;
+}
+
 
 /*! \brief This function will call the necessary sub-functions to generate the code for simulating a model. */
 
@@ -132,7 +189,7 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
       else {
 	      groupSize[0].push_back(model->neuronN[model->synapseTarget[group]]);
       }
-      if (model->synapseType[group] == LEARN1SYNAPSE) {
+      if (model->synapseType[group] == LEARN1SYNAPSE) {     // TODO: this needs updating where learning is detected properly!
 	      groupSize[1].push_back(model->neuronN[model->synapseSource[group]]);
       }
     }
@@ -170,17 +227,33 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
 #endif
       mos << command.str() << endl;
 
-#ifdef _WIN32
-      FILE *nvccPipe = _popen(command.str().c_str(), "r");
-#else // UNIX
-      FILE *nvccPipe = popen(command.str().c_str(), "r");
-#endif
-
-      if (!nvccPipe) {
-	cerr << "ERROR: failed to open nvcc pipe" << endl;
-	exit(EXIT_FAILURE);
+      system(command.str().c_str());
+// test a different way of obtaining ptxas info.
+      CUdevice cuDevice;
+      CUcontext cuContext;
+      CHECK_CU_ERRORS(cuDeviceGet(&cuDevice, theDev));
+      CHECK_CU_ERRORS(cuCtxCreate(&cuContext, 0, cuDevice));
+      CHECK_CU_ERRORS(cuCtxSetCurrent(cuContext));
+      CUmodule module;
+      string fname;
+      fname= tS(getenv("GENN_PATH")) +"/lib/runner.cubin";
+      CHECK_CU_ERRORS(cuModuleLoad(&module, fname.c_str()));
+      cudaFuncAttributes krnlAttr[3];
+      CUfunction kern;
+      CHECK_CU_ERRORS(cuModuleGetFunction(&kern, module, "calcNeurons"));
+      cudaFuncGetAttributesDriver(&krnlAttr[2], kern);
+      CHECK_CU_ERRORS(cuModuleGetFunction(&kern, module, "calcSynapses"));
+      cudaFuncGetAttributesDriver(&krnlAttr[0], kern);
+      CUresult res= cuModuleGetFunction(&kern, module, "learnSynapsesPost");
+      int learnKrnl;
+      if (res == CUDA_SUCCESS) {
+	  cudaFuncGetAttributesDriver(&krnlAttr[1], kern);
+	  learnKrnl= 1;
       }
-
+      else {
+	  learnKrnl= 0;
+      }
+     
       // This data is required for block size optimisation, but cannot be found in deviceProp.
       float warpAllocGran, regAllocGran, smemAllocGran, maxBlocksPerSM;
       if (deviceProp[device].major == 1) {
@@ -213,135 +286,97 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
       mos << "BLOCKSZ_DEBUG: maxBlocksPerSM= " <<  maxBlocksPerSM << endl;
 #endif
 
-      // Read pipe until reg / smem usage is found, then calculate optimum block size for each kernel.
       int kernel= 0;
-      while (fgets(buffer, 1024, nvccPipe) != NULL) {
-	mos << buffer;
-	if (strstr(buffer, "calcSynapses") != NULL) {
-	  kernel= 0;
-	}
-	else if (strstr(buffer, "learnSynapses") != NULL) {
-	  kernel= 1;
-	}
-	else if (strstr(buffer, "calcNeurons") != NULL) {
-	  kernel= 2;
-	}
-	if (strncmp(buffer, "ptxas : info : Used", 19) == 0) {
-	  ptxInfoFound = 1;
-	  ptxInfo.str("");
-	  ptxInfo << buffer;
-	  ptxInfo >> junk >> junk >> junk >> junk >> junk >> reqRegs >> junk >> reqSmem;
-	}
-	else if (strncmp(buffer, "ptxas info    : Used", 20) == 0) {
-	  ptxInfoFound = 1;
-	  ptxInfo.str("");
-	  ptxInfo << buffer;
-	  ptxInfo >> junk >> junk >> junk >> junk >> reqRegs >> junk >> reqSmem;
-	}
-	if ((strncmp(buffer, "ptxas : info : Used", 19) == 0) || (strncmp(buffer, "ptxas info    : Used", 20)) == 0) {
-	  mos << "kernel: " << kernelName[kernel] << ", regs needed: " << reqRegs << ", smem needed: " << reqSmem << endl;
-
-	  // Test all block sizes (in warps) up to [max warps per block].
-	  for (int blkSz = 1, mx= deviceProp[device].maxThreadsPerBlock / warpSize; blkSz <= mx; blkSz++) {
+      for (int kernel= 0; kernel < 3; kernel++) {
+	  if ((kernel != 1) || (learnKrnl)) {
+	      reqRegs= krnlAttr[kernel].numRegs;
+	      reqSmem= krnlAttr[kernel].sharedSizeBytes;
+	      for (int blkSz = 1, mx= deviceProp[device].maxThreadsPerBlock / warpSize; blkSz <= mx; blkSz++) {
+		  
+#ifdef BLOCKSZ_DEBUG
+		  mos << "BLOCKSZ_DEBUG: Candidate block size: " << blkSz*warpSize << endl;
+#endif
+		  // BLOCK LIMIT DUE TO THREADS
+		  blockLimit = floor((float) deviceProp[device].maxThreadsPerMultiProcessor/warpSize/blkSz);
+		  
+#ifdef BLOCKSZ_DEBUG
+		  mos << "BLOCKSZ_DEBUG: Block limit due to maxThreadsPerMultiProcessor: " << blockLimit << endl;
+#endif
+		  if (blockLimit > maxBlocksPerSM) blockLimit = maxBlocksPerSM;
+		  
+#ifdef BLOCKSZ_DEBUG
+		  mos << "BLOCKSZ_DEBUG: Block limit corrected for maxBlocksPerSM: " << blockLimit << endl;
+#endif
+		  mainBlockLimit = blockLimit;
+		  
+		  // BLOCK LIMIT DUE TO REGISTERS
+		  if (deviceProp[device].major == 1) { // if register allocation is per block
+		      blockLimit = ceil(blkSz/warpAllocGran)*warpAllocGran;
+		      blockLimit = ceil(blockLimit*reqRegs*warpSize/regAllocGran)*regAllocGran;
+		      blockLimit = floor(deviceProp[device].regsPerBlock/blockLimit);
+		  }
+		  else { // if register allocation is per warp
+		      blockLimit = ceil(reqRegs*warpSize/regAllocGran)*regAllocGran;
+		      blockLimit = floor(deviceProp[device].regsPerBlock/blockLimit/warpAllocGran)*warpAllocGran;
+		      blockLimit = floor(blockLimit/blkSz);
+		  }
+		  
+#ifdef BLOCKSZ_DEBUG
+		  mos << "BLOCKSZ_DEBUG: Block limit due to registers (device major " << deviceProp[device].major << "): " << blockLimit << endl;
+#endif
+		  
+		  if (blockLimit < mainBlockLimit) mainBlockLimit= blockLimit;
+		  
+		  // BLOCK LIMIT DUE TO SHARED MEMORY
+		  blockLimit = ceil(reqSmem/smemAllocGran)*smemAllocGran;
+		  blockLimit = floor(deviceProp[device].sharedMemPerBlock/blockLimit);
+		  
+#ifdef BLOCKSZ_DEBUG
+		  mos << "BLOCKSZ_DEBUG: Block limit due to shared memory: " << blockLimit << endl;
+#endif
+		  
+		  if (blockLimit < mainBlockLimit) mainBlockLimit= blockLimit;
+		  
+		  // The number of thread blocks required to simulate all groups
+		  requiredBlocks = 0;
+		  for (int group = 0; group < groupSize[kernel].size(); group++) {
+		      requiredBlocks+= ceil(((float) groupSize[kernel][group])/(blkSz*warpSize));
+		  }
+#ifdef BLOCKSZ_DEBUG
+		  mos << "BLOCKSZ_DEBUG: Required blocks (according to padded sum): " << requiredBlocks << endl;
+#endif
+		  
+		  // Use a small block size if it allows all groups to occupy the device concurrently
+		  if (requiredBlocks <= (mainBlockLimit*deviceProp[device].multiProcessorCount)) {
+		      bestBlkSz[kernel][device] = (unsigned int) blkSz*warpSize;
+		      deviceOccupancy[kernel][device]= blkSz*mainBlockLimit*deviceProp[device].multiProcessorCount;
+		      smallModel[kernel][device] = 1;
 
 #ifdef BLOCKSZ_DEBUG
-	    mos << "BLOCKSZ_DEBUG: Candidate block size: " << blkSz*warpSize << endl;
+		      mos << "BLOCKSZ_DEBUG: Small model situation detected; bestBlkSz: " << bestBlkSz[kernel][device] << endl;
+		      mos << "BLOCKSZ_DEBUG: ... setting smallModel[" << kernel << "][" << device << "] to 1" << endl;
 #endif
-	    // BLOCK LIMIT DUE TO THREADS
-	    blockLimit = floor((float) deviceProp[device].maxThreadsPerMultiProcessor/warpSize/blkSz);
-
+		      break; // for small model the first (smallest) block size allowing it is chosen
+		  }
+		  
+		  // Update the best warp occupancy and the block size which enables it.
+		  int newOccupancy= blkSz*mainBlockLimit*deviceProp[device].multiProcessorCount;
+		  if (newOccupancy > deviceOccupancy[kernel][device]) {
+		      bestBlkSz[kernel][device] = (unsigned int) blkSz*warpSize; 
+		      deviceOccupancy[kernel][device]= newOccupancy;
+		      
 #ifdef BLOCKSZ_DEBUG
-	    mos << "BLOCKSZ_DEBUG: Block limit due to maxThreadsPerMultiProcessor: " << blockLimit << endl;
+		      mos << "BLOCKSZ_DEBUG: Small model not enabled; device occupancy criterion; deviceOccupancy " << deviceOccupancy[kernel][device] << "; blocksize for " << kernelName[kernel] << ": " << (unsigned int) blkSz * warpSize << endl;
 #endif
-	    if (blockLimit > maxBlocksPerSM) blockLimit = maxBlocksPerSM;
-
-#ifdef BLOCKSZ_DEBUG
-	    mos << "BLOCKSZ_DEBUG: Block limit corrected for maxBlocksPerSM: " << blockLimit << endl;
-#endif
-	    mainBlockLimit = blockLimit;
-
-	    // BLOCK LIMIT DUE TO REGISTERS
-	    if (deviceProp[device].major == 1) { // if register allocation is per block
-	      blockLimit = ceil(blkSz/warpAllocGran)*warpAllocGran;
-	      blockLimit = ceil(blockLimit*reqRegs*warpSize/regAllocGran)*regAllocGran;
-	      blockLimit = floor(deviceProp[device].regsPerBlock/blockLimit);
-	    }
-	    else { // if register allocation is per warp
-	      blockLimit = ceil(reqRegs*warpSize/regAllocGran)*regAllocGran;
-	      blockLimit = floor(deviceProp[device].regsPerBlock/blockLimit/warpAllocGran)*warpAllocGran;
-	      blockLimit = floor(blockLimit/blkSz);
-	    }
-
-#ifdef BLOCKSZ_DEBUG
-	    mos << "BLOCKSZ_DEBUG: Block limit due to registers (device major " << deviceProp[device].major << "): " << blockLimit << endl;
-#endif
-
-	    if (blockLimit < mainBlockLimit) mainBlockLimit= blockLimit;
-
-	    // BLOCK LIMIT DUE TO SHARED MEMORY
-	    blockLimit = ceil(reqSmem/smemAllocGran)*smemAllocGran;
-	    blockLimit = floor(deviceProp[device].sharedMemPerBlock/blockLimit);
-
-#ifdef BLOCKSZ_DEBUG
-	    mos << "BLOCKSZ_DEBUG: Block limit due to shared memory: " << blockLimit << endl;
-#endif
-
-	    if (blockLimit < mainBlockLimit) mainBlockLimit= blockLimit;
-
-	    // The number of thread blocks required to simulate all groups
-	    requiredBlocks = 0;
-	    for (int group = 0; group < groupSize[kernel].size(); group++) {
-	      requiredBlocks+= ceil(((float) groupSize[kernel][group])/(blkSz*warpSize));
-	    }
-#ifdef BLOCKSZ_DEBUG
-	    mos << "BLOCKSZ_DEBUG: Required blocks (according to padded sum): " << requiredBlocks << endl;
-#endif
-
-	    // Use a small block size if it allows all groups to occupy the device concurrently
-	    if (requiredBlocks <= (mainBlockLimit*deviceProp[device].multiProcessorCount)) {
-	      bestBlkSz[kernel][device] = (unsigned int) blkSz*warpSize;
-	      deviceOccupancy[kernel][device]= blkSz*mainBlockLimit*deviceProp[device].multiProcessorCount;
-	      smallModel[kernel][device] = 1;
-
-#ifdef BLOCKSZ_DEBUG
-	      mos << "BLOCKSZ_DEBUG: Small model situation detected; bestBlkSz: " << bestBlkSz[kernel][device] << endl;
-	      mos << "BLOCKSZ_DEBUG: ... setting smallModel[" << kernel << "][" << device << "] to 1" << endl;
-#endif
-	      break; // for small model the first (smallest) block size allowing it is chosen
-	    }
-	    
-	    // Update the best warp occupancy and the block size which enables it.
-	    int newOccupancy= blkSz*mainBlockLimit*deviceProp[device].multiProcessorCount;
-	    if (newOccupancy > deviceOccupancy[kernel][device]) {
-	      bestBlkSz[kernel][device] = (unsigned int) blkSz*warpSize; 
-	      deviceOccupancy[kernel][device]= newOccupancy;
-
-#ifdef BLOCKSZ_DEBUG
-	      mos << "BLOCKSZ_DEBUG: Small model not enabled; device occupancy criterion; deviceOccupancy " << deviceOccupancy[kernel][device] << "; blocksize for " << kernelName[kernel] << ": " << (unsigned int) blkSz * warpSize << endl;
-#endif
-	    }
+		  }
+	      }
 	  }
-	}
       }
-
-      // Close the NVCC pipe after each invocation.
-#ifdef _WIN32
-      _pclose(nvccPipe);
-#else // UNIX
-      pclose(nvccPipe);
-#endif
-
-    }
-
-    if (!ptxInfoFound) {
-      cerr << "ERROR: did not find any PTX info" << endl;
-      cerr << "ensure nvcc is on your $PATH, and fix any NVCC errors listed above" << endl;
-      exit(EXIT_FAILURE);
-    }
-
-    // now decide the device ...
-    int anySmall= 0;
-    int *smallModelCnt= new int[deviceCount];
+   }
+   
+   // now decide the device ...
+   int anySmall= 0;
+   int *smallModelCnt= new int[deviceCount];
     int *sumOccupancy= new int[deviceCount];
     float smVersion, bestSmVersion = 0.0;
     int bestSmallModelCnt= 0;

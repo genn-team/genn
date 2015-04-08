@@ -73,9 +73,8 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 	}
     }
 
-  
     // kernel header
-    os << "__global__ void calcNeurons(";
+    os << "extern \"C\" __global__ void calcNeurons(";
     for (int i = 0; i < model.neuronGrpN; i++) {
 	nt = model.neuronType[i];
 
@@ -692,7 +691,7 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 
 
     // synapse kernel header
-    os << "__global__ void calcSynapses(" << ENDL;
+    os << "extern \"C\" __global__ void calcSynapses(" << ENDL;
     for (int i = 0; i < model.synapseGrpN; i++) {
 	synt = model.synapseType[i];
 	for (int k = 0, l = weightUpdateModels[synt].extraGlobalSynapseKernelParameters.size(); k < l; k++) {
@@ -875,7 +874,7 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 	numOfBlocks = model.padSumLearnN[model.lrnGroups - 1] / learnBlkSz;
   
 	// Kernel header
-	os << "__global__ void learnSynapsesPost(" << ENDL;
+	os << "extern \"C\" __global__ void learnSynapsesPost(" << ENDL;
 	for (int i=0; i< model.synapseName.size(); i++){
 	    unsigned int synt= model.synapseType[i];
 	    for (int k= 0, l= weightUpdateModels[synt].extraGlobalSynapseKernelParameters.size(); k < l; k++) {

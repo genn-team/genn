@@ -29,6 +29,7 @@ This global header file also takes care of including some generally used cuda su
 #include <sstream>
 #include <vector>
 #include <cmath>
+#include <cuda.h>
 #include <cuda_runtime.h>
 #include "toString.h"
 #include <stdint.h>
