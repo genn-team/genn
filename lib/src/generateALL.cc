@@ -240,28 +240,41 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
       CHECK_CU_ERRORS(cuModuleLoad(&module, fname.c_str()));
       cudaFuncAttributes krnlAttr[3];
       CUfunction kern;
+      CUresult res;
+      int KrnlExist[3];
 #ifdef BLOCKSZ_DEBUG
       cerr << "BLOCKSZ_DEBUG: ptxas info for calcSynapses ..." << endl;
 #endif
-      CHECK_CU_ERRORS(cuModuleGetFunction(&kern, module, "calcSynapses"));
-      cudaFuncGetAttributesDriver(&krnlAttr[0], kern);
-      CUresult res= cuModuleGetFunction(&kern, module, "learnSynapsesPost");
-      int learnKrnl;
+      res= cuModuleGetFunction(&kern, module, "calcSynapses");
+      if (res == CUDA_SUCCESS) {
+	  cudaFuncGetAttributesDriver(&krnlAttr[0], kern);
+	  KrnlExist[0]= 1;
+      }
+      else {
+	  KrnlExist[0]= 0;
+      }
+      res= cuModuleGetFunction(&kern, module, "learnSynapsesPost");
       if (res == CUDA_SUCCESS) {
 #ifdef BLOCKSZ_DEBUG
       cerr << "BLOCKSZ_DEBUG: ptxas info for learnSynapsesPost ..." << endl;
 #endif
 	  cudaFuncGetAttributesDriver(&krnlAttr[1], kern);
-	  learnKrnl= 1;
+	  KrnlExist[1]= 1;
       }
       else {
-	  learnKrnl= 0;
+	  KrnlExist[1]= 0;
       }
 #ifdef BLOCKSZ_DEBUG
       cerr << "BLOCKSZ_DEBUG: ptxas info for calcNeurons ..." << endl;
 #endif
-      CHECK_CU_ERRORS(cuModuleGetFunction(&kern, module, "calcNeurons"));
-      cudaFuncGetAttributesDriver(&krnlAttr[2], kern);
+      res= cuModuleGetFunction(&kern, module, "calcNeurons");
+      if (res == CUDA_SUCCESS) {
+	  cudaFuncGetAttributesDriver(&krnlAttr[2], kern);
+	  KrnlExist[2]= 1;
+      }
+      else {
+	  KrnlExist[2]= 0;
+      }
       CHECK_CU_ERRORS(cuModuleUnload(module));
     
       // This data is required for block size optimisation, but cannot be found in deviceProp.
@@ -298,7 +311,7 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
 
       int kernel= 0;
       for (int kernel= 0; kernel < 3; kernel++) {
-	  if ((kernel != 1) || (learnKrnl)) {
+	  if (KrnlExist[kernel]) {
 	      reqRegs= krnlAttr[kernel].numRegs;
 	      reqSmem= krnlAttr[kernel].sharedSizeBytes;
 	      for (int blkSz = 1, mx= deviceProp[device].maxThreadsPerBlock / warpSize; blkSz <= mx; blkSz++) {
