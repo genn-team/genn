@@ -1064,8 +1064,10 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     for (int i = 0; i < model.synapseGrpN; i++) {
 	st = model.synapseType[i];
 	pst = model.postSynapseType[i];
+	
+	os << "#define push" << model.synapseName[i] << "ToDevice push" << model.synapseName[i] << "StateToDevice" << ENDL << ENDL;
 
-	os << "void push" << model.synapseName[i] << "ToDevice()" << ENDL;
+	os << "void push" << model.synapseName[i] << "StateToDevice()" << ENDL;
 	os << OB(1100);
 
 	if (model.synapseGType[i] == INDIVIDUALG) { // INDIVIDUALG
@@ -1182,8 +1184,10 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     for (int i = 0; i < model.synapseGrpN; i++) {
 	st = model.synapseType[i];
 	pst = model.postSynapseType[i];
+	
+	os << "#define pull" << model.synapseName[i] << "FromDevice pull" << model.synapseName[i] << "StateFromDevice" << ENDL << ENDL;
 
-	os << "void pull" << model.synapseName[i] << "FromDevice()" << ENDL;
+	os << "void pull" << model.synapseName[i] << "StateFromDevice()" << ENDL;
 	os << OB(1100);
 
 	if (model.synapseGType[i] == INDIVIDUALG) { // INDIVIDUALG
@@ -1236,7 +1240,7 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     }
 
     for (int i = 0; i < model.synapseGrpN; i++) {
-	os << "push" << model.synapseName[i] << "ToDevice();" << ENDL;
+	os << "push" << model.synapseName[i] << "StateToDevice();" << ENDL;
     }
 
     os << CB(1110);
@@ -1255,7 +1259,7 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     }
 
     for (int i = 0; i < model.synapseGrpN; i++) {
-	os << "pull" << model.synapseName[i] << "FromDevice();" << ENDL;
+	os << "pull" << model.synapseName[i] << "StateFromDevice();" << ENDL;
     }
     
     os << CB(1120);
