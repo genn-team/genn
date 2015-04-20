@@ -40,7 +40,8 @@ unsigned int TRAUBMILES; //!< variable attaching the name "TRAUBMILES"
 unsigned int TRAUBMILES_PSTEP;//!< variable attaching the name "TRAUBMILES_PSTEP" 
 unsigned int IZHIKEVICH; //!< variable attaching the name "IZHIKEVICH" 
 unsigned int IZHIKEVICH_V; //!< variable attaching the name "IZHIKEVICH_V" 
-#define MAXNRN 6 // maximum number of neuron types: SpineML needs to know this
+unsigned int SPIKESOURCE; //!< variable attaching the name "SPIKESOURCE"
+#define MAXNRN 7 // maximum number of neuron types: SpineML needs to know this
 
 #define SYNTYPENO 4
 

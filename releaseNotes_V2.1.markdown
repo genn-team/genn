@@ -16,6 +16,14 @@ you may want to consider changing model parameters.
 
 4. The convenience function convertProbabilityToRandomNumberThreshold(float *, uint64_t *, int) was changed so that it actually converts firing probability/timestep into a threshold value for the GeNN random number generator (as its name always suggested). The previous functionality of converting a *rate* in kHz into a firing threshold number for the GeNN random number generator is now provided with the name convertRateToRandomNumberThreshold(float *, uint64_t *, int)
 
+5. Every model definition function `modelDefinition()` now needs to end with calling `NNmodel::finalize()` for the defined network model. This will lock down the mode and prevent any further changes to it by the supported methods. It also triggers necessary analysis of the model structure that should only be performed once. If the `finalize()` function is not called, GeNN will issue an error and exit before code generation.
+
+6. To be more consistent in function naming the `pull<SYNAPSENAME>FromDevice` and `push<SYNAPSENAME>ToDevice` have been renamed to `pull<SYNAPSENAME>StateFromDevice` and `push<SYNAPSENAME>StateToDevice`. The old versions are still supported through macro definitions to make the transition easier.
+
+7. For convenience macros are now provided to access the current spike numbers and identities of neurons that spiked. These are called spikeCount_XX and spike_XX where "XX" is the name of the neuron group. They access the values for the current time step even if there are synaptic delays and spikes are stored in circular queues.
+
+8. There is now a pre-defined neuron type "SPIKECOURCE" which is empty and can be used to define PyNN style spike source arrays. 
+
 Developer Side Changes
 ----
 

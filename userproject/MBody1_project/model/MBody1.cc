@@ -24,7 +24,7 @@
 #include "sizes.h"
 
 //uncomment the following line to turn on timing measures
-#define TIMING   
+//#define TIMING   
 
 double myPOI_p[4]= {
   0.1,        // 0 - firing rate
