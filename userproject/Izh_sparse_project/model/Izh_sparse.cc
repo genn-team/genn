@@ -24,21 +24,8 @@ scalar meanInpExc = 5.0; //5.0 for balanced regime
 scalar meanInpInh = 2.0; //2.0 for balanced regime
 
 double *excIzh_p = NULL;
-//Izhikevich model parameters - tonic spiking
-/*	0.02,	// 0 - a
-	0.2, 	// 1 - b
-	-65, 	// 2 - c
-	6 	// 3 - d
-};*/
-
 
 double *inhIzh_p = NULL;
-//Izhikevich model parameters - tonic spiking
-/*	0.02,	// 0 - a
-	0.25, 	// 1 - b
-	-65, 	// 2 - c
-	2 	// 3 - d
-};*/
 
 double IzhExc_ini[6]={
 //Izhikevich model initial conditions - excitatory population
@@ -62,20 +49,13 @@ double IzhInh_ini[6]={
 
 double *SynIzh_p= NULL;
 
-double postExpP[2]={
-  0.0,            // 0 - tau_S: decay time constant for S [ms]
-  0.0		  // 1 - Erev: Reversal potential
-};
+double *postExpP= NULL;
 
 double *postSynV = NULL;
 
 double SynIzh_ini[1]= {
     0.0 // default synaptic conductance
 };
-
-//double inpIzh1 = 4.0;
-//double gIzh1= 0.05;
-//double * input1, *input2;
 
 void modelDefinition(NNmodel &model) 
 {
@@ -86,25 +66,18 @@ void modelDefinition(NNmodel &model)
   model.addNeuronPopulation("PInh", _NInh, IZHIKEVICH_V, inhIzh_p, IzhInh_ini);
   
   model.addSynapsePopulation("Exc_Exc", NSYNAPSE, SPARSE, INDIVIDUALG, NO_DELAY, IZHIKEVICH_PS, "PExc", "PExc", SynIzh_ini, SynIzh_p, postSynV, postExpP); 
-  //model.setSynapseG("Exc_Exc", gIzh1);
-  
   model.addSynapsePopulation("Exc_Inh", NSYNAPSE, SPARSE, INDIVIDUALG, NO_DELAY, IZHIKEVICH_PS, "PExc", "PInh", SynIzh_ini, SynIzh_p, postSynV, postExpP); 
- //model.setSynapseG("Exc_Inh", gIzh1);
-
   model.addSynapsePopulation("Inh_Exc", NSYNAPSE, SPARSE, INDIVIDUALG, NO_DELAY, IZHIKEVICH_PS, "PInh", "PExc", SynIzh_ini, SynIzh_p, postSynV, postExpP); 
-  //model.setSynapseG("Inh_Exc", gIzh1);
-  
   model.addSynapsePopulation("Inh_Inh", NSYNAPSE, SPARSE, INDIVIDUALG, NO_DELAY, IZHIKEVICH_PS, "PInh", "PInh", SynIzh_ini, SynIzh_p, postSynV, postExpP); 
- //model.setSynapseG("Inh_Inh", gIzh1);
+ 
   fprintf(stderr, "#model created.\n"); 
 
   model.activateDirectInput("PExc", INPRULE);
   model.activateDirectInput("PInh", INPRULE);
-	model.setMaxConn("Exc_Exc", _NMaxConnP0);
-	model.setMaxConn("Exc_Inh", _NMaxConnP1);
-	model.setMaxConn("Inh_Exc", _NMaxConnP2);
-	model.setMaxConn("Inh_Inh", _NMaxConnP3);
-  //model.setConstInp("Izh1", input1);
+  model.setMaxConn("Exc_Exc", _NMaxConnP0);
+  model.setMaxConn("Exc_Inh", _NMaxConnP1);
+  model.setMaxConn("Inh_Exc", _NMaxConnP2);
+  model.setMaxConn("Inh_Inh", _NMaxConnP3);
   
   #ifdef nGPU 
     cerr << "nGPU: " << nGPU << endl;

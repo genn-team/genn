@@ -14,7 +14,9 @@
 //--------------------------------------------------------------------------
 /*! \file MBody_userdef.cc
 
-\brief This file contains the model definition of the mushroom body model. It is used in both the GeNN code generation and the user side simulation code (class classol, file classol_sim). It uses user-defined models for everything.
+\brief This file contains the model definition of the mushroom body model.
+ tis used in the GeNN code generation and the user side simulation code 
+(class classol, file classol_sim). 
 */
 //--------------------------------------------------------------------------
 
@@ -142,7 +144,6 @@ double postSynV_EXPDECAY_EVAR[1] = {
   class pwSTDP_userdef : public dpclass  //!TODO This class definition may be code-generated in a future release
   {
     public:
-      //double calculateDerivedParameter(int index, vector <double> pars, double dt = DT) {
       double calculateDerivedParameter(int index, vector<double> pars, double dt = DT){		
 	  switch (index) {
 	  case 0:
