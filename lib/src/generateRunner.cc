@@ -1410,14 +1410,10 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 	os << "if (t > 0.0) {" << endl;
 	if (model.timing) os << "cudaEventRecord(synapseStart);" << endl; 
 	os << "calcSynapses <<< sGrid, sThreads >>> (";
-	for (int i= 0; i < model.synapseGrpN; i++) {
-	    
-	    for (int i=0; i< model.synapseName.size(); i++){
-		int st= model.synapseType[i];
-		for (int k= 0, l= weightUpdateModels[st].extraGlobalSynapseKernelParameters.size(); k < l; k++) {
-		    os << weightUpdateModels[st].extraGlobalSynapseKernelParameters[k] << ", " ;
-		    os << model.synapseName[i];
-		}
+	for (int i= 0; i < model.synapseGrpN; i++) {	    
+	    int st= model.synapseType[i];
+	    for (int k= 0, l= weightUpdateModels[st].extraGlobalSynapseKernelParameters.size(); k < l; k++) {
+		os << weightUpdateModels[st].extraGlobalSynapseKernelParameters[k] << model.synapseName[i] << ", " ;
 	    }
 	}
 	os << "t);"<< endl;
@@ -1425,11 +1421,10 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 	if (model.lrnGroups > 0) {
 	    if (model.timing) os << "cudaEventRecord(learningStart);" << endl;
 	    os << "learnSynapsesPost <<< lGrid, lThreads >>> (";         
-	    for (int i = 0; i < model.synapseName.size(); i++){
+	    for (int i = 0; i < model.synapseGrpN; i++){
 		int st= model.synapseType[i];
 		for (int k= 0, l= weightUpdateModels[st].extraGlobalSynapseKernelParameters.size(); k < l; k++) {
-		    os << weightUpdateModels[st].extraGlobalSynapseKernelParameters[k] << ", ";
-		    os << model.synapseName[i];
+		    os << weightUpdateModels[st].extraGlobalSynapseKernelParameters[k] << model.synapseName[i] << ", ";
 		}
 	    }
 	    os << "t);" << endl;
