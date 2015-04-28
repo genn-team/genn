@@ -114,6 +114,9 @@ void genRunner(NNmodel &model, //!< Model description
     os << "*/" << ENDL;
     os << "//-------------------------------------------------------------------------" << ENDL << ENDL;
     
+    os << "#ifndef DEFINITIONS_H" << ENDL;
+    os << "#define DEFINITIONS_H" << ENDL;
+
     for (int i= 0; i < model.neuronGrpN; i++) {
 	os << "#define glbSpkShift" << model.neuronName[i];
 	if (model.neuronDelaySlots[i] > 1) {
@@ -142,7 +145,7 @@ void genRunner(NNmodel &model, //!< Model description
 	  os << " glbSpk" << model.neuronName[i] << endl;
 	}
     }
-
+    os << "#endif" << ENDL;
     os.close();
     
 //    cout << "entering genRunner" << endl;
@@ -164,6 +167,7 @@ void genRunner(NNmodel &model, //!< Model description
     os << "#include \"utils.h\"" << ENDL << ENDL;
     os << "#include \"numlib/simpleBit.h\"" << ENDL << ENDL;
     if (model.timing) os << "#include \"hr_time.cpp\"" << ENDL;
+    os << "#include \"definitions.h\"" << ENDL;
     os << ENDL;
 
     os << "#ifndef int_" << ENDL;
