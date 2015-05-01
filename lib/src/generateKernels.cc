@@ -468,7 +468,7 @@ void generate_process_presynaptic_events_code(
 	// Detect spike events or spikes and do the update
 	os << "// process presynaptic events: " << (evnt ? "Spike type events" : "True Spikes") << ENDL;
 	os << "for (r = 0; r < numSpikeSubsets" << postfix << "; r++)" << OB(90);
-	os << "if (r == numSpikeSubsets" << postfix << " - 1) lmax = lscnt" << postfix << " % BLOCKSZ_SYN;" << ENDL;
+	os << "if (r == numSpikeSubsets" << postfix << " - 1) lmax = ((lscnt" << postfix << "-1) % BLOCKSZ_SYN) +1;" << ENDL;
 	os << "else lmax = BLOCKSZ_SYN;" << ENDL;
 	os << "if (threadIdx.x < lmax)" << OB(100);
 	os << "shSpk" << postfix << "[threadIdx.x] = dd_glbSpk" << postfix << model.neuronName[src] << "[" << offsetPre << "(r * BLOCKSZ_SYN) + threadIdx.x];" << ENDL;
@@ -487,7 +487,6 @@ void generate_process_presynaptic_events_code(
 	os << "__syncthreads();" << ENDL;
 
 	int maxConnections;
-	os << "// only work on existing neurons" << ENDL;
 	if ((sparse) && (isGrpVarNeeded[model.synapseTarget[i]])) {
 	    if (model.maxConn[i] < 1) {
 		fprintf(stderr, "Model Generation warning: for every SPARSE synapse group used you must also supply (in your model)\
@@ -501,10 +500,10 @@ void generate_process_presynaptic_events_code(
 	else {
 	    maxConnections = model.neuronN[trg];
 	}
-	os << "if (" << localID << " < " << maxConnections << ")" << OB(110);
-
 	os << "// loop through all incoming spikes" << ENDL;
-	os << "for (j = 0; j < lmax; j++)" << OB(120);
+	os << "for (j = 0; j < lmax; j++)" << OB(110);
+	os << "// only work on existing neurons" << ENDL;
+	os << "if (" << localID << " < " << maxConnections << ")" << OB(120);
 	if (model.synapseGType[i] == INDIVIDUALID) {
 	    os << "unsigned int gid = (shSpk" << postfix << "[j] * " << model.neuronN[trg] << " + " << localID << ");" << ENDL;
 	}
@@ -623,6 +622,7 @@ void generate_process_presynaptic_events_code(
 	else if (model.synapseGType[i] == INDIVIDUALID) {
 	    os << CB(135); // end if (B(dd_gp" << model.synapseName[i] << "[gid >> " << logUIntSz << "], gid 
 	}
+	os << CB(120) << ENDL;
 
 	if ((sparse) && (!isGrpVarNeeded[model.synapseTarget[i]])) {
 	    os << "__syncthreads();" << ENDL;
@@ -632,11 +632,7 @@ void generate_process_presynaptic_events_code(
 	    os << CB(136) << ENDL;
 
 	    os << "__syncthreads();" << ENDL;
-
-	    // This seems a duplication that is not correct:
-	    //os << "linSyn += shLg[" << localID << "];" << ENDL;
 	}
-	os << CB(120) << ENDL;
 	os << CB(110) << ENDL;
 	os << CB(90) << ENDL;
     }
@@ -710,7 +706,7 @@ void genSynapseKernel(NNmodel &model, //!< Model description
     os << "unsigned int id = BLOCKSZ_SYN * blockIdx.x + threadIdx.x;" << ENDL;
     os << "unsigned int lmax, j, r;" << ENDL;
     os << model.ftype << " addtoinSyn;" << ENDL;  
-    os << "volatile __shared__ " << model.ftype << " shLg[" << neuronBlkSz << "];" << ENDL;
+    os << "volatile __shared__ " << model.ftype << " shLg[BLOCKSZ_SYN];" << ENDL;
 
     // case-dependent variables
     for (int i = 0; i < model.synapseGrpN; i++) { 
@@ -791,7 +787,7 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 	    else {
 		os << "[0];" << ENDL;
 	    }
-	    os << "numSpikeSubsetsEvnt = (unsigned int) (ceilf((float) lscntEvnt / ((float) BLOCKSZ_SYN)));" << ENDL;
+	    os << "numSpikeSubsetsEvnt = (lscntEvnt+BLOCKSZ_SYN-1) / BLOCKSZ_SYN;" << ENDL;
 	}
   
 	if ((model.synapseUsesTrueSpikes[i]) || (model.synapseUsesPostLearning[i])) {
@@ -802,7 +798,7 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 	    else {
 		os << "[0];" << ENDL;
 	    }
-	    os << "numSpikeSubsets = (unsigned int) (ceilf((float) lscnt / ((float) BLOCKSZ_SYN)));" << ENDL;
+	    os << "numSpikeSubsets = (lscnt+BLOCKSZ_SYN-1) / BLOCKSZ_SYN;" << ENDL;
 	}
 
 	// generate the code for processing spike-like events
@@ -942,9 +938,9 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 		os << "lscnt = dd_glbSpkCnt" << model.neuronName[trg] << "[0];" << ENDL;
 	    }
 
-	    os << "numSpikeSubsets = (unsigned int) (ceilf((float) lscnt / " << learnBlkSz << ".0f));" << ENDL;
+	    os << "numSpikeSubsets = (lscnt+" << learnBlkSz-1 << ") / " << learnBlkSz << ";" << ENDL;
 	    os << "for (r = 0; r < numSpikeSubsets; r++)" << OB(230);
-	    os << "if (r == numSpikeSubsets - 1) lmax = lscnt % " << learnBlkSz << ";" << ENDL;
+	    os << "if (r == numSpikeSubsets - 1) lmax = ((lscnt-1) % " << learnBlkSz << ")+1;" << ENDL;
 	    os << "else lmax = " << learnBlkSz << ";" << ENDL;
 
 	    os << "if (threadIdx.x < lmax)" << OB(240);

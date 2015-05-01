@@ -84,7 +84,6 @@ double myLHIKC_p[2]= {
   50.0            // 1 - Vslope: Activation slope of graded release 
 };
 
-//double gLHIKC= 0.6;
 double myLHIKC_ini[1] = {
     1.0/_NLHI   // 0 - g: initial synaptic conductance
 };
@@ -113,7 +112,6 @@ double myKCDN_ini[2]={
   0.01,		  // 1 - graw: raw synaptic conductance
 };
 
-//#define KCDNGSYN0 0.006
 double postExpKCDN[2]={
   5.0,            // 0 - tau_S: decay time constant for S [ms]
   0.0		  // 1 - Erev: Reversal potential
@@ -123,7 +121,6 @@ double myDNDN_p[2]= {
   -30.0,        // 0 - Epre: Presynaptic threshold potential 
   50.0          // 1 - Vslope: Activation slope of graded release 
 };
-//double gDNDN= 0.04;
 
 double myDNDN_ini[1]={
     5.0/_NLB            // 0 - g: synaptic conductance
