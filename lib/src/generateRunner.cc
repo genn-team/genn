@@ -128,7 +128,7 @@ void genRunner(NNmodel &model, //!< Model description
 	os << ENDL;
     }
     for (int i = 0; i < model.neuronGrpN; i++) {
-      	// convenience macros for accesing spike count 
+      	// convenience macros for accessing spike count 
 	os << "#define spikeCount_" << model.neuronName[i] << " glbSpkCnt" << model.neuronName[i];
 	if ((model.neuronDelaySlots[i] > 1) && (model.neuronNeedTrueSpk[i])) {
 	  os << "[spkQuePtr" << model.neuronName[i] << "]" << endl;
@@ -305,16 +305,9 @@ void genRunner(NNmodel &model, //!< Model description
 	    os << "__device__ " << nModels[nt].varTypes[k] << " *dd_";
 	    os << nModels[nt].varNames[k] << model.neuronName[i] << ";" << endl;
 	}
-
-	// write global variables for the extra global neuron kernel parameters.
-	// These are assumed not to be pointers, if they are the user needs to take care of allocation etc
-	for (int k = 0, l= nModels[nt].extraGlobalNeuronKernelParameters.size(); k < l; k++) {
-	    os << nModels[nt].extraGlobalNeuronKernelParameterTypes[k] << " ";
-	    os << nModels[nt].extraGlobalNeuronKernelParameters[k] << model.neuronName[i] << ";" << endl;
-	}
+	
     }
     os << endl;
-
 
     //----------------------------------
     // HOST AND DEVICE SYNAPSE VARIABLES
@@ -373,13 +366,25 @@ void genRunner(NNmodel &model, //!< Model description
 		os << "__device__ " << postSynModels[pst].varTypes[k] << " *dd_" << postSynModels[pst].varNames[k] << model.synapseName[i] << ";" << endl;
 	    }
 	}
-	for (int k = 0, l = weightUpdateModels[st].extraGlobalSynapseKernelParameters.size(); k < l; k++) {
-	    os << weightUpdateModels[st].extraGlobalSynapseKernelParameterTypes[k] << " ";
-	    os << weightUpdateModels[st].extraGlobalSynapseKernelParameters[k] << model.synapseName[i] << ";" << endl;
-	}
+    }
+    os << endl;
+    // write global variables for the extra global neuron kernel parameters.
+    // These are assumed not to be pointers, if they are the user needs to take care of allocation etc
+    os << " // memory space that holds the kernel arguments/parameters" << endl;
+    os << "char kernelPara[" << model.totalKernelParameterSize << "];" << endl;
+    os << "void *d_kernelPara;" << endl;
+    os << "__device__ char dd_kernelPara[" << model.totalKernelParameterSize << "];" << endl;
+    
+    for (int k = 0, l= model.kernelParameters.size(); k < l; k++) {
+	os << model.kernelParameterTypes[k] << " &" << model.kernelParameters[k];
+	os << model.kernelParameterPopulations[k] << "= *((";
+	os << << model.kernelParameterTypes[k] << " *)(kernelPara+" << offset << "));" << endl;
+	os << "__device__ " << model.kernelParameterTypes[k] << " &" << model.kernelParameters[k];
+	os << model.kernelParameterPopulations[k] << "= *((";
+	os << << model.kernelParameterTypes[k] << " *)(dd_kernelPara+" << offset << "));" << endl;
+	offset+= theSize(model.kernelParameterTypes);
     }
     os << endl << endl;
-
 
     os << "#include \"sparseUtils.cc\"" << ENDL << ENDL;
     // include simulation kernels
@@ -537,7 +542,9 @@ void genRunner(NNmodel &model, //!< Model description
 	    }
 	}
 	os << endl;
-    }  
+    }
+    os << "// Make the connection where to copy kernel arguments/parameters" << endl; 
+    os << "CHECK_CUDA_ERRORS(cudaGetSymbolAddress((void **) &d_kernelPara, dd_kernelPara));" << endl;
     os << "}" << endl << endl;
 
 
@@ -1410,28 +1417,16 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 	os << "dim3 nGrid(" << sqGridSize << ","<< sqGridSize <<");" << endl;
     }
     os << endl;
+    os << "CHECK_CUDA_ERRORS(cudaMemcpy((void *) d_kernelPara, (void *) kernelPara, " << model.totalKernelParameterSize;
+    os << ", cudaMemcpyHostToDevice));" << endl;
     if (model.synapseGrpN > 0) {
 	os << "if (t > 0.0) {" << endl;
 	if (model.timing) os << "cudaEventRecord(synapseStart);" << endl; 
-	os << "calcSynapses <<< sGrid, sThreads >>> (";
-	for (int i= 0; i < model.synapseGrpN; i++) {	    
-	    int st= model.synapseType[i];
-	    for (int k= 0, l= weightUpdateModels[st].extraGlobalSynapseKernelParameters.size(); k < l; k++) {
-		os << weightUpdateModels[st].extraGlobalSynapseKernelParameters[k] << model.synapseName[i] << ", " ;
-	    }
-	}
-	os << "t);"<< endl;
+	os << "calcSynapses <<< sGrid, sThreads >>> ();" << endl;
 	if (model.timing) os << "cudaEventRecord(synapseStop);" << endl;
 	if (model.lrnGroups > 0) {
 	    if (model.timing) os << "cudaEventRecord(learningStart);" << endl;
-	    os << "learnSynapsesPost <<< lGrid, lThreads >>> (";         
-	    for (int i = 0; i < model.synapseGrpN; i++){
-		int st= model.synapseType[i];
-		for (int k= 0, l= weightUpdateModels[st].extraGlobalSynapseKernelParameters.size(); k < l; k++) {
-		    os << weightUpdateModels[st].extraGlobalSynapseKernelParameters[k] << model.synapseName[i] << ", ";
-		}
-	    }
-	    os << "t);" << endl;
+	    os << "learnSynapsesPost <<< lGrid, lThreads >>> ();" << endl;         
 	    if (model.timing) os << "cudaEventRecord(learningStop);" << endl;
 	}
 	for (int i= 0; i < model.neuronGrpN; i++) { 
@@ -1442,21 +1437,7 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 	os << "}" << endl;
     }
     if (model.timing) os << "cudaEventRecord(neuronStart);" << endl;
-    os << "calcNeurons <<< nGrid, nThreads >>> (";
-    for (int i= 0; i < model.neuronGrpN; i++) {
-	nt= model.neuronType[i];
-	if (nt == POISSONNEURON) {
-	    os << "rates" << model.neuronName[i] << ", ";
-	    os << "offset" << model.neuronName[i] << ",";
-	}
-	if (model.receivesInputCurrent[i]>=2) {
-	    os << "d_inputI" << model.neuronName[i] << ", ";
-	}
-	for (int k= 0, l= nModels[nt].extraGlobalNeuronKernelParameters.size(); k < l; k++) {
-	    os << nModels[nt].extraGlobalNeuronKernelParameters[k] << model.neuronName[i]<< ", ";
-	}    
-    }
-    os << "t);" << endl;
+    os << "calcNeurons <<< nGrid, nThreads >>> ();" << endl;
     if (model.timing) {
 	os << "cudaEventRecord(neuronStop);" << endl;
 	os << "cudaEventSynchronize(neuronStop);" << endl;

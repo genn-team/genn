@@ -28,6 +28,32 @@ CodeHelper hlp;
 
 //-------------------------------------------------------------------------
 /*!
+  \brief Helper function for code substitutions relating to pre- and post-synaptic entities in synapse codes
+*/
+//-------------------------------------------------------------------------
+
+void name_substitutions_synapse_pre_post(NNmodel &model, string &code, int synPopID, string pre_indexig, string post_indexing)
+{
+    unsigned int synt= model.synapseType[synPopID];
+    string synapseName= model.synapseName[synPopID];
+    weightUpdateModel wu= weightUpdateModels[synt];
+    
+    // make all substitutions relating to extra global parameters, and pre, post-synaptic entities.
+    name_substitutions(code, tS("dd_"), wu.extraGlobalSynapseKernelParameters, synapseName);
+    int pre_type= model.neuronType[model.synapseSource[synPopID]];
+    string pre_name= model.neuronName[model.synapseSource[synPopID]];
+    extended_name_substitutions(code, tS("dd_"), nModels[pre_type].varNames, tS("_pre"), pre_name+pre_indexing);
+    extended_name_substitutions(code, tS("dd_"), nModels[pre_type].extraglobalNeuronKernelParameters, tS("_pre"), pre_name);
+    int post_type= model.neuronType[model.synapseTarget[synPopID]];
+    string post_name= model.neuronName[model.synapseTarget[synPopID]];
+    extended_name_substitutions(code, tS("dd_"), nModels[post_type].varNames, tS("_post"), post_name+post_indexing);
+    extended_name_substitutions(code, tS("dd_"), nModels[post_type].extraglobalNeuronKernelParameters, tS("_post"), post_name);
+}
+
+
+
+//-------------------------------------------------------------------------
+/*!
   \brief Function for generating the CUDA kernel that simulates all neurons in the model.
 
   The code generated upon execution of this function is for defining GPU side global variables that will hold model state in the GPU global memory and for the actual kernel function for simulating the neurons for one time step.
@@ -73,29 +99,9 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 	}
     }
 
+  
     // kernel header
-    os << "extern \"C\" __global__ void calcNeurons(";
-    for (int i = 0; i < model.neuronGrpN; i++) {
-	nt = model.neuronType[i];
-
-	if (nt == POISSONNEURON) {
-	    // Note: Poisson neurons only used as input neurons; they do not receive any inputs
-	    os << model.RNtype << " *d_rates" << model.neuronName[i];
-	    os << ", // poisson \"rates\" of grp " << model.neuronName[i] << ENDL;
-	    os << "unsigned int offset" << model.neuronName[i];
-	    os << ", // poisson \"rates\" offset of grp " << model.neuronName[i] << ENDL;
-	}
-	if (model.receivesInputCurrent[i] > 1) {
-	    os << model.ftype << " *d_inputI" << model.neuronName[i];
-	    os << ", // explicit input current to grp " << model.neuronName[i] << ENDL;
-	}
-	for (int k= 0, l= nModels[nt].extraGlobalNeuronKernelParameters.size(); k < l; k++) {
-	    os << nModels[nt].extraGlobalNeuronKernelParameterTypes[k];
-	    os << " " << nModels[nt].extraGlobalNeuronKernelParameters[k];
-	    os << model.neuronName[i] << ", " << ENDL;
-	}
-    }
-    os << model.ftype << " t)" << ENDL;
+    os << "__global__ void calcNeurons()" << ENDL;
     os << OB(5);
 
     // kernel code
@@ -224,6 +230,7 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 		    }
 		    value_substitutions(code, wu.pNames, model.synapsePara[synPopID]);
 		    value_substitutions(code, wu.dpNames, model.dsp_w[synPopID]);
+		    name_substitutions_synapse_pre_post(model, code, synPopID, tS("[k]"), tS("[dd_ind") + synapseName + tS("[dd_indInG") + synapsenName + tS("[k]] + ") << localID + tS("]"));
 		    os << ensureFtype(code, model.ftype) << ENDL;
 		    os << CB(24);
 		}
@@ -237,6 +244,8 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 		    }
 		    value_substitutions(code, wu.pNames, model.synapsePara[synPopID]);
 		    value_substitutions(code, wu.dpNames, model.dsp_w[synPopID]);
+		    name_substitutions_synapse_pre_post(model, code, synPopID, tS("[k]"), tS("[") << localID + tS("]"));
+tS("[dd_ind") + synapseName + tS("[dd_indInG") + synapsenName + tS("[k]] + ") << localID + tS("]"));
 		    os << ensureFtype(code, model.ftype) << ENDL;
 		    os << CB(25);
 		}
@@ -307,17 +316,25 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 
 	// look for spike type events first.
 	if (model.neuronNeedSpkEvnt[i]) {
-	    string eCode = model.neuronSpkEvntCondition[i];
 	    // code substitutions ----
-	    extended_name_substitutions(eCode, tS("l"), nModels[model.neuronType[i]].varNames, tS("_pre"), tS(""));
 	    for (int j= 0; j < model.outSyn[i].size(); j++) {
 		unsigned int synPopID = model.outSyn[i][j];
 		unsigned int synt = model.synapseType[synPopID];
+		string eCode = synapseModels[snyt].evntThreshold;
+		extended_name_substitutions(eCode, tS("l"), nModels[model.neuronType[i]].varNames, tS("_pre"), tS(""));
+		name_substitutions_synapse_pre_post(model, eCode, synPopID, tS(""), model.synapseTarget[synPopID
 		value_substitutions(eCode, weightUpdateModels[synt].pNames, model.synapsePara[synPopID]);
 		value_substitutions(eCode, weightUpdateModels[synt].dpNames, model.dsp_w[synPopID]);
 		name_substitutions(eCode, tS(""), weightUpdateModels[synt].extraGlobalSynapseKernelParameters, model.synapseName[synPopID]);
+		// end code substitutions ----
+		// add to the source population spike event condition
+		if (neuronSpkEvntCondition[src] == tS("")) {
+		    neuronSpkEvntCondition[src] = tS("(") + wu.evntThreshold + tS(")");
+		}
+		else {
+		    neuronSpkEvntCondition[src] += tS(" || (") + wu.evntThreshold + tS(")");
+		}
 	    }
-	    // end code substitutions ----
 
 	    os << "// test for and register a spike-like event" << ENDL;
 	    os << "if (" + ensureFtype(eCode, model.ftype) + ")" << OB(30);
@@ -687,17 +704,7 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 
 
     // synapse kernel header
-    os << "extern \"C\" __global__ void calcSynapses(" << ENDL;
-    for (int i = 0; i < model.synapseGrpN; i++) {
-	synt = model.synapseType[i];
-	for (int k = 0, l = weightUpdateModels[synt].extraGlobalSynapseKernelParameters.size(); k < l; k++) {
-	    os << weightUpdateModels[synt].extraGlobalSynapseKernelParameterTypes[k] << " ";
-	    os << weightUpdateModels[synt].extraGlobalSynapseKernelParameters[k];
-	    os << model.synapseName[i] << ", ";
-	}
-    }	
-    os << model.ftype << " t" << ENDL;
-    os << ")" << ENDL; // end of synapse kernel header
+    os << "__global__ void calcSynapses()" << ENDL; // end of synapse kernel header
 
     // synapse kernel code
     os << OB(75);
@@ -870,16 +877,7 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 	numOfBlocks = model.padSumLearnN[model.lrnGroups - 1] / learnBlkSz;
   
 	// Kernel header
-	os << "extern \"C\" __global__ void learnSynapsesPost(" << ENDL;
-	for (int i=0; i< model.synapseName.size(); i++){
-	    unsigned int synt= model.synapseType[i];
-	    for (int k= 0, l= weightUpdateModels[synt].extraGlobalSynapseKernelParameters.size(); k < l; k++) {
-		os << weightUpdateModels[synt].extraGlobalSynapseKernelParameterTypes[k] << " ";
-		os << weightUpdateModels[synt].extraGlobalSynapseKernelParameters[k];
-		os << model.synapseName[i] << ", ";
-	    }
-	}
-	os << model.ftype << " t)";
+	os << "__global__ void learnSynapsesPost()";
 	os << ENDL;
 
 	// kernel code
