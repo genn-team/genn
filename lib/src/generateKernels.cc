@@ -316,6 +316,8 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 		unsigned int synt = model.synapseType[synPopID];
 		value_substitutions(eCode, weightUpdateModels[synt].pNames, model.synapsePara[synPopID]);
 		value_substitutions(eCode, weightUpdateModels[synt].dpNames, model.dsp_w[synPopID]);
+// this is a bit of a hack: allow extraGrlobalNeuronKernelParameters to overshadow extraGlobalSynapeKernelParameters. This alows to use a copy of an extraGlobalSynapeKernelParameter within the neuron kernel.
+	    name_substitutions(eCode, tS(""), nModels[model.neuronType[i]].extraGlobalNeuronKernelParameters, model.neuronName[i]);
 		name_substitutions(eCode, tS(""), weightUpdateModels[synt].extraGlobalSynapseKernelParameters, model.synapseName[synPopID]);
 	    }
 	    // end code substitutions ----
