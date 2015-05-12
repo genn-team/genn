@@ -605,7 +605,7 @@ void genRunner(NNmodel &model, //!< Model description
 
 	if (model.neuronNeedSt[i]) {
 	    os << "    for (int i = 0; i < " << model.neuronN[i] * model.neuronDelaySlots[i] << "; i++) {" << endl;
-	    os << "        sT" <<  model.neuronName[i] << "[i] = -10000.0;" << endl;
+	    os << "        sT" <<  model.neuronName[i] << "[i] = -10.0;" << endl;
 	    os << "    }" << endl;
 	}
 

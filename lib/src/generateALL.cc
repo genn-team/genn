@@ -496,9 +496,9 @@ int main(int argc,     //!< number of arguments; expected to be 2
   }
   cout << endl;
   
-  synapseBlkSz = 256;
-  learnBlkSz = 256;
-  neuronBlkSz = 256;
+  synapseBlkSz = 32;
+  learnBlkSz = 32;
+  neuronBlkSz = 32;
   
   NNmodel *model = new NNmodel();
   modelDefinition(*model);
