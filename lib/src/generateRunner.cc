@@ -240,7 +240,7 @@ void genRunner(NNmodel &model, //!< Model description
 
     os << "void convertProbabilityToRandomNumberThreshold(" << model.ftype << " *p_pattern, " << model.RNtype << " *pattern, int N)" << ENDL;
     os << "{" << ENDL;
-    os << "    " << model.ftype << " fac= pow(2.0, (int) sizeof(" << model.RNtype << ")*8-16);" << ENDL;
+    os << "    " << model.ftype << " fac= pow(2.0, (double) sizeof(" << model.RNtype << ")*8-16);" << ENDL;
     os << "    for (int i= 0; i < N; i++) {" << ENDL;
     //os << "        assert(p_pattern[i] <= 1.0);" << ENDL;
     os << "        pattern[i]= (" << model.RNtype << ") (p_pattern[i]*fac);" << ENDL;
@@ -256,7 +256,7 @@ void genRunner(NNmodel &model, //!< Model description
 
     os << "void convertRateToRandomNumberThreshold(" << model.ftype << " *rateKHz_pattern, " << model.RNtype << " *pattern, int N)" << ENDL;
     os << "{" << ENDL;
-    os << "    " << model.ftype << " fac= pow(2.0, (int) sizeof(" << model.RNtype << ")*8-16)*DT;" << ENDL;
+    os << "    " << model.ftype << " fac= pow(2.0, (double) sizeof(" << model.RNtype << ")*8-16)*DT;" << ENDL;
     os << "    for (int i= 0; i < N; i++) {" << ENDL;
     //os << "        assert(rateKHz_pattern[i] <= 1.0);" << ENDL;
     os << "        pattern[i]= (" << model.RNtype << ") (rateKHz_pattern[i]*fac);" << ENDL;
