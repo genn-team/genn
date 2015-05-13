@@ -202,14 +202,12 @@ void NNmodel::initLearnGrps()
 
     neuronNeedTrueSpk.assign(neuronGrpN, FALSE);
     neuronNeedSpkEvnt.assign(neuronGrpN, FALSE);
+
     neuronVarNeedQueue.resize(neuronGrpN);
     for (int i = 0; i < neuronGrpN; i++) {
 	neuronVarNeedQueue[i] = vector<bool>(nModels[neuronType[i]].varNames.size(), FALSE);
     }
     neuronSpkEvntCondition.assign(neuronGrpN, tS(""));
-
-    neuronVarNeedSpkEvnt.resize(neuronGrpN); // what is this used for?
-    neuronVarNeedSpk.resize(neuronGrpN); // what is this used for?
 
     for (int i = 0; i < synapseGrpN; i++) {
 	unsigned int padnN = ceil((double) neuronN[synapseSource[i]] / (double) learnBlkSz) * (double) learnBlkSz;
@@ -221,14 +219,10 @@ void NNmodel::initLearnGrps()
 	    synapseUsesTrueSpikes[i] = TRUE;
 	    neuronNeedTrueSpk[src] = TRUE;
 
-	    // analyze which neuron variables need spk queues
-	    neuronVarNeedSpk[src].resize(vars.size());
+	    // analyze which neuron variables need queues
 	    for (int j = 0; j < vars.size(); j++) {
 		if (wu.simCode.find(vars[j] + tS("_pre")) != string::npos) {
-		    neuronVarNeedSpk[src][j] = TRUE;
-		}
-		else {
-		    neuronVarNeedSpk[src][j] = FALSE;		    
+		    neuronVarNeedQueue[src][j] = TRUE;
 		}
 	    }
 	}
@@ -253,15 +247,11 @@ void NNmodel::initLearnGrps()
 		neuronSpkEvntCondition[src] += tS(" || (") + wu.evntThreshold + tS(")");
 	    }
 
-	    // analyze which neuron variables need spkEvnt queues
-	    neuronVarNeedSpkEvnt[src].resize(vars.size());
+	    // analyze which neuron variables need queues
 	    for (int j = 0; j < vars.size(); j++) {
 		if (wu.simCodeEvnt.find(vars[j] + tS("_pre")) != string::npos) {
-		    neuronVarNeedSpkEvnt[src][j] = TRUE;
+		    neuronVarNeedQueue[src][j] = TRUE;
 		}
-		else {
-		    neuronVarNeedSpkEvnt[src][j]= FALSE;		    
-		} 
 	    }
 		
 	}
