@@ -709,19 +709,8 @@ void genRunner(NNmodel &model, //!< Model description
 	    os << endl;
 	    //setup up helper fn for this (specific) popn to generate sparse from dense 
 	    os << "void createSparseConnectivityFromDense" << model.synapseName[i] << "(int preN,int postN, " << model.ftype << " *denseMatrix)" << "{" << endl;
-	    os << "if (preN != " << model.neuronN[model.synapseSource[i]] << ") {" << endl;
-	    os << "    gennError(\"In createSparseConnectivityFromDense" << model.synapseName[i] << ": preN does not match the number of pre-synaptic neurons (" << model.neuronN[model.synapseSource[i]] << ").\");" << endl;
+	    os << "    gennError(\"The function createSparseConnectivityFromDense" << model.synapseName[i] << "() has been deprecated because with the introduction of synapse models that can be fully user-defined and may not contain a conductance variable g the existence condition for synapses has become ill-defined. \\n Please use your own logic and use the general tools allocate" << model.synapseName[i] << "(), countEntriesAbove(), and setSparseConnectivityFromDense().\");" << endl;
 	    os << "}" << endl;
-	    os << "if (postN != " << model.neuronN[model.synapseTarget[i]] << ") {" << endl;
-	    os << "    gennError(\"In createSparseConnectivityFromDense" << model.synapseName[i] << ": postN does not match the number of pre-synaptic neurons (" << model.neuronN[model.synapseTarget[i]] << ").\");" << endl;
-	    os << "}" << endl;
-	    
-	    os << "int connN = countEntriesAbove(denseMatrix, preN * postN, " << SCLR_MIN << ");" << endl;
-	    os << "allocate" << model.synapseName[i] << "(connN);" << endl;
-	    string wuvarName = "g" + tS(model.synapseName[i]);
-	    string sparseStructName = "C" + tS(model.synapseName[i]);
-	    os << "setSparseConnectivityFromDense(" << wuvarName << ",preN,postN,denseMatrix,&" << sparseStructName << ");" << endl;
-	    os << "}" << endl; 
 	    os << endl;
 	}
     }
