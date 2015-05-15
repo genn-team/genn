@@ -256,6 +256,14 @@ void NNmodel::initLearnGrps()
 		
 	}
 
+	if (wu.synapseDynamics != tS("")) {
+	    for (int j = 0; j < vars.size(); j++) {
+		if (wu.synapseDynamics.find(vars[j] + tS("_pre")) != string::npos) {
+		    neuronVarNeedQueue[src][j] = TRUE;
+		}
+	    }
+	}
+
 	if (wu.simLearnPost != tS("")) {
 	    synapseUsesPostLearning[i] = TRUE;
 	    fprintf(stdout, "detected learning synapse at %d \n", i);

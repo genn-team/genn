@@ -119,6 +119,9 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 	}
 
         os << "// execute internal synapse dynamics if any" << ENDL;
+	if (model.needSynapseDelay) {
+	    os << "unsigned int delaySlot;" << ENDL;
+	}
 	for (int j = 0; j < model.inSyn[i].size(); j++) {
 	    unsigned int synPopID=  model.inSyn[i][j];
 	    unsigned int synt= model.synapseType[synPopID];
@@ -130,31 +133,83 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 		string code= wu.synapseDynamics;
 		unsigned int srcno= model.neuronN[model.synapseSource[synPopID]]; 
 		unsigned int trgno= model.neuronN[model.synapseTarget[synPopID]];
+		int src= model.synapseSource[synPopID];
+		int trg= model.synapseTarget[synPopID];
+		int nt_pre= model.neuronType[src];
+		int nt_post= model.neuronType[trg];
+		bool delayPre = model.neuronDelaySlots[src] > 1;
+		string offsetPre = (delayPre ? "(delaySlot * " + tS(model.neuronN[src]) + ") + " : "");
+		if (model.neuronDelaySlots[src] > 1) {
+		    os << "delaySlot = (spkQuePtr" << model.neuronName[src];
+		    os << " + " << tS(model.neuronDelaySlots[src] - model.synapseDelay[synPopID]);
+		    os << ") % " << tS(model.neuronDelaySlots[src]) << ";" << ENDL;
+		}
 		if (model.synapseConnType[synPopID] == SPARSE) { // SPARSE
-		    os << "for (int k = 0; k < C" << synapseName << ".indInG[" << srcno << "]; k++)" << OB(24);
+		    os << "for (int j = 0; j < " << srcno << "; j++)" << OB(23) << ENDL;
+		    os << "for (int k = C" << synapseName << ".indInG[j]; k < C" << synapseName << ".indInG[j+1]; k++)" << OB(24);
 		    os << "// loop over all synapses" << ENDL;
 		    if (model.synapseGType[synPopID] == INDIVIDUALG) {
+			// name substitute synapse var names in synapseDynamics code
 			name_substitutions(code, tS(""), wu.varNames, synapseName + tS("[k]"));
 		    }
 		    else {
+			// substitute initial values as constants for synapse var names in synapseDynamics code
 			value_substitutions(code, wu.varNames, model.synapseIni[synPopID]);
 		    }
+		    // substitute pre-synaptic variable names in synapseDynamics code
+		    // !!! this functionality needs testing !!!
+		    if (nt_pre == POISSONNEURON) substitute(code, tS("$(V_pre)"), tS(model.neuronPara[src][2]));
+		    string theQueueOffset;
+		    for (int k= 0, l= nModels[nt_pre].varNames.size(); k < l; k++) {
+			if (model.neuronVarNeedQueue[src][k]) {
+			    substitute(code, tS("$(") + nModels[nt_pre].varNames[k] + tS("_pre)"), nModels[nt_pre].varNames[k]+model.neuronName[src]+tS("[")+offsetPre+tS("j]"));
+			}
+			else {
+			    substitute(code, tS("$(") + nModels[nt_pre].varNames[k] + tS("_pre)"), nModels[nt_pre].varNames[k]+model.neuronName[src]+tS("[j]"));
+			}
+		    }
+		    // substitute post-synaptic variable names in synapseDynamics code
+		    extended_name_substitutions(code, tS(""), nModels[nt_post].varNames, tS("_post"), model.neuronName[trg]+tS("[ind")+synapseName +tS("[k]]"));
+		    // !!! end of new mechanism !!!
+		    // substitute parameter values for parameters in synapseDynamics code
 		    value_substitutions(code, wu.pNames, model.synapsePara[synPopID]);
+		    // substitute values for derived parameters in synapseDynamics code
 		    value_substitutions(code, wu.dpNames, model.dsp_w[synPopID]);
 		    os << ensureFtype(code, model.ftype) << ENDL;
+		    os << CB(23);
 		    os << CB(24);
 		}
 		else { // DENSE
-		    os << "for (int k = 0; k < " <<  srcno * trgno << "; k++)" << OB(25);
+		    os << "for (int j = 0; j < " <<  srcno << "; j++)" << OB(25);
+		    os << "for (int k = 0; k < " <<  trgno << "; k++)" << OB(26);
+		    // substitute initial values as constants for synapse var names in synapseDynamics code
 		    if (model.synapseGType[synPopID] == INDIVIDUALG) {
-			name_substitutions(code, tS(""), wu.varNames, synapseName + tS("[k]"));
+			name_substitutions(code, tS(""), wu.varNames, synapseName + tS("[j*") + tS(trgno) + tS("+k]"));
 		    }
 		    else {
+			// substitute initial values as constants for synapse var names in synapseDynamics code
 			value_substitutions(code, wu.varNames, model.synapseIni[synPopID]);
 		    }
+		    // substitute pre-synaptic variable names in synapseDynamics code
+		    // !!! new - needs testing
+		    string theQueueOffset;
+		    for (int k= 0, l= nModels[nt_pre].varNames.size(); k < l; k++) {
+			if (model.neuronVarNeedQueue[src][k]) {
+			    substitute(code, tS("$(") + nModels[nt_pre].varNames[k] + tS("_pre)"), nModels[nt_pre].varNames[k]+model.neuronName[src]+tS("[")+offsetPre+tS("j]"));
+			}
+			else {
+			   substitute(code, tS("$(") + nModels[nt_pre].varNames[k] + tS("_pre)"), nModels[nt_pre].varNames[k]+model.neuronName[src]+tS("[j]"));
+			} 
+		    }
+		    // substitute post-synaptic variable names in synapseDynamics code 
+		    extended_name_substitutions(code, tS(""), nModels[nt_post].varNames, tS("_post"), model.neuronName[src]+tS("[k]"));
+		    // !!! end of new mechanism !!!
+// substitute parameter values for parameters in synapseDynamics code
 		    value_substitutions(code, wu.pNames, model.synapsePara[synPopID]);
+		    // substitute values for derived parameters in synapseDynamics code
 		    value_substitutions(code, wu.dpNames, model.dsp_w[synPopID]);
 		    os << ensureFtype(code, model.ftype) << ENDL;
+		    os << CB(26);
 		    os << CB(25);
 		}
 	    }
@@ -213,7 +268,7 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 	os << "// test whether spike condition was fulfilled previously" << ENDL;
 	string thCode= nModels[nt].thresholdConditionCode;
 	if (thCode == tS("")) { // no condition provided
-	    cerr << "Warning: No thresholdConditionCode for neuron type : " << model.neuronType[i] << " used for " << model.name[i] << " was provided. There will be no spikes detected in this population!" << ENDL;
+	    cerr << "Warning: No thresholdConditionCode for neuron type " << model.neuronType[i] << " used for population \"" << model.neuronName[i] << "\" was provided. There will be no spikes detected in this population!" << endl;
 	}
 	else {
 	    name_substitutions(thCode, tS("l"), nModels[nt].varNames, tS(""));

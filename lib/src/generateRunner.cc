@@ -331,7 +331,7 @@ void genRunner(NNmodel &model, //!< Model description
     
 
     for (int i = 0; i < model.synapseGrpN; i++) {
-    	st = model.synapseType[i];
+	st = model.synapseType[i];
 	pst = model.postSynapseType[i];
 
 	os << model.ftype << " *inSyn" << model.synapseName[i] << ";" << endl;

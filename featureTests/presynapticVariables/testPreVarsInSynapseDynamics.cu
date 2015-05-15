@@ -1,0 +1,184 @@
+
+#ifndef TESTPREVARSINSYNAPSEDYNAMICS_CU
+#define TESTPREVARSINSYNAPSEDYNAMICS_CU
+
+#include <cstdlib>
+#include <cfloat>
+#include <iostream>
+#include <fstream>
+
+using namespace std;
+
+#include "hr_time.cpp"
+#include "utils.h"
+#include "testHelper.h"
+
+#include "testPreVarsInSynapseDynamics.h"
+#include "preVarsInSynapseDynamics_CODE/definitions.h"
+#include "preVarsInSynapseDynamics_CODE/runner.cc"
+
+
+
+preVarsInSynapseDynamics::preVarsInSynapseDynamics()
+{
+  allocateMem();
+  initialize();
+  init_synapses();
+  init_neurons();
+}
+
+preVarsInSynapseDynamics::~preVarsInSynapseDynamics()
+{
+  freeMem();
+  delete[] theW;
+}
+
+void preVarsInSynapseDynamics::init_synapses() {
+    theW= new float*[10];
+    theW[0]= wsyn0;
+    theW[1]= wsyn1;
+    theW[2]= wsyn2;
+    theW[3]= wsyn3;
+    theW[4]= wsyn4;
+    theW[5]= wsyn5;
+    theW[6]= wsyn6;
+    theW[7]= wsyn7;
+    theW[8]= wsyn8;
+    theW[9]= wsyn9;
+}
+    
+void preVarsInSynapseDynamics::init_neurons() {
+    for (int i= 0; i < 10; i++) {
+	shiftpre[i]= i*10.0f;
+    }
+    copyStateToDevice();
+}
+
+void preVarsInSynapseDynamics::run(float t, int which)
+{
+  if (which == GPU)
+  {
+    stepTimeGPU(t);
+    copyStateFromDevice();
+  }
+  else
+  {
+    stepTimeCPU(t);
+  }
+}
+
+
+/*====================================================================
+--------------------------- MAIN FUNCTION ----------------------------
+====================================================================*/
+
+int main(int argc, char *argv[])
+{
+  if (argc != 4)
+  {
+    cerr << "usage: preVarsInSynapseDynamicsSim <GPU = 1, CPU = 0> <output label> <write output files? 0/1>" << endl;
+    return EXIT_FAILURE;
+  }
+
+  float t = 0.0f;
+  preVarsInSynapseDynamics *sim = new preVarsInSynapseDynamics();
+  int which= atoi(argv[1]);
+  int write= atoi(argv[3]);
+  CStopWatch *timer = new CStopWatch();
+  string outLabel = toString(argv[2]);
+  ofstream timeOs;
+  ofstream neurOs;
+  ofstream synOs;
+  ofstream expSynOs;
+  if (write) {
+      timeOs.open((outLabel + "_time.dat").c_str(), ios::app);
+      neurOs.open((outLabel + "_neur.dat").c_str());
+      synOs.open((outLabel + "_syn.dat").c_str());
+      expSynOs.open((outLabel + "_expSyn.dat").c_str());
+  }
+  float x[10][100];
+  if (write) {
+      cout << "# DT " << DT << endl;
+      cout << "# TOTAL_TIME " << TOTAL_TIME << endl;
+      cout << "# REPORT_TIME " << REPORT_TIME << endl;
+      cout << "# begin simulating on " << ((which) ? "GPU" : "CPU") << endl;
+  }
+  timer->startTimer();
+  float err= 0.0f;
+  for (int d= 0; d < 10; d++) {
+      for (int j= 0; j < 10; j++) {
+	  for (int k= 0; k < 10; k++) {
+	      x[d][j*10+k]= 0.0f;
+	  }
+      }
+  }
+  for (int i = 0; i < (TOTAL_TIME / DT); i++)
+  {      
+      t = i*DT;
+      if (write) {
+	  neurOs << t << " ";
+	  synOs << t << " ";
+	  expSynOs << t << " ";
+      }
+      for (int d= 0; d < 10; d++) { // for each delay
+	  for (int j= 0; j < 10; j++) { // for all pre-synaptic neurons 
+	      for (int k= 0; k < 10; k++) { // for all post-syn neurons
+              // generate expected values
+		  if (t > 0.001+d*DT) {
+		      x[d][j*10+k]= t-DT-d*DT+10*j;
+		  }
+		  if (write) {
+		      synOs << sim->theW[d][j*10+k] << " ";
+		      expSynOs << x[d][j*10+k] << " ";
+		  }
+	      }
+	  }		  
+	  err+= absDiff(x[d], sim->theW[d], 100);
+	  if (write) {
+	      synOs << "    ";
+	      expSynOs << "    ";
+	  }
+      }
+      if (write) {
+	  for (int j= 0; j < 10; j++) {
+	      neurOs << xpre[spkQuePtrpre*10+j] << " ";
+	  }
+	  neurOs << "    ";
+      }
+      neurOs << endl;
+      synOs << endl;
+      expSynOs << endl;
+      sim->run(t, which);
+      if (fmod(t+5e-5, REPORT_TIME) < 1e-4)
+      {
+	  cout << "\r" << t;
+      }
+  }
+  cout << "\r";
+  timer->stopTimer();
+  cout << "# done in " << timer->getElapsedTime() << " seconds" << endl;
+  if (write) {
+      timeOs << timer->getElapsedTime() << endl;
+      timeOs.close();
+      neurOs.close();
+      synOs.close();
+      expSynOs.close();
+  }
+
+  delete sim;
+  delete timer;
+  
+  float tolerance= 5e-2;
+  string result;
+  if (abs(err) < tolerance) result= tS("PASS");
+  else result= tS("FAIL");
+  cout << "# test preVarsInSynapseDynamics: Result " << result << endl;
+  cout << "# the error was: " << err << " against tolerance " << tolerance << endl;
+  cout << "#-----------------------------------------------------------" << endl;
+  if (result == tS("PASS"))
+      return EXIT_SUCCESS;
+  else 
+      return EXIT_FAILURE;
+}
+
+#endif // TESTPREVARSINSYNAPSEDYNAMICS_CU
