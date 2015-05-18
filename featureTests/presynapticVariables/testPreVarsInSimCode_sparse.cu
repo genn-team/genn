@@ -13,13 +13,13 @@ using namespace std;
 #include "utils.h"
 #include "testHelper.h"
 
-#include "testPreVarsInSimCode.h"
-#include "preVarsInSimCode_CODE/definitions.h"
-#include "preVarsInSimCode_CODE/runner.cc"
+#include "testPreVarsInSimCode_sparse.h"
+#include "preVarsInSimCode_sparse_CODE/definitions.h"
+#include "preVarsInSimCode_sparse_CODE/runner.cc"
 
 
 
-preVarsInSimCode::preVarsInSimCode()
+preVarsInSimCode_sparse::preVarsInSimCode_sparse()
 {
   allocateMem();
   initialize();
@@ -27,13 +27,66 @@ preVarsInSimCode::preVarsInSimCode()
   init_neurons();
 }
 
-preVarsInSimCode::~preVarsInSimCode()
+preVarsInSimCode_sparse::~preVarsInSimCode_sparse()
 {
   freeMem();
   delete[] theW;
 }
 
-void preVarsInSimCode::init_synapses() {
+void preVarsInSimCode_sparse::init_synapses() {
+    // fill the sparse connections with a cyclic 1-to-1 scheme
+    SparseProjection  *theC;
+    for (int i= 0; i < 10; i++) { // all different delay groups get same connectivity
+	switch (i) {
+	case 0:
+	    allocatesyn0(10);
+	    theC= &Csyn0;
+	    break;
+	case 1:
+	    allocatesyn1(10);
+	    theC= &Csyn1;
+	    break;
+	case 2:
+	    allocatesyn2(10);
+	    theC= &Csyn2;
+	    break;
+	case 3:
+	    allocatesyn3(10);
+	    theC= &Csyn3;
+	    break;
+	case 4:
+	    allocatesyn4(10);
+	    theC= &Csyn4;
+	    break;
+	case 5:
+	    allocatesyn5(10);
+	    theC= &Csyn5;
+	    break;
+	case 6:
+	    allocatesyn6(10);
+	    theC= &Csyn6;
+	    break;
+	case 7:
+	    allocatesyn7(10);
+	    theC= &Csyn7;
+	    break;
+	case 8:
+	    allocatesyn8(10);
+	    theC= &Csyn8;
+	    break;
+	case 9:
+	    allocatesyn9(10);
+	    theC= &Csyn9;
+	    break;
+	}
+	for (int j= 0; j < 10; j++) { // loop through pre-synaptic neurons
+	    // each pre-synatic neuron gets one target neuron
+	    unsigned int trg= (j+1)%10;
+	    theC->indInG[j]= j;
+	    theC->ind[j]= trg;
+	}
+	theC->indInG[10]= 10;
+    }	
     theW= new float*[10];
     theW[0]= wsyn0;
     theW[1]= wsyn1;
@@ -45,16 +98,23 @@ void preVarsInSimCode::init_synapses() {
     theW[7]= wsyn7;
     theW[8]= wsyn8;
     theW[9]= wsyn9;
+    for (int i= 0; i < 10; i++) { // for all synapse groups
+	for (int j= 0; j < 10; j++) { // for all synapses
+	    theW[i][j]= 0.0f;
+	} 
+    }
+    initializeAllSparseArrays();
 }
-    
-void preVarsInSimCode::init_neurons() {
+
+
+void preVarsInSimCode_sparse::init_neurons() {
     for (int i= 0; i < 10; i++) {
 	shiftpre[i]= i*10.0f;
     }
     copyStateToDevice();
 }
 
-void preVarsInSimCode::run(float t, int which)
+void preVarsInSimCode_sparse::run(float t, int which)
 {
   if (which == GPU)
   {
@@ -76,12 +136,12 @@ int main(int argc, char *argv[])
 {
   if (argc != 4)
   {
-    cerr << "usage: preVarsInSimCodeSim <GPU = 1, CPU = 0> <output label> <write output files? 0/1>" << endl;
+    cerr << "usage: preVarsInSimCode_sparseSim <GPU = 1, CPU = 0> <output label> <write output files? 0/1>" << endl;
     return EXIT_FAILURE;
   }
 
   float t = 0.0f;
-  preVarsInSimCode *sim = new preVarsInSimCode();
+  preVarsInSimCode_sparse *sim = new preVarsInSimCode_sparse();
   int which= atoi(argv[1]);
   int write= atoi(argv[3]);
   CStopWatch *timer = new CStopWatch();
@@ -96,7 +156,7 @@ int main(int argc, char *argv[])
       synOs.open((outLabel + "_syn.dat").c_str());
       expSynOs.open((outLabel + "_expSyn.dat").c_str());
   }
-  float x[10][100];
+  float x[10][10];
   if (write) {
       cout << "# DT " << DT << endl;
       cout << "# TOTAL_TIME " << TOTAL_TIME << endl;
@@ -107,9 +167,7 @@ int main(int argc, char *argv[])
   float err= 0.0f;
   for (int d= 0; d < 10; d++) {
       for (int j= 0; j < 10; j++) {
-	  for (int k= 0; k < 10; k++) {
-	      x[d][j*10+k]= 0.0f;
-	  }
+	  x[d][j]= 0.0f;
       }
   }
   for (int i = 0; i < (TOTAL_TIME / DT); i++)
@@ -122,18 +180,16 @@ int main(int argc, char *argv[])
       }
       for (int d= 0; d < 10; d++) { // for each delay
 	  for (int j= 0; j < 10; j++) { // for all pre-synaptic neurons 
-	      for (int k= 0; k < 10; k++) { // for all post-syn neurons
               // generate expected values
-		  if ((t > 1.1001) && (fmod(t-2*DT-d*DT+5e-5,1.0f) < 1e-4)) {
-		      x[d][j*10+k]= t-2*DT-d*DT+10*j;
-		  }
-		  if (write) {
-		      synOs << sim->theW[d][j*10+k] << " ";
-		      expSynOs << x[d][j*10+k] << " ";
-		  }
+	      if ((t > 1.1001) && (fmod(t-2*DT-d*DT+5e-5,1.0f) < 1e-4)) {
+		  x[d][j]= t-2*DT-d*DT+10*j;
+	      }
+	      if (write) {
+		  synOs << sim->theW[d][j] << " ";
+		  expSynOs << x[d][j] << " ";
 	      }
 	  }		  
-	  err+= absDiff(x[d], sim->theW[d], 100);
+	  err+= absDiff(x[d], sim->theW[d], 10);
 	  if (write) {
 	      synOs << "    ";
 	      expSynOs << "    ";
@@ -168,7 +224,7 @@ int main(int argc, char *argv[])
   delete sim;
   delete timer;
   
-  float tolerance= 1e-2;
+  float tolerance= 1e-3;
   int success;
   string result;
   if (abs(err) < tolerance) {
@@ -178,7 +234,7 @@ int main(int argc, char *argv[])
       success= 0;
       result= tS("\033[1;31m FAIL \033[0m");
   }
-  cout << "# test preVarsInSimCode: Result " << result << endl;
+  cout << "# test preVarsInSimCode_sparse: Result " << result << endl;
   cout << "# the error was: " << err << " against tolerance " << tolerance << endl;
   cout << "#-----------------------------------------------------------" << endl;
   if (success)

@@ -176,8 +176,8 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 		    // substitute values for derived parameters in synapseDynamics code
 		    value_substitutions(code, wu.dpNames, model.dsp_w[synPopID]);
 		    os << ensureFtype(code, model.ftype) << ENDL;
-		    os << CB(23);
 		    os << CB(24);
+		    os << CB(23);
 		}
 		else { // DENSE
 		    os << "for (int j = 0; j < " <<  srcno << "; j++)" << OB(25);

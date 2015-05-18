@@ -169,13 +169,19 @@ int main(int argc, char *argv[])
   delete timer;
   
   float tolerance= 5e-2;
+  int success;
   string result;
-  if (abs(err) < tolerance) result= tS("PASS");
-  else result= tS("FAIL");
+  if (abs(err) < tolerance) {
+      success= 1;
+      result= tS("\033[1;32m PASS \033[0m");
+  } else {
+      success= 0;
+      result= tS("\033[1;31m FAIL \033[0m");
+  }
   cout << "# test preVarsInSynapseDynamics: Result " << result << endl;
   cout << "# the error was: " << err << " against tolerance " << tolerance << endl;
   cout << "#-----------------------------------------------------------" << endl;
-  if (result == tS("PASS"))
+  if (success)
       return EXIT_SUCCESS;
   else 
       return EXIT_FAILURE;

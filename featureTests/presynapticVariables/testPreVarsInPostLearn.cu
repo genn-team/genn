@@ -13,13 +13,13 @@ using namespace std;
 #include "utils.h"
 #include "testHelper.h"
 
-#include "testPreVarsInSimCode.h"
-#include "preVarsInSimCode_CODE/definitions.h"
-#include "preVarsInSimCode_CODE/runner.cc"
+#include "testPreVarsInPostLearn.h"
+#include "preVarsInPostLearn_CODE/definitions.h"
+#include "preVarsInPostLearn_CODE/runner.cc"
 
 
 
-preVarsInSimCode::preVarsInSimCode()
+preVarsInPostLearn::preVarsInPostLearn()
 {
   allocateMem();
   initialize();
@@ -27,13 +27,13 @@ preVarsInSimCode::preVarsInSimCode()
   init_neurons();
 }
 
-preVarsInSimCode::~preVarsInSimCode()
+preVarsInPostLearn::~preVarsInPostLearn()
 {
   freeMem();
   delete[] theW;
 }
 
-void preVarsInSimCode::init_synapses() {
+void preVarsInPostLearn::init_synapses() {
     theW= new float*[10];
     theW[0]= wsyn0;
     theW[1]= wsyn1;
@@ -47,14 +47,14 @@ void preVarsInSimCode::init_synapses() {
     theW[9]= wsyn9;
 }
     
-void preVarsInSimCode::init_neurons() {
+void preVarsInPostLearn::init_neurons() {
     for (int i= 0; i < 10; i++) {
 	shiftpre[i]= i*10.0f;
     }
     copyStateToDevice();
 }
 
-void preVarsInSimCode::run(float t, int which)
+void preVarsInPostLearn::run(float t, int which)
 {
   if (which == GPU)
   {
@@ -76,12 +76,12 @@ int main(int argc, char *argv[])
 {
   if (argc != 4)
   {
-    cerr << "usage: preVarsInSimCodeSim <GPU = 1, CPU = 0> <output label> <write output files? 0/1>" << endl;
+    cerr << "usage: preVarsInPostLearnSim <GPU = 1, CPU = 0> <output label> <write output files? 0/1>" << endl;
     return EXIT_FAILURE;
   }
 
   float t = 0.0f;
-  preVarsInSimCode *sim = new preVarsInSimCode();
+  preVarsInPostLearn *sim = new preVarsInPostLearn();
   int which= atoi(argv[1]);
   int write= atoi(argv[3]);
   CStopWatch *timer = new CStopWatch();
@@ -124,7 +124,7 @@ int main(int argc, char *argv[])
 	  for (int j= 0; j < 10; j++) { // for all pre-synaptic neurons 
 	      for (int k= 0; k < 10; k++) { // for all post-syn neurons
               // generate expected values
-		  if ((t > 1.1001) && (fmod(t-2*DT-d*DT+5e-5,1.0f) < 1e-4)) {
+		  if ((t > 2.1001) && (fmod(t-2*DT+5e-5,2.0f) < 1e-4)) {
 		      x[d][j*10+k]= t-2*DT-d*DT+10*j;
 		  }
 		  if (write) {
@@ -168,7 +168,7 @@ int main(int argc, char *argv[])
   delete sim;
   delete timer;
   
-  float tolerance= 1e-2;
+  float tolerance= 2e-2;
   int success;
   string result;
   if (abs(err) < tolerance) {
@@ -178,7 +178,7 @@ int main(int argc, char *argv[])
       success= 0;
       result= tS("\033[1;31m FAIL \033[0m");
   }
-  cout << "# test preVarsInSimCode: Result " << result << endl;
+  cout << "# test preVarsInPostLearn: Result " << result << endl;
   cout << "# the error was: " << err << " against tolerance " << tolerance << endl;
   cout << "#-----------------------------------------------------------" << endl;
   if (success)

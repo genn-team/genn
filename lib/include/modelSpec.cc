@@ -275,6 +275,11 @@ void NNmodel::initLearnGrps()
 	    }
 	    lrnSynGrp.push_back(i);
 	    lrnGroups++;
+	    for (int j = 0; j < vars.size(); j++) {
+		if (wu.simLearnPost.find(vars[j] + tS("_pre")) != string::npos) {
+		    neuronVarNeedQueue[src][j] = TRUE;
+		}
+	    }
 	}
     }
 }
