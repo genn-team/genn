@@ -146,11 +146,12 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 		}
 		if (model.synapseConnType[synPopID] == SPARSE) { // SPARSE
 		    os << "for (int j = 0; j < " << srcno << "; j++)" << OB(23) << ENDL;
-		    os << "for (int k = C" << synapseName << ".indInG[j]; k < C" << synapseName << ".indInG[j+1]; k++)" << OB(24);
 		    os << "// loop over all synapses" << ENDL;
+		    os << "if (n < C" << synapseName << ".indInG[j+1] - C" << synapseName << ".indInG[j]) " << OB(24);
+		    os << "// only existing synapses" << ENDL;
 		    if (model.synapseGType[synPopID] == INDIVIDUALG) {
 			// name substitute synapse var names in synapseDynamics code
-			name_substitutions(code, tS(""), wu.varNames, synapseName + tS("[k]"));
+			name_substitutions(code, tS(""), wu.varNames, synapseName + tS("[C") + synapseName +tS(".indInG[j]+n]"));
 		    }
 		    else {
 			// substitute initial values as constants for synapse var names in synapseDynamics code
@@ -169,7 +170,7 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 			}
 		    }
 		    // substitute post-synaptic variable names in synapseDynamics code
-		    extended_name_substitutions(code, tS(""), nModels[nt_post].varNames, tS("_post"), model.neuronName[trg]+tS("[ind")+synapseName +tS("[k]]"));
+		    extended_name_substitutions(code, tS(""), nModels[nt_post].varNames, tS("_post"), model.neuronName[trg]+tS("[C") + synapseName + tS(".ind[C") + synapseName + tS(".indInG[j]+n]]"));
 		    // !!! end of new mechanism !!!
 		    // substitute parameter values for parameters in synapseDynamics code
 		    value_substitutions(code, wu.pNames, model.synapsePara[synPopID]);
@@ -181,10 +182,10 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 		}
 		else { // DENSE
 		    os << "for (int j = 0; j < " <<  srcno << "; j++)" << OB(25);
-		    os << "for (int k = 0; k < " <<  trgno << "; k++)" << OB(26);
+		    os << "// loop through all incoming synapses" << endl;
 		    // substitute initial values as constants for synapse var names in synapseDynamics code
 		    if (model.synapseGType[synPopID] == INDIVIDUALG) {
-			name_substitutions(code, tS(""), wu.varNames, synapseName + tS("[j*") + tS(trgno) + tS("+k]"));
+			name_substitutions(code, tS(""), wu.varNames, synapseName + tS("[j*") + tS(trgno) + tS("+n]"));
 		    }
 		    else {
 			// substitute initial values as constants for synapse var names in synapseDynamics code
@@ -202,14 +203,13 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 			} 
 		    }
 		    // substitute post-synaptic variable names in synapseDynamics code 
-		    extended_name_substitutions(code, tS(""), nModels[nt_post].varNames, tS("_post"), model.neuronName[src]+tS("[k]"));
+		    extended_name_substitutions(code, tS(""), nModels[nt_post].varNames, tS("_post"), model.neuronName[trg]+tS("[n]"));
 		    // !!! end of new mechanism !!!
 // substitute parameter values for parameters in synapseDynamics code
 		    value_substitutions(code, wu.pNames, model.synapsePara[synPopID]);
 		    // substitute values for derived parameters in synapseDynamics code
 		    value_substitutions(code, wu.dpNames, model.dsp_w[synPopID]);
 		    os << ensureFtype(code, model.ftype) << ENDL;
-		    os << CB(26);
 		    os << CB(25);
 		}
 	    }
