@@ -203,14 +203,12 @@ void NNmodel::initLearnGrps()
 
     neuronNeedTrueSpk.assign(neuronGrpN, FALSE);
     neuronNeedSpkEvnt.assign(neuronGrpN, FALSE);
+
     neuronVarNeedQueue.resize(neuronGrpN);
     for (int i = 0; i < neuronGrpN; i++) {
 	neuronVarNeedQueue[i] = vector<bool>(nModels[neuronType[i]].varNames.size(), FALSE);
     }
     neuronSpkEvntCondition.assign(neuronGrpN, tS(""));
-
-    neuronVarNeedSpkEvnt.resize(neuronGrpN); // what is this used for?
-    neuronVarNeedSpk.resize(neuronGrpN); // what is this used for?
 
     for (int i = 0; i < synapseGrpN; i++) {
 	unsigned int padnN = ceil((double) neuronN[synapseSource[i]] / (double) learnBlkSz) * (double) learnBlkSz;
@@ -222,14 +220,10 @@ void NNmodel::initLearnGrps()
 	    synapseUsesTrueSpikes[i] = TRUE;
 	    neuronNeedTrueSpk[src] = TRUE;
 
-	    // analyze which neuron variables need spk queues
-	    neuronVarNeedSpk[src].resize(vars.size());
+	    // analyze which neuron variables need queues
 	    for (int j = 0; j < vars.size(); j++) {
 		if (wu.simCode.find(vars[j] + tS("_pre")) != string::npos) {
-		    neuronVarNeedSpk[src][j] = TRUE;
-		}
-		else {
-		    neuronVarNeedSpk[src][j] = FALSE;		    
+		    neuronVarNeedQueue[src][j] = TRUE;
 		}
 	    }
 	}
@@ -247,17 +241,21 @@ void NNmodel::initLearnGrps()
 	    }
 
 
-	    // analyze which neuron variables need spkEvnt queues
-	    neuronVarNeedSpkEvnt[src].resize(vars.size());
+	    // analyze which neuron variables need queues
 	    for (int j = 0; j < vars.size(); j++) {
 		if (wu.simCodeEvnt.find(vars[j] + tS("_pre")) != string::npos) {
-		    neuronVarNeedSpkEvnt[src][j] = TRUE;
+		    neuronVarNeedQueue[src][j] = TRUE;
 		}
-		else {
-		    neuronVarNeedSpkEvnt[src][j]= FALSE;		    
-		} 
 	    }
 		
+	}
+
+	if (wu.synapseDynamics != tS("")) {
+	    for (int j = 0; j < vars.size(); j++) {
+		if (wu.synapseDynamics.find(vars[j] + tS("_pre")) != string::npos) {
+		    neuronVarNeedQueue[src][j] = TRUE;
+		}
+	    }
 	}
 
 	if (wu.simLearnPost != tS("")) {
@@ -271,6 +269,11 @@ void NNmodel::initLearnGrps()
 	    }
 	    lrnSynGrp.push_back(i);
 	    lrnGroups++;
+	    for (int j = 0; j < vars.size(); j++) {
+		if (wu.simLearnPost.find(vars[j] + tS("_pre")) != string::npos) {
+		    neuronVarNeedQueue[src][j] = TRUE;
+		}
+	    }
 	}
     }
 }

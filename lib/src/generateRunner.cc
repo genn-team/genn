@@ -240,7 +240,7 @@ void genRunner(NNmodel &model, //!< Model description
 
     os << "void convertProbabilityToRandomNumberThreshold(" << model.ftype << " *p_pattern, " << model.RNtype << " *pattern, int N)" << ENDL;
     os << "{" << ENDL;
-    os << "    " << model.ftype << " fac= pow(2.0, (int) sizeof(" << model.RNtype << ")*8-16);" << ENDL;
+    os << "    " << model.ftype << " fac= pow(2.0, (double) sizeof(" << model.RNtype << ")*8-16);" << ENDL;
     os << "    for (int i= 0; i < N; i++) {" << ENDL;
     //os << "        assert(p_pattern[i] <= 1.0);" << ENDL;
     os << "        pattern[i]= (" << model.RNtype << ") (p_pattern[i]*fac);" << ENDL;
@@ -256,7 +256,7 @@ void genRunner(NNmodel &model, //!< Model description
 
     os << "void convertRateToRandomNumberThreshold(" << model.ftype << " *rateKHz_pattern, " << model.RNtype << " *pattern, int N)" << ENDL;
     os << "{" << ENDL;
-    os << "    " << model.ftype << " fac= pow(2.0, (int) sizeof(" << model.RNtype << ")*8-16)*DT;" << ENDL;
+    os << "    " << model.ftype << " fac= pow(2.0, (double) sizeof(" << model.RNtype << ")*8-16)*DT;" << ENDL;
     os << "    for (int i= 0; i < N; i++) {" << ENDL;
     //os << "        assert(rateKHz_pattern[i] <= 1.0);" << ENDL;
     os << "        pattern[i]= (" << model.RNtype << ") (rateKHz_pattern[i]*fac);" << ENDL;
@@ -324,7 +324,7 @@ void genRunner(NNmodel &model, //!< Model description
     
 
     for (int i = 0; i < model.synapseGrpN; i++) {
-    	st = model.synapseType[i];
+	st = model.synapseType[i];
 	pst = model.postSynapseType[i];
 
 	os << model.ftype << " *inSyn" << model.synapseName[i] << ";" << endl;
@@ -612,7 +612,7 @@ void genRunner(NNmodel &model, //!< Model description
 
 	if (model.neuronNeedSt[i]) {
 	    os << "    for (int i = 0; i < " << model.neuronN[i] * model.neuronDelaySlots[i] << "; i++) {" << endl;
-	    os << "        sT" <<  model.neuronName[i] << "[i] = -10000.0;" << endl;
+	    os << "        sT" <<  model.neuronName[i] << "[i] = -10.0;" << endl;
 	    os << "    }" << endl;
 	}
 
@@ -716,19 +716,8 @@ void genRunner(NNmodel &model, //!< Model description
 	    os << endl;
 	    //setup up helper fn for this (specific) popn to generate sparse from dense 
 	    os << "void createSparseConnectivityFromDense" << model.synapseName[i] << "(int preN,int postN, " << model.ftype << " *denseMatrix)" << "{" << endl;
-	    os << "if (preN != " << model.neuronN[model.synapseSource[i]] << ") {" << endl;
-	    os << "    gennError(\"In createSparseConnectivityFromDense" << model.synapseName[i] << ": preN does not match the number of pre-synaptic neurons (" << model.neuronN[model.synapseSource[i]] << ").\");" << endl;
+	    os << "    gennError(\"The function createSparseConnectivityFromDense" << model.synapseName[i] << "() has been deprecated because with the introduction of synapse models that can be fully user-defined and may not contain a conductance variable g the existence condition for synapses has become ill-defined. \\n Please use your own logic and use the general tools allocate" << model.synapseName[i] << "(), countEntriesAbove(), and setSparseConnectivityFromDense().\");" << endl;
 	    os << "}" << endl;
-	    os << "if (postN != " << model.neuronN[model.synapseTarget[i]] << ") {" << endl;
-	    os << "    gennError(\"In createSparseConnectivityFromDense" << model.synapseName[i] << ": postN does not match the number of pre-synaptic neurons (" << model.neuronN[model.synapseTarget[i]] << ").\");" << endl;
-	    os << "}" << endl;
-	    
-	    os << "int connN = countEntriesAbove(denseMatrix, preN * postN, " << SCLR_MIN << ");" << endl;
-	    os << "allocate" << model.synapseName[i] << "(connN);" << endl;
-	    string wuvarName = "g" + tS(model.synapseName[i]);
-	    string sparseStructName = "C" + tS(model.synapseName[i]);
-	    os << "setSparseConnectivityFromDense(" << wuvarName << ",preN,postN,denseMatrix,&" << sparseStructName << ");" << endl;
-	    os << "}" << endl; 
 	    os << endl;
 	}
     }

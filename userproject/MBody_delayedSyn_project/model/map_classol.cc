@@ -233,8 +233,8 @@ void classol::read_kcdnsyns(FILE *f //!< File handle for a file containing KC to
 	    fprintf(stdout, "Too low conductance value %e detected and set to 2*SCALAR_MIN= %e, at index %d \n", gKCDN[i], 2*SCALAR_MIN, i);
 	    gKCDN[i] = 2.0*SCALAR_MIN; //to avoid log(0)/0 below
 	}
-	scalar tmp = gKCDN[i] / myKCDN_p[6]*2.0 ;
-	gRawKCDN[i]=  0.5 * log( tmp / (2.0 - tmp)) /myKCDN_p[8] + myKCDN_p[7];
+	scalar tmp = gKCDN[i] / myKCDN_p[5]*2.0 ;
+	gRawKCDN[i]=  0.5 * log( tmp / (2.0 - tmp)) /myKCDN_p[7] + myKCDN_p[6];
     }
     cerr << "Total number of low value corrections: " << cnt << endl;
     delete[] tmpg;

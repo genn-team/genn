@@ -725,7 +725,6 @@ void prepareWeightUpdateModels()
     wuL.varNames.push_back(tS("gRaw")); 
     wuL.varTypes.push_back(tS("scalar"));
     wuL.pNames.clear();
-    wuL.pNames.push_back(tS("Epre")); 
     wuL.pNames.push_back(tS("tLrn"));  
     wuL.pNames.push_back(tS("tChng")); 
     wuL.pNames.push_back(tS("tDecay")); 

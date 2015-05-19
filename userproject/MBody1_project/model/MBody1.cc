@@ -93,18 +93,17 @@ double postExpLHIKC[2]={
   -92.0		  // 1 - Erev: Reversal potential
 };
 
-double myKCDN_p[11]= {
-  -20.0,         // 0 - Epre: Presynaptic threshold potential
-  50.0, //25.0,          // 1 - TLRN: time scale of learning changes
-  50.0, //100.0        // 2 - TCHNG: width of learning window
-  50000.0,       // 3 - TDECAY: time scale of synaptic strength decay
-  100000.0,      // 4 - TPUNISH10: Time window of suppression in response to 1/0
-  200.0, //100.0,  // 5 - TPUNISH01: Time window of suppression in response to 0/1
-  0.015, // 0.06,          // 6 - GMAX: Maximal conductance achievable
-  0.0075, // 0.03,          // 7 - GMID: Midpoint of sigmoid g filter curve
-  33.33,         // 8 - GSLOPE: slope of sigmoid g filter curve
-  10.0,          // 9 - TAUSHIFT: shift of learning curve
-  0.00006 // 0.006   // 10 - GSYN0: value of syn conductance g decays to
+double myKCDN_p[10]= {
+  50.0,               // 0 - TLRN: time scale of learning changes
+  50.0,               // 1 - TCHNG: width of learning window
+  50000.0,            // 2 - TDECAY: time scale of synaptic strength decay
+  100000.0,           // 3 - TPUNISH10: Time window of suppression in response to 1/0
+  200.0,              // 4 - TPUNISH01: Time window of suppression in response to 0/1
+  0.015,              // 5 - GMAX: Maximal conductance achievable
+  0.0075,             // 6 - GMID: Midpoint of sigmoid g filter curve
+  33.33,              // 7 - GSLOPE: slope of sigmoid g filter curve
+  10.0,               // 8 - TAUSHIFT: shift of learning curve
+  0.00006             // 9 - GSYN0: value of syn conductance g decays to
 };
 
 double myKCDN_ini[2]={

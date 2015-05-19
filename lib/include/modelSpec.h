@@ -224,8 +224,6 @@ public:
   vector<unsigned int> neuronDelaySlots; //!< The number of slots needed in the synapse delay queues of a neuron group
   vector<int> neuronHostID; //!< The ID of the cluster node which the neuron groups are computed on
   vector<int> neuronDeviceID; //!< The ID of the CUDA device which the neuron groups are comnputed on
-  vector<vector<bool > > neuronVarNeedSpkEvnt; //!< indicates whether spkEnt values (or delay queues) need to be stored for this variable
-  vector<vector<bool > > neuronVarNeedSpk; //!< indicates whether spk values (or delay queues) need to be stored for this variable
 
 
   // PUBLIC SYNAPSE VARIABLES

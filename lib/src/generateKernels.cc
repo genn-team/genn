@@ -208,6 +208,10 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 	}
 
         os << "// execute internal synapse dynamics if any" << ENDL;
+	if (model.needSynapseDelay) {
+	    os << "unsigned int delaySlot;" << ENDL;
+	}
+	os << ENDL;
 	for (int j = 0; j < model.inSyn[i].size(); j++) {
 	    unsigned int synPopID=  model.inSyn[i][j];
 	    unsigned int synt= model.synapseType[synPopID];
@@ -218,36 +222,85 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 		weightUpdateModel wu= weightUpdateModels[synt];
 		string code= wu.synapseDynamics;
 		unsigned int srcno= model.neuronN[model.synapseSource[synPopID]]; 
+		int src= model.synapseSource[synPopID];
+		int trg= model.synapseTarget[synPopID];
+		int nt_pre= model.neuronType[src];
+		int nt_post= model.neuronType[trg];
+		bool delayPre = model.neuronDelaySlots[src] > 1;
+		string offsetPre = (delayPre ? "(delaySlot * " + tS(model.neuronN[src]) + ") + " : "");
+		// !! this is strange: feature test preVarsInSynapseDynamics passes with the following __sync_threads() but fails without (the delay 0 elements are not copied reliably). I leave it here for now without understanding its benefits.
+		os << "__syncthreads();" << endl;
+		if (model.neuronDelaySlots[src] > 1) {
+		    os << "delaySlot = (dd_spkQuePtr" << model.neuronName[src];
+		    os << " + " << tS(model.neuronDelaySlots[src] - model.synapseDelay[synPopID]);
+		    os << ") % " << tS(model.neuronDelaySlots[src]) << ";" << ENDL;
+		}
 		if (model.synapseConnType[synPopID] == SPARSE) { // SPARSE
 		    os << "for (int k = 0; k < " << srcno << "; k++)" << OB(24) << ENDL;
-		    os << "if (" << localID << " < dd_indInG" << synapseName << "[k + 1] - dd_indInG" << synapseName << "[k])" << OB(24);
+		    os << "if (" << localID << " < dd_indInG" << synapseName << "[k + 1] - dd_indInG" << synapseName << "[k])" << OB(25);
 		    os << "// all threads participate that can work on a post-synaptic neuron" << ENDL;
 		    if (model.synapseGType[synPopID] == INDIVIDUALG) {
-			name_substitutions(code, tS("dd_"), wu.varNames, synapseName + tS("[") + localID + tS(" + dd_indInG") + synapseName + tS("[k]]"));
+		      // name substitute synapse var names in synapseDynamics code
+		      name_substitutions(code, tS("dd_"), wu.varNames, synapseName + tS("[") + localID + tS(" + dd_indInG") + synapseName + tS("[k]]"));
 		    }
 		    else {
-			value_substitutions(code, wu.varNames, model.synapseIni[synPopID]);
+		      // substitute initial values as constants for synapse var names in synapseDynamics code
+		      value_substitutions(code, wu.varNames, model.synapseIni[synPopID]);
 		    }
+		    // substitute pre-synaptic variable names in synapseDynamics code
+		    // !!! this functionality needs testing !!!    
+		    if (nt_pre == POISSONNEURON) substitute(code, tS("$(V_pre)"), tS(model.neuronPara[src][2]));
+		    string theQueueOffset;
+		    for (int k= 0, l= nModels[nt_pre].varNames.size(); k < l; k++) {
+			if (model.neuronVarNeedQueue[src][k]) {
+			    substitute(code, tS("$(") + nModels[nt_pre].varNames[k] + tS("_pre)"), tS("dd_")+nModels[nt_pre].varNames[k]+ model.neuronName[src]+tS("[")+offsetPre+tS("k]"));
+			}
+			else {
+			   substitute(code, tS("$(") + nModels[nt_pre].varNames[k] + tS("_pre)"), tS("dd_")+nModels[nt_pre].varNames[k]+ model.neuronName[src]+tS("[k]")); 
+			}
+		    }
+		    // substitute post-synaptic variable names in synapseDynamics code
+		    extended_name_substitutions(code, tS("dd_"), nModels[nt_post].varNames, tS("_post"), model.neuronName[trg]+tS("[dd_ind")+synapseName +tS("[") + localID + tS(" + dd_indInG") + synapseName + tS("[k]]]"));
+		    // !!! end of new mechanism !!!
+		    // substitute parameter values for parameters in synapseDynamics code
 		    value_substitutions(code, wu.pNames, model.synapsePara[synPopID]);
+		    // substitute values for derived parameters in synapseDynamics code
 		    value_substitutions(code, wu.dpNames, model.dsp_w[synPopID]);
 		    name_substitutions_synapse_pre_post(model, code, synPopID, tS("[k]"), tS("[dd_ind") + synapseName + tS("[dd_indInG") + synapsenName + tS("[k]] + ") << localID + tS("]"));
 		    os << ensureFtype(code, model.ftype) << ENDL;
+		    os << CB(25);
 		    os << CB(24);
 		}
 		else { // DENSE
-		    os << "for (int k = 0; k < " <<  srcno << "; k++)" << OB(25);
+		    os << "for (int k = 0; k < " <<  srcno << "; k++)" << OB(26);
 		    if (model.synapseGType[synPopID] == INDIVIDUALG) {
+			// name substitute synapse var names in synapseDynamics code
 			name_substitutions(code, tS("dd_"), wu.varNames, synapseName + tS("[") + localID + tS(" + k * ") + tS(model.neuronN[i]) + tS("]"));
 		    }
 		    else {
+			// substitute initial values as constants for synapse var names in synapseDynamics code
 			value_substitutions(code, wu.varNames, model.synapseIni[synPopID]);
 		    }
+		    // substitute pre-synaptic variable names in synapseDynamics code
+		    string theQueueOffset;
+		    for (int k= 0, l= nModels[nt_pre].varNames.size(); k < l; k++) {
+			if (model.neuronVarNeedQueue[src][k]) {
+			    substitute(code, tS("$(") + nModels[nt_pre].varNames[k] + tS("_pre)"), tS("dd_")+nModels[nt_pre].varNames[k]+ model.neuronName[src]+tS("[")+offsetPre+tS("k]"));
+			}
+			else {
+			    substitute(code, tS("$(") + nModels[nt_pre].varNames[k] + tS("_pre)"), tS("dd_")+nModels[nt_pre].varNames[k]+ model.neuronName[src]+tS("[k]"));
+			}
+		    }
+		    // substitute post-synaptic variable names in synapseDynamics code - these are available in registers as "l**" because inSyn[i] contains all incoming synapse groups
+		    extended_name_substitutions(code, tS("l"), nModels[nt_post].varNames, tS("_post"), tS(""));
+		    // substitute parameter values for parameters in synapseDynamics code
 		    value_substitutions(code, wu.pNames, model.synapsePara[synPopID]);
+		    // substitute values for derived parameters in synapseDynamics code
 		    value_substitutions(code, wu.dpNames, model.dsp_w[synPopID]);
 		    name_substitutions_synapse_pre_post(model, code, synPopID, tS("[k]"), tS("[") << localID + tS("]"));
 tS("[dd_ind") + synapseName + tS("[dd_indInG") + synapsenName + tS("[k]] + ") << localID + tS("]"));
 		    os << ensureFtype(code, model.ftype) << ENDL;
-		    os << CB(25);
+		    os << CB(26);
 		}
 	    }
 	}
@@ -296,7 +349,7 @@ tS("[dd_ind") + synapseName + tS("[dd_indInG") + synapsenName + tS("[k]] + ") <<
 	os << "// test whether spike condition was fulfilled previously" << ENDL;
 	string thCode= nModels[nt].thresholdConditionCode;
 	if (thCode == tS("")) { // no condition provided
-	    cerr << "Warning: No thresholdConditionCode for neuron type : " << model.neuronType[i] << " used for " << model.name[i] << " was provided. There will be no spikes detected in this population!" << ENDL;
+	    cerr << "Warning: No thresholdConditionCode for neuron type " << model.neuronType[i] << " used for population \"" << model.neuronName[i] << "\" was provided. There will be no spikes detected in this population!" << endl;
 	} 
 	else {
 	    name_substitutions(thCode, tS("l"), nModels[nt].varNames, tS(""));
@@ -306,13 +359,13 @@ tS("[dd_ind") + synapseName + tS("[dd_indInG") + synapsenName + tS("[k]] + ") <<
 	}
 
 	os << "// calculate membrane potential" << ENDL;
-	string code = nModels[nt].simCode;
-	name_substitutions(code, tS("l"), nModels[nt].varNames, tS(""));
-	value_substitutions(code, nModels[nt].pNames, model.neuronPara[i]);
-	value_substitutions(code, nModels[nt].dpNames, model.dnp[i]);
-	name_substitutions(code, tS(""), nModels[nt].extraGlobalNeuronKernelParameters, model.neuronName[i]);
-	substitute(code, tS("$(Isyn)"), tS("Isyn"));
-	os << ensureFtype(code, model.ftype) << ENDL;
+	string sCode = nModels[nt].simCode;
+	name_substitutions(sCode, tS("l"), nModels[nt].varNames, tS(""));
+	value_substitutions(sCode, nModels[nt].pNames, model.neuronPara[i]);
+	value_substitutions(sCode, nModels[nt].dpNames, model.dnp[i]);
+	name_substitutions(sCode, tS(""), nModels[nt].extraGlobalNeuronKernelParameters, model.neuronName[i]);
+	substitute(sCode, tS("$(Isyn)"), tS("Isyn"));
+	os << ensureFtype(sCode, model.ftype) << ENDL;
 
 	// look for spike type events first.
 	if (model.neuronNeedSpkEvnt[i]) {
@@ -325,6 +378,8 @@ tS("[dd_ind") + synapseName + tS("[dd_indInG") + synapsenName + tS("[k]] + ") <<
 		name_substitutions_synapse_pre_post(model, eCode, synPopID, tS(""), model.synapseTarget[synPopID
 		value_substitutions(eCode, weightUpdateModels[synt].pNames, model.synapsePara[synPopID]);
 		value_substitutions(eCode, weightUpdateModels[synt].dpNames, model.dsp_w[synPopID]);
+// this is a bit of a hack: allow extraGrlobalNeuronKernelParameters to overshadow extraGlobalSynapeKernelParameters. This alows to use a copy of an extraGlobalSynapeKernelParameter within the neuron kernel.
+	    name_substitutions(eCode, tS(""), nModels[model.neuronType[i]].extraGlobalNeuronKernelParameters, model.neuronName[i]);
 		name_substitutions(eCode, tS(""), weightUpdateModels[synt].extraGlobalSynapseKernelParameters, model.synapseName[synPopID]);
 		// end code substitutions ----
 		// add to the source population spike event condition
@@ -352,13 +407,13 @@ tS("[dd_ind") + synapseName + tS("[dd_indInG") + synapsenName + tS("[k]] + ") <<
 
 	    // add after-spike reset if provided
 	    if (nModels[nt].resetCode != tS("")) {
-		code = nModels[nt].resetCode;
-		name_substitutions(code, tS("l"), nModels[nt].varNames, tS(""));
-		value_substitutions(code, nModels[nt].pNames, model.neuronPara[i]);
-		value_substitutions(code, nModels[nt].dpNames, model.dnp[i]);
-		substitute(code, tS("$(Isyn)"), tS("Isyn"));
+		string rCode = nModels[nt].resetCode;
+		name_substitutions(rCode, tS("l"), nModels[nt].varNames, tS(""));
+		value_substitutions(rCode, nModels[nt].pNames, model.neuronPara[i]);
+		value_substitutions(rCode, nModels[nt].dpNames, model.dnp[i]);
+		substitute(rCode, tS("$(Isyn)"), tS("Isyn"));
 		os << "// spike reset code" << ENDL;
-		os << ensureFtype(code, model.ftype) << ENDL;
+		os << ensureFtype(rCode, model.ftype) << ENDL;
 	    }
 	    os << CB(40);
 	}
@@ -405,33 +460,36 @@ tS("[dd_ind") + synapseName + tS("[dd_indInG") + synapsenName + tS("[k]] + ") <<
 		os << "[0], spkEvntCount);" << ENDL;
 	    }
 	    os << CB(50); // end if (threadIdx.x == 0)
+	    os << "__syncthreads();" << ENDL;
         }
 
-        os << "if (threadIdx.x == 0)" << OB(51);
-	os << "if (spkCount > 0) posSpk = atomicAdd((unsigned int *) &dd_glbSpkCnt" << model.neuronName[i];
-	if ((model.neuronDelaySlots[i] > 1) && (model.neuronNeedTrueSpk[i])) {
-	    os << "[dd_spkQuePtr" << model.neuronName[i] << "], spkCount);" << ENDL;
-	}
-	else {
-	    os << "[0], spkCount);" << ENDL;
-	}
-	os << CB(51); // end if (threadIdx.x == 1)
-
-	os << "__syncthreads();" << ENDL;
-
+	if (nModels[model.neuronType[i]].thresholdConditionCode != tS("")) {
+	    os << "if (threadIdx.x == 0)" << OB(51);
+	    os << "if (spkCount > 0) posSpk = atomicAdd((unsigned int *) &dd_glbSpkCnt" << model.neuronName[i];
+	    if ((model.neuronDelaySlots[i] > 1) && (model.neuronNeedTrueSpk[i])) {
+		os << "[dd_spkQuePtr" << model.neuronName[i] << "], spkCount);" << ENDL;
+	    }
+	    else {
+		os << "[0], spkCount);" << ENDL;
+	    }
+	    os << CB(51); // end if (threadIdx.x == 1)
+	    
+	    os << "__syncthreads();" << ENDL;
+	}   
 	if (model.neuronNeedSpkEvnt[i]) {
 	    os << "if (threadIdx.x < spkEvntCount)" << OB(60);
 	    os << "dd_glbSpkEvnt" << model.neuronName[i] << "[" << queueOffset << "posSpkEvnt + threadIdx.x] = shSpkEvnt[threadIdx.x];" << ENDL;
 	    os << CB(60); // end if (threadIdx.x < spkEvntCount)
         }
 
-	os << "if (threadIdx.x < spkCount)" << OB(70);
-	os << "dd_glbSpk" << model.neuronName[i] << "[" << queueOffsetTrueSpk << "posSpk + threadIdx.x] = shSpk[threadIdx.x];" << ENDL;
-	if (model.neuronNeedSt[i]) {
-	    os << "dd_sT" << model.neuronName[i] << "[" << queueOffset << "shSpk[threadIdx.x]] = t;" << ENDL;
+	if (nModels[model.neuronType[i]].thresholdConditionCode != tS("")) {
+	    os << "if (threadIdx.x < spkCount)" << OB(70);
+	    os << "dd_glbSpk" << model.neuronName[i] << "[" << queueOffsetTrueSpk << "posSpk + threadIdx.x] = shSpk[threadIdx.x];" << ENDL;
+	    if (model.neuronNeedSt[i]) {
+		os << "dd_sT" << model.neuronName[i] << "[" << queueOffset << "shSpk[threadIdx.x]] = t;" << ENDL;
+	    }
+	    os << CB(70); // end if (threadIdx.x < spkCount)
 	}
-	os << CB(70); // end if (threadIdx.x < spkCount)
-
 	os << CB(10); // end if (id < model.padSumNeuronN[i] )
     }
     os << CB(5) << ENDL; // end of neuron kernel
