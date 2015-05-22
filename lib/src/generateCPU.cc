@@ -117,6 +117,16 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 	    }
 	    os << "n];" << ENDL;
 	}
+	if ((nModels[nt].simCode.find(tS("$(sT)")) != string::npos)
+	    || (nModels[nt].thresholdConditionCode.find(tS("$(sT)")) != string::npos)
+	    || (nModels[nt].resetCode.find(tS("$(sT)")) != string::npos)) { // load sT into local variable
+	    os << model.ftype << " lsT= sT" <<  model.neuronName[i] << "[";
+	    if (model.neuronDelaySlots[i] > 1) {
+		os << "(((dd_spkQuePtr" << model.neuronName[i] << " + " << (model.neuronDelaySlots[i] - 1) << ") % ";
+		os << model.neuronDelaySlots[i] << ") * " << model.neuronN[i] << ") + ";
+	    }
+	    os << "n];" << ENDL;
+	}
 
         os << "// execute internal synapse dynamics if any" << ENDL;
 	if (model.needSynapseDelay) {
@@ -272,6 +282,7 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 	}
 	else {
 	    name_substitutions(thCode, tS("l"), nModels[nt].varNames, tS(""));
+	    substitute(thCode, tS("$(sT)"), tS("lsT"));
 	    value_substitutions(thCode, nModels[nt].pNames, model.neuronPara[i]);
 	    value_substitutions(thCode, nModels[nt].dpNames, model.dnp[i]);
 	    substitute(thCode, tS("$(Isyn)"), tS("Isyn"));
@@ -279,16 +290,17 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 	}
 
 	os << "// calculate membrane potential" << ENDL;
-	string code = nModels[nt].simCode;
-	name_substitutions(code, tS("l"), nModels[nt].varNames, tS(""));
-	value_substitutions(code, nModels[nt].pNames, model.neuronPara[i]);
-	value_substitutions(code, nModels[nt].dpNames, model.dnp[i]);
-	name_substitutions(code, tS(""), nModels[nt].extraGlobalNeuronKernelParameters, model.neuronName[i]);
+	string sCode = nModels[nt].simCode;
+	name_substitutions(sCode, tS("l"), nModels[nt].varNames, tS(""));
+	value_substitutions(sCode, nModels[nt].pNames, model.neuronPara[i]);
+	value_substitutions(sCode, nModels[nt].dpNames, model.dnp[i]);
+	name_substitutions(sCode, tS(""), nModels[nt].extraGlobalNeuronKernelParameters, model.neuronName[i]);
 	if (nt == POISSONNEURON) {
-	    substitute(code, tS("lrate"), tS("rates") + model.neuronName[i] + tS("[n + offset") + model.neuronName[i] + tS("]"));
+	    substitute(sCode, tS("lrate"), tS("rates") + model.neuronName[i] + tS("[n + offset") + model.neuronName[i] + tS("]"));
 	}
-	substitute(code, tS("$(Isyn)"), tS("Isyn"));
-	os << ensureFtype(code, model.ftype) << ENDL;
+	substitute(sCode, tS("$(Isyn)"), tS("Isyn"));
+	substitute(sCode, tS("$(sT)"), tS("lsT"));
+	os << ensureFtype(sCode, model.ftype) << ENDL;
 
 	// look for spike type events first.
 	if (model.neuronNeedSpkEvnt[i]) {
@@ -333,13 +345,14 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 
 	    // add after-spike reset if provided
 	    if (nModels[nt].resetCode != tS("")) {
-		code = nModels[nt].resetCode;
-		name_substitutions(code, tS("l"), nModels[nt].varNames, tS(""));
-		value_substitutions(code, nModels[nt].pNames, model.neuronPara[i]);
-		value_substitutions(code, nModels[nt].dpNames, model.dnp[i]);
-		substitute(code, tS("$(Isyn)"), tS("Isyn"));
+		string rCode = nModels[nt].resetCode;
+		name_substitutions(rCode, tS("l"), nModels[nt].varNames, tS(""));
+		value_substitutions(rCode, nModels[nt].pNames, model.neuronPara[i]);
+		value_substitutions(rCode, nModels[nt].dpNames, model.dnp[i]);
+		substitute(rCode, tS("$(Isyn)"), tS("Isyn"));
+		substitute(rCode, tS("$(sT)"), tS("lsT"));
 		os << "// spike reset code" << ENDL;
-		os << ensureFtype(code, model.ftype) << ENDL;
+		os << ensureFtype(rCode, model.ftype) << ENDL;
 	    }
 	    os << CB(40);
 	}

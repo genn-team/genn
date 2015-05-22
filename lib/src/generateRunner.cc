@@ -1011,15 +1011,17 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 	os << OB(1050);
 
 	for (int k= 0, l= nModels[nt].varNames.size(); k < l; k++) {
-	    if (model.neuronVarNeedQueue[i][k]) {
-		size = model.neuronN[i] * model.neuronDelaySlots[i];
+	    if (nModels[nt].varTypes[k].find(tS("*")) == string::npos) { // only copy non-pointers. Pointers don't transport between GPU and CPU
+		if (model.neuronVarNeedQueue[i][k]) {
+		    size = model.neuronN[i] * model.neuronDelaySlots[i];
+		}
+		else {
+		    size = model.neuronN[i];	
+		}
+		os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << nModels[nt].varNames[k] << model.neuronName[i];
+		os << ", " << nModels[nt].varNames[k] << model.neuronName[i];
+		os << ", " << size << " * sizeof(" << nModels[nt].varTypes[k] << "), cudaMemcpyHostToDevice));" << endl;
 	    }
-	    else {
-		size = model.neuronN[i];	
-	    }
-	    os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << nModels[nt].varNames[k] << model.neuronName[i];
-	    os << ", " << nModels[nt].varNames[k] << model.neuronName[i];
-	    os << ", " << size << " * sizeof(" << nModels[nt].varTypes[k] << "), cudaMemcpyHostToDevice));" << endl;
 	}
 
 	os << CB(1050);
@@ -1090,16 +1092,20 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 		os << "size_t size = C" << model.synapseName[i] << ".connN;" << ENDL;
 	    }
 	    for (int k= 0, l= weightUpdateModels[st].varNames.size(); k < l; k++) {
-		os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << weightUpdateModels[st].varNames[k] << model.synapseName[i];
-		os << ", " << weightUpdateModels[st].varNames[k] << model.synapseName[i];
-		os << ", size * sizeof(" << weightUpdateModels[st].varTypes[k] << "), cudaMemcpyHostToDevice));" << endl; 
+		if (weightUpdateModels[st].varTypes[k].find(tS("*")) == string::npos) { // only copy non-pointers. Pointers don't transport between GPU and CPU
+		    os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << weightUpdateModels[st].varNames[k] << model.synapseName[i];
+		    os << ", " << weightUpdateModels[st].varNames[k] << model.synapseName[i];
+		    os << ", size * sizeof(" << weightUpdateModels[st].varTypes[k] << "), cudaMemcpyHostToDevice));" << endl; 
+		}
 	    }
 
 	    for (int k= 0, l= postSynModels[pst].varNames.size(); k < l; k++) {
-		size = model.neuronN[model.synapseTarget[i]];
-		os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << postSynModels[pst].varNames[k] << model.synapseName[i];
-		os << ", " << postSynModels[pst].varNames[k] << model.synapseName[i];
-		os << ", " << size << " * sizeof(" << postSynModels[pst].varTypes[k] << "), cudaMemcpyHostToDevice));" << endl; 
+		if (postSynModels[pst].varTypes[k].find(tS("*")) == string::npos) { // only copy non-pointers. Pointers don't transport between GPU and CPU
+		    size = model.neuronN[model.synapseTarget[i]];
+		    os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << postSynModels[pst].varNames[k] << model.synapseName[i];
+		    os << ", " << postSynModels[pst].varNames[k] << model.synapseName[i];
+		    os << ", " << size << " * sizeof(" << postSynModels[pst].varTypes[k] << "), cudaMemcpyHostToDevice));" << endl; 
+		}
 	    }
 	}
 
@@ -1131,15 +1137,17 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 	os << OB(1050);
 
 	for (int k= 0, l= nModels[nt].varNames.size(); k < l; k++) {
-	    if (model.neuronVarNeedQueue[i][k]) {
-		size = model.neuronN[i] * model.neuronDelaySlots[i];
+	    if (nModels[nt].varTypes[k].find(tS("*")) == string::npos) { // only copy non-pointers. Pointers don't transport between GPU and CPU
+		if (model.neuronVarNeedQueue[i][k]) {
+		    size = model.neuronN[i] * model.neuronDelaySlots[i];
+		}
+		else {
+		    size = model.neuronN[i];
+		}
+		os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << nModels[nt].varNames[k] << model.neuronName[i];
+		os << ", d_" << nModels[nt].varNames[k] << model.neuronName[i];
+		os << ", " << size << " * sizeof(" << nModels[nt].varTypes[k] << "), cudaMemcpyDeviceToHost));" << endl;
 	    }
-	    else {
-		size = model.neuronN[i];
-	    }
-	    os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << nModels[nt].varNames[k] << model.neuronName[i];
-	    os << ", d_" << nModels[nt].varNames[k] << model.neuronName[i];
-	    os << ", " << size << " * sizeof(" << nModels[nt].varTypes[k] << "), cudaMemcpyDeviceToHost));" << endl;
 	}
 
 	os << CB(1050);
@@ -1239,16 +1247,20 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 		os << "size_t size = C" << model.synapseName[i] << ".connN;" << ENDL;
 	    }
 	    for (int k= 0, l= weightUpdateModels[st].varNames.size(); k < l; k++) {
-		os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << weightUpdateModels[st].varNames[k] << model.synapseName[i];
-		os << ", d_"  << weightUpdateModels[st].varNames[k] << model.synapseName[i];
-		os << ", size * sizeof(" << weightUpdateModels[st].varTypes[k] << "), cudaMemcpyDeviceToHost));" << endl; 
+		if (weightUpdateModels[st].varTypes[k].find(tS("*")) == string::npos) { // only copy non-pointers. Pointers don't transport between GPU and CPU
+		    os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << weightUpdateModels[st].varNames[k] << model.synapseName[i];
+		    os << ", d_"  << weightUpdateModels[st].varNames[k] << model.synapseName[i];
+		    os << ", size * sizeof(" << weightUpdateModels[st].varTypes[k] << "), cudaMemcpyDeviceToHost));" << endl; 
+		}
 	    }
 
 	    for (int k= 0, l= postSynModels[pst].varNames.size(); k < l; k++) {
-		size = model.neuronN[model.synapseTarget[i]];
-		os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << postSynModels[pst].varNames[k] << model.synapseName[i];
-		os << ", d_"  << postSynModels[pst].varNames[k] << model.synapseName[i];
-		os << ", " << size << " * sizeof(" << postSynModels[pst].varTypes[k] << "), cudaMemcpyDeviceToHost));" << endl; 
+		if (postSynModels[pst].varTypes[k].find(tS("*")) == string::npos) { // only copy non-pointers. Pointers don't transport between GPU and CPU
+		    size = model.neuronN[model.synapseTarget[i]];
+		    os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << postSynModels[pst].varNames[k] << model.synapseName[i];
+		    os << ", d_"  << postSynModels[pst].varNames[k] << model.synapseName[i];
+		    os << ", " << size << " * sizeof(" << postSynModels[pst].varTypes[k] << "), cudaMemcpyDeviceToHost));" << endl; 
+		}
 	    }
 	}
 
