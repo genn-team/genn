@@ -60,23 +60,7 @@ void genNeuronFunction(NNmodel &model, //!< Model description
     os << "//-------------------------------------------------------------------------" << ENDL << ENDL;
 
     // function header
-    os << "void calcNeuronsCPU(";
-    for (int i = 0; i < model.neuronGrpN; i++) {
-	nt = model.neuronType[i];
-
-	if (nt == POISSONNEURON) {
-	    // Note: Poisson neurons only used as input neurons; they do not receive any inputs
-	    os << model.RNtype << " *rates" << model.neuronName[i];
-	    os << ", // poisson \"rates\" of grp " << model.neuronName[i] << ENDL;
-	    os << "unsigned int offset" << model.neuronName[i];
-	    os << ", // poisson \"rates\" offset of grp " << model.neuronName[i] << ENDL;
-	}
-	if (model.receivesInputCurrent[i] > 1) {
-	    os << model.ftype << " *inputI" << model.neuronName[i];
-	    os << ", // explicit input current to grp " << model.neuronName[i] << ENDL;
-	}
-    }
-    os << model.ftype << " t)" << ENDL;
+    os << "void calcNeuronsCPU()" << ENDL;
     os << OB(51);
 
     // function code
@@ -141,6 +125,7 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 		// there is some internal synapse dynamics
 	        weightUpdateModel wu= weightUpdateModels[synt];
 		string code= wu.synapseDynamics;
+		substitute(code, tS("$(t)"), tS("t"));
 		unsigned int srcno= model.neuronN[model.synapseSource[synPopID]]; 
 		unsigned int trgno= model.neuronN[model.synapseTarget[synPopID]];
 		int src= model.synapseSource[synPopID];
@@ -281,6 +266,8 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 	    cerr << "Warning: No thresholdConditionCode for neuron type " << model.neuronType[i] << " used for population \"" << model.neuronName[i] << "\" was provided. There will be no spikes detected in this population!" << endl;
 	}
 	else {
+	    substitute(thCode, tS("$(id)"), tS("n"));
+	    substitute(thCode, tS("$(t)"), tS("t"));
 	    name_substitutions(thCode, tS("l"), nModels[nt].varNames, tS(""));
 	    substitute(thCode, tS("$(sT)"), tS("lsT"));
 	    value_substitutions(thCode, nModels[nt].pNames, model.neuronPara[i]);
@@ -291,6 +278,8 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 
 	os << "// calculate membrane potential" << ENDL;
 	string sCode = nModels[nt].simCode;
+	substitute(sCode, tS("$(id)"), tS("n"));
+	substitute(sCode, tS("$(t)"), tS("t"));
 	name_substitutions(sCode, tS("l"), nModels[nt].varNames, tS(""));
 	value_substitutions(sCode, nModels[nt].pNames, model.neuronPara[i]);
 	value_substitutions(sCode, nModels[nt].dpNames, model.dnp[i]);
@@ -310,6 +299,8 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 	    for (int j= 0; j < model.outSyn[i].size(); j++) {
 		unsigned int synPopID= model.outSyn[i][j];
 		unsigned int synt= model.synapseType[synPopID];
+		substitute(eCode, tS("$(id)"), tS("n"));
+		substitute(eCode, tS("$(t)"), tS("t"));
 		value_substitutions(eCode, weightUpdateModels[synt].pNames, model.synapsePara[synPopID]);
 		value_substitutions(eCode, weightUpdateModels[synt].dpNames, model.dsp_w[synPopID]);
 		name_substitutions(eCode, tS(""), weightUpdateModels[synt].extraGlobalSynapseKernelParameters, model.synapseName[synPopID]);
@@ -346,6 +337,8 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 	    // add after-spike reset if provided
 	    if (nModels[nt].resetCode != tS("")) {
 		string rCode = nModels[nt].resetCode;
+		substitute(rCode, tS("$(id)"), tS("n"));
+		substitute(rCode, tS("$(t)"), tS("t"));
 		name_substitutions(rCode, tS("l"), nModels[nt].varNames, tS(""));
 		value_substitutions(rCode, nModels[nt].pNames, model.neuronPara[i]);
 		value_substitutions(rCode, nModels[nt].dpNames, model.dnp[i]);
@@ -371,6 +364,8 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 	    postSynModel psModel= postSynModels[model.postSynapseType[model.inSyn[i][j]]];
 	    string sName= model.synapseName[model.inSyn[i][j]];
 	    string psCode = psModel.postSynDecay;
+	    substitute(psCode, tS("$(id)"), tS("n"));
+	    substitute(psCode, tS("$(t)"), tS("t"));
 	    substitute(psCode, tS("$(inSyn)"), tS("inSyn") + sName + tS("[n]"));
 	    name_substitutions(psCode, tS("lps"), psModel.varNames, sName);
 	    value_substitutions(psCode, psModel.pNames, model.postSynapsePara[model.inSyn[i][j]]);
@@ -454,6 +449,8 @@ void generate_process_presynaptic_events_code_CPU(
 
 	    // code substitutions ----
 	    string eCode = weightUpdateModels[synt].evntThreshold;
+	    substitute(eCode, tS("$(id)"), tS("n"));
+	    substitute(eCode, tS("$(t)"), tS("t"));
 	    extended_name_substitutions(eCode, tS(""), model.synapseSpkEvntVars[i], tS("_pre"), model.neuronName[src] + tS("[") + offsetPre + tS("ipre]"));
 	    value_substitutions(eCode, weightUpdateModels[synt].pNames, model.synapsePara[i]);
 	    value_substitutions(eCode, weightUpdateModels[synt].dpNames, model.dsp_w[i]);
@@ -475,6 +472,7 @@ void generate_process_presynaptic_events_code_CPU(
 	// Code substitutions ----------------------------------------------------------------------------------
 	string wCode = (evnt ? weightUpdateModels[synt].simCodeEvnt : weightUpdateModels[synt].simCode);
 	substitute(wCode, tS("$(updatelinsyn)"), tS("$(inSyn) += $(addtoinSyn)"));
+	substitute(wCode, tS("$(t)"), tS("t"));
 	if (sparse) { // SPARSE
 	    if (model.synapseGType[i] == INDIVIDUALG) {
 		name_substitutions(wCode, tS(""), weightUpdateModels[synt].varNames, model.synapseName[i] + tS("[C") + model.synapseName[i] + tS(".indInG[ipre] + j]"));
@@ -575,7 +573,7 @@ void genSynapseFunction(NNmodel &model, //!< Model description
     os << "//-------------------------------------------------------------------------" << ENDL << ENDL;
 
     // synapse function header
-    os << "void calcSynapsesCPU(" << model.ftype << " t)" << ENDL;
+    os << "void calcSynapsesCPU()" << ENDL;
 
     // synapse function code
     os << OB(1001);
@@ -629,7 +627,7 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 
     if (model.lrnGroups > 0) {
 
-	os << "void learnSynapsesPostHost(" << model.ftype << " t)" << ENDL;
+	os << "void learnSynapsesPostHost()" << ENDL;
 	os << OB(811);
 
 	os << "unsigned int ipost;" << ENDL;
@@ -695,6 +693,7 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 	    }
 
 	    string code = weightUpdateModels[synt].simLearnPost;
+	    substitute(code, tS("$(t)"), tS("t"));
 	    // Code substitutions ----------------------------------------------------------------------------------
 	    if (sparse) { // SPARSE
 		name_substitutions(code, tS(""), weightUpdateModels[synt].varNames, model.synapseName[k] + tS("[C") + model.synapseName[k] + tS(".remap[ipre]]"));

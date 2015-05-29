@@ -142,6 +142,7 @@ int main(int argc, char *argv[])
   fprintf(stdout, "# initial wait time execution ... \n");
 
   t= 0.0;
+  iT= 0;
   int done= 0;
   float last_t_report=  t;
   timer.startTimer();
@@ -149,10 +150,10 @@ int main(int argc, char *argv[])
   if (which == GPU){   
     while (!done) 
     {    
-      locust.runGPU(DT); // run next batch
-      locust.getSpikeNumbersFromGPU();
-      locust.getSpikesFromGPU();
-    
+	locust.runGPU(DT); // run next batch
+	locust.getSpikeNumbersFromGPU();
+	locust.getSpikesFromGPU();
+	
 //	pullDNStateFromDevice();
     
 #ifdef TIMING

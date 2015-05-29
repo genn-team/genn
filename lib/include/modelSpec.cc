@@ -240,6 +240,13 @@ void NNmodel::initLearnGrps()
 		}
 	    }
 
+	    // add to the source population spike event condition
+	    if (neuronSpkEvntCondition[src] == tS("")) {
+		neuronSpkEvntCondition[src] = tS("(") + wu.evntThreshold + tS(")");
+	    }
+	    else {
+		neuronSpkEvntCondition[src] += tS(" || (") + wu.evntThreshold + tS(")");
+	    }
 
 	    // analyze which neuron variables need queues
 	    for (int j = 0; j < vars.size(); j++) {
@@ -276,6 +283,32 @@ void NNmodel::initLearnGrps()
 	    }
 	}
     }
+    // related to kernel parameters
+    kernelParameters.push_back(tS("t"));
+    kernelParameterTypes.push_back(ftype);  
+    unsigned int byteAlign= 8;  
+    totalKernelParameterSize= byteAlign; // we add 8 to get 8 byte alignment
+    kernelParameterPopulations.push_back(tS(""));
+    for (int i = 0; i < neuronGrpN; i++) {
+	unsigned int nt= neuronType[i];
+	for (int j= 0, l= nModels[nt].extraGlobalNeuronKernelParameters.size(); j < l; j++) {
+	    cerr << "added " << nModels[nt].extraGlobalNeuronKernelParameters[j] << " in population" << neuronName[i] << endl;
+	    kernelParameters.push_back(nModels[nt].extraGlobalNeuronKernelParameters[j]);
+	    kernelParameterTypes.push_back(nModels[nt].extraGlobalNeuronKernelParameterTypes[j]);
+	    totalKernelParameterSize+= byteAlign;	
+	    kernelParameterPopulations.push_back(neuronName[i]);
+	}
+    }
+    for (int i = 0; i < synapseGrpN; i++) {
+	unsigned int st= synapseType[i];
+	for (int j= 0, l= weightUpdateModels[st].extraGlobalSynapseKernelParameters.size(); j < l; j++) {
+	    kernelParameters.push_back(weightUpdateModels[st].extraGlobalSynapseKernelParameters[j]);
+	    kernelParameterTypes.push_back(weightUpdateModels[st].extraGlobalSynapseKernelParameterTypes[j]);
+	    totalKernelParameterSize+= byteAlign;	
+	    kernelParameterPopulations.push_back(synapseName[i]);
+	}
+    }
+    
 }
 
 //--------------------------------------------------------------------------
@@ -740,107 +773,13 @@ void NNmodel::setGPUDevice(int device)
   chooseGPUDevice= device;
 }
 
-void NNmodel::addKernelParameterIfNotExisting(string p, string pop, string tpe)
-{
-    string theTpe;
-    vector<string>::iterator pos= find(kernelParameters.begin(), kernelParameters.end(), p);
-    int add= FALSE;
-   
-    if (pos == kernelParameters.end()) add= TRUE;
-    else {
-	int ipos= distance(vec.begin(), pos);
-	if (kernelParameterPopulations[ipos] != pop) add= TRUE;
-    }
-    if (add) {
-	// it's not there yet ...
-	kernelParameters.push_back(p);
-	kernelParameterPopulations.push_back(pop);
-	if (tpe == "scalar") theTpe= ftype;
-	else theTpe= tpe;
-	kernelParameterTypes.push_back(theTpe);
-	totalKernelParameterSize+= theSize(theTpe);
-    }
-}
-
-void NNmodel::analyzeExtraGlobalKernelParameters()
-{
-    // analyze whether extraGlobalSynapseKernelParameters are also used in 
-    // code that will be placed in neuron or learning kernels and flag 
-    // this to have relevant parameters passed into these kernels as well.
-    weightUpdateModel w;
-    string p, tpe, expr;
-
-    for (int n= 0; n < neuronGrpN; n++) {
-	if (neuronType[n] == POISSONNEURON) {
-	    addKernelParameterIfNotExisting(tS("rates"), neuronName[n], ftype);
-	}
-	else {
-	    nn= nModels[neuronType[n]];
-	    for (int i= 0; i < nn.extraGlobalNeuronKernelParameters.size(); i++) {
-		p= extraGlobalNeuronKernelParameters[i];
-		tpe= nn.extraGlobalNeuronKernelParameterTypes[i];
-		expr= "$("+p+")";
-		if (nn.simCode.find(expr) != string::npos) {
-		    addKernelParameterIfNotExisting(p, neuronName[s], tpe);
-		}
-	    }
-	}
-	if (receivesInputCurrent[n] > 1) {
-	    addKernelParameterIfNotExisting(tS("inputI"), neuronName[n], ftype);
-	}
-    }
-	
-    for (int s= 0; s < synapseGrpN; s++) {
-	w= synapseModels[synapseType[s]];
-	for (int i= 0, l= w.extraGlobalSynapseKernelParameters.size(); i < l; i++) {
-	    p= w.extraGlobalSynapseKernelParameters[i];
-	    tpe= w.extraGlobalSynapseKernelParameterTypes[i];
-	    expr= "$("+p+")";
-	    if ((w.simCode.find() != string::npos) 
-		|| (w.simCodeEvnt.find(expr) != string::npos)) {
-		addKernelParameterIfNotExisting(p, synapseName[s], tpe);
-	    }
-	    if (w.simLearnPost.find(expr) != string::npos) {
-		addKernelParameterIfNotExisting(p, synapseName[s], tpe);
-	    }
-	    if ((w.evntThreshold.find(expr) != string::npos) 
-		|| (synapseDynamics.find(expr) != string::npos)) {
-		addKernelParameterIfNotExisting(p, synapseName[s], tpe);
-	    }
-	}
-	for (int which= 0; which < 1; which++) {
-	    if (which == 0) suffix= tS("pre");
-	    else suffix= tS("post");
-	    for (int i= 0, l= nModels[synapseSource[s]].extraGlobalNeuronKernelParameters.size(); i < l; i++) {
-		p= nModels[model.synapseSource[s]].extraGlobalNeuronKernelParameters[i];
-		tpe= nModels[model.synapseSource[s]].extraGlobalNeuronKernelParameterTypes[i];
-		expr= "$("+p+"_"+suffix+")";
-		if ((w.simCode.find(expr) != string::npos) 
-		    || (w.simCodeEvnt.find(expr) != string::npos)) {
-		    addKernelParameterIfNotExisting(p, neuronName[synapseSource[s]], tpe);
-		}
-		if (w.simLearnPost.find(expr) != string::npos) {
-		    addKernelParameterIfNotExisting(p, neuronName[synapseSource[s]], tpe);
-		}
-		if ((w.evntThreshold.find(expr) != string::npos) 
-		    || (synapseDynamics.find(expr) != string::npos)) {
-		    addKernelParameterIfNotExisting(p, neuronName[synapseSource[s]], tpe);
-		}
-	    }
-	}
-    }
-    addKernelParameterIfNotExisting(t, tS(""), ftype);
-}
-
-
 void NNmodel::finalize()
 {
     //initializing learning parameters to start
     if (final) {
-	GeNNError("Your model has already been finalized");
+	gennError("Your model has already been finalized");
     }
     initLearnGrps();
-    analyzeExtraGlobalKernelParameters();
     final= 1;
 }
 

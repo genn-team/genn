@@ -374,15 +374,16 @@ void genRunner(NNmodel &model, //!< Model description
     os << "char kernelPara[" << model.totalKernelParameterSize << "];" << endl;
     os << "void *d_kernelPara;" << endl;
     os << "__device__ char dd_kernelPara[" << model.totalKernelParameterSize << "];" << endl;
-    
+    unsigned int offset= 0;
+    unsigned int byteAlign= 8;
     for (int k = 0, l= model.kernelParameters.size(); k < l; k++) {
 	os << model.kernelParameterTypes[k] << " &" << model.kernelParameters[k];
 	os << model.kernelParameterPopulations[k] << "= *((";
-	os << << model.kernelParameterTypes[k] << " *)(kernelPara+" << offset << "));" << endl;
-	os << "__device__ " << model.kernelParameterTypes[k] << " &" << model.kernelParameters[k];
+	os << model.kernelParameterTypes[k] << " *)(kernelPara+" << offset << "));" << endl;
+	os << "__device__ " << model.kernelParameterTypes[k] << " &dd_" << model.kernelParameters[k];
 	os << model.kernelParameterPopulations[k] << "= *((";
-	os << << model.kernelParameterTypes[k] << " *)(dd_kernelPara+" << offset << "));" << endl;
-	offset+= theSize(model.kernelParameterTypes);
+	os << model.kernelParameterTypes[k] << " *)(dd_kernelPara+" << offset << "));" << endl;
+	offset+= byteAlign;
     }
     os << endl << endl;
 
@@ -849,36 +850,20 @@ void genRunner(NNmodel &model, //!< Model description
     // ------------------------------------------------------------------------
     // the actual time stepping procedure
 
-    os << "void stepTimeCPU(";
-    for (int i = 0; i < model.neuronGrpN; i++) {
-	if (model.neuronType[i] == POISSONNEURON) {
-	    os << model.RNtype << " *rates" << model.neuronName[i];
-	    os << ",   // pointer to the rates of the Poisson neurons in grp ";
-	    os << model.neuronName[i] << endl;
-	    os << "unsigned int offset" << model.neuronName[i];
-	    os << ",   // offset on pointer to the rates in grp ";
-	    os << model.neuronName[i] << endl;
-	}
-	if (model.receivesInputCurrent[i] >= 2) {
-	    os << model.ftype << " *inputI" << model.neuronName[i];
-	    os << ",   // pointer to the explicit input to neurons in grp ";
-	    os << model.neuronName[i] << "," << endl;
-	}
-    }
-    os << model.ftype << " t)" << endl;
+    os << "void stepTimeCPU()" << endl;
     os << "{" << endl;
 
     if (model.synapseGrpN > 0) {
 	os << "    if (t > 0.0) {" << endl;
 	if (model.timing) os << "        synapse_timer.startTimer();" << endl;
-	os << "        calcSynapsesCPU(t);" << endl;
+	os << "        calcSynapsesCPU();" << endl;
 	if (model.timing) {
 	    os << "        synapse_timer.stopTimer();" << endl;
 	    os << "        synapse_tme+= synapse_timer.getElapsedTime();"<< endl;
 	}
 	if (model.lrnGroups > 0) {
 	    if (model.timing) os << "        learning_timer.startTimer();" << endl;
-	    os << "        learnSynapsesPostHost(t);" << endl;
+	    os << "        learnSynapsesPostHost();" << endl;
 	    if (model.timing) {
 		os << "        learning_timer.stopTimer();" << endl;
 		os << "        learning_tme+= learning_timer.getElapsedTime();" << endl;
@@ -887,17 +872,7 @@ void genRunner(NNmodel &model, //!< Model description
 	os << "    }" << endl;
     }
     if (model.timing) os << "    neuron_timer.startTimer();" << endl;
-    os << "    calcNeuronsCPU(";
-    for (int i = 0; i < model.neuronGrpN; i++) {
-	if (model.neuronType[i] == POISSONNEURON) {
-	    os << "rates" << model.neuronName[i] << ", ";
-	    os << "offset" << model.neuronName[i] << ", ";
-	}
-	if (model.receivesInputCurrent[i] >= 2) {
-	    os << "inputI" << model.neuronName[i] << ", ";
-	}
-    }
-    os << "t);" << endl;
+    os << "    calcNeuronsCPU();" << endl;
     if (model.timing) {
 	os << "    neuron_timer.stopTimer();" << endl;
 	os << "    neuron_tme+= neuron_timer.getElapsedTime();" << endl;
@@ -1371,23 +1346,7 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     // ------------------------------------------------------------------------
     // the actual time stepping procedure
     
-    os << "void stepTimeGPU(";
-    for (int i= 0; i < model.neuronGrpN; i++) {
-	if (model.neuronType[i] == POISSONNEURON) {
-	    os << model.RNtype << " *rates" << model.neuronName[i];
-	    os << ", // pointer to the rates of the Poisson neurons in grp ";
-	    os << model.neuronName[i] << endl;
-	    os << "unsigned int offset" << model.neuronName[i];
-	    os << ", // offset on pointer to the rates in grp ";
-	    os << model.neuronName[i] << endl;
-	}
-	if (model.receivesInputCurrent[i]>=2) {
-	    os << model.ftype << " *d_inputI" << model.neuronName[i];
-	    os << ", // Explicit input to the neurons in grp ";
-	    os << model.neuronName[i] << endl;
-	}
-    }
-    os << model.ftype << " t)" << endl;
+    os << "void stepTimeGPU()" << endl;
     os << "{" << endl;
 
     if (model.synapseGrpN > 0) { 

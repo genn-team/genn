@@ -221,6 +221,7 @@ public:
   vector<bool> neuronNeedTrueSpk; //!< Whether spike-like events from a group are required
   vector<bool> neuronNeedSpkEvnt; //!< Whether spike-like events from a group are required
   vector<vector<bool> > neuronVarNeedQueue; //!< Whether a neuron variable needs queueing for syn code
+  vector<string> neuronSpkEvntCondition; //!< Will contain the spike event condition code when spike events are used
   vector<unsigned int> neuronDelaySlots; //!< The number of slots needed in the synapse delay queues of a neuron group
   vector<int> neuronHostID; //!< The ID of the cluster node which the neuron groups are computed on
   vector<int> neuronDeviceID; //!< The ID of the CUDA device which the neuron groups are comnputed on
@@ -260,6 +261,12 @@ public:
   vector<int> synapseHostID; //!< The ID of the cluster node which the synapse groups are computed on
   vector<int> synapseDeviceID; //!< The ID of the CUDA device which the synapse groups are comnputed on
 
+  // PUBLIC KERNEL PARAMETER VARIABLES
+  //=========================
+  unsigned int totalKernelParameterSize;
+  vector<string> kernelParameters;
+  vector<string> kernelParameterTypes;
+  vector<string> kernelParameterPopulations;
     
 private:
 

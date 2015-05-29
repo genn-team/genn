@@ -37,7 +37,6 @@ using namespace std;
 #define DBG_SIZE 10000
 
 // and some global variables
-scalar t= 0.0f;
 unsigned int iT= 0;
 
 #define PATTERNNO 100

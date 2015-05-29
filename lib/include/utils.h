@@ -276,16 +276,20 @@ void prepareStandardModels()
   n.pNames.push_back(tS("Vspike"));
   n.pNames.push_back(tS("Vrest"));
   n.dpNames.clear();
+  n.extraGlobalNeuronKernelParameters.push_back(tS("rates"));
+  n.extraGlobalNeuronKernelParameterTypes.push_back(tS("uint64_t *"));
+  n.extraGlobalNeuronKernelParameters.push_back(tS("offset"));
+  n.extraGlobalNeuronKernelParameterTypes.push_back(tS("unsigned int"));
   n.simCode= tS("    uint64_t theRnd;\n\
     if ($(V) > $(Vrest)) {\n\
       $(V)= $(Vrest);\n\
     }\n\
     else {\n\
-      if (t - $(spikeTime) > ($(trefract))) {\n\
+      if ($(t) - $(spikeTime) > ($(trefract))) {\n\
         MYRAND($(seed),theRnd);\n\
-        if (theRnd < lrate) {\n			\
+        if (theRnd < *($(rates)+$(offset)+$(id))) {\n			\
           $(V)= $(Vspike);\n\
-          $(spikeTime)= t;\n\
+          $(spikeTime)= $(t);\n\
         }\n\
       }\n\
     }\n");
@@ -298,6 +302,8 @@ void prepareStandardModels()
 // Traub and Miles HH neurons TRAUBMILES_FAST - Original fast implementation, using 25 inner iterations. There are singularities in this model, which can be  easily hit in float precision.  
   n.varNames.clear();
   n.varTypes.clear();
+  n.extraGlobalNeuronKernelParameters.clear();
+  n.extraGlobalNeuronKernelParameterTypes.clear();
   n.varNames.push_back(tS("V"));
   n.varTypes.push_back(tS("scalar"));
   n.varNames.push_back(tS("m"));
@@ -746,7 +752,7 @@ void prepareWeightUpdateModels()
     // code for presynaptic spike
     wuL.simCode = tS("$(addtoinSyn) = $(g);\n\
   $(updatelinsyn); \n				\
-  scalar dt = $(sT_post) - t - ($(tauShift)); \n	\
+  scalar dt = $(sT_post) - $(t) - ($(tauShift)); \n	\
   scalar dg = 0;\n				\
   if (dt > $(lim0))  \n				\
       dg = -($(off0)) ; \n			\
@@ -759,7 +765,7 @@ void prepareWeightUpdateModels()
   $(g)=$(gMax)/2 *(tanh($(gSlope)*($(gRaw) - ($(gMid))))+1); \n");   
   wuL.dps = new pwSTDP;
   // code for post-synaptic spike 
-  wuL.simLearnPost = tS("scalar dt = t - ($(sT_pre)) - ($(tauShift)); \n\
+  wuL.simLearnPost = tS("scalar dt = $(t) - ($(sT_pre)) - ($(tauShift)); \n\
   scalar dg =0; \n\
   if (dt > $(lim0))  \n\
       dg = -($(off0)) ; \n \
