@@ -45,11 +45,7 @@ template<>
 std::string toString(float t)
 {
   std::stringstream s;
-  //  s << std::showpoint;
-  s << t;
-  if (floor(t) == t) { // it's a whole number
-      s << ".0";
-  }
+  s << std::showpoint << t;
   return s.str();
 }
 
@@ -57,11 +53,7 @@ template<>
 std::string toString(double t)
 {
   std::stringstream s;
-  //  s << std::showpoint;
-  s << t;
-  if (floor(t) == t) { // it's a whole number
-      s << ".0";
-  }
+  s << std::showpoint << t;
   return s.str();
 }
 

@@ -203,6 +203,16 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 	    }
 	    os << localID << "];" << ENDL;
 	}
+	if ((nModels[nt].simCode.find(tS("$(sT)")) != string::npos)
+	    || (nModels[nt].thresholdConditionCode.find(tS("$(sT)")) != string::npos)
+	    || (nModels[nt].resetCode.find(tS("$(sT)")) != string::npos)) { // load sT into local variable
+	    os << model.ftype << " lsT= dd_sT" <<  model.neuronName[i] << "[";
+	    if (model.neuronDelaySlots[i] > 1) {
+		os << "(((dd_spkQuePtr" << model.neuronName[i] << " + " << (model.neuronDelaySlots[i] - 1) << ") % ";
+		os << model.neuronDelaySlots[i] << ") * " << model.neuronN[i] << ") + ";
+	    }
+	    os << localID << "];" << ENDL;
+	}
 	if (nt == POISSONNEURON) {
 	    os << model.RNtype << " lrate = d_rates" << model.neuronName[i] << "[offset" << model.neuronName[i] << " + " << localID << "];" << ENDL;
 	}
@@ -353,6 +363,7 @@ tS("[dd_ind") + synapseName + tS("[dd_indInG") + synapsenName + tS("[k]] + ") <<
 	} 
 	else {
 	    name_substitutions(thCode, tS("l"), nModels[nt].varNames, tS(""));
+	    substitute(thCode, tS("$(sT)"), tS("lsT"));
 	    value_substitutions(thCode, nModels[nt].pNames, model.neuronPara[i]);
 	    value_substitutions(thCode, nModels[nt].dpNames, model.dnp[i]);
 	    os << "bool oldSpike= (" << ensureFtype(thCode, model.ftype) << ");" << ENDL;   
@@ -365,6 +376,7 @@ tS("[dd_ind") + synapseName + tS("[dd_indInG") + synapsenName + tS("[k]] + ") <<
 	value_substitutions(sCode, nModels[nt].dpNames, model.dnp[i]);
 	name_substitutions(sCode, tS(""), nModels[nt].extraGlobalNeuronKernelParameters, model.neuronName[i]);
 	substitute(sCode, tS("$(Isyn)"), tS("Isyn"));
+	substitute(sCode, tS("$(sT)"), tS("lsT"));
 	os << ensureFtype(sCode, model.ftype) << ENDL;
 
 	// look for spike type events first.
@@ -412,6 +424,7 @@ tS("[dd_ind") + synapseName + tS("[dd_indInG") + synapsenName + tS("[k]] + ") <<
 		value_substitutions(rCode, nModels[nt].pNames, model.neuronPara[i]);
 		value_substitutions(rCode, nModels[nt].dpNames, model.dnp[i]);
 		substitute(rCode, tS("$(Isyn)"), tS("Isyn"));
+		substitute(rCode, tS("$(sT)"), tS("lsT"));
 		os << "// spike reset code" << ENDL;
 		os << ensureFtype(rCode, model.ftype) << ENDL;
 	    }
