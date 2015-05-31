@@ -286,8 +286,7 @@ void NNmodel::initLearnGrps()
     // related to kernel parameters
     kernelParameters.push_back(tS("t"));
     kernelParameterTypes.push_back(ftype);  
-    unsigned int byteAlign= 8;  
-    totalKernelParameterSize= byteAlign; // we add 8 to get 8 byte alignment
+    unsigned int align= sizeof(ftype);
     kernelParameterPopulations.push_back(tS(""));
     for (int i = 0; i < neuronGrpN; i++) {
 	unsigned int nt= neuronType[i];
@@ -295,7 +294,7 @@ void NNmodel::initLearnGrps()
 	    cerr << "added " << nModels[nt].extraGlobalNeuronKernelParameters[j] << " in population" << neuronName[i] << endl;
 	    kernelParameters.push_back(nModels[nt].extraGlobalNeuronKernelParameters[j]);
 	    kernelParameterTypes.push_back(nModels[nt].extraGlobalNeuronKernelParameterTypes[j]);
-	    totalKernelParameterSize+= byteAlign;	
+	    if (theSize(nModels[nt].extraGlobalNeuronKernelParameterTypes[j]) > align) align= theSize(nModels[nt].extraGlobalNeuronKernelParameterTypes[j]);
 	    kernelParameterPopulations.push_back(neuronName[i]);
 	}
     }
@@ -304,11 +303,13 @@ void NNmodel::initLearnGrps()
 	for (int j= 0, l= weightUpdateModels[st].extraGlobalSynapseKernelParameters.size(); j < l; j++) {
 	    kernelParameters.push_back(weightUpdateModels[st].extraGlobalSynapseKernelParameters[j]);
 	    kernelParameterTypes.push_back(weightUpdateModels[st].extraGlobalSynapseKernelParameterTypes[j]);
-	    totalKernelParameterSize+= byteAlign;	
+	    if (theSize(weightUpdateModels[st].extraGlobalSynapseKernelParameterTypes[j]) > align) align= theSize(weightUpdateModels[st].extraGlobalSynapseKernelParameterTypes[j]);
 	    kernelParameterPopulations.push_back(synapseName[i]);
 	}
     }
-    
+    kernelParameterAlign= 1;
+    while (kernelParameterAlign < align) kernelParameterAlign*= 2;
+    totalKernelParameterSize= kernelParameterAlign*kernelParameters.size();
 }
 
 //--------------------------------------------------------------------------

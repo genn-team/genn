@@ -264,6 +264,7 @@ public:
   // PUBLIC KERNEL PARAMETER VARIABLES
   //=========================
   unsigned int totalKernelParameterSize;
+  unsigned int kernelParameterAlign;
   vector<string> kernelParameters;
   vector<string> kernelParameterTypes;
   vector<string> kernelParameterPopulations;

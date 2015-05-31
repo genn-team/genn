@@ -375,7 +375,6 @@ void genRunner(NNmodel &model, //!< Model description
     os << "void *d_kernelPara;" << endl;
     os << "__device__ char dd_kernelPara[" << model.totalKernelParameterSize << "];" << endl;
     unsigned int offset= 0;
-    unsigned int byteAlign= 8;
     for (int k = 0, l= model.kernelParameters.size(); k < l; k++) {
 	os << model.kernelParameterTypes[k] << " &" << model.kernelParameters[k];
 	os << model.kernelParameterPopulations[k] << "= *((";
@@ -383,7 +382,7 @@ void genRunner(NNmodel &model, //!< Model description
 	os << "__device__ " << model.kernelParameterTypes[k] << " &dd_" << model.kernelParameters[k];
 	os << model.kernelParameterPopulations[k] << "= *((";
 	os << model.kernelParameterTypes[k] << " *)(dd_kernelPara+" << offset << "));" << endl;
-	offset+= byteAlign;
+	offset+= model.kernelParameterAlign;
     }
     os << endl << endl;
 

@@ -103,6 +103,7 @@ void writeHeader(ostream &os)
 unsigned int theSize(string type) 
 {
   unsigned int size = 0;
+  if (type.find(tS("*")) != string::npos) size= sizeof(char *); // it's a pointer ... any pointer should have the same size
   if (type == "char") size = sizeof(char);
   //  if (type == "char16_t") size = sizeof(char16_t);
   //  if (type == "char32_t") size = sizeof(char32_t);
