@@ -115,16 +115,16 @@ void postVarsInSynapseDynamics_sparse::init_neurons() {
     copyStateToDevice();
 }
 
-void postVarsInSynapseDynamics_sparse::run(float t, int which)
+void postVarsInSynapseDynamics_sparse::run(int which)
 {
   if (which == GPU)
   {
-    stepTimeGPU(t);
+    stepTimeGPU();
     copyStateFromDevice();
   }
   else
   {
-    stepTimeCPU(t);
+    stepTimeCPU();
   }
 }
 
@@ -141,7 +141,6 @@ int main(int argc, char *argv[])
     return EXIT_FAILURE;
   }
 
-  float t = 0.0f;
   postVarsInSynapseDynamics_sparse *sim = new postVarsInSynapseDynamics_sparse();
   int which= atoi(argv[1]);
   int write= atoi(argv[3]);
@@ -205,7 +204,7 @@ int main(int argc, char *argv[])
       neurOs << endl;
       synOs << endl;
       expSynOs << endl;
-      sim->run(t, which);
+      sim->run(which);
       if (fmod(t+5e-5, REPORT_TIME) < 1e-4)
       {
 	  cout << "\r" << t;
