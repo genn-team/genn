@@ -233,7 +233,7 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 		int nt_post= model.neuronType[trg];
 		bool delayPre = model.neuronDelaySlots[src] > 1;
 		string offsetPre = (delayPre ? "(delaySlot * " + tS(model.neuronN[src]) + ") + " : "");
-		// !! this is strange: feature test preVarsInSynapseDynamics passes with the following __sync_threads() but fails without (the delay 0 elements are not copied reliably). I leave it here for now without understanding its benefits.
+		// !! there is an issue here for 0 delays: SynapseDynamics may access variables that are set within the same kernel with possible race conditions. In future versions it seems like a better solution to move synapse dynamics into a separate kernel
 		os << "__syncthreads();" << endl;
 		if (model.neuronDelaySlots[src] > 1) {
 		    os << "delaySlot = (dd_spkQuePtr" << model.neuronName[src];

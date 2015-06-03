@@ -54,7 +54,7 @@ void modelDefinition(NNmodel &model)
   string synName= tS("syn");
   for (int i= 0; i < 10; i++) {
       string theName= synName+tS(i);
-      model.addSynapsePopulation(theName, DUMMYSYNAPSE, SPARSE, INDIVIDUALG, i,IZHIKEVICH_PS, "pre", "post", synapses_ini, synapses_p, postSyn_ini, postSyn_p);
+      model.addSynapsePopulation(theName, DUMMYSYNAPSE, SPARSE, INDIVIDUALG, i+1,IZHIKEVICH_PS, "pre", "post", synapses_ini, synapses_p, postSyn_ini, postSyn_p);
   }
   model.setPrecision(FLOAT);
   model.finalize();
