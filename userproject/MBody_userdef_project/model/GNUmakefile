@@ -14,4 +14,7 @@
 EXECUTABLE	:=classol_sim
 SOURCES		:=classol_sim.cu
 
+NVCCFLAGS	:=--compiler-options "-ffast-math"
+CXXFLAGS	:=-ffast-math
+
 include	$(GENN_PATH)/userproject/include/makefile_common_gnu.mk
