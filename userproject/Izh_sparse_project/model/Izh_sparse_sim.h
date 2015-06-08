@@ -27,7 +27,6 @@ using namespace std;
 #define DBG_SIZE 5000
 
 // and some global variables
-float t= 0.0f;
 unsigned int iT= 0;
 
 //----------------------------------------------------------------------

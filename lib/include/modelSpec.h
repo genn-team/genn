@@ -50,14 +50,6 @@ unsigned int NSYNAPSE;  //!< Variable attaching  the name NSYNAPSE to predefined
 unsigned int NGRADSYNAPSE; //!< Variable attaching  the name NGRADSYNAPSE to predefined synapse type 1 which is a graded synapse wrt the presynaptic voltage
 unsigned int LEARN1SYNAPSE; //!< Variable attaching  the name LEARN1SYNAPSE to the predefined synapse type 2 which is a learning using spike timing; uses a primitive STDP rule for learning
 
-
-//input type
-#define NOINP 0 //!< Macro attaching  the name NOINP (no input) to 0
-#define CONSTINP 1 //!< Macro attaching  the name CONSTINP (constant input) to 1
-#define MATINP 2 //!< Macro attaching  the name MATINP (explicit input defined as a matrix) to 2
-#define INPRULE 3 //!< Macro attaching  the name INPRULE (explicit dynamic input defined as a rule) to 3
-#define RANDNINP 4 //!< Macro attaching  the name RANDNINP (Random input with Gaussian distribution, calculated real time on the device by the generated code) to 4 (TODO, not implemented yet)
-
 //connectivity of the network (synapseConnType)
 #define ALLTOALL 0  //!< Macro attaching the label "ALLTOALL" to connectivity type 0 
 #define DENSE 1 //!< Macro attaching the label "DENSE" to connectivity type 1
@@ -216,7 +208,6 @@ public:
   vector<vector<double> > neuronIni; //!< Initial values of neurons
   vector<vector<unsigned int> > inSyn; //!< The ids of the incoming synapse groups
   vector<vector<unsigned int> > outSyn; //!< The ids of the outgoing synapse groups
-  vector<unsigned int> receivesInputCurrent; //!< flags whether neurons of a population receive explicit input currents
   vector<bool> neuronNeedSt; //!< Whether last spike time needs to be saved for a group
   vector<bool> neuronNeedTrueSpk; //!< Whether spike-like events from a group are required
   vector<bool> neuronNeedSpkEvnt; //!< Whether spike-like events from a group are required
@@ -245,6 +236,7 @@ public:
   vector<bool> synapseUsesTrueSpikes; //!< Defines if synapse update is done after detection of real spikes (only one point after threshold)
   vector<bool> synapseUsesSpikeEvents; //!< Defines if synapse update is done after detection of spike events (every point above threshold)
   vector<bool> synapseUsesPostLearning; //!< Defines if anything is done in case of postsynaptic neuron spiking before presynaptic neuron (punishment in STDP etc.) 
+  vector<bool> synapseUsesSynapseDynamics; //!< Defines if there is any continuos synapse dynamics defined
   vector<vector<string> > synapseSpkEvntVars; //!< Defines variable names that are needed in the SpkEvnt condition and that are pre-fetched for that purpose into shared memory
   vector<vector<double> > synapsePara; //!< parameters of synapses
   vector<vector<double> > synapseIni; //!< Initial values of synapse variables
@@ -253,11 +245,13 @@ public:
   vector<vector<double> > postSynapsePara; //!< parameters of postsynapses
   vector<vector<double> > postSynIni; //!< Initial values of postsynaptic variables
   vector<vector<double> > dpsp;  //!< Derived postsynapse parameters
-  vector<double> globalInp; //!< Global explicit input if CONSTINP is chosen.
   unsigned int lrnGroups; //!< Number of synapse groups with learning
   vector<unsigned int> padSumLearnN; //!< Padded summed neuron numbers of learn group source populations
   vector<unsigned int> lrnSynGrp; //!< Enumeration of the IDs of synapse groups that learn
   vector<unsigned int> synapseDelay; //!< Global synaptic conductance delay for the group (in time steps)
+  unsigned int synDynGroups; //!< Number of synapse groups that define continuous synapse dynamics
+  vector<unsigned int> synDynGrp; //!< Enumeration of the IDs of synapse groups that have synapse Dynamics
+  vector<unsigned int> padSumSynDynN; //!< Padded summed neuron numbers of synapse dynamics group source populations
   vector<int> synapseHostID; //!< The ID of the cluster node which the synapse groups are computed on
   vector<int> synapseDeviceID; //!< The ID of the CUDA device which the synapse groups are comnputed on
 
@@ -330,12 +324,12 @@ public:
 
   void addNeuronPopulation(const string, unsigned int, unsigned int, vector<double>, vector<double>); //!< Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population
 
-  void activateDirectInput(const string, unsigned int);  //!< Method for activating explicit current input
-
-  void setConstInp(const string, double); //!< Method for setting the global input value for a neuron population if CONSTINP
-
   void setNeuronClusterIndex(const string neuronGroup, int hostID, int deviceID); //!< Function for setting which host and which device a neuron group will be simulated on
 
+//! This function has been deprecated in GeNN 2.2
+  void activateDirectInput(const string, unsigned int type);
+//! This function has been deprecated in GeNN 2.2
+  void setConstInp(const string, double);
 
   // PUBLIC SYNAPSE FUNCTIONS
   //=========================

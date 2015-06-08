@@ -151,11 +151,12 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
     string junk;
     int reqRegs, reqSmem, requiredBlocks, ptxInfoFound = 0;
     int warpSize= 32;
+    int krnlNo= 4;
 
-    unsigned int **bestBlkSz= new unsigned int*[3];
-    int **smallModel= new int*[3];
-    int **deviceOccupancy= new int*[3];
-    vector<unsigned int> *groupSize= new vector<unsigned int>[3];
+    unsigned int **bestBlkSz= new unsigned int*[krnlNo];
+    int **smallModel= new int*[krnlNo];
+    int **deviceOccupancy= new int*[krnlNo];
+    vector<unsigned int> *groupSize= new vector<unsigned int>[krnlNo];
     float blockLimit, mainBlockLimit;
 
     int devstart, devcount;
@@ -169,14 +170,14 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
     }
 
     // initialise the smallXXX flags and bestBlkSz
-    for (int kernel= 0; kernel < 3; kernel++) {
+    for (int kernel= 0; kernel < krnlNo; kernel++) {
       bestBlkSz[kernel]= new unsigned int[deviceCount];
       smallModel[kernel]= new int[deviceCount];
       deviceOccupancy[kernel]= new int[deviceCount];
       for (int device = 0; device < deviceCount; device++) { // initialise all whether used or not
-	      bestBlkSz[kernel][device]= 0;
-      	smallModel[kernel][device]= 0;
-	      deviceOccupancy[kernel][device]= 0;
+	  bestBlkSz[kernel][device]= 0;
+	  smallModel[kernel][device]= 0;
+	  deviceOccupancy[kernel][device]= 0;
       }
     }
 
@@ -196,7 +197,7 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
     groupSize[2]= model->neuronN;
  
 #ifdef BLOCKSZ_DEBUG
-    for (int i= 0; i < 3; i++) {
+    for (int i= 0; i < krnlNo; i++) {
 	mos << "BLOCKSZ_DEBUG: "; 
 	for (int j= 0; j < groupSize[i].size(); j++) {
 	    mos << "groupSize[" << i << "][" << j << "]=" << groupSize[i][j] << "; ";
@@ -238,10 +239,10 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
       string fname;
       fname= tS(getenv("GENN_PATH")) +"/lib/runner.cubin";
       CHECK_CU_ERRORS(cuModuleLoad(&module, fname.c_str()));
-      cudaFuncAttributes krnlAttr[3];
+      cudaFuncAttributes krnlAttr[krnlNo];
       CUfunction kern;
       CUresult res;
-      int KrnlExist[3];
+      int KrnlExist[krnlNo];
 #ifdef BLOCKSZ_DEBUG
       cerr << "BLOCKSZ_DEBUG: ptxas info for calcSynapses ..." << endl;
 #endif
@@ -264,16 +265,27 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
       else {
 	  KrnlExist[1]= 0;
       }
-#ifdef BLOCKSZ_DEBUG
-      cerr << "BLOCKSZ_DEBUG: ptxas info for calcNeurons ..." << endl;
-#endif
-      res= cuModuleGetFunction(&kern, module, "calcNeurons");
+      res= cuModuleGetFunction(&kern, module, "calcSynapseDynamics");
       if (res == CUDA_SUCCESS) {
+#ifdef BLOCKSZ_DEBUG
+      cerr << "BLOCKSZ_DEBUG: ptxas info for calcSynapseDynamics ..." << endl;
+#endif
 	  cudaFuncGetAttributesDriver(&krnlAttr[2], kern);
 	  KrnlExist[2]= 1;
       }
       else {
 	  KrnlExist[2]= 0;
+      }
+#ifdef BLOCKSZ_DEBUG
+      cerr << "BLOCKSZ_DEBUG: ptxas info for calcNeurons ..." << endl;
+#endif
+      res= cuModuleGetFunction(&kern, module, "calcNeurons");
+      if (res == CUDA_SUCCESS) {
+	  cudaFuncGetAttributesDriver(&krnlAttr[3], kern);
+	  KrnlExist[3]= 1;
+      }
+      else {
+	  KrnlExist[3]= 0;
       }
       CHECK_CU_ERRORS(cuModuleUnload(module));
     
@@ -310,7 +322,7 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
 #endif
 
       int kernel= 0;
-      for (int kernel= 0; kernel < 3; kernel++) {
+      for (int kernel= 0; kernel < krnlNo; kernel++) {
 	  if (KrnlExist[kernel]) {
 	      reqRegs= krnlAttr[kernel].numRegs;
 	      reqSmem= krnlAttr[kernel].sharedSizeBytes;
@@ -407,7 +419,7 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
     for (int device = devstart; device < devcount; device++) {
       smallModelCnt[device]= 0;
       sumOccupancy[device]= 0;
-      for (int kernel= 0; kernel < 3; kernel++) {
+      for (int kernel= 0; kernel < krnlNo; kernel++) {
         #ifdef BLOCKSZ_DEBUG	
           mos << "BLOCKSZ_DEBUG: smallModel[" << kernel << "][" << device << "]= " << smallModel[kernel][device] << endl;
         #endif
@@ -479,7 +491,8 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
     }
     synapseBlkSz = bestBlkSz[0][chosenDevice];
     learnBlkSz = bestBlkSz[1][chosenDevice];
-    neuronBlkSz = bestBlkSz[2][chosenDevice];
+    synDynBlkSz= bestBlkSz[2][chosenDevice];
+    neuronBlkSz = bestBlkSz[3][chosenDevice];
     delete model;
     model = new NNmodel();
     modelDefinition(*model);
@@ -488,7 +501,7 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
     }
     mos << "Using device " << chosenDevice << " (" << deviceProp[chosenDevice].name << "), with up to ";
     mos << bestDeviceOccupancy << " warps of summed kernel occupancy." << endl;
-    for (int kernel= 0; kernel < 3; kernel++) {
+    for (int kernel= 0; kernel < krnlNo; kernel++) {
       delete[] bestBlkSz[kernel];
       delete[] smallModel[kernel];
       delete[] deviceOccupancy[kernel];   
@@ -503,13 +516,13 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
   else { // IF OPTIMISATION IS OFF: Simply choose the device with the most global memory.
     mos << "skipping block size optimisation..." << endl;
     for (int device = 0; device < deviceCount; device++) {
-      CHECK_CUDA_ERRORS(cudaSetDevice(device));
-      CHECK_CUDA_ERRORS(cudaGetDeviceProperties(&(deviceProp[device]), device));
-      globalMem = deviceProp[device].totalGlobalMem;
-      if (globalMem >= mostGlobalMem) {
-			mostGlobalMem = globalMem;
-			chosenDevice = device;
-      }
+	CHECK_CUDA_ERRORS(cudaSetDevice(device));
+	CHECK_CUDA_ERRORS(cudaGetDeviceProperties(&(deviceProp[device]), device));
+	globalMem = deviceProp[device].totalGlobalMem;
+	if (globalMem >= mostGlobalMem) {
+	    mostGlobalMem = globalMem;
+	    chosenDevice = device;
+	}
     }
     mos << "Using device " << chosenDevice << ", which has " << mostGlobalMem << " bytes of global memory." << endl;
   }
@@ -526,6 +539,7 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
 
   mos << "synapse block size: " << synapseBlkSz << endl;
   mos << "learn block size: " << learnBlkSz << endl;
+  mos << "synapseDynamics block size: " << synDynBlkSz << endl;
   mos << "neuron block size: " << neuronBlkSz << endl;
   
   return chosenDevice;
@@ -556,6 +570,7 @@ int main(int argc,     //!< number of arguments; expected to be 2
   
   synapseBlkSz = 32;
   learnBlkSz = 32;
+  synDynBlkSz= 32;
   neuronBlkSz = 32;
   
   NNmodel *model = new NNmodel();

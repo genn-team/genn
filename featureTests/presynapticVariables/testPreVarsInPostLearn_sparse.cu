@@ -86,7 +86,6 @@ void preVarsInPostLearn_sparse::init_synapses() {
 	    theC->ind[j]= trg;
 	}
 	theC->indInG[10]= 10;
-	createPosttoPreArray(10, 10, theC);
     }	
     theW= new float*[10];
     theW[0]= wsyn0;
@@ -104,7 +103,7 @@ void preVarsInPostLearn_sparse::init_synapses() {
 	    theW[i][j]= 0.0f;
 	} 
     }
-    initializeAllSparseArrays();
+    initpreVarsInPostLearn_sparse();
 }
 
 

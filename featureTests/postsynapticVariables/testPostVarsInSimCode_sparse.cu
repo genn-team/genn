@@ -103,7 +103,7 @@ void postVarsInSimCode_sparse::init_synapses() {
 	    theW[i][j]= 0.0f;
 	} 
     }
-    initializeAllSparseArrays();
+    initpostVarsInSimCode_sparse();
 }
 
 

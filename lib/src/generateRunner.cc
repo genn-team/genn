@@ -209,6 +209,11 @@ void genRunner(NNmodel &model, //!< Model description
 	  os << "double learning_tme;" << endl;
 	  os << "CStopWatch learning_timer;" << endl;
       }
+      if (model.synDynGroups > 0) {
+	  os << "cudaEvent_t synDynStart, synDynStop;" << endl;
+	  os << "double synDyn_tme;" << endl;
+	  os << "CStopWatch synDyn_timer;" << endl;
+      }
   } 
 
     // write CUDA error handler macro
@@ -316,6 +321,7 @@ void genRunner(NNmodel &model, //!< Model description
     os << "struct SparseProjection{" << endl;
     os << "    unsigned int *indInG;" << endl;
     os << "    unsigned int *ind;" << endl;
+    os << "    unsigned int *preInd;" << endl;
     os << "    unsigned int *revIndInG;" << endl;
     os << "    unsigned int *revInd;" << endl;
     os << "    unsigned int *remap;" << endl;
@@ -341,13 +347,19 @@ void genRunner(NNmodel &model, //!< Model description
 	    os << "__device__ unsigned int *dd_indInG" << model.synapseName[i] << ";" << endl;
 	    os << "unsigned int *d_ind" << model.synapseName[i] << ";" << endl;
 	    os << "__device__ unsigned int *dd_ind" << model.synapseName[i] << ";" << endl;
-	    // TODO: make conditional on post-spike driven learning actually taking place
-	    os << "unsigned int *d_revIndInG" << model.synapseName[i] << ";" << endl;
-	    os << "__device__ unsigned int *dd_revIndInG" << model.synapseName[i] << ";" << endl;
-	    os << "unsigned int *d_revInd" << model.synapseName[i] << ";" << endl;
-	    os << "__device__ unsigned int *dd_revInd" << model.synapseName[i] << ";" << endl;
-	    os << "unsigned int *d_remap" << model.synapseName[i] << ";" << endl;
-	    os << "__device__ unsigned int *dd_remap" << model.synapseName[i] << ";" << endl;
+	    if (model.synapseUsesSynapseDynamics[i]) {
+		os << "unsigned int *d_preInd" << model.synapseName[i] << ";" << endl;
+		os << "__device__ unsigned int *dd_preInd" << model.synapseName[i] << ";" << endl;
+	    }
+	    if (model.synapseUsesPostLearning[i]) {
+		// TODO: make conditional on post-spike driven learning actually taking place
+		os << "unsigned int *d_revIndInG" << model.synapseName[i] << ";" << endl;
+		os << "__device__ unsigned int *dd_revIndInG" << model.synapseName[i] << ";" << endl;
+		os << "unsigned int *d_revInd" << model.synapseName[i] << ";" << endl;
+		os << "__device__ unsigned int *dd_revInd" << model.synapseName[i] << ";" << endl;
+		os << "unsigned int *d_remap" << model.synapseName[i] << ";" << endl;
+		os << "__device__ unsigned int *dd_remap" << model.synapseName[i] << ";" << endl;
+	    }
 	}
 	if (model.synapseGType[i] == INDIVIDUALG) { // not needed for GLOBALG, INDIVIDUALID
 	    for (int k = 0, l = weightUpdateModels[st].varNames.size(); k < l; k++) {
@@ -420,6 +432,11 @@ void genRunner(NNmodel &model, //!< Model description
 	    os << "    cudaEventCreate(&learningStart);" << endl;
 	    os << "    cudaEventCreate(&learningStop);" << endl;
 	    os << "    learning_tme= 0.0;" << endl;
+	}
+	if (model.synDynGroups > 0) {
+	    os << "    cudaEventCreate(&synDynStart);" << endl;
+	    os << "    cudaEventCreate(&synDynStop);" << endl;
+	    os << "    synDyn_tme= 0.0;" << endl;
 	}
     }
 
@@ -682,11 +699,20 @@ void genRunner(NNmodel &model, //!< Model description
 	    os << "// Allocate host side variables" << endl;
 	    os << "  C" << model.synapseName[i] << ".connN= connN;" << endl;
 	    os << "  C" << model.synapseName[i] << ".indInG= new unsigned int[" << model.neuronN[model.synapseSource[i]] + 1 << "];" << endl;
-	    os << "  C" << model.synapseName[i] << ".ind= new unsigned int[connN];" << endl;   
+	    os << "  C" << model.synapseName[i] << ".ind= new unsigned int[connN];" << endl; 
+	    if (model.synapseUsesSynapseDynamics[i]) {
+		os << "  C" << model.synapseName[i] << ".preInd= new unsigned int[connN];" << endl;
+	    } else {
+		os << "  C" << model.synapseName[i] << ".preInd= NULL;" << endl;
+	    }
 	    if (model.synapseUsesPostLearning[i]) {
-		os << "  C" << model.synapseName[i] << ".revIndInG= new unsigned int[" << model.neuronN[model.synapseSource[i]] + 1 << "];" << endl;
+		os << "  C" << model.synapseName[i] << ".revIndInG= new unsigned int[" << model.neuronN[model.synapseTarget[i]] + 1 << "];" << endl;
 		os << "  C" << model.synapseName[i] << ".revInd= new unsigned int[connN];" << endl;       
 		os << "  C" << model.synapseName[i] << ".remap= new unsigned int[connN];" << endl;       
+	    } else {
+		os << "  C" << model.synapseName[i] << ".revIndInG= NULL;" << endl;
+		os << "  C" << model.synapseName[i] << ".revInd= NULL;" << endl;       
+		os << "  C" << model.synapseName[i] << ".remap= NULL;" << endl; 
 	    }
 	    int st= model.synapseType[i];
 	    string size = "C" + model.synapseName[i]+".connN";
@@ -699,6 +725,10 @@ void genRunner(NNmodel &model, //!< Model description
 	    os << ", sizeof(unsigned int) * ("<< model.neuronN[model.synapseSource[i]] + 1 <<"));" << endl;
 	    os << "  deviceMemAllocate( &d_ind" << model.synapseName[i] << ", dd_ind" << model.synapseName[i];
 	    os << ", sizeof(unsigned int) * (" << size << "));" << endl;
+	    if (model.synapseUsesSynapseDynamics[i]) {
+		os << "  deviceMemAllocate( &d_preInd" << model.synapseName[i] << ", dd_preInd" << model.synapseName[i];
+		os << ", sizeof(unsigned int) * (" << size << "));" << endl;
+	    }
 	    if (model.synapseUsesPostLearning[i]) {
 		os << "  deviceMemAllocate( &d_revIndInG" << model.synapseName[i] << ", dd_revIndInG" << model.synapseName[i];
 		os << ", sizeof(unsigned int) * ("<< model.neuronN[model.synapseTarget[i]] + 1 <<"));" << endl;
@@ -722,22 +752,6 @@ void genRunner(NNmodel &model, //!< Model description
 	}
     }
 
-
-    // ------------------------------------------------------------------------
-    // initializing conductance arrays for sparse matrices
-
-    os << "void initializeSparseArray(SparseProjection C,  unsigned int * dInd, unsigned int * dIndInG, unsigned int preN)" << "{" << endl;
-    os << "  CHECK_CUDA_ERRORS(cudaMemcpy(dInd, C.ind, C.connN*sizeof(unsigned int), cudaMemcpyHostToDevice));" << endl;
-    os << "  CHECK_CUDA_ERRORS(cudaMemcpy(dIndInG, C.indInG, (preN+1)*sizeof(unsigned int), cudaMemcpyHostToDevice));" << endl;
-    os << "}" << endl; 
- 	
-    os << "void initializeSparseArrayRev(SparseProjection C,  unsigned int * dRevInd, unsigned int * dRevIndInG, unsigned int * dRemap, unsigned int postN)" << "{" << endl;
-    os << "  CHECK_CUDA_ERRORS(cudaMemcpy(dRevInd, C.revInd, C.connN*sizeof(unsigned int), cudaMemcpyHostToDevice));" << endl;
-    os << "  CHECK_CUDA_ERRORS(cudaMemcpy(dRevIndInG, C.revIndInG, (postN+1)*sizeof(unsigned int), cudaMemcpyHostToDevice));" << endl;
-    os << "  CHECK_CUDA_ERRORS(cudaMemcpy(dRemap, C.remap, C.connN*sizeof(unsigned int), cudaMemcpyHostToDevice));" << endl;
-    os << "}" << endl; 
-
-
     // ------------------------------------------------------------------------
     // initializing sparse arrays
 
@@ -755,6 +769,9 @@ void genRunner(NNmodel &model, //!< Model description
 	    os << "  d_ind" << model.synapseName[i] << ",";
 	    os << "  d_indInG" << model.synapseName[i] << ",";
 	    os << model.neuronN[model.synapseSource[i]] <<");" << endl;
+	    if (model.synapseUsesSynapseDynamics[i]) {
+		os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_preInd" << model.synapseName[i] << ", "  << "C" << model.synapseName[i] << ".preInd, C" << model.synapseName[i] << ".connN*sizeof(unsigned int), cudaMemcpyHostToDevice));" << endl;
+	    }
 	    if (model.synapseUsesPostLearning[i]) {
 		os << "  initializeSparseArrayRev(C" << model.synapseName[i] << ",";
 		os << "  d_revInd" << model.synapseName[i] << ",";
@@ -771,6 +788,29 @@ void genRunner(NNmodel &model, //!< Model description
     os << "}" << endl; 
     os << endl;
 
+
+    // ------------------------------------------------------------------------
+    // initialization of variables, e.g. reverse sparse arrays etc. 
+    // that the user would not want to worry about
+    
+    os << "void init" << model.name << "()" << ENDL;
+    os << OB(1130) << ENDL;
+    unsigned int sparseCount= 0;
+    for (int i= 0; i < model.synapseGrpN; i++) {
+	if (model.synapseConnType[i] == SPARSE) {
+	    sparseCount++;
+	    if (model.synapseUsesSynapseDynamics[i]) {
+		os << "createPreIndices(" << model.neuronN[model.synapseSource[i]] << ", " << model.neuronN[model.synapseTarget[i]] << ", &C" << model.synapseName[i] << ");" << ENDL;
+	    }
+	    if (model.synapseUsesPostLearning[i]) {
+		os << "createPosttoPreArray(" << model.neuronN[model.synapseSource[i]] << ", " << model.neuronN[model.synapseTarget[i]] << ", &C" << model.synapseName[i] << ");" << ENDL;
+	    }
+	}
+    }
+    if (sparseCount > 0) {
+	os << "initializeAllSparseArrays();" << ENDL;
+    }
+    os << CB(1130) << ENDL;
 
     // ------------------------------------------------------------------------
     // freeing global memory structures
@@ -868,6 +908,14 @@ void genRunner(NNmodel &model, //!< Model description
 		os << "        learning_tme+= learning_timer.getElapsedTime();" << endl;
 	    }
 	}
+	if (model.synDynGroups > 0) {
+	    if (model.timing) os << "        synDyn_timer.startTimer();" << endl;
+	    os << "        calcSynapseDynamicsCPU();" << endl;         
+	    if (model.timing) {
+		os << "        synDyn_timer.stopTimer();" << endl;
+		os << "        synDyn_tme+= synDyn_timer.getElapsedTime();" << endl;
+	    }
+	}
 	os << "    }" << endl;
     }
     if (model.timing) os << "    neuron_timer.startTimer();" << endl;
@@ -935,13 +983,6 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     os << "*/" << endl;
     os << "//-------------------------------------------------------------------------" << endl << endl;
 
-  
-    for (int i = 0; i < model.neuronGrpN; i++) {
-	if (model.receivesInputCurrent[i] >= 2) {
-	    os << "#include <string>" << endl;
-	    break;
-	}
-    }
     os << endl;
 
     if ((deviceProp[theDev].major >= 2) || (deviceProp[theDev].minor >= 3)) {
@@ -1341,7 +1382,7 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     os << "}" << endl;
     os << endl;
 
-
+    
     // ------------------------------------------------------------------------
     // the actual time stepping procedure
     
@@ -1364,7 +1405,14 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 	os << endl;
     }
 
-
+    if (model.synDynGroups > 0) {
+	unsigned int synDynGridSz = model.padSumSynDynN[model.synDynGroups - 1];
+	synDynGridSz = ceil((float) synDynGridSz / synDynBlkSz);
+	os << "dim3 sDThreads(" << synDynBlkSz << ", 1);" << endl;
+	os << "dim3 sDGrid(" << synDynGridSz << ", 1);" << endl;
+	os << endl;
+    }
+	
     unsigned int neuronGridSz = model.padSumNeuronN[model.neuronGrpN - 1];
     neuronGridSz = ceil((float) neuronGridSz / neuronBlkSz);
     os << "dim3 nThreads(" << neuronBlkSz << ", 1);" << endl;
@@ -1388,12 +1436,17 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 	    os << "learnSynapsesPost <<< lGrid, lThreads >>> ();" << endl;         
 	    if (model.timing) os << "cudaEventRecord(learningStop);" << endl;
 	}
-	for (int i= 0; i < model.neuronGrpN; i++) { 
-	    if (model.neuronDelaySlots[i] > 1) {
-		os << "spkQuePtr" << model.neuronName[i] << " = (spkQuePtr" << model.neuronName[i] << " + 1) % " << model.neuronDelaySlots[i] << ";" << ENDL;
-	    }
+	if (model.synDynGroups > 0) {
+	    if (model.timing) os << "cudaEventRecord(synDynStart);" << endl;
+	    os << "calcSynapseDynamics <<< sDGrid, sDThreads >>> ();" << endl;         
+	    if (model.timing) os << "cudaEventRecord(synDynStop);" << endl;
 	}
 	os << "}" << endl;
+    }    
+    for (int i= 0; i < model.neuronGrpN; i++) { 
+	if (model.neuronDelaySlots[i] > 1) {
+	    os << "spkQuePtr" << model.neuronName[i] << " = (spkQuePtr" << model.neuronName[i] << " + 1) % " << model.neuronDelaySlots[i] << ";" << ENDL;
+	}
     }
     if (model.timing) os << "cudaEventRecord(neuronStart);" << endl;
     os << "calcNeurons <<< nGrid, nThreads >>> ();" << endl;
@@ -1408,6 +1461,10 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 	if (model.lrnGroups > 0) {
 	    os << "cudaEventElapsedTime(&tmp, learningStart, learningStop);" << endl;
 	    os << "learning_tme+= tmp/1000.0;" << endl;
+	}
+	if (model.synDynGroups > 0) {
+	    os << "cudaEventElapsedTime(&tmp, synDynStart, synDynStop);" << endl;
+	    os << "lsynDyn_tme+= tmp/1000.0;" << endl;
 	}
 	os << "cudaEventElapsedTime(&tmp, neuronStart, neuronStop);" << endl;
 	os << "neuron_tme+= tmp/1000.0;" << endl;

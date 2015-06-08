@@ -44,6 +44,7 @@ using namespace std; // replaced these two lines : problem with visual studio
 int neuronBlkSz;
 int synapseBlkSz;
 int learnBlkSz;
+int synDynBlkSz;
 cudaDeviceProp *deviceProp;
 int theDev;
 

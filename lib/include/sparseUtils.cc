@@ -121,38 +121,68 @@ void createSparseConnectivityFromDense(DATATYPE * wuvar, int preN,int postN,DATA
 
 
 
-/*---------------------------------------------------------------------
- Utility to generate the SPARSE array structure with post-to-pre arrangement from the original pre-to-post arrangement where postsynaptic feedback is necessary (learning etc)
- ---------------------------------------------------------------------*/
-void createPosttoPreArray(unsigned int preN, unsigned int postN, SparseProjection * sparseStruct) {
-  vector<vector<unsigned int> > tempvectInd(postN); //temporary vector to keep indices
-  vector<vector<unsigned int> > tempvectV(postN); //temporary vector to keep connectivity values
-	unsigned int glbcounter = 0;
+//---------------------------------------------------------------------
+/*! \brief  Utility to generate the SPARSE array structure with post-to-pre arrangement from the original pre-to-post arrangement where postsynaptic feedback is necessary (learning etc)
+ */
+//---------------------------------------------------------------------
 
-	for (int i = 0; i< preN; i++){ //i : index of presynaptic neuron
-		for (int j = 0; j < (sparseStruct->indInG[i+1]-sparseStruct->indInG[i]); j++){ //for every postsynaptic neuron c
-			tempvectInd[sparseStruct->ind[sparseStruct->indInG[i]+j]].push_back(i); //sparseStruct->ind[sparseStruct->indInG[i]+j]: index of postsynaptic neuron
-			//old way : tempvectG[sparseStruct->ind[sparseStruct->indInG[i]+j]].push_back(sparseStruct->gp[sparseStruct->indInG[i]+j]);
-			tempvectV[sparseStruct->ind[sparseStruct->indInG[i]+j]].push_back(sparseStruct->indInG[i]+j); //this should give where we can find the value in the array
-			glbcounter++;
-      //fprintf(stdout,"i:%d j:%d val pushed to G is:%f , sparseStruct->gIndInG[i]=%d\n", i, j, sparseStruct->gp[sparseStruct->gIndInG[i]+j],sparseStruct->gIndInG[i]);
-		}
+void createPosttoPreArray(unsigned int preN, unsigned int postN, SparseProjection * C) {
+    vector<vector<unsigned int> > tempvectInd(postN); //temporary vector to keep indices
+    vector<vector<unsigned int> > tempvectV(postN); //temporary vector to keep connectivity values
+    unsigned int glbcounter = 0;
+    
+    for (int i = 0; i< preN; i++){ //i : index of presynaptic neuron
+	for (int j = 0; j < (C->indInG[i+1]-C->indInG[i]); j++){ //for every postsynaptic neuron j
+	    tempvectInd[C->ind[C->indInG[i]+j]].push_back(i); //C->ind[C->indInG[i]+j]: index of postsynaptic neuron
+	    tempvectV[C->ind[C->indInG[i]+j]].push_back(C->indInG[i]+j); //this should give where we can find the value in the array
+	    glbcounter++;
 	}
-	//which one makes more s?ense - probably the one on top
-  //float posttoprearray = new float[glbcounter];
-	unsigned int lcounter =0;
+    }
+    unsigned int lcounter =0;
 
-	sparseStruct->revIndInG[0]=0;
-	for (int k = 0; k < postN; k++){
-		sparseStruct->revIndInG[k+1]=sparseStruct->revIndInG[k]+tempvectInd[k].size();
-		for (int p = 0; p< tempvectInd[k].size(); p++){ //if k=0?
-			sparseStruct->revInd[lcounter]=tempvectInd[k][p];
-			sparseStruct->remap[lcounter]=tempvectV[k][p];
-			lcounter++;
-		}
+    C->revIndInG[0]=0;
+    for (int k = 0; k < postN; k++){
+	C->revIndInG[k+1]=C->revIndInG[k]+tempvectInd[k].size();
+	for (int p = 0; p< tempvectInd[k].size(); p++){ //if k=0?
+	    C->revInd[lcounter]=tempvectInd[k][p];
+	    C->remap[lcounter]=tempvectV[k][p];
+	    lcounter++;
 	}
+    }
 }
 
+//--------------------------------------------------------------------------
+/*! \brief function to create the mapping from the normal index array "ind" to the "reverse" array revInd, i.e. the inverse mapping of remap. This is needed if SynapseDynamics accesses pre-synaptic variables.
+ */
+//--------------------------------------------------------------------------
+
+void createPreIndices(unsigned int preN, unsigned int postN, SparseProjection * C) 
+{
+    // let's not assume anything and create from the minimum available data, i.e. indInG and ind
+    vector<vector<unsigned int> > tempvect(postN); //temporary vector to keep indices
+    for (int i = 0; i< preN; i++){ //i : index of presynaptic neuron
+	for (int j = 0; j < (C->indInG[i+1]-C->indInG[i]); j++){ //for every postsynaptic neuron j
+	    C->preInd[C->indInG[i]+j]= i; // simmple array of the presynaptic neuron index of each synapse
+	}
+    }
+}
+
+
+    // ------------------------------------------------------------------------
+    // initializing conductance arrays for sparse matrices
+
+void initializeSparseArray(SparseProjection C,  unsigned int * dInd, unsigned int * dIndInG, unsigned int preN)
+{
+    CHECK_CUDA_ERRORS(cudaMemcpy(dInd, C.ind, C.connN*sizeof(unsigned int), cudaMemcpyHostToDevice));
+    CHECK_CUDA_ERRORS(cudaMemcpy(dIndInG, C.indInG, (preN+1)*sizeof(unsigned int), cudaMemcpyHostToDevice));
+} 
+
+void initializeSparseArrayRev(SparseProjection C,  unsigned int * dRevInd, unsigned int * dRevIndInG, unsigned int * dRemap, unsigned int postN)
+{
+    CHECK_CUDA_ERRORS(cudaMemcpy(dRevInd, C.revInd, C.connN*sizeof(unsigned int), cudaMemcpyHostToDevice));
+    CHECK_CUDA_ERRORS(cudaMemcpy(dRevIndInG, C.revIndInG, (postN+1)*sizeof(unsigned int), cudaMemcpyHostToDevice));
+    CHECK_CUDA_ERRORS(cudaMemcpy(dRemap, C.remap, C.connN*sizeof(unsigned int), cudaMemcpyHostToDevice));
+} 
 
 
 //!!!!!find var to check if a string is used in a code (atm it is used to create post-to-pre arrays)

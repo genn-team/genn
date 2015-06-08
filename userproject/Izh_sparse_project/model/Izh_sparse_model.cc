@@ -25,8 +25,6 @@ randomGen R;
 classIzh::classIzh()
 {
   modelDefinition(model);
-  input1=new scalar[model.neuronN[0]];
-  input2=new scalar[model.neuronN[1]];
   allocateMem();
   initialize();
   sumPExc = 0;
@@ -102,35 +100,14 @@ void classIzh::init(unsigned int which)
 }
 
 
-void classIzh::allocate_device_mem_input()
-{
-  unsigned int size;
-
-  size= model.neuronN[0]*sizeof(scalar);
-  CHECK_CUDA_ERRORS(cudaMalloc((void**) &d_input1, size));
-    
-  size= model.neuronN[1]*sizeof(scalar);
-  CHECK_CUDA_ERRORS(cudaMalloc((void**) &d_input2, size));
-}
-
 void classIzh::copy_device_mem_input()
 {
-  CHECK_CUDA_ERRORS(cudaMemcpy(d_input1,input1, model.neuronN[0]*sizeof(scalar), cudaMemcpyHostToDevice));
-  CHECK_CUDA_ERRORS(cudaMemcpy(d_input2,input2, model.neuronN[1]*sizeof(scalar), cudaMemcpyHostToDevice));
-}
-
-void classIzh::free_device_mem()
-{
-  // clean up memory                          
-  printf("input is const, no need to copy");                                     
-  CHECK_CUDA_ERRORS(cudaFree(d_input1));                                   
-  CHECK_CUDA_ERRORS(cudaFree(d_input2));
+  CHECK_CUDA_ERRORS(cudaMemcpy(d_I0PExc,I0PExc, model.neuronN[0]*sizeof(scalar), cudaMemcpyHostToDevice));
+  CHECK_CUDA_ERRORS(cudaMemcpy(d_I0PInh,I0PInh, model.neuronN[1]*sizeof(scalar), cudaMemcpyHostToDevice));
 }
 
 classIzh::~classIzh()
 {
-  free(input1);
-  free(input2);
   freeMem();
 }
 
@@ -145,24 +122,18 @@ void classIzh::write_input_to_file(FILE *f)
 
   fprintf(f, "%f ", t);
   for(int i=0;i<outno;i++) {
-    fprintf(f, "%f ", input1[i]);
+    fprintf(f, "%f ", I0PExc[i]);
   }
   fprintf(f,"\n");
 }
 
-/*void classIzh::read_input_values(FILE *f)
-{
-  fread(input1, model.neuronN[0]*sizeof(scalar),1,f);
-}*/
-
-
 void classIzh::create_input_values() //define your explicit input rule here
 {
     for (int x= 0; x < model.neuronN[0]; x++) {
-	input1[x]= meanInpExc*((scalar) RG.n());
+	I0PExc[x]= meanInpExc*((scalar) RG.n());
     }
     for (int x= 0; x < model.neuronN[1]; x++) {
-	input2[x]= meanInpInh*((scalar) RG.n());
+	I0PInh[x]= meanInpInh*((scalar) RG.n());
     }
 }
 
@@ -230,18 +201,18 @@ void classIzh::run(double runtime, unsigned int which)
   int riT= (int) (runtime/DT);
   if (which == GPU){
     for (int i= 0; i < riT; i++) {
-      stepTimeGPU(d_input1,d_input2, t);
-      t+= DT;
+      stepTimeGPU();
       iT++;
+      t= iT+DT;
     }
   }
   
   if (which == CPU){
     for (int i= 0; i < riT; i++) {
-      stepTimeCPU(input1, input2,t);
-      t+= DT;
+      stepTimeCPU();
       iT++;
-		}
+      t= iT*DT;
+    }
   }
 
 }
@@ -281,7 +252,7 @@ void classIzh::output_params(FILE *f, FILE *f2)
 		fprintf(f, "%f ", bPExc[i]);
 		fprintf(f, "%f ", cPExc[i]);
 		fprintf(f, "%f ", dPExc[i]);
-		fprintf(f, "%f ", input1[i]);
+		fprintf(f, "%f ", I0PExc[i]);
 		fprintf(f,"\n");
 	}
 	for (int i= 0; i < model.neuronN[1]-1; i++) {
@@ -289,7 +260,7 @@ void classIzh::output_params(FILE *f, FILE *f2)
 		fprintf(f2, "%f ", bPInh[i]);
 		fprintf(f2, "%f ", cPInh[i]);
 		fprintf(f2, "%f ", dPInh[i]);
-		fprintf(f2, "%f ", input2[i]);
+		fprintf(f2, "%f ", I0PInh[i]);
 		fprintf(f2,"\n");
 		
 	}
