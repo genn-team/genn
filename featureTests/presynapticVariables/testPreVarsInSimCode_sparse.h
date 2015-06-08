@@ -3,7 +3,7 @@
 #define TESTPREVARSINSIMCODE_H
 
 #define DT 0.1f
-#define TOTAL_TIME 200.0f
+#define TOTAL_TIME 20.0f
 #define REPORT_TIME 1.0f
 
 class preVarsInSimCode_sparse

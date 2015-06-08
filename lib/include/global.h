@@ -59,4 +59,9 @@ int UIntSz = sizeof(unsigned int) * 8; //!< size of the unsigned int variable ty
 int logUIntSz = (int) (logf((float) UIntSz) / logf(2.0f) + 1e-5f); //!< logarithm of the size of the unsigned int variable type on the local architecture
 double asGoodAsZero = 1e-19; //!< Global variable that is used when detecting close to zero values, for example when setting sparse connectivity from a dense matrix
 
+namespace GeNNFlags {
+    unsigned int COPY= 1;
+    unsigned int NOCOPY= ~COPY;
+};
+
 #endif  // _GLOBAL_H_

@@ -268,6 +268,11 @@ void genRunner(NNmodel &model, //!< Model description
     os << "    }" << ENDL;
     os << "}" << ENDL << ENDL;
 
+    os << "// global variables" << ENDL;
+    os << "unsigned long long iT= 0;" << ENDL;
+    os << model.ftype << " t;" << ENDL;
+    os << "__device__ unsigned long long dd_iT= 0;" << ENDL;
+    os << "__device__ " << model.ftype << " dd_t;" << ENDL;
     //---------------------------------
     // HOST AND DEVICE NEURON VARIABLES
 
@@ -382,21 +387,24 @@ void genRunner(NNmodel &model, //!< Model description
     os << endl;
     // write global variables for the extra global neuron kernel parameters.
     // These are assumed not to be pointers, if they are the user needs to take care of allocation etc
-    os << " // memory space that holds the kernel arguments/parameters" << endl;
-    os << "char kernelPara[" << model.totalKernelParameterSize << "];" << endl;
-    os << "void *d_kernelPara;" << endl;
-    os << "__device__ char dd_kernelPara[" << model.totalKernelParameterSize << "];" << endl;
-    unsigned int offset= 0;
-    for (int k = 0, l= model.kernelParameters.size(); k < l; k++) {
-	os << model.kernelParameterTypes[k] << " &" << model.kernelParameters[k];
-	os << model.kernelParameterPopulations[k] << "= *((";
-	os << model.kernelParameterTypes[k] << " *)(kernelPara+" << offset << "));" << endl;
-	os << "__device__ " << model.kernelParameterTypes[k] << " &dd_" << model.kernelParameters[k];
-	os << model.kernelParameterPopulations[k] << "= *((";
-	os << model.kernelParameterTypes[k] << " *)(dd_kernelPara+" << offset << "));" << endl;
-	offset+= model.kernelParameterAlign;
+    if (model.totalKernelParameterSize > 0) {
+	os << " // memory space that holds the kernel arguments/parameters" << endl;
+	os << "char kernelPara[" << model.totalKernelParameterSize << "];" << endl;
+	os << "void *d_kernelPara;" << endl;
+	os << "__device__ char dd_kernelPara[" << model.totalKernelParameterSize << "];" << endl;
+	unsigned int offset= 0;
+	for (int k = 0, l= model.kernelParameters.size(); k < l; k++) {
+	    os << model.kernelParameterTypes[k] << " &" << model.kernelParameters[k];
+	    os << model.kernelParameterPopulations[k] << "= *((";
+	    os << model.kernelParameterTypes[k] << " *)(kernelPara+" << offset << "));" << endl;
+	    os << "__device__ " << model.kernelParameterTypes[k] << " &dd_" << model.kernelParameters[k];
+	    os << model.kernelParameterPopulations[k] << "= *((";
+	    os << model.kernelParameterTypes[k] << " *)(dd_kernelPara+" << offset << "));" << endl;
+	    offset+= model.kernelParameterAlign;
+	}
+	os << endl;
     }
-    os << endl << endl;
+    os << endl;
 
     os << "#include \"sparseUtils.cc\"" << ENDL << ENDL;
     // include simulation kernels
@@ -560,8 +568,10 @@ void genRunner(NNmodel &model, //!< Model description
 	}
 	os << endl;
     }
-    os << "// Make the connection where to copy kernel arguments/parameters" << endl; 
-    os << "CHECK_CUDA_ERRORS(cudaGetSymbolAddress((void **) &d_kernelPara, dd_kernelPara));" << endl;
+    if (model.totalKernelParameterSize > 0) {
+	os << "// Make the connection where to copy kernel arguments/parameters" << endl; 
+	os << "CHECK_CUDA_ERRORS(cudaGetSymbolAddress((void **) &d_kernelPara, dd_kernelPara));" << endl;
+    }
     os << "}" << endl << endl;
 
 
@@ -893,7 +903,6 @@ void genRunner(NNmodel &model, //!< Model description
     os << "{" << endl;
 
     if (model.synapseGrpN > 0) {
-	os << "    if (t > 0.0) {" << endl;
 	if (model.timing) os << "        synapse_timer.startTimer();" << endl;
 	os << "        calcSynapsesCPU();" << endl;
 	if (model.timing) {
@@ -916,7 +925,6 @@ void genRunner(NNmodel &model, //!< Model description
 		os << "        synDyn_tme+= synDyn_timer.getElapsedTime();" << endl;
 	    }
 	}
-	os << "    }" << endl;
     }
     if (model.timing) os << "    neuron_timer.startTimer();" << endl;
     os << "    calcNeuronsCPU();" << endl;
@@ -1386,7 +1394,7 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     // ------------------------------------------------------------------------
     // the actual time stepping procedure
     
-    os << "void stepTimeGPU()" << endl;
+    os << "void stepTimeGPU(unsigned int flags= GeNNFlags::COPY)" << endl;
     os << "{" << endl;
 
     if (model.synapseGrpN > 0) { 
@@ -1424,10 +1432,13 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 	os << "dim3 nGrid(" << sqGridSize << ","<< sqGridSize <<");" << endl;
     }
     os << endl;
-    os << "CHECK_CUDA_ERRORS(cudaMemcpy((void *) d_kernelPara, (void *) kernelPara, " << model.totalKernelParameterSize;
-    os << ", cudaMemcpyHostToDevice));" << endl;
+    if (model.totalKernelParameterSize > 0) {
+	os << "if (flags&GeNNFlags::COPY == 1)" << OB(33) << ENDL;
+	os << "CHECK_CUDA_ERRORS(cudaMemcpy((void *) d_kernelPara, (void *) kernelPara, " << model.totalKernelParameterSize;
+	os << ", cudaMemcpyHostToDevice));" << endl;
+	os << CB(33) << ENDL;
+    }
     if (model.synapseGrpN > 0) {
-	os << "if (t > 0.0) {" << endl;
 	if (model.timing) os << "cudaEventRecord(synapseStart);" << endl; 
 	os << "calcSynapses <<< sGrid, sThreads >>> ();" << endl;
 	if (model.timing) os << "cudaEventRecord(synapseStop);" << endl;
@@ -1441,7 +1452,6 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 	    os << "calcSynapseDynamics <<< sDGrid, sDThreads >>> ();" << endl;         
 	    if (model.timing) os << "cudaEventRecord(synDynStop);" << endl;
 	}
-	os << "}" << endl;
     }    
     for (int i= 0; i < model.neuronGrpN; i++) { 
 	if (model.neuronDelaySlots[i] > 1) {

@@ -304,10 +304,7 @@ void NNmodel::initLearnGrps()
 	}	
     }
     // related to kernel parameters
-    kernelParameters.push_back(tS("t"));
-    kernelParameterTypes.push_back(ftype);  
-    unsigned int align= sizeof(ftype);
-    kernelParameterPopulations.push_back(tS(""));
+    unsigned int align= 1;
     for (int i = 0; i < neuronGrpN; i++) {
 	unsigned int nt= neuronType[i];
 	for (int j= 0, l= nModels[nt].extraGlobalNeuronKernelParameters.size(); j < l; j++) {

@@ -338,18 +338,21 @@ void classol::runGPU(scalar runtime //!< Duration of time to run the model for
   int riT= (int) (runtime/DT);
 
   for (int i= 0; i < riT; i++) {
-    if (iT%patSetTime == 0) {
-      pno= (iT/patSetTime)%PATTERNNO;
-      ratesPN= d_pattern;
-      offsetPN= pno*model.neuronN[0];
-    }
-    if (iT%patSetTime == patFireTime) {
-	ratesPN= d_baserates;
-	offsetPN= 0;
-    }
-    stepTimeGPU();
-    iT++;
-    t= iT*DT;
+      unsigned int flags= 0;
+      if (iT%patSetTime == 0) {
+	  pno= (iT/patSetTime)%PATTERNNO;
+	  ratesPN= d_pattern;
+	  offsetPN= pno*model.neuronN[0];
+	  flags= GeNNFlags::COPY;
+      }
+      if (iT%patSetTime == patFireTime) {
+	  ratesPN= d_baserates;
+	  offsetPN= 0;
+	  flags= GeNNFlags::COPY;
+      }
+      stepTimeGPU(flags);
+      iT++;
+      t= iT*DT;
   }
 }
 //--------------------------------------------------------------------------

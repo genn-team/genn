@@ -134,6 +134,8 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 
     // Reset global spike counting vars always here (since GeNN 2.2)
     os << "if (id == 0)" << OB(6);
+    os << "dd_iT++;" << ENDL;
+    os << "dd_t= dd_iT*DT;" << ENDL;
     for (int j = 0; j < model.neuronGrpN; j++) {
 	if (model.neuronDelaySlots[j] > 1) { // WITH DELAY
 	    os << "dd_spkQuePtr" << model.neuronName[j] << " = (dd_spkQuePtr" << model.neuronName[j] << " + 1) % " << model.neuronDelaySlots[j] << ";" << ENDL;

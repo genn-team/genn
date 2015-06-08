@@ -64,6 +64,8 @@ void genNeuronFunction(NNmodel &model, //!< Model description
     os << OB(51);
 
     // function code
+    os << "iT++;" << ENDL;
+    os << "t= iT*DT;" << ENDL;   
     for (int i = 0; i < model.neuronGrpN; i++) {
 	nt = model.neuronType[i];
 

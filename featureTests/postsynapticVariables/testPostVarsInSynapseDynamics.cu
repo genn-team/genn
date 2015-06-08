@@ -125,7 +125,7 @@ int main(int argc, char *argv[])
 	      for (int k= 0; k < 10; k++) { // for all post-syn neurons
               // generate expected values
 		  if (t > 0.001+DT) {
-		      x[d][j*10+k]= t-2*DT+10*k;
+		      x[d][j*10+k]= t-DT+10*k;
 		  }
 		  if (write) {
 		      synOs << sim->theW[d][j*10+k] << " ";

@@ -123,8 +123,8 @@ int main(int argc, char *argv[])
 	  for (int j= 0; j < 10; j++) { // for all pre-synaptic neurons 
 	      for (int k= 0; k < 10; k++) { // for all post-syn neurons
               // generate expected values
-		  if ((t > 2.1001) && (fmod(t-2*DT+5e-5,2.0f) < 1e-4)) {
-		      x[d][j*10+k]= t-2*DT-d*DT+10*j;
+		  if ((t > 2.0001) && (fmod(t-DT+5e-5,2.0f) < 1e-4)) {
+		      x[d][j*10+k]= t-DT-d*DT+10*j;
 		  }
 		  if (write) {
 		      synOs << sim->theW[d][j*10+k] << " ";
