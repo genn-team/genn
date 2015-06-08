@@ -180,8 +180,8 @@ int main(int argc, char *argv[])
       for (int d= 0; d < 10; d++) { // for each delay
 	  for (int j= 0; j < 10; j++) { // for all pre-synaptic neurons 
               // generate expected values
-	      if (t > 0.1001+d*DT) {
-		  x[d][j]= t-DT-d*DT+10*j;
+	      if (t > 0.0001+(d+1)*DT) {
+		  x[d][j]= t-DT-(d+1)*DT+10*j;
 	      }
 	      if (write) {
 		  synOs << sim->theW[d][j] << " ";

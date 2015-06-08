@@ -191,7 +191,7 @@ public:
   int chooseGPUDevice;
   bool timing;
   unsigned int seed;
-
+  unsigned int resetKernel;  //!< The identity of the kernel in which the spike counters will be reset.
 
   // PUBLIC NEURON VARIABLES
   //========================

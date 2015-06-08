@@ -62,6 +62,11 @@ double asGoodAsZero = 1e-19; //!< Global variable that is used when detecting cl
 namespace GeNNFlags {
     unsigned int COPY= 1;
     unsigned int NOCOPY= ~COPY;
+
+    unsigned int calcSynapseDynamics= 0;
+    unsigned int calcSynapses= 1;
+    unsigned int learnSynapsesPost= 2;
+    unsigned int calcNeurons= 3;
 };
 
 #endif  // _GLOBAL_H_

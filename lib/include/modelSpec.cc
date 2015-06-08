@@ -327,6 +327,19 @@ void NNmodel::initLearnGrps()
     kernelParameterAlign= 1;
     while (kernelParameterAlign < align) kernelParameterAlign*= 2;
     totalKernelParameterSize= kernelParameterAlign*kernelParameters.size();
+
+    // figure out where to reset the spike counters
+    if (synapseGrpN == 0) { // no synapses -> reset in neuron kernel
+	resetKernel= GeNNFlags::calcNeurons;
+    }
+    else { // there are synapses
+	if (lrnGroups > 0) {
+	    resetKernel= GeNNFlags::learnSynapsesPost;
+	}
+	else {
+	    resetKernel= GeNNFlags::calcSynapses;
+	}
+    }
 }
 
 //--------------------------------------------------------------------------

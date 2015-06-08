@@ -271,8 +271,6 @@ void genRunner(NNmodel &model, //!< Model description
     os << "// global variables" << ENDL;
     os << "unsigned long long iT= 0;" << ENDL;
     os << model.ftype << " t;" << ENDL;
-    os << "__device__ unsigned long long dd_iT= 0;" << ENDL;
-    os << "__device__ " << model.ftype << " dd_t;" << ENDL;
     //---------------------------------
     // HOST AND DEVICE NEURON VARIABLES
 
@@ -903,35 +901,37 @@ void genRunner(NNmodel &model, //!< Model description
     os << "{" << endl;
 
     if (model.synapseGrpN > 0) {
+	if (model.synDynGroups > 0) {
+	    if (model.timing) os << "        synDyn_timer.startTimer();" << endl;
+	    os << "        calcSynapseDynamicsCPU(t);" << endl;         
+	    if (model.timing) {
+		os << "        synDyn_timer.stopTimer();" << endl;
+		os << "        synDyn_tme+= synDyn_timer.getElapsedTime();" << endl;
+	    }
+	}
 	if (model.timing) os << "        synapse_timer.startTimer();" << endl;
-	os << "        calcSynapsesCPU();" << endl;
+	os << "        calcSynapsesCPU(t);" << endl;
 	if (model.timing) {
 	    os << "        synapse_timer.stopTimer();" << endl;
 	    os << "        synapse_tme+= synapse_timer.getElapsedTime();"<< endl;
 	}
 	if (model.lrnGroups > 0) {
 	    if (model.timing) os << "        learning_timer.startTimer();" << endl;
-	    os << "        learnSynapsesPostHost();" << endl;
+	    os << "        learnSynapsesPostHost(t);" << endl;
 	    if (model.timing) {
 		os << "        learning_timer.stopTimer();" << endl;
 		os << "        learning_tme+= learning_timer.getElapsedTime();" << endl;
 	    }
 	}
-	if (model.synDynGroups > 0) {
-	    if (model.timing) os << "        synDyn_timer.startTimer();" << endl;
-	    os << "        calcSynapseDynamicsCPU();" << endl;         
-	    if (model.timing) {
-		os << "        synDyn_timer.stopTimer();" << endl;
-		os << "        synDyn_tme+= synDyn_timer.getElapsedTime();" << endl;
-	    }
-	}
     }
     if (model.timing) os << "    neuron_timer.startTimer();" << endl;
-    os << "    calcNeuronsCPU();" << endl;
+    os << "    calcNeuronsCPU(t);" << endl;
     if (model.timing) {
 	os << "    neuron_timer.stopTimer();" << endl;
 	os << "    neuron_tme+= neuron_timer.getElapsedTime();" << endl;
     }
+    os << "iT++;" << endl;
+    os << "t= iT*DT;" << endl;
     os << "}" << endl;
     os.close();
 
@@ -1439,18 +1439,18 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 	os << CB(33) << ENDL;
     }
     if (model.synapseGrpN > 0) {
+	if (model.synDynGroups > 0) {
+	    if (model.timing) os << "cudaEventRecord(synDynStart);" << endl;
+	    os << "calcSynapseDynamics <<< sDGrid, sDThreads >>> (t);" << endl;         
+	    if (model.timing) os << "cudaEventRecord(synDynStop);" << endl;
+	}
 	if (model.timing) os << "cudaEventRecord(synapseStart);" << endl; 
-	os << "calcSynapses <<< sGrid, sThreads >>> ();" << endl;
+	os << "calcSynapses <<< sGrid, sThreads >>> (t);" << endl;
 	if (model.timing) os << "cudaEventRecord(synapseStop);" << endl;
 	if (model.lrnGroups > 0) {
 	    if (model.timing) os << "cudaEventRecord(learningStart);" << endl;
-	    os << "learnSynapsesPost <<< lGrid, lThreads >>> ();" << endl;         
+	    os << "learnSynapsesPost <<< lGrid, lThreads >>> (t);" << endl;         
 	    if (model.timing) os << "cudaEventRecord(learningStop);" << endl;
-	}
-	if (model.synDynGroups > 0) {
-	    if (model.timing) os << "cudaEventRecord(synDynStart);" << endl;
-	    os << "calcSynapseDynamics <<< sDGrid, sDThreads >>> ();" << endl;         
-	    if (model.timing) os << "cudaEventRecord(synDynStop);" << endl;
 	}
     }    
     for (int i= 0; i < model.neuronGrpN; i++) { 
@@ -1459,7 +1459,7 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 	}
     }
     if (model.timing) os << "cudaEventRecord(neuronStart);" << endl;
-    os << "calcNeurons <<< nGrid, nThreads >>> ();" << endl;
+    os << "calcNeurons <<< nGrid, nThreads >>> (t);" << endl;
     if (model.timing) {
 	os << "cudaEventRecord(neuronStop);" << endl;
 	os << "cudaEventSynchronize(neuronStop);" << endl;
@@ -1479,6 +1479,8 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 	os << "cudaEventElapsedTime(&tmp, neuronStart, neuronStop);" << endl;
 	os << "neuron_tme+= tmp/1000.0;" << endl;
     }
+    os << "iT++;" << endl;
+    os << "t= iT*DT;" << endl;
     os << "}" << endl;
     os.close();
     //cout << "done with generating GPU runner" << endl;
