@@ -38,6 +38,4 @@ randomGauss RG;
 #define RAND(Y,X) Y = Y * 1103515245 +12345;X= (unsigned int)(Y >> 16) & 32767
 
 // and some global variables
-double t= 0.0f;
-unsigned int iT= 0;
 CStopWatch timer;

@@ -202,16 +202,12 @@ void classIzh::run(double runtime, unsigned int which)
   if (which == GPU){
     for (int i= 0; i < riT; i++) {
       stepTimeGPU();
-      iT++;
-      t= iT+DT;
     }
   }
   
   if (which == CPU){
     for (int i= 0; i < riT; i++) {
       stepTimeCPU();
-      iT++;
-      t= iT*DT;
     }
   }
 

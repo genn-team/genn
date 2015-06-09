@@ -31,10 +31,10 @@
 //--------------------------------------------------------------------------
 
 Schmuker2014_classifier::Schmuker2014_classifier():
-correctClass(0),winningClass(0),vrData(NULL),inputRatesSize(0),t(0.0f),clearedDownDevice(false)
+correctClass(0),winningClass(0),vrData(NULL),inputRatesSize(0),clearedDownDevice(false)
 {
 
-	d_maxRandomNumber = pow(2.0, (int) sizeof(uint64_t)*8-16); //work this out only once
+	d_maxRandomNumber = pow(2.0, (double) sizeof(uint64_t)*8-16); //work this out only once
 	modelDefinition(model);
 
 
@@ -618,7 +618,6 @@ void Schmuker2014_classifier::run(float runtimeMs, string filename_rasterPlot,bo
 #endif
 
 
-	unsigned int offset= 0;
 	int timestepsRequired = (int) (runtimeMs/DT);
 
 	int timestepsBetweenPlasticity = (int) (param_PLASTICITY_INTERVAL_MS/DT);
@@ -632,14 +631,14 @@ void Schmuker2014_classifier::run(float runtimeMs, string filename_rasterPlot,bo
 
 	for (int timestep= 0; timestep < timestepsRequired; timestep++) {
 
-		offset = timestep * countRN ; //units = num of unsigned ints
+		offsetRN = timestep * countRN ; //units = num of unsigned ints
 
 #ifdef FLAG_RUN_ON_CPU
 		//step simulation by one timestep on CPU
-		stepTimeCPU(inputRates, offset, t);
+		stepTimeCPU();
 #else
 		//step simulation by one timestep on GPU
-		stepTimeGPU(d_inputRates, offset, t);
+		stepTimeGPU();
 		getSpikesFromGPU(); //need these to calculate winning class etc (and for raster plots)
 		//cudaDeviceSynchronize();
 #endif
@@ -828,10 +827,15 @@ void Schmuker2014_classifier::initialiseInputData()
 	this->inputRatesSize = countRN * sizeof(uint64_t) * timestepsPerRecording;
 
 	//allocate memory on the CPU to hold the current input dataset
-	this->inputRates = new uint64_t[timestepsPerRecording * countRN];
+	inputRates = new uint64_t[timestepsPerRecording * countRN];
 
 	//allocate corresponding memory on the GPU device to hold the input dataset
 	CHECK_CUDA_ERRORS(cudaMalloc((void**) &d_inputRates, inputRatesSize));
+#ifdef FLAG_RUN_ON_CPU
+	ratesRN= inputRates;
+#else
+	ratesRN= d_inputRates;
+#endif
 
 	printf("Memory allocated for input rates on CPU and GPU.\n");
 }

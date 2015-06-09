@@ -143,8 +143,6 @@ int main(int argc, char *argv[])
   // output general parameters to output file and start the simulation
 
   fprintf(stdout, "# We are running with fixed time step %f \n", DT);
-  fprintf(stdout, "# initial wait time execution ... \n");
-
   t= 0.0;
   int done= 0;
   double last_t_report=  t;

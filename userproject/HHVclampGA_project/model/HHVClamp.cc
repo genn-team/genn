@@ -84,11 +84,12 @@ void modelDefinition(NNmodel &model)
   n.simCode= tS("   scalar Imem;\n\
     unsigned int mt;\n\
     scalar mdt= DT/100.0;\n\
-    for (mt=0; mt < 100; mt++) {\n\
-      Isyn= 200.0*($(stepVG)-$(V));\n\
+    scalar Icoupl;\n\
+    for (mt=0; mt < 100; mt++) {\n			\
+      Icoupl= 200.0*($(stepVG)-$(V));\n\
       Imem= -($(m)*$(m)*$(m)*$(h)*$(gNa)*($(V)-($(ENa)))+\n\
               $(n)*$(n)*$(n)*$(n)*$(gK)*($(V)-($(EK)))+\n\
-              $(gl)*($(V)-($(El)))-Isyn);\n\
+              $(gl)*($(V)-($(El)))-Icoupl);\n\
       scalar _a= (3.5+0.1*$(V)) / (1.0-exp(-3.5-0.1*$(V)));\n\
       scalar _b= 4.0*exp(-($(V)+60.0)/18.0);\n\
       $(m)+= (_a*(1.0-$(m))-_b*$(m))*mdt;\n\
@@ -100,7 +101,7 @@ void modelDefinition(NNmodel &model)
       $(n)+= (_a*(1.0-$(n))-_b*$(n))*mdt;\n\
       $(V)+= Imem/$(C)*mdt;\n\
     }\n\
-    $(err)+= abs(Isyn-$(IsynG));\n");
+    $(err)+= abs(Icoupl-$(IsynG));\n");
 
   n.thresholdConditionCode = tS("$(V) > 100");
   int HHV= nModels.size();

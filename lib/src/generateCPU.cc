@@ -116,40 +116,38 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 	    os << "unsigned int delaySlot;" << ENDL;
 	}
 
-   	if (nt != POISSONNEURON) {
-	    os << model.ftype << " Isyn = 0;" << ENDL;
-
-	    for (int j = 0; j < model.inSyn[i].size(); j++) {
-		unsigned int synPopID= model.inSyn[i][j]; // number of (post)synapse group
-		postSynModel psm= postSynModels[model.postSynapseType[synPopID]];
-		string sName= model.synapseName[synPopID];
-
-		if (model.synapseGType[synPopID] == INDIVIDUALG) {
-		    for (int k = 0, l = psm.varNames.size(); k < l; k++) {
-			os << psm.varTypes[k] << " lps" << psm.varNames[k] << sName;
-			os << " = " <<  psm.varNames[k] << sName << "[n];" << ENDL;
+	if (nModels[model.neuronType[i]].simCode.find(tS("$(Isyn)")) != string::npos) os << model.ftype << " Isyn = 0;" << ENDL;
+	for (int j = 0; j < model.inSyn[i].size(); j++) {
+	    unsigned int synPopID= model.inSyn[i][j]; // number of (post)synapse group
+	    postSynModel psm= postSynModels[model.postSynapseType[synPopID]];
+	    string sName= model.synapseName[synPopID];
+	    
+	    if (model.synapseGType[synPopID] == INDIVIDUALG) {
+		for (int k = 0, l = psm.varNames.size(); k < l; k++) {
+		    os << psm.varTypes[k] << " lps" << psm.varNames[k] << sName;
+		    os << " = " <<  psm.varNames[k] << sName << "[n];" << ENDL;
 		    
-		    }
 		}
-		os << "Isyn += ";
-      		string psCode = psm.postSyntoCurrent;
-		substitute(psCode, tS("$(inSyn)"), tS("inSyn") + sName + tS("[n]"));
-		name_substitutions(psCode, tS("l"), nModels[nt].varNames, tS(""));
-		value_substitutions(psCode, nModels[nt].pNames, model.neuronPara[i]);
-		value_substitutions(psCode, nModels[nt].dpNames, model.dnp[i]);
-		if (model.synapseGType[synPopID] == INDIVIDUALG) {
-		    name_substitutions(psCode, tS("lps"), psm.varNames, sName);
-		}
-		else {
-		    value_substitutions(psCode, psm.varNames, model.postSynIni[synPopID]);
-		}
-		value_substitutions(psCode, psm.pNames, model.postSynapsePara[synPopID]);
-		value_substitutions(psCode, psm.dpNames, model.dpsp[synPopID]);
-		os << ensureFtype(psCode, model.ftype);
-		os << ";" << ENDL;
 	    }
+	    os << "Isyn += ";
+	    string psCode = psm.postSyntoCurrent;
+	    substitute(psCode, tS("$(inSyn)"), tS("inSyn") + sName + tS("[n]"));
+	    name_substitutions(psCode, tS("l"), nModels[nt].varNames, tS(""));
+	    value_substitutions(psCode, nModels[nt].pNames, model.neuronPara[i]);
+	    value_substitutions(psCode, nModels[nt].dpNames, model.dnp[i]);
+	    if (model.synapseGType[synPopID] == INDIVIDUALG) {
+		name_substitutions(psCode, tS("lps"), psm.varNames, sName);
+	    }
+	    else {
+		value_substitutions(psCode, psm.varNames, model.postSynIni[synPopID]);
+	    }
+	    value_substitutions(psCode, psm.pNames, model.postSynapsePara[synPopID]);
+	    value_substitutions(psCode, psm.dpNames, model.dpsp[synPopID]);
+	    os << ensureFtype(psCode, model.ftype);
+	    os << ";" << ENDL;
 	}
-
+    
+    
 	os << "// test whether spike condition was fulfilled previously" << ENDL;
 	string thCode= nModels[nt].thresholdConditionCode;
 	if (thCode == tS("")) { // no condition provided

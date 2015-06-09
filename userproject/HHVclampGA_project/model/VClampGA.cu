@@ -73,7 +73,7 @@ int main(int argc, char *argv[])
 
   int done= 0, sn;
   unsigned int VSize= NPOP*theSize(model.ftype);
-  double lt, oldt;
+  double oldt;
   inputSpec I;
   initI(I);
   stepVGHH= I.baseV;
@@ -85,21 +85,18 @@ int main(int argc, char *argv[])
   {
     truevar_init();
     truevar_initexpHH();
-    lt= 0.0;
     sn= 0;	
-    for (int iT= 0; iT < iTN; iT++) {
-      oldt= lt;
+    for (int i= 0; i < iTN; i++) {
+      oldt= t;
       runexpHH(t); 
       if (which == GPU) {
-	stepTimeGPU(t);
+	stepTimeGPU();
       }
       else {
-	stepTimeCPU(t);
+	stepTimeCPU();
       }
-      t+= DT;	
-      lt+= DT;
       fprintf(osf,"%f %f \n", t, stepVGHH);
-      if ((sn < I.N) && (oldt < I.st[sn]) && (lt >= I.st[sn])) {
+      if ((sn < I.N) && (oldt < I.st[sn]) && (t >= I.st[sn])) {
 	stepVGHH= I.V[sn];
 	sn++;
       }

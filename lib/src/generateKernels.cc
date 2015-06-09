@@ -220,8 +220,8 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 	os << ENDL;
 	
 	
+	if (nModels[model.neuronType[i]].simCode.find(tS("$(Isyn)")) != string::npos) os << model.ftype << " Isyn = 0;" << ENDL;
 	for (int j = 0; j < model.inSyn[i].size(); j++) {
-	    if (j == 0) os << model.ftype << " Isyn = 0;" << ENDL;
 	    unsigned int synPopID= model.inSyn[i][j]; // number of (post)synapse group 
 	    postSynModel psm= postSynModels[model.postSynapseType[synPopID]];
 	    string sName= model.synapseName[synPopID];

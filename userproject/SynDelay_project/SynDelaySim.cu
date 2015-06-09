@@ -32,12 +32,12 @@ void SynDelay::run(float t)
 {
   if (usingGPU)
   {
-    stepTimeGPU(t);
+    stepTimeGPU();
     copyStateFromDevice();
   }
   else
   {
-    stepTimeCPU(t);
+    stepTimeCPU();
   }
 }
 
@@ -54,7 +54,6 @@ int main(int argc, char *argv[])
     return EXIT_FAILURE;
   }
 
-  float t = 0.0f;
   SynDelay *sim = new SynDelay(atoi(argv[1]));
   CStopWatch *timer = new CStopWatch();
   string outLabel = toString(argv[2]);

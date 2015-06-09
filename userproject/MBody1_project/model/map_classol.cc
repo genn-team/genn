@@ -369,13 +369,10 @@ void classol::runCPU(scalar runtime //!< Duration of time to run the model for
       pno= (iT/patSetTime)%PATTERNNO;
       ratesPN= pattern;
       offsetPN= pno*model.neuronN[0];
-      cerr << iT << " ratesPN is " << ratesPN << endl;
     }
-    cerr << iT%patSetTime << " " << patFireTime << endl;
     if (iT%patSetTime == patFireTime) {
 	ratesPN= baserates;
 	offsetPN= 0;
-      cerr << " ratesPN is back:" << ratesPN << endl;
     }
 
     stepTimeCPU();

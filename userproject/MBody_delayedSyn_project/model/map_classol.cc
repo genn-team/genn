@@ -41,7 +41,7 @@ classol::classol()
   sumKC= 0;
   sumLHI= 0;
   sumDN= 0;
-  offset= 0;
+  offsetPN= 0;
 }
 
 //--------------------------------------------------------------------------
@@ -52,12 +52,12 @@ classol::classol()
 void classol::init(unsigned int which //!< Flag defining whether GPU or CPU only version is run
 		   )
 {
-  offset= 0;
+  offsetPN= 0;
   if (which == CPU) {
-    theRates= baserates;
+    ratesPN= baserates;
   }
   if (which == GPU) {
-    theRates= d_baserates;
+    ratesPN= d_baserates;
     copyStateToDevice();
   }
 }
@@ -329,12 +329,38 @@ void classol::generate_baserates()
 }
 
 //--------------------------------------------------------------------------
-/*! \brief Method for simulating the model for a given period of time
+/*! \brief Method for simulating the model for a given period of time on the GPU
  */
 //--------------------------------------------------------------------------
 
-void classol::run(scalar runtime, //!< Duration of time to run the model for 
-		  unsigned int which //!< Flag determining whether to run on GPU or CPU only
+void classol::runGPU(scalar runtime //!< Duration of time to run the model for 
+		  )
+{
+  unsigned int pno;
+  int riT= (int) (runtime/DT);
+
+  for (int i= 0; i < riT; i++) {
+      unsigned int flags= 0;
+      if (iT%patSetTime == 0) {
+	  pno= (iT/patSetTime)%PATTERNNO;
+	  ratesPN= d_pattern;
+	  offsetPN= pno*model.neuronN[0];
+	  flags= GeNNFlags::COPY;
+      }
+      if (iT%patSetTime == patFireTime) {
+	  ratesPN= d_baserates;
+	  offsetPN= 0;
+	  flags= GeNNFlags::COPY;
+      }
+      stepTimeGPU(flags);
+  }
+}
+//--------------------------------------------------------------------------
+/*! \brief Method for simulating the model for a given period of time on the CPU
+ */
+//--------------------------------------------------------------------------
+
+void classol::runCPU(scalar runtime //!< Duration of time to run the model for 
 		  )
 {
   unsigned int pno;
@@ -343,27 +369,17 @@ void classol::run(scalar runtime, //!< Duration of time to run the model for
   for (int i= 0; i < riT; i++) {
     if (iT%patSetTime == 0) {
       pno= (iT/patSetTime)%PATTERNNO;
-//      cerr << "pattern: " << pno << endl;
-      if (which == CPU) theRates= pattern;
-      if (which == GPU)	theRates= d_pattern;
-      offset= pno*model.neuronN[0];
+      ratesPN= pattern;
+      offsetPN= pno*model.neuronN[0];
     }
     if (iT%patSetTime == patFireTime) {
-      if (which == CPU)
-	theRates= baserates;
-      if (which == GPU)
-	theRates= d_baserates;
-      offset= 0;
+	ratesPN= baserates;
+	offsetPN= 0;
     }
-    if (which == GPU)
-       stepTimeGPU(theRates, offset, t);
-    if (which == CPU)
-       stepTimeCPU(theRates, offset, t);
-    iT++;
-    t= iT*DT;
+
+    stepTimeCPU();
   }
 }
-
 //--------------------------------------------------------------------------
 // output functions
 

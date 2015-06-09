@@ -31,11 +31,11 @@ classol::classol()
 void classol::init(unsigned int which)
 {
   if (which == CPU) {
-    theRates= baserates;
+    ratesPN= baserates;
   }
   if (which == GPU) {
     copyStateToDevice();
-    theRates= d_baserates;
+    ratesPN= d_baserates;
   }
 }
 
@@ -135,14 +135,14 @@ void classol::generate_baserates()
 
 void classol::run(float runtime, unsigned int which)
 {
-  unsigned int offset= 0;
+  unsigned int offsetPN= 0;
   int riT= (int) (runtime/DT);
 
   for (int i= 0; i < riT; i++) {
     if (which == GPU)
-       stepTimeGPU(d_baserates, offset, t);
+       stepTimeGPU();
     if (which == CPU)
-       stepTimeCPU(baserates, offset, t);
+       stepTimeCPU();
     t+= DT;
     iT++;
   }

@@ -26,9 +26,6 @@ using namespace std;
 
 #define DBG_SIZE 5000
 
-// and some global variables
-unsigned int iT= 0;
-
 //----------------------------------------------------------------------
 // other stuff:
 #define T_REPORT_TME 5000.0

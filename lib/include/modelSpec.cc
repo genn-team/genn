@@ -310,8 +310,13 @@ void NNmodel::initLearnGrps()
 	for (int j= 0, l= nModels[nt].extraGlobalNeuronKernelParameters.size(); j < l; j++) {
 	    cerr << "added " << nModels[nt].extraGlobalNeuronKernelParameters[j] << " in population" << neuronName[i] << endl;
 	    kernelParameters.push_back(nModels[nt].extraGlobalNeuronKernelParameters[j]);
-	    kernelParameterTypes.push_back(nModels[nt].extraGlobalNeuronKernelParameterTypes[j]);
-	    if (theSize(nModels[nt].extraGlobalNeuronKernelParameterTypes[j]) > align) align= theSize(nModels[nt].extraGlobalNeuronKernelParameterTypes[j]);
+	    if (nModels[nt].extraGlobalNeuronKernelParameterTypes[j] == "scalar") {
+		kernelParameterTypes.push_back(ftype);
+	    }
+	    else {
+		kernelParameterTypes.push_back(nModels[nt].extraGlobalNeuronKernelParameterTypes[j]);
+	    }
+	    if (theSize(kernelParameterTypes.back()) > align) align= theSize(kernelParameterTypes.back());
 	    kernelParameterPopulations.push_back(neuronName[i]);
 	}
     }
@@ -319,8 +324,13 @@ void NNmodel::initLearnGrps()
 	unsigned int st= synapseType[i];
 	for (int j= 0, l= weightUpdateModels[st].extraGlobalSynapseKernelParameters.size(); j < l; j++) {
 	    kernelParameters.push_back(weightUpdateModels[st].extraGlobalSynapseKernelParameters[j]);
-	    kernelParameterTypes.push_back(weightUpdateModels[st].extraGlobalSynapseKernelParameterTypes[j]);
-	    if (theSize(weightUpdateModels[st].extraGlobalSynapseKernelParameterTypes[j]) > align) align= theSize(weightUpdateModels[st].extraGlobalSynapseKernelParameterTypes[j]);
+	    if (weightUpdateModels[st].extraGlobalSynapseKernelParameterTypes[j] == "scalar") {
+		kernelParameterTypes.push_back(ftype);
+	    }
+	    else {
+		kernelParameterTypes.push_back(weightUpdateModels[st].extraGlobalSynapseKernelParameterTypes[j]);
+	    }
+	    if (theSize(kernelParameterTypes.back()) > align) align= theSize(kernelParameterTypes.back());
 	    kernelParameterPopulations.push_back(synapseName[i]);
 	}
     }

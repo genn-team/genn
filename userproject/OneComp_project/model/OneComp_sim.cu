@@ -57,54 +57,29 @@ int main(int argc, char *argv[])
   t= 0.0;
   int done= 0;
   float last_t_report=  t;
-  for (int k=0;k<IzhikevichPop.model.neuronGrpN;k++){
-    if (IzhikevichPop.model.receivesInputCurrent[k]>1){
-      IzhikevichPop.allocate_device_mem_input();
-      break;
-    }
-  }
- IzhikevichPop.run(DT, which);
   while (!done) 
   {
-    if (which == GPU) IzhikevichPop.getSpikeNumbersFromGPU();
-    for (int k=0;k<IzhikevichPop.model.neuronGrpN;k++)
-    {
-      /*if (IzhikevichPop.model.receivesInputCurrent[k]==2) 
-      {
-        FILE * ff=fopen("../../tools/expoutf","rb");
-        IzhikevichPop.read_input_values(ff);
-        fclose(ff);
-	      IzhikevichPop.copy_device_mem_input();
-      }*/
-      if (IzhikevichPop.model.receivesInputCurrent[k]==3)//INPRULE
-      {
-	      IzhikevichPop.create_input_values(t);
-	      IzhikevichPop.copy_device_mem_input();
+      IzhikevichPop.run(DT, which); // run next batch
+      if (which == GPU) IzhikevichPop.getSpikeNumbersFromGPU();
+      if (which == GPU) {  
+	  CHECK_CUDA_ERRORS(cudaMemcpy(VIzh1, d_VIzh1, outno*sizeof(float), cudaMemcpyDeviceToHost));
+      } 
+      IzhikevichPop.sum_spikes();
+      fprintf(osf, "%f ", t);
+      
+      for(int i=0;i<outno;i++) {
+	  fprintf(osf, "%f ", VIzh1[i]);
       }
-    } 
-    IzhikevichPop.run(DT, which); // run next batch
-    if (which == GPU) {  
-    	CHECK_CUDA_ERRORS(cudaMemcpy(VIzh1, d_VIzh1, outno*sizeof(float), cudaMemcpyDeviceToHost));
-    } 
-    IzhikevichPop.sum_spikes();
-    fprintf(osf, "%f ", t);
-    IzhikevichPop.write_input_to_file(osf2);
-   
-    for(int i=0;i<outno;i++) {
-      fprintf(osf, "%f ", VIzh1[i]);
-    }
-  
-    fprintf(osf, "\n");
-   
-
-    // report progress
-    if (t - last_t_report >= T_REPORT_TME)
-    {
-      fprintf(stderr, "time %f \n", t);
-      last_t_report= t;
-    }
-
-    done= (t >= TOTAL_TME);
+      fprintf(osf, "\n");
+      
+      // report progress
+      if (t - last_t_report >= T_REPORT_TME)
+      {
+	  fprintf(stderr, "time %f \n", t);
+	  last_t_report= t;
+      }
+      
+      done= (t >= TOTAL_TME);
   }
 
   timer.stopTimer();

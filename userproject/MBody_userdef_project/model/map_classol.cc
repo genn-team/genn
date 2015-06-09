@@ -44,7 +44,7 @@ classol::classol()
   sumKC= 0;
   sumLHI= 0;
   sumDN= 0;
-  offset = 0;
+  offsetPN = 0;
 }
 
 //--------------------------------------------------------------------------
@@ -58,15 +58,15 @@ void classol::init(unsigned int which //!< Flag defining whether GPU or CPU only
   //initGRaw();
   //following is to initialise user-defined learn1synapse graw variable. Equivalent to initGRaw();
   //for (int i=0;i<gCKDN.connN;i++){ //sparse
-  offset = 0;
+  offsetPN = 0;
 
   initializeAllSparseArrays();
 
   if (which == CPU) {
-    theRates= baserates;
+    ratesPN= baserates;
   }
   if (which == GPU) {
-    theRates= d_baserates;
+    ratesPN= d_baserates;
     copyStateToDevice();
   }
 }
@@ -364,24 +364,25 @@ void classol::generate_baserates()
 void classol::runGPU(scalar runtime //!< Duration of time to run the model for 
 		  )
 {
-  //runtime arg1
-  unsigned int pno;
-  int riT= (int) (runtime/DT);
+    //runtime arg1
+    unsigned int pno;
+    int riT= (int) (runtime/DT);
 
-  for (int i= 0; i < riT; i++) {
-    if (iT%patSetTime == 0) {
-      pno= (iT/patSetTime)%PATTERNNO;
-      theRates= d_pattern;
-      offset= pno*model.neuronN[0];
+    for (int i= 0; i < riT; i++) {
+	unsigned int flags= 0;
+	if (iT%patSetTime == 0) {
+	    pno= (iT/patSetTime)%PATTERNNO;
+	    ratesPN= d_pattern;
+	    offsetPN= pno*model.neuronN[0];
+	    flags= GeNNFlags::COPY;
+	}
+	if (iT%patSetTime == patFireTime) {
+	    ratesPN= d_baserates;
+	    offsetPN= 0;
+	    flags= GeNNFlags::COPY;
+	}
+	stepTimeGPU(flags);
     }
-    if (iT%patSetTime == patFireTime) {
-	    theRates= d_baserates;
-      offset= 0;
-    }
-      stepTimeGPU(theRates, offset, t);
-    iT++;
-    t= iT*DT;
-  }
 }
 //--------------------------------------------------------------------------
 /*! \brief Method for simulating the model for a given period of time on th CPU
@@ -398,17 +399,15 @@ void classol::runCPU(scalar runtime //!< Duration of time to run the model for
   for (int i= 0; i < riT; i++) {
     if (iT%patSetTime == 0) {
       pno= (iT/patSetTime)%PATTERNNO;
-      theRates= pattern;
-      offset= pno*model.neuronN[0];
+      ratesPN= pattern;
+      offsetPN= pno*model.neuronN[0];
     }
     if (iT%patSetTime == patFireTime) {
-	    theRates= baserates;
-      offset= 0;
+      ratesPN= baserates;
+      offsetPN= 0;
     }
 
-    stepTimeCPU(theRates, offset, t);
-    iT++;
-    t= iT*DT;
+    stepTimeCPU();
   }
 }
 
