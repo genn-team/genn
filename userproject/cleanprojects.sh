@@ -5,10 +5,12 @@ projects="HHVclampGA_project Izh_sparse_project MBody1_project MBody_delayedSyn_
 for i in $projects; do
     cd $i
     make clean
-    rm -rf generate_run.dSYM/
+    rm -rf *.dSYM/
     rm -f *.o 
-    cd model
-    make purge
-    cd ..
+    if [ -f model ]; then
+	cd model
+	make purge
+	cd ..
+    fi
     cd ..
 done

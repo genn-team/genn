@@ -43,7 +43,9 @@ NNmodel::NNmodel()
   setPrecision(0);
   setTiming(FALSE);
   RNtype= tS("uint64_t");
+#ifndef CPU_ONLY
   setGPUDevice(AUTODEVICE);
+#endif
   setSeed(0);
   totalKernelParameterSize= 0;
 }
@@ -81,6 +83,7 @@ void NNmodel::initDerivedNeuronPara(unsigned int i /**< index of the neuron popu
     }
     dnp.push_back(tmpP);
 }
+
 
 void NNmodel::initNeuronSpecs(unsigned int i /**< index of the neuron population */)
 {
@@ -338,6 +341,7 @@ void NNmodel::initLearnGrps()
     while (kernelParameterAlign < align) kernelParameterAlign*= 2;
     totalKernelParameterSize= kernelParameterAlign*kernelParameters.size();
 
+#ifndef CPU_ONLY
     // figure out where to reset the spike counters
     if (synapseGrpN == 0) { // no synapses -> reset in neuron kernel
 	resetKernel= GeNNFlags::calcNeurons;
@@ -350,6 +354,7 @@ void NNmodel::initLearnGrps()
 	    resetKernel= GeNNFlags::calcSynapses;
 	}
     }
+#endif
 }
 
 //--------------------------------------------------------------------------
@@ -789,6 +794,7 @@ void NNmodel::setMaxConn(const string sname, /**<  */
   }
 }
 
+#ifndef CPU_ONLY
 //--------------------------------------------------------------------------
 /*! \brief This function defines the way how the GPU is chosen. If "AUTODEVICE" (-1) is given as the argument, GeNN will use internal heuristics to choose the device. Otherwise the argument is the device number and the indicated device will be used.
 */ 
@@ -802,6 +808,7 @@ void NNmodel::setGPUDevice(int device)
   assert(device < deviceCount);
   chooseGPUDevice= device;
 }
+#endif
 
 void NNmodel::finalize()
 {

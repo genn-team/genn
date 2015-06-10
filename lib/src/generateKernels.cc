@@ -11,6 +11,9 @@
 
   --------------------------------------------------------------------------*/
 
+// The CPU_ONLY version does not need any of this
+#ifndef CPU_ONLY
+
 //------------------------------------------------------------------------
 /*! \file generateKernels.cc
 
@@ -20,36 +23,9 @@
 //-------------------------------------------------------------------------
 
 #include <string>
-#include "CodeHelper.cc"
 #include "global.h"
 
 short *isGrpVarNeeded;
-CodeHelper hlp;
-
-//-------------------------------------------------------------------------
-/*!
-  \brief Helper function for code substitutions relating to pre- and post-synaptic entities in synapse codes
-*/
-//-------------------------------------------------------------------------
-
-void name_substitutions_synapse_pre_post(NNmodel &model, string &code, int synPopID, string pre_indexing, string post_indexing)
-{
-    unsigned int synt= model.synapseType[synPopID];
-    string synapseName= model.synapseName[synPopID];
-    weightUpdateModel wu= weightUpdateModels[synt];
-    
-    // make all substitutions relating to extra global parameters, and pre, post-synaptic entities.
-    name_substitutions(code, tS("dd_"), wu.extraGlobalSynapseKernelParameters, synapseName);
-    int pre_type= model.neuronType[model.synapseSource[synPopID]];
-    string pre_name= model.neuronName[model.synapseSource[synPopID]];
-    extended_name_substitutions(code, tS("dd_"), nModels[pre_type].varNames, tS("_pre"), pre_name+pre_indexing);
-    extended_name_substitutions(code, tS("dd_"), nModels[pre_type].extraGlobalNeuronKernelParameters, tS("_pre"), pre_name);
-    int post_type= model.neuronType[model.synapseTarget[synPopID]];
-    string post_name= model.neuronName[model.synapseTarget[synPopID]];
-    extended_name_substitutions(code, tS("dd_"), nModels[post_type].varNames, tS("_post"), post_name+post_indexing);
-    extended_name_substitutions(code, tS("dd_"), nModels[post_type].extraGlobalNeuronKernelParameters, tS("_post"), post_name);
-}
-
 
 
 //-------------------------------------------------------------------------
@@ -220,7 +196,7 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 	os << ENDL;
 	
 	
-	if (nModels[model.neuronType[i]].simCode.find(tS("$(Isyn)")) != string::npos) os << model.ftype << " Isyn = 0;" << ENDL;
+	if (nModels[model.neuronType[i]].simCode.find(tS("Isyn")) != string::npos) os << model.ftype << " Isyn = 0;" << ENDL;
 	for (int j = 0; j < model.inSyn[i].size(); j++) {
 	    unsigned int synPopID= model.inSyn[i][j]; // number of (post)synapse group 
 	    postSynModel psm= postSynModels[model.postSynapseType[synPopID]];
@@ -263,6 +239,7 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 	    substitute(thCode, tS("$(id)"), localID);
 	    substitute(thCode, tS("$(t)"), tS("t"));
 	    name_substitutions(thCode, tS("l"), nModels[nt].varNames, tS(""));
+	    substitute(thCode, tS("$(Isyn)"), tS("Isyn"));
 	    substitute(thCode, tS("$(sT)"), tS("lsT"));
 	    value_substitutions(thCode, nModels[nt].pNames, model.neuronPara[i]);
 	    value_substitutions(thCode, nModels[nt].dpNames, model.dnp[i]);
@@ -341,18 +318,18 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 	for (int j = 0; j < model.inSyn[i].size(); j++) {
 	    postSynModel psModel= postSynModels[model.postSynapseType[model.inSyn[i][j]]];
 	    string sName= model.synapseName[model.inSyn[i][j]];
-	    string psCode = psModel.postSynDecay;
-	    substitute(psCode, tS("$(id)"), localID);
-	    substitute(psCode, tS("$(t)"), tS("t"));
-	    substitute(psCode, tS("$(inSyn)"), tS("linSyn") + sName);
-	    name_substitutions(psCode, tS("lps"), psModel.varNames, sName);
-	    value_substitutions(psCode, psModel.pNames, model.postSynapsePara[model.inSyn[i][j]]);
-	    value_substitutions(psCode, psModel.dpNames, model.dpsp[model.inSyn[i][j]]);
-	    name_substitutions(psCode, tS("l"), nModels[nt].varNames, tS(""));
-	    value_substitutions(psCode, nModels[nt].pNames, model.neuronPara[i]);
-	    value_substitutions(psCode, nModels[nt].dpNames, model.dnp[i]);
+	    string pdCode = psModel.postSynDecay;
+	    substitute(pdCode, tS("$(id)"), localID);
+	    substitute(pdCode, tS("$(t)"), tS("t"));
+	    substitute(pdCode, tS("$(inSyn)"), tS("linSyn") + sName);
+	    name_substitutions(pdCode, tS("lps"), psModel.varNames, sName);
+	    value_substitutions(pdCode, psModel.pNames, model.postSynapsePara[model.inSyn[i][j]]);
+	    value_substitutions(pdCode, psModel.dpNames, model.dpsp[model.inSyn[i][j]]);
+	    name_substitutions(pdCode, tS("l"), nModels[nt].varNames, tS(""));
+	    value_substitutions(pdCode, nModels[nt].pNames, model.neuronPara[i]);
+	    value_substitutions(pdCode, nModels[nt].dpNames, model.dnp[i]);
 	    os << "// the post-synaptic dynamics" << ENDL;
-	    os << ensureFtype(psCode, model.ftype) << ENDL;
+	    os << ensureFtype(pdCode, model.ftype) << ENDL;
 	    os << "dd_inSyn"  << sName << "[" << localID << "] = linSyn" << sName << ";" << ENDL;
 	    for (int k = 0, l = psModel.varNames.size(); k < l; k++) {
 		os << "dd_" <<  psModel.varNames[k] << model.synapseName[model.inSyn[i][j]] << "[" << localID << "] = lps" << psModel.varNames[k] << sName << ";"<< ENDL;
@@ -1176,3 +1153,5 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 
 //    cout << "exiting genSynapseKernel" << endl;
 }
+
+#endif

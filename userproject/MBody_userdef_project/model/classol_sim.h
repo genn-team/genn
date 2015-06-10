@@ -26,18 +26,13 @@ using namespace std;
 #include "utils.h" // for CHECK_CUDA_ERRORS
 
 #include <cuda_runtime.h>
-#include <cfloat>
 
 #include "MBody_userdef.cc"
 
-
 #define MYRAND(Y,X) Y = Y * 1103515245 +12345; X= (Y >> 16);
-
 
 // we will hard-code some stuff ... because at the end of the day that is 
 // what we will do for the CUDA version
-
-#define DBG_SIZE 10000
 
 #define PATTERNNO 100
 scalar InputBaseRate= 2e-04;
@@ -55,7 +50,6 @@ int patSetTime;
 #define PATFTIME 1.5
 
 int patFireTime;
-
 
 #define TOTAL_TME 5000.0
 

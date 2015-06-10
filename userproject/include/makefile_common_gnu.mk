@@ -47,7 +47,7 @@ endif
 include sm_version.mk
 
 # Enumerate all source and object files (if they have not already been listed).
-SOURCES		?=$(wildcard *.cc *.cpp *.cu)
+SOURCES		?=$(wildcard *.cc *.cpp *.cu)	
 OBJECTS		:=$(foreach obj,$(basename $(SOURCES)),$(obj).o)
 
 # Target rules.
@@ -65,7 +65,6 @@ all: release
 
 $(EXECUTABLE): $(OBJECTS)
 	$(CXX) $(CXXFLAGS) $(OBJECTS) -o $@ $(LINK_FLAGS)
-
 
 .PHONY: release
 release: CXXFLAGS +=-O3 

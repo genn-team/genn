@@ -18,9 +18,14 @@
   generating the CPU side code for running simulations on either the CPU or GPU (generateRunner.cc) and for CPU-only simulation code (generateCPU.cc).
 */
 
+#include <string>
 #include "global.h"
 #include "modelSpec.h"
 #include "modelSpec.cc"
+
+#include "CodeHelper.cc"
+CodeHelper hlp;
+
 #include "generateKernels.cc"
 #include "generateRunner.cc"
 #include "generateCPU.cc"
@@ -34,6 +39,7 @@
 
 #define BLOCKSZ_DEBUG
 
+#ifndef CPU_ONLY
 /*! \brief Macro definition for error checking when using the driver API */
 
 #define CHECK_CU_ERRORS(call)					           \
@@ -88,7 +94,7 @@ CUresult cudaFuncGetAttributesDriver(cudaFuncAttributes *attr, CUfunction kern) 
       attr->binaryVersion= tmp;
       return CUDA_SUCCESS;
 }
-
+#endif
 
 /*! \brief This function will call the necessary sub-functions to generate the code for simulating a model. */
 
@@ -105,6 +111,7 @@ void generate_model_runner(NNmodel &model,  //!< Model description
   // general shared code for GPU and CPU versions
   genRunner(model, path, cout);
 
+#ifndef CPU_ONLY
   // GPU specific code generation
   genRunnerGPU(model, path, cout);
   
@@ -113,6 +120,7 @@ void generate_model_runner(NNmodel &model,  //!< Model description
 
   // generate synapse and learning kernels
   if (model.synapseGrpN > 0) genSynapseKernel(model, path, cout);
+#endif
 
   // Generate the equivalent of neuron kernel
   genNeuronFunction(model, path, cout);
@@ -121,7 +129,7 @@ void generate_model_runner(NNmodel &model,  //!< Model description
   if (model.synapseGrpN > 0) genSynapseFunction(model, path, cout);
 }
 
-
+#ifndef CPU_ONLY
 //--------------------------------------------------------------------------
 /*! 
   \brief Helper function that prepares data structures and detects the hardware properties to enable the code generation code that follows.
@@ -551,8 +559,10 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
   
   return chosenDevice;
 }
+#endif
 
 
+//--------------------------------------------------------------------------
 /*! \brief Main entry point for the generateALL executable that generates
   the code for GPU and CPU.
 
@@ -560,6 +570,7 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
   prepares the system and then invokes generate_model_runner to inititate
   the different parts of actual code generation.
 */
+//--------------------------------------------------------------------------
 
 int main(int argc,     //!< number of arguments; expected to be 2
 	 char *argv[]  //!< Arguments; expected to contain the target directory for code generation.
@@ -586,7 +597,9 @@ int main(int argc,     //!< number of arguments; expected to be 2
       gennError("Model was not finalized in modelDefinition(). Please call model.finalize().");
   }
   string path= toString(argv[1]);
+#ifndef CPU_ONLY
   theDev = chooseDevice(cout, model, path);
+#endif
   generate_model_runner(*model, path);
   
   return EXIT_SUCCESS;

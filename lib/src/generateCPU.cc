@@ -116,7 +116,7 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 	    os << "unsigned int delaySlot;" << ENDL;
 	}
 
-	if (nModels[model.neuronType[i]].simCode.find(tS("$(Isyn)")) != string::npos) os << model.ftype << " Isyn = 0;" << ENDL;
+	if (nModels[model.neuronType[i]].simCode.find(tS("Isyn")) != string::npos) os << model.ftype << " Isyn = 0;" << ENDL;
 	for (int j = 0; j < model.inSyn[i].size(); j++) {
 	    unsigned int synPopID= model.inSyn[i][j]; // number of (post)synapse group
 	    postSynModel psm= postSynModels[model.postSynapseType[synPopID]];
@@ -131,6 +131,8 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 	    }
 	    os << "Isyn += ";
 	    string psCode = psm.postSyntoCurrent;
+	    substitute(psCode, tS("$(id)"), tS("n"));
+	    substitute(psCode, tS("$(t)"), tS("t"));
 	    substitute(psCode, tS("$(inSyn)"), tS("inSyn") + sName + tS("[n]"));
 	    name_substitutions(psCode, tS("l"), nModels[nt].varNames, tS(""));
 	    value_substitutions(psCode, nModels[nt].pNames, model.neuronPara[i]);
@@ -251,18 +253,18 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 	for (int j = 0; j < model.inSyn[i].size(); j++) {
 	    postSynModel psModel= postSynModels[model.postSynapseType[model.inSyn[i][j]]];
 	    string sName= model.synapseName[model.inSyn[i][j]];
-	    string psCode = psModel.postSynDecay;
-	    substitute(psCode, tS("$(id)"), tS("n"));
-	    substitute(psCode, tS("$(t)"), tS("t"));
-	    substitute(psCode, tS("$(inSyn)"), tS("inSyn") + sName + tS("[n]"));
-	    name_substitutions(psCode, tS("lps"), psModel.varNames, sName);
-	    value_substitutions(psCode, psModel.pNames, model.postSynapsePara[model.inSyn[i][j]]);
-	    value_substitutions(psCode, psModel.dpNames, model.dpsp[model.inSyn[i][j]]);
-	    name_substitutions(psCode, tS("l"), nModels[nt].varNames, tS(""));
-	    value_substitutions(psCode, nModels[nt].pNames, model.neuronPara[i]);
-	    value_substitutions(psCode, nModels[nt].dpNames, model.dnp[i]);
+	    string pdCode = psModel.postSynDecay;
+	    substitute(pdCode, tS("$(id)"), tS("n"));
+	    substitute(pdCode, tS("$(t)"), tS("t"));
+	    substitute(pdCode, tS("$(inSyn)"), tS("inSyn") + sName + tS("[n]"));
+	    name_substitutions(pdCode, tS("lps"), psModel.varNames, sName);
+	    value_substitutions(pdCode, psModel.pNames, model.postSynapsePara[model.inSyn[i][j]]);
+	    value_substitutions(pdCode, psModel.dpNames, model.dpsp[model.inSyn[i][j]]);
+	    name_substitutions(pdCode, tS("l"), nModels[nt].varNames, tS(""));
+	    value_substitutions(pdCode, nModels[nt].pNames, model.neuronPara[i]);
+	    value_substitutions(pdCode, nModels[nt].dpNames, model.dnp[i]);
 	    os << "// the post-synaptic dynamics" << ENDL;
-	    os << ensureFtype(psCode, model.ftype) << ENDL;
+	    os << ensureFtype(pdCode, model.ftype) << ENDL;
 	    for (int k = 0, l = psModel.varNames.size(); k < l; k++) {
 		os << psModel.varNames[k] << sName << "[n]" << " = lps" << psModel.varNames[k] << sName << ";" << ENDL;
 	    }

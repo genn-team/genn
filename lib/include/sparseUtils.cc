@@ -28,10 +28,10 @@ template <class DATATYPE>
 DATATYPE getG(DATATYPE * wuvar, SparseProjection  * sparseStruct, int x, int y)
 {
   fprintf(stderr,"WARNING: This function is deprecated, and if you are still using it \n\
-  you are probably trying to use the old sparse structures containing g array.  \n\
-  Conductance structures have changed: conductance values should be defined as synapse variable now; \n\
+  you are probably trying to use the old sparse structures containing the g array.  \n\
+  Conductance structures have changed: conductance values should be defined as synapse variables now; \n\
   the structure is renamed as \"SparseProjection\" and contains only indexing arrays. \n\n\
-  Replacement function for getG is \n\
+  The replacement function for getG is \n\
   getSparseVar(DATATYPE * wuvar, SparseProjection  * sparseStruct, int x, int y).\n\n\
   calling getSparseVar...");
   getSparseVar(wuvar, &sparseStruct, x, y);
@@ -167,7 +167,7 @@ void createPreIndices(unsigned int preN, unsigned int postN, SparseProjection * 
     }
 }
 
-
+#ifndef CPU_ONLY
     // ------------------------------------------------------------------------
     // initializing conductance arrays for sparse matrices
 
@@ -183,8 +183,9 @@ void initializeSparseArrayRev(SparseProjection C,  unsigned int * dRevInd, unsig
     CHECK_CUDA_ERRORS(cudaMemcpy(dRevIndInG, C.revIndInG, (postN+1)*sizeof(unsigned int), cudaMemcpyHostToDevice));
     CHECK_CUDA_ERRORS(cudaMemcpy(dRemap, C.remap, C.connN*sizeof(unsigned int), cudaMemcpyHostToDevice));
 } 
+#endif
 
-
+// is this used anywhere? Suggest to remove (TN)
 //!!!!!find var to check if a string is used in a code (atm it is used to create post-to-pre arrays)
 void strsearch(string &s, const string trg)
 {

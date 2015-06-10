@@ -19,3 +19,7 @@ SOURCES		:=classol_sim.cu
 NVCCFLAGS	:=--compiler-options "-ffast-math"
 CXXFLAGS	:=-ffast-math
 include	$(GENN_PATH)/userproject/include/makefile_common_gnu.mk
+
+.PHONY: cpu_only
+#cpu_only: $(SOURCES)
+#	$(CXX) $(CXXFLAGS) -I$(GENN_PATH)/lib/include -I$(GENN_PATH)/userproject/include -o classol_sim_cpu_only classol_sim.cc -lc++ -stdlib=libstdc++ -lc++

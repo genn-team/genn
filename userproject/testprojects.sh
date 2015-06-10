@@ -165,10 +165,10 @@ if [ -d "testing_output" ]; then
   printf "With new setup... \n"  >> testing_output/testing.time
 fi
 printf "\n\n####################### Izh_sparse 10K GPU ######################\n"
-./generate_run 1 10000 1000 1 testing Izh_sparse 0 FLOAT 0
+./generate_run 1 10000 1000 1 testing Izh_sparse 0 FLOAT 0 1.0
 #cp testing_output/testing.out.st testing_output/testing.out.st.GPU
 printf "\n\n####################### Izh_sparse 10K CPU ######################\n"
-./generate_run 0 10000 1000 1 testing Izh_sparse 0 FLOAT 0
+./generate_run 0 10000 1000 1 testing Izh_sparse 0 FLOAT 0 1.0
 #cp testing_output/testing.out.st testing_output/testing.out.st.CPU
 if [ "$firstrun_IZH" = true ]; then
   cp -R inputfiles inputfiles10K
@@ -184,7 +184,7 @@ fi
 #need to recompile if we want to rerun with different number of neurons. To be revisited...
 #printf "\n\n*********************** Testing Izh_sparse 1K neurons****************************\n"
 #printf "\n\n####################### Izh_sparse 1K GPU ######################\n"
-#./generate_run 1 1000 1000 1 outdir Izh_sparse 0 0
+#./generate_run 1 1000 1000 1 outdir Izh_sparse 0 0 1.0
 #if [ "$firstrun" = true ]; then
 #  cp -R inputfiles inputfiles1K
 #fi 
