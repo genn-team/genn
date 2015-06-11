@@ -11,7 +11,7 @@
 ##  
 ##--------------------------------------------------------------------------
 
-EXECUTABLE	=classol_sim.exe
-SOURCES		=classol_sim.cu
+EXECUTABLE	=experiment.exe
+SOURCES		=experiment.cu
 
 !include $(GENN_PATH)\userproject\include\makefile_common_win.mk
