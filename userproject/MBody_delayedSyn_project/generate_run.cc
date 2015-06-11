@@ -103,7 +103,7 @@ int main(int argc, char *argv[])
   double pnkc_gsyn = 100.0 / nAL * gscale;
   double pnkc_gsyn_sigma = 100.0 / nAL * gscale / 15.0; 
   double kcdn_gsyn = 2500.0 / nMB * 0.05 * gscale; 
-  double kcdn_gsyn_sigma = 2500.0 / (sqrt(1000)*sqrt(nMB)) * 0.005 * gscale; 
+  double kcdn_gsyn_sigma = 2500.0 / (sqrt((double) 1000.0)*sqrt((double) nMB)) * 0.005 * gscale; 
   double pnlhi_theta = 100.0 / nAL * 14.0 * gscale;
 
   // write neuron population sizes
