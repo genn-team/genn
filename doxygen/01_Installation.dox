@@ -51,11 +51,11 @@ repository.
      GeNN directory, e.g. if you extracted/downloaded GeNN to
      /usr/local/GeNN, then you can add "export
      GENN_PATH=/usr/local/GeNN" to your login script (e.g. `.profile`
-     or `.bashrc`. If you are using
+     or `.bashrc`). If you are using
      WINDOWS, the path should be a windows path as it will be
      interpreted by the Visual C++ compiler `cl`, and enciront
      variables are best set using `setx` in a Windows cmd window.
-To do so, open a Windows cmd window byt typing `cmd` in the search
+To do so, open a Windows cmd window by typing `cmd` in the search
      field of the start menu, followed by the `enter` key.
 In the `cmd` window type
 \code
@@ -86,7 +86,7 @@ in your login script (or, if CUDA is installed in a non-standard
     the default value of /usr/local/cuda is fine. In Windows, use
     `setx` to set this variable,
 \code
-setx CUDA_PATH 
+setx CUDA_PATH "C:\Path\to\cuda"
 \endcode
 
 This normally completes the installation.
@@ -97,16 +97,16 @@ Depending on the needs of your own projects, e.g., depencies on other
      `$GENN_PATH/userproject/xxx_project` and
      `$GENN_PATH/userproject/xxx_project/model` 
      to add extra linker-, include- and compiler-flags on a per-project basis, or
-     modify global default flags in $GENN_PATH/lib/include/makefile_common.mk.
+     modify global default flags in `$GENN_PATH/userproject/include/makefile_common_gnu.mk` (on Linux, MacOS) or `%GENN_PATH%\userproject\include\makefile_common_win.mk` (on windows).
 
      For all makefiles there are separate makefiles for Unix-style
      operating systems (GNUmakefile) such as Linux or MacOS and for
      Windows (WINmakefile). 
 
 If you are using GeNN in Windows, you can use make.bat to build
-examples which will attempt to setup your
+the example projects. This script will attempt to set up your
 development environment by executing `vcvarsall.bat` which is part of
-every Visual Studio distribution. For this to work properly, GeNN must
+every Microsoft Visual Studio distribution. For this to work properly, GeNN must
 be able to locate the Visual Studio install directory, which should be
 contained in the `VS_PATH` environment variable. You can set this
 variable by hand if it is not already set by the Visual C++ installer

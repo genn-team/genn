@@ -437,7 +437,7 @@ A synapse model is a weightUpdateModel object which consists of variables, param
 
 - \c simCode: Simulation code that is used when a true spike is detected. Update is done for only one time step after threshold condition detection, which is provided by \c thresholdConditionCode in the neuron model corresponding to the presynaptic neuron population.
 
-What will be integrated in the postsynaptic neuron should be provided by the \$(addtoinsyn) snippet. When a spike is detected in the presynaptic neuron population, first the simCode is called by replacing the variables and parameters with their corresponding values. In order to define how presynaptic variables contribute to the update of the postsynaptic neuron, \$(addtoinSyn) variable should first be updated accordingly, and then \$(updatelinsyn) should be called in order to define where previous conductance values should be integrated before updating the conductances. For an example, see \ref sect31 for a simple synapse update model and \ref sect33 for a more complicated model that uses STDP. 
+What will be integrated in the postsynaptic neuron should be provided by the \$(addtoinsyn) snippet. When a spike is detected in the presynaptic neuron population, first the simCode is called by replacing the variables and parameters with their corresponding values. In order to define how presynaptic variables contribute to the update of the postsynaptic neuron, \$(addtoinSyn) variable should first be updated accordingly, and then \$(updatelinsyn) should be called in order to define where previous conductance values should be integrated before updating the conductances. For an example, see \ref sect31 for a simple synapse update model and \ref sect34 for a more complicated model that uses STDP. 
 
 - \c simCodeEvnt: Simulation code that is used for spike events, where update is done fo all the instances where event threshold evntThreshold is met. evntThresholdshould also be provided as a string. For an example, see \ref sect32.
 
@@ -521,7 +521,7 @@ Parameters are:
 
 For more details about these built-in synapse models, see \cite nowotny2005self.
 
-\section sect33 Defining a new synapse model
+\section sect34 Defining a new synapse model
 
 If users want to define their own models, they can add a new weightUpdateModel that includes the variables, parameters, and update codes as desired, and then push this object in the weightUpdateModels vector. The model can be used by referring to iths index in the weightUpdateModels vector while adding a new population by calling addSynapsePopulation.
 

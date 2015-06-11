@@ -189,7 +189,7 @@ It is run the same way as \ref ex_mbody, e.g.
 \endcode
 
 <br />
-\section ex_mbody_indID Insect Olfaction Model using delayed synapses
+\section ex_mbody_delayed Insect Olfaction Model using delayed synapses
 A variation of the \ref ex_mbody example using synaptic delays.
 In this example, the Kenyon Cell-Decision Neuron synapses are delayed by (5 * DT) MS, and the Decision Neuron-Decision Neuron synapses are delayed by (3 * DT) MS.
 The example is intended to test the operation of synapses which have a combination of delayed spike propagation and STDP (plasticity).

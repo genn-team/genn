@@ -37,7 +37,7 @@ and device choice.
 
 2. Changed the device selection logic so that device occupancy has larger priority than device capability version.
 
-3. A new HH model called TRAUBMILES\_PSTEP where we can set the number of inner loops as a parameter is introduced. It uses the TRAUBMILES\_SAFE method. 
+3. A new HH model called TRAUBMILES\_PSTEP where one can set the number of inner loops as a parameter is introduced. It uses the TRAUBMILES\_SAFE method. 
 
 4. An alternative method is added for the insect olfaction model in order
 to fix the number of connections to a maximum of 10K in order to avoid
@@ -56,7 +56,7 @@ Bug fixes:
 
 4. NGRADSYNAPSES was not scaling correctly with varying time step. 
 
-5. Fixed a bug where learning kernel with sparse connectivity was going out of array.
+5. Fixed a bug where learning kernel with sparse connectivity was going out of range in an array.
 
 6. Fixed synapse kernel name substitutions where the "dd_" prefix was omitted by mistake.
 
