@@ -15,6 +15,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#ifndef S_ISDIR
+#define S_ISDIR(mode)  (((mode) & S_IFMT) == S_IFDIR)
+#endif
 
 //this class does most the work, controlled by this experiment
 Schmuker2014_classifier classifier;
@@ -354,7 +357,7 @@ int main(int argc, char *argv[])
 
 	string paramName = "PLASTICITY_INTERVAL_MS";
 	//float paramValues[] {50,100,200,330,500,1000};
-	float paramValues[] {330};
+	float paramValues[]= {330};
 
 	//-----------------------------------------------------------------
 

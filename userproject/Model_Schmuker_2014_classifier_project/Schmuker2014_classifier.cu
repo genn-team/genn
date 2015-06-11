@@ -34,7 +34,7 @@ Schmuker2014_classifier::Schmuker2014_classifier():
 correctClass(0),winningClass(0),vrData(NULL),inputRatesSize(0),t(0.0f),clearedDownDevice(false)
 {
 
-	d_maxRandomNumber = pow(2.0, (int) sizeof(uint64_t)*8-16); //work this out only once
+	d_maxRandomNumber = pow(2.0, (double) sizeof(uint64_t)*8-16); //work this out only once
 	modelDefinition(model);
 
 

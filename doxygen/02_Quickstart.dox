@@ -71,21 +71,12 @@ Then type
 \code
 make.bat
 \endcode
-to compile the generate_run executable and a number of tools that are used by the example projects to
+(or just `make`) to compile the generate_run.exe executable and a number of tools that are used by the example projects to
 generate connectivity and inputs to model networks.
-
-Then navigate to the `MBody1_project` directory.
-\code
-cd ..\MBody1_project
-\endcode
-By typing
-\code
-make.bat all
-\endcode
-you can compile the `generate_run` engine that allows to run a \ref
+The `generate_run.exe` engine then allows to run a \ref
 ex_mbody model of the insect mushroom body:
 \code{.cc} 
-tools/generate_run <0(CPU)/1(GPU)> <#AL> <#KC> <#LH> <#DN> <gscale> <OUTNAME> <MODEL> <DEBUG> <FTYPE> <REUSE>. 
+generate_run.exe <0(CPU)/1(GPU)> <#AL> <#KC> <#LH> <#DN> <gscale> <OUTNAME> <MODEL> <DEBUG> <FTYPE> <REUSE>. 
 \endcode
 To invoke `generate_run.exe` type, e.g.,
 \code{.cc} 
@@ -96,10 +87,10 @@ system with 100 projection neurons, 1000 Kenyon cells, 20 lateral horn
 interneurons and 100 output neurons n the mushroom body lobes.  
 
 The tool `generate_run.exe` will generate connectivity matrices for the model
-`MBody1` and store them into files, compile and run the model on an
+`MBody1` and store them into files, build code, compile it and run the model on an
 automatically chosen GPU
-using these files as inputs and output the resulting spiking
-activity. To fix the GPU used, replace the first argument `1` with the
+using these files as inputs, and output the resulting spiking
+activity. To designate a fixed GPU to be used, replace the first argument `1` with the
 device number of the desired GPU plus 2, e.g., `2` for GPU 0. All input and output files will be prefixed with `test1` and will be
 created in a sub-directory with the name `test1_output`. The last
 parameter `0` will switch the debugging mode off, `1` would switch it
