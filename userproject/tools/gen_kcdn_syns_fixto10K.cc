@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
       }
       else{
         if (R2.n()<psyn){
-          gsyn= kcdn_gsyn/psyn+kcdn_jitter*sqrt(nMB)/100.0*RG.n(); // scaling stddev by sqrt(n/10000)
+	    gsyn= kcdn_gsyn/psyn+kcdn_jitter*sqrt((double) nMB)/100.0*RG.n(); // scaling stddev by sqrt(n/10000)
         }
         else gsyn = 1.0e-25;
       }
