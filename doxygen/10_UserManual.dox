@@ -68,7 +68,7 @@ model.setName("MyModel");
 2. Neuron populations (at least one) must be added (see \ref subsect11). The
   user may add as many neuron populations as she wishes. If resources
   run out, there will not be a warning but GeNN will fail. However, before this breaking point is reached, GeNN will make all necessary efforts in terms of block size optimisation to accommodate the defined models. All
-  populations should have a unique name.
+  populations must have a unique name.
 
 3. Synapse populations (zero or more) can be added (see \ref subsect12). Again,
   the number of synaptic connection populations is unlimited other than
@@ -84,13 +84,13 @@ Neuron populations are added using the function
 model.addNeuronPopulation(name, n, TYPE, para, ini);
 \endcode
 where the arguments are:
-\arg `const char* name`: Name of the neuron population
+\arg `const char* name`: Unique name of the neuron population
 \arg `int n`: number of neurons in the population
-\arg `int TYPE`: Type of the neurons, refers to either a standard type (see \ref sectNeuronModels) or user-defined type
+\arg `int TYPE`: Type of the neurons, refers to either a standard type (see \ref sectNeuronModels) or user-defined type; this is an integer that indicates the position in the list of all neuron models where the model in question is stored.
 \arg `double *para`: Parameters of this neuron type
 \arg `double *ini`: Initial values for variables of this neuron type 
 
-The user may add as many neuron populations as the model necessitates. They should all have unique names. The possible values for the arguments, predefined models and their parameters and initial values are detailed \ref sectNeuronModels below.
+The user may add as many neuron populations as the model necessitates. They must all have unique names. The possible values for the arguments, predefined models and their parameters and initial values are detailed \ref sectNeuronModels below.
 
 \section subsect12 Defining synapse populations
 
@@ -143,9 +143,13 @@ addNeuronGroup(...) function by their unique cardinal number, starting from
 0. For convenience, C variables with readable names are predefined
 - 0: \ref sect21 "MAPNEURON" 
 - 1: \ref sect22 "POISSONNEURON"
-- 2: \ref sect23 "TRAUBMILES"
-- 3: \ref sect24 "IZHIKEVICH"
-- 4: \ref sect25 "IZHIKEVICH_V"
+- 2: \ref sect23 "TRAUBMILES_FAST"
+- 3: \ref sect23 "TRAUBMILES_ALTERNATIVE"
+- 4: \ref sect23 "TRAUBMILES_SAFE"
+- 5: \ref sect23 "TRAUBMILES_PSTEP"
+- 6: \ref sect24 "IZHIKEVICH"
+- 7: \ref sect25 "IZHIKEVICH_V"
+- 8: \ref sect26 "SPIKESOURCE"
 
 \note
 Ist is best practice to not depend on the unique cardinal numbers but use predefined names. While it is not intended that the numbers will change the unique names are guaranteed to work in all future versions of GeNN.
@@ -212,7 +216,7 @@ to have an effect on the behaviour of the Poisson neurons because the
 numbers are so small that only if the random number is identical 0 a
 spike will be triggered.
  
-\section sect23 TRAUBMILES (Hodgkin-Huxley neurons with Traub & Miles algorithm)
+\section sect23 TRAUBMILES_FAST (Hodgkin-Huxley neurons with Traub & Miles algorithm)
 
 This conductance based model has been taken from \cite Traub1991 and can be described by the equations:
 \f{eqnarray*}{
@@ -254,6 +258,13 @@ and 7 parameters:
 \note
 Internally, the ordinary differential equations defining the model are integrated with a linear Euler algorithm and GeNN integrates 25 internal time steps for each neuron for each network time step. I.e., if the network is simulated at `DT= 0.1` ms, then the neurons are integrated with a linear Euler algorithm with `lDT= 0.004` ms.
 
+Other variants of the same model are TRAUBMILES_ALTERNATIVE, TRAUBMILES_SAFE and TRAUBMILES_PSTEP. The former two are adressing the problem of singularities in the original Traub & Miles model \cite Traub1991. At V= -52 mV, -25 mV, and -50 mV, the equations for \f$\alpha\f$ have denominators with value 0. Mathematically this is not a problem because the nominator is 0 as well and the left and right limits towards these singular points coincide. Numerically, however this does lead to nan (not-a-number) results through division by 0. The TRAUBMILES_ALTERNATIVE model adds SCALAR_MIN to the denominators at all times which typically is completely effect-free because it is truncated from teh mantissa, except when the denominator is very close to 0, in which case it avoids the singular value.
+
+TRAUBMILES_SAFE takes a much more direct approach in which at the singular points, the correct value calculated offline with l'Hopital's rule in substituted.
+This is implemented with "if" statements.
+
+Finally, the TRAUBMILES_PSTEP model allows users to control the number of internal loops, or sub-timesteps, that are used. This is enabled by making the number of time steps an explicit parameter of the model.
+
 \section sect24 IZHIKEVICH (Izhikevich neurons with fixed parameters)
 This is the Izhikevich model with fixed parameters \cite izhikevich2003simple.
 It is usually described as 
@@ -288,22 +299,24 @@ Accordingly, the model has the Variables:
 
 and no parameters.
 
+\section sect26 SPIKESOURCE (empty neuron which allows setting spikes from external sources)
+This model does not contain any update code and can be used to implement the equivalent of a SpikeGeneratorGroup in Brian or a SpikeSourceArray in PyNN. 
 
 \section sect_own Defining your own neuron type 
 
 In order to define a new neuron type for use in a GeNN application,
 it is necessary to populate an object of class \c neuronModel and
-append it to the global vector \c nModels. The \c neuronModel class
+append it to the global vector \c nModels. This can be done conveniently within the modelDefinition fundtion just before the model is needed. The \c neuronModel class 
 has several data members that make up the full description of the
 neuron model:
 
-- \c simCode of type \c string: This needs to be assigned a C++ string
+- \c simCode of type \c string: This needs to be assigned a C++ (stl) string
   that contains the code for executing the integration of the model
   for one time step. Within this code string, variables need to be
   referred to by $(NAME), where NAME is the name of the variable as
   defined in the vector varNames. The code may refer to the predefined
   primitives `DT` for the
-  time step size and `Isyn` for the total incoming synaptic current. <br />
+  time step size and `$(Isyn)` for the total incoming synaptic current. It can also refer to a unique ID (within the population) using $(id). <br />
   Example:
 \code
 neuronModel model;
@@ -324,20 +337,19 @@ would add the variable V as needed by the code string in the example above.
 - \c varTypes of type \c vector<string>: This vector needs to be
   filled with the variable type (e.g. "float", "double", etc) for the
   variables defined in \c varNames. Types and variables are matched to
-  each other by position in the respective vectors. <br />
+  each other by position in the respective vectors, i.e. the 0th entry of `varNames` will have the type stored in the 0th entry of `varTypes` and so on. <br />
 Example:
 \code
 model.varTypes.push_back(String("float"));
 \endcode
 would designate the variable V to be of type float. 
 \note
-Variable names and variable types are matched by their position in the corresponding arrays `varNames` and `varTypes`, i.e. the 0th entry of `varNames` will have the type stored in the 0th entry of `varTypes` and so on.
 
 - \c pNames of type \c vector<string>: This vector will contain the names
  of parameters relevant to the model. If defined as `NAME` here, they
  can then be referenced as `$(NAME)` in the code string. The length of
  this vector determines the expected number of parameters in the
- initialisation of the neuron model. Parameters are currently assumed
+ initialisation of the neuron model. Parameters are assumed
  to be always of type double. <br />
  \code
 model.pNames.push_back(String("a"));
@@ -367,26 +379,6 @@ model.dpNames.push_back(String("a"));
 
 - `dps` of type \ref `dpclass`*: The dependent parameter class, i.e. an implementation of \ref `dpclass` which would return the value for dependent parameters when queried for them. E.g. in the example above it would return `a` when queried for dependent parameter 0 through `dpclass::calculateDerivedParameter()`. Examples how this is done can be found in the pre-defined classes, e.g. expDecayDp, pwSTDP, \ref rulkovdp etc. 
 
-- \c tmpVarNames of type \c vector<string>: This vector can be used to
-  request additional variables that are not part of the state of the
-  neuron but used only as temporary storage during evaluation of the
-  integration time step. <br />
-For example, one could define
-\code
-model.tmpVarNames.push_back(String("a"));
-model.tmpVarNames.push_back(String("float"));
-model.simCode= String("$(a)= $(g)/$(C); \n\
-$(V)+= -$(a)*$(V);\n\");
-\endcode
-which would be equivalent to
-\code
-model.simCode= String("float $(a)= $(g)/$(C); \n\
-$(V)+= -$(a)*$(V);\n\");
-\endcode
-
-- \c tmpVarTypes of type \c vector<string>: This vector will contain
-  the variable types of the temporary variables, matched up by position as usual.
-
 Once the completed \c neuronModel object is appended to the \c nModels
 vector,
 \code
@@ -407,7 +399,8 @@ Then one can use the model as
 networkModel.addNeuronPopulation(..., myModel, ...);
 \endcode
 
-\section sect_explinput Explicit current input to neurons 
+\section sect_explinput Explicit current input to neurons (will be removed in future versions)
+
 The user can decide whether a neuron group receives external input current or not 
 in addition to the synaptic input that it receives from the network.
 External input to a neuron group is activated by calling 
@@ -435,15 +428,24 @@ device memory.
 
 A synapse model is a weightUpdateModel object which consists of variables, parameters, and string objects which will be substituted in the code. The three strings that will be substituted in the code for synapse update are:
 
-- \c simCode: Simulation code that is used when a true spike is detected. Update is done for only one time step after threshold condition detection, which is provided by \c thresholdConditionCode in the neuron model corresponding to the presynaptic neuron population.
+- \c simCode: Simulation code that is used when a true spike is detected. The update is performed only once, one time step after threshold condition detection, which is defined by \c thresholdConditionCode in the neuron model of the corresponding presynaptic neuron population.
 
-What will be integrated in the postsynaptic neuron should be provided by the \$(addtoinsyn) snippet. When a spike is detected in the presynaptic neuron population, first the simCode is called by replacing the variables and parameters with their corresponding values. In order to define how presynaptic variables contribute to the update of the postsynaptic neuron, \$(addtoinSyn) variable should first be updated accordingly, and then \$(updatelinsyn) should be called in order to define where previous conductance values should be integrated before updating the conductances. For an example, see \ref sect31 for a simple synapse update model and \ref sect34 for a more complicated model that uses STDP. 
+Typically, spikes lead to update of synaptic variables that then lead to the activation of input into the post-synaptic neuron. Most of the ime these inputs add linearly at the post-synaptic neuron. This is assumed in GeNN and the term to be added to the activation of the post-synaptic neuron should be provided as the value of the by the \$(addtoinsyn) snippet. 
+For example
+\code
+"\$(addtoinsyn) = $(inc);"
+\endcode
+where "inc" is a parameter of the weightupdate model, would define a constant increment of the synaptic input of a post-synaptic neuron for each pre-synaptic spike.
 
-- \c simCodeEvnt: Simulation code that is used for spike events, where update is done fo all the instances where event threshold evntThreshold is met. evntThresholdshould also be provided as a string. For an example, see \ref sect32.
+When a spike is detected in the presynaptic neuron population, the simCode is executed. Within the code snippet the \$(addtoinSyn) update just discussed should be be followed by the \$(updatelinsyn) keyword to indicate that the summation of synaptic inputs can now occur. This can then be followed by updates on the internal synapse variables that may have contributed to addtoinSyn. For an example, see \ref sect31 for a simple synapse update model and \ref sect33 for a more complicated model that uses STDP. 
 
-- \c simLearnPost: Simulation code which is used in the learnSynapsesPost kernel/function, where postsynaptic neuron spikes before the presynaptic neuron in the STDP window. Usually this is simply the conductance update rule defined by the other simCode elements above, with negative timing and without postsynaptic update. This code needs to be provided separately as simCode and simCodeEnvt are used after spanning the presynaptic spikes, where it is not possible to detect where a postsynaptic neuron fired before the presynaptic neuron. For an example, see \ref sect33.
+- \c simCodeEvnt: Simulation code that is used for spike like events, where updates are done for all instances in which the event condition defined by `evntThreshold` is met. `evntThreshold` is also be provided as a code string. For an example, see \ref sect32.
 
-These codes would include update functions for adding up conductances for that neuron model and for changes in conductances for the next time step (learning). 
+- \c simLearnPost: Simulation code which is used in the learnSynapsesPost kernel/function, which performs updates to synapses that are triggered by post-synaptic spikes. This is rather unusual other than in learning rules like e.g. STDP. For an example that uses `simLearnPost`, see \ref sect33.
+
+- \c synapseDynamics: Simulation code that applies for every time step, i.e.is unlike the others not gated with a condition. This can be used where synapses have internal variables and dynamics that are described in continuous time, e.g. by ODEs. Usng this mechnanism is typically computationally veruy costly because of the large number of synapses in a typical network.
+
+All code snippets can be used to manipulate any synapse variable and so implement both synaptic dynamics and learning processes.
 
 
 \section subsect31 Built-in Models
@@ -452,11 +454,11 @@ Currently 3 predefined synapse models are available:
 - \ref sect32 "NGRADSYNAPSE"
 - \ref sect33 "LEARN1SYNAPSE"
 
-These are defined in user.h. MBody_userdef example also includes a modified version of these models in as new user-defined models.
+These are defined in `lib.include/utils.h`. The `MBody_userdef` example also includes a modified version of these models as user-defined models.
 
 \section sect31 NSYNAPSE (No Learning)
-If this model is selected, no learning rule is applied to the synapse and presynaptic conductances are are simply
-added to the postsynaptic input. 
+If this model is selected, no learning rule is applied to the synapse and for each pre-synaptic spikes the synaptic conductances are simply
+added to the postsynaptic input variable. 
 The model has 1 variable:
 - \c g - conductance of \c scalar type
 
@@ -472,7 +474,8 @@ and no other parameters.
 \section sect32 NGRADSYNAPSE (Graded Synapse)
 In a graded synapse, the conductance is updated gradually with the rule: 
 
-\f[ gSyn= g * tanh((E - E_{pre}) / V_{slope} \f]
+\f[ gSyn= g * tanh((V - E_{pre}) / V_{slope} \f]
+whenever the membrane potential \f$V\f$ is larger than the threshold \f$E_{pre}\f$.
 The model has 1 variable:
 - \c g: conductance of \c scalar type
 
@@ -492,6 +495,8 @@ The parameters are:
 \code
 " $(V_pre) > $(Epre)"
 \endcode
+\note
+The pre-synaptic variables are referenced with the suffix `_pre` in synapse related code such as an `evntThreshold`. Users can also access post-synaptic neuron variables using the suffix `_post`.
 
 \section sect33 LEARN1SYNAPSE (Learning Synapse with a Primitive Role)
 This is a simple STDP rule including a time delay for the finite transmission speed of the synapse, defined as a piecewise function.
@@ -521,9 +526,9 @@ Parameters are:
 
 For more details about these built-in synapse models, see \cite nowotny2005self.
 
-\section sect34 Defining a new synapse model
+\section sect33 Defining a new synapse model
 
-If users want to define their own models, they can add a new weightUpdateModel that includes the variables, parameters, and update codes as desired, and then push this object in the weightUpdateModels vector. The model can be used by referring to iths index in the weightUpdateModels vector while adding a new population by calling addSynapsePopulation.
+If users want to define their own models, they can add a new `weightUpdateModel` that includes the variables, parameters, and update codes as desired, and then push this object in the `weightUpdateModels` vector. The model can be used by referring to its index in the `weightUpdateModels` vector when adding a new population by with a call to `addSynapsePopulation`.
 
 \section subsect34 Conductance definition methods
 The available options work as follows:
@@ -531,13 +536,14 @@ The available options work as follows:
 addSynapsePopulation command, GeNN reserves an array of size n_pre x
 n_post float for individual conductance values for each combination of
 pre and postsynaptic neuron. The actual values of the conductances are
-passed at runtime from the user side code, using the \c copyGToDevice
-function.
+passed at runtime from the user side code, using the \c pushXXXXXToDevice
+function, where XXXX is the name of the synapse population.
 
-- \c GLOBALG: When this option is chosen, the \c addSynapsePopulation
-  command must be followed within the \c modelDefinition function by a
-  call to \c setSynapseG for this synapse population. This option can
-  only be sensibly combined with connectivity type ALLTOALL. 
+- \c GLOBALG: When this option is chosen, the value of the variables
+  of the synapse model (including its conductance) is taken to be the
+  initial value provided for the synapse model's variables. This
+  option can only be sensibly combined with connectivity type
+  ALLTOALL.
 
 - \c INDIVIDUALID: When this option is chosen, GeNN expects to use the
 same maximal conductance for all existing synaptic connections but
@@ -545,11 +551,11 @@ which synapses exist will be defined at runtime from the user side
 code, provided as a binary array (see \ref ex_mbody).
 
 \section subsect32 Connectivity types
-If \c INDIVIDUALG is used with \c ALLTOALL connectivity, synapse variables are stored 
+If \c INDIVIDUALG is used with \c ALLTOALL or \c DENSE connectivity (these are equivalent in this case), synapse variables are stored 
 in an array of size npre * npost . 
 
-If connectivity is of SPARSE type, connectivity indices are stored in a 
-struct named SparseProjection in order to occupy minimum memory needed. The struct SparseProjection contains 
+If the connectivity is of SPARSE type, connectivity indices are stored in a 
+struct named SparseProjection in order to minimize the memory equirements. The struct SparseProjection contains the
 following members:
 	1: unsigned int connN: number of connections in the population. This value is needed for allocation of arrays. 
 	The indices that correspond to these values are defined in a pre-to-post basis by the following arrays:
@@ -573,13 +579,13 @@ If there are no connections for a presynaptic neuron, then g[indIng[n]]=gp[indIn
 
 \section sect_postsyn Postsynaptic integration methods
 
-The way that everything comes from the presynaptic inputs are updated by the postsynaptic neuron can be defined by either using a predefined method or by adding a new postSynModel object. 
+The postSynModel defines how synaptic activation translates into an input current (or other input term for models that are not current based). It also can contain equations defining dynamics that are applied to the (summed) synaptic activation, e.g. an exponential decay over time.
 
-A postSynModel object consists of variables, parameters, derived parameters and two strings that explain how the method works:
+A postSynModel object consists of variables, parameters, derived parameters and two strings that define the code for current generation and continuous dynamics.
 
-- string \c postSynDecay: This code explains what should be done with the sum of the presynaptic input arriving at the postsynaptic neuron. This usually consists of a decay function. 
+- string \c postSynDecay: This code defines the continuous time dynamics of the summed presynaptic inputs at the postsynaptic neuron. This usually consists of some kind of decay function. 
 
-- string \c postSyntoCurrent: This code explains how the postsynaptic inputs are added up to the input current (Isyn) to the postsynaptic neuron. 
+- string \c postSyntoCurrent: This code defines how the synaptic inputs lead to an input input current (Isyn) to the postsynaptic neuron. 
 
 There are currently 2 built-in postsynaptic integration methods:
  

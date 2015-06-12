@@ -1,7 +1,7 @@
 //----------------------------------------------------------------------------
 /*! \page Tutorial1 Tutorial 1
 
-In this tutorial we will go through step by step instructions ow to create and a GeNN simulation starting from scratch. Normally, we recommend users to use one of the example projects as a starting point but it can be very instructive to go through the necessary steps one by one once to appreciate what parts make a GeNN simulation.
+In this tutorial we will go through step by step instructions how to create and run a GeNN simulation starting from scratch. Normally, we recommend users to use one of the example projects as a starting point but it can be very instructive to go through the necessary steps one by one once to appreciate what parts make a GeNN simulation.
 
 \section ModelDefinition The Model Definition
 
@@ -27,7 +27,7 @@ void modelDefinition(NNmodel &model)
   // definition of tenHHModel
 }
 \endcode
-With this we have fixed the integration time step to `0.1` in the usual time units. The tyoical units in GeNN are `ms`, `mV`, `nF`, and `\f$\mu\f$S`. Therefore, this defines `DT= 0.1 ms`. Now we need t fill the actual model definition.
+With this we have fixed the integration time step to `0.1` in the usual time units. The typical units in GeNN are `ms`, `mV`, `nF`, and `\f$\mu\f$S`. Therefore, this defines `DT= 0.1 ms`. Now we need to fill the actual model definition.
 
 Two standard elements to the `modelDefinition function are initialising GeNN and setting the name of the model:
 \code
@@ -35,7 +35,7 @@ Two standard elements to the `modelDefinition function are initialising GeNN and
   model.setName("tenHHModel");
 \endcode
 \note 
-The name of the model given in the setName method does not need to match the file name of the model definition file. However, we strongly recommend it and if conflicting the file name of the model definition file will prevail.
+The name of the model given in the setName method does not need to match the file name of the model definition file. However, we strongly recommend it and if conflicting, the file name of the model definition file will prevail.
 
 Making the actual model definition makes use of the `addNeuronPopulation` and 'addSynapsePopulation` member functions of the NNmodel object. The arguments to a call to `addNeuronPopulations are
 \arg `string name`: the name of the population
@@ -65,7 +65,7 @@ We first create the parameter and initial variable arrays,
   };
 \endcode
 \note
-The comments are obviously only for clarity, they can in principle be omitted. To avoid any confusion about the meaning of parameters and variables, however, we recommend to always include comments of this type.
+The comments are obviously only for clarity, they can in principle be omitted. To avoid any confusion about the meaning of parameters and variables, however, we recommend strongly to always include comments of this type.
 
 Having defined the parameter values and initial values we can now create the neuron population,
 \code
@@ -115,7 +115,7 @@ void modelDefinition(NNmodel &model)
 This model definition suffices to generate code for simulating the ten Hodgkin-Huxley neurons on the a GPU or CPU. The second part of a GeNN simulation is the user code that sets up the simulation, does the data handling for input and output and generally defines the numerical experiment to be run.
 
 \section userCode User Code
-For the purposes of this tutorial we will initially simply run the model for one simulated second and record the final neuron variables into a file. GeNN provides the code for simulating the model in a function called `stepTimeCPU()` (execution on CPU only) or `stepTimeGPU()` (execution on a GPU). To make use of this code we need to define a minimal C/C++ main function. Open a new empty function `tenHHSimulation.cc` in an editor and type
+For the purposes of this tutorial we will initially simply run the model for one simulated second and record the final neuron variables into a file. GeNN provides the code for simulating the model in a function called `stepTimeCPU()` (execution on CPU only) or `stepTimeGPU()` (execution on a GPU). To make use of this code we need to define a minimal C/C++ main function. Open a new empty file `tenHHSimulation.cc` in an editor and type
 \code
 // tenHHModel simulation code
 #include "tenHHModel.cc"
@@ -131,7 +131,7 @@ int main()
 \endcode
 This boiler plate code includes the relevant model definition file we completed earlier and the entry point to the generated code `runner.cc` in the subdirectory `tenHHModel_CODE` where GeNN deposits all generated code.
 
-Calling `allocateMem()` allocates the memry structures for all neuron variables and `initialize()` sets the initial values and copies values to the GPU.
+Calling `allocateMem()` allocates the memory structures for all neuron variables and `initialize()` sets the initial values and copies values to the GPU.
 
 Now we can use the generated code to execute the integration of the neuron equations provided by GeNN. To do so, we add after `initialize();`
 \code
@@ -147,7 +147,7 @@ and we need to copy the result, and output it to stdout,
     cout << nPop1[i] << endl;
   }
 \endcode
-`pullPop1fromDevice()` copies all relevant state variables of the `Pop1~ neuron group from the GPU to the CPU main memory. The we can output the results to stdout by looping through all 10 neurons an outputting the state variables VPopo1, mPop1, hPop1, nPop1.
+`pullPop1fromDevice()` copies all relevant state variables of the `Pop1` neuron group from the GPU to the CPU main memory. Then we can output the results to stdout by looping through all 10 neurons and outputting the state variables VPop1, mPop1, hPop1, nPop1.
 \note
 The naming convention for variables in GeNN is the variable name defined by the neuron type, here TRAUBMILES defining V, m, h, and n, followed by the population name, here `Pop1`.
 
@@ -175,7 +175,7 @@ int main()
 \endcode
 
 \section Makefile Makefile
-A GeNN simulation is build with a simple Makefile. On Unix systems we typically name it `GNUmakefile`. Create this file and enter
+A GeNN simulation is built with a simple Makefile. On Unix systems we typically name it `GNUmakefile`. Create this file and enter
 \code
 EXECUTABLE	:=tenHHSimulation
 SOURCES		:=tenHHSimulation.cu
@@ -200,7 +200,7 @@ This should compile your `tenHHSimulation` executable and you can execute it wit
 \code
 ./tenHHSimulation
 \endcode
-The output yuo obtain should look like
+The output you obtain should look like
 \code
 -63.7838 0.0350042 0.336314 0.563243
 -63.7838 0.0350042 0.336314 0.563243
@@ -263,7 +263,7 @@ builmodel.sh tenHHModel
 make clean all
 ./tenHHSimulation
 \endcode
-there should a file `tenHH_output.V.dat` in the same directory. If you plot column one (time) against column two (voltage of neuron 0), you should observe dynamics like this:
+there should be a file `tenHH_output.V.dat` in the same directory. If you plot column one (time) against column two (voltage of neuron 0), you should observe dynamics like this:
 \image html tenHHexample.png
 \image latex tenHHexample.png width=10cm
 

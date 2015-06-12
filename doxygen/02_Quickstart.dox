@@ -20,63 +20,75 @@ freedom how to use the generated code in the final
 application. To facilitate the use of GeNN on the background of this
 philosophy, it comes with a number of complete examples containing both
 the model description code that is used by GeNN for code generation
-and the "user side code" to run the generated model and process the
+and the "user side code" to run the generated model and safe the
 results. Running these complete examples should be achievable in a few
 minutes. The necessary steps are described below.
 
 \section unix_quick Running an Example Model in Unix
 In order to get a quick start and run a provided model, open a
-shell, navigate to the directory of an example project, e.g.
+shell, navigate to `GeNN/tools` and type 
 \code
-cd $GENN_PATH/userproject/MBody1_project
-\code
-In this directory type
 make
 \endcode 
-This will compile the driver
-program "generate_run" and a few additional tools in the `tools` directory. The example can then be generated, compiled and run with the command line
+This will compile additional tools for creating and running example projects.
+For a first complete test, the system is best used with a full driver
+program such as in the \ref ex_mbody example:
 \code{.cc} 
-./generate_run <0(CPU)/1(GPU)> <#AL> <#KC> <#LH> <#DN> <gscale> <OUTNAME> <MODEL> <DEBUG> <FTYPE> <REUSE>. 
+tools/generate_run <0(CPU)/1(GPU)> <#AL> <#KC> <#LH> <#DN> <gscale> <OUTNAME> <MODEL> <DEBUG> <FTYPE> <REUSE>. 
 \endcode
- An example invocation would be
+ 
+To compile `generate_run.cc`, navigate to the `userproject/MBody1_project` directory and type
+\code
+make all
+\endcode
+This will generate an executable that you can invoke with, e.g.,
 \code{.cc} 
 ./generate_run 1 100 1000 20 100 0.0025 test1 MBody1 0 FLOAT 0
 \endcode
-which generates and simulates a model of the locust olfactory
+which would generate and simulate a model of the locust olfactory
 system with 100 projection neurons, 1000 Kenyon cells, 20 lateral horn
-interneurons and 100 output neurons in the mushroom body lobes on the GPU. It will not start a debugger, use single precision floating point and will re-generate (not re-use) the connectivity of the model.  
+interneurons and 100 output neurons n the mushroom body lobes.  
 
-The tool generate_run works in the following sequence: It will generate connectivity matrices for the model
-`MBody1` and store them into files (using tools in the `tools` directory), generate model code, compile the model code and run the model on the GPU
-using these files as inputs. It finally  outputs the resulting spiking
-activity. When run with the second argument equal to `1`, GeNN's automatic GPU "scan and pick" function is used to determine which GPU to run on. To indicate a specific GPU to be used, replace the first argument `1` with the
-device number of the desired GPU plus 2, e.g., `2` for GPU 0. With the above command line all input and output files will be prefixed with `test1` and will be
+The tool generate_run will generate connectivity matrices for the model
+`MBody1` and store them into files, compile and run the model on the GPU
+using these files as inputs and output the resulting spiking
+activity. To fix the GPU used, replace the first argument `1` with the
+device number of the desired GPU plus 2, e.g., `2` for GPU 0. All input and output files will be prefixed with `test1` and will be
 created in a sub-directory with the name `test1_output`. The third to last
 parameter `0` will switch the debugging mode off, `1` would switch it
-on. More about debugging in the \link Debugging debugging section \endlink. The parameter `FLOAT` will run the model in float (single precision floating point), using `DOUBLE` would use double precision. The last parameter regulates whether previously generated files for connectivity and input should be reused (1) or files should be generated anew (0). 
+on. More about debugging in the \link Debugging debugging section \endlink. The parameter `FLOAT` will run the model in float (single precision floating point), using `GENN_GENN_DOUBLE` would use double precision. The last parameter regulates whether previously generated files for connectivity and input should be reused (1) or files should be generated anew (0). 
 
 The MBody1 example is already a highly integrated example that
 showcases many of the features of GeNN and how to program the
-user-side code for a GeNN application. More details are in the \link UserManual User Manual \endlink
+user-side code for a GeNN application. More details in the \link UserManual User Manual \endlink
 
 \section windows_quick Running an Example Model in Windows 
 
 All interaction with GeNN programs are command-line based and hence
 are executed within a `cmd` window. Open a `cmd` window and navigate
-to the directory of a user project, e.g. `userprojects\MBody1_project`.
+to the `userprojects\tools` directory.
 \code
-cd %GENN_PATH%\userprojects\MBody1_project
+cd %GENN_PATH%\userprojects\tools
 \endcode
 Then type
 \code
-make.bat
+make.bat all
 \endcode
-(or just `make`) to compile the generate_run.exe executable and a number of tools that are used by the example projects to
+to compile a number of tools that are used by the example projects to
 generate connectivity and inputs to model networks.
-The `generate_run.exe` engine then allows to run a \ref
+
+The navigate to the `MBody1_project` directory.
+\code
+cd ..\MBody1_project
+\endcode
+By typing
+\code
+make.bat all
+\endcode
+you can compile the `generate_run` engine that allows to run a \ref
 ex_mbody model of the insect mushroom body:
 \code{.cc} 
-generate_run.exe <0(CPU)/1(GPU)> <#AL> <#KC> <#LH> <#DN> <gscale> <OUTNAME> <MODEL> <DEBUG> <FTYPE> <REUSE>. 
+tools/generate_run <0(CPU)/1(GPU)> <#AL> <#KC> <#LH> <#DN> <gscale> <OUTNAME> <MODEL> <DEBUG> <FTYPE> <REUSE>. 
 \endcode
 To invoke `generate_run.exe` type, e.g.,
 \code{.cc} 
@@ -87,10 +99,10 @@ system with 100 projection neurons, 1000 Kenyon cells, 20 lateral horn
 interneurons and 100 output neurons n the mushroom body lobes.  
 
 The tool `generate_run.exe` will generate connectivity matrices for the model
-`MBody1` and store them into files, build code, compile it and run the model on an
+`MBody1` and store them into files, compile and run the model on an
 automatically chosen GPU
-using these files as inputs, and output the resulting spiking
-activity. To designate a fixed GPU to be used, replace the first argument `1` with the
+using these files as inputs and output the resulting spiking
+activity. To fix the GPU used, replace the first argument `1` with the
 device number of the desired GPU plus 2, e.g., `2` for GPU 0. All input and output files will be prefixed with `test1` and will be
 created in a sub-directory with the name `test1_output`. The last
 parameter `0` will switch the debugging mode off, `1` would switch it
@@ -102,7 +114,7 @@ user-side code for a GeNN application. \link UserManual More details in the User
 
 \section how_to How to use GeNN for New Projects
 
-Creating and running projects in GeNN involves a few steps ranging from defining the fundamentals of the model, inputs to the model, dteails of the model like specific connectivity matrices or initial values, running the model and analyzing or saving the data.
+Creating and running projects in GeNN involves a few steps ranging from defining the fundamentals of the model, inputs to the model, details of the model like specific connectivity matrices or initial values, running the model and analyzing or saving the data.
 
 The most common way to use GeNN is to create or modify a program such as `userproject/MBody1_project/generate_run.cc` that wraps around other programs that are used for each of the necessary steps listed above.
 In more detail, what `generate_run` and similar programs do is: 
@@ -150,11 +162,11 @@ provided examples that are described in more detail in \link Examples
 Example projects\endlink.
 
 \section ownmodel Defining a New Model in GeNN
-According to the workflow outlined above, there are several steps to be completed to define a neuronal network model.
+According to the work flow outlined above, there are several steps to be completed to define a neuronal network model.
 
-1. The neuronal network of interest is defined in a model definitoin file, e.g. `Example1.cc`.  
+1. The neuronal network of interest is defined in a model definition file, e.g. `Example1.cc`.  
 \note
-GeNN follows a convention in which C/C++ files end with `.cc` and the model definition file will only be recognizd by the `buildmodel.sh` or `buildmodel.bat` scripts if it follows this convention and ends on `.cc`.
+GeNN follows a convention in which C/C++ files end with `.cc` and the model definition file will only be recognized by the `buildmodel.sh` or `buildmodel.bat` scripts if it follows this convention and ends on `.cc`.
 
 2. Within the the model definition file `Example1.cc`, the following tasks need to be completed:
 
@@ -174,24 +186,25 @@ All provided examples and pre-defined model elements in GeNN work with units of 
 \code
 float myPOI_p[4]= {
   0.1,        // 0 - firing rate
-  2.5,        // 1 - refratory period
+  2.5,        // 1 - refractory period
   20.0,       // 2 - Vspike
   -60.0       // 3 - Vrest
 };
 \endcode
   would define the (homogeneous) parameters for a population of Poisson neurons.
 \note
-The number of required parameters and their meaning is defined by the neuron or synapse type. Refer to the \link UserManual User Manual\endlink for details. <br />
-If heterogeneous parameter values are needed for any particular population of neurons (synapses), a new neuron (synapse) type needs to be defined in which these parameters are defined as variables rather than parameters. See the \link UserManual User  Manual\endlink for how to define new neuron (synapse) types.
+The number of required parameters and their meaning is defined by the neuron or synapse type. Refer to the \link UserManual User Manual\endlink for details. <br /> We recommend, however, to use comments like in the above example to achieve maximal clarity of each parameter's meaning.
+
+If heterogeneous parameter values are needed for any particular population of neurons (synapses), a new neuron (synapse) type needs to be defined in which these parameters are defined as "variables" rather than parameters. See the \link UserManual User  Manual\endlink for how to define new neuron (synapse) types.
 
 d) the actual network needs to be defined in the form of a function `modelDefinition`, i.e. 
 \code{.cc}
   void modelDefinition(NNmodel &model); 
 \endcode  
 \note
-The name `modelDefinition` and its parameter of type `NNmodel&` are fixed and cannot be changed if GeNN is to recognise it as a model definition.
+The name `modelDefinition` and its parameter of type `NNmodel&` are fixed and cannot be changed if GeNN is to recognize it as a model definition.
 
-`MBody1.cc` shows a typical example of a model definition function. In its core tt contains calls to `model.addNeuronPopulation` and `model.addSynapsePopulation` to build up the network. For a full range of options for defining a network, refer to the \link UserManual User Manual\endlink.
+`MBody1.cc` shows a typical example of a model definition function. In its core it contains calls to `model.addNeuronPopulation` and `model.addSynapsePopulation` to build up the network. For a full range of options for defining a network, refer to the \link UserManual User Manual\endlink.
 	
 3. The programmer defines her own "user-side" modeling code similar to
 the code in `userproject/MBody1_project/model/map_classol.*` and
@@ -210,8 +223,8 @@ The initial values given in the `modelDefinition` are automatically applied homo
 always compiled). 
 \note 
 However, mixing CPU and GPU execution does not make too much
-sense. Among pother things, The CPU version uses the same host side memory whereto results from the
-GPU version are copied, which would lead to collisions between what is calculated on the CPU and on the GPU (see next point). However, in certain circumstances, expert users may want to split the calculation and calculate parts (e.g. neurons) on the GPU and parts (e.g. synapses) on the CPU. In such cases the fundamental kernel and function calls contained in `stepTimeXXX` need to be used and appropriate copies of the data from teh CPU to the GPU and vice versa need to be performed.
+sense. Among other things, The CPU version uses the same host side memory where to results from the
+GPU version are copied, which would lead to collisions between what is calculated on the CPU and on the GPU (see next point). However, in certain circumstances, expert users may want to split the calculation and calculate parts (e.g. neurons) on the GPU and parts (e.g. synapses) on the CPU. In such cases the fundamental kernel and function calls contained in `stepTimeXXX` need to be used and appropriate copies of the data from the CPU to the GPU and vice versa need to be performed.
 
   d) she uses functions like `copyStateFromDevice()` etc to transfer the 
 results from GPU calculations to the main memory of the host computer for further processing.

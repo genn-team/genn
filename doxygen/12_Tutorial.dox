@@ -1,7 +1,7 @@
 //----------------------------------------------------------------------------
 /*! \page Tutorial2 Tutorial 2
 
-In this tutorial we will learn to add synapsePopulations to connect neurons in neuron groups to each other with synatic models. We will as an example connect the ten Hodgkin-Huxley neurons from tutorial 1 in a ring of excitatory synapses.
+In this tutorial we will learn to add synapsePopulations to connect neurons in neuron groups to each other with synatic models. As an example we will connect the ten Hodgkin-Huxley neurons from tutorial 1 in a ring of excitatory synapses.
 
 First, copy the files from Tutorial 1 into a new directory and rename them to new names, e.g.
 \code
@@ -16,7 +16,7 @@ Now, we need to add a synapse group to the model that allows to connect neurons 
 \endcode
 
 \section addSynapse Adding Synaptic connections
-Now we need additional initial values and parameters for the synapse and post-synaptic models. We will use the standard `NSYNAPSE` weightu[adte model and `EXPDECAY` post-synaptic model. They need intial variables and parameters as follows:
+Now we need additional initial values and parameters for the synapse and post-synaptic models. We will use the standard `NSYNAPSE` weightupdate model and `EXPDECAY` post-synaptic model. They need intial variables and parameters as follows:
 \code
   double s_ini[1] = {
     0.0      // 0 - g: the synaptic conductance value
@@ -28,7 +28,7 @@ Now we need additional initial values and parameters for the synapse and post-sy
     -80.0     // 1 - Erev: Reversal potential
   };
 \endcode
-If an array is not needed we pass in a NULL pointer. Here there are for example no synaptic parameters and no initial values for the post-synaptic mechanism. 
+If an array is not needed we set it to the NULL pointer. Here there are for example no synaptic parameters and no initial values for the post-synaptic mechanism. 
 We can then add a synapse population at the end of the `modelDefinition(...)` function,
 \code
   model.addSynapsePopulation("Pop1self", NSYNAPSE, DENSE, INDIVIDUALG, NO_DELAY, EXPDECAY, "Pop1", "Pop1", s_ini, s_p, ps_ini, ps_p);
@@ -51,7 +51,7 @@ parameter values (common to all synapses of the population)
 \arg `double *psIni`: A C-array of double precision numbers containing initial values for the post-synaptic model variables
 \arg `double *psPara`: A C-array of double precision numbers containing parameters fo the post-snaptic model.
 
-Adding the addSynapsePopulation command to the model definition informs GeNN that there will be synapses between the named neuron populations, here between population `Pop1` and itself. The detailed conenctivity as defined by the variables `g`, we have still to define in the setup of our simulation. 
+Adding the addSynapsePopulation command to the model definition informs GeNN that there will be synapses between the named neuron populations, here between population `Pop1` and itself. The detailed connectivity as defined by the variables `g`, we have still to define in the setup of our simulation. 
 As always, the `modelDefinition` function ends on 
 \code
   model.finalize();
@@ -122,7 +122,7 @@ Now we need to add code to generate the desired ring connectivity.
   }
   pushPop1selftoDevice();
 \endcode
-After memory allocation and initialization `gPop1self` will contain only zeros. We then assign in the loop a non-zero conductivity of 0.01 \f$\mu\f$S to all synapses from neuron `i` to `i+1` (and `9` to `8` to close the ring).
+After memory allocation and initialization `gPop1self` will contain only zeros. We then assign in the loop a non-zero conductivity of 0.01 \f$\mu\f$S to all synapses from neuron `i` to `i+1` (and `9` to `0` to close the ring).
 
 After adjusting the GNUmakefile to read
 \code
@@ -163,7 +163,7 @@ If we plot the content of columns one and two of `tenHHexample.V.dat` it looks v
 This is because the inhibitory synapses we created were all triggered at the same time so that they act during a post-synaptic spike which makes their effect all but invisible. 
 
 \section initialConditions Setting Heterogeneous Initial Conditions
-If we define different initial conditions for each of the ten neurons, add after `initialize()`,
+If we define different initial conditions for each of the ten neurons, i.e. add after `initialize()`,
 \code
   // set initial variables
   for (int i= 0; i < 10; i++) {
