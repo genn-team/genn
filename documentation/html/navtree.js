@@ -1,87 +1,3 @@
-var NAVTREE =
-[
-  [ "GeNN", "index.html", [
-    [ "Installation", "d8/d99/Installation.html", [
-      [ "Downloading a release", "d8/d99/Installation.html#Downloading", null ],
-      [ "Obtaining a Git snapshot", "d8/d99/Installation.html#GitSnapshot", null ],
-      [ "Installing GeNN", "d8/d99/Installation.html#installing", null ],
-      [ "Testing Your Installation", "d8/d99/Installation.html#testInstall", null ]
-    ] ],
-    [ "Quickstart", "d7/d98/Quickstart.html", [
-      [ "Running an Example Model in Unix", "d7/d98/Quickstart.html#unix_quick", null ],
-      [ "Running an Example Model in Windows", "d7/d98/Quickstart.html#windows_quick", null ],
-      [ "How to use GeNN for New Projects", "d7/d98/Quickstart.html#how_to", null ],
-      [ "Defining a New Model in GeNN", "d7/d98/Quickstart.html#ownmodel", null ]
-    ] ],
-    [ "Examples", "d9/d61/Examples.html", [
-      [ "Single compartment Izhikevich neuron(s)", "d9/d61/Examples.html#Ex_OneComp", null ],
-      [ "Izhikevich Network Driven by Poisson Input Spike Trains:", "d9/d61/Examples.html#ex_poissonizh", null ],
-      [ "Pulse-coupled Izhikevich Network", "d9/d61/Examples.html#ex_izhnetwork", null ],
-      [ "Izhikevich network with delayed synapses", "d9/d61/Examples.html#ex_izhdelay", null ],
-      [ "Insect Olfaction Model", "d9/d61/Examples.html#ex_mbody", null ],
-      [ "Insect Olfaction Model with User-Defined Types", "d9/d61/Examples.html#ex_mbody_userdef", null ]
-    ] ],
-    [ "Release Notes for GeNN v2.0", "df/ddb/ReleaseNotes.html", [
-      [ "User Side Changes", "df/ddb/ReleaseNotes.html#UserChange", null ],
-      [ "Developer Side Changes", "df/ddb/ReleaseNotes.html#developerChange", null ]
-    ] ],
-    [ "User Manual", "dc/d05/UserManual.html", "dc/d05/UserManual" ],
-    [ "Tutorial 1", "d5/dbb/Tutorial1.html", [
-      [ "The Model Definition", "d5/dbb/Tutorial1.html#ModelDefinition", null ],
-      [ "User Code", "d5/dbb/Tutorial1.html#userCode", null ],
-      [ "Makefile", "d5/dbb/Tutorial1.html#Makefile", null ],
-      [ "Making and Running the Simulation", "d5/dbb/Tutorial1.html#MakeRun", null ],
-      [ "Adding External Input", "d5/dbb/Tutorial1.html#Input", null ]
-    ] ],
-    [ "Tutorial 2", "dc/d7e/Tutorial2.html", [
-      [ "Adding Synaptic connections", "dc/d7e/Tutorial2.html#addSynapse", null ],
-      [ "Defining the Detailed Synaptic Connections", "dc/d7e/Tutorial2.html#SynapseMatrix", null ],
-      [ "Setting Heterogeneous Initial Conditions", "dc/d7e/Tutorial2.html#initialConditions", null ]
-    ] ],
-    [ "Suggestions for users", "d0/da6/UserGuide.html", [
-      [ "Creating and simulating a network model", "d0/da6/UserGuide.html#CreateAndSimulate", null ],
-      [ "Floating point precision", "d0/da6/UserGuide.html#floatPrecision", null ],
-      [ "Working with variables in GeNN", "d0/da6/UserGuide.html#ListOfVariables", [
-        [ "Model variables", "d0/da6/UserGuide.html#modelVars", null ],
-        [ "Built-in Variables in GeNN", "d0/da6/UserGuide.html#predefinedVars", null ]
-      ] ],
-      [ "Debugging suggestions", "d0/da6/UserGuide.html#Debugging", null ]
-    ] ],
-    [ "Credits", "dd/d51/Credits.html", null ],
-    [ "Bibliography", "d0/de3/citelist.html", null ],
-    [ "Classes", null, [
-      [ "Class List", "annotated.html", "annotated" ],
-      [ "Class Index", "classes.html", null ],
-      [ "Class Hierarchy", "hierarchy.html", "hierarchy" ],
-      [ "Class Members", "functions.html", [
-        [ "All", "functions.html", "functions_dup" ],
-        [ "Functions", "functions_func.html", "functions_func" ],
-        [ "Variables", "functions_vars.html", null ]
-      ] ]
-    ] ],
-    [ "Files", null, [
-      [ "File List", "files.html", "files" ],
-      [ "File Members", "globals.html", [
-        [ "All", "globals.html", "globals_dup" ],
-        [ "Functions", "globals_func.html", null ],
-        [ "Variables", "globals_vars.html", "globals_vars" ],
-        [ "Macros", "globals_defs.html", null ]
-      ] ]
-    ] ]
-  ] ]
-];
-
-var NAVTREEINDEX =
-[
-"annotated.html",
-"d3/dcd/MBody__userdef_8cc.html#a0399e5408044f345ed8d29f34d1ede7e",
-"d9/d1d/SpineML__to__GeNN_2extra__postsynapses_8h.html#a7d3f558ec6b9bc9a4a78603b6306a416",
-"dc/de1/modelSpec_8h.html#a4a4e62777219e0a1f16847a32a4b42b6",
-"de/dba/classclassIzh.html#a45922a013797bb3fc93c8d3c51c619e3"
-];
-
-var SYNCONMSG = 'click to disable panel synchronisation';
-var SYNCOFFMSG = 'click to enable panel synchronisation';
 var navTreeSubIndices = new Array();
 
 function getData(varName)
@@ -189,7 +105,7 @@ function createIndent(o,domNode,node,level)
     node.expandToggle.onclick = function() {
       if (node.expanded) {
         $(node.getChildrenUL()).slideUp("fast");
-        node.plus_img.src = node.relpath+"ftv2pnode.png";
+        node.plus_img.src = node.relpath+"arrowright.png";
         node.expanded = false;
       } else {
         expandNode(o, node, false, false);
@@ -197,7 +113,7 @@ function createIndent(o,domNode,node,level)
     }
     node.expandToggle.appendChild(imgNode);
     domNode.appendChild(node.expandToggle);
-    imgNode.src = node.relpath+"ftv2pnode.png";
+    imgNode.src = node.relpath+"arrowright.png";
   } else {
     var span = document.createElement("span");
     span.style.display = 'inline-block';
@@ -353,9 +269,9 @@ function expandNode(o, node, imm, showRoot)
         $(node.getChildrenUL()).slideDown("fast");
       }
       if (node.isLast) {
-        node.plus_img.src = node.relpath+"ftv2mlastnode.png";
+        node.plus_img.src = node.relpath+"arrowdown.png";
       } else {
-        node.plus_img.src = node.relpath+"ftv2mnode.png";
+        node.plus_img.src = node.relpath+"arrowdown.png";
       }
       node.expanded = true;
     }
@@ -425,11 +341,7 @@ function showNode(o, node, index, hash)
         getNode(o, node);
       }
       $(node.getChildrenUL()).css({'display':'block'});
-      if (node.isLast) {
-        node.plus_img.src = node.relpath+"ftv2mlastnode.png";
-      } else {
-        node.plus_img.src = node.relpath+"ftv2mnode.png";
-      }
+      node.plus_img.src = node.relpath+"arrowdown.png";
       node.expanded = true;
       var n = node.children[o.breadcrumbs[index]];
       if (index+1<o.breadcrumbs.length) {
@@ -567,7 +479,7 @@ function initNavTree(toroot,relpath)
   o.node.expanded = false;
   o.node.isLast = true;
   o.node.plus_img = document.createElement("img");
-  o.node.plus_img.src = relpath+"ftv2pnode.png";
+  o.node.plus_img.src = relpath+"arrowright.png";
   o.node.plus_img.width = 16;
   o.node.plus_img.height = 22;
 

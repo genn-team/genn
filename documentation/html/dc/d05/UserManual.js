@@ -9,11 +9,12 @@ var UserManual =
     [ "Neuron models", "de/ded/sectNeuronModels.html", [
       [ "MAPNEURON (Map Neurons)", "de/ded/sectNeuronModels.html#sect21", null ],
       [ "POISSONNEURON (Poisson Neurons)", "de/ded/sectNeuronModels.html#sect22", null ],
-      [ "TRAUBMILES (Hodgkin-Huxley neurons with Traub & Miles algorithm)", "de/ded/sectNeuronModels.html#sect23", null ],
+      [ "TRAUBMILES_FAST (Hodgkin-Huxley neurons with Traub & Miles algorithm)", "de/ded/sectNeuronModels.html#sect23", null ],
       [ "IZHIKEVICH (Izhikevich neurons with fixed parameters)", "de/ded/sectNeuronModels.html#sect24", null ],
       [ "IZHIKEVICH_V (Izhikevich neurons with variable parameters)", "de/ded/sectNeuronModels.html#sect25", null ],
+      [ "SPIKESOURCE (empty neuron which allows setting spikes from external sources)", "de/ded/sectNeuronModels.html#sect26", null ],
       [ "Defining your own neuron type", "de/ded/sectNeuronModels.html#sect_own", null ],
-      [ "Explicit current input to neurons", "de/ded/sectNeuronModels.html#sect_explinput", null ]
+      [ "Explicit current input to neurons (will be removed in future versions)", "de/ded/sectNeuronModels.html#sect_explinput", null ]
     ] ],
     [ "Synapse models", "d5/d24/sectSynapseModels.html", [
       [ "Built-in Models", "d5/d24/sectSynapseModels.html#subsect31", null ],
@@ -22,6 +23,6 @@ var UserManual =
       [ "LEARN1SYNAPSE (Learning Synapse with a Primitive Role)", "d5/d24/sectSynapseModels.html#sect33", null ],
       [ "Conductance definition methods", "d5/d24/sectSynapseModels.html#subsect34", null ],
       [ "Connectivity types", "d5/d24/sectSynapseModels.html#subsect32", null ],
-      [ "Postsynaptic integration methods", "d5/d24/sectSynapseModels.html#subsect35", null ]
+      [ "Postsynaptic integration methods", "d5/d24/sectSynapseModels.html#sect_postsyn", null ]
     ] ]
 ];

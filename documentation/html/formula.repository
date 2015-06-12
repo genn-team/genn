@@ -14,8 +14,11 @@
 \form#13:$E_{{\rm Na}}= 50$
 \form#14:$g_{{\rm {\rm K}}}=1.43$
 \form#15:$E_{{\rm K}}= -95$
-\form#16:\begin{eqnarray*} \frac{dV}{dt} &=& 0.04 V^2 + 5 V + 140 - U + I, \\ \frac{dU}{dt} &=& a (bV-U), \end{eqnarray*}
-\form#17:$\frac{dV}{dt}= -a V + I_{{\rm syn}}$
-\form#18:$\frac{dV}{dt} = -g/C \, V +I_{\rm syn}$
-\form#19:\[ gSyn= g * tanh((E - E_{pre}) / V_{slope} \]
-\form#20:$I_{\rm syn}= g*s*(V_{\rm rev}-V_{\rm post})$
+\form#16:$\alpha$
+\form#17:\begin{eqnarray*} \frac{dV}{dt} &=& 0.04 V^2 + 5 V + 140 - U + I, \\ \frac{dU}{dt} &=& a (bV-U), \end{eqnarray*}
+\form#18:$\frac{dV}{dt}= -a V + I_{{\rm syn}}$
+\form#19:$\frac{dV}{dt} = -g/C \, V +I_{\rm syn}$
+\form#20:\[ gSyn= g * tanh((V - E_{pre}) / V_{slope} \]
+\form#21:$V$
+\form#22:$E_{pre}$
+\form#23:$I_{\rm syn}= g*s*(V_{\rm rev}-V_{\rm post})$

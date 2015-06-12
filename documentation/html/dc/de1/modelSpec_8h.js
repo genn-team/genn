@@ -11,10 +11,10 @@ var modelSpec_8h =
     [ "CONSTINP", "dc/de1/modelSpec_8h.html#a921b56858504259e999652795a93f6be", null ],
     [ "CPU", "dc/de1/modelSpec_8h.html#ad703205f9a4d4bb6af9c25257c23ce6d", null ],
     [ "DENSE", "dc/de1/modelSpec_8h.html#ad6b1ce8b615d4247eedb05c21f03ef71", null ],
-    [ "DOUBLE", "dc/de1/modelSpec_8h.html#a8747af38b86aa2bbcda2f1b1aa0888c2", null ],
     [ "EXITSYN", "dc/de1/modelSpec_8h.html#a7bb4c29b501ba0e6331d8dea62d139d9", null ],
     [ "FALSE", "dc/de1/modelSpec_8h.html#aa93f0eb578d23995850d61f7d61c55c1", null ],
-    [ "FLOAT", "dc/de1/modelSpec_8h.html#ae8690abbffa85934d64d545920e2b108", null ],
+    [ "GENN_DOUBLE", "dc/de1/modelSpec_8h.html#a5fbe0a46143634905bda1bbdc243e279", null ],
+    [ "GENN_FLOAT", "dc/de1/modelSpec_8h.html#a55c2f0074bbfdf5c161699a3de835ae4", null ],
     [ "GLOBALG", "dc/de1/modelSpec_8h.html#a0241851d52e6a088bc3194511a8246b9", null ],
     [ "GPU", "dc/de1/modelSpec_8h.html#a39cb9803524b6f3b783344b2f89867b4", null ],
     [ "INDIVIDUALG", "dc/de1/modelSpec_8h.html#a816cbd49fb536367065e2306f5495444", null ],
@@ -44,8 +44,10 @@ var modelSpec_8h =
     [ "NGRADSYNAPSE", "dc/de1/modelSpec_8h.html#ab93f429621e76046d2ed6a40212a08de", null ],
     [ "NSYNAPSE", "dc/de1/modelSpec_8h.html#a1110b98e1962bdb6bcc86b647b1431d4", null ],
     [ "POISSONNEURON", "dc/de1/modelSpec_8h.html#abcccd1c2fd5b8f068528f69a680749ae", null ],
+    [ "SPIKESOURCE", "dc/de1/modelSpec_8h.html#abf09d4629cbcf04536f38976708bd16e", null ],
     [ "TRAUBMILES", "dc/de1/modelSpec_8h.html#a5cb672a4c033703aeb1b7ba7350cfbfd", null ],
     [ "TRAUBMILES_ALTERNATIVE", "dc/de1/modelSpec_8h.html#aec2c16d09ff375f800eb19e048bdc53b", null ],
     [ "TRAUBMILES_FAST", "dc/de1/modelSpec_8h.html#aee4db109db367bd6107ac4802228b6e7", null ],
+    [ "TRAUBMILES_PSTEP", "dc/de1/modelSpec_8h.html#ad217188df3a3df16786ff78e72c4e01c", null ],
     [ "TRAUBMILES_SAFE", "dc/de1/modelSpec_8h.html#a0443dbb3d7dd078e1dda2f2977acc0da", null ]
 ];

@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['cexp',['Cexp',['../d4/da1/helper_8h.html#a2dcb670d4b05ef1ad7c468a7991238cd',1,'helper.h']]],
-  ['choosegpudevice',['chooseGPUDevice',['../dc/de5/classNNmodel.html#a79631e0c13cdd5ebed55a16bea15819a',1,'NNmodel']]],
-  ['constinput',['constInput',['../dd/d0e/SynDelay_8cc.html#a2acdfe868e2f404a0ed1195b6f42bfe0',1,'SynDelay.cc']]]
+  ['baserates',['baserates',['../d1/d16/classclassol.html#a6274b206756a62789c2200def03f29c2',1,'classol']]],
+  ['basev',['baseV',['../de/dad/structinputSpec.html#a6aeb08095e0d0094123108c8a74950a4',1,'inputSpec']]],
+  ['braces',['braces',['../d1/d03/classCodeHelper.html#a6905dd45316e980be4ed4f68cf4fdf39',1,'CodeHelper']]]
 ];

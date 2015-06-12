@@ -6,6 +6,7 @@ var utils_8h =
     [ "_UTILS_H_", "d5/d60/utils_8h.html#abcbb42391c4d6963466375fd6821a216", null ],
     [ "CHECK_CUDA_ERRORS", "d5/d60/utils_8h.html#a3d4f854b9c80237b6f4c23540a823f47", null ],
     [ "gennError", "d5/d60/utils_8h.html#aacfab6dc3c4e2fc5c24f359fe7869132", null ],
+    [ "gennError", "d5/d60/utils_8h.html#a8acfd8479841643d40b4b3ba411e0136", null ],
     [ "preparePostSynModels", "d5/d60/utils_8h.html#a25ccc49bc4c814f8ae964b17f437efd8", null ],
     [ "prepareStandardModels", "d5/d60/utils_8h.html#a2df8eb7085cd0493e4cef63a2446adb4", null ],
     [ "prepareWeightUpdateModels", "d5/d60/utils_8h.html#a7665ad5333ff39de5f63bbe88f1f7de9", null ],

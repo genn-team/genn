@@ -1,6 +1,7 @@
 var global_8h =
 [
     [ "_GLOBAL_H_", "d2/d49/global_8h.html#ada6f015aed9ec48e464aec315a71273b", null ],
+    [ "asGoodAsZero", "d2/d49/global_8h.html#aa872ca71b515ec20c3b373e98bf733c8", null ],
     [ "deviceCount", "d2/d49/global_8h.html#aeae4d6852439dcd029768b91adabc33b", null ],
     [ "deviceProp", "d2/d49/global_8h.html#a9c0bee1772862acc65b81c8a2fe14f28", null ],
     [ "hostCount", "d2/d49/global_8h.html#a3a9b1273e41b6ba85090fca0451c7693", null ],

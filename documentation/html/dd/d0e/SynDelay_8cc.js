@@ -16,5 +16,5 @@ var SynDelay_8cc =
     [ "postExpInt", "dd/d0e/SynDelay_8cc.html#a3911780d3e2550b0b1f0f6adecd20264", null ],
     [ "postExpOut", "dd/d0e/SynDelay_8cc.html#a16faaf6181ee7edc6f94367cec1fa71a", null ],
     [ "postSynV", "dd/d0e/SynDelay_8cc.html#a55e3d87f8dd58f8c83dcbf644e429e7d", null ],
-    [ "synapses_p", "dd/d0e/SynDelay_8cc.html#a88c62a538457512156ea40da26178767", null ]
+    [ "synapses_p", "dd/d0e/SynDelay_8cc.html#aef24d3982d5ee2b08ec32226da5a60ab", null ]
 ];
