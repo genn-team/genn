@@ -9,6 +9,11 @@ Header file containing global variables, constants and macros used in running th
 
 -------------------------------------------------------------------------- */
 
+#ifdef _WIN32
+#define divi "\\"
+#else
+#define divi "/"
+#endif
 
 typedef unsigned int UINT;
 

@@ -50,7 +50,7 @@ bool createDirectory(string path) {
 		cout << "INFO: instructed to create directory " <<  path << " that already exists. Ignoring.." << endl;
 		return false;
 	} else {
-		string cmd  = "mkdir '" + path + "'";
+		string cmd  = "mkdir \"" + path + "\"";
 		return system(cmd.c_str());
 	}
 }
@@ -102,7 +102,7 @@ string getUniqueRunId()
 {
 	string timestamp = toString(time (NULL));
 	string id = timestamp +
-			" " + classifier.datasetName;
+			"_" + classifier.datasetName;
 	return id;
 }
 
@@ -112,7 +112,7 @@ Write to matching file the parameters used to create this run
 -----------------------------------------------------------------*/
 void outputRunParameters()
 {
-	string paramFilename = classifier.outputDir + "/" + classifier.uniqueRunId + " Run Parameters.txt";
+	string paramFilename = classifier.outputDir + divi + classifier.uniqueRunId + "_Run_Parameters.txt";
 	FILE * file = fopen(paramFilename.c_str(),"w");
 	fprintf(file,"DATASET_NAME\t\t%s\n",toString(DATASET_NAME).c_str());
 	fprintf(file,"DT\t\t%f\n",DT);
@@ -171,7 +171,7 @@ bool applyInputToClassifier(UINT recordingIdx,bool usePlasticity)
 	classifier.setCorrectClass(recordingIdx);
 
 	//run the model for the duration of the recording, collecting the relevant spike sets on each timestep (if raster plot specified in FLAGS )
-	string filename_rasterPlot = classifier.datasetName + " " + classifier.uniqueRunId +  " Recording-" + toString(recordingIdx) + " Class-" + toString(classifier.correctClass)  + " Raster plot data.txt";
+	string filename_rasterPlot = classifier.datasetName + "_" + classifier.uniqueRunId +  "_Recording-" + toString(recordingIdx) + "_Class-" + toString(classifier.correctClass)  + "_Raster_plot_data.txt";
 
 	/*
 	cudaEvent_t start, stop;
@@ -264,10 +264,10 @@ int main(int argc, char *argv[])
 
 	//set up file locations
 	classifier.datasetName = DATASET_NAME;
-	classifier.recordingsDir =   basename + "/" + RECORDINGS_DIR;
-	classifier.cacheDir = basename + "/" + CACHE_DIR;
+	classifier.recordingsDir =   basename + divi + RECORDINGS_DIR;
+	classifier.cacheDir = basename + divi + CACHE_DIR;
 	createDirectory(classifier.cacheDir);
-	classifier.outputDir = basename + "/" + OUTPUT_DIR;
+	classifier.outputDir = basename + divi + OUTPUT_DIR;
 	createDirectory(classifier.outputDir);
 	classifier.uniqueRunId = getUniqueRunId();
 	classifier.startLog();
@@ -362,7 +362,7 @@ int main(int argc, char *argv[])
 	//-----------------------------------------------------------------
 
 	//track the overall performance of the classifier
-	string overallResultsFilename = classifier.outputDir + "/" + classifier.uniqueRunId + " Overall Results for varying " + paramName  + ".txt";
+	string overallResultsFilename = classifier.outputDir + divi + classifier.uniqueRunId + "_Overall_Results_for_varying_" + paramName  + ".txt";
 	FILE * overallResultsFile = fopen(overallResultsFilename.c_str(),"w");
 	fprintf(overallResultsFile,"%s,AvgPercentScore,StdDev\n",paramName.c_str());
 
@@ -376,12 +376,12 @@ int main(int argc, char *argv[])
 		classifier.param_PLASTICITY_INTERVAL_MS = paramValues[paramIndex];
 
 		//track the performance across each param setting, per folding
-		string perParamResultsFilename = classifier.outputDir + "/" + classifier.uniqueRunId + " Totalled Results for " + param.name + "-" + param.value  + ".txt";
+		string perParamResultsFilename = classifier.outputDir + divi + classifier.uniqueRunId + "_Totalled_Results_for_" + param.name + "-" + param.value  + ".txt";
 		FILE * perParamResultsFile = fopen(perParamResultsFilename.c_str(),"w");
 		fprintf(perParamResultsFile,"%s,Folding,Stage,Correct,OutOf,Percent\n",param.name.c_str());
 
 		//track the detailed performance of the classifier
-		string individualResultsFilename = classifier.outputDir + "/" + classifier.uniqueRunId + " Individual Results for " + param.name + "-" + param.value  + ".txt";
+		string individualResultsFilename = classifier.outputDir + divi + classifier.uniqueRunId + "_Individual_Results_for_" + param.name + "-" + param.value  + ".txt";
 		FILE * individualResultsFile = fopen(individualResultsFilename.c_str(),"w");
 		fprintf(individualResultsFile,"%s,folding,recordingIdx,classifierSelectedClass,correctClass\n",param.name.c_str());
 		printf("Individual training results will be saved to the file: %s\n", individualResultsFilename.c_str());

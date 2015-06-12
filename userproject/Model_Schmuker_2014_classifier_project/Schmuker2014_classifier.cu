@@ -80,7 +80,7 @@ Schmuker2014_classifier::~Schmuker2014_classifier()
 
 void Schmuker2014_classifier::startLog()
 {
-	string logPath = outputDir + "/" + uniqueRunId + " Log.txt";
+	string logPath = outputDir + divi + uniqueRunId + "_Log.txt";
 	this->log = fopen(logPath.c_str(),"w");
 
 }
@@ -186,7 +186,7 @@ load set of virtual receptor points VR to be used to generate input levels
 -------------------------------------------------------------------------- */
 void Schmuker2014_classifier::load_VR_data()
 {
-	string filename = recordingsDir + "/" + VR_DATA_FILENAME;
+	string filename = recordingsDir + divi + VR_DATA_FILENAME;
 
 	printf("Loading VR data from file %s\n", filename.c_str());
 	UINT size = NUM_VR * NUM_FEATURES;
@@ -337,7 +337,7 @@ get the set of input rate data for the recording
 -------------------------------------------------------------------------- */
 void Schmuker2014_classifier::generate_or_load_inputrates_dataset(unsigned int recordingIdx)
 {
-	string cacheFilename = cacheDir + "/" + "InputRates created from recording no. " + toString(recordingIdx) +  " with " + toString(NUM_VR) + " VRs" + ".cache";
+	string cacheFilename = cacheDir + divi + "InputRates_created_from_recording_no._" + toString(recordingIdx) +  "_with_" + toString(NUM_VR) + "_VRs" + ".cache";
 	FILE *f= fopen(cacheFilename.c_str(),"r");
 	if (f==NULL)  {
 		//file doesn't exist
@@ -396,7 +396,7 @@ Knows how to build the individual filenames used for the sensor data
 -------------------------------------------------------------------------- */
 string Schmuker2014_classifier::getRecordingFilename(UINT recordingIdx)
 {
-	return this->recordingsDir + "/" + this->datasetName + " SensorRecording" + toString(recordingIdx) +  ".csv";
+	return this->recordingsDir + divi + this->datasetName + " SensorRecording" + toString(recordingIdx) +  ".csv";
 }
 
 /* --------------------------------------------------------------------------
@@ -424,7 +424,7 @@ get a handle to the specified sensor recording file
 -------------------------------------------------------------------------- */
 FILE * Schmuker2014_classifier::openRecordingFile(UINT recordingIdx)
 {
-	string recordingFilename = recordingsDir + "/" + datasetName + " SensorRecording" + toString(recordingIdx) +  ".data";
+	string recordingFilename = recordingsDir + divi + datasetName + " SensorRecording" + toString(recordingIdx) +  ".data";
 	FILE *f= fopen(recordingFilename.c_str(),"r");
 	if (f==NULL)  {
 		//file doesn't exist or cant read
@@ -609,7 +609,7 @@ float Schmuker2014_classifier::getManhattanDistance(float * pointA,float * point
 void Schmuker2014_classifier::run(float runtimeMs, string filename_rasterPlot,bool usePlasticity)
 {
 #ifdef FLAG_GENERATE_RASTER_PLOT
-	string path = outputDir + "/" + filename_rasterPlot;
+	string path = outputDir + divi + filename_rasterPlot;
 	FILE *rasterFile = fopen(path.c_str(),"w");
 	if (rasterFile==NULL) {
 		fprintf(stderr,"Unable to open raster file for writing %s\n",path.c_str());
