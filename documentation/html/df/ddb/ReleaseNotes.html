@@ -154,7 +154,7 @@ $(document).ready(function(){initNavTree('df/ddb/ReleaseNotes.html','../../');})
 <li>To be more consistent in function naming the <code>pull&lt;SYNAPSENAME&gt;FromDevice</code> and <code>push&lt;SYNAPSENAME&gt;ToDevice</code> have been renamed to <code>pull&lt;SYNAPSENAME&gt;StateFromDevice</code> and <code>push&lt;SYNAPSENAME&gt;StateToDevice</code>. The old versions are still supported through macro definitions to make the transition easier.</li>
 <li>New convenience macros are now provided to access the current spike numbers and identities of neurons that spiked. These are called spikeCount_XX and spike_XX where "XX" is the name of the neuron group. They access the values for the current time step even if there are synaptic delays and spikes are stored in circular queues.</li>
 <li>There is now a pre-defined neuron type "SPIKECOURCE" which is empty and can be used to define PyNN style spike source arrays.</li>
-<li>The macros FLOAT and DOUBLE were replaced with GENN_FLOAT and GENN_DOUBLE due to name clahes with typedefs in Windows that define FLOAT and DOUBLE.</li>
+<li>The macros FLOAT and DOUBLE were replaced with GENN_FLOAT and GENN_DOUBLE due to name clashes with typedefs in Windows that define FLOAT and DOUBLE.</li>
 </ol>
 <h2>Developer Side Changes </h2>
 <ol type="1">
@@ -185,7 +185,7 @@ $(document).ready(function(){initNavTree('df/ddb/ReleaseNotes.html','../../');})
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Fri Jun 12 2015 23:05:04 for GeNN by
+    <li class="footer">Generated on Fri Jun 12 2015 23:25:40 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
   </ul>
