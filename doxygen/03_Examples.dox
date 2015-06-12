@@ -17,7 +17,7 @@ All parameters are mandatory and signify:
 \arg `OUTNAME`: The base name of the output location and output files
 \arg `MODEL`: The name of the model to execute, as provided this would be `OneComp`
 \arg `DEBUG`: Whether to start in debug mode (1) or normally (0)
-\arg `FTYPE`: Floating point type `%FLOAT` or `%GENN_GENN_DOUBLE`
+\arg `FTYPE`: Floating point type `%FLOAT` or `%DOUBLE`
 \arg `REUSE`: whether to re-use input files
 
 This would create `n`  tonically spiking Izhikevich neuron(s) with no connectivity, receiving a constant, identical 4 nA input current. 
@@ -51,12 +51,12 @@ All parameters are mandatory and signify:
 \arg `OUTNAME`: The base name of the output location and output files
 \arg `MODEL`: The name of the model to execute, as provided this would be `PoissonIzh`
 \arg `DEBUG`: Whether to start in debug mode (1) or normally (0)
-\arg `FTYPE`: Floating point type `%FLOAT` or `%GENN_GENN_DOUBLE`
+\arg `FTYPE`: Floating point type `%FLOAT` or `%DOUBLE`
 \arg `REUSE`: whether to re-use input files
 
 For example, navigate to the `userproject/PoissonIzh_project` directory and type
 \code{.cc}
-./generate_run 1 100 10 0.5 2 Outdir PoissonIzh 0 GENN_GENN_DOUBLE 0
+./generate_run 1 100 10 0.5 2 Outdir PoissonIzh 0 DOUBLE 0
 \endcode
 This will generate a network of 100 Poisson neurons connected to 10 Izhikevich neurons with a probability of 0.5. The same example network can be used with 
 sparse connectivity (i.e. sparse matrix representations for the connectivity within GeNN) by using the keyword `SPARSE` in the addSynapsePopulation instead of `DENSE` in PoissonIzh.cc, 
@@ -86,7 +86,7 @@ All parameters are mandatory and signify:
 \arg `OUTNAME`: The base name of the output location and output files
 \arg `MODEL`: The name of the model to execute, as provided this would be `Izh_sparse`
 \arg `DEBUG`: Whether to start in debug mode (1) or normally (0)
-\arg `FTYPE`: Floating point type `%FLOAT` or `%GENN_GENN_DOUBLE`
+\arg `FTYPE`: Floating point type `%FLOAT` or `%DOUBLE`
 \arg `REUSE`: whether to re-use input files
 
 The model creates a pulse-coupled network \cite izhikevich2003simple with 80% excitatory 20% inhibitory neurons, each connecting to nCONN neurons using the sparse matrix connectivity methods of GeNN.
@@ -148,7 +148,7 @@ All parameters are mandatory and signify:
 \arg `OUTNAME`: The base name of the output location and output files
 \arg `MODEL`: The name of the model to execute, as provided this would be `MBody1`
 \arg `DEBUG`: Whether to start in debug mode (1) or normally (0)
-\arg `FTYPE`: Floating point type `%FLOAT` or `%GENN_GENN_DOUBLE`
+\arg `FTYPE`: Floating point type `%FLOAT` or `%DOUBLE`
 \arg `REUSE`: whether to re-use input files
 
 The tool generate_run will generate connectivity files for the model

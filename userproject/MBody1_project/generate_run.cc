@@ -118,7 +118,7 @@ int main(int argc, char *argv[])
   os << "#define _NLHI " << nLHI << endl;
   os << "#define _NLB " << nLB << endl;
   string tmps= tS(ftype);
-  os << "#define _FTYPE " << toUpper(tmps) << endl;
+  os << "#define _FTYPE " << "GENN_" << toUpper(tmps) << endl;
   os << "#define scalar " << toLower(tmps) << endl;
   if (toLower(ftype) == "double") {
       os << "#define SCALAR_MIN " << DBL_MIN << endl;

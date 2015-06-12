@@ -631,7 +631,7 @@ void NNmodel::setConstInp(const string sName, /**<  */
 
 
 //--------------------------------------------------------------------------
-/*! \brief This function sets the numerical precision of floating type variables. By default, it is FLOAT.
+/*! \brief This function sets the numerical precision of floating type variables. By default, it is GENN_GENN_FLOAT.
  */
 //--------------------------------------------------------------------------
 

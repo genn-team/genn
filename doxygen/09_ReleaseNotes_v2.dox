@@ -103,6 +103,8 @@ you may want to consider changing model parameters.
 
 8. There is now a pre-defined neuron type "SPIKECOURCE" which is empty and can be used to define PyNN style spike source arrays. 
 
+9. The macros FLOAT and DOUBLE were replaced with GENN_FLOAT and GENN_DOUBLE due to name clahes with typedefs in Windows that define FLOAT and DOUBLE.
+
 Developer Side Changes
 ----
 

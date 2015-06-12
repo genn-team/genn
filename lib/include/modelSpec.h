@@ -82,8 +82,8 @@ unsigned int LEARN1SYNAPSE; //!< Variable attaching  the name LEARN1SYNAPSE to t
 #define CPU 0 //!< Macro attaching the label "CPU" to flag 0
 #define GPU 1 //!< Macro attaching the label "GPU" to flag 1
 
-#define FLOAT 0  //!< Macro attaching the label "FLOAT" to flag 0. Used by NNModel::setPrecision()
-#define DOUBLE 1  //!< Macro attaching the label "DOUBLE" to flag 1. Used by NNModel::setPrecision()
+#define GENN_FLOAT 0  //!< Macro attaching the label "GENN_FLOAT" to flag 0. Used by NNModel::setPrecision()
+#define GENN_DOUBLE 1  //!< Macro attaching the label "GENN_DOUBLE" to flag 1. Used by NNModel::setPrecision()
 
 #define AUTODEVICE -1  //!< Macro attaching the label AUTODEVICE to flag -1. Used by setGPUDevice
 

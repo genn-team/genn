@@ -41,7 +41,7 @@ void modelDefinition(NNmodel &model)
 
 	cout << "GeNN building model with " << NUM_VR << " x VRs" << endl;
     initGeNN();
-    model.setPrecision(FLOAT);
+    model.setPrecision(GENN_FLOAT);
     model.setName("Schmuker_2014_classifier");
 
 

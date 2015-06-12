@@ -12,7 +12,7 @@
 --------------------------------------------------------------------------*/
 
 #define DT 1.0
-#define _FTYPE FLOAT //set float precision
+#define _FTYPE GENN_FLOAT //set float precision
 #define scalar float
 #define SCALAR_MIN (float)FLT_MIN
 #define SCALAR_MAX (float)FLT_MAX
@@ -78,6 +78,6 @@ void modelDefinition(NNmodel &model)
   model.addSynapsePopulation("PNIzh1", NSYNAPSE, ALLTOALL, INDIVIDUALG, NO_DELAY, IZHIKEVICH_PS, "PN", "Izh1", mySyn_ini, mySyn_p, postSynV, postExp);
   //model.setSynapseG("PNIzh1", gPNIzh1);
   model.setSeed(1234);
-  model.setPrecision(FLOAT);
+  model.setPrecision(GENN_FLOAT);
   model.finalize();
 }
