@@ -65,14 +65,14 @@ int main(int argc, char *argv[])
   	initializeAllSparseArrays();
   //SPARSE CONNECTIVITY END */
   
-  //ALLTOALL CONNECTIVITY
+  //DENSE CONNECTIVITY
   
   	name= OutDir+ "/gPoissonIzh_nonopt";
   	cout << "# reading PN-Izh1 synapses from file "<< name << endl;
   	FILE *f= fopen(name.c_str(),"rb");
   	PNIzhNN.read_PNIzh1syns(gPNIzh1 , f);
   	fclose(f);   
-  //ALLTOALL CONNECTIVITY END 
+  //DENSE CONNECTIVITY END 
  
 
   PNIzhNN.generate_baserates();

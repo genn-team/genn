@@ -114,7 +114,7 @@ user-side code for a GeNN application. \link UserManual More details in the User
 
 \section how_to How to use GeNN for New Projects
 
-Creating and running projects in GeNN involves a few steps ranging from defining the fundamentals of the model, inputs to the model, dteails of the model like specific connectivity matrices or initial values, running the model and analyzing or saving the data.
+Creating and running projects in GeNN involves a few steps ranging from defining the fundamentals of the model, inputs to the model, details of the model like specific connectivity matrices or initial values, running the model and analyzing or saving the data.
 
 The most common way to use GeNN is to create or modify a program such as `userproject/MBody1_project/generate_run.cc` that wraps around other programs that are used for each of the necessary steps listed above.
 In more detail, what `generate_run` and similar programs do is: 
@@ -162,11 +162,11 @@ provided examples that are described in more detail in \link Examples
 Example projects\endlink.
 
 \section ownmodel Defining a New Model in GeNN
-According to the workflow outlined above, there are several steps to be completed to define a neuronal network model.
+According to the work flow outlined above, there are several steps to be completed to define a neuronal network model.
 
-1. The neuronal network of interest is defined in a model definitoin file, e.g. `Example1.cc`.  
+1. The neuronal network of interest is defined in a model definition file, e.g. `Example1.cc`.  
 \note
-GeNN follows a convention in which C/C++ files end with `.cc` and the model definition file will only be recognizd by the `buildmodel.sh` or `buildmodel.bat` scripts if it follows this convention and ends on `.cc`.
+GeNN follows a convention in which C/C++ files end with `.cc` and the model definition file will only be recognized by the `buildmodel.sh` or `buildmodel.bat` scripts if it follows this convention and ends on `.cc`.
 
 2. Within the the model definition file `Example1.cc`, the following tasks need to be completed:
 
@@ -186,24 +186,25 @@ All provided examples and pre-defined model elements in GeNN work with units of 
 \code
 float myPOI_p[4]= {
   0.1,        // 0 - firing rate
-  2.5,        // 1 - refratory period
+  2.5,        // 1 - refractory period
   20.0,       // 2 - Vspike
   -60.0       // 3 - Vrest
 };
 \endcode
   would define the (homogeneous) parameters for a population of Poisson neurons.
 \note
-The number of required parameters and their meaning is defined by the neuron or synapse type. Refer to the \link UserManual User Manual\endlink for details. <br />
-If heterogeneous parameter values are needed for any particular population of neurons (synapses), a new neuron (synapse) type needs to be defined in which these parameters are defined as variables rather than parameters. See the \link UserManual User  Manual\endlink for how to define new neuron (synapse) types.
+The number of required parameters and their meaning is defined by the neuron or synapse type. Refer to the \link UserManual User Manual\endlink for details. <br /> We recommend, however, to use comments like in the above example to achieve maximal clarity of each parameter's meaning.
+
+If heterogeneous parameter values are needed for any particular population of neurons (synapses), a new neuron (synapse) type needs to be defined in which these parameters are defined as "variables" rather than parameters. See the \link UserManual User  Manual\endlink for how to define new neuron (synapse) types.
 
 d) the actual network needs to be defined in the form of a function `modelDefinition`, i.e. 
 \code{.cc}
   void modelDefinition(NNmodel &model); 
 \endcode  
 \note
-The name `modelDefinition` and its parameter of type `NNmodel&` are fixed and cannot be changed if GeNN is to recognise it as a model definition.
+The name `modelDefinition` and its parameter of type `NNmodel&` are fixed and cannot be changed if GeNN is to recognize it as a model definition.
 
-`MBody1.cc` shows a typical example of a model definition function. In its core tt contains calls to `model.addNeuronPopulation` and `model.addSynapsePopulation` to build up the network. For a full range of options for defining a network, refer to the \link UserManual User Manual\endlink.
+`MBody1.cc` shows a typical example of a model definition function. In its core it contains calls to `model.addNeuronPopulation` and `model.addSynapsePopulation` to build up the network. For a full range of options for defining a network, refer to the \link UserManual User Manual\endlink.
 	
 3. The programmer defines her own "user-side" modeling code similar to
 the code in `userproject/MBody1_project/model/map_classol.*` and
@@ -222,8 +223,8 @@ The initial values given in the `modelDefinition` are automatically applied homo
 always compiled). 
 \note 
 However, mixing CPU and GPU execution does not make too much
-sense. Among pother things, The CPU version uses the same host side memory whereto results from the
-GPU version are copied, which would lead to collisions between what is calculated on the CPU and on the GPU (see next point). However, in certain circumstances, expert users may want to split the calculation and calculate parts (e.g. neurons) on the GPU and parts (e.g. synapses) on the CPU. In such cases the fundamental kernel and function calls contained in `stepTimeXXX` need to be used and appropriate copies of the data from teh CPU to the GPU and vice versa need to be performed.
+sense. Among other things, The CPU version uses the same host side memory where to results from the
+GPU version are copied, which would lead to collisions between what is calculated on the CPU and on the GPU (see next point). However, in certain circumstances, expert users may want to split the calculation and calculate parts (e.g. neurons) on the GPU and parts (e.g. synapses) on the CPU. In such cases the fundamental kernel and function calls contained in `stepTimeXXX` need to be used and appropriate copies of the data from the CPU to the GPU and vice versa need to be performed.
 
   d) she uses functions like `copyStateFromDevice()` etc to transfer the 
 results from GPU calculations to the main memory of the host computer for further processing.

@@ -378,16 +378,16 @@ void prepareStandardModels()
       Imem= -($(m)*$(m)*$(m)*$(h)*$(gNa)*($(V)-($(ENa)))+\n\
               $(n)*$(n)*$(n)*$(n)*$(gK)*($(V)-($(EK)))+\n\
               $(gl)*($(V)-($(El)))-$(Isyn));\n\
-      scalar volatile _tmp= exp((-52.0-$(V))/4.0)-1.0;\n\
-      scalar _a= 0.32*(-52.0-$(V))/(_tmp+SCALAR_MIN);\n\
-      _tmp= exp(($(V)+25.0)/5.0)-1.0;\n\
-      scalar _b= 0.28*($(V)+25.0)/(_tmp+SCALAR_MIN);\n\
+      scalar volatile _tmp= abs(exp((-52.0-$(V))/4.0)-1.0);\n\
+      scalar _a= 0.32*abs(-52.0-$(V))/(_tmp+SCALAR_MIN);\n\
+      _tmp= abs(exp(($(V)+25.0)/5.0)-1.0);\n\
+      scalar _b= 0.28*abs($(V)+25.0)/(_tmp+SCALAR_MIN);\n\
       $(m)+= (_a*(1.0-$(m))-_b*$(m))*mdt;\n\
       _a= 0.128*exp((-48.0-$(V))/18.0);\n\
       _b= 4.0 / (exp((-25.0-$(V))/5.0)+1.0);\n\
       $(h)+= (_a*(1.0-$(h))-_b*$(h))*mdt;\n\
-      _tmp= exp((-50.0-$(V))/5.0)-1.0;\n\
-      _a= 0.032*(-50.0-$(V))/(_tmp+SCALAR_MIN); \n\
+      _tmp= abs(exp((-50.0-$(V))/5.0)-1.0);\n\
+      _a= 0.032*abs(-50.0-$(V))/(_tmp+SCALAR_MIN); \n\
       _b= 0.5*exp((-55.0-$(V))/40.0);\n\
       $(n)+= (_a*(1.0-$(n))-_b*$(n))*mdt;\n\
       $(V)+= Imem/$(C)*mdt;\n\
