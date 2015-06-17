@@ -44,7 +44,7 @@ else
 endif
 
 # An auto-generated file containing your cuda device's compute capability.
-include sm_version.mk
+-include sm_version.mk
 
 # Enumerate all source and object files (if they have not already been listed).
 SOURCES		?=$(wildcard *.cc *.cpp *.cu)	
@@ -78,7 +78,7 @@ debug: $(EXECUTABLE)
 
 .PHONY: clean
 clean:
-	rm -rf $(EXECUTABLE) *.o
+	rm -rf $(EXECUTABLE) *.o *.dSYM/
 
 .PHONY: purge
 purge: clean
