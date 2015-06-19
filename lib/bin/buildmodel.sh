@@ -1,9 +1,8 @@
 #!/bin/bash
 
 error() {
-  local parent_lineno="$1"
-  local message="$2"
-  local code="${3:-1}"
+  local message="$1"
+  local code="${2:-1}"
   if [[ -n "$message" ]] ; then
     echo "buildmodel Error: ${message}; exiting with status ${code}"
   else
@@ -11,7 +10,7 @@ error() {
   fi
   exit "${code}"
 }
-trap 'error ${LINENO}' ERR
+trap 'error ' ERR
 
 MODELPATH=$(pwd);
 echo "model path:" $MODELPATH
