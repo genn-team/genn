@@ -37,7 +37,6 @@ CodeHelper hlp;
 #include <sys/stat.h> // needed for mkdir
 #endif
 
-#define BLOCKSZ_DEBUG
 
 #ifndef CPU_ONLY
 /*! \brief Macro definition for error checking when using the driver API */

@@ -1,5 +1,6 @@
 
 #include <string>
+#include <regex>
 
 //--------------------------------------------------------------------------
 //! \brief Tool for substituting strings in the neuron code strings or other templates
@@ -330,3 +331,22 @@ string ensureFtype(string oldcode, string type)
 }
 
 
+//--------------------------------------------------------------------------
+/*! \brief This function checks for unknown variable definitions and returns a gennError if any are found
+ */
+//--------------------------------------------------------------------------
+
+void checkUnreplacedVariables(string code, string codeName) 
+{
+    regex rgx("\\$\\([\\w]+\\)");
+    string vars= "";
+    for (sregex_iterator it(code.begin(), code.end(), rgx), end; it != end; it++) {
+	vars+= it->str().substr(2,it->str().size()-3) + ", ";
+    }
+    if (vars.size() > 0) {
+	vars= vars.substr(0, vars.size()-2);
+	if (vars.find(",") != string::npos) vars= "variables "+vars+" were ";
+	else vars= "variable "+vars+" was ";
+	gennError("The "+vars+"undefined in code "+codeName+".");
+    }
+}

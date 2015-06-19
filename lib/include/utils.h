@@ -39,6 +39,29 @@ using namespace std;
 #include <cuda_runtime.h>
 #endif
 
+//--------------------------------------------------------------------------
+/*! \brief Function called upon the detection of an error. Outputs an error message and then exits.
+ */
+//--------------------------------------------------------------------------
+
+void gennError(string error)
+{
+  cerr << "GeNN error: " << error << endl;
+  exit(EXIT_FAILURE);
+}
+
+//--------------------------------------------------------------------------
+/*! \brief Function called upon the detection of an error. Outputs an error message and then exits.
+ */
+//--------------------------------------------------------------------------
+
+void gennError(const char *error)
+{
+  cerr << "GeNN error: " << error << endl;
+  exit(EXIT_FAILURE);
+}
+
+
 #include "modelSpec.h"
 #include "toString.h"
 #include "stringutils.h"
@@ -62,27 +85,6 @@ using namespace std;
 }
 #endif
 
-//--------------------------------------------------------------------------
-/*! \brief Function called upon the detection of an error. Outputs an error message and then exits.
- */
-//--------------------------------------------------------------------------
-
-void gennError(string error)
-{
-  cerr << "GeNN error: " << error << endl;
-  exit(EXIT_FAILURE);
-}
-
-//--------------------------------------------------------------------------
-/*! \brief Function called upon the detection of an error. Outputs an error message and then exits.
- */
-//--------------------------------------------------------------------------
-
-void gennError(const char *error)
-{
-  cerr << "GeNN error: " << error << endl;
-  exit(EXIT_FAILURE);
-}
 
 //--------------------------------------------------------------------------
 /*! \brief Function to write the comment header denoting file authorship and contact details into the generated code.

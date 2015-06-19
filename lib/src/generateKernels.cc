@@ -227,8 +227,9 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 	    }
 	    value_substitutions(psCode, psm.pNames, model.postSynapsePara[synPopID]);
 	    value_substitutions(psCode, psm.dpNames, model.dpsp[synPopID]);
-	    os << ensureFtype(psCode, model.ftype);
-	    os << ";" << ENDL;	    
+	    psCode= ensureFtype(psCode, model.ftype);
+	    checkUnreplacedVariables(psCode,tS("postSyntoCurrent"));
+	    os << psCode << ";" << ENDL;	    
 	}
 
 	os << "// test whether spike condition was fulfilled previously" << ENDL;
@@ -244,7 +245,9 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 	    substitute(thCode, tS("$(sT)"), tS("lsT"));
 	    value_substitutions(thCode, nModels[nt].pNames, model.neuronPara[i]);
 	    value_substitutions(thCode, nModels[nt].dpNames, model.dnp[i]);
-	    os << "bool oldSpike= (" << ensureFtype(thCode, model.ftype) << ");" << ENDL;   
+	    thCode= ensureFtype(thCode, model.ftype);
+	    checkUnreplacedVariables(thCode,tS("thresholdConditionCode"));
+	    os << "bool oldSpike= (" << thCode << ");" << ENDL;   
 	}
 
 	os << "// calculate membrane potential" << ENDL;
@@ -257,7 +260,9 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 	name_substitutions(sCode, tS("dd_"), nModels[nt].extraGlobalNeuronKernelParameters, model.neuronName[i]);
 	substitute(sCode, tS("$(Isyn)"), tS("Isyn"));
 	substitute(sCode, tS("$(sT)"), tS("lsT"));
-	os << ensureFtype(sCode, model.ftype) << ENDL;
+	sCode= ensureFtype(sCode, model.ftype);
+	checkUnreplacedVariables(sCode,tS("neuron simCode"));
+	os << sCode << ENDL;
 
 	// look for spike type events first.
 	if (model.neuronNeedSpkEvnt[i]) {
@@ -274,10 +279,11 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 		name_substitutions(eCode, tS("dd_"), weightUpdateModels[synt].extraGlobalSynapseKernelParameters, model.synapseName[synPopID]);
 		name_substitutions(eCode, tS("dd_"), nModels[model.neuronType[i]].extraGlobalNeuronKernelParameters, model.neuronName[i]);
 	    }
+	    eCode= ensureFtype(eCode, model.ftype);
+	    checkUnreplacedVariables(eCode, tS("neuronSpkEvntCondition"));
 	    // end code substitutions ----
-
 	    os << "// test for and register a spike-like event" << ENDL;
-	    os << "if (" + ensureFtype(eCode, model.ftype) + ")" << OB(30);
+	    os << "if (" + eCode + ")" << OB(30);
 	    os << "spkEvntIdx = atomicAdd((unsigned int *) &spkEvntCount, 1);" << ENDL;
 	    os << "shSpkEvnt[spkEvntIdx] = " << localID << ";" << ENDL;
 	    os << CB(30);
@@ -286,7 +292,7 @@ void genNeuronKernel(NNmodel &model, //!< Model description
         // test for true spikes if condition is provided
 	if (thCode != tS("")) {
 	    os << "// test for and register a true spike" << ENDL;
-	    os << "if ((" << ensureFtype(thCode, model.ftype) << ") && !(oldSpike)) " << OB(40);
+	    os << "if ((" << thCode << ") && !(oldSpike)) " << OB(40);
 	    os << "spkIdx = atomicAdd((unsigned int *) &spkCount, 1);" << ENDL;
 	    os << "shSpk[spkIdx] = " << localID << ";" << ENDL;
 
@@ -300,8 +306,10 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 		value_substitutions(rCode, nModels[nt].dpNames, model.dnp[i]);
 		substitute(rCode, tS("$(Isyn)"), tS("Isyn"));
 		substitute(rCode, tS("$(sT)"), tS("lsT"));
+		rCode= ensureFtype(rCode, model.ftype);
+		checkUnreplacedVariables(rCode, tS("resetCode"));
 		os << "// spike reset code" << ENDL;
-		os << ensureFtype(rCode, model.ftype) << ENDL;
+		os << rCode << ENDL;
 	    }
 	    os << CB(40);
 	}
@@ -329,8 +337,10 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 	    name_substitutions(pdCode, tS("l"), nModels[nt].varNames, tS(""));
 	    value_substitutions(pdCode, nModels[nt].pNames, model.neuronPara[i]);
 	    value_substitutions(pdCode, nModels[nt].dpNames, model.dnp[i]);
+	    pdCode= ensureFtype(pdCode, model.ftype);
+	    checkUnreplacedVariables(pdCode, tS("postSynDecay"));
 	    os << "// the post-synaptic dynamics" << ENDL;
-	    os << ensureFtype(pdCode, model.ftype) << ENDL;
+	    os << pdCode << ENDL;
 	    os << "dd_inSyn"  << sName << "[" << localID << "] = linSyn" << sName << ";" << ENDL;
 	    for (int k = 0, l = psModel.varNames.size(); k < l; k++) {
 		os << "dd_" <<  psModel.varNames[k] << model.synapseName[model.inSyn[i][j]] << "[" << localID << "] = lps" << psModel.varNames[k] << sName << ";"<< ENDL;
@@ -486,8 +496,10 @@ void generate_process_presynaptic_events_code(
 	    value_substitutions(eCode, weightUpdateModels[synt].pNames, model.synapsePara[i]);
 	    value_substitutions(eCode, weightUpdateModels[synt].dpNames, model.dsp_w[i]);
 	    name_substitutions(eCode, tS("dd_"), weightUpdateModels[synt].extraGlobalSynapseKernelParameters, model.synapseName[i]);
+	    eCode= ensureFtype(eCode, model.ftype);
+	    checkUnreplacedVariables(eCode, tS("evntThreshold"));
 	    // end code substitutions ----
-	    os << "(" << ensureFtype(eCode, model.ftype) << ")"; 
+	    os << "(" << eCode << ")"; 
 
 	    if (model.synapseGType[i] == INDIVIDUALID) {
 		os << ")";
@@ -573,8 +585,10 @@ void generate_process_presynaptic_events_code(
 	}
 	extended_value_substitutions(wCode, nModels[nt_post].pNames, tS("_post"), model.neuronPara[trg]);
 	extended_value_substitutions(wCode, nModels[nt_post].dpNames, tS("_post"), model.dnp[trg]);
+	wCode= ensureFtype(wCode, model.ftype);
+	checkUnreplacedVariables(wCode, tS("simCode")+postfix);
 	// end Code substitutions ------------------------------------------------------------------------- 
-	os << ensureFtype(wCode, model.ftype) << ENDL;
+	os << wCode << ENDL;
 
 	if (sparse) {
 	    os << CB(140); // end if (id < npost)
@@ -739,7 +753,9 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 		    value_substitutions(SDcode, wu.pNames, model.synapsePara[k]);
 		    // substitute values for derived parameters in synapseDynamics code
 		    value_substitutions(SDcode, wu.dpNames, model.dsp_w[k]);
-		    os << ensureFtype(SDcode, model.ftype) << ENDL;
+		    SDcode= ensureFtype(SDcode, model.ftype);
+		    checkUnreplacedVariables(SDcode, tS("synapseDynamics"));
+		    os << SDcode << ENDL;
 		    os << CB(25);
 		    os << CB(77);
 		}
@@ -779,7 +795,9 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 		    value_substitutions(SDcode, wu.pNames, model.synapsePara[k]);
 		    // substitute values for derived parameters in synapseDynamics code
 		    value_substitutions(SDcode, wu.dpNames, model.dsp_w[k]);
-		    os << ensureFtype(SDcode, model.ftype) << ENDL;
+		    SDcode= ensureFtype(SDcode, model.ftype);
+		    checkUnreplacedVariables(SDcode, tS("synapseDynamics"));
+		    os << SDcode << ENDL;
 		    os << CB(25);
 		    os << CB(77);
 		}
@@ -1101,9 +1119,10 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 	    }
 	    extended_value_substitutions(code, nModels[nt_post].pNames, tS("_post"), model.neuronPara[trg]);
 	    extended_value_substitutions(code, nModels[nt_post].dpNames, tS("_post"), model.dnp[trg]);
+	    code= ensureFtype(code, model.ftype);
+	    checkUnreplacedVariables(code, tS("simLearnPost"));
 	    // end Code substitutions ------------------------------------------------------------------------- 
-
-	    os << ensureFtype(code, model.ftype) << ENDL;
+	    os << code << ENDL;
 	if (sparse) {
 	    os << CB(1540);
 	} 

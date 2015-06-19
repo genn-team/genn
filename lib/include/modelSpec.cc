@@ -311,7 +311,6 @@ void NNmodel::initLearnGrps()
     for (int i = 0; i < neuronGrpN; i++) {
 	unsigned int nt= neuronType[i];
 	for (int j= 0, l= nModels[nt].extraGlobalNeuronKernelParameters.size(); j < l; j++) {
-	    cerr << "added " << nModels[nt].extraGlobalNeuronKernelParameters[j] << " in population" << neuronName[i] << endl;
 	    kernelParameters.push_back(nModels[nt].extraGlobalNeuronKernelParameters[j]);
 	    if (nModels[nt].extraGlobalNeuronKernelParameterTypes[j] == "scalar") {
 		kernelParameterTypes.push_back(ftype);

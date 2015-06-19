@@ -38,9 +38,6 @@ This global header file also takes care of including some generally used cuda su
 #include "toString.h"
 #include <stdint.h>
 
-// switch this on to debug problems in the Blocksize logic
-//#define BLOCKSZ_DEBUG
-
 using namespace std; // replaced these two lines : problem with visual studio
 
 // THESE WILL BE REPLACED BY VARIABLES BELOW SOON IF optimiseBlockSize == 1. THEIR INITIAL VALUES ARE SET IN generateAll.cc

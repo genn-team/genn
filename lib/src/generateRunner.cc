@@ -1028,7 +1028,7 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     unsigned int nt, st, pst;
     ofstream os;
 
-    mos << "entering GenRunnerGPU" << endl;
+//    mos << "entering GenRunnerGPU" << endl;
     name= path + toString("/") + model.name + toString("_CODE/runnerGPU.cc");
     os.open(name.c_str());
     writeHeader(os);
