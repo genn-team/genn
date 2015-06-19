@@ -31,3 +31,8 @@ GeNN synapse model scheme:
 2 weightUpdateModel
 
 1
+
+
+-----
+changes 2015-04-08
+extern "C" addition in front of neuron kernels to force clear text function names in the compiled cubin file. Note that this is disabling C++ fatures, so no overloading or templating ... not necessary at the moment but may be in the future.

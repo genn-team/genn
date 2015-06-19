@@ -86,7 +86,6 @@ void preVarsInPostLearn_sparse::init_synapses() {
 	    theC->ind[j]= trg;
 	}
 	theC->indInG[10]= 10;
-	createPosttoPreArray(10, 10, theC);
     }	
     theW= new float*[10];
     theW[0]= wsyn0;
@@ -104,7 +103,7 @@ void preVarsInPostLearn_sparse::init_synapses() {
 	    theW[i][j]= 0.0f;
 	} 
     }
-    initializeAllSparseArrays();
+    initpreVarsInPostLearn_sparse();
 }
 
 
@@ -115,16 +114,16 @@ void preVarsInPostLearn_sparse::init_neurons() {
     copyStateToDevice();
 }
 
-void preVarsInPostLearn_sparse::run(float t, int which)
+void preVarsInPostLearn_sparse::run(int which)
 {
   if (which == GPU)
   {
-    stepTimeGPU(t);
+    stepTimeGPU();
     copyStateFromDevice();
   }
   else
   {
-    stepTimeCPU(t);
+    stepTimeCPU();
   }
 }
 
@@ -141,7 +140,6 @@ int main(int argc, char *argv[])
     return EXIT_FAILURE;
   }
 
-  float t = 0.0f;
   preVarsInPostLearn_sparse *sim = new preVarsInPostLearn_sparse();
   int which= atoi(argv[1]);
   int write= atoi(argv[3]);
@@ -182,8 +180,8 @@ int main(int argc, char *argv[])
       for (int d= 0; d < 10; d++) { // for each delay
 	  for (int j= 0; j < 10; j++) { // for all pre-synaptic neurons 
               // generate expected values
-	      if ((t > 2.1001) && (fmod(t-2*DT+5e-5,2.0f) < 1e-4)) {
-		  x[d][j]= t-2*DT-d*DT+10*j;
+	      if ((t > 2.0001) && (fmod(t-2*DT+5e-5,2.0f) < 1e-4)) {
+		  x[d][j]= t-DT-(d+1)*DT+10*j;
 	      }
 	      if (write) {
 		  synOs << sim->theW[d][j] << " ";
@@ -205,7 +203,7 @@ int main(int argc, char *argv[])
       neurOs << endl;
       synOs << endl;
       expSynOs << endl;
-      sim->run(t, which);
+      sim->run(which);
       if (fmod(t+5e-5, REPORT_TIME) < 1e-4)
       {
 	  cout << "\r" << t;
@@ -225,7 +223,7 @@ int main(int argc, char *argv[])
   delete sim;
   delete timer;
   
-  float tolerance= 5e-3;
+  float tolerance= 3e-3;
   int success;
   string result;
   if (abs(err) < tolerance) {

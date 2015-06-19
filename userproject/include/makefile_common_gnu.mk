@@ -34,20 +34,20 @@ endif
 # Global include flags and link flags.
 INCLUDE_FLAGS	+=-I$(CUDA_PATH)/include -I$(CUDA_PATH)/samples/common/inc -I$(GENN_PATH)/lib/include -I$(GENN_PATH)/userproject/include
 ifeq ($(DARWIN),DARWIN)
-  LINK_FLAGS	+=-L$(CUDA_PATH)/lib -lcudart -stdlib=libstdc++ -lc++ 
+  LINK_FLAGS	+=-L$(CUDA_PATH)/lib -lcudart -lcuda -stdlib=libstdc++ -lc++ 
 else
   ifeq ($(OS_SIZE),32)
-    LINK_FLAGS	+=-L$(CUDA_PATH)/lib -lcudart 
+    LINK_FLAGS	+=-L$(CUDA_PATH)/lib -lcudart -lcuda
   else
-    LINK_FLAGS	+=-L$(CUDA_PATH)/lib64 -lcudart 
+    LINK_FLAGS	+=-L$(CUDA_PATH)/lib64 -lcudart -lcuda
   endif
 endif
 
 # An auto-generated file containing your cuda device's compute capability.
-include sm_version.mk
+-include sm_version.mk
 
 # Enumerate all source and object files (if they have not already been listed).
-SOURCES		?=$(wildcard *.cc *.cpp *.cu)
+SOURCES		?=$(wildcard *.cc *.cpp *.cu)	
 OBJECTS		:=$(foreach obj,$(basename $(SOURCES)),$(obj).o)
 
 # Target rules.
@@ -66,7 +66,6 @@ all: release
 $(EXECUTABLE): $(OBJECTS)
 	$(CXX) $(CXXFLAGS) $(OBJECTS) -o $@ $(LINK_FLAGS)
 
-
 .PHONY: release
 # use --compiler-options "-Wconversion" for silent type conversions 
 release: NVCCFLAGS	+=--compiler-options "-O3"
@@ -80,7 +79,7 @@ debug: $(EXECUTABLE)
 
 .PHONY: clean
 clean:
-	rm -rf $(EXECUTABLE) *.o
+	rm -rf $(EXECUTABLE) *.o *.dSYM/
 
 .PHONY: purge
 purge: clean

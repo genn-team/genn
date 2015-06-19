@@ -87,9 +87,9 @@ unsigned int openFileGetMax(unsigned int * array, unsigned int size, string name
 
 int main(int argc, char *argv[])
 {
-  if (argc != 10)
+  if (argc != 11)
   {
-    cerr << "usage: generate_run <CPU=0, GPU=1> <nNeurons> <nConn> <gscale> <outdir> <model name> <debug mode? (0/1)> <ftype \"FLOAT\" or \"DOUBLE\"> <use previous connectivity? (0/1)>" << endl;
+    cerr << "usage: generate_run <CPU=0, GPU=1> <nNeurons> <nConn> <gscale> <outdir> <model name> <debug mode? (0/1)> <ftype \"FLOAT\" or \"DOUBLE\"> <use previous connectivity? (0/1)> <input fac>" << endl;
     exit(1);
   }
   int retval;
@@ -109,7 +109,7 @@ int main(int argc, char *argv[])
   int dbgMode = atoi(argv[7]); // set this to 1 if you want to enable gdb and cuda-gdb debugging to 0 for release
   char *ftype= argv[8];
   int fixsynapse = atoi(argv[9]); // same synapse patterns should be used to compare CPU to GPU
-
+  double inputFac= atof(argv[10]);
 
   float meangExc = 0.5 * gscale;
   float meangInh = -1.0 * gscale;
@@ -170,7 +170,7 @@ int main(int argc, char *argv[])
   os << "#define _NMaxConnP1 " << maxN1 << endl;
   os << "#define _NMaxConnP2 " << maxN2 << endl;
   os << "#define _NMaxConnP3 " << maxN3 << endl;
-
+  os << "#define inputFac " << inputFac << endl;
   string tmps= tS(ftype);
   os << "#define _FTYPE " << "GENN_" << toUpper(tmps) << endl;
   os << "#define scalar " << toLower(tmps) << endl;

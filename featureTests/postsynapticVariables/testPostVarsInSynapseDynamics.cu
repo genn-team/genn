@@ -55,16 +55,16 @@ void postVarsInSynapseDynamics::init_neurons() {
     copyStateToDevice();
 }
 
-void postVarsInSynapseDynamics::run(float t, int which)
+void postVarsInSynapseDynamics::run(int which)
 {
   if (which == GPU)
   {
-    stepTimeGPU(t);
+    stepTimeGPU();
     copyStateFromDevice();
   }
   else
   {
-    stepTimeCPU(t);
+    stepTimeCPU();
   }
 }
 
@@ -81,7 +81,6 @@ int main(int argc, char *argv[])
     return EXIT_FAILURE;
   }
 
-  float t = 0.0f;
   postVarsInSynapseDynamics *sim = new postVarsInSynapseDynamics();
   int which= atoi(argv[1]);
   int write= atoi(argv[3]);
@@ -125,9 +124,10 @@ int main(int argc, char *argv[])
 	  for (int j= 0; j < 10; j++) { // for all pre-synaptic neurons 
 	      for (int k= 0; k < 10; k++) { // for all post-syn neurons
               // generate expected values
-		  if (t > 0.001+DT) {
+		  if (t > 0.0001+DT) {
 		      x[d][j*10+k]= t-2*DT+10*k;
 		  }
+
 		  if (write) {
 		      synOs << sim->theW[d][j*10+k] << " ";
 		      expSynOs << x[d][j*10+k] << " ";
@@ -149,7 +149,7 @@ int main(int argc, char *argv[])
       neurOs << endl;
       synOs << endl;
       expSynOs << endl;
-      sim->run(t, which);
+      sim->run(which);
       if (fmod(t+5e-5, REPORT_TIME) < 1e-4)
       {
 	  cout << "\r" << t;

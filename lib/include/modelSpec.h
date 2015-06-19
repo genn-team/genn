@@ -19,11 +19,15 @@
 //--------------------------------------------------------------------------
 /*! \file modelSpec.h
 
-\brief Header file that contains the class (struct) definition of neuronModel for defining a neuron model and the class definition of NNmodel for defining a neuronal network model. Part of the code generation and generated code sections.
+\brief Header file that contains the class (struct) definition of neuronModel for 
+defining a neuron model and the class definition of NNmodel for defining a neuronal network model. 
+Part of the code generation and generated code sections.
 */
 //--------------------------------------------------------------------------
 
 #include <vector>
+#include <string>
+using namespace std;
 #include "global.h"
 
 void initGeNN();
@@ -49,14 +53,6 @@ unsigned int SPIKESOURCE; //!< variable attaching the name "SPIKESOURCE"
 unsigned int NSYNAPSE;  //!< Variable attaching  the name NSYNAPSE to predefined synapse type 0, which is a non-learning synapse
 unsigned int NGRADSYNAPSE; //!< Variable attaching  the name NGRADSYNAPSE to predefined synapse type 1 which is a graded synapse wrt the presynaptic voltage
 unsigned int LEARN1SYNAPSE; //!< Variable attaching  the name LEARN1SYNAPSE to the predefined synapse type 2 which is a learning using spike timing; uses a primitive STDP rule for learning
-
-
-//input type
-#define NOINP 0 //!< Macro attaching  the name NOINP (no input) to 0
-#define CONSTINP 1 //!< Macro attaching  the name CONSTINP (constant input) to 1
-#define MATINP 2 //!< Macro attaching  the name MATINP (explicit input defined as a matrix) to 2
-#define INPRULE 3 //!< Macro attaching  the name INPRULE (explicit dynamic input defined as a rule) to 3
-#define RANDNINP 4 //!< Macro attaching  the name RANDNINP (Random input with Gaussian distribution, calculated real time on the device by the generated code) to 4 (TODO, not implemented yet)
 
 //connectivity of the network (synapseConnType)
 #define ALLTOALL 0  //!< Macro attaching the label "ALLTOALL" to connectivity type 0 
@@ -99,34 +95,39 @@ unsigned int IZHIKEVICH_PS; //empty postsynaptic rule for the Izhikevich model.
 
 class dpclass {
 public:
-  dpclass() {}  
   virtual double calculateDerivedParameter(int index, vector < double > pars, double dt = 1.0) {return -1;}
 };
 
+//! \brief class (struct) for defining a spars connectivity projection
+struct SparseProjection{
+    unsigned int *indInG;
+    unsigned int *ind;
+    unsigned int *preInd;
+    unsigned int *revIndInG;
+    unsigned int *revInd;
+    unsigned int *remap;
+    unsigned int connN; 
+};
 
 //! \brief class (struct) for specifying a neuron model.
 struct neuronModel
 {
-  string simCode; /*!< \brief Code that defines the execution of one timestep of integration of the neuron model
-		    
+    string simCode; /*!< \brief Code that defines the execution of one timestep of integration of the neuron model
 		    The code will refer to $(NN) for the value of the variable with name "NN". It needs to refer to the predefined variable "ISYN", i.e. contain $(ISYN), if it is to receive input. */
-  string thresholdConditionCode; /*!< \brief Code evaluating to a bool (e.g. "V > 20") that defines the condition for a true spike in the described neuron model */
-  string resetCode; /*!< \brief Code that defines the reset action taken after a spike occurred. This can be empty */
-  vector<string> varNames; //!< Names of the variables in the neuron model
-  vector<string> tmpVarNames; //!< never used
-  vector<string> varTypes; //!< Types of the variable named above, e.g. "float". Names and types are matched by their order of occurrence in the vector.
-  vector<string> tmpVarTypes; //!< never used
-  vector<string> pNames; //!< Names of (independent) parameters of the model. 
-  vector<string> dpNames; /*!< \brief Names of dependent parameters of the model. 
-  			    
-The dependent parameters are functions of independent parameters that enter into the neuron model. To avoid unecessary computational overhead, these parameters are calculated at compile time and inserted as explicit values into the generated code. See method NNmodel::initDerivedNeuronPara for how this is done.*/ 
-
-  vector<string> extraGlobalNeuronKernelParameters; //!< Additional parameter in the neuron kernel; it is translated to a population specific name but otherwise assumed to be one parameter per population rather than per neuron.
-
-  vector<string> extraGlobalNeuronKernelParameterTypes; //!< Additional parameters in the neuron kernel; they are translated to a population specific name but otherwise assumed to be one parameter per population rather than per neuron.
-  dpclass * dps; //!< \brief Derived parameters
-  bool needPreSt; //!< \brief Whether presynaptic spike times are needed or not
-  bool needPostSt; //!< \brief Whether postsynaptic spike times are needed or not
+    string thresholdConditionCode; /*!< \brief Code evaluating to a bool (e.g. "V > 20") that defines the condition for a true spike in the described neuron model */
+       string resetCode; /*!< \brief Code that defines the reset action taken after a spike occurred. This can be empty */
+    vector<string> varNames; //!< Names of the variables in the neuron model
+    vector<string> tmpVarNames; //!< never used
+    vector<string> varTypes; //!< Types of the variable named above, e.g. "float". Names and types are matched by their order of occurrence in the vector.
+    vector<string> tmpVarTypes; //!< never used
+    vector<string> pNames; //!< Names of (independent) parameters of the model. 
+    vector<string> dpNames; /*!< \brief Names of dependent parameters of the model.      
+			      The dependent parameters are functions of independent parameters that enter into the neuron model. To avoid unecessary computational overhead, these parameters are calculated at compile time and inserted as explicit values into the generated code. See method NNmodel::initDerivedNeuronPara for how this is done.*/ 
+    vector<string> extraGlobalNeuronKernelParameters; //!< Additional parameter in the neuron kernel; it is translated to a population specific name but otherwise assumed to be one parameter per population rather than per neuron.
+    vector<string> extraGlobalNeuronKernelParameterTypes; //!< Additional parameters in the neuron kernel; they are translated to a population specific name but otherwise assumed to be one parameter per population rather than per neuron.
+    dpclass * dps; //!< \brief Derived parameters
+    bool needPreSt; //!< \brief Whether presynaptic spike times are needed or not
+    bool needPostSt; //!< \brief Whether postsynaptic spike times are needed or not
 };
 
 /*! \brief Structure to hold the information that defines a post-synaptic model (a model of how synapses affect post-synaptic neuron variables, classically in the form of a synaptic current). It also allows to define an equation for the dynamics that can be applied to the summed synaptic input variable "insyn".
@@ -134,13 +135,13 @@ The dependent parameters are functions of independent parameters that enter into
 
 struct postSynModel
 {
-  string postSyntoCurrent; //!< \brief Code that defines how postsynaptic update is translated to current 
-  string postSynDecay; //!< \brief Code that defines how postsynaptic current decays 
-  vector<string> varNames; //!< Names of the variables in the postsynaptic model
-  vector<string> varTypes; //!< Types of the variable named above, e.g. "float". Names and types are matched by their order of occurrence in the vector.
-  vector<string> pNames; //!< Names of (independent) parameters of the model. 
-  vector<string> dpNames; //!< \brief Names of dependent parameters of the model. 
-  dpclass *dps; //!< \brief Derived parameters 
+    string postSyntoCurrent; //!< \brief Code that defines how postsynaptic update is translated to current 
+    string postSynDecay; //!< \brief Code that defines how postsynaptic current decays 
+    vector<string> varNames; //!< Names of the variables in the postsynaptic model
+    vector<string> varTypes; //!< Types of the variable named above, e.g. "float". Names and types are matched by their order of occurrence in the vector.
+    vector<string> pNames; //!< Names of (independent) parameters of the model. 
+    vector<string> dpNames; //!< \brief Names of dependent parameters of the model. 
+    dpclass *dps; //!< \brief Derived parameters 
 };
 
 /*! \brief Structure to hold the information that defines a weightupdate model (a model of how spikes affect synaptic (and/or) (mostly) post-synaptic neuron variables. It also allows to define changes in response to post-synaptic spikes/spike-like events.
@@ -149,7 +150,7 @@ struct postSynModel
 class weightUpdateModel
 {
 public:
-  string simCode; //!< \brief Simulation code that is used for true spikes (only one time step after spike detection)
+    string simCode; //!< \brief Simulation code that is used for true spikes (only one time step after spike detection)
   string simCodeEvnt; //!< \brief Simulation code that is used for spike events (all the instances where event threshold condition is met)
   string simLearnPost; //!< \brief Simulation code which is used in the learnSynapsesPost kernel/function, where postsynaptic neuron spikes before the presynaptic neuron in the STDP window.
   string evntThreshold; //!< \brief Simulation code for spike event detection.
@@ -163,14 +164,8 @@ public:
 
   vector<string> extraGlobalSynapseKernelParameterTypes; //!< Additional parameters in the neuron kernel; they are translated to a population specific name but otherwise assumed to be one parameter per population rather than per synapse.
   dpclass *dps;
-    bool needPreSt; //!< \brief Whether presynaptic spike times are needed or not
-    bool needPostSt; //!< \brief Whether postsynaptic spike times are needed or not
-
-    weightUpdateModel() {
-	dps= NULL;
-	needPreSt= FALSE;
-	needPostSt= FALSE;
-    }
+  bool needPreSt; //!< \brief Whether presynaptic spike times are needed or not
+  bool needPostSt; //!< \brief Whether postsynaptic spike times are needed or not
 };
 
 /*! \brief Structure to hold the information that defines synapse dynamics (a model of how synapse variables change over time, independent of or in addition to changes when spikes occur).
@@ -199,7 +194,7 @@ public:
   int chooseGPUDevice;
   bool timing;
   unsigned int seed;
-
+  unsigned int resetKernel;  //!< The identity of the kernel in which the spike counters will be reset.
 
   // PUBLIC NEURON VARIABLES
   //========================
@@ -216,7 +211,6 @@ public:
   vector<vector<double> > neuronIni; //!< Initial values of neurons
   vector<vector<unsigned int> > inSyn; //!< The ids of the incoming synapse groups
   vector<vector<unsigned int> > outSyn; //!< The ids of the outgoing synapse groups
-  vector<unsigned int> receivesInputCurrent; //!< flags whether neurons of a population receive explicit input currents
   vector<bool> neuronNeedSt; //!< Whether last spike time needs to be saved for a group
   vector<bool> neuronNeedTrueSpk; //!< Whether spike-like events from a group are required
   vector<bool> neuronNeedSpkEvnt; //!< Whether spike-like events from a group are required
@@ -245,6 +239,7 @@ public:
   vector<bool> synapseUsesTrueSpikes; //!< Defines if synapse update is done after detection of real spikes (only one point after threshold)
   vector<bool> synapseUsesSpikeEvents; //!< Defines if synapse update is done after detection of spike events (every point above threshold)
   vector<bool> synapseUsesPostLearning; //!< Defines if anything is done in case of postsynaptic neuron spiking before presynaptic neuron (punishment in STDP etc.) 
+  vector<bool> synapseUsesSynapseDynamics; //!< Defines if there is any continuos synapse dynamics defined
   vector<vector<string> > synapseSpkEvntVars; //!< Defines variable names that are needed in the SpkEvnt condition and that are pre-fetched for that purpose into shared memory
   vector<vector<double> > synapsePara; //!< parameters of synapses
   vector<vector<double> > synapseIni; //!< Initial values of synapse variables
@@ -253,14 +248,23 @@ public:
   vector<vector<double> > postSynapsePara; //!< parameters of postsynapses
   vector<vector<double> > postSynIni; //!< Initial values of postsynaptic variables
   vector<vector<double> > dpsp;  //!< Derived postsynapse parameters
-  vector<double> globalInp; //!< Global explicit input if CONSTINP is chosen.
   unsigned int lrnGroups; //!< Number of synapse groups with learning
   vector<unsigned int> padSumLearnN; //!< Padded summed neuron numbers of learn group source populations
   vector<unsigned int> lrnSynGrp; //!< Enumeration of the IDs of synapse groups that learn
   vector<unsigned int> synapseDelay; //!< Global synaptic conductance delay for the group (in time steps)
+  unsigned int synDynGroups; //!< Number of synapse groups that define continuous synapse dynamics
+  vector<unsigned int> synDynGrp; //!< Enumeration of the IDs of synapse groups that have synapse Dynamics
+  vector<unsigned int> padSumSynDynN; //!< Padded summed neuron numbers of synapse dynamics group source populations
   vector<int> synapseHostID; //!< The ID of the cluster node which the synapse groups are computed on
   vector<int> synapseDeviceID; //!< The ID of the CUDA device which the synapse groups are comnputed on
 
+  // PUBLIC KERNEL PARAMETER VARIABLES
+  //=========================
+  unsigned int totalKernelParameterSize;
+  unsigned int kernelParameterAlign;
+  vector<string> kernelParameters;
+  vector<string> kernelParameterTypes;
+  vector<string> kernelParameterPopulations;
     
 private:
 
@@ -311,8 +315,9 @@ public:
 
   void checkSizes(unsigned int *, unsigned int *, unsigned int *); //< Check if the sizes of the initialized neuron and synapse groups are correct.
 
+#ifndef CPU_ONLY
   void setGPUDevice(int); //!< Method to choose the GPU to be used for the model. If "AUTODEVICE' (-1), GeNN will choose the device based on a heuristic rule.
-
+#endif
 
   // PUBLIC NEURON FUNCTIONS
   //========================
@@ -323,12 +328,12 @@ public:
 
   void addNeuronPopulation(const string, unsigned int, unsigned int, vector<double>, vector<double>); //!< Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population
 
-  void activateDirectInput(const string, unsigned int);  //!< Method for activating explicit current input
-
-  void setConstInp(const string, double); //!< Method for setting the global input value for a neuron population if CONSTINP
-
   void setNeuronClusterIndex(const string neuronGroup, int hostID, int deviceID); //!< Function for setting which host and which device a neuron group will be simulated on
 
+//! This function has been deprecated in GeNN 2.2
+  void activateDirectInput(const string, unsigned int type);
+//! This function has been deprecated in GeNN 2.2
+  void setConstInp(const string, double);
 
   // PUBLIC SYNAPSE FUNCTIONS
   //=========================
@@ -350,5 +355,7 @@ public:
   void initLearnGrps();
   void finalize();
 };
+
+
 
 #endif

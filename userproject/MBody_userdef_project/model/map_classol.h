@@ -41,8 +41,6 @@ class classol
   void exportArray(double *, scalar *, int);
  public:
   NNmodel model;
-  unsigned int offset;
-  uint64_t *theRates;
   scalar *p_pattern;  
   uint64_t *pattern;
   uint64_t *baserates;

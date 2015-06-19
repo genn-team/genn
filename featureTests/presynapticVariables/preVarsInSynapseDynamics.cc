@@ -38,7 +38,7 @@ void modelDefinition(NNmodel &model)
   n.varTypes.push_back(tS("scalar"));
   n.varNames.push_back(tS("shift"));
   n.varTypes.push_back(tS("scalar"));
-  n.simCode= tS("$(x)= t+$(shift);");
+  n.simCode= tS("$(x)= $(t)+$(shift);");
   int DUMMYNEURON= nModels.size();
   nModels.push_back(n);
   
@@ -54,7 +54,7 @@ void modelDefinition(NNmodel &model)
   string synName= tS("syn");
   for (int i= 0; i < 10; i++) {
       string theName= synName+tS(i);
-      model.addSynapsePopulation(theName, DUMMYSYNAPSE, DENSE, INDIVIDUALG, i+1,IZHIKEVICH_PS, "pre", "post", synapses_ini, synapses_p, postSyn_ini, postSyn_p);
+      model.addSynapsePopulation(theName, DUMMYSYNAPSE, DENSE, INDIVIDUALG, i,IZHIKEVICH_PS, "pre", "post", synapses_ini, synapses_p, postSyn_ini, postSyn_p);
   }
   model.setPrecision(GENN_FLOAT);
   model.finalize();

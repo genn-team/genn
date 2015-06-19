@@ -28,7 +28,6 @@ class Schmuker2014_classifier
 {
  public:
 	double d_maxRandomNumber; //number used to scale correcly scale poission neuron firing probabilities
-	float t; //absolute time elapsed for network
 
 	NNmodel model;
 	uint64_t *inputRates; //dataset (2D array) of required poisson neuron firing rates that represent the input data to the network

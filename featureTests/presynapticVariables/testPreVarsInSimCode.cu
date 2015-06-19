@@ -54,16 +54,16 @@ void preVarsInSimCode::init_neurons() {
     copyStateToDevice();
 }
 
-void preVarsInSimCode::run(float t, int which)
+void preVarsInSimCode::run(int which)
 {
   if (which == GPU)
   {
-    stepTimeGPU(t);
+    stepTimeGPU();
     copyStateFromDevice();
   }
   else
   {
-    stepTimeCPU(t);
+    stepTimeCPU();
   }
 }
 
@@ -80,7 +80,6 @@ int main(int argc, char *argv[])
     return EXIT_FAILURE;
   }
 
-  float t = 0.0f;
   preVarsInSimCode *sim = new preVarsInSimCode();
   int which= atoi(argv[1]);
   int write= atoi(argv[3]);
@@ -124,8 +123,8 @@ int main(int argc, char *argv[])
 	  for (int j= 0; j < 10; j++) { // for all pre-synaptic neurons 
 	      for (int k= 0; k < 10; k++) { // for all post-syn neurons
               // generate expected values
-		  if ((t > 1.1001) && (fmod(t-2*DT-d*DT+5e-5,1.0f) < 1e-4)) {
-		      x[d][j*10+k]= t-2*DT-d*DT+10*j;
+		  if ((t > 1.1001) && (fmod(t-DT-(d+1)*DT+5e-5,1.0f) < 1e-4)) {
+		      x[d][j*10+k]= t-DT-(d+1)*DT+10*j;
 		  }
 		  if (write) {
 		      synOs << sim->theW[d][j*10+k] << " ";
@@ -148,7 +147,7 @@ int main(int argc, char *argv[])
       neurOs << endl;
       synOs << endl;
       expSynOs << endl;
-      sim->run(t, which);
+      sim->run(which);
       if (fmod(t+5e-5, REPORT_TIME) < 1e-4)
       {
 	  cout << "\r" << t;

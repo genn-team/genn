@@ -12,9 +12,12 @@
 #--------------------------------------------------------------------------
 
 INCLUDE_FLAGS	= -I$(GENN_PATH)/lib/include 
-CXXFLAGS	= $(INCLUDE_FLAGS) -Wall -Winline -O3 -g
+CXXFLAGS	= $(INCLUDE_FLAGS) -Wall -Winline -O3
 
 all: generate_run
+
+generate_run: generate_run.cc
+	$(CXX) $(CXXFLAGS) $(INCLUDE) -o generate_run generate_run.cc
 
 clean:
 	$(RM) generate_run

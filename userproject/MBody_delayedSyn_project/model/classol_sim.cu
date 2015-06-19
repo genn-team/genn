@@ -139,40 +139,29 @@ int main(int argc, char *argv[])
   // output general parameters to output file and start the simulation
 
   fprintf(stdout, "# We are running with fixed time step %f \n", DT);
-  fprintf(stdout, "# initial wait time execution ... \n");
-
   t= 0.0;
   int done= 0;
   float last_t_report=  t;
   timer.startTimer();
-  locust.run(DT, which);
   float synwriteT= 0.0f;
   float lastsynwrite= 0.0f;
   int synwrite= 0;
   while (!done) 
   {    
-    if (which == GPU) {
-      locust.getSpikeNumbersFromGPU();
-      locust.getSpikesFromGPU();
-    }
-    locust.sum_spikes();
-    locust.output_spikes(osf2, which);
-    locust.run(DT, which); // run next batch
-    // if (which == GPU) {  
-//	pullDNfromDevice();
-    //   }
+      if (which == GPU) {
+	  locust.runGPU(DT); // run next batch
+	  locust.getSpikeNumbersFromGPU();
+	  locust.getSpikesFromGPU();
+      }
+      else {
+	  locust.runCPU(DT);
+      }
+      locust.sum_spikes();
+      locust.output_spikes(osf2, which);
     
 #ifdef TIMING
 	fprintf(timeros, "%f %f %f \n", neuron_tme, synapse_tme, learning_tme);
 #endif
-
-
- /*   fprintf(osf, "%f ", t);
-    //  for (int i= 0; i < 100; i++) {
-    //     fprintf(osf, "%f ", VDN[i]);
-    //   }
-    // fprintf(osf,"\n");
-*/
     // report progress
     if (t - last_t_report >= T_REPORT_TME)
     {

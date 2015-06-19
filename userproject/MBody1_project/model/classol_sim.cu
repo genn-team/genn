@@ -122,9 +122,11 @@ int main(int argc, char *argv[])
 #endif
 
   locust.generate_baserates();
+#ifndef CPU_ONLY
   if (which == GPU) {
     locust.allocate_device_mem_patterns();
   }
+#endif
   locust.init(which);         // this includes copying g's for the GPU version
 
 #ifdef TIMING
@@ -139,20 +141,20 @@ int main(int argc, char *argv[])
   // output general parameters to output file and start the simulation
 
   fprintf(stdout, "# We are running with fixed time step %f \n", DT);
-  fprintf(stdout, "# initial wait time execution ... \n");
-
   t= 0.0;
+  iT= 0;
   int done= 0;
   float last_t_report=  t;
   timer.startTimer();
 
+#ifndef CPU_ONLY
   if (which == GPU){   
     while (!done) 
     {    
-      locust.runGPU(DT); // run next batch
-      locust.getSpikeNumbersFromGPU();
-      locust.getSpikesFromGPU();
-    
+	locust.runGPU(DT); // run next batch
+	locust.getSpikeNumbersFromGPU();
+	locust.getSpikesFromGPU();
+	
 //	pullDNStateFromDevice();
     
 #ifdef TIMING
@@ -176,6 +178,8 @@ int main(int argc, char *argv[])
     done= (t >= TOTAL_TME);
   }
 }
+#endif
+
   if (which == CPU){   
     while (!done) 
     {
@@ -202,7 +206,9 @@ int main(int argc, char *argv[])
   }
 }
   timer.stopTimer();
+#ifndef CPU_ONLY
   if (which == GPU) pullDNStateFromDevice();
+#endif
   cerr << "output files are created under the current directory." << endl;
   fprintf(timef, "%d %u %u %u %u %u %.4f %.2f %.1f %.2f\n",which, locust.model.sumNeuronN[locust.model.neuronGrpN-1], locust.sumPN, locust.sumKC, locust.sumLHI, locust.sumDN, timer.getElapsedTime(),VDN[0], TOTAL_TME, DT);
   fprintf(stdout, "GPU=%d, %u neurons, %u PN spikes, %u KC spikes, %u LHI spikes, %u DN spikes, simulation took %.4f secs, VDN[0]=%.2f DT=%.1f %.2f\n",which, locust.model.sumNeuronN[locust.model.neuronGrpN-1], locust.sumPN, locust.sumKC, locust.sumLHI, locust.sumDN, timer.getElapsedTime(),VDN[0], TOTAL_TME, DT);
@@ -215,9 +221,11 @@ int main(int argc, char *argv[])
   fclose(timeros);
 #endif
 
+#ifndef CPU_ONLY
   if (which == GPU) {
     locust.free_device_mem();
   }
+#endif
 
   return 0;
 }

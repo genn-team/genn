@@ -26,14 +26,10 @@ using namespace std;
 
 #define DBG_SIZE 5000
 
-// and some global variables
-float t= 0.0f;
-unsigned int iT= 0;
-
 //----------------------------------------------------------------------
 // other stuff:
 #define T_REPORT_TME 5000.0
-#define TOTAL_TME 5000.0
+#define TOTAL_TME 1000.0
 
 CStopWatch timer;
 

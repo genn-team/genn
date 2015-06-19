@@ -103,7 +103,7 @@ void postVarsInSynapseDynamics_sparse::init_synapses() {
 	    theW[i][j]= 0.0f;
 	} 
     }
-    initializeAllSparseArrays();
+    initpostVarsInSynapseDynamics_sparse();
 }
 
 
@@ -115,16 +115,16 @@ void postVarsInSynapseDynamics_sparse::init_neurons() {
     copyStateToDevice();
 }
 
-void postVarsInSynapseDynamics_sparse::run(float t, int which)
+void postVarsInSynapseDynamics_sparse::run(int which)
 {
   if (which == GPU)
   {
-    stepTimeGPU(t);
+    stepTimeGPU();
     copyStateFromDevice();
   }
   else
   {
-    stepTimeCPU(t);
+    stepTimeCPU();
   }
 }
 
@@ -141,7 +141,6 @@ int main(int argc, char *argv[])
     return EXIT_FAILURE;
   }
 
-  float t = 0.0f;
   postVarsInSynapseDynamics_sparse *sim = new postVarsInSynapseDynamics_sparse();
   int which= atoi(argv[1]);
   int write= atoi(argv[3]);
@@ -182,7 +181,7 @@ int main(int argc, char *argv[])
       for (int d= 0; d < 10; d++) { // for each delay
 	  for (int j= 0; j < 10; j++) { // for all pre-synaptic neurons 
               // generate expected values
-	      if (t > 0.001+DT) {
+	      if (t > 0.0001+DT) {
 		  x[d][j]= t-2*DT+10*((j+1)%10);
 	      }
 	      if (write) {
@@ -205,7 +204,7 @@ int main(int argc, char *argv[])
       neurOs << endl;
       synOs << endl;
       expSynOs << endl;
-      sim->run(t, which);
+      sim->run(which);
       if (fmod(t+5e-5, REPORT_TIME) < 1e-4)
       {
 	  cout << "\r" << t;

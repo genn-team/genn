@@ -38,7 +38,7 @@ void modelDefinition(NNmodel &model)
   n.varTypes.push_back(tS("scalar"));
   n.varNames.push_back(tS("shift"));
   n.varTypes.push_back(tS("scalar"));
-  n.simCode= tS("$(x)= t+$(shift);");
+  n.simCode= tS("$(x)= $(t)+$(shift);");
   int DUMMYNEURON= nModels.size();
   nModels.push_back(n);
   

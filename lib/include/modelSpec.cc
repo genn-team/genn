@@ -37,13 +37,17 @@ NNmodel::NNmodel()
   neuronGrpN= 0;
   synapseGrpN= 0;
   lrnGroups= 0;
+  synDynGroups= 0;
   needSt= 0;
   needSynapseDelay = 0;
   setPrecision(0);
   setTiming(FALSE);
   RNtype= tS("uint64_t");
+#ifndef CPU_ONLY
   setGPUDevice(AUTODEVICE);
+#endif
   setSeed(0);
+  totalKernelParameterSize= 0;
 }
 
 NNmodel::~NNmodel() 
@@ -79,6 +83,7 @@ void NNmodel::initDerivedNeuronPara(unsigned int i /**< index of the neuron popu
     }
     dnp.push_back(tmpP);
 }
+
 
 void NNmodel::initNeuronSpecs(unsigned int i /**< index of the neuron population */)
 {
@@ -199,6 +204,7 @@ void NNmodel::initLearnGrps()
     synapseUsesTrueSpikes.assign(synapseGrpN, FALSE);
     synapseUsesSpikeEvents.assign(synapseGrpN, FALSE);
     synapseUsesPostLearning.assign(synapseGrpN, FALSE);
+    synapseUsesSynapseDynamics.assign(synapseGrpN, FALSE);
 
     neuronNeedTrueSpk.assign(neuronGrpN, FALSE);
     neuronNeedSpkEvnt.assign(neuronGrpN, FALSE);
@@ -210,7 +216,6 @@ void NNmodel::initLearnGrps()
     neuronSpkEvntCondition.assign(neuronGrpN, tS(""));
 
     for (int i = 0; i < synapseGrpN; i++) {
-	unsigned int padnN = ceil((double) neuronN[synapseSource[i]] / (double) learnBlkSz) * (double) learnBlkSz;
 	weightUpdateModel wu = weightUpdateModels[synapseType[i]];
 	unsigned int src = synapseSource[i];
 	vector<string> vars = nModels[neuronType[src]].varNames;
@@ -256,22 +261,15 @@ void NNmodel::initLearnGrps()
 		
 	}
 
-	if (wu.synapseDynamics != tS("")) {
-	    for (int j = 0; j < vars.size(); j++) {
-		if (wu.synapseDynamics.find(vars[j] + tS("_pre")) != string::npos) {
-		    neuronVarNeedQueue[src][j] = TRUE;
-		}
-	    }
-	}
-
 	if (wu.simLearnPost != tS("")) {
+	    unsigned int padnN = ceil((double) neuronN[synapseSource[i]] / (double) learnBlkSz) * (double) learnBlkSz;
 	    synapseUsesPostLearning[i] = TRUE;
 	    fprintf(stdout, "detected learning synapse at %d \n", i);
 	    if (lrnGroups == 0) {
 		padSumLearnN.push_back(padnN);
 	    }
 	    else {
-		padSumLearnN.push_back(padSumLearnN[i - 1] + padnN); 
+		padSumLearnN.push_back(padSumLearnN[lrnGroups-1] + padnN); 
 	    }
 	    lrnSynGrp.push_back(i);
 	    lrnGroups++;
@@ -281,7 +279,82 @@ void NNmodel::initLearnGrps()
 		}
 	    }
 	}
+
+	if (wu.synapseDynamics != tS("")) {
+	    unsigned int padnN;
+	    if (synapseConnType[i] == SPARSE) {
+		padnN = ceil((double) neuronN[synapseSource[i]]*maxConn[i] / (double) synDynBlkSz) * (double) synDynBlkSz;
+	    }
+	    else {
+		padnN = ceil((double) neuronN[synapseSource[i]]*neuronN[synapseTarget[i]] / (double) synDynBlkSz) * (double) synDynBlkSz;
+		cerr << "# SYNDYN_PADN: " << padnN << endl;
+	    }
+	    synapseUsesSynapseDynamics[i]= TRUE;
+	    fprintf(stdout, "detected synapseDynamics synapse at %d \n", i);
+	    if (synDynGroups == 0) {
+		    padSumSynDynN.push_back(padnN);
+	    }
+	    else {
+		    padSumSynDynN.push_back(padSumSynDynN[synDynGroups-1] + padnN); 
+	    }
+	    synDynGrp.push_back(i);
+	    synDynGroups++;
+	    for (int j = 0; j < vars.size(); j++) {
+		if (wu.synapseDynamics.find(vars[j] + tS("_pre")) != string::npos) {
+		    neuronVarNeedQueue[src][j] = TRUE;
+		}
+	    }
+	}	
     }
+    // related to kernel parameters
+    unsigned int align= 1;
+    for (int i = 0; i < neuronGrpN; i++) {
+	unsigned int nt= neuronType[i];
+	for (int j= 0, l= nModels[nt].extraGlobalNeuronKernelParameters.size(); j < l; j++) {
+	    cerr << "added " << nModels[nt].extraGlobalNeuronKernelParameters[j] << " in population" << neuronName[i] << endl;
+	    kernelParameters.push_back(nModels[nt].extraGlobalNeuronKernelParameters[j]);
+	    if (nModels[nt].extraGlobalNeuronKernelParameterTypes[j] == "scalar") {
+		kernelParameterTypes.push_back(ftype);
+	    }
+	    else {
+		kernelParameterTypes.push_back(nModels[nt].extraGlobalNeuronKernelParameterTypes[j]);
+	    }
+	    if (theSize(kernelParameterTypes.back()) > align) align= theSize(kernelParameterTypes.back());
+	    kernelParameterPopulations.push_back(neuronName[i]);
+	}
+    }
+    for (int i = 0; i < synapseGrpN; i++) {
+	unsigned int st= synapseType[i];
+	for (int j= 0, l= weightUpdateModels[st].extraGlobalSynapseKernelParameters.size(); j < l; j++) {
+	    kernelParameters.push_back(weightUpdateModels[st].extraGlobalSynapseKernelParameters[j]);
+	    if (weightUpdateModels[st].extraGlobalSynapseKernelParameterTypes[j] == "scalar") {
+		kernelParameterTypes.push_back(ftype);
+	    }
+	    else {
+		kernelParameterTypes.push_back(weightUpdateModels[st].extraGlobalSynapseKernelParameterTypes[j]);
+	    }
+	    if (theSize(kernelParameterTypes.back()) > align) align= theSize(kernelParameterTypes.back());
+	    kernelParameterPopulations.push_back(synapseName[i]);
+	}
+    }
+    kernelParameterAlign= 1;
+    while (kernelParameterAlign < align) kernelParameterAlign*= 2;
+    totalKernelParameterSize= kernelParameterAlign*kernelParameters.size();
+
+#ifndef CPU_ONLY
+    // figure out where to reset the spike counters
+    if (synapseGrpN == 0) { // no synapses -> reset in neuron kernel
+	resetKernel= GeNNFlags::calcNeurons;
+    }
+    else { // there are synapses
+	if (lrnGroups > 0) {
+	    resetKernel= GeNNFlags::learnSynapsesPost;
+	}
+	else {
+	    resetKernel= GeNNFlags::calcSynapses;
+	}
+    }
+#endif
 }
 
 //--------------------------------------------------------------------------
@@ -390,7 +463,6 @@ void NNmodel::addNeuronPopulation(
     vector<unsigned int> tv;
     inSyn.push_back(tv);  // empty list of input synapse groups for neurons i 
     outSyn.push_back(tv);  // empty list of input synapse groups for neurons i 
-    receivesInputCurrent.push_back(0);
     neuronNeedSt.push_back(FALSE);
     neuronNeedSpkEvnt.push_back(FALSE);
     string tmp= tS("");
@@ -413,11 +485,7 @@ void NNmodel::activateDirectInput(
   const string name, /**< Name of the neuron population */
   unsigned int type /**< Type of input: 1 if common input, 2 if custom input from file, 3 if custom input as a rule*/)
 {
-    if (final) {
-	gennError("Trying to activate inputs in a finalized model.");
-    }
-    unsigned int i= findNeuronGrp(name);
-    receivesInputCurrent[i]= type;	// (TODO) 4 if random input with Gaussian distribution.
+    gennError("This function has been deprecated. Use neuron variables, extraGlobalNeuronKernelParameters, or parameters instead.");
 }
 
 //--------------------------------------------------------------------------
@@ -620,13 +688,7 @@ void NNmodel::setSynapseG(const string sName, /**<  */
 void NNmodel::setConstInp(const string sName, /**<  */
                           double globalInp0 /**<  */)
 {
-    if (final) {
-	gennError("Trying to add constant inputs in a finalized model.");
-    }
-  unsigned int found= findNeuronGrp(sName);
-  if (globalInp.size() < found+1) globalInp.resize(found+1);
-  globalInp[found]= globalInp0;
-
+    gennError("This function has been deprecated, use parameters in the neuron model instead.");
 }
 
 
@@ -732,6 +794,7 @@ void NNmodel::setMaxConn(const string sname, /**<  */
   }
 }
 
+#ifndef CPU_ONLY
 //--------------------------------------------------------------------------
 /*! \brief This function defines the way how the GPU is chosen. If "AUTODEVICE" (-1) is given as the argument, GeNN will use internal heuristics to choose the device. Otherwise the argument is the device number and the indicated device will be used.
 */ 
@@ -745,10 +808,14 @@ void NNmodel::setGPUDevice(int device)
   assert(device < deviceCount);
   chooseGPUDevice= device;
 }
+#endif
 
 void NNmodel::finalize()
 {
     //initializing learning parameters to start
+    if (final) {
+	gennError("Your model has already been finalized");
+    }
     initLearnGrps();
     final= 1;
 }

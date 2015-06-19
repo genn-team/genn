@@ -24,10 +24,6 @@ using namespace std;
 
 #define DBG_SIZE 10000
 
-// and some global variables
-float t= 0.0f;
-unsigned int iT= 0;
-
 //----------------------------------------------------------------------
 // other stuff:
 #define T_REPORT_TME 100.0

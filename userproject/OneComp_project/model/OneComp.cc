@@ -14,12 +14,13 @@
 #include "modelSpec.h"
 #include "modelSpec.cc"
 
-double exIzh_p[4]={
+double exIzh_p[5]={
 //Izhikevich model parameters - tonic spiking
 	0.02,	// 0 - a
 	0.2, 	// 1 - b
 	-65, 	// 2 - c
-	6 	// 3 - d
+	6, 	// 3 - d
+	4.0     // 4 - I0 (input current)
 };
 
 double exIzh_ini[2]={
@@ -44,19 +45,27 @@ double *postSynV = NULL;
 
 #include "../../userproject/include/sizes.h"
 
-float inpIzh1 = 4.0;
-
 void modelDefinition(NNmodel &model) 
 {
   initGeNN();
     model.setGPUDevice(0);
   model.setName("OneComp");
-  model.addNeuronPopulation("Izh1", _NC1, IZHIKEVICH, exIzh_p, exIzh_ini);        	 
- // model.addSynapsePopulation("IzhIzh", NSYNAPSE, ALLTOALL, INDIVIDUALG, NO_DELAY, IZHIKEVICH_PS, "Izh1", "Izh1", mySyn_p, postSynV, postExp);
- // model.setSynapseG("IzhIzh", gIzh1);
-  
-  model.activateDirectInput("Izh1", CONSTINP);
-  model.setConstInp("Izh1", inpIzh1);
+  neuronModel n= nModels[IZHIKEVICH];
+  n.pNames.push_back(tS("I0"));
+  n.simCode= tS("    if ($(V) >= 30.0){\n\
+      $(V)=$(c);\n\
+		  $(U)+=$(d);\n\
+    } \n\
+    $(V)+=0.5*(0.04*$(V)*$(V)+5.0*$(V)+140.0-$(U)+$(I0)+$(Isyn))*DT; //at two times for numerical stability\n\
+    $(V)+=0.5*(0.04*$(V)*$(V)+5.0*$(V)+140.0-$(U)+$(I0)+$(Isyn))*DT;\n\
+    $(U)+=$(a)*($(b)*$(V)-$(U))*DT;\n\
+   //if ($(V) > 30.0){   //keep this only for visualisation -- not really necessaary otherwise \n	\
+   //  $(V)=30.0; \n\
+   //}\n\
+   ");
+  unsigned int MYIZHIKEVICH= nModels.size();
+  nModels.push_back(n);
+  model.addNeuronPopulation("Izh1", _NC1, MYIZHIKEVICH, exIzh_p, exIzh_ini);        	 
   model.setPrecision(GENN_FLOAT);
   model.finalize();
 }

@@ -46,7 +46,7 @@ void modelDefinition(NNmodel &model)
   n.varNames.push_back(tS("shift"));
   n.varTypes.push_back(tS("scalar"));
   n.pNames.push_back(tS("ISI"));
-  n.simCode= tS("$(x)= t+$(shift);");
+  n.simCode= tS("$(x)= $(t)+$(shift);");
   n.thresholdConditionCode= tS("(fmod($(x),$(ISI)) < 1e-4)");
   int DUMMYNEURON= nModels.size();
   nModels.push_back(n);

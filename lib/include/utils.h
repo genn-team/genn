@@ -27,19 +27,24 @@
 
 #include <cstdlib> // for exit() and EXIT_FAIL / EXIT_SUCCESS
 #include <iostream>
-#include <string>
-#include <vector>
 #include <map>
 #include <memory>
 #include <fstream>
 #include <cmath>
+#include <vector>
+#include <string>
+using namespace std;
 
+#ifndef CPU_ONLY
 #include <cuda_runtime.h>
+#endif
 
 #include "modelSpec.h"
 #include "toString.h"
 #include "stringutils.h"
 
+
+#ifndef CPU_ONLY
 //--------------------------------------------------------------------------
 /*! \brief Macro for wrapping cuda runtime function calls and catching any errors that may be thrown.
  */
@@ -55,6 +60,7 @@
     exit(EXIT_FAILURE);						           \
   }									   \
 }
+#endif
 
 //--------------------------------------------------------------------------
 /*! \brief Function called upon the detection of an error. Outputs an error message and then exits.
@@ -103,6 +109,7 @@ void writeHeader(ostream &os)
 unsigned int theSize(string type) 
 {
   unsigned int size = 0;
+  if (type.find(tS("*")) != string::npos) size= sizeof(char *); // it's a pointer ... any pointer should have the same size
   if (type == "char") size = sizeof(char);
   //  if (type == "char16_t") size = sizeof(char16_t);
   //  if (type == "char32_t") size = sizeof(char32_t);
@@ -226,7 +233,6 @@ The neuron models are defined and added to the C++ vector nModels that is holdin
 void prepareStandardModels()
 {
   neuronModel n;
-
   //Rulkov neurons
   n.varNames.push_back(tS("V"));
   n.varTypes.push_back(tS("scalar"));
@@ -276,16 +282,20 @@ void prepareStandardModels()
   n.pNames.push_back(tS("Vspike"));
   n.pNames.push_back(tS("Vrest"));
   n.dpNames.clear();
+  n.extraGlobalNeuronKernelParameters.push_back(tS("rates"));
+  n.extraGlobalNeuronKernelParameterTypes.push_back(tS("uint64_t *"));
+  n.extraGlobalNeuronKernelParameters.push_back(tS("offset"));
+  n.extraGlobalNeuronKernelParameterTypes.push_back(tS("unsigned int"));
   n.simCode= tS("    uint64_t theRnd;\n\
     if ($(V) > $(Vrest)) {\n\
       $(V)= $(Vrest);\n\
     }\n\
     else {\n\
-      if (t - $(spikeTime) > ($(trefract))) {\n\
+      if ($(t) - $(spikeTime) > ($(trefract))) {\n\
         MYRAND($(seed),theRnd);\n\
-        if (theRnd < lrate) {\n			\
+        if (theRnd < *($(rates)+$(offset)+$(id))) {\n			\
           $(V)= $(Vspike);\n\
-          $(spikeTime)= t;\n\
+          $(spikeTime)= $(t);\n\
         }\n\
       }\n\
     }\n");
@@ -298,6 +308,8 @@ void prepareStandardModels()
 // Traub and Miles HH neurons TRAUBMILES_FAST - Original fast implementation, using 25 inner iterations. There are singularities in this model, which can be  easily hit in float precision.  
   n.varNames.clear();
   n.varTypes.clear();
+  n.extraGlobalNeuronKernelParameters.clear();
+  n.extraGlobalNeuronKernelParameterTypes.clear();
   n.varNames.push_back(tS("V"));
   n.varTypes.push_back(tS("scalar"));
   n.varNames.push_back(tS("m"));
@@ -321,7 +333,7 @@ void prepareStandardModels()
     for (mt=0; mt < 25; mt++) {\n\
       Imem= -($(m)*$(m)*$(m)*$(h)*$(gNa)*($(V)-($(ENa)))+\n\
               $(n)*$(n)*$(n)*$(n)*$(gK)*($(V)-($(EK)))+\n\
-              $(gl)*($(V)-($(El)))-Isyn);\n\
+              $(gl)*($(V)-($(El)))-$(Isyn));\n\
       scalar _a= 0.32*(-52.0-$(V))/(exp((-52.0-$(V))/4.0)-1.0);\n\
       scalar _b= 0.28*($(V)+25.0)/(exp(($(V)+25.0)/5.0)-1.0);\n\
       $(m)+= (_a*(1.0-$(m))-_b*$(m))*mdt;\n\
@@ -365,17 +377,17 @@ void prepareStandardModels()
     for (mt=0; mt < 25; mt++) {\n\
       Imem= -($(m)*$(m)*$(m)*$(h)*$(gNa)*($(V)-($(ENa)))+\n\
               $(n)*$(n)*$(n)*$(n)*$(gK)*($(V)-($(EK)))+\n\
-              $(gl)*($(V)-($(El)))-Isyn);\n\
-      scalar volatile _tmp= exp((-52.0-$(V))/4.0)-1.0;\n\
-      scalar _a= 0.32*(-52.0-$(V))/(_tmp+SCALAR_MIN);\n\
-      _tmp= exp(($(V)+25.0)/5.0)-1.0;\n\
-      scalar _b= 0.28*($(V)+25.0)/(_tmp+SCALAR_MIN);\n\
+              $(gl)*($(V)-($(El)))-$(Isyn));\n\
+      scalar volatile _tmp= abs(exp((-52.0-$(V))/4.0)-1.0);\n\
+      scalar _a= 0.32*abs(-52.0-$(V))/(_tmp+SCALAR_MIN);\n\
+      _tmp= abs(exp(($(V)+25.0)/5.0)-1.0);\n\
+      scalar _b= 0.28*abs($(V)+25.0)/(_tmp+SCALAR_MIN);\n\
       $(m)+= (_a*(1.0-$(m))-_b*$(m))*mdt;\n\
       _a= 0.128*exp((-48.0-$(V))/18.0);\n\
       _b= 4.0 / (exp((-25.0-$(V))/5.0)+1.0);\n\
       $(h)+= (_a*(1.0-$(h))-_b*$(h))*mdt;\n\
-      _tmp= exp((-50.0-$(V))/5.0)-1.0;\n\
-      _a= 0.032*(-50.0-$(V))/(_tmp+SCALAR_MIN); \n\
+      _tmp= abs(exp((-50.0-$(V))/5.0)-1.0);\n\
+      _a= 0.032*abs(-50.0-$(V))/(_tmp+SCALAR_MIN); \n\
       _b= 0.5*exp((-55.0-$(V))/40.0);\n\
       $(n)+= (_a*(1.0-$(n))-_b*$(n))*mdt;\n\
       $(V)+= Imem/$(C)*mdt;\n\
@@ -412,7 +424,7 @@ void prepareStandardModels()
     for (mt=0; mt < 25; mt++) {\n\
       Imem= -($(m)*$(m)*$(m)*$(h)*$(gNa)*($(V)-($(ENa)))+\n\
               $(n)*$(n)*$(n)*$(n)*$(gK)*($(V)-($(EK)))+\n\
-              $(gl)*($(V)-($(El)))-Isyn);\n\
+              $(gl)*($(V)-($(El)))-$(Isyn));\n\
       scalar _a;\n\
       if (lV == -52.0) _a= 1.28;\n\
       else _a= 0.32*(-52.0-$(V))/(exp((-52.0-$(V))/4.0)-1.0);\n\
@@ -463,7 +475,7 @@ void prepareStandardModels()
     for (mt=0; mt < $(ntimes); mt++) {\n\
       Imem= -($(m)*$(m)*$(m)*$(h)*$(gNa)*($(V)-($(ENa)))+\n\
               $(n)*$(n)*$(n)*$(n)*$(gK)*($(V)-($(EK)))+\n\
-              $(gl)*($(V)-($(El)))-Isyn);\n\
+              $(gl)*($(V)-($(El)))-$(Isyn));\n\
       scalar _a;\n\
       if (lV == -52.0) _a= 1.28;\n\
       else _a= 0.32*(-52.0-$(V))/(exp((-52.0-$(V))/4.0)-1.0);\n\
@@ -746,7 +758,7 @@ void prepareWeightUpdateModels()
     // code for presynaptic spike
     wuL.simCode = tS("$(addtoinSyn) = $(g);\n\
   $(updatelinsyn); \n				\
-  scalar dt = $(sT_post) - t - ($(tauShift)); \n	\
+  scalar dt = $(sT_post) - $(t) - ($(tauShift)); \n	\
   scalar dg = 0;\n				\
   if (dt > $(lim0))  \n				\
       dg = -($(off0)) ; \n			\
@@ -759,7 +771,7 @@ void prepareWeightUpdateModels()
   $(g)=$(gMax)/2 *(tanh($(gSlope)*($(gRaw) - ($(gMid))))+1); \n");   
   wuL.dps = new pwSTDP;
   // code for post-synaptic spike 
-  wuL.simLearnPost = tS("scalar dt = t - ($(sT_pre)) - ($(tauShift)); \n\
+  wuL.simLearnPost = tS("scalar dt = $(t) - ($(sT_pre)) - ($(tauShift)); \n\
   scalar dg =0; \n\
   if (dt > $(lim0))  \n\
       dg = -($(off0)) ; \n \

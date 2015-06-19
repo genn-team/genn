@@ -23,8 +23,6 @@ private:
     void exportArray(double *, scalar *, int);
  public:
   NNmodel model;
-  unsigned int offset;
-  uint64_t *theRates;
   uint64_t *baserates;
   //------------------------------------------------------------------------
   // on the device:

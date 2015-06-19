@@ -11,6 +11,9 @@
 
   --------------------------------------------------------------------------*/
 
+// The CPU_ONLY version does not need any of this
+#ifndef CPU_ONLY
+
 //------------------------------------------------------------------------
 /*! \file generateKernels.cc
 
@@ -20,11 +23,10 @@
 //-------------------------------------------------------------------------
 
 #include <string>
-#include "CodeHelper.cc"
 #include "global.h"
 
 short *isGrpVarNeeded;
-CodeHelper hlp;
+
 
 //-------------------------------------------------------------------------
 /*!
@@ -75,28 +77,7 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 
   
     // kernel header
-    os << "__global__ void calcNeurons(";
-    for (int i = 0; i < model.neuronGrpN; i++) {
-	nt = model.neuronType[i];
-
-	if (nt == POISSONNEURON) {
-	    // Note: Poisson neurons only used as input neurons; they do not receive any inputs
-	    os << model.RNtype << " *d_rates" << model.neuronName[i];
-	    os << ", // poisson \"rates\" of grp " << model.neuronName[i] << ENDL;
-	    os << "unsigned int offset" << model.neuronName[i];
-	    os << ", // poisson \"rates\" offset of grp " << model.neuronName[i] << ENDL;
-	}
-	if (model.receivesInputCurrent[i] > 1) {
-	    os << model.ftype << " *d_inputI" << model.neuronName[i];
-	    os << ", // explicit input current to grp " << model.neuronName[i] << ENDL;
-	}
-	for (int k= 0, l= nModels[nt].extraGlobalNeuronKernelParameters.size(); k < l; k++) {
-	    os << nModels[nt].extraGlobalNeuronKernelParameterTypes[k];
-	    os << " " << nModels[nt].extraGlobalNeuronKernelParameters[k];
-	    os << model.neuronName[i] << ", " << ENDL;
-	}
-    }
-    os << model.ftype << " t)" << ENDL;
+    os << "extern \"C\" __global__ void calcNeurons(" << model.ftype << " t)" << ENDL;
     os << OB(5);
 
     // kernel code
@@ -128,7 +109,7 @@ void genNeuronKernel(NNmodel &model, //!< Model description
     os << ENDL;
 
     // Reset global spike counting vars here if there are no synapses at all
-    if (model.synapseGrpN == 0) {
+    if (model.resetKernel == GeNNFlags::calcNeurons) {
 	os << "if (id == 0)" << OB(6);
 	for (int j = 0; j < model.neuronGrpN; j++) {
 	    if (model.neuronDelaySlots[j] > 1) { // WITH DELAY
@@ -168,13 +149,13 @@ void genNeuronKernel(NNmodel &model, //!< Model description
     }
     os << "__syncthreads();" << ENDL;
 
-
+    
     for (int i = 0; i < model.neuronGrpN; i++) {
 	nt = model.neuronType[i];
-
+	
 	string queueOffset = (model.neuronDelaySlots[i] > 1 ? "(dd_spkQuePtr" + model.neuronName[i] + " * " + tS(model.neuronN[i]) + ") + " : "");
 	string queueOffsetTrueSpk = (model.neuronNeedTrueSpk[i] ? queueOffset : "");
-
+	
 	if (i == 0) {
 	    os << "if (id < " << model.padSumNeuronN[i] << ")" << OB(10);
 	    localID = string("id");
@@ -184,10 +165,10 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 	    os << "unsigned int lid = id - " << model.padSumNeuronN[i - 1] << ";" << ENDL;
 	    localID = string("lid");
 	}
-
+	
 	os << "// only do this for existing neurons" << ENDL;
 	os << "if (" << localID << " < " << model.neuronN[i] << ")" << OB(20);
-
+	
 	os << "// pull neuron variables in a coalesced access" << ENDL;
 	for (int k = 0; k < nModels[nt].varNames.size(); k++) {
 	    os << nModels[nt].varTypes[k] << " l" << nModels[nt].varNames[k] << " = dd_";
@@ -208,144 +189,46 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 	    }
 	    os << localID << "];" << ENDL;
 	}
-	if (nt == POISSONNEURON) {
-	    os << model.RNtype << " lrate = d_rates" << model.neuronName[i] << "[offset" << model.neuronName[i] << " + " << localID << "];" << ENDL;
-	}
 
-        os << "// execute internal synapse dynamics if any" << ENDL;
 	if (model.needSynapseDelay) {
 	    os << "unsigned int delaySlot;" << ENDL;
 	}
 	os << ENDL;
-	for (int j = 0; j < model.inSyn[i].size(); j++) {
-	    unsigned int synPopID=  model.inSyn[i][j];
-	    unsigned int synt= model.synapseType[synPopID];
-	    string synapseName= model.synapseName[synPopID];
-
-	    if (weightUpdateModels[synt].synapseDynamics != tS("")) {
-                // there is some internal synapse dynamics
-		weightUpdateModel wu= weightUpdateModels[synt];
-		string code= wu.synapseDynamics;
-		unsigned int srcno= model.neuronN[model.synapseSource[synPopID]]; 
-		int src= model.synapseSource[synPopID];
-		int trg= model.synapseTarget[synPopID];
-		int nt_pre= model.neuronType[src];
-		int nt_post= model.neuronType[trg];
-		bool delayPre = model.neuronDelaySlots[src] > 1;
-		string offsetPre = (delayPre ? "(delaySlot * " + tS(model.neuronN[src]) + ") + " : "");
-		// !! there is an issue here for 0 delays: SynapseDynamics may access variables that are set within the same kernel with possible race conditions. In future versions it seems like a better solution to move synapse dynamics into a separate kernel
-		os << "__syncthreads();" << endl;
-		if (model.neuronDelaySlots[src] > 1) {
-		    os << "delaySlot = (dd_spkQuePtr" << model.neuronName[src];
-		    os << " + " << tS(model.neuronDelaySlots[src] - model.synapseDelay[synPopID]);
-		    os << ") % " << tS(model.neuronDelaySlots[src]) << ";" << ENDL;
-		}
-		if (model.synapseConnType[synPopID] == SPARSE) { // SPARSE
-		    os << "for (int k = 0; k < " << srcno << "; k++)" << OB(24) << ENDL;
-		    os << "if (" << localID << " < dd_indInG" << synapseName << "[k + 1] - dd_indInG" << synapseName << "[k])" << OB(25);
-		    os << "// all threads participate that can work on a post-synaptic neuron" << ENDL;
-		    if (model.synapseGType[synPopID] == INDIVIDUALG) {
-		      // name substitute synapse var names in synapseDynamics code
-		      name_substitutions(code, tS("dd_"), wu.varNames, synapseName + tS("[") + localID + tS(" + dd_indInG") + synapseName + tS("[k]]"));
-		    }
-		    else {
-		      // substitute initial values as constants for synapse var names in synapseDynamics code
-		      value_substitutions(code, wu.varNames, model.synapseIni[synPopID]);
-		    }
-		    // substitute pre-synaptic variable names in synapseDynamics code
-		    // !!! this functionality needs testing !!!    
-		    if (nt_pre == POISSONNEURON) substitute(code, tS("$(V_pre)"), tS(model.neuronPara[src][2]));
-		    string theQueueOffset;
-		    for (int k= 0, l= nModels[nt_pre].varNames.size(); k < l; k++) {
-			if (model.neuronVarNeedQueue[src][k]) {
-			    substitute(code, tS("$(") + nModels[nt_pre].varNames[k] + tS("_pre)"), tS("dd_")+nModels[nt_pre].varNames[k]+ model.neuronName[src]+tS("[")+offsetPre+tS("k]"));
-			}
-			else {
-			   substitute(code, tS("$(") + nModels[nt_pre].varNames[k] + tS("_pre)"), tS("dd_")+nModels[nt_pre].varNames[k]+ model.neuronName[src]+tS("[k]")); 
-			}
-		    }
-		    // substitute post-synaptic variable names in synapseDynamics code
-		    extended_name_substitutions(code, tS("dd_"), nModels[nt_post].varNames, tS("_post"), model.neuronName[trg]+tS("[dd_ind")+synapseName +tS("[") + localID + tS(" + dd_indInG") + synapseName + tS("[k]]]"));
-		    // !!! end of new mechanism !!!
-		    // substitute parameter values for parameters in synapseDynamics code
-		    value_substitutions(code, wu.pNames, model.synapsePara[synPopID]);
-		    // substitute values for derived parameters in synapseDynamics code
-		    value_substitutions(code, wu.dpNames, model.dsp_w[synPopID]);
-		    os << ensureFtype(code, model.ftype) << ENDL;
-		    os << CB(25);
-		    os << CB(24);
-		}
-		else { // DENSE
-		    os << "for (int k = 0; k < " <<  srcno << "; k++)" << OB(26);
-		    if (model.synapseGType[synPopID] == INDIVIDUALG) {
-			// name substitute synapse var names in synapseDynamics code
-			name_substitutions(code, tS("dd_"), wu.varNames, synapseName + tS("[") + localID + tS(" + k * ") + tS(model.neuronN[i]) + tS("]"));
-		    }
-		    else {
-			// substitute initial values as constants for synapse var names in synapseDynamics code
-			value_substitutions(code, wu.varNames, model.synapseIni[synPopID]);
-		    }
-		    // substitute pre-synaptic variable names in synapseDynamics code
-		    string theQueueOffset;
-		    for (int k= 0, l= nModels[nt_pre].varNames.size(); k < l; k++) {
-			if (model.neuronVarNeedQueue[src][k]) {
-			    substitute(code, tS("$(") + nModels[nt_pre].varNames[k] + tS("_pre)"), tS("dd_")+nModels[nt_pre].varNames[k]+ model.neuronName[src]+tS("[")+offsetPre+tS("k]"));
-			}
-			else {
-			    substitute(code, tS("$(") + nModels[nt_pre].varNames[k] + tS("_pre)"), tS("dd_")+nModels[nt_pre].varNames[k]+ model.neuronName[src]+tS("[k]"));
-			}
-		    }
-		    // substitute post-synaptic variable names in synapseDynamics code - these are available in registers as "l**" because inSyn[i] contains all incoming synapse groups
-		    extended_name_substitutions(code, tS("l"), nModels[nt_post].varNames, tS("_post"), tS(""));
-		    // substitute parameter values for parameters in synapseDynamics code
-		    value_substitutions(code, wu.pNames, model.synapsePara[synPopID]);
-		    // substitute values for derived parameters in synapseDynamics code
-		    value_substitutions(code, wu.dpNames, model.dsp_w[synPopID]);
-		    os << ensureFtype(code, model.ftype) << ENDL;
-		    os << CB(26);
-		}
-	    }
-	}
-
-	if (nt != POISSONNEURON) {
+		
+	if ((model.inSyn[i].size() > 0) || (nModels[nt].simCode.find(tS("Isyn")) != string::npos)) {
 	    os << model.ftype << " Isyn = 0;" << ENDL;
+	} 
+	for (int j = 0; j < model.inSyn[i].size(); j++) {
+	    unsigned int synPopID= model.inSyn[i][j]; // number of (post)synapse group 
+	    postSynModel psm= postSynModels[model.postSynapseType[synPopID]];
+	    string sName= model.synapseName[synPopID];
 	    
-	    for (int j = 0; j < model.inSyn[i].size(); j++) {
-		unsigned int synPopID= model.inSyn[i][j]; // number of (post)synapse group 
-		postSynModel psm= postSynModels[model.postSynapseType[synPopID]];
-		string sName= model.synapseName[synPopID];
-
-		os << "// pull inSyn values in a coalesced access" << ENDL;
-		os << model.ftype << " linSyn" << sName << " = dd_inSyn" << sName << "[" << localID << "];" << ENDL;
-		if (model.synapseGType[synPopID] == INDIVIDUALG) {
-		    for (int k = 0, l = psm.varNames.size(); k < l; k++) {
-			os << psm.varTypes[k] << " lps" << psm.varNames[k] << sName;
-			os << " = dd_" <<  psm.varNames[k] << sName << "[" << localID << "];" << ENDL;
-		    }
+	    os << "// pull inSyn values in a coalesced access" << ENDL;
+	    os << model.ftype << " linSyn" << sName << " = dd_inSyn" << sName << "[" << localID << "];" << ENDL;
+	    if (model.synapseGType[synPopID] == INDIVIDUALG) {
+		for (int k = 0, l = psm.varNames.size(); k < l; k++) {
+		    os << psm.varTypes[k] << " lps" << psm.varNames[k] << sName;
+		    os << " = dd_" <<  psm.varNames[k] << sName << "[" << localID << "];" << ENDL;
 		}
-		os << "Isyn += ";
-		string psCode = psm.postSyntoCurrent;
-		substitute(psCode, tS("$(inSyn)"), tS("linSyn") + sName);
-		name_substitutions(psCode, tS("l"), nModels[nt].varNames, tS(""));
-		value_substitutions(psCode, nModels[nt].pNames, model.neuronPara[i]);
-		value_substitutions(psCode, nModels[nt].dpNames, model.dnp[i]);
-		if (model.synapseGType[synPopID] == INDIVIDUALG) {
-		    name_substitutions(psCode, tS("lps"), psm.varNames, sName);
-		}
-		else {
-		    value_substitutions(psCode, psm.varNames, model.postSynIni[synPopID]);
-		}
-		value_substitutions(psCode, psm.pNames, model.postSynapsePara[synPopID]);
-		value_substitutions(psCode, psm.dpNames, model.dpsp[synPopID]);
-		os << ensureFtype(psCode, model.ftype);
-		os << ";" << ENDL;	    
 	    }
-	}
-	if (model.receivesInputCurrent[i] == 1) { // receives constant input
-	    os << "Isyn += " << model.globalInp[i] << ";" << ENDL;
-	}
-	if (model.receivesInputCurrent[i] >= 2) { // receives explicit input from argument
-	    os << "Isyn += (" << model.ftype << ") d_inputI" << model.neuronName[i] << "[" << localID << "];" << ENDL;
+	    os << "Isyn += ";
+	    string psCode = psm.postSyntoCurrent;
+	    substitute(psCode, tS("$(id)"), localID);
+	    substitute(psCode, tS("$(t)"), tS("t"));
+	    substitute(psCode, tS("$(inSyn)"), tS("linSyn") + sName);
+	    name_substitutions(psCode, tS("l"), nModels[nt].varNames, tS(""));
+	    value_substitutions(psCode, nModels[nt].pNames, model.neuronPara[i]);
+	    value_substitutions(psCode, nModels[nt].dpNames, model.dnp[i]);
+	    if (model.synapseGType[synPopID] == INDIVIDUALG) {
+		name_substitutions(psCode, tS("lps"), psm.varNames, sName);
+	    }
+	    else {
+		value_substitutions(psCode, psm.varNames, model.postSynIni[synPopID]);
+	    }
+	    value_substitutions(psCode, psm.pNames, model.postSynapsePara[synPopID]);
+	    value_substitutions(psCode, psm.dpNames, model.dpsp[synPopID]);
+	    os << ensureFtype(psCode, model.ftype);
+	    os << ";" << ENDL;	    
 	}
 
 	os << "// test whether spike condition was fulfilled previously" << ENDL;
@@ -354,7 +237,10 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 	    cerr << "Warning: No thresholdConditionCode for neuron type " << model.neuronType[i] << " used for population \"" << model.neuronName[i] << "\" was provided. There will be no spikes detected in this population!" << endl;
 	} 
 	else {
+	    substitute(thCode, tS("$(id)"), localID);
+	    substitute(thCode, tS("$(t)"), tS("t"));
 	    name_substitutions(thCode, tS("l"), nModels[nt].varNames, tS(""));
+	    substitute(thCode, tS("$(Isyn)"), tS("Isyn"));
 	    substitute(thCode, tS("$(sT)"), tS("lsT"));
 	    value_substitutions(thCode, nModels[nt].pNames, model.neuronPara[i]);
 	    value_substitutions(thCode, nModels[nt].dpNames, model.dnp[i]);
@@ -363,10 +249,12 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 
 	os << "// calculate membrane potential" << ENDL;
 	string sCode = nModels[nt].simCode;
+	substitute(sCode, tS("$(id)"), localID);
+	substitute(sCode, tS("$(t)"), tS("t"));
 	name_substitutions(sCode, tS("l"), nModels[nt].varNames, tS(""));
 	value_substitutions(sCode, nModels[nt].pNames, model.neuronPara[i]);
 	value_substitutions(sCode, nModels[nt].dpNames, model.dnp[i]);
-	name_substitutions(sCode, tS(""), nModels[nt].extraGlobalNeuronKernelParameters, model.neuronName[i]);
+	name_substitutions(sCode, tS("dd_"), nModels[nt].extraGlobalNeuronKernelParameters, model.neuronName[i]);
 	substitute(sCode, tS("$(Isyn)"), tS("Isyn"));
 	substitute(sCode, tS("$(sT)"), tS("lsT"));
 	os << ensureFtype(sCode, model.ftype) << ENDL;
@@ -375,15 +263,16 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 	if (model.neuronNeedSpkEvnt[i]) {
 	    string eCode = model.neuronSpkEvntCondition[i];
 	    // code substitutions ----
-	    extended_name_substitutions(eCode, tS("l"), nModels[model.neuronType[i]].varNames, tS("_pre"), tS(""));
 	    for (int j= 0; j < model.outSyn[i].size(); j++) {
 		unsigned int synPopID = model.outSyn[i][j];
 		unsigned int synt = model.synapseType[synPopID];
+		substitute(eCode, tS("$(id)"), localID);
+		substitute(eCode, tS("$(t)"), tS("t"));
+		extended_name_substitutions(eCode, tS("l"), nModels[model.neuronType[i]].varNames, tS("_pre"), tS(""));
 		value_substitutions(eCode, weightUpdateModels[synt].pNames, model.synapsePara[synPopID]);
-		value_substitutions(eCode, weightUpdateModels[synt].dpNames, model.dsp_w[synPopID]);
-// this is a bit of a hack: allow extraGrlobalNeuronKernelParameters to overshadow extraGlobalSynapeKernelParameters. This alows to use a copy of an extraGlobalSynapeKernelParameter within the neuron kernel.
-	    name_substitutions(eCode, tS(""), nModels[model.neuronType[i]].extraGlobalNeuronKernelParameters, model.neuronName[i]);
-		name_substitutions(eCode, tS(""), weightUpdateModels[synt].extraGlobalSynapseKernelParameters, model.synapseName[synPopID]);
+		value_substitutions(eCode, weightUpdateModels[synt].dpNames, model.dsp_w[synPopID]);						    
+		name_substitutions(eCode, tS("dd_"), weightUpdateModels[synt].extraGlobalSynapseKernelParameters, model.synapseName[synPopID]);
+		name_substitutions(eCode, tS("dd_"), nModels[model.neuronType[i]].extraGlobalNeuronKernelParameters, model.neuronName[i]);
 	    }
 	    // end code substitutions ----
 
@@ -404,6 +293,8 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 	    // add after-spike reset if provided
 	    if (nModels[nt].resetCode != tS("")) {
 		string rCode = nModels[nt].resetCode;
+		substitute(rCode, tS("$(id)"), localID);
+		substitute(rCode, tS("$(t)"), tS("t"));
 		name_substitutions(rCode, tS("l"), nModels[nt].varNames, tS(""));
 		value_substitutions(rCode, nModels[nt].pNames, model.neuronPara[i]);
 		value_substitutions(rCode, nModels[nt].dpNames, model.dnp[i]);
@@ -428,16 +319,18 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 	for (int j = 0; j < model.inSyn[i].size(); j++) {
 	    postSynModel psModel= postSynModels[model.postSynapseType[model.inSyn[i][j]]];
 	    string sName= model.synapseName[model.inSyn[i][j]];
-	    string psCode = psModel.postSynDecay;
-	    substitute(psCode, tS("$(inSyn)"), tS("linSyn") + sName);
-	    name_substitutions(psCode, tS("lps"), psModel.varNames, sName);
-	    value_substitutions(psCode, psModel.pNames, model.postSynapsePara[model.inSyn[i][j]]);
-	    value_substitutions(psCode, psModel.dpNames, model.dpsp[model.inSyn[i][j]]);
-	    name_substitutions(psCode, tS("l"), nModels[nt].varNames, tS(""));
-	    value_substitutions(psCode, nModels[nt].pNames, model.neuronPara[i]);
-	    value_substitutions(psCode, nModels[nt].dpNames, model.dnp[i]);
+	    string pdCode = psModel.postSynDecay;
+	    substitute(pdCode, tS("$(id)"), localID);
+	    substitute(pdCode, tS("$(t)"), tS("t"));
+	    substitute(pdCode, tS("$(inSyn)"), tS("linSyn") + sName);
+	    name_substitutions(pdCode, tS("lps"), psModel.varNames, sName);
+	    value_substitutions(pdCode, psModel.pNames, model.postSynapsePara[model.inSyn[i][j]]);
+	    value_substitutions(pdCode, psModel.dpNames, model.dpsp[model.inSyn[i][j]]);
+	    name_substitutions(pdCode, tS("l"), nModels[nt].varNames, tS(""));
+	    value_substitutions(pdCode, nModels[nt].pNames, model.neuronPara[i]);
+	    value_substitutions(pdCode, nModels[nt].dpNames, model.dnp[i]);
 	    os << "// the post-synaptic dynamics" << ENDL;
-	    os << ensureFtype(psCode, model.ftype) << ENDL;
+	    os << ensureFtype(pdCode, model.ftype) << ENDL;
 	    os << "dd_inSyn"  << sName << "[" << localID << "] = linSyn" << sName << ";" << ENDL;
 	    for (int k = 0, l = psModel.varNames.size(); k < l; k++) {
 		os << "dd_" <<  psModel.varNames[k] << model.synapseName[model.inSyn[i][j]] << "[" << localID << "] = lps" << psModel.varNames[k] << sName << ";"<< ENDL;
@@ -544,7 +437,7 @@ void generate_process_presynaptic_events_code(
 	os << "else lmax = BLOCKSZ_SYN;" << ENDL;
 	os << "if (threadIdx.x < lmax)" << OB(100);
 	os << "shSpk" << postfix << "[threadIdx.x] = dd_glbSpk" << postfix << model.neuronName[src] << "[" << offsetPre << "(r * BLOCKSZ_SYN) + threadIdx.x];" << ENDL;
-	if (evnt && (model.neuronType[src] != POISSONNEURON)) {
+	if (evnt) {
 	    vector<string> vars = model.synapseSpkEvntVars[i];
 	    for (int j = 0; j < vars.size(); j++) {
 		os << "shSpkEvnt" << vars[j] << "[threadIdx.x] = dd_" << vars[j] << model.neuronName[src] << "[" << offsetPre << " shSpk" << postfix << "[threadIdx.x]];" << ENDL;
@@ -580,8 +473,7 @@ void generate_process_presynaptic_events_code(
 	    os << "unsigned int gid = (shSpk" << postfix << "[j] * " << model.neuronN[trg] << " + " << localID << ");" << ENDL;
 	}
 
-	if ((evnt) && (model.neuronType[src] != POISSONNEURON)) { // cosider whether POISSON Neurons should be allowed to throw events
-
+	if (evnt) {
 	    os << "if ";
 	    if (model.synapseGType[i] == INDIVIDUALID) {
 		// Note: we will just access global mem. For compute >= 1.2 simultaneous access to same global mem in the (half-)warp will be coalesced - no worries
@@ -593,7 +485,7 @@ void generate_process_presynaptic_events_code(
 	    extended_name_substitutions(eCode, tS("shSpkEvnt"), model.synapseSpkEvntVars[i], tS("_pre"), tS("[j]"));
 	    value_substitutions(eCode, weightUpdateModels[synt].pNames, model.synapsePara[i]);
 	    value_substitutions(eCode, weightUpdateModels[synt].dpNames, model.dsp_w[i]);
-	    name_substitutions(eCode, tS(""), weightUpdateModels[synt].extraGlobalSynapseKernelParameters, model.synapseName[i]);
+	    name_substitutions(eCode, tS("dd_"), weightUpdateModels[synt].extraGlobalSynapseKernelParameters, model.synapseName[i]);
 	    // end code substitutions ----
 	    os << "(" << ensureFtype(eCode, model.ftype) << ")"; 
 
@@ -619,6 +511,7 @@ void generate_process_presynaptic_events_code(
 
 	// Code substitutions ----------------------------------------------------------------------------------
 	string wCode = (evnt ? weightUpdateModels[synt].simCodeEvnt : weightUpdateModels[synt].simCode);
+	substitute(wCode, tS("$(t)"), tS("t"));
 	if (sparse) { // SPARSE
 	    if (isGrpVarNeeded[model.synapseTarget[i]]) { // SPARSE using atomicAdd
 		substitute(wCode, tS("$(updatelinsyn)"), theAtomicAdd+tS("(&$(inSyn), $(addtoinSyn))"));
@@ -648,11 +541,10 @@ void generate_process_presynaptic_events_code(
 	}
 	value_substitutions(wCode, weightUpdateModels[synt].pNames, model.synapsePara[i]);
 	value_substitutions(wCode, weightUpdateModels[synt].dpNames, model.dsp_w[i]);
-	name_substitutions(wCode, tS(""), weightUpdateModels[synt].extraGlobalSynapseKernelParameters, model.synapseName[i]);
+	name_substitutions(wCode, tS("dd_"), weightUpdateModels[synt].extraGlobalSynapseKernelParameters, model.synapseName[i]);
 	substitute(wCode, tS("$(addtoinSyn)"), tS("addtoinSyn"));
 
 	// presynaptic neuron variables and parameters
-	if (model.neuronType[src] == POISSONNEURON) substitute(wCode, tS("$(V_pre)"), tS(model.neuronPara[src][2]));
 	substitute(wCode, tS("$(sT_pre)"), tS("dd_sT") + model.neuronName[src] + tS("[") + offsetPre + tS("shSpk") + postfix + tS("[j]]"));
 	for (int j = 0; j < nModels[nt_pre].varNames.size(); j++) {
 	    if (model.neuronVarNeedQueue[src][j]) {
@@ -688,7 +580,7 @@ void generate_process_presynaptic_events_code(
 	    os << CB(140); // end if (id < npost)
 	} 
 
-	if ((evnt) && (model.neuronType[src] != POISSONNEURON)) {
+	if (evnt) {
 	    os << CB(130); // end if (eCode) 
 	}
 	else if (model.synapseGType[i] == INDIVIDUALID) {
@@ -758,18 +650,146 @@ void genSynapseKernel(NNmodel &model, //!< Model description
     os << "//-------------------------------------------------------------------------" << ENDL << ENDL;
 
 
-    // synapse kernel header
-    os << "__global__ void calcSynapses(" << ENDL;
-    for (int i = 0; i < model.synapseGrpN; i++) {
-	synt = model.synapseType[i];
-	for (int k = 0, l = weightUpdateModels[synt].extraGlobalSynapseKernelParameters.size(); k < l; k++) {
-	    os << weightUpdateModels[synt].extraGlobalSynapseKernelParameterTypes[k] << " ";
-	    os << weightUpdateModels[synt].extraGlobalSynapseKernelParameters[k];
-	    os << model.synapseName[i] << ", ";
+        if (model.synDynGroups > 0) {
+	os << "#define BLOCKSZ_SYNDYN " << synDynBlkSz << endl;
+
+	// SynapseDynamics kernel header
+	os << "extern \"C\" __global__ void calcSynapseDynamics(" << model.ftype << " t)" << ENDL; // end of synapse kernel header
+	
+	// synapse dynamics kernel code
+	os << OB(75);
+	
+	// common variables for all cases
+	os << "unsigned int id = BLOCKSZ_SYNDYN * blockIdx.x + threadIdx.x;" << ENDL;
+	
+	os << "// execute internal synapse dynamics if any" << ENDL;
+	if (model.needSynapseDelay) {
+	    os << "unsigned int delaySlot;" << ENDL;
 	}
-    }	
-    os << model.ftype << " t" << ENDL;
-    os << ")" << ENDL; // end of synapse kernel header
+	os << ENDL;
+	for (int i = 0; i < model.synDynGroups; i++) {
+	    unsigned int k= model.synDynGrp[i];
+	    unsigned int synt= model.synapseType[k];
+	    string synapseName= model.synapseName[k];
+	    
+	    if (weightUpdateModels[synt].synapseDynamics != tS("")) {
+		// there is some internal synapse dynamics
+		if (i == 0) {
+		    os << "if (id < " << model.padSumSynDynN[i] << ")" << OB(77);
+		    localID = "id";
+		}
+		else {
+		    os << "if ((id >= " << model.padSumSynDynN[i - 1] << ") && (id < " << model.padSumSynDynN[i] << "))" << OB(77);
+		    os << "unsigned int lid = id - " << model.padSumSynDynN[i - 1] << ";" << ENDL;
+		    localID = "lid";
+		}
+		weightUpdateModel wu= weightUpdateModels[synt];
+		string SDcode= wu.synapseDynamics;
+		substitute(SDcode, tS("$(t)"), tS("t"));
+		int src= model.synapseSource[k];
+		int trg= model.synapseTarget[k];
+		unsigned int srcno= model.neuronN[src];
+		unsigned int trgno= model.neuronN[trg];
+		int nt_pre= model.neuronType[src];
+		int nt_post= model.neuronType[trg];
+		bool delayPre = model.neuronDelaySlots[src] > 1;
+		bool delayPost = model.neuronDelaySlots[trg] > 1;
+		string offsetPre = (delayPre ? "(delaySlot * " + tS(model.neuronN[src]) + ") + " : "");
+		string offsetPost = (delayPost ? "(dd_spkQuePtr" + model.neuronName[trg] +" * " + tS(model.neuronN[trg]) + ") + " : "");
+		if (model.neuronDelaySlots[src] > 1) {
+		    os << "delaySlot = (dd_spkQuePtr" << model.neuronName[src];
+		    os << " + " << tS(model.neuronDelaySlots[src] - model.synapseDelay[k]);
+		    os << ") % " << tS(model.neuronDelaySlots[src]) << ";" << ENDL;
+		}
+		if (model.synapseConnType[k] == SPARSE) { // SPARSE
+		    os << "if (" << localID << " < dd_indInG" << synapseName << "[" << srcno << "])" << OB(25);
+		    os << "// all threads participate that can work on an existing synapse" << ENDL;
+		    if (model.synapseGType[k] == INDIVIDUALG) {
+			// name substitute synapse var names in synapseDynamics code
+			name_substitutions(SDcode, tS("dd_"), wu.varNames, synapseName + tS("[") + localID +tS("]"));
+		    }
+		    else {
+			// substitute initial values as constants for synapse var names in synapseDynamics code
+			value_substitutions(SDcode, wu.varNames, model.synapseIni[k]);
+		    }
+		    // substitute pre-synaptic variable names in synapseDynamics code
+		    // !!! this functionality needs testing !!!    
+		    string theOffset;
+		    for (int j= 0, l= nModels[nt_pre].varNames.size(); j < l; j++) {
+			if (model.neuronVarNeedQueue[src][j]) {
+			    theOffset= offsetPre;
+			}
+			else {
+			    theOffset= tS("");
+			}
+			substitute(SDcode, tS("$(") + nModels[nt_pre].varNames[j] + tS("_pre)"), tS("dd_")+nModels[nt_pre].varNames[j]+ model.neuronName[src]+tS("[")+theOffset+tS("dd_preInd")+synapseName+tS("[") + localID + tS("]]"));
+		    }
+		    for (int j= 0, l= nModels[nt_post].varNames.size(); j < l; j++) {
+			// substitute post-synaptic variable names in synapseDynamics code
+			if (model.neuronVarNeedQueue[trg][j]) {
+			    theOffset= offsetPost;
+			}
+			else {
+			    theOffset= tS("");
+			}
+			substitute(SDcode, tS("$(") + nModels[nt_post].varNames[j] + tS("_post)"), tS("dd_")+nModels[nt_post].varNames[j]+ model.neuronName[trg]+tS("[")+theOffset+tS("dd_ind")+synapseName+tS("[") + localID + tS("]]"));
+		    }
+		    // !!! end of new mechanism !!!
+		    // substitute parameter values for parameters in synapseDynamics code
+		    value_substitutions(SDcode, wu.pNames, model.synapsePara[k]);
+		    // substitute values for derived parameters in synapseDynamics code
+		    value_substitutions(SDcode, wu.dpNames, model.dsp_w[k]);
+		    os << ensureFtype(SDcode, model.ftype) << ENDL;
+		    os << CB(25);
+		    os << CB(77);
+		}
+		else { // DENSE
+		    os << "if (" << localID << " < " << srcno*trgno << ")" << OB(25);
+		    os << "// all threads participate that can work on an existing synapse" << ENDL;
+		    if (model.synapseGType[k] == INDIVIDUALG) {
+			// name substitute synapse var names in synapseDynamics code
+			name_substitutions(SDcode, tS("dd_"), wu.varNames, synapseName + tS("[") + localID + tS("]"));
+		    }
+		    else {
+			// substitute initial values as constants for synapse var names in synapseDynamics code
+			value_substitutions(SDcode, wu.varNames, model.synapseIni[k]);
+		    }
+		    // substitute pre-synaptic variable names in synapseDynamics code
+		    string theOffset;
+		    for (int j= 0, l= nModels[nt_pre].varNames.size(); j < l; j++) {
+			if (model.neuronVarNeedQueue[src][j]) {
+			    theOffset= offsetPre;
+			}
+			else {
+			    theOffset= tS("");
+			}
+			substitute(SDcode, tS("$(") + nModels[nt_pre].varNames[j] + tS("_pre)"), tS("dd_")+nModels[nt_pre].varNames[j]+ model.neuronName[src]+tS("[")+theOffset+localID +"/" + tS(model.neuronN[trg])+ tS("]"));
+		    }
+		    // substitute post-synaptic variable names in synapseDynamics code
+		    for (int j= 0, l= nModels[nt_post].varNames.size(); j < l; j++) {
+			if (model.neuronVarNeedQueue[trg][j]) {
+			    theOffset= offsetPost;
+			}
+			else {
+			    theOffset= tS("");
+			}
+			substitute(SDcode, tS("$(") + nModels[nt_post].varNames[j] + tS("_post)"), tS("dd_")+nModels[nt_post].varNames[j]+ model.neuronName[trg]+tS("[")+theOffset +localID +"%" + tS(model.neuronN[trg])+ tS("]"));
+		    }
+		    // substitute parameter values for parameters in synapseDynamics code
+		    value_substitutions(SDcode, wu.pNames, model.synapsePara[k]);
+		    // substitute values for derived parameters in synapseDynamics code
+		    value_substitutions(SDcode, wu.dpNames, model.dsp_w[k]);
+		    os << ensureFtype(SDcode, model.ftype) << ENDL;
+		    os << CB(25);
+		    os << CB(77);
+		}
+	    }	
+	}
+	os << CB(75);
+    }
+
+// synapse kernel header
+	os << "extern \"C\" __global__ void calcSynapses(" << model.ftype << " t)" << ENDL; // end of synapse kernel header
 
     // synapse kernel code
     os << OB(75);
@@ -891,10 +911,9 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 	    os << "dd_inSyn" << model.synapseName[i] << "[" << localID << "] = linSyn;" << ENDL;
 	    os << CB(190);
 	}
-
 	// need to do reset operations in this kernel (no learning kernel)
-	if (model.lrnGroups == 0) {
-
+	if (model.resetKernel == GeNNFlags::calcSynapses) {
+	    os << "__syncthreads();" << ENDL;
 	    os << "if (threadIdx.x == 0)" << OB(200);
 	    os << "j = atomicAdd((unsigned int *) &d_done, 1);" << ENDL;
 	    os << "if (j == " << numOfBlocks - 1 << ")" << OB(210);
@@ -942,16 +961,7 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 	numOfBlocks = model.padSumLearnN[model.lrnGroups - 1] / learnBlkSz;
   
 	// Kernel header
-	os << "__global__ void learnSynapsesPost(" << ENDL;
-	for (int i=0; i< model.synapseName.size(); i++){
-	    unsigned int synt= model.synapseType[i];
-	    for (int k= 0, l= weightUpdateModels[synt].extraGlobalSynapseKernelParameters.size(); k < l; k++) {
-		os << weightUpdateModels[synt].extraGlobalSynapseKernelParameterTypes[k] << " ";
-		os << weightUpdateModels[synt].extraGlobalSynapseKernelParameters[k];
-		os << model.synapseName[i] << ", ";
-	    }
-	}
-	os << model.ftype << " t)";
+	os << "extern \"C\" __global__ void learnSynapsesPost(" << model.ftype << " t)";
 	os << ENDL;
 
 	// kernel code
@@ -1035,6 +1045,7 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 	    }
 
 	    string code = weightUpdateModels[synt].simLearnPost;
+	    substitute(code, tS("$(t)"), tS("t"));
 	    // Code substitutions ----------------------------------------------------------------------------------
 	    if (sparse) { // SPARSE
 		name_substitutions(code, tS("dd_"), weightUpdateModels[synt].varNames, model.synapseName[k] + tS("[dd_remap") + model.synapseName[k] + tS("[iprePos]]"));
@@ -1044,10 +1055,9 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 	    }
 	    value_substitutions(code, weightUpdateModels[synt].pNames, model.synapsePara[k]);
 	    value_substitutions(code, weightUpdateModels[synt].dpNames, model.dsp_w[k]);
-	    name_substitutions(code, tS(""), weightUpdateModels[synt].extraGlobalSynapseKernelParameters, model.synapseName[k]);
+	    name_substitutions(code, tS("dd_"), weightUpdateModels[synt].extraGlobalSynapseKernelParameters, model.synapseName[k]);
 
 	    // presynaptic neuron variables and parameters
-	    if (model.neuronType[src] == POISSONNEURON) substitute(code, tS("$(V_pre)"), tS(model.neuronPara[src][2]));
 	    if (sparse) { // SPARSE
 		substitute(code, tS("$(sT_pre)"), tS("dd_sT") + model.neuronName[src] + tS("[") + offsetPre + tS("dd_revInd" + model.synapseName[k] + "[iprePos]]"));
 		for (int j = 0; j < nModels[nt_pre].varNames.size(); j++) {
@@ -1101,44 +1111,48 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 	    os << CB(250);
 	    os << CB(230);
 
-	    os << "__threadfence();" << ENDL;
-	    os << "if (threadIdx.x == 0)" << OB(320);
-	    os << "j = atomicAdd((unsigned int *) &d_done, 1);" << ENDL;
-	    os << "if (j == " << numOfBlocks - 1 << ")" << OB(330);
-
-	    for (int j = 0; j < model.neuronGrpN; j++) {
-		if (model.neuronDelaySlots[j] > 1) { // WITH DELAY
-		    os << "dd_spkQuePtr" << model.neuronName[j] << " = (dd_spkQuePtr" << model.neuronName[j] << " + 1) % " << model.neuronDelaySlots[j] << ";" << ENDL;
-		    if (model.neuronNeedSpkEvnt[j]) {
-			os << "dd_glbSpkCntEvnt" << model.neuronName[j] << "[dd_spkQuePtr" << model.neuronName[j] << "] = 0;" << ENDL;
+	    if (model.resetKernel == GeNNFlags::learnSynapsesPost) {
+		os << "__syncthreads();" << ENDL;
+		os << "if (threadIdx.x == 0)" << OB(320);
+		os << "j = atomicAdd((unsigned int *) &d_done, 1);" << ENDL;
+		os << "if (j == " << numOfBlocks - 1 << ")" << OB(330);
+		
+		for (int j = 0; j < model.neuronGrpN; j++) {
+		    if (model.neuronDelaySlots[j] > 1) { // WITH DELAY
+			os << "dd_spkQuePtr" << model.neuronName[j] << " = (dd_spkQuePtr" << model.neuronName[j] << " + 1) % " << model.neuronDelaySlots[j] << ";" << ENDL;
+			if (model.neuronNeedSpkEvnt[j]) {
+			    os << "dd_glbSpkCntEvnt" << model.neuronName[j] << "[dd_spkQuePtr" << model.neuronName[j] << "] = 0;" << ENDL;
+			}
+			if (model.neuronNeedTrueSpk[j]) {
+			    os << "dd_glbSpkCnt" << model.neuronName[j] << "[dd_spkQuePtr" << model.neuronName[j] << "] = 0;" << ENDL;
+			}
+			else {
+			    os << "dd_glbSpkCnt" << model.neuronName[j] << "[0] = 0;" << ENDL;
+			}
 		    }
-		    if (model.neuronNeedTrueSpk[j]) {
-			os << "dd_glbSpkCnt" << model.neuronName[j] << "[dd_spkQuePtr" << model.neuronName[j] << "] = 0;" << ENDL;
-		    }
-		    else {
+		    else { // NO DELAY
+			if (model.neuronNeedSpkEvnt[j]) {
+			    os << "dd_glbSpkCntEvnt" << model.neuronName[j] << "[0] = 0;" << ENDL;
+			}
 			os << "dd_glbSpkCnt" << model.neuronName[j] << "[0] = 0;" << ENDL;
 		    }
 		}
-		else { // NO DELAY
-		    if (model.neuronNeedSpkEvnt[j]) {
-			os << "dd_glbSpkCntEvnt" << model.neuronName[j] << "[0] = 0;" << ENDL;
-		    }
-		    os << "dd_glbSpkCnt" << model.neuronName[j] << "[0] = 0;" << ENDL;
-		}
+		os << "d_done = 0;" << ENDL;
+	    
+		os << CB(330); // end "if (j == " << numOfBlocks - 1 << ")"
+		os << CB(320); // end "if (threadIdx.x == 0)"
 	    }
-	    os << "d_done = 0;" << ENDL;
-
-	    os << CB(330); // end "if (j == " << numOfBlocks - 1 << ")"
-	    os << CB(320); // end "if (threadIdx.x == 0)"
 	    os << CB(220);
 	}
 
 	os << CB(215);
     }
     os << ENDL;
-
+    
     os << "#endif" << ENDL;
     os.close();
 
 //    cout << "exiting genSynapseKernel" << endl;
 }
+
+#endif

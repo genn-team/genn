@@ -18,9 +18,14 @@
   generating the CPU side code for running simulations on either the CPU or GPU (generateRunner.cc) and for CPU-only simulation code (generateCPU.cc).
 */
 
+#include <string>
 #include "global.h"
 #include "modelSpec.h"
 #include "modelSpec.cc"
+
+#include "CodeHelper.cc"
+CodeHelper hlp;
+
 #include "generateKernels.cc"
 #include "generateRunner.cc"
 #include "generateCPU.cc"
@@ -32,6 +37,64 @@
 #include <sys/stat.h> // needed for mkdir
 #endif
 
+#define BLOCKSZ_DEBUG
+
+#ifndef CPU_ONLY
+/*! \brief Macro definition for error checking when using the driver API */
+
+#define CHECK_CU_ERRORS(call)					           \
+{								      	   \
+  CUresult error = call;						   \
+  if (error != CUDA_SUCCESS)						   \
+  {                                                                        \
+    const char *errStr;		                                           \
+    cuGetErrorName(error, &errStr);	       				   \
+    fprintf(stderr, "%s: %i: cuda driver error %i: %s\n",	       	   \
+	    __FILE__, __LINE__, (int)error, errStr);	                   \
+    exit(EXIT_FAILURE);						           \
+  }									   \
+}
+
+CUresult cudaFuncGetAttributesDriver(cudaFuncAttributes *attr, CUfunction kern) {
+    int tmp;
+    CHECK_CU_ERRORS(cuFuncGetAttribute(&tmp, CU_FUNC_ATTRIBUTE_MAX_THREADS_PER_BLOCK, kern));
+#ifdef BLOCKSZ_DEBUG
+      cerr << "BLOCKSZ_DEBUG: CU_FUNC_ATTRIBUTE_MAX_THREADS_PER_BLOCK: " << tmp << endl;
+#endif
+      attr->maxThreadsPerBlock= tmp;
+      CHECK_CU_ERRORS(cuFuncGetAttribute(&tmp, CU_FUNC_ATTRIBUTE_SHARED_SIZE_BYTES, kern));
+#ifdef BLOCKSZ_DEBUG
+      cerr << "BLOCKSZ_DEBUG: CU_FUNC_ATTRIBUTE_SHARED_SIZE_BYTES: " << tmp << endl;
+#endif
+      attr->sharedSizeBytes= tmp;
+      CHECK_CU_ERRORS(cuFuncGetAttribute(&tmp, CU_FUNC_ATTRIBUTE_CONST_SIZE_BYTES, kern));
+#ifdef BLOCKSZ_DEBUG
+      cerr << "BLOCKSZ_DEBUG: CU_FUNC_ATTRIBUTE_CONST_SIZE_BYTES: " << tmp << endl;
+#endif
+      attr->constSizeBytes= tmp;
+      CHECK_CU_ERRORS(cuFuncGetAttribute(&tmp, CU_FUNC_ATTRIBUTE_LOCAL_SIZE_BYTES, kern));
+#ifdef BLOCKSZ_DEBUG
+      cerr << "BLOCKSZ_DEBUG: CU_FUNC_ATTRIBUTE_LOCAL_SIZE_BYTES: " << tmp << endl;
+#endif
+      attr->localSizeBytes= tmp;
+      CHECK_CU_ERRORS(cuFuncGetAttribute(&tmp, CU_FUNC_ATTRIBUTE_NUM_REGS, kern));
+#ifdef BLOCKSZ_DEBUG
+      cerr << "BLOCKSZ_DEBUG: CU_FUNC_ATTRIBUTE_NUM_REGS: " << tmp << endl;
+#endif
+      attr->numRegs= tmp;
+      CHECK_CU_ERRORS(cuFuncGetAttribute(&tmp, CU_FUNC_ATTRIBUTE_PTX_VERSION, kern));
+#ifdef BLOCKSZ_DEBUG
+      cerr << "BLOCKSZ_DEBUG: CU_FUNC_ATTRIBUTE_PTX_VERSION: " << tmp << endl;
+#endif
+      attr->ptxVersion= tmp;
+      CHECK_CU_ERRORS(cuFuncGetAttribute(&tmp, CU_FUNC_ATTRIBUTE_BINARY_VERSION, kern));
+#ifdef BLOCKSZ_DEBUG
+      cerr << "BLOCKSZ_DEBUG: CU_FUNC_ATTRIBUTE_BINARY_VERSION: " << tmp << endl;
+#endif
+      attr->binaryVersion= tmp;
+      return CUDA_SUCCESS;
+}
+#endif
 
 /*! \brief This function will call the necessary sub-functions to generate the code for simulating a model. */
 
@@ -48,6 +111,7 @@ void generate_model_runner(NNmodel &model,  //!< Model description
   // general shared code for GPU and CPU versions
   genRunner(model, path, cout);
 
+#ifndef CPU_ONLY
   // GPU specific code generation
   genRunnerGPU(model, path, cout);
   
@@ -56,6 +120,7 @@ void generate_model_runner(NNmodel &model,  //!< Model description
 
   // generate synapse and learning kernels
   if (model.synapseGrpN > 0) genSynapseKernel(model, path, cout);
+#endif
 
   // Generate the equivalent of neuron kernel
   genNeuronFunction(model, path, cout);
@@ -64,7 +129,7 @@ void generate_model_runner(NNmodel &model,  //!< Model description
   if (model.synapseGrpN > 0) genSynapseFunction(model, path, cout);
 }
 
-
+#ifndef CPU_ONLY
 //--------------------------------------------------------------------------
 /*! 
   \brief Helper function that prepares data structures and detects the hardware properties to enable the code generation code that follows.
@@ -78,7 +143,7 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
 		 string path     //!< path the generated code will be deposited
 		 )
 {
-  const char *kernelName[3]= {"synapse", "learn", "neuron"};
+    const char *kernelName[4]= {"synapse", "learning", "synapseDynamics", "neuron"};
 
   // Get the specifications of all available cuda devices, then work out which one we will use.
   int deviceCount, chosenDevice = 0;
@@ -94,11 +159,12 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
     string junk;
     int reqRegs, reqSmem, requiredBlocks, ptxInfoFound = 0;
     int warpSize= 32;
+    int krnlNo= 4;
 
-    unsigned int **bestBlkSz= new unsigned int*[3];
-    int **smallModel= new int*[3];
-    int **deviceOccupancy= new int*[3];
-    vector<unsigned int> *groupSize= new vector<unsigned int>[3];
+    unsigned int **bestBlkSz= new unsigned int*[krnlNo];
+    int **smallModel= new int*[krnlNo];
+    int **deviceOccupancy= new int*[krnlNo];
+    vector<unsigned int> *groupSize= new vector<unsigned int>[krnlNo];
     float blockLimit, mainBlockLimit;
 
     int devstart, devcount;
@@ -112,34 +178,41 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
     }
 
     // initialise the smallXXX flags and bestBlkSz
-    for (int kernel= 0; kernel < 3; kernel++) {
+    for (int kernel= 0; kernel < krnlNo; kernel++) {
       bestBlkSz[kernel]= new unsigned int[deviceCount];
       smallModel[kernel]= new int[deviceCount];
       deviceOccupancy[kernel]= new int[deviceCount];
       for (int device = 0; device < deviceCount; device++) { // initialise all whether used or not
-	      bestBlkSz[kernel][device]= 0;
-      	smallModel[kernel][device]= 0;
-	      deviceOccupancy[kernel][device]= 0;
+	  bestBlkSz[kernel][device]= 0;
+	  smallModel[kernel][device]= 0;
+	  deviceOccupancy[kernel][device]= 0;
       }
     }
 
     // Get the sizes of each synapse / learn group present on this host and device
     vector<unsigned int> synapseN, learnN;
     for (int group = 0; group < model->synapseGrpN; group++) {
-      if ((model->synapseConnType[group] == SPARSE) && (model->maxConn[group]>0)) {
-	      groupSize[0].push_back(model->maxConn[group]);
-      }
-      else {
-	      groupSize[0].push_back(model->neuronN[model->synapseTarget[group]]);
-      }
-      if (model->synapseType[group] == LEARN1SYNAPSE) {
-	      groupSize[1].push_back(model->neuronN[model->synapseSource[group]]);
-      }
+	if ((model->synapseConnType[group] == SPARSE) && (model->maxConn[group]>0)) {
+	    groupSize[0].push_back(model->maxConn[group]);
+	}
+	else {
+	    groupSize[0].push_back(model->neuronN[model->synapseTarget[group]]);
+	}
+	if (model->synapseUsesPostLearning[group]) {     // TODO: this needs updating where learning is detected properly!
+	    groupSize[1].push_back(model->neuronN[model->synapseSource[group]]);
+	}
+	if (model->synapseUsesSynapseDynamics[group]) {
+	    if ((model->synapseConnType[group] == SPARSE) && (model->maxConn[group]>0)) {
+		groupSize[2].push_back(model->neuronN[model->synapseSource[group]]*model->maxConn[group]);
+	    }
+	    else {
+		groupSize[2].push_back(model->neuronN[model->synapseSource[group]]*model->neuronN[model->synapseTarget[group]]);
+	    } 
+	}
     }
-    groupSize[2]= model->neuronN;
- 
+    groupSize[3]= model->neuronN;
 #ifdef BLOCKSZ_DEBUG
-    for (int i= 0; i < 3; i++) {
+    for (int i= 0; i < krnlNo; i++) {
 	mos << "BLOCKSZ_DEBUG: "; 
 	for (int j= 0; j < groupSize[i].size(); j++) {
 	    mos << "groupSize[" << i << "][" << j << "]=" << groupSize[i][j] << "; ";
@@ -147,8 +220,8 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
 	mos << endl;
     }
 #endif
-
-   for (int device = devstart; device < devcount; device++) {
+    
+    for (int device = devstart; device < devcount; device++) {
       theDev = device;
       CHECK_CUDA_ERRORS(cudaSetDevice(device));
       CHECK_CUDA_ERRORS(cudaGetDeviceProperties(&(deviceProp[device]), device));      
@@ -170,17 +243,67 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
 #endif
       mos << command.str() << endl;
 
-#ifdef _WIN32
-      FILE *nvccPipe = _popen(command.str().c_str(), "r");
-#else // UNIX
-      FILE *nvccPipe = popen(command.str().c_str(), "r");
+      system(command.str().c_str());
+// test a different way of obtaining ptxas info.
+      CUdevice cuDevice;
+      CUcontext cuContext;
+      CHECK_CU_ERRORS(cuDeviceGet(&cuDevice, theDev));
+      CHECK_CU_ERRORS(cuCtxCreate(&cuContext, 0, cuDevice));
+      CHECK_CU_ERRORS(cuCtxSetCurrent(cuContext));
+      CUmodule module;
+      string fname;
+      fname= tS(getenv("GENN_PATH")) +"/lib/runner.cubin";
+      CHECK_CU_ERRORS(cuModuleLoad(&module, fname.c_str()));
+      cudaFuncAttributes krnlAttr[krnlNo];
+      CUfunction kern;
+      CUresult res;
+      int KrnlExist[krnlNo];
+#ifdef BLOCKSZ_DEBUG
+      cerr << "BLOCKSZ_DEBUG: ptxas info for calcSynapses ..." << endl;
 #endif
-
-      if (!nvccPipe) {
-	cerr << "ERROR: failed to open nvcc pipe" << endl;
-	exit(EXIT_FAILURE);
+      res= cuModuleGetFunction(&kern, module, "calcSynapses");
+      if (res == CUDA_SUCCESS) {
+	  cudaFuncGetAttributesDriver(&krnlAttr[0], kern);
+	  KrnlExist[0]= 1;
       }
-
+      else {
+	  KrnlExist[0]= 0;
+      }
+      res= cuModuleGetFunction(&kern, module, "learnSynapsesPost");
+      if (res == CUDA_SUCCESS) {
+#ifdef BLOCKSZ_DEBUG
+      cerr << "BLOCKSZ_DEBUG: ptxas info for learnSynapsesPost ..." << endl;
+#endif
+	  cudaFuncGetAttributesDriver(&krnlAttr[1], kern);
+	  KrnlExist[1]= 1;
+      }
+      else {
+	  KrnlExist[1]= 0;
+      }
+      res= cuModuleGetFunction(&kern, module, "calcSynapseDynamics");
+      if (res == CUDA_SUCCESS) {
+#ifdef BLOCKSZ_DEBUG
+      cerr << "BLOCKSZ_DEBUG: ptxas info for calcSynapseDynamics ..." << endl;
+#endif
+	  cudaFuncGetAttributesDriver(&krnlAttr[2], kern);
+	  KrnlExist[2]= 1;
+      }
+      else {
+	  KrnlExist[2]= 0;
+      }
+#ifdef BLOCKSZ_DEBUG
+      cerr << "BLOCKSZ_DEBUG: ptxas info for calcNeurons ..." << endl;
+#endif
+      res= cuModuleGetFunction(&kern, module, "calcNeurons");
+      if (res == CUDA_SUCCESS) {
+	  cudaFuncGetAttributesDriver(&krnlAttr[3], kern);
+	  KrnlExist[3]= 1;
+      }
+      else {
+	  KrnlExist[3]= 0;
+      }
+      CHECK_CU_ERRORS(cuModuleUnload(module));
+    
       // This data is required for block size optimisation, but cannot be found in deviceProp.
       float warpAllocGran, regAllocGran, smemAllocGran, maxBlocksPerSM;
       if (deviceProp[device].major == 1) {
@@ -213,135 +336,97 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
       mos << "BLOCKSZ_DEBUG: maxBlocksPerSM= " <<  maxBlocksPerSM << endl;
 #endif
 
-      // Read pipe until reg / smem usage is found, then calculate optimum block size for each kernel.
       int kernel= 0;
-      while (fgets(buffer, 1024, nvccPipe) != NULL) {
-	mos << buffer;
-	if (strstr(buffer, "calcSynapses") != NULL) {
-	  kernel= 0;
-	}
-	else if (strstr(buffer, "learnSynapses") != NULL) {
-	  kernel= 1;
-	}
-	else if (strstr(buffer, "calcNeurons") != NULL) {
-	  kernel= 2;
-	}
-	if (strncmp(buffer, "ptxas : info : Used", 19) == 0) {
-	  ptxInfoFound = 1;
-	  ptxInfo.str("");
-	  ptxInfo << buffer;
-	  ptxInfo >> junk >> junk >> junk >> junk >> junk >> reqRegs >> junk >> reqSmem;
-	}
-	else if (strncmp(buffer, "ptxas info    : Used", 20) == 0) {
-	  ptxInfoFound = 1;
-	  ptxInfo.str("");
-	  ptxInfo << buffer;
-	  ptxInfo >> junk >> junk >> junk >> junk >> reqRegs >> junk >> reqSmem;
-	}
-	if ((strncmp(buffer, "ptxas : info : Used", 19) == 0) || (strncmp(buffer, "ptxas info    : Used", 20)) == 0) {
-	  mos << "kernel: " << kernelName[kernel] << ", regs needed: " << reqRegs << ", smem needed: " << reqSmem << endl;
-
-	  // Test all block sizes (in warps) up to [max warps per block].
-	  for (int blkSz = 1, mx= deviceProp[device].maxThreadsPerBlock / warpSize; blkSz <= mx; blkSz++) {
+      for (int kernel= 0; kernel < krnlNo; kernel++) {
+	  if (KrnlExist[kernel]) {
+	      reqRegs= krnlAttr[kernel].numRegs;
+	      reqSmem= krnlAttr[kernel].sharedSizeBytes;
+	      for (int blkSz = 1, mx= deviceProp[device].maxThreadsPerBlock / warpSize; blkSz <= mx; blkSz++) {
+		  
+#ifdef BLOCKSZ_DEBUG
+		  mos << "BLOCKSZ_DEBUG: Kernel " << kernel << ": Candidate block size: " << blkSz*warpSize << endl;
+#endif
+		  // BLOCK LIMIT DUE TO THREADS
+		  blockLimit = floor((float) deviceProp[device].maxThreadsPerMultiProcessor/warpSize/blkSz);
+		  
+#ifdef BLOCKSZ_DEBUG
+		  mos << "BLOCKSZ_DEBUG: Kernel " << kernel << ": Block limit due to maxThreadsPerMultiProcessor: " << blockLimit << endl;
+#endif
+		  if (blockLimit > maxBlocksPerSM) blockLimit = maxBlocksPerSM;
+		  
+#ifdef BLOCKSZ_DEBUG
+		  mos << "BLOCKSZ_DEBUG: Kernel " << kernel << ": Block limit corrected for maxBlocksPerSM: " << blockLimit << endl;
+#endif
+		  mainBlockLimit = blockLimit;
+		  
+		  // BLOCK LIMIT DUE TO REGISTERS
+		  if (deviceProp[device].major == 1) { // if register allocation is per block
+		      blockLimit = ceil(blkSz/warpAllocGran)*warpAllocGran;
+		      blockLimit = ceil(blockLimit*reqRegs*warpSize/regAllocGran)*regAllocGran;
+		      blockLimit = floor(deviceProp[device].regsPerBlock/blockLimit);
+		  }
+		  else { // if register allocation is per warp
+		      blockLimit = ceil(reqRegs*warpSize/regAllocGran)*regAllocGran;
+		      blockLimit = floor(deviceProp[device].regsPerBlock/blockLimit/warpAllocGran)*warpAllocGran;
+		      blockLimit = floor(blockLimit/blkSz);
+		  }
+		  
+#ifdef BLOCKSZ_DEBUG
+		  mos << "BLOCKSZ_DEBUG: Kernel " << kernel << ": Block limit due to registers (device major " << deviceProp[device].major << "): " << blockLimit << endl;
+#endif
+		  
+		  if (blockLimit < mainBlockLimit) mainBlockLimit= blockLimit;
+		  
+		  // BLOCK LIMIT DUE TO SHARED MEMORY
+		  blockLimit = ceil(reqSmem/smemAllocGran)*smemAllocGran;
+		  blockLimit = floor(deviceProp[device].sharedMemPerBlock/blockLimit);
+		  
+#ifdef BLOCKSZ_DEBUG
+		  mos << "BLOCKSZ_DEBUG: Kernel " << kernel << ": Block limit due to shared memory: " << blockLimit << endl;
+#endif
+		  
+		  if (blockLimit < mainBlockLimit) mainBlockLimit= blockLimit;
+		  
+		  // The number of thread blocks required to simulate all groups
+		  requiredBlocks = 0;
+		  for (int group = 0; group < groupSize[kernel].size(); group++) {
+		      requiredBlocks+= ceil(((float) groupSize[kernel][group])/(blkSz*warpSize));
+		  }
+#ifdef BLOCKSZ_DEBUG
+		  mos << "BLOCKSZ_DEBUG: Kernel " << kernel << ": Required blocks (according to padded sum): " << requiredBlocks << endl;
+#endif
+		  
+		  // Use a small block size if it allows all groups to occupy the device concurrently
+		  if (requiredBlocks <= (mainBlockLimit*deviceProp[device].multiProcessorCount)) {
+		      bestBlkSz[kernel][device] = (unsigned int) blkSz*warpSize;
+		      deviceOccupancy[kernel][device]= blkSz*mainBlockLimit*deviceProp[device].multiProcessorCount;
+		      smallModel[kernel][device] = 1;
 
 #ifdef BLOCKSZ_DEBUG
-	    mos << "BLOCKSZ_DEBUG: Candidate block size: " << blkSz*warpSize << endl;
+		      mos << "BLOCKSZ_DEBUG: Kernel " << kernel << ": Small model situation detected; bestBlkSz: " << bestBlkSz[kernel][device] << endl;
+		      mos << "BLOCKSZ_DEBUG: Kernel " << kernel << ": ... setting smallModel[" << kernel << "][" << device << "] to 1" << endl;
 #endif
-	    // BLOCK LIMIT DUE TO THREADS
-	    blockLimit = floor((float) deviceProp[device].maxThreadsPerMultiProcessor/warpSize/blkSz);
-
+		      break; // for small model the first (smallest) block size allowing it is chosen
+		  }
+		  
+		  // Update the best warp occupancy and the block size which enables it.
+		  int newOccupancy= blkSz*mainBlockLimit*deviceProp[device].multiProcessorCount;
+		  if (newOccupancy > deviceOccupancy[kernel][device]) {
+		      bestBlkSz[kernel][device] = (unsigned int) blkSz*warpSize; 
+		      deviceOccupancy[kernel][device]= newOccupancy;
+		      
 #ifdef BLOCKSZ_DEBUG
-	    mos << "BLOCKSZ_DEBUG: Block limit due to maxThreadsPerMultiProcessor: " << blockLimit << endl;
+		      mos << "BLOCKSZ_DEBUG: Kernel " << kernel << ": Small model not enabled; device occupancy criterion; deviceOccupancy " << deviceOccupancy[kernel][device] << "; blocksize for " << kernelName[kernel] << ": " << (unsigned int) blkSz * warpSize << endl;
 #endif
-	    if (blockLimit > maxBlocksPerSM) blockLimit = maxBlocksPerSM;
-
-#ifdef BLOCKSZ_DEBUG
-	    mos << "BLOCKSZ_DEBUG: Block limit corrected for maxBlocksPerSM: " << blockLimit << endl;
-#endif
-	    mainBlockLimit = blockLimit;
-
-	    // BLOCK LIMIT DUE TO REGISTERS
-	    if (deviceProp[device].major == 1) { // if register allocation is per block
-	      blockLimit = ceil(blkSz/warpAllocGran)*warpAllocGran;
-	      blockLimit = ceil(blockLimit*reqRegs*warpSize/regAllocGran)*regAllocGran;
-	      blockLimit = floor(deviceProp[device].regsPerBlock/blockLimit);
-	    }
-	    else { // if register allocation is per warp
-	      blockLimit = ceil(reqRegs*warpSize/regAllocGran)*regAllocGran;
-	      blockLimit = floor(deviceProp[device].regsPerBlock/blockLimit/warpAllocGran)*warpAllocGran;
-	      blockLimit = floor(blockLimit/blkSz);
-	    }
-
-#ifdef BLOCKSZ_DEBUG
-	    mos << "BLOCKSZ_DEBUG: Block limit due to registers (device major " << deviceProp[device].major << "): " << blockLimit << endl;
-#endif
-
-	    if (blockLimit < mainBlockLimit) mainBlockLimit= blockLimit;
-
-	    // BLOCK LIMIT DUE TO SHARED MEMORY
-	    blockLimit = ceil(reqSmem/smemAllocGran)*smemAllocGran;
-	    blockLimit = floor(deviceProp[device].sharedMemPerBlock/blockLimit);
-
-#ifdef BLOCKSZ_DEBUG
-	    mos << "BLOCKSZ_DEBUG: Block limit due to shared memory: " << blockLimit << endl;
-#endif
-
-	    if (blockLimit < mainBlockLimit) mainBlockLimit= blockLimit;
-
-	    // The number of thread blocks required to simulate all groups
-	    requiredBlocks = 0;
-	    for (int group = 0; group < groupSize[kernel].size(); group++) {
-	      requiredBlocks+= ceil(((float) groupSize[kernel][group])/(blkSz*warpSize));
-	    }
-#ifdef BLOCKSZ_DEBUG
-	    mos << "BLOCKSZ_DEBUG: Required blocks (according to padded sum): " << requiredBlocks << endl;
-#endif
-
-	    // Use a small block size if it allows all groups to occupy the device concurrently
-	    if (requiredBlocks <= (mainBlockLimit*deviceProp[device].multiProcessorCount)) {
-	      bestBlkSz[kernel][device] = (unsigned int) blkSz*warpSize;
-	      deviceOccupancy[kernel][device]= blkSz*mainBlockLimit*deviceProp[device].multiProcessorCount;
-	      smallModel[kernel][device] = 1;
-
-#ifdef BLOCKSZ_DEBUG
-	      mos << "BLOCKSZ_DEBUG: Small model situation detected; bestBlkSz: " << bestBlkSz[kernel][device] << endl;
-	      mos << "BLOCKSZ_DEBUG: ... setting smallModel[" << kernel << "][" << device << "] to 1" << endl;
-#endif
-	      break; // for small model the first (smallest) block size allowing it is chosen
-	    }
-	    
-	    // Update the best warp occupancy and the block size which enables it.
-	    int newOccupancy= blkSz*mainBlockLimit*deviceProp[device].multiProcessorCount;
-	    if (newOccupancy > deviceOccupancy[kernel][device]) {
-	      bestBlkSz[kernel][device] = (unsigned int) blkSz*warpSize; 
-	      deviceOccupancy[kernel][device]= newOccupancy;
-
-#ifdef BLOCKSZ_DEBUG
-	      mos << "BLOCKSZ_DEBUG: Small model not enabled; device occupancy criterion; deviceOccupancy " << deviceOccupancy[kernel][device] << "; blocksize for " << kernelName[kernel] << ": " << (unsigned int) blkSz * warpSize << endl;
-#endif
-	    }
+		  }
+	      }
 	  }
-	}
       }
-
-      // Close the NVCC pipe after each invocation.
-#ifdef _WIN32
-      _pclose(nvccPipe);
-#else // UNIX
-      pclose(nvccPipe);
-#endif
-
-    }
-
-    if (!ptxInfoFound) {
-      cerr << "ERROR: did not find any PTX info" << endl;
-      cerr << "ensure nvcc is on your $PATH, and fix any NVCC errors listed above" << endl;
-      exit(EXIT_FAILURE);
-    }
-
-    // now decide the device ...
-    int anySmall= 0;
-    int *smallModelCnt= new int[deviceCount];
+   }
+   
+   // now decide the device ...
+   int anySmall= 0;
+   int *smallModelCnt= new int[deviceCount];
     int *sumOccupancy= new int[deviceCount];
     float smVersion, bestSmVersion = 0.0;
     int bestSmallModelCnt= 0;
@@ -349,7 +434,7 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
     for (int device = devstart; device < devcount; device++) {
       smallModelCnt[device]= 0;
       sumOccupancy[device]= 0;
-      for (int kernel= 0; kernel < 3; kernel++) {
+      for (int kernel= 0; kernel < krnlNo; kernel++) {
         #ifdef BLOCKSZ_DEBUG	
           mos << "BLOCKSZ_DEBUG: smallModel[" << kernel << "][" << device << "]= " << smallModel[kernel][device] << endl;
         #endif
@@ -421,7 +506,8 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
     }
     synapseBlkSz = bestBlkSz[0][chosenDevice];
     learnBlkSz = bestBlkSz[1][chosenDevice];
-    neuronBlkSz = bestBlkSz[2][chosenDevice];
+    synDynBlkSz= bestBlkSz[2][chosenDevice];
+    neuronBlkSz = bestBlkSz[3][chosenDevice];
     delete model;
     model = new NNmodel();
     modelDefinition(*model);
@@ -430,7 +516,7 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
     }
     mos << "Using device " << chosenDevice << " (" << deviceProp[chosenDevice].name << "), with up to ";
     mos << bestDeviceOccupancy << " warps of summed kernel occupancy." << endl;
-    for (int kernel= 0; kernel < 3; kernel++) {
+    for (int kernel= 0; kernel < krnlNo; kernel++) {
       delete[] bestBlkSz[kernel];
       delete[] smallModel[kernel];
       delete[] deviceOccupancy[kernel];   
@@ -445,13 +531,13 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
   else { // IF OPTIMISATION IS OFF: Simply choose the device with the most global memory.
     mos << "skipping block size optimisation..." << endl;
     for (int device = 0; device < deviceCount; device++) {
-      CHECK_CUDA_ERRORS(cudaSetDevice(device));
-      CHECK_CUDA_ERRORS(cudaGetDeviceProperties(&(deviceProp[device]), device));
-      globalMem = deviceProp[device].totalGlobalMem;
-      if (globalMem >= mostGlobalMem) {
-			mostGlobalMem = globalMem;
-			chosenDevice = device;
-      }
+	CHECK_CUDA_ERRORS(cudaSetDevice(device));
+	CHECK_CUDA_ERRORS(cudaGetDeviceProperties(&(deviceProp[device]), device));
+	globalMem = deviceProp[device].totalGlobalMem;
+	if (globalMem >= mostGlobalMem) {
+	    mostGlobalMem = globalMem;
+	    chosenDevice = device;
+	}
     }
     mos << "Using device " << chosenDevice << ", which has " << mostGlobalMem << " bytes of global memory." << endl;
   }
@@ -468,12 +554,15 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
 
   mos << "synapse block size: " << synapseBlkSz << endl;
   mos << "learn block size: " << learnBlkSz << endl;
+  mos << "synapseDynamics block size: " << synDynBlkSz << endl;
   mos << "neuron block size: " << neuronBlkSz << endl;
   
   return chosenDevice;
 }
+#endif
 
 
+//--------------------------------------------------------------------------
 /*! \brief Main entry point for the generateALL executable that generates
   the code for GPU and CPU.
 
@@ -481,6 +570,7 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
   prepares the system and then invokes generate_model_runner to inititate
   the different parts of actual code generation.
 */
+//--------------------------------------------------------------------------
 
 int main(int argc,     //!< number of arguments; expected to be 2
 	 char *argv[]  //!< Arguments; expected to contain the target directory for code generation.
@@ -498,6 +588,7 @@ int main(int argc,     //!< number of arguments; expected to be 2
   
   synapseBlkSz = 32;
   learnBlkSz = 32;
+  synDynBlkSz= 32;
   neuronBlkSz = 32;
   
   NNmodel *model = new NNmodel();
@@ -506,7 +597,9 @@ int main(int argc,     //!< number of arguments; expected to be 2
       gennError("Model was not finalized in modelDefinition(). Please call model.finalize().");
   }
   string path= toString(argv[1]);
+#ifndef CPU_ONLY
   theDev = chooseDevice(cout, model, path);
+#endif
   generate_model_runner(*model, path);
   
   return EXIT_SUCCESS;

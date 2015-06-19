@@ -19,7 +19,6 @@
 neuronpop::neuronpop()
 {
   modelDefinition(model);
-  input1=new float[model.neuronN[0]];
   allocateMem();
   initialize();
   sumIzh1 = 0;
@@ -35,54 +34,10 @@ void neuronpop::init(unsigned int which)
 }
 
 
-void neuronpop::allocate_device_mem_input()
-{
-  unsigned int size;
-
-  size= model.neuronN[0]*sizeof(float);
-  CHECK_CUDA_ERRORS(cudaMalloc((void**) &d_input1, size));
-}
-
-void neuronpop::copy_device_mem_input()
-{
-  CHECK_CUDA_ERRORS(cudaMemcpy(d_input1, input1, model.neuronN[0]*sizeof(float), cudaMemcpyHostToDevice));
-}
-
 neuronpop::~neuronpop()
 {
-  free(input1);
   freeMem();
 }
-
-void neuronpop::write_input_to_file(FILE *f)
-{
-  unsigned int outno;
-  if (model.neuronN[0]>10) 
-  outno=10;
-  else outno=model.neuronN[0];
-
-  fprintf(f, "%f ", t);
-  for(int i=0;i<outno;i++) {
-    fprintf(f, "%f ", input1[i]);
-  }
-  fprintf(f,"\n");
-}
-
-void neuronpop::read_input_values(FILE *f)
-{
-  fread(input1, model.neuronN[0]*sizeof(float),1,f);
-}
-
-
-void neuronpop::create_input_values(float t) //define your explicit input rule here. The model uses constant input instead at the moment.
-{
-  const double pi = 4*atan(1.);
-  float frequency =5;
-  for (int x= 0; x < model.neuronN[0]; x++) {
-    input1[x]= 5*float(sin(frequency*(t+10*(x+1))*0.001*2*pi));
-  }
-}
-
 
 void neuronpop::run(float runtime, unsigned int which)
 {
@@ -90,18 +45,10 @@ void neuronpop::run(float runtime, unsigned int which)
 
   for (int i= 0; i < riT; i++) {
     if (which == GPU){
-       /****if receivesInputCurrent==1***/
-       stepTimeGPU(t);
-       /****if receivesInputCurrent>1***/
-       //stepTimeGPU(d_input1, t);
+       stepTimeGPU();
     }
     if (which == CPU)
-       /****if receivesInputCurrent==1***/
-       stepTimeCPU(t);
-       /****if receivesInputCurrent>1***/
-       //stepTimeCPU(input1, t);
-    t+= DT;
-    iT++;
+       stepTimeCPU();
   }
 }
 

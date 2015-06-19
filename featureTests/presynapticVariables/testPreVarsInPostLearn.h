@@ -14,7 +14,7 @@ public:
   ~preVarsInPostLearn();
   void init_synapses();
   void init_neurons();
-  void run(float, int);
+  void run(int);
 
   float **theW;
 };

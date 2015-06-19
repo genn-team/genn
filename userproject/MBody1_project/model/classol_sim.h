@@ -18,27 +18,21 @@
 */
 //--------------------------------------------------------------------------
 
-using namespace std;
 #include <cassert>
 
+#include "MBody1.cc"
 #include "hr_time.cpp"
 #include "utils.h" // for CHECK_CUDA_ERRORS
 
+#ifndef CPU_ONLY
 #include <cuda_runtime.h>
-//#include <cfloat>
+#endif
 
-#include "MBody1.cc"
 
 #define MYRAND(Y,X) Y = Y * 1103515245 +12345; X= (Y >> 16);
 
 // we will hard-code some stuff ... because at the end of the day that is 
 // what we will do for the CUDA version
-
-#define DBG_SIZE 10000
-
-// and some global variables
-scalar t= 0.0f;
-unsigned int iT= 0;
 
 #define PATTERNNO 100
 scalar InputBaseRate= 2e-04;
@@ -55,7 +49,6 @@ int patSetTime;
 #define PATFTIME 1.5
 
 int patFireTime;
-
 
 #define TOTAL_TME 500.0
 

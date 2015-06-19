@@ -54,12 +54,15 @@ void classol::init(unsigned int which //!< Flag defining whether GPU or CPU only
   if (which == CPU) {
     theRates= baserates;
   }
+#ifndef CPU_ONLY
   if (which == GPU) {
     theRates= d_baserates;
     copyStateToDevice();
   }
+#endif
 }
 
+#ifndef CPU_ONLY
 //--------------------------------------------------------------------------
 /*! \brief Method for allocating memory on the GPU device to hold the input patterns
  */
@@ -90,7 +93,7 @@ void classol::free_device_mem()
   CHECK_CUDA_ERRORS(cudaFree(d_pattern));
   CHECK_CUDA_ERRORS(cudaFree(d_baserates));
 }
-
+#endif
 
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
@@ -326,6 +329,7 @@ void classol::generate_baserates()
     fprintf(stdout, "\n\n");  
 }
 
+#ifndef CPU_ONLY
 //--------------------------------------------------------------------------
 /*! \brief Method for simulating the model for a given period of time on the GPU
  */
@@ -338,22 +342,23 @@ void classol::runGPU(scalar runtime //!< Duration of time to run the model for
   int riT= (int) (runtime/DT);
 
   for (int i= 0; i < riT; i++) {
-    if (iT%patSetTime == 0) {
-      pno= (iT/patSetTime)%PATTERNNO;
-      theRates= d_pattern;
-      offset= pno*model.neuronN[0];
-    }
-    if (iT%patSetTime == patFireTime) {
-	    theRates= d_baserates;
-      offset= 0;
-    }
-
-    stepTimeGPU(theRates, offset, t);
-
-    iT++;
-    t= iT*DT;
+      unsigned int flags= 0;
+      if (iT%patSetTime == 0) {
+	  pno= (iT/patSetTime)%PATTERNNO;
+	  ratesPN= d_pattern;
+	  offsetPN= pno*model.neuronN[0];
+	  flags= GeNNFlags::COPY;
+      }
+      if (iT%patSetTime == patFireTime) {
+	  ratesPN= d_baserates;
+	  offsetPN= 0;
+	  flags= GeNNFlags::COPY;
+      }
+      stepTimeGPU(flags);
   }
 }
+#endif
+
 //--------------------------------------------------------------------------
 /*! \brief Method for simulating the model for a given period of time on the CPU
  */
@@ -368,18 +373,15 @@ void classol::runCPU(scalar runtime //!< Duration of time to run the model for
   for (int i= 0; i < riT; i++) {
     if (iT%patSetTime == 0) {
       pno= (iT/patSetTime)%PATTERNNO;
-      theRates= pattern;
-      offset= pno*model.neuronN[0];
+      ratesPN= pattern;
+      offsetPN= pno*model.neuronN[0];
     }
     if (iT%patSetTime == patFireTime) {
-	    theRates= baserates;
-      offset= 0;
+	ratesPN= baserates;
+	offsetPN= 0;
     }
 
-    stepTimeCPU(theRates, offset, t);
-
-    iT++;
-    t= iT*DT;
+    stepTimeCPU();
   }
 }
 //--------------------------------------------------------------------------
@@ -394,8 +396,10 @@ void classol::output_state(FILE *f, //!< File handle for a file to write the mod
 			   unsigned int which //!< Flag determining whether using GPU or CPU only
 			   )
 {
-  if (which == GPU) 
-    copyStateFromDevice();
+#ifndef CPU_ONLY
+    if (which == GPU) 
+	copyStateFromDevice();
+#endif
 
   fprintf(f, "%f ", t);
   for (int i= 0; i < model.neuronN[0]; i++) {
@@ -463,6 +467,8 @@ void classol::output_state(FILE *f, //!< File handle for a file to write the mod
   fprintf(f,"\n");
 }
 
+
+#ifndef CPU_ONLY
 //--------------------------------------------------------------------------
 /*! \brief Method for copying all spikes of the last time step from the GPU
  
@@ -486,6 +492,7 @@ void classol::getSpikeNumbersFromGPU()
 {
   copySpikeNFromDevice();
 }
+#endif
 
 //--------------------------------------------------------------------------
 /*! \brief Method for writing the spikes occurred in the last time step to a file
@@ -525,6 +532,7 @@ void classol::sum_spikes()
   sumDN+= glbSpkCntDN[0];
 }
 
+#ifndef CPU_ONLY
 //--------------------------------------------------------------------------
 /*! \brief Method for copying the synaptic conductances of the learning synapses between KCs and DNs (detector neurons) back to the CPU memory
  */
@@ -534,7 +542,7 @@ void classol::get_kcdnsyns()
 {
     CHECK_CUDA_ERRORS(cudaMemcpy(gKCDN, d_gKCDN, model.neuronN[1]*model.neuronN[3]*sizeof(scalar), cudaMemcpyDeviceToHost));
 }
-
+#endif
 
 
 #endif	

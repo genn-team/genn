@@ -29,7 +29,12 @@ This global header file also takes care of including some generally used cuda su
 #include <sstream>
 #include <vector>
 #include <cmath>
+
+#ifndef CPU_ONLY
+#include <cuda.h>
 #include <cuda_runtime.h>
+#endif
+
 #include "toString.h"
 #include <stdint.h>
 
@@ -38,13 +43,15 @@ This global header file also takes care of including some generally used cuda su
 
 using namespace std; // replaced these two lines : problem with visual studio
 
-
 // THESE WILL BE REPLACED BY VARIABLES BELOW SOON IF optimiseBlockSize == 1. THEIR INITIAL VALUES ARE SET IN generateAll.cc
 int neuronBlkSz;
 int synapseBlkSz;
 int learnBlkSz;
+int synDynBlkSz;
+#ifndef CPU_ONLY
 cudaDeviceProp *deviceProp;
 int theDev;
+#endif
 
 int hostCount; //!< Global variable containing the number of hosts within the local compute cluster
 int deviceCount; //!< Global variable containing the number of CUDA devices found on this host
@@ -53,8 +60,19 @@ int optimiseBlockSize = 1; //!< Flag for signalling whether or not block size op
 //vector<int> synapseBlkSz; //!< Global vector containing the optimum synapse kernel block size for each device
 //vector<int> learnBlkSz; //!< Global vector containing the optimum learn kernel block size for each device
 //vector<int> neuronBlkSz; //!< Global vector containing the optimum neuron kernel block size for each device
+
 int UIntSz = sizeof(unsigned int) * 8; //!< size of the unsigned int variable type on the local architecture
 int logUIntSz = (int) (logf((float) UIntSz) / logf(2.0f) + 1e-5f); //!< logarithm of the size of the unsigned int variable type on the local architecture
 double asGoodAsZero = 1e-19; //!< Global variable that is used when detecting close to zero values, for example when setting sparse connectivity from a dense matrix
+
+namespace GeNNFlags {
+    unsigned int COPY= 1;
+    unsigned int NOCOPY= ~COPY;
+
+    unsigned int calcSynapseDynamics= 0;
+    unsigned int calcSynapses= 1;
+    unsigned int learnSynapsesPost= 2;
+    unsigned int calcNeurons= 3;
+};
 
 #endif  // _GLOBAL_H_
