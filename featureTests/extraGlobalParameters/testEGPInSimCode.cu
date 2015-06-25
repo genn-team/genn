@@ -121,8 +121,8 @@ int main(int argc, char *argv[])
 	  expNeurOs << endl;
       }
       inputpre= pow(t, 2.0);
-      if (i%2 == 0) copy=GeNNFlags::COPY;
-      else copy= GeNNFlags::NOCOPY;
+      if (i%2 == 0) copy=GENN_FLAGS::COPY;
+      else copy= GENN_FLAGS::NOCOPY;
       sim->run(which, copy);
       if (fmod(t+5e-5, REPORT_TIME) < 1e-4)
       {

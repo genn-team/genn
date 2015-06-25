@@ -1443,7 +1443,7 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     // ------------------------------------------------------------------------
     // the actual time stepping procedure
     
-    os << "void stepTimeGPU(unsigned int flags= GeNNFlags::COPY)" << endl;
+    os << "void stepTimeGPU(unsigned int flags= GENN_FLAGS::COPY)" << endl;
     os << "{" << endl;
 
     if (model.synapseGrpN > 0) { 
@@ -1482,7 +1482,7 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     }
     os << endl;
     if (model.totalKernelParameterSize > 0) {
-	os << "if (flags&GeNNFlags::COPY == 1)" << OB(33) << ENDL;
+	os << "if (flags&GENN_FLAGS::COPY == 1)" << OB(33) << ENDL;
 	os << "CHECK_CUDA_ERRORS(cudaMemcpy((void *) d_kernelPara, (void *) kernelPara, " << model.totalKernelParameterSize;
 	os << ", cudaMemcpyHostToDevice));" << endl;
 	os << CB(33) << ENDL;

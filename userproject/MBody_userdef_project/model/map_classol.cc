@@ -160,7 +160,7 @@ void classol::read_pnkcsyns(FILE *f //!< File handle for a file containing PN to
     fprintf(stdout, "%f ", gpPNKC[i]);
   }
   fprintf(stdout,"\n\n");
-  unsigned int connN = countEntriesAbove(gpPNKC, model.neuronN[0] * model.neuronN[1], asGoodAsZero);
+  unsigned int connN = countEntriesAbove(gpPNKC, model.neuronN[0] * model.neuronN[1], GENN_PREFERENCES::asGoodAsZero);
   allocatePNKC(connN);
   setSparseConnectivityFromDense(gPNKC, model.neuronN[0], model.neuronN[1], gpPNKC, &CPNKC);
   cout << "PNKC connN is " << CPNKC.connN << endl; 
@@ -247,7 +247,7 @@ void classol::read_kcdnsyns(FILE *f //!< File handle for a file containing KC to
   }
   fprintf(stdout, "\n\n");
 
-	unsigned int connN = countEntriesAbove(gpKCDN, model.neuronN[1] * model.neuronN[3], asGoodAsZero);
+  unsigned int connN = countEntriesAbove(gpKCDN, model.neuronN[1] * model.neuronN[3], GENN_PREFERENCES::asGoodAsZero);
 //  connN = locust.model.neuronN[1] * locust.model.neuronN[3];
   allocateKCDN(connN);
   cout << "KCDN connN is " << CKCDN.connN << endl; 
@@ -374,12 +374,12 @@ void classol::runGPU(scalar runtime //!< Duration of time to run the model for
 	    pno= (iT/patSetTime)%PATTERNNO;
 	    ratesPN= d_pattern;
 	    offsetPN= pno*model.neuronN[0];
-	    flags= GeNNFlags::COPY;
+	    flags= GENN_FLAGS::COPY;
 	}
 	if (iT%patSetTime == patFireTime) {
 	    ratesPN= d_baserates;
 	    offsetPN= 0;
-	    flags= GeNNFlags::COPY;
+	    flags= GENN_FLAGS::COPY;
 	}
 	stepTimeGPU(flags);
     }

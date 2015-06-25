@@ -343,14 +343,14 @@ void NNmodel::initLearnGrps()
 #ifndef CPU_ONLY
     // figure out where to reset the spike counters
     if (synapseGrpN == 0) { // no synapses -> reset in neuron kernel
-	resetKernel= GeNNFlags::calcNeurons;
+	resetKernel= GENN_FLAGS::calcNeurons;
     }
     else { // there are synapses
 	if (lrnGroups > 0) {
-	    resetKernel= GeNNFlags::learnSynapsesPost;
+	    resetKernel= GENN_FLAGS::learnSynapsesPost;
 	}
 	else {
-	    resetKernel= GeNNFlags::calcSynapses;
+	    resetKernel= GENN_FLAGS::calcSynapses;
 	}
     }
 #endif
@@ -805,7 +805,11 @@ void NNmodel::setGPUDevice(int device)
   CHECK_CUDA_ERRORS(cudaGetDeviceCount(&deviceCount));
   assert(device >= -1);
   assert(device < deviceCount);
-  chooseGPUDevice= device;
+  if (device == -1) GENN_PREFERENCES::chooseDevice= 1;
+  else {
+      GENN_PREFERENCES::chooseDevice= 0;
+      GENN_PREFERENCES::defaultDevice= device;
+  }
 }
 #endif
 

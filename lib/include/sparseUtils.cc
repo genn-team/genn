@@ -65,7 +65,7 @@ void setSparseConnectivityFromDense(DATATYPE * wuvar, int preN,int postN,DATATYP
 	for (int pre = 0; pre < preN; ++pre) {
 		for (int post = 0; post < postN; ++post) {
 			DATATYPE g = tmp_gRNPN[pre * postN + post];
-			if (g > asGoodAsZero) {
+			if (g > GENN_PREFERENCES::asGoodAsZero) {
 				sparseStruct->ind[synapse] = post;
 				wuvar[synapse] = g;
 				synapse ++;
@@ -82,7 +82,7 @@ template <class DATATYPE>
 void createSparseConnectivityFromDense(DATATYPE * wuvar, int preN,int postN,DATATYPE * tmp_gRNPN, SparseProjection * sparseStruct, bool runTest) {
 
 	
-	sparseStruct->connN = countEntriesAbove(tmp_gRNPN, preN * postN, asGoodAsZero);
+	sparseStruct->connN = countEntriesAbove(tmp_gRNPN, preN * postN, GENN_PREFERENCES::asGoodAsZero);
 	//sorry -- this is not functional anymore 
 	//allocateSparseArray(sparseStruct, sparseStruct.connN, preN, false);
 
@@ -92,7 +92,7 @@ void createSparseConnectivityFromDense(DATATYPE * wuvar, int preN,int postN,DATA
 	for (int pre = 0; pre < preN; ++pre) {
 		for (int post = 0; post < postN; ++post) {
 			DATATYPE g = tmp_gRNPN[pre * postN + post];
-			if (g > asGoodAsZero) {
+			if (g > GENN_PREFERENCES::asGoodAsZero) {
 				sparseStruct->ind[synapse] = post;
 				wuvar[synapse] = g;
 				synapse ++;
@@ -109,7 +109,7 @@ void createSparseConnectivityFromDense(DATATYPE * wuvar, int preN,int postN,DATA
 		int randY = rand() % postN;
 		float denseResult = tmp_gRNPN[randX * postN + randY];
 		float sparseResult = getG(wuvar, sparseStruct,randX,randY);
-		if (abs(denseResult-sparseResult) > asGoodAsZero) fails++;
+		if (abs(denseResult-sparseResult) > GENN_PREFERENCES::asGoodAsZero) fails++;
 	}
 	if (fails > 0 ) {
 		fprintf(stderr, "ERROR: Sparse connectivity generator failed for %u out of 10 random checks.\n", fails);

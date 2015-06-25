@@ -19,6 +19,7 @@
 //--------------------------------------------------------------------------
 
 //#define CPU_ONLY
+#define BLOCKSZ_DEBUG
 
 #define DT 0.1  //!< This defines the global time step at which the simulation will run
 #include "modelSpec.h"
@@ -143,6 +144,9 @@ double *postSynV = NULL;
 void modelDefinition(NNmodel &model) 
 {
     initGeNN();
+//    GENN_PREFERENCES::chooseDevice= 0;
+    //   GENN_PREFERENCES::optimiseBlockSize= 0;
+    // GENN_PREFERENCES::neuronBlockSize= 192; 
     model.setName("MBody1");
     model.addNeuronPopulation("PN", _NAL, POISSONNEURON, myPOI_p, myPOI_ini);
     model.addNeuronPopulation("KC", _NMB, TRAUBMILES, stdTM_p, stdTM_ini);

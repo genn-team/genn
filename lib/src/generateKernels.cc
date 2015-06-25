@@ -109,7 +109,7 @@ void genNeuronKernel(NNmodel &model, //!< Model description
     os << ENDL;
 
     // Reset global spike counting vars here if there are no synapses at all
-    if (model.resetKernel == GeNNFlags::calcNeurons) {
+    if (model.resetKernel == GENN_FLAGS::calcNeurons) {
 	os << "if (id == 0)" << OB(6);
 	for (int j = 0; j < model.neuronGrpN; j++) {
 	    if (model.neuronDelaySlots[j] > 1) { // WITH DELAY
@@ -930,7 +930,7 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 	    os << CB(190);
 	}
 	// need to do reset operations in this kernel (no learning kernel)
-	if (model.resetKernel == GeNNFlags::calcSynapses) {
+	if (model.resetKernel == GENN_FLAGS::calcSynapses) {
 	    os << "__syncthreads();" << ENDL;
 	    os << "if (threadIdx.x == 0)" << OB(200);
 	    os << "j = atomicAdd((unsigned int *) &d_done, 1);" << ENDL;
@@ -1130,7 +1130,7 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 	    os << CB(250);
 	    os << CB(230);
 
-	    if (model.resetKernel == GeNNFlags::learnSynapsesPost) {
+	    if (model.resetKernel == GENN_FLAGS::learnSynapsesPost) {
 		os << "__syncthreads();" << ENDL;
 		os << "if (threadIdx.x == 0)" << OB(320);
 		os << "j = atomicAdd((unsigned int *) &d_done, 1);" << ENDL;
