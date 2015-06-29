@@ -54,6 +54,10 @@ CodeHelper hlp;
   }									   \
 }
 
+// comment above and uncomment here when using CUDA that does not support 
+// cugetErrorName 
+//#define CHECK_CU_ERRORS(call) call
+
 CUresult cudaFuncGetAttributesDriver(cudaFuncAttributes *attr, CUfunction kern) {
     int tmp;
     CHECK_CU_ERRORS(cuFuncGetAttribute(&tmp, CU_FUNC_ATTRIBUTE_MAX_THREADS_PER_BLOCK, kern));

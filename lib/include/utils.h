@@ -64,7 +64,6 @@ void gennError(const char *error)
 
 #include "modelSpec.h"
 #include "toString.h"
-#include "stringutils.h"
 
 
 #ifndef CPU_ONLY

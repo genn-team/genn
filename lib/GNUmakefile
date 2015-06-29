@@ -24,7 +24,7 @@ DARWIN  	:=$(strip $(findstring DARWIN, $(OS_UPPER)))
 
 # Global C++ and CUDA compiler settings.
 NVCC		:=$(CUDA_PATH)/bin/nvcc
-CXXFLAGS	+=-DNVCC=\"$(NVCC)\"
+CXXFLAGS	+=-DNVCC=\"$(NVCC)\" -std="c++11"
 
 # Global include flags and link flags.
 INCLUDE_FLAGS	:=-include $(MODEL) -I$(CUDA_PATH)/include -I$(GENN_PATH)/lib/include -I$(GENN_PATH)/userproject/include
