@@ -24,7 +24,7 @@ DARWIN  	:=$(strip $(findstring DARWIN, $(OS_UPPER)))
 
 # Global C++ and CUDA compiler settings.
 NVCC		:=$(CUDA_PATH)/bin/nvcc
-CXXFLAGS	+=-DNVCC=\"$(NVCC)\" -std="c++11"
+CXXFLAGS	+=-DNVCC=\"$(NVCC)\" -std=c++0x
 
 # Global include flags and link flags.
 INCLUDE_FLAGS	:=-include $(MODEL) -I$(CUDA_PATH)/include -I$(GENN_PATH)/lib/include -I$(GENN_PATH)/userproject/include
@@ -32,9 +32,9 @@ ifeq ($(DARWIN),DARWIN)
   LINK_FLAGS	:=-Xlinker -L$(CUDA_PATH)/lib -lcuda -lcudart -lstdc++ -lc++
 else
   ifeq ($(OS_SIZE),32)
-    LINK_FLAGS	:=-L$(CUDA_PATH)/lib -lcuda -lcudart
+    LINK_FLAGS	:=-L$(CUDA_PATH)/lib -lcuda -lcudart -lstdc++ 
   else
-    LINK_FLAGS	:=-L$(CUDA_PATH)/lib64 -lcuda -lcudart
+    LINK_FLAGS	:=-L$(CUDA_PATH)/lib64 -lcuda -lcudart -lstdc++
   endif
 endif
 

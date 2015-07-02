@@ -1,6 +1,8 @@
 
 #include <string>
+#if !defined(__GNUC__) || (__GNUC__ >= 4 && __GNUC_MINOR__ >= 9)
 #include <regex>
+#endif
 
 //--------------------------------------------------------------------------
 //! \brief Tool for substituting strings in the neuron code strings or other templates
@@ -331,6 +333,8 @@ string ensureFtype(string oldcode, string type)
 }
 
 
+#if !defined(__GNUC__) || (__GNUC__ >= 4 && __GNUC_MINOR__ >= 9)
+
 //--------------------------------------------------------------------------
 /*! \brief This function checks for unknown variable definitions and returns a gennError if any are found
  */
@@ -350,3 +354,8 @@ void checkUnreplacedVariables(string code, string codeName)
 	gennError("The "+vars+"undefined in code "+codeName+".");
     }
 }
+#else
+void checkUnreplacedVariables(string code, string codeName) 
+{
+}
+#endif
