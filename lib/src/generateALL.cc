@@ -41,6 +41,7 @@ CodeHelper hlp;
 #ifndef CPU_ONLY
 /*! \brief Macro definition for error checking when using the driver API */
 
+#if CUDA_VERSION >= 6050
 #define CHECK_CU_ERRORS(call)					           \
 {								      	   \
   CUresult error = call;						   \
@@ -53,6 +54,9 @@ CodeHelper hlp;
     exit(EXIT_FAILURE);						           \
   }									   \
 }
+#else
+#define CHECK_CU_ERRORS(call) call
+#endif
 
 CUresult cudaFuncGetAttributesDriver(cudaFuncAttributes *attr, CUfunction kern) {
     int tmp;
