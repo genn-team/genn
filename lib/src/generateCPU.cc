@@ -167,7 +167,9 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 	    substitute(thCode, tS("$(Isyn)"), tS("Isyn"));
 	    thCode= ensureFtype(thCode, model.ftype);
 	    checkUnreplacedVariables(thCode, tS("thresholdConditionCode"));
-	    os << "bool oldSpike= (" << thCode << ");" << ENDL;  
+	    if (GENN_PREFERENCES::autoRefractory) {
+	      os << "bool oldSpike= (" << thCode << ");" << ENDL;  
+	    }
 	}
 
 	os << "// calculate membrane potential" << ENDL;
@@ -220,7 +222,12 @@ void genNeuronFunction(NNmodel &model, //!< Model description
         // test for true spikes if condition is provided
 	if (thCode != tS("")) {
 	    os << "// test for and register a true spike" << ENDL;
-	    os << "if ((" << thCode << ") && !(oldSpike))" << OB(40);
+	    if (GENN_PREFERENCES::autoRefractory) {
+	      os << "if ((" << thCode << ") && !(oldSpike))" << OB(40);
+	    }
+	    else{
+	      os << "if (" << thCode << ") " << OB(40);
+	    }
 	    os << "glbSpk" << model.neuronName[i] << "[" << queueOffsetTrueSpk << "glbSpkCnt" << model.neuronName[i];
 	    if ((model.neuronDelaySlots[i] > 1) && (model.neuronNeedTrueSpk[i])) { // WITH DELAY
 		os << "[spkQuePtr" << model.neuronName[i] << "]++] = n;" << ENDL;

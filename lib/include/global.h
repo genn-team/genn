@@ -79,6 +79,8 @@ namespace GENN_PREFERENCES {
     unsigned int synapseBlockSize= 32;
     unsigned int learningBlockSize= 32;
     unsigned int synapseDynamicsBlockSize= 32;
+
+    unsigned int autoRefractory= 1; //!< Flag for signalling whether spikes are only reported if thresholdCondition changes from false to true (autoRefractory == 1) or spikes are emitted whenever thresholdCondition is true no matter what.
 };
     
 

@@ -153,6 +153,24 @@ void genRunner(NNmodel &model, //!< Model description
 	else {
 	  os << " glbSpk" << model.neuronName[i] << endl;
 	}
+      	if (model.neuronNeedSpkEvnt[i]) {
+	  // convenience macros for accessing spike count 
+	  os << "#define spikeEventCount_" << model.neuronName[i] << " glbSpkCntEvnt" << model.neuronName[i];
+	  if (model.neuronDelaySlots[i] > 1) {
+	    os << "[spkQuePtr" << model.neuronName[i] << "]" << endl;
+	  }
+	  else {
+	    os << "[0]" << endl;
+	  }
+	  // convenience macro for accessing spikes
+	  os << "#define spikeEvent_" << model.neuronName[i];
+	  if (model.neuronDelaySlots[i] > 1) {
+	    os << " (glbSpkEvnt" << model.neuronName[i] << "+(spkQuePtr" << model.neuronName[i] << "*" << model.neuronN[i] << "))" << endl;
+	  }
+	  else {
+	    os << " glbSpkEvnt" << model.neuronName[i] << endl;
+	  }
+	}
     }
     os << "#endif" << ENDL;
     os.close();
@@ -1131,15 +1149,7 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 	os << ", " << size << " * sizeof(unsigned int), cudaMemcpyHostToDevice));" << endl;
 
 	if (model.neuronNeedSpkEvnt[i]) {
-	    size = model.neuronDelaySlots[i];
-	    os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_glbSpkCntEvnt" << model.neuronName[i];
-	    os << ", glbSpkCntEvnt" << model.neuronName[i];
-	    os << ", " << size << " * sizeof(unsigned int), cudaMemcpyHostToDevice));" << endl;
-
-	    size = model.neuronN[i] * model.neuronDelaySlots[i];
-	    os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_glbSpkEvnt" << model.neuronName[i];
-	    os << ", glbSpkEvnt" << model.neuronName[i];
-	    os << ", " << size << " * sizeof(unsigned int), cudaMemcpyHostToDevice));" << endl;
+	  os << "push" << model.neuronName[i] << "SpikeEventsToDevice();" << ENDL;
 	}
 
 	if (model.neuronNeedSt[i]) {
@@ -1151,18 +1161,94 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 
 	os << CB(1060);
 	os << ENDL;	
-    }
+	
+	// neuron spike variables
+	os << "void push" << model.neuronName[i] << "SpikeEventsToDevice()" << ENDL;
+	os << OB(1060);
 
+	if (model.neuronNeedSpkEvnt[i]) {
+	    size = model.neuronDelaySlots[i];
+	    os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_glbSpkCntEvnt" << model.neuronName[i];
+	    os << ", glbSpkCntEvnt" << model.neuronName[i];
+	    os << ", " << size << " * sizeof(unsigned int), cudaMemcpyHostToDevice));" << endl;
+
+	    size = model.neuronN[i] * model.neuronDelaySlots[i];
+	    os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_glbSpkEvnt" << model.neuronName[i];
+	    os << ", glbSpkEvnt" << model.neuronName[i];
+	    os << ", " << size << " * sizeof(unsigned int), cudaMemcpyHostToDevice));" << endl;
+	}
+
+	os << CB(1060);
+	os << ENDL;	
+
+	// current neuron spike variables
+	os << "void push" << model.neuronName[i] << "CurrentSpikesToDevice()" << ENDL;
+	os << OB(1061);
+	
+	size = model.neuronN[i];
+	if ((model.neuronNeedTrueSpk[i]) && (model.neuronDelaySlots[i] > 1)) {
+	  os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_glbSpkCnt" << model.neuronName[i];
+	  os << "+spkQuePtr" << model.neuronName[i] << ", glbSpkCnt" << model.neuronName[i];
+	  os << "+spkQuePtr" << model.neuronName[i];
+	  os << ", sizeof(unsigned int), cudaMemcpyHostToDevice));" << ENDL;
+	  os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_glbSpk" << model.neuronName[i];
+	  os << "+(spkQuePtr" << model.neuronName[i] << "*" << model.neuronN[i] << ")";
+	  os << ", glbSpk" << model.neuronName[i];
+	  os << "+(spkQuePtr" << model.neuronName[i] << "*" << model.neuronN[i] << ")";
+	  os << ", " << "glbSpkCnt" << model.neuronName[i] << "[spkQuePtr" << model.neuronName[i] << "] * sizeof(unsigned int), cudaMemcpyHostToDevice));" << ENDL;
+	}
+	else {
+	  os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_glbSpkCnt" << model.neuronName[i];
+	  os << ", glbSpkCnt" << model.neuronName[i]; 
+	  os << ", sizeof(unsigned int), cudaMemcpyHostToDevice));" << ENDL;
+	  os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_glbSpk" << model.neuronName[i];
+	  os << ", glbSpk" << model.neuronName[i];
+	  os << ", " << "glbSpkCnt" << model.neuronName[i] << "[0] * sizeof(unsigned int), cudaMemcpyHostToDevice));" << endl;
+	}
+	
+	os << CB(1061);
+	os << ENDL;	
+	
+	// current neuron spike variables
+	os << "void push" << model.neuronName[i] << "CurrentSpikeEventsToDevice()" << ENDL;
+	os << OB(1062);
+	
+	size = model.neuronN[i];
+	if (model.neuronNeedSpkEvnt[i]) {
+	  if (model.neuronDelaySlots[i] > 1) {
+	    os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_glbSpkCntEvnt" << model.neuronName[i];
+	    os << "+spkQuePtr" << model.neuronName[i] << ", glbSpkCntEvnt" << model.neuronName[i];
+	    os << "+spkQuePtr" << model.neuronName[i];
+	    os << ", sizeof(unsigned int), cudaMemcpyHostToDevice));" << ENDL;
+	    os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_glbSpkEvnt" << model.neuronName[i];
+	    os << "+(spkQuePtr" << model.neuronName[i] << "*" << model.neuronN[i] << ")";
+	    os << ", glbSpkEvnt" << model.neuronName[i];
+	    os << "+(spkQuePtr" << model.neuronName[i] << "*" << model.neuronN[i] << ")";
+	    os << ", " << "glbSpkCnt" << model.neuronName[i] << "[spkQuePtr" << model.neuronName[i] << "] * sizeof(unsigned int), cudaMemcpyHostToDevice));" << ENDL;
+	  }
+	  else {
+	    os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_glbSpkCntEvnt" << model.neuronName[i];
+	    os << ", glbSpkCntEvnt" << model.neuronName[i]; 
+	    os << ", sizeof(unsigned int), cudaMemcpyHostToDevice));" << ENDL;
+	    os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_glbSpkEvnt" << model.neuronName[i];
+	    os << ", glbSpkEvnt" << model.neuronName[i];
+	    os << ", " << "glbSpkCntEvnt" << model.neuronName[i] << "[0] * sizeof(unsigned int), cudaMemcpyHostToDeviceDevice));" << endl;
+	  }
+	}
+	
+	os << CB(1062);
+	os << ENDL;	
+    }
     // synapse variables
     for (int i = 0; i < model.synapseGrpN; i++) {
-	st = model.synapseType[i];
-	pst = model.postSynapseType[i];
-	
-	os << "#define push" << model.synapseName[i] << "ToDevice push" << model.synapseName[i] << "StateToDevice" << ENDL << ENDL;
+        st = model.synapseType[i];
+        pst = model.postSynapseType[i];
+      
+        os << "#define push" << model.synapseName[i] << "ToDevice push" << model.synapseName[i] << "StateToDevice" << ENDL << ENDL;
 
-	os << "void push" << model.synapseName[i] << "StateToDevice()" << ENDL;
+        os << "void push" << model.synapseName[i] << "StateToDevice()" << ENDL;
 	os << OB(1100);
-
+	
 	if (model.synapseGType[i] == INDIVIDUALG) { // INDIVIDUALG
 	    if (model.synapseConnType[i] != SPARSE) {
 		os << "size_t size = " << model.neuronN[model.synapseSource[i]] * model.neuronN[model.synapseTarget[i]] << ";" << ENDL;
@@ -1231,8 +1317,27 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 
 	os << CB(1050);
 	os << ENDL;
+	
+	// spike event variables
+	os << "void pull" << model.neuronName[i] << "SpikeEventsFromDevice()" << ENDL;
+	os << OB(1061);
+	
+	size = model.neuronDelaySlots[i];
+	if (model.neuronNeedSpkEvnt[i]) {
+	  os << "CHECK_CUDA_ERRORS(cudaMemcpy(glbSpkCntEvnt" << model.neuronName[i];
+	  os << ", d_glbSpkCntEvnt" << model.neuronName[i];
+	  os << ", " << size << " * sizeof(unsigned int), cudaMemcpyDeviceToHost));" << endl;
+	  
+	  size = model.neuronN[i] * model.neuronDelaySlots[i];
+	  os << "CHECK_CUDA_ERRORS(cudaMemcpy(glbSpkEvnt" << model.neuronName[i];
+	  os << ", d_glbSpkEvnt" << model.neuronName[i];
+	  os << ", " << size << " * sizeof(unsigned int), cudaMemcpyDeviceToHost));" << endl;
+	}
+	
+	os << CB(1061);
+	os << ENDL;
 
-	// neuron spike variables
+	// neuron spike variables (including spike events)
 	os << "void pull" << model.neuronName[i] << "SpikesFromDevice()" << ENDL;
 	os << OB(1060);
 
@@ -1257,15 +1362,7 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 	os << ", " << size << " * sizeof(unsigned int), cudaMemcpyDeviceToHost));" << endl;
 
 	if (model.neuronNeedSpkEvnt[i]) {
-	    size = model.neuronDelaySlots[i];
-	    os << "CHECK_CUDA_ERRORS(cudaMemcpy(glbSpkCntEvnt" << model.neuronName[i];
-	    os << ", d_glbSpkCntEvnt" << model.neuronName[i];
-	    os << ", " << size << " * sizeof(unsigned int), cudaMemcpyDeviceToHost));" << endl;
-
-	    size = model.neuronN[i] * model.neuronDelaySlots[i];
-	    os << "CHECK_CUDA_ERRORS(cudaMemcpy(glbSpkEvnt" << model.neuronName[i];
-	    os << ", d_glbSpkEvnt" << model.neuronName[i];
-	    os << ", " << size << " * sizeof(unsigned int), cudaMemcpyDeviceToHost));" << endl;
+	  os << "pull" << model.neuronName[i] << "SpikeEventsFromDevice();" << ENDL;
 	}
 
 	if (model.neuronNeedSt[i]) {
@@ -1286,26 +1383,55 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 	  os << "CHECK_CUDA_ERRORS(cudaMemcpy(glbSpkCnt" << model.neuronName[i];
 	  os << "+spkQuePtr" << model.neuronName[i] << ", d_glbSpkCnt" << model.neuronName[i];
 	  os << "+spkQuePtr" << model.neuronName[i];
-	  os << ", sizeof(unsigned int), cudaMemcpyDeviceToHost));" << endl;
+	  os << ", sizeof(unsigned int), cudaMemcpyDeviceToHost));" << ENDL;
 
 	  os << "CHECK_CUDA_ERRORS(cudaMemcpy(glbSpk" << model.neuronName[i];
 	  os << "+(spkQuePtr" << model.neuronName[i] << "*" << model.neuronN[i] << ")";
 	  os << ", d_glbSpk" << model.neuronName[i];
 	  os << "+(spkQuePtr" << model.neuronName[i] << "*" << model.neuronN[i] << ")";
-	  os << ", " << "glbSpkCnt" << model.neuronName[i] << "[spkQuePtr" << model.neuronName[i] << "] * sizeof(unsigned int), cudaMemcpyDeviceToHost));" << endl;
+	  os << ", " << "glbSpkCnt" << model.neuronName[i] << "[spkQuePtr" << model.neuronName[i] << "] * sizeof(unsigned int), cudaMemcpyDeviceToHost));" << ENDL;
 	}
 	else {
 	  os << "CHECK_CUDA_ERRORS(cudaMemcpy(glbSpkCnt" << model.neuronName[i];
 	  os << ", d_glbSpkCnt" << model.neuronName[i]; 
-	  os << ", sizeof(unsigned int), cudaMemcpyDeviceToHost));" << endl;
+	  os << ", sizeof(unsigned int), cudaMemcpyDeviceToHost));" << ENDL;
 	  os << "CHECK_CUDA_ERRORS(cudaMemcpy(glbSpk" << model.neuronName[i];
 	  os << ", d_glbSpk" << model.neuronName[i];
-	  os << ", " << "glbSpkCnt" << model.neuronName[i] << "[0] * sizeof(unsigned int), cudaMemcpyDeviceToHost));" << endl;
+	  os << ", " << "glbSpkCnt" << model.neuronName[i] << "[0] * sizeof(unsigned int), cudaMemcpyDeviceToHost));" << ENDL;
 	}
 
 	os << CB(1061);
 	os << ENDL;	
 	
+	os << "void pull" << model.neuronName[i] << "CurrentSpikeEventsFromDevice()" << ENDL;
+	os << OB(1062);
+
+	size = model.neuronN[i] ;
+	if (model.neuronNeedSpkEvnt[i]) {
+	  if (model.neuronDelaySlots[i] > 1) {
+	    os << "CHECK_CUDA_ERRORS(cudaMemcpy(glbSpkCntEvnt" << model.neuronName[i];
+	    os << "+spkQuePtr" << model.neuronName[i] << ", d_glbSpkCntEvnt" << model.neuronName[i];
+	    os << "+spkQuePtr" << model.neuronName[i];
+	    os << ", sizeof(unsigned int), cudaMemcpyDeviceToHost));" << endl;
+	    
+	    os << "CHECK_CUDA_ERRORS(cudaMemcpy(glbSpkEvnt" << model.neuronName[i];
+	    os << "+(spkQuePtr" << model.neuronName[i] << "*" << model.neuronN[i] << ")";
+	    os << ", d_glbSpkEvnt" << model.neuronName[i];
+	    os << "+(spkQuePtr" << model.neuronName[i] << "*" << model.neuronN[i] << ")";
+	    os << ", " << "glbSpkCntEvnt" << model.neuronName[i] << "[spkQuePtr" << model.neuronName[i] << "] * sizeof(unsigned int), cudaMemcpyDeviceToHost));" << endl;
+	  }
+	  else {
+	    os << "CHECK_CUDA_ERRORS(cudaMemcpy(glbSpkCntEvnt" << model.neuronName[i];
+	    os << ", d_glbSpkCntEvnt" << model.neuronName[i]; 
+	    os << ", sizeof(unsigned int), cudaMemcpyDeviceToHost));" << endl;
+	    os << "CHECK_CUDA_ERRORS(cudaMemcpy(glbSpkEvnt" << model.neuronName[i];
+	    os << ", d_glbSpkEvnt" << model.neuronName[i];
+	    os << ", " << "glbSpkCntEvnt" << model.neuronName[i] << "[0] * sizeof(unsigned int), cudaMemcpyDeviceToHost));" << endl;
+	  }
+	}
+
+	os << CB(1062);
+	os << ENDL;	
     }
 
     // synapse variables
@@ -1378,6 +1504,46 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     os << CB(1110);
     os << endl;
     
+    // ------------------------------------------------------------------------
+    // copying spikes to device
+    
+    os << "void copySpikesToDevice()" << endl;
+    os << OB(1111);
+    for (int i = 0; i < model.neuronGrpN; i++) {
+      os << "push" << model.neuronName[i] << "SpikesToDevice();" << ENDL;
+    }
+    os << CB(1111);
+   
+    // ------------------------------------------------------------------------
+    // copying current spikes to device
+    
+    os << "void copyCurrentSpikesToDevice()" << endl;
+    os << OB(1112);
+    for (int i = 0; i < model.neuronGrpN; i++) {
+      os << "push" << model.neuronName[i] << "CurrentSpikesToDevice();" << ENDL;
+    }
+    os << CB(1112);
+   
+    
+    // ------------------------------------------------------------------------
+    // copying spike events to device
+    
+    os << "void copySpikeEventsToDevice()" << endl;
+    os << OB(1113);
+    for (int i = 0; i < model.neuronGrpN; i++) {
+      os << "push" << model.neuronName[i] << "SpikeEventsToDevice();" << ENDL;
+    }
+    os << CB(1113);
+   
+    // ------------------------------------------------------------------------
+    // copying current spikes to device
+    
+    os << "void copyCurrentSpikeEventsToDevice()" << endl;
+    os << OB(1114);
+    for (int i = 0; i < model.neuronGrpN; i++) {
+      os << "push" << model.neuronName[i] << "CurrentSpikeEventsToDevice();" << ENDL;
+    }
+    os << CB(1114);
 
     // ------------------------------------------------------------------------
     // copying values from device
@@ -1405,22 +1571,27 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     os << "{" << endl;
 
     for (int i = 0; i < model.neuronGrpN; i++) {
-	if ((model.neuronNeedTrueSpk[i]) && (model.neuronDelaySlots[i] > 1)) {
-	    size = model.neuronN[i] * model.neuronDelaySlots[i];
-	}
-	else {
-	    size = model.neuronN[i];
-	}
-	os << "CHECK_CUDA_ERRORS(cudaMemcpy(glbSpk" << model.neuronName[i];
-	os << ", d_glbSpk" << model.neuronName[i] << ", " << size << "* sizeof(unsigned int), cudaMemcpyDeviceToHost));" << endl;
+      os << "pull" << model.neuronName[i] << "SpikesFromDevice();" << ENDL;
     }
+    os << "}" << endl;
+    os << endl;
+    
+    // ------------------------------------------------------------------------
+    // copying current spikes from device                                            
+    
+    os << "void copyCurrentSpikesFromDevice()" << endl;
+    os << "{" << endl;
 
+    for (int i = 0; i < model.neuronGrpN; i++) {
+      os << "pull" << model.neuronName[i] << "CurrentSpikesFromDevice();" << ENDL;
+    }
     os << "}" << endl;
     os << endl;
     
 
     // ------------------------------------------------------------------------
-    // copying spike numbers from device
+    // copying spike numbers from device (note, only use when only interested
+    // in spike numbers; copySpikesFromDevice() already includes this)
 
     os << "void copySpikeNFromDevice()" << endl;
     os << "{" << endl;
@@ -1440,6 +1611,53 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     os << endl;
 
     
+    // ------------------------------------------------------------------------
+    // copying spikeEvents from device                                            
+    
+    os << "void copySpikeEventsFromDevice()" << endl;
+    os << "{" << endl;
+
+    for (int i = 0; i < model.neuronGrpN; i++) {
+      os << "pull" << model.neuronName[i] << "SpikeEventsFromDevice();" << ENDL;
+    }
+    os << "}" << endl;
+    os << endl;
+    
+    // ------------------------------------------------------------------------
+    // copying current spikeEvents from device                                            
+    
+    os << "void copyCurrentSpikeEventsFromDevice()" << endl;
+    os << "{" << endl;
+
+    for (int i = 0; i < model.neuronGrpN; i++) {
+      os << "pull" << model.neuronName[i] << "CurrentSpikeEventsFromDevice();" << ENDL;
+    }
+    os << "}" << endl;
+    os << endl;
+
+    // ------------------------------------------------------------------------
+    // copying spike event numbers from device (note, only use when only interested
+    // in spike numbers; copySpikeEventsFromDevice() already includes this)
+
+    os << "void copySpikeEventNFromDevice()" << endl;
+    os << "{" << endl;
+
+    for (int i = 0; i < model.neuronGrpN; i++) {
+      if (model.neuronNeedSpkEvnt[i]) {
+	if (model.neuronDelaySlots[i] > 1) {
+	  size = model.neuronDelaySlots[i];
+	}
+	else {
+	  size = 1;
+	}
+	os << "CHECK_CUDA_ERRORS(cudaMemcpy(glbSpkCntEvnt" << model.neuronName[i];
+	os << ", d_glbSpkCntEvnt" << model.neuronName[i] << ", " << size << "* sizeof(unsigned int), cudaMemcpyDeviceToHost));" << endl;
+      }
+    }
+
+    os << "}" << endl;
+    os << endl;
+
     // ------------------------------------------------------------------------
     // the actual time stepping procedure
     

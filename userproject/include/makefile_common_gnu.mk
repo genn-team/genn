@@ -26,7 +26,7 @@ DARWIN  	:=$(strip $(findstring DARWIN, $(OS_UPPER)))
 CUDA_PATH	?=/usr/local/cuda
 NVCC		:=$(CUDA_PATH)/bin/nvcc
 NVCCFLAGS	+= 
-CXXFLAGS	+=-std=c++11
+CXXFLAGS	+=-std=c++0x
 ifeq ($(DARWIN),DARWIN)
    CXX		:=clang++
 endif
