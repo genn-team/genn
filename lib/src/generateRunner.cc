@@ -30,6 +30,11 @@ void variable_def(ofstream &os, string type, string name)
 #endif
 }
 
+void extern_variable_def(ofstream &os, string type, string name)
+{
+    os << "extern " << type << " " << name << ";" << ENDL;
+}
+
 //--------------------------------------------------------------------------
 /*!
   \brief A function that generates predominantly host-side code.
@@ -253,6 +258,69 @@ void genRunner(NNmodel &model, //!< Model description
 
 #endif
 
+    //---------------------------------
+    // HOST AND DEVICE NEURON VARIABLES
+    os << "// neuron variables" << ENDL;
+    for (int i = 0; i < model.neuronGrpN; i++) {
+	nt = model.neuronType[i];
+
+	extern_variable_def(os, tS("unsigned int *"), "glbSpkCnt"+model.neuronName[i]);
+	extern_variable_def(os, tS("unsigned int *"), "glbSpk"+model.neuronName[i]);
+	if (model.neuronNeedSpkEvnt[i]) {
+	    extern_variable_def(os, tS("unsigned int *"), "glbSpkCntEvnt"+model.neuronName[i]);
+	    extern_variable_def(os, tS("unsigned int *"), "glbSpkEvnt"+model.neuronName[i]);
+	}
+	if (model.neuronDelaySlots[i] > 1) {
+	    os << "extern unsigned int spkQuePtr" << model.neuronName[i] << ";" << ENDL;
+	}
+	if (model.neuronNeedSt[i]) {
+	    extern_variable_def(os, model.ftype+" *", "sT"+model.neuronName[i]);
+	}
+	for (int k = 0, l= nModels[nt].varNames.size(); k < l; k++) {
+	    extern_variable_def(os, nModels[nt].varTypes[k]+" *", nModels[nt].varNames[k]+model.neuronName[i]);
+	}
+	
+    }
+    os << ENDL;
+
+    //----------------------------------
+    // HOST AND DEVICE SYNAPSE VARIABLES
+
+    os << "// synapse variables" << ENDL;
+    for (int i = 0; i < model.synapseGrpN; i++) {
+	st = model.synapseType[i];
+	pst = model.postSynapseType[i];
+
+	extern_variable_def(os, model.ftype+" *", "inSyn"+model.synapseName[i]);
+	if (model.synapseGType[i] == INDIVIDUALID) {
+	    extern_variable_def(os, tS("uint32_t *"), "gp"+model.synapseName[i]);
+	}
+	if (model.synapseConnType[i] == SPARSE) {
+	    os << "extern SparseProjection C" << model.synapseName[i] << ";" << ENDL;
+	}
+	if (model.synapseGType[i] == INDIVIDUALG) { // not needed for GLOBALG, INDIVIDUALID
+	    for (int k = 0, l = weightUpdateModels[st].varNames.size(); k < l; k++) {
+		extern_variable_def(os, weightUpdateModels[st].varTypes[k]+" *", weightUpdateModels[st].varNames[k]+model.synapseName[i]);
+	    }
+	    for (int k = 0, l = postSynModels[pst].varNames.size(); k < l; k++) {
+		extern_variable_def(os, postSynModels[pst].varTypes[k]+" *", postSynModels[pst].varNames[k]+model.synapseName[i]); 
+	    }
+	}
+    }
+    os << ENDL;
+    // write global variables for the extra global neuron kernel parameters.
+    // These are assumed not to be pointers, if they are the user needs to take care of allocation etc
+    if (model.totalKernelParameterSize > 0) {
+	os << " // memory space that holds the kernel arguments/parameters" << ENDL;
+	os << "extern char kernelPara[" << model.totalKernelParameterSize << "];" << ENDL;
+	for (int k = 0, l= model.kernelParameters.size(); k < l; k++) {
+	    os << "extern " << model.kernelParameterTypes[k] << "& " << model.kernelParameters[k];
+	    os << model.kernelParameterPopulations[k] << ";" << ENDL;
+	}
+	os << ENDL;
+    }
+    os << ENDL;
+
     os << "#endif" << ENDL;
     os.close();
     
@@ -275,6 +343,7 @@ void genRunner(NNmodel &model, //!< Model description
     os << "#include \"utils.h\"" << ENDL << ENDL;
     os << "#include \"numlib/simpleBit.h\"" << ENDL << ENDL;
     if (model.timing) os << "#include \"hr_time.cpp\"" << ENDL;
+    os << "#define RUNNER_CC_COMPILE" << ENDL;
     os << "#include \"definitions.h\"" << ENDL;
     os << ENDL;
 
