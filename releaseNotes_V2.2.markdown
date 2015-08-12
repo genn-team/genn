@@ -1,0 +1,42 @@
+Release Notes for GeNN v2.2
+====
+
+This release includes minor new features, some core code improvements and several bug fixes on GeNN v2.1.
+
+User Side Changes
+----
+
+1. There is now a new mechanism for how frequently changing "external input" is communicated to kernels. Rather than a GeNN generated argument list for each kernel comprising direct inputs, extraglobal parameters and the time variable in GeNN <= 2.1, there are now no kernel arguments for any kernel and the relevant variables are copied to the GPU in a single memory copy at each time step.
+For users this means that within kernels, references need to be made to the correctly named variables and similarly when setting them on the CPU side.
+Examples: CPU  	     GPU (kernel code snippet)
+	  t	     $(t)
+	  extraHH    $(extra)
+	  (for an extraglobalneuronparameter "extra" in a neurongroup "HH")
+
+Note, that for example, the predefined Poisson neurons have an auto-copy for the pointer to the rates array and for the offset (integer) where to use the array. The rates themselves in the array however are not updated automatically (this is exactly as before with the kernel arguments).
+IMPORTANT NOTE: The global time variable "t" is now provided by GeNN; please make sure that you are not duplicating its definition or shadowing it. This could have severe consequences for simulation correctness (e.g. time not advancing in cases of over-shadowing).
+The concept of "directInput" has been removed. Users can easily achieve the same thing by adding an additional variable (if there are infividual inputs to neurons), an extraGlobalNeuronParameter (if the input is homogeneous but time dependent) or, obviously a simple parameter if it's homogeneous and constant.
+
+2. We introduced the namespace GENN_PREFERENCES which contains variables that determine the behaviour of GeNN. These include
+
+
+Developer Side Changes
+----
+
+1. Blocksize optimization and device choice now obtain the ptxas information on memory usage from a CUDA driver API call rather than from parsing ptxas output of the nvcc compiler. This adds robustness to any change in the syntax of the compiler output.
+
+2. The information about device choice is now stored in variables in the namespace GENN_PREFERENCES. This includes `chooseDevice`, `optimiseBlockSize`, `defaultDevice`. `asGoodAsZero` has also been moved into this namespace.
+
+3. We have also introduce the namespace GENN_FLAGS that contains unsigned int variables that attach names to mueric flags that can be used within GeNN. 
+
+4. the headers of the auto-generated communication functions such as pullXXXStateFromDevice etc, are now generated into dfeinitions.h. This is useful where one does want to compile separate object files that cannot all include the full definitions in "runnerGPU.cc". One example where this is useful is brian2genn.
+
+
+Improvements
+----
+1. Improved method of obtaining ptxas compiler information on register and shared memory usage andan improved algorithm for estimating shared memory usage requirements for different block sizes.
+
+Bug fixes:
+----
+
+Please refer to the [full documentation](http://genn-team.github.io/genn/documentation/html/index.html) for further details, tutorials and complete code documentation.
