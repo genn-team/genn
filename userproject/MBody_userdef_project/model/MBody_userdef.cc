@@ -243,10 +243,12 @@ void modelDefinition(NNmodel &model)
   nsynapse.varNames.push_back(tS("g"));
   nsynapse.varTypes.push_back(tS("scalar"));
   // code for presynaptic spike:
-  nsynapse.simCode = tS("$(addtoinSyn) = $(g);\n\
+  nsynapse.simCode = tS("$(addtoinSyn) = $(g)+myfunc();\n\
   $(updatelinsyn);\n\
   ");
-
+  nsynapse.supportCode= tS("__host__ __device__ double myfunc() {\n\
+    return 0.0; \n\
+} \n");
   weightUpdateModels.push_back(nsynapse);
   unsigned int NSYNAPSE_userdef=weightUpdateModels.size()-1; //this is the synapse index to be used in addSynapsePopulation
 

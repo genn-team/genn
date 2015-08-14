@@ -321,6 +321,32 @@ void genRunner(NNmodel &model, //!< Model description
     }
     os << ENDL;
 
+    // write the support codes
+    os << "// support code for neuron and synapse models" << endl;
+    for (int i= 0; i < model.neuronGrpN; i++) {
+	if (nModels[model.neuronType[i]].supportCode != tS("")) {
+	    os << "namespace " << model.neuronName[i] << OB(11) << ENDL;
+	    os << nModels[model.neuronType[i]].supportCode << ENDL;
+	    os << CB(11) << " // end of support code namespace " << model.neuronName[i] << ENDL;
+	}
+    }
+    for (int i= 0; i < model.synapseGrpN; i++) {
+	if (weightUpdateModels[model.synapseType[i]].supportCode != tS("")) {
+	    os << "namespace " << model.synapseName[i] << "_weightupdate " << OB(11) << ENDL;
+	    os << weightUpdateModels[model.synapseType[i]].supportCode << ENDL;
+	    os << CB(11) << " // end of support code namespace " << model.synapseName[i] << "_weightupdate " << ENDL;
+	}
+	if (postSynModels[model.postSynapseType[i]].supportCode != tS("")) {
+	    os << "namespace " << model.synapseName[i] << "_postsyn " << OB(11) << ENDL;
+	    os << postSynModels[model.postSynapseType[i]].supportCode << ENDL;
+	    os << CB(11) << " // end of support code namespace " << model.synapseName[i] << "_postsyn " << ENDL;
+	}
+	
+    }
+
+    
+    
+
     os << "#endif" << ENDL;
     os.close();
     
