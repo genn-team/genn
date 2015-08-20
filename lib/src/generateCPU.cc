@@ -59,6 +59,9 @@ void genNeuronFunction(NNmodel &model, //!< Model description
     os << "*/" << ENDL;
     os << "//-------------------------------------------------------------------------" << ENDL << ENDL;
 
+    os << "// include the support codes provided by the user for neuron or synaptic models" << ENDL;
+    os << "#include \"support_code.h\"" << ENDL << ENDL; 
+
     // function header
     os << "void calcNeuronsCPU(" << model.ftype << " t)" << ENDL;
     os << OB(51);
@@ -175,7 +178,7 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 	    checkUnreplacedVariables(thCode, tS("thresholdConditionCode"));
 	    if (GENN_PREFERENCES::autoRefractory) {
 		if (nModels[nt].supportCode != tS("")) {
-		    os << OB(29) << " using namespace " << model.neuronName[i] << ";" << ENDL;
+		    os << OB(29) << " using namespace " << model.neuronName[i] << "_support;" << ENDL;
 		}
 		os << "bool oldSpike= (" << thCode << ");" << ENDL;  
 		if (nModels[nt].supportCode != tS("")) {
@@ -200,7 +203,7 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 	sCode= ensureFtype(sCode, model.ftype);
 	checkUnreplacedVariables(sCode,tS("neuron simCode"));
 	if (nModels[nt].supportCode != tS("")) {
-	    os << OB(29) << " using namespace " << model.neuronName[i] << ";" << ENDL;
+	    os << OB(29) << " using namespace " << model.neuronName[i] << "_support;" << ENDL;
 	}
 	os << sCode << ENDL;
 	if (nModels[nt].supportCode != tS("")) {
@@ -227,7 +230,7 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 
 	    os << "// test for and register a spike-like event" << ENDL;
 	    if (nModels[nt].supportCode != tS("")) {
-		os << OB(29) << " using namespace " << model.neuronName[i] << ";" << ENDL;	
+		os << OB(29) << " using namespace " << model.neuronName[i] << "_support;" << ENDL;	
 	    }
 	    os << "if (" + eCode + ")" << OB(30);
 	    os << "glbSpkEvnt" << model.neuronName[i] << "[" << queueOffset << "glbSpkCntEvnt" << model.neuronName[i];
@@ -247,7 +250,7 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 	if (thCode != tS("")) {
 	    os << "// test for and register a true spike" << ENDL;
 	    if (nModels[nt].supportCode != tS("")) {
-		os << OB(29) << " using namespace " << model.neuronName[i] << ";" << ENDL;	
+		os << OB(29) << " using namespace " << model.neuronName[i] << "_support;" << ENDL;	
 	    }
 	    if (GENN_PREFERENCES::autoRefractory) {
 	      os << "if ((" << thCode << ") && !(oldSpike))" << OB(40);
@@ -317,7 +320,7 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 		os << OB(29) << " using namespace " << sName << "_postsyn;" << ENDL;	
 	    }
 	    os << pdCode << ENDL;
-	    if (nModels[nt].supportCode != tS("")) {
+	    if (psModel.supportCode != tS("")) {
 		os << CB(29) << " // namespace bracket closed" << endl;
 	    }
 	    for (int k = 0, l = psModel.varNames.size(); k < l; k++) {

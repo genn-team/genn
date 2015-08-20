@@ -68,6 +68,9 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 
     //os << "__device__ __host__ float exp(int i) { return exp((float) i); }" << endl;
 
+    os << "// include the support codes provided by the user for neuron or synaptic models" << ENDL;
+    os << "#include \"support_code.h\"" << ENDL << ENDL;
+
     isGrpVarNeeded = new short[model.neuronGrpN];
     for (int i = 0; i < model.synapseGrpN; i++) {
 	if ((model.synapseConnType[i] == SPARSE) && (model.neuronN[model.synapseTarget[i]] > synapseBlkSz)) {
@@ -255,7 +258,7 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 	    checkUnreplacedVariables(thCode,tS("thresholdConditionCode"));
 	    if (GENN_PREFERENCES::autoRefractory) {
 		if (nModels[nt].supportCode != tS("")) {
-		    os << OB(29) << " using namespace " << model.neuronName[i] << ";" << ENDL;
+		    os << OB(29) << " using namespace " << model.neuronName[i] << "_support;" << ENDL;
 		}
 		os << "bool oldSpike= (" << thCode << ");" << ENDL;   
 		if (nModels[nt].supportCode != tS("")) {
@@ -278,7 +281,7 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 	checkUnreplacedVariables(sCode,tS("neuron simCode"));
 	
 	if (nModels[nt].supportCode != tS("")) {
-	    os << OB(29) << " using namespace " << model.neuronName[i] << ";" << ENDL;
+	    os << OB(29) << " using namespace " << model.neuronName[i] << "_support;" << ENDL;
 	}
 	os << sCode << ENDL;
 	if (nModels[nt].supportCode != tS("")) {
@@ -305,7 +308,7 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 	    // end code substitutions ----
 	    os << "// test for and register a spike-like event" << ENDL;
 	    if (nModels[nt].supportCode != tS("")) {
-		os << OB(29) << " using namespace " << model.neuronName[i] << ";" << ENDL;	
+		os << OB(29) << " using namespace " << model.neuronName[i] << "_support;" << ENDL;	
 	    }
 	    os << "if (" + eCode + ")" << OB(30);
 	    os << "spkEvntIdx = atomicAdd((unsigned int *) &spkEvntCount, 1);" << ENDL;
@@ -320,7 +323,7 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 	if (thCode != tS("")) {
 	    os << "// test for and register a true spike" << ENDL;
 	    if (nModels[nt].supportCode != tS("")) {
-		os << OB(29) << " using namespace " << model.neuronName[i] << ";" << ENDL;	
+		os << OB(29) << " using namespace " << model.neuronName[i] << "_support;" << ENDL;	
 	    }
 	    if (GENN_PREFERENCES::autoRefractory) {
 	      os << "if ((" << thCode << ") && !(oldSpike)) " << OB(40);
@@ -362,6 +365,9 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 	    }
 	}
 
+	if (model.inSyn[i].size() > 0) {
+	    os << "// the post-synaptic dynamics" << ENDL;
+	}
 	for (int j = 0; j < model.inSyn[i].size(); j++) {
 	    postSynModel psModel= postSynModels[model.postSynapseType[model.inSyn[i][j]]];
 	    string sName= model.synapseName[model.inSyn[i][j]];
@@ -377,12 +383,11 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 	    value_substitutions(pdCode, nModels[nt].dpNames, model.dnp[i]);
 	    pdCode= ensureFtype(pdCode, model.ftype);
 	    checkUnreplacedVariables(pdCode, tS("postSynDecay"));
-	    os << "// the post-synaptic dynamics" << ENDL;
 	    if (psModel.supportCode != tS("")) {
 		os << OB(29) << " using namespace " << sName << "_postsyn;" << ENDL;	
 	    }
 	    os << pdCode << ENDL;
-	    if (nModels[nt].supportCode != tS("")) {
+	    if (psModel.supportCode != tS("")) {
 		os << CB(29) << " // namespace bracket closed" << endl;
 	    }
 	    

@@ -130,7 +130,7 @@ void genRunner(NNmodel &model, //!< Model description
     
     os << "#ifndef DEFINITIONS_H" << ENDL;
     os << "#define DEFINITIONS_H" << ENDL;
-
+    
     for (int i= 0; i < model.neuronGrpN; i++) {
 	os << "#define glbSpkShift" << model.neuronName[i];
 	if (model.neuronDelaySlots[i] > 1) {
@@ -320,12 +320,30 @@ void genRunner(NNmodel &model, //!< Model description
 	os << ENDL;
     }
     os << ENDL;
+    os << "#endif" << ENDL;
+    os.close();
 
+    // generate definitions.h
+    // this file contains helpful macros and is separated out so that it can also be used by other code that is compiled separately
+    name= path + toString("/") + model.name + toString("_CODE/support_code.h");
+    os.open(name.c_str());  
+    writeHeader(os);
+    os << ENDL;
+    
+       // write doxygen comment
+    os << "//-------------------------------------------------------------------------" << ENDL;
+    os << "/*! \\file support_code.h" << ENDL << ENDL;
+    os << "\\brief File generated from GeNN for the model " << model.name << " containing support code provided by the user and used for both GPU amd CPU versions." << ENDL;
+    os << "*/" << ENDL;
+    os << "//-------------------------------------------------------------------------" << ENDL << ENDL;
+    
+    os << "#ifndef SUPPORT_CODE_H" << ENDL;
+    os << "#define SUPPORT_CODE_H" << ENDL;
     // write the support codes
     os << "// support code for neuron and synapse models" << endl;
     for (int i= 0; i < model.neuronGrpN; i++) {
 	if (nModels[model.neuronType[i]].supportCode != tS("")) {
-	    os << "namespace " << model.neuronName[i] << OB(11) << ENDL;
+	    os << "namespace " << model.neuronName[i] << "_support" << OB(11) << ENDL;
 	    os << nModels[model.neuronType[i]].supportCode << ENDL;
 	    os << CB(11) << " // end of support code namespace " << model.neuronName[i] << ENDL;
 	}
@@ -343,10 +361,6 @@ void genRunner(NNmodel &model, //!< Model description
 	}
 	
     }
-
-    
-    
-
     os << "#endif" << ENDL;
     os.close();
     
@@ -373,9 +387,9 @@ void genRunner(NNmodel &model, //!< Model description
     os << "#include \"definitions.h\"" << ENDL;
     os << ENDL;
 
-    os << "#ifndef int_" << ENDL;
-    os << "#define int_(X) ((int) (X))" << ENDL;
-    os << "#endif" << ENDL;
+//    os << "#ifndef int_" << ENDL;
+//    os << "#define int_(X) ((int) (X))" << ENDL;
+//    os << "#endif" << ENDL;
 
     os << "#ifndef scalar" << ENDL;
     os << "typedef " << model.ftype << " scalar;" << ENDL;
@@ -398,6 +412,9 @@ void genRunner(NNmodel &model, //!< Model description
     os << "#ifndef MYRAND" << ENDL;
     os << "#define MYRAND(Y,X) Y = Y * 1103515245 + 12345; X = (Y >> 16);" << ENDL;
     os << "#endif" << ENDL << ENDL;
+    os << "#ifndef MYRAND_MAX" << ENDL;
+    os << "#define MYRAND_MAX 0x0000FFFFFFFFFFFFLL" << ENDL;
+    os << "#endif" << ENDL;
   if (model.timing) {
 #ifndef CPU_ONLY
       os << "cudaEvent_t neuronStart, neuronStop;" << ENDL;
@@ -989,11 +1006,12 @@ void genRunner(NNmodel &model, //!< Model description
 	if (model.synapseConnType[i]==SPARSE){
 	    os << "size = C" << model.synapseName[i] << ".connN;" << ENDL;
 	    os << "  initializeSparseArray(C" << model.synapseName[i] << ",";
-	    os << "  d_ind" << model.synapseName[i] << ",";
-	    os << "  d_indInG" << model.synapseName[i] << ",";
+	    os << " d_ind" << model.synapseName[i] << ",";
+	    os << " d_indInG" << model.synapseName[i] << ",";
 	    os << model.neuronN[model.synapseSource[i]] <<");" << ENDL;
 	    if (model.synapseUsesSynapseDynamics[i]) {
-		os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_preInd" << model.synapseName[i] << ", "  << "C" << model.synapseName[i] << ".preInd, C" << model.synapseName[i] << ".connN*sizeof(unsigned int), cudaMemcpyHostToDevice));" << ENDL;
+		os << "  initializeSparseArrayPreInd(C" << model.synapseName[i] << ",";
+		os << " d_preInd" << model.synapseName[i] << ");" << ENDL;
 	    }
 	    if (model.synapseUsesPostLearning[i]) {
 		os << "  initializeSparseArrayRev(C" << model.synapseName[i] << ",";

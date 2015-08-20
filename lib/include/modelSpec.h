@@ -29,6 +29,7 @@ Part of the code generation and generated code sections.
 #include <string>
 using namespace std;
 #include "global.h"
+#include "sparseProjection.h"
 
 void initGeNN();
 
@@ -96,17 +97,6 @@ unsigned int IZHIKEVICH_PS; //empty postsynaptic rule for the Izhikevich model.
 class dpclass {
 public:
   virtual double calculateDerivedParameter(int index, vector < double > pars, double dt = 1.0) {return -1;}
-};
-
-//! \brief class (struct) for defining a spars connectivity projection
-struct SparseProjection{
-    unsigned int *indInG;
-    unsigned int *ind;
-    unsigned int *preInd;
-    unsigned int *revIndInG;
-    unsigned int *revInd;
-    unsigned int *remap;
-    unsigned int connN; 
 };
 
 //! \brief class (struct) for specifying a neuron model.

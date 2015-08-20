@@ -19,6 +19,11 @@ The concept of "directInput" has been removed. Users can easily achieve the same
 
 2. We introduced the namespace GENN_PREFERENCES which contains variables that determine the behaviour of GeNN. These include
 
+3. We introduced a new code snippet called "supportCode" for neuron models, weightupdate models and post-synaptic models. This code snippet is intended to contain user-defined functions that are used from the other code snippets. We advise where possible to define the support code functions with keywords "__host__ __device__" so that they are available for both GPU and CPU version. Alternatively one can define separate versions for __host__ and __device__ in the snippet. The snippets are automatically made available to the relevant code parts. This is regulated through namespaces so that name clashes between different models do not matter. An exception are hash defines. They can in principle be used in the supportCode snippet but need to be protected specifically using #ifndef. Example
+#ifndef clip(x)
+#define clip(x) x > 10.0? 10.0 : x
+#endif
+Note: If there are conflicting definitions for hash defines, the one that appears first in the GeNN generated code will then prevail.
 
 Developer Side Changes
 ----

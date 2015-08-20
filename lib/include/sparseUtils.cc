@@ -182,7 +182,13 @@ void initializeSparseArrayRev(SparseProjection C,  unsigned int * dRevInd, unsig
     CHECK_CUDA_ERRORS(cudaMemcpy(dRevInd, C.revInd, C.connN*sizeof(unsigned int), cudaMemcpyHostToDevice));
     CHECK_CUDA_ERRORS(cudaMemcpy(dRevIndInG, C.revIndInG, (postN+1)*sizeof(unsigned int), cudaMemcpyHostToDevice));
     CHECK_CUDA_ERRORS(cudaMemcpy(dRemap, C.remap, C.connN*sizeof(unsigned int), cudaMemcpyHostToDevice));
-} 
+}
+
+void initializeSparseArrayPreInd(SparseProjection C,  unsigned int * dPreInd)
+{
+    CHECK_CUDA_ERRORS(cudaMemcpy(dPreInd, C.preInd, C.connN*sizeof(unsigned int), cudaMemcpyHostToDevice));
+}
+
 #endif
 
 // is this used anywhere? Suggest to remove (TN)
