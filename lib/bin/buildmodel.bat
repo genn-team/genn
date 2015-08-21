@@ -16,7 +16,7 @@ if "%GENN_PATH%"=="" (
   set GENN_PATH=%GeNNPATH%
 )
 
-cd "%GENN_PATH%\lib"
+cd /d "%GENN_PATH%\lib"
 nmake /nologo /f WINmakefile clean
 if "%DBGMODE%"=="0" (
   nmake /nologo /f WINmakefile MODEL="%MODELPATH%\%MODELNAME%.cc"
@@ -26,6 +26,6 @@ if "%DBGMODE%"=="0" (
   nmake /nologo /f WINmakefile DEBUG=1 MODEL="%MODELPATH%\%MODELNAME%.cc"
   devenv /debugexe bin\generateALL.exe %MODELPATH%
 )
-cd "%MODELPATH%"
+cd /d "%MODELPATH%"
 
 echo Model build complete ...
