@@ -258,7 +258,7 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 	    checkUnreplacedVariables(thCode,tS("thresholdConditionCode"));
 	    if (GENN_PREFERENCES::autoRefractory) {
 		if (nModels[nt].supportCode != tS("")) {
-		    os << OB(29) << " using namespace " << model.neuronName[i] << "_support;" << ENDL;
+		    os << OB(29) << " using namespace " << model.neuronName[i] << "_neuron;" << ENDL;
 		}
 		os << "bool oldSpike= (" << thCode << ");" << ENDL;   
 		if (nModels[nt].supportCode != tS("")) {
@@ -281,7 +281,7 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 	checkUnreplacedVariables(sCode,tS("neuron simCode"));
 	
 	if (nModels[nt].supportCode != tS("")) {
-	    os << OB(29) << " using namespace " << model.neuronName[i] << "_support;" << ENDL;
+	    os << OB(29) << " using namespace " << model.neuronName[i] << "_neuron;" << ENDL;
 	}
 	os << sCode << ENDL;
 	if (nModels[nt].supportCode != tS("")) {
@@ -308,7 +308,7 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 	    // end code substitutions ----
 	    os << "// test for and register a spike-like event" << ENDL;
 	    if (nModels[nt].supportCode != tS("")) {
-		os << OB(29) << " using namespace " << model.neuronName[i] << "_support;" << ENDL;	
+		os << OB(29) << " using namespace " << model.neuronName[i] << "_neuron;" << ENDL;	
 	    }
 	    os << "if (" + eCode + ")" << OB(30);
 	    os << "spkEvntIdx = atomicAdd((unsigned int *) &spkEvntCount, 1);" << ENDL;
@@ -323,7 +323,7 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 	if (thCode != tS("")) {
 	    os << "// test for and register a true spike" << ENDL;
 	    if (nModels[nt].supportCode != tS("")) {
-		os << OB(29) << " using namespace " << model.neuronName[i] << "_support;" << ENDL;	
+		os << OB(29) << " using namespace " << model.neuronName[i] << "_neuron;" << ENDL;	
 	    }
 	    if (GENN_PREFERENCES::autoRefractory) {
 	      os << "if ((" << thCode << ") && !(oldSpike)) " << OB(40);
@@ -533,8 +533,8 @@ void generate_process_presynaptic_events_code(
 	    os << "unsigned int gid = (shSpk" << postfix << "[j] * " << model.neuronN[trg] << " + " << localID << ");" << ENDL;
 	}
 
-	if (weightUpdateModels[synt].supportCode != tS("")) {
-	    os << OB(29) << " using namespace " << model.synapseName[i] << "_weightupdate;" << ENDL;	
+	if (weightUpdateModels[synt].simCode_supportCode != tS("")) {
+	    os << OB(29) << " using namespace " << model.synapseName[i] << "_weightupdate_simCode;" << ENDL;	
 	}
 	if (evnt) {
 	    os << "if ";
@@ -653,7 +653,7 @@ void generate_process_presynaptic_events_code(
 	else if (model.synapseGType[i] == INDIVIDUALID) {
 	    os << CB(135); // end if (B(dd_gp" << model.synapseName[i] << "[gid >> " << logUIntSz << "], gid 
 	}
-	if (weightUpdateModels[synt].supportCode != tS("")) {
+	if (weightUpdateModels[synt].simCode_supportCode != tS("")) {
 	    os << CB(29) << " // namespace bracket closed" << ENDL;
 	}
 	os << CB(120) << ENDL;
@@ -754,8 +754,8 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 		    localID = "lid";
 		}
 		weightUpdateModel wu= weightUpdateModels[synt];
-		if (wu.supportCode != tS("")) {
-		    os << OB(29) << " using namespace " << model.synapseName[i] << "_weightupdate;" << ENDL;	
+		if (wu.synapseDynamics_supportCode != tS("")) {
+		    os << OB(29) << " using namespace " << model.synapseName[i] << "_weightupdate_synapseDynamics;" << ENDL;	
 		}
 		string SDcode= wu.synapseDynamics;
 		substitute(SDcode, tS("$(t)"), tS("t"));
@@ -815,8 +815,6 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 		    SDcode= ensureFtype(SDcode, model.ftype);
 		    checkUnreplacedVariables(SDcode, tS("synapseDynamics"));
 		    os << SDcode << ENDL;
-		    os << CB(25);
-		    os << CB(77);
 		}
 		else { // DENSE
 		    os << "if (" << localID << " < " << srcno*trgno << ")" << OB(25);
@@ -857,12 +855,12 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 		    SDcode= ensureFtype(SDcode, model.ftype);
 		    checkUnreplacedVariables(SDcode, tS("synapseDynamics"));
 		    os << SDcode << ENDL;
-		    os << CB(25);
-		    os << CB(77);
 		}
-		if (weightUpdateModels[synt].supportCode != tS("")) {
+		os << CB(25);
+		if (weightUpdateModels[synt].synapseDynamics_supportCode != tS("")) {
 		    os << CB(29) << " // namespace bracket closed" << ENDL;
-		}
+		    }
+		os << CB(77);
 	    }	
 	}
 	os << CB(75);
@@ -1074,8 +1072,8 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 	    string offsetTrueSpkPost = (model.neuronNeedTrueSpk[trg] ? offsetPost : "");
 
 // NOTE: WE DO NOT USE THE AXONAL DELAY FOR BACKWARDS PROPAGATION - WE CAN TALK ABOUT BACKWARDS DELAYS IF WE WANT THEM		
-	    if (weightUpdateModels[synt].supportCode != tS("")) {
-		os << OB(29) << " using namespace " << model.synapseName[k] << "_weightupdate;" << ENDL;	
+	    if (weightUpdateModels[synt].simLearnPost_supportCode != tS("")) {
+		os << OB(29) << " using namespace " << model.synapseName[k] << "_weightupdate_simLearnPost;" << ENDL;	
 	    }
 
 	    if (i == 0) {
@@ -1227,7 +1225,7 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 		os << CB(320); // end "if (threadIdx.x == 0)"
 	    }
 	    os << CB(220);
-	    if (weightUpdateModels[synt].supportCode != tS("")) {
+	    if (weightUpdateModels[synt].simLearnPost_supportCode != tS("")) {
 		os << CB(29) << " // namespace bracket closed" << ENDL;
 	    }
 	}

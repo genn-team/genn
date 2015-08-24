@@ -343,16 +343,26 @@ void genRunner(NNmodel &model, //!< Model description
     os << "// support code for neuron and synapse models" << endl;
     for (int i= 0; i < model.neuronGrpN; i++) {
 	if (nModels[model.neuronType[i]].supportCode != tS("")) {
-	    os << "namespace " << model.neuronName[i] << "_support" << OB(11) << ENDL;
+	    os << "namespace " << model.neuronName[i] << "_neuron" << OB(11) << ENDL;
 	    os << nModels[model.neuronType[i]].supportCode << ENDL;
 	    os << CB(11) << " // end of support code namespace " << model.neuronName[i] << ENDL;
 	}
     }
     for (int i= 0; i < model.synapseGrpN; i++) {
-	if (weightUpdateModels[model.synapseType[i]].supportCode != tS("")) {
-	    os << "namespace " << model.synapseName[i] << "_weightupdate " << OB(11) << ENDL;
-	    os << weightUpdateModels[model.synapseType[i]].supportCode << ENDL;
-	    os << CB(11) << " // end of support code namespace " << model.synapseName[i] << "_weightupdate " << ENDL;
+	if (weightUpdateModels[model.synapseType[i]].simCode_supportCode != tS("")) {
+	    os << "namespace " << model.synapseName[i] << "_weightupdate_simCode " << OB(11) << ENDL;
+	    os << weightUpdateModels[model.synapseType[i]].simCode_supportCode << ENDL;
+	    os << CB(11) << " // end of support code namespace " << model.synapseName[i] << "_weightupdate_simCode " << ENDL;
+	}
+	if (weightUpdateModels[model.synapseType[i]].simLearnPost_supportCode != tS("")) {
+	    os << "namespace " << model.synapseName[i] << "_weightupdate_simLearnPost " << OB(11) << ENDL;
+	    os << weightUpdateModels[model.synapseType[i]].simLearnPost_supportCode << ENDL;
+	    os << CB(11) << " // end of support code namespace " << model.synapseName[i] << "_weightupdate_simLearnPost " << ENDL;
+	}
+	if (weightUpdateModels[model.synapseType[i]].synapseDynamics_supportCode != tS("")) {
+	    os << "namespace " << model.synapseName[i] << "_weightupdate_synapseDynamics " << OB(11) << ENDL;
+	    os << weightUpdateModels[model.synapseType[i]].synapseDynamics_supportCode << ENDL;
+	    os << CB(11) << " // end of support code namespace " << model.synapseName[i] << "_weightupdate_synapseDynamics " << ENDL;
 	}
 	if (postSynModels[model.postSynapseType[i]].supportCode != tS("")) {
 	    os << "namespace " << model.synapseName[i] << "_postsyn " << OB(11) << ENDL;
