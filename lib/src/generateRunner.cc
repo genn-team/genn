@@ -1161,8 +1161,16 @@ void genRunner(NNmodel &model, //!< Model description
   os << "}" << ENDL;
 
 
-    // ------------------------------------------------------------------------
-    // the actual time stepping procedure
+  os << "// ------------------------------------------------------------------------" << ENDL;
+  os << "// Throw an error for \"old style\" time stepping calls" << ENDL;
+    os << "template <class T>" << ENDL;
+    os << "void stepTimeCPU(T arg1, ...)" << ENDL;
+    os << OB(101) << ENDL;
+    os << "gennError(\"Since GeNN 2.2 the call to step time has changed to not take any arguments. You appear to attempt to pass arguments. This is no longer supported. See the GeNN 2.2. release notes and the manual for examples how to pass data like, e.g., Poisson rates and direct inputs, that were previously handled through arguments.\");" << ENDL; 
+    os << CB(101) << endl;
+    
+    os << "// ------------------------------------------------------------------------" << ENDL;
+    os << "// the actual time stepping procedure" << ENDL;
 
     os << "void stepTimeCPU()" << ENDL;
     os << "{" << ENDL;
@@ -1857,6 +1865,14 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 
     os << CB(1126) << ENDL;
     os << ENDL;
+
+    os << "// ------------------------------------------------------------------------" << ENDL;
+    os << "// Raise an error if previous call convention is used for stepTimeGPU" << ENDL;           
+    os << "template <class T>" << ENDL;
+    os << "void stepTimeGPU(T arg1, ...)" << ENDL;
+    os << OB(101) << ENDL;
+    os << "gennError(\"Since GeNN 2.2 the call to stepTimeGPU has changed to not take any arguments other than an optional integer argument for flags. You appear to attempt to pass arguments. This is no longer supported. See the GeNN 2.2. release notes and the manual for examples how to pass data like, e.g., Poisson rates and direct inputs, that were previously handled through arguments.\");" << ENDL; 
+    os << CB(101) << endl;
 
     os << "// ------------------------------------------------------------------------" << ENDL;
     os << "// the actual time stepping procedure" << ENDL;

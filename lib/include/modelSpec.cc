@@ -484,7 +484,7 @@ void NNmodel::activateDirectInput(
   const string name, /**< Name of the neuron population */
   unsigned int type /**< Type of input: 1 if common input, 2 if custom input from file, 3 if custom input as a rule*/)
 {
-    gennError("This function has been deprecated. Use neuron variables, extraGlobalNeuronKernelParameters, or parameters instead.");
+    gennError("This function has been deprecated since GeNN 2.2. Use neuron variables, extraGlobalNeuronKernelParameters, or parameters instead.");
 }
 
 //--------------------------------------------------------------------------

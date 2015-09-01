@@ -6,7 +6,7 @@ This release includes minor new features, some core code improvements and severa
 User Side Changes
 ----
 
-1. There is now a new mechanism for how frequently changing "external input" is communicated to kernels. Rather than a GeNN generated argument list for each kernel comprising direct inputs, extraglobal parameters and the time variable in GeNN <= 2.1, there are now no kernel arguments for any kernel and the relevant variables are copied to the GPU in a single memory copy at each time step.
+1. There is now a new mechanism for how frequently changing "external input" is communicated to kernels. Rather than a GeNN generated argument list for each kernel comprising direct inputs, extraglobal parameters and the time variable in GeNN <= 2.1, there are now no kernel arguments other than the global time t for any of the kernels and the relevant variables are copied to the GPU in a single memory copy at each time step.
 For users this means that within kernels, references need to be made to the correctly named variables and similarly when setting them on the CPU side.
 Examples: CPU  	     GPU (kernel code snippet)
 	  t	     $(t)
@@ -15,7 +15,7 @@ Examples: CPU  	     GPU (kernel code snippet)
 
 Note, that for example, the predefined Poisson neurons have an auto-copy for the pointer to the rates array and for the offset (integer) where to use the array. The rates themselves in the array however are not updated automatically (this is exactly as before with the kernel arguments).
 IMPORTANT NOTE: The global time variable "t" is now provided by GeNN; please make sure that you are not duplicating its definition or shadowing it. This could have severe consequences for simulation correctness (e.g. time not advancing in cases of over-shadowing).
-The concept of "directInput" has been removed. Users can easily achieve the same thing by adding an additional variable (if there are infividual inputs to neurons), an extraGlobalNeuronParameter (if the input is homogeneous but time dependent) or, obviously a simple parameter if it's homogeneous and constant.
+The concept of "directInput" has been removed. Users can easily achieve the same thing by adding an additional variable (if there are individual inputs to neurons), an extraGlobalNeuronParameter (if the input is homogeneous but time dependent) or, obviously, a simple parameter if it's homogeneous and constant.
 
 2. We introduced the namespace GENN_PREFERENCES which contains variables that determine the behaviour of GeNN. These include
 
@@ -25,6 +25,10 @@ The concept of "directInput" has been removed. Users can easily achieve the same
 #endif
 Note: If there are conflicting definitions for hash defines, the one that appears first in the GeNN generated code will then prevail.
 
+4. The new convenience macros spikeCount_XX and spike_XX where "XX" is the name of the neuron group are now also available fro events: spikeEventCount_XX and spikeEvent_XX. They access the values for the current time step even if there are synaptic delays and spikes events are stored in circular queues.
+
+5. We have now introduced a "CPU_ONLY" macro that if it's defined will generate a GeNN version that is completely indepemdent from CUDA and hence can be used on computers without CUDA installation or CUDa enabled hardware. Obviously, thia then can also only run on CPU.
+
 Developer Side Changes
 ----
 
@@ -32,14 +36,14 @@ Developer Side Changes
 
 2. The information about device choice is now stored in variables in the namespace GENN_PREFERENCES. This includes `chooseDevice`, `optimiseBlockSize`, `defaultDevice`. `asGoodAsZero` has also been moved into this namespace.
 
-3. We have also introduce the namespace GENN_FLAGS that contains unsigned int variables that attach names to mueric flags that can be used within GeNN. 
+3. We have also introduced the namespace GENN_FLAGS that contains unsigned int variables that attach names to mueric flags that can be used within GeNN. 
 
-4. the headers of the auto-generated communication functions such as pullXXXStateFromDevice etc, are now generated into dfeinitions.h. This is useful where one does want to compile separate object files that cannot all include the full definitions in "runnerGPU.cc". One example where this is useful is brian2genn.
+4. The headers of the auto-generated communication functions such as pullXXXStateFromDevice etc, are now generated into definitions.h. This is useful where one wants to compile separate object files that cannot all include the full definitions in "runnerGPU.cc". One example where this is useful is the brian2genn interface.
 
 
 Improvements
 ----
-1. Improved method of obtaining ptxas compiler information on register and shared memory usage andan improved algorithm for estimating shared memory usage requirements for different block sizes.
+1. Improved method of obtaining ptxas compiler information on register and shared memory usage and an improved algorithm for estimating shared memory usage requirements for different block sizes.
 
 Bug fixes:
 ----
