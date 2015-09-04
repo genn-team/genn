@@ -13,5 +13,6 @@
 
 EXECUTABLE	=Izh_sim_sparse.exe
 SOURCES		=Izh_sim_sparse.cu
+OPTIMIZATIONFLAGS = /O2
 
 !include $(GENN_PATH)\userproject\include\makefile_common_win.mk

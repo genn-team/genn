@@ -13,5 +13,6 @@
 
 EXECUTABLE	=OneComp_sim.exe
 SOURCES		=OneComp_sim.cu
+OPTIMIZATIONFLAGS = /O2
 
 !include $(GENN_PATH)\userproject\include\makefile_common_win.mk

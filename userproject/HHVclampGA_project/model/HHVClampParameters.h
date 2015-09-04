@@ -1,3 +1,3 @@
-#define NPOP 5000
-#define TOTALT 1000
+#define NPOP 12
+#define TOTALT 200000
 #define fixGPU 0

@@ -13,5 +13,6 @@
 
 EXECUTABLE	:=Izh_sim_sparse
 SOURCES		:=Izh_sim_sparse.cu
+OPTIMIZATIONFLAGS:= -O3
 
 include	$(GENN_PATH)/userproject/include/makefile_common_gnu.mk

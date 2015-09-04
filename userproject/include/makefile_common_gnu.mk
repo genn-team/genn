@@ -68,8 +68,8 @@ $(EXECUTABLE): $(OBJECTS)
 
 .PHONY: release
 # use --compiler-options "-Wconversion" for silent type conversions 
-release: NVCCFLAGS	+=--compiler-options "-O3"
-release: CXXFLAGS	+=-O3
+release: NVCCFLAGS	+=--compiler-options "$(OPTIMIZATIONFLAGS)"
+release: CXXFLAGS	+= $(OPTIMIZATIONFLAGS)
 release: $(EXECUTABLE)
 
 .PHONY: debug

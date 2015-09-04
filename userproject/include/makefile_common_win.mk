@@ -42,7 +42,7 @@ OBJECTS		=$(OBJECTS:.cu=.obj)
 # Target rules.
 .SUFFIXES: .cu
 
-all: $(EXECUTABLE)
+all: release 
 
 .cc.obj:
 	$(CXX) $(CXXFLAGS) $(INCLUDE_FLAGS) $< /Fo$@ /c
@@ -55,6 +55,14 @@ all: $(EXECUTABLE)
 
 $(EXECUTABLE): $(OBJECTS)
 	$(CXX) $(CXXFLAGS) $(LINK_FLAGS) $(OBJECTS) /Fe$@
+
+release: NVCCFLAGS	+=--compiler-options "$(OPTIMIZATIONFLAGS)"
+release: CXXFLAGS	+= $(OPTIMIZATIONFLAGS)
+release: $(EXECUTABLE)
+
+debug: NVCCFLAGS	+=-g -G
+debug: CXXFLAGS		+=/G
+debug: $(EXECUTABLE) 
 
 clean:
 	-del $(EXECUTABLE) *.obj *.ilk *.pdb 2>nul

@@ -13,5 +13,6 @@
 
 EXECUTABLE	:=OneComp_sim
 SOURCES		:=OneComp_sim.cu
+OPTIMIZATIONFLAGS:= -O3
 
 include $(GENN_PATH)/userproject/include/makefile_common_gnu.mk

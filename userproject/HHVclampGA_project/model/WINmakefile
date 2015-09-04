@@ -14,5 +14,6 @@
 EXECUTABLE	=VClampGA.exe
 SOURCES		=VClampGA.cu
 EXTRA_INCLUDE	= /I %CD%
+OPTIMIZATIONFLAGS = /O2
 
 !include $(GENN_PATH)\userproject\include\makefile_common_win.mk
