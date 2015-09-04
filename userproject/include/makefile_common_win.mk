@@ -18,7 +18,6 @@
 
 # Global C++ and CUDA compiler settings.
 NVCC		="$(CUDA_PATH)\bin\nvcc.exe"
-NVCCFLAGS	=$(NVCCFLAGS) -g -G
 CXXFLAGS	=$(CXXFLAGS) /nologo /EHsc /Zi
 
 # Global include flags and link flags.
@@ -29,6 +28,14 @@ LINK_FLAGS	="$(CUDA_PATH)\lib\x64\cudart.lib"
 LINK_FLAGS	="$(CUDA_PATH)\lib\x64\cudart.lib"
 !ELSE
 LINK_FLAGS	="$(CUDA_PATH)\lib\Win32\cudart.lib"
+!ENDIF
+
+!IF "$(DEBUG)" != "1"
+NVCCFLAGS	= $(NVCCFLAGS) --compiler-options "$(OPTIMIZATIONFLAGS)"
+CXXFLAGS	= $(CXXFLAGS) $(OPTIMIZATIONFLAGS)
+!ELSE
+NVCCFLAGS	= $(NVCCFLAGS) -g -G
+CXXFLAGS	= $(CXXFLAGS) /Od /debug
 !ENDIF
 
 # An auto-generated file containing your cuda device's compute capability.
@@ -42,7 +49,7 @@ OBJECTS		=$(OBJECTS:.cu=.obj)
 # Target rules.
 .SUFFIXES: .cu
 
-all: release 
+all: $(EXECUTABLE)
 
 .cc.obj:
 	$(CXX) $(CXXFLAGS) $(INCLUDE_FLAGS) $< /Fo$@ /c
@@ -55,14 +62,6 @@ all: release
 
 $(EXECUTABLE): $(OBJECTS)
 	$(CXX) $(CXXFLAGS) $(LINK_FLAGS) $(OBJECTS) /Fe$@
-
-release: NVCCFLAGS	= $(NVCCFLAGS) --compiler-options "$(OPTIMIZATIONFLAGS)"
-release: CXXFLAGS	= $(CXXFLAGS) $(OPTIMIZATIONFLAGS)
-release: $(EXECUTABLE)
-
-debug: NVCCFLAGS	+=-g -G
-debug: CXXFLAGS		+=/G
-debug: $(EXECUTABLE) 
 
 clean:
 	-del $(EXECUTABLE) *.obj *.ilk *.pdb 2>nul
