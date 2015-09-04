@@ -150,8 +150,8 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
 		 string path     //!< path the generated code will be deposited
 		 )
 {
-    int krnlNo= 4;
-    const char *kernelName[4]= {"calcSynapses", "learnSynapsesPost", "calcSynapseDynamics", "calcNeurons"};
+#define krnlNo 4
+    const char *kernelName[krnlNo]= {"calcSynapses", "learnSynapsesPost", "calcSynapseDynamics", "calcNeurons"};
 
   // Get the specifications of all available cuda devices, then work out which one we will use.
   int deviceCount, chosenDevice = 0;
