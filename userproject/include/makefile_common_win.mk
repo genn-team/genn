@@ -56,8 +56,8 @@ all: release
 $(EXECUTABLE): $(OBJECTS)
 	$(CXX) $(CXXFLAGS) $(LINK_FLAGS) $(OBJECTS) /Fe$@
 
-release: NVCCFLAGS	+=--compiler-options "$(OPTIMIZATIONFLAGS)"
-release: CXXFLAGS	+= $(OPTIMIZATIONFLAGS)
+release: NVCCFLAGS	= $(NVCCFLAGS) --compiler-options "$(OPTIMIZATIONFLAGS)"
+release: CXXFLAGS	= $(CXXFLAGS) $(OPTIMIZATIONFLAGS)
 release: $(EXECUTABLE)
 
 debug: NVCCFLAGS	+=-g -G
