@@ -21,7 +21,9 @@ NVCC		="$(CUDA_PATH)\bin\nvcc.exe"
 CXXFLAGS	=$(CXXFLAGS) /nologo /EHsc /Zi
 
 # Global include flags and link flags.
+!IF "$(CPU_ONLY)" != "1"
 INCLUDE_FLAGS	= /I"$(CUDA_PATH)\include" /I"$(CUDA_PATH)\samples\common\inc" /I"$(GENN_PATH)\lib\include" /I"$(GENN_PATH)\userproject\include" $(EXTRA_INCLUDE) 
+
 !IF "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
 LINK_FLAGS	="$(CUDA_PATH)\lib\x64\cudart.lib"
 !ELSEIF "$(PROCESSOR_ARCHITEW6432)" == "AMD64"
@@ -37,9 +39,25 @@ CXXFLAGS	= $(CXXFLAGS) $(OPTIMIZATIONFLAGS)
 NVCCFLAGS	= $(NVCCFLAGS) -g -G
 CXXFLAGS	= $(CXXFLAGS) /Od /debug
 !ENDIF
+!ELSE
+NVCC		= $(CXX)
+INCLUDE_FLAGS	=  /I"$(GENN_PATH)\lib\include" /I"$(GENN_PATH)\userproject\include" $(EXTRA_INCLUDE) 
+
+!IF "$(DEBUG)" != "1"
+NVCCFLAGS	= $(CXXFLAGS) --compiler-options "$(OPTIMIZATIONFLAGS)"
+CXXFLAGS	= $(CXXFLAGS) $(OPTIMIZATIONFLAGS)
+!ELSE
+NVCCFLAGS	= $(CXXFLAGS) -g -G
+CXXFLAGS	= $(CXXFLAGS) /Od /debug
+!ENDIF
+
+!ENDIF
+
 
 # An auto-generated file containing your cuda device's compute capability.
+!IF "$(CPU_ONLY)" != "1"
 !INCLUDE sm_version.mk
+!ENDIF
 
 # Infer object file names from source file names.
 OBJECTS		=$(SOURCES:.cc=.obj)

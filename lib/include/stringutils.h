@@ -1,4 +1,7 @@
 
+#ifndef STRINGUTILS_H
+#define STRINGUTILS_H
+
 #include <string>
 #if !defined(__GNUC__) || (__GNUC__ >= 4 && __GNUC_MINOR__ >= 9)
 #include <regex>
@@ -358,4 +361,6 @@ void checkUnreplacedVariables(string code, string codeName)
 void checkUnreplacedVariables(string code, string codeName) 
 {
 }
+#endif
+
 #endif

@@ -20,6 +20,7 @@
 */
 //--------------------------------------------------------------------------
 
+#include "stringutils.h"
 
 void variable_def(ofstream &os, string type, string name)
 {

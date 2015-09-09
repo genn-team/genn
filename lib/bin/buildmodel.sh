@@ -17,6 +17,10 @@ echo "model path:" $MODELPATH
 MODELNAME=$1;
 echo "model name:" $MODELNAME
 DBGMODE=$2; # 1 if debugging, 0 if release
+EXTRA_DEF=$(echo $3 | tr [a-z] [A-Z]) # e.g., "cpu_only" keyword if building cpu_only version, store in upper case
+if [[ $EXTRA_DEF != "" ]]; then
+    EXTRA_DEF=-D$EXTRA_DEF
+fi
 
 if [ "$GENN_PATH" = "" ]; then
     if [ "$GeNNPATH" = "" ]; then
@@ -31,10 +35,10 @@ cd $GENN_PATH/lib;
 make clean
 if [ "$DBGMODE" = "1" ]; then
     echo "debugging mode ON"
-    make debug MODEL=$MODELPATH/$MODELNAME.cc;
+    make debug MODEL=$MODELPATH/$MODELNAME.cc EXTRA_DEF=$EXTRA_DEF;
     gdb -tui --directory=bin --args generateALL $MODELPATH;
 else
-    make MODEL=$MODELPATH/$MODELNAME.cc;
+    make MODEL=$MODELPATH/$MODELNAME.cc EXTRA_DEF=$EXTRA_DEF;
     bin/generateALL $MODELPATH;
 fi
 cd $MODELPATH;

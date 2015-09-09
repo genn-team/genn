@@ -77,6 +77,18 @@ debug: NVCCFLAGS	+=-g -G
 debug: CXXFLAGS		+=-g
 debug: $(EXECUTABLE) 
 
+.PHONY: cpu_only
+cpu_only: INCLUDE_FLAGS+= -DCPU_ONLY
+ifeq ($(DARWIN),DARWIN)
+cpu_only: LINK_FLAGS := -stdlib=libstdc++ -lc++ 
+else
+cpu_only: LINK_FLAGS := 
+endif
+cpu_only: NVCC :=$(CXX)
+cpu_only: NVCCFLAGS :=$(CXXFLAGS)
+cpu_only: CXXFLAGS +=$(OPTIMIZATIONFLAGS) 
+cpu_only: $(EXECUTABLE)
+
 .PHONY: clean
 clean:
 	rm -rf $(EXECUTABLE) *.o *.dSYM/
@@ -84,3 +96,7 @@ clean:
 .PHONY: purge
 purge: clean
 	rm -rf *_CODE sm_version.mk
+
+.PHONY: show
+show:
+	echo $(OBJECTS)
