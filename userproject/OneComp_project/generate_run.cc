@@ -78,13 +78,13 @@ int main(int argc, char *argv[])
 
   // build it  
 #ifdef _WIN32
-  cmd = "cd model && buildmodel.bat " + modelName + " " + toString(dbgMode);
-  cmd += " && nmake /nologo /f WINmakefile clean && nmake /nologo /f WINmakefile";
+  cmd = "cd model && buildmodel.bat " + modelName + " DEBUG=" + toString(dbgMode);
+  cmd += " && make.bat clean && make.bat ";
   if (dbgMode == 1) {
     cmd += " DEBUG=1";
   }
 #else // UNIX
-  cmd = "cd model && buildmodel.sh " + modelName + " " + toString(dbgMode);
+  cmd = "cd model && buildmodel.sh " + modelName + " DEBUG=" + toString(dbgMode);
   cmd += " && make clean && make";
   if (dbgMode == 1) {
     cmd += " debug";

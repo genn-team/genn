@@ -71,6 +71,50 @@ string toLower(string s)
     return s;
 }
 
+int extract_option(char *op, string &option) 
+{
+    string sop= tS(op);
+    size_t pos= sop.find(tS("="));
+    if (pos == string::npos) {
+	return -1;
+    }
+    option= sop.substr(0,pos);
+
+    return 0;
+}
+
+int extract_bool_value(char *op, unsigned int &val) 
+{
+    string sop= tS(op);
+    size_t pos= sop.find(tS("="));
+    if (pos == string::npos) {
+	return -1;
+    }
+    string sval= sop.substr(pos+1);
+    int tmpval= atoi(sval.c_str());
+    if ((tmpval != 0) && (tmpval != 1)) {
+	return -1;
+    }
+    val= tmpval;
+    
+    return 0;
+}
+
+int extract_string_value(char *op, string &val) 
+{
+    string sop= tS(op);
+    size_t pos= sop.find(tS("="));
+    if (pos == string::npos) {
+	return -1;
+    }
+    val= sop.substr(pos+1);
+
+    return 0;
+}
+
+
+
+
 //--------------------------------------------------------------------------
 /*! \brief Main entry point for generate_run.
  */
@@ -78,28 +122,73 @@ string toLower(string s)
 
 int main(int argc, char *argv[])
 {
-  if (argc != 12)
+    if ((argc < 9) || (argc > 13))
   {
-      cerr << "usage: generate_run <CPU=0, AUTO GPU=1, GPU n= \"n+2\"> <nAL> <nMB> <nLHI> <nLb> <gscale> <outdir> <model name> <debug mode? (0/1)> <ftype \"DOUBLE\" or \"FLOAT\"> <reuse input&connectivty? 0/1>" << endl;
-    exit(1);
+      cerr << "usage: generate_run <CPU=0, AUTO GPU=1, GPU n= \"n+2\"> <nAL> <nMB> <nLHI> <nLb> <gscale> <outdir> <model name> <OPTIONS> \n\
+Possible options: \n\
+DEBUG=0 or DEBUG=1 (default 0): Whether to run in a debugger \n\
+FTYPE=DOUBLE of FTYPE=FLOAT (default FLOAT): What floating point type to use \n\
+REUSE=0 or REUSE=1 (default 0): Whether to reuse generated connectivity from an earlier run \n\
+CPU_ONLY=0 or CPU_ONLY=1 (default 0): Whether to compile in (CUDA independent) \"CPU only\" mode." << endl;
+   exit(1);
   }
 
   int retval;
   string cmd;
   string gennPath = getenv("GENN_PATH");
-  string outdir = toString(argv[7]) + "_output";  
-  string modelName = argv[8];
-  int dbgMode = atoi(argv[9]); // set this to 1 if you want to enable gdb and cuda-gdb debugging to 0 for release
-  char *ftype= argv[10]; 
-  int fixsynapse= atoi(argv[11]); 
-
   int which = atoi(argv[1]);
   int nAL = atoi(argv[2]);
   int nMB = atoi(argv[3]);
   int nLHI = atoi(argv[4]);
   int nLB = atoi(argv[5]);
   double gscale = atof(argv[6]);
+  string outdir = toString(argv[7]) + "_output";  
+  string modelName = argv[8];
   
+  // parse options
+  unsigned int dbgMode= 0;
+  string ftype= "FLOAT";
+  unsigned int fixsynapse= 0; 
+  unsigned int cpu_only= 0;
+  string option;
+  for (int i= 9; i < argc; i++) {
+      if (extract_option(argv[i],option) != 0) {
+	  cerr << "Unknown option '" << argv[i] << "'." << endl;
+	  exit(1);
+      }
+      else {
+	  if (option == "DEBUG") {
+	      if (extract_bool_value(argv[i],dbgMode) != 0) {
+		  cerr << "illegal value for 'DEBUG' option." << endl;
+		  exit(1);
+	      }
+	  }
+	  else if (option == "FTYPE") {
+	      extract_string_value(argv[i],ftype);
+	      if ((ftype != "FLOAT") && (ftype != "DOUBLE")) {
+		  cerr << "illegal value " << ftype << " of 'FTYPE' option." <<endl;
+		  exit(1);
+	      }
+	  }
+	  else if (option == "REUSE") {
+	      if (extract_bool_value(argv[i], fixsynapse) != 0) {
+		  cerr << "illegal value for 'REUSE' option." << endl;
+		  exit(1);
+	      }
+	  }
+	  else if (option == "CPU_ONLY") {
+	      if (extract_bool_value(argv[i], cpu_only) != 0) {
+		  cerr << "illegal value for 'CPU_ONLY' option." << endl;
+		  exit(1);
+	      }
+	  }
+      }
+  }
+  if (cpu_only && (which == 1)) {
+      cerr << "You cannot use a GPU in CPU_only mode." << endl;
+      exit(1);
+  }
+
   double pnkc_gsyn = 100.0 / nAL * gscale;
   double pnkc_gsyn_sigma = 100.0 / nAL * gscale / 15.0; 
   double kcdn_gsyn = 2500.0 / nMB * 0.05 * gscale; 
@@ -133,19 +222,34 @@ int main(int argc, char *argv[])
 
   // build it
 #ifdef _WIN32
-  cmd = "cd model && buildmodel.bat " + modelName + " " + toString(dbgMode);
-  cmd += " && nmake /nologo /f WINmakefile clean && nmake /nologo /f WINmakefile";
+  cmd = "cd model && buildmodel.bat " + modelName + " DEBUG=" + toString(dbgMode);
+  if (cpu_only) {
+      cmd += " CPU_ONLY=1";
+  }
+  cmd += " && make.bat clean && make.bat ";
   if (dbgMode == 1) {
     cmd += " DEBUG=1";
   }
+  if (cpu_only) {
+      cmd += " CPU_ONLY=1";
+  }
+  
 #else // UNIX
-  cmd = "cd model && buildmodel.sh " + modelName + " " + toString(dbgMode);
+  cmd = "cd model && buildmodel.sh " + modelName + " DEBUG=" + toString(dbgMode);
+  if (cpu_only) {
+      cmd += " CPU_ONLY=1";
+  }
   cmd += " && make clean && make";
- if (dbgMode == 1) {
-    cmd += " debug";
+  if (cpu_only) {
+      cmd += " CPU_ONLY=1";
   }
   else {
-    cmd += " release";
+      if (dbgMode == 1) {
+	  cmd += " debug";
+      }
+      else {
+	  cmd += " release";
+      }
   }
 #endif
   cerr << cmd << endl;

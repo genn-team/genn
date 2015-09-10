@@ -4,6 +4,26 @@ set MODELPATH=%cd%
 echo model path: %MODELPATH%
 set MODELNAME=%1
 echo model name: %MODELNAME%
+set /a k=0
+set DBGMODE=0
+set EXTRA_DEF=
+for %%op in (%*) do (
+    if %k > 0 (
+REM op=$(echo $op | tr [a-z] [A-Z])
+	if "%op%" == "DEBUG=1" (
+	    set DBGMODE=1
+	)
+	if "%op%" == "CPU_ONLY=1" (
+	    set EXTRA_DEF=CPU_ONLY
+	)   
+    )
+    set /a k=!k!+1
+)
+
+if "%EXTRA_DEF%" != "" (
+    set EXTRA_DEF=-D$EXTRA_DEF
+)
+
 set DBGMODE=%2
 if "%DBGMODE%"=="" set DBGMODE=0
 

@@ -44,10 +44,10 @@ if [ -d "testing_output" ]; then
   echo ${custommsg} >> testing_output/testing.time
   printf "With new setup... \n"  >> testing_output/testing.time
 fi
-./generate_run 1 100 1000 20 100 0.0025 testing MBody1 0 FLOAT 0
+./generate_run 1 100 1000 20 100 0.0025 testing MBody1 
 cp testing_output/testing.out.st testing_output/testing.out.st.GPU
 printf "\n\n####################### MBody1 CPU ######################\n"
-./generate_run 0 100 1000 20 100 0.0025 testing MBody1 0 FLOAT 0
+./generate_run 0 100 1000 20 100 0.0025 testing MBody1
 cp testing_output/testing.out.st testing_output/testing.out.st.CPU 
 
 if [ "$firstrun_MB1" = true ]; then

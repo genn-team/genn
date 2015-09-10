@@ -71,14 +71,14 @@ int main(int argc, char *argv[])
 
   // build it
 #ifdef _WIN32
-  cmd= "cd model && buildmodel.bat HHVClamp " + toString(dbgMode);
+  cmd= "cd model && buildmodel.bat HHVClamp DEBUG=" + toString(dbgMode);
   cmd += " && nmake /nologo /f WINmakefile clean && nmake /nologo /f WINmakefile";
   if (dbgMode == 1) {
     cmd += " DEBUG=1";
     cout << cmd << endl;
   }
 #else // UNIX
-  cmd = "cd model && buildmodel.sh HHVClamp " + toString(dbgMode);
+  cmd = "cd model && buildmodel.sh HHVClamp DEBUG=" + toString(dbgMode);
   cmd += " && make clean && make";
   if (dbgMode == 1) {
     cmd += " debug";

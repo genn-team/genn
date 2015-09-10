@@ -39,6 +39,8 @@ CXXFLAGS	= $(CXXFLAGS) $(OPTIMIZATIONFLAGS)
 NVCCFLAGS	= $(NVCCFLAGS) -g -G
 CXXFLAGS	= $(CXXFLAGS) /Od /debug
 !ENDIF
+# An auto-generated file containing your cuda device's compute capability.
+!INCLUDE sm_version.mk
 !ELSE
 NVCC		= $(CXX)
 INCLUDE_FLAGS	=  /I"$(GENN_PATH)\lib\include" /I"$(GENN_PATH)\userproject\include" $(EXTRA_INCLUDE) 
@@ -51,12 +53,6 @@ NVCCFLAGS	= $(CXXFLAGS) -g -G
 CXXFLAGS	= $(CXXFLAGS) /Od /debug
 !ENDIF
 
-!ENDIF
-
-
-# An auto-generated file containing your cuda device's compute capability.
-!IF "$(CPU_ONLY)" != "1"
-!INCLUDE sm_version.mk
 !ENDIF
 
 # Infer object file names from source file names.
