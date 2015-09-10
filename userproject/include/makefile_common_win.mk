@@ -43,7 +43,7 @@ CXXFLAGS	= $(CXXFLAGS) /Od /debug
 !INCLUDE sm_version.mk
 !ELSE
 NVCC		= $(CXX)
-INCLUDE_FLAGS	=  /I"$(GENN_PATH)\lib\include" /I"$(GENN_PATH)\userproject\include" $(EXTRA_INCLUDE) 
+INCLUDE_FLAGS	=  /I"$(GENN_PATH)\lib\include" /I"$(GENN_PATH)\userproject\include" $(EXTRA_INCLUDE) /DCPU_ONLY
 
 !IF "$(DEBUG)" != "1"
 NVCCFLAGS	= $(CXXFLAGS) --compiler-options "$(OPTIMIZATIONFLAGS)"

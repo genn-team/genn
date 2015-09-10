@@ -18,12 +18,10 @@
 
 # Global C++ and CUDA compiler settings.
 NVCC		=$(CUDA_PATH)\bin\nvcc.exe
-CXXFLAGS	=$(CXXFLAGS) /nologo /EHsc /DNVCC="\"$(NVCC:\=/)\""
-!IFDEF DEBUG
-CXXFLAGS	=$(CXXFLAGS) /Zi
-!ENDIF
-
+CXXFLAGS	=$(CXXFLAGS) /nologo /EHsc 
 # Global include flags and link flags.
+!IF "$(CPU_ONLY)" != "1"
+CXXFLAGS	=$(CXXFLAGS) /DNVCC="\"$(NVCC:\=/)\"" 
 INCLUDE_FLAGS	=/FI"$(MODEL)" /I"$(CUDA_PATH)\include" /I"$(GENN_PATH)\lib\include" /I"$(GENN_PATH)\userproject\include"
 !IF "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
 LINK_FLAGS	="$(CUDA_PATH)\lib\x64\cudart.lib" "$(CUDA_PATH)\lib\x64\cuda.lib"
@@ -31,6 +29,13 @@ LINK_FLAGS	="$(CUDA_PATH)\lib\x64\cudart.lib" "$(CUDA_PATH)\lib\x64\cuda.lib"
 LINK_FLAGS	="$(CUDA_PATH)\lib\x64\cudart.lib" "$(CUDA_PATH)\lib\x64\cuda.lib"
 !ELSE
 LINK_FLAGS	="$(CUDA_PATH)\lib\Win32\cudart.lib" "$(CUDA_PATH)\lib\Win32\cuda.lib"
+!ENDIF
+!ELSE
+INCLUDE_FLAGS	=/FI"$(MODEL)" /I"$(GENN_PATH)\lib\include" /I"$(GENN_PATH)\userproject\include"
+EXTRA_DEF	=/DCPU_ONLY
+!ENDIF
+!IFDEF DEBUG
+CXXFLAGS	=$(CXXFLAGS) /Zi
 !ENDIF
 
 # Locations of src, obj and bin directories.
@@ -42,7 +47,7 @@ BINDIR		=bin
 all: $(BINDIR)\generateALL.exe
 
 $(OBJDIR)\generateALL.obj: $(SRCDIR)\generateALL.cc $(OBJDIR)
-	$(CXX) $(CXXFLAGS) $(INCLUDE_FLAGS) $(SRCDIR)\generateALL.cc /Fo$(OBJDIR)\generateALL.obj /c
+	$(CXX) $(CXXFLAGS) $(INCLUDE_FLAGS) $(EXTRA_DEF) $(SRCDIR)\generateALL.cc /Fo$(OBJDIR)\generateALL.obj /c
 
 $(BINDIR)\generateALL.exe: $(OBJDIR)\generateALL.obj
 	$(CXX) $(CXXFLAGS) $(LINK_FLAGS) $(OBJDIR)\generateALL.obj /Fe$(BINDIR)\generateALL.exe

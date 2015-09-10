@@ -226,7 +226,7 @@ CPU_ONLY=0 or CPU_ONLY=1 (default 0): Whether to compile in (CUDA independent) \
   if (cpu_only) {
       cmd += " CPU_ONLY=1";
   }
-  cmd += " && make.bat clean && make.bat ";
+  cmd += " && nmake /nologo /f WINmakefile clean && nmake /nologo /f WINmakefile ";
   if (dbgMode == 1) {
     cmd += " DEBUG=1";
   }
