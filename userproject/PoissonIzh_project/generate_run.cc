@@ -86,7 +86,7 @@ int main(int argc, char *argv[])
   // build it
 #ifdef _WIN32
   cmd = "cd model && buildmodel.bat " + modelName + " DEBUG=" + toString(dbgMode);
-  cmd += " && make.bat clean && make.bat ";
+  cmd += " && nmake /nologo /f WINmakefile clean && nmake /nologo /f WINmakefile ";
   if (dbgMode == 1) {
     cmd += " DEBUG=1";
   }
