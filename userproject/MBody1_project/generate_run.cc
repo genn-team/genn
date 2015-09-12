@@ -28,6 +28,7 @@ This file compiles to a tool that wraps all the other tools into one chain of ta
 #include <cmath>
 #include <cfloat>
 #include <locale>
+using namespace std;
 
 #ifdef _WIN32
 #include <direct.h>
@@ -36,84 +37,7 @@ This file compiles to a tool that wraps all the other tools into one chain of ta
 #include <sys/stat.h> // needed for mkdir
 #endif
 
-using namespace std;
-
-//--------------------------------------------------------------------------
-/*! \brief template function for string conversion from const char* to C++ string
- */
-//--------------------------------------------------------------------------
-
-template<typename T>
-std::string toString(T t)
-{
-  std::stringstream s;
-  s << std::showpoint;
-  s << t;
-  return s.str();
-} 
-
-#define tS(X) toString(X) //!< Macro providing the abbreviated syntax tS() instead of toString().
-
-
-string toUpper(string s)
-{
-    for (unsigned int i= 0; i < s.length(); i++) {
-	s[i]= toupper(s[i]);
-    }
-    return s;
-}
-
-string toLower(string s)
-{
-    for (unsigned int i= 0; i < s.length(); i++) {
-	s[i]= tolower(s[i]);
-    }
-    return s;
-}
-
-int extract_option(char *op, string &option) 
-{
-    string sop= tS(op);
-    size_t pos= sop.find(tS("="));
-    if (pos == string::npos) {
-	return -1;
-    }
-    option= sop.substr(0,pos);
-
-    return 0;
-}
-
-int extract_bool_value(char *op, unsigned int &val) 
-{
-    string sop= tS(op);
-    size_t pos= sop.find(tS("="));
-    if (pos == string::npos) {
-	return -1;
-    }
-    string sval= sop.substr(pos+1);
-    int tmpval= atoi(sval.c_str());
-    if ((tmpval != 0) && (tmpval != 1)) {
-	return -1;
-    }
-    val= tmpval;
-    
-    return 0;
-}
-
-int extract_string_value(char *op, string &val) 
-{
-    string sop= tS(op);
-    size_t pos= sop.find(tS("="));
-    if (pos == string::npos) {
-	return -1;
-    }
-    val= sop.substr(pos+1);
-
-    return 0;
-}
-
-
-
+#include "command_line_processing.h"
 
 //--------------------------------------------------------------------------
 /*! \brief Main entry point for generate_run.
