@@ -27,7 +27,10 @@ Note: If there are conflicting definitions for hash defines, the one that appear
 
 4. The new convenience macros spikeCount_XX and spike_XX where "XX" is the name of the neuron group are now also available fro events: spikeEventCount_XX and spikeEvent_XX. They access the values for the current time step even if there are synaptic delays and spikes events are stored in circular queues.
 
-5. We have now introduced a "CPU_ONLY" macro that if it's defined will generate a GeNN version that is completely indepemdent from CUDA and hence can be used on computers without CUDA installation or CUDa enabled hardware. Obviously, thia then can also only run on CPU.
+5. We have now introduced a "CPU_ONLY" macro that if it's defined will generate a GeNN version that is completely independent from CUDA and hence can be used on computers without CUDA installation or CUDA enabled hardware. Obviously, this then can also only run on CPU. CPU only mode can either be switched on by defining CPU_ONLY in the model description file or by passing appropriate parameters during the build, in particular
+buildmodel <name> CPU_ONLY=1
+make release CPU_ONLY=1
+**TODO** how to handle the problem with the main executable name suffix .cu
 
 Developer Side Changes
 ----
