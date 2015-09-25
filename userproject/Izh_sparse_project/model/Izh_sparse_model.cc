@@ -79,7 +79,7 @@ void classIzh::initializeAllVars(unsigned int which)
   for (int j=model.neuronN[1]; j< model.neuronN[0]; j++){
     UPExc[j]=bPExc[j]*VPExc[j];
   }
-
+#ifndef CPU_ONLY
   if (which == GPU) {
     CHECK_CUDA_ERRORS(cudaMemcpy(d_aPInh, aPInh, sizeof(scalar)*model.neuronN[1], cudaMemcpyHostToDevice));
     CHECK_CUDA_ERRORS(cudaMemcpy(d_bPInh, bPInh, sizeof(scalar)*model.neuronN[1], cudaMemcpyHostToDevice));
@@ -88,6 +88,7 @@ void classIzh::initializeAllVars(unsigned int which)
     CHECK_CUDA_ERRORS(cudaMemcpy(d_UPExc, UPExc, sizeof(scalar)*model.neuronN[0], cudaMemcpyHostToDevice));
     CHECK_CUDA_ERRORS(cudaMemcpy(d_UPInh, UPInh, sizeof(scalar)*model.neuronN[1], cudaMemcpyHostToDevice));
   }
+#endif
 }
 	
 void classIzh::init(unsigned int which)
@@ -95,15 +96,19 @@ void classIzh::init(unsigned int which)
   if (which == CPU) {
   }
   if (which == GPU) {
+#ifndef CPU_ONLY
     copyStateToDevice();
+#endif
   }
 }
 
 
 void classIzh::copy_device_mem_input()
 {
+#ifndef CPU_ONLY
   CHECK_CUDA_ERRORS(cudaMemcpy(d_I0PExc,I0PExc, model.neuronN[0]*sizeof(scalar), cudaMemcpyHostToDevice));
   CHECK_CUDA_ERRORS(cudaMemcpy(d_I0PInh,I0PInh, model.neuronN[1]*sizeof(scalar), cudaMemcpyHostToDevice));
+#endif
 }
 
 classIzh::~classIzh()
@@ -201,7 +206,9 @@ void classIzh::run(double runtime, unsigned int which)
   int riT= (int) (runtime/DT);
   if (which == GPU){
     for (int i= 0; i < riT; i++) {
+#ifndef CPU_ONLY
       stepTimeGPU();
+#endif
     }
   }
   
@@ -225,7 +232,9 @@ void classIzh::sum_spikes()
 void classIzh::output_state(FILE *f, unsigned int which)
 {
   if (which == GPU) 
+#ifndef CPU_ONLY
     copyStateFromDevice();
+#endif
 
   fprintf(f, "%f ", t);
 
@@ -270,7 +279,9 @@ void classIzh::output_params(FILE *f, FILE *f2)
 
 void classIzh::getSpikesFromGPU()
 {
+#ifndef CPU_ONLY
     copySpikesFromDevice();
+#endif
 }
 
 //--------------------------------------------------------------------------
@@ -282,7 +293,9 @@ This method is a simple wrapper for the convenience function copySpikeNFromDevic
 
 void classIzh::getSpikeNumbersFromGPU() 
 {
+#ifndef CPU_ONLY
     copySpikeNFromDevice();
+#endif
 }
 
 

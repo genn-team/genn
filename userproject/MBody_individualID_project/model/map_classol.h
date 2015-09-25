@@ -53,9 +53,11 @@ private:
 
   classol();
   ~classol();
-  void init(unsigned int); 
+  void init(unsigned int);
+#ifndef CPU_ONLY 
   void allocate_device_mem_patterns(); 
   void free_device_mem(); 
+#endif
   void read_pnkcsyns(FILE *);
   void read_sparsesyns_par(int, struct SparseProjection, scalar *, FILE *,FILE *,FILE *); 
   void write_pnkcsyns(FILE *); 
@@ -68,8 +70,10 @@ private:
   void runGPU(scalar); 
   void runCPU(scalar); 
   void output_state(FILE *, unsigned int); 
+#ifndef CPU_ONLY
   void getSpikesFromGPU(); 
   void getSpikeNumbersFromGPU(); 
+#endif
   void output_spikes(FILE *, unsigned int); 
   void sum_spikes(); 
   void get_kcdnsyns(); 

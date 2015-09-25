@@ -34,17 +34,20 @@ void classol::init(unsigned int which)
     ratesPN= baserates;
   }
   if (which == GPU) {
+#ifndef CPU_ONLY
     copyStateToDevice();
     ratesPN= d_baserates;
+#endif
   }
 }
 
-
+#ifndef CPU_ONLY
 void classol::free_device_mem()
 {
   // clean up memory
   CHECK_CUDA_ERRORS(cudaFree(d_baserates));
 }
+#endif
 
 classol::~classol()
 {
@@ -72,8 +75,6 @@ void classol::read_PNIzh1syns(scalar *gp, FILE *f)
   double *tmpg= new double[sz];
   unsigned int retval = fread(tmpg, 1, sz * sizeof(double),  f);
   importArray(gp, tmpg, sz);
-  fprintf(stderr, "%lu\n", model.neuronN[0]*model.neuronN[1]*sizeof(double));
-  retval = fread(gp, model.neuronN[0]*model.neuronN[1]*sizeof(double),1,f);
   fprintf(stderr,"read PNIzh1 ... \n");
   fprintf(stderr, "%u bytes, values start with: \n", retval);
   for(int i= 0; i < 100; i++) {
@@ -127,10 +128,11 @@ void classol::generate_baserates()
   fprintf(stderr, "generated baserates ... \n");
   fprintf(stderr, "baserate value %f, converted random number: %llu ", InputBaseRate, inputBase);
   fprintf(stderr, "\n\n"); 
+#ifndef CPU_ONLY
   int size= model.neuronN[0]*sizeof(uint64_t);
   CHECK_CUDA_ERRORS(cudaMalloc((void**) &d_baserates, size));
   CHECK_CUDA_ERRORS(cudaMemcpy(d_baserates, baserates, size, cudaMemcpyHostToDevice)); 
- 
+#endif
 }
 
 void classol::run(float runtime, unsigned int which)
@@ -139,10 +141,14 @@ void classol::run(float runtime, unsigned int which)
   int riT= (int) (runtime/DT);
 
   for (int i= 0; i < riT; i++) {
-    if (which == GPU)
+    if (which == GPU) {
+#ifndef CPU_ONLY
        stepTimeGPU();
-    if (which == CPU)
-       stepTimeCPU();
+#endif
+    }
+    if (which == CPU) {
+	stepTimeCPU();
+    }
     t+= DT;
     iT++;
   }
@@ -154,7 +160,9 @@ void classol::run(float runtime, unsigned int which)
 void classol::output_state(FILE *f, unsigned int which)
 {
   if (which == GPU) 
+#ifndef CPU_ONLY
     copyStateFromDevice();
+#endif
 
   fprintf(f, "%f ", t);
   for (int i= 0; i < model.neuronN[0]; i++) {
@@ -168,6 +176,7 @@ void classol::output_state(FILE *f, unsigned int which)
   fprintf(f,"\n");
 }
 
+#ifndef CPU_ONLY
 void classol::getSpikesFromGPU()
 {
   copySpikesFromDevice();
@@ -177,6 +186,7 @@ void classol::getSpikeNumbersFromGPU()
 {
   copySpikeNFromDevice();
 }
+#endif
 
 void classol::output_spikes(FILE *f, unsigned int which)
 {

@@ -58,7 +58,9 @@ void classol::init(unsigned int which //!< Flag defining whether GPU or CPU only
   }
   if (which == GPU) {
     ratesPN= d_baserates;
+#ifndef CPU_ONLY
     copyStateToDevice();
+#endif
   }
 }
 
@@ -67,6 +69,7 @@ void classol::init(unsigned int which //!< Flag defining whether GPU or CPU only
  */
 //--------------------------------------------------------------------------
 
+#ifndef CPU_ONLY
 void classol::allocate_device_mem_patterns()
 {
   unsigned int size;
@@ -92,6 +95,7 @@ void classol::free_device_mem()
   CHECK_CUDA_ERRORS(cudaFree(d_pattern));
   CHECK_CUDA_ERRORS(cudaFree(d_baserates));
 }
+#endif
 
 
 //--------------------------------------------------------------------------
@@ -333,6 +337,7 @@ void classol::generate_baserates()
  */
 //--------------------------------------------------------------------------
 
+#ifndef CPU_ONLY
 void classol::runGPU(scalar runtime //!< Duration of time to run the model for 
 		  )
 {
@@ -355,6 +360,8 @@ void classol::runGPU(scalar runtime //!< Duration of time to run the model for
       stepTimeGPU(flags);
   }
 }
+#endif
+
 //--------------------------------------------------------------------------
 /*! \brief Method for simulating the model for a given period of time on the CPU
  */
@@ -393,8 +400,9 @@ void classol::output_state(FILE *f, //!< File handle for a file to write the mod
 			   )
 {
   if (which == GPU) 
+#ifndef CPU_ONLY
     copyStateFromDevice();
-
+#endif
   fprintf(f, "%f ", t);
   for (int i= 0; i < model.neuronN[0]; i++) {
     fprintf(f, "%f ", VPN[i]);
@@ -470,7 +478,9 @@ void classol::output_state(FILE *f, //!< File handle for a file to write the mod
 
 void classol::getSpikesFromGPU()
 {
+#ifndef CPU_ONLY
   copySpikesFromDevice();
+#endif
 }
 
 //--------------------------------------------------------------------------
@@ -482,7 +492,9 @@ This method is a simple wrapper for the convenience function copySpikeNFromDevic
 
 void classol::getSpikeNumbersFromGPU() 
 {
+#ifndef CPU_ONLY
   copySpikeNFromDevice();
+#endif
 }
 
 //--------------------------------------------------------------------------
@@ -530,7 +542,9 @@ void classol::sum_spikes()
 
 void classol::get_kcdnsyns()
 {
+#ifndef CPU_ONLY
     CHECK_CUDA_ERRORS(cudaMemcpy(gKCDN, d_gKCDN, model.neuronN[1]*model.neuronN[3]*sizeof(scalar), cudaMemcpyDeviceToHost));
+#endif
 }
 
 

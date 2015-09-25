@@ -12,7 +12,11 @@
 ##--------------------------------------------------------------------------
 
 EXECUTABLE	=VClampGA.exe
+!IF "$(CPU_ONLY)" != "1"
 SOURCES		=VClampGA.cu
+!ELSE
+SOURCES		=VClampGA_cpu_only.cc
+!ENDIF
 EXTRA_INCLUDE	= /I %CD%
 OPTIMIZATIONFLAGS = /O2
 

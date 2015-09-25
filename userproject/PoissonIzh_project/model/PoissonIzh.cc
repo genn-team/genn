@@ -12,10 +12,6 @@
 --------------------------------------------------------------------------*/
 
 #define DT 1.0
-#define _FTYPE GENN_FLOAT //set float precision
-#define scalar float
-#define SCALAR_MIN (float)FLT_MIN
-#define SCALAR_MAX (float)FLT_MAX
 #include "modelSpec.h"
 #include "modelSpec.cc"
 
@@ -70,7 +66,6 @@ double *postSynV = NULL;
 void modelDefinition(NNmodel &model) 
 {
   initGeNN();
-  model.setGPUDevice(0);
   model.setName("PoissonIzh");
   model.addNeuronPopulation("PN", _NPoisson, POISSONNEURON, myPOI_p, myPOI_ini);
   model.addNeuronPopulation("Izh1", _NIzh, IZHIKEVICH, exIzh_p, exIzh_ini);
@@ -78,6 +73,6 @@ void modelDefinition(NNmodel &model)
   model.addSynapsePopulation("PNIzh1", NSYNAPSE, ALLTOALL, INDIVIDUALG, NO_DELAY, IZHIKEVICH_PS, "PN", "Izh1", mySyn_ini, mySyn_p, postSynV, postExp);
   //model.setSynapseG("PNIzh1", gPNIzh1);
   model.setSeed(1234);
-  model.setPrecision(GENN_FLOAT);
+  model.setPrecision(_FTYPE);
   model.finalize();
 }

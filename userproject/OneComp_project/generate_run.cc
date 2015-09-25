@@ -26,6 +26,9 @@ This file compiles to a tool that wraps all the other tools into one chain of ta
 #include <sstream>
 #include <cstdlib>
 #include <cmath>
+#include <cfloat>
+#include <locale>
+using namespace std;
 
 #ifdef _WIN32
 #include <direct.h>
@@ -34,19 +37,8 @@ This file compiles to a tool that wraps all the other tools into one chain of ta
 #include <sys/stat.h> // needed for mkdir?
 #endif
 
-using namespace std;
+#include "command_line_processing.h"
 
-//--------------------------------------------------------------------------
-/*! \brief Template function for string conversion 
- */
-//--------------------------------------------------------------------------
-
-template<typename T> std::string toString(T t)
-{
-  std::stringstream s;
-  s << t;
-  return s.str();
-}
 
 //--------------------------------------------------------------------------
 /*! \brief Main entry point for generate_run.
@@ -55,42 +47,73 @@ template<typename T> std::string toString(T t)
 
 int main(int argc, char *argv[])
 {
-  if (argc != 6)
+  if (argc < 5)
   {
-    cerr << "usage: generate_run <CPU=0, GPU=1> <nC1> <outdir> <model name> <debug mode? (0/1)>" << endl;
+    cerr << "usage: generate_run <CPU=0, , AUTO GPU=1, GPU n= \"n+2\"> <nC1> <outdir> <model name> <OPTIONS> \n\
+Possible options: \n\
+DEBUG=0 or DEBUG=1 (default 0): Whether to run in a debugger \n\
+FTYPE=DOUBLE of FTYPE=FLOAT (default FLOAT): What floating point type to use \n\
+REUSE=0 or REUSE=1 (default 0): Whether to reuse generated connectivity from an earlier run \n\
+CPU_ONLY=0 or CPU_ONLY=1 (default 0): Whether to compile in (CUDA independent) \"CPU only\" mode." << endl;
     exit(1);
   }
   int retval;
   string cmd;
   string gennPath = getenv("GENN_PATH");
-  string outdir = toString(argv[3]) + "_output";  
-  string modelName = argv[4];
-  int dbgMode = atoi(argv[5]); // set this to 1 if you want to enable gdb and cuda-gdb debugging to 0 for release
-
   int which = atoi(argv[1]);
   int nC1 = atoi(argv[2]);
+  string outdir = toString(argv[3]) + "_output";  
+  string modelName = argv[4];
+
+  int argStart= 5;
+#include "parse_options.h"  // parse options
 
   // write neuron population sizes
   string fname = gennPath + "/userproject/include/sizes.h";
   ofstream os(fname.c_str());
   os << "#define _NC1 " << nC1 << endl;
+  string tmps= tS(ftype);
+  os << "#define _FTYPE " << "GENN_" << toUpper(tmps) << endl;
+  os << "#define scalar " << toLower(tmps) << endl;
+  if (toLower(ftype) == "double") {
+      os << "#define SCALAR_MIN " << DBL_MIN << endl;
+      os << "#define SCALAR_MAX " << DBL_MAX << endl;
+  }
+  else {
+      os << "#define SCALAR_MIN " << FLT_MIN << "f" << endl;
+      os << "#define SCALAR_MAX " << FLT_MAX << "f" << endl;
+  } 
   os.close();
 
   // build it  
 #ifdef _WIN32
   cmd = "cd model && buildmodel.bat " + modelName + " DEBUG=" + toString(dbgMode);
+  if (cpu_only) {
+      cmd += " CPU_ONLY=1";
+  }
   cmd += " && nmake /nologo /f WINmakefile clean && nmake /nologo /f WINmakefile ";
   if (dbgMode == 1) {
     cmd += " DEBUG=1";
   }
+  if (cpu_only) {
+      cmd += " CPU_ONLY=1";
+  }
 #else // UNIX
   cmd = "cd model && buildmodel.sh " + modelName + " DEBUG=" + toString(dbgMode);
-  cmd += " && make clean && make";
-  if (dbgMode == 1) {
-    cmd += " debug";
+  if (cpu_only) {
+      cmd += " CPU_ONLY=1";
   }
-  else {
-    cmd += " release";
+  cmd += " && make clean && make";
+  if (cpu_only) {
+      cmd += " CPU_ONLY=1";
+  }
+  else {  
+      if (dbgMode == 1) {
+	  cmd += " debug";
+      }
+      else {
+	  cmd += " release";
+      }
   }
 #endif
   retval=system(cmd.c_str());

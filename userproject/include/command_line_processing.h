@@ -26,16 +26,7 @@
  */
 //--------------------------------------------------------------------------
 
-template<typename T>
-std::string toString(T t)
-{
-  std::stringstream s;
-  s << std::showpoint;
-  s << t;
-  return s.str();
-} 
-
-#define tS(X) toString(X) //!< Macro providing the abbreviated syntax tS() instead of toString().
+#include "toString.h"
 
 string toUpper(string s)
 {

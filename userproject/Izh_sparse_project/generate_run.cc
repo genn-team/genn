@@ -27,6 +27,7 @@ This file compiles to a tool that wraps all the other tools into one chain of ta
 #include <cstdlib>
 #include <cmath>
 #include <locale>
+using namespace std;
 
 #ifdef _WIN32
 #include <direct.h>
@@ -35,37 +36,8 @@ This file compiles to a tool that wraps all the other tools into one chain of ta
 #include <sys/stat.h> // needed for mkdir?
 #endif
 
-using namespace std;
+#include "command_line_processing.h"
 
-//--------------------------------------------------------------------------
-/*! \brief Template function for string conversion 
- */
-//--------------------------------------------------------------------------
-
-template<typename T> std::string toString(T t)
-{
-  std::stringstream s;
-  s << t;
-  return s.str();
-}
-
-#define tS(X) toString(X) //!< Macro providing the abbreviated syntax tS() instead of toString().
-
-string toUpper(string s)
-{
-  for (unsigned int i= 0; i < s.length(); i++) {
-	  s[i]= toupper(s[i]);
-  }
-  return s;
-}
-
-string toLower(string s)
-{
-  for (unsigned int i= 0; i < s.length(); i++) {
-	  s[i]= tolower(s[i]);
-  }
-  return s;
-}
 /////////////////////////
 unsigned int openFileGetMax(unsigned int * array, unsigned int size, string name) {
   unsigned int maxConn = 0;
@@ -87,32 +59,34 @@ unsigned int openFileGetMax(unsigned int * array, unsigned int size, string name
 
 int main(int argc, char *argv[])
 {
-  if (argc != 11)
+  if (argc < 8)
   {
-    cerr << "usage: generate_run <CPU=0, GPU=1> <nNeurons> <nConn> <gscale> <outdir> <model name> <debug mode? (0/1)> <ftype \"FLOAT\" or \"DOUBLE\"> <use previous connectivity? (0/1)> <input fac>" << endl;
+    cerr << "usage: generate_run <CPU=0, AUTO GPU=1, GPU n= \"n+2\"> <nNeurons> <nConn> <gscale> <outdir> <model name> <input fac> <OPTIONS> \n\
+Possible options: \n\
+DEBUG=0 or DEBUG=1 (default 0): Whether to run in a debugger \n\
+FTYPE=DOUBLE of FTYPE=FLOAT (default FLOAT): What floating point type to use \n\
+REUSE=0 or REUSE=1 (default 0): Whether to reuse generated connectivity from an earlier run \n\
+CPU_ONLY=0 or CPU_ONLY=1 (default 0): Whether to compile in (CUDA independent) \"CPU only\" mode." << endl;
     exit(1);
   }
   int retval;
   string cmd;
-
+  string gennPath= getenv("GENN_PATH");
   int which = atoi(argv[1]);
   int nTotal = atoi(argv[2]);
   int nExc = ceil((float) 4 * nTotal / 5);
   int nInh = nTotal - nExc;
   int nConn = atoi(argv[3]);
   float gscale = atof(argv[4]);
-  
-  string gennPath= getenv("GENN_PATH");
   string outDir = toString(argv[5]) + "_output";  
   string outDir_g = "inputfiles";  
   string modelName = argv[6];
-  int dbgMode = atoi(argv[7]); // set this to 1 if you want to enable gdb and cuda-gdb debugging to 0 for release
-  char *ftype= argv[8];
-  int fixsynapse = atoi(argv[9]); // same synapse patterns should be used to compare CPU to GPU
-  double inputFac= atof(argv[10]);
-
+  double inputFac= atof(argv[7]);
   float meangExc = 0.5 * gscale;
   float meangInh = -1.0 * gscale;
+
+  int argStart= 8;
+#include "parse_options.h"
 
   // create output directories
 #ifdef _WIN32
@@ -188,18 +162,33 @@ int main(int argc, char *argv[])
   // build it
 #ifdef _WIN32
   cmd = "cd model && buildmodel.bat " + modelName + " DEBUG=" + toString(dbgMode);
+  if (cpu_only) {
+      cmd += " CPU_ONLY=1";
+  }
   cmd += " && nmake /nologo /f WINmakefile clean && nmake /nologo /f WINmakefile";
   if (dbgMode == 1) {
     cmd += " DEBUG=1";
   }
+  if (cpu_only) {
+      cmd += " CPU_ONLY=1";
+  }
+  
 #else // UNIX
   cmd = "cd model && buildmodel.sh " + modelName + " DEBUG=" + toString(dbgMode);
+  if (cpu_only) {
+      cmd += " CPU_ONLY=1";
+  }
   cmd += " && make clean && make";
-  if (dbgMode == 1) {
-    cmd += " debug";
+  if (cpu_only) {
+      cmd += " CPU_ONLY=1";
   }
   else {
-    cmd += " release";
+      if (dbgMode == 1) {
+	  cmd += " debug";
+      }
+      else {
+	  cmd += " release";
+      }
   }
 #endif
   retval=system(cmd.c_str());

@@ -123,7 +123,9 @@ int main(int argc, char *argv[])
 
   locust.generate_baserates();
   if (which == GPU) {
+#ifndef CPU_ONLY
     locust.allocate_device_mem_patterns();
+#endif
   }
   locust.init(which);         // this includes copying g's for the GPU version
 
@@ -149,9 +151,11 @@ int main(int argc, char *argv[])
   while (!done) 
   {    
       if (which == GPU) {
+#ifndef CPU_ONLY
 	  locust.runGPU(DT); // run next batch
 	  locust.getSpikeNumbersFromGPU();
 	  locust.getSpikesFromGPU();
+#endif
       }
       else {
 	  locust.runCPU(DT); // run next batch
@@ -178,14 +182,18 @@ int main(int argc, char *argv[])
        synwrite= 0;
     }
     if (t - lastsynwrite >= SYN_OUT_TME) {
+#ifndef CPU_ONLY
        locust.get_kcdnsyns();
+#endif
        synwrite= 1;
        synwriteT= t;
     }
     done= (t >= TOTAL_TME);
   }
   timer.stopTimer();
+#ifndef CPU_ONLY
   pullDNStateFromDevice();
+#endif
   cerr << "output files are created under the current directory." << endl;
   fprintf(timef, "%d %u %u %u %u %u %.4f %.2f %.1f %.2f\n",which, locust.model.sumNeuronN[locust.model.neuronGrpN-1], locust.sumPN, locust.sumKC, locust.sumLHI, locust.sumDN, timer.getElapsedTime(),VDN[0], TOTAL_TME, DT);
  fprintf(stdout, "GPU=%d, %u neurons, %u PN spikes, %u KC spikes, %u LHI spikes, %u DN spikes, simulation took %.4f secs, VDN[0]=%.2f total time=%.1f DT=%.2f\n",which, locust.model.sumNeuronN[locust.model.neuronGrpN-1], locust.sumPN, locust.sumKC, locust.sumLHI, locust.sumDN, timer.getElapsedTime(),VDN[0], TOTAL_TME, DT);

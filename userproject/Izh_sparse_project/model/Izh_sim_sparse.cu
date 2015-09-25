@@ -14,7 +14,9 @@
 #include <iostream>
 #include <fstream>
 #include "Izh_sparse_sim.h"
+#ifndef CPU_ONLY
 #include "../GeNNHelperKrnls.cu"
+#endif
 
 int main(int argc, char *argv[])
 {
@@ -155,8 +157,9 @@ int main(int argc, char *argv[])
   	fclose(f); 
   	fclose(f_indInG); 
   	fclose(f_ind);   
-  	
+#ifndef CPU_ONLY
   	initializeAllSparseArrays();
+#endif
 
   	/*//use this if network size is <= 1000
   	PCNN.gen_alltoall_syns(gpExc_Exc, 0, 0, 0.5); //exc to exc
@@ -167,7 +170,9 @@ int main(int argc, char *argv[])
   */
   fprintf(stdout, "\nThere are %u synapses in the model.\n", sumSynapses);
   fprintf(stdout, "# neuronal circuitry built, start computation ... \n\n");
+#ifndef CPU_ONLY
   curandState * devStates;
+#endif
   /*unsigned int outno;
   if (PCNN.model.neuronN[0]>10) 
   outno=10;
@@ -175,33 +180,26 @@ int main(int argc, char *argv[])
 */
 
   fprintf(stdout, "set input...\n");
+#ifndef CPU_ONLY
   int sampleBlkNo0 = ceil(float((PCNN.model.neuronN[0])/float(BlkSz)));
   int sampleBlkNo1 = ceil(float((PCNN.model.neuronN[1])/float(BlkSz)));
   dim3 sThreads(BlkSz,1);
   dim3 sGrid0(sampleBlkNo0,1);
   dim3 sGrid1(sampleBlkNo1,1);
+#endif
   if (which==CPU) 
     {
     	PCNN.setInput(which);
     }
   else{
-
+#ifndef CPU_ONLY
   		 CHECK_CUDA_ERRORS(cudaMalloc((void **)&devStates, PCNN.model.neuronN[0]*sizeof(curandState)));
   	   xorwow_setup(devStates, PCNN.model.neuronN[0]); //setup the prng for the bigger network only
 
 	   generate_random_gpuInput_xorwow<<<sGrid0,sThreads>>>(devStates, d_I0PExc, PCNN.model.neuronN[0], meanInpExc, (scalar) 0.0);
 	   generate_random_gpuInput_xorwow<<<sGrid1,sThreads>>>(devStates, d_I0PInh, PCNN.model.neuronN[1], meanInpInh, (scalar) 0.0); 
-
+#endif
   	}  
-  
-  /*name= toString("fparams_tt");
-  FILE *fparams= fopen(name.c_str(),"w");
-  name= toString("fg_tt");
-  FILE *fg= fopen(name.c_str(),"w");
-  PCNN.output_params(fparams, fg);
-  fclose(fparams); 
-  fclose(fg);
-*/
   
   //------------------------------------------------------------------
   // output general parameters to output file and start the simulation
@@ -219,18 +217,20 @@ int main(int argc, char *argv[])
   int done= 0;
   float last_t_report=  t;
   PCNN.run(DT, which);
+#ifndef CPU_ONLY
   copySpikeNFromDevice();
   copySpikesFromDevice();
+#endif
   PCNN.sum_spikes();
  
   if (which == GPU){ 
+#ifndef CPU_ONLY
       while (!done) {
 	  generate_random_gpuInput_xorwow<<<sGrid0,sThreads>>>(devStates, d_I0PExc, PCNN.model.neuronN[0], meanInpExc, (scalar) 0.0);
 	  generate_random_gpuInput_xorwow<<<sGrid1,sThreads>>>(devStates, d_I0PInh, PCNN.model.neuronN[1], meanInpInh, (scalar) 0.0); 
 	  
 	  stepTimeGPU();
 	  t+= DT;
-	  //PCNN.output_spikes(osf2, which);
 	  copySpikeNFromDevice();
 	  copySpikesFromDevice();
 	  PCNN.sum_spikes();
@@ -242,16 +242,6 @@ int main(int argc, char *argv[])
 	  for (int i= 0; i < glbSpkCntPInh[0]; i++) {
 	      fprintf(osf2, "%f %d\n", t, PCNN.model.sumNeuronN[0]+glbSpkPInh[i]);
 	  }
-	  //end output_spikes
-	  
-	  //fprintf(osf, "%f ", t);
-	  
-	  /*for(int i=0;i<outno;i++) {
-	    fprintf(osf, "%f ", VPExc[i]);
-	    }*/
-	  
-	  //fprintf(osf, "\n");
-	  
 	  // report progress
 	  if (t - last_t_report >= T_REPORT_TME)
 	  {
@@ -261,6 +251,7 @@ int main(int argc, char *argv[])
 	  
 	  done= (t >= TOTAL_TME);
       }
+#endif
   }
   if (which == CPU){
       while (!done) {
@@ -269,8 +260,6 @@ int main(int argc, char *argv[])
 	  t+= DT;
 	  
 	  PCNN.sum_spikes();
-	  //PCNN.output_spikes(osf2, which);
-	  
 	  for (int i= 0; i < glbSpkCntPExc[0]; i++) {
 	      fprintf(osf2,"%f %d\n", t, glbSpkPExc[i]);
 	  }
@@ -278,16 +267,6 @@ int main(int argc, char *argv[])
 	  for (int i= 0; i < glbSpkCntPInh[0]; i++) {
 	      fprintf(osf2, "%f %d\n", t, PCNN.model.sumNeuronN[0]+glbSpkPInh[i]);
 	  }
-	  //end output_spikes
-	  //fprintf(osf, "%f ", t);
-	  //PCNN.write_input_to_file(osf2);
-	  
-	  /*for(int i=0;i<outno;i++) {
-	    fprintf(osf, "%f ", VPExc[i]);
-	    }*/
-	  
-	  //fprintf(osf, "\n");
-	  
 	  // report progress
 	  if (t - last_t_report >= T_REPORT_TME)
 	  {
@@ -298,18 +277,6 @@ int main(int argc, char *argv[])
 	  done= (t >= TOTAL_TME);
     }
   }
-  //PCNN.run(DT, which); // run next batch
-  /*if (which == GPU) { 
-    CHECK_CUDA_ERRORS(cudaMemcpy(VPExc,d_VPExc, outno*sizeof(PCNN.model.ftype), cudaMemcpyDeviceToHost));
-    } */
-  
-	
-  //PCNN.output_state(os, which);
-  
-  /*if (which == GPU) {
-    CHECK_CUDA_ERRORS(cudaMemcpy(VPExc,d_VPExc, 10*sizeof(PCNN.model.ftype), cudaMemcpyDeviceToHost));
-    }*/
-  
   
   timer.stopTimer();
   

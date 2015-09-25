@@ -19,7 +19,7 @@
 //--------------------------------------------------------------------------
 
 //#define CPU_ONLY
-#define BLOCKSZ_DEBUG
+//#define BLOCKSZ_DEBUG
 
 #define DT 0.1  //!< This defines the global time step at which the simulation will run
 #include "modelSpec.h"

@@ -48,7 +48,9 @@ double *postSynV = NULL;
 void modelDefinition(NNmodel &model) 
 {
   initGeNN();
+#ifndef CPU_ONLY
     model.setGPUDevice(0);
+#endif
   model.setName("OneComp");
   neuronModel n= nModels[IZHIKEVICH];
   n.pNames.push_back(tS("I0"));

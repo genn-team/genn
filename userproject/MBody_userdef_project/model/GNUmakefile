@@ -12,7 +12,12 @@
 ##--------------------------------------------------------------------------
 
 EXECUTABLE	:=classol_sim
-SOURCES		:=classol_sim.cu
+ifeq ($(CPU_ONLY),1)
+  SOURCES :=classol_sim_cpu_only.cc
+else
+  SOURCES :=classol_sim.cu
+endif
+
 OPTIMIZATIONFLAGS:= -O3 -ffast-math
 
 include	$(GENN_PATH)/userproject/include/makefile_common_gnu.mk

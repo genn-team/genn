@@ -60,10 +60,12 @@ int main(int argc, char *argv[])
   while (!done) 
   {
       IzhikevichPop.run(DT, which); // run next batch
-      if (which == GPU) IzhikevichPop.getSpikeNumbersFromGPU();
+#ifndef CPU_ONLY        
       if (which == GPU) {  
+	  IzhikevichPop.getSpikeNumbersFromGPU();
 	  CHECK_CUDA_ERRORS(cudaMemcpy(VIzh1, d_VIzh1, outno*sizeof(float), cudaMemcpyDeviceToHost));
       } 
+#endif
       IzhikevichPop.sum_spikes();
       fprintf(osf, "%f ", t);
       

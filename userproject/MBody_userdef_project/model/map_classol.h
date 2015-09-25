@@ -56,8 +56,10 @@ class classol
   classol();
   ~classol();
   void init(unsigned int); 
+#ifndef CPU_ONLY
   void allocate_device_mem_patterns(); 
   void free_device_mem(); 
+#endif
   void read_pnkcsyns(FILE *);
   template <class DATATYPE> 
   void read_sparsesyns_par(DATATYPE *, int, struct SparseProjection, FILE *,FILE *,FILE *); 
@@ -68,14 +70,18 @@ class classol
   void write_kcdnsyns(FILE *); 
   void read_input_patterns(FILE *); 
   void generate_baserates(); 
+#ifndef CPU_ONLY
   void runGPU(scalar);
+#endif
   void runCPU(scalar); 
   void output_state(FILE *, unsigned int); 
   void getSpikesFromGPU(); 
   void getSpikeNumbersFromGPU(); 
   void output_spikes(FILE *, unsigned int); 
   void sum_spikes(); 
+#ifndef CPU_ONLY
   void get_kcdnsyns(); 
+#endif
 };
 
 #endif

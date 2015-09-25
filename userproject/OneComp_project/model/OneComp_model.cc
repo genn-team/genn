@@ -29,7 +29,9 @@ void neuronpop::init(unsigned int which)
   if (which == CPU) {
   }
   if (which == GPU) {
+#ifndef CPU_ONLY
     copyStateToDevice();
+#endif
   }
 }
 
@@ -45,7 +47,9 @@ void neuronpop::run(float runtime, unsigned int which)
 
   for (int i= 0; i < riT; i++) {
     if (which == GPU){
+#ifndef CPU_ONLY
        stepTimeGPU();
+#endif
     }
     if (which == CPU)
        stepTimeCPU();
@@ -63,7 +67,9 @@ void neuronpop::sum_spikes()
 void neuronpop::output_state(FILE *f, unsigned int which)
 {
   if (which == GPU) 
+#ifndef CPU_ONLY
     copyStateFromDevice();
+#endif
 
   fprintf(f, "%f ", t);
 
@@ -74,7 +80,7 @@ void neuronpop::output_state(FILE *f, unsigned int which)
   fprintf(f,"\n");
 }
 
-
+#ifndef CPU_ONLY
 //--------------------------------------------------------------------------
 /*! \brief Method for copying all spikes of the last time step from the GPU
  
@@ -98,7 +104,7 @@ void neuronpop::getSpikeNumbersFromGPU()
 {
   copySpikeNFromDevice();
 }
-
+#endif
 
 void neuronpop::output_spikes(FILE *f, unsigned int which)
 {

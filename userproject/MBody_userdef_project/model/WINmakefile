@@ -12,7 +12,12 @@
 ##--------------------------------------------------------------------------
 
 EXECUTABLE	=classol_sim.exe
+!IF "$(CPU_ONLY)" != "1"
 SOURCES		=classol_sim.cu
+!ELSE
+SOURCES		=classol_sim_cpu_only.cc
+!ENDIF
+
 OPTIMIZATIONFLAGS = /O2
 
 !include $(GENN_PATH)\userproject\include\makefile_common_win.mk

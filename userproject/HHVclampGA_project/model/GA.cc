@@ -49,7 +49,9 @@ void procreatePop(FILE *osb)
     single_var_reinit(errs[i].id, 0.1); // jiggle the new copies a bit
     j++;
   }
+#ifndef CPU_ONLY
   copyStateToDevice();	
+#endif
 }
 
 

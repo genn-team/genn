@@ -42,7 +42,7 @@ c) compile the generated code by invoking "make clean && make"
    running the code, e.g. "./classol_sim r1 1".
 
 Another example of an invocation would be: 
-  ./generate_run 1 100 1000 20 100 0.0025 outname MBody1 FTYPE=DOUBLE CPU_ONLY=1
+  ./generate_run 0 100 1000 20 100 0.0025 outname MBody1 FTYPE=DOUBLE CPU_ONLY=1
 
 for using double precision floating point and compiling and running
 the "CPU only" version.

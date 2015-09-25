@@ -131,7 +131,11 @@ void genRunner(NNmodel &model, //!< Model description
     
     os << "#ifndef DEFINITIONS_H" << ENDL;
     os << "#define DEFINITIONS_H" << ENDL;
-    
+
+    os << "#ifndef DT" << ENDL;
+    os << "#define DT " << DT << ENDL;
+    os << "#endif" << ENDL;
+
     for (int i= 0; i < model.neuronGrpN; i++) {
 	os << "#define glbSpkShift" << model.neuronName[i];
 	if (model.neuronDelaySlots[i] > 1) {

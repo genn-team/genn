@@ -34,15 +34,19 @@ private:
   classol();
   ~classol();
   void init(unsigned int);
+#ifndef CPU_ONLY
   void allocate_device_mem_input();
   void free_device_mem();
+#endif
   void read_PNIzh1syns(scalar *, FILE *);
   void read_sparsesyns_par(int, struct SparseProjection, FILE *,FILE *,FILE *, double *);
   void generate_baserates();
   void run(float, unsigned int);
   void output_state(FILE *, unsigned int);
+#ifndef CPU_ONLY
   void getSpikesFromGPU();
   void getSpikeNumbersFromGPU();
+#endif
   void output_spikes(FILE *, unsigned int);
   void sum_spikes();
 };

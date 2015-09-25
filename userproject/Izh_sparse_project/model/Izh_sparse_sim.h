@@ -17,7 +17,9 @@ using namespace std;
 #include "hr_time.cpp"
 
 #include "utils.h" // for CHECK_CUDA_ERRORS
+#ifndef CPU_ONLY
 #include <cuda_runtime.h>
+#endif
 
 #include "Izh_sparse.cc"
 

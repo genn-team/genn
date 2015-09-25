@@ -12,7 +12,12 @@
 ##--------------------------------------------------------------------------
 
 EXECUTABLE	:=PoissonIzh_sim
-SOURCES		:=PoissonIzh_sim.cu
+ifeq ($(CPU_ONLY),1)
+  SOURCES :=PoissonIzh_sim_cpu_only.cc
+else
+  SOURCES :=PoissonIzh_sim.cu
+endif
+
 OPTIMIZATIONFLAGS:= -O3
 
 include	$(GENN_PATH)/userproject/include/makefile_common_gnu.mk

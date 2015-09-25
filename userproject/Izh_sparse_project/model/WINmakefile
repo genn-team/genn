@@ -12,7 +12,12 @@
 ##--------------------------------------------------------------------------
 
 EXECUTABLE	=Izh_sim_sparse.exe
+!IF "$(CPU_ONLY)" != "1"
 SOURCES		=Izh_sim_sparse.cu
+!ELSE
+SOURCES		=Izh_sim_sparse_cpu_only.cc
+!ENDIF
+
 OPTIMIZATIONFLAGS = /O2
 
 !include $(GENN_PATH)\userproject\include\makefile_common_win.mk

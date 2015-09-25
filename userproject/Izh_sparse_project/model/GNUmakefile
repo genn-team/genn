@@ -12,7 +12,11 @@
 ##--------------------------------------------------------------------------
 
 EXECUTABLE	:=Izh_sim_sparse
-SOURCES		:=Izh_sim_sparse.cu
+ifeq ($(CPU_ONLY),1)
+  SOURCES 	:=Izh_sim_sparse_cpu_only.cc
+else
+  SOURCES 	:=Izh_sim_sparse.cu
+endif
 OPTIMIZATIONFLAGS:= -O3
 
 include	$(GENN_PATH)/userproject/include/makefile_common_gnu.mk

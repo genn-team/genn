@@ -98,10 +98,12 @@ int main(int argc, char *argv[])
     PNIzhNN.run(DT, which); // run next batch
 
     if (which == GPU) {  
+#ifndef CPU_ONLY
       PNIzhNN.getSpikeNumbersFromGPU();
       PNIzhNN.getSpikesFromGPU();
       pullIzh1StateFromDevice();
       pullPNStateFromDevice();
+#endif
 	} 
 
       PNIzhNN.sum_spikes();

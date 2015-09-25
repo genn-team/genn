@@ -12,7 +12,12 @@
 ##--------------------------------------------------------------------------
 
 EXECUTABLE	=OneComp_sim.exe
+!IF "$(CPU_ONLY)" != "1"
 SOURCES		=OneComp_sim.cu
+!ELSE
+SOURCES		=OneComp_sim_cpu_only.cc
+!ENDIF
+
 OPTIMIZATIONFLAGS = /O2
 
 !include $(GENN_PATH)\userproject\include\makefile_common_win.mk

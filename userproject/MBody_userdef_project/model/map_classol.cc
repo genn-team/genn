@@ -59,18 +59,23 @@ void classol::init(unsigned int which //!< Flag defining whether GPU or CPU only
   //following is to initialise user-defined learn1synapse graw variable. Equivalent to initGRaw();
   //for (int i=0;i<gCKDN.connN;i++){ //sparse
   offsetPN = 0;
-
+  
+#ifndef CPU_ONLY
   initializeAllSparseArrays();
+#endif
 
   if (which == CPU) {
     ratesPN= baserates;
   }
   if (which == GPU) {
+#ifndef CPU_ONLY
     ratesPN= d_baserates;
     copyStateToDevice();
+#endif
   }
 }
 
+#ifndef CPU_ONLY
 //--------------------------------------------------------------------------
 /*! \brief Method for allocating memory on the GPU device to hold the input patterns
  */
@@ -101,7 +106,7 @@ void classol::free_device_mem()
   CHECK_CUDA_ERRORS(cudaFree(d_pattern));
   CHECK_CUDA_ERRORS(cudaFree(d_baserates));
 }
-
+#endif
 
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
@@ -356,7 +361,7 @@ void classol::generate_baserates()
 }
 
 
-
+#ifndef CPU_ONLY
 //--------------------------------------------------------------------------
 /*! \brief Method for simulating the model for a given period of time on th GPU
  */
@@ -384,6 +389,8 @@ void classol::runGPU(scalar runtime //!< Duration of time to run the model for
 	stepTimeGPU(flags);
     }
 }
+#endif
+
 //--------------------------------------------------------------------------
 /*! \brief Method for simulating the model for a given period of time on th CPU
  */
@@ -423,75 +430,27 @@ void classol::output_state(FILE *f, //!< File handle for a file to write the mod
 			   unsigned int which //!< Flag determining whether using GPU or CPU only
 			   )
 {
-  if (which == GPU) 
-    copyStateFromDevice();
-
-  fprintf(f, "%f ", t);
-  for (int i= 0; i < model.neuronN[0]; i++) {
-    fprintf(f, "%f ", VPN[i]);
-   }
-  // for (int i= 0; i < model.neuronN[0]; i++) {
-  //   os << seedsPN[i] << " ";
-  // }
-  // for (int i= 0; i < model.neuronN[0]; i++) {
-  //   os << spikeTimesPN[i] << " ";
-  // }
-  //  os << glbSpkCnt0 << "  ";
-  // for (int i= 0; i < glbscntPN; i++) {
-  //   os << glbSpkPN[i] << " ";
-  // }
-  // os << " * ";
-  // os << glbSpkCntKC << "  ";
-  // for (int i= 0; i < glbscntKC; i++) {
-  //   os << glbSpkKC[i] << " ";
-  // }
-  // os << " * ";
-  // os << glbSpkCntLHI << "  ";
-  // for (int i= 0; i < glbscntLHI; i++) {
-  //   os << glbSpkLHI[i] << " ";
-  // }
-  // os << " * ";
-  // os << glbSpkCntDN << "  ";
-  // for (int i= 0; i < glbscntDN; i++) {
-  //   os << glbSpkDN[i] << " ";
-  // }
- //   os << " * ";
- // for (int i= 0; i < 20; i++) {
- //   os << VKC[i] << " ";
- // }
-   for (int i= 0; i < model.neuronN[1]; i++) {
-     fprintf(f, "%f ", VKC[i]);
-   }
-  //os << " * ";
-  //for (int i= 0; i < model.neuronN[1]; i++) {
-  //  os << inSynKC0[i] << " ";
-  //}
-  //  os << " * ";
-  //  for (int i= 0; i < 20; i++) {
-  //    os << inSynKC1[i] << " ";
-  //  }
-  //  os << " * ";
-  //  for (int i= 0; i < 20; i++) {
-  //    os << inSynLHI0[i] << " ";
-  //  }
-  //  os << " * ";
-  //  for (int i= 0; i < model.neuronN[3]; i++) {
-  //    os << inSynDN0[i] << " ";
-  //  }
-  //  os << endl;
-  //  os << " * ";
-  //  for (int i= 0; i < model.neuronN[3]; i++) {
-  //    os << inSynDN1[i] << " ";
-  //  }
-  for (int i= 0; i < model.neuronN[2]; i++) {
-    fprintf(f, "%f ", VLHI[i]);
-  }
-  for (int i= 0; i < model.neuronN[3]; i++) {
-    fprintf(f, "%f ", VDN[i]);
-  }
-  fprintf(f,"\n");
+    if (which == GPU) 
+#ifndef CPU_ONLY
+	copyStateFromDevice();
+#endif
+    fprintf(f, "%f ", t);
+    for (int i= 0; i < model.neuronN[0]; i++) {
+	fprintf(f, "%f ", VPN[i]);
+    }
+    for (int i= 0; i < model.neuronN[1]; i++) {
+	fprintf(f, "%f ", VKC[i]);
+    }
+    for (int i= 0; i < model.neuronN[2]; i++) {
+	fprintf(f, "%f ", VLHI[i]);
+    }
+    for (int i= 0; i < model.neuronN[3]; i++) {
+	fprintf(f, "%f ", VDN[i]);
+    }
+    fprintf(f,"\n");
 }
 
+#ifndef CPU_ONLY
 //--------------------------------------------------------------------------
 /*! \brief Method for copying all spikes of the last time step from the GPU
  
@@ -515,6 +474,7 @@ void classol::getSpikeNumbersFromGPU()
 {
   copySpikeNFromDevice();
 }
+#endif
 
 //--------------------------------------------------------------------------
 /*! \brief Method for writing the spikes occurred in the last time step to a file
@@ -554,6 +514,7 @@ void classol::sum_spikes()
   sumDN+= glbSpkCntDN[0];
 }
 
+#ifndef CPU_ONLY
 //--------------------------------------------------------------------------
 /*! \brief Method for copying the synaptic conductances of the learning synapses between KCs and DNs (detector neurons) back to the CPU memory
  */
@@ -564,7 +525,7 @@ void classol::get_kcdnsyns()
     CHECK_CUDA_ERRORS(cudaMemcpy(gKCDN, d_gKCDN, model.neuronN[1]*model.neuronN[3]*sizeof(scalar), cudaMemcpyDeviceToHost));
 
 }
-
+#endif
 
 
 #endif	

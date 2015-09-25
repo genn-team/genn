@@ -123,7 +123,9 @@ int main(int argc, char *argv[])
 
   locust.generate_baserates();
   if (which == GPU) {
+#ifndef CPU_ONLY
     locust.allocate_device_mem_patterns();
+#endif
   }
   locust.init(which);         // this includes copying g's for the GPU version
 
@@ -149,9 +151,11 @@ int main(int argc, char *argv[])
   while (!done) 
   {    
       if (which == GPU) {
+#ifndef CPU_ONLY
 	  locust.runGPU(DT); // run next batch
 	  locust.getSpikeNumbersFromGPU();
 	  locust.getSpikesFromGPU();
+#endif
       }
       else {
 	  locust.runCPU(DT);
@@ -197,7 +201,9 @@ int main(int argc, char *argv[])
 #endif
 
   if (which == GPU) {
+#ifndef CPU_ONLY
     locust.free_device_mem();
+#endif
   }
 
   return 0;

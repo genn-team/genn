@@ -26,7 +26,9 @@
 #include <sstream>
 #include <cstdlib>
 #include <cmath>
-#include "toString.h"
+#include <cfloat>
+#include <locale>
+using namespace std;
 
 #ifdef _WIN32
 #include <direct.h>
@@ -35,7 +37,7 @@
 #include <sys/stat.h> // needed for mkdir
 #endif
 
-using namespace std;
+#include "command_line_processing.h"
 
 //--------------------------------------------------------------------------
 /*! \brief Main entry point for generate_run.
@@ -44,47 +46,79 @@ using namespace std;
 
 int main(int argc, char *argv[])
 {
-  if (argc != 8)
+  if (argc < 6)
   {
-    cerr << "usage: generate_run <CPU=0, GPU=1> <protocol> <nPop> <totalT> <outdir> <debug mode? (0/1)> <GPU choice>" << endl;
+    cerr << "usage: generate_run <CPU=0, AUTO GPU=1, GPU n= \"n+2\"> <protocol> <nPop> <totalT> <outdir> <OPTIONS> \n\
+Possible options: \n\
+DEBUG=0 or DEBUG=1 (default 0): Whether to run in a debugger \n\
+FTYPE=DOUBLE of FTYPE=FLOAT (default FLOAT): What floating point type to use \n\
+REUSE=0 or REUSE=1 (default 0): Whether to reuse generated connectivity from an earlier run \n\
+CPU_ONLY=0 or CPU_ONLY=1 (default 0): Whether to compile in (CUDA independent) \"CPU only\" mode." << endl;
     exit(1);
   }
+  int retval;
+  string cmd;
+  string gennPath = getenv("GENN_PATH");
   int which = atoi(argv[1]);
   int protocol = atoi(argv[2]);
   int nPop = atoi(argv[3]);
   double totalT = atof(argv[4]);
   string outDir = toString(argv[5]) + "_output";  
-  int dbgMode = atoi(argv[6]); // set this to 1 if you want to enable gdb and cuda-gdb debugging to 0 for release
-  int GPU= atoi(argv[7]);
-  int retval;
-  string cmd;
 
-  string GeNNPath= getenv("GENN_PATH");
-  cerr << GeNNPath << endl;
+   int argStart= 6;
+#include "parse_options.h"  // parse options
+
   // write model parameters
   string fname = "model/HHVClampParameters.h";
   ofstream os(fname.c_str());
   os << "#define NPOP " << nPop << endl;
   os << "#define TOTALT " << totalT << endl;
-  os << "#define fixGPU " << GPU << endl;
+  string tmps= tS(ftype);
+  os << "#define _FTYPE " << "GENN_" << toUpper(tmps) << endl;
+  os << "#define scalar " << toLower(tmps) << endl;
+  if (toLower(ftype) == "double") {
+      os << "#define SCALAR_MIN " << DBL_MIN << endl;
+      os << "#define SCALAR_MAX " << DBL_MAX << endl;
+  }
+  else {
+      os << "#define SCALAR_MIN " << FLT_MIN << "f" << endl;
+      os << "#define SCALAR_MAX " << FLT_MAX << "f" << endl;
+  } 
+  if (which > 1) {
+      os << "#define fixGPU " << which-2 << endl;
+  }
   os.close();
-
+  
   // build it
 #ifdef _WIN32
   cmd= "cd model && buildmodel.bat HHVClamp DEBUG=" + toString(dbgMode);
+  if (cpu_only) {
+      cmd += " CPU_ONLY=1";
+  }
   cmd += " && nmake /nologo /f WINmakefile clean && nmake /nologo /f WINmakefile";
   if (dbgMode == 1) {
     cmd += " DEBUG=1";
-    cout << cmd << endl;
   }
+  if (cpu_only) {
+      cmd += " CPU_ONLY=1";
+  }
+
 #else // UNIX
   cmd = "cd model && buildmodel.sh HHVClamp DEBUG=" + toString(dbgMode);
+  if (cpu_only) {
+      cmd += " CPU_ONLY=1";
+  }
   cmd += " && make clean && make";
-  if (dbgMode == 1) {
-    cmd += " debug";
+  if (cpu_only) {
+      cmd += " CPU_ONLY=1";
   }
   else {
-    cmd += " release";
+      if (dbgMode == 1) {
+	  cmd += " debug";
+      }
+      else {
+	  cmd += " release";
+      }
   }
 #endif
   cerr << cmd << endl;

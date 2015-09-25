@@ -12,7 +12,12 @@
 ##--------------------------------------------------------------------------
 
 EXECUTABLE	:=OneComp_sim
-SOURCES		:=OneComp_sim.cu
+ifeq ($(CPU_ONLY),1)
+  SOURCES :=OneComp_sim_cpu_only.cc
+else
+  SOURCES :=OneComp_sim.cu
+endif
+
 OPTIMIZATIONFLAGS:= -O3
 
 include $(GENN_PATH)/userproject/include/makefile_common_gnu.mk

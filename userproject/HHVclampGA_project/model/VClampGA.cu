@@ -90,7 +90,9 @@ int main(int argc, char *argv[])
       oldt= t;
       runexpHH(t); 
       if (which == GPU) {
+#ifndef CPU_ONLY
 	stepTimeGPU();
+#endif
       }
       else {
 	stepTimeCPU();
@@ -101,9 +103,11 @@ int main(int argc, char *argv[])
 	sn++;
       }
     }
+#ifndef CPU_ONLY
     if (which == GPU) {
        CHECK_CUDA_ERRORS(cudaMemcpy(errHH, d_errHH, VSize, cudaMemcpyDeviceToHost));
     }   
+#endif
     fprintf(osb, "%f %f %f %f %f %f %f %f ", t, gNaexp, ENaexp, gKexp, EKexp, glexp, Elexp, Cexp);
     procreatePop(osb);
     if (protocol >= 0) {

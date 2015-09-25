@@ -17,7 +17,7 @@ INCLUDE_FLAGS 	:=-I$(GENN_PATH)/lib/include -I$(GENN_PATH)/userproject/include
 all: generate_run tools
 
 generate_run: generate_run.cc 
-	g++  $(CXXFLAGS) $(INCLUDE_FLAGS) -L$(CUDA_PATH)/lib -o generate_run generate_run.cc 
+	g++  $(CXXFLAGS) $(INCLUDE_FLAGS) -o generate_run generate_run.cc 
 
 clean:
 	$(RM) generate_run

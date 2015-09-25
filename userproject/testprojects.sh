@@ -1,6 +1,6 @@
 #!/bin/bash
 #call this as:
-#$ bash testprojects.sh "what is new in this run" 2>&1 |tee outputtestscript
+#$ bash testprojects.sh "what is new in this run" &> outputtestscript
 #then:
 #$ grep -i warning outputtestscript
 #$ grep -i error outputtestscript
@@ -81,10 +81,10 @@ if [ -d "testing_output" ]; then
   echo ${custommsg} >> testing_output/testing.time
   printf "With new setup... \n"  >> testing_output/testing.time
 fi
-./generate_run 1 100 1000 20 100 0.0025 testing MBody_individualID 0 FLOAT 0
+./generate_run 1 100 1000 20 100 0.0025 testing MBody_individualID 
 cp testing_output/testing.out.st testing_output/testing.out.st.GPU
 printf "\n\n####################### MBody_individualID CPU ######################\n"
-./generate_run 0 100 1000 20 100 0.0025 testing MBody_individualID 0 FLOAT 0
+./generate_run 0 100 1000 20 100 0.0025 testing MBody_individualID 
 cp testing_output/testing.out.st testing_output/testing.out.st.CPU 
 
 if [ "$firstrun_MBI" = true ]; then
@@ -112,10 +112,10 @@ if [ -d "testing_output" ]; then
   printf "With new setup... \n"  >> testing_output/testing.time
 fi
 printf "\n\n####################### MBody_userdef GPU ######################\n"
-./generate_run 1 100 1000 20 100 0.0025 testing MBody_userdef 0 FLOAT 0
+./generate_run 1 100 1000 20 100 0.0025 testing MBody_userdef 
 cp testing_output/testing.out.st testing_output/testing.out.st.GPU
 printf "\n\n####################### MBody_userdef CPU ######################\n"
-./generate_run 0 100 1000 20 100 0.0025 testing MBody_userdef 0 FLOAT 0
+./generate_run 0 100 1000 20 100 0.0025 testing MBody_userdef 
 cp testing_output/testing.out.st testing_output/testing.out.st.CPU
 
 cp -R testing_output/testing.time $BmDir/MBody_userdef/testing.time
@@ -136,10 +136,10 @@ if [ -d "testing_output" ]; then
   printf "With new setup... \n"  >> testing_output/testing.time
 fi
 printf "\n\n####################### MBody_delayedSyn GPU ######################\n"
-./generate_run 1 100 1000 20 100 0.0025 testing MBody_delayedSyn 0 FLOAT 0
+./generate_run 1 100 1000 20 100 0.0025 testing MBody_delayedSyn 
 cp testing_output/testing.out.st testing_output/testing.out.st.GPU
 printf "\n\n####################### MBody_delayedSyn CPU ######################\n"
-./generate_run 0 100 1000 20 100 0.0025 testing MBody_delayedSyn 0 FLOAT 0
+./generate_run 0 100 1000 20 100 0.0025 testing MBody_delayedSyn 
 cp testing_output/testing.out.st testing_output/testing.out.st.CPU
 
 cp -R testing_output/testing.time $BmDir/MBody_delayedSyn/testing.time
@@ -165,10 +165,10 @@ if [ -d "testing_output" ]; then
   printf "With new setup... \n"  >> testing_output/testing.time
 fi
 printf "\n\n####################### Izh_sparse 10K GPU ######################\n"
-./generate_run 1 10000 1000 1 testing Izh_sparse 0 FLOAT 0 1.0
+./generate_run 1 10000 1000 1 testing Izh_sparse 1.0
 #cp testing_output/testing.out.st testing_output/testing.out.st.GPU
 printf "\n\n####################### Izh_sparse 10K CPU ######################\n"
-./generate_run 0 10000 1000 1 testing Izh_sparse 0 FLOAT 0 1.0
+./generate_run 0 10000 1000 1 testing Izh_sparse 1.0
 #cp testing_output/testing.out.st testing_output/testing.out.st.CPU
 if [ "$firstrun_IZH" = true ]; then
   cp -R inputfiles inputfiles10K
@@ -216,10 +216,10 @@ if [ -d "testing_output" ]; then
   printf "With new setup... \n"  >> testing_output/testing.time
 fi
 printf "\n\n####################### PoissonIzh GPU test 1 ######################\n"
-./generate_run 1 100 10 0.5 2 testing PoissonIzh 0
+./generate_run 1 100 10 0.5 2 testing PoissonIzh 
 
 printf "\n\n####################### PoissonIzh CPU test 1 ######################\n"
-./generate_run 0 100 10 0.5 2 testing PoissonIzh 0
+./generate_run 0 100 10 0.5 2 testing PoissonIzh 
 
 cp -R testing_output/testing.time $BmDir/PoissonIzh/testing.time
 if [ "$firstrun_PI" = true ]; then
@@ -246,10 +246,10 @@ if [ -d "testing_output" ]; then
   printf "With new setup... \n"  >> testing_output/testing.time
 fi
 printf "\n\n####################### OneComp GPU test 1 ######################\n"
-./generate_run 1 1 testing OneComp 0
+./generate_run 1 1 testing OneComp 
 
 printf "\n\n####################### OneComp CPU test 1 ######################\n"
-./generate_run 0 1 testing OneComp 0
+./generate_run 0 1 testing OneComp 
 
 cp -R testing_output/testing.time $BmDir/OneComp/testing.time
 
@@ -269,9 +269,9 @@ if [ -d "testing_output" ]; then
   printf "With new setup... \n"  >> testing_output/testing.time
 fi
 printf "\n\n####################### HHVclampGA GPU test 1 ######################\n"
-./generate_run 1 2 5000 1000 testing 0 0
+./generate_run 1 2 5000 1000 testing 
 printf "\n\n####################### HHVclampGA CPU test 1 ######################\n"
-./generate_run 0 2 5000 1000 testing 0 0
+./generate_run 0 2 5000 1000 testing 
 
 cp -R testing_output/testing.time $BmDir/HHVclampGA/testing.time
 

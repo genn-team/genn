@@ -93,7 +93,9 @@ void var_init_fullrange()
    for (int n= 0; n < NPOP; n++) {
    single_var_init_fullrange(n);
   }
+#ifndef CPU_ONLY
   copyStateToDevice();	
+#endif
 }
  
 void var_reinit(double fac) 
@@ -102,7 +104,9 @@ void var_reinit(double fac)
   for (int n= 0; n < NPOP; n++) {
     single_var_reinit(n, fac);
   }
+#ifndef CPU_ONLY
   copyStateToDevice();	
+#endif
 }
 
 void truevar_init()
@@ -114,7 +118,9 @@ void truevar_init()
     nHH[n]= myHH_ini[3];
     errHH[n]= 0.0;
   }
-  copyStateToDevice();	  
+#ifndef CPU_ONLY
+  copyStateToDevice();	
+#endif  
 }
 
 

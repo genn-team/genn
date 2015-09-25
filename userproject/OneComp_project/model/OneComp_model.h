@@ -26,8 +26,10 @@ class neuronpop
   ~neuronpop();
   void init(unsigned int);
   void run(float, unsigned int);
+#ifndef CPU_ONLY
   void getSpikesFromGPU(); 
-  void getSpikeNumbersFromGPU(); 
+  void getSpikeNumbersFromGPU();
+#endif 
   void output_state(FILE *, unsigned int);
   void output_spikes(FILE *, unsigned int);
   void sum_spikes();

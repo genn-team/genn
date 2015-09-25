@@ -23,7 +23,11 @@ using namespace std;
 #include "hr_time.cpp"
 
 #include "utils.h" // for CHECK_CUDA_ERRORS
+
+#ifndef CPU_ONLY
 #include <cuda_runtime.h>
+#endif
+
 #include "HHVClamp.cc"
 #include "HHVClamp_CODE/runner.cc"
 #include "../../../lib/include/numlib/randomGen.h"

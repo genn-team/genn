@@ -109,7 +109,9 @@ void modelDefinition(NNmodel &model)
 
   model.setName("HHVClamp");
   model.setPrecision(GENN_FLOAT);
+#ifdef fixGPU
   model.setGPUDevice(fixGPU);
+#endif
   model.addNeuronPopulation("HH", NPOP, HHV, myHH_p, myHH_ini);
   model.finalize();
 }

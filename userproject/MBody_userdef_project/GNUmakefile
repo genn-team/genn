@@ -12,7 +12,7 @@
 #--------------------------------------------------------------------------
 
 CXXFLAGS	=-Wall -Winline -O3
-INCLUDE_FLAGS   := -I$(GENN_PATH)/userproject/include
+INCLUDE_FLAGS 	:=-I$(GENN_PATH)/lib/include -I$(GENN_PATH)/userproject/include
 
 all: generate_run tools
 

@@ -18,14 +18,16 @@
 */
 //--------------------------------------------------------------------------
 
-using namespace std;
 #include <cassert>
+using namespace std;
 
 #include "hr_time.cpp"
 
 #include "utils.h" // for CHECK_CUDA_ERRORS
 
+#ifndef CPU_ONLY
 #include <cuda_runtime.h>
+#endif
 
 #include "MBody_userdef.cc"
 
