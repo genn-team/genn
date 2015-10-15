@@ -270,12 +270,13 @@ Error: Explicit delays used - these are not yet supported so won't affect anythi
 					</xsl:message>
 				</xsl:if>
 <!---->			<!---->	vector &lt; conn &gt; tempConns<xsl:value-of select="$varName"/>;
-<!---->			<!---->	conn newConn; 
+<!---->			<!---->	{conn newConn; 
 <!---->			<!---->	// mind bogglingly silly way of setting up the vector!
 <!---->			<xsl:for-each select="SMLNL:ConnectionList/SMLNL:Connection">
 <!---->			<!---->	newConn.src = <xsl:value-of select="@src_neuron"/>; newConn.dst = <xsl:value-of select="@dst_neuron"/>;
 <!---->			<!---->	tempConns<xsl:value-of select="$varName"/>.push_back(newConn);
 <!---->			</xsl:for-each>
+<!---->			<!---->	}
 			</xsl:if>
 			<xsl:if test="SMLNL:ConnectionList/SMLNL:BinaryFile">
 				<!-- binary file time - let's go! -->

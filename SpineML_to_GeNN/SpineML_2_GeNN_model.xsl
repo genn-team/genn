@@ -8,6 +8,7 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:SMLLOWNL="http://www.shef
 <!-- EXPERIMENT SET-UP -->
 <!-- DEFINE DT -->
 #define DT <xsl:value-of select="//SMLEX:Simulation//@dt"/>
+bool switchTypeOfSparse = true;
 <xsl:text>
 </xsl:text>
 

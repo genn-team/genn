@@ -39,6 +39,31 @@
 
   ps.postSyntoCurrent = tS(" \
   0; \n \
+     	float I_sum_NB = 0; \n \
+     	 { \n \
+    	float in_PS = $(inSyn); \n \
+     	I_sum_NB += (in_PS); \n \
+	  } \n \
+");
+  	 
+	ps.postSynDecay = tS(" \
+  	 	$(inSyn) = 0; \
+  	");
+
+  postSynModels.push_back(ps);
+
+	
+			
+  // Add new postsynapse type - passthroughPS: 
+  ps.varNames.clear();
+  ps.varTypes.clear();
+  
+  ps.pNames.clear();
+  
+  ps.dpNames.clear();
+
+  ps.postSyntoCurrent = tS(" \
+  0; \n \
       { \n \
     	float in_PS = $(inSyn); \n \
      	I_sum_NB += (in_PS); \n \

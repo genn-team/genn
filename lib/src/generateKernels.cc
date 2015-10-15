@@ -491,10 +491,92 @@ void generate_process_presynaptic_events_code(
 	string offsetPost = (delayPost ? "(dd_spkQuePtr" + model.neuronName[trg] + " * " + tS(model.neuronN[trg]) + ") + " : "");
 
 	// Detect spike events or spikes and do the update
+	if ((sparse) && switchTypeOfSparse) {
+	int maxConnections;
+	if ((sparse) && (isGrpVarNeeded[model.synapseTarget[i]])) {
+	    if (model.maxConn[i] < 1) {
+		fprintf(stderr, "Model Generation warning: for every SPARSE synapse group used you must also supply (in your model)\
+ a max possible number of connections via the model.setMaxConn() function.");
+		maxConnections = model.neuronN[trg];
+	    }
+	    else {
+		maxConnections = model.maxConn[i];
+	    }
+	}
+	else {
+	    maxConnections = model.neuronN[trg];
+	}
+	os << "if (" << localID << " < " << maxConnections << ") {" << ENDL;
+	os << "int preInd = dd_glbSpk"  << postfix << model.neuronName[src] << "[" << localID << "];" << ENDL;
+	os << "prePos = dd_indInG" << model.synapseName[i] << "[preInd];" << ENDL;
+	os << "npost = dd_indInG" << model.synapseName[i] << "[preInd + 1] - prePos;" << ENDL;
+	os << "for (int i = 0; i < npost; ++i) {" << ENDL;
+	os << "	ipost = dd_ind" <<  model.synapseName[i] << "[prePos];" << ENDL;
+	os << "prePos += i;" << ENDL;
+
+// Code substitutions ----------------------------------------------------------------------------------
+	string wCode = (evnt ? weightUpdateModels[synt].simCodeEvnt : weightUpdateModels[synt].simCode);
+	if (sparse) { // SPARSE
+	    if (isGrpVarNeeded[model.synapseTarget[i]]) { // SPARSE using atomicAdd
+		substitute(wCode, tS("$(updatelinsyn)"), theAtomicAdd+tS("(&$(inSyn), $(addtoinSyn))"));
+		substitute(wCode, tS("$(inSyn)"), tS("dd_inSyn") + model.synapseName[i] + tS("[ipost]")); 
+	    }
+	    else { // SPARSE using shared memory
+		substitute(wCode, tS("$(updatelinsyn)"), tS("$(inSyn) += $(addtoinSyn)")); 		   		
+		substitute(wCode, tS("$(inSyn)"), tS("shLg[ipost]"));
+	    }
+	    if (model.synapseGType[i] == INDIVIDUALG) {
+		name_substitutions(wCode, tS("dd_"), weightUpdateModels[synt].varNames, model.synapseName[i] + tS("[prePos]"));
+	    }
+	    else {
+		value_substitutions(wCode, weightUpdateModels[synt].varNames, model.synapseIni[i]);
+	    }
+	}
+	value_substitutions(wCode, weightUpdateModels[synt].pNames, model.synapsePara[i]);
+	value_substitutions(wCode, weightUpdateModels[synt].dpNames, model.dsp_w[i]);
+	name_substitutions(wCode, tS(""), weightUpdateModels[synt].extraGlobalSynapseKernelParameters, model.synapseName[i]);
+	substitute(wCode, tS("$(addtoinSyn)"), tS("addtoinSyn"));
+
+	// presynaptic neuron variables and parameters
+	if (model.neuronType[src] == POISSONNEURON) substitute(wCode, tS("$(V_pre)"), tS(model.neuronPara[src][2]));
+	substitute(wCode, tS("$(sT_pre)"), tS("dd_sT") + model.neuronName[src] + tS("[") + offsetPre + tS("preInd]"));
+	for (int j = 0; j < nModels[nt_pre].varNames.size(); j++) {
+	    if (model.neuronVarNeedQueue[src][j]) {
+		substitute(wCode, tS("$(") + nModels[nt_pre].varNames[j] + tS("_pre)"),
+			   tS("dd_") + nModels[nt_pre].varNames[j] + model.neuronName[src] + tS("[") + offsetPre + tS("preInd]"));
+	    }
+	    else {
+		substitute(wCode, tS("$(") + nModels[nt_pre].varNames[j] + tS("_pre)"),
+			   tS("dd_") + nModels[nt_pre].varNames[j] + model.neuronName[src] + tS("[preInd]"));
+	    }
+	}
+	extended_value_substitutions(wCode, nModels[nt_pre].pNames, tS("_pre"), model.neuronPara[src]);
+	extended_value_substitutions(wCode, nModels[nt_pre].dpNames, tS("_pre"), model.dnp[src]);
+
+	// postsynaptic neuron variables and parameters
+	substitute(wCode, tS("$(sT_post)"), tS("dd_sT") + model.neuronName[trg] + tS("[") + offsetPost + tS("ipost]"));
+	for (int j = 0; j < nModels[nt_post].varNames.size(); j++) {
+	    if (model.neuronVarNeedQueue[trg][j]) {
+		substitute(wCode, tS("$(") + nModels[nt_post].varNames[j] + tS("_post)"),
+			   tS("dd_") + nModels[nt_post].varNames[j] + model.neuronName[trg] + tS("[") + offsetPost + tS("ipost]"));
+	    }
+	    else {
+		substitute(wCode, tS("$(") + nModels[nt_post].varNames[j] + tS("_post)"),
+			   tS("dd_") + nModels[nt_post].varNames[j] + model.neuronName[trg] + tS("[ipost]"));
+	    }
+	}
+	extended_value_substitutions(wCode, nModels[nt_post].pNames, tS("_post"), model.neuronPara[trg]);
+	extended_value_substitutions(wCode, nModels[nt_post].dpNames, tS("_post"), model.dnp[trg]);
+	// end Code substitutions ------------------------------------------------------------------------- 
+	os << ensureFtype(wCode, model.ftype) << ENDL;
+	os << "}" << ENDL;
+	os << "}" << ENDL;
+	} else {
 	os << "// process presynaptic events: " << (evnt ? "Spike type events" : "True Spikes") << ENDL;
 	os << "for (r = 0; r < numSpikeSubsets" << postfix << "; r++)" << OB(90);
 	os << "if (r == numSpikeSubsets" << postfix << " - 1) lmax = ((lscnt" << postfix << "-1) % BLOCKSZ_SYN) +1;" << ENDL;
 	os << "else lmax = BLOCKSZ_SYN;" << ENDL;
+	os << "__syncthreads();" << ENDL;
 	os << "if (threadIdx.x < lmax)" << OB(100);
 	os << "shSpk" << postfix << "[threadIdx.x] = dd_glbSpk" << postfix << model.neuronName[src] << "[" << offsetPre << "(r * BLOCKSZ_SYN) + threadIdx.x];" << ENDL;
 	if (evnt) {
@@ -669,6 +751,7 @@ void generate_process_presynaptic_events_code(
 	}
 	os << CB(110) << ENDL;
 	os << CB(90) << ENDL;
+    }
     }
 }
 
