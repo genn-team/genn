@@ -399,6 +399,129 @@ Then one can use the model as
 networkModel.addNeuronPopulation(..., myModel, ...);
 \endcode
 
+\section sect_integration Defining the integration method
+
+Any type of numerical integration method can be used, given that the user provides 
+how it is done in the code snippets.
+The example above demonstrate how to use the forward Euler method.
+Implicit or higher-order methods can be tricky to be expressed manually, 
+and the resulting code may look a bit unwieldy.
+A convenient way would be to use the brian2genn interface to automatically create the desired code.
+For example, the code for 4th order Runge-Kutta integration can be easily created
+by defining the model in a simple Brian 2 script:
+
+\code
+from brian2 import *
+import brian2genn
+
+set_device('genn')
+
+N = 1
+Isyn = 1
+gNa= 7.15
+ENa= 50
+gK= 1.43
+EK= -95
+gl= 0.02672
+El= -63.563
+C= 0.143
+
+eqs = '''
+dV/dt= (m**3*h*gNa*(ENa-V)+n**4*gK*(EK-V)+gl*(El-V)+Isyn)/C/ms :1
+dm/dt= (0.32*(-52-V)/(exp((-52-V)/4)-1)*(1-m)-0.28*(V+25)/(exp((V+25)/5)-1)*m)/ms : 1
+dh/dt= (0.128*exp((-48-V)/18)*(1-h)-4.0/(exp((-25-V)/5)+1)*h)/ms :1
+dn/dt= (0.032*(-50-V)/(exp((-50-V)/5)-1)*(1-n)-0.5*exp((-55-V)/40)*n)/ms : 1
+'''
+
+defaultclock.dt= 0.02*ms
+
+G = NeuronGroup(N, eqs, threshold='V> 0', reset='', method='rk4')
+print G
+
+G.V= -60
+M= StateMonitor(G,True, record=True)
+
+run(500*ms)
+
+device.build(directory='simple_example_HH',
+             compile=True,
+             run=True,
+             use_GPU=True)
+\endcode
+
+brian2genn interface created the following GeNN code for this simulation:
+
+\code
+neuronModel n;
+
+  // setp 1: add variables
+  n.varNames.clear();
+  n.varTypes.clear();
+  n.varNames.push_back(tS("i"));
+  n.varNames.push_back(tS("h"));
+  n.varNames.push_back(tS("m"));
+  n.varNames.push_back(tS("V"));
+  n.varNames.push_back(tS("n"));
+  n.varTypes.push_back(tS("int32_t"));
+  n.varTypes.push_back(tS("double"));
+  n.varTypes.push_back(tS("double"));
+  n.varTypes.push_back(tS("double"));
+  n.varTypes.push_back(tS("double"));
+  // step2: add parameters
+  n.pNames.clear(); 
+  n.pNames.push_back(tS("El"));
+  n.pNames.push_back(tS("C"));
+  n.pNames.push_back(tS("gl"));
+  n.pNames.push_back(tS("ms"));
+  n.pNames.push_back(tS("EK"));
+  n.pNames.push_back(tS("ENa"));
+  n.pNames.push_back(tS("Isyn"));
+  n.pNames.push_back(tS("N"));
+  n.pNames.push_back(tS("gNa"));
+  n.pNames.push_back(tS("gK"));
+  // step 3: add simcode
+  n.simCode= tS("double __k_1_h = (DT * ((((-4.0) * $(h)) / ((0.00673794699909 * exp((-0.2) * $(V))) + 1.0)) + ((((-0.00889388175652) * $(h)) + 0.00889388175652) * exp((-0.0555555555556) * $(V))))) / $(ms);\n\
+double __k_1_n = (DT * ((((-0.126419797902) * $(n)) * exp((-0.025) * $(V))) + (((((-0.032) * $(V)) - 1.6) * ((- $(n)) + 1.0)) / ((4.53999297625e-05 * exp((-0.2) * $(V))) - 1.0)))) / $(ms);\n\
+double __k_1_m = (DT * ((((- $(m)) * ((0.28 * $(V)) + 7.0)) / ((148.413159103 * exp(0.2 * $(V))) - 1.0)) + (((((-0.32) * $(V)) - 16.64) * ((- $(m)) + 1.0)) / ((2.26032940698e-06 * exp((-0.25) * $(V))) - 1.0)))) / $(ms);\n\
+double __k_1_V = (DT * ((($(Isyn) + (($(gK) * (pow($(n), 4.0))) * ($(EK) - $(V)))) + ((($(gNa) * $(h)) * (pow($(m), 3.0))) * ($(ENa) - $(V)))) + ($(gl) * ($(El) - $(V))))) / ($(C) * $(ms));\n\
+double __k_2_h = (DT * ((((-4.0) * ((0.5 * __k_1_h) + $(h))) / ((0.00673794699909 * exp(((-0.2) * $(V)) - (0.1 * __k_1_V))) + 1.0)) + (((((-0.00444694087826) * __k_1_h) - (0.00889388175652 * $(h))) + 0.00889388175652) * exp(((-0.0555555555556) * $(V)) - (0.0277777777778 * __k_1_V))))) / $(ms);\n\
+double __k_2_n = (DT * ((((-0.126419797902) * ((0.5 * __k_1_n) + $(n))) * exp(((-0.025) * $(V)) - (0.0125 * __k_1_V))) + ((((((-0.032) * $(V)) - (0.016 * __k_1_V)) - 1.6) * ((((-0.5) * __k_1_n) - $(n)) + 1.0)) / ((4.53999297625e-05 * exp(((-0.2) * $(V)) - (0.1 * __k_1_V))) - 1.0)))) / $(ms);\n\
+double __k_2_m = (DT * ((((- ((0.5 * __k_1_m) + $(m))) * (((0.28 * $(V)) + (0.14 * __k_1_V)) + 7.0)) / ((148.413159103 * exp((0.2 * $(V)) + (0.1 * __k_1_V))) - 1.0)) + ((((((-0.32) * $(V)) - (0.16 * __k_1_V)) - 16.64) * ((((-0.5) * __k_1_m) - $(m)) + 1.0)) / ((2.26032940698e-06 * exp(((-0.25) * $(V)) - (0.125 * __k_1_V))) - 1.0)))) / $(ms);\n\
+double __k_2_V = (DT * ((($(Isyn) + (($(gK) * (pow((0.5 * __k_1_n) + $(n), 4.0))) * (($(EK) - $(V)) - (0.5 * __k_1_V)))) + ((($(gNa) * ((0.5 * __k_1_h) + $(h))) * (pow((0.5 * __k_1_m) + $(m), 3.0))) * (($(ENa) - $(V)) - (0.5 * __k_1_V)))) + ($(gl) * (($(El) - $(V)) - (0.5 * __k_1_V))))) / ($(C) * $(ms));\n\
+double __k_3_h = (DT * ((((-4.0) * ((0.5 * __k_2_h) + $(h))) / ((0.00673794699909 * exp(((-0.2) * $(V)) - (0.1 * __k_2_V))) + 1.0)) + (((((-0.00444694087826) * __k_2_h) - (0.00889388175652 * $(h))) + 0.00889388175652) * exp(((-0.0555555555556) * $(V)) - (0.0277777777778 * __k_2_V))))) / $(ms);\n\
+double __k_3_n = (DT * ((((-0.126419797902) * ((0.5 * __k_2_n) + $(n))) * exp(((-0.025) * $(V)) - (0.0125 * __k_2_V))) + ((((((-0.032) * $(V)) - (0.016 * __k_2_V)) - 1.6) * ((((-0.5) * __k_2_n) - $(n)) + 1.0)) / ((4.53999297625e-05 * exp(((-0.2) * $(V)) - (0.1 * __k_2_V))) - 1.0)))) / $(ms);\n\
+double __k_3_m = (DT * ((((- ((0.5 * __k_2_m) + $(m))) * (((0.28 * $(V)) + (0.14 * __k_2_V)) + 7.0)) / ((148.413159103 * exp((0.2 * $(V)) + (0.1 * __k_2_V))) - 1.0)) + ((((((-0.32) * $(V)) - (0.16 * __k_2_V)) - 16.64) * ((((-0.5) * __k_2_m) - $(m)) + 1.0)) / ((2.26032940698e-06 * exp(((-0.25) * $(V)) - (0.125 * __k_2_V))) - 1.0)))) / $(ms);\n\
+double __k_3_V = (DT * ((($(Isyn) + (($(gK) * (pow((0.5 * __k_2_n) + $(n), 4.0))) * (($(EK) - $(V)) - (0.5 * __k_2_V)))) + ((($(gNa) * ((0.5 * __k_2_h) + $(h))) * (pow((0.5 * __k_2_m) + $(m), 3.0))) * (($(ENa) - $(V)) - (0.5 * __k_2_V)))) + ($(gl) * (($(El) - $(V)) - (0.5 * __k_2_V))))) / ($(C) * $(ms));\n\
+double __k_4_h = (DT * ((((-4.0) * (__k_3_h + $(h))) / ((0.00673794699909 * exp(((-0.2) * $(V)) - (0.2 * __k_3_V))) + 1.0)) + (((((-0.00889388175652) * __k_3_h) - (0.00889388175652 * $(h))) + 0.00889388175652) * exp(((-0.0555555555556) * $(V)) - (0.0555555555556 * __k_3_V))))) / $(ms);\n\
+double __k_4_n = (DT * ((((-0.126419797902) * (__k_3_n + $(n))) * exp(((-0.025) * $(V)) - (0.025 * __k_3_V))) + ((((((-0.032) * $(V)) - (0.032 * __k_3_V)) - 1.6) * (((- __k_3_n) - $(n)) + 1.0)) / ((4.53999297625e-05 * exp(((-0.2) * $(V)) - (0.2 * __k_3_V))) - 1.0)))) / $(ms);\n\
+double __k_4_m = (DT * ((((- (__k_3_m + $(m))) * (((0.28 * $(V)) + (0.28 * __k_3_V)) + 7.0)) / ((148.413159103 * exp((0.2 * $(V)) + (0.2 * __k_3_V))) - 1.0)) + ((((((-0.32) * $(V)) - (0.32 * __k_3_V)) - 16.64) * (((- __k_3_m) - $(m)) + 1.0)) / ((2.26032940698e-06 * exp(((-0.25) * $(V)) - (0.25 * __k_3_V))) - 1.0)))) / $(ms);\n\
+double __k_4_V = (DT * ((($(Isyn) + (($(gK) * (pow(__k_3_n + $(n), 4.0))) * (($(EK) - $(V)) - __k_3_V))) + ((($(gNa) * (__k_3_h + $(h))) * (pow(__k_3_m + $(m), 3.0))) * (($(ENa) - $(V)) - __k_3_V))) + ($(gl) * (($(El) - $(V)) - __k_3_V)))) / ($(C) * $(ms));\n\
+double _h = ((((0.166666666666667 * __k_1_h) + (0.333333333333333 * __k_2_h)) + (0.333333333333333 * __k_3_h)) + (0.166666666666667 * __k_4_h)) + $(h);\n\
+double _n = ((((0.166666666666667 * __k_1_n) + (0.333333333333333 * __k_2_n)) + (0.333333333333333 * __k_3_n)) + (0.166666666666667 * __k_4_n)) + $(n);\n\
+double _m = ((((0.166666666666667 * __k_1_m) + (0.333333333333333 * __k_2_m)) + (0.333333333333333 * __k_3_m)) + (0.166666666666667 * __k_4_m)) + $(m);\n\
+double _V = ((($(V) + (0.166666666666667 * __k_1_V)) + (0.333333333333333 * __k_2_V)) + (0.333333333333333 * __k_3_V)) + (0.166666666666667 * __k_4_V);\n\
+$(h) = _h;\n\
+$(n) = _n;\n\
+$(m) = _m;\n\
+$(V) = _V;");
+  // step 4: add thresholder code
+  n.thresholdConditionCode= tS("$(V) > 0");
+  // step 5: add resetter code
+  n.resetCode= tS("");
+  // step 6: add support code
+  n.supportCode= tS("\n\
+\n\
+\n\
+\n\
+\n\
+\n\
+\n\
+\n\
+");
+  nModels.push_back(n);
+
+\endcode
+
 \section sect_explinput Explicit current input to neurons (will be removed in future versions)
 
 The user can decide whether a neuron group receives external input current or not 
