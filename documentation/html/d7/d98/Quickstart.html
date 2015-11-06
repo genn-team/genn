@@ -44,7 +44,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">2.1</span>
+   &#160;<span id="projectnumber">2.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -162,7 +162,7 @@ Defining a New Model in GeNN</h1>
 </div><!-- fragment --> <dl class="section note"><dt>Note</dt><dd>All provided examples and pre-defined model elements in GeNN work with units of mV, ms, nF and muS. However, the choice of units is entirely left to the user if custom model elements are used.</dd></dl>
 <p>b) The GeNN files <code><a class="el" href="../../dc/de1/modelSpec_8h.html" title="Header file that contains the class (struct) definition of neuronModel for defining a neuron model an...">modelSpec.h</a></code> and <code><a class="el" href="../../d7/dfd/modelSpec_8cc.html">modelSpec.cc</a></code> need to be included, </p><div class="fragment"><div class="line"><span class="preprocessor">#include &quot;<a class="code" href="../../dc/de1/modelSpec_8h.html">modelSpec.h</a>&quot;</span></div>
 <div class="line"><span class="preprocessor">#include &quot;<a class="code" href="../../d7/dfd/modelSpec_8cc.html">modelSpec.cc</a>&quot;</span></div>
-</div><!-- fragment --><p> c) The values for initial variables and parameters for neuron and synapse populations need to be defined, e.g. </p><div class="fragment"><div class="line"><span class="keywordtype">float</span> <a class="code" href="../../de/d16/HHVclampGA__project_2model_2MBody1_8cc.html#a4787a6c7bbbd701fe139d33765fa86a0">myPOI_p</a>[4]= {</div>
+</div><!-- fragment --><p> c) The values for initial variables and parameters for neuron and synapse populations need to be defined, e.g. </p><div class="fragment"><div class="line"><span class="keywordtype">float</span> <a class="code" href="../../d2/d9f/featureTests_2supportCode_2MBody__userdef_8cc.html#a4787a6c7bbbd701fe139d33765fa86a0">myPOI_p</a>[4]= {</div>
 <div class="line">  0.1,        <span class="comment">// 0 - firing rate</span></div>
 <div class="line">  2.5,        <span class="comment">// 1 - refractory period</span></div>
 <div class="line">  20.0,       <span class="comment">// 2 - Vspike</span></div>
@@ -193,7 +193,7 @@ Defining a New Model in GeNN</h1>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Fri Jun 12 2015 23:25:40 for GeNN by
+    <li class="footer">Generated on Fri Nov 6 2015 22:13:01 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
   </ul>

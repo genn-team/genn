@@ -2,9 +2,9 @@ var searchData=
 [
   ['generate_5frun_2ecc',['generate_run.cc',['../df/d1c/OneComp__project_2generate__run_8cc.html',1,'']]],
   ['ob',['OB',['../d6/d8a/CodeHelper_8cc.html#af4ed05e3e248b23010b4104717519160',1,'CodeHelper.cc']]],
-  ['off0',['off0',['../d0/dba/classpwSTDP.html#af27cb5a57ee26d9b420e7d1a56777623',1,'pwSTDP::off0()'],['../dd/d4e/classpwSTDP__userdef.html#a95274026847738539920b7a1a73d66e6',1,'pwSTDP_userdef::off0()']]],
-  ['off1',['off1',['../d0/dba/classpwSTDP.html#a96e1441a99827fc92da147b01c6c7e74',1,'pwSTDP::off1()'],['../dd/d4e/classpwSTDP__userdef.html#a11649f2718dcbb92220e586004612c6e',1,'pwSTDP_userdef::off1()']]],
-  ['off2',['off2',['../d0/dba/classpwSTDP.html#aa98862f3f34767a0d4b69a4e2cc9b7fe',1,'pwSTDP::off2()'],['../dd/d4e/classpwSTDP__userdef.html#a789ad895f96a8161810297d094870eca',1,'pwSTDP_userdef::off2()']]],
+  ['off0',['off0',['../dd/d4e/classpwSTDP__userdef.html#a95274026847738539920b7a1a73d66e6',1,'pwSTDP_userdef::off0()'],['../d0/dba/classpwSTDP.html#af27cb5a57ee26d9b420e7d1a56777623',1,'pwSTDP::off0()'],['../dd/d4e/classpwSTDP__userdef.html#a95274026847738539920b7a1a73d66e6',1,'pwSTDP_userdef::off0()']]],
+  ['off1',['off1',['../dd/d4e/classpwSTDP__userdef.html#a11649f2718dcbb92220e586004612c6e',1,'pwSTDP_userdef::off1()'],['../d0/dba/classpwSTDP.html#a96e1441a99827fc92da147b01c6c7e74',1,'pwSTDP::off1()'],['../dd/d4e/classpwSTDP__userdef.html#a11649f2718dcbb92220e586004612c6e',1,'pwSTDP_userdef::off1()']]],
+  ['off2',['off2',['../dd/d4e/classpwSTDP__userdef.html#a789ad895f96a8161810297d094870eca',1,'pwSTDP_userdef::off2()'],['../d0/dba/classpwSTDP.html#aa98862f3f34767a0d4b69a4e2cc9b7fe',1,'pwSTDP::off2()'],['../dd/d4e/classpwSTDP__userdef.html#a789ad895f96a8161810297d094870eca',1,'pwSTDP_userdef::off2()']]],
   ['offset',['offset',['../d1/d16/classclassol.html#a4c91e54037a58e0b286f10a986d46d9c',1,'classol']]],
   ['onecomp_2ecc',['OneComp.cc',['../db/d47/OneComp_8cc.html',1,'']]],
   ['onecomp_5fmodel_2ecc',['OneComp_model.cc',['../da/de9/OneComp__model_8cc.html',1,'']]],

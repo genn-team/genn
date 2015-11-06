@@ -14,6 +14,7 @@ var UserManual =
       [ "IZHIKEVICH_V (Izhikevich neurons with variable parameters)", "de/ded/sectNeuronModels.html#sect25", null ],
       [ "SPIKESOURCE (empty neuron which allows setting spikes from external sources)", "de/ded/sectNeuronModels.html#sect26", null ],
       [ "Defining your own neuron type", "de/ded/sectNeuronModels.html#sect_own", null ],
+      [ "Defining the integration method", "de/ded/sectNeuronModels.html#sect_integration", null ],
       [ "Explicit current input to neurons (will be removed in future versions)", "de/ded/sectNeuronModels.html#sect_explinput", null ]
     ] ],
     [ "Synapse models", "d5/d24/sectSynapseModels.html", [

@@ -8,6 +8,7 @@ var hierarchy =
       [ "expDecayDp", "da/d0d/classexpDecayDp.html", null ],
       [ "pwSTDP", "d0/dba/classpwSTDP.html", null ],
       [ "pwSTDP_userdef", "dd/d4e/classpwSTDP__userdef.html", null ],
+      [ "pwSTDP_userdef", "dd/d4e/classpwSTDP__userdef.html", null ],
       [ "rulkovdp", "d6/d9e/classrulkovdp.html", null ]
     ] ],
     [ "errTupel", "d4/da7/structerrTupel.html", null ],

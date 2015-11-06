@@ -44,7 +44,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">2.1</span>
+   &#160;<span id="projectnumber">2.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -213,7 +213,7 @@ $(document).ready(function(){initNavTree('d4/da1/helper_8h_source.html','../../'
 <div class="line"><a name="l00090"></a><span class="lineno">   90</span>&#160;</div>
 <div class="line"><a name="l00091"></a><span class="lineno"><a class="line" href="../../d4/da1/helper_8h.html#a433eba047747b10ad3093a9abd01ed3e">   91</a></span>&#160;<span class="keywordtype">void</span> <a class="code" href="../../d4/da1/helper_8h.html#a433eba047747b10ad3093a9abd01ed3e">var_init_fullrange</a>()</div>
 <div class="line"><a name="l00092"></a><span class="lineno">   92</span>&#160;{</div>
-<div class="line"><a name="l00093"></a><span class="lineno">   93</span>&#160;   <span class="keywordflow">for</span> (<span class="keywordtype">int</span> n= 0; n &lt; <a class="code" href="../../df/d46/HHVClampParameters_8h.html#a4c7c71797767db112d8dfa2c437a6572">NPOP</a>; n++) {</div>
+<div class="line"><a name="l00093"></a><span class="lineno">   93</span>&#160;   <span class="keywordflow">for</span> (<span class="keywordtype">int</span> n= 0; n &lt; NPOP; n++) {</div>
 <div class="line"><a name="l00094"></a><span class="lineno">   94</span>&#160;   <a class="code" href="../../d4/da1/helper_8h.html#ab7bc5f8142aa555995e140eb15b63a83">single_var_init_fullrange</a>(n);</div>
 <div class="line"><a name="l00095"></a><span class="lineno">   95</span>&#160;  }</div>
 <div class="line"><a name="l00096"></a><span class="lineno">   96</span>&#160;  copyStateToDevice();  </div>
@@ -222,7 +222,7 @@ $(document).ready(function(){initNavTree('d4/da1/helper_8h_source.html','../../'
 <div class="line"><a name="l00099"></a><span class="lineno"><a class="line" href="../../d4/da1/helper_8h.html#a7047db412e8087f01d49ba269751b189">   99</a></span>&#160;<span class="keywordtype">void</span> <a class="code" href="../../d4/da1/helper_8h.html#a7047db412e8087f01d49ba269751b189">var_reinit</a>(<span class="keywordtype">double</span> fac) </div>
 <div class="line"><a name="l00100"></a><span class="lineno">  100</span>&#160;{</div>
 <div class="line"><a name="l00101"></a><span class="lineno">  101</span>&#160;  <span class="comment">// add noise to the parameters</span></div>
-<div class="line"><a name="l00102"></a><span class="lineno">  102</span>&#160;  <span class="keywordflow">for</span> (<span class="keywordtype">int</span> n= 0; n &lt; <a class="code" href="../../df/d46/HHVClampParameters_8h.html#a4c7c71797767db112d8dfa2c437a6572">NPOP</a>; n++) {</div>
+<div class="line"><a name="l00102"></a><span class="lineno">  102</span>&#160;  <span class="keywordflow">for</span> (<span class="keywordtype">int</span> n= 0; n &lt; NPOP; n++) {</div>
 <div class="line"><a name="l00103"></a><span class="lineno">  103</span>&#160;    <a class="code" href="../../d4/da1/helper_8h.html#a38341b7a42bcfb44f7ac5b43a1a6dd95">single_var_reinit</a>(n, fac);</div>
 <div class="line"><a name="l00104"></a><span class="lineno">  104</span>&#160;  }</div>
 <div class="line"><a name="l00105"></a><span class="lineno">  105</span>&#160;  copyStateToDevice();  </div>
@@ -230,7 +230,7 @@ $(document).ready(function(){initNavTree('d4/da1/helper_8h_source.html','../../'
 <div class="line"><a name="l00107"></a><span class="lineno">  107</span>&#160;</div>
 <div class="line"><a name="l00108"></a><span class="lineno"><a class="line" href="../../d4/da1/helper_8h.html#a7c3b8a7c78ab272544a49c8c767f8874">  108</a></span>&#160;<span class="keywordtype">void</span> <a class="code" href="../../d4/da1/helper_8h.html#a7c3b8a7c78ab272544a49c8c767f8874">truevar_init</a>()</div>
 <div class="line"><a name="l00109"></a><span class="lineno">  109</span>&#160;{</div>
-<div class="line"><a name="l00110"></a><span class="lineno">  110</span>&#160;  <span class="keywordflow">for</span> (<span class="keywordtype">int</span> n= 0; n &lt; <a class="code" href="../../df/d46/HHVClampParameters_8h.html#a4c7c71797767db112d8dfa2c437a6572">NPOP</a>; n++) {  </div>
+<div class="line"><a name="l00110"></a><span class="lineno">  110</span>&#160;  <span class="keywordflow">for</span> (<span class="keywordtype">int</span> n= 0; n &lt; NPOP; n++) {  </div>
 <div class="line"><a name="l00111"></a><span class="lineno">  111</span>&#160;    VHH[n]= <a class="code" href="../../d9/dba/HHVClamp_8cc.html#ab505899fc652c98a2fc3dd67d89ef8cd">myHH_ini</a>[0];</div>
 <div class="line"><a name="l00112"></a><span class="lineno">  112</span>&#160;    mHH[n]= <a class="code" href="../../d9/dba/HHVClamp_8cc.html#ab505899fc652c98a2fc3dd67d89ef8cd">myHH_ini</a>[1];</div>
 <div class="line"><a name="l00113"></a><span class="lineno">  113</span>&#160;    hHH[n]= <a class="code" href="../../d9/dba/HHVClamp_8cc.html#ab505899fc652c98a2fc3dd67d89ef8cd">myHH_ini</a>[2];</div>
@@ -376,7 +376,6 @@ $(document).ready(function(){initNavTree('d4/da1/helper_8h_source.html','../../'
 <div class="ttc" id="helper_8h_html_a7e779242180c99f0614e8403fb9f4b7f"><div class="ttname"><a href="../../d4/da1/helper_8h.html#a7e779242180c99f0614e8403fb9f4b7f">hexp</a></div><div class="ttdeci">double hexp</div><div class="ttdef"><b>Definition:</b> helper.h:123</div></div>
 <div class="ttc" id="helper_8h_html_a5964dc86444b200692c39a57171c27fd"><div class="ttname"><a href="../../d4/da1/helper_8h.html#a5964dc86444b200692c39a57171c27fd">initI</a></div><div class="ttdeci">void initI(inputSpec &amp;I)</div><div class="ttdef"><b>Definition:</b> helper.h:183</div></div>
 <div class="ttc" id="helper_8h_html_a86cdbfaba3a6dacc0f0e69040a642f85"><div class="ttname"><a href="../../d4/da1/helper_8h.html#a86cdbfaba3a6dacc0f0e69040a642f85">sigC</a></div><div class="ttdeci">double sigC</div><div class="ttdef"><b>Definition:</b> helper.h:30</div></div>
-<div class="ttc" id="HHVClampParameters_8h_html_a4c7c71797767db112d8dfa2c437a6572"><div class="ttname"><a href="../../df/d46/HHVClampParameters_8h.html#a4c7c71797767db112d8dfa2c437a6572">NPOP</a></div><div class="ttdeci">#define NPOP</div><div class="ttdef"><b>Definition:</b> HHVClampParameters.h:1</div></div>
 <div class="ttc" id="helper_8h_html_a83cf90739c16b19704b98c436a5b798d"><div class="ttname"><a href="../../d4/da1/helper_8h.html#a83cf90739c16b19704b98c436a5b798d">Vexp</a></div><div class="ttdeci">double Vexp</div><div class="ttdef"><b>Definition:</b> helper.h:121</div></div>
 <div class="ttc" id="helper_8h_html_abd75410dc2c8d9242a4136f864ddb9ea"><div class="ttname"><a href="../../d4/da1/helper_8h.html#abd75410dc2c8d9242a4136f864ddb9ea">gKexp</a></div><div class="ttdeci">double gKexp</div><div class="ttdef"><b>Definition:</b> helper.h:127</div></div>
 <div class="ttc" id="helper_8h_html_a662b98908d7188369b9160f4e2dc90c2"><div class="ttname"><a href="../../d4/da1/helper_8h.html#a662b98908d7188369b9160f4e2dc90c2">initexpHH</a></div><div class="ttdeci">void initexpHH()</div><div class="ttdef"><b>Definition:</b> helper.h:133</div></div>
@@ -391,7 +390,7 @@ $(document).ready(function(){initNavTree('d4/da1/helper_8h_source.html','../../'
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dir_66fc3ae5585a02e310a487b6a12e9e11.html">userproject</a></li><li class="navelem"><a class="el" href="../../dir_a5184933c6533a0aa5b14fed7d933ef3.html">HHVclampGA_project</a></li><li class="navelem"><a class="el" href="../../dir_ebee3d0120a2ad2f40f581ebbc631f99.html">model</a></li><li class="navelem"><a class="el" href="../../d4/da1/helper_8h.html">helper.h</a></li>
-    <li class="footer">Generated on Fri Jun 12 2015 23:25:35 for GeNN by
+    <li class="footer">Generated on Fri Nov 6 2015 22:12:56 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
   </ul>

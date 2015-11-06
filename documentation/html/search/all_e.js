@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['n',['N',['../de/dad/structinputSpec.html#a25c637510c26633e00ac5f7704dce559',1,'inputSpec::N()'],['../d5/d45/classrandomGauss.html#a69a70b10bc65de93f60bfb1c02a16daf',1,'randomGauss::n()'],['../d8/d3b/classrandomGen.html#a38b3e42d3a1b00f069a88f0dcceed43d',1,'randomGen::n()'],['../db/d09/classstdRG.html#ab2b84f84f234df06a63aec2e69351fdd',1,'stdRG::n()']]],
+  ['n',['n',['../d5/d45/classrandomGauss.html#a69a70b10bc65de93f60bfb1c02a16daf',1,'randomGauss::n()'],['../d8/d3b/classrandomGen.html#a38b3e42d3a1b00f069a88f0dcceed43d',1,'randomGen::n()'],['../db/d09/classstdRG.html#ab2b84f84f234df06a63aec2e69351fdd',1,'stdRG::n()'],['../de/dad/structinputSpec.html#a25c637510c26633e00ac5f7704dce559',1,'inputSpec::N()']]],
   ['n_5ffolding',['N_FOLDING',['../dc/d02/experiment_8h.html#a750691d24dac50b3440d30b0851a6b5e',1,'experiment.h']]],
   ['name',['name',['../dc/de5/classNNmodel.html#a7d81556b7b15a4a625b23f965944dae9',1,'NNmodel::name()'],['../d9/d00/structParameter.html#a5edfa174bd9b40f80819b0390a030498',1,'Parameter::name()']]],
   ['name_5fsubstitutions',['name_substitutions',['../d9/d9e/stringutils_8h.html#af7abf2394f1c518b3df05e059f321766',1,'stringutils.h']]],
@@ -40,7 +40,6 @@ var searchData=
   ['no_5fdelay',['NO_DELAY',['../dc/de1/modelSpec_8h.html#a291aa33d0e485ee09a6881cf8056e13c',1,'modelSpec.h']]],
   ['noinp',['NOINP',['../dc/de1/modelSpec_8h.html#ac90609aa5b6133759d5f64dfa8dbcb34',1,'modelSpec.h']]],
   ['nolearning',['NOLEARNING',['../dc/de1/modelSpec_8h.html#a2457f51cd14920537c68e7b3f9f53c4c',1,'modelSpec.h']]],
-  ['npop',['NPOP',['../df/d46/HHVClampParameters_8h.html#a4c7c71797767db112d8dfa2c437a6572',1,'HHVClampParameters.h']]],
   ['nsynapse',['NSYNAPSE',['../dc/de1/modelSpec_8h.html#a1110b98e1962bdb6bcc86b647b1431d4',1,'modelSpec.h']]],
   ['num_5fclasses',['NUM_CLASSES',['../d7/d22/Model__Schmuker__2014__classifier_8cc.html#a7d5551659993636ed7aa362f9a0b5b30',1,'Model_Schmuker_2014_classifier.cc']]],
   ['num_5ffeatures',['NUM_FEATURES',['../d7/d22/Model__Schmuker__2014__classifier_8cc.html#ac2bca8adbc07c70e5c38d1d34a5568bb',1,'Model_Schmuker_2014_classifier.cc']]],

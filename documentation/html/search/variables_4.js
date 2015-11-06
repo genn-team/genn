@@ -14,5 +14,6 @@ var searchData=
   ['dpnames',['dpNames',['../d3/d64/structneuronModel.html#a051c0c704ce383c43cdf446accbeb201',1,'neuronModel::dpNames()'],['../d8/dbb/structpostSynModel.html#a1deddbf488ffa49ec90f084791d9ebe3',1,'postSynModel::dpNames()'],['../dd/db7/classweightUpdateModel.html#a508c032f1c92f8d3da42dfa9209f0eb8',1,'weightUpdateModel::dpNames()']]],
   ['dps',['dps',['../d3/d64/structneuronModel.html#a9b9b9e5e66702eb114b268bbd08d7c34',1,'neuronModel::dps()'],['../d8/dbb/structpostSynModel.html#a5c0093ffd554c603c21cce0c1b440373',1,'postSynModel::dps()'],['../dd/db7/classweightUpdateModel.html#a7f23e71d08ca83e3f5941105b90814d5',1,'weightUpdateModel::dps()']]],
   ['dpsp',['dpsp',['../dc/de5/classNNmodel.html#a07fecb4ea288e69301af55e93297660c',1,'NNmodel']]],
-  ['dsp_5fw',['dsp_w',['../dc/de5/classNNmodel.html#a285430d63d02f6bc1b339c35c41dda67',1,'NNmodel']]]
+  ['dsp_5fw',['dsp_w',['../dc/de5/classNNmodel.html#a285430d63d02f6bc1b339c35c41dda67',1,'NNmodel']]],
+  ['dv',['dv',['../df/d33/testMixedArray_8cc.html#a4cc5cb8db2dff063c687279beb706ab4',1,'testMixedArray.cc']]]
 ];

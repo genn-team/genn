@@ -44,7 +44,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">2.1</span>
+   &#160;<span id="projectnumber">2.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -262,6 +262,113 @@ Defining your own neuron type</h1>
 </div><!-- fragment --><p> it can be used in network descriptions by referring to its cardinal number in the nModels vector. I.e., if the model is added as the 4th entry, it would be model "3" (counting starts at 0 in usual C convention). The information of the cardinal number of a new model can be obtained by referring to <code>nModels.size()</code> right before appending the new model, i.e. a typical use case would be. </p><div class="fragment"><div class="line"><span class="keywordtype">int</span> myModel= <a class="code" href="../../d5/d60/utils_8h.html#a2bd39d11c2cd6cec9bf9b81c183b6cd4">nModels</a>.size();</div>
 <div class="line"><a class="code" href="../../d5/d60/utils_8h.html#a2bd39d11c2cd6cec9bf9b81c183b6cd4">nModels</a>.push_back(model);</div>
 </div><!-- fragment --><p>. Then one can use the model as </p><div class="fragment"><div class="line">networkModel.addNeuronPopulation(..., myModel, ...);</div>
+</div><!-- fragment --><h1><a class="anchor" id="sect_integration"></a>
+Defining the integration method</h1>
+<p>Any type of numerical integration method can be used, given that the user provides how it is done in the code snippets. The example above demonstrate how to use the forward Euler method. Implicit or higher-order methods can be tricky to be expressed manually, and the resulting code may look a bit unwieldy. A convenient way would be to use the brian2genn interface to automatically create the desired code. For example, the code for 4th order Runge-Kutta integration can be easily created by defining the model in a simple Brian 2 script:</p>
+<div class="fragment"><div class="line">from brian2 <span class="keyword">import</span> *</div>
+<div class="line"><span class="keyword">import</span> brian2genn</div>
+<div class="line"></div>
+<div class="line">set_device(<span class="stringliteral">&#39;genn&#39;</span>)</div>
+<div class="line"></div>
+<div class="line">N = 1</div>
+<div class="line">Isyn = 1</div>
+<div class="line">gNa= 7.15</div>
+<div class="line">ENa= 50</div>
+<div class="line">gK= 1.43</div>
+<div class="line">EK= -95</div>
+<div class="line">gl= 0.02672</div>
+<div class="line">El= -63.563</div>
+<div class="line">C= 0.143</div>
+<div class="line"></div>
+<div class="line">eqs = &#39;&#39;&#39;</div>
+<div class="line">dV/dt= (m**3*h*gNa*(ENa-V)+n**4*gK*(EK-V)+gl*(El-V)+Isyn)/C/ms :1</div>
+<div class="line">dm/dt= (0.32*(-52-V)/(exp((-52-V)/4)-1)*(1-m)-0.28*(V+25)/(exp((V+25)/5)-1)*m)/ms : 1</div>
+<div class="line">dh/dt= (0.128*exp((-48-V)/18)*(1-h)-4.0/(exp((-25-V)/5)+1)*h)/ms :1</div>
+<div class="line">dn/dt= (0.032*(-50-V)/(exp((-50-V)/5)-1)*(1-n)-0.5*exp((-55-V)/40)*n)/ms : 1</div>
+<div class="line">&#39;&#39;&#39;</div>
+<div class="line"></div>
+<div class="line">defaultclock.dt= 0.02*ms</div>
+<div class="line"></div>
+<div class="line">G = NeuronGroup(N, eqs, threshold=&#39;V&gt; 0&#39;, reset=&#39;&#39;, method=&#39;rk4&#39;)</div>
+<div class="line">print G</div>
+<div class="line"></div>
+<div class="line">G.V= -60</div>
+<div class="line">M= StateMonitor(G,True, record=True)</div>
+<div class="line"></div>
+<div class="line">run(500*ms)</div>
+<div class="line"></div>
+<div class="line">device.build(directory=&#39;simple_example_HH&#39;,</div>
+<div class="line">             compile=True,</div>
+<div class="line">             run=True,</div>
+<div class="line">             use_GPU=True)</div>
+</div><!-- fragment --><p>brian2genn interface created the following GeNN code for this simulation:</p>
+<div class="fragment"><div class="line"><a class="code" href="../../d3/d64/structneuronModel.html">neuronModel</a> n;</div>
+<div class="line"></div>
+<div class="line">  <span class="comment">// setp 1: add variables</span></div>
+<div class="line">  n.<a class="code" href="../../d3/d64/structneuronModel.html#a9a9156ffb643572fd67f6e585ef79ad0">varNames</a>.clear();</div>
+<div class="line">  n.<a class="code" href="../../d3/d64/structneuronModel.html#a86788cb29131da0a26ce79693a076352">varTypes</a>.clear();</div>
+<div class="line">  n.<a class="code" href="../../d3/d64/structneuronModel.html#a9a9156ffb643572fd67f6e585ef79ad0">varNames</a>.push_back(<a class="code" href="../../dd/d28/toString_8h.html#a59bb28cdc0693d03c5e7caee444be7db">tS</a>(<span class="stringliteral">&quot;i&quot;</span>));</div>
+<div class="line">  n.<a class="code" href="../../d3/d64/structneuronModel.html#a9a9156ffb643572fd67f6e585ef79ad0">varNames</a>.push_back(<a class="code" href="../../dd/d28/toString_8h.html#a59bb28cdc0693d03c5e7caee444be7db">tS</a>(<span class="stringliteral">&quot;h&quot;</span>));</div>
+<div class="line">  n.<a class="code" href="../../d3/d64/structneuronModel.html#a9a9156ffb643572fd67f6e585ef79ad0">varNames</a>.push_back(<a class="code" href="../../dd/d28/toString_8h.html#a59bb28cdc0693d03c5e7caee444be7db">tS</a>(<span class="stringliteral">&quot;m&quot;</span>));</div>
+<div class="line">  n.<a class="code" href="../../d3/d64/structneuronModel.html#a9a9156ffb643572fd67f6e585ef79ad0">varNames</a>.push_back(<a class="code" href="../../dd/d28/toString_8h.html#a59bb28cdc0693d03c5e7caee444be7db">tS</a>(<span class="stringliteral">&quot;V&quot;</span>));</div>
+<div class="line">  n.<a class="code" href="../../d3/d64/structneuronModel.html#a9a9156ffb643572fd67f6e585ef79ad0">varNames</a>.push_back(<a class="code" href="../../dd/d28/toString_8h.html#a59bb28cdc0693d03c5e7caee444be7db">tS</a>(<span class="stringliteral">&quot;n&quot;</span>));</div>
+<div class="line">  n.<a class="code" href="../../d3/d64/structneuronModel.html#a86788cb29131da0a26ce79693a076352">varTypes</a>.push_back(<a class="code" href="../../dd/d28/toString_8h.html#a59bb28cdc0693d03c5e7caee444be7db">tS</a>(<span class="stringliteral">&quot;int32_t&quot;</span>));</div>
+<div class="line">  n.<a class="code" href="../../d3/d64/structneuronModel.html#a86788cb29131da0a26ce79693a076352">varTypes</a>.push_back(<a class="code" href="../../dd/d28/toString_8h.html#a59bb28cdc0693d03c5e7caee444be7db">tS</a>(<span class="stringliteral">&quot;double&quot;</span>));</div>
+<div class="line">  n.<a class="code" href="../../d3/d64/structneuronModel.html#a86788cb29131da0a26ce79693a076352">varTypes</a>.push_back(<a class="code" href="../../dd/d28/toString_8h.html#a59bb28cdc0693d03c5e7caee444be7db">tS</a>(<span class="stringliteral">&quot;double&quot;</span>));</div>
+<div class="line">  n.<a class="code" href="../../d3/d64/structneuronModel.html#a86788cb29131da0a26ce79693a076352">varTypes</a>.push_back(<a class="code" href="../../dd/d28/toString_8h.html#a59bb28cdc0693d03c5e7caee444be7db">tS</a>(<span class="stringliteral">&quot;double&quot;</span>));</div>
+<div class="line">  n.<a class="code" href="../../d3/d64/structneuronModel.html#a86788cb29131da0a26ce79693a076352">varTypes</a>.push_back(<a class="code" href="../../dd/d28/toString_8h.html#a59bb28cdc0693d03c5e7caee444be7db">tS</a>(<span class="stringliteral">&quot;double&quot;</span>));</div>
+<div class="line">  <span class="comment">// step2: add parameters</span></div>
+<div class="line">  n.<a class="code" href="../../d3/d64/structneuronModel.html#a4a5bf1f757a72b6edc28ad26ed61b2be">pNames</a>.clear(); </div>
+<div class="line">  n.<a class="code" href="../../d3/d64/structneuronModel.html#a4a5bf1f757a72b6edc28ad26ed61b2be">pNames</a>.push_back(<a class="code" href="../../dd/d28/toString_8h.html#a59bb28cdc0693d03c5e7caee444be7db">tS</a>(<span class="stringliteral">&quot;El&quot;</span>));</div>
+<div class="line">  n.<a class="code" href="../../d3/d64/structneuronModel.html#a4a5bf1f757a72b6edc28ad26ed61b2be">pNames</a>.push_back(<a class="code" href="../../dd/d28/toString_8h.html#a59bb28cdc0693d03c5e7caee444be7db">tS</a>(<span class="stringliteral">&quot;C&quot;</span>));</div>
+<div class="line">  n.<a class="code" href="../../d3/d64/structneuronModel.html#a4a5bf1f757a72b6edc28ad26ed61b2be">pNames</a>.push_back(<a class="code" href="../../dd/d28/toString_8h.html#a59bb28cdc0693d03c5e7caee444be7db">tS</a>(<span class="stringliteral">&quot;gl&quot;</span>));</div>
+<div class="line">  n.<a class="code" href="../../d3/d64/structneuronModel.html#a4a5bf1f757a72b6edc28ad26ed61b2be">pNames</a>.push_back(<a class="code" href="../../dd/d28/toString_8h.html#a59bb28cdc0693d03c5e7caee444be7db">tS</a>(<span class="stringliteral">&quot;ms&quot;</span>));</div>
+<div class="line">  n.<a class="code" href="../../d3/d64/structneuronModel.html#a4a5bf1f757a72b6edc28ad26ed61b2be">pNames</a>.push_back(<a class="code" href="../../dd/d28/toString_8h.html#a59bb28cdc0693d03c5e7caee444be7db">tS</a>(<span class="stringliteral">&quot;EK&quot;</span>));</div>
+<div class="line">  n.<a class="code" href="../../d3/d64/structneuronModel.html#a4a5bf1f757a72b6edc28ad26ed61b2be">pNames</a>.push_back(<a class="code" href="../../dd/d28/toString_8h.html#a59bb28cdc0693d03c5e7caee444be7db">tS</a>(<span class="stringliteral">&quot;ENa&quot;</span>));</div>
+<div class="line">  n.<a class="code" href="../../d3/d64/structneuronModel.html#a4a5bf1f757a72b6edc28ad26ed61b2be">pNames</a>.push_back(<a class="code" href="../../dd/d28/toString_8h.html#a59bb28cdc0693d03c5e7caee444be7db">tS</a>(<span class="stringliteral">&quot;Isyn&quot;</span>));</div>
+<div class="line">  n.<a class="code" href="../../d3/d64/structneuronModel.html#a4a5bf1f757a72b6edc28ad26ed61b2be">pNames</a>.push_back(<a class="code" href="../../dd/d28/toString_8h.html#a59bb28cdc0693d03c5e7caee444be7db">tS</a>(<span class="stringliteral">&quot;N&quot;</span>));</div>
+<div class="line">  n.<a class="code" href="../../d3/d64/structneuronModel.html#a4a5bf1f757a72b6edc28ad26ed61b2be">pNames</a>.push_back(<a class="code" href="../../dd/d28/toString_8h.html#a59bb28cdc0693d03c5e7caee444be7db">tS</a>(<span class="stringliteral">&quot;gNa&quot;</span>));</div>
+<div class="line">  n.<a class="code" href="../../d3/d64/structneuronModel.html#a4a5bf1f757a72b6edc28ad26ed61b2be">pNames</a>.push_back(<a class="code" href="../../dd/d28/toString_8h.html#a59bb28cdc0693d03c5e7caee444be7db">tS</a>(<span class="stringliteral">&quot;gK&quot;</span>));</div>
+<div class="line">  <span class="comment">// step 3: add simcode</span></div>
+<div class="line">  n.<a class="code" href="../../d3/d64/structneuronModel.html#a9e6536fd15b69fa24b708e41f97df899">simCode</a>= <a class="code" href="../../dd/d28/toString_8h.html#a59bb28cdc0693d03c5e7caee444be7db">tS</a>(<span class="stringliteral">&quot;double __k_1_h = (DT * ((((-4.0) * $(h)) / ((0.00673794699909 * exp((-0.2) * $(V))) + 1.0)) + ((((-0.00889388175652) * $(h)) + 0.00889388175652) * exp((-0.0555555555556) * $(V))))) / $(ms);\n\</span></div>
+<div class="line"><span class="stringliteral">double __k_1_n = (DT * ((((-0.126419797902) * $(n)) * exp((-0.025) * $(V))) + (((((-0.032) * $(V)) - 1.6) * ((- $(n)) + 1.0)) / ((4.53999297625e-05 * exp((-0.2) * $(V))) - 1.0)))) / $(ms);\n\</span></div>
+<div class="line"><span class="stringliteral">double __k_1_m = (DT * ((((- $(m)) * ((0.28 * $(V)) + 7.0)) / ((148.413159103 * exp(0.2 * $(V))) - 1.0)) + (((((-0.32) * $(V)) - 16.64) * ((- $(m)) + 1.0)) / ((2.26032940698e-06 * exp((-0.25) * $(V))) - 1.0)))) / $(ms);\n\</span></div>
+<div class="line"><span class="stringliteral">double __k_1_V = (DT * ((($(Isyn) + (($(gK) * (pow($(n), 4.0))) * ($(EK) - $(V)))) + ((($(gNa) * $(h)) * (pow($(m), 3.0))) * ($(ENa) - $(V)))) + ($(gl) * ($(El) - $(V))))) / ($(C) * $(ms));\n\</span></div>
+<div class="line"><span class="stringliteral">double __k_2_h = (DT * ((((-4.0) * ((0.5 * __k_1_h) + $(h))) / ((0.00673794699909 * exp(((-0.2) * $(V)) - (0.1 * __k_1_V))) + 1.0)) + (((((-0.00444694087826) * __k_1_h) - (0.00889388175652 * $(h))) + 0.00889388175652) * exp(((-0.0555555555556) * $(V)) - (0.0277777777778 * __k_1_V))))) / $(ms);\n\</span></div>
+<div class="line"><span class="stringliteral">double __k_2_n = (DT * ((((-0.126419797902) * ((0.5 * __k_1_n) + $(n))) * exp(((-0.025) * $(V)) - (0.0125 * __k_1_V))) + ((((((-0.032) * $(V)) - (0.016 * __k_1_V)) - 1.6) * ((((-0.5) * __k_1_n) - $(n)) + 1.0)) / ((4.53999297625e-05 * exp(((-0.2) * $(V)) - (0.1 * __k_1_V))) - 1.0)))) / $(ms);\n\</span></div>
+<div class="line"><span class="stringliteral">double __k_2_m = (DT * ((((- ((0.5 * __k_1_m) + $(m))) * (((0.28 * $(V)) + (0.14 * __k_1_V)) + 7.0)) / ((148.413159103 * exp((0.2 * $(V)) + (0.1 * __k_1_V))) - 1.0)) + ((((((-0.32) * $(V)) - (0.16 * __k_1_V)) - 16.64) * ((((-0.5) * __k_1_m) - $(m)) + 1.0)) / ((2.26032940698e-06 * exp(((-0.25) * $(V)) - (0.125 * __k_1_V))) - 1.0)))) / $(ms);\n\</span></div>
+<div class="line"><span class="stringliteral">double __k_2_V = (DT * ((($(Isyn) + (($(gK) * (pow((0.5 * __k_1_n) + $(n), 4.0))) * (($(EK) - $(V)) - (0.5 * __k_1_V)))) + ((($(gNa) * ((0.5 * __k_1_h) + $(h))) * (pow((0.5 * __k_1_m) + $(m), 3.0))) * (($(ENa) - $(V)) - (0.5 * __k_1_V)))) + ($(gl) * (($(El) - $(V)) - (0.5 * __k_1_V))))) / ($(C) * $(ms));\n\</span></div>
+<div class="line"><span class="stringliteral">double __k_3_h = (DT * ((((-4.0) * ((0.5 * __k_2_h) + $(h))) / ((0.00673794699909 * exp(((-0.2) * $(V)) - (0.1 * __k_2_V))) + 1.0)) + (((((-0.00444694087826) * __k_2_h) - (0.00889388175652 * $(h))) + 0.00889388175652) * exp(((-0.0555555555556) * $(V)) - (0.0277777777778 * __k_2_V))))) / $(ms);\n\</span></div>
+<div class="line"><span class="stringliteral">double __k_3_n = (DT * ((((-0.126419797902) * ((0.5 * __k_2_n) + $(n))) * exp(((-0.025) * $(V)) - (0.0125 * __k_2_V))) + ((((((-0.032) * $(V)) - (0.016 * __k_2_V)) - 1.6) * ((((-0.5) * __k_2_n) - $(n)) + 1.0)) / ((4.53999297625e-05 * exp(((-0.2) * $(V)) - (0.1 * __k_2_V))) - 1.0)))) / $(ms);\n\</span></div>
+<div class="line"><span class="stringliteral">double __k_3_m = (DT * ((((- ((0.5 * __k_2_m) + $(m))) * (((0.28 * $(V)) + (0.14 * __k_2_V)) + 7.0)) / ((148.413159103 * exp((0.2 * $(V)) + (0.1 * __k_2_V))) - 1.0)) + ((((((-0.32) * $(V)) - (0.16 * __k_2_V)) - 16.64) * ((((-0.5) * __k_2_m) - $(m)) + 1.0)) / ((2.26032940698e-06 * exp(((-0.25) * $(V)) - (0.125 * __k_2_V))) - 1.0)))) / $(ms);\n\</span></div>
+<div class="line"><span class="stringliteral">double __k_3_V = (DT * ((($(Isyn) + (($(gK) * (pow((0.5 * __k_2_n) + $(n), 4.0))) * (($(EK) - $(V)) - (0.5 * __k_2_V)))) + ((($(gNa) * ((0.5 * __k_2_h) + $(h))) * (pow((0.5 * __k_2_m) + $(m), 3.0))) * (($(ENa) - $(V)) - (0.5 * __k_2_V)))) + ($(gl) * (($(El) - $(V)) - (0.5 * __k_2_V))))) / ($(C) * $(ms));\n\</span></div>
+<div class="line"><span class="stringliteral">double __k_4_h = (DT * ((((-4.0) * (__k_3_h + $(h))) / ((0.00673794699909 * exp(((-0.2) * $(V)) - (0.2 * __k_3_V))) + 1.0)) + (((((-0.00889388175652) * __k_3_h) - (0.00889388175652 * $(h))) + 0.00889388175652) * exp(((-0.0555555555556) * $(V)) - (0.0555555555556 * __k_3_V))))) / $(ms);\n\</span></div>
+<div class="line"><span class="stringliteral">double __k_4_n = (DT * ((((-0.126419797902) * (__k_3_n + $(n))) * exp(((-0.025) * $(V)) - (0.025 * __k_3_V))) + ((((((-0.032) * $(V)) - (0.032 * __k_3_V)) - 1.6) * (((- __k_3_n) - $(n)) + 1.0)) / ((4.53999297625e-05 * exp(((-0.2) * $(V)) - (0.2 * __k_3_V))) - 1.0)))) / $(ms);\n\</span></div>
+<div class="line"><span class="stringliteral">double __k_4_m = (DT * ((((- (__k_3_m + $(m))) * (((0.28 * $(V)) + (0.28 * __k_3_V)) + 7.0)) / ((148.413159103 * exp((0.2 * $(V)) + (0.2 * __k_3_V))) - 1.0)) + ((((((-0.32) * $(V)) - (0.32 * __k_3_V)) - 16.64) * (((- __k_3_m) - $(m)) + 1.0)) / ((2.26032940698e-06 * exp(((-0.25) * $(V)) - (0.25 * __k_3_V))) - 1.0)))) / $(ms);\n\</span></div>
+<div class="line"><span class="stringliteral">double __k_4_V = (DT * ((($(Isyn) + (($(gK) * (pow(__k_3_n + $(n), 4.0))) * (($(EK) - $(V)) - __k_3_V))) + ((($(gNa) * (__k_3_h + $(h))) * (pow(__k_3_m + $(m), 3.0))) * (($(ENa) - $(V)) - __k_3_V))) + ($(gl) * (($(El) - $(V)) - __k_3_V)))) / ($(C) * $(ms));\n\</span></div>
+<div class="line"><span class="stringliteral">double _h = ((((0.166666666666667 * __k_1_h) + (0.333333333333333 * __k_2_h)) + (0.333333333333333 * __k_3_h)) + (0.166666666666667 * __k_4_h)) + $(h);\n\</span></div>
+<div class="line"><span class="stringliteral">double _n = ((((0.166666666666667 * __k_1_n) + (0.333333333333333 * __k_2_n)) + (0.333333333333333 * __k_3_n)) + (0.166666666666667 * __k_4_n)) + $(n);\n\</span></div>
+<div class="line"><span class="stringliteral">double _m = ((((0.166666666666667 * __k_1_m) + (0.333333333333333 * __k_2_m)) + (0.333333333333333 * __k_3_m)) + (0.166666666666667 * __k_4_m)) + $(m);\n\</span></div>
+<div class="line"><span class="stringliteral">double _V = ((($(V) + (0.166666666666667 * __k_1_V)) + (0.333333333333333 * __k_2_V)) + (0.333333333333333 * __k_3_V)) + (0.166666666666667 * __k_4_V);\n\</span></div>
+<div class="line"><span class="stringliteral">$(h) = _h;\n\</span></div>
+<div class="line"><span class="stringliteral">$(n) = _n;\n\</span></div>
+<div class="line"><span class="stringliteral">$(m) = _m;\n\</span></div>
+<div class="line"><span class="stringliteral">$(V) = _V;&quot;</span>);</div>
+<div class="line">  <span class="comment">// step 4: add thresholder code</span></div>
+<div class="line">  n.<a class="code" href="../../d3/d64/structneuronModel.html#a9b0fae36963fb760040c3b1d22bee25c">thresholdConditionCode</a>= <a class="code" href="../../dd/d28/toString_8h.html#a59bb28cdc0693d03c5e7caee444be7db">tS</a>(<span class="stringliteral">&quot;$(V) &gt; 0&quot;</span>);</div>
+<div class="line">  <span class="comment">// step 5: add resetter code</span></div>
+<div class="line">  n.<a class="code" href="../../d3/d64/structneuronModel.html#ad97df9af00fba946865debf6cd539217">resetCode</a>= <a class="code" href="../../dd/d28/toString_8h.html#a59bb28cdc0693d03c5e7caee444be7db">tS</a>(<span class="stringliteral">&quot;&quot;</span>);</div>
+<div class="line">  <span class="comment">// step 6: add support code</span></div>
+<div class="line">  n.supportCode= <a class="code" href="../../dd/d28/toString_8h.html#a59bb28cdc0693d03c5e7caee444be7db">tS</a>(<span class="stringliteral">&quot;\n\</span></div>
+<div class="line"><span class="stringliteral">\n\</span></div>
+<div class="line"><span class="stringliteral">\n\</span></div>
+<div class="line"><span class="stringliteral">\n\</span></div>
+<div class="line"><span class="stringliteral">\n\</span></div>
+<div class="line"><span class="stringliteral">\n\</span></div>
+<div class="line"><span class="stringliteral">\n\</span></div>
+<div class="line"><span class="stringliteral">\n\</span></div>
+<div class="line"><span class="stringliteral">&quot;</span>);</div>
+<div class="line">  <a class="code" href="../../d5/d60/utils_8h.html#a2bd39d11c2cd6cec9bf9b81c183b6cd4">nModels</a>.push_back(n);</div>
 </div><!-- fragment --><h1><a class="anchor" id="sect_explinput"></a>
 Explicit current input to neurons (will be removed in future versions)</h1>
 <p>The user can decide whether a neuron group receives external input current or not in addition to the synaptic input that it receives from the network. External input to a neuron group is activated by calling <code>activateDirectInput</code> function. It receives two arguments: The first argument is the name of the neuron group to receive input current. The second parameter defines the type of input. Current options are:</p>
@@ -277,7 +384,7 @@ Explicit current input to neurons (will be removed in future versions)</h1>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dc/d05/UserManual.html">User Manual</a></li>
-    <li class="footer">Generated on Fri Jun 12 2015 23:25:40 for GeNN by
+    <li class="footer">Generated on Fri Nov 6 2015 22:13:01 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
   </ul>
