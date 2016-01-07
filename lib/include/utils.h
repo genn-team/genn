@@ -665,25 +665,25 @@ public:
     }
     
     double lim0(vector<double> pars, double dt) {
-	return (1/pars[5] + 1/pars[2]) * pars[1] / (2/pars[2]);
+	return (1/pars[4] + 1/pars[1]) * pars[0] / (2/pars[1]);
     }
     double lim1(vector<double> pars, double dt) {
-	return -((1/pars[4] + 1/pars[2]) * pars[1] / (2/pars[2]));
+	return -((1/pars[3] + 1/pars[1]) * pars[0] / (2/pars[1]));
     }
     double slope0(vector<double> pars, double dt) {
-	return -2*pars[6]/(pars[2]*pars[1]); 
+	return -2*pars[5]/(pars[1]*pars[0]); 
     }
     double slope1(vector<double> pars, double dt) {
 	return -1*slope0(pars, dt);
     }
     double off0(vector<double> pars, double dt) {
-	return pars[6]/pars[5];
+	return pars[5]/pars[4];
     }
     double off1(vector<double> pars, double dt) {
-	return pars[6]/pars[2];
+	return pars[5]/pars[1];
     }
     double off2(vector<double> pars, double dt) {
-	return pars[6]/pars[4];
+	return pars[5]/pars[3];
     }
 };
 
@@ -738,16 +738,16 @@ void prepareWeightUpdateModels()
     wuL.varNames.push_back(tS("gRaw")); 
     wuL.varTypes.push_back(tS("scalar"));
     wuL.pNames.clear();
-    wuL.pNames.push_back(tS("tLrn"));  
-    wuL.pNames.push_back(tS("tChng")); 
-    wuL.pNames.push_back(tS("tDecay")); 
-    wuL.pNames.push_back(tS("tPunish10")); 
-    wuL.pNames.push_back(tS("tPunish01")); 
-    wuL.pNames.push_back(tS("gMax")); 
-    wuL.pNames.push_back(tS("gMid")); 
-    wuL.pNames.push_back(tS("gSlope")); 
-    wuL.pNames.push_back(tS("tauShift")); 
-    wuL.pNames.push_back(tS("gSyn0"));
+    wuL.pNames.push_back(tS("tLrn"));  //0
+    wuL.pNames.push_back(tS("tChng")); //1
+    wuL.pNames.push_back(tS("tDecay")); //2
+    wuL.pNames.push_back(tS("tPunish10")); //3
+    wuL.pNames.push_back(tS("tPunish01")); //4
+    wuL.pNames.push_back(tS("gMax")); //5
+    wuL.pNames.push_back(tS("gMid")); //6
+    wuL.pNames.push_back(tS("gSlope")); //7
+    wuL.pNames.push_back(tS("tauShift")); //8
+    wuL.pNames.push_back(tS("gSyn0")); //9
     wuL.dpNames.clear(); 
     wuL.dpNames.push_back(tS("lim0"));
     wuL.dpNames.push_back(tS("lim1"));
