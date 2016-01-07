@@ -652,25 +652,25 @@ public:
     }
     
     double lim0(vector<double> pars, double dt) {
-	return (1/pars[5] + 1/pars[2]) * pars[1] / (2/pars[2]);
+	return (1/pars[4] + 1/pars[1]) * pars[0] / (2/pars[1]);
     }
     double lim1(vector<double> pars, double dt) {
-	return -((1/pars[4] + 1/pars[2]) * pars[1] / (2/pars[2]));
+	return -((1/pars[3] + 1/pars[1]) * pars[0] / (2/pars[1]));
     }
     double slope0(vector<double> pars, double dt) {
-	return -2*pars[6]/(pars[2]*pars[1]); 
+	return -2*pars[5]/(pars[1]*pars[0]); 
     }
     double slope1(vector<double> pars, double dt) {
 	return -1*slope0(pars, dt);
     }
     double off0(vector<double> pars, double dt) {
-	return pars[6]/pars[5];
+	return pars[5]/pars[4];
     }
     double off1(vector<double> pars, double dt) {
-	return pars[6]/pars[2];
+	return pars[5]/pars[1];
     }
     double off2(vector<double> pars, double dt) {
-	return pars[6]/pars[4];
+	return pars[5]/pars[3];
     }
 };
 
