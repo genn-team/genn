@@ -542,6 +542,7 @@ void generate_process_presynaptic_events_code(
 	os << "for (r = 0; r < numSpikeSubsets" << postfix << "; r++)" << OB(90);
 	os << "if (r == numSpikeSubsets" << postfix << " - 1) lmax = ((lscnt" << postfix << "-1) % BLOCKSZ_SYN) +1;" << ENDL;
 	os << "else lmax = BLOCKSZ_SYN;" << ENDL;
+	os << "__syncthreads();" << ENDL;
 	os << "if (threadIdx.x < lmax)" << OB(100);
 	os << "shSpk" << postfix << "[threadIdx.x] = dd_glbSpk" << postfix << model.neuronName[src] << "[" << offsetPre << "(r * BLOCKSZ_SYN) + threadIdx.x];" << ENDL;
 	if (evnt && (model.neuronType[src] != POISSONNEURON)) {
