@@ -512,7 +512,6 @@ void generate_process_presynaptic_events_code(
 	os << "npost = dd_indInG" << model.synapseName[i] << "[preInd + 1] - prePos;" << ENDL;
 	os << "for (int i = 0; i < npost; ++i)" << OB(103);
 	os << "	ipost = dd_ind" <<  model.synapseName[i] << "[prePos];" << ENDL;
-	os << "prePos += i;" << ENDL;
 
 // Code substitutions ----------------------------------------------------------------------------------
 	string wCode = (evnt ? weightUpdateModels[synt].simCodeEvnt : weightUpdateModels[synt].simCode);
@@ -568,7 +567,10 @@ void generate_process_presynaptic_events_code(
 	extended_value_substitutions(wCode, nModels[nt_post].pNames, tS("_post"), model.neuronPara[trg]);
 	extended_value_substitutions(wCode, nModels[nt_post].dpNames, tS("_post"), model.dnp[trg]);
 	// end Code substitutions ------------------------------------------------------------------------- 
+
 	os << ensureFtype(wCode, model.ftype) << ENDL;
+
+	os << "prePos += 1;" << ENDL;
 	os << CB(103);
 	os << CB(102);
 	//os << CB(101);

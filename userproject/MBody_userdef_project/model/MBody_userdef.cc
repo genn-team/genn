@@ -351,7 +351,8 @@ void modelDefinition(NNmodel &model)
 
   model.addSynapsePopulation("KCDN", LEARN1SYNAPSE_userdef, SPARSE, INDIVIDUALG, NO_DELAY, EXPDECAY, "KC", "DN",  myKCDN_ini,  myKCDN_p, postSynV, postExpKCDN);
   model.setMaxConn("KCDN", _NLB); 
-  
+  //model.setSpanTypeToPre("KCDN");
+
   model.addSynapsePopulation("DNDN", NGRADSYNAPSE_userdef, ALLTOALL, GLOBALG, NO_DELAY, EXPDECAY, "DN", "DN", myDNDN_ini, myDNDN_p, postSynV, postExpDNDN);
   
 #ifdef nGPU 
