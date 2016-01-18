@@ -343,6 +343,7 @@ void modelDefinition(NNmodel &model)
   
   model.addSynapsePopulation("PNKC", NSYNAPSE_userdef, SPARSE, INDIVIDUALG, NO_DELAY, EXPDECAY_EVAR, "PN", "KC", myPNKC_ini, myPNKC_p, postSynV_EXPDECAY_EVAR,postExpPNKC);
   model.setMaxConn("PNKC", _NMB);  
+  //model.setSpanTypeToPre("PNKC");
 
   model.addSynapsePopulation("PNLHI", NSYNAPSE_userdef, ALLTOALL, INDIVIDUALG, NO_DELAY, EXPDECAY, "PN", "LHI", myPNLHI_ini, myPNLHI_p, postSynV, postExpPNLHI);
 
