@@ -19,6 +19,7 @@ else
 endif
 
 OPTIMIZATIONFLAGS:= -O3 -ffast-math
+NVCC_OPTIMIZATIONFLAGS:= -use_fast_math -O3
 
 include	$(GENN_PATH)/userproject/include/makefile_common_gnu.mk
 

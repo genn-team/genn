@@ -18,6 +18,7 @@ else
   SOURCES :=classol_sim.cu
 endif
 
-OPTIMIZATIONFLAGS:= -O3 -ffast-math
+OPTIMIZATIONFLAGS:= -ffast-math -O3
+NVCC_OPTIMIZATIONFLAGS:= -use_fast_math -O3
 
 include	$(GENN_PATH)/userproject/include/makefile_common_gnu.mk

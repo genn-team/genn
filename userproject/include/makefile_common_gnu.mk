@@ -80,7 +80,7 @@ $(EXECUTABLE): $(OBJECTS)
 .PHONY: release
 # use --compiler-options "-Wconversion" for silent type conversions 
 ifneq ($(CPU_ONLY),1)
-  release: NVCCFLAGS	+=--compiler-options "$(OPTIMIZATIONFLAGS)"
+  release: NVCCFLAGS	+= $(NVCC_OPTIMIZATIONFLAGS) --compiler-options "$(OPTIMIZATIONFLAGS)"
 else
   release: NVCCFLAGS	+= $(OPTIMIZATIONFLAGS)
 endif
