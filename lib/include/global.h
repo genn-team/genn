@@ -75,6 +75,7 @@ namespace GENN_PREFERENCES {
     int chooseDevice= 1; //!< Flag to signal whether the GPU device should be chosen automatically 
     double asGoodAsZero = 1e-19; //!< Global variable that is used when detecting close to zero values, for example when setting sparse connectivity from a dense matrix
     int defaultDevice= 0; //! default GPU device; used to determine which GPU to use if chooseDevice is 0 (off)
+
     unsigned int neuronBlockSize= 32;
     unsigned int synapseBlockSize= 32;
     unsigned int learningBlockSize= 32;

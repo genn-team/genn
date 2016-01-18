@@ -226,6 +226,7 @@ public:
   vector<unsigned int> synapseType; //!< Types of synapses
   vector<unsigned int> synapseConnType; //!< Connectivity type of synapses
   vector<unsigned int> synapseGType; //!< Type of specification method for synaptic conductance
+  vector<unsigned int> synapseSpanType; //!< Execution order of synapses in the kernel. It determines whether synapses are executed in parallel for every postsynaptic neuron (0, default), or for every presynaptic neuron (1). 
   vector<unsigned int> synapseSource; //!< Presynaptic neuron groups
   vector<unsigned int> synapseTarget; //!< Postsynaptic neuron groups
   vector<unsigned int> synapseInSynNo; //!< IDs of the target neurons' incoming synapse variables for each synapse group
@@ -344,6 +345,8 @@ public:
 
   void setMaxConn(const string, unsigned int); //< Set maximum connections per neuron for the given group (needed for optimization by sparse connectivity)
 
+  void setSpanTypeToPre(const string); //!< Method for switching the execution order of synapses to pre-to-post
+  
   void setSynapseClusterIndex(const string synapseGroup, int hostID, int deviceID); //!< Function for setting which host and which device a synapse group will be simulated on
 
   void initLearnGrps();

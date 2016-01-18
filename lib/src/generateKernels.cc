@@ -481,7 +481,6 @@ void generate_process_presynaptic_events_code(
     if ((evnt && model.synapseUsesSpikeEvents[i]) || (!evnt && model.synapseUsesTrueSpikes[i])) {
 	unsigned int synt = model.synapseType[i];
 	bool sparse = model.synapseConnType[i] == SPARSE;
-
 	unsigned int nt_pre = model.neuronType[src];
 	bool delayPre = model.neuronDelaySlots[src] > 1;
 	string offsetPre = (delayPre ? "(delaySlot * " + tS(model.neuronN[src]) + ") + " : "");
@@ -491,7 +490,7 @@ void generate_process_presynaptic_events_code(
 	string offsetPost = (delayPost ? "(dd_spkQuePtr" + model.neuronName[trg] + " * " + tS(model.neuronN[trg]) + ") + " : "");
 
 	// Detect spike events or spikes and do the update
-	if ((sparse) && switchTypeOfSparse) {
+	if ( sparse && (model.synapseSpanType[i] == 1)) {
 	int maxConnections;
 	if ((sparse) && (isGrpVarNeeded[model.synapseTarget[i]])) {
 	    if (model.maxConn[i] < 1) {
@@ -506,11 +505,12 @@ void generate_process_presynaptic_events_code(
 	else {
 	    maxConnections = model.neuronN[trg];
 	}
-	os << "if (" << localID << " < " << maxConnections << ") {" << ENDL;
+	//os << "if (" << localID << " < " << maxConnections << ")" << OB(101);
+	os << "if (" << localID << " < " << "dd_glbSpkCnt" << postfix << model.neuronName[src] << "[0])" << OB(102); 
 	os << "int preInd = dd_glbSpk"  << postfix << model.neuronName[src] << "[" << localID << "];" << ENDL;
 	os << "prePos = dd_indInG" << model.synapseName[i] << "[preInd];" << ENDL;
 	os << "npost = dd_indInG" << model.synapseName[i] << "[preInd + 1] - prePos;" << ENDL;
-	os << "for (int i = 0; i < npost; ++i) {" << ENDL;
+	os << "for (int i = 0; i < npost; ++i)" << OB(103);
 	os << "	ipost = dd_ind" <<  model.synapseName[i] << "[prePos];" << ENDL;
 	os << "prePos += i;" << ENDL;
 
@@ -569,8 +569,9 @@ void generate_process_presynaptic_events_code(
 	extended_value_substitutions(wCode, nModels[nt_post].dpNames, tS("_post"), model.dnp[trg]);
 	// end Code substitutions ------------------------------------------------------------------------- 
 	os << ensureFtype(wCode, model.ftype) << ENDL;
-	os << "}" << ENDL;
-	os << "}" << ENDL;
+	os << CB(103);
+	os << CB(102);
+	//os << CB(101);
 	} else {
 	os << "// process presynaptic events: " << (evnt ? "Spike type events" : "True Spikes") << ENDL;
 	os << "for (r = 0; r < numSpikeSubsets" << postfix << "; r++)" << OB(90);

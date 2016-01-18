@@ -663,7 +663,7 @@ void NNmodel::addSynapsePopulation(
     synapseHostID.push_back(0);
     if (maxConn.size() < synapseGrpN) maxConn.resize(synapseGrpN);
     maxConn[i]= neuronN[trgNumber];
-
+    synapseSpanType.push_back(0);
 // TODO set uses*** variables for synaptic populations  
 }
 
@@ -791,6 +791,28 @@ void NNmodel::setMaxConn(const string sname, /**<  */
       }
       }*/
   }
+}
+
+//--------------------------------------------------------------------------
+/*! \brief This function defines the execution order of the synapses in the kernels (0 : execute for every postsynaptic neuron 1: execute for every presynaptic neuron)
+*/ 
+//--------------------------------------------------------------------------
+
+void NNmodel::setSpanTypeToPre(const string sname /**<  */
+                         )
+{
+  if (final) {
+	  gennError("Trying to set spanType in a finalized model.");
+  }
+  cout << "Changing spanType of the synapse " << sname << " to 1 (pre-to-post)..." << endl;
+  unsigned int found= findSynapseGrp(sname);
+
+  if (synapseConnType[found] == SPARSE){
+    synapseSpanType[found]=1;
+  }
+  else {
+      cerr << "This function is not enabled for dense connectivity type. Skipping..." << endl;
+	}
 }
 
 #ifndef CPU_ONLY
