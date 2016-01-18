@@ -15,7 +15,7 @@ EXECUTABLE	:=VClampGA
 ifeq ($(CPU_ONLY),1)
   SOURCES :=VClampGA_cpu_only.cc
 else
-  SOURCES :=classol_sim.cu
+  SOURCES :=VClampGA.cu
 endif
 
 OPTIMIZATIONFLAGS:= -O3
