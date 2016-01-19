@@ -807,12 +807,32 @@ void NNmodel::setSpanTypeToPre(const string sname /**<  */
   cout << "Changing spanType of the synapse " << sname << " to 1 (pre-to-post)..." << endl;
   unsigned int found= findSynapseGrp(sname);
 
+
   if (synapseConnType[found] == SPARSE){
     synapseSpanType[found]=1;
+    if (padSumSynapseKrnl.size() < found+1) padSumSynapseKrnl.resize(found+1);
+    // set padnC is the lowest multiple of synapseBlkSz >= neuronN[synapseSource[found]
+
+    unsigned int padnC = ceil((double)neuronN[synapseSource[found]] / (double)synapseBlkSz) * (double)synapseBlkSz;
+
+
+    if (found == 0) {
+      padSumSynapseKrnl[found]=padnC;
+      //fprintf(stderr, "padSumSynapseKrnl[%d] is %u\n", found, padSumSynapseKrnl[found]);
+    }
+    else {
+      unsigned int toOmitK = padSumSynapseKrnl[found]-padSumSynapseKrnl[found-1];
+      padSumSynapseKrnl[found]=padSumSynapseKrnl[found-1]+padnC;
+      for (int j=found+1;j<padSumSynapseKrnl.size();j++){    	
+	      padSumSynapseKrnl[j]=padSumSynapseKrnl[j]-toOmitK+padnC;
+	    }
+    }
+
   }
   else {
       cerr << "This function is not enabled for dense connectivity type. Skipping..." << endl;
 	}
+
 }
 
 #ifndef CPU_ONLY
