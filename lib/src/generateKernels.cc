@@ -506,7 +506,15 @@ void generate_process_presynaptic_events_code(
 	    maxConnections = model.neuronN[trg];
 	}
 	//os << "if (" << localID << " < " << maxConnections << ")" << OB(101);
-	os << "if (" << localID << " < " << "dd_glbSpkCnt" << postfix << model.neuronName[src] << "[0])" << OB(102); 
+
+  os << "if (" << localID << " < " ;
+  if (delayPre) {
+    os << "dd_glbSpkCnt" << postfix << model.neuronName[src] << "[dd_spkQuePtr" << model.neuronName[src] << "])" << OB(102);
+	    }
+	    else {
+      	os << "dd_glbSpkCnt" << postfix << model.neuronName[src] << "[0])" << OB(102);
+	    }
+ 
 	os << "int preInd = dd_glbSpk"  << postfix << model.neuronName[src] << "[" << localID << "];" << ENDL;
 	os << "prePos = dd_indInG" << model.synapseName[i] << "[preInd];" << ENDL;
 	os << "npost = dd_indInG" << model.synapseName[i] << "[preInd + 1] - prePos;" << ENDL;
