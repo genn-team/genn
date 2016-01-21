@@ -1,6 +1,6 @@
 #!/bin/bash
 #call this as:
-#$ bash testprojects.sh "what is new in this run" &> outputtestscript
+#$ bash testprojects.sh "what is new in this run" 2>&1|tee -a outputtestscript
 #then:
 #$ grep -i warning outputtestscript
 #$ grep -i error outputtestscript
@@ -13,7 +13,7 @@ BmDir=$GENN_PATH/userproject/refProjFiles
 printf "This script may take a while to finish all tests if you use it with default parameters. \n\
 You may consider shortening the duration of simulation in classol_sim.h for the MBody examples.\n\n"
 firstrun=false;
-
+reuse=1;
 
 echo "Making tools..."
 cd tools
@@ -44,10 +44,10 @@ if [ -d "testing_output" ]; then
   echo ${custommsg} >> testing_output/testing.time
   printf "With new setup... \n"  >> testing_output/testing.time
 fi
-./generate_run 1 100 1000 20 100 0.0025 testing MBody1 
+./generate_run 1 100 1000 20 100 0.0025 testing MBody1 REUSE=$reuse
 cp testing_output/testing.out.st testing_output/testing.out.st.GPU
 printf "\n\n####################### MBody1 CPU ######################\n"
-./generate_run 0 100 1000 20 100 0.0025 testing MBody1
+./generate_run 0 100 1000 20 100 0.0025 testing MBody1 REUSE=$reuse
 cp testing_output/testing.out.st testing_output/testing.out.st.CPU 
 
 if [ "$firstrun_MB1" = true ]; then
@@ -81,10 +81,12 @@ if [ -d "testing_output" ]; then
   echo ${custommsg} >> testing_output/testing.time
   printf "With new setup... \n"  >> testing_output/testing.time
 fi
-./generate_run 1 100 1000 20 100 0.0025 testing MBody_individualID 
+./generate_run 1 100 1000 20 100 0.0025 testing MBody_individualID REUSE=$reuse
+ 
 cp testing_output/testing.out.st testing_output/testing.out.st.GPU
 printf "\n\n####################### MBody_individualID CPU ######################\n"
-./generate_run 0 100 1000 20 100 0.0025 testing MBody_individualID 
+./generate_run 0 100 1000 20 100 0.0025 testing MBody_individualID REUSE=$reuse
+ 
 cp testing_output/testing.out.st testing_output/testing.out.st.CPU 
 
 if [ "$firstrun_MBI" = true ]; then
@@ -112,10 +114,12 @@ if [ -d "testing_output" ]; then
   printf "With new setup... \n"  >> testing_output/testing.time
 fi
 printf "\n\n####################### MBody_userdef GPU ######################\n"
-./generate_run 1 100 1000 20 100 0.0025 testing MBody_userdef 
+./generate_run 1 100 1000 20 100 0.0025 testing MBody_userdef REUSE=$reuse
+
 cp testing_output/testing.out.st testing_output/testing.out.st.GPU
 printf "\n\n####################### MBody_userdef CPU ######################\n"
-./generate_run 0 100 1000 20 100 0.0025 testing MBody_userdef 
+./generate_run 0 100 1000 20 100 0.0025 testing MBody_userdef REUSE=$reuse
+
 cp testing_output/testing.out.st testing_output/testing.out.st.CPU
 
 cp -R testing_output/testing.time $BmDir/MBody_userdef/testing.time
@@ -136,10 +140,12 @@ if [ -d "testing_output" ]; then
   printf "With new setup... \n"  >> testing_output/testing.time
 fi
 printf "\n\n####################### MBody_delayedSyn GPU ######################\n"
-./generate_run 1 100 1000 20 100 0.0025 testing MBody_delayedSyn 
+./generate_run 1 100 1000 20 100 0.0025 testing MBody_delayedSyn REUSE=$reuse
+ 
 cp testing_output/testing.out.st testing_output/testing.out.st.GPU
 printf "\n\n####################### MBody_delayedSyn CPU ######################\n"
-./generate_run 0 100 1000 20 100 0.0025 testing MBody_delayedSyn 
+./generate_run 0 100 1000 20 100 0.0025 testing MBody_delayedSyn REUSE=$reuse
+
 cp testing_output/testing.out.st testing_output/testing.out.st.CPU
 
 cp -R testing_output/testing.time $BmDir/MBody_delayedSyn/testing.time
@@ -165,10 +171,12 @@ if [ -d "testing_output" ]; then
   printf "With new setup... \n"  >> testing_output/testing.time
 fi
 printf "\n\n####################### Izh_sparse 10K GPU ######################\n"
-./generate_run 1 10000 1000 1 testing Izh_sparse 1.0
+./generate_run 1 10000 1000 1 testing Izh_sparse 1.0 REUSE=$reuse
+
 #cp testing_output/testing.out.st testing_output/testing.out.st.GPU
 printf "\n\n####################### Izh_sparse 10K CPU ######################\n"
-./generate_run 0 10000 1000 1 testing Izh_sparse 1.0
+./generate_run 0 10000 1000 1 testing Izh_sparse 1.0 REUSE=$reuse
+
 #cp testing_output/testing.out.st testing_output/testing.out.st.CPU
 if [ "$firstrun_IZH" = true ]; then
   cp -R inputfiles inputfiles10K
@@ -312,7 +320,8 @@ printf "\n\n####################### MBody1 CPU TEST 2 ######################\n"
 model/classol_sim testing 0
 
 cd ../MBody_individualID_project
-cp -R $BmDir/MBody_individualID/* testing_output/
+#cp -R $BmDir/MBody_individualID/* testing_output/
+cp -R $BmDir/MBody1/* testing_output/
 printf "With reference setup... \n"  >> testing_output/testing.time
 printf "\n\n####################### MBody_individualID GPU TEST 2 ######################\n"
 model/classol_sim testing 1
@@ -320,7 +329,8 @@ printf "\n\n####################### MBody_individualID CPU TEST 2 ##############
 model/classol_sim testing 0
 
 cd ../MBody_userdef_project
-cp -R $BmDir/MBody_userdef/* testing_output/
+cp -R $BmDir/MBody1/* testing_output/
+#cp -R $BmDir/MBody_userdef/* testing_output/
 printf "With reference setup (same as MBody1 as well)... \n"  >> testing_output/testing.time
 printf "\n\n####################### MBody_userdef GPU TEST 2 ######################\n"
 model/classol_sim testing 1
@@ -328,7 +338,8 @@ printf "\n\n####################### MBody_userdef CPU TEST 2 ###################
 model/classol_sim testing 0
 
 cd ../MBody_delayedSyn_project
-cp -R $BmDir/MBody_delayedSyn/* testing_output/
+cp -R $BmDir/MBody1/* testing_output/
+#cp -R $BmDir/MBody_delayedSyn/* testing_output/
 printf "With reference setup (same as MBody1 as well)...\n"  >> testing_output/testing.time
 printf "\n\n####################### MBody_delayedSyn GPU TEST 2 ######################\n"
 model/classol_sim testing 1
@@ -376,11 +387,11 @@ cp HHVclampGA_project/testing_output/testing.time $BmDir/HHVclampGA/testing.time
 printf "\nMBody1 time tail\n"
 tail -n 18 MBody1_project/testing_output/testing.time
 printf "\nMBody_individualID time tail\n"
-tail -n 18 MBody_userdef_project/testing_output/testing.time
+tail -n 18 MBody_individualID_project/testing_output/testing.time
 printf "\nMBody_userdef time tail\n"
 tail -n 18 MBody_userdef_project/testing_output/testing.time
 printf "\nMBody_delayedSyn time tail\n"
-tail -n 18 MBody_userdef_project/testing_output/testing.time
+tail -n 18 MBody_delayedSyn_project/testing_output/testing.time
 printf "\nIzh_sparse time tail\n"
 tail -n 18 Izh_sparse_project/testing_output/testing.time
 printf "\nPoissonIzh time tail\n"
