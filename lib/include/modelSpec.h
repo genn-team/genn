@@ -313,6 +313,7 @@ public:
 
   void setGPUDevice(int); //!< Method to choose the GPU to be used for the model. If "AUTODEVICE' (-1), GeNN will choose the device based on a heuristic rule.
 
+  string scalarExpr(const double);
 
   // PUBLIC NEURON FUNCTIONS
   //========================

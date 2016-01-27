@@ -616,7 +616,7 @@ void genRunner(NNmodel &model, //!< Model description
 	    else {
 		os << "    for (int i = 0; i < " << model.neuronN[i] << "; i++) {" << endl;
 	    }
-	    os << "        " << nModels[nt].varNames[j] << model.neuronName[i] << "[i] = " << model.neuronIni[i][j] << ";" << endl;
+	    os << "        " << nModels[nt].varNames[j] << model.neuronName[i] << "[i] = " << model.scalarExpr(model.neuronIni[i][j]) << ";" << endl;
 	    os << "    }" << endl;
 	}
 
@@ -639,13 +639,13 @@ void genRunner(NNmodel &model, //!< Model description
 	pst = model.postSynapseType[i];
 
 	os << "    for (int i = 0; i < " << model.neuronN[model.synapseTarget[i]] << "; i++) {" << endl;
-	os << "        inSyn" << model.synapseName[i] << "[i] = 0.0f;" << endl;
+	os << "        inSyn" << model.synapseName[i] << "[i] = " << model.scalarExpr(0.0) << ";" << endl;
 	os << "    }" << endl;
 
 	if ((model.synapseConnType[i] != SPARSE) && (model.synapseGType[i] == INDIVIDUALG)) {
 	    for (int k= 0, l= weightUpdateModels[st].varNames.size(); k < l; k++) {
 		os << "    for (int i = 0; i < " << model.neuronN[model.synapseSource[i]] * model.neuronN[model.synapseTarget[i]] << "; i++) {" << endl;
-		os << "        " << weightUpdateModels[st].varNames[k] << model.synapseName[i] << "[i] = " << model.synapseIni[i][k] << ";" << endl;
+		os << "        " << weightUpdateModels[st].varNames[k] << model.synapseName[i] << "[i] = " << model.scalarExpr(model.synapseIni[i][k]) << ";" << endl;
 		os << "    }" << endl;
 	    }
 	}
@@ -653,7 +653,7 @@ void genRunner(NNmodel &model, //!< Model description
 	if (model.synapseGType[i] == INDIVIDUALG) {
 	    for (int k= 0, l= postSynModels[pst].varNames.size(); k < l; k++) {
 		os << "    for (int i = 0; i < " << model.neuronN[model.synapseTarget[i]] << "; i++) {" << endl;
-		os << "        " << postSynModels[pst].varNames[k] << model.synapseName[i] << "[i] = " << model.postSynIni[i][k] << ";" << endl;
+		os << "        " << postSynModels[pst].varNames[k] << model.synapseName[i] << "[i] = " << model.scalarExpr(model.postSynIni[i][k]) << ";" << endl;
 		os << "    }" << endl;
 	    }
 	}
