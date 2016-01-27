@@ -855,6 +855,19 @@ void NNmodel::setGPUDevice(int device)
 }
 #endif
 
+string NNmodel::scalarExpr(const double val) 
+{
+    string tmp;
+    float fval= (float) val;
+    if (ftype == tS("float")) {
+	tmp= tS(fval) + "f";
+    }
+    if (ftype == tS("double")) {
+	tmp= tS(val);
+    }
+    return tmp;
+}
+
 void NNmodel::finalize()
 {
     //initializing learning parameters to start
