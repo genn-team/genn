@@ -345,7 +345,7 @@ void genRunner(NNmodel &model, //!< Model description
     os << "#ifndef SUPPORT_CODE_H" << ENDL;
     os << "#define SUPPORT_CODE_H" << ENDL;
     // write the support codes
-    os << "// support code for neuron and synapse models" << endl;
+    os << "// support code for neuron and synapse models" << ENDL;
     for (int i= 0; i < model.neuronGrpN; i++) {
 	if (nModels[model.neuronType[i]].supportCode != tS("")) {
 	    os << "namespace " << model.neuronName[i] << "_neuron" << OB(11) << ENDL;
@@ -892,7 +892,10 @@ void genRunner(NNmodel &model, //!< Model description
 	    else {
 		os << "    for (int i = 0; i < " << model.neuronN[i] << "; i++) {" << ENDL;
 	    }
+            if (nModels[nt].varTypes[j] == model.ftype)
 	    os << "        " << nModels[nt].varNames[j] << model.neuronName[i] << "[i] = " << model.scalarExpr(model.neuronIni[i][j]) << ";" << ENDL;
+            else
+            os << "        " << nModels[nt].varNames[j] << model.neuronName[i] << "[i] = " << model.neuronIni[i][j] << ";" << ENDL;
 	    os << "    }" << ENDL;
 	}
 
@@ -921,7 +924,11 @@ void genRunner(NNmodel &model, //!< Model description
 	if ((model.synapseConnType[i] != SPARSE) && (model.synapseGType[i] == INDIVIDUALG)) {
 	    for (int k= 0, l= weightUpdateModels[st].varNames.size(); k < l; k++) {
 		os << "    for (int i = 0; i < " << model.neuronN[model.synapseSource[i]] * model.neuronN[model.synapseTarget[i]] << "; i++) {" << ENDL;
+                if (weightUpdateModels[st].varTypes[k] == model.ftype)
 		os << "        " << weightUpdateModels[st].varNames[k] << model.synapseName[i] << "[i] = " << model.scalarExpr(model.synapseIni[i][k]) << ";" << ENDL;
+                else
+		os << "        " << weightUpdateModels[st].varNames[k] << model.synapseName[i] << "[i] = " << model.synapseIni[i][k] << ";" << ENDL;
+        
 		os << "    }" << ENDL;
 	    }
 	}
@@ -929,7 +936,10 @@ void genRunner(NNmodel &model, //!< Model description
 	if (model.synapseGType[i] == INDIVIDUALG) {
 	    for (int k= 0, l= postSynModels[pst].varNames.size(); k < l; k++) {
 		os << "    for (int i = 0; i < " << model.neuronN[model.synapseTarget[i]] << "; i++) {" << ENDL;
+                if (postSynModels[pst].varTypes[k] == model.ftype)
 		os << "        " << postSynModels[pst].varNames[k] << model.synapseName[i] << "[i] = " << model.scalarExpr(model.postSynIni[i][k]) << ";" << ENDL;
+                else
+		os << "        " << postSynModels[pst].varNames[k] << model.synapseName[i] << "[i] = " << model.postSynIni[i][k] << ";" << ENDL;
 		os << "    }" << ENDL;
 	    }
 	}
@@ -1172,7 +1182,7 @@ void genRunner(NNmodel &model, //!< Model description
     os << "void stepTimeCPU(T arg1, ...)" << ENDL;
     os << OB(101) << ENDL;
     os << "gennError(\"Since GeNN 2.2 the call to step time has changed to not take any arguments. You appear to attempt to pass arguments. This is no longer supported. See the GeNN 2.2. release notes and the manual for examples how to pass data like, e.g., Poisson rates and direct inputs, that were previously handled through arguments.\");" << ENDL; 
-    os << CB(101) << endl;
+    os << CB(101) << ENDL;
     
     os << "// ------------------------------------------------------------------------" << ENDL;
     os << "// the actual time stepping procedure" << ENDL;
@@ -1877,7 +1887,7 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     os << "void stepTimeGPU(T arg1, ...)" << ENDL;
     os << OB(101) << ENDL;
     os << "gennError(\"Since GeNN 2.2 the call to stepTimeGPU has changed to not take any arguments other than an optional integer argument for flags. You appear to attempt to pass arguments. This is no longer supported. See the GeNN 2.2. release notes and the manual for examples how to pass data like, e.g., Poisson rates and direct inputs, that were previously handled through arguments.\");" << ENDL; 
-    os << CB(101) << endl;
+    os << CB(101) << ENDL;
 
     os << "// ------------------------------------------------------------------------" << ENDL;
     os << "// the actual time stepping procedure" << ENDL;
