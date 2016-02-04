@@ -616,7 +616,10 @@ void genRunner(NNmodel &model, //!< Model description
 	    else {
 		os << "    for (int i = 0; i < " << model.neuronN[i] << "; i++) {" << endl;
 	    }
+            if (nModels[nt].varTypes[j] == model.ftype)
 	    os << "        " << nModels[nt].varNames[j] << model.neuronName[i] << "[i] = " << model.scalarExpr(model.neuronIni[i][j]) << ";" << endl;
+            else
+            os << "        " << nModels[nt].varNames[j] << model.neuronName[i] << "[i] = " << model.neuronIni[i][j] << ";" << endl;
 	    os << "    }" << endl;
 	}
 
@@ -645,7 +648,11 @@ void genRunner(NNmodel &model, //!< Model description
 	if ((model.synapseConnType[i] != SPARSE) && (model.synapseGType[i] == INDIVIDUALG)) {
 	    for (int k= 0, l= weightUpdateModels[st].varNames.size(); k < l; k++) {
 		os << "    for (int i = 0; i < " << model.neuronN[model.synapseSource[i]] * model.neuronN[model.synapseTarget[i]] << "; i++) {" << endl;
+                if (weightUpdateModels[st].varTypes[k] == model.ftype)
 		os << "        " << weightUpdateModels[st].varNames[k] << model.synapseName[i] << "[i] = " << model.scalarExpr(model.synapseIni[i][k]) << ";" << endl;
+                else
+		os << "        " << weightUpdateModels[st].varNames[k] << model.synapseName[i] << "[i] = " << model.synapseIni[i][k] << ";" << endl;
+        
 		os << "    }" << endl;
 	    }
 	}
@@ -653,7 +660,10 @@ void genRunner(NNmodel &model, //!< Model description
 	if (model.synapseGType[i] == INDIVIDUALG) {
 	    for (int k= 0, l= postSynModels[pst].varNames.size(); k < l; k++) {
 		os << "    for (int i = 0; i < " << model.neuronN[model.synapseTarget[i]] << "; i++) {" << endl;
+                if (postSynModels[pst].varTypes[k] == model.ftype)
 		os << "        " << postSynModels[pst].varNames[k] << model.synapseName[i] << "[i] = " << model.scalarExpr(model.postSynIni[i][k]) << ";" << endl;
+                else
+		os << "        " << postSynModels[pst].varNames[k] << model.synapseName[i] << "[i] = " << model.postSynIni[i][k] << ";" << endl;
 		os << "    }" << endl;
 	    }
 	}
