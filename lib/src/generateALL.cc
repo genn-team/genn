@@ -201,6 +201,12 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
 	regAllocGran = 256;
 	maxBlocksPerSM = 16;
       }
+      else if (deviceProp[device].major == 5) {
+	smemAllocGran = 256;
+	warpAllocGran = 4;
+	regAllocGran = 256;
+	maxBlocksPerSM = 32;
+      }
       else {
 	mos << "Error: unsupported CUDA device major version: " << deviceProp[device].major << endl;
 	exit(EXIT_FAILURE);
