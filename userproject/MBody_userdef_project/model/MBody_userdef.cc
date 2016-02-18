@@ -342,7 +342,9 @@ void modelDefinition(NNmodel &model)
   model.addNeuronPopulation("DN", _NLB, TRAUBMILES, stdTM_p, stdTM_ini);
   
   model.addSynapsePopulation("PNKC", NSYNAPSE_userdef, SPARSE, INDIVIDUALG, NO_DELAY, EXPDECAY_EVAR, "PN", "KC", myPNKC_ini, myPNKC_p, postSynV_EXPDECAY_EVAR,postExpPNKC);
-  model.setMaxConn("PNKC", _NMB);  
+  //setting max number of connections to the number of target neurons (used only in default mode (post-span))
+  model.setMaxConn("PNKC", _NMB); 
+  //set synapse update to pre-span mode 
   //model.setSpanTypeToPre("PNKC");
 
   model.addSynapsePopulation("PNLHI", NSYNAPSE_userdef, ALLTOALL, INDIVIDUALG, NO_DELAY, EXPDECAY, "PN", "LHI", myPNLHI_ini, myPNLHI_p, postSynV, postExpPNLHI);
@@ -350,8 +352,10 @@ void modelDefinition(NNmodel &model)
   model.addSynapsePopulation("LHIKC", NGRADSYNAPSE_userdef, ALLTOALL, GLOBALG, NO_DELAY, EXPDECAY, "LHI", "KC",  myLHIKC_ini, myLHIKC_p, postSynV, postExpLHIKC);
 
   model.addSynapsePopulation("KCDN", LEARN1SYNAPSE_userdef, SPARSE, INDIVIDUALG, NO_DELAY, EXPDECAY, "KC", "DN",  myKCDN_ini,  myKCDN_p, postSynV, postExpKCDN);
-  model.setMaxConn("KCDN", _NLB); 
-  //model.setSpanTypeToPre("KCDN");
+  //setting max number of connections to the number of target neurons (used only in default mode (post-span))
+  //model.setMaxConn("KCDN", _NLB); 
+  //set synapse update to pre-span mode 
+  model.setSpanTypeToPre("KCDN");
 
   model.addSynapsePopulation("DNDN", NGRADSYNAPSE_userdef, ALLTOALL, GLOBALG, NO_DELAY, EXPDECAY, "DN", "DN", myDNDN_ini, myDNDN_p, postSynV, postExpDNDN);
   
