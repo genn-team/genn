@@ -34,7 +34,7 @@ else
   ifeq ($(OS_SIZE),32)
     LINK_FLAGS	:=-L$(CUDA_PATH)/lib -lcudart
   else
-    LINK_FLAGS	:=-L$(CUDA_PATH)/lib32 -lcudart
+    LINK_FLAGS	:=-L$(CUDA_PATH)/lib64 -lcudart
   endif
 endif
 
