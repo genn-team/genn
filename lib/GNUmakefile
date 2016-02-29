@@ -17,7 +17,7 @@
 #-----------------------------------------------------------------
 
 # OS name (Linux or Darwin) and architecture (32 bit or 64 bit).
-OS_SIZE 	:=$(shell uname -m | sed -e "s/i.86/32/" -e "s/x86_64/64/")
+OS_SIZE 	:=$(shell uname -m | sed -e "s/i.86/32/" -e "s/x86_64/64/" -e "s/armv7l/32/")
 OS_LOWER 	:=$(shell uname -s 2>/dev/null | tr [:upper:] [:lower:])
 OS_UPPER 	:=$(shell uname -s 2>/dev/null | tr [:lower:] [:upper:])
 DARWIN  	:=$(strip $(findstring DARWIN, $(OS_UPPER)))
@@ -34,7 +34,7 @@ else
   ifeq ($(OS_SIZE),32)
     LINK_FLAGS	:=-L$(CUDA_PATH)/lib -lcudart
   else
-    LINK_FLAGS	:=-L$(CUDA_PATH)/lib64 -lcudart
+    LINK_FLAGS	:=-L$(CUDA_PATH)/lib32 -lcudart
   endif
 endif
 

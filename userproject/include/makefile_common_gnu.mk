@@ -17,7 +17,7 @@
 #-----------------------------------------------------------------
 
 # OS name (Linux or Darwin) and architecture (32 bit or 64 bit).
-OS_SIZE		:=$(shell uname -m | sed -e "s/i.86/32/" -e "s/x86_64/64/")
+OS_SIZE		:=$(shell uname -m | sed -e "s/i.86/32/" -e "s/x86_64/64/" -e "s/armv7l/32/")
 OS_UPPER 	:=$(shell uname -s 2>/dev/null | tr [:lower:] [:upper:])
 OS_LOWER 	:=$(shell uname -s 2>/dev/null | tr [:upper:] [:lower:])
 DARWIN  	:=$(strip $(findstring DARWIN, $(OS_UPPER)))
