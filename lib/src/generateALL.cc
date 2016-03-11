@@ -24,6 +24,7 @@
 #include "generateKernels.cc"
 #include "generateRunner.cc"
 #include "generateCPU.cc"
+#include "sizes.h"
 
 #ifdef _WIN32
 #include <direct.h>
@@ -211,6 +212,18 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
 	mos << "Error: unsupported CUDA device major version: " << deviceProp[device].major << endl;
 	exit(EXIT_FAILURE);
       }
+	 
+	 //For sm<1.3 and _FTYPE = GENN_DOUBLE error message dispayed and exit.
+	 if(deviceProp[device].major ==1 && deviceProp[device].minor < 3)
+	  {
+		
+		 if(_FTYPE == GENN_DOUBLE)
+		  {
+			  mos << "Error: This CUDA device major/minor version does not support double precision.\n Either change the ftype parameter to FLOAT or find a newer GPU"<<endl;
+			  exit(EXIT_FAILURE);
+		  }
+	  }
+	  
 
 #ifdef BLOCKSZ_DEBUG
       mos << "BLOCKSZ_DEBUG: smemAllocGran= " <<  smemAllocGran << endl;
