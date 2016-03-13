@@ -27,7 +27,7 @@ for op in $@; do
 	fi
 	if [[ $op == "CPU_ONLY=1" ]]; then
 	    EXTRA_DEF=CPU_ONLY
-	fi 
+	fi
     fi
     k=$[$k+1];
 done
@@ -35,6 +35,11 @@ if [[ $EXTRA_DEF != "" ]]; then
     EXTRA_DEF=-D$EXTRA_DEF
 fi
 
+if [[ "$GENN_PATH" == "" ]]; then
+    GENN_PATH=$(dirname $0)
+    GENN_PATH=$GENN_PATH/../..
+    GENN_PATH=$(readlink -f $GENN_PATH)
+fi
 if [[ "$GENN_PATH" == "" ]]; then
     if [[ "$GeNNPATH" == "" ]]; then
 	echo "buildmodel Error: Environment variable 'GENN_PATH' has not been defined. Quitting..."

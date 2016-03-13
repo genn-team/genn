@@ -16,6 +16,8 @@
 # This is a UNIX Makefile, to be used by the GNU make build system
 #-----------------------------------------------------------------
 
+GENN_PATH	?=$(realpath $(dir $(realpath GNUmakefile))..)
+
 # OS name (Linux or Darwin) and architecture (32 bit or 64 bit).
 OS_SIZE 	:=$(shell uname -m | sed -e "s/i.86/32/" -e "s/x86_64/64/" -e "s/armv7l/32/")
 OS_LOWER 	:=$(shell uname -s 2>/dev/null | tr [:upper:] [:lower:])
