@@ -34,10 +34,10 @@ ifneq ($(CPU_ONLY),1)
   # global CUDA compiler settings
   CUDA_PATH	?=/usr/local/cuda
   NVCC		:=$(CUDA_PATH)/bin/nvcc
-  NVCCFLAGS	+= 
+  NVCCFLAGS	+=
   INCLUDE_FLAGS	+=-I$(CUDA_PATH)/include -I$(CUDA_PATH)/samples/common/inc -I$(GENN_PATH)/lib/include -I$(GENN_PATH)/userproject/include
   ifeq ($(DARWIN),DARWIN)
-    LINK_FLAGS	+=-L$(CUDA_PATH)/lib -lcudart -lcuda -stdlib=libstdc++ -lc++ 
+    LINK_FLAGS	+=-L$(CUDA_PATH)/lib -lcudart -lcuda -stdlib=libstdc++ -lc++
   else
     ifeq ($(OS_SIZE),32)
       LINK_FLAGS	+=-L$(CUDA_PATH)/lib -lcudart -lcuda
@@ -50,7 +50,7 @@ ifneq ($(CPU_ONLY),1)
 else
   INCLUDE_FLAGS+= -DCPU_ONLY -I$(GENN_PATH)/lib/include -I$(GENN_PATH)/userproject/include
   ifeq ($(DARWIN),DARWIN)
-    LINK_FLAGS += -stdlib=libstdc++ -lc++ 
+    LINK_FLAGS += -stdlib=libstdc++ -lc++
   endif
   NVCC :=$(CXX)
   NVCCFLAGS :=$(CXXFLAGS)
@@ -58,7 +58,7 @@ endif
 
 
 # Enumerate all source and object files (if they have not already been listed).
-SOURCES		?=$(wildcard *.cc *.cpp *.cu)	
+SOURCES		?=$(wildcard *.cc *.cpp *.cu)
 OBJECTS		:=$(foreach obj,$(basename $(SOURCES)),$(obj).o)
 
 # Target rules.
@@ -74,11 +74,18 @@ all: release
 %.o: %.cu
 	$(NVCC) $(NVCCFLAGS) $(INCLUDE_FLAGS) $(GENCODE_FLAGS) $< -o $@ -c
 
+classol_sim_cpu_only.o: classol_sim_cpu_only.cc
+	$(CXX) $(CXXFLAGS) $(INCLUDE_FLAGS) $< -o $@ -c
+	mv classol_sim_cpu_only.cc classol_sim.cu
+
+classol_sim_cpu_only.cc: classol_sim.cu
+	mv classol_sim.cu classol_sim_cpu_only.cc
+
 $(EXECUTABLE): $(OBJECTS)
 	$(CXX) $(CXXFLAGS) $(OBJECTS) -o $@ $(LINK_FLAGS)
 
 .PHONY: release
-# use --compiler-options "-Wconversion" for silent type conversions 
+# use --compiler-options "-Wconversion" for silent type conversions
 ifneq ($(CPU_ONLY),1)
   release: NVCCFLAGS	+= $(NVCC_OPTIMIZATIONFLAGS) --compiler-options "$(OPTIMIZATIONFLAGS)"
 else
@@ -91,10 +98,10 @@ release: $(EXECUTABLE)
 ifneq ($(CPU_ONLY),1)
   debug: NVCCFLAGS	+=-g -G
 else
-  debug: NVCCFLAGS	+=-g 
+  debug: NVCCFLAGS	+=-g
 endif
 debug: CXXFLAGS		+=-g
-debug: $(EXECUTABLE) 
+debug: $(EXECUTABLE)
 
 .PHONY: clean
 clean:

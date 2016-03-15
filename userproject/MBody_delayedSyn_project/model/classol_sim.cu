@@ -1,20 +1,20 @@
 /*--------------------------------------------------------------------------
    Author: Thomas Nowotny
-  
+
    Institute: Institute for Nonlinear Science
               University of California San Diego
               La Jolla, CA 92093-0402
-  
+
    email to:  tnowotny@ucsd.edu
-  
+
    initial version: 2002-09-26
-  
+
 --------------------------------------------------------------------------*/
 
 //--------------------------------------------------------------------------
 /*! \file classol_sim.cu
 
-\brief Main entry point for the classol (CLASSification in OLfaction) model simulation. Provided as a part of the complete example of simulating the MBody_delayedSyn mushroom body model. 
+\brief Main entry point for the classol (CLASSification in OLfaction) model simulation. Provided as a part of the complete example of simulating the MBody_delayedSyn mushroom body model.
 */
 //--------------------------------------------------------------------------
 
@@ -29,35 +29,35 @@
 
 int main(int argc, char *argv[])
 {
-  if (argc != 3)
+  if (argc != 4)
   {
-    fprintf(stderr, "usage: classol_sim <basename> <CPU=0, GPU=1> \n");
+    fprintf(stderr, "usage: classol_sim <basename> <CPU=0, GPU=1> <model root dir>\n");
     return 1;
   }
   int which = atoi(argv[2]);
-  string OutDir = toString(argv[1]) +"_output";
+  string OutDir = toString(argv[3]) + "/" + toString(argv[1]) +"_output";
   string name;
   name= OutDir+ "/"+ toString(argv[1]) + toString(".time");
-  FILE *timef= fopen(name.c_str(),"a");  
+  FILE *timef= fopen(name.c_str(),"a");
 
   patSetTime= (int) (PAT_TIME/DT);
   patFireTime= (int) (PATFTIME/DT);
   fprintf(stdout, "# DT %f \n", DT);
   fprintf(stdout, "# T_REPORT_TME %f \n", T_REPORT_TME);
   fprintf(stdout, "# SYN_OUT_TME %f \n",  SYN_OUT_TME);
-  fprintf(stdout, "# PATFTIME %f \n", PATFTIME); 
+  fprintf(stdout, "# PATFTIME %f \n", PATFTIME);
   fprintf(stdout, "# patFireTime %d \n", patFireTime);
   fprintf(stdout, "# PAT_TIME %f \n", PAT_TIME);
   fprintf(stdout, "# patSetTime %d \n", patSetTime);
   fprintf(stdout, "# TOTAL_TME %f \n", TOTAL_TME);
-  
-  name= OutDir+ "/"+ toString(argv[1]) + toString(".out.Vm"); 
+
+  name= OutDir+ "/"+ toString(argv[1]) + toString(".out.Vm");
   FILE *osf= fopen(name.c_str(),"w");
-  name= OutDir+ "/"+ toString(argv[1]) + toString(".out.st"); 
+  name= OutDir+ "/"+ toString(argv[1]) + toString(".out.st");
   FILE *osf2= fopen(name.c_str(),"w");
 
 #ifdef TIMING
-  name= OutDir+ "/"+ toString(argv[1]) + toString(".timingprofile"); 
+  name= OutDir+ "/"+ toString(argv[1]) + toString(".timingprofile");
   FILE *timeros= fopen(name.c_str(),"w");
   double tme;
 #endif
@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
   name= OutDir+ "/"+ toString(argv[1]) + toString(".pnlhi");
   f= fopen(name.c_str(), "rb");
   locust.read_pnlhisyns(f);
-  fclose(f);   
+  fclose(f);
 
 #ifdef TIMING
   timer.stopTimer();
@@ -95,7 +95,7 @@ int main(int argc, char *argv[])
   fprintf(timeros, "%% Reading PN-LHI synapses: %f \n", tme);
   timer.startTimer();
 #endif
-  
+
   fprintf(stdout, "# reading KC-DN synapses ... \n");
   name= OutDir+ "/"+ toString(argv[1]) + toString(".kcdn");
   f= fopen(name.c_str(), "rb");
@@ -148,8 +148,8 @@ int main(int argc, char *argv[])
   float synwriteT= 0.0f;
   float lastsynwrite= 0.0f;
   int synwrite= 0;
-  while (!done) 
-  {    
+  while (!done)
+  {
       if (which == GPU) {
 #ifndef CPU_ONLY
 	  locust.runGPU(DT); // run next batch
@@ -162,7 +162,7 @@ int main(int argc, char *argv[])
       }
       locust.sum_spikes();
       locust.output_spikes(osf2, which);
-    
+
 #ifdef TIMING
 	fprintf(timeros, "%f %f %f \n", neuron_tme, synapse_tme, learning_tme);
 #endif
@@ -175,7 +175,7 @@ int main(int argc, char *argv[])
     // output synapses occasionally
     if (synwrite) {
        lastsynwrite= synwriteT;
-       name= OutDir+ "/"+ tS(argv[1]) + tS(".") + tS((int) synwriteT) + tS(".syn"); 
+       name= OutDir+ "/"+ tS(argv[1]) + tS(".") + tS((int) synwriteT) + tS(".syn");
        f= fopen(name.c_str(),"w");
        locust.write_kcdnsyns(f);
        fclose(f);

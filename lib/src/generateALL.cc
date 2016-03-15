@@ -1,14 +1,14 @@
 /*--------------------------------------------------------------------------
    Author: Thomas Nowotny
-  
+
    Institute: Center for Computational Neuroscience and Robotics
               University of Susse
-	      Falmer, Brighton BN1 9QJ, UK 
-  
+	      Falmer, Brighton BN1 9QJ, UK
+
    email to:  T.Nowotny@sussex.ac.uk
-  
+
    initial version: 2010-02-07
-  
+
 --------------------------------------------------------------------------*/
 
 /*! \file generateALL.cc
@@ -36,6 +36,7 @@ CodeHelper hlp;
 #else
 #include <sys/stat.h> // needed for mkdir
 #endif
+#include <stdexcept>
 
 
 #ifndef CPU_ONLY
@@ -58,8 +59,8 @@ CodeHelper hlp;
 #define CHECK_CU_ERRORS(call) call
 #endif
 
-// comment above and uncomment here when using CUDA that does not support 
-// cugetErrorName 
+// comment above and uncomment here when using CUDA that does not support
+// cugetErrorName
 //#define CHECK_CU_ERRORS(call) call
 
 CUresult cudaFuncGetAttributesDriver(cudaFuncAttributes *attr, CUfunction kern) {
@@ -112,7 +113,7 @@ void generate_model_runner(NNmodel &model,  //!< Model description
 #ifdef _WIN32
   _mkdir((path + "\\" + model.name + "_CODE").c_str());
 #else // UNIX
-  mkdir((path + "/" + model.name + "_CODE").c_str(), 0777); 
+  mkdir((path + "/" + model.name + "_CODE").c_str(), 0777);
 #endif
 
   // general shared code for GPU and CPU versions
@@ -121,7 +122,7 @@ void generate_model_runner(NNmodel &model,  //!< Model description
 #ifndef CPU_ONLY
   // GPU specific code generation
   genRunnerGPU(model, path, cout);
-  
+
   // generate neuron kernels
   genNeuronKernel(model, path, cout);
 
@@ -131,14 +132,14 @@ void generate_model_runner(NNmodel &model,  //!< Model description
 
   // Generate the equivalent of neuron kernel
   genNeuronFunction(model, path, cout);
-  
+
   // Generate the equivalent of synapse and learning kernel
   if (model.synapseGrpN > 0) genSynapseFunction(model, path, cout);
 }
 
 #ifndef CPU_ONLY
 //--------------------------------------------------------------------------
-/*! 
+/*!
   \brief Helper function that prepares data structures and detects the hardware properties to enable the code generation code that follows.
 
   The main tasks in this function are the detection and characterization of the GPU device present (if any), choosing which GPU device to use, finding and appropriate block size, taking note of the major and minor version of the CUDA enabled device chosen for use, and populating the list of standard neuron models. The chosen device number is returned.
@@ -147,7 +148,8 @@ void generate_model_runner(NNmodel &model,  //!< Model description
 
 int chooseDevice(ostream &mos,   //!< output stream for messages
 		 NNmodel *&model, //!< the nn model we are generating code for
-		 string path     //!< path the generated code will be deposited
+		 string path,     //!< path the generated code will be deposited
+		 char *argv	//!< path to the file generateALL
 		 )
 {
 #define krnlNo 4
@@ -158,10 +160,10 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
   size_t globalMem, mostGlobalMem = 0;
   CHECK_CUDA_ERRORS(cudaGetDeviceCount(&deviceCount));
   deviceProp = new cudaDeviceProp[deviceCount];
-  
+
   int devstart, devcount;
   if (GENN_PREFERENCES::chooseDevice) {
-      devstart= 0; 
+      devstart= 0;
       devcount= deviceCount;
   }
   else {
@@ -170,7 +172,7 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
   }
   for (int device = devstart; device < devcount; device++) {
       CHECK_CUDA_ERRORS(cudaSetDevice(device));
-      CHECK_CUDA_ERRORS(cudaGetDeviceProperties(&(deviceProp[device]), device));      
+      CHECK_CUDA_ERRORS(cudaGetDeviceProperties(&(deviceProp[device]), device));
   }
 
   if (GENN_PREFERENCES::optimiseBlockSize) { // IF OPTIMISATION IS ON: Choose the device which supports the highest warp occupancy.
@@ -180,7 +182,7 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
       string junk;
       int reqRegs, reqSmem, requiredBlocks, ptxInfoFound = 0;
       int warpSize= 32;
-      
+
       unsigned int **bestBlkSz= new unsigned int*[krnlNo];
       int **smallModel= new int*[krnlNo];
       int **deviceOccupancy= new int*[krnlNo];
@@ -197,7 +199,7 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
 	      deviceOccupancy[kernel][device]= 0;
 	  }
       }
-      
+
       // Get the sizes of each synapse / learn group present on this host and device
       vector<unsigned int> synapseN, learnN;
       for (int group = 0; group < model->synapseGrpN; group++) {
@@ -216,20 +218,20 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
 	      }
 	      else {
 		  groupSize[2].push_back(model->neuronN[model->synapseSource[group]]*model->neuronN[model->synapseTarget[group]]);
-	      } 
+	      }
 	  }
       }
       groupSize[3]= model->neuronN;
 #ifdef BLOCKSZ_DEBUG
       for (int i= 0; i < krnlNo; i++) {
-	  mos << "BLOCKSZ_DEBUG: "; 
+	  mos << "BLOCKSZ_DEBUG: ";
 	  for (int j= 0; j < groupSize[i].size(); j++) {
 	      mos << "groupSize[" << i << "][" << j << "]=" << groupSize[i][j] << "; ";
 	  }
 	  mos << endl;
       }
 #endif
-      
+
       for (int device = devstart; device < devcount; device++) {
 	  theDev = device;
 
@@ -290,7 +292,27 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
 	  CHECK_CU_ERRORS(cuCtxSetCurrent(cuContext));
 	  CUmodule module;
 	  string fname;
-	  fname= tS(getenv("GENN_PATH")) +"/lib/runner.cubin";
+	  string gennPath;
+	  try {
+	      gennPath += (string)getenv("GENN_PATH");
+	  }
+	  catch(std::logic_error &ex) {
+	      cerr << "Environment variable GENN_PATH not found..." << endl;
+#ifdef _WIN32
+              cerr << "Exiting..." << endl;
+              exit(1);
+#else
+	      int i;
+	      gennPath = (string)realpath(argv, NULL);
+	      i = gennPath.length() - 1;
+	      while (gennPath[i--] != '/');
+	      gennPath.erase(i+1, gennPath.length() - i);
+	      gennPath +=  "/../..";
+	      gennPath = (string)realpath(gennPath.c_str(), NULL);
+	      cout << "Autodetecting GENN_PATH=" << gennPath << endl;
+#endif
+  }
+	  fname= gennPath +"/lib/runner.cubin";
 	  cudaFuncAttributes krnlAttr[2][krnlNo];
 	  CUfunction kern;
 	  CUresult res;
@@ -305,23 +327,23 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
 	      model = new NNmodel();
 	      modelDefinition(*model);
 	      generate_model_runner(*model, path);
-	      
-	      // Run NVCC 
+
+	      // Run NVCC
 	      mos << "dry-run compile for device " << device << endl;
 	      command.str("");
 #ifdef _WIN32
 	      command << "\"\"" << NVCC << "\" -x cu -cubin -Xptxas=-v -DDT=" << DT;
-	      command << " -I\"%CUDA_PATH%/samples/common/inc\" -I\"%GENN_PATH%/lib/include\"";
+	       command << " -I\"%CUDA_PATH%/samples/common/inc\" -I\"" + gennPath +"/lib/include\"";
 	      command << " -arch=sm_" << deviceProp[device].major << deviceProp[device].minor;
 	      command << " " << path << "/" << model->name << "_CODE/runner.cc 2>&1\"";
 #else
 	      command << "\"" << NVCC << "\" -x cu -cubin -Xptxas=-v -DDT=" << DT;
-	      command << " -I\"$CUDA_PATH/samples/common/inc\" -I\"$GENN_PATH/lib/include\"";
+	      command << " -I\"$CUDA_PATH/samples/common/inc\" -I\"" + gennPath + "/lib/include\"";
 	      command << " -arch=sm_" << deviceProp[device].major << deviceProp[device].minor;
 	      command << " " << path << "/" << model->name << "_CODE/runner.cc 2>&1";
 #endif
 	      mos << command.str() << endl;
-	      
+
 	      system(command.str().c_str());
 	      CHECK_CU_ERRORS(cuModuleLoad(&module, fname.c_str()));
 	      for (int i= 0; i < krnlNo; i++) {
@@ -336,7 +358,7 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
 		  else {
 		      KrnlExist[i]= 0;
 		  }
-	      }	      
+	      }
 	      CHECK_CU_ERRORS(cuModuleUnload(module));
 	  }
 	  for (int kernel= 0; kernel < krnlNo; kernel++) {
@@ -348,25 +370,25 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
 		  double y1= krnlAttr[0][kernel].sharedSizeBytes;
 		  double y2= krnlAttr[1][kernel].sharedSizeBytes;
 		  double reqSmemM= (y2-y1)/(x2-x1);
-		  double reqSmemB= y1-reqSmemM*x1; 
+		  double reqSmemB= y1-reqSmemM*x1;
 		  for (int blkSz = 1, mx= deviceProp[device].maxThreadsPerBlock / warpSize; blkSz <= mx; blkSz++) {
-		      
+
 #ifdef BLOCKSZ_DEBUG
 		      mos << "BLOCKSZ_DEBUG: Kernel " << kernel << ": Candidate block size: " << blkSz*warpSize << endl;
 #endif
 		      // BLOCK LIMIT DUE TO THREADS
 		      blockLimit = floor((float) deviceProp[device].maxThreadsPerMultiProcessor/warpSize/blkSz);
-		      
+
 #ifdef BLOCKSZ_DEBUG
 		      mos << "BLOCKSZ_DEBUG: Kernel " << kernel << ": Block limit due to maxThreadsPerMultiProcessor: " << blockLimit << endl;
 #endif
 		      if (blockLimit > maxBlocksPerSM) blockLimit = maxBlocksPerSM;
-		      
+
 #ifdef BLOCKSZ_DEBUG
 		      mos << "BLOCKSZ_DEBUG: Kernel " << kernel << ": Block limit corrected for maxBlocksPerSM: " << blockLimit << endl;
 #endif
 		      mainBlockLimit = blockLimit;
-		      
+
 		      // BLOCK LIMIT DUE TO REGISTERS
 		      if (deviceProp[device].major == 1) { // if register allocation is per block
 			  blockLimit = ceil(blkSz/warpAllocGran)*warpAllocGran;
@@ -378,13 +400,13 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
 			  blockLimit = floor(deviceProp[device].regsPerBlock/blockLimit/warpAllocGran)*warpAllocGran;
 			  blockLimit = floor(blockLimit/blkSz);
 		      }
-		      
+
 #ifdef BLOCKSZ_DEBUG
 		      mos << "BLOCKSZ_DEBUG: Kernel " << kernel << ": Block limit due to registers (device major " << deviceProp[device].major << "): " << blockLimit << endl;
 #endif
-		      
+
 		      if (blockLimit < mainBlockLimit) mainBlockLimit= blockLimit;
-		      
+
 		      // BLOCK LIMIT DUE TO SHARED MEMORY
 		      reqSmem= (unsigned int) (reqSmemM*blkSz*warpSize+reqSmemB); // calculate required Smem for candidate block size
 #ifdef BLOCKSZ_DEBUG
@@ -392,13 +414,13 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
 #endif
 		      blockLimit = ceil(reqSmem/smemAllocGran)*smemAllocGran;
 		      blockLimit = floor(deviceProp[device].sharedMemPerBlock/blockLimit);
-		      
+
 #ifdef BLOCKSZ_DEBUG
 		      mos << "BLOCKSZ_DEBUG: Kernel " << kernel << ": Block limit due to shared memory: " << blockLimit << endl;
 #endif
-		      
+
 		      if (blockLimit < mainBlockLimit) mainBlockLimit= blockLimit;
-		      
+
 		      // The number of thread blocks required to simulate all groups
 		      requiredBlocks = 0;
 		      for (int group = 0; group < groupSize[kernel].size(); group++) {
@@ -407,26 +429,26 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
 #ifdef BLOCKSZ_DEBUG
 		      mos << "BLOCKSZ_DEBUG: Kernel " << kernel << ": Required blocks (according to padded sum): " << requiredBlocks << endl;
 #endif
-		      
+
 		      // Use a small block size if it allows all groups to occupy the device concurrently
 		      if (requiredBlocks <= (mainBlockLimit*deviceProp[device].multiProcessorCount)) {
 			  bestBlkSz[kernel][device] = (unsigned int) blkSz*warpSize;
 			  deviceOccupancy[kernel][device]= blkSz*mainBlockLimit*deviceProp[device].multiProcessorCount;
 			  smallModel[kernel][device] = 1;
-			  
+
 #ifdef BLOCKSZ_DEBUG
 			  mos << "BLOCKSZ_DEBUG: Kernel " << kernel << ": Small model situation detected; bestBlkSz: " << bestBlkSz[kernel][device] << endl;
 			  mos << "BLOCKSZ_DEBUG: Kernel " << kernel << ": ... setting smallModel[" << kernel << "][" << device << "] to 1" << endl;
 #endif
 			  break; // for small model the first (smallest) block size allowing it is chosen
 		      }
-		      
+
 		      // Update the best warp occupancy and the block size which enables it.
 		      int newOccupancy= blkSz*mainBlockLimit*deviceProp[device].multiProcessorCount;
 		      if (newOccupancy > deviceOccupancy[kernel][device]) {
-			  bestBlkSz[kernel][device] = (unsigned int) blkSz*warpSize; 
+			  bestBlkSz[kernel][device] = (unsigned int) blkSz*warpSize;
 			  deviceOccupancy[kernel][device]= newOccupancy;
-			  
+
 #ifdef BLOCKSZ_DEBUG
 			  mos << "BLOCKSZ_DEBUG: Kernel " << kernel << ": Small model not enabled; device occupancy criterion; deviceOccupancy " << deviceOccupancy[kernel][device] << "; blocksize for " << kernelName[kernel] << ": " << (unsigned int) blkSz * warpSize << endl;
 #endif
@@ -435,7 +457,7 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
 	      }
 	  }
       }
-      
+
       if (GENN_PREFERENCES::chooseDevice) {
 	  // now decide the device ...
 	  int anySmall= 0;
@@ -448,7 +470,7 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
 	      smallModelCnt[device]= 0;
 	      sumOccupancy[device]= 0;
 	      for (int kernel= 0; kernel < krnlNo; kernel++) {
-#ifdef BLOCKSZ_DEBUG	
+#ifdef BLOCKSZ_DEBUG
 		  mos << "BLOCKSZ_DEBUG: smallModel[" << kernel << "][" << device << "]= " << smallModel[kernel][device] << endl;
 #endif
 		  if (smallModel[kernel][device]) {
@@ -465,13 +487,13 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
 		  bestDeviceOccupancy= sumOccupancy[device];
 		  bestSmVersion= smVersion;
 		  chosenDevice= device;
-		  
+
 #ifdef BLOCKSZ_DEBUG
 		  mos << "BLOCKSZ_DEBUG: Choosing based on larger small model count;  device: " << chosenDevice << "; bestSmallModelCnt: " <<  bestSmallModelCnt << endl;
 #endif
 	      }
 	      else {
-		  if (smallModelCnt[device] == bestSmallModelCnt) { 
+		  if (smallModelCnt[device] == bestSmallModelCnt) {
 #ifdef BLOCKSZ_DEBUG
 		      mos << "BLOCKSZ_DEBUG: Equal small model count: Next criterion: Occupancy" << endl;
 #endif
@@ -481,14 +503,14 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
 			  chosenDevice= device;
 #ifdef BLOCKSZ_DEBUG
 			  mos << "BLOCKSZ_DEBUG: Choose device based on occupancy; device: " << chosenDevice << "; bestDeviceOccupancy (sum): " << bestDeviceOccupancy << endl;
-#endif	
-		      } 
+#endif
+		      }
 		      else {
 			  if (sumOccupancy[device] == bestDeviceOccupancy) {
 #ifdef BLOCKSZ_DEBUG
 			      mos << "BLOCKSZ_DEBUG: Equal device occupancy: Next criterion: smVersion" << endl;
-#endif      
-			      
+#endif
+
 			      if (smVersion > bestSmVersion) {
 				  bestSmVersion= smVersion;
 				  chosenDevice= device;
@@ -507,14 +529,14 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
 			      mos << "BLOCKSZ_DEBUG: Device has inferirior occupancy; chosen device remains: " << chosenDevice << endl;
 			  }
 #endif
-			  
+
 		      }
 		  }
 #ifdef BLOCKSZ_DEBUG
 		  else {
 		      mos << "BLOCKSZ_DEBUG: Device has inferirior small model count; chosen device remains: " << chosenDevice << endl;
 		  }
-#endif	      
+#endif
 	      }
 	  }
 	  mos << "Using device " << chosenDevice << " (" << deviceProp[chosenDevice].name << "), with up to ";
@@ -532,11 +554,11 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
       for (int kernel= 0; kernel < krnlNo; kernel++) {
 	  delete[] bestBlkSz[kernel];
 	  delete[] smallModel[kernel];
-	  delete[] deviceOccupancy[kernel];   
+	  delete[] deviceOccupancy[kernel];
       }
       delete[] bestBlkSz;
       delete[] smallModel;
-      delete[] deviceOccupancy;   
+      delete[] deviceOccupancy;
       delete[] groupSize;
   }
   else { // IF OPTIMISATION IS OFF: Simply choose the device with the most global memory.
@@ -589,7 +611,7 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
 /*! \brief Main entry point for the generateALL executable that generates
   the code for GPU and CPU.
 
-  The main function is the entry point for the code generation engine. It 
+  The main function is the entry point for the code generation engine. It
   prepares the system and then invokes generate_model_runner to inititate
   the different parts of actual code generation.
 */
@@ -608,7 +630,7 @@ int main(int argc,     //!< number of arguments; expected to be 2
     cout << argv[i] << " ";
   }
   cout << endl;
-    
+
   NNmodel *model = new NNmodel();
   modelDefinition(*model);
   if (!model->final) {
@@ -616,9 +638,9 @@ int main(int argc,     //!< number of arguments; expected to be 2
   }
   string path= toString(argv[1]);
 #ifndef CPU_ONLY
-  theDev = chooseDevice(cout, model, path);
+  theDev = chooseDevice(cout, model, path, argv[0]);
 #endif
   generate_model_runner(*model, path);
-  
+
   return EXIT_SUCCESS;
 }
