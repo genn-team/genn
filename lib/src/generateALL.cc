@@ -260,7 +260,7 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
 	      maxBlocksPerSM = 32;
 	  }
 	  else {
-	      mos << "Error: unsupported CUDA device major version: " << deviceProp[device].major << endl;
+	      cerr << "Error: unsupported CUDA device major version: " << deviceProp[device].major << endl;
 	      exit(EXIT_FAILURE);
 	  }
 
