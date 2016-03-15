@@ -1,14 +1,14 @@
 /*--------------------------------------------------------------------------
    Author: Thomas Nowotny
-  
+
    Institute: Center for Computational Neuroscience and Robotics
               University of Sussex
-	      Falmer, Brighton BN1 9QJ, UK 
-  
+	      Falmer, Brighton BN1 9QJ, UK
+
    email to:  T.Nowotny@sussex.ac.uk
-  
+
    initial version: 2010-02-07
-  
+
 --------------------------------------------------------------------------*/
 
 //--------------------------------------------------------------------------
@@ -17,7 +17,7 @@
 \brief This file is part of a tool chain for running the classol/MBody_delayedSyn example model.
 
 This file compiles to a tool that wraps all the other tools into one chain of tasks, including running all the gen_* tools for generating connectivity, providing the population size information through ../userproject/include/sizes.h to the MBody_delayedSyninition, running the GeNN code generation and compilation steps, executing the model and collecting some timing information. This tool is the recommended way to quickstart using GeNN as it only requires a single command line to execute all necessary tasks.
-*/ 
+*/
 //--------------------------------------------------------------------------
 
 #include <iostream>
@@ -28,6 +28,7 @@ This file compiles to a tool that wraps all the other tools into one chain of ta
 #include <cmath>
 #include <cfloat>
 #include <locale>
+#include <stdexcept>
 using namespace std;
 
 #ifdef _WIN32
@@ -59,23 +60,28 @@ CPU_ONLY=0 or CPU_ONLY=1 (default 0): Whether to compile in (CUDA independent) \
 
   int retval;
   string cmd;
-  string gennPath = getenv("GENN_PATH");
+#include "set_path.h"
+
   int which = atoi(argv[1]);
   int nAL = atoi(argv[2]);
   int nMB = atoi(argv[3]);
   int nLHI = atoi(argv[4]);
   int nLB = atoi(argv[5]);
   double gscale = atof(argv[6]);
-  string outdir = toString(argv[7]) + "_output";  
+  string outdir =
+#ifndef _WIN32
+    modelRoot + "/" +
+#endif
+    toString(argv[7]) + "_output";
   string modelName = argv[8];
 
   int argStart= 9;
 #include "parse_options.h"  // parse options
-  
+
   double pnkc_gsyn = 100.0 / nAL * gscale;
-  double pnkc_gsyn_sigma = 100.0 / nAL * gscale / 15.0; 
-  double kcdn_gsyn = 2500.0 / nMB * 0.05 * gscale; 
-  double kcdn_gsyn_sigma = 2500.0 / (sqrt((double) 1000.0)*sqrt((double) nMB)) * 0.005 * gscale; 
+  double pnkc_gsyn_sigma = 100.0 / nAL * gscale / 15.0;
+  double kcdn_gsyn = 2500.0 / nMB * 0.05 * gscale;
+  double kcdn_gsyn_sigma = 2500.0 / (sqrt((double) 1000.0)*sqrt((double) nMB)) * 0.005 * gscale;
   double pnlhi_theta = 100.0 / nAL * 14.0 * gscale;
 
   // write neuron population sizes
@@ -100,7 +106,7 @@ CPU_ONLY=0 or CPU_ONLY=1 (default 0): Whether to compile in (CUDA independent) \
   else {
       os << "#define SCALAR_MIN " << FLT_MIN << "f" << endl;
       os << "#define SCALAR_MAX " << FLT_MAX << "f" << endl;
-  } 
+  }
 
   os.close();
 
@@ -119,7 +125,7 @@ CPU_ONLY=0 or CPU_ONLY=1 (default 0): Whether to compile in (CUDA independent) \
   }
 
 #else // UNIX
-  cmd = "cd model && buildmodel.sh " + modelName + " DEBUG=" + toString(dbgMode);
+  cmd = "cd " + modelRoot + "/model && " + gennPath + "/lib/bin/buildmodel.sh " + modelName + " DEBUG=" + toString(dbgMode);
   if (cpu_only) {
       cmd += " CPU_ONLY=1";
   }
@@ -229,10 +235,10 @@ CPU_ONLY=0 or CPU_ONLY=1 (default 0): Whether to compile in (CUDA independent) \
   }
 #else // UNIX
   if (dbgMode == 1) {
-    cmd = "cuda-gdb -tui --args model/classol_sim "+ toString(argv[7]) + " " + toString(which);
+    cmd = "cuda-gdb -tui --args " + modelRoot + "/model/classol_sim " + toString(argv[7]) + " " + toString(which) + " " + modelRoot;
   }
   else {
-    cmd = "model/classol_sim "+ toString(argv[7]) + " " + toString(which);
+    cmd = modelRoot + "/model/classol_sim "+ toString(argv[7]) + " " + toString(which) + " " + modelRoot;
   }
 #endif
   retval = system(cmd.c_str());
