@@ -17,36 +17,58 @@
 #-----------------------------------------------------------------
 
 # OS name (Linux or Darwin) and architecture (32 bit or 64 bit).
-OS_SIZE 	:=$(shell uname -m | sed -e "s/i.86/32/" -e "s/x86_64/64/" -e "s/armv7l/32/")
-OS_LOWER 	:=$(shell uname -s 2>/dev/null | tr [:upper:] [:lower:])
-OS_UPPER 	:=$(shell uname -s 2>/dev/null | tr [:lower:] [:upper:])
-DARWIN  	:=$(strip $(findstring DARWIN, $(OS_UPPER)))
+OS_SIZE 		:=$(shell uname -m | sed -e "s/i.86/32/" -e "s/x86_64/64/" -e "s/armv7l/32/")
+OS_UPPER 		:=$(shell uname -s 2>/dev/null | tr [:lower:] [:upper:])
+OS_LOWER 		:=$(shell uname -s 2>/dev/null | tr [:upper:] [:lower:])
+DARWIN  		:=$(strip $(findstring DARWIN, $(OS_UPPER)))
 
-# Global C++ and CUDA compiler settings.
-ifdef CUDA_PATH
-  NVCC		:=$(CUDA_PATH)/bin/nvcc
-  CXXFLAGS	+=-DNVCC=\"$(NVCC)\" -std=c++0x
-  CUDA_LIBS	:=-lcuda -lcudart
-else
-  CXXFLAGS	+=-std=c++0x
-endif
 
-# Global include flags and link flags.
-INCLUDE_FLAGS	:=-include $(MODEL) -I$(CUDA_PATH)/include -I$(GENN_PATH)/lib/include -I$(GENN_PATH)/userproject/include
-ifeq ($(DARWIN),DARWIN)
-  LINK_FLAGS	:=-Xlinker -L$(CUDA_PATH)/lib $(CUDA_LIBS) -lstdc++ -lc++
-else
-  ifeq ($(OS_SIZE),32)
-    LINK_FLAGS	:=-L$(CUDA_PATH)/lib $(CUDA_LIBS) -lstdc++
-  else
-    LINK_FLAGS	:=-L$(CUDA_PATH)/lib64 $(CUDA_LIBS) -lstdc++
+ifneq ($(CPU_ONLY),1) # If generating CUDA device code
+
+  # global CUDA compiler settings
+  CUDA_PATH		?=/usr/local/cuda
+  NVCC			:=$(CUDA_PATH)/bin/nvcc
+  NVCCFLAGS		+=
+
+  # Global C++ compiler settings.
+  CXXFLAGS		+=-std=c++0x -DNVCC=\"$(NVCC)\"
+  ifeq ($(DARWIN),DARWIN)
+    CXX			:=clang++
   endif
+
+  # Global include flags and link flags.
+  INCLUDE_FLAGS		:=-include $(MODEL) -I$(CUDA_PATH)/include -I$(GENN_PATH)/lib/include -I$(GENN_PATH)/userproject/include
+  ifeq ($(DARWIN),DARWIN)
+    LINK_FLAGS		:=-Xlinker -L$(CUDA_PATH)/lib -lcudart -lstdc++ -lc++
+  else
+    ifeq ($(OS_SIZE),32)
+      LINK_FLAGS	:=-L$(CUDA_PATH)/lib -lcudart
+    else
+      LINK_FLAGS	:=-L$(CUDA_PATH)/lib64 -lcudart
+    endif
+  endif
+
+else # If generating CPU-only codex
+
+  # Global C++ compiler settings.
+  CXXFLAGS		+=-std=c++0x
+  ifeq ($(DARWIN),DARWIN)
+    CXX			:=clang++
+  endif
+
+  # Global include flags and link flags.
+  INCLUDE_FLAGS		:=-include $(MODEL) -I$(GENN_PATH)/lib/include -I$(GENN_PATH)/userproject/include
+  ifeq ($(DARWIN),DARWIN)
+    LINK_FLAGS		:=-Xlinker -lstdc++ -lc++
+  endif
+
 endif
 
 # Locations of src, obj and bin directories.
-SRCDIR		:=src
-OBJDIR		:=obj
-BINDIR		:=bin
+SRCDIR			:=src
+OBJDIR			:=obj
+BINDIR			:=bin
+
 
 # Target rules.
 .PHONY: all
