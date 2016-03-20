@@ -13,9 +13,9 @@
 
 EXECUTABLE	:=classol_sim
 ifeq ($(CPU_ONLY),1)
-  SOURCES :=classol_sim_cpu_only.cc
+  SOURCES :=$(EXECUTABLE)_cpu_only.cc
 else
-  SOURCES :=classol_sim.cu
+  SOURCES :=$(EXECUTABLE).cu
 endif
 
 OPTIMIZATIONFLAGS:= -O3 -ffast-math
@@ -23,9 +23,9 @@ NVCC_OPTIMIZATIONFLAGS:= -use_fast_math -O3
 
 include	$(GENN_PATH)/userproject/include/makefile_common_gnu.mk
 
-classol_sim_cpu_only.o: classol_sim_cpu_only.cc
+$(EXECUTABLE)_cpu_only.o: $(EXECUTABLE)_cpu_only.cc
 	$(CXX) $(CXXFLAGS) $(INCLUDE_FLAGS) $< -o $@ -c
-	rm classol_sim_cpu_only.cc
+	rm $(EXECUTABLE)_cpu_only.cc
 
-classol_sim_cpu_only.cc: classol_sim.cu
-	cp classol_sim.cu classol_sim_cpu_only.cc
+$(EXECUTABLE)_cpu_only.cc: $(EXECUTABLE).cu
+	cp $(EXECUTABLE).cu $(EXECUTABLE)_cpu_only.cc
