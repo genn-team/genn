@@ -1,21 +1,26 @@
 #!/bin/bash
 
 error() {
-  local message="$1"
-  local code="${2:-1}"
-  if [[ -n "$message" ]] ; then
-    echo "buildmodel Error: ${message}; exiting with status ${code}"
-  else
-    echo "buildmodel Error: exiting with status ${code}"
-  fi
-  exit "${code}"
+    local message="$1"
+    local code="${2:-1}"
+    if [[ -n "$message" ]] ; then
+	echo "buildmodel.sh: Error: ${message}; exiting with status ${code}"
+    else
+	echo "buildmodel.sh: Error: exiting with status ${code}"
+    fi
+    exit "${code}"
 }
 trap 'error ' ERR
 
 MODELPATH=$(pwd);
-echo "model path:" $MODELPATH
 MODELNAME=$1;
+if [[ $MODELNAME == "" ]]; then
+    echo "buildmodel.sh: Error: No arguments given"
+    exit 1
+fi
+echo "model path:" $MODELPATH
 echo "model name:" $MODELNAME
+
 k=0
 DBGMODE=0
 EXTRA_DEF=
@@ -27,7 +32,7 @@ for op in $@; do
 	fi
 	if [[ $op == "CPU_ONLY=1" ]]; then
 	    EXTRA_DEF=CPU_ONLY
-	fi 
+	fi
     fi
     k=$[$k+1];
 done
@@ -36,12 +41,13 @@ if [[ $EXTRA_DEF != "" ]]; then
 fi
 
 if [[ "$GENN_PATH" == "" ]]; then
-    if [[ "$GeNNPATH" == "" ]]; then
-	echo "buildmodel Error: Environment variable 'GENN_PATH' has not been defined. Quitting..."
-	exit 1
+    if [[ $(uname -s) == "Linux" ]]; then
+	echo "GENN_PATH is not defined. Auto-detecting..."
+	export GENN_PATH=$(readlink -f $(dirname $0)/../..)
+    else
+	echo "buildmodel.sh: Error: GENN_PATH is not defined"
+	exit 1	
     fi
-    echo "Environment variable 'GeNNPATH' will be replaced by 'GENN_PATH' in future GeNN releases."
-    export GENN_PATH=$GeNNPATH
 fi
 
 cd $GENN_PATH/lib;
@@ -54,6 +60,5 @@ else
     make MODEL=$MODELPATH/$MODELNAME.cc EXTRA_DEF=$EXTRA_DEF;
     bin/generateALL $MODELPATH;
 fi
-cd $MODELPATH;
 
 echo "Model build complete ..."

@@ -23,18 +23,23 @@ OS_UPPER 	:=$(shell uname -s 2>/dev/null | tr [:lower:] [:upper:])
 DARWIN  	:=$(strip $(findstring DARWIN, $(OS_UPPER)))
 
 # Global C++ and CUDA compiler settings.
-NVCC		:=$(CUDA_PATH)/bin/nvcc
-CXXFLAGS	+=-DNVCC=\"$(NVCC)\" -std=c++0x
+ifdef CUDA_PATH
+  NVCC		:=$(CUDA_PATH)/bin/nvcc
+  CXXFLAGS	+=-DNVCC=\"$(NVCC)\" -std=c++0x
+  CUDA_LIBS	:=-lcuda -lcudart
+else
+  CXXFLAGS	+=-std=c++0x
+endif
 
 # Global include flags and link flags.
 INCLUDE_FLAGS	:=-include $(MODEL) -I$(CUDA_PATH)/include -I$(GENN_PATH)/lib/include -I$(GENN_PATH)/userproject/include
 ifeq ($(DARWIN),DARWIN)
-  LINK_FLAGS	:=-Xlinker -L$(CUDA_PATH)/lib -lcuda -lcudart -lstdc++ -lc++
+  LINK_FLAGS	:=-Xlinker -L$(CUDA_PATH)/lib $(CUDA_LIBS) -lstdc++ -lc++
 else
   ifeq ($(OS_SIZE),32)
-    LINK_FLAGS	:=-L$(CUDA_PATH)/lib -lcuda -lcudart -lstdc++ 
+    LINK_FLAGS	:=-L$(CUDA_PATH)/lib $(CUDA_LIBS) -lstdc++
   else
-    LINK_FLAGS	:=-L$(CUDA_PATH)/lib64 -lcuda -lcudart -lstdc++
+    LINK_FLAGS	:=-L$(CUDA_PATH)/lib64 $(CUDA_LIBS) -lstdc++
   endif
 endif
 
@@ -51,7 +56,7 @@ $(OBJDIR)/generateALL.o: $(SRCDIR)/generateALL.cc $(OBJDIR)
 	$(CXX) $(CXXFLAGS) $(INCLUDE_FLAGS) $(EXTRA_DEF) $(SRCDIR)/generateALL.cc -o $(OBJDIR)/generateALL.o -c
 
 $(BINDIR)/generateALL: $(OBJDIR)/generateALL.o
-	$(CXX) $(CXXFLAGS) $(OBJDIR)/generateALL.o -o $(BINDIR)/generateALL $(LINK_FLAGS) 
+	$(CXX) $(CXXFLAGS) $(OBJDIR)/generateALL.o -o $(BINDIR)/generateALL $(LINK_FLAGS)
 
 .PHONY: debug
 debug: CXXFLAGS +=-g
