@@ -203,7 +203,7 @@ void classIzh::setInput(unsigned int which)
 
 void classIzh::run(double runtime, unsigned int which)
 {
-  int riT= (int) (runtime/DT);
+  int riT= (int) (runtime/DT+1e-6);
   if (which == GPU){
     for (int i= 0; i < riT; i++) {
 #ifndef CPU_ONLY
