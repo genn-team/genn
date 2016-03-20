@@ -371,7 +371,7 @@ void classol::runGPU(scalar runtime //!< Duration of time to run the model for
 {
     //runtime arg1
     unsigned int pno;
-    int riT= (int) (runtime/DT);
+    int riT= (int) (runtime/DT+1e-6);
 
     for (int i= 0; i < riT; i++) {
 	unsigned int flags= 0;

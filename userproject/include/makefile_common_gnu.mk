@@ -17,49 +17,60 @@
 #-----------------------------------------------------------------
 
 # OS name (Linux or Darwin) and architecture (32 bit or 64 bit).
-OS_SIZE		:=$(shell uname -m | sed -e "s/i.86/32/" -e "s/x86_64/64/" -e "s/armv7l/32/")
-OS_UPPER 	:=$(shell uname -s 2>/dev/null | tr [:lower:] [:upper:])
-OS_LOWER 	:=$(shell uname -s 2>/dev/null | tr [:upper:] [:lower:])
-DARWIN  	:=$(strip $(findstring DARWIN, $(OS_UPPER)))
-
-# Global C++ compiler settings.
-CXXFLAGS	+=-std=c++0x
-ifeq ($(DARWIN),DARWIN)
-   CXX		:=clang++
-endif
+OS_SIZE			:=$(shell uname -m | sed -e "s/i.86/32/" -e "s/x86_64/64/" -e "s/armv7l/32/")
+OS_UPPER 		:=$(shell uname -s 2>/dev/null | tr [:lower:] [:upper:])
+OS_LOWER 		:=$(shell uname -s 2>/dev/null | tr [:upper:] [:lower:])
+DARWIN			:=$(strip $(findstring DARWIN, $(OS_UPPER)))
 
 
-# Global include flags and link flags.
-ifneq ($(CPU_ONLY),1)
+ifneq ($(CPU_ONLY),1) # If generating CUDA device code
+
   # global CUDA compiler settings
-  CUDA_PATH	?=/usr/local/cuda
-  NVCC		:=$(CUDA_PATH)/bin/nvcc
-  NVCCFLAGS	+= 
-  INCLUDE_FLAGS	+=-I$(CUDA_PATH)/include -I$(CUDA_PATH)/samples/common/inc -I$(GENN_PATH)/lib/include -I$(GENN_PATH)/userproject/include
+  CUDA_PATH		?=/usr/local/cuda
+  NVCC			:=$(CUDA_PATH)/bin/nvcc
+  NVCCFLAGS		+=
+
+  # Global C++ compiler settings.
+  CXXFLAGS		+=-std=c++0x
   ifeq ($(DARWIN),DARWIN)
-    LINK_FLAGS	+=-L$(CUDA_PATH)/lib -lcudart -lcuda -stdlib=libstdc++ -lc++ 
+    CXX			:=clang++
+  endif
+
+  # Global include flags and link flags.
+  INCLUDE_FLAGS		+=-I$(CUDA_PATH)/include -I$(GENN_PATH)/lib/include -I$(GENN_PATH)/userproject/include
+  ifeq ($(DARWIN),DARWIN)
+    LINK_FLAGS		+=-L$(CUDA_PATH)/lib -lcuda -lcudart -stdlib=libstdc++ -lc++
   else
     ifeq ($(OS_SIZE),32)
-      LINK_FLAGS	+=-L$(CUDA_PATH)/lib -lcudart -lcuda
+      LINK_FLAGS	+=-L$(CUDA_PATH)/lib -lcuda -lcudart
     else
-      LINK_FLAGS	+=-L$(CUDA_PATH)/lib64 -lcudart -lcuda
+      LINK_FLAGS	+=-L$(CUDA_PATH)/lib64 -lcuda -lcudart
     endif
   endif
+
   # An auto-generated file containing your cuda device's compute capability.
   -include sm_version.mk
-else
-  INCLUDE_FLAGS+= -DCPU_ONLY -I$(GENN_PATH)/lib/include -I$(GENN_PATH)/userproject/include
+
+else # If generating CPU-only code
+
+  # Global C++ compiler settings.
+  CXXFLAGS		+=-std=c++0x -DCPU_ONLY
   ifeq ($(DARWIN),DARWIN)
-    LINK_FLAGS += -stdlib=libstdc++ -lc++ 
+    CXX			:=clang++
   endif
-  NVCC :=$(CXX)
-  NVCCFLAGS :=$(CXXFLAGS)
+
+  # Global include flags and link flags.
+  INCLUDE_FLAGS		+=-I$(GENN_PATH)/lib/include -I$(GENN_PATH)/userproject/include
+  ifeq ($(DARWIN),DARWIN)
+    LINK_FLAGS		+=-stdlib=libstdc++ -lc++
+  endif
+
 endif
 
-
 # Enumerate all source and object files (if they have not already been listed).
-SOURCES		?=$(wildcard *.cc *.cpp *.cu)	
+SOURCES		?=$(wildcard *.cc *.cpp *.cu)
 OBJECTS		:=$(foreach obj,$(basename $(SOURCES)),$(obj).o)
+
 
 # Target rules.
 .PHONY: all
@@ -78,23 +89,15 @@ $(EXECUTABLE): $(OBJECTS)
 	$(CXX) $(CXXFLAGS) $(OBJECTS) -o $@ $(LINK_FLAGS)
 
 .PHONY: release
-# use --compiler-options "-Wconversion" for silent type conversions 
-ifneq ($(CPU_ONLY),1)
-  release: NVCCFLAGS	+= $(NVCC_OPTIMIZATIONFLAGS) --compiler-options "$(OPTIMIZATIONFLAGS)"
-else
-  release: NVCCFLAGS	+= $(OPTIMIZATIONFLAGS)
-endif
+# use --compiler-options "-Wconversion" for silent type conversions
+release: NVCCFLAGS	+= $(NVCC_OPTIMIZATIONFLAGS) --compiler-options "$(OPTIMIZATIONFLAGS)"
 release: CXXFLAGS	+= $(OPTIMIZATIONFLAGS)
 release: $(EXECUTABLE)
 
 .PHONY: debug
-ifneq ($(CPU_ONLY),1)
-  debug: NVCCFLAGS	+=-g -G
-else
-  debug: NVCCFLAGS	+=-g 
-endif
+debug: NVCCFLAGS	+=-g -G
 debug: CXXFLAGS		+=-g
-debug: $(EXECUTABLE) 
+debug: $(EXECUTABLE)
 
 .PHONY: clean
 clean:
