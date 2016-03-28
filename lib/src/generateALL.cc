@@ -289,8 +289,7 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
 	  CHECK_CU_ERRORS(cuCtxCreate(&cuContext, 0, cuDevice));
 	  CHECK_CU_ERRORS(cuCtxSetCurrent(cuContext));
 	  CUmodule module;
-	  string fname;
-	  fname= tS(getenv("GENN_PATH")) +"/lib/runner.cubin";
+	  string fname = path + "/runner.cubin";
 	  cudaFuncAttributes krnlAttr[2][krnlNo];
 	  CUfunction kern;
 	  CUresult res;
