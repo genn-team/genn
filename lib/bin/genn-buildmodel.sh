@@ -18,19 +18,20 @@ genn_error () { # $1=line, $2=code, $3=message
 trap 'genn_error $LINENO 50 "command failure"' ERR
 
 # parse command options
-PROJECT_PATH="$(pwd)";
+OUTPUT_PATH="$(pwd)";
 while [[ -n "${!OPTIND}" ]]; do
     while getopts "cdo:h" option; do
 	case $option in
 	    c) CPU_ONLY=1;;
 	    d) DEBUG_MODE=1;;
 	    h) genn_help; exit;;
-	    o) PROJECT_PATH="$OPTARG";;
+	    o) OUTPUT_PATH="$OPTARG";;
 	    ?) genn_help; exit;;
 	esac
     done
     if [[ $OPTIND > $# ]]; then break; fi
-    MODEL="${!OPTIND}"
+    cd "$(dirname ${!OPTIND})"
+    MODEL="$(pwd -P)/$(basename ${!OPTIND})"
     let OPTIND++
 done
 if [[ -z "$MODEL" ]]; then
@@ -48,15 +49,15 @@ if [[ -z "$GENN_PATH" ]]; then
 fi
 
 # generate model code
-cd "$PROJECT_PATH"
+cd "$OUTPUT_PATH"
 make clean -f "$GENN_PATH/lib/src/GNUmakefile"
 if [[ -n "$DEBUG_MODE" ]]; then
     echo "debugging mode ON"
     make debug -f "$GENN_PATH/lib/src/GNUmakefile" MODEL="$MODEL" CPU_ONLY=$CPU_ONLY
-    gdb -tui --args ./generateALL "$PROJECT_PATH"
+    gdb -tui --args ./generateALL "$OUTPUT_PATH"
 else
     make -f "$GENN_PATH/lib/src/GNUmakefile" MODEL="$MODEL" CPU_ONLY=$CPU_ONLY
-    ./generateALL "$PROJECT_PATH"
+    ./generateALL "$OUTPUT_PATH"
 fi
 
 echo "model build complete"
