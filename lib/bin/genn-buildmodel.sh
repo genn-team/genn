@@ -18,20 +18,20 @@ genn_error () { # $1=line, $2=code, $3=message
 trap 'genn_error $LINENO 50 "command failure"' ERR
 
 # parse command options
-OUTPUT_PATH="$(pwd)";
+INITIAL_PATH="$(pwd)";
+OUTPUT_PATH="$INITIAL_PATH";
 while [[ -n "${!OPTIND}" ]]; do
     while getopts "cdo:h" option; do
 	case $option in
 	    c) CPU_ONLY=1;;
 	    d) DEBUG_MODE=1;;
 	    h) genn_help; exit;;
-	    o) OUTPUT_PATH="$OPTARG";;
+	    o) OUTPUT_PATH="$INITIAL_PATH/$OPTARG";;
 	    ?) genn_help; exit;;
 	esac
     done
     if [[ $OPTIND > $# ]]; then break; fi
-    cd "$(dirname ${!OPTIND})"
-    MODEL="$(pwd -P)/$(basename ${!OPTIND})"
+    MODEL="$INITIAL_PATH/${!OPTIND}"
     let OPTIND++
 done
 if [[ -z "$MODEL" ]]; then
