@@ -73,6 +73,9 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 	string queueOffset = (model.neuronDelaySlots[i] > 1 ? "(spkQuePtr" + model.neuronName[i] + " * " + tS(model.neuronN[i]) + ") + " : "");
 	string queueOffsetTrueSpk = (model.neuronNeedTrueSpk[i] ? queueOffset : "");
 
+	os << "// neuron group " << model.neuronName[i] << ENDL;
+	os << OB(55);
+
 	// increment spike queue pointer and reset spike count
 	if (model.neuronDelaySlots[i] > 1) { // with delay
 	    os << "spkQuePtr" << model.neuronName[i] << " = (spkQuePtr" << model.neuronName[i] << " + 1) % " << model.neuronDelaySlots[i] << ";" << ENDL;
@@ -92,6 +95,12 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 	    }
 	    os << "glbSpkCnt" << model.neuronName[i] << "[0] = 0;" << ENDL;
 	}
+	vector<bool> varNeedQueue = model.neuronVarNeedQueue[i];
+	if ((find(varNeedQueue.begin(), varNeedQueue.end(), true) != varNeedQueue.end()) && (model.neuronDelaySlots[i] > 1)) {
+	    os << "unsigned int delaySlot = (spkQuePtr" << model.neuronName[i];
+	    os << " + " << (model.neuronDelaySlots[i] - 1);
+	    os << ") % " << model.neuronDelaySlots[i] << ";" << ENDL;
+	}
 	os << ENDL;
 
 	os << "for (int n = 0; n < " <<  model.neuronN[i] << "; n++)" << OB(10);
@@ -99,8 +108,7 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 	    os << nModels[nt].varTypes[k] << " l" << nModels[nt].varNames[k] << " = ";
 	    os << nModels[nt].varNames[k] << model.neuronName[i] << "[";
 	    if ((model.neuronVarNeedQueue[i][k]) && (model.neuronDelaySlots[i] > 1)) {
-		os << "(((spkQuePtr" << model.neuronName[i] << " + " << (model.neuronDelaySlots[i] - 1) << ") % ";
-		os << model.neuronDelaySlots[i] << ") * " << model.neuronN[i] << ") + ";
+		os << "(delaySlot * " << model.neuronN[i] << ") + ";
 	    }
 	    os << "n];" << ENDL;
 	}
@@ -109,15 +117,12 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 	    || (nModels[nt].resetCode.find(tS("$(sT)")) != string::npos)) { // load sT into local variable
 	    os << model.ftype << " lsT= sT" <<  model.neuronName[i] << "[";
 	    if (model.neuronDelaySlots[i] > 1) {
-		os << "(((dd_spkQuePtr" << model.neuronName[i] << " + " << (model.neuronDelaySlots[i] - 1) << ") % ";
-		os << model.neuronDelaySlots[i] << ") * " << model.neuronN[i] << ") + ";
+		os << "(delaySlot * " << model.neuronN[i] << ") + ";
 	    }
 	    os << "n];" << ENDL;
 	}
+	os << ENDL;
 
-	if (model.needSynapseDelay) {
-	    os << "unsigned int delaySlot;" << ENDL;
-	}
 	if ((model.inSyn[i].size() > 0) || (nModels[nt].simCode.find(tS("Isyn")) != string::npos)) {
 	    os << model.ftype << " Isyn = 0;" << ENDL;
 	} 
@@ -327,7 +332,8 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 		os << psModel.varNames[k] << sName << "[n]" << " = lps" << psModel.varNames[k] << sName << ";" << ENDL;
 	    }
 	}
-	os << CB(10) << ENDL;
+	os << CB(10);
+	os << CB(55);
 	os << ENDL;
     }
     os << CB(51) << ENDL;
@@ -530,21 +536,26 @@ void genSynapseFunction(NNmodel &model, //!< Model description
     os << "//-------------------------------------------------------------------------" << ENDL << ENDL;
 
     // synapse dynamics function
-    
-
     os << "void calcSynapseDynamicsCPU(" << model.ftype << " t)" << ENDL;
     os << OB(1000);
     os << "// execute internal synapse dynamics if any" << ENDL;
 
-    if (model.needSynapseDelay) {
-	os << "unsigned int delaySlot;" << ENDL;
-    }
     for (int i = 0; i < model.synapseGrpN; i++) {
 	unsigned int synt= model.synapseType[i];
 	string synapseName= model.synapseName[i];
 	
+	// there is some internal synapse dynamics
 	if (weightUpdateModels[synt].synapseDynamics != tS("")) {
-	    // there is some internal synapse dynamics
+
+	    os << "// synapse group " << synapseName << ENDL;
+	    os << OB(1005);
+
+	    if (model.neuronDelaySlots[src] > 1) {
+		os << "unsigned int delaySlot = (spkQuePtr" << model.neuronName[src];
+		os << " + " << (model.neuronDelaySlots[src] - model.synapseDelay[i]);
+		os << ") % " << model.neuronDelaySlots[src] << ";" << ENDL;
+	    }
+
 	    weightUpdateModel wu= weightUpdateModels[synt];
 	    if (wu.synapseDynamics_supportCode != tS("")) {
 		os << OB(29) << " using namespace " << model.synapseName[i] << "_weightupdate_synapseDynamics;" << ENDL;	
@@ -560,12 +571,7 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 	    bool delayPre = model.neuronDelaySlots[src] > 1;
 	    bool delayPost = model.neuronDelaySlots[trg] > 1;
 	    string offsetPre = (delayPre ? "(delaySlot * " + tS(model.neuronN[src]) + ") + " : "");
-	    string offsetPost = (delayPost ? "(dd_spkQuePtr" + model.neuronName[trg] +" * " + tS(model.neuronN[trg]) + ") + " : "");
-	    if (model.neuronDelaySlots[src] > 1) {
-		os << "delaySlot = (spkQuePtr" << model.neuronName[src];
-		os << " + " << tS(model.neuronDelaySlots[src] - model.synapseDelay[i]);
-		os << ") % " << tS(model.neuronDelaySlots[src]) << ";" << ENDL;
-	    }
+	    string offsetPost = (delayPost ? "(spkQuePtr" + model.neuronName[trg] +" * " + tS(model.neuronN[trg]) + ") + " : "");
 	    if (model.synapseConnType[i] == SPARSE) { // SPARSE
 		os << "for (int n= 0; n < C" << model.synapseName[i] << ".connN; n++)" << OB(24) << ENDL; 
 		if (model.synapseGType[i] == INDIVIDUALG) {
@@ -655,6 +661,7 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 	    if (weightUpdateModels[synt].synapseDynamics_supportCode != tS("")) {
 		os << CB(29) << " // namespace bracket closed" << ENDL;
 	    }
+	    os << CB(1005);
 	}
     }
     os << CB(1000);
@@ -673,9 +680,6 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 	    break;
 	}
     }
-    if (model.needSynapseDelay) {
-	os << "unsigned int delaySlot;" << ENDL;
-    }
     os << model.ftype << " addtoinSyn;" << ENDL;  
     os << ENDL;
 
@@ -686,11 +690,12 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 	inSynNo = model.synapseInSynNo[i];
 
 	os << "// synapse group " << model.synapseName[i] << ENDL;
+	os << OB(1006);
 
 	if (model.neuronDelaySlots[src] > 1) {
-	    os << "delaySlot = (spkQuePtr" << model.neuronName[src];
-	    os << " + " << tS(model.neuronDelaySlots[src] - model.synapseDelay[i]);
-	    os << ") % " << tS(model.neuronDelaySlots[src]) << ";" << ENDL;
+	    os << "unsigned int delaySlot = (spkQuePtr" << model.neuronName[src];
+	    os << " + " << (model.neuronDelaySlots[src] - model.synapseDelay[i]);
+	    os << ") % " << model.neuronDelaySlots[src] << ";" << ENDL;
 	}
 
 	// generate the code for processing spike-like events
@@ -703,6 +708,7 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 	    generate_process_presynaptic_events_code_CPU(os, model, src, trg, i, localID, inSynNo, tS(""));
 	}
 
+	os << CB(1006);
 	os << ENDL;
     }
     os << CB(1001);
@@ -725,9 +731,6 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 		os << "unsigned int npre;" << ENDL;
 		break;
 	    }
-	}
-	if (model.needSynapseDelay) {
-	    os << "unsigned int delaySlot;" << ENDL;
 	}
 	os << ENDL;
 
@@ -753,14 +756,16 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 // NOTE: WE DO NOT USE THE AXONAL DELAY FOR BACKWARDS PROPAGATION - WE CAN TALK ABOUT BACKWARDS DELAYS IF WE WANT THEM
 
 	    os << "// synapse group " << model.synapseName[k] << ENDL;
-	    if (weightUpdateModels[synt].simLearnPost_supportCode != tS("")) {
-		os << OB(29) << " using namespace " << model.synapseName[k] << "_weightupdate_simLearnPost;" << ENDL;	
-	    }
+	    os << OB(950);
 
 	    if (delayPre) {
-		os << "delaySlot = (spkQuePtr" << model.neuronName[src];
-		os << " + " << tS(model.neuronDelaySlots[src] - model.synapseDelay[k]);
-		os << ") % " << tS(model.neuronDelaySlots[src]) << ";" << ENDL;
+		os << "unsigned int delaySlot = (spkQuePtr" << model.neuronName[src];
+		os << " + " << (model.neuronDelaySlots[src] - model.synapseDelay[k]);
+		os << ") % " << model.neuronDelaySlots[src] << ";" << ENDL;
+	    }
+
+	    if (weightUpdateModels[synt].simLearnPost_supportCode != tS("")) {
+		os << OB(29) << " using namespace " << model.synapseName[k] << "_weightupdate_simLearnPost;" << ENDL;
 	    }
 
 	    if (delayPost && model.neuronNeedTrueSpk[trg]) {
@@ -850,6 +855,7 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 	    if (weightUpdateModels[synt].simLearnPost_supportCode != tS("")) {
 		os << CB(29) << " // namespace bracket closed" << ENDL;
 	    }
+	    os << CB(950);
 	}
 	os << CB(811);
     }
