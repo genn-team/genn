@@ -18,6 +18,7 @@
   generating the CPU side code for running simulations on either the CPU or GPU (generateRunner.cc) and for CPU-only simulation code (generateCPU.cc).
 */
 
+#include <algorithm>
 #include <string>
 #include "global.h"
 #include "modelSpec.h"
