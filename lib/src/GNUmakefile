@@ -23,7 +23,7 @@ OS_LOWER 		:=$(shell uname -s 2>/dev/null | tr [:upper:] [:lower:])
 DARWIN  		:=$(strip $(findstring DARWIN, $(OS_UPPER)))
 
 # Global CUDA compiler settings
-ifndef $(CPU_ONLY)
+ifndef CPU_ONLY
     CUDA_PATH		?=/usr/local/cuda
     NVCC		:=$(CUDA_PATH)/bin/nvcc
 endif
@@ -32,14 +32,14 @@ endif
 ifeq ($(DARWIN),DARWIN)
     CXX			:=clang++
 endif
-ifndef $(CPU_ONLY)
+ifndef CPU_ONLY
     CXXFLAGS		:=-std=c++0x -DNVCC=\"$(NVCC)\"
 else
     CXXFLAGS		:=-std=c++0x -DCPU_ONLY
 endif
 
 # Global include and link flags
-ifndef $(CPU_ONLY)
+ifndef CPU_ONLY
     INCLUDE_FLAGS	:=-include $(MODEL) -I$(GENN_PATH)/lib/include -I$(CUDA_PATH)/include
     ifeq ($(DARWIN),DARWIN)
         LINK_FLAGS	:=-Xlinker -lstdc++ -lc++ -L$(CUDA_PATH)/lib -lcuda -lcudart
