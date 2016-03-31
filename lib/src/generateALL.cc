@@ -261,14 +261,14 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
 	      maxBlocksPerSM = 32;
 	  }
 	  else {
-	      mos << "Error: unsupported CUDA device major version: " << deviceProp[device].major << endl;
+	      cerr << "Error: unsupported CUDA device major version: " << deviceProp[device].major << endl;
 	      exit(EXIT_FAILURE);
 	  }
 
 	  // Signal error and exit if SM version < 1.3 and double precision floats are requested.
 	  if ((deviceProp[device].major == 1) && (deviceProp[device].minor < 3))
 	  {
-	      if (model->ftype == "double")
+	      if (model->ftype != "float")
 	      {
 		  cerr << "Error: This CUDA device does not support double precision floating-point." << endl;
 		  cerr << "       Either change the ftype parameter to GENN_FLOAT or find a newer GPU" << endl;
