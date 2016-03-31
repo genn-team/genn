@@ -14,7 +14,7 @@ interneurons, via faster synapses.
 
 To run this example project, first build the model into CUDA code by typing:
 
-  buildmodel.bat SynDelay
+  genn-buildmodel.bat SynDelay.cc
 
 then compile the project by typing:
 
@@ -27,7 +27,7 @@ then compile the project by typing:
 
 To run this example project, first build the model into CUDA code by typing:
 
-  buildmodel.sh SynDelay
+  genn-buildmodel.sh SynDelay.cc
 
 then compile the project by typing:
 
