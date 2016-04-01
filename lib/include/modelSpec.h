@@ -235,7 +235,6 @@ public:
   vector<bool> synapseUsesSpikeEvents; //!< Defines if synapse update is done after detection of spike events (every point above threshold)
   vector<bool> synapseUsesPostLearning; //!< Defines if anything is done in case of postsynaptic neuron spiking before presynaptic neuron (punishment in STDP etc.) 
   vector<bool> synapseUsesSynapseDynamics; //!< Defines if there is any continuos synapse dynamics defined
-  vector<vector<string> > synapseSpkEvntVars; //!< Defines variable names that are needed in the SpkEvnt condition and that are pre-fetched for that purpose into shared memory
   vector<vector<double> > synapsePara; //!< parameters of synapses
   vector<vector<double> > synapseIni; //!< Initial values of synapse variables
   vector<vector<double> > dsp_w;  //!< Derived synapse parameters (weightUpdateModel only)

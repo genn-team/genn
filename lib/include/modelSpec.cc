@@ -236,14 +236,7 @@ void NNmodel::initLearnGrps()
 	    neuronNeedSpkEvnt[src] = TRUE;
 
 	    assert(wu.evntThreshold != tS(""));
-            // find the necessary pre-synaptic variables contained in Threshold condition
-	    for (int j = 0; j < vars.size(); j++) {
-		if (wu.evntThreshold.find(vars[j] + tS("_pre")) != string::npos) {
-		    synapseSpkEvntVars[i].push_back(vars[j]);
-//		    cerr << "synapsepop: " << i << ", neuronGrpNo: " << synapseSource[i] << ", added variable: " << vars[j] << endl;
-		}
-	    }
-
+ 
 	    // add to the source population spike event condition
 	    if (neuronSpkEvntCondition[src] == tS("")) {
 		neuronSpkEvntCondition[src] = tS("(") + wu.evntThreshold + tS(")");
@@ -651,9 +644,6 @@ void NNmodel::addSynapsePopulation(
     postSynIni.push_back(PSVini);  
     postSynapsePara.push_back(ps);  
     
-    vector<string> tmpS;
-    synapseSpkEvntVars.push_back(tmpS); 
-
     registerSynapsePopulation(i);
     initDerivedSynapsePara(i);
     initDerivedPostSynapsePara(i);
