@@ -36,7 +36,7 @@ a) use some other tools to generate the appropriate connectivity
    matrices and store them in files.
 
 b) build the source code for the model by writing neuron numbers into
-   userproject/include/sizes.h, and executing "buildmodel.sh MBody1 [DEBUG OFF/ON]".  
+   ./model/sizes.h, and executing "genn-buildmodel.sh ./model/MBody1.cc.
 
 c) compile the generated code by invoking "make clean && make" 
    running the code, e.g. "./classol_sim r1 1".

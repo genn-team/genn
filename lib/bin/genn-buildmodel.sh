@@ -31,7 +31,11 @@ while [[ -n "${!OPTIND}" ]]; do
 	esac
     done
     if [[ $OPTIND > $# ]]; then break; fi
-    MODEL="$INITIAL_PATH/${!OPTIND}"
+    if [[ "${!OPTIND:0:1}" == "/" ]]; then
+	MODEL="${!OPTIND}"
+    else
+	MODEL="$INITIAL_PATH/${!OPTIND}"
+    fi
     let OPTIND++
 done
 if [[ -z "$MODEL" ]]; then
