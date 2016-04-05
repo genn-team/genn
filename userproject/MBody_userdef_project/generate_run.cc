@@ -16,7 +16,7 @@
 
 \brief This file is part of a tool chain for running the classol/MBody_userdef example model.
 
-This file compiles to a tool that wraps all the other tools into one chain of tasks, including running all the gen_* tools for generating connectivity, providing the population size information through ../userproject/include/sizes.h to the MBody_userdef model definition, running the GeNN code generation and compilation steps, executing the model and collecting some timing information. This tool is the recommended way to quickstart using GeNN as it only requires a single command line to execute all necessary tasks.
+This file compiles to a tool that wraps all the other tools into one chain of tasks, including running all the gen_* tools for generating connectivity, providing the population size information through ./model/sizes.h to the MBody_userdef model definition, running the GeNN code generation and compilation steps, executing the model and collecting some timing information. This tool is the recommended way to quickstart using GeNN as it only requires a single command line to execute all necessary tasks.
 */ 
 //--------------------------------------------------------------------------
 
@@ -79,7 +79,7 @@ CPU_ONLY=0 or CPU_ONLY=1 (default 0): Whether to compile in (CUDA independent) \
   double pnlhi_theta = 100.0 / nAL * 14.0 * gscale;
 
   // write neuron population sizes
-  string fname = gennPath + "/userproject/include/sizes.h";
+  string fname = "./model/sizes.h";
   ofstream os(fname.c_str());
   if (which > 1) {
       os << "#define nGPU " << which-2 << endl;
@@ -100,48 +100,33 @@ CPU_ONLY=0 or CPU_ONLY=1 (default 0): Whether to compile in (CUDA independent) \
       os << "#define SCALAR_MIN " << FLT_MIN << "f" << endl;
       os << "#define SCALAR_MAX " << FLT_MAX << "f" << endl;
   } 
-
   os.close();
 
   // build it
 #ifdef _WIN32
-  cmd = "cd model && buildmodel.bat " + modelName + " DEBUG=" + toString(dbgMode);
-  if (cpu_only) {
-      cmd += " CPU_ONLY=1";
-  }
-  cmd += " && nmake /nologo /f WINmakefile clean && nmake /nologo /f WINmakefile ";
-  if (dbgMode == 1) {
-    cmd += " DEBUG=1";
-  }
-  if (cpu_only) {
-      cmd += " CPU_ONLY=1";
-  }
-  
+  cmd = "cd model && genn-buildmodel.bat ./" + modelName + ".cc";
+  if (dbgMode) cmd += " -d";
+  if (cpu_only) cmd += " -c";
+  cmd += " && nmake /nologo /f WINmakefile clean && nmake /nologo /f WINmakefile";
+  if (dbgMode) cmd += " DEBUG=1";
+  if (cpu_only) cmd += " CPU_ONLY=1";
 #else // UNIX
-  cmd = "cd model && buildmodel.sh " + modelName + " DEBUG=" + toString(dbgMode);
-  if (cpu_only) {
-      cmd += " CPU_ONLY=1";
-  }
+  cmd = "cd model && genn-buildmodel.sh ./" + modelName + ".cc";
+  if (dbgMode) cmd += " -d";
+  if (cpu_only) cmd += " -c";
   cmd += " && make clean && make";
-  if (cpu_only) {
-      cmd += " CPU_ONLY=1";
-  }
-  else {
-      if (dbgMode == 1) {
-	  cmd += " debug";
-      }
-      else {
-	  cmd += " release";
-      }
-  }
+  if (dbgMode) cmd += " debug";
+  else cmd += " release";
+  if (cpu_only) cmd += " CPU_ONLY=1";
 #endif
-  cerr << cmd << endl;
+  cout << cmd << endl;
   retval=system(cmd.c_str());
   if (retval != 0){
     cerr << "ERROR: Following call failed with status " << retval << ":" << endl << cmd << endl;
     cerr << "Exiting..." << endl;
     exit(1);
   }
+
   // create output directory
 #ifdef _WIN32
   _mkdir(outdir.c_str());
