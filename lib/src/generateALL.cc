@@ -63,6 +63,7 @@ CodeHelper hlp;
 // cugetErrorName
 //#define CHECK_CU_ERRORS(call) call
 
+
 CUresult cudaFuncGetAttributesDriver(cudaFuncAttributes *attr, CUfunction kern) {
     int tmp;
     CHECK_CU_ERRORS(cuFuncGetAttribute(&tmp, CU_FUNC_ATTRIBUTE_MAX_THREADS_PER_BLOCK, kern));
@@ -135,6 +136,7 @@ void generate_model_runner(NNmodel &model,  //!< Model description
 
   // Generate the equivalent of synapse and learning kernel
   if (model.synapseGrpN > 0) genSynapseFunction(model, path, cout);
+
 }
 
 #ifndef CPU_ONLY
@@ -504,7 +506,7 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
 			  }
 #ifdef BLOCKSZ_DEBUG
 			  else {
-			      mos << "BLOCKSZ_DEBUG: Device has inferirior occupancy; chosen device remains: " << chosenDevice << endl;
+			      mos << "BLOCKSZ_DEBUG: Device has inferior occupancy; chosen device remains: " << chosenDevice << endl;
 			  }
 #endif
 
@@ -512,7 +514,7 @@ int chooseDevice(ostream &mos,   //!< output stream for messages
 		  }
 #ifdef BLOCKSZ_DEBUG
 		  else {
-		      mos << "BLOCKSZ_DEBUG: Device has inferirior small model count; chosen device remains: " << chosenDevice << endl;
+		      mos << "BLOCKSZ_DEBUG: Device has inferior small model count; chosen device remains: " << chosenDevice << endl;
 		  }
 #endif
 	      }
@@ -619,6 +621,7 @@ int main(int argc,     //!< number of arguments; expected to be 2
   theDev = chooseDevice(cout, model, path);
 #endif
   generate_model_runner(*model, path);
-  
+
+
   return EXIT_SUCCESS;
 }

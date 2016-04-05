@@ -43,7 +43,7 @@ void value_substitutions(string &code, vector<string> &names, vector<double> &va
 }
 
 //--------------------------------------------------------------------------
-//! \brief This function performs a list of name substitutions for variables in code snippets where the variables have a prefix/postfix in their names.
+//! \brief This function performs a list of name substitutions for variables in code snippets where the variables have an extension in their names (e.g. "_pre").
 //--------------------------------------------------------------------------
 
 void extended_name_substitutions(string &code, string prefix, vector<string> &names, string ext, string postfix= string(""))
@@ -54,7 +54,7 @@ void extended_name_substitutions(string &code, string prefix, vector<string> &na
 }
 
 //--------------------------------------------------------------------------
-//! \brief This function performs a list of value substitutions for parameters in code snippets where the parameters have a prefix/postfix in their names.
+//! \brief This function performs a list of value substitutions for parameters in code snippets where the parameters have an extension in their names (e.g. "_pre").
 //--------------------------------------------------------------------------
 
 void extended_value_substitutions(string &code, vector<string> &names, string ext, vector<double> &values)

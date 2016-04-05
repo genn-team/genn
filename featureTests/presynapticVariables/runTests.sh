@@ -10,6 +10,16 @@ echo \# running testPreVarsInSimCode on GPU ...
 echo \# running testPreVarsInSimCode on CPU ...
 ./testPreVarsInSimCode 0 test1CPU 0 
 
+echo \# building preVarsInSimCodeEvnt
+buildmodel.sh preVarsInSimCodeEvnt &>msg
+make -f MakefilePreVarsInSimCodeEvnt clean &>msg
+make -f MakefilePreVarsInSimCodeEvnt &>msg
+echo \#-----------------------------------------------------------
+echo \# running testPreVarsInSimCodeEvnt on GPU ...
+./testPreVarsInSimCodeEvnt 1 test1 0 
+echo \# running testPreVarsInSimCodeEvnt on CPU ...
+./testPreVarsInSimCodeEvnt 0 test1CPU 0 
+
 echo \# building preVarsInSynapseDynamics
 buildmodel.sh preVarsInSynapseDynamics &>msg
 make -f MakefilePreVarsInSynapseDynamics clean &>msg
@@ -39,6 +49,26 @@ echo \# running testPreVarsInSimCode_sparse on GPU ...
 ./testPreVarsInSimCode_sparse 1 test4 0 
 echo \# running testPreVarsInSimCode_sparse on CPU ...
 ./testPreVarsInSimCode_sparse 0 test4CPU 0 
+
+echo \# building preVarsInSimCodeEvnt_sparse
+buildmodel.sh preVarsInSimCodeEvnt_sparse &>msg
+make -f MakefilePreVarsInSimCodeEvnt_sparse clean &>msg
+make -f MakefilePreVarsInSimCodeEvnt_sparse &>msg
+echo \#-----------------------------------------------------------
+echo \# running testPreVarsInSimCodeEvnt_sparse on GPU ...
+./testPreVarsInSimCodeEvnt_sparse 1 test4 0 
+echo \# running testPreVarsInSimCodeEvnt_sparse on CPU ...
+./testPreVarsInSimCodeEvnt_sparse 0 test4CPU 0 
+
+echo \# building preVarsInSimCodeEvnt_sparseInv
+buildmodel.sh preVarsInSimCodeEvnt_sparseInv &>msg
+make -f MakefilePreVarsInSimCodeEvnt_sparseInv clean &>msg
+make -f MakefilePreVarsInSimCodeEvnt_sparseInv &>msg
+echo \#-----------------------------------------------------------
+echo \# running testPreVarsInSimCodeEvnt_sparseInv on GPU ...
+./testPreVarsInSimCodeEvnt_sparseInv 1 test4 0 
+echo \# running testPreVarsInSimCodeEvnt_sparseInv on CPU ...
+./testPreVarsInSimCodeEvnt_sparseInv 0 test4CPU 0 
 
 echo \# building preVarsInSynapseDynamics_sparse
 buildmodel.sh preVarsInSynapseDynamics_sparse &>msg
