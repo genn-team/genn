@@ -1,13 +1,21 @@
-@echo off
+@ECHO off
+setlocal EnableDelayedExpansion
 
-set PROJECT_PATH="%cd%"
+rem : parse command options
+set options=
 
-set MODELNAME="%1"
 
+set INITIAL_PATH="%CD%"
+set OUTPUT_PATH="%INITIAL_PATH%"
+
+
+
+
+
+set MODEL="%1"
 
 
 set k=0
-setlocal ENABLEDELAYEDEXPANSION
 for %%x in (%*) do (
     set /a k+=1
     set "argv[!k!]=%%~x"
@@ -23,30 +31,45 @@ for /l %%i in (1,1,%k%) do (
     )
 ) 
 for /f %%a in ('set DBGMODE^&set CPU_ONLY') do (if "!"=="" endlocal)&set "%%a"
-echo debug mode: %DBGMODE%
-echo cpu only: %CPU_ONLY%
 
 
 
 
 
-if "%GENN_PATH%"=="" (
-    echo error: GENN_PATH is not defined
-    exit
+
+
+if "%MODEL%"=="" (
+    echo genn-buildmodel.bat: error 2: no model file given
+    exit 2
 )
 
+rem : checking GENN_PATH is defined
+if "%GENN_PATH%"=="" (
+    echo genn-buildmodel.bat: error 3: GENN_PATH is not defined
+    exit 3
+)
 
-
-
-cd /d "%PROJECT_PATH%"
+rem : generate model code
+cd /d "%OUTPUT_PATH%"
 nmake clean /nologo /f "%GENN_PATH%\lib\src\WINmakefile"
 if "%DEBUG_MODE%"=="1" (
-    echo "debugging mode ON"
+    echo debugging mode ON
     nmake /nologo /f "%GENN_PATH%\lib\src\WINmakefile" MODEL="%MODEL%" CPU_ONLY=%CPU_ONLY% DEBUG_MODE=%DEBUG_MODE%
-    devenv /debugexe .\generateALL.exe "%PROJECT_PATH%"
+    devenv /debugexe .\generateALL.exe "%OUTPUT_PATH%"
 ) else (
     nmake /nologo /f "%GENN_PATH%\lib\src\WINmakefile" MODEL="%MODEL%" CPU_ONLY=%CPU_ONLY%
-    .\generateALL.exe "%PROJECT_PATH%"
+    .\generateALL.exe "%OUTPUT_PATH%"
 )
 
-echo Model build complete
+echo model build complete
+goto :eof
+
+rem : display genn-buildmodel.bat help and quit
+:genn_help
+    echo === genn-buildmodel.bat script usage ===
+    echo genn-buildmodel.bat [cdho] <model>
+    echo -c only generate simulation code for the CPU
+    echo -d enables the debugging mode
+    echo -h shows this help message
+    echo -o <path> changes the output directory to <path>
+    goto :eof
