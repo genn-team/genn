@@ -254,11 +254,14 @@ public:
 
   // PUBLIC KERNEL PARAMETER VARIABLES
   //=========================
-  unsigned int totalKernelParameterSize;
-  unsigned int kernelParameterAlign;
-  vector<string> kernelParameters;
-  vector<string> kernelParameterTypes;
-  vector<string> kernelParameterPopulations;
+  vector<string> neuronKernelParameters;
+  vector<string> neuronKernelParameterTypes;
+  vector<string> synapseKernelParameters;
+  vector<string> synapseKernelParameterTypes;
+  vector<string> simLearnPostKernelParameters;
+  vector<string> simLearnPostKernelParameterTypes;
+  vector<string> synapseDynamicsKernelParameters;
+  vector<string> synapseDynamicsKernelParameterTypes;
     
 private:
 

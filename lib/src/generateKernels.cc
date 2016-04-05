@@ -86,7 +86,11 @@ void genNeuronKernel(NNmodel &model, //!< Model description
     }
   
     // kernel header
-    os << "extern \"C\" __global__ void calcNeurons(" << model.ftype << " t)" << ENDL;
+    os << "extern \"C\" __global__ void calcNeurons(";
+    for (int i= 0, l= model.neuronKernelParameters.size(); i < l; i++) {
+	os << model.neuronKernelParameterTypes[i] << " " << model.neuronKernelParameters[i] << ", ";
+    }
+    os << model.ftype << " t)" << ENDL;
     os << OB(5);
 
     // kernel code
@@ -243,7 +247,7 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 	    }
 	    value_substitutions(psCode, psm.pNames, model.postSynapsePara[synPopID]);
 	    value_substitutions(psCode, psm.dpNames, model.dpsp[synPopID]);
-	    name_substitutions(psCode, tS("dd_"), nModels[nt].extraGlobalNeuronKernelParameters, model.neuronName[i]);
+	    name_substitutions(psCode, tS(""), nModels[nt].extraGlobalNeuronKernelParameters, model.neuronName[i]);
 	    psCode= ensureFtype(psCode, model.ftype);
 	    checkUnreplacedVariables(psCode,tS("postSyntoCurrent"));
 	    os << psCode << ";" << ENDL;	    
@@ -265,7 +269,7 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 	    substitute(thCode, tS("$(sT)"), tS("lsT"));
 	    value_substitutions(thCode, nModels[nt].pNames, model.neuronPara[i]);
 	    value_substitutions(thCode, nModels[nt].dpNames, model.dnp[i]);
-	    name_substitutions(thCode, tS("dd_"), nModels[nt].extraGlobalNeuronKernelParameters, model.neuronName[i]);
+	    name_substitutions(thCode, tS(""), nModels[nt].extraGlobalNeuronKernelParameters, model.neuronName[i]);
 	    thCode= ensureFtype(thCode, model.ftype);
 	    checkUnreplacedVariables(thCode,tS("thresholdConditionCode"));
 	    if (GENN_PREFERENCES::autoRefractory) {
@@ -286,7 +290,7 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 	name_substitutions(sCode, tS("l"), nModels[nt].varNames, tS(""));
 	value_substitutions(sCode, nModels[nt].pNames, model.neuronPara[i]);
 	value_substitutions(sCode, nModels[nt].dpNames, model.dnp[i]);
-	name_substitutions(sCode, tS("dd_"), nModels[nt].extraGlobalNeuronKernelParameters, model.neuronName[i]);
+	name_substitutions(sCode, tS(""), nModels[nt].extraGlobalNeuronKernelParameters, model.neuronName[i]);
 	substitute(sCode, tS("$(Isyn)"), tS("Isyn"));
 	substitute(sCode, tS("$(sT)"), tS("lsT"));
 	sCode= ensureFtype(sCode, model.ftype);
@@ -312,8 +316,8 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 		extended_name_substitutions(eCode, tS("l"), nModels[model.neuronType[i]].varNames, tS("_pre"), tS(""));
 		value_substitutions(eCode, weightUpdateModels[synt].pNames, model.synapsePara[synPopID]);
 		value_substitutions(eCode, weightUpdateModels[synt].dpNames, model.dsp_w[synPopID]);						    
-		name_substitutions(eCode, tS("dd_"), weightUpdateModels[synt].extraGlobalSynapseKernelParameters, model.synapseName[synPopID]);
-		name_substitutions(eCode, tS("dd_"), nModels[model.neuronType[i]].extraGlobalNeuronKernelParameters, model.neuronName[i]);
+		name_substitutions(eCode, tS(""), weightUpdateModels[synt].extraGlobalSynapseKernelParameters, model.synapseName[synPopID]);
+		name_substitutions(eCode, tS(""), nModels[model.neuronType[i]].extraGlobalNeuronKernelParameters, model.neuronName[i]);
 	    }
 	    eCode= ensureFtype(eCode, model.ftype);
 	    checkUnreplacedVariables(eCode, tS("neuronSpkEvntCondition"));
@@ -356,7 +360,7 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 		value_substitutions(rCode, nModels[nt].dpNames, model.dnp[i]);
 		substitute(rCode, tS("$(Isyn)"), tS("Isyn"));
 		substitute(rCode, tS("$(sT)"), tS("lsT"));
-		name_substitutions(rCode, tS("dd_"), nModels[nt].extraGlobalNeuronKernelParameters, model.neuronName[i]);
+		name_substitutions(rCode, tS(""), nModels[nt].extraGlobalNeuronKernelParameters, model.neuronName[i]);
 		rCode= ensureFtype(rCode, model.ftype);
 		checkUnreplacedVariables(rCode, tS("resetCode"));
 		os << "// spike reset code" << ENDL;
@@ -498,7 +502,7 @@ void neuron_substitutions_in_synaptic_code(
     }
     extended_value_substitutions(wCode, nModels[nt_pre].pNames, tS("_pre"), model.neuronPara[src]);
     extended_value_substitutions(wCode, nModels[nt_pre].dpNames, tS("_pre"), model.dnp[src]);
-    extended_name_substitutions(wCode, devPrefix, nModels[nt_pre].extraGlobalNeuronKernelParameters, tS("_pre"), model.neuronName[src]);
+    extended_name_substitutions(wCode, tS(""), nModels[nt_pre].extraGlobalNeuronKernelParameters, tS("_pre"), model.neuronName[src]); // no devPrefix for kernel parameters
     
     // postsynaptic neuron variables, parameters, and global parameters
     substitute(wCode, tS("$(sT_post)"), devPrefix+tS("sT") + model.neuronName[trg] + tS("[") + offsetPost + postIdx + tS("]"));
@@ -514,7 +518,7 @@ void neuron_substitutions_in_synaptic_code(
     }
     extended_value_substitutions(wCode, nModels[nt_post].pNames, tS("_post"), model.neuronPara[trg]);
     extended_value_substitutions(wCode, nModels[nt_post].dpNames, tS("_post"), model.dnp[trg]);
-    extended_name_substitutions(wCode, devPrefix, nModels[nt_post].extraGlobalNeuronKernelParameters, tS("_post"), model.neuronName[trg]);
+    extended_name_substitutions(wCode, tS(""), nModels[nt_post].extraGlobalNeuronKernelParameters, tS("_post"), model.neuronName[trg]);// no devPrefix for kernel parameters
 }
 
 //-------------------------------------------------------------------------
@@ -675,7 +679,7 @@ void generate_process_presynaptic_events_code(
 		string eCode = weightUpdateModels[synt].evntThreshold;
 		value_substitutions(eCode, weightUpdateModels[synt].pNames, model.synapsePara[i]);
 		value_substitutions(eCode, weightUpdateModels[synt].dpNames, model.dsp_w[i]);
-		name_substitutions(eCode, tS("dd_"), weightUpdateModels[synt].extraGlobalSynapseKernelParameters, model.synapseName[i]);
+		name_substitutions(eCode, tS(""), weightUpdateModels[synt].extraGlobalSynapseKernelParameters, model.synapseName[i]);
 		neuron_substitutions_in_synaptic_code(eCode, model, src, trg, nt_pre, nt_post, offsetPre, offsetPost, tS("shSpkEvnt") + tS("[j]"), tS("ipost"), tS("dd_"));
 		eCode= ensureFtype(eCode, model.ftype);
 		checkUnreplacedVariables(eCode, tS("evntThreshold"));
@@ -734,7 +738,7 @@ void generate_process_presynaptic_events_code(
 	    }
 	    value_substitutions(wCode, weightUpdateModels[synt].pNames, model.synapsePara[i]);
 	    value_substitutions(wCode, weightUpdateModels[synt].dpNames, model.dsp_w[i]);
-	    name_substitutions(wCode, tS("dd_"), weightUpdateModels[synt].extraGlobalSynapseKernelParameters, model.synapseName[i]);
+	    name_substitutions(wCode, tS(""), weightUpdateModels[synt].extraGlobalSynapseKernelParameters, model.synapseName[i]);
 	    substitute(wCode, tS("$(addtoinSyn)"), tS("addtoinSyn"));
 	    neuron_substitutions_in_synaptic_code(wCode, model, src, trg, nt_pre, nt_post, offsetPre, offsetPost, tS("shSpk") + postfix + tS("[j]"), tS("ipost"), tS("dd_"));
 	    wCode= ensureFtype(wCode, model.ftype);
@@ -824,7 +828,11 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 	os << "#define BLOCKSZ_SYNDYN " << synDynBlkSz << endl;
 
 	// SynapseDynamics kernel header
-	os << "extern \"C\" __global__ void calcSynapseDynamics(" << model.ftype << " t)" << ENDL; // end of synapse kernel header
+	os << "extern \"C\" __global__ void calcSynapseDynamics(";
+	for (int i= 0, l= model.synapseDynamicsKernelParameters.size(); i < l; i++) {
+	    os << model.synapseDynamicsKernelParameterTypes[i] << " " << model.synapseDynamicsKernelParameters[i] << ", ";
+	}
+	os << model.ftype << " t)" << ENDL; // end of synapse kernel header
 	
 	// synapse dynamics kernel code
 	os << OB(75);
@@ -928,7 +936,11 @@ void genSynapseKernel(NNmodel &model, //!< Model description
     }
 
 // synapse kernel header
-	os << "extern \"C\" __global__ void calcSynapses(" << model.ftype << " t)" << ENDL; // end of synapse kernel header
+	os << "extern \"C\" __global__ void calcSynapses(";
+	for (int i= 0, l= model.synapseKernelParameters.size(); i < l; i++) {
+	    os << model.synapseKernelParameterTypes[i] << " " << model.synapseKernelParameters[i] << ", ";
+	}
+	os << model.ftype << " t)" << ENDL; // end of synapse kernel header
 
     // synapse kernel code
     os << OB(75);
@@ -1091,7 +1103,11 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 	numOfBlocks = model.padSumLearnN[model.lrnGroups - 1] / learnBlkSz;
   
 	// Kernel header
-	os << "extern \"C\" __global__ void learnSynapsesPost(" << model.ftype << " t)";
+	os << "extern \"C\" __global__ void learnSynapsesPost(";
+	for (int i= 0, l= model.simLearnPostKernelParameters.size(); i < l; i++) {
+	    os << model.simLearnPostKernelParameterTypes[i] << " " << model.simLearnPostKernelParameters[i] << ", ";
+	}
+	os << model.ftype << " t)";
 	os << ENDL;
 
 	// kernel code
@@ -1184,7 +1200,7 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 	    }
 	    value_substitutions(code, weightUpdateModels[synt].pNames, model.synapsePara[k]);
 	    value_substitutions(code, weightUpdateModels[synt].dpNames, model.dsp_w[k]);
-	    name_substitutions(code, tS("dd_"), weightUpdateModels[synt].extraGlobalSynapseKernelParameters, model.synapseName[k]);
+	    name_substitutions(code, tS(""), weightUpdateModels[synt].extraGlobalSynapseKernelParameters, model.synapseName[k]);
 
 	    // presynaptic neuron variables and parameters
 	    if (sparse) { // SPARSE
