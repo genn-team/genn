@@ -88,40 +88,25 @@ CPU_ONLY=0 or CPU_ONLY=1 (default 0): Whether to compile in (CUDA independent) \
       os << "#define fixGPU " << which-2 << endl;
   }
   os.close();
-  
+
   // build it
 #ifdef _WIN32
-  cmd= "cd model && buildmodel.bat HHVClamp DEBUG=" + toString(dbgMode);
-  if (cpu_only) {
-      cmd += " CPU_ONLY=1";
-  }
+  cmd = "cd model && genn-buildmodel.bat ./HHVClamp.cc";
+  if (dbgMode) cmd += " -d";
+  if (cpu_only) cmd += " -c";
   cmd += " && nmake /nologo /f WINmakefile clean && nmake /nologo /f WINmakefile";
-  if (dbgMode == 1) {
-    cmd += " DEBUG=1";
-  }
-  if (cpu_only) {
-      cmd += " CPU_ONLY=1";
-  }
-
+  if (dbgMode) cmd += " DEBUG=1";
+  if (cpu_only) cmd += " CPU_ONLY=1";
 #else // UNIX
-  cmd = "cd model && buildmodel.sh HHVClamp DEBUG=" + toString(dbgMode);
-  if (cpu_only) {
-      cmd += " CPU_ONLY=1";
-  }
+  cmd = "cd model && genn-buildmodel.sh ./HHVClamp.cc";
+  if (dbgMode) cmd += " -d";
+  if (cpu_only) cmd += " -c";
   cmd += " && make clean && make";
-  if (cpu_only) {
-      cmd += " CPU_ONLY=1";
-  }
-  else {
-      if (dbgMode == 1) {
-	  cmd += " debug";
-      }
-      else {
-	  cmd += " release";
-      }
-  }
+  if (dbgMode) cmd += " debug";
+  else cmd += " release";
+  if (cpu_only) cmd += " CPU_ONLY=1";
 #endif
-  cerr << cmd << endl;
+  cout << cmd << endl;
   retval=system(cmd.c_str());
   if (retval != 0){
     cerr << "ERROR: Following call failed with status " << retval << ":" << endl << cmd << endl;

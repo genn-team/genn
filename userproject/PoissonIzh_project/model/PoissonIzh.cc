@@ -14,6 +14,7 @@
 #define DT 1.0
 #include "modelSpec.h"
 #include "modelSpec.cc"
+#include "sizes.h"
 
 double myPOI_p[4]= {
 //POISSON neuron parameters
@@ -61,7 +62,6 @@ double *postSynV = NULL;
 
 //float gPNIzh1= 0.001;
 
-#include "../../userproject/include/sizes.h"
 
 void modelDefinition(NNmodel &model) 
 {

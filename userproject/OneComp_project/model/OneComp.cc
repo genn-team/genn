@@ -13,6 +13,7 @@
 #define DT 1.0
 #include "modelSpec.h"
 #include "modelSpec.cc"
+#include "sizes.h"
 
 double exIzh_p[5]={
 //Izhikevich model parameters - tonic spiking
@@ -42,8 +43,6 @@ double postExp[2]={
 };
 double *postSynV = NULL;
 
-
-#include "../../userproject/include/sizes.h"
 
 void modelDefinition(NNmodel &model) 
 {

@@ -168,9 +168,6 @@ double postExpDNDN[2]={
 double *postSynV = NULL;
 
 
-
-#include "../../userproject/include/sizes.h"
-
 //--------------------------------------------------------------------------
 /*! \brief This function defines the MBody1 model, and it is a good example of how networks should be defined.
  */

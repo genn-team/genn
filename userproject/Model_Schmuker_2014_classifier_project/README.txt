@@ -18,9 +18,9 @@ cd to this project directory (userproject/Model_Schmuker_2014_project)
 
 To build the model using the GENN meta compiler type:-
 
- buildmodel.sh Model_Schmuker_2014_classifier 0
+ genn-buildmodel.sh Model_Schmuker_2014_classifier.cc
 
-(change the 0 to 1 for a debug build)
+(add -d for a debug build)
 
 You should only have to do this at the start, or when you change your actual network model  (i.e. editing the file Model_Schmuker_2014_classifier.cc )
 
