@@ -1,10 +1,14 @@
 @echo off
 
-set FLAGS="$PWD/$1.cc"
+echo warning: buildmodel.bat has been depreciated!
+echo please use the new genn-buildmodel.bat script in future
 
-
-
-
+set MODELPATH=%cd%
+echo model path: %MODELPATH%
+set MODELNAME=%1
+echo model name: %MODELNAME%
+set DBGMODE=0
+set CPU_ONLY=0
 set k=0
 setlocal ENABLEDELAYEDEXPANSION
 for %%x in (%*) do (
@@ -22,13 +26,26 @@ for /l %%i in (1,1,%k%) do (
     )
 ) 
 for /f %%a in ('set DBGMODE^&set CPU_ONLY') do (if "!"=="" endlocal)&set "%%a"
+echo debug mode: %DBGMODE%
+echo cpu only: %CPU_ONLY%
 
+if "%GENN_PATH%"=="" (
+  if "%GeNNPATH%"=="" (
+    echo ERROR: Environment variable 'GENN_PATH' has not been defined. Quitting...
+    exit
+  )
+  echo Environment variable 'GeNNPATH' will be replaced by 'GENN_PATH' in future GeNN releases.
+  set GENN_PATH=%GeNNPATH%
+)
 
+nmake clean /nologo /f "%GENN_PATH%\lib\src\WINmakefile"
+if "%DBGMODE%"=="0" (
+  nmake /nologo /f "%GENN_PATH%\lib\src\WINmakefile" MODEL="%MODELPATH%\%MODELNAME%.cc" CPU_ONLY=%CPU_ONLY%
+  .\generateALL.exe %MODELPATH%
+) else (
+  echo "Debugging mode ON"
+  nmake /nologo /f "%GENN_PATH%\lib\src\WINmakefile" DEBUG=1 MODEL="%MODELPATH%\%MODELNAME%.cc" EXTRA_DEF=%EXTRA_DEF%
+  devenv /debugexe .\generateALL.exe %MODELPATH%
+)
 
-
-echo warning: buildmodel.bat has been depreciated!
-echo please use the new genn-buildmodel.bat script in future
-echo the equivalent genn-buildmodel.bat command is:
-echo genn-buildmodel.bat %FLAGS%
-
-genn-buildmodel.bat %FLAGS%
+echo Model build complete ...
