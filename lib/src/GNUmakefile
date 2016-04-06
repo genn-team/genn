@@ -40,7 +40,7 @@ endif
 
 # Global include and link flags
 ifndef CPU_ONLY
-    INCLUDE_FLAGS	:=-include $(MODEL) -I$(GENN_PATH)/lib/include -I$(CUDA_PATH)/include
+    INCLUDE_FLAGS	:=-I$(GENN_PATH)/lib/include -I$(CUDA_PATH)/include -include $(MODEL)
     ifeq ($(DARWIN),DARWIN)
         LINK_FLAGS	:=-Xlinker -lstdc++ -lc++ -L$(CUDA_PATH)/lib -lcuda -lcudart
     else

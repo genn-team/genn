@@ -24,7 +24,7 @@ while [[ -n "${!OPTIND}" ]]; do
     while getopts "cdo:h" option; do
 	case $option in
 	    c) CPU_ONLY=1;;
-	    d) DEBUG_MODE=1;;
+	    d) DEBUG=1;;
 	    h) genn_help; exit;;
 	    o) OUTPUT_PATH="$INITIAL_PATH/$OPTARG";;
 	    ?) genn_help; exit;;
@@ -55,7 +55,7 @@ fi
 # generate model code
 cd "$OUTPUT_PATH"
 make clean -f "$GENN_PATH/lib/src/GNUmakefile"
-if [[ -n "$DEBUG_MODE" ]]; then
+if [[ -n "$DEBUG" ]]; then
     echo "debugging mode ON"
     make debug -f "$GENN_PATH/lib/src/GNUmakefile" MODEL="$MODEL" CPU_ONLY=$CPU_ONLY
     gdb -tui --args ./generateALL "$OUTPUT_PATH"

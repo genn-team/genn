@@ -16,51 +16,53 @@
 # This is a Windows Makefile, to be used by the MS nmake build system
 #--------------------------------------------------------------------
 
-# Global C++ and CUDA compiler settings.
-NVCC		="$(CUDA_PATH)\bin\nvcc.exe"
-CXXFLAGS	=$(CXXFLAGS) /nologo /EHsc /Zi
-
-# Global include flags and link flags.
-!IF "$(CPU_ONLY)" != "1"
-INCLUDE_FLAGS	= /I"$(CUDA_PATH)\include" /I"$(CUDA_PATH)\samples\common\inc" /I"$(GENN_PATH)\lib\include" /I"$(GENN_PATH)\userproject\include" $(EXTRA_INCLUDE) 
-
-!IF "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
-LINK_FLAGS	="$(CUDA_PATH)\lib\x64\cudart.lib"
-!ELSEIF "$(PROCESSOR_ARCHITEW6432)" == "AMD64"
-LINK_FLAGS	="$(CUDA_PATH)\lib\x64\cudart.lib"
+# Global CUDA compiler settings
+!IFNDEF CPU_ONLY
+    NVCC		="$(CUDA_PATH)\bin\nvcc.exe"
+!ENDIF
+!IFNDEF DEBUG
+    NVCCFLAGS		="$(NVCCFLAGS) --compiler-options $(OPTIMIZATIONFLAGS)"
 !ELSE
-LINK_FLAGS	="$(CUDA_PATH)\lib\Win32\cudart.lib"
+    NVCCFLAGS		="$(NVCCFLAGS) -g -G"
 !ENDIF
 
-!IF "$(DEBUG)" != "1"
-NVCCFLAGS	= $(NVCCFLAGS) --compiler-options "$(OPTIMIZATIONFLAGS)"
-CXXFLAGS	= $(CXXFLAGS) $(OPTIMIZATIONFLAGS)
+# Global C++ compiler settings
+!IFNDEF CPU_ONLY
+    CXXFLAGS		="$(CXXFLAGS) /nologo /EHsc"
 !ELSE
-NVCCFLAGS	= $(NVCCFLAGS) -g -G
-CXXFLAGS	= $(CXXFLAGS) /Od /debug
+    CXXFLAGS		="$(CXXFLAGS) /nologo /EHsc /DCPU_ONLY"
 !ENDIF
-# An auto-generated file containing your cuda device's compute capability.
-!INCLUDE sm_version.mk
+!IFNDEF DEBUG
+    CXXFLAGS		="$(CXXFLAGS) $(OPTIMIZATIONFLAGS)"
 !ELSE
-NVCC		= $(CXX)
-INCLUDE_FLAGS	=  /I"$(GENN_PATH)\lib\include" /I"$(GENN_PATH)\userproject\include" $(EXTRA_INCLUDE) /DCPU_ONLY
-
-!IF "$(DEBUG)" != "1"
-NVCCFLAGS	= $(CXXFLAGS) --compiler-options "$(OPTIMIZATIONFLAGS)"
-CXXFLAGS	= $(CXXFLAGS) $(OPTIMIZATIONFLAGS)
-!ELSE
-NVCCFLAGS	= $(CXXFLAGS) -g -G
-CXXFLAGS	= $(CXXFLAGS) /Od /debug
+    CXXFLAGS		="$(CXXFLAGS) /debug /Zi /Od"
 !ENDIF
 
+# Global include and link flags
+!IFNDEF CPU_ONLY
+    INCLUDE_FLAGS	="/I$(GENN_PATH)\lib\include /I$(GENN_PATH)\userproject\include /I$(CUDA_PATH)\include $(EXTRA_INCLUDE)"
+    !IF "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
+        LINK_FLAGS	="$(CUDA_PATH)\lib\x64\cudart.lib"
+    !ELSEIF "$(PROCESSOR_ARCHITEW6432)" == "AMD64"
+        LINK_FLAGS	="$(CUDA_PATH)\lib\x64\cudart.lib"
+    !ELSE
+        LINK_FLAGS	="$(CUDA_PATH)\lib\Win32\cudart.lib"
+    !ENDIF
+!ELSE
+    INCLUDE_FLAGS	="/I$(GENN_PATH)\lib\include /I$(GENN_PATH)\userproject\include $(EXTRA_INCLUDE)"
 !ENDIF
 
-# Infer object file names from source file names.
-OBJECTS		=$(SOURCES:.cc=.obj)
-OBJECTS		=$(OBJECTS:.cpp=.obj)
-OBJECTS		=$(OBJECTS:.cu=.obj)
+# An auto-generated file containing your cuda device's compute capability
+!IFNDEF CPU_ONLY
+    !INCLUDE sm_version.mk
+!ENDIF
 
-# Target rules.
+# Infer object file names from source file names
+OBJECTS		="$(SOURCES:.cc=.obj)"
+OBJECTS		="$(OBJECTS:.cpp=.obj)"
+OBJECTS		="$(OBJECTS:.cu=.obj)"
+
+# Target rules
 .SUFFIXES: .cu
 
 all: $(EXECUTABLE)

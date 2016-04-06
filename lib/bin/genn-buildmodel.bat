@@ -52,9 +52,9 @@ if "%GENN_PATH%"=="" (
 rem : generate model code
 cd /d "%OUTPUT_PATH%"
 nmake clean /nologo /f "%GENN_PATH%\lib\src\WINmakefile"
-if "%DEBUG_MODE%"=="1" (
+if "%DEBUG%"=="1" (
     echo debugging mode ON
-    nmake /nologo /f "%GENN_PATH%\lib\src\WINmakefile" MODEL="%MODEL%" CPU_ONLY=%CPU_ONLY% DEBUG_MODE=%DEBUG_MODE%
+    nmake /nologo /f "%GENN_PATH%\lib\src\WINmakefile" MODEL="%MODEL%" CPU_ONLY=%CPU_ONLY% DEBUG=%DEBUG%
     devenv /debugexe .\generateALL.exe "%OUTPUT_PATH%"
 ) else (
     nmake /nologo /f "%GENN_PATH%\lib\src\WINmakefile" MODEL="%MODEL%" CPU_ONLY=%CPU_ONLY%

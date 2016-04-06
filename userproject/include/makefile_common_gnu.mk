@@ -16,63 +16,57 @@
 # This is a UNIX Makefile, to be used by the GNU make build system
 #-----------------------------------------------------------------
 
-# OS name (Linux or Darwin) and architecture (32 bit or 64 bit).
+# OS name (Linux or Darwin) and architecture (32 bit or 64 bit)
 OS_SIZE			:=$(shell uname -m | sed -e "s/i.86/32/" -e "s/x86_64/64/" -e "s/armv7l/32/")
 OS_UPPER 		:=$(shell uname -s 2>/dev/null | tr [:lower:] [:upper:])
 OS_LOWER 		:=$(shell uname -s 2>/dev/null | tr [:upper:] [:lower:])
 DARWIN			:=$(strip $(findstring DARWIN, $(OS_UPPER)))
 
-
-ifneq ($(CPU_ONLY),1) # If generating CUDA device code
-
-  # global CUDA compiler settings
-  CUDA_PATH		?=/usr/local/cuda
-  NVCC			:=$(CUDA_PATH)/bin/nvcc
-  NVCCFLAGS		+=
-
-  # Global C++ compiler settings.
-  CXXFLAGS		+=-std=c++0x
-  ifeq ($(DARWIN),DARWIN)
-    CXX			:=clang++
-  endif
-
-  # Global include flags and link flags.
-  INCLUDE_FLAGS		+=-I$(CUDA_PATH)/include -I$(GENN_PATH)/lib/include -I$(GENN_PATH)/userproject/include
-  ifeq ($(DARWIN),DARWIN)
-    LINK_FLAGS		+=-L$(CUDA_PATH)/lib -lcuda -lcudart -stdlib=libstdc++ -lc++
-  else
-    ifeq ($(OS_SIZE),32)
-      LINK_FLAGS	+=-L$(CUDA_PATH)/lib -lcuda -lcudart
-    else
-      LINK_FLAGS	+=-L$(CUDA_PATH)/lib64 -lcuda -lcudart
-    endif
-  endif
-
-  # An auto-generated file containing your cuda device's compute capability.
-  -include sm_version.mk
-
-else # If generating CPU-only code
-
-  # Global C++ compiler settings.
-  CXXFLAGS		+=-std=c++0x -DCPU_ONLY
-  ifeq ($(DARWIN),DARWIN)
-    CXX			:=clang++
-  endif
-
-  # Global include flags and link flags.
-  INCLUDE_FLAGS		+=-I$(GENN_PATH)/lib/include -I$(GENN_PATH)/userproject/include
-  ifeq ($(DARWIN),DARWIN)
-    LINK_FLAGS		+=-stdlib=libstdc++ -lc++
-  endif
-
+# Global CUDA compiler settings
+ifndef CPU_ONLY
+    CUDA_PATH		?=/usr/local/cuda
+    NVCC		:=$(CUDA_PATH)/bin/nvcc
 endif
 
-# Enumerate all source and object files (if they have not already been listed).
+# Global C++ compiler settings
+ifeq ($(DARWIN),DARWIN)
+    CXX			:=clang++
+endif
+ifndef CPU_ONLY
+    CXXFLAGS		+=-std=c++0x
+else
+    CXXFLAGS		+=-std=c++0x -DCPU_ONLY
+endif
+
+# Global include and link flags
+ifndef CPU_ONLY
+    INCLUDE_FLAGS	+=-I$(GENN_PATH)/lib/include -I$(GENN_PATH)/userproject/include -I$(CUDA_PATH)/include
+    ifeq ($(DARWIN),DARWIN)
+        LINK_FLAGS	+=-Xlinker -lstdc++ -lc++ -L$(CUDA_PATH)/lib -lcuda -lcudart
+    else
+        ifeq ($(OS_SIZE),32)
+            LINK_FLAGS	+=-L$(CUDA_PATH)/lib -lcuda -lcudart
+        else
+            LINK_FLAGS	+=-L$(CUDA_PATH)/lib64 -lcuda -lcudart
+        endif
+    endif
+else
+    INCLUDE_FLAGS	+=-I$(GENN_PATH)/lib/include -I$(GENN_PATH)/userproject/include
+    ifeq ($(DARWIN),DARWIN)
+        LINK_FLAGS	+=-Xlinker -lstdc++ -lc++
+    endif
+endif
+
+# An auto-generated file containing your cuda device's compute capability
+ifndef CPU_ONLY
+    -include sm_version.mk
+endif
+
+# Enumerate all source and object files (if they have not already been listed)
 SOURCES		?=$(wildcard *.cc *.cpp *.cu)
 OBJECTS		:=$(foreach obj,$(basename $(SOURCES)),$(obj).o)
 
-
-# Target rules.
+# Target rules
 .PHONY: all
 all: release
 
