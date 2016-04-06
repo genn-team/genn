@@ -27,6 +27,7 @@ Part of the code generation and generated code sections.
 
 #include <vector>
 #include <string>
+#include <algorithm>
 using namespace std;
 #include "global.h"
 #include "sparseProjection.h"
