@@ -99,7 +99,7 @@ int main(int argc, char *argv[])
 
     if (which == GPU) {  
 #ifndef CPU_ONLY
-      PNIzhNN.getSpikeNumbersFromGPU();
+      //PNIzhNN.getSpikeNumbersFromGPU();
       PNIzhNN.getSpikesFromGPU();
       pullIzh1StateFromDevice();
       pullPNStateFromDevice();

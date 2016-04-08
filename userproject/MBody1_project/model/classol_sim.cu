@@ -152,7 +152,7 @@ int main(int argc, char *argv[])
     while (!done) 
     {    
 	locust.runGPU(DT); // run next batch
-	locust.getSpikeNumbersFromGPU();
+	//locust.getSpikeNumbersFromGPU();
 	locust.getSpikesFromGPU();
 	
 //	pullDNStateFromDevice();
