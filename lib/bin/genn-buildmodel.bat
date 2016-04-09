@@ -1,75 +1,75 @@
-@ECHO off
-setlocal EnableDelayedExpansion
+@echo off
+setlocal ENABLEDELAYEDEXPANSION
+goto :begin
 
-rem : parse command options
-set options=
+:genn_help
+rem :: display genn-buildmodel.bat help
+echo === genn-buildmodel.bat script usage ===
+echo genn-buildmodel.bat [cdho] model
+echo -c            only generate simulation code for the CPU
+echo -d            enables the debugging mode
+echo -h            shows this help message
+echo -o outpath    changes the output directory
+goto :eof
 
+:begin
+rem :: define genn-buildmodel.bat options separated by spaces
+rem :: -<option>:              option
+rem :: -<option>:""            option with argument
+rem :: -<option>:"<default>"   option with argument and default value
+set "OPTIONS=-o:"%CD%" -d: -c: -h:"
+for %%O in (%OPTIONS%) do for /f "tokens=1,* delims=:" %%A in ("%%O") do set "%%A=%%~B"
 
-set INITIAL_PATH="%CD%"
-set OUTPUT_PATH="%INITIAL_PATH%"
-
-
-
-
-
-set MODEL="%1"
-
-
-set k=0
-for %%x in (%*) do (
-    set /a k+=1
-    set "argv[!k!]=%%~x"
-)
-for /l %%i in (1,1,%k%) do (
-    if "!argv[%%i]!"=="DEBUG" (
-      set /a j=%%i+1
-      set /a DBGMODE="argv[!j!]"
-    )  
-    if "!argv[%%i]!"=="CPU_ONLY" (
-      set /a j=%%i+1
-      set /a CPU_ONLY="argv[!j!]"
+:parse_option
+rem :: parse command options
+set "OPT=%~1"
+if defined OPT (
+    set "test=!OPTIONS:*%~1:=! "
+    if "!test!"=="!OPTIONS! " (
+        if "!OPT:~0,1!"=="-" (
+            echo genn-buildmodel.bat: error: invalid option: !OPT!
+            goto :genn_help
+        )
+        set "MODEL=!OPT!"
+        shift /1
+        goto :parse_option
     )
-) 
-for /f %%a in ('set DBGMODE^&set CPU_ONLY') do (if "!"=="" endlocal)&set "%%a"
-
-
-
-
-
-
-
-if "%MODEL%"=="" (
+    if "!test:~0,1!"==" " (
+        set "!OPT!=1"
+    ) else (
+        set "!OPT!=%~2"
+        shift /1
+    )
+    shift /1
+    goto :parse_option
+)
+if defined -h goto :genn_help
+if not defined MODEL (
     echo genn-buildmodel.bat: error 2: no model file given
-    exit 2
+    goto :eof
 )
 
-rem : checking GENN_PATH is defined
-if "%GENN_PATH%"=="" (
+rem :: convert relative paths to absolute paths
+for /f %%I in ("%MODEL%") do set "MODEL=%%~fI"
+for /f %%I in ("%-o%") do set "-o=%%~fI"
+
+rem :: checking GENN_PATH is defined
+if not defined GENN_PATH (
     echo genn-buildmodel.bat: error 3: GENN_PATH is not defined
-    exit 3
+    goto :eof
 )
 
-rem : generate model code
-cd /d "%OUTPUT_PATH%"
+rem :: generate model code
+cd /d "%-o%"
 nmake clean /nologo /f "%GENN_PATH%\lib\src\WINmakefile"
-if "%DEBUG%"=="1" (
+if defined -d (
     echo debugging mode ON
-    nmake /nologo /f "%GENN_PATH%\lib\src\WINmakefile" MODEL="%MODEL%" CPU_ONLY=%CPU_ONLY% DEBUG=%DEBUG%
-    devenv /debugexe .\generateALL.exe "%OUTPUT_PATH%"
+    nmake /nologo /f "%GENN_PATH%\lib\src\WINmakefile" MODEL="%MODEL%" CPU_ONLY=%-c% DEBUG=%-d%
+    devenv /debugexe .\generateALL.exe "%-o%"
 ) else (
-    nmake /nologo /f "%GENN_PATH%\lib\src\WINmakefile" MODEL="%MODEL%" CPU_ONLY=%CPU_ONLY%
-    .\generateALL.exe "%OUTPUT_PATH%"
+    nmake /nologo /f "%GENN_PATH%\lib\src\WINmakefile" MODEL="%MODEL%" CPU_ONLY=%-c%
+    .\generateALL.exe "%-o%"
 )
 
 echo model build complete
 goto :eof
-
-rem : display genn-buildmodel.bat help and quit
-:genn_help
-    echo === genn-buildmodel.bat script usage ===
-    echo genn-buildmodel.bat [cdho] <model>
-    echo -c only generate simulation code for the CPU
-    echo -d enables the debugging mode
-    echo -h shows this help message
-    echo -o <path> changes the output directory to <path>
-    goto :eof

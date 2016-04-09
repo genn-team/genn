@@ -3,11 +3,11 @@
 # display genn-buildmodel.sh help
 genn_help () {
     echo "=== genn-buildmodel.sh script usage ==="
-    echo "genn-buildmodel.sh [cdho] <model>"
-    echo "-c only generate simulation code for the CPU"
-    echo "-d enables the debugging mode"
-    echo "-h shows this help message"
-    echo "-o <path> changes the output directory to <path>"
+    echo "genn-buildmodel.sh [cdho] model"
+    echo "-c            only generate simulation code for the CPU"
+    echo "-d            enables the debugging mode"
+    echo "-h            shows this help message"
+    echo "-o outpath    changes the output directory"
 }
 
 # handle script errors
@@ -18,29 +18,32 @@ genn_error () { # $1=line, $2=code, $3=message
 trap 'genn_error $LINENO 50 "command failure"' ERR
 
 # parse command options
-INITIAL_PATH="$(pwd)";
-OUTPUT_PATH="$INITIAL_PATH";
+OUTPUT_PATH="$PWD";
 while [[ -n "${!OPTIND}" ]]; do
     while getopts "cdo:h" option; do
 	case $option in
 	    c) CPU_ONLY=1;;
 	    d) DEBUG=1;;
 	    h) genn_help; exit;;
-	    o) OUTPUT_PATH="$INITIAL_PATH/$OPTARG";;
+	    o) OUTPUT_PATH="$OPTARG";;
 	    ?) genn_help; exit;;
 	esac
     done
     if [[ $OPTIND > $# ]]; then break; fi
-    if [[ "${!OPTIND:0:1}" == "/" ]]; then
-	MODEL="${!OPTIND}"
-    else
-	MODEL="$INITIAL_PATH/${!OPTIND}"
-    fi
+    MODEL="${!OPTIND}"
     let OPTIND++
 done
 if [[ -z "$MODEL" ]]; then
     genn_error $LINENO 2 "no model file given"
 fi
+
+# convert relative paths to absolute paths
+pushd $(dirname $MODEL) > /dev/null
+MODEL="$PWD/$(basename $MODEL)"
+popd > /dev/null
+pushd $OUTPUT_PATH > /dev/null
+OUTPUT_PATH="$PWD"
+popd > /dev/null
 
 # checking GENN_PATH is defined
 if [[ -z "$GENN_PATH" ]]; then
