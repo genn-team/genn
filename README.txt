@@ -137,4 +137,4 @@ c) The programmer defines their own modeling code along similar lines as
     results from GPU calculations.
 
   - the simulation code is then produced in the following two steps:
-    "buildmodel.[sh/bat] Model1 [DEBUG OFF/ON]" and "make clean && make"
+    "genn-buildmodel.[sh|bat] ./modelFile.cc" and "make clean && make"
