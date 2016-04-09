@@ -159,7 +159,7 @@ int main(int argc, char *argv[])
 	while (!done) 
 	{
 #ifndef CPU_ONLY
-	    locust.getSpikeNumbersFromGPU();
+	    //locust.getSpikeNumbersFromGPU();
 	    locust.getSpikesFromGPU();
 	    locust.runGPU(DT); // run next batch
 #endif
