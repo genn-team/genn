@@ -25,7 +25,6 @@
 #include <string>
 #include "global.h"
 #include "stringutils.h"
-#include <unistd.h>
 
 short *isGrpVarNeeded;
 

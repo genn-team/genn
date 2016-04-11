@@ -18,6 +18,14 @@
   generating the CPU side code for running simulations on either the CPU or GPU (generateRunner.cc) and for CPU-only simulation code (generateCPU.cc).
 */
 
+#ifdef _WIN32
+#include <direct.h>
+#include <stdlib.h>
+#else
+#include <unistd.h>
+#include <sys/stat.h> // needed for mkdir
+#endif
+
 #include <algorithm>
 #include <string>
 #include "global.h"
@@ -30,13 +38,6 @@ CodeHelper hlp;
 #include "generateKernels.cc"
 #include "generateRunner.cc"
 #include "generateCPU.cc"
-
-#ifdef _WIN32
-#include <direct.h>
-#include <stdlib.h>
-#else
-#include <sys/stat.h> // needed for mkdir
-#endif
 
 
 #ifndef CPU_ONLY
