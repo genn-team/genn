@@ -18,14 +18,14 @@ genn_error () { # $1=line, $2=code, $3=message
 trap 'genn_error $LINENO 50 "command failure"' ERR
 
 # parse command options
-OUTPUT_PATH="$PWD";
+OUT_PATH="$PWD";
 while [[ -n "${!OPTIND}" ]]; do
     while getopts "cdo:h" option; do
 	case $option in
 	    c) CPU_ONLY=1;;
 	    d) DEBUG=1;;
 	    h) genn_help; exit;;
-	    o) OUTPUT_PATH="$OPTARG";;
+	    o) OUT_PATH="$OPTARG";;
 	    ?) genn_help; exit;;
 	esac
     done
@@ -33,19 +33,11 @@ while [[ -n "${!OPTIND}" ]]; do
     MODEL="${!OPTIND}"
     let OPTIND++
 done
+
+# command options logic
 if [[ -z "$MODEL" ]]; then
     genn_error $LINENO 2 "no model file given"
 fi
-
-# convert relative paths to absolute paths
-pushd $(dirname $MODEL) > /dev/null
-MODEL="$PWD/$(basename $MODEL)"
-popd > /dev/null
-pushd $OUTPUT_PATH > /dev/null
-OUTPUT_PATH="$PWD"
-popd > /dev/null
-
-# checking GENN_PATH is defined
 if [[ -z "$GENN_PATH" ]]; then
     if [[ $(uname -s) == "Linux" ]]; then
 	echo "GENN_PATH is not defined - trying to auto-detect"
@@ -54,17 +46,25 @@ if [[ -z "$GENN_PATH" ]]; then
 	genn_error $LINENO 3 "GENN_PATH is not defined"
     fi
 fi
+pushd $OUT_PATH > /dev/null
+OUT_PATH="$PWD"
+popd > /dev/null
+pushd $(dirname $MODEL) > /dev/null
+MACROS="MODEL=$PWD/$(basename $MODEL)"
+popd > /dev/null
+if [[ -n "$DEBUG" ]]; then MACROS="$MACROS DEBUG=1"; fi
+if [[ -n "$CPU_ONLY" ]]; then MACROS="$MACROS CPU_ONLY=1"; fi
 
 # generate model code
-cd "$OUTPUT_PATH"
+cd "$OUT_PATH"
 make clean -f "$GENN_PATH/lib/src/GNUmakefile"
 if [[ -n "$DEBUG" ]]; then
     echo "debugging mode ON"
-    make debug -f "$GENN_PATH/lib/src/GNUmakefile" MODEL="$MODEL" CPU_ONLY=$CPU_ONLY
-    gdb -tui --args ./generateALL "$OUTPUT_PATH"
+    make debug -f "$GENN_PATH/lib/src/GNUmakefile" $MACROS
+    gdb -tui --args ./generateALL "$OUT_PATH"
 else
-    make -f "$GENN_PATH/lib/src/GNUmakefile" MODEL="$MODEL" CPU_ONLY=$CPU_ONLY
-    ./generateALL "$OUTPUT_PATH"
+    make -f "$GENN_PATH/lib/src/GNUmakefile" $MACROS
+    ./generateALL "$OUT_PATH"
 fi
 
 echo "model build complete"
