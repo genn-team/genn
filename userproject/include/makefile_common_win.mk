@@ -42,11 +42,11 @@ CXXFLAGS		=$(CXXFLAGS) /debug /Zi /Od
 !IFNDEF CPU_ONLY
 INCLUDE_FLAGS		=/I"$(GENN_PATH)\lib\include" /I"$(GENN_PATH)\userproject\include" /I"$(CUDA_PATH)\include" $(EXTRA_INCLUDE)
 !IF "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
-LINK_FLAGS		="$(CUDA_PATH)\lib\x64\cudart.lib"
+LINK_FLAGS		="$(CUDA_PATH)\lib\x64\cudart.lib" "$(CUDA_PATH)\lib\x64\cuda.lib"
 !ELSEIF "$(PROCESSOR_ARCHITEW6432)" == "AMD64"
-LINK_FLAGS		="$(CUDA_PATH)\lib\x64\cudart.lib"
+LINK_FLAGS		="$(CUDA_PATH)\lib\x64\cudart.lib" "$(CUDA_PATH)\lib\x64\cuda.lib"
 !ELSE
-LINK_FLAGS		="$(CUDA_PATH)\lib\Win32\cudart.lib"
+LINK_FLAGS		="$(CUDA_PATH)\lib\Win32\cudart.lib" "$(CUDA_PATH)\lib\Win32\cuda.lib"
 !ENDIF
 !ELSE
 INCLUDE_FLAGS		=/I"$(GENN_PATH)\lib\include" /I"$(GENN_PATH)\userproject\include" $(EXTRA_INCLUDE)
