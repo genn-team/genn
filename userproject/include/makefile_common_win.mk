@@ -53,7 +53,7 @@ INCLUDE_FLAGS		=/I"$(GENN_PATH)\lib\include" /I"$(GENN_PATH)\userproject\include
 !ENDIF
 
 # An auto-generated file containing your cuda device's compute capability
-!IFNDEF CPU_ONLY
+!IF EXIST(sm_version.mk)
 !INCLUDE sm_version.mk
 !ENDIF
 

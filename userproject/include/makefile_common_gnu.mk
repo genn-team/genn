@@ -58,9 +58,7 @@ else
 endif
 
 # An auto-generated file containing your cuda device's compute capability
-ifndef CPU_ONLY
-    -include sm_version.mk
-endif
+-include sm_version.mk
 
 # Enumerate all source and object files (if they have not already been listed)
 SOURCES		?=$(wildcard *.cc *.cpp *.cu)
