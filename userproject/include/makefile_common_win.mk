@@ -73,8 +73,10 @@ all: $(EXECUTABLE)
 .cpp.obj:
 	$(CXX) $(CXXFLAGS) $(INCLUDE_FLAGS) $** /Fo$@ /c
 
+!IFNDEF CPU_ONLY
 .cu.obj:
 	$(NVCC) $(NVCCFLAGS) $(INCLUDE_FLAGS:/I=-I) $(GENCODE_FLAGS) $** /Fo$@ -c
+!ENDIF
 
 $(EXECUTABLE): $(OBJECTS)
 	$(CXX) $(CXXFLAGS) $(LINK_FLAGS) $** /Fe$@

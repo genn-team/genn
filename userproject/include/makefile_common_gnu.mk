@@ -74,8 +74,10 @@ all: release
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) $(INCLUDE_FLAGS) $< -o $@ -c
 
+ifndef CPU_ONLY
 %.o: %.cu
 	$(NVCC) $(NVCCFLAGS) $(INCLUDE_FLAGS) $(GENCODE_FLAGS) $< -o $@ -c
+endif
 
 $(EXECUTABLE): $(OBJECTS)
 	$(CXX) $(CXXFLAGS) $(OBJECTS) -o $@ $(LINK_FLAGS)
