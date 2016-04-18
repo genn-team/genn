@@ -12,12 +12,15 @@
 ##--------------------------------------------------------------------------
 
 EXECUTABLE	=VClampGA.exe
-!IF "$(CPU_ONLY)" != "1"
+!IFNDEF CPU_ONLY
 SOURCES		=VClampGA.cu
 !ELSE
 SOURCES		=VClampGA_cpu_only.cc
 !ENDIF
-EXTRA_INCLUDE	= /I %CD%
-OPTIMIZATIONFLAGS = /O2
+CXXFLAGS	=/O2
+#EXTRA_INCLUDE	= /I %CD%
 
-!include $(GENN_PATH)\userproject\include\makefile_common_win.mk
+$(EXECUTABLE)_cpu_only.cc: $(EXECUTABLE).cu
+	copy $(EXECUTABLE).cu $(EXECUTABLE)_cpu_only.cc
+
+!INCLUDE $(GENN_PATH)\userproject\include\makefile_common_win.mk

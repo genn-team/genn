@@ -12,19 +12,14 @@
 ##--------------------------------------------------------------------------
 
 EXECUTABLE	:=VClampGA
-ifeq ($(CPU_ONLY),1)
-  SOURCES :=$(EXECUTABLE)_cpu_only.cc
+ifndef CPU_ONLY
+SOURCES		:=$(EXECUTABLE).cu
 else
-  SOURCES :=$(EXECUTABLE).cu
+SOURCES		:=$(EXECUTABLE)_cpu_only.cc
 endif
-
-OPTIMIZATIONFLAGS:= -O3
-
-include	$(GENN_PATH)/userproject/include/makefile_common_gnu.mk
-
-$(EXECUTABLE)_cpu_only.o: $(EXECUTABLE)_cpu_only.cc
-	$(CXX) $(CXXFLAGS) $(INCLUDE_FLAGS) $< -o $@ -c
-	rm $(EXECUTABLE)_cpu_only.cc
+CXXFLAGS	:=-O3
 
 $(EXECUTABLE)_cpu_only.cc: $(EXECUTABLE).cu
 	cp $(EXECUTABLE).cu $(EXECUTABLE)_cpu_only.cc
+
+include	$(GENN_PATH)/userproject/include/makefile_common_gnu.mk
