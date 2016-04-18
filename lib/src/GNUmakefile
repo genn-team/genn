@@ -62,7 +62,7 @@ endif
 all: generateALL
 
 generateALL: $(GENN_PATH)/lib/src/generateALL.cc
-	$(CXX) $(CXXFLAGS) $(INCLUDE_FLAGS)  $< -o $@ $(LINK_FLAGS)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_FLAGS) $< -o $@ $(LINK_FLAGS)
 
 .PHONY: debug
 debug: CXXFLAGS +=-g

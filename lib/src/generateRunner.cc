@@ -396,6 +396,7 @@ void genRunner(NNmodel &model, //!< Model description
 
     os << "#include <cstdio>" << ENDL;
     os << "#include <cassert>" << ENDL;
+    os << "#include <ctime>" << ENDL;
     os << "#include <stdint.h>" << ENDL;
     os << "#include \"utils.h\"" << ENDL << ENDL;
     os << "#include \"numlib/simpleBit.h\"" << ENDL << ENDL;

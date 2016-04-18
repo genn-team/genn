@@ -11,15 +11,15 @@
 ##
 ##--------------------------------------------------------------------------
 
-EXECUTABLE	:=VClampGA
+EXECUTABLE			:=VClampGA
 ifndef CPU_ONLY
-SOURCES		:=$(EXECUTABLE).cu
+    SOURCES			:=$(EXECUTABLE).cu
 else
-SOURCES		:=$(EXECUTABLE)_cpu_only.cc
+    SOURCES			:=$(EXECUTABLE)_cpu_only.cc
 endif
-CXXFLAGS	:=-O3
+OPTIMIZATIONFLAGS	:=-O3
+
+include	$(GENN_PATH)/userproject/include/makefile_common_gnu.mk
 
 $(EXECUTABLE)_cpu_only.cc: $(EXECUTABLE).cu
 	cp $(EXECUTABLE).cu $(EXECUTABLE)_cpu_only.cc
-
-include	$(GENN_PATH)/userproject/include/makefile_common_gnu.mk

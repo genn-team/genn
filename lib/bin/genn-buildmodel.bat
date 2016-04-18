@@ -46,12 +46,15 @@ if defined OPT (
 
 rem :: command options logic
 if defined -h goto :genn_help
-if not defined MODEL (
-    echo genn-buildmodel.bat: error 2: no model file given
-    goto :eof
+if not defined CUDA_PATH (
+    echo genn-buildmodel.bat: error 1: CUDA_PATH is not defined
 )
 if not defined GENN_PATH (
-    echo genn-buildmodel.bat: error 3: GENN_PATH is not defined
+    echo genn-buildmodel.bat: error 2: GENN_PATH is not defined
+    goto :eof
+)
+if not defined MODEL (
+    echo genn-buildmodel.bat: error 3: no model file given
     goto :eof
 )
 for /f %%I in ("%-o%") do set "-o=%%~fI"
