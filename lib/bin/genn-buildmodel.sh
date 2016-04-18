@@ -35,19 +35,16 @@ while [[ -n "${!OPTIND}" ]]; do
 done
 
 # command options logic
-if [[ -z "$CUDA_PATH" ]]; then
-    genn_error $LINENO 1 "CUDA_PATH is not defined"
-fi
 if [[ -z "$GENN_PATH" ]]; then
     if [[ $(uname -s) == "Linux" ]]; then
         echo "GENN_PATH is not defined - trying to auto-detect"
         export GENN_PATH="$(readlink -f $(dirname $0)/../..)"
     else
-        genn_error $LINENO 2 "GENN_PATH is not defined"
+        genn_error $LINENO 1 "GENN_PATH is not defined"
     fi
 fi
 if [[ -z "$MODEL" ]]; then
-    genn_error $LINENO 3 "no model file given"
+    genn_error $LINENO 2 "no model file given"
 fi
 pushd $OUT_PATH > /dev/null
 OUT_PATH="$PWD"
