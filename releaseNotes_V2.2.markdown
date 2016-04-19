@@ -27,10 +27,17 @@ Note: If there are conflicting definitions for hash defines, the one that appear
 
 4. The new convenience macros spikeCount_XX and spike_XX where "XX" is the name of the neuron group are now also available fro events: spikeEventCount_XX and spikeEvent_XX. They access the values for the current time step even if there are synaptic delays and spikes events are stored in circular queues.
 
-5. We have now introduced a "CPU_ONLY" macro that if it's defined will generate a GeNN version that is completely independent from CUDA and hence can be used on computers without CUDA installation or CUDA enabled hardware. Obviously, this then can also only run on CPU. CPU only mode can either be switched on by defining CPU_ONLY in the model description file or by passing appropriate parameters during the build, in particular
-buildmodel <name> CPU_ONLY=1
+5. The old buildmodel.[sh|bat] scripts have been superseded by new genn-buildmodel.[sh|bat] scripts. These scripts accept UNIX style option switches, allow both relative and absolute model file paths, and allow the user to specify the directory in which all output files are placed (-o <path>). Debug (-d), CPU-only (-c) and show help (-h) are also defined. 
+
+6. We have introduced a CPU-only "-c" genn-buildmodel switch, which, if it's defined, will generate a GeNN version that is completely independent from CUDA and hence can be used on computers without CUDA installation or CUDA enabled hardware. Obviously, this then can also only run on CPU. CPU only mode can either be switched on by defining CPU_ONLY in the model description file or by passing appropriate parameters during the build, in particular
+genn-buildmodel.[sh|bat] <modelfile> -c
 make release CPU_ONLY=1
-**TODO** how to handle the problem with the main executable name suffix .cu
+
+7. The new genn-buildmodel "-o" switch allows the user to specify the output directory for all generated files - the default is the current directory. For example, a user project could be in '/home/genn_project', whilst the GeNN directory could be '/usr/local/genn'. The GeNN directory is kept clean, unless the user decides to build the sample projects inside of it without copying them elsewhere. This allows the deployment of GeNN to a read-only directory, like '/usr/local' or 'C:\Program Files'. It also allows multiple users - i.e. on a compute cluster - to use GeNN simultaneously, without overwriting each other's code-generation files, etcetera.
+
+8. The ARM architecture is now supported - e.g. the NVIDIA Jetson development platform.
+
+9. The NVIDIA CUDA SM_5* (Maxwell) architecture is now supported. An error is now thrown when the user tries to use double precision floating-point numbers on devices with architecture older than SM_13 - since these devices do not support double precision. 
 
 Developer Side Changes
 ----
@@ -43,12 +50,18 @@ Developer Side Changes
 
 4. The headers of the auto-generated communication functions such as pullXXXStateFromDevice etc, are now generated into definitions.h. This is useful where one wants to compile separate object files that cannot all include the full definitions in "runnerGPU.cc". One example where this is useful is the brian2genn interface.
 
-
 Improvements
 ----
+
 1. Improved method of obtaining ptxas compiler information on register and shared memory usage and an improved algorithm for estimating shared memory usage requirements for different block sizes.
+
+2. Replaced pageable CPU-side memory with page-locked memory:
+https://devblogs.nvidia.com/parallelforall/how-optimize-data-transfers-cuda-cc/
+This can significantly speed up simulations in which a lot of data is regularly copied to and from a CUDA device.
 
 Bug fixes:
 ----
+
+1. Fixed a minor bug with delayed synapses, where delaySlot is declared but not referenced.
 
 Please refer to the [full documentation](http://genn-team.github.io/genn/documentation/html/index.html) for further details, tutorials and complete code documentation.
