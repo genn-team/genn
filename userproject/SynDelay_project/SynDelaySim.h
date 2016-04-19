@@ -1,3 +1,13 @@
+//--------------------------------------------------------------------------
+//   Author: James Turner
+//  
+//   Institute: Center for Computational Neuroscience and Robotics
+//              University of Sussex
+//              Falmer, Brighton BN1 9QJ, UK 
+//  
+//   email to:  J.P.Turner@sussex.ac.uk
+//  
+//--------------------------------------------------------------------------
 
 #ifndef SYNDELAYSIM_HPP
 #define SYNDELAYSIM_HPP
