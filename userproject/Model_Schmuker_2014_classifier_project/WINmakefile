@@ -1,18 +1,15 @@
 ##--------------------------------------------------------------------------
-##   Author: Thomas Nowotny
+##   Author: Alan Diamond
 ##  
 ##   Institute: Center for Computational Neuroscience and Robotics
 ##              University of Sussex
 ##              Falmer, Brighton BN1 9QJ, UK 
 ##  
-##   email to:  T.Nowotny@sussex.ac.uk
-##  
-##   initial version: 2010-02-07
 ##  
 ##--------------------------------------------------------------------------
 
 EXECUTABLE	=experiment.exe
 SOURCES		=experiment.cu
-OPTIMIZATIONFLAGS = /O2
+OPTIMIZATIONFLAGS	=/O2
 
-!include $(GENN_PATH)\userproject\include\makefile_common_win.mk
+!INCLUDE $(GENN_PATH)\userproject\include\makefile_common_win.mk

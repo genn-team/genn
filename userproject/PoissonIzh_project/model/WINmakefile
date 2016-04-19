@@ -11,8 +11,15 @@
 ##  
 ##--------------------------------------------------------------------------
 
-EXECUTABLE	=PoissonIzh_sim.exe
-SOURCES		=PoissonIzh_sim.cu
-OPTIMIZATIONFLAGS = /O2
+EXECUTABLE		=PoissonIzh_sim.exe
+!IFNDEF CPU_ONLY
+SOURCES			=$(EXECUTABLE:.exe=).cu
+!ELSE
+SOURCES			=$(EXECUTABLE:.exe=).cc
+!ENDIF
+OPTIMIZATIONFLAGS	=/O2
 
-!include $(GENN_PATH)\userproject\include\makefile_common_win.mk
+!INCLUDE $(GENN_PATH)\userproject\include\makefile_common_win.mk
+
+$(EXECUTABLE:.exe=).cc: $(EXECUTABLE:.exe=).cu
+	copy $(EXECUTABLE:.exe=).cu $(EXECUTABLE:.exe=).cc
