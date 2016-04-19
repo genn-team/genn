@@ -61,9 +61,6 @@ int UIntSz = sizeof(unsigned int) * 8; //!< size of the unsigned int variable ty
 int logUIntSz = (int) (logf((float) UIntSz) / logf(2.0f) + 1e-5f); //!< logarithm of the size of the unsigned int variable type on the local architecture
 
 namespace GENN_FLAGS {
-    unsigned int COPY= 1;
-    unsigned int NOCOPY= ~COPY;
-
     unsigned int calcSynapseDynamics= 0;
     unsigned int calcSynapses= 1;
     unsigned int learnSynapsesPost= 2;

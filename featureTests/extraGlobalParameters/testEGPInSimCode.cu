@@ -38,11 +38,11 @@ void EGPInSimCode::init_neurons() {
     copyStateToDevice();
 }
 
-void EGPInSimCode::run(int which, unsigned int copy)
+void EGPInSimCode::run(int which)
 {
   if (which == GPU)
   {
-    stepTimeGPU(copy);
+    stepTimeGPU();
     copyStateFromDevice();
   }
   else
@@ -99,17 +99,8 @@ int main(int argc, char *argv[])
       }
       for (int j= 0; j < 10; j++) { // for all pre-synaptic neurons 
 	  // generate expected values
-	  if (which == GPU) {
-	      if (i%2 == 1) {
-		  x[j]= (t-DT)+pow(t-DT,2.0)+j*10;
-	      }
-	      else {
-		  if (i > 0) x[j]= (t-DT)+pow(t-2*DT,2.0)+j*10;
-	      }
-	  }
-	  else {
-	      if (i > 0) x[j]= (t-DT)+pow(t-DT,2.0)+j*10;
-	  }
+	  if (i > 0) x[j]= (t-DT)+pow(t-DT,2.0)+j*10;
+
 	  if (write) {
 	      neurOs << xpre[glbSpkShiftpre+j] << " ";
 	      expNeurOs << x[j] << " ";
@@ -121,9 +112,7 @@ int main(int argc, char *argv[])
 	  expNeurOs << endl;
       }
       inputpre= pow(t, 2.0);
-      if (i%2 == 0) copy=GENN_FLAGS::COPY;
-      else copy= GENN_FLAGS::NOCOPY;
-      sim->run(which, copy);
+      sim->run(which);
       if (fmod(t+5e-5, REPORT_TIME) < 1e-4)
       {
 	  cout << "\r" << t;

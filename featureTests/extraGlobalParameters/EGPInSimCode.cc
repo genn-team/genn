@@ -45,7 +45,7 @@ void modelDefinition(NNmodel &model)
   n.extraGlobalNeuronKernelParameterTypes.push_back(tS("scalar"));
   int DUMMYNEURON= nModels.size();
   nModels.push_back(n);
-    model.addNeuronPopulation("pre", 10, DUMMYNEURON, neuron_p, neuron_ini);
+  model.addNeuronPopulation("pre", 10, DUMMYNEURON, neuron_p, neuron_ini);
   model.setPrecision(GENN_FLOAT);
   model.finalize();
 }

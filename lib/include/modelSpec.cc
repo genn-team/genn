@@ -47,7 +47,6 @@ NNmodel::NNmodel()
   setGPUDevice(AUTODEVICE);
 #endif
   setSeed(0);
-  totalKernelParameterSize= 0;
 }
 
 NNmodel::~NNmodel() 
@@ -299,40 +298,177 @@ void NNmodel::initLearnGrps()
 	    }
 	}	
     }
-    // related to kernel parameters
-    unsigned int align= 1;
+
+    // related to kernel parameters: make kernel parameter lists
+    // for neuron kernel
     for (int i = 0; i < neuronGrpN; i++) {
 	unsigned int nt= neuronType[i];
 	for (int j= 0, l= nModels[nt].extraGlobalNeuronKernelParameters.size(); j < l; j++) {
-	    kernelParameters.push_back(nModels[nt].extraGlobalNeuronKernelParameters[j]);
-	    if (nModels[nt].extraGlobalNeuronKernelParameterTypes[j] == "scalar") {
-		kernelParameterTypes.push_back(ftype);
+	    string pname= nModels[nt].extraGlobalNeuronKernelParameters[j];
+	    string pnamefull= pname + neuronName[i];
+	    string ptype= nModels[nt].extraGlobalNeuronKernelParameterTypes[j];
+	    if (find(neuronKernelParameters.begin(), neuronKernelParameters.end(), pnamefull) == neuronKernelParameters.end()) {
+		// parameter wasn't registered yet - is it used?
+		bool used= 0;
+		if (nModels[nt].simCode.find(tS("$(")+pname+tS(")")) != string::npos) used= 1; // it's used
+		if (nModels[nt].thresholdConditionCode.find(tS("$(")+pname+tS(")")) != string::npos) used= 1; // it's used
+		if (nModels[nt].resetCode.find(tS("$(")+pname+tS(")")) != string::npos) used= 1; // it's used
+		if (used) {
+		    neuronKernelParameters.push_back(pnamefull);
+		    neuronKernelParameterTypes.push_back(ptype);
+		}
 	    }
-	    else {
-		kernelParameterTypes.push_back(nModels[nt].extraGlobalNeuronKernelParameterTypes[j]);
-	    }
-	    if (theSize(kernelParameterTypes.back()) > align) align= theSize(kernelParameterTypes.back());
-	    kernelParameterPopulations.push_back(neuronName[i]);
 	}
     }
     for (int i = 0; i < synapseGrpN; i++) {
-	unsigned int st= synapseType[i];
-	for (int j= 0, l= weightUpdateModels[st].extraGlobalSynapseKernelParameters.size(); j < l; j++) {
-	    kernelParameters.push_back(weightUpdateModels[st].extraGlobalSynapseKernelParameters[j]);
-	    if (weightUpdateModels[st].extraGlobalSynapseKernelParameterTypes[j] == "scalar") {
-		kernelParameterTypes.push_back(ftype);
+	weightUpdateModel wu = weightUpdateModels[synapseType[i]];
+	unsigned int src = synapseSource[i];
+	for (int j= 0, l= wu.extraGlobalSynapseKernelParameters.size(); j < l; j++) {
+	    string pname= wu.extraGlobalSynapseKernelParameters[j];
+	    string pnamefull= pname + synapseName[i];
+	    string ptype= wu.extraGlobalSynapseKernelParameterTypes[j];
+	    if (find(neuronKernelParameters.begin(), neuronKernelParameters.end(), pnamefull) == neuronKernelParameters.end()) {
+		// parameter wasn't registered yet - is it used?
+		bool used= 0;
+		if (neuronSpkEvntCondition[src].find(tS("$(")+pname+tS(")")) != string::npos) used= 1; // it's used
+ 		if (used) {
+		    neuronKernelParameters.push_back(pnamefull);
+		    neuronKernelParameterTypes.push_back(ptype);
+		}
 	    }
-	    else {
-		kernelParameterTypes.push_back(weightUpdateModels[st].extraGlobalSynapseKernelParameterTypes[j]);
-	    }
-	    if (theSize(kernelParameterTypes.back()) > align) align= theSize(kernelParameterTypes.back());
-	    kernelParameterPopulations.push_back(synapseName[i]);
 	}
     }
-    kernelParameterAlign= 1;
-    while (kernelParameterAlign < align) kernelParameterAlign*= 2;
-    totalKernelParameterSize= kernelParameterAlign*kernelParameters.size();
-
+    // for synapse kernel
+    for (int i = 0; i < synapseGrpN; i++) {
+	weightUpdateModel wu = weightUpdateModels[synapseType[i]];
+	unsigned int src = synapseSource[i];
+	unsigned int trg = synapseTarget[i];
+	unsigned int nt[2];
+	nt[0]= neuronType[src]; // pre
+	nt[1]= neuronType[trg]; // post
+	string suffix[2];
+	suffix[0]= tS("_pre");
+	suffix[1]= tS("_post");
+	for (int k= 0; k < 2; k++) {
+	    for (int j= 0, l= nModels[nt[k]].extraGlobalNeuronKernelParameters.size(); j < l; j++) {
+		string pname= nModels[nt[k]].extraGlobalNeuronKernelParameters[j];
+		string pnamefull= pname + neuronName[i];
+		string ptype= nModels[nt[k]].extraGlobalNeuronKernelParameterTypes[j];
+		if (find(synapseKernelParameters.begin(), synapseKernelParameters.end(), pnamefull) == synapseKernelParameters.end()) {
+		    // parameter wasn't registered yet - is it used?
+		    bool used= 0;
+		    if (wu.simCode.find(tS("$(")+pname+suffix[k]) != string::npos) used= 1; // it's used
+		    if (wu.simCodeEvnt.find(tS("$(")+pname+suffix[k]) != string::npos) used= 1; // it's used
+		    if (wu.evntThreshold.find(tS("$(")+pname+suffix[k]) != string::npos) used= 1; // it's used
+		    if (used) {
+			synapseKernelParameters.push_back(pnamefull);
+			synapseKernelParameterTypes.push_back(ptype);
+		    }
+		}
+	    }
+	}
+	for (int j= 0, l= wu.extraGlobalSynapseKernelParameters.size(); j < l; j++) {
+	    string pname= wu.extraGlobalSynapseKernelParameters[j];
+	    string pnamefull= pname + synapseName[i];
+	    string ptype= wu.extraGlobalSynapseKernelParameterTypes[j];
+	    if (find(synapseKernelParameters.begin(), synapseKernelParameters.end(), pnamefull) == synapseKernelParameters.end()) {
+		// parameter wasn't registered yet - is it used?
+		bool used= 0;
+		if (wu.simCode.find(tS("$(")+pname+tS(")")) != string::npos) used= 1; // it's used
+ 		if (used) {
+		    synapseKernelParameters.push_back(pnamefull);
+		    synapseKernelParameterTypes.push_back(ptype);
+		}
+	    }
+	}
+    }
+    
+    // for simLearnPost
+    for (int i = 0; i < synapseGrpN; i++) {
+	weightUpdateModel wu = weightUpdateModels[synapseType[i]];
+	unsigned int src = synapseSource[i];
+	unsigned int trg = synapseTarget[i];
+	unsigned int nt[2];
+	nt[0]= neuronType[src]; // pre
+	nt[1]= neuronType[trg]; // post
+	string suffix[2];
+	suffix[0]= tS("_pre");
+	suffix[1]= tS("_post");
+	for (int k= 0; k < 2; k++) {
+	    for (int j= 0, l= nModels[nt[k]].extraGlobalNeuronKernelParameters.size(); j < l; j++) {
+		string pname= nModels[nt[k]].extraGlobalNeuronKernelParameters[j];
+		string pnamefull= pname + neuronName[i];
+		string ptype= nModels[nt[k]].extraGlobalNeuronKernelParameterTypes[j];
+		if (find(simLearnPostKernelParameters.begin(), simLearnPostKernelParameters.end(), pnamefull) == simLearnPostKernelParameters.end()) {
+		    // parameter wasn't registered yet - is it used?
+		    bool used= 0;
+		    if (wu.simLearnPost.find(tS("$(")+pname+suffix[k]) != string::npos) used= 1; // it's used
+		    if (used) {
+			simLearnPostKernelParameters.push_back(pnamefull);
+			simLearnPostKernelParameterTypes.push_back(ptype);
+		    }
+		}
+	    }
+	}
+	for (int j= 0, l= wu.extraGlobalSynapseKernelParameters.size(); j < l; j++) {
+	    string pname= wu.extraGlobalSynapseKernelParameters[j];
+	    string pnamefull= pname + synapseName[i];
+	    string ptype= wu.extraGlobalSynapseKernelParameterTypes[j];
+	    if (find(simLearnPostKernelParameters.begin(), simLearnPostKernelParameters.end(), pnamefull) == simLearnPostKernelParameters.end()) {
+		// parameter wasn't registered yet - is it used?
+		bool used= 0;
+		if (wu.simLearnPost.find(tS("$(")+pname+tS(")")) != string::npos) used= 1; // it's used
+ 		if (used) {
+		    simLearnPostKernelParameters.push_back(pnamefull);
+		    simLearnPostKernelParameterTypes.push_back(ptype);
+		}
+	    }
+	}
+    }
+   
+    // for synapse Dynamics
+    for (int i = 0; i < synapseGrpN; i++) {
+	weightUpdateModel wu = weightUpdateModels[synapseType[i]];
+	unsigned int src = synapseSource[i];
+	unsigned int trg = synapseTarget[i];
+	unsigned int nt[2];
+	nt[0]= neuronType[src]; // pre
+	nt[1]= neuronType[trg]; // post
+	string suffix[2];
+	suffix[0]= tS("_pre");
+	suffix[1]= tS("_post");
+	for (int k= 0; k < 2; k++) {
+	    for (int j= 0, l= nModels[nt[k]].extraGlobalNeuronKernelParameters.size(); j < l; j++) {
+		string pname= nModels[nt[k]].extraGlobalNeuronKernelParameters[j];
+		string pnamefull= pname + neuronName[i];
+		string ptype= nModels[nt[k]].extraGlobalNeuronKernelParameterTypes[j];
+		if (find(synapseDynamicsKernelParameters.begin(), synapseDynamicsKernelParameters.end(), pnamefull) == synapseDynamicsKernelParameters.end()) {
+		    // parameter wasn't registered yet - is it used?
+		    bool used= 0;
+		    if (wu.synapseDynamics.find(tS("$(")+pname+suffix[k]) != string::npos) used= 1; // it's used
+		    if (used) {
+			synapseDynamicsKernelParameters.push_back(pnamefull);
+			synapseDynamicsKernelParameterTypes.push_back(ptype);
+		    }
+		}
+	    }
+	}
+	for (int j= 0, l= wu.extraGlobalSynapseKernelParameters.size(); j < l; j++) {
+	    string pname= wu.extraGlobalSynapseKernelParameters[j];
+	    string pnamefull= pname + synapseName[i];
+	    string ptype= wu.extraGlobalSynapseKernelParameterTypes[j];
+	    if (find(synapseDynamicsKernelParameters.begin(), synapseDynamicsKernelParameters.end(), pnamefull) == synapseDynamicsKernelParameters.end()) {
+		// parameter wasn't registered yet - is it used?
+		bool used= 0;
+		if (wu.synapseDynamics.find(tS("$(")+pname+tS(")")) != string::npos) used= 1; // it's used
+ 		if (used) {
+		    synapseDynamicsKernelParameters.push_back(pnamefull);
+		    synapseDynamicsKernelParameterTypes.push_back(ptype);
+		}
+	    }
+	}
+    }
+    
 #ifndef CPU_ONLY
     // figure out where to reset the spike counters
     if (synapseGrpN == 0) { // no synapses -> reset in neuron kernel

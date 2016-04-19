@@ -13,7 +13,7 @@ public:
   EGPInSimCode();
   ~EGPInSimCode();
   void init_neurons();
-  void run(int, unsigned int);
+  void run(int);
 };
 
 #endif // SYNDELAYSIM_HPP
