@@ -11,13 +11,15 @@
 ##  
 ##--------------------------------------------------------------------------
 
-EXECUTABLE	=Izh_sim_sparse.exe
-!IF "$(CPU_ONLY)" != "1"
-SOURCES		=Izh_sim_sparse.cu
+EXECUTABLE		=Izh_sim_sparse.exe
+!IFNDEF CPU_ONLY
+SOURCES			=$(EXECUTABLE:.exe=).cu
 !ELSE
-SOURCES		=Izh_sim_sparse_cpu_only.cc
+SOURCES			=$(EXECUTABLE:.exe=).cc
 !ENDIF
+OPTIMIZATIONFLAGS	=/O2
 
-OPTIMIZATIONFLAGS = /O2
+!INCLUDE $(GENN_PATH)\userproject\include\makefile_common_win.mk
 
-!include $(GENN_PATH)\userproject\include\makefile_common_win.mk
+$(EXECUTABLE:.exe=).cc: $(EXECUTABLE:.exe=).cu
+	copy $(EXECUTABLE:.exe=).cu $(EXECUTABLE:.exe=).cc

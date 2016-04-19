@@ -11,13 +11,16 @@
 ##  
 ##--------------------------------------------------------------------------
 
-EXECUTABLE	=classol_sim.exe
-!IF "$(CPU_ONLY)" != "1"
-SOURCES		=classol_sim.cu
+EXECUTABLE		=classol_sim.exe
+!IFNDEF CPU_ONLY
+SOURCES			=$(EXECUTABLE:.exe=).cu
 !ELSE
-SOURCES		=classol_sim_cpu_only.cc
+SOURCES			=$(EXECUTABLE:.exe=).cc
 !ENDIF
+OPTIMIZATIONFLAGS	=/O2
+NVCC_OPTIMIZATIONFLAGS	=-use_fast_math -O3
 
-OPTIMIZATIONFLAGS = /O2
+!INCLUDE $(GENN_PATH)\userproject\include\makefile_common_win.mk
 
-!include $(GENN_PATH)\userproject\include\makefile_common_win.mk
+$(EXECUTABLE:.exe=).cc: $(EXECUTABLE:.exe=).cu
+	copy $(EXECUTABLE:.exe=).cu $(EXECUTABLE:.exe=).cc
