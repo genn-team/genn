@@ -44,39 +44,40 @@ else
   printf "\n"
   firstrun_MB1=true;
 fi 
+
 cd MBody1_project
 make clean && make 
 printf "\n\n####################### MBody1 GPU ######################\n"
-if [ -d ${testDir}"_output" ]; then
+if [ -d ${testDir}_output ]; then
   echo ${custommsg} >> ${testDir}_output/${testDir}.time
   printf "With new setup... \n"  >> ${testDir}_output/${testDir}.time
 fi
 ./generate_run 1 100 1000 20 100 0.0025 ${testDir} MBody1 
 cp ${testDir}_output/${testDir}.out.st ${testDir}_output/${testDir}.out.st.GPU
 printf "\n\n####################### MBody1 CPU ######################\n"
-./generate_run 0 100 1000 20 100 0.0025 ${testDir} MBody1 REUSE=$reuse
+./generate_run 0 100 1000 20 100 0.0025 ${testDir} MBody1 REUSE=1
 cp ${testDir}_output/${testDir}.out.st ${testDir}_output/${testDir}.out.st.CPU 
 
 if [ "$firstrun_MB1" = true ]; then
   printf "Benchmarking is run for the first time. Creating reference input files with the results of these runs. \nIf any error occurs please delete the benchmarking directory and run the script after the values are corrected.\nCopying reference files...\n"
-  cp -R ../MBody1_project/${testDir}_output $BmDir/MBody1
+  cp -R ../MBody1_project/${testDir}_output $BmDir/MBody1/
  #other MB variants
-else
-  cp -R ${testDir}_output/${testDir}.time $BmDir/MBody1/${testDir}.time
 fi
+cp -R ${testDir}_output/${testDir}.time $BmDir/MBody1/${testDir}_output/${testDir}.time
+
 
 printf "\n\n*******************************************************************************\n"
 printf "\n\n*********************** Testing MBody_individualID *********************************\n"
 printf "\n\n*******************************************************************************\n"
 
-echo "Checking if benchmarking directory exists..."
-if [ -d "$BmDir/MBody_individualID" ]; then
-  echo "benchmarking directory exists. Using input data from" $BmDir/MBody_individualID 
+echo "Checking if MBody_individualID benchmarking directory exists..."
+if [ -d "$BmDir/MBody_individualID/after_v2.1/" ]; then
+  echo "benchmarking directory exists. Using input data from" $BmDir/MBody_individualID/after_v2.1/ 
   printf "\n"
   firstrun_MBI=false;
 else
-  echo "Benchmarking directory does not exist. Creating a new one at" $BmDir/MBody_individualID " and running the test only once (first run for reference)."
-  mkdir -p $BmDir/MBody_individualID
+  echo "Benchmarking directory does not exist. Creating a new one at" $BmDir/MBody_individualID/after_v2.1/ " and running the test only once (first run for reference)."
+  mkdir -p $BmDir/MBody_individualID/after_v2.1/
   printf "\n"
   firstrun_MBI=true;
 fi 
@@ -84,7 +85,7 @@ fi
 cd ../MBody_individualID_project
 make clean && make
 printf "\n\n####################### MBody_individualID GPU ######################\n"
-if [ -d ${testDir}"_output" ]; then
+if [ -d ${testDir}_output ]; then
   echo ${custommsg} >> ${testDir}_output/${testDir}.time
   printf "With new setup... \n"  >> ${testDir}_output/${testDir}.time
 fi
@@ -92,19 +93,19 @@ fi
  
 cp ${testDir}_output/${testDir}.out.st ${testDir}_output/${testDir}.out.st.GPU
 printf "\n\n####################### MBody_individualID CPU ######################\n"
-./generate_run 0 100 1000 20 100 0.0025 ${testDir} MBody_individualID REUSE=$reuse
+./generate_run 0 100 1000 20 100 0.0025 ${testDir} MBody_individualID REUSE=1
  
 cp ${testDir}_output/${testDir}.out.st ${testDir}_output/${testDir}.out.st.CPU 
 
 if [ "$firstrun_MBI" = true ]; then
   printf "Benchmarking is run for the first time. Creating reference input files with the results of these runs. \nIf any error occurs please delete the benchmarking directory and run the script after the values are corrected.\nCopying reference files...\n"
-  cp -R ../MBody_individualID_project/${testDir}_output $BmDir/MBody_individualID
- #other MB variants
-else
-  cp -R ${testDir}_output/${testDir}.time $BmDir/MBody_individualID/${testDir}.time
+  cp -R ../MBody_individualID_project/${testDir}_output $BmDir/MBody_individualID/after_v2.1/
 fi
 
-#MBody1 reference files will be used in the other variants of the MBody project.
+cp -R ${testDir}_output/${testDir}.time $BmDir/MBody_individualID/${testDir}_output/${testDir}.time
+
+
+#MBody1 reference files will be used in the other variants of the MBody project, except MBody_individalID.
 printf "\n\n*******************************************************************************\n"
 printf "\n\n*********************** Testing MBody_userdef *********************************\n"
 printf "\n\n*******************************************************************************\n"
@@ -116,7 +117,7 @@ fi
 
 cd ../MBody_userdef_project
 make clean && make
-if [ -d ${testDir}"_output" ]; then
+if [ -d ${testDir}_output ]; then
   echo ${custommsg} >> ${testDir}_output/${testDir}.time
   printf "With new setup... \n"  >> ${testDir}_output/${testDir}.time
 fi
@@ -125,10 +126,9 @@ printf "\n\n####################### MBody_userdef GPU ######################\n"
 
 cp ${testDir}_output/${testDir}.out.st ${testDir}_output/${testDir}.out.st.GPU
 printf "\n\n####################### MBody_userdef CPU ######################\n"
-./generate_run 0 100 1000 20 100 0.0025 ${testDir} MBody_userdef REUSE=$reuse
+./generate_run 0 100 1000 20 100 0.0025 ${testDir} MBody_userdef REUSE=1
 
 cp ${testDir}_output/${testDir}.out.st ${testDir}_output/${testDir}.out.st.CPU
-
 cp -R ${testDir}_output/${testDir}.time $BmDir/MBody_userdef/${testDir}.time
 
 printf "\n\n*******************************************************************************\n"
@@ -142,7 +142,7 @@ fi
 
 cd ../MBody_delayedSyn_project
 make clean && make
-if [ -d ${testDir}"_output" ]; then
+if [ -d ${testDir}_output ]; then
   echo ${custommsg} >> ${testDir}_output/${testDir}.time
   printf "With new setup... \n"  >> ${testDir}_output/${testDir}.time
 fi
@@ -173,7 +173,7 @@ fi
 
 cd ../Izh_sparse_project
 make clean && make
-if [ -d ${testDir}"_output" ]; then
+if [ -d ${testDir}_output ]; then
   echo ${custommsg} >> ${testDir}_output/${testDir}.time
   printf "With new setup... \n"  >> ${testDir}_output/${testDir}.time
 fi
@@ -192,9 +192,9 @@ if [ "$firstrun_IZH" = true ]; then
   printf "Benchmarking is run for the first time. Creating reference input files with the results of these runs. \nIf any error occurs please delete the benchmarking directory and run the script after the values are corrected.\nCopying reference files...\n"
   cp -R ${testDir}_output $BmDir/Izh_sparse
   cp -R inputfiles10K $BmDir/Izh_sparse/inputfiles10K
-else
-  cp -R ${testDir}_output/${testDir}.time $BmDir/Izh_sparse/${testDir}.time
 fi
+cp -R ${testDir}_output/${testDir}.time $BmDir/Izh_sparse/${testDir}.time
+
 
 #need to recompile if we want to rerun with different number of neurons. To be revisited...
 #printf "\n\n*********************** Testing Izh_sparse 1K neurons****************************\n"
@@ -226,7 +226,7 @@ fi
 
 cd ../PoissonIzh_project
 make clean && make
-if [ -d ${testDir}"_output" ]; then
+if [ -d ${testDir}_output ]; then
   echo ${custommsg} >> ${testDir}_output/${testDir}.time
   printf "With new setup... \n"  >> ${testDir}_output/${testDir}.time
 fi
@@ -256,7 +256,7 @@ fi
 
 cd ../OneComp_project
 make clean && make
-if [ -d ${testDir}"_output" ]; then
+if [ -d ${testDir}_output ]; then
   echo ${custommsg} >> ${testDir}_output/${testDir}.time
   printf "With new setup... \n"  >> ${testDir}_output/${testDir}.time
 fi
@@ -279,7 +279,7 @@ fi
 
 cd ../HHVclampGA_project
 make clean && make
-if [ -d ${testDir}"_output" ]; then
+if [ -d ${testDir}_output ]; then
   echo ${custommsg} >> ${testDir}_output/${testDir}.time
   printf "With new setup... \n"  >> ${testDir}_output/${testDir}.time
 fi
@@ -302,7 +302,7 @@ fi
 cd ../SynDelay_project
 buildmodel.sh SynDelay
 make clean && make release
-if [ -d ${testDir}"_output" ]; then
+if [ -d ${testDir}_output ]; then
   echo ${custommsg} >> ${testDir}.time
 fi
 printf "\n\n####################### SynDelay GPU test 1 ######################\n"
@@ -319,7 +319,8 @@ printf "\nTEST 2: TEST BY USING REFERENCE INPUT PATTERNS\n"
 #be careful with network sizes
 #if you add new tests, don't forget to copy the output to your ref files 
 cd MBody1_project
-cp -R $BmDir/MBody1/* ${testDir}_output/
+cp -R $BmDir/MBody1/${testDir}_output/* ${testDir}_output/
+cp -R $BmDir/MBody1/${testDir}.time ${testDir}_output/
 printf "With reference setup... \n"  >> ${testDir}_output/${testDir}.time
 printf "\n\n####################### MBody1 GPU TEST 2 ######################\n"
 model/classol_sim ${testDir} 1
@@ -327,16 +328,17 @@ printf "\n\n####################### MBody1 CPU TEST 2 ######################\n"
 model/classol_sim ${testDir} 0
 
 cd ../MBody_individualID_project
-#cp -R $BmDir/MBody_individualID/* testing_output/
-cp -R $BmDir/MBody1/* ${testDir}_output/
-printf "With reference setup... \n"  >> ${testDir}_output/${testDir}.time
+cp -R $BmDir/MBody_individualID/after_v2.1/${testDir}_output/* ${testDir}_output/
+#cp -R $BmDir/MBody1/${testDir}_output/* ${testDir}_output/
+printf "With reference setup... (same as MBody1 as well)\n"  >> ${testDir}_output/${testDir}.time
 printf "\n\n####################### MBody_individualID GPU TEST 2 ######################\n"
 model/classol_sim ${testDir} 1
 printf "\n\n####################### MBody_individualID CPU TEST 2 ######################\n"
 model/classol_sim ${testDir} 0
 
 cd ../MBody_userdef_project
-cp -R $BmDir/MBody1/* ${testDir}_output/
+cp -R $BmDir/MBody1/${testDir}_output/* ${testDir}_output/
+cp -R $BmDir/MBody_userdef/${testDir}.time ${testDir}_output/
 #cp -R $BmDir/MBody_userdef/* testing_output/
 printf "With reference setup (same as MBody1 as well)... \n"  >> ${testDir}_output/${testDir}.time
 printf "\n\n####################### MBody_userdef GPU TEST 2 ######################\n"
@@ -345,7 +347,8 @@ printf "\n\n####################### MBody_userdef CPU TEST 2 ###################
 model/classol_sim ${testDir} 0
 
 cd ../MBody_delayedSyn_project
-cp -R $BmDir/MBody1/* ${testDir}_output/
+cp -R $BmDir/MBody1/${testDir}_output/* ${testDir}_output/
+cp -R $BmDir/MBody_delayedSyn/${testDir}.time ${testDir}_output/
 #cp -R $BmDir/MBody_delayedSyn/* testing_output/
 printf "With reference setup (same as MBody1 as well)...\n"  >> ${testDir}_output/${testDir}.time
 printf "\n\n####################### MBody_delayedSyn GPU TEST 2 ######################\n"
@@ -354,7 +357,8 @@ printf "\n\n####################### MBody_delayedSyn CPU TEST 2 ################
 model/classol_sim ${testDir} 0
 
 cd ../Izh_sparse_project
-cp -R $BmDir/Izh_sparse/* ${testDir}_output/
+cp -R $BmDir/Izh_sparse/${testDir}_output/* ${testDir}_output/
+cp -R $BmDir/Izh_sparse/${testDir}.time ${testDir}_output/
 printf "With reference setup (input is still random, so the results are not expected to be identical)... \n"  >> ${testDir}_output/${testDir}.time
 cp -R $BmDir/Izh_sparse/inputfiles10K/* inputfiles/
 printf "\n\n####################### Izh_sparse GPU TEST 2 ######################\n"
@@ -363,44 +367,34 @@ printf "\n\n####################### Izh_sparse CPU TEST 2 ######################
 model/Izh_sim_sparse ${testDir} 0
 
 cd ../PoissonIzh_project
-cp -R $BmDir/PoissonIzh/* ${testDir}_output/
+cp -R $BmDir/PoissonIzh/${testDir}_output/* ${testDir}_output/
 printf "With reference setup... \n"  >> ${testDir}_output/${testDir}.time
 printf "\n\n####################### PoissonIzh GPU TEST 2 ######################\n"
 model/PoissonIzh_sim ${testDir} 1
 printf "\n\n####################### PoissonIzh CPU TEST 2 ######################\n"
 model/PoissonIzh_sim ${testDir} 0
 
-#Skipping OneComp and SynDelay, as test 2 does not make any sense for these project
+#Skipping OneComp, SynDelay and HHVclampGA, as test 2 does not make any sense for these project
 
-cd ../HHVclampGA_project
-cp -R $BmDir/HHVclampGA/* ${testDir}_output/
-printf "With reference setup... \n"  >> ${testDir}_output/${testDir}.time
-printf "\n\n####################### HHVclampGA GPU TEST 2 ######################\n"
-model/VClampGA ${testDir} 1 2
-printf "\n\n####################### HHVclampGA CPU TEST 2 ######################\n"
-model/VClampGA ${testDir} 0 2
 cd ..
-#cp -R $BmDir/PoissonIzh PoissonIzh_project/testing
-#cp -R $BmDir/OneComp OneComp_project/testing
-#cp -R $BmDir/SynDelay SynDelay_project/testing
 
-cp MBody1_project/${testDir}_output/${testDir}.time $BmDir/MBody1/${testDir}.time
-cp MBody_userdef_project/${testDir}_output/${testDir}.time $BmDir/MBody_userdef/${testDir}.time
-cp Izh_sparse_project/${testDir}_output/${testDir}.time $BmDir/Izh_sparse/${testDir}.time
-cp PoissonIzh_project/${testDir}_output/${testDir}.time $BmDir/PoissonIzh/${testDir}.time
-cp OneComp_project/${testDir}_output/${testDir}.time $BmDir/OneComp/${testDir}.time
-cp HHVclampGA_project/${testDir}_output/${testDir}.time $BmDir/HHVclampGA/${testDir}.time
+#cp MBody1_project/${testDir}_output/${testDir}.time $BmDir/MBody1/${testDir}.time
+#cp MBody_userdef_project/${testDir}_output/${testDir}.time $BmDir/MBody_userdef/${testDir}.time
+#cp Izh_sparse_project/${testDir}_output/${testDir}.time $BmDir/Izh_sparse/${testDir}.time
+#cp PoissonIzh_project/${testDir}_output/${testDir}.time $BmDir/PoissonIzh/${testDir}.time
+#cp OneComp_project/${testDir}_output/${testDir}.time $BmDir/OneComp/${testDir}.time
+#cp HHVclampGA_project/${testDir}_output/${testDir}.time $BmDir/HHVclampGA/${testDir}.time
 
 printf "\nMBody1 time tail\n"
-tail -n 18 MBody1_project/${testDir}_output/${testDir}.time
+tail -n 28 MBody1_project/${testDir}_output/${testDir}.time
 printf "\nMBody_individualID time tail\n"
-tail -n 18 MBody_individualID_project/${testDir}_output/${testDir}.time
+tail -n 28 MBody_individualID_project/${testDir}_output/${testDir}.time
 printf "\nMBody_userdef time tail\n"
-tail -n 18 MBody_userdef_project/${testDir}_output/${testDir}.time
+tail -n 28 MBody_userdef_project/${testDir}_output/${testDir}.time
 printf "\nMBody_delayedSyn time tail\n"
-tail -n 18 MBody_delayedSyn_project/${testDir}_output/${testDir}.time
+tail -n 28 MBody_delayedSyn_project/${testDir}_output/${testDir}.time
 printf "\nIzh_sparse time tail\n"
-tail -n 18 Izh_sparse_project/${testDir}_output/${testDir}.time
+tail -n 28 Izh_sparse_project/${testDir}_output/${testDir}.time
 printf "\nPoissonIzh time tail\n"
 tail -n 8 PoissonIzh_project/${testDir}_output/${testDir}.time
 printf "\nOneComp time tail\n"
