@@ -1,0 +1,224 @@
+/*! \page ReleaseNotes Release Notes
+
+Release Notes for GeNN v2.2
+====
+
+This release includes minor new features, some core code improvements and several bug fixes on GeNN v2.1.
+
+User Side Changes
+----
+
+1. There is now a new mechanism for how frequently changing "external input" is communicated to kernels. Rather than a GeNN generated argument list for each kernel comprising direct inputs, extraglobal parameters and the time variable in GeNN <= 2.1, there are now no kernel arguments other than the global time t for any of the kernels and the relevant variables are copied to the GPU in a single memory copy at each time step.
+For users this means that within kernels, references need to be made to the correctly named variables and similarly when setting them on the CPU side.
+Examples: CPU  	     GPU (kernel code snippet)
+	  t	     $(t)
+	  extraHH    $(extra)
+	  (for an extraglobalneuronparameter "extra" in a neurongroup "HH")
+
+Note, that for example, the predefined Poisson neurons have an auto-copy for the pointer to the rates array and for the offset (integer) where to use the array. The rates themselves in the array however are not updated automatically (this is exactly as before with the kernel arguments).
+IMPORTANT NOTE: The global time variable "t" is now provided by GeNN; please make sure that you are not duplicating its definition or shadowing it. This could have severe consequences for simulation correctness (e.g. time not advancing in cases of over-shadowing).
+The concept of "directInput" has been removed. Users can easily achieve the same thing by adding an additional variable (if there are individual inputs to neurons), an extraGlobalNeuronParameter (if the input is homogeneous but time dependent) or, obviously, a simple parameter if it's homogeneous and constant.
+
+2. We introduced the namespace GENN_PREFERENCES which contains variables that determine the behaviour of GeNN. These include
+
+3. We introduced a new code snippet called "supportCode" for neuron models, weightupdate models and post-synaptic models. This code snippet is intended to contain user-defined functions that are used from the other code snippets. We advise where possible to define the support code functions with keywords "__host__ __device__" so that they are available for both GPU and CPU version. Alternatively one can define separate versions for __host__ and __device__ in the snippet. The snippets are automatically made available to the relevant code parts. This is regulated through namespaces so that name clashes between different models do not matter. An exception are hash defines. They can in principle be used in the supportCode snippet but need to be protected specifically using #ifndef. Example
+#ifndef clip(x)
+#define clip(x) x > 10.0? 10.0 : x
+#endif
+Note: If there are conflicting definitions for hash defines, the one that appears first in the GeNN generated code will then prevail.
+
+4. The new convenience macros spikeCount_XX and spike_XX where "XX" is the name of the neuron group are now also available fro events: spikeEventCount_XX and spikeEvent_XX. They access the values for the current time step even if there are synaptic delays and spikes events are stored in circular queues.
+
+5. The old buildmodel.[sh|bat] scripts have been superseded by new genn-buildmodel.[sh|bat] scripts. These scripts accept UNIX style option switches, allow both relative and absolute model file paths, and allow the user to specify the directory in which all output files are placed (-o <path>). Debug (-d), CPU-only (-c) and show help (-h) are also defined. 
+
+6. We have introduced a CPU-only "-c" genn-buildmodel switch, which, if it's defined, will generate a GeNN version that is completely independent from CUDA and hence can be used on computers without CUDA installation or CUDA enabled hardware. Obviously, this then can also only run on CPU. CPU only mode can either be switched on by defining CPU_ONLY in the model description file or by passing appropriate parameters during the build, in particular
+genn-buildmodel.[sh|bat] <modelfile> -c
+make release CPU_ONLY=1
+
+7. The new genn-buildmodel "-o" switch allows the user to specify the output directory for all generated files - the default is the current directory. For example, a user project could be in '/home/genn_project', whilst the GeNN directory could be '/usr/local/genn'. The GeNN directory is kept clean, unless the user decides to build the sample projects inside of it without copying them elsewhere. This allows the deployment of GeNN to a read-only directory, like '/usr/local' or 'C:\Program Files'. It also allows multiple users - i.e. on a compute cluster - to use GeNN simultaneously, without overwriting each other's code-generation files, etcetera.
+
+8. The ARM architecture is now supported - e.g. the NVIDIA Jetson development platform.
+
+9. The NVIDIA CUDA SM_5* (Maxwell) architecture is now supported. An error is now thrown when the user tries to use double precision floating-point numbers on devices with architecture older than SM_13 - since these devices do not support double precision. 
+
+Developer Side Changes
+----
+
+1. Blocksize optimization and device choice now obtain the ptxas information on memory usage from a CUDA driver API call rather than from parsing ptxas output of the nvcc compiler. This adds robustness to any change in the syntax of the compiler output.
+
+2. The information about device choice is now stored in variables in the namespace GENN_PREFERENCES. This includes `chooseDevice`, `optimiseBlockSize`, `defaultDevice`. `asGoodAsZero` has also been moved into this namespace.
+
+3. We have also introduced the namespace GENN_FLAGS that contains unsigned int variables that attach names to mueric flags that can be used within GeNN. 
+
+4. The headers of the auto-generated communication functions such as pullXXXStateFromDevice etc, are now generated into definitions.h. This is useful where one wants to compile separate object files that cannot all include the full definitions in "runnerGPU.cc". One example where this is useful is the brian2genn interface.
+
+Improvements
+----
+
+1. Improved method of obtaining ptxas compiler information on register and shared memory usage and an improved algorithm for estimating shared memory usage requirements for different block sizes.
+
+2. Replaced pageable CPU-side memory with [page-locked memory](https://devblogs.nvidia.com/parallelforall/how-optimize-data-transfers-cuda-cc/). This can significantly speed up simulations in which a lot of data is regularly copied to and from a CUDA device.
+
+Bug fixes:
+----
+
+1. Fixed a minor bug with delayed synapses, where delaySlot is declared but not referenced.
+
+Please refer to the [full documentation](http://genn-team.github.io/genn/documentation/html/index.html) for further details, tutorials and complete code documentation.
+
+-------------------------------------------------------------------
+
+
+Release Notes for GeNN v2.1
+====
+
+This release includes some new features and several bug fixes 
+on GeNN v2.0.
+
+User Side Changes
+----
+
+1. Block size debugging flag and the asGoodAsZero variables are moved into include/global.h.
+
+2. NGRADSYNAPSES dynamics have changed (See Bug fix #4) and this change is applied to the example projects. If you are using this synapse model,
+you may want to consider changing model parameters.
+
+3. The delay slots are now such that NO_DELAY is 0 delay slots (previously 1) and 1 means an actual delay of 1 time step.
+
+4. The convenience function convertProbabilityToRandomNumberThreshold(float *, uint64_t *, int) was changed so that it actually converts firing probability/timestep into a threshold value for the GeNN random number generator (as its name always suggested). The previous functionality of converting a *rate* in kHz into a firing threshold number for the GeNN random number generator is now provided with the name convertRateToRandomNumberThreshold(float *, uint64_t *, int)
+
+5. Every model definition function `modelDefinition()` now needs to end with calling `NNmodel::finalize()` for the defined network model. This will lock down the model and prevent any further changes to it by the supported methods. It also triggers necessary analysis of the model structure that should only be performed once. If the `finalize()` function is not called, GeNN will issue an error and exit before code generation.
+
+6. To be more consistent in function naming the `pull<SYNAPSENAME>FromDevice` and `push<SYNAPSENAME>ToDevice` have been renamed to `pull<SYNAPSENAME>StateFromDevice` and `push<SYNAPSENAME>StateToDevice`. The old versions are still supported through macro definitions to make the transition easier.
+
+7. New convenience macros are now provided to access the current spike numbers and identities of neurons that spiked. These are called spikeCount_XX and spike_XX where "XX" is the name of the neuron group. They access the values for the current time step even if there are synaptic delays and spikes are stored in circular queues.
+
+8. There is now a pre-defined neuron type "SPIKECOURCE" which is empty and can be used to define PyNN style spike source arrays. 
+
+9. The macros FLOAT and DOUBLE were replaced with GENN_FLOAT and GENN_DOUBLE due to name clashes with typedefs in Windows that define FLOAT and DOUBLE.
+
+Developer Side Changes
+----
+
+1. We introduced a file definitions.h, which is generated and filled with useful macros such as spkQuePtrShift which tells users where in the circular spike queue their spikes start.
+
+Improvements
+----
+
+1. Improved debugging information for block size optimisation
+and device choice.
+
+2. Changed the device selection logic so that device occupancy has larger priority than device capability version.
+
+3. A new HH model called TRAUBMILES\_PSTEP where one can set the number of inner loops as a parameter is introduced. It uses the TRAUBMILES\_SAFE method. 
+
+4. An alternative method is added for the insect olfaction model in order
+to fix the number of connections to a maximum of 10K in order to avoid
+negative conductance tails.
+
+5. We introduced a #define for an "int_" function that translates floating points to integers.
+
+Bug fixes:
+----
+
+1. AtomicAdd replacement for old GPUs were used by mistake if the model runs in double precision. 
+
+2. Timing of individual kernels is fixed and improved.
+
+3. More careful setting of maximum number of connections in sparse connectivity, covering mixed dense/sparse network scenarios.
+
+4. NGRADSYNAPSES was not scaling correctly with varying time step. 
+
+5. Fixed a bug where learning kernel with sparse connectivity was going out of range in an array.
+
+6. Fixed synapse kernel name substitutions where the "dd_" prefix was omitted by mistake.
+
+Please refer to the [full documentation](http://genn-team.github.io/genn/documentation/html/index.html) for further details, tutorials and complete code documentation.
+
+-------------------------------------------------------------------
+
+
+Release Notes for GeNN v2.0
+====
+
+Version 2.0 of GeNN comes with a lot of improvements and added features, some of which have necessitated some changes to the structure of parameter arrays among others.
+
+User Side Changes 
+----
+
+1. Users are now required to call `initGeNN()` in the model definition function before adding any populations to the neuronal network model. 
+
+2. glbscnt is now call glbSpkCnt for consistency with glbSpkEvntCnt.
+
+3. There is no longer a privileged parameter `Epre`.  Spike type events
+  are now defined by a code string `spkEvntThreshold`, the same way proper spikes are. The only difference is that Spike type events are specific to a synapse type rather than a neuron type.
+
+4. The function setSynapseG has been deprecated. In a `GLOBALG` scenario, the variables of a synapse group are set to the initial values provided in the `modeldefinition` function.
+
+5. Due to the split of synaptic models into weightUpdateModel and postSynModel, the parameter arrays used during model definition need to be carefully split as well so that each side gets the right parameters. For example, previously
+
+```C++
+float myPNKC_p[3]= {
+  0.0,           // 0 - Erev: Reversal potential
+  -20.0,         // 1 - Epre: Presynaptic threshold potential
+  1.0            // 2 - tau_S: decay time constant for S [ms]
+};
+```
+would define the parameter array of three parameters, `Erev`, `Epre`, and `tau_S` for a synapse of type `NSYNAPSE`. This now needs to be "split" into
+```C++
+float *myPNKC_p= NULL;
+float postExpPNKC[2]={
+  1.0,            // 0 - tau_S: decay time constant for S [ms]
+  0.0		  // 1 - Erev: Reversal potential
+};
+```
+i.e. parameters `Erev` and `tau_S` are moved to the post-synaptic model and its parameter array of two parameters. `Epre` is discontinued as a parameter for `NSYNAPSE`. As a consequence the weightupdate model of `NSYNAPSE` has no parameters and one can pass `NULL` for the parameter array in `addSynapsePopulation`. 
+
+The correct parameter lists for all defined neuron and synapse model types are listed in the [User Manual](http://genn-team.github.io/genn/documentation/html/dc/d05/UserManual.html).
+
+*Note:* 
+If the parameters are not redefined appropriately this will lead to uncontrolled behaviour of models and likely to sgementation faults and crashes.
+
+6. Advanced users can now define variables as type `scalar` when introducing new neuron or synapse types. This will at the code generation stage be translated to the model's floating point type (ftype), `float` or `double`. This works for defining variables as well as in all code snippets. Users can also use the expressions `SCALAR_MAX` and `SCALAR_MIN` for `FLT_MIN`, `FLT_MAX`, `DBL_MIN` and `DBL_MAX`, respectively. Corresponding definitions of `scalar`, `SCALAR_MIN` and `SCALAR_MAX` are also available for user-side code whenever the code-generated file `runner.cc` has been included.
+
+7. The example projects have been re-organized so that wrapper scripts of the `generate_run` type are now all located together with the models they run instead of in a common `tools` directory. Generally the structure now is that each example project contains the wrapper script `generate_run` and a `model` subdirectory which contains the model description file and the user side code complete with Makefiles for Unix and Windows operating systems. The generated code will be deposited in the `model` subdirectory in its own `modelname_CODE` folder. Simulation results will always be deposited in a new sub-folder of the main project directory.
+
+8. The `addSynapsePopulation(...)` function has now more mandatory parameters relating to the introduction of separate weightupdate models (pre-synaptic models) and postynaptic models. The correct syntax for the `addSynapsePopulation(...)` can be found with detailed explanations in teh [User Manual](http://genn-team.github.io/genn/documentation/html/dc/d05/UserManual.html).
+
+9. We have introduced a simple performance profiling method that users can employ to get an overview over the differential use of time by different kernels. To enable the timers in GeNN generated code, one needs to declare
+```C++
+networkmodel.setTiming(TRUE);
+```
+This will make available and operate GPU-side cudeEvent based timers whose cumulative value can be found in the double precision variables `neuron_tme`, `synapse_tme` and `learning_tme`. They measure the accumulated time that has been spent calculating the neuron kernel, synapse kernel and learning kernel, respectively. CPU-side timers for the simulation functions are also available and their cumulative values can be obtained through 
+```C++
+float x= sdkGetTimerValue(&neuron_timer);
+float y= sdkGetTimerValue(&synapse_timer);
+float z= sdkGetTimerValue(&learning_timer);
+```
+The \ref ex_mbody example shows how these can be used in the user-side code. To enable timing profiling in this example, simply enable it for GeNN:
+```C++
+model.setTiming(TRUE);
+```
+in `MBody1.cc`'s `modelDefinition` function and define the macro `TIMING` in `classol_sim.h`
+```C++
+#define TIMING
+```
+This will have the effect that timing information is output into `OUTNAME_output/OUTNAME.timingprofile`.
+
+Developer Side Changes
+----
+
+1. `allocateSparseArrays()` has been changed to take the number of connections, connN, as an argument rather than expecting it to have been set in the Connetion struct before the function is called as was the arrangement previously.
+
+2. For the case of sparse connectivity, there is now a reverse mapping implemented with revers index arrays and a remap array that points to the original positions of variable values in teh forward array. By this mechanism, revers lookups from post to pre synaptic indices are possible but value changes in the sparse array values do only need to be done once.
+
+3. SpkEvnt code is no longer generated whenever it is not actually used. That is also true on a somewhat finer granularity where variable queues for synapse delays are only maintained if the corresponding variables are used in synaptic code. True spikes on the other hand are always detected in case the user is interested in them.
+
+Please refer to the [full documentation](http://genn-team.github.io/genn/documentation/html/index.html) for further details, tutorials and complete code documentation.
+
+
+-----
+\link Examples Previous\endlink | \link ReleaseNotes Top\endlink | \link UserManual Next\endlink
+
+*/
+//-------------------------------------------------------------------------
