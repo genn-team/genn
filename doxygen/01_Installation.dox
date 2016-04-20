@@ -53,7 +53,7 @@ repository.
      GENN_PATH=/usr/local/GeNN" to your login script (e.g. `.profile`
      or `.bashrc`. If you are using
      WINDOWS, the path should be a windows path as it will be
-     interpreted by the Visual C++ compiler `cl`, and enciront
+     interpreted by the Visual C++ compiler `cl`, and environment
      variables are best set using `setx` in a Windows cmd window.
 To do so, open a Windows cmd window byt typing `cmd` in the search
      field of the start menu, followed by the `enter` key.
@@ -69,7 +69,7 @@ where `C:\Users\me\GeNN` is the path to your GeNN directory.
 \endcode
 in your login script, or in windows,
 \code
-	setx PATH=%PATH%;%GENN_PATH%/lib/bin
+	setx PATH=%GENN_PATH%\lib\bin;%PATH%
 \endcode 
 
 (iv) If you haven't installed CUDA on your machine, obtain a fresh installation of the NVIDIA CUDA toolkit from
@@ -83,8 +83,9 @@ export CUDA_PATH=/usr/local/cuda
 in your login script (or, if CUDA is installed in a non-standard
     location, the appropriate path to the main CUDA directory). 
     For most people, this will be done by the CUDA install script and
-    the default value of /usr/local/cuda is fine. In Windows, use
-    `setx` to set this variable,
+    the default value of /usr/local/cuda is fine. In Windows, CUDA_PATH
+    is normally already set after installing the CUDA toolkit. If not,
+    set this variable with:
 \code
 setx CUDA_PATH 
 \endcode
@@ -96,8 +97,9 @@ Depending on the needs of your own projects, e.g., depencies on other
      GeNN, you may want to modify Makefile examples under
      `$GENN_PATH/userproject/xxx_project` and
      `$GENN_PATH/userproject/xxx_project/model` 
-     to add extra linker-, include- and compiler-flags on a per-project basis, or
-     modify global default flags in $GENN_PATH/lib/include/makefile_common.mk.
+     to add extra linker-, include- and compiler-flags on a per-project
+     basis, or modify global default flags in
+     $GENN_PATH/userproject/include/makefile_common_\[win|gnu\].mk.
 
      For all makefiles there are separate makefiles for Unix-style
      operating systems (GNUmakefile) such as Linux or MacOS and for
@@ -121,14 +123,20 @@ between systems.
 - Double quotation marks like in the above example are necessary
 whenever a path contains spaces.
 
-
 GeNN also has experimental CYGWIN support. However, with the
 introduction of native Windows support in GeNN 1.1.3, this is not
 being developed further and should be considered as deprecated.
 
 \section testInstall Testing Your Installation
 
-To test your installation, follow the example in the \link Quickstart Quickstart section\endlink.
+To test your installation, follow the example in the
+\link Quickstart Quickstart section\endlink. Linux and Mac users can
+perform a more comprehensive test by running:
+\code
+cd $GENN_PATH/userproject && ./testprojects.sh
+\endcode
+This test script may take a long while to complete, and will terminate
+if any errors are detected.
 
 <br />
 
