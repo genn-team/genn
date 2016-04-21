@@ -16,7 +16,7 @@
 #define CLASSOL_H
 
 //--------------------------------------------------------------------------
-/*! \file map_classol.h
+/*! \file userproject/MBody_individualID_project/model/map_classol.h
 
 \brief Header file containing the class definition for classol (CLASSification OLfaction model), which contains the methods for setting up, initialising, simulating and saving results of a model of the insect mushroom body.
 

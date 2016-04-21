@@ -12,7 +12,7 @@
 --------------------------------------------------------------------------*/
 
 //--------------------------------------------------------------------------
-/*! \file MBody1.cc
+/*! \file userproject/HHVclampGA_project/model/MBody1.cc
 
 \brief This file contains the model definition of the mushroom body "MBody1" model. It is used in both the GeNN code generation and the user side simulation code (class classol, file classol_sim).
 */

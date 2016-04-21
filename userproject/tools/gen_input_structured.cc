@@ -12,7 +12,7 @@
 --------------------------------------------------------------------------*/
 
 //--------------------------------------------------------------------------
-/*! \file gen_input_fixfixfixno_struct.cc
+/*! \file userproject/tools/gen_input_structured.cc
 
 \brief This file is part of a tool chain for running the classol/MBody1 example model.
 

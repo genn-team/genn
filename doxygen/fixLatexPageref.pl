@@ -7,7 +7,7 @@ foreach $name (@ARGV) {
     unlink "$name";
     open(NF, "> $name\0") or die "can't open output file!!";
     $line = <FILE>;
-    $count = ($line =~ s/\\pageref{\K..\/...\///gm);
+    $count = ($line =~ s/\\pageref\{\K..\/...\///gm);
     print "replacing $count words in $name. \n";
     print NF $line;
     close FILE;

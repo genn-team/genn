@@ -12,7 +12,7 @@
 --------------------------------------------------------------------------*/
 
 //--------------------------------------------------------------------------
-/*! \file classol_sim.h
+/*! \file userproject/HHVclampGA_project/model/VClampGA.h
 
 \brief Header file containing global variables and macros used in running the HHVClamp/VClampGA model.
 */

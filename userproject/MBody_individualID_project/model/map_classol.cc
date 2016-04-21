@@ -16,7 +16,7 @@
 
 
 //--------------------------------------------------------------------------
-/*! \file map_classol.cc
+/*! \file userproject/MBody_individualID_project/model/map_classol.cc
 
 \brief Implementation of the classol class.
 */

@@ -15,7 +15,7 @@
 #define _MAP_CLASSOL_CC_ //!< macro for avoiding multiple inclusion during compilation
 
 //--------------------------------------------------------------------------
-/*! \file map_classol.cc
+/*! \file userproject/MBody1_project/model/map_classol.cc
 
 \brief Implementation of the classol class.
 */

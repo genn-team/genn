@@ -377,7 +377,7 @@ model.pNames.push_back(String("C"));
 model.dpNames.push_back(String("a"));
 \endcode
 
-- `dps` of type \ref `dpclass`*: The dependent parameter class, i.e. an implementation of \ref `dpclass` which would return the value for dependent parameters when queried for them. E.g. in the example above it would return `a` when queried for dependent parameter 0 through `dpclass::calculateDerivedParameter()`. Examples how this is done can be found in the pre-defined classes, e.g. expDecayDp, pwSTDP, \ref rulkovdp etc. 
+- `dps` of type \ref dpclass*: The dependent parameter class, i.e. an implementation of \ref dpclass which would return the value for dependent parameters when queried for them. E.g. in the example above it would return `a` when queried for dependent parameter 0 through `dpclass::calculateDerivedParameter()`. Examples how this is done can be found in the pre-defined classes, e.g. expDecayDp, pwSTDP, \ref rulkovdp etc. 
 
 Once the completed \c neuronModel object is appended to the \c nModels
 vector,
@@ -509,7 +509,7 @@ Parameters are:
 
 For more details about these built-in synapse models, see \cite nowotny2005self.
 
-\section sect33 Defining a new synapse model
+\section sect34 Defining a new synapse model
 
 If users want to define their own models, they can add a new `weightUpdateModel` that includes the variables, parameters, and update codes as desired, and then push this object in the `weightUpdateModels` vector. The model can be used by referring to its index in the `weightUpdateModels` vector when adding a new population by with a call to `addSynapsePopulation`.
 

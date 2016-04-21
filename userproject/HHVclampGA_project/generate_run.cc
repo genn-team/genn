@@ -12,7 +12,7 @@
   --------------------------------------------------------------------------*/
 
 //--------------------------------------------------------------------------
-/*! \file generate_run.cc
+/*! \file userproject/HHVclampGA_project/generate_run.cc
 
 \brief This file is used to run the HHVclampGA model with a single command line.
 

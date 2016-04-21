@@ -12,7 +12,7 @@
 --------------------------------------------------------------------------*/
 
 //--------------------------------------------------------------------------
-/*! \file classol_sim.h
+/*! \file userproject/MBody_individualID_project/model/classol_sim.h
 
 \brief Header file containing global variables and macros used in running the classol / MBody_individualID model.
 */
