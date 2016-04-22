@@ -518,7 +518,9 @@ void NNmodel::setSynapseClusterIndex(const string synapseGroup, /**< Name of the
 
 
 //--------------------------------------------------------------------------
-/*! \overload This function is an alternative method to the standard addNeuronPopulation that allows the use of constant character arrays instead of C++ strings
+/*! \overload
+
+  This function is an alternative method to the standard addNeuronPopulation that allows the use of constant character arrays instead of C++ strings
  */
 //--------------------------------------------------------------------------
 
@@ -534,7 +536,9 @@ void NNmodel::addNeuronPopulation(
 
 
 //--------------------------------------------------------------------------
-/*! \overload This function adds a neuron population to a neuronal network models, assigning the name, the number of neurons in the group, the neuron type, parameters and initial values, the latter two defined as double *
+/*! \overload
+
+  This function adds a neuron population to a neuronal network models, assigning the name, the number of neurons in the group, the neuron type, parameters and initial values, the latter two defined as double *
  */
 //--------------------------------------------------------------------------
 
@@ -617,7 +621,9 @@ void NNmodel::activateDirectInput(
 }
 
 //--------------------------------------------------------------------------
-/*! \overload This deprecated function is provided for compatibility with the previous release of GeNN.
+/*! \overload
+
+  This deprecated function is provided for compatibility with the previous release of GeNN.
  * Default values are provide for new parameters, it is strongly recommended these be selected explicity via the new version othe function
  */
 //--------------------------------------------------------------------------
@@ -644,7 +650,9 @@ void NNmodel::addSynapsePopulation(
 }
 
 //--------------------------------------------------------------------------
-/*! \overload This function is an alternative method to the standard addSynapsePopulation that allows the use of constant character arrays instead of C++ strings.
+/*! \overload
+
+  This function is an alternative method to the standard addSynapsePopulation that allows the use of constant character arrays instead of C++ strings.
  */
 //--------------------------------------------------------------------------
 
