@@ -12,7 +12,7 @@
 --------------------------------------------------------------------------*/
 
 //--------------------------------------------------------------------------
-/*! \file generate_izhikevich_network_run.cc
+/*! \file userproject/Izh_sparse_project/generate_run.cc
 
 \brief This file is part of a tool chain for running the classIzh/Izh_sparse example model.
 

@@ -2,7 +2,7 @@
   Izhikevich network with delayed synapses
   ========================================
 
-This example project demonstrates the delayed synapse feature of GeNN. It creates
+This example project demonstrates the synaptic delay feature of GeNN. It creates
 a network of three Izhikevich neuron groups, connected all-to-all with fast, medium
 and slow synapse groups. Neurons in the output group only spike if they are
 simultaneously innervated by the input neurons, via slow synapses, and the

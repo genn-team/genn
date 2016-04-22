@@ -21,7 +21,7 @@ The concept of "directInput" has been removed. Users can easily achieve the same
 2. We introduced the namespace GENN_PREFERENCES which contains variables that determine the behaviour of GeNN.
 
 3. We introduced a new code snippet called "supportCode" for neuron models, weightupdate models and post-synaptic models. This code snippet is intended to contain user-defined functions that are used from the other code snippets. We advise where possible to define the support code functions with keywords "__host__ __device__" so that they are available for both GPU and CPU version. Alternatively one can define separate versions for __host__ and __device__ in the snippet. The snippets are automatically made available to the relevant code parts. This is regulated through namespaces so that name clashes between different models do not matter. An exception are hash defines. They can in principle be used in the supportCode snippet but need to be protected specifically using
-#ifndef. Example
+ifndef. Example
 ```
 #ifndef clip(x)
 #define clip(x) x > 10.0? 10.0 : x
@@ -31,11 +31,11 @@ Note: If there are conflicting definitions for hash defines, the one that appear
 
 4. The new convenience macros spikeCount_XX and spike_XX where "XX" is the name of the neuron group are now also available fro events: spikeEventCount_XX and spikeEvent_XX. They access the values for the current time step even if there are synaptic delays and spikes events are stored in circular queues.
 
-5. The old buildmodel.[sh|bat] scripts have been superseded by new genn-buildmodel.[sh|bat] scripts. These scripts accept UNIX style option switches, allow both relative and absolute model file paths, and allow the user to specify the directory in which all output files are placed (-o <path>). Debug (-d), CPU-only (-c) and show help (-h) are also defined. 
+5. The old buildmodel.[sh|bat] scripts have been superseded by new genn-buildmodel.[sh|bat] scripts. These scripts accept UNIX style option switches, allow both relative and absolute model file paths, and allow the user to specify the directory in which all output files are placed (-o \<path\>). Debug (-d), CPU-only (-c) and show help (-h) are also defined. 
 
 6. We have introduced a CPU-only "-c" genn-buildmodel switch, which, if it's defined, will generate a GeNN version that is completely independent from CUDA and hence can be used on computers without CUDA installation or CUDA enabled hardware. Obviously, this then can also only run on CPU. CPU only mode can either be switched on by defining CPU_ONLY in the model description file or by passing appropriate parameters during the build, in particular
 ```
-genn-buildmodel.[sh|bat] <modelfile> -c
+genn-buildmodel.[sh|bat] \<modelfile\> -c
 make release CPU_ONLY=1
 ```
 
@@ -95,7 +95,7 @@ you may want to consider changing model parameters.
 
 5. Every model definition function `modelDefinition()` now needs to end with calling `NNmodel::finalize()` for the defined network model. This will lock down the model and prevent any further changes to it by the supported methods. It also triggers necessary analysis of the model structure that should only be performed once. If the `finalize()` function is not called, GeNN will issue an error and exit before code generation.
 
-6. To be more consistent in function naming the `pull<SYNAPSENAME>FromDevice` and `push<SYNAPSENAME>ToDevice` have been renamed to `pull<SYNAPSENAME>StateFromDevice` and `push<SYNAPSENAME>StateToDevice`. The old versions are still supported through macro definitions to make the transition easier.
+6. To be more consistent in function naming the `pull\<SYNAPSENAME\>FromDevice` and `push\<SYNAPSENAME\>ToDevice` have been renamed to `pull\<SYNAPSENAME\>StateFromDevice` and `push\<SYNAPSENAME\>StateToDevice`. The old versions are still supported through macro definitions to make the transition easier.
 
 7. New convenience macros are now provided to access the current spike numbers and identities of neurons that spiked. These are called spikeCount_XX and spike_XX where "XX" is the name of the neuron group. They access the values for the current time step even if there are synaptic delays and spikes are stored in circular queues.
 
@@ -122,7 +122,7 @@ and device choice.
 to fix the number of connections to a maximum of 10K in order to avoid
 negative conductance tails.
 
-5. We introduced a #define for an "int_" function that translates floating points to integers.
+5. We introduced a preprocessor define directive for an "int_" function that translates floating points to integers.
 
 Bug fixes:
 ----

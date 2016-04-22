@@ -14,7 +14,7 @@ The first step is to write a model definition function in a model definition fil
 \note
 The ">>" in the example code snippets refers to a shell prompt in a unix shell, do not enter them as part of your shell commands.
 
-The model definition file contains the definition of the network model we want to simulate. First, we need to define the simulation step size `DT` and include the GeNN model specification codes `modelSpec.h` and modelSpec.cc`. Then the model definition takes the form of a function named `modelDefinition` that takes one argument, passed by reference, of type `NNmodel`. Type in your `tenHHModel.cc` file:
+The model definition file contains the definition of the network model we want to simulate. First, we need to define the simulation step size `DT` and include the GeNN model specification codes `modelSpec.h` and `modelSpec.cc`. Then the model definition takes the form of a function named `modelDefinition` that takes one argument, passed by reference, of type `NNmodel`. Type in your `tenHHModel.cc` file:
 \code
 // Model definintion file tenHHModel.cc
 

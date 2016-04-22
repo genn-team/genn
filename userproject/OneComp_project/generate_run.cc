@@ -12,7 +12,7 @@
 --------------------------------------------------------------------------*/
 
 //--------------------------------------------------------------------------
-/*! \file generate_run.cc
+/*! \file userproject/OneComp_project/generate_run.cc
 
 \brief This file is part of a tool chain for running the classol/MBody1 example model.
 
