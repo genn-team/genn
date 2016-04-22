@@ -14,126 +14,142 @@
 
 //----------------------------------------------------------------------------
 /*!  \page UserManual User Manual
+
 \latexonly
 \vspace{0cm}\mbox{}\vspace{0cm}
 \endlatexonly
 
 \section Contents
-
-\ref sIntro <br />
-\subpage sectDefiningNetwork <br />
-\subpage sectNeuronModels <br />
-\subpage sectSynapseModels <br />
+- \ref sIntro\n
+- \subpage sectDefiningNetwork
+- \subpage sectNeuronModels
+- \subpage sectSynapseModels
 
 \section sIntro Introduction
+
 GeNN is a software library for facilitating the simulation of neuronal
 network models on NVIDIA CUDA enabled GPU hardware. It was designed
 with computational neuroscience models in mind rather than artificial
 neural networks. The main philosophy of GeNN is two-fold:
+
 1. GeNN relies heavily on code generation to make it very flexible and
-to allow adjusting simulation code to the model of interest and the GPU
-hardware that is detected at compile time.
+   to allow adjusting simulation code to the model of interest and the GPU
+   hardware that is detected at compile time.
 2. GeNN is lightweight in that it provides code for running models of
-neuronal networks on GPU hardware but it leaves it to the user to
-write a final simulation engine. It so allows maximal flexibility to
-the user who can use any of the provided code but can fully choose,
-inspect, extend or otherwise modify the generated code. She can also
-introduce her own optimisations and in particular control the data
-flow from and to the GPU in any desired granularity.
+   neuronal networks on GPU hardware but it leaves it to the user to
+   write a final simulation engine. It so allows maximal flexibility to
+   the user who can use any of the provided code but can fully choose,
+   inspect, extend or otherwise modify the generated code. They can also
+   introduce their own optimisations and in particular control the data
+   flow from and to the GPU in any desired granularity.
 
 This manual gives an overview of how to use GeNN for a novice user and
-tries to lead the user to more expert use later on. With this we jump
+tries to lead the user to more expert use later on. With that we jump
 right in.
-
-<br />
+\n
 
 -----
 \link ReleaseNotes Previous\endlink | \link UserManual Top\endlink | \link sectDefiningNetwork Next\endlink
+*/
 
-*/
-*/
 
 //----------------------------------------------------------------------------
-/*!  
-\page sectDefiningNetwork Defining a network model
+/*!  \page sectDefiningNetwork Defining a network model
+
 A network model is defined by the user by providing the function 
 \code{.cc}
 void modelDefinition(NNmodel &model) 
 \endcode
-in a separate file with name `name.cc`, where `name` is the name of the model network under consideration. In this function, the following tasks must be completed:
+in a separate file, such as `MyModel.cc`. In this function, the following
+tasks must be completed:
+
 1. The name of the model must be defined:
-\code{.cc}
-model.setName("MyModel");
-\endcode
-2. Neuron populations (at least one) must be added (see \ref subsect11). The
-  user may add as many neuron populations as she wishes. If resources
-  run out, there will not be a warning but GeNN will fail. However, before this breaking point is reached, GeNN will make all necessary efforts in terms of block size optimisation to accommodate the defined models. All
-  populations must have a unique name.
+   \code{.cc}
+   model.setName("MyModel");
+   \endcode
+2. Neuron populations (at least one) must be added (see \ref subsect11).
+   The user may add as many neuron populations as they wish. If resources
+   run out, there will not be a warning but GeNN will fail. However,
+   before this breaking point is reached, GeNN will make all necessary
+   efforts in terms of block size optimisation to accommodate the defined
+   models. All populations must have a unique name.
 
 3. Synapse populations (zero or more) can be added (see \ref subsect12). Again,
-  the number of synaptic connection populations is unlimited other than
-  by resources.
-
-\note
-GeNN uses the convention where C/C++ files end in `.cc`. If this is not adhered to the build script `buildmodel.sh` will not recognise the model definition file.
+   the number of synaptic connection populations is unlimited other than
+   by resources.
 
 \section subsect11 Defining neuron populations
 
 Neuron populations are added using the function
 \code{.cc}
-model.addNeuronPopulation(name, n, TYPE, para, ini);
+model.addNeuronPopulation(name, num, type, para, ini);
 \endcode
 where the arguments are:
-\arg `const char* name`: Unique name of the neuron population
-\arg `int n`: number of neurons in the population
-\arg `int TYPE`: Type of the neurons, refers to either a standard type (see \ref sectNeuronModels) or user-defined type; this is an integer that indicates the position in the list of all neuron models where the model in question is stored.
-\arg `double *para`: Parameters of this neuron type
-\arg `double *ini`: Initial values for variables of this neuron type 
+\arg `const string name`: Unique name of the neuron population
+\arg `unsigned int num`: number of neurons in the population
+\arg `unsigned int type`: Type of the neurons, refers to either a standard
+     	       	   	  type (see \ref sectNeuronModels) or user-defined
+			  type; this is an integer that indicates the
+			  position in the list of all neuron models where
+			  the model in question is stored.
+\arg `vector<double> para`: Parameters of this neuron type
+\arg `vector<double> ini`: Initial values for variables of this neuron type 
 
-The user may add as many neuron populations as the model necessitates. They must all have unique names. The possible values for the arguments, predefined models and their parameters and initial values are detailed \ref sectNeuronModels below.
+The user may add as many neuron populations as the model necessitates.
+They must all have unique names. The possible values for the arguments,
+predefined models and their parameters and initial values are detailed
+\ref sectNeuronModels below.
 
 \section subsect12 Defining synapse populations
 
-Synapse populations are added with the command
+Synapse populations are added with the function
 \code{.cc}
-model.addSynapsePopulation("name", sType, sConn, gType, delay, postSyn, "preName", "postName", sIni, sParam, postSynIni, postSynParam);
+model.addSynapsePopulation(name, sType, sConn, gType, delay, postSyn, preName, postName, sIni, sParam, postSynIni, postSynParam);
 \endcode
 where the arguments are
-\arg \c const \c char* name: The name of the synapse population
-\arg \c int \c sType: The type of synapse to be added. See \ref subsect31 below for the available predefined synapse types.
-\arg \c int \c sConn: The type of synaptic connectivity. the options currently are "ALLTOALL",
-"DENSE", "SPARSE" (see \ref subsect32 )
-\arg \c int \c gType: The way how the synaptic conductivity g will be
-defined. Options are
-"INDIVIDUALG", "GLOBALG", "INDIVIDUALID". For their meaning, see \ref
-sect33 below.
-\arg \c int \c delay: Synaptic delay (in multiples of the simulation time step `DT`). 
-\arg \c int \c postSyn: Postsynaptic integration method. See \ref sect_postsyn for predefined types.
-\arg \c char* \c preName: Name of the (existing!) pre-synaptic neuron
-population.
-\arg \c char* \c postName: Name of the (existing!) post-synaptic neuron
-population.
-\arg `double *sIni`: A C-array of doubles containing initial values for the (pre-) synaptic variables. 
-\arg `double *sParam`: A C-array of double precision that contains
-parameter values (common to all synapses of the population) which will
-be used for the defined synapses. The array must contain the right
-number of parameters in the right order for the chosen synapse
-type. If too few, segmentation faults will occur, if too many, excess
-will be ignored. For pre-defined synapse types the required parameters and their meaning are listed in \ref sect31 below. 
-\arg \c double * \c psIni: A C-array of double precision numbers containing initial values for the post-synaptic model variables
-\arg \c double * \c psPara: A C-array of double precision numbers containing parameters fo the post-snaptic model.
+\arg `const string name`: The name of the synapse population
+\arg `unsigned int sType`: The type of synapse to be added. See \ref
+     subsect31 below for the available predefined synapse types.
+\arg `unsigned int sConn`: The type of synaptic connectivity. the options
+     currently are "ALLTOALL", "DENSE", "SPARSE" (see \ref subsect32).
+\arg `unsigned int gType`: The way how the synaptic conductivity g will
+     be defined. Options are "INDIVIDUALG", "GLOBALG", "INDIVIDUALID"
+     (see \ref sect33).
+\arg `unsigned int delay`: Synaptic delay (in multiples of the simulation
+     time step `DT`). 
+\arg `unsigned int postSyn`: Postsynaptic integration method. See \ref
+     sect_postsyn for predefined types.
+\arg `const string preName`: Name of the (existing!) pre-synaptic
+     neuron population.
+\arg `const string postName`: Name of the (existing!) post-synaptic
+     neuron population.
+\arg `vector<double> sIni`: A vector of doubles containing initial values
+     for the (pre-) synaptic variables. 
+\arg `vector<double> sParam`: A vector of double precision that contains
+     parameter values (common to all synapses of the population) which will
+     be used for the defined synapses. The array must contain the right
+     number of parameters in the right order for the chosen synapse
+     type. If too few, segmentation faults will occur, if too many, excess
+     will be ignored. For pre-defined synapse types the required parameters
+     and their meaning are listed in \ref sect31 below. 
+\arg `vector<double> psIni`: A vector of double precision numbers
+     containing initial values for the post-synaptic model variables.
+\arg `vector<double> psPara`: A vector of double precision numbers
+     containing parameters fo the post-snaptic model.
+
 \note
-If the synapse conductance definition type is "GLOBALG" then the
-global value of the synapse conductances is taken from the initial value provided in `sINI`. (The function setSynapseG() from earlier versions of GeNN has been deprecated).
+If the synapse conductance definition type is "GLOBALG" then the global
+value of the synapse conductances is taken from the initial value provided
+in `sINI`. (The function setSynapseG() from earlier versions of GeNN has
+been deprecated).
 
 Synaptic updates can occur per "true" spike (i.e at one point per spike, e.g. after a threshold was crossed) or for all "spike type events" (e.g. all points above a given threshold). This is defined within each given synapse type.
-
-<br />
+\n
 
 -----
-\link UserManual Previous\endlink | \link sectDefiningNetwork Top\endlink | \link sectSynapseModels Next\endlink
-
+\link UserManual Previous\endlink | \link sectDefiningNetwork Top\endlink | \link sectNeuronModels Next\endlink
 */
+
 
 //----------------------------------------------------------------------------
 /*! 

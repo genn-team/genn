@@ -133,7 +133,7 @@ include	$(GENN_PATH)/userproject/include/makefile_common_gnu.mk
 \endcode
 we can build the model
 \code
->> buildmodel.sh tenHHRingModel
+>> genn-buildmodel.sh tenHHRingModel.cc
 \endcode
 and make it
 \code

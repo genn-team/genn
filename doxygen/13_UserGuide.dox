@@ -161,12 +161,12 @@ $(V)+= (-$(V)+$(Isyn))*DT
 In addition to these variables, neuron variables can be referred to in the synapse models by calling $(\<neuronVarName\>_pre) for the presynaptic neuron population, and $(\<neuronVarName\>_post) for the postsynaptic population. For example, \$(sT_pre), \$(sT_post), \$(V_pre), etc.
  
 \section Debugging Debugging suggestions
-In Linux, users can use cuda-gdb to debug on the GPU. Example projects in userproject and lib/bin/buildmodel.sh come with a flag to enable debugging.
+In Linux, users can use cuda-gdb to debug on the GPU. Example projects in userproject come with a flag to enable debugging (DEBUG=1). genn-buildmodel.sh has a debug flag (-d) to generate debugging data.
 If you are using a project with debugging, the code will be compiled with -g -G flags. In CPU mode the executable will be run in gdb,
 and in GPU mode it will be run in cuda-gdb in tui mode. 
 
 \note
-Do not forget to switch debugging flags -g and -G off after debugging is complete as they negatively affect performance.
+Do not forget to switch debugging flags -g and -G off after debugging is complete as they may negatively affect performance.
 \n
 
 -----
