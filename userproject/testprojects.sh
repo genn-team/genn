@@ -12,7 +12,7 @@ set -e #exit if error or segfault
 BmDir=$GENN_PATH/userproject/refProjFiles
 
 #Output directory
-testDir=testing 
+testDir=testing
 #WARNING: Output directory was fixed to "testing" in the commits earlier than 8/4/16.
 #If you change the name you won't be able to compare your output for the same model
 #in the earlier branches.
@@ -102,9 +102,6 @@ if [ "$firstrun_MBI" = true ]; then
   cp -R ../MBody_individualID_project/${testDir}_output $BmDir/MBody_individualID/after_v2.1/
 fi
 
-cp -R ${testDir}_output/${testDir}.time $BmDir/MBody_individualID/${testDir}_output/${testDir}.time
-
-
 #MBody1 reference files will be used in the other variants of the MBody project, except MBody_individalID.
 printf "\n\n*******************************************************************************\n"
 printf "\n\n*********************** Testing MBody_userdef *********************************\n"
@@ -190,10 +187,9 @@ if [ "$firstrun_IZH" = true ]; then
 fi  
 if [ "$firstrun_IZH" = true ]; then
   printf "Benchmarking is run for the first time. Creating reference input files with the results of these runs. \nIf any error occurs please delete the benchmarking directory and run the script after the values are corrected.\nCopying reference files...\n"
-  cp -R ${testDir}_output $BmDir/Izh_sparse
+  cp -R ${testDir}_output $BmDir/Izh_sparse/
   cp -R inputfiles10K $BmDir/Izh_sparse/inputfiles10K
 fi
-cp -R ${testDir}_output/${testDir}.time $BmDir/Izh_sparse/${testDir}.time
 
 
 #need to recompile if we want to rerun with different number of neurons. To be revisited...
@@ -320,7 +316,6 @@ printf "\nTEST 2: TEST BY USING REFERENCE INPUT PATTERNS\n"
 #if you add new tests, don't forget to copy the output to your ref files 
 cd MBody1_project
 cp -R $BmDir/MBody1/${testDir}_output/* ${testDir}_output/
-cp -R $BmDir/MBody1/${testDir}.time ${testDir}_output/
 printf "With reference setup... \n"  >> ${testDir}_output/${testDir}.time
 printf "\n\n####################### MBody1 GPU TEST 2 ######################\n"
 model/classol_sim ${testDir} 1
@@ -358,7 +353,6 @@ model/classol_sim ${testDir} 0
 
 cd ../Izh_sparse_project
 cp -R $BmDir/Izh_sparse/${testDir}_output/* ${testDir}_output/
-cp -R $BmDir/Izh_sparse/${testDir}.time ${testDir}_output/
 printf "With reference setup (input is still random, so the results are not expected to be identical)... \n"  >> ${testDir}_output/${testDir}.time
 cp -R $BmDir/Izh_sparse/inputfiles10K/* inputfiles/
 printf "\n\n####################### Izh_sparse GPU TEST 2 ######################\n"
