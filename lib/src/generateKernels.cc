@@ -522,6 +522,8 @@ void generate_process_presynaptic_events_code(
 	    else {
 		maxConnections = model.neuronN[trg];
 	    }
+
+
 	    //os << "if (" << localID << " < " << maxConnections << ")" << OB(101);
 	    
 	    os << "if (" << localID << " < " ;
@@ -532,15 +534,52 @@ void generate_process_presynaptic_events_code(
 		os << "dd_glbSpkCnt" << postfix << model.neuronName[src] << "[0])" << OB(102);
 	    }
 	    
+	    if (weightUpdateModels[synt].simCode_supportCode != tS("")) {
+		os << OB(29) << " using namespace " << model.synapseName[i] << "_weightupdate_simCode;" << ENDL;	
+	    }
+
 	    os << "int preInd = dd_glbSpk"  << postfix << model.neuronName[src] << "[" << localID << "];" << ENDL;
 	    os << "prePos = dd_indInG" << model.synapseName[i] << "[preInd];" << ENDL;
 	    os << "npost = dd_indInG" << model.synapseName[i] << "[preInd + 1] - prePos;" << ENDL;
 	    os << "for (int i = 0; i < npost; ++i)" << OB(103);
+
+	    if (evnt) {
+		os << "if ";
+		if (model.synapseGType[i] == INDIVIDUALID) {
+			os << "unsigned int gid = (dd_glbSpkCnt" << postfix << "[" << localID << "] * " << model.neuronN[trg] << " + i);" << ENDL;
+
+		    // Note: we will just access global mem. For compute >= 1.2 simultaneous access to same global mem in the (half-)warp will be coalesced - no worries
+			os << "((B(dd_gp" << model.synapseName[i] << "[gid >> " << logUIntSz << "], gid & " << UIntSz - 1 << ")) && ";
+		}
+		
+		// code substitutions ----
+		string eCode = weightUpdateModels[synt].evntThreshold;
+		value_substitutions(eCode, weightUpdateModels[synt].pNames, model.synapsePara[i]);
+		value_substitutions(eCode, weightUpdateModels[synt].dpNames, model.dsp_w[i]);
+		name_substitutions(eCode, tS("dd_"), weightUpdateModels[synt].extraGlobalSynapseKernelParameters, model.synapseName[i]);
+
+//		neuron_substitutions_in_synaptic_code(eCode, model, src, trg, nt_pre, nt_post, offsetPre, offsetPost, tS("shSpkEvnt") + tS("[j]"), tS("ipost"), tS("dd_"));
+		neuron_substitutions_in_synaptic_code(eCode, model, src, trg, nt_pre, nt_post, offsetPre, offsetPost, tS("preInd"), tS("i"), tS("dd_"));
+	  //  os << "shSpk" << postfix << "[threadIdx.x] = dd_glbSpk" << postfix << model.neuronName[src] << "[" << offsetPre << "(r * BLOCKSZ_SYN) + threadIdx.x];" << ENDL;
+		eCode= ensureFtype(eCode, model.ftype);
+		checkUnreplacedVariables(eCode, tS("evntThreshold"));
+		// end code substitutions ----
+		os << "(" << eCode << ")"; 
+		
+		if (model.synapseGType[i] == INDIVIDUALID) {
+		    os << ")";
+		}
+		os << OB(130);
+	    }
+	    else if (model.synapseGType[i] == INDIVIDUALID) {
+		os << "if (B(dd_gp" << model.synapseName[i] << "[gid >> " << logUIntSz << "], gid & " << UIntSz - 1 << "))" << OB(135);
+	    }
 	    os << "	ipost = dd_ind" <<  model.synapseName[i] << "[prePos];" << ENDL;
 	    
 // Code substitutions ----------------------------------------------------------------------------------
 	    string wCode = (evnt ? weightUpdateModels[synt].simCodeEvnt : weightUpdateModels[synt].simCode);
-	    if (sparse) { // SPARSE
+	    substitute(wCode, tS("$(t)"), tS("t"));
+
 		if (isGrpVarNeeded[model.synapseTarget[i]]) { // SPARSE using atomicAdd
 		    substitute(wCode, tS("$(updatelinsyn)"), theAtomicAdd+tS("(&$(inSyn), $(addtoinSyn))"));
 		    substitute(wCode, tS("$(inSyn)"), tS("dd_inSyn") + model.synapseName[i] + tS("[ipost]")); 
@@ -555,10 +594,10 @@ void generate_process_presynaptic_events_code(
 		else {
 		    value_substitutions(wCode, weightUpdateModels[synt].varNames, model.synapseIni[i]);
 		}
-	    }
+	    
 	    value_substitutions(wCode, weightUpdateModels[synt].pNames, model.synapsePara[i]);
 	    value_substitutions(wCode, weightUpdateModels[synt].dpNames, model.dsp_w[i]);
-	    name_substitutions(wCode, tS(""), weightUpdateModels[synt].extraGlobalSynapseKernelParameters, model.synapseName[i]);
+	    name_substitutions(wCode, tS("dd_"), weightUpdateModels[synt].extraGlobalSynapseKernelParameters, model.synapseName[i]);
 	    substitute(wCode, tS("$(addtoinSyn)"), tS("addtoinSyn"));
 	    neuron_substitutions_in_synaptic_code(wCode, model, src, trg, nt_pre, nt_post, offsetPre, offsetPost, tS("preInd"), tS("ipost"), tS("dd_"));
 	    wCode= ensureFtype(wCode, model.ftype);
@@ -568,6 +607,12 @@ void generate_process_presynaptic_events_code(
 	    os << wCode << ENDL;
 	    
 	    os << "prePos += 1;" << ENDL;
+			if (evnt) {
+				os << CB(130) 
+			}
+			else if (model.synapseGType[i] == INDIVIDUALID) {
+				os << CB(135) 
+			}
 	    os << CB(103);
 	    os << CB(102);
 	    //os << CB(101);
