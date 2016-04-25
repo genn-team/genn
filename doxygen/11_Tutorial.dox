@@ -189,7 +189,7 @@ Now we are ready to compile and run the simulation
 \section MakeRun Making and Running the Simulation
 To build the model and generate the GeNN code, type in a terminal where you are in the directory containing your `tenHHModel.cc` file,
 \code
->> buildmodel.sh tenHHModel
+>> genn-buildmodel.sh tenHHModel.cc
 \endcode
 If your environment variables `GENN_PATH` and `CUDA_PATH` are correctly configured, you should see some compile output ending in `Model build complete ...`.
 Now type
@@ -259,7 +259,7 @@ os.close();
 \endcode
 After building, making and executing,
 \code
-builmodel.sh tenHHModel
+genn-builmodel.sh tenHHModel.cc
 make clean all
 ./tenHHSimulation
 \endcode
