@@ -54,8 +54,7 @@ void extern_variable_def(ofstream &os, string type, string name)
 #include <cfloat>
 
 void genRunner(NNmodel &model, //!< Model description
-	       string path, //!< path for code generation
-	       ostream &mos //!< output stream for messages
+	       string &path //!< Path for code generationn
     )
 {
     string name;
@@ -1362,30 +1361,28 @@ void genRunner(NNmodel &model, //!< Model description
     // finish up
 
 #ifndef CPU_ONLY
-    mos << "Global memory required for core model: " << mem/1e6 << " MB. " << ENDL;
-    mos << deviceProp[theDev].totalGlobalMem << " for device " << theDev << ENDL;  
+    cout << "Global memory required for core model: " << mem/1e6 << " MB. " << ENDL;
+    cout << deviceProp[theDev].totalGlobalMem << " for device " << theDev << ENDL;  
   
     if (memremsparse != 0) {
 	int connEstim = int(memremsparse / (theSize(model.ftype) + sizeof(unsigned int)));
-	mos << "Remaining mem is " << memremsparse/1e6 << " MB." << ENDL;
-	mos << "You may run into memory problems on device" << theDev;
-	mos << " if the total number of synapses is bigger than " << connEstim;
-	mos << ", which roughly stands for " << int(connEstim/model.sumNeuronN[model.neuronGrpN - 1]);
-	mos << " connections per neuron, without considering any other dynamic memory load." << ENDL;
+	cout << "Remaining mem is " << memremsparse/1e6 << " MB." << ENDL;
+	cout << "You may run into memory problems on device" << theDev;
+	cout << " if the total number of synapses is bigger than " << connEstim;
+	cout << ", which roughly stands for " << int(connEstim/model.sumNeuronN[model.neuronGrpN - 1]);
+	cout << " connections per neuron, without considering any other dynamic memory load." << ENDL;
     }
     else {
 	if (0.5 * deviceProp[theDev].totalGlobalMem < mem) {
-	    mos << "memory required for core model (" << mem/1e6;
-	    mos << "MB) is more than 50% of global memory on the chosen device";
-	    mos << "(" << deviceProp[theDev].totalGlobalMem/1e6 << "MB)." << ENDL;
-	    mos << "Experience shows that this is UNLIKELY TO WORK ... " << ENDL;
+	    cout << "memory required for core model (" << mem/1e6;
+	    cout << "MB) is more than 50% of global memory on the chosen device";
+	    cout << "(" << deviceProp[theDev].totalGlobalMem/1e6 << "MB)." << ENDL;
+	    cout << "Experience shows that this is UNLIKELY TO WORK ... " << ENDL;
 	}
     }
 #endif
 }
 
-
-#ifndef CPU_ONLY
 
 //----------------------------------------------------------------------------
 /*!
@@ -1395,9 +1392,9 @@ void genRunner(NNmodel &model, //!< Model description
 */
 //----------------------------------------------------------------------------
 
+#ifndef CPU_ONLY
 void genRunnerGPU(NNmodel &model, //!< Model description 
-		  string &path, //!< path for code generation
-		  ostream &mos //!< output stream for messages
+		  string &path //!< Path for code generation
     )
 {
     string name;
@@ -1405,7 +1402,7 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     unsigned int nt, st, pst;
     ofstream os;
 
-//    mos << "entering GenRunnerGPU" << ENDL;
+//    cout << "entering GenRunnerGPU" << ENDL;
     name= path + toString("/") + model.name + toString("_CODE/runnerGPU.cc");
     os.open(name.c_str());
     writeHeader(os);

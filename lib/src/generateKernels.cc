@@ -38,8 +38,7 @@ short *isGrpVarNeeded;
 //-------------------------------------------------------------------------
 
 void genNeuronKernel(NNmodel &model, //!< Model description 
-		     string &path,  //!< path for code output
-		     ostream &mos //!< output stream for messages
+		     string &path  //!< Path for code generation
     )
 {
     //hlp.setVerbose(true);//this will show the generation of bracketing (brace) levels. Helps to debug a bracketing issue
@@ -778,8 +777,7 @@ void generate_process_presynaptic_events_code(
 //-------------------------------------------------------------------------
 
 void genSynapseKernel(NNmodel &model, //!< Model description 
-		      string &path, //!< Path for code output
-		      ostream &mos //!< output stream for messages
+		      string &path //!< Path for code generation
     )
 {
     string name, s;

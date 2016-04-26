@@ -31,8 +31,7 @@
 //--------------------------------------------------------------------------
 
 void genNeuronFunction(NNmodel &model, //!< Model description 
-		       string &path, //!< output stream for code
-		       ostream &mos //!< output stream for messages
+		       string &path //!< Path for code generation
     )
 {
     string name, s, localID;
@@ -484,8 +483,7 @@ void generate_process_presynaptic_events_code_CPU(
 //--------------------------------------------------------------------------
 
 void genSynapseFunction(NNmodel &model, //!< Model description
-			string &path, //!< Path for code generation
-			ostream &mos //!< output stream for messages
+			string &path //!< Path for code generation
     )
 {
     string name, s, localID, theLG, preSpike, preSpikeV, sTpost, sTpre;
