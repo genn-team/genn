@@ -1413,7 +1413,6 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     os << "\\brief File generated from GeNN for the model " << model.name << " containing the host side code for a GPU simulator version." << ENDL;
     os << "*/" << ENDL;
     os << "//-------------------------------------------------------------------------" << ENDL << ENDL;
-
     os << ENDL;
 
     if ((deviceProp[theDev].major >= 2) || (deviceProp[theDev].minor >= 3)) {
@@ -2120,5 +2119,79 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     os.close();
     //cout << "done with generating GPU runner" << ENDL;
 }
+#endif
+
+
+//----------------------------------------------------------------------------
+/*!
+  \brief Generates the Makefile for all generated GeNN code.
+*/
+//----------------------------------------------------------------------------
+
+void genMakefile(NNmodel &model, //!< Model description
+		 string &path    //!< Path for code generation
+    )
+{
+    string name = path + "/" + model.name + "_CODE/Makefile";
+    ofstream os;
+    os.open(name.c_str());
+
+
+    string cxxFlags = ""; // PASSED AS GENN_PREFERENCES
+    string nvccFlags = ""; // PASSED AS GENN_PREFERENCES
+
+
+
+
+#ifdef _WIN32
+
+    os << endl;
+
+    os << "CXX         =$(CXX)" << endl;
+    os << "CXXFLAGS    =" << cxxFlags << endl;
+    os << endl;
+
+    os << "NVCC        =\"" + tS(NVCC) + "\"" << endl;
+    os << "NVCCFLAGS   =-x cu --compiler-options \"" << cxxFlags << "\"" << endl;
+    os << endl;
+
+    os << "all: runner.obj" << endl;;
+    os << endl;
+
+#ifdef CPU_ONLY
+    os << "runner.obj: " << endl;
+    os << "\t$(CXX) $(CXXFLAGS) /Fe runner.obj runner.cc" << endl;
+#else
+    os << "runner.obj: " << endl;
+    os << "\t$(NVCC) $(NVCCFLAGS) /Fe runner.obj runner.cc" << endl;
+#endif
+
+#elifdef OSX
+
+#else // UNIX
+
+    os << endl;
+
+    os << "CXX         :=$(CXX)" << endl;
+    os << "CXXFLAGS    :=" << cxxFlags << endl;
+    os << endl;
+
+    os << "NVCC        :=\"" + tS(NVCC) + "\"" << endl;
+    os << "NVCCFLAGS   :=-x cu --compiler-options \"" << cxxFlags << "\"" << endl;
+    os << endl;
+
+    os << "all: runner.o" << endl;
+    os << endl;
+
+#ifdef CPU_ONLY
+    os << "runner.o: " << endl;
+    os << "\t$(CXX) $(CXXFLAGS) -o runner.o runner.cc" << endl;
+#else
+    os << "runner.o: " << endl;
+    os << "\t$(NVCC) $(NVCCFLAGS) -o runner.o runner.cc" << endl;
+#endif
 
 #endif
+
+    os.close();
+}

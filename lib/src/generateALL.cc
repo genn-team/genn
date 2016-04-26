@@ -139,10 +139,10 @@ void generate_model_runner(NNmodel &model,  //!< Model description
   if (model.synapseGrpN > 0) genSynapseFunction(model, path);
 
   // Generate the Makefile for the generated code
-  //genMakefile(model, path);
+  genMakefile(model, path);
 }
 
-#ifndef CPU_ONLY
+
 //--------------------------------------------------------------------------
 /*!
   \brief Helper function that prepares data structures and detects the hardware properties to enable the code generation code that follows.
@@ -151,6 +151,7 @@ void generate_model_runner(NNmodel &model,  //!< Model description
 */
 //--------------------------------------------------------------------------
 
+#ifndef CPU_ONLY
 int chooseDevice(NNmodel *&model, //!< the nn model we are generating code for
 		 string path     //!< path the generated code will be deposited
 		 )
@@ -180,10 +181,8 @@ int chooseDevice(NNmodel *&model, //!< the nn model we are generating code for
 
   if (GENN_PREFERENCES::optimiseBlockSize) { // IF OPTIMISATION IS ON: Choose the device which supports the highest warp occupancy.
       cout << "optimizing block size..." << endl;
-      char buffer[1024];
-      stringstream command, ptxInfo;
-      string junk;
-      int reqRegs, reqSmem, requiredBlocks, ptxInfoFound = 0;
+      stringstream command;
+      int reqRegs, reqSmem, requiredBlocks;
       int warpSize= 32;
 
       unsigned int **bestBlkSz= new unsigned int*[krnlNo];
