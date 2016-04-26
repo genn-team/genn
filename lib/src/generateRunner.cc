@@ -2132,63 +2132,63 @@ void genMakefile(NNmodel &model, //!< Model description
 		 string &path    //!< Path for code generation
     )
 {
+    string cxxFlags = ""; // PASSED AS GENN_PREFERENCES
+    string nvccFlags = ""; // PASSED AS GENN_PREFERENCES
+    nvccFlags += " -arch=sm_" + deviceProp[device].major + deviceProp[device].minor;
+
+
     string name = path + "/" + model.name + "_CODE/Makefile";
     ofstream os;
     os.open(name.c_str());
-
-
-    string cxxFlags = ""; // PASSED AS GENN_PREFERENCES
-    string nvccFlags = ""; // PASSED AS GENN_PREFERENCES
-
-
-
-
+    
 #ifdef _WIN32
 
     os << endl;
-
-    os << "CXX         =$(CXX)" << endl;
-    os << "CXXFLAGS    =" << cxxFlags << endl;
+    os << "CXX            =$(CXX)" << endl;
+    os << "CXXFLAGS       =$(CXXFLAGS) " << cxxFlags << endl;
     os << endl;
-
-    os << "NVCC        =\"" + tS(NVCC) + "\"" << endl;
-    os << "NVCCFLAGS   =-x cu --compiler-options \"" << cxxFlags << "\"" << endl;
+#ifndef CPU_ONLY
+    os << "NVCC           =\"" + tS(NVCC) + "\"" << endl;
+    os << "NVCCFLAGS      =$(NVCCFLAGS) " << nvccFlags << " -x cu -Xcompiler \"$(CXXFLAGS)\"" << endl;
     os << endl;
+#endif
+    os << "INCLUDEFLAGS   =/I\"$(GENN_PATH)\\lib\\include\"" << endl;
 
-    os << "all: runner.obj" << endl;;
+    os << "all: runner.obj" << endl;
     os << endl;
 
 #ifdef CPU_ONLY
     os << "runner.obj: " << endl;
-    os << "\t$(CXX) $(CXXFLAGS) /Fe runner.obj runner.cc" << endl;
+    os << "\t$(CXX) $(CXXFLAGS) $(INCLUDEFLAGS) /Ferunner.obj runner.cc" << endl;
 #else
     os << "runner.obj: " << endl;
-    os << "\t$(NVCC) $(NVCCFLAGS) /Fe runner.obj runner.cc" << endl;
+    os << "\t$(NVCC) $(NVCCFLAGS) $(INCLUDEFLAGS:/I=-I) /Ferunner.obj runner.cc" << endl;
 #endif
 
-#elifdef OSX
+#elif defined OSX
 
 #else // UNIX
 
     os << endl;
-
-    os << "CXX         :=$(CXX)" << endl;
-    os << "CXXFLAGS    :=" << cxxFlags << endl;
+    os << "CXX            :=$(CXX)" << endl;
+    os << "CXXFLAGS       +=" << cxxFlags << endl;
     os << endl;
-
-    os << "NVCC        :=\"" + tS(NVCC) + "\"" << endl;
-    os << "NVCCFLAGS   :=-x cu --compiler-options \"" << cxxFlags << "\"" << endl;
+#ifdef CPU_ONLY
+    os << "NVCC           :=\"" + tS(NVCC) + "\"" << endl;
+    os << "NVCCFLAGS      +=" << nvccFlags << " -x cu -Xcompiler \"$(CXXFLAGS)\"" << endl;
     os << endl;
+#endif
+    os << "INCLUDEFLAGS   =-I\"$(GENN_PATH)/lib/include\"" << endl;
 
     os << "all: runner.o" << endl;
     os << endl;
 
 #ifdef CPU_ONLY
     os << "runner.o: " << endl;
-    os << "\t$(CXX) $(CXXFLAGS) -o runner.o runner.cc" << endl;
+    os << "\t$(CXX) $(CXXFLAGS) $(INCLUDEFLAGS) -o runner.o runner.cc" << endl;
 #else
     os << "runner.o: " << endl;
-    os << "\t$(NVCC) $(NVCCFLAGS) -o runner.o runner.cc" << endl;
+    os << "\t$(NVCC) $(NVCCFLAGS) $(INCLUDEFLAGS) -o runner.o runner.cc" << endl;
 #endif
 
 #endif
