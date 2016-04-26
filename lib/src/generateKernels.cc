@@ -607,12 +607,12 @@ void generate_process_presynaptic_events_code(
 	    os << wCode << ENDL;
 	    
 	    os << "prePos += 1;" << ENDL;
-			if (evnt) {
-				os << CB(130) 
-			}
-			else if (model.synapseGType[i] == INDIVIDUALID) {
-				os << CB(135) 
-			}
+	    if (evnt) {
+		os << CB(130);
+	    }
+	    else if (model.synapseGType[i] == INDIVIDUALID) {
+		os << CB(135);
+	    }
 	    os << CB(103);
 	    os << CB(102);
 	    //os << CB(101);
