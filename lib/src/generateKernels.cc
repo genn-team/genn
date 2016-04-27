@@ -618,6 +618,9 @@ void generate_process_presynaptic_events_code(
 	    else if (model.synapseGType[i] == INDIVIDUALID) {
 		os << CB(135);
 	    }
+	    if (weightUpdateModels[synt].simCode_supportCode != tS("")) {
+		os << CB(29) << " // namespace bracket closed" << ENDL;
+	    }
 	    os << CB(102);
 	    //os << CB(101);
 	} 
