@@ -612,7 +612,7 @@ void genRunner(NNmodel &model, //!< Model description
     os << "void allocateMem()" << ENDL;
     os << "{" << ENDL;
 #ifndef CPU_ONLY
-    os << "    CHECK_CUDA_ERRORS(cudaSetDevice(" << theDev << "));" << ENDL;
+    os << "    CHECK_CUDA_ERRORS(cudaSetDevice(" << theDevice << "));" << ENDL;
 #endif
     //cout << "model.neuronGroupN " << model.neuronGrpN << ENDL;
     //os << "    " << model.ftype << " free_m, total_m;" << ENDL;
@@ -1362,21 +1362,21 @@ void genRunner(NNmodel &model, //!< Model description
 
 #ifndef CPU_ONLY
     cout << "Global memory required for core model: " << mem/1e6 << " MB. " << ENDL;
-    cout << deviceProp[theDev].totalGlobalMem << " for device " << theDev << ENDL;  
+    cout << deviceProp[theDevice].totalGlobalMem << " for device " << theDevice << ENDL;  
   
     if (memremsparse != 0) {
 	int connEstim = int(memremsparse / (theSize(model.ftype) + sizeof(unsigned int)));
 	cout << "Remaining mem is " << memremsparse/1e6 << " MB." << ENDL;
-	cout << "You may run into memory problems on device" << theDev;
+	cout << "You may run into memory problems on device" << theDevice;
 	cout << " if the total number of synapses is bigger than " << connEstim;
 	cout << ", which roughly stands for " << int(connEstim/model.sumNeuronN[model.neuronGrpN - 1]);
 	cout << " connections per neuron, without considering any other dynamic memory load." << ENDL;
     }
     else {
-	if (0.5 * deviceProp[theDev].totalGlobalMem < mem) {
+	if (0.5 * deviceProp[theDevice].totalGlobalMem < mem) {
 	    cout << "memory required for core model (" << mem/1e6;
 	    cout << "MB) is more than 50% of global memory on the chosen device";
-	    cout << "(" << deviceProp[theDev].totalGlobalMem/1e6 << "MB)." << ENDL;
+	    cout << "(" << deviceProp[theDevice].totalGlobalMem/1e6 << "MB)." << ENDL;
 	    cout << "Experience shows that this is UNLIKELY TO WORK ... " << ENDL;
 	}
     }
@@ -1415,7 +1415,7 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     os << "//-------------------------------------------------------------------------" << ENDL << ENDL;
     os << ENDL;
 
-    if ((deviceProp[theDev].major >= 2) || (deviceProp[theDev].minor >= 3)) {
+    if ((deviceProp[theDevice].major >= 2) || (deviceProp[theDevice].minor >= 3)) {
 	os << "__device__ double atomicAdd(double* address, double val)" << ENDL;
 	os << "{" << ENDL;
 	os << "    unsigned long long int* address_as_ull =" << ENDL;
@@ -1431,7 +1431,7 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 	os << "}" << ENDL << ENDL;
     }
 
-    if (deviceProp[theDev].major < 2) {
+    if (deviceProp[theDevice].major < 2) {
 	os << "__device__ float atomicAddoldGPU(float* address, float val)" << ENDL;
 	os << "{" << ENDL;
 	os << "    int* address_as_ull =" << ENDL;
@@ -2048,7 +2048,7 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     unsigned int neuronGridSz = model.padSumNeuronN[model.neuronGrpN - 1];
     neuronGridSz = ceil((float) neuronGridSz / neuronBlkSz);
     os << "dim3 nThreads(" << neuronBlkSz << ", 1);" << ENDL;
-    if (neuronGridSz < deviceProp[theDev].maxGridSize[1]) {
+    if (neuronGridSz < deviceProp[theDevice].maxGridSize[1]) {
 	os << "dim3 nGrid(" << neuronGridSz << ", 1);" << ENDL;
     }
     else {
@@ -2132,24 +2132,21 @@ void genMakefile(NNmodel &model, //!< Model description
 		 string &path    //!< Path for code generation
     )
 {
-    string cxxFlags = ""; // PASSED AS GENN_PREFERENCES
-    string nvccFlags = ""; // PASSED AS GENN_PREFERENCES
-    nvccFlags += " -arch=sm_" + deviceProp[device].major + deviceProp[device].minor;
-
+    string cxxFlags = "";
+    string nvccFlags = "-arch=sm_" + tS(deviceProp[theDevice].major) + tS(deviceProp[theDevice].minor);
 
     string name = path + "/" + model.name + "_CODE/Makefile";
     ofstream os;
     os.open(name.c_str());
-    
+
 #ifdef _WIN32
 
     os << endl;
-    os << "CXX            =$(CXX)" << endl;
-    os << "CXXFLAGS       =$(CXXFLAGS) " << cxxFlags << endl;
+    os << "CXXFLAGS       =/nologo /Ehsc " << cxxFlags << endl;
     os << endl;
 #ifndef CPU_ONLY
     os << "NVCC           =\"" + tS(NVCC) + "\"" << endl;
-    os << "NVCCFLAGS      =$(NVCCFLAGS) " << nvccFlags << " -x cu -Xcompiler \"$(CXXFLAGS)\"" << endl;
+    os << "NVCCFLAGS      =" << nvccFlags << " -x cu -Xcompiler \"$(CXXFLAGS)\"" << endl;
     os << endl;
 #endif
     os << "INCLUDEFLAGS   =/I\"$(GENN_PATH)\\lib\\include\"" << endl;
@@ -2158,24 +2155,26 @@ void genMakefile(NNmodel &model, //!< Model description
     os << endl;
 
 #ifdef CPU_ONLY
-    os << "runner.obj: " << endl;
-    os << "\t$(CXX) $(CXXFLAGS) $(INCLUDEFLAGS) /Ferunner.obj runner.cc" << endl;
+    os << "runner.obj: runner.cc" << endl;
+    os << "\t$(CXX) /C $(CXXFLAGS) $(INCLUDEFLAGS) runner.cc" << endl;
 #else
-    os << "runner.obj: " << endl;
-    os << "\t$(NVCC) $(NVCCFLAGS) $(INCLUDEFLAGS:/I=-I) /Ferunner.obj runner.cc" << endl;
+    os << "runner.obj: runner.cc" << endl;
+    os << "\t$(NVCC) -c $(NVCCFLAGS) $(INCLUDEFLAGS:/I=-I) runner.cc" << endl;
+    os << endl;
+    os << "cubin: runner.cc" << endl;
+    os << "\t$(NVCC) -cubin $(NVCCFLAGS) $(INCLUDEFLAGS:/I=-I) runner.cc" << endl;
 #endif
-
-#elif defined OSX
+    os << "clean:" << endl;
+    os << "\t-del runner.obj runner.cubin" << endl;
 
 #else // UNIX
 
     os << endl;
-    os << "CXX            :=$(CXX)" << endl;
-    os << "CXXFLAGS       +=" << cxxFlags << endl;
+    os << "CXXFLAGS       :=" << cxxFlags << endl;
     os << endl;
-#ifdef CPU_ONLY
+#ifndef CPU_ONLY
     os << "NVCC           :=\"" + tS(NVCC) + "\"" << endl;
-    os << "NVCCFLAGS      +=" << nvccFlags << " -x cu -Xcompiler \"$(CXXFLAGS)\"" << endl;
+    os << "NVCCFLAGS      :=" << nvccFlags << " -x cu -Xcompiler \"$(CXXFLAGS)\"" << endl;
     os << endl;
 #endif
     os << "INCLUDEFLAGS   =-I\"$(GENN_PATH)/lib/include\"" << endl;
@@ -2184,12 +2183,17 @@ void genMakefile(NNmodel &model, //!< Model description
     os << endl;
 
 #ifdef CPU_ONLY
-    os << "runner.o: " << endl;
-    os << "\t$(CXX) $(CXXFLAGS) $(INCLUDEFLAGS) -o runner.o runner.cc" << endl;
+    os << "runner.o: runner.cc" << endl;
+    os << "\t$(CXX) -c $(CXXFLAGS) $(INCLUDEFLAGS) runner.cc" << endl;
 #else
-    os << "runner.o: " << endl;
-    os << "\t$(NVCC) $(NVCCFLAGS) $(INCLUDEFLAGS) -o runner.o runner.cc" << endl;
+    os << "runner.o: runner.cc" << endl;
+    os << "\t$(NVCC) -c $(NVCCFLAGS) $(INCLUDEFLAGS) runner.cc" << endl;
+    os << endl;
+    os << "cubin: runner.cc" << endl;
+    os << "\t$(NVCC) -cubin $(NVCCFLAGS) $(INCLUDEFLAGS) runner.cc" << endl;
 #endif
+    os << "clean:" << endl;
+    os << "\trm -f runner.o runner.cubin" << endl;
 
 #endif
 

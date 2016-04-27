@@ -144,7 +144,7 @@ double *postSynV = NULL;
 void modelDefinition(NNmodel &model) 
 {
     initGeNN();
-//    GENN_PREFERENCES::chooseDevice= 0;
+//    GENN_PREFERENCES::autoChooseDevice= 0;
     //   GENN_PREFERENCES::optimiseBlockSize= 0;
     // GENN_PREFERENCES::neuronBlockSize= 192; 
     model.setName("MBody1");

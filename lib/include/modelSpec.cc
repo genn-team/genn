@@ -981,9 +981,9 @@ void NNmodel::setGPUDevice(int device)
   CHECK_CUDA_ERRORS(cudaGetDeviceCount(&deviceCount));
   assert(device >= -1);
   assert(device < deviceCount);
-  if (device == -1) GENN_PREFERENCES::chooseDevice= 1;
+  if (device == -1) GENN_PREFERENCES::autoChooseDevice= 1;
   else {
-      GENN_PREFERENCES::chooseDevice= 0;
+      GENN_PREFERENCES::autoChooseDevice= 0;
       GENN_PREFERENCES::defaultDevice= device;
   }
 }

@@ -94,7 +94,7 @@ void genNeuronKernel(NNmodel &model, //!< Model description
     // kernel code
     unsigned int neuronGridSz = model.padSumNeuronN[model.neuronGrpN - 1];
     neuronGridSz = neuronGridSz / neuronBlkSz;
-    if (neuronGridSz < deviceProp[theDev].maxGridSize[1]) {
+    if (neuronGridSz < deviceProp[theDevice].maxGridSize[1]) {
 	os << "unsigned int id = " << neuronBlkSz << " * blockIdx.x + threadIdx.x;" << ENDL;
     }
     else {
@@ -485,7 +485,7 @@ void generate_process_presynaptic_events_code(
     )
 {
     string theAtomicAdd;
-    if ((deviceProp[theDev].major < 2) && (model.ftype == "float")) {
+    if ((deviceProp[theDevice].major < 2) && (model.ftype == "float")) {
 	theAtomicAdd= tS("atomicAddoldGPU");
     }
     else {
