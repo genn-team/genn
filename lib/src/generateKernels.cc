@@ -527,7 +527,7 @@ void generate_process_presynaptic_events_code(
 	    
 	    os << "if (" << localID << " < " ;
 	    if (delayPre) {
-		os << "dd_glbSpkCnt" << postfix << model.neuronName[src] << "[dd_spkQuePtr" << model.neuronName[src] << "])" << OB(102);
+		os << "dd_glbSpkCnt" << postfix << model.neuronName[src] << "[delaySlot])" << OB(102);
 	    }
 	    else {
 		os << "dd_glbSpkCnt" << postfix << model.neuronName[src] << "[0])" << OB(102);
@@ -537,10 +537,13 @@ void generate_process_presynaptic_events_code(
 		os << OB(29) << " using namespace " << model.synapseName[i] << "_weightupdate_simCode;" << ENDL;	
 	    }
 
-	    os << "int preInd = dd_glbSpk"  << postfix << model.neuronName[src] << "[" << localID << "];" << ENDL;
+	    os << "int preInd = dd_glbSpk"  << postfix << model.neuronName[src] << "[";
+	    if (delayPre) {
+		os << "delaySlot*" << model.neuronN[src] << "+";
+	    }
+	    os << localID << "];" << ENDL;
 	    os << "prePos = dd_indInG" << model.synapseName[i] << "[preInd];" << ENDL;
 	    os << "npost = dd_indInG" << model.synapseName[i] << "[preInd + 1] - prePos;" << ENDL;
-	    os << "for (int i = 0; i < npost; ++i)" << OB(103);
 
 	    if (evnt) {
 		os << "if ";
@@ -573,6 +576,7 @@ void generate_process_presynaptic_events_code(
 	    else if (model.synapseGType[i] == INDIVIDUALID) {
 		os << "if (B(dd_gp" << model.synapseName[i] << "[gid >> " << logUIntSz << "], gid & " << UIntSz - 1 << "))" << OB(135);
 	    }
+	    os << "for (int i = 0; i < npost; ++i)" << OB(103);
 	    os << "	ipost = dd_ind" <<  model.synapseName[i] << "[prePos];" << ENDL;
 	    
 // Code substitutions ----------------------------------------------------------------------------------
@@ -606,13 +610,13 @@ void generate_process_presynaptic_events_code(
 	    os << wCode << ENDL;
 	    
 	    os << "prePos += 1;" << ENDL;
+	    os << CB(103);
 	    if (evnt) {
 		os << CB(130);
 	    }
 	    else if (model.synapseGType[i] == INDIVIDUALID) {
 		os << CB(135);
 	    }
-	    os << CB(103);
 	    os << CB(102);
 	    //os << CB(101);
 	} 
