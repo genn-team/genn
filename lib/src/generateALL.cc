@@ -165,7 +165,6 @@ void chooseDevice(NNmodel *&model, //!< the nn model we are generating code for
     // IF OPTIMISATION IS ON: Choose the device which supports the highest warp occupancy.
     if (GENN_PREFERENCES::optimiseBlockSize) {
 	cout << "optimizing block size..." << endl;
-	stringstream command;
 	int reqRegs, reqSmem, requiredBlocks;
 	int warpSize= 32;
 
@@ -277,7 +276,27 @@ void chooseDevice(NNmodel *&model, //!< the nn model we are generating code for
 	    CHECK_CU_ERRORS(cuCtxCreate(&cuContext, 0, cuDevice));
 	    CHECK_CU_ERRORS(cuCtxSetCurrent(cuContext));
 	    CUmodule module;
-	    //string fname = path + "/runner.cubin";
+
+
+
+
+	    string CHANGE_ME = ""; // more flags from GENN_PREFERENCES
+	    string nvccFlags = "-x cu -cubin" + CHANGE_ME;
+
+
+
+
+#ifdef _WIN32
+	    nvccFlags += " -I\"%GENN_PATH%\\lib\\include\"";
+	    string runnerPath = path + "\\" + model->name + "_CODE\\runner.cc";
+	    string cubinPath = "%TEMP%\\runner.cubin";
+#else
+	    nvccFlags += " -I\"$GENN_PATH/lib/include\"";
+	    string runnerPath = path + "/" + model->name + "_CODE/runner.cc";
+	    string cubinPath = "/tmp/runner.cubin";
+#endif
+	    string nvccCommand = "\"" + tS(NVCC) + "\" " + nvccFlags + " -o " + cubinPath + " " + runnerPath + " 2>&1";
+
 	    cudaFuncAttributes krnlAttr[2][krnlNo];
 	    CUfunction kern;
 	    CUresult res;
@@ -293,18 +312,12 @@ void chooseDevice(NNmodel *&model, //!< the nn model we are generating code for
 		modelDefinition(*model);
 		generate_model_runner(*model, path);
 	      
-		// Run NVCC 
+		// Run NVCC
 		cout << "dry-run compile for device " << theDevice << endl;
-		command.str("");
-#ifdef _WIN32
-		command << "cd " << path << "\\" << model->name << "_CODE 2>&1 && nmake /nologo cubin 2>&1";
-#else
-		command << "cd " << path << "/" << model->name << "_CODE 2>&1 && make cubin 2>&1";
-#endif
-		cout << command.str() << endl;
-		system(command.str().c_str());
+		cout << nvccCommand << endl;
+		system(nvccCommand.c_str());
 
-		CHECK_CU_ERRORS(cuModuleLoad(&module, /*fname*/(path + "/" + model->name + "_CODE/runner.cubin").c_str()));
+		CHECK_CU_ERRORS(cuModuleLoad(&module, cubinPath.c_str()));
 		for (int i= 0; i < krnlNo; i++) {
 #ifdef BLOCKSZ_DEBUG
 		    cerr << "BLOCKSZ_DEBUG: ptxas info for " << kernelName[i] << " ..." << endl;

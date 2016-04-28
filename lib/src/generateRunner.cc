@@ -2132,6 +2132,10 @@ void genMakefile(NNmodel &model, //!< Model description
 		 string &path    //!< Path for code generation
     )
 {
+    // TODO: STILL NEED TO GET OPTIMISATION AND DEBUG FLUGS VIA GENN_PREFERENCES!!!
+    // TODO: STILL NEED TO MAKE EXISTING PROJECT MAKEFILES USE GENN_CODE MAKEFILES AND INCLUDE OBJECT!!!
+    // TODO: DO FUNCTION TO RESET PAD-SUM VARIABLES, RATHER THAN DELETING AND RE-INITIALISING THE WHOLE NNMODEL!!!
+
     string cxxFlags = "";
     string nvccFlags = "-arch=sm_" + tS(deviceProp[theDevice].major) + tS(deviceProp[theDevice].minor);
 
@@ -2145,8 +2149,8 @@ void genMakefile(NNmodel &model, //!< Model description
     os << "CXXFLAGS       =/nologo /Ehsc " << cxxFlags << endl;
     os << endl;
 #ifndef CPU_ONLY
-    os << "NVCC           =\"" + tS(NVCC) + "\"" << endl;
-    os << "NVCCFLAGS      =" << nvccFlags << " -x cu -Xcompiler \"$(CXXFLAGS)\"" << endl;
+    os << "NVCC           =\"" << NVCC << "\"" << endl;
+    os << "NVCCFLAGS      =-x cu " << nvccFlags << " -Xcompiler \"$(CXXFLAGS)\"" << endl;
     os << endl;
 #endif
     os << "INCLUDEFLAGS   =/I\"$(GENN_PATH)\\lib\\include\"" << endl;
@@ -2161,11 +2165,9 @@ void genMakefile(NNmodel &model, //!< Model description
     os << "runner.obj: runner.cc" << endl;
     os << "\t$(NVCC) -c $(NVCCFLAGS) $(INCLUDEFLAGS:/I=-I) runner.cc" << endl;
     os << endl;
-    os << "cubin: runner.cc" << endl;
-    os << "\t$(NVCC) -cubin $(NVCCFLAGS) $(INCLUDEFLAGS:/I=-I) runner.cc" << endl;
 #endif
     os << "clean:" << endl;
-    os << "\t-del runner.obj runner.cubin" << endl;
+    os << "\t-del runner.obj" << endl;
 
 #else // UNIX
 
@@ -2173,8 +2175,8 @@ void genMakefile(NNmodel &model, //!< Model description
     os << "CXXFLAGS       :=" << cxxFlags << endl;
     os << endl;
 #ifndef CPU_ONLY
-    os << "NVCC           :=\"" + tS(NVCC) + "\"" << endl;
-    os << "NVCCFLAGS      :=" << nvccFlags << " -x cu -Xcompiler \"$(CXXFLAGS)\"" << endl;
+    os << "NVCC           :=\"" << NVCC << "\"" << endl;
+    os << "NVCCFLAGS      :=-x cu " << nvccFlags << " -Xcompiler \"$(CXXFLAGS)\"" << endl;
     os << endl;
 #endif
     os << "INCLUDEFLAGS   =-I\"$(GENN_PATH)/lib/include\"" << endl;
@@ -2189,11 +2191,9 @@ void genMakefile(NNmodel &model, //!< Model description
     os << "runner.o: runner.cc" << endl;
     os << "\t$(NVCC) -c $(NVCCFLAGS) $(INCLUDEFLAGS) runner.cc" << endl;
     os << endl;
-    os << "cubin: runner.cc" << endl;
-    os << "\t$(NVCC) -cubin $(NVCCFLAGS) $(INCLUDEFLAGS) runner.cc" << endl;
 #endif
     os << "clean:" << endl;
-    os << "\trm -f runner.o runner.cubin" << endl;
+    os << "\trm -f runner.o" << endl;
 
 #endif
 

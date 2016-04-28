@@ -40,18 +40,18 @@ endif
 
 # Global include and link flags
 ifndef CPU_ONLY
-    INCLUDE_FLAGS	+=-I$(GENN_PATH)/lib/include -I$(GENN_PATH)/userproject/include -I$(CUDA_PATH)/include
+    INCLUDE_FLAGS	+=-I"$(GENN_PATH)/lib/include" -I"$(GENN_PATH)/userproject/include" -I"$(CUDA_PATH)/include"
     ifeq ($(DARWIN),DARWIN)
-        LINK_FLAGS	+=-Xlinker -lstdc++ -lc++ -L$(CUDA_PATH)/lib -lcuda -lcudart
+        LINK_FLAGS	+=-Xlinker -lstdc++ -lc++ -L"$(CUDA_PATH)/lib" -lcuda -lcudart
     else
         ifeq ($(OS_SIZE),32)
-            LINK_FLAGS	+=-L$(CUDA_PATH)/lib -lcuda -lcudart
+            LINK_FLAGS	+=-L"$(CUDA_PATH)/lib" -lcuda -lcudart
         else
-            LINK_FLAGS	+=-L$(CUDA_PATH)/lib64 -lcuda -lcudart
+            LINK_FLAGS	+=-L"$(CUDA_PATH)/lib64" -lcuda -lcudart
         endif
     endif
 else
-    INCLUDE_FLAGS	+=-I$(GENN_PATH)/lib/include -I$(GENN_PATH)/userproject/include
+    INCLUDE_FLAGS	+=-I"$(GENN_PATH)/lib/include" -I"$(GENN_PATH)/userproject/include"
     ifeq ($(DARWIN),DARWIN)
         LINK_FLAGS	+=-Xlinker -lstdc++ -lc++
     endif

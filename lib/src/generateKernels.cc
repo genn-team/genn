@@ -539,9 +539,13 @@ void generate_process_presynaptic_events_code(
 
 	    os << "int preInd = dd_glbSpk"  << postfix << model.neuronName[src] << "[";
 	    if (delayPre) {
-		os << "delaySlot*" << model.neuronN[src] << "+";
+	      os << "int preInd = dd_glbSpk"  << postfix << model.neuronName[src];
+	      os << "[(delaySlot * " << model.neuronN[src] << ") + " << localID << "];";
 	    }
-	    os << localID << "];" << ENDL;
+	    else {
+	      os << "int preInd = dd_glbSpk"  << postfix << model.neuronName[src];
+	      os << "[" << localID << "];" << ENDL;
+	    }
 	    os << "prePos = dd_indInG" << model.synapseName[i] << "[preInd];" << ENDL;
 	    os << "npost = dd_indInG" << model.synapseName[i] << "[preInd + 1] - prePos;" << ENDL;
 
