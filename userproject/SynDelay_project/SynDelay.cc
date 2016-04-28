@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-//   Author: James Turner
+//   Author:    James Turner
 //  
 //   Institute: Center for Computational Neuroscience and Robotics
 //              University of Sussex

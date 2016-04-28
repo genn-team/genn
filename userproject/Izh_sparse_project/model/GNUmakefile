@@ -11,15 +11,8 @@
 ##
 ##--------------------------------------------------------------------------
 
-EXECUTABLE		:=Izh_sim_sparse
-ifndef CPU_ONLY
-    SOURCES 	:=$(EXECUTABLE).cu
-else
-    SOURCES 	:=$(EXECUTABLE)_cpu_only.cc
-endif
-OPTIMIZATIONFLAGS	:=-O3
+EXECUTABLE         :=Izh_sim_sparse
+SOURCES            :=$(EXECUTABLE).cu
+OPTIMIZATIONFLAGS  :=-O3
 
 include	$(GENN_PATH)/userproject/include/makefile_common_gnu.mk
-
-$(EXECUTABLE)_cpu_only.cc: $(EXECUTABLE).cu
-	cp $(EXECUTABLE).cu $(EXECUTABLE)_cpu_only.cc
