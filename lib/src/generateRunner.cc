@@ -2245,25 +2245,33 @@ void genMakefile(NNmodel &model, //!< Model description
 		 string &path    //!< Path for code generation
     )
 {
-    // TODO: STILL NEED TO GET OPTIMISATION AND DEBUG FLUGS VIA GENN_PREFERENCES!!!
-    // TODO: STILL NEED TO MAKE EXISTING PROJECT MAKEFILES USE GENN_CODE MAKEFILES AND INCLUDE OBJECT!!!
-    // TODO: DO FUNCTION TO RESET PAD-SUM VARIABLES, RATHER THAN DELETING AND RE-INITIALISING THE WHOLE NNMODEL!!!
-
     string cxxFlags = "";
-    string nvccFlags = "-arch=sm_" + tS(deviceProp[theDevice].major) + tS(deviceProp[theDevice].minor);
-
+    string nvccFlags = "";
+#ifndef CPU_ONLY
+    nvccFlags += "-arch=sm_" + tS(deviceProp[theDevice].major) + tS(deviceProp[theDevice].minor);
+#endif
+    if (GENN_PREFERENCES::showPtxInfo) nvccFlags += " -Xptxas \"-v\"";
+    
     string name = path + "/" + model.name + "_CODE/Makefile";
     ofstream os;
     os.open(name.c_str());
 
 #ifdef _WIN32
 
+    if (GENN_PREFERENCES::optimizeCode) {
+	cxxFlags += " /O2";
+	nvccFlags += " -O3 -use_fast_math";
+    }
+    if (GENN_PREFERENCES::debugCode) {
+	cxxFlags += " /debug /Zi /Od";
+	nvccFlags += " -O0 -g -G";
+    }
     os << endl;
-    os << "CXXFLAGS       =/nologo /Ehsc " << cxxFlags << endl;
+    os << "CXXFLAGS       =/nologo /EHsc " << cxxFlags << endl;
     os << endl;
 #ifndef CPU_ONLY
     os << "NVCC           =\"" << NVCC << "\"" << endl;
-    os << "NVCCFLAGS      =-x cu " << nvccFlags << " -Xcompiler \"$(CXXFLAGS)\"" << endl;
+    os << "NVCCFLAGS      =-x cu " << nvccFlags << endl;
     os << endl;
 #endif
     os << "INCLUDEFLAGS   =/I\"$(GENN_PATH)\\lib\\include\"" << endl;
@@ -2284,12 +2292,20 @@ void genMakefile(NNmodel &model, //!< Model description
 
 #else // UNIX
 
+    if (GENN_PREFERENCES::optimizeCode) {
+	cxxFlags += " -O3 -ffast-math";
+	nvccFlags += " -O3 -use_fast_math -Xcompiler \"-ffast-math\"";
+    }
+    if (GENN_PREFERENCES::debugCode) {
+	cxxFlags += " -O0 -g -G";
+	nvccFlags += " -O0 -g -G";
+    }
     os << endl;
     os << "CXXFLAGS       :=" << cxxFlags << endl;
     os << endl;
 #ifndef CPU_ONLY
     os << "NVCC           :=\"" << NVCC << "\"" << endl;
-    os << "NVCCFLAGS      :=-x cu " << nvccFlags << " -Xcompiler \"$(CXXFLAGS)\"" << endl;
+    os << "NVCCFLAGS      :=-x cu " << nvccFlags << endl;
     os << endl;
 #endif
     os << "INCLUDEFLAGS   =-I\"$(GENN_PATH)/lib/include\"" << endl;

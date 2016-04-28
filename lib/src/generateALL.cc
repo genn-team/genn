@@ -277,15 +277,10 @@ void chooseDevice(NNmodel *&model, //!< the nn model we are generating code for
 	    CHECK_CU_ERRORS(cuCtxSetCurrent(cuContext));
 	    CUmodule module;
 
-
-
-
-	    string CHANGE_ME = ""; // more flags from GENN_PREFERENCES
-	    string nvccFlags = "-x cu -cubin" + CHANGE_ME;
-
-
-
-
+	    string nvccFlags = "-x cu -cubin";
+	    if (GENN_PREFERENCES::optimizeCode) nvccFlags += " -O3 -use_fast_math";
+	    if (GENN_PREFERENCES::debugCode) nvccFlags += " -O0 -g -G";
+	    if (GENN_PREFERENCES::showPtxInfo) nvccFlags += " -Xptxas \"-v\"";
 #ifdef _WIN32
 	    nvccFlags += " -I\"%GENN_PATH%\\lib\\include\"";
 	    string runnerPath = path + "\\" + model->name + "_CODE\\runner.cc";
@@ -581,17 +576,16 @@ void chooseDevice(NNmodel *&model, //!< the nn model we are generating code for
     model = new NNmodel();
     modelDefinition(*model);
 
-
-    // DO BELOW ONLY IF REQUESTED IN GENN_PREFERENCES
-    /*
-    ofstream sm_os((path + "/sm_version.mk").c_str());
+    if (GENN_PREFERENCES::smVersionFile) {
+	ofstream sm_os((path + "/sm_version.mk").c_str());
 #ifdef _WIN32
-    sm_os << "NVCCFLAGS =$(NVCCFLAGS) -arch sm_" << deviceProp[chosenDevice].major << deviceProp[chosenDevice].minor << endl;
+	sm_os << "NVCCFLAGS =$(NVCCFLAGS) -arch sm_";
 #else // UNIX
-    sm_os << "NVCCFLAGS += -arch sm_" << deviceProp[chosenDevice].major << deviceProp[chosenDevice].minor << endl;
+	sm_os << "NVCCFLAGS += -arch sm_";
 #endif
-    sm_os.close();
-    */
+	sm_os << deviceProp[chosenDevice].major << deviceProp[chosenDevice].minor << endl;	
+	sm_os.close();
+    }
 
     theDevice = chosenDevice;
 }
