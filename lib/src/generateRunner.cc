@@ -116,7 +116,11 @@ void genRunner(NNmodel &model, //!< Model description
 	substitute(postSynModels[i].postSynDecay, "scalar", model.ftype);
     }
     
+
+    //=======================
     // generate definitions.h
+    //=======================
+
     // this file contains helpful macros and is separated out so that it can also be used by other code that is compiled separately
     name= path + toString("/") + model.name + toString("_CODE/definitions.h");
     os.open(name.c_str());  
@@ -132,6 +136,7 @@ void genRunner(NNmodel &model, //!< Model description
     
     os << "#ifndef DEFINITIONS_H" << ENDL;
     os << "#define DEFINITIONS_H" << ENDL;
+    os << ENDL;
 
     os << "#ifndef DT" << ENDL;
     os << "#define DT " << DT << ENDL;
@@ -195,6 +200,7 @@ void genRunner(NNmodel &model, //!< Model description
 	  }
 	}
     }
+    os << ENDL;
 
 #ifndef CPU_ONLY
 
@@ -205,7 +211,8 @@ void genRunner(NNmodel &model, //!< Model description
     // spike and state monitors
 
     os << "// ------------------------------------------------------------------------" << ENDL;
-    os << "// copying things to device" << ENDL << ENDL;
+    os << "// copying things to device" << ENDL;
+    os << ENDL;
     for (int i = 0; i < model.neuronGrpN; i++) {
 	os << "void push" << model.neuronName[i] << "StateToDevice();" << ENDL;
 	os << "void push" << model.neuronName[i] << "SpikesToDevice();" << ENDL;
@@ -214,12 +221,14 @@ void genRunner(NNmodel &model, //!< Model description
 	os << "void push" << model.neuronName[i] << "CurrentSpikeEventsToDevice();" << ENDL;
     }
     for (int i = 0; i < model.synapseGrpN; i++) {
-        os << "#define push" << model.synapseName[i] << "ToDevice push" << model.synapseName[i] << "StateToDevice" << ENDL << ENDL;
+        os << "#define push" << model.synapseName[i] << "ToDevice push" << model.synapseName[i] << "StateToDevice" << ENDL;
 	os << "void push" << model.synapseName[i] << "StateToDevice();" << ENDL;
     }
+    os << ENDL;
+
     os << "// ------------------------------------------------------------------------" << ENDL;
-    os << "// copying things from device" << ENDL << ENDL;
-    
+    os << "// copying things from device" << ENDL;
+    os << ENDL;
     for (int i = 0; i < model.neuronGrpN; i++) {
  	os << "void pull" << model.neuronName[i] << "StateFromDevice();" << ENDL;
 	os << "void pull" << model.neuronName[i] << "SpikesFromDevice();" << ENDL;
@@ -228,57 +237,150 @@ void genRunner(NNmodel &model, //!< Model description
 		os << "void pull" << model.neuronName[i] << "CurrentSpikeEventsFromDevice();" << ENDL;
     }
     for (int i = 0; i < model.synapseGrpN; i++) {
-	os << "#define pull" << model.synapseName[i] << "FromDevice pull" << model.synapseName[i] << "StateFromDevice" << ENDL << ENDL;
+	os << "#define pull" << model.synapseName[i] << "FromDevice pull" << model.synapseName[i] << "StateFromDevice" << ENDL;
 	os << "void pull" << model.synapseName[i] << "StateFromDevice();" << ENDL;
     }
+    os << ENDL;
 
     os << "// ------------------------------------------------------------------------" << ENDL;
     os << "// global copying values to device" << ENDL;
+    os << ENDL;
     os << "void copyStateToDevice();" << ENDL;
+    os << ENDL;
+
     os << "// ------------------------------------------------------------------------" << ENDL;
     os << "// global copying spikes to device" << ENDL;
+    os << ENDL;
     os << "void copySpikesToDevice();" << ENDL;
+    os << ENDL;
+
     os << "// ------------------------------------------------------------------------" << ENDL;
     os << "// copying current spikes to device" << ENDL;
+    os << ENDL;
     os << "void copyCurrentSpikesToDevice();" << ENDL;
+    os << ENDL;
+
     os << "// ------------------------------------------------------------------------" << ENDL;
     os << "// global copying spike events to device" << ENDL;    
+    os << ENDL;
     os << "void copySpikeEventsToDevice();" << ENDL;    
+    os << ENDL;
+
     os << "// ------------------------------------------------------------------------" << ENDL;
     os << "// copying current spikes to device" << ENDL;
+    os << ENDL;
     os << "void copyCurrentSpikeEventsToDevice();" << ENDL;
+    os << ENDL;
+
     os << "// ------------------------------------------------------------------------" << ENDL;
     os << "// global copying values from device" << ENDL;
+    os << ENDL;
     os << "void copyStateFromDevice();" << ENDL;
+    os << ENDL;
+
     os << "// ------------------------------------------------------------------------" << ENDL;
     os << "// global copying spikes from device" << ENDL;
+    os << ENDL;
     os << "void copySpikesFromDevice();" << ENDL;
+    os << ENDL;
+
     os << "// ------------------------------------------------------------------------" << ENDL;
     os << "// copying current spikes from device" << ENDL;
+    os << ENDL;
     os << "void copyCurrentSpikesFromDevice();" << ENDL;
+    os << ENDL;
+
     os << "// ------------------------------------------------------------------------" << ENDL;
     os << "// copying spike numbers from device (note, only use when only interested"<< ENDL;
     os << "// in spike numbers; copySpikesFromDevice() already includes this)" << ENDL;
+    os << ENDL;
     os << "void copySpikeNFromDevice();" << ENDL;
+    os << ENDL;
+
     os << "// ------------------------------------------------------------------------"<< ENDL;
     os << "// global copying spikeEvents from device" << ENDL;
+    os << ENDL;
     os << "void copySpikeEventsFromDevice();" << ENDL;
+    os << ENDL;
+
     os << "// ------------------------------------------------------------------------" << ENDL;
     os << "// copying current spikeEvents from device" << ENDL;
+    os << ENDL;
     os << "void copyCurrentSpikeEventsFromDevice();" << ENDL;
+    os << ENDL;
+
     os << "// ------------------------------------------------------------------------" << ENDL;
     os << "// global copying spike event numbers from device (note, only use when only interested" << ENDL;
     os << "// in spike numbers; copySpikeEventsFromDevice() already includes this)" << ENDL;
+    os << ENDL;
     os << "void copySpikeEventNFromDevice();" << ENDL;
+    os << ENDL;
+
     os << "// ------------------------------------------------------------------------" << ENDL;
-    os << "// the actual time stepping procedure" << ENDL;
-    os << "void stepTimeGPU(unsigned int flags);" << ENDL;
+    os << "// Function for setting the CUDA device and the host's global variables." << ENDL;
+    os << "// Also estimates memory usage on device." << ENDL;
+    os << ENDL;
+    os << "void allocateMem();" << ENDL;
+    os << ENDL;
+
+    os << "// ------------------------------------------------------------------------" << ENDL;
+    os << "// Function to (re)set all model variables to their compile-time, homogeneous initial" << ENDL;
+    os << "// values. Note that this typically includes synaptic weight values. The function" << ENDL;
+    os << "// (re)sets host side variables and copies them to the GPU device." << ENDL;
+    os << ENDL;
+    os << "void initialize();" << ENDL;
+    os << ENDL;
+
+    os << "// ------------------------------------------------------------------------" << ENDL;
+    os << "// Function to free all global memory structures." << ENDL;
+    os << ENDL;
+    os << "void freeMem();" << ENDL;
+    os << ENDL;
+
+    os << "// ------------------------------------------------------------------------" << ENDL;
+    os << "// Throw an error for \"old style\" time stepping calls (using CPU)" << ENDL;
+    os << ENDL;
+    os << "template <class T>" << ENDL;
+    os << "void stepTimeCPU(T arg1, ...);" << ENDL;
+    os << ENDL;
+
+    os << "// ------------------------------------------------------------------------" << ENDL;
+    os << "// the actual time stepping procedure (using CPU)" << ENDL;
+    os << ENDL;
+    os << "void stepTimeCPU();" << ENDL;
+    os << ENDL;
+
+    os << "// ------------------------------------------------------------------------" << ENDL;
+    os << "// Throw an error for \"old style\" time stepping calls (using GPU)" << ENDL;
+    os << ENDL;
+    os << "template <class T>" << ENDL;
+    os << "void stepTimeGPU(T arg1, ...);" << ENDL;
+    os << ENDL;
+
+    os << "// ------------------------------------------------------------------------" << ENDL;
+    os << "// the actual time stepping procedure (using GPU)" << ENDL;
+    os << ENDL;
+    os << "void stepTimeGPU();" << ENDL;
+    os << ENDL;
 
 #endif
 
+    //-----------------
+    // GLOBAL VARIABLES
+
+    os << "// ------------------------------------------------------------------------" << ENDL;
+    os << "// global variables" << ENDL;
+    os << ENDL;
+    os << "extern unsigned long long iT;" << ENDL;
+    os << "extern " << model.ftype << " t;" << ENDL;
+    os << ENDL;
+
     //---------------------------------
     // HOST AND DEVICE NEURON VARIABLES
+
+    os << "// ------------------------------------------------------------------------" << ENDL;
     os << "// neuron variables" << ENDL;
+    os << ENDL;
     for (int i = 0; i < model.neuronGrpN; i++) {
 	nt = model.neuronType[i];
 
@@ -306,7 +408,9 @@ void genRunner(NNmodel &model, //!< Model description
     //----------------------------------
     // HOST AND DEVICE SYNAPSE VARIABLES
 
+    os << "// ------------------------------------------------------------------------" << ENDL;
     os << "// synapse variables" << ENDL;
+    os << ENDL;
     for (int i = 0; i < model.synapseGrpN; i++) {
 	st = model.synapseType[i];
 	pst = model.postSynapseType[i];
@@ -334,8 +438,11 @@ void genRunner(NNmodel &model, //!< Model description
     os << "#endif" << ENDL;
     os.close();
 
-    // generate definitions.h
-    // this file contains helpful macros and is separated out so that it can also be used by other code that is compiled separately
+
+    //========================
+    // generate support_code.h
+    //========================
+
     name= path + toString("/") + model.name + toString("_CODE/support_code.h");
     os.open(name.c_str());  
     writeHeader(os);
@@ -512,6 +619,7 @@ void genRunner(NNmodel &model, //!< Model description
     os << "// global variables" << ENDL;
     os << "unsigned long long iT= 0;" << ENDL;
     os << model.ftype << " t;" << ENDL;
+
     //---------------------------------
     // HOST AND DEVICE NEURON VARIABLES
 
@@ -1296,31 +1404,30 @@ void genRunner(NNmodel &model, //!< Model description
     os << "}" << ENDL << ENDL;
 
 
-// ------------------------------------------------------------------------
-//! \brief Method for cleaning up and resetting device while quitting GeNN
+    // ------------------------------------------------------------------------
+    //! \brief Method for cleaning up and resetting device while quitting GeNN
 
-  os << "void exitGeNN(){" << ENDL;  
-  os << "  freeMem();" << ENDL;
+    os << "void exitGeNN(){" << ENDL;  
+    os << "  freeMem();" << ENDL;
 #ifndef CPU_ONLY
-  os << "  cudaDeviceReset();" << ENDL;
+    os << "  cudaDeviceReset();" << ENDL;
 #endif
-  os << "}" << ENDL;
+    os << "}" << ENDL;
+    os << ENDL;
 
-
-  os << "// ------------------------------------------------------------------------" << ENDL;
-  os << "// Throw an error for \"old style\" time stepping calls" << ENDL;
+    os << "// ------------------------------------------------------------------------" << ENDL;
+    os << "// Throw an error for \"old style\" time stepping calls (using CPU)" << ENDL;
     os << "template <class T>" << ENDL;
     os << "void stepTimeCPU(T arg1, ...)" << ENDL;
     os << OB(101) << ENDL;
     os << "gennError(\"Since GeNN 2.2 the call to step time has changed to not take any arguments. You appear to attempt to pass arguments. This is no longer supported. See the GeNN 2.2. release notes and the manual for examples how to pass data like, e.g., Poisson rates and direct inputs, that were previously handled through arguments.\");" << ENDL; 
-    os << CB(101) << ENDL;
+    os << CB(101);
+    os<< ENDL;
     
     os << "// ------------------------------------------------------------------------" << ENDL;
-    os << "// the actual time stepping procedure" << ENDL;
-
+    os << "// the actual time stepping procedure (using CPU)" << ENDL;
     os << "void stepTimeCPU()" << ENDL;
     os << "{" << ENDL;
-
     if (model.synapseGrpN > 0) {
 	if (model.synDynGroups > 0) {
 	    if (model.timing) os << "        synDyn_timer.startTimer();" << ENDL;
@@ -2011,16 +2118,22 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 	os << ", d_glbSpkCntEvnt" << model.neuronName[i] << ", " << size << "* sizeof(unsigned int), cudaMemcpyDeviceToHost));" << ENDL;
       }
     }
-
     os << CB(1126) << ENDL;
     os << ENDL;
 
     os << "// ------------------------------------------------------------------------" << ENDL;
-    os << "// the time stepping procedure" << ENDL;
-    
+    os << "// Throw an error for \"old style\" time stepping calls (using GPU)" << ENDL;
+    os << "template <class T>" << ENDL;
+    os << "void stepTimeGPU(T arg1, ...)" << ENDL;
+    os << OB(101) << ENDL;
+    os << "gennError(\"Since GeNN 2.2 the call to step time has changed to not take any arguments. You appear to attempt to pass arguments. This is no longer supported. See the GeNN 2.2. release notes and the manual for examples how to pass data like, e.g., Poisson rates and direct inputs, that were previously handled through arguments.\");" << ENDL; 
+    os << CB(101);
+    os<< ENDL;
+
+    os << "// ------------------------------------------------------------------------" << ENDL;
+    os << "// the time stepping procedure (using GPU)" << ENDL;
     os << "void stepTimeGPU()" << ENDL;
     os << OB(1130) << ENDL;
-
     if (model.synapseGrpN > 0) { 
 	unsigned int synapseGridSz = model.padSumSynapseKrnl[model.synapseGrpN - 1];   
 	os << "//model.padSumSynapseTrgN[model.synapseGrpN - 1] is " << model.padSumSynapseKrnl[model.synapseGrpN - 1] << ENDL; 

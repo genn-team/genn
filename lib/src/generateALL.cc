@@ -581,6 +581,18 @@ void chooseDevice(NNmodel *&model, //!< the nn model we are generating code for
     model = new NNmodel();
     modelDefinition(*model);
 
+
+    // DO BELOW ONLY IF REQUESTED IN GENN_PREFERENCES
+    /*
+    ofstream sm_os((path + "/sm_version.mk").c_str());
+#ifdef _WIN32
+    sm_os << "NVCCFLAGS =$(NVCCFLAGS) -arch sm_" << deviceProp[chosenDevice].major << deviceProp[chosenDevice].minor << endl;
+#else // UNIX
+    sm_os << "NVCCFLAGS += -arch sm_" << deviceProp[chosenDevice].major << deviceProp[chosenDevice].minor << endl;
+#endif
+    sm_os.close();
+    */
+
     theDevice = chosenDevice;
 }
 #endif

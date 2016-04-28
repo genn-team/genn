@@ -23,7 +23,6 @@ using namespace std;
 
 #include "SynDelaySim.h"
 #include "SynDelay_CODE/definitions.h"
-#include "SynDelay_CODE/runner.cc"
 
 
 SynDelay::SynDelay(bool usingGPU)
