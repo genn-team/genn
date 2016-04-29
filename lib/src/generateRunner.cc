@@ -2245,84 +2245,93 @@ void genMakefile(NNmodel &model, //!< Model description
 		 string &path    //!< Path for code generation
     )
 {
-    string cxxFlags = "";
-    string nvccFlags = "";
-#ifndef CPU_ONLY
-    nvccFlags += "-arch=sm_" + tS(deviceProp[theDevice].major) + tS(deviceProp[theDevice].minor);
-#endif
-    if (GENN_PREFERENCES::showPtxInfo) nvccFlags += " -Xptxas \"-v\"";
-    
     string name = path + "/" + model.name + "_CODE/Makefile";
     ofstream os;
     os.open(name.c_str());
 
 #ifdef _WIN32
 
-    if (GENN_PREFERENCES::optimizeCode) {
-	cxxFlags += " /O2";
-	nvccFlags += " -O3 -use_fast_math";
-    }
-    if (GENN_PREFERENCES::debugCode) {
-	cxxFlags += " /debug /Zi /Od";
-	nvccFlags += " -O0 -g -G";
-    }
+#ifdef CPU_ONLY
+    string cxxFlags = "/c";
+    if (GENN_PREFERENCES::optimizeCode) cxxFlags += " /O2";
+    if (GENN_PREFERENCES::debugCode) cxxFlags += " /debug /Zi /Od";
+
     os << endl;
     os << "CXXFLAGS       =/nologo /EHsc " << cxxFlags << endl;
     os << endl;
-#ifndef CPU_ONLY
-    os << "NVCC           =\"" << NVCC << "\"" << endl;
-    os << "NVCCFLAGS      =-x cu " << nvccFlags << endl;
-    os << endl;
-#endif
     os << "INCLUDEFLAGS   =/I\"$(GENN_PATH)\\lib\\include\"" << endl;
+    os << endl;
 
     os << "all: runner.obj" << endl;
     os << endl;
-
-#ifdef CPU_ONLY
     os << "runner.obj: runner.cc" << endl;
-    os << "\t$(CXX) /C $(CXXFLAGS) $(INCLUDEFLAGS) runner.cc" << endl;
-#else
-    os << "runner.obj: runner.cc" << endl;
-    os << "\t$(NVCC) -c $(NVCCFLAGS) $(INCLUDEFLAGS:/I=-I) runner.cc" << endl;
+    os << "\t$(CXX) $(CXXFLAGS) $(INCLUDEFLAGS) runner.cc" << endl;
     os << endl;
-#endif
     os << "clean:" << endl;
     os << "\t-del runner.obj" << endl;
+#else
+    string nvccFlags = "-c -x cu -arch=sm_" + tS(deviceProp[theDevice].major) + tS(deviceProp[theDevice].minor);
+    if (GENN_PREFERENCES::optimizeCode) nvccFlags += " -O3 -use_fast_math";
+    if (GENN_PREFERENCES::debugCode) nvccFlags += " -O0 -g -G";
+    if (GENN_PREFERENCES::showPtxInfo) nvccFlags += " -Xptxas \"-v\"";
+
+    os << endl;
+    os << "NVCC           =\"" << NVCC << "\"" << endl;
+    os << "NVCCFLAGS      =" << nvccFlags << endl;
+    os << endl;
+    os << "INCLUDEFLAGS   =/I\"$(GENN_PATH)\\lib\\include\"" << endl;
+    os << endl;
+
+    os << "all: runner.obj" << endl;
+    os << endl;
+    os << "runner.obj: runner.cc" << endl;
+    os << "\t$(NVCC) $(NVCCFLAGS) $(INCLUDEFLAGS:/I=-I) runner.cc" << endl;
+    os << endl;
+    os << "clean:" << endl;
+    os << "\t-del runner.obj" << endl;
+#endif
 
 #else // UNIX
 
-    if (GENN_PREFERENCES::optimizeCode) {
-	cxxFlags += " -O3 -ffast-math";
-	nvccFlags += " -O3 -use_fast_math -Xcompiler \"-ffast-math\"";
-    }
-    if (GENN_PREFERENCES::debugCode) {
-	cxxFlags += " -O0 -g -G";
-	nvccFlags += " -O0 -g -G";
-    }
+#ifdef CPU_ONLY
+    string cxxFlags = "-c";
+    if (GENN_PREFERENCES::optimizeCode) cxxFlags += " -O3 -ffast-math";
+    if (GENN_PREFERENCES::debugCode) cxxFlags += " -O0 -g";
+
     os << endl;
     os << "CXXFLAGS       :=" << cxxFlags << endl;
     os << endl;
-#ifndef CPU_ONLY
-    os << "NVCC           :=\"" << NVCC << "\"" << endl;
-    os << "NVCCFLAGS      :=-x cu " << nvccFlags << endl;
-    os << endl;
-#endif
     os << "INCLUDEFLAGS   =-I\"$(GENN_PATH)/lib/include\"" << endl;
+    os << endl;
 
     os << "all: runner.o" << endl;
     os << endl;
-
-#ifdef CPU_ONLY
     os << "runner.o: runner.cc" << endl;
-    os << "\t$(CXX) -c $(CXXFLAGS) $(INCLUDEFLAGS) runner.cc" << endl;
-#else
-    os << "runner.o: runner.cc" << endl;
-    os << "\t$(NVCC) -c $(NVCCFLAGS) $(INCLUDEFLAGS) runner.cc" << endl;
+    os << "\t$(CXX) $(CXXFLAGS) $(INCLUDEFLAGS) runner.cc" << endl;
     os << endl;
-#endif
     os << "clean:" << endl;
     os << "\trm -f runner.o" << endl;
+#else
+    string nvccFlags = "-c -x cu -arch=sm_" + tS(deviceProp[theDevice].major) + tS(deviceProp[theDevice].minor);
+    if (GENN_PREFERENCES::optimizeCode) nvccFlags += " -O3 -use_fast_math -Xcompiler \"-ffast-math\"";
+    if (GENN_PREFERENCES::debugCode) nvccFlags += " -O0 -g -G";
+    if (GENN_PREFERENCES::showPtxInfo) nvccFlags += " -Xptxas \"-v\"";
+
+    os << endl;
+    os << "NVCC           :=\"" << NVCC << "\"" << endl;
+    os << "NVCCFLAGS      :=" << nvccFlags << endl;
+    os << endl;
+    os << "INCLUDEFLAGS   =-I\"$(GENN_PATH)/lib/include\"" << endl;
+    os << endl;
+
+    os << "all: runner.o" << endl;
+    os << endl;
+    os << "runner.o: runner.cc" << endl;
+    os << "\t$(NVCC) $(NVCCFLAGS) $(INCLUDEFLAGS) runner.cc" << endl;
+    os << endl;
+    os << "clean:" << endl;
+    os << "\trm -f runner.o" << endl;
+#endif
 
 #endif
 
