@@ -637,16 +637,7 @@ void NNmodel::addSynapsePopulation(
   const string target, /**< Name of the (existing!) post-synaptic neuron population*/
   double *params/**< A C-type array of doubles that contains synapse parameter values (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored.*/)
 {
-    fprintf(stderr,"WARNING. Use of deprecated version of fn. addSynapsePopulation(). Some parameters have been supplied with default-only values\n");
-
-    double *postSynV = NULL;
-    
-    //Tries to borrow these values from the first set of synapse parameters supplied
-    double postExpSynapsePopn[2] = {
-	params[2], 	//tau_S: decay time constant [ms]
-	params[0]	// Erev: Reversal potential
-    };
-    addSynapsePopulation(name, syntype, conntype, gtype, NO_DELAY, EXPDECAY, src, target, params, postSynV, postExpSynapsePopn);
+  gennError("This version of addSynapsePopulation() has been depreciated since GeNN 2.2. Please use the newer addSynapsePopulation functions instead.");
 }
 
 //--------------------------------------------------------------------------
@@ -809,7 +800,7 @@ void NNmodel::addSynapsePopulation(
 void NNmodel::setSynapseG(const string sName, /**<  */
                           double g /**<  */)
 {
-  cerr << "NOTE: This function has been deprecated. Please provide the correct initial values in \"addSynapsePopulation\" for all your variables and they will be the constant values in the GLOBALG mode - global \"G\" not set." << endl; 
+  cerr << "NOTE: This function has been deprecated as of GeNN 2.2. Please provide the correct initial values in \"addSynapsePopulation\" for all your variables and they will be the constant values in the GLOBALG mode - global \"G\" not set." << endl;
 }
 
 
@@ -821,7 +812,7 @@ void NNmodel::setSynapseG(const string sName, /**<  */
 void NNmodel::setConstInp(const string sName, /**<  */
                           double globalInp0 /**<  */)
 {
-    gennError("This function has been deprecated, use parameters in the neuron model instead.");
+    gennError("This function has been deprecated as of GeNN 2.2. Use parameters in the neuron model instead.");
 }
 
 

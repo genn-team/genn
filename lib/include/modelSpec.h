@@ -304,15 +304,11 @@ public:
   NNmodel();
   ~NNmodel();
   void setName(const string); //!< Method to set the neuronal network model name
-
   void setPrecision(unsigned int);//!< Set numerical precision for floating point
-
   void setTiming(bool); //!< Set whether timers and timing commands are to be included
-
   void setSeed(unsigned int); //!< Set the random seed (disables automatic seeding if argument not 0).
-
   void checkSizes(unsigned int *, unsigned int *, unsigned int *); //< Check if the sizes of the initialized neuron and synapse groups are correct.
-
+  void finalize(); //!< Declare that the model specification is finalised in modelDefinition().
 #ifndef CPU_ONLY
   void setGPUDevice(int); //!< Method to choose the GPU to be used for the model. If "AUTODEVICE' (-1), GeNN will choose the device based on a heuristic rule.
 #endif
@@ -322,13 +318,9 @@ public:
   //========================
 
   void addNeuronPopulation(const char *, unsigned int, unsigned int, double *, double *); //!< Method for adding a neuron population to a neuronal network model, using C style character array for the name of the population
-
   void addNeuronPopulation(const string, unsigned int, unsigned int, double *, double *); //!< Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population
-
   void addNeuronPopulation(const string, unsigned int, unsigned int, vector<double>, vector<double>); //!< Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population
-
   void setNeuronClusterIndex(const string neuronGroup, int hostID, int deviceID); //!< Function for setting which host and which device a neuron group will be simulated on
-
 //! This function has been deprecated in GeNN 2.2
   void activateDirectInput(const string, unsigned int type);
 //! This function has been deprecated in GeNN 2.2
@@ -337,26 +329,16 @@ public:
   // PUBLIC SYNAPSE FUNCTIONS
   //=========================
 
-  void addSynapsePopulation(const string name, unsigned int syntype, unsigned int conntype, unsigned int gtype, const string src, const string trg, double *p); //!< Overload of method for backwards compatibility
-
+  void addSynapsePopulation(const string name, unsigned int syntype, unsigned int conntype, unsigned int gtype, const string src, const string trg, double *p); //!< This function has been depreciated as of GeNN 2.2.
   void addSynapsePopulation(const char *, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, const char *, const char *, double *, double *, double *); //!< Method for adding a synapse population to a neuronal network model, using C style character array for the name of the population
   void addSynapsePopulation(const string, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, const string, const string, double *, double *, double *); //!< Overloaded version without initial variables for synapses
   void addSynapsePopulation(const string, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, const string, const string, double *,double *, double *, double *); //!< Method for adding a synapse population to a neuronal network model, using C++ string for the name of the population
   void addSynapsePopulation(const string, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, const string, const string, vector<double>, vector<double>, vector<double>, vector<double>); //!< Method for adding a synapse population to a neuronal network model, using C++ string for the name of the population
-
-  void setSynapseG(const string, double); //!< Method for setting the conductance (g) value for a synapse population with "GLOBALG" charactertistic
-  //void setSynapseNo(unsigned int,unsigned int); // !< Sets the number of connections for sparse matrices  
-
+  void setSynapseG(const string, double); //!< This function has been depreciated as of GeNN 2.2.
   void setMaxConn(const string, unsigned int); //< Set maximum connections per neuron for the given group (needed for optimization by sparse connectivity)
-
   void setSpanTypeToPre(const string); //!< Method for switching the execution order of synapses to pre-to-post
-  
   void setSynapseClusterIndex(const string synapseGroup, int hostID, int deviceID); //!< Function for setting which host and which device a synapse group will be simulated on
-
   void initLearnGrps();
-  void finalize();
 };
-
-
 
 #endif
