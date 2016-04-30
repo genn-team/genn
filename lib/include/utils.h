@@ -39,6 +39,10 @@ using namespace std;
 #include <cuda_runtime.h>
 #endif
 
+#include "modelSpec.h"
+#include "toString.h"
+
+
 //--------------------------------------------------------------------------
 /*! \brief Function called upon the detection of an error. Outputs an error message and then exits.
  */
@@ -50,6 +54,7 @@ void gennError(string error)
   exit(EXIT_FAILURE);
 }
 
+
 //--------------------------------------------------------------------------
 /*! \brief Function called upon the detection of an error. Outputs an error message and then exits.
  */
@@ -60,10 +65,6 @@ void gennError(const char *error)
   cerr << "GeNN error: " << error << endl;
   exit(EXIT_FAILURE);
 }
-
-
-#include "modelSpec.h"
-#include "toString.h"
 
 
 #ifndef CPU_ONLY
@@ -82,6 +83,78 @@ void gennError(const char *error)
     exit(EXIT_FAILURE);						           \
   }									   \
 }
+
+
+//--------------------------------------------------------------------------
+/*! \brief Macro definition for error checking when using the driver API.
+ */
+//--------------------------------------------------------------------------
+
+#if CUDA_VERSION >= 6050
+#define CHECK_CU_ERRORS(call)					           \
+{								      	   \
+  CUresult error = call;						   \
+  if (error != CUDA_SUCCESS)						   \
+  {                                                                        \
+    const char *errStr;		                                           \
+    cuGetErrorName(error, &errStr);	       				   \
+    fprintf(stderr, "%s: %i: cuda driver error %i: %s\n",	       	   \
+	    __FILE__, __LINE__, (int)error, errStr);	                   \
+    exit(EXIT_FAILURE);						           \
+  }									   \
+}
+#else
+#define CHECK_CU_ERRORS(call) call
+#endif
+
+// comment above and uncomment here when using CUDA that does not support cugetErrorName
+//#define CHECK_CU_ERRORS(call) call
+
+
+//--------------------------------------------------------------------------
+/*! \brief Function for getting the capabilities of a CUDA device via the driver API.
+ */
+//--------------------------------------------------------------------------
+
+CUresult cudaFuncGetAttributesDriver(cudaFuncAttributes *attr, CUfunction kern) {
+    int tmp;
+    CHECK_CU_ERRORS(cuFuncGetAttribute(&tmp, CU_FUNC_ATTRIBUTE_MAX_THREADS_PER_BLOCK, kern));
+#ifdef BLOCKSZ_DEBUG
+    cerr << "BLOCKSZ_DEBUG: CU_FUNC_ATTRIBUTE_MAX_THREADS_PER_BLOCK: " << tmp << endl;
+#endif
+    attr->maxThreadsPerBlock= tmp;
+    CHECK_CU_ERRORS(cuFuncGetAttribute(&tmp, CU_FUNC_ATTRIBUTE_SHARED_SIZE_BYTES, kern));
+#ifdef BLOCKSZ_DEBUG
+    cerr << "BLOCKSZ_DEBUG: CU_FUNC_ATTRIBUTE_SHARED_SIZE_BYTES: " << tmp << endl;
+#endif
+    attr->sharedSizeBytes= tmp;
+    CHECK_CU_ERRORS(cuFuncGetAttribute(&tmp, CU_FUNC_ATTRIBUTE_CONST_SIZE_BYTES, kern));
+#ifdef BLOCKSZ_DEBUG
+    cerr << "BLOCKSZ_DEBUG: CU_FUNC_ATTRIBUTE_CONST_SIZE_BYTES: " << tmp << endl;
+#endif
+    attr->constSizeBytes= tmp;
+    CHECK_CU_ERRORS(cuFuncGetAttribute(&tmp, CU_FUNC_ATTRIBUTE_LOCAL_SIZE_BYTES, kern));
+#ifdef BLOCKSZ_DEBUG
+    cerr << "BLOCKSZ_DEBUG: CU_FUNC_ATTRIBUTE_LOCAL_SIZE_BYTES: " << tmp << endl;
+#endif
+    attr->localSizeBytes= tmp;
+    CHECK_CU_ERRORS(cuFuncGetAttribute(&tmp, CU_FUNC_ATTRIBUTE_NUM_REGS, kern));
+#ifdef BLOCKSZ_DEBUG
+    cerr << "BLOCKSZ_DEBUG: CU_FUNC_ATTRIBUTE_NUM_REGS: " << tmp << endl;
+#endif
+    attr->numRegs= tmp;
+    CHECK_CU_ERRORS(cuFuncGetAttribute(&tmp, CU_FUNC_ATTRIBUTE_PTX_VERSION, kern));
+#ifdef BLOCKSZ_DEBUG
+    cerr << "BLOCKSZ_DEBUG: CU_FUNC_ATTRIBUTE_PTX_VERSION: " << tmp << endl;
+#endif
+    attr->ptxVersion= tmp;
+    CHECK_CU_ERRORS(cuFuncGetAttribute(&tmp, CU_FUNC_ATTRIBUTE_BINARY_VERSION, kern));
+#ifdef BLOCKSZ_DEBUG
+    cerr << "BLOCKSZ_DEBUG: CU_FUNC_ATTRIBUTE_BINARY_VERSION: " << tmp << endl;
+#endif
+    attr->binaryVersion= tmp;
+    return CUDA_SUCCESS;
+}
 #endif
 
 
@@ -92,14 +165,14 @@ void gennError(const char *error)
 
 void writeHeader(ostream &os) 
 {
-  string s;
-  ifstream is("../src/header.src");
-  getline(is, s);
-  while (is.good()) {
-    os << s << endl;
+    string s;
+    ifstream is("../src/header.src");
     getline(is, s);
-  }
-  os << endl;
+    while (is.good()) {
+	os << s << endl;
+	getline(is, s);
+    }
+    os << endl;
 }
 
 
@@ -172,36 +245,37 @@ unsigned int theSize(string type)
   return size;
 }
 
+
 //--------------------------------------------------------------------------
 //! \brief Class defining the dependent parameters of teh Rulkov map neuron.
 //--------------------------------------------------------------------------
 
-
 class rulkovdp : public dpclass
 {
 public:
-	double calculateDerivedParameter(int index, vector <double> pars, double dt = 1.0) {
-		switch (index) {
-			case 0:
-			return ip0(pars);
-			case 1:
-			return ip1(pars);
-			case 2:
-			return ip2(pars);
-		}
-		return -1;
+    double calculateDerivedParameter(int index, vector <double> pars, double dt = 1.0) {
+	switch (index) {
+	case 0:
+	    return ip0(pars);
+	case 1:
+	    return ip1(pars);
+	case 2:
+	    return ip2(pars);
 	}
+	return -1;
+    }
 
-	double ip0(vector<double> pars) {
-		return pars[0]*pars[0]*pars[1];
-	}
-	double ip1(vector<double> pars) {
-		return pars[0]*pars[2];
-	}
-	double ip2(vector<double> pars) {
-		return pars[0]*pars[1]+pars[0]*pars[2];
-	}
+    double ip0(vector<double> pars) {
+	return pars[0]*pars[0]*pars[1];
+    }
+    double ip1(vector<double> pars) {
+	return pars[0]*pars[2];
+    }
+    double ip2(vector<double> pars) {
+	return pars[0]*pars[1]+pars[0]*pars[2];
+    }
 };
+
 
 //--------------------------------------------------------------------------
 //! \brief Class defining the dependent parameter for exponential decay.
@@ -210,18 +284,19 @@ public:
 class expDecayDp : public dpclass
 {
 public:
-	double calculateDerivedParameter(int index, vector <double> pars, double dt = 1.0) {
-		switch (index) {
-			case 0:
-			return expDecay(pars, dt);
-		}
-		return -1;
+    double calculateDerivedParameter(int index, vector <double> pars, double dt = 1.0) {
+	switch (index) {
+	case 0:
+	    return expDecay(pars, dt);
 	}
+	return -1;
+    }
 
-	double expDecay(vector<double> pars, double dt) {
-		return exp(-dt/pars[0]);
-	}
+    double expDecay(vector<double> pars, double dt) {
+	return exp(-dt/pars[0]);
+    }
 };
+
 
 vector<neuronModel> nModels; //!< Global C++ vector containing all neuron model descriptions
 
@@ -583,8 +658,6 @@ void prepareStandardModels()
   #include "extra_neurons.h"
 
 }
-
-
 
 
 vector<postSynModel> postSynModels; //!< Global C++ vector containing all post-synaptic update model descriptions

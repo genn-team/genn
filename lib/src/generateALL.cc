@@ -11,12 +11,14 @@
 
 --------------------------------------------------------------------------*/
 
+//--------------------------------------------------------------------------
 /*! \file generateALL.cc
   \brief Main file combining the code for code generation. Part of the code generation section.
 
   The file includes separate files for generating kernels (generateKernels.cc),
   generating the CPU side code for running simulations on either the CPU or GPU (generateRunner.cc) and for CPU-only simulation code (generateCPU.cc).
 */
+//--------------------------------------------------------------------------
 
 #ifdef _WIN32
 #include <direct.h>
@@ -28,7 +30,10 @@
 
 #include <algorithm>
 #include <string>
+
 #include "global.h"
+#include "utils.h"
+#include "stringutils.h"
 #include "modelSpec.h"
 #include "modelSpec.cc"
 
@@ -40,73 +45,10 @@ CodeHelper hlp;
 #include "generateCPU.cc"
 
 
-#ifndef CPU_ONLY
-/*! \brief Macro definition for error checking when using the driver API */
-
-#if CUDA_VERSION >= 6050
-#define CHECK_CU_ERRORS(call)					           \
-{								      	   \
-  CUresult error = call;						   \
-  if (error != CUDA_SUCCESS)						   \
-  {                                                                        \
-    const char *errStr;		                                           \
-    cuGetErrorName(error, &errStr);	       				   \
-    fprintf(stderr, "%s: %i: cuda driver error %i: %s\n",	       	   \
-	    __FILE__, __LINE__, (int)error, errStr);	                   \
-    exit(EXIT_FAILURE);						           \
-  }									   \
-}
-#else
-#define CHECK_CU_ERRORS(call) call
-#endif
-
-// comment above and uncomment here when using CUDA that does not support
-// cugetErrorName
-//#define CHECK_CU_ERRORS(call) call
-
-
-CUresult cudaFuncGetAttributesDriver(cudaFuncAttributes *attr, CUfunction kern) {
-    int tmp;
-    CHECK_CU_ERRORS(cuFuncGetAttribute(&tmp, CU_FUNC_ATTRIBUTE_MAX_THREADS_PER_BLOCK, kern));
-#ifdef BLOCKSZ_DEBUG
-      cerr << "BLOCKSZ_DEBUG: CU_FUNC_ATTRIBUTE_MAX_THREADS_PER_BLOCK: " << tmp << endl;
-#endif
-      attr->maxThreadsPerBlock= tmp;
-      CHECK_CU_ERRORS(cuFuncGetAttribute(&tmp, CU_FUNC_ATTRIBUTE_SHARED_SIZE_BYTES, kern));
-#ifdef BLOCKSZ_DEBUG
-      cerr << "BLOCKSZ_DEBUG: CU_FUNC_ATTRIBUTE_SHARED_SIZE_BYTES: " << tmp << endl;
-#endif
-      attr->sharedSizeBytes= tmp;
-      CHECK_CU_ERRORS(cuFuncGetAttribute(&tmp, CU_FUNC_ATTRIBUTE_CONST_SIZE_BYTES, kern));
-#ifdef BLOCKSZ_DEBUG
-      cerr << "BLOCKSZ_DEBUG: CU_FUNC_ATTRIBUTE_CONST_SIZE_BYTES: " << tmp << endl;
-#endif
-      attr->constSizeBytes= tmp;
-      CHECK_CU_ERRORS(cuFuncGetAttribute(&tmp, CU_FUNC_ATTRIBUTE_LOCAL_SIZE_BYTES, kern));
-#ifdef BLOCKSZ_DEBUG
-      cerr << "BLOCKSZ_DEBUG: CU_FUNC_ATTRIBUTE_LOCAL_SIZE_BYTES: " << tmp << endl;
-#endif
-      attr->localSizeBytes= tmp;
-      CHECK_CU_ERRORS(cuFuncGetAttribute(&tmp, CU_FUNC_ATTRIBUTE_NUM_REGS, kern));
-#ifdef BLOCKSZ_DEBUG
-      cerr << "BLOCKSZ_DEBUG: CU_FUNC_ATTRIBUTE_NUM_REGS: " << tmp << endl;
-#endif
-      attr->numRegs= tmp;
-      CHECK_CU_ERRORS(cuFuncGetAttribute(&tmp, CU_FUNC_ATTRIBUTE_PTX_VERSION, kern));
-#ifdef BLOCKSZ_DEBUG
-      cerr << "BLOCKSZ_DEBUG: CU_FUNC_ATTRIBUTE_PTX_VERSION: " << tmp << endl;
-#endif
-      attr->ptxVersion= tmp;
-      CHECK_CU_ERRORS(cuFuncGetAttribute(&tmp, CU_FUNC_ATTRIBUTE_BINARY_VERSION, kern));
-#ifdef BLOCKSZ_DEBUG
-      cerr << "BLOCKSZ_DEBUG: CU_FUNC_ATTRIBUTE_BINARY_VERSION: " << tmp << endl;
-#endif
-      attr->binaryVersion= tmp;
-      return CUDA_SUCCESS;
-}
-#endif
-
-/*! \brief This function will call the necessary sub-functions to generate the code for simulating a model. */
+//--------------------------------------------------------------------------
+/*! \brief This function will call the necessary sub-functions to generate the code for simulating a model.
+ */
+//--------------------------------------------------------------------------
 
 void generate_model_runner(NNmodel &model,  //!< Model description
 			   string path      //!< Path where the generated code will be deposited
@@ -270,12 +212,12 @@ void chooseDevice(NNmodel *&model, //!< the nn model we are generating code for
 #endif
 
 	    // obtaining ptxas info.
+	    CUmodule module;
 	    CUdevice cuDevice;
 	    CUcontext cuContext;
 	    CHECK_CU_ERRORS(cuDeviceGet(&cuDevice, theDevice));
 	    CHECK_CU_ERRORS(cuCtxCreate(&cuContext, 0, cuDevice));
 	    CHECK_CU_ERRORS(cuCtxSetCurrent(cuContext));
-	    CUmodule module;
 
 	    string nvccFlags = "-cubin -x cu -arch sm_";
 	    nvccFlags += tS(deviceProp[theDevice].major) + tS(deviceProp[theDevice].minor);
@@ -292,7 +234,8 @@ void chooseDevice(NNmodel *&model, //!< the nn model we are generating code for
 	    string runnerPath = path + "/" + model->name + "_CODE/runner.cc";
 	    string cubinPath = "/tmp/runner.cubin";
 #endif
-	    string nvccCommand = "\"" + tS(NVCC) + "\" " + nvccFlags + " -o " + cubinPath + " " + runnerPath;
+	    string nvccCommand = "\"" + tS(NVCC) + "\" " + nvccFlags;
+	    nvccCommand += " -o " + cubinPath + " " + runnerPath;
 
 	    cudaFuncAttributes krnlAttr[2][krnlNo];
 	    CUfunction kern;
