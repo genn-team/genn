@@ -2261,7 +2261,6 @@ void genMakefile(NNmodel &model, //!< Model description
     os << endl;
     os << "INCLUDEFLAGS   =/I\"$(GENN_PATH)\\lib\\include\"" << endl;
     os << endl;
-
     os << "all: runner.obj" << endl;
     os << endl;
     os << "runner.obj: runner.cc" << endl;
@@ -2270,7 +2269,8 @@ void genMakefile(NNmodel &model, //!< Model description
     os << "clean:" << endl;
     os << "\t-del runner.obj" << endl;
 #else
-    string nvccFlags = "-c -x cu -arch=sm_" + tS(deviceProp[theDevice].major) + tS(deviceProp[theDevice].minor);
+    string nvccFlags = "-c -x cu -arch sm_";
+    nvccFlags += tS(deviceProp[theDevice].major) + tS(deviceProp[theDevice].minor);
     if (GENN_PREFERENCES::optimizeCode) nvccFlags += " -O3 -use_fast_math";
     if (GENN_PREFERENCES::debugCode) nvccFlags += " -O0 -g -G";
     if (GENN_PREFERENCES::showPtxInfo) nvccFlags += " -Xptxas \"-v\"";
@@ -2279,13 +2279,12 @@ void genMakefile(NNmodel &model, //!< Model description
     os << "NVCC           =\"" << NVCC << "\"" << endl;
     os << "NVCCFLAGS      =" << nvccFlags << endl;
     os << endl;
-    os << "INCLUDEFLAGS   =/I\"$(GENN_PATH)\\lib\\include\"" << endl;
+    os << "INCLUDEFLAGS   =-I\"$(GENN_PATH)\\lib\\include\"" << endl;
     os << endl;
-
     os << "all: runner.obj" << endl;
     os << endl;
     os << "runner.obj: runner.cc" << endl;
-    os << "\t$(NVCC) $(NVCCFLAGS) $(INCLUDEFLAGS:/I=-I) runner.cc" << endl;
+    os << "\t$(NVCC) $(NVCCFLAGS) $(INCLUDEFLAGS) runner.cc" << endl;
     os << endl;
     os << "clean:" << endl;
     os << "\t-del runner.obj" << endl;
@@ -2303,7 +2302,6 @@ void genMakefile(NNmodel &model, //!< Model description
     os << endl;
     os << "INCLUDEFLAGS   =-I\"$(GENN_PATH)/lib/include\"" << endl;
     os << endl;
-
     os << "all: runner.o" << endl;
     os << endl;
     os << "runner.o: runner.cc" << endl;
@@ -2312,7 +2310,8 @@ void genMakefile(NNmodel &model, //!< Model description
     os << "clean:" << endl;
     os << "\trm -f runner.o" << endl;
 #else
-    string nvccFlags = "-c -x cu -arch=sm_" + tS(deviceProp[theDevice].major) + tS(deviceProp[theDevice].minor);
+    string nvccFlags = "-c -x cu -arch sm_";
+    nvccFlags += tS(deviceProp[theDevice].major) + tS(deviceProp[theDevice].minor);
     if (GENN_PREFERENCES::optimizeCode) nvccFlags += " -O3 -use_fast_math -Xcompiler \"-ffast-math\"";
     if (GENN_PREFERENCES::debugCode) nvccFlags += " -O0 -g -G";
     if (GENN_PREFERENCES::showPtxInfo) nvccFlags += " -Xptxas \"-v\"";
@@ -2323,7 +2322,6 @@ void genMakefile(NNmodel &model, //!< Model description
     os << endl;
     os << "INCLUDEFLAGS   =-I\"$(GENN_PATH)/lib/include\"" << endl;
     os << endl;
-
     os << "all: runner.o" << endl;
     os << endl;
     os << "runner.o: runner.cc" << endl;

@@ -277,10 +277,12 @@ void chooseDevice(NNmodel *&model, //!< the nn model we are generating code for
 	    CHECK_CU_ERRORS(cuCtxSetCurrent(cuContext));
 	    CUmodule module;
 
-	    string nvccFlags = "-x cu -cubin";
+	    string nvccFlags = "-cubin -x cu -arch sm_";
+	    nvccFlags += tS(deviceProp[theDevice].major) + tS(deviceProp[theDevice].minor);
 	    if (GENN_PREFERENCES::optimizeCode) nvccFlags += " -O3 -use_fast_math";
 	    if (GENN_PREFERENCES::debugCode) nvccFlags += " -O0 -g -G";
 	    if (GENN_PREFERENCES::showPtxInfo) nvccFlags += " -Xptxas \"-v\"";
+
 #ifdef _WIN32
 	    nvccFlags += " -I\"%GENN_PATH%\\lib\\include\"";
 	    string runnerPath = path + "\\" + model->name + "_CODE\\runner.cc";
@@ -290,7 +292,7 @@ void chooseDevice(NNmodel *&model, //!< the nn model we are generating code for
 	    string runnerPath = path + "/" + model->name + "_CODE/runner.cc";
 	    string cubinPath = "/tmp/runner.cubin";
 #endif
-	    string nvccCommand = "\"" + tS(NVCC) + "\" " + nvccFlags + " -o " + cubinPath + " " + runnerPath + " 2>&1";
+	    string nvccCommand = "\"" + tS(NVCC) + "\" " + nvccFlags + " -o " + cubinPath + " " + runnerPath;
 
 	    cudaFuncAttributes krnlAttr[2][krnlNo];
 	    CUfunction kern;
