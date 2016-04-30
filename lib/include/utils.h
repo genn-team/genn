@@ -1,4 +1,3 @@
-
 /*--------------------------------------------------------------------------
    Author/Modifier: Thomas Nowotny
   
@@ -10,13 +9,7 @@
   
    initial version: 2010-02-07
    
-   This file contains neuron model definitions.
-  
 --------------------------------------------------------------------------*/
-
-#ifndef _UTILS_H_
-#define _UTILS_H_ //!< macro for avoiding multiple inclusion during compilation
-
 
 //--------------------------------------------------------------------------
 /*! \file utils.h
@@ -24,6 +17,9 @@
 \brief This file contains standard utility functions provide within the NVIDIA CUDA software development toolkit (SDK). The remainder of the file contains a function that defines the standard neuron models.
 */
 //--------------------------------------------------------------------------
+
+#ifndef _UTILS_H_
+#define _UTILS_H_ //!< macro for avoiding multiple inclusion during compilation
 
 #include <cstdlib> // for exit() and EXIT_FAIL / EXIT_SUCCESS
 #include <iostream>
@@ -33,14 +29,11 @@
 #include <cmath>
 #include <vector>
 #include <string>
+
 using namespace std;
 
-#ifndef CPU_ONLY
-#include <cuda_runtime.h>
-#endif
-
 #include "modelSpec.h"
-#include "toString.h"
+#include "numlib/simpleBit.h" // bit tool macros
 
 
 //--------------------------------------------------------------------------
@@ -49,18 +42,6 @@ using namespace std;
 //--------------------------------------------------------------------------
 
 void gennError(string error)
-{
-  cerr << "GeNN error: " << error << endl;
-  exit(EXIT_FAILURE);
-}
-
-
-//--------------------------------------------------------------------------
-/*! \brief Function called upon the detection of an error. Outputs an error message and then exits.
- */
-//--------------------------------------------------------------------------
-
-void gennError(const char *error)
 {
   cerr << "GeNN error: " << error << endl;
   exit(EXIT_FAILURE);
@@ -183,7 +164,7 @@ void writeHeader(ostream &os)
 unsigned int theSize(string type) 
 {
   unsigned int size = 0;
-  if (type.find(tS("*")) != string::npos) size= sizeof(char *); // it's a pointer ... any pointer should have the same size
+  if (type.find("*") != string::npos) size= sizeof(char *); // it's a pointer ... any pointer should have the same size
   if (type == "char") size = sizeof(char);
   //  if (type == "char16_t") size = sizeof(char16_t);
   //  if (type == "char32_t") size = sizeof(char32_t);
@@ -247,7 +228,7 @@ unsigned int theSize(string type)
 
 
 //--------------------------------------------------------------------------
-//! \brief Class defining the dependent parameters of teh Rulkov map neuron.
+//! \brief Class defining the dependent parameters of the Rulkov map neuron.
 //--------------------------------------------------------------------------
 
 class rulkovdp : public dpclass
@@ -309,19 +290,20 @@ The neuron models are defined and added to the C++ vector nModels that is holdin
 void prepareStandardModels()
 {
   neuronModel n;
-  //Rulkov neurons
-  n.varNames.push_back(tS("V"));
-  n.varTypes.push_back(tS("scalar"));
-  n.varNames.push_back(tS("preV"));
-  n.varTypes.push_back(tS("scalar"));
-  n.pNames.push_back(tS("Vspike"));
-  n.pNames.push_back(tS("alpha"));
-  n.pNames.push_back(tS("y"));
-  n.pNames.push_back(tS("beta"));
-  n.dpNames.push_back(tS("ip0"));
-  n.dpNames.push_back(tS("ip1"));
-  n.dpNames.push_back(tS("ip2"));
-  n.simCode= tS("    if ($(V) <= 0) {\n\
+
+  // Rulkov neurons
+  n.varNames.push_back("V");
+  n.varTypes.push_back("scalar");
+  n.varNames.push_back("preV");
+  n.varTypes.push_back("scalar");
+  n.pNames.push_back("Vspike");
+  n.pNames.push_back("alpha");
+  n.pNames.push_back("y");
+  n.pNames.push_back("beta");
+  n.dpNames.push_back("ip0");
+  n.dpNames.push_back("ip1");
+  n.dpNames.push_back("ip2");
+  n.simCode= "    if ($(V) <= 0) {\n\
       $(preV)= $(V);\n\
       $(V)= $(ip0)/(($(Vspike)) - $(V) - ($(beta))*$(Isyn)) +($(ip1));\n\
     }\n\
@@ -334,35 +316,32 @@ void prepareStandardModels()
         $(preV)= $(V);\n\
         $(V)= -($(Vspike));\n\
       }\n\
-    }\n");
-
-  n.thresholdConditionCode = tS("$(V) >= $(ip2)");
-
+    }\n";
+  n.thresholdConditionCode = "$(V) >= $(ip2)";
   n.dps = new rulkovdp();
-
   nModels.push_back(n);
   MAPNEURON= nModels.size()-1;
 
   // Poisson neurons
   n.varNames.clear();
   n.varTypes.clear();
-  n.varNames.push_back(tS("V"));
-  n.varTypes.push_back(tS("scalar"));
-  n.varNames.push_back(tS("seed"));
-  n.varTypes.push_back(tS("uint64_t"));
-  n.varNames.push_back(tS("spikeTime"));
-  n.varTypes.push_back(tS("scalar"));
+  n.varNames.push_back("V");
+  n.varTypes.push_back("scalar");
+  n.varNames.push_back("seed");
+  n.varTypes.push_back("uint64_t");
+  n.varNames.push_back("spikeTime");
+  n.varTypes.push_back("scalar");
   n.pNames.clear();
-  n.pNames.push_back(tS("therate"));
-  n.pNames.push_back(tS("trefract"));
-  n.pNames.push_back(tS("Vspike"));
-  n.pNames.push_back(tS("Vrest"));
+  n.pNames.push_back("therate");
+  n.pNames.push_back("trefract");
+  n.pNames.push_back("Vspike");
+  n.pNames.push_back("Vrest");
   n.dpNames.clear();
-  n.extraGlobalNeuronKernelParameters.push_back(tS("rates"));
-  n.extraGlobalNeuronKernelParameterTypes.push_back(tS("uint64_t *"));
-  n.extraGlobalNeuronKernelParameters.push_back(tS("offset"));
-  n.extraGlobalNeuronKernelParameterTypes.push_back(tS("unsigned int"));
-  n.simCode= tS("    uint64_t theRnd;\n\
+  n.extraGlobalNeuronKernelParameters.push_back("rates");
+  n.extraGlobalNeuronKernelParameterTypes.push_back("uint64_t *");
+  n.extraGlobalNeuronKernelParameters.push_back("offset");
+  n.extraGlobalNeuronKernelParameterTypes.push_back("unsigned int");
+  n.simCode= "    uint64_t theRnd;\n\
     if ($(V) > $(Vrest)) {\n\
       $(V)= $(Vrest);\n\
     }\n\
@@ -374,36 +353,35 @@ void prepareStandardModels()
           $(spikeTime)= $(t);\n\
         }\n\
       }\n\
-    }\n");
-
-  n.thresholdConditionCode = tS("$(V) >= $(Vspike)");
+    }\n";
+  n.thresholdConditionCode = "$(V) >= $(Vspike)";
   n.dps= NULL;
   nModels.push_back(n);
   POISSONNEURON= nModels.size()-1;
 
-// Traub and Miles HH neurons TRAUBMILES_FAST - Original fast implementation, using 25 inner iterations. There are singularities in this model, which can be  easily hit in float precision.  
+  // Traub and Miles HH neurons TRAUBMILES_FAST - Original fast implementation, using 25 inner iterations. There are singularities in this model, which can be  easily hit in float precision.  
   n.varNames.clear();
   n.varTypes.clear();
   n.extraGlobalNeuronKernelParameters.clear();
   n.extraGlobalNeuronKernelParameterTypes.clear();
-  n.varNames.push_back(tS("V"));
-  n.varTypes.push_back(tS("scalar"));
-  n.varNames.push_back(tS("m"));
-  n.varTypes.push_back(tS("scalar"));
-  n.varNames.push_back(tS("h"));
-  n.varTypes.push_back(tS("scalar"));
-  n.varNames.push_back(tS("n"));
-  n.varTypes.push_back(tS("scalar"));
+  n.varNames.push_back("V");
+  n.varTypes.push_back("scalar");
+  n.varNames.push_back("m");
+  n.varTypes.push_back("scalar");
+  n.varNames.push_back("h");
+  n.varTypes.push_back("scalar");
+  n.varNames.push_back("n");
+  n.varTypes.push_back("scalar");
   n.pNames.clear();
-  n.pNames.push_back(tS("gNa"));
-  n.pNames.push_back(tS("ENa"));
-  n.pNames.push_back(tS("gK"));
-  n.pNames.push_back(tS("EK"));
-  n.pNames.push_back(tS("gl"));
-  n.pNames.push_back(tS("El"));
-  n.pNames.push_back(tS("C"));
+  n.pNames.push_back("gNa");
+  n.pNames.push_back("ENa");
+  n.pNames.push_back("gK");
+  n.pNames.push_back("EK");
+  n.pNames.push_back("gl");
+  n.pNames.push_back("El");
+  n.pNames.push_back("C");
   n.dpNames.clear();
-  n.simCode= tS("   scalar Imem;\n\
+  n.simCode= "   scalar Imem;\n\
     unsigned int mt;\n\
     scalar mdt= DT/25.0;\n\
     for (mt=0; mt < 25; mt++) {\n\
@@ -420,34 +398,33 @@ void prepareStandardModels()
       _b= 0.5*exp((-55.0-$(V))/40.0);\n\
       $(n)+= (_a*(1.0-$(n))-_b*$(n))*mdt;\n\
       $(V)+= Imem/$(C)*mdt;\n\
-    }\n");
-
-  n.thresholdConditionCode = tS("$(V) > 0.0");//TODO check this, to get better value
+    }\n";
+  n.thresholdConditionCode = "$(V) > 0.0"; //TODO check this, to get better value
   n.dps= NULL;
   nModels.push_back(n);
   TRAUBMILES_FAST= nModels.size()-1;
 
-// Traub and Miles HH neurons TRAUBMILES_ALTERNATIVE - Using a workaround to avoid singularity: adding the munimum numerical value of the floating point precision used. 
+  // Traub and Miles HH neurons TRAUBMILES_ALTERNATIVE - Using a workaround to avoid singularity: adding the munimum numerical value of the floating point precision used. 
   n.varNames.clear();
   n.varTypes.clear();
-  n.varNames.push_back(tS("V"));
-  n.varTypes.push_back(tS("scalar"));
-  n.varNames.push_back(tS("m"));
-  n.varTypes.push_back(tS("scalar"));
-  n.varNames.push_back(tS("h"));
-  n.varTypes.push_back(tS("scalar"));
-  n.varNames.push_back(tS("n"));
-  n.varTypes.push_back(tS("scalar"));
+  n.varNames.push_back("V");
+  n.varTypes.push_back("scalar");
+  n.varNames.push_back("m");
+  n.varTypes.push_back("scalar");
+  n.varNames.push_back("h");
+  n.varTypes.push_back("scalar");
+  n.varNames.push_back("n");
+  n.varTypes.push_back("scalar");
   n.pNames.clear();
-  n.pNames.push_back(tS("gNa"));
-  n.pNames.push_back(tS("ENa"));
-  n.pNames.push_back(tS("gK"));
-  n.pNames.push_back(tS("EK"));
-  n.pNames.push_back(tS("gl"));
-  n.pNames.push_back(tS("El"));
-  n.pNames.push_back(tS("C"));
+  n.pNames.push_back("gNa");
+  n.pNames.push_back("ENa");
+  n.pNames.push_back("gK");
+  n.pNames.push_back("EK");
+  n.pNames.push_back("gl");
+  n.pNames.push_back("El");
+  n.pNames.push_back("C");
   n.dpNames.clear();
-  n.simCode= tS("   scalar Imem;\n\
+  n.simCode= "   scalar Imem;\n\
     unsigned int mt;\n\
     scalar mdt= DT/25.0;\n\
     for (mt=0; mt < 25; mt++) {\n\
@@ -467,34 +444,33 @@ void prepareStandardModels()
       _b= 0.5*exp((-55.0-$(V))/40.0);\n\
       $(n)+= (_a*(1.0-$(n))-_b*$(n))*mdt;\n\
       $(V)+= Imem/$(C)*mdt;\n\
-    }\n");
-
-  n.thresholdConditionCode = tS("$(V) > 0");//TODO check this, to get better value
+    }\n";
+  n.thresholdConditionCode = "$(V) > 0"; //TODO check this, to get better value
   n.dps= NULL;
   nModels.push_back(n);
   TRAUBMILES_ALTERNATIVE= nModels.size()-1;
 
-// Traub and Miles HH neurons TRAUBMILES_SAFE - Using IF statements to check if a value that a singularity would be hit. If so, value calculated by L'Hospital rule is used. TRAUBMILES method points to this model.
+  // Traub and Miles HH neurons TRAUBMILES_SAFE - Using IF statements to check if a value that a singularity would be hit. If so, value calculated by L'Hospital rule is used. TRAUBMILES method points to this model.
   n.varNames.clear();
   n.varTypes.clear();
-  n.varNames.push_back(tS("V"));
-  n.varTypes.push_back(tS("scalar"));
-  n.varNames.push_back(tS("m"));
-  n.varTypes.push_back(tS("scalar"));
-  n.varNames.push_back(tS("h"));
-  n.varTypes.push_back(tS("scalar"));
-  n.varNames.push_back(tS("n"));
-  n.varTypes.push_back(tS("scalar"));
+  n.varNames.push_back("V");
+  n.varTypes.push_back("scalar");
+  n.varNames.push_back("m");
+  n.varTypes.push_back("scalar");
+  n.varNames.push_back("h");
+  n.varTypes.push_back("scalar");
+  n.varNames.push_back("n");
+  n.varTypes.push_back("scalar");
   n.pNames.clear();
-  n.pNames.push_back(tS("gNa"));
-  n.pNames.push_back(tS("ENa"));
-  n.pNames.push_back(tS("gK"));
-  n.pNames.push_back(tS("EK"));
-  n.pNames.push_back(tS("gl"));
-  n.pNames.push_back(tS("El"));
-  n.pNames.push_back(tS("C"));
+  n.pNames.push_back("gNa");
+  n.pNames.push_back("ENa");
+  n.pNames.push_back("gK");
+  n.pNames.push_back("EK");
+  n.pNames.push_back("gl");
+  n.pNames.push_back("El");
+  n.pNames.push_back("C");
   n.dpNames.clear();
-  n.simCode= tS("   scalar Imem;\n\
+  n.simCode= "   scalar Imem;\n\
     unsigned int mt;\n\
     scalar mdt= DT/25.0;\n\
     for (mt=0; mt < 25; mt++) {\n\
@@ -516,36 +492,35 @@ void prepareStandardModels()
       _b= 0.5*exp((-55.0-$(V))/40.0);\n\
       $(n)+= (_a*(1.0-$(n))-_b*$(n))*mdt;\n\
       $(V)+= Imem/$(C)*mdt;\n\
-    }\n");
-
-  n.thresholdConditionCode = tS("$(V) > 0.0");//TODO check this, to get better value.
+    }\n";
+  n.thresholdConditionCode = "$(V) > 0.0"; //TODO check this, to get better value.
   n.dps= NULL;
   nModels.push_back(n);
   TRAUBMILES_SAFE= nModels.size()-1;
   TRAUBMILES= TRAUBMILES_SAFE;
 
-// Traub and Miles HH neurons TRAUBMILES_PSTEP - same as TRAUBMILES_SAFE but the number of inner loops can be set as a parameter.
+  // Traub and Miles HH neurons TRAUBMILES_PSTEP - same as TRAUBMILES_SAFE but the number of inner loops can be set as a parameter.
   n.varNames.clear();
   n.varTypes.clear();
-  n.varNames.push_back(tS("V"));
-  n.varTypes.push_back(tS("scalar"));
-  n.varNames.push_back(tS("m"));
-  n.varTypes.push_back(tS("scalar"));
-  n.varNames.push_back(tS("h"));
-  n.varTypes.push_back(tS("scalar"));
-  n.varNames.push_back(tS("n"));
-  n.varTypes.push_back(tS("scalar"));
+  n.varNames.push_back("V");
+  n.varTypes.push_back("scalar");
+  n.varNames.push_back("m");
+  n.varTypes.push_back("scalar");
+  n.varNames.push_back("h");
+  n.varTypes.push_back("scalar");
+  n.varNames.push_back("n");
+  n.varTypes.push_back("scalar");
   n.pNames.clear();
-  n.pNames.push_back(tS("gNa"));
-  n.pNames.push_back(tS("ENa"));
-  n.pNames.push_back(tS("gK"));
-  n.pNames.push_back(tS("EK"));
-  n.pNames.push_back(tS("gl"));
-  n.pNames.push_back(tS("El"));
-  n.pNames.push_back(tS("C"));
-  n.pNames.push_back(tS("ntimes"));
+  n.pNames.push_back("gNa");
+  n.pNames.push_back("ENa");
+  n.pNames.push_back("gK");
+  n.pNames.push_back("EK");
+  n.pNames.push_back("gl");
+  n.pNames.push_back("El");
+  n.pNames.push_back("C");
+  n.pNames.push_back("ntimes");
   n.dpNames.clear();
-  n.simCode= tS("   scalar Imem;\n\
+  n.simCode= "   scalar Imem;\n\
     unsigned int mt;\n\
     scalar mdt= DT/scalar($(ntimes));\n\
     for (mt=0; mt < $(ntimes); mt++) {\n\
@@ -567,29 +542,28 @@ void prepareStandardModels()
       _b= 0.5*exp((-55.0-$(V))/40.0);\n\
       $(n)+= (_a*(1.0-$(n))-_b*$(n))*mdt;\n\
       $(V)+= Imem/$(C)*mdt;\n\
-    }\n");
-
-  n.thresholdConditionCode = tS("$(V) > 0.0");//TODO check this, to get better value
+    }\n";
+  n.thresholdConditionCode = "$(V) > 0.0"; //TODO check this, to get better value
   n.dps= NULL;
   nModels.push_back(n);
   TRAUBMILES_PSTEP= nModels.size()-1;
 
- //Izhikevich neurons
+  // Izhikevich neurons
   n.varNames.clear();
   n.varTypes.clear();
-  n.varNames.push_back(tS("V"));
-  n.varTypes.push_back(tS("scalar"));  
-  n.varNames.push_back(tS("U"));
-  n.varTypes.push_back(tS("scalar"));
+  n.varNames.push_back("V");
+  n.varTypes.push_back("scalar");  
+  n.varNames.push_back("U");
+  n.varTypes.push_back("scalar");
   n.pNames.clear();
-  //n.pNames.push_back(tS("Vspike"));
-  n.pNames.push_back(tS("a")); // time scale of U
-  n.pNames.push_back(tS("b")); // sensitivity of U
-  n.pNames.push_back(tS("c")); // after-spike reset value of V
-  n.pNames.push_back(tS("d")); // after-spike reset value of U
-  n.dpNames.clear(); 
+  //n.pNames.push_back("Vspike");
+  n.pNames.push_back("a"); // time scale of U
+  n.pNames.push_back("b"); // sensitivity of U
+  n.pNames.push_back("c"); // after-spike reset value of V
+  n.pNames.push_back("d"); // after-spike reset value of U
+  n.dpNames.clear();
   //TODO: replace the resetting in the following with BRIAN-like threshold and resetting 
-  n.simCode= tS("    if ($(V) >= 30.0){\n\
+  n.simCode= "    if ($(V) >= 30.0){\n\
       $(V)=$(c);\n\
 		  $(U)+=$(d);\n\
     } \n\
@@ -598,37 +572,34 @@ void prepareStandardModels()
     $(U)+=$(a)*($(b)*$(V)-$(U))*DT;\n\
    //if ($(V) > 30.0){   //keep this only for visualisation -- not really necessaary otherwise \n	\
    //  $(V)=30.0; \n\
-   //}\n\
-   ");
-    
-  n.thresholdConditionCode = tS("$(V) >= 29.99");
-
- /*  n.resetCode=tS("//reset code is here\n ");
+   //}\n";
+  n.thresholdConditionCode = "$(V) >= 29.99";
+ /*  n.resetCode="//reset code is here\n";
       $(V)=$(c);\n\
-		  $(U)+=$(d);\n\
+      $(U)+=$(d);\n\
   */
   nModels.push_back(n);
   IZHIKEVICH= nModels.size()-1;
 
-//Izhikevich neurons with variable parameters
+  // Izhikevich neurons with variable parameters
   n.varNames.clear();
   n.varTypes.clear();
-  n.varNames.push_back(tS("V"));
-  n.varTypes.push_back(tS("scalar"));  
-  n.varNames.push_back(tS("U"));
-  n.varTypes.push_back(tS("scalar"));
-  n.varNames.push_back(tS("a")); // time scale of U
-  n.varTypes.push_back(tS("scalar"));
-  n.varNames.push_back(tS("b")); // sensitivity of U
-  n.varTypes.push_back(tS("scalar"));
-  n.varNames.push_back(tS("c")); // after-spike reset value of V
-  n.varTypes.push_back(tS("scalar"));
-  n.varNames.push_back(tS("d")); // after-spike reset value of U
-  n.varTypes.push_back(tS("scalar"));
+  n.varNames.push_back("V");
+  n.varTypes.push_back("scalar");  
+  n.varNames.push_back("U");
+  n.varTypes.push_back("scalar");
+  n.varNames.push_back("a"); // time scale of U
+  n.varTypes.push_back("scalar");
+  n.varNames.push_back("b"); // sensitivity of U
+  n.varTypes.push_back("scalar");
+  n.varNames.push_back("c"); // after-spike reset value of V
+  n.varTypes.push_back("scalar");
+  n.varNames.push_back("d"); // after-spike reset value of U
+  n.varTypes.push_back("scalar");
   n.pNames.clear();
   n.dpNames.clear(); 
   //TODO: replace the resetting in the following with BRIAN-like threshold and resetting 
-  n.simCode= tS("    if ($(V) >= 30.0){\n\
+  n.simCode= "    if ($(V) >= 30.0){\n\
       $(V)=$(c);\n\
 		  $(U)+=$(d);\n\
     } \n\
@@ -637,20 +608,19 @@ void prepareStandardModels()
     $(U)+=$(a)*($(b)*$(V)-$(U))*DT;\n\
     //if ($(V) > 30.0){      //keep this only for visualisation -- not really necessaary otherwise \n\
     //  $(V)=30.0; \n\
-    //}\n\
-    ");
-  n.thresholdConditionCode = tS("$(V) > 29.99");
+    //}\n";
+  n.thresholdConditionCode = "$(V) > 29.99";
   n.dps= NULL;
   nModels.push_back(n);
   IZHIKEVICH_V= nModels.size()-1;
   
-  //Spike Source ("empty" neuron that does nothing - spikes need to be copied in explicitly from host code)
+  // Spike Source ("empty" neuron that does nothing - spikes need to be copied in explicitly from host code)
   n.varNames.clear();
   n.varTypes.clear();
   n.pNames.clear();
   n.dpNames.clear(); 
-  n.simCode= tS("");
-  n.thresholdConditionCode = tS("0");
+  n.simCode= "";
+  n.thresholdConditionCode = "0";
   n.dps= NULL;
   nModels.push_back(n);
   SPIKESOURCE= nModels.size()-1;
@@ -670,35 +640,27 @@ vector<postSynModel> postSynModels; //!< Global C++ vector containing all post-s
 void preparePostSynModels(){
   postSynModel ps;
   
-  //0: Exponential decay
+  // 0: Exponential decay
   ps.varNames.clear();
   ps.varTypes.clear();
-  
   ps.pNames.clear();
   ps.dpNames.clear(); 
-  
-  ps.pNames.push_back(tS("tau")); 
-  ps.pNames.push_back(tS("E"));  
-  ps.dpNames.push_back(tS("expDecay"));
-  
-  ps.postSynDecay=tS(" 	 $(inSyn)*=$(expDecay);\n");
-  ps.postSyntoCurrent=tS("$(inSyn)*($(E)-$(V))");
-  
+  ps.pNames.push_back("tau"); 
+  ps.pNames.push_back("E");  
+  ps.dpNames.push_back("expDecay");
+  ps.postSynDecay= "$(inSyn)*=$(expDecay);\n";
+  ps.postSyntoCurrent= "$(inSyn)*($(E)-$(V))";
   ps.dps = new expDecayDp;
-  
   postSynModels.push_back(ps);
   EXPDECAY= postSynModels.size()-1;
   
-  //1: IZHIKEVICH MODEL (NO POSTSYN RULE)
+  // 1: IZHIKEVICH MODEL (NO POSTSYN RULE)
   ps.varNames.clear();
   ps.varTypes.clear();
-  
   ps.pNames.clear();
   ps.dpNames.clear(); 
-  
-  ps.postSynDecay=tS("");
-  ps.postSyntoCurrent=tS("$(inSyn); $(inSyn)= 0");
-  
+  ps.postSynDecay= "";
+  ps.postSyntoCurrent= "$(inSyn); $(inSyn)= 0";
   postSynModels.push_back(ps);
   IZHIKEVICH_PS= postSynModels.size()-1;
  
@@ -708,11 +670,11 @@ void preparePostSynModels(){
 
 //--------------------------------------------------------------------------
 /*! This class defines derived parameters for the learn1synapse standard 
-    weightupdate model 
+    weightupdate model
 */
 //--------------------------------------------------------------------------
 
-class pwSTDP : public dpclass  //!TODO This class definition may be code-generated in a future release
+class pwSTDP : public dpclass //!TODO This class definition may be code-generated in a future release
 {
 public:
     double calculateDerivedParameter(int index, vector<double> pars, 
@@ -775,62 +737,62 @@ void prepareWeightUpdateModels()
     // NSYNAPSE weightupdate model: "normal" pulse coupling synapse
     wuN.varNames.clear();
     wuN.varTypes.clear();
-    wuN.varNames.push_back(tS("g"));
-    wuN.varTypes.push_back(tS("scalar"));
+    wuN.varNames.push_back("g");
+    wuN.varTypes.push_back("scalar");
     wuN.pNames.clear();
     wuN.dpNames.clear();
     // code for presynaptic spike:
-    wuN.simCode = tS("  $(addtoinSyn) = $(g);\n\
-  $(updatelinsyn);\n");
+    wuN.simCode = "  $(addtoinSyn) = $(g);\n\
+  $(updatelinsyn);\n";
     weightUpdateModels.push_back(wuN);
     NSYNAPSE= weightUpdateModels.size()-1;
     
     // NGRADSYNAPSE weightupdate model: "normal" graded synapse
     wuG.varNames.clear();
     wuG.varTypes.clear();
-    wuG.varNames.push_back(tS("g"));
-    wuG.varTypes.push_back(tS("scalar"));
+    wuG.varNames.push_back("g");
+    wuG.varTypes.push_back("scalar");
     wuG.pNames.clear();
-    wuG.pNames.push_back(tS("Epre")); 
-    wuG.pNames.push_back(tS("Vslope")); 
+    wuG.pNames.push_back("Epre"); 
+    wuG.pNames.push_back("Vslope"); 
     wuG.dpNames.clear();
     // code for presynaptic spike event 
-    wuG.simCodeEvnt = tS("$(addtoinSyn) = $(g) * tanh(($(V_pre) - $(Epre)) / $(Vslope))* DT;\n\
+    wuG.simCodeEvnt = "$(addtoinSyn) = $(g) * tanh(($(V_pre) - $(Epre)) / $(Vslope))* DT;\n\
     if ($(addtoinSyn) < 0) $(addtoinSyn) = 0.0;\n\
-    $(updatelinsyn);\n");
+    $(updatelinsyn);\n";
     // definition of presynaptic spike event 
-    wuG.evntThreshold = tS("$(V_pre) > $(Epre)");
+    wuG.evntThreshold = "$(V_pre) > $(Epre)";
     weightUpdateModels.push_back(wuG);
     NGRADSYNAPSE= weightUpdateModels.size()-1; 
 
     // LEARN1SYNAPSE weightupdate model: "normal" synapse with a type of STDP
     wuL.varNames.clear();
     wuL.varTypes.clear();
-    wuL.varNames.push_back(tS("g")); 
-    wuL.varTypes.push_back(tS("scalar"));
-    wuL.varNames.push_back(tS("gRaw")); 
-    wuL.varTypes.push_back(tS("scalar"));
+    wuL.varNames.push_back("g");
+    wuL.varTypes.push_back("scalar");
+    wuL.varNames.push_back("gRaw"); 
+    wuL.varTypes.push_back("scalar");
     wuL.pNames.clear();
-    wuL.pNames.push_back(tS("tLrn"));  //0
-    wuL.pNames.push_back(tS("tChng")); //1
-    wuL.pNames.push_back(tS("tDecay")); //2
-    wuL.pNames.push_back(tS("tPunish10")); //3
-    wuL.pNames.push_back(tS("tPunish01")); //4
-    wuL.pNames.push_back(tS("gMax")); //5
-    wuL.pNames.push_back(tS("gMid")); //6
-    wuL.pNames.push_back(tS("gSlope")); //7
-    wuL.pNames.push_back(tS("tauShift")); //8
-    wuL.pNames.push_back(tS("gSyn0")); //9
+    wuL.pNames.push_back("tLrn");  //0
+    wuL.pNames.push_back("tChng"); //1
+    wuL.pNames.push_back("tDecay"); //2
+    wuL.pNames.push_back("tPunish10"); //3
+    wuL.pNames.push_back("tPunish01"); //4
+    wuL.pNames.push_back("gMax"); //5
+    wuL.pNames.push_back("gMid"); //6
+    wuL.pNames.push_back("gSlope"); //7
+    wuL.pNames.push_back("tauShift"); //8
+    wuL.pNames.push_back("gSyn0"); //9
     wuL.dpNames.clear(); 
-    wuL.dpNames.push_back(tS("lim0"));
-    wuL.dpNames.push_back(tS("lim1"));
-    wuL.dpNames.push_back(tS("slope0"));
-    wuL.dpNames.push_back(tS("slope1"));
-    wuL.dpNames.push_back(tS("off0"));
-    wuL.dpNames.push_back(tS("off1"));
-    wuL.dpNames.push_back(tS("off2"));
+    wuL.dpNames.push_back("lim0");
+    wuL.dpNames.push_back("lim1");
+    wuL.dpNames.push_back("slope0");
+    wuL.dpNames.push_back("slope1");
+    wuL.dpNames.push_back("off0");
+    wuL.dpNames.push_back("off1");
+    wuL.dpNames.push_back("off2");
     // code for presynaptic spike
-    wuL.simCode = tS("$(addtoinSyn) = $(g);\n\
+    wuL.simCode = "$(addtoinSyn) = $(g);\n\
   $(updatelinsyn); \n				\
   scalar dt = $(sT_post) - $(t) - ($(tauShift)); \n	\
   scalar dg = 0;\n				\
@@ -842,10 +804,10 @@ void prepareWeightUpdateModels()
       dg = $(slope1) * dt + ($(off1)); \n\
   else dg = - ($(off2)) ; \n\
   $(gRaw) += dg; \n\
-  $(g)=$(gMax)/2 *(tanh($(gSlope)*($(gRaw) - ($(gMid))))+1); \n");   
+  $(g)=$(gMax)/2 *(tanh($(gSlope)*($(gRaw) - ($(gMid))))+1); \n";
   wuL.dps = new pwSTDP;
   // code for post-synaptic spike 
-  wuL.simLearnPost = tS("scalar dt = $(t) - ($(sT_pre)) - ($(tauShift)); \n\
+  wuL.simLearnPost = "scalar dt = $(t) - ($(sT_pre)) - ($(tauShift)); \n\
   scalar dg =0; \n\
   if (dt > $(lim0))  \n\
       dg = -($(off0)) ; \n \
@@ -855,17 +817,13 @@ void prepareWeightUpdateModels()
       dg = $(slope1) * dt + ($(off1)); \n\
   else dg = -($(off2)) ; \n\
   $(gRaw) += dg; \n\
-  $(g)=$(gMax)/2.0 *(tanh($(gSlope)*($(gRaw) - ($(gMid))))+1); \n");     
+  $(g)=$(gMax)/2.0 *(tanh($(gSlope)*($(gRaw) - ($(gMid))))+1); \n";
   wuL.needPreSt= TRUE;
   wuL.needPostSt= TRUE;
-
   weightUpdateModels.push_back(wuL);
   LEARN1SYNAPSE= weightUpdateModels.size()-1; 
 
 #include "extra_weightupdates.h"
 }
-
-// bit tool macros
-#include "numlib/simpleBit.h"
 
 #endif  // _UTILS_H_

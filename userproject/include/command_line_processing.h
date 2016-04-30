@@ -16,17 +16,15 @@
 
 \brief This file contains some tools for parsing the argv array which contains the command line options.
 */
-
+//--------------------------------------------------------------------------
 
 #ifndef COMMAND_LINE_PROCESSING
 #define COMMAND_LINE_PROCESSING
 
-//--------------------------------------------------------------------------
-/*! \brief template function for string conversion from const char* to C++ string
- */
-//--------------------------------------------------------------------------
+#include <string>
 
-#include "toString.h"
+using namespace std;
+
 
 string toUpper(string s)
 {
@@ -46,8 +44,8 @@ string toLower(string s)
 
 int extract_option(char *op, string &option) 
 {
-    string sop= tS(op);
-    size_t pos= sop.find(tS("="));
+    string sop= op;
+    size_t pos= sop.find("=");
     if (pos == string::npos) {
 	return -1;
     }
@@ -58,8 +56,8 @@ int extract_option(char *op, string &option)
 
 int extract_bool_value(char *op, unsigned int &val) 
 {
-    string sop= tS(op);
-    size_t pos= sop.find(tS("="));
+    string sop= op;
+    size_t pos= sop.find("=");
     if (pos == string::npos) {
 	return -1;
     }
@@ -75,8 +73,8 @@ int extract_bool_value(char *op, unsigned int &val)
 
 int extract_string_value(char *op, string &val) 
 {
-    string sop= tS(op);
-    size_t pos= sop.find(tS("="));
+    string sop= op;
+    size_t pos= sop.find("=");
     if (pos == string::npos) {
 	return -1;
     }

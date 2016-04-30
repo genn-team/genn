@@ -2250,7 +2250,7 @@ void genMakefile(NNmodel &model, //!< Model description
 #ifdef _WIN32
 
 #ifdef CPU_ONLY
-    string cxxFlags = "/c";
+    string cxxFlags = "/c /DCPU_ONLY";
     if (GENN_PREFERENCES::optimizeCode) cxxFlags += " /O2";
     if (GENN_PREFERENCES::debugCode) cxxFlags += " /debug /Zi /Od";
 
@@ -2291,7 +2291,7 @@ void genMakefile(NNmodel &model, //!< Model description
 #else // UNIX
 
 #ifdef CPU_ONLY
-    string cxxFlags = "-c";
+    string cxxFlags = "-c -DCPU_ONLY";
     if (GENN_PREFERENCES::optimizeCode) cxxFlags += " -O3 -ffast-math";
     if (GENN_PREFERENCES::debugCode) cxxFlags += " -O0 -g";
 

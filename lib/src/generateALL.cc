@@ -2,7 +2,7 @@
    Author: Thomas Nowotny
 
    Institute: Center for Computational Neuroscience and Robotics
-              University of Susse
+              University of Sussex
 	      Falmer, Brighton BN1 9QJ, UK
 
    email to:  T.Nowotny@sussex.ac.uk
@@ -13,12 +13,26 @@
 
 //--------------------------------------------------------------------------
 /*! \file generateALL.cc
+
   \brief Main file combining the code for code generation. Part of the code generation section.
 
-  The file includes separate files for generating kernels (generateKernels.cc),
-  generating the CPU side code for running simulations on either the CPU or GPU (generateRunner.cc) and for CPU-only simulation code (generateCPU.cc).
+  The file includes separate files for generating kernels (generateKernels.cc), generating the CPU side code for running simulations on either the CPU or GPU (generateRunner.cc) and for CPU-only simulation code (generateCPU.cc).
+
 */
 //--------------------------------------------------------------------------
+
+#include <algorithm>
+#include <string>
+#include <iostream>
+#include <cstring>
+#include <string>
+#include <sstream>
+#include <vector>
+#include <cmath>
+
+#include <stdint.h>
+
+using namespace std;
 
 #ifdef _WIN32
 #include <direct.h>
@@ -28,12 +42,11 @@
 #include <sys/stat.h> // needed for mkdir
 #endif
 
-#include <algorithm>
-#include <string>
-
 #include "global.h"
+
 #include "utils.h"
-#include "stringutils.h"
+#include "stringUtils.h"
+
 #include "modelSpec.h"
 #include "modelSpec.cc"
 

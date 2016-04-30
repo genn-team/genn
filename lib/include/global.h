@@ -11,9 +11,6 @@
   
 --------------------------------------------------------------------------*/
 
-#ifndef _GLOBAL_H_
-#define _GLOBAL_H_ //!< macro for avoiding multiple inclusion during compilation
-
 //--------------------------------------------------------------------------
 /*! \file global.h
 
@@ -23,43 +20,31 @@ This global header file also takes care of including some generally used cuda su
 */
 //--------------------------------------------------------------------------
 
-#include <iostream>
-#include <cstring>
-#include <string>
-#include <sstream>
-#include <vector>
-#include <cmath>
+#ifndef _GLOBAL_H_
+#define _GLOBAL_H_ //!< Multi-include guard macro
 
 #ifndef CPU_ONLY
 #include <cuda.h>
 #include <cuda_runtime.h>
-#endif
 
-#include "toString.h"
-#include <stdint.h>
-
-using namespace std; // replaced these two lines : problem with visual studio
-
-// THESE WILL BE REPLACED BY VARIABLES BELOW SOON IF optimiseBlockSize == 1. THEIR INITIAL VALUES ARE SET IN generateAll.cc
+cudaDeviceProp *deviceProp;
+int deviceCount; //!< Global variable containing the number of CUDA devices on this host
+int theDevice; //!< Global variable containing the currently selected CUDA device's number
 int neuronBlkSz;
 int synapseBlkSz;
 int learnBlkSz;
 int synDynBlkSz;
 
-int hostCount; //!< Global variable containing the number of hosts within the local compute cluster
-#ifndef CPU_ONLY
-int deviceCount; //!< Global variable containing the number of CUDA devices found on this host
-cudaDeviceProp *deviceProp;
-int theDevice = 0;
-#endif
-
 //vector<cudaDeviceProp> deviceProp; //!< Global vector containing the properties of all CUDA-enabled devices
 //vector<int> synapseBlkSz; //!< Global vector containing the optimum synapse kernel block size for each device
 //vector<int> learnBlkSz; //!< Global vector containing the optimum learn kernel block size for each device
 //vector<int> neuronBlkSz; //!< Global vector containing the optimum neuron kernel block size for each device
+#endif
 
+int hostCount; //!< Global variable containing the number of hosts within the local compute cluster
 int UIntSz = sizeof(unsigned int) * 8; //!< size of the unsigned int variable type on the local architecture
 int logUIntSz = (int) (logf((float) UIntSz) / logf(2.0f) + 1e-5f); //!< logarithm of the size of the unsigned int variable type on the local architecture
+
 
 namespace GENN_FLAGS {
     unsigned int calcSynapseDynamics= 0;
@@ -67,6 +52,7 @@ namespace GENN_FLAGS {
     unsigned int learnSynapsesPost= 2;
     unsigned int calcNeurons= 3;
 };
+
 
 namespace GENN_PREFERENCES {    
     int optimiseBlockSize = 1; //!< Flag for signalling whether or not block size optimisation should be performed
@@ -77,14 +63,12 @@ namespace GENN_PREFERENCES {
     int smVersionFile = 0; //!< Request a Makefile include file (sm_version.mk), containing architecture flags (-arch=sm_**), for use with the NVCC compiler
     double asGoodAsZero = 1e-19; //!< Global variable that is used when detecting close to zero values, for example when setting sparse connectivity from a dense matrix
     int defaultDevice= 0; //! default GPU device; used to determine which GPU to use if chooseDevice is 0 (off)
-
     unsigned int neuronBlockSize= 32;
     unsigned int synapseBlockSize= 32;
     unsigned int learningBlockSize= 32;
     unsigned int synapseDynamicsBlockSize= 32;
-
     unsigned int autoRefractory= 1; //!< Flag for signalling whether spikes are only reported if thresholdCondition changes from false to true (autoRefractory == 1) or spikes are emitted whenever thresholdCondition is true no matter what.
 };
-    
+
 
 #endif  // _GLOBAL_H_

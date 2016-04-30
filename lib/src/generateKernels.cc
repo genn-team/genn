@@ -1,18 +1,15 @@
 /*--------------------------------------------------------------------------
-  Author: Thomas Nowotny
+   Author: Thomas Nowotny
 
-  Institute: Center for Computational Neuroscience and Robotics
-  University of Sussex
-  Falmer, Brighton BN1 9QJ, UK 
+   Institute: Center for Computational Neuroscience and Robotics
+              University of Sussex
+              Falmer, Brighton BN1 9QJ, UK 
 
-  email to:  T.Nowotny@sussex.ac.uk
+   email to:  T.Nowotny@sussex.ac.uk
 
-  initial version: 2010-02-07
+   initial version: 2010-02-07
 
-  --------------------------------------------------------------------------*/
-
-// The CPU_ONLY version does not need any of this
-#ifndef CPU_ONLY
+--------------------------------------------------------------------------*/
 
 //------------------------------------------------------------------------
 /*! \file generateKernels.cc
@@ -22,9 +19,8 @@
 */
 //-------------------------------------------------------------------------
 
-#include <string>
-#include "global.h"
-#include "stringutils.h"
+// The CPU_ONLY version does not need any of this
+#ifndef CPU_ONLY
 
 short *isGrpVarNeeded;
 

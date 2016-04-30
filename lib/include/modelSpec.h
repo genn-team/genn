@@ -28,7 +28,9 @@ Part of the code generation and generated code sections.
 #include <vector>
 #include <string>
 #include <algorithm>
+
 using namespace std;
+
 #include "global.h"
 #include "sparseProjection.h"
 
@@ -314,23 +316,21 @@ public:
 #endif
   string scalarExpr(const double);
 
+
   // PUBLIC NEURON FUNCTIONS
   //========================
 
-  void addNeuronPopulation(const char *, unsigned int, unsigned int, double *, double *); //!< Method for adding a neuron population to a neuronal network model, using C style character array for the name of the population
   void addNeuronPopulation(const string, unsigned int, unsigned int, double *, double *); //!< Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population
   void addNeuronPopulation(const string, unsigned int, unsigned int, vector<double>, vector<double>); //!< Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population
   void setNeuronClusterIndex(const string neuronGroup, int hostID, int deviceID); //!< Function for setting which host and which device a neuron group will be simulated on
-//! This function has been deprecated in GeNN 2.2
-  void activateDirectInput(const string, unsigned int type);
-//! This function has been deprecated in GeNN 2.2
+  void activateDirectInput(const string, unsigned int type); //! This function has been deprecated in GeNN 2.2
   void setConstInp(const string, double);
+
 
   // PUBLIC SYNAPSE FUNCTIONS
   //=========================
 
   void addSynapsePopulation(const string name, unsigned int syntype, unsigned int conntype, unsigned int gtype, const string src, const string trg, double *p); //!< This function has been depreciated as of GeNN 2.2.
-  void addSynapsePopulation(const char *, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, const char *, const char *, double *, double *, double *); //!< Method for adding a synapse population to a neuronal network model, using C style character array for the name of the population
   void addSynapsePopulation(const string, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, const string, const string, double *, double *, double *); //!< Overloaded version without initial variables for synapses
   void addSynapsePopulation(const string, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, const string, const string, double *,double *, double *, double *); //!< Method for adding a synapse population to a neuronal network model, using C++ string for the name of the population
   void addSynapsePopulation(const string, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, const string, const string, vector<double>, vector<double>, vector<double>, vector<double>); //!< Method for adding a synapse population to a neuronal network model, using C++ string for the name of the population

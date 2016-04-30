@@ -17,6 +17,7 @@
 #define _MODELSPEC_CC_ //!< macro for avoiding multiple inclusion during compilation
 
 #include "utils.h"
+#include "stringUtils.h"
 
 // ------------------------------------------------------------------------
 //! \brief Method for GeNN initialisation (by preparing standard models)
@@ -42,7 +43,7 @@ NNmodel::NNmodel()
   needSynapseDelay = 0;
   setPrecision(0);
   setTiming(FALSE);
-  RNtype= tS("uint64_t");
+  RNtype= "uint64_t";
 #ifndef CPU_ONLY
   setGPUDevice(AUTODEVICE);
 #endif
@@ -58,7 +59,7 @@ void NNmodel::setName(const string inname)
     if (final) {
 	gennError("Trying to set the name of a finalized model.");
     }
-    name= toString(inname);
+    name= inname;
 }
 
 
@@ -212,48 +213,48 @@ void NNmodel::initLearnGrps()
     for (int i = 0; i < neuronGrpN; i++) {
 	neuronVarNeedQueue[i] = vector<bool>(nModels[neuronType[i]].varNames.size(), FALSE);
     }
-    neuronSpkEvntCondition.assign(neuronGrpN, tS(""));
+    neuronSpkEvntCondition.assign(neuronGrpN, "");
 
     for (int i = 0; i < synapseGrpN; i++) {
 	weightUpdateModel wu = weightUpdateModels[synapseType[i]];
 	unsigned int src = synapseSource[i];
 	vector<string> vars = nModels[neuronType[src]].varNames;
 
-	if (wu.simCode != tS("")) {
+	if (wu.simCode != "") {
 	    synapseUsesTrueSpikes[i] = TRUE;
 	    neuronNeedTrueSpk[src] = TRUE;
 
 	    // analyze which neuron variables need queues
 	    for (int j = 0; j < vars.size(); j++) {
-		if (wu.simCode.find(vars[j] + tS("_pre")) != string::npos) {
+		if (wu.simCode.find(vars[j] + "_pre") != string::npos) {
 		    neuronVarNeedQueue[src][j] = TRUE;
 		}
 	    }
 	}
-	if (wu.simCodeEvnt != tS("")) {
+	if (wu.simCodeEvnt != "") {
 	    synapseUsesSpikeEvents[i] = TRUE;
 	    neuronNeedSpkEvnt[src] = TRUE;
 
-	    assert(wu.evntThreshold != tS(""));
+	    assert(wu.evntThreshold != "");
  
 	    // add to the source population spike event condition
-	    if (neuronSpkEvntCondition[src] == tS("")) {
-		neuronSpkEvntCondition[src] = tS("(") + wu.evntThreshold + tS(")");
+	    if (neuronSpkEvntCondition[src] == "") {
+		neuronSpkEvntCondition[src] = "(" + wu.evntThreshold + ")";
 	    }
 	    else {
-		neuronSpkEvntCondition[src] += tS(" || (") + wu.evntThreshold + tS(")");
+		neuronSpkEvntCondition[src] += " || (" + wu.evntThreshold + ")";
 	    }
 
 	    // analyze which neuron variables need queues
 	    for (int j = 0; j < vars.size(); j++) {
-		if (wu.simCodeEvnt.find(vars[j] + tS("_pre")) != string::npos) {
+		if (wu.simCodeEvnt.find(vars[j] + "_pre") != string::npos) {
 		    neuronVarNeedQueue[src][j] = TRUE;
 		}
 	    }
 		
 	}
 
-	if (wu.simLearnPost != tS("")) {
+	if (wu.simLearnPost != "") {
 	    unsigned int padnN = ceil((double) neuronN[synapseSource[i]] / (double) learnBlkSz) * (double) learnBlkSz;
 	    synapseUsesPostLearning[i] = TRUE;
 	    fprintf(stdout, "detected learning synapse at %d \n", i);
@@ -266,13 +267,13 @@ void NNmodel::initLearnGrps()
 	    lrnSynGrp.push_back(i);
 	    lrnGroups++;
 	    for (int j = 0; j < vars.size(); j++) {
-		if (wu.simLearnPost.find(vars[j] + tS("_pre")) != string::npos) {
+		if (wu.simLearnPost.find(vars[j] + "_pre") != string::npos) {
 		    neuronVarNeedQueue[src][j] = TRUE;
 		}
 	    }
 	}
 
-	if (wu.synapseDynamics != tS("")) {
+	if (wu.synapseDynamics != "") {
 	    unsigned int padnN;
 	    if (synapseConnType[i] == SPARSE) {
 		padnN = ceil((double) neuronN[synapseSource[i]]*maxConn[i] / (double) synDynBlkSz) * (double) synDynBlkSz;
@@ -292,7 +293,7 @@ void NNmodel::initLearnGrps()
 	    synDynGrp.push_back(i);
 	    synDynGroups++;
 	    for (int j = 0; j < vars.size(); j++) {
-		if (wu.synapseDynamics.find(vars[j] + tS("_pre")) != string::npos) {
+		if (wu.synapseDynamics.find(vars[j] + "_pre") != string::npos) {
 		    neuronVarNeedQueue[src][j] = TRUE;
 		}
 	    }
@@ -310,9 +311,9 @@ void NNmodel::initLearnGrps()
 	    if (find(neuronKernelParameters.begin(), neuronKernelParameters.end(), pnamefull) == neuronKernelParameters.end()) {
 		// parameter wasn't registered yet - is it used?
 		bool used= 0;
-		if (nModels[nt].simCode.find(tS("$(")+pname+tS(")")) != string::npos) used= 1; // it's used
-		if (nModels[nt].thresholdConditionCode.find(tS("$(")+pname+tS(")")) != string::npos) used= 1; // it's used
-		if (nModels[nt].resetCode.find(tS("$(")+pname+tS(")")) != string::npos) used= 1; // it's used
+		if (nModels[nt].simCode.find("$(" + pname + ")") != string::npos) used= 1; // it's used
+		if (nModels[nt].thresholdConditionCode.find("$(" + pname + ")") != string::npos) used= 1; // it's used
+		if (nModels[nt].resetCode.find("$(" + pname + ")") != string::npos) used= 1; // it's used
 		if (used) {
 		    neuronKernelParameters.push_back(pnamefull);
 		    neuronKernelParameterTypes.push_back(ptype);
@@ -330,7 +331,7 @@ void NNmodel::initLearnGrps()
 	    if (find(neuronKernelParameters.begin(), neuronKernelParameters.end(), pnamefull) == neuronKernelParameters.end()) {
 		// parameter wasn't registered yet - is it used?
 		bool used= 0;
-		if (neuronSpkEvntCondition[src].find(tS("$(")+pname+tS(")")) != string::npos) used= 1; // it's used
+		if (neuronSpkEvntCondition[src].find("$(" + pname + ")") != string::npos) used= 1; // it's used
  		if (used) {
 		    neuronKernelParameters.push_back(pnamefull);
 		    neuronKernelParameterTypes.push_back(ptype);
@@ -347,8 +348,8 @@ void NNmodel::initLearnGrps()
 	nt[0]= neuronType[src]; // pre
 	nt[1]= neuronType[trg]; // post
 	string suffix[2];
-	suffix[0]= tS("_pre");
-	suffix[1]= tS("_post");
+	suffix[0]= "_pre";
+	suffix[1]= "_post";
 	for (int k= 0; k < 2; k++) {
 	    for (int j= 0, l= nModels[nt[k]].extraGlobalNeuronKernelParameters.size(); j < l; j++) {
 		string pname= nModels[nt[k]].extraGlobalNeuronKernelParameters[j];
@@ -357,9 +358,9 @@ void NNmodel::initLearnGrps()
 		if (find(synapseKernelParameters.begin(), synapseKernelParameters.end(), pnamefull) == synapseKernelParameters.end()) {
 		    // parameter wasn't registered yet - is it used?
 		    bool used= 0;
-		    if (wu.simCode.find(tS("$(")+pname+suffix[k]) != string::npos) used= 1; // it's used
-		    if (wu.simCodeEvnt.find(tS("$(")+pname+suffix[k]) != string::npos) used= 1; // it's used
-		    if (wu.evntThreshold.find(tS("$(")+pname+suffix[k]) != string::npos) used= 1; // it's used
+		    if (wu.simCode.find("$(" + pname + suffix[k]) != string::npos) used= 1; // it's used
+		    if (wu.simCodeEvnt.find("$(" + pname + suffix[k]) != string::npos) used= 1; // it's used
+		    if (wu.evntThreshold.find("$(" + pname + suffix[k]) != string::npos) used= 1; // it's used
 		    if (used) {
 			synapseKernelParameters.push_back(pnamefull);
 			synapseKernelParameterTypes.push_back(ptype);
@@ -374,7 +375,7 @@ void NNmodel::initLearnGrps()
 	    if (find(synapseKernelParameters.begin(), synapseKernelParameters.end(), pnamefull) == synapseKernelParameters.end()) {
 		// parameter wasn't registered yet - is it used?
 		bool used= 0;
-		if (wu.simCode.find(tS("$(")+pname+tS(")")) != string::npos) used= 1; // it's used
+		if (wu.simCode.find("$(" + pname + ")") != string::npos) used= 1; // it's used
  		if (used) {
 		    synapseKernelParameters.push_back(pnamefull);
 		    synapseKernelParameterTypes.push_back(ptype);
@@ -392,8 +393,8 @@ void NNmodel::initLearnGrps()
 	nt[0]= neuronType[src]; // pre
 	nt[1]= neuronType[trg]; // post
 	string suffix[2];
-	suffix[0]= tS("_pre");
-	suffix[1]= tS("_post");
+	suffix[0]= "_pre";
+	suffix[1]= "_post";
 	for (int k= 0; k < 2; k++) {
 	    for (int j= 0, l= nModels[nt[k]].extraGlobalNeuronKernelParameters.size(); j < l; j++) {
 		string pname= nModels[nt[k]].extraGlobalNeuronKernelParameters[j];
@@ -402,7 +403,7 @@ void NNmodel::initLearnGrps()
 		if (find(simLearnPostKernelParameters.begin(), simLearnPostKernelParameters.end(), pnamefull) == simLearnPostKernelParameters.end()) {
 		    // parameter wasn't registered yet - is it used?
 		    bool used= 0;
-		    if (wu.simLearnPost.find(tS("$(")+pname+suffix[k]) != string::npos) used= 1; // it's used
+		    if (wu.simLearnPost.find("$(" + pname + suffix[k]) != string::npos) used= 1; // it's used
 		    if (used) {
 			simLearnPostKernelParameters.push_back(pnamefull);
 			simLearnPostKernelParameterTypes.push_back(ptype);
@@ -417,7 +418,7 @@ void NNmodel::initLearnGrps()
 	    if (find(simLearnPostKernelParameters.begin(), simLearnPostKernelParameters.end(), pnamefull) == simLearnPostKernelParameters.end()) {
 		// parameter wasn't registered yet - is it used?
 		bool used= 0;
-		if (wu.simLearnPost.find(tS("$(")+pname+tS(")")) != string::npos) used= 1; // it's used
+		if (wu.simLearnPost.find("$(" + pname + ")") != string::npos) used= 1; // it's used
  		if (used) {
 		    simLearnPostKernelParameters.push_back(pnamefull);
 		    simLearnPostKernelParameterTypes.push_back(ptype);
@@ -435,8 +436,8 @@ void NNmodel::initLearnGrps()
 	nt[0]= neuronType[src]; // pre
 	nt[1]= neuronType[trg]; // post
 	string suffix[2];
-	suffix[0]= tS("_pre");
-	suffix[1]= tS("_post");
+	suffix[0]= "_pre";
+	suffix[1]= "_post";
 	for (int k= 0; k < 2; k++) {
 	    for (int j= 0, l= nModels[nt[k]].extraGlobalNeuronKernelParameters.size(); j < l; j++) {
 		string pname= nModels[nt[k]].extraGlobalNeuronKernelParameters[j];
@@ -445,7 +446,7 @@ void NNmodel::initLearnGrps()
 		if (find(synapseDynamicsKernelParameters.begin(), synapseDynamicsKernelParameters.end(), pnamefull) == synapseDynamicsKernelParameters.end()) {
 		    // parameter wasn't registered yet - is it used?
 		    bool used= 0;
-		    if (wu.synapseDynamics.find(tS("$(")+pname+suffix[k]) != string::npos) used= 1; // it's used
+		    if (wu.synapseDynamics.find("$(" + pname + suffix[k]) != string::npos) used= 1; // it's used
 		    if (used) {
 			synapseDynamicsKernelParameters.push_back(pnamefull);
 			synapseDynamicsKernelParameterTypes.push_back(ptype);
@@ -460,7 +461,7 @@ void NNmodel::initLearnGrps()
 	    if (find(synapseDynamicsKernelParameters.begin(), synapseDynamicsKernelParameters.end(), pnamefull) == synapseDynamicsKernelParameters.end()) {
 		// parameter wasn't registered yet - is it used?
 		bool used= 0;
-		if (wu.synapseDynamics.find(tS("$(")+pname+tS(")")) != string::npos) used= 1; // it's used
+		if (wu.synapseDynamics.find("$(" + pname + ")") != string::npos) used= 1; // it's used
  		if (used) {
 		    synapseDynamicsKernelParameters.push_back(pnamefull);
 		    synapseDynamicsKernelParameterTypes.push_back(ptype);
@@ -520,24 +521,6 @@ void NNmodel::setSynapseClusterIndex(const string synapseGroup, /**< Name of the
 //--------------------------------------------------------------------------
 /*! \overload
 
-  This function is an alternative method to the standard addNeuronPopulation that allows the use of constant character arrays instead of C++ strings
- */
-//--------------------------------------------------------------------------
-
-void NNmodel::addNeuronPopulation(
-  const char *name, /**< Name of the neuron population */
-  unsigned int nNo, /**< Number of neurons in the population  */
-  unsigned int type, /**< Type of the neurons, refers to either a standard type or user-defined type */
-  double *p, /**< Parameters of this neuron type */
-  double *ini /**< Initial values for variables of this neuron type */)
-{
-    addNeuronPopulation(toString(name), nNo, type, p, ini);
-}
-
-
-//--------------------------------------------------------------------------
-/*! \overload
-
   This function adds a neuron population to a neuronal network models, assigning the name, the number of neurons in the group, the neuron type, parameters and initial values, the latter two defined as double *
  */
 //--------------------------------------------------------------------------
@@ -574,22 +557,22 @@ void NNmodel::addNeuronPopulation(
   vector<double> ini /**< Initial values for variables of this neuron type */)
 {
     if (!GeNNReady) {
-      gennError(tS("You need to call initGeNN first."));
+      gennError("You need to call initGeNN first.");
     }
     if (final) {
 	gennError("Trying to add a neuron population to a finalized model.");
     }
     unsigned int i= neuronGrpN++;
     
-    neuronName.push_back(toString(name));
+    neuronName.push_back(name);
     neuronN.push_back(nNo);
     neuronType.push_back(type);
     if (p.size() != nModels[type].pNames.size()) {
-      gennError(tS("The number of neuron parameters for group ")+name+tS(" does not match that of their neuron type, ")+tS(p.size())+tS(" != ")+tS(nModels[type].pNames.size()));
+      gennError("The number of neuron parameters for group " + name + " does not match that of their neuron type, " + tS(p.size()) + " != " + tS(nModels[type].pNames.size()));
     }
     neuronPara.push_back(p);
     if (ini.size() != nModels[type].varNames.size()) {
-      gennError(tS("The number of initial variables for neuron group ")+name+tS(" does not match that of their neuron type, ")+tS(ini.size())+tS(" != ")+tS(nModels[type].varNames.size())); 
+      gennError("The number of initial variables for neuron group " + name + " does not match that of their neuron type, " + tS(ini.size()) + " != " + tS(nModels[type].varNames.size())); 
     }   
     neuronIni.push_back(ini);
     vector<unsigned int> tv;
@@ -597,7 +580,7 @@ void NNmodel::addNeuronPopulation(
     outSyn.push_back(tv);  // empty list of input synapse groups for neurons i 
     neuronNeedSt.push_back(FALSE);
     neuronNeedSpkEvnt.push_back(FALSE);
-    string tmp= tS("");
+    string tmp= "";
     neuronSpkEvntCondition.push_back(tmp);
     neuronDelaySlots.push_back(1);
     initDerivedNeuronPara(i);
@@ -640,29 +623,6 @@ void NNmodel::addSynapsePopulation(
   gennError("This version of addSynapsePopulation() has been depreciated since GeNN 2.2. Please use the newer addSynapsePopulation functions instead.");
 }
 
-//--------------------------------------------------------------------------
-/*! \overload
-
-  This function is an alternative method to the standard addSynapsePopulation that allows the use of constant character arrays instead of C++ strings.
- */
-//--------------------------------------------------------------------------
-
-void NNmodel::addSynapsePopulation(
-  const char *name, /**<  The name of the synapse population*/
-  unsigned int syntype, /**< The type of synapse to be added (i.e. learning mode) */
-  unsigned int conntype, /**< The type of synaptic connectivity*/
-  unsigned int gtype, /**< The way how the synaptic conductivity g will be defined*/
-  unsigned int delaySteps, /**< Number of delay slots*/
-  unsigned int postsyn, /**< Postsynaptic integration method*/
-  const char *src, /**< Name of the (existing!) pre-synaptic neuron population*/
-  const char *trg, /**< Name of the (existing!) post-synaptic neuron population*/
-  double *p, /**< A C-type array of doubles that contains synapse parameter values (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored.*/
-  double * PSVini, /**< A C-type array of doubles that contains the initial values for postsynaptic mechanism variables (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored.*/
-  double *ps/**< A C-type array of doubles that contains postsynaptic mechanism parameter values (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored.*/) 
-{
-  addSynapsePopulation(toString(name), syntype, conntype, gtype, delaySteps, postsyn, toString(src), toString(trg), p, PSVini, ps);
-}
-
 
 //--------------------------------------------------------------------------
 /*! \brief Overloaded old version 
@@ -682,7 +642,7 @@ void NNmodel::addSynapsePopulation(
   double* PSVini, /**< A C-type array of doubles that contains the initial values for postsynaptic mechanism variables (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored.*/
   double *ps /**< A C-type array of doubles that contains postsynaptic mechanism parameter values (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored.*/ )
 {
-    cerr << "!!!!!!GeNN WARNING: You use the overloaded method which passes a null pointer for the initial values of weight update variables. If you use a method that uses synapse variables, please add a pointer to this vector in the function call, like:\n  	addSynapsePopulation(name, syntype, conntype, gtype, NO_DELAY, EXPDECAY, src, target, double * SYNVARINI, params, postSynV,postExpSynapsePopn);" << endl;
+    cerr << "!!!!!!GeNN WARNING: This function has been depreciated since GeNN 2.2, and will be removed in a future release. You use the overloaded method which passes a null pointer for the initial values of weight update variables. If you use a method that uses synapse variables, please add a pointer to this vector in the function call, like:\n  	addSynapsePopulation(name, syntype, conntype, gtype, NO_DELAY, EXPDECAY, src, target, double * SYNVARINI, params, postSynV,postExpSynapsePopn);" << endl;
     double *iniv = NULL;
     addSynapsePopulation(name, syntype, conntype, gtype, delaySteps, postsyn, src, trg, iniv, p, PSVini, ps);
 }
@@ -828,16 +788,16 @@ void NNmodel::setPrecision(unsigned int floattype /**<  */)
     }
   switch (floattype) {
      case 0:
-	ftype = toString("float");
+	ftype = "float";
 	break;
      case 1:
-	ftype = toString("double"); // not supported by compute capability < 1.3
+	ftype = "double"; // not supported by compute capability < 1.3
 	break;
      case 2:
-	ftype = toString("long double"); // not supported by CUDA at the moment.
+	ftype = "long double"; // not supported by CUDA at the moment.
 	break;
      default:
-	ftype = toString("float");
+	ftype = "float";
   }
 }
 
@@ -984,10 +944,10 @@ string NNmodel::scalarExpr(const double val)
 {
     string tmp;
     float fval= (float) val;
-    if (ftype == tS("float")) {
+    if (ftype == "float") {
 	tmp= tS(fval) + "f";
     }
-    if (ftype == tS("double")) {
+    if (ftype == "double") {
 	tmp= tS(val);
     }
     return tmp;
