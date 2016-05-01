@@ -85,20 +85,6 @@ void NNmodel::initDerivedNeuronPara(unsigned int i /**< index of the neuron popu
 }
 
 
-void NNmodel::initNeuronSpecs(unsigned int i /**< index of the neuron population */)
-{
-    // padnN is the lowest multiple of neuronBlkSz >= neuronN[i]
-    unsigned int padnN = ceil((double) neuronN[i] / (double) neuronBlkSz) * (double) neuronBlkSz;
-    if (i == 0) {
-	sumNeuronN.push_back(neuronN[i]);
-	padSumNeuronN.push_back(padnN);
-    }
-    else {
-	sumNeuronN.push_back(sumNeuronN[i - 1] + neuronN[i]); 
-	padSumNeuronN.push_back(padSumNeuronN[i - 1] + padnN); 
-    }
-}
-
 //--------------------------------------------------------------------------
 /*! \brief This function calculates derived synapse parameters from primary synapse parameters. 
 
@@ -118,6 +104,7 @@ void NNmodel::initDerivedSynapsePara(unsigned int i /**< index of the synapse po
     dsp_w.push_back(tmpP);	
 }
 
+
 //--------------------------------------------------------------------------
 /*! \brief This function calculates the derived synaptic parameters in the employed post-synaptic model  based on the given underlying post-synapse parameters */
 //--------------------------------------------------------------------------
@@ -134,6 +121,7 @@ void NNmodel::initDerivedPostSynapsePara(unsigned int i)
     dpsp.push_back(tmpP);
 }
 
+
 //--------------------------------------------------------------------------
 /*! \brief This function generates the necessary entries so that a synapse population is known to source and target neuron groups.
 
@@ -148,17 +136,6 @@ void NNmodel::registerSynapsePopulation(unsigned int i /**< index of the synapse
     inSyn[synapseTarget[i]].push_back(i);
     synapseOutSynNo.push_back(outSyn[synapseSource[i]].size());
     outSyn[synapseSource[i]].push_back(i);
-
-    // padnN is the lowest multiple of synapseBlkSz >= neuronN[synapseTarget[i]]
-    // TODO: are these sums and padded sums used anywhere at all???
-    unsigned int padnN = ceil((double) neuronN[synapseTarget[i]] / (double) synapseBlkSz) * (double) synapseBlkSz;
-    if (i == 0) {
-	padSumSynapseKrnl.push_back(padnN);
-    }
-    else {
-	padSumSynapseKrnl.push_back(padSumSynapseKrnl[i - 1] + padnN);
-    }
-    //fprintf(stderr, " sum of padded postsynaptic neurons for group %u is %u, krnl size is %u\n", i, padSumSynapseTrgN[i],padSumSynapseKrnl[i]);
 }
 
 
@@ -255,15 +232,7 @@ void NNmodel::initLearnGrps()
 	}
 
 	if (wu.simLearnPost != "") {
-	    unsigned int padnN = ceil((double) neuronN[synapseSource[i]] / (double) learnBlkSz) * (double) learnBlkSz;
 	    synapseUsesPostLearning[i] = TRUE;
-	    fprintf(stdout, "detected learning synapse at %d \n", i);
-	    if (lrnGroups == 0) {
-		padSumLearnN.push_back(padnN);
-	    }
-	    else {
-		padSumLearnN.push_back(padSumLearnN[lrnGroups-1] + padnN); 
-	    }
 	    lrnSynGrp.push_back(i);
 	    lrnGroups++;
 	    for (int j = 0; j < vars.size(); j++) {
@@ -274,22 +243,7 @@ void NNmodel::initLearnGrps()
 	}
 
 	if (wu.synapseDynamics != "") {
-	    unsigned int padnN;
-	    if (synapseConnType[i] == SPARSE) {
-		padnN = ceil((double) neuronN[synapseSource[i]]*maxConn[i] / (double) synDynBlkSz) * (double) synDynBlkSz;
-	    }
-	    else {
-		padnN = ceil((double) neuronN[synapseSource[i]]*neuronN[synapseTarget[i]] / (double) synDynBlkSz) * (double) synDynBlkSz;
-		cerr << "# SYNDYN_PADN: " << padnN << endl;
-	    }
 	    synapseUsesSynapseDynamics[i]= TRUE;
-	    fprintf(stdout, "detected synapseDynamics synapse at %d \n", i);
-	    if (synDynGroups == 0) {
-		    padSumSynDynN.push_back(padnN);
-	    }
-	    else {
-		    padSumSynDynN.push_back(padSumSynDynN[synDynGroups-1] + padnN); 
-	    }
 	    synDynGrp.push_back(i);
 	    synDynGroups++;
 	    for (int j = 0; j < vars.size(); j++) {
@@ -469,7 +423,7 @@ void NNmodel::initLearnGrps()
 	    }
 	}
     }
-    
+
 #ifndef CPU_ONLY
     // figure out where to reset the spike counters
     if (synapseGrpN == 0) { // no synapses -> reset in neuron kernel
@@ -485,6 +439,7 @@ void NNmodel::initLearnGrps()
     }
 #endif
 }
+
 
 //--------------------------------------------------------------------------
 /*! \brief This function is a tool to find the numeric ID of a synapse population based on the name of the synapse population.
@@ -603,6 +558,7 @@ void NNmodel::activateDirectInput(
     gennError("This function has been deprecated since GeNN 2.2. Use neuron variables, extraGlobalNeuronKernelParameters, or parameters instead.");
 }
 
+
 //--------------------------------------------------------------------------
 /*! \overload
 
@@ -647,6 +603,7 @@ void NNmodel::addSynapsePopulation(
     addSynapsePopulation(name, syntype, conntype, gtype, delaySteps, postsyn, src, trg, iniv, p, PSVini, ps);
 }
 
+
 //--------------------------------------------------------------------------
 /*! \brief This function adds a synapse population to a neuronal network model, assigning the name, the synapse type, the connectivity type, the type of conductance specification, the source and destination neuron populations, and the synaptic parameters.
  */
@@ -685,6 +642,7 @@ void NNmodel::addSynapsePopulation(
   addSynapsePopulation(name, syntype, conntype, gtype, delaySteps, postsyn, src, trg, vsynini, vp, vpsini, vps);
 }
 
+
 //--------------------------------------------------------------------------
 /*! \brief This function adds a synapse population to a neuronal network model, assigning the name, the synapse type, the connectivity type, the type of conductance specification, the source and destination neuron populations, and the synaptic parameters.
  */
@@ -715,6 +673,7 @@ void NNmodel::addSynapsePopulation(
     synapseName.push_back(name);
     synapseType.push_back(syntype);
     synapseConnType.push_back(conntype);
+    maxConn.push_back(0);
     synapseGType.push_back(gtype);
     srcNumber = findNeuronGrp(src);
     synapseSource.push_back(srcNumber);
@@ -722,7 +681,7 @@ void NNmodel::addSynapsePopulation(
     synapseTarget.push_back(trgNumber);
     synapseDelay.push_back(delaySteps);
     if (delaySteps >= neuronDelaySlots[srcNumber]) {
-	neuronDelaySlots[srcNumber] = delaySteps+1;
+	neuronDelaySlots[srcNumber] = delaySteps + 1;
 	needSynapseDelay = 1;
     }
     if (weightUpdateModels[syntype].needPreSt) {
@@ -749,8 +708,10 @@ void NNmodel::addSynapsePopulation(
     if (maxConn.size() < synapseGrpN) maxConn.resize(synapseGrpN);
     maxConn[i]= neuronN[trgNumber];
     synapseSpanType.push_back(0);
-// TODO set uses*** variables for synaptic populations  
+
+    // TODO set uses*** variables for synaptic populations
 }
+
 
 //--------------------------------------------------------------------------
 /*! \brief This functions sets the global value of the maximal synaptic conductance for a synapse population that was idfentified as conductance specifcation method "GLOBALG" 
@@ -760,7 +721,7 @@ void NNmodel::addSynapsePopulation(
 void NNmodel::setSynapseG(const string sName, /**<  */
                           double g /**<  */)
 {
-  cerr << "NOTE: This function has been deprecated as of GeNN 2.2. Please provide the correct initial values in \"addSynapsePopulation\" for all your variables and they will be the constant values in the GLOBALG mode - global \"G\" not set." << endl;
+    gennError("NOTE: This function has been deprecated as of GeNN 2.2. Please provide the correct initial values in \"addSynapsePopulation\" for all your variables and they will be the constant values in the GLOBALG mode - global \"G\" not set.");
 }
 
 
@@ -801,6 +762,7 @@ void NNmodel::setPrecision(unsigned int floattype /**<  */)
   }
 }
 
+
 //--------------------------------------------------------------------------
 /*! \brief This function sets a flag to determine whether timers and timing commands are to be included in generated code.
  */
@@ -813,6 +775,7 @@ void NNmodel::setTiming(bool theTiming /**<  */)
     }
     timing= theTiming;
 }
+
 
 //--------------------------------------------------------------------------
 /*! \brief This function sets the random seed. If the passed argument is > 0, automatic seeding is disabled. If the argument is 0, the underlying seed is obtained from the time() function.
@@ -827,98 +790,6 @@ void NNmodel::setSeed(unsigned int inseed /*!< the new seed  */)
     seed= inseed;
 }
 
-//--------------------------------------------------------------------------
-/*! \brief This function defines the maximum number of connections for a neuron in the population
-*/ 
-//--------------------------------------------------------------------------
-
-void NNmodel::setMaxConn(const string sname, /**<  */
-                         unsigned int maxConnP /**<  */)
-{
-    if (final) {
-	gennError("Trying to set MaxConn in a finalized model.");
-    }
-  cout << "resizing maxConn of " << sname << " to " << maxConnP << "..." << endl;
-  unsigned int found= findSynapseGrp(sname);
-  if (padSumSynapseKrnl.size() < found+1) padSumSynapseKrnl.resize(found+1);
-
-  if (synapseConnType[found] == SPARSE){
-    if (maxConn.size() < synapseGrpN) maxConn.resize(synapseGrpN);
-    maxConn[found]= maxConnP;
-
-    // set padnC is the lowest multiple of synapseBlkSz >= maxConn[found]
-    unsigned int padnC = ceil((double)maxConn[found] / (double)synapseBlkSz) * (double)synapseBlkSz;
-
-    if (found == 0) {
-      padSumSynapseKrnl[found]=padnC;
-      //fprintf(stderr, "padSumSynapseKrnl[%d] is %u\n", found, padSumSynapseKrnl[found]);
-    }
-    else {
-      unsigned int toOmitK = padSumSynapseKrnl[found]-padSumSynapseKrnl[found-1];
-      padSumSynapseKrnl[found]=padSumSynapseKrnl[found-1]+padnC;
-      for (int j=found+1;j<padSumSynapseKrnl.size();j++){    	
-	      padSumSynapseKrnl[j]=padSumSynapseKrnl[j]-toOmitK+padnC;
-	    }
-    }
-  }
-  else {
-    fprintf(stderr,"WARNING: Synapse group %u is all-to-all connected. Maxconn variable is not needed in this case. Setting size to %u is not stable. Skipping...\n", found, maxConnP);
-
-    /*unsigned int padnC = ceil((double)maxConnP / (double)synapseBlkSz) * (double)synapseBlkSz;
-      if (found == 0) {
-      padSumSynapseKrnl[found]=padnN;
-      }
-      else{
-      unsigned int toOmitK = padSumSynapseKrnl[found]-padSumSynapseKrnl[found-1];
-      padSumSynapseKrnl[found]=padSumSynapseKrnl[found-1]+padnC;
-      for (int j=found+1,j<padSumSynapseKrnl.size(),j++){    	
-      padSumSynapseKrnl[j]=padSumSynapseKrnl[j]-toOmitK+padnC;
-      }
-      }*/
-  }
-}
-
-//--------------------------------------------------------------------------
-/*! \brief This function defines the execution order of the synapses in the kernels (0 : execute for every postsynaptic neuron 1: execute for every presynaptic neuron)
-*/ 
-//--------------------------------------------------------------------------
-
-void NNmodel::setSpanTypeToPre(const string sname /**<  */
-                         )
-{
-  if (final) {
-	  gennError("Trying to set spanType in a finalized model.");
-  }
-  cout << "Changing spanType of the synapse " << sname << " to 1 (pre-to-post)..." << endl;
-  unsigned int found= findSynapseGrp(sname);
-
-
-  if (synapseConnType[found] == SPARSE){
-    synapseSpanType[found]=1;
-    if (padSumSynapseKrnl.size() < found+1) padSumSynapseKrnl.resize(found+1);
-    // set padnC is the lowest multiple of synapseBlkSz >= neuronN[synapseSource[found]
-
-    unsigned int padnC = ceil((double)neuronN[synapseSource[found]] / (double)synapseBlkSz) * (double)synapseBlkSz;
-
-
-    if (found == 0) {
-      padSumSynapseKrnl[found]=padnC;
-      //fprintf(stderr, "padSumSynapseKrnl[%d] is %u\n", found, padSumSynapseKrnl[found]);
-    }
-    else {
-      unsigned int toOmitK = padSumSynapseKrnl[found]-padSumSynapseKrnl[found-1];
-      padSumSynapseKrnl[found]=padSumSynapseKrnl[found-1]+padnC;
-      for (int j=found+1;j<padSumSynapseKrnl.size();j++){    	
-	      padSumSynapseKrnl[j]=padSumSynapseKrnl[j]-toOmitK+padnC;
-	    }
-    }
-
-  }
-  else {
-      cerr << "This function is not enabled for dense connectivity type. Skipping..." << endl;
-	}
-
-}
 
 #ifndef CPU_ONLY
 //--------------------------------------------------------------------------
@@ -940,6 +811,7 @@ void NNmodel::setGPUDevice(int device)
 }
 #endif
 
+
 string NNmodel::scalarExpr(const double val) 
 {
     string tmp;
@@ -952,6 +824,128 @@ string NNmodel::scalarExpr(const double val)
     }
     return tmp;
 }
+
+
+void NNmodel::setPopulationSums()
+{
+    unsigned int paddedSize;
+    if (!final) {
+	gennError("Your model must be finalized before we can calculate population sums. Aborting.");
+    }
+
+    // NEED TO INITIALISE (OR RESIZE) ALL PADSUM VECTORS <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+    // NEURON GROUPS
+    for (int i = 0; i < neuronGrpN; i++) {
+	// paddedSize is the lowest multiple of neuronBlkSz >= neuronN[i]
+	paddedSize = ceil((double) neuronN[i] / (double) neuronBlkSz) * (double) neuronBlkSz;
+	if (i == 0) {
+	    sumNeuronN[i] = neuronN[i];
+	    padSumNeuronN[i] = paddedSize;
+	}
+	else {
+	    sumNeuronN[i] = sumNeuronN[i - 1] + neuronN[i]; 
+	    padSumNeuronN[i] = padSumNeuronN[i - 1] + paddedSize;
+	}
+    }
+
+    // SYNAPSE GROUPS
+    for (int i = 0; i < synapseGrpN; i++) {
+	if (synapseConnType[i] == SPARSE) {
+	    if (synapseSpanType[i] == 1) {
+		// paddedSize is the lowest multiple of synapseBlkSz >= neuronN[synapseSource[found]
+		paddedSize = ceil((double)neuronN[synapseSource[found]] / (double)synapseBlkSz) * (double)synapseBlkSz;
+	    }
+	    else {
+		// paddedSize is the lowest multiple of synapseBlkSz >= maxConn[found]
+		paddedSize = ceil((double) maxConn[found] / (double) synapseBlkSz) * (double) synapseBlkSz;
+	    }
+	}
+	else {
+	    // paddedSize is the lowest multiple of synapseBlkSz >= neuronN[synapseTarget[i]]
+	    paddedSize = ceil((double) neuronN[synapseTarget[i]] / (double) synapseBlkSz) * (double) synapseBlkSz;
+	}
+	if (i == 0) {
+	    padSumSynapseKrnl[i] = paddedSize;
+	}
+	else {
+	    padSumSynapseKrnl[i] = padSumSynapseKrnl[i - 1] + paddedSize;
+	}
+    }
+
+    // SYNAPSE DYNAMICS GROUPS
+    for (int i = 0; i < synDynGroups; i++) {
+	if (synapseConnType[i] == SPARSE) {
+	    // paddedSize is the lowest multiple of synDynBlkSz >= neuronN[synapseSource[i]] * maxConn[i]
+	    paddedSize = ceil((double) neuronN[synapseSource[i]] * maxConn[i] / (double) synDynBlkSz) * (double) synDynBlkSz;
+	}
+	else {
+	    // paddedSize is the lowest multiple of synDynBlkSz >= neuronN[synapseSource[i]] * neuronN[synapseTarget[i]]
+	    paddedSize = ceil((double) neuronN[synapseSource[i]] * neuronN[synapseTarget[i]] / (double) synDynBlkSz) * (double) synDynBlkSz;
+	}
+	if (i == 0) {
+	    padSumSynDynN[i] = paddedSize;
+	}
+	else {
+	    padSumSynDynN[i] = padSumSynDynN[i - 1] + paddedSize; 
+	}
+    }
+
+    // LEARN GROUPS
+    for (int i = 0; i < lrnGroups; i++) {
+	// paddedSize is the lowest multiple of learnBlkSz >= neuronN[synapseTarget[i]]
+	paddedSize = ceil((double) neuronN[synapseSource[i]] / (double) learnBlkSz) * (double) learnBlkSz;
+	if (i == 0) {
+	    padSumLearnN[i] = paddedSize;
+	}
+	else {
+	    padSumLearnN[i] = padSumLearnN[i - 1] + paddedSize;
+	}
+    }
+}
+
+
+//--------------------------------------------------------------------------
+/*! \brief This function defines the maximum number of connections for a neuron in the population
+*/ 
+//--------------------------------------------------------------------------
+
+void NNmodel::setMaxConn(const string sname, /**<  */
+                         unsigned int maxConnP /**<  */)
+{
+    if (final) {
+	gennError("Trying to set MaxConn in a finalized model.");
+    }
+    unsigned int found = findSynapseGrp(sname);
+    if (synapseConnType[found] == SPARSE) {
+	maxConn[found] = maxConnP;
+    }
+    else {
+	gennError("setMaxConn: Synapse group %u is all-to-all connected. Maxconn variable is not needed in this case. Setting size to %u is not stable.");
+    }
+}
+
+
+//--------------------------------------------------------------------------
+/*! \brief This function defines the execution order of the synapses in the kernels
+  (0 : execute for every postsynaptic neuron 1: execute for every presynaptic neuron)
+ */ 
+//--------------------------------------------------------------------------
+
+void NNmodel::setSpanTypeToPre(const string sname /**<  */)
+{
+    if (final) {
+	gennError("Trying to set spanType in a finalized model.");
+    }
+    unsigned int found = findSynapseGrp(sname);
+    if (synapseConnType[found] == SPARSE) {
+	synapseSpanType[found] = 1;
+    }
+    else {
+	gennError("setSpanTypeToPre: This function is not enabled for dense connectivity type.");
+    }
+}
+
 
 void NNmodel::finalize()
 {

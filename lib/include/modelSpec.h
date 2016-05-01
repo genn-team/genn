@@ -279,7 +279,6 @@ private:
   void setNeuronIni(unsigned int, double*); //!< Never used
   unsigned int findNeuronGrp(const string); //!< Find the the ID number of a neuron group by its name 
   void initDerivedNeuronPara(unsigned int); //!< Method for calculating the values of derived neuron parameters.
-  void initNeuronSpecs(unsigned int); //!< Method for calculating neuron IDs, taking into account the blocksize padding between neuron populations; also initializes nThresh and neuronNeedSt for a population of neurons.
 
 
   // PRIVATE SYNAPSE FUNCTIONS
@@ -310,11 +309,12 @@ public:
   void setTiming(bool); //!< Set whether timers and timing commands are to be included
   void setSeed(unsigned int); //!< Set the random seed (disables automatic seeding if argument not 0).
   void checkSizes(unsigned int *, unsigned int *, unsigned int *); //< Check if the sizes of the initialized neuron and synapse groups are correct.
-  void finalize(); //!< Declare that the model specification is finalised in modelDefinition().
 #ifndef CPU_ONLY
   void setGPUDevice(int); //!< Method to choose the GPU to be used for the model. If "AUTODEVICE' (-1), GeNN will choose the device based on a heuristic rule.
 #endif
   string scalarExpr(const double);
+  void setPopulationSums(); //!< Set the accumulated sums of lowest multiple of kernel block size >= group sizes for all simulated groups.
+  void finalize(); //!< Declare that the model specification is finalised in modelDefinition().
 
 
   // PUBLIC NEURON FUNCTIONS

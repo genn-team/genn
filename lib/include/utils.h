@@ -36,18 +36,6 @@ using namespace std;
 #include "numlib/simpleBit.h" // bit tool macros
 
 
-//--------------------------------------------------------------------------
-/*! \brief Function called upon the detection of an error. Outputs an error message and then exits.
- */
-//--------------------------------------------------------------------------
-
-void gennError(string error)
-{
-  cerr << "GeNN error: " << error << endl;
-  exit(EXIT_FAILURE);
-}
-
-
 #ifndef CPU_ONLY
 //--------------------------------------------------------------------------
 /*! \brief Macro for wrapping cuda runtime function calls and catching any errors that may be thrown.
@@ -137,6 +125,18 @@ CUresult cudaFuncGetAttributesDriver(cudaFuncAttributes *attr, CUfunction kern) 
     return CUDA_SUCCESS;
 }
 #endif
+
+
+//--------------------------------------------------------------------------
+/*! \brief Function called upon the detection of an error. Outputs an error message and then exits.
+ */
+//--------------------------------------------------------------------------
+
+void gennError(string error)
+{
+    cerr << "GeNN error: " << error << endl;
+    exit(EXIT_FAILURE);
+}
 
 
 //--------------------------------------------------------------------------
