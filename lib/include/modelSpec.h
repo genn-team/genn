@@ -13,9 +13,6 @@
   
 --------------------------------------------------------------------------*/
 
-#ifndef _MODELSPEC_H_
-#define _MODELSPEC_H_ //!< macro for avoiding multiple inclusion during compilation
-
 //--------------------------------------------------------------------------
 /*! \file modelSpec.h
 
@@ -24,6 +21,9 @@ defining a neuron model and the class definition of NNmodel for defining a neuro
 Part of the code generation and generated code sections.
 */
 //--------------------------------------------------------------------------
+
+#ifndef _MODELSPEC_H_
+#define _MODELSPEC_H_ //!< macro for avoiding multiple inclusion during compilation
 
 #include <vector>
 #include <string>
@@ -97,77 +97,6 @@ unsigned int IZHIKEVICH_PS; //empty postsynaptic rule for the Izhikevich model.
 // currently values >1 will be defined by code generation.
 #define MAXPOSTSYN 2 // maximum number of postsynaptic integration: SpineML needs to know this
 
-class dpclass {
-public:
-  virtual double calculateDerivedParameter(int index, vector < double > pars, double dt = 1.0) {return -1;}
-};
-
-//! \brief class (struct) for specifying a neuron model.
-struct neuronModel
-{
-    string simCode; /*!< \brief Code that defines the execution of one timestep of integration of the neuron model
-		    The code will refer to $(NN) for the value of the variable with name "NN". It needs to refer to the predefined variable "ISYN", i.e. contain $(ISYN), if it is to receive input. */
-    string thresholdConditionCode; /*!< \brief Code evaluating to a bool (e.g. "V > 20") that defines the condition for a true spike in the described neuron model */
-    string resetCode; /*!< \brief Code that defines the reset action taken after a spike occurred. This can be empty */
-    string supportCode; //!< \brief Support code is made available within the neuron kernel definition file and is meant to contain user defined device functions that are used in the neuron codes. Preprocessor defines are also allowed if appropriately safeguarded against multiple definition by using ifndef; functions should be declared as "__host__ __device__" to be available for both GPU and CPU versions
-    vector<string> varNames; //!< Names of the variables in the neuron model
-    vector<string> tmpVarNames; //!< never used
-    vector<string> varTypes; //!< Types of the variable named above, e.g. "float". Names and types are matched by their order of occurrence in the vector.
-    vector<string> tmpVarTypes; //!< never used
-    vector<string> pNames; //!< Names of (independent) parameters of the model. 
-    vector<string> dpNames; /*!< \brief Names of dependent parameters of the model.      
-			      The dependent parameters are functions of independent parameters that enter into the neuron model. To avoid unecessary computational overhead, these parameters are calculated at compile time and inserted as explicit values into the generated code. See method NNmodel::initDerivedNeuronPara for how this is done.*/ 
-    vector<string> extraGlobalNeuronKernelParameters; //!< Additional parameter in the neuron kernel; it is translated to a population specific name but otherwise assumed to be one parameter per population rather than per neuron.
-    vector<string> extraGlobalNeuronKernelParameterTypes; //!< Additional parameters in the neuron kernel; they are translated to a population specific name but otherwise assumed to be one parameter per population rather than per neuron.
-    dpclass * dps; //!< \brief Derived parameters
-    bool needPreSt; //!< \brief Whether presynaptic spike times are needed or not
-    bool needPostSt; //!< \brief Whether postsynaptic spike times are needed or not
-};
-
-/*! \brief Structure to hold the information that defines a post-synaptic model (a model of how synapses affect post-synaptic neuron variables, classically in the form of a synaptic current). It also allows to define an equation for the dynamics that can be applied to the summed synaptic input variable "insyn".
- */
-
-struct postSynModel
-{
-    string postSyntoCurrent; //!< \brief Code that defines how postsynaptic update is translated to current 
-    string postSynDecay; //!< \brief Code that defines how postsynaptic current decays 
-    string supportCode; //!< \brief Support code is made available within the neuron kernel definition file and is meant to contain user defined device functions that are used in the neuron codes. Preprocessor defines are also allowed if appropriately safeguarded against multiple definition by using ifndef; functions should be declared as "__host__ __device__" to be available for both GPU and CPU versions
-    vector<string> varNames; //!< Names of the variables in the postsynaptic model
-    vector<string> varTypes; //!< Types of the variable named above, e.g. "float". Names and types are matched by their order of occurrence in the vector.
-    vector<string> pNames; //!< Names of (independent) parameters of the model. 
-    vector<string> dpNames; //!< \brief Names of dependent parameters of the model. 
-    dpclass *dps; //!< \brief Derived parameters 
-};
-
-/*! \brief Structure to hold the information that defines a weightupdate model (a model of how spikes affect synaptic (and/or) (mostly) post-synaptic neuron variables. It also allows to define changes in response to post-synaptic spikes/spike-like events.
- */
-
-class weightUpdateModel
-{
-public:
-    string simCode; //!< \brief Simulation code that is used for true spikes (only one time step after spike detection)
-  string simCodeEvnt; //!< \brief Simulation code that is used for spike events (all the instances where event threshold condition is met)
-  string simLearnPost; //!< \brief Simulation code which is used in the learnSynapsesPost kernel/function, where postsynaptic neuron spikes before the presynaptic neuron in the STDP window.
-  string evntThreshold; //!< \brief Simulation code for spike event detection.
-  string synapseDynamics; //!< \brief Simulation code for synapse dynamics independent of spike detection
-  string simCode_supportCode; //!< \brief Support code is made available within the synapse kernel definition file and is meant to contain user defined device functions that are used in the neuron codes. Preprocessor defines are also allowed if appropriately safeguarded against multiple definition by using ifndef; functions should be declared as "__host__ __device__" to be available for both GPU and CPU versions; note that this support code is available to simCode, evntThreshold and simCodeEvnt
-  string simLearnPost_supportCode; //!< \brief Support code is made available within the synapse kernel definition file and is meant to contain user defined device functions that are used in the neuron codes. Preprocessor defines are also allowed if appropriately safeguarded against multiple definition by using ifndef; functions should be declared as "__host__ __device__" to be available for both GPU and CPU versions
-  string synapseDynamics_supportCode; //!< \brief Support code is made available within the synapse kernel definition file and is meant to contain user defined device functions that are used in the neuron codes. Preprocessor defines are also allowed if appropriately safeguarded against multiple definition by using ifndef; functions should be declared as "__host__ __device__" to be available for both GPU and CPU versions
-  vector<string> varNames; //!< \brief Names of the variables in the postsynaptic model
-  vector<string> varTypes; //!< \brief Types of the variable named above, e.g. "float". Names and types are matched by their order of occurrence in the vector.
-  vector<string> pNames; //!< \brief Names of (independent) parameters of the model. 
-  vector<string> dpNames; //!< \brief Names of dependent parameters of the model. 
-
-  vector<string> extraGlobalSynapseKernelParameters; //!< Additional parameter in the neuron kernel; it is translated to a population specific name but otherwise assumed to be one parameter per population rather than per synapse.
-
-  vector<string> extraGlobalSynapseKernelParameterTypes; //!< Additional parameters in the neuron kernel; they are translated to a population specific name but otherwise assumed to be one parameter per population rather than per synapse.
-  dpclass *dps;
-  bool needPreSt; //!< \brief Whether presynaptic spike times are needed or not
-  bool needPostSt; //!< \brief Whether postsynaptic spike times are needed or not
-};
-
-/*! \brief Structure to hold the information that defines synapse dynamics (a model of how synapse variables change over time, independent of or in addition to changes when spikes occur).
- */
 
 /*===============================================================
 //! \brief class NNmodel for specifying a neuronal network model.
@@ -176,9 +105,7 @@ public:
 
 class NNmodel
 {
-
 public:
-
 
   // PUBLIC MODEL VARIABLES
   //========================
@@ -192,6 +119,7 @@ public:
   bool timing;
   unsigned int seed;
   unsigned int resetKernel;  //!< The identity of the kernel in which the spike counters will be reset.
+
 
   // PUBLIC NEURON VARIABLES
   //========================
@@ -255,8 +183,9 @@ public:
   vector<int> synapseHostID; //!< The ID of the cluster node which the synapse groups are computed on
   vector<int> synapseDeviceID; //!< The ID of the CUDA device which the synapse groups are comnputed on
 
+
   // PUBLIC KERNEL PARAMETER VARIABLES
-  //=========================
+  //==================================
   vector<string> neuronKernelParameters;
   vector<string> neuronKernelParameterTypes;
   vector<string> synapseKernelParameters;
