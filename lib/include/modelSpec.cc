@@ -512,31 +512,29 @@ void NNmodel::addNeuronPopulation(
   vector<double> ini /**< Initial values for variables of this neuron type */)
 {
     if (!GeNNReady) {
-      gennError("You need to call initGeNN first.");
+	gennError("You need to call initGeNN first.");
     }
     if (final) {
 	gennError("Trying to add a neuron population to a finalized model.");
     }
+    if (p.size() != nModels[type].pNames.size()) {
+	gennError("The number of parameter values for neuron group " + name + " does not match that of their neuron type, " + tS(p.size()) + " != " + tS(nModels[type].pNames.size()));
+    }
+    if (ini.size() != nModels[type].varNames.size()) {
+	gennError("The number of variable initial values for neuron group " + name + " does not match that of their neuron type, " + tS(ini.size()) + " != " + tS(nModels[type].varNames.size())); 
+    }   
+
     unsigned int i= neuronGrpN++;
-    
     neuronName.push_back(name);
     neuronN.push_back(nNo);
     neuronType.push_back(type);
-    if (p.size() != nModels[type].pNames.size()) {
-      gennError("The number of neuron parameters for group " + name + " does not match that of their neuron type, " + tS(p.size()) + " != " + tS(nModels[type].pNames.size()));
-    }
     neuronPara.push_back(p);
-    if (ini.size() != nModels[type].varNames.size()) {
-      gennError("The number of initial variables for neuron group " + name + " does not match that of their neuron type, " + tS(ini.size()) + " != " + tS(nModels[type].varNames.size())); 
-    }   
     neuronIni.push_back(ini);
-    vector<unsigned int> tv;
-    inSyn.push_back(tv);  // empty list of input synapse groups for neurons i 
-    outSyn.push_back(tv);  // empty list of input synapse groups for neurons i 
+    inSyn.push_back(vector<unsigned int>());
+    outSyn.push_back(vector<unsigned int>());
     neuronNeedSt.push_back(FALSE);
     neuronNeedSpkEvnt.push_back(FALSE);
-    string tmp= "";
-    neuronSpkEvntCondition.push_back(tmp);
+    neuronSpkEvntCondition.push_back("");
     neuronDelaySlots.push_back(1);
     initDerivedNeuronPara(i);
     initNeuronSpecs(i);
@@ -574,7 +572,7 @@ void NNmodel::addSynapsePopulation(
   unsigned int gtype, /**< The way how the synaptic conductivity g will be defined*/
   const string src, /**< Name of the (existing!) pre-synaptic neuron population*/
   const string target, /**< Name of the (existing!) post-synaptic neuron population*/
-  double *params/**< A C-type array of doubles that contains synapse parameter values (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored.*/)
+  double *params/**< A C-type array of doubles that contains synapse parameter values (common to all synapses of the population) which will be used for the defined synapses.*/)
 {
   gennError("This version of addSynapsePopulation() has been deprecated since GeNN 2.2. Please use the newer addSynapsePopulation functions instead.");
 }
@@ -594,9 +592,9 @@ void NNmodel::addSynapsePopulation(
   unsigned int postsyn, /**< Postsynaptic integration method*/
   const string src, /**< Name of the (existing!) pre-synaptic neuron population*/
   const string trg, /**< Name of the (existing!) post-synaptic neuron population*/
-  double *p, /**< A C-type array of doubles that contains synapse parameter values (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored.*/
-  double* PSVini, /**< A C-type array of doubles that contains the initial values for postsynaptic mechanism variables (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored.*/
-  double *ps /**< A C-type array of doubles that contains postsynaptic mechanism parameter values (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored.*/ )
+  double *p, /**< A C-type array of doubles that contains synapse parameter values (common to all synapses of the population) which will be used for the defined synapses.*/
+  double* PSVini, /**< A C-type array of doubles that contains the initial values for postsynaptic mechanism variables (common to all synapses of the population) which will be used for the defined synapses.*/
+  double *ps /**< A C-type array of doubles that contains postsynaptic mechanism parameter values (common to all synapses of the population) which will be used for the defined synapses.*/)
 {
     cerr << "!!!!!!GeNN WARNING: This function has been deprecated since GeNN 2.2, and will be removed in a future release. You use the overloaded method which passes a null pointer for the initial values of weight update variables. If you use a method that uses synapse variables, please add a pointer to this vector in the function call, like:\n  	addSynapsePopulation(name, syntype, conntype, gtype, NO_DELAY, EXPDECAY, src, target, double * SYNVARINI, params, postSynV,postExpSynapsePopn);" << endl;
     double *iniv = NULL;
@@ -618,10 +616,10 @@ void NNmodel::addSynapsePopulation(
   unsigned int postsyn, /**< Postsynaptic integration method*/
   const string src, /**< Name of the (existing!) pre-synaptic neuron population*/
   const string trg, /**< Name of the (existing!) post-synaptic neuron population*/
-  double* synini, /**< A C-type array of doubles that contains the initial values for synapse variables (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored.*/
-  double *p, /**< A C-type array of doubles that contains synapse parameter values (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored.*/
-  double* PSVini, /**< A C-type array of doubles that contains the initial values for postsynaptic mechanism variables (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored.*/
-  double *ps /**< A C-type array of doubles that contains postsynaptic mechanism parameter values (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored.*/ )
+  double* synini, /**< A C-type array of doubles that contains the initial values for synapse variables (common to all synapses of the population) which will be used for the defined synapses.*/
+  double *p, /**< A C-type array of doubles that contains synapse parameter values (common to all synapses of the population) which will be used for the defined synapses.*/
+  double* PSVini, /**< A C-type array of doubles that contains the initial values for postsynaptic mechanism variables (common to all synapses of the population) which will be used for the defined synapses.*/
+  double *ps /**< A C-type array of doubles that contains postsynaptic mechanism parameter values (common to all synapses of the population) which will be used for the defined synapses.*/)
 {
   vector<double> vsynini;
   for (int j= 0; j < weightUpdateModels[syntype].varNames.size(); j++) {
@@ -657,10 +655,10 @@ void NNmodel::addSynapsePopulation(
   unsigned int postsyn, /**< Postsynaptic integration method*/
   const string src, /**< Name of the (existing!) pre-synaptic neuron population*/
   const string trg, /**< Name of the (existing!) post-synaptic neuron population*/
-  vector<double> synini, /**< A C-type array of doubles that contains the initial values for synapse variables (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored.*/
-  vector<double> p, /**< A C-type array of doubles that contains synapse parameter values (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored.*/
-  vector<double> PSVini, /**< A C-type array of doubles that contains the initial values for postsynaptic mechanism variables (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored.*/
-  vector<double> ps /**< A C-type array of doubles that contains postsynaptic mechanism parameter values (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored.*/ )
+  vector<double> synini, /**< A C-type array of doubles that contains the initial values for synapse variables (common to all synapses of the population) which will be used for the defined synapses.*/
+  vector<double> p, /**< A C-type array of doubles that contains synapse parameter values (common to all synapses of the population) which will be used for the defined synapses.*/
+  vector<double> PSVini, /**< A C-type array of doubles that contains the initial values for postsynaptic mechanism variables (common to all synapses of the population) which will be used for the defined synapses.*/
+  vector<double> ps /**< A C-type array of doubles that contains postsynaptic mechanism parameter values (common to all synapses of the population) which will be used for the defined synapses.*/)
 {
     if (!GeNNReady) {
 	gennError("You need to call initGeNN first.");
@@ -668,16 +666,28 @@ void NNmodel::addSynapsePopulation(
     if (final) {
 	gennError("Trying to add a synapse population to a finalized model.");
     }
+    if (p.size() != weightUpdateModels[syntype].pNames.size()) {
+	gennError("The number of presynaptic parameter values for synapse group " + name + " does not match that of their synapse type, " + tS(p.size()) + " != " + tS(weightUpdateModels[syntype].pNames.size()));
+    }
+    if (synini.size() != weightUpdateModels[syntype].varNames.size()) {
+	gennError("The number of presynaptic variable initial values for synapse group " + name + " does not match that of their synapse type, " + tS(synini.size()) + " != " + tS(weightUpdateModels[syntype].varNames.size())); 
+    }
+    if (ps.size() != postSynModels[postsyn].pNames.size()) {
+	gennError("The number of presynaptic parameter values for synapse group " + name + " does not match that of their synapse type, " + tS(ps.size()) + " != " + tS(postSynModels[postsyn].pNames.size()));
+    }
+    if (PSVini.size() != postSynModels[postsyn].varNames.size()) {
+	gennError("The number of presynaptic variable initial values for synapse group " + name + " does not match that of their synapse type, " + tS(PSVini.size()) + " != " + tS(postSynModels[postsyn].varNames.size())); 
+    }
+
     unsigned int i= synapseGrpN++;
-    unsigned int srcNumber, trgNumber;       
+    unsigned int srcNumber = findNeuronGrp(src);
+    unsigned int trgNumber = findNeuronGrp(trg);
     synapseName.push_back(name);
     synapseType.push_back(syntype);
     synapseConnType.push_back(conntype);
     maxConn.push_back(0);
     synapseGType.push_back(gtype);
-    srcNumber = findNeuronGrp(src);
     synapseSource.push_back(srcNumber);
-    trgNumber = findNeuronGrp(trg);
     synapseTarget.push_back(trgNumber);
     synapseDelay.push_back(delaySteps);
     if (delaySteps >= neuronDelaySlots[srcNumber]) {
@@ -697,19 +707,59 @@ void NNmodel::addSynapsePopulation(
     postSynapseType.push_back(postsyn);
     postSynIni.push_back(PSVini);  
     postSynapsePara.push_back(ps);  
-    
     registerSynapsePopulation(i);
     initDerivedSynapsePara(i);
     initDerivedPostSynapsePara(i);
+    maxConn.push_back(neuronN[trgNumber]);
+    synapseSpanType.push_back(0);
 
     // initially set synapase group indexing variables to device 0 host 0
     synapseDeviceID.push_back(0);
     synapseHostID.push_back(0);
-    if (maxConn.size() < synapseGrpN) maxConn.resize(synapseGrpN);
-    maxConn[i]= neuronN[trgNumber];
-    synapseSpanType.push_back(0);
 
     // TODO set uses*** variables for synaptic populations
+}
+
+
+//--------------------------------------------------------------------------
+/*! \brief This function defines the maximum number of connections for a neuron in the population
+*/ 
+//--------------------------------------------------------------------------
+
+void NNmodel::setMaxConn(const string sname, /**<  */
+                         unsigned int maxConnP /**<  */)
+{
+    if (final) {
+	gennError("Trying to set MaxConn in a finalized model.");
+    }
+    unsigned int found = findSynapseGrp(sname);
+    if (synapseConnType[found] == SPARSE) {
+	maxConn[found] = maxConnP;
+    }
+    else {
+	gennError("setMaxConn: Synapse group %u is all-to-all connected. Maxconn variable is not needed in this case. Setting size to %u is not stable.");
+    }
+}
+
+
+//--------------------------------------------------------------------------
+/*! \brief This function defines the execution order of the synapses in the kernels
+  (0 : execute for every postsynaptic neuron 1: execute for every presynaptic neuron)
+ */ 
+//--------------------------------------------------------------------------
+
+void NNmodel::setSpanTypeToPre(const string sname /**<  */)
+{
+    if (final) {
+	gennError("Trying to set spanType in a finalized model.");
+    }
+    unsigned int found = findSynapseGrp(sname);
+    if (synapseConnType[found] == SPARSE) {
+	synapseSpanType[found] = 1;
+    }
+    else {
+	gennError("setSpanTypeToPre: This function is not enabled for dense connectivity type.");
+    }
 }
 
 
@@ -904,48 +954,6 @@ void NNmodel::setPopulationSums()
 	else {
 	    padSumLearnN[i] = padSumLearnN[i - 1] + paddedSize;
 	}
-    }
-}
-
-
-//--------------------------------------------------------------------------
-/*! \brief This function defines the maximum number of connections for a neuron in the population
-*/ 
-//--------------------------------------------------------------------------
-
-void NNmodel::setMaxConn(const string sname, /**<  */
-                         unsigned int maxConnP /**<  */)
-{
-    if (final) {
-	gennError("Trying to set MaxConn in a finalized model.");
-    }
-    unsigned int found = findSynapseGrp(sname);
-    if (synapseConnType[found] == SPARSE) {
-	maxConn[found] = maxConnP;
-    }
-    else {
-	gennError("setMaxConn: Synapse group %u is all-to-all connected. Maxconn variable is not needed in this case. Setting size to %u is not stable.");
-    }
-}
-
-
-//--------------------------------------------------------------------------
-/*! \brief This function defines the execution order of the synapses in the kernels
-  (0 : execute for every postsynaptic neuron 1: execute for every presynaptic neuron)
- */ 
-//--------------------------------------------------------------------------
-
-void NNmodel::setSpanTypeToPre(const string sname /**<  */)
-{
-    if (final) {
-	gennError("Trying to set spanType in a finalized model.");
-    }
-    unsigned int found = findSynapseGrp(sname);
-    if (synapseConnType[found] == SPARSE) {
-	synapseSpanType[found] = 1;
-    }
-    else {
-	gennError("setSpanTypeToPre: This function is not enabled for dense connectivity type.");
     }
 }
 
