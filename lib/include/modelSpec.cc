@@ -576,12 +576,12 @@ void NNmodel::addSynapsePopulation(
   const string target, /**< Name of the (existing!) post-synaptic neuron population*/
   double *params/**< A C-type array of doubles that contains synapse parameter values (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored.*/)
 {
-  gennError("This version of addSynapsePopulation() has been depreciated since GeNN 2.2. Please use the newer addSynapsePopulation functions instead.");
+  gennError("This version of addSynapsePopulation() has been deprecated since GeNN 2.2. Please use the newer addSynapsePopulation functions instead.");
 }
 
 
 //--------------------------------------------------------------------------
-/*! \brief Overloaded old version 
+/*! \brief Overloaded old version (deprecated)
 */
 //--------------------------------------------------------------------------
 
@@ -598,7 +598,7 @@ void NNmodel::addSynapsePopulation(
   double* PSVini, /**< A C-type array of doubles that contains the initial values for postsynaptic mechanism variables (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored.*/
   double *ps /**< A C-type array of doubles that contains postsynaptic mechanism parameter values (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored.*/ )
 {
-    cerr << "!!!!!!GeNN WARNING: This function has been depreciated since GeNN 2.2, and will be removed in a future release. You use the overloaded method which passes a null pointer for the initial values of weight update variables. If you use a method that uses synapse variables, please add a pointer to this vector in the function call, like:\n  	addSynapsePopulation(name, syntype, conntype, gtype, NO_DELAY, EXPDECAY, src, target, double * SYNVARINI, params, postSynV,postExpSynapsePopn);" << endl;
+    cerr << "!!!!!!GeNN WARNING: This function has been deprecated since GeNN 2.2, and will be removed in a future release. You use the overloaded method which passes a null pointer for the initial values of weight update variables. If you use a method that uses synapse variables, please add a pointer to this vector in the function call, like:\n  	addSynapsePopulation(name, syntype, conntype, gtype, NO_DELAY, EXPDECAY, src, target, double * SYNVARINI, params, postSynV,postExpSynapsePopn);" << endl;
     double *iniv = NULL;
     addSynapsePopulation(name, syntype, conntype, gtype, delaySteps, postsyn, src, trg, iniv, p, PSVini, ps);
 }
@@ -721,7 +721,7 @@ void NNmodel::addSynapsePopulation(
 void NNmodel::setSynapseG(const string sName, /**<  */
                           double g /**<  */)
 {
-    gennError("NOTE: This function has been deprecated as of GeNN 2.2. Please provide the correct initial values in \"addSynapsePopulation\" for all your variables and they will be the constant values in the GLOBALG mode - global \"G\" not set.");
+    gennError("NOTE: This function has been deprecated as of GeNN 2.2. Please provide the correct initial values in \"addSynapsePopulation\" for all your variables and they will be the constant values in the GLOBALG mode.");
 }
 
 
@@ -833,9 +833,9 @@ void NNmodel::setPopulationSums()
 	gennError("Your model must be finalized before we can calculate population sums. Aborting.");
     }
 
-    // NEED TO INITIALISE (OR RESIZE) ALL PADSUM VECTORS <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
     // NEURON GROUPS
+    sumNeuronN.resize(neuronGrpN);
+    padSumNeuronN.resize(neuronGrpN);
     for (int i = 0; i < neuronGrpN; i++) {
 	// paddedSize is the lowest multiple of neuronBlkSz >= neuronN[i]
 	paddedSize = ceil((double) neuronN[i] / (double) neuronBlkSz) * (double) neuronBlkSz;
@@ -844,21 +844,22 @@ void NNmodel::setPopulationSums()
 	    padSumNeuronN[i] = paddedSize;
 	}
 	else {
-	    sumNeuronN[i] = sumNeuronN[i - 1] + neuronN[i]; 
+	    sumNeuronN[i] = sumNeuronN[i - 1] + neuronN[i];
 	    padSumNeuronN[i] = padSumNeuronN[i - 1] + paddedSize;
 	}
     }
 
     // SYNAPSE GROUPS
+    padSumSynapseKrnl.resize(synapseGrpN);
     for (int i = 0; i < synapseGrpN; i++) {
 	if (synapseConnType[i] == SPARSE) {
 	    if (synapseSpanType[i] == 1) {
-		// paddedSize is the lowest multiple of synapseBlkSz >= neuronN[synapseSource[found]
-		paddedSize = ceil((double)neuronN[synapseSource[found]] / (double)synapseBlkSz) * (double)synapseBlkSz;
+		// paddedSize is the lowest multiple of synapseBlkSz >= neuronN[synapseSource[i]
+		paddedSize = ceil((double)neuronN[synapseSource[i]] / (double)synapseBlkSz) * (double)synapseBlkSz;
 	    }
 	    else {
-		// paddedSize is the lowest multiple of synapseBlkSz >= maxConn[found]
-		paddedSize = ceil((double) maxConn[found] / (double) synapseBlkSz) * (double) synapseBlkSz;
+		// paddedSize is the lowest multiple of synapseBlkSz >= maxConn[i]
+		paddedSize = ceil((double) maxConn[i] / (double) synapseBlkSz) * (double) synapseBlkSz;
 	    }
 	}
 	else {
@@ -874,6 +875,7 @@ void NNmodel::setPopulationSums()
     }
 
     // SYNAPSE DYNAMICS GROUPS
+    padSumSynDynN.resize(synDynGroups);
     for (int i = 0; i < synDynGroups; i++) {
 	if (synapseConnType[i] == SPARSE) {
 	    // paddedSize is the lowest multiple of synDynBlkSz >= neuronN[synapseSource[i]] * maxConn[i]
@@ -887,11 +889,12 @@ void NNmodel::setPopulationSums()
 	    padSumSynDynN[i] = paddedSize;
 	}
 	else {
-	    padSumSynDynN[i] = padSumSynDynN[i - 1] + paddedSize; 
+	    padSumSynDynN[i] = padSumSynDynN[i - 1] + paddedSize;
 	}
     }
 
     // LEARN GROUPS
+    padSumLearnN.resize(lrnGroups);
     for (int i = 0; i < lrnGroups; i++) {
 	// paddedSize is the lowest multiple of learnBlkSz >= neuronN[synapseTarget[i]]
 	paddedSize = ceil((double) neuronN[synapseSource[i]] / (double) learnBlkSz) * (double) learnBlkSz;
