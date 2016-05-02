@@ -526,9 +526,6 @@ void prepareStandardModels()
 cout &lt;&lt; "AT END OF UTILS.H\n\n\n";
 }
 
-// bit tool macros
-#include "simpleBit.h"
-
 #endif // _UTILS_H_
 </xsl:template>
 

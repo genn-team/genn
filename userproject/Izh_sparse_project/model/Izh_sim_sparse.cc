@@ -15,7 +15,7 @@
 #include <fstream>
 #include "Izh_sparse_sim.h"
 #ifndef CPU_ONLY
-#include "../GeNNHelperKrnls.cu"
+#include "GeNNHelperKrnls.cu"
 #endif
 
 int main(int argc, char *argv[])

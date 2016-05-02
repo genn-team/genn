@@ -15,8 +15,8 @@
 #define _IZH_SPARSE_MODEL_CC_
 
 #include "Izh_sparse_CODE/runner.cc"
-#include "../../lib/include/numlib/randomGen.h"
-#include "../../lib/include/numlib/gauss.h"
+#include "randomGen.h"
+#include "gauss.h"
 #include "Izh_sparse_model.h"
 
 randomGauss RG;

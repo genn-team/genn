@@ -29,9 +29,9 @@ using namespace std;
 #endif
 
 #include "HHVClamp.cc"
-#include "HHVClamp_CODE/runner.cc"
-#include "../../../lib/include/numlib/randomGen.h"
-#include "../../../lib/include/numlib/gauss.h"
+#include "HHVClamp_CODE/definitions.cc"
+#include "randomGen.h"
+#include "gauss.h"
 randomGen R;
 randomGauss RG;
 #include "helper.h"

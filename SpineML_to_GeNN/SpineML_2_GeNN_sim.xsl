@@ -34,8 +34,6 @@ xmlns:fn="http://www.w3.org/2005/xpath-functions">
 CStopWatch timer;
 #include "../../lib/include/hr_time.cpp"
 
-#include "../../lib/include/numlib/simpleBit.h"
-
 #include "model.cc"
 #include "<xsl:value-of select="translate(/SMLLOWNL:SpineML/@name,' ','_')"/>_CODE/runner.cc"
 #include &lt;algorithm&gt;

@@ -27,10 +27,20 @@ This file compiles to a tool to generate appropriate connectivity patterns betwe
 
 using namespace std;
 
-#include "randomGen.h"
-#include "gauss.h"
-#include "simpleBit.h"
+//--------------------------------------------------------------------------
+/* Three macros that allow simple bit manipulations on an (presumably unsigned) 32 bit integer
+ */
+//--------------------------------------------------------------------------
 
+#define B(x,i) ((x) & (0x80000000 >> (i))) //!< Extract the bit at the specified position i from x
+
+#define setB(x,i) x= ((x) | (0x80000000 >> (i))) //!< Set the bit at the specified position i in x to 1 
+
+#define delB(x,i) x= ((x) & (~(0x80000000 >> (i)))) //!< Set the bit at the specified position i in x to 0 
+
+
+#include "gauss.h"
+#include "randomGen.h"
 #include "randomGen.cc"
 
 randomGen R;

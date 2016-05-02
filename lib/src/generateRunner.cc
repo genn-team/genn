@@ -507,8 +507,7 @@ void genRunner(NNmodel &model, //!< Model description
     os << "#include <cassert>" << ENDL;
     os << "#include <ctime>" << ENDL;
     os << "#include <stdint.h>" << ENDL;
-    os << "#include \"utils.h\"" << ENDL << ENDL;
-    os << "#include \"numlib/simpleBit.h\"" << ENDL << ENDL;
+    os << "#include \"utils.h\"" << ENDL;
     if (model.timing) os << "#include \"hr_time.cpp\"" << ENDL;
     os << "#define RUNNER_CC_COMPILE" << ENDL;
     os << "#include \"definitions.h\"" << ENDL;
