@@ -1,9 +1,17 @@
 
+// Post-Synapse Types
+extern vector<postSynModel> postSynModels; //!< Global C++ vector containing all post-synaptic update model descriptions
+extern unsigned int EXPDECAY; //default - exponential decay
+extern unsigned int IZHIKEVICH_PS; //empty postsynaptic rule for the Izhikevich model.
+const unsigned int MAXPOSTSYN = 2; // maximum number of postsynaptic integration: SpineML needs to know this
+
+
 class postSynapseDP
 {
 public:
     virtual double calculateDerivedParameter(int index, vector<double> pars, double dt = 1.0) { return -1; }
 };
+
 
 /*! \brief Structure to hold the information that defines a post-synaptic model (a model of how synapses affect post-synaptic neuron variables, classically in the form of a synaptic current). It also allows to define an equation for the dynamics that can be applied to the summed synaptic input variable "insyn".
  */
@@ -43,40 +51,9 @@ public:
 };
 
 
-vector<postSynModel> postSynModels; //!< Global C++ vector containing all post-synaptic update model descriptions
-
 //--------------------------------------------------------------------------
 /*! \brief Function that prepares the standard post-synaptic models, including their variables, parameters, dependent parameters and code strings.
  */
 //--------------------------------------------------------------------------
 
-void preparePostSynModels()
-{
-    postSynModel ps;
-  
-    // 0: Exponential decay
-    ps.varNames.clear();
-    ps.varTypes.clear();
-    ps.pNames.clear();
-    ps.dpNames.clear(); 
-    ps.pNames.push_back("tau"); 
-    ps.pNames.push_back("E");  
-    ps.dpNames.push_back("expDecay");
-    ps.postSynDecay= "$(inSyn)*=$(expDecay);\n";
-    ps.postSyntoCurrent= "$(inSyn)*($(E)-$(V))";
-    ps.dps = new expDecayDp;
-    postSynModels.push_back(ps);
-    EXPDECAY= postSynModels.size()-1;
-  
-    // 1: IZHIKEVICH MODEL (NO POSTSYN RULE)
-    ps.varNames.clear();
-    ps.varTypes.clear();
-    ps.pNames.clear();
-    ps.dpNames.clear(); 
-    ps.postSynDecay= "";
-    ps.postSyntoCurrent= "$(inSyn); $(inSyn)= 0";
-    postSynModels.push_back(ps);
-    IZHIKEVICH_PS= postSynModels.size()-1;
- 
-#include "extra_postsynapses.h"
-}
+void preparePostSynModels();

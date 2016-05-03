@@ -34,29 +34,9 @@ using namespace std;
 #include "global.h"
 #include "sparseProjection.h"
 
+
 void initGeNN();
-
 unsigned int GeNNReady= 0;
-
-//neuronType
-unsigned int MAPNEURON; //!< variable attaching the name "MAPNEURON" 
-unsigned int POISSONNEURON; //!< variable attaching the name "POISSONNEURON" 
-unsigned int TRAUBMILES_FAST; //!< variable attaching the name "TRAUBMILES_FAST" 
-unsigned int TRAUBMILES_ALTERNATIVE; //!< variable attaching the name "TRAUBMILES_ALTERNATIVE" 
-unsigned int TRAUBMILES_SAFE; //!< variable attaching the name "TRAUBMILES_SAFE" 
-unsigned int TRAUBMILES; //!< variable attaching the name "TRAUBMILES" 
-unsigned int TRAUBMILES_PSTEP;//!< variable attaching the name "TRAUBMILES_PSTEP" 
-unsigned int IZHIKEVICH; //!< variable attaching the name "IZHIKEVICH" 
-unsigned int IZHIKEVICH_V; //!< variable attaching the name "IZHIKEVICH_V" 
-unsigned int SPIKESOURCE; //!< variable attaching the name "SPIKESOURCE"
-#define MAXNRN 7 // maximum number of neuron types: SpineML needs to know this
-
-#define SYNTYPENO 4
-
-//synapseType
-unsigned int NSYNAPSE;  //!< Variable attaching  the name NSYNAPSE to predefined synapse type 0, which is a non-learning synapse
-unsigned int NGRADSYNAPSE; //!< Variable attaching  the name NGRADSYNAPSE to predefined synapse type 1 which is a graded synapse wrt the presynaptic voltage
-unsigned int LEARN1SYNAPSE; //!< Variable attaching  the name LEARN1SYNAPSE to the predefined synapse type 2 which is a learning using spike timing; uses a primitive STDP rule for learning
 
 //connectivity of the network (synapseConnType)
 #define ALLTOALL 0  //!< Macro attaching the label "ALLTOALL" to connectivity type 0 
@@ -86,16 +66,6 @@ unsigned int LEARN1SYNAPSE; //!< Variable attaching  the name LEARN1SYNAPSE to t
 #define GENN_DOUBLE 1  //!< Macro attaching the label "GENN_DOUBLE" to flag 1. Used by NNModel::setPrecision()
 
 #define AUTODEVICE -1  //!< Macro attaching the label AUTODEVICE to flag -1. Used by setGPUDevice
-
-// for purposes of STDP
-#define SPK_THRESH_STDP 0.0f //!< Macro defining the spiking threshold for the purposes of STDP
-//#define MAXSPKCNT 50000
-
-//postsynaptic parameters
-unsigned int EXPDECAY; //default - exponential decay
-unsigned int IZHIKEVICH_PS; //empty postsynaptic rule for the Izhikevich model.
-// currently values >1 will be defined by code generation.
-#define MAXPOSTSYN 2 // maximum number of postsynaptic integration: SpineML needs to know this
 
 
 /*===============================================================
