@@ -21,6 +21,8 @@
 #ifndef GLOBAL_CC
 #define GLOBAL_CC
 
+#include "global.h"
+
 
 namespace GENN_FLAGS {
     unsigned int calcSynapseDynamics= 0;

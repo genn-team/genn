@@ -13,24 +13,17 @@
   
 --------------------------------------------------------------------------*/
 
-#ifndef _MODELSPEC_CC_
-#define _MODELSPEC_CC_ //!< macro for avoiding multiple inclusion during compilation
+#ifndef MODELSPEC_CC
+#define MODELSPEC_CC
 
 #include "modelSpec.h"
-#include "generateALL.h"
+#include "global.h"
 #include "utils.h"
 #include "stringUtils.h"
 
 #include <cstdio>
 #include <cassert>
 #include <algorithm>
-
-
-
-//#include "global.h"
-//#include "sparseProjection.h"
-
-
 
 
 // ------------------------------------------------------------------------
@@ -981,4 +974,4 @@ void NNmodel::finalize()
     final= 1;
 }
 
-#endif
+#endif // MODELSPEC_CC

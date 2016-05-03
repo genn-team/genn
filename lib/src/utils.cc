@@ -18,8 +18,8 @@
 */
 //--------------------------------------------------------------------------
 
-#ifndef _UTILS_CC_
-#define _UTILS_CC_ //!< macro for avoiding multiple inclusion during compilation
+#ifndef UTILS_CC
+#define UTILS_CC
 
 #include "utils.h"
 
@@ -174,4 +174,4 @@ unsigned int theSize(string type)
   return size;
 }
 
-#endif  // _UTILS_CC_
+#endif  // UTILS_CC

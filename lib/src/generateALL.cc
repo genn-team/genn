@@ -48,7 +48,7 @@ CodeHelper hlp;
 #include "stringUtils.h"
 #include "modelSpec.h"
 
-#include "generateALL.h"
+#include "global.h"
 #include "generateRunner.cc"
 #include "generateCPU.cc"
 #include "generateKernels.cc"

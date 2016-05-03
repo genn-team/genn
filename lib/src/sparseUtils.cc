@@ -3,7 +3,7 @@
 #define SPARSEUTILS_CC
 
 #include "sparseUtils.h"
-#include "generateALL.h"
+#include "global.h"
 #include "utils.h"
 
 #include <cstdio>
