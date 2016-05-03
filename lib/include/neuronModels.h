@@ -1,17 +1,11 @@
 
-// Neuron Types
-extern vector<neuronModel> nModels; //!< Global C++ vector containing all neuron model descriptions
-extern unsigned int MAPNEURON; //!< variable attaching the name "MAPNEURON" 
-extern unsigned int POISSONNEURON; //!< variable attaching the name "POISSONNEURON" 
-extern unsigned int TRAUBMILES_FAST; //!< variable attaching the name "TRAUBMILES_FAST" 
-extern unsigned int TRAUBMILES_ALTERNATIVE; //!< variable attaching the name "TRAUBMILES_ALTERNATIVE" 
-extern unsigned int TRAUBMILES_SAFE; //!< variable attaching the name "TRAUBMILES_SAFE" 
-extern unsigned int TRAUBMILES; //!< variable attaching the name "TRAUBMILES" 
-extern unsigned int TRAUBMILES_PSTEP;//!< variable attaching the name "TRAUBMILES_PSTEP" 
-extern unsigned int IZHIKEVICH; //!< variable attaching the name "IZHIKEVICH" 
-extern unsigned int IZHIKEVICH_V; //!< variable attaching the name "IZHIKEVICH_V" 
-extern unsigned int SPIKESOURCE; //!< variable attaching the name "SPIKESOURCE"
-const unsigned int MAXNRN = 7; // maximum number of neuron types: SpineML needs to know this
+#ifndef NEURONMODELS_H
+#define NEURONMODELS_H
+
+#include <string>
+#include <vector>
+
+using namespace std;
 
 
 class neuronDP
@@ -45,6 +39,21 @@ public:
     bool needPreSt; //!< \brief Whether presynaptic spike times are needed or not
     bool needPostSt; //!< \brief Whether postsynaptic spike times are needed or not
 };
+
+
+// Neuron Types
+extern vector<neuronModel> nModels; //!< Global C++ vector containing all neuron model descriptions
+extern unsigned int MAPNEURON; //!< variable attaching the name "MAPNEURON" 
+extern unsigned int POISSONNEURON; //!< variable attaching the name "POISSONNEURON" 
+extern unsigned int TRAUBMILES_FAST; //!< variable attaching the name "TRAUBMILES_FAST" 
+extern unsigned int TRAUBMILES_ALTERNATIVE; //!< variable attaching the name "TRAUBMILES_ALTERNATIVE" 
+extern unsigned int TRAUBMILES_SAFE; //!< variable attaching the name "TRAUBMILES_SAFE" 
+extern unsigned int TRAUBMILES; //!< variable attaching the name "TRAUBMILES" 
+extern unsigned int TRAUBMILES_PSTEP;//!< variable attaching the name "TRAUBMILES_PSTEP" 
+extern unsigned int IZHIKEVICH; //!< variable attaching the name "IZHIKEVICH" 
+extern unsigned int IZHIKEVICH_V; //!< variable attaching the name "IZHIKEVICH_V" 
+extern unsigned int SPIKESOURCE; //!< variable attaching the name "SPIKESOURCE"
+const unsigned int MAXNRN = 7; // maximum number of neuron types: SpineML needs to know this
 
 
 //--------------------------------------------------------------------------
@@ -87,3 +96,5 @@ public:
 */
 
 void prepareStandardModels();
+
+#endif // NEURONMODELS_H

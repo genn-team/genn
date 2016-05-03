@@ -1,4 +1,9 @@
 
+#ifndef SYNAPSEMODELS_CC
+#define SYNAPSEMODELS_CC
+
+#include "synapseModels.h"
+
 // Synapse Types
 vector<weightUpdateModel> weightUpdateModels; //!< Global C++ vector containing all weightupdate model descriptions
 unsigned int NSYNAPSE; //!< Variable attaching  the name NSYNAPSE to the non-learning synapse
@@ -101,8 +106,10 @@ void prepareWeightUpdateModels()
   else dg = -($(off2)) ; \n\
   $(gRaw) += dg; \n\
   $(g)=$(gMax)/2.0 *(tanh($(gSlope)*($(gRaw) - ($(gMid))))+1); \n";
-    wu.needPreSt= TRUE;
-    wu.needPostSt= TRUE;
+    wu.needPreSt= true;
+    wu.needPostSt= true;
     weightUpdateModels.push_back(wu);
     LEARN1SYNAPSE= weightUpdateModels.size()-1; 
 }
+
+#endif // SYNAPSEMODELS_CC

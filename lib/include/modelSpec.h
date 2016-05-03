@@ -56,9 +56,6 @@ unsigned int GeNNReady= 0;
 #define EXITSYN 0 //!< Macro attaching the label "EXITSYN" to flag 0 (excitatory synapse)
 #define INHIBSYN 1 //!< Macro attaching the label "INHIBSYN" to flag 1 (inhibitory synapse)
 
-#define TRUE 1 //!< Macro attaching the label "TRUE" to value 1
-#define FALSE 0 //!< Macro attaching the label "FALSE" to value 0
-
 #define CPU 0 //!< Macro attaching the label "CPU" to flag 0
 #define GPU 1 //!< Macro attaching the label "GPU" to flag 1
 

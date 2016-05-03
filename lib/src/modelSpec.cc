@@ -16,6 +16,7 @@
 #ifndef _MODELSPEC_CC_
 #define _MODELSPEC_CC_ //!< macro for avoiding multiple inclusion during compilation
 
+#include "modelSpec.h"
 #include "utils.h"
 #include "stringUtils.h"
 
@@ -42,7 +43,7 @@ NNmodel::NNmodel()
   needSt= 0;
   needSynapseDelay = 0;
   setPrecision(0);
-  setTiming(FALSE);
+  setTiming(false);
   RNtype= "uint64_t";
 #ifndef CPU_ONLY
   setGPUDevice(AUTODEVICE);
@@ -178,17 +179,17 @@ void NNmodel::setNeuronClusterIndex(const string neuronGroup, /**< Name of the n
 
 void NNmodel::initLearnGrps()
 {
-    synapseUsesTrueSpikes.assign(synapseGrpN, FALSE);
-    synapseUsesSpikeEvents.assign(synapseGrpN, FALSE);
-    synapseUsesPostLearning.assign(synapseGrpN, FALSE);
-    synapseUsesSynapseDynamics.assign(synapseGrpN, FALSE);
+    synapseUsesTrueSpikes.assign(synapseGrpN, false);
+    synapseUsesSpikeEvents.assign(synapseGrpN, false);
+    synapseUsesPostLearning.assign(synapseGrpN, false);
+    synapseUsesSynapseDynamics.assign(synapseGrpN, false);
 
-    neuronNeedTrueSpk.assign(neuronGrpN, FALSE);
-    neuronNeedSpkEvnt.assign(neuronGrpN, FALSE);
+    neuronNeedTrueSpk.assign(neuronGrpN, false);
+    neuronNeedSpkEvnt.assign(neuronGrpN, false);
 
     neuronVarNeedQueue.resize(neuronGrpN);
     for (int i = 0; i < neuronGrpN; i++) {
-	neuronVarNeedQueue[i] = vector<bool>(nModels[neuronType[i]].varNames.size(), FALSE);
+	neuronVarNeedQueue[i] = vector<bool>(nModels[neuronType[i]].varNames.size(), false);
     }
     neuronSpkEvntCondition.assign(neuronGrpN, "");
 
@@ -198,19 +199,19 @@ void NNmodel::initLearnGrps()
 	vector<string> vars = nModels[neuronType[src]].varNames;
 
 	if (wu.simCode != "") {
-	    synapseUsesTrueSpikes[i] = TRUE;
-	    neuronNeedTrueSpk[src] = TRUE;
+	    synapseUsesTrueSpikes[i] = true;
+	    neuronNeedTrueSpk[src] = true;
 
 	    // analyze which neuron variables need queues
 	    for (int j = 0; j < vars.size(); j++) {
 		if (wu.simCode.find(vars[j] + "_pre") != string::npos) {
-		    neuronVarNeedQueue[src][j] = TRUE;
+		    neuronVarNeedQueue[src][j] = true;
 		}
 	    }
 	}
 	if (wu.simCodeEvnt != "") {
-	    synapseUsesSpikeEvents[i] = TRUE;
-	    neuronNeedSpkEvnt[src] = TRUE;
+	    synapseUsesSpikeEvents[i] = true;
+	    neuronNeedSpkEvnt[src] = true;
 
 	    assert(wu.evntThreshold != "");
  
@@ -225,30 +226,30 @@ void NNmodel::initLearnGrps()
 	    // analyze which neuron variables need queues
 	    for (int j = 0; j < vars.size(); j++) {
 		if (wu.simCodeEvnt.find(vars[j] + "_pre") != string::npos) {
-		    neuronVarNeedQueue[src][j] = TRUE;
+		    neuronVarNeedQueue[src][j] = true;
 		}
 	    }
 		
 	}
 
 	if (wu.simLearnPost != "") {
-	    synapseUsesPostLearning[i] = TRUE;
+	    synapseUsesPostLearning[i] = true;
 	    lrnSynGrp.push_back(i);
 	    lrnGroups++;
 	    for (int j = 0; j < vars.size(); j++) {
 		if (wu.simLearnPost.find(vars[j] + "_pre") != string::npos) {
-		    neuronVarNeedQueue[src][j] = TRUE;
+		    neuronVarNeedQueue[src][j] = true;
 		}
 	    }
 	}
 
 	if (wu.synapseDynamics != "") {
-	    synapseUsesSynapseDynamics[i]= TRUE;
+	    synapseUsesSynapseDynamics[i]= true;
 	    synDynGrp.push_back(i);
 	    synDynGroups++;
 	    for (int j = 0; j < vars.size(); j++) {
 		if (wu.synapseDynamics.find(vars[j] + "_pre") != string::npos) {
-		    neuronVarNeedQueue[src][j] = TRUE;
+		    neuronVarNeedQueue[src][j] = true;
 		}
 	    }
 	}	
@@ -532,8 +533,8 @@ void NNmodel::addNeuronPopulation(
     neuronIni.push_back(ini);
     inSyn.push_back(vector<unsigned int>());
     outSyn.push_back(vector<unsigned int>());
-    neuronNeedSt.push_back(FALSE);
-    neuronNeedSpkEvnt.push_back(FALSE);
+    neuronNeedSt.push_back(false);
+    neuronNeedSpkEvnt.push_back(false);
     neuronSpkEvntCondition.push_back("");
     neuronDelaySlots.push_back(1);
     initDerivedNeuronPara(i);
@@ -695,12 +696,12 @@ void NNmodel::addSynapsePopulation(
 	needSynapseDelay = 1;
     }
     if (weightUpdateModels[syntype].needPreSt) {
-	neuronNeedSt[srcNumber]= TRUE;
-	needSt= TRUE;
+	neuronNeedSt[srcNumber]= true;
+	needSt= true;
     }
     if (weightUpdateModels[syntype].needPostSt) {
-	neuronNeedSt[trgNumber]= TRUE;
-	needSt= TRUE;
+	neuronNeedSt[trgNumber]= true;
+	needSt= true;
     }
     synapseIni.push_back(synini);
     synapsePara.push_back(p);

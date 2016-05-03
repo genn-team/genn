@@ -1,4 +1,9 @@
 
+#ifndef NEURONMODELS_CC
+#define NEURONMODELS_CC
+
+#include "neuronModels.h"
+
 // Neuron Types
 vector<neuronModel> nModels; //!< Global C++ vector containing all neuron model descriptions
 unsigned int MAPNEURON; //!< variable attaching the name "MAPNEURON" 
@@ -466,3 +471,5 @@ $(__regime_val) = 1; \n \
 } \n";
     nModels.push_back(n);
 }
+
+#endif // NEURONMODELS_H

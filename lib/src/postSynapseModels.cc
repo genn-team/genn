@@ -1,4 +1,9 @@
 
+#ifndef POSTSYNAPSEMODELS_CC
+#define POSTSYNAPSEMODELS_CC
+
+#include "postSynapseModels.h"
+
 // Post-Synapse Types
 vector<postSynModel> postSynModels; //!< Global C++ vector containing all post-synaptic update model descriptions
 unsigned int EXPDECAY; //default - exponential decay
@@ -110,3 +115,5 @@ Isyn_NB += ($(g_PS)*($(E_PS)-v_PS)); \n \
 	 		$(inSyn) = 0;";
     postSynModels.push_back(ps);
 }
+
+#endif // POSTSYNAPSEMODELS_CC

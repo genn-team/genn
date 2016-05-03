@@ -1,10 +1,11 @@
 
-// Synapse Types
-extern vector<weightUpdateModel> weightUpdateModels; //!< Global C++ vector containing all weightupdate model descriptions
-extern unsigned int NSYNAPSE; //!< Variable attaching  the name NSYNAPSE to the non-learning synapse
-extern unsigned int NGRADSYNAPSE; //!< Variable attaching  the name NGRADSYNAPSE to the graded synapse wrt the presynaptic voltage
-extern unsigned int LEARN1SYNAPSE; //!< Variable attaching  the name LEARN1SYNAPSE to the the primitive STDP model for learning
-const unsigned int SYNTYPENO = 4; // maximum number of synapse types: SpineML needs to know this
+#ifndef SYNAPSEMODELS_H
+#define SYNAPSEMODELS_H
+
+#include <string>
+#include <vector>
+
+using namespace std;
 
 
 class synapseDP
@@ -38,6 +39,14 @@ public:
     bool needPreSt; //!< \brief Whether presynaptic spike times are needed or not
     bool needPostSt; //!< \brief Whether postsynaptic spike times are needed or not
 };
+
+
+// Synapse Types
+extern vector<weightUpdateModel> weightUpdateModels; //!< Global C++ vector containing all weightupdate model descriptions
+extern unsigned int NSYNAPSE; //!< Variable attaching  the name NSYNAPSE to the non-learning synapse
+extern unsigned int NGRADSYNAPSE; //!< Variable attaching  the name NGRADSYNAPSE to the graded synapse wrt the presynaptic voltage
+extern unsigned int LEARN1SYNAPSE; //!< Variable attaching  the name LEARN1SYNAPSE to the the primitive STDP model for learning
+const unsigned int SYNTYPENO = 4; // maximum number of synapse types: SpineML needs to know this
 
 
 //--------------------------------------------------------------------------
@@ -105,3 +114,5 @@ public:
 //--------------------------------------------------------------------------
 
 void prepareWeightUpdateModels();
+
+#endif // SYNAPSEMODELS_H

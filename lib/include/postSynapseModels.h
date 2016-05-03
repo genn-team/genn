@@ -1,9 +1,12 @@
 
-// Post-Synapse Types
-extern vector<postSynModel> postSynModels; //!< Global C++ vector containing all post-synaptic update model descriptions
-extern unsigned int EXPDECAY; //default - exponential decay
-extern unsigned int IZHIKEVICH_PS; //empty postsynaptic rule for the Izhikevich model.
-const unsigned int MAXPOSTSYN = 2; // maximum number of postsynaptic integration: SpineML needs to know this
+#ifndef POSTSYNAPSEMODELS_H
+#define POSTSYNAPSEMODELS_H
+
+#include <string>
+#include <vector>
+#include <cmath>
+
+using namespace std;
 
 
 class postSynapseDP
@@ -28,6 +31,13 @@ public:
     vector<string> dpNames; //!< \brief Names of dependent parameters of the model. 
     postSynapseDP *dps; //!< \brief Derived parameters 
 };
+
+
+// Post-Synapse Types
+extern vector<postSynModel> postSynModels; //!< Global C++ vector containing all post-synaptic update model descriptions
+extern unsigned int EXPDECAY; //default - exponential decay
+extern unsigned int IZHIKEVICH_PS; //empty postsynaptic rule for the Izhikevich model.
+const unsigned int MAXPOSTSYN = 2; // maximum number of postsynaptic integration: SpineML needs to know this
 
 
 //--------------------------------------------------------------------------
@@ -57,3 +67,5 @@ public:
 //--------------------------------------------------------------------------
 
 void preparePostSynModels();
+
+#endif // POSTSYNAPSEMODELS_H
