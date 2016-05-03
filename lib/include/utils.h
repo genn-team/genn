@@ -21,14 +21,12 @@
 #ifndef _UTILS_H_
 #define _UTILS_H_ //!< macro for avoiding multiple inclusion during compilation
 
-#include <cstdlib> // for exit() and EXIT_FAIL / EXIT_SUCCESS
 #include <iostream>
-#include <map>
-#include <memory>
-#include <fstream>
-#include <cmath>
-#include <vector>
 #include <string>
+#ifndef CPU_ONLY
+#include <cuda.h>
+#include <cuda_runtime.h>
+#endif
 
 using namespace std;
 
@@ -47,8 +45,9 @@ using namespace std;
       {								\
 	const char *errStr;					\
 	cuGetErrorName(error, &errStr);				\
-	fprintf(stderr, "%s: %i: cuda driver error %i: %s\n",	\
-		__FILE__, __LINE__, (int)error, errStr);	\
+	cerr << __FILE__ << ": " <<  __LINE__;			\
+	cerr << ": cuda driver error " << error << ": ";	\
+	cerr << errStr << endl;					\
 	exit(EXIT_FAILURE);					\
       }								\
   }
@@ -58,15 +57,16 @@ using namespace std;
 
 // comment below and uncomment here when using CUDA that does not support cugetErrorName
 //#define CHECK_CU_ERRORS(call) call
-#define CHECK_CUDA_ERRORS(call)						\
-  {									\
-    cudaError_t error = call;						\
-    if (error != cudaSuccess)						\
-      {									\
-	fprintf(stderr, "%s: %i: cuda error %i: %s\n",			\
-		__FILE__, __LINE__, (int)error, cudaGetErrorString(error)); \
-	exit(EXIT_FAILURE);						\
-      }									\
+#define CHECK_CUDA_ERRORS(call)					\
+  {								\
+    cudaError_t error = call;					\
+    if (error != cudaSuccess)					\
+      {								\
+	cerr << __FILE__ << ": " <<  __LINE__;			\
+	cerr << ": cuda runtime error " << error << ": ";	\
+	cerr << cudaGetErrorString(error) << endl;		\
+	exit(EXIT_FAILURE);					\
+      }								\
   }
 #endif
 

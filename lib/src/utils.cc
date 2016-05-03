@@ -22,18 +22,8 @@
 #define _UTILS_CC_ //!< macro for avoiding multiple inclusion during compilation
 
 #include "utils.h"
-#include "modelSpec.h"
-
-#include <cstdlib> // for exit() and EXIT_FAIL / EXIT_SUCCESS
-#include <iostream>
-#include <map>
-#include <memory>
 #include <fstream>
-#include <cmath>
-#include <vector>
-#include <string>
-
-using namespace std;
+#include <stdint.h>
 
 
 #ifndef CPU_ONLY
