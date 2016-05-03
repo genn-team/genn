@@ -17,8 +17,21 @@
 #define _MODELSPEC_CC_ //!< macro for avoiding multiple inclusion during compilation
 
 #include "modelSpec.h"
+#include "generateALL.h"
 #include "utils.h"
 #include "stringUtils.h"
+
+#include <cstdio>
+#include <cassert>
+#include <algorithm>
+
+
+
+//#include "global.h"
+//#include "sparseProjection.h"
+
+
+
 
 // ------------------------------------------------------------------------
 //! \brief Method for GeNN initialisation (by preparing standard models)
@@ -538,8 +551,7 @@ void NNmodel::addNeuronPopulation(
     neuronSpkEvntCondition.push_back("");
     neuronDelaySlots.push_back(1);
     initDerivedNeuronPara(i);
-    initNeuronSpecs(i);
-    
+
     // initially set neuron group indexing variables to device 0 host 0
     neuronDeviceID.push_back(0);
     neuronHostID.push_back(0);
@@ -906,7 +918,7 @@ void NNmodel::setPopulationSums()
 	if (synapseConnType[i] == SPARSE) {
 	    if (synapseSpanType[i] == 1) {
 		// paddedSize is the lowest multiple of synapseBlkSz >= neuronN[synapseSource[i]
-		paddedSize = ceil((double)neuronN[synapseSource[i]] / (double)synapseBlkSz) * (double)synapseBlkSz;
+		paddedSize = ceil((double) neuronN[synapseSource[i]] / (double) synapseBlkSz) * (double) synapseBlkSz;
 	    }
 	    else {
 		// paddedSize is the lowest multiple of synapseBlkSz >= maxConn[i]

@@ -25,25 +25,30 @@ Part of the code generation and generated code sections.
 #ifndef _MODELSPEC_H_
 #define _MODELSPEC_H_ //!< macro for avoiding multiple inclusion during compilation
 
-#include <vector>
+#include "neuronModels.h"
+#include "synapseModels.h"
+#include "postSynapseModels.h"
+
 #include <string>
-#include <algorithm>
+#include <vector>
 
 using namespace std;
-
-#include "global.h"
-#include "sparseProjection.h"
 
 
 void initGeNN();
 unsigned int GeNNReady= 0;
 
-//connectivity of the network (synapseConnType)
+// Set DT to 1.0 if it was not specified
+#ifndef DT
+#define DT 1.0
+#endif
+
+// connectivity of the network (synapseConnType)
 #define ALLTOALL 0  //!< Macro attaching the label "ALLTOALL" to connectivity type 0 
 #define DENSE 1 //!< Macro attaching the label "DENSE" to connectivity type 1
 #define SPARSE 2//!< Macro attaching the label "SPARSE" to connectivity type 2
 
-//conductance type (synapseGType)
+// conductance type (synapseGType)
 #define INDIVIDUALG 0  //!< Macro attaching the label "INDIVIDUALG" to method 0 for the definition of synaptic conductances
 #define GLOBALG 1 //!< Macro attaching the label "GLOBALG" to method 1 for the definition of synaptic conductances
 #define INDIVIDUALID 2 //!< Macro attaching the label "INDIVIDUALID" to method 2 for the definition of synaptic conductances

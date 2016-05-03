@@ -24,12 +24,12 @@
 #include <algorithm>
 #include <string>
 #include <iostream>
+#include <fstream>
 #include <cstring>
 #include <string>
 #include <sstream>
 #include <vector>
 #include <cmath>
-
 #include <stdint.h>
 
 using namespace std;
@@ -42,20 +42,16 @@ using namespace std;
 #include <sys/stat.h> // needed for mkdir
 #endif
 
-#include "global.h"
-
-#include "utils.h"
-#include "stringUtils.h"
-
-#include "modelSpec.h"
-#include "modelSpec.cc"
-
 #include "CodeHelper.cc"
 CodeHelper hlp;
+#include "utils.h"
+#include "stringUtils.h"
+#include "modelSpec.h"
 
-#include "generateKernels.cc"
+#include "generateALL.h"
 #include "generateRunner.cc"
 #include "generateCPU.cc"
+#include "generateKernels.cc"
 
 
 //--------------------------------------------------------------------------

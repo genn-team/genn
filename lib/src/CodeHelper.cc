@@ -1,7 +1,9 @@
 
 #ifndef __CODE_HELPER_CC
-#define  __CODE_HELPER_CC
+#define __CODE_HELPER_CC
+
 #include <iostream>
+#include <cstdio>
 #include <cstring>
 #include <string>
 #include <sstream>
@@ -15,52 +17,53 @@
 
 class CodeHelper {
 public:
-	vector<unsigned int>  braces;
-	bool verbose;
+    vector<unsigned int>  braces;
+    bool verbose;
 
-	CodeHelper(): verbose(false) {
-		braces.push_back(0);
-	}
+    CodeHelper(): verbose(false) {
+	braces.push_back(0);
+    }
 
-	void setVerbose(bool isVerbose) {
-		verbose = isVerbose;
-	}
-	string openBrace(unsigned int level) {
-		braces.push_back(level);
-		if (verbose) printf("%sopen %u.\n",indentBy(braces.size() - 1).c_str(),level);
-		string result  = " {\n";
-		result.append(indentBy(braces.size() - 1));
-		return  result;
-	}
+    void setVerbose(bool isVerbose) {
+	verbose = isVerbose;
+    }
+    string openBrace(unsigned int level) {
+	braces.push_back(level);
+	if (verbose) printf("%sopen %u.\n",indentBy(braces.size() - 1).c_str(),level);
+	string result  = " {\n";
+	result.append(indentBy(braces.size() - 1));
+	return  result;
+    }
 
-	string closeBrace(unsigned int level) {
-		if (braces.back()==level) {
-			if (verbose) printf("%sclose %u.\n",indentBy(braces.size() - 1).c_str(),level);
-			braces.pop_back();
-			string result  = "}\n";
-			result.append(indentBy(braces.size() - 1));
-			return result;
-		} else {
-			cerr << "Code generation error: Attempted to close brace " << level << ", expecting brace " << braces.back() << "\n" ;
-			exit(1);
-		}
+    string closeBrace(unsigned int level) {
+	if (braces.back()==level) {
+	    if (verbose) printf("%sclose %u.\n",indentBy(braces.size() - 1).c_str(),level);
+	    braces.pop_back();
+	    string result  = "}\n";
+	    result.append(indentBy(braces.size() - 1));
+	    return result;
+	} else {
+	    cerr << "Code generation error: Attempted to close brace " << level << ", expecting brace " << braces.back() << "\n" ;
+	    exit(1);
 	}
+    }
 
-	string endl() {
-		string result =  "\n";
-		//put out right number of tabs for level depth
-		result.append(indentBy(braces.size() - 1));
-		return result;
-	}
+    string endl() {
+	string result =  "\n";
+	//put out right number of tabs for level depth
+	result.append(indentBy(braces.size() - 1));
+	return result;
+    }
 
 private:
-	string indentBy(unsigned int numIndents) {
-		string result =  ""; ///toString(numIndents);
-		for (int i = 0; i < numIndents; i++) {
-			result.append("    ");
-		}
-		return result;
+    string indentBy(unsigned int numIndents) {
+	string result =  ""; ///toString(numIndents);
+	for (int i = 0; i < numIndents; i++) {
+	    result.append("    ");
 	}
+	return result;
+    }
 
 };
+
 #endif

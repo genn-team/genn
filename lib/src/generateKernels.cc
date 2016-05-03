@@ -489,6 +489,8 @@ void generate_process_presynaptic_events_code(
     }
 
     bool evnt = postfix == tS("Evnt");
+    int UIntSz = sizeof(unsigned int) * 8;
+    int logUIntSz = (int) (logf((float) UIntSz) / logf(2.0f) + 1e-5f);
 
     if ((evnt && model.synapseUsesSpikeEvents[i]) || (!evnt && model.synapseUsesTrueSpikes[i])) {
 	unsigned int synt = model.synapseType[i];

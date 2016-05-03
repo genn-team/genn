@@ -1,7 +1,7 @@
 //--------------------------------------------------------------------------
 /*! \file hr_time.cpp
 
-\brief This  file contains the implementation of the CStopWatch class that provides a simple timing tool based on the system clock.
+  \brief This  file contains the implementation of the CStopWatch class that provides a simple timing tool based on the system clock.
 */
 //--------------------------------------------------------------------------
 
@@ -15,13 +15,13 @@
 #include <windows.h>
 
 double CStopWatch::LIToSecs( LARGE_INTEGER & L) {
-	return ((double)L.QuadPart /(double)frequency.QuadPart);
+    return ((double)L.QuadPart /(double)frequency.QuadPart);
 }
 
-CStopWatch::CStopWatch(){
-	timer.start.QuadPart=0;
-	timer.stop.QuadPart=0;	
-	QueryPerformanceFrequency( &frequency );
+CStopWatch::CStopWatch() {
+    timer.start.QuadPart=0;
+    timer.stop.QuadPart=0;	
+    QueryPerformanceFrequency( &frequency );
 }
 
 void CStopWatch::startTimer( ) {
@@ -34,10 +34,11 @@ void CStopWatch::stopTimer( ) {
 
 
 double CStopWatch::getElapsedTime() {
-	LARGE_INTEGER time;
-	time.QuadPart = timer.stop.QuadPart - timer.start.QuadPart;
+    LARGE_INTEGER time;
+    time.QuadPart = timer.stop.QuadPart - timer.start.QuadPart;
     return LIToSecs( time) ;
 }
+
 #else
 
 //--------------------------------------------------------------------------
@@ -46,7 +47,7 @@ double CStopWatch::getElapsedTime() {
 //--------------------------------------------------------------------------
 
 void CStopWatch::startTimer( ) {
-	gettimeofday(&(timer.start),NULL);
+    gettimeofday(&(timer.start),NULL);
 }
 
 //--------------------------------------------------------------------------
@@ -55,7 +56,7 @@ void CStopWatch::startTimer( ) {
 //--------------------------------------------------------------------------
 
 void CStopWatch::stopTimer( ) {
-	gettimeofday(&(timer.stop),NULL);
+    gettimeofday(&(timer.stop),NULL);
 }
 
 //--------------------------------------------------------------------------
@@ -64,10 +65,11 @@ void CStopWatch::stopTimer( ) {
 //--------------------------------------------------------------------------
 
 double CStopWatch::getElapsedTime() {	
-	timeval res;
-	timersub(&(timer.stop),&(timer.start),&res);
-	return res.tv_sec + res.tv_usec/1000000.0; // 10^6 uSec per second
+    timeval res;
+    timersub(&(timer.stop),&(timer.start),&res);
+    return res.tv_sec + res.tv_usec/1000000.0; // 10^6 uSec per second
 }
 
 #endif
+
 #endif

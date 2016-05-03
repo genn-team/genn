@@ -1,8 +1,9 @@
 
-#ifndef STRINGUTILS_H
-#define STRINGUTILS_H
+#ifndef STRINGUTILS_CC
+#define STRINGUTILS_CC
 
-#include <string>
+#include "stringUtils.h"
+
 #include <sstream>
 #if !defined(__GNUC__) || (__GNUC__ >= 4 && __GNUC_MINOR__ >= 9)
 #include <regex>
@@ -58,7 +59,7 @@ void substitute(string &s, const string trg, const string rep)
 //! \brief This function performs a list of name substitutions for variables in code snippets.
 //--------------------------------------------------------------------------
 
-void name_substitutions(string &code, string prefix, vector<string> &names, string postfix= string(""))
+void name_substitutions(string &code, string prefix, vector<string> &names, string postfix)
 {
     for (int k = 0, l = names.size(); k < l; k++) {
 	substitute(code, tS("$(") + names[k] + tS(")"), prefix+names[k]+postfix);
@@ -80,7 +81,7 @@ void value_substitutions(string &code, vector<string> &names, vector<double> &va
 //! \brief This function performs a list of name substitutions for variables in code snippets where the variables have an extension in their names (e.g. "_pre").
 //--------------------------------------------------------------------------
 
-void extended_name_substitutions(string &code, string prefix, vector<string> &names, string ext, string postfix= string(""))
+void extended_name_substitutions(string &code, string prefix, vector<string> &names, string ext, string postfix)
 {
     for (int k = 0, l = names.size(); k < l; k++) {
 	substitute(code, tS("$(") + names[k] + ext + tS(")"), prefix+names[k]+postfix);
@@ -98,8 +99,8 @@ void extended_value_substitutions(string &code, vector<string> &names, string ex
     }
 }
 
-string digits= string("0123456789");
-string op= string("+-*/(<>= ,;")+string("\n")+string("\t");
+const string digits= string("0123456789");
+const string op= string("+-*/(<>= ,;")+string("\n")+string("\t");
 
 const int __mathFN = 56;
 const char *__dnames[__mathFN]= {
@@ -399,59 +400,4 @@ void checkUnreplacedVariables(string code, string codeName)
 }
 #endif
 
-
-//-------------------------------------------------------------------------
-/*!
-  \brief Function for performing the code and value substitutions necessary to insert neuron related variables, parameters, and extraGlobal parameters into synaptic code.
-*/
-//-------------------------------------------------------------------------
-
-void neuron_substitutions_in_synaptic_code(
-    string &wCode, //!< the code string to work on
-    NNmodel &model, //!< the neuronal network model to generate code for
-    unsigned int src, //!< the number of the src neuron population
-    unsigned int trg, //!< the number of the target neuron population
-    unsigned int nt_pre, //!< the neuron type of the pre-synaptic neuron
-    unsigned int nt_post, //!< the neuron type of the post-synaptic neuron
-    string offsetPre, //!< delay slot offset expression for pre-synaptic vars
-    string offsetPost, //!< delay slot offset expression for post-synaptic vars
-    string preIdx, //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
-    string postIdx, //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
-    string devPrefix //!< device prefix, "dd_" for GPU, nothing for CPU
-    )
-{
-    // presynaptic neuron variables, parameters, and global parameters
-    if (model.neuronType[src] == POISSONNEURON) substitute(wCode, tS("$(V_pre)"), tS(model.neuronPara[src][2]));
-    substitute(wCode, tS("$(sT_pre)"), devPrefix+ tS("sT") + model.neuronName[src] + tS("[") + offsetPre + preIdx + tS("]"));
-    for (int j = 0; j < nModels[nt_pre].varNames.size(); j++) {
-	if (model.neuronVarNeedQueue[src][j]) {
-	    substitute(wCode, tS("$(") + nModels[nt_pre].varNames[j] + tS("_pre)"),
-		       devPrefix + nModels[nt_pre].varNames[j] + model.neuronName[src] + tS("[") + offsetPre + preIdx + tS("]"));
-	}
-	else {
-	    substitute(wCode, tS("$(") + nModels[nt_pre].varNames[j] + tS("_pre)"),
-		       devPrefix + nModels[nt_pre].varNames[j] + model.neuronName[src] + tS("[") + preIdx + tS("]"));
-	}
-    }
-    extended_value_substitutions(wCode, nModels[nt_pre].pNames, tS("_pre"), model.neuronPara[src]);
-    extended_value_substitutions(wCode, nModels[nt_pre].dpNames, tS("_pre"), model.dnp[src]);
-    extended_name_substitutions(wCode, devPrefix, nModels[nt_pre].extraGlobalNeuronKernelParameters, tS("_pre"), model.neuronName[src]);
-    
-    // postsynaptic neuron variables, parameters, and global parameters
-    substitute(wCode, tS("$(sT_post)"), devPrefix+tS("sT") + model.neuronName[trg] + tS("[") + offsetPost + postIdx + tS("]"));
-    for (int j = 0; j < nModels[nt_post].varNames.size(); j++) {
-	if (model.neuronVarNeedQueue[trg][j]) {
-	    substitute(wCode, tS("$(") + nModels[nt_post].varNames[j] + tS("_post)"),
-		       devPrefix + nModels[nt_post].varNames[j] + model.neuronName[trg] + tS("[") + offsetPost + postIdx + tS("]"));
-	}
-	else {
-	    substitute(wCode, tS("$(") + nModels[nt_post].varNames[j] + tS("_post)"),
-		       devPrefix + nModels[nt_post].varNames[j] + model.neuronName[trg] + tS("[") + postIdx + tS("]"));
-	}
-    }
-    extended_value_substitutions(wCode, nModels[nt_post].pNames, tS("_post"), model.neuronPara[trg]);
-    extended_value_substitutions(wCode, nModels[nt_post].dpNames, tS("_post"), model.dnp[trg]);
-    extended_name_substitutions(wCode, devPrefix, nModels[nt_post].extraGlobalNeuronKernelParameters, tS("_post"), model.neuronName[trg]);
-}
-
-#endif
+#endif // STRINGUTILS_CC

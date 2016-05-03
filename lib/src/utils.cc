@@ -22,6 +22,7 @@
 #define _UTILS_CC_ //!< macro for avoiding multiple inclusion during compilation
 
 #include "utils.h"
+
 #include <fstream>
 #include <stdint.h>
 

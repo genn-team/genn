@@ -1,12 +1,19 @@
-#ifndef sparse_utils_cc
-#define sparse_utils_cc
+
+#ifndef SPARSEUTILS_CC
+#define SPARSEUTILS_CC
+
+#include "sparseUtils.h"
+#include "generateALL.h"
+#include "utils.h"
 
 #include <cstdio>
-#include <cmath>
+#include <vector>
+
 
 /*---------------------------------------------------------------------
  Utility to count how many entries above a specified value exist in a float array
  ---------------------------------------------------------------------*/
+
 template <class DATATYPE>
 unsigned int countEntriesAbove(DATATYPE * Array, int sz, double includeAbove)
 {
@@ -200,4 +207,5 @@ void strsearch(string &s, const string trg)
     //createPosttoPreArray(var)...
   }
 }
-#endif
+
+#endif // SPARSEUTILS_CC
