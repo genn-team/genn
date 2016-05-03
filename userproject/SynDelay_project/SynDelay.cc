@@ -12,7 +12,6 @@
 #define DT 1.0f
 
 #include "modelSpec.h"
-#include "modelSpec.cc"
 
 
 // INPUT NEURONS
@@ -94,8 +93,8 @@ void modelDefinition(NNmodel &model)
   initGeNN();
   model.setName("SynDelay");
   neuronModel n= nModels[IZHIKEVICH];
-  n.pNames.push_back(tS("I0"));
-  n.simCode= tS("    if ($(V) >= 30.0){\n\
+  n.pNames.push_back("I0");
+  n.simCode= "    if ($(V) >= 30.0){\n\
       $(V)=$(c);\n\
 		  $(U)+=$(d);\n\
     } \n\
@@ -105,7 +104,7 @@ void modelDefinition(NNmodel &model)
    //if ($(V) > 30.0){   //keep this only for visualisation -- not really necessaary otherwise \n	\
    //  $(V)=30.0; \n\
    //}\n\
-   ");
+   ";
   unsigned int MYIZHIKEVICH= nModels.size();
   nModels.push_back(n);
 

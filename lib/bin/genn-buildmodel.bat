@@ -61,13 +61,13 @@ if defined -d set "MACROS=%MACROS% DEBUG=1"
 
 rem :: generate model code
 cd /d "%-o%"
-nmake clean /nologo /f "%GENN_PATH%\lib\src\WINmakefile"
+nmake clean /nologo /f "%GENN_PATH%\lib\WINmakefile"
 if defined -d (
     echo debugging mode ON
-    nmake /nologo /f "%GENN_PATH%\lib\src\WINmakefile" %MACROS%
+    nmake /nologo /f "%GENN_PATH%\lib\WINmakefile" %MACROS%
     devenv /debugexe .\generateALL.exe "%-o%"
 ) else (
-    nmake /nologo /f "%GENN_PATH%\lib\src\WINmakefile" %MACROS%
+    nmake /nologo /f "%GENN_PATH%\lib\WINmakefile" %MACROS%
     .\generateALL.exe "%-o%"
 )
 

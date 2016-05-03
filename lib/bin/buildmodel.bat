@@ -38,13 +38,13 @@ if "%GENN_PATH%"=="" (
   set GENN_PATH=%GeNNPATH%
 )
 
-nmake clean /nologo /f "%GENN_PATH%\lib\src\WINmakefile"
+nmake clean /nologo /f "%GENN_PATH%\lib\WINmakefile"
 if "%DBGMODE%"=="0" (
-  nmake /nologo /f "%GENN_PATH%\lib\src\WINmakefile" MODEL="%MODELPATH%\%MODELNAME%.cc" CPU_ONLY=%CPU_ONLY%
+  nmake /nologo /f "%GENN_PATH%\lib\WINmakefile" MODEL="%MODELPATH%\%MODELNAME%.cc" CPU_ONLY=%CPU_ONLY%
   .\generateALL.exe %MODELPATH%
 ) else (
   echo "Debugging mode ON"
-  nmake /nologo /f "%GENN_PATH%\lib\src\WINmakefile" DEBUG=1 MODEL="%MODELPATH%\%MODELNAME%.cc" EXTRA_DEF=%EXTRA_DEF%
+  nmake /nologo /f "%GENN_PATH%\lib\WINmakefile" DEBUG=1 MODEL="%MODELPATH%\%MODELNAME%.cc" EXTRA_DEF=%EXTRA_DEF%
   devenv /debugexe .\generateALL.exe %MODELPATH%
 )
 
