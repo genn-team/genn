@@ -971,6 +971,7 @@ void NNmodel::finalize()
 	gennError("Your model has already been finalized");
     }
     initLearnGrps();
+    setPopulationSums();
     final= 1;
 }
 

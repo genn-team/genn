@@ -2,6 +2,8 @@
 #ifndef STRINGUTILS_H
 #define STRINGUTILS_H
 
+#include "modelSpec.h"
+
 #include <string>
 #include <vector>
 

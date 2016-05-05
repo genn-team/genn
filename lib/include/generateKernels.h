@@ -12,7 +12,7 @@
 --------------------------------------------------------------------------*/
 
 //------------------------------------------------------------------------
-/*! \file generateKernels.cc
+/*! \file generateKernels.h
 
   \brief Contains functions that generate code for CUDA kernels. Part of the code generation section.
 

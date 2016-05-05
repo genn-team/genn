@@ -19,11 +19,18 @@
 */
 //--------------------------------------------------------------------------
 
+#include "generateCPU.h"
+#include "global.h"
+#include "utils.h"
+#include "stringUtils.h"
+#include "CodeHelper.h"
+
+#include <algorithm>
+
 
 //--------------------------------------------------------------------------
 /*!
   \brief Function that generates the code of the function the will simulate all neurons on the CPU.
-
 */
 //--------------------------------------------------------------------------
 
@@ -345,7 +352,6 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 /*!
   \brief Function for generating the CUDA synapse kernel code that handles presynaptic 
   spikes or spike type events
-
 */
 //-------------------------------------------------------------------------
 
@@ -477,7 +483,6 @@ void generate_process_presynaptic_events_code_CPU(
 //--------------------------------------------------------------------------
 /*!
   \brief Function that generates code that will simulate all synapses of the model on the CPU.
-
 */
 //--------------------------------------------------------------------------
 
