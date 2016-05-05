@@ -104,7 +104,7 @@ void generate_model_runner(NNmodel &model,  //!< Model description
 //--------------------------------------------------------------------------
 
 #ifndef CPU_ONLY
-void chooseDevice(NNmodel *&model, //!< the nn model we are generating code for
+void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
 		  string path     //!< path the generated code will be deposited
     )
 {
@@ -139,26 +139,26 @@ void chooseDevice(NNmodel *&model, //!< the nn model we are generating code for
 
 	// Get the sizes of each synapse / learn group present on this host and device
 	vector<unsigned int> synapseN, learnN;
-	for (int group = 0; group < model->synapseGrpN; group++) {
-	    if ((model->synapseConnType[group] == SPARSE) && (model->maxConn[group]>0)) {
-		groupSize[0].push_back(model->maxConn[group]);
+	for (int group = 0; group < model.synapseGrpN; group++) {
+	    if ((model.synapseConnType[group] == SPARSE) && (model.maxConn[group]>0)) {
+		groupSize[0].push_back(model.maxConn[group]);
 	    }
 	    else {
-		groupSize[0].push_back(model->neuronN[model->synapseTarget[group]]);
+		groupSize[0].push_back(model.neuronN[model.synapseTarget[group]]);
 	    }
-	    if (model->synapseUsesPostLearning[group]) {     // TODO: this needs updating where learning is detected properly!
-		groupSize[1].push_back(model->neuronN[model->synapseSource[group]]);
+	    if (model.synapseUsesPostLearning[group]) {     // TODO: this needs updating where learning is detected properly!
+		groupSize[1].push_back(model.neuronN[model.synapseSource[group]]);
 	    }
-	    if (model->synapseUsesSynapseDynamics[group]) {
-		if ((model->synapseConnType[group] == SPARSE) && (model->maxConn[group]>0)) {
-		    groupSize[2].push_back(model->neuronN[model->synapseSource[group]]*model->maxConn[group]);
+	    if (model.synapseUsesSynapseDynamics[group]) {
+		if ((model.synapseConnType[group] == SPARSE) && (model.maxConn[group]>0)) {
+		    groupSize[2].push_back(model.neuronN[model.synapseSource[group]]*model.maxConn[group]);
 		}
 		else {
-		    groupSize[2].push_back(model->neuronN[model->synapseSource[group]]*model->neuronN[model->synapseTarget[group]]);
+		    groupSize[2].push_back(model.neuronN[model.synapseSource[group]]*model.neuronN[model.synapseTarget[group]]);
 		}
 	    }
 	}
-	groupSize[3]= model->neuronN;
+	groupSize[3]= model.neuronN;
 #ifdef BLOCKSZ_DEBUG
 	for (int i= 0; i < krnlNo; i++) {
 	    cerr << "BLOCKSZ_DEBUG: ";
@@ -206,7 +206,7 @@ void chooseDevice(NNmodel *&model, //!< the nn model we are generating code for
 	    // Signal error and exit if SM version < 1.3 and double precision floats are requested.
 	    if ((deviceProp[theDevice].major == 1) && (deviceProp[theDevice].minor < 3))
 	    {
-		if (model->ftype != "float")
+		if (model.ftype != "float")
 		{
 		    cerr << "Error: This CUDA device does not support double precision floating-point." << endl;
 		    cerr << "       Either change the ftype parameter to GENN_FLOAT or find a newer GPU" << endl;
@@ -237,11 +237,11 @@ void chooseDevice(NNmodel *&model, //!< the nn model we are generating code for
 
 #ifdef _WIN32
 	    nvccFlags += " -I\"%GENN_PATH%\\lib\\include\"";
-	    string runnerPath = path + "\\" + model->name + "_CODE\\runner.cc";
+	    string runnerPath = path + "\\" + model.name + "_CODE\\runner.cc";
 	    string cubinPath = "%TEMP%\\runner.cubin";
 #else
 	    nvccFlags += " -I\"$GENN_PATH/lib/include\"";
-	    string runnerPath = path + "/" + model->name + "_CODE/runner.cc";
+	    string runnerPath = path + "/" + model.name + "_CODE/runner.cc";
 	    string cubinPath = "/tmp/runner.cubin";
 #endif
 	    string nvccCommand = "\"" + tS(NVCC) + "\" " + nvccFlags;
@@ -257,10 +257,8 @@ void chooseDevice(NNmodel *&model, //!< the nn model we are generating code for
 		learnBlkSz = warpSize*(rep+1);
 		synDynBlkSz= warpSize*(rep+1);
 		neuronBlkSz = warpSize*(rep+1);
-		delete model;
-		model = new NNmodel();
-		modelDefinition(*model);
-		generate_model_runner(*model, path);
+		model.setPopulationSums();
+		generate_model_runner(model, path);
 	      
 		// Run NVCC
 		cout << "dry-run compile for device " << theDevice << endl;
@@ -522,14 +520,12 @@ void chooseDevice(NNmodel *&model, //!< the nn model we are generating code for
 	}
     }
 
+    model.setPopulationSums();
+
     cout << "synapse block size: " << synapseBlkSz << endl;
     cout << "learn block size: " << learnBlkSz << endl;
     cout << "synapseDynamics block size: " << synDynBlkSz << endl;
     cout << "neuron block size: " << neuronBlkSz << endl;
-
-    delete model;
-    model = new NNmodel();
-    modelDefinition(*model);
 
     if (GENN_PREFERENCES::smVersionFile) {
 	ofstream sm_os((path + "/sm_version.mk").c_str());
