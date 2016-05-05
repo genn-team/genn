@@ -1504,7 +1504,6 @@ void genRunner(NNmodel &model, //!< Model description
 }
 
 
-#ifndef CPU_ONLY
 //----------------------------------------------------------------------------
 /*!
   \brief A function to generate the code that simulates the model on the GPU
@@ -1513,6 +1512,7 @@ void genRunner(NNmodel &model, //!< Model description
 */
 //----------------------------------------------------------------------------
 
+#ifndef CPU_ONLY
 void genRunnerGPU(NNmodel &model, //!< Model description 
 		  string &path //!< Path for code generation
     )

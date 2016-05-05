@@ -21,35 +21,21 @@
 */
 //--------------------------------------------------------------------------
 
-#include "global.h"
-#include "utils.h"
-#include "stringUtils.h"
-#include "modelSpec.h"
+#include "generateALL.h"
 #include "generateRunner.h"
 #include "generateCPU.h"
 #include "generateKernels.h"
+#include "global.h"
+#include "modelSpec.h"
+#include "utils.h"
+#include "stringUtils.h"
 #include "CodeHelper.h"
-
-#include <algorithm>
-#include <string>
-#include <iostream>
-#include <fstream>
-#include <cstring>
-#include <string>
-#include <sstream>
-#include <vector>
-#include <cmath>
-#include <stdint.h>
 
 #ifdef _WIN32
 #include <direct.h>
-#include <stdlib.h>
 #else
-#include <unistd.h>
 #include <sys/stat.h> // needed for mkdir
 #endif
-
-using namespace std;
 
 CodeHelper hlp;
 //hlp.setVerbose(true);//this will show the generation of bracketing (brace) levels. Helps to debug a bracketing issue
@@ -112,7 +98,6 @@ void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
     const char *kernelName[krnlNo]= {"calcSynapses", "learnSynapsesPost", "calcSynapseDynamics", "calcNeurons"};
     size_t globalMem, mostGlobalMem = 0;
     int chosenDevice = 0;
-
 
     // IF OPTIMISATION IS ON: Choose the device which supports the highest warp occupancy.
     if (GENN_PREFERENCES::optimiseBlockSize) {
