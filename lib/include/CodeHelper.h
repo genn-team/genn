@@ -67,4 +67,6 @@ private:
 
 };
 
+extern CodeHelper hlp;
+
 #endif

@@ -52,6 +52,7 @@
 using namespace std;
 
 CodeHelper hlp;
+//hlp.setVerbose(true);//this will show the generation of bracketing (brace) levels. Helps to debug a bracketing issue
 
 
 //--------------------------------------------------------------------------

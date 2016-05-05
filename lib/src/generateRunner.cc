@@ -29,8 +29,6 @@
 #include <stdint.h>
 #include <cfloat>
 
-CodeHelper hlp;
-
 
 //--------------------------------------------------------------------------
 //! \brief This fucntion generates host and device variable definitions, of the given type and name.

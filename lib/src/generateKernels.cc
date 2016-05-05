@@ -19,6 +19,15 @@
 */
 //-------------------------------------------------------------------------
 
+#include "generateKernels.h"
+#include "global.h"
+#include "utils.h"
+#include "stringUtils.h"
+#include "CodeHelper.h"
+
+#include <algorithm>
+
+
 // The CPU_ONLY version does not need any of this
 #ifndef CPU_ONLY
 
@@ -37,8 +46,6 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 		     string &path  //!< Path for code generation
     )
 {
-    //hlp.setVerbose(true);//this will show the generation of bracketing (brace) levels. Helps to debug a bracketing issue
-
     string name, s, localID;
     unsigned int nt;
     ofstream os;
