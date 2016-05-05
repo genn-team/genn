@@ -585,7 +585,7 @@ int main(int argc,     //!< number of arguments; expected to be 2
 
     string path= toString(argv[1]);
 #ifndef CPU_ONLY
-    chooseDevice(model, path);
+    chooseDevice(*model, path);
 #endif
     generate_model_runner(*model, path);
 
