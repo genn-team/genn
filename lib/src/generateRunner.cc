@@ -12,14 +12,29 @@
   --------------------------------------------------------------------------*/
 
 //-----------------------------------------------------------------------
-/*!  \file generateRunner.cc 
-  
+/*!  \file generateRunner.cc
+
   \brief Contains functions to generate code for running the
   simulation on the GPU, and for I/O convenience functions between GPU
   and CPU space. Part of the code generation section.
 */
 //--------------------------------------------------------------------------
 
+#include "generateRunner.h"
+#include "global.h"
+#include "utils.h"
+#include "stringUtils.h"
+#include "CodeHelper.h"
+
+#include <stdint.h>
+#include <cfloat>
+
+CodeHelper hlp;
+
+
+//--------------------------------------------------------------------------
+//! \brief This fucntion generates host and device variable definitions, of the given type and name.
+//--------------------------------------------------------------------------
 
 void variable_def(ofstream &os, string type, string name)
 {
@@ -29,6 +44,11 @@ void variable_def(ofstream &os, string type, string name)
     os << "__device__ " << type << " dd_" << name << ";" << ENDL;
 #endif
 }
+
+
+//--------------------------------------------------------------------------
+//! \brief This fucntion generates host extern variable definitions, of the given type and name.
+//--------------------------------------------------------------------------
 
 void extern_variable_def(ofstream &os, string type, string name)
 {
@@ -48,8 +68,6 @@ void extern_variable_def(ofstream &os, string type, string name)
   the model.  
 */
 //--------------------------------------------------------------------------
-
-#include <cfloat>
 
 void genRunner(NNmodel &model, //!< Model description
 	       string &path //!< Path for code generationn
@@ -1488,6 +1506,7 @@ void genRunner(NNmodel &model, //!< Model description
 }
 
 
+#ifndef CPU_ONLY
 //----------------------------------------------------------------------------
 /*!
   \brief A function to generate the code that simulates the model on the GPU
@@ -1496,7 +1515,6 @@ void genRunner(NNmodel &model, //!< Model description
 */
 //----------------------------------------------------------------------------
 
-#ifndef CPU_ONLY
 void genRunnerGPU(NNmodel &model, //!< Model description 
 		  string &path //!< Path for code generation
     )
@@ -2229,18 +2247,18 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     os.close();
     //cout << "done with generating GPU runner" << ENDL;
 }
-#endif
+#endif // CPU_ONLY
 
 
 //----------------------------------------------------------------------------
 /*!
-  \brief Generates the Makefile for all generated GeNN code.
+  \brief A function that generates the Makefile for all generated GeNN code.
 */
 //----------------------------------------------------------------------------
 
 void genMakefile(NNmodel &model, //!< Model description
 		 string &path    //!< Path for code generation
-    )
+		 )
 {
     string name = path + "/" + model.name + "_CODE/Makefile";
     ofstream os;

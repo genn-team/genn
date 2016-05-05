@@ -3,6 +3,7 @@
 #define __CODE_HELPER_CC
 
 #include <iostream>
+#include <cstdlib>
 #include <cstdio>
 #include <cstring>
 #include <string>

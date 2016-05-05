@@ -21,6 +21,15 @@
 */
 //--------------------------------------------------------------------------
 
+#include "global.h"
+#include "utils.h"
+#include "stringUtils.h"
+#include "modelSpec.h"
+#include "generateRunner.h"
+#include "generateCPU.h"
+#include "generateKernels.h"
+#include "CodeHelper.h"
+
 #include <algorithm>
 #include <string>
 #include <iostream>
@@ -32,8 +41,6 @@
 #include <cmath>
 #include <stdint.h>
 
-using namespace std;
-
 #ifdef _WIN32
 #include <direct.h>
 #include <stdlib.h>
@@ -42,16 +49,9 @@ using namespace std;
 #include <sys/stat.h> // needed for mkdir
 #endif
 
-#include "CodeHelper.cc"
-CodeHelper hlp;
-#include "utils.h"
-#include "stringUtils.h"
-#include "modelSpec.h"
+using namespace std;
 
-#include "global.h"
-#include "generateRunner.cc"
-#include "generateCPU.cc"
-#include "generateKernels.cc"
+CodeHelper hlp;
 
 
 //--------------------------------------------------------------------------
