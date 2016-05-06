@@ -219,6 +219,7 @@ void NNmodel::initLearnGrps()
 	weightUpdateModel wu = weightUpdateModels[synapseType[i]];
 	unsigned int src = synapseSource[i];
 	vector<string> vars = nModels[neuronType[src]].varNames;
+	needEvntThresholdReTest.push_back(false);
 
 	if (wu.simCode != tS("")) {
 	    synapseUsesTrueSpikes[i] = TRUE;
@@ -230,33 +231,6 @@ void NNmodel::initLearnGrps()
 		    neuronVarNeedQueue[src][j] = TRUE;
 		}
 	    }
-	}
-	if (wu.simCodeEvnt != tS("")) {
-	    synapseUsesSpikeEvents[i] = TRUE;
-	    neuronNeedSpkEvnt[src] = TRUE;
-
-	    assert(wu.evntThreshold != tS(""));
- 
-	    // do an early replacement of parameters, derived parameters and extraglobalsynapse parameters
-	    string eCode= wu.evntThreshold;
-	    value_substitutions(eCode, wu.pNames, synapsePara[i]);
-	    value_substitutions(eCode, wu.dpNames, dsp_w[i]);						    
-	    name_substitutions(eCode, tS(""), wu.extraGlobalSynapseKernelParameters, synapseName[i]);
-	    // add to the source population spike event condition
-	    if (neuronSpkEvntCondition[src] == tS("")) {
-		neuronSpkEvntCondition[src] = tS("(") + eCode + tS(")");
-	    }
-	    else {
-		neuronSpkEvntCondition[src] += tS(" || (") + eCode + tS(")");
-	    }
-
-	    // analyze which neuron variables need queues
-	    for (int j = 0; j < vars.size(); j++) {
-		if (wu.simCodeEvnt.find(vars[j] + tS("_pre")) != string::npos) {
-		    neuronVarNeedQueue[src][j] = TRUE;
-		}
-	    }
-		
 	}
 
 	if (wu.simLearnPost != tS("")) {
@@ -305,6 +279,54 @@ void NNmodel::initLearnGrps()
 	}	
     }
 
+    for (int i = 0; i < neuronGrpN; i++) {
+	string eCode0;
+	vector<string> vars = nModels[neuronType[i]].varNames;
+	bool needReTest= false;
+	for (int j= 0, l= outSyn[i].size(); j < l; j++) {
+	    int synPopID= outSyn[i][j];
+	    weightUpdateModel wu= weightUpdateModels[synapseType[synPopID]];
+	    if (wu.simCodeEvnt != tS("")) {
+		synapseUsesSpikeEvents[synPopID] = TRUE;
+		neuronNeedSpkEvnt[i] = TRUE;
+		
+		assert(wu.evntThreshold != tS(""));
+		
+		// do an early replacement of parameters, derived parameters and extraglobalsynapse parameters
+		string eCode= wu.evntThreshold;
+		value_substitutions(eCode, wu.pNames, synapsePara[synPopID]);
+		value_substitutions(eCode, wu.dpNames, dsp_w[synPopID]);						    
+		name_substitutions(eCode, tS(""), wu.extraGlobalSynapseKernelParameters, synapseName[synPopID]);
+		// add to the source population spike event condition
+		if (neuronSpkEvntCondition[i] == tS("")) {
+		    neuronSpkEvntCondition[i] = tS("(") + eCode + tS(")");
+		    eCode0= eCode; // remember the first condition
+		}
+		else {
+		    if (eCode != eCode0) {
+			needReTest= true;
+		    }
+		    neuronSpkEvntCondition[i] += tS(" || (") + eCode + tS(")");
+		}
+		
+		// analyze which neuron variables need queues
+		for (int j = 0; j < vars.size(); j++) {
+		    if (wu.simCodeEvnt.find(vars[j] + tS("_pre")) != string::npos) {
+			neuronVarNeedQueue[i][j] = TRUE;
+		    }
+		}
+	    }
+	}
+	if (needReTest) {
+	    for (int j= 0, l= outSyn[i].size(); j < l; j++) {
+		int synPopID= outSyn[i][j];
+		weightUpdateModel wu= weightUpdateModels[synapseType[synPopID]];
+		if (wu.simCodeEvnt != tS("")) {
+		    needEvntThresholdReTest[synPopID]= true;
+		}
+	    }
+	}
+    }
     // related to kernel parameters: make kernel parameter lists
     // for neuron kernel
     for (int i = 0; i < neuronGrpN; i++) {
