@@ -17,6 +17,7 @@
 #define _MODELSPEC_CC_ //!< macro for avoiding multiple inclusion during compilation
 
 #include "utils.h"
+#include "stringutils.h"
 
 // ------------------------------------------------------------------------
 //! \brief Method for GeNN initialisation (by preparing standard models)
@@ -236,12 +237,17 @@ void NNmodel::initLearnGrps()
 
 	    assert(wu.evntThreshold != tS(""));
  
+	    // do an early replacement of parameters, derived parameters and extraglobalsynapse parameters
+	    string eCode= wu.evntThreshold;
+	    value_substitutions(eCode, wu.pNames, synapsePara[i]);
+	    value_substitutions(eCode, wu.dpNames, dsp_w[i]);						    
+	    name_substitutions(eCode, tS(""), wu.extraGlobalSynapseKernelParameters, synapseName[i]);
 	    // add to the source population spike event condition
 	    if (neuronSpkEvntCondition[src] == tS("")) {
-		neuronSpkEvntCondition[src] = tS("(") + wu.evntThreshold + tS(")");
+		neuronSpkEvntCondition[src] = tS("(") + eCode + tS(")");
 	    }
 	    else {
-		neuronSpkEvntCondition[src] += tS(" || (") + wu.evntThreshold + tS(")");
+		neuronSpkEvntCondition[src] += tS(" || (") + eCode + tS(")");
 	    }
 
 	    // analyze which neuron variables need queues
@@ -330,7 +336,7 @@ void NNmodel::initLearnGrps()
 	    if (find(neuronKernelParameters.begin(), neuronKernelParameters.end(), pnamefull) == neuronKernelParameters.end()) {
 		// parameter wasn't registered yet - is it used?
 		bool used= 0;
-		if (neuronSpkEvntCondition[src].find(tS("$(")+pname+tS(")")) != string::npos) used= 1; // it's used
+		if (neuronSpkEvntCondition[src].find(pnamefull) != string::npos) used= 1; // it's used
  		if (used) {
 		    neuronKernelParameters.push_back(pnamefull);
 		    neuronKernelParameterTypes.push_back(ptype);
@@ -357,9 +363,9 @@ void NNmodel::initLearnGrps()
 		if (find(synapseKernelParameters.begin(), synapseKernelParameters.end(), pnamefull) == synapseKernelParameters.end()) {
 		    // parameter wasn't registered yet - is it used?
 		    bool used= 0;
-		    if (wu.simCode.find(tS("$(")+pname+suffix[k]) != string::npos) used= 1; // it's used
-		    if (wu.simCodeEvnt.find(tS("$(")+pname+suffix[k]) != string::npos) used= 1; // it's used
-		    if (wu.evntThreshold.find(tS("$(")+pname+suffix[k]) != string::npos) used= 1; // it's used
+		    if (wu.simCode.find(tS("$(")+pname+suffix[k]+tS(")")) != string::npos) used= 1; // it's used
+		    if (wu.simCodeEvnt.find(tS("$(")+pname+suffix[k]+tS(")")) != string::npos) used= 1; // it's used
+		    if (wu.evntThreshold.find(tS("$(")+pname+suffix[k]+tS(")")) != string::npos) used= 1; // it's used
 		    if (used) {
 			synapseKernelParameters.push_back(pnamefull);
 			synapseKernelParameterTypes.push_back(ptype);
@@ -375,6 +381,7 @@ void NNmodel::initLearnGrps()
 		// parameter wasn't registered yet - is it used?
 		bool used= 0;
 		if (wu.simCode.find(tS("$(")+pname+tS(")")) != string::npos) used= 1; // it's used
+		if (wu.evntThreshold.find(tS("$(")+pname+tS(")")) != string::npos) used= 1; // it's used
  		if (used) {
 		    synapseKernelParameters.push_back(pnamefull);
 		    synapseKernelParameterTypes.push_back(ptype);
