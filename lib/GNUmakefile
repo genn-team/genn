@@ -40,8 +40,7 @@ ifeq ($(DARWIN),DARWIN)
     CXX                 :=clang++
 endif
 ifndef CPU_ONLY
-#    CXXFLAGS            :=-std=c++0x -MMD -MP -DNVCC=\"$(NVCC)\"
-    CXXFLAGS            :=-MMD -MP -DNVCC=\"$(NVCC)\"
+    CXXFLAGS            :=-std=c++0x -MMD -MP -DNVCC=\"$(NVCC)\"
 else
     CXXFLAGS            :=-std=c++0x -MMD -MP -DCPU_ONLY
 endif

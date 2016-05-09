@@ -206,6 +206,7 @@ void NNmodel::initLearnGrps()
 	weightUpdateModel wu = weightUpdateModels[synapseType[i]];
 	unsigned int src = synapseSource[i];
 	vector<string> vars = nModels[neuronType[src]].varNames;
+	needEvntThresholdReTest.push_back(false);
 
 	if (wu.simCode != "") {
 	    synapseUsesTrueSpikes[i] = true;
@@ -217,28 +218,6 @@ void NNmodel::initLearnGrps()
 		    neuronVarNeedQueue[src][j] = true;
 		}
 	    }
-	}
-	if (wu.simCodeEvnt != "") {
-	    synapseUsesSpikeEvents[i] = true;
-	    neuronNeedSpkEvnt[src] = true;
-
-	    assert(wu.evntThreshold != "");
- 
-	    // add to the source population spike event condition
-	    if (neuronSpkEvntCondition[src] == "") {
-		neuronSpkEvntCondition[src] = "(" + wu.evntThreshold + ")";
-	    }
-	    else {
-		neuronSpkEvntCondition[src] += " || (" + wu.evntThreshold + ")";
-	    }
-
-	    // analyze which neuron variables need queues
-	    for (int j = 0; j < vars.size(); j++) {
-		if (wu.simCodeEvnt.find(vars[j] + "_pre") != string::npos) {
-		    neuronVarNeedQueue[src][j] = true;
-		}
-	    }
-		
 	}
 
 	if (wu.simLearnPost != "") {
@@ -264,6 +243,54 @@ void NNmodel::initLearnGrps()
 	}	
     }
 
+    for (int i = 0; i < neuronGrpN; i++) {
+	string eCode0;
+	vector<string> vars = nModels[neuronType[i]].varNames;
+	bool needReTest= false;
+	for (int j= 0, l= outSyn[i].size(); j < l; j++) {
+	    int synPopID= outSyn[i][j];
+	    weightUpdateModel wu= weightUpdateModels[synapseType[synPopID]];
+	    if (wu.simCodeEvnt != "") {
+		synapseUsesSpikeEvents[synPopID] = true;
+		neuronNeedSpkEvnt[i] = true;
+		assert(wu.evntThreshold != "");
+		
+		// do an early replacement of parameters, derived parameters and extraglobalsynapse parameters
+		string eCode= wu.evntThreshold;
+		value_substitutions(eCode, wu.pNames, synapsePara[synPopID]);
+		value_substitutions(eCode, wu.dpNames, dsp_w[synPopID]);						    
+		name_substitutions(eCode, "", wu.extraGlobalSynapseKernelParameters, synapseName[synPopID]);
+
+		// add to the source population spike event condition
+		if (neuronSpkEvntCondition[i] == "") {
+		    neuronSpkEvntCondition[i] = "(" + eCode + ")";
+		    eCode0= eCode; // remember the first condition
+		}
+		else {
+		    if (eCode != eCode0) {
+			needReTest= true;
+		    }
+		    neuronSpkEvntCondition[i] += " || (" + eCode + ")";
+		}
+		
+		// analyze which neuron variables need queues
+		for (int j = 0; j < vars.size(); j++) {
+		    if (wu.simCodeEvnt.find(vars[j] + "_pre") != string::npos) {
+			neuronVarNeedQueue[i][j] = true;
+		    }
+		}
+	    }
+	}
+	if (needReTest) {
+	    for (int j= 0, l= outSyn[i].size(); j < l; j++) {
+		int synPopID= outSyn[i][j];
+		weightUpdateModel wu= weightUpdateModels[synapseType[synPopID]];
+		if (wu.simCodeEvnt != "") {
+		    needEvntThresholdReTest[synPopID]= true;
+		}
+	    }
+	}
+    }
     // related to kernel parameters: make kernel parameter lists
     // for neuron kernel
     for (int i = 0; i < neuronGrpN; i++) {
@@ -295,7 +322,7 @@ void NNmodel::initLearnGrps()
 	    if (find(neuronKernelParameters.begin(), neuronKernelParameters.end(), pnamefull) == neuronKernelParameters.end()) {
 		// parameter wasn't registered yet - is it used?
 		bool used= 0;
-		if (neuronSpkEvntCondition[src].find("$(" + pname + ")") != string::npos) used= 1; // it's used
+		if (neuronSpkEvntCondition[src].find(pnamefull) != string::npos) used= 1; // it's used
  		if (used) {
 		    neuronKernelParameters.push_back(pnamefull);
 		    neuronKernelParameterTypes.push_back(ptype);
@@ -322,9 +349,9 @@ void NNmodel::initLearnGrps()
 		if (find(synapseKernelParameters.begin(), synapseKernelParameters.end(), pnamefull) == synapseKernelParameters.end()) {
 		    // parameter wasn't registered yet - is it used?
 		    bool used= 0;
-		    if (wu.simCode.find("$(" + pname + suffix[k]) != string::npos) used= 1; // it's used
-		    if (wu.simCodeEvnt.find("$(" + pname + suffix[k]) != string::npos) used= 1; // it's used
-		    if (wu.evntThreshold.find("$(" + pname + suffix[k]) != string::npos) used= 1; // it's used
+		    if (wu.simCode.find("$(" + pname + suffix[k] + ")") != string::npos) used= 1; // it's used
+		    if (wu.simCodeEvnt.find("$(" + pname + suffix[k] + ")") != string::npos) used= 1; // it's used
+		    if (wu.evntThreshold.find("$(" + pname + suffix[k] + ")") != string::npos) used= 1; // it's used
 		    if (used) {
 			synapseKernelParameters.push_back(pnamefull);
 			synapseKernelParameterTypes.push_back(ptype);
@@ -340,6 +367,7 @@ void NNmodel::initLearnGrps()
 		// parameter wasn't registered yet - is it used?
 		bool used= 0;
 		if (wu.simCode.find("$(" + pname + ")") != string::npos) used= 1; // it's used
+		if (wu.evntThreshold.find("$(" + pname + ")") != string::npos) used= 1; // it's used
  		if (used) {
 		    synapseKernelParameters.push_back(pnamefull);
 		    synapseKernelParameterTypes.push_back(ptype);

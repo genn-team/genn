@@ -715,7 +715,7 @@ void genRunner(NNmodel &model, //!< Model description
     }
     os << ENDL;
 
-    os << "#include \"sparseUtils.cc\"" << ENDL << ENDL;
+    os << "#include \"sparseUtils.h\"" << ENDL << ENDL;
     // include simulation kernels
 #ifndef CPU_ONLY
     os << "#include \"runnerGPU.cc\"" << ENDL << ENDL;

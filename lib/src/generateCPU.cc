@@ -224,16 +224,9 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 	    string eCode= model.neuronSpkEvntCondition[i];
 	    // code substitutions ----
 	    extended_name_substitutions(eCode, tS("l"), nModels[model.neuronType[i]].varNames, tS("_pre"), tS(""));
-	    for (int j= 0; j < model.outSyn[i].size(); j++) {
-		unsigned int synPopID= model.outSyn[i][j];
-		unsigned int synt= model.synapseType[synPopID];
-		substitute(eCode, tS("$(id)"), tS("n"));
-		substitute(eCode, tS("$(t)"), tS("t"));
-		value_substitutions(eCode, weightUpdateModels[synt].pNames, model.synapsePara[synPopID]);
-		value_substitutions(eCode, weightUpdateModels[synt].dpNames, model.dsp_w[synPopID]);
-		name_substitutions(eCode, tS(""), weightUpdateModels[synt].extraGlobalSynapseKernelParameters, model.synapseName[synPopID]);
-		name_substitutions(eCode, tS(""), nModels[model.neuronType[i]].extraGlobalNeuronKernelParameters, model.neuronName[i]);
-	    }
+	    substitute(eCode, tS("$(id)"), tS("n"));
+	    substitute(eCode, tS("$(t)"), tS("t"));
+	    name_substitutions(eCode, tS(""), nModels[model.neuronType[i]].extraGlobalNeuronKernelParameters, model.neuronName[i]);
 	    eCode= ensureFtype(eCode, model.ftype);
 	    checkUnreplacedVariables(eCode, tS("neuronSpkEvntCondition"));
 	    // end code substitutions ----

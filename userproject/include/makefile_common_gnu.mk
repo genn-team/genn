@@ -97,9 +97,13 @@ debug: $(EXECUTABLE)
 
 .PHONY: clean
 clean:
-	rm -rf $(EXECUTABLE) *.o *.dSYM/
+	rm -rf $(EXECUTABLE) *.o *.dSYM/ generateALL
 	cd *_CODE && make clean
 
 .PHONY: purge
 purge: clean
 	rm -rf *_CODE sm_version.mk
+
+.PHONY: show
+show:
+	echo $(OBJECTS)

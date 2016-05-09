@@ -309,17 +309,10 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 	if (model.neuronNeedSpkEvnt[i]) {
 	    string eCode = model.neuronSpkEvntCondition[i];
 	    // code substitutions ----
-	    for (int j= 0; j < model.outSyn[i].size(); j++) {
-		unsigned int synPopID = model.outSyn[i][j];
-		unsigned int synt = model.synapseType[synPopID];
-		substitute(eCode, tS("$(id)"), localID);
-		substitute(eCode, tS("$(t)"), tS("t"));
-		extended_name_substitutions(eCode, tS("l"), nModels[model.neuronType[i]].varNames, tS("_pre"), tS(""));
-		value_substitutions(eCode, weightUpdateModels[synt].pNames, model.synapsePara[synPopID]);
-		value_substitutions(eCode, weightUpdateModels[synt].dpNames, model.dsp_w[synPopID]);						    
-		name_substitutions(eCode, tS(""), weightUpdateModels[synt].extraGlobalSynapseKernelParameters, model.synapseName[synPopID]);
-		name_substitutions(eCode, tS(""), nModels[model.neuronType[i]].extraGlobalNeuronKernelParameters, model.neuronName[i]);
-	    }
+	    substitute(eCode, tS("$(id)"), localID);
+	    substitute(eCode, tS("$(t)"), tS("t"));
+	    extended_name_substitutions(eCode, tS("l"), nModels[model.neuronType[i]].varNames, tS("_pre"), tS(""));
+	    name_substitutions(eCode, tS(""), nModels[model.neuronType[i]].extraGlobalNeuronKernelParameters, model.neuronName[i]);
 	    eCode= ensureFtype(eCode, model.ftype);
 	    checkUnreplacedVariables(eCode, tS("neuronSpkEvntCondition"));
 	    // end code substitutions ----
@@ -554,20 +547,21 @@ void generate_process_presynaptic_events_code(
 	    os << "prePos = dd_indInG" << model.synapseName[i] << "[preInd];" << ENDL;
 	    os << "npost = dd_indInG" << model.synapseName[i] << "[preInd + 1] - prePos;" << ENDL;
 
-	    if (evnt) {
+	    if (model.synapseGType[i] == INDIVIDUALID) {
+		os << "unsigned int gid = (dd_glbSpkCnt" << postfix << "[" << localID << "] * " << model.neuronN[trg] << " + i);" << ENDL;
+	    }
+	    if ((evnt) && (model.needEvntThresholdReTest[i])) {
 		os << "if ";
 		if (model.synapseGType[i] == INDIVIDUALID) {
-			os << "unsigned int gid = (dd_glbSpkCnt" << postfix << "[" << localID << "] * " << model.neuronN[trg] << " + i);" << ENDL;
-
 		    // Note: we will just access global mem. For compute >= 1.2 simultaneous access to same global mem in the (half-)warp will be coalesced - no worries
-			os << "((B(dd_gp" << model.synapseName[i] << "[gid >> " << logUIntSz << "], gid & " << UIntSz - 1 << ")) && ";
+		    os << "((B(dd_gp" << model.synapseName[i] << "[gid >> " << logUIntSz << "], gid & " << UIntSz - 1 << ")) && ";
 		}
 		
 		// code substitutions ----
 		string eCode = weightUpdateModels[synt].evntThreshold;
 		value_substitutions(eCode, weightUpdateModels[synt].pNames, model.synapsePara[i]);
 		value_substitutions(eCode, weightUpdateModels[synt].dpNames, model.dsp_w[i]);
-		name_substitutions(eCode, tS("dd_"), weightUpdateModels[synt].extraGlobalSynapseKernelParameters, model.synapseName[i]);
+		name_substitutions(eCode, tS(""), weightUpdateModels[synt].extraGlobalSynapseKernelParameters, model.synapseName[i]);
 
 //		neuron_substitutions_in_synaptic_code(eCode, model, src, trg, nt_pre, nt_post, offsetPre, offsetPost, tS("shSpkEvnt") + tS("[j]"), tS("ipost"), tS("dd_"));
 		neuron_substitutions_in_synaptic_code(eCode, model, src, trg, nt_pre, nt_post, offsetPre, offsetPost, tS("preInd"), tS("i"), tS("dd_"));
@@ -620,7 +614,7 @@ void generate_process_presynaptic_events_code(
 	    
 	    os << "prePos += 1;" << ENDL;
 	    os << CB(103);
-	    if (evnt) {
+	    if ((evnt) && (model.needEvntThresholdReTest[i])) {
 		os << CB(130);
 	    }
 	    else if (model.synapseGType[i] == INDIVIDUALID) {
@@ -673,7 +667,7 @@ void generate_process_presynaptic_events_code(
 	    if (weightUpdateModels[synt].simCode_supportCode != tS("")) {
 		os << OB(29) << " using namespace " << model.synapseName[i] << "_weightupdate_simCode;" << ENDL;	
 	    }
-	    if (evnt) {
+	    if ((evnt) && (model.needEvntThresholdReTest[i])) {
 		os << "if ";
 		if (model.synapseGType[i] == INDIVIDUALID) {
 		    // Note: we will just access global mem. For compute >= 1.2 simultaneous access to same global mem in the (half-)warp will be coalesced - no worries
@@ -755,7 +749,7 @@ void generate_process_presynaptic_events_code(
 		os << CB(140); // end if (id < npost)
 	    } 
 	    
-	    if (evnt) {
+	    if ((evnt) && (model.needEvntThresholdReTest[i])) {
 		os << CB(130); // end if (eCode) 
 	    }
 	    else if (model.synapseGType[i] == INDIVIDUALID) {
