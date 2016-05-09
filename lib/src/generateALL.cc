@@ -31,6 +31,7 @@
 #include "stringUtils.h"
 #include "CodeHelper.h"
 
+#include <cmath>
 #ifdef _WIN32
 #include <direct.h>
 #else

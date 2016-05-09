@@ -36,7 +36,7 @@ using namespace std;
 
 
 void initGeNN();
-unsigned int GeNNReady= 0;
+extern unsigned int GeNNReady;
 
 // Set DT to 1.0 if it was not specified
 #ifndef DT

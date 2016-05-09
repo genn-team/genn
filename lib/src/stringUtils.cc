@@ -4,42 +4,29 @@
 
 #include "stringUtils.h"
 
-#include <sstream>
 #if !defined(__GNUC__) || (__GNUC__ >= 4 && __GNUC_MINOR__ >= 9)
 #include <regex>
 #endif
 
 
 //--------------------------------------------------------------------------
-/*! \brief template function for conversion of various types to C++ strings
+/*! \brief template functions for conversion of various types to C++ strings
  */
 //--------------------------------------------------------------------------
 
-template<class T>
-std::string toString(T t)
-{
-    std::stringstream s;
-    s << t;
-    return s.str();
-}
-
-template<>
-std::string toString(float t)
+template<> std::string toString<float>(float t)
 {
     std::stringstream s;
     s << std::showpoint << t;
     return s.str();
 }
 
-template<>
-std::string toString(double t)
+template<> std::string toString<double>(double t)
 {
     std::stringstream s;
     s << std::showpoint << t;
     return s.str();
 }
-
-#define tS(X) toString(X) //!< Macro providing the abbreviated syntax tS() instead of toString().
 
 
 //--------------------------------------------------------------------------

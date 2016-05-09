@@ -22,9 +22,12 @@
 #include "stringUtils.h"
 
 #include <cstdio>
+#include <cmath>
 #include <cassert>
 #include <algorithm>
 
+
+unsigned int GeNNReady = 0;
 
 // ------------------------------------------------------------------------
 //! \brief Method for GeNN initialisation (by preparing standard models)
@@ -41,20 +44,20 @@ void initGeNN()
 
 NNmodel::NNmodel() 
 {
-  final= 0;
-  neuronGrpN= 0;
-  synapseGrpN= 0;
-  lrnGroups= 0;
-  synDynGroups= 0;
-  needSt= 0;
-  needSynapseDelay = 0;
-  setPrecision(0);
-  setTiming(false);
-  RNtype= "uint64_t";
+    final= 0;
+    neuronGrpN= 0;
+    synapseGrpN= 0;
+    lrnGroups= 0;
+    synDynGroups= 0;
+    needSt= 0;
+    needSynapseDelay = 0;
+    setPrecision(0);
+    setTiming(false);
+    RNtype= "uint64_t";
 #ifndef CPU_ONLY
-  setGPUDevice(AUTODEVICE);
+    setGPUDevice(AUTODEVICE);
 #endif
-  setSeed(0);
+    setSeed(0);
 }
 
 NNmodel::~NNmodel() 
@@ -971,8 +974,8 @@ void NNmodel::finalize()
 	gennError("Your model has already been finalized");
     }
     initLearnGrps();
-    setPopulationSums();
     final= 1;
+    setPopulationSums();
 }
 
 #endif // MODELSPEC_CC

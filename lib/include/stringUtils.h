@@ -5,19 +5,27 @@
 #include "modelSpec.h"
 
 #include <string>
+#include <sstream>
 #include <vector>
 
 using namespace std;
 
 
 //--------------------------------------------------------------------------
-/*! \brief template function for conversion of various types to C++ strings
+/*! \brief template functions for conversion of various types to C++ strings
  */
 //--------------------------------------------------------------------------
 
-template<class T> std::string toString(T t);
-template<> std::string toString(float t);
-template<> std::string toString(double t);
+template<class T> std::string toString(T t)
+{
+    std::stringstream s;
+    s << t;
+    return s.str();
+}
+
+template<> std::string toString<float>(float t);
+
+template<> std::string toString<double>(double t);
 
 #define tS(X) toString(X) //!< Macro providing the abbreviated syntax tS() instead of toString().
 

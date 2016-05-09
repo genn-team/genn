@@ -4,7 +4,7 @@ goto :genn_begin
 
 :genn_help
 rem :: display genn-buildmodel.bat help
-echo === genn-buildmodel.bat script usage ===
+echo genn-buildmodel.bat script usage:
 echo genn-buildmodel.bat [cdho] model
 echo -c            only generate simulation code for the CPU
 echo -d            enables the debugging mode
@@ -55,13 +55,11 @@ if not defined MODEL (
     goto :eof
 )
 for /f %%I in ("%-o%") do set "-o=%%~fI"
-for /f %%I in ("%MODEL%") do set "MACROS=MODEL=%%~fI"
+for /f %%I in ("%MODEL%") do set "MACROS=MODEL=%%~fI OUT_PATH=%-o%"
 if defined -c set "MACROS=%MACROS% CPU_ONLY=1"
 if defined -d set "MACROS=%MACROS% DEBUG=1"
 
 rem :: generate model code
-cd /d "%-o%"
-nmake clean /nologo /f "%GENN_PATH%\lib\WINmakefile"
 if defined -d (
     echo debugging mode ON
     nmake /nologo /f "%GENN_PATH%\lib\WINmakefile" %MACROS%
