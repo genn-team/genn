@@ -38,11 +38,6 @@ using namespace std;
 void initGeNN();
 extern unsigned int GeNNReady;
 
-// Set DT to 1.0 if it was not specified
-#ifndef DT
-#define DT 1.0
-#endif
-
 // connectivity of the network (synapseConnType)
 #define ALLTOALL 0  //!< Macro attaching the label "ALLTOALL" to connectivity type 0 
 #define DENSE 1 //!< Macro attaching the label "DENSE" to connectivity type 1
@@ -85,6 +80,7 @@ public:
   string name; //!< Name of the neuronal newtwork model
   string ftype; //!< Type of floating point variables (float, double, ...; default: float)
   string RNtype; //!< Underlying type for random number generation (default: long)
+  double DT; //!< The integration time step of the model
   int final; //!< Flag for whether the model has been finalized
   unsigned int needSt; //!< Whether last spike times are needed at all in this network model (related to STDP)
   unsigned int needSynapseDelay; //!< Whether delayed synapse conductance is required in the network
@@ -159,6 +155,7 @@ public:
 
   // PUBLIC KERNEL PARAMETER VARIABLES
   //==================================
+
   vector<string> neuronKernelParameters;
   vector<string> neuronKernelParameterTypes;
   vector<string> synapseKernelParameters;
@@ -180,7 +177,7 @@ private:
   void setNeuronPara(unsigned int, double*); //!< Never used
   void setNeuronIni(unsigned int, double*); //!< Never used
   unsigned int findNeuronGrp(const string); //!< Find the the ID number of a neuron group by its name 
-  void initDerivedNeuronPara(unsigned int); //!< Method for calculating the values of derived neuron parameters.
+  void initDerivedNeuronPara(); //!< Method for calculating the values of derived neuron parameters.
 
 
   // PRIVATE SYNAPSE FUNCTIONS
@@ -194,8 +191,8 @@ private:
   void setSynapseConnType(unsigned int, unsigned int); //!< Never used
   void setSynapseGType(unsigned int, unsigned int); //!< Never used
   unsigned int findSynapseGrp(const string); //< Find the the ID number of a synapse group by its name
-  void initDerivedSynapsePara(unsigned int); //!< Method for calculating the values of derived synapse parameters.
-  void initDerivedPostSynapsePara(unsigned int); //!< Method for calculating the values of derived postsynapse parameters.
+  void initDerivedSynapsePara(); //!< Method for calculating the values of derived synapse parameters.
+  void initDerivedPostSynapsePara(); //!< Method for calculating the values of derived postsynapse parameters.
   void registerSynapsePopulation(unsigned int); //!< Method to register a new synapse population with the inSyn list of the target neuron population
 
 public:
@@ -207,7 +204,8 @@ public:
   NNmodel();
   ~NNmodel();
   void setName(const string); //!< Method to set the neuronal network model name
-  void setPrecision(unsigned int);//!< Set numerical precision for floating point
+  void setPrecision(unsigned int); //!< Set numerical precision for floating point
+  void setDT(double); //!< Set the integration step size of the model
   void setTiming(bool); //!< Set whether timers and timing commands are to be included
   void setSeed(unsigned int); //!< Set the random seed (disables automatic seeding if argument not 0).
   void checkSizes(unsigned int *, unsigned int *, unsigned int *); //< Check if the sizes of the initialized neuron and synapse groups are correct.

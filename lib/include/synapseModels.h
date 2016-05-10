@@ -46,7 +46,7 @@ extern vector<weightUpdateModel> weightUpdateModels; //!< Global C++ vector cont
 extern unsigned int NSYNAPSE; //!< Variable attaching  the name NSYNAPSE to the non-learning synapse
 extern unsigned int NGRADSYNAPSE; //!< Variable attaching  the name NGRADSYNAPSE to the graded synapse wrt the presynaptic voltage
 extern unsigned int LEARN1SYNAPSE; //!< Variable attaching  the name LEARN1SYNAPSE to the the primitive STDP model for learning
-const unsigned int SYNTYPENO = 4; // maximum number of synapse types: SpineML needs to know this
+const unsigned int SYNTYPENO = 3; // maximum number of synapse types: SpineML needs to know this
 
 
 //--------------------------------------------------------------------------
@@ -58,7 +58,7 @@ const unsigned int SYNTYPENO = 4; // maximum number of synapse types: SpineML ne
 class pwSTDP : public synapseDP //!TODO This class definition may be code-generated in a future release
 {
 public:
-    double calculateDerivedParameter(int index, vector<double> pars, double dt) {
+    double calculateDerivedParameter(int index, vector<double> pars, double dt = 1.0) {
 	switch (index) {
 	case 0:
 	    return lim0(pars, dt);

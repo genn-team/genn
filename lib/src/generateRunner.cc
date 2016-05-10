@@ -152,10 +152,6 @@ void genRunner(NNmodel &model, //!< Model description
     os << "#define DEFINITIONS_H" << ENDL;
     os << ENDL;
 
-    os << "#ifndef DT" << ENDL;
-    os << "#define DT " << DT << ENDL;
-    os << "#endif" << ENDL;
-
     os << "#ifndef scalar" << ENDL;
     os << "typedef " << model.ftype << " scalar;" << ENDL;
     os << "#endif" << ENDL;
@@ -167,6 +163,8 @@ void genRunner(NNmodel &model, //!< Model description
     os << "#ifndef SCALAR_MAX" << ENDL;
     os << "#define SCALAR_MAX " << SCLR_MAX << ENDL;
     os << "#endif" << ENDL;
+
+    os << "const scalar DT = " << model.DT << ";" << ENDL;
 
     for (int i= 0; i < model.neuronGrpN; i++) {
 	os << "#define glbSpkShift" << model.neuronName[i];
@@ -1046,7 +1044,7 @@ void genRunner(NNmodel &model, //!< Model description
 	    os << "    }" << ENDL;
 	}
 
-	if ((model.neuronType[i] == IZHIKEVICH) && (DT != 1.0)) {
+	if ((model.neuronType[i] == IZHIKEVICH) && (model.DT != 1.0)) {
 	    os << "    fprintf(stderr,\"WARNING: You use a time step different than 1 ms. Izhikevich model behaviour may not be robust.\\n\"); " << ENDL;
 	}
     }

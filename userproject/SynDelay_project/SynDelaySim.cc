@@ -18,8 +18,9 @@
 
 using namespace std;
 
-#include "hr_time.cpp"
+#include "hr_time.h"
 #include "utils.h"
+#include "stringUtils.h"
 
 #include "SynDelaySim.h"
 #include "SynDelay_CODE/definitions.h"

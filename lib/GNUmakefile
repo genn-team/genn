@@ -32,7 +32,7 @@ OUT_PATH                :=$(CURDIR)
 # Global CUDA compiler settings
 ifndef CPU_ONLY
     CUDA_PATH           ?=/usr/local/cuda
-    NVCC                :=$(CUDA_PATH)/bin/nvcc
+    NVCC                :="$(CUDA_PATH)/bin/nvcc"
 endif
 
 # Global C++ compiler settings

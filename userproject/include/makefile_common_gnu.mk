@@ -20,7 +20,7 @@
 OS_SIZE                 :=$(shell uname -m | sed -e "s/i.86/32/" -e "s/x86_64/64/" -e "s/armv7l/32/")
 OS_UPPER                :=$(shell uname -s 2>/dev/null | tr [:lower:] [:upper:])
 OS_LOWER                :=$(shell uname -s 2>/dev/null | tr [:upper:] [:lower:])
-DARWIN                  :=$(strip $(findstring DARWIN, $(OS_UPPER)))
+DARWIN                  :=$(strip $(findstring DARWIN,$(OS_UPPER)))
 
 # Global CUDA compiler settings
 ifndef CPU_ONLY
@@ -42,18 +42,18 @@ endif
 ifndef CPU_ONLY
     INCLUDE_FLAGS       +=-I"$(GENN_PATH)/lib/include" -I"$(GENN_PATH)/userproject/include" -I"$(CUDA_PATH)/include"
     ifeq ($(DARWIN),DARWIN)
-        LINK_FLAGS      +=-Xlinker -lstdc++ -lc++ -L"$(CUDA_PATH)/lib" -lcuda -lcudart
+        LINK_FLAGS      +=-L"$(GENN_PATH)/lib/lib" -L"$(CUDA_PATH)/lib" -lgenn -lcuda -lcudart -lstdc++ -lc++
     else
         ifeq ($(OS_SIZE),32)
-            LINK_FLAGS  +=-L"$(CUDA_PATH)/lib" -lcuda -lcudart
+            LINK_FLAGS  +=-L"$(GENN_PATH)/lib/lib" -L"$(CUDA_PATH)/lib" -lgenn -lcuda -lcudart
         else
-            LINK_FLAGS  +=-L"$(CUDA_PATH)/lib64" -lcuda -lcudart
+            LINK_FLAGS  +=-L"$(GENN_PATH)/lib/lib" -L"$(CUDA_PATH)/lib64" -lgenn -lcuda -lcudart
         endif
     endif
 else
     INCLUDE_FLAGS       +=-I"$(GENN_PATH)/lib/include" -I"$(GENN_PATH)/userproject/include"
     ifeq ($(DARWIN),DARWIN)
-        LINK_FLAGS      +=-Xlinker -lstdc++ -lc++
+        LINK_FLAGS      +=-L"$(GENN_PATH)/lib/lib" -lgenn -lstdc++ -lc++
     endif
 endif
 

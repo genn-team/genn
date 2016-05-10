@@ -47,7 +47,7 @@ const unsigned int MAXPOSTSYN = 2; // maximum number of postsynaptic integration
 class expDecayDp : public postSynapseDP
 {
 public:
-    double calculateDerivedParameter(int index, vector <double> pars, double dt = 1.0) {
+    double calculateDerivedParameter(int index, vector<double> pars, double dt = 1.0) {
 	switch (index) {
 	case 0:
 	    return expDecay(pars, dt);

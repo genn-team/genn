@@ -53,7 +53,7 @@ extern unsigned int TRAUBMILES_PSTEP;//!< variable attaching the name "TRAUBMILE
 extern unsigned int IZHIKEVICH; //!< variable attaching the name "IZHIKEVICH" 
 extern unsigned int IZHIKEVICH_V; //!< variable attaching the name "IZHIKEVICH_V" 
 extern unsigned int SPIKESOURCE; //!< variable attaching the name "SPIKESOURCE"
-const unsigned int MAXNRN = 7; // maximum number of neuron types: SpineML needs to know this
+const unsigned int MAXNRN = 10; // maximum number of neuron types: SpineML needs to know this
 
 
 //--------------------------------------------------------------------------
@@ -63,7 +63,7 @@ const unsigned int MAXNRN = 7; // maximum number of neuron types: SpineML needs 
 class rulkovdp : public neuronDP
 {
 public:
-    double calculateDerivedParameter(int index, vector <double> pars, double dt = 1.0) {
+    double calculateDerivedParameter(int index, vector<double> pars, double dt = 1.0) {
 	switch (index) {
 	case 0:
 	    return ip0(pars);

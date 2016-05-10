@@ -51,7 +51,8 @@ NNmodel::NNmodel()
     synDynGroups= 0;
     needSt= 0;
     needSynapseDelay = 0;
-    setPrecision(0);
+    setDT(0.5);
+    setPrecision(GENN_FLOAT);
     setTiming(false);
     RNtype= "uint64_t";
 #ifndef CPU_ONLY
@@ -70,65 +71,6 @@ void NNmodel::setName(const string inname)
 	gennError("Trying to set the name of a finalized model.");
     }
     name= inname;
-}
-
-
-//--------------------------------------------------------------------------
-/*! \brief Method for calculating dependent parameter values from independent parameters.
-
-This method is to be invoked when all independent parameters have been set.
-It should also should only be called once and right after a population has been added. The method appends the derived values of dependent parameters to the corresponding vector (dnp) without checking for multiple calls. If called repeatedly, multiple copies of dependent parameters would be added leading to potential errors in the model execution.
-
-This method also saves the neuron numbers of the populations rounded to the next multiple of the block size as well as the sums s(i) = sum_{1...i} n_i of the rounded population sizes. These are later used to determine the branching structure for the generated neuron kernel code. 
-*/
-//--------------------------------------------------------------------------
-
-void NNmodel::initDerivedNeuronPara(unsigned int i /**< index of the neuron population */)
-{
-    vector<double> tmpP;
-    int numDpNames = nModels[neuronType[i]].dpNames.size();
-    for (int j=0; j < nModels[neuronType[i]].dpNames.size(); ++j) {	
-	double retVal = nModels[neuronType[i]].dps->calculateDerivedParameter(j, neuronPara[i], DT);
-	tmpP.push_back(retVal);
-    }
-    dnp.push_back(tmpP);
-}
-
-
-//--------------------------------------------------------------------------
-/*! \brief This function calculates derived synapse parameters from primary synapse parameters. 
-
-This function needs to be invoked each time a synapse population is added, after all primary parameters have been set, and before code for synapse evaluation is generated. It should be invoked only once per population and in order population by population.
-*/
-//--------------------------------------------------------------------------
-
-void NNmodel::initDerivedSynapsePara(unsigned int i /**< index of the synapse population */)
-{
-    vector<double> tmpP;
-    unsigned int synt= synapseType[i];
-    for (int j= 0; j < weightUpdateModels[synt].dpNames.size(); ++j) {
-	double retVal = weightUpdateModels[synt].dps->calculateDerivedParameter(j, synapsePara[i], DT);
-	tmpP.push_back(retVal);
-    }
-    assert(dsp_w.size() == i);
-    dsp_w.push_back(tmpP);	
-}
-
-
-//--------------------------------------------------------------------------
-/*! \brief This function calculates the derived synaptic parameters in the employed post-synaptic model  based on the given underlying post-synapse parameters */
-//--------------------------------------------------------------------------
-
-void NNmodel::initDerivedPostSynapsePara(unsigned int i)
-{
-    vector<double> tmpP;
-    unsigned int psynt= postSynapseType[i];
-    for (int j=0; j < postSynModels[psynt].dpNames.size(); ++j) {
-	double retVal = postSynModels[psynt].dps->calculateDerivedParameter(j, postSynapsePara[i], DT);
-	tmpP.push_back(retVal);
-    }	
-    assert(dpsp.size() == i);
-    dpsp.push_back(tmpP);
 }
 
 
@@ -574,7 +516,6 @@ void NNmodel::addNeuronPopulation(
     neuronNeedSpkEvnt.push_back(false);
     neuronSpkEvntCondition.push_back("");
     neuronDelaySlots.push_back(1);
-    initDerivedNeuronPara(i);
 
     // initially set neuron group indexing variables to device 0 host 0
     neuronDeviceID.push_back(0);
@@ -745,8 +686,6 @@ void NNmodel::addSynapsePopulation(
     postSynIni.push_back(PSVini);  
     postSynapsePara.push_back(ps);  
     registerSynapsePopulation(i);
-    initDerivedSynapsePara(i);
-    initDerivedPostSynapsePara(i);
     maxConn.push_back(neuronN[trgNumber]);
     synapseSpanType.push_back(0);
 
@@ -825,6 +764,20 @@ void NNmodel::setConstInp(const string sName, /**<  */
 
 
 //--------------------------------------------------------------------------
+/*! \brief This function sets the integration time step DT of the model
+ */
+//--------------------------------------------------------------------------
+
+void NNmodel::setDT(double theDT /**<  */)
+{
+    if (final) {
+	gennError("Trying to set DT in a finalized model.");
+    }
+    DT = theDT;
+}
+
+
+//--------------------------------------------------------------------------
 /*! \brief This function sets the numerical precision of floating type variables. By default, it is GENN_GENN_FLOAT.
  */
 //--------------------------------------------------------------------------
@@ -834,19 +787,19 @@ void NNmodel::setPrecision(unsigned int floattype /**<  */)
     if (final) {
 	gennError("Trying to set the precision of a finalized model.");
     }
-  switch (floattype) {
-     case 0:
+    switch (floattype) {
+    case 0:
 	ftype = "float";
 	break;
-     case 1:
+    case 1:
 	ftype = "double"; // not supported by compute capability < 1.3
 	break;
-     case 2:
+    case 2:
 	ftype = "long double"; // not supported by CUDA at the moment.
 	break;
-     default:
-	ftype = "float";
-  }
+    default:
+	gennError("Unrecognised floating-point type.");
+    }
 }
 
 
@@ -872,7 +825,7 @@ void NNmodel::setTiming(bool theTiming /**<  */)
 void NNmodel::setSeed(unsigned int inseed /*!< the new seed  */)
 {
     if (final) {
-	gennError("Trying to set the seed in a finalized model.");
+	gennError("Trying to set the random seed in a finalized model.");
     }
     seed= inseed;
 }
@@ -912,6 +865,13 @@ string NNmodel::scalarExpr(const double val)
     return tmp;
 }
 
+
+//--------------------------------------------------------------------------
+/*! \brief Accumulate the sums and block-size-padded sums of all simulation groups.
+
+  This method saves the neuron numbers of the populations rounded to the next multiple of the block size as well as the sums s(i) = sum_{1...i} n_i of the rounded population sizes. These are later used to determine the branching structure for the generated neuron kernel code. 
+*/
+//--------------------------------------------------------------------------
 
 void NNmodel::setPopulationSums()
 {
@@ -995,14 +955,83 @@ void NNmodel::setPopulationSums()
 }
 
 
+//--------------------------------------------------------------------------
+/*! \brief Method for calculating dependent parameter values from independent parameters.
+
+This method is to be invoked when all independent parameters have been set.
+It appends the derived values of dependent parameters to the corresponding vector (dnp) without checking for multiple calls. If called repeatedly, multiple copies of dependent parameters would be added leading to potential errors in the model execution.
+*/
+//--------------------------------------------------------------------------
+
+void NNmodel::initDerivedNeuronPara()
+{
+    for (int i = 0; i < neuronGrpN; i++) {
+	vector<double> tmpP;
+	int numDpNames = nModels[neuronType[i]].dpNames.size();
+	for (int j=0; j < nModels[neuronType[i]].dpNames.size(); ++j) {	
+	    double retVal = nModels[neuronType[i]].dps->calculateDerivedParameter(j, neuronPara[i], DT);
+	    tmpP.push_back(retVal);
+	}
+	dnp.push_back(tmpP);
+    }
+}
+
+
+//--------------------------------------------------------------------------
+/*! \brief This function calculates dependent synapse parameters from independent synapse parameters.
+
+  This method is to be invoked when all independent parameters have been set.
+*/
+//--------------------------------------------------------------------------
+
+void NNmodel::initDerivedSynapsePara()
+{
+    for (int i = 0; i < synapseGrpN; i++) {
+	vector<double> tmpP;
+	unsigned int synt= synapseType[i];
+	for (int j= 0; j < weightUpdateModels[synt].dpNames.size(); ++j) {
+	    double retVal = weightUpdateModels[synt].dps->calculateDerivedParameter(j, synapsePara[i], DT);
+	    tmpP.push_back(retVal);
+	}
+	assert(dsp_w.size() == i);
+	dsp_w.push_back(tmpP);
+    }
+}
+
+
+//--------------------------------------------------------------------------
+/*! \brief This function calculates dependent synaptic parameters in the employed post-synaptic model based on the independent post-synapse parameters.
+
+  This method is to be invoked when all independent parameters have been set.
+ */
+//--------------------------------------------------------------------------
+
+void NNmodel::initDerivedPostSynapsePara()
+{
+    for (int i = 0; i < synapseGrpN; i++) {
+	vector<double> tmpP;
+	unsigned int psynt= postSynapseType[i];
+	for (int j=0; j < postSynModels[psynt].dpNames.size(); ++j) {
+	    double retVal = postSynModels[psynt].dps->calculateDerivedParameter(j, postSynapsePara[i], DT);
+	    tmpP.push_back(retVal);
+	}
+	assert(dpsp.size() == i);
+	dpsp.push_back(tmpP);
+    }
+}
+
+
 void NNmodel::finalize()
 {
     //initializing learning parameters to start
     if (final) {
 	gennError("Your model has already been finalized");
     }
-    initLearnGrps();
     final= 1;
+    initDerivedNeuronPara();
+    initDerivedSynapsePara();
+    initDerivedPostSynapsePara();
+    initLearnGrps();
     setPopulationSums();
 }
 
