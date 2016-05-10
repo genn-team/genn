@@ -142,8 +142,18 @@ void classIzh::create_input_values() //define your explicit input rule here
     }
 }
 
-void classIzh::read_sparsesyns_par(int synInd, SparseProjection C, FILE *f_ind, FILE *f_indInG, FILE *f_g, scalar *g //!< File handle for a file containing sparse conductivity values
-			    )
+//--------------------------------------------------------------------------
+/*! \brief Read sparse connectivity from a file
+ */
+//--------------------------------------------------------------------------
+
+void classIzh::read_sparsesyns_par(int synInd, //!< index of the synapse population to be worked on
+				   SparseProjection C, //!< contains teh arrays to be initialized from file
+				   FILE *f_ind, //!< file pointer for the indices of post-synaptic neurons
+				   FILE *f_indInG, //!< file pointer for the summed post-synaptic neurons numbers
+				   FILE *f_g, //!< File handle for a file containing sparse conductivity values
+				   scalar *g //!< array to receive the conductance values
+    )
 {
   unsigned int retval=0; //to make the compiler happy
   double * gtemp = new double[C.connN]; //we need this now as files will always be generated as double but we may run the model with single precision
@@ -181,7 +191,15 @@ void classIzh::read_sparsesyns_par(int synInd, SparseProjection C, FILE *f_ind, 
   delete [] gtemp;
 }
 
-void classIzh::gen_alltoall_syns( scalar * g, unsigned int nPre, unsigned int nPost, scalar gscale//!< Generate random conductivity values for an all to all network
+//--------------------------------------------------------------------------
+/*! \brief Generate random conductivity values for an all to all network
+ */
+//--------------------------------------------------------------------------
+
+void classIzh::gen_alltoall_syns( scalar * g, //!< the resulting synaptic conductances
+				  unsigned int nPre, //!< number of pre-synaptic neurons
+				  unsigned int nPost, //!< number of post-synaptic neurons
+				  scalar gscale //!< the maximal conductance of generated synapses
 			    )
 {
   //randomGen R;

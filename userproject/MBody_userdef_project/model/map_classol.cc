@@ -29,6 +29,8 @@
 
 
 //--------------------------------------------------------------------------
+/* \brief Constructor of the olfaction model class
+ */
 //--------------------------------------------------------------------------
 
 classol::classol()
@@ -109,6 +111,8 @@ void classol::free_device_mem()
 #endif
 
 //--------------------------------------------------------------------------
+/*! \brief Destructor for olfaction model
+ */
 //--------------------------------------------------------------------------
 
 classol::~classol()
@@ -118,17 +122,34 @@ classol::~classol()
   freeMem();
 }
 
-void classol::importArray(scalar *dest, double *src, int sz) 
+//--------------------------------------------------------------------------
+/*! \brief Helper function to cast an array to the appropriate floating point type for the current model
+ */
+//--------------------------------------------------------------------------
+
+
+void classol::importArray(scalar *dest, //!< pointer to destination
+			  double *src, //!< pointer to the source
+			  int sz //!< number of elements of the array to be copied
+    )
 {
     for (int i= 0; i < sz; i++) {
 	dest[i]= (scalar) src[i];
     }
 }
 
-void classol::exportArray(double *dest, scalar *src, int sz) 
+//--------------------------------------------------------------------------
+/*! \brief Helper function to cast an array from the floating point type of the current model to double.
+ */
+//--------------------------------------------------------------------------
+
+void classol::exportArray(double *dest, //!< pointer to destination
+			  scalar *src, //!< pointer to the source
+			  int sz //!< number of elements of the array to be copied
+    ) 
 {
     for (int i= 0; i < sz; i++) {
-	dest[i]= (scalar) src[i];
+	dest[i]= (double) src[i];
     }
 }
 
@@ -285,8 +306,18 @@ void classol::write_kcdnsyns(FILE *f //!< File handle for a file to write KC to 
   fprintf(stdout, "wrote kcdn ... \n");
 }
 
+//--------------------------------------------------------------------------
+/*! \brief Read sparse connectivity from a file
+ */
+//--------------------------------------------------------------------------
+
 template <class DATATYPE>
-void classol::read_sparsesyns_par(DATATYPE * wuvar, int synInd, SparseProjection C, FILE *f_ind,FILE *f_indInG,FILE *f_g //!< File handle for a file containing sparse conductivity values
+void classol::read_sparsesyns_par(DATATYPE * wuvar, //!< array to receive the conductance values
+				  int synInd, //!< index of the synapse population to be worked on
+				  SparseProjection C, //!< contains the arrays to be initialized from file
+				  FILE *f_ind, //!< file pointer for the indices of post-synaptic neurons
+				  FILE *f_indInG, //!< file pointer for the summed post-synaptic neurons numbers
+				  FILE *f_g //!< File handle for a file containing sparse conductivity values
 			    )
 {
   //allocateSparseArray(synInd,C.connN);
