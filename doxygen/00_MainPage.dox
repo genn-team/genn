@@ -12,7 +12,7 @@
 --------------------------------------------------------------------------*/
 
 //----------------------------------------------------------------------------
-/*! \mainpage 
+/*! \mainpage GeNN Documentation
 
 GeNN is a software package to enable neuronal network simulations on
 NVIDIA GPUs by code generation. Models are defined in a simple C-style
