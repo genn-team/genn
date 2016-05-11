@@ -19,9 +19,9 @@ all: generate_run tools
 generate_run: generate_run.cc 
 	g++  $(CXXFLAGS) $(INCLUDE_FLAGS) -o generate_run generate_run.cc 
 
+tools:
+	cd ../tools && make
+
 clean:
 	$(RM) generate_run
 	cd ../tools && make clean
-
-tools:
-	cd ../tools && make

@@ -28,7 +28,7 @@ CXXFLAGS                =/nologo /EHsc /DNVCC=\"$(NVCC:\=/)\"
 CXXFLAGS                =/nologo /EHsc /DCPU_ONLY
 !ENDIF
 !IFDEF DEBUG
-CXXFLAGS                =$(CXXFLAGS) /debug /Zi /Od
+CXXFLAGS                =$(CXXFLAGS) /debug /Zi /Od /DDEBUG
 !ENDIF
 
 # Global include and link flags

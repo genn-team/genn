@@ -28,7 +28,6 @@
 #include <cmath>
 #include <cfloat>
 #include <locale>
-using namespace std;
 
 #ifdef _WIN32
 #include <direct.h>
@@ -37,7 +36,11 @@ using namespace std;
 #include <sys/stat.h> // needed for mkdir
 #endif
 
+#include "stringUtils.h"
 #include "command_line_processing.h"
+
+using namespace std;
+
 
 //--------------------------------------------------------------------------
 /*! \brief Main entry point for generate_run.

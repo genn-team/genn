@@ -19,17 +19,18 @@
 //--------------------------------------------------------------------------
 
 #include <cassert>
-using namespace std;
-#include "hr_time.cpp"
-
-#include "utils.h" // for CHECK_CUDA_ERRORS
-
 #ifndef CPU_ONLY
 #include <cuda_runtime.h>
 #endif
 
+#include "hr_time.h"
+#include "stringUtils.h"
+#include "utils.h" // for CHECK_CUDA_ERRORS
+
+using namespace std;
+
 #include "HHVClamp.cc"
-#include "HHVClamp_CODE/definitions.cc"
+#include "HHVClamp_CODE/definitions.h"
 #include "randomGen.h"
 #include "gauss.h"
 randomGen R;

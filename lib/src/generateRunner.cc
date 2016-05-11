@@ -31,7 +31,7 @@
 
 
 //--------------------------------------------------------------------------
-//! \brief This fucntion generates host and device variable definitions, of the given type and name.
+//! \brief This function generates host and device variable definitions, of the given type and name.
 //--------------------------------------------------------------------------
 
 void variable_def(ofstream &os, string type, string name)
@@ -45,12 +45,15 @@ void variable_def(ofstream &os, string type, string name)
 
 
 //--------------------------------------------------------------------------
-//! \brief This fucntion generates host extern variable definitions, of the given type and name.
+//! \brief This function generates host extern variable definitions, of the given type and name.
 //--------------------------------------------------------------------------
 
 void extern_variable_def(ofstream &os, string type, string name)
 {
     os << "extern " << type << " " << name << ";" << ENDL;
+#ifndef CPU_ONLY
+    os << "extern " << type << " d_" << name << ";" << ENDL;
+#endif
 }
 
 
@@ -136,12 +139,12 @@ void genRunner(NNmodel &model, //!< Model description
     //=======================
 
     // this file contains helpful macros and is separated out so that it can also be used by other code that is compiled separately
-    name= path + toString("/") + model.name + toString("_CODE/definitions.h");
+    name= path + "/" + model.name + "_CODE/definitions.h";
     os.open(name.c_str());  
     writeHeader(os);
     os << ENDL;
-    
-       // write doxygen comment
+
+    // write doxygen comment
     os << "//-------------------------------------------------------------------------" << ENDL;
     os << "/*! \\file definitions.h" << ENDL << ENDL;
     os << "\\brief File generated from GeNN for the model " << model.name << " containing useful Macros used for both GPU amd CPU versions." << ENDL;
@@ -329,6 +332,21 @@ void genRunner(NNmodel &model, //!< Model description
     os << ENDL;
 
     os << "// ------------------------------------------------------------------------" << ENDL;
+    os << "// Throw an error for \"old style\" time stepping calls (using GPU)" << ENDL;
+    os << ENDL;
+    os << "template <class T>" << ENDL;
+    os << "void stepTimeGPU(T arg1, ...);" << ENDL;
+    os << ENDL;
+
+    os << "// ------------------------------------------------------------------------" << ENDL;
+    os << "// the actual time stepping procedure (using GPU)" << ENDL;
+    os << ENDL;
+    os << "void stepTimeGPU();" << ENDL;
+    os << ENDL;
+
+#endif
+
+    os << "// ------------------------------------------------------------------------" << ENDL;
     os << "// Function for setting the CUDA device and the host's global variables." << ENDL;
     os << "// Also estimates memory usage on device." << ENDL;
     os << ENDL;
@@ -362,20 +380,6 @@ void genRunner(NNmodel &model, //!< Model description
     os << "void stepTimeCPU();" << ENDL;
     os << ENDL;
 
-    os << "// ------------------------------------------------------------------------" << ENDL;
-    os << "// Throw an error for \"old style\" time stepping calls (using GPU)" << ENDL;
-    os << ENDL;
-    os << "template <class T>" << ENDL;
-    os << "void stepTimeGPU(T arg1, ...);" << ENDL;
-    os << ENDL;
-
-    os << "// ------------------------------------------------------------------------" << ENDL;
-    os << "// the actual time stepping procedure (using GPU)" << ENDL;
-    os << ENDL;
-    os << "void stepTimeGPU();" << ENDL;
-    os << ENDL;
-
-#endif
 
     //-----------------
     // GLOBAL VARIABLES
@@ -504,8 +508,8 @@ void genRunner(NNmodel &model, //!< Model description
     os << "#endif" << ENDL;
     os.close();
     
-//    cout << "entering genRunner" << ENDL;
-    name= path + toString("/") + model.name + toString("_CODE/runner.cc");
+    //cout << "entering genRunner" << ENDL;
+    name= path + "/" + model.name + "_CODE/runner.cc";
     os.open(name.c_str());  
     writeHeader(os);
     os << ENDL;
@@ -515,27 +519,32 @@ void genRunner(NNmodel &model, //!< Model description
     os << "/*! \\file runner.cc" << ENDL << ENDL;
     os << "\\brief File generated from GeNN for the model " << model.name << " containing general control code." << ENDL;
     os << "*/" << ENDL;
-    os << "//-------------------------------------------------------------------------" << ENDL << ENDL;
-
-    os << "#include <cstdio>" << ENDL;
-    os << "#include <cassert>" << ENDL;
-    os << "#include <ctime>" << ENDL;
-    os << "#include <stdint.h>" << ENDL;
-    os << "#include \"utils.h\"" << ENDL;
-    if (model.timing) os << "#include \"hr_time.cpp\"" << ENDL;
-    os << "#define RUNNER_CC_COMPILE" << ENDL;
-    os << "#include \"definitions.h\"" << ENDL;
+    os << "//-------------------------------------------------------------------------" << ENDL;
     os << ENDL;
 
-//    os << "#ifndef int_" << ENDL;
-//    os << "#define int_(X) ((int) (X))" << ENDL;
-//    os << "#endif" << ENDL;
+    os << "#define RUNNER_CC_COMPILE" << ENDL;
+    os << ENDL;
+    os << "#include \"definitions.h\"" << ENDL;
+    os << "#include \"utils.h\"" << ENDL;
+    if (model.timing) os << "#include \"hr_time.cpp\"" << ENDL;
+    os << "#include <cstdlib>" << ENDL;
+    os << "#include <cstdio>" << ENDL;
+    os << "#include <cmath>" << ENDL;
+    os << "#include <ctime>" << ENDL;
+    os << "#include <cassert>" << ENDL;
+    os << "#include <stdint.h>" << ENDL;
+    os << ENDL;
 
-  os << "#define Conductance SparseProjection" << ENDL;
-  os << "/*struct Conductance is deprecated. \n\
+    //os << "#ifndef int_" << ENDL;
+    //os << "#define int_(X) ((int) (X))" << ENDL;
+    //os << "#endif" << ENDL;
+
+    os << "#define Conductance SparseProjection" << ENDL;
+    os << "/*struct Conductance is deprecated. \n\
   By GeNN 2.0, Conductance is renamed as SparseProjection and contains only indexing values. \n\
   Please consider updating your user code by renaming Conductance as SparseProjection \n\
   and making g member a synapse variable.*/" << ENDL;
+    os << ENDL;
 
     // write MYRAND macro
     os << "#ifndef MYRAND" << ENDL;
@@ -544,7 +553,9 @@ void genRunner(NNmodel &model, //!< Model description
     os << "#ifndef MYRAND_MAX" << ENDL;
     os << "#define MYRAND_MAX 0x0000FFFFFFFFFFFFLL" << ENDL;
     os << "#endif" << ENDL;
-  if (model.timing) {
+    os << ENDL;
+    
+    if (model.timing) {
 #ifndef CPU_ONLY
       os << "cudaEvent_t neuronStart, neuronStop;" << ENDL;
 #endif

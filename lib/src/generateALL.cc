@@ -554,6 +554,11 @@ int main(int argc,     //!< number of arguments; expected to be 2
     }
     cout << endl;
 
+#ifdef DEBUG
+    GENN_PREFERENCES::optimizeCode = false;
+    GENN_PREFERENCES::debugCode = true;
+#endif // DEBUG
+
 #ifndef CPU_ONLY
     CHECK_CUDA_ERRORS(cudaGetDeviceCount(&deviceCount));
     deviceProp = new cudaDeviceProp[deviceCount];
@@ -561,7 +566,7 @@ int main(int argc,     //!< number of arguments; expected to be 2
 	CHECK_CUDA_ERRORS(cudaSetDevice(device));
 	CHECK_CUDA_ERRORS(cudaGetDeviceProperties(&(deviceProp[device]), device));
     }
-#endif
+#endif // CPU_ONLY
 
     NNmodel *model = new NNmodel();
     modelDefinition(*model);
@@ -572,7 +577,7 @@ int main(int argc,     //!< number of arguments; expected to be 2
     string path= toString(argv[1]);
 #ifndef CPU_ONLY
     chooseDevice(*model, path);
-#endif
+#endif // CPU_ONLY
     generate_model_runner(*model, path);
 
     return EXIT_SUCCESS;

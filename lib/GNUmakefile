@@ -60,6 +60,7 @@ ifndef CPU_ONLY
     endif
 else
     INCLUDE_FLAGS       :=-I"$(INC_PATH)"
+    LINK_FLAGS          :=-L"$(LIB_PATH)" -lgenn
     ifeq ($(DARWIN),DARWIN)
         LINK_FLAGS      :=-L"$(LIB_PATH)" -lgenn -lstdc++ -lc++
     endif
@@ -96,7 +97,7 @@ $(OBJ_PATH):
 $(LIB_PATH):
 	mkdir -p $@
 
-debug: CXXFLAGS +=-g -O0
+debug: CXXFLAGS +=-g -O0 -DDEBUG
 debug: all
 
 clean:
