@@ -95,11 +95,11 @@ debug: $(EXECUTABLE)
 
 .PHONY: clean
 clean:
-	rm -rf $(EXECUTABLE) *.o *.dSYM/
+	rm -rf $(EXECUTABLE) *.o *.dSYM/ generateALL runner.cubin
 
 .PHONY: purge
 purge: clean
-	rm -rf *_CODE sm_version.mk
+	rm -rf *_CODE sm_version.mk 
 
 .PHONY: show
 show:
