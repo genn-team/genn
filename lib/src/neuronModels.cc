@@ -3,6 +3,7 @@
 #define NEURONMODELS_CC
 
 #include "neuronModels.h"
+#include "stringUtils.h"
 
 // Neuron Types
 vector<neuronModel> nModels; //!< Global C++ vector containing all neuron model descriptions

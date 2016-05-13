@@ -3,6 +3,7 @@
 #define POSTSYNAPSEMODELS_CC
 
 #include "postSynapseModels.h"
+#include "stringUtils.h"
 
 // Post-Synapse Types
 vector<postSynModel> postSynModels; //!< Global C++ vector containing all post-synaptic update model descriptions

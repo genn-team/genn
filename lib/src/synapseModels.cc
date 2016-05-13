@@ -3,6 +3,7 @@
 #define SYNAPSEMODELS_CC
 
 #include "synapseModels.h"
+#include "stringUtils.h"
 
 // Synapse Types
 vector<weightUpdateModel> weightUpdateModels; //!< Global C++ vector containing all weightupdate model descriptions

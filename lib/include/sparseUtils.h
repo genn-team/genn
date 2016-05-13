@@ -2,6 +2,8 @@
 #ifndef SPARSE_UTILS_H
 #define SPARSE_UTILS_H
 
+#include "sparseProjection.h"
+
 #include <string>
 
 using namespace std;
