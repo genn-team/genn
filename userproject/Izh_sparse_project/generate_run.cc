@@ -27,6 +27,9 @@ This file compiles to a tool that wraps all the other tools into one chain of ta
 #include <cstdlib>
 #include <cmath>
 #include <locale>
+
+#include <stringUtils.h>
+
 using namespace std;
 
 #ifdef _WIN32

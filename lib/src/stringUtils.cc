@@ -10,26 +10,6 @@
 
 
 //--------------------------------------------------------------------------
-/*! \brief template functions for conversion of various types to C++ strings
- */
-//--------------------------------------------------------------------------
-
-template<> std::string toString<float>(float t)
-{
-    std::stringstream s;
-    s << std::showpoint << t;
-    return s.str();
-}
-
-template<> std::string toString<double>(double t)
-{
-    std::stringstream s;
-    s << std::showpoint << t;
-    return s.str();
-}
-
-
-//--------------------------------------------------------------------------
 //! \brief Tool for substituting strings in the neuron code strings or other templates
 //--------------------------------------------------------------------------
 

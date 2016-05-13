@@ -7,22 +7,6 @@
 using namespace std;
 
 
-//---------------------------------------------------------------------
-/*! \brief class (struct) for defining a spars connectivity projection
- */
-//---------------------------------------------------------------------
-
-struct SparseProjection {
-    unsigned int *indInG;
-    unsigned int *ind;
-    unsigned int *preInd;
-    unsigned int *revIndInG;
-    unsigned int *revInd;
-    unsigned int *remap;
-    unsigned int connN;
-};
-
-
 /*---------------------------------------------------------------------
  Utility to count how many entries above a specified value exist in a float array
  ---------------------------------------------------------------------*/

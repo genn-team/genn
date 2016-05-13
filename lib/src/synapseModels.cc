@@ -110,6 +110,9 @@ void prepareWeightUpdateModels()
     wu.needPostSt= true;
     weightUpdateModels.push_back(wu);
     LEARN1SYNAPSE= weightUpdateModels.size()-1; 
+
+
+#include "extra_weightupdates.h"
 }
 
 #endif // SYNAPSEMODELS_CC

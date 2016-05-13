@@ -11,10 +11,13 @@
 #  
 #--------------------------------------------------------------------------
 
-INCLUDE_FLAGS = /I $(GENN_PATH)/lib/include /I $(GENN_PATH)/userproject/include
-CFLAGS		=/nologo /EHsc $(INCLUDE_FLAGS)
+CXXFLAGS        =/nologo /EHsc
+INCLUDE_FLAGS   =/I"$(GENN_PATH)/lib/include" /I"$(GENN_PATH)/userproject/include"
 
 all: generate_run.exe
+
+generate_run.exe: generate_run.cc
+	$(CXX) $(CXXFLAGS) $(INCLUDE_FLAGS) /Fe$@ $<
 
 clean:
 	-del generate_run.exe generate_run.obj 2>nul 

@@ -19,13 +19,9 @@ using namespace std;
 template<class T> std::string toString(T t)
 {
     std::stringstream s;
-    s << t;
+    s << std::showpoint << t;
     return s.str();
 }
-
-template<> std::string toString<float>(float t);
-
-template<> std::string toString<double>(double t);
 
 #define tS(X) toString(X) //!< Macro providing the abbreviated syntax tS() instead of toString().
 

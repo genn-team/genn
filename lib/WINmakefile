@@ -49,7 +49,7 @@ INCLUDE_FLAGS           =/FI"$(MODEL)" /I"$(GENN_PATH)\lib\include"
 all: generateALL.exe
 
 generateALL.exe: $(GENN_PATH)\lib\src\generateALL.cc
-	$(CXX) $(CXXFLAGS) $(INCLUDE_FLAGS) $** /Fe$@ $(LINK_FLAGS)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_FLAGS) /Fe$@ $* $(LINK_FLAGS)
 
 clean:
 	-del generateALL.exe 2>nul
