@@ -8,36 +8,31 @@ This release includes minor new features, some core code improvements and severa
 User Side Changes
 ----
 
-1. There is now a new mechanism for how frequently changing "external input" is communicated to kernels. Rather than a GeNN generated argument list for each kernel comprising direct inputs, extraglobal parameters and the time variable in GeNN <= 2.1, there are now no kernel arguments other than the global time t for any of the kernels and the relevant variables are copied to the GPU in a single memory copy at each time step.
-For users this means that within kernels, references need to be made to the correctly named variables and similarly when setting them on the CPU side.
-Examples: CPU  	     GPU (kernel code snippet)
-	  t	     $(t)
-	  extraHH    $(extra)
-	  (for an extraglobalneuronparameter "extra" in a neurongroup "HH")
-Note, that for example, the predefined Poisson neurons have an auto-copy for the pointer to the rates array and for the offset (integer) where to use the array. The rates themselves in the array however are not updated automatically (this is exactly as before with the kernel arguments).
-IMPORTANT NOTE: The global time variable "t" is now provided by GeNN; please make sure that you are not duplicating its definition or shadowing it. This could have severe consequences for simulation correctness (e.g. time not advancing in cases of over-shadowing).
-The concept of "directInput" has been removed. Users can easily achieve the same thing by adding an additional variable (if there are individual inputs to neurons), an extraGlobalNeuronParameter (if the input is homogeneous but time dependent) or, obviously, a simple parameter if it's homogeneous and constant.
+1. GeNN now analyses automatically which parameters each kernel needs access to and these and only these are passed in the kernel argument list in addition to the global time t. These parameters can be a combination of extraGlobalNeuronKernelParameters and extraGlobalSynapseKernelParameters in either neuron or synapse kernel. In the unlikely case that users wish to call kernels directly, the correct call can be found in the `stepTimeGPU()` function. \n
+Reflecting these changes, the predefined Poisson neurons now simply have two extraGlobalNeuronParameter `rates` and `offset` which replace the previous custom pointer to the array of input rates and integer offset to indicate the current input pattern. These extraGlobalNeuronKernelParameters are passed to the neuron kernel automatically, but the rates themselves within the array are of course not updated automatically (this is exactly as before with the specifically generated kernel arguments for Poisson neurons). \n
+The concept of "directInput" has been removed. Users can easily achieve the same functionality by adding an additional variable (if there are individual inputs to neurons), an extraGlobalNeuronParameter (if the input is homogeneous but time dependent) or, obviously, a simple parameter if it's homogeneous and constant.
+\note The global time variable "t" is now provided by GeNN; please make sure that you are not duplicating its definition or shadowing it. This could have severe consequences for simulation correctness (e.g. time not advancing in cases of over-shadowing). \n
 
 2. We introduced the namespace GENN_PREFERENCES which contains variables that determine the behaviour of GeNN.
 
-3. We introduced a new code snippet called "supportCode" for neuron models, weightupdate models and post-synaptic models. This code snippet is intended to contain user-defined functions that are used from the other code snippets. We advise where possible to define the support code functions with keywords "__host__ __device__" so that they are available for both GPU and CPU version. Alternatively one can define separate versions for __host__ and __device__ in the snippet. The snippets are automatically made available to the relevant code parts. This is regulated through namespaces so that name clashes between different models do not matter. An exception are hash defines. They can in principle be used in the supportCode snippet but need to be protected specifically using
-ifndef. Example
-```
+3. We introduced a new code snippet called "supportCode" for neuron models, weightupdate models and post-synaptic models. This code snippet is intended to contain user-defined functions that are used from the other code snippets. We advise where possible to define the support code functions with the CUDA keywords "__host__ __device__" so that they are available for both GPU and CPU version. Alternatively one can define separate versions for __host__ and __device__ in the snippet. The snippets are automatically made available to the relevant code parts. This is regulated through namespaces so that name clashes between different models do not matter. An exception are hash defines. They can in principle be used in the supportCode snippet but need to be protected specifically using
+ifndef. For example
+\code
 #ifndef clip(x)
 #define clip(x) x > 10.0? 10.0 : x
 #endif
-```
-Note: If there are conflicting definitions for hash defines, the one that appears first in the GeNN generated code will then prevail.
+\endcode
+\note If there are conflicting definitions for hash defines, the one that appears first in the GeNN generated code will then prevail.
 
-4. The new convenience macros spikeCount_XX and spike_XX where "XX" is the name of the neuron group are now also available fro events: spikeEventCount_XX and spikeEvent_XX. They access the values for the current time step even if there are synaptic delays and spikes events are stored in circular queues.
+4. The new convenience macros spikeCount_XX and spike_XX where "XX" is the name of the neuron group are now also available for events: spikeEventCount_XX and spikeEvent_XX. They access the values for the current time step even if there are synaptic delays and spikes events are stored in circular queues.
 
 5. The old buildmodel.[sh|bat] scripts have been superseded by new genn-buildmodel.[sh|bat] scripts. These scripts accept UNIX style option switches, allow both relative and absolute model file paths, and allow the user to specify the directory in which all output files are placed (-o \<path\>). Debug (-d), CPU-only (-c) and show help (-h) are also defined. 
 
 6. We have introduced a CPU-only "-c" genn-buildmodel switch, which, if it's defined, will generate a GeNN version that is completely independent from CUDA and hence can be used on computers without CUDA installation or CUDA enabled hardware. Obviously, this then can also only run on CPU. CPU only mode can either be switched on by defining CPU_ONLY in the model description file or by passing appropriate parameters during the build, in particular
-```
+\code
 genn-buildmodel.[sh|bat] \<modelfile\> -c
 make release CPU_ONLY=1
-```
+\endcode
 
 7. The new genn-buildmodel "-o" switch allows the user to specify the output directory for all generated files - the default is the current directory. For example, a user project could be in '/home/genn_project', whilst the GeNN directory could be '/usr/local/genn'. The GeNN directory is kept clean, unless the user decides to build the sample projects inside of it without copying them elsewhere. This allows the deployment of GeNN to a read-only directory, like '/usr/local' or 'C:\\Program Files'. It also allows multiple users - i.e. on a compute cluster - to use GeNN simultaneously, without overwriting each other's code-generation files, etcetera.
 
@@ -54,9 +49,11 @@ Developer Side Changes
 
 2. The information about device choice is now stored in variables in the namespace GENN_PREFERENCES. This includes `chooseDevice`, `optimiseBlockSize`, `defaultDevice`. `asGoodAsZero` has also been moved into this namespace.
 
-3. We have also introduced the namespace GENN_FLAGS that contains unsigned int variables that attach names to mueric flags that can be used within GeNN. 
+3. We have also introduced the namespace GENN_FLAGS that contains unsigned int variables that attach names to numeric flags that can be used within GeNN. 
 
 4. The headers of the auto-generated communication functions such as pullXXXStateFromDevice etc, are now generated into definitions.h. This is useful where one wants to compile separate object files that cannot all include the full definitions in "runnerGPU.cc". One example where this is useful is the brian2genn interface.
+
+5. A number of feature tests have been added that can be found in the `featureTests` directory. They can be run with the respective `runTests.sh` scripts. The `cleanTests.sh` scripts can be used to remove all generated code after testing.
 
 Improvements
 ----
@@ -69,6 +66,10 @@ Bug fixes:
 ----
 
 1. Fixed a minor bug with delayed synapses, where delaySlot is declared but not referenced.
+
+2. We fixed a bug where on rare occasions a synchronisation problem occurred in sparse synapse populations.
+
+3. We fixed a bug where the combined spike event condition from several synapse populations was not assembled correctly in the code generation phase (the parameter values of the first synapse population over-rode the values of all other populations in the combined condition).
 
 Please refer to the [full documentation](http://genn-team.github.io/genn/documentation/html/index.html) for further details, tutorials and complete code documentation.
 
@@ -162,28 +163,25 @@ User Side Changes
 4. The function setSynapseG has been deprecated. In a `GLOBALG` scenario, the variables of a synapse group are set to the initial values provided in the `modeldefinition` function.
 
 5. Due to the split of synaptic models into weightUpdateModel and postSynModel, the parameter arrays used during model definition need to be carefully split as well so that each side gets the right parameters. For example, previously
-
-```C++
-float myPNKC_p[3]= {
-  0.0,           // 0 - Erev: Reversal potential
-  -20.0,         // 1 - Epre: Presynaptic threshold potential
-  1.0            // 2 - tau_S: decay time constant for S [ms]
-};
-```
+\code
+    float myPNKC_p[3]= {
+    0.0,           // 0 - Erev: Reversal potential
+    -20.0,         // 1 - Epre: Presynaptic threshold potential
+    1.0            // 2 - tau_S: decay time constant for S [ms]
+    };
+\endcode
 would define the parameter array of three parameters, `Erev`, `Epre`, and `tau_S` for a synapse of type `NSYNAPSE`. This now needs to be "split" into
-```C++
+\code
 float *myPNKC_p= NULL;
 float postExpPNKC[2]={
   1.0,            // 0 - tau_S: decay time constant for S [ms]
   0.0		  // 1 - Erev: Reversal potential
 };
-```
+\endcode
 i.e. parameters `Erev` and `tau_S` are moved to the post-synaptic model and its parameter array of two parameters. `Epre` is discontinued as a parameter for `NSYNAPSE`. As a consequence the weightupdate model of `NSYNAPSE` has no parameters and one can pass `NULL` for the parameter array in `addSynapsePopulation`. 
-
 The correct parameter lists for all defined neuron and synapse model types are listed in the [User Manual](http://genn-team.github.io/genn/documentation/html/dc/d05/UserManual.html).
-
-*Note:* 
-If the parameters are not redefined appropriately this will lead to uncontrolled behaviour of models and likely to sgementation faults and crashes.
+\note
+If the parameters are not redefined appropriately this will lead to uncontrolled behaviour of models and likely to segmentation faults and crashes.
 
 6. Advanced users can now define variables as type `scalar` when introducing new neuron or synapse types. This will at the code generation stage be translated to the model's floating point type (ftype), `float` or `double`. This works for defining variables as well as in all code snippets. Users can also use the expressions `SCALAR_MAX` and `SCALAR_MIN` for `FLT_MIN`, `FLT_MAX`, `DBL_MIN` and `DBL_MAX`, respectively. Corresponding definitions of `scalar`, `SCALAR_MIN` and `SCALAR_MAX` are also available for user-side code whenever the code-generated file `runner.cc` has been included.
 
@@ -192,23 +190,23 @@ If the parameters are not redefined appropriately this will lead to uncontrolled
 8. The `addSynapsePopulation(...)` function has now more mandatory parameters relating to the introduction of separate weightupdate models (pre-synaptic models) and postynaptic models. The correct syntax for the `addSynapsePopulation(...)` can be found with detailed explanations in teh [User Manual](http://genn-team.github.io/genn/documentation/html/dc/d05/UserManual.html).
 
 9. We have introduced a simple performance profiling method that users can employ to get an overview over the differential use of time by different kernels. To enable the timers in GeNN generated code, one needs to declare
-```C++
+\code
 networkmodel.setTiming(TRUE);
-```
+\endcode
 This will make available and operate GPU-side cudeEvent based timers whose cumulative value can be found in the double precision variables `neuron_tme`, `synapse_tme` and `learning_tme`. They measure the accumulated time that has been spent calculating the neuron kernel, synapse kernel and learning kernel, respectively. CPU-side timers for the simulation functions are also available and their cumulative values can be obtained through 
-```C++
+\code
 float x= sdkGetTimerValue(&neuron_timer);
 float y= sdkGetTimerValue(&synapse_timer);
 float z= sdkGetTimerValue(&learning_timer);
-```
+\endcode
 The \ref ex_mbody example shows how these can be used in the user-side code. To enable timing profiling in this example, simply enable it for GeNN:
-```C++
+\code
 model.setTiming(TRUE);
-```
+\endcode
 in `MBody1.cc`'s `modelDefinition` function and define the macro `TIMING` in `classol_sim.h`
-```C++
+\code
 #define TIMING
-```
+\endcode
 This will have the effect that timing information is output into `OUTNAME_output/OUTNAME.timingprofile`.
 
 Developer Side Changes
