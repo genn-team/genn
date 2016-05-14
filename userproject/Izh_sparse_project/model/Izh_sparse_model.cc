@@ -14,7 +14,7 @@
 #ifndef _IZH_SPARSE_MODEL_CC_
 #define _IZH_SPARSE_MODEL_CC_
 
-#include "Izh_sparse_CODE/runner.cc"
+#include "Izh_sparse_CODE/definitions.h"
 #include "randomGen.h"
 #include "gauss.h"
 #include "Izh_sparse_model.h"

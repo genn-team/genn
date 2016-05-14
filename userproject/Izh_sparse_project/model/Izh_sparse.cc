@@ -10,9 +10,9 @@
    initial version: 2010-02-07
   
 --------------------------------------------------------------------------*/
-#define DT 1.0
+
 #include "modelSpec.h"
-#include "modelSpec.cc"
+#include "stringUtils.h"
 #include <vector>
 #include "sizes.h"
 
@@ -81,6 +81,7 @@ void modelDefinition(NNmodel &model)
     nModels.push_back(n);
   
   model.setName("Izh_sparse");
+  model.setDT(1.0);
   model.addNeuronPopulation("PExc", _NExc, myIZHIKEVICH, excIzh_p, IzhExc_ini);
 
   model.addNeuronPopulation("PInh", _NInh, myIZHIKEVICH, inhIzh_p, IzhInh_ini);

@@ -15,7 +15,8 @@
 #include <fstream>
 #include "Izh_sparse_sim.h"
 #ifndef CPU_ONLY
-#include "GeNNHelperKrnls.cu"
+#include <cuda_runtime.h>
+#include "GeNNHelperKrnls.h"
 #endif
 
 int main(int argc, char *argv[])
@@ -188,18 +189,18 @@ int main(int argc, char *argv[])
   dim3 sGrid1(sampleBlkNo1,1);
 #endif
   if (which==CPU) 
-    {
-    	PCNN.setInput(which);
-    }
+  {
+      PCNN.setInput(which);
+  }
   else{
 #ifndef CPU_ONLY
-  		 CHECK_CUDA_ERRORS(cudaMalloc((void **)&devStates, PCNN.model.neuronN[0]*sizeof(curandState)));
-  	   xorwow_setup(devStates, PCNN.model.neuronN[0]); //setup the prng for the bigger network only
+      CHECK_CUDA_ERRORS(cudaMalloc((void **)&devStates, PCNN.model.neuronN[0]*sizeof(curandState)));
+      xorwow_setup(devStates, PCNN.model.neuronN[0], 117); //setup the prng for the bigger network only
 
-	   generate_random_gpuInput_xorwow<<<sGrid0,sThreads>>>(devStates, d_I0PExc, PCNN.model.neuronN[0], meanInpExc, (scalar) 0.0);
-	   generate_random_gpuInput_xorwow<<<sGrid1,sThreads>>>(devStates, d_I0PInh, PCNN.model.neuronN[1], meanInpInh, (scalar) 0.0); 
+      generate_random_gpuInput_xorwow(devStates, d_I0PExc, PCNN.model.neuronN[0], meanInpExc, (scalar) 0.0, sGrid0, sThreads);
+      generate_random_gpuInput_xorwow(devStates, d_I0PInh, PCNN.model.neuronN[1], meanInpInh, (scalar) 0.0, sGrid1, sThreads); 
 #endif
-  	}  
+  }  
   
   //------------------------------------------------------------------
   // output general parameters to output file and start the simulation
@@ -226,8 +227,8 @@ int main(int argc, char *argv[])
   if (which == GPU){ 
 #ifndef CPU_ONLY
       while (!done) {
-	  generate_random_gpuInput_xorwow<<<sGrid0,sThreads>>>(devStates, d_I0PExc, PCNN.model.neuronN[0], meanInpExc, (scalar) 0.0);
-	  generate_random_gpuInput_xorwow<<<sGrid1,sThreads>>>(devStates, d_I0PInh, PCNN.model.neuronN[1], meanInpInh, (scalar) 0.0); 
+	  generate_random_gpuInput_xorwow(devStates, d_I0PExc, PCNN.model.neuronN[0], meanInpExc, (scalar) 0.0, sGrid0, sThreads);
+	  generate_random_gpuInput_xorwow(devStates, d_I0PInh, PCNN.model.neuronN[1], meanInpInh, (scalar) 0.0, sGrid1, sThreads);
 	  
 	  stepTimeGPU();
 	  t+= DT;

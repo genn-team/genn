@@ -155,6 +155,10 @@ void genRunner(NNmodel &model, //!< Model description
     os << "#define DEFINITIONS_H" << ENDL;
     os << ENDL;
 
+    os << "#include <stdint.h>" << ENDL;
+    os << "#include \"sparseProjection.h\"" << ENDL;
+    os << ENDL;
+
     os << "#ifndef scalar" << ENDL;
     os << "typedef " << model.ftype << " scalar;" << ENDL;
     os << "#endif" << ENDL;

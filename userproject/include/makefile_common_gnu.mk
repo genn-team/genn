@@ -64,6 +64,9 @@ endif
 # Enumerate all source and object files (if they have not already been listed)
 SOURCES                 ?=$(wildcard *.cc *.cpp)
 OBJECTS                 :=$(foreach obj,$(basename $(SOURCES)),$(obj).o) *_CODE/runner.o
+ifndef CPU_ONLY
+    OBJECTS             +=GeNNHelperKrnls.o
+endif
 
 # Target rules
 .PHONY: all
@@ -76,18 +79,18 @@ $(EXECUTABLE): $(OBJECTS)
 	cd *_CODE && make
 
 %.o: %.cc
-	$(CXX) $(CXXFLAGS) $(INCLUDE_FLAGS) $< -o $@ -c
+	$(CXX) $(CXXFLAGS) $(INCLUDE_FLAGS) -c $< -o $@
 
 %.o: %.cpp
-	$(CXX) $(CXXFLAGS) $(INCLUDE_FLAGS) $< -o $@ -c
+	$(CXX) $(CXXFLAGS) $(INCLUDE_FLAGS) -c $< -o $@
 
 ifndef CPU_ONLY
 %.o: %.cu
-	$(NVCC) $(NVCCFLAGS) $(INCLUDE_FLAGS) $(GENCODE_FLAGS) $< -o $@ -c
+	$(NVCC) $(NVCCFLAGS) $(INCLUDE_FLAGS) -c $< -o $@
 endif
 
 .PHONY: release
-release: NVCCFLAGS      +=$(NVCC_OPTIMIZATIONFLAGS) --compiler-options "$(OPTIMIZATIONFLAGS)"
+release: NVCCFLAGS      +=$(NVCC_OPTIMIZATIONFLAGS) -Xcompiler "$(OPTIMIZATIONFLAGS)"
 release: CXXFLAGS       +=$(OPTIMIZATIONFLAGS)
 release: $(EXECUTABLE)
 

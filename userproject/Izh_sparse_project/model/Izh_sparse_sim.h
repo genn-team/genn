@@ -14,7 +14,7 @@
 using namespace std;
 
 #include <cassert>
-#include "hr_time.cpp"
+#include "hr_time.h"
 
 #include "utils.h" // for CHECK_CUDA_ERRORS
 #ifndef CPU_ONLY

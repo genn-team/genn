@@ -40,7 +40,6 @@ namespace GENN_PREFERENCES {
     extern bool optimizeCode; //!< Request speed-optimized code, at the expense of floating-point accuracy
     extern bool debugCode; //!< Request debug data to be embedded in the generated code
     extern bool showPtxInfo; //!< Request that PTX assembler information be displayed for each CUDA kernel during compilation
-    extern bool smVersionFile; //!< Request a Makefile include file (sm_version.mk), containing architecture flags (-arch=sm_**), for use with the NVCC compiler
     extern double asGoodAsZero; //!< Global variable that is used when detecting close to zero values, for example when setting sparse connectivity from a dense matrix
     extern int defaultDevice; //! default GPU device; used to determine which GPU to use if chooseDevice is 0 (off)
     extern unsigned int neuronBlockSize;

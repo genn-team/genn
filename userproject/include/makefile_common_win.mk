@@ -21,7 +21,7 @@
 NVCC                    ="$(CUDA_PATH)\bin\nvcc.exe"
 !ENDIF
 !IFNDEF DEBUG
-NVCCFLAGS               =$(NVCCFLAGS) --compiler-options "$(OPTIMIZATIONFLAGS)"
+NVCCFLAGS               =$(NVCCFLAGS) -Xcompiler "$(OPTIMIZATIONFLAGS)"
 !ELSE
 NVCCFLAGS               =$(NVCCFLAGS) -g -G
 !ENDIF
@@ -80,7 +80,7 @@ $(EXECUTABLE): $(OBJECTS)
 
 !IFNDEF CPU_ONLY
 .cu.obj:
-	$(NVCC) $(NVCCFLAGS) $(INCLUDE_FLAGS:/I=-I) $(GENCODE_FLAGS) $** /Fo$@ -c
+	$(NVCC) $(NVCCFLAGS) $(INCLUDE_FLAGS:/I=-I) $** /Fo$@ -c
 !ENDIF
 
 clean:

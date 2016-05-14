@@ -506,25 +506,22 @@ void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
 	}
     }
 
+    theDevice = chosenDevice;
     model.setPopulationSums();
+
+    ofstream sm_os((path + "/sm_version.mk").c_str());
+#ifdef _WIN32
+    sm_os << "NVCCFLAGS =$(NVCCFLAGS) -arch sm_";
+#else // UNIX
+    sm_os << "NVCCFLAGS += -arch sm_";
+#endif
+    sm_os << deviceProp[chosenDevice].major << deviceProp[chosenDevice].minor << endl;	
+    sm_os.close();
 
     cout << "synapse block size: " << synapseBlkSz << endl;
     cout << "learn block size: " << learnBlkSz << endl;
     cout << "synapseDynamics block size: " << synDynBlkSz << endl;
     cout << "neuron block size: " << neuronBlkSz << endl;
-
-    if (GENN_PREFERENCES::smVersionFile) {
-	ofstream sm_os((path + "/sm_version.mk").c_str());
-#ifdef _WIN32
-	sm_os << "NVCCFLAGS =$(NVCCFLAGS) -arch sm_";
-#else // UNIX
-	sm_os << "NVCCFLAGS += -arch sm_";
-#endif
-	sm_os << deviceProp[chosenDevice].major << deviceProp[chosenDevice].minor << endl;	
-	sm_os.close();
-    }
-
-    theDevice = chosenDevice;
 }
 #endif
 

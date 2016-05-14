@@ -37,7 +37,6 @@ namespace GENN_PREFERENCES {
     bool optimizeCode = 0; //!< Request speed-optimized code, at the expense of floating-point accuracy
     bool debugCode = 0; //!< Request debug data to be embedded in the generated code
     bool showPtxInfo = 0; //!< Request that PTX assembler information be displayed for each CUDA kernel during compilation
-    bool smVersionFile = 0; //!< Request a Makefile include file (sm_version.mk), containing architecture flags (-arch=sm_**), for use with the NVCC compiler
     double asGoodAsZero = 1e-19; //!< Global variable that is used when detecting close to zero values, for example when setting sparse connectivity from a dense matrix
     int defaultDevice= 0; //! default GPU device; used to determine which GPU to use if chooseDevice is 0 (off)
     unsigned int neuronBlockSize= 32;
