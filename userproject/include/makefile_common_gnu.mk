@@ -61,12 +61,10 @@ endif
 # An auto-generated file containing your cuda device's compute capability
 -include sm_version.mk
 
-# Enumerate all source and object files (if they have not already been listed)
-SOURCES                 ?=$(wildcard *.cc *.cpp)
+# Enumerate all object files (if they have not already been listed)
+SOURCES                 ?=$(wildcard *.cc *.cpp *.cu)
 OBJECTS                 :=$(foreach obj,$(basename $(SOURCES)),$(obj).o) *_CODE/runner.o
-ifndef CPU_ONLY
-    OBJECTS             +=GeNNHelperKrnls.o
-endif
+
 
 # Target rules
 .PHONY: all

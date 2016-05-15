@@ -156,6 +156,7 @@ void genRunner(NNmodel &model, //!< Model description
     os << ENDL;
 
     os << "#include <stdint.h>" << ENDL;
+    os << "#include \"utils.h\"" << ENDL;
     os << "#include \"sparseProjection.h\"" << ENDL;
     os << ENDL;
 
@@ -222,7 +223,6 @@ void genRunner(NNmodel &model, //!< Model description
     os << ENDL;
 
 #ifndef CPU_ONLY
-
     // generate headers for the communication utility functions such as 
     // pullXXXStateFromDevice() etc. This is useful for the brian2genn
     // interface where we do more proper compile/link and do not want
@@ -334,20 +334,6 @@ void genRunner(NNmodel &model, //!< Model description
     os << ENDL;
     os << "void copySpikeEventNFromDevice();" << ENDL;
     os << ENDL;
-
-    os << "// ------------------------------------------------------------------------" << ENDL;
-    os << "// Throw an error for \"old style\" time stepping calls (using GPU)" << ENDL;
-    os << ENDL;
-    os << "template <class T>" << ENDL;
-    os << "void stepTimeGPU(T arg1, ...);" << ENDL;
-    os << ENDL;
-
-    os << "// ------------------------------------------------------------------------" << ENDL;
-    os << "// the actual time stepping procedure (using GPU)" << ENDL;
-    os << ENDL;
-    os << "void stepTimeGPU();" << ENDL;
-    os << ENDL;
-
 #endif
 
     os << "// ------------------------------------------------------------------------" << ENDL;
@@ -357,6 +343,13 @@ void genRunner(NNmodel &model, //!< Model description
     os << "void allocateMem();" << ENDL;
     os << ENDL;
 
+    for (int i = 0; i < model.synapseGrpN; i++) {	
+	if (model.synapseConnType[i] == SPARSE) {
+	    os << "void allocate" << model.synapseName[i] << "(unsigned int connN);" << ENDL;
+	    os << ENDL;
+	}
+    }
+
     os << "// ------------------------------------------------------------------------" << ENDL;
     os << "// Function to (re)set all model variables to their compile-time, homogeneous initial" << ENDL;
     os << "// values. Note that this typically includes synaptic weight values. The function" << ENDL;
@@ -365,24 +358,63 @@ void genRunner(NNmodel &model, //!< Model description
     os << "void initialize();" << ENDL;
     os << ENDL;
 
+
+#ifndef CPU_ONLY
+    os << "void initializeAllSparseArrays();" << ENDL;
+    os << ENDL;
+#endif
+
     os << "// ------------------------------------------------------------------------" << ENDL;
     os << "// Function to free all global memory structures." << ENDL;
     os << ENDL;
     os << "void freeMem();" << ENDL;
     os << ENDL;
 
+    os << "//-------------------------------------------------------------------------" << ENDL;
+    os << "// Function to convert a firing probability (per time step) to an integer of type uint64_t" << ENDL;
+    os << "// that can be used as a threshold for the GeNN random number generator to generate events with the given probability." << ENDL;
+    os << ENDL;
+    os << "void convertProbabilityToRandomNumberThreshold(" << model.ftype << " *p_pattern, " << model.RNtype << " *pattern, int N);" << ENDL;
+    os << ENDL;
+
+    os << "//-------------------------------------------------------------------------" << ENDL;
+    os << "// Function to convert a firing rate (in kHz) to an integer of type uint64_t that can be used" << ENDL;
+    os << "// as a threshold for the GeNN random number generator to generate events with the given rate." << ENDL;
+    os << ENDL;
+    os << "void convertRateToRandomNumberThreshold(" << model.ftype << " *rateKHz_pattern, " << model.RNtype << " *pattern, int N);" << ENDL;
+    os << ENDL;
+
     os << "// ------------------------------------------------------------------------" << ENDL;
     os << "// Throw an error for \"old style\" time stepping calls (using CPU)" << ENDL;
     os << ENDL;
     os << "template <class T>" << ENDL;
-    os << "void stepTimeCPU(T arg1, ...);" << ENDL;
-    os << ENDL;
+    os << "void stepTimeCPU(T arg1, ...)" << OB(101);
+    os << "gennError(\"Since GeNN 2.2 the call to step time has changed to not take any arguments. You appear to attempt to pass arguments. This is no longer supported. See the GeNN 2.2. release notes and the manual for examples how to pass data like, e.g., Poisson rates and direct inputs, that were previously handled through arguments.\");" << ENDL; 
+    os << CB(101);
+    os<< ENDL;
 
     os << "// ------------------------------------------------------------------------" << ENDL;
     os << "// the actual time stepping procedure (using CPU)" << ENDL;
     os << ENDL;
     os << "void stepTimeCPU();" << ENDL;
     os << ENDL;
+
+#ifndef CPU_ONLY
+    os << "// ------------------------------------------------------------------------" << ENDL;
+    os << "// Throw an error for \"old style\" time stepping calls (using GPU)" << ENDL;
+    os << ENDL;
+    os << "template <class T>" << ENDL;
+    os << "void stepTimeGPU(T arg1, ...)" << OB(101);
+    os << "gennError(\"Since GeNN 2.2 the call to step time has changed to not take any arguments. You appear to attempt to pass arguments. This is no longer supported. See the GeNN 2.2. release notes and the manual for examples how to pass data like, e.g., Poisson rates and direct inputs, that were previously handled through arguments.\");" << ENDL;
+    os << CB(101);
+    os<< ENDL;
+
+    os << "// ------------------------------------------------------------------------" << ENDL;
+    os << "// the actual time stepping procedure (using GPU)" << ENDL;
+    os << ENDL;
+    os << "void stepTimeGPU();" << ENDL;
+    os << ENDL;
+#endif
 
 
     //-----------------
@@ -1442,15 +1474,6 @@ void genRunner(NNmodel &model, //!< Model description
     os << ENDL;
 
     os << "// ------------------------------------------------------------------------" << ENDL;
-    os << "// Throw an error for \"old style\" time stepping calls (using CPU)" << ENDL;
-    os << "template <class T>" << ENDL;
-    os << "void stepTimeCPU(T arg1, ...)" << ENDL;
-    os << OB(101) << ENDL;
-    os << "gennError(\"Since GeNN 2.2 the call to step time has changed to not take any arguments. You appear to attempt to pass arguments. This is no longer supported. See the GeNN 2.2. release notes and the manual for examples how to pass data like, e.g., Poisson rates and direct inputs, that were previously handled through arguments.\");" << ENDL; 
-    os << CB(101);
-    os<< ENDL;
-    
-    os << "// ------------------------------------------------------------------------" << ENDL;
     os << "// the actual time stepping procedure (using CPU)" << ENDL;
     os << "void stepTimeCPU()" << ENDL;
     os << "{" << ENDL;
@@ -2146,15 +2169,6 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     }
     os << CB(1126) << ENDL;
     os << ENDL;
-
-    os << "// ------------------------------------------------------------------------" << ENDL;
-    os << "// Throw an error for \"old style\" time stepping calls (using GPU)" << ENDL;
-    os << "template <class T>" << ENDL;
-    os << "void stepTimeGPU(T arg1, ...)" << ENDL;
-    os << OB(101) << ENDL;
-    os << "gennError(\"Since GeNN 2.2 the call to step time has changed to not take any arguments. You appear to attempt to pass arguments. This is no longer supported. See the GeNN 2.2. release notes and the manual for examples how to pass data like, e.g., Poisson rates and direct inputs, that were previously handled through arguments.\");" << ENDL; 
-    os << CB(101);
-    os<< ENDL;
 
     os << "// ------------------------------------------------------------------------" << ENDL;
     os << "// the time stepping procedure (using GPU)" << ENDL;

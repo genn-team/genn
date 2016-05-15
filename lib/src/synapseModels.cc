@@ -19,69 +19,70 @@ unsigned int LEARN1SYNAPSE; //!< Variable attaching  the name LEARN1SYNAPSE to t
 
 void prepareWeightUpdateModels()
 {
-    weightUpdateModel wu;
-
     // NSYNAPSE weightupdate model: "normal" pulse coupling synapse
-    wu.varNames.clear();
-    wu.varTypes.clear();
-    wu.varNames.push_back("g");
-    wu.varTypes.push_back("scalar");
-    wu.pNames.clear();
-    wu.dpNames.clear();
+    weightUpdateModel wuN;
+    wuN.varNames.clear();
+    wuN.varTypes.clear();
+    wuN.varNames.push_back("g");
+    wuN.varTypes.push_back("scalar");
+    wuN.pNames.clear();
+    wuN.dpNames.clear();
     // code for presynaptic spike:
-    wu.simCode = "  $(addtoinSyn) = $(g);\n\
+    wuN.simCode = "  $(addtoinSyn) = $(g);\n\
   $(updatelinsyn);\n";
-    weightUpdateModels.push_back(wu);
+    weightUpdateModels.push_back(wuN);
     NSYNAPSE= weightUpdateModels.size()-1;
     
 
     // NGRADSYNAPSE weightupdate model: "normal" graded synapse
-    wu.varNames.clear();
-    wu.varTypes.clear();
-    wu.varNames.push_back("g");
-    wu.varTypes.push_back("scalar");
-    wu.pNames.clear();
-    wu.pNames.push_back("Epre"); 
-    wu.pNames.push_back("Vslope"); 
-    wu.dpNames.clear();
+    weightUpdateModel wuG;
+    wuG.varNames.clear();
+    wuG.varTypes.clear();
+    wuG.varNames.push_back("g");
+    wuG.varTypes.push_back("scalar");
+    wuG.pNames.clear();
+    wuG.pNames.push_back("Epre"); 
+    wuG.pNames.push_back("Vslope"); 
+    wuG.dpNames.clear();
     // code for presynaptic spike event 
-    wu.simCodeEvnt = "$(addtoinSyn) = $(g) * tanh(($(V_pre) - $(Epre)) / $(Vslope))* DT;\n\
+    wuG.simCodeEvnt = "$(addtoinSyn) = $(g) * tanh(($(V_pre) - $(Epre)) / $(Vslope))* DT;\n\
     if ($(addtoinSyn) < 0) $(addtoinSyn) = 0.0;\n\
     $(updatelinsyn);\n";
     // definition of presynaptic spike event 
-    wu.evntThreshold = "$(V_pre) > $(Epre)";
-    weightUpdateModels.push_back(wu);
+    wuG.evntThreshold = "$(V_pre) > $(Epre)";
+    weightUpdateModels.push_back(wuG);
     NGRADSYNAPSE= weightUpdateModels.size()-1; 
 
 
     // LEARN1SYNAPSE weightupdate model: "normal" synapse with a type of STDP
-    wu.varNames.clear();
-    wu.varTypes.clear();
-    wu.varNames.push_back("g");
-    wu.varTypes.push_back("scalar");
-    wu.varNames.push_back("gRaw"); 
-    wu.varTypes.push_back("scalar");
-    wu.pNames.clear();
-    wu.pNames.push_back("tLrn");  //0
-    wu.pNames.push_back("tChng"); //1
-    wu.pNames.push_back("tDecay"); //2
-    wu.pNames.push_back("tPunish10"); //3
-    wu.pNames.push_back("tPunish01"); //4
-    wu.pNames.push_back("gMax"); //5
-    wu.pNames.push_back("gMid"); //6
-    wu.pNames.push_back("gSlope"); //7
-    wu.pNames.push_back("tauShift"); //8
-    wu.pNames.push_back("gSyn0"); //9
-    wu.dpNames.clear(); 
-    wu.dpNames.push_back("lim0");
-    wu.dpNames.push_back("lim1");
-    wu.dpNames.push_back("slope0");
-    wu.dpNames.push_back("slope1");
-    wu.dpNames.push_back("off0");
-    wu.dpNames.push_back("off1");
-    wu.dpNames.push_back("off2");
+    weightUpdateModel wuL;
+    wuL.varNames.clear();
+    wuL.varTypes.clear();
+    wuL.varNames.push_back("g");
+    wuL.varTypes.push_back("scalar");
+    wuL.varNames.push_back("gRaw"); 
+    wuL.varTypes.push_back("scalar");
+    wuL.pNames.clear();
+    wuL.pNames.push_back("tLrn");  //0
+    wuL.pNames.push_back("tChng"); //1
+    wuL.pNames.push_back("tDecay"); //2
+    wuL.pNames.push_back("tPunish10"); //3
+    wuL.pNames.push_back("tPunish01"); //4
+    wuL.pNames.push_back("gMax"); //5
+    wuL.pNames.push_back("gMid"); //6
+    wuL.pNames.push_back("gSlope"); //7
+    wuL.pNames.push_back("tauShift"); //8
+    wuL.pNames.push_back("gSyn0"); //9
+    wuL.dpNames.clear(); 
+    wuL.dpNames.push_back("lim0");
+    wuL.dpNames.push_back("lim1");
+    wuL.dpNames.push_back("slope0");
+    wuL.dpNames.push_back("slope1");
+    wuL.dpNames.push_back("off0");
+    wuL.dpNames.push_back("off1");
+    wuL.dpNames.push_back("off2");
     // code for presynaptic spike
-    wu.simCode = "$(addtoinSyn) = $(g);\n\
+    wuL.simCode = "$(addtoinSyn) = $(g);\n\
   $(updatelinsyn); \n				\
   scalar dt = $(sT_post) - $(t) - ($(tauShift)); \n	\
   scalar dg = 0;\n				\
@@ -94,9 +95,9 @@ void prepareWeightUpdateModels()
   else dg = - ($(off2)) ; \n\
   $(gRaw) += dg; \n\
   $(g)=$(gMax)/2 *(tanh($(gSlope)*($(gRaw) - ($(gMid))))+1); \n";
-    wu.dps = new pwSTDP;
+    wuL.dps = new pwSTDP;
     // code for post-synaptic spike 
-    wu.simLearnPost = "scalar dt = $(t) - ($(sT_pre)) - ($(tauShift)); \n\
+    wuL.simLearnPost = "scalar dt = $(t) - ($(sT_pre)) - ($(tauShift)); \n\
   scalar dg =0; \n\
   if (dt > $(lim0))  \n\
       dg = -($(off0)) ; \n \
@@ -107,9 +108,9 @@ void prepareWeightUpdateModels()
   else dg = -($(off2)) ; \n\
   $(gRaw) += dg; \n\
   $(g)=$(gMax)/2.0 *(tanh($(gSlope)*($(gRaw) - ($(gMid))))+1); \n";
-    wu.needPreSt= true;
-    wu.needPostSt= true;
-    weightUpdateModels.push_back(wu);
+    wuL.needPreSt= true;
+    wuL.needPostSt= true;
+    weightUpdateModels.push_back(wuL);
     LEARN1SYNAPSE= weightUpdateModels.size()-1; 
 
 
