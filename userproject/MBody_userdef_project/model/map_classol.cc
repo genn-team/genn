@@ -23,8 +23,9 @@
 //--------------------------------------------------------------------------
 
 
-#include "MBody_userdef_CODE/runner.cc"
-#include "sparseUtils.cc"
+#include "MBody_userdef_CODE/definitions.h"
+#include "global.h"
+#include "sparseUtils.h"
 #include "map_classol.h"
 
 

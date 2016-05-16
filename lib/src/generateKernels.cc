@@ -520,7 +520,6 @@ void generate_process_presynaptic_events_code(
 		maxConnections = model.neuronN[trg];
 	    }
 
-
 	    //os << "if (" << localID << " < " << maxConnections << ")" << OB(101);
 	    
 	    os << "if (" << localID << " < " ;
@@ -535,7 +534,6 @@ void generate_process_presynaptic_events_code(
 		os << OB(29) << " using namespace " << model.synapseName[i] << "_weightupdate_simCode;" << ENDL;	
 	    }
 
-	    os << "int preInd = dd_glbSpk"  << postfix << model.neuronName[src] << "[";
 	    if (delayPre) {
 	      os << "int preInd = dd_glbSpk"  << postfix << model.neuronName[src];
 	      os << "[(delaySlot * " << model.neuronN[src] << ") + " << localID << "];";

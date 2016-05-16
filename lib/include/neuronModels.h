@@ -2,17 +2,12 @@
 #ifndef NEURONMODELS_H
 #define NEURONMODELS_H
 
+#include "dpclass.h"
+
 #include <string>
 #include <vector>
 
 using namespace std;
-
-
-class neuronDP
-{
-public:
-    virtual double calculateDerivedParameter(int index, vector<double> pars, double dt = 1.0) { return -1; }
-};
 
 
 /*! \brief class for specifying a neuron model.
@@ -35,7 +30,7 @@ public:
 			      The dependent parameters are functions of independent parameters that enter into the neuron model. To avoid unecessary computational overhead, these parameters are calculated at compile time and inserted as explicit values into the generated code. See method NNmodel::initDerivedNeuronPara for how this is done.*/ 
     vector<string> extraGlobalNeuronKernelParameters; //!< Additional parameter in the neuron kernel; it is translated to a population specific name but otherwise assumed to be one parameter per population rather than per neuron.
     vector<string> extraGlobalNeuronKernelParameterTypes; //!< Additional parameters in the neuron kernel; they are translated to a population specific name but otherwise assumed to be one parameter per population rather than per neuron.
-    neuronDP *dps; //!< \brief Derived parameters
+    dpclass *dps; //!< \brief Derived parameters
     bool needPreSt; //!< \brief Whether presynaptic spike times are needed or not
     bool needPostSt; //!< \brief Whether postsynaptic spike times are needed or not
 };
@@ -60,7 +55,7 @@ const unsigned int MAXNRN = 7; // maximum number of neuron types: SpineML needs 
 //! \brief Class defining the dependent parameters of the Rulkov map neuron.
 //--------------------------------------------------------------------------
 
-class rulkovdp : public neuronDP
+class rulkovdp : public dpclass
 {
 public:
     double calculateDerivedParameter(int index, vector<double> pars, double dt = 1.0) {

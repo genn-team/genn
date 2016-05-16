@@ -37,6 +37,7 @@ using namespace std;
 #include <sys/stat.h> // needed for mkdir
 #endif
 
+#include "stringUtils.h"
 #include "command_line_processing.h"
 
 //--------------------------------------------------------------------------

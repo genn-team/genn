@@ -155,26 +155,120 @@ void genRunner(NNmodel &model, //!< Model description
     os << "#define DEFINITIONS_H" << ENDL;
     os << ENDL;
 
-    os << "#include <stdint.h>" << ENDL;
     os << "#include \"utils.h\"" << ENDL;
+    if (model.timing) os << "#include \"hr_time.h\"" << ENDL;
+    os << "#include \"sparseUtils.h\"" << ENDL << ENDL;
     os << "#include \"sparseProjection.h\"" << ENDL;
+    os << "#include <stdint.h>" << ENDL;
+    os << ENDL;
+
+#ifndef CPU_ONLY
+    // write CUDA error handler macro
+    os << "#ifndef CHECK_CUDA_ERRORS" << ENDL;
+    os << "#define CHECK_CUDA_ERRORS(call) {\\" << ENDL;
+    os << "    cudaError_t error = call;\\" << ENDL;
+    os << "    if (error != cudaSuccess) {\\" << ENDL;
+    os << "        fprintf(stderr, \"%s: %i: cuda error %i: %s\\n\", __FILE__, __LINE__, (int) error, cudaGetErrorString(error));\\" << ENDL;
+    os << "        exit(EXIT_FAILURE);\\" << ENDL;
+    os << "    }\\" << ENDL;
+    os << "}" << ENDL;
+    os << "#endif" << ENDL;
+    os << ENDL;
+#endif // CPU_ONLY
+
+    // write MYRAND macro
+    os << "#ifndef MYRAND" << ENDL;
+    os << "#define MYRAND(Y,X) Y = Y * 1103515245 + 12345; X = (Y >> 16);" << ENDL;
+    os << "#endif" << ENDL;
+    os << "#ifndef MYRAND_MAX" << ENDL;
+    os << "#define MYRAND_MAX 0x0000FFFFFFFFFFFFLL" << ENDL;
+    os << "#endif" << ENDL;
     os << ENDL;
 
     os << "#ifndef scalar" << ENDL;
     os << "typedef " << model.ftype << " scalar;" << ENDL;
     os << "#endif" << ENDL;
-  
     os << "#ifndef SCALAR_MIN" << ENDL;
     os << "#define SCALAR_MIN " << SCLR_MIN << ENDL;
     os << "#endif" << ENDL;
-  
     os << "#ifndef SCALAR_MAX" << ENDL;
     os << "#define SCALAR_MAX " << SCLR_MAX << ENDL;
     os << "#endif" << ENDL;
+    os << ENDL;
 
-    os << "const scalar DT = " << model.DT << ";" << ENDL;
 
-    for (int i= 0; i < model.neuronGrpN; i++) {
+    //-----------------
+    // GLOBAL VARIABLES
+
+    os << "// ------------------------------------------------------------------------" << ENDL;
+    os << "// global variables" << ENDL;
+    os << ENDL;
+
+    os << "extern const scalar DT;" << ENDL;
+    os << "extern unsigned long long iT;" << ENDL;
+    os << "extern " << model.ftype << " t;" << ENDL;
+    if (model.timing) {
+#ifndef CPU_ONLY
+	os << "extern cudaEvent_t neuronStart, neuronStop;" << ENDL;
+#endif
+	os << "extern double neuron_tme;" << ENDL;
+	os << "extern CStopWatch neuron_timer;" << ENDL;
+	if (model.synapseGrpN > 0) {
+#ifndef CPU_ONLY
+	    os << "extern cudaEvent_t synapseStart, synapseStop;" << ENDL;
+#endif
+	    os << "extern double synapse_tme;" << ENDL;
+	    os << "extern CStopWatch synapse_timer;" << ENDL;
+	}
+	if (model.lrnGroups > 0) {
+#ifndef CPU_ONLY
+	    os << "extern cudaEvent_t learningStart, learningStop;" << ENDL;
+#endif
+	    os << "extern double learning_tme;" << ENDL;
+	    os << "extern CStopWatch learning_timer;" << ENDL;
+	}
+	if (model.synDynGroups > 0) {
+#ifndef CPU_ONLY
+	    os << "extern cudaEvent_t synDynStart, synDynStop;" << ENDL;
+#endif
+	    os << "extern double synDyn_tme;" << ENDL;
+	    os << "extern CStopWatch synDyn_timer;" << ENDL;
+	}
+    } 
+    os << ENDL;
+
+
+    //---------------------------------
+    // HOST AND DEVICE NEURON VARIABLES
+
+    os << "// ------------------------------------------------------------------------" << ENDL;
+    os << "// neuron variables" << ENDL;
+    os << ENDL;
+
+    for (int i = 0; i < model.neuronGrpN; i++) {
+	nt = model.neuronType[i];
+
+	extern_variable_def(os, tS("unsigned int *"), "glbSpkCnt"+model.neuronName[i]);
+	extern_variable_def(os, tS("unsigned int *"), "glbSpk"+model.neuronName[i]);
+	if (model.neuronNeedSpkEvnt[i]) {
+	    extern_variable_def(os, tS("unsigned int *"), "glbSpkCntEvnt"+model.neuronName[i]);
+	    extern_variable_def(os, tS("unsigned int *"), "glbSpkEvnt"+model.neuronName[i]);
+	}
+	if (model.neuronDelaySlots[i] > 1) {
+	    os << "extern unsigned int spkQuePtr" << model.neuronName[i] << ";" << ENDL;
+	}
+	if (model.neuronNeedSt[i]) {
+	    extern_variable_def(os, model.ftype+" *", "sT"+model.neuronName[i]);
+	}
+	for (int k = 0, l= nModels[nt].varNames.size(); k < l; k++) {
+	    extern_variable_def(os, nModels[nt].varTypes[k]+" *", nModels[nt].varNames[k]+model.neuronName[i]);
+	}
+	for (int k = 0, l= nModels[nt].extraGlobalNeuronKernelParameters.size(); k < l; k++) {
+	    extern_variable_def(os, nModels[nt].extraGlobalNeuronKernelParameterTypes[k], nModels[nt].extraGlobalNeuronKernelParameters[k]+model.neuronName[i]);
+	}	
+    }
+    os << ENDL;
+        for (int i= 0; i < model.neuronGrpN; i++) {
 	os << "#define glbSpkShift" << model.neuronName[i];
 	if (model.neuronDelaySlots[i] > 1) {
 	    os << " spkQuePtr" << model.neuronName[i] << "*" << model.neuronN[i];
@@ -184,43 +278,103 @@ void genRunner(NNmodel &model, //!< Model description
 	}
 	os << ENDL;
     }
+
     for (int i = 0; i < model.neuronGrpN; i++) {
       	// convenience macros for accessing spike count 
 	os << "#define spikeCount_" << model.neuronName[i] << " glbSpkCnt" << model.neuronName[i];
 	if ((model.neuronDelaySlots[i] > 1) && (model.neuronNeedTrueSpk[i])) {
-	  os << "[spkQuePtr" << model.neuronName[i] << "]" << ENDL;
+	    os << "[spkQuePtr" << model.neuronName[i] << "]" << ENDL;
 	}
 	else {
-	  os << "[0]" << ENDL;
+	    os << "[0]" << ENDL;
 	}
 	// convenience macro for accessing spikes
 	os << "#define spike_" << model.neuronName[i];
 	if ((model.neuronDelaySlots[i] > 1) && (model.neuronNeedTrueSpk[i])) {
-	  os << " (glbSpk" << model.neuronName[i] << "+(spkQuePtr" << model.neuronName[i] << "*" << model.neuronN[i] << "))" << ENDL;
+	    os << " (glbSpk" << model.neuronName[i] << "+(spkQuePtr" << model.neuronName[i] << "*" << model.neuronN[i] << "))" << ENDL;
 	}
 	else {
-	  os << " glbSpk" << model.neuronName[i] << ENDL;
+	    os << " glbSpk" << model.neuronName[i] << ENDL;
 	}
-      	if (model.neuronNeedSpkEvnt[i]) {
-	  // convenience macros for accessing spike count 
-	  os << "#define spikeEventCount_" << model.neuronName[i] << " glbSpkCntEvnt" << model.neuronName[i];
-	  if (model.neuronDelaySlots[i] > 1) {
-	    os << "[spkQuePtr" << model.neuronName[i] << "]" << ENDL;
-	  }
-	  else {
-	    os << "[0]" << ENDL;
-	  }
-	  // convenience macro for accessing spikes
-	  os << "#define spikeEvent_" << model.neuronName[i];
-	  if (model.neuronDelaySlots[i] > 1) {
-	    os << " (glbSpkEvnt" << model.neuronName[i] << "+(spkQuePtr" << model.neuronName[i] << "*" << model.neuronN[i] << "))" << ENDL;
-	  }
-	  else {
-	    os << " glbSpkEvnt" << model.neuronName[i] << ENDL;
-	  }
+	if (model.neuronNeedSpkEvnt[i]) {
+	    // convenience macros for accessing spike count 
+	    os << "#define spikeEventCount_" << model.neuronName[i] << " glbSpkCntEvnt" << model.neuronName[i];
+	    if (model.neuronDelaySlots[i] > 1) {
+		os << "[spkQuePtr" << model.neuronName[i] << "]" << ENDL;
+	    }
+	    else {
+		os << "[0]" << ENDL;
+	    }
+	    // convenience macro for accessing spikes
+	    os << "#define spikeEvent_" << model.neuronName[i];
+	    if (model.neuronDelaySlots[i] > 1) {
+		os << " (glbSpkEvnt" << model.neuronName[i] << "+(spkQuePtr" << model.neuronName[i] << "*" << model.neuronN[i] << "))" << ENDL;
+	    }
+	    else {
+		os << " glbSpkEvnt" << model.neuronName[i] << ENDL;
+	    }
 	}
     }
     os << ENDL;
+
+
+    //----------------------------------
+    // HOST AND DEVICE SYNAPSE VARIABLES
+
+    os << "// ------------------------------------------------------------------------" << ENDL;
+    os << "// synapse variables" << ENDL;
+    os << ENDL;
+
+    for (int i = 0; i < model.synapseGrpN; i++) {
+	st = model.synapseType[i];
+	pst = model.postSynapseType[i];
+
+	extern_variable_def(os, model.ftype+" *", "inSyn"+model.synapseName[i]);
+	if (model.synapseGType[i] == INDIVIDUALID) {
+	    extern_variable_def(os, tS("uint32_t *"), "gp"+model.synapseName[i]);
+	}
+	if (model.synapseConnType[i] == SPARSE) {
+	    os << "extern SparseProjection C" << model.synapseName[i] << ";" << ENDL;
+	}
+	if (model.synapseGType[i] == INDIVIDUALG) { // not needed for GLOBALG, INDIVIDUALID
+	    for (int k = 0, l = weightUpdateModels[st].varNames.size(); k < l; k++) {
+		extern_variable_def(os, weightUpdateModels[st].varTypes[k]+" *", weightUpdateModels[st].varNames[k]+model.synapseName[i]);
+	    }
+	    for (int k = 0, l = postSynModels[pst].varNames.size(); k < l; k++) {
+		extern_variable_def(os, postSynModels[pst].varTypes[k]+" *", postSynModels[pst].varNames[k]+model.synapseName[i]); 
+	    }
+	}
+	for (int k = 0, l= weightUpdateModels[st].extraGlobalSynapseKernelParameters.size(); k < l; k++) {
+	    extern_variable_def(os, weightUpdateModels[st].extraGlobalSynapseKernelParameterTypes[k], weightUpdateModels[st].extraGlobalSynapseKernelParameters[k]+model.synapseName[i]);
+	}		
+    }
+    os << ENDL;
+
+    os << "#define Conductance SparseProjection" << ENDL;
+    os << "/*struct Conductance is deprecated. \n\
+  By GeNN 2.0, Conductance is renamed as SparseProjection and contains only indexing values. \n\
+  Please consider updating your user code by renaming Conductance as SparseProjection \n\
+  and making g member a synapse variable.*/" << ENDL;
+    os << ENDL;
+
+
+    //--------------------------
+    // HOST AND DEVICE FUNCTIONS
+
+#ifndef CPU_ONLY
+    os << "// ------------------------------------------------------------------------" << ENDL;
+    os << "// Helper function for allocating memory blocks on the GPU device" << ENDL;
+    os << ENDL;
+    os << "template<class T>" << ENDL;
+    os << "void deviceMemAllocate(T* hostPtr, const T &devSymbol, size_t size)" << ENDL;
+    os << "{" << ENDL;
+    os << "    void *devptr;" << ENDL;
+    os << "    CHECK_CUDA_ERRORS(cudaMalloc(hostPtr, size));" << ENDL;
+    os << "    CHECK_CUDA_ERRORS(cudaGetSymbolAddress(&devptr, devSymbol));" << ENDL;
+    os << "    CHECK_CUDA_ERRORS(cudaMemcpy(devptr, hostPtr, sizeof(void*), cudaMemcpyHostToDevice));" << ENDL;
+    os << "}" << ENDL;
+    os << ENDL;
+#endif
 
 #ifndef CPU_ONLY
     // generate headers for the communication utility functions such as 
@@ -416,77 +570,6 @@ void genRunner(NNmodel &model, //!< Model description
     os << ENDL;
 #endif
 
-
-    //-----------------
-    // GLOBAL VARIABLES
-
-    os << "// ------------------------------------------------------------------------" << ENDL;
-    os << "// global variables" << ENDL;
-    os << ENDL;
-    os << "extern unsigned long long iT;" << ENDL;
-    os << "extern " << model.ftype << " t;" << ENDL;
-    os << ENDL;
-
-    //---------------------------------
-    // HOST AND DEVICE NEURON VARIABLES
-
-    os << "// ------------------------------------------------------------------------" << ENDL;
-    os << "// neuron variables" << ENDL;
-    os << ENDL;
-    for (int i = 0; i < model.neuronGrpN; i++) {
-	nt = model.neuronType[i];
-
-	extern_variable_def(os, tS("unsigned int *"), "glbSpkCnt"+model.neuronName[i]);
-	extern_variable_def(os, tS("unsigned int *"), "glbSpk"+model.neuronName[i]);
-	if (model.neuronNeedSpkEvnt[i]) {
-	    extern_variable_def(os, tS("unsigned int *"), "glbSpkCntEvnt"+model.neuronName[i]);
-	    extern_variable_def(os, tS("unsigned int *"), "glbSpkEvnt"+model.neuronName[i]);
-	}
-	if (model.neuronDelaySlots[i] > 1) {
-	    os << "extern unsigned int spkQuePtr" << model.neuronName[i] << ";" << ENDL;
-	}
-	if (model.neuronNeedSt[i]) {
-	    extern_variable_def(os, model.ftype+" *", "sT"+model.neuronName[i]);
-	}
-	for (int k = 0, l= nModels[nt].varNames.size(); k < l; k++) {
-	    extern_variable_def(os, nModels[nt].varTypes[k]+" *", nModels[nt].varNames[k]+model.neuronName[i]);
-	}
-	for (int k = 0, l= nModels[nt].extraGlobalNeuronKernelParameters.size(); k < l; k++) {
-	    extern_variable_def(os, nModels[nt].extraGlobalNeuronKernelParameterTypes[k], nModels[nt].extraGlobalNeuronKernelParameters[k]+model.neuronName[i]);
-	}	
-    }
-    os << ENDL;
-
-    //----------------------------------
-    // HOST AND DEVICE SYNAPSE VARIABLES
-
-    os << "// ------------------------------------------------------------------------" << ENDL;
-    os << "// synapse variables" << ENDL;
-    os << ENDL;
-    for (int i = 0; i < model.synapseGrpN; i++) {
-	st = model.synapseType[i];
-	pst = model.postSynapseType[i];
-
-	extern_variable_def(os, model.ftype+" *", "inSyn"+model.synapseName[i]);
-	if (model.synapseGType[i] == INDIVIDUALID) {
-	    extern_variable_def(os, tS("uint32_t *"), "gp"+model.synapseName[i]);
-	}
-	if (model.synapseConnType[i] == SPARSE) {
-	    os << "extern SparseProjection C" << model.synapseName[i] << ";" << ENDL;
-	}
-	if (model.synapseGType[i] == INDIVIDUALG) { // not needed for GLOBALG, INDIVIDUALID
-	    for (int k = 0, l = weightUpdateModels[st].varNames.size(); k < l; k++) {
-		extern_variable_def(os, weightUpdateModels[st].varTypes[k]+" *", weightUpdateModels[st].varNames[k]+model.synapseName[i]);
-	    }
-	    for (int k = 0, l = postSynModels[pst].varNames.size(); k < l; k++) {
-		extern_variable_def(os, postSynModels[pst].varTypes[k]+" *", postSynModels[pst].varNames[k]+model.synapseName[i]); 
-	    }
-	}
-	for (int k = 0, l= weightUpdateModels[st].extraGlobalSynapseKernelParameters.size(); k < l; k++) {
-	    extern_variable_def(os, weightUpdateModels[st].extraGlobalSynapseKernelParameterTypes[k], weightUpdateModels[st].extraGlobalSynapseKernelParameters[k]+model.synapseName[i]);
-	}		
-    }
-    os << ENDL;
     os << "#endif" << ENDL;
     os.close();
 
@@ -544,6 +627,7 @@ void genRunner(NNmodel &model, //!< Model description
     os << "#endif" << ENDL;
     os.close();
     
+
     //cout << "entering genRunner" << ENDL;
     name= path + "/" + model.name + "_CODE/runner.cc";
     os.open(name.c_str());  
@@ -561,8 +645,6 @@ void genRunner(NNmodel &model, //!< Model description
     os << "#define RUNNER_CC_COMPILE" << ENDL;
     os << ENDL;
     os << "#include \"definitions.h\"" << ENDL;
-    os << "#include \"utils.h\"" << ENDL;
-    if (model.timing) os << "#include \"hr_time.cpp\"" << ENDL;
     os << "#include <cstdlib>" << ENDL;
     os << "#include <cstdio>" << ENDL;
     os << "#include <cmath>" << ENDL;
@@ -571,117 +653,55 @@ void genRunner(NNmodel &model, //!< Model description
     os << "#include <stdint.h>" << ENDL;
     os << ENDL;
 
-    //os << "#ifndef int_" << ENDL;
-    //os << "#define int_(X) ((int) (X))" << ENDL;
-    //os << "#endif" << ENDL;
 
-    os << "#define Conductance SparseProjection" << ENDL;
-    os << "/*struct Conductance is deprecated. \n\
-  By GeNN 2.0, Conductance is renamed as SparseProjection and contains only indexing values. \n\
-  Please consider updating your user code by renaming Conductance as SparseProjection \n\
-  and making g member a synapse variable.*/" << ENDL;
-    os << ENDL;
+    //-----------------
+    // GLOBAL VARIABLES
 
-    // write MYRAND macro
-    os << "#ifndef MYRAND" << ENDL;
-    os << "#define MYRAND(Y,X) Y = Y * 1103515245 + 12345; X = (Y >> 16);" << ENDL;
-    os << "#endif" << ENDL << ENDL;
-    os << "#ifndef MYRAND_MAX" << ENDL;
-    os << "#define MYRAND_MAX 0x0000FFFFFFFFFFFFLL" << ENDL;
-    os << "#endif" << ENDL;
-    os << ENDL;
-    
-    if (model.timing) {
-#ifndef CPU_ONLY
-      os << "cudaEvent_t neuronStart, neuronStop;" << ENDL;
-#endif
-      os << "double neuron_tme;" << ENDL;
-      os << "CStopWatch neuron_timer;" << ENDL;
-      if (model.synapseGrpN > 0) {
-#ifndef CPU_ONLY
-	  os << "cudaEvent_t synapseStart, synapseStop;" << ENDL;
-#endif
-	  os << "double synapse_tme;" << ENDL;
-	  os << "CStopWatch synapse_timer;" << ENDL;
-      }
-      if (model.lrnGroups > 0) {
-#ifndef CPU_ONLY
-	  os << "cudaEvent_t learningStart, learningStop;" << ENDL;
-#endif
-	  os << "double learning_tme;" << ENDL;
-	  os << "CStopWatch learning_timer;" << ENDL;
-      }
-      if (model.synDynGroups > 0) {
-#ifndef CPU_ONLY
-	  os << "cudaEvent_t synDynStart, synDynStop;" << ENDL;
-#endif
-	  os << "double synDyn_tme;" << ENDL;
-	  os << "CStopWatch synDyn_timer;" << ENDL;
-      }
-  } 
-
-#ifndef CPU_ONLY
-    // write CUDA error handler macro
-    os << "#ifndef CHECK_CUDA_ERRORS" << ENDL;
-    os << "#define CHECK_CUDA_ERRORS(call) {\\" << ENDL;
-    os << "    cudaError_t error = call;\\" << ENDL;
-    os << "    if (error != cudaSuccess) {\\" << ENDL;
-    os << "        fprintf(stderr, \"%s: %i: cuda error %i: %s\\n\", __FILE__, __LINE__, (int) error, cudaGetErrorString(error));\\" << ENDL;
-    os << "        exit(EXIT_FAILURE);\\" << ENDL;
-    os << "    }\\" << ENDL;
-    os << "}" << ENDL;
-    os << "#endif" << ENDL << ENDL;
-
-    os << "template<class T>" << ENDL;
-    os << "void deviceMemAllocate(T* hostPtr, const T &devSymbol, size_t size)" << ENDL;
-    os << "{" << ENDL;
-    os << "    void *devptr;" << ENDL;
-    os << "    CHECK_CUDA_ERRORS(cudaMalloc(hostPtr, size));" << ENDL;
-    os << "    CHECK_CUDA_ERRORS(cudaGetSymbolAddress(&devptr, devSymbol));" << ENDL;
-    os << "    CHECK_CUDA_ERRORS(cudaMemcpy(devptr, hostPtr, sizeof(void*), cudaMemcpyHostToDevice));" << ENDL;
-    os << "}" << ENDL << ENDL;
-#endif
-
-    // write doxygen comment
-    os << "//-------------------------------------------------------------------------" << ENDL;
-    os << "/*! \\brief Function to convert a firing probability (per time step) " << ENDL;
-    os << "to an integer of type uint64_t that can be used as a threshold for the GeNN random number generator to generate events with the given probability." << ENDL;
-    os << "*/" << ENDL;
-    os << "//-------------------------------------------------------------------------" << ENDL << ENDL;
-
-    os << "void convertProbabilityToRandomNumberThreshold(" << model.ftype << " *p_pattern, " << model.RNtype << " *pattern, int N)" << ENDL;
-    os << "{" << ENDL;
-    os << "    " << model.ftype << " fac= pow(2.0, (double) sizeof(" << model.RNtype << ")*8-16);" << ENDL;
-    os << "    for (int i= 0; i < N; i++) {" << ENDL;
-    //os << "        assert(p_pattern[i] <= 1.0);" << ENDL;
-    os << "        pattern[i]= (" << model.RNtype << ") (p_pattern[i]*fac);" << ENDL;
-    os << "    }" << ENDL;
-    os << "}" << ENDL << ENDL;
-
-    // write doxygen comment
-    os << "//-------------------------------------------------------------------------" << ENDL;
-    os << "/*! \\brief Function to convert a firing rate (in kHz) " << ENDL;
-    os << "to an integer of type uint64_t that can be used as a threshold for the GeNN random number generator to generate events with the given rate." << ENDL;
-    os << "*/" << ENDL;
-    os << "//-------------------------------------------------------------------------" << ENDL << ENDL;
-
-    os << "void convertRateToRandomNumberThreshold(" << model.ftype << " *rateKHz_pattern, " << model.RNtype << " *pattern, int N)" << ENDL;
-    os << "{" << ENDL;
-    os << "    " << model.ftype << " fac= pow(2.0, (double) sizeof(" << model.RNtype << ")*8-16)*DT;" << ENDL;
-    os << "    for (int i= 0; i < N; i++) {" << ENDL;
-    //os << "        assert(rateKHz_pattern[i] <= 1.0);" << ENDL;
-    os << "        pattern[i]= (" << model.RNtype << ") (rateKHz_pattern[i]*fac);" << ENDL;
-    os << "    }" << ENDL;
-    os << "}" << ENDL << ENDL;
-
+    os << "// ------------------------------------------------------------------------" << ENDL;
     os << "// global variables" << ENDL;
+    os << ENDL;
+
+    os << "const scalar DT = " << model.DT << ";" << ENDL;
     os << "unsigned long long iT= 0;" << ENDL;
     os << model.ftype << " t;" << ENDL;
+    if (model.timing) {
+#ifndef CPU_ONLY
+	os << "cudaEvent_t neuronStart, neuronStop;" << ENDL;
+#endif
+	os << "double neuron_tme;" << ENDL;
+	os << "CStopWatch neuron_timer;" << ENDL;
+	if (model.synapseGrpN > 0) {
+#ifndef CPU_ONLY
+	    os << "cudaEvent_t synapseStart, synapseStop;" << ENDL;
+#endif
+	    os << "double synapse_tme;" << ENDL;
+	    os << "CStopWatch synapse_timer;" << ENDL;
+	}
+	if (model.lrnGroups > 0) {
+#ifndef CPU_ONLY
+	    os << "cudaEvent_t learningStart, learningStop;" << ENDL;
+#endif
+	    os << "double learning_tme;" << ENDL;
+	    os << "CStopWatch learning_timer;" << ENDL;
+	}
+	if (model.synDynGroups > 0) {
+#ifndef CPU_ONLY
+	    os << "cudaEvent_t synDynStart, synDynStop;" << ENDL;
+#endif
+	    os << "double synDyn_tme;" << ENDL;
+	    os << "CStopWatch synDyn_timer;" << ENDL;
+	}
+    } 
+    os << ENDL;
+
 
     //---------------------------------
     // HOST AND DEVICE NEURON VARIABLES
 
+    os << "// ------------------------------------------------------------------------" << ENDL;
     os << "// neuron variables" << ENDL;
+    os << ENDL;
+
 #ifndef CPU_ONLY
     os << "__device__ volatile unsigned int d_done;" << ENDL;
 #endif
@@ -712,10 +732,14 @@ void genRunner(NNmodel &model, //!< Model description
     }
     os << ENDL;
 
+
     //----------------------------------
     // HOST AND DEVICE SYNAPSE VARIABLES
 
+    os << "// ------------------------------------------------------------------------" << ENDL;
     os << "// synapse variables" << ENDL;
+    os << ENDL;
+
     for (int i = 0; i < model.synapseGrpN; i++) {
 	st = model.synapseType[i];
 	pst = model.postSynapseType[i];
@@ -760,7 +784,42 @@ void genRunner(NNmodel &model, //!< Model description
     }
     os << ENDL;
 
-    os << "#include \"sparseUtils.h\"" << ENDL << ENDL;
+
+    //--------------------------
+    // HOST AND DEVICE FUNCTIONS
+
+    // write doxygen comment
+    os << "//-------------------------------------------------------------------------" << ENDL;
+    os << "/*! \\brief Function to convert a firing probability (per time step) " << ENDL;
+    os << "to an integer of type uint64_t that can be used as a threshold for the GeNN random number generator to generate events with the given probability." << ENDL;
+    os << "*/" << ENDL;
+    os << "//-------------------------------------------------------------------------" << ENDL << ENDL;
+
+    os << "void convertProbabilityToRandomNumberThreshold(" << model.ftype << " *p_pattern, " << model.RNtype << " *pattern, int N)" << ENDL;
+    os << "{" << ENDL;
+    os << "    " << model.ftype << " fac= pow(2.0, (double) sizeof(" << model.RNtype << ")*8-16);" << ENDL;
+    os << "    for (int i= 0; i < N; i++) {" << ENDL;
+    //os << "        assert(p_pattern[i] <= 1.0);" << ENDL;
+    os << "        pattern[i]= (" << model.RNtype << ") (p_pattern[i]*fac);" << ENDL;
+    os << "    }" << ENDL;
+    os << "}" << ENDL << ENDL;
+
+    // write doxygen comment
+    os << "//-------------------------------------------------------------------------" << ENDL;
+    os << "/*! \\brief Function to convert a firing rate (in kHz) " << ENDL;
+    os << "to an integer of type uint64_t that can be used as a threshold for the GeNN random number generator to generate events with the given rate." << ENDL;
+    os << "*/" << ENDL;
+    os << "//-------------------------------------------------------------------------" << ENDL << ENDL;
+
+    os << "void convertRateToRandomNumberThreshold(" << model.ftype << " *rateKHz_pattern, " << model.RNtype << " *pattern, int N)" << ENDL;
+    os << "{" << ENDL;
+    os << "    " << model.ftype << " fac= pow(2.0, (double) sizeof(" << model.RNtype << ")*8-16)*DT;" << ENDL;
+    os << "    for (int i= 0; i < N; i++) {" << ENDL;
+    //os << "        assert(rateKHz_pattern[i] <= 1.0);" << ENDL;
+    os << "        pattern[i]= (" << model.RNtype << ") (rateKHz_pattern[i]*fac);" << ENDL;
+    os << "    }" << ENDL;
+    os << "}" << ENDL << ENDL;
+
     // include simulation kernels
 #ifndef CPU_ONLY
     os << "#include \"runnerGPU.cc\"" << ENDL << ENDL;

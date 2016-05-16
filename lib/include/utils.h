@@ -31,12 +31,12 @@
 using namespace std;
 
 
+#ifndef CPU_ONLY
 //--------------------------------------------------------------------------
 /*! \brief Macros for catching errors returned by the CUDA driver and runtime APIs.
  */
 //--------------------------------------------------------------------------
 
-#ifndef CPU_ONLY
 #if CUDA_VERSION >= 6050
 #define CHECK_CU_ERRORS(call)					\
   {								\
@@ -69,6 +69,18 @@ using namespace std;
       }								\
   }
 #endif
+
+
+//--------------------------------------------------------------------------
+/*! \brief Bit tool macros
+ */
+//--------------------------------------------------------------------------
+
+#define B(x,i) ((x) & (0x80000000 >> (i))) //!< Extract the bit at the specified position i from x
+
+#define setB(x,i) x= ((x) | (0x80000000 >> (i))) //!< Set the bit at the specified position i in x to 1
+
+#define delB(x,i) x= ((x) & (~(0x80000000 >> (i)))) //!< Set the bit at the specified position i in x to 0
 
 
 #ifndef CPU_ONLY

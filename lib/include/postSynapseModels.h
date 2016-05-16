@@ -2,6 +2,8 @@
 #ifndef POSTSYNAPSEMODELS_H
 #define POSTSYNAPSEMODELS_H
 
+#include "dpclass.h"
+
 #include <string>
 #include <vector>
 #include <cmath>
@@ -9,14 +11,7 @@
 using namespace std;
 
 
-class postSynapseDP
-{
-public:
-    virtual double calculateDerivedParameter(int index, vector<double> pars, double dt = 1.0) { return -1; }
-};
-
-
-/*! \brief Structure to hold the information that defines a post-synaptic model (a model of how synapses affect post-synaptic neuron variables, classically in the form of a synaptic current). It also allows to define an equation for the dynamics that can be applied to the summed synaptic input variable "insyn".
+/*! \brief Class to hold the information that defines a post-synaptic model (a model of how synapses affect post-synaptic neuron variables, classically in the form of a synaptic current). It also allows to define an equation for the dynamics that can be applied to the summed synaptic input variable "insyn".
  */
 
 class postSynModel
@@ -29,7 +24,7 @@ public:
     vector<string> varTypes; //!< Types of the variable named above, e.g. "float". Names and types are matched by their order of occurrence in the vector.
     vector<string> pNames; //!< Names of (independent) parameters of the model. 
     vector<string> dpNames; //!< \brief Names of dependent parameters of the model. 
-    postSynapseDP *dps; //!< \brief Derived parameters 
+    dpclass *dps; //!< \brief Derived parameters 
 };
 
 
@@ -44,7 +39,7 @@ const unsigned int MAXPOSTSYN = 2; // maximum number of postsynaptic integration
 //! \brief Class defining the dependent parameter for exponential decay.
 //--------------------------------------------------------------------------
 
-class expDecayDp : public postSynapseDP
+class expDecayDp : public dpclass
 {
 public:
     double calculateDerivedParameter(int index, vector<double> pars, double dt = 1.0) {

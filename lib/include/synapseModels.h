@@ -2,20 +2,15 @@
 #ifndef SYNAPSEMODELS_H
 #define SYNAPSEMODELS_H
 
+#include "dpclass.h"
+
 #include <string>
 #include <vector>
 
 using namespace std;
 
 
-class synapseDP
-{
-public:
-    virtual double calculateDerivedParameter(int index, vector<double> pars, double dt = 1.0) { return -1; }
-};
-
-
-/*! \brief Structure to hold the information that defines a weightupdate model (a model of how spikes affect synaptic (and/or) (mostly) post-synaptic neuron variables. It also allows to define changes in response to post-synaptic spikes/spike-like events.
+/*! \brief Class to hold the information that defines a weightupdate model (a model of how spikes affect synaptic (and/or) (mostly) post-synaptic neuron variables. It also allows to define changes in response to post-synaptic spikes/spike-like events.
  */
 
 class weightUpdateModel
@@ -35,7 +30,7 @@ public:
     vector<string> dpNames; //!< \brief Names of dependent parameters of the model. 
     vector<string> extraGlobalSynapseKernelParameters; //!< Additional parameter in the neuron kernel; it is translated to a population specific name but otherwise assumed to be one parameter per population rather than per synapse.
     vector<string> extraGlobalSynapseKernelParameterTypes; //!< Additional parameters in the neuron kernel; they are translated to a population specific name but otherwise assumed to be one parameter per population rather than per synapse.
-    synapseDP *dps;
+    dpclass *dps;
     bool needPreSt; //!< \brief Whether presynaptic spike times are needed or not
     bool needPostSt; //!< \brief Whether postsynaptic spike times are needed or not
 };
@@ -55,7 +50,7 @@ const unsigned int SYNTYPENO = 4; // maximum number of synapse types: SpineML ne
 */
 //--------------------------------------------------------------------------
 
-class pwSTDP : public synapseDP //!TODO This class definition may be code-generated in a future release
+class pwSTDP : public dpclass //!TODO This class definition may be code-generated in a future release
 {
 public:
     double calculateDerivedParameter(int index, vector<double> pars, double dt = 1.0) {
