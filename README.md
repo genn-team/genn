@@ -155,7 +155,7 @@ c)  The programmer defines their own modeling code along similar lines
 
 For more details on how to use Genn, please see the documentation.
 
-Bibliography
+# Bibliography
 
 [#Izhikevich 2003]: http://dx.doi.org/10.1109/TNN.2003.820440 "Izhikevich, E. M. Simple model of spiking neurons. IEEE transactions on neural networks 14, 1569–1572 (2003)"
 [#Nowotny et al. 2005]: http://dx.doi.org/10.1007/s00422-005-0019-7 "Nowotny, T., Huerta, R., Abarbanel, H. D. & Rabinovich, M. I. Self-organization in the olfactory system: one shot odor recognition in insects. Biological cybernetics 93, 436–446 (2005)"
