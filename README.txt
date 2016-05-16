@@ -1,5 +1,5 @@
 
-  GPU enhanced Neuronal Network (GeNN)
+  GPU enhanced Neuronal Networks (GeNN)
   ====================================
 
 GeNN is a GPU enhanced Neuronal Network simulation environment based on code
@@ -8,6 +8,7 @@ generation for Nvidia CUDA.
 
   [1] INSTALLING GeNN
   ===================
+These instructions are for installing the release obtained from https://github.com/genn-team/genn/releases. For full instructions and cloning git branches of the project, see http://genn-team.github.io/genn/documentation/html/d8/d99/Installation.html
 
     [1.1] WINDOWS INSTALL
     ---------------------
@@ -49,7 +50,7 @@ Alternatively you can do one of the following:
 
 This completes the installation.
 
-NOTE:
+
 
     [1.2] LINUX / MAC INSTALL
     -------------------------
@@ -84,22 +85,29 @@ This completes the installation.
 
 At the moment, the following example projects are provided with GeNN:
 
-1: Locust olfactory system example (Nowotny et al. 2005):
-2: Izhikevich network receiving Poisson input spike trains:
-3: Single compartment Izhikevich neuron(s)
-4: Pulse-coupled Izhikevich network
-5: Izhikevich network with delayed synapses
+* Locust olfactory system example (Nowotny et al. 2005):
+	* with all-to-all connectivity, using built-in neuron and synapse models (benchmarked in Yavuz et al. 2016)
+	* with sparse connectivity for some synapses, using user-defined neuron-and synapse models (benchmarked in Yavuz et al. 2016)
+	* using INDIVIDUALID scheme
+	* using delayed synapses
+
+* Single neuron population of Izhikevich neuron(s) receiving Poisson spike trains as input
+* Pulse-coupled network of Izhikevich neurons (Izhikevich 2003) (benchmarked in Yavuz et al. 2016)
+	* with fixed delays (original model)	
+	* Izhikevich  with delayed synapses
+
+* Genetic algorithm for tracking parameters in a Hodgkin-Huxley model cell
+
+* Classifier based on an abstraction of the insect olfactory system (Schmuker et al. 2014)
+
+* Toy examples:
+	* Izhikevich network receiving Poisson input spike trains
+	* Single neuron population of Izhikevich neuron(s) with no synapses
+	* Network of Izhikevich neurons with delayed synapses
 
 In order to get a quick start and run one of the the provided example models,
 navigate to one of the example project directories in $GENN_PATH/userproject/,
 and then follow the instructions in the README file contained within.
-
-DEBUGGING:
-  The last argument to "generate_run" helper binary, or similar file, enables
-  the debugging flags while compiling generateAll.cc under lib/src/ and *.cu
-  under individual user project directory, and will run the corresponding
-  executables with cuda-gdb consecutively. If you want to skip one of these
-  debugging steps, simply press r while on the debugging screen.
 
 
     [2.2] SIMULATING A NEW MODEL
@@ -127,14 +135,16 @@ c) The programmer defines their own modeling code along similar lines as
   - they define input patterns (e.g. for Poisson neurons like in the
     example) 
 
-  - they use "stepTimeGPU(x, y, z);" to run one time step on the GPU or
-    "stepTimeCPU(x, y, z);" to run one on the CPU. (both versions are
+  - they use "stepTimeGPU();" to run one time step on the GPU or
+    "stepTimeCPU();" to run one on the CPU. (both versions are
     always compiled). However, mixing the two does not make too much
     sense. The host version uses the same memory whereto results from the
     GPU version are copied (see next point) 
 
-  - they use functions like "copyStateFromDevice();" etcetera to obtain
+  - they use functions like "copy\<population\>StateFromDevice();" etcetera to obtain
     results from GPU calculations.
 
   - the simulation code is then produced in the following two steps:
     "genn-buildmodel.[sh|bat] ./modelFile.cc" and "make clean && make"
+
+For more details on how to use Genn, please see the documentation.

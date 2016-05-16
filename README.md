@@ -21,21 +21,23 @@ http://genn-team.github.io/genn/documentation/html/d8/d99/Installation.html
 
 (2) Ensure that the "CUDA\_PATH" environment variable is defined, and
     points to the location of the Nvidia CUDA toolkit installation, by
-    using: ECHO %CUDA\_PATH% This variable is usully set during most
+    using: `ECHO %CUDA\_PATH%` 
+    This variable is usully set during most
     CUDA installations on Windows systems. if not, correct this using:
-    SETX CUDA\_PATH "[drive]\Program Files\NVIDIA GPU Computing
-    Toolkit\CUDA[version]"
+    `SETX CUDA\_PATH "[drive]\Program Files\NVIDIA GPU Computing
+    Toolkit\CUDA[version]"`
 
 (3) Define the environment variable "GENN\_PATH" to point to the
-    directory in which GeNN was located. For example, use: SETX
-    GENN\_PATH "\path\to\genn"
+    directory in which GeNN was located. For example, use: 
+    `SETX GENN\_PATH "\path\to\genn"`
 
 (4) Add "%GENN\_PATH%\lib\bin" to your %PATH% variable. For example,
-    use: SETX PATH "%GENN\_PATH%\lib\bin;%PATH%"
+    use: 
+    `SETX PATH "%GENN\_PATH%\lib\bin;%PATH%"`
 
 (5) Define VC\_PATH as the path to your most recent Visual Studio
-    installation, e.g. setx VC\_PATH "C:\Program Files
-    (x86)\Microsoft Visual Studio 10.0"
+    installation, e.g. `setx VC\_PATH "C:\Program Files
+    (x86)\Microsoft Visual Studio 10.0"`
 
 Alternatively you can do one of the following:
 
@@ -61,17 +63,17 @@ This completes the installation.
 
 (2) Set the environment variable "CUDA\_PATH" to the location of your
     Nvidia CUDA toolkit installation. For example, if your CUDA toolkit
-    was installed to "/usr/local/cuda", you can use: echo "export
-    CUDA\_PATH=/usr/local/cuda" \>\> \~/.bash\_profile
+    was installed to "/usr/local/cuda", you can use: 
+    `echo "export CUDA\_PATH=/usr/local/cuda" \>\> \~/.bash\_profile`
 
 (3) Set the environment variable "GENN\_PATH" to point to the extracted
     GeNN directory. For example, if you extracted GeNN to
-    "/home/me/genn", then you can use: echo "export
-    GENN\_PATH=/home/me/genn" \>\> \~/.bash\_profile
+    "/home/me/genn", then you can use: 
+    `echo "export GENN\_PATH=/home/me/genn" \>\> \~/.bash\_profile`
 
 (4) Add "$GENN_PATH/lib/bin" to your $PATH variable. For example, you
-    can use: echo "export PATH=$PATH:$GENN\_PATH/lib/bin" \>\>
-    \~/.bash\_profile
+    can use: 
+    `echo "export PATH=$PATH:$GENN\_PATH/lib/bin" \>\> \~/.bash\_profile`
 
 This completes the installation.
 
@@ -82,24 +84,24 @@ This completes the installation.
 
 At the moment, the following example projects are provided with GeNN:
 
--   Locust olfactory system example (Nowotny et al. 2005):
+-   Locust olfactory system example \([#Nowotny et al. 2005]\):
     -   with all-to-all connectivity, using built-in neuron and synapse
-        models (benchmarked in Yavuz et al. 2016)
+        models \(benchmarked in [#Yavuz et al. 2016]\)
     -   with sparse connectivity for some synapses, using user-defined
-        neuron-and synapse models (benchmarked in Yavuz et al. 2016)
+        neuron-and synapse models \(benchmarked in [#Yavuz et al. 2016]\)
     -   using INDIVIDUALID scheme
     -   using delayed synapses
 -   Single neuron population of Izhikevich neuron(s) receiving Poisson
     spike trains as input
--   Pulse-coupled network of Izhikevich neurons (Izhikevich 2006)
-    (benchmarked in Yavuz et al. 2016)
+-   Pulse-coupled network of Izhikevich neurons \([#Izhikevich 2003]\)
+    (benchmarked in \[Yavuz et al. 2016])
     -   with fixed delays (original model)\
     -   Izhikevich with delayed synapses
 -   Genetic algorithm for tracking parameters in a Hodgkin-Huxley model
     cell
 
 -   Classifier based on an abstraction of the insect olfactory system
-    (Schmuker et al. 2014)
+    \([#Schmuker et al. 2014]\)
 
 -   Toy examples:
     -   Izhikevich network receiving Poisson input spike trains
@@ -125,9 +127,9 @@ b)  this file needs to
 
 (i) define "DT"
 (ii) include "modelSpec.h" and "modelSpec.cc"
-(iii) contains the model's definition in the form of a function "void
-    modelDefinition(NNmodel &model)" ("MBody1.cc") shows a typical
-    example)
+(iii) contains the model's definition in the form of a function 
+    `void modelDefinition(NNmodel &model)` 
+    ("MBody1.cc") shows a typical example)
 
 c)  The programmer defines their own modeling code along similar lines
     as "map\_classol.*" together with "classol\_sim.*", etcetera. In
@@ -139,16 +141,23 @@ c)  The programmer defines their own modeling code along similar lines
 -   they define input patterns (e.g. for Poisson neurons like in the
     example)
 
--   they use "stepTimeGPU(x, y, z);" to run one time step on the GPU or
-    "stepTimeCPU(x, y, z);" to run one on the CPU. (both versions are
+-   they use `stepTimeGPU(x, y, z);` to run one time step on the GPU or
+    `stepTimeCPU(x, y, z);` to run one on the CPU. (both versions are
     always compiled). However, mixing the two does not make too much
     sense. The host version uses the same memory whereto results from
     the GPU version are copied (see next point)
 
--   they use functions like "copyStateFromDevice();" etcetera to obtain
+-   they use functions like `copyStateFromDevice();` etcetera to obtain
     results from GPU calculations.
 
 -   the simulation code is then produced in the following two steps:
-    "genn-buildmodel.[sh|bat] ./modelFile.cc" and "make clean && make"
+    `genn-buildmodel.[sh|bat] ./modelFile.cc" and "make clean && make`
 
 For more details on how to use Genn, please see the documentation.
+
+Bibliography
+
+[#Izhikevich 2003]: http://dx.doi.org/10.1109/TNN.2003.820440 "Izhikevich, E. M. Simple model of spiking neurons. IEEE transactions on neural networks 14, 1569–1572 (2003)"
+[#Nowotny et al. 2005]: http://dx.doi.org/10.1007/s00422-005-0019-7 "Nowotny, T., Huerta, R., Abarbanel, H. D. & Rabinovich, M. I. Self-organization in the olfactory system: one shot odor recognition in insects. Biological cybernetics 93, 436–446 (2005)"
+[#Schmuker et al. 2014]: http://dx.doi.org/10.1073/pnas.1303053111 "Schmuker, M., Pfeil, T. and Nawrot, M.P. A neuromorphic network for generic multivariate data classification. Proceedings of the National Academy of Sciences, 111(6), pp.2081-2086 (2014)"
+[#Yavuz et al. 2016]: http://dx.doi.org/10.1038%2Fsrep18854 "Yavuz, E., Turner, J. and Nowotny, T. GeNN: a code generation framework for accelerated brain simulations. Scientific reports, 6. (2016)"
