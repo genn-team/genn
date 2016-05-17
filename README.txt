@@ -147,4 +147,7 @@ c) The programmer defines their own modeling code along similar lines as
   - the simulation code is then produced in the following two steps:
     "genn-buildmodel.[sh|bat] ./modelFile.cc" and "make clean && make"
 
-For more details on how to use Genn, please see the documentation.
+For more details on how to use GeNN, please see the documentation.
+
+If you use GeNN in your work, please cite 
+"Yavuz, E., Turner, J. and Nowotny, T. GeNN: a code generation framework for accelerated brain simulations. Scientific Reports, 6. (2016)"
