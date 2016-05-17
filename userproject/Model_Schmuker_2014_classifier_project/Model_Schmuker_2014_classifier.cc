@@ -11,6 +11,7 @@ This file contains the network model definition for the "Schmuker_2014_classifie
 -------------------------------------------------------------------------- */
 
 //network sizes and parameters
+#define DT 0.5 // Integration time step
 #define NUM_VR 10 //number of VR generated to map the input space
 #define NUM_FEATURES 4 //dimensionality of data set
 #define NUM_CLASSES 3 //number of classes to be classified
@@ -43,7 +44,6 @@ void modelDefinition(NNmodel &model)
     cout << "GeNN building model with " << NUM_VR << " x VRs" << endl;
     initGeNN();
     model.setPrecision(GENN_FLOAT);
-    model.setDT(0.5);
     model.setName("Schmuker_2014_classifier");
 
 

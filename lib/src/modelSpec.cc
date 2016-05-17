@@ -768,12 +768,12 @@ void NNmodel::setConstInp(const string sName, /**<  */
  */
 //--------------------------------------------------------------------------
 
-void NNmodel::setDT(double theDT /**<  */)
+void NNmodel::setDT(double newDT /**<  */)
 {
     if (final) {
 	gennError("Trying to set DT in a finalized model.");
     }
-    DT = theDT;
+    dt = newDT;
 }
 
 
@@ -969,7 +969,7 @@ void NNmodel::initDerivedNeuronPara()
 	vector<double> tmpP;
 	int numDpNames = nModels[neuronType[i]].dpNames.size();
 	for (int j=0; j < nModels[neuronType[i]].dpNames.size(); ++j) {	
-	    double retVal = nModels[neuronType[i]].dps->calculateDerivedParameter(j, neuronPara[i], DT);
+	    double retVal = nModels[neuronType[i]].dps->calculateDerivedParameter(j, neuronPara[i], dt);
 	    tmpP.push_back(retVal);
 	}
 	dnp.push_back(tmpP);
@@ -990,7 +990,7 @@ void NNmodel::initDerivedSynapsePara()
 	vector<double> tmpP;
 	unsigned int synt= synapseType[i];
 	for (int j= 0; j < weightUpdateModels[synt].dpNames.size(); ++j) {
-	    double retVal = weightUpdateModels[synt].dps->calculateDerivedParameter(j, synapsePara[i], DT);
+	    double retVal = weightUpdateModels[synt].dps->calculateDerivedParameter(j, synapsePara[i], dt);
 	    tmpP.push_back(retVal);
 	}
 	assert(dsp_w.size() == i);
@@ -1012,7 +1012,7 @@ void NNmodel::initDerivedPostSynapsePara()
 	vector<double> tmpP;
 	unsigned int psynt= postSynapseType[i];
 	for (int j=0; j < postSynModels[psynt].dpNames.size(); ++j) {
-	    double retVal = postSynModels[psynt].dps->calculateDerivedParameter(j, postSynapsePara[i], DT);
+	    double retVal = postSynModels[psynt].dps->calculateDerivedParameter(j, postSynapsePara[i], dt);
 	    tmpP.push_back(retVal);
 	}
 	assert(dpsp.size() == i);

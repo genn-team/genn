@@ -14,9 +14,8 @@
 #ifndef _POISSONIZHMODEL_CC_
 #define _POISSONIZHMODEL_CC_
 #include "PoissonIzh-model.h"
-#include "PoissonIzh_CODE/runner.cc"
+#include "PoissonIzh_CODE/definitions.h"
 #include "modelSpec.h"
-#include "modelSpec.cc"
 
 classol::classol()
 {

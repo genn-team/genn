@@ -80,7 +80,7 @@ public:
   string name; //!< Name of the neuronal newtwork model
   string ftype; //!< Type of floating point variables (float, double, ...; default: float)
   string RNtype; //!< Underlying type for random number generation (default: long)
-  double DT; //!< The integration time step of the model
+  double dt; //!< The integration time step of the model
   int final; //!< Flag for whether the model has been finalized
   unsigned int needSt; //!< Whether last spike times are needed at all in this network model (related to STDP)
   unsigned int needSynapseDelay; //!< Whether delayed synapse conductance is required in the network

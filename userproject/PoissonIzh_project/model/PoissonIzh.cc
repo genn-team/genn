@@ -11,9 +11,7 @@
   
 --------------------------------------------------------------------------*/
 
-#define DT 1.0
 #include "modelSpec.h"
-#include "modelSpec.cc"
 #include "sizes.h"
 
 double myPOI_p[4]= {
@@ -67,6 +65,7 @@ void modelDefinition(NNmodel &model)
 {
   initGeNN();
   model.setName("PoissonIzh");
+  model.setDT(1.0);
   model.addNeuronPopulation("PN", _NPoisson, POISSONNEURON, myPOI_p, myPOI_ini);
   model.addNeuronPopulation("Izh1", _NIzh, IZHIKEVICH, exIzh_p, exIzh_ini);
 

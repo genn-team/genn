@@ -12,14 +12,16 @@
 --------------------------------------------------------------------------*/
 
 
-#include <cassert>
-using namespace std;
-#include "hr_time.cpp"
-
 #include "utils.h" // for CHECK_CUDA_ERRORS
+#include "stringUtils.h"
+#include "hr_time.h"
+
 #ifndef CPU_ONLY
 #include <cuda_runtime.h>
 #endif
+#include <cassert>
+
+using namespace std;
 
 // we will hard-code some stuff ... because at the end of the day that is 
 // what we will do for the CUDA version

@@ -566,6 +566,10 @@ int main(int argc,     //!< number of arguments; expected to be 2
 #endif // CPU_ONLY
 
     NNmodel *model = new NNmodel();
+#ifdef DT
+    model->setDT(DT);
+    cout << "Setting integration step size from global DT macro: " << DT << endl;
+#endif // DT
     modelDefinition(*model);
     if (!model->final) {
 	gennError("Model was not finalized in modelDefinition(). Please call model.finalize().");

@@ -204,6 +204,7 @@ void genRunner(NNmodel &model, //!< Model description
     os << "// global variables" << ENDL;
     os << ENDL;
 
+    os << "#undef DT" << ENDL;
     os << "extern const scalar DT;" << ENDL;
     os << "extern unsigned long long iT;" << ENDL;
     os << "extern " << model.ftype << " t;" << ENDL;
@@ -661,7 +662,7 @@ void genRunner(NNmodel &model, //!< Model description
     os << "// global variables" << ENDL;
     os << ENDL;
 
-    os << "const scalar DT = " << model.DT << ";" << ENDL;
+    os << "const scalar DT = " << model.dt << ";" << ENDL;
     os << "unsigned long long iT= 0;" << ENDL;
     os << model.ftype << " t;" << ENDL;
     if (model.timing) {
@@ -1150,7 +1151,7 @@ void genRunner(NNmodel &model, //!< Model description
 	    os << "    }" << ENDL;
 	}
 
-	if ((model.neuronType[i] == IZHIKEVICH) && (model.DT != 1.0)) {
+	if ((model.neuronType[i] == IZHIKEVICH) && (model.dt != 1.0)) {
 	    os << "    fprintf(stderr,\"WARNING: You use a time step different than 1 ms. Izhikevich model behaviour may not be robust.\\n\"); " << ENDL;
 	}
     }
