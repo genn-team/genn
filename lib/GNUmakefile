@@ -72,18 +72,27 @@ LIBGENN_OBJ             :=$(addprefix $(OBJ_PATH)/,global.o modelSpec.o neuronMo
 
 
 # Target rules
-.PHONY: all debug clean
+.PHONY: all debug clean always-compile
 
 all: $(OUT_PATH)/generateALL
 
-$(LIB_PATH)/libgenn.a: $(LIBGENN_OBJ) | $(LIB_PATH)
-	$(AR) $(ARFLAGS) $@ $(LIBGENN_OBJ)
-
-$(OUT_PATH)/generateALL: $(GENERATE_OBJ) $(LIB_PATH)/libgenn.a
+$(OUT_PATH)/generateALL: always-compile $(GENERATE_OBJ) $(LIB_PATH)/libgenn.a
 	$(CXX) $(CXXFLAGS) -o $@ $(GENERATE_OBJ) $(LINK_FLAGS)
 
-$(OBJ_PATH)/generateALL.o: $(SRC_PATH)/generateALL.cc | $(OBJ_PATH)
-	$(CXX) $(CXXFLAGS) -c -o $@ $< $(INCLUDE_FLAGS) -include "$(MODEL)"
+$(OBJ_PATH)/generateALL.o: always-compile | $(OBJ_PATH)
+	$(CXX) $(CXXFLAGS) -c -o $@ $(SRC_PATH)/generateALL.cc $(INCLUDE_FLAGS) -include "$(MODEL)"
+
+$(OBJ_PATH)/generateRunner.o: always-compile | $(OBJ_PATH)
+	$(CXX) $(CXXFLAGS) -c -o $@ $(SRC_PATH)/generateRunner.cc $(INCLUDE_FLAGS)
+
+$(OBJ_PATH)/generateCPU.o: always-compile | $(OBJ_PATH)
+	$(CXX) $(CXXFLAGS) -c -o $@ $(SRC_PATH)/generateCPU.cc $(INCLUDE_FLAGS)
+
+$(OBJ_PATH)/generateKernels.o: always-compile | $(OBJ_PATH)
+	$(CXX) $(CXXFLAGS) -c -o $@ $(SRC_PATH)/generateKernels.cc $(INCLUDE_FLAGS)
+
+$(LIB_PATH)/libgenn.a: $(LIBGENN_OBJ) | $(LIB_PATH)
+	$(AR) $(ARFLAGS) $@ $(LIBGENN_OBJ)
 
 $(OBJ_PATH)/%.o: $(SRC_PATH)/%.cc | $(OBJ_PATH)
 	$(CXX) $(CXXFLAGS) -c -o $@ $< $(INCLUDE_FLAGS)
