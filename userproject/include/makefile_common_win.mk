@@ -57,7 +57,10 @@ INCLUDE_FLAGS           =/I"$(GENN_PATH)\lib\include" /I"$(GENN_PATH)\userprojec
 !ENDIF
 
 # Infer object file names from source file names
-OBJECTS                 =$(SOURCES:.cc=.obj) *_CODE\runner.obj
+!IFNDEF SIM_CODE
+SIM_CODE                =*_CODE
+!ENDIF
+OBJECTS                 =$(SOURCES:.cc=.obj) $(SIM_CODE)\runner.obj
 OBJECTS                 =$(OBJECTS:.cpp=.obj)
 OBJECTS                 =$(OBJECTS:.cu=.obj)
 
@@ -69,8 +72,8 @@ all: $(EXECUTABLE)
 $(EXECUTABLE): $(OBJECTS)
 	$(CXX) $(CXXFLAGS) $(OBJECTS) /Fe$@ $(LINK_FLAGS)
 
-*_CODE\runner.obj:
-	cd *_CODE && nmake /nologo
+$(SIM_CODE)\runner.obj:
+	cd $(SIM_CODE) && nmake /nologo
 
 .cc.obj:
 	$(CXX) $(CXXFLAGS) $(INCLUDE_FLAGS) $** /Fo$@ /c
@@ -85,8 +88,8 @@ $(EXECUTABLE): $(OBJECTS)
 
 clean:
 	-del $(EXECUTABLE) *.obj *.ilk *.pdb 2>nul
-	cd *_CODE && nmake clean /nologo
+	cd $(SIM_CODE) && nmake clean /nologo
 
 purge: clean
 	-del sm_version.mk 2>nul
-	-rd /s /q *_CODE 2>nul
+	-rd /s /q $(SIM_CODE) 2>nul

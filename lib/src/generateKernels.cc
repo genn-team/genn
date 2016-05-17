@@ -509,7 +509,7 @@ void generate_process_presynaptic_events_code(
 	    if ((sparse) && (isGrpVarNeeded[model.synapseTarget[i]])) {
 		if (model.maxConn[i] < 1) {
 		    fprintf(stderr, "Model Generation warning: for every SPARSE synapse group used you must also supply (in your model)\
- a max possible number of connections via the model.setMaxConn() function.");
+ a max possible number of connections via the model.setMaxConn() function.\n");
 		    maxConnections = model.neuronN[trg];
 		}
 		else {
@@ -644,7 +644,7 @@ void generate_process_presynaptic_events_code(
 	    if ((sparse) && (isGrpVarNeeded[model.synapseTarget[i]])) {
 		if (model.maxConn[i] < 1) {
 		    fprintf(stderr, "Model Generation warning: for every SPARSE synapse group used you must also supply (in your model)\
- a max possible number of connections via the model.setMaxConn() function.");
+ a max possible number of connections via the model.setMaxConn() function.\n");
 		    maxConnections = model.neuronN[trg];
 		}
 		else {

@@ -4,7 +4,6 @@
 
 
 #include "modelSpec.h"
-#include "modelSpec.cc"
 
 
 // NEURONS
@@ -36,13 +35,13 @@ void modelDefinition(NNmodel &model)
   model.setName("EGPInSimCode");
 
   neuronModel n;
-  n.varNames.push_back(tS("x"));
-  n.varTypes.push_back(tS("scalar"));
-  n.varNames.push_back(tS("shift"));
-  n.varTypes.push_back(tS("scalar"));
-  n.simCode= tS("$(x)= $(t)+$(shift)+$(input);");
-  n.extraGlobalNeuronKernelParameters.push_back(tS("input"));
-  n.extraGlobalNeuronKernelParameterTypes.push_back(tS("scalar"));
+  n.varNames.push_back("x");
+  n.varTypes.push_back("scalar");
+  n.varNames.push_back("shift");
+  n.varTypes.push_back("scalar");
+  n.simCode= "$(x)= $(t)+$(shift)+$(input);";
+  n.extraGlobalNeuronKernelParameters.push_back("input");
+  n.extraGlobalNeuronKernelParameterTypes.push_back("scalar");
   int DUMMYNEURON= nModels.size();
   nModels.push_back(n);
   model.addNeuronPopulation("pre", 10, DUMMYNEURON, neuron_p, neuron_ini);

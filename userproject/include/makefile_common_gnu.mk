@@ -62,8 +62,9 @@ endif
 -include sm_version.mk
 
 # Enumerate all object files (if they have not already been listed)
+SIM_CODE                ?=*_CODE
 SOURCES                 ?=$(wildcard *.cc *.cpp *.cu)
-OBJECTS                 :=$(foreach obj,$(basename $(SOURCES)),$(obj).o) *_CODE/runner.o
+OBJECTS                 :=$(foreach obj,$(basename $(SOURCES)),$(obj).o) $(SIM_CODE)/runner.o
 
 
 # Target rules
@@ -73,8 +74,8 @@ all: release
 $(EXECUTABLE): $(OBJECTS)
 	$(CXX) $(CXXFLAGS) $(OBJECTS) $(LINK_FLAGS) -o $@
 
-*_CODE/runner.o:
-	cd *_CODE && make
+$(SIM_CODE)/runner.o:
+	cd $(SIM_CODE) && make
 
 %.o: %.cc
 	$(CXX) $(CXXFLAGS) $(INCLUDE_FLAGS) -c $< -o $@
@@ -100,11 +101,11 @@ debug: $(EXECUTABLE)
 .PHONY: clean
 clean:
 	rm -rf $(EXECUTABLE) *.o *.dSYM/ generateALL
-	cd *_CODE && make clean
+	cd $(SIM_CODE) && make clean
 
 .PHONY: purge
 purge: clean
-	rm -rf *_CODE sm_version.mk
+	rm -rf $(SIM_CODE) sm_version.mk
 
 .PHONY: show
 show:
