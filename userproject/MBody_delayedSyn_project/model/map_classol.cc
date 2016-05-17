@@ -261,7 +261,17 @@ void classol::write_kcdnsyns(FILE *f //!< File handle for a file to write KC to 
     delete[] tmpg;
 }
 
-void classol::read_sparsesyns_par(int synInd, SparseProjection C, scalar* g, FILE *f_ind,FILE *f_indInG, FILE *f_g //!< File handle for a file containing sparse conductivity values
+//--------------------------------------------------------------------------
+/*! \brief Read sparse connectivity from a file
+ */
+//--------------------------------------------------------------------------
+
+void classol::read_sparsesyns_par(int synInd, //!< index of the synapse population to be worked on
+				  SparseProjection C, //!< contains the arrays to be initialized from file
+				  scalar* g, //!< array to receive the conductance values
+				  FILE *f_ind, //!< file pointer for the indices of post-synaptic neurons
+				  FILE *f_indInG, //!< file pointer for the summed post-synaptic neurons numbers
+				  FILE *f_g //!< File handle for a file containing sparse conductivity values
     )
 {
     //allocateSparseArray(synInd,C.connN);

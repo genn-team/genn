@@ -53,14 +53,31 @@ classol::~classol()
   free(baserates);
   freeMem();
 }
-void classol::importArray(scalar *dest, double *src, int sz) 
+
+//--------------------------------------------------------------------------
+/*! \brief Helper function to cast an array to the appropriate floating point type for the current model
+ */
+//--------------------------------------------------------------------------
+
+void classol::importArray(scalar *dest, //!< pointer to destination
+			  double *src, //!< pointer to the source
+			  int sz//!< number of elements of the array to be copied
+    ) 
 {
     for (int i= 0; i < sz; i++) {
 	dest[i]= (scalar) src[i];
     }
 }
 
-void classol::exportArray(double *dest, scalar *src, int sz) 
+//--------------------------------------------------------------------------
+/*! \brief Helper function to cast an array from the floating point type of the current model to double.
+ */
+//--------------------------------------------------------------------------
+
+void classol::exportArray(double *dest, //!< pointer to destination
+			  scalar *src,  //!< pointer to the source
+			  int sz //!< number of elements of the array to be copied
+    ) 
 {
     for (int i= 0; i < sz; i++) {
 	dest[i]= (scalar) src[i];
@@ -82,8 +99,18 @@ void classol::read_PNIzh1syns(scalar *gp, FILE *f)
   fprintf(stderr,"\n\n");
 }
 
-void classol::read_sparsesyns_par(int synInd, SparseProjection C, FILE *f_ind,FILE *f_indInG,FILE *f_g, double * g //!< File handle for a file containing sparse conductivity values
-				  )
+//--------------------------------------------------------------------------
+/*! \brief Read sparse connectivity from a file
+ */
+//--------------------------------------------------------------------------
+
+void classol::read_sparsesyns_par(int synInd, //!< index of the synapse population to be worked on
+				  SparseProjection C, //!< contains the arrays to be initialized from file
+				  FILE *f_ind, //!< file pointer for the indices of post-synaptic neurons
+				  FILE *f_indInG, //!< file pointer for the summed post-synaptic neurons numbers
+				  FILE *f_g, //!< File handle for a file containing sparse conductivity values
+				  double * g //!< array to receive the conductance values
+    )
 {
   //allocateSparseArray(synInd,C.connN);
 
