@@ -10,9 +10,9 @@
 using namespace std;
 
 #include "modelSpec.h"
-#include "stringUtils.h"
 #include "hr_time.h"
 #include "utils.h"
+#include "stringUtils.h"
 #include "testHelper.h"
 
 #include "testEGSPInSimCodeEvnt_sparseInv.h"

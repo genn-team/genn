@@ -520,6 +520,13 @@ void genRunner(NNmodel &model, //!< Model description
 #endif
 
     os << "// ------------------------------------------------------------------------" << ENDL;
+    os << "// initialization of variables, e.g. reverse sparse arrays etc." << ENDL;
+    os << "// that the user would not want to worry about" << ENDL;
+    os << ENDL;
+    os << "void init" << model.name << "();" << ENDL;
+    os << ENDL;
+
+    os << "// ------------------------------------------------------------------------" << ENDL;
     os << "// Function to free all global memory structures." << ENDL;
     os << ENDL;
     os << "void freeMem();" << ENDL;
