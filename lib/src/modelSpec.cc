@@ -663,7 +663,6 @@ void NNmodel::addSynapsePopulation(
     synapseName.push_back(name);
     synapseType.push_back(syntype);
     synapseConnType.push_back(conntype);
-    maxConn.push_back(0);
     synapseGType.push_back(gtype);
     synapseSource.push_back(srcNumber);
     synapseTarget.push_back(trgNumber);

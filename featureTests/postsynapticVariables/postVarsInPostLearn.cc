@@ -1,5 +1,5 @@
 
-#define DT 1.0f
+#define DT 0.1
 
 #include "modelSpec.h"
 #include "stringUtils.h"

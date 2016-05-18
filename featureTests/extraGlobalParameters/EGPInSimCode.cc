@@ -1,7 +1,5 @@
 
-#define DT 1.0f
-//#define BLOCKSZ_DEBUG
-
+#define DT 0.1
 
 #include "modelSpec.h"
 

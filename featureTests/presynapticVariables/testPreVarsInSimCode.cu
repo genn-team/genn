@@ -9,13 +9,14 @@
 
 using namespace std;
 
-#include "hr_time.cpp"
+#include "modelSpec.h"
+#include "hr_time.h"
 #include "utils.h"
+#include "stringUtils.h"
 #include "testHelper.h"
 
 #include "testPreVarsInSimCode.h"
 #include "preVarsInSimCode_CODE/definitions.h"
-#include "preVarsInSimCode_CODE/runner.cc"
 
 
 

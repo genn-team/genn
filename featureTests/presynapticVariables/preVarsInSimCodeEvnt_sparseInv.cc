@@ -2,7 +2,7 @@
 #define DT 0.1
 
 #include "modelSpec.h"
-#include "modelSpec.cc"
+#include "stringUtils.h"
 
 
 // NEURONS
@@ -36,26 +36,26 @@ void modelDefinition(NNmodel &model)
   model.setName("preVarsInSimCodeEvnt_sparseInv");
 
   neuronModel n;
-  n.varNames.push_back(tS("x"));
-  n.varTypes.push_back(tS("scalar"));
-  n.varNames.push_back(tS("shift"));
-  n.varTypes.push_back(tS("scalar"));
-  n.simCode= tS("$(x)= t+$(shift);");
+  n.varNames.push_back("x");
+  n.varTypes.push_back("scalar");
+  n.varNames.push_back("shift");
+  n.varTypes.push_back("scalar");
+  n.simCode= "$(x)= t+$(shift);";
   int DUMMYNEURON= nModels.size();
   nModels.push_back(n);
   
   weightUpdateModel s;
-  s.varNames.push_back(tS("w"));
-  s.varTypes.push_back(tS("scalar"));
-  s.pNames.push_back(tS("myTrigger"));
-  s.evntThreshold= tS("(fmod($(x_pre),$(myTrigger)) < 1e-4)");
-  s.simCodeEvnt= tS("$(w)= $(x_pre);");
+  s.varNames.push_back("w");
+  s.varTypes.push_back("scalar");
+  s.pNames.push_back("myTrigger");
+  s.evntThreshold= "(fmod($(x_pre),$(myTrigger)) < 1e-4)";
+  s.simCodeEvnt= "$(w)= $(x_pre);";
   int DUMMYSYNAPSE= weightUpdateModels.size();
   weightUpdateModels.push_back(s);
 
   model.addNeuronPopulation("pre", 10, DUMMYNEURON, neuron_p, neuron_ini);
   model.addNeuronPopulation("post", 10, DUMMYNEURON, neuron_p, neuron_ini);
-  string synName= tS("syn");
+  string synName= "syn";
   for (int i= 0; i < 10; i++) {
       string theName= synName+tS(i);
       synapses_p[0]= (float) (2*(i+1));
