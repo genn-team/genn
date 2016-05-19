@@ -5,6 +5,28 @@
 #include "neuronModels.h"
 #include "stringUtils.h"
 
+
+//--------------------------------------------------------------------------
+/*! \brief Constructor for neuronModel objects
+ */
+//--------------------------------------------------------------------------
+
+neuronModel::neuronModel()
+{
+    dps = NULL;
+    needPreSt = false;
+    needPostSt = false;
+}
+
+
+//--------------------------------------------------------------------------
+/*! \brief Destructor for neuronModel objects
+ */
+//--------------------------------------------------------------------------
+
+neuronModel::~neuronModel() {}
+
+
 // Neuron Types
 vector<neuronModel> nModels; //!< Global C++ vector containing all neuron model descriptions
 unsigned int MAPNEURON; //!< variable attaching the name "MAPNEURON" 

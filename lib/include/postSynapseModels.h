@@ -25,6 +25,9 @@ public:
     vector<string> pNames; //!< Names of (independent) parameters of the model. 
     vector<string> dpNames; //!< \brief Names of dependent parameters of the model. 
     dpclass *dps; //!< \brief Derived parameters 
+
+    postSynModel(); //!< \brief Constructor for postSynModel objects
+    ~postSynModel(); //!< \brief Destructor for postSynModel objects
 };
 
 

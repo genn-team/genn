@@ -5,6 +5,28 @@
 #include "synapseModels.h"
 #include "stringUtils.h"
 
+
+//--------------------------------------------------------------------------
+/*! \brief Constructor for weightUpdateModel objects
+ */
+//--------------------------------------------------------------------------
+
+weightUpdateModel::weightUpdateModel()
+{
+    dps = NULL;
+    needPreSt = false;
+    needPostSt = false;
+}
+
+
+//--------------------------------------------------------------------------
+/*! \brief Destructor for weightUpdateModel objects
+ */
+//--------------------------------------------------------------------------
+
+weightUpdateModel::~weightUpdateModel() {}
+
+
 // Synapse Types
 vector<weightUpdateModel> weightUpdateModels; //!< Global C++ vector containing all weightupdate model descriptions
 unsigned int NSYNAPSE; //!< Variable attaching  the name NSYNAPSE to the non-learning synapse

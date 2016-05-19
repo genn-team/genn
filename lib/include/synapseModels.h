@@ -33,6 +33,9 @@ public:
     dpclass *dps;
     bool needPreSt; //!< \brief Whether presynaptic spike times are needed or not
     bool needPostSt; //!< \brief Whether postsynaptic spike times are needed or not
+
+    weightUpdateModel(); //!< \brief Constructor for weightUpdateModel objects
+    ~weightUpdateModel(); //!< \brief Destructor for weightUpdateModel objects
 };
 
 

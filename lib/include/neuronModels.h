@@ -33,6 +33,9 @@ public:
     dpclass *dps; //!< \brief Derived parameters
     bool needPreSt; //!< \brief Whether presynaptic spike times are needed or not
     bool needPostSt; //!< \brief Whether postsynaptic spike times are needed or not
+
+    neuronModel(); //!< \brief Constructor for neuronModel objects
+    ~neuronModel(); //!< \brief Destructor for neuronModel objects
 };
 
 

@@ -5,6 +5,26 @@
 #include "postSynapseModels.h"
 #include "stringUtils.h"
 
+
+//--------------------------------------------------------------------------
+/*! \brief Constructor for postSynModel objects
+ */
+//--------------------------------------------------------------------------
+
+postSynModel::postSynModel()
+{
+    dps = NULL;
+}
+
+
+//--------------------------------------------------------------------------
+/*! \brief Destructor for postSynModel objects
+ */
+//--------------------------------------------------------------------------
+
+postSynModel::~postSynModel() {}
+
+
 // Post-Synapse Types
 vector<postSynModel> postSynModels; //!< Global C++ vector containing all post-synaptic update model descriptions
 unsigned int EXPDECAY; //default - exponential decay
