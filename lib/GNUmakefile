@@ -12,7 +12,7 @@
 ##--------------------------------------------------------------------------
 
 
-# Makefile for the GeNN "generateALL" binary
+# Makefile for the GeNN "generateALL" and "libgenn.a" binaries
 # This is a UNIX Makefile, to be used by the GNU make build system
 #-----------------------------------------------------------------
 
@@ -22,12 +22,12 @@ OS_UPPER                :=$(shell uname -s 2>/dev/null | tr [:lower:] [:upper:])
 OS_LOWER                :=$(shell uname -s 2>/dev/null | tr [:upper:] [:lower:])
 DARWIN                  :=$(strip $(findstring DARWIN,$(OS_UPPER)))
 
-# Source, Include, Object and Library directories 
-SRC_PATH                :=$(GENN_PATH)/lib/src
-INC_PATH                :=$(GENN_PATH)/lib/include
-OBJ_PATH                :=$(GENN_PATH)/lib/obj
-LIB_PATH                :=$(GENN_PATH)/lib/lib
-OUT_PATH                :=$(CURDIR)
+# Source, Include, Object and Library directories
+SRC_PATH                :=./src
+INC_PATH                :=./include
+OBJ_PATH                :=./obj
+LIB_PATH                :=./lib
+OUT_PATH                :=.
 
 # Global CUDA compiler settings
 ifndef CPU_ONLY
@@ -74,30 +74,30 @@ LIBGENN_OBJ             :=$(addprefix $(OBJ_PATH)/,global.o modelSpec.o neuronMo
 # Target rules
 .PHONY: all debug clean always-compile
 
-all: $(OUT_PATH)/generateALL
+all: $(OBJ_PATH) $(LIB_PATH) $(OUT_PATH)/generateALL
 
 $(OUT_PATH)/generateALL: always-compile $(GENERATE_OBJ) $(LIB_PATH)/libgenn.a
 	$(CXX) $(CXXFLAGS) -o $@ $(GENERATE_OBJ) $(LINK_FLAGS)
 
-$(OBJ_PATH)/generateALL.o: always-compile | $(OBJ_PATH)
+$(OBJ_PATH)/generateALL.o: always-compile
 	$(CXX) $(CXXFLAGS) -c -o $@ $(SRC_PATH)/generateALL.cc $(INCLUDE_FLAGS) -include "$(MODEL)"
 
-$(OBJ_PATH)/generateRunner.o: always-compile | $(OBJ_PATH)
+$(OBJ_PATH)/generateRunner.o: always-compile
 	$(CXX) $(CXXFLAGS) -c -o $@ $(SRC_PATH)/generateRunner.cc $(INCLUDE_FLAGS)
 
-$(OBJ_PATH)/generateCPU.o: always-compile | $(OBJ_PATH)
+$(OBJ_PATH)/generateCPU.o: always-compile
 	$(CXX) $(CXXFLAGS) -c -o $@ $(SRC_PATH)/generateCPU.cc $(INCLUDE_FLAGS)
 
-$(OBJ_PATH)/generateKernels.o: always-compile | $(OBJ_PATH)
+$(OBJ_PATH)/generateKernels.o: always-compile
 	$(CXX) $(CXXFLAGS) -c -o $@ $(SRC_PATH)/generateKernels.cc $(INCLUDE_FLAGS)
 
-$(LIB_PATH)/libgenn.a: $(LIBGENN_OBJ) | $(LIB_PATH)
+$(LIB_PATH)/libgenn.a: $(LIBGENN_OBJ)
 	$(AR) $(ARFLAGS) $@ $(LIBGENN_OBJ)
 
-$(OBJ_PATH)/%.o: $(SRC_PATH)/%.cc | $(OBJ_PATH)
+$(OBJ_PATH)/%.o: $(SRC_PATH)/%.cc
 	$(CXX) $(CXXFLAGS) -c -o $@ $< $(INCLUDE_FLAGS)
 
-$(OBJ_PATH)/%.o: $(SRC_PATH)/%.cpp | $(OBJ_PATH)
+$(OBJ_PATH)/%.o: $(SRC_PATH)/%.cpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $< $(INCLUDE_FLAGS)
 
 $(OBJ_PATH):
@@ -111,5 +111,11 @@ debug: all
 
 clean:
 	rm -rf $(OUT_PATH)/generateALL $(OBJ_PATH) $(LIB_PATH)
+
+clean_generateall:
+	rm -f $(OUT_PATH)/generateALL $(GENERATEALL_OBJ)
+
+clean_libgenn:
+	rm -f $(LIB_PATH)/libgenn.a $(LIBGENN_OBJ)
 
 -include $(patsubst %.o,%.d,$(GENERATE_OBJ) $(LIBGENN_OBJ))

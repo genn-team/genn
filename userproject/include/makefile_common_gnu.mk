@@ -62,51 +62,47 @@ endif
 -include sm_version.mk
 
 # Enumerate all object files (if they have not already been listed)
-SIM_CODE                ?=*_CODE
+SIM_CODE                ?=*_CODE # Can be changed by passing SIM_CODE=something in the make command
 SOURCES                 ?=$(wildcard *.cc *.cpp *.cu)
 OBJECTS                 :=$(foreach obj,$(basename $(SOURCES)),$(obj).o) $(SIM_CODE)/runner.o
 
 
 # Target rules
-.PHONY: all
+.PHONY: all release debug clean purge show
+
 all: release
 
 $(EXECUTABLE): $(OBJECTS)
-	$(CXX) $(CXXFLAGS) $(OBJECTS) $(LINK_FLAGS) -o $@
+	$(CXX) $(CXXFLAGS) -o $@ $(OBJECTS) $(LINK_FLAGS)
 
 $(SIM_CODE)/runner.o:
 	cd $(SIM_CODE) && make
 
 %.o: %.cc
-	$(CXX) $(CXXFLAGS) $(INCLUDE_FLAGS) -c $< -o $@
+	$(CXX) $(CXXFLAGS) -c $< -o $@ $(INCLUDE_FLAGS)
 
 %.o: %.cpp
-	$(CXX) $(CXXFLAGS) $(INCLUDE_FLAGS) -c $< -o $@
+	$(CXX) $(CXXFLAGS) -c $< -o $@ $(INCLUDE_FLAGS)
 
 ifndef CPU_ONLY
 %.o: %.cu
-	$(NVCC) $(NVCCFLAGS) $(INCLUDE_FLAGS) -c $< -o $@
+	$(NVCC) $(NVCCFLAGS) -c $< -o $@ $(INCLUDE_FLAGS)
 endif
 
-.PHONY: release
 release: NVCCFLAGS      +=$(NVCC_OPTIMIZATIONFLAGS) -Xcompiler "$(OPTIMIZATIONFLAGS)"
 release: CXXFLAGS       +=$(OPTIMIZATIONFLAGS)
 release: $(EXECUTABLE)
 
-.PHONY: debug
 debug: NVCCFLAGS        +=-g -G
 debug: CXXFLAGS         +=-g
 debug: $(EXECUTABLE)
 
-.PHONY: clean
 clean:
 	rm -rf $(EXECUTABLE) *.o *.dSYM/ generateALL
 	cd $(SIM_CODE) && make clean
 
-.PHONY: purge
 purge: clean
 	rm -rf $(SIM_CODE) sm_version.mk
 
-.PHONY: show
 show:
 	echo $(OBJECTS)

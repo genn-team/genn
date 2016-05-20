@@ -58,7 +58,7 @@ INCLUDE_FLAGS           =/I"$(GENN_PATH)\lib\include" /I"$(GENN_PATH)\userprojec
 
 # Infer object file names from source file names
 !IFNDEF SIM_CODE
-SIM_CODE                =*_CODE
+SIM_CODE                =*_CODE # Can be changed by passing SIM_CODE=something in the nmake command
 !ENDIF
 OBJECTS                 =$(SOURCES:.cc=.obj) $(SIM_CODE)\runner.obj
 OBJECTS                 =$(OBJECTS:.cpp=.obj)
@@ -70,20 +70,20 @@ OBJECTS                 =$(OBJECTS:.cu=.obj)
 all: $(EXECUTABLE)
 
 $(EXECUTABLE): $(OBJECTS)
-	$(CXX) $(CXXFLAGS) $(OBJECTS) /Fe$@ $(LINK_FLAGS)
+	$(CXX) $(CXXFLAGS) /Fe$@ $(OBJECTS) $(LINK_FLAGS)
 
 $(SIM_CODE)\runner.obj:
 	cd $(SIM_CODE) && nmake /nologo
 
 .cc.obj:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_FLAGS) $** /Fo$@ /c
+	$(CXX) $(CXXFLAGS) /c /Fo$@ $** $(INCLUDE_FLAGS)
 
 .cpp.obj:
-	$(CXX) $(CXXFLAGS) $(INCLUDE_FLAGS) $** /Fo$@ /c
+	$(CXX) $(CXXFLAGS) /c /Fo$@ $** $(INCLUDE_FLAGS)
 
 !IFNDEF CPU_ONLY
 .cu.obj:
-	$(NVCC) $(NVCCFLAGS) $(INCLUDE_FLAGS:/I=-I) $** /Fo$@ -c
+	$(NVCC) $(NVCCFLAGS) /c /Fo$@ $** $(INCLUDE_FLAGS:/I=-I)
 !ENDIF
 
 clean:

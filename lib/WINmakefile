@@ -12,9 +12,16 @@
 ##--------------------------------------------------------------------------
 
 
-# Makefile for the GeNN "generateALL.exe" binary
+# Makefile for the GeNN "generateALL.exe" and "genn.lib" binaries
 # This is a Windows Makefile, to be used by the MS nmake build system
 #--------------------------------------------------------------------
+
+# Source, Include, Object and Library directories
+SRC_PATH                =.\src
+INC_PATH                =.\include
+OBJ_PATH                =.\obj
+LIB_PATH                =.\lib
+OUT_PATH                =.
 
 # Global CUDA compiler settings
 !IFNDEF CPU_ONLY
@@ -33,23 +40,63 @@ CXXFLAGS                =$(CXXFLAGS) /debug /Zi /Od /DDEBUG
 
 # Global include and link flags
 !IFNDEF CPU_ONLY
-INCLUDE_FLAGS           =/FI"$(MODEL)" /I"$(GENN_PATH)\lib\include" /I"$(CUDA_PATH)\include"
+INCLUDE_FLAGS           = /I"$(INC_PATH)" /I"$(CUDA_PATH)\include"
 !IF "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
-LINK_FLAGS              ="$(CUDA_PATH)\lib\x64\cudart.lib" "$(CUDA_PATH)\lib\x64\cuda.lib"
+LINK_FLAGS              ="$(LIB_PATH)\genn.lib" "$(CUDA_PATH)\lib\x64\cudart.lib" "$(CUDA_PATH)\lib\x64\cuda.lib"
 !ELSEIF "$(PROCESSOR_ARCHITEW6432)" == "AMD64"
-LINK_FLAGS              ="$(CUDA_PATH)\lib\x64\cudart.lib" "$(CUDA_PATH)\lib\x64\cuda.lib"
+LINK_FLAGS              ="$(LIB_PATH)\genn.lib" "$(CUDA_PATH)\lib\x64\cudart.lib" "$(CUDA_PATH)\lib\x64\cuda.lib"
 !ELSE
-LINK_FLAGS              ="$(CUDA_PATH)\lib\Win32\cudart.lib" "$(CUDA_PATH)\lib\Win32\cuda.lib"
+LINK_FLAGS              ="$(LIB_PATH)\genn.lib" "$(CUDA_PATH)\lib\Win32\cudart.lib" "$(CUDA_PATH)\lib\Win32\cuda.lib"
 !ENDIF
 !ELSE
-INCLUDE_FLAGS           =/FI"$(MODEL)" /I"$(GENN_PATH)\lib\include"
+INCLUDE_FLAGS           =/I"$(INC_PATH)"
+LINK_FLAGS              ="$(LIB_PATH)\genn.lib"
 !ENDIF
+
+# generateALL and libgenn.a object targets
+GENERATE_OBJ            :=$(OBJ_PATH)\generateALL.obj $(OBJ_PATH)\generateRunner.obj $(OBJ_PATH)\generateCPU.obj $(OBJ_PATH)\generateKernels.obj
+LIBGENN_OBJ             :=$(OBJ_PATH)\global.obj $(OBJ_PATH)\modelSpec.obj $(OBJ_PATH)\neuronModels.obj $(OBJ_PATH)\synapseModels.obj $(OBJ_PATH)\postSynapseModels.obj $(OBJ_PATH)\utils.obj $(OBJ_PATH)\stringUtils.obj $(OBJ_PATH)\sparseUtils.obj $(OBJ_PATH)\hr_time.obj
+
 
 # Target rules
-all: generateALL.exe
+all: $(OBJ_PATH) $(LIB_PATH) $(OUT_PATH)\generateALL.exe
 
-generateALL.exe: $(GENN_PATH)\lib\src\generateALL.cc
-	$(CXX) $(CXXFLAGS) $(INCLUDE_FLAGS) /Fe$@ $* $(LINK_FLAGS)
+$(OUT_PATH)\generateALL.exe: always-compile $(GENNERATE_OBJ) $(LIB_PATH)\genn.lib
+	$(CXX) $(CXXFLAGS) /Fe$@ $(GENERATE_OBJ) $(LINK_FLAGS)
+
+$(OBJ_PATH)\generateALL.obj: always-compile
+	$(CXX) $(CXXFLAGS) /c /Fo$@ $(SRC_PATH)/generateALL.cc $(INCLUDE_FLAGS) /FI"$(MODEL)"
+
+$(OBJ_PATH)\generateRunner.obj: always-compile
+	$(CXX) $(CXXFLAGS) /c /Fo$@ $(SRC_PATH)/generateRunner.cc $(INCLUDE_FLAGS)
+
+$(OBJ_PATH)\generateCPU.obj: always-compile
+	$(CXX) $(CXXFLAGS) /c /Fo$@ $(SRC_PATH)/generateCPU.cc $(INCLUDE_FLAGS)
+
+$(OBJ_PATH)\generateKernels.obj: always-compile
+	$(CXX) $(CXXFLAGS) /c /Fo$@ $(SRC_PATH)/generateKernels.cc $(INCLUDE_FLAGS)
+
+$(LIB_PATH)\genn.lib: $(LIBGENN_OBJ)
+	lib /out:$@ $(LIBGENN_OBJ)
+
+{$(SRC_PATH)}.cc{$(OBJ_PATH)}.obj:
+	$(CXX) $(CXXFLAGS) /c /Fo$@ $** $(INCLUDE_FLAGS)
+
+{$(SRC_PATH)}.cpp{$(OBJ_PATH)}.obj:
+	$(CXX) $(CXXFLAGS) /c /Fo$@ $** $(INCLUDE_FLAGS)
+
+$(OBJ_PATH):
+	mkdir $@ 2>nul
+
+$(LIB_PATH):
+	mkdir $@ 2>nul
 
 clean:
-	-del generateALL.exe 2>nul
+	-del $(OUT_PATH)\generateALL.exe 2>nul
+	-rd /s /q $(OBJ_PATH) $(LIB_PATH) 2>nul
+
+clean_generateall:
+	-del $(OUT_PATH)\generateALL.exe $(GENERATEALL_OBJ) 2>nul
+
+clean_libgenn:
+	-del $(LIB_PATH)\genn.lib $(LIBGENN_OBJ) 2>nul
