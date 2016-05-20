@@ -1,14 +1,29 @@
+//-----------------------------------------------------------------------
+/*!  \file sparseUtils.cc 
+  
+  \brief Contains functions related to setting up sparse connectivity.
+*/
+//--------------------------------------------------------------------------
+
+
 #ifndef sparse_utils_cc
 #define sparse_utils_cc
 
 #include <cstdio>
 #include <cmath>
 
-/*---------------------------------------------------------------------
- Utility to count how many entries above a specified value exist in a float array
- ---------------------------------------------------------------------*/
+//--------------------------------------------------------------------------
+/*!
+  \brief Utility to count how many entries above a specified value exist in a float array
+*/
+//--------------------------------------------------------------------------
+
+
 template <class DATATYPE>
-unsigned int countEntriesAbove(DATATYPE * Array, int sz, double includeAbove)
+unsigned int countEntriesAbove(DATATYPE * Array, //!< Pointer to the all-to-all array
+                               int sz, //!< Length of the all-to-all array
+                               double includeAbove //!< Threshold for considering an array element as existing (in an all-to-all array non-existing connections are set to 0 or similarly low value)
+)
 {
 	int count = 0;
 	for (int i = 0; i < sz; i++) {
@@ -19,11 +34,15 @@ unsigned int countEntriesAbove(DATATYPE * Array, int sz, double includeAbove)
 
 }
 
-/*---------------------------------------------------------------------
- Utility to get a synapse weight from a SPARSE structure by x,y coordinates
+//--------------------------------------------------------------------------
+/*!
+  \brief DEPRECATED Utility to get a synapse weight from a SPARSE structure by x,y coordinates
  NB: as the SparseProjection struct doesnt hold the preN size (it should!) it is not possible
  to check the parameter validity. This fn may therefore crash unless user knows max poss X
- ---------------------------------------------------------------------*/
+*/
+//--------------------------------------------------------------------------
+
+
 template <class DATATYPE>
 DATATYPE getG(DATATYPE * wuvar, SparseProjection  * sparseStruct, int x, int y)
 {
@@ -54,17 +73,26 @@ float getSparseVar(DATATYPE * wuvar, SparseProjection  * sparseStruct, int x, in
 
 }
 
-/*---------------------------------------------------------------------
-Setting the values of SPARSE connectivity matrix
-----------------------------------------------------------------------*/
+//--------------------------------------------------------------------------
+/*!
+  \brief Function for setting the values of SPARSE connectivity matrix
+*/
+//--------------------------------------------------------------------------
+
 template <class DATATYPE>
-void setSparseConnectivityFromDense(DATATYPE * wuvar, int preN,int postN,DATATYPE * tmp_gRNPN, SparseProjection * sparseStruct){
+void setSparseConnectivityFromDense(DATATYPE * wuvar, //!< Pointer to the weightUpdateModel var array
+                                    int preN, //!< Number of presynaptic neurons
+                                    int postN, //!< Number of postsynaptic neurons
+                                    DATATYPE * tmp_var, //!< Pointer to the all-to-all equivalent of theweightUpdateModel var array to be converted
+                                    SparseProjection * sparseStruct //!< Structure that contains sparse connectivity
+)
+{
   int synapse = 0;
 	sparseStruct->indInG[0] = 0; //first neuron always gets first synapse listed.
   
 	for (int pre = 0; pre < preN; ++pre) {
 		for (int post = 0; post < postN; ++post) {
-			DATATYPE g = tmp_gRNPN[pre * postN + post];
+			DATATYPE g = tmp_var[pre * postN + post];
 			if (g > GENN_PREFERENCES::asGoodAsZero) {
 				sparseStruct->ind[synapse] = post;
 				wuvar[synapse] = g;
@@ -75,23 +103,29 @@ void setSparseConnectivityFromDense(DATATYPE * wuvar, int preN,int postN,DATATYP
 	}
 }
 
-/*---------------------------------------------------------------------
- Utility to generate the SPARSE connectivity structure from a simple all-to-all array
- ---------------------------------------------------------------------*/
+//--------------------------------------------------------------------------
+/*!
+  \brief Utility to generate the SPARSE connectivity structure from a simple all-to-all array
+*/
+//--------------------------------------------------------------------------
 template <class DATATYPE>
-void createSparseConnectivityFromDense(DATATYPE * wuvar, int preN,int postN,DATATYPE * tmp_gRNPN, SparseProjection * sparseStruct, bool runTest) {
+void createSparseConnectivityFromDense(DATATYPE * wuvar, //!< Pointer to the weightUpdateModel var array
+                                       int preN, //!< Number of presynaptic neurons
+                                       int postN, //!< Number of postsynaptic neurons
+                                       DATATYPE * tmp_var, //!< Pointer to the all-to-all equivalent of theweightUpdateModel var array to be converted
+                                       SparseProjection * sparseStruct, //!< Structure that contains sparse connectivity
+                                       bool runTest //!< Flag to enable testing
+) {
 
 	
-	sparseStruct->connN = countEntriesAbove(tmp_gRNPN, preN * postN, GENN_PREFERENCES::asGoodAsZero);
-	//sorry -- this is not functional anymore 
-	//allocateSparseArray(sparseStruct, sparseStruct.connN, preN, false);
+	sparseStruct->connN = countEntriesAbove(tmp_var, preN * postN, GENN_PREFERENCES::asGoodAsZero);
 
 	int synapse = 0;
 	sparseStruct->indInG[0] = 0; //first neuron always gets first synapse listed.
 
 	for (int pre = 0; pre < preN; ++pre) {
 		for (int post = 0; post < postN; ++post) {
-			DATATYPE g = tmp_gRNPN[pre * postN + post];
+			DATATYPE g = tmp_var[pre * postN + post];
 			if (g > GENN_PREFERENCES::asGoodAsZero) {
 				sparseStruct->ind[synapse] = post;
 				wuvar[synapse] = g;
@@ -107,7 +141,7 @@ void createSparseConnectivityFromDense(DATATYPE * wuvar, int preN,int postN,DATA
 	for (int test = 0; test < 10; ++test) {
 		int randX = rand() % preN;
 		int randY = rand() % postN;
-		float denseResult = tmp_gRNPN[randX * postN + randY];
+		float denseResult = tmp_var[randX * postN + randY];
 		float sparseResult = getG(wuvar, sparseStruct,randX,randY);
 		if (abs(denseResult-sparseResult) > GENN_PREFERENCES::asGoodAsZero) fails++;
 	}
@@ -126,37 +160,46 @@ void createSparseConnectivityFromDense(DATATYPE * wuvar, int preN,int postN,DATA
  */
 //---------------------------------------------------------------------
 
-void createPosttoPreArray(unsigned int preN, unsigned int postN, SparseProjection * C) {
-    vector<vector<unsigned int> > tempvectInd(postN); //temporary vector to keep indices
-    vector<vector<unsigned int> > tempvectV(postN); //temporary vector to keep connectivity values
-    unsigned int glbcounter = 0;
+void createPosttoPreArray(unsigned int preN, //!< Number of presynaptic neurons
+                      unsigned int postN, //!< Number of postsynaptic neurons
+                      SparseProjection * C //!< Structure that contains sparse connectivity
+)
+{
+  vector<vector<unsigned int> > tempvectInd(postN); // temporary vector to keep indices
+  vector<vector<unsigned int> > tempvectV(postN); // temporary vector to keep connectivity values
+  unsigned int glbcounter = 0;
     
-    for (int i = 0; i< preN; i++){ //i : index of presynaptic neuron
-	for (int j = 0; j < (C->indInG[i+1]-C->indInG[i]); j++){ //for every postsynaptic neuron j
+  for (int i = 0; i< preN; i++){ //i : index of presynaptic neuron
+	  for (int j = 0; j < (C->indInG[i+1]-C->indInG[i]); j++){ //for every postsynaptic neuron j
 	    tempvectInd[C->ind[C->indInG[i]+j]].push_back(i); //C->ind[C->indInG[i]+j]: index of postsynaptic neuron
 	    tempvectV[C->ind[C->indInG[i]+j]].push_back(C->indInG[i]+j); //this should give where we can find the value in the array
 	    glbcounter++;
-	}
-    }
-    unsigned int lcounter =0;
+	  }
+  }
 
-    C->revIndInG[0]=0;
-    for (int k = 0; k < postN; k++){
-	C->revIndInG[k+1]=C->revIndInG[k]+tempvectInd[k].size();
-	for (int p = 0; p< tempvectInd[k].size(); p++){ //if k=0?
+  unsigned int lcounter =0;
+
+  C->revIndInG[0]=0;
+  for (int k = 0; k < postN; k++){
+  	C->revIndInG[k+1]=C->revIndInG[k]+tempvectInd[k].size();
+	  for (int p = 0; p< tempvectInd[k].size(); p++){ //if k=0?
 	    C->revInd[lcounter]=tempvectInd[k][p];
 	    C->remap[lcounter]=tempvectV[k][p];
 	    lcounter++;
-	}
-    }
+	  }
+  }
 }
 
 //--------------------------------------------------------------------------
-/*! \brief function to create the mapping from the normal index array "ind" to the "reverse" array revInd, i.e. the inverse mapping of remap. This is needed if SynapseDynamics accesses pre-synaptic variables.
+/*! \brief Function to create the mapping from the normal index array "ind" to the "reverse" array revInd, i.e. the inverse mapping of remap. 
+This is needed if SynapseDynamics accesses pre-synaptic variables.
  */
 //--------------------------------------------------------------------------
 
-void createPreIndices(unsigned int preN, unsigned int postN, SparseProjection * C) 
+void createPreIndices(unsigned int preN, //!< Number of presynaptic neurons
+                      unsigned int postN, //!< Number of postsynaptic neurons
+                      SparseProjection * C //!< Structure that contains sparse connectivity
+) 
 {
     // let's not assume anything and create from the minimum available data, i.e. indInG and ind
     vector<vector<unsigned int> > tempvect(postN); //temporary vector to keep indices
@@ -168,36 +211,51 @@ void createPreIndices(unsigned int preN, unsigned int postN, SparseProjection * 
 }
 
 #ifndef CPU_ONLY
-    // ------------------------------------------------------------------------
-    // initializing conductance arrays for sparse matrices
+ //--------------------------------------------------------------------------
+/*! \brief Function for initializing conductance array indices for sparse matrices on the GPU
+(by copying the values from the host)
+ */
+//--------------------------------------------------------------------------
 
-void initializeSparseArray(SparseProjection C,  unsigned int * dInd, unsigned int * dIndInG, unsigned int preN)
+void initializeSparseArray(SparseProjection C, //!< Structure that contains sparse connectivity
+                           unsigned int * dInd, //!< Pointer to the sparse Ind variable array on the GPU 
+                           unsigned int * dIndInG, //!< Pointer to the sparse IndInG variable array on the GPU
+                           unsigned int preN //!< Number of presynaptic neurons
+)
 {
     CHECK_CUDA_ERRORS(cudaMemcpy(dInd, C.ind, C.connN*sizeof(unsigned int), cudaMemcpyHostToDevice));
     CHECK_CUDA_ERRORS(cudaMemcpy(dIndInG, C.indInG, (preN+1)*sizeof(unsigned int), cudaMemcpyHostToDevice));
 } 
 
-void initializeSparseArrayRev(SparseProjection C,  unsigned int * dRevInd, unsigned int * dRevIndInG, unsigned int * dRemap, unsigned int postN)
+ //--------------------------------------------------------------------------
+/*! \brief Function for initializing reversed conductance array indices for sparse matrices on the GPU
+(by copying the values from the host)
+ */
+//--------------------------------------------------------------------------
+void initializeSparseArrayRev(SparseProjection C, //!< Structure that contains sparse connectivity
+                              unsigned int * dRevInd, //!< Pointer to the sparse RevInd variable array on the GPU 
+                              unsigned int * dRevIndInG, //!< Pointer to the sparse RevndInG variable array on the GPU
+                              unsigned int * dRemap,  //!< Pointer to the sparse remap variable array on the GPU
+                              unsigned int postN //!< Number of postsynaptic neurons
+)
 {
     CHECK_CUDA_ERRORS(cudaMemcpy(dRevInd, C.revInd, C.connN*sizeof(unsigned int), cudaMemcpyHostToDevice));
     CHECK_CUDA_ERRORS(cudaMemcpy(dRevIndInG, C.revIndInG, (postN+1)*sizeof(unsigned int), cudaMemcpyHostToDevice));
     CHECK_CUDA_ERRORS(cudaMemcpy(dRemap, C.remap, C.connN*sizeof(unsigned int), cudaMemcpyHostToDevice));
 }
 
-void initializeSparseArrayPreInd(SparseProjection C,  unsigned int * dPreInd)
+ //--------------------------------------------------------------------------
+/*! \brief Function for initializing reversed conductance arrays presynaptic indices for sparse matrices on  the GPU
+(by copying the values from the host)
+ */
+//--------------------------------------------------------------------------
+void initializeSparseArrayPreInd(SparseProjection C, //!< Structure that contains sparse connectivity
+                                 unsigned int * dPreInd //!< Pointer to the sparse PreInd variable array on the GPU
+)
 {
     CHECK_CUDA_ERRORS(cudaMemcpy(dPreInd, C.preInd, C.connN*sizeof(unsigned int), cudaMemcpyHostToDevice));
 }
 
 #endif
 
-// is this used anywhere? Suggest to remove (TN)
-//!!!!!find var to check if a string is used in a code (atm it is used to create post-to-pre arrays)
-void strsearch(string &s, const string trg)
-{
-  size_t found= s.find(trg);
-  if (found != string::npos) {
-    //createPosttoPreArray(var)...
-  }
-}
 #endif
