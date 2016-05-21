@@ -23,11 +23,11 @@ OS_LOWER                :=$(shell uname -s 2>/dev/null | tr [:upper:] [:lower:])
 DARWIN                  :=$(strip $(findstring DARWIN,$(OS_UPPER)))
 
 # Source, Include, Object and Library directories
-SRC_PATH                :=./src
-INC_PATH                :=./include
-OBJ_PATH                :=./obj
-LIB_PATH                :=./lib
-OUT_PATH                :=.
+SRC_PATH                :=$(GENN_PATH)/lib/src
+INC_PATH                :=$(GENN_PATH)/lib/include
+OBJ_PATH                :=$(GENN_PATH)/lib/obj
+LIB_PATH                :=$(GENN_PATH)/lib/lib
+OUT_PATH                :=$(CURDIR)
 
 # Global CUDA compiler settings
 ifndef CPU_ONLY
