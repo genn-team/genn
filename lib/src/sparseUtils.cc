@@ -40,7 +40,8 @@ void createPosttoPreArray(unsigned int preN, unsigned int postN, SparseProjectio
 
 
 //--------------------------------------------------------------------------
-/*! \brief function to create the mapping from the normal index array "ind" to the "reverse" array revInd, i.e. the inverse mapping of remap. This is needed if SynapseDynamics accesses pre-synaptic variables.
+/*! \brief Function to create the mapping from the normal index array "ind" to the "reverse" array revInd, i.e. the inverse mapping of remap. 
+This is needed if SynapseDynamics accesses pre-synaptic variables.
  */
 //--------------------------------------------------------------------------
 
@@ -57,14 +58,24 @@ void createPreIndices(unsigned int preN, unsigned int postN, SparseProjection * 
 
 
 #ifndef CPU_ONLY
-    // ------------------------------------------------------------------------
-    // initializing conductance arrays for sparse matrices
+//--------------------------------------------------------------------------
+/*! \brief Function for initializing conductance array indices for sparse matrices on the GPU
+(by copying the values from the host)
+ */
+//--------------------------------------------------------------------------
 
 void initializeSparseArray(SparseProjection C,  unsigned int * dInd, unsigned int * dIndInG, unsigned int preN)
 {
     CHECK_CUDA_ERRORS(cudaMemcpy(dInd, C.ind, C.connN*sizeof(unsigned int), cudaMemcpyHostToDevice));
     CHECK_CUDA_ERRORS(cudaMemcpy(dIndInG, C.indInG, (preN+1)*sizeof(unsigned int), cudaMemcpyHostToDevice));
 } 
+
+
+//--------------------------------------------------------------------------
+/*! \brief Function for initializing reversed conductance array indices for sparse matrices on the GPU
+(by copying the values from the host)
+ */
+//--------------------------------------------------------------------------
 
 void initializeSparseArrayRev(SparseProjection C,  unsigned int * dRevInd, unsigned int * dRevIndInG, unsigned int * dRemap, unsigned int postN)
 {
@@ -73,21 +84,17 @@ void initializeSparseArrayRev(SparseProjection C,  unsigned int * dRevInd, unsig
     CHECK_CUDA_ERRORS(cudaMemcpy(dRemap, C.remap, C.connN*sizeof(unsigned int), cudaMemcpyHostToDevice));
 }
 
+
+//--------------------------------------------------------------------------
+/*! \brief Function for initializing reversed conductance arrays presynaptic indices for sparse matrices on  the GPU
+(by copying the values from the host)
+ */
+//--------------------------------------------------------------------------
+
 void initializeSparseArrayPreInd(SparseProjection C,  unsigned int * dPreInd)
 {
     CHECK_CUDA_ERRORS(cudaMemcpy(dPreInd, C.preInd, C.connN*sizeof(unsigned int), cudaMemcpyHostToDevice));
 }
 #endif
-
-
-// is this used anywhere? Suggest to remove (TN)
-//!!!!!find var to check if a string is used in a code (atm it is used to create post-to-pre arrays)
-void strsearch(string &s, const string trg)
-{
-  size_t found= s.find(trg);
-  if (found != string::npos) {
-    //createPosttoPreArray(var)...
-  }
-}
 
 #endif // SPARSEUTILS_CC
