@@ -58,7 +58,7 @@ INCLUDE_FLAGS           =/I"$(GENN_PATH)\lib\include" /I"$(GENN_PATH)\userprojec
 
 # Infer object file names from source file names
 !IFNDEF SIM_CODE
-SIM_CODE                =*_CODE # Can be changed by passing SIM_CODE=something in the nmake command
+SIM_CODE                =*_CODE
 !ENDIF
 OBJECTS                 =$(SOURCES:.cc=.obj) $(SIM_CODE)\runner.obj
 OBJECTS                 =$(OBJECTS:.cpp=.obj)

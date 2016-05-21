@@ -62,7 +62,7 @@ endif
 -include sm_version.mk
 
 # Enumerate all object files (if they have not already been listed)
-SIM_CODE                ?=*_CODE # Can be changed by passing SIM_CODE=something in the make command
+SIM_CODE                ?=*_CODE
 SOURCES                 ?=$(wildcard *.cc *.cpp *.cu)
 OBJECTS                 :=$(foreach obj,$(basename $(SOURCES)),$(obj).o) $(SIM_CODE)/runner.o
 
