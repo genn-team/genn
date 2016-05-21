@@ -65,16 +65,16 @@ $(OUT_PATH)\generateALL.exe: always-compile $(GENNERATE_OBJ) $(LIB_PATH)\genn.li
 	$(CXX) $(CXXFLAGS) /Fe$@ $(GENERATE_OBJ) $(LINK_FLAGS)
 
 $(OBJ_PATH)\generateALL.obj: always-compile
-	$(CXX) $(CXXFLAGS) /c /Fo$@ $(SRC_PATH)/generateALL.cc $(INCLUDE_FLAGS) /FI"$(MODEL)"
+	$(CXX) $(CXXFLAGS) /c /Fo$@ $(SRC_PATH)\generateALL.cc $(INCLUDE_FLAGS) /FI"$(MODEL)"
 
 $(OBJ_PATH)\generateRunner.obj: always-compile
-	$(CXX) $(CXXFLAGS) /c /Fo$@ $(SRC_PATH)/generateRunner.cc $(INCLUDE_FLAGS)
+	$(CXX) $(CXXFLAGS) /c /Fo$@ $(SRC_PATH)\generateRunner.cc $(INCLUDE_FLAGS)
 
 $(OBJ_PATH)\generateCPU.obj: always-compile
-	$(CXX) $(CXXFLAGS) /c /Fo$@ $(SRC_PATH)/generateCPU.cc $(INCLUDE_FLAGS)
+	$(CXX) $(CXXFLAGS) /c /Fo$@ $(SRC_PATH)\generateCPU.cc $(INCLUDE_FLAGS)
 
 $(OBJ_PATH)\generateKernels.obj: always-compile
-	$(CXX) $(CXXFLAGS) /c /Fo$@ $(SRC_PATH)/generateKernels.cc $(INCLUDE_FLAGS)
+	$(CXX) $(CXXFLAGS) /c /Fo$@ $(SRC_PATH)\generateKernels.cc $(INCLUDE_FLAGS)
 
 $(LIB_PATH)\genn.lib: $(LIBGENN_OBJ)
 	lib /out:$@ $(LIBGENN_OBJ)
