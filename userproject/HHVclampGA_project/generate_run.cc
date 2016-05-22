@@ -94,17 +94,19 @@ CPU_ONLY=0 or CPU_ONLY=1 (default 0): Whether to compile in (CUDA independent) \
 
   // build it
 #ifdef _WIN32
-  cmd = "cd model && genn-buildmodel.bat .\\HHVClamp.cc";
+  cmd = "cd model && genn-buildmodel.bat ";
 #else // UNIX
-  cmd = "cd model && genn-buildmodel.sh ./HHVClamp.cc";    
+  cmd = "cd model && genn-buildmodel.sh ";    
 #endif
+  cmd += "HHVClamp.cc";
   if (dbgMode) cmd += " -d";
   if (cpu_only) cmd += " -c";
 #ifdef _WIN32
-  cmd += " && nmake /nologo /f WINmakefile clean all SIM_CODE=HHVClamp_CODE";
+  cmd += " && nmake /nologo /f WINmakefile all ";
 #else // UNIX
-  cmd += " && make clean all SIM_CODE=HHVClamp_CODE";
+  cmd += " && make all ";
 #endif
+  cmd += "SIM_CODE=HHVClamp_CODE";
   if (dbgMode) cmd += " DEBUG=1";
   if (cpu_only) cmd += " CPU_ONLY=1";
   cout << cmd << endl;

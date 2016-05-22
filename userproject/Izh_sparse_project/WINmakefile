@@ -12,12 +12,12 @@
 #--------------------------------------------------------------------------
 
 CXXFLAGS        =/nologo /EHsc
-INCLUDE_FLAGS   =/I"$(GENN_PATH)/lib/include" /I"$(GENN_PATH)/userproject/include"
+INCLUDE_FLAGS   =/I"$(GENN_PATH)\lib\include" /I"$(GENN_PATH)\userproject\include"
 
 all: generate_run.exe tools
 
 generate_run.exe: generate_run.cc
-	$(CXX) $(CXXFLAGS) $(INCLUDE_FLAGS) /Fe$@ $<
+	$(CXX) $(CXXFLAGS) $(INCLUDE_FLAGS) /Fe$@ %s
 
 tools:
 	cd ..\tools && nmake /nologo /f WINmakefile
