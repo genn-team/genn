@@ -20,10 +20,10 @@
 !IFNDEF CPU_ONLY
 NVCC                    ="$(CUDA_PATH)\bin\nvcc.exe"
 !ENDIF
-!IFNDEF DEBUG
-NVCCFLAGS               =$(NVCCFLAGS) -Xcompiler "$(OPTIMIZATIONFLAGS)"
-!ELSE
+!IFDEF DEBUG
 NVCCFLAGS               =$(NVCCFLAGS) -g -G
+!ELSE
+NVCCFLAGS               =$(NVCCFLAGS) $(NVCC_OPTIMIZATIONFLAGS) -Xcompiler "$(OPTIMIZATIONFLAGS)"
 !ENDIF
 
 # Global C++ compiler settings
@@ -32,37 +32,38 @@ CXXFLAGS                =$(CXXFLAGS) /nologo /EHsc
 !ELSE
 CXXFLAGS                =$(CXXFLAGS) /nologo /EHsc /DCPU_ONLY
 !ENDIF
-!IFNDEF DEBUG
-CXXFLAGS                =$(CXXFLAGS) $(OPTIMIZATIONFLAGS)
-!ELSE
+!IFDEF DEBUG
 CXXFLAGS                =$(CXXFLAGS) /debug /Zi /Od
+!ELSE
+CXXFLAGS                =$(CXXFLAGS) $(OPTIMIZATIONFLAGS)
 !ENDIF
 
 # Global include and link flags
 !IFNDEF CPU_ONLY
 INCLUDE_FLAGS           =/I"$(GENN_PATH)\lib\include" /I"$(GENN_PATH)\userproject\include" /I"$(CUDA_PATH)\include"
-!IF "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
-LINK_FLAGS              ="$(CUDA_PATH)\lib\x64\cudart.lib" "$(CUDA_PATH)\lib\x64\cuda.lib"
-!ELSEIF "$(PROCESSOR_ARCHITEW6432)" == "AMD64"
-LINK_FLAGS              ="$(CUDA_PATH)\lib\x64\cudart.lib" "$(CUDA_PATH)\lib\x64\cuda.lib"
+!IF "$(PROCESSOR_ARCHITECTURE)" == "AMD64" || "$(PROCESSOR_ARCHITEW6432)" == "AMD64"
+LINK_FLAGS              ="$(GENN_PATH)\lib\lib\genn.lib" "$(CUDA_PATH)\lib\x64\cudart.lib" "$(CUDA_PATH)\lib\x64\cuda.lib"
 !ELSE
-LINK_FLAGS              ="$(CUDA_PATH)\lib\Win32\cudart.lib" "$(CUDA_PATH)\lib\Win32\cuda.lib"
+LINK_FLAGS              ="$(GENN_PATH)\lib\lib\genn.lib" "$(CUDA_PATH)\lib\Win32\cudart.lib" "$(CUDA_PATH)\lib\Win32\cuda.lib"
 !ENDIF
 !ELSE
 INCLUDE_FLAGS           =/I"$(GENN_PATH)\lib\include" /I"$(GENN_PATH)\userproject\include"
+LINK_FLAGS              ="$(GENN_PATH)\lib\lib\genn.lib"
 !ENDIF
 
+# An auto-generated file containing your cuda device's compute capability
 !IF EXIST(sm_version.mk)
 !INCLUDE sm_version.mk
 !ENDIF
 
 # Infer object file names from source file names
 !IFNDEF SIM_CODE
-SIM_CODE                =*_CODE
+!ERROR You must define SIM_CODE=<model>_CODE in the Makefile or NMAKE command.
 !ENDIF
 OBJECTS                 =$(SOURCES:.cc=.obj) $(SIM_CODE)\runner.obj
 OBJECTS                 =$(OBJECTS:.cpp=.obj)
 OBJECTS                 =$(OBJECTS:.cu=.obj)
+
 
 # Target rules
 .SUFFIXES: .cu

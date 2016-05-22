@@ -3,6 +3,7 @@
 #define STRINGUTILS_CC
 
 #include "stringUtils.h"
+#include "utils.h"
 
 #if !defined(__GNUC__) || (__GNUC__ >= 4 && __GNUC_MINOR__ >= 9)
 #include <regex>

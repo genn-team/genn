@@ -41,9 +41,7 @@ CXXFLAGS                =$(CXXFLAGS) /debug /Zi /Od /DDEBUG
 # Global include and link flags
 !IFNDEF CPU_ONLY
 INCLUDE_FLAGS           = /I"$(INC_PATH)" /I"$(CUDA_PATH)\include"
-!IF "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
-LINK_FLAGS              ="$(LIB_PATH)\genn.lib" "$(CUDA_PATH)\lib\x64\cudart.lib" "$(CUDA_PATH)\lib\x64\cuda.lib"
-!ELSEIF "$(PROCESSOR_ARCHITEW6432)" == "AMD64"
+!IF "$(PROCESSOR_ARCHITECTURE)" == "AMD64" || "$(PROCESSOR_ARCHITEW6432)" == "AMD64"
 LINK_FLAGS              ="$(LIB_PATH)\genn.lib" "$(CUDA_PATH)\lib\x64\cudart.lib" "$(CUDA_PATH)\lib\x64\cuda.lib"
 !ELSE
 LINK_FLAGS              ="$(LIB_PATH)\genn.lib" "$(CUDA_PATH)\lib\Win32\cudart.lib" "$(CUDA_PATH)\lib\Win32\cuda.lib"
@@ -54,14 +52,14 @@ LINK_FLAGS              ="$(LIB_PATH)\genn.lib"
 !ENDIF
 
 # generateALL and libgenn.a object targets
-GENERATE_OBJ            :=$(OBJ_PATH)\generateALL.obj $(OBJ_PATH)\generateRunner.obj $(OBJ_PATH)\generateCPU.obj $(OBJ_PATH)\generateKernels.obj
-LIBGENN_OBJ             :=$(OBJ_PATH)\global.obj $(OBJ_PATH)\modelSpec.obj $(OBJ_PATH)\neuronModels.obj $(OBJ_PATH)\synapseModels.obj $(OBJ_PATH)\postSynapseModels.obj $(OBJ_PATH)\utils.obj $(OBJ_PATH)\stringUtils.obj $(OBJ_PATH)\sparseUtils.obj $(OBJ_PATH)\hr_time.obj
+GENERATE_OBJ            =$(OBJ_PATH)\generateALL.obj $(OBJ_PATH)\generateRunner.obj $(OBJ_PATH)\generateCPU.obj $(OBJ_PATH)\generateKernels.obj
+LIBGENN_OBJ             =$(OBJ_PATH)\global.obj $(OBJ_PATH)\modelSpec.obj $(OBJ_PATH)\neuronModels.obj $(OBJ_PATH)\synapseModels.obj $(OBJ_PATH)\postSynapseModels.obj $(OBJ_PATH)\utils.obj $(OBJ_PATH)\stringUtils.obj $(OBJ_PATH)\sparseUtils.obj $(OBJ_PATH)\hr_time.obj
 
 
 # Target rules
 all: $(OBJ_PATH) $(LIB_PATH) $(OUT_PATH)\generateALL.exe
 
-$(OUT_PATH)\generateALL.exe: always-compile $(GENNERATE_OBJ) $(LIB_PATH)\genn.lib
+$(OUT_PATH)\generateALL.exe: always-compile $(GENERATE_OBJ) $(LIB_PATH)\genn.lib
 	$(CXX) $(CXXFLAGS) /Fe$@ $(GENERATE_OBJ) $(LINK_FLAGS)
 
 $(OBJ_PATH)\generateALL.obj: always-compile
@@ -77,13 +75,13 @@ $(OBJ_PATH)\generateKernels.obj: always-compile
 	$(CXX) $(CXXFLAGS) /c /Fo$@ $(SRC_PATH)\generateKernels.cc $(INCLUDE_FLAGS)
 
 $(LIB_PATH)\genn.lib: $(LIBGENN_OBJ)
-	lib /out:$@ $(LIBGENN_OBJ)
+	lib /nologo /out:$@ $(LIBGENN_OBJ)
 
 {$(SRC_PATH)}.cc{$(OBJ_PATH)}.obj:
-	$(CXX) $(CXXFLAGS) /c /Fo$@ $** $(INCLUDE_FLAGS)
+	$(CXX) $(CXXFLAGS) /c /Fo$@ %s $(INCLUDE_FLAGS)
 
 {$(SRC_PATH)}.cpp{$(OBJ_PATH)}.obj:
-	$(CXX) $(CXXFLAGS) /c /Fo$@ $** $(INCLUDE_FLAGS)
+	$(CXX) $(CXXFLAGS) /c /Fo$@ %s $(INCLUDE_FLAGS)
 
 $(OBJ_PATH):
 	mkdir $@ 2>nul
@@ -100,3 +98,5 @@ clean_generateall:
 
 clean_libgenn:
 	-del $(LIB_PATH)\genn.lib $(LIBGENN_OBJ) 2>nul
+
+always-compile:

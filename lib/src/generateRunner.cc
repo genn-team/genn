@@ -2374,7 +2374,7 @@ void genMakefile(NNmodel &model, //!< Model description
     os << "\t$(CXX) $(CXXFLAGS) $(INCLUDEFLAGS) runner.cc" << endl;
     os << endl;
     os << "clean:" << endl;
-    os << "\t-del runner.obj" << endl;
+    os << "\t-del runner.obj 2>nul" << endl;
 #else
     string nvccFlags = "-c -x cu -arch sm_";
     nvccFlags += tS(deviceProp[theDevice].major) + tS(deviceProp[theDevice].minor);
@@ -2394,7 +2394,7 @@ void genMakefile(NNmodel &model, //!< Model description
     os << "\t$(NVCC) $(NVCCFLAGS) $(INCLUDEFLAGS) runner.cc" << endl;
     os << endl;
     os << "clean:" << endl;
-    os << "\t-del runner.obj" << endl;
+    os << "\t-del runner.obj 2>nul" << endl;
 #endif
 
 #else // UNIX

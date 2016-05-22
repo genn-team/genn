@@ -44,6 +44,9 @@ ifndef CPU_ONLY
 else
     CXXFLAGS            :=-std=c++0x -MMD -MP -DCPU_ONLY
 endif
+ifdef DEBUG
+    CXXFLAGS            +=-g -O0 -DDEBUG
+endif
 
 # Global include and link flags
 ARFLAGS                 :=-rcs
@@ -105,9 +108,6 @@ $(OBJ_PATH):
 
 $(LIB_PATH):
 	mkdir -p $@
-
-debug: CXXFLAGS +=-g -O0 -DDEBUG
-debug: all
 
 clean:
 	rm -rf $(OUT_PATH)/generateALL $(OBJ_PATH) $(LIB_PATH)

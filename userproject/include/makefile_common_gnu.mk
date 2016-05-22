@@ -27,11 +27,22 @@ ifndef CPU_ONLY
     CUDA_PATH           ?=/usr/local/cuda
     NVCC                :="$(CUDA_PATH)/bin/nvcc"
 endif
+ifdef DEBUG
+    NVCCFLAGS           +=-g -G
+else
+    NVCCFLAGS           +=$(NVCC_OPTIMIZATIONFLAGS) -Xcompiler "$(OPTIMIZATIONFLAGS)"
+endif
 
 # Global C++ compiler settings
 ifeq ($(DARWIN),DARWIN)
     CXX                 :=clang++
 endif
+ifdef DEBUG
+    CXXFLAGS            +=-g
+else
+    CXXFLAGS            +=$(OPTIMIZATIONFLAGS)
+endif
+
 ifndef CPU_ONLY
     CXXFLAGS            +=-std=c++0x
 else
@@ -70,7 +81,7 @@ OBJECTS                 :=$(foreach obj,$(basename $(SOURCES)),$(obj).o) $(SIM_C
 # Target rules
 .PHONY: all release debug clean purge show
 
-all: release
+all: $(EXECUTABLE)
 
 $(EXECUTABLE): $(OBJECTS)
 	$(CXX) $(CXXFLAGS) -o $@ $(OBJECTS) $(LINK_FLAGS)
@@ -88,14 +99,6 @@ ifndef CPU_ONLY
 %.o: %.cu
 	$(NVCC) $(NVCCFLAGS) -c $< -o $@ $(INCLUDE_FLAGS)
 endif
-
-release: NVCCFLAGS      +=$(NVCC_OPTIMIZATIONFLAGS) -Xcompiler "$(OPTIMIZATIONFLAGS)"
-release: CXXFLAGS       +=$(OPTIMIZATIONFLAGS)
-release: $(EXECUTABLE)
-
-debug: NVCCFLAGS        +=-g -G
-debug: CXXFLAGS         +=-g
-debug: $(EXECUTABLE)
 
 clean:
 	rm -rf $(EXECUTABLE) *.o *.dSYM/ generateALL
