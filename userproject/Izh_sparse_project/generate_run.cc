@@ -160,7 +160,7 @@ CPU_ONLY=0 or CPU_ONLY=1 (default 0): Whether to compile in (CUDA independent) \
       os << "#define SCALAR_MAX FLT_MAX" << endl;
   } 
   os.close();
-  
+
   // build it
 #ifdef _WIN32
   cmd = "cd model && genn-buildmodel.bat ";

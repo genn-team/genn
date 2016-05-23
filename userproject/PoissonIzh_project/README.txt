@@ -28,7 +28,7 @@ CPU_ONLY=0 or CPU_ONLY=1 (default 0): Whether to compile in (CUDA independent) "
 
 An example invocation of generate_run is:
 
-  ./generate_run 1 100 10 0.5 2 outdir PoissonIzh 
+  ./generate_run 1 100 10 0.5 2 outdir PoissonIzh
 
 This will generate a network of 100 Poisson neurons with 20 Hz firing rate
 connected to 10 Izhikevich neurons with a 0.5 probability. 

@@ -11,14 +11,17 @@
 #  
 #--------------------------------------------------------------------------
 
-INCLUDE_FLAGS = /I $(GENN_PATH)/lib/include /I $(GENN_PATH)/userproject/include
-CFLAGS=/nologo /EHsc $(INCLUDE_FLAGS)
+CXXFLAGS        =/nologo /EHsc
+INCLUDE_FLAGS   =/I"$(GENN_PATH)\lib\include" /I"$(GENN_PATH)\userproject\include"
 
 all: generate_run.exe tools
 
-clean:
-	-del generate_run.exe generate_run.obj 2>nul 
-	cd ..\tools && nmake /nologo /f WINmakefile clean
+generate_run.exe: generate_run.cc
+	$(CXX) $(CXXFLAGS) $(INCLUDE_FLAGS) /Fe$@ %s
 
 tools:
 	cd ..\tools && nmake /nologo /f WINmakefile
+
+clean:
+	-del generate_run.exe generate_run.obj 2>nul
+	cd ..\tools && nmake /nologo /f WINmakefile clean

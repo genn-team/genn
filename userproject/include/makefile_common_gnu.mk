@@ -37,16 +37,15 @@ endif
 ifeq ($(DARWIN),DARWIN)
     CXX                 :=clang++
 endif
-ifdef DEBUG
-    CXXFLAGS            +=-g
-else
-    CXXFLAGS            +=$(OPTIMIZATIONFLAGS)
-endif
-
 ifndef CPU_ONLY
     CXXFLAGS            +=-std=c++0x
 else
     CXXFLAGS            +=-std=c++0x -DCPU_ONLY
+endif
+ifdef DEBUG
+    CXXFLAGS            +=-g
+else
+    CXXFLAGS            +=$(OPTIMIZATIONFLAGS)
 endif
 
 # Global include and link flags
@@ -73,7 +72,10 @@ endif
 -include sm_version.mk
 
 # Enumerate all object files (if they have not already been listed)
-SIM_CODE                ?=*_CODE
+ifndef SIM_CODE
+    $(warning SIM_CODE=<model>_CODE was not defined in the Makefile or make command. Using wildcard SIM_CODE=*_CODE.)
+    SIM_CODE            :=*_CODE
+endif
 SOURCES                 ?=$(wildcard *.cc *.cpp *.cu)
 OBJECTS                 :=$(foreach obj,$(basename $(SOURCES)),$(obj).o) $(SIM_CODE)/runner.o
 

@@ -29,7 +29,7 @@ CPU_ONLY=0 or CPU_ONLY=1 (default 0): Whether to compile in (CUDA independent) "
 
 For a first minimal test, the system may be used with:
 
-  ./generate_run 1 1 outdir OneComp 
+  ./generate_run 1 1 outdir OneComp
 
 This would create a set of tonic spiking Izhikevich neurons with no connectivity, 
 receiving a constant identical 4 nA input. It is lso possible to use the model
