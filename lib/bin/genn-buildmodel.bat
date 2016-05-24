@@ -60,12 +60,10 @@ if defined -c set "MACROS=%MACROS% CPU_ONLY=1"
 if defined -d set "MACROS=%MACROS% DEBUG=1"
 
 rem :: generate model code
+nmake /nologo /f "%GENN_PATH%\lib\WINmakefile" %MACROS%
 if defined -d (
-    echo debugging mode ON
-    nmake /nologo /f "%GENN_PATH%\lib\WINmakefile" %MACROS%
     devenv /debugexe .\generateALL.exe "%-o%"
 ) else (
-    nmake /nologo /f "%GENN_PATH%\lib\WINmakefile" %MACROS%
     .\generateALL.exe "%-o%"
 )
 

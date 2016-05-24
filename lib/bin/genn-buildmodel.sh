@@ -56,12 +56,10 @@ if [[ -n "$DEBUG" ]]; then MACROS="$MACROS DEBUG=1"; fi
 if [[ -n "$CPU_ONLY" ]]; then MACROS="$MACROS CPU_ONLY=1"; fi
 
 # generate model code
+make -f "$GENN_PATH/lib/GNUmakefile" $MACROS
 if [[ -n "$DEBUG" ]]; then
-    echo "debugging mode ON"
-    make debug -f "$GENN_PATH/lib/GNUmakefile" $MACROS
     gdb -tui --args ./generateALL "$OUT_PATH"
 else
-    make -f "$GENN_PATH/lib/GNUmakefile" $MACROS
     ./generateALL "$OUT_PATH"
 fi
 

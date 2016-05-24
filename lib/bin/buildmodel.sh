@@ -54,12 +54,10 @@ if [[ "$GENN_PATH" == "" ]]; then
 fi
 
 make clean -f "$GENN_PATH/lib/GNUmakefile"
+make -f "$GENN_PATH/lib/GNUmakefile" MODEL=$MODELPATH/$MODELNAME.cc EXTRA_DEF=$EXTRA_DEF;
 if [[ "$DBGMODE" == "1" ]]; then
-    echo "debugging mode ON"
-    make debug -f "$GENN_PATH/lib/GNUmakefile" MODEL=$MODELPATH/$MODELNAME.cc EXTRA_DEF=$EXTRA_DEF;
     gdb -tui --args ./generateALL $MODELPATH;
 else
-    make -f "$GENN_PATH/lib/GNUmakefile" MODEL=$MODELPATH/$MODELNAME.cc EXTRA_DEF=$EXTRA_DEF;
     ./generateALL $MODELPATH;
 fi
 

@@ -43,7 +43,6 @@ if "%DBGMODE%"=="0" (
   nmake /nologo /f "%GENN_PATH%\lib\WINmakefile" MODEL="%MODELPATH%\%MODELNAME%.cc" CPU_ONLY=%CPU_ONLY%
   .\generateALL.exe %MODELPATH%
 ) else (
-  echo "Debugging mode ON"
   nmake /nologo /f "%GENN_PATH%\lib\WINmakefile" DEBUG=1 MODEL="%MODELPATH%\%MODELNAME%.cc" EXTRA_DEF=%EXTRA_DEF%
   devenv /debugexe .\generateALL.exe %MODELPATH%
 )
