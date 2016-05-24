@@ -75,7 +75,7 @@ LIBGENN_OBJ             :=$(addprefix $(OBJ_PATH)/,global.o modelSpec.o neuronMo
 
 
 # Target rules
-.PHONY: all debug clean always-compile
+.PHONY: all clean always-compile
 
 all: $(OBJ_PATH) $(LIB_PATH) $(OUT_PATH)/generateALL
 

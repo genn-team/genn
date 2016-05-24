@@ -297,7 +297,7 @@ fi
 
 cd ../SynDelay_project
 buildmodel.sh SynDelay
-make clean && make release
+make clean && make
 if [ -d ${testDir}_output ]; then
   echo ${custommsg} >> ${testDir}.time
 fi

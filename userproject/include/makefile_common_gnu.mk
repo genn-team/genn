@@ -73,7 +73,8 @@ endif
 
 # Enumerate all object files (if they have not already been listed)
 ifndef SIM_CODE
-    $(warning SIM_CODE=<model>_CODE was not defined in the Makefile or make command. Using wildcard SIM_CODE=*_CODE.)
+    $(warning SIM_CODE=<model>_CODE was not defined in the Makefile or make command.)
+    $(warning Using wildcard SIM_CODE=*_CODE.)
     SIM_CODE            :=*_CODE
 endif
 SOURCES                 ?=$(wildcard *.cc *.cpp *.cu)
@@ -81,7 +82,7 @@ OBJECTS                 :=$(foreach obj,$(basename $(SOURCES)),$(obj).o) $(SIM_C
 
 
 # Target rules
-.PHONY: all release debug clean purge show
+.PHONY: all clean purge show
 
 all: $(EXECUTABLE)
 
