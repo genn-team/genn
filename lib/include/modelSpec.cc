@@ -403,6 +403,7 @@ void NNmodel::initLearnGrps()
 		// parameter wasn't registered yet - is it used?
 		bool used= 0;
 		if (wu.simCode.find(tS("$(")+pname+tS(")")) != string::npos) used= 1; // it's used
+		if (wu.simCodeEvnt.find(tS("$(")+pname+tS(")")) != string::npos) used= 1; // it's used
 		if (wu.evntThreshold.find(tS("$(")+pname+tS(")")) != string::npos) used= 1; // it's used
  		if (used) {
 		    synapseKernelParameters.push_back(pnamefull);

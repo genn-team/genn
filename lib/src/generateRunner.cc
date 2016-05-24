@@ -88,10 +88,15 @@ void genRunner(NNmodel &model, //!< Model description
 	substitute(nModels[i].simCode, "scalar", model.ftype);
 	substitute(nModels[i].resetCode, "scalar", model.ftype);
     }
-    for (int i= 0; i < weightUpdateModels.size(); i++) {
-	for (int k= 0; k < weightUpdateModels[i].varTypes.size(); k++) {
-	    substitute(weightUpdateModels[i].varTypes[k], "scalar", model.ftype);
-	}
+for (int i= 0; i < weightUpdateModels.size(); i++) {
+  for (int k= 0; k < weightUpdateModels[i].varTypes.size(); k++) {
+    substitute(weightUpdateModels[i].varTypes[k], "scalar", model.ftype);
+  }
+
+  for (int k= 0; k < weightUpdateModels[i].extraGlobalSynapseKernelParameterTypes.size(); k++) {
+    substitute(weightUpdateModels[i].extraGlobalSynapseKernelParameterTypes[k], "scalar", model.ftype);
+  }
+
 	substitute(weightUpdateModels[i].simCode, "SCALAR_MIN", SCLR_MIN);
 	substitute(weightUpdateModels[i].simCodeEvnt, "SCALAR_MIN", SCLR_MIN);
 	substitute(weightUpdateModels[i].simLearnPost, "SCALAR_MIN", SCLR_MIN);
