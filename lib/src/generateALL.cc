@@ -225,13 +225,15 @@ void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
 	    nvccFlags += " -I\"%GENN_PATH%\\lib\\include\"";
 	    string runnerPath = path + "\\" + model.name + "_CODE\\runner.cc";
 	    string cubinPath = tS(getenv("TEMP")) + "\\runner.cubin";
+	    string nvccCommand = "\"\"" + tS(NVCC) + "\" " + nvccFlags;
+	    nvccCommand += " -o \"" + cubinPath + "\" \"" + runnerPath + "\"\"";
 #else
 	    nvccFlags += " -I\"$GENN_PATH/lib/include\"";
 	    string runnerPath = path + "/" + model.name + "_CODE/runner.cc";
 	    string cubinPath = "/tmp/runner.cubin";
-#endif
 	    string nvccCommand = "\"" + tS(NVCC) + "\" " + nvccFlags;
 	    nvccCommand += " -o \"" + cubinPath + "\" \"" + runnerPath + "\"";
+#endif
 
 	    cudaFuncAttributes krnlAttr[2][krnlNo];
 	    CUfunction kern;
@@ -249,7 +251,7 @@ void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
 		// Run NVCC
 		cout << "dry-run compile for device " << theDevice << endl;
 		cout << nvccCommand << endl;
-		system(("\"" + nvccCommand + "\"").c_str());
+		system(nvccCommand.c_str());
 
 		CHECK_CU_ERRORS(cuModuleLoad(&module, cubinPath.c_str()));
 		for (int i= 0; i < krnlNo; i++) {
