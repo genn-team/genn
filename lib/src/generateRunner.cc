@@ -182,9 +182,9 @@ void genRunner(NNmodel &model, //!< Model description
     // write DT macro
     os << "#undef DT" << ENDL;
     if (model.ftype == "float") {
-        os << "#define DT " << model.dt << "f" << ENDL;
+	os << "#define DT " << tS(model.dt) << "f" << ENDL;
     } else {
-        os << "#define DT " << model.dt << ENDL;
+        os << "#define DT " << tS(model.dt) << ENDL;
     }
 
     // write MYRAND macro
