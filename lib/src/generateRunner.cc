@@ -176,6 +176,14 @@ void genRunner(NNmodel &model, //!< Model description
     os << ENDL;
 #endif // CPU_ONLY
 
+    // write DT macro
+    os << "#undef DT" << ENDL;
+    if (model.ftype == "float") {
+        os << "#define DT " << model.dt << "f" << ENDL;
+    } else {
+        os << "#define DT " << model.dt << ENDL;
+    }
+
     // write MYRAND macro
     os << "#ifndef MYRAND" << ENDL;
     os << "#define MYRAND(Y,X) Y = Y * 1103515245 + 12345; X = (Y >> 16);" << ENDL;
@@ -204,8 +212,6 @@ void genRunner(NNmodel &model, //!< Model description
     os << "// global variables" << ENDL;
     os << ENDL;
 
-    os << "#undef DT" << ENDL;
-    os << "extern const scalar DT;" << ENDL;
     os << "extern unsigned long long iT;" << ENDL;
     os << "extern " << model.ftype << " t;" << ENDL;
     if (model.timing) {
@@ -669,7 +675,6 @@ void genRunner(NNmodel &model, //!< Model description
     os << "// global variables" << ENDL;
     os << ENDL;
 
-    os << "const scalar DT = " << model.dt << ";" << ENDL;
     os << "unsigned long long iT= 0;" << ENDL;
     os << model.ftype << " t;" << ENDL;
     if (model.timing) {
