@@ -93,14 +93,14 @@ $(SIM_CODE)/runner.o:
 	cd $(SIM_CODE) && make
 
 %.o: %.cc
-	$(CXX) $(CXXFLAGS) -c $< -o $@ $(INCLUDE_FLAGS)
+	$(CXX) $(CXXFLAGS) -c -o $@ $< $(INCLUDE_FLAGS)
 
 %.o: %.cpp
-	$(CXX) $(CXXFLAGS) -c $< -o $@ $(INCLUDE_FLAGS)
+	$(CXX) $(CXXFLAGS) -c -o $@ $< $(INCLUDE_FLAGS)
 
 ifndef CPU_ONLY
 %.o: %.cu
-	$(NVCC) $(NVCCFLAGS) -c $< -o $@ $(INCLUDE_FLAGS)
+	$(NVCC) $(NVCCFLAGS) -c -o $@ $< $(INCLUDE_FLAGS)
 endif
 
 clean:

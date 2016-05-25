@@ -23,4 +23,4 @@ OPTIMIZATIONFLAGS  =/O2
 $(GENN_PATH)\userproject\include\GeNNHelperKrnls.obj: \
  $(GENN_PATH)\userproject\include\GeNNHelperKrnls.cu \
  $(GENN_PATH)\userproject\include\GeNNHelperKrnls.h
-	$(NVCC) $(NVCCFLAGS) $(INCLUDE_FLAGS) /c %s /o $@
+	$(NVCC) $(NVCCFLAGS) $(INCLUDE_FLAGS:/I=-I) -c -o $@ %s

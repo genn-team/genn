@@ -77,14 +77,14 @@ $(SIM_CODE)\runner.obj:
 	cd $(SIM_CODE) && nmake /nologo
 
 .cc.obj:
-	$(CXX) $(CXXFLAGS) /c /Fo$@ $** $(INCLUDE_FLAGS)
+	$(CXX) $(CXXFLAGS) /c /Fo$@ %s $(INCLUDE_FLAGS)
 
 .cpp.obj:
-	$(CXX) $(CXXFLAGS) /c /Fo$@ $** $(INCLUDE_FLAGS)
+	$(CXX) $(CXXFLAGS) /c /Fo$@ %s $(INCLUDE_FLAGS)
 
 !IFNDEF CPU_ONLY
 .cu.obj:
-	$(NVCC) $(NVCCFLAGS) /c /Fo$@ $** $(INCLUDE_FLAGS:/I=-I)
+	$(NVCC) $(NVCCFLAGS) -c -o $@ %s $(INCLUDE_FLAGS:/I=-I)
 !ENDIF
 
 clean:
