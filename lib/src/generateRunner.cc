@@ -108,6 +108,9 @@ void genRunner(NNmodel &model, //!< Model description
 	for (int k= 0; k < weightUpdateModels[i].varTypes.size(); k++) {
 	    substitute(weightUpdateModels[i].varTypes[k], "scalar", model.ftype);
 	}
+	for (int k= 0; k < weightUpdateModels[i].extraGlobalSynapseKernelParameterTypes.size(); k++) {
+	    substitute(weightUpdateModels[i].extraGlobalSynapseKernelParameterTypes[k], "scalar", model.ftype);
+	}
 	substitute(weightUpdateModels[i].simCode, "SCALAR_MIN", SCLR_MIN);
 	substitute(weightUpdateModels[i].simCodeEvnt, "SCALAR_MIN", SCLR_MIN);
 	substitute(weightUpdateModels[i].simLearnPost, "SCALAR_MIN", SCLR_MIN);
