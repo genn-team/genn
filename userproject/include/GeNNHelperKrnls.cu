@@ -40,12 +40,12 @@ __global__ void generate_random_gpuInput_xorwow (curandState *state, T *result, 
     }
 }
 
-template
+/*template
 __global__ void generate_random_gpuInput_xorwow <float> (curandState *state, float *result, int sizeofResult, float Rstrength, float Rshift);
 
 template
 __global__ void generate_random_gpuInput_xorwow <double> (curandState *state, double *result, int sizeofResult, double Rstrength, double Rshift);
-
+*/
 
 /*********************************/
 
