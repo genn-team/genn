@@ -11,9 +11,13 @@
 #  
 #--------------------------------------------------------------------------
 
-CFLAGS		=/nologo /EHsc /I$(GENN_PATH)\userproject\include
+CXXFLAGS        =/nologo /EHsc /O2
+INCLUDE_FLAGS   =/I"$(GENN_PATH)\userproject\include"
 
 all: gen_input_structured.exe gen_pnlhi_syns.exe gen_kcdn_syns.exe gen_kcdn_syns_fixto10K.exe gen_pnkc_syns.exe gen_pnkc_syns_indivID.exe gen_syns_sparse.exe gen_syns_sparse_izhModel.exe
+
+.cc.exe:
+	$(CXX) $(CXXFLAGS) /Fe$@ %s $(INCLUDE_FLAGS)
 
 clean:
 	-del *.exe *.obj 2>nul

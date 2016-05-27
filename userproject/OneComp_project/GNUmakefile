@@ -11,16 +11,16 @@
 #  
 #--------------------------------------------------------------------------
 
-CXXFLAGS	=-Wall -Winline -O3
-INCLUDE_FLAGS 	:=-I$(GENN_PATH)/lib/include -I$(GENN_PATH)/userproject/include
+CXXFLAGS        :=-Wall -Winline -O3
+INCLUDE_FLAGS   :=-I"$(GENN_PATH)/lib/include" -I"$(GENN_PATH)/userproject/include"
 
 all: generate_run tools
 
 generate_run: generate_run.cc 
-	g++  $(CXXFLAGS) $(INCLUDE_FLAGS) -o generate_run generate_run.cc 
+	$(CXX) $(CXXFLAGS) -o $@ $< $(INCLUDE_FLAGS)
 
 clean:
-	$(RM) generate_run
+	rm -f generate_run
 	cd ../tools && make clean
 
 tools:
