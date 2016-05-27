@@ -15,6 +15,8 @@
 #ifndef CLASSOL_H
 #define CLASSOL_H
 
+#include <stdint.h>
+
 //--------------------------------------------------------------------------
 /*! \file userproject/MBody1_project/model/map_classol.h
 
