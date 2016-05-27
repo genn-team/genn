@@ -12,7 +12,7 @@
 ##--------------------------------------------------------------------------
 
 EXECUTABLE         =PoissonIzh_sim.exe
-SOURCES            =$(EXECUTABLE:.exe=).cu
+SOURCES            =$(EXECUTABLE:.exe=.cc)
 OPTIMIZATIONFLAGS  =/O2
 
 !INCLUDE $(GENN_PATH)\userproject\include\makefile_common_win.mk

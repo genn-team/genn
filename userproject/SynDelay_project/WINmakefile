@@ -11,7 +11,7 @@
 #--------------------------------------------------------------------------
 
 EXECUTABLE         =syn_delay.exe
-SOURCES            =SynDelaySim.cu
+SOURCES            =SynDelaySim.cc
 OPTIMIZATIONFLAGS  =/O2
 
 !INCLUDE $(GENN_PATH)\userproject\include\makefile_common_win.mk

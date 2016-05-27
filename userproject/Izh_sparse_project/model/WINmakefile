@@ -12,7 +12,7 @@
 ##--------------------------------------------------------------------------
 
 EXECUTABLE         =Izh_sim_sparse.exe
-SOURCES            =$(EXECUTABLE:.exe=).cu
+SOURCES            =$(EXECUTABLE:.exe=.cc)
 !IFNDEF CPU_ONLY
 SOURCES            =$(SOURCES) $(GENN_PATH)\userproject\include\GeNNHelperKrnls.cu
 !ENDIF

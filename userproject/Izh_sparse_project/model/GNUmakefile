@@ -12,7 +12,7 @@
 ##--------------------------------------------------------------------------
 
 EXECUTABLE         :=Izh_sim_sparse
-SOURCES            :=$(EXECUTABLE).cu
+SOURCES            :=$(EXECUTABLE).cc
 ifndef CPU_ONLY
     SOURCES        += $(GENN_PATH)/userproject/include/GeNNHelperKrnls.cu
 endif
