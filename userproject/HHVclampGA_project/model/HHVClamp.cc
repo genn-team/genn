@@ -19,7 +19,9 @@
 //--------------------------------------------------------------------------
 
 #include "modelSpec.h"
+#include "global.h"
 #include "HHVClampParameters.h"
+
 
 double myHH_ini[11]= {
   -60.0,         // 0 - membrane potential E
@@ -46,6 +48,12 @@ double *myHH_p= NULL;
 void modelDefinition(NNmodel &model) 
 {
   initGeNN();
+
+#ifdef DEBUG
+  GENN_PREFERENCES::debugCode = true;
+#else
+  GENN_PREFERENCES::optimizeCode = true;
+#endif // DEBUG
 
   // HH neurons with adjustable parameters (introduced as variables)
   neuronModel n;

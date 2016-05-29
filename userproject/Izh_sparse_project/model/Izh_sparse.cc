@@ -12,6 +12,7 @@
 --------------------------------------------------------------------------*/
 
 #include "modelSpec.h"
+#include "global.h"
 #include "stringUtils.h"
 #include <vector>
 #include "sizes.h"
@@ -59,9 +60,17 @@ double SynIzh_ini[1]= {
     0.0 // default synaptic conductance
 };
 
+
 void modelDefinition(NNmodel &model) 
 {
   initGeNN();
+
+#ifdef DEBUG
+  GENN_PREFERENCES::debugCode = true;
+#else
+  GENN_PREFERENCES::optimizeCode = true;
+#endif // DEBUG
+
   //we modify the IZHIKEVICH_V neuron to receive external inputs
   neuronModel n= nModels[IZHIKEVICH_V];
   n.varNames.push_back(tS("I0"));

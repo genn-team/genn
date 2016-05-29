@@ -12,6 +12,7 @@
 --------------------------------------------------------------------------*/
 
 #include "modelSpec.h"
+#include "global.h"
 #include "sizes.h"
 
 double exIzh_p[5]={
@@ -46,8 +47,15 @@ double *postSynV = NULL;
 void modelDefinition(NNmodel &model) 
 {
   initGeNN();
+
+#ifdef DEBUG
+  GENN_PREFERENCES::debugCode = true;
+#else
+  GENN_PREFERENCES::optimizeCode = true;
+#endif // DEBUG
+
 #ifndef CPU_ONLY
-    model.setGPUDevice(0);
+  model.setGPUDevice(0);
 #endif
   model.setName("OneComp");
   model.setDT(1.0);

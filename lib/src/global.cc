@@ -34,9 +34,9 @@ namespace GENN_FLAGS {
 namespace GENN_PREFERENCES {    
     int optimiseBlockSize = 1; //!< Flag for signalling whether or not block size optimisation should be performed
     int autoChooseDevice= 1; //!< Flag to signal whether the GPU device should be chosen automatically 
-    bool optimizeCode = 0; //!< Request speed-optimized code, at the expense of floating-point accuracy
-    bool debugCode = 0; //!< Request debug data to be embedded in the generated code
-    bool showPtxInfo = 0; //!< Request that PTX assembler information be displayed for each CUDA kernel during compilation
+    bool optimizeCode = false; //!< Request speed-optimized code, at the expense of floating-point accuracy
+    bool debugCode = false; //!< Request debug data to be embedded in the generated code
+    bool showPtxInfo = false; //!< Request that PTX assembler information be displayed for each CUDA kernel during compilation
     double asGoodAsZero = 1e-19; //!< Global variable that is used when detecting close to zero values, for example when setting sparse connectivity from a dense matrix
     int defaultDevice= 0; //! default GPU device; used to determine which GPU to use if chooseDevice is 0 (off)
     unsigned int neuronBlockSize= 32;

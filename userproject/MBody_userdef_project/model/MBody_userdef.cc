@@ -21,6 +21,7 @@
 //--------------------------------------------------------------------------
 
 #include "modelSpec.h"
+#include "global.h"
 #include "sizes.h"
 
 //uncomment the following line to turn on timing measures (Linux/MacOS only)
@@ -203,10 +204,16 @@ scalar * gpKCDN = new scalar[_NMB*_NLB];
 //--------------------------------------------------------------------------
 
 void modelDefinition(NNmodel &model) 
-{	
-    // initialize standard models
-    initGeNN();
-    model.setPrecision(_FTYPE);
+{
+  initGeNN();
+
+#ifdef DEBUG
+  GENN_PREFERENCES::debugCode = true;
+#else
+  GENN_PREFERENCES::optimizeCode = true;
+#endif // DEBUG
+
+  model.setPrecision(_FTYPE);
 
   postSynModel pstest;
   pstest.varNames.clear();

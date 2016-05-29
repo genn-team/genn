@@ -12,6 +12,7 @@
 --------------------------------------------------------------------------*/
 
 #include "modelSpec.h"
+#include "global.h"
 #include "sizes.h"
 
 double myPOI_p[4]= {
@@ -64,6 +65,13 @@ double *postSynV = NULL;
 void modelDefinition(NNmodel &model) 
 {
   initGeNN();
+
+#ifdef DEBUG
+  GENN_PREFERENCES::debugCode = true;
+#else
+  GENN_PREFERENCES::optimizeCode = true;
+#endif // DEBUG
+
   model.setName("PoissonIzh");
   model.setDT(1.0);
   model.addNeuronPopulation("PN", _NPoisson, POISSONNEURON, myPOI_p, myPOI_ini);

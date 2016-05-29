@@ -18,10 +18,8 @@
 */
 //--------------------------------------------------------------------------
 
-//#define CPU_ONLY
-//#define BLOCKSZ_DEBUG
-
 #include "modelSpec.h"
+#include "global.h"
 #include "sizes.h"
 
 //uncomment the following line to turn on timing measures
@@ -142,9 +140,17 @@ double *postSynV = NULL;
 void modelDefinition(NNmodel &model) 
 {
     initGeNN();
-//    GENN_PREFERENCES::autoChooseDevice= 0;
-    //   GENN_PREFERENCES::optimiseBlockSize= 0;
-    // GENN_PREFERENCES::neuronBlockSize= 192; 
+
+#ifdef DEBUG
+    GENN_PREFERENCES::debugCode = true;
+#else
+    GENN_PREFERENCES::optimizeCode = true;
+#endif // DEBUG
+
+    //GENN_PREFERENCES::autoChooseDevice= 0;
+    //GENN_PREFERENCES::optimiseBlockSize= 0;
+    //GENN_PREFERENCES::neuronBlockSize= 192; 
+
     model.setName("MBody1");
     model.setDT(0.1);
     model.addNeuronPopulation("PN", _NAL, POISSONNEURON, myPOI_p, myPOI_ini);

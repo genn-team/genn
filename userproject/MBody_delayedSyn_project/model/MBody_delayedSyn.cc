@@ -19,6 +19,7 @@
 //--------------------------------------------------------------------------
 
 #include "modelSpec.h"
+#include "global.h"
 #include "sizes.h"
 
 //uncomment the following line to turn on timing measures (Linux/MacOS only)
@@ -142,6 +143,13 @@ double *postSynV = NULL;
 void modelDefinition(NNmodel &model) 
 {
     initGeNN();
+
+#ifdef DEBUG
+    GENN_PREFERENCES::debugCode = true;
+#else
+    GENN_PREFERENCES::optimizeCode = true;
+#endif // DEBUG
+
     model.setName("MBody_delayedSyn");
     model.setDT(0.1);
     model.addNeuronPopulation("PN", _NAL, POISSONNEURON, myPOI_p, myPOI_ini);
