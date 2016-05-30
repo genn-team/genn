@@ -46,8 +46,6 @@ else
 endif
 ifdef DEBUG
     CXXFLAGS            +=-g -O0 -DDEBUG
-else
-    CXXFLAGS            +=-O3
 endif
 ARFLAGS                 :=-rcs
 
