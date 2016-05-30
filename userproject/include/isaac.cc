@@ -2,7 +2,7 @@
 #define __ISAAC_HPP //!< macro for avoiding multiple inclusion during compilation
 
 //--------------------------------------------------------------------------
-/*! \file isaac.hpp
+/*! \file isaac.cc
 
 \brief Header file and implementation of the ISAAC random number generator. 
 

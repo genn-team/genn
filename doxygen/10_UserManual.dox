@@ -523,7 +523,7 @@ The pre-synaptic variables are referenced with the suffix `_pre` in synapse rela
 \section sect33 LEARN1SYNAPSE (Learning Synapse with a Primitive Piece-wise Linear Rule)
 This is a simple STDP rule including a time delay for the finite transmission speed of the synapse, defined as a piecewise function:
 
-\image html LEARN1SYNAPSE_explain_html.png 
+\image html LEARN1SYNAPSE_explain.png 
 \image latex LEARN1SYNAPSE_explain.png width=10cm
 
 The STDP curve is applied to the raw synaptic conductance `gRaw`, which is then filtered through the sugmoidal filter displayed above to obtain the value of `g`.

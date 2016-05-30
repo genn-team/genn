@@ -12,7 +12,7 @@
 --------------------------------------------------------------------------*/
 
 //--------------------------------------------------------------------------
-/*! \file userproject/MBody_individualID_project/model/classol_sim.cu
+/*! \file userproject/MBody_individualID_project/model/classol_sim.cc
 
 \brief Main entry point for the classol (CLASSification in OLfaction) model simulation. Provided as a part of the complete example of simulating the MBody1 mushroom body model. 
 */

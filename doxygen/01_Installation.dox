@@ -49,48 +49,53 @@ repository.
 
 (ii) Define the environment variable "GENN_PATH" to point to the main
      GeNN directory, e.g. if you extracted/downloaded GeNN to
-     /usr/local/GeNN, then you can add "export
-     GENN_PATH=/usr/local/GeNN" to your login script (e.g. `.profile`
-     or `.bashrc`. If you are using
+     /usr/local/GeNN, then you can add "export GENN_PATH=/usr/local/GeNN"
+     to your login script (e.g. `.profile` or `.bashrc`. If you are using
      WINDOWS, the path should be a windows path as it will be
      interpreted by the Visual C++ compiler `cl`, and environment
-     variables are best set using `setx` in a Windows cmd window.
-To do so, open a Windows cmd window byt typing `cmd` in the search
+     variables are best set using `SETX` in a Windows cmd window.
+     To do so, open a Windows cmd window by typing `cmd` in the search
      field of the start menu, followed by the `enter` key.
-In the `cmd` window type
-\code
-setx GENN_PATH "C:\Users\me\GeNN"
-\endcode
-where `C:\Users\me\GeNN` is the path to your GeNN directory.
+     In the `cmd` window type
+     \code
+     setx GENN_PATH "C:\Users\me\GeNN"
+     \endcode
+     where `C:\Users\me\GeNN` is the path to your GeNN directory.
 
 (iii) Add $GENN_PATH/lib/bin to your PATH variable, e.g.
-\code
+      \code
       export PATH=$PATH:$GENN_PATH/lib/bin
-\endcode
-in your login script, or in windows,
-\code
-	setx PATH=%GENN_PATH%\lib\bin;%PATH%
-\endcode 
+      \endcode
+      in your login script, or in windows,
+      \code
+      setx PATH=%GENN_PATH%\lib\bin;%PATH%
+      \endcode 
 
-(iv) If you haven't installed CUDA on your machine, obtain a fresh installation of the NVIDIA CUDA toolkit from
-    \a https://developer.nvidia.com/cuda-downloads
+(iv) If you haven't installed CUDA on your machine, obtain a fresh
+     installation of the NVIDIA CUDA toolkit from
+     \a https://developer.nvidia.com/cuda-downloads
+     Be sure to pick CUDA and C++ compiler versions which are compatible
+     with each other. The latest C++ compiler is not necessarily
+     compatible with the latest CUDA toolkit.
 
-(v) Set the `CUDA_PATH` variable if it is not already
-    set by the system, by putting
-\code
-export CUDA_PATH=/usr/local/cuda
-\endcode
-in your login script (or, if CUDA is installed in a non-standard
+(v) Set the `CUDA_PATH` variable if it is not already set by the
+    system, by putting
+    \code
+    export CUDA_PATH=/usr/local/cuda
+    \endcode
+    in your login script (or, if CUDA is installed in a non-standard
     location, the appropriate path to the main CUDA directory). 
     For most people, this will be done by the CUDA install script and
     the default value of /usr/local/cuda is fine. In Windows, CUDA_PATH
     is normally already set after installing the CUDA toolkit. If not,
     set this variable with:
-\code
-setx CUDA_PATH 
-\endcode
+    \code
+    setx CUDA_PATH C:\path\to\cuda
+    \endcode
 
-This normally completes the installation.
+This normally completes the installation. Windows useres must close
+and reopen their command window to ensure variables set using `SETX`
+are initialised.
 
 Depending on the needs of your own projects, e.g., depencies on other
      libraries or non-standard installation paths of libraries used by
