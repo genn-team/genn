@@ -1,6 +1,6 @@
 
-  Locust olfactory system (Nowotny et al. 2005)
-  =============================================
+Locust olfactory system (Nowotny et al. 2005)
+=============================================
 
 This project implements the insect olfaction model by Nowotny et
 al. that demonstrates self-organized clustering of odours in a
@@ -13,16 +13,20 @@ prepares additional synapse connectivity and input pattern data, before compilin
 executing the model.
 
 To compile it, navigate to genn/userproject/MBody1_project and type:
-  nmake /f WINmakefile
+
+nmake /f WINmakefile
+
 for Windows users, or:
-  make
+
+make
+
 for Linux, Mac and other UNIX users. 
 
 
-  USAGE
-  -----
+USAGE
+-----
 
-  ./generate_run <0(CPU)/1(GPU)/n(GPU n-2)> <nAL> <nKC> <nLH> <nDN> <gScale> <DIR> <MODEL> 
+generate_run <0(CPU)/1(GPU)/n(GPU n-2)> <nAL> <nKC> <nLH> <nDN> <gScale> <DIR> <MODEL> 
 
 Mandatory parameters:
 CPU/GPU: Choose whether to run the simulation on CPU (`0`), auto GPU (`1`), or GPU (n-2) (`n`).
@@ -42,7 +46,13 @@ CPU_ONLY=0 or CPU_ONLY=1 (default 0): Whether to compile in (CUDA independent) "
 
 An example invocation of generate_run is:
 
-  ./generate_run 1 100 1000 20 100 0.0025 outname MBody1
+generate_run.exe 1 100 1000 20 100 0.0025 outname MBody1
+
+for Windows users, or:
+
+./generate_run 1 100 1000 20 100 0.0025 outname MBody1
+
+for Linux, Mac and other UNIX users. 
 
 Such a command would generate a locust olfaction model with 100 antennal lobe neurons,
 1000 mushroom body Kenyon cells, 20 lateral horn interneurons and 100 mushroom body
@@ -64,10 +74,15 @@ c) compile the generated code by invoking "make clean && make"
    running the code, e.g. "./classol_sim r1 1".
 
 Another example of an invocation would be: 
-  ./generate_run 0 100 1000 20 100 0.0025 outname MBody1 FTYPE=DOUBLE CPU_ONLY=1
 
-for using double precision floating point and compiling and running
-the "CPU only" version.
+generate_run.exe 0 100 1000 20 100 0.0025 outname MBody1 FTYPE=DOUBLE CPU_ONLY=1
+
+for Windows users, or:
+
+./generate_run 0 100 1000 20 100 0.0025 outname MBody1 FTYPE=DOUBLE CPU_ONLY=1
+
+for Linux, Mac and other UNIX users, for using double precision floating point
+and compiling and running the "CPU only" version.
 
 Note: Optional arguments cannot contain spaces, i.e. "CPU_ONLY= 0"
 will fail.
@@ -81,8 +96,8 @@ the results of a simulation. For more about the model itself and
 the scientific insights gained from it see Nowotny et al. referenced below.
 
 
-  MODEL INFORMATION
-  -----------------
+MODEL INFORMATION
+-----------------
 
 For information regarding the locust olfaction model implemented in this example project, see:
 

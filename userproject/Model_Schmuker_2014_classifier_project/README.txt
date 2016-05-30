@@ -16,26 +16,39 @@ Start a terminal session
 
 cd to this project directory (userproject/Model_Schmuker_2014_project)
 
-To build the model using the GENN meta compiler type:-
+To build the model using the GENN meta compiler type:
 
- genn-buildmodel.sh Model_Schmuker_2014_classifier.cc
+genn-buildmodel.sh Model_Schmuker_2014_classifier.cc
 
-(add -d for a debug build)
+for Linux, Mac and other UNIX systems, or:
+
+genn-buildmodel.bat Model_Schmuker_2014_classifier.cc
+
+for Windows systems (add -d for a debug build).
 
 You should only have to do this at the start, or when you change your actual network model  (i.e. editing the file Model_Schmuker_2014_classifier.cc )
 
 Then to compile the experiment plus the GeNN created C/CUDA code type:-
 
-make clean && make
+make
 
-(or "make clean debug && make debug" if using debug mode )
+for Linux, Mac and other UNIX users, or:
+
+nmake /f WINmakefile
+
+for Windows users (add DEBUG=1 if using debug mode).
 
 Once it compiles you should be able to run the classifier against the included Iris dataset.
 
 type
 
- ./experiment .
+./experiment .
 
+for Linux, Mac and other UNIX systems, or:
+
+experiment .
+
+for Windows systems.
 
 This is how it works roughly.
 The experiment (experiment.cu) controls the experiment at a high level. It mostly does this by instructing the classifier (Schmuker2014_classifier.cu) which does the grunt work.

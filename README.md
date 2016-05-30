@@ -15,64 +15,61 @@ http://genn-team.github.io/genn/documentation/html/d8/d99/Installation.html
 
 1. Download and unpack GeNN.zip to a convenient location, then download
     and install the Microsoft Visual C++ compiler and IDE from:
-    http://www.visualstudio.com/en-us/downloads then download and
-    install the Nvidia CUDA toolkit from:
-    https://developer.nvidia.com/cuda-downloads
+    http://www.visualstudio.com/en-us/downloads. Be sure to click custom
+    install and select all the Visual C++ tools when installing Visual Studio.
+    Then download and install a compatible version of the Nvidia CUDA toolkit
+    from: https://developer.nvidia.com/cuda-downloads. Note that the latest
+    version of Visual Studio is not necessarily compatible with the latest
+    version of the CUDA toolkit.
 
 2. Ensure that the "CUDA\_PATH" environment variable is defined, and
     points to the location of the Nvidia CUDA toolkit installation, by
-    using: `ECHO %CUDA\_PATH%` 
-    This variable is usully set during most
+    using: `ECHO %CUDA_PATH%` This variable is usully set during most
     CUDA installations on Windows systems. if not, correct this using:
-    `SETX CUDA\_PATH "[drive]\Program Files\NVIDIA GPU Computing
-    Toolkit\CUDA[version]"`
+    `SETX CUDA_PATH "[drive]\Program Files\NVIDIA GPU Computing
+    Toolkit\CUDA[version]"`.
 
 3. Define the environment variable "GENN\_PATH" to point to the
     directory in which GeNN was located. For example, use: 
-    `SETX GENN\_PATH "\path\to\genn"`
+    `SETX GENN_PATH "\path\to\genn"`.
 
 4. Add "%GENN\_PATH%\lib\bin" to your %PATH% variable. For example,
-    use: 
-    `SETX PATH "%GENN\_PATH%\lib\bin;%PATH%"`
+    use: `SETX PATH "%GENN_PATH%\lib\bin;%PATH%"`.
 
-5. Define VC\_PATH as the path to your most recent Visual Studio
-    installation, e.g. `setx VC\_PATH "C:\Program Files
-    (x86)\Microsoft Visual Studio 10.0"`
+5. To access a developer command prompt, use the shortcut link in:
+    start menu -\> all programs -\> Microsoft Visual Studio
+    -\> Visual Studio Tools -\> Native Tools Command Prompt
+    which will launch an instance of cmd.exe with a build environment
+    already set up. Alternatively, from any cmd console window, run the
+    vscvsrsall.bat script under the Visual C++ directory before
+    compiling any projects.
 
-Alternatively you can do one of the following:
-
-i.  Run the vscvsrsall.bat script under Visual C++ directory before
-    projects are compiled and run in a given cmd.exe terminal window.
-
-ii. Alternatively, one can use the shortcut link in: start menu -\> all
-    programs -\> Microsoft Visual Studio -\> Visual Studio Tools -\>
-    Visual Studio Command Prompt which will launch an instance of
-    cmd.exe in which the vcvarsall.bat compiler setup script has already
-    been executed.
-
-This completes the installation.
+This completes the installation. Note that the command window must be
+restarted to initialise the variables set using the `SETX` command.
 
 ###LINUX / MAC INSTALL
 
 (1) Unpack GeNN.zip in a convenient location, then download and install
-    the Nvidia CUDA toolkit from:
+    a compatible version of the Nvidia CUDA toolkit from:
     https://developer.nvidia.com/cuda-downloads and install the GNU GCC
     compiler collection and GNU Make build environment if it is not
-    already present on the system.
+    already present on the system. Note that the latest versions of GCC
+    / Clang / Linux are not necessarily compatible with the latest
+    version of the CUDA toolkit.
 
 (2) Set the environment variable "CUDA\_PATH" to the location of your
     Nvidia CUDA toolkit installation. For example, if your CUDA toolkit
     was installed to "/usr/local/cuda", you can use: 
-    `echo "export CUDA\_PATH=/usr/local/cuda" \>\> \~/.bash\_profile`
+    `echo "export CUDA_PATH=/usr/local/cuda" >> ~/.bash_profile`
 
 (3) Set the environment variable "GENN\_PATH" to point to the extracted
     GeNN directory. For example, if you extracted GeNN to
     "/home/me/genn", then you can use: 
-    `echo "export GENN\_PATH=/home/me/genn" \>\> \~/.bash\_profile`
+    `echo "export GENN_PATH=/home/me/genn" >> ~/.bash_profile`
 
 (4) Add "$GENN_PATH/lib/bin" to your $PATH variable. For example, you
     can use: 
-    `echo "export PATH=$PATH:$GENN\_PATH/lib/bin" \>\> \~/.bash\_profile`
+    `echo "export PATH=$PATH:$GENN_PATH/lib/bin" >> ~/.bash_profile`
 
 This completes the installation.
 
@@ -122,8 +119,7 @@ a)  The model in question is defined in a file, say "Model1.cc".
 
 b)  this file needs to
 
-- define `DT`
-- include `modelSpec.h` and `modelSpec.cc`
+- include `modelSpec.h`
 - contains the model's definition in the form of a function 
     `void modelDefinition(NNmodel &model)` 
     ("MBody1.cc") shows a typical example)
@@ -163,4 +159,3 @@ If you use GeNN in your work, please cite
 [@Schmukeretal2014]: http://dx.doi.org/10.1073/pnas.1303053111 "Schmuker, M., Pfeil, T. and Nawrot, M.P. A neuromorphic network for generic multivariate data classification. Proceedings of the National Academy of Sciences, 111(6), pp.2081-2086 (2014)"
 
 [@Yavuzetal2016]: http://dx.doi.org/10.1038%2Fsrep18854 "Yavuz, E., Turner, J. and Nowotny, T. GeNN: a code generation framework for accelerated brain simulations. Scientific reports, 6. (2016)"
-

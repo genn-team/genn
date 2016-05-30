@@ -1,6 +1,6 @@
 
-  Locust olfactory system (Nowotny et al. 2005)
-  =============================================
+Locust olfactory system (Nowotny et al. 2005)
+=============================================
 
 A variation of the \ref ex_mbody example using synaptic delays.
 In this example, the Kenyon Cell-Decision Neuron synapses are
@@ -13,16 +13,20 @@ which also prepares additional synapse connectivity and input
 pattern data, before compiling and executing the model.
 
 To compile it, navigate to genn/userproject/MBody_delayedSyn_project and type:
-  nmake /f WINmakefile
+
+nmake /f WINmakefile
+
 for Windows users, or:
-  make
+
+make
+
 for Linux, Mac and other UNIX users. 
 
 
-  USAGE
-  -----
+USAGE
+-----
 
-  ./generate_run <0(CPU)/1(GPU)/n(GPU n-2)> <nAL> <nKC> <nLH> <nDN> <gScale> <DIR> <MODEL> 
+generate_run <0(CPU)/1(GPU)/n(GPU n-2)> <nAL> <nKC> <nLH> <nDN> <gScale> <DIR> <MODEL> 
 
 Mandatory parameters:
 CPU/GPU: Choose whether to run the simulation on CPU (`0`), auto GPU (`1`), or GPU (n-2) (`n`).
@@ -42,7 +46,13 @@ CPU_ONLY=0 or CPU_ONLY=1 (default 0): Whether to compile in (CUDA independent) "
 
 An example invocation of generate_run is:
 
-  ./generate_run 1 100 1000 20 100 0.0025 outname MBody_delayedSyn
+generate_run.exe 1 100 1000 20 100 0.0025 outname MBody_delayedSyn
+
+for Windows users, or:
+
+./generate_run 1 100 1000 20 100 0.0025 outname MBody_delayedSyn
+
+for Linux, Mac and other UNIX users. 
 
 Such a command would generate a locust olfaction model with 100
 antennal lobe neurons, 1000 mushroom body Kenyon cells, 20 lateral
@@ -62,11 +72,18 @@ c) compile the generated code by invoking "make clean && make"
    running the code, e.g. "./classol_sim r1 1".
 
 Another example of an invocation would be: 
-  ./generate_run 0 100 1000 20 100 0.0025 outname MBody_delayedSyn FTYPE=DOUBLE CPU_ONLY=1
+
+generate_run.exe 0 100 1000 20 100 0.0025 outname MBody_delayedSyn FTYPE=DOUBLE CPU_ONLY=1
+
+for Windows users, or:
+
+./generate_run 0 100 1000 20 100 0.0025 outname MBody_delayedSyn FTYPE=DOUBLE CPU_ONLY=1
+
+for Linux, Mac and other UNIX users. 
 
 
-  MODEL INFORMATION
-  -----------------
+MODEL INFORMATION
+-----------------
 
 For information regarding the locust olfaction model implemented in this example project, see:
 
