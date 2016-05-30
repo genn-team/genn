@@ -46,10 +46,12 @@ else
 endif
 ifdef DEBUG
     CXXFLAGS            +=-g -O0 -DDEBUG
+else
+    CXXFLAGS            +=-O3
 endif
+ARFLAGS                 :=-rcs
 
 # Global include and link flags
-ARFLAGS                 :=-rcs
 ifndef CPU_ONLY
     INCLUDE_FLAGS       :=-I"$(INC_PATH)" -I"$(CUDA_PATH)/include"
     ifeq ($(DARWIN),DARWIN)

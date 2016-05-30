@@ -36,6 +36,8 @@ CXXFLAGS                =/nologo /EHsc /DCPU_ONLY
 !ENDIF
 !IFDEF DEBUG
 CXXFLAGS                =$(CXXFLAGS) /debug /Zi /Od /DDEBUG
+!ELSE
+CXXFLAGS                =$(CXXFLAGS) /02
 !ENDIF
 
 # Global include and link flags

@@ -43,7 +43,7 @@ else
     CXXFLAGS            +=-std=c++0x -DCPU_ONLY
 endif
 ifdef DEBUG
-    CXXFLAGS            +=-g
+    CXXFLAGS            +=-g -O0 -DDEBUG
 else
     CXXFLAGS            +=$(OPTIMIZATIONFLAGS)
 endif
