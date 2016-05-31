@@ -40,9 +40,9 @@ ifeq ($(DARWIN),DARWIN)
     CXX                 :=clang++
 endif
 ifndef CPU_ONLY
-    CXXFLAGS            :=-std=c++0x -MMD -MP -DNVCC=\"$(NVCC)\"
+    CXXFLAGS            :=-std=c++11 -MMD -MP -DNVCC=\"$(NVCC)\"
 else
-    CXXFLAGS            :=-std=c++0x -MMD -MP -DCPU_ONLY
+    CXXFLAGS            :=-std=c++11 -MMD -MP -DCPU_ONLY
 endif
 ifdef DEBUG
     CXXFLAGS            +=-g -O0 -DDEBUG
@@ -70,38 +70,29 @@ else
 endif
 
 # generateALL and libgenn.a object targets
-GENERATE_OBJ            :=$(addprefix $(OBJ_PATH)/,generateALL.o generateRunner.o generateCPU.o generateKernels.o)
+GENERATEALL_OBJ         :=$(addprefix $(OUT_PATH)/,generateALL.o generateRunner.o generateCPU.o generateKernels.o)
 LIBGENN_OBJ             :=$(addprefix $(OBJ_PATH)/,global.o modelSpec.o neuronModels.o synapseModels.o postSynapseModels.o utils.o stringUtils.o sparseUtils.o hr_time.o)
 
 
 # Target rules
-.PHONY: all clean always-compile
+.PHONY: all clean clean_generateall clean_libgenn
 
-all: $(OBJ_PATH) $(LIB_PATH) $(OUT_PATH)/generateALL
-
-$(OUT_PATH)/generateALL: always-compile $(GENERATE_OBJ) $(LIB_PATH)/libgenn.a
-	$(CXX) $(CXXFLAGS) -o $@ $(GENERATE_OBJ) $(LINK_FLAGS)
-
-$(OBJ_PATH)/generateALL.o: always-compile
-	$(CXX) $(CXXFLAGS) -c -o $@ $(SRC_PATH)/generateALL.cc $(INCLUDE_FLAGS) -include "$(MODEL)"
-
-$(OBJ_PATH)/generateRunner.o: always-compile
-	$(CXX) $(CXXFLAGS) -c -o $@ $(SRC_PATH)/generateRunner.cc $(INCLUDE_FLAGS)
-
-$(OBJ_PATH)/generateCPU.o: always-compile
-	$(CXX) $(CXXFLAGS) -c -o $@ $(SRC_PATH)/generateCPU.cc $(INCLUDE_FLAGS)
-
-$(OBJ_PATH)/generateKernels.o: always-compile
-	$(CXX) $(CXXFLAGS) -c -o $@ $(SRC_PATH)/generateKernels.cc $(INCLUDE_FLAGS)
-
-$(LIB_PATH)/libgenn.a: $(LIBGENN_OBJ)
-	$(AR) $(ARFLAGS) $@ $(LIBGENN_OBJ)
+all: $(OUT_PATH)/generateALL
 
 $(OBJ_PATH)/%.o: $(SRC_PATH)/%.cc
 	$(CXX) $(CXXFLAGS) -c -o $@ $< $(INCLUDE_FLAGS)
 
-$(OBJ_PATH)/%.o: $(SRC_PATH)/%.cpp
+$(OUT_PATH)/%.o: $(SRC_PATH)/%.cc
 	$(CXX) $(CXXFLAGS) -c -o $@ $< $(INCLUDE_FLAGS)
+
+$(LIB_PATH)/libgenn.a: $(OBJ_PATH) $(LIB_PATH) $(LIBGENN_OBJ)
+	$(AR) $(ARFLAGS) $@ $(LIBGENN_OBJ)
+
+$(OUT_PATH)/generateALL: $(GENERATEALL_OBJ) $(LIB_PATH)/libgenn.a
+	$(CXX) $(CXXFLAGS) -o $@ $(GENERATEALL_OBJ) $(LINK_FLAGS)
+
+$(OUT_PATH)/generateALL.o:
+	$(CXX) $(CXXFLAGS) -c -o $@ $(SRC_PATH)/generateALL.cc $(INCLUDE_FLAGS) -include "$(MODEL)"
 
 $(OBJ_PATH):
 	mkdir -p $@
@@ -109,13 +100,12 @@ $(OBJ_PATH):
 $(LIB_PATH):
 	mkdir -p $@
 
-clean:
-	rm -rf $(OUT_PATH)/generateALL $(OBJ_PATH) $(LIB_PATH)
+clean: clean_generateall clean_libgenn
 
 clean_generateall:
-	rm -f $(OUT_PATH)/generateALL $(GENERATEALL_OBJ)
+	rm -f $(OUT_PATH)/generateALL $(GENERATEALL_OBJ) $(patsubst %.o,%.d,$(GENERATEALL_OBJ))
 
 clean_libgenn:
-	rm -f $(LIB_PATH)/libgenn.a $(LIBGENN_OBJ)
+	rm -rf $(OBJ_PATH) $(LIB_PATH)
 
--include $(patsubst %.o,%.d,$(GENERATE_OBJ) $(LIBGENN_OBJ))
+-include $(patsubst %.o,%.d,$(GENERATEALL_OBJ) $(LIBGENN_OBJ))

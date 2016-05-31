@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-/*! \file hr_time.cpp
+/*! \file hr_time.cc
 
   \brief This  file contains the implementation of the CStopWatch class that provides a simple timing tool based on the system clock.
 */
