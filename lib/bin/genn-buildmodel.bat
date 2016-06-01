@@ -55,7 +55,7 @@ if not defined MODEL (
     goto :eof
 )
 for /f %%I in ("%-o%") do set "-o=%%~fI"
-for /f %%I in ("%MODEL%") do set "MACROS=MODEL=%%~fI OUT_PATH=%-o%"
+for /f %%I in ("%MODEL%") do set "MACROS=MODEL=%%~fI GENERATEALL_PATH=%-o%"
 if defined -c set "MACROS=%MACROS% CPU_ONLY=1"
 if defined -d set "MACROS=%MACROS% DEBUG=1"
 

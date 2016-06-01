@@ -17,95 +17,113 @@
 #-----------------------------------------------------------------
 
 # OS name (Linux or Darwin) and architecture (32 bit or 64 bit)
-OS_SIZE                 :=$(shell uname -m | sed -e "s/i.86/32/" -e "s/x86_64/64/" -e "s/armv7l/32/")
-OS_UPPER                :=$(shell uname -s 2>/dev/null | tr [:lower:] [:upper:])
-OS_LOWER                :=$(shell uname -s 2>/dev/null | tr [:upper:] [:lower:])
-DARWIN                  :=$(strip $(findstring DARWIN,$(OS_UPPER)))
+OS_SIZE                  :=$(shell uname -m | sed -e "s/i.86/32/" -e "s/x86_64/64/" -e "s/armv7l/32/")
+OS_UPPER                 :=$(shell uname -s 2>/dev/null | tr [:lower:] [:upper:])
+OS_LOWER                 :=$(shell uname -s 2>/dev/null | tr [:upper:] [:lower:])
+DARWIN                   :=$(strip $(findstring DARWIN,$(OS_UPPER)))
 
 # Source, Include, Object and Library directories
-SRC_PATH                :=$(GENN_PATH)/lib/src
-INC_PATH                :=$(GENN_PATH)/lib/include
-OBJ_PATH                :=$(GENN_PATH)/lib/obj
-LIB_PATH                :=$(GENN_PATH)/lib/lib
-OUT_PATH                :=$(CURDIR)
+SRC_PATH                 :=$(GENN_PATH)/lib/src
+INC_PATH                 :=$(GENN_PATH)/lib/include
+GENERATEALL_PATH         :=$(CURDIR)
+LIBGENN_PATH             :=$(GENN_PATH)/lib/lib
+ifndef CPU_ONLY
+    GENERATEALL_OBJ_PATH :=$(GENERATEALL_PATH)/obj
+    LIBGENN_OBJ_PATH     :=$(GENN_PATH)/lib/obj
+else
+    GENERATEALL_OBJ_PATH :=$(GENERATEALL_PATH)/obj_CPU_ONLY
+    LIBGENN_OBJ_PATH     :=$(GENN_PATH)/lib/obj_CPU_ONLY
+endif
+
+# generateALL and libgenn.a targets
+ifndef CPU_ONLY
+    GENERATEALL          :=$(GENERATEALL_PATH)/generateALL
+    LIBGENN              :=$(LIBGENN_PATH)/libgenn.a
+else
+    GENERATEALL          :=$(GENERATEALL_PATH)/generateALL_CPU_ONLY
+    LIBGENN              :=$(LIBGENN_PATH)/libgenn_CPU_ONLY.a
+endif
+GENERATEALL_OBJ          :=generateALL.o generateRunner.o generateCPU.o generateKernels.o
+GENERATEALL_OBJ          :=$(addprefix $(GENERATEALL_OBJ_PATH)/,$(GENERATEALL_OBJ))
+LIBGENN_OBJ              :=global.o modelSpec.o neuronModels.o synapseModels.o postSynapseModels.o utils.o stringUtils.o sparseUtils.o hr_time.o
+LIBGENN_OBJ              :=$(addprefix $(LIBGENN_OBJ_PATH)/,$(LIBGENN_OBJ))
 
 # Global CUDA compiler settings
 ifndef CPU_ONLY
-    CUDA_PATH           ?=/usr/local/cuda
-    NVCC                :="$(CUDA_PATH)/bin/nvcc"
+    CUDA_PATH            ?=/usr/local/cuda
+    NVCC                 :="$(CUDA_PATH)/bin/nvcc"
 endif
 
 # Global C++ compiler settings
 ifeq ($(DARWIN),DARWIN)
-    CXX                 :=clang++
+    CXX                  :=clang++
 endif
 ifndef CPU_ONLY
-    CXXFLAGS            :=-std=c++11 -MMD -MP -DNVCC=\"$(NVCC)\"
+    CXXFLAGS             :=-std=c++11 -MMD -MP -DNVCC=\"$(NVCC)\"
 else
-    CXXFLAGS            :=-std=c++11 -MMD -MP -DCPU_ONLY
+    CXXFLAGS             :=-std=c++11 -MMD -MP -DCPU_ONLY
 endif
 ifdef DEBUG
-    CXXFLAGS            +=-g -O0 -DDEBUG
+    CXXFLAGS             +=-g -O0 -DDEBUG
 endif
-ARFLAGS                 :=-rcs
+ARFLAGS                  :=-rcs
 
 # Global include and link flags
 ifndef CPU_ONLY
-    INCLUDE_FLAGS       :=-I"$(INC_PATH)" -I"$(CUDA_PATH)/include"
+    INCLUDE_FLAGS        :=-I"$(INC_PATH)" -I"$(CUDA_PATH)/include"
     ifeq ($(DARWIN),DARWIN)
-        LINK_FLAGS      :=-L"$(LIB_PATH)" -L"$(CUDA_PATH)/lib" -lgenn -lcuda -lcudart -lstdc++ -lc++
+        LINK_FLAGS       :=-L"$(LIBGENN_PATH)" -L"$(CUDA_PATH)/lib" -lgenn -lcuda -lcudart -lstdc++ -lc++
     else
         ifeq ($(OS_SIZE),32)
-            LINK_FLAGS  :=-L"$(LIB_PATH)" -L"$(CUDA_PATH)/lib" -lgenn -lcuda -lcudart
+            LINK_FLAGS   :=-L"$(LIBGENN_PATH)" -L"$(CUDA_PATH)/lib" -lgenn -lcuda -lcudart
         else
-            LINK_FLAGS  :=-L"$(LIB_PATH)" -L"$(CUDA_PATH)/lib64" -lgenn -lcuda -lcudart
+            LINK_FLAGS   :=-L"$(LIBGENN_PATH)" -L"$(CUDA_PATH)/lib64" -lgenn -lcuda -lcudart
         endif
     endif
 else
-    INCLUDE_FLAGS       :=-I"$(INC_PATH)"
-    LINK_FLAGS          :=-L"$(LIB_PATH)" -lgenn
+    INCLUDE_FLAGS        :=-I"$(INC_PATH)"
+    LINK_FLAGS           :=-L"$(LIBGENN_PATH)" -lgenn_CPU_ONLY
     ifeq ($(DARWIN),DARWIN)
-        LINK_FLAGS      :=-L"$(LIB_PATH)" -lgenn -lstdc++ -lc++
+        LINK_FLAGS       :=-L"$(LIBGENN_PATH)" -lgenn_CPU_ONLY -lstdc++ -lc++
     endif
 endif
-
-# generateALL and libgenn.a object targets
-GENERATEALL_OBJ         :=$(addprefix $(OUT_PATH)/,generateALL.o generateRunner.o generateCPU.o generateKernels.o)
-LIBGENN_OBJ             :=$(addprefix $(OBJ_PATH)/,global.o modelSpec.o neuronModels.o synapseModels.o postSynapseModels.o utils.o stringUtils.o sparseUtils.o hr_time.o)
 
 
 # Target rules
 .PHONY: all clean clean_generateall clean_libgenn
 
-all: $(OUT_PATH)/generateALL
+all: $(GENERATEALL)
 
-$(OBJ_PATH)/%.o: $(SRC_PATH)/%.cc
-	$(CXX) $(CXXFLAGS) -c -o $@ $< $(INCLUDE_FLAGS)
-
-$(OUT_PATH)/%.o: $(SRC_PATH)/%.cc
-	$(CXX) $(CXXFLAGS) -c -o $@ $< $(INCLUDE_FLAGS)
-
-$(LIB_PATH)/libgenn.a: $(OBJ_PATH) $(LIB_PATH) $(LIBGENN_OBJ)
-	$(AR) $(ARFLAGS) $@ $(LIBGENN_OBJ)
-
-$(OUT_PATH)/generateALL: $(GENERATEALL_OBJ) $(LIB_PATH)/libgenn.a
+$(GENERATEALL): $(GENERATEALL_OBJ_PATH) $(GENERATEALL_OBJ) $(LIBGENN)
 	$(CXX) $(CXXFLAGS) -o $@ $(GENERATEALL_OBJ) $(LINK_FLAGS)
 
-$(OUT_PATH)/generateALL.o:
-	$(CXX) $(CXXFLAGS) -c -o $@ $(SRC_PATH)/generateALL.cc $(INCLUDE_FLAGS) -include "$(MODEL)"
+$(GENERATEALL_OBJ_PATH)/generateALL.o: $(MODEL)
+	$(CXX) $(CXXFLAGS) -c -o $@ $(SRC_PATH)/generateALL.cc $(INCLUDE_FLAGS) -include $<
 
-$(OBJ_PATH):
+$(GENERATEALL_OBJ_PATH)/%.o: $(SRC_PATH)/%.cc
+	$(CXX) $(CXXFLAGS) -c -o $@ $< $(INCLUDE_FLAGS)
+
+$(LIBGENN): $(LIBGENN_OBJ_PATH) $(LIBGENN_OBJ) $(LIBGENN_PATH)
+	$(AR) $(ARFLAGS) $@ $(LIBGENN_OBJ)
+
+$(LIBGENN_OBJ_PATH)/%.o: $(SRC_PATH)/%.cc
+	$(CXX) $(CXXFLAGS) -c -o $@ $< $(INCLUDE_FLAGS)
+
+$(GENERATEALL_OBJ_PATH):
 	mkdir -p $@
 
-$(LIB_PATH):
+$(LIBGENN_OBJ_PATH):
+	mkdir -p $@
+
+$(LIBGENN_PATH):
 	mkdir -p $@
 
 clean: clean_generateall clean_libgenn
 
 clean_generateall:
-	rm -f $(OUT_PATH)/generateALL $(GENERATEALL_OBJ) $(patsubst %.o,%.d,$(GENERATEALL_OBJ))
+	rm -rf $(GENERATEALL_OBJ_PATH) $(GENERATEALL)
 
 clean_libgenn:
-	rm -rf $(OBJ_PATH) $(LIB_PATH)
+	rm -rf $(LIBGENN_OBJ_PATH) $(LIBGENN_PATH)
 
 -include $(patsubst %.o,%.d,$(GENERATEALL_OBJ) $(LIBGENN_OBJ))
