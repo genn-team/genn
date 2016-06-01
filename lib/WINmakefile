@@ -72,13 +72,13 @@ LINK_FLAGS               ="$(LIBGENN_PATH)\genn_CPU_ONLY.lib"
 # Target rules
 all: $(GENERATEALL)
 
-$(GENERATEALL): $(GENERATEALL_OBJ_PATH) $(GENERATEALL_OBJ) $(LIBGENN)
+$(GENERATEALL): $(GENERATEALL_OBJ_PATH) $(GENERATEALL_OBJ) $(LIBGENN) always-compile
 	$(CXX) $(CXXFLAGS) /Fe$@ $(GENERATEALL_OBJ) $(LINK_FLAGS)
 
-$(GENERATEALL_OBJ_PATH)\generateALL.obj: $(MODEL)
+$(GENERATEALL_OBJ_PATH)\generateALL.obj: always-compile
 	$(CXX) $(CXXFLAGS) /c /Fo$@ $(SRC_PATH)\generateALL.cc $(INCLUDE_FLAGS) /FI$(MODEL)
 
-{$(SRC_PATH)}.cc{$(GENERATEALL_OBJ_PATH)}.obj:
+{$(SRC_PATH)}.cc{$(GENERATEALL_OBJ_PATH)}.obj: always-compile
 	$(CXX) $(CXXFLAGS) /c /Fo$@ %s $(INCLUDE_FLAGS)
 
 $(LIBGENN): $(LIBGENN_OBJ_PATH) $(LIBGENN_OBJ) $(LIBGENN_PATH)
@@ -104,3 +104,5 @@ clean_generateall:
 
 clean_libgenn:
 	-rd /s /q $(LIBGENN_OBJ_PATH) $(LIBGENN_PATH) 2>nul
+
+always-compile:

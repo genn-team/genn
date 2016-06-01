@@ -90,17 +90,17 @@ endif
 
 
 # Target rules
-.PHONY: all clean clean_generateall clean_libgenn
+.PHONY: all clean clean_generateall clean_libgenn always-compile
 
 all: $(GENERATEALL)
 
-$(GENERATEALL): $(GENERATEALL_OBJ_PATH) $(GENERATEALL_OBJ) $(LIBGENN)
+$(GENERATEALL): $(GENERATEALL_OBJ_PATH) $(GENERATEALL_OBJ) $(LIBGENN) always-compile
 	$(CXX) $(CXXFLAGS) -o $@ $(GENERATEALL_OBJ) $(LINK_FLAGS)
 
-$(GENERATEALL_OBJ_PATH)/generateALL.o: $(MODEL)
-	$(CXX) $(CXXFLAGS) -c -o $@ $(SRC_PATH)/generateALL.cc $(INCLUDE_FLAGS) -include $<
+$(GENERATEALL_OBJ_PATH)/generateALL.o: always-compile
+	$(CXX) $(CXXFLAGS) -c -o $@ $(SRC_PATH)/generateALL.cc $(INCLUDE_FLAGS) -include $(MODEL)
 
-$(GENERATEALL_OBJ_PATH)/%.o: $(SRC_PATH)/%.cc
+$(GENERATEALL_OBJ_PATH)/%.o: $(SRC_PATH)/%.cc always-compile
 	$(CXX) $(CXXFLAGS) -c -o $@ $< $(INCLUDE_FLAGS)
 
 $(LIBGENN): $(LIBGENN_OBJ_PATH) $(LIBGENN_OBJ) $(LIBGENN_PATH)
