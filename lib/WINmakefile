@@ -22,50 +22,50 @@ INC_PATH                 =$(GENN_PATH)\lib\include
 GENERATEALL_PATH         =$(MAKEDIR)
 LIBGENN_PATH             =$(GENN_PATH)\lib\lib
 !IFNDEF CPU_ONLY
-    GENERATEALL_OBJ_PATH =$(GENERATEALL_PATH)\obj
-    LIBGENN_OBJ_PATH     =$(GENN_PATH)\lib\obj
+GENERATEALL_OBJ_PATH     =$(GENERATEALL_PATH)\obj
+LIBGENN_OBJ_PATH         =$(GENN_PATH)\lib\obj
 !ELSE
-    GENERATEALL_OBJ_PATH =$(GENERATEALL_PATH)\obj_CPU_ONLY
-    LIBGENN_OBJ_PATH     =$(GENN_PATH)\lib\obj_CPU_ONLY
+GENERATEALL_OBJ_PATH     =$(GENERATEALL_PATH)\obj_CPU_ONLY
+LIBGENN_OBJ_PATH         =$(GENN_PATH)\lib\obj_CPU_ONLY
 !ENDIF
 
 # generateALL.exe and genn.lib targets
 !IFNDEF CPU_ONLY
-    GENERATEALL          =$(GENERATEALL_PATH)\generateALL.exe
-    LIBGENN              =$(LIBGENN_PATH)\genn.lib
+GENERATEALL              =$(GENERATEALL_PATH)\generateALL.exe
+LIBGENN                  =$(LIBGENN_PATH)\genn.lib
 !ELSE
-    GENERATEALL          =$(GENERATEALL_PATH)\generateALL_CPU_ONLY.exe
-    LIBGENN              =$(LIBGENN_PATH)\genn_CPU_ONLY.lib
+GENERATEALL              =$(GENERATEALL_PATH)\generateALL_CPU_ONLY.exe
+LIBGENN                  =$(LIBGENN_PATH)\genn_CPU_ONLY.lib
 !ENDIF
 GENERATEALL_OBJ          =$(GENERATEALL_OBJ_PATH)\generateALL.obj $(GENERATEALL_OBJ_PATH)\generateRunner.obj $(GENERATEALL_OBJ_PATH)\generateCPU.obj $(GENERATEALL_OBJ_PATH)\generateKernels.obj
 LIBGENN_OBJ              =$(LIBGENN_OBJ_PATH)\global.obj $(LIBGENN_OBJ_PATH)\modelSpec.obj $(LIBGENN_OBJ_PATH)\neuronModels.obj $(LIBGENN_OBJ_PATH)\synapseModels.obj $(LIBGENN_OBJ_PATH)\postSynapseModels.obj $(LIBGENN_OBJ_PATH)\utils.obj $(LIBGENN_OBJ_PATH)\stringUtils.obj $(LIBGENN_OBJ_PATH)\sparseUtils.obj $(LIBGENN_OBJ_PATH)\hr_time.obj
 
 # Global CUDA compiler settings
 !IFNDEF CPU_ONLY
-    NVCC                 ="$(CUDA_PATH)\bin\nvcc.exe"
+NVCC                     ="$(CUDA_PATH)\bin\nvcc.exe"
 !ENDIF
 
 # Global C++ compiler settings
 !IFNDEF CPU_ONLY
-    CXXFLAGS             =/nologo /EHsc /DNVCC=\"$(NVCC:\=/)\"
+CXXFLAGS                 =/nologo /EHsc /DNVCC=\"$(NVCC:\=/)\"
 !ELSE
-    CXXFLAGS             =/nologo /EHsc /DCPU_ONLY
+CXXFLAGS                 =/nologo /EHsc /DCPU_ONLY
 !ENDIF
 !IFDEF DEBUG
-    CXXFLAGS             =$(CXXFLAGS) /debug /Zi /Od /DDEBUG
+CXXFLAGS                 =$(CXXFLAGS) /debug /Zi /Od /DDEBUG
 !ENDIF
 
 # Global include and link flags
 !IFNDEF CPU_ONLY
-    INCLUDE_FLAGS        =/I"$(INC_PATH)" /I"$(CUDA_PATH)\include"
-!   IF "$(PROCESSOR_ARCHITECTURE)" == "AMD64" || "$(PROCESSOR_ARCHITEW6432)" == "AMD64"
-        LINK_FLAGS       ="$(LIBGENN_PATH)\genn.lib" "$(CUDA_PATH)\lib\x64\cudart.lib" "$(CUDA_PATH)\lib\x64\cuda.lib"
-!   ELSE
-        LINK_FLAGS       ="$(LIBGENN_PATH)\genn.lib" "$(CUDA_PATH)\lib\Win32\cudart.lib" "$(CUDA_PATH)\lib\Win32\cuda.lib"
-!   ENDIF
+INCLUDE_FLAGS            =/I"$(INC_PATH)" /I"$(CUDA_PATH)\include"
+!IF "$(PROCESSOR_ARCHITECTURE)" == "AMD64" || "$(PROCESSOR_ARCHITEW6432)" == "AMD64"
+LINK_FLAGS               ="$(LIBGENN_PATH)\genn.lib" "$(CUDA_PATH)\lib\x64\cudart.lib" "$(CUDA_PATH)\lib\x64\cuda.lib"
 !ELSE
-    INCLUDE_FLAGS        =/I"$(INC_PATH)"
-    LINK_FLAGS           ="$(LIBGENN_PATH)\genn_CPU_ONLY.lib"
+LINK_FLAGS               ="$(LIBGENN_PATH)\genn.lib" "$(CUDA_PATH)\lib\Win32\cudart.lib" "$(CUDA_PATH)\lib\Win32\cuda.lib"
+!ENDIF
+!ELSE
+INCLUDE_FLAGS            =/I"$(INC_PATH)"
+LINK_FLAGS               ="$(LIBGENN_PATH)\genn_CPU_ONLY.lib"
 !ENDIF
 
 
@@ -76,7 +76,7 @@ $(GENERATEALL): $(GENERATEALL_OBJ_PATH) $(GENERATEALL_OBJ) $(LIBGENN)
 	$(CXX) $(CXXFLAGS) /Fe$@ $(GENERATEALL_OBJ) $(LINK_FLAGS)
 
 $(GENERATEALL_OBJ_PATH)\generateALL.obj: $(MODEL)
-	$(CXX) $(CXXFLAGS) /c /Fo$@ $(SRC_PATH)\generateALL.cc $(INCLUDE_FLAGS) /FI%s
+	$(CXX) $(CXXFLAGS) /c /Fo$@ $(SRC_PATH)\generateALL.cc $(INCLUDE_FLAGS) /FI$(MODEL)
 
 {$(SRC_PATH)}.cc{$(GENERATEALL_OBJ_PATH)}.obj:
 	$(CXX) $(CXXFLAGS) /c /Fo$@ %s $(INCLUDE_FLAGS)
