@@ -52,15 +52,22 @@ popd > /dev/null
 pushd $(dirname $MODEL) > /dev/null
 MACROS="MODEL=$PWD/$(basename $MODEL) GENERATEALL_PATH=$OUT_PATH"
 popd > /dev/null
-if [[ -n "$DEBUG" ]]; then MACROS="$MACROS DEBUG=1"; fi
-if [[ -n "$CPU_ONLY" ]]; then MACROS="$MACROS CPU_ONLY=1"; fi
+if [[ -n "$DEBUG" ]]; then
+    MACROS="$MACROS DEBUG=1";
+fi
+if [[ -n "$CPU_ONLY" ]]; then
+    MACROS="$MACROS CPU_ONLY=1";
+    GENERATEALL=./generateALL_CPU_ONLY
+else
+    GENERATEALL=./generateALL
+fi
 
 # generate model code
 make -f "$GENN_PATH/lib/GNUmakefile" $MACROS
 if [[ -n "$DEBUG" ]]; then
-    gdb -tui --args ./generateALL "$OUT_PATH"
+    gdb -tui --args "$GENERATEALL" "$OUT_PATH"
 else
-    ./generateALL "$OUT_PATH"
+    "$GENERATEALL" "$OUT_PATH"
 fi
 
 echo "model build complete"

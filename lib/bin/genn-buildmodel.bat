@@ -56,15 +56,22 @@ if not defined MODEL (
 )
 for /f %%I in ("%-o%") do set "-o=%%~fI"
 for /f %%I in ("%MODEL%") do set "MACROS=MODEL=%%~fI GENERATEALL_PATH=%-o%"
-if defined -c set "MACROS=%MACROS% CPU_ONLY=1"
-if defined -d set "MACROS=%MACROS% DEBUG=1"
+if defined -d (
+    set "MACROS=%MACROS% DEBUG=1"
+)
+if defined -c (
+    set "MACROS=%MACROS% CPU_ONLY=1"
+    set GENERATEALL=.\generateALL_CPU_ONLY.exe
+) else (
+    set GENERATEALL=.\generateALL.exe
+)
 
 rem :: generate model code
 nmake /nologo /f "%GENN_PATH%\lib\WINmakefile" %MACROS%
 if defined -d (
-    devenv /debugexe .\generateALL.exe "%-o%"
+    devenv /debugexe "%GENERATEALL%" "%-o%"
 ) else (
-    .\generateALL.exe "%-o%"
+    "%GENERATEALL%" "%-o%"
 )
 
 echo model build complete
