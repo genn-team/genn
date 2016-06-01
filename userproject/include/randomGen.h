@@ -22,8 +22,8 @@
 #include <time.h>
 #include <limits.h>
 #include <stdlib.h>
-#include "isaac.hpp"
 #include <assert.h>
+#include "isaac.cc"
 
 //--------------------------------------------------------------------------
 /*! 
@@ -61,7 +61,5 @@ class stdRG
   double n();
   unsigned long nlong();
 };
-
-//#include "randomGen.cc"
 
 #endif

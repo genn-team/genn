@@ -10,9 +10,9 @@
    initial version: 2010-02-07
   
 --------------------------------------------------------------------------*/
-#define DT 1.0
+
 #include "modelSpec.h"
-#include "modelSpec.cc"
+#include "global.h"
 #include "sizes.h"
 
 double exIzh_p[5]={
@@ -47,13 +47,21 @@ double *postSynV = NULL;
 void modelDefinition(NNmodel &model) 
 {
   initGeNN();
+
+#ifdef DEBUG
+  GENN_PREFERENCES::debugCode = true;
+#else
+  GENN_PREFERENCES::optimizeCode = true;
+#endif // DEBUG
+
 #ifndef CPU_ONLY
-    model.setGPUDevice(0);
+  model.setGPUDevice(0);
 #endif
   model.setName("OneComp");
+  model.setDT(1.0);
   neuronModel n= nModels[IZHIKEVICH];
-  n.pNames.push_back(tS("I0"));
-  n.simCode= tS("    if ($(V) >= 30.0){\n\
+  n.pNames.push_back("I0");
+  n.simCode= "    if ($(V) >= 30.0){\n\
       $(V)=$(c);\n\
 		  $(U)+=$(d);\n\
     } \n\
@@ -62,8 +70,7 @@ void modelDefinition(NNmodel &model)
     $(U)+=$(a)*($(b)*$(V)-$(U))*DT;\n\
    //if ($(V) > 30.0){   //keep this only for visualisation -- not really necessaary otherwise \n	\
    //  $(V)=30.0; \n\
-   //}\n\
-   ");
+   //}\n";
   unsigned int MYIZHIKEVICH= nModels.size();
   nModels.push_back(n);
   model.addNeuronPopulation("Izh1", _NC1, MYIZHIKEVICH, exIzh_p, exIzh_ini);        	 

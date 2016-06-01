@@ -15,6 +15,8 @@
 #ifndef POISSONIZHMODEL_H 
 #define POISSONIZHMODEL_H
 
+#include <stdint.h>
+
 
 class classol
 {

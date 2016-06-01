@@ -20,13 +20,17 @@
 #include <string>
 #include <sstream>
 #include <fstream>
-#include <stdlib.h> 
+#include <cstdlib>
+#include <cstring>
 #include <time.h>
+
 #include "Schmuker2014_classifier.h"
-#include "Schmuker_2014_classifier_CODE/runner.cc"
+#include "Schmuker_2014_classifier_CODE/definitions.h"
+#include "stringUtils.h"
 #ifndef DEVICE_MEM_ALLOCATED_ON_DEVICE
-	#include "sparseUtils.cc"
+#include "sparseUtils.h"
 #endif
+
 
 //--------------------------------------------------------------------------
 

@@ -11,15 +11,16 @@
 ##
 ##--------------------------------------------------------------------------
 
-EXECUTABLE		:=Izh_sim_sparse
+EXECUTABLE         :=Izh_sim_sparse
+SOURCES            :=$(EXECUTABLE).cc
 ifndef CPU_ONLY
-    SOURCES 	:=$(EXECUTABLE).cu
-else
-    SOURCES 	:=$(EXECUTABLE)_cpu_only.cc
+    SOURCES        += $(GENN_PATH)/userproject/include/GeNNHelperKrnls.cu
 endif
-OPTIMIZATIONFLAGS	:=-O3
+OPTIMIZATIONFLAGS  :=-O3
 
 include	$(GENN_PATH)/userproject/include/makefile_common_gnu.mk
 
-$(EXECUTABLE)_cpu_only.cc: $(EXECUTABLE).cu
-	cp $(EXECUTABLE).cu $(EXECUTABLE)_cpu_only.cc
+$(GENN_PATH)/userproject/include/GeNNHelperKrnls.o: \
+ $(GENN_PATH)/userproject/include/GeNNHelperKrnls.cu \
+ $(GENN_PATH)/userproject/include/GeNNHelperKrnls.h
+	$(NVCC) $(NVCCFLAGS) $(INCLUDE_FLAGS) -c $< -o $@

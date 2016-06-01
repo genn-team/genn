@@ -12,7 +12,7 @@
 --------------------------------------------------------------------------*/
 
 //--------------------------------------------------------------------------
-/*! \file userproject/MBody_individualID_project/model/classol_sim.cu
+/*! \file userproject/MBody1_project/model/classol_sim.cc
 
 \brief Main entry point for the classol (CLASSification in OLfaction) model simulation. Provided as a part of the complete example of simulating the MBody1 mushroom body model. 
 */
@@ -34,7 +34,7 @@ int main(int argc, char *argv[])
     fprintf(stderr, "usage: classol_sim <basename> <CPU=0, GPU=1> \n");
     return 1;
   }
-  int which = atoi(argv[2]);
+  int which= atoi(argv[2]);
   string OutDir = toString(argv[1]) +"_output";
   string name;
   name= OutDir+ "/"+ toString(argv[1]) + toString(".time");
@@ -122,11 +122,11 @@ int main(int argc, char *argv[])
 #endif
 
   locust.generate_baserates();
-  if (which == GPU) {
 #ifndef CPU_ONLY
+  if (which == GPU) {
     locust.allocate_device_mem_patterns();
-#endif
   }
+#endif
   locust.init(which);         // this includes copying g's for the GPU version
 
 #ifdef TIMING
@@ -142,61 +142,76 @@ int main(int argc, char *argv[])
 
   fprintf(stdout, "# We are running with fixed time step %f \n", DT);
   t= 0.0;
+  iT= 0;
   int done= 0;
   float last_t_report=  t;
   timer.startTimer();
-  float synwriteT= 0.0f;
-  float lastsynwrite= 0.0f;
-  int synwrite= 0;
-  while (!done) 
-  {    
-      if (which == GPU) {
+
 #ifndef CPU_ONLY
-	  locust.runGPU(DT); // run next batch
-	  //locust.getSpikeNumbersFromGPU();
-	  locust.getSpikesFromGPU();
-#endif
-      }
-      else {
-	  locust.runCPU(DT); // run next batch
-      }
-      locust.sum_spikes();
-      locust.output_spikes(osf2, which);
+  if (which == GPU){   
+    while (!done) 
+    {    
+	locust.runGPU(DT); // run next batch
+	//locust.getSpikeNumbersFromGPU();
+	locust.getSpikesFromGPU();
+	
+//	pullDNStateFromDevice();
     
 #ifdef TIMING
 	fprintf(timeros, "%f %f %f \n", neuron_tme, synapse_tme, learning_tme);
 #endif
+      locust.sum_spikes();
+      locust.output_spikes(osf2, which);
+
+ /*   fprintf(osf, "%f ", t);
+      for (int i= 0; i < 100; i++) {
+         fprintf(osf, "%f ", VDN[i]);
+       }
+       fprintf(osf,"\n");
+*/
     // report progress
     if (t - last_t_report >= T_REPORT_TME)
     {
       fprintf(stdout, "time %f \n", t);
       last_t_report= t;
     }
-    // output synapses occasionally
-    if (synwrite) {
-       lastsynwrite= synwriteT;
-       name= OutDir+ "/"+ tS(argv[1]) + tS(".") + tS((int) synwriteT) + tS(".syn"); 
-       f= fopen(name.c_str(),"w");
-       locust.write_kcdnsyns(f);
-       fclose(f);
-       synwrite= 0;
-    }
-    if (t - lastsynwrite >= SYN_OUT_TME) {
-#ifndef CPU_ONLY
-       locust.get_kcdnsyns();
+    done= (t >= TOTAL_TME);
+  }
+}
 #endif
-       synwrite= 1;
-       synwriteT= t;
+
+  if (which == CPU){   
+    while (!done) 
+    {
+      locust.runCPU(DT); // run next batch
+    
+#ifdef TIMING
+	    fprintf(timeros, "%f %f %f \n", neuron_tme, synapse_tme, learning_tme);
+#endif
+      locust.sum_spikes();
+      locust.output_spikes(osf2, which);
+ /*   fprintf(osf, "%f ", t);
+      for (int i= 0; i < 100; i++) {
+         fprintf(osf, "%f ", VDN[i]);
+       }
+       fprintf(osf,"\n");
+*/
+    // report progress
+    if (t - last_t_report >= T_REPORT_TME)
+    {
+      fprintf(stdout, "time %f \n", t);
+      last_t_report= t;
     }
     done= (t >= TOTAL_TME);
   }
+}
   timer.stopTimer();
 #ifndef CPU_ONLY
-  pullDNStateFromDevice();
+  if (which == GPU) pullDNStateFromDevice();
 #endif
   cerr << "output files are created under the current directory." << endl;
   fprintf(timef, "%d %u %u %u %u %u %.4f %.2f %.1f %.2f\n",which, locust.model.sumNeuronN[locust.model.neuronGrpN-1], locust.sumPN, locust.sumKC, locust.sumLHI, locust.sumDN, timer.getElapsedTime(),VDN[0], TOTAL_TME, DT);
- fprintf(stdout, "GPU=%d, %u neurons, %u PN spikes, %u KC spikes, %u LHI spikes, %u DN spikes, simulation took %.4f secs, VDN[0]=%.2f total time=%.1f DT=%.2f\n",which, locust.model.sumNeuronN[locust.model.neuronGrpN-1], locust.sumPN, locust.sumKC, locust.sumLHI, locust.sumDN, timer.getElapsedTime(),VDN[0], TOTAL_TME, DT);
+  fprintf(stdout, "GPU=%d, %u neurons, %u PN spikes, %u KC spikes, %u LHI spikes, %u DN spikes, simulation took %.4f secs, VDN[0]=%.2f DT=%.1f %.2f\n",which, locust.model.sumNeuronN[locust.model.neuronGrpN-1], locust.sumPN, locust.sumKC, locust.sumLHI, locust.sumDN, timer.getElapsedTime(),VDN[0], TOTAL_TME, DT);
 
   fclose(osf);
   fclose(osf2);
@@ -204,6 +219,12 @@ int main(int argc, char *argv[])
 
 #ifdef TIMING
   fclose(timeros);
+#endif
+
+#ifndef CPU_ONLY
+  if (which == GPU) {
+    locust.free_device_mem();
+  }
 #endif
 
   return 0;

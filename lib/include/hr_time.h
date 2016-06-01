@@ -1,7 +1,7 @@
 //--------------------------------------------------------------------------
 /*! \file hr_time.h
 
-\brief This header file contains the definition of the CStopWatch class that implements a simple timing tool using the system clock.
+  \brief This header file contains the definition of the CStopWatch class that implements a simple timing tool using the system clock.
 */
 //--------------------------------------------------------------------------
 
@@ -17,35 +17,33 @@ typedef struct {
 } stopWatch;
 
 class CStopWatch {
-
 private:
-	stopWatch timer;
-	LARGE_INTEGER frequency;
-	double LIToSecs( LARGE_INTEGER & L);
+    stopWatch timer;
+    LARGE_INTEGER frequency;
+    double LIToSecs( LARGE_INTEGER & L);
 public:
-	CStopWatch();
-	void startTimer( );
-	void stopTimer( );
-	double getElapsedTime();
+    CStopWatch();
+    void startTimer( );
+    void stopTimer( );
+    double getElapsedTime();
 };
 
 #else
 #include <sys/time.h>
 
 typedef struct {
-	timeval start;
-	timeval stop;
+    timeval start;
+    timeval stop;
 } stopWatch;
 
 class CStopWatch {
-
 private:
-	stopWatch timer;
+    stopWatch timer;
 public:
-	CStopWatch() {};
-	void startTimer( );
-	void stopTimer( );
-	double getElapsedTime();
+    CStopWatch() {};
+    void startTimer( );
+    void stopTimer( );
+    double getElapsedTime();
 };
 
 #endif

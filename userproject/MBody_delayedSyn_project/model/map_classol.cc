@@ -23,7 +23,7 @@
 //--------------------------------------------------------------------------
 
 #include "map_classol.h"
-#include "MBody_delayedSyn_CODE/runner.cc"
+#include "MBody_delayedSyn_CODE/definitions.h"
 
 
 //--------------------------------------------------------------------------

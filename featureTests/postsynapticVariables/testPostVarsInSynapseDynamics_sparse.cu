@@ -9,13 +9,14 @@
 
 using namespace std;
 
-#include "hr_time.cpp"
+#include "modelSpec.h"
+#include "hr_time.h"
 #include "utils.h"
+#include "stringUtils.h"
 #include "testHelper.h"
 
 #include "testPostVarsInSynapseDynamics_sparse.h"
 #include "postVarsInSynapseDynamics_sparse_CODE/definitions.h"
-#include "postVarsInSynapseDynamics_sparse_CODE/runner.cc"
 
 
 

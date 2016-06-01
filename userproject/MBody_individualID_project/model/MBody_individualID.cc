@@ -18,9 +18,8 @@
 */
 //--------------------------------------------------------------------------
 
-#define DT 0.1  //!< This defines the global time step at which the simulation will run
 #include "modelSpec.h"
-#include "modelSpec.cc"
+#include "global.h"
 #include "sizes.h"
 
 //uncomment the following line to turn on timing measures (Linux/MacOS only)
@@ -144,7 +143,15 @@ double *postSynV = NULL;
 void modelDefinition(NNmodel &model) 
 {
     initGeNN();
+
+#ifdef DEBUG
+    GENN_PREFERENCES::debugCode = true;
+#else
+    GENN_PREFERENCES::optimizeCode = true;
+#endif // DEBUG
+
     model.setName("MBody_individualID");
+    model.setDT(0.1);
     model.addNeuronPopulation("PN", _NAL, POISSONNEURON, myPOI_p, myPOI_ini);
     model.addNeuronPopulation("KC", _NMB, TRAUBMILES, stdTM_p, stdTM_ini);
     model.addNeuronPopulation("LHI", _NLHI, TRAUBMILES, stdTM_p, stdTM_ini);
@@ -165,9 +172,9 @@ void modelDefinition(NNmodel &model)
     model.setPrecision(_FTYPE);
     
 #ifdef TIMING
-    model.setTiming(TRUE);
+    model.setTiming(true);
 #else
-    model.setTiming(FALSE);
+    model.setTiming(false);
 #endif // TIMING
   model.finalize();
 }

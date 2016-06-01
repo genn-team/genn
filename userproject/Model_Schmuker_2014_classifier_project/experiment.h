@@ -76,7 +76,7 @@ Data and extra network dimensions (see also Model file)
 
 using namespace std;
 #include <cassert>
-#include "hr_time.cpp"
+#include "hr_time.h"
 #include "utils.h" // for CHECK_CUDA_ERRORS
 //#include <cuda_runtime.h>
 
@@ -88,4 +88,4 @@ CStopWatch timer;
 
 
 //--------------------------------------------------------------------------
-#include "Schmuker2014_classifier.cu"
+#include "Schmuker2014_classifier.cc"

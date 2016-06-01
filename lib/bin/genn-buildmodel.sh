@@ -2,7 +2,7 @@
 
 # display genn-buildmodel.sh help
 genn_help () {
-    echo "=== genn-buildmodel.sh script usage ==="
+    echo "genn-buildmodel.sh script usage:"
     echo "genn-buildmodel.sh [cdho] model"
     echo "-c            only generate simulation code for the CPU"
     echo "-d            enables the debugging mode"
@@ -50,21 +50,24 @@ pushd $OUT_PATH > /dev/null
 OUT_PATH="$PWD"
 popd > /dev/null
 pushd $(dirname $MODEL) > /dev/null
-MACROS="MODEL=$PWD/$(basename $MODEL)"
+MACROS="MODEL=$PWD/$(basename $MODEL) GENERATEALL_PATH=$OUT_PATH"
 popd > /dev/null
-if [[ -n "$DEBUG" ]]; then MACROS="$MACROS DEBUG=1"; fi
-if [[ -n "$CPU_ONLY" ]]; then MACROS="$MACROS CPU_ONLY=1"; fi
+if [[ -n "$DEBUG" ]]; then
+    MACROS="$MACROS DEBUG=1";
+fi
+if [[ -n "$CPU_ONLY" ]]; then
+    MACROS="$MACROS CPU_ONLY=1";
+    GENERATEALL=./generateALL_CPU_ONLY
+else
+    GENERATEALL=./generateALL
+fi
 
 # generate model code
-cd "$OUT_PATH"
-make clean -f "$GENN_PATH/lib/src/GNUmakefile"
+make -f "$GENN_PATH/lib/GNUmakefile" $MACROS
 if [[ -n "$DEBUG" ]]; then
-    echo "debugging mode ON"
-    make debug -f "$GENN_PATH/lib/src/GNUmakefile" $MACROS
-    gdb -tui --args ./generateALL "$OUT_PATH"
+    gdb -tui --args "$GENERATEALL" "$OUT_PATH"
 else
-    make -f "$GENN_PATH/lib/src/GNUmakefile" $MACROS
-    ./generateALL "$OUT_PATH"
+    "$GENERATEALL" "$OUT_PATH"
 fi
 
 echo "model build complete"

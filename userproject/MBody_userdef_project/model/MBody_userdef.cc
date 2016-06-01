@@ -20,9 +20,8 @@
 */
 //--------------------------------------------------------------------------
 
-#define DT 0.1  //!< This defines the global time step at which the simulation will run
 #include "modelSpec.h"
-#include "modelSpec.cc"
+#include "global.h"
 #include "sizes.h"
 
 //uncomment the following line to turn on timing measures (Linux/MacOS only)
@@ -140,59 +139,59 @@ double postSynV_EXPDECAY_EVAR[1] = {
 };
 
 
-  //define derived parameters for learn1synapse
-  class pwSTDP_userdef : public dpclass  //!TODO This class definition may be code-generated in a future release
-  {
-    public:
-      double calculateDerivedParameter(int index, vector<double> pars, double dt = DT){		
-	  switch (index) {
-	  case 0:
-	      return lim0(pars, dt);
-	  case 1:
-	      return lim1(pars, dt);
-	  case 2:
-	      return slope0(pars, dt);
-	  case 3:
-	      return slope1(pars, dt);
-	  case 4:
-	      return off0(pars, dt);
-	  case 5:
-	      return off1(pars, dt);
-	  case 6:
-	      return off2(pars, dt);
-	  }
-	  return -1;
-      }
+//define derived parameters for learn1synapse
+class pwSTDP_userdef : public dpclass  //!TODO This class definition may be code-generated in a future release
+{
+public:
+    double calculateDerivedParameter(int index, vector<double> pars, double dt) {		
+	switch (index) {
+	case 0:
+	    return lim0(pars, dt);
+	case 1:
+	    return lim1(pars, dt);
+	case 2:
+	    return slope0(pars, dt);
+	case 3:
+	    return slope1(pars, dt);
+	case 4:
+	    return off0(pars, dt);
+	case 5:
+	    return off1(pars, dt);
+	case 6:
+	    return off2(pars, dt);
+	}
+	return -1;
+    }
       
-      double lim0(vector<double> pars, double dt) {
-	  //return 1.0f/$(TPUNISH01) + 1.0f/$(TCHNG) *$(TLRN) / (2.0f/$(TCHNG));
-	  return (1.0f/pars[5] + 1.0f/pars[2]) * pars[1] / (2.0f/pars[2]);
-      }
-      double lim1(vector<double> pars, double dt) {
-	  //return 1.0f/$(TPUNISH10) + 1.0f/$(TCHNG) *$(TLRN) / (2.0f/$(TCHNG));
-	  return -((1.0f/pars[4] + 1.0f/pars[2]) * pars[1] / (2.0f/pars[2]));
-      }
-      double slope0(vector<double> pars, double dt) {
-	  //return -2.0f*$(gmax)/ ($(TCHNG)*$(TLRN)); 
-	  return -2.0f*pars[6]/(pars[2]*pars[1]); 
-      }
-      double slope1(vector<double> pars, double dt) {
-	  //return -1*slope0(pars, dt);
-	  return -1*slope0(pars, dt);
-      }
-      double off0(vector<double> pars, double dt) {
-	  //return $(gmax)/$(TPUNISH01);
-	  return pars[6]/pars[5];
-      }
-      double off1(vector<double> pars, double dt) {
-	  //return $(gmax)/$(TCHNG);
-	  return pars[6]/pars[2];
-      }
-      double off2(vector<double> pars, double dt) {
-	  //return $(gmax)/$(TPUNISH10);
-			return pars[6]/pars[4];
-      }
-  };
+    double lim0(vector<double> pars, double dt) {
+	//return 1.0f/$(TPUNISH01) + 1.0f/$(TCHNG) *$(TLRN) / (2.0f/$(TCHNG));
+	return (1.0f/pars[5] + 1.0f/pars[2]) * pars[1] / (2.0f/pars[2]);
+    }
+    double lim1(vector<double> pars, double dt) {
+	//return 1.0f/$(TPUNISH10) + 1.0f/$(TCHNG) *$(TLRN) / (2.0f/$(TCHNG));
+	return -((1.0f/pars[4] + 1.0f/pars[2]) * pars[1] / (2.0f/pars[2]));
+    }
+    double slope0(vector<double> pars, double dt) {
+	//return -2.0f*$(gmax)/ ($(TCHNG)*$(TLRN)); 
+	return -2.0f*pars[6]/(pars[2]*pars[1]); 
+    }
+    double slope1(vector<double> pars, double dt) {
+	//return -1*slope0(pars, dt);
+	return -1*slope0(pars, dt);
+    }
+    double off0(vector<double> pars, double dt) {
+	//return $(gmax)/$(TPUNISH01);
+	return pars[6]/pars[5];
+    }
+    double off1(vector<double> pars, double dt) {
+	//return $(gmax)/$(TCHNG);
+	return pars[6]/pars[2];
+    }
+    double off2(vector<double> pars, double dt) {
+	//return $(gmax)/$(TPUNISH10);
+	return pars[6]/pars[4];
+    }
+};
 
 //for sparse only -- we need to set them by hand if we want to do dense to sparse conversion. Sparse connectivity will only create sparse arrays.
 scalar * gpPNKC = new scalar[_NAL*_NMB];
@@ -205,47 +204,45 @@ scalar * gpKCDN = new scalar[_NMB*_NLB];
 //--------------------------------------------------------------------------
 
 void modelDefinition(NNmodel &model) 
-{	
-    // initialize standard models
-    initGeNN();
- /******************************************************************/		
-  // redefine nsynapse as a user-defined syapse type 
+{
+  initGeNN();
+
+#ifdef DEBUG
+  GENN_PREFERENCES::debugCode = true;
+#else
+  GENN_PREFERENCES::optimizeCode = true;
+#endif // DEBUG
+
   model.setPrecision(_FTYPE);
 
   postSynModel pstest;
   pstest.varNames.clear();
   pstest.varTypes.clear();
-
-  pstest.varNames.push_back(tS("EEEE")); 
-  pstest.varTypes.push_back(tS("scalar"));  
-
+  pstest.varNames.push_back("EEEE"); 
+  pstest.varTypes.push_back("scalar");  
   pstest.pNames.clear();
   pstest.dpNames.clear(); 
-  
-  pstest.pNames.push_back(tS("tau")); 
-  pstest.dpNames.push_back(tS("expDecay"));
-
-  pstest.postSynDecay=tS(" 	 $(inSyn)*=$(expDecay);\n");
-  pstest.postSyntoCurrent=tS("$(inSyn)*($(EEEE)-$(V))");
-
+  pstest.pNames.push_back("tau"); 
+  pstest.dpNames.push_back("expDecay");
+  pstest.postSynDecay= " 	 $(inSyn)*=$(expDecay);\n";
+  pstest.postSyntoCurrent= "$(inSyn)*($(EEEE)-$(V))";
   pstest.dps = new expDecayDp;
-  
   postSynModels.push_back(pstest);
   unsigned int EXPDECAY_EVAR=postSynModels.size()-1; //this is the synapse index to be used in addSynapsePopulation*/
 
-  /*END ADDING POSTSYNAPTIC METHODS*/
 
+  /******************************************************************/		
+  // redefine nsynapse as a user-defined syapse type 
   weightUpdateModel nsynapse;
   nsynapse.varNames.clear();
   nsynapse.varTypes.clear();
   nsynapse.pNames.clear();
   nsynapse.dpNames.clear();
-  nsynapse.varNames.push_back(tS("g"));
-  nsynapse.varTypes.push_back(tS("scalar"));
+  nsynapse.varNames.push_back("g");
+  nsynapse.varTypes.push_back("scalar");
   // code for presynaptic spike:
-  nsynapse.simCode = tS("$(addtoinSyn) = $(g);\n\
-  $(updatelinsyn);\n\
-  ");
+  nsynapse.simCode = "$(addtoinSyn) = $(g);\n\
+  $(updatelinsyn);\n";
   weightUpdateModels.push_back(nsynapse);
   unsigned int NSYNAPSE_userdef=weightUpdateModels.size()-1; //this is the synapse index to be used in addSynapsePopulation
 
@@ -255,87 +252,86 @@ void modelDefinition(NNmodel &model)
   weightUpdateModel ngradsynapse;
   ngradsynapse.varNames.clear();
   ngradsynapse.varTypes.clear();
-  ngradsynapse.varNames.push_back(tS("g"));
-  ngradsynapse.varTypes.push_back(tS("scalar"));
+  ngradsynapse.varNames.push_back("g");
+  ngradsynapse.varTypes.push_back("scalar");
   ngradsynapse.pNames.clear();
-  ngradsynapse.pNames.push_back(tS("Epre")); 
-  ngradsynapse.pNames.push_back(tS("Vslope")); 
+  ngradsynapse.pNames.push_back("Epre"); 
+  ngradsynapse.pNames.push_back("Vslope"); 
   ngradsynapse.dpNames.clear();
   // code for presynaptic spike event (defined by Epre)
-  ngradsynapse.simCodeEvnt = tS("$(addtoinSyn) = $(g) * tanh(($(V_pre) - $(Epre)) / $(Vslope))* DT;\n\
+  ngradsynapse.simCodeEvnt = "$(addtoinSyn) = $(g) * tanh(($(V_pre) - $(Epre)) / $(Vslope))* DT;\n\
     if ($(addtoinSyn) < 0) $(addtoinSyn) = 0.0;\n\
-    $(updatelinsyn);\n");
+    $(updatelinsyn);\n";
   // definition of presynaptic spike event 
-  ngradsynapse.evntThreshold = tS("    $(V_pre) > $(Epre)");
+  ngradsynapse.evntThreshold = "    $(V_pre) > $(Epre)";
   weightUpdateModels.push_back(ngradsynapse);
   unsigned int NGRADSYNAPSE_userdef=weightUpdateModels.size()-1; //this is the synapse index to be used in addSynapsePopulation
+
 
   /******************************************************************/
   // redefine learn1synapse as a user-defined syapse type: 
   weightUpdateModel learn1synapse;
-
   learn1synapse.varNames.clear();
   learn1synapse.varTypes.clear();
-  learn1synapse.varTypes.push_back(tS("scalar"));
-  learn1synapse.varNames.push_back(tS("g")); 
-  learn1synapse.varTypes.push_back(tS("scalar"));
-  learn1synapse.varNames.push_back(tS("gRaw")); 
+  learn1synapse.varTypes.push_back("scalar");
+  learn1synapse.varNames.push_back("g");
+  learn1synapse.varTypes.push_back("scalar");
+  learn1synapse.varNames.push_back("gRaw"); 
   learn1synapse.pNames.clear();
-  learn1synapse.pNames.push_back(tS("Epre")); 
-  learn1synapse.pNames.push_back(tS("tLrn"));  
-  learn1synapse.pNames.push_back(tS("tChng")); 
-  learn1synapse.pNames.push_back(tS("tDecay")); 
-  learn1synapse.pNames.push_back(tS("tPunish10")); 
-  learn1synapse.pNames.push_back(tS("tPunish01")); 
-  learn1synapse.pNames.push_back(tS("gMax")); 
-  learn1synapse.pNames.push_back(tS("gMid")); 
-  learn1synapse.pNames.push_back(tS("gSlope")); 
-  learn1synapse.pNames.push_back(tS("tauShift")); 
-  learn1synapse.pNames.push_back(tS("gSyn0"));
+  learn1synapse.pNames.push_back("Epre");
+  learn1synapse.pNames.push_back("tLrn");
+  learn1synapse.pNames.push_back("tChng");
+  learn1synapse.pNames.push_back("tDecay");
+  learn1synapse.pNames.push_back("tPunish10");
+  learn1synapse.pNames.push_back("tPunish01");
+  learn1synapse.pNames.push_back("gMax");
+  learn1synapse.pNames.push_back("gMid");
+  learn1synapse.pNames.push_back("gSlope");
+  learn1synapse.pNames.push_back("tauShift");
+  learn1synapse.pNames.push_back("gSyn0");
   learn1synapse.dpNames.clear(); 
-  learn1synapse.dpNames.push_back(tS("lim0"));
-  learn1synapse.dpNames.push_back(tS("lim1"));
-  learn1synapse.dpNames.push_back(tS("slope0"));
-  learn1synapse.dpNames.push_back(tS("slope1"));
-  learn1synapse.dpNames.push_back(tS("off0"));
-  learn1synapse.dpNames.push_back(tS("off1"));
-  learn1synapse.dpNames.push_back(tS("off2"));
+  learn1synapse.dpNames.push_back("lim0");
+  learn1synapse.dpNames.push_back("lim1");
+  learn1synapse.dpNames.push_back("slope0");
+  learn1synapse.dpNames.push_back("slope1");
+  learn1synapse.dpNames.push_back("off0");
+  learn1synapse.dpNames.push_back("off1");
+  learn1synapse.dpNames.push_back("off2");
   // code for presynaptic spike
-  learn1synapse.simCode = tS("$(addtoinSyn) = $(g);\n\
-					$(updatelinsyn); \n\
-					scalar dt = $(sT_post) - t - ($(tauShift)); \n\
-					scalar dg = 0;\n\
-					if (dt > $(lim0))  \n\
-					dg = -($(off0)) ; \n\
-					else if (dt > 0.0)  \n\
-					dg = $(slope0) * dt + ($(off1)); \n\
-					else if (dt > $(lim1))  \n\
-					dg = $(slope1) * dt + ($(off1)); \n\
-					else dg = - ($(off2)) ; \n\
-					$(gRaw) += dg; \n\
-					$(g)=$(gMax)/2.0 *(tanh($(gSlope)*($(gRaw) - ($(gMid))))+1.0); \n\
-					");     
+  learn1synapse.simCode = "$(addtoinSyn) = $(g);\n\
+		$(updatelinsyn); \n				\
+		scalar dt = $(sT_post) - t - ($(tauShift)); \n\
+		scalar dg = 0;\n\
+		if (dt > $(lim0))  \n\
+		dg = -($(off0)); \n\
+		else if (dt > 0.0)  \n\
+		dg = $(slope0) * dt + ($(off1)); \n\
+		else if (dt > $(lim1))  \n\
+		dg = $(slope1) * dt + ($(off1)); \n\
+		else dg = - ($(off2)) ; \n\
+		$(gRaw) += dg; \n\
+		$(g)=$(gMax)/2.0 *(tanh($(gSlope)*($(gRaw) - ($(gMid))))+1.0); \n";
   learn1synapse.dps = new pwSTDP_userdef;
   // code for post-synaptic spike event
-  learn1synapse.simLearnPost = tS("scalar dt = t - ($(sT_pre)) - ($(tauShift)); \n\
-				   scalar dg =0; \n\
-				   if (dt > $(lim0))  \n\
-				   dg = -($(off0)) ; \n \
-				   else if (dt > 0.0)  \n\
-			           dg = $(slope0) * dt + ($(off1)); \n\
-				   else if (dt > $(lim1))  \n\
-				   dg = $(slope1) * dt + ($(off1)); \n\
-				   else dg = -($(off2)) ; \n\
-				   $(gRaw) += dg; \n\
-				   $(g)=$(gMax)/2.0 *(tanh($(gSlope)*($(gRaw) - ($(gMid))))+1.0); \n\
-				  ");     
+  learn1synapse.simLearnPost = "scalar dt = t - ($(sT_pre)) - ($(tauShift)); \n\
+		scalar dg =0; \n\
+		if (dt > $(lim0))  \n\
+		dg = -($(off0)) ; \n \
+		else if (dt > 0.0)  \n\
+		dg = $(slope0) * dt + ($(off1)); \n\
+		else if (dt > $(lim1))  \n\
+		dg = $(slope1) * dt + ($(off1)); \n\
+		else dg = -($(off2)) ; \n\
+		$(gRaw) += dg; \n\
+		$(g)=$(gMax)/2.0 *(tanh($(gSlope)*($(gRaw) - ($(gMid))))+1.0);\n";
   // in the future, this could be auto-detected.
-  learn1synapse.needPreSt= TRUE;
-  learn1synapse.needPostSt= TRUE;
+  learn1synapse.needPreSt= true;
+  learn1synapse.needPostSt= true;
   weightUpdateModels.push_back(learn1synapse);
   unsigned int LEARN1SYNAPSE_userdef=weightUpdateModels.size()-1; //this is the synapse index to be used in addSynapsePopulation
 
   model.setName("MBody_userdef");
+  model.setDT(0.1);
   model.addNeuronPopulation("PN", _NAL, POISSONNEURON, myPOI_p, myPOI_ini);
   model.addNeuronPopulation("KC", _NMB, TRAUBMILES, stdTM_p, stdTM_ini);
   model.addNeuronPopulation("LHI", _NLHI, TRAUBMILES, stdTM_p, stdTM_ini);
@@ -365,9 +361,9 @@ void modelDefinition(NNmodel &model)
 #endif 
   model.setSeed(1234);
 #ifdef TIMING
-    model.setTiming(TRUE);
+    model.setTiming(true);
 #else
-    model.setTiming(FALSE);
+    model.setTiming(false);
 #endif // TIMING
   model.finalize();
 }

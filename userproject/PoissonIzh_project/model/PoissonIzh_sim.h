@@ -12,15 +12,17 @@
 --------------------------------------------------------------------------*/
 
 
-#include <cassert>
-using namespace std;
-#include "hr_time.cpp"
-
 #include "utils.h" // for CHECK_CUDA_ERRORS
+#include "stringUtils.h"
+#include "hr_time.h"
+
 #ifndef CPU_ONLY
 #include <cuda_runtime.h>
 #endif
 #include "PoissonIzh.cc"
+#include <cassert>
+
+using namespace std;
 
 #define MYRAND(Y,X) Y = Y * 1103515245 +12345; X= (Y >> 16); 
 

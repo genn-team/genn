@@ -14,4 +14,3 @@ rm -f msg
 rm -f sm_version.mk
 rm -f *.dat
 rm -f generateALL
-rm -f runner.cubin

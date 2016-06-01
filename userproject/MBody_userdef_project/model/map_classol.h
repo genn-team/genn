@@ -15,6 +15,8 @@
 #ifndef CLASSOL_H
 #define CLASSOL_H
 
+#include <stdint.h>
+
 //--------------------------------------------------------------------------
 /*! \file userproject/MBody_userdef_project/model/map_classol.h
 
@@ -26,8 +28,6 @@ T. Nowotny, R. Huerta, H. D. I. Abarbanel, and M. I. Rabinovich Self-organizatio
 */
 //--------------------------------------------------------------------------
 
-
-//#include "MBody_userdef.cc"
 
 //--------------------------------------------------------------------------
 /*! \brief This class cpontains the methods for running the MBody1 example model.

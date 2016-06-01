@@ -8,8 +8,8 @@
 ##  
 ##--------------------------------------------------------------------------
 
-EXECUTABLE	=experiment.exe
-SOURCES		=experiment.cu
-OPTIMIZATIONFLAGS	=/O2
+EXECUTABLE         =experiment.exe
+SOURCES            =$(EXECUTABLE:.exe=.cc)
+OPTIMIZATIONFLAGS  =/O2
 
 !INCLUDE $(GENN_PATH)\userproject\include\makefile_common_win.mk

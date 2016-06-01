@@ -18,10 +18,10 @@
 */
 //--------------------------------------------------------------------------
 
-#define DT 0.25  //!< This defines the global time step at which the simulation will run
 #include "modelSpec.h"
-#include "modelSpec.cc"
+#include "global.h"
 #include "HHVClampParameters.h"
+
 
 double myHH_ini[11]= {
   -60.0,         // 0 - membrane potential E
@@ -47,41 +47,48 @@ double *myHH_p= NULL;
 
 void modelDefinition(NNmodel &model) 
 {
-  neuronModel n;
   initGeNN();
+
+#ifdef DEBUG
+  GENN_PREFERENCES::debugCode = true;
+#else
+  GENN_PREFERENCES::optimizeCode = true;
+#endif // DEBUG
+
   // HH neurons with adjustable parameters (introduced as variables)
+  neuronModel n;
   n.varNames.clear();
   n.varTypes.clear();
-  n.varNames.push_back(tS("V"));
-  n.varTypes.push_back(tS("scalar"));
-  n.varNames.push_back(tS("m"));
-  n.varTypes.push_back(tS("scalar"));
-  n.varNames.push_back(tS("h"));
-  n.varTypes.push_back(tS("scalar"));
-  n.varNames.push_back(tS("n"));
-  n.varTypes.push_back(tS("scalar"));
-  n.varNames.push_back(tS("gNa"));
-  n.varTypes.push_back(tS("scalar"));
-  n.varNames.push_back(tS("ENa"));
-  n.varTypes.push_back(tS("scalar"));
-  n.varNames.push_back(tS("gK"));
-  n.varTypes.push_back(tS("scalar"));
-  n.varNames.push_back(tS("EK"));
-  n.varTypes.push_back(tS("scalar"));
-  n.varNames.push_back(tS("gl"));
-  n.varTypes.push_back(tS("scalar"));
-  n.varNames.push_back(tS("El"));
-  n.varTypes.push_back(tS("scalar"));
-  n.varNames.push_back(tS("C"));
-  n.varTypes.push_back(tS("scalar"));
-  n.varNames.push_back(tS("err"));
-  n.varTypes.push_back(tS("scalar"));
-  n.extraGlobalNeuronKernelParameters.push_back(tS("stepVG"));
-  n.extraGlobalNeuronKernelParameterTypes.push_back(tS("scalar"));
-  n.extraGlobalNeuronKernelParameters.push_back(tS("IsynG"));
-  n.extraGlobalNeuronKernelParameterTypes.push_back(tS("scalar"));
+  n.varNames.push_back("V");
+  n.varTypes.push_back("scalar");
+  n.varNames.push_back("m");
+  n.varTypes.push_back("scalar");
+  n.varNames.push_back("h");
+  n.varTypes.push_back("scalar");
+  n.varNames.push_back("n");
+  n.varTypes.push_back("scalar");
+  n.varNames.push_back("gNa");
+  n.varTypes.push_back("scalar");
+  n.varNames.push_back("ENa");
+  n.varTypes.push_back("scalar");
+  n.varNames.push_back("gK");
+  n.varTypes.push_back("scalar");
+  n.varNames.push_back("EK");
+  n.varTypes.push_back("scalar");
+  n.varNames.push_back("gl");
+  n.varTypes.push_back("scalar");
+  n.varNames.push_back("El");
+  n.varTypes.push_back("scalar");
+  n.varNames.push_back("C");
+  n.varTypes.push_back("scalar");
+  n.varNames.push_back("err");
+  n.varTypes.push_back("scalar");
+  n.extraGlobalNeuronKernelParameters.push_back("stepVG");
+  n.extraGlobalNeuronKernelParameterTypes.push_back("scalar");
+  n.extraGlobalNeuronKernelParameters.push_back("IsynG");
+  n.extraGlobalNeuronKernelParameterTypes.push_back("scalar");
 
-  n.simCode= tS("   scalar Imem;\n\
+  n.simCode= "   scalar Imem;\n\
     unsigned int mt;\n\
     scalar mdt= DT/100.0;\n\
     scalar Icoupl;\n\
@@ -101,13 +108,14 @@ void modelDefinition(NNmodel &model)
       $(n)+= (_a*(1.0-$(n))-_b*$(n))*mdt;\n\
       $(V)+= Imem/$(C)*mdt;\n\
     }\n\
-    $(err)+= abs(Icoupl-$(IsynG));\n");
+    $(err)+= abs(Icoupl-$(IsynG));\n";
 
-  n.thresholdConditionCode = tS("$(V) > 100");
+  n.thresholdConditionCode = "$(V) > 100";
   int HHV= nModels.size();
   nModels.push_back(n);
 
   model.setName("HHVClamp");
+  model.setDT(0.25);
   model.setPrecision(GENN_FLOAT);
 #ifdef fixGPU
   model.setGPUDevice(fixGPU);

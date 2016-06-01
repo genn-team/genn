@@ -1,18 +1,15 @@
 /*--------------------------------------------------------------------------
-  Author: Thomas Nowotny
+   Author: Thomas Nowotny
 
-  Institute: Center for Computational Neuroscience and Robotics
-  University of Sussex
-  Falmer, Brighton BN1 9QJ, UK 
+   Institute: Center for Computational Neuroscience and Robotics
+              University of Sussex
+              Falmer, Brighton BN1 9QJ, UK 
 
-  email to:  T.Nowotny@sussex.ac.uk
+   email to:  T.Nowotny@sussex.ac.uk
 
-  initial version: 2010-02-07
+   initial version: 2010-02-07
 
-  --------------------------------------------------------------------------*/
-
-// The CPU_ONLY version does not need any of this
-#ifndef CPU_ONLY
+--------------------------------------------------------------------------*/
 
 //------------------------------------------------------------------------
 /*! \file generateKernels.cc
@@ -22,9 +19,17 @@
 */
 //-------------------------------------------------------------------------
 
-#include <string>
+#include "generateKernels.h"
 #include "global.h"
-#include "stringutils.h"
+#include "utils.h"
+#include "stringUtils.h"
+#include "CodeHelper.h"
+
+#include <algorithm>
+
+
+// The CPU_ONLY version does not need any of this
+#ifndef CPU_ONLY
 
 short *isGrpVarNeeded;
 
@@ -38,12 +43,9 @@ short *isGrpVarNeeded;
 //-------------------------------------------------------------------------
 
 void genNeuronKernel(NNmodel &model, //!< Model description 
-		     string &path,  //!< path for code output
-		     ostream &mos //!< output stream for messages
+		     string &path  //!< Path for code generation
     )
 {
-    //hlp.setVerbose(true);//this will show the generation of bracketing (brace) levels. Helps to debug a bracketing issue
-
     string name, s, localID;
     unsigned int nt;
     ofstream os;
@@ -95,7 +97,7 @@ void genNeuronKernel(NNmodel &model, //!< Model description
     // kernel code
     unsigned int neuronGridSz = model.padSumNeuronN[model.neuronGrpN - 1];
     neuronGridSz = neuronGridSz / neuronBlkSz;
-    if (neuronGridSz < deviceProp[theDev].maxGridSize[1]) {
+    if (neuronGridSz < deviceProp[theDevice].maxGridSize[1]) {
 	os << "unsigned int id = " << neuronBlkSz << " * blockIdx.x + threadIdx.x;" << ENDL;
     }
     else {
@@ -479,7 +481,7 @@ void generate_process_presynaptic_events_code(
     )
 {
     string theAtomicAdd;
-    if ((deviceProp[theDev].major < 2) && (model.ftype == "float")) {
+    if ((deviceProp[theDevice].major < 2) && (model.ftype == "float")) {
 	theAtomicAdd= tS("atomicAddoldGPU");
     }
     else {
@@ -487,6 +489,8 @@ void generate_process_presynaptic_events_code(
     }
 
     bool evnt = postfix == tS("Evnt");
+    int UIntSz = sizeof(unsigned int) * 8;
+    int logUIntSz = (int) (logf((float) UIntSz) / logf(2.0f) + 1e-5f);
 
     if ((evnt && model.synapseUsesSpikeEvents[i]) || (!evnt && model.synapseUsesTrueSpikes[i])) {
 	unsigned int synt = model.synapseType[i];
@@ -505,7 +509,7 @@ void generate_process_presynaptic_events_code(
 	    if ((sparse) && (isGrpVarNeeded[model.synapseTarget[i]])) {
 		if (model.maxConn[i] < 1) {
 		    fprintf(stderr, "Model Generation warning: for every SPARSE synapse group used you must also supply (in your model)\
- a max possible number of connections via the model.setMaxConn() function.");
+ a max possible number of connections via the model.setMaxConn() function.\n");
 		    maxConnections = model.neuronN[trg];
 		}
 		else {
@@ -515,7 +519,6 @@ void generate_process_presynaptic_events_code(
 	    else {
 		maxConnections = model.neuronN[trg];
 	    }
-
 
 	    //os << "if (" << localID << " < " << maxConnections << ")" << OB(101);
 	    
@@ -531,11 +534,14 @@ void generate_process_presynaptic_events_code(
 		os << OB(29) << " using namespace " << model.synapseName[i] << "_weightupdate_simCode;" << ENDL;	
 	    }
 
-	    os << "int preInd = dd_glbSpk"  << postfix << model.neuronName[src] << "[";
 	    if (delayPre) {
-		os << "delaySlot*" << model.neuronN[src] << "+";
+	      os << "int preInd = dd_glbSpk"  << postfix << model.neuronName[src];
+	      os << "[(delaySlot * " << model.neuronN[src] << ") + " << localID << "];";
 	    }
-	    os << localID << "];" << ENDL;
+	    else {
+	      os << "int preInd = dd_glbSpk"  << postfix << model.neuronName[src];
+	      os << "[" << localID << "];" << ENDL;
+	    }
 	    os << "prePos = dd_indInG" << model.synapseName[i] << "[preInd];" << ENDL;
 	    os << "npost = dd_indInG" << model.synapseName[i] << "[preInd + 1] - prePos;" << ENDL;
 
@@ -638,7 +644,7 @@ void generate_process_presynaptic_events_code(
 	    if ((sparse) && (isGrpVarNeeded[model.synapseTarget[i]])) {
 		if (model.maxConn[i] < 1) {
 		    fprintf(stderr, "Model Generation warning: for every SPARSE synapse group used you must also supply (in your model)\
- a max possible number of connections via the model.setMaxConn() function.");
+ a max possible number of connections via the model.setMaxConn() function.\n");
 		    maxConnections = model.neuronN[trg];
 		}
 		else {
@@ -779,8 +785,7 @@ void generate_process_presynaptic_events_code(
 //-------------------------------------------------------------------------
 
 void genSynapseKernel(NNmodel &model, //!< Model description 
-		      string &path, //!< Path for code output
-		      ostream &mos //!< output stream for messages
+		      string &path //!< Path for code generation
     )
 {
     string name, s;

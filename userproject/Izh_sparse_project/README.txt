@@ -1,6 +1,6 @@
 
-  Pulse-coupled Izhikevich network
-  ================================
+Pulse-coupled Izhikevich network
+================================
 
 This example model is inspired by simple thalamo-cortical network of Izhikevich 
 with an excitatory and an inhibitory population of spiking neurons that are
@@ -8,16 +8,20 @@ randomly connected. It creates a pulse-coupled network with 80% excitatory 20%
 inhibitory connections, each connecting to nConn neurons with sparse connectivity.
 
 To compile it, navigate to genn/userproject/Izh_sparse_project and type:
-  nmake /f WINmakefile
+
+nmake /f WINmakefile
+
 for Windows users, or:
-  make
+
+make
+
 for Linux, Mac and other UNIX users.
 
 
-  USAGE
-  -----
+USAGE
+-----
 
-  ./generate_run <0(CPU)/1(GPU)/n(GPU n-2)> <nNeurons> <nConn> <gScale> <outdir> <model name> <input factor>
+generate_run <0(CPU)/1(GPU)/n(GPU n-2)> <nNeurons> <nConn> <gScale> <outdir> <model name> <input factor>
 
 Mandatory arguments:
 CPU/GPU: Choose whether to run the simulation on CPU (`0`), auto GPU (`1`), or GPU (n-2) (`n`).
@@ -35,7 +39,13 @@ CPU_ONLY=0 or CPU_ONLY=1 (default 0): Whether to compile in (CUDA independent) "
 
 An example invocation of generate_run is:
 
-  ./generate_run 1 10000 1000 1 outdir Izh_sparse 1.0
+generate_run.exe 1 10000 1000 1 outdir Izh_sparse 1.0
+
+for Windows users, or:
+
+./generate_run 1 10000 1000 1 outdir Izh_sparse 1.0
+
+for Linux, Mac and other UNIX users.
 
 This would create a pulse coupled network of 8000 excitatory 2000 inhibitory
 Izhikevich neurons, each making 1000 connections with other neurons, generating
@@ -54,4 +64,11 @@ are not part of the core GeNN definitions and it is the privilege (or burden)
 of the user to find their own in their own versions of `generate_run`.
 
 Another example of an invocation would be: 
-  ./generate_run 0 10000 1000 1 outdir Izh_sparse 1.0 FTYPE=DOUBLE DEBUG=0 CPU_ONLY=1
+
+generate_run.exe 0 10000 1000 1 outdir Izh_sparse 1.0 FTYPE=DOUBLE DEBUG=0 CPU_ONLY=1
+
+for Windows users, or:
+
+./generate_run 0 10000 1000 1 outdir Izh_sparse 1.0 FTYPE=DOUBLE DEBUG=0 CPU_ONLY=1
+
+for Linux, Mac and other UNIX users.

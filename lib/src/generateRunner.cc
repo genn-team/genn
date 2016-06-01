@@ -12,16 +12,27 @@
   --------------------------------------------------------------------------*/
 
 //-----------------------------------------------------------------------
-/*!  \file generateRunner.cc 
-  
+/*!  \file generateRunner.cc
+
   \brief Contains functions to generate code for running the
   simulation on the GPU, and for I/O convenience functions between GPU
   and CPU space. Part of the code generation section.
 */
 //--------------------------------------------------------------------------
 
-#include "stringutils.h"
+#include "generateRunner.h"
+#include "global.h"
+#include "utils.h"
+#include "stringUtils.h"
+#include "CodeHelper.h"
 
+#include <stdint.h>
+#include <cfloat>
+
+
+//--------------------------------------------------------------------------
+//! \brief This function generates host and device variable definitions, of the given type and name.
+//--------------------------------------------------------------------------
 
 void variable_def(ofstream &os, string type, string name)
 {
@@ -32,9 +43,17 @@ void variable_def(ofstream &os, string type, string name)
 #endif
 }
 
+
+//--------------------------------------------------------------------------
+//! \brief This function generates host extern variable definitions, of the given type and name.
+//--------------------------------------------------------------------------
+
 void extern_variable_def(ofstream &os, string type, string name)
 {
     os << "extern " << type << " " << name << ";" << ENDL;
+#ifndef CPU_ONLY
+    os << "extern " << type << " d_" << name << ";" << ENDL;
+#endif
 }
 
 
@@ -51,11 +70,8 @@ void extern_variable_def(ofstream &os, string type, string name)
 */
 //--------------------------------------------------------------------------
 
-#include <cfloat>
-
 void genRunner(NNmodel &model, //!< Model description
-	       string path, //!< path for code generation
-	       ostream &mos //!< output stream for messages
+	       string &path //!< Path for code generationn
     )
 {
     string name;
@@ -88,15 +104,13 @@ void genRunner(NNmodel &model, //!< Model description
 	substitute(nModels[i].simCode, "scalar", model.ftype);
 	substitute(nModels[i].resetCode, "scalar", model.ftype);
     }
-for (int i= 0; i < weightUpdateModels.size(); i++) {
-  for (int k= 0; k < weightUpdateModels[i].varTypes.size(); k++) {
-    substitute(weightUpdateModels[i].varTypes[k], "scalar", model.ftype);
-  }
-
-  for (int k= 0; k < weightUpdateModels[i].extraGlobalSynapseKernelParameterTypes.size(); k++) {
-    substitute(weightUpdateModels[i].extraGlobalSynapseKernelParameterTypes[k], "scalar", model.ftype);
-  }
-
+    for (int i= 0; i < weightUpdateModels.size(); i++) {
+	for (int k= 0; k < weightUpdateModels[i].varTypes.size(); k++) {
+	    substitute(weightUpdateModels[i].varTypes[k], "scalar", model.ftype);
+	}
+	for (int k= 0; k < weightUpdateModels[i].extraGlobalSynapseKernelParameterTypes.size(); k++) {
+	    substitute(weightUpdateModels[i].extraGlobalSynapseKernelParameterTypes[k], "scalar", model.ftype);
+	}
 	substitute(weightUpdateModels[i].simCode, "SCALAR_MIN", SCLR_MIN);
 	substitute(weightUpdateModels[i].simCodeEvnt, "SCALAR_MIN", SCLR_MIN);
 	substitute(weightUpdateModels[i].simLearnPost, "SCALAR_MIN", SCLR_MIN);
@@ -122,14 +136,18 @@ for (int i= 0; i < weightUpdateModels.size(); i++) {
 	substitute(postSynModels[i].postSynDecay, "scalar", model.ftype);
     }
     
+
+    //=======================
     // generate definitions.h
+    //=======================
+
     // this file contains helpful macros and is separated out so that it can also be used by other code that is compiled separately
-    name= path + toString("/") + model.name + toString("_CODE/definitions.h");
+    name= path + "/" + model.name + "_CODE/definitions.h";
     os.open(name.c_str());  
     writeHeader(os);
     os << ENDL;
-    
-       // write doxygen comment
+
+    // write doxygen comment
     os << "//-------------------------------------------------------------------------" << ENDL;
     os << "/*! \\file definitions.h" << ENDL << ENDL;
     os << "\\brief File generated from GeNN for the model " << model.name << " containing useful Macros used for both GPU amd CPU versions." << ENDL;
@@ -138,153 +156,105 @@ for (int i= 0; i < weightUpdateModels.size(); i++) {
     
     os << "#ifndef DEFINITIONS_H" << ENDL;
     os << "#define DEFINITIONS_H" << ENDL;
+    os << ENDL;
 
-    os << "#ifndef DT" << ENDL;
-    os << "#define DT " << DT << ENDL;
+    os << "#include \"utils.h\"" << ENDL;
+    if (model.timing) os << "#include \"hr_time.h\"" << ENDL;
+    os << "#include \"sparseUtils.h\"" << ENDL << ENDL;
+    os << "#include \"sparseProjection.h\"" << ENDL;
+    os << "#include <stdint.h>" << ENDL;
+    os << ENDL;
+
+#ifndef CPU_ONLY
+    // write CUDA error handler macro
+    os << "#ifndef CHECK_CUDA_ERRORS" << ENDL;
+    os << "#define CHECK_CUDA_ERRORS(call) {\\" << ENDL;
+    os << "    cudaError_t error = call;\\" << ENDL;
+    os << "    if (error != cudaSuccess) {\\" << ENDL;
+    os << "        fprintf(stderr, \"%s: %i: cuda error %i: %s\\n\", __FILE__, __LINE__, (int) error, cudaGetErrorString(error));\\" << ENDL;
+    os << "        exit(EXIT_FAILURE);\\" << ENDL;
+    os << "    }\\" << ENDL;
+    os << "}" << ENDL;
     os << "#endif" << ENDL;
+    os << ENDL;
+#endif // CPU_ONLY
+
+    // write DT macro
+    os << "#undef DT" << ENDL;
+    if (model.ftype == "float") {
+	os << "#define DT " << tS(model.dt) << "f" << ENDL;
+    } else {
+        os << "#define DT " << tS(model.dt) << ENDL;
+    }
+
+    // write MYRAND macro
+    os << "#ifndef MYRAND" << ENDL;
+    os << "#define MYRAND(Y,X) Y = Y * 1103515245 + 12345; X = (Y >> 16);" << ENDL;
+    os << "#endif" << ENDL;
+    os << "#ifndef MYRAND_MAX" << ENDL;
+    os << "#define MYRAND_MAX 0x0000FFFFFFFFFFFFLL" << ENDL;
+    os << "#endif" << ENDL;
+    os << ENDL;
 
     os << "#ifndef scalar" << ENDL;
     os << "typedef " << model.ftype << " scalar;" << ENDL;
     os << "#endif" << ENDL;
-  
     os << "#ifndef SCALAR_MIN" << ENDL;
     os << "#define SCALAR_MIN " << SCLR_MIN << ENDL;
     os << "#endif" << ENDL;
-  
     os << "#ifndef SCALAR_MAX" << ENDL;
     os << "#define SCALAR_MAX " << SCLR_MAX << ENDL;
     os << "#endif" << ENDL;
+    os << ENDL;
 
-    for (int i= 0; i < model.neuronGrpN; i++) {
-	os << "#define glbSpkShift" << model.neuronName[i];
-	if (model.neuronDelaySlots[i] > 1) {
-	    os << " spkQuePtr" << model.neuronName[i] << "*" << model.neuronN[i];
-	}
-	else {
-	    os << " 0";
-	}
-	os << ENDL;
-    }
-    for (int i = 0; i < model.neuronGrpN; i++) {
-      	// convenience macros for accessing spike count 
-	os << "#define spikeCount_" << model.neuronName[i] << " glbSpkCnt" << model.neuronName[i];
-	if ((model.neuronDelaySlots[i] > 1) && (model.neuronNeedTrueSpk[i])) {
-	  os << "[spkQuePtr" << model.neuronName[i] << "]" << ENDL;
-	}
-	else {
-	  os << "[0]" << ENDL;
-	}
-	// convenience macro for accessing spikes
-	os << "#define spike_" << model.neuronName[i];
-	if ((model.neuronDelaySlots[i] > 1) && (model.neuronNeedTrueSpk[i])) {
-	  os << " (glbSpk" << model.neuronName[i] << "+(spkQuePtr" << model.neuronName[i] << "*" << model.neuronN[i] << "))" << ENDL;
-	}
-	else {
-	  os << " glbSpk" << model.neuronName[i] << ENDL;
-	}
-      	if (model.neuronNeedSpkEvnt[i]) {
-	  // convenience macros for accessing spike count 
-	  os << "#define spikeEventCount_" << model.neuronName[i] << " glbSpkCntEvnt" << model.neuronName[i];
-	  if (model.neuronDelaySlots[i] > 1) {
-	    os << "[spkQuePtr" << model.neuronName[i] << "]" << ENDL;
-	  }
-	  else {
-	    os << "[0]" << ENDL;
-	  }
-	  // convenience macro for accessing spikes
-	  os << "#define spikeEvent_" << model.neuronName[i];
-	  if (model.neuronDelaySlots[i] > 1) {
-	    os << " (glbSpkEvnt" << model.neuronName[i] << "+(spkQuePtr" << model.neuronName[i] << "*" << model.neuronN[i] << "))" << ENDL;
-	  }
-	  else {
-	    os << " glbSpkEvnt" << model.neuronName[i] << ENDL;
-	  }
-	}
-    }
 
+    //-----------------
+    // GLOBAL VARIABLES
+
+    os << "// ------------------------------------------------------------------------" << ENDL;
+    os << "// global variables" << ENDL;
+    os << ENDL;
+
+    os << "extern unsigned long long iT;" << ENDL;
+    os << "extern " << model.ftype << " t;" << ENDL;
+    if (model.timing) {
 #ifndef CPU_ONLY
-
-    // generate headers for the communication utility functions such as 
-    // pullXXXStateFromDevice() etc. This is useful for the brian2genn
-    // interface where we do more proper compile/link and do not want
-    // to include runnerGPU.cc into all relevant code_objects (e.g.
-    // spike and state monitors
-
-    os << "// ------------------------------------------------------------------------" << ENDL;
-    os << "// copying things to device" << ENDL << ENDL;
-    for (int i = 0; i < model.neuronGrpN; i++) {
-	os << "void push" << model.neuronName[i] << "StateToDevice();" << ENDL;
-	os << "void push" << model.neuronName[i] << "SpikesToDevice();" << ENDL;
-	os << "void push" << model.neuronName[i] << "SpikeEventsToDevice();" << ENDL;
-	os << "void push" << model.neuronName[i] << "CurrentSpikesToDevice();" << ENDL;
-	os << "void push" << model.neuronName[i] << "CurrentSpikeEventsToDevice();" << ENDL;
-    }
-    for (int i = 0; i < model.synapseGrpN; i++) {
-        os << "#define push" << model.synapseName[i] << "ToDevice push" << model.synapseName[i] << "StateToDevice" << ENDL << ENDL;
-	os << "void push" << model.synapseName[i] << "StateToDevice();" << ENDL;
-    }
-    os << "// ------------------------------------------------------------------------" << ENDL;
-    os << "// copying things from device" << ENDL << ENDL;
-    
-    for (int i = 0; i < model.neuronGrpN; i++) {
- 	os << "void pull" << model.neuronName[i] << "StateFromDevice();" << ENDL;
-	os << "void pull" << model.neuronName[i] << "SpikesFromDevice();" << ENDL;
-	os << "void pull" << model.neuronName[i] << "SpikeEventsFromDevice();" << ENDL;
-    	os << "void pull" << model.neuronName[i] << "CurrentSpikesFromDevice();" << ENDL;
-		os << "void pull" << model.neuronName[i] << "CurrentSpikeEventsFromDevice();" << ENDL;
-    }
-    for (int i = 0; i < model.synapseGrpN; i++) {
-	os << "#define pull" << model.synapseName[i] << "FromDevice pull" << model.synapseName[i] << "StateFromDevice" << ENDL << ENDL;
-	os << "void pull" << model.synapseName[i] << "StateFromDevice();" << ENDL;
-    }
-
-    os << "// ------------------------------------------------------------------------" << ENDL;
-    os << "// global copying values to device" << ENDL;
-    os << "void copyStateToDevice();" << ENDL;
-    os << "// ------------------------------------------------------------------------" << ENDL;
-    os << "// global copying spikes to device" << ENDL;
-    os << "void copySpikesToDevice();" << ENDL;
-    os << "// ------------------------------------------------------------------------" << ENDL;
-    os << "// copying current spikes to device" << ENDL;
-    os << "void copyCurrentSpikesToDevice();" << ENDL;
-    os << "// ------------------------------------------------------------------------" << ENDL;
-    os << "// global copying spike events to device" << ENDL;    
-    os << "void copySpikeEventsToDevice();" << ENDL;    
-    os << "// ------------------------------------------------------------------------" << ENDL;
-    os << "// copying current spikes to device" << ENDL;
-    os << "void copyCurrentSpikeEventsToDevice();" << ENDL;
-    os << "// ------------------------------------------------------------------------" << ENDL;
-    os << "// global copying values from device" << ENDL;
-    os << "void copyStateFromDevice();" << ENDL;
-    os << "// ------------------------------------------------------------------------" << ENDL;
-    os << "// global copying spikes from device" << ENDL;
-    os << "void copySpikesFromDevice();" << ENDL;
-    os << "// ------------------------------------------------------------------------" << ENDL;
-    os << "// copying current spikes from device" << ENDL;
-    os << "void copyCurrentSpikesFromDevice();" << ENDL;
-    os << "// ------------------------------------------------------------------------" << ENDL;
-    os << "// copying spike numbers from device (note, only use when only interested"<< ENDL;
-    os << "// in spike numbers; copySpikesFromDevice() already includes this)" << ENDL;
-    os << "void copySpikeNFromDevice();" << ENDL;
-    os << "// ------------------------------------------------------------------------"<< ENDL;
-    os << "// global copying spikeEvents from device" << ENDL;
-    os << "void copySpikeEventsFromDevice();" << ENDL;
-    os << "// ------------------------------------------------------------------------" << ENDL;
-    os << "// copying current spikeEvents from device" << ENDL;
-    os << "void copyCurrentSpikeEventsFromDevice();" << ENDL;
-    os << "// ------------------------------------------------------------------------" << ENDL;
-    os << "// global copying spike event numbers from device (note, only use when only interested" << ENDL;
-    os << "// in spike numbers; copySpikeEventsFromDevice() already includes this)" << ENDL;
-    os << "void copySpikeEventNFromDevice();" << ENDL;
-    os << "// ------------------------------------------------------------------------" << ENDL;
-    os << "// the actual time stepping procedure" << ENDL;
-    os << "void stepTimeGPU(unsigned int flags);" << ENDL;
-
+	os << "extern cudaEvent_t neuronStart, neuronStop;" << ENDL;
 #endif
+	os << "extern double neuron_tme;" << ENDL;
+	os << "extern CStopWatch neuron_timer;" << ENDL;
+	if (model.synapseGrpN > 0) {
+#ifndef CPU_ONLY
+	    os << "extern cudaEvent_t synapseStart, synapseStop;" << ENDL;
+#endif
+	    os << "extern double synapse_tme;" << ENDL;
+	    os << "extern CStopWatch synapse_timer;" << ENDL;
+	}
+	if (model.lrnGroups > 0) {
+#ifndef CPU_ONLY
+	    os << "extern cudaEvent_t learningStart, learningStop;" << ENDL;
+#endif
+	    os << "extern double learning_tme;" << ENDL;
+	    os << "extern CStopWatch learning_timer;" << ENDL;
+	}
+	if (model.synDynGroups > 0) {
+#ifndef CPU_ONLY
+	    os << "extern cudaEvent_t synDynStart, synDynStop;" << ENDL;
+#endif
+	    os << "extern double synDyn_tme;" << ENDL;
+	    os << "extern CStopWatch synDyn_timer;" << ENDL;
+	}
+    } 
+    os << ENDL;
+
 
     //---------------------------------
     // HOST AND DEVICE NEURON VARIABLES
+
+    os << "// ------------------------------------------------------------------------" << ENDL;
     os << "// neuron variables" << ENDL;
+    os << ENDL;
+
     for (int i = 0; i < model.neuronGrpN; i++) {
 	nt = model.neuronType[i];
 
@@ -308,11 +278,63 @@ for (int i= 0; i < weightUpdateModels.size(); i++) {
 	}	
     }
     os << ENDL;
+        for (int i= 0; i < model.neuronGrpN; i++) {
+	os << "#define glbSpkShift" << model.neuronName[i];
+	if (model.neuronDelaySlots[i] > 1) {
+	    os << " spkQuePtr" << model.neuronName[i] << "*" << model.neuronN[i];
+	}
+	else {
+	    os << " 0";
+	}
+	os << ENDL;
+    }
+
+    for (int i = 0; i < model.neuronGrpN; i++) {
+      	// convenience macros for accessing spike count 
+	os << "#define spikeCount_" << model.neuronName[i] << " glbSpkCnt" << model.neuronName[i];
+	if ((model.neuronDelaySlots[i] > 1) && (model.neuronNeedTrueSpk[i])) {
+	    os << "[spkQuePtr" << model.neuronName[i] << "]" << ENDL;
+	}
+	else {
+	    os << "[0]" << ENDL;
+	}
+	// convenience macro for accessing spikes
+	os << "#define spike_" << model.neuronName[i];
+	if ((model.neuronDelaySlots[i] > 1) && (model.neuronNeedTrueSpk[i])) {
+	    os << " (glbSpk" << model.neuronName[i] << "+(spkQuePtr" << model.neuronName[i] << "*" << model.neuronN[i] << "))" << ENDL;
+	}
+	else {
+	    os << " glbSpk" << model.neuronName[i] << ENDL;
+	}
+	if (model.neuronNeedSpkEvnt[i]) {
+	    // convenience macros for accessing spike count 
+	    os << "#define spikeEventCount_" << model.neuronName[i] << " glbSpkCntEvnt" << model.neuronName[i];
+	    if (model.neuronDelaySlots[i] > 1) {
+		os << "[spkQuePtr" << model.neuronName[i] << "]" << ENDL;
+	    }
+	    else {
+		os << "[0]" << ENDL;
+	    }
+	    // convenience macro for accessing spikes
+	    os << "#define spikeEvent_" << model.neuronName[i];
+	    if (model.neuronDelaySlots[i] > 1) {
+		os << " (glbSpkEvnt" << model.neuronName[i] << "+(spkQuePtr" << model.neuronName[i] << "*" << model.neuronN[i] << "))" << ENDL;
+	    }
+	    else {
+		os << " glbSpkEvnt" << model.neuronName[i] << ENDL;
+	    }
+	}
+    }
+    os << ENDL;
+
 
     //----------------------------------
     // HOST AND DEVICE SYNAPSE VARIABLES
 
+    os << "// ------------------------------------------------------------------------" << ENDL;
     os << "// synapse variables" << ENDL;
+    os << ENDL;
+
     for (int i = 0; i < model.synapseGrpN; i++) {
 	st = model.synapseType[i];
 	pst = model.postSynapseType[i];
@@ -337,11 +359,242 @@ for (int i= 0; i < weightUpdateModels.size(); i++) {
 	}		
     }
     os << ENDL;
+
+    os << "#define Conductance SparseProjection" << ENDL;
+    os << "/*struct Conductance is deprecated. \n\
+  By GeNN 2.0, Conductance is renamed as SparseProjection and contains only indexing values. \n\
+  Please consider updating your user code by renaming Conductance as SparseProjection \n\
+  and making g member a synapse variable.*/" << ENDL;
+    os << ENDL;
+
+
+    //--------------------------
+    // HOST AND DEVICE FUNCTIONS
+
+#ifndef CPU_ONLY
+    os << "// ------------------------------------------------------------------------" << ENDL;
+    os << "// Helper function for allocating memory blocks on the GPU device" << ENDL;
+    os << ENDL;
+    os << "template<class T>" << ENDL;
+    os << "void deviceMemAllocate(T* hostPtr, const T &devSymbol, size_t size)" << ENDL;
+    os << "{" << ENDL;
+    os << "    void *devptr;" << ENDL;
+    os << "    CHECK_CUDA_ERRORS(cudaMalloc(hostPtr, size));" << ENDL;
+    os << "    CHECK_CUDA_ERRORS(cudaGetSymbolAddress(&devptr, devSymbol));" << ENDL;
+    os << "    CHECK_CUDA_ERRORS(cudaMemcpy(devptr, hostPtr, sizeof(void*), cudaMemcpyHostToDevice));" << ENDL;
+    os << "}" << ENDL;
+    os << ENDL;
+#endif
+
+#ifndef CPU_ONLY
+    // generate headers for the communication utility functions such as 
+    // pullXXXStateFromDevice() etc. This is useful for the brian2genn
+    // interface where we do more proper compile/link and do not want
+    // to include runnerGPU.cc into all relevant code_objects (e.g.
+    // spike and state monitors
+
+    os << "// ------------------------------------------------------------------------" << ENDL;
+    os << "// copying things to device" << ENDL;
+    os << ENDL;
+    for (int i = 0; i < model.neuronGrpN; i++) {
+	os << "void push" << model.neuronName[i] << "StateToDevice();" << ENDL;
+	os << "void push" << model.neuronName[i] << "SpikesToDevice();" << ENDL;
+	os << "void push" << model.neuronName[i] << "SpikeEventsToDevice();" << ENDL;
+	os << "void push" << model.neuronName[i] << "CurrentSpikesToDevice();" << ENDL;
+	os << "void push" << model.neuronName[i] << "CurrentSpikeEventsToDevice();" << ENDL;
+    }
+    for (int i = 0; i < model.synapseGrpN; i++) {
+        os << "#define push" << model.synapseName[i] << "ToDevice push" << model.synapseName[i] << "StateToDevice" << ENDL;
+	os << "void push" << model.synapseName[i] << "StateToDevice();" << ENDL;
+    }
+    os << ENDL;
+
+    os << "// ------------------------------------------------------------------------" << ENDL;
+    os << "// copying things from device" << ENDL;
+    os << ENDL;
+    for (int i = 0; i < model.neuronGrpN; i++) {
+ 	os << "void pull" << model.neuronName[i] << "StateFromDevice();" << ENDL;
+	os << "void pull" << model.neuronName[i] << "SpikesFromDevice();" << ENDL;
+	os << "void pull" << model.neuronName[i] << "SpikeEventsFromDevice();" << ENDL;
+    	os << "void pull" << model.neuronName[i] << "CurrentSpikesFromDevice();" << ENDL;
+		os << "void pull" << model.neuronName[i] << "CurrentSpikeEventsFromDevice();" << ENDL;
+    }
+    for (int i = 0; i < model.synapseGrpN; i++) {
+	os << "#define pull" << model.synapseName[i] << "FromDevice pull" << model.synapseName[i] << "StateFromDevice" << ENDL;
+	os << "void pull" << model.synapseName[i] << "StateFromDevice();" << ENDL;
+    }
+    os << ENDL;
+
+    os << "// ------------------------------------------------------------------------" << ENDL;
+    os << "// global copying values to device" << ENDL;
+    os << ENDL;
+    os << "void copyStateToDevice();" << ENDL;
+    os << ENDL;
+
+    os << "// ------------------------------------------------------------------------" << ENDL;
+    os << "// global copying spikes to device" << ENDL;
+    os << ENDL;
+    os << "void copySpikesToDevice();" << ENDL;
+    os << ENDL;
+
+    os << "// ------------------------------------------------------------------------" << ENDL;
+    os << "// copying current spikes to device" << ENDL;
+    os << ENDL;
+    os << "void copyCurrentSpikesToDevice();" << ENDL;
+    os << ENDL;
+
+    os << "// ------------------------------------------------------------------------" << ENDL;
+    os << "// global copying spike events to device" << ENDL;    
+    os << ENDL;
+    os << "void copySpikeEventsToDevice();" << ENDL;    
+    os << ENDL;
+
+    os << "// ------------------------------------------------------------------------" << ENDL;
+    os << "// copying current spikes to device" << ENDL;
+    os << ENDL;
+    os << "void copyCurrentSpikeEventsToDevice();" << ENDL;
+    os << ENDL;
+
+    os << "// ------------------------------------------------------------------------" << ENDL;
+    os << "// global copying values from device" << ENDL;
+    os << ENDL;
+    os << "void copyStateFromDevice();" << ENDL;
+    os << ENDL;
+
+    os << "// ------------------------------------------------------------------------" << ENDL;
+    os << "// global copying spikes from device" << ENDL;
+    os << ENDL;
+    os << "void copySpikesFromDevice();" << ENDL;
+    os << ENDL;
+
+    os << "// ------------------------------------------------------------------------" << ENDL;
+    os << "// copying current spikes from device" << ENDL;
+    os << ENDL;
+    os << "void copyCurrentSpikesFromDevice();" << ENDL;
+    os << ENDL;
+
+    os << "// ------------------------------------------------------------------------" << ENDL;
+    os << "// copying spike numbers from device (note, only use when only interested"<< ENDL;
+    os << "// in spike numbers; copySpikesFromDevice() already includes this)" << ENDL;
+    os << ENDL;
+    os << "void copySpikeNFromDevice();" << ENDL;
+    os << ENDL;
+
+    os << "// ------------------------------------------------------------------------"<< ENDL;
+    os << "// global copying spikeEvents from device" << ENDL;
+    os << ENDL;
+    os << "void copySpikeEventsFromDevice();" << ENDL;
+    os << ENDL;
+
+    os << "// ------------------------------------------------------------------------" << ENDL;
+    os << "// copying current spikeEvents from device" << ENDL;
+    os << ENDL;
+    os << "void copyCurrentSpikeEventsFromDevice();" << ENDL;
+    os << ENDL;
+
+    os << "// ------------------------------------------------------------------------" << ENDL;
+    os << "// global copying spike event numbers from device (note, only use when only interested" << ENDL;
+    os << "// in spike numbers; copySpikeEventsFromDevice() already includes this)" << ENDL;
+    os << ENDL;
+    os << "void copySpikeEventNFromDevice();" << ENDL;
+    os << ENDL;
+#endif
+
+    os << "// ------------------------------------------------------------------------" << ENDL;
+    os << "// Function for setting the CUDA device and the host's global variables." << ENDL;
+    os << "// Also estimates memory usage on device." << ENDL;
+    os << ENDL;
+    os << "void allocateMem();" << ENDL;
+    os << ENDL;
+
+    for (int i = 0; i < model.synapseGrpN; i++) {	
+	if (model.synapseConnType[i] == SPARSE) {
+	    os << "void allocate" << model.synapseName[i] << "(unsigned int connN);" << ENDL;
+	    os << ENDL;
+	}
+    }
+
+    os << "// ------------------------------------------------------------------------" << ENDL;
+    os << "// Function to (re)set all model variables to their compile-time, homogeneous initial" << ENDL;
+    os << "// values. Note that this typically includes synaptic weight values. The function" << ENDL;
+    os << "// (re)sets host side variables and copies them to the GPU device." << ENDL;
+    os << ENDL;
+    os << "void initialize();" << ENDL;
+    os << ENDL;
+
+
+#ifndef CPU_ONLY
+    os << "void initializeAllSparseArrays();" << ENDL;
+    os << ENDL;
+#endif
+
+    os << "// ------------------------------------------------------------------------" << ENDL;
+    os << "// initialization of variables, e.g. reverse sparse arrays etc." << ENDL;
+    os << "// that the user would not want to worry about" << ENDL;
+    os << ENDL;
+    os << "void init" << model.name << "();" << ENDL;
+    os << ENDL;
+
+    os << "// ------------------------------------------------------------------------" << ENDL;
+    os << "// Function to free all global memory structures." << ENDL;
+    os << ENDL;
+    os << "void freeMem();" << ENDL;
+    os << ENDL;
+
+    os << "//-------------------------------------------------------------------------" << ENDL;
+    os << "// Function to convert a firing probability (per time step) to an integer of type uint64_t" << ENDL;
+    os << "// that can be used as a threshold for the GeNN random number generator to generate events with the given probability." << ENDL;
+    os << ENDL;
+    os << "void convertProbabilityToRandomNumberThreshold(" << model.ftype << " *p_pattern, " << model.RNtype << " *pattern, int N);" << ENDL;
+    os << ENDL;
+
+    os << "//-------------------------------------------------------------------------" << ENDL;
+    os << "// Function to convert a firing rate (in kHz) to an integer of type uint64_t that can be used" << ENDL;
+    os << "// as a threshold for the GeNN random number generator to generate events with the given rate." << ENDL;
+    os << ENDL;
+    os << "void convertRateToRandomNumberThreshold(" << model.ftype << " *rateKHz_pattern, " << model.RNtype << " *pattern, int N);" << ENDL;
+    os << ENDL;
+
+    os << "// ------------------------------------------------------------------------" << ENDL;
+    os << "// Throw an error for \"old style\" time stepping calls (using CPU)" << ENDL;
+    os << ENDL;
+    os << "template <class T>" << ENDL;
+    os << "void stepTimeCPU(T arg1, ...)" << OB(101);
+    os << "gennError(\"Since GeNN 2.2 the call to step time has changed to not take any arguments. You appear to attempt to pass arguments. This is no longer supported. See the GeNN 2.2. release notes and the manual for examples how to pass data like, e.g., Poisson rates and direct inputs, that were previously handled through arguments.\");" << ENDL; 
+    os << CB(101);
+    os<< ENDL;
+
+    os << "// ------------------------------------------------------------------------" << ENDL;
+    os << "// the actual time stepping procedure (using CPU)" << ENDL;
+    os << ENDL;
+    os << "void stepTimeCPU();" << ENDL;
+    os << ENDL;
+
+#ifndef CPU_ONLY
+    os << "// ------------------------------------------------------------------------" << ENDL;
+    os << "// Throw an error for \"old style\" time stepping calls (using GPU)" << ENDL;
+    os << ENDL;
+    os << "template <class T>" << ENDL;
+    os << "void stepTimeGPU(T arg1, ...)" << OB(101);
+    os << "gennError(\"Since GeNN 2.2 the call to step time has changed to not take any arguments. You appear to attempt to pass arguments. This is no longer supported. See the GeNN 2.2. release notes and the manual for examples how to pass data like, e.g., Poisson rates and direct inputs, that were previously handled through arguments.\");" << ENDL;
+    os << CB(101);
+    os<< ENDL;
+
+    os << "// ------------------------------------------------------------------------" << ENDL;
+    os << "// the actual time stepping procedure (using GPU)" << ENDL;
+    os << ENDL;
+    os << "void stepTimeGPU();" << ENDL;
+    os << ENDL;
+#endif
+
     os << "#endif" << ENDL;
     os.close();
 
-    // generate definitions.h
-    // this file contains helpful macros and is separated out so that it can also be used by other code that is compiled separately
+
+    //========================
+    // generate support_code.h
+    //========================
+
     name= path + toString("/") + model.name + toString("_CODE/support_code.h");
     os.open(name.c_str());  
     writeHeader(os);
@@ -391,8 +644,9 @@ for (int i= 0; i < weightUpdateModels.size(); i++) {
     os << "#endif" << ENDL;
     os.close();
     
-//    cout << "entering genRunner" << ENDL;
-    name= path + toString("/") + model.name + toString("_CODE/runner.cc");
+
+    //cout << "entering genRunner" << ENDL;
+    name= path + "/" + model.name + "_CODE/runner.cc";
     os.open(name.c_str());  
     writeHeader(os);
     os << ENDL;
@@ -402,126 +656,68 @@ for (int i= 0; i < weightUpdateModels.size(); i++) {
     os << "/*! \\file runner.cc" << ENDL << ENDL;
     os << "\\brief File generated from GeNN for the model " << model.name << " containing general control code." << ENDL;
     os << "*/" << ENDL;
-    os << "//-------------------------------------------------------------------------" << ENDL << ENDL;
-
-    os << "#include <cstdio>" << ENDL;
-    os << "#include <cassert>" << ENDL;
-    os << "#include <ctime>" << ENDL;
-    os << "#include <stdint.h>" << ENDL;
-    os << "#include \"utils.h\"" << ENDL << ENDL;
-    os << "#include \"numlib/simpleBit.h\"" << ENDL << ENDL;
-    if (model.timing) os << "#include \"hr_time.cpp\"" << ENDL;
-    os << "#define RUNNER_CC_COMPILE" << ENDL;
-    os << "#include \"definitions.h\"" << ENDL;
+    os << "//-------------------------------------------------------------------------" << ENDL;
     os << ENDL;
 
-//    os << "#ifndef int_" << ENDL;
-//    os << "#define int_(X) ((int) (X))" << ENDL;
-//    os << "#endif" << ENDL;
+    os << "#define RUNNER_CC_COMPILE" << ENDL;
+    os << ENDL;
+    os << "#include \"definitions.h\"" << ENDL;
+    os << "#include <cstdlib>" << ENDL;
+    os << "#include <cstdio>" << ENDL;
+    os << "#include <cmath>" << ENDL;
+    os << "#include <ctime>" << ENDL;
+    os << "#include <cassert>" << ENDL;
+    os << "#include <stdint.h>" << ENDL;
+    os << ENDL;
 
-  os << "#define Conductance SparseProjection" << ENDL;
-  os << "/*struct Conductance is deprecated. \n\
-  By GeNN 2.0, Conductance is renamed as SparseProjection and contains only indexing values. \n\
-  Please consider updating your user code by renaming Conductance as SparseProjection \n\
-  and making g member a synapse variable.*/" << ENDL;
 
-    // write MYRAND macro
-    os << "#ifndef MYRAND" << ENDL;
-    os << "#define MYRAND(Y,X) Y = Y * 1103515245 + 12345; X = (Y >> 16);" << ENDL;
-    os << "#endif" << ENDL << ENDL;
-    os << "#ifndef MYRAND_MAX" << ENDL;
-    os << "#define MYRAND_MAX 0x0000FFFFFFFFFFFFLL" << ENDL;
-    os << "#endif" << ENDL;
-  if (model.timing) {
-#ifndef CPU_ONLY
-      os << "cudaEvent_t neuronStart, neuronStop;" << ENDL;
-#endif
-      os << "double neuron_tme;" << ENDL;
-      os << "CStopWatch neuron_timer;" << ENDL;
-      if (model.synapseGrpN > 0) {
-#ifndef CPU_ONLY
-	  os << "cudaEvent_t synapseStart, synapseStop;" << ENDL;
-#endif
-	  os << "double synapse_tme;" << ENDL;
-	  os << "CStopWatch synapse_timer;" << ENDL;
-      }
-      if (model.lrnGroups > 0) {
-#ifndef CPU_ONLY
-	  os << "cudaEvent_t learningStart, learningStop;" << ENDL;
-#endif
-	  os << "double learning_tme;" << ENDL;
-	  os << "CStopWatch learning_timer;" << ENDL;
-      }
-      if (model.synDynGroups > 0) {
-#ifndef CPU_ONLY
-	  os << "cudaEvent_t synDynStart, synDynStop;" << ENDL;
-#endif
-	  os << "double synDyn_tme;" << ENDL;
-	  os << "CStopWatch synDyn_timer;" << ENDL;
-      }
-  } 
+    //-----------------
+    // GLOBAL VARIABLES
 
-#ifndef CPU_ONLY
-    // write CUDA error handler macro
-    os << "#ifndef CHECK_CUDA_ERRORS" << ENDL;
-    os << "#define CHECK_CUDA_ERRORS(call) {\\" << ENDL;
-    os << "    cudaError_t error = call;\\" << ENDL;
-    os << "    if (error != cudaSuccess) {\\" << ENDL;
-    os << "        fprintf(stderr, \"%s: %i: cuda error %i: %s\\n\", __FILE__, __LINE__, (int) error, cudaGetErrorString(error));\\" << ENDL;
-    os << "        exit(EXIT_FAILURE);\\" << ENDL;
-    os << "    }\\" << ENDL;
-    os << "}" << ENDL;
-    os << "#endif" << ENDL << ENDL;
-
-    os << "template<class T>" << ENDL;
-    os << "void deviceMemAllocate(T* hostPtr, const T &devSymbol, size_t size)" << ENDL;
-    os << "{" << ENDL;
-    os << "    void *devptr;" << ENDL;
-    os << "    CHECK_CUDA_ERRORS(cudaMalloc(hostPtr, size));" << ENDL;
-    os << "    CHECK_CUDA_ERRORS(cudaGetSymbolAddress(&devptr, devSymbol));" << ENDL;
-    os << "    CHECK_CUDA_ERRORS(cudaMemcpy(devptr, hostPtr, sizeof(void*), cudaMemcpyHostToDevice));" << ENDL;
-    os << "}" << ENDL << ENDL;
-#endif
-
-    // write doxygen comment
-    os << "//-------------------------------------------------------------------------" << ENDL;
-    os << "/*! \\brief Function to convert a firing probability (per time step) " << ENDL;
-    os << "to an integer of type uint64_t that can be used as a threshold for the GeNN random number generator to generate events with the given probability." << ENDL;
-    os << "*/" << ENDL;
-    os << "//-------------------------------------------------------------------------" << ENDL << ENDL;
-
-    os << "void convertProbabilityToRandomNumberThreshold(" << model.ftype << " *p_pattern, " << model.RNtype << " *pattern, int N)" << ENDL;
-    os << "{" << ENDL;
-    os << "    " << model.ftype << " fac= pow(2.0, (double) sizeof(" << model.RNtype << ")*8-16);" << ENDL;
-    os << "    for (int i= 0; i < N; i++) {" << ENDL;
-    //os << "        assert(p_pattern[i] <= 1.0);" << ENDL;
-    os << "        pattern[i]= (" << model.RNtype << ") (p_pattern[i]*fac);" << ENDL;
-    os << "    }" << ENDL;
-    os << "}" << ENDL << ENDL;
-
-    // write doxygen comment
-    os << "//-------------------------------------------------------------------------" << ENDL;
-    os << "/*! \\brief Function to convert a firing rate (in kHz) " << ENDL;
-    os << "to an integer of type uint64_t that can be used as a threshold for the GeNN random number generator to generate events with the given rate." << ENDL;
-    os << "*/" << ENDL;
-    os << "//-------------------------------------------------------------------------" << ENDL << ENDL;
-
-    os << "void convertRateToRandomNumberThreshold(" << model.ftype << " *rateKHz_pattern, " << model.RNtype << " *pattern, int N)" << ENDL;
-    os << "{" << ENDL;
-    os << "    " << model.ftype << " fac= pow(2.0, (double) sizeof(" << model.RNtype << ")*8-16)*DT;" << ENDL;
-    os << "    for (int i= 0; i < N; i++) {" << ENDL;
-    //os << "        assert(rateKHz_pattern[i] <= 1.0);" << ENDL;
-    os << "        pattern[i]= (" << model.RNtype << ") (rateKHz_pattern[i]*fac);" << ENDL;
-    os << "    }" << ENDL;
-    os << "}" << ENDL << ENDL;
-
+    os << "// ------------------------------------------------------------------------" << ENDL;
     os << "// global variables" << ENDL;
+    os << ENDL;
+
     os << "unsigned long long iT= 0;" << ENDL;
     os << model.ftype << " t;" << ENDL;
+    if (model.timing) {
+#ifndef CPU_ONLY
+	os << "cudaEvent_t neuronStart, neuronStop;" << ENDL;
+#endif
+	os << "double neuron_tme;" << ENDL;
+	os << "CStopWatch neuron_timer;" << ENDL;
+	if (model.synapseGrpN > 0) {
+#ifndef CPU_ONLY
+	    os << "cudaEvent_t synapseStart, synapseStop;" << ENDL;
+#endif
+	    os << "double synapse_tme;" << ENDL;
+	    os << "CStopWatch synapse_timer;" << ENDL;
+	}
+	if (model.lrnGroups > 0) {
+#ifndef CPU_ONLY
+	    os << "cudaEvent_t learningStart, learningStop;" << ENDL;
+#endif
+	    os << "double learning_tme;" << ENDL;
+	    os << "CStopWatch learning_timer;" << ENDL;
+	}
+	if (model.synDynGroups > 0) {
+#ifndef CPU_ONLY
+	    os << "cudaEvent_t synDynStart, synDynStop;" << ENDL;
+#endif
+	    os << "double synDyn_tme;" << ENDL;
+	    os << "CStopWatch synDyn_timer;" << ENDL;
+	}
+    } 
+    os << ENDL;
+
+
     //---------------------------------
     // HOST AND DEVICE NEURON VARIABLES
 
+    os << "// ------------------------------------------------------------------------" << ENDL;
     os << "// neuron variables" << ENDL;
+    os << ENDL;
+
 #ifndef CPU_ONLY
     os << "__device__ volatile unsigned int d_done;" << ENDL;
 #endif
@@ -552,10 +748,14 @@ for (int i= 0; i < weightUpdateModels.size(); i++) {
     }
     os << ENDL;
 
+
     //----------------------------------
     // HOST AND DEVICE SYNAPSE VARIABLES
 
+    os << "// ------------------------------------------------------------------------" << ENDL;
     os << "// synapse variables" << ENDL;
+    os << ENDL;
+
     for (int i = 0; i < model.synapseGrpN; i++) {
 	st = model.synapseType[i];
 	pst = model.postSynapseType[i];
@@ -600,7 +800,42 @@ for (int i= 0; i < weightUpdateModels.size(); i++) {
     }
     os << ENDL;
 
-    os << "#include \"sparseUtils.cc\"" << ENDL << ENDL;
+
+    //--------------------------
+    // HOST AND DEVICE FUNCTIONS
+
+    // write doxygen comment
+    os << "//-------------------------------------------------------------------------" << ENDL;
+    os << "/*! \\brief Function to convert a firing probability (per time step) " << ENDL;
+    os << "to an integer of type uint64_t that can be used as a threshold for the GeNN random number generator to generate events with the given probability." << ENDL;
+    os << "*/" << ENDL;
+    os << "//-------------------------------------------------------------------------" << ENDL << ENDL;
+
+    os << "void convertProbabilityToRandomNumberThreshold(" << model.ftype << " *p_pattern, " << model.RNtype << " *pattern, int N)" << ENDL;
+    os << "{" << ENDL;
+    os << "    " << model.ftype << " fac= pow(2.0, (double) sizeof(" << model.RNtype << ")*8-16);" << ENDL;
+    os << "    for (int i= 0; i < N; i++) {" << ENDL;
+    //os << "        assert(p_pattern[i] <= 1.0);" << ENDL;
+    os << "        pattern[i]= (" << model.RNtype << ") (p_pattern[i]*fac);" << ENDL;
+    os << "    }" << ENDL;
+    os << "}" << ENDL << ENDL;
+
+    // write doxygen comment
+    os << "//-------------------------------------------------------------------------" << ENDL;
+    os << "/*! \\brief Function to convert a firing rate (in kHz) " << ENDL;
+    os << "to an integer of type uint64_t that can be used as a threshold for the GeNN random number generator to generate events with the given rate." << ENDL;
+    os << "*/" << ENDL;
+    os << "//-------------------------------------------------------------------------" << ENDL << ENDL;
+
+    os << "void convertRateToRandomNumberThreshold(" << model.ftype << " *rateKHz_pattern, " << model.RNtype << " *pattern, int N)" << ENDL;
+    os << "{" << ENDL;
+    os << "    " << model.ftype << " fac= pow(2.0, (double) sizeof(" << model.RNtype << ")*8-16)*DT;" << ENDL;
+    os << "    for (int i= 0; i < N; i++) {" << ENDL;
+    //os << "        assert(rateKHz_pattern[i] <= 1.0);" << ENDL;
+    os << "        pattern[i]= (" << model.RNtype << ") (rateKHz_pattern[i]*fac);" << ENDL;
+    os << "    }" << ENDL;
+    os << "}" << ENDL << ENDL;
+
     // include simulation kernels
 #ifndef CPU_ONLY
     os << "#include \"runnerGPU.cc\"" << ENDL << ENDL;
@@ -618,7 +853,7 @@ for (int i= 0; i < weightUpdateModels.size(); i++) {
     os << "void allocateMem()" << ENDL;
     os << "{" << ENDL;
 #ifndef CPU_ONLY
-    os << "    CHECK_CUDA_ERRORS(cudaSetDevice(" << theDev << "));" << ENDL;
+    os << "    CHECK_CUDA_ERRORS(cudaSetDevice(" << theDevice << "));" << ENDL;
 #endif
     //cout << "model.neuronGroupN " << model.neuronGrpN << ENDL;
     //os << "    " << model.ftype << " free_m, total_m;" << ENDL;
@@ -931,7 +1166,7 @@ for (int i= 0; i < weightUpdateModels.size(); i++) {
 	    os << "    }" << ENDL;
 	}
 
-	if ((model.neuronType[i] == IZHIKEVICH) && (DT != 1.0)) {
+	if ((model.neuronType[i] == IZHIKEVICH) && (model.dt != 1.0)) {
 	    os << "    fprintf(stderr,\"WARNING: You use a time step different than 1 ms. Izhikevich model behaviour may not be robust.\\n\"); " << ENDL;
 	}
     }
@@ -1302,31 +1537,21 @@ for (int i= 0; i < weightUpdateModels.size(); i++) {
     os << "}" << ENDL << ENDL;
 
 
-// ------------------------------------------------------------------------
-//! \brief Method for cleaning up and resetting device while quitting GeNN
+    // ------------------------------------------------------------------------
+    //! \brief Method for cleaning up and resetting device while quitting GeNN
 
-  os << "void exitGeNN(){" << ENDL;  
-  os << "  freeMem();" << ENDL;
+    os << "void exitGeNN(){" << ENDL;  
+    os << "  freeMem();" << ENDL;
 #ifndef CPU_ONLY
-  os << "  cudaDeviceReset();" << ENDL;
+    os << "  cudaDeviceReset();" << ENDL;
 #endif
-  os << "}" << ENDL;
+    os << "}" << ENDL;
+    os << ENDL;
 
-
-  os << "// ------------------------------------------------------------------------" << ENDL;
-  os << "// Throw an error for \"old style\" time stepping calls" << ENDL;
-    os << "template <class T>" << ENDL;
-    os << "void stepTimeCPU(T arg1, ...)" << ENDL;
-    os << OB(101) << ENDL;
-    os << "gennError(\"Since GeNN 2.2 the call to step time has changed to not take any arguments. You appear to attempt to pass arguments. This is no longer supported. See the GeNN 2.2. release notes and the manual for examples how to pass data like, e.g., Poisson rates and direct inputs, that were previously handled through arguments.\");" << ENDL; 
-    os << CB(101) << ENDL;
-    
     os << "// ------------------------------------------------------------------------" << ENDL;
-    os << "// the actual time stepping procedure" << ENDL;
-
+    os << "// the actual time stepping procedure (using CPU)" << ENDL;
     os << "void stepTimeCPU()" << ENDL;
     os << "{" << ENDL;
-
     if (model.synapseGrpN > 0) {
 	if (model.synDynGroups > 0) {
 	    if (model.timing) os << "        synDyn_timer.startTimer();" << ENDL;
@@ -1367,30 +1592,28 @@ for (int i= 0; i < weightUpdateModels.size(); i++) {
     // finish up
 
 #ifndef CPU_ONLY
-    mos << "Global memory required for core model: " << mem/1e6 << " MB. " << ENDL;
-    mos << deviceProp[theDev].totalGlobalMem << " for device " << theDev << ENDL;  
+    cout << "Global memory required for core model: " << mem/1e6 << " MB. " << ENDL;
+    cout << deviceProp[theDevice].totalGlobalMem << " for device " << theDevice << ENDL;  
   
     if (memremsparse != 0) {
 	int connEstim = int(memremsparse / (theSize(model.ftype) + sizeof(unsigned int)));
-	mos << "Remaining mem is " << memremsparse/1e6 << " MB." << ENDL;
-	mos << "You may run into memory problems on device" << theDev;
-	mos << " if the total number of synapses is bigger than " << connEstim;
-	mos << ", which roughly stands for " << int(connEstim/model.sumNeuronN[model.neuronGrpN - 1]);
-	mos << " connections per neuron, without considering any other dynamic memory load." << ENDL;
+	cout << "Remaining mem is " << memremsparse/1e6 << " MB." << ENDL;
+	cout << "You may run into memory problems on device" << theDevice;
+	cout << " if the total number of synapses is bigger than " << connEstim;
+	cout << ", which roughly stands for " << int(connEstim/model.sumNeuronN[model.neuronGrpN - 1]);
+	cout << " connections per neuron, without considering any other dynamic memory load." << ENDL;
     }
     else {
-	if (0.5 * deviceProp[theDev].totalGlobalMem < mem) {
-	    mos << "memory required for core model (" << mem/1e6;
-	    mos << "MB) is more than 50% of global memory on the chosen device";
-	    mos << "(" << deviceProp[theDev].totalGlobalMem/1e6 << "MB)." << ENDL;
-	    mos << "Experience shows that this is UNLIKELY TO WORK ... " << ENDL;
+	if (0.5 * deviceProp[theDevice].totalGlobalMem < mem) {
+	    cout << "memory required for core model (" << mem/1e6;
+	    cout << "MB) is more than 50% of global memory on the chosen device";
+	    cout << "(" << deviceProp[theDevice].totalGlobalMem/1e6 << "MB)." << ENDL;
+	    cout << "Experience shows that this is UNLIKELY TO WORK ... " << ENDL;
 	}
     }
 #endif
 }
 
-
-#ifndef CPU_ONLY
 
 //----------------------------------------------------------------------------
 /*!
@@ -1400,9 +1623,9 @@ for (int i= 0; i < weightUpdateModels.size(); i++) {
 */
 //----------------------------------------------------------------------------
 
+#ifndef CPU_ONLY
 void genRunnerGPU(NNmodel &model, //!< Model description 
-		  string &path, //!< path for code generation
-		  ostream &mos //!< output stream for messages
+		  string &path //!< Path for code generation
     )
 {
     string name;
@@ -1410,7 +1633,7 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     unsigned int nt, st, pst;
     ofstream os;
 
-//    mos << "entering GenRunnerGPU" << ENDL;
+//    cout << "entering GenRunnerGPU" << ENDL;
     name= path + toString("/") + model.name + toString("_CODE/runnerGPU.cc");
     os.open(name.c_str());
     writeHeader(os);
@@ -1421,10 +1644,9 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     os << "\\brief File generated from GeNN for the model " << model.name << " containing the host side code for a GPU simulator version." << ENDL;
     os << "*/" << ENDL;
     os << "//-------------------------------------------------------------------------" << ENDL << ENDL;
-
     os << ENDL;
 
-    if ((deviceProp[theDev].major >= 2) || (deviceProp[theDev].minor >= 3)) {
+    if ((deviceProp[theDevice].major >= 2) || (deviceProp[theDevice].minor >= 3)) {
 	os << "__device__ double atomicAdd(double* address, double val)" << ENDL;
 	os << "{" << ENDL;
 	os << "    unsigned long long int* address_as_ull =" << ENDL;
@@ -1440,7 +1662,7 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 	os << "}" << ENDL << ENDL;
     }
 
-    if (deviceProp[theDev].major < 2) {
+    if (deviceProp[theDevice].major < 2) {
 	os << "__device__ float atomicAddoldGPU(float* address, float val)" << ENDL;
 	os << "{" << ENDL;
 	os << "    int* address_as_ull =" << ENDL;
@@ -2020,16 +2242,13 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 	os << ", d_glbSpkCntEvnt" << model.neuronName[i] << ", " << size << "* sizeof(unsigned int), cudaMemcpyDeviceToHost));" << ENDL;
       }
     }
-
     os << CB(1126) << ENDL;
     os << ENDL;
 
     os << "// ------------------------------------------------------------------------" << ENDL;
-    os << "// the time stepping procedure" << ENDL;
-    
+    os << "// the time stepping procedure (using GPU)" << ENDL;
     os << "void stepTimeGPU()" << ENDL;
     os << OB(1130) << ENDL;
-
     if (model.synapseGrpN > 0) { 
 	unsigned int synapseGridSz = model.padSumSynapseKrnl[model.synapseGrpN - 1];   
 	os << "//model.padSumSynapseTrgN[model.synapseGrpN - 1] is " << model.padSumSynapseKrnl[model.synapseGrpN - 1] << ENDL; 
@@ -2057,7 +2276,7 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     unsigned int neuronGridSz = model.padSumNeuronN[model.neuronGrpN - 1];
     neuronGridSz = ceil((float) neuronGridSz / neuronBlkSz);
     os << "dim3 nThreads(" << neuronBlkSz << ", 1);" << ENDL;
-    if (neuronGridSz < deviceProp[theDev].maxGridSize[1]) {
+    if (neuronGridSz < deviceProp[theDevice].maxGridSize[1]) {
 	os << "dim3 nGrid(" << neuronGridSz << ", 1);" << ENDL;
     }
     else {
@@ -2128,5 +2347,106 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     os.close();
     //cout << "done with generating GPU runner" << ENDL;
 }
+#endif // CPU_ONLY
+
+
+//----------------------------------------------------------------------------
+/*!
+  \brief A function that generates the Makefile for all generated GeNN code.
+*/
+//----------------------------------------------------------------------------
+
+void genMakefile(NNmodel &model, //!< Model description
+		 string &path    //!< Path for code generation
+		 )
+{
+    string name = path + "/" + model.name + "_CODE/Makefile";
+    ofstream os;
+    os.open(name.c_str());
+
+#ifdef _WIN32
+
+#ifdef CPU_ONLY
+    string cxxFlags = "/c /DCPU_ONLY";
+    if (GENN_PREFERENCES::optimizeCode) cxxFlags += " /O2";
+    if (GENN_PREFERENCES::debugCode) cxxFlags += " /debug /Zi /Od";
+
+    os << endl;
+    os << "CXXFLAGS       =/nologo /EHsc " << cxxFlags << endl;
+    os << endl;
+    os << "INCLUDEFLAGS   =/I\"$(GENN_PATH)\\lib\\include\"" << endl;
+    os << endl;
+    os << "all: runner.obj" << endl;
+    os << endl;
+    os << "runner.obj: runner.cc" << endl;
+    os << "\t$(CXX) $(CXXFLAGS) $(INCLUDEFLAGS) runner.cc" << endl;
+    os << endl;
+    os << "clean:" << endl;
+    os << "\t-del runner.obj 2>nul" << endl;
+#else
+    string nvccFlags = "-c -x cu -arch sm_";
+    nvccFlags += tS(deviceProp[theDevice].major) + tS(deviceProp[theDevice].minor);
+    if (GENN_PREFERENCES::optimizeCode) nvccFlags += " -O3 -use_fast_math";
+    if (GENN_PREFERENCES::debugCode) nvccFlags += " -O0 -g -G";
+    if (GENN_PREFERENCES::showPtxInfo) nvccFlags += " -Xptxas \"-v\"";
+
+    os << endl;
+    os << "NVCC           =\"" << NVCC << "\"" << endl;
+    os << "NVCCFLAGS      =" << nvccFlags << endl;
+    os << endl;
+    os << "INCLUDEFLAGS   =-I\"$(GENN_PATH)\\lib\\include\"" << endl;
+    os << endl;
+    os << "all: runner.obj" << endl;
+    os << endl;
+    os << "runner.obj: runner.cc" << endl;
+    os << "\t$(NVCC) $(NVCCFLAGS) $(INCLUDEFLAGS) runner.cc" << endl;
+    os << endl;
+    os << "clean:" << endl;
+    os << "\t-del runner.obj 2>nul" << endl;
+#endif
+
+#else // UNIX
+
+#ifdef CPU_ONLY
+    string cxxFlags = "-c -DCPU_ONLY";
+    if (GENN_PREFERENCES::optimizeCode) cxxFlags += " -O3 -ffast-math";
+    if (GENN_PREFERENCES::debugCode) cxxFlags += " -O0 -g";
+
+    os << endl;
+    os << "CXXFLAGS       :=" << cxxFlags << endl;
+    os << endl;
+    os << "INCLUDEFLAGS   =-I\"$(GENN_PATH)/lib/include\"" << endl;
+    os << endl;
+    os << "all: runner.o" << endl;
+    os << endl;
+    os << "runner.o: runner.cc" << endl;
+    os << "\t$(CXX) $(CXXFLAGS) $(INCLUDEFLAGS) runner.cc" << endl;
+    os << endl;
+    os << "clean:" << endl;
+    os << "\trm -f runner.o" << endl;
+#else
+    string nvccFlags = "-c -x cu -arch sm_";
+    nvccFlags += tS(deviceProp[theDevice].major) + tS(deviceProp[theDevice].minor);
+    if (GENN_PREFERENCES::optimizeCode) nvccFlags += " -O3 -use_fast_math -Xcompiler \"-ffast-math\"";
+    if (GENN_PREFERENCES::debugCode) nvccFlags += " -O0 -g -G";
+    if (GENN_PREFERENCES::showPtxInfo) nvccFlags += " -Xptxas \"-v\"";
+
+    os << endl;
+    os << "NVCC           :=\"" << NVCC << "\"" << endl;
+    os << "NVCCFLAGS      :=" << nvccFlags << endl;
+    os << endl;
+    os << "INCLUDEFLAGS   =-I\"$(GENN_PATH)/lib/include\"" << endl;
+    os << endl;
+    os << "all: runner.o" << endl;
+    os << endl;
+    os << "runner.o: runner.cc" << endl;
+    os << "\t$(NVCC) $(NVCCFLAGS) $(INCLUDEFLAGS) runner.cc" << endl;
+    os << endl;
+    os << "clean:" << endl;
+    os << "\trm -f runner.o" << endl;
+#endif
 
 #endif
+
+    os.close();
+}

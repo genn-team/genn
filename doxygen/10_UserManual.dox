@@ -322,7 +322,7 @@ This model does not contain any update code and can be used to implement the equ
 
 In order to define a new neuron type for use in a GeNN application,
 it is necessary to populate an object of class \c neuronModel and
-append it to the global vector \c nModels. This can be done conveniently within the modelDefinition fundtion just before the model is needed. The \c neuronModel class 
+append it to the global vector \c nModels. This can be done conveniently within the modelDefinition function just before the model is needed. The \c neuronModel class 
 has several data members that make up the full description of the
 neuron model:
 
@@ -339,6 +339,16 @@ neuronModel model;
 model.simCode=String("$(V)+= (-$(a)$(V)+$(Isyn))*DT;");
 \endcode
 would implement a leaky itegrator \f$\frac{dV}{dt}= -a V + I_{{\rm syn}}\f$.
+
+- \c thresholdConditionCode of type \c vector<string> (if applicable):
+  Condition for true spike detection. <br />
+
+- `supportCode` of type `string`: This allows to define a code snippet that contains supporting code that will be utilized in the otehr code snippets. Typically, these are functions that are needed in the `simCode` or `thresholdConditionCode`. If possible, these should be defined as `__host__ __device__` functions so that both GPU and CPU versions of GeNN code have an appropriate support code function available. The support code is protected with a namespace so that it is exclusively available for the neuronpopulation whose neurons define it. An example of a `supportCode` definition would be
+\code
+n.supportCode= tS(" __host__ __device__ mysin(float x) {\n\
+return sin(x);\n\
+}");
+\endcode
 
 - \c varNames of type \c vector<string>: This vector needs to be
   filled with the names of variables that make up the neuron
@@ -379,10 +389,6 @@ stores the parameter `a` needed in the code example above.
   the model, then it is more efficient to pre-compute this combination
   and define it as a dependent parameter. This vector contains the
   names of such dependent parameters. <br />
-
-- \c thresholdConditionCode of type \c vector<string> (if applicable):
-  Condition for true spike detection. <br />
-
 For example, if in the example above the original model had been \f$\frac{dV}{dt} = -g/C \, V +I_{\rm syn}\f$. Then one could define the code string and parameters as
 \code
 model.simCode=String("$(V)+= (-$(a)$(V)+$(Isyn))*DT;");
@@ -394,6 +400,20 @@ model.dpNames.push_back(String("a"));
 \endcode
 
 - `dps` of type \ref dpclass*: The dependent parameter class, i.e. an implementation of \ref dpclass which would return the value for dependent parameters when queried for them. E.g. in the example above it would return `a` when queried for dependent parameter 0 through `dpclass::calculateDerivedParameter()`. Examples how this is done can be found in the pre-defined classes, e.g. expDecayDp, pwSTDP, \ref rulkovdp etc. 
+
+- `extraGlobalNeuronKernelParameters` of type `vector<string>`: On occasion, the neurons in a population share the same parameter. This could, for example, be a global reward signal. Such situations are implemented in GeNN with `extraGlobalNeuronKernelParameters`. This vector takes the names of such parameters. FOr each name, a variable will be created, with the name of the neuron population name appended, that can take a single value per population of the type defined in the extraGlobalNeuronKernelParameterTypes vector. This variable is available to all neurons in the population. It can also be used in synaptic code snippets; in this case it needs to be addressed with a `_pre` or `_post` postfix.
+For example, if teh pre-synaptic neuron population is of a neuron type that defines:
+\code
+n.extraGlobalNeuronKernelParameters.push_back(tS("R"));
+n.extraGlobalNeuronKernelParameterTypes.push_back(tS("float"));
+\endcode
+then, a synapse population could have simulation code like
+\code
+s.simCode= tS("$(x)= $(x)+$(R_pre);");
+\endcode
+where we have assumed that the synapse type `s` has a variable `x` and the synapse type `s` will only be used in conjunction with pre-synaptic neuron populations that do have the extraGlobalNeuronKernelParameter `R`. If the pre-synaptic population does not have the required variable/parameter, GeNN will fail when compiling the kernels.
+
+- `extraGlobalNeuronKernelParameterTypes` of type `vector<string>`: These are the types of the `extraGlobalNeuronKernelParameters`. Types are matched to names by their position in the vector.
 
 Once the completed \c neuronModel object is appended to the \c nModels
 vector,
@@ -427,15 +447,13 @@ External input to a neuron group could be activated by calling the
 
 A synapse model is a weightUpdateModel object which consists of variables, parameters, and string objects which will be substituted in the code. The three strings that will be substituted in the code for synapse update are:
 
-- \c simCode: Simulation code that is used when a true spike is detected. The update is performed only once, one time step after threshold condition detection, which is defined by \c thresholdConditionCode in the neuron model of the corresponding presynaptic neuron population.
-
+- \c simCode: Simulation code that is used when a true spike is detected. The update is performed only once, one time step after threshold condition detection, which is defined by \c thresholdConditionCode in the neuron model of the corresponding presynaptic neuron population. <br />
 Typically, spikes lead to update of synaptic variables that then lead to the activation of input into the post-synaptic neuron. Most of the ime these inputs add linearly at the post-synaptic neuron. This is assumed in GeNN and the term to be added to the activation of the post-synaptic neuron should be provided as the value of the by the \$(addtoinsyn) snippet. 
 For example
 \code
 "\$(addtoinsyn) = $(inc);"
 \endcode
-where "inc" is a parameter of the weightupdate model, would define a constant increment of the synaptic input of a post-synaptic neuron for each pre-synaptic spike.
-
+where "inc" is a parameter of the weightupdate model, would define a constant increment of the synaptic input of a post-synaptic neuron for each pre-synaptic spike. <br />
 When a spike is detected in the presynaptic neuron population, the simCode is executed. Within the code snippet the \$(addtoinSyn) update just discussed should be be followed by the \$(updatelinsyn) keyword to indicate that the summation of synaptic inputs can now occur. This can then be followed by updates on the internal synapse variables that may have contributed to addtoinSyn. For an example, see \ref sect31 for a simple synapse update model and \ref sect33 for a more complicated model that uses STDP. 
 
 - \c simCodeEvnt: Simulation code that is used for spike like events, where updates are done for all instances in which the event condition defined by `evntThreshold` is met. `evntThreshold` is also be provided as a code string. For an example, see \ref sect32.
@@ -443,6 +461,11 @@ When a spike is detected in the presynaptic neuron population, the simCode is ex
 - \c simLearnPost: Simulation code which is used in the learnSynapsesPost kernel/function, which performs updates to synapses that are triggered by post-synaptic spikes. This is rather unusual other than in learning rules like e.g. STDP. For an example that uses `simLearnPost`, see \ref sect33.
 
 - \c synapseDynamics: Simulation code that applies for every time step, i.e.is unlike the others not gated with a condition. This can be used where synapses have internal variables and dynamics that are described in continuous time, e.g. by ODEs. Usng this mechnanism is typically computationally veruy costly because of the large number of synapses in a typical network.
+
+- `extraGlobalSynapseKernelParameters` of type `vector<string>`: On occasion, the synapses in a synapse population share a global parameter. This could, for example, be a global reward signal. This is supported in GeNN with `extraGlobalSynapseKernelParameters`. The user defines the names of such parameters and pushes them into this vector. GeNN creates variables of this name, with the name of the synapse population appended, that can take a single value per population of the type defined in the extraGlobalSynapseKernelParameterTypes vector. This variable is then available to all synapses in the population. 
+\note No implicit or explicit copy of `extraGlobalSynapseKernelParameters` is necessary as they are communicated as kernel parameters.
+
+- `extraGlobalSynapseKernelParameterTypes` of type `vector<string>`: These are the types of the `extraGlobalSynapseKernelParameters`. Types are matched to names by their position in the vector.
 
 All code snippets can be used to manipulate any synapse variable and so implement both synaptic dynamics and learning processes.
 
@@ -500,9 +523,7 @@ The pre-synaptic variables are referenced with the suffix `_pre` in synapse rela
 \section sect33 LEARN1SYNAPSE (Learning Synapse with a Primitive Piece-wise Linear Rule)
 This is a simple STDP rule including a time delay for the finite transmission speed of the synapse, defined as a piecewise function:
 
-\htmlonly
-<img src="../../LEARN1SYNAPSE_explain.png" width="600px"/> 
-\endhtmlonly
+\image html LEARN1SYNAPSE_explain.png 
 \image latex LEARN1SYNAPSE_explain.png width=10cm
 
 The STDP curve is applied to the raw synaptic conductance `gRaw`, which is then filtered through the sugmoidal filter displayed above to obtain the value of `g`.

@@ -1,6 +1,6 @@
 
-  Genetic algorithm for tracking parameters in a HH model cell
-  ============================================================
+Genetic algorithm for tracking parameters in a HH model cell
+============================================================
 
 This example simulates a population of Hodgkin-Huxley neuron models on the GPU and evolves them with a simple 
 guided random search (simple GA) to mimic the dynamics of a separate Hodgkin-Huxley
@@ -10,14 +10,18 @@ Eleak, Cmem are modified by a sinusoidal addition (voltage parameters) or factor
 protocol 0-6. For protocol 7 all 7 parameters undergo a random walk concurrently.
 
 To compile it, navigate to genn/userproject/HHVclampGA_project and type:
-  nmake /f WINmakefile
+
+nmake /f WINmakefile
+
 for Windows users, or:
-  make
+
+make
+
 for Linux, Mac and other UNIX users.
 
 
-  USAGE
-  -----
+USAGE
+-----
 
 generate_run <CPU=0, GPU=1> <protocol> <nPop> <totalT> <outdir> 
 
@@ -36,11 +40,24 @@ CPU_ONLY=0 or CPU_ONLY=1 (default 0): Whether to compile in (CUDA independent) "
 
 An example invocation of generate_run is:
 
+generate_run.exe 1 -1 12 200000 test1
+
+for Windows users, or:
+
 ./generate_run 1 -1 12 200000 test1
+
+for Linux, Mac and other UNIX users.
 
 This will simulate nPop= 5000 Hodgkin-Huxley neurons on the GPU which will for 1000 ms be matched to a
 Hodgkin-Huxley neuron where the parameter gKd is sinusoidally modulated. The output files will be
 written into a directory of the name test1_output, which will be created if it does not yet exist.
 
 Another example of an invocation would be: 
-  ./generate_run 0 -1 12 200000 test1 FTYPE=DOUBLE CPU_ONLY=1
+
+generate_run.exe 0 -1 12 200000 test1 FTYPE=DOUBLE CPU_ONLY=1
+
+for Windows users, or:
+
+./generate_run 0 -1 12 200000 test1 FTYPE=DOUBLE CPU_ONLY=1
+
+for Linux, Mac and other UNIX users.

@@ -1,6 +1,6 @@
 
-  Izhikevich network with delayed synapses
-  ========================================
+Izhikevich network with delayed synapses
+========================================
 
 This example project demonstrates the synaptic delay feature of GeNN. It creates
 a network of three Izhikevich neuron groups, connected all-to-all with fast, medium
@@ -9,32 +9,31 @@ simultaneously innervated by the input neurons, via slow synapses, and the
 interneurons, via faster synapses. 
 
 
-  COMPILE (WINDOWS)
-  -----------------
+COMPILE (WINDOWS)
+-----------------
 
 To run this example project, first build the model into CUDA code by typing:
 
-  genn-buildmodel.bat SynDelay.cc
+genn-buildmodel.bat SynDelay.cc
 
 then compile the project by typing:
 
-  nmake /f WINmakefile clean
-  nmake /f WINmakefile
+nmake /f WINmakefile
 
 
-  COMPILE (MAC AND LINUX)
-  -----------------------
+COMPILE (MAC AND LINUX)
+-----------------------
 
 To run this example project, first build the model into CUDA code by typing:
 
-  genn-buildmodel.sh SynDelay.cc
+genn-buildmodel.sh SynDelay.cc
 
 then compile the project by typing:
 
-  make clean && make release
+make
 
 
-  USAGE
-  -----
+USAGE
+-----
 
-  ./syn_delay [CPU = 0 / GPU = 1] [directory to save output]
+syn_delay [CPU = 0 / GPU = 1] [directory to save output]

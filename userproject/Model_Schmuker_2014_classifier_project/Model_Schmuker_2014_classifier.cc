@@ -11,7 +11,7 @@ This file contains the network model definition for the "Schmuker_2014_classifie
 -------------------------------------------------------------------------- */
 
 //network sizes and parameters
-#define DT 0.5  //This defines the global time step at which the simulation will run
+#define DT 0.5 // Integration time step
 #define NUM_VR 10 //number of VR generated to map the input space
 #define NUM_FEATURES 4 //dimensionality of data set
 #define NUM_CLASSES 3 //number of classes to be classified
@@ -28,9 +28,11 @@ This file contains the network model definition for the "Schmuker_2014_classifie
 #define SYNAPSE_TAU_PNAN 1.0
 #define SYNAPSE_TAU_ANAN 8.0
 
-
 #include "modelSpec.h"
-#include "modelSpec.cc"
+#include <iostream>
+
+using namespace std;
+
 
 /*--------------------------------------------------------------------------
  This function defines the Schmuker_2014_classifier model
@@ -39,7 +41,7 @@ This file contains the network model definition for the "Schmuker_2014_classifie
 void modelDefinition(NNmodel &model) 
 {
 
-	cout << "GeNN building model with " << NUM_VR << " x VRs" << endl;
+    cout << "GeNN building model with " << NUM_VR << " x VRs" << endl;
     initGeNN();
     model.setPrecision(GENN_FLOAT);
     model.setName("Schmuker_2014_classifier");
@@ -103,12 +105,12 @@ void modelDefinition(NNmodel &model)
     /* setup a synapse model NSYNAPSE_SPK_EVNT that drives from spike type events with V over a certain threshold
     */
     weightUpdateModel wuModel;
-    wuModel.varNames.push_back(toString("g"));
-    wuModel.varTypes.push_back(toString("scalar"));
-    wuModel.pNames.push_back(toString("Epre"));
-    wuModel.simCodeEvnt= toString("$(addtoinSyn) = $(g);\n\
-        $(updatelinsyn);\n");
-    wuModel.evntThreshold = toString("$(V_pre) > $(Epre)");
+    wuModel.varNames.push_back("g");
+    wuModel.varTypes.push_back("scalar");
+    wuModel.pNames.push_back("Epre");
+    wuModel.simCodeEvnt= "$(addtoinSyn) = $(g);\n\
+        $(updatelinsyn);\n";
+    wuModel.evntThreshold = "$(V_pre) > $(Epre)";
     //add to GenNN as a new weight update model
     unsigned int NSYNAPSE_SPK_EVNT = weightUpdateModels.size();
     weightUpdateModels.push_back(wuModel);

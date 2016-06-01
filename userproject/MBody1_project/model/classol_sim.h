@@ -21,8 +21,9 @@
 #include <cassert>
 
 #include "MBody1.cc"
-#include "hr_time.cpp"
+#include "hr_time.h"
 #include "utils.h" // for CHECK_CUDA_ERRORS
+#include "stringUtils.h"
 
 #ifndef CPU_ONLY
 #include <cuda_runtime.h>

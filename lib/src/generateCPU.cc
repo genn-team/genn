@@ -19,20 +19,23 @@
 */
 //--------------------------------------------------------------------------
 
-#include <string>
-#include "CodeHelper.cc"
-#include <cfloat>
+#include "generateCPU.h"
+#include "global.h"
+#include "utils.h"
+#include "stringUtils.h"
+#include "CodeHelper.h"
+
+#include <algorithm>
+
 
 //--------------------------------------------------------------------------
 /*!
   \brief Function that generates the code of the function the will simulate all neurons on the CPU.
-
 */
 //--------------------------------------------------------------------------
 
 void genNeuronFunction(NNmodel &model, //!< Model description 
-		       string &path, //!< output stream for code
-		       ostream &mos //!< output stream for messages
+		       string &path //!< Path for code generation
     )
 {
     string name, s, localID;
@@ -342,7 +345,6 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 /*!
   \brief Function for generating the CUDA synapse kernel code that handles presynaptic 
   spikes or spike type events
-
 */
 //-------------------------------------------------------------------------
 
@@ -358,6 +360,8 @@ void generate_process_presynaptic_events_code_CPU(
     )
 {
     bool evnt = postfix == tS("Evnt");
+    int UIntSz = sizeof(unsigned int) * 8;
+    int logUIntSz = (int) (logf((float) UIntSz) / logf(2.0f) + 1e-5f);
 
     if ((evnt && model.synapseUsesSpikeEvents[i]) || (!evnt && model.synapseUsesTrueSpikes[i])) {
 	unsigned int synt = model.synapseType[i];
@@ -472,13 +476,11 @@ void generate_process_presynaptic_events_code_CPU(
 //--------------------------------------------------------------------------
 /*!
   \brief Function that generates code that will simulate all synapses of the model on the CPU.
-
 */
 //--------------------------------------------------------------------------
 
 void genSynapseFunction(NNmodel &model, //!< Model description
-			string &path, //!< Path for code generation
-			ostream &mos //!< output stream for messages
+			string &path //!< Path for code generation
     )
 {
     string name, s, localID, theLG, preSpike, preSpikeV, sTpost, sTpre;

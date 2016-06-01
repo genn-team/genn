@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-//   Author: James Turner
+//   Author:    James Turner
 //  
 //   Institute: Center for Computational Neuroscience and Robotics
 //              University of Sussex
@@ -18,12 +18,12 @@
 
 using namespace std;
 
-#include "hr_time.cpp"
+#include "hr_time.h"
 #include "utils.h"
+#include "stringUtils.h"
 
 #include "SynDelaySim.h"
 #include "SynDelay_CODE/definitions.h"
-#include "SynDelay_CODE/runner.cc"
 
 
 SynDelay::SynDelay(bool usingGPU)
@@ -42,8 +42,10 @@ void SynDelay::run(float t)
 {
   if (usingGPU)
   {
+#ifndef CPU_ONLY
     stepTimeGPU();
     copyStateFromDevice();
+#endif // CPU_ONLY
   }
   else
   {
@@ -63,6 +65,15 @@ int main(int argc, char *argv[])
     cerr << "usage: SynDelaySim <GPU = 1, CPU = 0> <output label>" << endl;
     return EXIT_FAILURE;
   }
+
+#ifdef CPU_ONLY
+  if (atoi(argv[1]) == 1)
+  {
+    cerr << "Cannot use GPU in a CPU_ONLY binary." << endl;
+    cerr << "Recompile without CPU_ONLY to run a GPU simulation." << endl;
+    return EXIT_FAILURE;
+  }
+#endif // CPU_ONLY  
 
   SynDelay *sim = new SynDelay(atoi(argv[1]));
   CStopWatch *timer = new CStopWatch();

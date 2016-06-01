@@ -11,75 +11,58 @@
   
 --------------------------------------------------------------------------*/
 
-#ifndef _GLOBAL_H_
-#define _GLOBAL_H_ //!< macro for avoiding multiple inclusion during compilation
-
 //--------------------------------------------------------------------------
 /*! \file global.h
 
 \brief Global header file containing a few global variables. Part of the code generation section.
-
-This global header file also takes care of including some generally used cuda support header files.
 */
 //--------------------------------------------------------------------------
 
-#include <iostream>
-#include <cstring>
-#include <string>
-#include <sstream>
-#include <vector>
-#include <cmath>
+#ifndef GLOBAL_H
+#define GLOBAL_H
 
 #ifndef CPU_ONLY
 #include <cuda.h>
 #include <cuda_runtime.h>
 #endif
 
-#include "toString.h"
-#include <stdint.h>
-
-using namespace std; // replaced these two lines : problem with visual studio
-
-// THESE WILL BE REPLACED BY VARIABLES BELOW SOON IF optimiseBlockSize == 1. THEIR INITIAL VALUES ARE SET IN generateAll.cc
-int neuronBlkSz;
-int synapseBlkSz;
-int learnBlkSz;
-int synDynBlkSz;
-#ifndef CPU_ONLY
-cudaDeviceProp *deviceProp;
-int theDev;
-#endif
-
-int hostCount; //!< Global variable containing the number of hosts within the local compute cluster
-int deviceCount; //!< Global variable containing the number of CUDA devices found on this host
-//vector<cudaDeviceProp> deviceProp; //!< Global vector containing the properties of all CUDA-enabled devices
-//vector<int> synapseBlkSz; //!< Global vector containing the optimum synapse kernel block size for each device
-//vector<int> learnBlkSz; //!< Global vector containing the optimum learn kernel block size for each device
-//vector<int> neuronBlkSz; //!< Global vector containing the optimum neuron kernel block size for each device
-
-int UIntSz = sizeof(unsigned int) * 8; //!< size of the unsigned int variable type on the local architecture
-int logUIntSz = (int) (logf((float) UIntSz) / logf(2.0f) + 1e-5f); //!< logarithm of the size of the unsigned int variable type on the local architecture
 
 namespace GENN_FLAGS {
-    unsigned int calcSynapseDynamics= 0;
-    unsigned int calcSynapses= 1;
-    unsigned int learnSynapsesPost= 2;
-    unsigned int calcNeurons= 3;
+    extern unsigned int calcSynapseDynamics;
+    extern unsigned int calcSynapses;
+    extern unsigned int learnSynapsesPost;
+    extern unsigned int calcNeurons;
 };
 
 namespace GENN_PREFERENCES {    
-    int optimiseBlockSize = 1; //!< Flag for signalling whether or not block size optimisation should be performed
-    int chooseDevice= 1; //!< Flag to signal whether the GPU device should be chosen automatically 
-    double asGoodAsZero = 1e-19; //!< Global variable that is used when detecting close to zero values, for example when setting sparse connectivity from a dense matrix
-    int defaultDevice= 0; //! default GPU device; used to determine which GPU to use if chooseDevice is 0 (off)
-
-    unsigned int neuronBlockSize= 32;
-    unsigned int synapseBlockSize= 32;
-    unsigned int learningBlockSize= 32;
-    unsigned int synapseDynamicsBlockSize= 32;
-
-    unsigned int autoRefractory= 1; //!< Flag for signalling whether spikes are only reported if thresholdCondition changes from false to true (autoRefractory == 1) or spikes are emitted whenever thresholdCondition is true no matter what.
+    extern int optimiseBlockSize; //!< Flag for signalling whether or not block size optimisation should be performed
+    extern int autoChooseDevice; //!< Flag to signal whether the GPU device should be chosen automatically 
+    extern bool optimizeCode; //!< Request speed-optimized code, at the expense of floating-point accuracy
+    extern bool debugCode; //!< Request debug data to be embedded in the generated code
+    extern bool showPtxInfo; //!< Request that PTX assembler information be displayed for each CUDA kernel during compilation
+    extern double asGoodAsZero; //!< Global variable that is used when detecting close to zero values, for example when setting sparse connectivity from a dense matrix
+    extern int defaultDevice; //! default GPU device; used to determine which GPU to use if chooseDevice is 0 (off)
+    extern unsigned int neuronBlockSize;
+    extern unsigned int synapseBlockSize;
+    extern unsigned int learningBlockSize;
+    extern unsigned int synapseDynamicsBlockSize;
+    extern unsigned int autoRefractory; //!< Flag for signalling whether spikes are only reported if thresholdCondition changes from false to true (autoRefractory == 1) or spikes are emitted whenever thresholdCondition is true no matter what.
 };
-    
 
-#endif  // _GLOBAL_H_
+extern int neuronBlkSz; //!< Global variable containing the GPU block size for the neuron kernel
+extern int synapseBlkSz; //!< Global variable containing the GPU block size for the synapse kernel
+extern int learnBlkSz; //!< Global variable containing the GPU block size for the learn kernel
+extern int synDynBlkSz; //!< Global variable containing the GPU block size for the synapse dynamics kernel
+//extern vector<cudaDeviceProp> deviceProp; //!< Global vector containing the properties of all CUDA-enabled devices
+//extern vector<int> synapseBlkSz; //!< Global vector containing the optimum synapse kernel block size for each device
+//extern vector<int> learnBlkSz; //!< Global vector containing the optimum learn kernel block size for each device
+//extern vector<int> neuronBlkSz; //!< Global vector containing the optimum neuron kernel block size for each device
+//extern vector<int> synDynBlkSz; //!< Global vector containing the optimum synapse dynamics kernel block size for each device
+#ifndef CPU_ONLY
+extern cudaDeviceProp *deviceProp;
+extern int theDevice; //!< Global variable containing the currently selected CUDA device's number
+extern int deviceCount; //!< Global variable containing the number of CUDA devices on this host
+#endif
+extern int hostCount; //!< Global variable containing the number of hosts within the local compute cluster
+
+#endif // GLOBAL_H

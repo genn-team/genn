@@ -75,14 +75,15 @@ user-side code for a GeNN application. More details in the
 \section windows_quick Running an Example Model in Windows 
 
 All interaction with GeNN programs are command-line based and hence
-are executed within a `cmd` window. Open a `cmd` window and navigate
-to the `userprojects\tools` directory.
+are executed within a `cmd` window. Open a Visual Studio `cmd` window
+via Start: All Programs: Visual Studio: Tools: Native Tools Command Prompt,
+and navigate to the `userprojects\tools` directory.
 \code
 cd %GENN_PATH%\userprojects\tools
 \endcode
 Then type
 \code
-make.bat all
+nmake /f WINmakefile
 \endcode
 to compile a number of tools that are used by the example projects to
 generate connectivity and inputs to model networks. Then navigate to
@@ -92,7 +93,7 @@ cd ..\MBody1_project
 \endcode
 By typing
 \code
-make.bat all
+nmake /f WINmakefile
 \endcode
 you can compile the `generate_run` engine that allows to run a \ref
 ex_mbody of the insect mushroom body:
@@ -157,7 +158,7 @@ In more detail, the GeNN workflow consists of:
 
 3. Compiling the generated code, found in `model/MBody1_CODE/`, by calling:
    \code
-   make clean && make
+   make clean all
    \endcode
    It is at this stage that GeNN generated model simulation code is combined
    with user-side code. In this example, `classol_sim.cu`
@@ -176,8 +177,7 @@ The usage scenario described was made explicit for Unix
 environments. In Windows the setup is essentially the same except for
 the usual operating system dependent syntax differences, e.g. the
 build script is named genn-buildmodel.bat, compilation of the generated
-model simulator would be `make.bat clean && make.bat all`, or, `nmake
-/f WINmakefile clean && nmake /f WINmakefile all`, and the resulting
+model simulator would be `nmake /f WINmakefile clean all`, and the resulting
 executable would be named `classol_sim.exe`.
 
 GeNN comes with several example projects which showcase its features.
@@ -194,22 +194,12 @@ completed to define a neuronal network model.
 2. Within the the model definition file `Example1.cc`, the following tasks
    need to be completed:
 
-   a) The time step `DT` needs to be defined, e.g.
-      \code
-      #define DT 0.1
-      \endcode
-      \note
-      All provided examples and pre-defined model elements in GeNN work with
-      units of mV, ms, nF and muS. However, the choice of units is entirely
-      left to the user if custom model elements are used.
-
-   b) The GeNN files `modelSpec.h` and `modelSpec.cc` need to be included,
+   a) The GeNN file `modelSpec.h` needs to be included,
       \code
       #include "modelSpec.h"
-      #include "modelSpec.cc"
       \endcode
 
-   c) The values for initial variables and parameters for neuron and synapse
+   b) The values for initial variables and parameters for neuron and synapse
       populations need to be defined, e.g.
       \code
       float myPOI_p[4] = {
@@ -234,7 +224,7 @@ completed to define a neuronal network model.
       rather than parameters. See the \link UserManual User  Manual
       \endlink for how to define new neuron (synapse) types.
 
-   d) The actual network needs to be defined in the form of a function
+   c) The actual network needs to be defined in the form of a function
       `modelDefinition`, i.e. 
       \code{.cc}
       void modelDefinition(NNmodel &model); 
@@ -243,6 +233,15 @@ completed to define a neuronal network model.
       The name `modelDefinition` and its parameter of type `NNmodel&`
       are fixed and cannot be changed if GeNN is to recognize it as a
       model definition.
+
+   d) Inside modelDefinition(), The time step `DT` needs to be defined, e.g.
+      \code{.cc}
+      model.setDT(0.1);
+      \endcode
+      \note
+      All provided examples and pre-defined model elements in GeNN work with
+      units of mV, ms, nF and muS. However, the choice of units is entirely
+      left to the user if custom model elements are used.
 
    `MBody1.cc` shows a typical example of a model definition function. In
    its core it contains calls to `model.addNeuronPopulation` and

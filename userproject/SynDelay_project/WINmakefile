@@ -1,16 +1,17 @@
-##--------------------------------------------------------------------------
-##   Author: James Turner
-##  
-##   Institute: Center for Computational Neuroscience and Robotics
-##              University of Sussex
-##              Falmer, Brighton BN1 9QJ, UK 
-##  
-##   email to:  J.P.Turner@sussex.ac.uk
-##  
-##--------------------------------------------------------------------------
+#--------------------------------------------------------------------------
+#
+#  Author:    James Turner
+#
+#  Institute: Center for Computational Neuroscience and Robotics
+#             University of Sussex
+#             Falmer, Brighton BN1 9QJ, UK 
+#
+#  email to:  J.P.Turner@sussex.ac.uk
+#
+#--------------------------------------------------------------------------
 
-EXECUTABLE		=syn_delay.exe
-SOURCES			=SynDelaySim.cu
-OPTIMIZATIONFLAGS	=/O2
+EXECUTABLE         =syn_delay.exe
+SOURCES            =SynDelaySim.cc
+OPTIMIZATIONFLAGS  =/O2
 
 !INCLUDE $(GENN_PATH)\userproject\include\makefile_common_win.mk

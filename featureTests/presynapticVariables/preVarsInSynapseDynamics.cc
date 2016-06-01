@@ -2,7 +2,7 @@
 #define DT 0.1
 
 #include "modelSpec.h"
-#include "modelSpec.cc"
+#include "stringUtils.h"
 
 
 // NEURONS
@@ -34,24 +34,24 @@ void modelDefinition(NNmodel &model)
   model.setName("preVarsInSynapseDynamics");
 
   neuronModel n;
-  n.varNames.push_back(tS("x"));
-  n.varTypes.push_back(tS("scalar"));
-  n.varNames.push_back(tS("shift"));
-  n.varTypes.push_back(tS("scalar"));
-  n.simCode= tS("$(x)= $(t)+$(shift);");
+  n.varNames.push_back("x");
+  n.varTypes.push_back("scalar");
+  n.varNames.push_back("shift");
+  n.varTypes.push_back("scalar");
+  n.simCode= "$(x)= $(t)+$(shift);";
   int DUMMYNEURON= nModels.size();
   nModels.push_back(n);
   
   weightUpdateModel s;
-  s.varNames.push_back(tS("w"));
-  s.varTypes.push_back(tS("scalar"));
-  s.synapseDynamics= tS("$(w)= $(x_pre);");
+  s.varNames.push_back("w");
+  s.varTypes.push_back("scalar");
+  s.synapseDynamics= "$(w)= $(x_pre);";
   int DUMMYSYNAPSE= weightUpdateModels.size();
   weightUpdateModels.push_back(s);
 
   model.addNeuronPopulation("pre", 10, DUMMYNEURON, neuron_p, neuron_ini);
   model.addNeuronPopulation("post", 10, DUMMYNEURON, neuron_p, neuron_ini);
-  string synName= tS("syn");
+  string synName= "syn";
   for (int i= 0; i < 10; i++) {
       string theName= synName+tS(i);
       model.addSynapsePopulation(theName, DUMMYSYNAPSE, DENSE, INDIVIDUALG, i,IZHIKEVICH_PS, "pre", "post", synapses_ini, synapses_p, postSyn_ini, postSyn_p);

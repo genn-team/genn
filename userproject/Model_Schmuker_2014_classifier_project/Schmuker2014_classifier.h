@@ -6,6 +6,8 @@
 #ifndef SCHMUKER2014_CLASSIFIER_H
 #define SCHMUKER2014_CLASSIFIER_H
 
+#include <stdint.h>
+
 //--------------------------------------------------------------------------
 /*! \file Schmuker2014_classifier.h
 

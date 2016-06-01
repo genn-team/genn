@@ -10,9 +10,10 @@
    initial version: 2010-02-07
   
 --------------------------------------------------------------------------*/
-#define DT 1.0
+
 #include "modelSpec.h"
-#include "modelSpec.cc"
+#include "global.h"
+#include "stringUtils.h"
 #include <vector>
 #include "sizes.h"
 
@@ -59,9 +60,17 @@ double SynIzh_ini[1]= {
     0.0 // default synaptic conductance
 };
 
+
 void modelDefinition(NNmodel &model) 
 {
   initGeNN();
+
+#ifdef DEBUG
+  GENN_PREFERENCES::debugCode = true;
+#else
+  GENN_PREFERENCES::optimizeCode = true;
+#endif // DEBUG
+
   //we modify the IZHIKEVICH_V neuron to receive external inputs
   neuronModel n= nModels[IZHIKEVICH_V];
   n.varNames.push_back(tS("I0"));
@@ -81,6 +90,7 @@ void modelDefinition(NNmodel &model)
     nModels.push_back(n);
   
   model.setName("Izh_sparse");
+  model.setDT(1.0);
   model.addNeuronPopulation("PExc", _NExc, myIZHIKEVICH, excIzh_p, IzhExc_ini);
 
   model.addNeuronPopulation("PInh", _NInh, myIZHIKEVICH, inhIzh_p, IzhInh_ini);
