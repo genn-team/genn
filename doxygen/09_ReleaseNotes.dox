@@ -42,18 +42,26 @@ make release CPU_ONLY=1
 
 10. An error is now thrown when the user tries to use double precision floating-point numbers on devices with architecture older than SM_13, since these devices do not support double precision. 
 
+11. All GeNN helper functions and classes, such as `toString()` and `NNmodel`, are defined in the header files at `genn/lib/include/`, for example `stringUtils.h` and `modelSpec.h`, which should be individually included before the functions and classes may be used. The functions and classes are actually implementated in the static library `genn\lib\lib\genn.lib` (Windows) or `genn/lib/lib/libgenn.a` (Mac, Linux), which must be linked into the final executable if any GeNN functions or classes are used.
+
+12. In the `modelDefinition()` file, only the header file `modelSpec.h` should be included - i.e. not the source file `modelSpec.cc`.
+
+13. In the `modelDefinition()` fie, DT is now preferrably defined using `model.setDT(<val>);`, rather than #`define DT <val>`, in order to prevent problems with DT macro redefinition. For backward-compatibility reasons, the old #`define DT <val>` method may still be used, however users are advised to adopt the new method.
+
 Developer Side Changes
 ----
 
 1. Blocksize optimization and device choice now obtain the ptxas information on memory usage from a CUDA driver API call rather than from parsing ptxas output of the nvcc compiler. This adds robustness to any change in the syntax of the compiler output.
 
-2. The information about device choice is now stored in variables in the namespace GENN_PREFERENCES. This includes `chooseDevice`, `optimiseBlockSize`, `defaultDevice`. `asGoodAsZero` has also been moved into this namespace.
+2. The information about device choice is now stored in variables in the namespace `GENN_PREFERENCES`. This includes `chooseDevice`, `optimiseBlockSize`, `optimizeCode`, `debugCode`, `showPtxInfo`, `defaultDevice`. `asGoodAsZero` has also been moved into this namespace.
 
 3. We have also introduced the namespace GENN_FLAGS that contains unsigned int variables that attach names to numeric flags that can be used within GeNN. 
 
-4. The headers of the auto-generated communication functions such as pullXXXStateFromDevice etc, are now generated into definitions.h. This is useful where one wants to compile separate object files that cannot all include the full definitions in "runnerGPU.cc". One example where this is useful is the brian2genn interface.
+4. The definitions of all generated variables and functions such as pullXXXStateFromDevice etc, are now generated into definitions.h. This is useful where one wants to compile separate object files that cannot all include the full definitions in e.g. "runnerGPU.cc". One example where this is useful is the brian2genn interface.
 
 5. A number of feature tests have been added that can be found in the `featureTests` directory. They can be run with the respective `runTests.sh` scripts. The `cleanTests.sh` scripts can be used to remove all generated code after testing.
+
+6. In preparation for multi-GPU support in GeNN, we have separated out the compilation of generated code from user-side code. This will eventually allow us to optimise and compile different parts of the model with different CUDA flags, depending on the CUDA device chosen to execute that particular part of the model. 
 
 Improvements
 ----
@@ -61,6 +69,8 @@ Improvements
 1. Improved method of obtaining ptxas compiler information on register and shared memory usage and an improved algorithm for estimating shared memory usage requirements for different block sizes.
 
 2. Replaced pageable CPU-side memory with [page-locked memory](https://devblogs.nvidia.com/parallelforall/how-optimize-data-transfers-cuda-cc/). This can significantly speed up simulations in which a lot of data is regularly copied to and from a CUDA device.
+
+3. GeNN library objects and the main generateALL binary objects are now compiled separately, and only when a change has been made to an object's source, rather than recompiling all software for a minor change in a single source file. This should speed up compilation in some instances.
 
 Bug fixes:
 ----
