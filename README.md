@@ -1,6 +1,6 @@
-# GPU enhanced Neuronal Network (GeNN)
+# GPU-enhanced Neuronal Networks (GeNN)
 
-GeNN is a GPU enhanced Neuronal Network simulation environment based on
+GeNN is a GPU-enhanced Neuronal Network simulation environment based on
 code generation for Nvidia CUDA.
 
 ## INSTALLING GeNN 
@@ -22,14 +22,14 @@ http://genn-team.github.io/genn/documentation/html/d8/d99/Installation.html
     version of Visual Studio is not necessarily compatible with the latest
     version of the CUDA toolkit.
 
-2. Ensure that the "CUDA\_PATH" environment variable is defined, and
+2. Ensure that the `CUDA_PATH` environment variable is defined, and
     points to the location of the Nvidia CUDA toolkit installation, by
     using: `ECHO %CUDA_PATH%` This variable is usully set during most
     CUDA installations on Windows systems. if not, correct this using:
     `SETX CUDA_PATH "[drive]\Program Files\NVIDIA GPU Computing
     Toolkit\CUDA[version]"`.
 
-3. Define the environment variable "GENN\_PATH" to point to the
+3. Define the environment variable `GENN_PATH` to point to the
     directory in which GeNN was located. For example, use: 
     `SETX GENN_PATH "\path\to\genn"`.
 
@@ -57,14 +57,14 @@ restarted to initialise the variables set using the `SETX` command.
     / Clang / Linux are not necessarily compatible with the latest
     version of the CUDA toolkit.
 
-(2) Set the environment variable "CUDA\_PATH" to the location of your
+(2) Set the environment variable `CUDA_PATH` to the location of your
     Nvidia CUDA toolkit installation. For example, if your CUDA toolkit
     was installed to "/usr/local/cuda", you can use: 
     `echo "export CUDA_PATH=/usr/local/cuda" >> ~/.bash_profile`
 
-(3) Set the environment variable "GENN\_PATH" to point to the extracted
+(3) Set the environment variable `GENN_PATH` to point to the extracted
     GeNN directory. For example, if you extracted GeNN to
-    "/home/me/genn", then you can use: 
+    `/home/me/genn`, then you can use: 
     `echo "export GENN_PATH=/home/me/genn" >> ~/.bash_profile`
 
 (4) Add "$GENN_PATH/lib/bin" to your $PATH variable. For example, you
@@ -79,19 +79,16 @@ This completes the installation.
 
 At the moment, the following example projects are provided with GeNN:
 
--   Locust olfactory system example \([Nowotny et al. 2005][@Nowotnyetal2005]\):
+-   Self-organisation with STDP in the locust olfactory system \([Nowotny et al. 2005][@Nowotnyetal2005]\):
     -   with all-to-all connectivity, using built-in neuron and synapse
-        models \(benchmarked in [Yavuz et al. 2016][@Yavuzetal2016]\)
+        models \(for benchmarks see [Yavuz et al. 2016][@Yavuzetal2016]\)
     -   with sparse connectivity for some synapses, using user-defined
-        neuron-and synapse models \(benchmarked in [Yavuz et al. 2016][@Yavuzetal2016]\)
+        neuron-and synapse models \(for benchmarks see [Yavuz et al. 2016][@Yavuzetal2016]\)
     -   using INDIVIDUALID scheme
     -   using delayed synapses
--   Single neuron population of Izhikevich neuron(s) receiving Poisson
-    spike trains as input
 -   Pulse-coupled network of Izhikevich neurons \([Izhikevich 2003][@Izhikevich2003]\)
-    (benchmarked in [Yavuz et al. 2016][@Yavuzetal2016])
-    -   with fixed delays (original model)\
-    -   Izhikevich with delayed synapses
+    (for benchmarks see [Yavuz et al. 2016][@Yavuzetal2016])
+
 -   Genetic algorithm for tracking parameters in a Hodgkin-Huxley model
     cell
 
@@ -99,14 +96,15 @@ At the moment, the following example projects are provided with GeNN:
     \([Schmuker et al. 2014][@Schmukeretal2014]\)
 
 -   Toy examples:
-    -   Izhikevich network receiving Poisson input spike trains
+    -   Single neuron population of Izhikevich neuron(s) receiving Poisson
+    spike trains as input
     -   Single neuron population of Izhikevich neuron(s) with no
         synapses
     -   Network of Izhikevich neurons with delayed synapses
 
 In order to get a quick start and run one of the the provided example
 models, navigate to one of the example project directories in
-\$GENN\_PATH/userproject/, and then follow the instructions in the
+$GENN\_PATH/userproject/, and then follow the instructions in the
 README file contained within.
 
 ## SIMULATING A NEW MODEL
@@ -122,7 +120,7 @@ b)  this file needs to
 - include `modelSpec.h`
 - contains the model's definition in the form of a function 
     `void modelDefinition(NNmodel &model)` 
-    ("MBody1.cc") shows a typical example)
+    (`MBody1.cc`) shows a typical example)
 
 c)  The programmer defines their own modeling code along similar lines
     as `map_classol.*` together with `classol_sim.*`, etcetera. In
