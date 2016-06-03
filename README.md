@@ -33,7 +33,7 @@ http://genn-team.github.io/genn/documentation/html/d8/d99/Installation.html
     directory in which GeNN was located. For example, use: 
     `SETX GENN_PATH "\path\to\genn"`.
 
-4. Add "%GENN\_PATH%\lib\bin" to your %PATH% variable. For example,
+4. Add `%GENN_PATH%\lib\bin` to your %PATH% variable. For example,
     use: `SETX PATH "%GENN_PATH%\lib\bin;%PATH%"`.
 
 5. To access a developer command prompt, use the shortcut link in:
@@ -59,7 +59,7 @@ restarted to initialise the variables set using the `SETX` command.
 
 (2) Set the environment variable `CUDA_PATH` to the location of your
     Nvidia CUDA toolkit installation. For example, if your CUDA toolkit
-    was installed to "/usr/local/cuda", you can use: 
+    was installed to `/usr/local/cuda`, you can use: 
     `echo "export CUDA_PATH=/usr/local/cuda" >> ~/.bash_profile`
 
 (3) Set the environment variable `GENN_PATH` to point to the extracted
@@ -67,7 +67,7 @@ restarted to initialise the variables set using the `SETX` command.
     `/home/me/genn`, then you can use: 
     `echo "export GENN_PATH=/home/me/genn" >> ~/.bash_profile`
 
-(4) Add "$GENN_PATH/lib/bin" to your $PATH variable. For example, you
+(4) Add `$GENN_PATH/lib/bin` to your $PATH variable. For example, you
     can use: 
     `echo "export PATH=$PATH:$GENN_PATH/lib/bin" >> ~/.bash_profile`
 
@@ -113,7 +113,7 @@ The sample projects listed above are already quite highly integrated
 examples. If one was to use the library for GPU code generation of their
 own model, the following would be done:
 
-a)  The model in question is defined in a file, say "Model1.cc".
+a)  The model in question is defined in a file, say `Model1.cc`.
 
 b)  this file needs to
 
