@@ -32,7 +32,7 @@ xmlns:fn="http://www.w3.org/2005/xpath-functions">
 
 #include "../../lib/include/hr_time.h"
 CStopWatch timer;
-#include "../../lib/include/hr_time.cpp"
+#include "../../lib/src/hr_time.cc"
 
 #include "../../lib/include/numlib/simpleBit.h"
 
