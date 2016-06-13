@@ -21,6 +21,7 @@
 */
 //--------------------------------------------------------------------------
 
+#include MODEL
 #include "generateALL.h"
 #include "generateRunner.h"
 #include "generateCPU.h"
