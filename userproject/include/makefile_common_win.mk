@@ -48,7 +48,7 @@ LINK_FLAGS              ="$(GENN_PATH)\lib\lib\genn.lib" "$(CUDA_PATH)\lib\Win32
 !ENDIF
 !ELSE
 INCLUDE_FLAGS           =/I"$(GENN_PATH)\lib\include" /I"$(GENN_PATH)\userproject\include"
-LINK_FLAGS              ="$(GENN_PATH)\lib\lib\genn.lib"
+LINK_FLAGS              ="$(GENN_PATH)\lib\lib\genn_CPU_ONLY.lib"
 !ENDIF
 
 # An auto-generated file containing your cuda device's compute capability

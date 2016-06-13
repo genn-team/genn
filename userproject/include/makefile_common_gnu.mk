@@ -62,9 +62,9 @@ ifndef CPU_ONLY
     endif
 else
     INCLUDE_FLAGS       +=-I"$(GENN_PATH)/lib/include" -I"$(GENN_PATH)/userproject/include"
-    LINK_FLAGS          +=-L"$(GENN_PATH)/lib/lib" -lgenn
+    LINK_FLAGS          +=-L"$(GENN_PATH)/lib/lib" -lgenn_CPU_ONLY
     ifeq ($(DARWIN),DARWIN)
-        LINK_FLAGS      +=-L"$(GENN_PATH)/lib/lib" -lgenn -lstdc++ -lc++
+        LINK_FLAGS      +=-L"$(GENN_PATH)/lib/lib" -lgenn_CPU_ONLY -lstdc++ -lc++
     endif
 endif
 
