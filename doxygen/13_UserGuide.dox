@@ -1,6 +1,6 @@
 
 //----------------------------------------------------------------------------
-/*! \page UserGuide Suggestions for users
+/*! \page UserGuide Best practices guide
 
 GeNN generates code according to the network model defined by the user, and allows users to include the generated code 
 in their programs as they want. Here we provide a guideline to setup GeNN and use generated functions. 
@@ -178,5 +178,5 @@ Do not forget to switch debugging flags -g and -G off after debugging is complet
 \n
 
 -----
-\link sect_postsyn Previous\endlink | \link ListOfVariables Top\endlink | \link Credits Next\endlink
+\link Tutorial2 Previous\endlink | \link UserGuide Top\endlink | \link Credits Next\endlink
 */

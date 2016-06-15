@@ -188,4 +188,7 @@ and zooming in on the first 200 ms, the voltage of the first neuron now looks li
 \image latex tenHHRingexample2.png width=10cm
 
 The complete codes for this tutorial are in `userproject\tenHHRing_project`.
+
+\link Tutorial1 Previous\endlink | \link Tutorial2 Top\endlink | \link UserGuide Next\endlink
+
 */
