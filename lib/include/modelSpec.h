@@ -176,7 +176,6 @@ private:
   void setNeuronType(unsigned int, unsigned int); //!< Never used
   void setNeuronPara(unsigned int, double*); //!< Never used
   void setNeuronIni(unsigned int, double*); //!< Never used
-  unsigned int findNeuronGrp(const string); //!< Find the the ID number of a neuron group by its name 
   void initDerivedNeuronPara(); //!< Method for calculating the values of derived neuron parameters.
 
 
@@ -190,7 +189,6 @@ private:
   void setSynapsePara(unsigned int, double*); //!< Never used
   void setSynapseConnType(unsigned int, unsigned int); //!< Never used
   void setSynapseGType(unsigned int, unsigned int); //!< Never used
-  unsigned int findSynapseGrp(const string); //< Find the the ID number of a synapse group by its name
   void initDerivedSynapsePara(); //!< Method for calculating the values of derived synapse parameters.
   void initDerivedPostSynapsePara(); //!< Method for calculating the values of derived postsynapse parameters.
   void registerSynapsePopulation(unsigned int); //!< Method to register a new synapse population with the inSyn list of the target neuron population
@@ -225,7 +223,8 @@ public:
   void setNeuronClusterIndex(const string neuronGroup, int hostID, int deviceID); //!< Function for setting which host and which device a neuron group will be simulated on
   void activateDirectInput(const string, unsigned int type); //! This function has been deprecated in GeNN 2.2
   void setConstInp(const string, double);
-
+  unsigned int findNeuronGrp(const string); //!< Find the the ID number of a neuron group by its name 
+  
 
   // PUBLIC SYNAPSE FUNCTIONS
   //=========================
@@ -239,6 +238,8 @@ public:
   void setSpanTypeToPre(const string); //!< Method for switching the execution order of synapses to pre-to-post
   void setSynapseClusterIndex(const string synapseGroup, int hostID, int deviceID); //!< Function for setting which host and which device a synapse group will be simulated on
   void initLearnGrps();
+  unsigned int findSynapseGrp(const string); //< Find the the ID number of a synapse group by its name
+ 
 };
 
 #endif
