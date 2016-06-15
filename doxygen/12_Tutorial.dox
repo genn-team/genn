@@ -60,14 +60,13 @@ At this point our model definition file `tenHHRingModel.cc` should look like thi
 \code
 // Model definintion file tenHHModel.cc
 
-#define DT 0.1 
 #include "modelSpec.h"
-#include "modelSpec.cc"
 
 void modelDefinition(NNmodel &model)
 {
   // definition of tenHHModel
   initGeNN();
+  model.setDT(0.1);
   model.setName("tenHHRingModel");
   double p[7]= {
     7.15,          // 0 - gNa: Na conductance in muS
@@ -107,7 +106,7 @@ Open the `tenHHRingSimulation.cu` file and update the file names of includes:
 \code
 // tenHHRingModel simulation code
 #include "tenHHRingModel.cc"
-#include "tenHHRingModel_CODE/runner.cc"
+#include "tenHHRingModel_CODE/definitions.h"
 \endcode
 Now we need to add code to generate the desired ring connectivity.
 \code

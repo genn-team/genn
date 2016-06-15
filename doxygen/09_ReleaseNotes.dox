@@ -61,7 +61,7 @@ Developer Side Changes
 
 5. A number of feature tests have been added that can be found in the `featureTests` directory. They can be run with the respective `runTests.sh` scripts. The `cleanTests.sh` scripts can be used to remove all generated code after testing.
 
-6. In preparation for multi-GPU support in GeNN, we have separated out the compilation of generated code from user-side code. This will eventually allow us to optimise and compile different parts of the model with different CUDA flags, depending on the CUDA device chosen to execute that particular part of the model. 
+6. In preparation for multi-GPU support in GeNN, we have separated out the compilation of generated code from user-side code. This will eventually allow us to optimise and compile different parts of the model with different CUDA flags, depending on the CUDA device chosen to execute that particular part of the model. As such, we have had to use a header file 'definitions.h' as the generated code interface, rather than the 'runner.cc' file. In practice, this means that user-side code should include 'myModel_CODE/definitions.h', rather than 'myModel_CODE/runner.cc'. Including 'runner.cc' will likely result in pages of linking errors at best!
 
 Improvements
 ----
