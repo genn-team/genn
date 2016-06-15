@@ -73,14 +73,14 @@ repository.
 
 (iv) Install the C++ compiler on the machine, if not already present.
      For Windows, download Microsoft Visual Studio Community Edition from
-     \a www.visualstudio.com/en-us/downloads/download-visual-studio-vs.aspx
+     \a https://www.visualstudio.com/en-us/downloads/download-visual-studio-vs.aspx
      When installing Visual Studio, one should select "custom install",
      and ensure that all C++ optional extras are also installed.
      Mac users should download and set up Xcode from
-     \a developer.apple.com/xcode
+     \a https://developer.apple.com/xcode/index.html
      Linux users should install the GNU compiler collection gcc and g++
      from their Linux distribution repository, or alternatively from
-     \a gcc.gnu.com
+     \a https://gcc.gnu.org/index.html
      Be sure to pick CUDA and C++ compiler versions which are compatible
      with each other. The latest C++ compiler is not necessarily
      compatible with the latest CUDA toolkit.

@@ -44,9 +44,11 @@ make release CPU_ONLY=1
 
 11. All GeNN helper functions and classes, such as `toString()` and `NNmodel`, are defined in the header files at `genn/lib/include/`, for example `stringUtils.h` and `modelSpec.h`, which should be individually included before the functions and classes may be used. The functions and classes are actually implementated in the static library `genn\lib\lib\genn.lib` (Windows) or `genn/lib/lib/libgenn.a` (Mac, Linux), which must be linked into the final executable if any GeNN functions or classes are used.
 
-12. In the `modelDefinition()` file, only the header file `modelSpec.h` should be included - i.e. not the source file `modelSpec.cc`.
+12. In the `modelDefinition()` file, only the header file `modelSpec.h` should be included - i.e. not the source file `modelSpec.cc`. This is because the declaration and definition of `NNmodel`, and associated functions, has been separated into `modelSpec.h` and `modelSpec.cc`, respectively. This is to enable NNmodel code to be precompiled separately. *Henceforth, only the header file `modelSpec.h` should be included in model definition files!*
 
-13. In the `modelDefinition()` fie, DT is now preferrably defined using `model.setDT(<val>);`, rather than #`define DT <val>`, in order to prevent problems with DT macro redefinition. For backward-compatibility reasons, the old #`define DT <val>` method may still be used, however users are advised to adopt the new method.
+13. In the `modelDefinition()` file, DT is now preferrably defined using `model.setDT(<val>);`, rather than #`define DT <val>`, in order to prevent problems with DT macro redefinition. For backward-compatibility reasons, the old #`define DT <val>` method may still be used, however users are advised to adopt the new method.
+
+14. In preparation for multi-GPU support in GeNN, we have separated out the compilation of generated code from user-side code. This will eventually allow us to optimise and compile different parts of the model with different CUDA flags, depending on the CUDA device chosen to execute that particular part of the model. As such, we have had to use a header file `definitions.h` as the generated code interface, rather than the `runner.cc` file. In practice, this means that *user-side code should include `myModel_CODE/definitions.h`, rather than `myModel_CODE/runner.cc`. Including `runner.cc` will likely result in pages of linking errors at best!*
 
 Developer Side Changes
 ----
@@ -60,8 +62,6 @@ Developer Side Changes
 4. The definitions of all generated variables and functions such as pullXXXStateFromDevice etc, are now generated into definitions.h. This is useful where one wants to compile separate object files that cannot all include the full definitions in e.g. "runnerGPU.cc". One example where this is useful is the brian2genn interface.
 
 5. A number of feature tests have been added that can be found in the `featureTests` directory. They can be run with the respective `runTests.sh` scripts. The `cleanTests.sh` scripts can be used to remove all generated code after testing.
-
-6. In preparation for multi-GPU support in GeNN, we have separated out the compilation of generated code from user-side code. This will eventually allow us to optimise and compile different parts of the model with different CUDA flags, depending on the CUDA device chosen to execute that particular part of the model. As such, we have had to use a header file 'definitions.h' as the generated code interface, rather than the 'runner.cc' file. In practice, this means that user-side code should include 'myModel_CODE/definitions.h', rather than 'myModel_CODE/runner.cc'. Including 'runner.cc' will likely result in pages of linking errors at best!
 
 Improvements
 ----
