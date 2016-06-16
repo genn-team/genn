@@ -1646,7 +1646,7 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     os << "//-------------------------------------------------------------------------" << ENDL << ENDL;
     os << ENDL;
 
-    if ((deviceProp[theDevice].major >= 2) || (deviceProp[theDevice].minor >= 3)) {
+    if (((deviceProp[theDevice].major >= 2) || (deviceProp[theDevice].minor >= 3)) && deviceProp[theDevice].major < 6) {
 	os << "__device__ double atomicAdd(double* address, double val)" << ENDL;
 	os << "{" << ENDL;
 	os << "    unsigned long long int* address_as_ull =" << ENDL;
