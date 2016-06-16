@@ -439,6 +439,8 @@ networkModel.addNeuronPopulation(..., myModel, ...);
 In earlier versions of GeNN 
 External input to a neuron group could be activated by calling the
 \c activateDirectInput function. This was now removed in favour of defining a new neuron model where the direct input can be a parameter (constant over time and homogeneous across the population), a variable (changing in time and non-homogeneous across the population), or an `extraGlobalNeuronKernelParameter` (changing in time but homogeneous across the population). How this can be done is illustrated for example in the Izh_sparse example project.
+
+\link sectDefiningNetwork Previous\endlink | \link UserManual Top\endlink | \link sectSynapseModels Next\endlink
 */
 
 //----------------------------------------------------------------------------
@@ -448,7 +450,7 @@ External input to a neuron group could be activated by calling the
 A synapse model is a weightUpdateModel object which consists of variables, parameters, and string objects which will be substituted in the code. The three strings that will be substituted in the code for synapse update are:
 
 - \c simCode: Simulation code that is used when a true spike is detected. The update is performed only once, one time step after threshold condition detection, which is defined by \c thresholdConditionCode in the neuron model of the corresponding presynaptic neuron population. <br />
-Typically, spikes lead to update of synaptic variables that then lead to the activation of input into the post-synaptic neuron. Most of the ime these inputs add linearly at the post-synaptic neuron. This is assumed in GeNN and the term to be added to the activation of the post-synaptic neuron should be provided as the value of the by the \$(addtoinsyn) snippet. 
+Typically, spikes lead to update of synaptic variables that then lead to the activation of input into the post-synaptic neuron. Most of the time these inputs add linearly at the post-synaptic neuron. This is assumed in GeNN and the term to be added to the activation of the post-synaptic neuron should be provided as the value of the by the \$(addtoinsyn) snippet. 
 For example
 \code
 "\$(addtoinsyn) = $(inc);"
@@ -604,16 +606,29 @@ which synapses exist will be defined at runtime from the user side
 code, provided as a binary array (see \ref ex_mbody).
 
 \section subsect32 Connectivity types
+Available options are \c DENSE and \c SPARSE. Various tools are provided under 
+\ref userproject/tools for creating different connectivity schemes.
+
+Different strategies are used by GeNN for different combinations of connecticity types and \ref subsect34, as explained in the table below:
+
+
+|                       |  ALLTOALL                                            |  DENSE  |  SPARSE |
+| ------------- |:-------------:|:-----:|:-----:|
+| GLOBALG     |  Fixed values for all synapse members |    Fixed values for all synapse members   |  Fixed values for some synapse members (using sparse indexing)     |
+| INDIVIDUALG |  Variable values for all synapse members | Variable values for all synapse members | Variable values for some synapse members |
+| INDIVIDUALID | Fixed values for some synapse members (using a binary array). Technically possible but not meaningful.  | Fixed values for some synapse members (using a binary array) | N/A |
+
+
 If \c INDIVIDUALG is used with \c ALLTOALL or \c DENSE connectivity (these are equivalent in this case), synapse variables are stored 
 in an array of size npre * npost . 
 
 If the connectivity is of SPARSE type, connectivity indices are stored in a 
-struct named SparseProjection in order to minimize the memory equirements. The struct SparseProjection contains the
+struct named SparseProjection in order to minimize the memory requirements. The struct SparseProjection contains the
 following members:
 	1: unsigned int connN: number of connections in the population. This value is needed for allocation of arrays. 
 	The indices that correspond to these values are defined in a pre-to-post basis by the following arrays:
 	2: unsigned int ind, of size connN: Indices of corresponding postsynaptic neurons concatenated for each presynaptic neuron.
-	3: unsigned int *indInG, of size model.neuronN[model.synapseSource[synInd]]+1: This array defines from which index in the synapse variable array the indices in ind would correspond to the presynaptic neuron that corresponds to the index of the indInG array, with the number of connections being the size of ind. More specifically, indIng[n+1]-indIng[n] would give the number of postsynaptic connections for neuron n. 
+	3: unsigned int *indInG, of size \c model.neuronN[model.synapseSource[synInd]]+1: This array defines from which index in the synapse variable array the indices in ind would correspond to the presynaptic neuron that corresponds to the index of the indInG array, with the number of connections being the size of ind. More specifically, \c indIng[n+1]-indIng[n] would give the number of postsynaptic connections for neuron n. 
 	
 For example, consider a network of two presynaptic neurons connected to three postsynaptic neurons: 0th presynaptic neuron connected to 1st and 2nd postsynaptic neurons, the 1st presynaptic neuron connected to 0th and 2nd neurons. The struct SparseProjection should have these members, with indexing from 0:
 
@@ -625,8 +640,8 @@ For example, consider a network of two presynaptic neurons connected to three po
 
 
 A synapse variable of a sparsely connected synapse will be kept in an array using this conductance for indexing. For example, a variable caled \c g will be kept in an array such as:
-g= [g_Pre0-Post1 g_pre0-post2 g_pre1-post0 g_pre1-post2]
-If there are no connections for a presynaptic neuron, then g[indIng[n]]=gp[indIng[n]+1].	 
+\c g=[g_Pre0-Post1 g_pre0-post2 g_pre1-post0 g_pre1-post2]
+If there are no connections for a presynaptic neuron, then \c g[indIng[n]]=gp[indIng[n]+1].	 
 
  See tools/gen_syns_sparse_IzhModel used in Izh_sparse project to see a working example.	
 
@@ -656,7 +671,7 @@ IZHIKEVICH_PS: Empty postsynaptic rule to be used with Izhikevich neurons.
 
 
 -----
-\link sectSynapseModels Previous\endlink | \link sect_postsyn  Top\endlink | \link ListOfVariables Next\endlink
+\link sectNeuronModels Previous\endlink | \link UserManual Top\endlink | \link Tutorial1 Next\endlink
 
 
 */

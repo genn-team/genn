@@ -214,7 +214,7 @@ completed to define a neuronal network model.
       \note
       The number of required parameters and their meaning is defined by the
       neuron or synapse type. Refer to the \link UserManual User Manual
-      \endlink for details./n We recommend, however, to use comments like
+      \endlink for details. We recommend, however, to use comments like
       in the above example to achieve maximal clarity of each parameter's
       meaning.
 

@@ -14,28 +14,25 @@ The first step is to write a model definition function in a model definition fil
 \note
 The ">>" in the example code snippets refers to a shell prompt in a unix shell, do not enter them as part of your shell commands.
 
-The model definition file contains the definition of the network model we want to simulate. First, we need to define the simulation step size `DT` and include the GeNN model specification codes `modelSpec.h` and `modelSpec.cc`. Then the model definition takes the form of a function named `modelDefinition` that takes one argument, passed by reference, of type `NNmodel`. Type in your `tenHHModel.cc` file:
+The model definition file contains the definition of the network model we want to simulate. First, we need to include the GeNN model specification code `modelSpec.h`. Then the model definition takes the form of a function named `modelDefinition` that takes one argument, passed by reference, of type `NNmodel`. Type in your `tenHHModel.cc` file:
 \code
 // Model definintion file tenHHModel.cc
 
-#define DT 0.1 
 #include "modelSpec.h"
-#include "modelSpec.cc"
 
 void modelDefinition(NNmodel &model)
 {
   // definition of tenHHModel
 }
 \endcode
-With this we have fixed the integration time step to `0.1` in the usual time units. The typical units in GeNN are `ms`, `mV`, `nF`, and `\f$\mu\f$S`. Therefore, this defines `DT= 0.1 ms`. Now we need to fill the actual model definition.
-
-Two standard elements to the `modelDefinition function are initialising GeNN and setting the name of the model:
+Now we need to fill the actual model definition. Three standard elements to the `modelDefinition function are initialising GeNN, setting the simulation step size and setting the name of the model:
 \code
   initGeNN();
+  model.setDT(0.1);
   model.setName("tenHHModel");
 \endcode
 \note 
-The name of the model given in the setName method does not need to match the file name of the model definition file. However, we strongly recommend it and if conflicting, the file name of the model definition file will prevail.
+With this we have fixed the integration time step to `0.1` in the usual time units. The typical units in GeNN are `ms`, `mV`, `nF`, and `\f$\mu\f$S`. Therefore, this defines `DT= 0.1 ms`. The name of the model given in the setName method does not need to match the file name of the model definition file. However, we strongly recommend it and if conflicting, the file name of the model definition file will prevail.
 
 Making the actual model definition makes use of the `addNeuronPopulation` and 'addSynapsePopulation` member functions of the NNmodel object. The arguments to a call to `addNeuronPopulations are
 \arg `string name`: the name of the population
@@ -83,14 +80,13 @@ This completes the model definition in this example. The complete `tenHHModel.cc
 \code
 // Model definintion file tenHHModel.cc
 
-#define DT 0.1 
 #include "modelSpec.h"
-#include "modelSpec.cc"
 
 void modelDefinition(NNmodel &model)
 {
   // definition of tenHHModel
   initGeNN();
+  model.setDT(0.1);
   model.setName("tenHHModel");
   double p[7]= {
     7.15,          // 0 - gNa: Na conductance in muS
@@ -115,11 +111,11 @@ void modelDefinition(NNmodel &model)
 This model definition suffices to generate code for simulating the ten Hodgkin-Huxley neurons on the a GPU or CPU. The second part of a GeNN simulation is the user code that sets up the simulation, does the data handling for input and output and generally defines the numerical experiment to be run.
 
 \section userCode User Code
-For the purposes of this tutorial we will initially simply run the model for one simulated second and record the final neuron variables into a file. GeNN provides the code for simulating the model in a function called `stepTimeCPU()` (execution on CPU only) or `stepTimeGPU()` (execution on a GPU). To make use of this code we need to define a minimal C/C++ main function. Open a new empty file `tenHHSimulation.cc` in an editor and type
+For the purposes of this tutorial we will initially simply run the model for one simulated second and record the final neuron variables into a file. GeNN provides the code for simulating the model in a function called `stepTimeCPU()` (execution on CPU only) or `stepTimeGPU()` (execution on a GPU). To make use of this code, we need to define a minimal C/C++ main function. Open a new empty file `tenHHSimulation.cc` in an editor and type
 \code
 // tenHHModel simulation code
 #include "tenHHModel.cc"
-#include "tenHHModel_CODE/runner.cc"
+#include "tenHHModel_CODE/definitions.h"
 
 int main()
 {
@@ -129,7 +125,7 @@ int main()
   return 0;
 }
 \endcode
-This boiler plate code includes the relevant model definition file we completed earlier and the entry point to the generated code `runner.cc` in the subdirectory `tenHHModel_CODE` where GeNN deposits all generated code.
+This boiler plate code includes the relevant model definition file we completed earlier and the header file of entry point to the generated code `definitions.h` in the subdirectory `tenHHModel_CODE` where GeNN deposits all generated code.
 
 Calling `allocateMem()` allocates the memory structures for all neuron variables and `initialize()` sets the initial values and copies values to the GPU.
 
@@ -151,11 +147,11 @@ and we need to copy the result, and output it to stdout,
 \note
 The naming convention for variables in GeNN is the variable name defined by the neuron type, here TRAUBMILES defining V, m, h, and n, followed by the population name, here `Pop1`.
 
-This completes the user code. The complete `tenHHSimulation.cu` file shoul now look like 
+This completes the user code. The complete `tenHHSimulation.cu` file should now look like 
 \code
 // tenHHModel simulation code
 #include "tenHHModel.cc"
-#include "tenHHModel_CODE/runner.cc"
+#include "tenHHModel_CODE/definitions.h"
 
 int main()
 {
@@ -268,5 +264,7 @@ there should be a file `tenHH_output.V.dat` in the same directory. If you plot c
 \image latex tenHHexample.png width=10cm
 
 The completed files from this tutorial can be found in `userproject/tenHH_project`.
+
+\link sectSynapseModels Previous\endlink | \link Tutorial1 Top\endlink | \link Tutorial2 Next\endlink
 
 */

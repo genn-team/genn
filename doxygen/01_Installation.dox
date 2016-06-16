@@ -71,14 +71,28 @@ repository.
       setx PATH=%GENN_PATH%\lib\bin;%PATH%
       \endcode 
 
-(iv) If you haven't installed CUDA on your machine, obtain a fresh
-     installation of the NVIDIA CUDA toolkit from
-     \a https://developer.nvidia.com/cuda-downloads
+(iv) Install the C++ compiler on the machine, if not already present.
+     For Windows, download Microsoft Visual Studio Community Edition from
+     \a https://www.visualstudio.com/en-us/downloads/download-visual-studio-vs.aspx
+     When installing Visual Studio, one should select "custom install",
+     and ensure that all C++ optional extras are also installed.
+     Mac users should download and set up Xcode from
+     \a https://developer.apple.com/xcode/index.html
+     Linux users should install the GNU compiler collection gcc and g++
+     from their Linux distribution repository, or alternatively from
+     \a https://gcc.gnu.org/index.html
      Be sure to pick CUDA and C++ compiler versions which are compatible
      with each other. The latest C++ compiler is not necessarily
      compatible with the latest CUDA toolkit.
 
-(v) Set the `CUDA_PATH` variable if it is not already set by the
+(v) If you haven't installed CUDA on your machine, obtain a fresh
+    installation of the NVIDIA CUDA toolkit from
+    \a https://developer.nvidia.com/cuda-downloads
+    Again, be sure to pick CUDA and C++ compiler versions which are compatible
+    with each other. The latest C++ compiler is not necessarily
+    compatible with the latest CUDA toolkit.
+
+(vi) Set the `CUDA_PATH` variable if it is not already set by the
     system, by putting
     \code
     export CUDA_PATH=/usr/local/cuda
@@ -110,14 +124,21 @@ Depending on the needs of your own projects, e.g., depencies on other
      operating systems (GNUmakefile) such as Linux or MacOS and for
      Windows (WINmakefile). 
 
-If you are using GeNN in Windows, you can use make.bat to build
-examples which will attempt to setup your
+If you are using GeNN in Windows, the Visual Studio development
+environment must be set up within every instance of the CMD.EXE command
+window used. One can open an instance of CMD.EXE with the development
+environment already set up by navigating to Start - All Programs - visual
+studio - tools - visual studio native command prompt. You may wish to
+create a shortcut for this tool on the desktop, for convenience. Note that
+all C++ tools should have been installed during the Visual Studio install
+process for this to work. Alternatively one can use the make.bat scripts
+to build the example projects, which will attempt to setup your
 development environment by executing `vcvarsall.bat` which is part of
-every Visual Studio distribution. For this to work properly, GeNN must
-be able to locate the Visual Studio install directory, which should be
-contained in the `VS_PATH` environment variable. You can set this
-variable by hand if it is not already set by the Visual C++ installer
-by typing
+every Visual Studio distribution, inside the visual studio/VC directory.
+For this to work properly, GeNN must be able to locate the Visual
+Studio install directory, which should be contained in the `VS_PATH`
+environment variable. You can set this variable by hand if it is not
+already set by the Visual C++ installer by typing:
 \code
 setx VS_PATH "C:\Program Files (x86)\Microsoft Visual Studio 10.0"
 \endcode

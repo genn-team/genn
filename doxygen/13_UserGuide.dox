@@ -1,6 +1,6 @@
 
 //----------------------------------------------------------------------------
-/*! \page UserGuide Suggestions for users
+/*! \page UserGuide Best practices guide
 
 GeNN generates code according to the network model defined by the user, and allows users to include the generated code 
 in their programs as they want. Here we provide a guideline to setup GeNN and use generated functions. 
@@ -10,7 +10,8 @@ We recommend users to also have a look at the \ref Examples, and to follow the t
 
 The user is first expected to create an object of class NNmodel by creating the function modelDefinition() which includes calls to following methods in correct order:
 
-- initGeNN(); 
+- initGeNN();
+- NNmodel::setDT();
 - NNmodel::setName();  
 
 Then add neuron populations by:
@@ -30,6 +31,7 @@ Other optional functions are explained in NNmodel class reference. At the end th
 \code
 void modelDefinition(NNModel &model) {
   initGeNN();
+  model.setDT(0.5);
   model.setName("YourModelName");
   model.addNeuronPopulation(...);
   ...
@@ -39,7 +41,7 @@ void modelDefinition(NNModel &model) {
 }
 \endcode
 
-modelSpec.h and modelSpec.cc should be included in the file where this function is defined.
+modelSpec.h should be included in the file where this function is defined.
 
 This function will be called by generateALL.cc to create corresponding CPU and GPU simulation codes under the \<YourModelName\>_CODE directory.
 
@@ -176,5 +178,5 @@ Do not forget to switch debugging flags -g and -G off after debugging is complet
 \n
 
 -----
-\link sect_postsyn Previous\endlink | \link ListOfVariables Top\endlink | \link Credits Next\endlink
+\link Tutorial2 Previous\endlink | \link UserGuide Top\endlink | \link Credits Next\endlink
 */

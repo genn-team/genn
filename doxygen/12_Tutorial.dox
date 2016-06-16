@@ -60,14 +60,13 @@ At this point our model definition file `tenHHRingModel.cc` should look like thi
 \code
 // Model definintion file tenHHModel.cc
 
-#define DT 0.1 
 #include "modelSpec.h"
-#include "modelSpec.cc"
 
 void modelDefinition(NNmodel &model)
 {
   // definition of tenHHModel
   initGeNN();
+  model.setDT(0.1);
   model.setName("tenHHRingModel");
   double p[7]= {
     7.15,          // 0 - gNa: Na conductance in muS
@@ -107,7 +106,7 @@ Open the `tenHHRingSimulation.cu` file and update the file names of includes:
 \code
 // tenHHRingModel simulation code
 #include "tenHHRingModel.cc"
-#include "tenHHRingModel_CODE/runner.cc"
+#include "tenHHRingModel_CODE/definitions.h"
 \endcode
 Now we need to add code to generate the desired ring connectivity.
 \code
@@ -189,4 +188,7 @@ and zooming in on the first 200 ms, the voltage of the first neuron now looks li
 \image latex tenHHRingexample2.png width=10cm
 
 The complete codes for this tutorial are in `userproject\tenHHRing_project`.
+
+\link Tutorial1 Previous\endlink | \link Tutorial2 Top\endlink | \link UserGuide Next\endlink
+
 */
