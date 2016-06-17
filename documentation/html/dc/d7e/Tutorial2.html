@@ -34,6 +34,7 @@
   $(document).ready(function() { init_search(); });
 </script>
 <link href="../../customdoxygen.css" rel="stylesheet" type="text/css" />
+<link href="../../html_styles.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -44,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">2.0</span>
+   &#160;<span id="projectnumber">2.2</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -61,6 +62,7 @@ var searchBox = new SearchBox("searchBox", "../../search",false,'Search');
     <ul class="tablist">
       <li><a href="../../index.html"><span>Main&#160;Page</span></a></li>
       <li class="current"><a href="../../pages.html"><span>Related&#160;Pages</span></a></li>
+      <li><a href="../../namespaces.html"><span>Namespaces</span></a></li>
       <li><a href="../../annotated.html"><span>Classes</span></a></li>
       <li><a href="../../files.html"><span>Files</span></a></li>
       <li>
@@ -127,12 +129,12 @@ Adding Synaptic connections</h1>
 <div class="line">  0.0      <span class="comment">// 0 - g: the synaptic conductance value</span></div>
 <div class="line">};</div>
 <div class="line"><span class="keywordtype">double</span> *s_p= NULL;</div>
-<div class="line"><span class="keywordtype">double</span> *ps_ini= NULL;</div>
+<div class="line"><span class="keywordtype">double</span> *<a class="code" href="../../d5/df0/emurgano__project_2SynDelay_8cc.html#af398e4ea2be4c36d4ba8f5ec598d4890">ps_ini</a>= NULL;</div>
 <div class="line"><span class="keywordtype">double</span> ps_p[2]= {</div>
 <div class="line">  1.0,      <span class="comment">// 0 - tau_S: decay time constant for S [ms]</span></div>
 <div class="line">  -80.0     <span class="comment">// 1 - Erev: Reversal potential</span></div>
 <div class="line">};</div>
-</div><!-- fragment --><p> If an array is not needed we set it to the NULL pointer. Here there are for example no synaptic parameters and no initial values for the post-synaptic mechanism. We can then add a synapse population at the end of the <code>modelDefinition(...)</code> function, </p><div class="fragment"><div class="line">model.<a class="code" href="../../dc/de5/classNNmodel.html#ae252945f336a330ec1c69f24cb1d4203">addSynapsePopulation</a>(<span class="stringliteral">&quot;Pop1self&quot;</span>, <a class="code" href="../../dc/de1/modelSpec_8h.html#a1110b98e1962bdb6bcc86b647b1431d4">NSYNAPSE</a>, <a class="code" href="../../dc/de1/modelSpec_8h.html#ad6b1ce8b615d4247eedb05c21f03ef71">DENSE</a>, <a class="code" href="../../dc/de1/modelSpec_8h.html#a816cbd49fb536367065e2306f5495444">INDIVIDUALG</a>, <a class="code" href="../../dc/de1/modelSpec_8h.html#a291aa33d0e485ee09a6881cf8056e13c">NO_DELAY</a>, <a class="code" href="../../dc/de1/modelSpec_8h.html#a49eb71ad1b005eccc948e788d0ae524b">EXPDECAY</a>, <span class="stringliteral">&quot;Pop1&quot;</span>, <span class="stringliteral">&quot;Pop1&quot;</span>, s_ini, s_p, ps_ini, ps_p);</div>
+</div><!-- fragment --><p> If an array is not needed we set it to the NULL pointer. Here there are for example no synaptic parameters and no initial values for the post-synaptic mechanism. We can then add a synapse population at the end of the <code>modelDefinition(...)</code> function, </p><div class="fragment"><div class="line">model.<a class="code" href="../../dc/de5/classNNmodel.html#ae252945f336a330ec1c69f24cb1d4203">addSynapsePopulation</a>(<span class="stringliteral">&quot;Pop1self&quot;</span>, <a class="code" href="../../d2/d5b/synapseModels_8h.html#a1110b98e1962bdb6bcc86b647b1431d4">NSYNAPSE</a>, <a class="code" href="../../dc/de1/modelSpec_8h.html#ad6b1ce8b615d4247eedb05c21f03ef71">DENSE</a>, <a class="code" href="../../dc/de1/modelSpec_8h.html#a816cbd49fb536367065e2306f5495444">INDIVIDUALG</a>, <a class="code" href="../../dc/de1/modelSpec_8h.html#a291aa33d0e485ee09a6881cf8056e13c">NO_DELAY</a>, <a class="code" href="../../d4/d8a/postSynapseModels_8h.html#a49eb71ad1b005eccc948e788d0ae524b">EXPDECAY</a>, <span class="stringliteral">&quot;Pop1&quot;</span>, <span class="stringliteral">&quot;Pop1&quot;</span>, s_ini, s_p, ps_ini, ps_p);</div>
 </div><!-- fragment --><p> The addSynapsePopulation parameters are </p><ul>
 <li><code>const char *name</code>: The name of the synapse population, here "Pop1self" </li>
 <li><code>int sType</code>: The type of synapse to be added, we here use the predefined typse <code>NSYNAPSE</code>. See <a class="el" href="../../d5/d24/sectSynapseModels.html#subsect31">Built-in Models</a> for all available predefined synapse types. </li>
@@ -150,14 +152,13 @@ Adding Synaptic connections</h1>
 <p>Adding the addSynapsePopulation command to the model definition informs GeNN that there will be synapses between the named neuron populations, here between population <code>Pop1</code> and itself. The detailed connectivity as defined by the variables <code>g</code>, we have still to define in the setup of our simulation. As always, the <code>modelDefinition</code> function ends on </p><div class="fragment"><div class="line">model.<a class="code" href="../../dc/de5/classNNmodel.html#aaee7f16c9627dddb2588bad24afe5d15">finalize</a>();</div>
 </div><!-- fragment --><p> At this point our model definition file <code>tenHHRingModel.cc</code> should look like this </p><div class="fragment"><div class="line"><span class="comment">// Model definintion file tenHHModel.cc</span></div>
 <div class="line"></div>
-<div class="line"><span class="preprocessor">#define DT 0.1 </span></div>
 <div class="line"><span class="preprocessor">#include &quot;<a class="code" href="../../dc/de1/modelSpec_8h.html">modelSpec.h</a>&quot;</span></div>
-<div class="line"><span class="preprocessor">#include &quot;<a class="code" href="../../d7/dfd/modelSpec_8cc.html">modelSpec.cc</a>&quot;</span></div>
 <div class="line"></div>
-<div class="line"><span class="keywordtype">void</span> <a class="code" href="../../db/d0a/postVarsInPostLearn_8cc.html#a9aeaa0a22980484b2c472564fc9f686e">modelDefinition</a>(<a class="code" href="../../dc/de5/classNNmodel.html">NNmodel</a> &amp;model)</div>
+<div class="line"><span class="keywordtype">void</span> <a class="code" href="../../d0/d73/myModel_8cc.html#a9aeaa0a22980484b2c472564fc9f686e">modelDefinition</a>(<a class="code" href="../../dc/de5/classNNmodel.html">NNmodel</a> &amp;model)</div>
 <div class="line">{</div>
 <div class="line">  <span class="comment">// definition of tenHHModel</span></div>
-<div class="line">  <a class="code" href="../../d7/dfd/modelSpec_8cc.html#a62ce532f6f7e535adfb9fe151a1c0c6b">initGeNN</a>();</div>
+<div class="line">  <a class="code" href="../../dc/de1/modelSpec_8h.html#a62ce532f6f7e535adfb9fe151a1c0c6b">initGeNN</a>();</div>
+<div class="line">  model.<a class="code" href="../../dc/de5/classNNmodel.html#aa8283ad87bc9d6caa854d21ca4f9b249">setDT</a>(0.1);</div>
 <div class="line">  model.<a class="code" href="../../dc/de5/classNNmodel.html#a757eff2a5877688e6e5492726df035ee">setName</a>(<span class="stringliteral">&quot;tenHHRingModel&quot;</span>);</div>
 <div class="line">  <span class="keywordtype">double</span> p[7]= {</div>
 <div class="line">    7.15,          <span class="comment">// 0 - gNa: Na conductance in muS</span></div>
@@ -175,8 +176,8 @@ Adding Synaptic connections</h1>
 <div class="line">    0.3176767,     <span class="comment">// 2 - prob. for not Na channel blocking h</span></div>
 <div class="line">    0.5961207      <span class="comment">// 3 - prob. for K channel activation n</span></div>
 <div class="line">  };</div>
-<div class="line">  model.<a class="code" href="../../dc/de5/classNNmodel.html#a32c254358da2f8c43c91291d24cfd295">addNeuronPopulation</a>(<span class="stringliteral">&quot;Pop1&quot;</span>, 10, <a class="code" href="../../dc/de1/modelSpec_8h.html#a5cb672a4c033703aeb1b7ba7350cfbfd">TRAUBMILES</a>, p, ini);</div>
-<div class="line">  model.<a class="code" href="../../dc/de5/classNNmodel.html#a95724e1798bd9ac5642a8fb2484a2f93">activateDirectInput</a>(<span class="stringliteral">&quot;Pop1&quot;</span>, <a class="code" href="../../dc/de1/modelSpec_8h.html#a921b56858504259e999652795a93f6be">CONSTINP</a>);</div>
+<div class="line">  model.<a class="code" href="../../dc/de5/classNNmodel.html#a2750f5d035618a4f5af9e6992758ea90">addNeuronPopulation</a>(<span class="stringliteral">&quot;Pop1&quot;</span>, 10, <a class="code" href="../../d3/dc0/neuronModels_8h.html#a5cb672a4c033703aeb1b7ba7350cfbfd">TRAUBMILES</a>, p, ini);</div>
+<div class="line">  model.<a class="code" href="../../dc/de5/classNNmodel.html#a8b6071f4798f114a09164ecd697a84cb">activateDirectInput</a>(<span class="stringliteral">&quot;Pop1&quot;</span>, CONSTINP);</div>
 <div class="line">  model.<a class="code" href="../../dc/de5/classNNmodel.html#a25ab2e7846813491aff8276a8a1b00b1">setConstInp</a>(<span class="stringliteral">&quot;Pop1&quot;</span>, 0.1);</div>
 <div class="line">  <span class="keywordtype">double</span> s_ini[1] = {</div>
 <div class="line">    0.0       <span class="comment">// 0 - g: the synaptic conductance value</span></div>
@@ -187,14 +188,14 @@ Adding Synaptic connections</h1>
 <div class="line">    1.0,      <span class="comment">// 0 - tau_S: decay time constant for S [ms]</span></div>
 <div class="line">    -80.0     <span class="comment">// 1 - Erev: Reversal potential</span></div>
 <div class="line">  };</div>
-<div class="line">  model.<a class="code" href="../../dc/de5/classNNmodel.html#ae252945f336a330ec1c69f24cb1d4203">addSynapsePopulation</a>(<span class="stringliteral">&quot;Pop1self&quot;</span>, <a class="code" href="../../dc/de1/modelSpec_8h.html#a1110b98e1962bdb6bcc86b647b1431d4">NSYNAPSE</a>, <a class="code" href="../../dc/de1/modelSpec_8h.html#ad6b1ce8b615d4247eedb05c21f03ef71">DENSE</a>, <a class="code" href="../../dc/de1/modelSpec_8h.html#a816cbd49fb536367065e2306f5495444">INDIVIDUALG</a>, <a class="code" href="../../dc/de1/modelSpec_8h.html#a291aa33d0e485ee09a6881cf8056e13c">NO_DELAY</a>, <a class="code" href="../../dc/de1/modelSpec_8h.html#a49eb71ad1b005eccc948e788d0ae524b">EXPDECAY</a>, <span class="stringliteral">&quot;Pop1&quot;</span>, <span class="stringliteral">&quot;Pop1&quot;</span>, s_ini, s_p, ps_ini, ps_p);</div>
+<div class="line">  model.<a class="code" href="../../dc/de5/classNNmodel.html#ae252945f336a330ec1c69f24cb1d4203">addSynapsePopulation</a>(<span class="stringliteral">&quot;Pop1self&quot;</span>, <a class="code" href="../../d2/d5b/synapseModels_8h.html#a1110b98e1962bdb6bcc86b647b1431d4">NSYNAPSE</a>, <a class="code" href="../../dc/de1/modelSpec_8h.html#ad6b1ce8b615d4247eedb05c21f03ef71">DENSE</a>, <a class="code" href="../../dc/de1/modelSpec_8h.html#a816cbd49fb536367065e2306f5495444">INDIVIDUALG</a>, <a class="code" href="../../dc/de1/modelSpec_8h.html#a291aa33d0e485ee09a6881cf8056e13c">NO_DELAY</a>, <a class="code" href="../../d4/d8a/postSynapseModels_8h.html#a49eb71ad1b005eccc948e788d0ae524b">EXPDECAY</a>, <span class="stringliteral">&quot;Pop1&quot;</span>, <span class="stringliteral">&quot;Pop1&quot;</span>, s_ini, s_p, ps_ini, ps_p);</div>
 <div class="line">  model.<a class="code" href="../../dc/de5/classNNmodel.html#aaee7f16c9627dddb2588bad24afe5d15">finalize</a>();</div>
 <div class="line">}</div>
 </div><!-- fragment --><h1><a class="anchor" id="SynapseMatrix"></a>
 Defining the Detailed Synaptic Connections</h1>
 <p>Open the <code>tenHHRingSimulation.cu</code> file and update the file names of includes: </p><div class="fragment"><div class="line"><span class="comment">// tenHHRingModel simulation code</span></div>
 <div class="line"><span class="preprocessor">#include &quot;tenHHRingModel.cc&quot;</span></div>
-<div class="line"><span class="preprocessor">#include &quot;tenHHRingModel_CODE/runner.cc&quot;</span></div>
+<div class="line"><span class="preprocessor">#include &quot;tenHHRingModel_CODE/definitions.h&quot;</span></div>
 </div><!-- fragment --><p> Now we need to add code to generate the desired ring connectivity. </p><div class="fragment"><div class="line">allocateMem();</div>
 <div class="line">initialize();</div>
 <div class="line"><span class="comment">// define the connectivity</span></div>
@@ -210,7 +211,7 @@ Defining the Detailed Synaptic Connections</h1>
 <div class="line">SOURCES         :=tenHHRingSimulation.cu</div>
 <div class="line"></div>
 <div class="line">include $(GENN_PATH)/userproject/include/makefile_common_gnu.mk</div>
-</div><!-- fragment --><p> we can build the model </p><div class="fragment"><div class="line">&gt;&gt; buildmodel.sh tenHHRingModel</div>
+</div><!-- fragment --><p> we can build the model </p><div class="fragment"><div class="line">&gt;&gt; genn-buildmodel.sh tenHHRingModel.cc</div>
 </div><!-- fragment --><p> and make it </p><div class="fragment"><div class="line">&gt;&gt; make clean all</div>
 </div><!-- fragment --><p> After this there should be an exectable <code>tenHHRingSimulation</code>, which can be executed, </p><div class="fragment"><div class="line">&gt;&gt; ./tenHHRingSimulation</div>
 </div><!-- fragment --><p> which should again result in </p><div class="fragment"><div class="line">-64.9054 0.0147837 0.981337 0.030886</div>
@@ -247,13 +248,14 @@ Setting Heterogeneous Initial Conditions</h1>
 </div><!-- fragment --><p> and zooming in on the first 200 ms, the voltage of the first neuron now looks like this </p><div class="image">
 <img src="../../tenHHRingexample2.png" alt="tenHHRingexample2.png"/>
 </div>
- <p>The complete codes for this tutorial are in <code>userproject\tenHHRing_project</code>. </p>
+ <p>The complete codes for this tutorial are in <code>userproject\tenHHRing_project</code>.</p>
+<p><a class="el" href="../../d5/dbb/Tutorial1.html">Previous</a> | <a class="el" href="../../dc/d7e/Tutorial2.html">Top</a> | <a class="el" href="../../d0/da6/UserGuide.html">Next</a> </p>
 </div></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Fri Nov 6 2015 22:13:02 for GeNN by
+    <li class="footer">Generated on Fri Jun 17 2016 14:45:00 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
   </ul>

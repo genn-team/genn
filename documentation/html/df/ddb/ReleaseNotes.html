@@ -5,7 +5,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.9.1"/>
-<title>GeNN: Release Notes for GeNN v2.0</title>
+<title>GeNN: Release Notes</title>
 <link href="../../tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="../../jquery.js"></script>
 <script type="text/javascript" src="../../dynsections.js"></script>
@@ -34,6 +34,7 @@
   $(document).ready(function() { init_search(); });
 </script>
 <link href="../../customdoxygen.css" rel="stylesheet" type="text/css" />
+<link href="../../html_styles.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -44,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">2.0</span>
+   &#160;<span id="projectnumber">2.2</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -61,6 +62,7 @@ var searchBox = new SearchBox("searchBox", "../../search",false,'Search');
     <ul class="tablist">
       <li><a href="../../index.html"><span>Main&#160;Page</span></a></li>
       <li class="current"><a href="../../pages.html"><span>Related&#160;Pages</span></a></li>
+      <li><a href="../../namespaces.html"><span>Namespaces</span></a></li>
       <li><a href="../../annotated.html"><span>Classes</span></a></li>
       <li><a href="../../files.html"><span>Files</span></a></li>
       <li>
@@ -112,37 +114,60 @@ $(document).ready(function(){initNavTree('df/ddb/ReleaseNotes.html','../../');})
 
 <div class="header">
   <div class="headertitle">
-<div class="title">Release Notes for GeNN v2.0 </div>  </div>
+<div class="title">Release Notes </div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p>Version 2.0 of GeNN comes with a lot of improvements and added features, some of which have necessitated some changes to the structure of parameter arrays among others.</p>
+<div class="textblock"><h1>Release Notes for GeNN v2.2 </h1>
+<p>This release includes minor new features, some core code improvements and several bug fixes on GeNN v2.1.</p>
 <h2>User Side Changes </h2>
 <ol type="1">
-<li>Users are now required to call <code><a class="el" href="../../d7/dfd/modelSpec_8cc.html#a62ce532f6f7e535adfb9fe151a1c0c6b" title="Method for GeNN initialisation (by preparing standard models) ">initGeNN()</a></code> in the model definition function before adding any populations to the neuronal network model.</li>
-<li>glbscnt is now call glbSpkCnt for consistency with glbSpkEvntCnt.</li>
-<li>There is no longer a privileged parameter <code>Epre</code>. Spike type events are now defined by a code string <code>spkEvntThreshold</code>, the same way proper spikes are. The only difference is that Spike type events are specific to a synapse type rather than a neuron type.</li>
-<li>The function setSynapseG has been deprecated. In a <code>GLOBALG</code> scenario, the variables of a synapse group are set to the initial values provided in the <code>modeldefinition</code> function.</li>
-<li>Due to the split of synaptic models into <a class="el" href="../../dd/db7/classweightUpdateModel.html" title="Structure to hold the information that defines a weightupdate model (a model of how spikes affect syn...">weightUpdateModel</a> and <a class="el" href="../../d8/dbb/structpostSynModel.html" title="Structure to hold the information that defines a post-synaptic model (a model of how synapses affect ...">postSynModel</a>, the parameter arrays used during model definition need to be carefully split as well so that each side gets the right parameters. For example, previously</li>
-</ol>
-<p>```C++ float myPNKC_p[3]= { 0.0, // 0 - Erev: Reversal potential -20.0, // 1 - Epre: Presynaptic threshold potential 1.0 // 2 - tau_S: decay time constant for S [ms] }; ``<code> would define the parameter array of three parameters,</code>Erev<code>,</code>Epre<code>, and</code>tau_S<code>for a synapse of type</code>NSYNAPSE<code>. This now needs to be "split" into </code>``C++ float *myPNKC_p= NULL; float postExpPNKC[2]={ 1.0, // 0 - tau_S: decay time constant for S [ms] 0.0 // 1 - Erev: Reversal potential }; ``<code> i.e. parameters</code>Erev<code>and</code>tau_S<code>are moved to the post-synaptic model and its parameter array of two parameters.</code>Epre<code>is discontinued as a parameter for</code>NSYNAPSE<code>. As a consequence the weightupdate model of</code>NSYNAPSE<code>has no parameters and one can pass</code>NULL<code>for the parameter array in</code>addSynapsePopulation`.</p>
-<p>The correct parameter lists for all defined neuron and synapse model types are listed in the <a href="http://genn-team.github.io/genn/documentation/html/dc/d05/UserManual.html">User Manual</a>.</p>
-<p>Note:* If the parameters are not redefined appropriately this will lead to uncontrolled behaviour of models and likely to sgementation faults and crashes.</p>
-<ol type="1">
-<li>Advanced users can now define variables as type <code>scalar</code> when introducing new neuron or synapse types. This will at the code generation stage be translated to the model's floating point type (ftype), <code>float</code> or <code>double</code>. This works for defining variables as well as in all code snippets. Users can also use the expressions <code>SCALAR_MAX</code> and <code>SCALAR_MIN</code> for <code>FLT_MIN</code>, <code>FLT_MAX</code>, <code>DBL_MIN</code> and <code>DBL_MAX</code>, respectively. Corresponding definitions of <code>scalar</code>, <code>SCALAR_MIN</code> and <code>SCALAR_MAX</code> are also available for user-side code whenever the code-generated file <code>runner.cc</code> has been included.</li>
-<li>The example projects have been re-organized so that wrapper scripts of the <code>generate_run</code> type are now all located together with the models they run instead of in a common <code>tools</code> directory. Generally the structure now is that each example project contains the wrapper script <code>generate_run</code> and a <code>model</code> subdirectory which contains the model description file and the user side code complete with Makefiles for Unix and Windows operating systems. The generated code will be deposited in the <code>model</code> subdirectory in its own <code>modelname_CODE</code> folder. Simulation results will always be deposited in a new sub-folder of the main project directory.</li>
-<li>The <code>addSynapsePopulation(...)</code> function has now more mandatory parameters relating to the introduction of separate weightupdate models (pre-synaptic models) and postynaptic models. The correct syntax for the <code>addSynapsePopulation(...)</code> can be found with detailed explanations in teh <a href="http://genn-team.github.io/genn/documentation/html/dc/d05/UserManual.html">User Manual</a>.</li>
-<li>We have introduced a simple performance profiling method that users can employ to get an overview over the differential use of time by different kernels. To enable the timers in GeNN generated code, one needs to declare ```C++ networkmodel.setTiming(TRUE); ``<code> This will make available and operate GPU-side cudeEvent based timers whose cumulative value can be found in the double precision variables</code>neuron_tme<code>,</code>synapse_tme<code>and</code>learning_tme<code>. They measure the accumulated time that has been spent calculating the neuron kernel, synapse kernel and learning kernel, respectively. CPU-side timers for the simulation functions are also available and their cumulative values can be obtained through </code>``C++ float x= sdkGetTimerValue(&amp;neuron_timer); float y= sdkGetTimerValue(&amp;synapse_timer); float z= sdkGetTimerValue(&amp;learning_timer); ``` The <a class="el" href="../../d9/d61/Examples.html#ex_mbody">Insect olfaction model</a> example shows how these can be used in the user-side code. To enable timing profiling in this example, simply enable it for GeNN: ```C++ model.setTiming(TRUE); ``<code> in</code>MBody1.cc&lt;tt&gt;'smodelDefinition<code>function and define the macro</code>TIMING<code>in</code>classol_sim.h&lt;tt&gt; ``C++ #define TIMING ``<code> This will have the effect that timing information is output into</code>OUTNAME_output/OUTNAME.timingprofile`.</li>
+<li>GeNN now analyses automatically which parameters each kernel needs access to and these and only these are passed in the kernel argument list in addition to the global time t. These parameters can be a combination of extraGlobalNeuronKernelParameters and extraGlobalSynapseKernelParameters in either neuron or synapse kernel. In the unlikely case that users wish to call kernels directly, the correct call can be found in the <code>stepTimeGPU()</code> function. <br />
+Reflecting these changes, the predefined Poisson neurons now simply have two extraGlobalNeuronParameter <code>rates</code> and <code>offset</code> which replace the previous custom pointer to the array of input rates and integer offset to indicate the current input pattern. These extraGlobalNeuronKernelParameters are passed to the neuron kernel automatically, but the rates themselves within the array are of course not updated automatically (this is exactly as before with the specifically generated kernel arguments for Poisson neurons). <br />
+The concept of "directInput" has been removed. Users can easily achieve the same functionality by adding an additional variable (if there are individual inputs to neurons), an extraGlobalNeuronParameter (if the input is homogeneous but time dependent) or, obviously, a simple parameter if it's homogeneous and constant. <dl class="section note"><dt>Note</dt><dd>The global time variable "t" is now provided by GeNN; please make sure that you are not duplicating its definition or shadowing it. This could have severe consequences for simulation correctness (e.g. time not advancing in cases of over-shadowing). <br />
+</dd></dl>
+</li>
+<li>We introduced the namespace <a class="el" href="../../d8/d27/namespaceGENN__PREFERENCES.html">GENN_PREFERENCES</a> which contains variables that determine the behaviour of GeNN.</li>
+<li>We introduced a new code snippet called "supportCode" for neuron models, weightupdate models and post-synaptic models. This code snippet is intended to contain user-defined functions that are used from the other code snippets. We advise where possible to define the support code functions with the CUDA keywords "__host__ __device__" so that they are available for both GPU and CPU version. Alternatively one can define separate versions for <b>host</b> and <b>device</b> in the snippet. The snippets are automatically made available to the relevant code parts. This is regulated through namespaces so that name clashes between different models do not matter. An exception are hash defines. They can in principle be used in the supportCode snippet but need to be protected specifically using ifndef. For example <div class="fragment"><div class="line"><span class="preprocessor">#ifndef clip(x)</span></div>
+<div class="line"><span class="preprocessor">#define clip(x) x &gt; 10.0? 10.0 : x</span></div>
+<div class="line"><span class="preprocessor">#endif</span></div>
+</div><!-- fragment --> <dl class="section note"><dt>Note</dt><dd>If there are conflicting definitions for hash defines, the one that appears first in the GeNN generated code will then prevail.</dd></dl>
+</li>
+<li>The new convenience macros spikeCount_XX and spike_XX where "XX" is the name of the neuron group are now also available for events: spikeEventCount_XX and spikeEvent_XX. They access the values for the current time step even if there are synaptic delays and spikes events are stored in circular queues.</li>
+<li>The old buildmodel.[sh|bat] scripts have been superseded by new genn-buildmodel.[sh|bat] scripts. These scripts accept UNIX style option switches, allow both relative and absolute model file paths, and allow the user to specify the directory in which all output files are placed (-o &lt;path&gt;). Debug (-d), CPU-only (-c) and show help (-h) are also defined.</li>
+<li>We have introduced a CPU-only "-c" genn-buildmodel switch, which, if it's defined, will generate a GeNN version that is completely independent from CUDA and hence can be used on computers without CUDA installation or CUDA enabled hardware. Obviously, this then can also only run on CPU. CPU only mode can either be switched on by defining CPU_ONLY in the model description file or by passing appropriate parameters during the build, in particular <div class="fragment"><div class="line">genn-buildmodel.[sh|bat] \&lt;modelfile\&gt; -c</div>
+<div class="line">make release CPU_ONLY=1</div>
+</div><!-- fragment --></li>
+<li>The new genn-buildmodel "-o" switch allows the user to specify the output directory for all generated files - the default is the current directory. For example, a user project could be in '/home/genn_project', whilst the GeNN directory could be '/usr/local/genn'. The GeNN directory is kept clean, unless the user decides to build the sample projects inside of it without copying them elsewhere. This allows the deployment of GeNN to a read-only directory, like '/usr/local' or 'C:\Program Files'. It also allows multiple users - i.e. on a compute cluster - to use GeNN simultaneously, without overwriting each other's code-generation files, etcetera.</li>
+<li>The ARM architecture is now supported - e.g. the NVIDIA Jetson development platform.</li>
+<li>The NVIDIA CUDA SM_5* (Maxwell) architecture is now supported.</li>
+<li>An error is now thrown when the user tries to use double precision floating-point numbers on devices with architecture older than SM_13, since these devices do not support double precision.</li>
+<li>All GeNN helper functions and classes, such as <code><a class="el" href="../../dd/dc3/stringUtils_8h.html#acd4836da644df996627ecc9823546f8a" title="template functions for conversion of various types to C++ strings ">toString()</a></code> and <code><a class="el" href="../../dc/de5/classNNmodel.html">NNmodel</a></code>, are defined in the header files at <code>genn/lib/include/</code>, for example <code><a class="el" href="../../dd/dc3/stringUtils_8h.html">stringUtils.h</a></code> and <code><a class="el" href="../../dc/de1/modelSpec_8h.html" title="Header file that contains the class (struct) definition of neuronModel for defining a neuron model an...">modelSpec.h</a></code>, which should be individually included before the functions and classes may be used. The functions and classes are actually implementated in the static library <code>genn\lib\lib\genn.lib</code> (Windows) or <code>genn/lib/lib/libgenn.a</code> (Mac, Linux), which must be linked into the final executable if any GeNN functions or classes are used.</li>
+<li>In the <code><a class="el" href="../../d0/d73/myModel_8cc.html#a9aeaa0a22980484b2c472564fc9f686e" title="This function defines a model with novel synapses. ">modelDefinition()</a></code> file, only the header file <code><a class="el" href="../../dc/de1/modelSpec_8h.html" title="Header file that contains the class (struct) definition of neuronModel for defining a neuron model an...">modelSpec.h</a></code> should be included - i.e. not the source file <code>modelSpec.cc</code>. This is because the declaration and definition of <code><a class="el" href="../../dc/de5/classNNmodel.html">NNmodel</a></code>, and associated functions, has been separated into <code><a class="el" href="../../dc/de1/modelSpec_8h.html" title="Header file that contains the class (struct) definition of neuronModel for defining a neuron model an...">modelSpec.h</a></code> and <code>modelSpec.cc</code>, respectively. This is to enable <a class="el" href="../../dc/de5/classNNmodel.html">NNmodel</a> code to be precompiled separately. <em>Henceforth, only the header file <code><a class="el" href="../../dc/de1/modelSpec_8h.html" title="Header file that contains the class (struct) definition of neuronModel for defining a neuron model an...">modelSpec.h</a></code> should be included in model definition files!</em></li>
+<li>In the <code><a class="el" href="../../d0/d73/myModel_8cc.html#a9aeaa0a22980484b2c472564fc9f686e" title="This function defines a model with novel synapses. ">modelDefinition()</a></code> file, DT is now preferrably defined using <code>model.setDT(&lt;val&gt;);</code>, rather than #<code>define DT &lt;val&gt;</code>, in order to prevent problems with DT macro redefinition. For backward-compatibility reasons, the old #<code>define DT &lt;val&gt;</code> method may still be used, however users are advised to adopt the new method.</li>
+<li>In preparation for multi-GPU support in GeNN, we have separated out the compilation of generated code from user-side code. This will eventually allow us to optimise and compile different parts of the model with different CUDA flags, depending on the CUDA device chosen to execute that particular part of the model. As such, we have had to use a header file <code>definitions.h</code> as the generated code interface, rather than the <code>runner.cc</code> file. In practice, this means that <em>user-side code should include <code>myModel_CODE/definitions.h</code>, rather than <code>myModel_CODE/runner.cc</code>. Including <code>runner.cc</code> will likely result in pages of linking errors at best!</em></li>
 </ol>
 <h2>Developer Side Changes </h2>
 <ol type="1">
-<li><code>allocateSparseArrays()</code> has been changed to take the number of connections, connN, as an argument rather than expecting it to have been set in the Connetion struct before the function is called as was the arrangement previously.</li>
-<li>For the case of sparse connectivity, there is now a reverse mapping implemented with revers index arrays and a remap array that points to the original positions of variable values in teh forward array. By this mechanism, revers lookups from post to pre synaptic indices are possible but value changes in the sparse array values do only need to be done once.</li>
-<li>SpkEvnt code is no longer generated whenever it is not actually used. That is also true on a somewhat finer granularity where variable queues for synapse delays are only maintained if the corresponding variables are used in synaptic code. True spikes on the other hand are always detected in case the user is interested in them.</li>
+<li>Blocksize optimization and device choice now obtain the ptxas information on memory usage from a CUDA driver API call rather than from parsing ptxas output of the nvcc compiler. This adds robustness to any change in the syntax of the compiler output.</li>
+<li>The information about device choice is now stored in variables in the namespace <code><a class="el" href="../../d8/d27/namespaceGENN__PREFERENCES.html">GENN_PREFERENCES</a></code>. This includes <code>chooseDevice</code>, <code>optimiseBlockSize</code>, <code>optimizeCode</code>, <code>debugCode</code>, <code>showPtxInfo</code>, <code>defaultDevice</code>. <code>asGoodAsZero</code> has also been moved into this namespace.</li>
+<li>We have also introduced the namespace <a class="el" href="../../d4/dd6/namespaceGENN__FLAGS.html">GENN_FLAGS</a> that contains unsigned int variables that attach names to numeric flags that can be used within GeNN.</li>
+<li>The definitions of all generated variables and functions such as pullXXXStateFromDevice etc, are now generated into definitions.h. This is useful where one wants to compile separate object files that cannot all include the full definitions in e.g. "runnerGPU.cc". One example where this is useful is the brian2genn interface.</li>
+<li>A number of feature tests have been added that can be found in the <code>featureTests</code> directory. They can be run with the respective <code>runTests.sh</code> scripts. The <code>cleanTests.sh</code> scripts can be used to remove all generated code after testing.</li>
 </ol>
-<p><br />
- </p><hr/>
-<p> <a class="el" href="../../d9/d61/Examples.html">Previous</a> | <a class="el" href="../../df/ddb/ReleaseNotes.html">Top</a> | <a class="el" href="../../dc/d05/UserManual.html">Next</a></p>
-<p>/*!</p>
+<h2>Improvements </h2>
+<ol type="1">
+<li>Improved method of obtaining ptxas compiler information on register and shared memory usage and an improved algorithm for estimating shared memory usage requirements for different block sizes.</li>
+<li>Replaced pageable CPU-side memory with <a href="https://devblogs.nvidia.com/parallelforall/how-optimize-data-transfers-cuda-cc/">page-locked memory</a>. This can significantly speed up simulations in which a lot of data is regularly copied to and from a CUDA device.</li>
+<li>GeNN library objects and the main generateALL binary objects are now compiled separately, and only when a change has been made to an object's source, rather than recompiling all software for a minor change in a single source file. This should speed up compilation in some instances.</li>
+</ol>
+<h2>Bug fixes: </h2>
+<ol type="1">
+<li>Fixed a minor bug with delayed synapses, where delaySlot is declared but not referenced.</li>
+<li>We fixed a bug where on rare occasions a synchronisation problem occurred in sparse synapse populations.</li>
+<li>We fixed a bug where the combined spike event condition from several synapse populations was not assembled correctly in the code generation phase (the parameter values of the first synapse population over-rode the values of all other populations in the combined condition).</li>
+</ol>
+<p>Please refer to the <a href="http://genn-team.github.io/genn/documentation/html/index.html">full documentation</a> for further details, tutorials and complete code documentation. </p><hr/>
+<h1>Release Notes for GeNN v2.1 </h1>
 <p>This release includes some new features and several bug fixes on GeNN v2.0.</p>
 <h2>User Side Changes </h2>
 <ol type="1">
@@ -150,11 +175,11 @@ $(document).ready(function(){initNavTree('df/ddb/ReleaseNotes.html','../../');})
 <li>NGRADSYNAPSES dynamics have changed (See Bug fix #4) and this change is applied to the example projects. If you are using this synapse model, you may want to consider changing model parameters.</li>
 <li>The delay slots are now such that NO_DELAY is 0 delay slots (previously 1) and 1 means an actual delay of 1 time step.</li>
 <li>The convenience function convertProbabilityToRandomNumberThreshold(float *, uint64_t *, int) was changed so that it actually converts firing probability/timestep into a threshold value for the GeNN random number generator (as its name always suggested). The previous functionality of converting a <em>rate</em> in kHz into a firing threshold number for the GeNN random number generator is now provided with the name convertRateToRandomNumberThreshold(float *, uint64_t *, int)</li>
-<li>Every model definition function <code><a class="el" href="../../db/d0a/postVarsInPostLearn_8cc.html#a9aeaa0a22980484b2c472564fc9f686e">modelDefinition()</a></code> now needs to end with calling <code><a class="el" href="../../dc/de5/classNNmodel.html#aaee7f16c9627dddb2588bad24afe5d15">NNmodel::finalize()</a></code> for the defined network model. This will lock down the model and prevent any further changes to it by the supported methods. It also triggers necessary analysis of the model structure that should only be performed once. If the <code>finalize()</code> function is not called, GeNN will issue an error and exit before code generation.</li>
-<li>To be more consistent in function naming the <code>pull&lt;SYNAPSENAME&gt;FromDevice</code> and <code>push&lt;SYNAPSENAME&gt;ToDevice</code> have been renamed to <code>pull&lt;SYNAPSENAME&gt;StateFromDevice</code> and <code>push&lt;SYNAPSENAME&gt;StateToDevice</code>. The old versions are still supported through macro definitions to make the transition easier.</li>
+<li>Every model definition function <code><a class="el" href="../../d0/d73/myModel_8cc.html#a9aeaa0a22980484b2c472564fc9f686e" title="This function defines a model with novel synapses. ">modelDefinition()</a></code> now needs to end with calling <code><a class="el" href="../../dc/de5/classNNmodel.html#aaee7f16c9627dddb2588bad24afe5d15" title="Declare that the model specification is finalised in modelDefinition(). ">NNmodel::finalize()</a></code> for the defined network model. This will lock down the model and prevent any further changes to it by the supported methods. It also triggers necessary analysis of the model structure that should only be performed once. If the <code>finalize()</code> function is not called, GeNN will issue an error and exit before code generation.</li>
+<li>To be more consistent in function naming the <code>pull\&lt;SYNAPSENAME\&gt;FromDevice</code> and <code>push\&lt;SYNAPSENAME\&gt;ToDevice</code> have been renamed to <code>pull\&lt;SYNAPSENAME\&gt;StateFromDevice</code> and <code>push\&lt;SYNAPSENAME\&gt;StateToDevice</code>. The old versions are still supported through macro definitions to make the transition easier.</li>
 <li>New convenience macros are now provided to access the current spike numbers and identities of neurons that spiked. These are called spikeCount_XX and spike_XX where "XX" is the name of the neuron group. They access the values for the current time step even if there are synaptic delays and spikes are stored in circular queues.</li>
 <li>There is now a pre-defined neuron type "SPIKECOURCE" which is empty and can be used to define PyNN style spike source arrays.</li>
-<li>The macros FLOAT and DOUBLE were replaced with GENN_FLOAT and GENN_DOUBLE due to name clahes with typedefs in Windows that define FLOAT and DOUBLE.</li>
+<li>The macros FLOAT and DOUBLE were replaced with GENN_FLOAT and GENN_DOUBLE due to name clashes with typedefs in Windows that define FLOAT and DOUBLE.</li>
 </ol>
 <h2>Developer Side Changes </h2>
 <ol type="1">
@@ -164,9 +189,9 @@ $(document).ready(function(){initNavTree('df/ddb/ReleaseNotes.html','../../');})
 <ol type="1">
 <li>Improved debugging information for block size optimisation and device choice.</li>
 <li>Changed the device selection logic so that device occupancy has larger priority than device capability version.</li>
-<li>A new HH model called TRAUBMILES_PSTEP where we can set the number of inner loops as a parameter is introduced. It uses the TRAUBMILES_SAFE method.</li>
+<li>A new HH model called TRAUBMILES_PSTEP where one can set the number of inner loops as a parameter is introduced. It uses the TRAUBMILES_SAFE method.</li>
 <li>An alternative method is added for the insect olfaction model in order to fix the number of connections to a maximum of 10K in order to avoid negative conductance tails.</li>
-<li>We introduced a #define for an "int_" function that translates floating points to integers.</li>
+<li>We introduced a preprocessor define directive for an "int_" function that translates floating points to integers.</li>
 </ol>
 <h2>Bug fixes: </h2>
 <ol type="1">
@@ -174,18 +199,56 @@ $(document).ready(function(){initNavTree('df/ddb/ReleaseNotes.html','../../');})
 <li>Timing of individual kernels is fixed and improved.</li>
 <li>More careful setting of maximum number of connections in sparse connectivity, covering mixed dense/sparse network scenarios.</li>
 <li>NGRADSYNAPSES was not scaling correctly with varying time step.</li>
-<li>Fixed a bug where learning kernel with sparse connectivity was going out of array.</li>
+<li>Fixed a bug where learning kernel with sparse connectivity was going out of range in an array.</li>
 <li>Fixed synapse kernel name substitutions where the "dd_" prefix was omitted by mistake.</li>
 </ol>
-<p><br />
- </p><hr/>
+<p>Please refer to the <a href="http://genn-team.github.io/genn/documentation/html/index.html">full documentation</a> for further details, tutorials and complete code documentation. </p><hr/>
+<h1>Release Notes for GeNN v2.0 </h1>
+<p>Version 2.0 of GeNN comes with a lot of improvements and added features, some of which have necessitated some changes to the structure of parameter arrays among others.</p>
+<h2>User Side Changes </h2>
+<ol type="1">
+<li>Users are now required to call <code><a class="el" href="../../dc/de1/modelSpec_8h.html#a62ce532f6f7e535adfb9fe151a1c0c6b" title="Method for GeNN initialisation (by preparing standard models) ">initGeNN()</a></code> in the model definition function before adding any populations to the neuronal network model.</li>
+<li>glbscnt is now call glbSpkCnt for consistency with glbSpkEvntCnt.</li>
+<li>There is no longer a privileged parameter <code>Epre</code>. Spike type events are now defined by a code string <code>spkEvntThreshold</code>, the same way proper spikes are. The only difference is that Spike type events are specific to a synapse type rather than a neuron type.</li>
+<li>The function setSynapseG has been deprecated. In a <code>GLOBALG</code> scenario, the variables of a synapse group are set to the initial values provided in the <code>modeldefinition</code> function.</li>
+<li>Due to the split of synaptic models into <a class="el" href="../../dd/db7/classweightUpdateModel.html" title="Class to hold the information that defines a weightupdate model (a model of how spikes affect synapti...">weightUpdateModel</a> and <a class="el" href="../../d2/d1a/classpostSynModel.html" title="Class to hold the information that defines a post-synaptic model (a model of how synapses affect post...">postSynModel</a>, the parameter arrays used during model definition need to be carefully split as well so that each side gets the right parameters. For example, previously <div class="fragment"><div class="line"><span class="keywordtype">float</span> <a class="code" href="../../de/d16/HHVclampGA__project_2model_2MBody1_8cc.html#a67342d45803c29c4bda5af32fd5d06ff">myPNKC_p</a>[3]= {</div>
+<div class="line">0.0,           <span class="comment">// 0 - Erev: Reversal potential</span></div>
+<div class="line">-20.0,         <span class="comment">// 1 - Epre: Presynaptic threshold potential</span></div>
+<div class="line">1.0            <span class="comment">// 2 - tau_S: decay time constant for S [ms]</span></div>
+<div class="line">};</div>
+</div><!-- fragment --> would define the parameter array of three parameters, <code>Erev</code>, <code>Epre</code>, and <code>tau_S</code> for a synapse of type <code>NSYNAPSE</code>. This now needs to be "split" into <div class="fragment"><div class="line"><span class="keywordtype">float</span> *myPNKC_p= NULL;</div>
+<div class="line"><span class="keywordtype">float</span> <a class="code" href="../../de/d16/HHVclampGA__project_2model_2MBody1_8cc.html#a0399e5408044f345ed8d29f34d1ede7e">postExpPNKC</a>[2]={</div>
+<div class="line">  1.0,            <span class="comment">// 0 - tau_S: decay time constant for S [ms]</span></div>
+<div class="line">  0.0             <span class="comment">// 1 - Erev: Reversal potential</span></div>
+<div class="line">};</div>
+</div><!-- fragment --> i.e. parameters <code>Erev</code> and <code>tau_S</code> are moved to the post-synaptic model and its parameter array of two parameters. <code>Epre</code> is discontinued as a parameter for <code>NSYNAPSE</code>. As a consequence the weightupdate model of <code>NSYNAPSE</code> has no parameters and one can pass <code>NULL</code> for the parameter array in <code>addSynapsePopulation</code>. The correct parameter lists for all defined neuron and synapse model types are listed in the <a href="http://genn-team.github.io/genn/documentation/html/dc/d05/UserManual.html">User Manual</a>. <dl class="section note"><dt>Note</dt><dd>If the parameters are not redefined appropriately this will lead to uncontrolled behaviour of models and likely to segmentation faults and crashes.</dd></dl>
+</li>
+<li>Advanced users can now define variables as type <code>scalar</code> when introducing new neuron or synapse types. This will at the code generation stage be translated to the model's floating point type (ftype), <code>float</code> or <code>double</code>. This works for defining variables as well as in all code snippets. Users can also use the expressions <code>SCALAR_MAX</code> and <code>SCALAR_MIN</code> for <code>FLT_MIN</code>, <code>FLT_MAX</code>, <code>DBL_MIN</code> and <code>DBL_MAX</code>, respectively. Corresponding definitions of <code>scalar</code>, <code>SCALAR_MIN</code> and <code>SCALAR_MAX</code> are also available for user-side code whenever the code-generated file <code>runner.cc</code> has been included.</li>
+<li>The example projects have been re-organized so that wrapper scripts of the <code>generate_run</code> type are now all located together with the models they run instead of in a common <code>tools</code> directory. Generally the structure now is that each example project contains the wrapper script <code>generate_run</code> and a <code>model</code> subdirectory which contains the model description file and the user side code complete with Makefiles for Unix and Windows operating systems. The generated code will be deposited in the <code>model</code> subdirectory in its own <code>modelname_CODE</code> folder. Simulation results will always be deposited in a new sub-folder of the main project directory.</li>
+<li>The <code>addSynapsePopulation(...)</code> function has now more mandatory parameters relating to the introduction of separate weightupdate models (pre-synaptic models) and postynaptic models. The correct syntax for the <code>addSynapsePopulation(...)</code> can be found with detailed explanations in teh <a href="http://genn-team.github.io/genn/documentation/html/dc/d05/UserManual.html">User Manual</a>.</li>
+<li>We have introduced a simple performance profiling method that users can employ to get an overview over the differential use of time by different kernels. To enable the timers in GeNN generated code, one needs to declare <div class="fragment"><div class="line">networkmodel.setTiming(<a class="code" href="../../d2/d49/global_8h.html#aa8cecfc5c5c054d2875c03e77b7be15d">TRUE</a>);</div>
+</div><!-- fragment --> This will make available and operate GPU-side cudeEvent based timers whose cumulative value can be found in the double precision variables <code>neuron_tme</code>, <code>synapse_tme</code> and <code>learning_tme</code>. They measure the accumulated time that has been spent calculating the neuron kernel, synapse kernel and learning kernel, respectively. CPU-side timers for the simulation functions are also available and their cumulative values can be obtained through <div class="fragment"><div class="line"><span class="keywordtype">float</span> x= sdkGetTimerValue(&amp;neuron_timer);</div>
+<div class="line"><span class="keywordtype">float</span> y= sdkGetTimerValue(&amp;synapse_timer);</div>
+<div class="line"><span class="keywordtype">float</span> z= sdkGetTimerValue(&amp;learning_timer);</div>
+</div><!-- fragment --> The <a class="el" href="../../d9/d61/Examples.html#ex_mbody">Insect olfaction model</a> example shows how these can be used in the user-side code. To enable timing profiling in this example, simply enable it for GeNN: <div class="fragment"><div class="line">model.setTiming(<a class="code" href="../../d2/d49/global_8h.html#aa8cecfc5c5c054d2875c03e77b7be15d">TRUE</a>);</div>
+</div><!-- fragment --> in <code>MBody1.cc</code>'s <code>modelDefinition</code> function and define the macro <code>TIMING</code> in <code>classol_sim.h</code> <div class="fragment"><div class="line"><span class="preprocessor">#define TIMING</span></div>
+</div><!-- fragment --> This will have the effect that timing information is output into <code>OUTNAME_output/OUTNAME.timingprofile</code>.</li>
+</ol>
+<h2>Developer Side Changes </h2>
+<ol type="1">
+<li><code>allocateSparseArrays()</code> has been changed to take the number of connections, connN, as an argument rather than expecting it to have been set in the Connetion struct before the function is called as was the arrangement previously.</li>
+<li>For the case of sparse connectivity, there is now a reverse mapping implemented with revers index arrays and a remap array that points to the original positions of variable values in teh forward array. By this mechanism, revers lookups from post to pre synaptic indices are possible but value changes in the sparse array values do only need to be done once.</li>
+<li>SpkEvnt code is no longer generated whenever it is not actually used. That is also true on a somewhat finer granularity where variable queues for synapse delays are only maintained if the corresponding variables are used in synaptic code. True spikes on the other hand are always detected in case the user is interested in them.</li>
+</ol>
+<p>Please refer to the <a href="http://genn-team.github.io/genn/documentation/html/index.html">full documentation</a> for further details, tutorials and complete code documentation.</p>
+<hr/>
 <p> <a class="el" href="../../d9/d61/Examples.html">Previous</a> | <a class="el" href="../../df/ddb/ReleaseNotes.html">Top</a> | <a class="el" href="../../dc/d05/UserManual.html">Next</a> </p>
 </div></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Fri Nov 6 2015 22:13:01 for GeNN by
+    <li class="footer">Generated on Fri Jun 17 2016 14:44:59 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
   </ul>

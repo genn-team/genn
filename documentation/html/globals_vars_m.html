@@ -34,6 +34,7 @@
   $(document).ready(function() { init_search(); });
 </script>
 <link href="customdoxygen.css" rel="stylesheet" type="text/css" />
+<link href="html_styles.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -44,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">2.0</span>
+   &#160;<span id="projectnumber">2.2</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -61,6 +62,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
       <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
+      <li><a href="namespaces.html"><span>Namespaces</span></a></li>
       <li><a href="annotated.html"><span>Classes</span></a></li>
       <li class="current"><a href="files.html"><span>Files</span></a></li>
       <li>
@@ -99,7 +101,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow4" class="tabs3">
     <ul class="tablist">
       <li><a href="globals_vars.html#index__"><span>_</span></a></li>
-      <li><a href="globals_vars_a.html#index_a"><span>a</span></a></li>
+      <li><a href="globals_vars_b.html#index_b"><span>b</span></a></li>
       <li><a href="globals_vars_c.html#index_c"><span>c</span></a></li>
       <li><a href="globals_vars_d.html#index_d"><span>d</span></a></li>
       <li><a href="globals_vars_e.html#index_e"><span>e</span></a></li>
@@ -115,7 +117,6 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
       <li><a href="globals_vars_r.html#index_r"><span>r</span></a></li>
       <li><a href="globals_vars_s.html#index_s"><span>s</span></a></li>
       <li><a href="globals_vars_t.html#index_t"><span>t</span></a></li>
-      <li><a href="globals_vars_u.html#index_u"><span>u</span></a></li>
       <li><a href="globals_vars_v.html#index_v"><span>v</span></a></li>
       <li><a href="globals_vars_w.html#index_w"><span>w</span></a></li>
     </ul>
@@ -154,7 +155,14 @@ $(document).ready(function(){initNavTree('globals_vars_m.html','');});
 
 <h3><a class="anchor" id="index_m"></a>- m -</h3><ul>
 <li>MAPNEURON
-: <a class="el" href="dc/de1/modelSpec_8h.html#a341a1df6d0b9abb9b23eea5816bcb552">modelSpec.h</a>
+: <a class="el" href="d3/dc0/neuronModels_8h.html#a341a1df6d0b9abb9b23eea5816bcb552">neuronModels.h</a>
+, <a class="el" href="dc/dbc/neuronModels_8cc.html#a341a1df6d0b9abb9b23eea5816bcb552">neuronModels.cc</a>
+</li>
+<li>MAXNRN
+: <a class="el" href="d3/dc0/neuronModels_8h.html#a0bfcf6ecbe51421eb064efc33fb483c9">neuronModels.h</a>
+</li>
+<li>MAXPOSTSYN
+: <a class="el" href="d4/d8a/postSynapseModels_8h.html#ac67a2cad7d97484debf4b3eb98acbe93">postSynapseModels.h</a>
 </li>
 <li>meanInpExc
 : <a class="el" href="d7/d5b/Izh__sparse_8cc.html#ae2df4139650041d55fd91f48630f78b4">Izh_sparse.cc</a>
@@ -166,19 +174,17 @@ $(document).ready(function(){initNavTree('globals_vars_m.html','');});
 : <a class="el" href="d4/da1/helper_8h.html#a6ddfc8722483b0f79172b6124d704905">helper.h</a>
 </li>
 <li>myDNDN_ini
-: <a class="el" href="d3/d25/MBody__individualID_8cc.html#a935fe58cc4a61dbbb40a1e6af2f0fe0d">MBody_individualID.cc</a>
-, <a class="el" href="de/d1c/userproject_2MBody__userdef__project_2model_2MBody__userdef_8cc.html#a935fe58cc4a61dbbb40a1e6af2f0fe0d">userproject/MBody_userdef_project/model/MBody_userdef.cc</a>
-, <a class="el" href="d2/d9f/featureTests_2supportCode_2MBody__userdef_8cc.html#a935fe58cc4a61dbbb40a1e6af2f0fe0d">featureTests/supportCode/MBody_userdef.cc</a>
-, <a class="el" href="dc/de0/MBody1__project_2model_2MBody1_8cc.html#a935fe58cc4a61dbbb40a1e6af2f0fe0d">MBody1_project/model/MBody1.cc</a>
+: <a class="el" href="dc/de0/MBody1__project_2model_2MBody1_8cc.html#a935fe58cc4a61dbbb40a1e6af2f0fe0d">MBody1_project/model/MBody1.cc</a>
 , <a class="el" href="df/dc6/MBody__delayedSyn_8cc.html#a935fe58cc4a61dbbb40a1e6af2f0fe0d">MBody_delayedSyn.cc</a>
+, <a class="el" href="d3/d25/MBody__individualID_8cc.html#a935fe58cc4a61dbbb40a1e6af2f0fe0d">MBody_individualID.cc</a>
+, <a class="el" href="d3/dcd/MBody__userdef_8cc.html#a935fe58cc4a61dbbb40a1e6af2f0fe0d">MBody_userdef.cc</a>
 </li>
 <li>myDNDN_p
-: <a class="el" href="d2/d9f/featureTests_2supportCode_2MBody__userdef_8cc.html#a73bd14c09c4f07fc966d10c6cc11883d">featureTests/supportCode/MBody_userdef.cc</a>
+: <a class="el" href="d3/dcd/MBody__userdef_8cc.html#a73bd14c09c4f07fc966d10c6cc11883d">MBody_userdef.cc</a>
 , <a class="el" href="de/d16/HHVclampGA__project_2model_2MBody1_8cc.html#a03b50c841dd61652a56841700566aac9">HHVclampGA_project/model/MBody1.cc</a>
 , <a class="el" href="dc/de0/MBody1__project_2model_2MBody1_8cc.html#a73bd14c09c4f07fc966d10c6cc11883d">MBody1_project/model/MBody1.cc</a>
 , <a class="el" href="df/dc6/MBody__delayedSyn_8cc.html#a73bd14c09c4f07fc966d10c6cc11883d">MBody_delayedSyn.cc</a>
 , <a class="el" href="d3/d25/MBody__individualID_8cc.html#a73bd14c09c4f07fc966d10c6cc11883d">MBody_individualID.cc</a>
-, <a class="el" href="de/d1c/userproject_2MBody__userdef__project_2model_2MBody__userdef_8cc.html#a73bd14c09c4f07fc966d10c6cc11883d">userproject/MBody_userdef_project/model/MBody_userdef.cc</a>
 </li>
 <li>myHH_ini
 : <a class="el" href="d9/dba/HHVClamp_8cc.html#ab505899fc652c98a2fc3dd67d89ef8cd">HHVClamp.cc</a>
@@ -187,82 +193,72 @@ $(document).ready(function(){initNavTree('globals_vars_m.html','');});
 : <a class="el" href="d9/dba/HHVClamp_8cc.html#a188b58c67f14d23befeac725649a7369">HHVClamp.cc</a>
 </li>
 <li>myKCDN_ini
-: <a class="el" href="d2/d9f/featureTests_2supportCode_2MBody__userdef_8cc.html#a9482ef7801de91698f108da5565b45f8">featureTests/supportCode/MBody_userdef.cc</a>
-, <a class="el" href="dc/de0/MBody1__project_2model_2MBody1_8cc.html#a9482ef7801de91698f108da5565b45f8">MBody1_project/model/MBody1.cc</a>
+: <a class="el" href="dc/de0/MBody1__project_2model_2MBody1_8cc.html#a9482ef7801de91698f108da5565b45f8">MBody1_project/model/MBody1.cc</a>
 , <a class="el" href="df/dc6/MBody__delayedSyn_8cc.html#a9482ef7801de91698f108da5565b45f8">MBody_delayedSyn.cc</a>
 , <a class="el" href="d3/d25/MBody__individualID_8cc.html#a9482ef7801de91698f108da5565b45f8">MBody_individualID.cc</a>
-, <a class="el" href="de/d1c/userproject_2MBody__userdef__project_2model_2MBody__userdef_8cc.html#a9482ef7801de91698f108da5565b45f8">userproject/MBody_userdef_project/model/MBody_userdef.cc</a>
+, <a class="el" href="d3/dcd/MBody__userdef_8cc.html#a9482ef7801de91698f108da5565b45f8">MBody_userdef.cc</a>
 </li>
 <li>myKCDN_p
-: <a class="el" href="d2/d9f/featureTests_2supportCode_2MBody__userdef_8cc.html#aeaff7baa82f280ceb2ad47878f9fca52">featureTests/supportCode/MBody_userdef.cc</a>
-, <a class="el" href="de/d16/HHVclampGA__project_2model_2MBody1_8cc.html#adfe4c40a099763bf4bfbc15af79376d9">HHVclampGA_project/model/MBody1.cc</a>
+: <a class="el" href="de/d16/HHVclampGA__project_2model_2MBody1_8cc.html#adfe4c40a099763bf4bfbc15af79376d9">HHVclampGA_project/model/MBody1.cc</a>
 , <a class="el" href="dc/de0/MBody1__project_2model_2MBody1_8cc.html#a39e09942e977b1b2b3353a353bd99f97">MBody1_project/model/MBody1.cc</a>
 , <a class="el" href="df/dc6/MBody__delayedSyn_8cc.html#a39e09942e977b1b2b3353a353bd99f97">MBody_delayedSyn.cc</a>
 , <a class="el" href="d3/d25/MBody__individualID_8cc.html#aeaff7baa82f280ceb2ad47878f9fca52">MBody_individualID.cc</a>
-, <a class="el" href="de/d1c/userproject_2MBody__userdef__project_2model_2MBody__userdef_8cc.html#aeaff7baa82f280ceb2ad47878f9fca52">userproject/MBody_userdef_project/model/MBody_userdef.cc</a>
+, <a class="el" href="d3/dcd/MBody__userdef_8cc.html#aeaff7baa82f280ceb2ad47878f9fca52">MBody_userdef.cc</a>
 </li>
 <li>myLHIKC_ini
-: <a class="el" href="d3/d25/MBody__individualID_8cc.html#a0dbf6fda5d2924bbe17939ce11bf3a54">MBody_individualID.cc</a>
-, <a class="el" href="de/d1c/userproject_2MBody__userdef__project_2model_2MBody__userdef_8cc.html#a0dbf6fda5d2924bbe17939ce11bf3a54">userproject/MBody_userdef_project/model/MBody_userdef.cc</a>
-, <a class="el" href="d2/d9f/featureTests_2supportCode_2MBody__userdef_8cc.html#a0dbf6fda5d2924bbe17939ce11bf3a54">featureTests/supportCode/MBody_userdef.cc</a>
-, <a class="el" href="dc/de0/MBody1__project_2model_2MBody1_8cc.html#a0dbf6fda5d2924bbe17939ce11bf3a54">MBody1_project/model/MBody1.cc</a>
+: <a class="el" href="dc/de0/MBody1__project_2model_2MBody1_8cc.html#a0dbf6fda5d2924bbe17939ce11bf3a54">MBody1_project/model/MBody1.cc</a>
 , <a class="el" href="df/dc6/MBody__delayedSyn_8cc.html#a0dbf6fda5d2924bbe17939ce11bf3a54">MBody_delayedSyn.cc</a>
+, <a class="el" href="d3/d25/MBody__individualID_8cc.html#a0dbf6fda5d2924bbe17939ce11bf3a54">MBody_individualID.cc</a>
+, <a class="el" href="d3/dcd/MBody__userdef_8cc.html#a0dbf6fda5d2924bbe17939ce11bf3a54">MBody_userdef.cc</a>
 </li>
 <li>myLHIKC_p
-: <a class="el" href="d2/d9f/featureTests_2supportCode_2MBody__userdef_8cc.html#a1921a3b652820cbd262e8ebc37afdc62">featureTests/supportCode/MBody_userdef.cc</a>
-, <a class="el" href="de/d16/HHVclampGA__project_2model_2MBody1_8cc.html#a8a43de6d7a69b61ba09ce7abd8a1baf4">HHVclampGA_project/model/MBody1.cc</a>
+: <a class="el" href="de/d16/HHVclampGA__project_2model_2MBody1_8cc.html#a8a43de6d7a69b61ba09ce7abd8a1baf4">HHVclampGA_project/model/MBody1.cc</a>
 , <a class="el" href="dc/de0/MBody1__project_2model_2MBody1_8cc.html#a1921a3b652820cbd262e8ebc37afdc62">MBody1_project/model/MBody1.cc</a>
 , <a class="el" href="df/dc6/MBody__delayedSyn_8cc.html#a1921a3b652820cbd262e8ebc37afdc62">MBody_delayedSyn.cc</a>
 , <a class="el" href="d3/d25/MBody__individualID_8cc.html#a1921a3b652820cbd262e8ebc37afdc62">MBody_individualID.cc</a>
-, <a class="el" href="de/d1c/userproject_2MBody__userdef__project_2model_2MBody__userdef_8cc.html#a1921a3b652820cbd262e8ebc37afdc62">userproject/MBody_userdef_project/model/MBody_userdef.cc</a>
+, <a class="el" href="d3/dcd/MBody__userdef_8cc.html#a1921a3b652820cbd262e8ebc37afdc62">MBody_userdef.cc</a>
 </li>
 <li>myPNKC_ini
 : <a class="el" href="d3/d25/MBody__individualID_8cc.html#a22b09336393c9558a89156b4d23e587b">MBody_individualID.cc</a>
-, <a class="el" href="d2/d9f/featureTests_2supportCode_2MBody__userdef_8cc.html#a22b09336393c9558a89156b4d23e587b">featureTests/supportCode/MBody_userdef.cc</a>
 , <a class="el" href="dc/de0/MBody1__project_2model_2MBody1_8cc.html#a22b09336393c9558a89156b4d23e587b">MBody1_project/model/MBody1.cc</a>
 , <a class="el" href="df/dc6/MBody__delayedSyn_8cc.html#a22b09336393c9558a89156b4d23e587b">MBody_delayedSyn.cc</a>
-, <a class="el" href="de/d1c/userproject_2MBody__userdef__project_2model_2MBody__userdef_8cc.html#a22b09336393c9558a89156b4d23e587b">userproject/MBody_userdef_project/model/MBody_userdef.cc</a>
+, <a class="el" href="d3/dcd/MBody__userdef_8cc.html#a22b09336393c9558a89156b4d23e587b">MBody_userdef.cc</a>
 </li>
 <li>myPNKC_p
-: <a class="el" href="d2/d9f/featureTests_2supportCode_2MBody__userdef_8cc.html#a7ca1e4b7cf9ae5cdaf81ce2acf9ed8da">featureTests/supportCode/MBody_userdef.cc</a>
-, <a class="el" href="de/d16/HHVclampGA__project_2model_2MBody1_8cc.html#a67342d45803c29c4bda5af32fd5d06ff">HHVclampGA_project/model/MBody1.cc</a>
+: <a class="el" href="de/d16/HHVclampGA__project_2model_2MBody1_8cc.html#a67342d45803c29c4bda5af32fd5d06ff">HHVclampGA_project/model/MBody1.cc</a>
 , <a class="el" href="dc/de0/MBody1__project_2model_2MBody1_8cc.html#a7ca1e4b7cf9ae5cdaf81ce2acf9ed8da">MBody1_project/model/MBody1.cc</a>
-, <a class="el" href="df/dc6/MBody__delayedSyn_8cc.html#a7ca1e4b7cf9ae5cdaf81ce2acf9ed8da">MBody_delayedSyn.cc</a>
 , <a class="el" href="d3/d25/MBody__individualID_8cc.html#a7ca1e4b7cf9ae5cdaf81ce2acf9ed8da">MBody_individualID.cc</a>
-, <a class="el" href="de/d1c/userproject_2MBody__userdef__project_2model_2MBody__userdef_8cc.html#a7ca1e4b7cf9ae5cdaf81ce2acf9ed8da">userproject/MBody_userdef_project/model/MBody_userdef.cc</a>
+, <a class="el" href="d3/dcd/MBody__userdef_8cc.html#a7ca1e4b7cf9ae5cdaf81ce2acf9ed8da">MBody_userdef.cc</a>
+, <a class="el" href="df/dc6/MBody__delayedSyn_8cc.html#a7ca1e4b7cf9ae5cdaf81ce2acf9ed8da">MBody_delayedSyn.cc</a>
 </li>
 <li>myPNLHI_ini
-: <a class="el" href="d2/d9f/featureTests_2supportCode_2MBody__userdef_8cc.html#a100cb9eca53f0c442c07e7e90e357e09">featureTests/supportCode/MBody_userdef.cc</a>
-, <a class="el" href="de/d1c/userproject_2MBody__userdef__project_2model_2MBody__userdef_8cc.html#a100cb9eca53f0c442c07e7e90e357e09">userproject/MBody_userdef_project/model/MBody_userdef.cc</a>
-, <a class="el" href="dc/de0/MBody1__project_2model_2MBody1_8cc.html#a100cb9eca53f0c442c07e7e90e357e09">MBody1_project/model/MBody1.cc</a>
+: <a class="el" href="dc/de0/MBody1__project_2model_2MBody1_8cc.html#a100cb9eca53f0c442c07e7e90e357e09">MBody1_project/model/MBody1.cc</a>
 , <a class="el" href="d3/d25/MBody__individualID_8cc.html#a100cb9eca53f0c442c07e7e90e357e09">MBody_individualID.cc</a>
+, <a class="el" href="d3/dcd/MBody__userdef_8cc.html#a100cb9eca53f0c442c07e7e90e357e09">MBody_userdef.cc</a>
 , <a class="el" href="df/dc6/MBody__delayedSyn_8cc.html#a100cb9eca53f0c442c07e7e90e357e09">MBody_delayedSyn.cc</a>
 </li>
 <li>myPNLHI_p
-: <a class="el" href="dc/de0/MBody1__project_2model_2MBody1_8cc.html#a12d084efb33d4310d013345a7ce6bb68">MBody1_project/model/MBody1.cc</a>
-, <a class="el" href="de/d16/HHVclampGA__project_2model_2MBody1_8cc.html#a92175feff63514391ca96317f3451f0e">HHVclampGA_project/model/MBody1.cc</a>
-, <a class="el" href="df/dc6/MBody__delayedSyn_8cc.html#a12d084efb33d4310d013345a7ce6bb68">MBody_delayedSyn.cc</a>
-, <a class="el" href="de/d1c/userproject_2MBody__userdef__project_2model_2MBody__userdef_8cc.html#a12d084efb33d4310d013345a7ce6bb68">userproject/MBody_userdef_project/model/MBody_userdef.cc</a>
-, <a class="el" href="d2/d9f/featureTests_2supportCode_2MBody__userdef_8cc.html#a12d084efb33d4310d013345a7ce6bb68">featureTests/supportCode/MBody_userdef.cc</a>
+: <a class="el" href="de/d16/HHVclampGA__project_2model_2MBody1_8cc.html#a92175feff63514391ca96317f3451f0e">HHVclampGA_project/model/MBody1.cc</a>
 , <a class="el" href="d3/d25/MBody__individualID_8cc.html#a12d084efb33d4310d013345a7ce6bb68">MBody_individualID.cc</a>
+, <a class="el" href="d3/dcd/MBody__userdef_8cc.html#a12d084efb33d4310d013345a7ce6bb68">MBody_userdef.cc</a>
+, <a class="el" href="dc/de0/MBody1__project_2model_2MBody1_8cc.html#a12d084efb33d4310d013345a7ce6bb68">MBody1_project/model/MBody1.cc</a>
+, <a class="el" href="df/dc6/MBody__delayedSyn_8cc.html#a12d084efb33d4310d013345a7ce6bb68">MBody_delayedSyn.cc</a>
 </li>
 <li>myPOI_ini
-: <a class="el" href="d2/d9f/featureTests_2supportCode_2MBody__userdef_8cc.html#ad798b46bffaecae97f3032362e90cc8e">featureTests/supportCode/MBody_userdef.cc</a>
-, <a class="el" href="dc/de0/MBody1__project_2model_2MBody1_8cc.html#ad798b46bffaecae97f3032362e90cc8e">MBody1_project/model/MBody1.cc</a>
-, <a class="el" href="dc/d3f/PoissonIzh_8cc.html#ad0e35892e7003023471f9c2c7bc6378a">PoissonIzh.cc</a>
-, <a class="el" href="de/d1c/userproject_2MBody__userdef__project_2model_2MBody__userdef_8cc.html#ad798b46bffaecae97f3032362e90cc8e">userproject/MBody_userdef_project/model/MBody_userdef.cc</a>
-, <a class="el" href="de/d16/HHVclampGA__project_2model_2MBody1_8cc.html#ad0e35892e7003023471f9c2c7bc6378a">HHVclampGA_project/model/MBody1.cc</a>
+: <a class="el" href="dc/d3f/PoissonIzh_8cc.html#ad0e35892e7003023471f9c2c7bc6378a">PoissonIzh.cc</a>
 , <a class="el" href="df/dc6/MBody__delayedSyn_8cc.html#ad798b46bffaecae97f3032362e90cc8e">MBody_delayedSyn.cc</a>
+, <a class="el" href="d3/dcd/MBody__userdef_8cc.html#ad798b46bffaecae97f3032362e90cc8e">MBody_userdef.cc</a>
+, <a class="el" href="de/d16/HHVclampGA__project_2model_2MBody1_8cc.html#ad0e35892e7003023471f9c2c7bc6378a">HHVclampGA_project/model/MBody1.cc</a>
 , <a class="el" href="d3/d25/MBody__individualID_8cc.html#ad798b46bffaecae97f3032362e90cc8e">MBody_individualID.cc</a>
+, <a class="el" href="dc/de0/MBody1__project_2model_2MBody1_8cc.html#ad798b46bffaecae97f3032362e90cc8e">MBody1_project/model/MBody1.cc</a>
 </li>
 <li>myPOI_p
-: <a class="el" href="df/dc6/MBody__delayedSyn_8cc.html#a4787a6c7bbbd701fe139d33765fa86a0">MBody_delayedSyn.cc</a>
-, <a class="el" href="d2/d9f/featureTests_2supportCode_2MBody__userdef_8cc.html#a4787a6c7bbbd701fe139d33765fa86a0">featureTests/supportCode/MBody_userdef.cc</a>
-, <a class="el" href="de/d1c/userproject_2MBody__userdef__project_2model_2MBody__userdef_8cc.html#a4787a6c7bbbd701fe139d33765fa86a0">userproject/MBody_userdef_project/model/MBody_userdef.cc</a>
-, <a class="el" href="dc/d3f/PoissonIzh_8cc.html#a4787a6c7bbbd701fe139d33765fa86a0">PoissonIzh.cc</a>
+: <a class="el" href="dc/d3f/PoissonIzh_8cc.html#a4787a6c7bbbd701fe139d33765fa86a0">PoissonIzh.cc</a>
+, <a class="el" href="df/dc6/MBody__delayedSyn_8cc.html#a4787a6c7bbbd701fe139d33765fa86a0">MBody_delayedSyn.cc</a>
 , <a class="el" href="d3/d25/MBody__individualID_8cc.html#a4787a6c7bbbd701fe139d33765fa86a0">MBody_individualID.cc</a>
 , <a class="el" href="dc/de0/MBody1__project_2model_2MBody1_8cc.html#a4787a6c7bbbd701fe139d33765fa86a0">MBody1_project/model/MBody1.cc</a>
 , <a class="el" href="de/d16/HHVclampGA__project_2model_2MBody1_8cc.html#a4787a6c7bbbd701fe139d33765fa86a0">HHVclampGA_project/model/MBody1.cc</a>
+, <a class="el" href="d3/dcd/MBody__userdef_8cc.html#a4787a6c7bbbd701fe139d33765fa86a0">MBody_userdef.cc</a>
 </li>
 <li>mySyn_ini
 : <a class="el" href="dc/d3f/PoissonIzh_8cc.html#a76839eeb65dfeb72bd6e6a8793cb8e45">PoissonIzh.cc</a>
@@ -277,7 +273,7 @@ $(document).ready(function(){initNavTree('globals_vars_m.html','');});
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Fri Nov 6 2015 22:13:07 for GeNN by
+    <li class="footer">Generated on Fri Jun 17 2016 14:45:01 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
   </ul>

@@ -1,20 +1,9 @@
 var searchData=
 [
-  ['ga_2ecc',['GA.cc',['../d5/d06/GA_8cc.html',1,'']]],
-  ['gauss_2ecc',['gauss.cc',['../db/d8c/gauss_8cc.html',1,'']]],
-  ['gauss_2eh',['gauss.h',['../d1/d69/gauss_8h.html',1,'']]],
-  ['gen_5finput_5fstructured_2ecc',['gen_input_structured.cc',['../d8/d7d/gen__input__structured_8cc.html',1,'']]],
-  ['gen_5fkcdn_5fsyns_2ecc',['gen_kcdn_syns.cc',['../d1/dd5/gen__kcdn__syns_8cc.html',1,'']]],
-  ['gen_5fkcdn_5fsyns_5ffixto10k_2ecc',['gen_kcdn_syns_fixto10K.cc',['../dc/d0a/gen__kcdn__syns__fixto10K_8cc.html',1,'']]],
-  ['gen_5fpnkc_5fsyns_2ecc',['gen_pnkc_syns.cc',['../da/d40/gen__pnkc__syns_8cc.html',1,'']]],
-  ['gen_5fpnkc_5fsyns_5findivid_2ecc',['gen_pnkc_syns_indivID.cc',['../d8/d08/gen__pnkc__syns__indivID_8cc.html',1,'']]],
-  ['gen_5fpnlhi_5fsyns_2ecc',['gen_pnlhi_syns.cc',['../d2/db6/gen__pnlhi__syns_8cc.html',1,'']]],
-  ['gen_5fsyns_5fsparse_2ecc',['gen_syns_sparse.cc',['../dc/d45/gen__syns__sparse_8cc.html',1,'']]],
-  ['gen_5fsyns_5fsparse_5fizhmodel_2ecc',['gen_syns_sparse_izhModel.cc',['../d8/d1e/gen__syns__sparse__izhModel_8cc.html',1,'']]],
-  ['generateall_2ecc',['generateALL.cc',['../df/d10/generateALL_8cc.html',1,'']]],
-  ['generatecpu_2ecc',['generateCPU.cc',['../da/d80/generateCPU_8cc.html',1,'']]],
-  ['generatekernels_2ecc',['generateKernels.cc',['../da/d14/generateKernels_8cc.html',1,'']]],
-  ['generaterunner_2ecc',['generateRunner.cc',['../d3/dad/generateRunner_8cc.html',1,'']]],
-  ['gennhelperkrnls_2ecu',['GeNNHelperKrnls.cu',['../db/d69/GeNNHelperKrnls_8cu.html',1,'']]],
-  ['global_2eh',['global.h',['../d2/d49/global_8h.html',1,'']]]
+  ['experiment_2ecc',['experiment.cc',['../d8/d39/experiment_8cc.html',1,'']]],
+  ['experiment_2eh',['experiment.h',['../dc/d02/experiment_8h.html',1,'']]],
+  ['extra_5fneurons_2eh',['extra_neurons.h',['../db/d66/extra__neurons_8h.html',1,'']]],
+  ['extra_5fweightupdates_2eh',['extra_weightupdates.h',['../d4/d71/extra__weightupdates_8h.html',1,'']]],
+  ['syndelay_2ecc',['SynDelay.cc',['../d5/df0/emurgano__project_2SynDelay_8cc.html',1,'']]],
+  ['syndelaysim_2eh',['SynDelaySim.h',['../dd/d0d/emurgano__project_2SynDelaySim_8h.html',1,'']]]
 ];

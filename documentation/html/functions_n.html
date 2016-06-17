@@ -34,6 +34,7 @@
   $(document).ready(function() { init_search(); });
 </script>
 <link href="customdoxygen.css" rel="stylesheet" type="text/css" />
+<link href="html_styles.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -44,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">2.0</span>
+   &#160;<span id="projectnumber">2.2</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -61,6 +62,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
       <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
+      <li><a href="namespaces.html"><span>Namespaces</span></a></li>
       <li class="current"><a href="annotated.html"><span>Classes</span></a></li>
       <li><a href="files.html"><span>Files</span></a></li>
       <li>
@@ -94,6 +96,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
       <li class="current"><a href="functions.html"><span>All</span></a></li>
       <li><a href="functions_func.html"><span>Functions</span></a></li>
       <li><a href="functions_vars.html"><span>Variables</span></a></li>
+      <li><a href="functions_type.html"><span>Typedefs</span></a></li>
       <li><a href="functions_enum.html"><span>Enumerations</span></a></li>
       <li><a href="functions_eval.html"><span>Enumerator</span></a></li>
     </ul>
@@ -113,6 +116,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
       <li class="current"><a href="functions_n.html#index_n"><span>n</span></a></li>
       <li><a href="functions_o.html#index_o"><span>o</span></a></li>
       <li><a href="functions_p.html#index_p"><span>p</span></a></li>
+      <li><a href="functions_q.html#index_q"><span>q</span></a></li>
       <li><a href="functions_r.html#index_r"><span>r</span></a></li>
       <li><a href="functions_s.html#index_s"><span>s</span></a></li>
       <li><a href="functions_t.html#index_t"><span>t</span></a></li>
@@ -157,6 +161,7 @@ $(document).ready(function(){initNavTree('functions_n.html','');});
 <h3><a class="anchor" id="index_n"></a>- n -</h3><ul>
 <li>N
 : <a class="el" href="de/dad/structinputSpec.html#a25c637510c26633e00ac5f7704dce559">inputSpec</a>
+, <a class="el" href="d9/dea/classQTIsaac.html#a2f9d908d12a5725146e161998b733233a44174520f740123b364728ca92b3dc97">QTIsaac&lt; ALPHA, T &gt;</a>
 </li>
 <li>n()
 : <a class="el" href="d5/d45/classrandomGauss.html#a69a70b10bc65de93f60bfb1c02a16daf">randomGauss</a>
@@ -167,12 +172,15 @@ $(document).ready(function(){initNavTree('functions_n.html','');});
 : <a class="el" href="dc/de5/classNNmodel.html#a7d81556b7b15a4a625b23f965944dae9">NNmodel</a>
 , <a class="el" href="d9/d00/structParameter.html#a5edfa174bd9b40f80819b0390a030498">Parameter</a>
 </li>
+<li>needEvntThresholdReTest
+: <a class="el" href="dc/de5/classNNmodel.html#ad124eba0d5c19d64131a954490bf0241">NNmodel</a>
+</li>
 <li>needPostSt
-: <a class="el" href="d3/d64/structneuronModel.html#a633acff33b8b640f7a815f357b144117">neuronModel</a>
+: <a class="el" href="d3/dc9/classneuronModel.html#a633acff33b8b640f7a815f357b144117">neuronModel</a>
 , <a class="el" href="dd/db7/classweightUpdateModel.html#a1948fc8aa7b2d8b82784cbd09bc741aa">weightUpdateModel</a>
 </li>
 <li>needPreSt
-: <a class="el" href="d3/d64/structneuronModel.html#aff3d8b2160410c976506e0c4ddf8b6c1">neuronModel</a>
+: <a class="el" href="d3/dc9/classneuronModel.html#aff3d8b2160410c976506e0c4ddf8b6c1">neuronModel</a>
 , <a class="el" href="dd/db7/classweightUpdateModel.html#af93f31710e2249afd22c05c4a7e7a28d">weightUpdateModel</a>
 </li>
 <li>needSt
@@ -195,6 +203,15 @@ $(document).ready(function(){initNavTree('functions_n.html','');});
 </li>
 <li>neuronIni
 : <a class="el" href="dc/de5/classNNmodel.html#ad7b9fe0c7ed6edc08cc9b809027cf8a0">NNmodel</a>
+</li>
+<li>neuronKernelParameters
+: <a class="el" href="dc/de5/classNNmodel.html#acf58971a11ca479eb286696041d3df75">NNmodel</a>
+</li>
+<li>neuronKernelParameterTypes
+: <a class="el" href="dc/de5/classNNmodel.html#a098f6b4a46ae2c18b9b1ad5f371463bf">NNmodel</a>
+</li>
+<li>neuronModel()
+: <a class="el" href="d3/dc9/classneuronModel.html#a31ec1cd7525147db71d75cb81b8c4558">neuronModel</a>
 </li>
 <li>neuronN
 : <a class="el" href="dc/de5/classNNmodel.html#a87d3de14d0d5c7183199fea48c04b949">NNmodel</a>
@@ -241,7 +258,7 @@ $(document).ready(function(){initNavTree('functions_n.html','');});
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Fri Nov 6 2015 22:13:05 for GeNN by
+    <li class="footer">Generated on Fri Jun 17 2016 14:45:01 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
   </ul>

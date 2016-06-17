@@ -77,10 +77,12 @@ var classclassol =
     [ "read_sparsesyns_par", "d1/d16/classclassol.html#a4788e79fd6ec3bde287cafb020d5d0cb", null ],
     [ "read_sparsesyns_par", "d1/d16/classclassol.html#ab9c79c6449c01a2bca6280cd408e720b", null ],
     [ "run", "d1/d16/classclassol.html#ae907498a8660fe41f7d9b41aad6e5d10", null ],
-    [ "run", "d1/d16/classclassol.html#a27128f5afa624f6dc0c6b47d73ce5827", null ],
-    [ "run", "d1/d16/classclassol.html#a27128f5afa624f6dc0c6b47d73ce5827", null ],
     [ "runCPU", "d1/d16/classclassol.html#a91972987fdeb56b7d4b7fb15b2619145", null ],
     [ "runCPU", "d1/d16/classclassol.html#a91972987fdeb56b7d4b7fb15b2619145", null ],
+    [ "runCPU", "d1/d16/classclassol.html#a91972987fdeb56b7d4b7fb15b2619145", null ],
+    [ "runCPU", "d1/d16/classclassol.html#a91972987fdeb56b7d4b7fb15b2619145", null ],
+    [ "runGPU", "d1/d16/classclassol.html#a2a95daf452913b42ba7965d291275c3c", null ],
+    [ "runGPU", "d1/d16/classclassol.html#a2a95daf452913b42ba7965d291275c3c", null ],
     [ "runGPU", "d1/d16/classclassol.html#a2a95daf452913b42ba7965d291275c3c", null ],
     [ "runGPU", "d1/d16/classclassol.html#a2a95daf452913b42ba7965d291275c3c", null ],
     [ "sum_spikes", "d1/d16/classclassol.html#af9dfaa92f0e4737dbadd9ec9cd203555", null ],
@@ -113,5 +115,5 @@ var classclassol =
     [ "sumKC", "d1/d16/classclassol.html#ad04f16a78fce1de429fc9371380fb15a", null ],
     [ "sumLHI", "d1/d16/classclassol.html#a9157c62195074a9bc34c5570e311315c", null ],
     [ "sumPN", "d1/d16/classclassol.html#abd188bdb202d67ec2c1a6316128f9c44", null ],
-    [ "theRates", "d1/d16/classclassol.html#a3787ca459281e7a39a6b9ba8a254e3f1", null ]
+    [ "theRates", "d1/d16/classclassol.html#a0b534a0ff6a56ab9e137f964bcf29d78", null ]
 ];

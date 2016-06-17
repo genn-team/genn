@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['quickstart',['Quickstart',['../d7/d98/Quickstart.html',1,'']]]
+  ['neuron_20models',['Neuron models',['../de/ded/sectNeuronModels.html',1,'UserManual']]]
 ];

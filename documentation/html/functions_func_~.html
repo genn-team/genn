@@ -34,6 +34,7 @@
   $(document).ready(function() { init_search(); });
 </script>
 <link href="customdoxygen.css" rel="stylesheet" type="text/css" />
+<link href="html_styles.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -44,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">2.0</span>
+   &#160;<span id="projectnumber">2.2</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -61,6 +62,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
       <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
+      <li><a href="namespaces.html"><span>Namespaces</span></a></li>
       <li class="current"><a href="annotated.html"><span>Classes</span></a></li>
       <li><a href="files.html"><span>Files</span></a></li>
       <li>
@@ -94,6 +96,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
       <li><a href="functions.html"><span>All</span></a></li>
       <li class="current"><a href="functions_func.html"><span>Functions</span></a></li>
       <li><a href="functions_vars.html"><span>Variables</span></a></li>
+      <li><a href="functions_type.html"><span>Typedefs</span></a></li>
       <li><a href="functions_enum.html"><span>Enumerations</span></a></li>
       <li><a href="functions_eval.html"><span>Enumerator</span></a></li>
     </ul>
@@ -102,7 +105,6 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
     <ul class="tablist">
       <li><a href="functions_func.html#index_a"><span>a</span></a></li>
       <li><a href="functions_func_c.html#index_c"><span>c</span></a></li>
-      <li><a href="functions_func_d.html#index_d"><span>d</span></a></li>
       <li><a href="functions_func_e.html#index_e"><span>e</span></a></li>
       <li><a href="functions_func_f.html#index_f"><span>f</span></a></li>
       <li><a href="functions_func_g.html#index_g"><span>g</span></a></li>
@@ -111,6 +113,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
       <li><a href="functions_func_n.html#index_n"><span>n</span></a></li>
       <li><a href="functions_func_o.html#index_o"><span>o</span></a></li>
       <li><a href="functions_func_p.html#index_p"><span>p</span></a></li>
+      <li><a href="functions_func_q.html#index_q"><span>q</span></a></li>
       <li><a href="functions_func_r.html#index_r"><span>r</span></a></li>
       <li><a href="functions_func_s.html#index_s"><span>s</span></a></li>
       <li><a href="functions_func_u.html#index_u"><span>u</span></a></li>
@@ -157,47 +160,23 @@ $(document).ready(function(){initNavTree('functions_func_~.html','');});
 <li>~classol()
 : <a class="el" href="d1/d16/classclassol.html#a1273a6a57e2127a7b028bdbd92fed9b4">classol</a>
 </li>
+<li>~neuronModel()
+: <a class="el" href="d3/dc9/classneuronModel.html#a9c576ea5de9072a092c45dd519355f5e">neuronModel</a>
+</li>
 <li>~neuronpop()
 : <a class="el" href="de/d18/classneuronpop.html#a2b2fb37b8252026adc8a6fec1fc2b03b">neuronpop</a>
 </li>
 <li>~NNmodel()
 : <a class="el" href="dc/de5/classNNmodel.html#aa9f519391df5f08c4ec5f59578ac5ffc">NNmodel</a>
 </li>
-<li>~postVarsInPostLearn()
-: <a class="el" href="dd/df9/classpostVarsInPostLearn.html#ac7411795bd512903e2a23759ac1f3a82">postVarsInPostLearn</a>
+<li>~postSynModel()
+: <a class="el" href="d2/d1a/classpostSynModel.html#a493acaafb0a5e5d6120755c2184e35cd">postSynModel</a>
 </li>
-<li>~postVarsInPostLearn_sparse()
-: <a class="el" href="d3/d3e/classpostVarsInPostLearn__sparse.html#a7fa3932bc8205a76289604324ca63a98">postVarsInPostLearn_sparse</a>
+<li>~QTIsaac()
+: <a class="el" href="d9/dea/classQTIsaac.html#ab0dfe7af413f019311ec43aec83a0592">QTIsaac&lt; ALPHA, T &gt;</a>
 </li>
-<li>~postVarsInSimCode()
-: <a class="el" href="d9/d04/classpostVarsInSimCode.html#ae2fd2805b148c383dc72f1eb82438cea">postVarsInSimCode</a>
-</li>
-<li>~postVarsInSimCode_sparse()
-: <a class="el" href="d7/d09/classpostVarsInSimCode__sparse.html#acad9cfafba96db8653580d2abebb0a92">postVarsInSimCode_sparse</a>
-</li>
-<li>~postVarsInSynapseDynamics()
-: <a class="el" href="d0/d21/classpostVarsInSynapseDynamics.html#a34fba76d2f9a4096cbde153e9b390aff">postVarsInSynapseDynamics</a>
-</li>
-<li>~postVarsInSynapseDynamics_sparse()
-: <a class="el" href="de/dd4/classpostVarsInSynapseDynamics__sparse.html#a696ba5afa8f1f058b803e6292646608b">postVarsInSynapseDynamics_sparse</a>
-</li>
-<li>~preVarsInPostLearn()
-: <a class="el" href="dc/d93/classpreVarsInPostLearn.html#a9a8c07e23d8128769f06391382f82b7b">preVarsInPostLearn</a>
-</li>
-<li>~preVarsInPostLearn_sparse()
-: <a class="el" href="db/da4/classpreVarsInPostLearn__sparse.html#a9573a77f13d95c9cabb4695f7a29b6f0">preVarsInPostLearn_sparse</a>
-</li>
-<li>~preVarsInSimCode()
-: <a class="el" href="d1/dc2/classpreVarsInSimCode.html#a25b4e81ac596c47c279fd5d6319a5501">preVarsInSimCode</a>
-</li>
-<li>~preVarsInSimCode_sparse()
-: <a class="el" href="de/d14/classpreVarsInSimCode__sparse.html#a85c7d1470a274da29a3491f7a1f14f57">preVarsInSimCode_sparse</a>
-</li>
-<li>~preVarsInSynapseDynamics()
-: <a class="el" href="d4/d6b/classpreVarsInSynapseDynamics.html#a5b997672e699d5164087596d7f6545d1">preVarsInSynapseDynamics</a>
-</li>
-<li>~preVarsInSynapseDynamics_sparse()
-: <a class="el" href="d3/d88/classpreVarsInSynapseDynamics__sparse.html#ad12d1ada9f0a703047e89d8bbdcb960a">preVarsInSynapseDynamics_sparse</a>
+<li>~randctx()
+: <a class="el" href="d6/dc7/structQTIsaac_1_1randctx.html#a10c2275a173a11614314467047fdf501">QTIsaac&lt; ALPHA, T &gt;::randctx</a>
 </li>
 <li>~randomGauss()
 : <a class="el" href="d5/d45/classrandomGauss.html#a2925cbc1ccf2cfdb91e042d8b2cc373a">randomGauss</a>
@@ -214,13 +193,16 @@ $(document).ready(function(){initNavTree('functions_func_~.html','');});
 <li>~SynDelay()
 : <a class="el" href="db/df7/classSynDelay.html#ad39ace0c45d15b6beb716c9efad2312f">SynDelay</a>
 </li>
+<li>~weightUpdateModel()
+: <a class="el" href="dd/db7/classweightUpdateModel.html#aef2043ad128ea3b84a7259b2d4c77403">weightUpdateModel</a>
+</li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Fri Nov 6 2015 22:13:06 for GeNN by
+    <li class="footer">Generated on Fri Jun 17 2016 14:45:01 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
   </ul>

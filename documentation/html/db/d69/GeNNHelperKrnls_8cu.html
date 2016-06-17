@@ -34,6 +34,7 @@
   $(document).ready(function() { init_search(); });
 </script>
 <link href="../../customdoxygen.css" rel="stylesheet" type="text/css" />
+<link href="../../html_styles.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -44,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">2.0</span>
+   &#160;<span id="projectnumber">2.2</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -61,6 +62,7 @@ var searchBox = new SearchBox("searchBox", "../../search",false,'Search');
     <ul class="tablist">
       <li><a href="../../index.html"><span>Main&#160;Page</span></a></li>
       <li><a href="../../pages.html"><span>Related&#160;Pages</span></a></li>
+      <li><a href="../../namespaces.html"><span>Namespaces</span></a></li>
       <li><a href="../../annotated.html"><span>Classes</span></a></li>
       <li class="current"><a href="../../files.html"><span>Files</span></a></li>
       <li>
@@ -118,48 +120,36 @@ $(document).ready(function(){initNavTree('db/d69/GeNNHelperKrnls_8cu.html','../.
 
 <div class="header">
   <div class="summary">
-<a href="#define-members">Macros</a> &#124;
 <a href="#func-members">Functions</a>  </div>
   <div class="headertitle">
 <div class="title">GeNNHelperKrnls.cu File Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><code>#include &lt;curand_kernel.h&gt;</code><br />
+<div class="textblock"><code>#include &quot;<a class="el" href="../../d1/d49/GeNNHelperKrnls_8h_source.html">GeNNHelperKrnls.h</a>&quot;</code><br />
 </div><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="define-members"></a>
-Macros</h2></td></tr>
-<tr class="memitem:a9a16f85c609abdf08b9d24186215fcae"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d69/GeNNHelperKrnls_8cu.html#a9a16f85c609abdf08b9d24186215fcae">BlkSz</a>&#160;&#160;&#160;256</td></tr>
-<tr class="separator:a9a16f85c609abdf08b9d24186215fcae"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
 <tr class="memitem:adb85534870a979bdcefda11d2d40de54"><td class="memItemLeft" align="right" valign="top">__global__ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d69/GeNNHelperKrnls_8cu.html#adb85534870a979bdcefda11d2d40de54">setup_kernel</a> (curandState *state, unsigned long seed, int sizeofResult)</td></tr>
 <tr class="separator:adb85534870a979bdcefda11d2d40de54"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2db3ae938dc2abab2cbaa036846e6b40"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
+<tr class="memitem:a55aab8e08cbedc1c8d54ac90803f2a46"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d69/GeNNHelperKrnls_8cu.html#a55aab8e08cbedc1c8d54ac90803f2a46">xorwow_setup</a> (curandState *devStates, long int sampleSize, long long int seed)</td></tr>
+<tr class="separator:a55aab8e08cbedc1c8d54ac90803f2a46"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2db3ae938dc2abab2cbaa036846e6b40"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
 <tr class="memitem:a2db3ae938dc2abab2cbaa036846e6b40"><td class="memTemplItemLeft" align="right" valign="top">__global__ void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../db/d69/GeNNHelperKrnls_8cu.html#a2db3ae938dc2abab2cbaa036846e6b40">generate_random_gpuInput_xorwow</a> (curandState *state, T *result, int sizeofResult, T Rstrength, T Rshift)</td></tr>
 <tr class="separator:a2db3ae938dc2abab2cbaa036846e6b40"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:addeb2120a5db41facb5d99b838c714e5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d69/GeNNHelperKrnls_8cu.html#addeb2120a5db41facb5d99b838c714e5">xorwow_setup</a> (curandState *devStates, long int sampleSize)</td></tr>
-<tr class="separator:addeb2120a5db41facb5d99b838c714e5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac03c2d83996f5eb7a33c1c560a7aac56"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
+<tr class="memitem:ac03c2d83996f5eb7a33c1c560a7aac56"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../db/d69/GeNNHelperKrnls_8cu.html#ac03c2d83996f5eb7a33c1c560a7aac56">generate_random_gpuInput_xorwow</a> (curandState *state, T *result, int sizeofResult, T Rstrength, T Rshift, dim3 sGrid, dim3 sThreads)</td></tr>
+<tr class="separator:ac03c2d83996f5eb7a33c1c560a7aac56"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab1285dcb647ac74131615d30abef5fa0"><td class="memItemLeft" align="right" valign="top">template void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d69/GeNNHelperKrnls_8cu.html#ab1285dcb647ac74131615d30abef5fa0">generate_random_gpuInput_xorwow&lt; float &gt;</a> (curandState *state, float *result, int sizeofResult, float Rstrength, float Rshift, dim3 sGrid, dim3 sThreads)</td></tr>
+<tr class="separator:ab1285dcb647ac74131615d30abef5fa0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac8ded860302a84a8451f78105404fd6d"><td class="memItemLeft" align="right" valign="top">template void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d69/GeNNHelperKrnls_8cu.html#ac8ded860302a84a8451f78105404fd6d">generate_random_gpuInput_xorwow&lt; double &gt;</a> (curandState *state, double *result, int sizeofResult, double Rstrength, double Rshift, dim3 sGrid, dim3 sThreads)</td></tr>
+<tr class="separator:ac8ded860302a84a8451f78105404fd6d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<h2 class="groupheader">Macro Definition Documentation</h2>
-<a class="anchor" id="a9a16f85c609abdf08b9d24186215fcae"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">#define BlkSz&#160;&#160;&#160;256</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
 <h2 class="groupheader">Function Documentation</h2>
 <a class="anchor" id="a2db3ae938dc2abab2cbaa036846e6b40"></a>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class T &gt; </div>
+template&lt;typename T &gt; </div>
       <table class="memname">
         <tr>
           <td class="memname">__global__ void generate_random_gpuInput_xorwow </td>
@@ -190,6 +180,176 @@ template&lt;class T &gt; </div>
           <td></td>
           <td class="paramtype">T&#160;</td>
           <td class="paramname"><em>Rshift</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="ac03c2d83996f5eb7a33c1c560a7aac56"></a>
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">void generate_random_gpuInput_xorwow </td>
+          <td>(</td>
+          <td class="paramtype">curandState *&#160;</td>
+          <td class="paramname"><em>state</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">T *&#160;</td>
+          <td class="paramname"><em>result</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>sizeofResult</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">T&#160;</td>
+          <td class="paramname"><em>Rstrength</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">T&#160;</td>
+          <td class="paramname"><em>Rshift</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">dim3&#160;</td>
+          <td class="paramname"><em>sGrid</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">dim3&#160;</td>
+          <td class="paramname"><em>sThreads</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="ac8ded860302a84a8451f78105404fd6d"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">template void <a class="el" href="../../d1/d49/GeNNHelperKrnls_8h.html#ac03c2d83996f5eb7a33c1c560a7aac56">generate_random_gpuInput_xorwow</a>&lt; double &gt; </td>
+          <td>(</td>
+          <td class="paramtype">curandState *&#160;</td>
+          <td class="paramname"><em>state</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">double *&#160;</td>
+          <td class="paramname"><em>result</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>sizeofResult</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">double&#160;</td>
+          <td class="paramname"><em>Rstrength</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">double&#160;</td>
+          <td class="paramname"><em>Rshift</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">dim3&#160;</td>
+          <td class="paramname"><em>sGrid</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">dim3&#160;</td>
+          <td class="paramname"><em>sThreads</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="ab1285dcb647ac74131615d30abef5fa0"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">template void <a class="el" href="../../d1/d49/GeNNHelperKrnls_8h.html#ac03c2d83996f5eb7a33c1c560a7aac56">generate_random_gpuInput_xorwow</a>&lt; float &gt; </td>
+          <td>(</td>
+          <td class="paramtype">curandState *&#160;</td>
+          <td class="paramname"><em>state</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">float *&#160;</td>
+          <td class="paramname"><em>result</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>sizeofResult</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">float&#160;</td>
+          <td class="paramname"><em>Rstrength</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">float&#160;</td>
+          <td class="paramname"><em>Rshift</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">dim3&#160;</td>
+          <td class="paramname"><em>sGrid</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">dim3&#160;</td>
+          <td class="paramname"><em>sThreads</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -233,7 +393,7 @@ template&lt;class T &gt; </div>
 
 </div>
 </div>
-<a class="anchor" id="addeb2120a5db41facb5d99b838c714e5"></a>
+<a class="anchor" id="a55aab8e08cbedc1c8d54ac90803f2a46"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -247,7 +407,13 @@ template&lt;class T &gt; </div>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">long int&#160;</td>
-          <td class="paramname"><em>sampleSize</em>&#160;</td>
+          <td class="paramname"><em>sampleSize</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">long long int&#160;</td>
+          <td class="paramname"><em>seed</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -264,8 +430,8 @@ template&lt;class T &gt; </div>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><a class="el" href="../../dir_66fc3ae5585a02e310a487b6a12e9e11.html">userproject</a></li><li class="navelem"><a class="el" href="../../db/d69/GeNNHelperKrnls_8cu.html">GeNNHelperKrnls.cu</a></li>
-    <li class="footer">Generated on Fri Nov 6 2015 22:12:58 for GeNN by
+    <li class="navelem"><a class="el" href="../../dir_75b82e7e4a5feb05200b9ad7adf06257.html">home</a></li><li class="navelem"><a class="el" href="../../dir_ffe3a3aad2509bd71bde52251b868b95.html">t</a></li><li class="navelem"><a class="el" href="../../dir_a76bff614e8015b519bf2acd237705ed.html">tn</a></li><li class="navelem"><a class="el" href="../../dir_f4e7678815bf6e9eaf2cc8bfbd1351b7.html">tn41</a></li><li class="navelem"><a class="el" href="../../dir_2f2428e5af9c71cc79b0eec8cffe5ad2.html">localdisk_projects</a></li><li class="navelem"><a class="el" href="../../dir_3cf40d34fd3099085c9305fe2b26b2ea.html">develop</a></li><li class="navelem"><a class="el" href="../../dir_ee841fdb1cf52f11d3719e45227a7fba.html">genn</a></li><li class="navelem"><a class="el" href="../../dir_e9435152734d1e7a318dd6df08ca98d9.html">userproject</a></li><li class="navelem"><a class="el" href="../../dir_c942daf8eeb48a1a595d63f326c08ccd.html">include</a></li><li class="navelem"><a class="el" href="../../db/d69/GeNNHelperKrnls_8cu.html">GeNNHelperKrnls.cu</a></li>
+    <li class="footer">Generated on Fri Jun 17 2016 14:44:59 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
   </ul>

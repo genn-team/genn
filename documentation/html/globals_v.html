@@ -34,6 +34,7 @@
   $(document).ready(function() { init_search(); });
 </script>
 <link href="customdoxygen.css" rel="stylesheet" type="text/css" />
+<link href="html_styles.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -44,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">2.0</span>
+   &#160;<span id="projectnumber">2.2</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -61,6 +62,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
       <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
+      <li><a href="namespaces.html"><span>Namespaces</span></a></li>
       <li><a href="annotated.html"><span>Classes</span></a></li>
       <li class="current"><a href="files.html"><span>Files</span></a></li>
       <li>
@@ -156,7 +158,8 @@ $(document).ready(function(){initNavTree('globals_v.html','');});
 
 <h3><a class="anchor" id="index_v"></a>- v -</h3><ul>
 <li>value_substitutions()
-: <a class="el" href="d9/d9e/stringutils_8h.html#a2ade65c777bcb3c45d95ff77eaed475b">stringutils.h</a>
+: <a class="el" href="dd/dc3/stringUtils_8h.html#a2ade65c777bcb3c45d95ff77eaed475b">stringUtils.h</a>
+, <a class="el" href="dc/db6/stringUtils_8cc.html#a2ade65c777bcb3c45d95ff77eaed475b">stringUtils.cc</a>
 </li>
 <li>var_init_fullrange()
 : <a class="el" href="d4/da1/helper_8h.html#a433eba047747b10ad3093a9abd01ed3e">helper.h</a>
@@ -164,8 +167,12 @@ $(document).ready(function(){initNavTree('globals_v.html','');});
 <li>var_reinit()
 : <a class="el" href="d4/da1/helper_8h.html#a7047db412e8087f01d49ba269751b189">helper.h</a>
 </li>
+<li>variable_def()
+: <a class="el" href="d2/d75/generateRunner_8h.html#aaeb9fa7f77832da70ee7a4679fed29f9">generateRunner.h</a>
+, <a class="el" href="d3/dad/generateRunner_8cc.html#aaeb9fa7f77832da70ee7a4679fed29f9">generateRunner.cc</a>
+</li>
 <li>vectorContains()
-: <a class="el" href="dc/d26/experiment_8cu.html#a54c6ef3a037f445fa0759b799eafdac8">experiment.cu</a>
+: <a class="el" href="d8/d39/experiment_8cc.html#a54c6ef3a037f445fa0759b799eafdac8">experiment.cc</a>
 </li>
 <li>Vexp
 : <a class="el" href="d4/da1/helper_8h.html#a83cf90739c16b19704b98c436a5b798d">helper.h</a>
@@ -179,7 +186,7 @@ $(document).ready(function(){initNavTree('globals_v.html','');});
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Fri Nov 6 2015 22:13:07 for GeNN by
+    <li class="footer">Generated on Fri Jun 17 2016 14:45:01 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
   </ul>

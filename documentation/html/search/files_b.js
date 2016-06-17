@@ -1,23 +1,5 @@
 var searchData=
 [
-  ['generate_5frun_2ecc',['generate_run.cc',['../de/d37/PoissonIzh__project_2generate__run_8cc.html',1,'']]],
-  ['poissonizh_2dmodel_2ecc',['PoissonIzh-model.cc',['../d8/d11/PoissonIzh-model_8cc.html',1,'']]],
-  ['poissonizh_2dmodel_2eh',['PoissonIzh-model.h',['../df/d16/PoissonIzh-model_8h.html',1,'']]],
-  ['poissonizh_2ecc',['PoissonIzh.cc',['../dc/d3f/PoissonIzh_8cc.html',1,'']]],
-  ['poissonizh_5fsim_2ecu',['PoissonIzh_sim.cu',['../d3/d43/PoissonIzh__sim_8cu.html',1,'']]],
-  ['poissonizh_5fsim_2eh',['PoissonIzh_sim.h',['../d9/d32/PoissonIzh__sim_8h.html',1,'']]],
-  ['postvarsinpostlearn_2ecc',['postVarsInPostLearn.cc',['../db/d0a/postVarsInPostLearn_8cc.html',1,'']]],
-  ['postvarsinpostlearn_5fsparse_2ecc',['postVarsInPostLearn_sparse.cc',['../d1/d13/postVarsInPostLearn__sparse_8cc.html',1,'']]],
-  ['postvarsinsimcode_2ecc',['postVarsInSimCode.cc',['../de/d35/postVarsInSimCode_8cc.html',1,'']]],
-  ['postvarsinsimcode_5fsparse_2ecc',['postVarsInSimCode_sparse.cc',['../d3/dad/postVarsInSimCode__sparse_8cc.html',1,'']]],
-  ['postvarsinsynapsedynamics_2ecc',['postVarsInSynapseDynamics.cc',['../d2/d27/postVarsInSynapseDynamics_8cc.html',1,'']]],
-  ['postvarsinsynapsedynamics_5fsparse_2ecc',['postVarsInSynapseDynamics_sparse.cc',['../d6/d1f/postVarsInSynapseDynamics__sparse_8cc.html',1,'']]],
-  ['prevarsinpostlearn_2ecc',['preVarsInPostLearn.cc',['../d0/dd7/preVarsInPostLearn_8cc.html',1,'']]],
-  ['prevarsinpostlearn_5fsparse_2ecc',['preVarsInPostLearn_sparse.cc',['../d9/d09/preVarsInPostLearn__sparse_8cc.html',1,'']]],
-  ['prevarsinsimcode_2ecc',['preVarsInSimCode.cc',['../dd/db2/preVarsInSimCode_8cc.html',1,'']]],
-  ['prevarsinsimcode_5fsparse_2ecc',['preVarsInSimCode_sparse.cc',['../de/d7d/preVarsInSimCode__sparse_8cc.html',1,'']]],
-  ['prevarsinsynapsedynamics_2ecc',['preVarsInSynapseDynamics.cc',['../d4/d49/preVarsInSynapseDynamics_8cc.html',1,'']]],
-  ['prevarsinsynapsedynamics_5fsparse_2ecc',['preVarsInSynapseDynamics_sparse.cc',['../df/d0e/preVarsInSynapseDynamics__sparse_8cc.html',1,'']]],
-  ['testhelper_2eh',['testHelper.h',['../db/de3/postsynapticVariables_2testHelper_8h.html',1,'']]],
-  ['testhelper_2eh',['testHelper.h',['../d7/dce/presynapticVariables_2testHelper_8h.html',1,'']]]
+  ['neuronmodels_2ecc',['neuronModels.cc',['../dc/dbc/neuronModels_8cc.html',1,'']]],
+  ['neuronmodels_2eh',['neuronModels.h',['../d3/dc0/neuronModels_8h.html',1,'']]]
 ];

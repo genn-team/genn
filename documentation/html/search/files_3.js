@@ -1,8 +1,5 @@
 var searchData=
 [
-  ['ensureftype_2eh',['ensureFtype.h',['../d9/d5b/ensureFtype_8h.html',1,'']]],
-  ['experiment_2ecu',['experiment.cu',['../dc/d26/experiment_8cu.html',1,'']]],
-  ['experiment_2eh',['experiment.h',['../dc/d02/experiment_8h.html',1,'']]],
-  ['extra_5fneurons_2eh',['extra_neurons.h',['../db/d66/extra__neurons_8h.html',1,'']]],
-  ['extra_5fweightupdates_2eh',['extra_weightupdates.h',['../d4/d71/extra__weightupdates_8h.html',1,'']]]
+  ['codehelper_2eh',['CodeHelper.h',['../dd/d95/CodeHelper_8h.html',1,'']]],
+  ['command_5fline_5fprocessing_2eh',['command_line_processing.h',['../d3/d1c/command__line__processing_8h.html',1,'']]]
 ];

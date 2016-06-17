@@ -34,6 +34,7 @@
   $(document).ready(function() { init_search(); });
 </script>
 <link href="customdoxygen.css" rel="stylesheet" type="text/css" />
+<link href="html_styles.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -44,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">2.0</span>
+   &#160;<span id="projectnumber">2.2</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -61,6 +62,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
       <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
+      <li><a href="namespaces.html"><span>Namespaces</span></a></li>
       <li><a href="annotated.html"><span>Classes</span></a></li>
       <li class="current"><a href="files.html"><span>Files</span></a></li>
       <li>
@@ -165,14 +167,15 @@ $(document).ready(function(){initNavTree('globals_e.html','');});
 : <a class="el" href="d4/da1/helper_8h.html#a38504d54eb399b663442c535b8c34708">helper.h</a>
 </li>
 <li>ENDL
-: <a class="el" href="d6/d8a/CodeHelper_8cc.html#a90dc3f3ee970394e0080300526390a84">CodeHelper.cc</a>
+: <a class="el" href="dd/d95/CodeHelper_8h.html#a90dc3f3ee970394e0080300526390a84">CodeHelper.h</a>
 </li>
 <li>ensureFtype()
-: <a class="el" href="d9/d5b/ensureFtype_8h.html#ad8ea93f3fcfb07e52bce918bd8df7e96">ensureFtype.h</a>
-, <a class="el" href="d9/d9e/stringutils_8h.html#ad8ea93f3fcfb07e52bce918bd8df7e96">stringutils.h</a>
+: <a class="el" href="dd/dc3/stringUtils_8h.html#ad8ea93f3fcfb07e52bce918bd8df7e96">stringUtils.h</a>
+, <a class="el" href="dc/db6/stringUtils_8cc.html#ad8ea93f3fcfb07e52bce918bd8df7e96">stringUtils.cc</a>
 </li>
 <li>ensureMathFunctionFtype()
-: <a class="el" href="d9/d9e/stringutils_8h.html#abec7ad26d45cbdc8196ccf01f21f5b04">stringutils.h</a>
+: <a class="el" href="dc/db6/stringUtils_8cc.html#abec7ad26d45cbdc8196ccf01f21f5b04">stringUtils.cc</a>
+, <a class="el" href="dd/dc3/stringUtils_8h.html#abec7ad26d45cbdc8196ccf01f21f5b04">stringUtils.h</a>
 </li>
 <li>excIzh_p
 : <a class="el" href="d7/d5b/Izh__sparse_8cc.html#af621c74cc503772b3a6589272ede67ea">Izh_sparse.cc</a>
@@ -185,17 +188,39 @@ $(document).ready(function(){initNavTree('globals_e.html','');});
 , <a class="el" href="dc/d3f/PoissonIzh_8cc.html#a095626472c86f088893a9dbebc00c49b">PoissonIzh.cc</a>
 </li>
 <li>exIzh_p
-: <a class="el" href="dc/d3f/PoissonIzh_8cc.html#ab0c620eee5f0e828d73b9544b63d3ff8">PoissonIzh.cc</a>
-, <a class="el" href="db/d47/OneComp_8cc.html#ab0c620eee5f0e828d73b9544b63d3ff8">OneComp.cc</a>
+: <a class="el" href="db/d47/OneComp_8cc.html#ad4fce6a83f62f72cd8ff6d36957421b1">OneComp.cc</a>
+, <a class="el" href="dc/d3f/PoissonIzh_8cc.html#ab0c620eee5f0e828d73b9544b63d3ff8">PoissonIzh.cc</a>
 </li>
 <li>EXPDECAY
-: <a class="el" href="dc/de1/modelSpec_8h.html#a49eb71ad1b005eccc948e788d0ae524b">modelSpec.h</a>
+: <a class="el" href="d5/d21/postSynapseModels_8cc.html#a49eb71ad1b005eccc948e788d0ae524b">postSynapseModels.cc</a>
+, <a class="el" href="d4/d8a/postSynapseModels_8h.html#a49eb71ad1b005eccc948e788d0ae524b">postSynapseModels.h</a>
 </li>
 <li>extended_name_substitutions()
-: <a class="el" href="d9/d9e/stringutils_8h.html#a57c82fc7c66a9de7d5241905e419ec6c">stringutils.h</a>
+: <a class="el" href="dd/dc3/stringUtils_8h.html#aabd96b5aa960e22fde8e31228a8b2404">stringUtils.h</a>
+, <a class="el" href="d0/d1c/av_8cc.html#a78446d5866641488fdddaea46f726989">av.cc</a>
+, <a class="el" href="dc/db6/stringUtils_8cc.html#ae71b3b0ebf7f96340ba9cbe6ba7af987">stringUtils.cc</a>
+, <a class="el" href="d0/d1c/av_8cc.html#af9eba8264ca996c13970d98a15ac1d76">av.cc</a>
 </li>
 <li>extended_value_substitutions()
-: <a class="el" href="d9/d9e/stringutils_8h.html#a6695a138e731c5fd924a5571bc11599e">stringutils.h</a>
+: <a class="el" href="d0/db2/ov_8cc.html#a73eb8b0855f5d9cc574c5d79e990562a">ov.cc</a>
+, <a class="el" href="d0/d1c/av_8cc.html#a73eb8b0855f5d9cc574c5d79e990562a">av.cc</a>
+, <a class="el" href="dc/db6/stringUtils_8cc.html#a6695a138e731c5fd924a5571bc11599e">stringUtils.cc</a>
+, <a class="el" href="d0/d1c/av_8cc.html#a6aa3eb8c0514f87db02db5b48bf66cd5">av.cc</a>
+, <a class="el" href="d0/db2/ov_8cc.html#a6aa3eb8c0514f87db02db5b48bf66cd5">ov.cc</a>
+, <a class="el" href="dd/dc3/stringUtils_8h.html#a6695a138e731c5fd924a5571bc11599e">stringUtils.h</a>
+</li>
+<li>extern_variable_def()
+: <a class="el" href="d3/dad/generateRunner_8cc.html#a3503165b96c6874910d2b58a0f695488">generateRunner.cc</a>
+, <a class="el" href="d2/d75/generateRunner_8h.html#a3503165b96c6874910d2b58a0f695488">generateRunner.h</a>
+</li>
+<li>extract_bool_value()
+: <a class="el" href="d3/d1c/command__line__processing_8h.html#a72b1eac866737b20d13a733dcd15c858">command_line_processing.h</a>
+</li>
+<li>extract_option()
+: <a class="el" href="d3/d1c/command__line__processing_8h.html#a6e33e653f93cdbde277907fd64b3f6ef">command_line_processing.h</a>
+</li>
+<li>extract_string_value()
+: <a class="el" href="d3/d1c/command__line__processing_8h.html#a8496187a33db7d6087a3485f05e4500f">command_line_processing.h</a>
 </li>
 </ul>
 </div><!-- contents -->
@@ -203,7 +228,7 @@ $(document).ready(function(){initNavTree('globals_e.html','');});
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Fri Nov 6 2015 22:13:06 for GeNN by
+    <li class="footer">Generated on Fri Jun 17 2016 14:45:01 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
   </ul>

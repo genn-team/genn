@@ -1,14 +1,9 @@
 var PoissonIzh__sim_8h =
 [
-    [ "DBG_SIZE", "d9/d32/PoissonIzh__sim_8h.html#af2aa052c33678b98e77e813a818e95e2", null ],
-    [ "INJECTCURRENT", "d9/d32/PoissonIzh__sim_8h.html#a49569124a23a2fdc7abd6e2597b735ca", null ],
     [ "MYRAND", "d9/d32/PoissonIzh__sim_8h.html#ae22bee5ab0274eba2219d11cf354c982", null ],
-    [ "PATTERNNO", "d9/d32/PoissonIzh__sim_8h.html#aaf25ec5f61586416d586e061a66a7597", null ],
     [ "SYN_OUT_TME", "d9/d32/PoissonIzh__sim_8h.html#aac8ddc8e2452ee7f0fa2dc5c4f200337", null ],
     [ "T_REPORT_TME", "d9/d32/PoissonIzh__sim_8h.html#ab83f44e4142be41861734e19dfa92c75", null ],
     [ "TOTAL_TME", "d9/d32/PoissonIzh__sim_8h.html#ac0d135e67adb53905496926b648857dc", null ],
     [ "InputBaseRate", "d9/d32/PoissonIzh__sim_8h.html#a5b04369a7558bcf7da0830c978a36bff", null ],
-    [ "iT", "d9/d32/PoissonIzh__sim_8h.html#af90823709b88c685c62a727366640633", null ],
-    [ "t", "d9/d32/PoissonIzh__sim_8h.html#afea36502e9d227ff62c5fb2719a246f2", null ],
     [ "timer", "d9/d32/PoissonIzh__sim_8h.html#a5256bd92e0315a4504ed1d8c6bcab9c9", null ]
 ];

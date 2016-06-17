@@ -34,6 +34,7 @@
   $(document).ready(function() { init_search(); });
 </script>
 <link href="../../customdoxygen.css" rel="stylesheet" type="text/css" />
+<link href="../../html_styles.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -44,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">2.0</span>
+   &#160;<span id="projectnumber">2.2</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -61,6 +62,7 @@ var searchBox = new SearchBox("searchBox", "../../search",false,'Search');
     <ul class="tablist">
       <li><a href="../../index.html"><span>Main&#160;Page</span></a></li>
       <li><a href="../../pages.html"><span>Related&#160;Pages</span></a></li>
+      <li><a href="../../namespaces.html"><span>Namespaces</span></a></li>
       <li class="current"><a href="../../annotated.html"><span>Classes</span></a></li>
       <li><a href="../../files.html"><span>Files</span></a></li>
       <li>
@@ -255,8 +257,6 @@ Public Member Functions</h2></td></tr>
 Public Attributes</h2></td></tr>
 <tr class="memitem:aa9633e63568dac6a32a6e9b8977a0d56"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/dc3/classSchmuker2014__classifier.html#aa9633e63568dac6a32a6e9b8977a0d56">d_maxRandomNumber</a></td></tr>
 <tr class="separator:aa9633e63568dac6a32a6e9b8977a0d56"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4ec3af9e49e8acb27eeb429b3be4fc83"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/dc3/classSchmuker2014__classifier.html#a4ec3af9e49e8acb27eeb429b3be4fc83">t</a></td></tr>
-<tr class="separator:a4ec3af9e49e8acb27eeb429b3be4fc83"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afffafb20513d386a40e9f7eaf2ce34d7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../dc/de5/classNNmodel.html">NNmodel</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/dc3/classSchmuker2014__classifier.html#afffafb20513d386a40e9f7eaf2ce34d7">model</a></td></tr>
 <tr class="separator:afffafb20513d386a40e9f7eaf2ce34d7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a798c8e94ac301c38149a1351e8c6ff12"><td class="memItemLeft" align="right" valign="top">uint64_t *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/dc3/classSchmuker2014__classifier.html#a798c8e94ac301c38149a1351e8c6ff12">inputRates</a></td></tr>
@@ -338,7 +338,7 @@ Public Attributes</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-attribs"></a>
 Static Public Attributes</h2></td></tr>
-<tr class="memitem:a9c607c5f0fcf5197376273ec33cea206"><td class="memItemLeft" align="right" valign="top">static const unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/dc3/classSchmuker2014__classifier.html#a9c607c5f0fcf5197376273ec33cea206">timestepsPerRecording</a> = <a class="el" href="../../dc/d02/experiment_8h.html#aa32757400d06baa8825b92839fae9dcd">RECORDING_TIME_MS</a> / <a class="el" href="../../db/df9/SynDelaySim_8h.html#a943f07034774ef1261d62cd0d3d1fec9">DT</a></td></tr>
+<tr class="memitem:a9c607c5f0fcf5197376273ec33cea206"><td class="memItemLeft" align="right" valign="top">static const unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/dc3/classSchmuker2014__classifier.html#a9c607c5f0fcf5197376273ec33cea206">timestepsPerRecording</a> = <a class="el" href="../../dc/d02/experiment_8h.html#aa32757400d06baa8825b92839fae9dcd">RECORDING_TIME_MS</a> / <a class="el" href="../../d7/d22/Model__Schmuker__2014__classifier_8cc.html#a943f07034774ef1261d62cd0d3d1fec9">DT</a></td></tr>
 <tr class="separator:a9c607c5f0fcf5197376273ec33cea206"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
@@ -1833,18 +1833,6 @@ Static Public Attributes</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a4ec3af9e49e8acb27eeb429b3be4fc83"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">float Schmuker2014_classifier::t</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
 <a class="anchor" id="a9c607c5f0fcf5197376273ec33cea206"></a>
 <div class="memitem">
 <div class="memproto">
@@ -1853,7 +1841,7 @@ Static Public Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">const unsigned int Schmuker2014_classifier::timestepsPerRecording = <a class="el" href="../../dc/d02/experiment_8h.html#aa32757400d06baa8825b92839fae9dcd">RECORDING_TIME_MS</a> / <a class="el" href="../../db/df9/SynDelaySim_8h.html#a943f07034774ef1261d62cd0d3d1fec9">DT</a></td>
+          <td class="memname">const unsigned int Schmuker2014_classifier::timestepsPerRecording = <a class="el" href="../../dc/d02/experiment_8h.html#aa32757400d06baa8825b92839fae9dcd">RECORDING_TIME_MS</a> / <a class="el" href="../../d7/d22/Model__Schmuker__2014__classifier_8cc.html#a943f07034774ef1261d62cd0d3d1fec9">DT</a></td>
         </tr>
       </table>
   </td>
@@ -1903,7 +1891,7 @@ Static Public Attributes</h2></td></tr>
 </div>
 <hr/>The documentation for this class was generated from the following files:<ul>
 <li><a class="el" href="../../dc/d58/Schmuker2014__classifier_8h_source.html">Schmuker2014_classifier.h</a></li>
-<li><a class="el" href="../../d0/db2/Schmuker2014__classifier_8cu.html">Schmuker2014_classifier.cu</a></li>
+<li><a class="el" href="../../d7/d8d/Schmuker2014__classifier_8cc.html">Schmuker2014_classifier.cc</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
@@ -1911,7 +1899,7 @@ Static Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../d1/dc3/classSchmuker2014__classifier.html">Schmuker2014_classifier</a></li>
-    <li class="footer">Generated on Fri Nov 6 2015 22:13:04 for GeNN by
+    <li class="footer">Generated on Fri Jun 17 2016 14:45:01 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
   </ul>

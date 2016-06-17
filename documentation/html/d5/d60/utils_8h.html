@@ -34,6 +34,7 @@
   $(document).ready(function() { init_search(); });
 </script>
 <link href="../../customdoxygen.css" rel="stylesheet" type="text/css" />
+<link href="../../html_styles.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -44,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">2.0</span>
+   &#160;<span id="projectnumber">2.2</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -61,6 +62,7 @@ var searchBox = new SearchBox("searchBox", "../../search",false,'Search');
     <ul class="tablist">
       <li><a href="../../index.html"><span>Main&#160;Page</span></a></li>
       <li><a href="../../pages.html"><span>Related&#160;Pages</span></a></li>
+      <li><a href="../../namespaces.html"><span>Namespaces</span></a></li>
       <li><a href="../../annotated.html"><span>Classes</span></a></li>
       <li class="current"><a href="../../files.html"><span>Files</span></a></li>
       <li>
@@ -118,10 +120,8 @@ $(document).ready(function(){initNavTree('d5/d60/utils_8h.html','../../');});
 
 <div class="header">
   <div class="summary">
-<a href="#nested-classes">Classes</a> &#124;
 <a href="#define-members">Macros</a> &#124;
-<a href="#func-members">Functions</a> &#124;
-<a href="#var-members">Variables</a>  </div>
+<a href="#func-members">Functions</a>  </div>
   <div class="headertitle">
 <div class="title">utils.h File Reference</div>  </div>
 </div><!--header-->
@@ -129,81 +129,47 @@ $(document).ready(function(){initNavTree('d5/d60/utils_8h.html','../../');});
 
 <p>This file contains standard utility functions provide within the NVIDIA CUDA software development toolkit (SDK). The remainder of the file contains a function that defines the standard neuron models.  
 <a href="#details">More...</a></p>
-<div class="textblock"><code>#include &lt;cstdlib&gt;</code><br />
-<code>#include &lt;iostream&gt;</code><br />
+<div class="textblock"><code>#include &lt;iostream&gt;</code><br />
 <code>#include &lt;string&gt;</code><br />
-<code>#include &lt;vector&gt;</code><br />
-<code>#include &lt;map&gt;</code><br />
-<code>#include &lt;memory&gt;</code><br />
-<code>#include &lt;fstream&gt;</code><br />
-<code>#include &lt;cmath&gt;</code><br />
+<code>#include &lt;cuda.h&gt;</code><br />
 <code>#include &lt;cuda_runtime.h&gt;</code><br />
-<code>#include &quot;<a class="el" href="../../dc/de1/modelSpec_8h_source.html">modelSpec.h</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="../../dd/d28/toString_8h_source.html">toString.h</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="../../d9/d9e/stringutils_8h_source.html">stringutils.h</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="../../db/d66/extra__neurons_8h_source.html">extra_neurons.h</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="../../d1/de9/lib_2include_2extra__postsynapses_8h_source.html">extra_postsynapses.h</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="../../d4/d71/extra__weightupdates_8h_source.html">extra_weightupdates.h</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="../../db/d06/simpleBit_8h_source.html">numlib/simpleBit.h</a>&quot;</code><br />
 </div>
 <p><a href="../../d5/d60/utils_8h_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
-Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d6/d9e/classrulkovdp.html">rulkovdp</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Class defining the dependent parameters of teh Rulkov map neuron.  <a href="../../d6/d9e/classrulkovdp.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d0d/classexpDecayDp.html">expDecayDp</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Class defining the dependent parameter for exponential decay.  <a href="../../da/d0d/classexpDecayDp.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/dba/classpwSTDP.html">pwSTDP</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">TODO This class definition may be code-generated in a future release.  <a href="../../d0/dba/classpwSTDP.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="define-members"></a>
 Macros</h2></td></tr>
 <tr class="memitem:abcbb42391c4d6963466375fd6821a216"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/d60/utils_8h.html#abcbb42391c4d6963466375fd6821a216">_UTILS_H_</a></td></tr>
 <tr class="memdesc:abcbb42391c4d6963466375fd6821a216"><td class="mdescLeft">&#160;</td><td class="mdescRight">macro for avoiding multiple inclusion during compilation  <a href="#abcbb42391c4d6963466375fd6821a216">More...</a><br /></td></tr>
 <tr class="separator:abcbb42391c4d6963466375fd6821a216"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac1cf82f980a76bb9ef43b7027cb2348b"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/d60/utils_8h.html#ac1cf82f980a76bb9ef43b7027cb2348b">CHECK_CU_ERRORS</a>(call)&#160;&#160;&#160;call</td></tr>
+<tr class="memdesc:ac1cf82f980a76bb9ef43b7027cb2348b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Macros for catching errors returned by the CUDA driver and runtime APIs.  <a href="#ac1cf82f980a76bb9ef43b7027cb2348b">More...</a><br /></td></tr>
+<tr class="separator:ac1cf82f980a76bb9ef43b7027cb2348b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3d4f854b9c80237b6f4c23540a823f47"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/d60/utils_8h.html#a3d4f854b9c80237b6f4c23540a823f47">CHECK_CUDA_ERRORS</a>(call)</td></tr>
-<tr class="memdesc:a3d4f854b9c80237b6f4c23540a823f47"><td class="mdescLeft">&#160;</td><td class="mdescRight">Macro for wrapping cuda runtime function calls and catching any errors that may be thrown.  <a href="#a3d4f854b9c80237b6f4c23540a823f47">More...</a><br /></td></tr>
 <tr class="separator:a3d4f854b9c80237b6f4c23540a823f47"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae6d30aaeb7572325daf782219a9df1ab"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/d60/utils_8h.html#ae6d30aaeb7572325daf782219a9df1ab">B</a>(x,  i)&#160;&#160;&#160;((x) &amp; (0x80000000 &gt;&gt; (i)))</td></tr>
+<tr class="memdesc:ae6d30aaeb7572325daf782219a9df1ab"><td class="mdescLeft">&#160;</td><td class="mdescRight">Bit tool macros.  <a href="#ae6d30aaeb7572325daf782219a9df1ab">More...</a><br /></td></tr>
+<tr class="separator:ae6d30aaeb7572325daf782219a9df1ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a85168e9d1f1c6a6a3f0a87dbdc33d404"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/d60/utils_8h.html#a85168e9d1f1c6a6a3f0a87dbdc33d404">setB</a>(x,  i)&#160;&#160;&#160;x= ((x) | (0x80000000 &gt;&gt; (i)))</td></tr>
+<tr class="memdesc:a85168e9d1f1c6a6a3f0a87dbdc33d404"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the bit at the specified position i in x to 1.  <a href="#a85168e9d1f1c6a6a3f0a87dbdc33d404">More...</a><br /></td></tr>
+<tr class="separator:a85168e9d1f1c6a6a3f0a87dbdc33d404"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6e900247bc34d6cbb25b903c4911f0df"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/d60/utils_8h.html#a6e900247bc34d6cbb25b903c4911f0df">delB</a>(x,  i)&#160;&#160;&#160;x= ((x) &amp; (~(0x80000000 &gt;&gt; (i))))</td></tr>
+<tr class="memdesc:a6e900247bc34d6cbb25b903c4911f0df"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the bit at the specified position i in x to 0.  <a href="#a6e900247bc34d6cbb25b903c4911f0df">More...</a><br /></td></tr>
+<tr class="separator:a6e900247bc34d6cbb25b903c4911f0df"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
+<tr class="memitem:a40e4d6de9cd558e30ad854d30a048608"><td class="memItemLeft" align="right" valign="top">CUresult&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/d60/utils_8h.html#a40e4d6de9cd558e30ad854d30a048608">cudaFuncGetAttributesDriver</a> (cudaFuncAttributes *attr, CUfunction kern)</td></tr>
+<tr class="memdesc:a40e4d6de9cd558e30ad854d30a048608"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function for getting the capabilities of a CUDA device via the driver API.  <a href="#a40e4d6de9cd558e30ad854d30a048608">More...</a><br /></td></tr>
+<tr class="separator:a40e4d6de9cd558e30ad854d30a048608"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aacfab6dc3c4e2fc5c24f359fe7869132"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/d60/utils_8h.html#aacfab6dc3c4e2fc5c24f359fe7869132">gennError</a> (string error)</td></tr>
 <tr class="memdesc:aacfab6dc3c4e2fc5c24f359fe7869132"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function called upon the detection of an error. Outputs an error message and then exits.  <a href="#aacfab6dc3c4e2fc5c24f359fe7869132">More...</a><br /></td></tr>
 <tr class="separator:aacfab6dc3c4e2fc5c24f359fe7869132"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8acfd8479841643d40b4b3ba411e0136"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/d60/utils_8h.html#a8acfd8479841643d40b4b3ba411e0136">gennError</a> (const char *error)</td></tr>
-<tr class="memdesc:a8acfd8479841643d40b4b3ba411e0136"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function called upon the detection of an error. Outputs an error message and then exits.  <a href="#a8acfd8479841643d40b4b3ba411e0136">More...</a><br /></td></tr>
-<tr class="separator:a8acfd8479841643d40b4b3ba411e0136"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a25920bbe5c1f08854c7162c4cd0b5796"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/d60/utils_8h.html#a25920bbe5c1f08854c7162c4cd0b5796">writeHeader</a> (ostream &amp;os)</td></tr>
-<tr class="memdesc:a25920bbe5c1f08854c7162c4cd0b5796"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function to write the comment header denoting file authorship and contact details into the generated code.  <a href="#a25920bbe5c1f08854c7162c4cd0b5796">More...</a><br /></td></tr>
-<tr class="separator:a25920bbe5c1f08854c7162c4cd0b5796"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a822620707c96ec8f90da32326cc5fde6"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/d60/utils_8h.html#a822620707c96ec8f90da32326cc5fde6">theSize</a> (string type)</td></tr>
 <tr class="memdesc:a822620707c96ec8f90da32326cc5fde6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Tool for determining the size of variable types on the current architecture.  <a href="#a822620707c96ec8f90da32326cc5fde6">More...</a><br /></td></tr>
 <tr class="separator:a822620707c96ec8f90da32326cc5fde6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2df8eb7085cd0493e4cef63a2446adb4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/d60/utils_8h.html#a2df8eb7085cd0493e4cef63a2446adb4">prepareStandardModels</a> ()</td></tr>
-<tr class="memdesc:a2df8eb7085cd0493e4cef63a2446adb4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function that defines standard neuron models.  <a href="#a2df8eb7085cd0493e4cef63a2446adb4">More...</a><br /></td></tr>
-<tr class="separator:a2df8eb7085cd0493e4cef63a2446adb4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a25ccc49bc4c814f8ae964b17f437efd8"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/d60/utils_8h.html#a25ccc49bc4c814f8ae964b17f437efd8">preparePostSynModels</a> ()</td></tr>
-<tr class="memdesc:a25ccc49bc4c814f8ae964b17f437efd8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function that prepares the standard post-synaptic models, including their variables, parameters, dependent parameters and code strings.  <a href="#a25ccc49bc4c814f8ae964b17f437efd8">More...</a><br /></td></tr>
-<tr class="separator:a25ccc49bc4c814f8ae964b17f437efd8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7665ad5333ff39de5f63bbe88f1f7de9"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/d60/utils_8h.html#a7665ad5333ff39de5f63bbe88f1f7de9">prepareWeightUpdateModels</a> ()</td></tr>
-<tr class="memdesc:a7665ad5333ff39de5f63bbe88f1f7de9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function that prepares the standard (pre) synaptic models, including their variables, parameters, dependent parameters and code strings.  <a href="#a7665ad5333ff39de5f63bbe88f1f7de9">More...</a><br /></td></tr>
-<tr class="separator:a7665ad5333ff39de5f63bbe88f1f7de9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="var-members"></a>
-Variables</h2></td></tr>
-<tr class="memitem:a2bd39d11c2cd6cec9bf9b81c183b6cd4"><td class="memItemLeft" align="right" valign="top">vector&lt; <a class="el" href="../../d3/d64/structneuronModel.html">neuronModel</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/d60/utils_8h.html#a2bd39d11c2cd6cec9bf9b81c183b6cd4">nModels</a></td></tr>
-<tr class="memdesc:a2bd39d11c2cd6cec9bf9b81c183b6cd4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Global C++ vector containing all neuron model descriptions.  <a href="#a2bd39d11c2cd6cec9bf9b81c183b6cd4">More...</a><br /></td></tr>
-<tr class="separator:a2bd39d11c2cd6cec9bf9b81c183b6cd4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a14d8cf3b78f877bec80867485607cafe"><td class="memItemLeft" align="right" valign="top">vector&lt; <a class="el" href="../../d8/dbb/structpostSynModel.html">postSynModel</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/d60/utils_8h.html#a14d8cf3b78f877bec80867485607cafe">postSynModels</a></td></tr>
-<tr class="memdesc:a14d8cf3b78f877bec80867485607cafe"><td class="mdescLeft">&#160;</td><td class="mdescRight">Global C++ vector containing all post-synaptic update model descriptions.  <a href="#a14d8cf3b78f877bec80867485607cafe">More...</a><br /></td></tr>
-<tr class="separator:a14d8cf3b78f877bec80867485607cafe"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a065de3cb4b7c83d51aff0549db676c0a"><td class="memItemLeft" align="right" valign="top">vector&lt; <a class="el" href="../../dd/db7/classweightUpdateModel.html">weightUpdateModel</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/d60/utils_8h.html#a065de3cb4b7c83d51aff0549db676c0a">weightUpdateModels</a></td></tr>
-<tr class="memdesc:a065de3cb4b7c83d51aff0549db676c0a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Global C++ vector containing all weightupdate model descriptions.  <a href="#a065de3cb4b7c83d51aff0549db676c0a">More...</a><br /></td></tr>
-<tr class="separator:a065de3cb4b7c83d51aff0549db676c0a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a25920bbe5c1f08854c7162c4cd0b5796"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/d60/utils_8h.html#a25920bbe5c1f08854c7162c4cd0b5796">writeHeader</a> (ostream &amp;os)</td></tr>
+<tr class="memdesc:a25920bbe5c1f08854c7162c4cd0b5796"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function to write the comment header denoting file authorship and contact details into the generated code.  <a href="#a25920bbe5c1f08854c7162c4cd0b5796">More...</a><br /></td></tr>
+<tr class="separator:a25920bbe5c1f08854c7162c4cd0b5796"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>This file contains standard utility functions provide within the NVIDIA CUDA software development toolkit (SDK). The remainder of the file contains a function that defines the standard neuron models. </p>
@@ -222,6 +188,53 @@ Variables</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="ae6d30aaeb7572325daf782219a9df1ab"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define B</td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname">x, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname">i&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td>&#160;&#160;&#160;((x) &amp; (0x80000000 &gt;&gt; (i)))</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Bit tool macros. </p>
+<p>Extract the bit at the specified position i from x </p>
+
+</div>
+</div>
+<a class="anchor" id="ac1cf82f980a76bb9ef43b7027cb2348b"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define CHECK_CU_ERRORS</td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname">call</td><td>)</td>
+          <td>&#160;&#160;&#160;call</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Macros for catching errors returned by the CUDA driver and runtime APIs. </p>
+
+</div>
+</div>
 <a class="anchor" id="a3d4f854b9c80237b6f4c23540a823f47"></a>
 <div class="memitem">
 <div class="memproto">
@@ -235,21 +248,105 @@ Variables</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<b>Value:</b><div class="fragment"><div class="line">{                                                                          \</div>
-<div class="line">  cudaError_t error = call;                                                \</div>
-<div class="line">  if (error != cudaSuccess)                                                \</div>
-<div class="line">  {                                                                        \</div>
-<div class="line">    fprintf(stderr, <span class="stringliteral">&quot;%s: %i: cuda error %i: %s\n&quot;</span>,                         \</div>
-<div class="line">            __FILE__, __LINE__, (<span class="keywordtype">int</span>)error, cudaGetErrorString(error));    \</div>
-<div class="line">    exit(EXIT_FAILURE);                                                    \</div>
-<div class="line">  }                                                                        \</div>
-<div class="line">}</div>
+<b>Value:</b><div class="fragment"><div class="line">{                                                               \</div>
+<div class="line">    cudaError_t error = call;                                   <a class="code" href="../../d0/d1c/av_8cc.html#a1edb431790b441ea81445f52a56d2059">\</a></div>
+<div class="line"><a class="code" href="../../d0/d1c/av_8cc.html#a1edb431790b441ea81445f52a56d2059">    if</a> (error != cudaSuccess)                                   \</div>
+<div class="line">      {                                                         \</div>
+<div class="line">        cerr &lt;&lt; __FILE__ &lt;&lt; <span class="stringliteral">&quot;: &quot;</span> &lt;&lt;  __LINE__;                  \</div>
+<div class="line">        cerr &lt;&lt; <span class="stringliteral">&quot;: cuda runtime error &quot;</span> &lt;&lt; error &lt;&lt; <span class="stringliteral">&quot;: &quot;</span>;       \</div>
+<div class="line">        cerr &lt;&lt; cudaGetErrorString(error) &lt;&lt; endl;              \</div>
+<div class="line">        exit(EXIT_FAILURE);                                     \</div>
+<div class="line">      }                                                         \</div>
+<div class="line">  }</div>
+<div class="ttc" id="av_8cc_html_a1edb431790b441ea81445f52a56d2059"><div class="ttname"><a href="../../d0/d1c/av_8cc.html#a1edb431790b441ea81445f52a56d2059">if</a></div><div class="ttdeci">if(model.neuronType[src]==POISSONNEURON) substitute(wCode</div></div>
 </div><!-- fragment -->
-<p>Macro for wrapping cuda runtime function calls and catching any errors that may be thrown. </p>
+</div>
+</div>
+<a class="anchor" id="a6e900247bc34d6cbb25b903c4911f0df"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define delB</td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname">x, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname">i&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td>&#160;&#160;&#160;x= ((x) &amp; (~(0x80000000 &gt;&gt; (i))))</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Set the bit at the specified position i in x to 0. </p>
+
+</div>
+</div>
+<a class="anchor" id="a85168e9d1f1c6a6a3f0a87dbdc33d404"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define setB</td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname">x, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname">i&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td>&#160;&#160;&#160;x= ((x) | (0x80000000 &gt;&gt; (i)))</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Set the bit at the specified position i in x to 1. </p>
 
 </div>
 </div>
 <h2 class="groupheader">Function Documentation</h2>
+<a class="anchor" id="a40e4d6de9cd558e30ad854d30a048608"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">CUresult cudaFuncGetAttributesDriver </td>
+          <td>(</td>
+          <td class="paramtype">cudaFuncAttributes *&#160;</td>
+          <td class="paramname"><em>attr</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">CUfunction&#160;</td>
+          <td class="paramname"><em>kern</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Function for getting the capabilities of a CUDA device via the driver API. </p>
+
+</div>
+</div>
 <a class="anchor" id="aacfab6dc3c4e2fc5c24f359fe7869132"></a>
 <div class="memitem">
 <div class="memproto">
@@ -265,76 +362,6 @@ Variables</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Function called upon the detection of an error. Outputs an error message and then exits. </p>
-
-</div>
-</div>
-<a class="anchor" id="a8acfd8479841643d40b4b3ba411e0136"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void gennError </td>
-          <td>(</td>
-          <td class="paramtype">const char *&#160;</td>
-          <td class="paramname"><em>error</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Function called upon the detection of an error. Outputs an error message and then exits. </p>
-
-</div>
-</div>
-<a class="anchor" id="a25ccc49bc4c814f8ae964b17f437efd8"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void preparePostSynModels </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Function that prepares the standard post-synaptic models, including their variables, parameters, dependent parameters and code strings. </p>
-
-</div>
-</div>
-<a class="anchor" id="a2df8eb7085cd0493e4cef63a2446adb4"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void prepareStandardModels </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Function that defines standard neuron models. </p>
-<p>The neuron models are defined and added to the C++ vector nModels that is holding all neuron model descriptions. User defined neuron models can be appended to this vector later in (a) separate function(s). </p>
-
-</div>
-</div>
-<a class="anchor" id="a7665ad5333ff39de5f63bbe88f1f7de9"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void prepareWeightUpdateModels </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Function that prepares the standard (pre) synaptic models, including their variables, parameters, dependent parameters and code strings. </p>
 
 </div>
 </div>
@@ -374,56 +401,13 @@ Variables</h2></td></tr>
 
 </div>
 </div>
-<h2 class="groupheader">Variable Documentation</h2>
-<a class="anchor" id="a2bd39d11c2cd6cec9bf9b81c183b6cd4"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">vector&lt;<a class="el" href="../../d3/d64/structneuronModel.html">neuronModel</a>&gt; nModels</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Global C++ vector containing all neuron model descriptions. </p>
-
-</div>
-</div>
-<a class="anchor" id="a14d8cf3b78f877bec80867485607cafe"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">vector&lt;<a class="el" href="../../d8/dbb/structpostSynModel.html">postSynModel</a>&gt; postSynModels</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Global C++ vector containing all post-synaptic update model descriptions. </p>
-
-</div>
-</div>
-<a class="anchor" id="a065de3cb4b7c83d51aff0549db676c0a"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">vector&lt;<a class="el" href="../../dd/db7/classweightUpdateModel.html">weightUpdateModel</a>&gt; weightUpdateModels</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Global C++ vector containing all weightupdate model descriptions. </p>
-
-</div>
-</div>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><a class="el" href="../../dir_97aefd0d527b934f1d99a682da8fe6a9.html">lib</a></li><li class="navelem"><a class="el" href="../../dir_5a30104352ef4255dc24354b02eb2d20.html">include</a></li><li class="navelem"><a class="el" href="../../d5/d60/utils_8h.html">utils.h</a></li>
-    <li class="footer">Generated on Fri Nov 6 2015 22:13:01 for GeNN by
+    <li class="navelem"><a class="el" href="../../dir_75b82e7e4a5feb05200b9ad7adf06257.html">home</a></li><li class="navelem"><a class="el" href="../../dir_ffe3a3aad2509bd71bde52251b868b95.html">t</a></li><li class="navelem"><a class="el" href="../../dir_a76bff614e8015b519bf2acd237705ed.html">tn</a></li><li class="navelem"><a class="el" href="../../dir_f4e7678815bf6e9eaf2cc8bfbd1351b7.html">tn41</a></li><li class="navelem"><a class="el" href="../../dir_2f2428e5af9c71cc79b0eec8cffe5ad2.html">localdisk_projects</a></li><li class="navelem"><a class="el" href="../../dir_3cf40d34fd3099085c9305fe2b26b2ea.html">develop</a></li><li class="navelem"><a class="el" href="../../dir_ee841fdb1cf52f11d3719e45227a7fba.html">genn</a></li><li class="navelem"><a class="el" href="../../dir_97d83ea9b369010f011f7f8afbb221a3.html">lib</a></li><li class="navelem"><a class="el" href="../../dir_3886a36523d5a98a8b30f50f43af3f11.html">include</a></li><li class="navelem"><a class="el" href="../../d5/d60/utils_8h.html">utils.h</a></li>
+    <li class="footer">Generated on Fri Jun 17 2016 14:44:59 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
   </ul>

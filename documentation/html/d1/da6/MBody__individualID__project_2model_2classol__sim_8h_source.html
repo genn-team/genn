@@ -34,6 +34,7 @@
   $(document).ready(function() { init_search(); });
 </script>
 <link href="../../customdoxygen.css" rel="stylesheet" type="text/css" />
+<link href="../../html_styles.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -44,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">2.0</span>
+   &#160;<span id="projectnumber">2.2</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -61,6 +62,7 @@ var searchBox = new SearchBox("searchBox", "../../search",false,'Search');
     <ul class="tablist">
       <li><a href="../../index.html"><span>Main&#160;Page</span></a></li>
       <li><a href="../../pages.html"><span>Related&#160;Pages</span></a></li>
+      <li><a href="../../namespaces.html"><span>Namespaces</span></a></li>
       <li><a href="../../annotated.html"><span>Classes</span></a></li>
       <li class="current"><a href="../../files.html"><span>Files</span></a></li>
       <li>
@@ -137,70 +139,68 @@ $(document).ready(function(){initNavTree('d1/da6/MBody__individualID__project_2m
 <div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160;<span class="comment">//--------------------------------------------------------------------------</span></div>
 <div class="line"><a name="l00019"></a><span class="lineno">   19</span>&#160;<span class="comment"></span><span class="comment">//--------------------------------------------------------------------------</span></div>
 <div class="line"><a name="l00020"></a><span class="lineno">   20</span>&#160;</div>
-<div class="line"><a name="l00021"></a><span class="lineno">   21</span>&#160;<span class="keyword">using namespace </span><a class="code" href="../../d8/dcc/namespacestd.html">std</a>;</div>
-<div class="line"><a name="l00022"></a><span class="lineno">   22</span>&#160;<span class="preprocessor">#include &lt;cassert&gt;</span></div>
+<div class="line"><a name="l00021"></a><span class="lineno">   21</span>&#160;<span class="preprocessor">#include &lt;cassert&gt;</span></div>
+<div class="line"><a name="l00022"></a><span class="lineno">   22</span>&#160;<span class="keyword">using namespace </span><a class="code" href="../../d8/dcc/namespacestd.html">std</a>;</div>
 <div class="line"><a name="l00023"></a><span class="lineno">   23</span>&#160;</div>
-<div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160;<span class="preprocessor">#include &quot;<a class="code" href="../../df/d71/hr__time_8cpp.html">hr_time.cpp</a>&quot;</span></div>
+<div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160;<span class="preprocessor">#include &quot;<a class="code" href="../../db/dd6/hr__time_8h.html">hr_time.h</a>&quot;</span></div>
 <div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;<span class="preprocessor">#include &quot;<a class="code" href="../../d5/d60/utils_8h.html">utils.h</a>&quot;</span> <span class="comment">// for CHECK_CUDA_ERRORS</span></div>
-<div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;</div>
-<div class="line"><a name="l00027"></a><span class="lineno">   27</span>&#160;<span class="preprocessor">#include &lt;cuda_runtime.h&gt;</span></div>
-<div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160;<span class="comment">//#include &lt;cfloat&gt;</span></div>
-<div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;</div>
-<div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;<span class="preprocessor">#include &quot;<a class="code" href="../../d3/d25/MBody__individualID_8cc.html">MBody_individualID.cc</a>&quot;</span></div>
-<div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160;</div>
-<div class="line"><a name="l00032"></a><span class="lineno"><a class="line" href="../../d1/da6/MBody__individualID__project_2model_2classol__sim_8h.html#ae22bee5ab0274eba2219d11cf354c982">   32</a></span>&#160;<span class="preprocessor">#define MYRAND(Y,X) Y = Y * 1103515245 +12345; X= (Y &gt;&gt; 16);</span></div>
-<div class="line"><a name="l00033"></a><span class="lineno">   33</span>&#160;</div>
-<div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160;<span class="comment">// we will hard-code some stuff ... because at the end of the day that is </span></div>
-<div class="line"><a name="l00035"></a><span class="lineno">   35</span>&#160;<span class="comment">// what we will do for the CUDA version</span></div>
+<div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;<span class="preprocessor">#include &quot;<a class="code" href="../../dd/dc3/stringUtils_8h.html">stringUtils.h</a>&quot;</span></div>
+<div class="line"><a name="l00027"></a><span class="lineno">   27</span>&#160;</div>
+<div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160;<span class="preprocessor">#ifndef CPU_ONLY</span></div>
+<div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;<span class="preprocessor">#include &lt;cuda_runtime.h&gt;</span></div>
+<div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160;<span class="comment">//#include &lt;cfloat&gt;</span></div>
+<div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160;</div>
+<div class="line"><a name="l00033"></a><span class="lineno">   33</span>&#160;<span class="preprocessor">#include &quot;<a class="code" href="../../d3/d25/MBody__individualID_8cc.html">MBody_individualID.cc</a>&quot;</span></div>
+<div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160;</div>
+<div class="line"><a name="l00035"></a><span class="lineno"><a class="line" href="../../d1/da6/MBody__individualID__project_2model_2classol__sim_8h.html#ae22bee5ab0274eba2219d11cf354c982">   35</a></span>&#160;<span class="preprocessor">#define MYRAND(Y,X) Y = Y * 1103515245 +12345; X= (Y &gt;&gt; 16);</span></div>
 <div class="line"><a name="l00036"></a><span class="lineno">   36</span>&#160;</div>
-<div class="line"><a name="l00037"></a><span class="lineno"><a class="line" href="../../d1/da6/MBody__individualID__project_2model_2classol__sim_8h.html#af2aa052c33678b98e77e813a818e95e2">   37</a></span>&#160;<span class="preprocessor">#define DBG_SIZE 10000</span></div>
-<div class="line"><a name="l00038"></a><span class="lineno">   38</span>&#160;</div>
-<div class="line"><a name="l00039"></a><span class="lineno">   39</span>&#160;<span class="comment">// and some global variables</span></div>
-<div class="line"><a name="l00040"></a><span class="lineno"><a class="line" href="../../d1/da6/MBody__individualID__project_2model_2classol__sim_8h.html#a8aa5341922e7fabc709fff9cf14e2e5f">   40</a></span>&#160;<a class="code" href="../../dc/d3f/PoissonIzh_8cc.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a> <a class="code" href="../../d1/da6/MBody__individualID__project_2model_2classol__sim_8h.html#a8aa5341922e7fabc709fff9cf14e2e5f">t</a>= 0.0f;</div>
-<div class="line"><a name="l00041"></a><span class="lineno"><a class="line" href="../../d1/da6/MBody__individualID__project_2model_2classol__sim_8h.html#af90823709b88c685c62a727366640633">   41</a></span>&#160;<span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> <a class="code" href="../../d1/da6/MBody__individualID__project_2model_2classol__sim_8h.html#af90823709b88c685c62a727366640633">iT</a>= 0;</div>
-<div class="line"><a name="l00042"></a><span class="lineno">   42</span>&#160;</div>
-<div class="line"><a name="l00043"></a><span class="lineno"><a class="line" href="../../d1/da6/MBody__individualID__project_2model_2classol__sim_8h.html#aaf25ec5f61586416d586e061a66a7597">   43</a></span>&#160;<span class="preprocessor">#define PATTERNNO 100</span></div>
-<div class="line"><a name="l00044"></a><span class="lineno"><a class="line" href="../../d1/da6/MBody__individualID__project_2model_2classol__sim_8h.html#a5b04369a7558bcf7da0830c978a36bff">   44</a></span>&#160;<a class="code" href="../../dc/d3f/PoissonIzh_8cc.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a> <a class="code" href="../../d1/da6/MBody__individualID__project_2model_2classol__sim_8h.html#a5b04369a7558bcf7da0830c978a36bff">InputBaseRate</a>= 2e-04;</div>
-<div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160;<span class="comment">//----------------------------------------------------------------------</span></div>
-<div class="line"><a name="l00046"></a><span class="lineno">   46</span>&#160;<span class="comment">// other stuff:</span></div>
-<div class="line"><a name="l00047"></a><span class="lineno"><a class="line" href="../../d1/da6/MBody__individualID__project_2model_2classol__sim_8h.html#ab83f44e4142be41861734e19dfa92c75">   47</a></span>&#160;<span class="preprocessor">#define T_REPORT_TME 10000.0</span></div>
-<div class="line"><a name="l00048"></a><span class="lineno"><a class="line" href="../../d1/da6/MBody__individualID__project_2model_2classol__sim_8h.html#aac8ddc8e2452ee7f0fa2dc5c4f200337">   48</a></span>&#160;<span class="preprocessor">#define SYN_OUT_TME 20000.0</span></div>
-<div class="line"><a name="l00049"></a><span class="lineno">   49</span>&#160;</div>
-<div class="line"><a name="l00050"></a><span class="lineno"><a class="line" href="../../d1/da6/MBody__individualID__project_2model_2classol__sim_8h.html#a0413cabfdba223c3bb3098f49896cd9b">   50</a></span>&#160;<span class="keywordtype">int</span> <a class="code" href="../../d1/da6/MBody__individualID__project_2model_2classol__sim_8h.html#a0413cabfdba223c3bb3098f49896cd9b">patSetTime</a>;</div>
-<div class="line"><a name="l00051"></a><span class="lineno">   51</span>&#160;<span class="comment">// reset input every 100 steps == 50ms</span></div>
-<div class="line"><a name="l00052"></a><span class="lineno"><a class="line" href="../../d1/da6/MBody__individualID__project_2model_2classol__sim_8h.html#ad0d1935d330839532eb6ae6c67676cb5">   52</a></span>&#160;<span class="preprocessor">#define PAT_TIME 100.0</span></div>
-<div class="line"><a name="l00053"></a><span class="lineno">   53</span>&#160;</div>
-<div class="line"><a name="l00054"></a><span class="lineno">   54</span>&#160;<span class="comment">// pattern goes off at 2 steps == 1 ms</span></div>
-<div class="line"><a name="l00055"></a><span class="lineno"><a class="line" href="../../d1/da6/MBody__individualID__project_2model_2classol__sim_8h.html#a28f281652dfeaa0e5546b0a471f9469b">   55</a></span>&#160;<span class="preprocessor">#define PATFTIME 1.5</span></div>
-<div class="line"><a name="l00056"></a><span class="lineno">   56</span>&#160;</div>
-<div class="line"><a name="l00057"></a><span class="lineno"><a class="line" href="../../d1/da6/MBody__individualID__project_2model_2classol__sim_8h.html#a344fc02d0f9a72f72085a8c5fe191ea9">   57</a></span>&#160;<span class="keywordtype">int</span> <a class="code" href="../../d1/da6/MBody__individualID__project_2model_2classol__sim_8h.html#a344fc02d0f9a72f72085a8c5fe191ea9">patFireTime</a>;</div>
+<div class="line"><a name="l00037"></a><span class="lineno">   37</span>&#160;<span class="comment">// we will hard-code some stuff ... because at the end of the day that is </span></div>
+<div class="line"><a name="l00038"></a><span class="lineno">   38</span>&#160;<span class="comment">// what we will do for the CUDA version</span></div>
+<div class="line"><a name="l00039"></a><span class="lineno">   39</span>&#160;</div>
+<div class="line"><a name="l00040"></a><span class="lineno"><a class="line" href="../../d1/da6/MBody__individualID__project_2model_2classol__sim_8h.html#af2aa052c33678b98e77e813a818e95e2">   40</a></span>&#160;<span class="preprocessor">#define DBG_SIZE 10000</span></div>
+<div class="line"><a name="l00041"></a><span class="lineno">   41</span>&#160;</div>
+<div class="line"><a name="l00042"></a><span class="lineno"><a class="line" href="../../d1/da6/MBody__individualID__project_2model_2classol__sim_8h.html#aaf25ec5f61586416d586e061a66a7597">   42</a></span>&#160;<span class="preprocessor">#define PATTERNNO 100</span></div>
+<div class="line"><a name="l00043"></a><span class="lineno"><a class="line" href="../../d1/da6/MBody__individualID__project_2model_2classol__sim_8h.html#a5b04369a7558bcf7da0830c978a36bff">   43</a></span>&#160;<a class="code" href="../../df/d46/HHVClampParameters_8h.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a> <a class="code" href="../../d1/da6/MBody__individualID__project_2model_2classol__sim_8h.html#a5b04369a7558bcf7da0830c978a36bff">InputBaseRate</a>= 2e-04;</div>
+<div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;<span class="comment">//----------------------------------------------------------------------</span></div>
+<div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160;<span class="comment">// other stuff:</span></div>
+<div class="line"><a name="l00046"></a><span class="lineno"><a class="line" href="../../d1/da6/MBody__individualID__project_2model_2classol__sim_8h.html#ab83f44e4142be41861734e19dfa92c75">   46</a></span>&#160;<span class="preprocessor">#define T_REPORT_TME 10000.0</span></div>
+<div class="line"><a name="l00047"></a><span class="lineno"><a class="line" href="../../d1/da6/MBody__individualID__project_2model_2classol__sim_8h.html#aac8ddc8e2452ee7f0fa2dc5c4f200337">   47</a></span>&#160;<span class="preprocessor">#define SYN_OUT_TME 20000.0</span></div>
+<div class="line"><a name="l00048"></a><span class="lineno">   48</span>&#160;</div>
+<div class="line"><a name="l00049"></a><span class="lineno"><a class="line" href="../../d1/da6/MBody__individualID__project_2model_2classol__sim_8h.html#a0413cabfdba223c3bb3098f49896cd9b">   49</a></span>&#160;<span class="keywordtype">int</span> <a class="code" href="../../d1/da6/MBody__individualID__project_2model_2classol__sim_8h.html#a0413cabfdba223c3bb3098f49896cd9b">patSetTime</a>;</div>
+<div class="line"><a name="l00050"></a><span class="lineno">   50</span>&#160;<span class="comment">// reset input every 100 steps == 50ms</span></div>
+<div class="line"><a name="l00051"></a><span class="lineno"><a class="line" href="../../d1/da6/MBody__individualID__project_2model_2classol__sim_8h.html#ad0d1935d330839532eb6ae6c67676cb5">   51</a></span>&#160;<span class="preprocessor">#define PAT_TIME 100.0</span></div>
+<div class="line"><a name="l00052"></a><span class="lineno">   52</span>&#160;</div>
+<div class="line"><a name="l00053"></a><span class="lineno">   53</span>&#160;<span class="comment">// pattern goes off at 2 steps == 1 ms</span></div>
+<div class="line"><a name="l00054"></a><span class="lineno"><a class="line" href="../../d1/da6/MBody__individualID__project_2model_2classol__sim_8h.html#a28f281652dfeaa0e5546b0a471f9469b">   54</a></span>&#160;<span class="preprocessor">#define PATFTIME 1.5</span></div>
+<div class="line"><a name="l00055"></a><span class="lineno">   55</span>&#160;</div>
+<div class="line"><a name="l00056"></a><span class="lineno"><a class="line" href="../../d1/da6/MBody__individualID__project_2model_2classol__sim_8h.html#a344fc02d0f9a72f72085a8c5fe191ea9">   56</a></span>&#160;<span class="keywordtype">int</span> <a class="code" href="../../d1/da6/MBody__individualID__project_2model_2classol__sim_8h.html#a344fc02d0f9a72f72085a8c5fe191ea9">patFireTime</a>;</div>
+<div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160;</div>
 <div class="line"><a name="l00058"></a><span class="lineno">   58</span>&#160;</div>
-<div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160;</div>
-<div class="line"><a name="l00060"></a><span class="lineno"><a class="line" href="../../d1/da6/MBody__individualID__project_2model_2classol__sim_8h.html#ac0d135e67adb53905496926b648857dc">   60</a></span>&#160;<span class="preprocessor">#define TOTAL_TME 5000.0</span></div>
-<div class="line"><a name="l00061"></a><span class="lineno">   61</span>&#160;</div>
-<div class="line"><a name="l00062"></a><span class="lineno"><a class="line" href="../../d1/da6/MBody__individualID__project_2model_2classol__sim_8h.html#a5256bd92e0315a4504ed1d8c6bcab9c9">   62</a></span>&#160;<a class="code" href="../../d9/de8/classCStopWatch.html">CStopWatch</a> <a class="code" href="../../d1/da6/MBody__individualID__project_2model_2classol__sim_8h.html#a5256bd92e0315a4504ed1d8c6bcab9c9">timer</a>;</div>
-<div class="line"><a name="l00063"></a><span class="lineno">   63</span>&#160;</div>
-<div class="line"><a name="l00064"></a><span class="lineno">   64</span>&#160;<span class="preprocessor">#include &quot;<a class="code" href="../../dd/d60/MBody__individualID__project_2model_2map__classol_8cc.html">map_classol.cc</a>&quot;</span></div>
-<div class="ttc" id="classCStopWatch_html"><div class="ttname"><a href="../../d9/de8/classCStopWatch.html">CStopWatch</a></div><div class="ttdef"><b>Definition:</b> hr_time.h:40</div></div>
-<div class="ttc" id="MBody__individualID__project_2model_2classol__sim_8h_html_a0413cabfdba223c3bb3098f49896cd9b"><div class="ttname"><a href="../../d1/da6/MBody__individualID__project_2model_2classol__sim_8h.html#a0413cabfdba223c3bb3098f49896cd9b">patSetTime</a></div><div class="ttdeci">int patSetTime</div><div class="ttdef"><b>Definition:</b> MBody_individualID_project/model/classol_sim.h:50</div></div>
-<div class="ttc" id="PoissonIzh_8cc_html_afad04d16ebd8523dd0d5f74145280a40"><div class="ttname"><a href="../../dc/d3f/PoissonIzh_8cc.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a></div><div class="ttdeci">#define scalar</div><div class="ttdef"><b>Definition:</b> PoissonIzh.cc:16</div></div>
-<div class="ttc" id="MBody__individualID__project_2model_2classol__sim_8h_html_a8aa5341922e7fabc709fff9cf14e2e5f"><div class="ttname"><a href="../../d1/da6/MBody__individualID__project_2model_2classol__sim_8h.html#a8aa5341922e7fabc709fff9cf14e2e5f">t</a></div><div class="ttdeci">scalar t</div><div class="ttdef"><b>Definition:</b> MBody_individualID_project/model/classol_sim.h:40</div></div>
+<div class="line"><a name="l00059"></a><span class="lineno"><a class="line" href="../../d1/da6/MBody__individualID__project_2model_2classol__sim_8h.html#ac0d135e67adb53905496926b648857dc">   59</a></span>&#160;<span class="preprocessor">#define TOTAL_TME 5000.0</span></div>
+<div class="line"><a name="l00060"></a><span class="lineno">   60</span>&#160;</div>
+<div class="line"><a name="l00061"></a><span class="lineno"><a class="line" href="../../d1/da6/MBody__individualID__project_2model_2classol__sim_8h.html#a5256bd92e0315a4504ed1d8c6bcab9c9">   61</a></span>&#160;<a class="code" href="../../d9/de8/classCStopWatch.html">CStopWatch</a> <a class="code" href="../../d1/da6/MBody__individualID__project_2model_2classol__sim_8h.html#a5256bd92e0315a4504ed1d8c6bcab9c9">timer</a>;</div>
+<div class="line"><a name="l00062"></a><span class="lineno">   62</span>&#160;</div>
+<div class="line"><a name="l00063"></a><span class="lineno">   63</span>&#160;<span class="preprocessor">#include &quot;<a class="code" href="../../dd/d60/MBody__individualID__project_2model_2map__classol_8cc.html">map_classol.cc</a>&quot;</span></div>
+<div class="ttc" id="classCStopWatch_html"><div class="ttname"><a href="../../d9/de8/classCStopWatch.html">CStopWatch</a></div><div class="ttdef"><b>Definition:</b> hr_time.h:39</div></div>
+<div class="ttc" id="MBody__individualID__project_2model_2classol__sim_8h_html_a0413cabfdba223c3bb3098f49896cd9b"><div class="ttname"><a href="../../d1/da6/MBody__individualID__project_2model_2classol__sim_8h.html#a0413cabfdba223c3bb3098f49896cd9b">patSetTime</a></div><div class="ttdeci">int patSetTime</div><div class="ttdef"><b>Definition:</b> MBody_individualID_project/model/classol_sim.h:49</div></div>
 <div class="ttc" id="namespacestd_html"><div class="ttname"><a href="../../d8/dcc/namespacestd.html">std</a></div></div>
-<div class="ttc" id="MBody__individualID__project_2model_2classol__sim_8h_html_a344fc02d0f9a72f72085a8c5fe191ea9"><div class="ttname"><a href="../../d1/da6/MBody__individualID__project_2model_2classol__sim_8h.html#a344fc02d0f9a72f72085a8c5fe191ea9">patFireTime</a></div><div class="ttdeci">int patFireTime</div><div class="ttdef"><b>Definition:</b> MBody_individualID_project/model/classol_sim.h:57</div></div>
+<div class="ttc" id="MBody__individualID__project_2model_2classol__sim_8h_html_a344fc02d0f9a72f72085a8c5fe191ea9"><div class="ttname"><a href="../../d1/da6/MBody__individualID__project_2model_2classol__sim_8h.html#a344fc02d0f9a72f72085a8c5fe191ea9">patFireTime</a></div><div class="ttdeci">int patFireTime</div><div class="ttdef"><b>Definition:</b> MBody_individualID_project/model/classol_sim.h:56</div></div>
 <div class="ttc" id="utils_8h_html"><div class="ttname"><a href="../../d5/d60/utils_8h.html">utils.h</a></div><div class="ttdoc">This file contains standard utility functions provide within the NVIDIA CUDA software development too...</div></div>
-<div class="ttc" id="hr__time_8cpp_html"><div class="ttname"><a href="../../df/d71/hr__time_8cpp.html">hr_time.cpp</a></div><div class="ttdoc">This file contains the implementation of the CStopWatch class that provides a simple timing tool base...</div></div>
-<div class="ttc" id="MBody__individualID__project_2model_2map__classol_8cc_html"><div class="ttname"><a href="../../dd/d60/MBody__individualID__project_2model_2map__classol_8cc.html">map_classol.cc</a></div></div>
-<div class="ttc" id="MBody__individualID__project_2model_2classol__sim_8h_html_a5b04369a7558bcf7da0830c978a36bff"><div class="ttname"><a href="../../d1/da6/MBody__individualID__project_2model_2classol__sim_8h.html#a5b04369a7558bcf7da0830c978a36bff">InputBaseRate</a></div><div class="ttdeci">scalar InputBaseRate</div><div class="ttdef"><b>Definition:</b> MBody_individualID_project/model/classol_sim.h:44</div></div>
+<div class="ttc" id="hr__time_8h_html"><div class="ttname"><a href="../../db/dd6/hr__time_8h.html">hr_time.h</a></div><div class="ttdoc">This header file contains the definition of the CStopWatch class that implements a simple timing tool...</div></div>
+<div class="ttc" id="MBody__individualID__project_2model_2map__classol_8cc_html"><div class="ttname"><a href="../../dd/d60/MBody__individualID__project_2model_2map__classol_8cc.html">map_classol.cc</a></div><div class="ttdoc">Implementation of the classol class. </div></div>
+<div class="ttc" id="MBody__individualID__project_2model_2classol__sim_8h_html_a5b04369a7558bcf7da0830c978a36bff"><div class="ttname"><a href="../../d1/da6/MBody__individualID__project_2model_2classol__sim_8h.html#a5b04369a7558bcf7da0830c978a36bff">InputBaseRate</a></div><div class="ttdeci">scalar InputBaseRate</div><div class="ttdef"><b>Definition:</b> MBody_individualID_project/model/classol_sim.h:43</div></div>
+<div class="ttc" id="stringUtils_8h_html"><div class="ttname"><a href="../../dd/dc3/stringUtils_8h.html">stringUtils.h</a></div></div>
 <div class="ttc" id="MBody__individualID_8cc_html"><div class="ttname"><a href="../../d3/d25/MBody__individualID_8cc.html">MBody_individualID.cc</a></div><div class="ttdoc">This file contains the model definition of the mushroom body "MBody_incividualID" model...</div></div>
-<div class="ttc" id="MBody__individualID__project_2model_2classol__sim_8h_html_af90823709b88c685c62a727366640633"><div class="ttname"><a href="../../d1/da6/MBody__individualID__project_2model_2classol__sim_8h.html#af90823709b88c685c62a727366640633">iT</a></div><div class="ttdeci">unsigned int iT</div><div class="ttdef"><b>Definition:</b> MBody_individualID_project/model/classol_sim.h:41</div></div>
-<div class="ttc" id="MBody__individualID__project_2model_2classol__sim_8h_html_a5256bd92e0315a4504ed1d8c6bcab9c9"><div class="ttname"><a href="../../d1/da6/MBody__individualID__project_2model_2classol__sim_8h.html#a5256bd92e0315a4504ed1d8c6bcab9c9">timer</a></div><div class="ttdeci">CStopWatch timer</div><div class="ttdef"><b>Definition:</b> MBody_individualID_project/model/classol_sim.h:62</div></div>
+<div class="ttc" id="HHVClampParameters_8h_html_afad04d16ebd8523dd0d5f74145280a40"><div class="ttname"><a href="../../df/d46/HHVClampParameters_8h.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a></div><div class="ttdeci">#define scalar</div><div class="ttdef"><b>Definition:</b> HHVClampParameters.h:4</div></div>
+<div class="ttc" id="MBody__individualID__project_2model_2classol__sim_8h_html_a5256bd92e0315a4504ed1d8c6bcab9c9"><div class="ttname"><a href="../../d1/da6/MBody__individualID__project_2model_2classol__sim_8h.html#a5256bd92e0315a4504ed1d8c6bcab9c9">timer</a></div><div class="ttdeci">CStopWatch timer</div><div class="ttdef"><b>Definition:</b> MBody_individualID_project/model/classol_sim.h:61</div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><a class="el" href="../../dir_66fc3ae5585a02e310a487b6a12e9e11.html">userproject</a></li><li class="navelem"><a class="el" href="../../dir_9b93f25abba8addfb044acb7cfa1de04.html">MBody_individualID_project</a></li><li class="navelem"><a class="el" href="../../dir_f5eae8e555c19a92a065ce21c4cc8468.html">model</a></li><li class="navelem"><a class="el" href="../../d1/da6/MBody__individualID__project_2model_2classol__sim_8h.html">classol_sim.h</a></li>
-    <li class="footer">Generated on Fri Nov 6 2015 22:12:56 for GeNN by
+    <li class="navelem"><a class="el" href="../../dir_75b82e7e4a5feb05200b9ad7adf06257.html">home</a></li><li class="navelem"><a class="el" href="../../dir_ffe3a3aad2509bd71bde52251b868b95.html">t</a></li><li class="navelem"><a class="el" href="../../dir_a76bff614e8015b519bf2acd237705ed.html">tn</a></li><li class="navelem"><a class="el" href="../../dir_f4e7678815bf6e9eaf2cc8bfbd1351b7.html">tn41</a></li><li class="navelem"><a class="el" href="../../dir_2f2428e5af9c71cc79b0eec8cffe5ad2.html">localdisk_projects</a></li><li class="navelem"><a class="el" href="../../dir_3cf40d34fd3099085c9305fe2b26b2ea.html">develop</a></li><li class="navelem"><a class="el" href="../../dir_ee841fdb1cf52f11d3719e45227a7fba.html">genn</a></li><li class="navelem"><a class="el" href="../../dir_e9435152734d1e7a318dd6df08ca98d9.html">userproject</a></li><li class="navelem"><a class="el" href="../../dir_129eb0c55821a54e45ca323fba376d4c.html">MBody_individualID_project</a></li><li class="navelem"><a class="el" href="../../dir_d3bfb841323ea122dc52183bad22037b.html">model</a></li><li class="navelem"><a class="el" href="../../d1/da6/MBody__individualID__project_2model_2classol__sim_8h.html">classol_sim.h</a></li>
+    <li class="footer">Generated on Fri Jun 17 2016 14:44:59 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
   </ul>

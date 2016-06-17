@@ -4,7 +4,9 @@ var searchData=
   ['gauss_5fh',['GAUSS_H',['../d1/d69/gauss_8h.html#afd4b232f1f3ad32181fb0915b28bcd10',1,'gauss.h']]],
   ['genn_5fdouble',['GENN_DOUBLE',['../dc/de1/modelSpec_8h.html#a5fbe0a46143634905bda1bbdc243e279',1,'modelSpec.h']]],
   ['genn_5ffloat',['GENN_FLOAT',['../dc/de1/modelSpec_8h.html#a55c2f0074bbfdf5c161699a3de835ae4',1,'modelSpec.h']]],
+  ['global_5fcc',['GLOBAL_CC',['../d7/dd8/global_8cc.html#aab39068ee3baa91e6d8b214118852d28',1,'global.cc']]],
   ['global_5fweight_5fscaling',['GLOBAL_WEIGHT_SCALING',['../dc/d02/experiment_8h.html#a1d0c99a74301e43efeb845a971aa2b63',1,'experiment.h']]],
   ['globalg',['GLOBALG',['../dc/de1/modelSpec_8h.html#a0241851d52e6a088bc3194511a8246b9',1,'modelSpec.h']]],
+  ['gpnkc_5fglobal',['gPNKC_GLOBAL',['../d2/d8c/include_2sizes_8h.html#a97e1b5dcad4a248c5ee8b23f8daedd62',1,'gPNKC_GLOBAL():&#160;sizes.h'],['../d0/d8e/MBody__individualID__project_2model_2sizes_8h.html#a97e1b5dcad4a248c5ee8b23f8daedd62',1,'gPNKC_GLOBAL():&#160;sizes.h']]],
   ['gpu',['GPU',['../dc/de1/modelSpec_8h.html#a39cb9803524b6f3b783344b2f89867b4',1,'modelSpec.h']]]
 ];

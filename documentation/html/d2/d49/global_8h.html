@@ -34,6 +34,7 @@
   $(document).ready(function() { init_search(); });
 </script>
 <link href="../../customdoxygen.css" rel="stylesheet" type="text/css" />
+<link href="../../html_styles.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -44,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">2.0</span>
+   &#160;<span id="projectnumber">2.2</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -61,6 +62,7 @@ var searchBox = new SearchBox("searchBox", "../../search",false,'Search');
     <ul class="tablist">
       <li><a href="../../index.html"><span>Main&#160;Page</span></a></li>
       <li><a href="../../pages.html"><span>Related&#160;Pages</span></a></li>
+      <li><a href="../../namespaces.html"><span>Namespaces</span></a></li>
       <li><a href="../../annotated.html"><span>Classes</span></a></li>
       <li class="current"><a href="../../files.html"><span>Files</span></a></li>
       <li>
@@ -118,6 +120,7 @@ $(document).ready(function(){initNavTree('d2/d49/global_8h.html','../../');});
 
 <div class="header">
   <div class="summary">
+<a href="#namespaces">Namespaces</a> &#124;
 <a href="#define-members">Macros</a> &#124;
 <a href="#var-members">Variables</a>  </div>
   <div class="headertitle">
@@ -127,88 +130,119 @@ $(document).ready(function(){initNavTree('d2/d49/global_8h.html','../../');});
 
 <p>Global header file containing a few global variables. Part of the code generation section.  
 <a href="#details">More...</a></p>
-<div class="textblock"><code>#include &lt;iostream&gt;</code><br />
-<code>#include &lt;cstring&gt;</code><br />
-<code>#include &lt;string&gt;</code><br />
-<code>#include &lt;sstream&gt;</code><br />
-<code>#include &lt;vector&gt;</code><br />
-<code>#include &lt;cmath&gt;</code><br />
+<div class="textblock"><code>#include &lt;cuda.h&gt;</code><br />
 <code>#include &lt;cuda_runtime.h&gt;</code><br />
-<code>#include &quot;<a class="el" href="../../dd/d28/toString_8h_source.html">toString.h</a>&quot;</code><br />
-<code>#include &lt;stdint.h&gt;</code><br />
 </div>
 <p><a href="../../d2/d49/global_8h_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="namespaces"></a>
+Namespaces</h2></td></tr>
+<tr class="memitem:d4/dd6/namespaceGENN__FLAGS"><td class="memItemLeft" align="right" valign="top"> &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/dd6/namespaceGENN__FLAGS.html">GENN_FLAGS</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:d8/d27/namespaceGENN__PREFERENCES"><td class="memItemLeft" align="right" valign="top"> &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d27/namespaceGENN__PREFERENCES.html">GENN_PREFERENCES</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="define-members"></a>
 Macros</h2></td></tr>
-<tr class="memitem:ada6f015aed9ec48e464aec315a71273b"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d2/d49/global_8h.html#ada6f015aed9ec48e464aec315a71273b">_GLOBAL_H_</a></td></tr>
-<tr class="memdesc:ada6f015aed9ec48e464aec315a71273b"><td class="mdescLeft">&#160;</td><td class="mdescRight">macro for avoiding multiple inclusion during compilation  <a href="#ada6f015aed9ec48e464aec315a71273b">More...</a><br /></td></tr>
-<tr class="separator:ada6f015aed9ec48e464aec315a71273b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa8cecfc5c5c054d2875c03e77b7be15d"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d2/d49/global_8h.html#aa8cecfc5c5c054d2875c03e77b7be15d">TRUE</a>&#160;&#160;&#160;true</td></tr>
+<tr class="separator:aa8cecfc5c5c054d2875c03e77b7be15d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa93f0eb578d23995850d61f7d61c55c1"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d2/d49/global_8h.html#aa93f0eb578d23995850d61f7d61c55c1">FALSE</a>&#160;&#160;&#160;false</td></tr>
+<tr class="separator:aa93f0eb578d23995850d61f7d61c55c1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="var-members"></a>
 Variables</h2></td></tr>
+<tr class="memitem:a3b1f267e861503db8c2371bfe0989531"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/dd6/namespaceGENN__FLAGS.html#a3b1f267e861503db8c2371bfe0989531">GENN_FLAGS::calcSynapseDynamics</a> = 0</td></tr>
+<tr class="separator:a3b1f267e861503db8c2371bfe0989531"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa9e7f573246d5738188a5c7950b2cd35"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/dd6/namespaceGENN__FLAGS.html#aa9e7f573246d5738188a5c7950b2cd35">GENN_FLAGS::calcSynapses</a> = 1</td></tr>
+<tr class="separator:aa9e7f573246d5738188a5c7950b2cd35"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab711c6c2ef7ff24596840043244153b5"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/dd6/namespaceGENN__FLAGS.html#ab711c6c2ef7ff24596840043244153b5">GENN_FLAGS::learnSynapsesPost</a> = 2</td></tr>
+<tr class="separator:ab711c6c2ef7ff24596840043244153b5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a70d6722298f30838c00baf136c110902"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/dd6/namespaceGENN__FLAGS.html#a70d6722298f30838c00baf136c110902">GENN_FLAGS::calcNeurons</a> = 3</td></tr>
+<tr class="separator:a70d6722298f30838c00baf136c110902"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a24fbefb33f64f717b24b6f9892342472"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d27/namespaceGENN__PREFERENCES.html#a24fbefb33f64f717b24b6f9892342472">GENN_PREFERENCES::optimiseBlockSize</a> = 1</td></tr>
+<tr class="memdesc:a24fbefb33f64f717b24b6f9892342472"><td class="mdescLeft">&#160;</td><td class="mdescRight">Flag for signalling whether or not block size optimisation should be performed.  <a href="#a24fbefb33f64f717b24b6f9892342472">More...</a><br /></td></tr>
+<tr class="separator:a24fbefb33f64f717b24b6f9892342472"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adb99ec835aec37d566c69248798643bd"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d27/namespaceGENN__PREFERENCES.html#adb99ec835aec37d566c69248798643bd">GENN_PREFERENCES::autoChooseDevice</a> = 1</td></tr>
+<tr class="memdesc:adb99ec835aec37d566c69248798643bd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Flag to signal whether the GPU device should be chosen automatically.  <a href="#adb99ec835aec37d566c69248798643bd">More...</a><br /></td></tr>
+<tr class="separator:adb99ec835aec37d566c69248798643bd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac1fd3b45ea8f157c8d5f779d7603fa35"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d27/namespaceGENN__PREFERENCES.html#ac1fd3b45ea8f157c8d5f779d7603fa35">GENN_PREFERENCES::optimizeCode</a> = false</td></tr>
+<tr class="memdesc:ac1fd3b45ea8f157c8d5f779d7603fa35"><td class="mdescLeft">&#160;</td><td class="mdescRight">Request speed-optimized code, at the expense of floating-point accuracy.  <a href="#ac1fd3b45ea8f157c8d5f779d7603fa35">More...</a><br /></td></tr>
+<tr class="separator:ac1fd3b45ea8f157c8d5f779d7603fa35"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a967223438a721ed5c23ba510df02c347"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d27/namespaceGENN__PREFERENCES.html#a967223438a721ed5c23ba510df02c347">GENN_PREFERENCES::debugCode</a> = false</td></tr>
+<tr class="memdesc:a967223438a721ed5c23ba510df02c347"><td class="mdescLeft">&#160;</td><td class="mdescRight">Request debug data to be embedded in the generated code.  <a href="#a967223438a721ed5c23ba510df02c347">More...</a><br /></td></tr>
+<tr class="separator:a967223438a721ed5c23ba510df02c347"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4751653b0c4b7c43c163776650f23116"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d27/namespaceGENN__PREFERENCES.html#a4751653b0c4b7c43c163776650f23116">GENN_PREFERENCES::showPtxInfo</a> = false</td></tr>
+<tr class="memdesc:a4751653b0c4b7c43c163776650f23116"><td class="mdescLeft">&#160;</td><td class="mdescRight">Request that PTX assembler information be displayed for each CUDA kernel during compilation.  <a href="#a4751653b0c4b7c43c163776650f23116">More...</a><br /></td></tr>
+<tr class="separator:a4751653b0c4b7c43c163776650f23116"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a735be1f8a3fa1bb1eb74cf981d0525a2"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d27/namespaceGENN__PREFERENCES.html#a735be1f8a3fa1bb1eb74cf981d0525a2">GENN_PREFERENCES::asGoodAsZero</a> = 1e-19</td></tr>
+<tr class="memdesc:a735be1f8a3fa1bb1eb74cf981d0525a2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Global variable that is used when detecting close to zero values, for example when setting sparse connectivity from a dense matrix.  <a href="#a735be1f8a3fa1bb1eb74cf981d0525a2">More...</a><br /></td></tr>
+<tr class="separator:a735be1f8a3fa1bb1eb74cf981d0525a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1ae9bcfe428d00fd1f709cd7facf22b4"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d27/namespaceGENN__PREFERENCES.html#a1ae9bcfe428d00fd1f709cd7facf22b4">GENN_PREFERENCES::defaultDevice</a> = 0</td></tr>
+<tr class="separator:a1ae9bcfe428d00fd1f709cd7facf22b4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9ead15e70419d90b29f5a0da7417c92d"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d27/namespaceGENN__PREFERENCES.html#a9ead15e70419d90b29f5a0da7417c92d">GENN_PREFERENCES::neuronBlockSize</a> = 32</td></tr>
+<tr class="memdesc:a9ead15e70419d90b29f5a0da7417c92d"><td class="mdescLeft">&#160;</td><td class="mdescRight">default GPU device; used to determine which GPU to use if chooseDevice is 0 (off)  <a href="#a9ead15e70419d90b29f5a0da7417c92d">More...</a><br /></td></tr>
+<tr class="separator:a9ead15e70419d90b29f5a0da7417c92d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a46f28153f078f519794ba872417fa4e1"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d27/namespaceGENN__PREFERENCES.html#a46f28153f078f519794ba872417fa4e1">GENN_PREFERENCES::synapseBlockSize</a> = 32</td></tr>
+<tr class="separator:a46f28153f078f519794ba872417fa4e1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8fe9767c3de6e4ef52e8987ed50a5bd9"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d27/namespaceGENN__PREFERENCES.html#a8fe9767c3de6e4ef52e8987ed50a5bd9">GENN_PREFERENCES::learningBlockSize</a> = 32</td></tr>
+<tr class="separator:a8fe9767c3de6e4ef52e8987ed50a5bd9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ade2fa83150fa1af5c46b057c90c97aaa"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d27/namespaceGENN__PREFERENCES.html#ade2fa83150fa1af5c46b057c90c97aaa">GENN_PREFERENCES::synapseDynamicsBlockSize</a> = 32</td></tr>
+<tr class="separator:ade2fa83150fa1af5c46b057c90c97aaa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aea36da0f447200facdcd5ecad8b39a2a"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d27/namespaceGENN__PREFERENCES.html#aea36da0f447200facdcd5ecad8b39a2a">GENN_PREFERENCES::autoRefractory</a> = 1</td></tr>
+<tr class="memdesc:aea36da0f447200facdcd5ecad8b39a2a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Flag for signalling whether spikes are only reported if thresholdCondition changes from false to true (autoRefractory == 1) or spikes are emitted whenever thresholdCondition is true no matter what.  <a href="#aea36da0f447200facdcd5ecad8b39a2a">More...</a><br /></td></tr>
+<tr class="separator:aea36da0f447200facdcd5ecad8b39a2a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0374fbd30c8aa1ad09006c78859e7544"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d2/d49/global_8h.html#a0374fbd30c8aa1ad09006c78859e7544">neuronBlkSz</a></td></tr>
+<tr class="memdesc:a0374fbd30c8aa1ad09006c78859e7544"><td class="mdescLeft">&#160;</td><td class="mdescRight">Global variable containing the GPU block size for the neuron kernel.  <a href="#a0374fbd30c8aa1ad09006c78859e7544">More...</a><br /></td></tr>
 <tr class="separator:a0374fbd30c8aa1ad09006c78859e7544"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1c6d8e35ba0775d90b3ce5d777a6c892"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d2/d49/global_8h.html#a1c6d8e35ba0775d90b3ce5d777a6c892">synapseBlkSz</a></td></tr>
+<tr class="memdesc:a1c6d8e35ba0775d90b3ce5d777a6c892"><td class="mdescLeft">&#160;</td><td class="mdescRight">Global variable containing the GPU block size for the synapse kernel.  <a href="#a1c6d8e35ba0775d90b3ce5d777a6c892">More...</a><br /></td></tr>
 <tr class="separator:a1c6d8e35ba0775d90b3ce5d777a6c892"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1f16ea6bb3f329500a9f60fb4da7dd46"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d2/d49/global_8h.html#a1f16ea6bb3f329500a9f60fb4da7dd46">learnBlkSz</a></td></tr>
+<tr class="memdesc:a1f16ea6bb3f329500a9f60fb4da7dd46"><td class="mdescLeft">&#160;</td><td class="mdescRight">Global variable containing the GPU block size for the learn kernel.  <a href="#a1f16ea6bb3f329500a9f60fb4da7dd46">More...</a><br /></td></tr>
 <tr class="separator:a1f16ea6bb3f329500a9f60fb4da7dd46"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab6746418e5ea3f2dc81f9d71a2c6f5b8"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d2/d49/global_8h.html#ab6746418e5ea3f2dc81f9d71a2c6f5b8">synDynBlkSz</a></td></tr>
+<tr class="memdesc:ab6746418e5ea3f2dc81f9d71a2c6f5b8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Global variable containing the GPU block size for the synapse dynamics kernel.  <a href="#ab6746418e5ea3f2dc81f9d71a2c6f5b8">More...</a><br /></td></tr>
+<tr class="separator:ab6746418e5ea3f2dc81f9d71a2c6f5b8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9c0bee1772862acc65b81c8a2fe14f28"><td class="memItemLeft" align="right" valign="top">cudaDeviceProp *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d2/d49/global_8h.html#a9c0bee1772862acc65b81c8a2fe14f28">deviceProp</a></td></tr>
 <tr class="separator:a9c0bee1772862acc65b81c8a2fe14f28"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a81d96cf5e1975e327528f0822fb35a02"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d2/d49/global_8h.html#a81d96cf5e1975e327528f0822fb35a02">theDev</a></td></tr>
-<tr class="separator:a81d96cf5e1975e327528f0822fb35a02"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a23b3c32d04af422162d050484a76d11e"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d2/d49/global_8h.html#a23b3c32d04af422162d050484a76d11e">theDevice</a></td></tr>
+<tr class="memdesc:a23b3c32d04af422162d050484a76d11e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Global variable containing the currently selected CUDA device's number.  <a href="#a23b3c32d04af422162d050484a76d11e">More...</a><br /></td></tr>
+<tr class="separator:a23b3c32d04af422162d050484a76d11e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aeae4d6852439dcd029768b91adabc33b"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d2/d49/global_8h.html#aeae4d6852439dcd029768b91adabc33b">deviceCount</a></td></tr>
+<tr class="memdesc:aeae4d6852439dcd029768b91adabc33b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Global variable containing the number of CUDA devices on this host.  <a href="#aeae4d6852439dcd029768b91adabc33b">More...</a><br /></td></tr>
+<tr class="separator:aeae4d6852439dcd029768b91adabc33b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3a9b1273e41b6ba85090fca0451c7693"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d2/d49/global_8h.html#a3a9b1273e41b6ba85090fca0451c7693">hostCount</a></td></tr>
 <tr class="memdesc:a3a9b1273e41b6ba85090fca0451c7693"><td class="mdescLeft">&#160;</td><td class="mdescRight">Global variable containing the number of hosts within the local compute cluster.  <a href="#a3a9b1273e41b6ba85090fca0451c7693">More...</a><br /></td></tr>
 <tr class="separator:a3a9b1273e41b6ba85090fca0451c7693"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aeae4d6852439dcd029768b91adabc33b"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d2/d49/global_8h.html#aeae4d6852439dcd029768b91adabc33b">deviceCount</a></td></tr>
-<tr class="memdesc:aeae4d6852439dcd029768b91adabc33b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Global variable containing the number of CUDA devices found on this host.  <a href="#aeae4d6852439dcd029768b91adabc33b">More...</a><br /></td></tr>
-<tr class="separator:aeae4d6852439dcd029768b91adabc33b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3979da82e8d774168c2d6fef6b07f0b3"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d2/d49/global_8h.html#a3979da82e8d774168c2d6fef6b07f0b3">optimiseBlockSize</a> = 1</td></tr>
-<tr class="memdesc:a3979da82e8d774168c2d6fef6b07f0b3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Flag for signalling whether or not block size optimisation should be performed.  <a href="#a3979da82e8d774168c2d6fef6b07f0b3">More...</a><br /></td></tr>
-<tr class="separator:a3979da82e8d774168c2d6fef6b07f0b3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a36bbec086798c87606bdc408a282cda2"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d2/d49/global_8h.html#a36bbec086798c87606bdc408a282cda2">UIntSz</a> = sizeof(unsigned int) * 8</td></tr>
-<tr class="memdesc:a36bbec086798c87606bdc408a282cda2"><td class="mdescLeft">&#160;</td><td class="mdescRight">size of the unsigned int variable type on the local architecture  <a href="#a36bbec086798c87606bdc408a282cda2">More...</a><br /></td></tr>
-<tr class="separator:a36bbec086798c87606bdc408a282cda2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a55a62a3cab839c3ded600b32a02a9a7d"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d2/d49/global_8h.html#a55a62a3cab839c3ded600b32a02a9a7d">logUIntSz</a> = (int) (logf((float) <a class="el" href="../../d2/d49/global_8h.html#a36bbec086798c87606bdc408a282cda2">UIntSz</a>) / logf(2.0f) + 1e-5f)</td></tr>
-<tr class="memdesc:a55a62a3cab839c3ded600b32a02a9a7d"><td class="mdescLeft">&#160;</td><td class="mdescRight">logarithm of the size of the unsigned int variable type on the local architecture  <a href="#a55a62a3cab839c3ded600b32a02a9a7d">More...</a><br /></td></tr>
-<tr class="separator:a55a62a3cab839c3ded600b32a02a9a7d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa872ca71b515ec20c3b373e98bf733c8"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d2/d49/global_8h.html#aa872ca71b515ec20c3b373e98bf733c8">asGoodAsZero</a> = 1e-19</td></tr>
-<tr class="memdesc:aa872ca71b515ec20c3b373e98bf733c8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Global variable that is used when detecting close to zero values, for example when setting sparse connectivity from a dense matrix.  <a href="#aa872ca71b515ec20c3b373e98bf733c8">More...</a><br /></td></tr>
-<tr class="separator:aa872ca71b515ec20c3b373e98bf733c8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Global header file containing a few global variables. Part of the code generation section. </p>
-<p>This global header file also takes care of including some generally used cuda support header files. </p>
 </div><h2 class="groupheader">Macro Definition Documentation</h2>
-<a class="anchor" id="ada6f015aed9ec48e464aec315a71273b"></a>
+<a class="anchor" id="aa93f0eb578d23995850d61f7d61c55c1"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">#define _GLOBAL_H_</td>
+          <td class="memname">#define FALSE&#160;&#160;&#160;false</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>macro for avoiding multiple inclusion during compilation </p>
+</div>
+</div>
+<a class="anchor" id="aa8cecfc5c5c054d2875c03e77b7be15d"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define TRUE&#160;&#160;&#160;true</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
 
 </div>
 </div>
 <h2 class="groupheader">Variable Documentation</h2>
-<a class="anchor" id="aa872ca71b515ec20c3b373e98bf733c8"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">double asGoodAsZero = 1e-19</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Global variable that is used when detecting close to zero values, for example when setting sparse connectivity from a dense matrix. </p>
-
-</div>
-</div>
 <a class="anchor" id="aeae4d6852439dcd029768b91adabc33b"></a>
 <div class="memitem">
 <div class="memproto">
@@ -219,7 +253,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Global variable containing the number of CUDA devices found on this host. </p>
+<p>Global variable containing the number of CUDA devices on this host. </p>
 
 </div>
 </div>
@@ -259,19 +293,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-</div>
-</div>
-<a class="anchor" id="a55a62a3cab839c3ded600b32a02a9a7d"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">int logUIntSz = (int) (logf((float) <a class="el" href="../../d2/d49/global_8h.html#a36bbec086798c87606bdc408a282cda2">UIntSz</a>) / logf(2.0f) + 1e-5f)</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>logarithm of the size of the unsigned int variable type on the local architecture </p>
+<p>Global variable containing the GPU block size for the learn kernel. </p>
 
 </div>
 </div>
@@ -285,19 +307,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-</div>
-</div>
-<a class="anchor" id="a3979da82e8d774168c2d6fef6b07f0b3"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">int optimiseBlockSize = 1</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Flag for signalling whether or not block size optimisation should be performed. </p>
+<p>Global variable containing the GPU block size for the neuron kernel. </p>
 
 </div>
 </div>
@@ -311,31 +321,35 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
+<p>Global variable containing the GPU block size for the synapse kernel. </p>
+
 </div>
 </div>
-<a class="anchor" id="a81d96cf5e1975e327528f0822fb35a02"></a>
+<a class="anchor" id="ab6746418e5ea3f2dc81f9d71a2c6f5b8"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">int theDev</td>
+          <td class="memname">int synDynBlkSz</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
+<p>Global variable containing the GPU block size for the synapse dynamics kernel. </p>
+
 </div>
 </div>
-<a class="anchor" id="a36bbec086798c87606bdc408a282cda2"></a>
+<a class="anchor" id="a23b3c32d04af422162d050484a76d11e"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">int UIntSz = sizeof(unsigned int) * 8</td>
+          <td class="memname">int theDevice</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>size of the unsigned int variable type on the local architecture </p>
+<p>Global variable containing the currently selected CUDA device's number. </p>
 
 </div>
 </div>
@@ -344,8 +358,8 @@ Variables</h2></td></tr>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><a class="el" href="../../dir_97aefd0d527b934f1d99a682da8fe6a9.html">lib</a></li><li class="navelem"><a class="el" href="../../dir_5a30104352ef4255dc24354b02eb2d20.html">include</a></li><li class="navelem"><a class="el" href="../../d2/d49/global_8h.html">global.h</a></li>
-    <li class="footer">Generated on Fri Nov 6 2015 22:12:58 for GeNN by
+    <li class="navelem"><a class="el" href="../../dir_75b82e7e4a5feb05200b9ad7adf06257.html">home</a></li><li class="navelem"><a class="el" href="../../dir_ffe3a3aad2509bd71bde52251b868b95.html">t</a></li><li class="navelem"><a class="el" href="../../dir_a76bff614e8015b519bf2acd237705ed.html">tn</a></li><li class="navelem"><a class="el" href="../../dir_f4e7678815bf6e9eaf2cc8bfbd1351b7.html">tn41</a></li><li class="navelem"><a class="el" href="../../dir_2f2428e5af9c71cc79b0eec8cffe5ad2.html">localdisk_projects</a></li><li class="navelem"><a class="el" href="../../dir_3cf40d34fd3099085c9305fe2b26b2ea.html">develop</a></li><li class="navelem"><a class="el" href="../../dir_ee841fdb1cf52f11d3719e45227a7fba.html">genn</a></li><li class="navelem"><a class="el" href="../../dir_97d83ea9b369010f011f7f8afbb221a3.html">lib</a></li><li class="navelem"><a class="el" href="../../dir_3886a36523d5a98a8b30f50f43af3f11.html">include</a></li><li class="navelem"><a class="el" href="../../d2/d49/global_8h.html">global.h</a></li>
+    <li class="footer">Generated on Fri Jun 17 2016 14:44:59 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
   </ul>

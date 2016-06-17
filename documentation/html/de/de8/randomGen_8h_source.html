@@ -34,6 +34,7 @@
   $(document).ready(function() { init_search(); });
 </script>
 <link href="../../customdoxygen.css" rel="stylesheet" type="text/css" />
+<link href="../../html_styles.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -44,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">2.0</span>
+   &#160;<span id="projectnumber">2.2</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -61,6 +62,7 @@ var searchBox = new SearchBox("searchBox", "../../search",false,'Search');
     <ul class="tablist">
       <li><a href="../../index.html"><span>Main&#160;Page</span></a></li>
       <li><a href="../../pages.html"><span>Related&#160;Pages</span></a></li>
+      <li><a href="../../namespaces.html"><span>Namespaces</span></a></li>
       <li><a href="../../annotated.html"><span>Classes</span></a></li>
       <li class="current"><a href="../../files.html"><span>Files</span></a></li>
       <li>
@@ -143,8 +145,8 @@ $(document).ready(function(){initNavTree('de/de8/randomGen_8h_source.html','../.
 <div class="line"><a name="l00022"></a><span class="lineno">   22</span>&#160;<span class="preprocessor">#include &lt;time.h&gt;</span></div>
 <div class="line"><a name="l00023"></a><span class="lineno">   23</span>&#160;<span class="preprocessor">#include &lt;limits.h&gt;</span></div>
 <div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160;<span class="preprocessor">#include &lt;stdlib.h&gt;</span></div>
-<div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;<span class="preprocessor">#include &quot;isaac.hpp&quot;</span></div>
-<div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;<span class="preprocessor">#include &lt;assert.h&gt;</span></div>
+<div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;<span class="preprocessor">#include &lt;assert.h&gt;</span></div>
+<div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;<span class="preprocessor">#include &quot;<a class="code" href="../../dd/d68/isaac_8cc.html">isaac.cc</a>&quot;</span></div>
 <div class="line"><a name="l00027"></a><span class="lineno">   27</span>&#160;</div>
 <div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160;<span class="comment">//--------------------------------------------------------------------------</span></div>
 <div class="line"><a name="l00036"></a><span class="lineno">   36</span>&#160;<span class="comment"></span><span class="comment">//--------------------------------------------------------------------------</span></div>
@@ -152,7 +154,7 @@ $(document).ready(function(){initNavTree('de/de8/randomGen_8h_source.html','../.
 <div class="line"><a name="l00038"></a><span class="lineno"><a class="line" href="../../d8/d3b/classrandomGen.html">   38</a></span>&#160;<span class="keyword">class </span><a class="code" href="../../d8/d3b/classrandomGen.html">randomGen</a></div>
 <div class="line"><a name="l00039"></a><span class="lineno">   39</span>&#160;{</div>
 <div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160; <span class="keyword">private</span>:</div>
-<div class="line"><a name="l00041"></a><span class="lineno">   41</span>&#160;  QTIsaac&lt;8, unsigned long&gt; TheGen; </div>
+<div class="line"><a name="l00041"></a><span class="lineno">   41</span>&#160;  <a class="code" href="../../d9/dea/classQTIsaac.html">QTIsaac&lt;8, unsigned long&gt;</a> TheGen; </div>
 <div class="line"><a name="l00042"></a><span class="lineno">   42</span>&#160;  <span class="keywordtype">double</span> a;</div>
 <div class="line"><a name="l00043"></a><span class="lineno">   43</span>&#160;  </div>
 <div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160; <span class="keyword">public</span>:</div>
@@ -176,14 +178,14 @@ $(document).ready(function(){initNavTree('de/de8/randomGen_8h_source.html','../.
 <div class="line"><a name="l00062"></a><span class="lineno">   62</span>&#160;  <span class="keywordtype">unsigned</span> <span class="keywordtype">long</span> <a class="code" href="../../db/d09/classstdRG.html#a7abd7966eb13e25de120e4ef05e4e877">nlong</a>();</div>
 <div class="line"><a name="l00063"></a><span class="lineno">   63</span>&#160;};</div>
 <div class="line"><a name="l00064"></a><span class="lineno">   64</span>&#160;</div>
-<div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;<span class="comment">//#include &quot;randomGen.cc&quot;</span></div>
-<div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160;</div>
-<div class="line"><a name="l00067"></a><span class="lineno">   67</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;<span class="preprocessor">#endif</span></div>
 <div class="ttc" id="classstdRG_html_ab2b84f84f234df06a63aec2e69351fdd"><div class="ttname"><a href="../../db/d09/classstdRG.html#ab2b84f84f234df06a63aec2e69351fdd">stdRG::n</a></div><div class="ttdeci">double n()</div><div class="ttdoc">Method to generate a uniform random number. </div><div class="ttdef"><b>Definition:</b> randomGen.cc:123</div></div>
 <div class="ttc" id="classrandomGen_html_ada03051a500718832b829f7d6f699028"><div class="ttname"><a href="../../d8/d3b/classrandomGen.html#ada03051a500718832b829f7d6f699028">randomGen::randomGen</a></div><div class="ttdeci">randomGen()</div><div class="ttdoc">Constructor for the ISAAC random number generator class without giving explicit seeds. </div><div class="ttdef"><b>Definition:</b> randomGen.cc:32</div></div>
 <div class="ttc" id="classrandomGen_html_aff27fbad3b28842484acd1422c41ca66"><div class="ttname"><a href="../../d8/d3b/classrandomGen.html#aff27fbad3b28842484acd1422c41ca66">randomGen::~randomGen</a></div><div class="ttdeci">~randomGen()</div><div class="ttdef"><b>Definition:</b> randomGen.h:47</div></div>
+<div class="ttc" id="classQTIsaac_html"><div class="ttname"><a href="../../d9/dea/classQTIsaac.html">QTIsaac&lt; 8, unsigned long &gt;</a></div></div>
 <div class="ttc" id="classrandomGen_html_ae524b99f0205bf178c0ecc2bc49a518f"><div class="ttname"><a href="../../d8/d3b/classrandomGen.html#ae524b99f0205bf178c0ecc2bc49a518f">randomGen::srand</a></div><div class="ttdeci">void srand(unsigned long, unsigned long, unsigned long)</div><div class="ttdoc">Function for seeding with fixed seeds. </div><div class="ttdef"><b>Definition:</b> randomGen.cc:78</div></div>
 <div class="ttc" id="classstdRG_html_a7abd7966eb13e25de120e4ef05e4e877"><div class="ttname"><a href="../../db/d09/classstdRG.html#a7abd7966eb13e25de120e4ef05e4e877">stdRG::nlong</a></div><div class="ttdeci">unsigned long nlong()</div></div>
+<div class="ttc" id="isaac_8cc_html"><div class="ttname"><a href="../../dd/d68/isaac_8cc.html">isaac.cc</a></div><div class="ttdoc">Header file and implementation of the ISAAC random number generator. </div></div>
 <div class="ttc" id="classstdRG_html_a0bbc8b513176fbf0fdadb5b568222ffe"><div class="ttname"><a href="../../db/d09/classstdRG.html#a0bbc8b513176fbf0fdadb5b568222ffe">stdRG::~stdRG</a></div><div class="ttdeci">~stdRG()</div><div class="ttdef"><b>Definition:</b> randomGen.h:60</div></div>
 <div class="ttc" id="classstdRG_html_a49cecf58206a2a7f6e7994357672f5de"><div class="ttname"><a href="../../db/d09/classstdRG.html#a49cecf58206a2a7f6e7994357672f5de">stdRG::stdRG</a></div><div class="ttdeci">stdRG()</div><div class="ttdoc">Constructor of the standard random number generator class without explicit seed. </div><div class="ttdef"><b>Definition:</b> randomGen.cc:96</div></div>
 <div class="ttc" id="classrandomGen_html"><div class="ttname"><a href="../../d8/d3b/classrandomGen.html">randomGen</a></div><div class="ttdoc">Class randomGen which implements the ISAAC random number generator for uniformely distributed random ...</div><div class="ttdef"><b>Definition:</b> randomGen.h:38</div></div>
@@ -194,8 +196,8 @@ $(document).ready(function(){initNavTree('de/de8/randomGen_8h_source.html','../.
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><a class="el" href="../../dir_97aefd0d527b934f1d99a682da8fe6a9.html">lib</a></li><li class="navelem"><a class="el" href="../../dir_5a30104352ef4255dc24354b02eb2d20.html">include</a></li><li class="navelem"><a class="el" href="../../dir_5204117c1a0cbfbbef67bbcdcd7665f5.html">numlib</a></li><li class="navelem"><a class="el" href="../../de/de8/randomGen_8h.html">randomGen.h</a></li>
-    <li class="footer">Generated on Fri Nov 6 2015 22:12:56 for GeNN by
+    <li class="navelem"><a class="el" href="../../dir_75b82e7e4a5feb05200b9ad7adf06257.html">home</a></li><li class="navelem"><a class="el" href="../../dir_ffe3a3aad2509bd71bde52251b868b95.html">t</a></li><li class="navelem"><a class="el" href="../../dir_a76bff614e8015b519bf2acd237705ed.html">tn</a></li><li class="navelem"><a class="el" href="../../dir_f4e7678815bf6e9eaf2cc8bfbd1351b7.html">tn41</a></li><li class="navelem"><a class="el" href="../../dir_2f2428e5af9c71cc79b0eec8cffe5ad2.html">localdisk_projects</a></li><li class="navelem"><a class="el" href="../../dir_3cf40d34fd3099085c9305fe2b26b2ea.html">develop</a></li><li class="navelem"><a class="el" href="../../dir_ee841fdb1cf52f11d3719e45227a7fba.html">genn</a></li><li class="navelem"><a class="el" href="../../dir_e9435152734d1e7a318dd6df08ca98d9.html">userproject</a></li><li class="navelem"><a class="el" href="../../dir_c942daf8eeb48a1a595d63f326c08ccd.html">include</a></li><li class="navelem"><a class="el" href="../../de/de8/randomGen_8h.html">randomGen.h</a></li>
+    <li class="footer">Generated on Fri Jun 17 2016 14:44:59 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
   </ul>

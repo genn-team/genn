@@ -34,6 +34,7 @@
   $(document).ready(function() { init_search(); });
 </script>
 <link href="../../customdoxygen.css" rel="stylesheet" type="text/css" />
+<link href="../../html_styles.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -44,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">2.0</span>
+   &#160;<span id="projectnumber">2.2</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -61,6 +62,7 @@ var searchBox = new SearchBox("searchBox", "../../search",false,'Search');
     <ul class="tablist">
       <li><a href="../../index.html"><span>Main&#160;Page</span></a></li>
       <li><a href="../../pages.html"><span>Related&#160;Pages</span></a></li>
+      <li><a href="../../namespaces.html"><span>Namespaces</span></a></li>
       <li><a href="../../annotated.html"><span>Classes</span></a></li>
       <li class="current"><a href="../../files.html"><span>Files</span></a></li>
       <li>
@@ -124,9 +126,13 @@ $(document).ready(function(){initNavTree('d1/da6/MBody__individualID__project_2m
 <div class="title">MBody_individualID_project/model/classol_sim.h File Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
+
+<p>Header file containing global variables and macros used in running the classol / MBody_individualID model.  
+<a href="#details">More...</a></p>
 <div class="textblock"><code>#include &lt;cassert&gt;</code><br />
-<code>#include &quot;<a class="el" href="../../df/d71/hr__time_8cpp.html">hr_time.cpp</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="../../db/dd6/hr__time_8h_source.html">hr_time.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="../../d5/d60/utils_8h_source.html">utils.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="../../dd/dc3/stringUtils_8h_source.html">stringUtils.h</a>&quot;</code><br />
 <code>#include &lt;cuda_runtime.h&gt;</code><br />
 <code>#include &quot;<a class="el" href="../../d3/d25/MBody__individualID_8cc.html">MBody_individualID.cc</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="../../dd/d60/MBody__individualID__project_2model_2map__classol_8cc.html">map_classol.cc</a>&quot;</code><br />
@@ -154,11 +160,7 @@ Macros</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="var-members"></a>
 Variables</h2></td></tr>
-<tr class="memitem:a8aa5341922e7fabc709fff9cf14e2e5f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../dc/d3f/PoissonIzh_8cc.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/da6/MBody__individualID__project_2model_2classol__sim_8h.html#a8aa5341922e7fabc709fff9cf14e2e5f">t</a> = 0.0f</td></tr>
-<tr class="separator:a8aa5341922e7fabc709fff9cf14e2e5f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af90823709b88c685c62a727366640633"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/da6/MBody__individualID__project_2model_2classol__sim_8h.html#af90823709b88c685c62a727366640633">iT</a> = 0</td></tr>
-<tr class="separator:af90823709b88c685c62a727366640633"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5b04369a7558bcf7da0830c978a36bff"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../dc/d3f/PoissonIzh_8cc.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/da6/MBody__individualID__project_2model_2classol__sim_8h.html#a5b04369a7558bcf7da0830c978a36bff">InputBaseRate</a> = 2e-04</td></tr>
+<tr class="memitem:a5b04369a7558bcf7da0830c978a36bff"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d6/d45/PoissonIzh__project_2model_2sizes_8h.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/da6/MBody__individualID__project_2model_2classol__sim_8h.html#a5b04369a7558bcf7da0830c978a36bff">InputBaseRate</a> = 2e-04</td></tr>
 <tr class="separator:a5b04369a7558bcf7da0830c978a36bff"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0413cabfdba223c3bb3098f49896cd9b"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/da6/MBody__individualID__project_2model_2classol__sim_8h.html#a0413cabfdba223c3bb3098f49896cd9b">patSetTime</a></td></tr>
 <tr class="separator:a0413cabfdba223c3bb3098f49896cd9b"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -167,7 +169,9 @@ Variables</h2></td></tr>
 <tr class="memitem:a5256bd92e0315a4504ed1d8c6bcab9c9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d9/de8/classCStopWatch.html">CStopWatch</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/da6/MBody__individualID__project_2model_2classol__sim_8h.html#a5256bd92e0315a4504ed1d8c6bcab9c9">timer</a></td></tr>
 <tr class="separator:a5256bd92e0315a4504ed1d8c6bcab9c9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<h2 class="groupheader">Macro Definition Documentation</h2>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><p>Header file containing global variables and macros used in running the classol / MBody_individualID model. </p>
+</div><h2 class="groupheader">Macro Definition Documentation</h2>
 <a class="anchor" id="af2aa052c33678b98e77e813a818e95e2"></a>
 <div class="memitem">
 <div class="memproto">
@@ -284,19 +288,7 @@ Variables</h2></td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="../../dc/d3f/PoissonIzh_8cc.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a> InputBaseRate = 2e-04</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a class="anchor" id="af90823709b88c685c62a727366640633"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">unsigned int iT = 0</td>
+          <td class="memname"><a class="el" href="../../d6/d45/PoissonIzh__project_2model_2sizes_8h.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a> InputBaseRate = 2e-04</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -327,18 +319,6 @@ Variables</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a8aa5341922e7fabc709fff9cf14e2e5f"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="../../dc/d3f/PoissonIzh_8cc.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a> t = 0.0f</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
 <a class="anchor" id="a5256bd92e0315a4504ed1d8c6bcab9c9"></a>
 <div class="memitem">
 <div class="memproto">
@@ -356,8 +336,8 @@ Variables</h2></td></tr>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><a class="el" href="../../dir_66fc3ae5585a02e310a487b6a12e9e11.html">userproject</a></li><li class="navelem"><a class="el" href="../../dir_9b93f25abba8addfb044acb7cfa1de04.html">MBody_individualID_project</a></li><li class="navelem"><a class="el" href="../../dir_f5eae8e555c19a92a065ce21c4cc8468.html">model</a></li><li class="navelem"><a class="el" href="../../d1/da6/MBody__individualID__project_2model_2classol__sim_8h.html">classol_sim.h</a></li>
-    <li class="footer">Generated on Fri Nov 6 2015 22:12:57 for GeNN by
+    <li class="navelem"><a class="el" href="../../dir_75b82e7e4a5feb05200b9ad7adf06257.html">home</a></li><li class="navelem"><a class="el" href="../../dir_ffe3a3aad2509bd71bde52251b868b95.html">t</a></li><li class="navelem"><a class="el" href="../../dir_a76bff614e8015b519bf2acd237705ed.html">tn</a></li><li class="navelem"><a class="el" href="../../dir_f4e7678815bf6e9eaf2cc8bfbd1351b7.html">tn41</a></li><li class="navelem"><a class="el" href="../../dir_2f2428e5af9c71cc79b0eec8cffe5ad2.html">localdisk_projects</a></li><li class="navelem"><a class="el" href="../../dir_3cf40d34fd3099085c9305fe2b26b2ea.html">develop</a></li><li class="navelem"><a class="el" href="../../dir_ee841fdb1cf52f11d3719e45227a7fba.html">genn</a></li><li class="navelem"><a class="el" href="../../dir_e9435152734d1e7a318dd6df08ca98d9.html">userproject</a></li><li class="navelem"><a class="el" href="../../dir_129eb0c55821a54e45ca323fba376d4c.html">MBody_individualID_project</a></li><li class="navelem"><a class="el" href="../../dir_d3bfb841323ea122dc52183bad22037b.html">model</a></li><li class="navelem"><a class="el" href="../../d1/da6/MBody__individualID__project_2model_2classol__sim_8h.html">classol_sim.h</a></li>
+    <li class="footer">Generated on Fri Jun 17 2016 14:44:59 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
   </ul>

@@ -1,6 +1,5 @@
 var MBody__delayedSyn_8cc =
 [
-    [ "DT", "df/dc6/MBody__delayedSyn_8cc.html#a943f07034774ef1261d62cd0d3d1fec9", null ],
     [ "modelDefinition", "df/dc6/MBody__delayedSyn_8cc.html#a9aeaa0a22980484b2c472564fc9f686e", null ],
     [ "myDNDN_ini", "df/dc6/MBody__delayedSyn_8cc.html#a935fe58cc4a61dbbb40a1e6af2f0fe0d", null ],
     [ "myDNDN_p", "df/dc6/MBody__delayedSyn_8cc.html#a73bd14c09c4f07fc966d10c6cc11883d", null ],

@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['installation',['Installation',['../d8/d99/Installation.html',1,'']]]
+  ['genn_20documentation',['GeNN Documentation',['../index.html',1,'']]]
 ];

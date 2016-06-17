@@ -34,6 +34,7 @@
   $(document).ready(function() { init_search(); });
 </script>
 <link href="../../customdoxygen.css" rel="stylesheet" type="text/css" />
+<link href="../../html_styles.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -44,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">2.0</span>
+   &#160;<span id="projectnumber">2.2</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -61,6 +62,7 @@ var searchBox = new SearchBox("searchBox", "../../search",false,'Search');
     <ul class="tablist">
       <li><a href="../../index.html"><span>Main&#160;Page</span></a></li>
       <li><a href="../../pages.html"><span>Related&#160;Pages</span></a></li>
+      <li><a href="../../namespaces.html"><span>Namespaces</span></a></li>
       <li class="current"><a href="../../annotated.html"><span>Classes</span></a></li>
       <li><a href="../../files.html"><span>Files</span></a></li>
       <li>
@@ -128,15 +130,19 @@ $(document).ready(function(){initNavTree('dd/db7/classweightUpdateModel.html','.
 </div><!--header-->
 <div class="contents">
 
-<p>Structure to hold the information that defines a weightupdate model (a model of how spikes affect synaptic (and/or) (mostly) post-synaptic neuron variables. It also allows to define changes in response to post-synaptic spikes/spike-like events.  
+<p>Class to hold the information that defines a weightupdate model (a model of how spikes affect synaptic (and/or) (mostly) post-synaptic neuron variables. It also allows to define changes in response to post-synaptic spikes/spike-like events.  
  <a href="../../dd/db7/classweightUpdateModel.html#details">More...</a></p>
 
-<p><code>#include &lt;<a class="el" href="../../dc/de1/modelSpec_8h_source.html">modelSpec.h</a>&gt;</code></p>
+<p><code>#include &lt;<a class="el" href="../../d2/d5b/synapseModels_8h_source.html">synapseModels.h</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:ae83d9e39690aaa754ab5be7b72ca60d5"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/db7/classweightUpdateModel.html#ae83d9e39690aaa754ab5be7b72ca60d5">weightUpdateModel</a> ()</td></tr>
+<tr class="memdesc:ae83d9e39690aaa754ab5be7b72ca60d5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructor for <a class="el" href="../../dd/db7/classweightUpdateModel.html" title="Class to hold the information that defines a weightupdate model (a model of how spikes affect synapti...">weightUpdateModel</a> objects.  <a href="#ae83d9e39690aaa754ab5be7b72ca60d5">More...</a><br /></td></tr>
 <tr class="separator:ae83d9e39690aaa754ab5be7b72ca60d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aef2043ad128ea3b84a7259b2d4c77403"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/db7/classweightUpdateModel.html#aef2043ad128ea3b84a7259b2d4c77403">~weightUpdateModel</a> ()</td></tr>
+<tr class="memdesc:aef2043ad128ea3b84a7259b2d4c77403"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destructor for <a class="el" href="../../dd/db7/classweightUpdateModel.html" title="Class to hold the information that defines a weightupdate model (a model of how spikes affect synapti...">weightUpdateModel</a> objects.  <a href="#aef2043ad128ea3b84a7259b2d4c77403">More...</a><br /></td></tr>
+<tr class="separator:aef2043ad128ea3b84a7259b2d4c77403"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
@@ -155,6 +161,15 @@ Public Attributes</h2></td></tr>
 <tr class="memitem:a8f5c92fc0ca6c1ddf861891bfd751de2"><td class="memItemLeft" align="right" valign="top">string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/db7/classweightUpdateModel.html#a8f5c92fc0ca6c1ddf861891bfd751de2">synapseDynamics</a></td></tr>
 <tr class="memdesc:a8f5c92fc0ca6c1ddf861891bfd751de2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Simulation code for synapse dynamics independent of spike detection.  <a href="#a8f5c92fc0ca6c1ddf861891bfd751de2">More...</a><br /></td></tr>
 <tr class="separator:a8f5c92fc0ca6c1ddf861891bfd751de2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af698a58749d3f6e18f01ca3c0e165b36"><td class="memItemLeft" align="right" valign="top">string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/db7/classweightUpdateModel.html#af698a58749d3f6e18f01ca3c0e165b36">simCode_supportCode</a></td></tr>
+<tr class="memdesc:af698a58749d3f6e18f01ca3c0e165b36"><td class="mdescLeft">&#160;</td><td class="mdescRight">Support code is made available within the synapse kernel definition file and is meant to contain user defined device functions that are used in the neuron codes. Preprocessor defines are also allowed if appropriately safeguarded against multiple definition by using ifndef; functions should be declared as "__host__ __device__" to be available for both GPU and CPU versions; note that this support code is available to simCode, evntThreshold and simCodeEvnt.  <a href="#af698a58749d3f6e18f01ca3c0e165b36">More...</a><br /></td></tr>
+<tr class="separator:af698a58749d3f6e18f01ca3c0e165b36"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a457fbb8ae21cc4077cc1e08618c4cbb4"><td class="memItemLeft" align="right" valign="top">string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/db7/classweightUpdateModel.html#a457fbb8ae21cc4077cc1e08618c4cbb4">simLearnPost_supportCode</a></td></tr>
+<tr class="memdesc:a457fbb8ae21cc4077cc1e08618c4cbb4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Support code is made available within the synapse kernel definition file and is meant to contain user defined device functions that are used in the neuron codes. Preprocessor defines are also allowed if appropriately safeguarded against multiple definition by using ifndef; functions should be declared as "__host__ __device__" to be available for both GPU and CPU versions.  <a href="#a457fbb8ae21cc4077cc1e08618c4cbb4">More...</a><br /></td></tr>
+<tr class="separator:a457fbb8ae21cc4077cc1e08618c4cbb4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a456e18c995ff42277e23005f75c83728"><td class="memItemLeft" align="right" valign="top">string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/db7/classweightUpdateModel.html#a456e18c995ff42277e23005f75c83728">synapseDynamics_supportCode</a></td></tr>
+<tr class="memdesc:a456e18c995ff42277e23005f75c83728"><td class="mdescLeft">&#160;</td><td class="mdescRight">Support code is made available within the synapse kernel definition file and is meant to contain user defined device functions that are used in the neuron codes. Preprocessor defines are also allowed if appropriately safeguarded against multiple definition by using ifndef; functions should be declared as "__host__ __device__" to be available for both GPU and CPU versions.  <a href="#a456e18c995ff42277e23005f75c83728">More...</a><br /></td></tr>
+<tr class="separator:a456e18c995ff42277e23005f75c83728"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a130dc4796aef818562cd9ab112a6dc98"><td class="memItemLeft" align="right" valign="top">vector&lt; string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/db7/classweightUpdateModel.html#a130dc4796aef818562cd9ab112a6dc98">varNames</a></td></tr>
 <tr class="memdesc:a130dc4796aef818562cd9ab112a6dc98"><td class="mdescLeft">&#160;</td><td class="mdescRight">Names of the variables in the postsynaptic model.  <a href="#a130dc4796aef818562cd9ab112a6dc98">More...</a><br /></td></tr>
 <tr class="separator:a130dc4796aef818562cd9ab112a6dc98"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -183,14 +198,11 @@ Public Attributes</h2></td></tr>
 <tr class="separator:a1948fc8aa7b2d8b82784cbd09bc741aa"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Structure to hold the information that defines a weightupdate model (a model of how spikes affect synaptic (and/or) (mostly) post-synaptic neuron variables. It also allows to define changes in response to post-synaptic spikes/spike-like events. </p>
+<div class="textblock"><p>Class to hold the information that defines a weightupdate model (a model of how spikes affect synaptic (and/or) (mostly) post-synaptic neuron variables. It also allows to define changes in response to post-synaptic spikes/spike-like events. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a class="anchor" id="ae83d9e39690aaa754ab5be7b72ca60d5"></a>
 <div class="memitem">
 <div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">weightUpdateModel::weightUpdateModel </td>
@@ -199,12 +211,26 @@ Public Attributes</h2></td></tr>
           <td></td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
+
+<p>Constructor for <a class="el" href="../../dd/db7/classweightUpdateModel.html" title="Class to hold the information that defines a weightupdate model (a model of how spikes affect synapti...">weightUpdateModel</a> objects. </p>
+
+</div>
+</div>
+<a class="anchor" id="aef2043ad128ea3b84a7259b2d4c77403"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">weightUpdateModel::~weightUpdateModel </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Destructor for <a class="el" href="../../dd/db7/classweightUpdateModel.html" title="Class to hold the information that defines a weightupdate model (a model of how spikes affect synapti...">weightUpdateModel</a> objects. </p>
 
 </div>
 </div>
@@ -333,6 +359,20 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="af698a58749d3f6e18f01ca3c0e165b36"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">string weightUpdateModel::simCode_supportCode</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Support code is made available within the synapse kernel definition file and is meant to contain user defined device functions that are used in the neuron codes. Preprocessor defines are also allowed if appropriately safeguarded against multiple definition by using ifndef; functions should be declared as "__host__ __device__" to be available for both GPU and CPU versions; note that this support code is available to simCode, evntThreshold and simCodeEvnt. </p>
+
+</div>
+</div>
 <a class="anchor" id="a758cc3211ae12407583f625418dd5a89"></a>
 <div class="memitem">
 <div class="memproto">
@@ -361,6 +401,20 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="a457fbb8ae21cc4077cc1e08618c4cbb4"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">string weightUpdateModel::simLearnPost_supportCode</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Support code is made available within the synapse kernel definition file and is meant to contain user defined device functions that are used in the neuron codes. Preprocessor defines are also allowed if appropriately safeguarded against multiple definition by using ifndef; functions should be declared as "__host__ __device__" to be available for both GPU and CPU versions. </p>
+
+</div>
+</div>
 <a class="anchor" id="a8f5c92fc0ca6c1ddf861891bfd751de2"></a>
 <div class="memitem">
 <div class="memproto">
@@ -372,6 +426,20 @@ Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Simulation code for synapse dynamics independent of spike detection. </p>
+
+</div>
+</div>
+<a class="anchor" id="a456e18c995ff42277e23005f75c83728"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">string weightUpdateModel::synapseDynamics_supportCode</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Support code is made available within the synapse kernel definition file and is meant to contain user defined device functions that are used in the neuron codes. Preprocessor defines are also allowed if appropriately safeguarded against multiple definition by using ifndef; functions should be declared as "__host__ __device__" to be available for both GPU and CPU versions. </p>
 
 </div>
 </div>
@@ -403,8 +471,9 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
-<hr/>The documentation for this class was generated from the following file:<ul>
-<li><a class="el" href="../../dc/de1/modelSpec_8h_source.html">modelSpec.h</a></li>
+<hr/>The documentation for this class was generated from the following files:<ul>
+<li><a class="el" href="../../d2/d5b/synapseModels_8h_source.html">synapseModels.h</a></li>
+<li><a class="el" href="../../d9/d5b/synapseModels_8cc.html">synapseModels.cc</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
@@ -412,7 +481,7 @@ Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dd/db7/classweightUpdateModel.html">weightUpdateModel</a></li>
-    <li class="footer">Generated on Fri Nov 6 2015 22:13:05 for GeNN by
+    <li class="footer">Generated on Fri Jun 17 2016 14:45:01 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
   </ul>

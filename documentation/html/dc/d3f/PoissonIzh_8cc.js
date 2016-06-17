@@ -1,10 +1,5 @@
 var PoissonIzh_8cc =
 [
-    [ "_FTYPE", "dc/d3f/PoissonIzh_8cc.html#a7a70d06ab2deeaf6f1d21e70b18b2123", null ],
-    [ "DT", "dc/d3f/PoissonIzh_8cc.html#a943f07034774ef1261d62cd0d3d1fec9", null ],
-    [ "scalar", "dc/d3f/PoissonIzh_8cc.html#afad04d16ebd8523dd0d5f74145280a40", null ],
-    [ "SCALAR_MAX", "dc/d3f/PoissonIzh_8cc.html#a560c7f59cdd1a313bddd6954b7fe73e6", null ],
-    [ "SCALAR_MIN", "dc/d3f/PoissonIzh_8cc.html#aa3be788851c8e708d04e146d3c043f05", null ],
     [ "modelDefinition", "dc/d3f/PoissonIzh_8cc.html#a9aeaa0a22980484b2c472564fc9f686e", null ],
     [ "exIzh_ini", "dc/d3f/PoissonIzh_8cc.html#a095626472c86f088893a9dbebc00c49b", null ],
     [ "exIzh_p", "dc/d3f/PoissonIzh_8cc.html#ab0c620eee5f0e828d73b9544b63d3ff8", null ],

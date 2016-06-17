@@ -1,6 +1,7 @@
 var classweightUpdateModel =
 [
     [ "weightUpdateModel", "dd/db7/classweightUpdateModel.html#ae83d9e39690aaa754ab5be7b72ca60d5", null ],
+    [ "~weightUpdateModel", "dd/db7/classweightUpdateModel.html#aef2043ad128ea3b84a7259b2d4c77403", null ],
     [ "dpNames", "dd/db7/classweightUpdateModel.html#a508c032f1c92f8d3da42dfa9209f0eb8", null ],
     [ "dps", "dd/db7/classweightUpdateModel.html#a7f23e71d08ca83e3f5941105b90814d5", null ],
     [ "evntThreshold", "dd/db7/classweightUpdateModel.html#acccf120c9b1307f7ee2c5bac43110be1", null ],
@@ -10,9 +11,12 @@ var classweightUpdateModel =
     [ "needPreSt", "dd/db7/classweightUpdateModel.html#af93f31710e2249afd22c05c4a7e7a28d", null ],
     [ "pNames", "dd/db7/classweightUpdateModel.html#a991eb286139c935b39e0af71e5b85ec6", null ],
     [ "simCode", "dd/db7/classweightUpdateModel.html#a6f665453175451356bbf14b9f60baed3", null ],
+    [ "simCode_supportCode", "dd/db7/classweightUpdateModel.html#af698a58749d3f6e18f01ca3c0e165b36", null ],
     [ "simCodeEvnt", "dd/db7/classweightUpdateModel.html#a758cc3211ae12407583f625418dd5a89", null ],
     [ "simLearnPost", "dd/db7/classweightUpdateModel.html#a9ebdfd1b336b3c40403546deb05cbfc9", null ],
+    [ "simLearnPost_supportCode", "dd/db7/classweightUpdateModel.html#a457fbb8ae21cc4077cc1e08618c4cbb4", null ],
     [ "synapseDynamics", "dd/db7/classweightUpdateModel.html#a8f5c92fc0ca6c1ddf861891bfd751de2", null ],
+    [ "synapseDynamics_supportCode", "dd/db7/classweightUpdateModel.html#a456e18c995ff42277e23005f75c83728", null ],
     [ "varNames", "dd/db7/classweightUpdateModel.html#a130dc4796aef818562cd9ab112a6dc98", null ],
     [ "varTypes", "dd/db7/classweightUpdateModel.html#a77fdb9d1287b883d227f1b50fef9889c", null ]
 ];

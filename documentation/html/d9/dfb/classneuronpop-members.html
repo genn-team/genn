@@ -34,6 +34,7 @@
   $(document).ready(function() { init_search(); });
 </script>
 <link href="../../customdoxygen.css" rel="stylesheet" type="text/css" />
+<link href="../../html_styles.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -44,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">2.0</span>
+   &#160;<span id="projectnumber">2.2</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -61,6 +62,7 @@ var searchBox = new SearchBox("searchBox", "../../search",false,'Search');
     <ul class="tablist">
       <li><a href="../../index.html"><span>Main&#160;Page</span></a></li>
       <li><a href="../../pages.html"><span>Related&#160;Pages</span></a></li>
+      <li><a href="../../namespaces.html"><span>Namespaces</span></a></li>
       <li class="current"><a href="../../annotated.html"><span>Classes</span></a></li>
       <li><a href="../../files.html"><span>Files</span></a></li>
       <li>
@@ -126,31 +128,23 @@ $(document).ready(function(){initNavTree('de/d18/classneuronpop.html','../../');
 
 <p>This is the complete list of members for <a class="el" href="../../de/d18/classneuronpop.html">neuronpop</a>, including all inherited members.</p>
 <table class="directory">
-  <tr class="even"><td class="entry"><a class="el" href="../../de/d18/classneuronpop.html#a65885acf904eb6d7d3f395295d45fffb">allocate_device_mem_input</a>()</td><td class="entry"><a class="el" href="../../de/d18/classneuronpop.html">neuronpop</a></td><td class="entry"></td></tr>
-  <tr><td class="entry"><a class="el" href="../../de/d18/classneuronpop.html#a7b92328892f032c9d81f2fa117913f68">allocate_device_mem_patterns</a>()</td><td class="entry"><a class="el" href="../../de/d18/classneuronpop.html">neuronpop</a></td><td class="entry"></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="../../de/d18/classneuronpop.html#a3a6b3fc3efc008ee62e374c572d91930">copy_device_mem_input</a>()</td><td class="entry"><a class="el" href="../../de/d18/classneuronpop.html">neuronpop</a></td><td class="entry"></td></tr>
-  <tr><td class="entry"><a class="el" href="../../de/d18/classneuronpop.html#acf2975088824d06bd4512f91906bb911">create_input_values</a>(float t)</td><td class="entry"><a class="el" href="../../de/d18/classneuronpop.html">neuronpop</a></td><td class="entry"></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="../../de/d18/classneuronpop.html#ab229af02d2909578d38b99614149c5a4">d_input1</a></td><td class="entry"><a class="el" href="../../de/d18/classneuronpop.html">neuronpop</a></td><td class="entry"></td></tr>
-  <tr><td class="entry"><a class="el" href="../../de/d18/classneuronpop.html#a6355c5eed28d113d16ed9fcee9ddea70">getSpikeNumbersFromGPU</a>()</td><td class="entry"><a class="el" href="../../de/d18/classneuronpop.html">neuronpop</a></td><td class="entry"></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="../../de/d18/classneuronpop.html#ab85246db3c39066bdf2de90df4baa27f">getSpikesFromGPU</a>()</td><td class="entry"><a class="el" href="../../de/d18/classneuronpop.html">neuronpop</a></td><td class="entry"></td></tr>
-  <tr><td class="entry"><a class="el" href="../../de/d18/classneuronpop.html#aca23e74750c3c9d2108607b9be6b2de6">init</a>(unsigned int)</td><td class="entry"><a class="el" href="../../de/d18/classneuronpop.html">neuronpop</a></td><td class="entry"></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="../../de/d18/classneuronpop.html#af880867bf88c2491ea5c1709121e2920">input1</a></td><td class="entry"><a class="el" href="../../de/d18/classneuronpop.html">neuronpop</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="../../de/d18/classneuronpop.html#a6355c5eed28d113d16ed9fcee9ddea70">getSpikeNumbersFromGPU</a>()</td><td class="entry"><a class="el" href="../../de/d18/classneuronpop.html">neuronpop</a></td><td class="entry"></td></tr>
+  <tr><td class="entry"><a class="el" href="../../de/d18/classneuronpop.html#ab85246db3c39066bdf2de90df4baa27f">getSpikesFromGPU</a>()</td><td class="entry"><a class="el" href="../../de/d18/classneuronpop.html">neuronpop</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="../../de/d18/classneuronpop.html#aca23e74750c3c9d2108607b9be6b2de6">init</a>(unsigned int)</td><td class="entry"><a class="el" href="../../de/d18/classneuronpop.html">neuronpop</a></td><td class="entry"></td></tr>
   <tr><td class="entry"><a class="el" href="../../de/d18/classneuronpop.html#a3b2cc37eb2ed02b05a04efbd450bdd16">model</a></td><td class="entry"><a class="el" href="../../de/d18/classneuronpop.html">neuronpop</a></td><td class="entry"></td></tr>
   <tr class="even"><td class="entry"><a class="el" href="../../de/d18/classneuronpop.html#ad02e1027a4f4b0199df2193f04d46f72">neuronpop</a>()</td><td class="entry"><a class="el" href="../../de/d18/classneuronpop.html">neuronpop</a></td><td class="entry"></td></tr>
   <tr><td class="entry"><a class="el" href="../../de/d18/classneuronpop.html#a5a3c7104d1d931df42fb566de0d6f5f5">output_spikes</a>(FILE *, unsigned int)</td><td class="entry"><a class="el" href="../../de/d18/classneuronpop.html">neuronpop</a></td><td class="entry"></td></tr>
   <tr class="even"><td class="entry"><a class="el" href="../../de/d18/classneuronpop.html#a21a2685f3cab2c73dfc0d0f8c96d667c">output_state</a>(FILE *, unsigned int)</td><td class="entry"><a class="el" href="../../de/d18/classneuronpop.html">neuronpop</a></td><td class="entry"></td></tr>
-  <tr><td class="entry"><a class="el" href="../../de/d18/classneuronpop.html#ab67e00819534a8699f42d50e8413f2e0">read_input_values</a>(FILE *)</td><td class="entry"><a class="el" href="../../de/d18/classneuronpop.html">neuronpop</a></td><td class="entry"></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="../../de/d18/classneuronpop.html#ac907643021795b9b89044568337334e8">run</a>(float, unsigned int)</td><td class="entry"><a class="el" href="../../de/d18/classneuronpop.html">neuronpop</a></td><td class="entry"></td></tr>
-  <tr><td class="entry"><a class="el" href="../../de/d18/classneuronpop.html#a47e4b657c35cb4ccedcf5078523abe53">sum_spikes</a>()</td><td class="entry"><a class="el" href="../../de/d18/classneuronpop.html">neuronpop</a></td><td class="entry"></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="../../de/d18/classneuronpop.html#a9393399b43dab4672310dc05ba798671">sumIzh1</a></td><td class="entry"><a class="el" href="../../de/d18/classneuronpop.html">neuronpop</a></td><td class="entry"></td></tr>
-  <tr><td class="entry"><a class="el" href="../../de/d18/classneuronpop.html#a68f706bea473e260a813559db32edf99">write_input_to_file</a>(FILE *)</td><td class="entry"><a class="el" href="../../de/d18/classneuronpop.html">neuronpop</a></td><td class="entry"></td></tr>
+  <tr><td class="entry"><a class="el" href="../../de/d18/classneuronpop.html#ac907643021795b9b89044568337334e8">run</a>(float, unsigned int)</td><td class="entry"><a class="el" href="../../de/d18/classneuronpop.html">neuronpop</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="../../de/d18/classneuronpop.html#a47e4b657c35cb4ccedcf5078523abe53">sum_spikes</a>()</td><td class="entry"><a class="el" href="../../de/d18/classneuronpop.html">neuronpop</a></td><td class="entry"></td></tr>
+  <tr><td class="entry"><a class="el" href="../../de/d18/classneuronpop.html#a9393399b43dab4672310dc05ba798671">sumIzh1</a></td><td class="entry"><a class="el" href="../../de/d18/classneuronpop.html">neuronpop</a></td><td class="entry"></td></tr>
   <tr class="even"><td class="entry"><a class="el" href="../../de/d18/classneuronpop.html#a2b2fb37b8252026adc8a6fec1fc2b03b">~neuronpop</a>()</td><td class="entry"><a class="el" href="../../de/d18/classneuronpop.html">neuronpop</a></td><td class="entry"></td></tr>
 </table></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Fri Nov 6 2015 22:13:03 for GeNN by
+    <li class="footer">Generated on Fri Jun 17 2016 14:45:01 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
   </ul>

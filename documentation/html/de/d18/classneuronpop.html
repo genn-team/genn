@@ -34,6 +34,7 @@
   $(document).ready(function() { init_search(); });
 </script>
 <link href="../../customdoxygen.css" rel="stylesheet" type="text/css" />
+<link href="../../html_styles.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -44,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">2.0</span>
+   &#160;<span id="projectnumber">2.2</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -61,6 +62,7 @@ var searchBox = new SearchBox("searchBox", "../../search",false,'Search');
     <ul class="tablist">
       <li><a href="../../index.html"><span>Main&#160;Page</span></a></li>
       <li><a href="../../pages.html"><span>Related&#160;Pages</span></a></li>
+      <li><a href="../../namespaces.html"><span>Namespaces</span></a></li>
       <li class="current"><a href="../../annotated.html"><span>Classes</span></a></li>
       <li><a href="../../files.html"><span>Files</span></a></li>
       <li>
@@ -138,18 +140,6 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a2b2fb37b8252026adc8a6fec1fc2b03b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aca23e74750c3c9d2108607b9be6b2de6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d18/classneuronpop.html#aca23e74750c3c9d2108607b9be6b2de6">init</a> (unsigned int)</td></tr>
 <tr class="separator:aca23e74750c3c9d2108607b9be6b2de6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7b92328892f032c9d81f2fa117913f68"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d18/classneuronpop.html#a7b92328892f032c9d81f2fa117913f68">allocate_device_mem_patterns</a> ()</td></tr>
-<tr class="separator:a7b92328892f032c9d81f2fa117913f68"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a65885acf904eb6d7d3f395295d45fffb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d18/classneuronpop.html#a65885acf904eb6d7d3f395295d45fffb">allocate_device_mem_input</a> ()</td></tr>
-<tr class="separator:a65885acf904eb6d7d3f395295d45fffb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3a6b3fc3efc008ee62e374c572d91930"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d18/classneuronpop.html#a3a6b3fc3efc008ee62e374c572d91930">copy_device_mem_input</a> ()</td></tr>
-<tr class="separator:a3a6b3fc3efc008ee62e374c572d91930"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a68f706bea473e260a813559db32edf99"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d18/classneuronpop.html#a68f706bea473e260a813559db32edf99">write_input_to_file</a> (FILE *)</td></tr>
-<tr class="separator:a68f706bea473e260a813559db32edf99"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab67e00819534a8699f42d50e8413f2e0"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d18/classneuronpop.html#ab67e00819534a8699f42d50e8413f2e0">read_input_values</a> (FILE *)</td></tr>
-<tr class="separator:ab67e00819534a8699f42d50e8413f2e0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acf2975088824d06bd4512f91906bb911"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d18/classneuronpop.html#acf2975088824d06bd4512f91906bb911">create_input_values</a> (float <a class="el" href="../../d9/d32/PoissonIzh__sim_8h.html#afea36502e9d227ff62c5fb2719a246f2">t</a>)</td></tr>
-<tr class="separator:acf2975088824d06bd4512f91906bb911"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac907643021795b9b89044568337334e8"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d18/classneuronpop.html#ac907643021795b9b89044568337334e8">run</a> (float, unsigned int)</td></tr>
 <tr class="separator:ac907643021795b9b89044568337334e8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab85246db3c39066bdf2de90df4baa27f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d18/classneuronpop.html#ab85246db3c39066bdf2de90df4baa27f">getSpikesFromGPU</a> ()</td></tr>
@@ -169,10 +159,6 @@ Public Member Functions</h2></td></tr>
 Public Attributes</h2></td></tr>
 <tr class="memitem:a3b2cc37eb2ed02b05a04efbd450bdd16"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../dc/de5/classNNmodel.html">NNmodel</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d18/classneuronpop.html#a3b2cc37eb2ed02b05a04efbd450bdd16">model</a></td></tr>
 <tr class="separator:a3b2cc37eb2ed02b05a04efbd450bdd16"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af880867bf88c2491ea5c1709121e2920"><td class="memItemLeft" align="right" valign="top">float *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d18/classneuronpop.html#af880867bf88c2491ea5c1709121e2920">input1</a></td></tr>
-<tr class="separator:af880867bf88c2491ea5c1709121e2920"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab229af02d2909578d38b99614149c5a4"><td class="memItemLeft" align="right" valign="top">float *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d18/classneuronpop.html#ab229af02d2909578d38b99614149c5a4">d_input1</a></td></tr>
-<tr class="separator:ab229af02d2909578d38b99614149c5a4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9393399b43dab4672310dc05ba798671"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d18/classneuronpop.html#a9393399b43dab4672310dc05ba798671">sumIzh1</a></td></tr>
 <tr class="separator:a9393399b43dab4672310dc05ba798671"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
@@ -208,67 +194,6 @@ Public Attributes</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a class="anchor" id="a65885acf904eb6d7d3f395295d45fffb"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void neuronpop::allocate_device_mem_input </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a class="anchor" id="a7b92328892f032c9d81f2fa117913f68"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void neuronpop::allocate_device_mem_patterns </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a class="anchor" id="a3a6b3fc3efc008ee62e374c572d91930"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void neuronpop::copy_device_mem_input </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a class="anchor" id="acf2975088824d06bd4512f91906bb911"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void neuronpop::create_input_values </td>
-          <td>(</td>
-          <td class="paramtype">float&#160;</td>
-          <td class="paramname"><em>t</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
 <a class="anchor" id="a6355c5eed28d113d16ed9fcee9ddea70"></a>
 <div class="memitem">
 <div class="memproto">
@@ -373,22 +298,6 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="ab67e00819534a8699f42d50e8413f2e0"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void neuronpop::read_input_values </td>
-          <td>(</td>
-          <td class="paramtype">FILE *&#160;</td>
-          <td class="paramname"><em>f</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
 <a class="anchor" id="ac907643021795b9b89044568337334e8"></a>
 <div class="memitem">
 <div class="memproto">
@@ -430,47 +339,7 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a68f706bea473e260a813559db32edf99"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void neuronpop::write_input_to_file </td>
-          <td>(</td>
-          <td class="paramtype">FILE *&#160;</td>
-          <td class="paramname"><em>f</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
 <h2 class="groupheader">Member Data Documentation</h2>
-<a class="anchor" id="ab229af02d2909578d38b99614149c5a4"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">float* neuronpop::d_input1</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a class="anchor" id="af880867bf88c2491ea5c1709121e2920"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">float* neuronpop::input1</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
 <a class="anchor" id="a3b2cc37eb2ed02b05a04efbd450bdd16"></a>
 <div class="memitem">
 <div class="memproto">
@@ -505,7 +374,7 @@ Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../de/d18/classneuronpop.html">neuronpop</a></li>
-    <li class="footer">Generated on Fri Nov 6 2015 22:13:03 for GeNN by
+    <li class="footer">Generated on Fri Jun 17 2016 14:45:01 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
   </ul>

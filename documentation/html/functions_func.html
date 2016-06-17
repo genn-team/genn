@@ -34,6 +34,7 @@
   $(document).ready(function() { init_search(); });
 </script>
 <link href="customdoxygen.css" rel="stylesheet" type="text/css" />
+<link href="html_styles.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -44,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">2.0</span>
+   &#160;<span id="projectnumber">2.2</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -61,6 +62,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
       <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
+      <li><a href="namespaces.html"><span>Namespaces</span></a></li>
       <li class="current"><a href="annotated.html"><span>Classes</span></a></li>
       <li><a href="files.html"><span>Files</span></a></li>
       <li>
@@ -94,6 +96,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
       <li><a href="functions.html"><span>All</span></a></li>
       <li class="current"><a href="functions_func.html"><span>Functions</span></a></li>
       <li><a href="functions_vars.html"><span>Variables</span></a></li>
+      <li><a href="functions_type.html"><span>Typedefs</span></a></li>
       <li><a href="functions_enum.html"><span>Enumerations</span></a></li>
       <li><a href="functions_eval.html"><span>Enumerator</span></a></li>
     </ul>
@@ -102,7 +105,6 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
     <ul class="tablist">
       <li class="current"><a href="functions_func.html#index_a"><span>a</span></a></li>
       <li><a href="functions_func_c.html#index_c"><span>c</span></a></li>
-      <li><a href="functions_func_d.html#index_d"><span>d</span></a></li>
       <li><a href="functions_func_e.html#index_e"><span>e</span></a></li>
       <li><a href="functions_func_f.html#index_f"><span>f</span></a></li>
       <li><a href="functions_func_g.html#index_g"><span>g</span></a></li>
@@ -111,6 +113,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
       <li><a href="functions_func_n.html#index_n"><span>n</span></a></li>
       <li><a href="functions_func_o.html#index_o"><span>o</span></a></li>
       <li><a href="functions_func_p.html#index_p"><span>p</span></a></li>
+      <li><a href="functions_func_q.html#index_q"><span>q</span></a></li>
       <li><a href="functions_func_r.html#index_r"><span>r</span></a></li>
       <li><a href="functions_func_s.html#index_s"><span>s</span></a></li>
       <li><a href="functions_func_u.html#index_u"><span>u</span></a></li>
@@ -152,26 +155,24 @@ $(document).ready(function(){initNavTree('functions_func.html','');});
 
 <h3><a class="anchor" id="index_a"></a>- a -</h3><ul>
 <li>activateDirectInput()
-: <a class="el" href="dc/de5/classNNmodel.html#a95724e1798bd9ac5642a8fb2484a2f93">NNmodel</a>
+: <a class="el" href="dc/de5/classNNmodel.html#a8b6071f4798f114a09164ecd697a84cb">NNmodel</a>
 </li>
 <li>addInputRate()
 : <a class="el" href="d1/dc3/classSchmuker2014__classifier.html#a1f1589b6a1ee4509bb294631fb44598e">Schmuker2014_classifier</a>
 </li>
 <li>addNeuronPopulation()
-: <a class="el" href="dc/de5/classNNmodel.html#a2750f5d035618a4f5af9e6992758ea90">NNmodel</a>
+: <a class="el" href="dc/de5/classNNmodel.html#a860ac47a916005dd68bc06e59155d502">NNmodel</a>
 </li>
 <li>addSynapsePopulation()
-: <a class="el" href="dc/de5/classNNmodel.html#a1a9afe1e1038aa634e020da7732701e5">NNmodel</a>
+: <a class="el" href="dc/de5/classNNmodel.html#ae9cf711ce1a28d3532a793d176bfd2b8">NNmodel</a>
 </li>
 <li>allocate_device_mem_input()
 : <a class="el" href="de/dba/classclassIzh.html#af7e70326650adf3445f7d36e2135a505">classIzh</a>
 , <a class="el" href="d1/d16/classclassol.html#aec30118b75a92ebca10eb227345cddfe">classol</a>
-, <a class="el" href="de/d18/classneuronpop.html#a65885acf904eb6d7d3f395295d45fffb">neuronpop</a>
 </li>
 <li>allocate_device_mem_patterns()
 : <a class="el" href="de/dba/classclassIzh.html#afb7e0ee19c092c388b7c9a892aea5f1c">classIzh</a>
 , <a class="el" href="d1/d16/classclassol.html#a224bf755bd74d7512606518ae2658215">classol</a>
-, <a class="el" href="de/d18/classneuronpop.html#a7b92328892f032c9d81f2fa117913f68">neuronpop</a>
 </li>
 <li>allocateHostAndDeviceMemory()
 : <a class="el" href="d1/dc3/classSchmuker2014__classifier.html#aa05f17d8a30734ec7ff7fc4a9b9f886c">Schmuker2014_classifier</a>
@@ -185,7 +186,7 @@ $(document).ready(function(){initNavTree('functions_func.html','');});
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Fri Nov 6 2015 22:13:06 for GeNN by
+    <li class="footer">Generated on Fri Jun 17 2016 14:45:01 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
   </ul>

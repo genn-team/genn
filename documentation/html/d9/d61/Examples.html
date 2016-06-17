@@ -34,6 +34,7 @@
   $(document).ready(function() { init_search(); });
 </script>
 <link href="../../customdoxygen.css" rel="stylesheet" type="text/css" />
+<link href="../../html_styles.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -44,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">2.0</span>
+   &#160;<span id="projectnumber">2.2</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -61,6 +62,7 @@ var searchBox = new SearchBox("searchBox", "../../search",false,'Search');
     <ul class="tablist">
       <li><a href="../../index.html"><span>Main&#160;Page</span></a></li>
       <li class="current"><a href="../../pages.html"><span>Related&#160;Pages</span></a></li>
+      <li><a href="../../namespaces.html"><span>Namespaces</span></a></li>
       <li><a href="../../annotated.html"><span>Classes</span></a></li>
       <li><a href="../../files.html"><span>Files</span></a></li>
       <li>
@@ -115,141 +117,716 @@ $(document).ready(function(){initNavTree('d9/d61/Examples.html','../../');});
 <div class="title">Examples </div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p>GeNN comes with a number of complete examples. At the moment, there are seven such example projects provided with GeNN.</p>
-<p><br />
+<div class="textblock"><p>GeNN comes with a number of complete examples. At the moment, there are seven such example projects provided with GeNN. <br />
 </p>
 <h1><a class="anchor" id="Ex_OneComp"></a>
 Single compartment Izhikevich neuron(s)</h1>
-<p>This is a minimal example, with only one neuron population (with more or less neurons depending on the command line, but without any synapses). The neurons are Izhikevich neurons <a class="el" href="../../d0/de3/citelist.html#CITEREF_izhikevich2003simple">[1]</a> with homogeneous parameters across the neuron population. The model can be used by navigating to the <code>userproject/OneComp_project</code> directory and entering a command line </p><div class="fragment"><div class="line">./generate_run &lt;<a class="code" href="../../dc/de1/modelSpec_8h.html#ad703205f9a4d4bb6af9c25257c23ce6d">CPU</a>/<a class="code" href="../../dc/de1/modelSpec_8h.html#a39cb9803524b6f3b783344b2f89867b4">GPU</a>&gt; &lt;n&gt; &lt;OUTNAME&gt; &lt;MODEL&gt; &lt;DEBUG&gt; &lt;FTYPE&gt; &lt;REUSE&gt;.</div>
-</div><!-- fragment --><p> All parameters are mandatory and signify: </p><ul>
-<li><code>CPU/GPU</code>: Choose whether to run the simulation on CPU (<code>0</code>) or GPU (<code>1</code>). </li>
-<li><code>n</code>: Number of neurons </li>
-<li><code>OUTNAME</code>: The base name of the output location and output files </li>
-<li><code>MODEL</code>: The name of the model to execute, as provided this would be <code>OneComp</code> </li>
-<li><code>DEBUG</code>: Whether to start in debug mode (1) or normally (0) </li>
-<li><code>FTYPE</code>: Floating point type <code>FLOAT</code> or <code>DOUBLE</code> </li>
-<li><code>REUSE</code>: whether to re-use input files</li>
-</ul>
-<p>This would create <code>n</code> tonically spiking Izhikevich neuron(s) with no connectivity, receiving a constant, identical 4 nA input current.</p>
-<p>For example, navigate to the <code>userproject/OneComp_project</code> directory and type </p><div class="fragment"><div class="line">make all</div>
-<div class="line">./generate_run 1 1 Outdir OneComp_sim OneComp 0 FLOAT 0</div>
-</div><!-- fragment --><p> to model a single neuron which output will be saved in the <code>Outdir_output</code> directory.</p>
-<p><br />
+<pre class="fragment">
+Izhikevich neuron(s) without any connections
+=====================================
+
+This is a minimal example, with only one neuron population (with more or less
+neurons depending on the command line, but without any synapses). The neurons
+are Izhikevich neurons with homogeneous parameters across the neuron population.
+This example project contains a helper executable called "generate_run", which also
+prepares additional synapse connectivity and input pattern data, before compiling and
+executing the model.
+
+To compile it, navigate to genn/userproject/OneComp_project and type:
+
+nmake /f WINmakefile
+
+for Windows users, or:
+
+make
+
+for Linux, Mac and other UNIX users. 
+
+
+USAGE
+-----
+
+generate_run &lt;0(CPU)/1(GPU)&gt; &lt;n&gt; &lt;DIR&gt; &lt;MODEL&gt;
+
+Optional arguments:
+DEBUG=0 or DEBUG=1 (default 0): Whether to run in a debugger
+FTYPE=DOUBLE of FTYPE=FLOAT (default FLOAT): What floating point type to use
+REUSE=0 or REUSE=1 (default 0): Whether to reuse generated connectivity from an earlier run
+CPU_ONLY=0 or CPU_ONLY=1 (default 0): Whether to compile in (CUDA independent) "CPU only" mode.
+
+For a first minimal test, the system may be used with:
+
+generate_run.exe 1 1 outdir OneComp
+
+for Windows users, or:
+
+./generate_run 1 1 outdir OneComp
+
+for Linux, Mac and other UNIX users. 
+
+This would create a set of tonic spiking Izhikevich neurons with no connectivity, 
+receiving a constant identical 4 nA input. It is lso possible to use the model
+with a sinusoidal input instead, by setting the input to INPRULE.
+
+Another example of an invocation would be: 
+
+generate_run.exe 0 1 outdir OneComp FTYPE=DOUBLE CPU_ONLY=1
+
+for Windows users, or:
+
+./generate_run 0 1 outdir OneComp FTYPE=DOUBLE CPU_ONLY=1
+
+for Linux, Mac and other UNIX users. 
+</pre><p> Izhikevich neuron model: <a class="el" href="../../d0/de3/citelist.html#CITEREF_izhikevich2003simple">[1]</a> <br />
 </p>
 <h1><a class="anchor" id="ex_poissonizh"></a>
 Izhikevich neurons driven by Poisson input spike trains:</h1>
-<p>In this example project there is again a pool of non-connected Izhikevich model neurons <a class="el" href="../../d0/de3/citelist.html#CITEREF_izhikevich2003simple">[1]</a> that are connected to a pool of Poisson input neurons with a fixed probability.</p>
-<p>The model can be compiled by navigating to the <code>userproject\PoissonIzh_project</code> directory and typing </p><div class="fragment"><div class="line">make all</div>
-</div><!-- fragment --><p> Subsequently it can be invoked using the following command line </p><div class="fragment"><div class="line">./generate_run &lt;<a class="code" href="../../dc/de1/modelSpec_8h.html#ad703205f9a4d4bb6af9c25257c23ce6d">CPU</a>/<a class="code" href="../../dc/de1/modelSpec_8h.html#a39cb9803524b6f3b783344b2f89867b4">GPU</a>&gt; &lt;nPOISSON&gt; &lt;nIZHIKEVICH&gt; &lt;PCONN&gt; &lt;GSCALE&gt; &lt;OUTNAME&gt; &lt;MODEL&gt; &lt;DEBUG OFF/ON&gt; &lt;FTYPE&gt; &lt;REUSE&gt;</div>
-</div><!-- fragment --><p> All parameters are mandatory and signify: </p><ul>
-<li><code>CPU/GPU</code>: Choose whether to run the simulation on CPU (<code>0</code>) or GPU (<code>1</code>). </li>
-<li><code>\nPOISSON</code>: Number of Poisson input neurons </li>
-<li><code>\nIZHIKEVICH</code>: Number of Izhikevich neurons </li>
-<li><code>PCONN</code>: Probability of connections </li>
-<li><code>OUTNAME</code>: The base name of the output location and output files </li>
-<li><code>MODEL</code>: The name of the model to execute, as provided this would be <code>PoissonIzh</code> </li>
-<li><code>DEBUG</code>: Whether to start in debug mode (1) or normally (0) </li>
-<li><code>FTYPE</code>: Floating point type <code>FLOAT</code> or <code>DOUBLE</code> </li>
-<li><code>REUSE</code>: whether to re-use input files</li>
-</ul>
-<p>For example, navigate to the <code>userproject/PoissonIzh_project</code> directory and type </p><div class="fragment"><div class="line">./generate_run 1 100 10 0.5 2 Outdir PoissonIzh 0 DOUBLE 0</div>
-</div><!-- fragment --><p> This will generate a network of 100 Poisson neurons connected to 10 Izhikevich neurons with a probability of 0.5. The same example network can be used with sparse connectivity (i.e. sparse matrix representations for the connectivity within GeNN) by using the keyword <code>SPARSE</code> in the addSynapsePopulation instead of <code>DENSE</code> in <a class="el" href="../../dc/d3f/PoissonIzh_8cc.html">PoissonIzh.cc</a>, uncommenting the lines following the comment <code>//SPARSE CONNECTIVITY</code> in the file <a class="el" href="../../d3/d43/PoissonIzh__sim_8cu.html">PoissonIzh_sim.cu</a> and commenting the lines following <code>//DENSE CONNECTIVITY</code>. In this example the model would be simulated with double precision variables and input files and connectivity would not be reused from earlier runs.</p>
-<p><br />
+<pre class="fragment">
+Izhikevich network receiving Poisson input spike trains
+=======================================================
+
+In this example project there is again a pool of non-connected Izhikevich model neurons
+that are connected to a pool of Poisson input neurons with a fixed probability.
+This example project contains a helper executable called "generate_run", which also
+prepares additional synapse connectivity and input pattern data, before compiling and
+executing the model.
+
+To compile it, navigate to genn/userproject/PoissonIzh_project and type:
+
+nmake /f WINmakefile
+
+for Windows users, or:
+
+make
+
+for Linux, Mac and other UNIX users. 
+
+
+USAGE
+-----
+
+generate_run &lt;0(CPU)/1(GPU)&gt; &lt;nPoisson&gt; &lt;nIzhikevich&gt; &lt;pConn&gt; &lt;gscale&gt; &lt;DIR&gt; &lt;MODEL&gt;
+
+Optional arguments:
+DEBUG=0 or DEBUG=1 (default 0): Whether to run in a debugger
+FTYPE=DOUBLE or FTYPE=FLOAT (default FLOAT): What floating point type to use
+REUSE=0 or REUSE=1 (default 0): Whether to reuse generated connectivity from an earlier run
+CPU_ONLY=0 or CPU_ONLY=1 (default 0): Whether to compile in (CUDA independent) "CPU only" mode.
+
+An example invocation of generate_run is:
+
+generate_run.exe 1 100 10 0.5 2 outdir PoissonIzh
+
+for Windows users, or:
+
+./generate_run 1 100 10 0.5 2 outdir PoissonIzh
+
+for Linux, Mac and other UNIX users. 
+
+This will generate a network of 100 Poisson neurons with 20 Hz firing rate
+connected to 10 Izhikevich neurons with a 0.5 probability. 
+The same network with sparse connectivity can be used by adding
+the synapse population with sparse connectivity in PoissonIzh.cc and by uncommenting
+the lines following the "//SPARSE CONNECTIVITY" tag in PoissonIzh.cu and commenting the
+lines following `//DENSE CONNECTIVITY`.
+
+Another example of an invocation would be: 
+
+generate_run.exe 0 100 10 0.5 2 outdir PoissonIzh FTYPE=DOUBLE CPU_ONLY=1
+
+for Windows users, or:
+
+./generate_run 0 100 10 0.5 2 outdir PoissonIzh FTYPE=DOUBLE CPU_ONLY=1
+
+for Linux, Mac and other UNIX users. 
+</pre><p> Izhikevich neuron model: <a class="el" href="../../d0/de3/citelist.html#CITEREF_izhikevich2003simple">[1]</a> <br />
 </p>
 <h1><a class="anchor" id="ex_izhnetwork"></a>
 Pulse-coupled Izhikevich network</h1>
-<p>This example model is inspired by simple thalamo-cortical network of Izhikevich <a class="el" href="../../d0/de3/citelist.html#CITEREF_izhikevich2003simple">[1]</a> with an excitatory and an inhibitory population of spiking neurons that are randomly connected.</p>
-<p>The model can be built by navigating to the <code>userproject/Izh_Sparse_project</code> directory and typing </p><div class="fragment"><div class="line">make all</div>
-</div><!-- fragment --><p> It can then be used as </p><div class="fragment"><div class="line">./generate_run &lt;<a class="code" href="../../dc/de1/modelSpec_8h.html#ad703205f9a4d4bb6af9c25257c23ce6d">CPU</a>/<a class="code" href="../../dc/de1/modelSpec_8h.html#a39cb9803524b6f3b783344b2f89867b4">GPU</a>&gt; &lt;nN&gt; &lt;nCONN&gt; &lt;GSCALE&gt; &lt;OUTNAME&gt; &lt;MODEL&gt; &lt;DEBUG OFF/ON&gt; </div>
-<div class="line"> &lt;FTYPE&gt; &lt;REUSE&gt;</div>
-</div><!-- fragment --><p> All parameters are mandatory and signify: </p><ul>
-<li><code>CPU/GPU</code>: Choose whether to run the simulation on CPU (<code>0</code>) or GPU (<code>1</code>). </li>
-<li><code>\nN</code>: Number of neurons </li>
-<li><code>\nCONN</code>: Number of connections per neuron </li>
-<li>`GSCALE': General scaling of synaptic conductances </li>
-<li><code>OUTNAME</code>: The base name of the output location and output files </li>
-<li><code>MODEL</code>: The name of the model to execute, as provided this would be <code>Izh_sparse</code> </li>
-<li><code>DEBUG</code>: Whether to start in debug mode (1) or normally (0) </li>
-<li><code>FTYPE</code>: Floating point type <code>FLOAT</code> or <code>DOUBLE</code> </li>
-<li><code>REUSE</code>: whether to re-use input files</li>
-</ul>
-<p>The model creates a pulse-coupled network <a class="el" href="../../d0/de3/citelist.html#CITEREF_izhikevich2003simple">[1]</a> with 80% excitatory 20% inhibitory neurons, each connecting to nCONN neurons using the sparse matrix connectivity methods of GeNN.</p>
-<p>For example, typing </p><div class="fragment"><div class="line">./generate_run 1 10000 1000 1 Outdir Izh_sparse 0 FLOAT 0 </div>
-</div><!-- fragment --><p> generates a random network of 8000 excitatory and 2000 inhibitory neurons which each have 1000 outgoing synapses to randomly chosen post-synaptic target neurons. The synapses are of a simple pulse-coupling type. The results of the simulation are saved in the directory <code>Outdir_output</code>, debugging is switched off, and the connectivity is generated afresh (rather than being read from existing files). </p><dl class="section note"><dt>Note</dt><dd>If connectivity were to be read from files, the connectivity files would have to be in the <code>inputfiles</code> sub-directory and be named according to the names of the synapse populations involved, e.g., <code>gIzh_sparse_ee</code> (&lt;variable name&gt;=<code>g</code> &lt;model name&gt;=<code>Izh_sparse</code> &lt;synapse population&gt;=<code>_ee</code>). These name conventions are not part of the core GeNN definitions and it is the privilege (or burden) of the user to find their own in their own versions of <code>generate_run</code>.</dd></dl>
-<p><br />
+<pre class="fragment">
+Pulse-coupled Izhikevich network
+================================
+
+This example model is inspired by simple thalamo-cortical network of Izhikevich 
+with an excitatory and an inhibitory population of spiking neurons that are
+randomly connected. It creates a pulse-coupled network with 80% excitatory 20%
+inhibitory connections, each connecting to nConn neurons with sparse connectivity.
+
+To compile it, navigate to genn/userproject/Izh_sparse_project and type:
+
+nmake /f WINmakefile
+
+for Windows users, or:
+
+make
+
+for Linux, Mac and other UNIX users.
+
+
+USAGE
+-----
+
+generate_run &lt;0(CPU)/1(GPU)/n(GPU n-2)&gt; &lt;nNeurons&gt; &lt;nConn&gt; &lt;gScale&gt; &lt;outdir&gt; &lt;model name&gt; &lt;input factor&gt;
+
+Mandatory arguments:
+CPU/GPU: Choose whether to run the simulation on CPU (`0`), auto GPU (`1`), or GPU (n-2) (`n`).
+nNeurons: Number of neurons
+nConn: Number of connections per neuron
+gScale: General scaling of synaptic conductances
+outname: The base name of the output location and output files
+model name: The name of the model to execute, as provided this would be `Izh_sparse`
+
+Optional arguments:
+DEBUG=0 or DEBUG=1 (default 0): Whether to run in a debugger
+FTYPE=DOUBLE of FTYPE=FLOAT (default FLOAT): What floating point type to use
+REUSE=0 or REUSE=1 (default 0): Whether to reuse generated connectivity from an earlier run
+CPU_ONLY=0 or CPU_ONLY=1 (default 0): Whether to compile in (CUDA independent) "CPU only" mode.
+
+An example invocation of generate_run is:
+
+generate_run.exe 1 10000 1000 1 outdir Izh_sparse 1.0
+
+for Windows users, or:
+
+./generate_run 1 10000 1000 1 outdir Izh_sparse 1.0
+
+for Linux, Mac and other UNIX users.
+
+This would create a pulse coupled network of 8000 excitatory 2000 inhibitory
+Izhikevich neurons, each making 1000 connections with other neurons, generating
+a mixed alpha and gamma regime. For larger input factor, there is more
+input current and more irregular activity, for smaller factors less
+and less and more sparse activity. The synapses are of a simple pulse-coupling
+type. The results of the simulation are saved in the directory `outdir_output`,
+debugging is switched off, and the connectivity is generated afresh (rather than
+being read from existing files).
+
+If connectivity were to be read from files, the connectivity files would have to
+be in the `inputfiles` sub-directory and be named according to the names of the
+synapse populations involved, e.g., `gIzh_sparse_ee` (\&lt;variable name&gt;=`g`
+\&lt;model name&gt;=`Izh_sparse` \&lt;synapse population&gt;=`_ee`). These name conventions
+are not part of the core GeNN definitions and it is the privilege (or burden)
+of the user to find their own in their own versions of `generate_run`.
+
+Another example of an invocation would be: 
+
+generate_run.exe 0 10000 1000 1 outdir Izh_sparse 1.0 FTYPE=DOUBLE DEBUG=0 CPU_ONLY=1
+
+for Windows users, or:
+
+./generate_run 0 10000 1000 1 outdir Izh_sparse 1.0 FTYPE=DOUBLE DEBUG=0 CPU_ONLY=1
+
+for Linux, Mac and other UNIX users.
+</pre><p> Izhikevich neuron model: <a class="el" href="../../d0/de3/citelist.html#CITEREF_izhikevich2003simple">[1]</a> <br />
 </p>
 <h1><a class="anchor" id="ex_izhdelay"></a>
 Izhikevich network with delayed synapses</h1>
-<p>This example project demonstrates the feature of synaptic delays in GeNN. It creates a network of three Izhikevich neuron groups, connected all-to-all with short, medium and long delay synapse groups. Synaptic weights are chosen such that neurons in the output group only spike if they are simultaneously excited by the input neurons, via synapses with long delay, and the interneurons, via synapses with shorter delay.</p>
-<p>To run this example project, navigate to <code>userproject/SynDelay_project</code> and type, e.g., </p><div class="fragment"><div class="line">buildmodel <a class="code" href="../../db/df7/classSynDelay.html">SynDelay</a></div>
-<div class="line">make clean &amp;&amp; make </div>
-<div class="line">./bin/release/syn_delay 1 output</div>
-</div><!-- fragment --><p><br />
+<pre class="fragment">
+Izhikevich network with delayed synapses
+========================================
+
+This example project demonstrates the synaptic delay feature of GeNN. It creates
+a network of three Izhikevich neuron groups, connected all-to-all with fast, medium
+and slow synapse groups. Neurons in the output group only spike if they are
+simultaneously innervated by the input neurons, via slow synapses, and the
+interneurons, via faster synapses. 
+
+
+COMPILE (WINDOWS)
+-----------------
+
+To run this example project, first build the model into CUDA code by typing:
+
+genn-buildmodel.bat SynDelay.cc
+
+then compile the project by typing:
+
+nmake /f WINmakefile
+
+
+COMPILE (MAC AND LINUX)
+-----------------------
+
+To run this example project, first build the model into CUDA code by typing:
+
+genn-buildmodel.sh SynDelay.cc
+
+then compile the project by typing:
+
+make
+
+
+USAGE
+-----
+
+syn_delay [CPU = 0 / GPU = 1] [directory to save output]
+</pre><p> Izhikevich neuron model: <a class="el" href="../../d0/de3/citelist.html#CITEREF_izhikevich2003simple">[1]</a> <br />
 </p>
 <h1><a class="anchor" id="ex_mbody"></a>
 Insect olfaction model</h1>
-<p>This project implements the insect olfaction model by Nowotny et al. <a class="el" href="../../d0/de3/citelist.html#CITEREF_nowotny2005self">[2]</a> that demonstrates self-organized clustering of odours in a simulation of the insect antennal lobe and mushroom body. As provided the model works with conductance based Hodgkin-Huxley neurons <a class="el" href="../../d0/de3/citelist.html#CITEREF_Traub1991">[4]</a> and several different synapse types, conductance based (but pulse-coupled) excitatory synapses, graded inhibitory synapses and synapses with a simplified STDP rule.</p>
-<p>To explore the model navigate to <code>userproject/MBody1_project/</code> and type </p><div class="fragment"><div class="line">make all</div>
-<div class="line">./generate_run </div>
-</div><!-- fragment --><p> This will show you the command line parameters that are needed, </p><div class="fragment"><div class="line">generate_run &lt;<a class="code" href="../../dc/de1/modelSpec_8h.html#ad703205f9a4d4bb6af9c25257c23ce6d">CPU</a>/<a class="code" href="../../dc/de1/modelSpec_8h.html#a39cb9803524b6f3b783344b2f89867b4">GPU</a>&gt; &lt;nAL&gt; &lt;nKC&gt; &lt;nLHI&gt; &lt;nDN&gt; &lt;GSCALE&gt; &lt;OUTNAME&gt; &lt;MODEL&gt; &lt;DEBUG&gt; &lt;FTYPE&gt; &lt;REUSE&gt;</div>
-</div><!-- fragment --><p> All parameters are mandatory and signify: </p><ul>
-<li><code>CPU/GPU</code>: Choose whether to run the simulation on CPU (<code>0</code>) or GPU (<code>1</code>). </li>
-<li><code>nAL</code>: Number of neurons in the antennal lobe (AL), the input neurons to this model </li>
-<li><code>nKC</code>: Number of Kenyon cells (KC) in the "hidden layer" </li>
-<li><code>nLH</code>: Number of lateral horn interneurons, implementing gain control </li>
-<li><code>nDN</code>: Number of decision neurons (DN) in the output layer </li>
-<li><code>GSCALE</code>: A general rescaling factor for snaptic strength </li>
-<li><code>OUTNAME</code>: The base name of the output location and output files </li>
-<li><code>MODEL</code>: The name of the model to execute, as provided this would be <code>MBody1</code> </li>
-<li><code>DEBUG</code>: Whether to start in debug mode (1) or normally (0) </li>
-<li><code>FTYPE</code>: Floating point type <code>FLOAT</code> or <code>DOUBLE</code> </li>
-<li><code>REUSE</code>: whether to re-use input files</li>
-</ul>
-<p>The tool generate_run will generate connectivity files for the model <code>MBody1</code>, compile this model for the CPU and GPU and execute it. The command line parameters are the numbers of neurons in the different neuropils of the model and an overall synaptic strength scaling factor. A typical call would be, e.g., </p><div class="fragment"><div class="line">./generate_run 1 100 1000 20 100 0.0025 test1 MBody1 0 FLOAT 0</div>
-</div><!-- fragment --><p> which would generate a model, and run it on the GPU (first parameter), with 100 antennal lobe neurons, 1000 mushroom body Kenyon cells, 20 lateral horn interneurons and 100 mushroom body output neurons. All output files will be prefixed with <code>test1</code> and stored in <code>test1_output</code>. The model that is run is defined in <code>model/MBody1.cc</code>, debugging is switched off, the model would be simulated using float (single precision floating point) variables and parameters and the connectivity and input would be generated afresh for this run.</p>
-<p>As provided, the model outputs a file <code>test1.out.st</code> that contains the spiking activity observed in the simulation, There are two columns in this ASCII file, the first one containing the time of a spike and the second one the ID of the neuron that spiked. Users of matlab can use the scripts in the <code>matlab</code> directory to plot the results of a simulation. For more about the model itself and the scientific insights gained from it see <a class="el" href="../../d0/de3/citelist.html#CITEREF_nowotny2005self">[2]</a>.</p>
-<p><br />
+<pre class="fragment">
+Locust olfactory system (Nowotny et al. 2005)
+=============================================
+
+This project implements the insect olfaction model by Nowotny et
+al. that demonstrates self-organized clustering of odours in a
+simulation of the insect antennal lobe and mushroom body. As provided
+the model works with conductance based Hodgkin-Huxley neurons and
+several different synapse types, conductance based (but pulse-coupled)
+excitatory synapses, graded inhibitory synapses and synapses with a
+simplified STDP rule. This example project contains a helper executable called "generate_run", which also
+prepares additional synapse connectivity and input pattern data, before compiling and
+executing the model.
+
+To compile it, navigate to genn/userproject/MBody1_project and type:
+
+nmake /f WINmakefile
+
+for Windows users, or:
+
+make
+
+for Linux, Mac and other UNIX users. 
+
+
+USAGE
+-----
+
+generate_run &lt;0(CPU)/1(GPU)/n(GPU n-2)&gt; &lt;nAL&gt; &lt;nKC&gt; &lt;nLH&gt; &lt;nDN&gt; &lt;gScale&gt; &lt;DIR&gt; &lt;MODEL&gt; 
+
+Mandatory parameters:
+CPU/GPU: Choose whether to run the simulation on CPU (`0`), auto GPU (`1`), or GPU (n-2) (`n`).
+nAL: Number of neurons in the antennal lobe (AL), the input neurons to this model
+nKC: Number of Kenyon cells (KC) in the "hidden layer"
+nLH: Number of lateral horn interneurons, implementing gain control
+nDN: Number of decision neurons (DN) in the output layer
+gScale: A general rescaling factor for snaptic strength
+outname: The base name of the output location and output files
+model: The name of the model to execute, as provided this would be `MBody1`
+
+Optional arguments:
+DEBUG=0 or DEBUG=1 (default 0): Whether to run in a debugger
+FTYPE=DOUBLE of FTYPE=FLOAT (default FLOAT): What floating point type to use
+REUSE=0 or REUSE=1 (default 0): Whether to reuse generated connectivity from an earlier run
+CPU_ONLY=0 or CPU_ONLY=1 (default 0): Whether to compile in (CUDA independent) "CPU only" mode.
+
+An example invocation of generate_run is:
+
+generate_run.exe 1 100 1000 20 100 0.0025 outname MBody1
+
+for Windows users, or:
+
+./generate_run 1 100 1000 20 100 0.0025 outname MBody1
+
+for Linux, Mac and other UNIX users. 
+
+Such a command would generate a locust olfaction model with 100 antennal lobe neurons,
+1000 mushroom body Kenyon cells, 20 lateral horn interneurons and 100 mushroom body
+output neurons, and launch a simulation of it on a CUDA-enabled GPU using single
+precision floating point numbers. All output files will be prefixed with "outname"
+and will be created under the "outname" directory. The model that is run is defined
+in `model/MBody1.cc`, debugging is switched off, the model would be simulated using
+float (single precision floating point) variables and parameters and the connectivity
+and input would be generated afresh for this run.
+
+In more details, what generate_run program does is: 
+a) use some other tools to generate the appropriate connectivity
+   matrices and store them in files.
+
+b) build the source code for the model by writing neuron numbers into
+   ./model/sizes.h, and executing "genn-buildmodel.sh ./model/MBody1.cc.
+
+c) compile the generated code by invoking "make clean &amp;&amp; make" 
+   running the code, e.g. "./classol_sim r1 1".
+
+Another example of an invocation would be: 
+
+generate_run.exe 0 100 1000 20 100 0.0025 outname MBody1 FTYPE=DOUBLE CPU_ONLY=1
+
+for Windows users, or:
+
+./generate_run 0 100 1000 20 100 0.0025 outname MBody1 FTYPE=DOUBLE CPU_ONLY=1
+
+for Linux, Mac and other UNIX users, for using double precision floating point
+and compiling and running the "CPU only" version.
+
+Note: Optional arguments cannot contain spaces, i.e. "CPU_ONLY= 0"
+will fail.
+
+As provided, the model outputs a file `test1.out.st` that contains
+the spiking activity observed in the simulation, There are two
+columns in this ASCII file, the first one containing the time of
+a spike and the second one the ID of the neuron that spiked. Users
+of matlab can use the scripts in the `matlab` directory to plot
+the results of a simulation. For more about the model itself and
+the scientific insights gained from it see Nowotny et al. referenced below.
+
+
+MODEL INFORMATION
+-----------------
+
+For information regarding the locust olfaction model implemented in this example project, see:
+
+T. Nowotny, R. Huerta, H. D. I. Abarbanel, and M. I. Rabinovich Self-organization in the
+olfactory system: One shot odor recognition in insects, Biol Cyber, 93 (6): 436-446 (2005),
+doi:10.1007/s00422-005-0019-7 
+</pre><p> Nowotny insect olfaction model: <a class="el" href="../../d0/de3/citelist.html#CITEREF_nowotny2005self">[2]</a>; Traub-Miles Hodgkin-Huxley neuron model: <a class="el" href="../../d0/de3/citelist.html#CITEREF_Traub1991">[5]</a> <br />
 </p>
 <h1><a class="anchor" id="ex_mbody_userdef"></a>
 Insect olfaction model with user-defined neuron and synapse models</h1>
-<p>This examples recapitulates the exact same model as <a class="el" href="../../d9/d61/Examples.html#ex_mbody">Insect olfaction model</a> above but with user-defined model types for neurons and synapses. It is run the same way as <a class="el" href="../../d9/d61/Examples.html#ex_mbody">Insect olfaction model</a>, e.g. </p><div class="fragment"><div class="line">./generate_run 1 100 1000 20 100 0.0025 test1 MBody_userdef 0 FLOAT 0</div>
-</div><!-- fragment --><p> But the way user-defined types are used should be very instructive to advanced users wishing to do the same with their models.</p>
-<p><br />
- </p>
-<h1><a class="anchor" id="ex_mbody_indID"></a>
-Insect Olfaction Model using INDIVIDUALID connectivity scheme</h1>
-<p>This example is very similar to the <a class="el" href="../../d9/d61/Examples.html#ex_mbody">Insect olfaction model</a> example. The only difference is that PN to KC connections are defined with the INDIVIDUALID mechanism.</p>
-<p>It is run the same way as <a class="el" href="../../d9/d61/Examples.html#ex_mbody">Insect olfaction model</a>, e.g. </p><div class="fragment"><div class="line">./generate_run 1 100 1000 20 100 0.0025 test1 MBody_individualID 0 FLOAT 0</div>
-</div><!-- fragment --><p><br />
+<pre class="fragment">
+Locust olfactory system (Nowotny et al. 2005) with user-defined synapses
+========================================================================
+
+This examples recapitulates the exact same model as MBody1_project,
+but with user-defined model types for neurons and synapses. Also
+sparse connectivity is used instead of dense. The way user-defined
+types are used should be very instructive to advanced users wishing
+to do the same with their models. This example project contains a
+helper executable called "generate_run", which also prepares
+additional synapse connectivity and input pattern data, before
+compiling and executing the model.
+
+To compile it, navigate to genn/userproject/MBody_userdef_project and type:
+
+nmake /f WINmakefile
+
+for Windows users, or:
+
+make
+
+for Linux, Mac and other UNIX users. 
+
+
+  USAGE
+  -----
+
+generate_run &lt;0(CPU)/1(GPU)/n(GPU n-2)&gt; &lt;nAL&gt; &lt;nKC&gt; &lt;nLH&gt; &lt;nDN&gt; &lt;gScale&gt; &lt;DIR&gt; &lt;MODEL&gt; 
+
+Mandatory parameters:
+CPU/GPU: Choose whether to run the simulation on CPU (`0`), auto GPU (`1`), or GPU (n-2) (`n`).
+nAL: Number of neurons in the antennal lobe (AL), the input neurons to this model
+nKC: Number of Kenyon cells (KC) in the "hidden layer"
+nLH: Number of lateral horn interneurons, implementing gain control
+nDN: Number of decision neurons (DN) in the output layer
+gScale: A general rescaling factor for snaptic strength
+outname: The base name of the output location and output files
+model: The name of the model to execute, as provided this would be `MBody1`
+
+Optional arguments:
+DEBUG=0 or DEBUG=1 (default 0): Whether to run in a debugger
+FTYPE=DOUBLE of FTYPE=FLOAT (default FLOAT): What floating point type to use
+REUSE=0 or REUSE=1 (default 0): Whether to reuse generated connectivity from an earlier run
+CPU_ONLY=0 or CPU_ONLY=1 (default 0): Whether to compile in (CUDA independent) "CPU only" mode.
+
+An example invocation of generate_run is:
+
+generate_run.exe 1 100 1000 20 100 0.0025 outname MBody_userdef
+
+for Windows users, or:
+
+./generate_run 1 100 1000 20 100 0.0025 outname MBody_userdef
+
+for Linux, Mac and other UNIX users. 
+
+Such a command would generate a locust olfaction model with 100
+antennal lobe neurons, 1000 mushroom body Kenyon cells, 20 lateral
+horn interneurons and 100 mushroom body output neurons, and launch
+a simulation of it on a CUDA-enabled GPU using single precision
+floating point numbers. All output files will be prefixed with
+"outname" and will be created under the "outname" directory.
+
+In more details, what generate_run program does is: 
+a) use some other tools to generate the appropriate connectivity
+   matrices and store them in files.
+
+b) build the source code for the model by writing neuron numbers into
+   ./model/sizes.h, and executing "genn-buildmodel.sh ./model/MBody_userdef.cc".  
+
+c) compile the generated code by invoking "make clean &amp;&amp; make" 
+   running the code, e.g. "./classol_sim r1 1".
+
+Another example of an invocation would be: 
+
+generate_run.exe 0 100 1000 20 100 0.0025 outname MBody_userdef FTYPE=DOUBLE CPU_ONLY=1
+
+for Windows users, or:
+
+./generate_run 0 100 1000 20 100 0.0025 outname MBody_userdef FTYPE=DOUBLE CPU_ONLY=1
+
+for Linux, Mac and other UNIX users. 
+
+
+MODEL INFORMATION
+-----------------
+
+For information regarding the locust olfaction model implemented in this example project, see:
+
+T. Nowotny, R. Huerta, H. D. I. Abarbanel, and M. I. Rabinovich Self-organization in the
+olfactory system: One shot odor recognition in insects, Biol Cyber, 93 (6): 436-446 (2005),
+doi:10.1007/s00422-005-0019-7 
+</pre><p> Nowotny insect olfaction model: <a class="el" href="../../d0/de3/citelist.html#CITEREF_nowotny2005self">[2]</a>; Traub-Miles Hodgkin-Huxley neuron model: <a class="el" href="../../d0/de3/citelist.html#CITEREF_Traub1991">[5]</a> <br />
 </p>
 <h1><a class="anchor" id="ex_mbody_indID"></a>
 Insect Olfaction Model using INDIVIDUALID connectivity scheme</h1>
-<p>A variation of the <a class="el" href="../../d9/d61/Examples.html#ex_mbody">Insect olfaction model</a> example using synaptic delays. In this example, the Kenyon Cell-Decision Neuron synapses are delayed by (5 * DT) ms, and the Decision Neuron-Decision Neuron synapses are delayed by (3 * DT) ms. The example is intended to test the operation of synapses which have a combination of delayed spike propagation and STDP (plasticity).</p>
-<p>It is run the same way as <a class="el" href="../../d9/d61/Examples.html#ex_mbody">Insect olfaction model</a>, e.g. </p><div class="fragment"><div class="line">./generate_run 1 100 1000 20 100 0.0025 test1 MBody_delayedSyn 0 FLOAT 0</div>
-</div><!-- fragment --><p><br />
- </p>
+<pre class="fragment">
+Locust olfactory system (Nowotny et al. 2005)
+=============================================
+
+This example is very similar to the MBody1_project example. The
+only difference is that PN to KC connections are defined with
+the INDIVIDUALID mechanism.
+
+To compile it, navigate to genn/userproject/MBody_individualID_project and type:
+
+nmake /f WINmakefile
+
+for Windows users, or:
+
+make
+
+for Linux, Mac and other UNIX users. 
+
+
+USAGE
+-----
+
+generate_run &lt;0(CPU)/1(GPU)/n(GPU n-2)&gt; &lt;nAL&gt; &lt;nKC&gt; &lt;nLH&gt; &lt;nDN&gt; &lt;gScale&gt; &lt;DIR&gt; &lt;MODEL&gt; 
+
+Mandatory parameters:
+CPU/GPU: Choose whether to run the simulation on CPU (`0`), auto GPU (`1`), or GPU (n-2) (`n`).
+nAL: Number of neurons in the antennal lobe (AL), the input neurons to this model
+nKC: Number of Kenyon cells (KC) in the "hidden layer"
+nLH: Number of lateral horn interneurons, implementing gain control
+nDN: Number of decision neurons (DN) in the output layer
+gScale: A general rescaling factor for snaptic strength
+outname: The base name of the output location and output files
+model: The name of the model to execute, as provided this would be `MBody1`
+
+Optional arguments:
+DEBUG=0 or DEBUG=1 (default 0): Whether to run in a debugger
+FTYPE=DOUBLE of FTYPE=FLOAT (default FLOAT): What floating point type to use
+REUSE=0 or REUSE=1 (default 0): Whether to reuse generated connectivity from an earlier run
+CPU_ONLY=0 or CPU_ONLY=1 (default 0): Whether to compile in (CUDA independent) "CPU only" mode.
+
+An example invocation of generate_run is:
+
+generate_run.exe 1 100 1000 20 100 0.0025 outname MBody_individualID
+
+for Windows users, or:
+
+./generate_run 1 100 1000 20 100 0.0025 outname MBody_individualID
+
+for Linux, Mac and other UNIX users. 
+
+Such a command would generate a locust olfaction model with 100
+antennal lobe neurons, 1000 mushroom body Kenyon cells, 20 lateral
+horn interneurons and 100 mushroom body output neurons, and launch
+a simulation of it on a CUDA-enabled GPU using single precision
+floating point numbers. All output files will be prefixed with
+"outname" and will be created under the "outname" directory.
+
+In more details, what generate_run program does is: 
+a) use some other tools to generate the appropriate connectivity
+   matrices and store them in files.
+
+b) build the source code for the model by writing neuron numbers into
+   ./model/sizes.h, and executing "genn-buildmodel.sh ./model/MBody_individualID.cc".  
+
+c) compile the generated code by invoking "make clean &amp;&amp; make" 
+   running the code, e.g. "./classol_sim r1 1".
+
+Another example of an invocation would be: 
+
+generate_run.exe 0 100 1000 20 100 0.0025 outname MBody_individualID FTYPE=DOUBLE CPU_ONLY=1
+
+for Windows users, or:
+
+./generate_run 0 100 1000 20 100 0.0025 outname MBody_individualID FTYPE=DOUBLE CPU_ONLY=1
+
+for Linux, Mac and other UNIX users. 
+
+
+MODEL INFORMATION
+-----------------
+
+For information regarding the locust olfaction model implemented in this example project, see:
+
+T. Nowotny, R. Huerta, H. D. I. Abarbanel, and M. I. Rabinovich Self-organization in the
+olfactory system: One shot odor recognition in insects, Biol Cyber, 93 (6): 436-446 (2005),
+doi:10.1007/s00422-005-0019-7 
+</pre><p> Nowotny insect olfaction model: <a class="el" href="../../d0/de3/citelist.html#CITEREF_nowotny2005self">[2]</a>; Traub-Miles Hodgkin-Huxley neuron model: <a class="el" href="../../d0/de3/citelist.html#CITEREF_Traub1991">[5]</a> <br />
+</p>
+<h1><a class="anchor" id="ex_mbody_delay"></a>
+Insect Olfaction Model using delayed synapses</h1>
+<pre class="fragment">
+Locust olfactory system (Nowotny et al. 2005)
+=============================================
+
+A variation of the \ref ex_mbody example using synaptic delays.
+In this example, the Kenyon Cell-Decision Neuron synapses are
+delayed by (5 * DT) ms, and the Decision Neuron-Decision Neuron
+synapses are delayed by (3 * DT) ms. The example is intended
+to test the operation of synapses which have a combination of
+delayed spike propagation and STDP (plasticity). This example
+project contains a helper executable called "generate_run",
+which also prepares additional synapse connectivity and input
+pattern data, before compiling and executing the model.
+
+To compile it, navigate to genn/userproject/MBody_delayedSyn_project and type:
+
+nmake /f WINmakefile
+
+for Windows users, or:
+
+make
+
+for Linux, Mac and other UNIX users. 
+
+
+USAGE
+-----
+
+generate_run &lt;0(CPU)/1(GPU)/n(GPU n-2)&gt; &lt;nAL&gt; &lt;nKC&gt; &lt;nLH&gt; &lt;nDN&gt; &lt;gScale&gt; &lt;DIR&gt; &lt;MODEL&gt; 
+
+Mandatory parameters:
+CPU/GPU: Choose whether to run the simulation on CPU (`0`), auto GPU (`1`), or GPU (n-2) (`n`).
+nAL: Number of neurons in the antennal lobe (AL), the input neurons to this model
+nKC: Number of Kenyon cells (KC) in the "hidden layer"
+nLH: Number of lateral horn interneurons, implementing gain control
+nDN: Number of decision neurons (DN) in the output layer
+gScale: A general rescaling factor for snaptic strength
+outname: The base name of the output location and output files
+model: The name of the model to execute, as provided this would be `MBody1`
+
+Optional arguments:
+DEBUG=0 or DEBUG=1 (default 0): Whether to run in a debugger
+FTYPE=DOUBLE of FTYPE=FLOAT (default FLOAT): What floating point type to use
+REUSE=0 or REUSE=1 (default 0): Whether to reuse generated connectivity from an earlier run
+CPU_ONLY=0 or CPU_ONLY=1 (default 0): Whether to compile in (CUDA independent) "CPU only" mode.
+
+An example invocation of generate_run is:
+
+generate_run.exe 1 100 1000 20 100 0.0025 outname MBody_delayedSyn
+
+for Windows users, or:
+
+./generate_run 1 100 1000 20 100 0.0025 outname MBody_delayedSyn
+
+for Linux, Mac and other UNIX users. 
+
+Such a command would generate a locust olfaction model with 100
+antennal lobe neurons, 1000 mushroom body Kenyon cells, 20 lateral
+horn interneurons and 100 mushroom body output neurons, and launch
+a simulation of it on a CUDA-enabled GPU using single precision
+floating point numbers. All output files will be prefixed with
+"outname" and will be created under the "outname" directory.
+
+In more details, what generate_run program does is: 
+a) use some other tools to generate the appropriate connectivity
+   matrices and store them in files.
+
+b) build the source code for the model by writing neuron numbers into
+   ./model/sizes.h, and executing "genn-buildmodel.sh ./model/MBody_delayedSyn.cc".  
+
+c) compile the generated code by invoking "make clean &amp;&amp; make" 
+   running the code, e.g. "./classol_sim r1 1".
+
+Another example of an invocation would be: 
+
+generate_run.exe 0 100 1000 20 100 0.0025 outname MBody_delayedSyn FTYPE=DOUBLE CPU_ONLY=1
+
+for Windows users, or:
+
+./generate_run 0 100 1000 20 100 0.0025 outname MBody_delayedSyn FTYPE=DOUBLE CPU_ONLY=1
+
+for Linux, Mac and other UNIX users. 
+
+
+MODEL INFORMATION
+-----------------
+
+For information regarding the locust olfaction model implemented in this example project, see:
+
+T. Nowotny, R. Huerta, H. D. I. Abarbanel, and M. I. Rabinovich Self-organization in the
+olfactory system: One shot odor recognition in insects, Biol Cyber, 93 (6): 436-446 (2005),
+doi:10.1007/s00422-005-0019-7 
+</pre><p> Nowotny insect olfaction model: <a class="el" href="../../d0/de3/citelist.html#CITEREF_nowotny2005self">[2]</a>; Traub-Miles Hodgkin-Huxley neuron model: <a class="el" href="../../d0/de3/citelist.html#CITEREF_Traub1991">[5]</a> <br />
+</p>
 <h1><a class="anchor" id="ex_Vclamp"></a>
 Voltage clamp simulation to estimate Hodgkin-Huxley parameters</h1>
-<p>This example simulates a population of Hodgkin-Huxley neuron models on the GPU and evolves them with a simple guided random search (simple GA) to mimic the dynamics of a separate Hodgkin-Huxley neuron that is simulated on the CPU. The parameters of the CPU simulated "true cell" are drifting according to a user-chosen protocol: Either one of the parameters gNa, ENa, gKd, EKd, gleak, Eleak, Cmem are modified by a sinusoidal addition (voltage parameters) or factor (conductance or capacitance) - protocol 0-6. For protocol 7 all 7 parameters undergo a random walk concurrently.</p>
-<p>The syntax of the generate_run program is </p><div class="fragment"><div class="line">generate_run &lt;CPU=0, GPU=1&gt; &lt;protocol&gt; &lt;nPop&gt; &lt;totalT&gt; &lt;outdir&gt; &lt;debug mode? (0/1)&gt; &lt;<a class="code" href="../../dc/de1/modelSpec_8h.html#a39cb9803524b6f3b783344b2f89867b4">GPU</a> choice&gt;</div>
-</div><!-- fragment --><p> The parameters are </p><ul>
-<li>GPU/CPU: Whether to use the GPU (1) or CPU (0) for the model neuron population </li>
-<li>protocol: Which changes to apply during the run to the parameters of the "true cell" </li>
-<li>nPop: Number of neurons in the tracking population </li>
-<li>totalT: Time in ms how long to run the simulation </li>
-<li>outdir: The directory in which to save results </li>
-<li>debug mode: whether to start in debugging mode (1) or not (0) GPU choice: explicit choice of the GPU to be used.</li>
-</ul>
-<p>An example invocation is: </p><div class="fragment"><div class="line">./generate_run 1 2 5000 1000 test1 0 0</div>
-</div><!-- fragment --><p>This will simulate nPop= 5000 Hodgkin-Huxley neurons on the GPU which will for 1000 ms be matched to a Hodgkin-Huxley neuron where the parameter gKd is sinusoidally modulated. The output files will be written into a directory of the name test1_output, which will be created if it does not yet exist.</p>
-<hr/>
+<pre class="fragment">
+Genetic algorithm for tracking parameters in a HH model cell
+============================================================
+
+This example simulates a population of Hodgkin-Huxley neuron models on the GPU and evolves them with a simple 
+guided random search (simple GA) to mimic the dynamics of a separate Hodgkin-Huxley
+neuron that is simulated on the CPU. The parameters of the CPU simulated "true cell" are drifting 
+according to a user-chosen protocol: Either one of the parameters gNa, ENa, gKd, EKd, gleak,
+Eleak, Cmem are modified by a sinusoidal addition (voltage parameters) or factor (conductance or capacitance) - 
+protocol 0-6. For protocol 7 all 7 parameters undergo a random walk concurrently.
+
+To compile it, navigate to genn/userproject/HHVclampGA_project and type:
+
+nmake /f WINmakefile
+
+for Windows users, or:
+
+make
+
+for Linux, Mac and other UNIX users.
+
+
+USAGE
+-----
+
+generate_run &lt;CPU=0, GPU=1&gt; &lt;protocol&gt; &lt;nPop&gt; &lt;totalT&gt; &lt;outdir&gt; 
+
+Mandatory parameters: 
+GPU/CPU: Whether to use the GPU (1) or CPU (0) for the model neuron population
+protocol: Which changes to apply during the run to the parameters of the "true cell"
+nPop: Number of neurons in the tracking population
+totalT: Time in ms how long to run the simulation 
+outdir: The directory in which to save results
+
+Optional arguments:
+DEBUG=0 or DEBUG=1 (default 0): Whether to run in a debugger
+FTYPE=DOUBLE of FTYPE=FLOAT (default FLOAT): What floating point type to use
+REUSE=0 or REUSE=1 (default 0): Whether to reuse generated connectivity from an earlier run
+CPU_ONLY=0 or CPU_ONLY=1 (default 0): Whether to compile in (CUDA independent) "CPU only" mode.
+
+An example invocation of generate_run is:
+
+generate_run.exe 1 -1 12 200000 test1
+
+for Windows users, or:
+
+./generate_run 1 -1 12 200000 test1
+
+for Linux, Mac and other UNIX users.
+
+This will simulate nPop= 5000 Hodgkin-Huxley neurons on the GPU which will for 1000 ms be matched to a
+Hodgkin-Huxley neuron where the parameter gKd is sinusoidally modulated. The output files will be
+written into a directory of the name test1_output, which will be created if it does not yet exist.
+
+Another example of an invocation would be: 
+
+generate_run.exe 0 -1 12 200000 test1 FTYPE=DOUBLE CPU_ONLY=1
+
+for Windows users, or:
+
+./generate_run 0 -1 12 200000 test1 FTYPE=DOUBLE CPU_ONLY=1
+
+for Linux, Mac and other UNIX users.
+</pre><p> Traub-Miles Hodgkin-Huxley neuron model: <a class="el" href="../../d0/de3/citelist.html#CITEREF_Traub1991">[5]</a> <br />
+ </p><hr/>
 <p> <a class="el" href="../../d7/d98/Quickstart.html">Previous</a> | <a class="el" href="../../d9/d61/Examples.html">Top</a> | <a class="el" href="../../df/ddb/ReleaseNotes.html">Next</a> </p>
 </div></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Fri Nov 6 2015 22:13:01 for GeNN by
+    <li class="footer">Generated on Fri Jun 17 2016 14:44:59 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
   </ul>

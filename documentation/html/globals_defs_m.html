@@ -34,6 +34,7 @@
   $(document).ready(function() { init_search(); });
 </script>
 <link href="customdoxygen.css" rel="stylesheet" type="text/css" />
+<link href="html_styles.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -44,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">2.0</span>
+   &#160;<span id="projectnumber">2.2</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -61,6 +62,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
       <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
+      <li><a href="namespaces.html"><span>Namespaces</span></a></li>
       <li><a href="annotated.html"><span>Classes</span></a></li>
       <li class="current"><a href="files.html"><span>Files</span></a></li>
       <li>
@@ -116,6 +118,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
       <li><a href="globals_defs_r.html#index_r"><span>r</span></a></li>
       <li><a href="globals_defs_s.html#index_s"><span>s</span></a></li>
       <li><a href="globals_defs_t.html#index_t"><span>t</span></a></li>
+      <li><a href="globals_defs_u.html#index_u"><span>u</span></a></li>
       <li><a href="globals_defs_v.html#index_v"><span>v</span></a></li>
       <li><a href="globals_defs_w.html#index_w"><span>w</span></a></li>
     </ul>
@@ -153,20 +156,11 @@ $(document).ready(function(){initNavTree('globals_defs_m.html','');});
 &#160;
 
 <h3><a class="anchor" id="index_m"></a>- m -</h3><ul>
-<li>MATINP
-: <a class="el" href="dc/de1/modelSpec_8h.html#a3a7e23cf756f49b33e8fbe9066eb4bf9">modelSpec.h</a>
-</li>
 <li>MAX_FIRING_RATE_HZ
 : <a class="el" href="dc/d02/experiment_8h.html#ab3c367d72e72452b69f44e6442a25f54">experiment.h</a>
 </li>
 <li>MAX_WEIGHT_PN_AN
 : <a class="el" href="dc/d02/experiment_8h.html#a7af9345842d0b383b73b4cec9ee2c3e3">experiment.h</a>
-</li>
-<li>MAXNRN
-: <a class="el" href="dc/de1/modelSpec_8h.html#a9d90d99c40eba68df6c053f0e6e44672">modelSpec.h</a>
-</li>
-<li>MAXPOSTSYN
-: <a class="el" href="dc/de1/modelSpec_8h.html#a4a4e62777219e0a1f16847a32a4b42b6">modelSpec.h</a>
 </li>
 <li>MIN_FIRING_RATE_HZ
 : <a class="el" href="dc/d02/experiment_8h.html#a87c3bd7738ebf772f512ccbbd5be9fc2">experiment.h</a>
@@ -174,11 +168,14 @@ $(document).ready(function(){initNavTree('globals_defs_m.html','');});
 <li>MIN_WEIGHT_PN_AN
 : <a class="el" href="dc/d02/experiment_8h.html#a1d593b5cfc7307ed9ebc6b640105c0ce">experiment.h</a>
 </li>
+<li>MODELSPEC_CC
+: <a class="el" href="d8/d9a/src_2modelSpec_8cc.html#ae3cc45c136c54a62fd9bfebd3a979815">src/modelSpec.cc</a>
+</li>
 <li>MYRAND
-: <a class="el" href="dc/ddd/MBody__userdef__project_2model_2classol__sim_8h.html#ae22bee5ab0274eba2219d11cf354c982">MBody_userdef_project/model/classol_sim.h</a>
+: <a class="el" href="d5/d8d/MBody1__project_2model_2classol__sim_8h.html#ae22bee5ab0274eba2219d11cf354c982">MBody1_project/model/classol_sim.h</a>
 , <a class="el" href="d1/da6/MBody__individualID__project_2model_2classol__sim_8h.html#ae22bee5ab0274eba2219d11cf354c982">MBody_individualID_project/model/classol_sim.h</a>
 , <a class="el" href="d9/d32/PoissonIzh__sim_8h.html#ae22bee5ab0274eba2219d11cf354c982">PoissonIzh_sim.h</a>
-, <a class="el" href="d5/d8d/MBody1__project_2model_2classol__sim_8h.html#ae22bee5ab0274eba2219d11cf354c982">MBody1_project/model/classol_sim.h</a>
+, <a class="el" href="dc/ddd/MBody__userdef__project_2model_2classol__sim_8h.html#ae22bee5ab0274eba2219d11cf354c982">MBody_userdef_project/model/classol_sim.h</a>
 , <a class="el" href="de/d54/MBody__delayedSyn__project_2model_2classol__sim_8h.html#ae22bee5ab0274eba2219d11cf354c982">MBody_delayedSyn_project/model/classol_sim.h</a>
 </li>
 </ul>
@@ -187,7 +184,7 @@ $(document).ready(function(){initNavTree('globals_defs_m.html','');});
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Fri Nov 6 2015 22:13:08 for GeNN by
+    <li class="footer">Generated on Fri Jun 17 2016 14:45:01 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
   </ul>

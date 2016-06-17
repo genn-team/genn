@@ -34,6 +34,7 @@
   $(document).ready(function() { init_search(); });
 </script>
 <link href="customdoxygen.css" rel="stylesheet" type="text/css" />
+<link href="html_styles.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -44,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">2.0</span>
+   &#160;<span id="projectnumber">2.2</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -61,6 +62,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
       <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
+      <li><a href="namespaces.html"><span>Namespaces</span></a></li>
       <li class="current"><a href="annotated.html"><span>Classes</span></a></li>
       <li><a href="files.html"><span>Files</span></a></li>
       <li>
@@ -94,6 +96,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
       <li class="current"><a href="functions.html"><span>All</span></a></li>
       <li><a href="functions_func.html"><span>Functions</span></a></li>
       <li><a href="functions_vars.html"><span>Variables</span></a></li>
+      <li><a href="functions_type.html"><span>Typedefs</span></a></li>
       <li><a href="functions_enum.html"><span>Enumerations</span></a></li>
       <li><a href="functions_eval.html"><span>Enumerator</span></a></li>
     </ul>
@@ -113,6 +116,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
       <li><a href="functions_n.html#index_n"><span>n</span></a></li>
       <li><a href="functions_o.html#index_o"><span>o</span></a></li>
       <li><a href="functions_p.html#index_p"><span>p</span></a></li>
+      <li><a href="functions_q.html#index_q"><span>q</span></a></li>
       <li><a href="functions_r.html#index_r"><span>r</span></a></li>
       <li class="current"><a href="functions_s.html#index_s"><span>s</span></a></li>
       <li><a href="functions_t.html#index_t"><span>t</span></a></li>
@@ -158,6 +162,9 @@ $(document).ready(function(){initNavTree('functions_s.html','');});
 <li>sampleDistance
 : <a class="el" href="d1/dc3/classSchmuker2014__classifier.html#ab2bfa6550e1f5611a3f4edeb1a8fec82">Schmuker2014_classifier</a>
 </li>
+<li>scalarExpr()
+: <a class="el" href="dc/de5/classNNmodel.html#ab68dd1b0e4795cb7c813cb04efbc443e">NNmodel</a>
+</li>
 <li>Schmuker2014_classifier()
 : <a class="el" href="d1/dc3/classSchmuker2014__classifier.html#a59fedb148283226664ba39331282f9ba">Schmuker2014_classifier</a>
 </li>
@@ -169,6 +176,9 @@ $(document).ready(function(){initNavTree('functions_s.html','');});
 </li>
 <li>setCorrectClass()
 : <a class="el" href="d1/dc3/classSchmuker2014__classifier.html#abc8b88580ac5bfc95f084f02b63951fa">Schmuker2014_classifier</a>
+</li>
+<li>setDT()
+: <a class="el" href="dc/de5/classNNmodel.html#aa8283ad87bc9d6caa854d21ca4f9b249">NNmodel</a>
 </li>
 <li>setGPUDevice()
 : <a class="el" href="dc/de5/classNNmodel.html#ae44b078dcca0b16ef45978a7fe54d16e">NNmodel</a>
@@ -188,11 +198,17 @@ $(document).ready(function(){initNavTree('functions_s.html','');});
 <li>setNeuronClusterIndex()
 : <a class="el" href="dc/de5/classNNmodel.html#a65aee794c66069cd3e6316ade0c91192">NNmodel</a>
 </li>
+<li>setPopulationSums()
+: <a class="el" href="dc/de5/classNNmodel.html#a63d26f88fd7ccf40d6414bb236c9b3f5">NNmodel</a>
+</li>
 <li>setPrecision()
 : <a class="el" href="dc/de5/classNNmodel.html#a44fb38b93216c56254fbbee6175cffd1">NNmodel</a>
 </li>
 <li>setSeed()
 : <a class="el" href="dc/de5/classNNmodel.html#acc6b868fe6383bbea589ba2eddfac679">NNmodel</a>
+</li>
+<li>setSpanTypeToPre()
+: <a class="el" href="dc/de5/classNNmodel.html#a94d0072fd31f1742c161235801d4cd2a">NNmodel</a>
 </li>
 <li>setSynapseClusterIndex()
 : <a class="el" href="dc/de5/classNNmodel.html#a2b7ad279fd8e68d951957f21bbb072c5">NNmodel</a>
@@ -206,15 +222,30 @@ $(document).ready(function(){initNavTree('functions_s.html','');});
 <li>setVerbose()
 : <a class="el" href="d1/d03/classCodeHelper.html#a056ddd7c70cf16382b0518fed4fca8af">CodeHelper</a>
 </li>
+<li>shuffle()
+: <a class="el" href="d9/dea/classQTIsaac.html#a9eb2ef09b2864b5b2b0406b7d0236ade">QTIsaac&lt; ALPHA, T &gt;</a>
+</li>
 <li>simCode
-: <a class="el" href="d3/d64/structneuronModel.html#a9e6536fd15b69fa24b708e41f97df899">neuronModel</a>
+: <a class="el" href="d3/dc9/classneuronModel.html#a9e6536fd15b69fa24b708e41f97df899">neuronModel</a>
 , <a class="el" href="dd/db7/classweightUpdateModel.html#a6f665453175451356bbf14b9f60baed3">weightUpdateModel</a>
+</li>
+<li>simCode_supportCode
+: <a class="el" href="dd/db7/classweightUpdateModel.html#af698a58749d3f6e18f01ca3c0e165b36">weightUpdateModel</a>
 </li>
 <li>simCodeEvnt
 : <a class="el" href="dd/db7/classweightUpdateModel.html#a758cc3211ae12407583f625418dd5a89">weightUpdateModel</a>
 </li>
 <li>simLearnPost
 : <a class="el" href="dd/db7/classweightUpdateModel.html#a9ebdfd1b336b3c40403546deb05cbfc9">weightUpdateModel</a>
+</li>
+<li>simLearnPost_supportCode
+: <a class="el" href="dd/db7/classweightUpdateModel.html#a457fbb8ae21cc4077cc1e08618c4cbb4">weightUpdateModel</a>
+</li>
+<li>simLearnPostKernelParameters
+: <a class="el" href="dc/de5/classNNmodel.html#a2c4f168330bc2a780d65a3554bdefe17">NNmodel</a>
+</li>
+<li>simLearnPostKernelParameterTypes
+: <a class="el" href="dc/de5/classNNmodel.html#a89dd960fec4bf03a4cb48fd4516f9649">NNmodel</a>
 </li>
 <li>size_g
 : <a class="el" href="d1/d16/classclassol.html#aa6efbc353061391575387b33639d7961">classol</a>
@@ -228,7 +259,8 @@ $(document).ready(function(){initNavTree('functions_s.html','');});
 , <a class="el" href="dd/d4e/classpwSTDP__userdef.html#ac0215c6e0b8b959d6ae0be1d11df2ab2">pwSTDP_userdef</a>
 </li>
 <li>srand()
-: <a class="el" href="d5/d45/classrandomGauss.html#ae70753cbda35d7226796602c13e27a5f">randomGauss</a>
+: <a class="el" href="d9/dea/classQTIsaac.html#a56a7c9ea3a20da03d07f7eaf8d4b4599">QTIsaac&lt; ALPHA, T &gt;</a>
+, <a class="el" href="d5/d45/classrandomGauss.html#ae70753cbda35d7226796602c13e27a5f">randomGauss</a>
 , <a class="el" href="d8/d3b/classrandomGen.html#ae524b99f0205bf178c0ecc2bc49a518f">randomGen</a>
 </li>
 <li>st
@@ -282,6 +314,10 @@ $(document).ready(function(){initNavTree('functions_s.html','');});
 <li>sumPN
 : <a class="el" href="d1/d16/classclassol.html#abd188bdb202d67ec2c1a6316128f9c44">classol</a>
 </li>
+<li>supportCode
+: <a class="el" href="d3/dc9/classneuronModel.html#a98b59827f668ecfee9dec5c82b629a5b">neuronModel</a>
+, <a class="el" href="d2/d1a/classpostSynModel.html#a66efe45d6824aaea989355be70b21253">postSynModel</a>
+</li>
 <li>synapseConnType
 : <a class="el" href="dc/de5/classNNmodel.html#a0b1d2c6f24b8ed9215dce9daf3ca0518">NNmodel</a>
 </li>
@@ -293,6 +329,15 @@ $(document).ready(function(){initNavTree('functions_s.html','');});
 </li>
 <li>synapseDynamics
 : <a class="el" href="dd/db7/classweightUpdateModel.html#a8f5c92fc0ca6c1ddf861891bfd751de2">weightUpdateModel</a>
+</li>
+<li>synapseDynamics_supportCode
+: <a class="el" href="dd/db7/classweightUpdateModel.html#a456e18c995ff42277e23005f75c83728">weightUpdateModel</a>
+</li>
+<li>synapseDynamicsKernelParameters
+: <a class="el" href="dc/de5/classNNmodel.html#a26e26e8e7a23e5d989fcbe3dae9ecf7f">NNmodel</a>
+</li>
+<li>synapseDynamicsKernelParameterTypes
+: <a class="el" href="dc/de5/classNNmodel.html#a978553ea2e6133280be00238a1efc4ff">NNmodel</a>
 </li>
 <li>synapseGrpN
 : <a class="el" href="dc/de5/classNNmodel.html#a1e6209fc2014ab9f1820a614cc246c67">NNmodel</a>
@@ -309,6 +354,12 @@ $(document).ready(function(){initNavTree('functions_s.html','');});
 <li>synapseInSynNo
 : <a class="el" href="dc/de5/classNNmodel.html#adc8ccfb003c34fbca10d0fd0e3b26ee0">NNmodel</a>
 </li>
+<li>synapseKernelParameters
+: <a class="el" href="dc/de5/classNNmodel.html#a66098221e9884d1753bbae898ac7b689">NNmodel</a>
+</li>
+<li>synapseKernelParameterTypes
+: <a class="el" href="dc/de5/classNNmodel.html#a02280002784a158897db8e0dd1340d1f">NNmodel</a>
+</li>
 <li>synapseName
 : <a class="el" href="dc/de5/classNNmodel.html#a13993564faeb0e67a21b3c9ffababaf1">NNmodel</a>
 </li>
@@ -321,8 +372,8 @@ $(document).ready(function(){initNavTree('functions_s.html','');});
 <li>synapseSource
 : <a class="el" href="dc/de5/classNNmodel.html#a39861eefc8f7b13c21aaf82142520227">NNmodel</a>
 </li>
-<li>synapseSpkEvntVars
-: <a class="el" href="dc/de5/classNNmodel.html#a30e4ebc1109de5e7d921b22f1597cbf4">NNmodel</a>
+<li>synapseSpanType
+: <a class="el" href="dc/de5/classNNmodel.html#a4345e3c5d520f66402b6413a8681b837">NNmodel</a>
 </li>
 <li>synapseTarget
 : <a class="el" href="dc/de5/classNNmodel.html#a10c4e0a9d71bbfa6895de30a64f31ca6">NNmodel</a>
@@ -336,11 +387,20 @@ $(document).ready(function(){initNavTree('functions_s.html','');});
 <li>synapseUsesSpikeEvents
 : <a class="el" href="dc/de5/classNNmodel.html#a523332e852d8d6eda1a52fec384b9372">NNmodel</a>
 </li>
+<li>synapseUsesSynapseDynamics
+: <a class="el" href="dc/de5/classNNmodel.html#a31b5d8df9a66b460499ac2414f25e454">NNmodel</a>
+</li>
 <li>synapseUsesTrueSpikes
 : <a class="el" href="dc/de5/classNNmodel.html#ad79fc7a473d7fb646725a017cb34d6eb">NNmodel</a>
 </li>
 <li>SynDelay()
 : <a class="el" href="db/df7/classSynDelay.html#aaade14bd66306666c78e8c121e44ce96">SynDelay</a>
+</li>
+<li>synDynGroups
+: <a class="el" href="dc/de5/classNNmodel.html#ac9f336ee8ff74afe98b4a541cf04ac26">NNmodel</a>
+</li>
+<li>synDynGrp
+: <a class="el" href="dc/de5/classNNmodel.html#aa481e80f89d24e2809a5d060092b50b3">NNmodel</a>
 </li>
 </ul>
 </div><!-- contents -->
@@ -348,7 +408,7 @@ $(document).ready(function(){initNavTree('functions_s.html','');});
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Fri Nov 6 2015 22:13:06 for GeNN by
+    <li class="footer">Generated on Fri Jun 17 2016 14:45:01 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
   </ul>

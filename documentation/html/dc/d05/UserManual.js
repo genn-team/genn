@@ -14,14 +14,14 @@ var UserManual =
       [ "IZHIKEVICH_V (Izhikevich neurons with variable parameters)", "de/ded/sectNeuronModels.html#sect25", null ],
       [ "SPIKESOURCE (empty neuron which allows setting spikes from external sources)", "de/ded/sectNeuronModels.html#sect26", null ],
       [ "Defining your own neuron type", "de/ded/sectNeuronModels.html#sect_own", null ],
-      [ "Defining the integration method", "de/ded/sectNeuronModels.html#sect_integration", null ],
-      [ "Explicit current input to neurons (will be removed in future versions)", "de/ded/sectNeuronModels.html#sect_explinput", null ]
+      [ "Explicit current input to neurons (NOW REMOVED)", "de/ded/sectNeuronModels.html#sect_explinput", null ]
     ] ],
     [ "Synapse models", "d5/d24/sectSynapseModels.html", [
       [ "Built-in Models", "d5/d24/sectSynapseModels.html#subsect31", null ],
       [ "NSYNAPSE (No Learning)", "d5/d24/sectSynapseModels.html#sect31", null ],
       [ "NGRADSYNAPSE (Graded Synapse)", "d5/d24/sectSynapseModels.html#sect32", null ],
-      [ "LEARN1SYNAPSE (Learning Synapse with a Primitive Role)", "d5/d24/sectSynapseModels.html#sect33", null ],
+      [ "LEARN1SYNAPSE (Learning Synapse with a Primitive Piece-wise Linear Rule)", "d5/d24/sectSynapseModels.html#sect33", null ],
+      [ "Defining a new synapse model", "d5/d24/sectSynapseModels.html#sect34", null ],
       [ "Conductance definition methods", "d5/d24/sectSynapseModels.html#subsect34", null ],
       [ "Connectivity types", "d5/d24/sectSynapseModels.html#subsect32", null ],
       [ "Postsynaptic integration methods", "d5/d24/sectSynapseModels.html#sect_postsyn", null ]

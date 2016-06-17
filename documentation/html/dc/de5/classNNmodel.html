@@ -34,6 +34,7 @@
   $(document).ready(function() { init_search(); });
 </script>
 <link href="../../customdoxygen.css" rel="stylesheet" type="text/css" />
+<link href="../../html_styles.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -44,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">2.0</span>
+   &#160;<span id="projectnumber">2.2</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -61,6 +62,7 @@ var searchBox = new SearchBox("searchBox", "../../search",false,'Search');
     <ul class="tablist">
       <li><a href="../../index.html"><span>Main&#160;Page</span></a></li>
       <li><a href="../../pages.html"><span>Related&#160;Pages</span></a></li>
+      <li><a href="../../namespaces.html"><span>Namespaces</span></a></li>
       <li class="current"><a href="../../annotated.html"><span>Classes</span></a></li>
       <li><a href="../../files.html"><span>Files</span></a></li>
       <li>
@@ -128,9 +130,6 @@ $(document).ready(function(){initNavTree('dc/de5/classNNmodel.html','../../');})
 </div><!--header-->
 <div class="contents">
 
-<p>Structure to hold the information that defines synapse dynamics (a model of how synapse variables change over time, independent of or in addition to changes when spikes occur).  
- <a href="../../dc/de5/classNNmodel.html#details">More...</a></p>
-
 <p><code>#include &lt;<a class="el" href="../../dc/de1/modelSpec_8h_source.html">modelSpec.h</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
@@ -145,6 +144,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a44fb38b93216c56254fbbee6175cffd1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#a44fb38b93216c56254fbbee6175cffd1">setPrecision</a> (unsigned int)</td></tr>
 <tr class="memdesc:a44fb38b93216c56254fbbee6175cffd1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set numerical precision for floating point.  <a href="#a44fb38b93216c56254fbbee6175cffd1">More...</a><br /></td></tr>
 <tr class="separator:a44fb38b93216c56254fbbee6175cffd1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa8283ad87bc9d6caa854d21ca4f9b249"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#aa8283ad87bc9d6caa854d21ca4f9b249">setDT</a> (double)</td></tr>
+<tr class="memdesc:aa8283ad87bc9d6caa854d21ca4f9b249"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the integration step size of the model.  <a href="#aa8283ad87bc9d6caa854d21ca4f9b249">More...</a><br /></td></tr>
+<tr class="separator:aa8283ad87bc9d6caa854d21ca4f9b249"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab843183abd01171e9a8ab99b219cb2b7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#ab843183abd01171e9a8ab99b219cb2b7">setTiming</a> (bool)</td></tr>
 <tr class="memdesc:ab843183abd01171e9a8ab99b219cb2b7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set whether timers and timing commands are to be included.  <a href="#ab843183abd01171e9a8ab99b219cb2b7">More...</a><br /></td></tr>
 <tr class="separator:ab843183abd01171e9a8ab99b219cb2b7"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -156,30 +158,35 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ae44b078dcca0b16ef45978a7fe54d16e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#ae44b078dcca0b16ef45978a7fe54d16e">setGPUDevice</a> (int)</td></tr>
 <tr class="memdesc:ae44b078dcca0b16ef45978a7fe54d16e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Method to choose the GPU to be used for the model. If "AUTODEVICE' (-1), GeNN will choose the device based on a heuristic rule.  <a href="#ae44b078dcca0b16ef45978a7fe54d16e">More...</a><br /></td></tr>
 <tr class="separator:ae44b078dcca0b16ef45978a7fe54d16e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a32c254358da2f8c43c91291d24cfd295"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#a32c254358da2f8c43c91291d24cfd295">addNeuronPopulation</a> (const char *, unsigned int, unsigned int, double *, double *)</td></tr>
-<tr class="memdesc:a32c254358da2f8c43c91291d24cfd295"><td class="mdescLeft">&#160;</td><td class="mdescRight">Method for adding a neuron population to a neuronal network model, using C style character array for the name of the population.  <a href="#a32c254358da2f8c43c91291d24cfd295">More...</a><br /></td></tr>
-<tr class="separator:a32c254358da2f8c43c91291d24cfd295"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab68dd1b0e4795cb7c813cb04efbc443e"><td class="memItemLeft" align="right" valign="top">string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#ab68dd1b0e4795cb7c813cb04efbc443e">scalarExpr</a> (const double)</td></tr>
+<tr class="separator:ab68dd1b0e4795cb7c813cb04efbc443e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a63d26f88fd7ccf40d6414bb236c9b3f5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#a63d26f88fd7ccf40d6414bb236c9b3f5">setPopulationSums</a> ()</td></tr>
+<tr class="memdesc:a63d26f88fd7ccf40d6414bb236c9b3f5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the accumulated sums of lowest multiple of kernel block size &gt;= group sizes for all simulated groups.  <a href="#a63d26f88fd7ccf40d6414bb236c9b3f5">More...</a><br /></td></tr>
+<tr class="separator:a63d26f88fd7ccf40d6414bb236c9b3f5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaee7f16c9627dddb2588bad24afe5d15"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#aaee7f16c9627dddb2588bad24afe5d15">finalize</a> ()</td></tr>
+<tr class="memdesc:aaee7f16c9627dddb2588bad24afe5d15"><td class="mdescLeft">&#160;</td><td class="mdescRight">Declare that the model specification is finalised in <a class="el" href="../../d0/d73/myModel_8cc.html#a9aeaa0a22980484b2c472564fc9f686e" title="This function defines a model with novel synapses. ">modelDefinition()</a>.  <a href="#aaee7f16c9627dddb2588bad24afe5d15">More...</a><br /></td></tr>
+<tr class="separator:aaee7f16c9627dddb2588bad24afe5d15"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2750f5d035618a4f5af9e6992758ea90"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#a2750f5d035618a4f5af9e6992758ea90">addNeuronPopulation</a> (const string, unsigned int, unsigned int, double *, double *)</td></tr>
 <tr class="memdesc:a2750f5d035618a4f5af9e6992758ea90"><td class="mdescLeft">&#160;</td><td class="mdescRight">Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population.  <a href="#a2750f5d035618a4f5af9e6992758ea90">More...</a><br /></td></tr>
 <tr class="separator:a2750f5d035618a4f5af9e6992758ea90"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a860ac47a916005dd68bc06e59155d502"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#a860ac47a916005dd68bc06e59155d502">addNeuronPopulation</a> (const string, unsigned int, unsigned int, vector&lt; double &gt;, vector&lt; double &gt;)</td></tr>
 <tr class="memdesc:a860ac47a916005dd68bc06e59155d502"><td class="mdescLeft">&#160;</td><td class="mdescRight">Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population.  <a href="#a860ac47a916005dd68bc06e59155d502">More...</a><br /></td></tr>
 <tr class="separator:a860ac47a916005dd68bc06e59155d502"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a95724e1798bd9ac5642a8fb2484a2f93"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#a95724e1798bd9ac5642a8fb2484a2f93">activateDirectInput</a> (const string, unsigned int)</td></tr>
-<tr class="memdesc:a95724e1798bd9ac5642a8fb2484a2f93"><td class="mdescLeft">&#160;</td><td class="mdescRight">Method for activating explicit current input.  <a href="#a95724e1798bd9ac5642a8fb2484a2f93">More...</a><br /></td></tr>
-<tr class="separator:a95724e1798bd9ac5642a8fb2484a2f93"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a25ab2e7846813491aff8276a8a1b00b1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#a25ab2e7846813491aff8276a8a1b00b1">setConstInp</a> (const string, double)</td></tr>
-<tr class="memdesc:a25ab2e7846813491aff8276a8a1b00b1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Method for setting the global input value for a neuron population if CONSTINP.  <a href="#a25ab2e7846813491aff8276a8a1b00b1">More...</a><br /></td></tr>
-<tr class="separator:a25ab2e7846813491aff8276a8a1b00b1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a65aee794c66069cd3e6316ade0c91192"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#a65aee794c66069cd3e6316ade0c91192">setNeuronClusterIndex</a> (const string neuronGroup, int hostID, int deviceID)</td></tr>
 <tr class="memdesc:a65aee794c66069cd3e6316ade0c91192"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function for setting which host and which device a neuron group will be simulated on.  <a href="#a65aee794c66069cd3e6316ade0c91192">More...</a><br /></td></tr>
 <tr class="separator:a65aee794c66069cd3e6316ade0c91192"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8b6071f4798f114a09164ecd697a84cb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#a8b6071f4798f114a09164ecd697a84cb">activateDirectInput</a> (const string, unsigned int type)</td></tr>
+<tr class="memdesc:a8b6071f4798f114a09164ecd697a84cb"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function defines the type of the explicit input to the neuron model. Current options are common constant input to all neurons, input from a file and input defines as a rule.  <a href="#a8b6071f4798f114a09164ecd697a84cb">More...</a><br /></td></tr>
+<tr class="separator:a8b6071f4798f114a09164ecd697a84cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a25ab2e7846813491aff8276a8a1b00b1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#a25ab2e7846813491aff8276a8a1b00b1">setConstInp</a> (const string, double)</td></tr>
+<tr class="memdesc:a25ab2e7846813491aff8276a8a1b00b1"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function has been deprecated in GeNN 2.2.  <a href="#a25ab2e7846813491aff8276a8a1b00b1">More...</a><br /></td></tr>
+<tr class="separator:a25ab2e7846813491aff8276a8a1b00b1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab6af0fc6b664bd6fa6c13c96cda890ac"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#ab6af0fc6b664bd6fa6c13c96cda890ac">findNeuronGrp</a> (const string)</td></tr>
+<tr class="memdesc:ab6af0fc6b664bd6fa6c13c96cda890ac"><td class="mdescLeft">&#160;</td><td class="mdescRight">Find the the ID number of a neuron group by its name.  <a href="#ab6af0fc6b664bd6fa6c13c96cda890ac">More...</a><br /></td></tr>
+<tr class="separator:ab6af0fc6b664bd6fa6c13c96cda890ac"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae252945f336a330ec1c69f24cb1d4203"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#ae252945f336a330ec1c69f24cb1d4203">addSynapsePopulation</a> (const string <a class="el" href="../../dc/de5/classNNmodel.html#a7d81556b7b15a4a625b23f965944dae9">name</a>, unsigned int syntype, unsigned int conntype, unsigned int gtype, const string src, const string trg, double *p)</td></tr>
-<tr class="memdesc:ae252945f336a330ec1c69f24cb1d4203"><td class="mdescLeft">&#160;</td><td class="mdescRight">Overload of method for backwards compatibility.  <a href="#ae252945f336a330ec1c69f24cb1d4203">More...</a><br /></td></tr>
+<tr class="memdesc:ae252945f336a330ec1c69f24cb1d4203"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function has been depreciated as of GeNN 2.2.  <a href="#ae252945f336a330ec1c69f24cb1d4203">More...</a><br /></td></tr>
 <tr class="separator:ae252945f336a330ec1c69f24cb1d4203"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afa3c98f04f97f4b20840b9353e7b5cbb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#afa3c98f04f97f4b20840b9353e7b5cbb">addSynapsePopulation</a> (const char *, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, const char *, const char *, double *, double *, double *)</td></tr>
-<tr class="memdesc:afa3c98f04f97f4b20840b9353e7b5cbb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Method for adding a synapse population to a neuronal network model, using C style character array for the name of the population.  <a href="#afa3c98f04f97f4b20840b9353e7b5cbb">More...</a><br /></td></tr>
-<tr class="separator:afa3c98f04f97f4b20840b9353e7b5cbb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1a9afe1e1038aa634e020da7732701e5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#a1a9afe1e1038aa634e020da7732701e5">addSynapsePopulation</a> (const string, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, const string, const string, double *, double *, double *)</td></tr>
 <tr class="memdesc:a1a9afe1e1038aa634e020da7732701e5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Overloaded version without initial variables for synapses.  <a href="#a1a9afe1e1038aa634e020da7732701e5">More...</a><br /></td></tr>
 <tr class="separator:a1a9afe1e1038aa634e020da7732701e5"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -190,18 +197,22 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:ae9cf711ce1a28d3532a793d176bfd2b8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Method for adding a synapse population to a neuronal network model, using C++ string for the name of the population.  <a href="#ae9cf711ce1a28d3532a793d176bfd2b8">More...</a><br /></td></tr>
 <tr class="separator:ae9cf711ce1a28d3532a793d176bfd2b8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a953d2010f6358fa707a459952ef3df26"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#a953d2010f6358fa707a459952ef3df26">setSynapseG</a> (const string, double)</td></tr>
-<tr class="memdesc:a953d2010f6358fa707a459952ef3df26"><td class="mdescLeft">&#160;</td><td class="mdescRight">Method for setting the conductance (g) value for a synapse population with "GLOBALG" charactertistic.  <a href="#a953d2010f6358fa707a459952ef3df26">More...</a><br /></td></tr>
+<tr class="memdesc:a953d2010f6358fa707a459952ef3df26"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function has been depreciated as of GeNN 2.2.  <a href="#a953d2010f6358fa707a459952ef3df26">More...</a><br /></td></tr>
 <tr class="separator:a953d2010f6358fa707a459952ef3df26"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abcd74b0eb3c2696069320bd929070d4b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#abcd74b0eb3c2696069320bd929070d4b">setMaxConn</a> (const string, unsigned int)</td></tr>
 <tr class="memdesc:abcd74b0eb3c2696069320bd929070d4b"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function defines the maximum number of connections for a neuron in the population.  <a href="#abcd74b0eb3c2696069320bd929070d4b">More...</a><br /></td></tr>
 <tr class="separator:abcd74b0eb3c2696069320bd929070d4b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a94d0072fd31f1742c161235801d4cd2a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#a94d0072fd31f1742c161235801d4cd2a">setSpanTypeToPre</a> (const string)</td></tr>
+<tr class="memdesc:a94d0072fd31f1742c161235801d4cd2a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Method for switching the execution order of synapses to pre-to-post.  <a href="#a94d0072fd31f1742c161235801d4cd2a">More...</a><br /></td></tr>
+<tr class="separator:a94d0072fd31f1742c161235801d4cd2a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2b7ad279fd8e68d951957f21bbb072c5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#a2b7ad279fd8e68d951957f21bbb072c5">setSynapseClusterIndex</a> (const string synapseGroup, int hostID, int deviceID)</td></tr>
 <tr class="memdesc:a2b7ad279fd8e68d951957f21bbb072c5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function for setting which host and which device a synapse group will be simulated on.  <a href="#a2b7ad279fd8e68d951957f21bbb072c5">More...</a><br /></td></tr>
 <tr class="separator:a2b7ad279fd8e68d951957f21bbb072c5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3de3cfc04cb28e939225341ee10e2119"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#a3de3cfc04cb28e939225341ee10e2119">initLearnGrps</a> ()</td></tr>
 <tr class="separator:a3de3cfc04cb28e939225341ee10e2119"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aaee7f16c9627dddb2588bad24afe5d15"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#aaee7f16c9627dddb2588bad24afe5d15">finalize</a> ()</td></tr>
-<tr class="separator:aaee7f16c9627dddb2588bad24afe5d15"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6c15b0ca030e37edc0024db99eb9bd0d"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#a6c15b0ca030e37edc0024db99eb9bd0d">findSynapseGrp</a> (const string)</td></tr>
+<tr class="memdesc:a6c15b0ca030e37edc0024db99eb9bd0d"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function is a tool to find the numeric ID of a synapse population based on the name of the synapse population.  <a href="#a6c15b0ca030e37edc0024db99eb9bd0d">More...</a><br /></td></tr>
+<tr class="separator:a6c15b0ca030e37edc0024db99eb9bd0d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
@@ -214,6 +225,9 @@ Public Attributes</h2></td></tr>
 <tr class="memitem:ae02892a44b18e3ce913dc43dc31dd380"><td class="memItemLeft" align="right" valign="top">string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#ae02892a44b18e3ce913dc43dc31dd380">RNtype</a></td></tr>
 <tr class="memdesc:ae02892a44b18e3ce913dc43dc31dd380"><td class="mdescLeft">&#160;</td><td class="mdescRight">Underlying type for random number generation (default: long)  <a href="#ae02892a44b18e3ce913dc43dc31dd380">More...</a><br /></td></tr>
 <tr class="separator:ae02892a44b18e3ce913dc43dc31dd380"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9fb0319cd38554dfc294773bd54ad73b"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#a9fb0319cd38554dfc294773bd54ad73b">dt</a></td></tr>
+<tr class="memdesc:a9fb0319cd38554dfc294773bd54ad73b"><td class="mdescLeft">&#160;</td><td class="mdescRight">The integration time step of the model.  <a href="#a9fb0319cd38554dfc294773bd54ad73b">More...</a><br /></td></tr>
+<tr class="separator:a9fb0319cd38554dfc294773bd54ad73b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4d6a555fb668199f7da1ca1488cd5fcf"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#a4d6a555fb668199f7da1ca1488cd5fcf">final</a></td></tr>
 <tr class="memdesc:a4d6a555fb668199f7da1ca1488cd5fcf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Flag for whether the model has been finalized.  <a href="#a4d6a555fb668199f7da1ca1488cd5fcf">More...</a><br /></td></tr>
 <tr class="separator:a4d6a555fb668199f7da1ca1488cd5fcf"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -223,12 +237,13 @@ Public Attributes</h2></td></tr>
 <tr class="memitem:aa6753d648bcac06109f0820349b5d2be"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#aa6753d648bcac06109f0820349b5d2be">needSynapseDelay</a></td></tr>
 <tr class="memdesc:aa6753d648bcac06109f0820349b5d2be"><td class="mdescLeft">&#160;</td><td class="mdescRight">Whether delayed synapse conductance is required in the network.  <a href="#aa6753d648bcac06109f0820349b5d2be">More...</a><br /></td></tr>
 <tr class="separator:aa6753d648bcac06109f0820349b5d2be"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a79631e0c13cdd5ebed55a16bea15819a"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#a79631e0c13cdd5ebed55a16bea15819a">chooseGPUDevice</a></td></tr>
-<tr class="separator:a79631e0c13cdd5ebed55a16bea15819a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afae2a91984509205ff07afc948cbf106"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#afae2a91984509205ff07afc948cbf106">timing</a></td></tr>
 <tr class="separator:afae2a91984509205ff07afc948cbf106"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad82f4dbcf4cc6a942965f9ecaa79616a"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#ad82f4dbcf4cc6a942965f9ecaa79616a">seed</a></td></tr>
 <tr class="separator:ad82f4dbcf4cc6a942965f9ecaa79616a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac6b05d8a941fcc09d1cf4de14edf60f9"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#ac6b05d8a941fcc09d1cf4de14edf60f9">resetKernel</a></td></tr>
+<tr class="memdesc:ac6b05d8a941fcc09d1cf4de14edf60f9"><td class="mdescLeft">&#160;</td><td class="mdescRight">The identity of the kernel in which the spike counters will be reset.  <a href="#ac6b05d8a941fcc09d1cf4de14edf60f9">More...</a><br /></td></tr>
+<tr class="separator:ac6b05d8a941fcc09d1cf4de14edf60f9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a383562e3f02192f58a6150a4ca0861c5"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#a383562e3f02192f58a6150a4ca0861c5">neuronGrpN</a></td></tr>
 <tr class="memdesc:a383562e3f02192f58a6150a4ca0861c5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Number of neuron groups.  <a href="#a383562e3f02192f58a6150a4ca0861c5">More...</a><br /></td></tr>
 <tr class="separator:a383562e3f02192f58a6150a4ca0861c5"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -264,9 +279,6 @@ Public Attributes</h2></td></tr>
 <tr class="memitem:a6ba57b83448ab23eaa5a68d40b2ceac9"><td class="memItemLeft" align="right" valign="top">vector&lt; vector&lt; unsigned int &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#a6ba57b83448ab23eaa5a68d40b2ceac9">outSyn</a></td></tr>
 <tr class="memdesc:a6ba57b83448ab23eaa5a68d40b2ceac9"><td class="mdescLeft">&#160;</td><td class="mdescRight">The ids of the outgoing synapse groups.  <a href="#a6ba57b83448ab23eaa5a68d40b2ceac9">More...</a><br /></td></tr>
 <tr class="separator:a6ba57b83448ab23eaa5a68d40b2ceac9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acd0592315c59ac3c0e0dbe9bb35d7004"><td class="memItemLeft" align="right" valign="top">vector&lt; unsigned int &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#acd0592315c59ac3c0e0dbe9bb35d7004">receivesInputCurrent</a></td></tr>
-<tr class="memdesc:acd0592315c59ac3c0e0dbe9bb35d7004"><td class="mdescLeft">&#160;</td><td class="mdescRight">flags whether neurons of a population receive explicit input currents  <a href="#acd0592315c59ac3c0e0dbe9bb35d7004">More...</a><br /></td></tr>
-<tr class="separator:acd0592315c59ac3c0e0dbe9bb35d7004"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad14509938bfeb7f2fc8f011d2ec995ac"><td class="memItemLeft" align="right" valign="top">vector&lt; bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#ad14509938bfeb7f2fc8f011d2ec995ac">neuronNeedSt</a></td></tr>
 <tr class="memdesc:ad14509938bfeb7f2fc8f011d2ec995ac"><td class="mdescLeft">&#160;</td><td class="mdescRight">Whether last spike time needs to be saved for a group.  <a href="#ad14509938bfeb7f2fc8f011d2ec995ac">More...</a><br /></td></tr>
 <tr class="separator:ad14509938bfeb7f2fc8f011d2ec995ac"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -311,6 +323,9 @@ Public Attributes</h2></td></tr>
 <tr class="memitem:a521aa25f9cc763dab52769da0b775470"><td class="memItemLeft" align="right" valign="top">vector&lt; unsigned int &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#a521aa25f9cc763dab52769da0b775470">synapseGType</a></td></tr>
 <tr class="memdesc:a521aa25f9cc763dab52769da0b775470"><td class="mdescLeft">&#160;</td><td class="mdescRight">Type of specification method for synaptic conductance.  <a href="#a521aa25f9cc763dab52769da0b775470">More...</a><br /></td></tr>
 <tr class="separator:a521aa25f9cc763dab52769da0b775470"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4345e3c5d520f66402b6413a8681b837"><td class="memItemLeft" align="right" valign="top">vector&lt; unsigned int &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#a4345e3c5d520f66402b6413a8681b837">synapseSpanType</a></td></tr>
+<tr class="memdesc:a4345e3c5d520f66402b6413a8681b837"><td class="mdescLeft">&#160;</td><td class="mdescRight">Execution order of synapses in the kernel. It determines whether synapses are executed in parallel for every postsynaptic neuron (0, default), or for every presynaptic neuron (1).  <a href="#a4345e3c5d520f66402b6413a8681b837">More...</a><br /></td></tr>
+<tr class="separator:a4345e3c5d520f66402b6413a8681b837"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a39861eefc8f7b13c21aaf82142520227"><td class="memItemLeft" align="right" valign="top">vector&lt; unsigned int &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#a39861eefc8f7b13c21aaf82142520227">synapseSource</a></td></tr>
 <tr class="memdesc:a39861eefc8f7b13c21aaf82142520227"><td class="mdescLeft">&#160;</td><td class="mdescRight">Presynaptic neuron groups.  <a href="#a39861eefc8f7b13c21aaf82142520227">More...</a><br /></td></tr>
 <tr class="separator:a39861eefc8f7b13c21aaf82142520227"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -332,9 +347,12 @@ Public Attributes</h2></td></tr>
 <tr class="memitem:ae0b073a5cf490d93c8acae905ba94cf8"><td class="memItemLeft" align="right" valign="top">vector&lt; bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#ae0b073a5cf490d93c8acae905ba94cf8">synapseUsesPostLearning</a></td></tr>
 <tr class="memdesc:ae0b073a5cf490d93c8acae905ba94cf8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Defines if anything is done in case of postsynaptic neuron spiking before presynaptic neuron (punishment in STDP etc.)  <a href="#ae0b073a5cf490d93c8acae905ba94cf8">More...</a><br /></td></tr>
 <tr class="separator:ae0b073a5cf490d93c8acae905ba94cf8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a30e4ebc1109de5e7d921b22f1597cbf4"><td class="memItemLeft" align="right" valign="top">vector&lt; vector&lt; string &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#a30e4ebc1109de5e7d921b22f1597cbf4">synapseSpkEvntVars</a></td></tr>
-<tr class="memdesc:a30e4ebc1109de5e7d921b22f1597cbf4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Defines variable names that are needed in the SpkEvnt condition and that are pre-fetched for that purpose into shared memory.  <a href="#a30e4ebc1109de5e7d921b22f1597cbf4">More...</a><br /></td></tr>
-<tr class="separator:a30e4ebc1109de5e7d921b22f1597cbf4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a31b5d8df9a66b460499ac2414f25e454"><td class="memItemLeft" align="right" valign="top">vector&lt; bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#a31b5d8df9a66b460499ac2414f25e454">synapseUsesSynapseDynamics</a></td></tr>
+<tr class="memdesc:a31b5d8df9a66b460499ac2414f25e454"><td class="mdescLeft">&#160;</td><td class="mdescRight">Defines if there is any continuos synapse dynamics defined.  <a href="#a31b5d8df9a66b460499ac2414f25e454">More...</a><br /></td></tr>
+<tr class="separator:a31b5d8df9a66b460499ac2414f25e454"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad124eba0d5c19d64131a954490bf0241"><td class="memItemLeft" align="right" valign="top">vector&lt; bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#ad124eba0d5c19d64131a954490bf0241">needEvntThresholdReTest</a></td></tr>
+<tr class="memdesc:ad124eba0d5c19d64131a954490bf0241"><td class="mdescLeft">&#160;</td><td class="mdescRight">Defines whether the Evnt Threshold needs to be retested in the synapse kernel due to multiple non-identical events in the pre-synaptic neuron population.  <a href="#ad124eba0d5c19d64131a954490bf0241">More...</a><br /></td></tr>
+<tr class="separator:ad124eba0d5c19d64131a954490bf0241"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1db0c8906b4f027e2c792bb1239d398c"><td class="memItemLeft" align="right" valign="top">vector&lt; vector&lt; double &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#a1db0c8906b4f027e2c792bb1239d398c">synapsePara</a></td></tr>
 <tr class="memdesc:a1db0c8906b4f027e2c792bb1239d398c"><td class="mdescLeft">&#160;</td><td class="mdescRight">parameters of synapses  <a href="#a1db0c8906b4f027e2c792bb1239d398c">More...</a><br /></td></tr>
 <tr class="separator:a1db0c8906b4f027e2c792bb1239d398c"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -342,7 +360,7 @@ Public Attributes</h2></td></tr>
 <tr class="memdesc:ab811824a05d66248babb250c726296bb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initial values of synapse variables.  <a href="#ab811824a05d66248babb250c726296bb">More...</a><br /></td></tr>
 <tr class="separator:ab811824a05d66248babb250c726296bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a285430d63d02f6bc1b339c35c41dda67"><td class="memItemLeft" align="right" valign="top">vector&lt; vector&lt; double &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#a285430d63d02f6bc1b339c35c41dda67">dsp_w</a></td></tr>
-<tr class="memdesc:a285430d63d02f6bc1b339c35c41dda67"><td class="mdescLeft">&#160;</td><td class="mdescRight">Derived synapse parameters (<a class="el" href="../../dd/db7/classweightUpdateModel.html" title="Structure to hold the information that defines a weightupdate model (a model of how spikes affect syn...">weightUpdateModel</a> only)  <a href="#a285430d63d02f6bc1b339c35c41dda67">More...</a><br /></td></tr>
+<tr class="memdesc:a285430d63d02f6bc1b339c35c41dda67"><td class="mdescLeft">&#160;</td><td class="mdescRight">Derived synapse parameters (<a class="el" href="../../dd/db7/classweightUpdateModel.html" title="Class to hold the information that defines a weightupdate model (a model of how spikes affect synapti...">weightUpdateModel</a> only)  <a href="#a285430d63d02f6bc1b339c35c41dda67">More...</a><br /></td></tr>
 <tr class="separator:a285430d63d02f6bc1b339c35c41dda67"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4fc23591415ddac76d1d92ab68c018c9"><td class="memItemLeft" align="right" valign="top">vector&lt; unsigned int &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#a4fc23591415ddac76d1d92ab68c018c9">postSynapseType</a></td></tr>
 <tr class="memdesc:a4fc23591415ddac76d1d92ab68c018c9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Types of post-synaptic model.  <a href="#a4fc23591415ddac76d1d92ab68c018c9">More...</a><br /></td></tr>
@@ -356,9 +374,6 @@ Public Attributes</h2></td></tr>
 <tr class="memitem:a07fecb4ea288e69301af55e93297660c"><td class="memItemLeft" align="right" valign="top">vector&lt; vector&lt; double &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#a07fecb4ea288e69301af55e93297660c">dpsp</a></td></tr>
 <tr class="memdesc:a07fecb4ea288e69301af55e93297660c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Derived postsynapse parameters.  <a href="#a07fecb4ea288e69301af55e93297660c">More...</a><br /></td></tr>
 <tr class="separator:a07fecb4ea288e69301af55e93297660c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aac7678ea215faa062e828d727b1f641b"><td class="memItemLeft" align="right" valign="top">vector&lt; double &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#aac7678ea215faa062e828d727b1f641b">globalInp</a></td></tr>
-<tr class="memdesc:aac7678ea215faa062e828d727b1f641b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Global explicit input if CONSTINP is chosen.  <a href="#aac7678ea215faa062e828d727b1f641b">More...</a><br /></td></tr>
-<tr class="separator:aac7678ea215faa062e828d727b1f641b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa0e25f384103db3bcc8c8b0425ae01b3"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#aa0e25f384103db3bcc8c8b0425ae01b3">lrnGroups</a></td></tr>
 <tr class="memdesc:aa0e25f384103db3bcc8c8b0425ae01b3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Number of synapse groups with learning.  <a href="#aa0e25f384103db3bcc8c8b0425ae01b3">More...</a><br /></td></tr>
 <tr class="separator:aa0e25f384103db3bcc8c8b0425ae01b3"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -371,16 +386,39 @@ Public Attributes</h2></td></tr>
 <tr class="memitem:a3c7efe131920a17f9292c0d2ffd74d7c"><td class="memItemLeft" align="right" valign="top">vector&lt; unsigned int &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#a3c7efe131920a17f9292c0d2ffd74d7c">synapseDelay</a></td></tr>
 <tr class="memdesc:a3c7efe131920a17f9292c0d2ffd74d7c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Global synaptic conductance delay for the group (in time steps)  <a href="#a3c7efe131920a17f9292c0d2ffd74d7c">More...</a><br /></td></tr>
 <tr class="separator:a3c7efe131920a17f9292c0d2ffd74d7c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac9f336ee8ff74afe98b4a541cf04ac26"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#ac9f336ee8ff74afe98b4a541cf04ac26">synDynGroups</a></td></tr>
+<tr class="memdesc:ac9f336ee8ff74afe98b4a541cf04ac26"><td class="mdescLeft">&#160;</td><td class="mdescRight">Number of synapse groups that define continuous synapse dynamics.  <a href="#ac9f336ee8ff74afe98b4a541cf04ac26">More...</a><br /></td></tr>
+<tr class="separator:ac9f336ee8ff74afe98b4a541cf04ac26"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa481e80f89d24e2809a5d060092b50b3"><td class="memItemLeft" align="right" valign="top">vector&lt; unsigned int &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#aa481e80f89d24e2809a5d060092b50b3">synDynGrp</a></td></tr>
+<tr class="memdesc:aa481e80f89d24e2809a5d060092b50b3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enumeration of the IDs of synapse groups that have synapse Dynamics.  <a href="#aa481e80f89d24e2809a5d060092b50b3">More...</a><br /></td></tr>
+<tr class="separator:aa481e80f89d24e2809a5d060092b50b3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afecdc78acfc425123789db195a48ffb0"><td class="memItemLeft" align="right" valign="top">vector&lt; unsigned int &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#afecdc78acfc425123789db195a48ffb0">padSumSynDynN</a></td></tr>
+<tr class="memdesc:afecdc78acfc425123789db195a48ffb0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Padded summed neuron numbers of synapse dynamics group source populations.  <a href="#afecdc78acfc425123789db195a48ffb0">More...</a><br /></td></tr>
+<tr class="separator:afecdc78acfc425123789db195a48ffb0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acd3b57fb1ab65b46f3d23a7464e4dcf8"><td class="memItemLeft" align="right" valign="top">vector&lt; int &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#acd3b57fb1ab65b46f3d23a7464e4dcf8">synapseHostID</a></td></tr>
 <tr class="memdesc:acd3b57fb1ab65b46f3d23a7464e4dcf8"><td class="mdescLeft">&#160;</td><td class="mdescRight">The ID of the cluster node which the synapse groups are computed on.  <a href="#acd3b57fb1ab65b46f3d23a7464e4dcf8">More...</a><br /></td></tr>
 <tr class="separator:acd3b57fb1ab65b46f3d23a7464e4dcf8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a55d5ec678b5ed7756c7dbb4c4c604f51"><td class="memItemLeft" align="right" valign="top">vector&lt; int &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#a55d5ec678b5ed7756c7dbb4c4c604f51">synapseDeviceID</a></td></tr>
 <tr class="memdesc:a55d5ec678b5ed7756c7dbb4c4c604f51"><td class="mdescLeft">&#160;</td><td class="mdescRight">The ID of the CUDA device which the synapse groups are comnputed on.  <a href="#a55d5ec678b5ed7756c7dbb4c4c604f51">More...</a><br /></td></tr>
 <tr class="separator:a55d5ec678b5ed7756c7dbb4c4c604f51"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acf58971a11ca479eb286696041d3df75"><td class="memItemLeft" align="right" valign="top">vector&lt; string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#acf58971a11ca479eb286696041d3df75">neuronKernelParameters</a></td></tr>
+<tr class="separator:acf58971a11ca479eb286696041d3df75"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a098f6b4a46ae2c18b9b1ad5f371463bf"><td class="memItemLeft" align="right" valign="top">vector&lt; string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#a098f6b4a46ae2c18b9b1ad5f371463bf">neuronKernelParameterTypes</a></td></tr>
+<tr class="separator:a098f6b4a46ae2c18b9b1ad5f371463bf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a66098221e9884d1753bbae898ac7b689"><td class="memItemLeft" align="right" valign="top">vector&lt; string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#a66098221e9884d1753bbae898ac7b689">synapseKernelParameters</a></td></tr>
+<tr class="separator:a66098221e9884d1753bbae898ac7b689"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a02280002784a158897db8e0dd1340d1f"><td class="memItemLeft" align="right" valign="top">vector&lt; string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#a02280002784a158897db8e0dd1340d1f">synapseKernelParameterTypes</a></td></tr>
+<tr class="separator:a02280002784a158897db8e0dd1340d1f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2c4f168330bc2a780d65a3554bdefe17"><td class="memItemLeft" align="right" valign="top">vector&lt; string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#a2c4f168330bc2a780d65a3554bdefe17">simLearnPostKernelParameters</a></td></tr>
+<tr class="separator:a2c4f168330bc2a780d65a3554bdefe17"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a89dd960fec4bf03a4cb48fd4516f9649"><td class="memItemLeft" align="right" valign="top">vector&lt; string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#a89dd960fec4bf03a4cb48fd4516f9649">simLearnPostKernelParameterTypes</a></td></tr>
+<tr class="separator:a89dd960fec4bf03a4cb48fd4516f9649"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a26e26e8e7a23e5d989fcbe3dae9ecf7f"><td class="memItemLeft" align="right" valign="top">vector&lt; string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#a26e26e8e7a23e5d989fcbe3dae9ecf7f">synapseDynamicsKernelParameters</a></td></tr>
+<tr class="separator:a26e26e8e7a23e5d989fcbe3dae9ecf7f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a978553ea2e6133280be00238a1efc4ff"><td class="memItemLeft" align="right" valign="top">vector&lt; string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#a978553ea2e6133280be00238a1efc4ff">synapseDynamicsKernelParameterTypes</a></td></tr>
+<tr class="separator:a978553ea2e6133280be00238a1efc4ff"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Structure to hold the information that defines synapse dynamics (a model of how synapse variables change over time, independent of or in addition to changes when spikes occur). </p>
-</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a class="anchor" id="a91216d74536a5871c507af7f40cd2d64"></a>
 <div class="memitem">
 <div class="memproto">
@@ -412,7 +450,7 @@ Public Attributes</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a class="anchor" id="a95724e1798bd9ac5642a8fb2484a2f93"></a>
+<a class="anchor" id="a8b6071f4798f114a09164ecd697a84cb"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -436,68 +474,11 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Method for activating explicit current input. </p>
 <p>This function defines the type of the explicit input to the neuron model. Current options are common constant input to all neurons, input from a file and input defines as a rule. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">name</td><td>Name of the neuron population </td></tr>
     <tr><td class="paramname">type</td><td>Type of input: 1 if common input, 2 if custom input from file, 3 if custom input as a rule </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a class="anchor" id="a32c254358da2f8c43c91291d24cfd295"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void NNmodel::addNeuronPopulation </td>
-          <td>(</td>
-          <td class="paramtype">const char *&#160;</td>
-          <td class="paramname"><em>name</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">unsigned int&#160;</td>
-          <td class="paramname"><em>nNo</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">unsigned int&#160;</td>
-          <td class="paramname"><em>type</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">double *&#160;</td>
-          <td class="paramname"><em>p</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">double *&#160;</td>
-          <td class="paramname"><em>ini</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Method for adding a neuron population to a neuronal network model, using C style character array for the name of the population. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">name</td><td>Name of the neuron population </td></tr>
-    <tr><td class="paramname">nNo</td><td>Number of neurons in the population </td></tr>
-    <tr><td class="paramname">type</td><td>Type of the neurons, refers to either a standard type or user-defined type </td></tr>
-    <tr><td class="paramname">p</td><td>Parameters of this neuron type </td></tr>
-    <tr><td class="paramname">ini</td><td>Initial values for variables of this neuron type </td></tr>
   </table>
   </dd>
 </dl>
@@ -547,6 +528,8 @@ Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population. </p>
+<p>This is an overloaded member function, provided for convenience. It differs from the above function only in what argument(s) it accepts.</p>
+<p>This function adds a neuron population to a neuronal network models, assigning the name, the number of neurons in the group, the neuron type, parameters and initial values, the latter two defined as double * </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">name</td><td>The name of the neuron population </td></tr>
@@ -671,7 +654,9 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Overload of method for backwards compatibility. </p>
+<p>This function has been depreciated as of GeNN 2.2. </p>
+<p>This is an overloaded member function, provided for convenience. It differs from the above function only in what argument(s) it accepts.</p>
+<p>This deprecated function is provided for compatibility with the previous release of GeNN. Default values are provide for new parameters, it is strongly recommended these be selected explicity via the new version othe function </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">name</td><td>The name of the synapse population </td></tr>
@@ -680,105 +665,7 @@ Public Attributes</h2></td></tr>
     <tr><td class="paramname">gtype</td><td>The way how the synaptic conductivity g will be defined </td></tr>
     <tr><td class="paramname">src</td><td>Name of the (existing!) pre-synaptic neuron population </td></tr>
     <tr><td class="paramname">target</td><td>Name of the (existing!) post-synaptic neuron population </td></tr>
-    <tr><td class="paramname">params</td><td>A C-type array of doubles that contains synapse parameter values (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored. </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a class="anchor" id="afa3c98f04f97f4b20840b9353e7b5cbb"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void NNmodel::addSynapsePopulation </td>
-          <td>(</td>
-          <td class="paramtype">const char *&#160;</td>
-          <td class="paramname"><em>name</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">unsigned int&#160;</td>
-          <td class="paramname"><em>syntype</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">unsigned int&#160;</td>
-          <td class="paramname"><em>conntype</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">unsigned int&#160;</td>
-          <td class="paramname"><em>gtype</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">unsigned int&#160;</td>
-          <td class="paramname"><em>delaySteps</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">unsigned int&#160;</td>
-          <td class="paramname"><em>postsyn</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const char *&#160;</td>
-          <td class="paramname"><em>src</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const char *&#160;</td>
-          <td class="paramname"><em>trg</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">double *&#160;</td>
-          <td class="paramname"><em>p</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">double *&#160;</td>
-          <td class="paramname"><em>PSVini</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">double *&#160;</td>
-          <td class="paramname"><em>ps</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Method for adding a synapse population to a neuronal network model, using C style character array for the name of the population. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">name</td><td>The name of the synapse population </td></tr>
-    <tr><td class="paramname">syntype</td><td>The type of synapse to be added (i.e. learning mode) </td></tr>
-    <tr><td class="paramname">conntype</td><td>The type of synaptic connectivity </td></tr>
-    <tr><td class="paramname">gtype</td><td>The way how the synaptic conductivity g will be defined </td></tr>
-    <tr><td class="paramname">delaySteps</td><td>Number of delay slots </td></tr>
-    <tr><td class="paramname">postsyn</td><td>Postsynaptic integration method </td></tr>
-    <tr><td class="paramname">src</td><td>Name of the (existing!) pre-synaptic neuron population </td></tr>
-    <tr><td class="paramname">trg</td><td>Name of the (existing!) post-synaptic neuron population </td></tr>
-    <tr><td class="paramname">p</td><td>A C-type array of doubles that contains synapse parameter values (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored. </td></tr>
-    <tr><td class="paramname">PSVini</td><td>A C-type array of doubles that contains the initial values for postsynaptic mechanism variables (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored. </td></tr>
-    <tr><td class="paramname">ps</td><td>A C-type array of doubles that contains postsynaptic mechanism parameter values (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored. </td></tr>
+    <tr><td class="paramname">params</td><td>A C-type array of doubles that contains synapse parameter values (common to all synapses of the population) which will be used for the defined synapses. </td></tr>
   </table>
   </dd>
 </dl>
@@ -864,7 +751,7 @@ Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Overloaded version without initial variables for synapses. </p>
-<p>Overloaded old version. </p>
+<p>Overloaded old version (deprecated) </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">name</td><td>The name of the synapse population </td></tr>
@@ -875,9 +762,9 @@ Public Attributes</h2></td></tr>
     <tr><td class="paramname">postsyn</td><td>Postsynaptic integration method </td></tr>
     <tr><td class="paramname">src</td><td>Name of the (existing!) pre-synaptic neuron population </td></tr>
     <tr><td class="paramname">trg</td><td>Name of the (existing!) post-synaptic neuron population </td></tr>
-    <tr><td class="paramname">p</td><td>A C-type array of doubles that contains synapse parameter values (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored. </td></tr>
-    <tr><td class="paramname">PSVini</td><td>A C-type array of doubles that contains the initial values for postsynaptic mechanism variables (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored. </td></tr>
-    <tr><td class="paramname">ps</td><td>A C-type array of doubles that contains postsynaptic mechanism parameter values (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored. </td></tr>
+    <tr><td class="paramname">p</td><td>A C-type array of doubles that contains synapse parameter values (common to all synapses of the population) which will be used for the defined synapses. </td></tr>
+    <tr><td class="paramname">PSVini</td><td>A C-type array of doubles that contains the initial values for postsynaptic mechanism variables (common to all synapses of the population) which will be used for the defined synapses. </td></tr>
+    <tr><td class="paramname">ps</td><td>A C-type array of doubles that contains postsynaptic mechanism parameter values (common to all synapses of the population) which will be used for the defined synapses. </td></tr>
   </table>
   </dd>
 </dl>
@@ -980,10 +867,10 @@ Public Attributes</h2></td></tr>
     <tr><td class="paramname">postsyn</td><td>Postsynaptic integration method </td></tr>
     <tr><td class="paramname">src</td><td>Name of the (existing!) pre-synaptic neuron population </td></tr>
     <tr><td class="paramname">trg</td><td>Name of the (existing!) post-synaptic neuron population </td></tr>
-    <tr><td class="paramname">synini</td><td>A C-type array of doubles that contains the initial values for synapse variables (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored. </td></tr>
-    <tr><td class="paramname">p</td><td>A C-type array of doubles that contains synapse parameter values (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored. </td></tr>
-    <tr><td class="paramname">PSVini</td><td>A C-type array of doubles that contains the initial values for postsynaptic mechanism variables (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored. </td></tr>
-    <tr><td class="paramname">ps</td><td>A C-type array of doubles that contains postsynaptic mechanism parameter values (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored. </td></tr>
+    <tr><td class="paramname">synini</td><td>A C-type array of doubles that contains the initial values for synapse variables (common to all synapses of the population) which will be used for the defined synapses. </td></tr>
+    <tr><td class="paramname">p</td><td>A C-type array of doubles that contains synapse parameter values (common to all synapses of the population) which will be used for the defined synapses. </td></tr>
+    <tr><td class="paramname">PSVini</td><td>A C-type array of doubles that contains the initial values for postsynaptic mechanism variables (common to all synapses of the population) which will be used for the defined synapses. </td></tr>
+    <tr><td class="paramname">ps</td><td>A C-type array of doubles that contains postsynaptic mechanism parameter values (common to all synapses of the population) which will be used for the defined synapses. </td></tr>
   </table>
   </dd>
 </dl>
@@ -1086,10 +973,10 @@ Public Attributes</h2></td></tr>
     <tr><td class="paramname">postsyn</td><td>Postsynaptic integration method </td></tr>
     <tr><td class="paramname">src</td><td>Name of the (existing!) pre-synaptic neuron population </td></tr>
     <tr><td class="paramname">trg</td><td>Name of the (existing!) post-synaptic neuron population </td></tr>
-    <tr><td class="paramname">synini</td><td>A C-type array of doubles that contains the initial values for synapse variables (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored. </td></tr>
-    <tr><td class="paramname">p</td><td>A C-type array of doubles that contains synapse parameter values (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored. </td></tr>
-    <tr><td class="paramname">PSVini</td><td>A C-type array of doubles that contains the initial values for postsynaptic mechanism variables (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored. </td></tr>
-    <tr><td class="paramname">ps</td><td>A C-type array of doubles that contains postsynaptic mechanism parameter values (common to all synapses of the population) which will be used for the defined synapses. The array must contain the right number of parameters in the right order for the chosen synapse type. If too few, segmentation faults will occur, if too many, excess will be ignored. </td></tr>
+    <tr><td class="paramname">synini</td><td>A C-type array of doubles that contains the initial values for synapse variables (common to all synapses of the population) which will be used for the defined synapses. </td></tr>
+    <tr><td class="paramname">p</td><td>A C-type array of doubles that contains synapse parameter values (common to all synapses of the population) which will be used for the defined synapses. </td></tr>
+    <tr><td class="paramname">PSVini</td><td>A C-type array of doubles that contains the initial values for postsynaptic mechanism variables (common to all synapses of the population) which will be used for the defined synapses. </td></tr>
+    <tr><td class="paramname">ps</td><td>A C-type array of doubles that contains postsynaptic mechanism parameter values (common to all synapses of the population) which will be used for the defined synapses. </td></tr>
   </table>
   </dd>
 </dl>
@@ -1141,6 +1028,57 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
+<p>Declare that the model specification is finalised in <a class="el" href="../../d0/d73/myModel_8cc.html#a9aeaa0a22980484b2c472564fc9f686e" title="This function defines a model with novel synapses. ">modelDefinition()</a>. </p>
+
+</div>
+</div>
+<a class="anchor" id="ab6af0fc6b664bd6fa6c13c96cda890ac"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">unsigned int NNmodel::findNeuronGrp </td>
+          <td>(</td>
+          <td class="paramtype">const string&#160;</td>
+          <td class="paramname"><em>nName</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Find the the ID number of a neuron group by its name. </p>
+<p>This function is a tool to find the numeric ID of a neuron population based on the name of the neuron population. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">nName</td><td>Name of the neuron population </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a6c15b0ca030e37edc0024db99eb9bd0d"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">unsigned int NNmodel::findSynapseGrp </td>
+          <td>(</td>
+          <td class="paramtype">const string&#160;</td>
+          <td class="paramname"><em>sName</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>This function is a tool to find the numeric ID of a synapse population based on the name of the synapse population. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">sName</td><td>Name of the synapse population </td></tr>
+  </table>
+  </dd>
+</dl>
+
 </div>
 </div>
 <a class="anchor" id="a3de3cfc04cb28e939225341ee10e2119"></a>
@@ -1151,6 +1089,22 @@ Public Attributes</h2></td></tr>
           <td class="memname">void NNmodel::initLearnGrps </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="ab68dd1b0e4795cb7c813cb04efbc443e"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">string NNmodel::scalarExpr </td>
+          <td>(</td>
+          <td class="paramtype">const double&#160;</td>
+          <td class="paramname"><em>val</em></td><td>)</td>
           <td></td>
         </tr>
       </table>
@@ -1182,8 +1136,27 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Method for setting the global input value for a neuron population if CONSTINP. </p>
+<p>This function has been deprecated in GeNN 2.2. </p>
 <p>This function sets a global input value to the specified neuron group. </p>
+
+</div>
+</div>
+<a class="anchor" id="aa8283ad87bc9d6caa854d21ca4f9b249"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void NNmodel::setDT </td>
+          <td>(</td>
+          <td class="paramtype">double&#160;</td>
+          <td class="paramname"><em>newDT</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Set the integration step size of the model. </p>
+<p>This function sets the integration time step DT of the model. </p>
 
 </div>
 </div>
@@ -1295,6 +1268,25 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="a63d26f88fd7ccf40d6414bb236c9b3f5"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void NNmodel::setPopulationSums </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Set the accumulated sums of lowest multiple of kernel block size &gt;= group sizes for all simulated groups. </p>
+<p>Accumulate the sums and block-size-padded sums of all simulation groups.</p>
+<p>This method saves the neuron numbers of the populations rounded to the next multiple of the block size as well as the sums s(i) = sum_{1...i} n_i of the rounded population sizes. These are later used to determine the branching structure for the generated neuron kernel code. </p>
+
+</div>
+</div>
 <a class="anchor" id="a44fb38b93216c56254fbbee6175cffd1"></a>
 <div class="memitem">
 <div class="memproto">
@@ -1336,6 +1328,25 @@ Public Attributes</h2></td></tr>
   </table>
   </dd>
 </dl>
+
+</div>
+</div>
+<a class="anchor" id="a94d0072fd31f1742c161235801d4cd2a"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void NNmodel::setSpanTypeToPre </td>
+          <td>(</td>
+          <td class="paramtype">const string&#160;</td>
+          <td class="paramname"><em>sname</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Method for switching the execution order of synapses to pre-to-post. </p>
+<p>This function defines the execution order of the synapses in the kernels (0 : execute for every postsynaptic neuron 1: execute for every presynaptic neuron) </p>
 
 </div>
 </div>
@@ -1406,7 +1417,7 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Method for setting the conductance (g) value for a synapse population with "GLOBALG" charactertistic. </p>
+<p>This function has been depreciated as of GeNN 2.2. </p>
 <p>This functions sets the global value of the maximal synaptic conductance for a synapse population that was idfentified as conductance specifcation method "GLOBALG". </p>
 
 </div>
@@ -1431,18 +1442,6 @@ Public Attributes</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Data Documentation</h2>
-<a class="anchor" id="a79631e0c13cdd5ebed55a16bea15819a"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">int NNmodel::chooseGPUDevice</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
 <a class="anchor" id="a8199af3b9c937784502210645828d2fd"></a>
 <div class="memitem">
 <div class="memproto">
@@ -1481,7 +1480,21 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Derived synapse parameters (<a class="el" href="../../dd/db7/classweightUpdateModel.html" title="Structure to hold the information that defines a weightupdate model (a model of how spikes affect syn...">weightUpdateModel</a> only) </p>
+<p>Derived synapse parameters (<a class="el" href="../../dd/db7/classweightUpdateModel.html" title="Class to hold the information that defines a weightupdate model (a model of how spikes affect synapti...">weightUpdateModel</a> only) </p>
+
+</div>
+</div>
+<a class="anchor" id="a9fb0319cd38554dfc294773bd54ad73b"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">double NNmodel::dt</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>The integration time step of the model. </p>
 
 </div>
 </div>
@@ -1510,20 +1523,6 @@ Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Type of floating point variables (float, double, ...; default: float) </p>
-
-</div>
-</div>
-<a class="anchor" id="aac7678ea215faa062e828d727b1f641b"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">vector&lt;double&gt; NNmodel::globalInp</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Global explicit input if CONSTINP is chosen. </p>
 
 </div>
 </div>
@@ -1594,6 +1593,20 @@ Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Name of the neuronal newtwork model. </p>
+
+</div>
+</div>
+<a class="anchor" id="ad124eba0d5c19d64131a954490bf0241"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">vector&lt;bool&gt; NNmodel::needEvntThresholdReTest</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Defines whether the Evnt Threshold needs to be retested in the synapse kernel due to multiple non-identical events in the pre-synaptic neuron population. </p>
 
 </div>
 </div>
@@ -1692,6 +1705,30 @@ Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Initial values of neurons. </p>
+
+</div>
+</div>
+<a class="anchor" id="acf58971a11ca479eb286696041d3df75"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">vector&lt;string&gt; NNmodel::neuronKernelParameters</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a098f6b4a46ae2c18b9b1ad5f371463bf"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">vector&lt;string&gt; NNmodel::neuronKernelParameterTypes</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
 
 </div>
 </div>
@@ -1888,6 +1925,20 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="afecdc78acfc425123789db195a48ffb0"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">vector&lt;unsigned int&gt; NNmodel::padSumSynDynN</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Padded summed neuron numbers of synapse dynamics group source populations. </p>
+
+</div>
+</div>
 <a class="anchor" id="af8435992678424c638d107a2c2c1d075"></a>
 <div class="memitem">
 <div class="memproto">
@@ -1930,17 +1981,17 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="acd0592315c59ac3c0e0dbe9bb35d7004"></a>
+<a class="anchor" id="ac6b05d8a941fcc09d1cf4de14edf60f9"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">vector&lt;unsigned int&gt; NNmodel::receivesInputCurrent</td>
+          <td class="memname">unsigned int NNmodel::resetKernel</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>flags whether neurons of a population receive explicit input currents </p>
+<p>The identity of the kernel in which the spike counters will be reset. </p>
 
 </div>
 </div>
@@ -1964,6 +2015,30 @@ Public Attributes</h2></td></tr>
       <table class="memname">
         <tr>
           <td class="memname">unsigned int NNmodel::seed</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a2c4f168330bc2a780d65a3554bdefe17"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">vector&lt;string&gt; NNmodel::simLearnPostKernelParameters</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a89dd960fec4bf03a4cb48fd4516f9649"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">vector&lt;string&gt; NNmodel::simLearnPostKernelParameterTypes</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -2023,6 +2098,30 @@ Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>The ID of the CUDA device which the synapse groups are comnputed on. </p>
+
+</div>
+</div>
+<a class="anchor" id="a26e26e8e7a23e5d989fcbe3dae9ecf7f"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">vector&lt;string&gt; NNmodel::synapseDynamicsKernelParameters</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a978553ea2e6133280be00238a1efc4ff"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">vector&lt;string&gt; NNmodel::synapseDynamicsKernelParameterTypes</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
 
 </div>
 </div>
@@ -2096,6 +2195,30 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="a66098221e9884d1753bbae898ac7b689"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">vector&lt;string&gt; NNmodel::synapseKernelParameters</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a02280002784a158897db8e0dd1340d1f"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">vector&lt;string&gt; NNmodel::synapseKernelParameterTypes</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a class="anchor" id="a13993564faeb0e67a21b3c9ffababaf1"></a>
 <div class="memitem">
 <div class="memproto">
@@ -2152,17 +2275,17 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a30e4ebc1109de5e7d921b22f1597cbf4"></a>
+<a class="anchor" id="a4345e3c5d520f66402b6413a8681b837"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">vector&lt;vector&lt;string&gt; &gt; NNmodel::synapseSpkEvntVars</td>
+          <td class="memname">vector&lt;unsigned int&gt; NNmodel::synapseSpanType</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>Defines variable names that are needed in the SpkEvnt condition and that are pre-fetched for that purpose into shared memory. </p>
+<p>Execution order of synapses in the kernel. It determines whether synapses are executed in parallel for every postsynaptic neuron (0, default), or for every presynaptic neuron (1). </p>
 
 </div>
 </div>
@@ -2222,6 +2345,20 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="a31b5d8df9a66b460499ac2414f25e454"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">vector&lt;bool&gt; NNmodel::synapseUsesSynapseDynamics</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Defines if there is any continuos synapse dynamics defined. </p>
+
+</div>
+</div>
 <a class="anchor" id="ad79fc7a473d7fb646725a017cb34d6eb"></a>
 <div class="memitem">
 <div class="memproto">
@@ -2233,6 +2370,34 @@ Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Defines if synapse update is done after detection of real spikes (only one point after threshold) </p>
+
+</div>
+</div>
+<a class="anchor" id="ac9f336ee8ff74afe98b4a541cf04ac26"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">unsigned int NNmodel::synDynGroups</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Number of synapse groups that define continuous synapse dynamics. </p>
+
+</div>
+</div>
+<a class="anchor" id="aa481e80f89d24e2809a5d060092b50b3"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">vector&lt;unsigned int&gt; NNmodel::synDynGrp</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Enumeration of the IDs of synapse groups that have synapse Dynamics. </p>
 
 </div>
 </div>
@@ -2250,7 +2415,7 @@ Public Attributes</h2></td></tr>
 </div>
 <hr/>The documentation for this class was generated from the following files:<ul>
 <li><a class="el" href="../../dc/de1/modelSpec_8h_source.html">modelSpec.h</a></li>
-<li><a class="el" href="../../d7/dfd/modelSpec_8cc.html">modelSpec.cc</a></li>
+<li><a class="el" href="../../d8/d9a/src_2modelSpec_8cc.html">src/modelSpec.cc</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
@@ -2258,7 +2423,7 @@ Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dc/de5/classNNmodel.html">NNmodel</a></li>
-    <li class="footer">Generated on Fri Nov 6 2015 22:13:03 for GeNN by
+    <li class="footer">Generated on Fri Jun 17 2016 14:45:01 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
   </ul>

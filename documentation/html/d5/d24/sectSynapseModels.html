@@ -34,6 +34,7 @@
   $(document).ready(function() { init_search(); });
 </script>
 <link href="../../customdoxygen.css" rel="stylesheet" type="text/css" />
+<link href="../../html_styles.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -44,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">2.0</span>
+   &#160;<span id="projectnumber">2.2</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -61,6 +62,7 @@ var searchBox = new SearchBox("searchBox", "../../search",false,'Search');
     <ul class="tablist">
       <li><a href="../../index.html"><span>Main&#160;Page</span></a></li>
       <li class="current"><a href="../../pages.html"><span>Related&#160;Pages</span></a></li>
+      <li><a href="../../namespaces.html"><span>Namespaces</span></a></li>
       <li><a href="../../annotated.html"><span>Classes</span></a></li>
       <li><a href="../../files.html"><span>Files</span></a></li>
       <li>
@@ -115,17 +117,18 @@ $(document).ready(function(){initNavTree('d5/d24/sectSynapseModels.html','../../
 <div class="title">Synapse models </div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p>A synapse model is a <a class="el" href="../../dd/db7/classweightUpdateModel.html" title="Structure to hold the information that defines a weightupdate model (a model of how spikes affect syn...">weightUpdateModel</a> object which consists of variables, parameters, and string objects which will be substituted in the code. The three strings that will be substituted in the code for synapse update are:</p>
+<div class="textblock"><p>A synapse model is a <a class="el" href="../../dd/db7/classweightUpdateModel.html" title="Class to hold the information that defines a weightupdate model (a model of how spikes affect synapti...">weightUpdateModel</a> object which consists of variables, parameters, and string objects which will be substituted in the code. The three strings that will be substituted in the code for synapse update are:</p>
 <ul>
-<li><code>simCode:</code> Simulation code that is used when a true spike is detected. The update is performed only once, one time step after threshold condition detection, which is defined by <code>thresholdConditionCode</code> in the neuron model of the corresponding presynaptic neuron population.</li>
-</ul>
-<p>Typically, spikes lead to update of synaptic variables that then lead to the activation of input into the post-synaptic neuron. Most of the ime these inputs add linearly at the post-synaptic neuron. This is assumed in GeNN and the term to be added to the activation of the post-synaptic neuron should be provided as the value of the by the $(addtoinsyn) snippet. For example </p><div class="fragment"><div class="line"><span class="stringliteral">&quot;\$(addtoinsyn) = $(inc);&quot;</span></div>
-</div><!-- fragment --><p> where "inc" is a parameter of the weightupdate model, would define a constant increment of the synaptic input of a post-synaptic neuron for each pre-synaptic spike.</p>
-<p>When a spike is detected in the presynaptic neuron population, the simCode is executed. Within the code snippet the $(addtoinSyn) update just discussed should be be followed by the $(updatelinsyn) keyword to indicate that the summation of synaptic inputs can now occur. This can then be followed by updates on the internal synapse variables that may have contributed to addtoinSyn. For an example, see <a class="el" href="../../d5/d24/sectSynapseModels.html#sect31">NSYNAPSE (No Learning)</a> for a simple synapse update model and <a class="el" href="../../d5/d24/sectSynapseModels.html#sect33">LEARN1SYNAPSE (Learning Synapse with a Primitive Role)</a> for a more complicated model that uses STDP.</p>
-<ul>
+<li><code>simCode:</code> Simulation code that is used when a true spike is detected. The update is performed only once, one time step after threshold condition detection, which is defined by <code>thresholdConditionCode</code> in the neuron model of the corresponding presynaptic neuron population. <br />
+ Typically, spikes lead to update of synaptic variables that then lead to the activation of input into the post-synaptic neuron. Most of the time these inputs add linearly at the post-synaptic neuron. This is assumed in GeNN and the term to be added to the activation of the post-synaptic neuron should be provided as the value of the by the $(addtoinsyn) snippet. For example <div class="fragment"><div class="line"><span class="stringliteral">&quot;\$(addtoinsyn) = $(inc);&quot;</span></div>
+</div><!-- fragment --> where "inc" is a parameter of the weightupdate model, would define a constant increment of the synaptic input of a post-synaptic neuron for each pre-synaptic spike. <br />
+ When a spike is detected in the presynaptic neuron population, the simCode is executed. Within the code snippet the $(addtoinSyn) update just discussed should be be followed by the $(updatelinsyn) keyword to indicate that the summation of synaptic inputs can now occur. This can then be followed by updates on the internal synapse variables that may have contributed to addtoinSyn. For an example, see <a class="el" href="../../d5/d24/sectSynapseModels.html#sect31">NSYNAPSE (No Learning)</a> for a simple synapse update model and <a class="el" href="../../d5/d24/sectSynapseModels.html#sect33">LEARN1SYNAPSE (Learning Synapse with a Primitive Piece-wise Linear Rule)</a> for a more complicated model that uses STDP.</li>
 <li><code>simCodeEvnt:</code> Simulation code that is used for spike like events, where updates are done for all instances in which the event condition defined by <code>evntThreshold</code> is met. <code>evntThreshold</code> is also be provided as a code string. For an example, see <a class="el" href="../../d5/d24/sectSynapseModels.html#sect32">NGRADSYNAPSE (Graded Synapse)</a>.</li>
-<li><code>simLearnPost:</code> Simulation code which is used in the learnSynapsesPost kernel/function, which performs updates to synapses that are triggered by post-synaptic spikes. This is rather unusual other than in learning rules like e.g. STDP. For an example that uses <code>simLearnPost</code>, see <a class="el" href="../../d5/d24/sectSynapseModels.html#sect33">LEARN1SYNAPSE (Learning Synapse with a Primitive Role)</a>.</li>
+<li><code>simLearnPost:</code> Simulation code which is used in the learnSynapsesPost kernel/function, which performs updates to synapses that are triggered by post-synaptic spikes. This is rather unusual other than in learning rules like e.g. STDP. For an example that uses <code>simLearnPost</code>, see <a class="el" href="../../d5/d24/sectSynapseModels.html#sect33">LEARN1SYNAPSE (Learning Synapse with a Primitive Piece-wise Linear Rule)</a>.</li>
 <li><code>synapseDynamics:</code> Simulation code that applies for every time step, i.e.is unlike the others not gated with a condition. This can be used where synapses have internal variables and dynamics that are described in continuous time, e.g. by ODEs. Usng this mechnanism is typically computationally veruy costly because of the large number of synapses in a typical network.</li>
+<li><code>extraGlobalSynapseKernelParameters</code> of type <code>vector&lt;string&gt;</code>: On occasion, the synapses in a synapse population share a global parameter. This could, for example, be a global reward signal. This is supported in GeNN with <code>extraGlobalSynapseKernelParameters</code>. The user defines the names of such parameters and pushes them into this vector. GeNN creates variables of this name, with the name of the synapse population appended, that can take a single value per population of the type defined in the extraGlobalSynapseKernelParameterTypes vector. This variable is then available to all synapses in the population. <dl class="section note"><dt>Note</dt><dd>No implicit or explicit copy of <code>extraGlobalSynapseKernelParameters</code> is necessary as they are communicated as kernel parameters.</dd></dl>
+</li>
+<li><code>extraGlobalSynapseKernelParameterTypes</code> of type <code>vector&lt;string&gt;</code>: These are the types of the <code>extraGlobalSynapseKernelParameters</code>. Types are matched to names by their position in the vector.</li>
 </ul>
 <p>All code snippets can be used to manipulate any synapse variable and so implement both synaptic dynamics and learning processes.</p>
 <h1><a class="anchor" id="subsect31"></a>
@@ -165,13 +168,33 @@ NGRADSYNAPSE (Graded Synapse)</h1>
 <div class="fragment"><div class="line"><span class="stringliteral">&quot; $(V_pre) &gt; $(Epre)&quot;</span></div>
 </div><!-- fragment --> <dl class="section note"><dt>Note</dt><dd>The pre-synaptic variables are referenced with the suffix <code>_pre</code> in synapse related code such as an <code>evntThreshold</code>. Users can also access post-synaptic neuron variables using the suffix <code>_post</code>.</dd></dl>
 <h1><a class="anchor" id="sect33"></a>
-LEARN1SYNAPSE (Learning Synapse with a Primitive Role)</h1>
-<p>This is a simple STDP rule including a time delay for the finite transmission speed of the synapse, defined as a piecewise function.</p>
+LEARN1SYNAPSE (Learning Synapse with a Primitive Piece-wise Linear Rule)</h1>
+<p>This is a simple STDP rule including a time delay for the finite transmission speed of the synapse, defined as a piecewise function:</p>
+<div class="image">
+<img src="../../LEARN1SYNAPSE_explain_html.png" alt="LEARN1SYNAPSE_explain_html.png"/>
+</div>
+ <p>The STDP curve is applied to the raw synaptic conductance <code>gRaw</code>, which is then filtered through the sugmoidal filter displayed above to obtain the value of <code>g</code>.</p>
+<dl class="section note"><dt>Note</dt><dd>The STDP curve implies that unpaired pre- and post-synaptic spikes incur a negative increment in <code>gRaw</code> (and hence in <code>g</code>).</dd>
+<dd>
+The time of the last spike in each neuron, "sTXX", where XX is the name of a neuron population is (somewhat arbitrarily) initialised to -10.0 ms. If neurons never spike, these spike times are used.</dd>
+<dd>
+It is the raw synaptic conductance <code>gRaw</code> that is subject to the STDP rule. The resulting synaptic conductance is a sigmoid filter of <code>gRaw</code>. This implies that <code>g</code> is initialised but not <code>gRaw</code>, the synapse will revert to the value that corresponds to <code>gRaw</code>.</dd></dl>
+<p>An example how to use this synapse correctly is given in <code>map_classol.cc</code> (MBody1 userproject): </p><div class="fragment"><div class="line"><span class="keywordflow">for</span> (<span class="keywordtype">int</span> i= 0; i &lt; model.neuronN[1]*model.neuronN[3]; i++) {</div>
+<div class="line">        <span class="keywordflow">if</span> (gKCDN[i] &lt; 2.0*<a class="code" href="../../df/d46/HHVClampParameters_8h.html#aa3be788851c8e708d04e146d3c043f05">SCALAR_MIN</a>){</div>
+<div class="line">            cnt++;</div>
+<div class="line">            fprintf(stdout, <span class="stringliteral">&quot;Too low conductance value %e detected and set to 2*SCALAR_MIN= %e, at index %d \n&quot;</span>, gKCDN[i], 2*<a class="code" href="../../df/d46/HHVClampParameters_8h.html#aa3be788851c8e708d04e146d3c043f05">SCALAR_MIN</a>, i);</div>
+<div class="line">            gKCDN[i] = 2.0*<a class="code" href="../../df/d46/HHVClampParameters_8h.html#aa3be788851c8e708d04e146d3c043f05">SCALAR_MIN</a>; <span class="comment">//to avoid log(0)/0 below</span></div>
+<div class="line">        }</div>
+<div class="line">        <a class="code" href="../../df/d46/HHVClampParameters_8h.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a> tmp = gKCDN[i] / <a class="code" href="../../de/d16/HHVclampGA__project_2model_2MBody1_8cc.html#adfe4c40a099763bf4bfbc15af79376d9">myKCDN_p</a>[5]*2.0 ;</div>
+<div class="line">        gRawKCDN[i]=  0.5 * log( tmp / (2.0 - tmp)) /<a class="code" href="../../de/d16/HHVclampGA__project_2model_2MBody1_8cc.html#adfe4c40a099763bf4bfbc15af79376d9">myKCDN_p</a>[7] + <a class="code" href="../../de/d16/HHVclampGA__project_2model_2MBody1_8cc.html#adfe4c40a099763bf4bfbc15af79376d9">myKCDN_p</a>[6];</div>
+<div class="line">}</div>
+<div class="line">cerr &lt;&lt; <span class="stringliteral">&quot;Total number of low value corrections: &quot;</span> &lt;&lt; cnt &lt;&lt; endl;</div>
+</div><!-- fragment --><dl class="section note"><dt>Note</dt><dd>One cannot set values of <code>g</code> fully to <code>0</code>, as this leads to <code>gRaw</code>= -infinity and this is not support. I.e., 'g' needs to be some nominal value &gt; 0 (but can be extremely small so that it acts like it's 0).</dd></dl>
 <p>The model has 2 variables:</p><ul>
 <li><code>g:</code> conductance of <code>scalar</code> type</li>
 <li><code>gRaw:</code> raw conductance of <code>scalar</code> type</li>
 </ul>
-<p>Parameters are:</p><ul>
+<p>Parameters are (compare to the figure above):</p><ul>
 <li><code>Epre:</code> Presynaptic threshold potential</li>
 <li><code>tLrn:</code> Time scale of learning changes</li>
 <li><code>tChng:</code> Width of learning window</li>
@@ -184,10 +207,10 @@ LEARN1SYNAPSE (Learning Synapse with a Primitive Role)</h1>
 <li><code>tauShift:</code> Shift of learning curve</li>
 <li><code>gSyn0:</code> Value of syn conductance g decays to</li>
 </ul>
-<p>For more details about these built-in synapse models, see <a class="el" href="../../d0/de3/citelist.html#CITEREF_nowotny2005self">[2]</a>.</p>
-<h1><a class="anchor" id="sect33"></a>
-LEARN1SYNAPSE (Learning Synapse with a Primitive Role)</h1>
-<p>If users want to define their own models, they can add a new <code><a class="el" href="../../dd/db7/classweightUpdateModel.html" title="Structure to hold the information that defines a weightupdate model (a model of how spikes affect syn...">weightUpdateModel</a></code> that includes the variables, parameters, and update codes as desired, and then push this object in the <code>weightUpdateModels</code> vector. The model can be used by referring to its index in the <code>weightUpdateModels</code> vector when adding a new population by with a call to <code>addSynapsePopulation</code>.</p>
+<p>For more details about these built-in synapse models, see <a class="el" href="../../d0/de3/citelist.html#CITEREF_Nowotny2010">[3]</a>.</p>
+<h1><a class="anchor" id="sect34"></a>
+Defining a new synapse model</h1>
+<p>If users want to define their own models, they can add a new <code><a class="el" href="../../dd/db7/classweightUpdateModel.html" title="Class to hold the information that defines a weightupdate model (a model of how spikes affect synapti...">weightUpdateModel</a></code> that includes the variables, parameters, and update codes as desired, and then push this object in the <code>weightUpdateModels</code> vector. The model can be used by referring to its index in the <code>weightUpdateModels</code> vector when adding a new population by with a call to <code>addSynapsePopulation</code>.</p>
 <h1><a class="anchor" id="subsect34"></a>
 Conductance definition methods</h1>
 <p>The available options work as follows:</p><ul>
@@ -197,19 +220,31 @@ Conductance definition methods</h1>
 </ul>
 <h1><a class="anchor" id="subsect32"></a>
 Connectivity types</h1>
+<p>Available options are <code>DENSE</code> and <code>SPARSE</code>. Various tools are provided under userproject/tools for creating different connectivity schemes.</p>
+<p>Different strategies are used by GeNN for different combinations of connecticity types and <a class="el" href="../../d5/d24/sectSynapseModels.html#subsect34">Conductance definition methods</a>, as explained in the table below:</p>
+<table class="doxtable">
+<tr>
+<th></th><th align="center">ALLTOALL </th><th align="center">DENSE </th><th align="center">SPARSE  </th></tr>
+<tr>
+<td>GLOBALG </td><td align="center">Fixed values for all synapse members </td><td align="center">Fixed values for all synapse members </td><td align="center">Fixed values for some synapse members (using sparse indexing) </td></tr>
+<tr>
+<td>INDIVIDUALG </td><td align="center">Variable values for all synapse members </td><td align="center">Variable values for all synapse members </td><td align="center">Variable values for some synapse members </td></tr>
+<tr>
+<td>INDIVIDUALID </td><td align="center">Fixed values for some synapse members (using a binary array). Technically possible but not meaningful. </td><td align="center">Fixed values for some synapse members (using a binary array) </td><td align="center">N/A </td></tr>
+</table>
 <p>If <code>INDIVIDUALG</code> is used with <code>ALLTOALL</code> or <code>DENSE</code> connectivity (these are equivalent in this case), synapse variables are stored in an array of size npre * npost .</p>
-<p>If the connectivity is of SPARSE type, connectivity indices are stored in a struct named SparseProjection in order to minimize the memory equirements. The struct SparseProjection contains the following members: 1: unsigned int connN: number of connections in the population. This value is needed for allocation of arrays. The indices that correspond to these values are defined in a pre-to-post basis by the following arrays: 2: unsigned int ind, of size connN: Indices of corresponding postsynaptic neurons concatenated for each presynaptic neuron. 3: unsigned int *indInG, of size model.neuronN[model.synapseSource[synInd]]+1: This array defines from which index in the synapse variable array the indices in ind would correspond to the presynaptic neuron that corresponds to the index of the indInG array, with the number of connections being the size of ind. More specifically, indIng[n+1]-indIng[n] would give the number of postsynaptic connections for neuron n.</p>
-<p>For example, consider a network of two presynaptic neurons connected to three postsynaptic neurons: 0th presynaptic neuron connected to 1st and 2nd postsynaptic neurons, the 1st presynaptic neuron connected to 0th and 2nd neurons. The struct SparseProjection should have these members, with indexing from 0: </p><pre class="fragment">    ConnN = 4
+<p>If the connectivity is of SPARSE type, connectivity indices are stored in a struct named <a class="el" href="../../d9/d91/structSparseProjection.html" title="class (struct) for defining a spars connectivity projection ">SparseProjection</a> in order to minimize the memory requirements. The struct <a class="el" href="../../d9/d91/structSparseProjection.html" title="class (struct) for defining a spars connectivity projection ">SparseProjection</a> contains the following members: 1: unsigned int connN: number of connections in the population. This value is needed for allocation of arrays. The indices that correspond to these values are defined in a pre-to-post basis by the following arrays: 2: unsigned int ind, of size connN: Indices of corresponding postsynaptic neurons concatenated for each presynaptic neuron. 3: unsigned int *indInG, of size <code>model.neuronN</code>[model.synapseSource[synInd]]+1: This array defines from which index in the synapse variable array the indices in ind would correspond to the presynaptic neuron that corresponds to the index of the indInG array, with the number of connections being the size of ind. More specifically, <code>indIng</code>[n+1]-indIng[n] would give the number of postsynaptic connections for neuron n.</p>
+<p>For example, consider a network of two presynaptic neurons connected to three postsynaptic neurons: 0th presynaptic neuron connected to 1st and 2nd postsynaptic neurons, the 1st presynaptic neuron connected to 0th and 2nd neurons. The struct <a class="el" href="../../d9/d91/structSparseProjection.html" title="class (struct) for defining a spars connectivity projection ">SparseProjection</a> should have these members, with indexing from 0: </p><pre class="fragment">    ConnN = 4
 
     ind= [1 2 0 2]
 
     indIng= [0 2 4]  
-</pre><p>A synapse variable of a sparsely connected synapse will be kept in an array using this conductance for indexing. For example, a variable caled <code>g</code> will be kept in an array such as: g= [g_Pre0-Post1 g_pre0-post2 g_pre1-post0 g_pre1-post2] If there are no connections for a presynaptic neuron, then g[indIng[n]]=gp[indIng[n]+1].</p>
+</pre><p>A synapse variable of a sparsely connected synapse will be kept in an array using this conductance for indexing. For example, a variable caled <code>g</code> will be kept in an array such as: <code>g=</code>[g_Pre0-Post1 g_pre0-post2 g_pre1-post0 g_pre1-post2] If there are no connections for a presynaptic neuron, then <code>g</code>[indIng[n]]=gp[indIng[n]+1].</p>
 <p>See tools/gen_syns_sparse_IzhModel used in Izh_sparse project to see a working example.</p>
 <h1><a class="anchor" id="sect_postsyn"></a>
 Postsynaptic integration methods</h1>
-<p>The <a class="el" href="../../d8/dbb/structpostSynModel.html" title="Structure to hold the information that defines a post-synaptic model (a model of how synapses affect ...">postSynModel</a> defines how synaptic activation translates into an input current (or other input term for models that are not current based). It also can contain equations defining dynamics that are applied to the (summed) synaptic activation, e.g. an exponential decay over time.</p>
-<p>A <a class="el" href="../../d8/dbb/structpostSynModel.html" title="Structure to hold the information that defines a post-synaptic model (a model of how synapses affect ...">postSynModel</a> object consists of variables, parameters, derived parameters and two strings that define the code for current generation and continuous dynamics.</p>
+<p>The <a class="el" href="../../d2/d1a/classpostSynModel.html" title="Class to hold the information that defines a post-synaptic model (a model of how synapses affect post...">postSynModel</a> defines how synaptic activation translates into an input current (or other input term for models that are not current based). It also can contain equations defining dynamics that are applied to the (summed) synaptic activation, e.g. an exponential decay over time.</p>
+<p>A <a class="el" href="../../d2/d1a/classpostSynModel.html" title="Class to hold the information that defines a post-synaptic model (a model of how synapses affect post...">postSynModel</a> object consists of variables, parameters, derived parameters and two strings that define the code for current generation and continuous dynamics.</p>
 <ul>
 <li>string <code>postSynDecay:</code> This code defines the continuous time dynamics of the summed presynaptic inputs at the postsynaptic neuron. This usually consists of some kind of decay function.</li>
 <li>string <code>postSyntoCurrent:</code> This code defines how the synaptic inputs lead to an input input current (Isyn) to the postsynaptic neuron.</li>
@@ -225,14 +260,14 @@ Postsynaptic integration methods</h1>
 <p>IZHIKEVICH_PS: Empty postsynaptic rule to be used with Izhikevich neurons. <br />
 </p>
 <hr/>
-<p> <a class="el" href="../../d5/d24/sectSynapseModels.html">Previous</a> | <a class="el" href="../../d5/d24/sectSynapseModels.html#sect_postsyn">Top</a> | <a class="el" href="../../d0/da6/UserGuide.html#ListOfVariables">Next</a> </p>
+<p> <a class="el" href="../../de/ded/sectNeuronModels.html">Previous</a> | <a class="el" href="../../dc/d05/UserManual.html">Top</a> | <a class="el" href="../../d5/dbb/Tutorial1.html">Next</a> </p>
 </div></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dc/d05/UserManual.html">User Manual</a></li>
-    <li class="footer">Generated on Fri Nov 6 2015 22:13:01 for GeNN by
+    <li class="footer">Generated on Fri Jun 17 2016 14:45:00 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
   </ul>

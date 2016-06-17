@@ -34,6 +34,7 @@
   $(document).ready(function() { init_search(); });
 </script>
 <link href="../../customdoxygen.css" rel="stylesheet" type="text/css" />
+<link href="../../html_styles.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -44,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">2.0</span>
+   &#160;<span id="projectnumber">2.2</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -61,6 +62,7 @@ var searchBox = new SearchBox("searchBox", "../../search",false,'Search');
     <ul class="tablist">
       <li><a href="../../index.html"><span>Main&#160;Page</span></a></li>
       <li><a href="../../pages.html"><span>Related&#160;Pages</span></a></li>
+      <li><a href="../../namespaces.html"><span>Namespaces</span></a></li>
       <li><a href="../../annotated.html"><span>Classes</span></a></li>
       <li class="current"><a href="../../files.html"><span>Files</span></a></li>
       <li>
@@ -126,21 +128,24 @@ $(document).ready(function(){initNavTree('da/d80/generateCPU_8cc.html','../../')
 
 <p>Functions for generating code that will run the neuron and synapse simulations on the CPU. Part of the code generation section.  
 <a href="#details">More...</a></p>
-<div class="textblock"><code>#include &lt;string&gt;</code><br />
-<code>#include &quot;<a class="el" href="../../d6/d8a/CodeHelper_8cc.html">CodeHelper.cc</a>&quot;</code><br />
-<code>#include &lt;cfloat&gt;</code><br />
+<div class="textblock"><code>#include &quot;<a class="el" href="../../d2/dfd/generateCPU_8h_source.html">generateCPU.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="../../d2/d49/global_8h_source.html">global.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="../../d5/d60/utils_8h_source.html">utils.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="../../dd/dc3/stringUtils_8h_source.html">stringUtils.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="../../dd/d95/CodeHelper_8h_source.html">CodeHelper.h</a>&quot;</code><br />
+<code>#include &lt;algorithm&gt;</code><br />
 </div><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:a15a320ee739b42b1dda39ebd99acdb21"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d80/generateCPU_8cc.html#a15a320ee739b42b1dda39ebd99acdb21">genNeuronFunction</a> (<a class="el" href="../../dc/de5/classNNmodel.html">NNmodel</a> &amp;model, string &amp;path, ostream &amp;mos)</td></tr>
-<tr class="memdesc:a15a320ee739b42b1dda39ebd99acdb21"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function that generates the code of the function the will simulate all neurons on the CPU.  <a href="#a15a320ee739b42b1dda39ebd99acdb21">More...</a><br /></td></tr>
-<tr class="separator:a15a320ee739b42b1dda39ebd99acdb21"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8ed2bdc9bdb37b645da5f53c54c33b6c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d80/generateCPU_8cc.html#a8ed2bdc9bdb37b645da5f53c54c33b6c">genNeuronFunction</a> (<a class="el" href="../../dc/de5/classNNmodel.html">NNmodel</a> &amp;model, string &amp;path)</td></tr>
+<tr class="memdesc:a8ed2bdc9bdb37b645da5f53c54c33b6c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function that generates the code of the function the will simulate all neurons on the CPU.  <a href="#a8ed2bdc9bdb37b645da5f53c54c33b6c">More...</a><br /></td></tr>
+<tr class="separator:a8ed2bdc9bdb37b645da5f53c54c33b6c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af0f68722173aa844b8ab29e82faf28cb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d80/generateCPU_8cc.html#af0f68722173aa844b8ab29e82faf28cb">generate_process_presynaptic_events_code_CPU</a> (ostream &amp;os, <a class="el" href="../../dc/de5/classNNmodel.html">NNmodel</a> &amp;model, unsigned int src, unsigned int trg, int i, string &amp;localID, unsigned int inSynNo, string postfix)</td></tr>
 <tr class="memdesc:af0f68722173aa844b8ab29e82faf28cb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function for generating the CUDA synapse kernel code that handles presynaptic spikes or spike type events.  <a href="#af0f68722173aa844b8ab29e82faf28cb">More...</a><br /></td></tr>
 <tr class="separator:af0f68722173aa844b8ab29e82faf28cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab79c0cea7b9f14c32fe161eb1303fdb0"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d80/generateCPU_8cc.html#ab79c0cea7b9f14c32fe161eb1303fdb0">genSynapseFunction</a> (<a class="el" href="../../dc/de5/classNNmodel.html">NNmodel</a> &amp;model, string &amp;path, ostream &amp;mos)</td></tr>
-<tr class="memdesc:ab79c0cea7b9f14c32fe161eb1303fdb0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function that generates code that will simulate all synapses of the model on the CPU.  <a href="#ab79c0cea7b9f14c32fe161eb1303fdb0">More...</a><br /></td></tr>
-<tr class="separator:ab79c0cea7b9f14c32fe161eb1303fdb0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2f01cda6e5e49585a12393b07969efa5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d80/generateCPU_8cc.html#a2f01cda6e5e49585a12393b07969efa5">genSynapseFunction</a> (<a class="el" href="../../dc/de5/classNNmodel.html">NNmodel</a> &amp;model, string &amp;path)</td></tr>
+<tr class="memdesc:a2f01cda6e5e49585a12393b07969efa5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function that generates code that will simulate all synapses of the model on the CPU.  <a href="#a2f01cda6e5e49585a12393b07969efa5">More...</a><br /></td></tr>
+<tr class="separator:a2f01cda6e5e49585a12393b07969efa5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Functions for generating code that will run the neuron and synapse simulations on the CPU. Part of the code generation section. </p>
@@ -222,7 +227,7 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a15a320ee739b42b1dda39ebd99acdb21"></a>
+<a class="anchor" id="a8ed2bdc9bdb37b645da5f53c54c33b6c"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -236,13 +241,7 @@ Functions</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">string &amp;&#160;</td>
-          <td class="paramname"><em>path</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">ostream &amp;&#160;</td>
-          <td class="paramname"><em>mos</em>&#160;</td>
+          <td class="paramname"><em>path</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -256,15 +255,14 @@ Functions</h2></td></tr>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">model</td><td>Model description </td></tr>
-    <tr><td class="paramname">path</td><td>output stream for code </td></tr>
-    <tr><td class="paramname">mos</td><td>output stream for messages </td></tr>
+    <tr><td class="paramname">path</td><td>Path for code generation </td></tr>
   </table>
   </dd>
 </dl>
 
 </div>
 </div>
-<a class="anchor" id="ab79c0cea7b9f14c32fe161eb1303fdb0"></a>
+<a class="anchor" id="a2f01cda6e5e49585a12393b07969efa5"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -278,13 +276,7 @@ Functions</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">string &amp;&#160;</td>
-          <td class="paramname"><em>path</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">ostream &amp;&#160;</td>
-          <td class="paramname"><em>mos</em>&#160;</td>
+          <td class="paramname"><em>path</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -299,7 +291,6 @@ Functions</h2></td></tr>
   <table class="params">
     <tr><td class="paramname">model</td><td>Model description </td></tr>
     <tr><td class="paramname">path</td><td>Path for code generation </td></tr>
-    <tr><td class="paramname">mos</td><td>output stream for messages </td></tr>
   </table>
   </dd>
 </dl>
@@ -311,8 +302,8 @@ Functions</h2></td></tr>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><a class="el" href="../../dir_97aefd0d527b934f1d99a682da8fe6a9.html">lib</a></li><li class="navelem"><a class="el" href="../../dir_a065c5f60305fee3569f887679366939.html">src</a></li><li class="navelem"><a class="el" href="../../da/d80/generateCPU_8cc.html">generateCPU.cc</a></li>
-    <li class="footer">Generated on Fri Nov 6 2015 22:12:58 for GeNN by
+    <li class="navelem"><a class="el" href="../../dir_75b82e7e4a5feb05200b9ad7adf06257.html">home</a></li><li class="navelem"><a class="el" href="../../dir_ffe3a3aad2509bd71bde52251b868b95.html">t</a></li><li class="navelem"><a class="el" href="../../dir_a76bff614e8015b519bf2acd237705ed.html">tn</a></li><li class="navelem"><a class="el" href="../../dir_f4e7678815bf6e9eaf2cc8bfbd1351b7.html">tn41</a></li><li class="navelem"><a class="el" href="../../dir_2f2428e5af9c71cc79b0eec8cffe5ad2.html">localdisk_projects</a></li><li class="navelem"><a class="el" href="../../dir_3cf40d34fd3099085c9305fe2b26b2ea.html">develop</a></li><li class="navelem"><a class="el" href="../../dir_ee841fdb1cf52f11d3719e45227a7fba.html">genn</a></li><li class="navelem"><a class="el" href="../../dir_97d83ea9b369010f011f7f8afbb221a3.html">lib</a></li><li class="navelem"><a class="el" href="../../dir_792efa9462d7b15d401f92f84d7c7727.html">src</a></li><li class="navelem"><a class="el" href="../../da/d80/generateCPU_8cc.html">generateCPU.cc</a></li>
+    <li class="footer">Generated on Fri Jun 17 2016 14:44:59 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
   </ul>

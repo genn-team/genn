@@ -1,6 +1,6 @@
 var classpwSTDP =
 [
-    [ "calculateDerivedParameter", "d0/dba/classpwSTDP.html#ae2b1d284606988c81dfeb436de37fa6c", null ],
+    [ "calculateDerivedParameter", "d0/dba/classpwSTDP.html#ab7b15a7e2e35af7bd494aec81e585698", null ],
     [ "lim0", "d0/dba/classpwSTDP.html#a3f98501bb2833374ee451003a89af11f", null ],
     [ "lim1", "d0/dba/classpwSTDP.html#abd4f7d4251507c1708c53a3025894fac", null ],
     [ "off0", "d0/dba/classpwSTDP.html#af27cb5a57ee26d9b420e7d1a56777623", null ],

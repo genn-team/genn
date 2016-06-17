@@ -95,7 +95,6 @@ var classSchmuker2014__classifier =
     [ "plasticWeights", "d1/dc3/classSchmuker2014__classifier.html#aa16703ae330bffb4724385c1fd4cafe7", null ],
     [ "recordingsDir", "d1/dc3/classSchmuker2014__classifier.html#a3bf69e948bbfe8bb0bab9d6f9dea597a", null ],
     [ "sampleDistance", "d1/dc3/classSchmuker2014__classifier.html#ab2bfa6550e1f5611a3f4edeb1a8fec82", null ],
-    [ "t", "d1/dc3/classSchmuker2014__classifier.html#a4ec3af9e49e8acb27eeb429b3be4fc83", null ],
     [ "uniqueRunId", "d1/dc3/classSchmuker2014__classifier.html#a58966899fc63a52f44d441ec44e7cc31", null ],
     [ "vrData", "d1/dc3/classSchmuker2014__classifier.html#aac86f5e7733b62d97351580420853ad4", null ],
     [ "winningClass", "d1/dc3/classSchmuker2014__classifier.html#ac387eaa87f68ae34b4c546f5c1bb20b5", null ]

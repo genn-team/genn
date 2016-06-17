@@ -34,6 +34,7 @@
   $(document).ready(function() { init_search(); });
 </script>
 <link href="../../customdoxygen.css" rel="stylesheet" type="text/css" />
+<link href="../../html_styles.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -44,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">2.0</span>
+   &#160;<span id="projectnumber">2.2</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -61,6 +62,7 @@ var searchBox = new SearchBox("searchBox", "../../search",false,'Search');
     <ul class="tablist">
       <li><a href="../../index.html"><span>Main&#160;Page</span></a></li>
       <li class="current"><a href="../../pages.html"><span>Related&#160;Pages</span></a></li>
+      <li><a href="../../namespaces.html"><span>Namespaces</span></a></li>
       <li><a href="../../annotated.html"><span>Classes</span></a></li>
       <li><a href="../../files.html"><span>Files</span></a></li>
       <li>
@@ -117,27 +119,29 @@ $(document).ready(function(){initNavTree('dc/d05/UserManual.html','../../');});
 <div class="contents">
 <div class="textblock"><h1><a class="anchor" id="Contents"></a>
 Contents</h1>
-<p><a class="el" href="../../dc/d05/UserManual.html#sIntro">Introduction</a> <br />
- <a class="el" href="../../df/dc3/sectDefiningNetwork.html">Defining a network model</a> <br />
- <a class="el" href="../../de/ded/sectNeuronModels.html">Neuron models</a> <br />
- <a class="el" href="../../d5/d24/sectSynapseModels.html">Synapse models</a> <br />
-</p>
+<ul>
+<li><a class="el" href="../../dc/d05/UserManual.html#sIntro">Introduction</a><br />
+</li>
+<li><a class="el" href="../../df/dc3/sectDefiningNetwork.html">Defining a network model</a></li>
+<li><a class="el" href="../../de/ded/sectNeuronModels.html">Neuron models</a></li>
+<li><a class="el" href="../../d5/d24/sectSynapseModels.html">Synapse models</a></li>
+</ul>
 <h1><a class="anchor" id="sIntro"></a>
 Introduction</h1>
-<p>GeNN is a software library for facilitating the simulation of neuronal network models on NVIDIA CUDA enabled GPU hardware. It was designed with computational neuroscience models in mind rather than artificial neural networks. The main philosophy of GeNN is two-fold:</p><ol type="1">
+<p>GeNN is a software library for facilitating the simulation of neuronal network models on NVIDIA CUDA enabled GPU hardware. It was designed with computational neuroscience models in mind rather than artificial neural networks. The main philosophy of GeNN is two-fold:</p>
+<ol type="1">
 <li>GeNN relies heavily on code generation to make it very flexible and to allow adjusting simulation code to the model of interest and the GPU hardware that is detected at compile time.</li>
-<li>GeNN is lightweight in that it provides code for running models of neuronal networks on GPU hardware but it leaves it to the user to write a final simulation engine. It so allows maximal flexibility to the user who can use any of the provided code but can fully choose, inspect, extend or otherwise modify the generated code. She can also introduce her own optimisations and in particular control the data flow from and to the GPU in any desired granularity.</li>
+<li>GeNN is lightweight in that it provides code for running models of neuronal networks on GPU hardware but it leaves it to the user to write a final simulation engine. It so allows maximal flexibility to the user who can use any of the provided code but can fully choose, inspect, extend or otherwise modify the generated code. They can also introduce their own optimisations and in particular control the data flow from and to the GPU in any desired granularity.</li>
 </ol>
-<p>This manual gives an overview of how to use GeNN for a novice user and tries to lead the user to more expert use later on. With this we jump right in.</p>
-<p><br />
- </p><hr/>
+<p>This manual gives an overview of how to use GeNN for a novice user and tries to lead the user to more expert use later on. With that we jump right in. <br />
+</p><hr/>
 <p> <a class="el" href="../../df/ddb/ReleaseNotes.html">Previous</a> | <a class="el" href="../../dc/d05/UserManual.html">Top</a> | <a class="el" href="../../df/dc3/sectDefiningNetwork.html">Next</a> </p>
 </div></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Fri Nov 6 2015 22:13:01 for GeNN by
+    <li class="footer">Generated on Fri Jun 17 2016 14:44:59 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
   </ul>

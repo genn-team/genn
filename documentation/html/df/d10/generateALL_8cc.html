@@ -34,6 +34,7 @@
   $(document).ready(function() { init_search(); });
 </script>
 <link href="../../customdoxygen.css" rel="stylesheet" type="text/css" />
+<link href="../../html_styles.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -44,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">2.0</span>
+   &#160;<span id="projectnumber">2.2</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -61,6 +62,7 @@ var searchBox = new SearchBox("searchBox", "../../search",false,'Search');
     <ul class="tablist">
       <li><a href="../../index.html"><span>Main&#160;Page</span></a></li>
       <li><a href="../../pages.html"><span>Related&#160;Pages</span></a></li>
+      <li><a href="../../namespaces.html"><span>Namespaces</span></a></li>
       <li><a href="../../annotated.html"><span>Classes</span></a></li>
       <li class="current"><a href="../../files.html"><span>Files</span></a></li>
       <li>
@@ -118,7 +120,8 @@ $(document).ready(function(){initNavTree('df/d10/generateALL_8cc.html','../../')
 
 <div class="header">
   <div class="summary">
-<a href="#func-members">Functions</a>  </div>
+<a href="#func-members">Functions</a> &#124;
+<a href="#var-members">Variables</a>  </div>
   <div class="headertitle">
 <div class="title">generateALL.cc File Reference</div>  </div>
 </div><!--header-->
@@ -126,12 +129,16 @@ $(document).ready(function(){initNavTree('df/d10/generateALL_8cc.html','../../')
 
 <p>Main file combining the code for code generation. Part of the code generation section.  
 <a href="#details">More...</a></p>
-<div class="textblock"><code>#include &quot;<a class="el" href="../../d2/d49/global_8h_source.html">global.h</a>&quot;</code><br />
+<div class="textblock"><code>#include &quot;<a class="el" href="../../d8/deb/generateALL_8h_source.html">generateALL.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="../../d2/d75/generateRunner_8h_source.html">generateRunner.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="../../d2/dfd/generateCPU_8h_source.html">generateCPU.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="../../d9/d4c/generateKernels_8h_source.html">generateKernels.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="../../d2/d49/global_8h_source.html">global.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="../../dc/de1/modelSpec_8h_source.html">modelSpec.h</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="../../d7/dfd/modelSpec_8cc.html">modelSpec.cc</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="../../da/d14/generateKernels_8cc.html">generateKernels.cc</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="../../d3/dad/generateRunner_8cc.html">generateRunner.cc</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="../../da/d80/generateCPU_8cc.html">generateCPU.cc</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="../../d5/d60/utils_8h_source.html">utils.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="../../dd/dc3/stringUtils_8h_source.html">stringUtils.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="../../dd/d95/CodeHelper_8h_source.html">CodeHelper.h</a>&quot;</code><br />
+<code>#include &lt;cmath&gt;</code><br />
 <code>#include &lt;sys/stat.h&gt;</code><br />
 </div><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
@@ -139,31 +146,30 @@ Functions</h2></td></tr>
 <tr class="memitem:a50587c2d6003b7e7161c51fb5492f315"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d10/generateALL_8cc.html#a50587c2d6003b7e7161c51fb5492f315">generate_model_runner</a> (<a class="el" href="../../dc/de5/classNNmodel.html">NNmodel</a> &amp;model, string path)</td></tr>
 <tr class="memdesc:a50587c2d6003b7e7161c51fb5492f315"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function will call the necessary sub-functions to generate the code for simulating a model.  <a href="#a50587c2d6003b7e7161c51fb5492f315">More...</a><br /></td></tr>
 <tr class="separator:a50587c2d6003b7e7161c51fb5492f315"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9c3c21bc7440b336138bcb541e4eab79"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d10/generateALL_8cc.html#a9c3c21bc7440b336138bcb541e4eab79">chooseDevice</a> (ostream &amp;mos, <a class="el" href="../../dc/de5/classNNmodel.html">NNmodel</a> *&amp;model, string path)</td></tr>
-<tr class="memdesc:a9c3c21bc7440b336138bcb541e4eab79"><td class="mdescLeft">&#160;</td><td class="mdescRight">Helper function that prepares data structures and detects the hardware properties to enable the code generation code that follows.  <a href="#a9c3c21bc7440b336138bcb541e4eab79">More...</a><br /></td></tr>
-<tr class="separator:a9c3c21bc7440b336138bcb541e4eab79"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9c02a3157f3ff2e8e3c40bf7c779bcb9"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d10/generateALL_8cc.html#a9c02a3157f3ff2e8e3c40bf7c779bcb9">chooseDevice</a> (<a class="el" href="../../dc/de5/classNNmodel.html">NNmodel</a> &amp;model, string path)</td></tr>
+<tr class="memdesc:a9c02a3157f3ff2e8e3c40bf7c779bcb9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Helper function that prepares data structures and detects the hardware properties to enable the code generation code that follows.  <a href="#a9c02a3157f3ff2e8e3c40bf7c779bcb9">More...</a><br /></td></tr>
+<tr class="separator:a9c02a3157f3ff2e8e3c40bf7c779bcb9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0ddf1224851353fc92bfbff6f499fa97"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d10/generateALL_8cc.html#a0ddf1224851353fc92bfbff6f499fa97">main</a> (int argc, char *argv[])</td></tr>
 <tr class="memdesc:a0ddf1224851353fc92bfbff6f499fa97"><td class="mdescLeft">&#160;</td><td class="mdescRight">Main entry point for the generateALL executable that generates the code for GPU and CPU.  <a href="#a0ddf1224851353fc92bfbff6f499fa97">More...</a><br /></td></tr>
 <tr class="separator:a0ddf1224851353fc92bfbff6f499fa97"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="var-members"></a>
+Variables</h2></td></tr>
+<tr class="memitem:a528456f8f1feca5714ef5cef70156619"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d1/d03/classCodeHelper.html">CodeHelper</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d10/generateALL_8cc.html#a528456f8f1feca5714ef5cef70156619">hlp</a></td></tr>
+<tr class="separator:a528456f8f1feca5714ef5cef70156619"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Main file combining the code for code generation. Part of the code generation section. </p>
 <p>The file includes separate files for generating kernels (<a class="el" href="../../da/d14/generateKernels_8cc.html" title="Contains functions that generate code for CUDA kernels. Part of the code generation section...">generateKernels.cc</a>), generating the CPU side code for running simulations on either the CPU or GPU (<a class="el" href="../../d3/dad/generateRunner_8cc.html" title="Contains functions to generate code for running the simulation on the GPU, and for I/O convenience fu...">generateRunner.cc</a>) and for CPU-only simulation code (<a class="el" href="../../da/d80/generateCPU_8cc.html" title="Functions for generating code that will run the neuron and synapse simulations on the CPU...">generateCPU.cc</a>). </p>
 </div><h2 class="groupheader">Function Documentation</h2>
-<a class="anchor" id="a9c3c21bc7440b336138bcb541e4eab79"></a>
+<a class="anchor" id="a9c02a3157f3ff2e8e3c40bf7c779bcb9"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">int chooseDevice </td>
+          <td class="memname">void chooseDevice </td>
           <td>(</td>
-          <td class="paramtype">ostream &amp;&#160;</td>
-          <td class="paramname"><em>mos</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="../../dc/de5/classNNmodel.html">NNmodel</a> *&amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="../../dc/de5/classNNmodel.html">NNmodel</a> &amp;&#160;</td>
           <td class="paramname"><em>model</em>, </td>
         </tr>
         <tr>
@@ -184,7 +190,6 @@ Functions</h2></td></tr>
 <p>The main tasks in this function are the detection and characterization of the GPU device present (if any), choosing which GPU device to use, finding and appropriate block size, taking note of the major and minor version of the CUDA enabled device chosen for use, and populating the list of standard neuron models. The chosen device number is returned. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">mos</td><td>output stream for messages </td></tr>
     <tr><td class="paramname">model</td><td>the nn model we are generating code for </td></tr>
     <tr><td class="paramname">path</td><td>path the generated code will be deposited </td></tr>
   </table>
@@ -264,13 +269,26 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<h2 class="groupheader">Variable Documentation</h2>
+<a class="anchor" id="a528456f8f1feca5714ef5cef70156619"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="../../d1/d03/classCodeHelper.html">CodeHelper</a> hlp</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><a class="el" href="../../dir_97aefd0d527b934f1d99a682da8fe6a9.html">lib</a></li><li class="navelem"><a class="el" href="../../dir_a065c5f60305fee3569f887679366939.html">src</a></li><li class="navelem"><a class="el" href="../../df/d10/generateALL_8cc.html">generateALL.cc</a></li>
-    <li class="footer">Generated on Fri Nov 6 2015 22:12:58 for GeNN by
+    <li class="navelem"><a class="el" href="../../dir_75b82e7e4a5feb05200b9ad7adf06257.html">home</a></li><li class="navelem"><a class="el" href="../../dir_ffe3a3aad2509bd71bde52251b868b95.html">t</a></li><li class="navelem"><a class="el" href="../../dir_a76bff614e8015b519bf2acd237705ed.html">tn</a></li><li class="navelem"><a class="el" href="../../dir_f4e7678815bf6e9eaf2cc8bfbd1351b7.html">tn41</a></li><li class="navelem"><a class="el" href="../../dir_2f2428e5af9c71cc79b0eec8cffe5ad2.html">localdisk_projects</a></li><li class="navelem"><a class="el" href="../../dir_3cf40d34fd3099085c9305fe2b26b2ea.html">develop</a></li><li class="navelem"><a class="el" href="../../dir_ee841fdb1cf52f11d3719e45227a7fba.html">genn</a></li><li class="navelem"><a class="el" href="../../dir_97d83ea9b369010f011f7f8afbb221a3.html">lib</a></li><li class="navelem"><a class="el" href="../../dir_792efa9462d7b15d401f92f84d7c7727.html">src</a></li><li class="navelem"><a class="el" href="../../df/d10/generateALL_8cc.html">generateALL.cc</a></li>
+    <li class="footer">Generated on Fri Jun 17 2016 14:44:59 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
   </ul>

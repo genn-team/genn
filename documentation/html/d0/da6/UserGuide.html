@@ -5,7 +5,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.9.1"/>
-<title>GeNN: Suggestions for users</title>
+<title>GeNN: Best practices guide</title>
 <link href="../../tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="../../jquery.js"></script>
 <script type="text/javascript" src="../../dynsections.js"></script>
@@ -34,6 +34,7 @@
   $(document).ready(function() { init_search(); });
 </script>
 <link href="../../customdoxygen.css" rel="stylesheet" type="text/css" />
+<link href="../../html_styles.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -44,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">2.0</span>
+   &#160;<span id="projectnumber">2.2</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -61,6 +62,7 @@ var searchBox = new SearchBox("searchBox", "../../search",false,'Search');
     <ul class="tablist">
       <li><a href="../../index.html"><span>Main&#160;Page</span></a></li>
       <li class="current"><a href="../../pages.html"><span>Related&#160;Pages</span></a></li>
+      <li><a href="../../namespaces.html"><span>Namespaces</span></a></li>
       <li><a href="../../annotated.html"><span>Classes</span></a></li>
       <li><a href="../../files.html"><span>Files</span></a></li>
       <li>
@@ -112,30 +114,32 @@ $(document).ready(function(){initNavTree('d0/da6/UserGuide.html','../../');});
 
 <div class="header">
   <div class="headertitle">
-<div class="title">Suggestions for users </div>  </div>
+<div class="title">Best practices guide </div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p>GeNN generates code according to the network model defined by the user, but lets users use generated code the way they want. Here we explain in some more detail how to setup GeNN and how to use generated functions. We recommend users to also have a look at the <a class="el" href="../../d9/d61/Examples.html">Examples</a>, and to follow the tutorials <a class="el" href="../../d5/dbb/Tutorial1.html">Tutorial 1</a> and <a class="el" href="../../dc/d7e/Tutorial2.html">Tutorial 2</a>.</p>
+<div class="textblock"><p>GeNN generates code according to the network model defined by the user, and allows users to include the generated code in their programs as they want. Here we provide a guideline to setup GeNN and use generated functions. We recommend users to also have a look at the <a class="el" href="../../d9/d61/Examples.html">Examples</a>, and to follow the tutorials <a class="el" href="../../d5/dbb/Tutorial1.html">Tutorial 1</a> and <a class="el" href="../../dc/d7e/Tutorial2.html">Tutorial 2</a>.</p>
 <h1><a class="anchor" id="CreateAndSimulate"></a>
 Creating and simulating a network model</h1>
-<p>The user is first expected to create an object of class <a class="el" href="../../dc/de5/classNNmodel.html" title="Structure to hold the information that defines synapse dynamics (a model of how synapse variables cha...">NNmodel</a> by creating the function <a class="el" href="../../db/d0a/postVarsInPostLearn_8cc.html#a9aeaa0a22980484b2c472564fc9f686e">modelDefinition()</a> which includes calls to following methods in correct order:</p>
+<p>The user is first expected to create an object of class <a class="el" href="../../dc/de5/classNNmodel.html">NNmodel</a> by creating the function <a class="el" href="../../d0/d73/myModel_8cc.html#a9aeaa0a22980484b2c472564fc9f686e" title="This function defines a model with novel synapses. ">modelDefinition()</a> which includes calls to following methods in correct order:</p>
 <ul>
-<li><a class="el" href="../../d7/dfd/modelSpec_8cc.html#a62ce532f6f7e535adfb9fe151a1c0c6b" title="Method for GeNN initialisation (by preparing standard models) ">initGeNN()</a>;</li>
+<li><a class="el" href="../../dc/de1/modelSpec_8h.html#a62ce532f6f7e535adfb9fe151a1c0c6b" title="Method for GeNN initialisation (by preparing standard models) ">initGeNN()</a>;</li>
+<li><a class="el" href="../../dc/de5/classNNmodel.html#aa8283ad87bc9d6caa854d21ca4f9b249" title="Set the integration step size of the model. ">NNmodel::setDT()</a>;</li>
 <li><a class="el" href="../../dc/de5/classNNmodel.html#a757eff2a5877688e6e5492726df035ee" title="Method to set the neuronal network model name. ">NNmodel::setName()</a>;</li>
 </ul>
 <p>Then add neuron populations by:</p>
 <ul>
-<li><a class="el" href="../../dc/de5/classNNmodel.html#a32c254358da2f8c43c91291d24cfd295" title="Method for adding a neuron population to a neuronal network model, using C style character array for ...">NNmodel::addNeuronPopulation()</a>;</li>
+<li><a class="el" href="../../dc/de5/classNNmodel.html#a2750f5d035618a4f5af9e6992758ea90" title="Method for adding a neuron population to a neuronal network model, using C++ string for the name of t...">NNmodel::addNeuronPopulation()</a>;</li>
 </ul>
 <p>for each neuron population. Add synapse populations by:</p>
 <ul>
-<li><a class="el" href="../../dc/de5/classNNmodel.html#ae252945f336a330ec1c69f24cb1d4203" title="Overload of method for backwards compatibility. ">NNmodel::addSynapsePopulation()</a>;</li>
+<li><a class="el" href="../../dc/de5/classNNmodel.html#ae252945f336a330ec1c69f24cb1d4203" title="This function has been depreciated as of GeNN 2.2. ">NNmodel::addSynapsePopulation()</a>;</li>
 </ul>
 <p>for each synapse population.</p>
-<p>The <a class="el" href="../../db/d0a/postVarsInPostLearn_8cc.html#a9aeaa0a22980484b2c472564fc9f686e">modelDefinition()</a> needs to end with calling <a class="el" href="../../dc/de5/classNNmodel.html#aaee7f16c9627dddb2588bad24afe5d15">NNmodel::finalize()</a>.</p>
-<p>Other optional functions are explained in <a class="el" href="../../dc/de5/classNNmodel.html" title="Structure to hold the information that defines synapse dynamics (a model of how synapse variables cha...">NNmodel</a> class reference. At the end the function should look like this:</p>
-<div class="fragment"><div class="line"><span class="keywordtype">void</span> <a class="code" href="../../db/d0a/postVarsInPostLearn_8cc.html#a9aeaa0a22980484b2c472564fc9f686e">modelDefinition</a>(NNModel &amp;model) {</div>
-<div class="line">  <a class="code" href="../../d7/dfd/modelSpec_8cc.html#a62ce532f6f7e535adfb9fe151a1c0c6b">initGeNN</a>();</div>
+<p>The <a class="el" href="../../d0/d73/myModel_8cc.html#a9aeaa0a22980484b2c472564fc9f686e" title="This function defines a model with novel synapses. ">modelDefinition()</a> needs to end with calling <a class="el" href="../../dc/de5/classNNmodel.html#aaee7f16c9627dddb2588bad24afe5d15" title="Declare that the model specification is finalised in modelDefinition(). ">NNmodel::finalize()</a>.</p>
+<p>Other optional functions are explained in <a class="el" href="../../dc/de5/classNNmodel.html">NNmodel</a> class reference. At the end the function should look like this:</p>
+<div class="fragment"><div class="line"><span class="keywordtype">void</span> <a class="code" href="../../d0/d73/myModel_8cc.html#a9aeaa0a22980484b2c472564fc9f686e">modelDefinition</a>(NNModel &amp;model) {</div>
+<div class="line">  <a class="code" href="../../dc/de1/modelSpec_8h.html#a62ce532f6f7e535adfb9fe151a1c0c6b">initGeNN</a>();</div>
+<div class="line">  model.setDT(0.5);</div>
 <div class="line">  model.setName(<span class="stringliteral">&quot;YourModelName&quot;</span>);</div>
 <div class="line">  model.addNeuronPopulation(...);</div>
 <div class="line">  ...</div>
@@ -143,11 +147,11 @@ Creating and simulating a network model</h1>
 <div class="line">  ...</div>
 <div class="line">  model.finalize();</div>
 <div class="line">}</div>
-</div><!-- fragment --><p><a class="el" href="../../dc/de1/modelSpec_8h.html" title="Header file that contains the class (struct) definition of neuronModel for defining a neuron model an...">modelSpec.h</a> and <a class="el" href="../../d7/dfd/modelSpec_8cc.html">modelSpec.cc</a> should be included in the file where this function is defined.</p>
+</div><!-- fragment --><p><a class="el" href="../../dc/de1/modelSpec_8h.html" title="Header file that contains the class (struct) definition of neuronModel for defining a neuron model an...">modelSpec.h</a> should be included in the file where this function is defined.</p>
 <p>This function will be called by <a class="el" href="../../df/d10/generateALL_8cc.html" title="Main file combining the code for code generation. Part of the code generation section. ">generateALL.cc</a> to create corresponding CPU and GPU simulation codes under the &lt;YourModelName&gt;_CODE directory.</p>
 <p>These functions can then be used in a .cu file which runs the simulation. This file should include &lt;YourModelName&gt;_CODE/runner.cc. Generated code differ from one model to the other, but core functions are the same and they should be called in correct order. First, the following variables should be defined and initialized:</p>
 <ul>
-<li><a class="el" href="../../dc/de5/classNNmodel.html" title="Structure to hold the information that defines synapse dynamics (a model of how synapse variables cha...">NNmodel</a> model // initialized by calling modelDefinition(model)</li>
+<li><a class="el" href="../../dc/de5/classNNmodel.html">NNmodel</a> model // initialized by calling modelDefinition(model)</li>
 <li>Array containing current input (if any)</li>
 </ul>
 <p>The following are declared by GeNN but should be initialized by the user:</p><ul>
@@ -157,24 +161,24 @@ Creating and simulating a network model</h1>
 </ul>
 <p>Core functions generated by GeNN to be included in the user code include:</p>
 <ul>
-<li>allocateMem()</li>
-<li>deviceMemAllocate()</li>
-<li>initialize()</li>
-<li>initializeAllSparseArrays()</li>
-<li>convertProbabilityToRandomNumberThreshold()</li>
-<li>convertRateToRandomNumberThreshold()</li>
-<li>copyStateToDevice()</li>
-<li>push&lt;neuron or synapse name&gt;StatetoDevice()</li>
-<li>pull&lt;neuron or synapse name&gt;StatefromDevice()</li>
-<li>copyStateFromDevice()</li>
-<li>copySpikeNFromDevice()</li>
-<li>copySpikesFromDevice()</li>
-<li>stepTimeCPU() //arguments depend on model</li>
-<li>stepTimeGPU() //arguments depend on model</li>
-<li>freeMem()</li>
-<li>freeDeviceMem()</li>
+<li><code>allocateMem()</code></li>
+<li><code>deviceMemAllocate()</code></li>
+<li><code>initialize()</code></li>
+<li><code>initializeAllSparseArrays()</code></li>
+<li><code>convertProbabilityToRandomNumberThreshold()</code></li>
+<li><code>convertRateToRandomNumberThreshold()</code></li>
+<li><code>copyStateToDevice()</code></li>
+<li><code>push\&lt;neuron or synapse name\&gt;StatetoDevice()</code></li>
+<li><code>pull\&lt;neuron or synapse name\&gt;StatefromDevice()</code></li>
+<li><code>copyStateFromDevice()</code></li>
+<li><code>copySpikeNFromDevice()</code></li>
+<li><code>copySpikesFromDevice()</code></li>
+<li><code>stepTimeCPU()</code></li>
+<li><code>stepTimeGPU()</code></li>
+<li><code>freeMem()</code></li>
+<li><code>freeDeviceMem()</code></li>
 </ul>
-<p>Copying elements from GPU to host memory is very costly in terms of performance and should only be done when needed.</p>
+<p>Before calling the kernels, <b>make sure you have copied the initial values of all the neuron and synapse variables in the GPU</b>. You can use the <code>push\&lt;neuron or synapse name\&gt;StatetoDevice()</code> to copy from the host to the GPU. At the end of your simulation, if you want to access the variables you need to copy them back from the device using the <code>pull\&lt;neuron or synapse name\&gt;StatefromDevice()</code> function. Alternatively, you can directly use the CUDA memcopy functions. <b>Copying elements between the GPU and the host memory is very costly in terms of performance and should only be done when needed.</b></p>
 <h1><a class="anchor" id="floatPrecision"></a>
 Floating point precision</h1>
 <p>Double precision floating point numbers are supported by devices with compute capability 1.3 or higher. If you have an older GPU, you need to use single precision floating point in your models and simulation.</p>
@@ -185,12 +189,12 @@ Floating point precision</h1>
 Working with variables in GeNN</h1>
 <h2><a class="anchor" id="modelVars"></a>
 Model variables</h2>
-<p>User-defined model variables originate from core units such as <a class="el" href="../../d3/d64/structneuronModel.html" title="class (struct) for specifying a neuron model. ">neuronModel</a>, <a class="el" href="../../dd/db7/classweightUpdateModel.html" title="Structure to hold the information that defines a weightupdate model (a model of how spikes affect syn...">weightUpdateModel</a> or <a class="el" href="../../d8/dbb/structpostSynModel.html" title="Structure to hold the information that defines a post-synaptic model (a model of how synapses affect ...">postSynModel</a> objects. The name of a variable is defined when the model type is introduced, i.e. with a statement such as </p><div class="fragment"><div class="line"><a class="code" href="../../d3/d64/structneuronModel.html">neuronModel</a> model;</div>
-<div class="line">model.<a class="code" href="../../d3/d64/structneuronModel.html#a9a9156ffb643572fd67f6e585ef79ad0">varNames</a>.push_back(String<span class="stringliteral">&quot;x&quot;</span>));</div>
-<div class="line">model.<a class="code" href="../../d3/d64/structneuronModel.html#a86788cb29131da0a26ce79693a076352">varTypes</a>.push_back(String(<span class="stringliteral">&quot;double&quot;</span>));</div>
+<p>User-defined model variables originate from core units such as <a class="el" href="../../d3/dc9/classneuronModel.html" title="class for specifying a neuron model. ">neuronModel</a>, <a class="el" href="../../dd/db7/classweightUpdateModel.html" title="Class to hold the information that defines a weightupdate model (a model of how spikes affect synapti...">weightUpdateModel</a> or <a class="el" href="../../d2/d1a/classpostSynModel.html" title="Class to hold the information that defines a post-synaptic model (a model of how synapses affect post...">postSynModel</a> objects. The name of a variable is defined when the model type is introduced, i.e. with a statement such as </p><div class="fragment"><div class="line"><a class="code" href="../../d3/dc9/classneuronModel.html">neuronModel</a> model;</div>
+<div class="line">model.<a class="code" href="../../d3/dc9/classneuronModel.html#a9a9156ffb643572fd67f6e585ef79ad0">varNames</a>.push_back(String<span class="stringliteral">&quot;x&quot;</span>));</div>
+<div class="line">model.<a class="code" href="../../d3/dc9/classneuronModel.html#a86788cb29131da0a26ce79693a076352">varTypes</a>.push_back(String(<span class="stringliteral">&quot;double&quot;</span>));</div>
 <div class="line">...</div>
-<div class="line">int myModel= <a class="code" href="../../d5/d60/utils_8h.html#a2bd39d11c2cd6cec9bf9b81c183b6cd4">nModels</a>.size();</div>
-<div class="line"><a class="code" href="../../d5/d60/utils_8h.html#a2bd39d11c2cd6cec9bf9b81c183b6cd4">nModels</a>.push_back(model);</div>
+<div class="line">int myModel= <a class="code" href="../../d3/dc0/neuronModels_8h.html#a2bd39d11c2cd6cec9bf9b81c183b6cd4">nModels</a>.size();</div>
+<div class="line"><a class="code" href="../../d3/dc0/neuronModels_8h.html#a2bd39d11c2cd6cec9bf9b81c183b6cd4">nModels</a>.push_back(model);</div>
 </div><!-- fragment --><p> This declares that whenever the defined model type of cardinal number <code>myModel</code> is used, there will be a variable of core name <code>x</code>. varType can be of <code>scalar</code> type (see <a class="el" href="../../d0/da6/UserGuide.html#floatPrecision">Floating point precision</a>). The full GeNN name of this variable is obtained by directly concatenating the core name with the name of the neuron population in which the model type has been used, i.e. after a definition </p><div class="fragment"><div class="line">networkModel.addNeuronPopulation(<span class="stringliteral">&quot;EN&quot;</span>, n, myModel, ...);</div>
 </div><!-- fragment --><p> there will be a variable <code>xEN</code> of type <code>double*</code> available in the global namespace of the simulation program. GeNN will pre-allocate this C array to the correct size of elements corresponding to the size of the neuron population, <code>n</code> in the example above. GeNN will also free these variables when the provided function <code>freeMem()</code> is called. Users can otherwise manipulate these variable arrays as they wish. For convenience, GeNN provides functions <code>pullXXStatefromDevice()</code> and <code>pushXXStatetoDevice()</code> to copy the variables associated to a neuron population <code>XX</code> from the device into host memory and vice versa. E.g. </p><div class="fragment"><div class="line">pullENStatefromDevice();</div>
 </div><!-- fragment --><p> would copy the C array xEN from device memory into host memory (and any other variables that the neuron type of the population EN may have).</p>
@@ -198,36 +202,38 @@ Model variables</h2>
 <div class="line">size = <span class="keyword">sizeof</span>(double) * nEN;</div>
 <div class="line">cudaMemcpy(xEN, d_xEN, size, cudaMemcpyDeviceToHost);</div>
 </div><!-- fragment --><p> where <code>nEN</code> is an integer containing the population size of the EN neuron population.</p>
-<p>The same convention as for neuron variables applies for the variables of synapse populations, both for those originating from weightupdate models and from post-synaptic models, e.g. the variables in type <code>NSYNAPSE</code> contain the variable <code>g</code> of type float. Then, after </p><div class="fragment"><div class="line">networkModel.addSynapsePopulation(<span class="stringliteral">&quot;ENIN&quot;</span>, <a class="code" href="../../dc/de1/modelSpec_8h.html#a1110b98e1962bdb6bcc86b647b1431d4">NSYNAPSE</a>, ...);</div>
+<p>The same convention as for neuron variables applies for the variables of synapse populations, both for those originating from weightupdate models and from post-synaptic models, e.g. the variables in type <code>NSYNAPSE</code> contain the variable <code>g</code> of type float. Then, after </p><div class="fragment"><div class="line">networkModel.addSynapsePopulation(<span class="stringliteral">&quot;ENIN&quot;</span>, <a class="code" href="../../d2/d5b/synapseModels_8h.html#a1110b98e1962bdb6bcc86b647b1431d4">NSYNAPSE</a>, ...);</div>
 </div><!-- fragment --><p> there will be a global variable of type <code>float*</code> with the name <code>gENIN</code> that is pre-allocated to the right size. There will also be a matching device pointer with the name <code>d_gENIN</code>. </p><dl class="section note"><dt>Note</dt><dd>The content of <code>gENIN</code> needs to be interpreted differently for DENSE connectivity and sparse matrix based SPARSE connectivity representations. For DENSE connectivity <code>gENIN</code> would contain "n_pre" times "n_post" elements, ordered along the pre-synaptic neurons as the major dimension, i.e. the value of <code>gENIN</code> for the ith pre-synaptic neuron and the jth post-synaptic neuron would be <code>gENIN[i*n_post+j]</code>. The arrangement of values in the SPARSE representation is explained in section <a class="el" href="../../d5/d24/sectSynapseModels.html#subsect32">Connectivity types</a> </dd>
 <dd>
-Be aware that the above naming conventions do assume that variables from the weightupdate models and the postSynModels that are used together in a synapse population are unique. If both the weightupdate model and the <a class="el" href="../../d8/dbb/structpostSynModel.html" title="Structure to hold the information that defines a post-synaptic model (a model of how synapses affect ...">postSynModel</a> have a variable of the same name, the behaviour is undefined.</dd></dl>
+Be aware that the above naming conventions do assume that variables from the weightupdate models and the postSynModels that are used together in a synapse population are unique. If both the weightupdate model and the <a class="el" href="../../d2/d1a/classpostSynModel.html" title="Class to hold the information that defines a post-synaptic model (a model of how synapses affect post...">postSynModel</a> have a variable of the same name, the behaviour is undefined.</dd></dl>
 <h2><a class="anchor" id="predefinedVars"></a>
 Built-in Variables in GeNN</h2>
 <p>Since GeNN 2.0, there are no more explicitly hard-coded synapse and neuron variables. Users are free to name the variable of their models as they want. However, there are some reserved variables that are used for intermediary calculations and communication between different parts of the generated code. They can be used in the user defined code but no other variables should be defined with these names.</p>
 <ul>
 <li><code>DT</code> : Time step (typically in ms) for simulation; Neuron integration can be done in multiple sub-steps inside the neuron model for numerical stability (see Traub-Miles and Izhikevich neuron model variations in <a class="el" href="../../de/ded/sectNeuronModels.html">Neuron models</a>).</li>
-<li><code>addtoinSyn</code> : This variable is used by <a class="el" href="../../dd/db7/classweightUpdateModel.html" title="Structure to hold the information that defines a weightupdate model (a model of how spikes affect syn...">weightUpdateModel</a> for updating synaptic input. The way it is modified is defined in <a class="el" href="../../dd/db7/classweightUpdateModel.html#a6f665453175451356bbf14b9f60baed3" title="Simulation code that is used for true spikes (only one time step after spike detection) ...">weightUpdateModel.simCode</a> or <a class="el" href="../../dd/db7/classweightUpdateModel.html#a758cc3211ae12407583f625418dd5a89" title="Simulation code that is used for spike events (all the instances where event threshold condition is m...">weightUpdateModel.simCodeEvnt</a>, therefore if a user defines her own model she should update this variable to contain the input to the post-synaptic model.</li>
+<li><code>addtoinSyn</code> : This variable is used by <a class="el" href="../../dd/db7/classweightUpdateModel.html" title="Class to hold the information that defines a weightupdate model (a model of how spikes affect synapti...">weightUpdateModel</a> for updating synaptic input. The way it is modified is defined in <a class="el" href="../../dd/db7/classweightUpdateModel.html#a6f665453175451356bbf14b9f60baed3" title="Simulation code that is used for true spikes (only one time step after spike detection) ...">weightUpdateModel.simCode</a> or <a class="el" href="../../dd/db7/classweightUpdateModel.html#a758cc3211ae12407583f625418dd5a89" title="Simulation code that is used for spike events (all the instances where event threshold condition is m...">weightUpdateModel.simCodeEvnt</a>, therefore if a user defines her own model she should update this variable to contain the input to the post-synaptic model.</li>
 <li><code>updatelinsyn</code> : At the end of the synaptic update by <code>addtoinSyn</code>, final values are copied back to the d_inSyn&lt;synapsePopulation&gt; variables which will be used in the next step of the neuron update to provide the input to the postsynaptic neurons. This keyword designated where the changes to <code>addtoinSyn</code> have been completed and it is safe to update the summed synaptic input and write back to d_inSyn&lt;synapsePopulation&gt; in device memory.</li>
 <li><code>inSyn:</code> This is an intermediary synapse variable which contains the summed input into a postsynaptic neuron (originating from the <code>addtoinSyn</code> variables of the incoming synapses) .</li>
-<li><code>Isyn</code> : This is a local variable which contains the (summed) input current to a neuron. It is typically the sum of any explicit current input and all synaptic inputs. The way its value is calculated during the update of the postsynaptic neuron is defined by the code provided in the <a class="el" href="../../d8/dbb/structpostSynModel.html" title="Structure to hold the information that defines a post-synaptic model (a model of how synapses affect ...">postSynModel</a>. For example, the standard <code>EXPDECAY</code> postsynaptic model defines ps.postSyntoCurrent= String("$(inSyn)*($(E)-$(V))");  which implements a conductance based synapse in which the postsynaptic current is given by <img class="formulaInl" alt="$I_{\rm syn}= g*s*(V_{\rm rev}-V_{\rm post})$" src="../../form_23.png"/>. <dl class="section note"><dt>Note</dt><dd>The <code>addtoinSyn</code> variables from all incoming synapses are automatically summed and added to the current value of <code>inSyn</code>.</dd></dl>
-The value resulting from the <code>postSyntoCurrent</code> code is assigned to <code>Isyn</code> and can then be used in neuron simCode like so: <div class="fragment"><div class="line">$(V)+= (-$(V)+$(Isyn))*<a class="code" href="../../db/d0a/postVarsInPostLearn_8cc.html#a943f07034774ef1261d62cd0d3d1fec9">DT</a> </div>
+<li><code>Isyn</code> : This is a local variable which contains the (summed) input current to a neuron. It is typically the sum of any explicit current input and all synaptic inputs. The way its value is calculated during the update of the postsynaptic neuron is defined by the code provided in the <a class="el" href="../../d2/d1a/classpostSynModel.html" title="Class to hold the information that defines a post-synaptic model (a model of how synapses affect post...">postSynModel</a>. For example, the standard <code>EXPDECAY</code> postsynaptic model defines <div class="fragment"><div class="line"><a class="code" href="../../d9/d1d/SpineML__to__GeNN_2extra__postsynapses_8h.html#a8e36244d2f8835318551d393db2f5066">ps</a>.<a class="code" href="../../d2/d1a/classpostSynModel.html#a205249bc6ac27c021d3395a9cad6a81b">postSyntoCurrent</a>= String(<span class="stringliteral">&quot;$(inSyn)*($(E)-$(V))&quot;</span>);</div>
+</div><!-- fragment --> which implements a conductance based synapse in which the postsynaptic current is given by <img class="formulaInl" alt="$I_{\rm syn}= g*s*(V_{\rm rev}-V_{\rm post})$" src="../../form_23.png"/>. <dl class="section note"><dt>Note</dt><dd>The <code>addtoinSyn</code> variables from all incoming synapses are automatically summed and added to the current value of <code>inSyn</code>.</dd></dl>
+The value resulting from the <code>postSyntoCurrent</code> code is assigned to <code>Isyn</code> and can then be used in neuron simCode like so: <div class="fragment"><div class="line">$(V)+= (-$(V)+$(Isyn))*<a class="code" href="../../d0/d73/myModel_8cc.html#a943f07034774ef1261d62cd0d3d1fec9">DT</a> </div>
 </div><!-- fragment --></li>
 <li><code>sT</code> : As a neuron variable, this is the last spike time in a neuron and is automatically generated for pre and postsynaptic neuron groups of a synapse group i that follows a spike based learning rule (indicated by usesPostLearning[i]= TRUE for the ith synapse population).</li>
 </ul>
 <p>In addition to these variables, neuron variables can be referred to in the synapse models by calling $(&lt;neuronVarName&gt;_pre) for the presynaptic neuron population, and $(&lt;neuronVarName&gt;_post) for the postsynaptic population. For example, $(sT_pre), $(sT_post), $(V_pre), etc.</p>
 <h1><a class="anchor" id="Debugging"></a>
 Debugging suggestions</h1>
-<p>In Linux, users can use cuda-gdb to debug on the GPU. Example projects in userproject and lib/bin/buildmodel.sh come with a flag to enable debugging. If you are using a project with debugging, the code will be compiled with -g -G flags. In CPU mode the executable will be run in gdb, and in GPU mode it will be run in cuda-gdb in tui mode.</p>
-<dl class="section note"><dt>Note</dt><dd>Do not forget to switch debugging flags -g and -G off after debugging is complete as they negatively affect performance. <br />
- <hr/>
- <a class="el" href="../../d5/d24/sectSynapseModels.html#sect_postsyn">Previous</a> | <a class="el" href="../../d0/da6/UserGuide.html#ListOfVariables">Top</a> | <a class="el" href="../../dd/d51/Credits.html">Next</a> </dd></dl>
+<p>In Linux, users can call <code>cuda-gdb</code> to debug on the GPU. Example projects in the <code>userproject</code> directory come with a flag to enable debugging (DEBUG=1). genn-buildmodel.sh has a debug flag (-d) to generate debugging data. If you are executing a project with debugging on, the code will be compiled with -g -G flags. In CPU mode the executable will be run in gdb, and in GPU mode it will be run in cuda-gdb in tui mode.</p>
+<p>On Mac, some versions of <code>clang</code> aren't supported by the CUDA toolkit. This is a recurring problem on Fedora as well, where CUDA doesn't keep up with GCC releases. You can either hack the CUDA header which checks compiler versions - <code>cuda/include/host_config.h</code> - or just use an older XCode version (6.4 works fine).</p>
+<dl class="section note"><dt>Note</dt><dd>Do not forget to switch debugging flags -g and -G off after debugging is complete as they may negatively affect performance. <br />
+<hr/>
+ <a class="el" href="../../dc/d7e/Tutorial2.html">Previous</a> | <a class="el" href="../../d0/da6/UserGuide.html">Top</a> | <a class="el" href="../../dd/d51/Credits.html">Next</a> </dd></dl>
 </div></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Fri Nov 6 2015 22:13:02 for GeNN by
+    <li class="footer">Generated on Fri Jun 17 2016 14:45:00 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
   </ul>

@@ -34,6 +34,7 @@
   $(document).ready(function() { init_search(); });
 </script>
 <link href="../../customdoxygen.css" rel="stylesheet" type="text/css" />
+<link href="../../html_styles.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -44,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">2.0</span>
+   &#160;<span id="projectnumber">2.2</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -61,6 +62,7 @@ var searchBox = new SearchBox("searchBox", "../../search",false,'Search');
     <ul class="tablist">
       <li><a href="../../index.html"><span>Main&#160;Page</span></a></li>
       <li><a href="../../pages.html"><span>Related&#160;Pages</span></a></li>
+      <li><a href="../../namespaces.html"><span>Namespaces</span></a></li>
       <li><a href="../../annotated.html"><span>Classes</span></a></li>
       <li class="current"><a href="../../files.html"><span>Files</span></a></li>
       <li>
@@ -118,7 +120,6 @@ $(document).ready(function(){initNavTree('d7/d5b/Izh__sparse_8cc.html','../../')
 
 <div class="header">
   <div class="summary">
-<a href="#define-members">Macros</a> &#124;
 <a href="#func-members">Functions</a> &#124;
 <a href="#var-members">Variables</a>  </div>
   <div class="headertitle">
@@ -126,15 +127,11 @@ $(document).ready(function(){initNavTree('d7/d5b/Izh__sparse_8cc.html','../../')
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><code>#include &quot;<a class="el" href="../../dc/de1/modelSpec_8h_source.html">modelSpec.h</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="../../d7/dfd/modelSpec_8cc.html">modelSpec.cc</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="../../d2/d49/global_8h_source.html">global.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="../../dd/dc3/stringUtils_8h_source.html">stringUtils.h</a>&quot;</code><br />
 <code>#include &lt;vector&gt;</code><br />
-<code>#include &quot;<a class="el" href="../../d4/deb/sizes_8h_source.html">sizes.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="../../dc/d68/Izh__sparse__project_2model_2sizes_8h_source.html">sizes.h</a>&quot;</code><br />
 </div><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="define-members"></a>
-Macros</h2></td></tr>
-<tr class="memitem:a943f07034774ef1261d62cd0d3d1fec9"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d5b/Izh__sparse_8cc.html#a943f07034774ef1261d62cd0d3d1fec9">DT</a>&#160;&#160;&#160;1.0</td></tr>
-<tr class="separator:a943f07034774ef1261d62cd0d3d1fec9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
 <tr class="memitem:a9aeaa0a22980484b2c472564fc9f686e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d5b/Izh__sparse_8cc.html#a9aeaa0a22980484b2c472564fc9f686e">modelDefinition</a> (<a class="el" href="../../dc/de5/classNNmodel.html">NNmodel</a> &amp;model)</td></tr>
@@ -148,18 +145,18 @@ Variables</h2></td></tr>
 <tr class="separator:ac6c4c694785586c0544004ac778c260a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9ee1c3498d38aedc26117e0f972f4a50"><td class="memItemLeft" align="right" valign="top">std::vector&lt; unsigned int &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d5b/Izh__sparse_8cc.html#a9ee1c3498d38aedc26117e0f972f4a50">synapsePSize</a></td></tr>
 <tr class="separator:a9ee1c3498d38aedc26117e0f972f4a50"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae2df4139650041d55fd91f48630f78b4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../dc/d3f/PoissonIzh_8cc.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d5b/Izh__sparse_8cc.html#ae2df4139650041d55fd91f48630f78b4">meanInpExc</a> = 5.0</td></tr>
+<tr class="memitem:ae2df4139650041d55fd91f48630f78b4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d6/d45/PoissonIzh__project_2model_2sizes_8h.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d5b/Izh__sparse_8cc.html#ae2df4139650041d55fd91f48630f78b4">meanInpExc</a> = 5.0*<a class="el" href="../../dc/d68/Izh__sparse__project_2model_2sizes_8h.html#a7ea7a5335804b53ca088f2883ef4ec14">inputFac</a></td></tr>
 <tr class="separator:ae2df4139650041d55fd91f48630f78b4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af172d7bf6a095d35b5874317e5b8b67a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../dc/d3f/PoissonIzh_8cc.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d5b/Izh__sparse_8cc.html#af172d7bf6a095d35b5874317e5b8b67a">meanInpInh</a> = 2.0</td></tr>
+<tr class="memitem:af172d7bf6a095d35b5874317e5b8b67a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d6/d45/PoissonIzh__project_2model_2sizes_8h.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d5b/Izh__sparse_8cc.html#af172d7bf6a095d35b5874317e5b8b67a">meanInpInh</a> = 2.0*<a class="el" href="../../dc/d68/Izh__sparse__project_2model_2sizes_8h.html#a7ea7a5335804b53ca088f2883ef4ec14">inputFac</a></td></tr>
 <tr class="separator:af172d7bf6a095d35b5874317e5b8b67a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af621c74cc503772b3a6589272ede67ea"><td class="memItemLeft" align="right" valign="top">double *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d5b/Izh__sparse_8cc.html#af621c74cc503772b3a6589272ede67ea">excIzh_p</a> = NULL</td></tr>
 <tr class="separator:af621c74cc503772b3a6589272ede67ea"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9020cf86b09ad751193dff00fe463270"><td class="memItemLeft" align="right" valign="top">double *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d5b/Izh__sparse_8cc.html#a9020cf86b09ad751193dff00fe463270">inhIzh_p</a> = NULL</td></tr>
 <tr class="separator:a9020cf86b09ad751193dff00fe463270"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5e53931dcb77c5d86edf8f62b237df37"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d5b/Izh__sparse_8cc.html#a5e53931dcb77c5d86edf8f62b237df37">IzhExc_ini</a> [6]</td></tr>
-<tr class="separator:a5e53931dcb77c5d86edf8f62b237df37"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a30f91f3d64c6cd74ba847dd89b02c2f8"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d5b/Izh__sparse_8cc.html#a30f91f3d64c6cd74ba847dd89b02c2f8">IzhInh_ini</a> [6]</td></tr>
-<tr class="separator:a30f91f3d64c6cd74ba847dd89b02c2f8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a33f96355cbf760b84d1e9327d9d555a1"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d5b/Izh__sparse_8cc.html#a33f96355cbf760b84d1e9327d9d555a1">IzhExc_ini</a> [7]</td></tr>
+<tr class="separator:a33f96355cbf760b84d1e9327d9d555a1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6d8bf2bcd56012e29d04062feb70ef01"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d5b/Izh__sparse_8cc.html#a6d8bf2bcd56012e29d04062feb70ef01">IzhInh_ini</a> [7]</td></tr>
+<tr class="separator:a6d8bf2bcd56012e29d04062feb70ef01"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aff9bd1e10bb6f668d9bbd9a89633b43f"><td class="memItemLeft" align="right" valign="top">double *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d5b/Izh__sparse_8cc.html#aff9bd1e10bb6f668d9bbd9a89633b43f">SynIzh_p</a> = NULL</td></tr>
 <tr class="separator:aff9bd1e10bb6f668d9bbd9a89633b43f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ada75cf5f1070b7bb8903a24f5272217d"><td class="memItemLeft" align="right" valign="top">double *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d5b/Izh__sparse_8cc.html#ada75cf5f1070b7bb8903a24f5272217d">postExpP</a> = NULL</td></tr>
@@ -169,19 +166,6 @@ Variables</h2></td></tr>
 <tr class="memitem:ad4ec2122be99e7175fcdb8962943edba"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d5b/Izh__sparse_8cc.html#ad4ec2122be99e7175fcdb8962943edba">SynIzh_ini</a> [1]</td></tr>
 <tr class="separator:ad4ec2122be99e7175fcdb8962943edba"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<h2 class="groupheader">Macro Definition Documentation</h2>
-<a class="anchor" id="a943f07034774ef1261d62cd0d3d1fec9"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">#define DT&#160;&#160;&#160;1.0</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
 <h2 class="groupheader">Function Documentation</h2>
 <a class="anchor" id="a9aeaa0a22980484b2c472564fc9f686e"></a>
 <div class="memitem">
@@ -224,12 +208,12 @@ Variables</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a5e53931dcb77c5d86edf8f62b237df37"></a>
+<a class="anchor" id="a33f96355cbf760b84d1e9327d9d555a1"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">double IzhExc_ini[6]</td>
+          <td class="memname">double IzhExc_ini[7]</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -240,17 +224,18 @@ Variables</h2></td></tr>
 <div class="line">         0.02,  </div>
 <div class="line">        0.2,    </div>
 <div class="line">        -65.0,  </div>
-<div class="line">         8.0    </div>
+<div class="line">        8.0,    </div>
+<div class="line">        0.0     </div>
 <div class="line">}</div>
 </div><!-- fragment -->
 </div>
 </div>
-<a class="anchor" id="a30f91f3d64c6cd74ba847dd89b02c2f8"></a>
+<a class="anchor" id="a6d8bf2bcd56012e29d04062feb70ef01"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">double IzhInh_ini[6]</td>
+          <td class="memname">double IzhInh_ini[7]</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -261,7 +246,8 @@ Variables</h2></td></tr>
 <div class="line">         0.02,  </div>
 <div class="line">        0.25,   </div>
 <div class="line">        -65.0,  </div>
-<div class="line">         2.0    </div>
+<div class="line">        2.0,    </div>
+<div class="line">        0.0     </div>
 <div class="line">}</div>
 </div><!-- fragment -->
 </div>
@@ -271,7 +257,7 @@ Variables</h2></td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="../../dc/d3f/PoissonIzh_8cc.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a> meanInpExc = 5.0</td>
+          <td class="memname"><a class="el" href="../../d6/d45/PoissonIzh__project_2model_2sizes_8h.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a> meanInpExc = 5.0*<a class="el" href="../../dc/d68/Izh__sparse__project_2model_2sizes_8h.html#a7ea7a5335804b53ca088f2883ef4ec14">inputFac</a></td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -283,7 +269,7 @@ Variables</h2></td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="../../dc/d3f/PoissonIzh_8cc.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a> meanInpInh = 2.0</td>
+          <td class="memname"><a class="el" href="../../d6/d45/PoissonIzh__project_2model_2sizes_8h.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a> meanInpInh = 2.0*<a class="el" href="../../dc/d68/Izh__sparse__project_2model_2sizes_8h.html#a7ea7a5335804b53ca088f2883ef4ec14">inputFac</a></td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -382,8 +368,8 @@ Variables</h2></td></tr>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><a class="el" href="../../dir_66fc3ae5585a02e310a487b6a12e9e11.html">userproject</a></li><li class="navelem"><a class="el" href="../../dir_25bf7bdefd49e2dcebab3daa6ebba4d3.html">Izh_sparse_project</a></li><li class="navelem"><a class="el" href="../../dir_6644b37b504d312bd90bb17624fde551.html">model</a></li><li class="navelem"><a class="el" href="../../d7/d5b/Izh__sparse_8cc.html">Izh_sparse.cc</a></li>
-    <li class="footer">Generated on Fri Nov 6 2015 22:12:59 for GeNN by
+    <li class="navelem"><a class="el" href="../../dir_75b82e7e4a5feb05200b9ad7adf06257.html">home</a></li><li class="navelem"><a class="el" href="../../dir_ffe3a3aad2509bd71bde52251b868b95.html">t</a></li><li class="navelem"><a class="el" href="../../dir_a76bff614e8015b519bf2acd237705ed.html">tn</a></li><li class="navelem"><a class="el" href="../../dir_f4e7678815bf6e9eaf2cc8bfbd1351b7.html">tn41</a></li><li class="navelem"><a class="el" href="../../dir_2f2428e5af9c71cc79b0eec8cffe5ad2.html">localdisk_projects</a></li><li class="navelem"><a class="el" href="../../dir_3cf40d34fd3099085c9305fe2b26b2ea.html">develop</a></li><li class="navelem"><a class="el" href="../../dir_ee841fdb1cf52f11d3719e45227a7fba.html">genn</a></li><li class="navelem"><a class="el" href="../../dir_e9435152734d1e7a318dd6df08ca98d9.html">userproject</a></li><li class="navelem"><a class="el" href="../../dir_709a484c60c60014cf45dd85b725a65f.html">Izh_sparse_project</a></li><li class="navelem"><a class="el" href="../../dir_beeda5802d71b220377273544cafda5a.html">model</a></li><li class="navelem"><a class="el" href="../../d7/d5b/Izh__sparse_8cc.html">Izh_sparse.cc</a></li>
+    <li class="footer">Generated on Fri Jun 17 2016 14:44:59 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
   </ul>

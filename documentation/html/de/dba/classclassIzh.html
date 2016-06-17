@@ -34,6 +34,7 @@
   $(document).ready(function() { init_search(); });
 </script>
 <link href="../../customdoxygen.css" rel="stylesheet" type="text/css" />
+<link href="../../html_styles.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -44,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">2.0</span>
+   &#160;<span id="projectnumber">2.2</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -61,6 +62,7 @@ var searchBox = new SearchBox("searchBox", "../../search",false,'Search');
     <ul class="tablist">
       <li><a href="../../index.html"><span>Main&#160;Page</span></a></li>
       <li><a href="../../pages.html"><span>Related&#160;Pages</span></a></li>
+      <li><a href="../../namespaces.html"><span>Namespaces</span></a></li>
       <li class="current"><a href="../../annotated.html"><span>Classes</span></a></li>
       <li><a href="../../files.html"><span>Files</span></a></li>
       <li>
@@ -144,9 +146,11 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:af7e70326650adf3445f7d36e2135a505"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa13d5c82fb1656eb849c0e6235b17050"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/dba/classclassIzh.html#aa13d5c82fb1656eb849c0e6235b17050">copy_device_mem_input</a> ()</td></tr>
 <tr class="separator:aa13d5c82fb1656eb849c0e6235b17050"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aeaf44f0d1febdbabc151633ba1ad6b5b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/dba/classclassIzh.html#aeaf44f0d1febdbabc151633ba1ad6b5b">read_sparsesyns_par</a> (int, struct SparseProjection, FILE *, FILE *, FILE *, <a class="el" href="../../dc/d3f/PoissonIzh_8cc.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a> *)</td></tr>
+<tr class="memitem:aeaf44f0d1febdbabc151633ba1ad6b5b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/dba/classclassIzh.html#aeaf44f0d1febdbabc151633ba1ad6b5b">read_sparsesyns_par</a> (int, struct <a class="el" href="../../d9/d91/structSparseProjection.html">SparseProjection</a>, FILE *, FILE *, FILE *, <a class="el" href="../../d6/d45/PoissonIzh__project_2model_2sizes_8h.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a> *)</td></tr>
+<tr class="memdesc:aeaf44f0d1febdbabc151633ba1ad6b5b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read sparse connectivity from a file.  <a href="#aeaf44f0d1febdbabc151633ba1ad6b5b">More...</a><br /></td></tr>
 <tr class="separator:aeaf44f0d1febdbabc151633ba1ad6b5b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad9bc44273b88f74436ef153f871fcac1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/dba/classclassIzh.html#ad9bc44273b88f74436ef153f871fcac1">gen_alltoall_syns</a> (<a class="el" href="../../dc/d3f/PoissonIzh_8cc.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a> *, unsigned int, unsigned int, <a class="el" href="../../dc/d3f/PoissonIzh_8cc.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a>)</td></tr>
+<tr class="memitem:ad9bc44273b88f74436ef153f871fcac1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/dba/classclassIzh.html#ad9bc44273b88f74436ef153f871fcac1">gen_alltoall_syns</a> (<a class="el" href="../../d6/d45/PoissonIzh__project_2model_2sizes_8h.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a> *, unsigned int, unsigned int, <a class="el" href="../../d6/d45/PoissonIzh__project_2model_2sizes_8h.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a>)</td></tr>
+<tr class="memdesc:ad9bc44273b88f74436ef153f871fcac1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generate random conductivity values for an all to all network.  <a href="#ad9bc44273b88f74436ef153f871fcac1">More...</a><br /></td></tr>
 <tr class="separator:ad9bc44273b88f74436ef153f871fcac1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a931d1414232340a14769339acbf9a5fb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/dba/classclassIzh.html#a931d1414232340a14769339acbf9a5fb">free_device_mem</a> ()</td></tr>
 <tr class="separator:a931d1414232340a14769339acbf9a5fb"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -174,9 +178,9 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a721c5922909192b3fd23d2907202b5ea"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a75c6b6ea09132daa34d06396dcc7f321"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/dba/classclassIzh.html#a75c6b6ea09132daa34d06396dcc7f321">setInput</a> (unsigned int)</td></tr>
 <tr class="separator:a75c6b6ea09132daa34d06396dcc7f321"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a73f8c6d3b1cdce29958888ccf439a409"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/dba/classclassIzh.html#a73f8c6d3b1cdce29958888ccf439a409">randomizeVar</a> (<a class="el" href="../../dc/d3f/PoissonIzh_8cc.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a> *, <a class="el" href="../../dc/d3f/PoissonIzh_8cc.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a>, unsigned int)</td></tr>
+<tr class="memitem:a73f8c6d3b1cdce29958888ccf439a409"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/dba/classclassIzh.html#a73f8c6d3b1cdce29958888ccf439a409">randomizeVar</a> (<a class="el" href="../../d6/d45/PoissonIzh__project_2model_2sizes_8h.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a> *, <a class="el" href="../../d6/d45/PoissonIzh__project_2model_2sizes_8h.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a>, unsigned int)</td></tr>
 <tr class="separator:a73f8c6d3b1cdce29958888ccf439a409"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0bc0ab09f844b4c93b7ad989abaa98f1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/dba/classclassIzh.html#a0bc0ab09f844b4c93b7ad989abaa98f1">randomizeVarSq</a> (<a class="el" href="../../dc/d3f/PoissonIzh_8cc.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a> *, <a class="el" href="../../dc/d3f/PoissonIzh_8cc.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a>, unsigned int)</td></tr>
+<tr class="memitem:a0bc0ab09f844b4c93b7ad989abaa98f1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/dba/classclassIzh.html#a0bc0ab09f844b4c93b7ad989abaa98f1">randomizeVarSq</a> (<a class="el" href="../../d6/d45/PoissonIzh__project_2model_2sizes_8h.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a> *, <a class="el" href="../../d6/d45/PoissonIzh__project_2model_2sizes_8h.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a>, unsigned int)</td></tr>
 <tr class="separator:a0bc0ab09f844b4c93b7ad989abaa98f1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a52fe8debc76c04e677ede74b5eb17896"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/dba/classclassIzh.html#a52fe8debc76c04e677ede74b5eb17896">initializeAllVars</a> (unsigned int)</td></tr>
 <tr class="separator:a52fe8debc76c04e677ede74b5eb17896"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -185,13 +189,13 @@ Public Member Functions</h2></td></tr>
 Public Attributes</h2></td></tr>
 <tr class="memitem:ad5e7af3f3f65bb85830ce41efff7875e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../dc/de5/classNNmodel.html">NNmodel</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/dba/classclassIzh.html#ad5e7af3f3f65bb85830ce41efff7875e">model</a></td></tr>
 <tr class="separator:ad5e7af3f3f65bb85830ce41efff7875e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac1c0c249eceb2d61592b9ff531435a14"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../dc/d3f/PoissonIzh_8cc.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/dba/classclassIzh.html#ac1c0c249eceb2d61592b9ff531435a14">input1</a></td></tr>
+<tr class="memitem:ac1c0c249eceb2d61592b9ff531435a14"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d6/d45/PoissonIzh__project_2model_2sizes_8h.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/dba/classclassIzh.html#ac1c0c249eceb2d61592b9ff531435a14">input1</a></td></tr>
 <tr class="separator:ac1c0c249eceb2d61592b9ff531435a14"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9a793be6300aecbf730dc7e8d40eebdf"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../dc/d3f/PoissonIzh_8cc.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/dba/classclassIzh.html#a9a793be6300aecbf730dc7e8d40eebdf">input2</a></td></tr>
+<tr class="memitem:a9a793be6300aecbf730dc7e8d40eebdf"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d6/d45/PoissonIzh__project_2model_2sizes_8h.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/dba/classclassIzh.html#a9a793be6300aecbf730dc7e8d40eebdf">input2</a></td></tr>
 <tr class="separator:a9a793be6300aecbf730dc7e8d40eebdf"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8d076bb1d7159b863572cca0e1f27554"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../dc/d3f/PoissonIzh_8cc.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/dba/classclassIzh.html#a8d076bb1d7159b863572cca0e1f27554">d_input1</a></td></tr>
+<tr class="memitem:a8d076bb1d7159b863572cca0e1f27554"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d6/d45/PoissonIzh__project_2model_2sizes_8h.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/dba/classclassIzh.html#a8d076bb1d7159b863572cca0e1f27554">d_input1</a></td></tr>
 <tr class="separator:a8d076bb1d7159b863572cca0e1f27554"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7b6479298c1c21ae519e5261fc9b67c1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../dc/d3f/PoissonIzh_8cc.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/dba/classclassIzh.html#a7b6479298c1c21ae519e5261fc9b67c1">d_input2</a></td></tr>
+<tr class="memitem:a7b6479298c1c21ae519e5261fc9b67c1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d6/d45/PoissonIzh__project_2model_2sizes_8h.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/dba/classclassIzh.html#a7b6479298c1c21ae519e5261fc9b67c1">d_input2</a></td></tr>
 <tr class="separator:a7b6479298c1c21ae519e5261fc9b67c1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a494e8cf8484db99c98dcdfd8bd3b34d7"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/dba/classclassIzh.html#a494e8cf8484db99c98dcdfd8bd3b34d7">sumPExc</a></td></tr>
 <tr class="separator:a494e8cf8484db99c98dcdfd8bd3b34d7"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -312,7 +316,7 @@ Public Attributes</h2></td></tr>
         <tr>
           <td class="memname">void classIzh::gen_alltoall_syns </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="../../dc/d3f/PoissonIzh_8cc.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a> *&#160;</td>
+          <td class="paramtype"><a class="el" href="../../d6/d45/PoissonIzh__project_2model_2sizes_8h.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a> *&#160;</td>
           <td class="paramname"><em>g</em>, </td>
         </tr>
         <tr>
@@ -330,7 +334,7 @@ Public Attributes</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="../../dc/d3f/PoissonIzh_8cc.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="../../d6/d45/PoissonIzh__project_2model_2sizes_8h.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a>&#160;</td>
           <td class="paramname"><em>gscale</em>&#160;</td>
         </tr>
         <tr>
@@ -340,9 +344,14 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Generate random conductivity values for an all to all network. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">gscale</td><td>Generate random conductivity values for an all to all network </td></tr>
+    <tr><td class="paramname">g</td><td>the resulting synaptic conductances </td></tr>
+    <tr><td class="paramname">nPre</td><td>number of pre-synaptic neurons </td></tr>
+    <tr><td class="paramname">nPost</td><td>number of post-synaptic neurons </td></tr>
+    <tr><td class="paramname">gscale</td><td>the maximal conductance of generated synapses </td></tr>
   </table>
   </dd>
 </dl>
@@ -502,13 +511,13 @@ Public Attributes</h2></td></tr>
         <tr>
           <td class="memname">void classIzh::randomizeVar </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="../../dc/d3f/PoissonIzh_8cc.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a> *&#160;</td>
+          <td class="paramtype"><a class="el" href="../../d6/d45/PoissonIzh__project_2model_2sizes_8h.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a> *&#160;</td>
           <td class="paramname"><em>Var</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="../../dc/d3f/PoissonIzh_8cc.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="../../d6/d45/PoissonIzh__project_2model_2sizes_8h.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a>&#160;</td>
           <td class="paramname"><em>strength</em>, </td>
         </tr>
         <tr>
@@ -534,13 +543,13 @@ Public Attributes</h2></td></tr>
         <tr>
           <td class="memname">void classIzh::randomizeVarSq </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="../../dc/d3f/PoissonIzh_8cc.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a> *&#160;</td>
+          <td class="paramtype"><a class="el" href="../../d6/d45/PoissonIzh__project_2model_2sizes_8h.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a> *&#160;</td>
           <td class="paramname"><em>Var</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="../../dc/d3f/PoissonIzh_8cc.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="../../d6/d45/PoissonIzh__project_2model_2sizes_8h.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a>&#160;</td>
           <td class="paramname"><em>strength</em>, </td>
         </tr>
         <tr>
@@ -588,7 +597,7 @@ Public Attributes</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">struct SparseProjection&#160;</td>
+          <td class="paramtype">struct <a class="el" href="../../d9/d91/structSparseProjection.html">SparseProjection</a>&#160;</td>
           <td class="paramname"><em>C</em>, </td>
         </tr>
         <tr>
@@ -612,7 +621,7 @@ Public Attributes</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="../../dc/d3f/PoissonIzh_8cc.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a> *&#160;</td>
+          <td class="paramtype"><a class="el" href="../../d6/d45/PoissonIzh__project_2model_2sizes_8h.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a> *&#160;</td>
           <td class="paramname"><em>g</em>&#160;</td>
         </tr>
         <tr>
@@ -622,9 +631,16 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Read sparse connectivity from a file. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">g</td><td>File handle for a file containing sparse conductivity values </td></tr>
+    <tr><td class="paramname">synInd</td><td>index of the synapse population to be worked on </td></tr>
+    <tr><td class="paramname">C</td><td>contains teh arrays to be initialized from file </td></tr>
+    <tr><td class="paramname">f_ind</td><td>file pointer for the indices of post-synaptic neurons </td></tr>
+    <tr><td class="paramname">f_indInG</td><td>file pointer for the summed post-synaptic neurons numbers </td></tr>
+    <tr><td class="paramname">f_g</td><td>File handle for a file containing sparse conductivity values </td></tr>
+    <tr><td class="paramname">g</td><td>array to receive the conductance values </td></tr>
   </table>
   </dd>
 </dl>
@@ -710,7 +726,7 @@ Public Attributes</h2></td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="../../dc/d3f/PoissonIzh_8cc.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a>* classIzh::d_input1</td>
+          <td class="memname"><a class="el" href="../../d6/d45/PoissonIzh__project_2model_2sizes_8h.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a>* classIzh::d_input1</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -722,7 +738,7 @@ Public Attributes</h2></td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="../../dc/d3f/PoissonIzh_8cc.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a> * classIzh::d_input2</td>
+          <td class="memname"><a class="el" href="../../d6/d45/PoissonIzh__project_2model_2sizes_8h.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a> * classIzh::d_input2</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -734,7 +750,7 @@ Public Attributes</h2></td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="../../dc/d3f/PoissonIzh_8cc.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a>* classIzh::input1</td>
+          <td class="memname"><a class="el" href="../../d6/d45/PoissonIzh__project_2model_2sizes_8h.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a>* classIzh::input1</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -746,7 +762,7 @@ Public Attributes</h2></td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="../../dc/d3f/PoissonIzh_8cc.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a> * classIzh::input2</td>
+          <td class="memname"><a class="el" href="../../d6/d45/PoissonIzh__project_2model_2sizes_8h.html#afad04d16ebd8523dd0d5f74145280a40">scalar</a> * classIzh::input2</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -799,7 +815,7 @@ Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../de/dba/classclassIzh.html">classIzh</a></li>
-    <li class="footer">Generated on Fri Nov 6 2015 22:13:02 for GeNN by
+    <li class="footer">Generated on Fri Jun 17 2016 14:45:00 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
   </ul>

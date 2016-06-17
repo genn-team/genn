@@ -1,7 +1,6 @@
 var MBody__userdef_8cc =
 [
     [ "pwSTDP_userdef", "dd/d4e/classpwSTDP__userdef.html", "dd/d4e/classpwSTDP__userdef" ],
-    [ "DT", "d3/dcd/MBody__userdef_8cc.html#a943f07034774ef1261d62cd0d3d1fec9", null ],
     [ "TIMING", "d3/dcd/MBody__userdef_8cc.html#a51b7a9c320bb9b58fc5632da0a44ab84", null ],
     [ "modelDefinition", "d3/dcd/MBody__userdef_8cc.html#a9aeaa0a22980484b2c472564fc9f686e", null ],
     [ "gpKCDN", "d3/dcd/MBody__userdef_8cc.html#ac518dcc37dd66acbcb268d28c691e78d", null ],

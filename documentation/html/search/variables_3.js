@@ -1,16 +1,20 @@
 var searchData=
 [
   ['cachedir',['cacheDir',['../d1/dc3/classSchmuker2014__classifier.html#add0819fe67edd2b2e4e2af85d4d4cc1b',1,'Schmuker2014_classifier']]],
+  ['calcneurons',['calcNeurons',['../d4/dd6/namespaceGENN__FLAGS.html#a70d6722298f30838c00baf136c110902',1,'GENN_FLAGS']]],
+  ['calcsynapsedynamics',['calcSynapseDynamics',['../d4/dd6/namespaceGENN__FLAGS.html#a3b1f267e861503db8c2371bfe0989531',1,'GENN_FLAGS']]],
+  ['calcsynapses',['calcSynapses',['../d4/dd6/namespaceGENN__FLAGS.html#aa9e7f573246d5738188a5c7950b2cd35',1,'GENN_FLAGS']]],
   ['cexp',['Cexp',['../d4/da1/helper_8h.html#a2dcb670d4b05ef1ad7c468a7991238cd',1,'helper.h']]],
-  ['choosegpudevice',['chooseGPUDevice',['../dc/de5/classNNmodel.html#a79631e0c13cdd5ebed55a16bea15819a',1,'NNmodel']]],
-  ['classifier',['classifier',['../dc/d26/experiment_8cu.html#a12fb9731e8eb3e59f3f02d283561b36b',1,'experiment.cu']]],
+  ['classifier',['classifier',['../d8/d39/experiment_8cc.html#a12fb9731e8eb3e59f3f02d283561b36b',1,'experiment.cc']]],
   ['classlabel',['classLabel',['../d1/dc3/classSchmuker2014__classifier.html#ad558c7e05037566353712912ba70be9e',1,'Schmuker2014_classifier']]],
   ['cleareddowndevice',['clearedDownDevice',['../d1/dc3/classSchmuker2014__classifier.html#aa98f82122d856cb89620665a01366513',1,'Schmuker2014_classifier']]],
   ['clusterspikecountan',['clusterSpikeCountAN',['../d1/dc3/classSchmuker2014__classifier.html#a77b97cdabafc023e9501868a7dde2f2f',1,'Schmuker2014_classifier']]],
-  ['constinput',['constInput',['../dd/d0e/SynDelay_8cc.html#a2acdfe868e2f404a0ed1195b6f42bfe0',1,'SynDelay.cc']]],
+  ['cond_5fini',['cond_ini',['../d5/df0/emurgano__project_2SynDelay_8cc.html#a07119cfd5e27f291e55ede66ec55450f',1,'SynDelay.cc']]],
+  ['connn',['connN',['../d9/d91/structSparseProjection.html#a52c5a7d78b767694bbf323fef446a2d8',1,'SparseProjection']]],
   ['correctclass',['correctClass',['../d1/dc3/classSchmuker2014__classifier.html#ad24bf54e3d7be4fb69ef2ff1d2a31072',1,'Schmuker2014_classifier']]],
   ['countan',['countAN',['../d1/dc3/classSchmuker2014__classifier.html#a62c1be3b4294b5d6f767fc8f104d6178',1,'Schmuker2014_classifier']]],
   ['countpn',['countPN',['../d1/dc3/classSchmuker2014__classifier.html#a18d7c2431ae5195adfc0047bb57d18f6',1,'Schmuker2014_classifier']]],
   ['countpnan',['countPNAN',['../d1/dc3/classSchmuker2014__classifier.html#a7756267be3693061b95967e53874d2de',1,'Schmuker2014_classifier']]],
-  ['countrn',['countRN',['../d1/dc3/classSchmuker2014__classifier.html#a3fd0e6b49090670c13f223d10585816f',1,'Schmuker2014_classifier']]]
+  ['countrn',['countRN',['../d1/dc3/classSchmuker2014__classifier.html#a3fd0e6b49090670c13f223d10585816f',1,'Schmuker2014_classifier']]],
+  ['cpu_5fonly',['cpu_only',['../d7/d44/parse__options_8h.html#acf6f44a6051a0dd743c4f9919e17ee1e',1,'parse_options.h']]]
 ];

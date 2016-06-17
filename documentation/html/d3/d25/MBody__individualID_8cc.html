@@ -34,6 +34,7 @@
   $(document).ready(function() { init_search(); });
 </script>
 <link href="../../customdoxygen.css" rel="stylesheet" type="text/css" />
+<link href="../../html_styles.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -44,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">2.0</span>
+   &#160;<span id="projectnumber">2.2</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -61,6 +62,7 @@ var searchBox = new SearchBox("searchBox", "../../search",false,'Search');
     <ul class="tablist">
       <li><a href="../../index.html"><span>Main&#160;Page</span></a></li>
       <li><a href="../../pages.html"><span>Related&#160;Pages</span></a></li>
+      <li><a href="../../namespaces.html"><span>Namespaces</span></a></li>
       <li><a href="../../annotated.html"><span>Classes</span></a></li>
       <li class="current"><a href="../../files.html"><span>Files</span></a></li>
       <li>
@@ -118,7 +120,6 @@ $(document).ready(function(){initNavTree('d3/d25/MBody__individualID_8cc.html','
 
 <div class="header">
   <div class="summary">
-<a href="#define-members">Macros</a> &#124;
 <a href="#func-members">Functions</a> &#124;
 <a href="#var-members">Variables</a>  </div>
   <div class="headertitle">
@@ -129,15 +130,9 @@ $(document).ready(function(){initNavTree('d3/d25/MBody__individualID_8cc.html','
 <p>This file contains the model definition of the mushroom body "MBody_incividualID" model. It is used in both the GeNN code generation and the user side simulation code (class classol, file classol_sim). It uses INDIVIDUALID for the connections from AL to MB allowing quite large numbers of PN and KC.  
 <a href="#details">More...</a></p>
 <div class="textblock"><code>#include &quot;<a class="el" href="../../dc/de1/modelSpec_8h_source.html">modelSpec.h</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="../../d7/dfd/modelSpec_8cc.html">modelSpec.cc</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="../../d4/deb/sizes_8h_source.html">sizes.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="../../d2/d49/global_8h_source.html">global.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="../../d0/d8e/MBody__individualID__project_2model_2sizes_8h_source.html">sizes.h</a>&quot;</code><br />
 </div><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="define-members"></a>
-Macros</h2></td></tr>
-<tr class="memitem:a943f07034774ef1261d62cd0d3d1fec9"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d25/MBody__individualID_8cc.html#a943f07034774ef1261d62cd0d3d1fec9">DT</a>&#160;&#160;&#160;0.1</td></tr>
-<tr class="memdesc:a943f07034774ef1261d62cd0d3d1fec9"><td class="mdescLeft">&#160;</td><td class="mdescRight">This defines the global time step at which the simulation will run.  <a href="#a943f07034774ef1261d62cd0d3d1fec9">More...</a><br /></td></tr>
-<tr class="separator:a943f07034774ef1261d62cd0d3d1fec9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
 <tr class="memitem:a9aeaa0a22980484b2c472564fc9f686e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d25/MBody__individualID_8cc.html#a9aeaa0a22980484b2c472564fc9f686e">modelDefinition</a> (<a class="el" href="../../dc/de5/classNNmodel.html">NNmodel</a> &amp;model)</td></tr>
@@ -189,22 +184,7 @@ Variables</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>This file contains the model definition of the mushroom body "MBody_incividualID" model. It is used in both the GeNN code generation and the user side simulation code (class classol, file classol_sim). It uses INDIVIDUALID for the connections from AL to MB allowing quite large numbers of PN and KC. </p>
-</div><h2 class="groupheader">Macro Definition Documentation</h2>
-<a class="anchor" id="a943f07034774ef1261d62cd0d3d1fec9"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">#define DT&#160;&#160;&#160;0.1</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>This defines the global time step at which the simulation will run. </p>
-
-</div>
-</div>
-<h2 class="groupheader">Function Documentation</h2>
+</div><h2 class="groupheader">Function Documentation</h2>
 <a class="anchor" id="a9aeaa0a22980484b2c472564fc9f686e"></a>
 <div class="memitem">
 <div class="memproto">
@@ -234,8 +214,9 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 <b>Initial value:</b><div class="fragment"><div class="line">={</div>
-<div class="line">    5.0/_NLB            </div>
+<div class="line">    5.0/<a class="code" href="../../d2/d8c/include_2sizes_8h.html#ad31e3513bdcdd2f68bc7a60e11ee874e">_NLB</a>            </div>
 <div class="line">}</div>
+<div class="ttc" id="include_2sizes_8h_html_ad31e3513bdcdd2f68bc7a60e11ee874e"><div class="ttname"><a href="../../d2/d8c/include_2sizes_8h.html#ad31e3513bdcdd2f68bc7a60e11ee874e">_NLB</a></div><div class="ttdeci">#define _NLB</div><div class="ttdef"><b>Definition:</b> include/sizes.h:4</div></div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -305,8 +286,9 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 <b>Initial value:</b><div class="fragment"><div class="line">= {</div>
-<div class="line">    1.0/_NLHI   </div>
+<div class="line">    1.0/<a class="code" href="../../d2/d8c/include_2sizes_8h.html#adae7b6dfa49ce579f325368b9f6b23da">_NLHI</a>   </div>
 <div class="line">}</div>
+<div class="ttc" id="include_2sizes_8h_html_adae7b6dfa49ce579f325368b9f6b23da"><div class="ttname"><a href="../../d2/d8c/include_2sizes_8h.html#adae7b6dfa49ce579f325368b9f6b23da">_NLHI</a></div><div class="ttdeci">#define _NLHI</div><div class="ttdef"><b>Definition:</b> include/sizes.h:3</div></div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -336,8 +318,9 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 <b>Initial value:</b><div class="fragment"><div class="line">= {</div>
-<div class="line">  gPNKC_GLOBAL            </div>
+<div class="line">  <a class="code" href="../../d2/d8c/include_2sizes_8h.html#a97e1b5dcad4a248c5ee8b23f8daedd62">gPNKC_GLOBAL</a>            </div>
 <div class="line">}</div>
+<div class="ttc" id="include_2sizes_8h_html_a97e1b5dcad4a248c5ee8b23f8daedd62"><div class="ttname"><a href="../../d2/d8c/include_2sizes_8h.html#a97e1b5dcad4a248c5ee8b23f8daedd62">gPNKC_GLOBAL</a></div><div class="ttdeci">#define gPNKC_GLOBAL</div><div class="ttdef"><b>Definition:</b> include/sizes.h:9</div></div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -551,8 +534,8 @@ Variables</h2></td></tr>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><a class="el" href="../../dir_66fc3ae5585a02e310a487b6a12e9e11.html">userproject</a></li><li class="navelem"><a class="el" href="../../dir_9b93f25abba8addfb044acb7cfa1de04.html">MBody_individualID_project</a></li><li class="navelem"><a class="el" href="../../dir_f5eae8e555c19a92a065ce21c4cc8468.html">model</a></li><li class="navelem"><a class="el" href="../../d3/d25/MBody__individualID_8cc.html">MBody_individualID.cc</a></li>
-    <li class="footer">Generated on Fri Nov 6 2015 22:12:59 for GeNN by
+    <li class="navelem"><a class="el" href="../../dir_75b82e7e4a5feb05200b9ad7adf06257.html">home</a></li><li class="navelem"><a class="el" href="../../dir_ffe3a3aad2509bd71bde52251b868b95.html">t</a></li><li class="navelem"><a class="el" href="../../dir_a76bff614e8015b519bf2acd237705ed.html">tn</a></li><li class="navelem"><a class="el" href="../../dir_f4e7678815bf6e9eaf2cc8bfbd1351b7.html">tn41</a></li><li class="navelem"><a class="el" href="../../dir_2f2428e5af9c71cc79b0eec8cffe5ad2.html">localdisk_projects</a></li><li class="navelem"><a class="el" href="../../dir_3cf40d34fd3099085c9305fe2b26b2ea.html">develop</a></li><li class="navelem"><a class="el" href="../../dir_ee841fdb1cf52f11d3719e45227a7fba.html">genn</a></li><li class="navelem"><a class="el" href="../../dir_e9435152734d1e7a318dd6df08ca98d9.html">userproject</a></li><li class="navelem"><a class="el" href="../../dir_129eb0c55821a54e45ca323fba376d4c.html">MBody_individualID_project</a></li><li class="navelem"><a class="el" href="../../dir_d3bfb841323ea122dc52183bad22037b.html">model</a></li><li class="navelem"><a class="el" href="../../d3/d25/MBody__individualID_8cc.html">MBody_individualID.cc</a></li>
+    <li class="footer">Generated on Fri Jun 17 2016 14:44:59 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
   </ul>
