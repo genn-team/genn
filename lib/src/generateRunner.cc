@@ -1647,6 +1647,8 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     os << ENDL;
 
     if (((deviceProp[theDevice].major >= 2) || (deviceProp[theDevice].minor >= 3)) && deviceProp[theDevice].major < 6) {
+	os << "#if !defined( __CUDA_ARCH__) || __CUDA_ARCH__ >= 600"<< ENDL;
+	os << "#else"<< ENDL;
 	os << "__device__ double atomicAdd(double* address, double val)" << ENDL;
 	os << "{" << ENDL;
 	os << "    unsigned long long int* address_as_ull =" << ENDL;
@@ -1660,6 +1662,7 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 	os << "    } while (assumed != old);" << ENDL;
 	os << "    return __longlong_as_double(old);" << ENDL;
 	os << "}" << ENDL << ENDL;
+	os << "#endif"<< ENDL;
     }
 
     if (deviceProp[theDevice].major < 2) {
