@@ -1646,9 +1646,10 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     os << "//-------------------------------------------------------------------------" << ENDL << ENDL;
     os << ENDL;
 
-    if (((deviceProp[theDevice].major >= 2) || (deviceProp[theDevice].minor >= 3)) && deviceProp[theDevice].major < 6) {
-	os << "#if !defined( __CUDA_ARCH__) || __CUDA_ARCH__ >= 600"<< ENDL;
-	os << "#else"<< ENDL;
+    if ((deviceProp[theDevice].major >= 2) || (deviceProp[theDevice].minor >= 3)) {
+	//os << "#if !defined(__CUDA_ARCH__) || __CUDA_ARCH__ >= 600" << ENDL;
+	//os << "#else"<< ENDL;
+	os << "#if __CUDA_ARCH__ < 600" << ENDL;
 	os << "__device__ double atomicAdd(double* address, double val)" << ENDL;
 	os << "{" << ENDL;
 	os << "    unsigned long long int* address_as_ull =" << ENDL;
@@ -1661,8 +1662,9 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 	os << "                        __longlong_as_double(assumed)));" << ENDL;
 	os << "    } while (assumed != old);" << ENDL;
 	os << "    return __longlong_as_double(old);" << ENDL;
-	os << "}" << ENDL << ENDL;
+	os << "}" << ENDL;
 	os << "#endif"<< ENDL;
+	os << ENDL;
     }
 
     if (deviceProp[theDevice].major < 2) {
@@ -1678,7 +1680,8 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 	os << "                        __int_as_float(assumed)));" << ENDL;
 	os << "    } while (assumed != old);" << ENDL;
 	os << "    return __int_as_float(old);" << ENDL;
-	os << "}" << ENDL << ENDL;
+	os << "}" << ENDL;
+	os << ENDL;
     }	
 
     os << "#include \"neuronKrnl.cc\"" << ENDL;
@@ -2252,6 +2255,7 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     os << "// the time stepping procedure (using GPU)" << ENDL;
     os << "void stepTimeGPU()" << ENDL;
     os << OB(1130) << ENDL;
+
     if (model.synapseGrpN > 0) { 
 	unsigned int synapseGridSz = model.padSumSynapseKrnl[model.synapseGrpN - 1];   
 	os << "//model.padSumSynapseTrgN[model.synapseGrpN - 1] is " << model.padSumSynapseKrnl[model.synapseGrpN - 1] << ENDL; 
