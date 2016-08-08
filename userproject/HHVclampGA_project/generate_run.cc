@@ -102,9 +102,9 @@ CPU_ONLY=0 or CPU_ONLY=1 (default 0): Whether to compile in (CUDA independent) \
   if (dbgMode) cmd += " -d";
   if (cpu_only) cmd += " -c";
 #ifdef _WIN32
-  cmd += " && nmake /nologo /f WINmakefile all ";
+  cmd += " && nmake /nologo /f WINmakefile clean all ";
 #else // UNIX
-  cmd += " && make all ";
+  cmd += " && make clean all ";
 #endif
   cmd += "SIM_CODE=HHVClamp_CODE";
   if (dbgMode) cmd += " DEBUG=1";
