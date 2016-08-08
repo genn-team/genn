@@ -3,6 +3,27 @@
 Release Notes for GeNN v2.2
 ====
 
+This bugfix release fixes some critical bugs which occur on certain system configurations.
+
+Bug fixes:
+----
+
+1. (important) Fixed a Windows-specific bug where the CL compiler terminates, incorrectly reporting that the nested scope limit has been exceeded, when a large number of device variables need to be initialised.
+
+2. (important) Fixed a bug where, in certain circumstances, outdated generateALL objects are used by the Makefiles, rather than being cleaned and replaced by up-to-date ones.
+
+3. (important) Fixed an 'atomicAdd' redeclared or missing bug, which happens on certain CUDA architectures when using the newest CUDA 8.0 RC toolkit.
+
+4. (minor) The SynDelay example project now correctly reports spike indexes for the input group.
+
+Please refer to the [full documentation](http://genn-team.github.io/genn/documentation/html/index.html) for further details, tutorials and complete code documentation.
+
+-------------------------------------------------------------------
+
+
+Release Notes for GeNN v2.2
+====
+
 This release includes minor new features, some core code improvements and several bug fixes on GeNN v2.1.
 
 User Side Changes
