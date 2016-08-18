@@ -286,7 +286,7 @@ void NNmodel::initLearnGrps()
 	for (int k= 0; k < 2; k++) {
 	    for (int j= 0, l= nModels[nt[k]].extraGlobalNeuronKernelParameters.size(); j < l; j++) {
 		string pname= nModels[nt[k]].extraGlobalNeuronKernelParameters[j];
-		string pnamefull= pname + neuronName[i];
+		string pnamefull= pname + neuronName[src];
 		string ptype= nModels[nt[k]].extraGlobalNeuronKernelParameterTypes[j];
 		if (find(synapseKernelParameters.begin(), synapseKernelParameters.end(), pnamefull) == synapseKernelParameters.end()) {
 		    // parameter wasn't registered yet - is it used?
@@ -333,7 +333,7 @@ void NNmodel::initLearnGrps()
 	for (int k= 0; k < 2; k++) {
 	    for (int j= 0, l= nModels[nt[k]].extraGlobalNeuronKernelParameters.size(); j < l; j++) {
 		string pname= nModels[nt[k]].extraGlobalNeuronKernelParameters[j];
-		string pnamefull= pname + neuronName[i];
+		string pnamefull= pname + neuronName[src];
 		string ptype= nModels[nt[k]].extraGlobalNeuronKernelParameterTypes[j];
 		if (find(simLearnPostKernelParameters.begin(), simLearnPostKernelParameters.end(), pnamefull) == simLearnPostKernelParameters.end()) {
 		    // parameter wasn't registered yet - is it used?
@@ -376,7 +376,7 @@ void NNmodel::initLearnGrps()
 	for (int k= 0; k < 2; k++) {
 	    for (int j= 0, l= nModels[nt[k]].extraGlobalNeuronKernelParameters.size(); j < l; j++) {
 		string pname= nModels[nt[k]].extraGlobalNeuronKernelParameters[j];
-		string pnamefull= pname + neuronName[i];
+		string pnamefull= pname + neuronName[src];
 		string ptype= nModels[nt[k]].extraGlobalNeuronKernelParameterTypes[j];
 		if (find(synapseDynamicsKernelParameters.begin(), synapseDynamicsKernelParameters.end(), pnamefull) == synapseDynamicsKernelParameters.end()) {
 		    // parameter wasn't registered yet - is it used?
