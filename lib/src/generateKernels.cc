@@ -1246,10 +1246,10 @@ void genSynapseKernel(NNmodel &model, //!< Model description
 		os << CB(330); // end "if (j == " << numOfBlocks - 1 << ")"
 		os << CB(320); // end "if (threadIdx.x == 0)"
 	    }
-	    os << CB(220);
 	    if (weightUpdateModels[synt].simLearnPost_supportCode != tS("")) {
 		os << CB(29) << " // namespace bracket closed" << ENDL;
 	    }
+	    os << CB(220);
 	}
 
 	os << CB(215);
