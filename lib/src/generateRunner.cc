@@ -1652,8 +1652,9 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     os << "*/" << ENDL;
     os << "//-------------------------------------------------------------------------" << ENDL << ENDL;
     os << ENDL;
-
-    if (deviceProp[theDevice].major < 6) {
+    int version;
+    cudaRuntimeGetVersion(&version); 
+    if ((deviceProp[theDevice].major < 6) || (version < 8000)){
 	//os << "#if !defined(__CUDA_ARCH__) || __CUDA_ARCH__ >= 600" << ENDL;
 	//os << "#else"<< ENDL;
         //os << "#if __CUDA_ARCH__ < 600" << ENDL;
