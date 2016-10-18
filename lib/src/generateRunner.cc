@@ -1653,11 +1653,12 @@ void genRunnerGPU(NNmodel &model, //!< Model description
     os << "//-------------------------------------------------------------------------" << ENDL << ENDL;
     os << ENDL;
 
-    if ((deviceProp[theDevice].major >= 2) || (deviceProp[theDevice].minor >= 3)) {
+    if (deviceProp[theDevice].major < 6) {
 	//os << "#if !defined(__CUDA_ARCH__) || __CUDA_ARCH__ >= 600" << ENDL;
 	//os << "#else"<< ENDL;
-	os << "#if __CUDA_ARCH__ < 600" << ENDL;
-	os << "__device__ double atomicAdd(double* address, double val)" << ENDL;
+        //os << "#if __CUDA_ARCH__ < 600" << ENDL;
+	os << "// software version of atomic add for double precision" << ENDL;
+	os << "__device__ double atomicAddSW(double* address, double val)" << ENDL;
 	os << "{" << ENDL;
 	os << "    unsigned long long int* address_as_ull =" << ENDL;
 	os << "                                          (unsigned long long int*)address;" << ENDL;
@@ -1670,12 +1671,13 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 	os << "    } while (assumed != old);" << ENDL;
 	os << "    return __longlong_as_double(old);" << ENDL;
 	os << "}" << ENDL;
-	os << "#endif"<< ENDL;
+	//os << "#endif"<< ENDL;
 	os << ENDL;
     }
 
     if (deviceProp[theDevice].major < 2) {
-	os << "__device__ float atomicAddoldGPU(float* address, float val)" << ENDL;
+	os << "// software version of atomic add for single precision float" << ENDL;
+	os << "__device__ float atomicAddSW(float* address, float val)" << ENDL;
 	os << "{" << ENDL;
 	os << "    int* address_as_ull =" << ENDL;
 	os << "                                          (int*)address;" << ENDL;
