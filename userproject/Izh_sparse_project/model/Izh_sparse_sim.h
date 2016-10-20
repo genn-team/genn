@@ -31,7 +31,7 @@ using namespace std;
 //----------------------------------------------------------------------
 // other stuff:
 #define T_REPORT_TME 5000.0
-#define TOTAL_TME 1000.0
+#define TOTAL_TME 100000.0
 
 CStopWatch timer;
 
