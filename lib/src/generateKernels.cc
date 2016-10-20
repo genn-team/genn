@@ -481,8 +481,12 @@ void generate_process_presynaptic_events_code(
     )
 {
     string theAtomicAdd;
-    if ((deviceProp[theDevice].major < 2) && (model.ftype == "float")) {
-	theAtomicAdd= tS("atomicAddoldGPU");
+    int version;
+    cudaRuntimeGetVersion(&version);     
+    if (((deviceProp[theDevice].major < 2) && (model.ftype == "float")) 
+	|| (((deviceProp[theDevice].major < 6) || (version < 8000)) && (model.ftype == "double")))
+    {
+	theAtomicAdd= tS("atomicAddSW");
     }
     else {
 	theAtomicAdd= tS("atomicAdd");
