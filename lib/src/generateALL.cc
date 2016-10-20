@@ -225,13 +225,13 @@ void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
 #ifdef _WIN32
 	    nvccFlags += " -I\"%GENN_PATH%\\lib\\include\"";
 	    string runnerPath = path + "\\" + model.name + "_CODE\\runner.cc";
-	    string cubinPath = tS(getenv("TEMP")) + "\\runner.cubin";
+	    string cubinPath = path + "\\runner.cubin";
 	    string nvccCommand = "\"\"" + tS(NVCC) + "\" " + nvccFlags;
 	    nvccCommand += " -o \"" + cubinPath + "\" \"" + runnerPath + "\"\"";
 #else
 	    nvccFlags += " -I\"$GENN_PATH/lib/include\"";
 	    string runnerPath = path + "/" + model.name + "_CODE/runner.cc";
-	    string cubinPath = "/tmp/runner.cubin";
+	    string cubinPath = path + "/runner.cubin";
 	    string nvccCommand = "\"" + tS(NVCC) + "\" " + nvccFlags;
 	    nvccCommand += " -o \"" + cubinPath + "\" \"" + runnerPath + "\"";
 #endif
@@ -269,6 +269,11 @@ void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
 		    }
 		}
 		CHECK_CU_ERRORS(cuModuleUnload(module));
+
+		if (remove(cubinPath.c_str())) {
+		    cerr << "generateALL: Error deleting dry-run cubin file" << endl;
+		    exit(EXIT_FAILURE);
+		}
 	    }
 
 	    for (int kernel= 0; kernel < krnlNo; kernel++) {
