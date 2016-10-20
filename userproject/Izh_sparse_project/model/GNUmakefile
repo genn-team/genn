@@ -16,7 +16,7 @@ SOURCES            :=$(EXECUTABLE).cc
 ifndef CPU_ONLY
     SOURCES        += $(GENN_PATH)/userproject/include/GeNNHelperKrnls.cu
 endif
-OPTIMIZATIONFLAGS  :=-O3
+OPTIMIZATIONFLAGS  :=-O3 -fopenmp
 
 include	$(GENN_PATH)/userproject/include/makefile_common_gnu.mk
 
