@@ -106,6 +106,11 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 	}
 	os << ENDL;
 
+//	os << "#pragma omp parallel num_threads(4)" << ENDL;
+	os << "#pragma omp parallel" << ENDL;
+	os << OB(55); // parallel section starts
+    	os << "#pragma omp for" << ENDL; // parallelising for
+
 	os << "for (int n = 0; n < " <<  model.neuronN[i] << "; n++)" << OB(10);
 	for (int k = 0; k < nModels[nt].varNames.size(); k++) {
 	    os << nModels[nt].varTypes[k] << " l" << nModels[nt].varNames[k] << " = ";
@@ -613,6 +618,15 @@ void genSynapseFunction(NNmodel &model, //!< Model description
     os << model.ftype << " addtoinSyn;" << ENDL;  
     os << ENDL;
 
+//	os << "#pragma omp parallel num_threads(4)" << ENDL;
+	os << "#pragma omp parallel" << ENDL;
+	
+	os << OB(55);
+
+	// Each section runs on a different CPU core
+	os << "#pragma omp sections" << ENDL;
+	os << OB(666);
+
     for (int i = 0; i < model.synapseGrpN; i++) {
 	src = model.synapseSource[i];
 	trg = model.synapseTarget[i];
@@ -620,6 +634,7 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 	inSynNo = model.synapseInSynNo[i];
 
 	os << "// synapse group " << model.synapseName[i] << ENDL;
+	os << "#pragma omp section" << ENDL;
 	os << OB(1006);
 
 	if (model.neuronDelaySlots[src] > 1) {
@@ -641,6 +656,9 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 	os << CB(1006);
 	os << ENDL;
     }
+
+    os << CB(666); // close omp sections
+    os << CB(55);  // close omp parallel
     os << CB(1001);
     os << ENDL;
 
