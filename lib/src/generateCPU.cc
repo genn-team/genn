@@ -77,7 +77,6 @@ void genNeuronFunction(NNmodel &model, //!< Model description
 	string queueOffsetTrueSpk = (model.neuronNeedTrueSpk[i] ? queueOffset : "");
 
 	os << "// neuron group " << model.neuronName[i] << ENDL;
-	os << OB(55);
 
 	// increment spike queue pointer and reset spike count
 	if (model.neuronDelaySlots[i] > 1) { // with delay
