@@ -669,6 +669,7 @@ void genRunner(NNmodel &model, //!< Model description
     os << "#include <cassert>" << ENDL;
     os << "#include <stdint.h>" << ENDL;
     os << ENDL;
+    os << "#include <omp.h>"<< ENDL << ENDL; // for parallel (pragma openmp omp)
 
 
     //-----------------
@@ -2422,7 +2423,7 @@ void genMakefile(NNmodel &model, //!< Model description
 #else // UNIX
 
 #ifdef CPU_ONLY
-    string cxxFlags = "-c -DCPU_ONLY";
+    string cxxFlags = "-c -DCPU_ONLY -fopenmp"; // -fopenmp flag for OpenMP parallelising
     if (GENN_PREFERENCES::optimizeCode) cxxFlags += " -O3 -ffast-math";
     if (GENN_PREFERENCES::debugCode) cxxFlags += " -O0 -g";
 
