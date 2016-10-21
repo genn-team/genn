@@ -615,12 +615,12 @@ void genSynapseFunction(NNmodel &model, //!< Model description
 	}
     }
 	
+    os << model.ftype << " addtoinSyn;" << ENDL;  
+    os << ENDL;
+
 //	os << "#pragma omp parallel num_threads(4)" << ENDL;
     os << "#pragma omp parallel" << ENDL;
     os << OB(55);
-
-    os << model.ftype << " addtoinSyn;" << ENDL;  
-    os << ENDL;
 
 	// Each section runs on a different CPU core
 	os << "#pragma omp sections" << ENDL;
