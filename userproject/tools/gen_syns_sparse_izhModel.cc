@@ -13,6 +13,7 @@
 #include <fstream>
 #include <stdlib.h>
 #include <string.h>
+#include <cmath>
 #include <vector>
 
 using namespace std;
@@ -75,7 +76,7 @@ int main(int argc, char *argv[])
   }
   
   unsigned int nN= atoi(argv[1]);
-  unsigned int nExc= (int)(4*nN/5);
+  unsigned int nExc= ceil((float) 4 * nN / 5);
   unsigned int nConn= atoi(argv[2]);
   double meangsynExc= atof(argv[3]);
   double meangsynInh= atof(argv[4]);
