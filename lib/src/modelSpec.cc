@@ -724,7 +724,7 @@ void NNmodel::setMaxConn(const string sname, /**<  */
  */ 
 //--------------------------------------------------------------------------
 
-void NNmodel::setSpanTypeToPre(const string sname /**<  */)
+void NNmodel::setSpanTypeToPre(const string sname /**< name of the synapse group to which to apply the pre-synaptic span type */)
 {
     if (final) {
 	gennError("Trying to set spanType in a finalized model.");
