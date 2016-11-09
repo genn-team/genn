@@ -21,12 +21,12 @@
 */
 //--------------------------------------------------------------------------
 
+#include "global.h"
 #include MODEL
 #include "generateALL.h"
 #include "generateRunner.h"
 #include "generateCPU.h"
 #include "generateKernels.h"
-#include "global.h"
 #include "modelSpec.h"
 #include "utils.h"
 #include "stringUtils.h"

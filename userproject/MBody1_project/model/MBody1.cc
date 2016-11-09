@@ -25,6 +25,7 @@
 //uncomment the following line to turn on timing measures
 //#define TIMING   
 
+
 double myPOI_p[4]= {
   0.1,        // 0 - firing rate
   2.5,        // 1 - refratory period
@@ -146,7 +147,9 @@ void modelDefinition(NNmodel &model)
 #else
     GENN_PREFERENCES::optimizeCode = true;
 #endif // DEBUG
-
+    GENN_PREFERENCES::optimizeCode = false;
+    GENN_PREFERENCES::userNvccFlags= " -O3 -use_fast_math -Xcompiler \"-ffast-math\"";
+    GENN_PREFERENCES::userCxxFlagsGNU= " -O3";
     //GENN_PREFERENCES::autoChooseDevice= 0;
     //GENN_PREFERENCES::optimiseBlockSize= 0;
     //GENN_PREFERENCES::neuronBlockSize= 192; 
