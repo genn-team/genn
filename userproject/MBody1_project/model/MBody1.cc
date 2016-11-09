@@ -25,6 +25,7 @@
 //uncomment the following line to turn on timing measures
 //#define TIMING   
 
+
 double myPOI_p[4]= {
   0.1,        // 0 - firing rate
   2.5,        // 1 - refratory period

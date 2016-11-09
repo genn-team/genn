@@ -44,6 +44,9 @@ namespace GENN_PREFERENCES {
     unsigned int learningBlockSize= 32;
     unsigned int synapseDynamicsBlockSize= 32;
     unsigned int autoRefractory= 1; //!< Flag for signalling whether spikes are only reported if thresholdCondition changes from false to true (autoRefractory == 1) or spikes are emitted whenever thresholdCondition is true no matter what.
+    std::string userCxxFlagsWIN = ""; //!< Allows users to set specific C++ compiler options they may want to use for all host side code (used for windows platforms)
+    std::string userCxxFlagsGNU = ""; //!< Allows users to set specific C++ compiler options they may want to use for all host side code (used for unix based platforms)
+    std::string userNvccFlags = ""; //!< Allows users to set specific nvcc compiler options they may want to use for all GPU code (identical for windows and unix platforms)
 };
 
 // These will eventually go inside e.g. some HardwareConfig class. Putting them here meanwhile.
