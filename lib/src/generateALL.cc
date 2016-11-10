@@ -218,6 +218,7 @@ void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
 
 	    string nvccFlags = "-cubin -x cu -arch sm_";
 	    nvccFlags += tS(deviceProp[theDevice].major) + tS(deviceProp[theDevice].minor);
+	    nvccFlags += " " + GENN_PREFERENCES::userNvccFlags;
 	    if (GENN_PREFERENCES::optimizeCode) nvccFlags += " -O3 -use_fast_math";
 	    if (GENN_PREFERENCES::debugCode) nvccFlags += " -O0 -g -G";
 	    if (GENN_PREFERENCES::showPtxInfo) nvccFlags += " -Xptxas \"-v\"";
