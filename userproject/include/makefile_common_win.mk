@@ -40,15 +40,15 @@ CXXFLAGS                =$(CXXFLAGS) $(OPTIMIZATIONFLAGS)
 
 # Global include and link flags
 !IFNDEF CPU_ONLY
-INCLUDE_FLAGS           =/I"$(GENN_PATH)\lib\include" /I"$(GENN_PATH)\userproject\include" /I"$(CUDA_PATH)\include"
+INCLUDE_FLAGS           =$(INCLUDE_FLAGS) /I"$(GENN_PATH)\lib\include" /I"$(GENN_PATH)\userproject\include" /I"$(CUDA_PATH)\include"
 !IF "$(PROCESSOR_ARCHITECTURE)" == "AMD64" || "$(PROCESSOR_ARCHITEW6432)" == "AMD64"
-LINK_FLAGS              ="$(GENN_PATH)\lib\lib\genn.lib" "$(CUDA_PATH)\lib\x64\cudart.lib" "$(CUDA_PATH)\lib\x64\cuda.lib"
+LINK_FLAGS              =$(LINK_FLAGS) "$(GENN_PATH)\lib\lib\genn.lib" "$(CUDA_PATH)\lib\x64\cudart.lib" "$(CUDA_PATH)\lib\x64\cuda.lib"
 !ELSE
-LINK_FLAGS              ="$(GENN_PATH)\lib\lib\genn.lib" "$(CUDA_PATH)\lib\Win32\cudart.lib" "$(CUDA_PATH)\lib\Win32\cuda.lib"
+LINK_FLAGS              =$(LINK_FLAGS) "$(GENN_PATH)\lib\lib\genn.lib" "$(CUDA_PATH)\lib\Win32\cudart.lib" "$(CUDA_PATH)\lib\Win32\cuda.lib"
 !ENDIF
 !ELSE
-INCLUDE_FLAGS           =/I"$(GENN_PATH)\lib\include" /I"$(GENN_PATH)\userproject\include"
-LINK_FLAGS              ="$(GENN_PATH)\lib\lib\genn_CPU_ONLY.lib"
+INCLUDE_FLAGS           =$(INCLUDE_FLAGS) /I"$(GENN_PATH)\lib\include" /I"$(GENN_PATH)\userproject\include"
+LINK_FLAGS              =$(LINK_FLAGS) "$(GENN_PATH)\lib\lib\genn_CPU_ONLY.lib"
 !ENDIF
 
 # An auto-generated file containing your cuda device's compute capability
