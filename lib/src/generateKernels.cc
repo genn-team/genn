@@ -267,12 +267,12 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 	    }
 	}
 
-	os << "// test whether spike condition was fulfilled previously" << ENDL;
 	string thCode= nModels[nt].thresholdConditionCode;
 	if (thCode == tS("")) { // no condition provided
 	    cerr << "Warning: No thresholdConditionCode for neuron type " << model.neuronType[i] << " used for population \"" << model.neuronName[i] << "\" was provided. There will be no spikes detected in this population!" << endl;
 	} 
 	else {
+        os << "// test whether spike condition was fulfilled previously" << ENDL;
 	    substitute(thCode, tS("$(id)"), localID);
 	    substitute(thCode, tS("$(t)"), tS("t"));
 	    name_substitutions(thCode, tS("l"), nModels[nt].varNames, tS(""));
