@@ -1,5 +1,33 @@
 /*! \page ReleaseNotes Release Notes
 
+Release Notes for GeNN v2.2.2
+====
+
+This release includes minor new features and several bug fixes for certain system configurations.
+
+User Side Changes
+----
+
+1. Added support for the new version (2.0) of the Brian simulation package for Python.
+
+2. Added a mechanism for setting user-defined flags for the C++ compiler and NVCC compiler, via `GENN_PREFERENCES`.
+
+Bug fixes:
+----
+
+1. Fixed a problem with `atomicAdd()` redefinitions on certain CUDA runtime versions and GPU configurations.
+
+2. Fixed an incorrect bracket placement bug in code generation for certain models.
+
+3. Fixed an incorrect neuron group indexing bug in the learning kernel, for certain models.
+
+4. The dry-run compile phase now stores temporary files in the current directory, rather than the temp directory, solving issues on some systems.
+
+5. The `LINK_FLAGS` and `INCLUDE_FLAGS` in the common windows makefile include 'makefile_commin_win.mk' are now appended to, rather than being overwritten, fixing issues with custom user makefiles on Windows.
+
+-------------------------------------------------------------------
+
+
 Release Notes for GeNN v2.2.1
 ====
 
