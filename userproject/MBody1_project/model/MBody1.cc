@@ -148,7 +148,9 @@ void modelDefinition(NNmodel &model)
     GENN_PREFERENCES::optimizeCode = true;
 #endif // DEBUG
 
-    //GENN_PREFERENCES::autoChooseDevice= 0;
+    GENN_PREFERENCES::userNvccFlags = " -O3 -use_fast_math";
+     GENN_PREFERENCES::optimizeCode = false;
+   //GENN_PREFERENCES::autoChooseDevice= 0;
     //GENN_PREFERENCES::optimiseBlockSize= 0;
     //GENN_PREFERENCES::neuronBlockSize= 192; 
 
