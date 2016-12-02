@@ -116,10 +116,15 @@ void genNeuronKernel(NNmodel &model, //!< Model description
     }
 
     // these variables now deal only with true spikes, not high V "events"
-    os << "__shared__ unsigned int shSpk[" << neuronBlkSz << "];" << ENDL;
-    os << "__shared__ volatile unsigned int posSpk;" << ENDL;
-    os << "unsigned int spkIdx;" << ENDL;
-    os << "__shared__ volatile unsigned int spkCount;" << ENDL;
+    for (int i = 0; i < model.neuronGrpN; i++) {
+    if (nModels[model.neuronType[i]].thresholdConditionCode != tS("")) {
+        os << "__shared__ unsigned int shSpk[" << neuronBlkSz << "];" << ENDL;
+        os << "__shared__ volatile unsigned int posSpk;" << ENDL;
+        os << "unsigned int spkIdx;" << ENDL;
+        os << "__shared__ volatile unsigned int spkCount;" << ENDL;
+        break;
+    }
+    }
     os << ENDL;
 
     // Reset global spike counting vars here if there are no synapses at all
@@ -150,9 +155,14 @@ void genNeuronKernel(NNmodel &model, //!< Model description
     }
 
     // Initialise shared spike count vars
-    os << "if (threadIdx.x == 0)" << OB(8);
-    os << "spkCount = 0;" << ENDL;
-    os << CB(8);
+    for (int i = 0; i < model.neuronGrpN; i++) {
+    if (nModels[model.neuronType[i]].thresholdConditionCode != tS("")) {
+        os << "if (threadIdx.x == 0)" << OB(8);
+        os << "spkCount = 0;" << ENDL;
+        os << CB(8);
+        break;
+    }
+    }
     for (int i = 0; i < model.neuronGrpN; i++) {
 	if (model.neuronNeedSpkEvnt[i]) {
 	    os << "if (threadIdx.x == 1)" << OB(7);
@@ -257,12 +267,12 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 	    }
 	}
 
-	os << "// test whether spike condition was fulfilled previously" << ENDL;
 	string thCode= nModels[nt].thresholdConditionCode;
 	if (thCode == tS("")) { // no condition provided
 	    cerr << "Warning: No thresholdConditionCode for neuron type " << model.neuronType[i] << " used for population \"" << model.neuronName[i] << "\" was provided. There will be no spikes detected in this population!" << endl;
 	} 
 	else {
+        os << "// test whether spike condition was fulfilled previously" << ENDL;
 	    substitute(thCode, tS("$(id)"), localID);
 	    substitute(thCode, tS("$(t)"), tS("t"));
 	    name_substitutions(thCode, tS("l"), nModels[nt].varNames, tS(""));
