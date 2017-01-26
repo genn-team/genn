@@ -109,7 +109,7 @@ void prepareStandardModels()
     else {\n\
       if ($(t) - $(spikeTime) > ($(trefract))) {\n\
         MYRAND($(seed),theRnd);\n\
-        if (theRnd < *($(rates)+$(offset)+$(id))) {\n			\
+        if (theRnd < *($(rates)+$(offset)+$(id))) {\n                        \
           $(V)= $(Vspike);\n\
           $(spikeTime)= $(t);\n\
         }\n\
@@ -331,18 +331,18 @@ void prepareStandardModels()
     //TODO: replace the resetting in the following with BRIAN-like threshold and resetting 
     n.simCode= "    if ($(V) >= 30.0){\n\
       $(V)=$(c);\n\
-		  $(U)+=$(d);\n\
+                  $(U)+=$(d);\n\
     } \n\
     $(V)+=0.5*(0.04*$(V)*$(V)+5.0*$(V)+140.0-$(U)+$(Isyn))*DT; //at two times for numerical stability\n\
     $(V)+=0.5*(0.04*$(V)*$(V)+5.0*$(V)+140.0-$(U)+$(Isyn))*DT;\n\
     $(U)+=$(a)*($(b)*$(V)-$(U))*DT;\n\
-   //if ($(V) > 30.0){   //keep this only for visualisation -- not really necessaary otherwise \n	\
+   //if ($(V) > 30.0){   //keep this only for visualisation -- not really necessaary otherwise \n        \
    //  $(V)=30.0; \n\
    //}\n";
     n.thresholdConditionCode = "$(V) >= 29.99";
     /*  n.resetCode="//reset code is here\n";
-	$(V)=$(c);\n\
-	$(U)+=$(d);\n\
+        $(V)=$(c);\n\
+        $(U)+=$(d);\n\
     */
     nModels.push_back(n);
     IZHIKEVICH= nModels.size()-1;
@@ -368,7 +368,7 @@ void prepareStandardModels()
     //TODO: replace the resetting in the following with BRIAN-like threshold and resetting 
     n.simCode= "    if ($(V) >= 30.0){\n\
       $(V)=$(c);\n\
-		  $(U)+=$(d);\n\
+                  $(U)+=$(d);\n\
     } \n\
     $(V)+=0.5*(0.04*$(V)*$(V)+5.0*$(V)+140.0-$(U)+$(Isyn))*DT; //at two times for numerical stability\n\
     $(V)+=0.5*(0.04*$(V)*$(V)+5.0*$(V)+140.0-$(U)+$(Isyn))*DT;\n\

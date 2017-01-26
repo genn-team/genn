@@ -46,15 +46,15 @@ class expDecayDp : public dpclass
 {
 public:
     double calculateDerivedParameter(int index, vector<double> pars, double dt = 1.0) {
-	switch (index) {
-	case 0:
-	    return expDecay(pars, dt);
-	}
-	return -1;
+        switch (index) {
+        case 0:
+            return expDecay(pars, dt);
+        }
+        return -1;
     }
 
     double expDecay(vector<double> pars, double dt) {
-	return exp(-dt/pars[0]);
+        return exp(-dt/pars[0]);
     }
 };
 

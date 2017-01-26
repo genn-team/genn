@@ -1,5 +1,5 @@
 
-			
+
   // Add new neuron type - LIntF: 
   n.varNames.clear();
   n.varTypes.clear();
@@ -23,13 +23,13 @@
   n.dpNames.clear();
 
   n.simCode = tS(" \
-  	 $(V) = -1000000; \
-  	 if ($(__regime_val)==1) { \n \
+           $(V) = -1000000; \
+           if ($(__regime_val)==1) { \n \
 $(V_NB) += (Isyn_NB/$(Cm_NB)+($(VRest_NB)-$(V_NB))/$(TAUm_NB))*DT; \n \
-	 	if ($(V_NB)>$(VThresh_NB)) { \n \
+                 if ($(V_NB)>$(VThresh_NB)) { \n \
 $(V_NB) = $(VReset_NB); \n \
 $(tSpike_NB) = t; \n \
-		$(V) = 100000; \
+                $(V) = 100000; \
 $(__regime_val) = 2; \n \
 } \n \
 } \n \
@@ -42,8 +42,8 @@ $(__regime_val) = 1; \n \
 
   nModels.push_back(n);
 
-		
-			
+
+
   // Add new neuron type - regular spike: 
   n.varNames.clear();
   n.varTypes.clear();
@@ -60,12 +60,12 @@ $(__regime_val) = 1; \n \
   n.dpNames.clear();
 
   n.simCode = tS(" \
-  	 $(V) = -1000000; \
-  	 if ($(__regime_val)==1) { \n \
+           $(V) = -1000000; \
+           if ($(__regime_val)==1) { \n \
 $(count_t_NB) += (1)*DT; \n \
-	 	if ($(count_t_NB) > $(max_t_NB)-0.0001) { \n \
+                 if ($(count_t_NB) > $(max_t_NB)-0.0001) { \n \
 $(count_t_NB) = 0; \n \
-		$(V) = 100000; \
+                $(V) = 100000; \
 $(__regime_val) = 1; \n \
 } \n \
 } \n \
@@ -73,8 +73,8 @@ $(__regime_val) = 1; \n \
 
   nModels.push_back(n);
 
-		
-			
+
+
   // Add new neuron type - LInt: 
   n.varNames.clear();
   n.varTypes.clear();
@@ -98,13 +98,13 @@ $(__regime_val) = 1; \n \
   n.dpNames.clear();
 
   n.simCode = tS(" \
-  	 $(V) = -1000000; \
-  	 if ($(__regime_val)==1) { \n \
+           $(V) = -1000000; \
+           if ($(__regime_val)==1) { \n \
 $(V_NB) += (Isyn_NB/$(Cm_NB)+($(VRest_NB)-$(V_NB))/$(TAUm_NB))*DT; \n \
-	 	if ($(V_NB)>$(VThresh_NB)) { \n \
+                 if ($(V_NB)>$(VThresh_NB)) { \n \
 $(V_NB) = $(VReset_NB); \n \
 $(tSpike_NB) = t; \n \
-		$(V) = 100000; \
+                $(V) = 100000; \
 $(__regime_val) = 2; \n \
 } \n \
 } \n \
@@ -117,4 +117,3 @@ $(__regime_val) = 1; \n \
 
   nModels.push_back(n);
 
-		
