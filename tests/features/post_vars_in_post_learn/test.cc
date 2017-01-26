@@ -9,57 +9,9 @@
 
 // **NOTE** base-class for simulation tests must be
 // included after auto-generated globals are includes
-#include "../../utils/simulation_test.h"
+#include "../../utils/simulation_test_post_vars.h"
 
-//----------------------------------------------------------------------------
-// PostVarsInPostLearnTest
-//----------------------------------------------------------------------------
-// **TODO** most of this fixture could be moved into
-// a base class for use by all feature tests
-class PostVarsInPostLearnTest : public SimulationTest
-{
-protected:
-  //--------------------------------------------------------------------------
-  // SimulationTest virtuals
-  //--------------------------------------------------------------------------
-  virtual void Init()
-  {
-    // Initialise neuron parameters
-    for (int i = 0; i < 10; i++)
-    {
-      shiftpre[i] = i * 10.0f;
-      shiftpost[i] = i * 10.0f;
-    }
-
-    m_TheW[0] = wsyn0;
-    m_TheW[1] = wsyn1;
-    m_TheW[2] = wsyn2;
-    m_TheW[3] = wsyn3;
-    m_TheW[4] = wsyn4;
-    m_TheW[5] = wsyn5;
-    m_TheW[6] = wsyn6;
-    m_TheW[7] = wsyn7;
-    m_TheW[8] = wsyn8;
-    m_TheW[9] = wsyn9;
-  }
-
-  //--------------------------------------------------------------------------
-  // Protected methods
-  //--------------------------------------------------------------------------
-  float *GetTheW(unsigned int delay) const
-  {
-    return m_TheW[delay];
-  }
-
-
-private:
-  //--------------------------------------------------------------------------
-  // Members
-  //--------------------------------------------------------------------------
-  float *m_TheW[10];
-};
-
-TEST_P(PostVarsInPostLearnTest, AcceptableError)
+TEST_P(SimulationTestPostVars, AcceptableError)
 {
   float err = 0.0f;
   float x[10][100];
@@ -109,6 +61,6 @@ auto simulatorBackends = ::testing::Values(true, false);
 auto simulatorBackends = ::testing::Values(false);
 #endif
 
-INSTANTIATE_TEST_CASE_P(Backends,
-                        PostVarsInPostLearnTest,
+INSTANTIATE_TEST_CASE_P(PostLearn,
+                        SimulationTestPostVars,
                         simulatorBackends);

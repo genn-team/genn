@@ -9,106 +9,13 @@
 
 // **NOTE** base-class for simulation tests must be
 // included after auto-generated globals are includes
-#include "../../utils/simulation_test.h"
+#include "../../utils/simulation_test_post_vars_sparse.h"
 
-//----------------------------------------------------------------------------
-// PostVarsInPostLearnSparseTest
-//----------------------------------------------------------------------------
-// **TODO** most of this fixture could be moved into
-// a base class for use by all feature tests
-class PostVarsInPostLearnSparseTest : public SimulationTest
+TEST_P(SimulationTestPostVarsSparse, AcceptableError)
 {
-protected:
-  //--------------------------------------------------------------------------
-  // SimulationTest virtuals
-  //--------------------------------------------------------------------------
-  virtual void Init()
-  {
-    // Initialise neuron parameters
-    for(int i = 0; i < 10; i++)
-    {
-      shiftpre[i] = i * 10.0f;
-      shiftpost[i] = i * 10.0f;
-    }
+  // Initialize sparse projection
+  initpost_vars_in_post_learn_sparse();
 
-    #define SETUP_THE_C(I)  \
-      case I:               \
-        allocatesyn##I(10); \
-        theC= &Csyn##I;     \
-        break;
-
-    // all different delay groups get same connectivity
-    for(int i = 0; i < 10; i++)
-    {
-        // **YUCK** extract correct sparse projection
-        SparseProjection *theC;
-        switch (i)
-        {
-          SETUP_THE_C(0)
-          SETUP_THE_C(1)
-          SETUP_THE_C(2)
-          SETUP_THE_C(3)
-          SETUP_THE_C(4)
-          SETUP_THE_C(5)
-          SETUP_THE_C(6)
-          SETUP_THE_C(7)
-          SETUP_THE_C(8)
-          SETUP_THE_C(9)
-        };
-
-        // loop through pre-synaptic neurons
-        for(int j = 0; j < 10; j++)
-        {
-            // each pre-synatic neuron gets one target neuron
-            unsigned int trg= (j + 1) % 10;
-            theC->indInG[j]= j;
-            theC->ind[j]= trg;
-        }
-        theC->indInG[10]= 10;
-    }
-    m_TheW[0] = wsyn0;
-    m_TheW[1] = wsyn1;
-    m_TheW[2] = wsyn2;
-    m_TheW[3] = wsyn3;
-    m_TheW[4] = wsyn4;
-    m_TheW[5] = wsyn5;
-    m_TheW[6] = wsyn6;
-    m_TheW[7] = wsyn7;
-    m_TheW[8] = wsyn8;
-    m_TheW[9] = wsyn9;
-
-    // for all synapse groups
-    for(int i = 0; i < 10; i++)
-    {
-        // for all synapses
-        for(int j = 0; j < 10; j++)
-        {
-            m_TheW[i][j]= 0.0f;
-        }
-    }
-
-    // Initialize sparse projection
-    initpost_vars_in_post_learn_sparse();
-  }
-
-  //--------------------------------------------------------------------------
-  // Protected methods
-  //--------------------------------------------------------------------------
-  float *GetTheW(unsigned int delay) const
-  {
-    return m_TheW[delay];
-  }
-
-
-private:
-  //--------------------------------------------------------------------------
-  // Members
-  //--------------------------------------------------------------------------
-  float *m_TheW[10];
-};
-
-TEST_P(PostVarsInPostLearnSparseTest, AcceptableError)
-{
   float err = 0.0f;
   float x[10][10];
   for (int i = 0; i < (int)(20.0f / DT); i++)
@@ -153,6 +60,6 @@ auto simulatorBackends = ::testing::Values(true, false);
 auto simulatorBackends = ::testing::Values(false);
 #endif
 
-INSTANTIATE_TEST_CASE_P(Backends,
-                        PostVarsInPostLearnSparseTest,
+INSTANTIATE_TEST_CASE_P(PostLearn,
+                        SimulationTestPostVarsSparse,
                         simulatorBackends);
