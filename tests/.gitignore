@@ -1,0 +1,23 @@
+# Ignore object files
+**/*.o
+
+# Ignore test executables
+**/test
+
+# Ignore GCOV output
+**/*.gcda
+**/*.gcno
+
+# Ignore xml test output
+**/*.xml
+
+# Ignore output folders from code generation
+**/*_CODE
+
+# Ignore generator executables
+**/generateALL_CPU_ONLY
+
+# Ignore LCOV output
+coverage.txt
+code_coverage_report
+
