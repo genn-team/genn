@@ -57,51 +57,51 @@ class pwSTDP : public dpclass //!TODO This class definition may be code-generate
 {
 public:
     double calculateDerivedParameter(int index, vector<double> pars, double dt = 1.0) {
-	switch (index) {
-	case 0:
-	    return lim0(pars, dt);
-	case 1:
-	    return lim1(pars, dt);
-	case 2:
-	    return slope0(pars, dt);
-	case 3:
-	    return slope1(pars, dt);
-	case 4:
-	    return off0(pars, dt);
-	case 5:
-	    return off1(pars, dt);
-	case 6:
-	    return off2(pars, dt);
-	}
-	return -1;
+        switch (index) {
+        case 0:
+            return lim0(pars, dt);
+        case 1:
+            return lim1(pars, dt);
+        case 2:
+            return slope0(pars, dt);
+        case 3:
+            return slope1(pars, dt);
+        case 4:
+            return off0(pars, dt);
+        case 5:
+            return off1(pars, dt);
+        case 6:
+            return off2(pars, dt);
+        }
+        return -1;
     }
     
     double lim0(vector<double> pars, double dt) {
-	return (1/pars[4] + 1/pars[1]) * pars[0] / (2/pars[1]);
+        return (1/pars[4] + 1/pars[1]) * pars[0] / (2/pars[1]);
     }
 
     double lim1(vector<double> pars, double dt) {
-	return -((1/pars[3] + 1/pars[1]) * pars[0] / (2/pars[1]));
+        return -((1/pars[3] + 1/pars[1]) * pars[0] / (2/pars[1]));
     }
 
     double slope0(vector<double> pars, double dt) {
-	return -2*pars[5]/(pars[1]*pars[0]); 
+        return -2*pars[5]/(pars[1]*pars[0]);
     }
 
     double slope1(vector<double> pars, double dt) {
-	return -1*slope0(pars, dt);
+        return -1*slope0(pars, dt);
     }
 
     double off0(vector<double> pars, double dt) {
-	return pars[5]/pars[4];
+        return pars[5]/pars[4];
     }
 
     double off1(vector<double> pars, double dt) {
-	return pars[5]/pars[1];
+        return pars[5]/pars[1];
     }
 
     double off2(vector<double> pars, double dt) {
-	return pars[5]/pars[3];
+        return pars[5]/pars[3];
     }
 };
 

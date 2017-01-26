@@ -3,7 +3,7 @@
   
    Institute: Center for Computational Neuroscience and Robotics
               University of Sussex
-	      Falmer, Brighton BN1 9QJ, UK 
+              Falmer, Brighton BN1 9QJ, UK
   
    email to:  T.Nowotny@sussex.ac.uk
   
@@ -98,8 +98,8 @@ void writeHeader(ostream &os)
     ifstream is("../src/header.src");
     getline(is, s);
     while (is.good()) {
-	os << s << endl;
-	getline(is, s);
+        os << s << endl;
+        getline(is, s);
     }
     os << endl;
 }
@@ -149,7 +149,7 @@ unsigned int theSize(string type)
   if (type == "uintmax_t") size= sizeof(uintmax_t);
   if (type == "int8_t") size= sizeof(int8_t);
   if (type == "uint8_t") size= sizeof(uint8_t);
-  if (type == "int16_t") size= sizeof(int16_t);	
+  if (type == "int16_t") size= sizeof(int16_t);
   if (type == "uint16_t") size= sizeof(uint16_t);
   if (type == "int32_t") size= sizeof(int32_t);
   if (type == "uint32_t") size= sizeof(uint32_t);

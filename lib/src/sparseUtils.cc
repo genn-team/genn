@@ -19,22 +19,22 @@ void createPosttoPreArray(unsigned int preN, unsigned int postN, SparseProjectio
     unsigned int glbcounter = 0;
     
     for (int i = 0; i< preN; i++){ //i : index of presynaptic neuron
-	for (int j = 0; j < (C->indInG[i+1]-C->indInG[i]); j++){ //for every postsynaptic neuron j
-	    tempvectInd[C->ind[C->indInG[i]+j]].push_back(i); //C->ind[C->indInG[i]+j]: index of postsynaptic neuron
-	    tempvectV[C->ind[C->indInG[i]+j]].push_back(C->indInG[i]+j); //this should give where we can find the value in the array
-	    glbcounter++;
-	}
+        for (int j = 0; j < (C->indInG[i+1]-C->indInG[i]); j++){ //for every postsynaptic neuron j
+            tempvectInd[C->ind[C->indInG[i]+j]].push_back(i); //C->ind[C->indInG[i]+j]: index of postsynaptic neuron
+            tempvectV[C->ind[C->indInG[i]+j]].push_back(C->indInG[i]+j); //this should give where we can find the value in the array
+            glbcounter++;
+        }
     }
     unsigned int lcounter =0;
 
     C->revIndInG[0]=0;
     for (int k = 0; k < postN; k++){
-	C->revIndInG[k+1]=C->revIndInG[k]+tempvectInd[k].size();
-	for (int p = 0; p< tempvectInd[k].size(); p++){ //if k=0?
-	    C->revInd[lcounter]=tempvectInd[k][p];
-	    C->remap[lcounter]=tempvectV[k][p];
-	    lcounter++;
-	}
+        C->revIndInG[k+1]=C->revIndInG[k]+tempvectInd[k].size();
+        for (int p = 0; p< tempvectInd[k].size(); p++){ //if k=0?
+            C->revInd[lcounter]=tempvectInd[k][p];
+            C->remap[lcounter]=tempvectV[k][p];
+            lcounter++;
+        }
     }
 }
 
@@ -50,9 +50,9 @@ void createPreIndices(unsigned int preN, unsigned int postN, SparseProjection * 
     // let's not assume anything and create from the minimum available data, i.e. indInG and ind
     vector<vector<unsigned int> > tempvect(postN); //temporary vector to keep indices
     for (int i = 0; i< preN; i++){ //i : index of presynaptic neuron
-	for (int j = 0; j < (C->indInG[i+1]-C->indInG[i]); j++){ //for every postsynaptic neuron j
-	    C->preInd[C->indInG[i]+j]= i; // simmple array of the presynaptic neuron index of each synapse
-	}
+        for (int j = 0; j < (C->indInG[i+1]-C->indInG[i]); j++){ //for every postsynaptic neuron j
+            C->preInd[C->indInG[i]+j]= i; // simmple array of the presynaptic neuron index of each synapse
+        }
     }
 }
 

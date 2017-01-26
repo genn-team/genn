@@ -1,5 +1,5 @@
 
-			
+
   // Add new postsynapse type - Exp Decay: 
   ps.varNames.clear();
   ps.varTypes.clear();
@@ -14,24 +14,24 @@
 
   ps.postSyntoCurrent = tS(" \
   0; \n \
-     	float Isyn_NB = 0; \n \
-     	 { \n \
-    	float v_PS = lV_NB; \n \
-     	 float g_in_PS = $(inSyn); \
+             float Isyn_NB = 0; \n \
+              { \n \
+            float v_PS = lV_NB; \n \
+              float g_in_PS = $(inSyn); \
 $(g_PS) = $(g_PS)+g_in_PS; \n \
 Isyn_NB += ($(g_PS)*($(E_PS)-v_PS)); \n \
-	  } \n \
+          } \n \
 ");
-  	 
-	ps.postSynDecay = tS(" \
-  	 $(g_PS) += (-$(g_PS)/$(tau_syn_PS))*DT; \n \
-	 		$(inSyn) = 0; \
-  	");
+
+        ps.postSynDecay = tS(" \
+           $(g_PS) += (-$(g_PS)/$(tau_syn_PS))*DT; \n \
+                         $(inSyn) = 0; \
+          ");
 
   postSynModels.push_back(ps);
 
-	
-			
+
+
   // Add new postsynapse type - Exp Decay: 
   ps.varNames.clear();
   ps.varTypes.clear();
@@ -47,22 +47,22 @@ Isyn_NB += ($(g_PS)*($(E_PS)-v_PS)); \n \
   ps.postSyntoCurrent = tS(" \
   0; \n \
       { \n \
-    	float v_PS = lV_NB; \n \
-     	 float g_in_PS = $(inSyn); \
+            float v_PS = lV_NB; \n \
+              float g_in_PS = $(inSyn); \
 $(g_PS) = $(g_PS)+g_in_PS; \n \
 Isyn_NB += ($(g_PS)*($(E_PS)-v_PS)); \n \
-	  } \n \
+          } \n \
 ");
-  	 
-	ps.postSynDecay = tS(" \
-  	 $(g_PS) += (-$(g_PS)/$(tau_syn_PS))*DT; \n \
-	 		$(inSyn) = 0; \
-  	");
+
+        ps.postSynDecay = tS(" \
+           $(g_PS) += (-$(g_PS)/$(tau_syn_PS))*DT; \n \
+                         $(inSyn) = 0; \
+          ");
 
   postSynModels.push_back(ps);
 
-	
-			
+
+
   // Add new postsynapse type - Exp Decay: 
   ps.varNames.clear();
   ps.varTypes.clear();
@@ -77,20 +77,19 @@ Isyn_NB += ($(g_PS)*($(E_PS)-v_PS)); \n \
 
   ps.postSyntoCurrent = tS(" \
   0; \n \
-     	float Isyn_NB = 0; \n \
-     	 { \n \
-    	float v_PS = lV_NB; \n \
-     	 float g_in_PS = $(inSyn); \
+             float Isyn_NB = 0; \n \
+              { \n \
+            float v_PS = lV_NB; \n \
+              float g_in_PS = $(inSyn); \
 $(g_PS) = $(g_PS)+g_in_PS; \n \
 Isyn_NB += ($(g_PS)*($(E_PS)-v_PS)); \n \
-	  } \n \
+          } \n \
 ");
-  	 
-	ps.postSynDecay = tS(" \
-  	 $(g_PS) += (-$(g_PS)/$(tau_syn_PS))*DT; \n \
-	 		$(inSyn) = 0; \
-  	");
+
+        ps.postSynDecay = tS(" \
+           $(g_PS) += (-$(g_PS)/$(tau_syn_PS))*DT; \n \
+                         $(inSyn) = 0; \
+          ");
 
   postSynModels.push_back(ps);
 
-	

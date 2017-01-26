@@ -38,18 +38,18 @@ using namespace std;
 //--------------------------------------------------------------------------
 
 #if CUDA_VERSION >= 6050
-#define CHECK_CU_ERRORS(call)					\
-  {								\
-    CUresult error = call;					\
-    if (error != CUDA_SUCCESS)					\
-      {								\
-	const char *errStr;					\
-	cuGetErrorName(error, &errStr);				\
-	cerr << __FILE__ << ": " <<  __LINE__;			\
-	cerr << ": cuda driver error " << error << ": ";	\
-	cerr << errStr << endl;					\
-	exit(EXIT_FAILURE);					\
-      }								\
+#define CHECK_CU_ERRORS(call)                                        \
+  {                                                                \
+    CUresult error = call;                                        \
+    if (error != CUDA_SUCCESS)                                        \
+      {                                                                \
+        const char *errStr;                                        \
+        cuGetErrorName(error, &errStr);                                \
+        cerr << __FILE__ << ": " <<  __LINE__;                        \
+        cerr << ": cuda driver error " << error << ": ";        \
+        cerr << errStr << endl;                                        \
+        exit(EXIT_FAILURE);                                        \
+      }                                                                \
   }
 #else
 #define CHECK_CU_ERRORS(call) call
@@ -57,16 +57,16 @@ using namespace std;
 
 // comment below and uncomment here when using CUDA that does not support cugetErrorName
 //#define CHECK_CU_ERRORS(call) call
-#define CHECK_CUDA_ERRORS(call)					\
-  {								\
-    cudaError_t error = call;					\
-    if (error != cudaSuccess)					\
-      {								\
-	cerr << __FILE__ << ": " <<  __LINE__;			\
-	cerr << ": cuda runtime error " << error << ": ";	\
-	cerr << cudaGetErrorString(error) << endl;		\
-	exit(EXIT_FAILURE);					\
-      }								\
+#define CHECK_CUDA_ERRORS(call)                                        \
+  {                                                                \
+    cudaError_t error = call;                                        \
+    if (error != cudaSuccess)                                        \
+      {                                                                \
+        cerr << __FILE__ << ": " <<  __LINE__;                        \
+        cerr << ": cuda runtime error " << error << ": ";        \
+        cerr << cudaGetErrorString(error) << endl;                \
+        exit(EXIT_FAILURE);                                        \
+      }                                                                \
   }
 #endif
 

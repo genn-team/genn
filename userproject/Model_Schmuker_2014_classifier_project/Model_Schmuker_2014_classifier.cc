@@ -47,55 +47,55 @@ void modelDefinition(NNmodel &model)
     model.setName("Schmuker_2014_classifier");
 
 
-  	/*--------------------------------------------------------------------------*/
+      /*--------------------------------------------------------------------------*/
   
     //DEFINE NEURON POPULATIONS ..
       
-	/*--------------------------------------------------------------------------
- 	RN receptor neuron Population. Clusters of Poisson neurons take rate level input from set of VR
-	-------------------------------------------------------------------------- */
-	
-	double poissonRN_params[4]= {
-  	0.1,        // 0 - firing rate
-  	2.5,        // 1 - refractory period
-  	20.0,       // 2 - Vspike
-  	-60.0       // 3 - Vrest
-	};
+    /*--------------------------------------------------------------------------
+     RN receptor neuron Population. Clusters of Poisson neurons take rate level input from set of VR
+    -------------------------------------------------------------------------- */
 
-	double poissonRN_ini[3]= { //initial values for the neron variables
- 	-60.0,        // 0 - V
-  	0,           // 1 - seed
-  	-10.0,       // 2 - SpikeTime
-	};
-	int countRN = NUM_VR * CLUST_SIZE_RN;
-  	model.addNeuronPopulation("RN", countRN, POISSONNEURON, poissonRN_params,  poissonRN_ini);
+    double poissonRN_params[4]= {
+      0.1,        // 0 - firing rate
+      2.5,        // 1 - refractory period
+      20.0,       // 2 - Vspike
+      -60.0       // 3 - Vrest
+    };
+
+    double poissonRN_ini[3]= { //initial values for the neron variables
+     -60.0,        // 0 - V
+      0,           // 1 - seed
+      -10.0,       // 2 - SpikeTime
+    };
+    int countRN = NUM_VR * CLUST_SIZE_RN;
+      model.addNeuronPopulation("RN", countRN, POISSONNEURON, poissonRN_params,  poissonRN_ini);
   
   
-	/*--------------------------------------------------------------------------
- 	PN projection neuron Population. Uses MAP neuron model. 
- 	Clusters of PN neurons take excitatory input 1:1 from RN clusters, 
- 	whilst conducting an weak WTA among themselves
-	-------------------------------------------------------------------------- */
-	
-	double stdMAP_params[4]= {
-	60.0,          // 0 - Vspike: spike Amplitude factor
-	3.0,           // 1 - alpha: "steepness / size" parameter
-	-2.468,        // 2 - y: "shift / excitation" parameter
-	0.0165         // 3 - beta: input sensitivity
-	};
+    /*--------------------------------------------------------------------------
+     PN projection neuron Population. Uses MAP neuron model.
+     Clusters of PN neurons take excitatory input 1:1 from RN clusters,
+     whilst conducting an weak WTA among themselves
+    -------------------------------------------------------------------------- */
 
-	double stdMAP_ini[2]= {
-	-60.0,         // 0 - V: initial value for membrane potential
-	-60.0          // 1 - preV: initial previous value
-	};
-	int countPN = NUM_VR * CLUST_SIZE_PN;
+    double stdMAP_params[4]= {
+    60.0,          // 0 - Vspike: spike Amplitude factor
+    3.0,           // 1 - alpha: "steepness / size" parameter
+    -2.468,        // 2 - y: "shift / excitation" parameter
+    0.0165         // 3 - beta: input sensitivity
+    };
+
+    double stdMAP_ini[2]= {
+    -60.0,         // 0 - V: initial value for membrane potential
+    -60.0          // 1 - preV: initial previous value
+    };
+    int countPN = NUM_VR * CLUST_SIZE_PN;
     model.addNeuronPopulation("PN", countPN, MAPNEURON, stdMAP_params,  stdMAP_ini);
-    	
-	/*--------------------------------------------------------------------------
- 	AN output Association Neuron population. Uses MAP neuron model. 
- 	Clusters of AN neurons, each representing an output class take excitatory input from all PN clusters, 
- 	whilst conducting an strong WTA among themselves
-	-------------------------------------------------------------------------- */
+
+    /*--------------------------------------------------------------------------
+     AN output Association Neuron population. Uses MAP neuron model.
+     Clusters of AN neurons, each representing an output class take excitatory input from all PN clusters,
+     whilst conducting an strong WTA among themselves
+    -------------------------------------------------------------------------- */
     int countAN = NUM_CLASSES * CLUST_SIZE_AN;
     model.addNeuronPopulation("AN", countAN, MAPNEURON, stdMAP_params,  stdMAP_ini);
     
@@ -117,73 +117,73 @@ void modelDefinition(NNmodel &model)
 
 
     //std shared params
-	double synapsesStdExcitatory_params[1]= {-20.0};// Epre: Presynaptic threshold potential
-	double initialConductanceValue[1]={0.0};
-	double *postSynV = NULL;
+    double synapsesStdExcitatory_params[1]= {-20.0};// Epre: Presynaptic threshold potential
+    double initialConductanceValue[1]={0.0};
+    double *postSynV = NULL;
     
     /*--------------------------------------------------------------------------
- 	Define RN to PN Synapses. These are fixed weight, excitatory. cluster-cluster 1:1 connections, with N% connectivity (e.g. 50%)
- 	NB: The specific matrix entries defining cluster-cluster 1:1 connections are generated and loaded in the initialisation of the classifier class
- 	Note that this connectivity will move to SPARSE data structure when available
-	-------------------------------------------------------------------------- */
-	
-	double postExpSynapsePopn_RNPN[2] = {
-			SYNAPSE_TAU_RNPN, 	//tau_S: decay time constant [ms]
-			0.0	// Erev: Reversal potential
-			};
+     Define RN to PN Synapses. These are fixed weight, excitatory. cluster-cluster 1:1 connections, with N% connectivity (e.g. 50%)
+     NB: The specific matrix entries defining cluster-cluster 1:1 connections are generated and loaded in the initialisation of the classifier class
+     Note that this connectivity will move to SPARSE data structure when available
+    -------------------------------------------------------------------------- */
 
-	model.addSynapsePopulation("RNPN", NSYNAPSE_SPK_EVNT, DENSE, INDIVIDUALG,NO_DELAY, EXPDECAY, "RN", "PN", initialConductanceValue, synapsesStdExcitatory_params, postSynV,postExpSynapsePopn_RNPN);
-	
+    double postExpSynapsePopn_RNPN[2] = {
+            SYNAPSE_TAU_RNPN,     //tau_S: decay time constant [ms]
+            0.0    // Erev: Reversal potential
+            };
+
+    model.addSynapsePopulation("RNPN", NSYNAPSE_SPK_EVNT, DENSE, INDIVIDUALG,NO_DELAY, EXPDECAY, "RN", "PN", initialConductanceValue, synapsesStdExcitatory_params, postSynV,postExpSynapsePopn_RNPN);
+
     /*--------------------------------------------------------------------------
- 	Define PN to PN Synapses. These are fixed weight, inhibitory synapses. configured as a weak WTA between clusters, with N% connectivity (e.g. 50%)
- 	NB: The specific matrix entries defining cluster-cluster connections are generated and loaded in the initialisation of the classifier class
-	-------------------------------------------------------------------------- */
+     Define PN to PN Synapses. These are fixed weight, inhibitory synapses. configured as a weak WTA between clusters, with N% connectivity (e.g. 50%)
+     NB: The specific matrix entries defining cluster-cluster connections are generated and loaded in the initialisation of the classifier class
+    -------------------------------------------------------------------------- */
 
-	/*
-	//Average inbitory synapse (created from mid point of strong and weak examples)
-	double synapsesWTA_AvgInhibitory_params[2]= {
-  	-35.0,        		// Epre: Presynaptic threshold potential (strong -40, weak -30)
-  	50.0          		// Vslope: Activation slope of graded release
-	};
-	*/
-	//Average inhibitory synapse (created from mid point of strong and weak examples)
-	double synapsesWTA_AvgInhibitory_params[1]= {-35}; // Epre: Presynaptic threshold potential (strong -40, weak -30)
+    /*
+    //Average inbitory synapse (created from mid point of strong and weak examples)
+    double synapsesWTA_AvgInhibitory_params[2]= {
+      -35.0,                // Epre: Presynaptic threshold potential (strong -40, weak -30)
+      50.0                  // Vslope: Activation slope of graded release
+    };
+    */
+    //Average inhibitory synapse (created from mid point of strong and weak examples)
+    double synapsesWTA_AvgInhibitory_params[1]= {-35}; // Epre: Presynaptic threshold potential (strong -40, weak -30)
 
 
-	double postExpSynapsePopn_PNPN[2] = {
-			SYNAPSE_TAU_PNPN, 	// tau_S: decay time constant for S [ms] //may need tuning(fast/strong 3ms, slow/weak 8ms avg:5.5)
-			-92.0        		// Erev: Reversal potential
-	};
+    double postExpSynapsePopn_PNPN[2] = {
+            SYNAPSE_TAU_PNPN,     // tau_S: decay time constant for S [ms] //may need tuning(fast/strong 3ms, slow/weak 8ms avg:5.5)
+            -92.0                // Erev: Reversal potential
+    };
 
-	model.addSynapsePopulation("PNPN", NSYNAPSE_SPK_EVNT, DENSE, INDIVIDUALG,NO_DELAY, EXPDECAY, "PN", "PN", initialConductanceValue, synapsesWTA_AvgInhibitory_params,postSynV,postExpSynapsePopn_PNPN);
-	
-	/*--------------------------------------------------------------------------
- 	Define PN to AN Synapses. These are plastic, excitatory. all-all connections, but with N% connectivity (e.g. 50%)
- 	NB: The specific matrix entries defining connections are generated and loaded in the initialisation of the classifier class
- 	Initial weight values are set randomly between upper and lower limits
- 	Weights are altered on the CPU by a learning rule between time steps and revised matrix uploaded to the GPU
-	-------------------------------------------------------------------------- */
-    	
-	double postExpSynapsePopn_PNAN[2] = {
-				SYNAPSE_TAU_PNAN, 	//tau_S: decay time constant [ms]
-				0.0	// Erev: Reversal potential
-				};
-	model.addSynapsePopulation("PNAN", NSYNAPSE_SPK_EVNT, DENSE, INDIVIDUALG,NO_DELAY, EXPDECAY, "PN", "AN", initialConductanceValue, synapsesStdExcitatory_params,postSynV,postExpSynapsePopn_PNAN);
-	
-	/*--------------------------------------------------------------------------
-	Define AN to AN Synapses. These are fixed weight, inhibitory synapses. configured as a strong WTA between output class clusters, with N% connectivity (e.g. 50%)
-	NB: The specific matrix entries defining cluster-cluster connections are generated and loaded in the initialisation of the classifier class
-	-------------------------------------------------------------------------- */
+    model.addSynapsePopulation("PNPN", NSYNAPSE_SPK_EVNT, DENSE, INDIVIDUALG,NO_DELAY, EXPDECAY, "PN", "PN", initialConductanceValue, synapsesWTA_AvgInhibitory_params,postSynV,postExpSynapsePopn_PNPN);
 
-	double postExpSynapsePopn_ANAN[2] = {
-			SYNAPSE_TAU_ANAN, 	// tau_S: decay time constant for S [ms] //may need tuning(fast/strong 3ms, slow/weak 8ms avg:5.5)
-			-92.0        		// Erev: Reversal potential
-	};
+    /*--------------------------------------------------------------------------
+     Define PN to AN Synapses. These are plastic, excitatory. all-all connections, but with N% connectivity (e.g. 50%)
+     NB: The specific matrix entries defining connections are generated and loaded in the initialisation of the classifier class
+     Initial weight values are set randomly between upper and lower limits
+     Weights are altered on the CPU by a learning rule between time steps and revised matrix uploaded to the GPU
+    -------------------------------------------------------------------------- */
 
-	model.addSynapsePopulation("ANAN", NSYNAPSE_SPK_EVNT, DENSE, INDIVIDUALG,NO_DELAY, EXPDECAY, "AN", "AN", initialConductanceValue, synapsesWTA_AvgInhibitory_params,postSynV,postExpSynapsePopn_ANAN);
+    double postExpSynapsePopn_PNAN[2] = {
+                SYNAPSE_TAU_PNAN,     //tau_S: decay time constant [ms]
+                0.0    // Erev: Reversal potential
+                };
+    model.addSynapsePopulation("PNAN", NSYNAPSE_SPK_EVNT, DENSE, INDIVIDUALG,NO_DELAY, EXPDECAY, "PN", "AN", initialConductanceValue, synapsesStdExcitatory_params,postSynV,postExpSynapsePopn_PNAN);
 
-	//initializing learning parameters to start
-	model.finalize();
+    /*--------------------------------------------------------------------------
+    Define AN to AN Synapses. These are fixed weight, inhibitory synapses. configured as a strong WTA between output class clusters, with N% connectivity (e.g. 50%)
+    NB: The specific matrix entries defining cluster-cluster connections are generated and loaded in the initialisation of the classifier class
+    -------------------------------------------------------------------------- */
+
+    double postExpSynapsePopn_ANAN[2] = {
+            SYNAPSE_TAU_ANAN,     // tau_S: decay time constant for S [ms] //may need tuning(fast/strong 3ms, slow/weak 8ms avg:5.5)
+            -92.0                // Erev: Reversal potential
+    };
+
+    model.addSynapsePopulation("ANAN", NSYNAPSE_SPK_EVNT, DENSE, INDIVIDUALG,NO_DELAY, EXPDECAY, "AN", "AN", initialConductanceValue, synapsesWTA_AvgInhibitory_params,postSynV,postExpSynapsePopn_ANAN);
+
+    //initializing learning parameters to start
+    model.finalize();
 }
 
 /*--------------------------------------------------------------------------
