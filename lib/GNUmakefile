@@ -63,7 +63,7 @@ ifdef DEBUG
     CXXFLAGS             +=-g -O0 -DDEBUG
 endif
 ifdef COVERAGE
-    CXXFLAGS             +=--coverage
+    CXXFLAGS             +=-O0 --coverage
 endif
 ARFLAGS                  :=-rcs
 
