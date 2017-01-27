@@ -15,39 +15,11 @@ TEST_P(SimulationTestPostVarsSparse, AcceptableError)
 {
   initpost_vars_in_synapse_dynamics_sparse();
 
-  float err = 0.0f;
-  float x[10][10];
-  for (int i = 0; i < (int)(20.0f / DT); i++)
-  {
-    t = i * DT;
-
-    // for each delay
-    for (int d = 0; d < 10; d++)
+  float err = Simulate(
+    [](float t)
     {
-        // for all pre-synaptic neurons
-        for (int j = 0; j < 10; j++)
-        {
-            if (t > 0.0001+DT)
-            {
-                x[d][j] = t-2*DT+10*((j+1)%10);
-            }
-            else if(i == 0)
-            {
-                x[d][j] = 0.0f;
-            }
-        }
-
-        // Add error for this time step to total
-        err += std::inner_product(&x[d][0], &x[d][10],
-                                  GetTheW(d),
-                                  0.0,
-                                  std::plus<float>(),
-                                  [](float a, float b){ return abs(a - b); });
-    }
-
-    // Step simulation
-    Step();
-  }
+        return (t > 0.0001+DT);
+    });
 
   // Check total error is less than some tolerance
   EXPECT_LT(err, 5e-3);

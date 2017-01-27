@@ -1,6 +1,3 @@
-#include <functional>
-#include <numeric>
-
 // Google test includes
 #include "gtest/gtest.h"
 
@@ -13,43 +10,11 @@
 
 TEST_P(SimulationTestPostVars, AcceptableError)
 {
-  float err = 0.0f;
-  float x[10][100];
-  for (int i = 0; i < (int)(20.0f / DT); i++)
-  {
-    t = i * DT;
-
-    // for each delay
-    for (int d = 0; d < 10; d++)
+  float err = Simulate(
+    [](float t)
     {
-        // for all pre-synaptic neurons
-        for (int j = 0; j < 10; j++)
-        {
-            // for all post-syn neurons
-            for (int k = 0; k < 10; k++)
-            {
-                if (t > 0.0001+DT)
-                {
-                    x[d][(j * 10) + k] = t-2*DT+10*k;
-                }
-                else if(i == 0)
-                {
-                    x[d][(j * 10) + k] = 0.0f;
-                }
-            }
-        }
-
-        // Add error for this time step to total
-        err += std::inner_product(&x[d][0], &x[d][100],
-                                  GetTheW(d),
-                                  0.0,
-                                  std::plus<float>(),
-                                  [](float a, float b){ return abs(a - b); });
-    }
-
-    // Step simulation
-    Step();
-  }
+        return (t > 0.0001+DT);
+    });
 
   // Check total error is less than some tolerance
   EXPECT_LT(err, 5e-2);
