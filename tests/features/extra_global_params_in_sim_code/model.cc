@@ -12,7 +12,7 @@ void modelDefinition(NNmodel &model)
 {
   initGeNN();
   model.setDT(0.1);
-  model.setName("extra_global_parameters");
+  model.setName("extra_global_params_in_sim_code");
 
   neuronModel n;
 
