@@ -4,44 +4,31 @@
 #include <functional>
 #include <numeric>
 
-// Test includes
-#include "simulation_test.h"
-
 //----------------------------------------------------------------------------
-// SimulationTestPostVars
+// SimulationSynapsePolicyDense
 //----------------------------------------------------------------------------
-class SimulationTestPostVars : public SimulationTest
+class SimulationSynapsePolicyDense
 {
-protected:
-  //--------------------------------------------------------------------------
-  // SimulationTest virtuals
-  //--------------------------------------------------------------------------
-  virtual void Init()
+public:
+  //----------------------------------------------------------------------------
+  // Public API
+  //----------------------------------------------------------------------------
+  void Init()
   {
-    // Initialise neuron parameters
-    for (int i = 0; i < 10; i++)
-    {
-      shiftpre[i] = i * 10.0f;
-      shiftpost[i] = i * 10.0f;
-    }
+      m_TheW[0] = wsyn0;
+      m_TheW[1] = wsyn1;
+      m_TheW[2] = wsyn2;
+      m_TheW[3] = wsyn3;
+      m_TheW[4] = wsyn4;
+      m_TheW[5] = wsyn5;
+      m_TheW[6] = wsyn6;
+      m_TheW[7] = wsyn7;
+      m_TheW[8] = wsyn8;
+      m_TheW[9] = wsyn9;
+  }
 
-    m_TheW[0] = wsyn0;
-    m_TheW[1] = wsyn1;
-    m_TheW[2] = wsyn2;
-    m_TheW[3] = wsyn3;
-    m_TheW[4] = wsyn4;
-    m_TheW[5] = wsyn5;
-    m_TheW[6] = wsyn6;
-    m_TheW[7] = wsyn7;
-    m_TheW[8] = wsyn8;
-    m_TheW[9] = wsyn9;
-  };
-
-  //--------------------------------------------------------------------------
-  // Protected methods
-  //--------------------------------------------------------------------------
-  template<typename ShouldUpdateFn>
-  float Simulate(ShouldUpdateFn shouldUpdate)
+  template<typename UpdateFn, typename StepGeNNFn>
+  float Simulate(UpdateFn updateFn, StepGeNNFn stepGeNNFn)
   {
       float err = 0.0f;
       float x[10][100];
@@ -58,9 +45,10 @@ protected:
                 // for all post-syn neurons
                 for (int k = 0; k < 10; k++)
                 {
-                    if (shouldUpdate(t))
+                    float newX;
+                    if(updateFn(d, j, k, t, newX))
                     {
-                        x[d][(j * 10) + k] = t-2*DT+10*k;
+                        x[d][(j * 10) + k] = newX;
                     }
                     else if(i == 0)
                     {
@@ -74,16 +62,20 @@ protected:
                                       GetTheW(d),
                                       0.0,
                                       std::plus<float>(),
-                                      [](double a, double b){ return abs(a - b); });
+                                      [](float a, float b){ return abs(a - b); });
         }
 
-        // Step simulation
-        Step();
+        // Step GeNN kernel
+        stepGeNNFn();
       }
 
       return err;
   }
 
+protected:
+  //--------------------------------------------------------------------------
+  // Protected API
+  //--------------------------------------------------------------------------
   float *GetTheW(unsigned int delay) const
   {
       return m_TheW[delay];

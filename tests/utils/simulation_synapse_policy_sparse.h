@@ -1,22 +1,21 @@
 #pragma once
 
+#include "simulation_synapse_policy_dense.h"
+
 // Standard includes
 #include <functional>
 #include <numeric>
 
-#include "simulation_test_post_vars.h"
-
-
 //----------------------------------------------------------------------------
-// SimulationTestPostVarsSparse
+// SimulationSynapsePolicySparse
 //----------------------------------------------------------------------------
-class SimulationTestPostVarsSparse : public SimulationTestPostVars
+class SimulationSynapsePolicySparse : public SimulationSynapsePolicyDense
 {
-protected:
-  //--------------------------------------------------------------------------
-  // SimulationTest virtuals
-  //--------------------------------------------------------------------------
-  virtual void Init()
+public:
+  //----------------------------------------------------------------------------
+  // Public API
+  //----------------------------------------------------------------------------
+  void Init()
   {
       #define SETUP_THE_C(I)  \
         case I:               \
@@ -55,7 +54,7 @@ protected:
       }
 
       // Superclass
-      SimulationTestPostVars::Init();
+      SimulationSynapsePolicyDense::Init();
 
       // for all synapse groups
       for(int i = 0; i < 10; i++)
@@ -68,11 +67,8 @@ protected:
       }
   }
 
-  //--------------------------------------------------------------------------
-  // Protected methods
-  //--------------------------------------------------------------------------
-  template<typename ShouldUpdateFn>
-  float Simulate(ShouldUpdateFn shouldUpdate)
+  template<typename UpdateFn, typename StepGeNNFn>
+  float Simulate(UpdateFn updateFn, StepGeNNFn stepGeNNFn)
   {
       float err = 0.0f;
       float x[10][10];
@@ -86,9 +82,10 @@ protected:
             // for all pre-synaptic neurons
             for (int j = 0; j < 10; j++)
             {
-                if (shouldUpdate(t))
+                float newX;
+                if(updateFn(i, d, j, t, newX))
                 {
-                    x[d][j] = t-2*DT+10*((j+1)%10);
+                    x[d][j] = newX;
                 }
                 else if(i == 0)
                 {
@@ -101,11 +98,11 @@ protected:
                                       GetTheW(d),
                                       0.0,
                                       std::plus<float>(),
-                                      [](double a, double b){ return abs(a - b); });
+                                      [](float a, float b){ return abs(a - b); });
          }
 
-        // Step simulation
-        Step();
+        // Step GeNN
+        stepGeNNFn();
       }
 
       return err;

@@ -6,16 +6,29 @@
 
 // **NOTE** base-class for simulation tests must be
 // included after auto-generated globals are includes
-#include "../../utils/simulation_test_post_vars.h"
+#include "../../utils/simulation_test_vars.h"
+#include "../../utils/simulation_neuron_policy_pre_post_var.h"
+#include "../../utils/simulation_synapse_policy_dense.h"
+
+// Combine neuron and synapse policies together to build variable-testing fixture
+typedef SimulationTestVars<SimulationNeuronPolicyPrePostVar, SimulationSynapsePolicyDense> SimulationTestPostVars;
 
 TEST_P(SimulationTestPostVars, AcceptableError)
 {
   float err = Simulate(
-    [](float t)
+    [](unsigned int d, unsigned int j, unsigned int k, float t, float &newX)
     {
-        return (t > 0.0001+DT);
+        if (t > 0.0001+DT)
+        {
+            newX = t-2*DT+10*k;
+            return true;
+        }
+        else
+        {
+          return false;
+        }
     });
-
+ 
   // Check total error is less than some tolerance
   EXPECT_LT(err, 5e-2);
 }
