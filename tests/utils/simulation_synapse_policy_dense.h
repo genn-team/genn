@@ -15,6 +15,7 @@ public:
   //----------------------------------------------------------------------------
   void Init()
   {
+      // **TODO** macroified loop
       m_TheW[0] = wsyn0;
       m_TheW[1] = wsyn1;
       m_TheW[2] = wsyn2;
