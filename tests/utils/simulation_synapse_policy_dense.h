@@ -15,7 +15,7 @@ public:
   //----------------------------------------------------------------------------
   void Init()
   {
-      // **TODO** macroified loop
+      // Create array pointing to weights
       m_TheW[0] = wsyn0;
       m_TheW[1] = wsyn1;
       m_TheW[2] = wsyn2;
@@ -35,36 +35,36 @@ public:
       float x[10][100];
       for (int i = 0; i < (int)(20.0f / DT); i++)
       {
-        t = i * DT;
+          t = i * DT;
 
-        // for each delay
-        for (int d = 0; d < 10; d++)
-        {
-            // for all pre-synaptic neurons
-            for (int j = 0; j < 10; j++)
-            {
-                // for all post-syn neurons
-                for (int k = 0; k < 10; k++)
-                {
-                    float newX;
-                    if(updateFn(d, j, k, t, newX))
-                    {
-                        x[d][(j * 10) + k] = newX;
-                    }
-                    else if(i == 0)
-                    {
-                        x[d][(j * 10) + k] = 0.0f;
-                    }
-                }
-            }
+          // for each delay
+          for (int d = 0; d < 10; d++)
+          {
+              // for all pre-synaptic neurons
+              for (int j = 0; j < 10; j++)
+              {
+                  // for all post-syn neurons
+                  for (int k = 0; k < 10; k++)
+                  {
+                      float newX;
+                      if(updateFn(d, j, k, t, newX))
+                      {
+                          x[d][(j * 10) + k] = newX;
+                      }
+                      else if(i == 0)
+                      {
+                          x[d][(j * 10) + k] = 0.0f;
+                      }
+                  }
+              }
 
-            // Add error for this time step to total
-            err += std::inner_product(&x[d][0], &x[d][100],
-                                      GetTheW(d),
-                                      0.0,
-                                      std::plus<float>(),
-                                      [](float a, float b){ return abs(a - b); });
-        }
+              // Add error for this time step to total
+              err += std::inner_product(&x[d][0], &x[d][100],
+                                        GetTheW(d),
+                                        0.0,
+                                        std::plus<float>(),
+                                        [](float a, float b){ return abs(a - b); });
+          }
 
         // Step GeNN kernel
         stepGeNNFn();

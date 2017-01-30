@@ -21,20 +21,20 @@ public:
   //----------------------------------------------------------------------------
   void Init()
   {
-    // Superclass
-    SimulationSynapsePolicySparse::Init();
+      // Superclass
+      SimulationSynapsePolicySparse::Init();
 
-    // **TODO** macroified loop
-    m_TheThresh[0] = &threshsyn0;
-    m_TheThresh[1] = &threshsyn1;
-    m_TheThresh[2] = &threshsyn2;
-    m_TheThresh[3] = &threshsyn3;
-    m_TheThresh[4] = &threshsyn4;
-    m_TheThresh[5] = &threshsyn5;
-    m_TheThresh[6] = &threshsyn6;
-    m_TheThresh[7] = &threshsyn7;
-    m_TheThresh[8] = &threshsyn8;
-    m_TheThresh[9] = &threshsyn9;
+      // Create array pointing to thresholds
+      m_TheThresh[0] = &threshsyn0;
+      m_TheThresh[1] = &threshsyn1;
+      m_TheThresh[2] = &threshsyn2;
+      m_TheThresh[3] = &threshsyn3;
+      m_TheThresh[4] = &threshsyn4;
+      m_TheThresh[5] = &threshsyn5;
+      m_TheThresh[6] = &threshsyn6;
+      m_TheThresh[7] = &threshsyn7;
+      m_TheThresh[8] = &threshsyn8;
+      m_TheThresh[9] = &threshsyn9;
   }
 
   template<typename UpdateFn, typename StepGeNNFn>
@@ -53,48 +53,48 @@ public:
       float x[10][10];
       for (int i = 0; i < (int)(20.0f / DT); i++)
       {
-        t = i * DT;
+          t = i * DT;
 
-        // If swapping point has been reached
-        if(abs(t - swapT) < DT)
-        {
-          // Update threshold
-          for(int k = 0; k < 10; k++)
+          // If swapping point has been reached
+          if(abs(t - swapT) < DT)
           {
-              *(m_TheThresh[k]) = 2.0f + (3 * k);
+              // Update threshold
+              for(int k = 0; k < 10; k++)
+              {
+                  *(m_TheThresh[k]) = 2.0f + (3 * k);
+              }
+
+              theSwap = t;
           }
 
-          theSwap = t;
-        }
+          // for each delay
+          for (int d = 0; d < 10; d++)
+          {
+              // for all pre-synaptic neurons
+              for (int j = 0; j < 10; j++)
+              {
+                  float newX;
+                  float evntT = t-2*DT-d*DT+5e-5;
+                  if(updateFn(i, d, j, t, evntT, (evntT < theSwap), newX))
+                  {
+                      x[d][j] = newX;
+                  }
+                  else if(i == 0)
+                  {
+                      x[d][j] = 0.0f;
+                  }
+              }
 
-        // for each delay
-        for (int d = 0; d < 10; d++)
-        {
-            // for all pre-synaptic neurons
-            for (int j = 0; j < 10; j++)
-            {
-                float newX;
-                float evntT = t-2*DT-d*DT+5e-5;
-                if(updateFn(i, d, j, t, evntT, (evntT < theSwap), newX))
-                {
-                    x[d][j] = newX;
-                }
-                else if(i == 0)
-                {
-                    x[d][j] = 0.0f;
-                }
-            }
+              // Add error for this time step to total
+              err += std::inner_product(&x[d][0], &x[d][10],
+                                        GetTheW(d),
+                                        0.0,
+                                        std::plus<float>(),
+                                        [](float a, float b){ return abs(a - b); });
+          }
 
-            // Add error for this time step to total
-            err += std::inner_product(&x[d][0], &x[d][10],
-                                      GetTheW(d),
-                                      0.0,
-                                      std::plus<float>(),
-                                      [](float a, float b){ return abs(a - b); });
-         }
-
-        // Step GeNN
-        stepGeNNFn();
+          // Step GeNN
+          stepGeNNFn();
       }
 
       return err;

@@ -3,6 +3,11 @@
 // Test includes
 #include "simulation_test.h"
 
+#define ASSIGN_ARRAY_VARS(ARRAY_NAME, VAR_PREFIX, COUNT)  \
+    for(int i_##__LINE__ = 0; i_##__LINE__ < COUNT; i++)  \
+    {                                                     \
+        ARRAY_NAME[i_##__LINE__] = VAR_PREFIX##i_##__LINE__; \
+    }
 //----------------------------------------------------------------------------
 // SimulationTestVars
 //----------------------------------------------------------------------------
