@@ -3,7 +3,7 @@
   
    Institute: Center for Computational Neuroscience and Robotics
               University of Sussex
-	      Falmer, Brighton BN1 9QJ, UK 
+              Falmer, Brighton BN1 9QJ, UK
   
    email to:  T.Nowotny@sussex.ac.uk
   

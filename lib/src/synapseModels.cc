@@ -105,14 +105,14 @@ void prepareWeightUpdateModels()
     wuL.dpNames.push_back("off2");
     // code for presynaptic spike
     wuL.simCode = "$(addtoinSyn) = $(g);\n\
-  $(updatelinsyn); \n				\
-  scalar dt = $(sT_post) - $(t) - ($(tauShift)); \n	\
-  scalar dg = 0;\n				\
-  if (dt > $(lim0))  \n				\
-      dg = -($(off0)) ; \n			\
-  else if (dt > 0)  \n			\
+  $(updatelinsyn); \n                                \
+  scalar dt = $(sT_post) - $(t) - ($(tauShift)); \n        \
+  scalar dg = 0;\n                                \
+  if (dt > $(lim0))  \n                                \
+      dg = -($(off0)) ; \n                        \
+  else if (dt > 0)  \n                        \
       dg = $(slope0) * dt + ($(off1)); \n\
-  else if (dt > $(lim1))  \n			\
+  else if (dt > $(lim1))  \n                        \
       dg = $(slope1) * dt + ($(off1)); \n\
   else dg = - ($(off2)) ; \n\
   $(gRaw) += dg; \n\

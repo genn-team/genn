@@ -56,8 +56,8 @@ void extern_variable_def(ofstream &os, string type, string name);
 //--------------------------------------------------------------------------
 
 void genRunner(NNmodel &model, //!< Model description
-	       string &path //!< Path for code generationn
-	       );
+               string &path //!< Path for code generationn
+               );
 
 
 //----------------------------------------------------------------------------
@@ -70,8 +70,8 @@ void genRunner(NNmodel &model, //!< Model description
 
 #ifndef CPU_ONLY
 void genRunnerGPU(NNmodel &model, //!< Model description 
-		  string &path //!< Path for code generation
-		  );
+                  string &path //!< Path for code generation
+                  );
 #endif // CPU_ONLY
 
 
@@ -82,5 +82,5 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 //----------------------------------------------------------------------------
 
 void genMakefile(NNmodel &model, //!< Model description
-		 string &path    //!< Path for code generation
-		 );
+                 string &path    //!< Path for code generation
+                 );

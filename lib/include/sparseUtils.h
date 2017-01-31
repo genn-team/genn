@@ -24,7 +24,7 @@ unsigned int countEntriesAbove(DATATYPE *Array, int sz, double includeAbove)
 {
     int count = 0;
     for (int i = 0; i < sz; i++) {
-	if (abs(Array[i]) > includeAbove) count++;
+        if (abs(Array[i]) > includeAbove) count++;
     }
     fprintf(stdout, "\nCounted %u nonzero entries\n\n", count);
     return count;
@@ -60,10 +60,10 @@ float getSparseVar(DATATYPE *wuvar, SparseProjection *sparseStruct, int x, int y
     int startSynapse = sparseStruct->indInG[x];
     int endSynapse = sparseStruct->indInG[x+1];
     for (int syn = startSynapse; syn < endSynapse; syn++) {
-	if (sparseStruct->ind[syn]==y) {//look for index y
-	    g = wuvar[syn]; //set the real g
-	    break; //stop looking
-	}
+        if (sparseStruct->ind[syn]==y) {//look for index y
+            g = wuvar[syn]; //set the real g
+            break; //stop looking
+        }
     }
     return g;
 }
@@ -81,15 +81,15 @@ void setSparseConnectivityFromDense(DATATYPE *wuvar, int preN, int postN, DATATY
     int synapse = 0;
     sparseStruct->indInG[0] = 0; //first neuron always gets first synapse listed.
     for (int pre = 0; pre < preN; ++pre) {
-	for (int post = 0; post < postN; ++post) {
-	    DATATYPE g = tmp_gRNPN[pre * postN + post];
-	    if (g > GENN_PREFERENCES::asGoodAsZero) {
-		sparseStruct->ind[synapse] = post;
-		wuvar[synapse] = g;
-		synapse ++;
-	    }
-	}
-	sparseStruct->indInG[pre + 1] = synapse; //write start of next group
+        for (int post = 0; post < postN; ++post) {
+            DATATYPE g = tmp_gRNPN[pre * postN + post];
+            if (g > GENN_PREFERENCES::asGoodAsZero) {
+                sparseStruct->ind[synapse] = post;
+                wuvar[synapse] = g;
+                synapse ++;
+            }
+        }
+        sparseStruct->indInG[pre + 1] = synapse; //write start of next group
     }
 }
 
@@ -110,30 +110,30 @@ void createSparseConnectivityFromDense(DATATYPE *wuvar, int preN, int postN, DAT
     int synapse = 0;
     sparseStruct->indInG[0] = 0; //first neuron always gets first synapse listed.
     for (int pre = 0; pre < preN; ++pre) {
-	for (int post = 0; post < postN; ++post) {
-	    DATATYPE g = tmp_gRNPN[pre * postN + post];
-	    if (g > GENN_PREFERENCES::asGoodAsZero) {
-		sparseStruct->ind[synapse] = post;
-		wuvar[synapse] = g;
-		synapse ++;
-	    }
-	}
-	sparseStruct->indInG[pre + 1] = synapse; //write start of next group
+        for (int post = 0; post < postN; ++post) {
+            DATATYPE g = tmp_gRNPN[pre * postN + post];
+            if (g > GENN_PREFERENCES::asGoodAsZero) {
+                sparseStruct->ind[synapse] = post;
+                wuvar[synapse] = g;
+                synapse ++;
+            }
+        }
+        sparseStruct->indInG[pre + 1] = synapse; //write start of next group
     }
     if (!runTest) return;
 
     //test correct
     int fails = 0;
     for (int test = 0; test < 10; ++test) {
-	int randX = rand() % preN;
-	int randY = rand() % postN;
-	float denseResult = tmp_gRNPN[randX * postN + randY];
-	float sparseResult = getG(wuvar, sparseStruct,randX,randY);
-	if (abs(denseResult-sparseResult) > GENN_PREFERENCES::asGoodAsZero) fails++;
+        int randX = rand() % preN;
+        int randY = rand() % postN;
+        float denseResult = tmp_gRNPN[randX * postN + randY];
+        float sparseResult = getG(wuvar, sparseStruct,randX,randY);
+        if (abs(denseResult-sparseResult) > GENN_PREFERENCES::asGoodAsZero) fails++;
     }
     if (fails > 0 ) {
-	fprintf(stderr, "ERROR: Sparse connectivity generator failed for %u out of 10 random checks.\n", fails);
-	exit(1);
+        fprintf(stderr, "ERROR: Sparse connectivity generator failed for %u out of 10 random checks.\n", fails);
+        exit(1);
     }
     fprintf(stdout, "Sparse connectivity generator passed %u out of 10 random checks.\n", fails);
 }
