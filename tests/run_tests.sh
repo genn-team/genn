@@ -1,6 +1,18 @@
 #!/bin/bash
-BUILD_FLAGS =  ""
-MAKE_FLAGS = ""
+
+# By default no flags are passed to genn-buildmodel.sh or make
+BUILD_FLAGS=""
+MAKE_FLAGS=""
+
+# Parse command line arguments
+OPTIND=1
+while getopts "c" opt; do
+    case "$opt" in
+    c)  BUILD_FLAGS="-c"
+        MAKE_FLAGS="CPU_ONLY=1"
+        ;;
+    esac
+done
 
 # Clean GeNN library
 pushd $GENN_PATH/lib
