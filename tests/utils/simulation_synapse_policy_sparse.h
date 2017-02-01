@@ -65,6 +65,8 @@ public:
               SetTheW(i, j, 0.0f);
           }
       }
+
+      initializeAllSparseArrays();
   }
 
   template<typename UpdateFn, typename StepGeNNFn>
@@ -74,6 +76,7 @@ public:
       float x[10][10];
       for (int i = 0; i < (int)(20.0f / DT); i++)
       {
+        // **YUCK** update global time - this shouldn't be user responsibility
         t = i * DT;
 
         // for each delay

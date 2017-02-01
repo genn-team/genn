@@ -20,6 +20,9 @@ public:
         inputpre = 0.0f;
         for (int i = 0; i < (int)(20.0f / DT); i++)
         {
+            // **YUCK** update global time - this shouldn't be user responsibility
+            t = i * DT;
+
             // for all pre-synaptic neurons
             float x[10];
             for (int j = 0; j < 10; j++)
