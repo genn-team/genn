@@ -49,5 +49,7 @@ public:
             // Step GeNN kernel
             stepGeNNFn();
         }
+
+        return err;
     }
 };
