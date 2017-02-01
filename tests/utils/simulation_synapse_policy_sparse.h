@@ -65,8 +65,9 @@ public:
               SetTheW(i, j, 0.0f);
           }
       }
-
+#ifndef CPU_ONLY
       initializeAllSparseArrays();
+#endif  // CPU_ONLY
   }
 
   template<typename UpdateFn, typename StepGeNNFn>
