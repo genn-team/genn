@@ -19,36 +19,37 @@ pushd $GENN_PATH/lib
 make clean
 popd
 
+# Loop through feature tests
 NUM_SUCCESSES=0
 NUM_FAILURES=0
-
-# Loop through feature tests
-# **TODO** CPU_ONLY ness should be passed as command line argument based on node configuration
 for f in features/*;
     do
+        echo "Running test $f..."
+
         # Push feature directory
         pushd $f
 
         # Clean
-        make clean
+        make clean &>msg
 
         # Build and generate model
-        genn-buildmodel.sh $BUILD_FLAGS model.cc || exit $?
+        genn-buildmodel.sh $BUILD_FLAGS model.cc &>msg || exit $?
 	
         # Build
-        make $MAKE_FLAGS || exit $?
+        make $MAKE_FLAGS &>msg || exit $?
 
         # Run tests
-        # **NOTE** we're assuming that optimisation level doesn't effect code generation
         ./test --gtest_output="xml:test_results.xml"
         if [ $? -eq 0 ]; then
             NUM_SUCCESSES=$((NUM_SUCCESSES+1))
         else
             NUM_FAILURES=$((NUM_FAILURES+1))
         fi
+
         # Pop feature directory
         popd
     done;
 
+# Print brief summary of output
 echo "$NUM_SUCCESSES feature tests succeeded"
 echo "$NUM_FAILURES feature tests failed"

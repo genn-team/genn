@@ -17,17 +17,18 @@ make clean
 popd
 
 # Loop through feature tests
-# **TODO** CPU_ONLY ness should be passed as command line argument based on node configuration
 for f in features/*;
     do
+        echo "Calculating code generation coverage of $f..."
+
         # Push feature directory
         pushd $f
 
         # Clean
-        make clean
+        make clean &>msg
 
         # Build and generate model (measuring coverage)
-        genn-buildmodel.sh $BUILD_FLAGS -v model.cc || exit $?
+        genn-buildmodel.sh $BUILD_FLAGS -v model.cc &>msg || exit $?
 	
         # Pop feature directory
         popd
