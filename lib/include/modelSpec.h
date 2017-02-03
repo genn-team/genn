@@ -210,7 +210,7 @@ public:
 #ifndef CPU_ONLY
   void setGPUDevice(int); //!< Method to choose the GPU to be used for the model. If "AUTODEVICE' (-1), GeNN will choose the device based on a heuristic rule.
 #endif
-  string scalarExpr(const double);
+  string scalarExpr(const double) const;
   void setPopulationSums(); //!< Set the accumulated sums of lowest multiple of kernel block size >= group sizes for all simulated groups.
   void finalize(); //!< Declare that the model specification is finalised in modelDefinition().
 
@@ -218,27 +218,28 @@ public:
   // PUBLIC NEURON FUNCTIONS
   //========================
 
-  void addNeuronPopulation(const string, unsigned int, unsigned int, double *, double *); //!< Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population
-  void addNeuronPopulation(const string, unsigned int, unsigned int, vector<double>, vector<double>); //!< Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population
-  void setNeuronClusterIndex(const string neuronGroup, int hostID, int deviceID); //!< Function for setting which host and which device a neuron group will be simulated on
-  void activateDirectInput(const string, unsigned int type); //! This function has been deprecated in GeNN 2.2
-  void setConstInp(const string, double);
-  unsigned int findNeuronGrp(const string); //!< Find the the ID number of a neuron group by its name 
+  void addNeuronPopulation(const string&, unsigned int, unsigned int, const double *, const double *); //!< Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population
+  void addNeuronPopulation(const string&, unsigned int, unsigned int, const vector<double>&, const vector<double>&); //!< Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population
+  void setNeuronClusterIndex(const string &neuronGroup, int hostID, int deviceID); //!< Function for setting which host and which device a neuron group will be simulated on
+  void activateDirectInput(const string&, unsigned int type); //! This function has been deprecated in GeNN 2.2
+  void setConstInp(const string&, double);
+  unsigned int findNeuronGrp(const string&) const; //!< Find the the ID number of a neuron group by its name
   
 
   // PUBLIC SYNAPSE FUNCTIONS
   //=========================
 
-  void addSynapsePopulation(const string name, unsigned int syntype, unsigned int conntype, unsigned int gtype, const string src, const string trg, double *p); //!< This function has been depreciated as of GeNN 2.2.
-  void addSynapsePopulation(const string, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, const string, const string, double *, double *, double *); //!< Overloaded version without initial variables for synapses
-  void addSynapsePopulation(const string, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, const string, const string, double *,double *, double *, double *); //!< Method for adding a synapse population to a neuronal network model, using C++ string for the name of the population
-  void addSynapsePopulation(const string, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, const string, const string, vector<double>, vector<double>, vector<double>, vector<double>); //!< Method for adding a synapse population to a neuronal network model, using C++ string for the name of the population
-  void setSynapseG(const string, double); //!< This function has been depreciated as of GeNN 2.2.
-  void setMaxConn(const string, unsigned int); //< Set maximum connections per neuron for the given group (needed for optimization by sparse connectivity)
-  void setSpanTypeToPre(const string); //!< Method for switching the execution order of synapses to pre-to-post
-  void setSynapseClusterIndex(const string synapseGroup, int hostID, int deviceID); //!< Function for setting which host and which device a synapse group will be simulated on
+  void addSynapsePopulation(const string &name, unsigned int syntype, unsigned int conntype, unsigned int gtype, const string& src, const string& trg, const double *p); //!< This function has been depreciated as of GeNN 2.2.
+  void addSynapsePopulation(const string&, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, const string&, const string&, const double *, const double *, const double *); //!< Overloaded version without initial variables for synapses
+  void addSynapsePopulation(const string&, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, const string&, const string&, const double *, const double *, const double *, const double *); //!< Method for adding a synapse population to a neuronal network model, using C++ string for the name of the population
+  void addSynapsePopulation(const string&, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, const string&, const string&,
+                            const vector<double>&, const vector<double>&, const vector<double>&, const vector<double>&); //!< Method for adding a synapse population to a neuronal network model, using C++ string for the name of the population
+  void setSynapseG(const string&, double); //!< This function has been depreciated as of GeNN 2.2.
+  void setMaxConn(const string&, unsigned int); //< Set maximum connections per neuron for the given group (needed for optimization by sparse connectivity)
+  void setSpanTypeToPre(const string&); //!< Method for switching the execution order of synapses to pre-to-post
+  void setSynapseClusterIndex(const string &synapseGroup, int hostID, int deviceID); //!< Function for setting which host and which device a synapse group will be simulated on
   void initLearnGrps();
-  unsigned int findSynapseGrp(const string); //< Find the the ID number of a synapse group by its name
+  unsigned int findSynapseGrp(const string&) const; //< Find the the ID number of a synapse group by its name
  
 };
 

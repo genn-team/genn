@@ -96,7 +96,7 @@ void NNmodel::registerSynapsePopulation(unsigned int i /**< index of the synapse
  */
 //--------------------------------------------------------------------------
 
-unsigned int NNmodel::findNeuronGrp(const string nName /**< Name of the neuron population */)
+unsigned int NNmodel::findNeuronGrp(const string &nName /**< Name of the neuron population */) const
 {
   for (int j= 0; j < neuronGrpN; j++) {
       if (nName == neuronName[j]) {
@@ -113,7 +113,7 @@ unsigned int NNmodel::findNeuronGrp(const string nName /**< Name of the neuron p
  */
 //--------------------------------------------------------------------------
 
-void NNmodel::setNeuronClusterIndex(const string neuronGroup, /**< Name of the neuron population */
+void NNmodel::setNeuronClusterIndex(const string &neuronGroup, /**< Name of the neuron population */
                                     int hostID, /**< ID of the host */
                                     int deviceID /**< ID of the device */)
 {
@@ -145,7 +145,7 @@ void NNmodel::initLearnGrps()
     neuronSpkEvntCondition.assign(neuronGrpN, "");
 
     for (int i = 0; i < synapseGrpN; i++) {
-        weightUpdateModel wu = weightUpdateModels[synapseType[i]];
+        const auto &wu = weightUpdateModels[synapseType[i]];
         unsigned int src = synapseSource[i];
         vector<string> vars = nModels[neuronType[src]].varNames;
         needEvntThresholdReTest.push_back(false);
@@ -191,7 +191,7 @@ void NNmodel::initLearnGrps()
         bool needReTest= false;
         for (int j= 0, l= outSyn[i].size(); j < l; j++) {
             int synPopID= outSyn[i][j];
-            weightUpdateModel wu= weightUpdateModels[synapseType[synPopID]];
+            const auto &wu= weightUpdateModels[synapseType[synPopID]];
             if (wu.simCodeEvnt != "") {
                 synapseUsesSpikeEvents[synPopID] = true;
                 neuronNeedSpkEvnt[i] = true;
@@ -255,7 +255,7 @@ void NNmodel::initLearnGrps()
         }
     }
     for (int i = 0; i < synapseGrpN; i++) {
-        weightUpdateModel wu = weightUpdateModels[synapseType[i]];
+        const auto &wu = weightUpdateModels[synapseType[i]];
         unsigned int src = synapseSource[i];
         for (int j= 0, l= wu.extraGlobalSynapseKernelParameters.size(); j < l; j++) {
             string pname= wu.extraGlobalSynapseKernelParameters[j];
@@ -274,7 +274,7 @@ void NNmodel::initLearnGrps()
     }
     // for synapse kernel
     for (int i = 0; i < synapseGrpN; i++) {
-        weightUpdateModel wu = weightUpdateModels[synapseType[i]];
+        const auto &wu = weightUpdateModels[synapseType[i]];
         unsigned int src = synapseSource[i];
         unsigned int trg = synapseTarget[i];
         unsigned int nt[2];
@@ -321,7 +321,7 @@ void NNmodel::initLearnGrps()
     
     // for simLearnPost
     for (int i = 0; i < synapseGrpN; i++) {
-        weightUpdateModel wu = weightUpdateModels[synapseType[i]];
+        const auto &wu = weightUpdateModels[synapseType[i]];
         unsigned int src = synapseSource[i];
         unsigned int trg = synapseTarget[i];
         unsigned int nt[2];
@@ -364,7 +364,7 @@ void NNmodel::initLearnGrps()
    
     // for synapse Dynamics
     for (int i = 0; i < synapseGrpN; i++) {
-        weightUpdateModel wu = weightUpdateModels[synapseType[i]];
+        const auto &wu = weightUpdateModels[synapseType[i]];
         unsigned int src = synapseSource[i];
         unsigned int trg = synapseTarget[i];
         unsigned int nt[2];
@@ -427,7 +427,7 @@ void NNmodel::initLearnGrps()
  */
 //--------------------------------------------------------------------------
 
-unsigned int NNmodel::findSynapseGrp(const string sName /**< Name of the synapse population */)
+unsigned int NNmodel::findSynapseGrp(const string &sName /**< Name of the synapse population */) const
 {
     for (int j= 0; j < synapseGrpN; j++) {
         if (sName == synapseName[j]) {
@@ -444,7 +444,7 @@ unsigned int NNmodel::findSynapseGrp(const string sName /**< Name of the synapse
  */
 //--------------------------------------------------------------------------
 
-void NNmodel::setSynapseClusterIndex(const string synapseGroup, /**< Name of the synapse population */
+void NNmodel::setSynapseClusterIndex(const string &synapseGroup, /**< Name of the synapse population */
                                      int hostID, /**< ID of the host */
                                      int deviceID /**< ID of the device */)
 {
@@ -462,11 +462,11 @@ void NNmodel::setSynapseClusterIndex(const string synapseGroup, /**< Name of the
 //--------------------------------------------------------------------------
 
 void NNmodel::addNeuronPopulation(
-  const string name, /**<  The name of the neuron population*/
+  const string &name, /**<  The name of the neuron population*/
   unsigned int nNo, /**<  Number of neurons in the population */
   unsigned int type, /**<  Type of the neurons, refers to either a standard type or user-defined type*/
-  double *p, /**< Parameters of this neuron type */
-  double *ini /**< Initial values for variables of this neuron type */)
+  const double *p, /**< Parameters of this neuron type */
+  const double *ini /**< Initial values for variables of this neuron type */)
 {
   vector<double> vp;
   vector<double> vini;
@@ -486,11 +486,11 @@ void NNmodel::addNeuronPopulation(
 //--------------------------------------------------------------------------
 
 void NNmodel::addNeuronPopulation(
-  const string name, /**<  The name of the neuron population*/
+  const string &name, /**<  The name of the neuron population*/
   unsigned int nNo, /**<  Number of neurons in the population */
   unsigned int type, /**<  Type of the neurons, refers to either a standard type or user-defined type*/
-  vector<double> p, /**< Parameters of this neuron type */
-  vector<double> ini /**< Initial values for variables of this neuron type */)
+  const vector<double> &p, /**< Parameters of this neuron type */
+  const vector<double> &ini /**< Initial values for variables of this neuron type */)
 {
     if (!GeNNReady) {
         gennError("You need to call initGeNN first.");
@@ -529,7 +529,7 @@ void NNmodel::addNeuronPopulation(
 */ 
 //--------------------------------------------------------------------------
 void NNmodel::activateDirectInput(
-  const string name, /**< Name of the neuron population */
+  const string &name, /**< Name of the neuron population */
   unsigned int type /**< Type of input: 1 if common input, 2 if custom input from file, 3 if custom input as a rule*/)
 {
     gennError("This function has been deprecated since GeNN 2.2. Use neuron variables, extraGlobalNeuronKernelParameters, or parameters instead.");
@@ -545,13 +545,13 @@ void NNmodel::activateDirectInput(
 //--------------------------------------------------------------------------
 
 void NNmodel::addSynapsePopulation(
-  const string name, /**<  The name of the synapse population*/
+  const string &name, /**<  The name of the synapse population*/
   unsigned int syntype, /**< The type of synapse to be added (i.e. learning mode) */
   unsigned int conntype, /**< The type of synaptic connectivity*/ 
   unsigned int gtype, /**< The way how the synaptic conductivity g will be defined*/
-  const string src, /**< Name of the (existing!) pre-synaptic neuron population*/
-  const string target, /**< Name of the (existing!) post-synaptic neuron population*/
-  double *params/**< A C-type array of doubles that contains synapse parameter values (common to all synapses of the population) which will be used for the defined synapses.*/)
+  const string &src, /**< Name of the (existing!) pre-synaptic neuron population*/
+  const string &target, /**< Name of the (existing!) post-synaptic neuron population*/
+  const double *params/**< A C-type array of doubles that contains synapse parameter values (common to all synapses of the population) which will be used for the defined synapses.*/)
 {
   gennError("This version of addSynapsePopulation() has been deprecated since GeNN 2.2. Please use the newer addSynapsePopulation functions instead.");
 }
@@ -563,20 +563,20 @@ void NNmodel::addSynapsePopulation(
 //--------------------------------------------------------------------------
 
 void NNmodel::addSynapsePopulation(
-  const string name, /**<  The name of the synapse population*/
+  const string &name, /**<  The name of the synapse population*/
   unsigned int syntype, /**< The type of synapse to be added (i.e. learning mode) */
   unsigned int conntype, /**< The type of synaptic connectivity*/
   unsigned int gtype, /**< The way how the synaptic conductivity g will be defined*/
   unsigned int delaySteps, /**< Number of delay slots*/
   unsigned int postsyn, /**< Postsynaptic integration method*/
-  const string src, /**< Name of the (existing!) pre-synaptic neuron population*/
-  const string trg, /**< Name of the (existing!) post-synaptic neuron population*/
-  double *p, /**< A C-type array of doubles that contains synapse parameter values (common to all synapses of the population) which will be used for the defined synapses.*/
-  double* PSVini, /**< A C-type array of doubles that contains the initial values for postsynaptic mechanism variables (common to all synapses of the population) which will be used for the defined synapses.*/
-  double *ps /**< A C-type array of doubles that contains postsynaptic mechanism parameter values (common to all synapses of the population) which will be used for the defined synapses.*/)
+  const string &src, /**< Name of the (existing!) pre-synaptic neuron population*/
+  const string &trg, /**< Name of the (existing!) post-synaptic neuron population*/
+  const double *p, /**< A C-type array of doubles that contains synapse parameter values (common to all synapses of the population) which will be used for the defined synapses.*/
+  const double* PSVini, /**< A C-type array of doubles that contains the initial values for postsynaptic mechanism variables (common to all synapses of the population) which will be used for the defined synapses.*/
+  const double *ps /**< A C-type array of doubles that contains postsynaptic mechanism parameter values (common to all synapses of the population) which will be used for the defined synapses.*/)
 {
     cerr << "!!!!!!GeNN WARNING: This function has been deprecated since GeNN 2.2, and will be removed in a future release. You use the overloaded method which passes a null pointer for the initial values of weight update variables. If you use a method that uses synapse variables, please add a pointer to this vector in the function call, like:\n          addSynapsePopulation(name, syntype, conntype, gtype, NO_DELAY, EXPDECAY, src, target, double * SYNVARINI, params, postSynV,postExpSynapsePopn);" << endl;
-    double *iniv = NULL;
+    const double *iniv = NULL;
     addSynapsePopulation(name, syntype, conntype, gtype, delaySteps, postsyn, src, trg, iniv, p, PSVini, ps);
 }
 
@@ -587,18 +587,18 @@ void NNmodel::addSynapsePopulation(
 //--------------------------------------------------------------------------
 
 void NNmodel::addSynapsePopulation(
-  const string name, /**<  The name of the synapse population*/
+  const string &name, /**<  The name of the synapse population*/
   unsigned int syntype, /**< The type of synapse to be added (i.e. learning mode) */
   unsigned int conntype, /**< The type of synaptic connectivity*/
   unsigned int gtype, /**< The way how the synaptic conductivity g will be defined*/
   unsigned int delaySteps, /**< Number of delay slots*/
   unsigned int postsyn, /**< Postsynaptic integration method*/
-  const string src, /**< Name of the (existing!) pre-synaptic neuron population*/
-  const string trg, /**< Name of the (existing!) post-synaptic neuron population*/
-  double* synini, /**< A C-type array of doubles that contains the initial values for synapse variables (common to all synapses of the population) which will be used for the defined synapses.*/
-  double *p, /**< A C-type array of doubles that contains synapse parameter values (common to all synapses of the population) which will be used for the defined synapses.*/
-  double* PSVini, /**< A C-type array of doubles that contains the initial values for postsynaptic mechanism variables (common to all synapses of the population) which will be used for the defined synapses.*/
-  double *ps /**< A C-type array of doubles that contains postsynaptic mechanism parameter values (common to all synapses of the population) which will be used for the defined synapses.*/)
+  const string &src, /**< Name of the (existing!) pre-synaptic neuron population*/
+  const string &trg, /**< Name of the (existing!) post-synaptic neuron population*/
+  const double* synini, /**< A C-type array of doubles that contains the initial values for synapse variables (common to all synapses of the population) which will be used for the defined synapses.*/
+  const double *p, /**< A C-type array of doubles that contains synapse parameter values (common to all synapses of the population) which will be used for the defined synapses.*/
+  const double* PSVini, /**< A C-type array of doubles that contains the initial values for postsynaptic mechanism variables (common to all synapses of the population) which will be used for the defined synapses.*/
+  const double *ps /**< A C-type array of doubles that contains postsynaptic mechanism parameter values (common to all synapses of the population) which will be used for the defined synapses.*/)
 {
   vector<double> vsynini;
   for (int j= 0; j < weightUpdateModels[syntype].varNames.size(); j++) {
@@ -626,18 +626,18 @@ void NNmodel::addSynapsePopulation(
 //--------------------------------------------------------------------------
 
 void NNmodel::addSynapsePopulation(
-  const string name, /**<  The name of the synapse population*/
+  const string &name, /**<  The name of the synapse population*/
   unsigned int syntype, /**< The type of synapse to be added (i.e. learning mode) */
   unsigned int conntype, /**< The type of synaptic connectivity*/
   unsigned int gtype, /**< The way how the synaptic conductivity g will be defined*/
   unsigned int delaySteps, /**< Number of delay slots*/
   unsigned int postsyn, /**< Postsynaptic integration method*/
-  const string src, /**< Name of the (existing!) pre-synaptic neuron population*/
-  const string trg, /**< Name of the (existing!) post-synaptic neuron population*/
-  vector<double> synini, /**< A C-type array of doubles that contains the initial values for synapse variables (common to all synapses of the population) which will be used for the defined synapses.*/
-  vector<double> p, /**< A C-type array of doubles that contains synapse parameter values (common to all synapses of the population) which will be used for the defined synapses.*/
-  vector<double> PSVini, /**< A C-type array of doubles that contains the initial values for postsynaptic mechanism variables (common to all synapses of the population) which will be used for the defined synapses.*/
-  vector<double> ps /**< A C-type array of doubles that contains postsynaptic mechanism parameter values (common to all synapses of the population) which will be used for the defined synapses.*/)
+  const string &src, /**< Name of the (existing!) pre-synaptic neuron population*/
+  const string &trg, /**< Name of the (existing!) post-synaptic neuron population*/
+  const vector<double> &synini, /**< A C-type array of doubles that contains the initial values for synapse variables (common to all synapses of the population) which will be used for the defined synapses.*/
+  const vector<double> &p, /**< A C-type array of doubles that contains synapse parameter values (common to all synapses of the population) which will be used for the defined synapses.*/
+  const vector<double> &PSVini, /**< A C-type array of doubles that contains the initial values for postsynaptic mechanism variables (common to all synapses of the population) which will be used for the defined synapses.*/
+  const vector<double> &ps /**< A C-type array of doubles that contains postsynaptic mechanism parameter values (common to all synapses of the population) which will be used for the defined synapses.*/)
 {
     if (!GeNNReady) {
         gennError("You need to call initGeNN first.");
@@ -702,7 +702,7 @@ void NNmodel::addSynapsePopulation(
 */ 
 //--------------------------------------------------------------------------
 
-void NNmodel::setMaxConn(const string sname, /**<  */
+void NNmodel::setMaxConn(const string &sname, /**<  */
                          unsigned int maxConnP /**<  */)
 {
     if (final) {
@@ -724,7 +724,7 @@ void NNmodel::setMaxConn(const string sname, /**<  */
  */ 
 //--------------------------------------------------------------------------
 
-void NNmodel::setSpanTypeToPre(const string sname /**< name of the synapse group to which to apply the pre-synaptic span type */)
+void NNmodel::setSpanTypeToPre(const string &sname /**< name of the synapse group to which to apply the pre-synaptic span type */)
 {
     if (final) {
         gennError("Trying to set spanType in a finalized model.");
@@ -744,7 +744,7 @@ void NNmodel::setSpanTypeToPre(const string sname /**< name of the synapse group
  */
 //--------------------------------------------------------------------------
 
-void NNmodel::setSynapseG(const string sName, /**<  */
+void NNmodel::setSynapseG(const string &sName, /**<  */
                           double g /**<  */)
 {
     gennError("NOTE: This function has been deprecated as of GeNN 2.2. Please provide the correct initial values in \"addSynapsePopulation\" for all your variables and they will be the constant values in the GLOBALG mode.");
@@ -756,7 +756,7 @@ void NNmodel::setSynapseG(const string sName, /**<  */
  */
 //--------------------------------------------------------------------------
 
-void NNmodel::setConstInp(const string sName, /**<  */
+void NNmodel::setConstInp(const string &sName, /**<  */
                           double globalInp0 /**<  */)
 {
     gennError("This function has been deprecated as of GeNN 2.2. Use parameters in the neuron model instead.");
@@ -852,7 +852,7 @@ void NNmodel::setGPUDevice(int device)
 #endif
 
 
-string NNmodel::scalarExpr(const double val) 
+string NNmodel::scalarExpr(const double val) const
 {
     string tmp;
     float fval= (float) val;

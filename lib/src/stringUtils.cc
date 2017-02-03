@@ -27,7 +27,7 @@ void substitute(string &s, const string trg, const string rep)
 //! \brief This function performs a list of name substitutions for variables in code snippets.
 //--------------------------------------------------------------------------
 
-void name_substitutions(string &code, string prefix, vector<string> &names, string postfix)
+void name_substitutions(string &code, const string &prefix, const vector<string> &names, const string &postfix)
 {
     for (int k = 0, l = names.size(); k < l; k++) {
         substitute(code, tS("$(") + names[k] + tS(")"), prefix+names[k]+postfix);
@@ -38,7 +38,7 @@ void name_substitutions(string &code, string prefix, vector<string> &names, stri
 //! \brief This function performs a list of value substitutions for parameters in code snippets.
 //--------------------------------------------------------------------------
 
-void value_substitutions(string &code, vector<string> &names, vector<double> &values)
+void value_substitutions(string &code, const vector<string> &names, const vector<double> &values)
 {
     for (int k = 0, l = names.size(); k < l; k++) {
         substitute(code, tS("$(") + names[k] + tS(")"), tS("(")+tS(values[k])+ tS(")"));
@@ -49,7 +49,7 @@ void value_substitutions(string &code, vector<string> &names, vector<double> &va
 //! \brief This function performs a list of name substitutions for variables in code snippets where the variables have an extension in their names (e.g. "_pre").
 //--------------------------------------------------------------------------
 
-void extended_name_substitutions(string &code, string prefix, vector<string> &names, string ext, string postfix)
+void extended_name_substitutions(string &code, const string &prefix, const vector<string> &names, const string &ext, const string &postfix)
 {
     for (int k = 0, l = names.size(); k < l; k++) {
         substitute(code, tS("$(") + names[k] + ext + tS(")"), prefix+names[k]+postfix);

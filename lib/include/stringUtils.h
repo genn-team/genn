@@ -37,21 +37,21 @@ void substitute(string &s, const string trg, const string rep);
 //! \brief This function performs a list of name substitutions for variables in code snippets.
 //--------------------------------------------------------------------------
 
-void name_substitutions(string &code, string prefix, vector<string> &names, string postfix= "");
+void name_substitutions(string &code, const string &prefix, const vector<string> &names, const string &postfix= "");
 
 
 //--------------------------------------------------------------------------
 //! \brief This function performs a list of value substitutions for parameters in code snippets.
 //--------------------------------------------------------------------------
 
-void value_substitutions(string &code, vector<string> &names, vector<double> &values);
+void value_substitutions(string &code, const vector<string> &names, const vector<double> &values);
 
 
 //--------------------------------------------------------------------------
 //! \brief This function performs a list of name substitutions for variables in code snippets where the variables have an extension in their names (e.g. "_pre").
 //--------------------------------------------------------------------------
 
-void extended_name_substitutions(string &code, string prefix, vector<string> &names, string ext, string postfix= "");
+void extended_name_substitutions(string &code, const string &prefix, const vector<string> &names, const string &ext, const string &postfix= "");
 
 
 //--------------------------------------------------------------------------
