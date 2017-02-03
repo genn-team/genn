@@ -547,8 +547,8 @@ void NNmodel::activateDirectInput(
 void NNmodel::addSynapsePopulation(
   const string &name, /**<  The name of the synapse population*/
   unsigned int syntype, /**< The type of synapse to be added (i.e. learning mode) */
-  unsigned int conntype, /**< The type of synaptic connectivity*/ 
-  unsigned int gtype, /**< The way how the synaptic conductivity g will be defined*/
+  SynapseConnType conntype, /**< The type of synaptic connectivity*/
+  SynapseGType gtype, /**< The way how the synaptic conductivity g will be defined*/
   const string &src, /**< Name of the (existing!) pre-synaptic neuron population*/
   const string &target, /**< Name of the (existing!) post-synaptic neuron population*/
   const double *params/**< A C-type array of doubles that contains synapse parameter values (common to all synapses of the population) which will be used for the defined synapses.*/)
@@ -565,8 +565,8 @@ void NNmodel::addSynapsePopulation(
 void NNmodel::addSynapsePopulation(
   const string &name, /**<  The name of the synapse population*/
   unsigned int syntype, /**< The type of synapse to be added (i.e. learning mode) */
-  unsigned int conntype, /**< The type of synaptic connectivity*/
-  unsigned int gtype, /**< The way how the synaptic conductivity g will be defined*/
+  SynapseConnType conntype, /**< The type of synaptic connectivity*/
+  SynapseGType gtype, /**< The way how the synaptic conductivity g will be defined*/
   unsigned int delaySteps, /**< Number of delay slots*/
   unsigned int postsyn, /**< Postsynaptic integration method*/
   const string &src, /**< Name of the (existing!) pre-synaptic neuron population*/
@@ -589,8 +589,8 @@ void NNmodel::addSynapsePopulation(
 void NNmodel::addSynapsePopulation(
   const string &name, /**<  The name of the synapse population*/
   unsigned int syntype, /**< The type of synapse to be added (i.e. learning mode) */
-  unsigned int conntype, /**< The type of synaptic connectivity*/
-  unsigned int gtype, /**< The way how the synaptic conductivity g will be defined*/
+  SynapseConnType conntype, /**< The type of synaptic connectivity*/
+  SynapseGType gtype, /**< The way how the synaptic conductivity g will be defined*/
   unsigned int delaySteps, /**< Number of delay slots*/
   unsigned int postsyn, /**< Postsynaptic integration method*/
   const string &src, /**< Name of the (existing!) pre-synaptic neuron population*/
@@ -628,8 +628,8 @@ void NNmodel::addSynapsePopulation(
 void NNmodel::addSynapsePopulation(
   const string &name, /**<  The name of the synapse population*/
   unsigned int syntype, /**< The type of synapse to be added (i.e. learning mode) */
-  unsigned int conntype, /**< The type of synaptic connectivity*/
-  unsigned int gtype, /**< The way how the synaptic conductivity g will be defined*/
+  SynapseConnType conntype, /**< The type of synaptic connectivity*/
+  SynapseGType gtype, /**< The way how the synaptic conductivity g will be defined*/
   unsigned int delaySteps, /**< Number of delay slots*/
   unsigned int postsyn, /**< Postsynaptic integration method*/
   const string &src, /**< Name of the (existing!) pre-synaptic neuron population*/
@@ -782,19 +782,19 @@ void NNmodel::setDT(double newDT /**<  */)
  */
 //--------------------------------------------------------------------------
 
-void NNmodel::setPrecision(unsigned int floattype /**<  */)
+void NNmodel::setPrecision(FloatType floattype /**<  */)
 {
     if (final) {
         gennError("Trying to set the precision of a finalized model.");
     }
     switch (floattype) {
-    case 0:
+    case GENN_FLOAT:
         ftype = "float";
         break;
-    case 1:
+    case GENN_DOUBLE:
         ftype = "double"; // not supported by compute capability < 1.3
         break;
-    case 2:
+    case GENN_LONG_DOUBLE:
         ftype = "long double"; // not supported by CUDA at the moment.
         break;
     default:

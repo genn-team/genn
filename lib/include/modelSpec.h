@@ -39,14 +39,20 @@ void initGeNN();
 extern unsigned int GeNNReady;
 
 // connectivity of the network (synapseConnType)
-#define ALLTOALL 0  //!< Macro attaching the label "ALLTOALL" to connectivity type 0 
-#define DENSE 1 //!< Macro attaching the label "DENSE" to connectivity type 1
-#define SPARSE 2//!< Macro attaching the label "SPARSE" to connectivity type 2
+enum SynapseConnType
+{
+    ALLTOALL,
+    DENSE,
+    SPARSE,
+};
 
 // conductance type (synapseGType)
-#define INDIVIDUALG 0  //!< Macro attaching the label "INDIVIDUALG" to method 0 for the definition of synaptic conductances
-#define GLOBALG 1 //!< Macro attaching the label "GLOBALG" to method 1 for the definition of synaptic conductances
-#define INDIVIDUALID 2 //!< Macro attaching the label "INDIVIDUALID" to method 2 for the definition of synaptic conductances
+enum SynapseGType
+{
+    INDIVIDUALG,
+    GLOBALG,
+    INDIVIDUALID,
+};
 
 #define NO_DELAY 0 //!< Macro used to indicate no synapse delay for the group (only one queue slot will be generated)
 
@@ -59,8 +65,13 @@ extern unsigned int GeNNReady;
 #define CPU 0 //!< Macro attaching the label "CPU" to flag 0
 #define GPU 1 //!< Macro attaching the label "GPU" to flag 1
 
-#define GENN_FLOAT 0  //!< Macro attaching the label "GENN_FLOAT" to flag 0. Used by NNModel::setPrecision()
-#define GENN_DOUBLE 1  //!< Macro attaching the label "GENN_DOUBLE" to flag 1. Used by NNModel::setPrecision()
+// Floating point precision to use for models
+enum FloatType
+{
+    GENN_FLOAT,
+    GENN_DOUBLE,
+    GENN_LONG_DOUBLE,
+};
 
 #define AUTODEVICE -1  //!< Macro attaching the label AUTODEVICE to flag -1. Used by setGPUDevice
 
@@ -123,8 +134,8 @@ public:
   vector<unsigned int> maxConn; //!< Padded summed maximum number of connections for a neuron in the neuron groups
   vector<unsigned int> padSumSynapseKrnl; //Combination of padSumSynapseTrgN and padSumMaxConn to support both sparse and all-to-all connectivity in a model
   vector<unsigned int> synapseType; //!< Types of synapses
-  vector<unsigned int> synapseConnType; //!< Connectivity type of synapses
-  vector<unsigned int> synapseGType; //!< Type of specification method for synaptic conductance
+  vector<SynapseConnType> synapseConnType; //!< Connectivity type of synapses
+  vector<SynapseGType> synapseGType; //!< Type of specification method for synaptic conductance
   vector<unsigned int> synapseSpanType; //!< Execution order of synapses in the kernel. It determines whether synapses are executed in parallel for every postsynaptic neuron (0, default), or for every presynaptic neuron (1). 
   vector<unsigned int> synapseSource; //!< Presynaptic neuron groups
   vector<unsigned int> synapseTarget; //!< Postsynaptic neuron groups
@@ -202,7 +213,7 @@ public:
   NNmodel();
   ~NNmodel();
   void setName(const string); //!< Method to set the neuronal network model name
-  void setPrecision(unsigned int); //!< Set numerical precision for floating point
+  void setPrecision(FloatType); //!< Set numerical precision for floating point
   void setDT(double); //!< Set the integration step size of the model
   void setTiming(bool); //!< Set whether timers and timing commands are to be included
   void setSeed(unsigned int); //!< Set the random seed (disables automatic seeding if argument not 0).
@@ -229,10 +240,10 @@ public:
   // PUBLIC SYNAPSE FUNCTIONS
   //=========================
 
-  void addSynapsePopulation(const string &name, unsigned int syntype, unsigned int conntype, unsigned int gtype, const string& src, const string& trg, const double *p); //!< This function has been depreciated as of GeNN 2.2.
-  void addSynapsePopulation(const string&, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, const string&, const string&, const double *, const double *, const double *); //!< Overloaded version without initial variables for synapses
-  void addSynapsePopulation(const string&, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, const string&, const string&, const double *, const double *, const double *, const double *); //!< Method for adding a synapse population to a neuronal network model, using C++ string for the name of the population
-  void addSynapsePopulation(const string&, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, const string&, const string&,
+  void addSynapsePopulation(const string &name, unsigned int syntype, SynapseConnType conntype, SynapseGType gtype, const string& src, const string& trg, const double *p); //!< This function has been depreciated as of GeNN 2.2.
+  void addSynapsePopulation(const string&, unsigned int, SynapseConnType, SynapseGType, unsigned int, unsigned int, const string&, const string&, const double *, const double *, const double *); //!< Overloaded version without initial variables for synapses
+  void addSynapsePopulation(const string&, unsigned int, SynapseConnType, SynapseGType, unsigned int, unsigned int, const string&, const string&, const double *, const double *, const double *, const double *); //!< Method for adding a synapse population to a neuronal network model, using C++ string for the name of the population
+  void addSynapsePopulation(const string&, unsigned int, SynapseConnType, SynapseGType, unsigned int, unsigned int, const string&, const string&,
                             const vector<double>&, const vector<double>&, const vector<double>&, const vector<double>&); //!< Method for adding a synapse population to a neuronal network model, using C++ string for the name of the population
   void setSynapseG(const string&, double); //!< This function has been depreciated as of GeNN 2.2.
   void setMaxConn(const string&, unsigned int); //< Set maximum connections per neuron for the given group (needed for optimization by sparse connectivity)
