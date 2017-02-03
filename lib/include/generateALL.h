@@ -47,7 +47,7 @@ void generate_model_runner(const NNmodel &model,  //!< Model description
 //--------------------------------------------------------------------------
 
 #ifndef CPU_ONLY
-void chooseDevice(const NNmodel &model, //!< the nn model we are generating code for
+void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
                   const string &path     //!< path the generated code will be deposited
                   );
 #endif
