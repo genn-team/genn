@@ -14,7 +14,7 @@
 //! \brief Tool for substituting strings in the neuron code strings or other templates
 //--------------------------------------------------------------------------
 
-void substitute(string &s, const string trg, const string rep)
+void substitute(string &s, const string &trg, const string &rep)
 {
     size_t found= s.find(trg);
     while (found != string::npos) {
@@ -60,7 +60,7 @@ void extended_name_substitutions(string &code, const string &prefix, const vecto
 //! \brief This function performs a list of value substitutions for parameters in code snippets where the parameters have an extension in their names (e.g. "_pre").
 //--------------------------------------------------------------------------
 
-void extended_value_substitutions(string &code, vector<string> &names, string ext, vector<double> &values)
+void extended_value_substitutions(string &code, const vector<string> &names, const string &ext, const vector<double> &values)
 {
     for (int k = 0, l = names.size(); k < l; k++) {
         substitute(code, tS("$(") + names[k] + ext + tS(")"), tS("(")+tS(values[k])+ tS(")"));
@@ -195,7 +195,7 @@ const char *__fnames[__mathFN]= {
  */
 //--------------------------------------------------------------------------
 
-void ensureMathFunctionFtype(string &code, string type) 
+void ensureMathFunctionFtype(string &code, const string &type)
 {
     if (type == string("double")) {
         for (int i= 0; i < __mathFN; i++) {
@@ -215,7 +215,7 @@ void ensureMathFunctionFtype(string &code, string type)
  */
 //--------------------------------------------------------------------------
 
-void doFinal(string &code, unsigned int i, string type, unsigned int &state) 
+void doFinal(string &code, unsigned int i, const string &type, unsigned int &state)
 {
     if (code[i] == 'f') {
         if (type == "double") {
@@ -377,16 +377,16 @@ void checkUnreplacedVariables(string code, string codeName)
 
 void neuron_substitutions_in_synaptic_code(
     string &wCode, //!< the code string to work on
-    NNmodel &model, //!< the neuronal network model to generate code for
+    const NNmodel &model, //!< the neuronal network model to generate code for
     unsigned int src, //!< the number of the src neuron population
     unsigned int trg, //!< the number of the target neuron population
     unsigned int nt_pre, //!< the neuron type of the pre-synaptic neuron
     unsigned int nt_post, //!< the neuron type of the post-synaptic neuron
-    string offsetPre, //!< delay slot offset expression for pre-synaptic vars
-    string offsetPost, //!< delay slot offset expression for post-synaptic vars
-    string preIdx, //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
-    string postIdx, //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
-    string devPrefix //!< device prefix, "dd_" for GPU, nothing for CPU
+    const string &offsetPre, //!< delay slot offset expression for pre-synaptic vars
+    const string &offsetPost, //!< delay slot offset expression for post-synaptic vars
+    const string &preIdx, //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
+    const string &postIdx, //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
+    const string &devPrefix //!< device prefix, "dd_" for GPU, nothing for CPU
     )
 {
     // presynaptic neuron variables, parameters, and global parameters

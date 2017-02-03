@@ -42,8 +42,8 @@ short *isGrpVarNeeded;
 */
 //-------------------------------------------------------------------------
 
-void genNeuronKernel(NNmodel &model, //!< Model description 
-                     string &path  //!< Path for code generation
+void genNeuronKernel(const NNmodel &model, //!< Model description
+                     const string &path  //!< Path for code generation
     )
 {
     string name, s, localID;
@@ -471,13 +471,13 @@ void genNeuronKernel(NNmodel &model, //!< Model description
 
 void generate_process_presynaptic_events_code(
     ostream &os, //!< output stream for code
-    NNmodel &model, //!< the neuronal network model to generate code for
+    const NNmodel &model, //!< the neuronal network model to generate code for
     unsigned int src, //!< the number of the src neuron population
     unsigned int trg, //!< the number of the target neuron population
     int i, //!< the index of the synapse group being processed
-    string &localID, //!< the variable name of the local ID of the thread within the synapse group
+    const string &localID, //!< the variable name of the local ID of the thread within the synapse group
     unsigned int inSynNo, //!< the ID number of the current synapse population as the incoming population to the target neuron population
-    string postfix //!< whether to generate code for true spikes or spike type events
+    const string &postfix //!< whether to generate code for true spikes or spike type events
     )
 {
     string theAtomicAdd;
@@ -788,8 +788,8 @@ void generate_process_presynaptic_events_code(
 */
 //-------------------------------------------------------------------------
 
-void genSynapseKernel(NNmodel &model, //!< Model description 
-                      string &path //!< Path for code generation
+void genSynapseKernel(const NNmodel &model, //!< Model description
+                      const string &path //!< Path for code generation
     )
 {
     string name, s;
