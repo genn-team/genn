@@ -30,7 +30,7 @@ void substitute(string &s, const string &trg, const string &rep)
 void name_substitutions(string &code, const string &prefix, const vector<string> &names, const string &postfix)
 {
     for (int k = 0, l = names.size(); k < l; k++) {
-        substitute(code, tS("$(") + names[k] + tS(")"), prefix+names[k]+postfix);
+        substitute(code, "$(" + names[k] + ")", prefix + names[k] + postfix);
     }
 }
 
@@ -41,7 +41,7 @@ void name_substitutions(string &code, const string &prefix, const vector<string>
 void value_substitutions(string &code, const vector<string> &names, const vector<double> &values)
 {
     for (int k = 0, l = names.size(); k < l; k++) {
-        substitute(code, tS("$(") + names[k] + tS(")"), tS("(")+tS(values[k])+ tS(")"));
+        substitute(code, "$(" + names[k] + ")", "(" + to_string(values[k]) + ")");
     }
 }
 
@@ -52,7 +52,7 @@ void value_substitutions(string &code, const vector<string> &names, const vector
 void extended_name_substitutions(string &code, const string &prefix, const vector<string> &names, const string &ext, const string &postfix)
 {
     for (int k = 0, l = names.size(); k < l; k++) {
-        substitute(code, tS("$(") + names[k] + ext + tS(")"), prefix+names[k]+postfix);
+        substitute(code, "$(" + names[k] + ext + ")", prefix + names[k] + postfix);
     }
 }
 
@@ -63,7 +63,7 @@ void extended_name_substitutions(string &code, const string &prefix, const vecto
 void extended_value_substitutions(string &code, const vector<string> &names, const string &ext, const vector<double> &values)
 {
     for (int k = 0, l = names.size(); k < l; k++) {
-        substitute(code, tS("$(") + names[k] + ext + tS(")"), tS("(")+tS(values[k])+ tS(")"));
+        substitute(code, "$(" + names[k] + ext + ")", "(" + to_string(values[k]) + ")");
     }
 }
 
@@ -390,37 +390,37 @@ void neuron_substitutions_in_synaptic_code(
     )
 {
     // presynaptic neuron variables, parameters, and global parameters
-    if (model.neuronType[src] == POISSONNEURON) substitute(wCode, tS("$(V_pre)"), tS(model.neuronPara[src][2]));
-    substitute(wCode, tS("$(sT_pre)"), devPrefix+ tS("sT") + model.neuronName[src] + tS("[") + offsetPre + preIdx + tS("]"));
+    if (model.neuronType[src] == POISSONNEURON) substitute(wCode, "$(V_pre)", to_string(model.neuronPara[src][2]));
+    substitute(wCode, "$(sT_pre)", devPrefix+ "sT" + model.neuronName[src] + "[" + offsetPre + preIdx + "]");
     for (int j = 0; j < nModels[nt_pre].varNames.size(); j++) {
         if (model.neuronVarNeedQueue[src][j]) {
-            substitute(wCode, tS("$(") + nModels[nt_pre].varNames[j] + tS("_pre)"),
-                       devPrefix + nModels[nt_pre].varNames[j] + model.neuronName[src] + tS("[") + offsetPre + preIdx + tS("]"));
+            substitute(wCode, "$(" + nModels[nt_pre].varNames[j] + "_pre)",
+                       devPrefix + nModels[nt_pre].varNames[j] + model.neuronName[src] + "[" + offsetPre + preIdx + "]");
         }
         else {
-            substitute(wCode, tS("$(") + nModels[nt_pre].varNames[j] + tS("_pre)"),
-                       devPrefix + nModels[nt_pre].varNames[j] + model.neuronName[src] + tS("[") + preIdx + tS("]"));
+            substitute(wCode, "$(" + nModels[nt_pre].varNames[j] + "_pre)",
+                       devPrefix + nModels[nt_pre].varNames[j] + model.neuronName[src] + "[" + preIdx + "]");
         }
     }
-    extended_value_substitutions(wCode, nModels[nt_pre].pNames, tS("_pre"), model.neuronPara[src]);
-    extended_value_substitutions(wCode, nModels[nt_pre].dpNames, tS("_pre"), model.dnp[src]);
-    extended_name_substitutions(wCode, devPrefix, nModels[nt_pre].extraGlobalNeuronKernelParameters, tS("_pre"), model.neuronName[src]);
+    extended_value_substitutions(wCode, nModels[nt_pre].pNames, "_pre", model.neuronPara[src]);
+    extended_value_substitutions(wCode, nModels[nt_pre].dpNames, "_pre", model.dnp[src]);
+    extended_name_substitutions(wCode, devPrefix, nModels[nt_pre].extraGlobalNeuronKernelParameters, "_pre", model.neuronName[src]);
     
     // postsynaptic neuron variables, parameters, and global parameters
-    substitute(wCode, tS("$(sT_post)"), devPrefix+tS("sT") + model.neuronName[trg] + tS("[") + offsetPost + postIdx + tS("]"));
+    substitute(wCode, "$(sT_post)", devPrefix + "sT" + model.neuronName[trg] + "[" + offsetPost + postIdx + "]");
     for (int j = 0; j < nModels[nt_post].varNames.size(); j++) {
         if (model.neuronVarNeedQueue[trg][j]) {
-            substitute(wCode, tS("$(") + nModels[nt_post].varNames[j] + tS("_post)"),
-                       devPrefix + nModels[nt_post].varNames[j] + model.neuronName[trg] + tS("[") + offsetPost + postIdx + tS("]"));
+            substitute(wCode, "$(" + nModels[nt_post].varNames[j] + "_post)",
+                       devPrefix + nModels[nt_post].varNames[j] + model.neuronName[trg] + "[" + offsetPost + postIdx + "]");
         }
         else {
-            substitute(wCode, tS("$(") + nModels[nt_post].varNames[j] + tS("_post)"),
-                       devPrefix + nModels[nt_post].varNames[j] + model.neuronName[trg] + tS("[") + postIdx + tS("]"));
+            substitute(wCode, "$(" + nModels[nt_post].varNames[j] + "_post)",
+                       devPrefix + nModels[nt_post].varNames[j] + model.neuronName[trg] + "[" + postIdx + "]");
         }
     }
-    extended_value_substitutions(wCode, nModels[nt_post].pNames, tS("_post"), model.neuronPara[trg]);
-    extended_value_substitutions(wCode, nModels[nt_post].dpNames, tS("_post"), model.dnp[trg]);
-    extended_name_substitutions(wCode, devPrefix, nModels[nt_post].extraGlobalNeuronKernelParameters, tS("_post"), model.neuronName[trg]);
+    extended_value_substitutions(wCode, nModels[nt_post].pNames, "_post", model.neuronPara[trg]);
+    extended_value_substitutions(wCode, nModels[nt_post].dpNames, "_post", model.dnp[trg]);
+    extended_name_substitutions(wCode, devPrefix, nModels[nt_post].extraGlobalNeuronKernelParameters, "_post", model.neuronName[trg]);
 }
 
 #endif // STRINGUTILS_CC

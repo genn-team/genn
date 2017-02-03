@@ -83,14 +83,14 @@ void genRunner(const NNmodel &model, //!< Model description
         
     string SCLR_MIN;
     string SCLR_MAX;
-    if (model.ftype == tS("float")) {
-        SCLR_MIN= tS(FLT_MIN)+tS("f");
-        SCLR_MAX= tS(FLT_MAX)+tS("f");
+    if (model.ftype == "float") {
+        SCLR_MIN= to_string(FLT_MIN)+"f";
+        SCLR_MAX= to_string(FLT_MAX)+"f";
     }
 
-    if (model.ftype == tS("double")) {
-        SCLR_MIN= tS(DBL_MIN);
-        SCLR_MAX= tS(DBL_MAX);
+    if (model.ftype == "double") {
+        SCLR_MIN= to_string(DBL_MIN);
+        SCLR_MAX= to_string(DBL_MAX);
     }
 
     for (int i= 0; i < nModels.size(); i++) {
@@ -258,11 +258,11 @@ void genRunner(const NNmodel &model, //!< Model description
     for (int i = 0; i < model.neuronGrpN; i++) {
         nt = model.neuronType[i];
 
-        extern_variable_def(os, tS("unsigned int *"), "glbSpkCnt"+model.neuronName[i]);
-        extern_variable_def(os, tS("unsigned int *"), "glbSpk"+model.neuronName[i]);
+        extern_variable_def(os, "unsigned int *", "glbSpkCnt"+model.neuronName[i]);
+        extern_variable_def(os, "unsigned int *", "glbSpk"+model.neuronName[i]);
         if (model.neuronNeedSpkEvnt[i]) {
-            extern_variable_def(os, tS("unsigned int *"), "glbSpkCntEvnt"+model.neuronName[i]);
-            extern_variable_def(os, tS("unsigned int *"), "glbSpkEvnt"+model.neuronName[i]);
+            extern_variable_def(os, "unsigned int *", "glbSpkCntEvnt"+model.neuronName[i]);
+            extern_variable_def(os, "unsigned int *", "glbSpkEvnt"+model.neuronName[i]);
         }
         if (model.neuronDelaySlots[i] > 1) {
             os << "extern unsigned int spkQuePtr" << model.neuronName[i] << ";" << ENDL;
@@ -341,7 +341,7 @@ void genRunner(const NNmodel &model, //!< Model description
 
         extern_variable_def(os, model.ftype+" *", "inSyn"+model.synapseName[i]);
         if (model.synapseGType[i] == INDIVIDUALID) {
-            extern_variable_def(os, tS("uint32_t *"), "gp"+model.synapseName[i]);
+            extern_variable_def(os, "uint32_t *", "gp"+model.synapseName[i]);
         }
         if (model.synapseConnType[i] == SPARSE) {
             os << "extern SparseProjection C" << model.synapseName[i] << ";" << ENDL;
@@ -595,7 +595,7 @@ void genRunner(const NNmodel &model, //!< Model description
     // generate support_code.h
     //========================
 
-    name= path + toString("/") + model.name + toString("_CODE/support_code.h");
+    name= path + "/" + model.name + "_CODE/support_code.h";
     os.open(name.c_str());  
     writeHeader(os);
     os << ENDL;
@@ -612,29 +612,29 @@ void genRunner(const NNmodel &model, //!< Model description
     // write the support codes
     os << "// support code for neuron and synapse models" << ENDL;
     for (int i= 0; i < model.neuronGrpN; i++) {
-        if (nModels[model.neuronType[i]].supportCode != tS("")) {
+        if (!nModels[model.neuronType[i]].supportCode.empty()) {
             os << "namespace " << model.neuronName[i] << "_neuron" << OB(11) << ENDL;
             os << nModels[model.neuronType[i]].supportCode << ENDL;
             os << CB(11) << " // end of support code namespace " << model.neuronName[i] << ENDL;
         }
     }
     for (int i= 0; i < model.synapseGrpN; i++) {
-        if (weightUpdateModels[model.synapseType[i]].simCode_supportCode != tS("")) {
+        if (!weightUpdateModels[model.synapseType[i]].simCode_supportCode.empty()) {
             os << "namespace " << model.synapseName[i] << "_weightupdate_simCode " << OB(11) << ENDL;
             os << weightUpdateModels[model.synapseType[i]].simCode_supportCode << ENDL;
             os << CB(11) << " // end of support code namespace " << model.synapseName[i] << "_weightupdate_simCode " << ENDL;
         }
-        if (weightUpdateModels[model.synapseType[i]].simLearnPost_supportCode != tS("")) {
+        if (!weightUpdateModels[model.synapseType[i]].simLearnPost_supportCode.empty()) {
             os << "namespace " << model.synapseName[i] << "_weightupdate_simLearnPost " << OB(11) << ENDL;
             os << weightUpdateModels[model.synapseType[i]].simLearnPost_supportCode << ENDL;
             os << CB(11) << " // end of support code namespace " << model.synapseName[i] << "_weightupdate_simLearnPost " << ENDL;
         }
-        if (weightUpdateModels[model.synapseType[i]].synapseDynamics_supportCode != tS("")) {
+        if (!weightUpdateModels[model.synapseType[i]].synapseDynamics_supportCode.empty()) {
             os << "namespace " << model.synapseName[i] << "_weightupdate_synapseDynamics " << OB(11) << ENDL;
             os << weightUpdateModels[model.synapseType[i]].synapseDynamics_supportCode << ENDL;
             os << CB(11) << " // end of support code namespace " << model.synapseName[i] << "_weightupdate_synapseDynamics " << ENDL;
         }
-        if (postSynModels[model.postSynapseType[i]].supportCode != tS("")) {
+        if (!postSynModels[model.postSynapseType[i]].supportCode.empty()) {
             os << "namespace " << model.synapseName[i] << "_postsyn " << OB(11) << ENDL;
             os << postSynModels[model.postSynapseType[i]].supportCode << ENDL;
             os << CB(11) << " // end of support code namespace " << model.synapseName[i] << "_postsyn " << ENDL;
@@ -724,11 +724,11 @@ void genRunner(const NNmodel &model, //!< Model description
     for (int i = 0; i < model.neuronGrpN; i++) {
         nt = model.neuronType[i];
 
-        variable_def(os, tS("unsigned int *"), "glbSpkCnt"+model.neuronName[i]);
-        variable_def(os, tS("unsigned int *"), "glbSpk"+model.neuronName[i]);
+        variable_def(os, "unsigned int *", "glbSpkCnt"+model.neuronName[i]);
+        variable_def(os, "unsigned int *", "glbSpk"+model.neuronName[i]);
         if (model.neuronNeedSpkEvnt[i]) {
-            variable_def(os, tS("unsigned int *"), "glbSpkCntEvnt"+model.neuronName[i]);
-            variable_def(os, tS("unsigned int *"), "glbSpkEvnt"+model.neuronName[i]);
+            variable_def(os, "unsigned int *", "glbSpkCntEvnt"+model.neuronName[i]);
+            variable_def(os, "unsigned int *", "glbSpkEvnt"+model.neuronName[i]);
         }
         if (model.neuronDelaySlots[i] > 1) {
             os << "unsigned int spkQuePtr" << model.neuronName[i] << ";" << ENDL;
@@ -762,7 +762,7 @@ void genRunner(const NNmodel &model, //!< Model description
 
         variable_def(os, model.ftype+" *", "inSyn"+model.synapseName[i]);
         if (model.synapseGType[i] == INDIVIDUALID) {
-            variable_def(os, tS("uint32_t *"), "gp"+model.synapseName[i]);
+            variable_def(os, "uint32_t *", "gp"+model.synapseName[i]);
         }
         if (model.synapseConnType[i] == SPARSE) {
             os << "SparseProjection C" << model.synapseName[i] << ";" << ENDL;
@@ -1641,7 +1641,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     ofstream os;
 
 //    cout << "entering GenRunnerGPU" << ENDL;
-    name= path + toString("/") + model.name + toString("_CODE/runnerGPU.cc");
+    name= path + "/" + model.name + "_CODE/runnerGPU.cc";
     os.open(name.c_str());
     writeHeader(os);
 
@@ -1710,7 +1710,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
         os << OB(1050);
 
         for (int k= 0, l= nModels[nt].varNames.size(); k < l; k++) {
-            if (nModels[nt].varTypes[k].find(tS("*")) == string::npos) { // only copy non-pointers. Pointers don't transport between GPU and CPU
+            if (nModels[nt].varTypes[k].find("*") == string::npos) { // only copy non-pointers. Pointers don't transport between GPU and CPU
                 if (model.neuronVarNeedQueue[i][k]) {
                     size = model.neuronN[i] * model.neuronDelaySlots[i];
                 }
@@ -1857,7 +1857,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
                 os << "size_t size = C" << model.synapseName[i] << ".connN;" << ENDL;
             }
             for (int k= 0, l= weightUpdateModels[st].varNames.size(); k < l; k++) {
-                if (weightUpdateModels[st].varTypes[k].find(tS("*")) == string::npos) { // only copy non-pointers. Pointers don't transport between GPU and CPU
+                if (weightUpdateModels[st].varTypes[k].find("*") == string::npos) { // only copy non-pointers. Pointers don't transport between GPU and CPU
                     os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << weightUpdateModels[st].varNames[k] << model.synapseName[i];
                     os << ", " << weightUpdateModels[st].varNames[k] << model.synapseName[i];
                     os << ", size * sizeof(" << weightUpdateModels[st].varTypes[k] << "), cudaMemcpyHostToDevice));" << ENDL;
@@ -1865,7 +1865,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
             }
 
             for (int k= 0, l= postSynModels[pst].varNames.size(); k < l; k++) {
-                if (postSynModels[pst].varTypes[k].find(tS("*")) == string::npos) { // only copy non-pointers. Pointers don't transport between GPU and CPU
+                if (postSynModels[pst].varTypes[k].find("*") == string::npos) { // only copy non-pointers. Pointers don't transport between GPU and CPU
                     size = model.neuronN[model.synapseTarget[i]];
                     os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << postSynModels[pst].varNames[k] << model.synapseName[i];
                     os << ", " << postSynModels[pst].varNames[k] << model.synapseName[i];
@@ -1902,7 +1902,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
         os << OB(1050);
 
         for (int k= 0, l= nModels[nt].varNames.size(); k < l; k++) {
-            if (nModels[nt].varTypes[k].find(tS("*")) == string::npos) { // only copy non-pointers. Pointers don't transport between GPU and CPU
+            if (nModels[nt].varTypes[k].find("*") == string::npos) { // only copy non-pointers. Pointers don't transport between GPU and CPU
                 if (model.neuronVarNeedQueue[i][k]) {
                     size = model.neuronN[i] * model.neuronDelaySlots[i];
                 }
@@ -2056,7 +2056,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
                 os << "size_t size = C" << model.synapseName[i] << ".connN;" << ENDL;
             }
             for (int k= 0, l= weightUpdateModels[st].varNames.size(); k < l; k++) {
-                if (weightUpdateModels[st].varTypes[k].find(tS("*")) == string::npos) { // only copy non-pointers. Pointers don't transport between GPU and CPU
+                if (weightUpdateModels[st].varTypes[k].find("*") == string::npos) { // only copy non-pointers. Pointers don't transport between GPU and CPU
                     os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << weightUpdateModels[st].varNames[k] << model.synapseName[i];
                     os << ", d_"  << weightUpdateModels[st].varNames[k] << model.synapseName[i];
                     os << ", size * sizeof(" << weightUpdateModels[st].varTypes[k] << "), cudaMemcpyDeviceToHost));" << ENDL;
@@ -2064,7 +2064,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
             }
 
             for (int k= 0, l= postSynModels[pst].varNames.size(); k < l; k++) {
-                if (postSynModels[pst].varTypes[k].find(tS("*")) == string::npos) { // only copy non-pointers. Pointers don't transport between GPU and CPU
+                if (postSynModels[pst].varTypes[k].find("*") == string::npos) { // only copy non-pointers. Pointers don't transport between GPU and CPU
                     size = model.neuronN[model.synapseTarget[i]];
                     os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << postSynModels[pst].varNames[k] << model.synapseName[i];
                     os << ", d_"  << postSynModels[pst].varNames[k] << model.synapseName[i];

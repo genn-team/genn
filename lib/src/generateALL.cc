@@ -217,7 +217,7 @@ void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
             CHECK_CU_ERRORS(cuCtxSetCurrent(cuContext));
 
             string nvccFlags = "-cubin -x cu -arch sm_";
-            nvccFlags += tS(deviceProp[theDevice].major) + tS(deviceProp[theDevice].minor);
+            nvccFlags += to_string(deviceProp[theDevice].major) + to_string(deviceProp[theDevice].minor);
             nvccFlags += " " + GENN_PREFERENCES::userNvccFlags;
             if (GENN_PREFERENCES::optimizeCode) nvccFlags += " -O3 -use_fast_math";
             if (GENN_PREFERENCES::debugCode) nvccFlags += " -O0 -g -G";
@@ -227,13 +227,13 @@ void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
             nvccFlags += " -I\"%GENN_PATH%\\lib\\include\"";
             string runnerPath = path + "\\" + model.name + "_CODE\\runner.cc";
             string cubinPath = path + "\\runner.cubin";
-            string nvccCommand = "\"\"" + tS(NVCC) + "\" " + nvccFlags;
+            string nvccCommand = "\"\"" + NVCC + "\" " + nvccFlags;
             nvccCommand += " -o \"" + cubinPath + "\" \"" + runnerPath + "\"\"";
 #else
             nvccFlags += " -I\"$GENN_PATH/lib/include\"";
             string runnerPath = path + "/" + model.name + "_CODE/runner.cc";
             string cubinPath = path + "/runner.cubin";
-            string nvccCommand = "\"" + tS(NVCC) + "\" " + nvccFlags;
+            string nvccCommand = "\"" + NVCC + "\" " + nvccFlags;
             nvccCommand += " -o \"" + cubinPath + "\" \"" + runnerPath + "\"";
 #endif
 
@@ -584,7 +584,7 @@ int main(int argc,     //!< number of arguments; expected to be 2
         gennError("Model was not finalized in modelDefinition(). Please call model.finalize().");
     }
 
-    string path= toString(argv[1]);
+    string path = argv[1];
 #ifndef CPU_ONLY
     chooseDevice(*model, path);
 #endif // CPU_ONLY
