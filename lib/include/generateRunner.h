@@ -32,14 +32,14 @@ using namespace std;
 //! \brief This fucntion generates host and device variable definitions, of the given type and name.
 //--------------------------------------------------------------------------
 
-void variable_def(ofstream &os, string type, string name);
+void variable_def(ofstream &os, const string &type, const string &name);
 
 
 //--------------------------------------------------------------------------
 //! \brief This fucntion generates host extern variable definitions, of the given type and name.
 //--------------------------------------------------------------------------
 
-void extern_variable_def(ofstream &os, string type, string name);
+void extern_variable_def(ofstream &os, const string &type, const string &name);
 
 
 //--------------------------------------------------------------------------
@@ -55,8 +55,8 @@ void extern_variable_def(ofstream &os, string type, string name);
 */
 //--------------------------------------------------------------------------
 
-void genRunner(NNmodel &model, //!< Model description
-               string &path //!< Path for code generationn
+void genRunner(const NNmodel &model, //!< Model description
+               const string &path //!< Path for code generationn
                );
 
 
@@ -69,8 +69,8 @@ void genRunner(NNmodel &model, //!< Model description
 //----------------------------------------------------------------------------
 
 #ifndef CPU_ONLY
-void genRunnerGPU(NNmodel &model, //!< Model description 
-                  string &path //!< Path for code generation
+void genRunnerGPU(const NNmodel &model, //!< Model description
+                  const string &path //!< Path for code generation
                   );
 #endif // CPU_ONLY
 
@@ -81,6 +81,6 @@ void genRunnerGPU(NNmodel &model, //!< Model description
 */
 //----------------------------------------------------------------------------
 
-void genMakefile(NNmodel &model, //!< Model description
-                 string &path    //!< Path for code generation
+void genMakefile(const NNmodel &model, //!< Model description
+                 const string &path    //!< Path for code generation
                  );
