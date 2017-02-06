@@ -259,7 +259,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
 
         os << "// test whether spike condition was fulfilled previously" << ENDL;
         string thCode= nModels[nt].thresholdConditionCode;
-        if (!thCode.empty()) { // no condition provided
+        if (thCode.empty()) { // no condition provided
             cerr << "Warning: No thresholdConditionCode for neuron type " << model.neuronType[i] << " used for population \"" << model.neuronName[i] << "\" was provided. There will be no spikes detected in this population!" << endl;
         }
         else {
@@ -681,7 +681,7 @@ void generate_process_presynaptic_events_code(
                 value_substitutions(eCode, weightUpdateModels[synt].pNames, model.synapsePara[i]);
                 value_substitutions(eCode, weightUpdateModels[synt].dpNames, model.dsp_w[i]);
                 name_substitutions(eCode, "", weightUpdateModels[synt].extraGlobalSynapseKernelParameters, model.synapseName[i]);
-                neuron_substitutions_in_synaptic_code(eCode, model, src, trg, nt_pre, nt_post, offsetPre, offsetPost, "shSpkEvnt" + "[j]", "ipost", "dd_");
+                neuron_substitutions_in_synaptic_code(eCode, model, src, trg, nt_pre, nt_post, offsetPre, offsetPost, "shSpkEvnt[j]", "ipost", "dd_");
                 eCode= ensureFtype(eCode, model.ftype);
                 checkUnreplacedVariables(eCode, "evntThreshold");
                 // end code substitutions ----
@@ -1196,7 +1196,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                 name_substitutions(code, "dd_", weightUpdateModels[synt].varNames, model.synapseName[k] + "[dd_remap" + model.synapseName[k] + "[iprePos]]");
             }
             else { // DENSE
-                name_substitutions(code, "dd_", weightUpdateModels[synt].varNames, model.synapseName[k] + "[" + localID + " * " + tS(model.neuronN[trg]) + " + shSpk[j]]");
+                name_substitutions(code, "dd_", weightUpdateModels[synt].varNames, model.synapseName[k] + "[" + localID + " * " + to_string(model.neuronN[trg]) + " + shSpk[j]]");
             }
             value_substitutions(code, weightUpdateModels[synt].pNames, model.synapsePara[k]);
             value_substitutions(code, weightUpdateModels[synt].dpNames, model.dsp_w[k]);
@@ -1204,7 +1204,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
 
             // presynaptic neuron variables and parameters
             if (sparse) { // SPARSE
-                neuron_substitutions_in_synaptic_code(code, model, src, trg, nt_pre, nt_post, offsetPre, offsetPost, "dd_revInd" + model.synapseName[k] + "[iprePos]"), "shSpk[j]", "dd_");
+                neuron_substitutions_in_synaptic_code(code, model, src, trg, nt_pre, nt_post, offsetPre, offsetPost, "dd_revInd" + model.synapseName[k] + "[iprePos]", "shSpk[j]", "dd_");
             }
             else { // DENSE
                 neuron_substitutions_in_synaptic_code(code, model, src, trg, nt_pre, nt_post, offsetPre, offsetPost, localID, "shSpk[j]", "dd_");
@@ -1250,7 +1250,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                 os << CB(330); // end "if (j == " << numOfBlocks - 1 << ")"
                 os << CB(320); // end "if (threadIdx.x == 0)"
             }
-            if (!weightUpdateModels[synt].simLearnPost_supportCode.empty())) {
+            if (!weightUpdateModels[synt].simLearnPost_supportCode.empty()) {
                 os << CB(29) << " // namespace bracket closed" << ENDL;
             }
             os << CB(220);
