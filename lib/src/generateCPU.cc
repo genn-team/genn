@@ -169,13 +169,12 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
             }
         }
     
-    
-        os << "// test whether spike condition was fulfilled previously" << ENDL;
         string thCode= nModels[nt].thresholdConditionCode;
         if (thCode == "") { // no condition provided
             cerr << "Warning: No thresholdConditionCode for neuron type " << model.neuronType[i] << " used for population \"" << model.neuronName[i] << "\" was provided. There will be no spikes detected in this population!" << endl;
         }
         else {
+            os << "// test whether spike condition was fulfilled previously" << ENDL;
             substitute(thCode, "$(id)", "n");
             substitute(thCode, "$(t)", "t");
             name_substitutions(thCode, "l", nModels[nt].varNames, "");
