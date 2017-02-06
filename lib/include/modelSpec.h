@@ -26,6 +26,7 @@ Part of the code generation and generated code sections.
 #define _MODELSPEC_H_ //!< macro for avoiding multiple inclusion during compilation
 
 #include "neuronModels.h"
+#include "newNeuronModels.h"
 #include "synapseModels.h"
 #include "postSynapseModels.h"
 
@@ -109,7 +110,8 @@ public:
   vector<unsigned int> sumNeuronN; //!< Summed neuron numbers
   vector<unsigned int> padSumNeuronN; //!< Padded summed neuron numbers
   vector<unsigned int> neuronPostSyn; //! Postsynaptic methods to the neuron
-  vector<unsigned int> neuronType; //!< Types of neurons
+  //vector<unsigned int> neuronType; //!< Types of neurons
+  vector<const NeuronModels::Base*>   //!< Neuron models
   vector<vector<double> > neuronPara; //!< Parameters of neurons
   vector<vector<double> > dnp; //!< Derived neuron parameters
   vector<vector<double> > neuronIni; //!< Initial values of neurons
@@ -229,8 +231,32 @@ public:
   // PUBLIC NEURON FUNCTIONS
   //========================
 
-  void addNeuronPopulation(const string&, unsigned int, unsigned int, const double *, const double *); //!< Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population
-  void addNeuronPopulation(const string&, unsigned int, unsigned int, const vector<double>&, const vector<double>&); //!< Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population
+  //void addNeuronPopulation(const string&, unsigned int, unsigned int, const double *, const double *); //!< Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population
+  //void addNeuronPopulation(const string&, unsigned int, unsigned int, const vector<double>&, const vector<double>&); //!< Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population
+
+  template<typename NeuronModel>
+  void addNeuronPopulation(const string &name, unsigned int size,
+                           const NeuronModel::Params &params, const NeuronModel::InitValues &initValues)
+  {
+      unsigned int i= neuronGrpN++;
+      neuronName.push_back(name);
+      neuronN.push_back(nNo);
+      //neuronType.push_back(type);
+      neuronModel.push_back(NeuronModel::GetInstance());
+      neuronPara.push_back(params.GetValues());
+      neuronIni.push_back(initValues.GetValues());
+      inSyn.push_back(vector<unsigned int>());
+      outSyn.push_back(vector<unsigned int>());
+      neuronNeedSt.push_back(false);
+      neuronNeedSpkEvnt.push_back(false);
+      neuronSpkEvntCondition.push_back("");
+      neuronDelaySlots.push_back(1);
+
+      // initially set neuron group indexing variables to device 0 host 0
+      neuronDeviceID.push_back(0);
+      neuronHostID.push_back(0);
+  }
+
   void setNeuronClusterIndex(const string &neuronGroup, int hostID, int deviceID); //!< Function for setting which host and which device a neuron group will be simulated on
   void activateDirectInput(const string&, unsigned int type); //! This function has been deprecated in GeNN 2.2
   void setConstInp(const string&, double);

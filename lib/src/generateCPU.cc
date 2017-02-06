@@ -71,7 +71,8 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
 
     // function code
     for (int i = 0; i < model.neuronGrpN; i++) {
-        nt = model.neuronType[i];
+        //nt = model.neuronType[i];
+        auto neuronModel = model.neuronModel[i];
 
         string queueOffset = (model.neuronDelaySlots[i] > 1 ? "(spkQuePtr" + model.neuronName[i] + " * " + to_string(model.neuronN[i]) + ") + " : "");
         string queueOffsetTrueSpk = (model.neuronNeedTrueSpk[i] ? queueOffset : "");
@@ -108,16 +109,19 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
 
         os << "for (int n = 0; n < " <<  model.neuronN[i] << "; n++)" << OB(10);
         for (int k = 0; k < nModels[nt].varNames.size(); k++) {
-            os << nModels[nt].varTypes[k] << " l" << nModels[nt].varNames[k] << " = ";
-            os << nModels[nt].varNames[k] << model.neuronName[i] << "[";
+            const char *varName = neuronModel->GetVarName(k);
+            const char *varType = neuronModel->GetVarType(k);
+
+            os << varType << " l" << varName << " = ";
+            os << varName << model.neuronName[i] << "[";
             if ((model.neuronVarNeedQueue[i][k]) && (model.neuronDelaySlots[i] > 1)) {
                 os << "(delaySlot * " << model.neuronN[i] << ") + ";
             }
             os << "n];" << ENDL;
         }
-        if ((nModels[nt].simCode.find("$(sT)") != string::npos)
-            || (nModels[nt].thresholdConditionCode.find("$(sT)") != string::npos)
-            || (nModels[nt].resetCode.find("$(sT)") != string::npos)) { // load sT into local variable
+        if ((neuronModel->GetSimCode().find("$(sT)") != string::npos)
+            || (neuronModel->GetThresholdConditionCode().find("$(sT)") != string::npos)
+            || (neuronModel->GetResetCode().find("$(sT)") != string::npos)) { // load sT into local variable
             os << model.ftype << " lsT= sT" <<  model.neuronName[i] << "[";
             if (model.neuronDelaySlots[i] > 1) {
                 os << "(delaySlot * " << model.neuronN[i] << ") + ";
@@ -126,7 +130,7 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
         }
         os << ENDL;
 
-        if ((model.inSyn[i].size() > 0) || (nModels[nt].simCode.find("Isyn") != string::npos)) {
+        if ((model.inSyn[i].size() > 0) || (neuronModel->GetSimCode().find("Isyn") != string::npos)) {
             os << model.ftype << " Isyn = 0;" << ENDL;
         }
         for (int j = 0; j < model.inSyn[i].size(); j++) {
