@@ -227,13 +227,13 @@ void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
             nvccFlags += " -I\"%GENN_PATH%\\lib\\include\"";
             string runnerPath = path + "\\" + model.name + "_CODE\\runner.cc";
             string cubinPath = path + "\\runner.cubin";
-            string nvccCommand = "\"\"" + NVCC + "\" " + nvccFlags;
+            string nvccCommand = "\"\"" NVCC "\" " + nvccFlags;
             nvccCommand += " -o \"" + cubinPath + "\" \"" + runnerPath + "\"\"";
 #else
             nvccFlags += " -I\"$GENN_PATH/lib/include\"";
             string runnerPath = path + "/" + model.name + "_CODE/runner.cc";
             string cubinPath = path + "/runner.cubin";
-            string nvccCommand = "\"" + NVCC + "\" " + nvccFlags;
+            string nvccCommand = "\"" NVCC "\" " + nvccFlags;
             nvccCommand += " -o \"" + cubinPath + "\" \"" + runnerPath + "\"";
 #endif
 
