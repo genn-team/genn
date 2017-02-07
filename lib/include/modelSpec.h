@@ -111,7 +111,7 @@ public:
   vector<unsigned int> padSumNeuronN; //!< Padded summed neuron numbers
   vector<unsigned int> neuronPostSyn; //! Postsynaptic methods to the neuron
   //vector<unsigned int> neuronType; //!< Types of neurons
-  vector<const NeuronModels::Base*>   //!< Neuron models
+  vector<const NeuronModels::Base*> neuronModel;  //!< Neuron models
   vector<vector<double> > neuronPara; //!< Parameters of neurons
   vector<vector<double> > dnp; //!< Derived neuron parameters
   vector<vector<double> > neuronIni; //!< Initial values of neurons
@@ -236,14 +236,14 @@ public:
 
   template<typename NeuronModel>
   void addNeuronPopulation(const string &name, unsigned int size,
-                           const NeuronModel::Params &params, const NeuronModel::InitValues &initValues)
+                           const typename NeuronModel::ParamValues &paramValues, const typename NeuronModel::InitValues &initValues)
   {
       unsigned int i= neuronGrpN++;
       neuronName.push_back(name);
-      neuronN.push_back(nNo);
+      neuronN.push_back(size);
       //neuronType.push_back(type);
       neuronModel.push_back(NeuronModel::GetInstance());
-      neuronPara.push_back(params.GetValues());
+      neuronPara.push_back(paramValues.GetValues());
       neuronIni.push_back(initValues.GetValues());
       inSyn.push_back(vector<unsigned int>());
       outSyn.push_back(vector<unsigned int>());

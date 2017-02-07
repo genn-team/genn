@@ -140,14 +140,14 @@ void NNmodel::initLearnGrps()
 
     neuronVarNeedQueue.resize(neuronGrpN);
     for (int i = 0; i < neuronGrpN; i++) {
-        neuronVarNeedQueue[i] = vector<bool>(nModels[neuronType[i]].varNames.size(), false);
+        neuronVarNeedQueue[i] = vector<bool>(neuronModel[i]->GetInitVals().size(), false);
     }
     neuronSpkEvntCondition.assign(neuronGrpN, "");
 
     for (int i = 0; i < synapseGrpN; i++) {
         const auto &wu = weightUpdateModels[synapseType[i]];
         unsigned int src = synapseSource[i];
-        vector<string> vars = nModels[neuronType[src]].varNames;
+        const auto &srcInitVals = neuronModel[src]->GetInitVals();
         needEvntThresholdReTest.push_back(false);
 
         if (wu.simCode != "") {
@@ -155,8 +155,8 @@ void NNmodel::initLearnGrps()
             neuronNeedTrueSpk[src] = true;
 
             // analyze which neuron variables need queues
-            for (int j = 0; j < vars.size(); j++) {
-                if (wu.simCode.find(vars[j] + "_pre") != string::npos) {
+            for (int j = 0; j < srcInitVals.size(); j++) {
+                if (wu.simCode.find(srcInitVals[j].first + "_pre") != string::npos) {
                     neuronVarNeedQueue[src][j] = true;
                 }
             }
@@ -166,8 +166,8 @@ void NNmodel::initLearnGrps()
             synapseUsesPostLearning[i] = true;
             lrnSynGrp.push_back(i);
             lrnGroups++;
-            for (int j = 0; j < vars.size(); j++) {
-                if (wu.simLearnPost.find(vars[j] + "_pre") != string::npos) {
+            for (int j = 0; j < srcInitVals.size(); j++) {
+                if (wu.simLearnPost.find(srcInitVals[j].first + "_pre") != string::npos) {
                     neuronVarNeedQueue[src][j] = true;
                 }
             }
@@ -177,8 +177,8 @@ void NNmodel::initLearnGrps()
             synapseUsesSynapseDynamics[i]= true;
             synDynGrp.push_back(i);
             synDynGroups++;
-            for (int j = 0; j < vars.size(); j++) {
-                if (wu.synapseDynamics.find(vars[j] + "_pre") != string::npos) {
+            for (int j = 0; j < srcInitVals.size(); j++) {
+                if (wu.synapseDynamics.find(srcInitVals[j].first + "_pre") != string::npos) {
                     neuronVarNeedQueue[src][j] = true;
                 }
             }
@@ -187,7 +187,7 @@ void NNmodel::initLearnGrps()
 
     for (int i = 0; i < neuronGrpN; i++) {
         string eCode0;
-        vector<string> vars = nModels[neuronType[i]].varNames;
+        const auto &vars = neuronModel[i]->GetInitVals();
         bool needReTest= false;
         for (int j= 0, l= outSyn[i].size(); j < l; j++) {
             int synPopID= outSyn[i][j];
@@ -217,7 +217,7 @@ void NNmodel::initLearnGrps()
 
                 // analyze which neuron variables need queues
                 for (int j = 0; j < vars.size(); j++) {
-                    if (wu.simCodeEvnt.find(vars[j] + "_pre") != string::npos) {
+                    if (wu.simCodeEvnt.find(vars[j].first + "_pre") != string::npos) {
                         neuronVarNeedQueue[i][j] = true;
                     }
                 }
@@ -236,23 +236,22 @@ void NNmodel::initLearnGrps()
     // related to kernel parameters: make kernel parameter lists
     // for neuron kernel
     for (int i = 0; i < neuronGrpN; i++) {
-        unsigned int nt= neuronType[i];
-        for (int j= 0, l= nModels[nt].extraGlobalNeuronKernelParameters.size(); j < l; j++) {
-            string pname= nModels[nt].extraGlobalNeuronKernelParameters[j];
+        /*for (int j= 0, l= neuronModel[i].extraGlobalNeuronKernelParameters.size(); j < l; j++) {
+            string pname= neuronModel[i].extraGlobalNeuronKernelParameters[j];
             string pnamefull= pname + neuronName[i];
-            string ptype= nModels[nt].extraGlobalNeuronKernelParameterTypes[j];
+            string ptype= neuronModel[i].extraGlobalNeuronKernelParameterTypes[j];
             if (find(neuronKernelParameters.begin(), neuronKernelParameters.end(), pnamefull) == neuronKernelParameters.end()) {
                 // parameter wasn't registered yet - is it used?
                 bool used= 0;
-                if (nModels[nt].simCode.find("$(" + pname + ")") != string::npos) used= 1; // it's used
-                if (nModels[nt].thresholdConditionCode.find("$(" + pname + ")") != string::npos) used= 1; // it's used
-                if (nModels[nt].resetCode.find("$(" + pname + ")") != string::npos) used= 1; // it's used
+                if (neuronModel[i].simCode.find("$(" + pname + ")") != string::npos) used= 1; // it's used
+                if (neuronModel[i].thresholdConditionCode.find("$(" + pname + ")") != string::npos) used= 1; // it's used
+                if (neuronModel[i].resetCode.find("$(" + pname + ")") != string::npos) used= 1; // it's used
                 if (used) {
                     neuronKernelParameters.push_back(pnamefull);
                     neuronKernelParameterTypes.push_back(ptype);
                 }
             }
-        }
+        }*/
     }
     for (int i = 0; i < synapseGrpN; i++) {
         const auto &wu = weightUpdateModels[synapseType[i]];
@@ -277,14 +276,12 @@ void NNmodel::initLearnGrps()
         const auto &wu = weightUpdateModels[synapseType[i]];
         unsigned int src = synapseSource[i];
         unsigned int trg = synapseTarget[i];
-        unsigned int nt[2];
-        nt[0]= neuronType[src]; // pre
-        nt[1]= neuronType[trg]; // post
+        const NeuronModels::Base *nm[2] = {neuronModel[src], neuronModel[trg]};
         string suffix[2];
         suffix[0]= "_pre";
         suffix[1]= "_post";
         for (int k= 0; k < 2; k++) {
-            for (int j= 0, l= nModels[nt[k]].extraGlobalNeuronKernelParameters.size(); j < l; j++) {
+            /*for (int j= 0, l= nModels[nt[k]].extraGlobalNeuronKernelParameters.size(); j < l; j++) {
                 string pname= nModels[nt[k]].extraGlobalNeuronKernelParameters[j];
                 string pnamefull= pname + neuronName[src];
                 string ptype= nModels[nt[k]].extraGlobalNeuronKernelParameterTypes[j];
@@ -299,7 +296,7 @@ void NNmodel::initLearnGrps()
                         synapseKernelParameterTypes.push_back(ptype);
                     }
                 }
-            }
+            }*/
         }
         for (int j= 0, l= wu.extraGlobalSynapseKernelParameters.size(); j < l; j++) {
             string pname= wu.extraGlobalSynapseKernelParameters[j];
@@ -324,14 +321,12 @@ void NNmodel::initLearnGrps()
         const auto &wu = weightUpdateModels[synapseType[i]];
         unsigned int src = synapseSource[i];
         unsigned int trg = synapseTarget[i];
-        unsigned int nt[2];
-        nt[0]= neuronType[src]; // pre
-        nt[1]= neuronType[trg]; // post
+        const NeuronModels::Base *nm[2] = {neuronModel[src], neuronModel[trg]};
         string suffix[2];
         suffix[0]= "_pre";
         suffix[1]= "_post";
         for (int k= 0; k < 2; k++) {
-            for (int j= 0, l= nModels[nt[k]].extraGlobalNeuronKernelParameters.size(); j < l; j++) {
+            /*for (int j= 0, l= nModels[nt[k]].extraGlobalNeuronKernelParameters.size(); j < l; j++) {
                 string pname= nModels[nt[k]].extraGlobalNeuronKernelParameters[j];
                 string pnamefull= pname + neuronName[src];
                 string ptype= nModels[nt[k]].extraGlobalNeuronKernelParameterTypes[j];
@@ -344,7 +339,7 @@ void NNmodel::initLearnGrps()
                         simLearnPostKernelParameterTypes.push_back(ptype);
                     }
                 }
-            }
+            }*/
         }
         for (int j= 0, l= wu.extraGlobalSynapseKernelParameters.size(); j < l; j++) {
             string pname= wu.extraGlobalSynapseKernelParameters[j];
@@ -367,14 +362,12 @@ void NNmodel::initLearnGrps()
         const auto &wu = weightUpdateModels[synapseType[i]];
         unsigned int src = synapseSource[i];
         unsigned int trg = synapseTarget[i];
-        unsigned int nt[2];
-        nt[0]= neuronType[src]; // pre
-        nt[1]= neuronType[trg]; // post
+        const NeuronModels::Base *nm[2] = {neuronModel[src], neuronModel[trg]};
         string suffix[2];
         suffix[0]= "_pre";
         suffix[1]= "_post";
         for (int k= 0; k < 2; k++) {
-            for (int j= 0, l= nModels[nt[k]].extraGlobalNeuronKernelParameters.size(); j < l; j++) {
+            /*for (int j= 0, l= nModels[nt[k]].extraGlobalNeuronKernelParameters.size(); j < l; j++) {
                 string pname= nModels[nt[k]].extraGlobalNeuronKernelParameters[j];
                 string pnamefull= pname + neuronName[src];
                 string ptype= nModels[nt[k]].extraGlobalNeuronKernelParameterTypes[j];
@@ -387,7 +380,7 @@ void NNmodel::initLearnGrps()
                         synapseDynamicsKernelParameterTypes.push_back(ptype);
                     }
                 }
-            }
+            }*/
         }
         for (int j= 0, l= wu.extraGlobalSynapseKernelParameters.size(); j < l; j++) {
             string pname= wu.extraGlobalSynapseKernelParameters[j];
@@ -967,11 +960,11 @@ void NNmodel::initDerivedNeuronPara()
 {
     for (int i = 0; i < neuronGrpN; i++) {
         vector<double> tmpP;
-        int numDpNames = nModels[neuronType[i]].dpNames.size();
+        /*int numDpNames = nModels[neuronType[i]].dpNames.size();
         for (int j=0; j < nModels[neuronType[i]].dpNames.size(); ++j) {
             double retVal = nModels[neuronType[i]].dps->calculateDerivedParameter(j, neuronPara[i], dt);
             tmpP.push_back(retVal);
-        }
+        }*/
         dnp.push_back(tmpP);
     }
 }
