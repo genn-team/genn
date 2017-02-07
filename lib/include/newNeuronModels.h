@@ -26,6 +26,9 @@
         virtual const std::vector<std::string> &GetParamNames() const{ return s_ParamNames; }                     \
         virtual const std::vector<std::pair<std::string, std::string>> &GetInitVals() const{ return s_InitVals; } \
 
+#define DECLARE_PARAM_VALUES(NUM_PARAMS) typedef NeuronModels::ValueBase<NUM_PARAMS> ParamValues
+#define DECLARE_INIT_VALUES(NUM_INIT_VALUES) typedef NeuronModels::ValueBase<NUM_INIT_VALUES> InitValues
+
 #define ARRAY_PROTECT(...) __VA_ARGS__
 #define IMPLEMENT_NEURON(TYPE, SIM_CODE, THRESHOLD_CONDITION_CODE, RESET_CODE, PARAM_NAMES, INIT_VALS)  \
     std::string TYPE::s_SimCode = SIM_CODE;                                                             \
@@ -43,8 +46,12 @@ template<size_t NumValues>
 class ValueBase
 {
 public:
-    ValueBase(const std::array<double, NumValues> &values) : m_Values(values)
+    // **NOTE** other less terrifying forms of constructor won't complain at compile time about
+    // number of parameters e.g. std::array<double, 4> can be initialized with <= 4 elements
+    template<typename... T>
+    ValueBase(T&&... vals) : m_Values{std::forward<double>(vals)...}
     {
+        static_assert(sizeof...(vals) == NumValues, "Wrong number of values");
     }
 
     //----------------------------------------------------------------------------
@@ -113,6 +120,7 @@ public:
         }
         return s_Instance;
     }
+
 private:
     //------------------------------------------------------------------------
     // Static members
@@ -131,26 +139,7 @@ class Izhikevich : public BaseSingleton<Izhikevich>
 public:
     DECLARE_NEURON();
 
-    //--------------------------------------------------------------------------
-    // ParamValues
-    //--------------------------------------------------------------------------
-    class ParamValues : public ValueBase<4>
-    {
-    public:
-        ParamValues(double a, double b, double c, double d) : ValueBase<4>({a, b, c, d})
-        {
-        }
-    };
-
-    //--------------------------------------------------------------------------
-    // InitValues
-    //--------------------------------------------------------------------------
-    class InitValues : public ValueBase<2>
-    {
-    public:
-        InitValues(double v, double u) : ValueBase<2>({v, u})
-        {
-        }
-    };
+    DECLARE_PARAM_VALUES(4);
+    DECLARE_INIT_VALUES(2);
 };
 } // NeuronModels
