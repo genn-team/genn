@@ -12,19 +12,27 @@
 //----------------------------------------------------------------------------
 // Macros
 //----------------------------------------------------------------------------
-#define DECLARE_NEURON()                                           \
-private:                                                                                              \
-    static std::string s_SimCode;                                                                     \
-    static std::string s_ThresholdConditionCode;                                                      \
-    static std::string s_ResetCode; \
-    static std::vector<std::string> s_ParamNames;\
-    static std::vector<std::pair<std::string, std::string>> s_InitVals;\
-public:                                                                                               \
-    virtual const std::string &GetSimCode() const{ return s_SimCode; } \
-    virtual const std::string &GetThresholdConditionCode() const{ return s_ThresholdConditionCode; } \
-    virtual const std::string &GetResetCode() const{ return s_ResetCode; }\
-    virtual const std::vector<std::string> &GetParamNames() const{ return s_ParamNames; }\
-    virtual const std::vector<std::pair<std::string, std::string>> &GetInitVals() const{ return s_InitVals; } \
+#define DECLARE_NEURON()                                                                                          \
+    private:                                                                                                      \
+        static std::string s_SimCode;                                                                             \
+        static std::string s_ThresholdConditionCode;                                                              \
+        static std::string s_ResetCode;                                                                           \
+        static std::vector<std::string> s_ParamNames;                                                             \
+        static std::vector<std::pair<std::string, std::string>> s_InitVals;                                       \
+    public:                                                                                                       \
+        virtual const std::string &GetSimCode() const{ return s_SimCode; }                                        \
+        virtual const std::string &GetThresholdConditionCode() const{ return s_ThresholdConditionCode; }          \
+        virtual const std::string &GetResetCode() const{ return s_ResetCode; }                                    \
+        virtual const std::vector<std::string> &GetParamNames() const{ return s_ParamNames; }                     \
+        virtual const std::vector<std::pair<std::string, std::string>> &GetInitVals() const{ return s_InitVals; } \
+
+#define ARRAY_PROTECT(...) __VA_ARGS__
+#define IMPLEMENT_NEURON(TYPE, SIM_CODE, THRESHOLD_CONDITION_CODE, RESET_CODE, PARAM_NAMES, INIT_VALS)  \
+    std::string TYPE::s_SimCode = SIM_CODE;                                                             \
+    std::string TYPE::s_ThresholdConditionCode = THRESHOLD_CONDITION_CODE;                              \
+    std::string TYPE::s_ResetCode = RESET_CODE;                                                         \
+    std::vector<std::string> TYPE::s_ParamNames = PARAM_NAMES;                                          \
+    std::vector<std::pair<std::string, std::string>> TYPE::s_InitVals = INIT_VALS;
 
 //----------------------------------------------------------------------------
 // NeuronModels::ValueBase
