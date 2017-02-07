@@ -349,7 +349,7 @@ void neuron_substitutions_in_synaptic_code(
     // presynaptic neuron variables, parameters, and global parameters
     //if (model.neuronType[src] == POISSONNEURON) substitute(wCode, "$(V_pre)", to_string(model.neuronPara[src][2]));
     substitute(wCode, "$(sT_pre)", devPrefix+ "sT" + model.neuronName[src] + "[" + offsetPre + preIdx + "]");
-    const auto &preInitVals = preModel->GetInitVals();
+    auto preInitVals = preModel->GetInitVals();
     for (int j = 0; j < preInitVals.size(); j++) {
         if (model.neuronVarNeedQueue[src][j]) {
             substitute(wCode, "$(" + preInitVals[j].first + "_pre)",
@@ -366,7 +366,7 @@ void neuron_substitutions_in_synaptic_code(
     
     // postsynaptic neuron variables, parameters, and global parameters
     substitute(wCode, "$(sT_post)", devPrefix + "sT" + model.neuronName[trg] + "[" + offsetPost + postIdx + "]");
-    const auto &postInitVals = postModel->GetInitVals();
+    auto postInitVals = postModel->GetInitVals();
     for (int j = 0; j < postInitVals.size(); j++) {
         if (model.neuronVarNeedQueue[trg][j]) {
             substitute(wCode, "$(" + postInitVals[j].first + "_post)",

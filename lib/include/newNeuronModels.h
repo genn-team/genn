@@ -12,30 +12,14 @@
 //----------------------------------------------------------------------------
 // Macros
 //----------------------------------------------------------------------------
-#define DECLARE_NEURON()                                                                                          \
-    private:                                                                                                      \
-        static std::string s_SimCode;                                                                             \
-        static std::string s_ThresholdConditionCode;                                                              \
-        static std::string s_ResetCode;                                                                           \
-        static std::vector<std::string> s_ParamNames;                                                             \
-        static std::vector<std::pair<std::string, std::string>> s_InitVals;                                       \
-    public:                                                                                                       \
-        virtual const std::string &GetSimCode() const{ return s_SimCode; }                                        \
-        virtual const std::string &GetThresholdConditionCode() const{ return s_ThresholdConditionCode; }          \
-        virtual const std::string &GetResetCode() const{ return s_ResetCode; }                                    \
-        virtual const std::vector<std::string> &GetParamNames() const{ return s_ParamNames; }                     \
-        virtual const std::vector<std::pair<std::string, std::string>> &GetInitVals() const{ return s_InitVals; } \
-
 #define DECLARE_PARAM_VALUES(NUM_PARAMS) typedef NeuronModels::ValueBase<NUM_PARAMS> ParamValues
 #define DECLARE_INIT_VALUES(NUM_INIT_VALUES) typedef NeuronModels::ValueBase<NUM_INIT_VALUES> InitValues
 
-#define ARRAY_PROTECT(...) __VA_ARGS__
-#define IMPLEMENT_NEURON(TYPE, SIM_CODE, THRESHOLD_CONDITION_CODE, RESET_CODE, PARAM_NAMES, INIT_VALS)  \
-    std::string TYPE::s_SimCode = SIM_CODE;                                                             \
-    std::string TYPE::s_ThresholdConditionCode = THRESHOLD_CONDITION_CODE;                              \
-    std::string TYPE::s_ResetCode = RESET_CODE;                                                         \
-    std::vector<std::string> TYPE::s_ParamNames = PARAM_NAMES;                                          \
-    std::vector<std::pair<std::string, std::string>> TYPE::s_InitVals = INIT_VALS;
+#define SET_SIM_CODE(SIM_CODE) virtual std::string GetSimCode() const{ return SIM_CODE; }
+#define SET_THRESHOLD_CONDITION_CODE(THRESHOLD_CONDITION_CODE) virtual std::string GetThresholdConditionCode() const{ return THRESHOLD_CONDITION_CODE; }
+#define SET_RESET_CODE(RESET_CODE) virtual std::string GetResetCode() const{ return RESET_CODE; }
+#define SET_PARAM_NAMES(...) virtual std::vector<std::string> GetParamNames() const{ return __VA_ARGS__; }
+#define SET_INIT_VALS(...) virtual std::vector<std::pair<std::string, std::string>> GetInitVals() const{ return __VA_ARGS__; }
 
 //----------------------------------------------------------------------------
 // NeuronModels::ValueBase
@@ -78,26 +62,13 @@ public:
     //----------------------------------------------------------------------------
     // Declared virtuals
     //----------------------------------------------------------------------------
-    virtual const std::string &GetSimCode() const = 0;
-    virtual const std::string &GetThresholdConditionCode() const = 0;
-    virtual const std::string &GetResetCode() const = 0;
+    virtual std::string GetSimCode() const{ return ""; }
+    virtual std::string GetThresholdConditionCode() const{ return ""; }
+    virtual std::string GetResetCode() const{ return ""; }
 
-    virtual const std::vector<std::string> &GetParamNames() const = 0;
+    virtual std::vector<std::string> GetParamNames() const{ return {}; }
 
-    virtual const std::vector<std::pair<std::string, std::string>> &GetInitVals() const = 0;
-
-    //----------------------------------------------------------------------------
-    // Public API
-    //----------------------------------------------------------------------------
-    PairStringKeyConstIter GetInitValNamesCBegin() const
-    {
-      return GetInitVals().cbegin();
-    }
-
-    PairStringKeyConstIter GetInitValNamesCEnd() const
-    {
-      return GetInitVals().cend();
-    }
+    virtual std::vector<std::pair<std::string, std::string>> GetInitVals() const{ return {}; }
 };
 
 //----------------------------------------------------------------------------
@@ -137,9 +108,25 @@ Type *BaseSingleton<Type>::s_Instance = NULL;
 class Izhikevich : public BaseSingleton<Izhikevich>
 {
 public:
-    DECLARE_NEURON();
-
     DECLARE_PARAM_VALUES(4);
     DECLARE_INIT_VALUES(2);
+
+    SET_SIM_CODE(
+        "    if ($(V) >= 30.0){\n"
+        "      $(V)=$(c);\n"
+        "                  $(U)+=$(d);\n"
+        "    } \n"
+        "    $(V)+=0.5*(0.04*$(V)*$(V)+5.0*$(V)+140.0-$(U)+$(Isyn))*DT; //at two times for numerical stability\n"
+        "    $(V)+=0.5*(0.04*$(V)*$(V)+5.0*$(V)+140.0-$(U)+$(Isyn))*DT;\n"
+        "    $(U)+=$(a)*($(b)*$(V)-$(U))*DT;\n"
+        "   //if ($(V) > 30.0){   //keep this only for visualisation -- not really necessaary otherwise \n"
+        "   //  $(V)=30.0; \n"
+        "   //}\n"
+    );
+
+    SET_THRESHOLD_CONDITION_CODE("$(V) >= 29.99");
+
+    SET_PARAM_NAMES({"a", "b", "c", "d"});
+    SET_INIT_VALS({{"V","scalar"}, {"U", "scalar"}});
 };
 } // NeuronModels

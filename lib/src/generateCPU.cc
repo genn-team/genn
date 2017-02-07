@@ -106,7 +106,9 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
         os << "for (int n = 0; n < " <<  model.neuronN[i] << "; n++)" << OB(10);
 
         auto neuronModel = model.neuronModel[i];
-        const auto &neuronModelInitVars = neuronModel->GetInitVals();
+        auto neuronModelInitVars = neuronModel->GetInitVals();
+        PairStringKeyConstIter neuronModelInitVarNameBegin = neuronModelInitVars.cbegin();
+        PairStringKeyConstIter neuronModelInitVarNameEnd = neuronModelInitVars.cend();
         for (int k = 0; k < neuronModelInitVars.size(); k++) {
 
             os << neuronModelInitVars[k].second << " l" << neuronModelInitVars[k].first << " = ";
@@ -151,7 +153,7 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
             substitute(psCode, "$(t)", "t");
             substitute(psCode, "$(inSyn)", "inSyn" + sName + "[n]");
 
-            name_substitutions(psCode, "l", neuronModel->GetInitValNamesCBegin(), neuronModel->GetInitValNamesCEnd(), "");
+            name_substitutions(psCode, "l", neuronModelInitVarNameBegin, neuronModelInitVarNameEnd, "");
             value_substitutions(psCode, neuronModel->GetParamNames(), model.neuronPara[i]);
             //value_substitutions(psCode, nModels[nt].dpNames, model.dnp[i]);
             if (model.synapseGType[synPopID] == INDIVIDUALG) {
@@ -180,7 +182,7 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
             os << "// test whether spike condition was fulfilled previously" << ENDL;
             substitute(thCode, "$(id)", "n");
             substitute(thCode, "$(t)", "t");
-            name_substitutions(thCode, "l", neuronModel->GetInitValNamesCBegin(), neuronModel->GetInitValNamesCEnd(), "");
+            name_substitutions(thCode, "l", neuronModelInitVarNameBegin, neuronModelInitVarNameEnd, "");
             substitute(thCode, "$(sT)", "lsT");
             value_substitutions(thCode, neuronModel->GetParamNames(), model.neuronPara[i]);
             //value_substitutions(thCode, nModels[nt].dpNames, model.dnp[i]);
@@ -202,7 +204,7 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
         string sCode = neuronModel->GetSimCode();
         substitute(sCode, "$(id)", "n");
         substitute(sCode, "$(t)", "t");
-        name_substitutions(sCode, "l", neuronModel->GetInitValNamesCBegin(), neuronModel->GetInitValNamesCEnd(), "");
+        name_substitutions(sCode, "l", neuronModelInitVarNameBegin, neuronModelInitVarNameEnd, "");
         value_substitutions(sCode, neuronModel->GetParamNames(), model.neuronPara[i]);
         //value_substitutions(sCode, nModels[nt].dpNames, model.dnp[i]);
         //name_substitutions(sCode, "", nModels[nt].extraGlobalNeuronKernelParameters, model.neuronName[i]);
@@ -225,7 +227,7 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
         if (model.neuronNeedSpkEvnt[i]) {
             string eCode= model.neuronSpkEvntCondition[i];
             // code substitutions ----
-            extended_name_substitutions(eCode, "l", neuronModel->GetInitValNamesCBegin(), neuronModel->GetInitValNamesCEnd(), "_pre", "");
+            extended_name_substitutions(eCode, "l", neuronModelInitVarNameBegin, neuronModelInitVarNameEnd, "_pre", "");
             substitute(eCode, "$(id)", "n");
             substitute(eCode, "$(t)", "t");
             //name_substitutions(eCode, "", nModels[model.neuronType[i]].extraGlobalNeuronKernelParameters, model.neuronName[i]);
@@ -254,7 +256,7 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
         // test for true spikes if condition is provided
         if (!thCode.empty()) {
             os << "// test for and register a true spike" << ENDL;
-            //if (!nModels[nt].empty()) {
+            //if (!nModels[nt].supportCode.empty()) {
             //    os << OB(29) << " using namespace " << model.neuronName[i] << "_neuron;" << ENDL;
             //}
             if (GENN_PREFERENCES::autoRefractory) {
@@ -279,8 +281,7 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
                 string rCode = neuronModel->GetResetCode();
                 substitute(rCode, "$(id)", "n");
                 substitute(rCode, "$(t)", "t");
-                name_substitutions(rCode, "l", neuronModel->GetInitValNamesCBegin(),
-                                   neuronModel->GetInitValNamesCEnd(), "");
+                name_substitutions(rCode, "l", neuronModelInitVarNameBegin, neuronModelInitVarNameEnd, "");
                 value_substitutions(rCode, neuronModel->GetParamNames(), model.neuronPara[i]);
                 //value_substitutions(rCode, nModels[nt].dpNames, model.dnp[i]);
                 substitute(rCode, "$(Isyn)", "Isyn");
@@ -317,8 +318,7 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
             name_substitutions(pdCode, "lps", psModel.varNames, sName);
             value_substitutions(pdCode, psModel.pNames, model.postSynapsePara[model.inSyn[i][j]]);
             value_substitutions(pdCode, psModel.dpNames, model.dpsp[model.inSyn[i][j]]);
-            name_substitutions(pdCode, "l", neuronModel->GetInitValNamesCBegin(),
-                               neuronModel->GetInitValNamesCEnd(), "");
+            name_substitutions(pdCode, "l", neuronModelInitVarNameBegin, neuronModelInitVarNameEnd, "");
             value_substitutions(pdCode, neuronModel->GetParamNames(), model.neuronPara[i]);
             //value_substitutions(pdCode, nModels[nt].dpNames, model.dnp[i]);
             os << "// the post-synaptic dynamics" << ENDL;

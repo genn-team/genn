@@ -147,7 +147,7 @@ void NNmodel::initLearnGrps()
     for (int i = 0; i < synapseGrpN; i++) {
         const auto &wu = weightUpdateModels[synapseType[i]];
         unsigned int src = synapseSource[i];
-        const auto &srcInitVals = neuronModel[src]->GetInitVals();
+        auto srcInitVals = neuronModel[src]->GetInitVals();
         needEvntThresholdReTest.push_back(false);
 
         if (wu.simCode != "") {
@@ -187,7 +187,7 @@ void NNmodel::initLearnGrps()
 
     for (int i = 0; i < neuronGrpN; i++) {
         string eCode0;
-        const auto &vars = neuronModel[i]->GetInitVals();
+        auto vars = neuronModel[i]->GetInitVals();
         bool needReTest= false;
         for (int j= 0, l= outSyn[i].size(); j < l; j++) {
             int synPopID= outSyn[i][j];

@@ -960,7 +960,7 @@ void genRunner(const NNmodel &model, //!< Model description
         }
 
         // Variable are queued only if they are referenced in forward synapse code.
-        const auto &neuronModelInitVals = model.neuronModel[i]->GetInitVals();
+        auto neuronModelInitVals = model.neuronModel[i]->GetInitVals();
         for (int j = 0; j < neuronModelInitVals.size(); j++) {
             size_t size = model.neuronVarNeedQueue[i][j] ? model.neuronN[i] * model.neuronDelaySlots[i] : model.neuronN[i];
 
@@ -1133,7 +1133,7 @@ void genRunner(const NNmodel &model, //!< Model description
             os << "    }" << cB << ENDL;
         }
         
-        const auto &neuronModelInitVars = model.neuronModel[i]->GetInitVals();
+        auto neuronModelInitVars = model.neuronModel[i]->GetInitVals();
         for (int j = 0; j < neuronModelInitVars.size(); j++) {
             if (model.neuronVarNeedQueue[i][j]) {
                 os << "    " << oB << "for (int i = 0; i < " << model.neuronN[i] * model.neuronDelaySlots[i] << "; i++) {" << ENDL;
