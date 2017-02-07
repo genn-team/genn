@@ -2,28 +2,30 @@
 
 // Standard includes
 #include <array>
+#include <string>
 #include <tuple>
 #include <vector>
+
+// GeNN includes
+#include "stringUtils.h"
 
 //----------------------------------------------------------------------------
 // Macros
 //----------------------------------------------------------------------------
-#define IMPLEMENT_NEURON(TYPE, NUM_PARAMs, NUM_INIT_VALUES)                                           \
+#define DECLARE_NEURON(TYPE, NUM_PARAMs, NUM_INIT_VALUES)                                           \
 private:                                                                                              \
-    static const char *s_SimCode;                                                                     \
-    static const char *s_ThresholdConditionCode;                                                      \
-    static const char *s_ParamNames[NUM_PARAMS];                                                      \
-    static const char *s_InitValueNames[NUM_INIT_VALUES];                                             \
-    static const char *s_InitValueTypes[NUM_INIT_VALUES];                                             \
+    static std::string s_SimCode;                                                                     \
+    static std::string s_ThresholdConditionCode;                                                      \
+    static std::string s_ResetCode; \
+    static std::vector<std::string> s_ParamNames;\
+    static std::vector<std::pair<std::string, std::string>> s_InitVals;\
     static TYPE *s_Instance;                                                                          \
 public:                                                                                               \
-    virtual const char *GetSimCode() const { return TYPE::s_SimCode; }                                \
-    virtual const char *GetThresholdConditionCode() const { return TYPE::s_ThresholdConditionCode; }  \
-    virtual size_t GetNumParams() const { return NUM_PARAMs; }                                        \
-    virtual const char *GetParamName(size_t i) const { return s_ParamNames[i]; }                      \
-    virtual size_t GetNumInitValues() const { return NUM_INIT_VALUES; }                               \
-    virtual const char *GetInitValueName(size_t i) const { return s_InitValueNames[i]; }              \
-    virtual const char *GetInitValueType(size_t i) const { return s_InitValueTypes[i]; }              \
+    virtual const std::string &GetSimCode() const{ return s_SimCode; } \
+    virtual const std::string &GetThresholdConditionCode() const{ return s_ThresholdConditionCode; } \
+    virtual const std::string &GetResetCode() const{ return s_ResetCode; }\
+    virtual const std::vector<std::string> &GetParamNames() const{ return s_ParamNames; }\
+    virtual const std::vector<std::pair<std::string, std::string>> &GetInitVals() const{ return s_InitVals; } \
     static const TYPE *GetInstance()                                                                  \
     {                                                                                                 \
         if(s_Instance == NULL)                                                                        \
@@ -50,9 +52,9 @@ public:
     //----------------------------------------------------------------------------
     // Public API
     //----------------------------------------------------------------------------
-    void GetValues() const
+    std::vector<double> GetValues() const
     {
-        return std::vector<double>(m_Values);
+        return std::vector<double>(m_Values.cbegin(), m_Values.cend());
     }
 
 private:
@@ -71,15 +73,26 @@ public:
     //----------------------------------------------------------------------------
     // Declared virtuals
     //----------------------------------------------------------------------------
-    virtual const char *GetSimCode() const = 0;
-    virtual const char *GetThresholdConditionCode() const = 0;
+    virtual const std::string &GetSimCode() const = 0;
+    virtual const std::string &GetThresholdConditionCode() const = 0;
+    virtual const std::string &GetResetCode() const = 0;
 
-    virtual size_t GetNumParams() const = 0;
-    virtual const char *GetParamName(size_t i) const = 0;
+    virtual const std::vector<std::string> &GetParamNames() const = 0;
 
-    virtual size_t GetNumInitValues() const = 0;
-    virtual const char *GetInitValueName(size_t i) const = 0;
-    virtual const char *GetInitValueType(size_t i) const = 0;
+    virtual const std::vector<std::pair<std::string, std::string>> &GetInitVals() const = 0;
+
+    //----------------------------------------------------------------------------
+    // Public API
+    //----------------------------------------------------------------------------
+    PairStringKeyConstIter GetInitValNamesCBegin() const
+    {
+      return GetInitVals().cbegin();
+    }
+
+    PairStringKeyConstIter GetInitValNamesCEnd() const
+    {
+      return GetInitVals().cend();
+    }
 };
 
 //----------------------------------------------------------------------------
@@ -88,7 +101,7 @@ public:
 class Izhikevich : public Base
 {
 public:
-    IMPLEMENT_NEURON(Izhikevich, 4, 2);
+    DECLARE_NEURON(Izhikevich, 4, 2);
 
     //--------------------------------------------------------------------------
     // ParamValues
@@ -96,7 +109,7 @@ public:
     class ParamValues : public ValueBase<4>
     {
     public:
-        ParamValues(double a, double b, double c, double d) : ParamBase({a, b, c, d})
+        ParamValues(double a, double b, double c, double d) : ValueBase<4>({a, b, c, d})
         {
         }
     };
@@ -107,7 +120,7 @@ public:
     class InitValues : public ValueBase<2>
     {
     public:
-        InitValues(double v, double u) : ParamBase({v, u})
+        InitValues(double v, double u) : ValueBase<2>({v, u})
         {
         }
     };
@@ -117,43 +130,4 @@ private:
   {
   }
 };
-
-//----------------------------------------------------------------------------
-// NeuronModels::IzhikevichVS
-//----------------------------------------------------------------------------
-class IzhikevichV : public Base
-{
-public:
-    IMPLEMENT_NEURON(IzhikevichV, 1, 6);
-
-    //--------------------------------------------------------------------------
-    // ParamValues
-    //--------------------------------------------------------------------------
-    class ParamValues : public ValueBase<1>
-    {
-    public:
-        ParamValues(double iOffset) : ParamBase({iOffset})
-        {
-        }
-    };
-
-    //--------------------------------------------------------------------------
-    // InitValues
-    //--------------------------------------------------------------------------
-    class InitValues : public ValueBase<6>
-    {
-    public:
-        InitValues(double v, double u, double a, double b, double c, double d) : ParamBase({v, u, a, b, c, d})
-        {
-        }
-    };
-
-private:
-  IzhikevichV()
-  {
-  }
-};
-
-
-
 } // NeuronModels
