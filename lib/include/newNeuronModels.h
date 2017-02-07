@@ -12,29 +12,19 @@
 //----------------------------------------------------------------------------
 // Macros
 //----------------------------------------------------------------------------
-#define DECLARE_NEURON(TYPE, NUM_PARAMs, NUM_INIT_VALUES)                                           \
+#define DECLARE_NEURON()                                           \
 private:                                                                                              \
     static std::string s_SimCode;                                                                     \
     static std::string s_ThresholdConditionCode;                                                      \
     static std::string s_ResetCode; \
     static std::vector<std::string> s_ParamNames;\
     static std::vector<std::pair<std::string, std::string>> s_InitVals;\
-    static TYPE *s_Instance;                                                                          \
 public:                                                                                               \
     virtual const std::string &GetSimCode() const{ return s_SimCode; } \
     virtual const std::string &GetThresholdConditionCode() const{ return s_ThresholdConditionCode; } \
     virtual const std::string &GetResetCode() const{ return s_ResetCode; }\
     virtual const std::vector<std::string> &GetParamNames() const{ return s_ParamNames; }\
     virtual const std::vector<std::pair<std::string, std::string>> &GetInitVals() const{ return s_InitVals; } \
-    static const TYPE *GetInstance()                                                                  \
-    {                                                                                                 \
-        if(s_Instance == NULL)                                                                        \
-        {                                                                                             \
-            s_Instance = new TYPE;                                                                    \
-        }                                                                                             \
-        return s_Instance;                                                                            \
-    }
-
 
 //----------------------------------------------------------------------------
 // NeuronModels::ValueBase
@@ -96,12 +86,42 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// NeuronModels::Izhikevich
+// NeuronModels::BaseSingleton
 //----------------------------------------------------------------------------
-class Izhikevich : public Base
+// Simple boilerplate class which implements singleton
+// functionality using curiously recurring template pattern
+template<typename Type>
+class BaseSingleton : public Base
 {
 public:
-    DECLARE_NEURON(Izhikevich, 4, 2);
+    //------------------------------------------------------------------------
+    // Static methods
+    //------------------------------------------------------------------------
+    static const Type *GetInstance()
+    {
+        if(s_Instance == NULL)
+        {
+            s_Instance = new Type;
+        }
+        return s_Instance;
+    }
+private:
+    //------------------------------------------------------------------------
+    // Static members
+    //------------------------------------------------------------------------
+    static Type *s_Instance;
+};
+
+template<typename Type>
+Type *BaseSingleton<Type>::s_Instance = NULL;
+
+//----------------------------------------------------------------------------
+// NeuronModels::Izhikevich
+//----------------------------------------------------------------------------
+class Izhikevich : public BaseSingleton<Izhikevich>
+{
+public:
+    DECLARE_NEURON();
 
     //--------------------------------------------------------------------------
     // ParamValues
@@ -124,10 +144,5 @@ public:
         {
         }
     };
-
-private:
-  Izhikevich()
-  {
-  }
 };
 } // NeuronModels

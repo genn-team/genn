@@ -3,7 +3,6 @@
 //----------------------------------------------------------------------------
 // NeuronModels::Izhikevich
 //----------------------------------------------------------------------------
-NeuronModels::Izhikevich *NeuronModels::Izhikevich::s_Instance = NULL;
 std::string NeuronModels::Izhikevich::s_SimCode =
 "    if ($(V) >= 30.0){\n"
 "      $(V)=$(c);\n"
