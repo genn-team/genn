@@ -31,29 +31,41 @@ template<class T> std::string toString(T t)
 #define tS(X) toString(X) //!< Macro providing the abbreviated syntax tS() instead of toString().
 
 //--------------------------------------------------------------------------
-// PairStringKeyConstIter
+// PairKeyConstIter
 //--------------------------------------------------------------------------
-// Custom iterator for iterating through just the keys of a vector of pairs of strings
-typedef std::vector<std::pair<std::string, std::string>> StringPairVec;
-class PairStringKeyConstIter : public StringPairVec::const_iterator
+// Custom iterator for iterating through the keys of containers containing pairs
+template<typename BaseIter>
+class PairKeyConstIter : public BaseIter
 {
 private:
-    typedef StringPairVec::const_iterator BaseIter;
+    //--------------------------------------------------------------------------
+    // Typedefines
+    //--------------------------------------------------------------------------
+    typedef typename BaseIter::value_type::first_type KeyType;
 
 public:
-    PairStringKeyConstIter() {}
-    PairStringKeyConstIter(BaseIter iter) : BaseIter(iter) {}
+    PairKeyConstIter() {}
+    PairKeyConstIter(BaseIter iter) : BaseIter(iter) {}
 
-    const std::string *operator -> () const
+    //--------------------------------------------------------------------------
+    // Operators
+    //--------------------------------------------------------------------------
+    const KeyType *operator -> () const
     {
-        return (const std::string *) &(BaseIter::operator -> ( )->first);
+        return (const KeyType *) &(BaseIter::operator -> ( )->first);
     }
 
-    const std::string &operator * () const
+    const KeyType &operator * () const
     {
         return BaseIter::operator * ( ).first;
     }
 };
+
+template<typename BaseIter>
+inline PairKeyConstIter<BaseIter> GetPairKeyConstIter(BaseIter iter)
+{
+  return iter;
+}
 
 //--------------------------------------------------------------------------
 //! \brief Tool for substituting strings in the neuron code strings or other templates

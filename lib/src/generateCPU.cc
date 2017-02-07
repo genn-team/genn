@@ -107,8 +107,8 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
 
         auto neuronModel = model.neuronModel[i];
         auto neuronModelInitVars = neuronModel->GetInitVals();
-        PairStringKeyConstIter neuronModelInitVarNameBegin = neuronModelInitVars.cbegin();
-        PairStringKeyConstIter neuronModelInitVarNameEnd = neuronModelInitVars.cend();
+        auto neuronModelInitVarNameBegin = GetPairKeyConstIter(neuronModelInitVars.cbegin());
+        auto neuronModelInitVarNameEnd = GetPairKeyConstIter(neuronModelInitVars.cend());
         for (int k = 0; k < neuronModelInitVars.size(); k++) {
 
             os << neuronModelInitVars[k].second << " l" << neuronModelInitVars[k].first << " = ";
