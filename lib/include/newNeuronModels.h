@@ -19,6 +19,7 @@
 #define SET_THRESHOLD_CONDITION_CODE(THRESHOLD_CONDITION_CODE) virtual std::string GetThresholdConditionCode() const{ return THRESHOLD_CONDITION_CODE; }
 #define SET_RESET_CODE(RESET_CODE) virtual std::string GetResetCode() const{ return RESET_CODE; }
 #define SET_PARAM_NAMES(...) virtual std::vector<std::string> GetParamNames() const{ return __VA_ARGS__; }
+#define SET_DERIVED_PARAM_NAMES(...) virtual std::vector<std::string> GetDerivedParamNames() const{ return __VA_ARGS__; }
 #define SET_INIT_VALS(...) virtual std::vector<std::pair<std::string, std::string>> GetInitVals() const{ return __VA_ARGS__; }
 
 //----------------------------------------------------------------------------
@@ -68,7 +69,11 @@ public:
 
     virtual std::vector<std::string> GetParamNames() const{ return {}; }
 
+    virtual std::vector<std::string> GetDerivedParamNames() const{ return {}; }
+
     virtual std::vector<std::pair<std::string, std::string>> GetInitVals() const{ return {}; }
+
+    virtual double CalculateDerivedParam(int index, const vector<double> &pars, double dt = 1.0) const{ return -1; }
 };
 
 //----------------------------------------------------------------------------
@@ -128,5 +133,17 @@ public:
 
     SET_PARAM_NAMES({"a", "b", "c", "d"});
     SET_INIT_VALS({{"V","scalar"}, {"U", "scalar"}});
+};
+
+//----------------------------------------------------------------------------
+// NeuronModels::SpikeSource
+//----------------------------------------------------------------------------
+class SpikeSource : public BaseSingleton<SpikeSource>
+{
+public:
+    DECLARE_PARAM_VALUES(0);
+    DECLARE_INIT_VALUES(0);
+
+    SET_THRESHOLD_CONDITION_CODE("0");
 };
 } // NeuronModels

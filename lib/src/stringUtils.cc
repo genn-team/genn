@@ -361,7 +361,7 @@ void neuron_substitutions_in_synaptic_code(
         }
     }
     extended_value_substitutions(wCode, preModel->GetParamNames(), "_pre", model.neuronPara[src]);
-    //extended_value_substitutions(wCode, nModels[nt_pre].dpNames, "_pre", model.dnp[src]);
+    extended_value_substitutions(wCode, preModel->GetDerivedParamNames(), "_pre", model.dnp[src]);
     //extended_name_substitutions(wCode, devPrefix, nModels[nt_pre].extraGlobalNeuronKernelParameters, "_pre", model.neuronName[src]);
     
     // postsynaptic neuron variables, parameters, and global parameters
