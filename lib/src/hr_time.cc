@@ -20,7 +20,7 @@ double CStopWatch::LIToSecs( LARGE_INTEGER & L) {
 
 CStopWatch::CStopWatch() {
     timer.start.QuadPart=0;
-    timer.stop.QuadPart=0;	
+    timer.stop.QuadPart=0;
     QueryPerformanceFrequency( &frequency );
 }
 
@@ -64,7 +64,7 @@ void CStopWatch::stopTimer( ) {
  */
 //--------------------------------------------------------------------------
 
-double CStopWatch::getElapsedTime() {	
+double CStopWatch::getElapsedTime() {
     timeval res;
     timersub(&(timer.stop),&(timer.start),&res);
     return res.tv_sec + res.tv_usec/1000000.0; // 10^6 uSec per second
