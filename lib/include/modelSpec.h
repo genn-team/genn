@@ -237,6 +237,7 @@ public:
   void addNeuronPopulation(const string &name, unsigned int size,
                            const typename NeuronModel::ParamValues &paramValues, const typename NeuronModel::InitValues &initValues)
   {
+      neuronGrpN++;
       neuronName.push_back(name);
       neuronN.push_back(size);
       neuronModel.push_back(NeuronModel::GetInstance());

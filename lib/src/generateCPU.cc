@@ -38,7 +38,7 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
                        const string &path //!< Path for code generation
     )
 {
-    string s, localID;
+    string s;
     ofstream os;
 
     string name = path + "/" + model.name + "_CODE/neuronFnct.cc";
@@ -370,8 +370,6 @@ void generate_process_presynaptic_events_code_CPU(
     unsigned int src, //!< the number of the src neuron population
     unsigned int trg, //!< the number of the target neuron population
     int i, //!< the index of the synapse group being processed
-    string &localID, //!< the variable name of the local ID of the thread within the synapse group
-    unsigned int inSynNo, //!< the ID number of the current synapse population as the incoming population to the target neuron population
     const string &postfix //!< whether to generate code for true spikes or spike type events
     )
 {
@@ -500,7 +498,7 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
     )
 {
     string name, s, localID, theLG, preSpike, preSpikeV, sTpost, sTpre;
-    unsigned int k, src, trg, synt, inSynNo;
+    unsigned int k, src, trg, synt;
     ofstream os;
 
 //    cout << "entering genSynapseFunction" << endl;
@@ -633,7 +631,6 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
         src = model.synapseSource[i];
         trg = model.synapseTarget[i];
         synt = model.synapseType[i];
-        inSynNo = model.synapseInSynNo[i];
 
         os << "// synapse group " << model.synapseName[i] << ENDL;
         os << OB(1006);
@@ -646,12 +643,12 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
 
         // generate the code for processing spike-like events
         if (model.synapseUsesSpikeEvents[i]) {
-            generate_process_presynaptic_events_code_CPU(os, model, src, trg, i, localID, inSynNo, "Evnt");
+            generate_process_presynaptic_events_code_CPU(os, model, src, trg, i, "Evnt");
         }
 
         // generate the code for processing true spike events
         if (model.synapseUsesTrueSpikes[i]) {
-            generate_process_presynaptic_events_code_CPU(os, model, src, trg, i, localID, inSynNo, "");
+            generate_process_presynaptic_events_code_CPU(os, model, src, trg, i, "");
         }
 
         os << CB(1006);
@@ -685,7 +682,6 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
             src = model.synapseSource[k];
             trg = model.synapseTarget[k];
             synt = model.synapseType[k];
-            inSynNo = model.synapseInSynNo[k];
             bool sparse = model.synapseConnType[k] == SPARSE;
 
             const auto *preNeuronModel = model.neuronModel[src];

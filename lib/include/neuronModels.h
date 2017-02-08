@@ -59,7 +59,7 @@ const unsigned int MAXNRN = 7; // maximum number of neuron types: SpineML needs 
 class rulkovdp : public dpclass
 {
 public:
-    double calculateDerivedParameter(int index, vector<double> pars, double dt = 1.0) {
+    double calculateDerivedParameter(int index, vector<double> pars, double = 1.0) {
         switch (index) {
         case 0:
             return ip0(pars);
@@ -71,15 +71,16 @@ public:
         return -1;
     }
 
-    double ip0(vector<double> pars) {
+private:
+    double ip0(const vector<double> &pars) {
         return pars[0]*pars[0]*pars[1];
     }
 
-    double ip1(vector<double> pars) {
+    double ip1(const vector<double> &pars) {
         return pars[0]*pars[2];
     }
 
-    double ip2(vector<double> pars) {
+    double ip2(const vector<double> &pars) {
         return pars[0]*pars[1]+pars[0]*pars[2];
     }
 };

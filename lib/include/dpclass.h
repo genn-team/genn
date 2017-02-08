@@ -9,7 +9,7 @@ using namespace std;
 
 class dpclass {
 public:
-    virtual double calculateDerivedParameter(int index, vector<double> pars, double dt = 0.5) {return -1;}
+    virtual double calculateDerivedParameter(int, vector<double>, double = 0.5) {return -1;}
 };
 
 #endif // DPCLASS_H
