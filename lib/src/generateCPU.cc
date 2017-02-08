@@ -105,10 +105,18 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
 
         os << "for (int n = 0; n < " <<  model.neuronN[i] << "; n++)" << OB(10);
 
+        // Get neuron model associated with this group
         auto neuronModel = model.neuronModel[i];
+
+        // Create iterators to iterate over the names of the neuron model's initial values
         auto neuronModelInitVars = neuronModel->GetInitVals();
         auto neuronModelInitVarNameBegin = GetPairKeyConstIter(neuronModelInitVars.cbegin());
         auto neuronModelInitVarNameEnd = GetPairKeyConstIter(neuronModelInitVars.cend());
+
+        // Create iterators to iterate over the names of the neuron model's derived parameters
+        auto neuronModelDerivedParams = neuronModel->GetDerivedParams();
+        auto neuronModelDerivedParamNameBegin= GetPairKeyConstIter(neuronModelDerivedParams.cbegin());
+        auto neuronModelDerivedParamNameEnd = GetPairKeyConstIter(neuronModelDerivedParams.cend());
         for (int k = 0; k < neuronModelInitVars.size(); k++) {
 
             os << neuronModelInitVars[k].second << " l" << neuronModelInitVars[k].first << " = ";
@@ -155,7 +163,7 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
 
             name_substitutions(psCode, "l", neuronModelInitVarNameBegin, neuronModelInitVarNameEnd, "");
             value_substitutions(psCode, neuronModel->GetParamNames(), model.neuronPara[i]);
-            value_substitutions(psCode, neuronModel->GetDerivedParamNames(), model.dnp[i]);
+            value_substitutions(psCode, neuronModelDerivedParamNameBegin, neuronModelDerivedParamNameEnd, model.dnp[i]);
             if (model.synapseGType[synPopID] == INDIVIDUALG) {
                 name_substitutions(psCode, "lps", psm.varNames, sName);
             }
@@ -185,7 +193,7 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
             name_substitutions(thCode, "l", neuronModelInitVarNameBegin, neuronModelInitVarNameEnd, "");
             substitute(thCode, "$(sT)", "lsT");
             value_substitutions(thCode, neuronModel->GetParamNames(), model.neuronPara[i]);
-            value_substitutions(thCode, neuronModel->GetDerivedParamNames(), model.dnp[i]);
+            value_substitutions(thCode, neuronModelDerivedParamNameBegin, neuronModelDerivedParamNameEnd, model.dnp[i]);
             substitute(thCode, "$(Isyn)", "Isyn");
             thCode= ensureFtype(thCode, model.ftype);
             checkUnreplacedVariables(thCode, "thresholdConditionCode");
@@ -206,7 +214,7 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
         substitute(sCode, "$(t)", "t");
         name_substitutions(sCode, "l", neuronModelInitVarNameBegin, neuronModelInitVarNameEnd, "");
         value_substitutions(sCode, neuronModel->GetParamNames(), model.neuronPara[i]);
-        value_substitutions(sCode, neuronModel->GetDerivedParamNames(), model.dnp[i]);
+        value_substitutions(sCode, neuronModelDerivedParamNameBegin, neuronModelDerivedParamNameEnd, model.dnp[i]);
         //name_substitutions(sCode, "", nModels[nt].extraGlobalNeuronKernelParameters, model.neuronName[i]);
         //if (nt == POISSONNEURON) {
         //    substitute(sCode, "lrate", "rates" + model.neuronName[i] + "[n + offset" + model.neuronName[i] + "]");
@@ -283,7 +291,7 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
                 substitute(rCode, "$(t)", "t");
                 name_substitutions(rCode, "l", neuronModelInitVarNameBegin, neuronModelInitVarNameEnd, "");
                 value_substitutions(rCode, neuronModel->GetParamNames(), model.neuronPara[i]);
-                value_substitutions(rCode, neuronModel->GetDerivedParamNames(), model.dnp[i]);
+                value_substitutions(rCode, neuronModelDerivedParamNameBegin, neuronModelDerivedParamNameEnd, model.dnp[i]);
                 substitute(rCode, "$(Isyn)", "Isyn");
                 substitute(rCode, "$(sT)", "lsT");
                 os << "// spike reset code" << ENDL;
@@ -320,7 +328,7 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
             value_substitutions(pdCode, psModel.dpNames, model.dpsp[model.inSyn[i][j]]);
             name_substitutions(pdCode, "l", neuronModelInitVarNameBegin, neuronModelInitVarNameEnd, "");
             value_substitutions(pdCode, neuronModel->GetParamNames(), model.neuronPara[i]);
-            value_substitutions(pdCode, neuronModel->GetDerivedParamNames(), model.dnp[i]);
+            value_substitutions(pdCode, neuronModelDerivedParamNameBegin, neuronModelDerivedParamNameEnd, model.dnp[i]);
             os << "// the post-synaptic dynamics" << ENDL;
             pdCode= ensureFtype(pdCode, model.ftype);
             checkUnreplacedVariables(pdCode, "postSynDecay");

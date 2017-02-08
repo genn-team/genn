@@ -959,11 +959,15 @@ It appends the derived values of dependent parameters to the corresponding vecto
 void NNmodel::initDerivedNeuronPara()
 {
     for (int i = 0; i < neuronGrpN; i++) {
-        int numDerivedParams = neuronModel[i]->GetDerivedParamNames().size();
+        auto derivedParams = neuronModel[i]->GetDerivedParams();
+
+        // Reserve vector to hold derived parameters
         vector<double> tmpP;
-        tmpP.reserve(numDerivedParams);
-        for (int j=0; j < numDerivedParams; ++j) {
-            double retVal = neuronModel[i]->CalculateDerivedParam(j, neuronPara[i], dt);
+        tmpP.reserve(derivedParams.size());
+
+        // Loop through derived parameters
+        for (int j = 0; j < derivedParams.size(); j++) {
+            double retVal = derivedParams[j].second(neuronPara[i], dt);
             tmpP.push_back(retVal);
         }
         dnp.push_back(tmpP);

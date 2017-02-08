@@ -94,20 +94,19 @@ inline void name_substitutions(string &code, const string &prefix, const vector<
 //--------------------------------------------------------------------------
 //! \brief This function performs a list of value substitutions for parameters in code snippets.
 //--------------------------------------------------------------------------
-template<typename NameIter, typename ValueIter>
-inline void value_substitutions(string &code, NameIter namesBegin, NameIter namesEnd,
-    ValueIter valuesBegin, ValueIter valuesEnd)
+template<typename NameIter>
+inline void value_substitutions(string &code, NameIter namesBegin, NameIter namesEnd, const vector<double> &values)
 {
     NameIter n = namesBegin;
-    ValueIter v = valuesBegin;
-    for (;n != namesEnd && v != valuesEnd; n++, v++) {
+    auto v = values.cbegin();
+    for (;n != namesEnd && v != values.cend(); n++, v++) {
         substitute(code, "$(" + *n + ")", "(" + to_string(*v) + ")");
     }
 }
 
 inline void value_substitutions(string &code, const vector<string> &names, const vector<double> &values)
 {
-    value_substitutions(code, names.cbegin(), names.cend(), values.cbegin(), values.cend());
+    value_substitutions(code, names.cbegin(), names.cend(), values);
 }
 
 
@@ -130,20 +129,20 @@ inline void extended_name_substitutions(string &code, const string &prefix, cons
 //--------------------------------------------------------------------------
 //! \brief This function performs a list of value substitutions for parameters in code snippets where the parameters have an extension in their names (e.g. "_pre").
 //--------------------------------------------------------------------------
-template<typename NameIter, typename ValueIter>
+template<typename NameIter>
 inline void extended_value_substitutions(string &code, NameIter namesBegin, NameIter namesEnd,
-                                         const string &ext, ValueIter valuesBegin, ValueIter valuesEnd)
+                                         const string &ext, const vector<double> &values)
 {
     NameIter n = namesBegin;
-    ValueIter v = valuesBegin;
-    for (;n != namesEnd && v != valuesEnd; n++, v++) {
+    auto v = values.cbegin();
+    for (;n != namesEnd && v != values.cend(); n++, v++) {
         substitute(code, "$(" + *n + ext + ")", "(" + to_string(*v) + ")");
     }
 }
 
 inline void extended_value_substitutions(string &code, const vector<string> &names, const string &ext, const vector<double> &values)
 {
-    extended_value_substitutions(code, names.cbegin(), names.cend(), ext, values.cbegin(), values.cend());
+    extended_value_substitutions(code, names.cbegin(), names.cend(), ext, values);
 }
 //--------------------------------------------------------------------------
 /*! \brief This function converts code to contain only explicit single precision (float) function calls (C99 standard)
