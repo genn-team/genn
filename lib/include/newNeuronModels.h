@@ -19,9 +19,12 @@
 #define SET_SIM_CODE(SIM_CODE) virtual std::string GetSimCode() const{ return SIM_CODE; }
 #define SET_THRESHOLD_CONDITION_CODE(THRESHOLD_CONDITION_CODE) virtual std::string GetThresholdConditionCode() const{ return THRESHOLD_CONDITION_CODE; }
 #define SET_RESET_CODE(RESET_CODE) virtual std::string GetResetCode() const{ return RESET_CODE; }
+#define SET_SUPPORT_CODE(SUPPORT_CODE) virtual std::string GetSupportCode() const{ return SUPPORT_CODE; }
+
 #define SET_PARAM_NAMES(...) virtual std::vector<std::string> GetParamNames() const{ return __VA_ARGS__; }
 #define SET_DERIVED_PARAMS(...) virtual std::vector<std::pair<std::string, std::function<double(const vector<double> &pars, double)>>> GetDerivedParams() const{ return __VA_ARGS__; }
 #define SET_INIT_VALS(...) virtual std::vector<std::pair<std::string, std::string>> GetInitVals() const{ return __VA_ARGS__; }
+#define SET_EXTRA_GLOBAL_PARAMS(...) virtual std::vector<std::pair<std::string, std::string>> GetExtraGlobalParams() const{ return __VA_ARGS__; }
 
 //----------------------------------------------------------------------------
 // NeuronModels::ValueBase
@@ -67,12 +70,12 @@ public:
     virtual std::string GetSimCode() const{ return ""; }
     virtual std::string GetThresholdConditionCode() const{ return ""; }
     virtual std::string GetResetCode() const{ return ""; }
+    virtual std::string GetSupportCode() const{ return ""; }
 
     virtual std::vector<std::string> GetParamNames() const{ return {}; }
-
     virtual std::vector<std::pair<std::string, std::function<double(const vector<double> &pars, double)>>> GetDerivedParams() const{ return {}; }
-
     virtual std::vector<std::pair<std::string, std::string>> GetInitVals() const{ return {}; }
+    virtual std::vector<std::pair<std::string, std::string>> GetExtraGlobalParams() const{ return {}; }
 };
 
 //----------------------------------------------------------------------------

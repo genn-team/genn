@@ -117,6 +117,11 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
         auto neuronModelDerivedParams = neuronModel->GetDerivedParams();
         auto neuronModelDerivedParamNameBegin= GetPairKeyConstIter(neuronModelDerivedParams.cbegin());
         auto neuronModelDerivedParamNameEnd = GetPairKeyConstIter(neuronModelDerivedParams.cend());
+
+        // Create iterators to iterate over the names of the neuron model's extra global parameters
+        auto neuronModelExtraGlobalParams = neuronModel->GetExtraGlobalParams();
+        auto neuronModelExtraGlobalParamsNameBegin = GetPairKeyConstIter(neuronModelExtraGlobalParams.cbegin());
+        auto neuronModelExtraGlobalParamsNameEnd = GetPairKeyConstIter(neuronModelExtraGlobalParams.cend());
         for (int k = 0; k < neuronModelInitVars.size(); k++) {
 
             os << neuronModelInitVars[k].second << " l" << neuronModelInitVars[k].first << " = ";
@@ -172,11 +177,11 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
             }
             value_substitutions(psCode, psm.pNames, model.postSynapsePara[synPopID]);
             value_substitutions(psCode, psm.dpNames, model.dpsp[synPopID]);
-            //name_substitutions(psCode, "", nModels[nt].extraGlobalNeuronKernelParameters, model.neuronName[i]);
+            name_substitutions(psCode, "", neuronModelExtraGlobalParamsNameBegin, neuronModelExtraGlobalParamsNameEnd, model.neuronName[i]);
             psCode= ensureFtype(psCode, model.ftype);
             checkUnreplacedVariables(psCode, "postSyntoCurrent");
             os << psCode << ";" << ENDL;
-            if (psm.supportCode != "") {
+            if (!psm.supportCode.empty()) {
                 os << CB(29) << " // namespace bracket closed" << ENDL;
             }
         }
@@ -195,16 +200,16 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
             value_substitutions(thCode, neuronModel->GetParamNames(), model.neuronPara[i]);
             value_substitutions(thCode, neuronModelDerivedParamNameBegin, neuronModelDerivedParamNameEnd, model.dnp[i]);
             substitute(thCode, "$(Isyn)", "Isyn");
-            thCode= ensureFtype(thCode, model.ftype);
+            thCode = ensureFtype(thCode, model.ftype);
             checkUnreplacedVariables(thCode, "thresholdConditionCode");
             if (GENN_PREFERENCES::autoRefractory) {
-                /*if (!nModels[nt].supportCode.empty()) {
+                if (!neuronModel->GetSupportCode().empty()) {
                     os << OB(29) << " using namespace " << model.neuronName[i] << "_neuron;" << ENDL;
-                }*/
+                }
                 os << "bool oldSpike= (" << thCode << ");" << ENDL;
-                /*if (!nModels[nt].supportCode.empty()) {
+                if (!neuronModel->GetSupportCode().empty()) {
                     os << CB(29) << " // namespace bracket closed" << endl;
-                }*/
+                }
             }
         }
 
@@ -215,7 +220,7 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
         name_substitutions(sCode, "l", neuronModelInitVarNameBegin, neuronModelInitVarNameEnd, "");
         value_substitutions(sCode, neuronModel->GetParamNames(), model.neuronPara[i]);
         value_substitutions(sCode, neuronModelDerivedParamNameBegin, neuronModelDerivedParamNameEnd, model.dnp[i]);
-        //name_substitutions(sCode, "", nModels[nt].extraGlobalNeuronKernelParameters, model.neuronName[i]);
+        name_substitutions(sCode, "", neuronModelExtraGlobalParamsNameBegin, neuronModelExtraGlobalParamsNameEnd, model.neuronName[i]);
         //if (nt == POISSONNEURON) {
         //    substitute(sCode, "lrate", "rates" + model.neuronName[i] + "[n + offset" + model.neuronName[i] + "]");
         //}
@@ -223,30 +228,30 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
         substitute(sCode, "$(sT)", "lsT");
         sCode= ensureFtype(sCode, model.ftype);
         checkUnreplacedVariables(sCode,"neuron simCode");
-        //if (!nModels[nt].supportCode.empty()) {
-        //    os << OB(29) << " using namespace " << model.neuronName[i] << "_neuron;" << ENDL;
-        //}
+        if (!neuronModel->GetSupportCode().empty()) {
+            os << OB(29) << " using namespace " << model.neuronName[i] << "_neuron;" << ENDL;
+        }
         os << sCode << ENDL;
-        //if (!nModels[nt].supportCode.empty()) {
-        //    os << CB(29) << " // namespace bracket closed" << endl;
-        //}
+        if (!neuronModel->GetSupportCode().empty()) {
+            os << CB(29) << " // namespace bracket closed" << endl;
+        }
 
         // look for spike type events first.
         if (model.neuronNeedSpkEvnt[i]) {
-            string eCode= model.neuronSpkEvntCondition[i];
+            string eCode = model.neuronSpkEvntCondition[i];
             // code substitutions ----
             extended_name_substitutions(eCode, "l", neuronModelInitVarNameBegin, neuronModelInitVarNameEnd, "_pre", "");
             substitute(eCode, "$(id)", "n");
             substitute(eCode, "$(t)", "t");
-            //name_substitutions(eCode, "", nModels[model.neuronType[i]].extraGlobalNeuronKernelParameters, model.neuronName[i]);
-            eCode= ensureFtype(eCode, model.ftype);
+            name_substitutions(eCode, "", neuronModelExtraGlobalParamsNameBegin, neuronModelExtraGlobalParamsNameEnd, model.neuronName[i]);
+            eCode = ensureFtype(eCode, model.ftype);
             checkUnreplacedVariables(eCode, "neuronSpkEvntCondition");
             // end code substitutions ----
 
             os << "// test for and register a spike-like event" << ENDL;
-            //if (!nModels[nt].supportCode.empty()) {
-            //    os << OB(29) << " using namespace " << model.neuronName[i] << "_neuron;" << ENDL;
-            //}
+            if (!neuronModel->GetSupportCode().empty()) {
+                os << OB(29) << " using namespace " << model.neuronName[i] << "_neuron;" << ENDL;
+            }
             os << "if (" + eCode + ")" << OB(30);
             os << "glbSpkEvnt" << model.neuronName[i] << "[" << queueOffset << "glbSpkCntEvnt" << model.neuronName[i];
             if (model.neuronDelaySlots[i] > 1) { // WITH DELAY
@@ -256,17 +261,17 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
                 os << "[0]++] = n;" << ENDL;
             }
             os << CB(30);
-            //if (!nModels[nt].supportCode.empty()) {
-            //    os << CB(29) << " // namespace bracket closed" << endl;
-            //}
+            if (!neuronModel->GetSupportCode().empty()) {
+                os << CB(29) << " // namespace bracket closed" << endl;
+            }
         }
 
         // test for true spikes if condition is provided
         if (!thCode.empty()) {
             os << "// test for and register a true spike" << ENDL;
-            //if (!nModels[nt].supportCode.empty()) {
-            //    os << OB(29) << " using namespace " << model.neuronName[i] << "_neuron;" << ENDL;
-            //}
+            if (!neuronModel->GetSupportCode().empty()) {
+                os << OB(29) << " using namespace " << model.neuronName[i] << "_neuron;" << ENDL;
+            }
             if (GENN_PREFERENCES::autoRefractory) {
               os << "if ((" << thCode << ") && !(oldSpike))" << OB(40);
             }
@@ -295,15 +300,15 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
                 substitute(rCode, "$(Isyn)", "Isyn");
                 substitute(rCode, "$(sT)", "lsT");
                 os << "// spike reset code" << ENDL;
-                //name_substitutions(rCode, "", nModels[nt].extraGlobalNeuronKernelParameters, model.neuronName[i]);
+                name_substitutions(rCode, "", neuronModelExtraGlobalParamsNameBegin, neuronModelExtraGlobalParamsNameEnd, model.neuronName[i]);
                 rCode= ensureFtype(rCode, model.ftype);
                 checkUnreplacedVariables(rCode, "resetCode");
                 os << rCode << ENDL;
             }
             os << CB(40);
-            //if (!nModels[nt].supportCode.empty()) {
-            //    os << CB(29) << " // namespace bracket closed" << endl;
-            //}
+            if (!neuronModel->GetSupportCode().empty()) {
+                os << CB(29) << " // namespace bracket closed" << endl;
+            }
         }
 
         // store the defined parts of the neuron state into the global state variables V etc
