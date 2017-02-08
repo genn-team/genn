@@ -69,7 +69,7 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
     os << OB(51);
 
     // function code
-    for (int i = 0; i < model.neuronGrpN; i++) {
+    for (unsigned int i = 0; i < model.neuronGrpN; i++) {
         string queueOffset = (model.neuronDelaySlots[i] > 1 ? "(spkQuePtr" + model.neuronName[i] + " * " + to_string(model.neuronN[i]) + ") + " : "");
         string queueOffsetTrueSpk = (model.neuronNeedTrueSpk[i] ? queueOffset : "");
 
@@ -122,7 +122,7 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
         auto neuronModelExtraGlobalParams = neuronModel->GetExtraGlobalParams();
         auto neuronModelExtraGlobalParamsNameBegin = GetPairKeyConstIter(neuronModelExtraGlobalParams.cbegin());
         auto neuronModelExtraGlobalParamsNameEnd = GetPairKeyConstIter(neuronModelExtraGlobalParams.cend());
-        for (int k = 0; k < neuronModelInitVars.size(); k++) {
+        for (size_t k = 0; k < neuronModelInitVars.size(); k++) {
 
             os << neuronModelInitVars[k].second << " l" << neuronModelInitVars[k].first << " = ";
             os << neuronModelInitVars[k].first << model.neuronName[i] << "[";
@@ -145,7 +145,7 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
         if ((model.inSyn[i].size() > 0) || (neuronModel->GetSimCode().find("Isyn") != string::npos)) {
             os << model.ftype << " Isyn = 0;" << ENDL;
         }
-        for (int j = 0; j < model.inSyn[i].size(); j++) {
+        for (size_t j = 0; j < model.inSyn[i].size(); j++) {
             unsigned int synPopID= model.inSyn[i][j]; // number of (post)synapse group
             postSynModel psm= postSynModels[model.postSynapseType[synPopID]];
             string sName= model.synapseName[synPopID];
@@ -220,7 +220,7 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
         value_substitutions(sCode, neuronModel->GetParamNames(), model.neuronPara[i]);
         value_substitutions(sCode, neuronModelDerivedParamNameBegin, neuronModelDerivedParamNameEnd, model.dnp[i]);
         name_substitutions(sCode, "", neuronModelExtraGlobalParamsNameBegin, neuronModelExtraGlobalParamsNameEnd, model.neuronName[i]);
-        //if (nt == POISSONNEURON) {
+        //if (nt == POISSONNEURON) {'
         //    substitute(sCode, "lrate", "rates" + model.neuronName[i] + "[n + offset" + model.neuronName[i] + "]");
         //}
         substitute(sCode, "$(Isyn)", "Isyn");
@@ -311,7 +311,7 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
         }
 
         // store the defined parts of the neuron state into the global state variables V etc
-        for (int k = 0; k < neuronModelInitVars.size(); k++) {
+        for (size_t k = 0; k < neuronModelInitVars.size(); k++) {
             if (model.neuronVarNeedQueue[i][k]) {
                 os << neuronModelInitVars[k].first << model.neuronName[i] << "[" << queueOffset << "n] = l" << neuronModelInitVars[k].first << ";" << ENDL;
             }
@@ -320,7 +320,7 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
             }
         }
 
-        for (int j = 0; j < model.inSyn[i].size(); j++) {
+        for (size_t j = 0; j < model.inSyn[i].size(); j++) {
             postSynModel psModel= postSynModels[model.postSynapseType[model.inSyn[i][j]]];
             string sName= model.synapseName[model.inSyn[i][j]];
             string pdCode = psModel.postSynDecay;
@@ -528,7 +528,7 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
     os << OB(1000);
     os << "// execute internal synapse dynamics if any" << ENDL;
 
-    for (int i = 0; i < model.synDynGroups; i++) {
+    for (unsigned int i = 0; i < model.synDynGroups; i++) {
         k= model.synDynGrp[i];
         src= model.synapseSource[k];
         trg= model.synapseTarget[k];
@@ -620,7 +620,7 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
 
     os << "unsigned int ipost;" << ENDL;
     os << "unsigned int ipre;" << ENDL;
-    for (int i = 0; i < model.synapseGrpN; i++) {  
+    for (unsigned int i = 0; i < model.synapseGrpN; i++) {
         if (model.synapseConnType[i] == SPARSE) {
             os << "unsigned int npost;" << ENDL;
             break;
@@ -629,7 +629,7 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
     os << model.ftype << " addtoinSyn;" << ENDL;  
     os << ENDL;
 
-    for (int i = 0; i < model.synapseGrpN; i++) {
+    for (unsigned int i = 0; i < model.synapseGrpN; i++) {
         src = model.synapseSource[i];
         trg = model.synapseTarget[i];
         synt = model.synapseType[i];
@@ -672,7 +672,7 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
         os << "unsigned int ipost;" << ENDL;
         os << "unsigned int ipre;" << ENDL;
         os << "unsigned int lSpk;" << ENDL;
-        for (int i = 0; i < model.synapseGrpN; i++) {
+        for (unsigned int i = 0; i < model.synapseGrpN; i++) {
             if (model.synapseConnType[i] == SPARSE) {
                 os << "unsigned int npre;" << ENDL;
                 break;
@@ -680,13 +680,12 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
         }
         os << ENDL;
 
-        for (int i = 0; i < model.lrnGroups; i++) {
+        for (unsigned int i = 0; i < model.lrnGroups; i++) {
             k = model.lrnSynGrp[i];
             src = model.synapseSource[k];
             trg = model.synapseTarget[k];
             synt = model.synapseType[k];
             inSynNo = model.synapseInSynNo[k];
-            unsigned int nN = model.neuronN[src];
             bool sparse = model.synapseConnType[k] == SPARSE;
 
             const auto *preNeuronModel = model.neuronModel[src];

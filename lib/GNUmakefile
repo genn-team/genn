@@ -55,9 +55,9 @@ ifeq ($(DARWIN),DARWIN)
     CXX                  :=clang++
 endif
 ifndef CPU_ONLY
-    CXXFLAGS             :=-std=c++11 -DNVCC=\"$(NVCC)\"
+    CXXFLAGS             :=-std=c++11 -Wall -DNVCC=\"$(NVCC)\"
 else
-    CXXFLAGS             :=-std=c++11 -DCPU_ONLY
+    CXXFLAGS             :=-std=c++11 -Wall -DCPU_ONLY
 endif
 ifdef DEBUG
     CXXFLAGS             +=-g -O0 -DDEBUG
