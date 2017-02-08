@@ -14,8 +14,6 @@
 neuronModel::neuronModel()
 {
     dps = NULL;
-    needPreSt = false;
-    needPostSt = false;
 }
 
 

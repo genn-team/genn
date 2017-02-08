@@ -31,8 +31,6 @@ public:
     vector<string> extraGlobalNeuronKernelParameters; //!< Additional parameter in the neuron kernel; it is translated to a population specific name but otherwise assumed to be one parameter per population rather than per neuron.
     vector<string> extraGlobalNeuronKernelParameterTypes; //!< Additional parameters in the neuron kernel; they are translated to a population specific name but otherwise assumed to be one parameter per population rather than per neuron.
     dpclass *dps; //!< \brief Derived parameters
-    bool needPreSt; //!< \brief Whether presynaptic spike times are needed or not
-    bool needPostSt; //!< \brief Whether postsynaptic spike times are needed or not
 
     neuronModel(); //!< \brief Constructor for neuronModel objects
     ~neuronModel(); //!< \brief Destructor for neuronModel objects
