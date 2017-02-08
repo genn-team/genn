@@ -13,6 +13,9 @@
 //----------------------------------------------------------------------------
 // Macros
 //----------------------------------------------------------------------------
+#define DECLARE_PARAM_VALUES(NUM_PARAMS) typedef NeuronModels::ValueBase<NUM_PARAMS> ParamValues
+#define DECLARE_INIT_VALUES(NUM_INIT_VALUES) typedef NeuronModels::ValueBase<NUM_INIT_VALUES> InitValues
+
 #define SET_SIM_CODE(SIM_CODE) virtual std::string GetSimCode() const{ return SIM_CODE; }
 #define SET_THRESHOLD_CONDITION_CODE(THRESHOLD_CONDITION_CODE) virtual std::string GetThresholdConditionCode() const{ return THRESHOLD_CONDITION_CODE; }
 #define SET_RESET_CODE(RESET_CODE) virtual std::string GetResetCode() const{ return RESET_CODE; }
@@ -123,16 +126,10 @@ private:
 //----------------------------------------------------------------------------
 // Simple boilerplate class which implements singleton
 // functionality using curiously recurring template pattern
-template<typename Type, unsigned int NumParamVals, unsigned int NumInitVals>
+template<typename Type>
 class BaseSingleton : public Base
 {
 public:
-    //------------------------------------------------------------------------
-    // Typedefines
-    //------------------------------------------------------------------------
-    typedef NeuronModels::ValueBase<NumParamVals> ParamValues;
-    typedef NeuronModels::ValueBase<NumInitVals> InitValues;
-
     //------------------------------------------------------------------------
     // Static methods
     //------------------------------------------------------------------------
@@ -152,15 +149,18 @@ private:
     static Type *s_Instance;
 };
 
-template<typename Type, unsigned int NumParamVals, unsigned int NumInitVals>
-Type *BaseSingleton<Type, NumParamVals, NumInitVals>::s_Instance = NULL;
+template<typename Type>
+Type *BaseSingleton<Type>::s_Instance = NULL;
 
 //----------------------------------------------------------------------------
 // NeuronModels::Izhikevich
 //----------------------------------------------------------------------------
-class Izhikevich : public BaseSingleton<Izhikevich, 4, 2>
+class Izhikevich : public BaseSingleton<Izhikevich>
 {
 public:
+    DECLARE_PARAM_VALUES(4);
+    DECLARE_INIT_VALUES(2);
+
     SET_SIM_CODE(
         "    if ($(V) >= 30.0){\n"
         "      $(V)=$(c);\n"
@@ -183,9 +183,12 @@ public:
 //----------------------------------------------------------------------------
 // NeuronModels::SpikeSource
 //----------------------------------------------------------------------------
-class SpikeSource : public BaseSingleton<SpikeSource, 0, 0>
+class SpikeSource : public BaseSingleton<SpikeSource>
 {
 public:
+    DECLARE_PARAM_VALUES(0);
+    DECLARE_INIT_VALUES(0);
+
     SET_THRESHOLD_CONDITION_CODE("0");
 };
 } // NeuronModels
