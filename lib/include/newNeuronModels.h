@@ -22,7 +22,7 @@
 #define SET_SUPPORT_CODE(SUPPORT_CODE) virtual std::string GetSupportCode() const{ return SUPPORT_CODE; }
 
 #define SET_PARAM_NAMES(...) virtual std::vector<std::string> GetParamNames() const{ return __VA_ARGS__; }
-#define SET_DERIVED_PARAMS(...) virtual std::vector<std::pair<std::string, std::function<double(const vector<double> &pars, double)>>> GetDerivedParams() const{ return __VA_ARGS__; }
+#define SET_DERIVED_PARAMS(...) virtual std::vector<std::pair<std::string, DerivedParamFunc>> GetDerivedParams() const{ return __VA_ARGS__; }
 #define SET_INIT_VALS(...) virtual std::vector<std::pair<std::string, std::string>> GetInitVals() const{ return __VA_ARGS__; }
 #define SET_EXTRA_GLOBAL_PARAMS(...) virtual std::vector<std::pair<std::string, std::string>> GetExtraGlobalParams() const{ return __VA_ARGS__; }
 
@@ -65,6 +65,11 @@ class Base
 {
 public:
     //----------------------------------------------------------------------------
+    // Typedefines
+    //----------------------------------------------------------------------------
+    typedef std::function<double(const vector<double> &pars, double)> DerivedParamFunc;
+
+    //----------------------------------------------------------------------------
     // Declared virtuals
     //----------------------------------------------------------------------------
     virtual std::string GetSimCode() const{ return ""; }
@@ -73,9 +78,47 @@ public:
     virtual std::string GetSupportCode() const{ return ""; }
 
     virtual std::vector<std::string> GetParamNames() const{ return {}; }
-    virtual std::vector<std::pair<std::string, std::function<double(const vector<double> &pars, double)>>> GetDerivedParams() const{ return {}; }
+    virtual std::vector<std::pair<std::string, DerivedParamFunc>> GetDerivedParams() const{ return {}; }
     virtual std::vector<std::pair<std::string, std::string>> GetInitVals() const{ return {}; }
     virtual std::vector<std::pair<std::string, std::string>> GetExtraGlobalParams() const{ return {}; }
+};
+
+//----------------------------------------------------------------------------
+// NeuronModels::LegacyWrapper
+//----------------------------------------------------------------------------
+// Wrapper around neuron models stored in global
+class LegacyWrapper : public Base
+{
+public:
+    LegacyWrapper(int legacyTypeIndex) : m_LegacyTypeIndex(legacyTypeIndex)
+    {
+    }
+
+    //----------------------------------------------------------------------------
+    // Base virtuals
+    //----------------------------------------------------------------------------
+    virtual std::string GetSimCode() const;
+    virtual std::string GetThresholdConditionCode() const;
+    virtual std::string GetResetCode() const;
+    virtual std::string GetSupportCode() const;
+
+    virtual std::vector<std::string> GetParamNames() const;
+
+    virtual std::vector<std::pair<std::string, DerivedParamFunc>> GetDerivedParams() const;
+
+    virtual std::vector<std::pair<std::string, std::string>> GetInitVals() const;
+    virtual std::vector<std::pair<std::string, std::string>> GetExtraGlobalParams() const;
+
+private:
+    //----------------------------------------------------------------------------
+    // Static methods
+    //----------------------------------------------------------------------------
+    static std::vector<std::pair<std::string, std::string>> ZipStringVectors(const std::vector<std::string> &a,
+                                                                             const std::vector<std::string> &b);
+    //----------------------------------------------------------------------------
+    // Members
+    //----------------------------------------------------------------------------
+    const int m_LegacyTypeIndex;
 };
 
 //----------------------------------------------------------------------------

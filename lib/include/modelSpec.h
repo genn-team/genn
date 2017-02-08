@@ -110,7 +110,6 @@ public:
   vector<unsigned int> sumNeuronN; //!< Summed neuron numbers
   vector<unsigned int> padSumNeuronN; //!< Padded summed neuron numbers
   vector<unsigned int> neuronPostSyn; //! Postsynaptic methods to the neuron
-  //vector<unsigned int> neuronType; //!< Types of neurons
   vector<const NeuronModels::Base*> neuronModel;  //!< Neuron models
   vector<vector<double> > neuronPara; //!< Parameters of neurons
   vector<vector<double> > dnp; //!< Derived neuron parameters
@@ -231,8 +230,8 @@ public:
   // PUBLIC NEURON FUNCTIONS
   //========================
 
-  //void addNeuronPopulation(const string&, unsigned int, unsigned int, const double *, const double *); //!< Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population
-  //void addNeuronPopulation(const string&, unsigned int, unsigned int, const vector<double>&, const vector<double>&); //!< Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population
+  void addNeuronPopulation(const string&, unsigned int, unsigned int, const double *, const double *); //!< Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population
+  void addNeuronPopulation(const string&, unsigned int, unsigned int, const vector<double>&, const vector<double>&); //!< Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population
 
   template<typename NeuronModel>
   void addNeuronPopulation(const string &name, unsigned int size,
@@ -241,7 +240,6 @@ public:
       unsigned int i= neuronGrpN++;
       neuronName.push_back(name);
       neuronN.push_back(size);
-      //neuronType.push_back(type);
       neuronModel.push_back(NeuronModel::GetInstance());
       neuronPara.push_back(paramValues.GetValues());
       neuronIni.push_back(initValues.GetValues());

@@ -443,23 +443,23 @@ void NNmodel::setSynapseClusterIndex(const string &synapseGroup, /**< Name of th
  */
 //--------------------------------------------------------------------------
 
-// void NNmodel::addNeuronPopulation(
-//   const string &name, /**<  The name of the neuron population*/
-//   unsigned int nNo, /**<  Number of neurons in the population */
-//   unsigned int type, /**<  Type of the neurons, refers to either a standard type or user-defined type*/
-//   const double *p, /**< Parameters of this neuron type */
-//   const double *ini /**< Initial values for variables of this neuron type */)
-// {
-//   vector<double> vp;
-//   vector<double> vini;
-//   for (int i= 0; i < nModels[type].pNames.size(); i++) {
-//     vp.push_back(p[i]);
-//   }
-//   for (int i= 0; i < nModels[type].varNames.size(); i++) {
-//     vini.push_back(ini[i]);
-//   }
-//   addNeuronPopulation(name, nNo, type, vp, vini);
-// }
+void NNmodel::addNeuronPopulation(
+  const string &name, /**<  The name of the neuron population*/
+  unsigned int nNo, /**<  Number of neurons in the population */
+  unsigned int type, /**<  Type of the neurons, refers to either a standard type or user-defined type*/
+  const double *p, /**< Parameters of this neuron type */
+  const double *ini /**< Initial values for variables of this neuron type */)
+{
+  vector<double> vp;
+  vector<double> vini;
+  for (int i= 0; i < nModels[type].pNames.size(); i++) {
+    vp.push_back(p[i]);
+  }
+  for (int i= 0; i < nModels[type].varNames.size(); i++) {
+    vini.push_back(ini[i]);
+  }
+  addNeuronPopulation(name, nNo, type, vp, vini);
+}
   
 
 //--------------------------------------------------------------------------
@@ -467,43 +467,43 @@ void NNmodel::setSynapseClusterIndex(const string &synapseGroup, /**< Name of th
  */
 //--------------------------------------------------------------------------
 
-// void NNmodel::addNeuronPopulation(
-//   const string &name, /**<  The name of the neuron population*/
-//   unsigned int nNo, /**<  Number of neurons in the population */
-//   unsigned int type, /**<  Type of the neurons, refers to either a standard type or user-defined type*/
-//   const vector<double> &p, /**< Parameters of this neuron type */
-//   const vector<double> &ini /**< Initial values for variables of this neuron type */)
-// {
-//     if (!GeNNReady) {
-//         gennError("You need to call initGeNN first.");
-//     }
-//     if (final) {
-//         gennError("Trying to add a neuron population to a finalized model.");
-//     }
-//     if (p.size() != nModels[type].pNames.size()) {
-//         gennError("The number of parameter values for neuron group " + name + " does not match that of their neuron type, " + tS(p.size()) + " != " + tS(nModels[type].pNames.size()));
-//     }
-//     if (ini.size() != nModels[type].varNames.size()) {
-//         gennError("The number of variable initial values for neuron group " + name + " does not match that of their neuron type, " + tS(ini.size()) + " != " + tS(nModels[type].varNames.size()));
-//     }
-//
-//     unsigned int i= neuronGrpN++;
-//     neuronName.push_back(name);
-//     neuronN.push_back(nNo);
-//     neuronType.push_back(type);
-//     neuronPara.push_back(p);
-//     neuronIni.push_back(ini);
-//     inSyn.push_back(vector<unsigned int>());
-//     outSyn.push_back(vector<unsigned int>());
-//     neuronNeedSt.push_back(false);
-//     neuronNeedSpkEvnt.push_back(false);
-//     neuronSpkEvntCondition.push_back("");
-//     neuronDelaySlots.push_back(1);
-//
-//     // initially set neuron group indexing variables to device 0 host 0
-//     neuronDeviceID.push_back(0);
-//     neuronHostID.push_back(0);
-// }
+void NNmodel::addNeuronPopulation(
+  const string &name, /**<  The name of the neuron population*/
+  unsigned int nNo, /**<  Number of neurons in the population */
+  unsigned int type, /**<  Type of the neurons, refers to either a standard type or user-defined type*/
+  const vector<double> &p, /**< Parameters of this neuron type */
+  const vector<double> &ini /**< Initial values for variables of this neuron type */)
+{
+    if (!GeNNReady) {
+        gennError("You need to call initGeNN first.");
+    }
+    if (final) {
+        gennError("Trying to add a neuron population to a finalized model.");
+    }
+    if (p.size() != nModels[type].pNames.size()) {
+        gennError("The number of parameter values for neuron group " + name + " does not match that of their neuron type, " + tS(p.size()) + " != " + tS(nModels[type].pNames.size()));
+    }
+    if (ini.size() != nModels[type].varNames.size()) {
+        gennError("The number of variable initial values for neuron group " + name + " does not match that of their neuron type, " + tS(ini.size()) + " != " + tS(nModels[type].varNames.size()));
+    }
+
+    unsigned int i= neuronGrpN++;
+    neuronName.push_back(name);
+    neuronN.push_back(nNo);
+    neuronModel.push_back(new NeuronModels::LegacyWrapper(type));
+    neuronPara.push_back(p);
+    neuronIni.push_back(ini);
+    inSyn.push_back(vector<unsigned int>());
+    outSyn.push_back(vector<unsigned int>());
+    neuronNeedSt.push_back(false);
+    neuronNeedSpkEvnt.push_back(false);
+    neuronSpkEvntCondition.push_back("");
+    neuronDelaySlots.push_back(1);
+
+    // initially set neuron group indexing variables to device 0 host 0
+    neuronDeviceID.push_back(0);
+    neuronHostID.push_back(0);
+}
 
 
 //--------------------------------------------------------------------------
