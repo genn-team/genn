@@ -26,7 +26,7 @@
 #include "CodeHelper.h"
 
 #include <algorithm>
-
+#include <typeinfo>
 
 //--------------------------------------------------------------------------
 /*!
@@ -188,8 +188,7 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
     
         string thCode= neuronModel->GetThresholdConditionCode();
         if (thCode == "") { // no condition provided
-            //cerr << "Warning: No thresholdConditionCode for neuron type " << model.neuronType[i] << " used for population \"" << model.neuronName[i] << "\" was provided. There will be no spikes detected in this population!" << endl;
-          cerr << "Warning: No thresholdConditionCode for neuron type XXX used for population \"" << model.neuronName[i] << "\" was provided. There will be no spikes detected in this population!" << endl;
+            cerr << "Warning: No thresholdConditionCode for neuron type " << typeid(*neuronModel).name() << " used for population \"" << model.neuronName[i] << "\" was provided. There will be no spikes detected in this population!" << endl;
         }
         else {
             os << "// test whether spike condition was fulfilled previously" << ENDL;
