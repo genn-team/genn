@@ -23,7 +23,7 @@
 #include "generateRunner.h"
 #include "global.h"
 #include "utils.h"
-#include "stringUtils.h"
+#include "codeGenUtils.h"
 #include "CodeHelper.h"
 
 #include <stdint.h>
@@ -178,9 +178,9 @@ void genRunner(const NNmodel &model, //!< Model description
     // write DT macro
     os << "#undef DT" << ENDL;
     if (model.ftype == "float") {
-        os << "#define DT " << tS(model.dt) << "f" << ENDL;
+        os << "#define DT " << to_string(model.dt) << "f" << ENDL;
     } else {
-        os << "#define DT " << tS(model.dt) << ENDL;
+        os << "#define DT " << to_string(model.dt) << ENDL;
     }
 
     // write MYRAND macro

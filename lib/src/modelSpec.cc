@@ -19,7 +19,7 @@
 #include "modelSpec.h"
 #include "global.h"
 #include "utils.h"
-#include "stringUtils.h"
+#include "codeGenUtils.h"
 
 #include <cstdio>
 #include <cmath>
@@ -481,10 +481,10 @@ void NNmodel::addNeuronPopulation(
         gennError("Trying to add a neuron population to a finalized model.");
     }
     if (p.size() != nModels[type].pNames.size()) {
-        gennError("The number of parameter values for neuron group " + name + " does not match that of their neuron type, " + tS(p.size()) + " != " + tS(nModels[type].pNames.size()));
+        gennError("The number of parameter values for neuron group " + name + " does not match that of their neuron type, " + to_string(p.size()) + " != " + to_string(nModels[type].pNames.size()));
     }
     if (ini.size() != nModels[type].varNames.size()) {
-        gennError("The number of variable initial values for neuron group " + name + " does not match that of their neuron type, " + tS(ini.size()) + " != " + tS(nModels[type].varNames.size()));
+        gennError("The number of variable initial values for neuron group " + name + " does not match that of their neuron type, " + to_string(ini.size()) + " != " + to_string(nModels[type].varNames.size()));
     }
 
     neuronGrpN++;
@@ -628,16 +628,16 @@ void NNmodel::addSynapsePopulation(
         gennError("Trying to add a synapse population to a finalized model.");
     }
     if (p.size() != weightUpdateModels[syntype].pNames.size()) {
-        gennError("The number of presynaptic parameter values for synapse group " + name + " does not match that of their synapse type, " + tS(p.size()) + " != " + tS(weightUpdateModels[syntype].pNames.size()));
+        gennError("The number of presynaptic parameter values for synapse group " + name + " does not match that of their synapse type, " + to_string(p.size()) + " != " + to_string(weightUpdateModels[syntype].pNames.size()));
     }
     if (synini.size() != weightUpdateModels[syntype].varNames.size()) {
-        gennError("The number of presynaptic variable initial values for synapse group " + name + " does not match that of their synapse type, " + tS(synini.size()) + " != " + tS(weightUpdateModels[syntype].varNames.size()));
+        gennError("The number of presynaptic variable initial values for synapse group " + name + " does not match that of their synapse type, " + to_string(synini.size()) + " != " + to_string(weightUpdateModels[syntype].varNames.size()));
     }
     if (ps.size() != postSynModels[postsyn].pNames.size()) {
-        gennError("The number of presynaptic parameter values for synapse group " + name + " does not match that of their synapse type, " + tS(ps.size()) + " != " + tS(postSynModels[postsyn].pNames.size()));
+        gennError("The number of presynaptic parameter values for synapse group " + name + " does not match that of their synapse type, " + to_string(ps.size()) + " != " + to_string(postSynModels[postsyn].pNames.size()));
     }
     if (PSVini.size() != postSynModels[postsyn].varNames.size()) {
-        gennError("The number of presynaptic variable initial values for synapse group " + name + " does not match that of their synapse type, " + tS(PSVini.size()) + " != " + tS(postSynModels[postsyn].varNames.size()));
+        gennError("The number of presynaptic variable initial values for synapse group " + name + " does not match that of their synapse type, " + to_string(PSVini.size()) + " != " + to_string(postSynModels[postsyn].varNames.size()));
     }
 
     unsigned int i= synapseGrpN++;
@@ -839,10 +839,10 @@ string NNmodel::scalarExpr(const double val) const
     string tmp;
     float fval= (float) val;
     if (ftype == "float") {
-        tmp= tS(fval) + "f";
+        tmp= to_string(fval) + "f";
     }
     if (ftype == "double") {
-        tmp= tS(val);
+        tmp= to_string(val);
     }
     return tmp;
 }

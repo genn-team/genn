@@ -1,15 +1,13 @@
+#include "codeGenUtils.h"
 
-#ifndef STRINGUTILS_CC
-#define STRINGUTILS_CC
-
-#include "stringUtils.h"
-#include "modelSpec.h"
-#include "utils.h"
-
+// Standard includes
 #if !defined(__GNUC__) || (__GNUC__ >= 4 && __GNUC_MINOR__ >= 9)
 #include <regex>
 #endif
 
+// GeNN includes
+#include "modelSpec.h"
+#include "utils.h"
 
 //--------------------------------------------------------------------------
 //! \brief Tool for substituting strings in the neuron code strings or other templates
@@ -320,7 +318,7 @@ void checkUnreplacedVariables(string code, string codeName)
     }
 }
 #else
-void checkUnreplacedVariables(string code, string codeName) 
+void checkUnreplacedVariables(string, string)
 {
 }
 #endif
@@ -350,7 +348,7 @@ void neuron_substitutions_in_synaptic_code(
     //if (model.neuronType[src] == POISSONNEURON) substitute(wCode, "$(V_pre)", to_string(model.neuronPara[src][2]));
     substitute(wCode, "$(sT_pre)", devPrefix+ "sT" + model.neuronName[src] + "[" + offsetPre + preIdx + "]");
     auto preInitVals = preModel->GetInitVals();
-    for (int j = 0; j < preInitVals.size(); j++) {
+    for (size_t j = 0; j < preInitVals.size(); j++) {
         if (model.neuronVarNeedQueue[src][j]) {
             substitute(wCode, "$(" + preInitVals[j].first + "_pre)",
                        devPrefix + preInitVals[j].first + model.neuronName[src] + "[" + offsetPre + preIdx + "]");
@@ -370,12 +368,12 @@ void neuron_substitutions_in_synaptic_code(
     auto preExtraGlobalParams = preModel->GetExtraGlobalParams();
     auto preExtraGlobalParamsNameBegin = GetPairKeyConstIter(preExtraGlobalParams.cbegin());
     auto preExtraGlobalParamsNameEnd = GetPairKeyConstIter(preExtraGlobalParams.cend());
-    extended_name_substitutions(wCode, devPrefix, preExtraGlobalParamsNameBegin, preExtraGlobalParamsNameBegin, "_pre", model.neuronName[src]);
+    extended_name_substitutions(wCode, devPrefix, preExtraGlobalParamsNameBegin, preExtraGlobalParamsNameEnd, "_pre", model.neuronName[src]);
     
     // postsynaptic neuron variables, parameters, and global parameters
     substitute(wCode, "$(sT_post)", devPrefix + "sT" + model.neuronName[trg] + "[" + offsetPost + postIdx + "]");
     auto postInitVals = postModel->GetInitVals();
-    for (int j = 0; j < postInitVals.size(); j++) {
+    for (size_t j = 0; j < postInitVals.size(); j++) {
         if (model.neuronVarNeedQueue[trg][j]) {
             substitute(wCode, "$(" + postInitVals[j].first + "_post)",
                        devPrefix + postInitVals[j].first + model.neuronName[trg] + "[" + offsetPost + postIdx + "]");
@@ -397,5 +395,3 @@ void neuron_substitutions_in_synaptic_code(
     auto postExtraGlobalParamsNameEnd = GetPairKeyConstIter(postExtraGlobalParams.cend());
     extended_name_substitutions(wCode, devPrefix, postExtraGlobalParamsNameBegin, postExtraGlobalParamsNameEnd, "_post", model.neuronName[trg]);
 }
-
-#endif // STRINGUTILS_CC

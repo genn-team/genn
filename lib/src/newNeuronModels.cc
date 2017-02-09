@@ -48,7 +48,7 @@ std::vector<std::pair<std::string, NeuronModels::Base::DerivedParamFunc>> Neuron
     derivedParams.reserve(nm.dpNames.size());
 
     // Loop through derived parameters
-    for(int p = 0; p < nm.dpNames.size(); p++)
+    for(size_t p = 0; p < nm.dpNames.size(); p++)
     {
         // Add pair consisting of parameter name and lambda function which calls
         // through to the DPS object associated with the legacy model
@@ -86,7 +86,7 @@ std::vector<std::pair<std::string, std::string>> NeuronModels::LegacyWrapper::Zi
     zip.reserve(a.size());
 
     // Build vector from legacy neuron model
-    for(int v = 0; v < a.size(); v++)
+    for(size_t v = 0; v < a.size(); v++)
     {
         zip.push_back(std::pair<std::string, std::string>(a[v], b[v]));
     }

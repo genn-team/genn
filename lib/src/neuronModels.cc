@@ -2,9 +2,8 @@
 #ifndef NEURONMODELS_CC
 #define NEURONMODELS_CC
 
+#include "codeGenUtils.h"
 #include "neuronModels.h"
-#include "stringUtils.h"
-
 
 //--------------------------------------------------------------------------
 /*! \brief Constructor for neuronModel objects

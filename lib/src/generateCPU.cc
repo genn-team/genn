@@ -22,7 +22,7 @@
 #include "generateCPU.h"
 #include "global.h"
 #include "utils.h"
-#include "stringUtils.h"
+#include "codeGenUtils.h"
 #include "CodeHelper.h"
 
 #include <algorithm>
@@ -455,7 +455,7 @@ void generate_process_presynaptic_events_code_CPU(
         }
         else { // DENSE
             if (model.synapseGType[i] == INDIVIDUALG) {
-                name_substitutions(wCode, "", weightUpdateModels[synt].varNames, model.synapseName[i] + "[ipre * " + tS(model.neuronN[trg]) + " + ipost]");
+                name_substitutions(wCode, "", weightUpdateModels[synt].varNames, model.synapseName[i] + "[ipre * " + to_string(model.neuronN[trg]) + " + ipost]");
             }
             else {
                 value_substitutions(wCode, weightUpdateModels[synt].varNames, model.synapseIni[i]);
@@ -585,7 +585,7 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
                 os << "// loop through all synapses" << endl;
                 // substitute initial values as constants for synapse var names in synapseDynamics code
                 if (model.synapseGType[k] == INDIVIDUALG) {
-                    name_substitutions(SDcode, "", wu.varNames, synapseName + "[i*" + tS(trgno) + "+j]");
+                    name_substitutions(SDcode, "", wu.varNames, synapseName + "[i*" + to_string(trgno) + "+j]");
                 }
                 else {
                     // substitute initial values as constants for synapse var names in synapseDynamics code
@@ -686,12 +686,12 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
 
             const auto *preNeuronModel = model.neuronModel[src];
             bool delayPre = model.neuronDelaySlots[src] > 1;
-            string offsetPre = (delayPre ? "(delaySlot * " + tS(model.neuronN[src]) + ") + " : "");
+            string offsetPre = (delayPre ? "(delaySlot * " + to_string(model.neuronN[src]) + ") + " : "");
             string offsetTrueSpkPre = (model.neuronNeedTrueSpk[src] ? offsetPre : "");
 
             const auto *postNeuronModel = model.neuronModel[trg];
             bool delayPost = model.neuronDelaySlots[trg] > 1;
-            string offsetPost = (delayPost ? "(spkQuePtr" + model.neuronName[trg] + " * " + tS(model.neuronN[trg]) + ") + " : "");
+            string offsetPost = (delayPost ? "(spkQuePtr" + model.neuronName[trg] + " * " + to_string(model.neuronN[trg]) + ") + " : "");
             string offsetTrueSpkPost = (model.neuronNeedTrueSpk[trg] ? offsetPost : "");
 
 // NOTE: WE DO NOT USE THE AXONAL DELAY FOR BACKWARDS PROPAGATION - WE CAN TALK ABOUT BACKWARDS DELAYS IF WE WANT THEM
@@ -735,7 +735,7 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
                 name_substitutions(code, "", weightUpdateModels[synt].varNames, model.synapseName[k] + "[C" + model.synapseName[k] + ".remap[ipre]]");
             }
             else { // DENSE
-                name_substitutions(code, "", weightUpdateModels[synt].varNames, model.synapseName[k] + "[lSpk + " + tS(model.neuronN[trg]) + " * ipre]");
+                name_substitutions(code, "", weightUpdateModels[synt].varNames, model.synapseName[k] + "[lSpk + " + to_string(model.neuronN[trg]) + " * ipre]");
             }
             value_substitutions(code, weightUpdateModels[synt].pNames, model.synapsePara[k]);
             value_substitutions(code, weightUpdateModels[synt].dpNames, model.dsp_w[k]);

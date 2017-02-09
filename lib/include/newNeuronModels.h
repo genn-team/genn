@@ -8,7 +8,7 @@
 #include <vector>
 
 // GeNN includes
-#include "stringUtils.h"
+#include "codeGenUtils.h"
 
 //----------------------------------------------------------------------------
 // Macros

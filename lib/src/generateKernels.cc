@@ -22,7 +22,7 @@
 #include "generateKernels.h"
 #include "global.h"
 #include "utils.h"
-#include "stringUtils.h"
+#include "codeGenUtils.h"
 #include "CodeHelper.h"
 
 #include <algorithm>

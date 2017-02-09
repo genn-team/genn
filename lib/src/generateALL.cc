@@ -29,7 +29,7 @@
 #include "generateKernels.h"
 #include "modelSpec.h"
 #include "utils.h"
-#include "stringUtils.h"
+#include "codeGenUtils.h"
 #include "CodeHelper.h"
 
 #include <cmath>
