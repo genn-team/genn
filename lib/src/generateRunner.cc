@@ -76,7 +76,11 @@ void genRunner(const NNmodel &model, //!< Model description
 {
     unsigned int st, pst;
     ofstream os;
-        
+      
+#ifndef CPU_ONLY
+    unsigned int mem = 0;
+#endif // !CPU_ONLY
+  
     string SCLR_MIN;
     string SCLR_MAX;
     if (model.ftype == "float") {
@@ -415,7 +419,7 @@ void genRunner(const NNmodel &model, //!< Model description
             os << "void pull" << model.neuronName[i] << "CurrentSpikesFromDevice();" << ENDL;
                 os << "void pull" << model.neuronName[i] << "CurrentSpikeEventsFromDevice();" << ENDL;
     }
-    for (int i = 0; i < model.synapseGrpN; i++) {
+    for (unsigned int i = 0; i < model.synapseGrpN; i++) {
         os << "#define pull" << model.synapseName[i] << "FromDevice pull" << model.synapseName[i] << "StateFromDevice" << ENDL;
         os << "void pull" << model.synapseName[i] << "StateFromDevice();" << ENDL;
     }
@@ -963,7 +967,7 @@ void genRunner(const NNmodel &model, //!< Model description
             size_t size = model.neuronVarNeedQueue[i][j] ? model.neuronN[i] * model.neuronDelaySlots[i] : model.neuronN[i];
 
 #ifndef CPU_ONLY
-            os << "cudaHostAlloc(&" <<  + model.neuronName[i] << ", ";
+            os << "cudaHostAlloc(&" <<  model.neuronName[i] << ", ";
             os << size << " * sizeof(" << neuronModelInitVals[j].first << "), cudaHostAllocPortable);" << ENDL;
             os << "    deviceMemAllocate(&d_" << neuronModelInitVals[j].first << model.neuronName[i];
             os << ", dd_" << neuronModelInitVals[j].first << model.neuronName[i] << ", ";
@@ -1582,21 +1586,11 @@ void genRunner(const NNmodel &model, //!< Model description
     cout << "Global memory required for core model: " << mem/1e6 << " MB. " << ENDL;
     cout << deviceProp[theDevice].totalGlobalMem << " for device " << theDevice << ENDL;  
   
-    if (memremsparse != 0) {
-        int connEstim = int(memremsparse / (theSize(model.ftype) + sizeof(unsigned int)));
-        cout << "Remaining mem is " << memremsparse/1e6 << " MB." << ENDL;
-        cout << "You may run into memory problems on device" << theDevice;
-        cout << " if the total number of synapses is bigger than " << connEstim;
-        cout << ", which roughly stands for " << int(connEstim/model.sumNeuronN[model.neuronGrpN - 1]);
-        cout << " connections per neuron, without considering any other dynamic memory load." << ENDL;
-    }
-    else {
-        if (0.5 * deviceProp[theDevice].totalGlobalMem < mem) {
-            cout << "memory required for core model (" << mem/1e6;
-            cout << "MB) is more than 50% of global memory on the chosen device";
-            cout << "(" << deviceProp[theDevice].totalGlobalMem/1e6 << "MB)." << ENDL;
-            cout << "Experience shows that this is UNLIKELY TO WORK ... " << ENDL;
-        }
+    if (0.5 * deviceProp[theDevice].totalGlobalMem < mem) {
+        cout << "memory required for core model (" << mem/1e6;
+        cout << "MB) is more than 50% of global memory on the chosen device";
+        cout << "(" << deviceProp[theDevice].totalGlobalMem/1e6 << "MB)." << ENDL;
+        cout << "Experience shows that this is UNLIKELY TO WORK ... " << ENDL;
     }
 #endif
 }
@@ -1681,19 +1675,18 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     os << "// copying things to device" << ENDL << ENDL;
 
     for (unsigned int i = 0; i < model.neuronGrpN; i++) {
-        nt = model.neuronType[i];
-
         // neuron state variables
         os << "void push" << model.neuronName[i] << "StateToDevice()" << ENDL;
         os << OB(1050);
 
-        for (size_t k= 0, l= nModels[nt].varNames.size(); k < l; k++) {
-            if (nModels[nt].varTypes[k].find("*") == string::npos) { // only copy non-pointers. Pointers don't transport between GPU and CPU
+        auto neuronModelInitVars = model.neuronModel[i]->GetInitVals();
+        for (size_t k= 0, l= neuronModelInitVars.size(); k < l; k++) {
+            if (neuronModelInitVars[k].second.find("*") == string::npos) { // only copy non-pointers. Pointers don't transport between GPU and CPU
                 size_t size = model.neuronVarNeedQueue[i][k] ? (model.neuronN[i] * model.neuronDelaySlots[i]) : model.neuronN[i];
 
-                os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << nModels[nt].varNames[k] << model.neuronName[i];
-                os << ", " << nModels[nt].varNames[k] << model.neuronName[i];
-                os << ", " << size << " * sizeof(" << nModels[nt].varTypes[k] << "), cudaMemcpyHostToDevice));" << ENDL;
+                os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << neuronModelInitVars[k].first << model.neuronName[i];
+                os << ", " << neuronModelInitVars[k].first << model.neuronName[i];
+                os << ", " << size << " * sizeof(" << neuronModelInitVars[k].second << "), cudaMemcpyHostToDevice));" << ENDL;
             }
         }
 
@@ -1858,19 +1851,18 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     os << "// copying things from device" << ENDL << ENDL;
 
     for (unsigned int i = 0; i < model.neuronGrpN; i++) {
-        nt = model.neuronType[i];
-
         // neuron state variables
         os << "void pull" << model.neuronName[i] << "StateFromDevice()" << ENDL;
         os << OB(1050);
-
-        for (size_t k= 0, l= nModels[nt].varNames.size(); k < l; k++) {
-            if (nModels[nt].varTypes[k].find("*") == string::npos) { // only copy non-pointers. Pointers don't transport between GPU and CPU
+        
+        auto neuronModelInitVars = model.neuronModel[i]->GetInitVals();
+        for (size_t k= 0, l= neuronModelInitVars.size(); k < l; k++) {
+            if (neuronModelInitVars[k].second.find("*") == string::npos) { // only copy non-pointers. Pointers don't transport between GPU and CPU
                 size_t size = model.neuronVarNeedQueue[i][k] ? model.neuronN[i] * model.neuronDelaySlots[i] : model.neuronN[i];
 
-                os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << nModels[nt].varNames[k] << model.neuronName[i];
-                os << ", d_" << nModels[nt].varNames[k] << model.neuronName[i];
-                os << ", " << size << " * sizeof(" << nModels[nt].varTypes[k] << "), cudaMemcpyDeviceToHost));" << ENDL;
+                os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << neuronModelInitVars[k].first << model.neuronName[i];
+                os << ", d_" << neuronModelInitVars[k].first << model.neuronName[i];
+                os << ", " << size << " * sizeof(" << neuronModelInitVars[k].second << "), cudaMemcpyDeviceToHost));" << ENDL;
             }
         }
 
@@ -1921,7 +1913,6 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
         os << OB(10601);
         os << "//Assumes that spike numbers are already copied back from the device" << ENDL;
         if (model.neuronNeedSt[i]) {
-            size_t size = model.neuronN[i] * model.neuronDelaySlots[i];
             os << "CHECK_CUDA_ERRORS(cudaMemcpy(sT" << model.neuronName[i];
             os << ", d_sT" << model.neuronName[i];
             os << ", " << "glbSpkCnt" << model.neuronName[i] << "[0] * sizeof(unsigned int), cudaMemcpyDeviceToHost));" << ENDL;
@@ -2060,7 +2051,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     
     os << "void copySpikesToDevice()" << ENDL;
     os << OB(1111);
-    for (int i = 0; i < model.neuronGrpN; i++) {
+    for (unsigned int i = 0; i < model.neuronGrpN; i++) {
       os << "push" << model.neuronName[i] << "SpikesToDevice();" << ENDL;
     }
     os << CB(1111);
@@ -2148,7 +2139,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     os << OB(1123) << ENDL;
 
     for (unsigned int i = 0; i < model.neuronGrpN; i++) {
-        size_t size = (model.neuronNeedTrueSpk[i]) && (model.neuronDelaySlots[i] > 1))
+        size_t size = (model.neuronNeedTrueSpk[i] && (model.neuronDelaySlots[i] > 1))
             ? model.neuronDelaySlots[i] : 1;
 
         os << "CHECK_CUDA_ERRORS(cudaMemcpy(glbSpkCnt" << model.neuronName[i];
@@ -2177,7 +2168,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     os << "void copyCurrentSpikeEventsFromDevice()" << ENDL;
     os << OB(1125) << ENDL;
 
-    for (int i = 0; i < model.neuronGrpN; i++) {
+    for (unsigned int i = 0; i < model.neuronGrpN; i++) {
       os << "pull" << model.neuronName[i] << "CurrentSpikeEventsFromDevice();" << ENDL;
     }
     os << CB(1125) << ENDL;
@@ -2233,7 +2224,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     unsigned int neuronGridSz = model.padSumNeuronN[model.neuronGrpN - 1];
     neuronGridSz = ceil((float) neuronGridSz / neuronBlkSz);
     os << "dim3 nThreads(" << neuronBlkSz << ", 1);" << ENDL;
-    if (neuronGridSz < deviceProp[theDevice].maxGridSize[1]) {
+    if (neuronGridSz < (unsigned int)deviceProp[theDevice].maxGridSize[1]) {
         os << "dim3 nGrid(" << neuronGridSz << ", 1);" << ENDL;
     }
     else {
@@ -2386,7 +2377,7 @@ void genMakefile(const NNmodel &model, //!< Model description
     os << "\trm -f runner.o" << endl;
 #else
     string nvccFlags = "-c -x cu -arch sm_";
-    nvccFlags += tS(deviceProp[theDevice].major) + tS(deviceProp[theDevice].minor);
+    nvccFlags += to_string(deviceProp[theDevice].major) + to_string(deviceProp[theDevice].minor);
     nvccFlags += " " + GENN_PREFERENCES::userNvccFlags;
     if (GENN_PREFERENCES::optimizeCode) nvccFlags += " -O3 -use_fast_math -Xcompiler \"-ffast-math\"";
     if (GENN_PREFERENCES::debugCode) nvccFlags += " -O0 -g -G";
