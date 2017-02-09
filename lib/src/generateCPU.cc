@@ -220,9 +220,9 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
         value_substitutions(sCode, neuronModel->GetParamNames(), model.neuronPara[i]);
         value_substitutions(sCode, neuronModelDerivedParamNameBegin, neuronModelDerivedParamNameEnd, model.dnp[i]);
         name_substitutions(sCode, "", neuronModelExtraGlobalParamsNameBegin, neuronModelExtraGlobalParamsNameEnd, model.neuronName[i]);
-        //if (nt == POISSONNEURON) {'
-        //    substitute(sCode, "lrate", "rates" + model.neuronName[i] + "[n + offset" + model.neuronName[i] + "]");
-        //}
+        if (neuronModel->IsPoisson()) {
+            substitute(sCode, "lrate", "rates" + model.neuronName[i] + "[n + offset" + model.neuronName[i] + "]");
+        }
         substitute(sCode, "$(Isyn)", "Isyn");
         substitute(sCode, "$(sT)", "lsT");
         sCode= ensureFtype(sCode, model.ftype);
@@ -381,11 +381,9 @@ void generate_process_presynaptic_events_code_CPU(
         unsigned int synt = model.synapseType[i];
         bool sparse = model.synapseConnType[i] == SPARSE;
 
-        const auto *preNeuronModel = model.neuronModel[src];
         bool delayPre = model.neuronDelaySlots[src] > 1;
         string offsetPre = delayPre ? ("(delaySlot * " + to_string(model.neuronN[src]) + ") + ") : "";
 
-        const auto *postNeuronModel = model.neuronModel[trg];
         bool delayPost = model.neuronDelaySlots[trg] > 1;
         string offsetPost = delayPost ? ("(spkQuePtr" + model.neuronName[trg] + " * " + to_string(model.neuronN[trg]) + ") + ") : "";
 
@@ -424,7 +422,7 @@ void generate_process_presynaptic_events_code_CPU(
             value_substitutions(eCode, weightUpdateModels[synt].pNames, model.synapsePara[i]);
             value_substitutions(eCode, weightUpdateModels[synt].dpNames, model.dsp_w[i]);
             name_substitutions(eCode, "", weightUpdateModels[synt].extraGlobalSynapseKernelParameters, model.synapseName[i]);
-            neuron_substitutions_in_synaptic_code(eCode, model, src, trg, preNeuronModel, postNeuronModel, offsetPre, offsetPost, "ipre", "ipost", "");
+            neuron_substitutions_in_synaptic_code(eCode, model, src, trg, offsetPre, offsetPost, "ipre", "ipost", "");
             eCode= ensureFtype(eCode, model.ftype);
             checkUnreplacedVariables(eCode, "evntThreshold");
             // end code substitutions ----
@@ -466,7 +464,7 @@ void generate_process_presynaptic_events_code_CPU(
         value_substitutions(wCode, weightUpdateModels[synt].dpNames, model.dsp_w[i]);
         name_substitutions(wCode, "", weightUpdateModels[synt].extraGlobalSynapseKernelParameters, model.synapseName[i]);
         substitute(wCode, "$(addtoinSyn)", "addtoinSyn");
-        neuron_substitutions_in_synaptic_code(wCode, model, src, trg, preNeuronModel, postNeuronModel, offsetPre, offsetPost, "ipre", "ipost", "");
+        neuron_substitutions_in_synaptic_code(wCode, model, src, trg, offsetPre, offsetPost, "ipre", "ipost", "");
         wCode= ensureFtype(wCode, model.ftype);
         checkUnreplacedVariables(wCode, "simCode"+postfix);
         // end Code substitutions -------------------------------------------------------------------------
@@ -534,8 +532,6 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
         string synapseName= model.synapseName[k];
         unsigned int srcno= model.neuronN[src];
         unsigned int trgno= model.neuronN[trg];
-        const auto *preNeuronModel = model.neuronModel[src];
-        const auto *postNeuronModel = model.neuronModel[trg];
         bool delayPre = model.neuronDelaySlots[src] > 1;
         bool delayPost = model.neuronDelaySlots[trg] > 1;
         string offsetPre = (delayPre ? "(delaySlot * " + to_string(model.neuronN[src]) + ") + " : "");
@@ -573,7 +569,8 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
                 value_substitutions(SDcode, wu.pNames, model.synapsePara[k]);
                 // substitute values for derived parameters in synapseDynamics code
                 value_substitutions(SDcode, wu.dpNames, model.dsp_w[k]);
-                neuron_substitutions_in_synaptic_code(SDcode, model, src, trg, preNeuronModel, postNeuronModel, offsetPre, offsetPost, "C"+ synapseName+ ".preInd[n]", "C"+synapseName+".ind[n]", "");
+                neuron_substitutions_in_synaptic_code(SDcode, model, src, trg, offsetPre, offsetPost,
+                                                      "C" + synapseName + ".preInd[n]", "C" +synapseName + ".ind[n]", "");
                 SDcode= ensureFtype(SDcode, model.ftype);
                 checkUnreplacedVariables(SDcode, "synapseDynamics");
                 os << SDcode << ENDL;
@@ -595,7 +592,7 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
                 value_substitutions(SDcode, wu.pNames, model.synapsePara[k]);
                 // substitute values for derived parameters in synapseDynamics code
                 value_substitutions(SDcode, wu.dpNames, model.dsp_w[k]);
-                neuron_substitutions_in_synaptic_code(SDcode, model, src, trg, preNeuronModel, postNeuronModel, offsetPre, offsetPost, "i", "j", "");
+                neuron_substitutions_in_synaptic_code(SDcode, model, src, trg, offsetPre, offsetPost, "i", "j", "");
                 SDcode= ensureFtype(SDcode, model.ftype);
                 checkUnreplacedVariables(SDcode, "synapseDynamics");
                 os << SDcode << ENDL;
@@ -684,12 +681,10 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
             synt = model.synapseType[k];
             bool sparse = model.synapseConnType[k] == SPARSE;
 
-            const auto *preNeuronModel = model.neuronModel[src];
             bool delayPre = model.neuronDelaySlots[src] > 1;
             string offsetPre = (delayPre ? "(delaySlot * " + to_string(model.neuronN[src]) + ") + " : "");
             string offsetTrueSpkPre = (model.neuronNeedTrueSpk[src] ? offsetPre : "");
 
-            const auto *postNeuronModel = model.neuronModel[trg];
             bool delayPost = model.neuronDelaySlots[trg] > 1;
             string offsetPost = (delayPost ? "(spkQuePtr" + model.neuronName[trg] + " * " + to_string(model.neuronN[trg]) + ") + " : "");
             string offsetTrueSpkPost = (model.neuronNeedTrueSpk[trg] ? offsetPost : "");
@@ -743,10 +738,10 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
 
             // presynaptic neuron variables and parameters
             if (sparse) { // SPARSE
-                neuron_substitutions_in_synaptic_code(code, model, src, trg, preNeuronModel, postNeuronModel, offsetPre, offsetPost, "C" + model.synapseName[k] + ".revInd[ipre]", "lSpk", "");
+                neuron_substitutions_in_synaptic_code(code, model, src, trg, offsetPre, offsetPost, "C" + model.synapseName[k] + ".revInd[ipre]", "lSpk", "");
             }
             else { // DENSE
-                neuron_substitutions_in_synaptic_code(code, model, src, trg, preNeuronModel, postNeuronModel, offsetPre, offsetPost, "ipre", "lSpk", "");
+                neuron_substitutions_in_synaptic_code(code, model, src, trg, offsetPre, offsetPost, "ipre", "lSpk", "");
             }
             code= ensureFtype(code, model.ftype);
             checkUnreplacedVariables(code, "simLearnPost");

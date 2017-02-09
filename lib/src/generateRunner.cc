@@ -269,9 +269,9 @@ void genRunner(const NNmodel &model, //!< Model description
         for(auto const &v : neuronModel->GetInitVals()) {
             extern_variable_def(os, v.second +" *", v.first + model.neuronName[i]);
         }
-        //for (int k = 0, l= nModels[nt].extraGlobalNeuronKernelParameters.size(); k < l; k++) {
-        //    extern_variable_def(os, nModels[nt].extraGlobalNeuronKernelParameterTypes[k], nModels[nt].extraGlobalNeuronKernelParameters[k]+model.neuronName[i]);
-        //}
+        for(auto const &v : neuronModel->GetExtraGlobalParams()) {
+            extern_variable_def(os, v.second, v.first + model.neuronName[i]);
+        }
     }
     os << ENDL;
     for (unsigned int i= 0; i < model.neuronGrpN; i++) {
@@ -738,9 +738,9 @@ void genRunner(const NNmodel &model, //!< Model description
         for(auto const &v : neuronModel->GetInitVals()) {
             variable_def(os, v.second + " *", v.first + model.neuronName[i]);
         }
-        //for (int k = 0, l= nModels[nt].extraGlobalNeuronKernelParameters.size(); k < l; k++) {
-        //    os << nModels[nt].extraGlobalNeuronKernelParameterTypes[k] << " " <<  nModels[nt].extraGlobalNeuronKernelParameters[k] << model.neuronName[i] << ";" << ENDL;
-        //}
+        for(auto const &v : neuronModel->GetExtraGlobalParams()) {
+            os << v.second << " " <<  v.first << model.neuronName[i] << ";" << ENDL;
+        }
     }
     os << ENDL;
 
@@ -1148,13 +1148,13 @@ void genRunner(const NNmodel &model, //!< Model description
             os << "    }" << cB << ENDL;
         }
 
-        /*if (model.neuronType[i] == POISSONNEURON) {
+        if (model.neuronModel[i]->IsPoisson()) {
             os << "    " << oB << "for (int i = 0; i < " << model.neuronN[i] << "; i++) {" << ENDL;
             os << "        seed" << model.neuronName[i] << "[i] = rand();" << ENDL;
             os << "    }" << cB << ENDL;
         }
 
-        if ((model.neuronType[i] == IZHIKEVICH) && (model.dt != 1.0)) {
+        /*if ((model.neuronType[i] == IZHIKEVICH) && (model.dt != 1.0)) {
             os << "    fprintf(stderr,\"WARNING: You use a time step different than 1 ms. Izhikevich model behaviour may not be robust.\\n\"); " << ENDL;
         }*/
     }

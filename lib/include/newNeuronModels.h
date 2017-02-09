@@ -81,6 +81,8 @@ public:
     virtual std::vector<std::pair<std::string, DerivedParamFunc>> GetDerivedParams() const{ return {}; }
     virtual std::vector<std::pair<std::string, std::string>> GetInitVals() const{ return {}; }
     virtual std::vector<std::pair<std::string, std::string>> GetExtraGlobalParams() const{ return {}; }
+
+    virtual bool IsPoisson() const{ return false; }
 };
 
 //----------------------------------------------------------------------------
@@ -90,7 +92,7 @@ public:
 class LegacyWrapper : public Base
 {
 public:
-    LegacyWrapper(int legacyTypeIndex) : m_LegacyTypeIndex(legacyTypeIndex)
+    LegacyWrapper(unsigned int legacyTypeIndex) : m_LegacyTypeIndex(legacyTypeIndex)
     {
     }
 
@@ -109,6 +111,8 @@ public:
     virtual std::vector<std::pair<std::string, std::string>> GetInitVals() const;
     virtual std::vector<std::pair<std::string, std::string>> GetExtraGlobalParams() const;
 
+    virtual bool IsPoisson() const;
+
 private:
     //----------------------------------------------------------------------------
     // Static methods
@@ -118,7 +122,7 @@ private:
     //----------------------------------------------------------------------------
     // Members
     //----------------------------------------------------------------------------
-    const int m_LegacyTypeIndex;
+    const unsigned int m_LegacyTypeIndex;
 };
 
 //----------------------------------------------------------------------------

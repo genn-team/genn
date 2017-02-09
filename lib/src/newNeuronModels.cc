@@ -76,6 +76,11 @@ std::vector<std::pair<std::string, std::string>> NeuronModels::LegacyWrapper::Ge
     return ZipStringVectors(nm.extraGlobalNeuronKernelParameters, nm.extraGlobalNeuronKernelParameterTypes);
 }
 //----------------------------------------------------------------------------
+bool NeuronModels::LegacyWrapper::IsPoisson() const
+{
+    return (m_LegacyTypeIndex == POISSONNEURON);
+}
+//----------------------------------------------------------------------------
 std::vector<std::pair<std::string, std::string>> NeuronModels::LegacyWrapper::ZipStringVectors(const std::vector<std::string> &a,
                                                                                                const std::vector<std::string> &b)
 {

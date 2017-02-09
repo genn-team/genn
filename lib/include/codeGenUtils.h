@@ -172,8 +172,6 @@ void neuron_substitutions_in_synaptic_code(
     const NNmodel &model, //!< the neuronal network model to generate code for
     unsigned int src, //!< the number of the src neuron population
     unsigned int trg, //!< the number of the target neuron population
-    const NeuronModels::Base *preModel, //!< the model used by the pre-synaptic neuron
-    const NeuronModels::Base *postModel, //!< the model used by the post-synaptic neuron
     const string &offsetPre, //!< delay slot offset expression for pre-synaptic vars
     const string &offsetPost, //!< delay slot offset expression for post-synaptic vars
     const string &preIdx, //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
