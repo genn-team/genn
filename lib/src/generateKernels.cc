@@ -222,7 +222,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
         for (size_t k = 0; k < neuronModelInitVars.size(); k++) {
 
             os << neuronModelInitVars[k].second << " l" << neuronModelInitVars[k] .first<< " = dd_";
-            os << neuronModelInitVars[k].second << model.neuronName[i] << "[";
+            os << neuronModelInitVars[k].first << model.neuronName[i] << "[";
             if ((model.neuronVarNeedQueue[i][k]) && (model.neuronDelaySlots[i] > 1)) {
                 os << "(delaySlot * " << model.neuronN[i] << ") + ";
             }
