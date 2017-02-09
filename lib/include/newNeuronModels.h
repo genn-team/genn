@@ -9,35 +9,16 @@
 
 // GeNN includes
 #include "codeGenUtils.h"
+#include "neuronModels.h"
+#include "newModels.h"
 
 //----------------------------------------------------------------------------
 // Macros
 //----------------------------------------------------------------------------
-#define DECLARE_MODEL(TYPE, NUM_PARAMS, NUM_INIT_VALUES)          \
-public:                                                           \
-    static const TYPE *GetInstance()                              \
-    {                                                             \
-        if(s_Instance == NULL)                                    \
-        {                                                         \
-            s_Instance = new TYPE;                                \
-        }                                                         \
-        return s_Instance;                                        \
-    }                                                             \
-    typedef NeuronModels::ValueBase<NUM_PARAMS> ParamValues;      \
-    typedef NeuronModels::ValueBase<NUM_INIT_VALUES> InitValues;  \
-private:                                                          \
-    static TYPE *s_Instance;
-
-#define IMPLEMENT_MODEL(TYPE) TYPE *TYPE::s_Instance = NULL
-
 #define SET_SIM_CODE(SIM_CODE) virtual std::string GetSimCode() const{ return SIM_CODE; }
 #define SET_THRESHOLD_CONDITION_CODE(THRESHOLD_CONDITION_CODE) virtual std::string GetThresholdConditionCode() const{ return THRESHOLD_CONDITION_CODE; }
 #define SET_RESET_CODE(RESET_CODE) virtual std::string GetResetCode() const{ return RESET_CODE; }
 #define SET_SUPPORT_CODE(SUPPORT_CODE) virtual std::string GetSupportCode() const{ return SUPPORT_CODE; }
-
-#define SET_PARAM_NAMES(...) virtual std::vector<std::string> GetParamNames() const{ return __VA_ARGS__; }
-#define SET_DERIVED_PARAMS(...) virtual std::vector<std::pair<std::string, DerivedParamFunc>> GetDerivedParams() const{ return __VA_ARGS__; }
-#define SET_INIT_VALS(...) virtual std::vector<std::pair<std::string, std::string>> GetInitVals() const{ return __VA_ARGS__; }
 #define SET_EXTRA_GLOBAL_PARAMS(...) virtual std::vector<std::pair<std::string, std::string>> GetExtraGlobalParams() const{ return __VA_ARGS__; }
 
 //----------------------------------------------------------------------------
@@ -45,44 +26,12 @@ private:                                                          \
 //----------------------------------------------------------------------------
 namespace NeuronModels
 {
-template<size_t NumValues>
-class ValueBase
-{
-public:
-    // **NOTE** other less terrifying forms of constructor won't complain at compile time about
-    // number of parameters e.g. std::array<double, 4> can be initialized with <= 4 elements
-    template<typename... T>
-    ValueBase(T&&... vals) : m_Values{std::forward<double>(vals)...}
-    {
-        static_assert(sizeof...(vals) == NumValues, "Wrong number of values");
-    }
-
-    //----------------------------------------------------------------------------
-    // Public API
-    //----------------------------------------------------------------------------
-    std::vector<double> GetValues() const
-    {
-        return std::vector<double>(m_Values.cbegin(), m_Values.cend());
-    }
-
-private:
-    //----------------------------------------------------------------------------
-    // Members
-    //----------------------------------------------------------------------------
-    std::array<double, NumValues> m_Values;
-};
-
 //----------------------------------------------------------------------------
 // NeuronModels::Base
 //----------------------------------------------------------------------------
-class Base
+class Base : public NewModels::Base
 {
 public:
-    //----------------------------------------------------------------------------
-    // Typedefines
-    //----------------------------------------------------------------------------
-    typedef std::function<double(const vector<double> &pars, double)> DerivedParamFunc;
-
     //----------------------------------------------------------------------------
     // Declared virtuals
     //----------------------------------------------------------------------------
@@ -90,10 +39,6 @@ public:
     virtual std::string GetThresholdConditionCode() const{ return ""; }
     virtual std::string GetResetCode() const{ return ""; }
     virtual std::string GetSupportCode() const{ return ""; }
-
-    virtual std::vector<std::string> GetParamNames() const{ return {}; }
-    virtual std::vector<std::pair<std::string, DerivedParamFunc>> GetDerivedParams() const{ return {}; }
-    virtual std::vector<std::pair<std::string, std::string>> GetInitVals() const{ return {}; }
     virtual std::vector<std::pair<std::string, std::string>> GetExtraGlobalParams() const{ return {}; }
 
     virtual bool IsPoisson() const{ return false; }
@@ -103,10 +48,10 @@ public:
 // NeuronModels::LegacyWrapper
 //----------------------------------------------------------------------------
 // Wrapper around neuron models stored in global
-class LegacyWrapper : public Base
+class LegacyWrapper : public NewModels::LegacyWrapper<Base, neuronModel, nModels>
 {
 public:
-    LegacyWrapper(unsigned int legacyTypeIndex) : m_LegacyTypeIndex(legacyTypeIndex)
+    LegacyWrapper(unsigned int legacyTypeIndex) : NewModels::LegacyWrapper<Base, neuronModel, nModels>(legacyTypeIndex)
     {
     }
 
@@ -117,26 +62,9 @@ public:
     virtual std::string GetThresholdConditionCode() const;
     virtual std::string GetResetCode() const;
     virtual std::string GetSupportCode() const;
-
-    virtual std::vector<std::string> GetParamNames() const;
-
-    virtual std::vector<std::pair<std::string, DerivedParamFunc>> GetDerivedParams() const;
-
-    virtual std::vector<std::pair<std::string, std::string>> GetInitVals() const;
     virtual std::vector<std::pair<std::string, std::string>> GetExtraGlobalParams() const;
 
     virtual bool IsPoisson() const;
-
-private:
-    //----------------------------------------------------------------------------
-    // Static methods
-    //----------------------------------------------------------------------------
-    static std::vector<std::pair<std::string, std::string>> ZipStringVectors(const std::vector<std::string> &a,
-                                                                             const std::vector<std::string> &b);
-    //----------------------------------------------------------------------------
-    // Members
-    //----------------------------------------------------------------------------
-    const unsigned int m_LegacyTypeIndex;
 };
 
 //----------------------------------------------------------------------------
