@@ -13,8 +13,22 @@
 //----------------------------------------------------------------------------
 // Macros
 //----------------------------------------------------------------------------
-#define DECLARE_PARAM_VALUES(NUM_PARAMS) typedef NeuronModels::ValueBase<NUM_PARAMS> ParamValues
-#define DECLARE_INIT_VALUES(NUM_INIT_VALUES) typedef NeuronModels::ValueBase<NUM_INIT_VALUES> InitValues
+#define DECLARE_MODEL(TYPE, NUM_PARAMS, NUM_INIT_VALUES)          \
+public:                                                           \
+    static const TYPE *GetInstance()                              \
+    {                                                             \
+        if(s_Instance == NULL)                                    \
+        {                                                         \
+            s_Instance = new TYPE;                                \
+        }                                                         \
+        return s_Instance;                                        \
+    }                                                             \
+    typedef NeuronModels::ValueBase<NUM_PARAMS> ParamValues;      \
+    typedef NeuronModels::ValueBase<NUM_INIT_VALUES> InitValues;  \
+private:                                                          \
+    static TYPE *s_Instance;
+
+#define IMPLEMENT_MODEL(TYPE) TYPE *TYPE::s_Instance = NULL
 
 #define SET_SIM_CODE(SIM_CODE) virtual std::string GetSimCode() const{ return SIM_CODE; }
 #define SET_THRESHOLD_CONDITION_CODE(THRESHOLD_CONDITION_CODE) virtual std::string GetThresholdConditionCode() const{ return THRESHOLD_CONDITION_CODE; }
@@ -126,44 +140,12 @@ private:
 };
 
 //----------------------------------------------------------------------------
-// NeuronModels::BaseSingleton
-//----------------------------------------------------------------------------
-// Simple boilerplate class which implements singleton
-// functionality using curiously recurring template pattern
-template<typename Type>
-class BaseSingleton : public Base
-{
-public:
-    //------------------------------------------------------------------------
-    // Static methods
-    //------------------------------------------------------------------------
-    static const Type *GetInstance()
-    {
-        if(s_Instance == NULL)
-        {
-            s_Instance = new Type;
-        }
-        return s_Instance;
-    }
-
-private:
-    //------------------------------------------------------------------------
-    // Static members
-    //------------------------------------------------------------------------
-    static Type *s_Instance;
-};
-
-template<typename Type>
-Type *BaseSingleton<Type>::s_Instance = NULL;
-
-//----------------------------------------------------------------------------
 // NeuronModels::Izhikevich
 //----------------------------------------------------------------------------
-class Izhikevich : public BaseSingleton<Izhikevich>
+class Izhikevich : public Base
 {
 public:
-    DECLARE_PARAM_VALUES(4);
-    DECLARE_INIT_VALUES(2);
+    DECLARE_MODEL(NeuronModels::Izhikevich, 4, 2);
 
     SET_SIM_CODE(
         "    if ($(V) >= 30.0){\n"
@@ -187,11 +169,10 @@ public:
 //----------------------------------------------------------------------------
 // NeuronModels::SpikeSource
 //----------------------------------------------------------------------------
-class SpikeSource : public BaseSingleton<SpikeSource>
+class SpikeSource : public Base
 {
 public:
-    DECLARE_PARAM_VALUES(0);
-    DECLARE_INIT_VALUES(0);
+    DECLARE_MODEL(NeuronModels::SpikeSource, 0, 0);
 
     SET_THRESHOLD_CONDITION_CODE("0");
 };

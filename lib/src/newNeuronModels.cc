@@ -6,6 +6,10 @@
 // GeNN includes
 #include "neuronModels.h"
 
+// Implement models
+IMPLEMENT_MODEL(NeuronModels::Izhikevich);
+IMPLEMENT_MODEL(NeuronModels::SpikeSource);
+
 //----------------------------------------------------------------------------
 // NeuronModels::LegacyWrapper
 //----------------------------------------------------------------------------
