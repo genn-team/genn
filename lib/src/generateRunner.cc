@@ -967,8 +967,8 @@ void genRunner(const NNmodel &model, //!< Model description
             size_t size = model.neuronVarNeedQueue[i][j] ? model.neuronN[i] * model.neuronDelaySlots[i] : model.neuronN[i];
 
 #ifndef CPU_ONLY
-            os << "cudaHostAlloc(&" <<  model.neuronName[i] << ", ";
-            os << size << " * sizeof(" << neuronModelInitVals[j].first << "), cudaHostAllocPortable);" << ENDL;
+            os << "cudaHostAlloc(&" << neuronModelInitVals[j].first << model.neuronName[i] << ", ";
+            os << size << " * sizeof(" << neuronModelInitVals[j].second << "), cudaHostAllocPortable);" << ENDL;
             os << "    deviceMemAllocate(&d_" << neuronModelInitVals[j].first << model.neuronName[i];
             os << ", dd_" << neuronModelInitVals[j].first << model.neuronName[i] << ", ";
             os << size << " * sizeof(" << neuronModelInitVals[j].second << "));" << ENDL;
