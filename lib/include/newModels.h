@@ -73,7 +73,7 @@ public:
     //----------------------------------------------------------------------------
     // Typedefines
     //----------------------------------------------------------------------------
-    typedef std::function<double(const vector<double> &pars, double)> DerivedParamFunc;
+    typedef std::function<double(const std::vector<double> &, double)> DerivedParamFunc;
 
     //----------------------------------------------------------------------------
     // Declared virtuals
@@ -109,20 +109,20 @@ public:
 
     std::vector<std::pair<std::string, DerivedParamFunc>> GetDerivedParams() const
     {
-        const auto &nm = ModelArray[m_LegacyTypeIndex];
+        const auto &m = ModelArray[m_LegacyTypeIndex];
 
         // Reserve vector to hold derived parameters
         std::vector<std::pair<std::string, DerivedParamFunc>> derivedParams;
-        derivedParams.reserve(nm.dpNames.size());
+        derivedParams.reserve(m.dpNames.size());
 
         // Loop through derived parameters
-        for(size_t p = 0; p < nm.dpNames.size(); p++)
+        for(size_t p = 0; p < m.dpNames.size(); p++)
         {
             // Add pair consisting of parameter name and lambda function which calls
             // through to the DPS object associated with the legacy model
             derivedParams.push_back(std::pair<std::string, DerivedParamFunc>(
-              nm.dpNames[p],
-              [this, p](const vector<double> &pars, double dt)
+              m.dpNames[p],
+              [this, p](const std::vector<double> &pars, double dt)
               {
                   return ModelArray[m_LegacyTypeIndex].dps->calculateDerivedParameter(p, pars, dt);
               }

@@ -22,13 +22,10 @@
 #define SET_EXTRA_GLOBAL_PARAMS(...) virtual std::vector<std::pair<std::string, std::string>> GetExtraGlobalParams() const{ return __VA_ARGS__; }
 
 //----------------------------------------------------------------------------
-// NeuronModels::ValueBase
+// NeuronModels::Base
 //----------------------------------------------------------------------------
 namespace NeuronModels
 {
-//----------------------------------------------------------------------------
-// NeuronModels::Base
-//----------------------------------------------------------------------------
 class Base : public NewModels::Base
 {
 public:

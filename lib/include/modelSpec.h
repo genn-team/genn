@@ -27,6 +27,7 @@ Part of the code generation and generated code sections.
 
 #include "neuronModels.h"
 #include "newNeuronModels.h"
+#include "newPostsynapticModels.h"
 #include "synapseModels.h"
 #include "postSynapseModels.h"
 
