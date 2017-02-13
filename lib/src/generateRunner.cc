@@ -93,50 +93,6 @@ void genRunner(const NNmodel &model, //!< Model description
         SCLR_MAX= to_string(DBL_MAX);
     }
 
-    for (size_t i= 0; i < nModels.size(); i++) {
-        for (size_t k= 0; k < nModels[i].varTypes.size(); k++) {
-            substitute(nModels[i].varTypes[k], "scalar", model.ftype);
-        }
-        substitute(nModels[i].simCode, "SCALAR_MIN", SCLR_MIN);
-        substitute(nModels[i].resetCode, "SCALAR_MIN", SCLR_MIN);
-        substitute(nModels[i].simCode, "SCALAR_MAX", SCLR_MAX);
-        substitute(nModels[i].resetCode, "SCALAR_MAX", SCLR_MAX);
-        substitute(nModels[i].simCode, "scalar", model.ftype);
-        substitute(nModels[i].resetCode, "scalar", model.ftype);
-    }
-    for (size_t i= 0; i < weightUpdateModels.size(); i++) {
-        for (size_t k= 0; k < weightUpdateModels[i].varTypes.size(); k++) {
-            substitute(weightUpdateModels[i].varTypes[k], "scalar", model.ftype);
-        }
-        for (size_t k= 0; k < weightUpdateModels[i].extraGlobalSynapseKernelParameterTypes.size(); k++) {
-            substitute(weightUpdateModels[i].extraGlobalSynapseKernelParameterTypes[k], "scalar", model.ftype);
-        }
-        substitute(weightUpdateModels[i].simCode, "SCALAR_MIN", SCLR_MIN);
-        substitute(weightUpdateModels[i].simCodeEvnt, "SCALAR_MIN", SCLR_MIN);
-        substitute(weightUpdateModels[i].simLearnPost, "SCALAR_MIN", SCLR_MIN);
-        substitute(weightUpdateModels[i].synapseDynamics, "SCALAR_MIN", SCLR_MIN);
-        substitute(weightUpdateModels[i].simCode, "SCALAR_MAX", SCLR_MAX);
-        substitute(weightUpdateModels[i].simCodeEvnt, "SCALAR_MAX", SCLR_MAX);
-        substitute(weightUpdateModels[i].simLearnPost, "SCALAR_MAX", SCLR_MAX);
-        substitute(weightUpdateModels[i].synapseDynamics, "SCALAR_MAX", SCLR_MAX);
-        substitute(weightUpdateModels[i].simCode, "scalar", model.ftype);
-        substitute(weightUpdateModels[i].simCodeEvnt, "scalar", model.ftype);
-        substitute(weightUpdateModels[i].simLearnPost, "scalar", model.ftype);
-        substitute(weightUpdateModels[i].synapseDynamics, "scalar", model.ftype);
-    }
-    for (size_t i= 0; i < postSynModels.size(); i++) {
-        for (size_t k= 0; k < postSynModels[i].varTypes.size(); k++) {
-            substitute(postSynModels[i].varTypes[k], "scalar", model.ftype);
-        }
-        substitute(postSynModels[i].postSyntoCurrent, "SCALAR_MIN", SCLR_MIN);
-        substitute(postSynModels[i].postSynDecay, "SCALAR_MIN", SCLR_MIN);
-        substitute(postSynModels[i].postSyntoCurrent, "SCALAR_MAX", SCLR_MAX);
-        substitute(postSynModels[i].postSynDecay, "SCALAR_MAX", SCLR_MAX);
-        substitute(postSynModels[i].postSyntoCurrent, "scalar", model.ftype);
-        substitute(postSynModels[i].postSynDecay, "scalar", model.ftype);
-    }
-    
-
     //=======================
     // generate definitions.h
     //=======================
