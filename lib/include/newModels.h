@@ -65,6 +65,30 @@ private:
 };
 
 //----------------------------------------------------------------------------
+// NewModels::ValueBase<0>
+//----------------------------------------------------------------------------
+template<>
+class ValueBase<0>
+{
+public:
+    // **NOTE** other less terrifying forms of constructor won't complain at compile time about
+    // number of parameters e.g. std::array<double, 4> can be initialized with <= 4 elements
+    template<typename... T>
+    ValueBase(T&&... vals)
+    {
+        static_assert(sizeof...(vals) == 0, "Wrong number of values");
+    }
+
+    //----------------------------------------------------------------------------
+    // Public API
+    //----------------------------------------------------------------------------
+    std::vector<double> GetValues() const
+    {
+        return {};
+    }
+};
+
+//----------------------------------------------------------------------------
 // NeuronModels::Base
 //----------------------------------------------------------------------------
 class Base
