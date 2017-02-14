@@ -45,4 +45,33 @@ public:
     virtual std::string GetSupportCode() const;
 };
 
+//----------------------------------------------------------------------------
+// PostsynapticModels::ExpConductance
+//----------------------------------------------------------------------------
+class ExpCond : public Base
+{
+public:
+    DECLARE_MODEL(ExpCond, 1, 0);
+
+    SET_DECAY_CODE("$(inSyn)*=$(expDecay);");
+
+    SET_CURRENT_CONVERTER_CODE("$(inSyn) * ($(E) - $(V))");
+
+    SET_PARAM_NAMES({"tau", "E"});
+
+    SET_DERIVED_PARAMS({{"expDecay", [](const vector<double> &pars, double dt){ return std::exp(-dt / pars[0]); }}});
+};
+
+//----------------------------------------------------------------------------
+// PostsynapticModels::Izhikevich
+//----------------------------------------------------------------------------
+class Izhikevich : public Base
+{
+public:
+    DECLARE_MODEL(Izhikevich, 0, 0);
+
+    SET_CURRENT_CONVERTER_CODE("$(inSyn); $(inSyn) = 0");
+
+    SET_PARAM_NAMES({"tau", "E"});
+};
 }

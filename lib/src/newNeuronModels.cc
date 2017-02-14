@@ -9,26 +9,22 @@ IMPLEMENT_MODEL(NeuronModels::SpikeSource);
 //----------------------------------------------------------------------------
 std::string NeuronModels::LegacyWrapper::GetSimCode() const
 {
-    const auto &nm = nModels[m_LegacyTypeIndex];
-    return nm.simCode;
+    return nModels[m_LegacyTypeIndex].simCode;
 }
 //----------------------------------------------------------------------------
 std::string NeuronModels::LegacyWrapper::GetThresholdConditionCode() const
 {
-    const auto &nm = nModels[m_LegacyTypeIndex];
-    return nm.thresholdConditionCode;
+    return nModels[m_LegacyTypeIndex].thresholdConditionCode;
 }
 //----------------------------------------------------------------------------
 std::string NeuronModels::LegacyWrapper::GetResetCode() const
 {
-    const auto &nm = nModels[m_LegacyTypeIndex];
-    return nm.resetCode;
+    return nModels[m_LegacyTypeIndex].resetCode;
 }
 //----------------------------------------------------------------------------
 std::string NeuronModels::LegacyWrapper::GetSupportCode() const
 {
-    const auto &nm = nModels[m_LegacyTypeIndex];
-    return nm.supportCode;
+    return nModels[m_LegacyTypeIndex].supportCode;
 }
 //----------------------------------------------------------------------------
 std::vector<std::pair<std::string, std::string>> NeuronModels::LegacyWrapper::GetExtraGlobalParams() const
