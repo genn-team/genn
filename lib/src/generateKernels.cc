@@ -805,9 +805,9 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
     os << "//-------------------------------------------------------------------------" << ENDL << ENDL;
 
 
-        if (model.synDynGroups > 0) {
+    if (model.synDynGroups > 0) {
         os << "#define BLOCKSZ_SYNDYN " << synDynBlkSz << endl;
-
+	
         // SynapseDynamics kernel header
         os << "extern \"C\" __global__ void calcSynapseDynamics(";
         for (int i= 0, l= model.synapseDynamicsKernelParameters.size(); i < l; i++) {
@@ -915,13 +915,13 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
         }
         os << CB(75);
     }
-
-// synapse kernel header
-        os << "extern \"C\" __global__ void calcSynapses(";
-        for (int i= 0, l= model.synapseKernelParameters.size(); i < l; i++) {
-            os << model.synapseKernelParameterTypes[i] << " " << model.synapseKernelParameters[i] << ", ";
-        }
-        os << model.ftype << " t)" << ENDL; // end of synapse kernel header
+    
+    // synapse kernel header
+    os << "extern \"C\" __global__ void calcSynapses(";
+    for (int i= 0, l= model.synapseKernelParameters.size(); i < l; i++) {
+	os << model.synapseKernelParameterTypes[i] << " " << model.synapseKernelParameters[i] << ", ";
+    }
+    os << model.ftype << " t)" << ENDL; // end of synapse kernel header
 
     // synapse kernel code
     os << OB(75);
