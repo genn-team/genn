@@ -19,8 +19,8 @@
 
 #define SET_EXTRA_GLOBAL_PARAMS(...) virtual std::vector<std::pair<std::string, std::string>> GetExtraGlobalParams() const{ return __VA_ARGS__; }
 
-#define SET_NEEDS_PRE_SPIKE_TIME(NEEDS_PRE_SPIKE_TIME) virtual bool NeedsPreSpikeTime() const{ return NEEDS_PRE_SPIKE_TIME; }
-#define SET_NEEDS_POST_SPIKE_TIME(NEEDS_POST_SPIKE_TIME) virtual bool NeedsPostSpikeTime() const{ return NEEDS_POST_SPIKE_TIME; }
+#define SET_NEEDS_PRE_SPIKE_TIME(NEEDS_PRE_SPIKE_TIME) static const bool NeedsPreSpikeTime = NEEDS_PRE_SPIKE_TIME
+#define SET_NEEDS_POST_SPIKE_TIME(NEEDS_POST_SPIKE_TIME) static const bool NeedsPostSpikeTime = NEEDS_POST_SPIKE_TIME
 
 //----------------------------------------------------------------------------
 // WeightUpdateModels::Base
@@ -45,8 +45,11 @@ public:
 
     virtual std::vector<std::pair<std::string, std::string>> GetExtraGlobalParams() const{ return {}; }
 
-    virtual bool NeedsPreSpikeTime() const{ return false; }
-    virtual bool NeedsPostSpikeTime() const{ return false; }
+    //----------------------------------------------------------------------------
+    // Constants
+    //----------------------------------------------------------------------------
+    static const bool NeedsPreSpikeTime = false;
+    static const bool NeedsPostSpikeTime = false;
 };
 
 //----------------------------------------------------------------------------
@@ -73,9 +76,6 @@ public:
     virtual std::string GetSynapseDynamicsSuppportCode() const;
 
     virtual std::vector<std::pair<std::string, std::string>> GetExtraGlobalParams() const;
-
-    virtual bool NeedsPreSpikeTime() const;
-    virtual bool NeedsPostSpikeTime() const;
 };
 
 //----------------------------------------------------------------------------
@@ -123,7 +123,7 @@ public:
 
     SET_PARAM_NAMES({"tLrn", "tChng", "tDecay", "tPunish10", "tPunish01",
         "gMax", "gMid", "gSlope", "tauShift", "gSyn0"});
-    SET_INIT_VALS({{"g", "scalar"}, {"gRaw", "scalar"});
+    SET_INIT_VALS({{"g", "scalar"}, {"gRaw", "scalar"}});
 
     SET_SIM_CODE(
         "$(addtoinSyn) = $(g);"
@@ -151,13 +151,17 @@ public:
         "else dg = -($(off2)) ; \n"
         "$(gRaw) += dg; \n"
         "$(g)=$(gMax)/2.0 *(tanh($(gSlope)*($(gRaw) - ($(gMid))))+1); \n");
+
     SET_DERIVED_PARAMS({
-        {"lim0", [](const vector<double> &pars, double dt){ return std::exp(-dt / pars[1]); }},
-        {"lim1", [](const vector<double> &pars, double){ return  pars[1] / pars[0]; }},
-        {"slope0", [](const vector<double> &pars, double){ return  pars[1] / pars[0]; }},
-        {"slope1", [](const vector<double> &pars, double){ return  pars[1] / pars[0]; }},
-        {"off0", [](const vector<double> &pars, double){ return  pars[1] / pars[0]; }},
-        {"off1", [](const vector<double> &pars, double){ return  pars[1] / pars[0]; }},
-        {"off2", [](const vector<double> &pars, double){ return  pars[1] / pars[0]; }}});
+        {"lim0", [](const vector<double> &pars, double){ return (1/pars[4] + 1/pars[1]) * pars[0] / (2/pars[1]); }},
+        {"lim1", [](const vector<double> &pars, double){ return  -((1/pars[3] + 1/pars[1]) * pars[0] / (2/pars[1])); }},
+        {"slope0", [](const vector<double> &pars, double){ return  -2*pars[5]/(pars[1]*pars[0]); }},
+        {"slope1", [](const vector<double> &pars, double){ return  2*pars[5]/(pars[1]*pars[0]); }},
+        {"off0", [](const vector<double> &pars, double){ return  pars[5] / pars[4]; }},
+        {"off1", [](const vector<double> &pars, double){ return  pars[5] / pars[1]; }},
+        {"off2", [](const vector<double> &pars, double){ return  pars[5] / pars[3]; }}});
+
+    SET_NEEDS_PRE_SPIKE_TIME(true);
+    SET_NEEDS_POST_SPIKE_TIME(true);
 };
 } // WeightUpdateModels

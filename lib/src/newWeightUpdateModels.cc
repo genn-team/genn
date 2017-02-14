@@ -2,6 +2,7 @@
 
 IMPLEMENT_MODEL(StaticPulse);
 IMPLEMENT_MODEL(StaticGraded);
+IMPLEMENT_MODEL(Learn1);
 
 //----------------------------------------------------------------------------
 // WeightUpdateModels::LegacyWrapper

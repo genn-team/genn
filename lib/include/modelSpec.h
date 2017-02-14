@@ -28,8 +28,10 @@ Part of the code generation and generated code sections.
 #include "neuronModels.h"
 #include "newNeuronModels.h"
 #include "newPostsynapticModels.h"
+#include "newWeightUpdateModels.h"
 #include "synapseModels.h"
 #include "postSynapseModels.h"
+#include "utils.h"
 
 #include <string>
 #include <vector>
@@ -135,7 +137,7 @@ public:
   //vector<unsigned int>synapseNo; // !<numnber of synapses in a synapse group
   vector<unsigned int> maxConn; //!< Padded summed maximum number of connections for a neuron in the neuron groups
   vector<unsigned int> padSumSynapseKrnl; //Combination of padSumSynapseTrgN and padSumMaxConn to support both sparse and all-to-all connectivity in a model
-  vector<unsigned int> synapseType; //!< Types of synapses
+  vector<const WeightUpdateModels::Base*> synapseModel; //!< Types of synapses
   vector<SynapseConnType> synapseConnType; //!< Connectivity type of synapses
   vector<SynapseGType> synapseGType; //!< Type of specification method for synaptic conductance
   vector<unsigned int> synapseSpanType; //!< Execution order of synapses in the kernel. It determines whether synapses are executed in parallel for every postsynaptic neuron (0, default), or for every presynaptic neuron (1). 
@@ -151,7 +153,7 @@ public:
   vector<vector<double> > synapsePara; //!< parameters of synapses
   vector<vector<double> > synapseIni; //!< Initial values of synapse variables
   vector<vector<double> > dsp_w;  //!< Derived synapse parameters (weightUpdateModel only)
-  vector<unsigned int> postSynapseType; //!< Types of post-synaptic model
+  vector<const PostsynapticModels::Base*> postSynapseModel; //!< Types of post-synaptic model
   vector<vector<double> > postSynapsePara; //!< parameters of postsynapses
   vector<vector<double> > postSynIni; //!< Initial values of postsynaptic variables
   vector<vector<double> > dpsp;  //!< Derived postsynapse parameters
@@ -238,6 +240,13 @@ public:
   void addNeuronPopulation(const string &name, unsigned int size,
                            const typename NeuronModel::ParamValues &paramValues, const typename NeuronModel::InitValues &initValues)
   {
+      if (!GeNNReady) {
+          gennError("You need to call initGeNN first.");
+      }
+      if (final) {
+          gennError("Trying to add a neuron population to a finalized model.");
+      }
+
       neuronGrpN++;
       neuronName.push_back(name);
       neuronN.push_back(size);
@@ -270,6 +279,55 @@ public:
   void addSynapsePopulation(const string&, unsigned int, SynapseConnType, SynapseGType, unsigned int, unsigned int, const string&, const string&, const double *, const double *, const double *, const double *); //!< Method for adding a synapse population to a neuronal network model, using C++ string for the name of the population
   void addSynapsePopulation(const string&, unsigned int, SynapseConnType, SynapseGType, unsigned int, unsigned int, const string&, const string&,
                             const vector<double>&, const vector<double>&, const vector<double>&, const vector<double>&); //!< Method for adding a synapse population to a neuronal network model, using C++ string for the name of the population
+
+  template<typename WeightUpdateModel, typename PostsynapticModel>
+  void addSynapsePopulation(const string &name, SynapseConnType conntype, SynapseGType gtype, unsigned int delaySteps, const string& src, const string& trg,
+                            const typename WeightUpdateModel::ParamValues &weightParamValues, const typename WeightUpdateModel::InitValues &weightInitValues,
+                            const typename PostsynapticModel::ParamValues &postsynapticParamValues, const typename PostsynapticModel::InitValues &postsynapticInitValues)
+  {
+      if (!GeNNReady) {
+          gennError("You need to call initGeNN first.");
+      }
+      if (final) {
+          gennError("Trying to add a synapse population to a finalized model.");
+      }
+
+      unsigned int i= synapseGrpN++;
+      unsigned int srcNumber = findNeuronGrp(src);
+      unsigned int trgNumber = findNeuronGrp(trg);
+      synapseName.push_back(name);
+      synapseModel.push_back(WeightUpdateModel::GetInstance());
+      synapseConnType.push_back(conntype);
+      synapseGType.push_back(gtype);
+      synapseSource.push_back(srcNumber);
+      synapseTarget.push_back(trgNumber);
+      synapseDelay.push_back(delaySteps);
+      if (delaySteps >= neuronDelaySlots[srcNumber]) {
+          neuronDelaySlots[srcNumber] = delaySteps + 1;
+          needSynapseDelay = 1;
+      }
+      if (WeightUpdateModel::NeedsPreSpikeTime) {
+          neuronNeedSt[srcNumber]= true;
+          needSt= true;
+      }
+      if (WeightUpdateModel::NeedsPostSpikeTime) {
+          neuronNeedSt[trgNumber]= true;
+          needSt= true;
+      }
+      synapseIni.push_back(weightInitValues.GetValues());
+      synapsePara.push_back(weightParamValues.GetValues());
+      postSynapseModel.push_back(PostsynapticModel::GetInstance());
+      postSynIni.push_back(postsynapticInitValues.GetValues());
+      postSynapsePara.push_back(postsynapticParamValues.GetValues());
+      registerSynapsePopulation(i);
+      maxConn.push_back(neuronN[trgNumber]);
+      synapseSpanType.push_back(0);
+
+      // initially set synapase group indexing variables to device 0 host 0
+      synapseDeviceID.push_back(0);
+      synapseHostID.push_back(0);
+  }
+
   void setSynapseG(const string&, double); //!< This function has been depreciated as of GeNN 2.2.
   void setMaxConn(const string&, unsigned int); //< Set maximum connections per neuron for the given group (needed for optimization by sparse connectivity)
   void setSpanTypeToPre(const string&); //!< Method for switching the execution order of synapses to pre-to-post

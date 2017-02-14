@@ -644,7 +644,7 @@ void NNmodel::addSynapsePopulation(
     unsigned int srcNumber = findNeuronGrp(src);
     unsigned int trgNumber = findNeuronGrp(trg);
     synapseName.push_back(name);
-    synapseType.push_back(syntype);
+    synapseModel.push_back(new WeightUpdateModels::LegacyWrapper(syntype));
     synapseConnType.push_back(conntype);
     synapseGType.push_back(gtype);
     synapseSource.push_back(srcNumber);
@@ -664,7 +664,7 @@ void NNmodel::addSynapsePopulation(
     }
     synapseIni.push_back(synini);
     synapsePara.push_back(p);
-    postSynapseType.push_back(postsyn);
+    postSynapseModel.push_back(new PostsynapticModels(postsyn));
     postSynIni.push_back(PSVini);  
     postSynapsePara.push_back(ps);  
     registerSynapsePopulation(i);
