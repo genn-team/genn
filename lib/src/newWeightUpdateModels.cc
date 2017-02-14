@@ -1,8 +1,8 @@
 #include "newWeightUpdateModels.h"
 
-IMPLEMENT_MODEL(StaticPulse);
-IMPLEMENT_MODEL(StaticGraded);
-IMPLEMENT_MODEL(Learn1);
+IMPLEMENT_MODEL(WeightUpdateModels::StaticPulse);
+IMPLEMENT_MODEL(WeightUpdateModels::StaticGraded);
+IMPLEMENT_MODEL(WeightUpdateModels::Learn1);
 
 //----------------------------------------------------------------------------
 // WeightUpdateModels::LegacyWrapper
@@ -50,15 +50,5 @@ std::string WeightUpdateModels::LegacyWrapper::GetSynapseDynamicsSuppportCode() 
 std::vector<std::pair<std::string, std::string>> WeightUpdateModels::LegacyWrapper::GetExtraGlobalParams() const
 {
     const auto &wu = weightUpdateModels[m_LegacyTypeIndex];
-    return return ZipStringVectors(wu.extraGlobalSynapseKernelParameters, wu.extraGlobalSynapseKernelParameterTypes);
-}
-//----------------------------------------------------------------------------
-bool WeightUpdateModels::LegacyWrapper::NeedsPreSpikeTime() const
-{
-    return weightUpdateModels[m_LegacyTypeIndex].needPreSt;
-}
-//----------------------------------------------------------------------------
-bool WeightUpdateModels::LegacyWrapper::NeedsPostSpikeTime() const
-{
-    return weightUpdateModels[m_LegacyTypeIndex].needPostSt;
+    return ZipStringVectors(wu.extraGlobalSynapseKernelParameters, wu.extraGlobalSynapseKernelParameterTypes);
 }
