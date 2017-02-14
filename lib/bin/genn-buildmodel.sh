@@ -64,12 +64,6 @@ fi
 
 # generate model code
 make -f "$GENN_PATH/lib/GNUmakefile" $MACROS
-# The following became necessary because from Mac OSX El Capitan, SIP (System Integrity Protection) squashes DYLD_LIBRARY_PATH in sub-shells and libcudart.8.dylib has a @rpath based install path which necessitates to add the cuda path to DYLD_LIBRARY_PATH.
-unamestr=`uname`
-# if [[ "$unamestr" == "Darwin" ]]; then
-#     export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$CUDA_PATH/lib
-# fi
-# end of workaround
 if [[ -n "$DEBUG" ]]; then
     gdb -tui --args "$GENERATEALL" "$OUT_PATH"
 else
