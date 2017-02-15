@@ -18,17 +18,16 @@ double synapses_ini[1]= {
 void modelDefinition(NNmodel &model)
 {
   initGeNN();
+
   model.setDT(0.1);
-  model.setName("neuron_support_code_scope");
+  model.setName("neuron_support_code_threshold");
 
   neuronModel n;
   n.varNames = {"x", "shift"};
   n.varTypes = {"scalar", "scalar"};
-  n.supportCode = "bool checkThreshold(scalar x, scalar threshold){ return (fmod(x, 1.0) < threshold); }";
-  n.simCode=
-      "scalar lThreshold = 1e-4;"
-      "$(x)= $(t)+$(shift);";
-  n.thresholdConditionCode= "checkThreshold($(x), lThreshold)";
+  n.supportCode = "bool checkThreshold(scalar x){ return (fmod(x, 1.0) < 1e-4); }";
+  n.simCode= "$(x)= $(t)+$(shift);\n";
+  n.thresholdConditionCode= "checkThreshold($(x))";
 
   const int DUMMYNEURON= nModels.size();
   nModels.push_back(n);
