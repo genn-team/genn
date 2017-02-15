@@ -12,6 +12,8 @@
 // Macros
 //----------------------------------------------------------------------------
 #define DECLARE_MODEL(TYPE, NUM_PARAMS, NUM_INIT_VALUES)       \
+private:                                                       \
+    static TYPE *s_Instance;                                   \
 public:                                                        \
     static const TYPE *GetInstance()                           \
     {                                                          \
@@ -22,9 +24,8 @@ public:                                                        \
         return s_Instance;                                     \
     }                                                          \
     typedef NewModels::ValueBase<NUM_PARAMS> ParamValues;      \
-    typedef NewModels::ValueBase<NUM_INIT_VALUES> InitValues;  \
-private:                                                       \
-    static TYPE *s_Instance;
+    typedef NewModels::ValueBase<NUM_INIT_VALUES> InitValues;
+
 
 #define IMPLEMENT_MODEL(TYPE) TYPE *TYPE::s_Instance = NULL
 
