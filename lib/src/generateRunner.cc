@@ -1001,8 +1001,8 @@ void genRunner(const NNmodel &model, //!< Model description
 #ifndef CPU_ONLY
                 os << "cudaHostAlloc(&" << v.first + model.synapseName[i] << ", ";
                 os << size << " * sizeof(" << v.second << "), cudaHostAllocPortable);" << ENDL;
-                os << "    deviceMemAllocate(&d_" << v.name << model.synapseName[i];
-                os << ", dd_" << v.name << model.synapseName[i];
+                os << "    deviceMemAllocate(&d_" << v.first << model.synapseName[i];
+                os << ", dd_" << v.first << model.synapseName[i];
                 os << ", " << size << " * sizeof(" << v.second << "));" << ENDL;
                 mem += size * theSize(v.second);
 #else
@@ -1309,8 +1309,8 @@ void genRunner(const NNmodel &model, //!< Model description
                 os << "  d_remap" << model.synapseName[i] << ",";
                 os << model.neuronN[model.synapseTarget[i]] <<");" << ENDL;
             }
-            int st= model.synapseType[i];
-            for(const auto &v : wu->GetInitVals()) {
+           
+            for(const auto &v : model.synapseModel[i]->GetInitVals()) {
                 os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << v.first << model.synapseName[i] << ", "  << v.first << model.synapseName[i] << ", sizeof(" << v.second << ") * size , cudaMemcpyHostToDevice));" << ENDL;
             }
         }
@@ -1567,7 +1567,6 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
                   const string &path //!< Path for code generation
     )
 {
-    unsigned int st, pst;
     ofstream os;
 
 //    cout << "entering GenRunnerGPU" << ENDL;
@@ -1757,8 +1756,8 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     }
     // synapse variables
     for (unsigned int i = 0; i < model.synapseGrpN; i++) {
-        st = model.synapseType[i];
-        pst = model.postSynapseType[i];
+        const auto *wu = model.synapseModel[i];
+        const auto *psm = model.postSynapseModel[i];
       
         os << "void push" << model.synapseName[i] << "StateToDevice()" << ENDL;
         os << OB(1100);
@@ -1770,20 +1769,20 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
             else {
                 os << "size_t size = C" << model.synapseName[i] << ".connN;" << ENDL;
             }
-            for (size_t k= 0, l= weightUpdateModels[st].varNames.size(); k < l; k++) {
-                if (weightUpdateModels[st].varTypes[k].find("*") == string::npos) { // only copy non-pointers. Pointers don't transport between GPU and CPU
-                    os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << weightUpdateModels[st].varNames[k] << model.synapseName[i];
-                    os << ", " << weightUpdateModels[st].varNames[k] << model.synapseName[i];
-                    os << ", size * sizeof(" << weightUpdateModels[st].varTypes[k] << "), cudaMemcpyHostToDevice));" << ENDL;
+            for(const auto &v : wu->GetInitVals()) {
+                if (v.second.find("*") == string::npos) { // only copy non-pointers. Pointers don't transport between GPU and CPU
+                    os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << v.first << model.synapseName[i];
+                    os << ", " << v.first << model.synapseName[i];
+                    os << ", size * sizeof(" << v.second << "), cudaMemcpyHostToDevice));" << ENDL;
                 }
             }
 
-            for (size_t k= 0, l= postSynModels[pst].varNames.size(); k < l; k++) {
-                if (postSynModels[pst].varTypes[k].find("*") == string::npos) { // only copy non-pointers. Pointers don't transport between GPU and CPU
+            for(const auto &v : psm->GetInitVals()) {
+                if (v.second.find("*") == string::npos) { // only copy non-pointers. Pointers don't transport between GPU and CPU
                     size_t size = model.neuronN[model.synapseTarget[i]];
-                    os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << postSynModels[pst].varNames[k] << model.synapseName[i];
-                    os << ", " << postSynModels[pst].varNames[k] << model.synapseName[i];
-                    os << ", " << size << " * sizeof(" << postSynModels[pst].varTypes[k] << "), cudaMemcpyHostToDevice));" << ENDL;
+                    os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << v.first << model.synapseName[i];
+                    os << ", " << v.first << model.synapseName[i];
+                    os << ", " << size << " * sizeof(" << v.second << "), cudaMemcpyHostToDevice));" << ENDL;
                 }
             }
         }
@@ -1938,8 +1937,8 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
 
     // synapse variables
     for (unsigned int i = 0; i < model.synapseGrpN; i++) {
-        st = model.synapseType[i];
-        pst = model.postSynapseType[i];
+        const auto *wu = model.synapseModel[i];
+        const auto *psm = model.postSynapseModel[i];
 
         os << "void pull" << model.synapseName[i] << "StateFromDevice()" << ENDL;
         os << OB(1100);
@@ -1951,20 +1950,20 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
             else {
                 os << "size_t size = C" << model.synapseName[i] << ".connN;" << ENDL;
             }
-            for (size_t k= 0, l= weightUpdateModels[st].varNames.size(); k < l; k++) {
-                if (weightUpdateModels[st].varTypes[k].find("*") == string::npos) { // only copy non-pointers. Pointers don't transport between GPU and CPU
-                    os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << weightUpdateModels[st].varNames[k] << model.synapseName[i];
-                    os << ", d_"  << weightUpdateModels[st].varNames[k] << model.synapseName[i];
-                    os << ", size * sizeof(" << weightUpdateModels[st].varTypes[k] << "), cudaMemcpyDeviceToHost));" << ENDL;
+            for(const auto &v : wu->GetInitVals()) {
+                if (v.second.find("*") == string::npos) { // only copy non-pointers. Pointers don't transport between GPU and CPU
+                    os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << v.first << model.synapseName[i];
+                    os << ", d_"  << v.first << model.synapseName[i];
+                    os << ", size * sizeof(" << v.second << "), cudaMemcpyDeviceToHost));" << ENDL;
                 }
             }
 
-            for (size_t k= 0, l= postSynModels[pst].varNames.size(); k < l; k++) {
-                if (postSynModels[pst].varTypes[k].find("*") == string::npos) { // only copy non-pointers. Pointers don't transport between GPU and CPU
+            for(const auto &v : psm->GetInitVals()) {
+                if (v.second.find("*") == string::npos) { // only copy non-pointers. Pointers don't transport between GPU and CPU
                     size_t size = model.neuronN[model.synapseTarget[i]];
-                    os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << postSynModels[pst].varNames[k] << model.synapseName[i];
-                    os << ", d_"  << postSynModels[pst].varNames[k] << model.synapseName[i];
-                    os << ", " << size << " * sizeof(" << postSynModels[pst].varTypes[k] << "), cudaMemcpyDeviceToHost));" << ENDL;
+                    os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << v.first << model.synapseName[i];
+                    os << ", d_"  << v.first << model.synapseName[i];
+                    os << ", " << size << " * sizeof(" << v.second << "), cudaMemcpyDeviceToHost));" << ENDL;
                 }
             }
         }

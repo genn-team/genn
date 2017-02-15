@@ -428,7 +428,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
                                GetPairKeyConstIter(psmInitVars.cend()), sName);
             value_substitutions(pdCode, psm->GetParamNames(), model.postSynapsePara[model.inSyn[i][j]]);
 
-            auto psmDerivedParams = psm->GetDerivedParams()
+            auto psmDerivedParams = psm->GetDerivedParams();
             value_substitutions(pdCode, GetPairKeyConstIter(psmDerivedParams.cbegin()),
                                 GetPairKeyConstIter(psmDerivedParams.cend()), model.dpsp[model.inSyn[i][j]]);
             name_substitutions(pdCode, "l", neuronModelInitVarNameBegin, neuronModelInitVarNameEnd, "");
@@ -907,16 +907,10 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                 auto wuDerivedParamNameBegin= GetPairKeyConstIter(wuDerivedParams.cbegin());
                 auto wuDerivedParamNameEnd = GetPairKeyConstIter(wuDerivedParams.cend());
 
-                // Create iterators to iterate over the names of the weight update model's extra global parameters
-                auto wuExtraGlobalParams = wu->GetExtraGlobalParams();
-                auto wuExtraGlobalParamsNameBegin = GetPairKeyConstIter(wuExtraGlobalParams.cbegin());
-                auto wuExtraGlobalParamsNameEnd = GetPairKeyConstIter(wuExtraGlobalParams.cend());
-
                 // Create iterators to iterate over the names of the weight update model's initial values
                 auto wuInitVars = wu->GetInitVals();
                 auto wuInitVarNameBegin = GetPairKeyConstIter(wuInitVars.cbegin());
                 auto wuInitVarNameEnd = GetPairKeyConstIter(wuInitVars.cend());
-
 
                 os << "// synapse group " << synapseName << ENDL;
                 if (i == 0) {
@@ -1259,7 +1253,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
             value_substitutions(code, GetPairKeyConstIter(wuDerivedParams.cbegin()),
                                 GetPairKeyConstIter(wuDerivedParams.cend()), model.dsp_w[k]);
 
-            auto wuExtraGlobalParams = wu->GetExtraGlobalParams()
+            auto wuExtraGlobalParams = wu->GetExtraGlobalParams();
             name_substitutions(code, "", GetPairKeyConstIter(wuExtraGlobalParams.cbegin()),
                                GetPairKeyConstIter(wuExtraGlobalParams.cend()), model.synapseName[k]);
 
