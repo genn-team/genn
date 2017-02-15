@@ -1,7 +1,7 @@
 #! /bin/bash
 
 echo \# building postVarsInSimCode
-buildmodel.sh postVarsInSimCode &>msg
+genn-buildmodel.sh postVarsInSimCode.cc &>msg
 make -f MakefilePostVarsInSimCode SIM_CODE=postVarsInSimCode_CODE clean &>msg
 make -f MakefilePostVarsInSimCode SIM_CODE=postVarsInSimCode_CODE &>msg
 echo \#-----------------------------------------------------------
@@ -11,7 +11,7 @@ echo \# running testPostVarsInSimCode on CPU ...
 ./testPostVarsInSimCode 0 test1CPU 0 
 
 echo \# building postVarsInSynapseDynamics
-buildmodel.sh postVarsInSynapseDynamics &>msg
+genn-buildmodel.sh postVarsInSynapseDynamics.cc &>msg
 make -f MakefilePostVarsInSynapseDynamics SIM_CODE=postVarsInSynapseDynamics_CODE clean &>msg
 make -f MakefilePostVarsInSynapseDynamics SIM_CODE=postVarsInSynapseDynamics_CODE &>msg
 echo \#-----------------------------------------------------------
@@ -21,7 +21,7 @@ echo \# running testPostVarsInSynapseDynamics on CPU ...
 ./testPostVarsInSynapseDynamics 0 test2CPU 0 
 
 echo \# building postVarsInPostLearn
-buildmodel.sh postVarsInPostLearn &>msg
+genn-buildmodel.sh postVarsInPostLearn.cc &>msg
 make -f MakefilePostVarsInPostLearn SIM_CODE=postVarsInPostLearn_CODE clean &>msg
 make -f MakefilePostVarsInPostLearn SIM_CODE=postVarsInPostLearn_CODE &>msg
 echo \#-----------------------------------------------------------
@@ -31,7 +31,7 @@ echo \# running testPostVarsInPostLearn on CPU ...
 ./testPostVarsInPostLearn 0 test3CPU 0 
 
 echo \# building postVarsInSimCode_sparse
-buildmodel.sh postVarsInSimCode_sparse &>msg
+genn-buildmodel.sh postVarsInSimCode_sparse.cc &>msg
 make -f MakefilePostVarsInSimCode_sparse SIM_CODE=postVarsInSimCode_sparse_CODE clean &>msg
 make -f MakefilePostVarsInSimCode_sparse SIM_CODE=postVarsInSimCode_sparse_CODE &>msg
 echo \#-----------------------------------------------------------
@@ -41,7 +41,7 @@ echo \# running testPostVarsInSimCode_sparse on CPU ...
 ./testPostVarsInSimCode_sparse 0 test4CPU 0 
 
 echo \# building postVarsInSynapseDynamics_sparse
-buildmodel.sh postVarsInSynapseDynamics_sparse &>msg
+genn-buildmodel.sh postVarsInSynapseDynamics_sparse.cc &>msg
 make -f MakefilePostVarsInSynapseDynamics_sparse SIM_CODE=postVarsInSynapseDynamics_sparse_CODE clean &>msg
 make -f MakefilePostVarsInSynapseDynamics_sparse SIM_CODE=postVarsInSynapseDynamics_sparse_CODE &>msg
 echo \#-----------------------------------------------------------
@@ -51,7 +51,7 @@ echo \# running testPostVarsInSynapseDynamics_sparse on CPU ...
 ./testPostVarsInSynapseDynamics_sparse 0 test5CPU 0 
 
 echo \# building postVarsInPostLearn_sparse
-buildmodel.sh postVarsInPostLearn_sparse &>msg
+genn-buildmodel.sh postVarsInPostLearn_sparse.cc &>msg
 make -f MakefilePostVarsInPostLearn_sparse SIM_CODE=postVarsInPostLearn_sparse_CODE clean &>msg
 make -f MakefilePostVarsInPostLearn_sparse SIM_CODE=postVarsInPostLearn_sparse_CODE &>msg
 echo \#-----------------------------------------------------------

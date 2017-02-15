@@ -141,10 +141,6 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
 
                 }
             }
-            if (!psm.supportCode.empty()) {
-                os << OB(29) << " using namespace " << sName << "_postsyn;" << ENDL;
-            }
-            os << "Isyn += ";
             string psCode = psm.postSyntoCurrent;
             substitute(psCode, "$(id)", "n");
             substitute(psCode, "$(t)", "t");
@@ -163,12 +159,19 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
             name_substitutions(psCode, "", nModels[nt].extraGlobalNeuronKernelParameters, model.neuronName[i]);
             psCode= ensureFtype(psCode, model.ftype);
             checkUnreplacedVariables(psCode, "postSyntoCurrent");
+            if (!psm.supportCode.empty()) {
+                os << OB(29) << " using namespace " << sName << "_postsyn;" << ENDL;
+            }
+            os << "Isyn += ";
             os << psCode << ";" << ENDL;
-            if (psm.supportCode != "") {
+            if (!psm.supportCode.empty()) {
                 os << CB(29) << " // namespace bracket closed" << ENDL;
             }
         }
     
+	if (nModels[nt].supportCode != "") {
+	    os << " using namespace " << model.neuronName[i] << "_neuron;" << ENDL;
+	}
         string thCode= nModels[nt].thresholdConditionCode;
         if (thCode == "") { // no condition provided
             cerr << "Warning: No thresholdConditionCode for neuron type " << model.neuronType[i] << " used for population \"" << model.neuronName[i] << "\" was provided. There will be no spikes detected in this population!" << endl;
@@ -185,13 +188,7 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
             thCode= ensureFtype(thCode, model.ftype);
             checkUnreplacedVariables(thCode, "thresholdConditionCode");
             if (GENN_PREFERENCES::autoRefractory) {
-                if (nModels[nt].supportCode != "") {
-                    os << OB(29) << " using namespace " << model.neuronName[i] << "_neuron;" << ENDL;
-                }
                 os << "bool oldSpike= (" << thCode << ");" << ENDL;
-                if (nModels[nt].supportCode != "") {
-                    os << CB(29) << " // namespace bracket closed" << endl;
-                }
             }
         }
 
@@ -210,30 +207,20 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
         substitute(sCode, "$(sT)", "lsT");
         sCode= ensureFtype(sCode, model.ftype);
         checkUnreplacedVariables(sCode,"neuron simCode");
-        if (nModels[nt].supportCode != "") {
-            os << OB(29) << " using namespace " << model.neuronName[i] << "_neuron;" << ENDL;
-        }
         os << sCode << ENDL;
-        if (nModels[nt].supportCode != "") {
-            os << CB(29) << " // namespace bracket closed" << endl;
-        }
 
         // look for spike type events first.
         if (model.neuronNeedSpkEvnt[i]) {
             string eCode= model.neuronSpkEvntCondition[i];
             // code substitutions ----
-            extended_name_substitutions(eCode, "l", nModels[model.neuronType[i]].varNames, "_pre", "");
             substitute(eCode, "$(id)", "n");
             substitute(eCode, "$(t)", "t");
+            extended_name_substitutions(eCode, "l", nModels[model.neuronType[i]].varNames, "_pre", "");
             name_substitutions(eCode, "", nModels[model.neuronType[i]].extraGlobalNeuronKernelParameters, model.neuronName[i]);
             eCode= ensureFtype(eCode, model.ftype);
             checkUnreplacedVariables(eCode, "neuronSpkEvntCondition");
             // end code substitutions ----
-
             os << "// test for and register a spike-like event" << ENDL;
-            if (nModels[nt].supportCode != "") {
-                os << OB(29) << " using namespace " << model.neuronName[i] << "_neuron;" << ENDL;
-            }
             os << "if (" + eCode + ")" << OB(30);
             os << "glbSpkEvnt" << model.neuronName[i] << "[" << queueOffset << "glbSpkCntEvnt" << model.neuronName[i];
             if (model.neuronDelaySlots[i] > 1) { // WITH DELAY
@@ -241,19 +228,13 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
             }
             else { // NO DELAY
                 os << "[0]++] = n;" << ENDL;
-      }
+	    }
             os << CB(30);
-            if (nModels[nt].supportCode != "") {
-                os << CB(29) << " // namespace bracket closed" << endl;
-            }
         }
 
         // test for true spikes if condition is provided
         if (thCode != "") {
             os << "// test for and register a true spike" << ENDL;
-            if (nModels[nt].supportCode != "") {
-                os << OB(29) << " using namespace " << model.neuronName[i] << "_neuron;" << ENDL;
-            }
             if (GENN_PREFERENCES::autoRefractory) {
               os << "if ((" << thCode << ") && !(oldSpike))" << OB(40);
             }
@@ -288,9 +269,6 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
                 os << rCode << ENDL;
             }
             os << CB(40);
-            if (nModels[nt].supportCode != "") {
-                os << CB(29) << " // namespace bracket closed" << endl;
-            }
         }
 
         // store the defined parts of the neuron state into the global state variables V etc
@@ -398,8 +376,8 @@ void generate_process_presynaptic_events_code_CPU(
             os << "unsigned int gid = (ipre * " << model.neuronN[i] << " + ipost);" << ENDL;
         }
 
-        if (weightUpdateModels[synt].simCode_supportCode != "") {
-            os << OB(29) << " using namespace " << model.synapseName[i] << "_weightupdate_simCode;" << ENDL;
+        if (!weightUpdateModels[synt].simCode_supportCode.empty()) {
+            os << " using namespace " << model.synapseName[i] << "_weightupdate_simCode;" << ENDL;
         }
         if (evnt) {
             // code substitutions ----
@@ -462,9 +440,6 @@ void generate_process_presynaptic_events_code_CPU(
         }
         else if (model.synapseGType[i] == INDIVIDUALID) {
             os << CB(2041); // end if (B(gp" << model.synapseName[i] << "[gid >> " << logUIntSz << "], gid
-        }
-        if (weightUpdateModels[synt].simCode_supportCode != "") {
-            os << CB(29) << " // namespace bracket closed" << ENDL;
         }
         os << CB(202);
         os << CB(201);
@@ -540,7 +515,7 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
 
             weightUpdateModel wu= weightUpdateModels[synt];
             if (!wu.synapseDynamics_supportCode.empty()) {
-                os << OB(29) << " using namespace " << synapseName << "_weightupdate_synapseDynamics;" << ENDL;
+                os << " using namespace " << synapseName << "_weightupdate_synapseDynamics;" << ENDL;
             }
             string SDcode= wu.synapseDynamics;
             substitute(SDcode, "$(t)", "t");
@@ -586,9 +561,6 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
                 os << SDcode << ENDL;
                 os << CB(26);
                 os << CB(25);
-            }
-            if (weightUpdateModels[synt].synapseDynamics_supportCode != "") {
-                os << CB(29) << " // namespace bracket closed" << ENDL;
             }
             os << CB(1005);
         }
@@ -694,7 +666,7 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
             }
 
             if (!weightUpdateModels[synt].simLearnPost_supportCode.empty()) {
-                os << OB(29) << " using namespace " << model.synapseName[k] << "_weightupdate_simLearnPost;" << ENDL;
+                os << " using namespace " << model.synapseName[k] << "_weightupdate_simLearnPost;" << ENDL;
             }
 
             if (delayPost && model.neuronNeedTrueSpk[trg]) {
@@ -743,9 +715,6 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
 
             os << CB(121);
             os << CB(910);
-            if (!weightUpdateModels[synt].simLearnPost_supportCode.empty()) {
-                os << CB(29) << " // namespace bracket closed" << ENDL;
-            }
             os << CB(950);
         }
         os << CB(811);

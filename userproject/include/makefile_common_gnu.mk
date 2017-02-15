@@ -52,7 +52,7 @@ endif
 ifndef CPU_ONLY
     INCLUDE_FLAGS       +=-I"$(GENN_PATH)/lib/include" -I"$(GENN_PATH)/userproject/include" -I"$(CUDA_PATH)/include"
     ifeq ($(DARWIN),DARWIN)
-        LINK_FLAGS      +=-L"$(GENN_PATH)/lib/lib" -L"$(CUDA_PATH)/lib" -lgenn -lcuda -lcudart -lstdc++ -lc++
+        LINK_FLAGS      +=-rpath $(CUDA_PATH)/lib -L"$(GENN_PATH)/lib/lib" -L"$(CUDA_PATH)/lib" -lgenn -lcuda -lcudart -lstdc++ -lc++
     else
         ifeq ($(OS_SIZE),32)
             LINK_FLAGS  +=-L"$(GENN_PATH)/lib/lib" -L"$(CUDA_PATH)/lib" -lgenn -lcuda -lcudart
