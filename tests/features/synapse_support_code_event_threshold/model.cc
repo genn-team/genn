@@ -38,7 +38,7 @@ void modelDefinition(NNmodel &model)
   s.varNames = {"w"};
   s.varTypes = {"scalar"};
   s.pNames = {"myTrigger"};
-  s.simCode_supportCode = "bool checkThreshold(scalar x, scalar threshold){ return (fmod(x, 1.0) < threshold); }";
+  s.simCode_supportCode = "bool checkThreshold(scalar x, scalar threshold){ return (fmod(x, threshold) < 1e4); }";
   s.evntThreshold= "checkThreshold($(x_pre),$(myTrigger))";
   s.simCodeEvnt= "$(w)= $(x_pre);";
   const int DUMMYSYNAPSE= weightUpdateModels.size();
