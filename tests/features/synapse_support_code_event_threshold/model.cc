@@ -21,8 +21,9 @@ double synapses_ini[1]= {
 void modelDefinition(NNmodel &model)
 {
   initGeNN();
+  
   model.setDT(0.1);
-  model.setName("weight_update_support_code_scope");
+  model.setName("synapse_support_code_event_threshold");
 
   neuronModel n;
   n.varNames = {"x", "shift"};
