@@ -484,7 +484,7 @@ void generate_process_presynaptic_events_code_CPU(
                 value_substitutions(wCode, wuInitVarNameBegin, wuInitVarNameEnd, model.synapseIni[i]);
             }
         }
-        else { // DENSEweightUpdateModels
+        else { // DENSE
             if (model.synapseGType[i] == INDIVIDUALG) {
                 name_substitutions(wCode, "", wuInitVarNameBegin, wuInitVarNameEnd, model.synapseName[i] + "[ipre * " + to_string(model.neuronN[trg]) + " + ipost]");
             }
@@ -493,7 +493,7 @@ void generate_process_presynaptic_events_code_CPU(
             }
         }
         substitute(wCode, "$(inSyn)", "inSyn" + model.synapseName[i] + "[ipost]");
-        value_substitutions(wCode, wuDerivedParamNameBegin, wuDerivedParamNameEnd, model.synapsePara[i]);
+        value_substitutions(wCode, wu->GetParamNames(), model.synapsePara[i]);
         value_substitutions(wCode, wuDerivedParamNameBegin, wuDerivedParamNameEnd, model.dsp_w[i]);
         name_substitutions(wCode, "", wuExtraGlobalParamsNameBegin, wuExtraGlobalParamsNameEnd, model.synapseName[i]);
         substitute(wCode, "$(addtoinSyn)", "addtoinSyn");
