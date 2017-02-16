@@ -262,7 +262,7 @@ void NNmodel::initLearnGrps()
                 bool used= false;
 
                 // Loop through event conditions going outward from source
-                for(const auto &spkEventCond : neuronSpkEvntCondition[i]) {
+                for(const auto &spkEventCond : neuronSpkEvntCondition[src]) {
                     // If the event threshold code contains this parameter
                     // (in it's non-uniquified form), set flag and stop searching
                     if(spkEventCond.first.find(pnamefull) != string::npos) {
