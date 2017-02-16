@@ -212,7 +212,7 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
         // look for spike type events first.
         if (model.neuronNeedSpkEvnt[i]) {
             // Create local variable
-            os << "bool spikeLikeEvent = false" << ENDL;
+            os << "bool spikeLikeEvent = false;" << ENDL;
 
             // Loop through outgoing synapse populations that will contribute to event condition code
             for(const auto &spkEventCond : model.neuronSpkEvntCondition[i]) {
