@@ -142,7 +142,6 @@ void NNmodel::initLearnGrps()
     for (int i = 0; i < neuronGrpN; i++) {
         neuronVarNeedQueue[i] = vector<bool>(nModels[neuronType[i]].varNames.size(), false);
     }
-    neuronSpkEvntCondition.assign(neuronGrpN, "");
 
     for (int i = 0; i < synapseGrpN; i++) {
         const auto &wu = weightUpdateModels[synapseType[i]];
@@ -185,17 +184,19 @@ void NNmodel::initLearnGrps()
         }
     }
 
+    // Resize the vector of synapse population IDs used t generate spike events
+    neuronSpkEvntCondition.resize(neuronGrpN);
+
+    // Loop through neuron populations and their outgoing synapse populations
     for (int i = 0; i < neuronGrpN; i++) {
-        string eCode0;
-        vector<string> vars = nModels[neuronType[i]].varNames;
-        bool needReTest= false;
         for (int j= 0, l= outSyn[i].size(); j < l; j++) {
-            int synPopID= outSyn[i][j];
+            // If synapse population provides event driven simulation code
+            int synPopID = outSyn[i][j];
             const auto &wu= weightUpdateModels[synapseType[synPopID]];
-            if (wu.simCodeEvnt != "") {
+            if (!wu.simCodeEvnt.empty()) {
                 synapseUsesSpikeEvents[synPopID] = true;
                 neuronNeedSpkEvnt[i] = true;
-                assert(wu.evntThreshold != "");
+                assert(!wu.evntThreshold.empty());
 
                 // do an early replacement of parameters, derived parameters and extraglobalsynapse parameters
                 string eCode= wu.evntThreshold;
@@ -203,31 +204,26 @@ void NNmodel::initLearnGrps()
                 value_substitutions(eCode, wu.dpNames, dsp_w[synPopID]);
                 name_substitutions(eCode, "", wu.extraGlobalSynapseKernelParameters, synapseName[synPopID]);
 
-                // add to the source population spike event condition
-                if (neuronSpkEvntCondition[i] == "") {
-                    neuronSpkEvntCondition[i] = "(" + eCode + ")";
-                    eCode0= eCode; // remember the first condition
-                }
-                else {
-                    if (eCode != eCode0) {
-                        needReTest= true;
-                    }
-                    neuronSpkEvntCondition[i] += " || (" + eCode + ")";
-                }
+                // Add code and name of
+                string supportCodeNamespaceName = wu.simCode_supportCode.empty() ?
+                    "" : synapseName[synPopID] + "_weightupdate_simCode";
+
+                // Add code and name of support code namespace to set
+                neuronSpkEvntCondition[i].insert(pair<string, string>(eCode, supportCodeNamespaceName));
 
                 // analyze which neuron variables need queues
-                for (int j = 0; j < vars.size(); j++) {
-                    if (wu.simCodeEvnt.find(vars[j] + "_pre") != string::npos) {
+                for (int j = 0; j < nModels[neuronType[i]].varNames.size(); j++) {
+                    if (wu.simCodeEvnt.find(nModels[neuronType[i]].varNames[j] + "_pre") != string::npos) {
                         neuronVarNeedQueue[i][j] = true;
                     }
                 }
             }
         }
-        if (needReTest) {
+        if (neuronSpkEvntCondition[i].size() > 1) {
             for (int j= 0, l= outSyn[i].size(); j < l; j++) {
                 int synPopID= outSyn[i][j];
-                weightUpdateModel wu= weightUpdateModels[synapseType[synPopID]];
-                if (wu.simCodeEvnt != "") {
+                const auto &wu= weightUpdateModels[synapseType[synPopID]];
+                if (!wu.simCodeEvnt.empty()) {
                     needEvntThresholdReTest[synPopID]= true;
                 }
             }
@@ -258,14 +254,24 @@ void NNmodel::initLearnGrps()
         const auto &wu = weightUpdateModels[synapseType[i]];
         unsigned int src = synapseSource[i];
         for (int j= 0, l= wu.extraGlobalSynapseKernelParameters.size(); j < l; j++) {
-            string pname= wu.extraGlobalSynapseKernelParameters[j];
+            const string &pname = wu.extraGlobalSynapseKernelParameters[j];
             string pnamefull= pname + synapseName[i];
-            string ptype= wu.extraGlobalSynapseKernelParameterTypes[j];
+            const string &ptype = wu.extraGlobalSynapseKernelParameterTypes[j];
             if (find(neuronKernelParameters.begin(), neuronKernelParameters.end(), pnamefull) == neuronKernelParameters.end()) {
                 // parameter wasn't registered yet - is it used?
-                bool used= 0;
-                if (neuronSpkEvntCondition[src].find(pnamefull) != string::npos) used= 1; // it's used
-                 if (used) {
+                bool used= false;
+
+                // Loop through event conditions going outward from source
+                for(const auto &spkEventCond : neuronSpkEvntCondition[i]) {
+                    // If the event threshold code contains this parameter
+                    // (in it's non-uniquified form), set flag and stop searching
+                    if(spkEventCond.first.find(pnamefull) != string::npos) {
+                        used = true;
+                        break;
+                    }
+                }
+
+                if (used) {
                     neuronKernelParameters.push_back(pnamefull);
                     neuronKernelParameterTypes.push_back(ptype);
                 }
@@ -515,7 +521,6 @@ void NNmodel::addNeuronPopulation(
     outSyn.push_back(vector<unsigned int>());
     neuronNeedSt.push_back(false);
     neuronNeedSpkEvnt.push_back(false);
-    neuronSpkEvntCondition.push_back("");
     neuronDelaySlots.push_back(1);
 
     // initially set neuron group indexing variables to device 0 host 0
