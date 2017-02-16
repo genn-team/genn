@@ -306,17 +306,39 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
 
         // look for spike type events first.
         if (model.neuronNeedSpkEvnt[i]) {
-            string eCode = model.neuronSpkEvntCondition[i];
-            // code substitutions ----
-            substitute(eCode, "$(id)", localID);
-            substitute(eCode, "$(t)", "t");
-            extended_name_substitutions(eCode, "l", nModels[model.neuronType[i]].varNames, "_pre", "");
-            name_substitutions(eCode, "", nModels[model.neuronType[i]].extraGlobalNeuronKernelParameters, model.neuronName[i]);
-            eCode= ensureFtype(eCode, model.ftype);
-            checkUnreplacedVariables(eCode, "neuronSpkEvntCondition");
-            // end code substitutions ----
-            os << "// test for and register a spike-like event" << ENDL;
-            os << "if (" + eCode + ")" << OB(30);
+            // Create local variable
+            os << "bool spikeLikeEvent = false;" << ENDL;
+
+            // Loop through outgoing synapse populations that will contribute to event condition code
+            for(const auto &spkEventCond : model.neuronSpkEvntCondition[i]) {
+                // Replace of parameters, derived parameters and extraglobalsynapse parameters
+                string eCode = spkEventCond.first;
+
+                // code substitutions ----
+                substitute(eCode, "$(id)", "n");
+                substitute(eCode, "$(t)", "t");
+                extended_name_substitutions(eCode, "l", nModels[model.neuronType[i]].varNames, "_pre", "");
+                name_substitutions(eCode, "", nModels[model.neuronType[i]].extraGlobalNeuronKernelParameters, model.neuronName[i]);
+                eCode = ensureFtype(eCode, model.ftype);
+                checkUnreplacedVariables(eCode, "neuronSpkEvntCondition");
+
+                // Open scope for spike-like event test
+                os << OB(31);
+
+                // Use synapse population support code namespace if required
+                if (!spkEventCond.second.empty()) {
+                    os << " using namespace " << spkEventCond.second << ";" << ENDL;
+                }
+
+                // Combine this event threshold test with
+                os << "spikeLikeEvent |= (" << eCode << ");" << ENDL;
+
+                // Close scope for spike-like event test
+                os << CB(31);
+            }
+
+            os << "// register a spike-like event" << ENDL;
+            os << "if (spikeLikeEvent)" << OB(30);
             os << "spkEvntIdx = atomicAdd((unsigned int *) &spkEvntCount, 1);" << ENDL;
             os << "shSpkEvnt[spkEvntIdx] = " << localID << ";" << ENDL;
             os << CB(30);
