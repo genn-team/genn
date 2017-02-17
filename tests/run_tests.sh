@@ -19,6 +19,9 @@ pushd $GENN_PATH/lib
 make clean
 popd
 
+# Delete existing output
+rm -f msg
+
 # Loop through feature tests
 NUM_SUCCESSES=0
 NUM_FAILURES=0
@@ -30,13 +33,13 @@ for f in features/*;
         pushd $f
 
         # Clean
-        make clean &>msg
+        make clean &>> ../../msg
 
         # Build and generate model
-        genn-buildmodel.sh $BUILD_FLAGS model.cc &>msg || exit $?
+        genn-buildmodel.sh $BUILD_FLAGS model.cc &>>../../msg || exit $?
 	
         # Build
-        make $MAKE_FLAGS &>msg || exit $?
+        make $MAKE_FLAGS &>>../../msg || exit $?
 
         # Run tests
         ./test --gtest_output="xml:test_results.xml"
