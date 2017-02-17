@@ -25,7 +25,7 @@ void modelDefinition(NNmodel &model)
   neuronModel n;
   n.varNames = {"x", "shift"};
   n.varTypes = {"scalar", "scalar"};
-  n.supportCode = "__device__ __host__ bool checkThreshold(scalar x){ return (fmodf(x, 1.0f) < 1e-4f); }";
+  n.supportCode = "__device__ __host__ bool checkThreshold(scalar x){ return (fmod(x, 1.0) < 1e-4); }";
   n.simCode= "$(x)= $(t)+$(shift);\n";
   n.thresholdConditionCode= "checkThreshold($(x))";
 
