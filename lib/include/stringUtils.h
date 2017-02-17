@@ -62,27 +62,11 @@ void extended_value_substitutions(string &code, const vector<string> &names, con
 
 
 //--------------------------------------------------------------------------
-/*! \brief This function converts code to contain only explicit single precision (float) function calls (C99 standard)
- */
-//--------------------------------------------------------------------------
-
-void ensureMathFunctionFtype(string &code, const string &type);
-
-
-//--------------------------------------------------------------------------
-/*! \brief This function is part of the parser that converts any floating point constant in a code snippet to a floating point constant with an explicit precision (by appending "f" or removing it). 
- */
-//--------------------------------------------------------------------------
-
-void doFinal(string &code, unsigned int i, const string &type, unsigned int &state);
-
-
-//--------------------------------------------------------------------------
 /*! \brief This function implements a parser that converts any floating point constant in a code snippet to a floating point constant with an explicit precision (by appending "f" or removing it). 
  */
 //--------------------------------------------------------------------------
 
-string ensureFtype(string oldcode, string type);
+string ensureFtype(const string &oldcode, const string &type);
 
 
 //--------------------------------------------------------------------------
