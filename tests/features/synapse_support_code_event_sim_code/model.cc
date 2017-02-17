@@ -38,7 +38,7 @@ void modelDefinition(NNmodel &model)
   s.varNames = {"w"};
   s.varTypes = {"scalar"};
   s.pNames = {"myTrigger"};
-  s.simCode_supportCode = "scalar getWeight(scalar x){ return x; }";
+  s.simCode_supportCode = "__device__ __host__ scalar getWeight(scalar x){ return x; }";
   s.evntThreshold= "(fmod($(x_pre), $(myTrigger)) < 1e-4)";
   s.simCodeEvnt= "$(w)= getWeight($(x_pre));";
   const int DUMMYSYNAPSE= weightUpdateModels.size();

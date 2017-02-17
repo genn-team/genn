@@ -25,7 +25,7 @@ void modelDefinition(NNmodel &model)
   neuronModel n;
   n.varNames = {"x", "shift"};
   n.varTypes = {"scalar", "scalar"};
-  n.supportCode = "scalar calcActivation(scalar t, scalar shift){ return (t + shift); }";
+  n.supportCode = "__device__ __host__ scalar calcActivation(scalar t, scalar shift){ return (t + shift); }";
   n.simCode= "$(x)= calcActivation($(t), $(shift));\n";
   n.thresholdConditionCode= "(fmod($(x), 1.0) < 1e-4)";
 

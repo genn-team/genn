@@ -44,7 +44,7 @@ void modelDefinition(NNmodel &model)
   weightUpdateModel s;
   s.varNames = {"w"};
   s.varTypes = {"scalar"};
-  s.simLearnPost_supportCode = "scalar getWeight(scalar x){ return x; }";
+  s.simLearnPost_supportCode = "__device__ __host__ scalar getWeight(scalar x){ return x; }";
   s.simLearnPost= "$(w)= getWeight($(x_pre));";
   const int DUMMYSYNAPSE= weightUpdateModels.size();
   weightUpdateModels.push_back(s);
