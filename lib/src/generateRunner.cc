@@ -177,6 +177,13 @@ void genRunner(const NNmodel &model, //!< Model description
     os << "}" << ENDL;
     os << "#endif" << ENDL;
     os << ENDL;
+#else
+    // define CUDA device and function type qualifiers
+    os << "#define __device__" << ENDL;
+    os << "#define __global__" << ENDL;
+    os << "#define __host__" << ENDL;
+    os << "#define __constant__" << ENDL;
+    os << "#define __shared__" << ENDL;
 #endif // CPU_ONLY
 
     // write DT macro
