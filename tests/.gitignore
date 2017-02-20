@@ -1,8 +1,10 @@
 # Ignore object files
 **/*.o
+**/*.obj
 
 # Ignore test executables
 **/test
+**/test.exe
 
 # Ignore GCOV output
 **/*.gcda
@@ -16,6 +18,7 @@
 
 # Ignore generator executables
 **/generateALL_CPU_ONLY
+**/generateALL_CPU_ONLY.exe
 
 # Ignore LCOV output
 coverage.txt
