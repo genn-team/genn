@@ -33,13 +33,13 @@ for f in features/*;
         pushd $f
 
         # Clean
-        make clean &>> ../../msg
+        make clean 1>> ../../msg 2>> ../../msg
 
         # Build and generate model
-        genn-buildmodel.sh $BUILD_FLAGS model.cc &>>../../msg || exit $?
+        genn-buildmodel.sh $BUILD_FLAGS model.cc 1>>../../msg 2>> ../../msg || exit $?
 	
         # Build
-        make $MAKE_FLAGS &>>../../msg || exit $?
+        make $MAKE_FLAGS 1>>../../msg 2>>../../msg || exit $?
 
         # Run tests
         ./test --gtest_output="xml:test_results.xml"
