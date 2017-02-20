@@ -62,7 +62,7 @@ public:
               // Add error for this time step to total
               err += std::inner_product(&x[d][0], &x[d][100],
                                         GetTheW(d),
-                                        0.0,
+                                        0.0f,
                                         std::plus<float>(),
                                         [](float a, float b){ return abs(a - b); });
           }
