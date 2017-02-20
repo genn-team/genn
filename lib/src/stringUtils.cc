@@ -9,64 +9,11 @@
 #include <regex>
 #endif
 
-
 //--------------------------------------------------------------------------
-//! \brief Tool for substituting strings in the neuron code strings or other templates
+// Anonymous namespace
 //--------------------------------------------------------------------------
-
-void substitute(string &s, const string &trg, const string &rep)
+namespace
 {
-    size_t found= s.find(trg);
-    while (found != string::npos) {
-        s.replace(found,trg.length(),rep);
-        found= s.find(trg);
-    }
-}
-
-//--------------------------------------------------------------------------
-//! \brief This function performs a list of name substitutions for variables in code snippets.
-//--------------------------------------------------------------------------
-
-void name_substitutions(string &code, const string &prefix, const vector<string> &names, const string &postfix)
-{
-    for (int k = 0, l = names.size(); k < l; k++) {
-        substitute(code, "$(" + names[k] + ")", prefix + names[k] + postfix);
-    }
-}
-
-//--------------------------------------------------------------------------
-//! \brief This function performs a list of value substitutions for parameters in code snippets.
-//--------------------------------------------------------------------------
-
-void value_substitutions(string &code, const vector<string> &names, const vector<double> &values)
-{
-    for (int k = 0, l = names.size(); k < l; k++) {
-        substitute(code, "$(" + names[k] + ")", "(" + to_string(values[k]) + ")");
-    }
-}
-
-//--------------------------------------------------------------------------
-//! \brief This function performs a list of name substitutions for variables in code snippets where the variables have an extension in their names (e.g. "_pre").
-//--------------------------------------------------------------------------
-
-void extended_name_substitutions(string &code, const string &prefix, const vector<string> &names, const string &ext, const string &postfix)
-{
-    for (int k = 0, l = names.size(); k < l; k++) {
-        substitute(code, "$(" + names[k] + ext + ")", prefix + names[k] + postfix);
-    }
-}
-
-//--------------------------------------------------------------------------
-//! \brief This function performs a list of value substitutions for parameters in code snippets where the parameters have an extension in their names (e.g. "_pre").
-//--------------------------------------------------------------------------
-
-void extended_value_substitutions(string &code, const vector<string> &names, const string &ext, const vector<double> &values)
-{
-    for (int k = 0, l = names.size(); k < l; k++) {
-        substitute(code, "$(" + names[k] + ext + ")", "(" + to_string(values[k]) + ")");
-    }
-}
-
 const string digits= string("0123456789");
 const string op= string("+-*/(<>= ,;")+string("\n")+string("\t");
 
@@ -189,12 +136,10 @@ const char *__fnames[__mathFN]= {
     "fmaf"
 };
 
-
 //--------------------------------------------------------------------------
 /*! \brief This function converts code to contain only explicit single precision (float) function calls (C99 standard)
  */
 //--------------------------------------------------------------------------
-
 void ensureMathFunctionFtype(string &code, const string &type)
 {
     if (type == string("double")) {
@@ -209,12 +154,10 @@ void ensureMathFunctionFtype(string &code, const string &type)
     }
 }
 
-
 //--------------------------------------------------------------------------
-/*! \brief This function is part of the parser that converts any floating point constant in a code snippet to a floating point constant with an explicit precision (by appending "f" or removing it). 
+/*! \brief This function is part of the parser that converts any floating point constant in a code snippet to a floating point constant with an explicit precision (by appending "f" or removing it).
  */
 //--------------------------------------------------------------------------
-
 void doFinal(string &code, unsigned int i, const string &type, unsigned int &state)
 {
     if (code[i] == 'f') {
@@ -237,13 +180,70 @@ void doFinal(string &code, unsigned int i, const string &type, unsigned int &sta
     }
 }
 
+}
+//--------------------------------------------------------------------------
+//! \brief Tool for substituting strings in the neuron code strings or other templates
+//--------------------------------------------------------------------------
+
+void substitute(string &s, const string &trg, const string &rep)
+{
+    size_t found= s.find(trg);
+    while (found != string::npos) {
+        s.replace(found,trg.length(),rep);
+        found= s.find(trg);
+    }
+}
+
+//--------------------------------------------------------------------------
+//! \brief This function performs a list of name substitutions for variables in code snippets.
+//--------------------------------------------------------------------------
+
+void name_substitutions(string &code, const string &prefix, const vector<string> &names, const string &postfix)
+{
+    for (int k = 0, l = names.size(); k < l; k++) {
+        substitute(code, "$(" + names[k] + ")", prefix + names[k] + postfix);
+    }
+}
+
+//--------------------------------------------------------------------------
+//! \brief This function performs a list of value substitutions for parameters in code snippets.
+//--------------------------------------------------------------------------
+
+void value_substitutions(string &code, const vector<string> &names, const vector<double> &values)
+{
+    for (int k = 0, l = names.size(); k < l; k++) {
+        substitute(code, "$(" + names[k] + ")", "(" + to_string(values[k]) + ")");
+    }
+}
+
+//--------------------------------------------------------------------------
+//! \brief This function performs a list of name substitutions for variables in code snippets where the variables have an extension in their names (e.g. "_pre").
+//--------------------------------------------------------------------------
+
+void extended_name_substitutions(string &code, const string &prefix, const vector<string> &names, const string &ext, const string &postfix)
+{
+    for (int k = 0, l = names.size(); k < l; k++) {
+        substitute(code, "$(" + names[k] + ext + ")", prefix + names[k] + postfix);
+    }
+}
+
+//--------------------------------------------------------------------------
+//! \brief This function performs a list of value substitutions for parameters in code snippets where the parameters have an extension in their names (e.g. "_pre").
+//--------------------------------------------------------------------------
+
+void extended_value_substitutions(string &code, const vector<string> &names, const string &ext, const vector<double> &values)
+{
+    for (int k = 0, l = names.size(); k < l; k++) {
+        substitute(code, "$(" + names[k] + ext + ")", "(" + to_string(values[k]) + ")");
+    }
+}
 
 //--------------------------------------------------------------------------
 /*! \brief This function implements a parser that converts any floating point constant in a code snippet to a floating point constant with an explicit precision (by appending "f" or removing it). 
  */
 //--------------------------------------------------------------------------
 
-string ensureFtype(string oldcode, string type) 
+string ensureFtype(const string &oldcode, const string &type)
 {
 //    cerr << "entering ensure" << endl;
 //    cerr << oldcode << endl;

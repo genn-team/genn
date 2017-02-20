@@ -239,10 +239,6 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
                     os << " = dd_" <<  psm.varNames[k] << sName << "[" << localID << "];" << ENDL;
                 }
             }
-            if (!psm.supportCode.empty()) {
-                os << OB(29) << " using namespace " << sName << "_postsyn;" << ENDL;
-            }
-            os << "Isyn += ";
             string psCode = psm.postSyntoCurrent;
             substitute(psCode, "$(id)", localID);
             substitute(psCode, "$(t)", "t");
@@ -261,12 +257,18 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
             name_substitutions(psCode, "", nModels[nt].extraGlobalNeuronKernelParameters, model.neuronName[i]);
             psCode= ensureFtype(psCode, model.ftype);
             checkUnreplacedVariables(psCode,"postSyntoCurrent");
-            os << psCode << ";" << ENDL;
+            if (!psm.supportCode.empty()) {
+                os << OB(29) << " using namespace " << sName << "_postsyn;" << ENDL;
+            }
+            os << "Isyn += " << psCode << ";" << ENDL;
             if (!psm.supportCode.empty()) {
                 os << CB(29) << " // namespace bracket closed" << ENDL;
             }
         }
 
+	if (!nModels[nt].supportCode.empty()) {
+	    os << " using namespace " << model.neuronName[i] << "_neuron;" << ENDL;
+	}
         string thCode= nModels[nt].thresholdConditionCode;
         if (thCode.empty()) { // no condition provided
             cerr << "Warning: No thresholdConditionCode for neuron type " << model.neuronType[i] << " used for population \"" << model.neuronName[i] << "\" was provided. There will be no spikes detected in this population!" << endl;
@@ -284,13 +286,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
             thCode= ensureFtype(thCode, model.ftype);
             checkUnreplacedVariables(thCode,"thresholdConditionCode");
             if (GENN_PREFERENCES::autoRefractory) {
-                if (!nModels[nt].supportCode.empty()) {
-                    os << OB(29) << " using namespace " << model.neuronName[i] << "_neuron;" << ENDL;
-                }
                 os << "bool oldSpike= (" << thCode << ");" << ENDL;
-                if (!nModels[nt].supportCode.empty()) {
-                    os << CB(29) << " // namespace bracket closed" << endl;
-                }
             }
         }
 
@@ -306,50 +302,56 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
         substitute(sCode, "$(sT)", "lsT");
         sCode= ensureFtype(sCode, model.ftype);
         checkUnreplacedVariables(sCode,"neuron simCode");
-
-        if (!nModels[nt].supportCode.empty()) {
-            os << OB(29) << " using namespace " << model.neuronName[i] << "_neuron;" << ENDL;
-        }
         os << sCode << ENDL;
-        if (!nModels[nt].supportCode.empty()) {
-            os << CB(29) << " // namespace bracket closed" << endl;
-        }
 
         // look for spike type events first.
         if (model.neuronNeedSpkEvnt[i]) {
-            string eCode = model.neuronSpkEvntCondition[i];
-            // code substitutions ----
-            substitute(eCode, "$(id)", localID);
-            substitute(eCode, "$(t)", "t");
-            extended_name_substitutions(eCode, "l", nModels[model.neuronType[i]].varNames, "_pre", "");
-            name_substitutions(eCode, "", nModels[model.neuronType[i]].extraGlobalNeuronKernelParameters, model.neuronName[i]);
-            eCode= ensureFtype(eCode, model.ftype);
-            checkUnreplacedVariables(eCode, "neuronSpkEvntCondition");
-            // end code substitutions ----
-            os << "// test for and register a spike-like event" << ENDL;
-            if (!nModels[nt].supportCode.empty()) {
-                os << OB(29) << " using namespace " << model.neuronName[i] << "_neuron;" << ENDL;
+            // Create local variable
+            os << "bool spikeLikeEvent = false;" << ENDL;
+
+            // Loop through outgoing synapse populations that will contribute to event condition code
+            for(const auto &spkEventCond : model.neuronSpkEvntCondition[i]) {
+                // Replace of parameters, derived parameters and extraglobalsynapse parameters
+                string eCode = spkEventCond.first;
+
+                // code substitutions ----
+                substitute(eCode, "$(id)", "n");
+                substitute(eCode, "$(t)", "t");
+                extended_name_substitutions(eCode, "l", nModels[model.neuronType[i]].varNames, "_pre", "");
+                name_substitutions(eCode, "", nModels[model.neuronType[i]].extraGlobalNeuronKernelParameters, model.neuronName[i]);
+                eCode = ensureFtype(eCode, model.ftype);
+                checkUnreplacedVariables(eCode, "neuronSpkEvntCondition");
+
+                // Open scope for spike-like event test
+                os << OB(31);
+
+                // Use synapse population support code namespace if required
+                if (!spkEventCond.second.empty()) {
+                    os << " using namespace " << spkEventCond.second << ";" << ENDL;
+                }
+
+                // Combine this event threshold test with
+                os << "spikeLikeEvent |= (" << eCode << ");" << ENDL;
+
+                // Close scope for spike-like event test
+                os << CB(31);
             }
-            os << "if (" + eCode + ")" << OB(30);
+
+            os << "// register a spike-like event" << ENDL;
+            os << "if (spikeLikeEvent)" << OB(30);
             os << "spkEvntIdx = atomicAdd((unsigned int *) &spkEvntCount, 1);" << ENDL;
             os << "shSpkEvnt[spkEvntIdx] = " << localID << ";" << ENDL;
             os << CB(30);
-            if (!nModels[nt].supportCode.empty()) {
-                os << CB(29) << " // namespace bracket closed" << endl;
-            }
         }
 
         // test for true spikes if condition is provided
         if (!thCode.empty()) {
             os << "// test for and register a true spike" << ENDL;
-            if (!nModels[nt].supportCode.empty()) {
-                os << OB(29) << " using namespace " << model.neuronName[i] << "_neuron;" << ENDL;
-            }
             if (GENN_PREFERENCES::autoRefractory) {
-              os << "if ((" << thCode << ") && !(oldSpike)) " << OB(40);
+		os << "if ((" << thCode << ") && !(oldSpike)) " << OB(40);
             }
             else {
-              os << "if (" << thCode << ") " << OB(40);
+		os << "if (" << thCode << ") " << OB(40);
             }
             os << "spkIdx = atomicAdd((unsigned int *) &spkCount, 1);" << ENDL;
             os << "shSpk[spkIdx] = " << localID << ";" << ENDL;
@@ -371,9 +373,6 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
                 os << rCode << ENDL;
             }
             os << CB(40);
-            if (!nModels[nt].supportCode.empty()) {
-                os << CB(29) << " // namespace bracket closed" << endl;
-            }
         }
 
         // store the defined parts of the neuron state into the global state variables dd_V etc
@@ -545,7 +544,7 @@ void generate_process_presynaptic_events_code(
             }
 
             if (!weightUpdateModels[synt].simCode_supportCode.empty()) {
-                os << OB(29) << " using namespace " << model.synapseName[i] << "_weightupdate_simCode;" << ENDL;
+                os << " using namespace " << model.synapseName[i] << "_weightupdate_simCode;" << ENDL;
             }
 
             if (delayPre) {
@@ -632,9 +631,6 @@ void generate_process_presynaptic_events_code(
             else if (model.synapseGType[i] == INDIVIDUALID) {
                 os << CB(135);
             }
-            if (weightUpdateModels[synt].simCode_supportCode != "") {
-                os << CB(29) << " // namespace bracket closed" << ENDL;
-            }
             os << CB(102);
             //os << CB(101);
         }
@@ -677,7 +673,7 @@ void generate_process_presynaptic_events_code(
             }
 
             if (!weightUpdateModels[synt].simCode_supportCode.empty()) {
-                os << OB(29) << " using namespace " << model.synapseName[i] << "_weightupdate_simCode;" << ENDL;
+                os << " using namespace " << model.synapseName[i] << "_weightupdate_simCode;" << ENDL;
             }
             if ((evnt) && (model.needEvntThresholdReTest[i])) {
                 os << "if ";
@@ -767,9 +763,6 @@ void generate_process_presynaptic_events_code(
             else if (model.synapseGType[i] == INDIVIDUALID) {
                 os << CB(135); // end if (B(dd_gp" << model.synapseName[i] << "[gid >> " << logUIntSz << "], gid
             }
-            if (!weightUpdateModels[synt].simCode_supportCode.empty()) {
-                os << CB(29) << " // namespace bracket closed" << ENDL;
-            }
             os << CB(120) << ENDL;
 
             if ((sparse) && (!isGrpVarNeeded[model.synapseTarget[i]])) {
@@ -834,9 +827,9 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
     os << "//-------------------------------------------------------------------------" << ENDL << ENDL;
 
 
-        if (model.synDynGroups > 0) {
+    if (model.synDynGroups > 0) {
         os << "#define BLOCKSZ_SYNDYN " << synDynBlkSz << endl;
-
+	
         // SynapseDynamics kernel header
         os << "extern \"C\" __global__ void calcSynapseDynamics(";
         for (int i= 0, l= model.synapseDynamicsKernelParameters.size(); i < l; i++) {
@@ -889,15 +882,15 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                 }
 
                 weightUpdateModel wu= weightUpdateModels[synt];
-                if (!wu.synapseDynamics_supportCode.empty()) {
-                    os << OB(29) << " using namespace " << model.synapseName[i] << "_weightupdate_synapseDynamics;" << ENDL;
-                }
                 string SDcode= wu.synapseDynamics;
                 substitute(SDcode, "$(t)", "t");
 
                 if (model.synapseConnType[k] == SPARSE) { // SPARSE
                     os << "if (" << localID << " < dd_indInG" << synapseName << "[" << srcno << "])" << OB(25);
                     os << "// all threads participate that can work on an existing synapse" << ENDL;
+		    if (!wu.synapseDynamics_supportCode.empty()) {
+			os << " using namespace " << model.synapseName[i] << "_weightupdate_synapseDynamics;" << ENDL;
+		    }
                     if (model.synapseGType[k] == INDIVIDUALG) {
                         // name substitute synapse var names in synapseDynamics code
                         name_substitutions(SDcode, "dd_", wu.varNames, synapseName + "[" + localID +"]");
@@ -918,7 +911,10 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                 else { // DENSE
                     os << "if (" << localID << " < " << srcno*trgno << ")" << OB(25);
                     os << "// all threads participate that can work on an existing synapse" << ENDL;
-                    if (model.synapseGType[k] == INDIVIDUALG) {
+ 		    if (!wu.synapseDynamics_supportCode.empty()) {
+			os << " using namespace " << model.synapseName[i] << "_weightupdate_synapseDynamics;" << ENDL;
+		    }
+		    if (model.synapseGType[k] == INDIVIDUALG) {
                         // name substitute synapse var names in synapseDynamics code
                         name_substitutions(SDcode, "dd_", wu.varNames, synapseName + "[" + localID + "]");
                     }
@@ -936,21 +932,18 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                     os << SDcode << ENDL;
                 }
                 os << CB(25);
-                if (!weightUpdateModels[synt].synapseDynamics_supportCode.empty()) {
-                    os << CB(29) << " // namespace bracket closed" << ENDL;
-                }
                 os << CB(77);
             }
         }
         os << CB(75);
     }
-
-// synapse kernel header
-        os << "extern \"C\" __global__ void calcSynapses(";
-        for (int i= 0, l= model.synapseKernelParameters.size(); i < l; i++) {
-            os << model.synapseKernelParameterTypes[i] << " " << model.synapseKernelParameters[i] << ", ";
-        }
-        os << model.ftype << " t)" << ENDL; // end of synapse kernel header
+    
+    // synapse kernel header
+    os << "extern \"C\" __global__ void calcSynapses(";
+    for (int i= 0, l= model.synapseKernelParameters.size(); i < l; i++) {
+	os << model.synapseKernelParameterTypes[i] << " " << model.synapseKernelParameters[i] << ", ";
+    }
+    os << model.ftype << " t)" << ENDL; // end of synapse kernel header
 
     // synapse kernel code
     os << OB(75);
@@ -1164,10 +1157,6 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                 os << ") % " << model.neuronDelaySlots[src] << ";" << ENDL;
             }
 
-            if (!weightUpdateModels[synt].simLearnPost_supportCode.empty()) {
-                os << OB(29) << " using namespace " << model.synapseName[k] << "_weightupdate_simLearnPost;" << ENDL;
-            }
-
             if (delayPost && model.neuronNeedTrueSpk[trg]) {
                 os << "lscnt = dd_glbSpkCnt" << model.neuronName[trg] << "[dd_spkQuePtr" << model.neuronName[trg] << "];" << ENDL;
             }
@@ -1198,7 +1187,9 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
         //Commenting out the next line as it is not used rather than deleting as I'm not sure if it may be used by different learning models 
               //os << "unsigned int ipre = dd_revInd" << model.synapseName[i] << "[iprePos];" << ENDL;
             }
-
+            if (!weightUpdateModels[synt].simLearnPost_supportCode.empty()) {
+                os << " using namespace " << model.synapseName[k] << "_weightupdate_simLearnPost;" << ENDL;
+            }
             string code = weightUpdateModels[synt].simLearnPost;
             substitute(code, "$(t)", "t");
             // Code substitutions ----------------------------------------------------------------------------------
@@ -1259,9 +1250,6 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
 
                 os << CB(330); // end "if (j == " << numOfBlocks - 1 << ")"
                 os << CB(320); // end "if (threadIdx.x == 0)"
-            }
-            if (!weightUpdateModels[synt].simLearnPost_supportCode.empty()) {
-                os << CB(29) << " // namespace bracket closed" << ENDL;
             }
             os << CB(220);
         }
