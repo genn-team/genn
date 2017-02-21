@@ -8,7 +8,7 @@
 // Macros
 //----------------------------------------------------------------------------
 #define SET_SIM_CODE(SIM_CODE) virtual std::string GetSimCode() const{ return SIM_CODE; }
-#define SET_EVENT_CODE(EVENT_CODE) virtual std::string GetEventCode() const{ return EVENT_SIM_CODE; }
+#define SET_EVENT_CODE(EVENT_CODE) virtual std::string GetEventCode() const{ return EVENT_CODE; }
 #define SET_LEARN_POST_CODE(LEARN_POST_CODE) virtual std::string GetLearnPostCode() const{ return LEARN_POST_CODE; }
 #define SET_SYNAPSE_DYNAMICS_CODE(SYNAPSE_DYNAMICS_CODE) virtual std::string GetSynapseDynamicsCode() const{ return SYNAPSE_DYNAMICS_CODE; }
 #define SET_EVENT_THRESHOLD_CONDITION_CODE(EVENT_THRESHOLD_CONDITION_CODE) virtual std::string GetEventThresholdConditionCode() const{ return EVENT_THRESHOLD_CONDITION_CODE; }
