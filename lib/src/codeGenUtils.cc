@@ -10,18 +10,10 @@
 #include "utils.h"
 
 //--------------------------------------------------------------------------
-//! \brief Tool for substituting strings in the neuron code strings or other templates
+// Anonymous namespace
 //--------------------------------------------------------------------------
-
-void substitute(string &s, const string &trg, const string &rep)
+namespace
 {
-    size_t found= s.find(trg);
-    while (found != string::npos) {
-        s.replace(found,trg.length(),rep);
-        found= s.find(trg);
-    }
-}
-
 const string digits= string("0123456789");
 const string op= string("+-*/(<>= ,;")+string("\n")+string("\t");
 
@@ -144,12 +136,10 @@ const char *__fnames[__mathFN]= {
     "fmaf"
 };
 
-
 //--------------------------------------------------------------------------
 /*! \brief This function converts code to contain only explicit single precision (float) function calls (C99 standard)
  */
 //--------------------------------------------------------------------------
-
 void ensureMathFunctionFtype(string &code, const string &type)
 {
     if (type == string("double")) {
@@ -164,12 +154,10 @@ void ensureMathFunctionFtype(string &code, const string &type)
     }
 }
 
-
 //--------------------------------------------------------------------------
-/*! \brief This function is part of the parser that converts any floating point constant in a code snippet to a floating point constant with an explicit precision (by appending "f" or removing it). 
+/*! \brief This function is part of the parser that converts any floating point constant in a code snippet to a floating point constant with an explicit precision (by appending "f" or removing it).
  */
 //--------------------------------------------------------------------------
-
 void doFinal(string &code, unsigned int i, const string &type, unsigned int &state)
 {
     if (code[i] == 'f') {
@@ -191,14 +179,27 @@ void doFinal(string &code, unsigned int i, const string &type, unsigned int &sta
         }
     }
 }
+}    // Anonymous namespace
 
+//--------------------------------------------------------------------------
+//! \brief Tool for substituting strings in the neuron code strings or other templates
+//--------------------------------------------------------------------------
+
+void substitute(string &s, const string &trg, const string &rep)
+{
+    size_t found= s.find(trg);
+    while (found != string::npos) {
+        s.replace(found,trg.length(),rep);
+        found= s.find(trg);
+    }
+}
 
 //--------------------------------------------------------------------------
 /*! \brief This function implements a parser that converts any floating point constant in a code snippet to a floating point constant with an explicit precision (by appending "f" or removing it). 
  */
 //--------------------------------------------------------------------------
 
-string ensureFtype(string oldcode, string type) 
+string ensureFtype(const string &oldcode, const string &type)
 {
 //    cerr << "entering ensure" << endl;
 //    cerr << oldcode << endl;
@@ -303,7 +304,7 @@ string ensureFtype(string oldcode, string type)
  */
 //--------------------------------------------------------------------------
 
-void checkUnreplacedVariables(string code, string codeName) 
+void checkUnreplacedVariables(const string &code, const string &codeName)
 {
     regex rgx("\\$\\([\\w]+\\)");
     string vars= "";
@@ -318,7 +319,7 @@ void checkUnreplacedVariables(string code, string codeName)
     }
 }
 #else
-void checkUnreplacedVariables(string, string)
+void checkUnreplacedVariables(const string &, const string &)
 {
 }
 #endif

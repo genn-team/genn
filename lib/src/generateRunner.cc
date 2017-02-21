@@ -132,6 +132,13 @@ void genRunner(const NNmodel &model, //!< Model description
     os << "}" << ENDL;
     os << "#endif" << ENDL;
     os << ENDL;
+#else
+    // define CUDA device and function type qualifiers
+    os << "#define __device__" << ENDL;
+    os << "#define __global__" << ENDL;
+    os << "#define __host__" << ENDL;
+    os << "#define __constant__" << ENDL;
+    os << "#define __shared__" << ENDL;
 #endif // CPU_ONLY
 
     // write DT macro
@@ -570,7 +577,7 @@ void genRunner(const NNmodel &model, //!< Model description
     for (unsigned int i= 0; i < model.neuronGrpN; i++) {
         if (!model.neuronModel[i]->GetSupportCode().empty()) {
             os << "namespace " << model.neuronName[i] << "_neuron" << OB(11) << ENDL;
-            os << model.neuronModel[i]->GetSupportCode() << ENDL;
+            os << ensureFtype(model.neuronModel[i]->GetSupportCode(), model.ftype) << ENDL;
             os << CB(11) << " // end of support code namespace " << model.neuronName[i] << ENDL;
         }
     }
@@ -580,22 +587,22 @@ void genRunner(const NNmodel &model, //!< Model description
 
         if (!wu->GetSimSupportCode().empty()) {
             os << "namespace " << model.synapseName[i] << "_weightupdate_simCode " << OB(11) << ENDL;
-            os << wu->GetSimSupportCode() << ENDL;
+            os << ensureFtype(wu->GetSimSupportCode(), model.ftype) << ENDL;
             os << CB(11) << " // end of support code namespace " << model.synapseName[i] << "_weightupdate_simCode " << ENDL;
         }
         if (!wu->GetLearnPostSupportCode().empty()) {
             os << "namespace " << model.synapseName[i] << "_weightupdate_simLearnPost " << OB(11) << ENDL;
-            os << wu->GetLearnPostSupportCode() << ENDL;
+            os << ensureFtype(wu->GetLearnPostSupportCode(), model.ftype) << ENDL;
             os << CB(11) << " // end of support code namespace " << model.synapseName[i] << "_weightupdate_simLearnPost " << ENDL;
         }
         if (!wu->GetSynapseDynamicsSuppportCode().empty()) {
             os << "namespace " << model.synapseName[i] << "_weightupdate_synapseDynamics " << OB(11) << ENDL;
-            os << wu->GetSynapseDynamicsSuppportCode() << ENDL;
+            os << ensureFtype(wu->GetSynapseDynamicsSuppportCode(), model.ftype) << ENDL;
             os << CB(11) << " // end of support code namespace " << model.synapseName[i] << "_weightupdate_synapseDynamics " << ENDL;
         }
         if (!psm->GetSupportCode().empty()) {
             os << "namespace " << model.synapseName[i] << "_postsyn " << OB(11) << ENDL;
-            os << psm->GetSupportCode() << ENDL;
+            os << ensureFtype(psm->GetSupportCode(), model.ftype) << ENDL;
             os << CB(11) << " // end of support code namespace " << model.synapseName[i] << "_postsyn " << ENDL;
         }
 

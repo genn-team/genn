@@ -33,6 +33,7 @@ Part of the code generation and generated code sections.
 #include "postSynapseModels.h"
 #include "utils.h"
 
+#include <set>
 #include <string>
 #include <vector>
 
@@ -123,7 +124,7 @@ public:
   vector<bool> neuronNeedTrueSpk; //!< Whether spike-like events from a group are required
   vector<bool> neuronNeedSpkEvnt; //!< Whether spike-like events from a group are required
   vector<vector<bool> > neuronVarNeedQueue; //!< Whether a neuron variable needs queueing for syn code
-  vector<string> neuronSpkEvntCondition; //!< Will contain the spike event condition code when spike events are used
+  vector<set<pair<string, string>>> neuronSpkEvntCondition; //!< Will contain the spike event condition code when spike events are used
   vector<unsigned int> neuronDelaySlots; //!< The number of slots needed in the synapse delay queues of a neuron group
   vector<int> neuronHostID; //!< The ID of the cluster node which the neuron groups are computed on
   vector<int> neuronDeviceID; //!< The ID of the CUDA device which the neuron groups are comnputed on
@@ -257,7 +258,6 @@ public:
       outSyn.push_back(vector<unsigned int>());
       neuronNeedSt.push_back(false);
       neuronNeedSpkEvnt.push_back(false);
-      neuronSpkEvntCondition.push_back("");
       neuronDelaySlots.push_back(1);
 
       // initially set neuron group indexing variables to device 0 host 0
