@@ -17,10 +17,17 @@
 **/*_CODE
 
 # Ignore generator executables
+**/generateALL
+**/generateALL.exe
 **/generateALL_CPU_ONLY
 **/generateALL_CPU_ONLY.exe
+
+# Ignore CUDA junk
+**/sm_version.mk
+
+# Ignore test output
+msg
 
 # Ignore LCOV output
 coverage.txt
 code_coverage_report
-
