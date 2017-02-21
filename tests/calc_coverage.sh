@@ -31,10 +31,10 @@ for f in features/*;
         pushd $f
 
         # Clean
-        make clean &>> ../../msg
+        make clean 1>> ../../msg 2>> ../../msg
 
         # Build and generate model (measuring coverage)
-        genn-buildmodel.sh $BUILD_FLAGS -v model.cc  &>>../../msg || exit $?
+        genn-buildmodel.sh $BUILD_FLAGS -v model.cc  1>> ../../msg 2>>../../msg || exit $?
 
         # Pop feature directory
         popd
@@ -43,11 +43,11 @@ for f in features/*;
 echo "Combining coverage data..."
 
 # Combine all GCOV ouratput in child directories
-lcov --directory . --capture --output-file coverage.txt -rc lcov_branch_coverage=1 &>msg
+lcov --directory . --capture --output-file coverage.txt -rc lcov_branch_coverage=1 1>> ../../msg 2>> msg
 
 if [ $REPORT -eq 1 ]; then
   echo "Generating HTML coverage report..."
 
   # Generate browseable HTML
-  genhtml coverage.txt --branch-coverage --output-directory ./code_coverage_report/ &>msg
+  genhtml coverage.txt --branch-coverage --output-directory ./code_coverage_report/ 1>> ../../msg 2>> msg
 fi
