@@ -50,7 +50,7 @@ void modelDefinition(NNmodel &model)
         string theName= synName + std::to_string(i);
         model.addSynapsePopulation<WeightUpdateModel, PostsynapticModels::Izhikevich>(
             theName, DENSE, INDIVIDUALG, i, "pre", "post",
-            WeightUpdateModel::ParamValues(0.0), WeightUpdateModel::InitValues(0.0),
+            WeightUpdateModel::ParamValues((double)(2*(i+1))), WeightUpdateModel::InitValues(0.0),
             {}, {});
     }
     model.setPrecision(GENN_FLOAT);
