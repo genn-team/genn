@@ -32,6 +32,7 @@ public:
     SET_EVENT_CODE("$(w)= $(x_pre);");
 };
 
+IMPLEMENT_MODEL(WeightUpdateModel);
 
 void modelDefinition(NNmodel &model)
 {
@@ -48,7 +49,7 @@ void modelDefinition(NNmodel &model)
         string theName= synName + std::to_string(i);
         model.addSynapsePopulation<WeightUpdateModel, PostsynapticModels::Izhikevich>(
             theName, SPARSE, INDIVIDUALG, i, "pre", "post",
-            WeightUpdateModel::ParamValues(0.0), WeightUpdateModel::InitValues(0.0),
+            WeightUpdateModel::ParamValues((double)(2*(i+1))), WeightUpdateModel::InitValues(0.0),
             {}, {});
         model.setSpanTypeToPre(theName);
     }
