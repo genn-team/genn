@@ -31,23 +31,27 @@ for f in features/*;
 
         # Push feature directory
         pushd $f
+        
+        # Loop through model suffixes
+        for s in "" _new;
+            do
+                # Clean
+                make clean 1>> ../../msg 2>> ../../msg
 
-        # Clean
-        make clean 1>> ../../msg 2>> ../../msg
+                # Build and generate model
+                genn-buildmodel.sh $BUILD_FLAGS model$s.cc 1>>../../msg 2>> ../../msg || exit $?
+                
+                # Build
+                make $MAKE_FLAGS 1>>../../msg 2>>../../msg || exit $?
 
-        # Build and generate model
-        genn-buildmodel.sh $BUILD_FLAGS model.cc 1>>../../msg 2>> ../../msg || exit $?
-	
-        # Build
-        make $MAKE_FLAGS 1>>../../msg 2>>../../msg || exit $?
-
-        # Run tests
-        ./test --gtest_output="xml:test_results.xml"
-        if [ $? -eq 0 ]; then
-            NUM_SUCCESSES=$((NUM_SUCCESSES+1))
-        else
-            NUM_FAILURES=$((NUM_FAILURES+1))
-        fi
+                # Run tests
+                ./test --gtest_output="xml:test_results$s.xml"
+                if [ $? -eq 0 ]; then
+                    NUM_SUCCESSES=$((NUM_SUCCESSES+1))
+                else
+                    NUM_FAILURES=$((NUM_FAILURES+1))
+                fi
+            done;
 
         # Pop feature directory
         popd
