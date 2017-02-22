@@ -32,6 +32,7 @@ public:
     SET_EVENT_CODE("$(w)= $(x_pre);");
 };
 
+IMPLEMENT_MODEL(WeightUpdateModel);
 
 void modelDefinition(NNmodel &model)
 {

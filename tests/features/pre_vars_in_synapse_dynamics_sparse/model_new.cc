@@ -34,7 +34,7 @@ void modelDefinition(NNmodel &model)
 {
     initGeNN();
     model.setDT(0.1);
-    model.setName("pre_vars_in_synapse_dynamics");
+    model.setName("pre_vars_in_synapse_dynamics_sparse");
 
     model.addNeuronPopulation<Neuron>("pre", 10, {}, Neuron::InitValues(0.0, 0.0));
     model.addNeuronPopulation<Neuron>("post", 10, {}, Neuron::InitValues(0.0, 0.0));
@@ -44,7 +44,7 @@ void modelDefinition(NNmodel &model)
     {
         string theName= synName + std::to_string(i);
         model.addSynapsePopulation<WeightUpdateModel, PostsynapticModels::Izhikevich>(
-            theName, DENSE, INDIVIDUALG, i, "pre", "post",
+            theName, SPARSE, INDIVIDUALG, i, "pre", "post",
             {}, WeightUpdateModel::InitValues(0.0),
             {}, {});
     }

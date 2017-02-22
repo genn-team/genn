@@ -25,7 +25,8 @@ public:
 
     SET_INIT_VALS({{"w", "scalar"}});
 
-    SET_SYNAPSE_DYNAMICS_CODE("$(w)= $(x_pre);");
+    SET_SYNAPSE_DYNAMICS_SUPPORT_CODE("__device__ __host__ scalar getWeight(scalar x){ return x; }");
+    SET_SYNAPSE_DYNAMICS_CODE("$(w)= getWeight($(x_post));");
 };
 
 IMPLEMENT_MODEL(WeightUpdateModel);
@@ -34,7 +35,7 @@ void modelDefinition(NNmodel &model)
 {
     initGeNN();
     model.setDT(0.1);
-    model.setName("pre_vars_in_synapse_dynamics");
+    model.setName("synapse_support_code_synapse_dynamics");
 
     model.addNeuronPopulation<Neuron>("pre", 10, {}, Neuron::InitValues(0.0, 0.0));
     model.addNeuronPopulation<Neuron>("post", 10, {}, Neuron::InitValues(0.0, 0.0));

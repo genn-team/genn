@@ -6,10 +6,13 @@
 class Neuron : public NeuronModels::Base
 {
 public:
-    DECLARE_MODEL(Neuron, 0, 2);
+    DECLARE_MODEL(Neuron, 1, 2);
 
     SET_SIM_CODE("$(x)= $(t)+$(shift);\n");
 
+    SET_THRESHOLD_CONDITION_CODE("(fmod($(x),$(ISI)) < 1e-4)");
+
+    SET_PARAM_NAMES({"ISI"});
     SET_INIT_VALS({{"x", "scalar"}, {"shift", "scalar"}});
 };
 
@@ -25,7 +28,8 @@ public:
 
     SET_INIT_VALS({{"w", "scalar"}});
 
-    SET_SYNAPSE_DYNAMICS_CODE("$(w)= $(x_pre);");
+    SET_LEARN_POST_SUPPORT_CODE("__device__ __host__ scalar getWeight(scalar x){ return x; }");
+    SET_LEARN_POST_CODE("$(w)= getWeight($(x_pre));");
 };
 
 IMPLEMENT_MODEL(WeightUpdateModel);
@@ -34,10 +38,10 @@ void modelDefinition(NNmodel &model)
 {
     initGeNN();
     model.setDT(0.1);
-    model.setName("pre_vars_in_synapse_dynamics");
+    model.setName("synapse_support_code_post_learn");
 
-    model.addNeuronPopulation<Neuron>("pre", 10, {}, Neuron::InitValues(0.0, 0.0));
-    model.addNeuronPopulation<Neuron>("post", 10, {}, Neuron::InitValues(0.0, 0.0));
+    model.addNeuronPopulation<Neuron>("pre", 10, Neuron::ParamValues(1.0), Neuron::InitValues(0.0, 0.0));
+    model.addNeuronPopulation<Neuron>("post", 10, Neuron::ParamValues(2.0), Neuron::InitValues(0.0, 0.0));
 
     string synName= "syn";
     for (int i= 0; i < 10; i++)

@@ -10,6 +10,8 @@ public:
 
     SET_SIM_CODE("$(x)= $(t)+$(shift);\n");
 
+    SET_THRESHOLD_CONDITION_CODE("(fmod($(x),1.0) < 1e-4)");
+
     SET_INIT_VALS({{"x", "scalar"}, {"shift", "scalar"}});
 };
 
@@ -25,7 +27,8 @@ public:
 
     SET_INIT_VALS({{"w", "scalar"}});
 
-    SET_SYNAPSE_DYNAMICS_CODE("$(w)= $(x_pre);");
+    SET_SIM_SUPPORT_CODE("__device__ __host__ scalar getWeight(scalar x){ return x; }");
+    SET_SIM_CODE("$(w)= getWeight($(x_pre));");
 };
 
 IMPLEMENT_MODEL(WeightUpdateModel);
@@ -34,7 +37,7 @@ void modelDefinition(NNmodel &model)
 {
     initGeNN();
     model.setDT(0.1);
-    model.setName("pre_vars_in_synapse_dynamics");
+    model.setName("synapse_support_code_sim_code");
 
     model.addNeuronPopulation<Neuron>("pre", 10, {}, Neuron::InitValues(0.0, 0.0));
     model.addNeuronPopulation<Neuron>("post", 10, {}, Neuron::InitValues(0.0, 0.0));
