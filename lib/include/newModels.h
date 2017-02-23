@@ -41,11 +41,17 @@ namespace NewModels
 template<size_t NumValues>
 class ValueBase
 {
+private:
+    //----------------------------------------------------------------------------
+    // Typedefines
+    //----------------------------------------------------------------------------
+    typedef std::array<double, NumValues> ValueArray;
+
 public:
     // **NOTE** other less terrifying forms of constructor won't complain at compile time about
     // number of parameters e.g. std::array<double, 4> can be initialized with <= 4 elements
     template<typename... T>
-    ValueBase(T&&... vals) : m_Values{std::forward<double>(vals)...}
+    ValueBase(T&&... vals) : m_Values(ValueArray{std::forward<double>(vals)...})
     {
         static_assert(sizeof...(vals) == NumValues, "Wrong number of values");
     }
@@ -62,7 +68,7 @@ private:
     //----------------------------------------------------------------------------
     // Members
     //----------------------------------------------------------------------------
-    std::array<double, NumValues> m_Values;
+    ValueArray m_Values;
 };
 
 //----------------------------------------------------------------------------
