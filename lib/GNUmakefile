@@ -62,13 +62,16 @@ endif
 ifdef DEBUG
     CXXFLAGS             +=-g -O0 -DDEBUG
 endif
+ifdef COVERAGE
+    CXXFLAGS             +=-O0 --coverage
+endif
 ARFLAGS                  :=-rcs
 
 # Global include and link flags
 ifndef CPU_ONLY
     INCLUDE_FLAGS        :=-I"$(INC_PATH)" -I"$(CUDA_PATH)/include"
     ifeq ($(DARWIN),DARWIN)
-        LINK_FLAGS       :=-L"$(LIBGENN_PATH)" -L"$(CUDA_PATH)/lib" -lgenn -lcuda -lcudart -lstdc++ -lc++
+        LINK_FLAGS       :=-rpath $(CUDA_PATH)/lib -L"$(LIBGENN_PATH)" -L"$(CUDA_PATH)/lib" -lgenn -lcuda -lcudart -lstdc++ -lc++
     else
         ifeq ($(OS_SIZE),32)
             LINK_FLAGS   :=-L"$(LIBGENN_PATH)" -L"$(CUDA_PATH)/lib" -lgenn -lcuda -lcudart
@@ -83,7 +86,6 @@ else
         LINK_FLAGS       :=-L"$(LIBGENN_PATH)" -lgenn_CPU_ONLY -lstdc++ -lc++
     endif
 endif
-
 
 # Target rules
 .PHONY: all clean clean_generateall clean_libgenn always_compile

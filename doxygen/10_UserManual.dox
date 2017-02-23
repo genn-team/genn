@@ -232,6 +232,8 @@ to have an effect on the behaviour of the Poisson neurons because the
 numbers are so small that only if the random number is identical 0 a
 spike will be triggered.
  
+\note GeNN uses a separate random number generator for each Poisson neuron. The seeds (and later states) of these random number generators are stored in the `seed` variable. GeNN allocates memory for these seeds/states in the generated `allocateMem()` function. It is, however, currently the responsibility of the user to fill the array of seeds with actual random seeds. Not doing so carries the risk that all random number generators are seeded with the same seed ("0") and produce the same random numbers across neurons at each given time step. When using the GPU, `seed` also must be copied to the GPU after having been initialized.
+
 \section sect23 TRAUBMILES_FAST (Hodgkin-Huxley neurons with Traub & Miles algorithm)
 
 This conductance based model has been taken from \cite Traub1991 and can be described by the equations:
@@ -457,6 +459,12 @@ For example
 \endcode
 where "inc" is a parameter of the weightupdate model, would define a constant increment of the synaptic input of a post-synaptic neuron for each pre-synaptic spike. <br />
 When a spike is detected in the presynaptic neuron population, the simCode is executed. Within the code snippet the \$(addtoinSyn) update just discussed should be be followed by the \$(updatelinsyn) keyword to indicate that the summation of synaptic inputs can now occur. This can then be followed by updates on the internal synapse variables that may have contributed to addtoinSyn. For an example, see \ref sect31 for a simple synapse update model and \ref sect33 for a more complicated model that uses STDP. 
+
+- \c evntThreshold: Code that defines the condition for a synaptic event. This typically involves the pre-synaptic variables, e.g. the membrane potential: 
+\code
+"$(V_pre) > -0.02"
+\endcode
+Whenever this expression evaluates to true, the code in `simCodeEvnt` is executed. For an example, see \ref sect32.
 
 - \c simCodeEvnt: Simulation code that is used for spike like events, where updates are done for all instances in which the event condition defined by `evntThreshold` is met. `evntThreshold` is also be provided as a code string. For an example, see \ref sect32.
 

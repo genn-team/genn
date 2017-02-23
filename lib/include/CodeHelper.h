@@ -18,9 +18,6 @@
 
 class CodeHelper {
 public:
-    vector<unsigned int>  braces;
-    bool verbose;
-
     CodeHelper(): verbose(false) {
         braces.push_back(0);
     }
@@ -49,7 +46,7 @@ public:
         }
     }
 
-    string endl() {
+    string endl() const{
         string result =  "\n";
         //put out right number of tabs for level depth
         result.append(indentBy(braces.size() - 1));
@@ -57,7 +54,7 @@ public:
     }
 
 private:
-    string indentBy(unsigned int numIndents) {
+    string indentBy(unsigned int numIndents) const{
         string result =  ""; ///toString(numIndents);
         for (int i = 0; i < numIndents; i++) {
             result.append("    ");
@@ -65,6 +62,8 @@ private:
         return result;
     }
 
+    vector<unsigned int>  braces;
+    bool verbose;
 };
 
 extern CodeHelper hlp;

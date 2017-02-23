@@ -9,64 +9,11 @@
 #include <regex>
 #endif
 
-
 //--------------------------------------------------------------------------
-//! \brief Tool for substituting strings in the neuron code strings or other templates
+// Anonymous namespace
 //--------------------------------------------------------------------------
-
-void substitute(string &s, const string trg, const string rep)
+namespace
 {
-    size_t found= s.find(trg);
-    while (found != string::npos) {
-        s.replace(found,trg.length(),rep);
-        found= s.find(trg);
-    }
-}
-
-//--------------------------------------------------------------------------
-//! \brief This function performs a list of name substitutions for variables in code snippets.
-//--------------------------------------------------------------------------
-
-void name_substitutions(string &code, string prefix, vector<string> &names, string postfix)
-{
-    for (int k = 0, l = names.size(); k < l; k++) {
-        substitute(code, tS("$(") + names[k] + tS(")"), prefix+names[k]+postfix);
-    }
-}
-
-//--------------------------------------------------------------------------
-//! \brief This function performs a list of value substitutions for parameters in code snippets.
-//--------------------------------------------------------------------------
-
-void value_substitutions(string &code, vector<string> &names, vector<double> &values)
-{
-    for (int k = 0, l = names.size(); k < l; k++) {
-        substitute(code, tS("$(") + names[k] + tS(")"), tS("(")+tS(values[k])+ tS(")"));
-    }
-}
-
-//--------------------------------------------------------------------------
-//! \brief This function performs a list of name substitutions for variables in code snippets where the variables have an extension in their names (e.g. "_pre").
-//--------------------------------------------------------------------------
-
-void extended_name_substitutions(string &code, string prefix, vector<string> &names, string ext, string postfix)
-{
-    for (int k = 0, l = names.size(); k < l; k++) {
-        substitute(code, tS("$(") + names[k] + ext + tS(")"), prefix+names[k]+postfix);
-    }
-}
-
-//--------------------------------------------------------------------------
-//! \brief This function performs a list of value substitutions for parameters in code snippets where the parameters have an extension in their names (e.g. "_pre").
-//--------------------------------------------------------------------------
-
-void extended_value_substitutions(string &code, vector<string> &names, string ext, vector<double> &values)
-{
-    for (int k = 0, l = names.size(); k < l; k++) {
-        substitute(code, tS("$(") + names[k] + ext + tS(")"), tS("(")+tS(values[k])+ tS(")"));
-    }
-}
-
 const string digits= string("0123456789");
 const string op= string("+-*/(<>= ,;")+string("\n")+string("\t");
 
@@ -189,13 +136,11 @@ const char *__fnames[__mathFN]= {
     "fmaf"
 };
 
-
 //--------------------------------------------------------------------------
 /*! \brief This function converts code to contain only explicit single precision (float) function calls (C99 standard)
  */
 //--------------------------------------------------------------------------
-
-void ensureMathFunctionFtype(string &code, string type) 
+void ensureMathFunctionFtype(string &code, const string &type)
 {
     if (type == string("double")) {
         for (int i= 0; i < __mathFN; i++) {
@@ -209,13 +154,11 @@ void ensureMathFunctionFtype(string &code, string type)
     }
 }
 
-
 //--------------------------------------------------------------------------
-/*! \brief This function is part of the parser that converts any floating point constant in a code snippet to a floating point constant with an explicit precision (by appending "f" or removing it). 
+/*! \brief This function is part of the parser that converts any floating point constant in a code snippet to a floating point constant with an explicit precision (by appending "f" or removing it).
  */
 //--------------------------------------------------------------------------
-
-void doFinal(string &code, unsigned int i, string type, unsigned int &state) 
+void doFinal(string &code, unsigned int i, const string &type, unsigned int &state)
 {
     if (code[i] == 'f') {
         if (type == "double") {
@@ -237,13 +180,70 @@ void doFinal(string &code, unsigned int i, string type, unsigned int &state)
     }
 }
 
+}
+//--------------------------------------------------------------------------
+//! \brief Tool for substituting strings in the neuron code strings or other templates
+//--------------------------------------------------------------------------
+
+void substitute(string &s, const string &trg, const string &rep)
+{
+    size_t found= s.find(trg);
+    while (found != string::npos) {
+        s.replace(found,trg.length(),rep);
+        found= s.find(trg);
+    }
+}
+
+//--------------------------------------------------------------------------
+//! \brief This function performs a list of name substitutions for variables in code snippets.
+//--------------------------------------------------------------------------
+
+void name_substitutions(string &code, const string &prefix, const vector<string> &names, const string &postfix)
+{
+    for (int k = 0, l = names.size(); k < l; k++) {
+        substitute(code, "$(" + names[k] + ")", prefix + names[k] + postfix);
+    }
+}
+
+//--------------------------------------------------------------------------
+//! \brief This function performs a list of value substitutions for parameters in code snippets.
+//--------------------------------------------------------------------------
+
+void value_substitutions(string &code, const vector<string> &names, const vector<double> &values)
+{
+    for (int k = 0, l = names.size(); k < l; k++) {
+        substitute(code, "$(" + names[k] + ")", "(" + to_string(values[k]) + ")");
+    }
+}
+
+//--------------------------------------------------------------------------
+//! \brief This function performs a list of name substitutions for variables in code snippets where the variables have an extension in their names (e.g. "_pre").
+//--------------------------------------------------------------------------
+
+void extended_name_substitutions(string &code, const string &prefix, const vector<string> &names, const string &ext, const string &postfix)
+{
+    for (int k = 0, l = names.size(); k < l; k++) {
+        substitute(code, "$(" + names[k] + ext + ")", prefix + names[k] + postfix);
+    }
+}
+
+//--------------------------------------------------------------------------
+//! \brief This function performs a list of value substitutions for parameters in code snippets where the parameters have an extension in their names (e.g. "_pre").
+//--------------------------------------------------------------------------
+
+void extended_value_substitutions(string &code, const vector<string> &names, const string &ext, const vector<double> &values)
+{
+    for (int k = 0, l = names.size(); k < l; k++) {
+        substitute(code, "$(" + names[k] + ext + ")", "(" + to_string(values[k]) + ")");
+    }
+}
 
 //--------------------------------------------------------------------------
 /*! \brief This function implements a parser that converts any floating point constant in a code snippet to a floating point constant with an explicit precision (by appending "f" or removing it). 
  */
 //--------------------------------------------------------------------------
 
-string ensureFtype(string oldcode, string type) 
+string ensureFtype(const string &oldcode, const string &type)
 {
 //    cerr << "entering ensure" << endl;
 //    cerr << oldcode << endl;
@@ -377,50 +377,50 @@ void checkUnreplacedVariables(string code, string codeName)
 
 void neuron_substitutions_in_synaptic_code(
     string &wCode, //!< the code string to work on
-    NNmodel &model, //!< the neuronal network model to generate code for
+    const NNmodel &model, //!< the neuronal network model to generate code for
     unsigned int src, //!< the number of the src neuron population
     unsigned int trg, //!< the number of the target neuron population
     unsigned int nt_pre, //!< the neuron type of the pre-synaptic neuron
     unsigned int nt_post, //!< the neuron type of the post-synaptic neuron
-    string offsetPre, //!< delay slot offset expression for pre-synaptic vars
-    string offsetPost, //!< delay slot offset expression for post-synaptic vars
-    string preIdx, //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
-    string postIdx, //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
-    string devPrefix //!< device prefix, "dd_" for GPU, nothing for CPU
+    const string &offsetPre, //!< delay slot offset expression for pre-synaptic vars
+    const string &offsetPost, //!< delay slot offset expression for post-synaptic vars
+    const string &preIdx, //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
+    const string &postIdx, //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
+    const string &devPrefix //!< device prefix, "dd_" for GPU, nothing for CPU
     )
 {
     // presynaptic neuron variables, parameters, and global parameters
-    if (model.neuronType[src] == POISSONNEURON) substitute(wCode, tS("$(V_pre)"), tS(model.neuronPara[src][2]));
-    substitute(wCode, tS("$(sT_pre)"), devPrefix+ tS("sT") + model.neuronName[src] + tS("[") + offsetPre + preIdx + tS("]"));
+    if (model.neuronType[src] == POISSONNEURON) substitute(wCode, "$(V_pre)", to_string(model.neuronPara[src][2]));
+    substitute(wCode, "$(sT_pre)", devPrefix+ "sT" + model.neuronName[src] + "[" + offsetPre + preIdx + "]");
     for (int j = 0; j < nModels[nt_pre].varNames.size(); j++) {
         if (model.neuronVarNeedQueue[src][j]) {
-            substitute(wCode, tS("$(") + nModels[nt_pre].varNames[j] + tS("_pre)"),
-                       devPrefix + nModels[nt_pre].varNames[j] + model.neuronName[src] + tS("[") + offsetPre + preIdx + tS("]"));
+            substitute(wCode, "$(" + nModels[nt_pre].varNames[j] + "_pre)",
+                       devPrefix + nModels[nt_pre].varNames[j] + model.neuronName[src] + "[" + offsetPre + preIdx + "]");
         }
         else {
-            substitute(wCode, tS("$(") + nModels[nt_pre].varNames[j] + tS("_pre)"),
-                       devPrefix + nModels[nt_pre].varNames[j] + model.neuronName[src] + tS("[") + preIdx + tS("]"));
+            substitute(wCode, "$(" + nModels[nt_pre].varNames[j] + "_pre)",
+                       devPrefix + nModels[nt_pre].varNames[j] + model.neuronName[src] + "[" + preIdx + "]");
         }
     }
-    extended_value_substitutions(wCode, nModels[nt_pre].pNames, tS("_pre"), model.neuronPara[src]);
-    extended_value_substitutions(wCode, nModels[nt_pre].dpNames, tS("_pre"), model.dnp[src]);
-    extended_name_substitutions(wCode, devPrefix, nModels[nt_pre].extraGlobalNeuronKernelParameters, tS("_pre"), model.neuronName[src]);
+    extended_value_substitutions(wCode, nModels[nt_pre].pNames, "_pre", model.neuronPara[src]);
+    extended_value_substitutions(wCode, nModels[nt_pre].dpNames, "_pre", model.dnp[src]);
+    extended_name_substitutions(wCode, devPrefix, nModels[nt_pre].extraGlobalNeuronKernelParameters, "_pre", model.neuronName[src]);
     
     // postsynaptic neuron variables, parameters, and global parameters
-    substitute(wCode, tS("$(sT_post)"), devPrefix+tS("sT") + model.neuronName[trg] + tS("[") + offsetPost + postIdx + tS("]"));
+    substitute(wCode, "$(sT_post)", devPrefix + "sT" + model.neuronName[trg] + "[" + offsetPost + postIdx + "]");
     for (int j = 0; j < nModels[nt_post].varNames.size(); j++) {
         if (model.neuronVarNeedQueue[trg][j]) {
-            substitute(wCode, tS("$(") + nModels[nt_post].varNames[j] + tS("_post)"),
-                       devPrefix + nModels[nt_post].varNames[j] + model.neuronName[trg] + tS("[") + offsetPost + postIdx + tS("]"));
+            substitute(wCode, "$(" + nModels[nt_post].varNames[j] + "_post)",
+                       devPrefix + nModels[nt_post].varNames[j] + model.neuronName[trg] + "[" + offsetPost + postIdx + "]");
         }
         else {
-            substitute(wCode, tS("$(") + nModels[nt_post].varNames[j] + tS("_post)"),
-                       devPrefix + nModels[nt_post].varNames[j] + model.neuronName[trg] + tS("[") + postIdx + tS("]"));
+            substitute(wCode, "$(" + nModels[nt_post].varNames[j] + "_post)",
+                       devPrefix + nModels[nt_post].varNames[j] + model.neuronName[trg] + "[" + postIdx + "]");
         }
     }
-    extended_value_substitutions(wCode, nModels[nt_post].pNames, tS("_post"), model.neuronPara[trg]);
-    extended_value_substitutions(wCode, nModels[nt_post].dpNames, tS("_post"), model.dnp[trg]);
-    extended_name_substitutions(wCode, devPrefix, nModels[nt_post].extraGlobalNeuronKernelParameters, tS("_post"), model.neuronName[trg]);
+    extended_value_substitutions(wCode, nModels[nt_post].pNames, "_post", model.neuronPara[trg]);
+    extended_value_substitutions(wCode, nModels[nt_post].dpNames, "_post", model.dnp[trg]);
+    extended_name_substitutions(wCode, devPrefix, nModels[nt_post].extraGlobalNeuronKernelParameters, "_post", model.neuronName[trg]);
 }
 
 #endif // STRINGUTILS_CC
