@@ -31,7 +31,7 @@
 // The CPU_ONLY version does not need any of this
 #ifndef CPU_ONLY
 
-short *isGrpVarNeeded;
+vector<bool> isGrpVarNeeded;
 
 
 //-------------------------------------------------------------------------
@@ -73,14 +73,14 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
     os << "// include the support codes provided by the user for neuron or synaptic models" << ENDL;
     os << "#include \"support_code.h\"" << ENDL << ENDL;
 
-    isGrpVarNeeded = new short[model.neuronGrpN];
+    isGrpVarNeeded.resize(model.neuronGrpN, false);
     for (unsigned int i = 0; i < model.synapseGrpN; i++) {
         if (model.synapseConnType[i] == SPARSE){
             if ((model.synapseSpanType[i] == 0) && (model.neuronN[model.synapseTarget[i]] > synapseBlkSz)) {
-                isGrpVarNeeded[model.synapseTarget[i]] = 1; //! Binary flag for the sparse synapses to use atomic operations when the number of connections is bigger than the block size, and shared variables otherwise
+                isGrpVarNeeded[model.synapseTarget[i]] = true; //! Binary flag for the sparse synapses to use atomic operations when the number of connections is bigger than the block size, and shared variables otherwise
             }
             if ((model.synapseSpanType[i] == 1) && (model.neuronN[model.synapseSource[i]] > synapseBlkSz)) {
-                isGrpVarNeeded[model.synapseTarget[i]] = 1; //! Binary flag for the sparse synapses to use atomic operations when the number of connections is bigger than the block size, and shared variables otherwise
+                isGrpVarNeeded[model.synapseTarget[i]] = true; //! Binary flag for the sparse synapses to use atomic operations when the number of connections is bigger than the block size, and shared variables otherwise
             }
         }
     }
