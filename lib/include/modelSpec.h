@@ -120,7 +120,7 @@ public:
   vector<bool> neuronNeedTrueSpk; //!< Whether spike-like events from a group are required
   vector<bool> neuronNeedSpkEvnt; //!< Whether spike-like events from a group are required
   vector<vector<bool> > neuronVarNeedQueue; //!< Whether a neuron variable needs queueing for syn code
-  vector<set<pair<string, string>>> neuronSpkEvntCondition; //!< Will contain the spike event condition code when spike events are used
+  vector<set<pair<string, string> > > neuronSpkEvntCondition; //!< Will contain the spike event condition code when spike events are used
   vector<unsigned int> neuronDelaySlots; //!< The number of slots needed in the synapse delay queues of a neuron group
   vector<int> neuronHostID; //!< The ID of the cluster node which the neuron groups are computed on
   vector<int> neuronDeviceID; //!< The ID of the CUDA device which the neuron groups are comnputed on
