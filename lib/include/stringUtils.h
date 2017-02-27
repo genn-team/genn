@@ -2,11 +2,13 @@
 #ifndef STRINGUTILS_H
 #define STRINGUTILS_H
 
-#include "modelSpec.h"
-
 #include <string>
 #include <sstream>
 #include <vector>
+
+
+// Forward declarations
+class NNmodel;
 
 using namespace std;
 
