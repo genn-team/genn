@@ -3,6 +3,7 @@
 // Implement models
 IMPLEMENT_MODEL(NeuronModels::Izhikevich);
 IMPLEMENT_MODEL(NeuronModels::SpikeSource);
+IMPLEMENT_MODEL(NeuronModels::Poisson);
 
 //----------------------------------------------------------------------------
 // NeuronModels::LegacyWrapper

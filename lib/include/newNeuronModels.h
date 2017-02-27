@@ -101,4 +101,34 @@ public:
 
     SET_THRESHOLD_CONDITION_CODE("0");
 };
+
+//----------------------------------------------------------------------------
+// NeuronModels::Poisson
+//----------------------------------------------------------------------------
+class Poisson : public Base
+{
+public:
+    DECLARE_MODEL(NeuronModels::Poisson, 4, 3);
+
+    SET_SIM_CODE(
+        "uint64_t theRnd;\n"
+        "if ($(V) > $(Vrest)) {\n"
+        "   $(V)= $(Vrest);\n"
+        "}"
+        "else if ($(t) - $(spikeTime) > ($(trefract))) {\n"
+        "   MYRAND($(seed),theRnd);\n"
+        "   if (theRnd < *($(rates)+$(offset)+$(id))) {\n"
+        "       $(V)= $(Vspike);\n"
+        "       $(spikeTime)= $(t);\n"
+        "   }\n"
+        "}\n"
+    );
+    SET_THRESHOLD_CONDITION_CODE("$(V) >= $(Vspike)");
+
+    SET_PARAM_NAMES({"therate", "trefract", "Vspike", "Vrest"});
+    SET_INIT_VALS({{"V", "scalar"}, {"seed", "uint64_t"}, {"spikeTime", "scalar"}});
+    SET_EXTRA_GLOBAL_PARAMS({{"rates", "uint64_t *"}, {"offset", "unsigned int"}});
+
+    virtual bool IsPoisson() const{ return true; }
+};
 } // NeuronModels
