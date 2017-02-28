@@ -2,6 +2,7 @@
 #ifndef STRINGUTILS_CC
 #define STRINGUTILS_CC
 
+#include "modelSpec.h"
 #include "stringUtils.h"
 #include "utils.h"
 
