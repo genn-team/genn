@@ -80,7 +80,7 @@ CUresult cudaFuncGetAttributesDriver(cudaFuncAttributes *attr, CUfunction kern) 
  */
 //--------------------------------------------------------------------------
 
-void gennError(string error)
+void gennError(const string &error)
 {
     cerr << "GeNN error: " << error << endl;
     exit(EXIT_FAILURE);
@@ -109,7 +109,7 @@ void writeHeader(ostream &os)
 //! \brief Tool for determining the size of variable types on the current architecture
 //--------------------------------------------------------------------------
 
-unsigned int theSize(string type) 
+unsigned int theSize(const string &type)
 {
   unsigned int size = 0;
   if (type.find("*") != string::npos) size= sizeof(char *); // it's a pointer ... any pointer should have the same size

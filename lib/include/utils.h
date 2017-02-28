@@ -98,14 +98,14 @@ CUresult cudaFuncGetAttributesDriver(cudaFuncAttributes *attr, CUfunction kern);
  */
 //--------------------------------------------------------------------------
 
-void gennError(string error);
+void gennError(const string &error);
 
 
 //--------------------------------------------------------------------------
 //! \brief Tool for determining the size of variable types on the current architecture
 //--------------------------------------------------------------------------
 
-unsigned int theSize(string type);
+unsigned int theSize(const string &type);
 
 
 //--------------------------------------------------------------------------
