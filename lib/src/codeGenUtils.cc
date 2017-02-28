@@ -1,14 +1,13 @@
+#include "codeGenUtils.h"
 
-#ifndef STRINGUTILS_CC
-#define STRINGUTILS_CC
-
-#include "modelSpec.h"
-#include "stringUtils.h"
-#include "utils.h"
-
+// Standard includes
 #if !defined(__GNUC__) || (__GNUC__ >= 4 && __GNUC_MINOR__ >= 9)
 #include <regex>
 #endif
+
+// GeNN includes
+#include "modelSpec.h"
+#include "utils.h"
 
 //--------------------------------------------------------------------------
 // Anonymous namespace
@@ -180,8 +179,8 @@ void doFinal(string &code, unsigned int i, const string &type, unsigned int &sta
         }
     }
 }
+}    // Anonymous namespace
 
-}
 //--------------------------------------------------------------------------
 //! \brief Tool for substituting strings in the neuron code strings or other templates
 //--------------------------------------------------------------------------
@@ -192,50 +191,6 @@ void substitute(string &s, const string &trg, const string &rep)
     while (found != string::npos) {
         s.replace(found,trg.length(),rep);
         found= s.find(trg);
-    }
-}
-
-//--------------------------------------------------------------------------
-//! \brief This function performs a list of name substitutions for variables in code snippets.
-//--------------------------------------------------------------------------
-
-void name_substitutions(string &code, const string &prefix, const vector<string> &names, const string &postfix)
-{
-    for (int k = 0, l = names.size(); k < l; k++) {
-        substitute(code, "$(" + names[k] + ")", prefix + names[k] + postfix);
-    }
-}
-
-//--------------------------------------------------------------------------
-//! \brief This function performs a list of value substitutions for parameters in code snippets.
-//--------------------------------------------------------------------------
-
-void value_substitutions(string &code, const vector<string> &names, const vector<double> &values)
-{
-    for (int k = 0, l = names.size(); k < l; k++) {
-        substitute(code, "$(" + names[k] + ")", "(" + to_string(values[k]) + ")");
-    }
-}
-
-//--------------------------------------------------------------------------
-//! \brief This function performs a list of name substitutions for variables in code snippets where the variables have an extension in their names (e.g. "_pre").
-//--------------------------------------------------------------------------
-
-void extended_name_substitutions(string &code, const string &prefix, const vector<string> &names, const string &ext, const string &postfix)
-{
-    for (int k = 0, l = names.size(); k < l; k++) {
-        substitute(code, "$(" + names[k] + ext + ")", prefix + names[k] + postfix);
-    }
-}
-
-//--------------------------------------------------------------------------
-//! \brief This function performs a list of value substitutions for parameters in code snippets where the parameters have an extension in their names (e.g. "_pre").
-//--------------------------------------------------------------------------
-
-void extended_value_substitutions(string &code, const vector<string> &names, const string &ext, const vector<double> &values)
-{
-    for (int k = 0, l = names.size(); k < l; k++) {
-        substitute(code, "$(" + names[k] + ext + ")", "(" + to_string(values[k]) + ")");
     }
 }
 
@@ -349,7 +304,7 @@ string ensureFtype(const string &oldcode, const string &type)
  */
 //--------------------------------------------------------------------------
 
-void checkUnreplacedVariables(string code, string codeName) 
+void checkUnreplacedVariables(const string &code, const string &codeName)
 {
     regex rgx("\\$\\([\\w]+\\)");
     string vars= "";
@@ -364,7 +319,7 @@ void checkUnreplacedVariables(string code, string codeName)
     }
 }
 #else
-void checkUnreplacedVariables(string code, string codeName) 
+void checkUnreplacedVariables(const string &, const string &)
 {
 }
 #endif
@@ -381,8 +336,6 @@ void neuron_substitutions_in_synaptic_code(
     const NNmodel &model, //!< the neuronal network model to generate code for
     unsigned int src, //!< the number of the src neuron population
     unsigned int trg, //!< the number of the target neuron population
-    unsigned int nt_pre, //!< the neuron type of the pre-synaptic neuron
-    unsigned int nt_post, //!< the neuron type of the post-synaptic neuron
     const string &offsetPre, //!< delay slot offset expression for pre-synaptic vars
     const string &offsetPost, //!< delay slot offset expression for post-synaptic vars
     const string &preIdx, //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
@@ -391,37 +344,55 @@ void neuron_substitutions_in_synaptic_code(
     )
 {
     // presynaptic neuron variables, parameters, and global parameters
-    if (model.neuronType[src] == POISSONNEURON) substitute(wCode, "$(V_pre)", to_string(model.neuronPara[src][2]));
+    if (model.neuronModel[src]->IsPoisson()) {
+        substitute(wCode, "$(V_pre)", to_string(model.neuronPara[src][2]));
+    }
     substitute(wCode, "$(sT_pre)", devPrefix+ "sT" + model.neuronName[src] + "[" + offsetPre + preIdx + "]");
-    for (int j = 0; j < nModels[nt_pre].varNames.size(); j++) {
+    auto preInitVals = model.neuronModel[src]->GetInitVals();
+    for (size_t j = 0; j < preInitVals.size(); j++) {
         if (model.neuronVarNeedQueue[src][j]) {
-            substitute(wCode, "$(" + nModels[nt_pre].varNames[j] + "_pre)",
-                       devPrefix + nModels[nt_pre].varNames[j] + model.neuronName[src] + "[" + offsetPre + preIdx + "]");
+            substitute(wCode, "$(" + preInitVals[j].first + "_pre)",
+                       devPrefix + preInitVals[j].first + model.neuronName[src] + "[" + offsetPre + preIdx + "]");
         }
         else {
-            substitute(wCode, "$(" + nModels[nt_pre].varNames[j] + "_pre)",
-                       devPrefix + nModels[nt_pre].varNames[j] + model.neuronName[src] + "[" + preIdx + "]");
+            substitute(wCode, "$(" + preInitVals[j].first + "_pre)",
+                       devPrefix + preInitVals[j].first + model.neuronName[src] + "[" + preIdx + "]");
         }
     }
-    extended_value_substitutions(wCode, nModels[nt_pre].pNames, "_pre", model.neuronPara[src]);
-    extended_value_substitutions(wCode, nModels[nt_pre].dpNames, "_pre", model.dnp[src]);
-    extended_name_substitutions(wCode, devPrefix, nModels[nt_pre].extraGlobalNeuronKernelParameters, "_pre", model.neuronName[src]);
+    extended_value_substitutions(wCode, model.neuronModel[src]->GetParamNames(), "_pre", model.neuronPara[src]);
+
+    auto preDerivedParams = model.neuronModel[src]->GetDerivedParams();
+    auto preDerivedParamNameBegin = GetPairKeyConstIter(preDerivedParams.cbegin());
+    auto preDerivedParamNameEnd = GetPairKeyConstIter(preDerivedParams.cend());
+    extended_value_substitutions(wCode, preDerivedParamNameBegin, preDerivedParamNameEnd, "_pre", model.dnp[src]);
+
+    auto preExtraGlobalParams = model.neuronModel[src]->GetExtraGlobalParams();
+    auto preExtraGlobalParamsNameBegin = GetPairKeyConstIter(preExtraGlobalParams.cbegin());
+    auto preExtraGlobalParamsNameEnd = GetPairKeyConstIter(preExtraGlobalParams.cend());
+    extended_name_substitutions(wCode, devPrefix, preExtraGlobalParamsNameBegin, preExtraGlobalParamsNameEnd, "_pre", model.neuronName[src]);
     
     // postsynaptic neuron variables, parameters, and global parameters
     substitute(wCode, "$(sT_post)", devPrefix + "sT" + model.neuronName[trg] + "[" + offsetPost + postIdx + "]");
-    for (int j = 0; j < nModels[nt_post].varNames.size(); j++) {
+    auto postInitVals = model.neuronModel[trg]->GetInitVals();
+    for (size_t j = 0; j < postInitVals.size(); j++) {
         if (model.neuronVarNeedQueue[trg][j]) {
-            substitute(wCode, "$(" + nModels[nt_post].varNames[j] + "_post)",
-                       devPrefix + nModels[nt_post].varNames[j] + model.neuronName[trg] + "[" + offsetPost + postIdx + "]");
+            substitute(wCode, "$(" + postInitVals[j].first + "_post)",
+                       devPrefix + postInitVals[j].first + model.neuronName[trg] + "[" + offsetPost + postIdx + "]");
         }
         else {
-            substitute(wCode, "$(" + nModels[nt_post].varNames[j] + "_post)",
-                       devPrefix + nModels[nt_post].varNames[j] + model.neuronName[trg] + "[" + postIdx + "]");
+            substitute(wCode, "$(" + postInitVals[j].first + "_post)",
+                       devPrefix + postInitVals[j].first + model.neuronName[trg] + "[" + postIdx + "]");
         }
     }
-    extended_value_substitutions(wCode, nModels[nt_post].pNames, "_post", model.neuronPara[trg]);
-    extended_value_substitutions(wCode, nModels[nt_post].dpNames, "_post", model.dnp[trg]);
-    extended_name_substitutions(wCode, devPrefix, nModels[nt_post].extraGlobalNeuronKernelParameters, "_post", model.neuronName[trg]);
-}
+    extended_value_substitutions(wCode, model.neuronModel[trg]->GetParamNames(), "_post", model.neuronPara[trg]);
 
-#endif // STRINGUTILS_CC
+    auto postDerivedParams = model.neuronModel[trg]->GetDerivedParams();
+    auto postDerivedParamNameBegin= GetPairKeyConstIter(postDerivedParams.cbegin());
+    auto postDerivedParamNameEnd = GetPairKeyConstIter(postDerivedParams.cend());
+    extended_value_substitutions(wCode, postDerivedParamNameBegin, postDerivedParamNameEnd, "_post", model.dnp[trg]);
+
+    auto postExtraGlobalParams = model.neuronModel[trg]->GetExtraGlobalParams();
+    auto postExtraGlobalParamsNameBegin = GetPairKeyConstIter(postExtraGlobalParams.cbegin());
+    auto postExtraGlobalParamsNameEnd = GetPairKeyConstIter(postExtraGlobalParams.cend());
+    extended_name_substitutions(wCode, devPrefix, postExtraGlobalParamsNameBegin, postExtraGlobalParamsNameEnd, "_post", model.neuronName[trg]);
+}

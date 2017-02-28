@@ -29,7 +29,7 @@
 #include "generateKernels.h"
 #include "modelSpec.h"
 #include "utils.h"
-#include "stringUtils.h"
+#include "codeGenUtils.h"
 #include "CodeHelper.h"
 
 #include <cmath>
@@ -126,7 +126,7 @@ void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
 
         // Get the sizes of each synapse / learn group present on this host and device
         vector<unsigned int> synapseN, learnN;
-        for (int group = 0; group < model.synapseGrpN; group++) {
+        for (unsigned int group = 0; group < model.synapseGrpN; group++) {
             if ((model.synapseConnType[group] == SPARSE) && (model.maxConn[group]>0)) {
                 groupSize[0].push_back(model.maxConn[group]);
             }
@@ -338,7 +338,7 @@ void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
 
                         // The number of thread blocks required to simulate all groups
                         requiredBlocks = 0;
-                        for (int group = 0; group < groupSize[kernel].size(); group++) {
+                        for (size_t group = 0; group < groupSize[kernel].size(); group++) {
                             requiredBlocks+= ceil(((float) groupSize[kernel][group])/(blkSz*warpSize));
                         }
 #ifdef BLOCKSZ_DEBUG
@@ -381,8 +381,6 @@ void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
 
         // Now choose the device
         if (GENN_PREFERENCES::autoChooseDevice) {
-
-            int anySmall= 0;
             int *smallModelCnt= new int[deviceCount];
             int *sumOccupancy= new int[deviceCount];
             float smVersion, bestSmVersion = 0.0;

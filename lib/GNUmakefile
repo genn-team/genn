@@ -41,7 +41,7 @@ else
     GENERATEALL          :=$(GENERATEALL_PATH)/generateALL_CPU_ONLY
     LIBGENN              :=$(LIBGENN_PATH)/libgenn_CPU_ONLY.a
 endif
-LIBGENN_OBJ              :=global.o modelSpec.o neuronModels.o synapseModels.o postSynapseModels.o utils.o stringUtils.o sparseUtils.o hr_time.o
+LIBGENN_OBJ              :=global.o modelSpec.o neuronModels.o synapseModels.o postSynapseModels.o utils.o codeGenUtils.o sparseUtils.o hr_time.o newNeuronModels.o newPostsynapticModels.o newWeightUpdateModels.o
 LIBGENN_OBJ              :=$(addprefix $(LIBGENN_OBJ_PATH)/,$(LIBGENN_OBJ))
 
 # Global CUDA compiler settings
@@ -55,9 +55,9 @@ ifeq ($(DARWIN),DARWIN)
     CXX                  :=clang++
 endif
 ifndef CPU_ONLY
-    CXXFLAGS             :=-std=c++11 -DNVCC=\"$(NVCC)\"
+    CXXFLAGS             :=-std=c++11 -Wall -Wextra -DNVCC=\"$(NVCC)\"
 else
-    CXXFLAGS             :=-std=c++11 -DCPU_ONLY
+    CXXFLAGS             :=-std=c++11 -Wall -Wextra -DCPU_ONLY
 endif
 ifdef DEBUG
     CXXFLAGS             +=-g -O0 -DDEBUG
