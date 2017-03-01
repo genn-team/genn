@@ -103,6 +103,20 @@ bool NNmodel::zeroCopyInUse() const
         return true;
     }
 
+    // If any synapse groups have any weight update model state variables with zero-copy enabled return true
+    if(any_of(begin(synapseInitValZeroCopy), end(synapseInitValZeroCopy),
+        [](const set<string> &s){ return !s.empty(); }))
+    {
+        return true;
+    }
+
+    // If any synapse groups have any weight update model state variables with zero-copy enabled return true
+    if(any_of(begin(postSynapseInitValZeroCopy), end(postSynapseInitValZeroCopy),
+        [](const set<string> &s){ return !s.empty(); }))
+    {
+        return true;
+    }
+
     return false;
 }
 
