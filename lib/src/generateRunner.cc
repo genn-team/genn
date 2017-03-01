@@ -2180,6 +2180,13 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
         os << "cudaEventElapsedTime(&tmp, neuronStart, neuronStop);" << ENDL;
         os << "neuron_tme+= tmp/1000.0;" << ENDL;
     }
+
+    // Synchronise if zero-copy is in use
+    if(model.zeroCopyInUse())
+    {
+        os << "cudaDeviceSynchronize();" << ENDL;
+    }
+
     os << "iT++;" << ENDL;
     os << "t= iT*DT;" << ENDL;
     os << CB(1130) << ENDL;
