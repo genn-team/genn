@@ -410,7 +410,7 @@ void NNmodel::initLearnGrps()
                 if (wu->GetSimCode().find("$(" + p.first + ")") != string::npos) used = true; // it's used
                 if (wu->GetEventCode().find("$(" + p.first + ")") != string::npos) used = true; // it's used
                 if (wu->GetEventThresholdConditionCode().find("$(" + p.first + ")") != string::npos) used = true; // it's used
-                 if (used) {
+                if (used) {
                     synapseKernelParameters.push_back(pnamefull);
                     synapseKernelParameterTypes.push_back(p.second);
                 }
@@ -533,6 +533,53 @@ void NNmodel::setSynapseClusterIndex(const string &synapseGroup, /**< Name of th
     synapseDeviceID[groupNo] = deviceID;  
 }
 
+//--------------------------------------------------------------------------
+/*! \brief Function to specify that synapse group should use zero-copied memory for a particular weight update model state variable -
+ * May improve IO performance at the expense of kernel performance
+ */
+//--------------------------------------------------------------------------
+void NNmodel::setSynapseWeightUpdateInitValZeroCopy(const string &synapseGroup, const string &var)
+{
+    const unsigned int groupNo = findSynapseGrp(synapseGroup);
+
+    // If named variable doesn't exist give error
+    auto wuInitVals = synapseModel[groupNo]->GetInitVals();
+    auto wuInitValNameBegin = GetPairKeyConstIter(begin(wuInitVals));
+    auto wuInitValNameEnd = GetPairKeyConstIter(end(wuInitVals));
+    if(find(wuInitValNameBegin, wuInitValNameEnd, var) == wuInitValNameEnd)
+    {
+        gennError("Cannot find weight update model initial variable " + var + " for synapse group " + synapseGroup);
+    }
+    // Otherwise add name of variable to set
+    else
+    {
+        synapseInitValZeroCopy[groupNo].insert(var);
+    }
+}
+
+//--------------------------------------------------------------------------
+/*! \brief Function to specify that synapse group should use zero-copied memory for a particular postsynaptic model state variable -
+ * May improve IO performance at the expense of kernel performance
+ * */
+//--------------------------------------------------------------------------
+void NNmodel::setSynapsePostsynapticInitValZeroCopy(const string &synapseGroup, const string &var)
+{
+    const unsigned int groupNo = findSynapseGrp(synapseGroup);
+
+    // If named variable doesn't exist give error
+    auto psmInitVals = postSynapseModel[groupNo]->GetInitVals();
+    auto psmInitValNameBegin = GetPairKeyConstIter(begin(psmInitVals));
+    auto psmInitValNameEnd = GetPairKeyConstIter(end(psmInitVals));
+    if(find(psmInitValNameBegin, psmInitValNameEnd, var) == psmInitValNameEnd)
+    {
+        gennError("Cannot find postsynaptic model initial variable " + var + " for synapse group " + synapseGroup);
+    }
+    // Otherwise add name of variable to set
+    else
+    {
+        postSynapseInitValZeroCopy[groupNo].insert(var);
+    }
+}
 
 //--------------------------------------------------------------------------
 /*! \overload
@@ -773,6 +820,10 @@ void NNmodel::addSynapsePopulation(
     registerSynapsePopulation(i);
     maxConn.push_back(neuronN[trgNumber]);
     synapseSpanType.push_back(0);
+
+    // By default zero-copy should be disabled
+    synapseInitValZeroCopy.push_back(set<string>());
+    postSynapseInitValZeroCopy.push_back(set<string>());
 
     // initially set synapase group indexing variables to device 0 host 0
     synapseDeviceID.push_back(0);

@@ -171,7 +171,8 @@ public:
   vector<unsigned int> padSumSynDynN; //!< Padded summed neuron numbers of synapse dynamics group source populations
   vector<int> synapseHostID; //!< The ID of the cluster node which the synapse groups are computed on
   vector<int> synapseDeviceID; //!< The ID of the CUDA device which the synapse groups are comnputed on
-
+  vector<set<string>> synapseInitValZeroCopy; //!< Whether indidividual weight update model state variables of a synapse group should use zero-copied memory
+  vector<set<string>> postSynapseInitValZeroCopy; //!< Whether indidividual post synapse model state variables of a synapse group should use zero-copied memory
 
   // PUBLIC KERNEL PARAMETER VARIABLES
   //==================================
@@ -327,6 +328,10 @@ public:
       maxConn.push_back(neuronN[trgNumber]);
       synapseSpanType.push_back(0);
 
+      // By default zero-copy should be disabled
+      synapseInitValZeroCopy.push_back(set<string>());
+      postSynapseInitValZeroCopy.push_back(set<string>());
+
       // initially set synapase group indexing variables to device 0 host 0
       synapseDeviceID.push_back(0);
       synapseHostID.push_back(0);
@@ -336,6 +341,9 @@ public:
   void setMaxConn(const string&, unsigned int); //< Set maximum connections per neuron for the given group (needed for optimization by sparse connectivity)
   void setSpanTypeToPre(const string&); //!< Method for switching the execution order of synapses to pre-to-post
   void setSynapseClusterIndex(const string &synapseGroup, int hostID, int deviceID); //!< Function for setting which host and which device a synapse group will be simulated on
+  void setSynapseWeightUpdateInitValZeroCopy(const string &synapseGroup, const string &var);   //!< Function to specify that synapse group should use zero-copied memory for a particular weight update model state variable - May improve IO performance at the expense of kernel performance
+  void setSynapsePostsynapticInitValZeroCopy(const string &synapseGroup, const string &var);   //!< Function to specify that synapse group should use zero-copied memory for a particular postsynaptic model state variable - May improve IO performance at the expense of kernel performance
+
   void initLearnGrps();
   unsigned int findSynapseGrp(const string&) const; //< Find the the ID number of a synapse group by its name
  
