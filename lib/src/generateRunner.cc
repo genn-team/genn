@@ -456,7 +456,7 @@ void genRunner(const NNmodel &model, //!< Model description
     os << "template<class T>" << ENDL;
     os << "void deviceZeroCopy(T hostPtr, const T *devPtr, const T &devSymbol)" << ENDL;
     os << "{" << ENDL;
-    os << "    CHECK_CUDA_ERRORS(cudaHostGetDevicePointer(devPtr, hostPtr, 0));" << ENDL;
+    os << "    CHECK_CUDA_ERRORS(cudaHostGetDevicePointer((void **)devPtr, (void*)hostPtr, 0));" << ENDL;
     os << "    void *devSymbolPtr;" << ENDL;
     os << "    CHECK_CUDA_ERRORS(cudaGetSymbolAddress(&devSymbolPtr, devSymbol));" << ENDL;
     os << "    CHECK_CUDA_ERRORS(cudaMemcpy(devSymbolPtr, devPtr, sizeof(void*), cudaMemcpyHostToDevice));" << ENDL;
@@ -936,6 +936,12 @@ void genRunner(const NNmodel &model, //!< Model description
     os << "{" << ENDL;
 #ifndef CPU_ONLY
     os << "    CHECK_CUDA_ERRORS(cudaSetDevice(" << theDevice << "));" << ENDL;
+
+    // If the model requires zero-copy set appropriate device flags
+    if(model.zeroCopyInUse())
+    {
+        os << "    CHECK_CUDA_ERRORS(cudaSetDeviceFlags(cudaDeviceMapHost));" << ENDL;
+    }
 #endif
     //cout << "model.neuronGroupN " << model.neuronGrpN << ENDL;
     //os << "    " << model.ftype << " free_m, total_m;" << ENDL;
@@ -973,34 +979,37 @@ void genRunner(const NNmodel &model, //!< Model description
     // ALLOCATE NEURON VARIABLES
     for (unsigned int i = 0; i < model.neuronGrpN; i++) {
         // Allocate population spike count
-        mem += allocate_variable(os, "unsigned int", "glbSpkCnt" + model.neuronName[i], false,
+        mem += allocate_variable(os, "unsigned int", "glbSpkCnt" + model.neuronName[i], model.neuronSpikeZeroCopy[i],
                                  model.neuronNeedTrueSpk[i] ? model.neuronDelaySlots[i] : 1);
 
         // Allocate population spike output buffer
-        mem += allocate_variable(os, "unsigned int", "glbSpk" + model.neuronName[i], false,
+        mem += allocate_variable(os, "unsigned int", "glbSpk" + model.neuronName[i], model.neuronSpikeZeroCopy[i],
                                  model.neuronNeedTrueSpk[i] ? model.neuronN[i] * model.neuronDelaySlots[i] : model.neuronN[i]);
 
 
         if (model.neuronNeedSpkEvnt[i]) {
             // Allocate population spike-like event counters
-            mem += allocate_variable(os, "unsigned int", "glbSpkCntEvnt" + model.neuronName[i], false,
+            mem += allocate_variable(os, "unsigned int", "glbSpkCntEvnt" + model.neuronName[i], model.neuronSpikeEventZeroCopy[i],
                                      model.neuronDelaySlots[i]);
 
             // Allocate population spike-like event output buffer
-            mem += allocate_variable(os, "unsigned int", "glbSpkEvnt" + model.neuronName[i], false,
+            mem += allocate_variable(os, "unsigned int", "glbSpkEvnt" + model.neuronName[i], model.neuronSpikeEventZeroCopy[i],
                                      model.neuronN[i] * model.neuronDelaySlots[i]);
         }
 
         // Allocate buffer to hold last spike times if required
         if (model.neuronNeedSt[i]) {
-            mem += allocate_variable(os, model.ftype, "sT" + model.neuronName[i], false,
+            mem += allocate_variable(os, model.ftype, "sT" + model.neuronName[i], model.neuronSpikeTimeZeroCopy[i],
                                      model.neuronN[i] * model.neuronDelaySlots[i]);
         }
 
         // Allocate memory for neuron model's state variables
-        auto neuronModelInitVals = model.neuronModel[i]->GetInitVals();
-        for (size_t j = 0; j < neuronModelInitVals.size(); j++) {
-            mem += allocate_variable(os, neuronModelInitVals[j].second, neuronModelInitVals[j].first + model.neuronName[i], false,
+        auto nmInitVals = model.neuronModel[i]->GetInitVals();
+        const auto &nmInitValZeroCopy = model.neuronInitValZeroCopy[i];
+        for (size_t j = 0; j < nmInitVals.size(); j++) {
+            const bool zeroCopy = (nmInitValZeroCopy.find(nmInitVals[j].first) != end(nmInitValZeroCopy));
+
+            mem += allocate_variable(os, nmInitVals[j].second, nmInitVals[j].first + model.neuronName[i], zeroCopy,
                                      model.neuronVarNeedQueue[i][j] ? model.neuronN[i] * model.neuronDelaySlots[i] : model.neuronN[i]);
         }
         os << ENDL;
@@ -1345,23 +1354,25 @@ void genRunner(const NNmodel &model, //!< Model description
     // FREE NEURON VARIABLES
     for (unsigned int i = 0; i < model.neuronGrpN; i++) {
         // Free spike buffer
-        free_variable(os, "glbSpkCnt" + model.neuronName[i], false);
-        free_variable(os, "glbSpk" + model.neuronName[i], false);
+        free_variable(os, "glbSpkCnt" + model.neuronName[i], model.neuronSpikeZeroCopy[i]);
+        free_variable(os, "glbSpk" + model.neuronName[i], model.neuronSpikeZeroCopy[i]);
 
         // Free spike-like event buffer if allocated
         if (model.neuronNeedSpkEvnt[i]) {
-            free_variable(os, "glbSpkCntEvnt" + model.neuronName[i], false);
-            free_variable(os, "glbSpkEvnt" + model.neuronName[i], false);
+            free_variable(os, "glbSpkCntEvnt" + model.neuronName[i], model.neuronSpikeEventZeroCopy[i]);
+            free_variable(os, "glbSpkEvnt" + model.neuronName[i], model.neuronSpikeEventZeroCopy[i]);
         }
 
         // Free last spike time buffer if allocated
         if (model.neuronNeedSt[i]) {
-            free_variable(os, "sT" + model.neuronName[i], false);
+            free_variable(os, "sT" + model.neuronName[i], model.neuronSpikeTimeZeroCopy[i]);
         }
 
         // Free neuron state variables
+        const auto &nmInitValZeroCopy = model.neuronInitValZeroCopy[i];
         for (auto const &v : model.neuronModel[i]->GetInitVals()) {
-            free_variable(os, v.first + model.neuronName[i], false);
+            free_variable(os, v.first + model.neuronName[i],
+                          nmInitValZeroCopy.find(v.first) != end(nmInitValZeroCopy));
         }
     }
 

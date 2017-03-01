@@ -73,6 +73,39 @@ void NNmodel::setName(const string inname)
     name= inname;
 }
 
+bool NNmodel::zeroCopyInUse() const
+{
+    // If any neuron groups have zero-copy enabled for their spikes return true
+    if(any_of(begin(neuronSpikeZeroCopy), end(neuronSpikeZeroCopy),
+        [](bool v){ return v; }))
+    {
+        return true;
+    }
+
+    // If any neuron groups have zero-copy enabled for their spike events return true
+    if(any_of(begin(neuronSpikeEventZeroCopy), end(neuronSpikeEventZeroCopy),
+        [](bool v){ return v; }))
+    {
+        return true;
+    }
+
+    // If any neuron groups have zero-copy enabled for their spike times return true
+    if(any_of(begin(neuronSpikeTimeZeroCopy), end(neuronSpikeTimeZeroCopy),
+        [](bool v){ return v; }))
+    {
+        return true;
+    }
+
+    // If any neuron groups have any state variables with zero-copy enabled return true
+    if(any_of(begin(neuronInitValZeroCopy), end(neuronInitValZeroCopy),
+        [](const set<string> &s){ return !s.empty(); }))
+    {
+        return true;
+    }
+
+    return false;
+}
+
 
 //--------------------------------------------------------------------------
 /*! \brief This function generates the necessary entries so that a synapse population is known to source and target neuron groups.
@@ -120,6 +153,60 @@ void NNmodel::setNeuronClusterIndex(const string &neuronGroup, /**< Name of the 
     unsigned int groupNo = findNeuronGrp(neuronGroup);
     neuronHostID[groupNo] = hostID;
     neuronDeviceID[groupNo] = deviceID;
+}
+
+//--------------------------------------------------------------------------
+/*! \brief Function to specify that neuron group should use zero-copied memory for its spikes -
+ * May improve IO performance at the expense of kernel performance
+ */
+//--------------------------------------------------------------------------
+void NNmodel::setNeuronSpikeZeroCopy(const string &neuronGroup /**< Name of the neuron population */)
+{
+    neuronSpikeZeroCopy[findNeuronGrp(neuronGroup)] = true;
+}
+
+//--------------------------------------------------------------------------
+/*! \brief Function to specify that neuron group should use zero-copied memory for its spike-like events -
+ * May improve IO performance at the expense of kernel performance
+ */
+//--------------------------------------------------------------------------
+void NNmodel::setNeuronSpikeEventZeroCopy(const string &neuronGroup  /**< Name of the neuron population */)
+{
+    neuronSpikeEventZeroCopy[findNeuronGrp(neuronGroup)] = true;
+}
+
+//--------------------------------------------------------------------------
+/*! \brief Function to specify that neuron group should use zero-copied memory for its spike times -
+ * May improve IO performance at the expense of kernel performance
+ */
+//--------------------------------------------------------------------------
+void NNmodel::setNeuronSpikeTimeZeroCopy(const string &neuronGroup)
+{
+    neuronSpikeTimeZeroCopy[findNeuronGrp(neuronGroup)] = true;
+}
+
+//--------------------------------------------------------------------------
+/*! \brief Function to specify that neuron group should use zero-copied memory for a particular state variable -
+ * May improve IO performance at the expense of kernel performance
+ */
+//--------------------------------------------------------------------------
+void NNmodel::setNeuronInitValZeroCopy(const string &neuronGroup, const string &var)
+{
+    const unsigned int groupNo = findNeuronGrp(neuronGroup);
+
+    // If named variable doesn't exist give error
+    auto nmInitVals = neuronModel[groupNo]->GetInitVals();
+    auto nmInitValNameBegin = GetPairKeyConstIter(begin(nmInitVals));
+    auto nmInitValNameEnd = GetPairKeyConstIter(end(nmInitVals));
+    if(find(nmInitValNameBegin, nmInitValNameEnd, var) == nmInitValNameEnd)
+    {
+        gennError("Cannot find initial variable " + var + " for neuron group " + neuronGroup);
+    }
+    // Otherwise add name of variable to set
+    else
+    {
+        neuronInitValZeroCopy[groupNo].insert(var);
+    }
 }
 
 
@@ -509,6 +596,12 @@ void NNmodel::addNeuronPopulation(
     neuronNeedSt.push_back(false);
     neuronNeedSpkEvnt.push_back(false);
     neuronDelaySlots.push_back(1);
+
+    // By default zero-copy should be disabled
+    neuronSpikeZeroCopy.push_back(false);
+    neuronSpikeEventZeroCopy.push_back(false);
+    neuronSpikeTimeZeroCopy.push_back(false);
+    neuronInitValZeroCopy.push_back(set<string>());
 
     // initially set neuron group indexing variables to device 0 host 0
     neuronDeviceID.push_back(0);

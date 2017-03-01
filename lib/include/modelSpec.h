@@ -128,6 +128,10 @@ public:
   vector<unsigned int> neuronDelaySlots; //!< The number of slots needed in the synapse delay queues of a neuron group
   vector<int> neuronHostID; //!< The ID of the cluster node which the neuron groups are computed on
   vector<int> neuronDeviceID; //!< The ID of the CUDA device which the neuron groups are comnputed on
+  vector<bool> neuronSpikeZeroCopy; //!< Whether spikes from neuron group should use zero-copied memory
+  vector<bool> neuronSpikeEventZeroCopy; //!< Whether spike-like events from neuron group should use zero-copied memory
+  vector<bool> neuronSpikeTimeZeroCopy; //!< Whether spike times from neuron group should use zero-copied memory
+  vector<set<string>> neuronInitValZeroCopy;   //!< Whether indidividual state variables of a neuron group should use zero-copied memory
 
 
   // PUBLIC SYNAPSE VARIABLES
@@ -218,6 +222,7 @@ public:
   void setPopulationSums(); //!< Set the accumulated sums of lowest multiple of kernel block size >= group sizes for all simulated groups.
   void finalize(); //!< Declare that the model specification is finalised in modelDefinition().
 
+  bool zeroCopyInUse() const;
 
   // PUBLIC NEURON FUNCTIONS
   //========================
@@ -248,12 +253,23 @@ public:
       neuronNeedSpkEvnt.push_back(false);
       neuronDelaySlots.push_back(1);
 
+      // By default zero-copy should be disabled
+      neuronSpikeZeroCopy.push_back(false);
+      neuronSpikeEventZeroCopy.push_back(false);
+      neuronSpikeTimeZeroCopy.push_back(false);
+      neuronInitValZeroCopy.push_back(set<string>());
+
       // initially set neuron group indexing variables to device 0 host 0
       neuronDeviceID.push_back(0);
       neuronHostID.push_back(0);
   }
 
   void setNeuronClusterIndex(const string &neuronGroup, int hostID, int deviceID); //!< Function for setting which host and which device a neuron group will be simulated on
+  void setNeuronSpikeZeroCopy(const string &neuronGroup);   //!< Function to specify that neuron group should use zero-copied memory for its spikes - May improve IO performance at the expense of kernel performance
+  void setNeuronSpikeEventZeroCopy(const string &neuronGroup);   //!< Function to specify that neuron group should use zero-copied memory for its spike-like events - May improve IO performance at the expense of kernel performance
+  void setNeuronSpikeTimeZeroCopy(const string &neuronGroup);   //!< Function to specify that neuron group should use zero-copied memory for its spike times - May improve IO performance at the expense of kernel performance
+  void setNeuronInitValZeroCopy(const string &neuronGroup, const string &var);   //!< Function to specify that neuron group should use zero-copied memory for a particular state variable - May improve IO performance at the expense of kernel performance
+
   void activateDirectInput(const string&, unsigned int type); //! This function has been deprecated in GeNN 2.2
   void setConstInp(const string&, double);
   unsigned int findNeuronGrp(const string&) const; //!< Find the the ID number of a neuron group by its name
