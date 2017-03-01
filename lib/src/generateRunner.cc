@@ -29,7 +29,11 @@
 #include <stdint.h>
 #include <cfloat>
 
-
+//--------------------------------------------------------------------------
+// Anonymous namespace
+//--------------------------------------------------------------------------
+namespace
+{
 //--------------------------------------------------------------------------
 //! \brief This function generates host and device variable definitions, of the given type and name.
 //--------------------------------------------------------------------------
@@ -58,6 +62,58 @@ void extern_variable_def(ofstream &os, const string &type, const string &name)
 
 
 //--------------------------------------------------------------------------
+//! \brief This function generates host allocation code
+//--------------------------------------------------------------------------
+
+void allocate_host_variable(ofstream &os, const string &type, const string &name, bool zeroCopy, const string &size)
+{
+#ifndef CPU_ONLY
+    os << "    cudaHostAlloc(&" << name << ", " << size << " * sizeof(" << type << "), cudaHostAllocPortable);" << ENDL;
+#else
+    os << "    " << name << " = new " << model.ftype << "[" << size << "];" << ENDL;
+#endif
+}
+
+void allocate_host_variable(ofstream &os, const string &type, const string &name, bool zeroCopy, size_t size)
+{
+    allocate_host_variable(os, type, name, zeroCopy, to_string(size));
+}
+
+void allocate_device_variable(ofstream &os, const string &type, const string &name, bool zeroCopy, const string &size)
+{
+#ifndef CPU_ONLY
+    os << "    deviceMemAllocate(&d_" << name << ", dd_" << name << ", " << size << " * sizeof(" << type << "));" << ENDL;
+#endif
+}
+
+void allocate_device_variable(ofstream &os, const string &type, const string &name, bool zeroCopy, size_t size)
+{
+    allocate_device_variable(os, type, name, zeroCopy, to_string(size));
+}
+
+
+//--------------------------------------------------------------------------
+//! \brief This function generates host and device allocation with standard names (name, d_name, dd_name) and estimates size based on size known at generate-time
+//--------------------------------------------------------------------------
+unsigned int allocate_variable(ofstream &os, const string &type, const string &name, bool zeroCopy, size_t size)
+{
+    // Allocate host and device variables
+    allocate_host_variable(os, type, name, zeroCopy, size);
+    allocate_device_variable(os, type, name, zeroCopy, size);
+
+    // Return size estimate
+    return size * theSize(type);
+}
+
+void allocate_variable(ofstream &os, const string &type, const string &name, bool zeroCopy, const string &size)
+{
+    // Allocate host and device variables
+    allocate_host_variable(os, type, name, zeroCopy, size);
+    allocate_device_variable(os, type, name, zeroCopy, size);
+}
+}
+
+//--------------------------------------------------------------------------
 /*!
   \brief A function that generates predominantly host-side code.
 
@@ -75,10 +131,8 @@ void genRunner(const NNmodel &model, //!< Model description
     )
 {
     ofstream os;
-      
-#ifndef CPU_ONLY
+
     unsigned int mem = 0;
-#endif // !CPU_ONLY
   
     string SCLR_MIN;
     string SCLR_MAX;
@@ -345,6 +399,18 @@ void genRunner(const NNmodel &model, //!< Model description
     os << "    CHECK_CUDA_ERRORS(cudaMalloc(hostPtr, size));" << ENDL;
     os << "    CHECK_CUDA_ERRORS(cudaGetSymbolAddress(&devptr, devSymbol));" << ENDL;
     os << "    CHECK_CUDA_ERRORS(cudaMemcpy(devptr, hostPtr, sizeof(void*), cudaMemcpyHostToDevice));" << ENDL;
+    os << "}" << ENDL;
+    os << ENDL;
+    os << "// ------------------------------------------------------------------------" << ENDL;
+    os << "// Helper function for getting the device pointer corresponding to a zero-copied host pointer and assigning it to a symbol" << ENDL;
+    os << ENDL;
+    os << "template<class T>" << ENDL;
+    os << "void deviceZeroCopy(T hostPtr, const T *devPtr, const T &devSymbol)" << ENDL;
+    os << "{" << ENDL;
+    os << "    CHECK_CUDA_ERRORS(cudaHostGetDevicePointer(devPtr, hostPtr, 0));" << ENDL;
+    os << "    void *devSymbolPtr;" << ENDL;
+    os << "    CHECK_CUDA_ERRORS(cudaGetSymbolAddress(&devSymbolPtr, devSymbol));" << ENDL;
+    os << "    CHECK_CUDA_ERRORS(cudaMemcpy(devSymbolPtr, devPtr, sizeof(void*), cudaMemcpyHostToDevice));" << ENDL;
     os << "}" << ENDL;
     os << ENDL;
 #endif
@@ -857,94 +923,36 @@ void genRunner(const NNmodel &model, //!< Model description
 
     // ALLOCATE NEURON VARIABLES
     for (unsigned int i = 0; i < model.neuronGrpN; i++) {
-        size_t glbSpkCntSize = model.neuronNeedTrueSpk[i] ? model.neuronDelaySlots[i] : 1;
+        // Allocate population spike count
+        mem += allocate_variable(os, "unsigned int", "glbSpkCnt" + model.neuronName[i], false,
+                                 model.neuronNeedTrueSpk[i] ? model.neuronDelaySlots[i] : 1);
 
-#ifndef CPU_ONLY
-        os << "cudaHostAlloc(&glbSpkCnt" << model.neuronName[i] << ", ";
-        os << glbSpkCntSize << " * sizeof(unsigned int), cudaHostAllocPortable);" << ENDL;
-        os << "    deviceMemAllocate(&d_glbSpkCnt" << model.neuronName[i];
-        os << ", dd_glbSpkCnt" << model.neuronName[i] << ", ";
-        os << glbSpkCntSize << " * sizeof(unsigned int));" << ENDL;
-        mem += glbSpkCntSize * sizeof(unsigned int);
-#else
-        os << "glbSpkCnt" << model.neuronName[i] << " = new unsigned int[" << glbSpkCntSize << "];" << ENDL;
-#endif
+        // Allocate population spike output buffer
+        mem += allocate_variable(os, "unsigned int", "glbSpk" + model.neuronName[i], false,
+                                 model.neuronNeedTrueSpk[i] ? model.neuronN[i] * model.neuronDelaySlots[i] : model.neuronN[i]);
 
-        size_t glbSpkSize = model.neuronNeedTrueSpk[i] ? model.neuronN[i] * model.neuronDelaySlots[i] : model.neuronN[i];
-
-#ifndef CPU_ONLY
-        os << "cudaHostAlloc(&glbSpk" << model.neuronName[i] << ", ";
-        os << glbSpkSize << " * sizeof(unsigned int), cudaHostAllocPortable);" << ENDL;
-        os << "    deviceMemAllocate(&d_glbSpk" << model.neuronName[i];
-        os << ", dd_glbSpk" << model.neuronName[i] << ", ";
-        os << glbSpkSize << " * sizeof(unsigned int));" << ENDL;
-        mem += glbSpkSize * sizeof(unsigned int);
-#else
-        os << "glbSpk" << model.neuronName[i] << " = new unsigned int[" << glbSpkSize << "];" << ENDL;
-#endif
 
         if (model.neuronNeedSpkEvnt[i]) {
-            size_t size = model.neuronDelaySlots[i];
+            // Allocate population spike-like event counters
+            mem += allocate_variable(os, "unsigned int", "glbSpkCntEvnt" + model.neuronName[i], false,
+                                     model.neuronDelaySlots[i]);
 
-#ifndef CPU_ONLY
-            os << "cudaHostAlloc(&glbSpkCntEvnt" << model.neuronName[i] << ", ";
-            os << size << " * sizeof(unsigned int), cudaHostAllocPortable);" << ENDL;
-            os << "    deviceMemAllocate(&d_glbSpkCntEvnt" << model.neuronName[i];
-            os << ", dd_glbSpkCntEvnt" << model.neuronName[i] << ", ";
-            os << size << " * sizeof(unsigned int));" << ENDL;
-            mem += size * sizeof(unsigned int);
-#else
-            os << "glbSpkCntEvnt" << model.neuronName[i] << " = new unsigned int[" << size << "];" << ENDL;
-#endif
-
-            size = model.neuronN[i] * model.neuronDelaySlots[i];
-
-#ifndef CPU_ONLY
-            os << "cudaHostAlloc(&glbSpkEvnt" << model.neuronName[i] << ", ";
-            os << size << " * sizeof(unsigned int), cudaHostAllocPortable);" << ENDL;
-            os << "    deviceMemAllocate(&d_glbSpkEvnt" << model.neuronName[i];
-            os << ", dd_glbSpkEvnt" << model.neuronName[i] << ", ";
-            os << size << " * sizeof(unsigned int));" << ENDL;
-            mem += size * sizeof(unsigned int);
-#else
-            os << "glbSpkEvnt" << model.neuronName[i] << " = new unsigned int[" << size << "];" << ENDL;
-#endif
-
+            // Allocate population spike-like event output buffer
+            mem += allocate_variable(os, "unsigned int", "glbSpkEvnt" + model.neuronName[i], false,
+                                     model.neuronN[i] * model.neuronDelaySlots[i]);
         }
 
+        // Allocate buffer to hold last spike times if required
         if (model.neuronNeedSt[i]) {
-            size_t size = model.neuronN[i] * model.neuronDelaySlots[i];
-
-#ifndef CPU_ONLY
-            os << "cudaHostAlloc(&sT" << model.neuronName[i] << ", ";
-            os << size << " * sizeof(" << model.ftype << "), cudaHostAllocPortable);" << ENDL;
-            os << "    deviceMemAllocate(&d_sT" << model.neuronName[i];
-            os << ", dd_sT" << model.neuronName[i] << ", ";
-            os << size << " * sizeof(" << model.ftype << "));" << ENDL;
-            mem += size * theSize(model.ftype);
-#else
-            os << "sT" << model.neuronName[i] << " = new " << model.ftype << "[" << size << "];" << ENDL;
-#endif
-
+            mem += allocate_variable(os, model.ftype, "sT" + model.neuronName[i], false,
+                                     model.neuronN[i] * model.neuronDelaySlots[i]);
         }
 
-        // Variable are queued only if they are referenced in forward synapse code.
+        // Allocate memory for neuron model's state variables
         auto neuronModelInitVals = model.neuronModel[i]->GetInitVals();
         for (size_t j = 0; j < neuronModelInitVals.size(); j++) {
-            size_t size = model.neuronVarNeedQueue[i][j] ? model.neuronN[i] * model.neuronDelaySlots[i] : model.neuronN[i];
-
-#ifndef CPU_ONLY
-            os << "cudaHostAlloc(&" << neuronModelInitVals[j].first << model.neuronName[i] << ", ";
-            os << size << " * sizeof(" << neuronModelInitVals[j].second << "), cudaHostAllocPortable);" << ENDL;
-            os << "    deviceMemAllocate(&d_" << neuronModelInitVals[j].first << model.neuronName[i];
-            os << ", dd_" << neuronModelInitVals[j].first << model.neuronName[i] << ", ";
-            os << size << " * sizeof(" << neuronModelInitVals[j].second << "));" << ENDL;
-            mem += size * theSize(neuronModelInitVals[j].second);
-#else
-            os << neuronModelInitVals[j].first << model.neuronName[i];
-            os << " = new " << neuronModelInitVals[j].second << "[" << size << "];" << ENDL;
-#endif
-
+            mem += allocate_variable(os, neuronModelInitVals[j].second, neuronModelInitVals[j].first + model.neuronName[i], false,
+                                     model.neuronVarNeedQueue[i][j] ? model.neuronN[i] * model.neuronDelaySlots[i] : model.neuronN[i]);
         }
         os << ENDL;
     }
@@ -953,70 +961,33 @@ void genRunner(const NNmodel &model, //!< Model description
     for (unsigned int i = 0; i < model.synapseGrpN; i++) {
         const auto *wu = model.synapseModel[i];
         const auto *psm = model.postSynapseModel[i];
-        size_t inSynSize = model.neuronN[model.synapseTarget[i]];
 
-#ifndef CPU_ONLY
-        os << "cudaHostAlloc(&inSyn" << model.synapseName[i] << ", ";
-        os << inSynSize << " * sizeof(" << model.ftype << "), cudaHostAllocPortable);" << ENDL;
-        os << "    deviceMemAllocate(&d_inSyn" << model.synapseName[i];
-        os << ", dd_inSyn" << model.synapseName[i];
-        os << ", " << inSynSize << " * sizeof(" << model.ftype << "));" << ENDL;
-        mem += inSynSize * theSize(model.ftype);
-#else
-        os << "inSyn" << model.synapseName[i] << " = new " << model.ftype << "[" << inSynSize << "];" << ENDL;
-#endif
+        // Allocate buffer to hold input coming from this synapse population
+        mem += allocate_variable(os, model.ftype, "inSyn" + model.synapseName[i], false,
+                                 model.neuronN[model.synapseTarget[i]]);
 
         // note, if GLOBALG we put the value at compile time
         if (model.synapseGType[i] == INDIVIDUALID) {
-            size_t gpSize = (model.neuronN[model.synapseSource[i]] * model.neuronN[model.synapseTarget[i]]) / 32 + 1;
-
-#ifndef CPU_ONLY
-            os << "cudaHostAlloc(&gp" << model.synapseName[i] << ", ";
-            os << gpSize << " * sizeof(uint32_t), cudaHostAllocPortable);" << ENDL;
-            os << "    deviceMemAllocate(&d_gp" << model.synapseName[i];
-            os << ", dd_gp" << model.synapseName[i];
-            os << ", " << gpSize << " * sizeof(uint32_t));" << ENDL;
-            mem += gpSize * sizeof(uint32_t);
-#else
-            os << "gp" << model.synapseName[i] << " = new uint32_t[" << gpSize << "];" << ENDL;
-#endif
-
+            const size_t gpSize = (model.neuronN[model.synapseSource[i]] * model.neuronN[model.synapseTarget[i]]) / 32 + 1;
+            mem += allocate_variable(os, "uint32_t", "gp" + model.synapseName[i], false,
+                                     gpSize);
         }
 
         // allocate user-defined weight model variables
         // if they are sparse, allocate later in the allocatesparsearrays function when we know the size of the network
         if ((model.synapseConnType[i] != SPARSE) && (model.synapseGType[i] == INDIVIDUALG)) {
-            size_t size = model.neuronN[model.synapseSource[i]] * model.neuronN[model.synapseTarget[i]];
+            const size_t size = model.neuronN[model.synapseSource[i]] * model.neuronN[model.synapseTarget[i]];
             for(const auto &v : wu->GetInitVals()) {
-#ifndef CPU_ONLY
-                os << "cudaHostAlloc(&" << v.first << model.synapseName[i] << ", ";
-                os << size << " * sizeof(" << v.second << "), cudaHostAllocPortable);" << ENDL;
-                os << "    deviceMemAllocate(&d_" << v.first << model.synapseName[i];
-                os << ", dd_" << v.first << model.synapseName[i];
-                os << ", " << size << " * sizeof(" << v.second << "));" << ENDL;
-                mem += size * theSize(v.second);
-#else
-                os << v.first << model.synapseName[i];
-                os << " = new " << v.second << "[" << size << "];" << ENDL;
-#endif
+                mem += allocate_variable(os, v.second, v.first + model.synapseName[i], false,
+                                         size);
             }
         }
 
         if (model.synapseGType[i] == INDIVIDUALG) { // not needed for GLOBALG, INDIVIDUALID
-            size_t size = model.neuronN[model.synapseTarget[i]];
+            const size_t size = model.neuronN[model.synapseTarget[i]];
             for(const auto &v : psm->GetInitVals()) {
-#ifndef CPU_ONLY
-                os << "cudaHostAlloc(&" << v.first + model.synapseName[i] << ", ";
-                os << size << " * sizeof(" << v.second << "), cudaHostAllocPortable);" << ENDL;
-                os << "    deviceMemAllocate(&d_" << v.first << model.synapseName[i];
-                os << ", dd_" << v.first << model.synapseName[i];
-                os << ", " << size << " * sizeof(" << v.second << "));" << ENDL;
-                mem += size * theSize(v.second);
-#else
-                os << v.first + model.synapseName[i];
-                os << " = new " << v.second << "[" << size << "];" << ENDL;
-#endif
-
+                mem += allocate_variable(os, v.second, v.first + model.synapseName[i], false,
+                                         size);
             }
         }
         os << ENDL;
@@ -1183,100 +1154,65 @@ void genRunner(const NNmodel &model, //!< Model description
             os << "void allocate" << model.synapseName[i] << "(unsigned int connN)" << "{" << ENDL;
             os << "// Allocate host side variables" << ENDL;
             os << "  C" << model.synapseName[i] << ".connN= connN;" << ENDL;
-            size_t indInSize = model.neuronN[model.synapseSource[i]] + 1;
 
-#ifndef CPU_ONLY
-            os << "cudaHostAlloc(&C" << model.synapseName[i];
-            os << ".indInG, " << indInSize << " * sizeof(unsigned int), cudaHostAllocPortable);" << ENDL;
-#else
-            os << "C" << model.synapseName[i] << ".indInG = new unsigned int[" << indInSize << "];" << ENDL;
-#endif
+            // Allocate indices pointing to synapses in each presynaptic neuron's sparse matrix row
+            allocate_host_variable(os, "unsigned int", "C" + model.synapseName[i] + ".indInG", false,
+                                   model.neuronN[model.synapseSource[i]] + 1);
 
-#ifndef CPU_ONLY
-            os << "cudaHostAlloc(&C" << model.synapseName[i];
-            os << ".ind, connN * sizeof(unsigned int), cudaHostAllocPortable);" << ENDL;
-#else
-            os << "C" << model.synapseName[i] << ".ind = new unsigned int[connN];" << ENDL;
-#endif
+            // Allocate the postsynaptic neuron indices that make up sparse matrix
+            allocate_host_variable(os, "unsigned int", "C" + model.synapseName[i] + ".ind", false,
+                                   "connN");
 
             if (model.synapseUsesSynapseDynamics[i]) {
-
-#ifndef CPU_ONLY
-                os << "cudaHostAlloc(&C" << model.synapseName[i];
-                os << ".preInd, connN * sizeof(unsigned int), cudaHostAllocPortable);" << ENDL;
-#else
-                os << "C" << model.synapseName[i] << ".preInd = new unsigned int[connN];" << ENDL;
-#endif
-
+                allocate_host_variable(os, "unsigned int", "C" + model.synapseName[i] + ".preInd", false,
+                                       "connN");
             } else {
                 os << "  C" << model.synapseName[i] << ".preInd= NULL;" << ENDL;
             }
             if (model.synapseUsesPostLearning[i]) {
-                size_t revIndInSize = model.neuronN[model.synapseTarget[i]] + 1;
+                // Allocate indices pointing to synapses in each postsynaptic neuron's sparse matrix column
+                allocate_host_variable(os, "unsigned int", "C" + model.synapseName[i] + ".revIndInG", false,
+                                       model.neuronN[model.synapseTarget[i]] + 1);
 
-#ifndef CPU_ONLY
-                os << "cudaHostAlloc(&C" << model.synapseName[i];
-                os << ".revIndInG, " << revIndInSize << " * sizeof(unsigned int), cudaHostAllocPortable);" << ENDL;
-#else
-                os << "C" << model.synapseName[i] << ".revIndInG = new unsigned int[" << revIndInSize << "];" << ENDL;
-#endif
+                // Allocate presynaptic neuron indices that make up postsynaptically indexed sparse matrix
+                allocate_host_variable(os, "unsigned int", "C" + model.synapseName[i] + ".revInd", false,
+                                       "connN");
 
-#ifndef CPU_ONLY
-                os << "cudaHostAlloc(&C" << model.synapseName[i];
-                os << ".revInd, connN * sizeof(unsigned int), cudaHostAllocPortable);" << ENDL;
-#else
-                os << "  C" << model.synapseName[i] << ".revInd= new unsigned int[connN];" << ENDL;
-#endif
-
-#ifndef CPU_ONLY
-                os << "cudaHostAlloc(&C" << model.synapseName[i];
-                os << ".remap, connN * sizeof(unsigned int), cudaHostAllocPortable);" << ENDL;
-#else
-                os << "  C" << model.synapseName[i] << ".remap= new unsigned int[connN];" << ENDL;
-#endif
-
+                // Allocate array mapping from postsynaptically to presynaptically indexed sparse matrix
+                allocate_host_variable(os, "unsigned int", "C" + model.synapseName[i] + ".remap", false,
+                                       "connN");
             } else {
                 os << "  C" << model.synapseName[i] << ".revIndInG= NULL;" << ENDL;
                 os << "  C" << model.synapseName[i] << ".revInd= NULL;" << ENDL;
                 os << "  C" << model.synapseName[i] << ".remap= NULL;" << ENDL;
             }
 
-            const auto *wu = model.synapseModel[i];
-            string size = "C" + model.synapseName[i] + ".connN";
-            for(const auto &v : wu->GetInitVals()) {
-#ifndef CPU_ONLY
-                os << "cudaHostAlloc(&" << v.first << model.synapseName[i] << ", ";
-                os << size << " * sizeof(" << v.second << "), cudaHostAllocPortable);" << ENDL;
-#else
-                os << v.first << model.synapseName[i];
-                os << " = new " << v.second << "[" << size << "];" << ENDL;
-#endif
+            const string numConnections = "C" + model.synapseName[i] + ".connN";
 
-            }
-#ifndef CPU_ONLY
-            os << "// Allocate device side variables" << ENDL;
-            os << "  deviceMemAllocate( &d_indInG" << model.synapseName[i] << ", dd_indInG" << model.synapseName[i];
-            os << ", sizeof(unsigned int) * ("<< model.neuronN[model.synapseSource[i]] + 1 <<"));" << ENDL;
-            os << "  deviceMemAllocate( &d_ind" << model.synapseName[i] << ", dd_ind" << model.synapseName[i];
-            os << ", sizeof(unsigned int) * (" << size << "));" << ENDL;
+            allocate_device_variable(os, "unsigned int", "indInG" + model.synapseName[i], false,
+                                     model.neuronN[model.synapseSource[i]] + 1);
+
+            allocate_device_variable(os, "unsigned int", "ind" + model.synapseName[i], false,
+                                     numConnections);
+
             if (model.synapseUsesSynapseDynamics[i]) {
-                os << "  deviceMemAllocate( &d_preInd" << model.synapseName[i] << ", dd_preInd" << model.synapseName[i];
-                os << ", sizeof(unsigned int) * (" << size << "));" << ENDL;
+                allocate_device_variable(os, "unsigned int", "preInd" + model.synapseName[i], false,
+                                         numConnections);
             }
             if (model.synapseUsesPostLearning[i]) {
-                os << "  deviceMemAllocate( &d_revIndInG" << model.synapseName[i] << ", dd_revIndInG" << model.synapseName[i];
-                os << ", sizeof(unsigned int) * ("<< model.neuronN[model.synapseTarget[i]] + 1 <<"));" << ENDL;
-                os << "  deviceMemAllocate( &d_revInd" << model.synapseName[i] << ", dd_revInd" << model.synapseName[i];
-                os << ", sizeof(unsigned int) * (" << size <<"));" << ENDL;
-                os << "  deviceMemAllocate( &d_remap" << model.synapseName[i] << ", dd_remap" << model.synapseName[i];
-                os << ", sizeof(unsigned int) * ("<< size << "));" << ENDL;
+                allocate_device_variable(os, "unsigned int", "revIndInG" + model.synapseName[i], false,
+                                         model.neuronN[model.synapseTarget[i]] + 1);
+                allocate_device_variable(os, "unsigned int", "revInd" + model.synapseName[i], false,
+                                         numConnections);
+                allocate_device_variable(os, "unsigned int", "remap" + model.synapseName[i], false,
+                                         numConnections);
             }
-            for(const auto &v : wu->GetInitVals()) {
-                os << "deviceMemAllocate(&d_" << v.first << model.synapseName[i];
-                os << ", dd_" << v.first << model.synapseName[i];
-                os << ", sizeof("  << v.second << ")*(" << size << "));" << ENDL;
+
+            // Allocate synapse variables
+            for(const auto &v : model.synapseModel[i]->GetInitVals()) {
+                allocate_variable(os, v.second, v.first + model.synapseName[i], false, numConnections);
             }
-#endif
+
             os << "}" << ENDL;
             os << ENDL;
             //setup up helper fn for this (specific) popn to generate sparse from dense
