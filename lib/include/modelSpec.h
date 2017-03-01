@@ -141,14 +141,14 @@ public:
   vector<const WeightUpdateModels::Base*> synapseModel; //!< Types of synapses
   vector<SynapseConnType> synapseConnType; //!< Connectivity type of synapses
   vector<SynapseGType> synapseGType; //!< Type of specification method for synaptic conductance
-  vector<unsigned int> synapseSpanType; //!< Execution order of synapses in the kernel. It determines whether synapses are executed in parallel for every postsynaptic neuron (0, default), or for every presynaptic neuron (1). 
+  vector<unsigned int> synapseSpanType; //!< Execution order of synapses in the kernel. It determines whether synapses are executed in parallel for every postsynaptic neuron (0, default), or for every presynaptic neuron (1).
   vector<unsigned int> synapseSource; //!< Presynaptic neuron groups
   vector<unsigned int> synapseTarget; //!< Postsynaptic neuron groups
   vector<unsigned int> synapseInSynNo; //!< IDs of the target neurons' incoming synapse variables for each synapse group
   vector<unsigned int> synapseOutSynNo; //!< The target neurons' outgoing synapse for each synapse group
   vector<bool> synapseUsesTrueSpikes; //!< Defines if synapse update is done after detection of real spikes (only one point after threshold)
   vector<bool> synapseUsesSpikeEvents; //!< Defines if synapse update is done after detection of spike events (every point above threshold)
-  vector<bool> synapseUsesPostLearning; //!< Defines if anything is done in case of postsynaptic neuron spiking before presynaptic neuron (punishment in STDP etc.) 
+  vector<bool> synapseUsesPostLearning; //!< Defines if anything is done in case of postsynaptic neuron spiking before presynaptic neuron (punishment in STDP etc.)
   vector<bool> synapseUsesSynapseDynamics; //!< Defines if there is any continuos synapse dynamics defined
   vector<bool> needEvntThresholdReTest; //!< Defines whether the Evnt Threshold needs to be retested in the synapse kernel due to multiple non-identical events in the pre-synaptic neuron population
   vector<vector<double> > synapsePara; //!< parameters of synapses
@@ -180,31 +180,19 @@ public:
   vector<string> simLearnPostKernelParameterTypes;
   vector<string> synapseDynamicsKernelParameters;
   vector<string> synapseDynamicsKernelParameterTypes;
-    
+
 private:
 
 
   // PRIVATE NEURON FUNCTIONS
   //=========================
 
-  void setNeuronName(unsigned int, const string); //!< Never used
-  void setNeuronN(unsigned int, unsigned int); //!< Never used
-  void setNeuronType(unsigned int, unsigned int); //!< Never used
-  void setNeuronPara(unsigned int, double*); //!< Never used
-  void setNeuronIni(unsigned int, double*); //!< Never used
   void initDerivedNeuronPara(); //!< Method for calculating the values of derived neuron parameters.
 
 
   // PRIVATE SYNAPSE FUNCTIONS
   //==========================
 
-  void setSynapseName(unsigned int, const string); //!< Never used
-  void setSynapseType(unsigned int, unsigned int); //!< Never used
-  void setSynapseSource(unsigned int, unsigned int); //!< Never used
-  void setSynapseTarget(unsigned int, unsigned int); //!< Never used
-  void setSynapsePara(unsigned int, double*); //!< Never used
-  void setSynapseConnType(unsigned int, unsigned int); //!< Never used
-  void setSynapseGType(unsigned int, unsigned int); //!< Never used
   void initDerivedSynapsePara(); //!< Method for calculating the values of derived synapse parameters.
   void initDerivedPostSynapsePara(); //!< Method for calculating the values of derived postsynapse parameters.
   void registerSynapsePopulation(unsigned int); //!< Method to register a new synapse population with the inSyn list of the target neuron population
