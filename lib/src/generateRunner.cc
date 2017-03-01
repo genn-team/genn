@@ -934,9 +934,15 @@ void genRunner(const NNmodel &model, //!< Model description
 #ifndef CPU_ONLY
     os << "    CHECK_CUDA_ERRORS(cudaSetDevice(" << theDevice << "));" << ENDL;
 
-    // If the model requires zero-copy set appropriate device flags
+    // If the model requires zero-copy
     if(model.zeroCopyInUse())
     {
+        // If device doesn't support mapping host memory error
+        if(!deviceProp[theDevice].canMapHostMemory) {
+            gennError("Device does not support mapping CPU host memory!");
+        }
+
+        // set appropriate device flags
         os << "    CHECK_CUDA_ERRORS(cudaSetDeviceFlags(cudaDeviceMapHost));" << ENDL;
     }
 #endif
