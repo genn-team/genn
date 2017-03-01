@@ -68,9 +68,12 @@ void extern_variable_def(ofstream &os, const string &type, const string &name)
 void allocate_host_variable(ofstream &os, const string &type, const string &name, bool zeroCopy, const string &size)
 {
 #ifndef CPU_ONLY
-    os << "    cudaHostAlloc(&" << name << ", " << size << " * sizeof(" << type << "), cudaHostAllocPortable);" << ENDL;
+    const char *flags = zeroCopy ? "cudaHostAllocMapped" : "cudaHostAllocPortable";
+    os << "    cudaHostAlloc(&" << name << ", " << size << " * sizeof(" << type << "), " << flags << ");" << ENDL;
 #else
-    os << "    " << name << " = new " << model.ftype << "[" << size << "];" << ENDL;
+    USE(zeroCopy);
+
+    os << "    " << name << " = new " << type << "[" << size << "];" << ENDL;
 #endif
 }
 
@@ -82,7 +85,21 @@ void allocate_host_variable(ofstream &os, const string &type, const string &name
 void allocate_device_variable(ofstream &os, const string &type, const string &name, bool zeroCopy, const string &size)
 {
 #ifndef CPU_ONLY
-    os << "    deviceMemAllocate(&d_" << name << ", dd_" << name << ", " << size << " * sizeof(" << type << "));" << ENDL;
+    // Insert call to correct helper depending on whether variable should be allocated in zero-copy mode or not
+    if(zeroCopy)
+    {
+        os << "    deviceZeroCopy(" << name << ", &d_" << name << ", dd_" << name << ");" << ENDL;
+    }
+    else
+    {
+        os << "    deviceMemAllocate(&d_" << name << ", dd_" << name << ", " << size << " * sizeof(" << type << "));" << ENDL;
+    }
+#else
+    USE(os);
+    USE(type);
+    USE(name);
+    USE(zeroCopy);
+    USE(size);
 #endif
 }
 
@@ -123,7 +140,15 @@ void free_host_variable(ofstream &os, const string &name)
 void free_device_variable(ofstream &os, const string &name, bool zeroCopy)
 {
 #ifndef CPU_ONLY
-    os << "    CHECK_CUDA_ERRORS(cudaFree(d_" << name << "));" << ENDL;
+    // If this variable wasn't allocated in zero-copy mode, free it
+    if(!zeroCopy)
+    {
+        os << "    CHECK_CUDA_ERRORS(cudaFree(d_" << name << "));" << ENDL;
+    }
+#else
+    USE(os);
+    USE(name);
+    USE(zeroCopy);
 #endif
 }
 
