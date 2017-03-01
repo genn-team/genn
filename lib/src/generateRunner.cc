@@ -91,7 +91,6 @@ void allocate_device_variable(ofstream &os, const string &type, const string &na
     allocate_device_variable(os, type, name, zeroCopy, to_string(size));
 }
 
-
 //--------------------------------------------------------------------------
 //! \brief This function generates host and device allocation with standard names (name, d_name, dd_name) and estimates size based on size known at generate-time
 //--------------------------------------------------------------------------
@@ -110,6 +109,31 @@ void allocate_variable(ofstream &os, const string &type, const string &name, boo
     // Allocate host and device variables
     allocate_host_variable(os, type, name, zeroCopy, size);
     allocate_device_variable(os, type, name, zeroCopy, size);
+}
+
+void free_host_variable(ofstream &os, const string &name)
+{
+#ifndef CPU_ONLY
+    os << "    CHECK_CUDA_ERRORS(cudaFreeHost(" << name << "));" << ENDL;
+#else
+    os << "    delete[] " << name << ";" << ENDL;
+#endif
+}
+
+void free_device_variable(ofstream &os, const string &name, bool zeroCopy)
+{
+#ifndef CPU_ONLY
+    os << "    CHECK_CUDA_ERRORS(cudaFree(d_" << name << "));" << ENDL;
+#endif
+}
+
+//--------------------------------------------------------------------------
+//! \brief This function generates code to free host and device allocations with standard names (name, d_name, dd_name)
+//--------------------------------------------------------------------------
+void free_variable(ofstream &os, const string &name, bool zeroCopy)
+{
+    free_host_variable(os, name);
+    free_device_variable(os, name, zeroCopy);
 }
 }
 
@@ -1295,134 +1319,65 @@ void genRunner(const NNmodel &model, //!< Model description
 
     // FREE NEURON VARIABLES
     for (unsigned int i = 0; i < model.neuronGrpN; i++) {
-#ifndef CPU_ONLY
-        os << "cudaFreeHost(glbSpkCnt" << model.neuronName[i] << ");" << ENDL;
-        os << "    CHECK_CUDA_ERRORS(cudaFree(d_glbSpkCnt" << model.neuronName[i] << "));" << ENDL;
-#else
-        os << "    delete[] glbSpkCnt" << model.neuronName[i] << ";" << ENDL;
-#endif
+        // Free spike buffer
+        free_variable(os, "glbSpkCnt" + model.neuronName[i], false);
+        free_variable(os, "glbSpk" + model.neuronName[i], false);
 
-#ifndef CPU_ONLY
-        os << "cudaFreeHost(glbSpk" << model.neuronName[i] << ");" << ENDL;
-        os << "    CHECK_CUDA_ERRORS(cudaFree(d_glbSpk" << model.neuronName[i] << "));" << ENDL;
-#else
-        os << "    delete[] glbSpk" << model.neuronName[i] << ";" << ENDL;
-#endif
-
+        // Free spike-like event buffer if allocated
         if (model.neuronNeedSpkEvnt[i]) {
-
-#ifndef CPU_ONLY
-            os << "cudaFreeHost(glbSpkCntEvnt" << model.neuronName[i] << ");" << ENDL;
-            os << "    CHECK_CUDA_ERRORS(cudaFree(d_glbSpkCntEvnt" << model.neuronName[i] << "));" << ENDL;
-#else
-            os << "    delete[] glbSpkCntEvnt" << model.neuronName[i] << ";" << ENDL;
-#endif
-
-#ifndef CPU_ONLY
-            os << "cudaFreeHost(glbSpkEvnt" << model.neuronName[i] << ");" << ENDL;
-            os << "    CHECK_CUDA_ERRORS(cudaFree(d_glbSpkEvnt" << model.neuronName[i] << "));" << ENDL;
-#else
-            os << "    delete[] glbSpkEvnt" << model.neuronName[i] << ";" << ENDL;
-#endif
-
+            free_variable(os, "glbSpkCntEvnt" + model.neuronName[i], false);
+            free_variable(os, "glbSpkEvnt" + model.neuronName[i], false);
         }
+
+        // Free last spike time buffer if allocated
         if (model.neuronNeedSt[i]) {
-
-#ifndef CPU_ONLY
-            os << "cudaFreeHost(sT" << model.neuronName[i] << ");" << ENDL;
-            os << "    CHECK_CUDA_ERRORS(cudaFree(d_sT" << model.neuronName[i] << "));" << ENDL;
-#else
-            os << "    delete[] sT" << model.neuronName[i] << ";" << ENDL;
-#endif
-
+            free_variable(os, "sT" + model.neuronName[i], false);
         }
 
-        auto neuronModel = model.neuronModel[i];
-        for (auto const &v : neuronModel->GetInitVals()) {
-#ifndef CPU_ONLY
-            os << "cudaFreeHost(" << v.first << model.neuronName[i] << ");" << ENDL;
-            os << "    CHECK_CUDA_ERRORS(cudaFree(d_" << v.first << model.neuronName[i] << "));" << ENDL;
-#else
-            os << "    delete[] " << v.first << model.neuronName[i] << ";" << ENDL;
-#endif
-
+        // Free neuron state variables
+        for (auto const &v : model.neuronModel[i]->GetInitVals()) {
+            free_variable(os, v.first + model.neuronName[i], false);
         }
     }
 
     // FREE SYNAPSE VARIABLES
     for (unsigned int i = 0; i < model.synapseGrpN; i++) {
-#ifndef CPU_ONLY
-        os << "cudaFreeHost(inSyn" << model.synapseName[i] << ");" << ENDL;
-        os << "    CHECK_CUDA_ERRORS(cudaFree(d_inSyn" << model.synapseName[i] << "));" << ENDL;
-#else
-        os << "    delete[] inSyn" << model.synapseName[i] << ";" << ENDL;
-#endif
+        free_variable(os, "inSyn" + model.synapseName[i], false);
 
         if (model.synapseConnType[i] == SPARSE) {
             os << "    C" << model.synapseName[i] << ".connN= 0;" << ENDL;
 
-#ifndef CPU_ONLY
-            os << "cudaFreeHost(C" << model.synapseName[i] << ".indInG);" << ENDL;
-#else
-            os << "    delete[] C" << model.synapseName[i] << ".indInG;" << ENDL;
-#endif
+            free_host_variable(os, "C" + model.synapseName[i] + ".indInG");
+            free_device_variable(os, "indInG" + model.synapseName[i], false);
 
-#ifndef CPU_ONLY
-            os << "cudaFreeHost(C" << model.synapseName[i] << ".ind);" << ENDL;
-#else
-            os << "    delete[] C" << model.synapseName[i] << ".ind;" << ENDL;
-#endif
+            free_host_variable(os, "C" + model.synapseName[i] + ".ind");
+            free_device_variable(os, "ind" + model.synapseName[i], false);
 
             if (model.synapseUsesPostLearning[i]) {
+                free_host_variable(os, "C" + model.synapseName[i] + ".revIndInG");
+                free_device_variable(os, "revIndInG" + model.synapseName[i], false);
 
-#ifndef CPU_ONLY
-                os << "cudaFreeHost(C" << model.synapseName[i] << ".revIndInG);" << ENDL;
-#else
-                os << "    delete[] C" << model.synapseName[i] << ".revIndInG;" << ENDL;
-#endif
+                free_host_variable(os, "C" + model.synapseName[i] + ".revInd");
+                free_device_variable(os, "revInd" + model.synapseName[i], false);
 
-#ifndef CPU_ONLY
-                os << "cudaFreeHost(C" << model.synapseName[i] << ".revInd);" << ENDL;
-#else
-                os << "    delete[] C" << model.synapseName[i] << ".revInd;" << ENDL;
-#endif
+                free_host_variable(os, "C" + model.synapseName[i] + ".remap");
+                free_device_variable(os, "remap" + model.synapseName[i], false);
+            }
 
-#ifndef CPU_ONLY
-                os << "cudaFreeHost(C" << model.synapseName[i] << ".remap);" << ENDL;
-#else
-                os << "    delete[] C" << model.synapseName[i] << ".remap;" << ENDL;
-#endif
-
+            if (model.synapseUsesSynapseDynamics[i]) {
+                free_host_variable(os, "C" + model.synapseName[i] + ".preInd");
+                free_device_variable(os, "preInd" + model.synapseName[i], false);
             }
         }
         if (model.synapseGType[i] == INDIVIDUALID) {
-
-#ifndef CPU_ONLY
-            os << "cudaFreeHost(gp" << model.synapseName[i] << ");" << ENDL;
-            os << "    CHECK_CUDA_ERRORS(cudaFree(d_gp" << model.synapseName[i] << "));" <<ENDL;
-#else
-            os << "    delete[] gp" << model.synapseName[i] << ";" << ENDL;
-#endif
-
+            free_variable(os, "gp" + model.synapseName[i], false);
         }
         if (model.synapseGType[i] == INDIVIDUALG) {
             for(const auto &v : model.synapseModel[i]->GetInitVals()) {
-#ifndef CPU_ONLY
-                os << "cudaFreeHost(" << v.first << model.synapseName[i] << ");" << ENDL;
-                os << "    CHECK_CUDA_ERRORS(cudaFree(d_" << v.first << model.synapseName[i] << "));" << ENDL;
-#else
-                os << "    delete[] " << v.first << model.synapseName[i] << ";" << ENDL;
-#endif
-
+                free_variable(os, v.first + model.synapseName[i], false);
             }
             for(const auto &v : model.postSynapseModel[i]->GetInitVals()) {
-#ifndef CPU_ONLY
-                os << "cudaFreeHost(" << v.first << model.synapseName[i] << ");" << ENDL;
-                os << "    CHECK_CUDA_ERRORS(cudaFree(d_" << v.first << model.synapseName[i] << "));" << ENDL;
-#else
-                os << "    delete[] " << v.first << model.synapseName[i] << ";" << ENDL;
-#endif
-
+                free_variable(os, v.first + model.synapseName[i], false);
             }
         }
     }
