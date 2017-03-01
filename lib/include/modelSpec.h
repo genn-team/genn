@@ -115,15 +115,15 @@ public:
   vector<unsigned int> padSumNeuronN; //!< Padded summed neuron numbers
   vector<unsigned int> neuronPostSyn; //! Postsynaptic methods to the neuron
   vector<const NeuronModels::Base*> neuronModel;  //!< Neuron models
-  vector<vector<double> > neuronPara; //!< Parameters of neurons
-  vector<vector<double> > dnp; //!< Derived neuron parameters
-  vector<vector<double> > neuronIni; //!< Initial values of neurons
-  vector<vector<unsigned int> > inSyn; //!< The ids of the incoming synapse groups
-  vector<vector<unsigned int> > outSyn; //!< The ids of the outgoing synapse groups
+  vector<vector<double>> neuronPara; //!< Parameters of neurons
+  vector<vector<double>> dnp; //!< Derived neuron parameters
+  vector<vector<double>> neuronIni; //!< Initial values of neurons
+  vector<vector<unsigned int>> inSyn; //!< The ids of the incoming synapse groups
+  vector<vector<unsigned int>> outSyn; //!< The ids of the outgoing synapse groups
   vector<bool> neuronNeedSt; //!< Whether last spike time needs to be saved for a group
   vector<bool> neuronNeedTrueSpk; //!< Whether spike-like events from a group are required
   vector<bool> neuronNeedSpkEvnt; //!< Whether spike-like events from a group are required
-  vector<vector<bool> > neuronVarNeedQueue; //!< Whether a neuron variable needs queueing for syn code
+  vector<vector<bool>> neuronVarNeedQueue; //!< Whether a neuron variable needs queueing for syn code
   vector<set<pair<string, string>>> neuronSpkEvntCondition; //!< Will contain the spike event condition code when spike events are used
   vector<unsigned int> neuronDelaySlots; //!< The number of slots needed in the synapse delay queues of a neuron group
   vector<int> neuronHostID; //!< The ID of the cluster node which the neuron groups are computed on
@@ -151,13 +151,13 @@ public:
   vector<bool> synapseUsesPostLearning; //!< Defines if anything is done in case of postsynaptic neuron spiking before presynaptic neuron (punishment in STDP etc.)
   vector<bool> synapseUsesSynapseDynamics; //!< Defines if there is any continuos synapse dynamics defined
   vector<bool> needEvntThresholdReTest; //!< Defines whether the Evnt Threshold needs to be retested in the synapse kernel due to multiple non-identical events in the pre-synaptic neuron population
-  vector<vector<double> > synapsePara; //!< parameters of synapses
-  vector<vector<double> > synapseIni; //!< Initial values of synapse variables
-  vector<vector<double> > dsp_w;  //!< Derived synapse parameters (weightUpdateModel only)
+  vector<vector<double>> synapsePara; //!< parameters of synapses
+  vector<vector<double>> synapseIni; //!< Initial values of synapse variables
+  vector<vector<double>> dsp_w;  //!< Derived synapse parameters (weightUpdateModel only)
   vector<const PostsynapticModels::Base*> postSynapseModel; //!< Types of post-synaptic model
-  vector<vector<double> > postSynapsePara; //!< parameters of postsynapses
-  vector<vector<double> > postSynIni; //!< Initial values of postsynaptic variables
-  vector<vector<double> > dpsp;  //!< Derived postsynapse parameters
+  vector<vector<double>> postSynapsePara; //!< parameters of postsynapses
+  vector<vector<double>> postSynIni; //!< Initial values of postsynaptic variables
+  vector<vector<double>> dpsp;  //!< Derived postsynapse parameters
   unsigned int lrnGroups; //!< Number of synapse groups with learning
   vector<unsigned int> padSumLearnN; //!< Padded summed neuron numbers of learn group source populations
   vector<unsigned int> lrnSynGrp; //!< Enumeration of the IDs of synapse groups that learn
