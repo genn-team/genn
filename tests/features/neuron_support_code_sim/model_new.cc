@@ -39,6 +39,7 @@ void modelDefinition(NNmodel &model)
     initGeNN();
 
     model.setDT(0.1);
+    model.setName("neuron_support_code_sim");
 
     model.addNeuronPopulation<Neuron>("pre", 10, {}, Neuron::InitValues(0.0, 0.0));
     model.addNeuronPopulation<Neuron>("post", 10, {}, Neuron::InitValues(0.0, 0.0));
