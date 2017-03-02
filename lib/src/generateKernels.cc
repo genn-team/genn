@@ -930,7 +930,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                     os << "if (" << localID << " < dd_indInG" << synapseName << "[" << srcno << "])" << OB(25);
                     os << "// all threads participate that can work on an existing synapse" << ENDL;
                     if (!wu->GetSynapseDynamicsSuppportCode().empty()) {
-			            os << " using namespace " << model.synapseName[i] << "_weightupdate_synapseDynamics;" << ENDL;
+			            os << " using namespace " << synapseName << "_weightupdate_synapseDynamics;" << ENDL;
 		            }
                     if (model.synapseGType[k] == INDIVIDUALG) {
                         // name substitute synapse var names in synapseDynamics code
