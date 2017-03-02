@@ -332,7 +332,7 @@ void genRunner(const NNmodel &model, //!< Model description
         }
 
         auto neuronModel = model.neuronModel[i];
-        for(auto const &v : neuronModel->GetInitVals()) {
+        for(auto const &v : neuronModel->GetVars()) {
             extern_variable_def(os, v.second +" *", v.first + model.neuronName[i]);
         }
         for(auto const &v : neuronModel->GetExtraGlobalParams()) {
@@ -409,10 +409,10 @@ void genRunner(const NNmodel &model, //!< Model description
             os << "extern SparseProjection C" << model.synapseName[i] << ";" << ENDL;
         }
         if (model.synapseGType[i] == INDIVIDUALG) { // not needed for GLOBALG, INDIVIDUALID
-            for(const auto &v : wu->GetInitVals()) {
+            for(const auto &v : wu->GetVars()) {
                 extern_variable_def(os, v.second + " *", v.first + model.synapseName[i]);
             }
-            for(const auto &v : psm->GetInitVals()) {
+            for(const auto &v : psm->GetVars()) {
                 extern_variable_def(os, v.second + " *", v.first + model.synapseName[i]);
             }
         }
@@ -817,7 +817,7 @@ void genRunner(const NNmodel &model, //!< Model description
         }
 
         auto neuronModel = model.neuronModel[i];
-        for(auto const &v : neuronModel->GetInitVals()) {
+        for(auto const &v : neuronModel->GetVars()) {
             variable_def(os, v.second + " *", v.first + model.neuronName[i]);
         }
         for(auto const &v : neuronModel->GetExtraGlobalParams()) {
@@ -865,10 +865,10 @@ void genRunner(const NNmodel &model, //!< Model description
 #endif
         }
         if (model.synapseGType[i] == INDIVIDUALG) { // not needed for GLOBALG, INDIVIDUALID
-            for(const auto &v : wu->GetInitVals()) {
+            for(const auto &v : wu->GetVars()) {
                 variable_def(os, v.second + " *", v.first + model.synapseName[i]);
             }
-            for(const auto &v : psm->GetInitVals()) {
+            for(const auto &v : psm->GetVars()) {
                 variable_def(os, v.second+" *", v.first + model.synapseName[i]);
             }
         }
@@ -1007,12 +1007,12 @@ void genRunner(const NNmodel &model, //!< Model description
         }
 
         // Allocate memory for neuron model's state variables
-        auto nmInitVals = model.neuronModel[i]->GetInitVals();
-        const auto &nmInitValZeroCopy = model.neuronInitValZeroCopy[i];
-        for (size_t j = 0; j < nmInitVals.size(); j++) {
-            const bool zeroCopy = (nmInitValZeroCopy.find(nmInitVals[j].first) != end(nmInitValZeroCopy));
+        auto nmVars = model.neuronModel[i]->GetVars();
+        const auto &nmVarZeroCopy = model.neuronVarZeroCopy[i];
+        for (size_t j = 0; j < nmVars.size(); j++) {
+            const bool zeroCopy = (nmVarZeroCopy.find(nmVars[j].first) != end(nmVarZeroCopy));
 
-            mem += allocate_variable(os, nmInitVals[j].second, nmInitVals[j].first + model.neuronName[i], zeroCopy,
+            mem += allocate_variable(os, nmVars[j].second, nmVars[j].first + model.neuronName[i], zeroCopy,
                                      model.neuronVarNeedQueue[i][j] ? model.neuronN[i] * model.neuronDelaySlots[i] : model.neuronN[i]);
         }
         os << ENDL;
@@ -1038,10 +1038,10 @@ void genRunner(const NNmodel &model, //!< Model description
         // if they are sparse, allocate later in the allocatesparsearrays function when we know the size of the network
         if ((model.synapseConnType[i] != SPARSE) && (model.synapseGType[i] == INDIVIDUALG)) {
             const size_t size = model.neuronN[model.synapseSource[i]] * model.neuronN[model.synapseTarget[i]];
-            const auto &wuInitValZeroCopy = model.synapseInitValZeroCopy[i];
+            const auto &wuVarZeroCopy = model.synapseVarZeroCopy[i];
 
-            for(const auto &v : wu->GetInitVals()) {
-                const bool zeroCopy = (wuInitValZeroCopy.find(v.first) != end(wuInitValZeroCopy));
+            for(const auto &v : wu->GetVars()) {
+                const bool zeroCopy = (wuVarZeroCopy.find(v.first) != end(wuVarZeroCopy));
                 mem += allocate_variable(os, v.second, v.first + model.synapseName[i], zeroCopy,
                                          size);
             }
@@ -1049,10 +1049,10 @@ void genRunner(const NNmodel &model, //!< Model description
 
         if (model.synapseGType[i] == INDIVIDUALG) { // not needed for GLOBALG, INDIVIDUALID
             const size_t size = model.neuronN[model.synapseTarget[i]];
-            const auto &psmInitValZeroCopy = model.postSynapseInitValZeroCopy[i];
+            const auto &psmVarZeroCopy = model.postSynapseVarZeroCopy[i];
 
-            for(const auto &v : psm->GetInitVals()) {
-                const bool zeroCopy = (psmInitValZeroCopy.find(v.first) != end(psmInitValZeroCopy));
+            for(const auto &v : psm->GetVars()) {
+                const bool zeroCopy = (psmVarZeroCopy.find(v.first) != end(psmVarZeroCopy));
                 mem += allocate_variable(os, v.second, v.first + model.synapseName[i], zeroCopy,
                                          size);
             }
@@ -1137,19 +1137,19 @@ void genRunner(const NNmodel &model, //!< Model description
             os << "    }" << cB << ENDL;
         }
         
-        auto neuronModelInitVars = model.neuronModel[i]->GetInitVals();
-        for (size_t j = 0; j < neuronModelInitVars.size(); j++) {
+        auto neuronModelVars = model.neuronModel[i]->GetVars();
+        for (size_t j = 0; j < neuronModelVars.size(); j++) {
             if (model.neuronVarNeedQueue[i][j]) {
                 os << "    " << oB << "for (int i = 0; i < " << model.neuronN[i] * model.neuronDelaySlots[i] << "; i++) {" << ENDL;
             }
             else {
                 os << "    " << oB << "for (int i = 0; i < " << model.neuronN[i] << "; i++) {" << ENDL;
             }
-            if (neuronModelInitVars[j].second == model.ftype) {
-                os << "        " << neuronModelInitVars[j].first << model.neuronName[i] << "[i] = " << model.scalarExpr(model.neuronIni[i][j]) << ";" << ENDL;
+            if (neuronModelVars[j].second == model.ftype) {
+                os << "        " << neuronModelVars[j].first << model.neuronName[i] << "[i] = " << model.scalarExpr(model.neuronIni[i][j]) << ";" << ENDL;
             }
             else {
-                os << "        " << neuronModelInitVars[j].first << model.neuronName[i] << "[i] = " << model.neuronIni[i][j] << ";" << ENDL;
+                os << "        " << neuronModelVars[j].first << model.neuronName[i] << "[i] = " << model.neuronIni[i][j] << ";" << ENDL;
             }
             os << "    }" << cB << ENDL;
         }
@@ -1177,14 +1177,14 @@ void genRunner(const NNmodel &model, //!< Model description
         os << "    }" << cB << ENDL;
 
         if ((model.synapseConnType[i] != SPARSE) && (model.synapseGType[i] == INDIVIDUALG)) {
-            auto wuInitVals = wu->GetInitVals();
-            for (size_t k= 0, l= wuInitVals.size(); k < l; k++) {
+            auto wuVars = wu->GetVars();
+            for (size_t k= 0, l= wuVars.size(); k < l; k++) {
                 os << "    " << oB << "for (int i = 0; i < " << model.neuronN[model.synapseSource[i]] * model.neuronN[model.synapseTarget[i]] << "; i++) {" << ENDL;
-                if (wuInitVals[k].second == model.ftype) {
-                    os << "        " << wuInitVals[k].first << model.synapseName[i] << "[i] = " << model.scalarExpr(model.synapseIni[i][k]) << ";" << ENDL;
+                if (wuVars[k].second == model.ftype) {
+                    os << "        " << wuVars[k].first << model.synapseName[i] << "[i] = " << model.scalarExpr(model.synapseIni[i][k]) << ";" << ENDL;
                 }
                 else {
-                    os << "        " << wuInitVals[k].first << model.synapseName[i] << "[i] = " << model.synapseIni[i][k] << ";" << ENDL;
+                    os << "        " << wuVars[k].first << model.synapseName[i] << "[i] = " << model.synapseIni[i][k] << ";" << ENDL;
                 }
         
                 os << "    }" << cB << ENDL;
@@ -1192,14 +1192,14 @@ void genRunner(const NNmodel &model, //!< Model description
         }
 
         if (model.synapseGType[i] == INDIVIDUALG) {
-            auto psmInitVals = psm->GetInitVals();
-            for (size_t k= 0, l= psmInitVals.size(); k < l; k++) {
+            auto psmVars = psm->GetVars();
+            for (size_t k= 0, l= psmVars.size(); k < l; k++) {
                 os << "    " << oB << "for (int i = 0; i < " << model.neuronN[model.synapseTarget[i]] << "; i++) {" << ENDL;
-                if (psmInitVals[k].second == model.ftype) {
-                    os << "        " << psmInitVals[k].first << model.synapseName[i] << "[i] = " << model.scalarExpr(model.postSynIni[i][k]) << ";" << ENDL;
+                if (psmVars[k].second == model.ftype) {
+                    os << "        " << psmVars[k].first << model.synapseName[i] << "[i] = " << model.scalarExpr(model.postSynIni[i][k]) << ";" << ENDL;
                 }
                 else {
-                    os << "        " << psmInitVals[k].first << model.synapseName[i] << "[i] = " << model.postSynIni[i][k] << ";" << ENDL;
+                    os << "        " << psmVars[k].first << model.synapseName[i] << "[i] = " << model.postSynIni[i][k] << ";" << ENDL;
                 }
                 os << "    }" << cB << ENDL;
             }
@@ -1276,9 +1276,9 @@ void genRunner(const NNmodel &model, //!< Model description
             }
 
             // Allocate synapse variables
-            const auto &wuInitValZeroCopy = model.synapseInitValZeroCopy[i];
-            for(const auto &v : model.synapseModel[i]->GetInitVals()) {
-                const bool zeroCopy = (wuInitValZeroCopy.find(v.first) != end(wuInitValZeroCopy));
+            const auto &wuVarZeroCopy = model.synapseVarZeroCopy[i];
+            for(const auto &v : model.synapseModel[i]->GetVars()) {
+                const bool zeroCopy = (wuVarZeroCopy.find(v.first) != end(wuVarZeroCopy));
                 allocate_variable(os, v.second, v.first + model.synapseName[i], zeroCopy, numConnections);
             }
 
@@ -1322,9 +1322,9 @@ void genRunner(const NNmodel &model, //!< Model description
                 os << model.neuronN[model.synapseTarget[i]] <<");" << ENDL;
             }
            
-            const auto &wuInitValZeroCopy = model.synapseInitValZeroCopy[i];
-            for(const auto &v : model.synapseModel[i]->GetInitVals()) {
-                if(wuInitValZeroCopy.find(v.first) == end(wuInitValZeroCopy)) {
+            const auto &wuVarZeroCopy = model.synapseVarZeroCopy[i];
+            for(const auto &v : model.synapseModel[i]->GetVars()) {
+                if(wuVarZeroCopy.find(v.first) == end(wuVarZeroCopy)) {
                     os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << v.first << model.synapseName[i] << ", "  << v.first << model.synapseName[i] << ", sizeof(" << v.second << ") * size , cudaMemcpyHostToDevice));" << ENDL;
                 }
             }
@@ -1383,10 +1383,10 @@ void genRunner(const NNmodel &model, //!< Model description
         }
 
         // Free neuron state variables
-        const auto &nmInitValZeroCopy = model.neuronInitValZeroCopy[i];
-        for (auto const &v : model.neuronModel[i]->GetInitVals()) {
+        const auto &nmVarZeroCopy = model.neuronVarZeroCopy[i];
+        for (auto const &v : model.neuronModel[i]->GetVars()) {
             free_variable(os, v.first + model.neuronName[i],
-                          nmInitValZeroCopy.find(v.first) != end(nmInitValZeroCopy));
+                          nmVarZeroCopy.find(v.first) != end(nmVarZeroCopy));
         }
     }
 
@@ -1423,14 +1423,14 @@ void genRunner(const NNmodel &model, //!< Model description
             free_variable(os, "gp" + model.synapseName[i], false);
         }
         if (model.synapseGType[i] == INDIVIDUALG) {
-            const auto &wuInitValZeroCopy = model.synapseInitValZeroCopy[i];
-            for(const auto &v : model.synapseModel[i]->GetInitVals()) {
-                const bool zeroCopy = (wuInitValZeroCopy.find(v.first) != end(wuInitValZeroCopy));
+            const auto &wuVarZeroCopy = model.synapseVarZeroCopy[i];
+            for(const auto &v : model.synapseModel[i]->GetVars()) {
+                const bool zeroCopy = (wuVarZeroCopy.find(v.first) != end(wuVarZeroCopy));
                 free_variable(os, v.first + model.synapseName[i], zeroCopy);
             }
-            const auto &psmInitValZeroCopy = model.postSynapseInitValZeroCopy[i];
-            for(const auto &v : model.postSynapseModel[i]->GetInitVals()) {
-                const bool zeroCopy = (psmInitValZeroCopy.find(v.first) != end(psmInitValZeroCopy));
+            const auto &psmVarZeroCopy = model.postSynapseVarZeroCopy[i];
+            for(const auto &v : model.postSynapseModel[i]->GetVars()) {
+                const bool zeroCopy = (psmVarZeroCopy.find(v.first) != end(psmVarZeroCopy));
                 free_variable(os, v.first + model.synapseName[i], zeroCopy);
             }
         }
@@ -1588,15 +1588,15 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
         os << "void push" << model.neuronName[i] << "StateToDevice()" << ENDL;
         os << OB(1050);
 
-        const auto &nmInitValZeroCopy = model.neuronInitValZeroCopy[i];
-        auto nmInitVars = model.neuronModel[i]->GetInitVals();
-        for (size_t k = 0, l = nmInitVars.size(); k < l; k++) {
+        const auto &nmVarZeroCopy = model.neuronVarZeroCopy[i];
+        auto nmVars = model.neuronModel[i]->GetVars();
+        for (size_t k = 0, l = nmVars.size(); k < l; k++) {
             // only copy non-zero-copied, non-pointers. Pointers don't transport between GPU and CPU
-            if (nmInitVars[k].second.find("*") == string::npos && nmInitValZeroCopy.find(nmInitVars[k].first) == end(nmInitValZeroCopy)) {
+            if (nmVars[k].second.find("*") == string::npos && nmVarZeroCopy.find(nmVars[k].first) == end(nmVarZeroCopy)) {
                 const size_t size = model.neuronVarNeedQueue[i][k] ? (model.neuronN[i] * model.neuronDelaySlots[i]) : model.neuronN[i];
-                os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << nmInitVars[k].first << model.neuronName[i];
-                os << ", " << nmInitVars[k].first << model.neuronName[i];
-                os << ", " << size << " * sizeof(" << nmInitVars[k].second << "), cudaMemcpyHostToDevice));" << ENDL;
+                os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << nmVars[k].first << model.neuronName[i];
+                os << ", " << nmVars[k].first << model.neuronName[i];
+                os << ", " << size << " * sizeof(" << nmVars[k].second << "), cudaMemcpyHostToDevice));" << ENDL;
             }
         }
 
@@ -1724,20 +1724,20 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
             else {
                 os << "size_t size = C" << model.synapseName[i] << ".connN;" << ENDL;
             }
-            const auto &wuInitValZeroCopy = model.synapseInitValZeroCopy[i];
-            for(const auto &v : wu->GetInitVals()) {
+            const auto &wuVarZeroCopy = model.synapseVarZeroCopy[i];
+            for(const auto &v : wu->GetVars()) {
                  // only copy non-pointers and non-zero-copied. Pointers don't transport between GPU and CPU
-                if (v.second.find("*") == string::npos && wuInitValZeroCopy.find(v.first) == end(wuInitValZeroCopy)) {
+                if (v.second.find("*") == string::npos && wuVarZeroCopy.find(v.first) == end(wuVarZeroCopy)) {
                     os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << v.first << model.synapseName[i];
                     os << ", " << v.first << model.synapseName[i];
                     os << ", size * sizeof(" << v.second << "), cudaMemcpyHostToDevice));" << ENDL;
                 }
             }
 
-            const auto &psmInitValZeroCopy = model.postSynapseInitValZeroCopy[i];
-            for(const auto &v : psm->GetInitVals()) {
+            const auto &psmVarZeroCopy = model.postSynapseVarZeroCopy[i];
+            for(const auto &v : psm->GetVars()) {
                 // only copy non-pointers and non-zero-copied. Pointers don't transport between GPU and CPU
-                if (v.second.find("*") == string::npos && psmInitValZeroCopy.find(v.first) == end(psmInitValZeroCopy)) {
+                if (v.second.find("*") == string::npos && psmVarZeroCopy.find(v.first) == end(psmVarZeroCopy)) {
                     const size_t size = model.neuronN[model.synapseTarget[i]];
                     os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << v.first << model.synapseName[i];
                     os << ", " << v.first << model.synapseName[i];
@@ -1771,16 +1771,16 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
         os << "void pull" << model.neuronName[i] << "StateFromDevice()" << ENDL;
         os << OB(1050);
         
-        auto nmInitVars = model.neuronModel[i]->GetInitVals();
-        const auto &nmInitValZeroCopy = model.neuronInitValZeroCopy[i];
-        for (size_t k= 0, l= nmInitVars.size(); k < l; k++) {
+        auto nmVars = model.neuronModel[i]->GetVars();
+        const auto &nmVarZeroCopy = model.neuronVarZeroCopy[i];
+        for (size_t k= 0, l= nmVars.size(); k < l; k++) {
             // only copy non-zero-copied, non-pointers. Pointers don't transport between GPU and CPU
-            if (nmInitVars[k].second.find("*") == string::npos && nmInitValZeroCopy.find(nmInitVars[k].first) == end(nmInitValZeroCopy)) {
+            if (nmVars[k].second.find("*") == string::npos && nmVarZeroCopy.find(nmVars[k].first) == end(nmVarZeroCopy)) {
                 const size_t size = model.neuronVarNeedQueue[i][k] ? model.neuronN[i] * model.neuronDelaySlots[i] : model.neuronN[i];
 
-                os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << nmInitVars[k].first << model.neuronName[i];
-                os << ", d_" << nmInitVars[k].first << model.neuronName[i];
-                os << ", " << size << " * sizeof(" << nmInitVars[k].second << "), cudaMemcpyDeviceToHost));" << ENDL;
+                os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << nmVars[k].first << model.neuronName[i];
+                os << ", d_" << nmVars[k].first << model.neuronName[i];
+                os << ", " << size << " * sizeof(" << nmVars[k].second << "), cudaMemcpyDeviceToHost));" << ENDL;
             }
         }
 
@@ -1915,20 +1915,20 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
                 os << "size_t size = C" << model.synapseName[i] << ".connN;" << ENDL;
             }
 
-            const auto &wuInitValZeroCopy = model.synapseInitValZeroCopy[i];
-            for(const auto &v : wu->GetInitVals()) {
+            const auto &wuVarZeroCopy = model.synapseVarZeroCopy[i];
+            for(const auto &v : wu->GetVars()) {
                 // only copy non-pointers and non-zero-copied. Pointers don't transport between GPU and CPU
-                if (v.second.find("*") == string::npos && wuInitValZeroCopy.find(v.first) == end(wuInitValZeroCopy)) {
+                if (v.second.find("*") == string::npos && wuVarZeroCopy.find(v.first) == end(wuVarZeroCopy)) {
                     os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << v.first << model.synapseName[i];
                     os << ", d_"  << v.first << model.synapseName[i];
                     os << ", size * sizeof(" << v.second << "), cudaMemcpyDeviceToHost));" << ENDL;
                 }
             }
 
-            const auto &psmInitValZeroCopy = model.postSynapseInitValZeroCopy[i];
-            for(const auto &v : psm->GetInitVals()) {
+            const auto &psmVarZeroCopy = model.postSynapseVarZeroCopy[i];
+            for(const auto &v : psm->GetVars()) {
                 // only copy non-pointers and non-zero-copied. Pointers don't transport between GPU and CPU
-                if (v.second.find("*") == string::npos && psmInitValZeroCopy.find(v.first) == end(psmInitValZeroCopy)) {
+                if (v.second.find("*") == string::npos && psmVarZeroCopy.find(v.first) == end(psmVarZeroCopy)) {
                     size_t size = model.neuronN[model.synapseTarget[i]];
                     os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << v.first << model.synapseName[i];
                     os << ", d_"  << v.first << model.synapseName[i];

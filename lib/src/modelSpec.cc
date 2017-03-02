@@ -97,21 +97,21 @@ bool NNmodel::zeroCopyInUse() const
     }
 
     // If any neuron groups have any state variables with zero-copy enabled return true
-    if(any_of(begin(neuronInitValZeroCopy), end(neuronInitValZeroCopy),
+    if(any_of(begin(neuronVarZeroCopy), end(neuronVarZeroCopy),
         [](const set<string> &s){ return !s.empty(); }))
     {
         return true;
     }
 
     // If any synapse groups have any weight update model state variables with zero-copy enabled return true
-    if(any_of(begin(synapseInitValZeroCopy), end(synapseInitValZeroCopy),
+    if(any_of(begin(synapseVarZeroCopy), end(synapseVarZeroCopy),
         [](const set<string> &s){ return !s.empty(); }))
     {
         return true;
     }
 
     // If any synapse groups have any weight update model state variables with zero-copy enabled return true
-    if(any_of(begin(postSynapseInitValZeroCopy), end(postSynapseInitValZeroCopy),
+    if(any_of(begin(postSynapseVarZeroCopy), end(postSynapseVarZeroCopy),
         [](const set<string> &s){ return !s.empty(); }))
     {
         return true;
@@ -204,22 +204,22 @@ void NNmodel::setNeuronSpikeTimeZeroCopy(const string &neuronGroup)
  * May improve IO performance at the expense of kernel performance
  */
 //--------------------------------------------------------------------------
-void NNmodel::setNeuronInitValZeroCopy(const string &neuronGroup, const string &var)
+void NNmodel::setNeuronVarZeroCopy(const string &neuronGroup, const string &var)
 {
     const unsigned int groupNo = findNeuronGrp(neuronGroup);
 
     // If named variable doesn't exist give error
-    auto nmInitVals = neuronModel[groupNo]->GetInitVals();
-    auto nmInitValNameBegin = GetPairKeyConstIter(begin(nmInitVals));
-    auto nmInitValNameEnd = GetPairKeyConstIter(end(nmInitVals));
-    if(find(nmInitValNameBegin, nmInitValNameEnd, var) == nmInitValNameEnd)
+    auto nmVars = neuronModel[groupNo]->GetVars();
+    auto nmVarNameBegin = GetPairKeyConstIter(begin(nmVars));
+    auto nmVarNameEnd = GetPairKeyConstIter(end(nmVars));
+    if(find(nmVarNameBegin, nmVarNameEnd, var) == nmVarNameEnd)
     {
-        gennError("Cannot find initial variable " + var + " for neuron group " + neuronGroup);
+        gennError("Cannot find variable " + var + " for neuron group " + neuronGroup);
     }
     // Otherwise add name of variable to set
     else
     {
-        neuronInitValZeroCopy[groupNo].insert(var);
+        neuronVarZeroCopy[groupNo].insert(var);
     }
 }
 
@@ -241,13 +241,13 @@ void NNmodel::initLearnGrps()
 
     neuronVarNeedQueue.resize(neuronGrpN);
     for (unsigned int i = 0; i < neuronGrpN; i++) {
-        neuronVarNeedQueue[i] = vector<bool>(neuronModel[i]->GetInitVals().size(), false);
+        neuronVarNeedQueue[i] = vector<bool>(neuronModel[i]->GetVars().size(), false);
     }
 
     for (unsigned int i = 0; i < synapseGrpN; i++) {
         const auto *wu = synapseModel[i];
         unsigned int src = synapseSource[i];
-        auto srcInitVals = neuronModel[src]->GetInitVals();
+        auto srcVars = neuronModel[src]->GetVars();
         needEvntThresholdReTest.push_back(false);
 
         if (!wu->GetSimCode().empty()) {
@@ -255,8 +255,8 @@ void NNmodel::initLearnGrps()
             neuronNeedTrueSpk[src] = true;
 
             // analyze which neuron variables need queues
-            for (size_t j = 0; j < srcInitVals.size(); j++) {
-                if (wu->GetSimCode().find(srcInitVals[j].first + "_pre") != string::npos) {
+            for (size_t j = 0; j < srcVars.size(); j++) {
+                if (wu->GetSimCode().find(srcVars[j].first + "_pre") != string::npos) {
                     neuronVarNeedQueue[src][j] = true;
                 }
             }
@@ -266,8 +266,8 @@ void NNmodel::initLearnGrps()
             synapseUsesPostLearning[i] = true;
             lrnSynGrp.push_back(i);
             lrnGroups++;
-            for (size_t j = 0; j < srcInitVals.size(); j++) {
-                if (wu->GetLearnPostCode().find(srcInitVals[j].first + "_pre") != string::npos) {
+            for (size_t j = 0; j < srcVars.size(); j++) {
+                if (wu->GetLearnPostCode().find(srcVars[j].first + "_pre") != string::npos) {
                     neuronVarNeedQueue[src][j] = true;
                 }
             }
@@ -277,8 +277,8 @@ void NNmodel::initLearnGrps()
             synapseUsesSynapseDynamics[i]= true;
             synDynGrp.push_back(i);
             synDynGroups++;
-            for (size_t j = 0; j < srcInitVals.size(); j++) {
-                if (wu->GetSynapseDynamicsCode().find(srcInitVals[j].first + "_pre") != string::npos) {
+            for (size_t j = 0; j < srcVars.size(); j++) {
+                if (wu->GetSynapseDynamicsCode().find(srcVars[j].first + "_pre") != string::npos) {
                     neuronVarNeedQueue[src][j] = true;
                 }
             }
@@ -290,7 +290,7 @@ void NNmodel::initLearnGrps()
 
     // Loop through neuron populations and their outgoing synapse populations
     for (unsigned int i = 0; i < neuronGrpN; i++) {
-        auto vars = neuronModel[i]->GetInitVals();
+        auto vars = neuronModel[i]->GetVars();
         for (size_t j= 0, l= outSyn[i].size(); j < l; j++) {
             int synPopID= outSyn[i][j];
             const auto *wu = synapseModel[synPopID];
@@ -552,22 +552,22 @@ void NNmodel::setSynapseClusterIndex(const string &synapseGroup, /**< Name of th
  * May improve IO performance at the expense of kernel performance
  */
 //--------------------------------------------------------------------------
-void NNmodel::setSynapseWeightUpdateInitValZeroCopy(const string &synapseGroup, const string &var)
+void NNmodel::setSynapseWeightUpdateVarZeroCopy(const string &synapseGroup, const string &var)
 {
     const unsigned int groupNo = findSynapseGrp(synapseGroup);
 
     // If named variable doesn't exist give error
-    auto wuInitVals = synapseModel[groupNo]->GetInitVals();
-    auto wuInitValNameBegin = GetPairKeyConstIter(begin(wuInitVals));
-    auto wuInitValNameEnd = GetPairKeyConstIter(end(wuInitVals));
-    if(find(wuInitValNameBegin, wuInitValNameEnd, var) == wuInitValNameEnd)
+    auto wuVars = synapseModel[groupNo]->GetVars();
+    auto wuVarNameBegin = GetPairKeyConstIter(begin(wuVars));
+    auto wuVarNameEnd = GetPairKeyConstIter(end(wuVars));
+    if(find(wuVarNameBegin, wuVarNameEnd, var) == wuVarNameEnd)
     {
-        gennError("Cannot find weight update model initial variable " + var + " for synapse group " + synapseGroup);
+        gennError("Cannot find weight update model variable " + var + " for synapse group " + synapseGroup);
     }
     // Otherwise add name of variable to set
     else
     {
-        synapseInitValZeroCopy[groupNo].insert(var);
+        synapseVarZeroCopy[groupNo].insert(var);
     }
 }
 
@@ -576,22 +576,22 @@ void NNmodel::setSynapseWeightUpdateInitValZeroCopy(const string &synapseGroup, 
  * May improve IO performance at the expense of kernel performance
  * */
 //--------------------------------------------------------------------------
-void NNmodel::setSynapsePostsynapticInitValZeroCopy(const string &synapseGroup, const string &var)
+void NNmodel::setSynapsePostsynapticVarZeroCopy(const string &synapseGroup, const string &var)
 {
     const unsigned int groupNo = findSynapseGrp(synapseGroup);
 
     // If named variable doesn't exist give error
-    auto psmInitVals = postSynapseModel[groupNo]->GetInitVals();
-    auto psmInitValNameBegin = GetPairKeyConstIter(begin(psmInitVals));
-    auto psmInitValNameEnd = GetPairKeyConstIter(end(psmInitVals));
-    if(find(psmInitValNameBegin, psmInitValNameEnd, var) == psmInitValNameEnd)
+    auto psmVars = postSynapseModel[groupNo]->GetVars();
+    auto psmVarNameBegin = GetPairKeyConstIter(begin(psmVars));
+    auto psmVarNameEnd = GetPairKeyConstIter(end(psmVars));
+    if(find(psmVarNameBegin, psmVarNameEnd, var) == psmVarNameEnd)
     {
         gennError("Cannot find postsynaptic model initial variable " + var + " for synapse group " + synapseGroup);
     }
     // Otherwise add name of variable to set
     else
     {
-        postSynapseInitValZeroCopy[groupNo].insert(var);
+        postSynapseVarZeroCopy[groupNo].insert(var);
     }
 }
 
@@ -662,7 +662,7 @@ void NNmodel::addNeuronPopulation(
     neuronSpikeZeroCopy.push_back(false);
     neuronSpikeEventZeroCopy.push_back(false);
     neuronSpikeTimeZeroCopy.push_back(false);
-    neuronInitValZeroCopy.push_back(set<string>());
+    neuronVarZeroCopy.push_back(set<string>());
 
     // initially set neuron group indexing variables to device 0 host 0
     neuronDeviceID.push_back(0);
@@ -836,8 +836,8 @@ void NNmodel::addSynapsePopulation(
     synapseSpanType.push_back(0);
 
     // By default zero-copy should be disabled
-    synapseInitValZeroCopy.push_back(set<string>());
-    postSynapseInitValZeroCopy.push_back(set<string>());
+    synapseVarZeroCopy.push_back(set<string>());
+    postSynapseVarZeroCopy.push_back(set<string>());
 
     // initially set synapase group indexing variables to device 0 host 0
     synapseDeviceID.push_back(0);

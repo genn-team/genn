@@ -131,7 +131,7 @@ public:
   vector<bool> neuronSpikeZeroCopy; //!< Whether spikes from neuron group should use zero-copied memory
   vector<bool> neuronSpikeEventZeroCopy; //!< Whether spike-like events from neuron group should use zero-copied memory
   vector<bool> neuronSpikeTimeZeroCopy; //!< Whether spike times from neuron group should use zero-copied memory
-  vector<set<string>> neuronInitValZeroCopy;   //!< Whether indidividual state variables of a neuron group should use zero-copied memory
+  vector<set<string>> neuronVarZeroCopy;   //!< Whether indidividual state variables of a neuron group should use zero-copied memory
 
 
   // PUBLIC SYNAPSE VARIABLES
@@ -171,8 +171,8 @@ public:
   vector<unsigned int> padSumSynDynN; //!< Padded summed neuron numbers of synapse dynamics group source populations
   vector<int> synapseHostID; //!< The ID of the cluster node which the synapse groups are computed on
   vector<int> synapseDeviceID; //!< The ID of the CUDA device which the synapse groups are comnputed on
-  vector<set<string>> synapseInitValZeroCopy; //!< Whether indidividual weight update model state variables of a synapse group should use zero-copied memory
-  vector<set<string>> postSynapseInitValZeroCopy; //!< Whether indidividual post synapse model state variables of a synapse group should use zero-copied memory
+  vector<set<string>> synapseVarZeroCopy; //!< Whether indidividual weight update model state variables of a synapse group should use zero-copied memory
+  vector<set<string>> postSynapseVarZeroCopy; //!< Whether indidividual post synapse model state variables of a synapse group should use zero-copied memory
 
   // PUBLIC KERNEL PARAMETER VARIABLES
   //==================================
@@ -233,7 +233,7 @@ public:
 
   template<typename NeuronModel>
   void addNeuronPopulation(const string &name, unsigned int size,
-                           const typename NeuronModel::ParamValues &paramValues, const typename NeuronModel::InitValues &initValues)
+                           const typename NeuronModel::ParamValues &paramValues, const typename NeuronModel::VarValues &varValues)
   {
       if (!GeNNReady) {
           gennError("You need to call initGeNN first.");
@@ -247,7 +247,7 @@ public:
       neuronN.push_back(size);
       neuronModel.push_back(NeuronModel::GetInstance());
       neuronPara.push_back(paramValues.GetValues());
-      neuronIni.push_back(initValues.GetValues());
+      neuronIni.push_back(varValues.GetValues());
       inSyn.push_back(vector<unsigned int>());
       outSyn.push_back(vector<unsigned int>());
       neuronNeedSt.push_back(false);
@@ -258,7 +258,7 @@ public:
       neuronSpikeZeroCopy.push_back(false);
       neuronSpikeEventZeroCopy.push_back(false);
       neuronSpikeTimeZeroCopy.push_back(false);
-      neuronInitValZeroCopy.push_back(set<string>());
+      neuronVarZeroCopy.push_back(set<string>());
 
       // initially set neuron group indexing variables to device 0 host 0
       neuronDeviceID.push_back(0);
@@ -269,7 +269,7 @@ public:
   void setNeuronSpikeZeroCopy(const string &neuronGroup);   //!< Function to specify that neuron group should use zero-copied memory for its spikes - May improve IO performance at the expense of kernel performance
   void setNeuronSpikeEventZeroCopy(const string &neuronGroup);   //!< Function to specify that neuron group should use zero-copied memory for its spike-like events - May improve IO performance at the expense of kernel performance
   void setNeuronSpikeTimeZeroCopy(const string &neuronGroup);   //!< Function to specify that neuron group should use zero-copied memory for its spike times - May improve IO performance at the expense of kernel performance
-  void setNeuronInitValZeroCopy(const string &neuronGroup, const string &var);   //!< Function to specify that neuron group should use zero-copied memory for a particular state variable - May improve IO performance at the expense of kernel performance
+  void setNeuronVarZeroCopy(const string &neuronGroup, const string &var);   //!< Function to specify that neuron group should use zero-copied memory for a particular state variable - May improve IO performance at the expense of kernel performance
 
   void activateDirectInput(const string&, unsigned int type); //! This function has been deprecated in GeNN 2.2
   void setConstInp(const string&, double);
@@ -287,8 +287,8 @@ public:
 
   template<typename WeightUpdateModel, typename PostsynapticModel>
   void addSynapsePopulation(const string &name, SynapseConnType conntype, SynapseGType gtype, unsigned int delaySteps, const string& src, const string& trg,
-                            const typename WeightUpdateModel::ParamValues &weightParamValues, const typename WeightUpdateModel::InitValues &weightInitValues,
-                            const typename PostsynapticModel::ParamValues &postsynapticParamValues, const typename PostsynapticModel::InitValues &postsynapticInitValues)
+                            const typename WeightUpdateModel::ParamValues &weightParamValues, const typename WeightUpdateModel::VarValues &weightVarValues,
+                            const typename PostsynapticModel::ParamValues &postsynapticParamValues, const typename PostsynapticModel::VarValues &postsynapticVarValues)
   {
       if (!GeNNReady) {
           gennError("You need to call initGeNN first.");
@@ -319,18 +319,18 @@ public:
           neuronNeedSt[trgNumber]= true;
           needSt= true;
       }
-      synapseIni.push_back(weightInitValues.GetValues());
+      synapseIni.push_back(weightVarValues.GetValues());
       synapsePara.push_back(weightParamValues.GetValues());
       postSynapseModel.push_back(PostsynapticModel::GetInstance());
-      postSynIni.push_back(postsynapticInitValues.GetValues());
+      postSynIni.push_back(postsynapticVarValues.GetValues());
       postSynapsePara.push_back(postsynapticParamValues.GetValues());
       registerSynapsePopulation(i);
       maxConn.push_back(neuronN[trgNumber]);
       synapseSpanType.push_back(0);
 
       // By default zero-copy should be disabled
-      synapseInitValZeroCopy.push_back(set<string>());
-      postSynapseInitValZeroCopy.push_back(set<string>());
+      synapseVarZeroCopy.push_back(set<string>());
+      postSynapseVarZeroCopy.push_back(set<string>());
 
       // initially set synapase group indexing variables to device 0 host 0
       synapseDeviceID.push_back(0);
@@ -341,8 +341,8 @@ public:
   void setMaxConn(const string&, unsigned int); //< Set maximum connections per neuron for the given group (needed for optimization by sparse connectivity)
   void setSpanTypeToPre(const string&); //!< Method for switching the execution order of synapses to pre-to-post
   void setSynapseClusterIndex(const string &synapseGroup, int hostID, int deviceID); //!< Function for setting which host and which device a synapse group will be simulated on
-  void setSynapseWeightUpdateInitValZeroCopy(const string &synapseGroup, const string &var);   //!< Function to specify that synapse group should use zero-copied memory for a particular weight update model state variable - May improve IO performance at the expense of kernel performance
-  void setSynapsePostsynapticInitValZeroCopy(const string &synapseGroup, const string &var);   //!< Function to specify that synapse group should use zero-copied memory for a particular postsynaptic model state variable - May improve IO performance at the expense of kernel performance
+  void setSynapseWeightUpdateVarZeroCopy(const string &synapseGroup, const string &var);   //!< Function to specify that synapse group should use zero-copied memory for a particular weight update model state variable - May improve IO performance at the expense of kernel performance
+  void setSynapsePostsynapticVarZeroCopy(const string &synapseGroup, const string &var);   //!< Function to specify that synapse group should use zero-copied memory for a particular postsynaptic model state variable - May improve IO performance at the expense of kernel performance
 
   void initLearnGrps();
   unsigned int findSynapseGrp(const string&) const; //< Find the the ID number of a synapse group by its name

@@ -88,7 +88,7 @@ public:
     SET_THRESHOLD_CONDITION_CODE("$(V) >= 29.99");
 
     SET_PARAM_NAMES({"a", "b", "c", "d"});
-    SET_INIT_VALS({{"V","scalar"}, {"U", "scalar"}});
+    SET_VARS({{"V","scalar"}, {"U", "scalar"}});
 };
 
 //----------------------------------------------------------------------------
@@ -126,7 +126,7 @@ public:
     SET_THRESHOLD_CONDITION_CODE("$(V) >= $(Vspike)");
 
     SET_PARAM_NAMES({"therate", "trefract", "Vspike", "Vrest"});
-    SET_INIT_VALS({{"V", "scalar"}, {"seed", "uint64_t"}, {"spikeTime", "scalar"}});
+    SET_VARS({{"V", "scalar"}, {"seed", "uint64_t"}, {"spikeTime", "scalar"}});
     SET_EXTRA_GLOBAL_PARAMS({{"rates", "uint64_t *"}, {"offset", "unsigned int"}});
 
     virtual bool IsPoisson() const{ return true; }

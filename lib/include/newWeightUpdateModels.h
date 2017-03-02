@@ -86,7 +86,7 @@ class StaticPulse : public Base
 public:
     DECLARE_MODEL(StaticPulse, 0, 1);
 
-    SET_INIT_VALS({{"g","scalar"}});
+    SET_VARS({{"g","scalar"}});
 
     SET_SIM_CODE(
         "$(addtoinSyn) = $(g);\n"
@@ -102,7 +102,7 @@ public:
     DECLARE_MODEL(StaticGraded, 2, 1);
 
     SET_PARAM_NAMES({"Epre", "Vslope"});
-    SET_INIT_VALS({{"g","scalar"}});
+    SET_VARS({{"g","scalar"}});
 
     SET_SIM_CODE(
         "$(addtoinSyn) = $(g) * tanh(($(V_pre) - $(Epre)) / $(Vslope))* DT;\n"
@@ -123,7 +123,7 @@ public:
 
     SET_PARAM_NAMES({"tLrn", "tChng", "tDecay", "tPunish10", "tPunish01",
         "gMax", "gMid", "gSlope", "tauShift", "gSyn0"});
-    SET_INIT_VALS({{"g", "scalar"}, {"gRaw", "scalar"}});
+    SET_VARS({{"g", "scalar"}, {"gRaw", "scalar"}});
 
     SET_SIM_CODE(
         "$(addtoinSyn) = $(g);"
