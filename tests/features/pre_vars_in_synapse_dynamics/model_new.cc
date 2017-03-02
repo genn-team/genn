@@ -10,7 +10,7 @@ public:
 
     SET_SIM_CODE("$(x)= $(t)+$(shift);\n");
 
-    SET_INIT_VALS({{"x", "scalar"}, {"shift", "scalar"}});
+    SET_VARS({{"x", "scalar"}, {"shift", "scalar"}});
 };
 
 IMPLEMENT_MODEL(Neuron);
@@ -23,7 +23,7 @@ class WeightUpdateModel : public WeightUpdateModels::Base
 public:
     DECLARE_MODEL(WeightUpdateModel, 0, 1);
 
-    SET_INIT_VALS({{"w", "scalar"}});
+    SET_VARS({{"w", "scalar"}});
 
     SET_SYNAPSE_DYNAMICS_CODE("$(w)= $(x_pre);");
 };
@@ -36,8 +36,8 @@ void modelDefinition(NNmodel &model)
     model.setDT(0.1);
     model.setName("pre_vars_in_synapse_dynamics");
 
-    model.addNeuronPopulation<Neuron>("pre", 10, {}, Neuron::InitValues(0.0, 0.0));
-    model.addNeuronPopulation<Neuron>("post", 10, {}, Neuron::InitValues(0.0, 0.0));
+    model.addNeuronPopulation<Neuron>("pre", 10, {}, Neuron::VarValues(0.0, 0.0));
+    model.addNeuronPopulation<Neuron>("post", 10, {}, Neuron::VarValues(0.0, 0.0));
 
     string synName= "syn";
     for (int i= 0; i < 10; i++)
@@ -45,7 +45,7 @@ void modelDefinition(NNmodel &model)
         string theName= synName + std::to_string(i);
         model.addSynapsePopulation<WeightUpdateModel, PostsynapticModels::Izhikevich>(
             theName, DENSE, INDIVIDUALG, i, "pre", "post",
-            {}, WeightUpdateModel::InitValues(0.0),
+            {}, WeightUpdateModel::VarValues(0.0),
             {}, {});
     }
     model.setPrecision(GENN_FLOAT);
