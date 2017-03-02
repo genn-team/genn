@@ -1,6 +1,7 @@
 #pragma once
 
 // Standard includes
+#include <limits>
 #include <string>
 #include <sstream>
 #include <vector>
@@ -85,7 +86,10 @@ inline void value_substitutions(string &code, NameIter namesBegin, NameIter name
     NameIter n = namesBegin;
     auto v = values.cbegin();
     for (;n != namesEnd && v != values.cend(); n++, v++) {
-        substitute(code, "$(" + *n + ")", "(" + to_string(*v) + ")");
+        stringstream stream;
+        stream.precision(std::numeric_limits<double>::max_digits10);
+        stream << std::scientific << *v;
+        substitute(code, "$(" + *n + ")", "(" + stream.str() + ")");
     }
 }
 
@@ -121,7 +125,10 @@ inline void extended_value_substitutions(string &code, NameIter namesBegin, Name
     NameIter n = namesBegin;
     auto v = values.cbegin();
     for (;n != namesEnd && v != values.cend(); n++, v++) {
-        substitute(code, "$(" + *n + ext + ")", "(" + to_string(*v) + ")");
+        stringstream stream;
+        stream.precision(std::numeric_limits<double>::max_digits10);
+        stream << std::scientific << *v;
+        substitute(code, "$(" + *n + ext + ")", "(" + stream.str() + ")");
     }
 }
 
