@@ -64,16 +64,18 @@ void substitute(string &s, const string &trg, const string &rep);
 //! \brief This function performs a list of name substitutions for variables in code snippets.
 //--------------------------------------------------------------------------
 template<typename NameIter>
-inline void name_substitutions(string &code, const string &prefix, NameIter namesBegin, NameIter namesEnd, const string &postfix= "")
+inline void name_substitutions(string &code, const string &prefix, NameIter namesBegin, NameIter namesEnd, const string &postfix= "", const string &ext = "")
 {
     for (NameIter n = namesBegin; n != namesEnd; n++) {
-        substitute(code, "$(" + *n + ")", prefix + *n + postfix);
+        substitute(code,
+                   "$(" + *n + ext + ")",
+                   prefix + *n + postfix);
     }
 }
 
-inline void name_substitutions(string &code, const string &prefix, const vector<string> &names, const string &postfix= "")
+inline void name_substitutions(string &code, const string &prefix, const vector<string> &names, const string &postfix= "", const string &ext = "")
 {
-    name_substitutions(code, prefix, names.cbegin(), names.cend(), postfix);
+    name_substitutions(code, prefix, names.cbegin(), names.cend(), postfix, ext);
 }
 
 
@@ -81,7 +83,7 @@ inline void name_substitutions(string &code, const string &prefix, const vector<
 //! \brief This function performs a list of value substitutions for parameters in code snippets.
 //--------------------------------------------------------------------------
 template<typename NameIter>
-inline void value_substitutions(string &code, NameIter namesBegin, NameIter namesEnd, const vector<double> &values)
+inline void value_substitutions(string &code, NameIter namesBegin, NameIter namesEnd, const vector<double> &values, const string &ext = "")
 {
     NameIter n = namesBegin;
     auto v = values.cbegin();
@@ -89,52 +91,15 @@ inline void value_substitutions(string &code, NameIter namesBegin, NameIter name
         stringstream stream;
         stream.precision(std::numeric_limits<double>::max_digits10);
         stream << std::scientific << *v;
-        substitute(code, "$(" + *n + ")", "(" + stream.str() + ")");
+        substitute(code,
+                   "$(" + *n + ext + ")",
+                   "(" + stream.str() + ")");
     }
 }
 
-inline void value_substitutions(string &code, const vector<string> &names, const vector<double> &values)
+inline void value_substitutions(string &code, const vector<string> &names, const vector<double> &values, const string &ext = "")
 {
-    value_substitutions(code, names.cbegin(), names.cend(), values);
-}
-
-
-//--------------------------------------------------------------------------
-//! \brief This function performs a list of name substitutions for variables in code snippets where the variables have an extension in their names (e.g. "_pre").
-//--------------------------------------------------------------------------
-template<typename NameIter>
-inline void extended_name_substitutions(string &code, const string &prefix, NameIter namesBegin, NameIter namesEnd, const string &ext, const string &postfix= "")
-{
-    for (NameIter n = namesBegin; n != namesEnd; n++) {
-        substitute(code, "$(" + *n + ext + ")", prefix + *n + postfix);
-    }
-}
-
-inline void extended_name_substitutions(string &code, const string &prefix, const vector<string> &names, const string &ext, const string &postfix= "")
-{
-    extended_name_substitutions(code, prefix, names.cbegin(), names.cend(), ext, postfix);
-}
-
-//--------------------------------------------------------------------------
-//! \brief This function performs a list of value substitutions for parameters in code snippets where the parameters have an extension in their names (e.g. "_pre").
-//--------------------------------------------------------------------------
-template<typename NameIter>
-inline void extended_value_substitutions(string &code, NameIter namesBegin, NameIter namesEnd,
-                                         const string &ext, const vector<double> &values)
-{
-    NameIter n = namesBegin;
-    auto v = values.cbegin();
-    for (;n != namesEnd && v != values.cend(); n++, v++) {
-        stringstream stream;
-        stream.precision(std::numeric_limits<double>::max_digits10);
-        stream << std::scientific << *v;
-        substitute(code, "$(" + *n + ext + ")", "(" + stream.str() + ")");
-    }
-}
-
-inline void extended_value_substitutions(string &code, const vector<string> &names, const string &ext, const vector<double> &values)
-{
-    extended_value_substitutions(code, names.cbegin(), names.cend(), ext, values);
+    value_substitutions(code, names.cbegin(), names.cend(), values, ext);
 }
 
 //--------------------------------------------------------------------------

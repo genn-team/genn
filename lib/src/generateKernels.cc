@@ -343,7 +343,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
                 // code substitutions ----
                 substitute(eCode, "$(id)", "n");
                 substitute(eCode, "$(t)", "t");
-                extended_name_substitutions(eCode, "l", neuronModelVarNameBegin, neuronModelVarNameEnd, "_pre", "");
+                name_substitutions(eCode, "l", neuronModelVarNameBegin, neuronModelVarNameEnd, "", "_pre");
                 name_substitutions(eCode, "", neuronModelExtraGlobalParamsNameBegin, neuronModelExtraGlobalParamsNameEnd, model.neuronName[i]);
                 eCode = ensureFtype(eCode, model.ftype);
                 checkUnreplacedVariables(eCode, "neuronSpkEvntCondition");
