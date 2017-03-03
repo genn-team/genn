@@ -22,9 +22,11 @@ popd
 # Delete existing output
 rm -f msg
 
-# Loop through feature tests
+# Zero counters of test passes and fails
 NUM_SUCCESSES=0
 NUM_FAILURES=0
+
+# Loop through feature tests
 for f in features/*;
     do
         echo "Running test $f..."
@@ -57,6 +59,26 @@ for f in features/*;
         popd
     done;
 
+# Enter unit tests directory
+pushd unit
+
+# Clean
+make clean 1>> ../../msg 2>> ../../msg
+
+# Build
+make $MAKE_FLAGS 1>>../../msg 2>>../../msg || exit $?
+
+# Run tests
+./test --gtest_output="xml:test_results$s.xml"
+if [ $? -eq 0 ]; then
+    NUM_SUCCESSES=$((NUM_SUCCESSES+1))
+else
+    NUM_FAILURES=$((NUM_FAILURES+1))
+fi
+
+# Pop unit tests directory
+popd
+
 # Print brief summary of output
-echo "$NUM_SUCCESSES feature tests succeeded"
-echo "$NUM_FAILURES feature tests failed"
+echo "$NUM_SUCCESSES tests succeeded"
+echo "$NUM_FAILURES tests failed"
