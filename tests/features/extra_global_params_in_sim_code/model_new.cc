@@ -12,7 +12,7 @@ public:
 
     SET_EXTRA_GLOBAL_PARAMS({{"input", "scalar"}});
 
-    SET_INIT_VALS({{"x", "scalar"}, {"shift", "scalar"}});
+    SET_VARS({{"x", "scalar"}, {"shift", "scalar"}});
 };
 
 IMPLEMENT_MODEL(Neuron);
@@ -23,7 +23,7 @@ void modelDefinition(NNmodel &model)
   model.setDT(0.1);
   model.setName("extra_global_params_in_sim_code");
 
-  model.addNeuronPopulation<Neuron>("pre", 10, {}, Neuron::InitValues(0.0, 0.0));
+  model.addNeuronPopulation<Neuron>("pre", 10, {}, Neuron::VarValues(0.0, 0.0));
   model.setPrecision(GENN_FLOAT);
   model.finalize();
 }

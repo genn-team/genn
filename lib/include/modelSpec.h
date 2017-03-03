@@ -115,19 +115,23 @@ public:
   vector<unsigned int> padSumNeuronN; //!< Padded summed neuron numbers
   vector<unsigned int> neuronPostSyn; //! Postsynaptic methods to the neuron
   vector<const NeuronModels::Base*> neuronModel;  //!< Neuron models
-  vector<vector<double> > neuronPara; //!< Parameters of neurons
-  vector<vector<double> > dnp; //!< Derived neuron parameters
-  vector<vector<double> > neuronIni; //!< Initial values of neurons
-  vector<vector<unsigned int> > inSyn; //!< The ids of the incoming synapse groups
-  vector<vector<unsigned int> > outSyn; //!< The ids of the outgoing synapse groups
+  vector<vector<double>> neuronPara; //!< Parameters of neurons
+  vector<vector<double>> dnp; //!< Derived neuron parameters
+  vector<vector<double>> neuronIni; //!< Initial values of neurons
+  vector<vector<unsigned int>> inSyn; //!< The ids of the incoming synapse groups
+  vector<vector<unsigned int>> outSyn; //!< The ids of the outgoing synapse groups
   vector<bool> neuronNeedSt; //!< Whether last spike time needs to be saved for a group
   vector<bool> neuronNeedTrueSpk; //!< Whether spike-like events from a group are required
   vector<bool> neuronNeedSpkEvnt; //!< Whether spike-like events from a group are required
-  vector<vector<bool> > neuronVarNeedQueue; //!< Whether a neuron variable needs queueing for syn code
+  vector<vector<bool>> neuronVarNeedQueue; //!< Whether a neuron variable needs queueing for syn code
   vector<set<pair<string, string>>> neuronSpkEvntCondition; //!< Will contain the spike event condition code when spike events are used
   vector<unsigned int> neuronDelaySlots; //!< The number of slots needed in the synapse delay queues of a neuron group
   vector<int> neuronHostID; //!< The ID of the cluster node which the neuron groups are computed on
   vector<int> neuronDeviceID; //!< The ID of the CUDA device which the neuron groups are comnputed on
+  vector<bool> neuronSpikeZeroCopy; //!< Whether spikes from neuron group should use zero-copied memory
+  vector<bool> neuronSpikeEventZeroCopy; //!< Whether spike-like events from neuron group should use zero-copied memory
+  vector<bool> neuronSpikeTimeZeroCopy; //!< Whether spike times from neuron group should use zero-copied memory
+  vector<set<string>> neuronVarZeroCopy;   //!< Whether indidividual state variables of a neuron group should use zero-copied memory
 
 
   // PUBLIC SYNAPSE VARIABLES
@@ -141,23 +145,23 @@ public:
   vector<const WeightUpdateModels::Base*> synapseModel; //!< Types of synapses
   vector<SynapseConnType> synapseConnType; //!< Connectivity type of synapses
   vector<SynapseGType> synapseGType; //!< Type of specification method for synaptic conductance
-  vector<unsigned int> synapseSpanType; //!< Execution order of synapses in the kernel. It determines whether synapses are executed in parallel for every postsynaptic neuron (0, default), or for every presynaptic neuron (1). 
+  vector<unsigned int> synapseSpanType; //!< Execution order of synapses in the kernel. It determines whether synapses are executed in parallel for every postsynaptic neuron (0, default), or for every presynaptic neuron (1).
   vector<unsigned int> synapseSource; //!< Presynaptic neuron groups
   vector<unsigned int> synapseTarget; //!< Postsynaptic neuron groups
   vector<unsigned int> synapseInSynNo; //!< IDs of the target neurons' incoming synapse variables for each synapse group
   vector<unsigned int> synapseOutSynNo; //!< The target neurons' outgoing synapse for each synapse group
   vector<bool> synapseUsesTrueSpikes; //!< Defines if synapse update is done after detection of real spikes (only one point after threshold)
   vector<bool> synapseUsesSpikeEvents; //!< Defines if synapse update is done after detection of spike events (every point above threshold)
-  vector<bool> synapseUsesPostLearning; //!< Defines if anything is done in case of postsynaptic neuron spiking before presynaptic neuron (punishment in STDP etc.) 
+  vector<bool> synapseUsesPostLearning; //!< Defines if anything is done in case of postsynaptic neuron spiking before presynaptic neuron (punishment in STDP etc.)
   vector<bool> synapseUsesSynapseDynamics; //!< Defines if there is any continuos synapse dynamics defined
   vector<bool> needEvntThresholdReTest; //!< Defines whether the Evnt Threshold needs to be retested in the synapse kernel due to multiple non-identical events in the pre-synaptic neuron population
-  vector<vector<double> > synapsePara; //!< parameters of synapses
-  vector<vector<double> > synapseIni; //!< Initial values of synapse variables
-  vector<vector<double> > dsp_w;  //!< Derived synapse parameters (weightUpdateModel only)
+  vector<vector<double>> synapsePara; //!< parameters of synapses
+  vector<vector<double>> synapseIni; //!< Initial values of synapse variables
+  vector<vector<double>> dsp_w;  //!< Derived synapse parameters (weightUpdateModel only)
   vector<const PostsynapticModels::Base*> postSynapseModel; //!< Types of post-synaptic model
-  vector<vector<double> > postSynapsePara; //!< parameters of postsynapses
-  vector<vector<double> > postSynIni; //!< Initial values of postsynaptic variables
-  vector<vector<double> > dpsp;  //!< Derived postsynapse parameters
+  vector<vector<double>> postSynapsePara; //!< parameters of postsynapses
+  vector<vector<double>> postSynIni; //!< Initial values of postsynaptic variables
+  vector<vector<double>> dpsp;  //!< Derived postsynapse parameters
   unsigned int lrnGroups; //!< Number of synapse groups with learning
   vector<unsigned int> padSumLearnN; //!< Padded summed neuron numbers of learn group source populations
   vector<unsigned int> lrnSynGrp; //!< Enumeration of the IDs of synapse groups that learn
@@ -167,7 +171,8 @@ public:
   vector<unsigned int> padSumSynDynN; //!< Padded summed neuron numbers of synapse dynamics group source populations
   vector<int> synapseHostID; //!< The ID of the cluster node which the synapse groups are computed on
   vector<int> synapseDeviceID; //!< The ID of the CUDA device which the synapse groups are comnputed on
-
+  vector<set<string>> synapseVarZeroCopy; //!< Whether indidividual weight update model state variables of a synapse group should use zero-copied memory
+  vector<set<string>> postSynapseVarZeroCopy; //!< Whether indidividual post synapse model state variables of a synapse group should use zero-copied memory
 
   // PUBLIC KERNEL PARAMETER VARIABLES
   //==================================
@@ -180,31 +185,19 @@ public:
   vector<string> simLearnPostKernelParameterTypes;
   vector<string> synapseDynamicsKernelParameters;
   vector<string> synapseDynamicsKernelParameterTypes;
-    
+
 private:
 
 
   // PRIVATE NEURON FUNCTIONS
   //=========================
 
-  void setNeuronName(unsigned int, const string); //!< Never used
-  void setNeuronN(unsigned int, unsigned int); //!< Never used
-  void setNeuronType(unsigned int, unsigned int); //!< Never used
-  void setNeuronPara(unsigned int, double*); //!< Never used
-  void setNeuronIni(unsigned int, double*); //!< Never used
   void initDerivedNeuronPara(); //!< Method for calculating the values of derived neuron parameters.
 
 
   // PRIVATE SYNAPSE FUNCTIONS
   //==========================
 
-  void setSynapseName(unsigned int, const string); //!< Never used
-  void setSynapseType(unsigned int, unsigned int); //!< Never used
-  void setSynapseSource(unsigned int, unsigned int); //!< Never used
-  void setSynapseTarget(unsigned int, unsigned int); //!< Never used
-  void setSynapsePara(unsigned int, double*); //!< Never used
-  void setSynapseConnType(unsigned int, unsigned int); //!< Never used
-  void setSynapseGType(unsigned int, unsigned int); //!< Never used
   void initDerivedSynapsePara(); //!< Method for calculating the values of derived synapse parameters.
   void initDerivedPostSynapsePara(); //!< Method for calculating the values of derived postsynapse parameters.
   void registerSynapsePopulation(unsigned int); //!< Method to register a new synapse population with the inSyn list of the target neuron population
@@ -230,6 +223,7 @@ public:
   void setPopulationSums(); //!< Set the accumulated sums of lowest multiple of kernel block size >= group sizes for all simulated groups.
   void finalize(); //!< Declare that the model specification is finalised in modelDefinition().
 
+  bool zeroCopyInUse() const;
 
   // PUBLIC NEURON FUNCTIONS
   //========================
@@ -239,7 +233,7 @@ public:
 
   template<typename NeuronModel>
   void addNeuronPopulation(const string &name, unsigned int size,
-                           const typename NeuronModel::ParamValues &paramValues, const typename NeuronModel::InitValues &initValues)
+                           const typename NeuronModel::ParamValues &paramValues, const typename NeuronModel::VarValues &varValues)
   {
       if (!GeNNReady) {
           gennError("You need to call initGeNN first.");
@@ -253,12 +247,18 @@ public:
       neuronN.push_back(size);
       neuronModel.push_back(NeuronModel::GetInstance());
       neuronPara.push_back(paramValues.GetValues());
-      neuronIni.push_back(initValues.GetValues());
+      neuronIni.push_back(varValues.GetValues());
       inSyn.push_back(vector<unsigned int>());
       outSyn.push_back(vector<unsigned int>());
       neuronNeedSt.push_back(false);
       neuronNeedSpkEvnt.push_back(false);
       neuronDelaySlots.push_back(1);
+
+      // By default zero-copy should be disabled
+      neuronSpikeZeroCopy.push_back(false);
+      neuronSpikeEventZeroCopy.push_back(false);
+      neuronSpikeTimeZeroCopy.push_back(false);
+      neuronVarZeroCopy.push_back(set<string>());
 
       // initially set neuron group indexing variables to device 0 host 0
       neuronDeviceID.push_back(0);
@@ -266,6 +266,11 @@ public:
   }
 
   void setNeuronClusterIndex(const string &neuronGroup, int hostID, int deviceID); //!< Function for setting which host and which device a neuron group will be simulated on
+  void setNeuronSpikeZeroCopy(const string &neuronGroup);   //!< Function to specify that neuron group should use zero-copied memory for its spikes - May improve IO performance at the expense of kernel performance
+  void setNeuronSpikeEventZeroCopy(const string &neuronGroup);   //!< Function to specify that neuron group should use zero-copied memory for its spike-like events - May improve IO performance at the expense of kernel performance
+  void setNeuronSpikeTimeZeroCopy(const string &neuronGroup);   //!< Function to specify that neuron group should use zero-copied memory for its spike times - May improve IO performance at the expense of kernel performance
+  void setNeuronVarZeroCopy(const string &neuronGroup, const string &var);   //!< Function to specify that neuron group should use zero-copied memory for a particular state variable - May improve IO performance at the expense of kernel performance
+
   void activateDirectInput(const string&, unsigned int type); //! This function has been deprecated in GeNN 2.2
   void setConstInp(const string&, double);
   unsigned int findNeuronGrp(const string&) const; //!< Find the the ID number of a neuron group by its name
@@ -282,8 +287,8 @@ public:
 
   template<typename WeightUpdateModel, typename PostsynapticModel>
   void addSynapsePopulation(const string &name, SynapseConnType conntype, SynapseGType gtype, unsigned int delaySteps, const string& src, const string& trg,
-                            const typename WeightUpdateModel::ParamValues &weightParamValues, const typename WeightUpdateModel::InitValues &weightInitValues,
-                            const typename PostsynapticModel::ParamValues &postsynapticParamValues, const typename PostsynapticModel::InitValues &postsynapticInitValues)
+                            const typename WeightUpdateModel::ParamValues &weightParamValues, const typename WeightUpdateModel::VarValues &weightVarValues,
+                            const typename PostsynapticModel::ParamValues &postsynapticParamValues, const typename PostsynapticModel::VarValues &postsynapticVarValues)
   {
       if (!GeNNReady) {
           gennError("You need to call initGeNN first.");
@@ -314,14 +319,18 @@ public:
           neuronNeedSt[trgNumber]= true;
           needSt= true;
       }
-      synapseIni.push_back(weightInitValues.GetValues());
+      synapseIni.push_back(weightVarValues.GetValues());
       synapsePara.push_back(weightParamValues.GetValues());
       postSynapseModel.push_back(PostsynapticModel::GetInstance());
-      postSynIni.push_back(postsynapticInitValues.GetValues());
+      postSynIni.push_back(postsynapticVarValues.GetValues());
       postSynapsePara.push_back(postsynapticParamValues.GetValues());
       registerSynapsePopulation(i);
       maxConn.push_back(neuronN[trgNumber]);
       synapseSpanType.push_back(0);
+
+      // By default zero-copy should be disabled
+      synapseVarZeroCopy.push_back(set<string>());
+      postSynapseVarZeroCopy.push_back(set<string>());
 
       // initially set synapase group indexing variables to device 0 host 0
       synapseDeviceID.push_back(0);
@@ -332,6 +341,9 @@ public:
   void setMaxConn(const string&, unsigned int); //< Set maximum connections per neuron for the given group (needed for optimization by sparse connectivity)
   void setSpanTypeToPre(const string&); //!< Method for switching the execution order of synapses to pre-to-post
   void setSynapseClusterIndex(const string &synapseGroup, int hostID, int deviceID); //!< Function for setting which host and which device a synapse group will be simulated on
+  void setSynapseWeightUpdateVarZeroCopy(const string &synapseGroup, const string &var);   //!< Function to specify that synapse group should use zero-copied memory for a particular weight update model state variable - May improve IO performance at the expense of kernel performance
+  void setSynapsePostsynapticVarZeroCopy(const string &synapseGroup, const string &var);   //!< Function to specify that synapse group should use zero-copied memory for a particular postsynaptic model state variable - May improve IO performance at the expense of kernel performance
+
   void initLearnGrps();
   unsigned int findSynapseGrp(const string&) const; //< Find the the ID number of a synapse group by its name
  

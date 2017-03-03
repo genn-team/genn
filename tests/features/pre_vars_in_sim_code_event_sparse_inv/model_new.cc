@@ -12,7 +12,7 @@ public:
 
     SET_THRESHOLD_CONDITION_CODE("(fmod($(x),1.0) < 1e-4)");
 
-    SET_INIT_VALS({{"x", "scalar"}, {"shift", "scalar"}});
+    SET_VARS({{"x", "scalar"}, {"shift", "scalar"}});
 };
 
 IMPLEMENT_MODEL(Neuron);
@@ -25,7 +25,7 @@ class WeightUpdateModel : public WeightUpdateModels::Base
 public:
     DECLARE_MODEL(WeightUpdateModel, 1, 1);
 
-    SET_INIT_VALS({{"w", "scalar"}});
+    SET_VARS({{"w", "scalar"}});
     SET_PARAM_NAMES({"myTrigger"});
 
     SET_EVENT_THRESHOLD_CONDITION_CODE("(fmod($(x_pre),$(myTrigger)) < 1e-4)");
@@ -40,8 +40,8 @@ void modelDefinition(NNmodel &model)
     model.setDT(0.1);
     model.setName("pre_vars_in_sim_code_event_sparse_inv");
 
-    model.addNeuronPopulation<Neuron>("pre", 10, {}, Neuron::InitValues(0.0, 0.0));
-    model.addNeuronPopulation<Neuron>("post", 10, {}, Neuron::InitValues(0.0, 0.0));
+    model.addNeuronPopulation<Neuron>("pre", 10, {}, Neuron::VarValues(0.0, 0.0));
+    model.addNeuronPopulation<Neuron>("post", 10, {}, Neuron::VarValues(0.0, 0.0));
 
     string synName= "syn";
     for (int i= 0; i < 10; i++)
@@ -49,7 +49,7 @@ void modelDefinition(NNmodel &model)
         string theName= synName + std::to_string(i);
         model.addSynapsePopulation<WeightUpdateModel, PostsynapticModels::Izhikevich>(
             theName, SPARSE, INDIVIDUALG, i, "pre", "post",
-            WeightUpdateModel::ParamValues((double)(2*(i+1))), WeightUpdateModel::InitValues(0.0),
+            WeightUpdateModel::ParamValues((double)(2*(i+1))), WeightUpdateModel::VarValues(0.0),
             {}, {});
         model.setSpanTypeToPre(theName);
     }

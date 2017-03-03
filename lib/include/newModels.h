@@ -11,7 +11,7 @@
 //----------------------------------------------------------------------------
 // Macros
 //----------------------------------------------------------------------------
-#define DECLARE_MODEL(TYPE, NUM_PARAMS, NUM_INIT_VALUES)       \
+#define DECLARE_MODEL(TYPE, NUM_PARAMS, NUM_VARS)              \
 private:                                                       \
     static TYPE *s_Instance;                                   \
 public:                                                        \
@@ -24,14 +24,14 @@ public:                                                        \
         return s_Instance;                                     \
     }                                                          \
     typedef NewModels::ValueBase<NUM_PARAMS> ParamValues;      \
-    typedef NewModels::ValueBase<NUM_INIT_VALUES> InitValues;
+    typedef NewModels::ValueBase<NUM_VARS> VarValues;
 
 
 #define IMPLEMENT_MODEL(TYPE) TYPE *TYPE::s_Instance = NULL
 
 #define SET_PARAM_NAMES(...) virtual std::vector<std::string> GetParamNames() const{ return __VA_ARGS__; }
 #define SET_DERIVED_PARAMS(...) virtual std::vector<std::pair<std::string, DerivedParamFunc>> GetDerivedParams() const{ return __VA_ARGS__; }
-#define SET_INIT_VALS(...) virtual std::vector<std::pair<std::string, std::string>> GetInitVals() const{ return __VA_ARGS__; }
+#define SET_VARS(...) virtual std::vector<std::pair<std::string, std::string>> GetVars() const{ return __VA_ARGS__; }
 
 //----------------------------------------------------------------------------
 // NewModels::ValueBase
@@ -111,7 +111,7 @@ public:
     //----------------------------------------------------------------------------
     virtual std::vector<std::string> GetParamNames() const{ return {}; }
     virtual std::vector<std::pair<std::string, DerivedParamFunc>> GetDerivedParams() const{ return {}; }
-    virtual std::vector<std::pair<std::string, std::string>> GetInitVals() const{ return {}; }
+    virtual std::vector<std::pair<std::string, std::string>> GetVars() const{ return {}; }
 };
 
 //----------------------------------------------------------------------------
@@ -132,13 +132,13 @@ public:
     //----------------------------------------------------------------------------
     // ModelBase virtuals
     //----------------------------------------------------------------------------
-    std::vector<std::string>  GetParamNames() const
+    virtual std::vector<std::string>  GetParamNames() const
     {
         const auto &nm = ModelArray[m_LegacyTypeIndex];
         return nm.pNames;
     }
 
-    std::vector<std::pair<std::string, DerivedParamFunc>> GetDerivedParams() const
+    virtual std::vector<std::pair<std::string, DerivedParamFunc>> GetDerivedParams() const
     {
         const auto &m = ModelArray[m_LegacyTypeIndex];
 
@@ -162,7 +162,8 @@ public:
 
         return derivedParams;
     }
-    std::vector<std::pair<std::string, std::string>> GetInitVals() const
+
+    virtual std::vector<std::pair<std::string, std::string>> GetVars() const
     {
         const auto &nm = ModelArray[m_LegacyTypeIndex];
         return ZipStringVectors(nm.varNames, nm.varTypes);

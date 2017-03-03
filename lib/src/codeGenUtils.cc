@@ -348,15 +348,15 @@ void neuron_substitutions_in_synaptic_code(
         substitute(wCode, "$(V_pre)", to_string(model.neuronPara[src][2]));
     }
     substitute(wCode, "$(sT_pre)", devPrefix+ "sT" + model.neuronName[src] + "[" + offsetPre + preIdx + "]");
-    auto preInitVals = model.neuronModel[src]->GetInitVals();
-    for (size_t j = 0; j < preInitVals.size(); j++) {
+    auto preVars = model.neuronModel[src]->GetVars();
+    for (size_t j = 0; j < preVars.size(); j++) {
         if (model.neuronVarNeedQueue[src][j]) {
-            substitute(wCode, "$(" + preInitVals[j].first + "_pre)",
-                       devPrefix + preInitVals[j].first + model.neuronName[src] + "[" + offsetPre + preIdx + "]");
+            substitute(wCode, "$(" + preVars[j].first + "_pre)",
+                       devPrefix + preVars[j].first + model.neuronName[src] + "[" + offsetPre + preIdx + "]");
         }
         else {
-            substitute(wCode, "$(" + preInitVals[j].first + "_pre)",
-                       devPrefix + preInitVals[j].first + model.neuronName[src] + "[" + preIdx + "]");
+            substitute(wCode, "$(" + preVars[j].first + "_pre)",
+                       devPrefix + preVars[j].first + model.neuronName[src] + "[" + preIdx + "]");
         }
     }
     extended_value_substitutions(wCode, model.neuronModel[src]->GetParamNames(), "_pre", model.neuronPara[src]);
@@ -373,15 +373,15 @@ void neuron_substitutions_in_synaptic_code(
     
     // postsynaptic neuron variables, parameters, and global parameters
     substitute(wCode, "$(sT_post)", devPrefix + "sT" + model.neuronName[trg] + "[" + offsetPost + postIdx + "]");
-    auto postInitVals = model.neuronModel[trg]->GetInitVals();
-    for (size_t j = 0; j < postInitVals.size(); j++) {
+    auto postVars = model.neuronModel[trg]->GetVars();
+    for (size_t j = 0; j < postVars.size(); j++) {
         if (model.neuronVarNeedQueue[trg][j]) {
-            substitute(wCode, "$(" + postInitVals[j].first + "_post)",
-                       devPrefix + postInitVals[j].first + model.neuronName[trg] + "[" + offsetPost + postIdx + "]");
+            substitute(wCode, "$(" + postVars[j].first + "_post)",
+                       devPrefix + postVars[j].first + model.neuronName[trg] + "[" + offsetPost + postIdx + "]");
         }
         else {
-            substitute(wCode, "$(" + postInitVals[j].first + "_post)",
-                       devPrefix + postInitVals[j].first + model.neuronName[trg] + "[" + postIdx + "]");
+            substitute(wCode, "$(" + postVars[j].first + "_post)",
+                       devPrefix + postVars[j].first + model.neuronName[trg] + "[" + postIdx + "]");
         }
     }
     extended_value_substitutions(wCode, model.neuronModel[trg]->GetParamNames(), "_post", model.neuronPara[trg]);
