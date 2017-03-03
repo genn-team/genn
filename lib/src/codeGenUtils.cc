@@ -359,17 +359,17 @@ void neuron_substitutions_in_synaptic_code(
                        devPrefix + preVars[j].first + model.neuronName[src] + "[" + preIdx + "]");
         }
     }
-    extended_value_substitutions(wCode, model.neuronModel[src]->GetParamNames(), "_pre", model.neuronPara[src]);
+    value_substitutions(wCode, model.neuronModel[src]->GetParamNames(), model.neuronPara[src], "_pre");
 
     auto preDerivedParams = model.neuronModel[src]->GetDerivedParams();
     auto preDerivedParamNameBegin = GetPairKeyConstIter(preDerivedParams.cbegin());
     auto preDerivedParamNameEnd = GetPairKeyConstIter(preDerivedParams.cend());
-    extended_value_substitutions(wCode, preDerivedParamNameBegin, preDerivedParamNameEnd, "_pre", model.dnp[src]);
+    value_substitutions(wCode, preDerivedParamNameBegin, preDerivedParamNameEnd, model.dnp[src], "_pre");
 
     auto preExtraGlobalParams = model.neuronModel[src]->GetExtraGlobalParams();
     auto preExtraGlobalParamsNameBegin = GetPairKeyConstIter(preExtraGlobalParams.cbegin());
     auto preExtraGlobalParamsNameEnd = GetPairKeyConstIter(preExtraGlobalParams.cend());
-    extended_name_substitutions(wCode, devPrefix, preExtraGlobalParamsNameBegin, preExtraGlobalParamsNameEnd, "_pre", model.neuronName[src]);
+    name_substitutions(wCode, devPrefix, preExtraGlobalParamsNameBegin, preExtraGlobalParamsNameEnd, model.neuronName[src], "_pre");
     
     // postsynaptic neuron variables, parameters, and global parameters
     substitute(wCode, "$(sT_post)", devPrefix + "sT" + model.neuronName[trg] + "[" + offsetPost + postIdx + "]");
@@ -384,15 +384,15 @@ void neuron_substitutions_in_synaptic_code(
                        devPrefix + postVars[j].first + model.neuronName[trg] + "[" + postIdx + "]");
         }
     }
-    extended_value_substitutions(wCode, model.neuronModel[trg]->GetParamNames(), "_post", model.neuronPara[trg]);
+    value_substitutions(wCode, model.neuronModel[trg]->GetParamNames(), model.neuronPara[trg], "_post");
 
     auto postDerivedParams = model.neuronModel[trg]->GetDerivedParams();
     auto postDerivedParamNameBegin= GetPairKeyConstIter(postDerivedParams.cbegin());
     auto postDerivedParamNameEnd = GetPairKeyConstIter(postDerivedParams.cend());
-    extended_value_substitutions(wCode, postDerivedParamNameBegin, postDerivedParamNameEnd, "_post", model.dnp[trg]);
+    value_substitutions(wCode, postDerivedParamNameBegin, postDerivedParamNameEnd, model.dnp[trg], "_post");
 
     auto postExtraGlobalParams = model.neuronModel[trg]->GetExtraGlobalParams();
     auto postExtraGlobalParamsNameBegin = GetPairKeyConstIter(postExtraGlobalParams.cbegin());
     auto postExtraGlobalParamsNameEnd = GetPairKeyConstIter(postExtraGlobalParams.cend());
-    extended_name_substitutions(wCode, devPrefix, postExtraGlobalParamsNameBegin, postExtraGlobalParamsNameEnd, "_post", model.neuronName[trg]);
+    name_substitutions(wCode, devPrefix, postExtraGlobalParamsNameBegin, postExtraGlobalParamsNameEnd, model.neuronName[trg], "_post");
 }
