@@ -395,7 +395,7 @@ void generate_process_presynaptic_events_code_CPU(
         }
 
         if (model.synapseGType[i] == INDIVIDUALID) {
-            os << "unsigned int gid = (ipre * " << model.neuronN[i] << " + ipost);" << ENDL;
+            os << "unsigned int gid = (ipre * " << model.neuronN[trg] << " + ipost);" << ENDL;
         }
 
         if (!weightUpdateModels[synt].simCode_supportCode.empty()) {
