@@ -1276,10 +1276,12 @@ void genRunner(const NNmodel &model, //!< Model description
             }
 
             // Allocate synapse variables
-            const auto &wuVarZeroCopy = model.synapseVarZeroCopy[i];
-            for(const auto &v : model.synapseModel[i]->GetVars()) {
-                const bool zeroCopy = (wuVarZeroCopy.find(v.first) != end(wuVarZeroCopy));
-                allocate_variable(os, v.second, v.first + model.synapseName[i], zeroCopy, numConnections);
+            if (model.synapseGType[i] == INDIVIDUALG) {
+                const auto &wuVarZeroCopy = model.synapseVarZeroCopy[i];
+                for(const auto &v : model.synapseModel[i]->GetVars()) {
+                    const bool zeroCopy = (wuVarZeroCopy.find(v.first) != end(wuVarZeroCopy));
+                    allocate_variable(os, v.second, v.first + model.synapseName[i], zeroCopy, numConnections);
+                }
             }
 
             os << "}" << ENDL;
@@ -1322,10 +1324,12 @@ void genRunner(const NNmodel &model, //!< Model description
                 os << model.neuronN[model.synapseTarget[i]] <<");" << ENDL;
             }
            
-            const auto &wuVarZeroCopy = model.synapseVarZeroCopy[i];
-            for(const auto &v : model.synapseModel[i]->GetVars()) {
-                if(wuVarZeroCopy.find(v.first) == end(wuVarZeroCopy)) {
-                    os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << v.first << model.synapseName[i] << ", "  << v.first << model.synapseName[i] << ", sizeof(" << v.second << ") * size , cudaMemcpyHostToDevice));" << ENDL;
+            if (model.synapseGType[i] == INDIVIDUALG) {
+                const auto &wuVarZeroCopy = model.synapseVarZeroCopy[i];
+                for(const auto &v : model.synapseModel[i]->GetVars()) {
+                    if(wuVarZeroCopy.find(v.first) == end(wuVarZeroCopy)) {
+                        os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << v.first << model.synapseName[i] << ", "  << v.first << model.synapseName[i] << ", sizeof(" << v.second << ") * size , cudaMemcpyHostToDevice));" << ENDL;
+                    }
                 }
             }
         }
