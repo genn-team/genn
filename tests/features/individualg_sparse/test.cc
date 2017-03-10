@@ -6,12 +6,12 @@
 
 // **NOTE** base-class for simulation tests must be
 // included after auto-generated globals are includes
-#include "../../utils/simulation_test.h"
+#include "../../utils/simulation_test_decoder_matrix.h"
 
 //----------------------------------------------------------------------------
 // SimulationTestIndividualGSparse
 //----------------------------------------------------------------------------
-class SimulationTestIndividualGSparse : public SimulationTest
+class SimulationTestIndividualGSparse : public SimulationTestDecoderMatrix
 {
 public:
     //----------------------------------------------------------------------------
@@ -46,59 +46,14 @@ public:
 
         // Fill weights
         std::fill(&gSyn[0], &gSyn[17], 1.0f);
-
-
-    }
-
-    bool Simulate()
-    {
-        // Initialize sparse arrays
-        initializeAllSparseArrays();
-
-        for (int i = 0; i < (int)(10.0f / DT); i++)
-        {
-            // What value should neurons be representing this time step?
-            const unsigned int in_value = (i / 10) + 1;
-
-            // Input spike representing value
-            // **NOTE** neurons start from zero
-            glbSpkCntPre[0] = 1;
-            glbSpkPre[0] = (in_value - 1);
-
-#ifndef CPU_ONLY
-            if(GetParam())
-            {
-                pushPreSpikesToDevice();
-            }
-#endif  // CPU_ONLY
-
-            // Step GeNN
-            StepGeNN();
-
-            // Loop through output neurons
-            unsigned int out_value = 0;
-            for(unsigned int j = 0; j < 4; j++)
-            {
-                // If this neuron is representing 1 add value it represents to output
-                if(fabs(xPost[j] - 1.0f) < 1E-5)
-                {
-                    out_value += (1 << j);
-                }
-            }
-
-            // If input value isn't correctly decoded, return false
-            if(out_value != in_value)
-            {
-                return false;
-            }
-        }
-
-        return true;
     }
 };
 
 TEST_P(SimulationTestIndividualGSparse, AcceptableError)
 {
+    // Initialize sparse arrays
+    initializeAllSparseArrays();
+
     // Check total error is less than some tolerance
     EXPECT_TRUE(Simulate());
 }
