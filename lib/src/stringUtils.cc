@@ -6,6 +6,8 @@
 #include "stringUtils.h"
 #include "utils.h"
 
+#include <limits>
+
 #if !defined(__GNUC__) || (__GNUC__ >= 4 && __GNUC_MINOR__ >= 9)
 #include <regex>
 #endif
@@ -213,7 +215,10 @@ void name_substitutions(string &code, const string &prefix, const vector<string>
 void value_substitutions(string &code, const vector<string> &names, const vector<double> &values)
 {
     for (int k = 0, l = names.size(); k < l; k++) {
-        substitute(code, "$(" + names[k] + ")", "(" + to_string(values[k]) + ")");
+        stringstream stream;
+        stream.precision(std::numeric_limits<double>::max_digits10);
+        stream << std::scientific << values[k];
+        substitute(code, "$(" + names[k] + ")", "(" + stream.str() + ")");
     }
 }
 
@@ -235,7 +240,10 @@ void extended_name_substitutions(string &code, const string &prefix, const vecto
 void extended_value_substitutions(string &code, const vector<string> &names, const string &ext, const vector<double> &values)
 {
     for (int k = 0, l = names.size(); k < l; k++) {
-        substitute(code, "$(" + names[k] + ext + ")", "(" + to_string(values[k]) + ")");
+        stringstream stream;
+        stream.precision(std::numeric_limits<double>::max_digits10);
+        stream << std::scientific << values[k];
+        substitute(code, "$(" + names[k] + ext + ")", "(" + stream.str() + ")");
     }
 }
 
