@@ -2,7 +2,7 @@
 #include "gtest/gtest.h"
 
 // Auto-generated simulation code includess
-#include "individualg_sparse_CODE/definitions.h"
+#include "decode_matrix_individualg_sparse_CODE/definitions.h"
 
 // **NOTE** base-class for simulation tests must be
 // included after auto-generated globals are includes
@@ -49,7 +49,7 @@ public:
     }
 };
 
-TEST_P(SimulationTestIndividualGSparse, AcceptableError)
+TEST_P(SimulationTestIndividualGSparse, CorrectDecoding)
 {
     // Initialize sparse arrays
     initializeAllSparseArrays();
@@ -64,6 +64,6 @@ auto simulatorBackends = ::testing::Values(true, false);
 auto simulatorBackends = ::testing::Values(false);
 #endif
 
-INSTANTIATE_TEST_CASE_P(SimCodeEventSparseInv,
+INSTANTIATE_TEST_CASE_P(DecodeMatrix,
                         SimulationTestIndividualGSparse,
                         simulatorBackends);

@@ -21,7 +21,7 @@ void modelDefinition(NNmodel &model)
     initGeNN();
 
     model.setDT(0.1);
-    model.setName("individualg_sparse");
+    model.setName("decode_matrix_individualg_sparse");
 
     // Static synapse parameters
     WeightUpdateModels::StaticPulse::VarValues staticSynapseInit(1.0);    // 0 - Wij (nA)
