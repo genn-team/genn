@@ -31,7 +31,7 @@ void modelDefinition(NNmodel &model)
 
 
     model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::Izhikevich>(
-        "Syn", DENSE, INDIVIDUALID, NO_DELAY, "Pre", "Post",
+        "Syn", SynapseMatrixType::BITMASK_GLOBAL_WEIGHT, NO_DELAY, "Pre", "Post",
         {}, staticSynapseInit,
         {}, {});
 
