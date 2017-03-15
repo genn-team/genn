@@ -254,7 +254,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
 
             os << "// pull inSyn values in a coalesced access" << ENDL;
             os << model.ftype << " linSyn" << sName << " = dd_inSyn" << sName << "[" << localID << "];" << ENDL;
-            if (model.synapseGType[synPopID] == INDIVIDUALG) {
+            if (model.synapseMatrixType[synPopID] & SynapseMatrixWeight::INDIVIDUAL) {
                 for(const auto &v : psm->GetVars()) {
                     os << v.second << " lps" << v.first << sName;
                     os << " = dd_" <<  v.first << sName << "[" << localID << "];" << ENDL;
@@ -267,7 +267,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
             name_substitutions(psCode, "l", neuronModelVarNameBegin, neuronModelVarNameEnd, "");
             value_substitutions(psCode, neuronModel->GetParamNames(), model.neuronPara[i]);
             value_substitutions(psCode, neuronModelDerivedParamNameBegin, neuronModelDerivedParamNameEnd, model.dnp[i]);
-            if (model.synapseGType[synPopID] == INDIVIDUALG) {
+            if (model.synapseMatrixType[synPopID] & SynapseMatrixWeight::INDIVIDUAL) {
                 name_substitutions(psCode, "lps", psmVarNameBegin, psmVarNameEnd, sName);
             }
             else {
@@ -594,13 +594,13 @@ void generate_process_presynaptic_events_code(
             os << "prePos = dd_indInG" << model.synapseName[i] << "[preInd];" << ENDL;
             os << "npost = dd_indInG" << model.synapseName[i] << "[preInd + 1] - prePos;" << ENDL;
 
-            if (model.synapseGType[i] == INDIVIDUALID) {
+            if (model.synapseMatrixType[i] & SynapseMatrixConnectivity::BITMASK) {
                 os << "unsigned int gid = (dd_glbSpkCnt" << postfix << "[" << localID << "] * " << model.neuronN[trg] << " + i);" << ENDL;
             }
 
             if ((evnt) && (model.needEvntThresholdReTest[i])) {
                 os << "if ";
-                if (model.synapseGType[i] == INDIVIDUALID) {
+                if (model.synapseMatrixType[i] & SynapseMatrixConnectivity::BITMASK) {
                     // Note: we will just access global mem. For compute >= 1.2 simultaneous access to same global mem in the (half-)warp will be coalesced - no worries
                     os << "((B(dd_gp" << model.synapseName[i] << "[gid >> " << logUIntSz << "], gid & " << UIntSz - 1 << ")) && ";
                 }
@@ -619,12 +619,12 @@ void generate_process_presynaptic_events_code(
                 // end code substitutions ----
                 os << "(" << eCode << ")";
 
-                if (model.synapseGType[i] == INDIVIDUALID) {
+                if (model.synapseMatrixType[i] & SynapseMatrixConnectivity::BITMASK) {
                     os << ")";
                 }
                 os << OB(130);
             }
-            else if (model.synapseGType[i] == INDIVIDUALID) {
+            else if (model.synapseMatrixType[i] & SynapseMatrixConnectivity::BITMASK) {
                 os << "if (B(dd_gp" << model.synapseName[i] << "[gid >> " << logUIntSz << "], gid & " << UIntSz - 1 << "))" << OB(135);
             }
             os << "for (int i = 0; i < npost; ++i)" << OB(103);
@@ -642,7 +642,7 @@ void generate_process_presynaptic_events_code(
                     substitute(wCode, "$(updatelinsyn)", "$(inSyn) += $(addtoinSyn)");
                     substitute(wCode, "$(inSyn)", "shLg[ipost]");
                 }
-                if (model.synapseGType[i] == INDIVIDUALG) {
+                if (model.synapseMatrixType[i] & SynapseMatrixWeight::INDIVIDUAL) {
                     name_substitutions(wCode, "dd_", wuVarNameBegin, wuVarNameEnd, model.synapseName[i] + "[prePos]");
                 }
                 else {
@@ -665,7 +665,7 @@ void generate_process_presynaptic_events_code(
             if ((evnt) && (model.needEvntThresholdReTest[i])) {
                 os << CB(130);
             }
-            else if (model.synapseGType[i] == INDIVIDUALID) {
+            else if (model.synapseMatrixType[i] & SynapseMatrixConnectivity::BITMASK) {
                 os << CB(135);
             }
             os << CB(102);
@@ -705,7 +705,7 @@ void generate_process_presynaptic_events_code(
             os << "for (j = 0; j < lmax; j++)" << OB(110);
             os << "// only work on existing neurons" << ENDL;
             os << "if (" << localID << " < " << maxConnections << ")" << OB(120);
-            if (model.synapseGType[i] == INDIVIDUALID) {
+            if (model.synapseMatrixType[i] & SynapseMatrixConnectivity::BITMASK) {
                 os << "unsigned int gid = (shSpk" << postfix << "[j] * " << model.neuronN[trg] << " + " << localID << ");" << ENDL;
             }
 
@@ -714,7 +714,7 @@ void generate_process_presynaptic_events_code(
             }
             if ((evnt) && (model.needEvntThresholdReTest[i])) {
                 os << "if ";
-                if (model.synapseGType[i] == INDIVIDUALID) {
+                if (model.synapseMatrixType[i] & SynapseMatrixConnectivity::BITMASK) {
                     // Note: we will just access global mem. For compute >= 1.2 simultaneous access to same global mem in the (half-)warp will be coalesced - no worries
                     os << "((B(dd_gp" << model.synapseName[i] << "[gid >> " << logUIntSz << "], gid & " << UIntSz - 1 << ")) && ";
                 }
@@ -730,12 +730,12 @@ void generate_process_presynaptic_events_code(
                 // end code substitutions ----
                 os << "(" << eCode << ")";
 
-                if (model.synapseGType[i] == INDIVIDUALID) {
+                if (model.synapseMatrixType[i] & SynapseMatrixConnectivity::BITMASK) {
                     os << ")";
                 }
                 os << OB(130);
             }
-            else if (model.synapseGType[i] == INDIVIDUALID) {
+            else if (model.synapseMatrixType[i] & SynapseMatrixConnectivity::BITMASK) {
                 os << "if (B(dd_gp" << model.synapseName[i] << "[gid >> " << logUIntSz << "], gid & " << UIntSz - 1 << "))" << OB(135);
             }
 
@@ -762,7 +762,7 @@ void generate_process_presynaptic_events_code(
                     substitute(wCode, "$(updatelinsyn)", "$(inSyn) += $(addtoinSyn)");
                     substitute(wCode, "$(inSyn)", "shLg[ipost]");
                 }
-                if (model.synapseGType[i] == INDIVIDUALG) {
+                if (model.synapseMatrixType[i] & SynapseMatrixWeight::INDIVIDUAL) {
                     name_substitutions(wCode, "dd_", wuVarNameBegin, wuVarNameEnd, model.synapseName[i] + "[prePos]");
                 }
                 else {
@@ -772,7 +772,7 @@ void generate_process_presynaptic_events_code(
             else { // DENSE
                 substitute(wCode, "$(updatelinsyn)", "$(inSyn) += $(addtoinSyn)");
                 substitute(wCode, "$(inSyn)", "linSyn");
-                if (model.synapseGType[i] == INDIVIDUALG) {
+                if (model.synapseMatrixType[i] & SynapseMatrixWeight::INDIVIDUAL) {
                     name_substitutions(wCode, "dd_", wuVarNameBegin, wuVarNameEnd, model.synapseName[i] + "[shSpk"
                                        + postfix + "[j] * " + to_string(model.neuronN[trg]) + "+ ipost]");
                 }
@@ -797,7 +797,7 @@ void generate_process_presynaptic_events_code(
             if ((evnt) && (model.needEvntThresholdReTest[i])) {
                 os << CB(130); // end if (eCode)
             }
-            else if (model.synapseGType[i] == INDIVIDUALID) {
+            else if (model.synapseMatrixType[i] & SynapseMatrixConnectivity::BITMASK) {
                 os << CB(135); // end if (B(dd_gp" << model.synapseName[i] << "[gid >> " << logUIntSz << "], gid
             }
             os << CB(120) << ENDL;
@@ -926,13 +926,13 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                 string SDcode = wu->GetSynapseDynamicsCode();
                 substitute(SDcode, "$(t)", "t");
 
-                if (model.synapseConnType[k] == SPARSE) { // SPARSE
+                if (model.synapseMatrixType[k] & SynapseMatrixConnectivity::SPARSE) { // SPARSE
                     os << "if (" << localID << " < dd_indInG" << synapseName << "[" << srcno << "])" << OB(25);
                     os << "// all threads participate that can work on an existing synapse" << ENDL;
                     if (!wu->GetSynapseDynamicsSuppportCode().empty()) {
 			            os << " using namespace " << synapseName << "_weightupdate_synapseDynamics;" << ENDL;
 		            }
-                    if (model.synapseGType[k] == INDIVIDUALG) {
+                    if (model.synapseMatrixType[k] & SynapseMatrixWeight::INDIVIDUAL) {
                         // name substitute synapse var names in synapseDynamics code
                         name_substitutions(SDcode, "dd_", wuVarNameBegin, wuVarNameEnd, synapseName + "[" + localID +"]");
                     }
@@ -955,7 +955,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
  		            if (!wu->GetSynapseDynamicsSuppportCode().empty()) {
 			           os << " using namespace " << model.synapseName[i] << "_weightupdate_synapseDynamics;" << ENDL;
 		            }
-                    if (model.synapseGType[k] == INDIVIDUALG) {
+                    if (model.synapseMatrixType[k] & SynapseMatrixWeight::INDIVIDUAL) {
                         // name substitute synapse var names in synapseDynamics code
                         name_substitutions(SDcode, "dd_", wuVarNameBegin, wuVarNameEnd, synapseName + "[" + localID + "]");
                     }

@@ -401,15 +401,15 @@ void genRunner(const NNmodel &model, //!< Model description
         auto const *wu = model.synapseModel[i];
         auto const *psm = model.postSynapseModel[i];
 
-        extern_variable_def(os, model.ftype+" *", "inSyn"+model.synapseName[i]);
-        if (model.synapseGType[i] == INDIVIDUALID) {
-            extern_variable_def(os, "uint32_t *", "gp"+model.synapseName[i]);
+        extern_variable_def(os, model.ftype+" *", "inSyn" + model.synapseName[i]);
+        if (model.synapseMatrixType[i] & SynapseMatrixConnectivity::BITMASK) {
+            extern_variable_def(os, "uint32_t *", "gp" + model.synapseName[i]);
         }
-        if (model.synapseMatrixType[i] & SynapseMatrixConnectivity::SPARSE) {
+        else if (model.synapseMatrixType[i] & SynapseMatrixConnectivity::SPARSE) {
             os << "extern SparseProjection C" << model.synapseName[i] << ";" << ENDL;
         }
 
-        if (model.synapseGType[i] == INDIVIDUALG) { // not needed for GLOBALG
+        if (model.synapseMatrixType[i] & SynapseMatrixWeight::INDIVIDUAL) { // not needed for GLOBALG
             for(const auto &v : wu->GetVars()) {
                 extern_variable_def(os, v.second + " *", v.first + model.synapseName[i]);
             }
@@ -840,7 +840,7 @@ void genRunner(const NNmodel &model, //!< Model description
         const auto *psm = model.postSynapseModel[i];
 
         variable_def(os, model.ftype+" *", "inSyn"+model.synapseName[i]);
-        if (model.synapseGType[i] == INDIVIDUALID) {
+        if (model.synapseMatrixType[i] & SynapseMatrixConnectivity::BITMASK) {
             variable_def(os, "uint32_t *", "gp"+model.synapseName[i]);
         }
         if (model.synapseMatrixType[i] & SynapseMatrixConnectivity::SPARSE) {
@@ -865,7 +865,7 @@ void genRunner(const NNmodel &model, //!< Model description
             }
 #endif
         }
-        if (model.synapseGType[i] == INDIVIDUALG) { // not needed for GLOBALG, INDIVIDUALID
+        if (model.synapseMatrixType[i] & SynapseMatrixWeight::INDIVIDUAL) { // not needed for GLOBALG, INDIVIDUALID
             for(const auto &v : wu->GetVars()) {
                 variable_def(os, v.second + " *", v.first + model.synapseName[i]);
             }
@@ -1036,7 +1036,7 @@ void genRunner(const NNmodel &model, //!< Model description
         }
         // Otherwise, if matrix connectivity is defined using a dense matrix, allocate user-defined weight model variables
         // **NOTE** if matrix is sparse, allocate later in the allocatesparsearrays function when we know the size of the network
-        else if ((model.synapseMatrixType[i] & SynapseMatrixConnectivity::DENSE) && (model.synapseGType[i] == INDIVIDUALG)) {
+        else if ((model.synapseMatrixType[i] & SynapseMatrixConnectivity::DENSE) && (model.synapseMatrixType[i] & SynapseMatrixWeight::INDIVIDUAL)) {
             const size_t size = model.neuronN[model.synapseSource[i]] * model.neuronN[model.synapseTarget[i]];
             const auto &wuVarZeroCopy = model.synapseVarZeroCopy[i];
 
@@ -1047,7 +1047,7 @@ void genRunner(const NNmodel &model, //!< Model description
             }
         }
 
-        if (model.synapseGType[i] == INDIVIDUALG) { // not needed for GLOBALG, INDIVIDUALID
+        if (model.synapseMatrixType[i] & SynapseMatrixWeight::INDIVIDUAL) { // not needed for GLOBALG
             const size_t size = model.neuronN[model.synapseTarget[i]];
             const auto &psmVarZeroCopy = model.postSynapseVarZeroCopy[i];
 
@@ -1176,7 +1176,7 @@ void genRunner(const NNmodel &model, //!< Model description
         os << "        inSyn" << model.synapseName[i] << "[i] = " << model.scalarExpr(0.0) << ";" << ENDL;
         os << "    }" << cB << ENDL;
 
-        if ((model.synapseMatrixType[i] & SynapseMatrixConnectivity::DENSE) && (model.synapseGType[i] == INDIVIDUALG)) {
+        if ((model.synapseMatrixType[i] & SynapseMatrixConnectivity::DENSE) && (model.synapseMatrixType[i] & SynapseMatrixWeight::INDIVIDUAL)) {
             auto wuVars = wu->GetVars();
             for (size_t k= 0, l= wuVars.size(); k < l; k++) {
                 os << "    " << oB << "for (int i = 0; i < " << model.neuronN[model.synapseSource[i]] * model.neuronN[model.synapseTarget[i]] << "; i++) {" << ENDL;
@@ -1191,7 +1191,7 @@ void genRunner(const NNmodel &model, //!< Model description
             }
         }
 
-        if (model.synapseGType[i] == INDIVIDUALG) {
+        if (model.synapseMatrixType[i] & SynapseMatrixWeight::INDIVIDUAL) {
             auto psmVars = psm->GetVars();
             for (size_t k= 0, l= psmVars.size(); k < l; k++) {
                 os << "    " << oB << "for (int i = 0; i < " << model.neuronN[model.synapseTarget[i]] << "; i++) {" << ENDL;
@@ -1276,7 +1276,7 @@ void genRunner(const NNmodel &model, //!< Model description
             }
 
             // Allocate synapse variables
-            if (model.synapseGType[i] == INDIVIDUALG) {
+            if (model.synapseMatrixType[i] & SynapseMatrixWeight::INDIVIDUAL) {
                 const auto &wuVarZeroCopy = model.synapseVarZeroCopy[i];
                 for(const auto &v : model.synapseModel[i]->GetVars()) {
                     const bool zeroCopy = (wuVarZeroCopy.find(v.first) != end(wuVarZeroCopy));
@@ -1324,7 +1324,7 @@ void genRunner(const NNmodel &model, //!< Model description
                 os << model.neuronN[model.synapseTarget[i]] <<");" << ENDL;
             }
            
-            if (model.synapseGType[i] == INDIVIDUALG) {
+            if (model.synapseMatrixType[i] & SynapseMatrixWeight::INDIVIDUAL) {
                 const auto &wuVarZeroCopy = model.synapseVarZeroCopy[i];
                 for(const auto &v : model.synapseModel[i]->GetVars()) {
                     if(wuVarZeroCopy.find(v.first) == end(wuVarZeroCopy)) {
@@ -1423,10 +1423,10 @@ void genRunner(const NNmodel &model, //!< Model description
                 free_device_variable(os, "preInd" + model.synapseName[i], false);
             }
         }
-        if (model.synapseGType[i] == INDIVIDUALID) {
+        if (model.synapseMatrixType[i] & SynapseMatrixConnectivity::BITMASK) {
             free_variable(os, "gp" + model.synapseName[i], false);
         }
-        if (model.synapseGType[i] == INDIVIDUALG) {
+        if (model.synapseMatrixType[i] & SynapseMatrixWeight::INDIVIDUAL) {
             const auto &wuVarZeroCopy = model.synapseVarZeroCopy[i];
             for(const auto &v : model.synapseModel[i]->GetVars()) {
                 const bool zeroCopy = (wuVarZeroCopy.find(v.first) != end(wuVarZeroCopy));
@@ -1721,7 +1721,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
         os << "void push" << model.synapseName[i] << "StateToDevice()" << ENDL;
         os << OB(1100);
 
-        if (model.synapseGType[i] == INDIVIDUALG) { // INDIVIDUALG
+        if (model.synapseMatrixType[i] & SynapseMatrixWeight::INDIVIDUAL) { // INDIVIDUALG
             if (model.synapseMatrixType[i] & SynapseMatrixConnectivity::DENSE) {
                 os << "size_t size = " << model.neuronN[model.synapseSource[i]] * model.neuronN[model.synapseTarget[i]] << ";" << ENDL;
             }
@@ -1749,8 +1749,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
                 }
             }
         }
-
-        else if (model.synapseGType[i] == INDIVIDUALID) { // INDIVIDUALID
+        else if (model.synapseMatrixType[i] & SynapseMatrixConnectivity::BITMASK) {
             const size_t size = (model.neuronN[model.synapseSource[i]] * model.neuronN[model.synapseTarget[i]]) / 32 + 1;
             os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_gp" << model.synapseName[i];
             os << ", gp" << model.synapseName[i];
@@ -1911,7 +1910,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
         os << "void pull" << model.synapseName[i] << "StateFromDevice()" << ENDL;
         os << OB(1100);
 
-        if (model.synapseGType[i] == INDIVIDUALG) { // INDIVIDUALG
+        if (model.synapseMatrixType[i] & SynapseMatrixWeight::INDIVIDUAL) { // INDIVIDUALG
             if (model.synapseMatrixType[i] & SynapseMatrixConnectivity::DENSE) {
                 os << "size_t size = " << model.neuronN[model.synapseSource[i]] * model.neuronN[model.synapseTarget[i]] << ";" << ENDL;
             }
@@ -1940,8 +1939,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
                 }
             }
         }
-
-        else if (model.synapseGType[i] == INDIVIDUALID) { // INDIVIDUALID
+        else if (model.synapseMatrixType[i] & SynapseMatrixConnectivity::BITMASK) {
             size_t size = (model.neuronN[model.synapseSource[i]] * model.neuronN[model.synapseTarget[i]]) / 32 + 1;
             os << "CHECK_CUDA_ERRORS(cudaMemcpy(gp" << model.synapseName[i];
             os << ", d_gp" << model.synapseName[i];
