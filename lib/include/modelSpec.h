@@ -30,6 +30,7 @@ Part of the code generation and generated code sections.
 #include "newPostsynapticModels.h"
 #include "newWeightUpdateModels.h"
 #include "synapseModels.h"
+#include "synapseMatrixType.h"
 #include "postSynapseModels.h"
 #include "utils.h"
 
@@ -58,6 +59,7 @@ enum SynapseGType
     GLOBALG,
     INDIVIDUALID,
 };
+
 
 #define NO_DELAY 0 //!< Macro used to indicate no synapse delay for the group (only one queue slot will be generated)
 
@@ -143,8 +145,7 @@ public:
   vector<unsigned int> maxConn; //!< Padded summed maximum number of connections for a neuron in the neuron groups
   vector<unsigned int> padSumSynapseKrnl; //Combination of padSumSynapseTrgN and padSumMaxConn to support both sparse and all-to-all connectivity in a model
   vector<const WeightUpdateModels::Base*> synapseModel; //!< Types of synapses
-  vector<SynapseConnType> synapseConnType; //!< Connectivity type of synapses
-  vector<SynapseGType> synapseGType; //!< Type of specification method for synaptic conductance
+  vector<SynapseMatrixType> synapseMatrixType; //!< Connectivity type of synapses
   vector<unsigned int> synapseSpanType; //!< Execution order of synapses in the kernel. It determines whether synapses are executed in parallel for every postsynaptic neuron (0, default), or for every presynaptic neuron (1).
   vector<unsigned int> synapseSource; //!< Presynaptic neuron groups
   vector<unsigned int> synapseTarget; //!< Postsynaptic neuron groups
@@ -286,7 +287,7 @@ public:
                             const vector<double>&, const vector<double>&, const vector<double>&, const vector<double>&); //!< Method for adding a synapse population to a neuronal network model, using C++ string for the name of the population
 
   template<typename WeightUpdateModel, typename PostsynapticModel>
-  void addSynapsePopulation(const string &name, SynapseConnType conntype, SynapseGType gtype, unsigned int delaySteps, const string& src, const string& trg,
+  void addSynapsePopulation(const string &name, SynapseMatrixType mtype, unsigned int delaySteps, const string& src, const string& trg,
                             const typename WeightUpdateModel::ParamValues &weightParamValues, const typename WeightUpdateModel::VarValues &weightVarValues,
                             const typename PostsynapticModel::ParamValues &postsynapticParamValues, const typename PostsynapticModel::VarValues &postsynapticVarValues)
   {
@@ -302,8 +303,7 @@ public:
       unsigned int trgNumber = findNeuronGrp(trg);
       synapseName.push_back(name);
       synapseModel.push_back(WeightUpdateModel::GetInstance());
-      synapseConnType.push_back(conntype);
-      synapseGType.push_back(gtype);
+      synapseMatrixType.push_back(mtype);
       synapseSource.push_back(srcNumber);
       synapseTarget.push_back(trgNumber);
       synapseDelay.push_back(delaySteps);

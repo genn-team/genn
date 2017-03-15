@@ -75,7 +75,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
 
     isGrpVarNeeded.resize(model.neuronGrpN, false);
     for (unsigned int i = 0; i < model.synapseGrpN; i++) {
-        if (model.synapseConnType[i] == SPARSE){
+        if (model.synapseMatrixType[i] & SynapseMatrixConnectivity::SPARSE){
             if ((model.synapseSpanType[i] == 0) && (model.neuronN[model.synapseTarget[i]] > synapseBlkSz)) {
                 isGrpVarNeeded[model.synapseTarget[i]] = true; //! Binary flag for the sparse synapses to use atomic operations when the number of connections is bigger than the block size, and shared variables otherwise
             }
@@ -539,11 +539,11 @@ void generate_process_presynaptic_events_code(
 
     if ((evnt && model.synapseUsesSpikeEvents[i]) || (!evnt && model.synapseUsesTrueSpikes[i])) {
         const auto *wu = model.synapseModel[i];
-        bool sparse = model.synapseConnType[i] == SPARSE;
-        bool delayPre = model.neuronDelaySlots[src] > 1;
+        const bool sparse = model.synapseMatrixType[i] & SynapseMatrixConnectivity::SPARSE;
+        const bool delayPre = model.neuronDelaySlots[src] > 1;
         string offsetPre = (delayPre ? "(delaySlot * " + to_string(model.neuronN[src]) + ") + " : "");
 
-        bool delayPost = model.neuronDelaySlots[trg] > 1;
+        const bool delayPost = model.neuronDelaySlots[trg] > 1;
         string offsetPost = (delayPost ? "(dd_spkQuePtr" + model.neuronName[trg] + " * " + to_string(model.neuronN[trg]) + ") + " : "");
 
         // Create iterators to iterate over the names of the weight update model's derived parameters
@@ -997,7 +997,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
 
     // case-dependent variables
     for (unsigned int i = 0; i < model.synapseGrpN; i++) { 
-        if ((model.synapseConnType[i] != SPARSE) || (!isGrpVarNeeded[model.synapseTarget[i]])){
+        if (!(model.synapseMatrixType[i] & SynapseMatrixConnectivity::SPARSE) || (!isGrpVarNeeded[model.synapseTarget[i]])){
             os << model.ftype << " linSyn;" << ENDL;
             break;
         }
@@ -1005,7 +1005,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
     // we need ipost in any case, and we need npost if there are any SPARSE connections
     os << "unsigned int ipost;" << ENDL;
     for (unsigned int i = 0; i < model.synapseGrpN; i++) {  
-        if (model.synapseConnType[i] == SPARSE) {
+        if (model.synapseMatrixType[i] & SynapseMatrixConnectivity::SPARSE) {
             os << "unsigned int prePos; " << ENDL;
             os << "unsigned int npost; " << ENDL;
             break;
@@ -1049,7 +1049,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
             os << ") % " << model.neuronDelaySlots[src] << ";" << ENDL;
         }
 
-        if ((model.synapseConnType[i] != SPARSE) || (!isGrpVarNeeded[model.synapseTarget[i]])){
+        if (!(model.synapseMatrixType[i] & SynapseMatrixConnectivity::SPARSE) || (!isGrpVarNeeded[model.synapseTarget[i]])){
             os << "// only do this for existing neurons" << ENDL;
             os << "if (" << localID << " < " << model.neuronN[trg] << ")" << OB(80);
             os << "linSyn = dd_inSyn" << model.synapseName[i] << "[" << localID << "];" << ENDL;
@@ -1089,7 +1089,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
         }
         os << ENDL;
 
-        if ((model.synapseConnType[i] != SPARSE) || (!isGrpVarNeeded[model.synapseTarget[i]])) {
+        if (!(model.synapseMatrixType[i] & SynapseMatrixConnectivity::SPARSE) || (!isGrpVarNeeded[model.synapseTarget[i]])) {
             os << "// only do this for existing neurons" << ENDL;
             os << "if (" << localID << " < " << model.neuronN[trg] << ")" << OB(190);
             os << "dd_inSyn" << model.synapseName[i] << "[" << localID << "] = linSyn;" << ENDL;
@@ -1160,17 +1160,17 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
         os << ENDL;
 
         for (unsigned int i = 0; i < model.lrnGroups; i++) {
-            unsigned k = model.lrnSynGrp[i];
-            unsigned src = model.synapseSource[k];
-            unsigned trg = model.synapseTarget[k];
+            const unsigned k = model.lrnSynGrp[i];
+            const unsigned src = model.synapseSource[k];
+            const unsigned trg = model.synapseTarget[k];
             const auto *wu = model.synapseModel[k];
-            bool sparse = model.synapseConnType[k] == SPARSE;
+            const bool sparse = model.synapseMatrixType[k] & SynapseMatrixConnectivity::SPARSE;
 
-            bool delayPre = model.neuronDelaySlots[src] > 1;
+            const bool delayPre = model.neuronDelaySlots[src] > 1;
             string offsetPre = (delayPre ? "(delaySlot * " + to_string(model.neuronN[src]) + ") + " : "");
             string offsetTrueSpkPre = (model.neuronNeedTrueSpk[src] ? offsetPre : "");
 
-            bool delayPost = model.neuronDelaySlots[trg] > 1;
+            const bool delayPost = model.neuronDelaySlots[trg] > 1;
             string offsetPost = (delayPost ? "(dd_spkQuePtr" + model.neuronName[trg] + " * " + to_string(model.neuronN[trg]) + ") + " : "");
             string offsetTrueSpkPost = (model.neuronNeedTrueSpk[trg] ? offsetPost : "");
 
