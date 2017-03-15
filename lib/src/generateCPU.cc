@@ -425,7 +425,7 @@ void generate_process_presynaptic_events_code_CPU(
             os << "for (ipost = 0; ipost < " << model.neuronN[trg] << "; ipost++)" << OB(202);
         }
 
-        if (model.synapseMatrixType[i] & SynapseMatrixWeight::INDIVIDUAL) {
+        if (model.synapseMatrixType[i] & SynapseMatrixConnectivity::BITMASK) {
             os << "unsigned int gid = (ipre * " << model.neuronN[trg] << " + ipost);" << ENDL;
         }
 
@@ -461,7 +461,7 @@ void generate_process_presynaptic_events_code_CPU(
             checkUnreplacedVariables(eCode, "evntThreshold");
             // end code substitutions ----
 
-            if (model.synapseMatrixType[i] & SynapseMatrixWeight::INDIVIDUAL) {
+            if (model.synapseMatrixType[i] & SynapseMatrixConnectivity::BITMASK) {
                 os << "if ((B(gp" << model.synapseName[i] << "[gid >> " << logUIntSz << "], gid & " << UIntSz - 1;
                 os << ")) && (" << eCode << "))" << OB(2041);
             }
@@ -469,7 +469,7 @@ void generate_process_presynaptic_events_code_CPU(
                 os << "if (" << eCode << ")" << OB(2041);
             }
         }
-        else if (model.synapseMatrixType[i] & SynapseMatrixWeight::INDIVIDUAL) {
+        else if (model.synapseMatrixType[i] & SynapseMatrixConnectivity::BITMASK) {
             os << "if (B(gp" << model.synapseName[i] << "[gid >> " << logUIntSz << "], gid & " << UIntSz - 1 << "))" << OB(2041);
         }
 
@@ -507,7 +507,7 @@ void generate_process_presynaptic_events_code_CPU(
         if (evnt) {
             os << CB(2041); // end if (eCode)
         }
-        else if (model.synapseMatrixType[i] & SynapseMatrixWeight::INDIVIDUAL) {
+        else if (model.synapseMatrixType[i] & SynapseMatrixConnectivity::BITMASK) {
             os << CB(2041); // end if (B(gp" << model.synapseName[i] << "[gid >> " << logUIntSz << "], gid
         }
         os << CB(202);
