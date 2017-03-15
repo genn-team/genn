@@ -202,7 +202,7 @@ void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
             default: // Dev note: when adding a new version case above, please move the 'latest:' label into it.
                 cerr << "Warning: Unsupported CUDA device major version: " << deviceProp[theDevice].major << endl;
                 cerr << "         This is a bug! Please report it at https://github.com/genn-team/genn." << endl;
-                cerr << "         Falling back to next latest SM config." << endl;
+                cerr << "         Falling back to next latest SM version parameters." << endl;
                 goto latest;
             }
 
