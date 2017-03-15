@@ -806,19 +806,19 @@ void NNmodel::addSynapsePopulation(
     SynapseMatrixType mtype;
     if(conntype == SPARSE && gtype == GLOBALG)
     {
-        mtype = SynapseMatrixType::SPARSE_GLOBAL_WEIGHT;
+        mtype = SynapseMatrixType::SPARSE_GLOBALG;
     }
     else if(conntype == SPARSE && gtype == INDIVIDUALG)
     {
-        mtype = SynapseMatrixType::SPARSE_INDIVIDUAL_WEIGHT;
+        mtype = SynapseMatrixType::SPARSE_INDIVIDUALG;
     }
     else if((conntype == DENSE || conntype == ALLTOALL) && gtype == INDIVIDUALG)
     {
-        mtype = SynapseMatrixType::DENSE_INDIVIDUAL_WEIGHT;
+        mtype = SynapseMatrixType::DENSE_INDIVIDUALG;
     }
     else if(gtype == INDIVIDUALID)
     {
-        mtype = SynapseMatrixType::BITMASK_GLOBAL_WEIGHT;
+        mtype = SynapseMatrixType::BITMASK_GLOBALG;
     }
     else
     {

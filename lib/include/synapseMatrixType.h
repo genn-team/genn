@@ -9,10 +9,10 @@
 //!< Supported combinations of SynapticMatrixConnectivity and SynapticMatrixWeight
 enum class SynapseMatrixType : unsigned int
 {
-    SPARSE_GLOBAL_WEIGHT       = SynapseMatrixConnectivity::SPARSE | SynapseMatrixWeight::GLOBAL,
-    SPARSE_INDIVIDUAL_WEIGHT   = SynapseMatrixConnectivity::SPARSE | SynapseMatrixWeight::INDIVIDUAL,
-    DENSE_INDIVIDUAL_WEIGHT    = SynapseMatrixConnectivity::DENSE | SynapseMatrixWeight::INDIVIDUAL,
-    BITMASK_GLOBAL_WEIGHT      = SynapseMatrixConnectivity::BITMASK | SynapseMatrixWeight::GLOBAL,
+    SPARSE_GLOBALG       = SynapseMatrixConnectivity::SPARSE | SynapseMatrixWeight::GLOBAL,
+    SPARSE_INDIVIDUALG   = SynapseMatrixConnectivity::SPARSE | SynapseMatrixWeight::INDIVIDUAL,
+    DENSE_INDIVIDUALG    = SynapseMatrixConnectivity::DENSE | SynapseMatrixWeight::INDIVIDUAL,
+    BITMASK_GLOBALG      = SynapseMatrixConnectivity::BITMASK | SynapseMatrixWeight::GLOBAL,
 };
 
 //----------------------------------------------------------------------------
