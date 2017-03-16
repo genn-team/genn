@@ -48,6 +48,11 @@ void NeuronGroup::setVarZeroCopy(const std::string &var)
     }
 }
 
+bool NeuronGroup::varZeroCopyEnabled(const std::string &var) const
+{
+    return (m_VarZeroCopy.find(var) != std::end(m_VarZeroCopy));
+}
+
 void NeuronGroup::addSpkEventCondition(const std::string &code, const std::string &supportCodeNamespace)
 {
     m_SpikeEventCondition.insert(std::pair<std::string, std::string>(code, supportCodeNamespace));

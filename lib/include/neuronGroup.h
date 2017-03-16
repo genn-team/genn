@@ -85,6 +85,7 @@ public:
     bool usesSpikeEventZeroCopy() const{ return m_SpikeEventZeroCopy; }
     bool usesSpikeTimeZeroCopy() const{ return m_SpikeTimeZeroCopy; }
     bool usesZeroCopy() const;
+    bool varZeroCopyEnabled(const std::string &var) const;
 
     bool getNumSpikeEventConditions() const{ return m_SpikeEventCondition.size(); }
 
