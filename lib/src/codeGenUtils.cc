@@ -342,7 +342,7 @@ void neuron_substitutions_in_synaptic_code(
     substitute(wCode, "$(sT_pre)", devPrefix+ "sT" + src + "[" + offsetPre + preIdx + "]");
     auto preVars = srcNeuronModel->GetVars();
     for (size_t j = 0; j < preVars.size(); j++) {
-        if (srcNeuronGroup->doesVarNeedQueue(j)) {
+        if (srcNeuronGroup->isVarQueueRequired(j)) {
             substitute(wCode, "$(" + preVars[j].first + "_pre)",
                        devPrefix + preVars[j].first + src + "[" + offsetPre + preIdx + "]");
         }
@@ -368,7 +368,7 @@ void neuron_substitutions_in_synaptic_code(
     substitute(wCode, "$(sT_post)", devPrefix + "sT" + trg + "[" + offsetPost + postIdx + "]");
     auto postVars = trgNeuronModel->GetVars();
     for (size_t j = 0; j < postVars.size(); j++) {
-        if (trgNeuronGroup->doesVarNeedQueue(j)) {
+        if (trgNeuronGroup->isVarQueueRequired(j)) {
             substitute(wCode, "$(" + postVars[j].first + "_post)",
                        devPrefix + postVars[j].first + trg + "[" + offsetPost + postIdx + "]");
         }

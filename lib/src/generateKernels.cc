@@ -202,22 +202,12 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
 
         os << "// pull neuron variables in a coalesced access" << ENDL;
 
-        const auto *neuronModel = model.neuronModel[i];
+        const auto *nm = model.neuronModel[i];
 
-        // Create iterators to iterate over the names of the neuron model's initial values
-        auto neuronModelVars = neuronModel->GetVars();
-        auto neuronModelVarNameBegin = GetPairKeyConstIter(neuronModelVars.cbegin());
-        auto neuronModelVarNameEnd = GetPairKeyConstIter(neuronModelVars.cend());
-
-        // Create iterators to iterate over the names of the neuron model's derived parameters
-        auto neuronModelDerivedParams = neuronModel->GetDerivedParams();
-        auto neuronModelDerivedParamNameBegin= GetPairKeyConstIter(neuronModelDerivedParams.cbegin());
-        auto neuronModelDerivedParamNameEnd = GetPairKeyConstIter(neuronModelDerivedParams.cend());
-
-        // Create iterators to iterate over the names of the neuron model's extra global parameters
-        auto neuronModelExtraGlobalParams = neuronModel->GetExtraGlobalParams();
-        auto neuronModelExtraGlobalParamsNameBegin = GetPairKeyConstIter(neuronModelExtraGlobalParams.cbegin());
-        auto neuronModelExtraGlobalParamsNameEnd = GetPairKeyConstIter(neuronModelExtraGlobalParams.cend());
+         // Create iteration context to iterate over the variables; derived and extra global parameters
+        VarNameIterCtx nmVars(nm->GetVars());
+        NameIterCtx nmDerivedParams(nm->GetDerivedParams());
+        NameIterCtx nmExtraGlobalParams(nm->GetExtraGlobalParams());
 
         for (size_t k = 0; k < neuronModelVars.size(); k++) {
 
@@ -262,26 +252,8 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
             }
             string psCode = psm->GetCurrentConverterCode();
             substitute(psCode, "$(id)", localID);
-            substitute(psCode, "$(t)", "t");
             substitute(psCode, "$(inSyn)", "linSyn" + sName);
-            name_substitutions(psCode, "l", neuronModelVarNameBegin, neuronModelVarNameEnd, "");
-            value_substitutions(psCode, neuronModel->GetParamNames(), model.neuronPara[i]);
-            value_substitutions(psCode, neuronModelDerivedParamNameBegin, neuronModelDerivedParamNameEnd, model.dnp[i]);
-            if (model.synapseMatrixType[synPopID] & SynapseMatrixWeight::INDIVIDUAL) {
-                name_substitutions(psCode, "lps", psmVarNameBegin, psmVarNameEnd, sName);
-            }
-            else {
-                value_substitutions(psCode, psmVarNameBegin, psmVarNameEnd, model.postSynIni[synPopID]);
-            }
-            value_substitutions(psCode, psm->GetParamNames(), model.postSynapsePara[synPopID]);
-
-            auto psmDerivedParams = psm->GetDerivedParams();
-            value_substitutions(psCode, GetPairKeyConstIter(psmDerivedParams.cbegin()),
-                                GetPairKeyConstIter(psmDerivedParams.cend()), model.dpsp[synPopID]);
-
-            name_substitutions(psCode, "", neuronModelExtraGlobalParamsNameBegin, neuronModelExtraGlobalParamsNameEnd, model.neuronName[i]);
-            psCode= ensureFtype(psCode, model.ftype);
-            checkUnreplacedVariables(psCode,"postSyntoCurrent");
+            performPSMCurrentConverterSubtitutions(psCode, model, synPopID, n.second);
 
             if (!psm->GetSupportCode().empty()) {
                 os << OB(29) << " using namespace " << sName << "_postsyn;" << ENDL;
@@ -302,15 +274,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
         else {
             os << "// test whether spike condition was fulfilled previously" << ENDL;
             substitute(thCode, "$(id)", localID);
-            substitute(thCode, "$(t)", "t");
-            name_substitutions(thCode, "l", neuronModelVarNameBegin, neuronModelVarNameEnd, "");
-            substitute(thCode, "$(Isyn)", "Isyn");
-            substitute(thCode, "$(sT)", "lsT");
-            value_substitutions(thCode, neuronModel->GetParamNames(), model.neuronPara[i]);
-            value_substitutions(thCode, neuronModelDerivedParamNameBegin, neuronModelDerivedParamNameEnd, model.dnp[i]);
-            name_substitutions(thCode, "", neuronModelExtraGlobalParamsNameBegin, neuronModelExtraGlobalParamsNameEnd, model.neuronName[i]);
-            thCode= ensureFtype(thCode, model.ftype);
-            checkUnreplacedVariables(thCode,"thresholdConditionCode");
+            performThresholdConditionSubstitutions(thCode, n.first, n.second, model.ftype);
             if (GENN_PREFERENCES::autoRefractory) {
                 os << "bool oldSpike= (" << thCode << ");" << ENDL;
             }
@@ -319,15 +283,9 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
         os << "// calculate membrane potential" << ENDL;
         string sCode = neuronModel->GetSimCode();
         substitute(sCode, "$(id)", localID);
-        substitute(sCode, "$(t)", "t");
-        name_substitutions(sCode, "l", neuronModelVarNameBegin, neuronModelVarNameEnd, "");
-        value_substitutions(sCode, neuronModel->GetParamNames(), model.neuronPara[i]);
-        value_substitutions(sCode, neuronModelDerivedParamNameBegin, neuronModelDerivedParamNameEnd, model.dnp[i]);
-        name_substitutions(sCode, "", neuronModelExtraGlobalParamsNameBegin, neuronModelExtraGlobalParamsNameEnd, model.neuronName[i]);
-        substitute(sCode, "$(Isyn)", "Isyn");
-        substitute(sCode, "$(sT)", "lsT");
-        sCode= ensureFtype(sCode, model.ftype);
-        checkUnreplacedVariables(sCode,"neuron simCode");
+        StandardSubstitutions::neuronSimCode(sCode, n.first, n.second,
+                                            nmVars, nmDerivedParams, nmExtraGlobalParams,
+                                            model.ftype);
         os << sCode << ENDL;
 
         // look for spike type events first.

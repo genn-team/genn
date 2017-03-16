@@ -252,11 +252,11 @@ public:
         }
 
         if (WeightUpdateModel::NeedsPreSpikeTime) {
-            srcNeuronGrp->setNeedSpikeTiming();
+            srcNeuronGrp->setSpikeTimeRequired();
             needSt = true;
         }
         if (WeightUpdateModel::NeedsPostSpikeTime) {
-            trgNeuronGrp->setNeedSpikeTiming();
+            trgNeuronGrp->setSpikeTimeRequired();
             needSt = true;
         }
 

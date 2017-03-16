@@ -19,12 +19,12 @@ public:
                 const std::vector<double> &params, const std::vector<double> &initVals) :
         m_NumNeurons(numNeurons), m_CumSumNeurons(0), m_PaddedCumSumNeurons(0),
         m_NeuronModel(neuronModel), m_Params(params), m_InitVals(initVals),
-        m_NeedSpikeTime(false), m_NeedTrueSpike(false), m_NeedSpikeEvents(false), m_NeedQueue(false),
+        m_SpikeTimeRequired(false), m_TrueSpikeRequired(false), m_SpikeEventRequired(false), m_QueueRequired(false),
         m_NumDelaySlots(1),
-        m_SpikeZeroCopy(false), m_SpikeEventZeroCopy(false), m_SpikeTimeZeroCopy(false),
+        m_SpikeZeroCopyEnabled(false), m_SpikeEventZeroCopyEnabled(false), m_SpikeTimeZeroCopyEnabled(false),
         m_HostID(0), m_DeviceID(0)
     {
-        m_VarNeedQueue.resize(initVals.size(), false);
+        m_VarQueueRequired.resize(initVals.size(), false);
     }
 
     //------------------------------------------------------------------------
@@ -36,14 +36,14 @@ public:
     // Update which variables require queues based on piece of code
     void updateVarQueues(const std::string &code);
 
-    void setNeedSpikeTiming(){ m_NeedSpikeTime = true; }
-    void setNeedTrueSpike(){ m_NeedTrueSpike = true; }
-    void setNeedSpikeEvents(){ m_NeedSpikeEvents = true; }
+    void setSpikeTimeRequired(){ m_SpikeTimeRequired = true; }
+    void setTrueSpikeRequired(){ m_TrueSpikeRequired = true; }
+    void setSpikeEventRequired(){ m_SpikeEventRequired = true; }
 
-    void setSpikeZeroCopy(){ m_SpikeZeroCopy = true; }
-    void setSpikeEventZeroCopy(){ m_SpikeEventZeroCopy = true; }
-    void setSpikeTimeZeroCopy(){ m_SpikeTimeZeroCopy = true; }
-    void setVarZeroCopy(const std::string &varName);
+    void setSpikeZeroCopyEnabled(){ m_SpikeZeroCopyEnabled = true; }
+    void setSpikeEventZeroCopyEnabled(){ m_SpikeEventZeroCopyEnabled = true; }
+    void setSpikeTimeZeroCopyEnabled(){ m_SpikeTimeZeroCopyEnabled = true; }
+    void setVarZeroCopyEnabled(const std::string &varName);
 
     void setClusterIndex(int hostID, int deviceID){ m_HostID = hostID; m_DeviceID = deviceID; }
 
@@ -68,31 +68,30 @@ public:
     const std::vector<string> &getInSyn() const{ return m_InSyn; }
     const std::vector<string> &getOutSyn() const{ return m_OutSyn; }
 
-    bool doesNeedSpikeTime() const{ return m_NeedSpikeTime; }
-    bool doesNeedTrueSpike() const{ return m_NeedTrueSpike; }
-    bool doesNeedSpikeEvents() const{ return m_NeedSpikeEvents; }
-    bool doesNeedQueue() const{ return m_NeedQueue; }
+    bool isSpikeTimeRequired() const{ return m_SpikeTimeRequired; }
+    bool isTrueSpikeRequired() const{ return m_TrueSpikeRequired; }
+    bool isSpikeEventRequired() const{ return m_SpikeEventRequired; }
+    bool isQueueRequired() const{ return m_QueueRequired; }
 
-    bool doesVarNeedQueue(size_t v) const{ return m_VarNeedQueue[v]; }
-    bool anyVarNeedQueue() const;
+    bool isVarQueueRequired(size_t v) const{ return m_VarQueueRequired[v]; }
+    bool isVarQueueRequired() const;
 
     const std::set<std::pair<std::string, std::string>> &getSpikeEventCondition() const{ return m_SpikeEventCondition; }
 
     unsigned int getNumDelaySlots() const{ return m_NumDelaySlots; }
-    bool delayRequired() const{ return (m_NumDelaySlots > 1); }
+    bool isDelayRequired() const{ return (m_NumDelaySlots > 1); }
 
-    bool usesSpikeZeroCopy() const{ return m_SpikeZeroCopy; }
-    bool usesSpikeEventZeroCopy() const{ return m_SpikeEventZeroCopy; }
-    bool usesSpikeTimeZeroCopy() const{ return m_SpikeTimeZeroCopy; }
-    bool usesZeroCopy() const;
-    bool varZeroCopyEnabled(const std::string &var) const;
+    bool isSpikeZeroCopyEnabled() const{ return m_SpikeZeroCopyEnabled; }
+    bool isSpikeEventZeroCopyEnabled() const{ return m_SpikeEventZeroCopyEnabled; }
+    bool isSpikeTimeZeroCopyEnabled() const{ return m_SpikeTimeZeroCopyEnabled; }
+    bool isZeroCopyEnabled() const;
+    bool isVarZeroCopyEnabled(const std::string &var) const;
 
     bool getNumSpikeEventConditions() const{ return m_SpikeEventCondition.size(); }
 
     void addExtraGlobalParams(const string &groupName, std::map<std::string, std::string> &kernelParameters) const;
     void addSpikeEventConditionParams(const std::pair<std::string, std::string> &param, const std::string &groupName,
                                       std::map<string, string> &kernelParameters) const;
-
 
 private:
     //------------------------------------------------------------------------
@@ -108,27 +107,27 @@ private:
     std::vector<double> m_InitVals;
     std::vector<std::string> m_InSyn;
     std::vector<std::string> m_OutSyn;
-    bool m_NeedSpikeTime;
-    bool m_NeedTrueSpike;
-    bool m_NeedSpikeEvents;
-    bool m_NeedQueue;
+    bool m_SpikeTimeRequired;
+    bool m_TrueSpikeRequired;
+    bool m_SpikeEventRequired;
+    bool m_QueueRequired;
     std::set<std::pair<std::string, std::string>> m_SpikeEventCondition;
     unsigned int m_NumDelaySlots;
 
     //!< Vector specifying which variables require queues
-    std::vector<bool> m_VarNeedQueue;
+    std::vector<bool> m_VarQueueRequired;
 
     //!< Whether spikes from neuron group should use zero-copied memory
-    bool m_SpikeZeroCopy;
+    bool m_SpikeZeroCopyEnabled;
 
     //!< Whether spike-like events from neuron group should use zero-copied memory
-    bool m_SpikeEventZeroCopy;
+    bool m_SpikeEventZeroCopyEnabled;
 
     //!< Whether spike times from neuron group should use zero-copied memory
-    bool m_SpikeTimeZeroCopy;
+    bool m_SpikeTimeZeroCopyEnabled;
 
     //!< Whether indidividual state variables of a neuron group should use zero-copied memory
-    std::set<string> m_VarZeroCopy;
+    std::set<string> m_VarZeroCopyEnabled;
 
     //!< The ID of the cluster node which the neuron groups are computed on
     int m_HostID;

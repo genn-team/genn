@@ -26,12 +26,12 @@ void NeuronGroup::updateVarQueues(const string &code)
     for (size_t v = 0; v < vars.size(); v++) {
         // If the code contains a reference to this variable, set queued flag
         if (code.find(vars[v].first + "_pre") != string::npos) {
-            m_VarNeedQueue[v] = true;
+            m_VarQueueRequired[v] = true;
         }
     }
 }
 
-void NeuronGroup::setVarZeroCopy(const std::string &var)
+void NeuronGroup::setVarZeroCopyEnabled(const std::string &var)
 {
     // If named variable doesn't exist give error
     auto nmVars = getNeuronModel()->GetVars();
@@ -44,13 +44,13 @@ void NeuronGroup::setVarZeroCopy(const std::string &var)
     // Otherwise add name of variable to set
     else
     {
-        m_VarZeroCopy.insert(var);
+        m_VarZeroCopyEnabled.insert(var);
     }
 }
 
-bool NeuronGroup::varZeroCopyEnabled(const std::string &var) const
+bool NeuronGroup::isVarZeroCopyEnabled(const std::string &var) const
 {
-    return (m_VarZeroCopy.find(var) != std::end(m_VarZeroCopy));
+    return (m_VarZeroCopyEnabled.find(var) != std::end(m_VarZeroCopyEnabled));
 }
 
 void NeuronGroup::addSpkEventCondition(const std::string &code, const std::string &supportCodeNamespace)
@@ -97,21 +97,21 @@ size_t NeuronGroup::addOutSyn(const string &synapseName)
     return (m_OutSyn.size() - 1);
 }
 
-bool NeuronGroup::anyVarNeedQueue() const
+bool NeuronGroup::isVarQueueRequired() const
 {
-    return (find(begin(m_VarNeedQueue), end(m_VarNeedQueue), true) != end(m_VarNeedQueue));
+    return (find(begin(m_VarQueueRequired), end(m_VarQueueRequired), true) != end(m_VarQueueRequired));
 }
 
-bool NeuronGroup::usesZeroCopy() const
+bool NeuronGroup::isZeroCopyEnabled() const
 {
     // If any bits of spikes require zero-copy return true
-    if(usesSpikeZeroCopy() || usesSpikeEventZeroCopy() || usesSpikeTimeZeroCopy())
+    if(isSpikeZeroCopyEnabled() || isSpikeEventZeroCopyEnabled() || isSpikeTimeZeroCopyEnabled())
     {
         return true;
     }
 
     // If there are any variables return true
-    if(!m_VarZeroCopy.empty())
+    if(!m_VarZeroCopyEnabled.empty())
     {
         return true;
     }

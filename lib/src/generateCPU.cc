@@ -70,21 +70,21 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
 
     // function code
     for(auto &n : model.getNeuronGroups()) {
-        string queueOffset = n.second.delayRequired()
+        string queueOffset = n.second.isDelayRequired()
             ? "(spkQuePtr" + n.first + " * " + to_string(n.second.getNumNeurons()) + ") + "
             : "";
-        string queueOffsetTrueSpk = (n.second.doesNeedTrueSpike() ? queueOffset : "");
+        string queueOffsetTrueSpk = (n.second.isTrueSpikeRequired() ? queueOffset : "");
 
         os << "// neuron group " << n.first << ENDL;
         os << OB(55);
 
         // increment spike queue pointer and reset spike count
-        if (n.second.delayRequired()) { // with delay
+        if (n.second.isDelayRequired()) { // with delay
             os << "spkQuePtr" << n.first << " = (spkQuePtr" << n.first << " + 1) % " << n.second.getNumDelaySlots() << ";" << ENDL;
-            if (n.second.doesNeedSpikeEvents()) {
+            if (n.second.isSpikeEventRequired()) {
                 os << "glbSpkCntEvnt" << n.first << "[spkQuePtr" << n.first << "] = 0;" << ENDL;
             }
-            if (n.second.doesNeedTrueSpike()) {
+            if (n.second.isTrueSpikeRequired()) {
                 os << "glbSpkCnt" << n.first << "[spkQuePtr" << n.first << "] = 0;" << ENDL;
             }
             else {
@@ -92,12 +92,12 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
             }
         }
         else { // no delay
-            if (n.second.doesNeedSpikeEvents()) {
+            if (n.second.isSpikeEventRequired()) {
                 os << "glbSpkCntEvnt" << n.first << "[0] = 0;" << ENDL;
             }
             os << "glbSpkCnt" << n.first << "[0] = 0;" << ENDL;
         }
-        if (n.second.anyVarNeedQueue() && n.second.delayRequired()) {
+        if (n.second.isVarQueueRequired() && n.second.isDelayRequired()) {
             os << "unsigned int delaySlot = (spkQuePtr" << n.first;
             os << " + " << (n.second.getNumDelaySlots() - 1);
             os << ") % " << n.second.getNumDelaySlots() << ";" << ENDL;
@@ -118,7 +118,7 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
 
             os << nmVars.container[k].second << " l" << nmVars.container[k].first << " = ";
             os << nmVars.container[k].first << n.first << "[";
-            if (n.second.doesVarNeedQueue(k) && n.second.delayRequired()) {
+            if (n.second.isVarQueueRequired(k) && n.second.isDelayRequired()) {
                 os << "(delaySlot * " << n.second.getNumNeurons() << ") + ";
             }
             os << "n];" << ENDL;
@@ -127,7 +127,7 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
             || (nm->GetThresholdConditionCode().find("$(sT)") != string::npos)
             || (nm->GetResetCode().find("$(sT)") != string::npos)) { // load sT into local variable
             os << model.ftype << " lsT= sT" <<  n.first << "[";
-            if (n.second.delayRequired()) {
+            if (n.second.isDelayRequired()) {
                 os << "(delaySlot * " << n.second.getNumNeurons() << ") + ";
             }
             os << "n];" << ENDL;
@@ -198,7 +198,7 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
         os << sCode << ENDL;
 
         // look for spike type events first.
-        if (n.second.doesNeedSpikeEvents()) {
+        if (n.second.isSpikeEventRequired()) {
             // Create local variable
             os << "bool spikeLikeEvent = false;" << ENDL;
 
@@ -230,7 +230,7 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
             os << "// register a spike-like event" << ENDL;
             os << "if (spikeLikeEvent)" << OB(30);
             os << "glbSpkEvnt" << n.first << "[" << queueOffset << "glbSpkCntEvnt" << n.first;
-            if (n.second.delayRequired()) { // WITH DELAY
+            if (n.second.isDelayRequired()) { // WITH DELAY
                 os << "[spkQuePtr" << n.first << "]++] = n;" << ENDL;
             }
             else { // NO DELAY
@@ -249,13 +249,13 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
               os << "if (" << thCode << ") " << OB(40);
             }
             os << "glbSpk" << n.first << "[" << queueOffsetTrueSpk << "glbSpkCnt" << n.first;
-            if (n.second.delayRequired() && n.second.doesNeedTrueSpike()) { // WITH DELAY
+            if (n.second.isDelayRequired() && n.second.isTrueSpikeRequired()) { // WITH DELAY
                 os << "[spkQuePtr" << n.first << "]++] = n;" << ENDL;
             }
             else { // NO DELAY
                 os << "[0]++] = n;" << ENDL;
             }
-            if (n.second.doesNeedSpikeTime()) {
+            if (n.second.isSpikeTimeRequired()) {
                 os << "sT" << n.first << "[" << queueOffset << "n] = t;" << ENDL;
             }
 
@@ -274,7 +274,7 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
 
         // store the defined parts of the neuron state into the global state variables V etc
         for (size_t k = 0; k < nmVars.container.size(); k++) {
-            if (n.second.doesVarNeedQueue(k)) {
+            if (n.second.isVarQueueRequired(k)) {
                 os << nmVars.container[k].first << n.first << "[" << queueOffset << "n] = l" << nmVars.container[k].first << ";" << ENDL;
             }
             else {
@@ -339,17 +339,17 @@ void generate_process_presynaptic_events_code_CPU(
         const auto *wu = model.synapseModel[i];
         const bool sparse = model.synapseMatrixType[i] & SynapseMatrixConnectivity::SPARSE;
 
-        string offsetPre = srcNeuronGroup->delayRequired()
+        string offsetPre = srcNeuronGroup->isDelayRequired()
             ? "(delaySlot * " + to_string(srcNeuronGroup->getNumNeurons()) + ") + "
             : "";
 
-        string offsetPost = trgNeuronGroup->delayRequired()
+        string offsetPost = trgNeuronGroup->isDelayRequired()
             ? "(spkQuePtr" + trg + " * " + to_string(trgNeuronGroup->getNumNeurons()) + ") + "
             : "";
 
         // Detect spike events or spikes and do the update
         os << "// process presynaptic events: " << (evnt ? "Spike type events" : "True Spikes") << ENDL;
-        if (srcNeuronGroup->delayRequired()) {
+        if (srcNeuronGroup->isDelayRequired()) {
             os << "for (int i = 0; i < glbSpkCnt" << postfix << src << "[delaySlot]; i++)" << OB(201);
         }
         else {
@@ -498,10 +498,10 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
         const auto *wu = model.synapseModel[k];
         string synapseName = model.synapseName[k];
 
-        string offsetPre = srcNeuronGroup->delayRequired()
+        string offsetPre = srcNeuronGroup->isDelayRequired()
             ? "(delaySlot * " + to_string(srcNeuronGroup->getNumNeurons()) + ") + "
             : "";
-        string offsetPost = trgNeuronGroup->delayRequired()
+        string offsetPost = trgNeuronGroup->isDelayRequired()
             ? "(spkQuePtr" + trg +" * " + to_string(trgNeuronGroup->getNumNeurons()) + ") + "
             : "";
 
@@ -511,7 +511,7 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
             os << "// synapse group " << synapseName << ENDL;
             os << OB(1005);
 
-            if (srcNeuronGroup->delayRequired()) {
+            if (srcNeuronGroup->isDelayRequired()) {
                 os << "unsigned int delaySlot = (spkQuePtr" << src;
                 os << " + " << (srcNeuronGroup->getNumDelaySlots() - model.synapseDelay[k]);
                 os << ") % " << srcNeuronGroup->getNumDelaySlots() << ";" << ENDL;
@@ -604,7 +604,7 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
         os << "// synapse group " << model.synapseName[i] << ENDL;
         os << OB(1006);
 
-        if (srcNeuronGroup->delayRequired()) {
+        if (srcNeuronGroup->isDelayRequired()) {
             os << "unsigned int delaySlot = (spkQuePtr" << src;
             os << " + " << (srcNeuronGroup->getNumDelaySlots() - model.synapseDelay[i]);
             os << ") % " << srcNeuronGroup->getNumDelaySlots() << ";" << ENDL;
@@ -655,15 +655,15 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
             const auto *wu = model.synapseModel[i];
             const bool sparse = model.synapseMatrixType[i] & SynapseMatrixConnectivity::SPARSE;
 
-            string offsetPre = srcNeuronGroup->delayRequired()
+            string offsetPre = srcNeuronGroup->isDelayRequired()
                 ? "(delaySlot * " + to_string(srcNeuronGroup->getNumNeurons()) + ") + "
                 : "";
-            string offsetTrueSpkPre = srcNeuronGroup->doesNeedTrueSpike() ? offsetPre : "";
+            string offsetTrueSpkPre = srcNeuronGroup->isTrueSpikeRequired() ? offsetPre : "";
 
-            string offsetPost = trgNeuronGroup->delayRequired()
+            string offsetPost = trgNeuronGroup->isDelayRequired()
                 ? "(spkQuePtr" + trg + " * " + to_string(trgNeuronGroup->getNumNeurons()) + ") + "
                 : "";
-            string offsetTrueSpkPost = trgNeuronGroup->doesNeedTrueSpike() ? offsetPost : "";
+            string offsetTrueSpkPost = trgNeuronGroup->isTrueSpikeRequired() ? offsetPost : "";
 
             // Create iteration context to iterate over the variables; derived and extra global parameters
             DerivedParamNameIterCtx wuDerivedParams(wu->GetDerivedParams());
@@ -675,7 +675,7 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
             os << "// synapse group " << model.synapseName[k] << ENDL;
             os << OB(950);
 
-            if (srcNeuronGroup->delayRequired()) {
+            if (srcNeuronGroup->isDelayRequired()) {
                 os << "unsigned int delaySlot = (spkQuePtr" << src;
                 os << " + " << (srcNeuronGroup->getNumDelaySlots() - model.synapseDelay[k]);
                 os << ") % " << srcNeuronGroup->getNumDelaySlots() << ";" << ENDL;
@@ -685,7 +685,7 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
                 os << "using namespace " << model.synapseName[k] << "_weightupdate_simLearnPost;" << ENDL;
             }
 
-            if (trgNeuronGroup->delayRequired() && trgNeuronGroup->doesNeedTrueSpike()) {
+            if (trgNeuronGroup->isDelayRequired() && trgNeuronGroup->isTrueSpikeRequired()) {
                 os << "for (ipost = 0; ipost < glbSpkCnt" << trg << "[spkQuePtr" << trg << "]; ipost++)" << OB(910);
             }
             else {

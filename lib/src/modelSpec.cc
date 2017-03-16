@@ -78,7 +78,7 @@ bool NNmodel::zeroCopyInUse() const
 {
     // If any neuron groups use zero copy return true
     if(any_of(begin(m_NeuronGroups), end(m_NeuronGroups),
-        [](const std::pair<string, NeuronGroup> &n){ return n.second.usesZeroCopy(); }))
+        [](const std::pair<string, NeuronGroup> &n){ return n.second.isZeroCopyEnabled(); }))
     {
         return true;
     }
@@ -119,7 +119,7 @@ void NNmodel::setNeuronClusterIndex(const string &neuronGroup, /**< Name of the 
 //--------------------------------------------------------------------------
 void NNmodel::setNeuronSpikeZeroCopy(const string &neuronGroup /**< Name of the neuron population */)
 {
-    findNeuronGroup(neuronGroup)->setSpikeZeroCopy();
+    findNeuronGroup(neuronGroup)->setSpikeZeroCopyEnabled();
 }
 
 //--------------------------------------------------------------------------
@@ -129,7 +129,7 @@ void NNmodel::setNeuronSpikeZeroCopy(const string &neuronGroup /**< Name of the 
 //--------------------------------------------------------------------------
 void NNmodel::setNeuronSpikeEventZeroCopy(const string &neuronGroup  /**< Name of the neuron population */)
 {
-    findNeuronGroup(neuronGroup)->setSpikeEventZeroCopy();
+    findNeuronGroup(neuronGroup)->setSpikeEventZeroCopyEnabled();
 }
 
 //--------------------------------------------------------------------------
@@ -139,7 +139,7 @@ void NNmodel::setNeuronSpikeEventZeroCopy(const string &neuronGroup  /**< Name o
 //--------------------------------------------------------------------------
 void NNmodel::setNeuronSpikeTimeZeroCopy(const string &neuronGroup)
 {
-    findNeuronGroup(neuronGroup)->setSpikeTimeZeroCopy();
+    findNeuronGroup(neuronGroup)->setSpikeTimeZeroCopyEnabled();
 }
 
 //--------------------------------------------------------------------------
@@ -149,7 +149,7 @@ void NNmodel::setNeuronSpikeTimeZeroCopy(const string &neuronGroup)
 //--------------------------------------------------------------------------
 void NNmodel::setNeuronVarZeroCopy(const string &neuronGroup, const string &var)
 {
-    findNeuronGroup(neuronGroup)->setVarZeroCopy(var);
+    findNeuronGroup(neuronGroup)->setVarZeroCopyEnabled(var);
 }
 
 
@@ -173,7 +173,7 @@ void NNmodel::initLearnGrps()
 
         if (!wu->GetSimCode().empty()) {
             synapseUsesTrueSpikes[i] = true;
-            srcNeuronGroup->setNeedTrueSpike();
+            srcNeuronGroup->setTrueSpikeRequired();
 
             // analyze which neuron variables need queues
             srcNeuronGroup->updateVarQueues(wu->GetSimCode());
@@ -202,7 +202,7 @@ void NNmodel::initLearnGrps()
 
             if (!wu->GetEventCode().empty()) {
                 synapseUsesSpikeEvents[synPopID] = true;
-                n.second.setNeedSpikeEvents();
+                n.second.setSpikeEventRequired();
                 assert(!wu->GetEventThresholdConditionCode().empty());
 
                 // Create iterators to iterate over the names of the weight update model's extra global parameters
@@ -698,11 +698,11 @@ void NNmodel::addSynapsePopulation(
     }
 
     if (weightUpdateModels[syntype].needPreSt) {
-        srcNeuronGrp->setNeedSpikeTiming();
+        srcNeuronGrp->setSpikeTimeRequired();
         needSt = true;
     }
     if (weightUpdateModels[syntype].needPostSt) {
-        trgNeuronGrp->setNeedSpikeTiming();
+        trgNeuronGrp->setSpikeTimeRequired();
         needSt = true;
     }
 
