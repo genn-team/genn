@@ -39,7 +39,6 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
                        const string &path //!< Path for code generation
     )
 {
-    string s;
     ofstream os;
 
     string name = path + "/" + model.name + "_CODE/neuronFnct.cc";
@@ -141,7 +140,7 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
 
 
         for(const auto &sName : n.second.getInSyn()) {
-            int synPopID = model.findSynapseGrp(s);
+            int synPopID = model.findSynapseGrp(sName);
             const auto *psm = model.postSynapseModel[synPopID];
 
             if (model.synapseMatrixType[synPopID] & SynapseMatrixWeight::INDIVIDUAL) {
@@ -284,7 +283,7 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
         }
 
          for(const auto &sName : n.second.getInSyn()) {
-            int synPopID = model.findSynapseGrp(s);
+            int synPopID = model.findSynapseGrp(sName);
             const auto *psm = model.postSynapseModel[synPopID];
             string pdCode = psm->GetDecayCode();
             substitute(pdCode, "$(id)", "n");
