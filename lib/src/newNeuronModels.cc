@@ -28,7 +28,7 @@ std::string NeuronModels::LegacyWrapper::GetSupportCode() const
     return nModels[m_LegacyTypeIndex].supportCode;
 }
 //----------------------------------------------------------------------------
-std::vector<std::pair<std::string, std::string>> NeuronModels::LegacyWrapper::GetExtraGlobalParams() const
+NewModels::Base::StringPairVec NeuronModels::LegacyWrapper::GetExtraGlobalParams() const
 {
     const auto &nm = nModels[m_LegacyTypeIndex];
     return ZipStringVectors(nm.extraGlobalNeuronKernelParameters, nm.extraGlobalNeuronKernelParameterTypes);

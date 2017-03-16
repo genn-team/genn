@@ -47,7 +47,7 @@ std::string WeightUpdateModels::LegacyWrapper::GetSynapseDynamicsSuppportCode() 
     return weightUpdateModels[m_LegacyTypeIndex].synapseDynamics_supportCode;
 }
 //----------------------------------------------------------------------------
-std::vector<std::pair<std::string, std::string>> WeightUpdateModels::LegacyWrapper::GetExtraGlobalParams() const
+NewModels::Base::StringPairVec WeightUpdateModels::LegacyWrapper::GetExtraGlobalParams() const
 {
     const auto &wu = weightUpdateModels[m_LegacyTypeIndex];
     return ZipStringVectors(wu.extraGlobalSynapseKernelParameters, wu.extraGlobalSynapseKernelParameterTypes);

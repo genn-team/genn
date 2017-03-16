@@ -29,9 +29,9 @@ public:                                                        \
 
 #define IMPLEMENT_MODEL(TYPE) TYPE *TYPE::s_Instance = NULL
 
-#define SET_PARAM_NAMES(...) virtual std::vector<std::string> GetParamNames() const{ return __VA_ARGS__; }
-#define SET_DERIVED_PARAMS(...) virtual std::vector<std::pair<std::string, DerivedParamFunc>> GetDerivedParams() const{ return __VA_ARGS__; }
-#define SET_VARS(...) virtual std::vector<std::pair<std::string, std::string>> GetVars() const{ return __VA_ARGS__; }
+#define SET_PARAM_NAMES(...) virtual StringVec GetParamNames() const{ return __VA_ARGS__; }
+#define SET_DERIVED_PARAMS(...) virtual DerivedParamVec GetDerivedParams() const{ return __VA_ARGS__; }
+#define SET_VARS(...) virtual StringPairVec GetVars() const{ return __VA_ARGS__; }
 
 //----------------------------------------------------------------------------
 // NewModels::ValueBase
@@ -96,7 +96,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// NeuronModels::Base
+// NewModels::Base
 //----------------------------------------------------------------------------
 class Base
 {
@@ -105,24 +105,30 @@ public:
     // Typedefines
     //----------------------------------------------------------------------------
     typedef std::function<double(const std::vector<double> &, double)> DerivedParamFunc;
+    typedef std::vector<std::string> StringVec;
+    typedef std::vector<std::pair<std::string, std::string>> StringPairVec;
+    typedef std::vector<std::pair<std::string, DerivedParamFunc>> DerivedParamVec;
 
     //----------------------------------------------------------------------------
     // Declared virtuals
     //----------------------------------------------------------------------------
-    virtual std::vector<std::string> GetParamNames() const{ return {}; }
-    virtual std::vector<std::pair<std::string, DerivedParamFunc>> GetDerivedParams() const{ return {}; }
-    virtual std::vector<std::pair<std::string, std::string>> GetVars() const{ return {}; }
+    virtual StringVec GetParamNames() const{ return {}; }
+    virtual DerivedParamVec GetDerivedParams() const{ return {}; }
+    virtual StringPairVec GetVars() const{ return {}; }
 };
 
 //----------------------------------------------------------------------------
-// NeuronModels::LegacyWrapper
+// NewModels::LegacyWrapper
 //----------------------------------------------------------------------------
-// Wrapper around neuron models stored in global
+// Wrapper around old-style models stored in global arrays and referenced by index
 template<typename ModelBase, typename LegacyModelType, const std::vector<LegacyModelType> &ModelArray>
 class LegacyWrapper : public ModelBase
 {
 private:
     typedef typename ModelBase::DerivedParamFunc DerivedParamFunc;
+    typedef typename ModelBase::StringVec StringVec;
+    typedef typename ModelBase::StringPairVec StringPairVec;
+    typedef typename ModelBase::DerivedParamVec DerivedParamVec;
 
 public:
     LegacyWrapper(unsigned int legacyTypeIndex) : m_LegacyTypeIndex(legacyTypeIndex)
@@ -132,18 +138,18 @@ public:
     //----------------------------------------------------------------------------
     // ModelBase virtuals
     //----------------------------------------------------------------------------
-    virtual std::vector<std::string>  GetParamNames() const
+    virtual StringVec GetParamNames() const
     {
         const auto &nm = ModelArray[m_LegacyTypeIndex];
         return nm.pNames;
     }
 
-    virtual std::vector<std::pair<std::string, DerivedParamFunc>> GetDerivedParams() const
+    virtual DerivedParamVec GetDerivedParams() const
     {
         const auto &m = ModelArray[m_LegacyTypeIndex];
 
         // Reserve vector to hold derived parameters
-        std::vector<std::pair<std::string, DerivedParamFunc>> derivedParams;
+        DerivedParamVec derivedParams;
         derivedParams.reserve(m.dpNames.size());
 
         // Loop through derived parameters
@@ -163,7 +169,7 @@ public:
         return derivedParams;
     }
 
-    virtual std::vector<std::pair<std::string, std::string>> GetVars() const
+    virtual StringPairVec GetVars() const
     {
         const auto &nm = ModelArray[m_LegacyTypeIndex];
         return ZipStringVectors(nm.varNames, nm.varTypes);
@@ -173,13 +179,12 @@ protected:
     //----------------------------------------------------------------------------
     // Static methods
     //----------------------------------------------------------------------------
-    static std::vector<std::pair<std::string, std::string>> ZipStringVectors(const std::vector<std::string> &a,
-                                                                             const std::vector<std::string> &b)
+    static StringPairVec ZipStringVectors(const StringVec &a, const StringVec &b)
     {
         assert(a.size() == b.size());
 
         // Reserve vector to hold initial values
-        std::vector<std::pair<std::string, std::string>> zip;
+        StringPairVec zip;
         zip.reserve(a.size());
 
         // Build vector from legacy neuron model

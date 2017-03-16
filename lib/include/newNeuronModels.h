@@ -19,7 +19,7 @@
 #define SET_THRESHOLD_CONDITION_CODE(THRESHOLD_CONDITION_CODE) virtual std::string GetThresholdConditionCode() const{ return THRESHOLD_CONDITION_CODE; }
 #define SET_RESET_CODE(RESET_CODE) virtual std::string GetResetCode() const{ return RESET_CODE; }
 #define SET_SUPPORT_CODE(SUPPORT_CODE) virtual std::string GetSupportCode() const{ return SUPPORT_CODE; }
-#define SET_EXTRA_GLOBAL_PARAMS(...) virtual std::vector<std::pair<std::string, std::string>> GetExtraGlobalParams() const{ return __VA_ARGS__; }
+#define SET_EXTRA_GLOBAL_PARAMS(...) virtual StringPairVec GetExtraGlobalParams() const{ return __VA_ARGS__; }
 
 //----------------------------------------------------------------------------
 // NeuronModels::Base
@@ -59,7 +59,7 @@ public:
     virtual std::string GetThresholdConditionCode() const;
     virtual std::string GetResetCode() const;
     virtual std::string GetSupportCode() const;
-    virtual std::vector<std::pair<std::string, std::string>> GetExtraGlobalParams() const;
+    virtual NewModels::Base::StringPairVec GetExtraGlobalParams() const;
 
     virtual bool IsPoisson() const;
 };

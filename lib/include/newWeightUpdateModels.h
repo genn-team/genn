@@ -17,7 +17,7 @@
 #define SET_LEARN_POST_SUPPORT_CODE(LEARN_POST_SUPPORT_CODE) virtual std::string GetLearnPostSupportCode() const{ return LEARN_POST_SUPPORT_CODE; }
 #define SET_SYNAPSE_DYNAMICS_SUPPORT_CODE(SYNAPSE_DYNAMICS_SUPPORT_CODE) virtual std::string GetSynapseDynamicsSuppportCode() const{ return SYNAPSE_DYNAMICS_SUPPORT_CODE; }
 
-#define SET_EXTRA_GLOBAL_PARAMS(...) virtual std::vector<std::pair<std::string, std::string>> GetExtraGlobalParams() const{ return __VA_ARGS__; }
+#define SET_EXTRA_GLOBAL_PARAMS(...) virtual StringPairVec GetExtraGlobalParams() const{ return __VA_ARGS__; }
 
 #define SET_NEEDS_PRE_SPIKE_TIME(NEEDS_PRE_SPIKE_TIME) static const bool NeedsPreSpikeTime = NEEDS_PRE_SPIKE_TIME
 #define SET_NEEDS_POST_SPIKE_TIME(NEEDS_POST_SPIKE_TIME) static const bool NeedsPostSpikeTime = NEEDS_POST_SPIKE_TIME
@@ -43,7 +43,7 @@ public:
     virtual std::string GetLearnPostSupportCode() const{ return ""; }
     virtual std::string GetSynapseDynamicsSuppportCode() const{ return ""; }
 
-    virtual std::vector<std::pair<std::string, std::string>> GetExtraGlobalParams() const{ return {}; }
+    virtual StringPairVec GetExtraGlobalParams() const{ return {}; }
 
     //----------------------------------------------------------------------------
     // Constants
@@ -75,7 +75,7 @@ public:
     virtual std::string GetLearnPostSupportCode() const;
     virtual std::string GetSynapseDynamicsSuppportCode() const;
 
-    virtual std::vector<std::pair<std::string, std::string>> GetExtraGlobalParams() const;
+    virtual NewModels::Base::StringPairVec GetExtraGlobalParams() const;
 };
 
 //----------------------------------------------------------------------------
