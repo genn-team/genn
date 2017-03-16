@@ -19,8 +19,8 @@ struct NameIterCtx
 {
     typedef PairKeyConstIter<typename Container::const_iterator> NameIter;
 
-    NameIterCtx(const Container &c) :
-        container(c), nameBegin(std::begin(c)), nameEnd(std::end(c)){}
+    NameIterCtx(Container &&c) :
+        container(std::move(c)), nameBegin(std::begin(c)), nameEnd(std::end(c)){}
 
     const Container container;
     const NameIter nameBegin;
