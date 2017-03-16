@@ -678,6 +678,9 @@ void NNmodel::addSynapsePopulation(
         gennError("Combination of connection type " + to_string(conntype) + " and weight type " + to_string(gtype) + " not supported");
     }
 
+    // Increase synapse group count
+    synapseGrpN++;
+
     auto srcNeuronGrp = findNeuronGroup(src);
     auto trgNeuronGrp = findNeuronGroup(trg);
 
@@ -799,7 +802,7 @@ const NeuronGroup *NNmodel::findNeuronGroup(const std::string &name) const
 
     if(neuronGroup == m_NeuronGroups.cend())
     {
-        gennError("Cannot find neuron group:" + name);
+        gennError("neuron group " + name + " not found, aborting ...");
         return NULL;
     }
     else
@@ -1072,7 +1075,7 @@ NeuronGroup *NNmodel::findNeuronGroup(const std::string &name)
 
     if(neuronGroup == m_NeuronGroups.end())
     {
-        gennError("Cannot find neuron group:" + name);
+        gennError("neuron group " + name + " not found, aborting ...");
         return NULL;
     }
     else

@@ -222,8 +222,8 @@ public:
 
     template<typename WeightUpdateModel, typename PostsynapticModel>
     void addSynapsePopulation(const string &name, SynapseMatrixType mtype, unsigned int delaySteps, const string& src, const string& trg,
-                            const typename WeightUpdateModel::ParamValues &weightParamValues, const typename WeightUpdateModel::VarValues &weightVarValues,
-                            const typename PostsynapticModel::ParamValues &postsynapticParamValues, const typename PostsynapticModel::VarValues &postsynapticVarValues)
+                              const typename WeightUpdateModel::ParamValues &weightParamValues, const typename WeightUpdateModel::VarValues &weightVarValues,
+                              const typename PostsynapticModel::ParamValues &postsynapticParamValues, const typename PostsynapticModel::VarValues &postsynapticVarValues)
     {
         if (!GeNNReady) {
             gennError("You need to call initGeNN first.");
@@ -231,6 +231,9 @@ public:
         if (final) {
             gennError("Trying to add a synapse population to a finalized model.");
         }
+
+        // Increase synapse group count
+        synapseGrpN++;
 
         auto srcNeuronGrp = findNeuronGroup(src);
         auto trgNeuronGrp = findNeuronGroup(trg);
