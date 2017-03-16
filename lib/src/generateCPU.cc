@@ -23,6 +23,7 @@
 #include "global.h"
 #include "utils.h"
 #include "codeGenUtils.h"
+#include "standardSubstitutions.h"
 #include "CodeHelper.h"
 
 #include <algorithm>
@@ -69,87 +70,79 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
     os << OB(51);
 
     // function code
-    for (unsigned int i = 0; i < model.neuronGrpN; i++) {
-        string queueOffset = (model.neuronDelaySlots[i] > 1 ? "(spkQuePtr" + model.neuronName[i] + " * " + to_string(model.neuronN[i]) + ") + " : "");
-        string queueOffsetTrueSpk = (model.neuronNeedTrueSpk[i] ? queueOffset : "");
+    for(auto &n : model.getNeuronGroups()) {
+        string queueOffset = n.second.delayRequired()
+            ? "(spkQuePtr" + n.first + " * " + to_string(n.second.getNumNeurons()) + ") + "
+            : "";
+        string queueOffsetTrueSpk = (n.second.doesNeedTrueSpike() ? queueOffset : "");
 
-        os << "// neuron group " << model.neuronName[i] << ENDL;
+        os << "// neuron group " << n.first << ENDL;
         os << OB(55);
 
         // increment spike queue pointer and reset spike count
-        if (model.neuronDelaySlots[i] > 1) { // with delay
-            os << "spkQuePtr" << model.neuronName[i] << " = (spkQuePtr" << model.neuronName[i] << " + 1) % " << model.neuronDelaySlots[i] << ";" << ENDL;
-            if (model.neuronNeedSpkEvnt[i]) {
-                os << "glbSpkCntEvnt" << model.neuronName[i] << "[spkQuePtr" << model.neuronName[i] << "] = 0;" << ENDL;
+        if (n.second.delayRequired()) { // with delay
+            os << "spkQuePtr" << n.first << " = (spkQuePtr" << n.first << " + 1) % " << n.second.getNumDelaySlots() << ";" << ENDL;
+            if (n.second.doesNeedSpikeEvents()) {
+                os << "glbSpkCntEvnt" << n.first << "[spkQuePtr" << n.first << "] = 0;" << ENDL;
             }
-            if (model.neuronNeedTrueSpk[i]) {
-                os << "glbSpkCnt" << model.neuronName[i] << "[spkQuePtr" << model.neuronName[i] << "] = 0;" << ENDL;
+            if (n.second.doesNeedTrueSpike()) {
+                os << "glbSpkCnt" << n.first << "[spkQuePtr" << n.first << "] = 0;" << ENDL;
             }
             else {
-                os << "glbSpkCnt" << model.neuronName[i] << "[0] = 0;" << ENDL;
+                os << "glbSpkCnt" << n.first << "[0] = 0;" << ENDL;
             }
         }
         else { // no delay
-            if (model.neuronNeedSpkEvnt[i]) {
-                os << "glbSpkCntEvnt" << model.neuronName[i] << "[0] = 0;" << ENDL;
+            if (n.second.doesNeedSpikeEvents()) {
+                os << "glbSpkCntEvnt" << n.first << "[0] = 0;" << ENDL;
             }
-            os << "glbSpkCnt" << model.neuronName[i] << "[0] = 0;" << ENDL;
+            os << "glbSpkCnt" << n.first << "[0] = 0;" << ENDL;
         }
-        vector<bool> varNeedQueue = model.neuronVarNeedQueue[i];
-        if ((find(varNeedQueue.begin(), varNeedQueue.end(), true) != varNeedQueue.end()) && (model.neuronDelaySlots[i] > 1)) {
-            os << "unsigned int delaySlot = (spkQuePtr" << model.neuronName[i];
-            os << " + " << (model.neuronDelaySlots[i] - 1);
-            os << ") % " << model.neuronDelaySlots[i] << ";" << ENDL;
+        if (n.second.anyVarNeedQueue() && n.second.delayRequired()) {
+            os << "unsigned int delaySlot = (spkQuePtr" << n.first;
+            os << " + " << (n.second.getNumDelaySlots() - 1);
+            os << ") % " << n.second.getNumDelaySlots() << ";" << ENDL;
         }
         os << ENDL;
 
-        os << "for (int n = 0; n < " <<  model.neuronN[i] << "; n++)" << OB(10);
+        os << "for (int n = 0; n < " <<  n.second.getNumNeurons() << "; n++)" << OB(10);
 
         // Get neuron model associated with this group
-        auto neuronModel = model.neuronModel[i];
+        auto nm = n.second.getNeuronModel();
 
-        // Create iterators to iterate over the names of the neuron model's initial values
-        auto neuronModelVars = neuronModel->GetVars();
-        auto neuronModelVarNameBegin = GetPairKeyConstIter(neuronModelVars.cbegin());
-        auto neuronModelVarNameEnd = GetPairKeyConstIter(neuronModelVars.cend());
+        // Create iteration context to iterate over the variables; derived and extra global parameters
+        VarNameIterCtx nmVars(nm->GetVars());
+        DerivedParamNameIterCtx nmDerivedParams(nm->GetDerivedParams());
+        ExtraGlobalParamNameIterCtx nmExtraGlobalParams(nm->GetExtraGlobalParams());
 
-        // Create iterators to iterate over the names of the neuron model's derived parameters
-        auto neuronModelDerivedParams = neuronModel->GetDerivedParams();
-        auto neuronModelDerivedParamNameBegin= GetPairKeyConstIter(neuronModelDerivedParams.cbegin());
-        auto neuronModelDerivedParamNameEnd = GetPairKeyConstIter(neuronModelDerivedParams.cend());
+        for (size_t k = 0; k < nmVars.container.size(); k++) {
 
-        // Create iterators to iterate over the names of the neuron model's extra global parameters
-        auto neuronModelExtraGlobalParams = neuronModel->GetExtraGlobalParams();
-        auto neuronModelExtraGlobalParamsNameBegin = GetPairKeyConstIter(neuronModelExtraGlobalParams.cbegin());
-        auto neuronModelExtraGlobalParamsNameEnd = GetPairKeyConstIter(neuronModelExtraGlobalParams.cend());
-        for (size_t k = 0; k < neuronModelVars.size(); k++) {
-
-            os << neuronModelVars[k].second << " l" << neuronModelVars[k].first << " = ";
-            os << neuronModelVars[k].first << model.neuronName[i] << "[";
-            if ((model.neuronVarNeedQueue[i][k]) && (model.neuronDelaySlots[i] > 1)) {
-                os << "(delaySlot * " << model.neuronN[i] << ") + ";
+            os << nmVars.container[k].second << " l" << nmVars.container[k].first << " = ";
+            os << nmVars.container[k].first << n.first << "[";
+            if (n.second.doesVarNeedQueue(k) && n.second.delayRequired()) {
+                os << "(delaySlot * " << n.second.getNumNeurons() << ") + ";
             }
             os << "n];" << ENDL;
         }
-        if ((neuronModel->GetSimCode().find("$(sT)") != string::npos)
-            || (neuronModel->GetThresholdConditionCode().find("$(sT)") != string::npos)
-            || (neuronModel->GetResetCode().find("$(sT)") != string::npos)) { // load sT into local variable
-            os << model.ftype << " lsT= sT" <<  model.neuronName[i] << "[";
-            if (model.neuronDelaySlots[i] > 1) {
-                os << "(delaySlot * " << model.neuronN[i] << ") + ";
+        if ((nm->GetSimCode().find("$(sT)") != string::npos)
+            || (nm->GetThresholdConditionCode().find("$(sT)") != string::npos)
+            || (nm->GetResetCode().find("$(sT)") != string::npos)) { // load sT into local variable
+            os << model.ftype << " lsT= sT" <<  n.first << "[";
+            if (n.second.delayRequired()) {
+                os << "(delaySlot * " << n.second.getNumNeurons() << ") + ";
             }
             os << "n];" << ENDL;
         }
         os << ENDL;
 
-        if ((model.inSyn[i].size() > 0) || (neuronModel->GetSimCode().find("Isyn") != string::npos)) {
+        if ((n.second.getInSyn().size() > 0) || (nm->GetSimCode().find("Isyn") != string::npos)) {
             os << model.ftype << " Isyn = 0;" << ENDL;
         }
-        for (size_t j = 0; j < model.inSyn[i].size(); j++) {
-            unsigned int synPopID = model.inSyn[i][j]; // number of (post)synapse group
-            const auto *psm = model.postSynapseModel[synPopID];
-            const string &sName = model.synapseName[synPopID];
 
+
+        for(const auto &sName : n.second.getInSyn()) {
+            int synPopID = model.findSynapseGrp(s);
+            const auto *psm = model.postSynapseModel[synPopID];
 
             if (model.synapseMatrixType[synPopID] & SynapseMatrixWeight::INDIVIDUAL) {
                 for(const auto &v : psm->GetVars()) {
@@ -158,35 +151,13 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
                 }
             }
 
+            // Apply substitutions to current converter code
             string psCode = psm->GetCurrentConverterCode();
             substitute(psCode, "$(id)", "n");
-            substitute(psCode, "$(t)", "t");
             substitute(psCode, "$(inSyn)", "inSyn" + sName + "[n]");
+            StandardSubstitutions::postSynapseCurrentConverter(psCode, model, synPopID, n.first, n.second,
+                nmVars, nmDerivedParams, nmExtraGlobalParams);
 
-            name_substitutions(psCode, "l", neuronModelVarNameBegin, neuronModelVarNameEnd, "");
-            value_substitutions(psCode, neuronModel->GetParamNames(), model.neuronPara[i]);
-            value_substitutions(psCode, neuronModelDerivedParamNameBegin, neuronModelDerivedParamNameEnd, model.dnp[i]);
-
-            // Create iterators to iterate over the names of the postsynaptic model's initial values
-            auto psmVars = psm->GetVars();
-            auto psmVarNameBegin = GetPairKeyConstIter(psmVars.cbegin());
-            auto psmVarNameEnd = GetPairKeyConstIter(psmVars.cend());
-
-            if (model.synapseMatrixType[synPopID] & SynapseMatrixWeight::INDIVIDUAL) {
-                name_substitutions(psCode, "lps", psmVarNameBegin, psmVarNameEnd, sName);
-            }
-            else {
-                value_substitutions(psCode, psmVarNameBegin, psmVarNameEnd, model.postSynIni[synPopID]);
-            }
-            value_substitutions(psCode, psm->GetParamNames(), model.postSynapsePara[synPopID]);
-
-            // Create iterators to iterate over the names of the postsynaptic model's derived parameters
-            auto psmDerivedParams = psm->GetDerivedParams();
-            value_substitutions(psCode, GetPairKeyConstIter(psmDerivedParams.cbegin()),
-                                GetPairKeyConstIter(psmDerivedParams.cend()), model.dpsp[synPopID]);
-            name_substitutions(psCode, "", neuronModelExtraGlobalParamsNameBegin, neuronModelExtraGlobalParamsNameEnd, model.neuronName[i]);
-            psCode= ensureFtype(psCode, model.ftype);
-            checkUnreplacedVariables(psCode, "postSyntoCurrent");
             if (!psm->GetSupportCode().empty()) {
                 os << OB(29) << " using namespace " << sName << "_postsyn;" << ENDL;
             }
@@ -197,65 +168,51 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
             }
         }
 
-	    if (!neuronModel->GetSupportCode().empty()) {
-	        os << " using namespace " << model.neuronName[i] << "_neuron;" << ENDL;
-	    }
-      
-        string thCode= neuronModel->GetThresholdConditionCode();
+        if (!nm->GetSupportCode().empty()) {
+            os << " using namespace " << n.first << "_neuron;" << ENDL;
+        }
+
+        string thCode = nm->GetThresholdConditionCode();
         if (thCode.empty()) { // no condition provided
-            cerr << "Warning: No thresholdConditionCode for neuron type " << typeid(*neuronModel).name() << " used for population \"" << model.neuronName[i] << "\" was provided. There will be no spikes detected in this population!" << endl;
+            cerr << "Warning: No thresholdConditionCode for neuron type " << typeid(*nm).name() << " used for population \"" << n.first << "\" was provided. There will be no spikes detected in this population!" << endl;
         }
         else {
             os << "// test whether spike condition was fulfilled previously" << ENDL;
             substitute(thCode, "$(id)", "n");
-            substitute(thCode, "$(t)", "t");
-            name_substitutions(thCode, "l", neuronModelVarNameBegin, neuronModelVarNameEnd, "");
-            substitute(thCode, "$(sT)", "lsT");
-            value_substitutions(thCode, neuronModel->GetParamNames(), model.neuronPara[i]);
-            value_substitutions(thCode, neuronModelDerivedParamNameBegin, neuronModelDerivedParamNameEnd, model.dnp[i]);
-            substitute(thCode, "$(Isyn)", "Isyn");
-            thCode = ensureFtype(thCode, model.ftype);
-            checkUnreplacedVariables(thCode, "thresholdConditionCode");
+            StandardSubstitutions::neuronThresholdCondition(thCode, n.first, n.second,
+                                                            nmVars, nmDerivedParams, nmExtraGlobalParams,
+                                                            model.ftype);
             if (GENN_PREFERENCES::autoRefractory) {
                 os << "bool oldSpike= (" << thCode << ");" << ENDL;
             }
         }
 
         os << "// calculate membrane potential" << ENDL;
-        string sCode = neuronModel->GetSimCode();
+        string sCode = nm->GetSimCode();
         substitute(sCode, "$(id)", "n");
-        substitute(sCode, "$(t)", "t");
-        name_substitutions(sCode, "l", neuronModelVarNameBegin, neuronModelVarNameEnd, "");
-        value_substitutions(sCode, neuronModel->GetParamNames(), model.neuronPara[i]);
-        value_substitutions(sCode, neuronModelDerivedParamNameBegin, neuronModelDerivedParamNameEnd, model.dnp[i]);
-        name_substitutions(sCode, "", neuronModelExtraGlobalParamsNameBegin, neuronModelExtraGlobalParamsNameEnd, model.neuronName[i]);
-        if (neuronModel->IsPoisson()) {
-            substitute(sCode, "lrate", "rates" + model.neuronName[i] + "[n + offset" + model.neuronName[i] + "]");
+        StandardSubstitutions::neuronSim(sCode, n.first, n.second,
+                                         nmVars, nmDerivedParams, nmExtraGlobalParams,
+                                         model.ftype);
+        if (nm->IsPoisson()) {
+            substitute(sCode, "lrate", "rates" + n.first + "[n + offset" + n.first + "]");
         }
-        substitute(sCode, "$(Isyn)", "Isyn");
-        substitute(sCode, "$(sT)", "lsT");
-        sCode= ensureFtype(sCode, model.ftype);
-        checkUnreplacedVariables(sCode,"neuron simCode");
         os << sCode << ENDL;
 
         // look for spike type events first.
-        if (model.neuronNeedSpkEvnt[i]) {
+        if (n.second.doesNeedSpikeEvents()) {
             // Create local variable
             os << "bool spikeLikeEvent = false;" << ENDL;
 
             // Loop through outgoing synapse populations that will contribute to event condition code
-            for(const auto &spkEventCond : model.neuronSpkEvntCondition[i]) {
+            for(const auto &spkEventCond : n.second.getSpikeEventCondition()) {
                 // Replace of parameters, derived parameters and extraglobalsynapse parameters
                 string eCode = spkEventCond.first;
                 
                 // code substitutions ----
                 substitute(eCode, "$(id)", "n");
-                substitute(eCode, "$(t)", "t");
-                name_substitutions(eCode, "l", neuronModelVarNameBegin, neuronModelVarNameEnd, "", "_pre");
-                name_substitutions(eCode, "", neuronModelExtraGlobalParamsNameBegin, neuronModelExtraGlobalParamsNameEnd, model.neuronName[i]);
-                eCode = ensureFtype(eCode, model.ftype);
-                checkUnreplacedVariables(eCode, "neuronSpkEvntCondition");
-
+                StandardSubstitutions::neuronSpikeEventCondition(eCode, n.first,
+                                                                 nmVars, nmExtraGlobalParams,
+                                                                 model.ftype);
                 // Open scope for spike-like event test
                 os << OB(31);
 
@@ -273,9 +230,9 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
 
             os << "// register a spike-like event" << ENDL;
             os << "if (spikeLikeEvent)" << OB(30);
-            os << "glbSpkEvnt" << model.neuronName[i] << "[" << queueOffset << "glbSpkCntEvnt" << model.neuronName[i];
-            if (model.neuronDelaySlots[i] > 1) { // WITH DELAY
-                os << "[spkQuePtr" << model.neuronName[i] << "]++] = n;" << ENDL;
+            os << "glbSpkEvnt" << n.first << "[" << queueOffset << "glbSpkCntEvnt" << n.first;
+            if (n.second.delayRequired()) { // WITH DELAY
+                os << "[spkQuePtr" << n.first << "]++] = n;" << ENDL;
             }
             else { // NO DELAY
                 os << "[0]++] = n;" << ENDL;
@@ -292,68 +249,50 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
             else{
               os << "if (" << thCode << ") " << OB(40);
             }
-            os << "glbSpk" << model.neuronName[i] << "[" << queueOffsetTrueSpk << "glbSpkCnt" << model.neuronName[i];
-            if ((model.neuronDelaySlots[i] > 1) && (model.neuronNeedTrueSpk[i])) { // WITH DELAY
-                os << "[spkQuePtr" << model.neuronName[i] << "]++] = n;" << ENDL;
+            os << "glbSpk" << n.first << "[" << queueOffsetTrueSpk << "glbSpkCnt" << n.first;
+            if (n.second.delayRequired() && n.second.doesNeedTrueSpike()) { // WITH DELAY
+                os << "[spkQuePtr" << n.first << "]++] = n;" << ENDL;
             }
             else { // NO DELAY
                 os << "[0]++] = n;" << ENDL;
             }
-            if (model.neuronNeedSt[i]) {
-                os << "sT" << model.neuronName[i] << "[" << queueOffset << "n] = t;" << ENDL;
+            if (n.second.doesNeedSpikeTime()) {
+                os << "sT" << n.first << "[" << queueOffset << "n] = t;" << ENDL;
             }
 
             // add after-spike reset if provided
-            if (!neuronModel->GetResetCode().empty()) {
-                string rCode = neuronModel->GetResetCode();
+            if (!nm->GetResetCode().empty()) {
+                string rCode = nm->GetResetCode();
                 substitute(rCode, "$(id)", "n");
-                substitute(rCode, "$(t)", "t");
-                name_substitutions(rCode, "l", neuronModelVarNameBegin, neuronModelVarNameEnd, "");
-                value_substitutions(rCode, neuronModel->GetParamNames(), model.neuronPara[i]);
-                value_substitutions(rCode, neuronModelDerivedParamNameBegin, neuronModelDerivedParamNameEnd, model.dnp[i]);
-                substitute(rCode, "$(Isyn)", "Isyn");
-                substitute(rCode, "$(sT)", "lsT");
+                StandardSubstitutions::neuronReset(sCode, n.first, n.second,
+                                                   nmVars, nmDerivedParams, nmExtraGlobalParams,
+                                                   model.ftype);
                 os << "// spike reset code" << ENDL;
-                name_substitutions(rCode, "", neuronModelExtraGlobalParamsNameBegin, neuronModelExtraGlobalParamsNameEnd, model.neuronName[i]);
-                rCode= ensureFtype(rCode, model.ftype);
-                checkUnreplacedVariables(rCode, "resetCode");
                 os << rCode << ENDL;
             }
             os << CB(40);
         }
 
         // store the defined parts of the neuron state into the global state variables V etc
-        for (size_t k = 0; k < neuronModelVars.size(); k++) {
-            if (model.neuronVarNeedQueue[i][k]) {
-                os << neuronModelVars[k].first << model.neuronName[i] << "[" << queueOffset << "n] = l" << neuronModelVars[k].first << ";" << ENDL;
+        for (size_t k = 0; k < nmVars.container.size(); k++) {
+            if (n.second.doesVarNeedQueue(k)) {
+                os << nmVars.container[k].first << n.first << "[" << queueOffset << "n] = l" << nmVars.container[k].first << ";" << ENDL;
             }
             else {
-                os << neuronModelVars[k].first << model.neuronName[i] << "[n] = l" << neuronModelVars[k].first << ";" << ENDL;
+                os << nmVars.container[k].first << n.first << "[n] = l" << nmVars.container[k].first << ";" << ENDL;
             }
         }
 
-        for (size_t j = 0; j < model.inSyn[i].size(); j++) {
-            const auto *psm= model.postSynapseModel[model.inSyn[i][j]];
-            string sName= model.synapseName[model.inSyn[i][j]];
+         for(const auto &sName : n.second.getInSyn()) {
+            int synPopID = model.findSynapseGrp(s);
+            const auto *psm = model.postSynapseModel[synPopID];
             string pdCode = psm->GetDecayCode();
             substitute(pdCode, "$(id)", "n");
-            substitute(pdCode, "$(t)", "t");
-            substitute(pdCode, "$(inSyn)", "inSyn" + sName + "[n]");
 
-            auto psmVars = psm->GetVars();
-            name_substitutions(pdCode, "lps", GetPairKeyConstIter(psmVars.cbegin()),
-                               GetPairKeyConstIter(psmVars.cend()), sName);
-            value_substitutions(pdCode, psm->GetParamNames(), model.postSynapsePara[model.inSyn[i][j]]);
-
-            auto psmDerivedParams = psm->GetDerivedParams();
-            value_substitutions(pdCode, GetPairKeyConstIter(psmDerivedParams.cbegin()),
-                                GetPairKeyConstIter(psmDerivedParams.cend()), model.dpsp[model.inSyn[i][j]]);
-            name_substitutions(pdCode, "l", neuronModelVarNameBegin, neuronModelVarNameEnd, "");
-            value_substitutions(pdCode, neuronModel->GetParamNames(), model.neuronPara[i]);
-            value_substitutions(pdCode, neuronModelDerivedParamNameBegin, neuronModelDerivedParamNameEnd, model.dnp[i]);
+            StandardSubstitutions::postSynapseDecay(pdCode, model, synPopID, n.first, n.second,
+                                                    nmVars, nmDerivedParams, nmExtraGlobalParams,
+                                                    model.ftype);
             os << "// the post-synaptic dynamics" << ENDL;
-            pdCode= ensureFtype(pdCode, model.ftype);
-            checkUnreplacedVariables(pdCode, "postSynDecay");
             if (!psm->GetSupportCode().empty()) {
                 os << OB(29) << " using namespace " << sName << "_postsyn;" << ENDL;
             }
@@ -361,7 +300,7 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
             if (!psm->GetSupportCode().empty()) {
                 os << CB(29) << " // namespace bracket closed" << endl;
             }
-            for (const auto &v : psmVars) {
+            for (const auto &v : psm->GetVars()) {
                 os << v.first << sName << "[n]" << " = lps" << v.first << sName << ";" << ENDL;
             }
         }
@@ -385,8 +324,10 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
 void generate_process_presynaptic_events_code_CPU(
     ostream &os, //!< output stream for code
     const NNmodel &model, //!< the neuronal network model to generate code for
-    unsigned int src, //!< the number of the src neuron population
-    unsigned int trg, //!< the number of the target neuron population
+    const std::string &src, //!< the name of the src neuron population
+    const std::string &trg, //!< the number of the target neuron population
+    const NeuronGroup *srcNeuronGroup,
+    const NeuronGroup *trgNeuronGroup,
     int i, //!< the index of the synapse group being processed
     const string &postfix //!< whether to generate code for true spikes or spike type events
     )
@@ -399,22 +340,24 @@ void generate_process_presynaptic_events_code_CPU(
         const auto *wu = model.synapseModel[i];
         const bool sparse = model.synapseMatrixType[i] & SynapseMatrixConnectivity::SPARSE;
 
-        const bool delayPre = model.neuronDelaySlots[src] > 1;
-        string offsetPre = delayPre ? ("(delaySlot * " + to_string(model.neuronN[src]) + ") + ") : "";
+        string offsetPre = srcNeuronGroup->delayRequired()
+            ? "(delaySlot * " + to_string(srcNeuronGroup->getNumNeurons()) + ") + "
+            : "";
 
-        const bool delayPost = model.neuronDelaySlots[trg] > 1;
-        string offsetPost = delayPost ? ("(spkQuePtr" + model.neuronName[trg] + " * " + to_string(model.neuronN[trg]) + ") + ") : "";
+        string offsetPost = trgNeuronGroup->delayRequired()
+            ? "(spkQuePtr" + trg + " * " + to_string(trgNeuronGroup->getNumNeurons()) + ") + "
+            : "";
 
         // Detect spike events or spikes and do the update
         os << "// process presynaptic events: " << (evnt ? "Spike type events" : "True Spikes") << ENDL;
-        if (delayPre) {
-            os << "for (int i = 0; i < glbSpkCnt" << postfix << model.neuronName[src] << "[delaySlot]; i++)" << OB(201);
+        if (srcNeuronGroup->delayRequired()) {
+            os << "for (int i = 0; i < glbSpkCnt" << postfix << src << "[delaySlot]; i++)" << OB(201);
         }
         else {
-            os << "for (int i = 0; i < glbSpkCnt" << postfix << model.neuronName[src] << "[0]; i++)" << OB(201);
+            os << "for (int i = 0; i < glbSpkCnt" << postfix << src << "[0]; i++)" << OB(201);
         }
 
-        os << "ipre = glbSpk" << postfix << model.neuronName[src] << "[" << offsetPre << "i];" << ENDL;
+        os << "ipre = glbSpk" << postfix << src << "[" << offsetPre << "i];" << ENDL;
 
         if (sparse) { // SPARSE
             os << "npost = C" << model.synapseName[i] << ".indInG[ipre + 1] - C" << model.synapseName[i] << ".indInG[ipre];" << ENDL;
@@ -422,31 +365,21 @@ void generate_process_presynaptic_events_code_CPU(
             os << "ipost = C" << model.synapseName[i] << ".ind[C" << model.synapseName[i] << ".indInG[ipre] + j];" << ENDL;
         }
         else { // DENSE
-            os << "for (ipost = 0; ipost < " << model.neuronN[trg] << "; ipost++)" << OB(202);
+            os << "for (ipost = 0; ipost < " << trgNeuronGroup->getNumNeurons() << "; ipost++)" << OB(202);
         }
 
         if (model.synapseMatrixType[i] & SynapseMatrixConnectivity::BITMASK) {
-            os << "unsigned int gid = (ipre * " << model.neuronN[trg] << " + ipost);" << ENDL;
+            os << "unsigned int gid = (ipre * " << trgNeuronGroup->getNumNeurons() << " + ipost);" << ENDL;
         }
 
         if (!wu->GetSimSupportCode().empty()) {
             os << " using namespace " << model.synapseName[i] << "_weightupdate_simCode;" << ENDL;
         }
 
-        // Create iterators to iterate over the names of the weight update model's derived parameters
-        auto wuDerivedParams = wu->GetDerivedParams();
-        auto wuDerivedParamNameBegin= GetPairKeyConstIter(wuDerivedParams.cbegin());
-        auto wuDerivedParamNameEnd = GetPairKeyConstIter(wuDerivedParams.cend());
-
-        // Create iterators to iterate over the names of the weight update model's extra global parameters
-        auto wuExtraGlobalParams = wu->GetExtraGlobalParams();
-        auto wuExtraGlobalParamsNameBegin = GetPairKeyConstIter(wuExtraGlobalParams.cbegin());
-        auto wuExtraGlobalParamsNameEnd = GetPairKeyConstIter(wuExtraGlobalParams.cend());
-
-        // Create iterators to iterate over the names of the weight update model's initial values
-        auto wuVars = wu->GetVars();
-        auto wuVarNameBegin = GetPairKeyConstIter(wuVars.cbegin());
-        auto wuVarNameEnd = GetPairKeyConstIter(wuVars.cend());
+        // Create iteration context to iterate over the variables; derived and extra global parameters
+        DerivedParamNameIterCtx wuDerivedParams(wu->GetDerivedParams());
+        ExtraGlobalParamNameIterCtx wuExtraGlobalParams(wu->GetExtraGlobalParams());
+        VarNameIterCtx wuVars(wu->GetVars());
 
         if (evnt) {
             // code substitutions ----
@@ -454,9 +387,10 @@ void generate_process_presynaptic_events_code_CPU(
             substitute(eCode, "$(id)", "n");
             substitute(eCode, "$(t)", "t");
             value_substitutions(eCode, wu->GetParamNames(), model.synapsePara[i]);
-            value_substitutions(eCode, wuDerivedParamNameBegin, wuDerivedParamNameEnd, model.dsp_w[i]);
-            name_substitutions(eCode, "", wuExtraGlobalParamsNameBegin, wuExtraGlobalParamsNameEnd, model.synapseName[i]);
-            neuron_substitutions_in_synaptic_code(eCode, model, src, trg, offsetPre, offsetPost, "ipre", "ipost", "");
+            value_substitutions(eCode, wuDerivedParams.nameBegin, wuDerivedParams.nameEnd, model.dsp_w[i]);
+            name_substitutions(eCode, "", wuExtraGlobalParams.nameBegin, wuExtraGlobalParams.nameEnd, model.synapseName[i]);
+            neuron_substitutions_in_synaptic_code(eCode, src, trg, srcNeuronGroup, trgNeuronGroup, offsetPre, offsetPost,
+                                                  "ipre", "ipost", "");
             eCode= ensureFtype(eCode, model.ftype);
             checkUnreplacedVariables(eCode, "evntThreshold");
             // end code substitutions ----
@@ -479,26 +413,29 @@ void generate_process_presynaptic_events_code_CPU(
         substitute(wCode, "$(t)", "t");
         if (sparse) { // SPARSE
             if (model.synapseMatrixType[i] & SynapseMatrixWeight::INDIVIDUAL) {
-                name_substitutions(wCode, "", wuVarNameBegin, wuVarNameEnd, model.synapseName[i] + "[C" + model.synapseName[i] + ".indInG[ipre] + j]");
+                name_substitutions(wCode, "", wuVars.nameBegin, wuVars.nameEnd,
+                                   model.synapseName[i] + "[C" + model.synapseName[i] + ".indInG[ipre] + j]");
             }
             else {
-                value_substitutions(wCode, wuVarNameBegin, wuVarNameEnd, model.synapseIni[i]);
+                value_substitutions(wCode, wuVars.nameBegin, wuVars.nameEnd, model.synapseIni[i]);
             }
         }
         else { // DENSE
             if (model.synapseMatrixType[i] & SynapseMatrixWeight::INDIVIDUAL) {
-                name_substitutions(wCode, "", wuVarNameBegin, wuVarNameEnd, model.synapseName[i] + "[ipre * " + to_string(model.neuronN[trg]) + " + ipost]");
+                name_substitutions(wCode, "", wuVars.nameBegin, wuVars.nameEnd,
+                                    model.synapseName[i] + "[ipre * " + to_string(trgNeuronGroup->getNumNeurons()) + " + ipost]");
             }
             else {
-                value_substitutions(wCode, wuVarNameBegin, wuVarNameEnd, model.synapseIni[i]);
+                value_substitutions(wCode, wuVars.nameBegin, wuVars.nameEnd, model.synapseIni[i]);
             }
         }
         substitute(wCode, "$(inSyn)", "inSyn" + model.synapseName[i] + "[ipost]");
         value_substitutions(wCode, wu->GetParamNames(), model.synapsePara[i]);
-        value_substitutions(wCode, wuDerivedParamNameBegin, wuDerivedParamNameEnd, model.dsp_w[i]);
-        name_substitutions(wCode, "", wuExtraGlobalParamsNameBegin, wuExtraGlobalParamsNameEnd, model.synapseName[i]);
+        value_substitutions(wCode, wuDerivedParams.nameBegin, wuDerivedParams.nameEnd, model.dsp_w[i]);
+        name_substitutions(wCode, "", wuExtraGlobalParams.nameBegin, wuExtraGlobalParams.nameEnd, model.synapseName[i]);
         substitute(wCode, "$(addtoinSyn)", "addtoinSyn");
-        neuron_substitutions_in_synaptic_code(wCode, model, src, trg, offsetPre, offsetPost, "ipre", "ipost", "");
+        neuron_substitutions_in_synaptic_code(wCode, src, trg, srcNeuronGroup, trgNeuronGroup, offsetPre, offsetPost,
+                                              "ipre", "ipost", "");
         wCode= ensureFtype(wCode, model.ftype);
         checkUnreplacedVariables(wCode, "simCode"+postfix);
         // end Code substitutions -------------------------------------------------------------------------
@@ -554,17 +491,20 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
     os << "// execute internal synapse dynamics if any" << ENDL;
 
     for (unsigned int i = 0; i < model.synDynGroups; i++) {
-        unsigned int k= model.synDynGrp[i];
-        unsigned int src= model.synapseSource[k];
-        unsigned int trg= model.synapseTarget[k];
+        unsigned int k = model.synDynGrp[i];
+        const std::string &src = model.synapseSource[k];
+        const std::string &trg = model.synapseTarget[k];
+        const NeuronGroup *srcNeuronGroup = model.findNeuronGroup(src);
+        const NeuronGroup *trgNeuronGroup = model.findNeuronGroup(trg);
         const auto *wu = model.synapseModel[k];
-        string synapseName= model.synapseName[k];
-        unsigned int srcno= model.neuronN[src];
-        unsigned int trgno= model.neuronN[trg];
-        bool delayPre = model.neuronDelaySlots[src] > 1;
-        bool delayPost = model.neuronDelaySlots[trg] > 1;
-        string offsetPre = (delayPre ? "(delaySlot * " + to_string(model.neuronN[src]) + ") + " : "");
-        string offsetPost = (delayPost ? "(spkQuePtr" + model.neuronName[trg] +" * " + to_string(model.neuronN[trg]) + ") + " : "");
+        string synapseName = model.synapseName[k];
+
+        string offsetPre = srcNeuronGroup->delayRequired()
+            ? "(delaySlot * " + to_string(srcNeuronGroup->getNumNeurons()) + ") + "
+            : "";
+        string offsetPost = trgNeuronGroup->delayRequired()
+            ? "(spkQuePtr" + trg +" * " + to_string(trgNeuronGroup->getNumNeurons()) + ") + "
+            : "";
 
         // there is some internal synapse dynamics
         if (!wu->GetSynapseDynamicsCode().empty()) {
@@ -572,25 +512,19 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
             os << "// synapse group " << synapseName << ENDL;
             os << OB(1005);
 
-            if (model.neuronDelaySlots[src] > 1) {
-                os << "unsigned int delaySlot = (spkQuePtr" << model.neuronName[src];
-                os << " + " << (model.neuronDelaySlots[src] - model.synapseDelay[k]);
-                os << ") % " << model.neuronDelaySlots[src] << ";" << ENDL;
+            if (srcNeuronGroup->delayRequired()) {
+                os << "unsigned int delaySlot = (spkQuePtr" << src;
+                os << " + " << (srcNeuronGroup->getNumDelaySlots() - model.synapseDelay[k]);
+                os << ") % " << srcNeuronGroup->getNumDelaySlots() << ";" << ENDL;
             }
 
             if (!wu->GetSynapseDynamicsSuppportCode().empty()) {
                 os << "using namespace " << synapseName << "_weightupdate_synapseDynamics;" << ENDL;
             }
 
-            // Create iterators to iterate over the names of the weight update model's derived parameters
-            auto wuDerivedParams = wu->GetDerivedParams();
-            auto wuDerivedParamNameBegin= GetPairKeyConstIter(wuDerivedParams.cbegin());
-            auto wuDerivedParamNameEnd = GetPairKeyConstIter(wuDerivedParams.cend());
-
-            // Create iterators to iterate over the names of the weight update model's initial values
-            auto wuVars = wu->GetVars();
-            auto wuVarNameBegin = GetPairKeyConstIter(wuVars.cbegin());
-            auto wuVarNameEnd = GetPairKeyConstIter(wuVars.cend());
+            // Create iteration context to iterate over the variables and derived parameters
+            DerivedParamNameIterCtx wuDerivedParams(wu->GetDerivedParams());
+            VarNameIterCtx wuVars(wu->GetVars());
 
             string SDcode= wu->GetSynapseDynamicsCode();
             substitute(SDcode, "$(t)", "t");
@@ -598,17 +532,17 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
                 os << "for (int n= 0; n < C" << synapseName << ".connN; n++)" << OB(24) << ENDL;
                 if (model.synapseMatrixType[k] & SynapseMatrixWeight::INDIVIDUAL) {
                     // name substitute synapse var names in synapseDynamics code
-                    name_substitutions(SDcode, "", wuVarNameBegin, wuVarNameEnd, synapseName + "[n]");
+                    name_substitutions(SDcode, "", wuVars.nameBegin, wuVars.nameEnd, synapseName + "[n]");
                 }
                 else {
                     // substitute initial values as constants for synapse var names in synapseDynamics code
-                    value_substitutions(SDcode, wuVarNameBegin, wuVarNameEnd, model.synapseIni[k]);
+                    value_substitutions(SDcode, wuVars.nameBegin, wuVars.nameEnd, model.synapseIni[k]);
                 }
                 // substitute parameter values for parameters in synapseDynamics code
                 value_substitutions(SDcode, wu->GetParamNames(), model.synapsePara[k]);
                 // substitute values for derived parameters in synapseDynamics code
-                value_substitutions(SDcode, wuDerivedParamNameBegin, wuDerivedParamNameEnd, model.dsp_w[k]);
-                neuron_substitutions_in_synaptic_code(SDcode, model, src, trg, offsetPre, offsetPost,
+                value_substitutions(SDcode, wuDerivedParams.nameBegin, wuDerivedParams.nameEnd, model.dsp_w[k]);
+                neuron_substitutions_in_synaptic_code(SDcode, src, trg, srcNeuronGroup, trgNeuronGroup, offsetPre, offsetPost,
                                                       "C" + synapseName + ".preInd[n]", "C" +synapseName + ".ind[n]", "");
                 SDcode= ensureFtype(SDcode, model.ftype);
                 checkUnreplacedVariables(SDcode, "synapseDynamics");
@@ -616,22 +550,24 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
                 os << CB(24);
             }
             else { // DENSE
-                os << "for (int i = 0; i < " <<  srcno << "; i++)" << OB(25);
-                os << "for (int j = 0; j < " <<  trgno << "; j++)" << OB(26);
+                os << "for (int i = 0; i < " <<  srcNeuronGroup->getNumNeurons() << "; i++)" << OB(25);
+                os << "for (int j = 0; j < " <<  trgNeuronGroup->getNumNeurons() << "; j++)" << OB(26);
                 os << "// loop through all synapses" << endl;
                 // substitute initial values as constants for synapse var names in synapseDynamics code
                 if (model.synapseMatrixType[k] & SynapseMatrixWeight::INDIVIDUAL) {
-                    name_substitutions(SDcode, "", wuVarNameBegin, wuVarNameEnd, synapseName + "[i*" + to_string(trgno) + "+j]");
+                    name_substitutions(SDcode, "", wuVars.nameBegin, wuVars.nameEnd,
+                                       synapseName + "[i*" + to_string(trgNeuronGroup->getNumNeurons()) + "+j]");
                 }
                 else {
                     // substitute initial values as constants for synapse var names in synapseDynamics code
-                    value_substitutions(SDcode, wuVarNameBegin, wuVarNameEnd, model.synapseIni[k]);
+                    value_substitutions(SDcode, wuVars.nameBegin, wuVars.nameEnd, model.synapseIni[k]);
                 }
                 // substitute parameter values for parameters in synapseDynamics code
                 value_substitutions(SDcode, wu->GetParamNames(), model.synapsePara[k]);
                 // substitute values for derived parameters in synapseDynamics code
-                value_substitutions(SDcode, wuDerivedParamNameBegin, wuDerivedParamNameEnd, model.dsp_w[k]);
-                neuron_substitutions_in_synaptic_code(SDcode, model, src, trg, offsetPre, offsetPost, "i", "j", "");
+                value_substitutions(SDcode, wuDerivedParams.nameBegin, wuDerivedParams.nameEnd, model.dsp_w[k]);
+                neuron_substitutions_in_synaptic_code(SDcode, src, trg, srcNeuronGroup, trgNeuronGroup, offsetPre, offsetPost,
+                                                      "i", "j", "");
                 SDcode= ensureFtype(SDcode, model.ftype);
                 checkUnreplacedVariables(SDcode, "synapseDynamics");
                 os << SDcode << ENDL;
@@ -661,26 +597,28 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
     os << ENDL;
 
     for (unsigned int i = 0; i < model.synapseGrpN; i++) {
-        unsigned int src = model.synapseSource[i];
-        unsigned int trg = model.synapseTarget[i];
+        const std::string &src = model.synapseSource[i];
+        const std::string &trg = model.synapseTarget[i];
+        const NeuronGroup *srcNeuronGroup = model.findNeuronGroup(src);
+        const NeuronGroup *trgNeuronGroup = model.findNeuronGroup(trg);
 
         os << "// synapse group " << model.synapseName[i] << ENDL;
         os << OB(1006);
 
-        if (model.neuronDelaySlots[src] > 1) {
-            os << "unsigned int delaySlot = (spkQuePtr" << model.neuronName[src];
-            os << " + " << (model.neuronDelaySlots[src] - model.synapseDelay[i]);
-            os << ") % " << model.neuronDelaySlots[src] << ";" << ENDL;
+        if (srcNeuronGroup->delayRequired()) {
+            os << "unsigned int delaySlot = (spkQuePtr" << src;
+            os << " + " << (srcNeuronGroup->getNumDelaySlots() - model.synapseDelay[i]);
+            os << ") % " << srcNeuronGroup->getNumDelaySlots() << ";" << ENDL;
         }
 
         // generate the code for processing spike-like events
         if (model.synapseUsesSpikeEvents[i]) {
-            generate_process_presynaptic_events_code_CPU(os, model, src, trg, i, "Evnt");
+            generate_process_presynaptic_events_code_CPU(os, model, src, trg, srcNeuronGroup, trgNeuronGroup, i, "Evnt");
         }
 
         // generate the code for processing true spike events
         if (model.synapseUsesTrueSpikes[i]) {
-            generate_process_presynaptic_events_code_CPU(os, model, src, trg, i, "");
+            generate_process_presynaptic_events_code_CPU(os, model, src, trg, srcNeuronGroup, trgNeuronGroup, i, "");
         }
 
         os << CB(1006);
@@ -711,57 +649,51 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
 
         for (unsigned int i = 0; i < model.lrnGroups; i++) {
             unsigned int k = model.lrnSynGrp[i];
-            unsigned int src = model.synapseSource[k];
-            unsigned int trg = model.synapseTarget[k];
+            const std::string &src = model.synapseSource[k];
+            const std::string &trg = model.synapseTarget[k];
+            const NeuronGroup *srcNeuronGroup = model.findNeuronGroup(src);
+            const NeuronGroup *trgNeuronGroup = model.findNeuronGroup(trg);
             const auto *wu = model.synapseModel[i];
             const bool sparse = model.synapseMatrixType[i] & SynapseMatrixConnectivity::SPARSE;
 
-            const bool delayPre = model.neuronDelaySlots[src] > 1;
-            string offsetPre = (delayPre ? "(delaySlot * " + to_string(model.neuronN[src]) + ") + " : "");
-            string offsetTrueSpkPre = (model.neuronNeedTrueSpk[src] ? offsetPre : "");
+            string offsetPre = srcNeuronGroup->delayRequired()
+                ? "(delaySlot * " + to_string(srcNeuronGroup->getNumNeurons()) + ") + "
+                : "";
+            string offsetTrueSpkPre = srcNeuronGroup->doesNeedTrueSpike() ? offsetPre : "";
 
-            const bool delayPost = model.neuronDelaySlots[trg] > 1;
-            string offsetPost = (delayPost ? "(spkQuePtr" + model.neuronName[trg] + " * " + to_string(model.neuronN[trg]) + ") + " : "");
-            string offsetTrueSpkPost = (model.neuronNeedTrueSpk[trg] ? offsetPost : "");
+            string offsetPost = trgNeuronGroup->delayRequired()
+                ? "(spkQuePtr" + trg + " * " + to_string(trgNeuronGroup->getNumNeurons()) + ") + "
+                : "";
+            string offsetTrueSpkPost = trgNeuronGroup->doesNeedTrueSpike() ? offsetPost : "";
 
-            // Create iterators to iterate over the names of the weight update model's derived parameters
-            auto wuDerivedParams = wu->GetDerivedParams();
-            auto wuDerivedParamNameBegin= GetPairKeyConstIter(wuDerivedParams.cbegin());
-            auto wuDerivedParamNameEnd = GetPairKeyConstIter(wuDerivedParams.cend());
-
-            // Create iterators to iterate over the names of the weight update model's extra global parameters
-            auto wuExtraGlobalParams = wu->GetExtraGlobalParams();
-            auto wuExtraGlobalParamsNameBegin = GetPairKeyConstIter(wuExtraGlobalParams.cbegin());
-            auto wuExtraGlobalParamsNameEnd = GetPairKeyConstIter(wuExtraGlobalParams.cend());
-
-            // Create iterators to iterate over the names of the weight update model's initial values
-            auto wuVars = wu->GetVars();
-            auto wuVarNameBegin = GetPairKeyConstIter(wuVars.cbegin());
-            auto wuVarNameEnd = GetPairKeyConstIter(wuVars.cend());
+            // Create iteration context to iterate over the variables; derived and extra global parameters
+            DerivedParamNameIterCtx wuDerivedParams(wu->GetDerivedParams());
+            ExtraGlobalParamNameIterCtx wuExtraGlobalParams(wu->GetExtraGlobalParams());
+            VarNameIterCtx wuVars(wu->GetVars());
 
 // NOTE: WE DO NOT USE THE AXONAL DELAY FOR BACKWARDS PROPAGATION - WE CAN TALK ABOUT BACKWARDS DELAYS IF WE WANT THEM
 
             os << "// synapse group " << model.synapseName[k] << ENDL;
             os << OB(950);
 
-            if (delayPre) {
-                os << "unsigned int delaySlot = (spkQuePtr" << model.neuronName[src];
-                os << " + " << (model.neuronDelaySlots[src] - model.synapseDelay[k]);
-                os << ") % " << model.neuronDelaySlots[src] << ";" << ENDL;
+            if (srcNeuronGroup->delayRequired()) {
+                os << "unsigned int delaySlot = (spkQuePtr" << src;
+                os << " + " << (srcNeuronGroup->getNumDelaySlots() - model.synapseDelay[k]);
+                os << ") % " << srcNeuronGroup->getNumDelaySlots() << ";" << ENDL;
             }
 
             if (!wu->GetLearnPostSupportCode().empty()) {
                 os << "using namespace " << model.synapseName[k] << "_weightupdate_simLearnPost;" << ENDL;
             }
 
-            if (delayPost && model.neuronNeedTrueSpk[trg]) {
-                os << "for (ipost = 0; ipost < glbSpkCnt" << model.neuronName[trg] << "[spkQuePtr" << model.neuronName[trg] << "]; ipost++)" << OB(910);
+            if (trgNeuronGroup->delayRequired() && trgNeuronGroup->doesNeedTrueSpike()) {
+                os << "for (ipost = 0; ipost < glbSpkCnt" << trg << "[spkQuePtr" << trg << "]; ipost++)" << OB(910);
             }
             else {
-                os << "for (ipost = 0; ipost < glbSpkCnt" << model.neuronName[trg] << "[0]; ipost++)" << OB(910);
+                os << "for (ipost = 0; ipost < glbSpkCnt" << trg << "[0]; ipost++)" << OB(910);
             }
 
-            os << "lSpk = glbSpk" << model.neuronName[trg] << "[" << offsetTrueSpkPost << "ipost];" << ENDL;
+            os << "lSpk = glbSpk" << trg << "[" << offsetTrueSpkPost << "ipost];" << ENDL;
 
             if (sparse) { // SPARSE
                 // TODO: THIS NEEDS CHECKING AND FUNCTIONAL C.POST* ARRAYS
@@ -770,28 +702,32 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
                 os << "ipre = C" << model.synapseName[k] << ".revIndInG[lSpk] + l;" << ENDL;
             }
             else { // DENSE
-                os << "for (ipre = 0; ipre < " << model.neuronN[src] << "; ipre++)" << OB(121);
+                os << "for (ipre = 0; ipre < " << srcNeuronGroup->getNumNeurons() << "; ipre++)" << OB(121);
             }
 
             string code = wu->GetLearnPostCode();
             substitute(code, "$(t)", "t");
             // Code substitutions ----------------------------------------------------------------------------------
             if (sparse) { // SPARSE
-                name_substitutions(code, "", wuVarNameBegin, wuVarNameEnd, model.synapseName[k] + "[C" + model.synapseName[k] + ".remap[ipre]]");
+                name_substitutions(code, "", wuVars.nameBegin, wuVars.nameEnd,
+                                   model.synapseName[k] + "[C" + model.synapseName[k] + ".remap[ipre]]");
             }
             else { // DENSE
-                name_substitutions(code, "", wuVarNameBegin, wuVarNameEnd, model.synapseName[k] + "[lSpk + " + to_string(model.neuronN[trg]) + " * ipre]");
+                name_substitutions(code, "", wuVars.nameBegin, wuVars.nameEnd,
+                                   model.synapseName[k] + "[lSpk + " + to_string(trgNeuronGroup->getNumNeurons()) + " * ipre]");
             }
             value_substitutions(code, wu->GetParamNames(), model.synapsePara[k]);
-            value_substitutions(code, wuDerivedParamNameBegin, wuDerivedParamNameEnd, model.dsp_w[k]);
-            name_substitutions(code, "", wuExtraGlobalParamsNameBegin, wuExtraGlobalParamsNameEnd, model.synapseName[k]);
+            value_substitutions(code, wuDerivedParams.nameBegin, wuDerivedParams.nameEnd, model.dsp_w[k]);
+            name_substitutions(code, "", wuExtraGlobalParams.nameBegin, wuExtraGlobalParams.nameEnd, model.synapseName[k]);
 
             // presynaptic neuron variables and parameters
             if (sparse) { // SPARSE
-                neuron_substitutions_in_synaptic_code(code, model, src, trg, offsetPre, offsetPost, "C" + model.synapseName[k] + ".revInd[ipre]", "lSpk", "");
+                neuron_substitutions_in_synaptic_code(code, src, trg, srcNeuronGroup, trgNeuronGroup, offsetPre, offsetPost,
+                                                      "C" + model.synapseName[k] + ".revInd[ipre]", "lSpk", "");
             }
             else { // DENSE
-                neuron_substitutions_in_synaptic_code(code, model, src, trg, offsetPre, offsetPost, "ipre", "lSpk", "");
+                neuron_substitutions_in_synaptic_code(code, src, trg, srcNeuronGroup, trgNeuronGroup, offsetPre, offsetPost,
+                                                      "ipre", "lSpk", "");
             }
             code= ensureFtype(code, model.ftype);
             checkUnreplacedVariables(code, "simLearnPost");
