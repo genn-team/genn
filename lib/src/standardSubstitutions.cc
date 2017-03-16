@@ -70,7 +70,7 @@ void StandardSubstitutions::postSynapseDecay(
 
     name_substitutions(pdCode, "lps", psmVars.nameBegin, psmVars.nameEnd, sName);
     value_substitutions(pdCode, psm->GetParamNames(), model.postSynapsePara[synPopID]);
-    value_substitutions(pdCode, psmDerivedParams.nameBegin, psmDerivedParams.nameEnd, model.postSynIni[synPopID]);
+    value_substitutions(pdCode, psmDerivedParams.nameBegin, psmDerivedParams.nameEnd, model.dpsp[synPopID]);
     name_substitutions(pdCode, "l", nmVars.nameBegin, nmVars.nameEnd, "");
     value_substitutions(pdCode, ng.getNeuronModel()->GetParamNames(), ng.getParams());
     value_substitutions(pdCode, nmDerivedParams.nameBegin, nmDerivedParams.nameEnd, ng.getDerivedParams());
