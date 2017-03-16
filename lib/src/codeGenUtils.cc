@@ -1,9 +1,7 @@
 #include "codeGenUtils.h"
 
 // Standard includes
-#if !defined(__GNUC__) || (__GNUC__ >= 4 && __GNUC_MINOR__ >= 9)
 #include <regex>
-#endif
 
 // GeNN includes
 #include "modelSpec.h"
@@ -296,9 +294,6 @@ string ensureFtype(const string &oldcode, const string &type)
     return code;
 }
 
-
-#if !defined(__GNUC__) || (__GNUC__ >= 4 && __GNUC_MINOR__ >= 9)
-
 //--------------------------------------------------------------------------
 /*! \brief This function checks for unknown variable definitions and returns a gennError if any are found
  */
@@ -318,12 +313,6 @@ void checkUnreplacedVariables(const string &code, const string &codeName)
         gennError("The "+vars+"undefined in code "+codeName+".");
     }
 }
-#else
-void checkUnreplacedVariables(const string &, const string &)
-{
-}
-#endif
-
 
 //-------------------------------------------------------------------------
 /*!
