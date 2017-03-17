@@ -466,8 +466,8 @@ void NNmodel::addSynapsePopulation(
         gennError("Cannot add a synapse population with duplicate name:" + name);
     }
 
-    /*synapseInSynNo.push_back(*/trgNeuronGrp->addInSyn(name)/*)*/;
-        /*synapseOutSynNo.push_back(*/srcNeuronGrp->addOutSyn(name)/*)*/;
+    trgNeuronGrp->addInSyn(name);
+    srcNeuronGrp->addOutSyn(name);
 }
 
 

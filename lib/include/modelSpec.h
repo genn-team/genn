@@ -222,8 +222,8 @@ public:
             gennError("Cannot add a synapse population with duplicate name:" + name);
         }
 
-        /*synapseInSynNo.push_back(*/trgNeuronGrp->addInSyn(name)/*)*/;
-        /*synapseOutSynNo.push_back(*/srcNeuronGrp->addOutSyn(name)/*)*/;
+        trgNeuronGrp->addInSyn(name);
+        srcNeuronGrp->addOutSyn(name);
     }
 
     void setSynapseG(const string&, double); //!< This function has been depreciated as of GeNN 2.2.
@@ -253,11 +253,11 @@ private:
     //!< Named synapse groups
     map<string, SynapseGroup> m_SynapseGroups;
 
-    //!< Set of synapse group names which have postsynaptic learning
+    //!< Mapping  of synapse group names which have postsynaptic learning to their padded size
     //!< **THINK** is this the right container?
     map<string, unsigned int> m_SynapsePostLearnGroups;
 
-    //!< Set of synapse group names which have synapse dynamics
+    //!< Mapping of synapse group names which have synapse dynamics to their padded size
     //!< **THINK** is this the right container?
     map<string, unsigned int> m_SynapseDynamicsGroups;
 
@@ -266,12 +266,6 @@ private:
     map<string, string> synapseKernelParameters;
     map<string, string> simLearnPostKernelParameters;
     map<string, string> synapseDynamicsKernelParameters;
-
-    vector<unsigned int> padSumSynapseKrnl; //Combination of padSumSynapseTrgN and padSumMaxConn to support both sparse and all-to-all connectivity in a model
-
-    vector<unsigned int> padSumLearnN; //!< Padded summed neuron numbers of learn group source populations
-
-   vector<unsigned int> padSumSynDynN; //!< Padded summed neuron numbers of synapse dynamics group source populations
 
 };
 
