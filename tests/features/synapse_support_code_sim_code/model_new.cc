@@ -47,7 +47,7 @@ void modelDefinition(NNmodel &model)
     {
         string theName= synName + std::to_string(i);
         model.addSynapsePopulation<WeightUpdateModel, PostsynapticModels::Izhikevich>(
-            theName, DENSE, INDIVIDUALG, i, "pre", "post",
+            theName, SynapseMatrixType::DENSE_INDIVIDUALG, i, "pre", "post",
             {}, WeightUpdateModel::VarValues(0.0),
             {}, {});
     }

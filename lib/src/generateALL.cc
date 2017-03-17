@@ -127,7 +127,7 @@ void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
         // Get the sizes of each synapse / learn group present on this host and device
         vector<unsigned int> synapseN, learnN;
         for (unsigned int group = 0; group < model.synapseGrpN; group++) {
-            if ((model.synapseConnType[group] == SPARSE) && (model.maxConn[group]>0)) {
+            if ((model.synapseMatrixType[group] & SynapseMatrixConnectivity::SPARSE) && (model.maxConn[group]>0)) {
                 groupSize[0].push_back(model.maxConn[group]);
             }
             else {
@@ -137,7 +137,7 @@ void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
                 groupSize[1].push_back(model.neuronN[model.synapseSource[group]]);
             }
             if (model.synapseUsesSynapseDynamics[group]) {
-                if ((model.synapseConnType[group] == SPARSE) && (model.maxConn[group]>0)) {
+                if ((model.synapseMatrixType[group] & SynapseMatrixConnectivity::SPARSE) && (model.maxConn[group]>0)) {
                     groupSize[2].push_back(model.neuronN[model.synapseSource[group]]*model.maxConn[group]);
                 }
                 else {

@@ -26,7 +26,6 @@
 #include <cassert>
 #include <algorithm>
 
-
 unsigned int GeNNReady = 0;
 
 // ------------------------------------------------------------------------
@@ -804,13 +803,38 @@ void NNmodel::addSynapsePopulation(
         gennError("The number of presynaptic variable initial values for synapse group " + name + " does not match that of their synapse type, " + to_string(PSVini.size()) + " != " + to_string(postSynModels[postsyn].varNames.size()));
     }
 
+    SynapseMatrixType mtype;
+    if(conntype == SPARSE && gtype == GLOBALG)
+    {
+        mtype = SynapseMatrixType::SPARSE_GLOBALG;
+    }
+    else if(conntype == SPARSE && gtype == INDIVIDUALG)
+    {
+        mtype = SynapseMatrixType::SPARSE_INDIVIDUALG;
+    }
+    else if((conntype == DENSE || conntype == ALLTOALL) && gtype == INDIVIDUALG)
+    {
+        mtype = SynapseMatrixType::DENSE_INDIVIDUALG;
+    }
+    else if((conntype == DENSE || conntype == ALLTOALL) && gtype == GLOBALG)
+    {
+        mtype = SynapseMatrixType::DENSE_GLOBALG;
+    }
+    else if(gtype == INDIVIDUALID)
+    {
+        mtype = SynapseMatrixType::BITMASK_GLOBALG;
+    }
+    else
+    {
+        gennError("Combination of connection type " + to_string(conntype) + " and weight type " + to_string(gtype) + " not supported");
+    }
+
     unsigned int i= synapseGrpN++;
     unsigned int srcNumber = findNeuronGrp(src);
     unsigned int trgNumber = findNeuronGrp(trg);
     synapseName.push_back(name);
     synapseModel.push_back(new WeightUpdateModels::LegacyWrapper(syntype));
-    synapseConnType.push_back(conntype);
-    synapseGType.push_back(gtype);
+    synapseMatrixType.push_back(mtype);
     synapseSource.push_back(srcNumber);
     synapseTarget.push_back(trgNumber);
     synapseDelay.push_back(delaySteps);
@@ -859,7 +883,7 @@ void NNmodel::setMaxConn(const string &sname, /**<  */
         gennError("Trying to set MaxConn in a finalized model.");
     }
     unsigned int found = findSynapseGrp(sname);
-    if (synapseConnType[found] == SPARSE) {
+    if (synapseMatrixType[found] & SynapseMatrixConnectivity::SPARSE) {
         maxConn[found] = maxConnP;
     }
     else {
@@ -880,7 +904,7 @@ void NNmodel::setSpanTypeToPre(const string &sname /**< name of the synapse grou
         gennError("Trying to set spanType in a finalized model.");
     }
     unsigned int found = findSynapseGrp(sname);
-    if (synapseConnType[found] == SPARSE) {
+    if (synapseMatrixType[found]  & SynapseMatrixConnectivity::SPARSE) {
         synapseSpanType[found] = 1;
     }
     else {
@@ -1049,7 +1073,7 @@ void NNmodel::setPopulationSums()
     // SYNAPSE GROUPS
     padSumSynapseKrnl.resize(synapseGrpN);
     for (unsigned int i = 0; i < synapseGrpN; i++) {
-        if (synapseConnType[i] == SPARSE) {
+        if (synapseMatrixType[i] & SynapseMatrixConnectivity::SPARSE) {
             if (synapseSpanType[i] == 1) {
                 // paddedSize is the lowest multiple of synapseBlkSz >= neuronN[synapseSource[i]
                 paddedSize = ceil((double) neuronN[synapseSource[i]] / (double) synapseBlkSz) * (double) synapseBlkSz;
@@ -1074,7 +1098,7 @@ void NNmodel::setPopulationSums()
     // SYNAPSE DYNAMICS GROUPS
     padSumSynDynN.resize(synDynGroups);
     for (unsigned int i = 0; i < synDynGroups; i++) {
-        if (synapseConnType[i] == SPARSE) {
+        if (synapseMatrixType[i] & SynapseMatrixConnectivity::SPARSE) {
             // paddedSize is the lowest multiple of synDynBlkSz >= neuronN[synapseSource[i]] * maxConn[i]
             paddedSize = ceil((double) neuronN[synapseSource[i]] * maxConn[i] / (double) synDynBlkSz) * (double) synDynBlkSz;
         }
