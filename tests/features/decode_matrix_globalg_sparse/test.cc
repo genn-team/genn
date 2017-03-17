@@ -48,8 +48,10 @@ public:
 
 TEST_P(SimulationTestGlobalGSparse, CorrectDecoding)
 {
+#ifndef CPU_ONLY
     // Initialize sparse arrays
     initializeAllSparseArrays();
+#endif  // CPU_ONLY
 
     // Check total error is less than some tolerance
     EXPECT_TRUE(Simulate());
