@@ -11,6 +11,7 @@ enum class SynapseMatrixType : unsigned int
 {
     SPARSE_GLOBALG       = SynapseMatrixConnectivity::SPARSE | SynapseMatrixWeight::GLOBAL,
     SPARSE_INDIVIDUALG   = SynapseMatrixConnectivity::SPARSE | SynapseMatrixWeight::INDIVIDUAL,
+    DENSE_GLOBALG        = SynapseMatrixConnectivity::DENSE | SynapseMatrixWeight::GLOBAL,
     DENSE_INDIVIDUALG    = SynapseMatrixConnectivity::DENSE | SynapseMatrixWeight::INDIVIDUAL,
     BITMASK_GLOBALG      = SynapseMatrixConnectivity::BITMASK | SynapseMatrixWeight::GLOBAL,
 };
