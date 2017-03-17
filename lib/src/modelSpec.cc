@@ -731,7 +731,7 @@ void NNmodel::finalize()
             const auto *wu = synGroup->getWUModel();
 
             if (!wu->GetEventCode().empty()) {
-                synGroup->setTrueSpikeRequired();
+                synGroup->setSpikeEventRequired();
                 n.second.setSpikeEventRequired();
                 assert(!wu->GetEventThresholdConditionCode().empty());
 
