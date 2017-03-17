@@ -165,6 +165,10 @@ public:
     const map<string, SynapseGroup> &getSynapseGroups() const{ return m_SynapseGroups; }
     const SynapseGroup *findSynapseGroup(const std::string &name) const;
 
+    const map<string, unsigned int> &getSynapsePostLearnGroups() const{ return m_SynapsePostLearnGroups; }
+    const map<string, unsigned int> &getSynapseDynamicsGroups() const{ return m_SynapseDynamicsGroups; }
+
+
     bool isSynapseGroupDynamicsRequired(const std::string &name) const;
     bool isSynapseGroupPostLearningRequired(const std::string &name) const;
 

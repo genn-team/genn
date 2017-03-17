@@ -69,14 +69,18 @@ void generate_model_runner(const NNmodel &model,  //!< Model description
   genNeuronKernel(model, path);
 
   // generate synapse and learning kernels
-  if (model.synapseGrpN > 0) genSynapseKernel(model, path);
+  if (!model.getSynapseGroups().empty()) {
+      genSynapseKernel(model, path);
+  }
 #endif
 
   // Generate the equivalent of neuron kernel
   genNeuronFunction(model, path);
 
   // Generate the equivalent of synapse and learning kernel
-  if (model.synapseGrpN > 0) genSynapseFunction(model, path);
+  if (!model.getSynapseGroups().empty()) {
+      genSynapseFunction(model, path);
+  }
 
   // Generate the Makefile for the generated code
   genMakefile(model, path);

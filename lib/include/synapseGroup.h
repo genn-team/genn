@@ -56,6 +56,7 @@ public:
     // Public const methods
     //------------------------------------------------------------------------
     unsigned int getSpanType() const{ return m_SpanType; }
+    unsigned int getDelaySteps() const{ return m_DelaySteps; }
     unsigned int getMaxConnections() const{ return m_MaxConnections; }
     SynapseMatrixType getMatrixType() const{ return m_MatrixType; }
 
@@ -67,6 +68,10 @@ public:
 
     const std::string &getTrgNeuronGroupName() const{ return m_TrgNeuronGroupName; }
     const NeuronGroup *getTrgNeuronGroup() const{ return m_TrgNeuronGroup; }
+
+    bool isTrueSpikeRequired() const{ return m_TrueSpikeRequired; }
+    bool isSpikeEventRequired() const{ return m_SpikeEventRequired; }
+    bool isEventThresholdReTestRequired() const{ return m_EventThresholdReTestRequired; }
 
     const WeightUpdateModels::Base *getWUModel() const{ return m_WUModel; }
 
