@@ -8,21 +8,18 @@
 //----------------------------------------------------------------------------
 void StandardSubstitutions::postSynapseCurrentConverter(
     std::string &psCode,          //!< the code string to work on
-    const NNmodel &model,    //!< **TEMP**
-    int synPopID,            //!< **TEMP**
+    const std::string &sgName,
+    const SynapseGroup &sg,
     const std::string &ngName,
     const NeuronGroup &ng,
     const VarNameIterCtx &nmVars,
     const DerivedParamNameIterCtx &nmDerivedParams,
-    const ExtraGlobalParamNameIterCtx &nmExtraGlobalParams)
+    const ExtraGlobalParamNameIterCtx &nmExtraGlobalParams,
+    const std::string &ftype)
 {
-    // **TEMP** extract PSM from model
-    const auto *psm = model.postSynapseModel[synPopID];
-    const std::string &sName = model.synapseName[synPopID];
-
     // Create iterators to iterate over the names of the postsynaptic model's initial values
-    auto psmVars = VarNameIterCtx(psm->GetVars());
-    auto psmDerivedParams = DerivedParamNameIterCtx(psm->GetDerivedParams());
+    auto psmVars = VarNameIterCtx(sg.getPSModel()->GetVars());
+    auto psmDerivedParams = DerivedParamNameIterCtx(sg.getPSModel()->GetDerivedParams());
 
     // Substitute in time parameter
     substitute(psCode, "$(t)", "t");
@@ -31,25 +28,25 @@ void StandardSubstitutions::postSynapseCurrentConverter(
     value_substitutions(psCode, ng.getNeuronModel()->GetParamNames(), ng.getParams());
     value_substitutions(psCode, nmDerivedParams.nameBegin, nmDerivedParams.nameEnd, ng.getDerivedParams());
 
-    if (model.synapseMatrixType[synPopID] & SynapseMatrixWeight::INDIVIDUAL) {
-        name_substitutions(psCode, "lps", psmVars.nameBegin, psmVars.nameEnd, sName);
+    if (sg.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
+        name_substitutions(psCode, "lps", psmVars.nameBegin, psmVars.nameEnd, sgName);
     }
     else {
-        value_substitutions(psCode, psmVars.nameBegin, psmVars.nameEnd, model.postSynIni[synPopID]);
+        value_substitutions(psCode, psmVars.nameBegin, psmVars.nameEnd, sg.getPSInitVals());
     }
-    value_substitutions(psCode, psm->GetParamNames(), model.postSynapsePara[synPopID]);
+    value_substitutions(psCode, sg.getPSModel()->GetParamNames(), sg.getPSParams());
 
     // Create iterators to iterate over the names of the postsynaptic model's derived parameters
-    value_substitutions(psCode, psmDerivedParams.nameBegin, psmDerivedParams.nameEnd, model.dpsp[synPopID]);
+    value_substitutions(psCode, psmDerivedParams.nameBegin, psmDerivedParams.nameEnd, sg.getPSDerivedParams());
     name_substitutions(psCode, "", nmExtraGlobalParams.nameBegin, nmExtraGlobalParams.nameEnd, ngName);
-    psCode= ensureFtype(psCode, model.ftype);
+    psCode = ensureFtype(psCode, ftype);
     checkUnreplacedVariables(psCode, "postSyntoCurrent");
 }
 
 void StandardSubstitutions::postSynapseDecay(
     std::string &pdCode,
-    const NNmodel &model,    //!< **TEMP**
-    int synPopID,            //!< **TEMP**
+    const std::string &sgName,
+    const SynapseGroup &sg,
     const std::string &,
     const NeuronGroup &ng,
     const VarNameIterCtx &nmVars,
@@ -57,20 +54,16 @@ void StandardSubstitutions::postSynapseDecay(
     const ExtraGlobalParamNameIterCtx &,
     const std::string &ftype)
 {
-    // **TEMP** extract PSM from model
-    const auto *psm = model.postSynapseModel[synPopID];
-    const std::string &sName = model.synapseName[synPopID];
-
     // Create iterators to iterate over the names of the postsynaptic model's initial values
-    auto psmVars = VarNameIterCtx(psm->GetVars());
-    auto psmDerivedParams = DerivedParamNameIterCtx(psm->GetDerivedParams());
+    auto psmVars = VarNameIterCtx(sg.getPSModel()->GetVars());
+    auto psmDerivedParams = DerivedParamNameIterCtx(sg.getPSModel()->GetDerivedParams());
 
     substitute(pdCode, "$(t)", "t");
-    substitute(pdCode, "$(inSyn)", "inSyn" + sName + "[n]");
+    substitute(pdCode, "$(inSyn)", "inSyn" + sgName + "[n]");
 
-    name_substitutions(pdCode, "lps", psmVars.nameBegin, psmVars.nameEnd, sName);
-    value_substitutions(pdCode, psm->GetParamNames(), model.postSynapsePara[synPopID]);
-    value_substitutions(pdCode, psmDerivedParams.nameBegin, psmDerivedParams.nameEnd, model.dpsp[synPopID]);
+    name_substitutions(pdCode, "lps", psmVars.nameBegin, psmVars.nameEnd, sgName);
+    value_substitutions(pdCode, sg.getPSModel()->GetParamNames(), sg.getPSParams());
+    value_substitutions(pdCode, psmDerivedParams.nameBegin, psmDerivedParams.nameEnd, sg.getPSDerivedParams());
     name_substitutions(pdCode, "l", nmVars.nameBegin, nmVars.nameEnd, "");
     value_substitutions(pdCode, ng.getNeuronModel()->GetParamNames(), ng.getParams());
     value_substitutions(pdCode, nmDerivedParams.nameBegin, nmDerivedParams.nameEnd, ng.getDerivedParams());

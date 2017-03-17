@@ -10,6 +10,7 @@
 // Forward declarations
 class NeuronGroup;
 class NNmodel;
+class SynapseGroup;
 
 //----------------------------------------------------------------------------
 // NameIterCtx
@@ -41,18 +42,19 @@ namespace StandardSubstitutions
 {
 void postSynapseCurrentConverter(
     std::string &psCode,          //!< the code string to work on
-    const NNmodel &model,    //!< **TEMP**
-    int synPopID,            //!< **TEMP**
+    const std::string &sgName,
+    const SynapseGroup &sg,
     const std::string &ngName,
     const NeuronGroup &ng,
     const VarNameIterCtx &nmVars,
     const DerivedParamNameIterCtx &nmDerivedParams,
-    const ExtraGlobalParamNameIterCtx &nmExtraGlobalParams);
+    const ExtraGlobalParamNameIterCtx &nmExtraGlobalParams,
+    const std::string &ftype);
 
 void postSynapseDecay(
     std::string &pdCode,
-    const NNmodel &model,    //!< **TEMP**
-    int synPopID,            //!< **TEMP**
+    const std::string &sgName,
+    const SynapseGroup &sg,
     const std::string &ngName,
     const NeuronGroup &ng,
     const VarNameIterCtx &nmVars,

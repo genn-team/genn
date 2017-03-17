@@ -26,13 +26,7 @@ Part of the code generation and generated code sections.
 #define _MODELSPEC_H_ //!< macro for avoiding multiple inclusion during compilation
 
 #include "neuronGroup.h"
-#include "neuronModels.h"
-#include "newNeuronModels.h"
-#include "newPostsynapticModels.h"
-#include "newWeightUpdateModels.h"
-#include "synapseModels.h"
-#include "synapseMatrixType.h"
-#include "postSynapseModels.h"
+#include "synapseGroup.h"
 #include "utils.h"
 
 #include <map>
@@ -105,49 +99,6 @@ public:
     unsigned int seed;
     unsigned int resetKernel;  //!< The identity of the kernel in which the spike counters will be reset.
 
-    // PUBLIC SYNAPSE VARIABLES
-    //=========================
-    unsigned int synapseGrpN; //!< Number of synapse groups
-    vector<string> synapseName; //!< Names of synapse groups
-    //vector<unsigned int>synapseNo; // !<numnber of synapses in a synapse group
-    vector<unsigned int> maxConn; //!< Padded summed maximum number of connections for a neuron in the neuron groups
-    vector<unsigned int> padSumSynapseKrnl; //Combination of padSumSynapseTrgN and padSumMaxConn to support both sparse and all-to-all connectivity in a model
-    vector<const WeightUpdateModels::Base*> synapseModel; //!< Types of synapses
-    vector<SynapseMatrixType> synapseMatrixType; //!< Connectivity type of synapses
-    vector<unsigned int> synapseSpanType; //!< Execution order of synapses in the kernel. It determines whether synapses are executed in parallel for every postsynaptic neuron (0, default), or for every presynaptic neuron (1).
-    vector<string> synapseSource; //!< Presynaptic neuron groups
-    vector<string> synapseTarget; //!< Postsynaptic neuron groups
-    vector<unsigned int> synapseInSynNo; //!< IDs of the target neurons' incoming synapse variables for each synapse group
-    vector<unsigned int> synapseOutSynNo; //!< The target neurons' outgoing synapse for each synapse group
-    vector<bool> synapseUsesTrueSpikes; //!< Defines if synapse update is done after detection of real spikes (only one point after threshold)
-    vector<bool> synapseUsesSpikeEvents; //!< Defines if synapse update is done after detection of spike events (every point above threshold)
-    vector<bool> synapseUsesPostLearning; //!< Defines if anything is done in case of postsynaptic neuron spiking before presynaptic neuron (punishment in STDP etc.)
-    vector<bool> synapseUsesSynapseDynamics; //!< Defines if there is any continuos synapse dynamics defined
-    vector<bool> needEvntThresholdReTest; //!< Defines whether the Evnt Threshold needs to be retested in the synapse kernel due to multiple non-identical events in the pre-synaptic neuron population
-    vector<vector<double>> synapsePara; //!< parameters of synapses
-    vector<vector<double>> synapseIni; //!< Initial values of synapse variables
-    vector<vector<double>> dsp_w;  //!< Derived synapse parameters (weightUpdateModel only)
-    vector<const PostsynapticModels::Base*> postSynapseModel; //!< Types of post-synaptic model
-    vector<vector<double>> postSynapsePara; //!< parameters of postsynapses
-    vector<vector<double>> postSynIni; //!< Initial values of postsynaptic variables
-    vector<vector<double>> dpsp;  //!< Derived postsynapse parameters
-    unsigned int lrnGroups; //!< Number of synapse groups with learning
-    vector<unsigned int> padSumLearnN; //!< Padded summed neuron numbers of learn group source populations
-    vector<unsigned int> lrnSynGrp; //!< Enumeration of the IDs of synapse groups that learn
-    vector<unsigned int> synapseDelay; //!< Global synaptic conductance delay for the group (in time steps)
-    unsigned int synDynGroups; //!< Number of synapse groups that define continuous synapse dynamics
-    vector<unsigned int> synDynGrp; //!< Enumeration of the IDs of synapse groups that have synapse Dynamics
-    vector<unsigned int> padSumSynDynN; //!< Padded summed neuron numbers of synapse dynamics group source populations
-    vector<int> synapseHostID; //!< The ID of the cluster node which the synapse groups are computed on
-    vector<int> synapseDeviceID; //!< The ID of the CUDA device which the synapse groups are comnputed on
-    vector<set<string>> synapseVarZeroCopy; //!< Whether indidividual weight update model state variables of a synapse group should use zero-copied memory
-    vector<set<string>> postSynapseVarZeroCopy; //!< Whether indidividual post synapse model state variables of a synapse group should use zero-copied memory
-
-    // PUBLIC KERNEL PARAMETER VARIABLES
-    //==================================
-
-
-
 public:
     // PUBLIC MODEL FUNCTIONS
     //=======================
@@ -171,6 +122,7 @@ public:
     // PUBLIC NEURON FUNCTIONS
     //========================
     const map<string, NeuronGroup> &getNeuronGroups() const{ return m_NeuronGroups; }
+    const NeuronGroup *findNeuronGroup(const std::string &name) const;
 
     void addNeuronPopulation(const string&, unsigned int, unsigned int, const double *, const double *); //!< Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population
     void addNeuronPopulation(const string&, unsigned int, unsigned int, const vector<double>&, const vector<double>&); //!< Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population
@@ -208,11 +160,13 @@ public:
     void activateDirectInput(const string&, unsigned int type); //! This function has been deprecated in GeNN 2.2
     void setConstInp(const string&, double);
 
-    const NeuronGroup *findNeuronGroup(const std::string &name) const;
-
-
     // PUBLIC SYNAPSE FUNCTIONS
     //=========================
+    const map<string, SynapseGroup> &getSynapseGroups() const{ return m_SynapseGroups; }
+    const SynapseGroup *findSynapseGroup(const std::string &name) const;
+
+    bool isSynapseGroupDynamicsRequired(const std::string &name) const;
+    bool isSynapseGroupPostLearningRequired(const std::string &name) const;
 
     void addSynapsePopulation(const string &name, unsigned int syntype, SynapseConnType conntype, SynapseGType gtype, const string& src, const string& trg, const double *p); //!< This function has been depreciated as of GeNN 2.2.
     void addSynapsePopulation(const string&, unsigned int, SynapseConnType, SynapseGType, unsigned int, unsigned int, const string&, const string&, const double *, const double *, const double *); //!< Overloaded version without initial variables for synapses
@@ -232,18 +186,9 @@ public:
             gennError("Trying to add a synapse population to a finalized model.");
         }
 
-        // Increase synapse group count
-        synapseGrpN++;
 
         auto srcNeuronGrp = findNeuronGroup(src);
         auto trgNeuronGrp = findNeuronGroup(trg);
-
-        synapseName.push_back(name);
-        synapseModel.push_back(WeightUpdateModel::GetInstance());
-        synapseMatrixType.push_back(mtype);
-        synapseSource.push_back(src);
-        synapseTarget.push_back(trg);
-        synapseDelay.push_back(delaySteps);
 
         srcNeuronGrp->checkNumDelaySlots(delaySteps);
         if (delaySteps != NO_DELAY)
@@ -260,25 +205,21 @@ public:
             needSt = true;
         }
 
-        synapseIni.push_back(weightVarValues.GetValues());
-        synapsePara.push_back(weightParamValues.GetValues());
-        postSynapseModel.push_back(PostsynapticModel::GetInstance());
-        postSynIni.push_back(postsynapticVarValues.GetValues());
-        postSynapsePara.push_back(postsynapticParamValues.GetValues());
+        // Add synapse group
+        auto result = m_SynapseGroups.insert(
+            pair<string, SynapseGroup>(
+                name, SynapseGroup(mtype, delaySteps,
+                                   WeightUpdateModel::GetInstance(), weightParamValues.GetValues(), weightVarValues.GetValues(),
+                                   PostsynapticModel::GetInstance(), postsynapticParamValues.GetValues(), postsynapticVarValues.GetValues(),
+                                   src, srcNeuronGrp, trg, trgNeuronGrp)));
 
-        synapseInSynNo.push_back(trgNeuronGrp->addInSyn(name));
-        synapseOutSynNo.push_back(srcNeuronGrp->addOutSyn(name));
+        if(!result.second)
+        {
+            gennError("Cannot add a synapse population with duplicate name:" + name);
+        }
 
-        maxConn.push_back(trgNeuronGrp->getNumNeurons());
-        synapseSpanType.push_back(0);
-
-        // By default zero-copy should be disabled
-        synapseVarZeroCopy.push_back(set<string>());
-        postSynapseVarZeroCopy.push_back(set<string>());
-
-        // initially set synapase group indexing variables to device 0 host 0
-        synapseDeviceID.push_back(0);
-        synapseHostID.push_back(0);
+        /*synapseInSynNo.push_back(*/trgNeuronGrp->addInSyn(name)/*)*/;
+        /*synapseOutSynNo.push_back(*/srcNeuronGrp->addOutSyn(name)/*)*/;
     }
 
     void setSynapseG(const string&, double); //!< This function has been depreciated as of GeNN 2.2.
@@ -288,22 +229,16 @@ public:
     void setSynapseWeightUpdateVarZeroCopy(const string &synapseGroup, const string &var);   //!< Function to specify that synapse group should use zero-copied memory for a particular weight update model state variable - May improve IO performance at the expense of kernel performance
     void setSynapsePostsynapticVarZeroCopy(const string &synapseGroup, const string &var);   //!< Function to specify that synapse group should use zero-copied memory for a particular postsynaptic model state variable - May improve IO performance at the expense of kernel performance
 
-    void initLearnGrps();
-    unsigned int findSynapseGrp(const string&) const; //< Find the the ID number of a synapse group by its name
-
 private:
     //--------------------------------------------------------------------------
     // Private neuron methods
     //--------------------------------------------------------------------------
-    void initDerivedNeuronParams(); //!< Method for calculating the values of derived neuron parameters.
+    NeuronGroup *findNeuronGroup(const std::string &name);
 
     //--------------------------------------------------------------------------
     // Private synapse methods
     //--------------------------------------------------------------------------
-    void initDerivedSynapsePara(); //!< Method for calculating the values of derived synapse parameters.
-    void initDerivedPostSynapsePara(); //!< Method for calculating the values of derived postsynapse parameters.
-
-    NeuronGroup *findNeuronGroup(const std::string &name);
+    SynapseGroup *findSynapseGroup(const std::string &name);
 
     //--------------------------------------------------------------------------
     // Private members
@@ -311,15 +246,29 @@ private:
     //!< Named neuron groups
     map<string, NeuronGroup> m_NeuronGroups;
 
+    //!< Named synapse groups
+    map<string, SynapseGroup> m_SynapseGroups;
+
+    //!< Set of synapse group names which have postsynaptic learning
+    //!< **THINK** is this the right container?
+    map<string, unsigned int> m_SynapsePostLearnGroups;
+
+    //!< Set of synapse group names which have synapse dynamics
+    //!< **THINK** is this the right container?
+    map<string, unsigned int> m_SynapseDynamicsGroups;
+
     // Kernel members
     map<string, string> neuronKernelParameters;
+    map<string, string> synapseKernelParameters;
+    map<string, string> simLearnPostKernelParameters;
+    map<string, string> synapseDynamicsKernelParameters;
 
-    vector<string> synapseKernelParameters;
-    vector<string> synapseKernelParameterTypes;
-    vector<string> simLearnPostKernelParameters;
-    vector<string> simLearnPostKernelParameterTypes;
-    vector<string> synapseDynamicsKernelParameters;
-    vector<string> synapseDynamicsKernelParameterTypes;
+    vector<unsigned int> padSumSynapseKrnl; //Combination of padSumSynapseTrgN and padSumMaxConn to support both sparse and all-to-all connectivity in a model
+
+    vector<unsigned int> padSumLearnN; //!< Padded summed neuron numbers of learn group source populations
+
+   vector<unsigned int> padSumSynDynN; //!< Padded summed neuron numbers of synapse dynamics group source populations
+
 };
 
 #endif

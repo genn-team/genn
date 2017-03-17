@@ -6,10 +6,11 @@
 
 // GeNN includes
 #include "codeGenUtils.h"
+#include "standardSubstitutions.h"
 #include "utils.h"
 
 // ------------------------------------------------------------------------
-// NNmodel::NeuronGroup
+// NeuronGroup
 // ------------------------------------------------------------------------
 void NeuronGroup::checkNumDelaySlots(unsigned int requiredDelay)
 {
@@ -34,10 +35,8 @@ void NeuronGroup::updateVarQueues(const string &code)
 void NeuronGroup::setVarZeroCopyEnabled(const std::string &var)
 {
     // If named variable doesn't exist give error
-    auto nmVars = getNeuronModel()->GetVars();
-    auto nmVarNameBegin = GetPairKeyConstIter(begin(nmVars));
-    auto nmVarNameEnd = GetPairKeyConstIter(end(nmVars));
-    if(find(nmVarNameBegin, nmVarNameEnd, var) == nmVarNameEnd)
+    VarNameIterCtx nmVars(getNeuronModel()->GetVars());
+    if(find(nmVars.nameBegin, nmVars.nameEnd, var) == nmVars.nameEnd)
     {
         gennError("Cannot find variable " + var);
     }
@@ -48,10 +47,6 @@ void NeuronGroup::setVarZeroCopyEnabled(const std::string &var)
     }
 }
 
-bool NeuronGroup::isVarZeroCopyEnabled(const std::string &var) const
-{
-    return (m_VarZeroCopyEnabled.find(var) != std::end(m_VarZeroCopyEnabled));
-}
 
 void NeuronGroup::addSpkEventCondition(const std::string &code, const std::string &supportCodeNamespace)
 {
@@ -117,6 +112,11 @@ bool NeuronGroup::isZeroCopyEnabled() const
     }
 
     return false;
+}
+
+bool NeuronGroup::isVarZeroCopyEnabled(const std::string &var) const
+{
+    return (m_VarZeroCopyEnabled.find(var) != std::end(m_VarZeroCopyEnabled));
 }
 
 void NeuronGroup::addExtraGlobalParams(const std::string &groupName, std::map<string, string> &kernelParameters) const

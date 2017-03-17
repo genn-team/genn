@@ -16,11 +16,14 @@
 #ifndef MODELSPEC_CC
 #define MODELSPEC_CC
 
-#include "modelSpec.h"
-#include "global.h"
-#include "utils.h"
+// GeNN includes
 #include "codeGenUtils.h"
+#include "global.h"
+#include "modelSpec.h"
+#include "standardSubstitutions.h"
+#include "utils.h"
 
+// Standard includes
 #include <cstdio>
 #include <cmath>
 #include <cassert>
@@ -46,12 +49,9 @@ void initGeNN()
 
 NNmodel::NNmodel() 
 {
-    final= 0;
-    synapseGrpN= 0;
-    lrnGroups= 0;
-    synDynGroups= 0;
-    needSt= 0;
-    needSynapseDelay = 0;
+    final= false;
+    needSt= false;
+    needSynapseDelay = false;
     setDT(0.5);
     setPrecision(GENN_FLOAT);
     setTiming(false);
@@ -83,16 +83,9 @@ bool NNmodel::zeroCopyInUse() const
         return true;
     }
 
-    // If any synapse groups have any weight update model state variables with zero-copy enabled return true
-    if(any_of(begin(synapseVarZeroCopy), end(synapseVarZeroCopy),
-        [](const set<string> &s){ return !s.empty(); }))
-    {
-        return true;
-    }
-
-    // If any synapse groups have any weight update model state variables with zero-copy enabled return true
-    if(any_of(begin(postSynapseVarZeroCopy), end(postSynapseVarZeroCopy),
-        [](const set<string> &s){ return !s.empty(); }))
+    // If any neuron groups use zero copy return true
+    if(any_of(begin(m_SynapseGroups), end(m_SynapseGroups),
+        [](const std::pair<string, SynapseGroup> &s){ return s.second.isZeroCopyEnabled(); }))
     {
         return true;
     }
@@ -154,251 +147,6 @@ void NNmodel::setNeuronVarZeroCopy(const string &neuronGroup, const string &var)
 
 
 //--------------------------------------------------------------------------
-/*! \brief 
- */
-//--------------------------------------------------------------------------
-
-void NNmodel::initLearnGrps()
-{
-    synapseUsesTrueSpikes.assign(synapseGrpN, false);
-    synapseUsesSpikeEvents.assign(synapseGrpN, false);
-    synapseUsesPostLearning.assign(synapseGrpN, false);
-    synapseUsesSynapseDynamics.assign(synapseGrpN, false);
-
-
-    for (unsigned int i = 0; i < synapseGrpN; i++) {
-        const auto *wu = synapseModel[i];
-        auto srcNeuronGroup = findNeuronGroup(synapseSource[i]);
-        needEvntThresholdReTest.push_back(false);
-
-        if (!wu->GetSimCode().empty()) {
-            synapseUsesTrueSpikes[i] = true;
-            srcNeuronGroup->setTrueSpikeRequired();
-
-            // analyze which neuron variables need queues
-            srcNeuronGroup->updateVarQueues(wu->GetSimCode());
-        }
-
-        if (!wu->GetLearnPostCode().empty()) {
-            synapseUsesPostLearning[i] = true;
-            lrnSynGrp.push_back(i);
-            lrnGroups++;
-            srcNeuronGroup->updateVarQueues(wu->GetLearnPostCode());
-        }
-
-        if (!wu->GetSynapseDynamicsCode().empty()) {
-            synapseUsesSynapseDynamics[i]= true;
-            synDynGrp.push_back(i);
-            synDynGroups++;
-            srcNeuronGroup->updateVarQueues(wu->GetSynapseDynamicsCode());
-        }
-    }
-
-    // Loop through neuron populations and their outgoing synapse populations
-    for(auto &n : m_NeuronGroups) {
-        for(const auto &s : n.second.getOutSyn()) {
-            int synPopID = findSynapseGrp(s);
-            const auto *wu = synapseModel[synPopID];
-
-            if (!wu->GetEventCode().empty()) {
-                synapseUsesSpikeEvents[synPopID] = true;
-                n.second.setSpikeEventRequired();
-                assert(!wu->GetEventThresholdConditionCode().empty());
-
-                // Create iterators to iterate over the names of the weight update model's extra global parameters
-                auto wuExtraGlobalParams = wu->GetExtraGlobalParams();
-                auto wuExtraGlobalParamsNameBegin = GetPairKeyConstIter(wuExtraGlobalParams.cbegin());
-                auto wuExtraGlobalParamsNameEnd = GetPairKeyConstIter(wuExtraGlobalParams.cend());
-
-                // Create iterators to iterate over the names of the weight update model's derived parameters
-                auto wuDerivedParams = wu->GetDerivedParams();
-                auto wuDerivedParamNameBegin= GetPairKeyConstIter(wuDerivedParams.cbegin());
-                auto wuDerivedParamNameEnd = GetPairKeyConstIter(wuDerivedParams.cend());
-
-                // do an early replacement of parameters, derived parameters and extraglobalsynapse parameters
-                string eCode= wu->GetEventThresholdConditionCode();
-                value_substitutions(eCode, wu->GetParamNames(), synapsePara[synPopID]);
-                value_substitutions(eCode, wuDerivedParamNameBegin, wuDerivedParamNameEnd, dsp_w[synPopID]);
-                name_substitutions(eCode, "", wuExtraGlobalParamsNameBegin, wuExtraGlobalParamsNameEnd, synapseName[synPopID]);
-
-                // Add code and name of
-                string supportCodeNamespaceName = wu->GetSimSupportCode().empty() ?
-                    "" : synapseName[synPopID] + "_weightupdate_simCode";
-
-                // Add code and name of support code namespace to set
-                n.second.addSpkEventCondition(eCode, supportCodeNamespaceName);
-
-                // analyze which neuron variables need queues
-                n.second.updateVarQueues(wu->GetEventCode());
-            }
-        }
-        if (n.second.getNumSpikeEventConditions() > 1) {
-            for(const auto &s : n.second.getOutSyn()) {
-                int synPopID = findSynapseGrp(s);
-                const auto *wu = synapseModel[synPopID];
-                if (!wu->GetEventCode().empty()) {
-                    needEvntThresholdReTest[synPopID]= true;
-                }
-            }
-        }
-    }
-    // related to kernel parameters: make kernel parameter lists
-    // for neuron kernel
-    for(auto const &n : m_NeuronGroups) {
-        n.second.addExtraGlobalParams(n.first, neuronKernelParameters);
-    }
-    for (unsigned int i = 0; i < synapseGrpN; i++) {
-        auto srcNeuronGroup = findNeuronGroup(synapseSource[i]);
-        for(auto const &p : synapseModel[i]->GetExtraGlobalParams()) {
-            srcNeuronGroup->addSpikeEventConditionParams(p, synapseName[i], neuronKernelParameters);
-        }
-    }
-    // for synapse kernel
-    for (unsigned int i = 0; i < synapseGrpN; i++) {
-        const auto *wu = synapseModel[i];
-        auto srcNeuronGroup = findNeuronGroup(synapseSource[i]);
-        auto trgNeuronGroup = findNeuronGroup(synapseTarget[i]);
-        const NeuronModels::Base *nm[2] = {srcNeuronGroup->getNeuronModel(),
-            trgNeuronGroup->getNeuronModel()};
-        string suffix[2];
-        suffix[0]= "_pre";
-        suffix[1]= "_post";
-        for (unsigned int k= 0; k < 2; k++) {
-            for(auto const &p : nm[k]->GetExtraGlobalParams()) {
-                string pnamefull= p.first + synapseSource[i];
-                if (find(synapseKernelParameters.begin(), synapseKernelParameters.end(), pnamefull) == synapseKernelParameters.end()) {
-                    // parameter wasn't registered yet - is it used?
-                    bool used = false;
-                    if (wu->GetSimCode().find("$(" + p.first + suffix[k] + ")") != string::npos) used= true; // it's used
-                    if (wu->GetEventCode().find("$(" + p.first + suffix[k] + ")") != string::npos) used= true; // it's used
-                    if (wu->GetEventThresholdConditionCode().find("$(" + p.first + suffix[k] + ")") != string::npos) used= true; // it's used
-                    if (used) {
-                        synapseKernelParameters.push_back(pnamefull);
-                        synapseKernelParameterTypes.push_back(p.second);
-                    }
-                }
-            }
-        }
-        for(auto const &p : wu->GetExtraGlobalParams()) {
-            string pnamefull= p.first + synapseName[i];
-            if (find(synapseKernelParameters.begin(), synapseKernelParameters.end(), pnamefull) == synapseKernelParameters.end()) {
-                // parameter wasn't registered yet - is it used?
-                bool used = false;
-                if (wu->GetSimCode().find("$(" + p.first + ")") != string::npos) used = true; // it's used
-                if (wu->GetEventCode().find("$(" + p.first + ")") != string::npos) used = true; // it's used
-                if (wu->GetEventThresholdConditionCode().find("$(" + p.first + ")") != string::npos) used = true; // it's used
-                if (used) {
-                    synapseKernelParameters.push_back(pnamefull);
-                    synapseKernelParameterTypes.push_back(p.second);
-                }
-            }
-        }
-    }
-    
-    // for simLearnPost
-    for (unsigned int i = 0; i < synapseGrpN; i++) {
-        const auto *wu = synapseModel[i];
-        auto srcNeuronGroup = findNeuronGroup(synapseSource[i]);
-        auto trgNeuronGroup = findNeuronGroup(synapseTarget[i]);
-        const NeuronModels::Base *nm[2] = {srcNeuronGroup->getNeuronModel(),
-            trgNeuronGroup->getNeuronModel()};
-        string suffix[2];
-        suffix[0]= "_pre";
-        suffix[1]= "_post";
-        for (unsigned int k= 0; k < 2; k++) {
-            for(auto const &p : nm[k]->GetExtraGlobalParams()) {
-                string pnamefull= p.first + synapseSource[i];
-                if (find(simLearnPostKernelParameters.begin(), simLearnPostKernelParameters.end(), pnamefull) == simLearnPostKernelParameters.end()) {
-                    // parameter wasn't registered yet - is it used?
-                    if (wu->GetLearnPostCode().find("$(" + p.first + suffix[k]) != string::npos) {
-                        simLearnPostKernelParameters.push_back(pnamefull);
-                        simLearnPostKernelParameterTypes.push_back(p.second);
-                    }
-                }
-            }
-        }
-        for(auto const &p : wu->GetExtraGlobalParams()) {
-            string pnamefull= p.first + synapseName[i];
-            if (find(simLearnPostKernelParameters.begin(), simLearnPostKernelParameters.end(), pnamefull) == simLearnPostKernelParameters.end()) {
-                // parameter wasn't registered yet - is it used?
-                 if (wu->GetLearnPostCode().find("$(" + p.first + ")") != string::npos) {
-                    simLearnPostKernelParameters.push_back(pnamefull);
-                    simLearnPostKernelParameterTypes.push_back(p.second);
-                }
-            }
-        }
-    }
-   
-    // for synapse Dynamics
-    for (unsigned int i = 0; i < synapseGrpN; i++) {
-        const auto *wu = synapseModel[i];
-        auto srcNeuronGroup = findNeuronGroup(synapseSource[i]);
-        auto trgNeuronGroup = findNeuronGroup(synapseTarget[i]);
-        const NeuronModels::Base *nm[2] = {srcNeuronGroup->getNeuronModel(),
-            trgNeuronGroup->getNeuronModel()};
-        string suffix[2];
-        suffix[0]= "_pre";
-        suffix[1]= "_post";
-        for (unsigned int k= 0; k < 2; k++) {
-            for(auto const &p : nm[k]->GetExtraGlobalParams()) {
-                string pnamefull= p.first + synapseSource[i];
-                if (find(synapseDynamicsKernelParameters.begin(), synapseDynamicsKernelParameters.end(), pnamefull) == synapseDynamicsKernelParameters.end()) {
-                    if (wu->GetSynapseDynamicsCode().find("$(" + p.first + suffix[k]) != string::npos) {
-                        synapseDynamicsKernelParameters.push_back(pnamefull);
-                        synapseDynamicsKernelParameterTypes.push_back(p.second);
-                    }
-                }
-            }
-        }
-        for(auto const &p : wu->GetExtraGlobalParams()) {
-            string pnamefull= p.first + synapseName[i];
-            if (find(synapseDynamicsKernelParameters.begin(), synapseDynamicsKernelParameters.end(), pnamefull) == synapseDynamicsKernelParameters.end()) {
-                // parameter wasn't registered yet - is it used?
-                bool used= 0;
-                if (wu->GetSynapseDynamicsCode().find("$(" + p.first + ")") != string::npos) used= 1; // it's used
-                 if (used) {
-                    synapseDynamicsKernelParameters.push_back(pnamefull);
-                    synapseDynamicsKernelParameterTypes.push_back(p.second);
-                }
-            }
-        }
-    }
-
-#ifndef CPU_ONLY
-    // figure out where to reset the spike counters
-    if (synapseGrpN == 0) { // no synapses -> reset in neuron kernel
-        resetKernel= GENN_FLAGS::calcNeurons;
-    }
-    else { // there are synapses
-        if (lrnGroups > 0) {
-            resetKernel= GENN_FLAGS::learnSynapsesPost;
-        }
-        else {
-            resetKernel= GENN_FLAGS::calcSynapses;
-        }
-    }
-#endif
-}
-
-
-//--------------------------------------------------------------------------
-/*! \brief This function is a tool to find the numeric ID of a synapse population based on the name of the synapse population.
- */
-//--------------------------------------------------------------------------
-
-unsigned int NNmodel::findSynapseGrp(const string &sName /**< Name of the synapse population */) const
-{
-    for (unsigned int j= 0; j < synapseGrpN; j++) {
-        if (sName == synapseName[j]) {
-            return j;
-        }
-    }
-    fprintf(stderr, "synapse group %s not found, aborting ...\n", sName.c_str());
-    exit(1);
-}
-
-
-//--------------------------------------------------------------------------
 /*! \brief This function is for setting which host and which device a synapse group will be simulated on
  */
 //--------------------------------------------------------------------------
@@ -407,9 +155,7 @@ void NNmodel::setSynapseClusterIndex(const string &synapseGroup, /**< Name of th
                                      int hostID, /**< ID of the host */
                                      int deviceID /**< ID of the device */)
 {
-    unsigned int groupNo = findSynapseGrp(synapseGroup);
-    synapseHostID[groupNo] = hostID;
-    synapseDeviceID[groupNo] = deviceID;  
+    findSynapseGroup(synapseGroup)->setClusterIndex(hostID, deviceID);
 }
 
 //--------------------------------------------------------------------------
@@ -419,21 +165,7 @@ void NNmodel::setSynapseClusterIndex(const string &synapseGroup, /**< Name of th
 //--------------------------------------------------------------------------
 void NNmodel::setSynapseWeightUpdateVarZeroCopy(const string &synapseGroup, const string &var)
 {
-    const unsigned int groupNo = findSynapseGrp(synapseGroup);
-
-    // If named variable doesn't exist give error
-    auto wuVars = synapseModel[groupNo]->GetVars();
-    auto wuVarNameBegin = GetPairKeyConstIter(begin(wuVars));
-    auto wuVarNameEnd = GetPairKeyConstIter(end(wuVars));
-    if(find(wuVarNameBegin, wuVarNameEnd, var) == wuVarNameEnd)
-    {
-        gennError("Cannot find weight update model variable " + var + " for synapse group " + synapseGroup);
-    }
-    // Otherwise add name of variable to set
-    else
-    {
-        synapseVarZeroCopy[groupNo].insert(var);
-    }
+    findSynapseGroup(synapseGroup)->setWUVarZeroCopyEnabled(var);
 }
 
 //--------------------------------------------------------------------------
@@ -443,20 +175,21 @@ void NNmodel::setSynapseWeightUpdateVarZeroCopy(const string &synapseGroup, cons
 //--------------------------------------------------------------------------
 void NNmodel::setSynapsePostsynapticVarZeroCopy(const string &synapseGroup, const string &var)
 {
-    const unsigned int groupNo = findSynapseGrp(synapseGroup);
+    findSynapseGroup(synapseGroup)->setPSVarZeroCopyEnabled(var);
+}
 
-    // If named variable doesn't exist give error
-    auto psmVars = postSynapseModel[groupNo]->GetVars();
-    auto psmVarNameBegin = GetPairKeyConstIter(begin(psmVars));
-    auto psmVarNameEnd = GetPairKeyConstIter(end(psmVars));
-    if(find(psmVarNameBegin, psmVarNameEnd, var) == psmVarNameEnd)
+const NeuronGroup *NNmodel::findNeuronGroup(const std::string &name) const
+{
+    auto neuronGroup = m_NeuronGroups.find(name);
+
+    if(neuronGroup == m_NeuronGroups.cend())
     {
-        gennError("Cannot find postsynaptic model initial variable " + var + " for synapse group " + synapseGroup);
+        gennError("neuron group " + name + " not found, aborting ...");
+        return NULL;
     }
-    // Otherwise add name of variable to set
     else
     {
-        postSynapseVarZeroCopy[groupNo].insert(var);
+        return &neuronGroup->second;
     }
 }
 
@@ -533,6 +266,30 @@ void NNmodel::activateDirectInput(
     gennError("This function has been deprecated since GeNN 2.2. Use neuron variables, extraGlobalNeuronKernelParameters, or parameters instead.");
 }
 
+const SynapseGroup *NNmodel::findSynapseGroup(const std::string &name) const
+{
+    auto synapseGroup = m_SynapseGroups.find(name);
+
+    if(synapseGroup == m_SynapseGroups.cend())
+    {
+        gennError("synapse group " + name + " not found, aborting ...");
+        return NULL;
+    }
+    else
+    {
+        return &synapseGroup->second;
+    }
+}
+
+bool NNmodel::isSynapseGroupDynamicsRequired(const std::string &name) const
+{
+    return (m_SynapseDynamicsGroups.find(name) != end(m_SynapseDynamicsGroups));
+}
+
+bool NNmodel::isSynapseGroupPostLearningRequired(const std::string &name) const
+{
+    return (m_SynapsePostLearnGroups.find(name) != end(m_SynapsePostLearnGroups));
+}
 
 //--------------------------------------------------------------------------
 /*! \overload
@@ -678,18 +435,8 @@ void NNmodel::addSynapsePopulation(
         gennError("Combination of connection type " + to_string(conntype) + " and weight type " + to_string(gtype) + " not supported");
     }
 
-    // Increase synapse group count
-    synapseGrpN++;
-
     auto srcNeuronGrp = findNeuronGroup(src);
     auto trgNeuronGrp = findNeuronGroup(trg);
-
-    synapseName.push_back(name);
-    synapseModel.push_back(new WeightUpdateModels::LegacyWrapper(syntype));
-    synapseMatrixType.push_back(mtype);
-    synapseSource.push_back(src);
-    synapseTarget.push_back(trg);
-    synapseDelay.push_back(delaySteps);
 
     srcNeuronGrp->checkNumDelaySlots(delaySteps);
     if (delaySteps != NO_DELAY)
@@ -706,27 +453,21 @@ void NNmodel::addSynapsePopulation(
         needSt = true;
     }
 
-    synapseIni.push_back(synini);
-    synapsePara.push_back(p);
-    postSynapseModel.push_back(new PostsynapticModels::LegacyWrapper(postsyn));
-    postSynIni.push_back(PSVini);
-    postSynapsePara.push_back(ps);
+    // Add synapse group
+    auto result = m_SynapseGroups.insert(
+        pair<string, SynapseGroup>(
+            name, SynapseGroup(mtype, delaySteps,
+                                new WeightUpdateModels::LegacyWrapper(syntype), p, synini,
+                                new PostsynapticModels::LegacyWrapper(postsyn), ps, PSVini,
+                                src, srcNeuronGrp, trg, trgNeuronGrp)));
 
-    synapseInSynNo.push_back(trgNeuronGrp->addInSyn(name));
-    synapseOutSynNo.push_back(srcNeuronGrp->addOutSyn(name));
+    if(!result.second)
+    {
+        gennError("Cannot add a synapse population with duplicate name:" + name);
+    }
 
-    maxConn.push_back(trgNeuronGrp->getNumNeurons());
-    synapseSpanType.push_back(0);
-
-    // By default zero-copy should be disabled
-    synapseVarZeroCopy.push_back(set<string>());
-    postSynapseVarZeroCopy.push_back(set<string>());
-
-    // initially set synapase group indexing variables to device 0 host 0
-    synapseDeviceID.push_back(0);
-    synapseHostID.push_back(0);
-
-    // TODO set uses*** variables for synaptic populations
+    /*synapseInSynNo.push_back(*/trgNeuronGrp->addInSyn(name)/*)*/;
+        /*synapseOutSynNo.push_back(*/srcNeuronGrp->addOutSyn(name)/*)*/;
 }
 
 
@@ -741,13 +482,8 @@ void NNmodel::setMaxConn(const string &sname, /**<  */
     if (final) {
         gennError("Trying to set MaxConn in a finalized model.");
     }
-    unsigned int found = findSynapseGrp(sname);
-    if (synapseMatrixType[found] & SynapseMatrixConnectivity::SPARSE) {
-        maxConn[found] = maxConnP;
-    }
-    else {
-        gennError("setMaxConn: Synapse group %u is all-to-all connected. Maxconn variable is not needed in this case. Setting size to %u is not stable.");
-    }
+    findSynapseGroup(sname)->setMaxConnections(maxConnP);
+
 }
 
 
@@ -762,13 +498,8 @@ void NNmodel::setSpanTypeToPre(const string &sname /**< name of the synapse grou
     if (final) {
         gennError("Trying to set spanType in a finalized model.");
     }
-    unsigned int found = findSynapseGrp(sname);
-    if (synapseMatrixType[found]  & SynapseMatrixConnectivity::SPARSE) {
-        synapseSpanType[found] = 1;
-    }
-    else {
-        gennError("setSpanTypeToPre: This function is not enabled for dense connectivity type.");
-    }
+    findSynapseGroup(sname)->setSpanType(1);
+
 }
 
 
@@ -793,22 +524,6 @@ void NNmodel::setConstInp(const string &, /**<  */
                           double /**<  */)
 {
     gennError("This function has been deprecated as of GeNN 2.2. Use parameters in the neuron model instead.");
-}
-
-
-const NeuronGroup *NNmodel::findNeuronGroup(const std::string &name) const
-{
-    auto neuronGroup = m_NeuronGroups.find(name);
-
-    if(neuronGroup == m_NeuronGroups.cend())
-    {
-        gennError("neuron group " + name + " not found, aborting ...");
-        return NULL;
-    }
-    else
-    {
-        return &neuronGroup->second;
-    }
 }
 
 
@@ -914,161 +629,6 @@ string NNmodel::scalarExpr(const double val) const
     return tmp;
 }
 
-
-//--------------------------------------------------------------------------
-/*! \brief Accumulate the sums and block-size-padded sums of all simulation groups.
-
-  This method saves the neuron numbers of the populations rounded to the next multiple of the block size as well as the sums s(i) = sum_{1...i} n_i of the rounded population sizes. These are later used to determine the branching structure for the generated neuron kernel code. 
-*/
-//--------------------------------------------------------------------------
-
-void NNmodel::setPopulationSums()
-{
-    unsigned int paddedSize;
-    if (!final) {
-        gennError("Your model must be finalized before we can calculate population sums. Aborting.");
-    }
-
-    // NEURON GROUPS
-    unsigned int cumSumNeurons = 0;
-    unsigned int paddedCumSumNeurons = 0;
-    for(auto &n : m_NeuronGroups) {
-        n.second.calcSizes(neuronBlkSz, cumSumNeurons, paddedCumSumNeurons);
-    }
-
-    // SYNAPSE GROUPS
-    padSumSynapseKrnl.resize(synapseGrpN);
-    for (unsigned int i = 0; i < synapseGrpN; i++) {
-        if (synapseMatrixType[i] & SynapseMatrixConnectivity::SPARSE) {
-            if (synapseSpanType[i] == 1) {
-                // paddedSize is the lowest multiple of synapseBlkSz >= neuronN[synapseSource[i]
-                auto srcNeuronGroup = findNeuronGroup(synapseSource[i]);
-                paddedSize = ceil((double) srcNeuronGroup->getNumNeurons() / (double) synapseBlkSz) * (double) synapseBlkSz;
-            }
-            else {
-                // paddedSize is the lowest multiple of synapseBlkSz >= maxConn[i]
-                paddedSize = ceil((double) maxConn[i] / (double) synapseBlkSz) * (double) synapseBlkSz;
-            }
-        }
-        else {
-            // paddedSize is the lowest multiple of synapseBlkSz >= neuronN[synapseTarget[i]]
-            auto trgNeuronGroup = findNeuronGroup(synapseTarget[i]);
-            paddedSize = ceil((double) trgNeuronGroup->getNumNeurons() / (double) synapseBlkSz) * (double) synapseBlkSz;
-        }
-        if (i == 0) {
-            padSumSynapseKrnl[i] = paddedSize;
-        }
-        else {
-            padSumSynapseKrnl[i] = padSumSynapseKrnl[i - 1] + paddedSize;
-        }
-    }
-
-    // SYNAPSE DYNAMICS GROUPS
-    padSumSynDynN.resize(synDynGroups);
-    for (unsigned int i = 0; i < synDynGroups; i++) {
-        auto srcNeuronGroup = findNeuronGroup(synapseSource[i]);
-        auto trgNeuronGroup = findNeuronGroup(synapseTarget[i]);
-        if (synapseMatrixType[i] & SynapseMatrixConnectivity::SPARSE) {
-            // paddedSize is the lowest multiple of synDynBlkSz >= neuronN[synapseSource[i]] * maxConn[i]
-            paddedSize = ceil((double) srcNeuronGroup->getNumNeurons() * maxConn[i] / (double) synDynBlkSz) * (double) synDynBlkSz;
-        }
-        else {
-            // paddedSize is the lowest multiple of synDynBlkSz >= neuronN[synapseSource[i]] * neuronN[synapseTarget[i]]
-            paddedSize = ceil((double) srcNeuronGroup->getNumNeurons() * trgNeuronGroup->getNumNeurons() / (double) synDynBlkSz) * (double) synDynBlkSz;
-        }
-        if (i == 0) {
-            padSumSynDynN[i] = paddedSize;
-        }
-        else {
-            padSumSynDynN[i] = padSumSynDynN[i - 1] + paddedSize;
-        }
-    }
-
-    // LEARN GROUPS
-    padSumLearnN.resize(lrnGroups);
-    for (unsigned int i = 0; i < lrnGroups; i++) {
-        // paddedSize is the lowest multiple of learnBlkSz >= neuronN[synapseTarget[i]]
-        auto srcNeuronGroup = findNeuronGroup(synapseSource[i]);
-        paddedSize = ceil((double) srcNeuronGroup->getNumNeurons() / (double) learnBlkSz) * (double) learnBlkSz;
-        if (i == 0) {
-            padSumLearnN[i] = paddedSize;
-        }
-        else {
-            padSumLearnN[i] = padSumLearnN[i - 1] + paddedSize;
-        }
-    }
-}
-
-
-//--------------------------------------------------------------------------
-/*! \brief Method for calculating dependent parameter values from independent parameters.
-
-This method is to be invoked when all independent parameters have been set.
-It appends the derived values of dependent parameters to the corresponding vector (dnp) without checking for multiple calls. If called repeatedly, multiple copies of dependent parameters would be added leading to potential errors in the model execution.
-*/
-//--------------------------------------------------------------------------
-
-void NNmodel::initDerivedNeuronParams()
-{
-    for(auto &n : m_NeuronGroups) {
-        n.second.initDerivedParams(dt);
-    }
-}
-
-
-//--------------------------------------------------------------------------
-/*! \brief This function calculates dependent synapse parameters from independent synapse parameters.
-
-  This method is to be invoked when all independent parameters have been set.
-*/
-//--------------------------------------------------------------------------
-
-void NNmodel::initDerivedSynapsePara()
-{
-    for (unsigned int i = 0; i < synapseGrpN; i++) {
-        auto derivedParams = synapseModel[i]->GetDerivedParams();
-
-        // Reserve vector to hold derived parameters
-        vector<double> tmpP;
-        tmpP.reserve(derivedParams.size());
-
-        // Loop through derived parameters
-        for (size_t j = 0; j < derivedParams.size(); j++) {
-            double retVal = derivedParams[j].second(synapsePara[i], dt);
-            tmpP.push_back(retVal);
-        }
-        assert(dsp_w.size() == i);
-        dsp_w.push_back(tmpP);
-    }
-}
-
-
-//--------------------------------------------------------------------------
-/*! \brief This function calculates dependent synaptic parameters in the employed post-synaptic model based on the independent post-synapse parameters.
-
-  This method is to be invoked when all independent parameters have been set.
- */
-//--------------------------------------------------------------------------
-
-void NNmodel::initDerivedPostSynapsePara()
-{
-    for (unsigned int i = 0; i < synapseGrpN; i++) {
-         auto derivedParams = postSynapseModel[i]->GetDerivedParams();
-
-        // Reserve vector to hold derived parameters
-        vector<double> tmpP;
-        tmpP.reserve(derivedParams.size());
-
-        // Loop through derived parameters
-        for (size_t j = 0; j < derivedParams.size(); j++) {
-            double retVal = derivedParams[j].second(postSynapsePara[i], dt);
-            tmpP.push_back(retVal);
-        }
-        assert(dpsp.size() == i);
-        dpsp.push_back(tmpP);
-    }
-}
-
 NeuronGroup *NNmodel::findNeuronGroup(const std::string &name)
 {
     auto neuronGroup = m_NeuronGroups.find(name);
@@ -1084,6 +644,21 @@ NeuronGroup *NNmodel::findNeuronGroup(const std::string &name)
     }
 }
 
+SynapseGroup *NNmodel::findSynapseGroup(const std::string &name)
+{
+    auto synapseGroup = m_SynapseGroups.find(name);
+
+    if(synapseGroup == m_SynapseGroups.cend())
+    {
+        gennError("synapse group " + name + " not found, aborting ...");
+        return NULL;
+    }
+    else
+    {
+        return &synapseGroup->second;
+    }
+}
+
 void NNmodel::finalize()
 {
     //initializing learning parameters to start
@@ -1091,11 +666,120 @@ void NNmodel::finalize()
         gennError("Your model has already been finalized");
     }
     final = true;
-    initDerivedNeuronParams();
-    initDerivedSynapsePara();
-    initDerivedPostSynapsePara();
-    initLearnGrps();
-    setPopulationSums();
+
+    // NEURON GROUPS
+    unsigned int cumSumNeurons = 0;
+    unsigned int paddedCumSumNeurons = 0;
+    for(auto &n : m_NeuronGroups) {
+        // Initialize derived parameters
+        n.second.initDerivedParams(dt);
+
+        // Calculate padded sizes
+        n.second.calcSizes(neuronBlkSz, cumSumNeurons, paddedCumSumNeurons);
+
+        // Make extra global parameter lists
+        n.second.addExtraGlobalParams(n.first, neuronKernelParameters);
+    }
+
+    // SYNAPSE groups
+    unsigned int paddedCumSumSynGroups = 0;
+    unsigned int paddedCumSumSynDynGroups = 0;
+    unsigned int paddedCumSumSynPostLrnGroups = 0;
+    for(auto &s : m_SynapseGroups) {
+        const auto *wu = s.second.getWUModel();
+
+        // Initialize derived parameters
+        s.second.initDerivedParams(dt);
+
+        // Make extra global parameter lists
+        s.second.addExtraGlobalParams(s.first, synapseKernelParameters);
+        for(auto const &p : wu->GetExtraGlobalParams()) {
+            s.second.getSrcNeuronGroup()->addSpikeEventConditionParams(p, s.first, neuronKernelParameters);
+        }
+
+
+        if (!wu->GetSimCode().empty()) {
+            s.second.setTrueSpikeRequired();
+            s.second.getSrcNeuronGroup()->setTrueSpikeRequired();
+
+            // analyze which neuron variables need queues
+            s.second.getSrcNeuronGroup()->updateVarQueues(wu->GetSimCode());
+
+            // Calculate synapse kernel sizes
+            s.second.calcKernelSizes(synapseBlkSz, paddedCumSumSynGroups);
+        }
+
+        if (!wu->GetLearnPostCode().empty()) {
+            paddedCumSumSynPostLrnGroups += s.second.getPaddedPostLearnKernelSize(learnBlkSz);
+            m_SynapsePostLearnGroups.insert(pair<string, unsigned int>(s.first, paddedCumSumSynPostLrnGroups));
+
+            s.second.getSrcNeuronGroup()->updateVarQueues(wu->GetLearnPostCode());
+        }
+
+        if (!wu->GetSynapseDynamicsCode().empty()) {
+            paddedCumSumSynDynGroups += s.second.getPaddedDynKernelSize(synDynBlkSz);
+            m_SynapseDynamicsGroups.insert(std::pair<std::string, unsigned int>(s.first, paddedCumSumSynDynGroups));
+
+            s.second.getSrcNeuronGroup()->updateVarQueues(wu->GetSynapseDynamicsCode());
+        }
+    }
+
+    // Loop through neuron populations and their outgoing synapse populations
+    for(auto &n : m_NeuronGroups) {
+        for(const auto &s : n.second.getOutSyn()) {
+            SynapseGroup *synGroup = findSynapseGroup(s);
+            const auto *wu = synGroup->getWUModel();
+
+            if (!wu->GetEventCode().empty()) {
+                synGroup->setTrueSpikeRequired();
+                n.second.setSpikeEventRequired();
+                assert(!wu->GetEventThresholdConditionCode().empty());
+
+                 // Create iteration context to iterate over derived and extra global parameters
+                ExtraGlobalParamNameIterCtx wuExtraGlobalParams(wu->GetExtraGlobalParams());
+                DerivedParamNameIterCtx wuDerivedParams(wu->GetDerivedParams());
+
+                // do an early replacement of parameters, derived parameters and extraglobalsynapse parameters
+                string eCode = wu->GetEventThresholdConditionCode();
+                value_substitutions(eCode, wu->GetParamNames(), synGroup->getWUParams());
+                value_substitutions(eCode, wuDerivedParams.nameBegin, wuDerivedParams.nameEnd, synGroup->getWUDerivedParams());
+                name_substitutions(eCode, "", wuExtraGlobalParams.nameBegin, wuExtraGlobalParams.nameEnd, s);
+
+                // Add code and name of
+                string supportCodeNamespaceName = wu->GetSimSupportCode().empty() ?
+                    "" : s + "_weightupdate_simCode";
+
+                // Add code and name of support code namespace to set
+                n.second.addSpkEventCondition(eCode, supportCodeNamespaceName);
+
+                // analyze which neuron variables need queues
+                n.second.updateVarQueues(wu->GetEventCode());
+            }
+        }
+        if (n.second.getNumSpikeEventConditions() > 1) {
+            for(const auto &s : n.second.getOutSyn()) {
+                SynapseGroup *synapseGroup = findSynapseGroup(s);
+                if (!synapseGroup->getWUModel()->GetEventCode().empty()) {
+                    synapseGroup->setEventThresholdReTestRequired();
+                }
+            }
+        }
+    }
+
+#ifndef CPU_ONLY
+    // figure out where to reset the spike counters
+    if (m_SynapseGroups.empty()) { // no synapses -> reset in neuron kernel
+        resetKernel= GENN_FLAGS::calcNeurons;
+    }
+    else { // there are synapses
+        if (m_SynapsePostLearnGroups.empty()) {
+            resetKernel= GENN_FLAGS::learnSynapsesPost;
+        }
+        else {
+            resetKernel= GENN_FLAGS::calcSynapses;
+        }
+    }
+#endif
 }
 
 
