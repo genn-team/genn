@@ -165,33 +165,49 @@ void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
 
             // This data is required for block size optimisation, but cannot be found in deviceProp.
             float warpAllocGran, regAllocGran, smemAllocGran, maxBlocksPerSM;
-            if (deviceProp[theDevice].major == 1) {
+            switch (deviceProp[theDevice].major) {
+
+            case 1:
                 smemAllocGran = 512;
                 warpAllocGran = 2;
                 regAllocGran = (deviceProp[theDevice].minor < 2) ? 256 : 512;
                 maxBlocksPerSM = 8;
-            }
-            else if (deviceProp[theDevice].major == 2) {
+                break;
+
+            case 2:
                 smemAllocGran = 128;
                 warpAllocGran = 2;
                 regAllocGran = 64;
                 maxBlocksPerSM = 8;
-            }
-            else if (deviceProp[theDevice].major == 3) {
+                break;
+
+            case 3:
                 smemAllocGran = 256;
                 warpAllocGran = 4;
                 regAllocGran = 256;
                 maxBlocksPerSM = 16;
-            }
-            else if (deviceProp[theDevice].major == 5) {
+                break;
+                
+            case 5:
                 smemAllocGran = 256;
                 warpAllocGran = 4;
                 regAllocGran = 256;
                 maxBlocksPerSM = 32;
-            }
-            else {
-                cerr << "Error: unsupported CUDA device major version: " << deviceProp[theDevice].major << endl;
-                exit(EXIT_FAILURE);
+                break;
+
+            case 6:
+            latest:
+                smemAllocGran = 256;
+                warpAllocGran = (deviceProp[theDevice].minor == 0) ? 2 : 4;
+                regAllocGran = 256;
+                maxBlocksPerSM = 32;
+                break;
+
+            default: // Dev note: when adding a new version case above, please move the 'latest:' label into it.
+                cerr << "Warning: Unsupported CUDA device major version: " << deviceProp[theDevice].major << endl;
+                cerr << "         This is a bug! Please report it at https://github.com/genn-team/genn." << endl;
+                cerr << "         Falling back to next latest SM version parameters." << endl;
+                goto latest;
             }
 
             // Signal error and exit if SM version < 1.3 and double precision floats are requested.

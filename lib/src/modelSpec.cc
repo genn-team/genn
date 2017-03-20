@@ -426,6 +426,10 @@ void NNmodel::addSynapsePopulation(
     {
         mtype = SynapseMatrixType::DENSE_INDIVIDUALG;
     }
+    else if((conntype == DENSE || conntype == ALLTOALL) && gtype == GLOBALG)
+    {
+        mtype = SynapseMatrixType::DENSE_GLOBALG;
+    }
     else if(gtype == INDIVIDUALID)
     {
         mtype = SynapseMatrixType::BITMASK_GLOBALG;
