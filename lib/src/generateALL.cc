@@ -506,10 +506,10 @@ void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
         else {
             chosenDevice= GENN_PREFERENCES::defaultDevice;
         }
-        synapseBlkSz = bestBlkSz[0][chosenDevice];
-        learnBlkSz = bestBlkSz[1][chosenDevice];
-        synDynBlkSz= bestBlkSz[2][chosenDevice];
-        neuronBlkSz = bestBlkSz[3][chosenDevice];
+        synapseBlkSz = bestBlkSz[KernelCalcSynapses][chosenDevice];
+        learnBlkSz = bestBlkSz[KernelLearnSynapsesPost][chosenDevice];
+        synDynBlkSz= bestBlkSz[KernelCalcSynapseDynamics][chosenDevice];
+        neuronBlkSz = bestBlkSz[KernelCalcNeurons][chosenDevice];
     }
 
     // IF OPTIMISATION IS OFF: Simply choose the device with the most global memory.
