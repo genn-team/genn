@@ -70,6 +70,7 @@ public:
     // Public const methods
     //------------------------------------------------------------------------
     unsigned int getNumNeurons() const{ return m_NumNeurons; }
+    unsigned int getPaddedCumSumNeurons() const{ return m_PaddedCumSumNeurons; }
     const NeuronModels::Base *getNeuronModel() const{ return m_NeuronModel; }
 
     const std::vector<double> &getParams() const{ return m_Params; }
@@ -100,9 +101,14 @@ public:
 
     bool getNumSpikeEventConditions() const{ return m_SpikeEventCondition.size(); }
 
+    // **YUCK** should neuron groups just know their own name?
     void addExtraGlobalParams(const string &groupName, std::map<std::string, std::string> &kernelParameters) const;
     void addSpikeEventConditionParams(const std::pair<std::string, std::string> &param, const std::string &groupName,
                                       std::map<string, string> &kernelParameters) const;
+
+    // **THINK** do this really belong here - it is very code-generation specific
+    // **YUCK** should neuron groups just know their own name?
+    std::string getQueueOffset(const std::string &groupName, const std::string &varPrefix) const;
 
 private:
     //------------------------------------------------------------------------

@@ -128,8 +128,6 @@ void checkUnreplacedVariables(const string &code, const string &codeName);
 void neuron_substitutions_in_synaptic_code(
     string &wCode, //!< the code string to work on
     const SynapseGroup *sg,
-    const string &offsetPre, //!< delay slot offset expression for pre-synaptic vars
-    const string &offsetPost, //!< delay slot offset expression for post-synaptic vars
     const string &preIdx, //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
     const string &postIdx, //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
     const string &devPrefix); //!< device prefix, "dd_" for GPU, nothing for CPU

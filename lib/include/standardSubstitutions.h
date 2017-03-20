@@ -35,6 +35,40 @@ typedef NameIterCtx<NewModels::Base::StringPairVec> VarNameIterCtx;
 typedef NameIterCtx<NewModels::Base::DerivedParamVec> DerivedParamNameIterCtx;
 typedef NameIterCtx<NewModels::Base::StringPairVec> ExtraGlobalParamNameIterCtx;
 
+
+namespace StandardGeneratedSections
+{
+void neuronOutputInit(
+    std::ostream &os,
+    const std::string &ngName,
+    const NeuronGroup &ng,
+    const std::string &varPrefix);
+
+void neuronLocalVarInit(
+    std::ostream &os,
+    const std::string &ngName,
+    const NeuronGroup &ng,
+    const VarNameIterCtx &nmVars,
+    const std::string &varPrefix,
+    const std::string &localID);
+
+void neuronLocalVarWrite(
+    std::ostream &os,
+    const std::string &ngName,
+    const NeuronGroup &ng,
+    const VarNameIterCtx &nmVars,
+    const std::string &varPrefix,
+    const std::string &localID);
+
+void neuronSpikeEventTest(
+    std::ostream &os,
+    const std::string &ngName,
+    const NeuronGroup &ng,
+    const VarNameIterCtx &nmVars,
+    const ExtraGlobalParamNameIterCtx &nmExtraGlobalParams,
+    const std::string &localID,
+    const std::string &ftype);
+}
 //----------------------------------------------------------------------------
 // Standard substitution functins
 //----------------------------------------------------------------------------
@@ -96,4 +130,47 @@ void neuronReset(
     const ExtraGlobalParamNameIterCtx &nmExtraGlobalParams,
     const std::string &ftype);
 
+void weightUpdateThresholdCondition(
+    std::string &eCode,
+    const std::string &sgName,
+    const SynapseGroup &sg,
+    const DerivedParamNameIterCtx &nmDerivedParams,
+    const ExtraGlobalParamNameIterCtx &nmExtraGlobalParams,
+   const string &preIdx, //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
+    const string &postIdx, //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
+    const string &devPrefix,
+    const std::string &ftype);
+
+void weightUpdateSim(
+    std::string &wCode,
+    const std::string &sgName,
+    const SynapseGroup &sg,
+    const VarNameIterCtx &wuVars,
+    const DerivedParamNameIterCtx &wuDerivedParams,
+    const ExtraGlobalParamNameIterCtx &wuExtraGlobalParams,
+    const string &preIdx, //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
+    const string &postIdx, //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
+    const string &devPrefix,
+    const std::string &ftype);
+
+void weightUpdateDynamics(
+    std::string &SDcode,
+    const SynapseGroup *sg,
+    const VarNameIterCtx &wuVars,
+    const DerivedParamNameIterCtx &wuDerivedParams,
+    const string &preIdx, //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
+    const string &postIdx, //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
+    const string &devPrefix,
+    const std::string &ftype);
+
+void weightUpdatePostLearn(
+    std::string &code,
+    const std::string &sgName,
+    const SynapseGroup *sg,
+    const DerivedParamNameIterCtx &wuDerivedParams,
+    const ExtraGlobalParamNameIterCtx &wuExtraGlobalParams,
+    const string &preIdx, //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
+    const string &postIdx, //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
+    const string &devPrefix,
+    const std::string &ftype);
 }   // StandardSubstitions

@@ -141,6 +141,18 @@ bool SynapseGroup::isPSVarZeroCopyEnabled(const std::string &var) const
     return (m_PSVarZeroCopyEnabled.find(var) != std::end(m_PSVarZeroCopyEnabled));
 }
 
+bool SynapseGroup::isPSAtomicAddRequired(unsigned int blockSize) const
+{
+    if (getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+        if (getSpanType() == 0 && getTrgNeuronGroup()->getNumNeurons() > blockSize) {
+            return true;
+        }
+        if (getSpanType() == 1 && getSrcNeuronGroup()->getNumNeurons() > blockSize) {
+            return true;
+        }
+    }
+    return false;
+}
 void SynapseGroup::addExtraGlobalParams(const std::string &groupName, std::map<std::string, std::string> &kernelParameters) const
 {
     // Synapse kernel
@@ -229,4 +241,16 @@ void SynapseGroup::addExtraGlobalSynapseDynamicsParams(const std::string &groupN
             }
         }
     }
+}
+
+std::string SynapseGroup::getOffsetPre() const
+{
+    return getSrcNeuronGroup()->isDelayRequired()
+        ? "(delaySlot * " + to_string(getSrcNeuronGroup()->getNumNeurons()) + ") + "
+        : "";
+}
+
+std::string SynapseGroup::getOffsetPost(const std::string &varPrefix) const
+{
+    return getTrgNeuronGroup()->getQueueOffset(getTrgNeuronGroupName(), varPrefix);
 }

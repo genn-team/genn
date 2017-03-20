@@ -94,7 +94,15 @@ public:
     bool isWUVarZeroCopyEnabled(const std::string &var) const;
     bool isPSVarZeroCopyEnabled(const std::string &var) const;
 
+    //!< Is this synapse group too large to use shared memory for combining postsynaptic output
+    // **THINK** this is very cuda-specific
+    bool isPSAtomicAddRequired(unsigned int blockSize) const;
+
     void addExtraGlobalParams(const std::string &groupName, std::map<string, string> &kernelParameters) const;
+
+    // **THINK** do these really belong here - they are very code-generation specific
+    std::string getOffsetPre() const;
+    std::string getOffsetPost(const std::string &varPrefix) const;
 
 private:
     //------------------------------------------------------------------------

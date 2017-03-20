@@ -117,6 +117,9 @@ public:
     void setPopulationSums(); //!< Set the accumulated sums of lowest multiple of kernel block size >= group sizes for all simulated groups.
     void finalize(); //!< Declare that the model specification is finalised in modelDefinition().
 
+    const map<string, string> &getNeuronKernelParameters() const{ return neuronKernelParameters; }
+    const map<string, string> &getSynapseKernelParameters() const{ return synapseKernelParameters; }
+
     bool zeroCopyInUse() const;
 
     // PUBLIC NEURON FUNCTIONS

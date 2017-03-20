@@ -38,21 +38,6 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
                        );
 
 
-//-------------------------------------------------------------------------
-/*!
-  \brief Function for generating the CUDA synapse kernel code that handles presynaptic 
-  spikes or spike type events
-*/
-//-------------------------------------------------------------------------
-
-void generate_process_presynaptic_events_code_CPU(
-    ostream &os, //!< output stream for code
-    const string &sgName,
-    const SynapseGroup &sg,
-    const string &postfix, //!< whether to generate code for true spikes or spike type events
-    const string &ftype);
-
-
 //--------------------------------------------------------------------------
 /*!
   \brief Function that generates code that will simulate all synapses of the model on the CPU.
