@@ -27,6 +27,7 @@
 #include "CodeHelper.h"
 
 #include <stdint.h>
+#include <algorithm>
 #include <cfloat>
 
 //--------------------------------------------------------------------------
@@ -847,7 +848,7 @@ void genRunner(const NNmodel &model, //!< Model description
             os << "__device__ unsigned int *dd_indInG" << s.first << ";" << ENDL;
             os << "unsigned int *d_ind" << s.first << ";" << ENDL;
             os << "__device__ unsigned int *dd_ind" << s.first << ";" << ENDL;
-            if (model.synapseUsesSynapseDynamics[i]) {
+            if (model.isSynapseGroupDynamicsRequired(s.first)) {
                 os << "unsigned int *d_preInd" << s.first << ";" << ENDL;
                 os << "__device__ unsigned int *dd_preInd" << s.first << ";" << ENDL;
             }
@@ -1306,7 +1307,7 @@ void genRunner(const NNmodel &model, //!< Model description
             os << "  initializeSparseArray(C" << s.first << ",";
             os << " d_ind" << s.first << ",";
             os << " d_indInG" << s.first << ",";
-            os << srcNeuronGroup->getNumNeurons() <<");" << ENDL;
+            os << s.second.getSrcNeuronGroup()->getNumNeurons() <<");" << ENDL;
             if (model.isSynapseGroupDynamicsRequired(s.first)) {
                 os << "  initializeSparseArrayPreInd(C" << s.first << ",";
                 os << " d_preInd" << s.first << ");" << ENDL;
@@ -1316,11 +1317,11 @@ void genRunner(const NNmodel &model, //!< Model description
                 os << "  d_revInd" << s.first << ",";
                 os << "  d_revIndInG" << s.first << ",";
                 os << "  d_remap" << s.first << ",";
-                os << trgNeuronGroup->getNumNeurons() <<");" << ENDL;
+                os << s.second.getTrgNeuronGroup()->getNumNeurons() <<");" << ENDL;
             }
            
             if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
-                for(const auto &v : model.synapseModel[i]->GetVars()) {
+                for(const auto &v : s.second.getWUModel()->GetVars()) {
                     if(!s.second.isWUVarZeroCopyEnabled(v.first)) {
                         os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << v.first << s.first << ", "  << v.first << s.first << ", sizeof(" << v.second << ") * size , cudaMemcpyHostToDevice));" << ENDL;
                     }
@@ -1571,7 +1572,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     }
 
     os << "#include \"neuronKrnl.cc\"" << ENDL;
-    if (model.synapseGrpN > 0) {
+    if (!model.getSynapseGroups().empty()) {
         os << "#include \"synapseKrnl.cc\"" << ENDL;
     }
 
@@ -1587,7 +1588,9 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
         for (size_t k = 0, l = nmVars.size(); k < l; k++) {
             // only copy non-zero-copied, non-pointers. Pointers don't transport between GPU and CPU
             if (nmVars[k].second.find("*") == string::npos && !n.second.isVarZeroCopyEnabled(nmVars[k].first)) {
-                const size_t size = model.neuronVarNeedQueue[i][k] ? (n.second.getNumNeurons() * n.second.getNumDelaySlots()) : n.second.getNumNeurons();
+                const size_t size = n.second.isVarQueueRequired(k)
+                    ? n.second.getNumNeurons() * n.second.getNumDelaySlots()
+                    : n.second.getNumNeurons();
                 os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << nmVars[k].first << n.first;
                 os << ", " << nmVars[k].first << n.first;
                 os << ", " << size << " * sizeof(" << nmVars[k].second << "), cudaMemcpyHostToDevice));" << ENDL;
@@ -1766,8 +1769,10 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
         auto nmVars = n.second.getNeuronModel()->GetVars();
         for (size_t k= 0, l= nmVars.size(); k < l; k++) {
             // only copy non-zero-copied, non-pointers. Pointers don't transport between GPU and CPU
-            if (nmVars[k].second.find("*") == string::npos && !n.second.isVarZeroCopyEnabled(nmVars[k].first) {
-                const size_t size = model.neuronVarNeedQueue[i][k] ? n.second.getNumNeurons() * n.second.getNumDelaySlots() : n.second.getNumNeurons();
+            if (nmVars[k].second.find("*") == string::npos && !n.second.isVarZeroCopyEnabled(nmVars[k].first)) {
+                const size_t size = n.second.isVarQueueRequired(k)
+                    ? n.second.getNumNeurons() * n.second.getNumDelaySlots()
+                    : n.second.getNumNeurons();
 
                 os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << nmVars[k].first << n.first;
                 os << ", d_" << nmVars[k].first << n.first;
@@ -2114,32 +2119,29 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     os << "void stepTimeGPU()" << ENDL;
     os << OB(1130) << ENDL;
 
-    if (model.synapseGrpN > 0) { 
-        unsigned int synapseGridSz = model.padSumSynapseKrnl[model.synapseGrpN - 1];
-        os << "//model.padSumSynapseTrgN[model.synapseGrpN - 1] is " << model.padSumSynapseKrnl[model.synapseGrpN - 1] << ENDL;
+    if (!model.getSynapseGroups().empty()) {
+        unsigned int synapseGridSz = model.getSynapseKernelGridSize();
+        os << "//model.padSumSynapseTrgN[model.synapseGrpN - 1] is " << synapseGridSz << ENDL;
         synapseGridSz = synapseGridSz / synapseBlkSz;
         os << "dim3 sThreads(" << synapseBlkSz << ", 1);" << ENDL;
         os << "dim3 sGrid(" << synapseGridSz << ", 1);" << ENDL;
         os << ENDL;
     }
-    if (model.lrnGroups > 0) {
-        unsigned int learnGridSz = model.padSumLearnN[model.lrnGroups - 1];
-        learnGridSz = ceil((float) learnGridSz / learnBlkSz);
+    if (!model.getSynapsePostLearnGroups().empty()) {
+        const unsigned int learnGridSz = ceil((float)model.getSynapsePostLearnGridSize() / learnBlkSz);
         os << "dim3 lThreads(" << learnBlkSz << ", 1);" << ENDL;
         os << "dim3 lGrid(" << learnGridSz << ", 1);" << ENDL;
         os << ENDL;
     }
 
-    if (model.synDynGroups > 0) {
-        unsigned int synDynGridSz = model.padSumSynDynN[model.synDynGroups - 1];
-        synDynGridSz = ceil((float) synDynGridSz / synDynBlkSz);
+    if (!model.getSynapseDynamicsGroups().empty()) {
+        const unsigned int synDynGridSz = ceil((float)model.getSynapseDynamicsGridSize() / synDynBlkSz);
         os << "dim3 sDThreads(" << synDynBlkSz << ", 1);" << ENDL;
         os << "dim3 sDGrid(" << synDynGridSz << ", 1);" << ENDL;
         os << ENDL;
     }
 
-    unsigned int neuronGridSz = model.padSumNeuronN[model.neuronGrpN - 1];
-    neuronGridSz = ceil((float) neuronGridSz / neuronBlkSz);
+    const unsigned int neuronGridSz = ceil((float) model.getNeuronGridSize() / neuronBlkSz);
     os << "dim3 nThreads(" << neuronBlkSz << ", 1);" << ENDL;
     if (neuronGridSz < (unsigned int)deviceProp[theDevice].maxGridSize[1]) {
         os << "dim3 nGrid(" << neuronGridSz << ", 1);" << ENDL;
@@ -2149,31 +2151,44 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
         os << "dim3 nGrid(" << sqGridSize << ","<< sqGridSize <<");" << ENDL;
     }
     os << ENDL;
-    if (model.synapseGrpN > 0) {
-        if (model.synDynGroups > 0) {
-            if (model.timing) os << "cudaEventRecord(synDynStart);" << ENDL;
+    if (!model.getSynapseGroups().empty()) {
+        if (!model.getSynapseDynamicsGroups().empty()) {
+            if (model.timing) {
+                os << "cudaEventRecord(synDynStart);" << ENDL;
+            }
             os << "calcSynapseDynamics <<< sDGrid, sDThreads >>> (";
-            for (size_t i= 0, l= model.synapseDynamicsKernelParameters.size(); i < l; i++) {
-                os << model.synapseDynamicsKernelParameters[i] << ", ";
+            for(const auto &p : model.getSynapseDynamicsKernelParameters()) {
+                os << p.first << ", ";
             }
             os << "t);" << ENDL;
-            if (model.timing) os << "cudaEventRecord(synDynStop);" << ENDL;
+            if (model.timing) {
+                os << "cudaEventRecord(synDynStop);" << ENDL;
+            }
         }
-        if (model.timing) os << "cudaEventRecord(synapseStart);" << ENDL;
+        if (model.timing) {
+            os << "cudaEventRecord(synapseStart);" << ENDL;
+        }
         os << "calcSynapses <<< sGrid, sThreads >>> (";
-        for (size_t i= 0, l= model.synapseKernelParameters.size(); i < l; i++) {
-            os << model.synapseKernelParameters[i] << ", ";
+        for(const auto &p : model.getSynapseKernelParameters()) {
+            os << p.first << ", ";
         }
         os << "t);" << ENDL;
-        if (model.timing) os << "cudaEventRecord(synapseStop);" << ENDL;
-        if (model.lrnGroups > 0) {
-            if (model.timing) os << "cudaEventRecord(learningStart);" << ENDL;
+        if (model.timing) {
+            os << "cudaEventRecord(synapseStop);" << ENDL;
+        }
+
+        if (!model.getSynapsePostLearnGroups().empty()) {
+            if (model.timing) {
+                os << "cudaEventRecord(learningStart);" << ENDL;
+            }
             os << "learnSynapsesPost <<< lGrid, lThreads >>> (";
-            for (size_t i= 0, l= model.simLearnPostKernelParameters.size(); i < l; i++) {
-                os << model.simLearnPostKernelParameters[i] << ", ";
+            for(const auto &p : model.getSimLearnPostKernelParameters()) {
+                os << p.first << ", ";
             }
             os << "t);" << ENDL;
-            if (model.timing) os << "cudaEventRecord(learningStop);" << ENDL;
+            if (model.timing) {
+                os << "cudaEventRecord(learningStop);" << ENDL;
+            }
         }
     }    
     for(auto &n : model.getNeuronGroups()) {
@@ -2181,25 +2196,28 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
             os << "spkQuePtr" << n.first << " = (spkQuePtr" << n.first << " + 1) % " << n.second.getNumDelaySlots() << ";" << ENDL;
         }
     }
-    if (model.timing) os << "cudaEventRecord(neuronStart);" << ENDL;
+    if (model.timing) {
+        os << "cudaEventRecord(neuronStart);" << ENDL;
+    }
+
     os << "calcNeurons <<< nGrid, nThreads >>> (";
-    for (size_t i= 0, l= model.neuronKernelParameters.size(); i < l; i++) {
-        os << model.neuronKernelParameters[i] << ", ";
+    for(const auto &p : model.getNeuronKernelParameters()) {
+        os << p.first << ", ";
     }
     os << "t);" << ENDL;
     if (model.timing) {
         os << "cudaEventRecord(neuronStop);" << ENDL;
         os << "cudaEventSynchronize(neuronStop);" << ENDL;
         os << "float tmp;" << ENDL;
-        if (model.synapseGrpN > 0) {
+        if (!model.getSynapseGroups().empty()) {
             os << "cudaEventElapsedTime(&tmp, synapseStart, synapseStop);" << ENDL;
             os << "synapse_tme+= tmp/1000.0;" << ENDL;
         }
-        if (model.lrnGroups > 0) {
+        if (!model.getSynapsePostLearnGroups().empty()) {
             os << "cudaEventElapsedTime(&tmp, learningStart, learningStop);" << ENDL;
             os << "learning_tme+= tmp/1000.0;" << ENDL;
         }
-        if (model.synDynGroups > 0) {
+        if (!model.getSynapseDynamicsGroups().empty()) {
             os << "cudaEventElapsedTime(&tmp, synDynStart, synDynStop);" << ENDL;
             os << "lsynDyn_tme+= tmp/1000.0;" << ENDL;
         }

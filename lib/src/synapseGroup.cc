@@ -84,6 +84,8 @@ void SynapseGroup::initDerivedParams(double dt)
 
 void SynapseGroup::calcKernelSizes(unsigned int blockSize, unsigned int &paddedCumSum)
 {
+    m_PaddedKernelCumSum.first = paddedCumSum;
+
     if (getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
         if (getSpanType()== 1) {
             // paddedSize is the lowest multiple of blockSize >= neuronN[synapseSource[i]
@@ -100,7 +102,7 @@ void SynapseGroup::calcKernelSizes(unsigned int blockSize, unsigned int &paddedC
     }
 
     // Store padded cumulative sum
-    m_PaddedKernelCumSum = paddedCumSum;
+    m_PaddedKernelCumSum.second = paddedCumSum;
 }
 
 unsigned int SynapseGroup::getPaddedDynKernelSize(unsigned int blockSize) const

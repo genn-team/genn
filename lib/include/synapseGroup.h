@@ -23,7 +23,7 @@ public:
                  const PostsynapticModels::Base *ps, const std::vector<double> &psParams, const std::vector<double> &psInitVals,
                  const std::string &srcNeuronGroupName, NeuronGroup *srcNeuronGroup,
                  const std::string &trgNeuronGroupName, NeuronGroup *trgNeuronGroup) :
-        m_PaddedKernelCumSum(0), m_SpanType(0), m_DelaySteps(delaySteps), m_MaxConnections(trgNeuronGroup->getNumNeurons()), m_MatrixType(matrixType),
+        m_PaddedKernelCumSum(0, 0), m_SpanType(0), m_DelaySteps(delaySteps), m_MaxConnections(trgNeuronGroup->getNumNeurons()), m_MatrixType(matrixType),
         m_SrcNeuronGroupName(srcNeuronGroupName), m_SrcNeuronGroup(srcNeuronGroup),
         m_TrgNeuronGroupName(trgNeuronGroupName), m_TrgNeuronGroup(trgNeuronGroup),
         m_TrueSpikeRequired(false), m_SpikeEventRequired(false), m_EventThresholdReTestRequired(false),
@@ -60,6 +60,8 @@ public:
     //------------------------------------------------------------------------
     // Public const methods
     //------------------------------------------------------------------------
+    std::pair<unsigned int, unsigned int> getPaddedKernelCumSum() const{ return m_PaddedKernelCumSum; }
+
     unsigned int getSpanType() const{ return m_SpanType; }
     unsigned int getDelaySteps() const{ return m_DelaySteps; }
     unsigned int getMaxConnections() const{ return m_MaxConnections; }
@@ -119,7 +121,7 @@ private:
     // Members
     //------------------------------------------------------------------------
     //!< Starting index of this synapse group in synapse kernel
-    unsigned int m_PaddedKernelCumSum;
+    std::pair<unsigned int, unsigned int> m_PaddedKernelCumSum;
 
     //!< Execution order of synapses in the kernel. It determines whether synapses are executed in parallel for every postsynaptic neuron (0, default), or for every presynaptic neuron (1).
     unsigned int m_SpanType;

@@ -118,6 +118,17 @@ void NNmodel::setSynapseClusterIndex(const string &synapseGroup, /**< Name of th
     findSynapseGroup(synapseGroup)->setClusterIndex(hostID, deviceID);
 }
 
+unsigned int NNmodel::getNeuronGridSize() const
+{
+    if(m_NeuronGroups.empty()) {
+        return 0;
+    }
+    else {
+        return m_NeuronGroups.rbegin()->second.getPaddedCumSumNeurons().second;
+    }
+
+}
+
 const NeuronGroup *NNmodel::findNeuronGroup(const std::string &name) const
 {
     auto neuronGroup = m_NeuronGroups.find(name);
@@ -224,6 +235,37 @@ void NNmodel::activateDirectInput(
   unsigned int /**< Type of input: 1 if common input, 2 if custom input from file, 3 if custom input as a rule*/)
 {
     gennError("This function has been deprecated since GeNN 2.2. Use neuron variables, extraGlobalNeuronKernelParameters, or parameters instead.");
+}
+
+unsigned int NNmodel::getSynapseKernelGridSize() const
+{
+    if(m_SynapseGroups.empty()) {
+        return 0;
+    }
+    else {
+        return  m_SynapseGroups.rbegin()->second.getPaddedKernelCumSum().second;
+    }
+
+}
+
+unsigned int NNmodel::getSynapsePostLearnGridSize() const
+{
+    if(m_SynapsePostLearnGroups.empty()) {
+        return 0;
+    }
+    else {
+        return m_SynapsePostLearnGroups.rbegin()->second.second;
+    }
+}
+
+unsigned int NNmodel::getSynapseDynamicsGridSize() const
+{
+    if(m_SynapseDynamicsGroups.empty()) {
+        return 0;
+    }
+    else {
+        return m_SynapseDynamicsGroups.rbegin()->second.second;
+    }
 }
 
 const SynapseGroup *NNmodel::findSynapseGroup(const std::string &name) const
@@ -614,6 +656,50 @@ string NNmodel::scalarExpr(const double val) const
     return tmp;
 }
 
+//--------------------------------------------------------------------------
+/*! \brief Accumulate the sums and block-size-padded sums of all simulation groups.
+
+  This method saves the neuron numbers of the populations rounded to the next multiple of the block size as well as the sums s(i) = sum_{1...i} n_i of the rounded population sizes. These are later used to determine the branching structure for the generated neuron kernel code. 
+*/
+//--------------------------------------------------------------------------
+
+void NNmodel::setPopulationSums()
+{
+    // NEURON GROUPS
+    unsigned int cumSumNeurons = 0;
+    unsigned int paddedCumSumNeurons = 0;
+    for(auto &n : m_NeuronGroups) {
+        n.second.calcSizes(neuronBlkSz, cumSumNeurons, paddedCumSumNeurons);
+    }
+
+    // SYNAPSE groups
+    unsigned int paddedCumSumSynGroups = 0;
+    unsigned int paddedCumSumSynDynGroups = 0;
+    unsigned int paddedCumSumSynPostLrnGroups = 0;
+    for(auto &s : m_SynapseGroups) {
+        if (!s.second.getWUModel()->GetSimCode().empty()) {
+            // Calculate synapse kernel sizes
+            s.second.calcKernelSizes(synapseBlkSz, paddedCumSumSynGroups);
+        }
+
+        if (!s.second.getWUModel()->GetLearnPostCode().empty()) {
+            unsigned int startID = paddedCumSumSynPostLrnGroups;
+            paddedCumSumSynPostLrnGroups += s.second.getPaddedPostLearnKernelSize(learnBlkSz);
+            m_SynapsePostLearnGroups.insert(std::pair<string, std::pair<unsigned int, unsigned int>>(
+                s.first,
+                std::pair<unsigned int, unsigned int>(startID, paddedCumSumSynPostLrnGroups)));
+        }
+
+         if (!s.second.getWUModel()->GetSynapseDynamicsCode().empty()) {
+            unsigned int startID = paddedCumSumSynDynGroups;
+            paddedCumSumSynDynGroups += s.second.getPaddedDynKernelSize(synDynBlkSz);
+            m_SynapseDynamicsGroups.insert(std::pair<std::string, std::pair<unsigned int, unsigned int>>(
+                s.first,
+                std::pair<unsigned int, unsigned int>(startID, paddedCumSumSynDynGroups)));
+         }
+    }
+}
+
 void NNmodel::finalize()
 {
     //initializing learning parameters to start
@@ -623,23 +709,15 @@ void NNmodel::finalize()
     final = true;
 
     // NEURON GROUPS
-    unsigned int cumSumNeurons = 0;
-    unsigned int paddedCumSumNeurons = 0;
     for(auto &n : m_NeuronGroups) {
         // Initialize derived parameters
         n.second.initDerivedParams(dt);
-
-        // Calculate padded sizes
-        n.second.calcSizes(neuronBlkSz, cumSumNeurons, paddedCumSumNeurons);
 
         // Make extra global parameter lists
         n.second.addExtraGlobalParams(n.first, neuronKernelParameters);
     }
 
     // SYNAPSE groups
-    unsigned int paddedCumSumSynGroups = 0;
-    unsigned int paddedCumSumSynDynGroups = 0;
-    unsigned int paddedCumSumSynPostLrnGroups = 0;
     for(auto &s : m_SynapseGroups) {
         const auto *wu = s.second.getWUModel();
 
@@ -659,22 +737,13 @@ void NNmodel::finalize()
 
             // analyze which neuron variables need queues
             s.second.getSrcNeuronGroup()->updateVarQueues(wu->GetSimCode());
-
-            // Calculate synapse kernel sizes
-            s.second.calcKernelSizes(synapseBlkSz, paddedCumSumSynGroups);
         }
 
         if (!wu->GetLearnPostCode().empty()) {
-            paddedCumSumSynPostLrnGroups += s.second.getPaddedPostLearnKernelSize(learnBlkSz);
-            m_SynapsePostLearnGroups.insert(pair<string, unsigned int>(s.first, paddedCumSumSynPostLrnGroups));
-
             s.second.getSrcNeuronGroup()->updateVarQueues(wu->GetLearnPostCode());
         }
 
         if (!wu->GetSynapseDynamicsCode().empty()) {
-            paddedCumSumSynDynGroups += s.second.getPaddedDynKernelSize(synDynBlkSz);
-            m_SynapseDynamicsGroups.insert(std::pair<std::string, unsigned int>(s.first, paddedCumSumSynDynGroups));
-
             s.second.getSrcNeuronGroup()->updateVarQueues(wu->GetSynapseDynamicsCode());
         }
     }
@@ -720,6 +789,8 @@ void NNmodel::finalize()
             }
         }
     }
+
+    setPopulationSums();
 
 #ifndef CPU_ONLY
     // figure out where to reset the spike counters

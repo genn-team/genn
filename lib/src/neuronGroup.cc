@@ -71,13 +71,17 @@ void NeuronGroup::calcSizes(unsigned int blockSize, unsigned int &cumSum, unsign
     // paddedSize is the lowest multiple of neuronBlkSz >= neuronN[i]
     const unsigned int paddedSize = ceil((double)getNumNeurons() / (double) blockSize) * (double) blockSize;
 
+    // Store current cummulative sum in first
+    m_CumSumNeurons.first = cumSum;
+    m_PaddedCumSumNeurons.first = paddedCumSum;
+
     // Update global cummulative sums of neurons
     cumSum += getNumNeurons();
     paddedCumSum +=  paddedSize;
 
     // Store cummulative sums of point after this neuron group
-    m_CumSumNeurons = cumSum;
-    m_PaddedCumSumNeurons = paddedCumSum;
+    m_CumSumNeurons.second = cumSum;
+    m_PaddedCumSumNeurons.second = paddedCumSum;
 }
 
 size_t NeuronGroup::addInSyn(const string &synapseName)

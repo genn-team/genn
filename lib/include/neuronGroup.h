@@ -17,7 +17,7 @@ class NeuronGroup
 public:
     NeuronGroup(int numNeurons, const NeuronModels::Base *neuronModel,
                 const std::vector<double> &params, const std::vector<double> &initVals) :
-        m_NumNeurons(numNeurons), m_CumSumNeurons(0), m_PaddedCumSumNeurons(0),
+        m_NumNeurons(numNeurons), m_CumSumNeurons(0, 0), m_PaddedCumSumNeurons(0, 0),
         m_NeuronModel(neuronModel), m_Params(params), m_InitVals(initVals),
         m_SpikeTimeRequired(false), m_TrueSpikeRequired(false), m_SpikeEventRequired(false), m_QueueRequired(false),
         m_NumDelaySlots(1),
@@ -70,7 +70,7 @@ public:
     // Public const methods
     //------------------------------------------------------------------------
     unsigned int getNumNeurons() const{ return m_NumNeurons; }
-    unsigned int getPaddedCumSumNeurons() const{ return m_PaddedCumSumNeurons; }
+    const std::pair<unsigned int, unsigned int> &getPaddedCumSumNeurons() const{ return m_PaddedCumSumNeurons; }
     const NeuronModels::Base *getNeuronModel() const{ return m_NeuronModel; }
 
     const std::vector<double> &getParams() const{ return m_Params; }
@@ -115,8 +115,8 @@ private:
     // Members
     //------------------------------------------------------------------------
     unsigned int m_NumNeurons;
-    unsigned int m_CumSumNeurons;
-    unsigned int m_PaddedCumSumNeurons;
+    std::pair<unsigned int, unsigned int> m_CumSumNeurons;
+    std::pair<unsigned int, unsigned int> m_PaddedCumSumNeurons;
 
     const NeuronModels::Base *m_NeuronModel;
     std::vector<double> m_Params;

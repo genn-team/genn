@@ -117,15 +117,16 @@ public:
     void setPopulationSums(); //!< Set the accumulated sums of lowest multiple of kernel block size >= group sizes for all simulated groups.
     void finalize(); //!< Declare that the model specification is finalised in modelDefinition().
 
-    const map<string, string> &getNeuronKernelParameters() const{ return neuronKernelParameters; }
-    const map<string, string> &getSynapseKernelParameters() const{ return synapseKernelParameters; }
-
     bool zeroCopyInUse() const;
 
     // PUBLIC NEURON FUNCTIONS
     //========================
     const map<string, NeuronGroup> &getNeuronGroups() const{ return m_NeuronGroups; }
-    
+
+    const map<string, string> &getNeuronKernelParameters() const{ return neuronKernelParameters; }
+
+    unsigned int getNeuronGridSize() const;
+
     const NeuronGroup *findNeuronGroup(const std::string &name) const;
     NeuronGroup *findNeuronGroup(const std::string &name);
 
@@ -168,8 +169,16 @@ public:
     // PUBLIC SYNAPSE FUNCTIONS
     //=========================
     const map<string, SynapseGroup> &getSynapseGroups() const{ return m_SynapseGroups; }
-    const map<string, unsigned int> &getSynapsePostLearnGroups() const{ return m_SynapsePostLearnGroups; }
-    const map<string, unsigned int> &getSynapseDynamicsGroups() const{ return m_SynapseDynamicsGroups; }
+    const map<string, std::pair<unsigned int, unsigned int>> &getSynapsePostLearnGroups() const{ return m_SynapsePostLearnGroups; }
+    const map<string, std::pair<unsigned int, unsigned int>> &getSynapseDynamicsGroups() const{ return m_SynapseDynamicsGroups; }
+
+    const map<string, string> &getSynapseKernelParameters() const{ return synapseKernelParameters; }
+    const map<string, string> &getSimLearnPostKernelParameters() const{ return synapseDynamicsKernelParameters; }
+    const map<string, string> &getSynapseDynamicsKernelParameters() const{ return synapseDynamicsKernelParameters; }
+
+    unsigned int getSynapseKernelGridSize() const;
+    unsigned int getSynapsePostLearnGridSize() const;
+    unsigned int getSynapseDynamicsGridSize() const;
 
     const SynapseGroup *findSynapseGroup(const std::string &name) const;
     SynapseGroup *findSynapseGroup(const std::string &name);    
@@ -251,13 +260,13 @@ private:
     //!< Named synapse groups
     map<string, SynapseGroup> m_SynapseGroups;
 
-    //!< Mapping  of synapse group names which have postsynaptic learning to their padded size
+    //!< Mapping  of synapse group names which have postsynaptic learning to their start and end padded indices
     //!< **THINK** is this the right container?
-    map<string, unsigned int> m_SynapsePostLearnGroups;
+    map<string, std::pair<unsigned int, unsigned int>> m_SynapsePostLearnGroups;
 
-    //!< Mapping of synapse group names which have synapse dynamics to their padded size
+    //!< Mapping of synapse group names which have synapse dynamics to their start and end padded indices
     //!< **THINK** is this the right container?
-    map<string, unsigned int> m_SynapseDynamicsGroups;
+    map<string, std::pair<unsigned int, unsigned int>> m_SynapseDynamicsGroups;
 
     // Kernel members
     map<string, string> neuronKernelParameters;
