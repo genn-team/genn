@@ -685,17 +685,21 @@ void NNmodel::setPopulationSums()
         if (!s.second.getWUModel()->GetLearnPostCode().empty()) {
             unsigned int startID = paddedCumSumSynPostLrnGroups;
             paddedCumSumSynPostLrnGroups += s.second.getPaddedPostLearnKernelSize(learnBlkSz);
-            m_SynapsePostLearnGroups.insert(std::pair<string, std::pair<unsigned int, unsigned int>>(
-                s.first,
-                std::pair<unsigned int, unsigned int>(startID, paddedCumSumSynPostLrnGroups)));
+
+            // Add this synapse group to map of synapse groups with postsynaptic learning
+            // or update the existing entry with the new block sizes
+            m_SynapsePostLearnGroups[s.first] = std::pair<unsigned int, unsigned int>(
+                startID, paddedCumSumSynPostLrnGroups);
         }
 
          if (!s.second.getWUModel()->GetSynapseDynamicsCode().empty()) {
             unsigned int startID = paddedCumSumSynDynGroups;
             paddedCumSumSynDynGroups += s.second.getPaddedDynKernelSize(synDynBlkSz);
-            m_SynapseDynamicsGroups.insert(std::pair<std::string, std::pair<unsigned int, unsigned int>>(
-                s.first,
-                std::pair<unsigned int, unsigned int>(startID, paddedCumSumSynDynGroups)));
+
+            // Add this synapse group to map of synapse groups with dynamics
+            // or update the existing entry with the new block sizes
+            m_SynapseDynamicsGroups[s.first] = std::pair<unsigned int, unsigned int>(
+                startID, paddedCumSumSynDynGroups);
          }
     }
 }
