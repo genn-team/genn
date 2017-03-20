@@ -798,11 +798,11 @@ void NNmodel::finalize()
 
 #ifndef CPU_ONLY
     // figure out where to reset the spike counters
-    if (!m_SynapseGroups.empty()) { // no synapses -> reset in neuron kernel
+    if (m_SynapseGroups.empty()) { // no synapses -> reset in neuron kernel
         resetKernel= GENN_FLAGS::calcNeurons;
     }
     else { // there are synapses
-        if (m_SynapsePostLearnGroups.empty()) {
+        if (!m_SynapsePostLearnGroups.empty()) {
             resetKernel= GENN_FLAGS::learnSynapsesPost;
         }
         else {
