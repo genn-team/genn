@@ -42,7 +42,12 @@ public:
     void setSpikeEventRequired(){ m_SpikeEventRequired = true; }
     void setEventThresholdReTestRequired(){ m_EventThresholdReTestRequired = true; }
 
+    //!< Function to enable the use of zero-copied memory for a particular weight update model state variable:
+    //!< May improve IO performance at the expense of kernel performance
     void setWUVarZeroCopyEnabled(const std::string &varName);
+
+    //!< Function to enable the use zero-copied memory for a particular postsynaptic model state variable
+    //!< May improve IO performance at the expense of kernel performance
     void setPSVarZeroCopyEnabled(const std::string &varName);
     void setClusterIndex(int hostID, int deviceID){ m_HostID = hostID; m_DeviceID = deviceID; }
 

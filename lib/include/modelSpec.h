@@ -122,13 +122,15 @@ public:
     // PUBLIC NEURON FUNCTIONS
     //========================
     const map<string, NeuronGroup> &getNeuronGroups() const{ return m_NeuronGroups; }
+    
     const NeuronGroup *findNeuronGroup(const std::string &name) const;
+    NeuronGroup *findNeuronGroup(const std::string &name);
 
-    void addNeuronPopulation(const string&, unsigned int, unsigned int, const double *, const double *); //!< Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population
-    void addNeuronPopulation(const string&, unsigned int, unsigned int, const vector<double>&, const vector<double>&); //!< Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population
+    NeuronGroup *addNeuronPopulation(const string&, unsigned int, unsigned int, const double *, const double *); //!< Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population
+    NeuronGroup *addNeuronPopulation(const string&, unsigned int, unsigned int, const vector<double>&, const vector<double>&); //!< Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population
 
     template<typename NeuronModel>
-    void addNeuronPopulation(const string &name, unsigned int size,
+    NeuronGroup *addNeuronPopulation(const string &name, unsigned int size,
                             const typename NeuronModel::ParamValues &paramValues, const typename NeuronModel::VarValues &varValues)
     {
         if (!GeNNReady) {
@@ -147,15 +149,15 @@ public:
         if(!result.second)
         {
             gennError("Cannot add a neuron population with duplicate name:" + name);
+            return NULL;
         }
-
+        else
+        {
+            return &result.first->second;
+        }
     }
 
     void setNeuronClusterIndex(const string &neuronGroup, int hostID, int deviceID); //!< Function for setting which host and which device a neuron group will be simulated on
-    void setNeuronSpikeZeroCopy(const string &neuronGroup);   //!< Function to specify that neuron group should use zero-copied memory for its spikes - May improve IO performance at the expense of kernel performance
-    void setNeuronSpikeEventZeroCopy(const string &neuronGroup);   //!< Function to specify that neuron group should use zero-copied memory for its spike-like events - May improve IO performance at the expense of kernel performance
-    void setNeuronSpikeTimeZeroCopy(const string &neuronGroup);   //!< Function to specify that neuron group should use zero-copied memory for its spike times - May improve IO performance at the expense of kernel performance
-    void setNeuronVarZeroCopy(const string &neuronGroup, const string &var);   //!< Function to specify that neuron group should use zero-copied memory for a particular state variable - May improve IO performance at the expense of kernel performance
 
     void activateDirectInput(const string&, unsigned int type); //! This function has been deprecated in GeNN 2.2
     void setConstInp(const string&, double);
@@ -163,25 +165,25 @@ public:
     // PUBLIC SYNAPSE FUNCTIONS
     //=========================
     const map<string, SynapseGroup> &getSynapseGroups() const{ return m_SynapseGroups; }
-    const SynapseGroup *findSynapseGroup(const std::string &name) const;
-
     const map<string, unsigned int> &getSynapsePostLearnGroups() const{ return m_SynapsePostLearnGroups; }
     const map<string, unsigned int> &getSynapseDynamicsGroups() const{ return m_SynapseDynamicsGroups; }
 
+    const SynapseGroup *findSynapseGroup(const std::string &name) const;
+    SynapseGroup *findSynapseGroup(const std::string &name);    
 
     bool isSynapseGroupDynamicsRequired(const std::string &name) const;
     bool isSynapseGroupPostLearningRequired(const std::string &name) const;
 
-    void addSynapsePopulation(const string &name, unsigned int syntype, SynapseConnType conntype, SynapseGType gtype, const string& src, const string& trg, const double *p); //!< This function has been depreciated as of GeNN 2.2.
-    void addSynapsePopulation(const string&, unsigned int, SynapseConnType, SynapseGType, unsigned int, unsigned int, const string&, const string&, const double *, const double *, const double *); //!< Overloaded version without initial variables for synapses
-    void addSynapsePopulation(const string&, unsigned int, SynapseConnType, SynapseGType, unsigned int, unsigned int, const string&, const string&, const double *, const double *, const double *, const double *); //!< Method for adding a synapse population to a neuronal network model, using C++ string for the name of the population
-    void addSynapsePopulation(const string&, unsigned int, SynapseConnType, SynapseGType, unsigned int, unsigned int, const string&, const string&,
+    SynapseGroup *addSynapsePopulation(const string &name, unsigned int syntype, SynapseConnType conntype, SynapseGType gtype, const string& src, const string& trg, const double *p); //!< This function has been depreciated as of GeNN 2.2.
+    SynapseGroup *addSynapsePopulation(const string&, unsigned int, SynapseConnType, SynapseGType, unsigned int, unsigned int, const string&, const string&, const double *, const double *, const double *); //!< Overloaded version without initial variables for synapses
+    SynapseGroup *addSynapsePopulation(const string&, unsigned int, SynapseConnType, SynapseGType, unsigned int, unsigned int, const string&, const string&, const double *, const double *, const double *, const double *); //!< Method for adding a synapse population to a neuronal network model, using C++ string for the name of the population
+    SynapseGroup *addSynapsePopulation(const string&, unsigned int, SynapseConnType, SynapseGType, unsigned int, unsigned int, const string&, const string&,
                               const vector<double>&, const vector<double>&, const vector<double>&, const vector<double>&); //!< Method for adding a synapse population to a neuronal network model, using C++ string for the name of the population
 
     template<typename WeightUpdateModel, typename PostsynapticModel>
-    void addSynapsePopulation(const string &name, SynapseMatrixType mtype, unsigned int delaySteps, const string& src, const string& trg,
-                              const typename WeightUpdateModel::ParamValues &weightParamValues, const typename WeightUpdateModel::VarValues &weightVarValues,
-                              const typename PostsynapticModel::ParamValues &postsynapticParamValues, const typename PostsynapticModel::VarValues &postsynapticVarValues)
+    SynapseGroup *addSynapsePopulation(const string &name, SynapseMatrixType mtype, unsigned int delaySteps, const string& src, const string& trg,
+                                       const typename WeightUpdateModel::ParamValues &weightParamValues, const typename WeightUpdateModel::VarValues &weightVarValues,
+                                       const typename PostsynapticModel::ParamValues &postsynapticParamValues, const typename PostsynapticModel::VarValues &postsynapticVarValues)
     {
         if (!GeNNReady) {
             gennError("You need to call initGeNN first.");
@@ -220,30 +222,23 @@ public:
         if(!result.second)
         {
             gennError("Cannot add a synapse population with duplicate name:" + name);
+            return NULL;
         }
+        else
+        {
+            trgNeuronGrp->addInSyn(name);
+            srcNeuronGrp->addOutSyn(name);
 
-        trgNeuronGrp->addInSyn(name);
-        srcNeuronGrp->addOutSyn(name);
+            return &result.first->second;
+        }
     }
 
     void setSynapseG(const string&, double); //!< This function has been depreciated as of GeNN 2.2.
     void setMaxConn(const string&, unsigned int); //< Set maximum connections per neuron for the given group (needed for optimization by sparse connectivity)
     void setSpanTypeToPre(const string&); //!< Method for switching the execution order of synapses to pre-to-post
     void setSynapseClusterIndex(const string &synapseGroup, int hostID, int deviceID); //!< Function for setting which host and which device a synapse group will be simulated on
-    void setSynapseWeightUpdateVarZeroCopy(const string &synapseGroup, const string &var);   //!< Function to specify that synapse group should use zero-copied memory for a particular weight update model state variable - May improve IO performance at the expense of kernel performance
-    void setSynapsePostsynapticVarZeroCopy(const string &synapseGroup, const string &var);   //!< Function to specify that synapse group should use zero-copied memory for a particular postsynaptic model state variable - May improve IO performance at the expense of kernel performance
 
 private:
-    //--------------------------------------------------------------------------
-    // Private neuron methods
-    //--------------------------------------------------------------------------
-    NeuronGroup *findNeuronGroup(const std::string &name);
-
-    //--------------------------------------------------------------------------
-    // Private synapse methods
-    //--------------------------------------------------------------------------
-    SynapseGroup *findSynapseGroup(const std::string &name);
-
     //--------------------------------------------------------------------------
     // Private members
     //--------------------------------------------------------------------------

@@ -105,46 +105,6 @@ void NNmodel::setNeuronClusterIndex(const string &neuronGroup, /**< Name of the 
     findNeuronGroup(neuronGroup)->setClusterIndex(hostID, deviceID);
 }
 
-//--------------------------------------------------------------------------
-/*! \brief Function to specify that neuron group should use zero-copied memory for its spikes -
- * May improve IO performance at the expense of kernel performance
- */
-//--------------------------------------------------------------------------
-void NNmodel::setNeuronSpikeZeroCopy(const string &neuronGroup /**< Name of the neuron population */)
-{
-    findNeuronGroup(neuronGroup)->setSpikeZeroCopyEnabled();
-}
-
-//--------------------------------------------------------------------------
-/*! \brief Function to specify that neuron group should use zero-copied memory for its spike-like events -
- * May improve IO performance at the expense of kernel performance
- */
-//--------------------------------------------------------------------------
-void NNmodel::setNeuronSpikeEventZeroCopy(const string &neuronGroup  /**< Name of the neuron population */)
-{
-    findNeuronGroup(neuronGroup)->setSpikeEventZeroCopyEnabled();
-}
-
-//--------------------------------------------------------------------------
-/*! \brief Function to specify that neuron group should use zero-copied memory for its spike times -
- * May improve IO performance at the expense of kernel performance
- */
-//--------------------------------------------------------------------------
-void NNmodel::setNeuronSpikeTimeZeroCopy(const string &neuronGroup)
-{
-    findNeuronGroup(neuronGroup)->setSpikeTimeZeroCopyEnabled();
-}
-
-//--------------------------------------------------------------------------
-/*! \brief Function to specify that neuron group should use zero-copied memory for a particular state variable -
- * May improve IO performance at the expense of kernel performance
- */
-//--------------------------------------------------------------------------
-void NNmodel::setNeuronVarZeroCopy(const string &neuronGroup, const string &var)
-{
-    findNeuronGroup(neuronGroup)->setVarZeroCopyEnabled(var);
-}
-
 
 //--------------------------------------------------------------------------
 /*! \brief This function is for setting which host and which device a synapse group will be simulated on
@@ -158,27 +118,22 @@ void NNmodel::setSynapseClusterIndex(const string &synapseGroup, /**< Name of th
     findSynapseGroup(synapseGroup)->setClusterIndex(hostID, deviceID);
 }
 
-//--------------------------------------------------------------------------
-/*! \brief Function to specify that synapse group should use zero-copied memory for a particular weight update model state variable -
- * May improve IO performance at the expense of kernel performance
- */
-//--------------------------------------------------------------------------
-void NNmodel::setSynapseWeightUpdateVarZeroCopy(const string &synapseGroup, const string &var)
-{
-    findSynapseGroup(synapseGroup)->setWUVarZeroCopyEnabled(var);
-}
-
-//--------------------------------------------------------------------------
-/*! \brief Function to specify that synapse group should use zero-copied memory for a particular postsynaptic model state variable -
- * May improve IO performance at the expense of kernel performance
- * */
-//--------------------------------------------------------------------------
-void NNmodel::setSynapsePostsynapticVarZeroCopy(const string &synapseGroup, const string &var)
-{
-    findSynapseGroup(synapseGroup)->setPSVarZeroCopyEnabled(var);
-}
-
 const NeuronGroup *NNmodel::findNeuronGroup(const std::string &name) const
+{
+    auto neuronGroup = m_NeuronGroups.find(name);
+
+    if(neuronGroup == m_NeuronGroups.cend())
+    {
+        gennError("neuron group " + name + " not found, aborting ...");
+        return NULL;
+    }
+    else
+    {
+        return &neuronGroup->second;
+    }
+}
+
+NeuronGroup *NNmodel::findNeuronGroup(const std::string &name)
 {
     auto neuronGroup = m_NeuronGroups.find(name);
 
@@ -200,7 +155,7 @@ const NeuronGroup *NNmodel::findNeuronGroup(const std::string &name) const
  */
 //--------------------------------------------------------------------------
 
-void NNmodel::addNeuronPopulation(
+NeuronGroup *NNmodel::addNeuronPopulation(
   const string &name, /**<  The name of the neuron population*/
   unsigned int nNo, /**<  Number of neurons in the population */
   unsigned int type, /**<  Type of the neurons, refers to either a standard type or user-defined type*/
@@ -215,7 +170,7 @@ void NNmodel::addNeuronPopulation(
   for (size_t i= 0; i < nModels[type].varNames.size(); i++) {
     vini.push_back(ini[i]);
   }
-  addNeuronPopulation(name, nNo, type, vp, vini);
+  return addNeuronPopulation(name, nNo, type, vp, vini);
 }
   
 
@@ -224,7 +179,7 @@ void NNmodel::addNeuronPopulation(
  */
 //--------------------------------------------------------------------------
 
-void NNmodel::addNeuronPopulation(
+NeuronGroup *NNmodel::addNeuronPopulation(
   const string &name, /**<  The name of the neuron population*/
   unsigned int nNo, /**<  Number of neurons in the population */
   unsigned int type, /**<  Type of the neurons, refers to either a standard type or user-defined type*/
@@ -251,6 +206,11 @@ void NNmodel::addNeuronPopulation(
     if(!result.second)
     {
         gennError("Cannot add a neuron population with duplicate name:" + name);
+        return NULL;
+    }
+    else
+    {
+        return &result.first->second;
     }
 }
 
@@ -267,6 +227,21 @@ void NNmodel::activateDirectInput(
 }
 
 const SynapseGroup *NNmodel::findSynapseGroup(const std::string &name) const
+{
+    auto synapseGroup = m_SynapseGroups.find(name);
+
+    if(synapseGroup == m_SynapseGroups.cend())
+    {
+        gennError("synapse group " + name + " not found, aborting ...");
+        return NULL;
+    }
+    else
+    {
+        return &synapseGroup->second;
+    }
+}
+
+SynapseGroup *NNmodel::findSynapseGroup(const std::string &name)
 {
     auto synapseGroup = m_SynapseGroups.find(name);
 
@@ -299,7 +274,7 @@ bool NNmodel::isSynapseGroupPostLearningRequired(const std::string &name) const
  */
 //--------------------------------------------------------------------------
 
-void NNmodel::addSynapsePopulation(
+SynapseGroup *NNmodel::addSynapsePopulation(
   const string &, /**<  The name of the synapse population*/
   unsigned int, /**< The type of synapse to be added (i.e. learning mode) */
   SynapseConnType, /**< The type of synaptic connectivity*/
@@ -309,6 +284,7 @@ void NNmodel::addSynapsePopulation(
   const double */**< A C-type array of doubles that contains synapse parameter values (common to all synapses of the population) which will be used for the defined synapses.*/)
 {
   gennError("This version of addSynapsePopulation() has been deprecated since GeNN 2.2. Please use the newer addSynapsePopulation functions instead.");
+  return NULL;
 }
 
 
@@ -317,7 +293,7 @@ void NNmodel::addSynapsePopulation(
 */
 //--------------------------------------------------------------------------
 
-void NNmodel::addSynapsePopulation(
+SynapseGroup *NNmodel::addSynapsePopulation(
   const string &name, /**<  The name of the synapse population*/
   unsigned int syntype, /**< The type of synapse to be added (i.e. learning mode) */
   SynapseConnType conntype, /**< The type of synaptic connectivity*/
@@ -332,7 +308,7 @@ void NNmodel::addSynapsePopulation(
 {
     cerr << "!!!!!!GeNN WARNING: This function has been deprecated since GeNN 2.2, and will be removed in a future release. You use the overloaded method which passes a null pointer for the initial values of weight update variables. If you use a method that uses synapse variables, please add a pointer to this vector in the function call, like:\n          addSynapsePopulation(name, syntype, conntype, gtype, NO_DELAY, EXPDECAY, src, target, double * SYNVARINI, params, postSynV,postExpSynapsePopn);" << endl;
     const double *iniv = NULL;
-    addSynapsePopulation(name, syntype, conntype, gtype, delaySteps, postsyn, src, trg, iniv, p, PSVini, ps);
+    return addSynapsePopulation(name, syntype, conntype, gtype, delaySteps, postsyn, src, trg, iniv, p, PSVini, ps);
 }
 
 
@@ -341,7 +317,7 @@ void NNmodel::addSynapsePopulation(
  */
 //--------------------------------------------------------------------------
 
-void NNmodel::addSynapsePopulation(
+SynapseGroup *NNmodel::addSynapsePopulation(
   const string &name, /**<  The name of the synapse population*/
   unsigned int syntype, /**< The type of synapse to be added (i.e. learning mode) */
   SynapseConnType conntype, /**< The type of synaptic connectivity*/
@@ -371,7 +347,7 @@ void NNmodel::addSynapsePopulation(
   for (size_t j= 0; j <  postSynModels[postsyn].pNames.size(); j++) {
     vps.push_back(ps[j]);
   }
-  addSynapsePopulation(name, syntype, conntype, gtype, delaySteps, postsyn, src, trg, vsynini, vp, vpsini, vps);
+  return addSynapsePopulation(name, syntype, conntype, gtype, delaySteps, postsyn, src, trg, vsynini, vp, vpsini, vps);
 }
 
 
@@ -380,7 +356,7 @@ void NNmodel::addSynapsePopulation(
  */
 //--------------------------------------------------------------------------
 
-void NNmodel::addSynapsePopulation(
+SynapseGroup *NNmodel::addSynapsePopulation(
   const string &name, /**<  The name of the synapse population*/
   unsigned int syntype, /**< The type of synapse to be added (i.e. learning mode) */
   SynapseConnType conntype, /**< The type of synaptic connectivity*/
@@ -468,10 +444,15 @@ void NNmodel::addSynapsePopulation(
     if(!result.second)
     {
         gennError("Cannot add a synapse population with duplicate name:" + name);
+        return NULL;
     }
+    else
+    {
+        trgNeuronGrp->addInSyn(name);
+        srcNeuronGrp->addOutSyn(name);
 
-    trgNeuronGrp->addInSyn(name);
-    srcNeuronGrp->addOutSyn(name);
+        return &result.first->second;
+    }
 }
 
 
@@ -631,36 +612,6 @@ string NNmodel::scalarExpr(const double val) const
         tmp= to_string(val);
     }
     return tmp;
-}
-
-NeuronGroup *NNmodel::findNeuronGroup(const std::string &name)
-{
-    auto neuronGroup = m_NeuronGroups.find(name);
-
-    if(neuronGroup == m_NeuronGroups.end())
-    {
-        gennError("neuron group " + name + " not found, aborting ...");
-        return NULL;
-    }
-    else
-    {
-        return &neuronGroup->second;
-    }
-}
-
-SynapseGroup *NNmodel::findSynapseGroup(const std::string &name)
-{
-    auto synapseGroup = m_SynapseGroups.find(name);
-
-    if(synapseGroup == m_SynapseGroups.cend())
-    {
-        gennError("synapse group " + name + " not found, aborting ...");
-        return NULL;
-    }
-    else
-    {
-        return &synapseGroup->second;
-    }
 }
 
 void NNmodel::finalize()

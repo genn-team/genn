@@ -40,9 +40,20 @@ public:
     void setTrueSpikeRequired(){ m_TrueSpikeRequired = true; }
     void setSpikeEventRequired(){ m_SpikeEventRequired = true; }
 
+    //!< Function to enable the use of zero-copied memory for spikes:
+    //!< May improve IO performance at the expense of kernel performance
     void setSpikeZeroCopyEnabled(){ m_SpikeZeroCopyEnabled = true; }
+
+    //!< Function to enable the use of zero-copied memory for spike-like events:
+    //!< May improve IO performance at the expense of kernel performance
     void setSpikeEventZeroCopyEnabled(){ m_SpikeEventZeroCopyEnabled = true; }
+
+    //!< Function to enable the use of zero-copied memory for spike times:
+    //!< May improve IO performance at the expense of kernel performance
     void setSpikeTimeZeroCopyEnabled(){ m_SpikeTimeZeroCopyEnabled = true; }
+
+     //!< Function to enable the use zero-copied memory for a particular state variable:
+     //!< May improve IO performance at the expense of kernel performance
     void setVarZeroCopyEnabled(const std::string &varName);
 
     void setClusterIndex(int hostID, int deviceID){ m_HostID = hostID; m_DeviceID = deviceID; }
