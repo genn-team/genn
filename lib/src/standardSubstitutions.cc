@@ -164,7 +164,6 @@ void StandardSubstitutions::postSynapseDecay(
     auto psmDerivedParams = DerivedParamNameIterCtx(sg->getPSModel()->GetDerivedParams());
 
     substitute(pdCode, "$(t)", "t");
-    substitute(pdCode, "$(inSyn)", "inSyn" + sgName + "[n]");
 
     name_substitutions(pdCode, "lps", psmVars.nameBegin, psmVars.nameEnd, sgName);
     value_substitutions(pdCode, sg->getPSModel()->GetParamNames(), sg->getPSParams());

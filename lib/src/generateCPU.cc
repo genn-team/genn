@@ -357,6 +357,7 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
 
             string pdCode = psm->GetDecayCode();
             substitute(pdCode, "$(id)", "n");
+            substitute(pdCode, "$(inSyn)", "inSyn" + sName + "[n]");
             StandardSubstitutions::postSynapseDecay(pdCode, sName, sg, n.first, n.second,
                                                     nmVars, nmDerivedParams, nmExtraGlobalParams,
                                                     model.ftype);

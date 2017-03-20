@@ -607,7 +607,8 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
             const auto *psm = sg->getPSModel();
 
             string pdCode = psm->GetDecayCode();
-            substitute(pdCode, "$(id)", "n");
+            substitute(pdCode, "$(id)", localID);
+            substitute(pdCode, "$(inSyn)", "linSyn" + sName);
             StandardSubstitutions::postSynapseDecay(pdCode, sName, sg, n.first, n.second,
                                                     nmVars, nmDerivedParams, nmExtraGlobalParams,
                                                     model.ftype);
