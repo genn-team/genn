@@ -8,7 +8,8 @@ node {
         
         dir("genn") {
             // Checkout GeNN into it
-            git "https://github.com/genn-team/genn.git"
+            // **NOTE** because we're using multi-branch project URL is substituted here
+            checkout scm
         }
         
         // If google test doesn't exist
