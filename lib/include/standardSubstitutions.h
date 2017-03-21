@@ -41,20 +41,20 @@ namespace StandardGeneratedSections
 void neuronOutputInit(
     std::ostream &os,
     const NeuronGroup &ng,
-    const std::string &varPrefix);
+    const std::string &devPrefix);
 
 void neuronLocalVarInit(
     std::ostream &os,
     const NeuronGroup &ng,
     const VarNameIterCtx &nmVars,
-    const std::string &varPrefix,
+    const std::string &devPrefix,
     const std::string &localID);
 
 void neuronLocalVarWrite(
     std::ostream &os,
     const NeuronGroup &ng,
     const VarNameIterCtx &nmVars,
-    const std::string &varPrefix,
+    const std::string &devPrefix,
     const std::string &localID);
 
 void neuronSpikeEventTest(

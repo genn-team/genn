@@ -150,9 +150,9 @@ void NeuronGroup::addSpikeEventConditionParams(const std::pair<std::string, std:
     }
 }
 
-std::string NeuronGroup::getQueueOffset(const std::string &varPrefix) const
+std::string NeuronGroup::getQueueOffset(const std::string &devPrefix) const
 {
     return isDelayRequired()
-        ? "(" + varPrefix + "spkQuePtr" + getName() + " * " + to_string(getNumNeurons()) + ") + "
+        ? "(" + devPrefix + "spkQuePtr" + getName() + " * " + to_string(getNumNeurons()) + ") + "
         : "";
 }

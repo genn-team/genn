@@ -253,7 +253,7 @@ std::string SynapseGroup::getOffsetPre() const
         : "";
 }
 
-std::string SynapseGroup::getOffsetPost(const std::string &varPrefix) const
+std::string SynapseGroup::getOffsetPost(const std::string &devPrefix) const
 {
-    return getTrgNeuronGroup()->getQueueOffset(varPrefix);
+    return getTrgNeuronGroup()->getQueueOffset(devPrefix);
 }

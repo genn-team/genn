@@ -108,7 +108,7 @@ public:
                                       std::map<string, string> &kernelParameters) const;
 
     // **THINK** do this really belong here - it is very code-generation specific
-    std::string getQueueOffset(const std::string &varPrefix) const;
+    std::string getQueueOffset(const std::string &devPrefix) const;
 
 private:
     //------------------------------------------------------------------------
