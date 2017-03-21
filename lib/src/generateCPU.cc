@@ -234,26 +234,25 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
         }
 
 
-        for(const auto &sName : n.second.getInSyn()) {
-            const SynapseGroup *sg = model.findSynapseGroup(sName);
+        for(const auto *sg : n.second.getInSyn()) {
             const auto *psm = sg->getPSModel();
 
             if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
                 for(const auto &v : psm->GetVars()) {
-                    os << v.second << " lps" << v.first << sName;
-                    os << " = " <<  v.first << sName << "[n];" << ENDL;
+                    os << v.second << " lps" << v.first << sg->getName();
+                    os << " = " <<  v.first << sg->getName() << "[n];" << ENDL;
                 }
             }
 
             // Apply substitutions to current converter code
             string psCode = psm->GetCurrentConverterCode();
             substitute(psCode, "$(id)", "n");
-            substitute(psCode, "$(inSyn)", "inSyn" + sName + "[n]");
+            substitute(psCode, "$(inSyn)", "inSyn" + sg->getName() + "[n]");
             StandardSubstitutions::postSynapseCurrentConverter(psCode, sg, n.second,
                 nmVars, nmDerivedParams, nmExtraGlobalParams, model.ftype);
 
             if (!psm->GetSupportCode().empty()) {
-                os << OB(29) << " using namespace " << sName << "_postsyn;" << ENDL;
+                os << OB(29) << " using namespace " << sg->getName() << "_postsyn;" << ENDL;
             }
             os << "Isyn += ";
             os << psCode << ";" << ENDL;
@@ -351,26 +350,25 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
         // store the defined parts of the neuron state into the global state variables V etc
         StandardGeneratedSections::neuronLocalVarWrite(os, n.second, nmVars, "", "n");
 
-         for(const auto &sName : n.second.getInSyn()) {
-            const SynapseGroup *sg = model.findSynapseGroup(sName);
+         for(const auto *sg : n.second.getInSyn()) {
             const auto *psm = sg->getPSModel();
 
             string pdCode = psm->GetDecayCode();
             substitute(pdCode, "$(id)", "n");
-            substitute(pdCode, "$(inSyn)", "inSyn" + sName + "[n]");
+            substitute(pdCode, "$(inSyn)", "inSyn" + sg->getName() + "[n]");
             StandardSubstitutions::postSynapseDecay(pdCode, sg, n.second,
                                                     nmVars, nmDerivedParams, nmExtraGlobalParams,
                                                     model.ftype);
             os << "// the post-synaptic dynamics" << ENDL;
             if (!psm->GetSupportCode().empty()) {
-                os << OB(29) << " using namespace " << sName << "_postsyn;" << ENDL;
+                os << OB(29) << " using namespace " << sg->getName() << "_postsyn;" << ENDL;
             }
             os << pdCode << ENDL;
             if (!psm->GetSupportCode().empty()) {
                 os << CB(29) << " // namespace bracket closed" << endl;
             }
             for (const auto &v : psm->GetVars()) {
-                os << v.first << sName << "[n]" << " = lps" << v.first << sName << ";" << ENDL;
+                os << v.first << sg->getName() << "[n]" << " = lps" << v.first << sg->getName() << ";" << ENDL;
             }
         }
         os << CB(10);

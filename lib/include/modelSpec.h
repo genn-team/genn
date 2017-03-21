@@ -238,10 +238,15 @@ public:
         }
         else
         {
-            trgNeuronGrp->addInSyn(name);
-            srcNeuronGrp->addOutSyn(name);
+            // Get pointer to new synapse group
+            SynapseGroup *newSynapseGroup = &result.first->second;
 
-            return &result.first->second;
+            // Add references to target and source neuron groups
+            trgNeuronGrp->addInSyn(newSynapseGroup);
+            srcNeuronGrp->addOutSyn(newSynapseGroup);
+
+            // Return
+            return newSynapseGroup;
         }
     }
 

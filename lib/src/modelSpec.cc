@@ -490,10 +490,15 @@ SynapseGroup *NNmodel::addSynapsePopulation(
     }
     else
     {
-        trgNeuronGrp->addInSyn(name);
-        srcNeuronGrp->addOutSyn(name);
+        // Get pointer to new synapse group
+        SynapseGroup *newSynapseGroup = &result.first->second;
 
-        return &result.first->second;
+        // Add references to target and source neuron groups
+        trgNeuronGrp->addInSyn(newSynapseGroup);
+        srcNeuronGrp->addOutSyn(newSynapseGroup);
+
+        // Return
+        return newSynapseGroup;
     }
 }
 
@@ -754,12 +759,11 @@ void NNmodel::finalize()
 
     // Loop through neuron populations and their outgoing synapse populations
     for(auto &n : m_NeuronGroups) {
-        for(const auto &s : n.second.getOutSyn()) {
-            SynapseGroup *synGroup = findSynapseGroup(s);
-            const auto *wu = synGroup->getWUModel();
+        for(auto *sg : n.second.getOutSyn()) {
+            const auto *wu = sg->getWUModel();
 
             if (!wu->GetEventCode().empty()) {
-                synGroup->setSpikeEventRequired();
+                sg->setSpikeEventRequired();
                 n.second.setSpikeEventRequired();
                 assert(!wu->GetEventThresholdConditionCode().empty());
 
@@ -769,13 +773,13 @@ void NNmodel::finalize()
 
                 // do an early replacement of parameters, derived parameters and extraglobalsynapse parameters
                 string eCode = wu->GetEventThresholdConditionCode();
-                value_substitutions(eCode, wu->GetParamNames(), synGroup->getWUParams());
-                value_substitutions(eCode, wuDerivedParams.nameBegin, wuDerivedParams.nameEnd, synGroup->getWUDerivedParams());
-                name_substitutions(eCode, "", wuExtraGlobalParams.nameBegin, wuExtraGlobalParams.nameEnd, s);
+                value_substitutions(eCode, wu->GetParamNames(), sg->getWUParams());
+                value_substitutions(eCode, wuDerivedParams.nameBegin, wuDerivedParams.nameEnd, sg->getWUDerivedParams());
+                name_substitutions(eCode, "", wuExtraGlobalParams.nameBegin, wuExtraGlobalParams.nameEnd, sg->getName());
 
                 // Add code and name of
                 string supportCodeNamespaceName = wu->GetSimSupportCode().empty() ?
-                    "" : s + "_weightupdate_simCode";
+                    "" : sg->getName() + "_weightupdate_simCode";
 
                 // Add code and name of support code namespace to set
                 n.second.addSpkEventCondition(eCode, supportCodeNamespaceName);
@@ -785,10 +789,9 @@ void NNmodel::finalize()
             }
         }
         if (n.second.getNumSpikeEventConditions() > 1) {
-            for(const auto &s : n.second.getOutSyn()) {
-                SynapseGroup *synapseGroup = findSynapseGroup(s);
-                if (!synapseGroup->getWUModel()->GetEventCode().empty()) {
-                    synapseGroup->setEventThresholdReTestRequired();
+            for(auto *sg : n.second.getOutSyn()) {
+                if (!sg->getWUModel()->GetEventCode().empty()) {
+                    sg->setEventThresholdReTestRequired();
                 }
             }
         }

@@ -84,18 +84,6 @@ void NeuronGroup::calcSizes(unsigned int blockSize, unsigned int &cumSum, unsign
     m_PaddedCumSumNeurons.second = paddedCumSum;
 }
 
-size_t NeuronGroup::addInSyn(const string &synapseName)
-{
-    m_InSyn.push_back(synapseName);
-    return (m_InSyn.size() - 1);
-}
-
-size_t NeuronGroup::addOutSyn(const string &synapseName)
-{
-    m_OutSyn.push_back(synapseName);
-    return (m_OutSyn.size() - 1);
-}
-
 bool NeuronGroup::isVarQueueRequired() const
 {
     return (find(begin(m_VarQueueRequired), end(m_VarQueueRequired), true) != end(m_VarQueueRequired));

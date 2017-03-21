@@ -501,26 +501,25 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
         if (n.second.getInSyn().size() > 0 || (nm->GetSimCode().find("Isyn") != string::npos)) {
             os << model.ftype << " Isyn = 0;" << ENDL;
         }
-        for(const auto &sName : n.second.getInSyn()) {
-            const SynapseGroup *sg = model.findSynapseGroup(sName);
+        for(const auto *sg : n.second.getInSyn()) {
             const auto *psm = sg->getPSModel();
 
             os << "// pull inSyn values in a coalesced access" << ENDL;
-            os << model.ftype << " linSyn" << sName << " = dd_inSyn" << sName << "[" << localID << "];" << ENDL;
+            os << model.ftype << " linSyn" << sg->getName() << " = dd_inSyn" << sg->getName() << "[" << localID << "];" << ENDL;
             if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
                 for(const auto &v : psm->GetVars()) {
-                    os << v.second << " lps" << v.first << sName;
-                    os << " = dd_" <<  v.first << sName << "[" << localID << "];" << ENDL;
+                    os << v.second << " lps" << v.first << sg->getName();
+                    os << " = dd_" <<  v.first << sg->getName() << "[" << localID << "];" << ENDL;
                 }
             }
             string psCode = psm->GetCurrentConverterCode();
             substitute(psCode, "$(id)", localID);
-            substitute(psCode, "$(inSyn)", "linSyn" + sName);
+            substitute(psCode, "$(inSyn)", "linSyn" + sg->getName());
             StandardSubstitutions::postSynapseCurrentConverter(psCode, sg, n.second,
                 nmVars, nmDerivedParams, nmExtraGlobalParams, model.ftype);
 
             if (!psm->GetSupportCode().empty()) {
-                os << OB(29) << " using namespace " << sName << "_postsyn;" << ENDL;
+                os << OB(29) << " using namespace " << sg->getName() << "_postsyn;" << ENDL;
             }
             os << "Isyn += " << psCode << ";" << ENDL;
             if (!psm->GetSupportCode().empty()) {
@@ -599,27 +598,26 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
         if (!n.second.getInSyn().empty()) {
             os << "// the post-synaptic dynamics" << ENDL;
         }
-        for(const auto &sName : n.second.getInSyn()) {
-            const SynapseGroup *sg = model.findSynapseGroup(sName);
+        for(const auto *sg : n.second.getInSyn()) {
             const auto *psm = sg->getPSModel();
 
             string pdCode = psm->GetDecayCode();
             substitute(pdCode, "$(id)", localID);
-            substitute(pdCode, "$(inSyn)", "linSyn" + sName);
+            substitute(pdCode, "$(inSyn)", "linSyn" + sg->getName());
             StandardSubstitutions::postSynapseDecay(pdCode, sg, n.second,
                                                     nmVars, nmDerivedParams, nmExtraGlobalParams,
                                                     model.ftype);
             if (!psm->GetSupportCode().empty()) {
-                os << OB(29) << " using namespace " << sName << "_postsyn;" << ENDL;
+                os << OB(29) << " using namespace " << sg->getName() << "_postsyn;" << ENDL;
             }
             os << pdCode << ENDL;
             if (!psm->GetSupportCode().empty()) {
                 os << CB(29) << " // namespace bracket closed" << endl;
             }
 
-            os << "dd_inSyn"  << sName << "[" << localID << "] = linSyn" << sName << ";" << ENDL;
+            os << "dd_inSyn"  << sg->getName() << "[" << localID << "] = linSyn" << sg->getName() << ";" << ENDL;
             for(const auto &v : psm->GetVars()) {
-                os << "dd_" <<  v.first << sName << "[" << localID << "] = lps" << v.first << sName << ";"<< ENDL;
+                os << "dd_" <<  v.first << sg->getName() << "[" << localID << "] = lps" << v.first << sg->getName() << ";"<< ENDL;
             }
         }
 

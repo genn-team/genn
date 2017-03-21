@@ -60,8 +60,8 @@ public:
 
     void addSpkEventCondition(const std::string &code, const std::string &supportCodeNamespace);
 
-    size_t addInSyn(const std::string &synapseName);
-    size_t addOutSyn(const std::string &synapseName);
+    void addInSyn(SynapseGroup *synapseGroup){ m_InSyn.push_back(synapseGroup); }
+    void addOutSyn(SynapseGroup *synapseGroup){ m_OutSyn.push_back(synapseGroup); }
 
     void initDerivedParams(double dt);
     void calcSizes(unsigned int blockSize, unsigned int &cumSum, unsigned int &paddedCumSum);
@@ -79,8 +79,8 @@ public:
     const std::vector<double> &getDerivedParams() const{ return m_DerivedParams; }
     const std::vector<double> &getInitVals() const{ return m_InitVals; }
 
-    const std::vector<string> &getInSyn() const{ return m_InSyn; }
-    const std::vector<string> &getOutSyn() const{ return m_OutSyn; }
+    const std::vector<SynapseGroup*> &getInSyn() const{ return m_InSyn; }
+    const std::vector<SynapseGroup*> &getOutSyn() const{ return m_OutSyn; }
 
     bool isSpikeTimeRequired() const{ return m_SpikeTimeRequired; }
     bool isTrueSpikeRequired() const{ return m_TrueSpikeRequired; }
@@ -124,8 +124,8 @@ private:
     std::vector<double> m_Params;
     std::vector<double> m_DerivedParams;
     std::vector<double> m_InitVals;
-    std::vector<std::string> m_InSyn;
-    std::vector<std::string> m_OutSyn;
+    std::vector<SynapseGroup*> m_InSyn;
+    std::vector<SynapseGroup*> m_OutSyn;
     bool m_SpikeTimeRequired;
     bool m_TrueSpikeRequired;
     bool m_SpikeEventRequired;
