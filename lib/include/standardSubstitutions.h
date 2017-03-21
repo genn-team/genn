@@ -72,7 +72,6 @@ namespace StandardSubstitutions
 {
 void postSynapseCurrentConverter(
     std::string &psCode,          //!< the code string to work on
-    const std::string &sgName,
     const SynapseGroup *sg,
     const NeuronGroup &ng,
     const VarNameIterCtx &nmVars,
@@ -82,7 +81,6 @@ void postSynapseCurrentConverter(
 
 void postSynapseDecay(
     std::string &pdCode,
-    const std::string &sgName,
     const SynapseGroup *sg,
     const NeuronGroup &ng,
     const VarNameIterCtx &nmVars,
@@ -123,7 +121,6 @@ void neuronReset(
 
 void weightUpdateThresholdCondition(
     std::string &eCode,
-    const std::string &sgName,
     const SynapseGroup &sg,
     const DerivedParamNameIterCtx &nmDerivedParams,
     const ExtraGlobalParamNameIterCtx &nmExtraGlobalParams,
@@ -134,7 +131,6 @@ void weightUpdateThresholdCondition(
 
 void weightUpdateSim(
     std::string &wCode,
-    const std::string &sgName,
     const SynapseGroup &sg,
     const VarNameIterCtx &wuVars,
     const DerivedParamNameIterCtx &wuDerivedParams,
@@ -156,7 +152,6 @@ void weightUpdateDynamics(
 
 void weightUpdatePostLearn(
     std::string &code,
-    const std::string &sgName,
     const SynapseGroup *sg,
     const DerivedParamNameIterCtx &wuDerivedParams,
     const ExtraGlobalParamNameIterCtx &wuExtraGlobalParams,

@@ -108,7 +108,6 @@ void StandardGeneratedSections::neuronSpikeEventTest(
 //----------------------------------------------------------------------------
 void StandardSubstitutions::postSynapseCurrentConverter(
     std::string &psCode,          //!< the code string to work on
-    const std::string &sgName,
     const SynapseGroup *sg,
     const NeuronGroup &ng,
     const VarNameIterCtx &nmVars,
@@ -128,7 +127,7 @@ void StandardSubstitutions::postSynapseCurrentConverter(
     value_substitutions(psCode, nmDerivedParams.nameBegin, nmDerivedParams.nameEnd, ng.getDerivedParams());
 
     if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
-        name_substitutions(psCode, "lps", psmVars.nameBegin, psmVars.nameEnd, sgName);
+        name_substitutions(psCode, "lps", psmVars.nameBegin, psmVars.nameEnd, sg->getName());
     }
     else {
         value_substitutions(psCode, psmVars.nameBegin, psmVars.nameEnd, sg->getPSInitVals());
@@ -144,7 +143,6 @@ void StandardSubstitutions::postSynapseCurrentConverter(
 
 void StandardSubstitutions::postSynapseDecay(
     std::string &pdCode,
-    const std::string &sgName,
     const SynapseGroup *sg,
     const NeuronGroup &ng,
     const VarNameIterCtx &nmVars,
@@ -158,7 +156,7 @@ void StandardSubstitutions::postSynapseDecay(
 
     substitute(pdCode, "$(t)", "t");
 
-    name_substitutions(pdCode, "lps", psmVars.nameBegin, psmVars.nameEnd, sgName);
+    name_substitutions(pdCode, "lps", psmVars.nameBegin, psmVars.nameEnd, sg->getName());
     value_substitutions(pdCode, sg->getPSModel()->GetParamNames(), sg->getPSParams());
     value_substitutions(pdCode, psmDerivedParams.nameBegin, psmDerivedParams.nameEnd, sg->getPSDerivedParams());
     name_substitutions(pdCode, "l", nmVars.nameBegin, nmVars.nameEnd, "");
@@ -244,7 +242,6 @@ void StandardSubstitutions::neuronReset(
 
 void StandardSubstitutions::weightUpdateThresholdCondition(
     std::string &eCode,
-    const std::string &sgName,
     const SynapseGroup &sg,
     const DerivedParamNameIterCtx &wuDerivedParams,
     const ExtraGlobalParamNameIterCtx &wuExtraGlobalParams,
@@ -255,7 +252,7 @@ void StandardSubstitutions::weightUpdateThresholdCondition(
 {
     value_substitutions(eCode, sg.getWUModel()->GetParamNames(), sg.getWUParams());
     value_substitutions(eCode, wuDerivedParams.nameBegin, wuDerivedParams.nameEnd, sg.getWUDerivedParams());
-    name_substitutions(eCode, "", wuExtraGlobalParams.nameBegin, wuExtraGlobalParams.nameEnd, sgName);
+    name_substitutions(eCode, "", wuExtraGlobalParams.nameBegin, wuExtraGlobalParams.nameEnd, sg.getName());
     neuron_substitutions_in_synaptic_code(eCode, &sg, preIdx, postIdx, devPrefix);
     eCode= ensureFtype(eCode, ftype);
     checkUnreplacedVariables(eCode, "evntThreshold");
@@ -263,7 +260,6 @@ void StandardSubstitutions::weightUpdateThresholdCondition(
 
 void StandardSubstitutions::weightUpdateSim(
     std::string &wCode,
-    const std::string &sgName,
     const SynapseGroup &sg,
     const VarNameIterCtx &wuVars,
     const DerivedParamNameIterCtx &wuDerivedParams,
@@ -279,7 +275,7 @@ void StandardSubstitutions::weightUpdateSim(
 
     value_substitutions(wCode, sg.getWUModel()->GetParamNames(), sg.getWUParams());
     value_substitutions(wCode, wuDerivedParams.nameBegin, wuDerivedParams.nameEnd, sg.getWUDerivedParams());
-    name_substitutions(wCode, "", wuExtraGlobalParams.nameBegin, wuExtraGlobalParams.nameEnd, sgName);
+    name_substitutions(wCode, "", wuExtraGlobalParams.nameBegin, wuExtraGlobalParams.nameEnd, sg.getName());
     substitute(wCode, "$(addtoinSyn)", "addtoinSyn");
     neuron_substitutions_in_synaptic_code(wCode, &sg, preIdx, postIdx, devPrefix);
     wCode= ensureFtype(wCode, ftype);
@@ -312,7 +308,6 @@ void StandardSubstitutions::weightUpdateDynamics(
 
 void StandardSubstitutions::weightUpdatePostLearn(
     std::string &code,
-    const std::string &sgName,
     const SynapseGroup *sg,
     const DerivedParamNameIterCtx &wuDerivedParams,
     const ExtraGlobalParamNameIterCtx &wuExtraGlobalParams,
@@ -323,7 +318,7 @@ void StandardSubstitutions::weightUpdatePostLearn(
 {
     value_substitutions(code, sg->getWUModel()->GetParamNames(), sg->getWUParams());
     value_substitutions(code, wuDerivedParams.nameBegin, wuDerivedParams.nameEnd, sg->getWUDerivedParams());
-    name_substitutions(code, "", wuExtraGlobalParams.nameBegin, wuExtraGlobalParams.nameEnd, sgName);
+    name_substitutions(code, "", wuExtraGlobalParams.nameBegin, wuExtraGlobalParams.nameEnd, sg->getName());
 
     // presynaptic neuron variables and parameters
     neuron_substitutions_in_synaptic_code(code, sg, preIdx, postIdx, devPrefix);

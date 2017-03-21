@@ -98,7 +98,7 @@ void generate_process_presynaptic_events_code_CPU(
             string eCode = wu->GetEventThresholdConditionCode();
             substitute(eCode, "$(id)", "n");
             substitute(eCode, "$(t)", "t");
-            StandardSubstitutions::weightUpdateThresholdCondition(eCode, sgName, sg,
+            StandardSubstitutions::weightUpdateThresholdCondition(eCode, sg,
                                                                   wuDerivedParams, wuExtraGlobalParams,
                                                                   "ipre", "ipost", "", ftype);
 
@@ -134,7 +134,7 @@ void generate_process_presynaptic_events_code_CPU(
         }
         substitute(wCode, "$(inSyn)", "inSyn" + sgName + "[ipost]");
 
-        StandardSubstitutions::weightUpdateSim(wCode, sgName, sg,
+        StandardSubstitutions::weightUpdateSim(wCode, sg,
                                                wuVars, wuDerivedParams, wuExtraGlobalParams,
                                                "ipre", "ipost", "", ftype);
         // end Code substitutions -------------------------------------------------------------------------
@@ -249,7 +249,7 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
             string psCode = psm->GetCurrentConverterCode();
             substitute(psCode, "$(id)", "n");
             substitute(psCode, "$(inSyn)", "inSyn" + sName + "[n]");
-            StandardSubstitutions::postSynapseCurrentConverter(psCode, sName, sg, n.second,
+            StandardSubstitutions::postSynapseCurrentConverter(psCode, sg, n.second,
                 nmVars, nmDerivedParams, nmExtraGlobalParams, model.ftype);
 
             if (!psm->GetSupportCode().empty()) {
@@ -358,7 +358,7 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
             string pdCode = psm->GetDecayCode();
             substitute(pdCode, "$(id)", "n");
             substitute(pdCode, "$(inSyn)", "inSyn" + sName + "[n]");
-            StandardSubstitutions::postSynapseDecay(pdCode, sName, sg, n.second,
+            StandardSubstitutions::postSynapseDecay(pdCode, sg, n.second,
                                                     nmVars, nmDerivedParams, nmExtraGlobalParams,
                                                     model.ftype);
             os << "// the post-synaptic dynamics" << ENDL;
@@ -605,7 +605,7 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
                 name_substitutions(code, "", wuVars.nameBegin, wuVars.nameEnd,
                                    s.first + "[lSpk + " + to_string(sg->getTrgNeuronGroup()->getNumNeurons()) + " * ipre]");
             }
-            StandardSubstitutions::weightUpdatePostLearn(code, s.first, sg,
+            StandardSubstitutions::weightUpdatePostLearn(code, sg,
                                                          wuDerivedParams, wuExtraGlobalParams,
                                                          sparse ?  "C" + s.first + ".revInd[ipre]" : "ipre",
                                                          "lSpk", "", model.ftype);

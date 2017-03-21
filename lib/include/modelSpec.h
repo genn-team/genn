@@ -226,7 +226,7 @@ public:
         // Add synapse group
         auto result = m_SynapseGroups.insert(
             pair<string, SynapseGroup>(
-                name, SynapseGroup(mtype, delaySteps,
+                name, SynapseGroup(name, mtype, delaySteps,
                                    WeightUpdateModel::GetInstance(), weightParamValues.GetValues(), weightVarValues.GetValues(),
                                    PostsynapticModel::GetInstance(), postsynapticParamValues.GetValues(), postsynapticVarValues.GetValues(),
                                    srcNeuronGrp, trgNeuronGrp)));

@@ -18,11 +18,11 @@
 class SynapseGroup
 {
 public:
-    SynapseGroup(SynapseMatrixType matrixType, unsigned int delaySteps,
+    SynapseGroup(const std::string name, SynapseMatrixType matrixType, unsigned int delaySteps,
                  const WeightUpdateModels::Base *wu, const std::vector<double> &wuParams, const std::vector<double> &wuInitVals,
                  const PostsynapticModels::Base *ps, const std::vector<double> &psParams, const std::vector<double> &psInitVals,
                  NeuronGroup *srcNeuronGroup, NeuronGroup *trgNeuronGroup) :
-        m_PaddedKernelCumSum(0, 0), m_SpanType(0), m_DelaySteps(delaySteps), m_MaxConnections(trgNeuronGroup->getNumNeurons()), m_MatrixType(matrixType),
+        m_PaddedKernelCumSum(0, 0), m_Name(name), m_SpanType(0), m_DelaySteps(delaySteps), m_MaxConnections(trgNeuronGroup->getNumNeurons()), m_MatrixType(matrixType),
         m_SrcNeuronGroup(srcNeuronGroup), m_TrgNeuronGroup(trgNeuronGroup),
         m_TrueSpikeRequired(false), m_SpikeEventRequired(false), m_EventThresholdReTestRequired(false),
         m_WUModel(wu), m_WUParams(wuParams), m_WUInitVals(wuInitVals), m_PSModel(ps), m_PSParams(psParams), m_PSInitVals(psInitVals),
@@ -59,6 +59,8 @@ public:
     // Public const methods
     //------------------------------------------------------------------------
     std::pair<unsigned int, unsigned int> getPaddedKernelCumSum() const{ return m_PaddedKernelCumSum; }
+
+    const std::string &getName() const{ return m_Name; }
 
     unsigned int getSpanType() const{ return m_SpanType; }
     unsigned int getDelaySteps() const{ return m_DelaySteps; }
@@ -117,6 +119,9 @@ private:
     //------------------------------------------------------------------------
     //!< Starting index of this synapse group in synapse kernel
     std::pair<unsigned int, unsigned int> m_PaddedKernelCumSum;
+
+    //!< Name of the synapse group
+    std::string m_Name;
 
     //!< Execution order of synapses in the kernel. It determines whether synapses are executed in parallel for every postsynaptic neuron (0, default), or for every presynaptic neuron (1).
     unsigned int m_SpanType;

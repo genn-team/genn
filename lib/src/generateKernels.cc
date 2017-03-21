@@ -52,7 +52,6 @@ string getFloatAtomicAdd(const string &ftype)
 // parallelisation along pre-synaptic spikes, looped over post-synaptic neurons
 void generatePreParallelisedSparseCode(
     ostream &os, //!< output stream for code
-    const string &sgName,
     const SynapseGroup &sg,
     const string &localID, //!< the variable name of the local ID of the thread within the synapse group
     const string &postfix, //!< whether to generate code for true spikes or spike type events
@@ -85,7 +84,7 @@ a max possible number of connections via the model.setMaxConn() function.\n");
     }
 
     if (!wu->GetSimSupportCode().empty()) {
-        os << "using namespace " << sgName << "_weightupdate_simCode;" << ENDL;
+        os << "using namespace " << sg.getName() << "_weightupdate_simCode;" << ENDL;
     }
 
     if (sg.getSrcNeuronGroup()->isDelayRequired()) {
@@ -96,8 +95,8 @@ a max possible number of connections via the model.setMaxConn() function.\n");
         os << "int preInd = dd_glbSpk"  << postfix << sg.getSrcNeuronGroup()->getName();
         os << "[" << localID << "];" << ENDL;
     }
-    os << "prePos = dd_indInG" << sgName << "[preInd];" << ENDL;
-    os << "npost = dd_indInG" << sgName << "[preInd + 1] - prePos;" << ENDL;
+    os << "prePos = dd_indInG" << sg.getName() << "[preInd];" << ENDL;
+    os << "npost = dd_indInG" << sg.getName() << "[preInd + 1] - prePos;" << ENDL;
 
     if (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
         os << "unsigned int gid = (dd_glbSpkCnt" << postfix << "[" << localID << "] * " << sg.getTrgNeuronGroup()->getNumNeurons() << " + i);" << ENDL;
@@ -107,14 +106,14 @@ a max possible number of connections via the model.setMaxConn() function.\n");
         os << "if ";
         if (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
             // Note: we will just access global mem. For compute >= 1.2 simultaneous access to same global mem in the (half-)warp will be coalesced - no worries
-            os << "((B(dd_gp" << sgName << "[gid >> " << logUIntSz << "], gid & " << UIntSz - 1 << ")) && ";
+            os << "((B(dd_gp" << sg.getName() << "[gid >> " << logUIntSz << "], gid & " << UIntSz - 1 << ")) && ";
         }
 
         // code substitutions ----
         string eCode = wu->GetEventThresholdConditionCode();
-        StandardSubstitutions::weightUpdateThresholdCondition(eCode, sgName, sg,
-                                                            wuDerivedParams, wuExtraGlobalParams,
-                                                            "preInd", "i", "dd_", ftype);
+        StandardSubstitutions::weightUpdateThresholdCondition(eCode, sg.getName(), sg,
+                                                              wuDerivedParams, wuExtraGlobalParams,
+                                                              "preInd", "i", "dd_", ftype);
         // end code substitutions ----
         os << "(" << eCode << ")";
 
@@ -124,11 +123,11 @@ a max possible number of connections via the model.setMaxConn() function.\n");
         os << OB(130);
     }
     else if (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-        os << "if (B(dd_gp" << sgName << "[gid >> " << logUIntSz << "], gid & " << UIntSz - 1 << "))" << OB(135);
+        os << "if (B(dd_gp" << sg.getName() << "[gid >> " << logUIntSz << "], gid & " << UIntSz - 1 << "))" << OB(135);
     }
 
     os << "for (int i = 0; i < npost; ++i)" << OB(103);
-    os << "        ipost = dd_ind" <<  sgName << "[prePos];" << ENDL;
+    os << "        ipost = dd_ind" <<  sg.getName() << "[prePos];" << ENDL;
 
 // Code substitutions ----------------------------------------------------------------------------------
     string wCode = evnt ? wu->GetEventCode() : wu->GetSimCode();
@@ -136,7 +135,7 @@ a max possible number of connections via the model.setMaxConn() function.\n");
 
     if (sg.isPSAtomicAddRequired(synapseBlkSz)) { // SPARSE using atomicAdd
         substitute(wCode, "$(updatelinsyn)", getFloatAtomicAdd(ftype) + "(&$(inSyn), $(addtoinSyn))");
-        substitute(wCode, "$(inSyn)", "dd_inSyn" + sgName + "[ipost]");
+        substitute(wCode, "$(inSyn)", "dd_inSyn" + sg.getName() + "[ipost]");
     }
     else { // using shared memory
         substitute(wCode, "$(updatelinsyn)", "$(inSyn) += $(addtoinSyn)");
@@ -144,10 +143,10 @@ a max possible number of connections via the model.setMaxConn() function.\n");
     }
 
     if (sg.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
-        name_substitutions(wCode, "dd_", wuVars.nameBegin, wuVars.nameEnd, sgName + "[prePos]");
+        name_substitutions(wCode, "dd_", wuVars.nameBegin, wuVars.nameEnd, sg.getName() + "[prePos]");
     }
 
-    StandardSubstitutions::weightUpdateSim(wCode, sgName, sg,
+    StandardSubstitutions::weightUpdateSim(wCode, sg,
                                            wuVars, wuDerivedParams, wuExtraGlobalParams,
                                            "preInd", "ipost", "dd_", ftype);
     // end code substitutions -------------------------------------------------------------------------
@@ -169,7 +168,6 @@ a max possible number of connections via the model.setMaxConn() function.\n");
 // classical parallelisation of post-synaptic neurons in parallel and spikes in a loop
 void generatePostParallelisedCode(
     ostream &os, //!< output stream for code
-    const string &sgName,
     const SynapseGroup &sg,
     const string &localID, //!< the variable name of the local ID of the thread within the synapse group
     const string &postfix, //!< whether to generate code for true spikes or spike type events
@@ -223,18 +221,18 @@ a max possible number of connections via the model.setMaxConn() function.\n");
     }
 
     if (!wu->GetSimSupportCode().empty()) {
-        os << "using namespace " << sgName << "_weightupdate_simCode;" << ENDL;
+        os << "using namespace " << sg.getName() << "_weightupdate_simCode;" << ENDL;
     }
     if (evnt && sg.isEventThresholdReTestRequired()) {
         os << "if ";
         if (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
             // Note: we will just access global mem. For compute >= 1.2 simultaneous access to same global mem in the (half-)warp will be coalesced - no worries
-            os << "((B(dd_gp" << sgName << "[gid >> " << logUIntSz << "], gid & " << UIntSz - 1 << ")) && ";
+            os << "((B(dd_gp" << sg.getName() << "[gid >> " << logUIntSz << "], gid & " << UIntSz - 1 << ")) && ";
         }
 
         // code substitutions ----
         string eCode = wu->GetEventThresholdConditionCode();
-        StandardSubstitutions::weightUpdateThresholdCondition(eCode, sgName, sg, wuDerivedParams, wuExtraGlobalParams,
+        StandardSubstitutions::weightUpdateThresholdCondition(eCode, sg, wuDerivedParams, wuExtraGlobalParams,
                                                               "shSpkEvnt[j]", "ipost", "dd_", ftype);
         // end code substitutions ----
         os << "(" << eCode << ")";
@@ -245,15 +243,15 @@ a max possible number of connections via the model.setMaxConn() function.\n");
         os << OB(130);
     }
     else if (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-        os << "if (B(dd_gp" << sgName << "[gid >> " << logUIntSz << "], gid & " << UIntSz - 1 << "))" << OB(135);
+        os << "if (B(dd_gp" << sg.getName() << "[gid >> " << logUIntSz << "], gid & " << UIntSz - 1 << "))" << OB(135);
     }
 
     if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) { // SPARSE
-        os << "prePos = dd_indInG" << sgName << "[shSpk" << postfix << "[j]];" << ENDL;
-        os << "npost = dd_indInG" << sgName << "[shSpk" << postfix << "[j] + 1] - prePos;" << ENDL;
+        os << "prePos = dd_indInG" << sg.getName() << "[shSpk" << postfix << "[j]];" << ENDL;
+        os << "npost = dd_indInG" << sg.getName() << "[shSpk" << postfix << "[j] + 1] - prePos;" << ENDL;
         os << "if (" << localID << " < npost)" << OB(140);
         os << "prePos += " << localID << ";" << ENDL;
-        os << "ipost = dd_ind" << sgName << "[prePos];" << ENDL;
+        os << "ipost = dd_ind" << sg.getName() << "[prePos];" << ENDL;
     }
     else { // DENSE
     os << "ipost = " << localID << ";" << ENDL;
@@ -265,7 +263,7 @@ a max possible number of connections via the model.setMaxConn() function.\n");
     if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) { // SPARSE
         if (sg.isPSAtomicAddRequired(synapseBlkSz)) { // SPARSE using atomicAdd
             substitute(wCode, "$(updatelinsyn)", getFloatAtomicAdd(ftype) + "(&$(inSyn), $(addtoinSyn))");
-            substitute(wCode, "$(inSyn)", "dd_inSyn" + sgName + "[ipost]");
+            substitute(wCode, "$(inSyn)", "dd_inSyn" + sg.getName() + "[ipost]");
         }
         else { // SPARSE using shared memory
             substitute(wCode, "$(updatelinsyn)", "$(inSyn) += $(addtoinSyn)");
@@ -273,19 +271,19 @@ a max possible number of connections via the model.setMaxConn() function.\n");
         }
 
         if (sg.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
-            name_substitutions(wCode, "dd_", wuVars.nameBegin, wuVars.nameEnd, sgName + "[prePos]");
+            name_substitutions(wCode, "dd_", wuVars.nameBegin, wuVars.nameEnd, sg.getName() + "[prePos]");
         }
     }
     else { // DENSE
         substitute(wCode, "$(updatelinsyn)", "$(inSyn) += $(addtoinSyn)");
         substitute(wCode, "$(inSyn)", "linSyn");
         if (sg.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
-            name_substitutions(wCode, "dd_", wuVars.nameBegin, wuVars.nameEnd, sgName + "[shSpk"
+            name_substitutions(wCode, "dd_", wuVars.nameBegin, wuVars.nameEnd, sg.getName() + "[shSpk"
                                 + postfix + "[j] * " + to_string(sg.getTrgNeuronGroup()->getNumNeurons()) + "+ ipost]");
         }
     }
 
-    StandardSubstitutions::weightUpdateSim(wCode, sgName, sg, wuVars, wuDerivedParams, wuExtraGlobalParams,
+    StandardSubstitutions::weightUpdateSim(wCode, sg, wuVars, wuDerivedParams, wuExtraGlobalParams,
                                            "shSpk" + postfix + "[j]", "ipost", "dd_", ftype);
     // end Code substitutions -------------------------------------------------------------------------
     os << wCode << ENDL;
@@ -298,7 +296,7 @@ a max possible number of connections via the model.setMaxConn() function.\n");
         os << CB(130); // end if (eCode)
     }
     else if (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-        os << CB(135); // end if (B(dd_gp" << sgName << "[gid >> " << logUIntSz << "], gid
+        os << CB(135); // end if (B(dd_gp" << sg.getName() << "[gid >> " << logUIntSz << "], gid
     }
     os << CB(120) << ENDL;
 
@@ -323,7 +321,6 @@ a max possible number of connections via the model.setMaxConn() function.\n");
 //-------------------------------------------------------------------------
 void generate_process_presynaptic_events_code(
     ostream &os, //!< output stream for code
-    const string &sgName,
     const SynapseGroup &sg,
     const string &localID, //!< the variable name of the local ID of the thread within the synapse group
     const string &postfix, //!< whether to generate code for true spikes or spike type events
@@ -334,10 +331,10 @@ void generate_process_presynaptic_events_code(
      if ((evnt && sg.isSpikeEventRequired()) || (!evnt && sg.isTrueSpikeRequired())) {
         // Detect spike events or spikes and do the update
         if ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && sg.getSpanType() == 1) { // parallelisation along pre-synaptic spikes, looped over post-synaptic neurons
-            generatePreParallelisedSparseCode(os, sgName, sg, localID, postfix, ftype);
+            generatePreParallelisedSparseCode(os, sg, localID, postfix, ftype);
         }
         else { // classical parallelisation of post-synaptic neurons in parallel and spikes in a loop
-            generatePostParallelisedCode(os, sgName, sg, localID, postfix, ftype);
+            generatePostParallelisedCode(os, sg, localID, postfix, ftype);
         }
     }
 }
@@ -519,7 +516,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
             string psCode = psm->GetCurrentConverterCode();
             substitute(psCode, "$(id)", localID);
             substitute(psCode, "$(inSyn)", "linSyn" + sName);
-            StandardSubstitutions::postSynapseCurrentConverter(psCode, sName, sg, n.second,
+            StandardSubstitutions::postSynapseCurrentConverter(psCode, sg, n.second,
                 nmVars, nmDerivedParams, nmExtraGlobalParams, model.ftype);
 
             if (!psm->GetSupportCode().empty()) {
@@ -609,7 +606,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
             string pdCode = psm->GetDecayCode();
             substitute(pdCode, "$(id)", localID);
             substitute(pdCode, "$(inSyn)", "linSyn" + sName);
-            StandardSubstitutions::postSynapseDecay(pdCode, sName, sg, n.second,
+            StandardSubstitutions::postSynapseDecay(pdCode, sg, n.second,
                                                     nmVars, nmDerivedParams, nmExtraGlobalParams,
                                                     model.ftype);
             if (!psm->GetSupportCode().empty()) {
@@ -919,12 +916,12 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
 
         // generate the code for processing spike-like events
         if (s.second.isSpikeEventRequired()) {
-            generate_process_presynaptic_events_code(os, s.first, s.second, localID, "Evnt", model.ftype);
+            generate_process_presynaptic_events_code(os, s.second, localID, "Evnt", model.ftype);
         }
 
         // generate the code for processing true spike events
         if (s.second.isTrueSpikeRequired()) {
-            generate_process_presynaptic_events_code(os, s.first, s.second, localID, "", model.ftype);
+            generate_process_presynaptic_events_code(os, s.second, localID, "", model.ftype);
         }
         os << ENDL;
 
@@ -1077,8 +1074,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
             else { // DENSE
                 name_substitutions(code, "dd_", wuVars.nameBegin, wuVars.nameEnd, s.first + "[" + localID + " * " + to_string(sg->getTrgNeuronGroup()->getNumNeurons()) + " + shSpk[j]]");
             }
-            StandardSubstitutions::weightUpdatePostLearn(code, s.first, sg,
-                                                         wuDerivedParams, wuExtraGlobalParams,
+            StandardSubstitutions::weightUpdatePostLearn(code, sg, wuDerivedParams, wuExtraGlobalParams,
                                                          sparse ?  "dd_revInd" + s.first + "[iprePos]" : localID,
                                                          "shSpk[j]", "dd_", model.ftype);
             // end Code substitutions -------------------------------------------------------------------------
