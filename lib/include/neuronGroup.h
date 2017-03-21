@@ -69,6 +69,8 @@ public:
     //------------------------------------------------------------------------
     // Public const methods
     //------------------------------------------------------------------------
+    const std::string &getName() const{ return m_Name; }
+
     unsigned int getNumNeurons() const{ return m_NumNeurons; }
     const std::pair<unsigned int, unsigned int> &getPaddedCumSumNeurons() const{ return m_PaddedCumSumNeurons; }
     const NeuronModels::Base *getNeuronModel() const{ return m_NeuronModel; }
@@ -114,6 +116,8 @@ private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
+    std::string m_Name;
+
     unsigned int m_NumNeurons;
     std::pair<unsigned int, unsigned int> m_CumSumNeurons;
     std::pair<unsigned int, unsigned int> m_PaddedCumSumNeurons;
