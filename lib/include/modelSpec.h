@@ -147,7 +147,7 @@ public:
         // Add neuron group
         auto result = m_NeuronGroups.insert(
             pair<string, NeuronGroup>(
-                name, NeuronGroup(size, NeuronModel::GetInstance(),
+                name, NeuronGroup(name, size, NeuronModel::GetInstance(),
                                   paramValues.GetValues(), varValues.GetValues())));
 
         if(!result.second)
@@ -229,7 +229,7 @@ public:
                 name, SynapseGroup(mtype, delaySteps,
                                    WeightUpdateModel::GetInstance(), weightParamValues.GetValues(), weightVarValues.GetValues(),
                                    PostsynapticModel::GetInstance(), postsynapticParamValues.GetValues(), postsynapticVarValues.GetValues(),
-                                   src, srcNeuronGrp, trg, trgNeuronGrp)));
+                                   srcNeuronGrp, trgNeuronGrp)));
 
         if(!result.second)
         {

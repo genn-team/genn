@@ -9,33 +9,31 @@
 //----------------------------------------------------------------------------
 void StandardGeneratedSections::neuronOutputInit(
     std::ostream &os,
-    const std::string &ngName,
     const NeuronGroup &ng,
     const std::string &varPrefix)
 {
     if (ng.isDelayRequired()) { // with delay
-        os << varPrefix << "spkQuePtr" << ngName << " = (" << varPrefix << "spkQuePtr" << ngName << " + 1) % " << ng.getNumDelaySlots() << ";" << ENDL;
+        os << varPrefix << "spkQuePtr" << ng.getName() << " = (" << varPrefix << "spkQuePtr" << ng.getName() << " + 1) % " << ng.getNumDelaySlots() << ";" << ENDL;
         if (ng.isSpikeEventRequired()) {
-            os << varPrefix << "glbSpkCntEvnt" << ngName << "[" << varPrefix << "spkQuePtr" << ngName << "] = 0;" << ENDL;
+            os << varPrefix << "glbSpkCntEvnt" << ng.getName() << "[" << varPrefix << "spkQuePtr" << ng.getName() << "] = 0;" << ENDL;
         }
         if (ng.isTrueSpikeRequired()) {
-            os << varPrefix << "glbSpkCnt" << ngName << "[" << varPrefix << "spkQuePtr" << ngName << "] = 0;" << ENDL;
+            os << varPrefix << "glbSpkCnt" << ng.getName() << "[" << varPrefix << "spkQuePtr" << ng.getName() << "] = 0;" << ENDL;
         }
         else {
-            os << varPrefix << "glbSpkCnt" << ngName << "[0] = 0;" << ENDL;
+            os << varPrefix << "glbSpkCnt" << ng.getName() << "[0] = 0;" << ENDL;
         }
     }
     else { // no delay
         if (ng.isSpikeEventRequired()) {
-            os << varPrefix << "glbSpkCntEvnt" << ngName << "[0] = 0;" << ENDL;
+            os << varPrefix << "glbSpkCntEvnt" << ng.getName() << "[0] = 0;" << ENDL;
         }
-        os << varPrefix << "glbSpkCnt" << ngName << "[0] = 0;" << ENDL;
+        os << varPrefix << "glbSpkCnt" << ng.getName() << "[0] = 0;" << ENDL;
     }
 }
 
 void StandardGeneratedSections::neuronLocalVarInit(
     std::ostream &os,
-     const std::string &ngName,
     const NeuronGroup &ng,
     const VarNameIterCtx &nmVars,
     const std::string &varPrefix,
@@ -43,7 +41,7 @@ void StandardGeneratedSections::neuronLocalVarInit(
 {
     for (size_t k = 0; k < nmVars.container.size(); k++) {
         os << nmVars.container[k].second << " l" << nmVars.container[k].first << " = ";
-        os << varPrefix << nmVars.container[k].first << ngName << "[";
+        os << varPrefix << nmVars.container[k].first << ng.getName() << "[";
         if (ng.isVarQueueRequired(k) && ng.isDelayRequired()) {
             os << "(delaySlot * " << ng.getNumNeurons() << ") + ";
         }
@@ -53,7 +51,6 @@ void StandardGeneratedSections::neuronLocalVarInit(
 
 void StandardGeneratedSections::neuronLocalVarWrite(
     std::ostream &os,
-    const std::string &ngName,
     const NeuronGroup &ng,
     const VarNameIterCtx &nmVars,
     const std::string &varPrefix,
@@ -62,17 +59,16 @@ void StandardGeneratedSections::neuronLocalVarWrite(
     // store the defined parts of the neuron state into the global state variables dd_V etc
     for (size_t k = 0, l = nmVars.container.size(); k < l; k++) {
         if (ng.isVarQueueRequired(k)) {
-            os << varPrefix << nmVars.container[k].first << ngName << "[" << ng.getQueueOffset(ngName, varPrefix) << localID << "] = l" << nmVars.container[k].first << ";" << ENDL;
+            os << varPrefix << nmVars.container[k].first << ng.getName() << "[" << ng.getQueueOffset(varPrefix) << localID << "] = l" << nmVars.container[k].first << ";" << ENDL;
         }
         else {
-            os << varPrefix << nmVars.container[k].first << ngName << "[" << localID << "] = l" << nmVars.container[k].first << ";" << ENDL;
+            os << varPrefix << nmVars.container[k].first << ng.getName() << "[" << localID << "] = l" << nmVars.container[k].first << ";" << ENDL;
         }
     }
 }
 
 void StandardGeneratedSections::neuronSpikeEventTest(
     std::ostream &os,
-    const std::string &ngName,
     const NeuronGroup &ng,
     const VarNameIterCtx &nmVars,
     const ExtraGlobalParamNameIterCtx &nmExtraGlobalParams,
@@ -89,9 +85,8 @@ void StandardGeneratedSections::neuronSpikeEventTest(
 
         // code substitutions ----
         substitute(eCode, "$(id)", "n");
-        StandardSubstitutions::neuronSpikeEventCondition(eCode, ngName,
-                                                         nmVars, nmExtraGlobalParams,
-                                                         ftype);
+        StandardSubstitutions::neuronSpikeEventCondition(eCode, ng, nmVars, nmExtraGlobalParams, ftype);
+
         // Open scope for spike-like event test
         os << OB(31);
 
@@ -115,7 +110,6 @@ void StandardSubstitutions::postSynapseCurrentConverter(
     std::string &psCode,          //!< the code string to work on
     const std::string &sgName,
     const SynapseGroup *sg,
-    const std::string &ngName,
     const NeuronGroup &ng,
     const VarNameIterCtx &nmVars,
     const DerivedParamNameIterCtx &nmDerivedParams,
@@ -143,7 +137,7 @@ void StandardSubstitutions::postSynapseCurrentConverter(
 
     // Create iterators to iterate over the names of the postsynaptic model's derived parameters
     value_substitutions(psCode, psmDerivedParams.nameBegin, psmDerivedParams.nameEnd, sg->getPSDerivedParams());
-    name_substitutions(psCode, "", nmExtraGlobalParams.nameBegin, nmExtraGlobalParams.nameEnd, ngName);
+    name_substitutions(psCode, "", nmExtraGlobalParams.nameBegin, nmExtraGlobalParams.nameEnd, ng.getName());
     psCode = ensureFtype(psCode, ftype);
     checkUnreplacedVariables(psCode, "postSyntoCurrent");
 }
@@ -152,7 +146,6 @@ void StandardSubstitutions::postSynapseDecay(
     std::string &pdCode,
     const std::string &sgName,
     const SynapseGroup *sg,
-    const std::string &,
     const NeuronGroup &ng,
     const VarNameIterCtx &nmVars,
     const DerivedParamNameIterCtx &nmDerivedParams,
@@ -179,7 +172,6 @@ void StandardSubstitutions::postSynapseDecay(
 
 void StandardSubstitutions::neuronThresholdCondition(
     std::string &thCode,
-    const std::string &ngName,
     const NeuronGroup &ng,
     const VarNameIterCtx &nmVars,
     const DerivedParamNameIterCtx &nmDerivedParams,
@@ -192,14 +184,13 @@ void StandardSubstitutions::neuronThresholdCondition(
     substitute(thCode, "$(sT)", "lsT");
     value_substitutions(thCode, ng.getNeuronModel()->GetParamNames(), ng.getParams());
     value_substitutions(thCode, nmDerivedParams.nameBegin, nmDerivedParams.nameEnd, ng.getDerivedParams());
-    name_substitutions(thCode, "", nmExtraGlobalParams.nameBegin, nmExtraGlobalParams.nameEnd, ngName);
+    name_substitutions(thCode, "", nmExtraGlobalParams.nameBegin, nmExtraGlobalParams.nameEnd, ng.getName());
     thCode= ensureFtype(thCode, ftype);
     checkUnreplacedVariables(thCode,"thresholdConditionCode");
 }
 
 void StandardSubstitutions::neuronSim(
     std::string &sCode,
-    const std::string &ngName,
     const NeuronGroup &ng,
     const VarNameIterCtx &nmVars,
     const DerivedParamNameIterCtx &nmDerivedParams,
@@ -210,7 +201,7 @@ void StandardSubstitutions::neuronSim(
     name_substitutions(sCode, "l", nmVars.nameBegin, nmVars.nameEnd, "");
     value_substitutions(sCode, ng.getNeuronModel()->GetParamNames(), ng.getParams());
     value_substitutions(sCode, nmDerivedParams.nameBegin, nmDerivedParams.nameEnd, ng.getDerivedParams());
-    name_substitutions(sCode, "", nmExtraGlobalParams.nameBegin, nmExtraGlobalParams.nameEnd, ngName);
+    name_substitutions(sCode, "", nmExtraGlobalParams.nameBegin, nmExtraGlobalParams.nameEnd, ng.getName());
     substitute(sCode, "$(Isyn)", "Isyn");
     substitute(sCode, "$(sT)", "lsT");
     sCode = ensureFtype(sCode, ftype);
@@ -219,7 +210,7 @@ void StandardSubstitutions::neuronSim(
 
 void StandardSubstitutions::neuronSpikeEventCondition(
     std::string &eCode,
-    const std::string &ngName,
+    const NeuronGroup &ng,
     const VarNameIterCtx &nmVars,
     const ExtraGlobalParamNameIterCtx &nmExtraGlobalParams,
     const std::string &ftype)
@@ -227,14 +218,13 @@ void StandardSubstitutions::neuronSpikeEventCondition(
     // code substitutions ----
     substitute(eCode, "$(t)", "t");
     name_substitutions(eCode, "l", nmVars.nameBegin, nmVars.nameEnd, "", "_pre");
-    name_substitutions(eCode, "", nmExtraGlobalParams.nameBegin, nmExtraGlobalParams.nameEnd, ngName);
+    name_substitutions(eCode, "", nmExtraGlobalParams.nameBegin, nmExtraGlobalParams.nameEnd, ng.getName());
     eCode = ensureFtype(eCode, ftype);
     checkUnreplacedVariables(eCode, "neuronSpkEvntCondition");
 }
 
 void StandardSubstitutions::neuronReset(
     std::string &rCode,
-    const std::string &ngName,
     const NeuronGroup &ng,
     const VarNameIterCtx &nmVars,
     const DerivedParamNameIterCtx &nmDerivedParams,
@@ -247,7 +237,7 @@ void StandardSubstitutions::neuronReset(
     value_substitutions(rCode, nmDerivedParams.nameBegin, nmDerivedParams.nameEnd, ng.getDerivedParams());
     substitute(rCode, "$(Isyn)", "Isyn");
     substitute(rCode, "$(sT)", "lsT");
-    name_substitutions(rCode, "", nmExtraGlobalParams.nameBegin, nmExtraGlobalParams.nameEnd, ngName);
+    name_substitutions(rCode, "", nmExtraGlobalParams.nameBegin, nmExtraGlobalParams.nameEnd, ng.getName());
     rCode = ensureFtype(rCode, ftype);
     checkUnreplacedVariables(rCode, "resetCode");
 }

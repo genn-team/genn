@@ -155,15 +155,16 @@ bool SynapseGroup::isPSAtomicAddRequired(unsigned int blockSize) const
     }
     return false;
 }
+
 void SynapseGroup::addExtraGlobalParams(const std::string &groupName, std::map<std::string, std::string> &kernelParameters) const
 {
     // Synapse kernel
     // --------------
     // Add any of the pre or postsynaptic neuron group's extra global
     // parameters referenced in the sim code to the map of kernel parameters
-    addExtraGlobalSimParams(getSrcNeuronGroupName(), "_pre", getSrcNeuronGroup()->getNeuronModel()->GetExtraGlobalParams(),
+    addExtraGlobalSimParams(getSrcNeuronGroup()->getName(), "_pre", getSrcNeuronGroup()->getNeuronModel()->GetExtraGlobalParams(),
                              kernelParameters);
-    addExtraGlobalSimParams(getSrcNeuronGroupName(), "_post", getTrgNeuronGroup()->getNeuronModel()->GetExtraGlobalParams(),
+    addExtraGlobalSimParams(getSrcNeuronGroup()->getName(), "_post", getTrgNeuronGroup()->getNeuronModel()->GetExtraGlobalParams(),
                              kernelParameters);
 
     // Finally add any weight update model extra global
@@ -174,9 +175,9 @@ void SynapseGroup::addExtraGlobalParams(const std::string &groupName, std::map<s
     // -----------
     // Add any of the pre or postsynaptic neuron group's extra global
     // parameters referenced in the sim code to the map of kernel parameters
-    addExtraGlobalPostLearnParams(getSrcNeuronGroupName(), "_pre", getSrcNeuronGroup()->getNeuronModel()->GetExtraGlobalParams(),
+    addExtraGlobalPostLearnParams(getSrcNeuronGroup()->getName(), "_pre", getSrcNeuronGroup()->getNeuronModel()->GetExtraGlobalParams(),
                                   kernelParameters);
-    addExtraGlobalPostLearnParams(getSrcNeuronGroupName(), "_post", getTrgNeuronGroup()->getNeuronModel()->GetExtraGlobalParams(),
+    addExtraGlobalPostLearnParams(getSrcNeuronGroup()->getName(), "_post", getTrgNeuronGroup()->getNeuronModel()->GetExtraGlobalParams(),
                                   kernelParameters);
 
     // Finally add any weight update model extra global
@@ -187,9 +188,9 @@ void SynapseGroup::addExtraGlobalParams(const std::string &groupName, std::map<s
     // ----------------
     // Add any of the pre or postsynaptic neuron group's extra global
     // parameters referenced in the sim code to the map of kernel parameters
-    addExtraGlobalSynapseDynamicsParams(getSrcNeuronGroupName(), "_pre", getSrcNeuronGroup()->getNeuronModel()->GetExtraGlobalParams(),
+    addExtraGlobalSynapseDynamicsParams(getSrcNeuronGroup()->getName(), "_pre", getSrcNeuronGroup()->getNeuronModel()->GetExtraGlobalParams(),
                                         kernelParameters);
-    addExtraGlobalSynapseDynamicsParams(getSrcNeuronGroupName(), "_post", getTrgNeuronGroup()->getNeuronModel()->GetExtraGlobalParams(),
+    addExtraGlobalSynapseDynamicsParams(getSrcNeuronGroup()->getName(), "_post", getTrgNeuronGroup()->getNeuronModel()->GetExtraGlobalParams(),
                                         kernelParameters);
 
     // Finally add any weight update model extra global
@@ -254,5 +255,5 @@ std::string SynapseGroup::getOffsetPre() const
 
 std::string SynapseGroup::getOffsetPost(const std::string &varPrefix) const
 {
-    return getTrgNeuronGroup()->getQueueOffset(getTrgNeuronGroupName(), varPrefix);
+    return getTrgNeuronGroup()->getQueueOffset(varPrefix);
 }

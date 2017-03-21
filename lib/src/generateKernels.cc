@@ -78,10 +78,10 @@ a max possible number of connections via the model.setMaxConn() function.\n");
 
     os << "if (" << localID << " < " ;
     if (sg.getSrcNeuronGroup()->isDelayRequired()) {
-        os << "dd_glbSpkCnt" << postfix << sg.getSrcNeuronGroupName() << "[delaySlot])" << OB(102);
+        os << "dd_glbSpkCnt" << postfix << sg.getSrcNeuronGroup()->getName() << "[delaySlot])" << OB(102);
     }
     else {
-        os << "dd_glbSpkCnt" << postfix << sg.getSrcNeuronGroupName() << "[0])" << OB(102);
+        os << "dd_glbSpkCnt" << postfix << sg.getSrcNeuronGroup()->getName() << "[0])" << OB(102);
     }
 
     if (!wu->GetSimSupportCode().empty()) {
@@ -89,11 +89,11 @@ a max possible number of connections via the model.setMaxConn() function.\n");
     }
 
     if (sg.getSrcNeuronGroup()->isDelayRequired()) {
-        os << "int preInd = dd_glbSpk"  << postfix << sg.getSrcNeuronGroupName();
+        os << "int preInd = dd_glbSpk"  << postfix << sg.getSrcNeuronGroup()->getName();
         os << "[(delaySlot * " << sg.getSrcNeuronGroup()->getNumNeurons() << ") + " << localID << "];";
     }
     else {
-        os << "int preInd = dd_glbSpk"  << postfix << sg.getSrcNeuronGroupName();
+        os << "int preInd = dd_glbSpk"  << postfix << sg.getSrcNeuronGroup()->getName();
         os << "[" << localID << "];" << ENDL;
     }
     os << "prePos = dd_indInG" << sgName << "[preInd];" << ENDL;
@@ -191,7 +191,7 @@ void generatePostParallelisedCode(
     os << "else lmax = BLOCKSZ_SYN;" << ENDL;
     os << "__syncthreads();" << ENDL;
     os << "if (threadIdx.x < lmax)" << OB(100);
-    os << "shSpk" << postfix << "[threadIdx.x] = dd_glbSpk" << postfix << sg.getSrcNeuronGroupName() << "[" << sg.getOffsetPre() << "(r * BLOCKSZ_SYN) + threadIdx.x];" << ENDL;
+    os << "shSpk" << postfix << "[threadIdx.x] = dd_glbSpk" << postfix << sg.getSrcNeuronGroup()->getName() << "[" << sg.getOffsetPre() << "(r * BLOCKSZ_SYN) + threadIdx.x];" << ENDL;
     os << CB(100);
 
     if ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && !sg.isPSAtomicAddRequired(synapseBlkSz)) {
@@ -426,7 +426,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
     if (model.resetKernel == GENN_FLAGS::calcNeurons) {
         os << "if (id == 0)" << OB(6);
         for(const auto &n : model.getNeuronGroups()) {
-            StandardGeneratedSections::neuronOutputInit(os, n.first, n.second, "dd_");
+            StandardGeneratedSections::neuronOutputInit(os, n.second, "dd_");
         }
         os << CB(6);
         os << "__threadfence();" << ENDL << ENDL;
@@ -488,7 +488,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
         ExtraGlobalParamNameIterCtx nmExtraGlobalParams(nm->GetExtraGlobalParams());
 
         // Generate code to copy neuron state into local variables
-        StandardGeneratedSections::neuronLocalVarInit(os, n.first, n.second, nmVars, "dd_", localID);
+        StandardGeneratedSections::neuronLocalVarInit(os, n.second, nmVars, "dd_", localID);
 
         if ((nm->GetSimCode().find("$(sT)") != string::npos)
             || (nm->GetThresholdConditionCode().find("$(sT)") != string::npos)
@@ -519,7 +519,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
             string psCode = psm->GetCurrentConverterCode();
             substitute(psCode, "$(id)", localID);
             substitute(psCode, "$(inSyn)", "linSyn" + sName);
-            StandardSubstitutions::postSynapseCurrentConverter(psCode, sName, sg, n.first, n.second,
+            StandardSubstitutions::postSynapseCurrentConverter(psCode, sName, sg, n.second,
                 nmVars, nmDerivedParams, nmExtraGlobalParams, model.ftype);
 
             if (!psm->GetSupportCode().empty()) {
@@ -541,7 +541,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
         else {
             os << "// test whether spike condition was fulfilled previously" << ENDL;
             substitute(thCode, "$(id)", localID);
-            StandardSubstitutions::neuronThresholdCondition(thCode, n.first, n.second,
+            StandardSubstitutions::neuronThresholdCondition(thCode, n.second,
                                                             nmVars, nmDerivedParams, nmExtraGlobalParams,
                                                             model.ftype);
             if (GENN_PREFERENCES::autoRefractory) {
@@ -552,7 +552,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
         os << "// calculate membrane potential" << ENDL;
         string sCode = nm->GetSimCode();
         substitute(sCode, "$(id)", localID);
-        StandardSubstitutions::neuronSim(sCode, n.first, n.second,
+        StandardSubstitutions::neuronSim(sCode, n.second,
                                          nmVars, nmDerivedParams, nmExtraGlobalParams,
                                          model.ftype);
         os << sCode << ENDL;
@@ -560,7 +560,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
         // look for spike type events first.
         if (n.second.isSpikeEventRequired()) {
            // Generate spike event test
-            StandardGeneratedSections::neuronSpikeEventTest(os, n.first, n.second,
+            StandardGeneratedSections::neuronSpikeEventTest(os, n.second,
                                                             nmVars, nmExtraGlobalParams,
                                                             localID, model.ftype);
 
@@ -587,7 +587,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
             if (!nm->GetResetCode().empty()) {
                 string rCode = nm->GetResetCode();
                 substitute(rCode, "$(id)", localID);
-                StandardSubstitutions::neuronReset(rCode, n.first, n.second,
+                StandardSubstitutions::neuronReset(rCode, n.second,
                                                    nmVars, nmDerivedParams, nmExtraGlobalParams,
                                                    model.ftype);
                 os << "// spike reset code" << ENDL;
@@ -597,7 +597,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
         }
 
         // store the defined parts of the neuron state into the global state variables dd_V etc
-        StandardGeneratedSections::neuronLocalVarWrite(os, n.first, n.second, nmVars, "dd_", localID);
+        StandardGeneratedSections::neuronLocalVarWrite(os, n.second, nmVars, "dd_", localID);
 
         if (!n.second.getInSyn().empty()) {
             os << "// the post-synaptic dynamics" << ENDL;
@@ -609,7 +609,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
             string pdCode = psm->GetDecayCode();
             substitute(pdCode, "$(id)", localID);
             substitute(pdCode, "$(inSyn)", "linSyn" + sName);
-            StandardSubstitutions::postSynapseDecay(pdCode, sName, sg, n.first, n.second,
+            StandardSubstitutions::postSynapseDecay(pdCode, sName, sg, n.second,
                                                     nmVars, nmDerivedParams, nmExtraGlobalParams,
                                                     model.ftype);
             if (!psm->GetSupportCode().empty()) {
@@ -656,7 +656,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
             os << "__syncthreads();" << ENDL;
         }
 
-        string queueOffset = n.second.getQueueOffset(n.first, "dd_");
+        string queueOffset = n.second.getQueueOffset("dd_");
         if (n.second.isSpikeEventRequired()) {
             os << "if (threadIdx.x < spkEvntCount)" << OB(60);
             os << "dd_glbSpkEvnt" << n.first << "[" << queueOffset << "posSpkEvnt + threadIdx.x] = shSpkEvnt[threadIdx.x];" << ENDL;
@@ -766,7 +766,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                 }
 
                 if (sg->getSrcNeuronGroup()->isDelayRequired()) {
-                    os << "unsigned int delaySlot = (dd_spkQuePtr" << sg->getSrcNeuronGroupName();
+                    os << "unsigned int delaySlot = (dd_spkQuePtr" << sg->getSrcNeuronGroup()->getName();
                     os << " + " << (sg->getSrcNeuronGroup()->getNumDelaySlots() - sg->getDelaySteps());
                     os << ") % " << sg->getSrcNeuronGroup()->getNumDelaySlots() << ";" << ENDL;
                 }
@@ -883,7 +883,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
         }
 
         if (s.second.getSrcNeuronGroup()->isDelayRequired()) {
-            os << "unsigned int delaySlot = (dd_spkQuePtr" << s.second.getSrcNeuronGroupName();
+            os << "unsigned int delaySlot = (dd_spkQuePtr" << s.second.getSrcNeuronGroup()->getName();
             os << " + " << (s.second.getSrcNeuronGroup()->getNumDelaySlots() - s.second.getDelaySteps());
             os << ") % " << s.second.getSrcNeuronGroup()->getNumDelaySlots() << ";" << ENDL;
         }
@@ -896,7 +896,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
         }
 
         if (s.second.isSpikeEventRequired()) {
-            os << "lscntEvnt = dd_glbSpkCntEvnt" << s.second.getSrcNeuronGroupName();
+            os << "lscntEvnt = dd_glbSpkCntEvnt" << s.second.getSrcNeuronGroup()->getName();
             if (s.second.getSrcNeuronGroup()->isDelayRequired()) {
                 os << "[delaySlot];" << ENDL;
             }
@@ -907,7 +907,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
         }
   
         if (s.second.isTrueSpikeRequired() || model.isSynapseGroupPostLearningRequired(s.first)) {
-            os << "lscnt = dd_glbSpkCnt" << s.second.getSrcNeuronGroupName();
+            os << "lscnt = dd_glbSpkCnt" << s.second.getSrcNeuronGroup()->getName();
             if (s.second.getSrcNeuronGroup()->isDelayRequired()) {
                 os << "[delaySlot];" << ENDL;
             }
@@ -1020,16 +1020,16 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
             }
 
             if (sg->getSrcNeuronGroup()->isDelayRequired()) {
-                os << "unsigned int delaySlot = (dd_spkQuePtr" << sg->getSrcNeuronGroupName();
+                os << "unsigned int delaySlot = (dd_spkQuePtr" << sg->getSrcNeuronGroup()->getName();
                 os << " + " << (sg->getSrcNeuronGroup()->getNumDelaySlots() - sg->getDelaySteps());
                 os << ") % " << sg->getSrcNeuronGroup()->getNumDelaySlots() << ";" << ENDL;
             }
 
             if (sg->getTrgNeuronGroup()->isDelayRequired() && sg->getTrgNeuronGroup()->isTrueSpikeRequired()) {
-                os << "lscnt = dd_glbSpkCnt" << sg->getTrgNeuronGroupName() << "[dd_spkQuePtr" << sg->getTrgNeuronGroupName() << "];" << ENDL;
+                os << "lscnt = dd_glbSpkCnt" << sg->getTrgNeuronGroup()->getName() << "[dd_spkQuePtr" << sg->getTrgNeuronGroup()->getName() << "];" << ENDL;
             }
             else {
-                os << "lscnt = dd_glbSpkCnt" << sg->getTrgNeuronGroupName() << "[0];" << ENDL;
+                os << "lscnt = dd_glbSpkCnt" << sg->getTrgNeuronGroup()->getName() << "[0];" << ENDL;
             }
 
             os << "numSpikeSubsets = (lscnt+" << learnBlkSz-1 << ") / " << learnBlkSz << ";" << ENDL;
@@ -1041,7 +1041,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                 ? sg->getOffsetPost("dd_")
                 : "";
             os << "if (threadIdx.x < lmax)" << OB(240);
-            os << "shSpk[threadIdx.x] = dd_glbSpk" << sg->getTrgNeuronGroupName() << "[" << offsetTrueSpkPost << "(r * " << learnBlkSz << ") + threadIdx.x];" << ENDL;
+            os << "shSpk[threadIdx.x] = dd_glbSpk" << sg->getTrgNeuronGroup()->getName() << "[" << offsetTrueSpkPost << "(r * " << learnBlkSz << ") + threadIdx.x];" << ENDL;
             os << CB(240);
 
             os << "__syncthreads();" << ENDL;

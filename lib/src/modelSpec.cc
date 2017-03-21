@@ -212,7 +212,7 @@ NeuronGroup *NNmodel::addNeuronPopulation(
 
     // Add neuron group
     auto result = m_NeuronGroups.insert(
-        pair<string, NeuronGroup>(name, NeuronGroup(nNo, new NeuronModels::LegacyWrapper(type), p, ini)));
+        pair<string, NeuronGroup>(name, NeuronGroup(name, nNo, new NeuronModels::LegacyWrapper(type), p, ini)));
 
     if(!result.second)
     {
@@ -479,9 +479,9 @@ SynapseGroup *NNmodel::addSynapsePopulation(
     auto result = m_SynapseGroups.insert(
         pair<string, SynapseGroup>(
             name, SynapseGroup(mtype, delaySteps,
-                                new WeightUpdateModels::LegacyWrapper(syntype), p, synini,
-                                new PostsynapticModels::LegacyWrapper(postsyn), ps, PSVini,
-                                src, srcNeuronGrp, trg, trgNeuronGrp)));
+                               new WeightUpdateModels::LegacyWrapper(syntype), p, synini,
+                               new PostsynapticModels::LegacyWrapper(postsyn), ps, PSVini,
+                               srcNeuronGrp, trgNeuronGrp)));
 
     if(!result.second)
     {
@@ -718,7 +718,7 @@ void NNmodel::finalize()
         n.second.initDerivedParams(dt);
 
         // Make extra global parameter lists
-        n.second.addExtraGlobalParams(n.first, neuronKernelParameters);
+        n.second.addExtraGlobalParams(neuronKernelParameters);
     }
 
     // SYNAPSE groups
@@ -731,7 +731,7 @@ void NNmodel::finalize()
         // Make extra global parameter lists
         s.second.addExtraGlobalParams(s.first, synapseKernelParameters);
         for(auto const &p : wu->GetExtraGlobalParams()) {
-            s.second.getSrcNeuronGroup()->addSpikeEventConditionParams(p, s.first, neuronKernelParameters);
+            s.second.getSrcNeuronGroup()->addSpikeEventConditionParams(p, neuronKernelParameters);
         }
 
 

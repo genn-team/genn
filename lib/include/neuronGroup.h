@@ -15,9 +15,9 @@
 class NeuronGroup
 {
 public:
-    NeuronGroup(int numNeurons, const NeuronModels::Base *neuronModel,
+    NeuronGroup(const std::string &name, int numNeurons, const NeuronModels::Base *neuronModel,
                 const std::vector<double> &params, const std::vector<double> &initVals) :
-        m_NumNeurons(numNeurons), m_CumSumNeurons(0, 0), m_PaddedCumSumNeurons(0, 0),
+        m_Name(name), m_NumNeurons(numNeurons), m_CumSumNeurons(0, 0), m_PaddedCumSumNeurons(0, 0),
         m_NeuronModel(neuronModel), m_Params(params), m_InitVals(initVals),
         m_SpikeTimeRequired(false), m_TrueSpikeRequired(false), m_SpikeEventRequired(false), m_QueueRequired(false),
         m_NumDelaySlots(1),
@@ -103,14 +103,12 @@ public:
 
     bool getNumSpikeEventConditions() const{ return m_SpikeEventCondition.size(); }
 
-    // **YUCK** should neuron groups just know their own name?
-    void addExtraGlobalParams(const string &groupName, std::map<std::string, std::string> &kernelParameters) const;
-    void addSpikeEventConditionParams(const std::pair<std::string, std::string> &param, const std::string &groupName,
+    void addExtraGlobalParams(std::map<std::string, std::string> &kernelParameters) const;
+    void addSpikeEventConditionParams(const std::pair<std::string, std::string> &param,
                                       std::map<string, string> &kernelParameters) const;
 
     // **THINK** do this really belong here - it is very code-generation specific
-    // **YUCK** should neuron groups just know their own name?
-    std::string getQueueOffset(const std::string &groupName, const std::string &varPrefix) const;
+    std::string getQueueOffset(const std::string &varPrefix) const;
 
 private:
     //------------------------------------------------------------------------

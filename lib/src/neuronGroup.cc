@@ -123,10 +123,10 @@ bool NeuronGroup::isVarZeroCopyEnabled(const std::string &var) const
     return (m_VarZeroCopyEnabled.find(var) != std::end(m_VarZeroCopyEnabled));
 }
 
-void NeuronGroup::addExtraGlobalParams(const std::string &groupName, std::map<string, string> &kernelParameters) const
+void NeuronGroup::addExtraGlobalParams(std::map<string, string> &kernelParameters) const
 {
     for(auto const &p : getNeuronModel()->GetExtraGlobalParams()) {
-        std::string pnamefull = p.first + groupName;
+        std::string pnamefull = p.first + getName();
         if (kernelParameters.find(pnamefull) == kernelParameters.end()) {
             // parameter wasn't registered yet - is it used?
             if (getNeuronModel()->GetSimCode().find("$(" + p.first + ")") != string::npos
@@ -138,10 +138,10 @@ void NeuronGroup::addExtraGlobalParams(const std::string &groupName, std::map<st
     }
 }
 
-void NeuronGroup::addSpikeEventConditionParams(const std::pair<std::string, std::string> &param, const std::string &groupName,
+void NeuronGroup::addSpikeEventConditionParams(const std::pair<std::string, std::string> &param,
                                                std::map<string, string> &kernelParameters) const
 {
-    std::string pnamefull = param.first + groupName;
+    std::string pnamefull = param.first + getName();
     if (kernelParameters.find(pnamefull) == kernelParameters.end()) {
         // parameter wasn't registered yet - is it used?
         bool used = false;
@@ -162,9 +162,9 @@ void NeuronGroup::addSpikeEventConditionParams(const std::pair<std::string, std:
     }
 }
 
-std::string NeuronGroup::getQueueOffset(const std::string &groupName, const std::string &varPrefix) const
+std::string NeuronGroup::getQueueOffset(const std::string &varPrefix) const
 {
     return isDelayRequired()
-        ? "(" + varPrefix + "spkQuePtr" + groupName + " * " + to_string(getNumNeurons()) + ") + "
+        ? "(" + varPrefix + "spkQuePtr" + getName() + " * " + to_string(getNumNeurons()) + ") + "
         : "";
 }

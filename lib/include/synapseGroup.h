@@ -21,11 +21,9 @@ public:
     SynapseGroup(SynapseMatrixType matrixType, unsigned int delaySteps,
                  const WeightUpdateModels::Base *wu, const std::vector<double> &wuParams, const std::vector<double> &wuInitVals,
                  const PostsynapticModels::Base *ps, const std::vector<double> &psParams, const std::vector<double> &psInitVals,
-                 const std::string &srcNeuronGroupName, NeuronGroup *srcNeuronGroup,
-                 const std::string &trgNeuronGroupName, NeuronGroup *trgNeuronGroup) :
+                 NeuronGroup *srcNeuronGroup, NeuronGroup *trgNeuronGroup) :
         m_PaddedKernelCumSum(0, 0), m_SpanType(0), m_DelaySteps(delaySteps), m_MaxConnections(trgNeuronGroup->getNumNeurons()), m_MatrixType(matrixType),
-        m_SrcNeuronGroupName(srcNeuronGroupName), m_SrcNeuronGroup(srcNeuronGroup),
-        m_TrgNeuronGroupName(trgNeuronGroupName), m_TrgNeuronGroup(trgNeuronGroup),
+        m_SrcNeuronGroup(srcNeuronGroup), m_TrgNeuronGroup(trgNeuronGroup),
         m_TrueSpikeRequired(false), m_SpikeEventRequired(false), m_EventThresholdReTestRequired(false),
         m_WUModel(wu), m_WUParams(wuParams), m_WUInitVals(wuInitVals), m_PSModel(ps), m_PSParams(psParams), m_PSInitVals(psInitVals),
         m_HostID(0), m_DeviceID(0)
@@ -70,10 +68,7 @@ public:
     unsigned int getPaddedDynKernelSize(unsigned int blockSize) const;
     unsigned int getPaddedPostLearnKernelSize(unsigned int blockSize) const;
 
-    const std::string &getSrcNeuronGroupName() const{ return m_SrcNeuronGroupName; }
     const NeuronGroup *getSrcNeuronGroup() const{ return m_SrcNeuronGroup; }
-
-    const std::string &getTrgNeuronGroupName() const{ return m_TrgNeuronGroupName; }
     const NeuronGroup *getTrgNeuronGroup() const{ return m_TrgNeuronGroup; }
 
     bool isTrueSpikeRequired() const{ return m_TrueSpikeRequired; }
@@ -135,14 +130,8 @@ private:
     //!< Connectivity type of synapses
     SynapseMatrixType m_MatrixType;
 
-    //!< Name of presynaptic neuron group
-    std::string m_SrcNeuronGroupName;
-
     //!< Pointer to presynaptic neuron group
     NeuronGroup *m_SrcNeuronGroup;
-
-    //!< Name of postsynaptic neuron group
-    std::string m_TrgNeuronGroupName;
 
     //!< Pointer to postsynaptic neuron group
     NeuronGroup *m_TrgNeuronGroup;

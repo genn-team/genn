@@ -40,13 +40,11 @@ namespace StandardGeneratedSections
 {
 void neuronOutputInit(
     std::ostream &os,
-    const std::string &ngName,
     const NeuronGroup &ng,
     const std::string &varPrefix);
 
 void neuronLocalVarInit(
     std::ostream &os,
-    const std::string &ngName,
     const NeuronGroup &ng,
     const VarNameIterCtx &nmVars,
     const std::string &varPrefix,
@@ -54,7 +52,6 @@ void neuronLocalVarInit(
 
 void neuronLocalVarWrite(
     std::ostream &os,
-    const std::string &ngName,
     const NeuronGroup &ng,
     const VarNameIterCtx &nmVars,
     const std::string &varPrefix,
@@ -62,7 +59,6 @@ void neuronLocalVarWrite(
 
 void neuronSpikeEventTest(
     std::ostream &os,
-    const std::string &ngName,
     const NeuronGroup &ng,
     const VarNameIterCtx &nmVars,
     const ExtraGlobalParamNameIterCtx &nmExtraGlobalParams,
@@ -78,7 +74,6 @@ void postSynapseCurrentConverter(
     std::string &psCode,          //!< the code string to work on
     const std::string &sgName,
     const SynapseGroup *sg,
-    const std::string &ngName,
     const NeuronGroup &ng,
     const VarNameIterCtx &nmVars,
     const DerivedParamNameIterCtx &nmDerivedParams,
@@ -89,7 +84,6 @@ void postSynapseDecay(
     std::string &pdCode,
     const std::string &sgName,
     const SynapseGroup *sg,
-    const std::string &ngName,
     const NeuronGroup &ng,
     const VarNameIterCtx &nmVars,
     const DerivedParamNameIterCtx &nmDerivedParams,
@@ -98,7 +92,6 @@ void postSynapseDecay(
 
 void neuronThresholdCondition(
     std::string &thCode,
-    const std::string &ngName,
     const NeuronGroup &ng,
     const VarNameIterCtx &nmVars,
     const DerivedParamNameIterCtx &nmDerivedParams,
@@ -107,7 +100,6 @@ void neuronThresholdCondition(
 
 void neuronSim(
     std::string &sCode,
-    const std::string &ngName,
     const NeuronGroup &ng,
     const VarNameIterCtx &nmVars,
     const DerivedParamNameIterCtx &nmDerivedParams,
@@ -116,14 +108,13 @@ void neuronSim(
 
 void neuronSpikeEventCondition(
     std::string &eCode,
-    const std::string &ngName,
+    const NeuronGroup &ng,
     const VarNameIterCtx &nmVars,
     const ExtraGlobalParamNameIterCtx &nmExtraGlobalParams,
     const std::string &ftype);
 
 void neuronReset(
     std::string &rCode,
-    const std::string &ngName,
     const NeuronGroup &ng,
     const VarNameIterCtx &nmVars,
     const DerivedParamNameIterCtx &nmDerivedParams,
