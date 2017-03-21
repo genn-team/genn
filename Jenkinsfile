@@ -1,6 +1,7 @@
+#!groovy​
 node {
     // Checkout
-    stage('Preparation') {
+    stage("Installation") {
         echo "Checking out GeNN";
         
         // Deleting existing checked out version of GeNN
@@ -31,7 +32,8 @@ node {
         // Add GeNN binaries directory to path
         env.PATH += ":" + env.GENN_PATH + "/lib/bin";
     }
-    stage("Build") {
+    
+    stage("Running tests") {
         // Run automatic tests
         if (isUnix()) {
             echo "${env.PATH}";
@@ -41,7 +43,8 @@ node {
             }
         } 
     }
-    stage("Results") {
+    
+    stage("Gathering test results") {
         dir("genn/tests") {
             // Process JUnit test output
             junit "**/test_results*.xml"
@@ -50,4 +53,21 @@ node {
             archive "msg"
         }
     }
+    
+    stage("Calculating code coverage") {
+        // Calculate coverage
+        if (isUnix()) {
+            echo "${env.PATH}";
+            dir("genn/tests") {
+                sh "./calc_coverage.sh -c"
+            }
+        } 
+    }
+    
+    tage("Uploading coverage summary") {
+        dir("genn/tests") {
+            
+        }
+    }
+    
 }
