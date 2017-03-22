@@ -115,6 +115,20 @@ bool NeuronGroup::isVarZeroCopyEnabled(const std::string &var) const
     return (m_VarZeroCopyEnabled.find(var) != std::end(m_VarZeroCopyEnabled));
 }
 
+bool NeuronGroup::isParamRequiredBySpikeEventCondition(const std::string &pnamefull) const
+{
+    // Loop through event conditions
+    for(const auto &spkEventCond : m_SpikeEventCondition) {
+        // If the event threshold code contains this parameter
+        // (in it's non-uniquified form), set flag and stop searching
+        if(spkEventCond.first.find(pnamefull) != string::npos) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 void NeuronGroup::addExtraGlobalParams(std::map<string, string> &kernelParameters) const
 {
     for(auto const &p : getNeuronModel()->getExtraGlobalParams()) {
@@ -126,30 +140,6 @@ void NeuronGroup::addExtraGlobalParams(std::map<string, string> &kernelParameter
                 || getNeuronModel()->getResetCode().find("$(" + p.first + ")") != string::npos) {
                 kernelParameters.insert(pair<string, string>(pnamefull, p.second));
             }
-        }
-    }
-}
-
-void NeuronGroup::addSpikeEventConditionParams(const std::pair<std::string, std::string> &param,
-                                               std::map<string, string> &kernelParameters) const
-{
-    std::string pnamefull = param.first + getName();
-    if (kernelParameters.find(pnamefull) == kernelParameters.end()) {
-        // parameter wasn't registered yet - is it used?
-        bool used = false;
-
-        // Loop through event conditions
-        for(const auto &spkEventCond : m_SpikeEventCondition) {
-            // If the event threshold code contains this parameter
-            // (in it's non-uniquified form), set flag and stop searching
-            if(spkEventCond.first.find(pnamefull) != string::npos) {
-                used = true;
-                break;
-            }
-        }
-
-        if (used) {
-            kernelParameters.insert(pair<string, string>(pnamefull, param.second));
         }
     }
 }

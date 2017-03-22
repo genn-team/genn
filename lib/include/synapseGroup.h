@@ -106,7 +106,8 @@ public:
     // **THINK** this is very cuda-specific
     bool isPSAtomicAddRequired(unsigned int blockSize) const;
 
-    void addExtraGlobalParams(const std::string &groupName, std::map<string, string> &kernelParameters) const;
+    void addExtraGlobalSynapseParams(std::map<string, string> &kernelParameters) const;
+    void addExtraGlobalNeuronParams(std::map<string, string> &kernelParameters) const;
 
     // **THINK** do these really belong here - they are very code-generation specific
     std::string getOffsetPre() const;
@@ -116,11 +117,11 @@ private:
     //------------------------------------------------------------------------
     // Private methods
     //------------------------------------------------------------------------
-    void addExtraGlobalSimParams(const std::string &groupName, const std::string &suffix, const NewModels::Base::StringPairVec &extraGlobalParameters,
+    void addExtraGlobalSimParams(const std::string &prefix, const std::string &suffix, const NewModels::Base::StringPairVec &extraGlobalParameters,
                                  std::map<std::string, std::string> &kernelParameters) const;
-    void addExtraGlobalPostLearnParams(const std::string &groupName, const std::string &suffix, const NewModels::Base::StringPairVec &extraGlobalParameters,
+    void addExtraGlobalPostLearnParams(const std::string &prefix, const std::string &suffix, const NewModels::Base::StringPairVec &extraGlobalParameters,
                                        std::map<std::string, std::string> &kernelParameters) const;
-    void addExtraGlobalSynapseDynamicsParams(const std::string &groupName, const std::string &suffix, const NewModels::Base::StringPairVec &extraGlobalParameters,
+    void addExtraGlobalSynapseDynamicsParams(const std::string &prefix, const std::string &suffix, const NewModels::Base::StringPairVec &extraGlobalParameters,
                                              std::map<std::string, std::string> &kernelParameters) const;
 
     //------------------------------------------------------------------------

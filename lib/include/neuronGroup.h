@@ -100,11 +100,11 @@ public:
     bool isZeroCopyEnabled() const;
     bool isVarZeroCopyEnabled(const std::string &var) const;
 
+    bool isParamRequiredBySpikeEventCondition(const std::string &pnamefull) const;
+
     bool getNumSpikeEventConditions() const{ return m_SpikeEventCondition.size(); }
 
     void addExtraGlobalParams(std::map<std::string, std::string> &kernelParameters) const;
-    void addSpikeEventConditionParams(const std::pair<std::string, std::string> &param,
-                                      std::map<string, string> &kernelParameters) const;
 
     // **THINK** do this really belong here - it is very code-generation specific
     std::string getQueueOffset(const std::string &devPrefix) const;

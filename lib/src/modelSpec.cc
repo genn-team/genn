@@ -682,10 +682,8 @@ void NNmodel::setPopulationSums()
     unsigned int paddedCumSumSynDynGroups = 0;
     unsigned int paddedCumSumSynPostLrnGroups = 0;
     for(auto &s : m_SynapseGroups) {
-        if (!s.second.getWUModel()->getSimCode().empty()) {
-            // Calculate synapse kernel sizes
-            s.second.calcKernelSizes(synapseBlkSz, paddedCumSumSynGroups);
-        }
+        // Calculate synapse kernel sizes
+        s.second.calcKernelSizes(synapseBlkSz, paddedCumSumSynGroups);
 
         if (!s.second.getWUModel()->getLearnPostCode().empty()) {
             unsigned int startID = paddedCumSumSynPostLrnGroups;
@@ -716,46 +714,6 @@ void NNmodel::finalize()
         gennError("Your model has already been finalized");
     }
     final = true;
-
-    // NEURON GROUPS
-    for(auto &n : m_NeuronGroups) {
-        // Initialize derived parameters
-        n.second.initDerivedParams(dt);
-
-        // Make extra global parameter lists
-        n.second.addExtraGlobalParams(neuronKernelParameters);
-    }
-
-    // SYNAPSE groups
-    for(auto &s : m_SynapseGroups) {
-        const auto *wu = s.second.getWUModel();
-
-        // Initialize derived parameters
-        s.second.initDerivedParams(dt);
-
-        // Make extra global parameter lists
-        s.second.addExtraGlobalParams(s.first, synapseKernelParameters);
-        for(auto const &p : wu->getExtraGlobalParams()) {
-            s.second.getSrcNeuronGroup()->addSpikeEventConditionParams(p, neuronKernelParameters);
-        }
-
-
-        if (!wu->getSimCode().empty()) {
-            s.second.setTrueSpikeRequired(true);
-            s.second.getSrcNeuronGroup()->setTrueSpikeRequired(true);
-
-            // analyze which neuron variables need queues
-            s.second.getSrcNeuronGroup()->updateVarQueues(wu->getSimCode());
-        }
-
-        if (!wu->getLearnPostCode().empty()) {
-            s.second.getSrcNeuronGroup()->updateVarQueues(wu->getLearnPostCode());
-        }
-
-        if (!wu->getSynapseDynamicsCode().empty()) {
-            s.second.getSrcNeuronGroup()->updateVarQueues(wu->getSynapseDynamicsCode());
-        }
-    }
 
     // Loop through neuron populations and their outgoing synapse populations
     for(auto &n : m_NeuronGroups) {
@@ -795,6 +753,44 @@ void NNmodel::finalize()
                 }
             }
         }
+    }
+
+    // NEURON GROUPS
+    for(auto &n : m_NeuronGroups) {
+        // Initialize derived parameters
+        n.second.initDerivedParams(dt);
+
+        // Make extra global parameter lists
+        n.second.addExtraGlobalParams(neuronKernelParameters);
+    }
+
+    // SYNAPSE groups
+    for(auto &s : m_SynapseGroups) {
+        const auto *wu = s.second.getWUModel();
+
+        // Initialize derived parameters
+        s.second.initDerivedParams(dt);
+
+        if (!wu->getSimCode().empty()) {
+            s.second.setTrueSpikeRequired(true);
+            s.second.getSrcNeuronGroup()->setTrueSpikeRequired(true);
+
+            // analyze which neuron variables need queues
+            s.second.getSrcNeuronGroup()->updateVarQueues(wu->getSimCode());
+        }
+
+        if (!wu->getLearnPostCode().empty()) {
+            s.second.getSrcNeuronGroup()->updateVarQueues(wu->getLearnPostCode());
+        }
+
+        if (!wu->getSynapseDynamicsCode().empty()) {
+            s.second.getSrcNeuronGroup()->updateVarQueues(wu->getSynapseDynamicsCode());
+        }
+
+        // Make extra global parameter lists
+        s.second.addExtraGlobalSynapseParams(synapseKernelParameters);
+        s.second.addExtraGlobalNeuronParams(neuronKernelParameters);
+
     }
 
     setPopulationSums();
