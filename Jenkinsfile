@@ -95,4 +95,6 @@ node {
         }
     }
     
+    // Success
+    setBuildStatus(context, "Success", "SUCCESS");
 }
