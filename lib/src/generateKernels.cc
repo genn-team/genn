@@ -111,7 +111,7 @@ a max possible number of connections via the model.setMaxConn() function.\n");
 
         // code substitutions ----
         string eCode = wu->GetEventThresholdConditionCode();
-        StandardSubstitutions::weightUpdateThresholdCondition(eCode, sg.getName(), sg,
+        StandardSubstitutions::weightUpdateThresholdCondition(eCode, sg,
                                                               wuDerivedParams, wuExtraGlobalParams,
                                                               "preInd", "i", "dd_", ftype);
         // end code substitutions ----
