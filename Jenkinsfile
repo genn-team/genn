@@ -2,30 +2,31 @@
 
 // Wrapper around setting of GitHUb commit status curtesy of https://groups.google.com/forum/#!topic/jenkinsci-issues/p-UFjxKkXRI
 void buildStep(String message, Closure closure) {
-  stage(message);
-  try {
-    setBuildStatus(message, "PENDING");
-    closure();
-  } catch (Exception e) {
-    setBuildStatus(message, "FAILURE");
-  }
+    stage(message)
+    {
+        try {
+            setBuildStatus(message, "PENDING");
+            closure();
+        } catch (Exception e) {
+            setBuildStatus(message, "FAILURE");
+        }
+    }
 }
 
 void setBuildStatus(String message, String state) {
-  step([
-      $class: "GitHubCommitStatusSetter",
-      reposSource: [$class: "ManuallyEnteredRepositorySource", url: "https://github.com/genn-team/genn/"],
-      contextSource: [$class: "ManuallyEnteredCommitContextSource", context: "ci/jenkins/build-status"],
-      errorHandlers: [[$class: "ChangingBuildStatusErrorHandler", result: "UNSTABLE"]],
-      statusResultSource: [ $class: "ConditionalStatusResultSource", results: [[$class: "AnyBuildResult", message: message, state: state]] ]
-  ]);
+    step([
+        $class: "GitHubCommitStatusSetter",
+        reposSource: [$class: "ManuallyEnteredRepositorySource", url: "https://github.com/genn-team/genn/"],
+        contextSource: [$class: "ManuallyEnteredCommitContextSource", context: "ci/jenkins/build-status"],
+        errorHandlers: [[$class: "ChangingBuildStatusErrorHandler", result: "UNSTABLE"]],
+        statusResultSource: [ $class: "ConditionalStatusResultSource", results: [[$class: "AnyBuildResult", message: message, state: state]] ]
+    ]);
 }
 
 
 node {
     // Checkout
     buildStep("Installation") {
-        git setBuildStatus("Build complete", "SUCCESS");
         echo "Checking out GeNN";
         
         // Deleting existing checked out version of GeNN
