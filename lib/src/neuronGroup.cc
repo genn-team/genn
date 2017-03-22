@@ -23,7 +23,7 @@ void NeuronGroup::checkNumDelaySlots(unsigned int requiredDelay)
 void NeuronGroup::updateVarQueues(const string &code)
 {
     // Loop through neuron variables
-    for(const auto &v : getNeuronModel()->GetVars()) {
+    for(const auto &v : getNeuronModel()->getVars()) {
         // If the code contains a reference to this variable, set queued flag
         if (code.find(v.first + "_pre") != string::npos) {
             m_VarQueueRequired.insert(v.first);
@@ -34,7 +34,7 @@ void NeuronGroup::updateVarQueues(const string &code)
 void NeuronGroup::setVarZeroCopyEnabled(const std::string &var, bool enabled)
 {
     // If named variable doesn't exist give error
-    VarNameIterCtx nmVars(getNeuronModel()->GetVars());
+    VarNameIterCtx nmVars(getNeuronModel()->getVars());
     if(find(nmVars.nameBegin, nmVars.nameEnd, var) == nmVars.nameEnd) {
         gennError("Cannot find variable " + var);
     }
@@ -59,7 +59,7 @@ void NeuronGroup::addSpkEventCondition(const std::string &code, const std::strin
 
 void NeuronGroup::initDerivedParams(double dt)
 {
-    auto derivedParams = getNeuronModel()->GetDerivedParams();
+    auto derivedParams = getNeuronModel()->getDerivedParams();
 
     // Reserve vector to hold derived parameters
     m_DerivedParams.reserve(derivedParams.size());
@@ -117,13 +117,13 @@ bool NeuronGroup::isVarZeroCopyEnabled(const std::string &var) const
 
 void NeuronGroup::addExtraGlobalParams(std::map<string, string> &kernelParameters) const
 {
-    for(auto const &p : getNeuronModel()->GetExtraGlobalParams()) {
+    for(auto const &p : getNeuronModel()->getExtraGlobalParams()) {
         std::string pnamefull = p.first + getName();
         if (kernelParameters.find(pnamefull) == kernelParameters.end()) {
             // parameter wasn't registered yet - is it used?
-            if (getNeuronModel()->GetSimCode().find("$(" + p.first + ")") != string::npos
-                || getNeuronModel()->GetThresholdConditionCode().find("$(" + p.first + ")") != string::npos
-                || getNeuronModel()->GetResetCode().find("$(" + p.first + ")") != string::npos) {
+            if (getNeuronModel()->getSimCode().find("$(" + p.first + ")") != string::npos
+                || getNeuronModel()->getThresholdConditionCode().find("$(" + p.first + ")") != string::npos
+                || getNeuronModel()->getResetCode().find("$(" + p.first + ")") != string::npos) {
                 kernelParameters.insert(pair<string, string>(pnamefull, p.second));
             }
         }

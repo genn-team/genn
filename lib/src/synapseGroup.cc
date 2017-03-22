@@ -15,7 +15,7 @@
 void SynapseGroup::setWUVarZeroCopyEnabled(const std::string &var, bool enabled)
 {
     // If named variable doesn't exist give error
-    VarNameIterCtx wuVars(getWUModel()->GetVars());
+    VarNameIterCtx wuVars(getWUModel()->getVars());
     if(find(wuVars.nameBegin, wuVars.nameEnd, var) == wuVars.nameEnd) {
         gennError("Cannot find variable " + var);
     }
@@ -35,7 +35,7 @@ void SynapseGroup::setWUVarZeroCopyEnabled(const std::string &var, bool enabled)
 void SynapseGroup::setPSVarZeroCopyEnabled(const std::string &var, bool enabled)
 {
     // If named variable doesn't exist give error
-    VarNameIterCtx psVars(getPSModel()->GetVars());
+    VarNameIterCtx psVars(getPSModel()->getVars());
     if(find(psVars.nameBegin, psVars.nameEnd, var) == psVars.nameEnd) {
         gennError("Cannot find variable " + var);
     }
@@ -74,8 +74,8 @@ void SynapseGroup::setSpanType(SpanType spanType)
 
 void SynapseGroup::initDerivedParams(double dt)
 {
-    auto wuDerivedParams = getWUModel()->GetDerivedParams();
-    auto psDerivedParams = getPSModel()->GetDerivedParams();
+    auto wuDerivedParams = getWUModel()->getDerivedParams();
+    auto psDerivedParams = getPSModel()->getDerivedParams();
 
     // Reserve vector to hold derived parameters
     m_WUDerivedParams.reserve(wuDerivedParams.size());
@@ -172,40 +172,40 @@ void SynapseGroup::addExtraGlobalParams(const std::string &groupName, std::map<s
     // --------------
     // Add any of the pre or postsynaptic neuron group's extra global
     // parameters referenced in the sim code to the map of kernel parameters
-    addExtraGlobalSimParams(getSrcNeuronGroup()->getName(), "_pre", getSrcNeuronGroup()->getNeuronModel()->GetExtraGlobalParams(),
+    addExtraGlobalSimParams(getSrcNeuronGroup()->getName(), "_pre", getSrcNeuronGroup()->getNeuronModel()->getExtraGlobalParams(),
                              kernelParameters);
-    addExtraGlobalSimParams(getSrcNeuronGroup()->getName(), "_post", getTrgNeuronGroup()->getNeuronModel()->GetExtraGlobalParams(),
+    addExtraGlobalSimParams(getSrcNeuronGroup()->getName(), "_post", getTrgNeuronGroup()->getNeuronModel()->getExtraGlobalParams(),
                              kernelParameters);
 
     // Finally add any weight update model extra global
     // parameters referenced in the sim to the map of kernel paramters
-    addExtraGlobalSimParams(groupName, "", getWUModel()->GetExtraGlobalParams(), kernelParameters);
+    addExtraGlobalSimParams(groupName, "", getWUModel()->getExtraGlobalParams(), kernelParameters);
 
     // Learn post
     // -----------
     // Add any of the pre or postsynaptic neuron group's extra global
     // parameters referenced in the sim code to the map of kernel parameters
-    addExtraGlobalPostLearnParams(getSrcNeuronGroup()->getName(), "_pre", getSrcNeuronGroup()->getNeuronModel()->GetExtraGlobalParams(),
+    addExtraGlobalPostLearnParams(getSrcNeuronGroup()->getName(), "_pre", getSrcNeuronGroup()->getNeuronModel()->getExtraGlobalParams(),
                                   kernelParameters);
-    addExtraGlobalPostLearnParams(getSrcNeuronGroup()->getName(), "_post", getTrgNeuronGroup()->getNeuronModel()->GetExtraGlobalParams(),
+    addExtraGlobalPostLearnParams(getSrcNeuronGroup()->getName(), "_post", getTrgNeuronGroup()->getNeuronModel()->getExtraGlobalParams(),
                                   kernelParameters);
 
     // Finally add any weight update model extra global
     // parameters referenced in the sim to the map of kernel paramters
-    addExtraGlobalPostLearnParams(groupName, "", getWUModel()->GetExtraGlobalParams(), kernelParameters);
+    addExtraGlobalPostLearnParams(groupName, "", getWUModel()->getExtraGlobalParams(), kernelParameters);
 
     // Synapse dynamics
     // ----------------
     // Add any of the pre or postsynaptic neuron group's extra global
     // parameters referenced in the sim code to the map of kernel parameters
-    addExtraGlobalSynapseDynamicsParams(getSrcNeuronGroup()->getName(), "_pre", getSrcNeuronGroup()->getNeuronModel()->GetExtraGlobalParams(),
+    addExtraGlobalSynapseDynamicsParams(getSrcNeuronGroup()->getName(), "_pre", getSrcNeuronGroup()->getNeuronModel()->getExtraGlobalParams(),
                                         kernelParameters);
-    addExtraGlobalSynapseDynamicsParams(getSrcNeuronGroup()->getName(), "_post", getTrgNeuronGroup()->getNeuronModel()->GetExtraGlobalParams(),
+    addExtraGlobalSynapseDynamicsParams(getSrcNeuronGroup()->getName(), "_post", getTrgNeuronGroup()->getNeuronModel()->getExtraGlobalParams(),
                                         kernelParameters);
 
     // Finally add any weight update model extra global
     // parameters referenced in the sim to the map of kernel paramters
-    addExtraGlobalSynapseDynamicsParams(groupName, "", getWUModel()->GetExtraGlobalParams(), kernelParameters);
+    addExtraGlobalSynapseDynamicsParams(groupName, "", getWUModel()->getExtraGlobalParams(), kernelParameters);
 
 }
 
@@ -217,9 +217,9 @@ void SynapseGroup::addExtraGlobalSimParams(const std::string &groupName, const s
         std::string pnamefull = p.first + groupName;
         if (kernelParameters.find(pnamefull) == kernelParameters.end()) {
             // parameter wasn't registered yet - is it used?
-            if (getWUModel()->GetSimCode().find("$(" + p.first + suffix + ")") != string::npos
-                || getWUModel()->GetEventCode().find("$(" + p.first + suffix + ")") != string::npos
-                || getWUModel()->GetEventThresholdConditionCode().find("$(" + p.first + suffix + ")") != string::npos) {
+            if (getWUModel()->getSimCode().find("$(" + p.first + suffix + ")") != string::npos
+                || getWUModel()->getEventCode().find("$(" + p.first + suffix + ")") != string::npos
+                || getWUModel()->getEventThresholdConditionCode().find("$(" + p.first + suffix + ")") != string::npos) {
                 kernelParameters.insert(pair<string, string>(pnamefull, p.second));
             }
         }
@@ -234,7 +234,7 @@ void SynapseGroup::addExtraGlobalPostLearnParams(const std::string &groupName, c
         std::string pnamefull = p.first + groupName;
         if (kernelParameters.find(pnamefull) == kernelParameters.end()) {
             // parameter wasn't registered yet - is it used?
-            if (getWUModel()->GetLearnPostCode().find("$(" + p.first + suffix) != string::npos) {
+            if (getWUModel()->getLearnPostCode().find("$(" + p.first + suffix) != string::npos) {
                 kernelParameters.insert(pair<string, string>(pnamefull, p.second));
             }
         }
@@ -249,7 +249,7 @@ void SynapseGroup::addExtraGlobalSynapseDynamicsParams(const std::string &groupN
         std::string pnamefull = p.first + groupName;
         if (kernelParameters.find(pnamefull) == kernelParameters.end()) {
             // parameter wasn't registered yet - is it used?
-            if (getWUModel()->GetSynapseDynamicsCode().find("$(" + p.first + suffix) != string::npos) {
+            if (getWUModel()->getSynapseDynamicsCode().find("$(" + p.first + suffix) != string::npos) {
                 kernelParameters.insert(pair<string, string>(pnamefull, p.second));
             }
         }

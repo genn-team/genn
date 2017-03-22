@@ -682,12 +682,12 @@ void NNmodel::setPopulationSums()
     unsigned int paddedCumSumSynDynGroups = 0;
     unsigned int paddedCumSumSynPostLrnGroups = 0;
     for(auto &s : m_SynapseGroups) {
-        if (!s.second.getWUModel()->GetSimCode().empty()) {
+        if (!s.second.getWUModel()->getSimCode().empty()) {
             // Calculate synapse kernel sizes
             s.second.calcKernelSizes(synapseBlkSz, paddedCumSumSynGroups);
         }
 
-        if (!s.second.getWUModel()->GetLearnPostCode().empty()) {
+        if (!s.second.getWUModel()->getLearnPostCode().empty()) {
             unsigned int startID = paddedCumSumSynPostLrnGroups;
             paddedCumSumSynPostLrnGroups += s.second.getPaddedPostLearnKernelSize(learnBlkSz);
 
@@ -697,7 +697,7 @@ void NNmodel::setPopulationSums()
                 startID, paddedCumSumSynPostLrnGroups);
         }
 
-         if (!s.second.getWUModel()->GetSynapseDynamicsCode().empty()) {
+         if (!s.second.getWUModel()->getSynapseDynamicsCode().empty()) {
             unsigned int startID = paddedCumSumSynDynGroups;
             paddedCumSumSynDynGroups += s.second.getPaddedDynKernelSize(synDynBlkSz);
 
@@ -735,25 +735,25 @@ void NNmodel::finalize()
 
         // Make extra global parameter lists
         s.second.addExtraGlobalParams(s.first, synapseKernelParameters);
-        for(auto const &p : wu->GetExtraGlobalParams()) {
+        for(auto const &p : wu->getExtraGlobalParams()) {
             s.second.getSrcNeuronGroup()->addSpikeEventConditionParams(p, neuronKernelParameters);
         }
 
 
-        if (!wu->GetSimCode().empty()) {
+        if (!wu->getSimCode().empty()) {
             s.second.setTrueSpikeRequired(true);
             s.second.getSrcNeuronGroup()->setTrueSpikeRequired(true);
 
             // analyze which neuron variables need queues
-            s.second.getSrcNeuronGroup()->updateVarQueues(wu->GetSimCode());
+            s.second.getSrcNeuronGroup()->updateVarQueues(wu->getSimCode());
         }
 
-        if (!wu->GetLearnPostCode().empty()) {
-            s.second.getSrcNeuronGroup()->updateVarQueues(wu->GetLearnPostCode());
+        if (!wu->getLearnPostCode().empty()) {
+            s.second.getSrcNeuronGroup()->updateVarQueues(wu->getLearnPostCode());
         }
 
-        if (!wu->GetSynapseDynamicsCode().empty()) {
-            s.second.getSrcNeuronGroup()->updateVarQueues(wu->GetSynapseDynamicsCode());
+        if (!wu->getSynapseDynamicsCode().empty()) {
+            s.second.getSrcNeuronGroup()->updateVarQueues(wu->getSynapseDynamicsCode());
         }
     }
 
@@ -762,35 +762,35 @@ void NNmodel::finalize()
         for(auto *sg : n.second.getOutSyn()) {
             const auto *wu = sg->getWUModel();
 
-            if (!wu->GetEventCode().empty()) {
+            if (!wu->getEventCode().empty()) {
                 sg->setSpikeEventRequired(true);
                 n.second.setSpikeEventRequired(true);
-                assert(!wu->GetEventThresholdConditionCode().empty());
+                assert(!wu->getEventThresholdConditionCode().empty());
 
                  // Create iteration context to iterate over derived and extra global parameters
-                ExtraGlobalParamNameIterCtx wuExtraGlobalParams(wu->GetExtraGlobalParams());
-                DerivedParamNameIterCtx wuDerivedParams(wu->GetDerivedParams());
+                ExtraGlobalParamNameIterCtx wuExtraGlobalParams(wu->getExtraGlobalParams());
+                DerivedParamNameIterCtx wuDerivedParams(wu->getDerivedParams());
 
                 // do an early replacement of parameters, derived parameters and extraglobalsynapse parameters
-                string eCode = wu->GetEventThresholdConditionCode();
-                value_substitutions(eCode, wu->GetParamNames(), sg->getWUParams());
+                string eCode = wu->getEventThresholdConditionCode();
+                value_substitutions(eCode, wu->getParamNames(), sg->getWUParams());
                 value_substitutions(eCode, wuDerivedParams.nameBegin, wuDerivedParams.nameEnd, sg->getWUDerivedParams());
                 name_substitutions(eCode, "", wuExtraGlobalParams.nameBegin, wuExtraGlobalParams.nameEnd, sg->getName());
 
                 // Add code and name of
-                string supportCodeNamespaceName = wu->GetSimSupportCode().empty() ?
+                string supportCodeNamespaceName = wu->getSimSupportCode().empty() ?
                     "" : sg->getName() + "_weightupdate_simCode";
 
                 // Add code and name of support code namespace to set
                 n.second.addSpkEventCondition(eCode, supportCodeNamespaceName);
 
                 // analyze which neuron variables need queues
-                n.second.updateVarQueues(wu->GetEventCode());
+                n.second.updateVarQueues(wu->getEventCode());
             }
         }
         if (n.second.getNumSpikeEventConditions() > 1) {
             for(auto *sg : n.second.getOutSyn()) {
-                if (!sg->getWUModel()->GetEventCode().empty()) {
+                if (!sg->getWUModel()->getEventCode().empty()) {
                     sg->setEventThresholdReTestRequired(true);
                 }
             }

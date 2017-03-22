@@ -333,10 +333,10 @@ void genRunner(const NNmodel &model, //!< Model description
         }
 
         auto neuronModel = n.second.getNeuronModel();
-        for(auto const &v : neuronModel->GetVars()) {
+        for(auto const &v : neuronModel->getVars()) {
             extern_variable_def(os, v.second +" *", v.first + n.first);
         }
-        for(auto const &v : neuronModel->GetExtraGlobalParams()) {
+        for(auto const &v : neuronModel->getExtraGlobalParams()) {
             extern_variable_def(os, v.second, v.first + n.first);
         }
     }
@@ -408,15 +408,15 @@ void genRunner(const NNmodel &model, //!< Model description
         }
 
         if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) { // not needed for GLOBALG
-            for(const auto &v : s.second.getWUModel()->GetVars()) {
+            for(const auto &v : s.second.getWUModel()->getVars()) {
                 extern_variable_def(os, v.second + " *", v.first + s.first);
             }
-            for(const auto &v : s.second.getPSModel()->GetVars()) {
+            for(const auto &v : s.second.getPSModel()->getVars()) {
                 extern_variable_def(os, v.second + " *", v.first + s.first);
             }
         }
 
-        for(auto const &p : s.second.getWUModel()->GetExtraGlobalParams()) {
+        for(auto const &p : s.second.getWUModel()->getExtraGlobalParams()) {
             extern_variable_def(os, p.second, p.first + s.first);
         }
     }
@@ -686,9 +686,9 @@ void genRunner(const NNmodel &model, //!< Model description
     // write the support codes
     os << "// support code for neuron and synapse models" << ENDL;
     for(const auto &n : model.getNeuronGroups()) {
-        if (!n.second.getNeuronModel()->GetSupportCode().empty()) {
+        if (!n.second.getNeuronModel()->getSupportCode().empty()) {
             os << "namespace " << n.first << "_neuron" << OB(11) << ENDL;
-            os << ensureFtype(n.second.getNeuronModel()->GetSupportCode(), model.ftype) << ENDL;
+            os << ensureFtype(n.second.getNeuronModel()->getSupportCode(), model.ftype) << ENDL;
             os << CB(11) << " // end of support code namespace " << n.first << ENDL;
         }
     }
@@ -696,24 +696,24 @@ void genRunner(const NNmodel &model, //!< Model description
         const auto *wu = s.second.getWUModel();
         const auto *psm = s.second.getPSModel();
 
-        if (!wu->GetSimSupportCode().empty()) {
+        if (!wu->getSimSupportCode().empty()) {
             os << "namespace " << s.first << "_weightupdate_simCode " << OB(11) << ENDL;
-            os << ensureFtype(wu->GetSimSupportCode(), model.ftype) << ENDL;
+            os << ensureFtype(wu->getSimSupportCode(), model.ftype) << ENDL;
             os << CB(11) << " // end of support code namespace " << s.first << "_weightupdate_simCode " << ENDL;
         }
-        if (!wu->GetLearnPostSupportCode().empty()) {
+        if (!wu->getLearnPostSupportCode().empty()) {
             os << "namespace " << s.first << "_weightupdate_simLearnPost " << OB(11) << ENDL;
-            os << ensureFtype(wu->GetLearnPostSupportCode(), model.ftype) << ENDL;
+            os << ensureFtype(wu->getLearnPostSupportCode(), model.ftype) << ENDL;
             os << CB(11) << " // end of support code namespace " << s.first << "_weightupdate_simLearnPost " << ENDL;
         }
-        if (!wu->GetSynapseDynamicsSuppportCode().empty()) {
+        if (!wu->getSynapseDynamicsSuppportCode().empty()) {
             os << "namespace " << s.first << "_weightupdate_synapseDynamics " << OB(11) << ENDL;
-            os << ensureFtype(wu->GetSynapseDynamicsSuppportCode(), model.ftype) << ENDL;
+            os << ensureFtype(wu->getSynapseDynamicsSuppportCode(), model.ftype) << ENDL;
             os << CB(11) << " // end of support code namespace " << s.first << "_weightupdate_synapseDynamics " << ENDL;
         }
-        if (!psm->GetSupportCode().empty()) {
+        if (!psm->getSupportCode().empty()) {
             os << "namespace " << s.first << "_postsyn " << OB(11) << ENDL;
-            os << ensureFtype(psm->GetSupportCode(), model.ftype) << ENDL;
+            os << ensureFtype(psm->getSupportCode(), model.ftype) << ENDL;
             os << CB(11) << " // end of support code namespace " << s.first << "_postsyn " << ENDL;
         }
 
@@ -816,10 +816,10 @@ void genRunner(const NNmodel &model, //!< Model description
         }
 
         auto neuronModel = n.second.getNeuronModel();
-        for(auto const &v : neuronModel->GetVars()) {
+        for(auto const &v : neuronModel->getVars()) {
             variable_def(os, v.second + " *", v.first + n.first);
         }
-        for(auto const &v : neuronModel->GetExtraGlobalParams()) {
+        for(auto const &v : neuronModel->getExtraGlobalParams()) {
             os << v.second << " " <<  v.first << n.first << ";" << ENDL;
         }
     }
@@ -864,15 +864,15 @@ void genRunner(const NNmodel &model, //!< Model description
 #endif
         }
         if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) { // not needed for GLOBALG, INDIVIDUALID
-            for(const auto &v : wu->GetVars()) {
+            for(const auto &v : wu->getVars()) {
                 variable_def(os, v.second + " *", v.first + s.first);
             }
-            for(const auto &v : psm->GetVars()) {
+            for(const auto &v : psm->getVars()) {
                 variable_def(os, v.second+" *", v.first + s.first);
             }
         }
 
-        for(const auto &v : wu->GetExtraGlobalParams()) {
+        for(const auto &v : wu->getExtraGlobalParams()) {
             os << v.second << " " <<  v.first<< s.first << ";" << ENDL;
         }
     }
@@ -1006,7 +1006,7 @@ void genRunner(const NNmodel &model, //!< Model description
         }
 
         // Allocate memory for neuron model's state variables
-        for(const auto &v : n.second.getNeuronModel()->GetVars()) {
+        for(const auto &v : n.second.getNeuronModel()->getVars()) {
             mem += allocate_variable(os, v.second, v.first + n.first, n.second.isVarZeroCopyEnabled(v.first),
                                      n.second.isVarQueueRequired(v.first) ? n.second.getNumNeurons() * n.second.getNumDelaySlots() : n.second.getNumNeurons());
         }
@@ -1033,7 +1033,7 @@ void genRunner(const NNmodel &model, //!< Model description
         else if ((s.second.getMatrixType() & SynapseMatrixConnectivity::DENSE) && (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL)) {
             const size_t size = s.second.getSrcNeuronGroup()->getNumNeurons() * s.second.getTrgNeuronGroup()->getNumNeurons();
 
-            for(const auto &v : wu->GetVars()) {
+            for(const auto &v : wu->getVars()) {
                 mem += allocate_variable(os, v.second, v.first + s.first, s.second.isWUVarZeroCopyEnabled(v.first),
                                          size);
             }
@@ -1042,7 +1042,7 @@ void genRunner(const NNmodel &model, //!< Model description
         if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) { // not needed for GLOBALG
             const size_t size = s.second.getTrgNeuronGroup()->getNumNeurons();
 
-            for(const auto &v : psm->GetVars()) {
+            for(const auto &v : psm->getVars()) {
                 mem += allocate_variable(os, v.second, v.first + s.first, s.second.isPSVarZeroCopyEnabled(v.first),
                                          size);
             }
@@ -1127,7 +1127,7 @@ void genRunner(const NNmodel &model, //!< Model description
             os << "    }" << cB << ENDL;
         }
         
-        auto neuronModelVars = n.second.getNeuronModel()->GetVars();
+        auto neuronModelVars = n.second.getNeuronModel()->getVars();
         for (size_t j = 0; j < neuronModelVars.size(); j++) {
             if (n.second.isVarQueueRequired(neuronModelVars[j].first)) {
                 os << "    " << oB << "for (int i = 0; i < " << n.second.getNumNeurons() * n.second.getNumDelaySlots() << "; i++) {" << ENDL;
@@ -1144,7 +1144,7 @@ void genRunner(const NNmodel &model, //!< Model description
             os << "    }" << cB << ENDL;
         }
 
-        if (n.second.getNeuronModel()->IsPoisson()) {
+        if (n.second.getNeuronModel()->isPoisson()) {
             os << "    " << oB << "for (int i = 0; i < " << n.second.getNumNeurons() << "; i++) {" << ENDL;
             os << "        seed" << n.first << "[i] = rand();" << ENDL;
             os << "    }" << cB << ENDL;
@@ -1170,7 +1170,7 @@ void genRunner(const NNmodel &model, //!< Model description
         os << "    }" << cB << ENDL;
 
         if ((s.second.getMatrixType() & SynapseMatrixConnectivity::DENSE) && (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL)) {
-            auto wuVars = wu->GetVars();
+            auto wuVars = wu->getVars();
             for (size_t k= 0, l= wuVars.size(); k < l; k++) {
                 os << "    " << oB << "for (int i = 0; i < " << numSrcNeurons * numTrgNeurons << "; i++) {" << ENDL;
                 if (wuVars[k].second == model.ftype) {
@@ -1185,7 +1185,7 @@ void genRunner(const NNmodel &model, //!< Model description
         }
 
         if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
-            auto psmVars = psm->GetVars();
+            auto psmVars = psm->getVars();
             for (size_t k= 0, l= psmVars.size(); k < l; k++) {
                 os << "    " << oB << "for (int i = 0; i < " << numTrgNeurons << "; i++) {" << ENDL;
                 if (psmVars[k].second == model.ftype) {
@@ -1270,7 +1270,7 @@ void genRunner(const NNmodel &model, //!< Model description
 
             // Allocate synapse variables
             if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
-                for(const auto &v : s.second.getWUModel()->GetVars()) {
+                for(const auto &v : s.second.getWUModel()->getVars()) {
                     allocate_variable(os, v.second, v.first + s.first, s.second.isWUVarZeroCopyEnabled(v.first), numConnections);
                 }
             }
@@ -1320,7 +1320,7 @@ void genRunner(const NNmodel &model, //!< Model description
             }
            
             if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
-                for(const auto &v : s.second.getWUModel()->GetVars()) {
+                for(const auto &v : s.second.getWUModel()->getVars()) {
                     if(!s.second.isWUVarZeroCopyEnabled(v.first)) {
                         os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << v.first << s.first << ", "  << v.first << s.first << ", sizeof(" << v.second << ") * size , cudaMemcpyHostToDevice));" << ENDL;
                     }
@@ -1383,7 +1383,7 @@ void genRunner(const NNmodel &model, //!< Model description
         }
 
         // Free neuron state variables
-        for (auto const &v : n.second.getNeuronModel()->GetVars()) {
+        for (auto const &v : n.second.getNeuronModel()->getVars()) {
             free_variable(os, v.first + n.first,
                           n.second.isVarZeroCopyEnabled(v.first));
         }
@@ -1422,10 +1422,10 @@ void genRunner(const NNmodel &model, //!< Model description
             free_variable(os, "gp" + s.first, false);
         }
         if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
-            for(const auto &v : s.second.getWUModel()->GetVars()) {
+            for(const auto &v : s.second.getWUModel()->getVars()) {
                 free_variable(os, v.first + s.first, s.second.isWUVarZeroCopyEnabled(v.first));
             }
-            for(const auto &v : s.second.getPSModel()->GetVars()) {
+            for(const auto &v : s.second.getPSModel()->getVars()) {
                 free_variable(os, v.first + s.first, s.second.isPSVarZeroCopyEnabled(v.first));
             }
         }
@@ -1583,7 +1583,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
         os << "void push" << n.first << "StateToDevice()" << ENDL;
         os << OB(1050);
 
-        for(const auto &v : n.second.getNeuronModel()->GetVars()) {
+        for(const auto &v : n.second.getNeuronModel()->getVars()) {
             // only copy non-zero-copied, non-pointers. Pointers don't transport between GPU and CPU
             if (v.second.find("*") == string::npos && !n.second.isVarZeroCopyEnabled(v.first)) {
                 const size_t size = n.second.isVarQueueRequired(v.first)
@@ -1722,7 +1722,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
                 os << "size_t size = C" << s.first << ".connN;" << ENDL;
             }
 
-            for(const auto &v : wu->GetVars()) {
+            for(const auto &v : wu->getVars()) {
                  // only copy non-pointers and non-zero-copied. Pointers don't transport between GPU and CPU
                 if (v.second.find("*") == string::npos && !s.second.isWUVarZeroCopyEnabled(v.first)) {
                     os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << v.first << s.first;
@@ -1731,7 +1731,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
                 }
             }
 
-            for(const auto &v : psm->GetVars()) {
+            for(const auto &v : psm->getVars()) {
                 // only copy non-pointers and non-zero-copied. Pointers don't transport between GPU and CPU
                 if (v.second.find("*") == string::npos && !s.second.isPSVarZeroCopyEnabled(v.first)) {
                     os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << v.first << s.first;
@@ -1764,7 +1764,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
         os << "void pull" << n.first << "StateFromDevice()" << ENDL;
         os << OB(1050);
         
-        for(const auto &v : n.second.getNeuronModel()->GetVars()) {
+        for(const auto &v : n.second.getNeuronModel()->getVars()) {
             // only copy non-zero-copied, non-pointers. Pointers don't transport between GPU and CPU
             if (v.second.find("*") == string::npos && !n.second.isVarZeroCopyEnabled(v.first)) {
                 const size_t size = n.second.isVarQueueRequired(v.first)
@@ -1911,7 +1911,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
                 os << "size_t size = C" << s.first << ".connN;" << ENDL;
             }
 
-            for(const auto &v : wu->GetVars()) {
+            for(const auto &v : wu->getVars()) {
                 // only copy non-pointers and non-zero-copied. Pointers don't transport between GPU and CPU
                 if (v.second.find("*") == string::npos && !s.second.isWUVarZeroCopyEnabled(v.first)) {
                     os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << v.first << s.first;
@@ -1920,7 +1920,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
                 }
             }
 
-            for(const auto &v : psm->GetVars()) {
+            for(const auto &v : psm->getVars()) {
                 // only copy non-pointers and non-zero-copied. Pointers don't transport between GPU and CPU
                 if (v.second.find("*") == string::npos && !s.second.isPSVarZeroCopyEnabled(v.first)) {
                     os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << v.first << s.first;

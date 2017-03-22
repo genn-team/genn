@@ -8,33 +8,33 @@ IMPLEMENT_MODEL(NeuronModels::Poisson);
 //----------------------------------------------------------------------------
 // NeuronModels::LegacyWrapper
 //----------------------------------------------------------------------------
-std::string NeuronModels::LegacyWrapper::GetSimCode() const
+std::string NeuronModels::LegacyWrapper::getSimCode() const
 {
     return nModels[m_LegacyTypeIndex].simCode;
 }
 //----------------------------------------------------------------------------
-std::string NeuronModels::LegacyWrapper::GetThresholdConditionCode() const
+std::string NeuronModels::LegacyWrapper::getThresholdConditionCode() const
 {
     return nModels[m_LegacyTypeIndex].thresholdConditionCode;
 }
 //----------------------------------------------------------------------------
-std::string NeuronModels::LegacyWrapper::GetResetCode() const
+std::string NeuronModels::LegacyWrapper::getResetCode() const
 {
     return nModels[m_LegacyTypeIndex].resetCode;
 }
 //----------------------------------------------------------------------------
-std::string NeuronModels::LegacyWrapper::GetSupportCode() const
+std::string NeuronModels::LegacyWrapper::getSupportCode() const
 {
     return nModels[m_LegacyTypeIndex].supportCode;
 }
 //----------------------------------------------------------------------------
-NewModels::Base::StringPairVec NeuronModels::LegacyWrapper::GetExtraGlobalParams() const
+NewModels::Base::StringPairVec NeuronModels::LegacyWrapper::getExtraGlobalParams() const
 {
     const auto &nm = nModels[m_LegacyTypeIndex];
-    return ZipStringVectors(nm.extraGlobalNeuronKernelParameters, nm.extraGlobalNeuronKernelParameterTypes);
+    return zipStringVectors(nm.extraGlobalNeuronKernelParameters, nm.extraGlobalNeuronKernelParameterTypes);
 }
 //----------------------------------------------------------------------------
-bool NeuronModels::LegacyWrapper::IsPoisson() const
+bool NeuronModels::LegacyWrapper::isPoisson() const
 {
     return (m_LegacyTypeIndex == POISSONNEURON);
 }

@@ -79,14 +79,14 @@ void generate_process_presynaptic_events_code_CPU(
             os << "unsigned int gid = (ipre * " << sg.getTrgNeuronGroup()->getNumNeurons() << " + ipost);" << ENDL;
         }
 
-        if (!wu->GetSimSupportCode().empty()) {
+        if (!wu->getSimSupportCode().empty()) {
             os << " using namespace " << sgName << "_weightupdate_simCode;" << ENDL;
         }
 
         // Create iteration context to iterate over the variables; derived and extra global parameters
-        DerivedParamNameIterCtx wuDerivedParams(wu->GetDerivedParams());
-        ExtraGlobalParamNameIterCtx wuExtraGlobalParams(wu->GetExtraGlobalParams());
-        VarNameIterCtx wuVars(wu->GetVars());
+        DerivedParamNameIterCtx wuDerivedParams(wu->getDerivedParams());
+        ExtraGlobalParamNameIterCtx wuExtraGlobalParams(wu->getExtraGlobalParams());
+        VarNameIterCtx wuVars(wu->getVars());
 
         if (evnt) {
             os << "if ";
@@ -95,7 +95,7 @@ void generate_process_presynaptic_events_code_CPU(
             }
 
             // code substitutions ----
-            string eCode = wu->GetEventThresholdConditionCode();
+            string eCode = wu->getEventThresholdConditionCode();
             substitute(eCode, "$(id)", "n");
             substitute(eCode, "$(t)", "t");
             StandardSubstitutions::weightUpdateThresholdCondition(eCode, sg,
@@ -115,7 +115,7 @@ void generate_process_presynaptic_events_code_CPU(
         }
 
         // Code substitutions ----------------------------------------------------------------------------------
-        string wCode = evnt ? wu->GetEventCode() : wu->GetSimCode();
+        string wCode = evnt ? wu->getEventCode() : wu->getSimCode();
         substitute(wCode, "$(updatelinsyn)", "$(inSyn) += $(addtoinSyn)");
         substitute(wCode, "$(t)", "t");
         if (sparse) { // SPARSE
@@ -211,16 +211,16 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
         auto nm = n.second.getNeuronModel();
 
         // Create iteration context to iterate over the variables; derived and extra global parameters
-        VarNameIterCtx nmVars(nm->GetVars());
-        DerivedParamNameIterCtx nmDerivedParams(nm->GetDerivedParams());
-        ExtraGlobalParamNameIterCtx nmExtraGlobalParams(nm->GetExtraGlobalParams());
+        VarNameIterCtx nmVars(nm->getVars());
+        DerivedParamNameIterCtx nmDerivedParams(nm->getDerivedParams());
+        ExtraGlobalParamNameIterCtx nmExtraGlobalParams(nm->getExtraGlobalParams());
 
         // Generate code to copy neuron state into local variable
         StandardGeneratedSections::neuronLocalVarInit(os, n.second, nmVars, "", "n");
 
-        if ((nm->GetSimCode().find("$(sT)") != string::npos)
-            || (nm->GetThresholdConditionCode().find("$(sT)") != string::npos)
-            || (nm->GetResetCode().find("$(sT)") != string::npos)) { // load sT into local variable
+        if ((nm->getSimCode().find("$(sT)") != string::npos)
+            || (nm->getThresholdConditionCode().find("$(sT)") != string::npos)
+            || (nm->getResetCode().find("$(sT)") != string::npos)) { // load sT into local variable
             os << model.ftype << " lsT= sT" <<  n.first << "[";
             if (n.second.isDelayRequired()) {
                 os << "(delaySlot * " << n.second.getNumNeurons() << ") + ";
@@ -229,7 +229,7 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
         }
         os << ENDL;
 
-        if (n.second.getInSyn().size() > 0 || (nm->GetSimCode().find("Isyn") != string::npos)) {
+        if (n.second.getInSyn().size() > 0 || (nm->getSimCode().find("Isyn") != string::npos)) {
             os << model.ftype << " Isyn = 0;" << ENDL;
         }
 
@@ -238,34 +238,34 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
             const auto *psm = sg->getPSModel();
 
             if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
-                for(const auto &v : psm->GetVars()) {
+                for(const auto &v : psm->getVars()) {
                     os << v.second << " lps" << v.first << sg->getName();
                     os << " = " <<  v.first << sg->getName() << "[n];" << ENDL;
                 }
             }
 
             // Apply substitutions to current converter code
-            string psCode = psm->GetCurrentConverterCode();
+            string psCode = psm->getCurrentConverterCode();
             substitute(psCode, "$(id)", "n");
             substitute(psCode, "$(inSyn)", "inSyn" + sg->getName() + "[n]");
             StandardSubstitutions::postSynapseCurrentConverter(psCode, sg, n.second,
                 nmVars, nmDerivedParams, nmExtraGlobalParams, model.ftype);
 
-            if (!psm->GetSupportCode().empty()) {
+            if (!psm->getSupportCode().empty()) {
                 os << OB(29) << " using namespace " << sg->getName() << "_postsyn;" << ENDL;
             }
             os << "Isyn += ";
             os << psCode << ";" << ENDL;
-            if (!psm->GetSupportCode().empty()) {
+            if (!psm->getSupportCode().empty()) {
                 os << CB(29) << " // namespace bracket closed" << ENDL;
             }
         }
 
-        if (!nm->GetSupportCode().empty()) {
+        if (!nm->getSupportCode().empty()) {
             os << " using namespace " << n.first << "_neuron;" << ENDL;
         }
 
-        string thCode = nm->GetThresholdConditionCode();
+        string thCode = nm->getThresholdConditionCode();
         if (thCode.empty()) { // no condition provided
             cerr << "Warning: No thresholdConditionCode for neuron type " << typeid(*nm).name() << " used for population \"" << n.first << "\" was provided. There will be no spikes detected in this population!" << endl;
         }
@@ -281,12 +281,12 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
         }
 
         os << "// calculate membrane potential" << ENDL;
-        string sCode = nm->GetSimCode();
+        string sCode = nm->getSimCode();
         substitute(sCode, "$(id)", "n");
         StandardSubstitutions::neuronSim(sCode, n.second,
                                          nmVars, nmDerivedParams, nmExtraGlobalParams,
                                          model.ftype);
-        if (nm->IsPoisson()) {
+        if (nm->isPoisson()) {
             substitute(sCode, "lrate", "rates" + n.first + "[n + offset" + n.first + "]");
         }
         os << sCode << ENDL;
@@ -335,8 +335,8 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
             }
 
             // add after-spike reset if provided
-            if (!nm->GetResetCode().empty()) {
-                string rCode = nm->GetResetCode();
+            if (!nm->getResetCode().empty()) {
+                string rCode = nm->getResetCode();
                 substitute(rCode, "$(id)", "n");
                 StandardSubstitutions::neuronReset(rCode, n.second,
                                                    nmVars, nmDerivedParams, nmExtraGlobalParams,
@@ -353,21 +353,21 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
          for(const auto *sg : n.second.getInSyn()) {
             const auto *psm = sg->getPSModel();
 
-            string pdCode = psm->GetDecayCode();
+            string pdCode = psm->getDecayCode();
             substitute(pdCode, "$(id)", "n");
             substitute(pdCode, "$(inSyn)", "inSyn" + sg->getName() + "[n]");
             StandardSubstitutions::postSynapseDecay(pdCode, sg, n.second,
                                                     nmVars, nmDerivedParams, nmExtraGlobalParams,
                                                     model.ftype);
             os << "// the post-synaptic dynamics" << ENDL;
-            if (!psm->GetSupportCode().empty()) {
+            if (!psm->getSupportCode().empty()) {
                 os << OB(29) << " using namespace " << sg->getName() << "_postsyn;" << ENDL;
             }
             os << pdCode << ENDL;
-            if (!psm->GetSupportCode().empty()) {
+            if (!psm->getSupportCode().empty()) {
                 os << CB(29) << " // namespace bracket closed" << endl;
             }
-            for (const auto &v : psm->GetVars()) {
+            for (const auto &v : psm->getVars()) {
                 os << v.first << sg->getName() << "[n]" << " = lps" << v.first << sg->getName() << ";" << ENDL;
             }
         }
@@ -422,7 +422,7 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
         const auto *wu = sg->getWUModel();
 
         // there is some internal synapse dynamics
-        if (!wu->GetSynapseDynamicsCode().empty()) {
+        if (!wu->getSynapseDynamicsCode().empty()) {
 
             os << "// synapse group " << s.first << ENDL;
             os << OB(1005);
@@ -433,15 +433,15 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
                 os << ") % " << sg->getSrcNeuronGroup()->getNumDelaySlots() << ";" << ENDL;
             }
 
-            if (!wu->GetSynapseDynamicsSuppportCode().empty()) {
+            if (!wu->getSynapseDynamicsSuppportCode().empty()) {
                 os << "using namespace " << s.first << "_weightupdate_synapseDynamics;" << ENDL;
             }
 
             // Create iteration context to iterate over the variables and derived parameters
-            DerivedParamNameIterCtx wuDerivedParams(wu->GetDerivedParams());
-            VarNameIterCtx wuVars(wu->GetVars());
+            DerivedParamNameIterCtx wuDerivedParams(wu->getDerivedParams());
+            VarNameIterCtx wuVars(wu->getVars());
 
-            string SDcode= wu->GetSynapseDynamicsCode();
+            string SDcode= wu->getSynapseDynamicsCode();
             substitute(SDcode, "$(t)", "t");
             if (sg->getMatrixType() & SynapseMatrixConnectivity::SPARSE) { // SPARSE
                 os << "for (int n= 0; n < C" << s.first << ".connN; n++)" << OB(24) << ENDL;
@@ -553,9 +553,9 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
             const bool sparse = sg->getMatrixType() & SynapseMatrixConnectivity::SPARSE;
 
             // Create iteration context to iterate over the variables; derived and extra global parameters
-            DerivedParamNameIterCtx wuDerivedParams(wu->GetDerivedParams());
-            ExtraGlobalParamNameIterCtx wuExtraGlobalParams(wu->GetExtraGlobalParams());
-            VarNameIterCtx wuVars(wu->GetVars());
+            DerivedParamNameIterCtx wuDerivedParams(wu->getDerivedParams());
+            ExtraGlobalParamNameIterCtx wuExtraGlobalParams(wu->getExtraGlobalParams());
+            VarNameIterCtx wuVars(wu->getVars());
 
 // NOTE: WE DO NOT USE THE AXONAL DELAY FOR BACKWARDS PROPAGATION - WE CAN TALK ABOUT BACKWARDS DELAYS IF WE WANT THEM
 
@@ -568,7 +568,7 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
                 os << ") % " << sg->getSrcNeuronGroup()->getNumDelaySlots() << ";" << ENDL;
             }
 
-            if (!wu->GetLearnPostSupportCode().empty()) {
+            if (!wu->getLearnPostSupportCode().empty()) {
                 os << "using namespace " << s.first << "_weightupdate_simLearnPost;" << ENDL;
             }
 
@@ -592,7 +592,7 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
                 os << "for (ipre = 0; ipre < " << sg->getSrcNeuronGroup()->getNumNeurons() << "; ipre++)" << OB(121);
             }
 
-            string code = wu->GetLearnPostCode();
+            string code = wu->getLearnPostCode();
             substitute(code, "$(t)", "t");
             // Code substitutions ----------------------------------------------------------------------------------
             if (sparse) { // SPARSE

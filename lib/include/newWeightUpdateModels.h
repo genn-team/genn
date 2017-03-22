@@ -7,17 +7,17 @@
 //----------------------------------------------------------------------------
 // Macros
 //----------------------------------------------------------------------------
-#define SET_SIM_CODE(SIM_CODE) virtual std::string GetSimCode() const{ return SIM_CODE; }
-#define SET_EVENT_CODE(EVENT_CODE) virtual std::string GetEventCode() const{ return EVENT_CODE; }
-#define SET_LEARN_POST_CODE(LEARN_POST_CODE) virtual std::string GetLearnPostCode() const{ return LEARN_POST_CODE; }
-#define SET_SYNAPSE_DYNAMICS_CODE(SYNAPSE_DYNAMICS_CODE) virtual std::string GetSynapseDynamicsCode() const{ return SYNAPSE_DYNAMICS_CODE; }
-#define SET_EVENT_THRESHOLD_CONDITION_CODE(EVENT_THRESHOLD_CONDITION_CODE) virtual std::string GetEventThresholdConditionCode() const{ return EVENT_THRESHOLD_CONDITION_CODE; }
+#define SET_SIM_CODE(SIM_CODE) virtual std::string getSimCode() const{ return SIM_CODE; }
+#define SET_EVENT_CODE(EVENT_CODE) virtual std::string getEventCode() const{ return EVENT_CODE; }
+#define SET_LEARN_POST_CODE(LEARN_POST_CODE) virtual std::string getLearnPostCode() const{ return LEARN_POST_CODE; }
+#define SET_SYNAPSE_DYNAMICS_CODE(SYNAPSE_DYNAMICS_CODE) virtual std::string getSynapseDynamicsCode() const{ return SYNAPSE_DYNAMICS_CODE; }
+#define SET_EVENT_THRESHOLD_CONDITION_CODE(EVENT_THRESHOLD_CONDITION_CODE) virtual std::string getEventThresholdConditionCode() const{ return EVENT_THRESHOLD_CONDITION_CODE; }
 
-#define SET_SIM_SUPPORT_CODE(SIM_SUPPORT_CODE) virtual std::string GetSimSupportCode() const{ return SIM_SUPPORT_CODE; }
-#define SET_LEARN_POST_SUPPORT_CODE(LEARN_POST_SUPPORT_CODE) virtual std::string GetLearnPostSupportCode() const{ return LEARN_POST_SUPPORT_CODE; }
-#define SET_SYNAPSE_DYNAMICS_SUPPORT_CODE(SYNAPSE_DYNAMICS_SUPPORT_CODE) virtual std::string GetSynapseDynamicsSuppportCode() const{ return SYNAPSE_DYNAMICS_SUPPORT_CODE; }
+#define SET_SIM_SUPPORT_CODE(SIM_SUPPORT_CODE) virtual std::string getSimSupportCode() const{ return SIM_SUPPORT_CODE; }
+#define SET_LEARN_POST_SUPPORT_CODE(LEARN_POST_SUPPORT_CODE) virtual std::string getLearnPostSupportCode() const{ return LEARN_POST_SUPPORT_CODE; }
+#define SET_SYNAPSE_DYNAMICS_SUPPORT_CODE(SYNAPSE_DYNAMICS_SUPPORT_CODE) virtual std::string getSynapseDynamicsSuppportCode() const{ return SYNAPSE_DYNAMICS_SUPPORT_CODE; }
 
-#define SET_EXTRA_GLOBAL_PARAMS(...) virtual StringPairVec GetExtraGlobalParams() const{ return __VA_ARGS__; }
+#define SET_EXTRA_GLOBAL_PARAMS(...) virtual StringPairVec getExtraGlobalParams() const{ return __VA_ARGS__; }
 
 #define SET_NEEDS_PRE_SPIKE_TIME(NEEDS_PRE_SPIKE_TIME) static const bool NeedsPreSpikeTime = NEEDS_PRE_SPIKE_TIME
 #define SET_NEEDS_POST_SPIKE_TIME(NEEDS_POST_SPIKE_TIME) static const bool NeedsPostSpikeTime = NEEDS_POST_SPIKE_TIME
@@ -33,17 +33,17 @@ public:
     //----------------------------------------------------------------------------
     // Declared virtuals
     //----------------------------------------------------------------------------
-    virtual std::string GetSimCode() const{ return ""; }
-    virtual std::string GetEventCode() const{ return ""; }
-    virtual std::string GetLearnPostCode() const{ return ""; }
-    virtual std::string GetSynapseDynamicsCode() const{ return ""; }
-    virtual std::string GetEventThresholdConditionCode() const{ return ""; }
+    virtual std::string getSimCode() const{ return ""; }
+    virtual std::string getEventCode() const{ return ""; }
+    virtual std::string getLearnPostCode() const{ return ""; }
+    virtual std::string getSynapseDynamicsCode() const{ return ""; }
+    virtual std::string getEventThresholdConditionCode() const{ return ""; }
 
-    virtual std::string GetSimSupportCode() const{ return ""; }
-    virtual std::string GetLearnPostSupportCode() const{ return ""; }
-    virtual std::string GetSynapseDynamicsSuppportCode() const{ return ""; }
+    virtual std::string getSimSupportCode() const{ return ""; }
+    virtual std::string getLearnPostSupportCode() const{ return ""; }
+    virtual std::string getSynapseDynamicsSuppportCode() const{ return ""; }
 
-    virtual StringPairVec GetExtraGlobalParams() const{ return {}; }
+    virtual StringPairVec getExtraGlobalParams() const{ return {}; }
 
     //----------------------------------------------------------------------------
     // Constants
@@ -65,17 +65,17 @@ public:
     //----------------------------------------------------------------------------
     // Base virtuals
     //----------------------------------------------------------------------------
-    virtual std::string GetSimCode() const;
-    virtual std::string GetEventCode() const;
-    virtual std::string GetLearnPostCode() const;
-    virtual std::string GetSynapseDynamicsCode() const;
-    virtual std::string GetEventThresholdConditionCode() const;
+    virtual std::string getSimCode() const;
+    virtual std::string getEventCode() const;
+    virtual std::string getLearnPostCode() const;
+    virtual std::string getSynapseDynamicsCode() const;
+    virtual std::string getEventThresholdConditionCode() const;
 
-    virtual std::string GetSimSupportCode() const;
-    virtual std::string GetLearnPostSupportCode() const;
-    virtual std::string GetSynapseDynamicsSuppportCode() const;
+    virtual std::string getSimSupportCode() const;
+    virtual std::string getLearnPostSupportCode() const;
+    virtual std::string getSynapseDynamicsSuppportCode() const;
 
-    virtual NewModels::Base::StringPairVec GetExtraGlobalParams() const;
+    virtual NewModels::Base::StringPairVec getExtraGlobalParams() const;
 };
 
 //----------------------------------------------------------------------------

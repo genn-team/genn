@@ -15,11 +15,11 @@
 //----------------------------------------------------------------------------
 // Macros
 //----------------------------------------------------------------------------
-#define SET_SIM_CODE(SIM_CODE) virtual std::string GetSimCode() const{ return SIM_CODE; }
-#define SET_THRESHOLD_CONDITION_CODE(THRESHOLD_CONDITION_CODE) virtual std::string GetThresholdConditionCode() const{ return THRESHOLD_CONDITION_CODE; }
-#define SET_RESET_CODE(RESET_CODE) virtual std::string GetResetCode() const{ return RESET_CODE; }
-#define SET_SUPPORT_CODE(SUPPORT_CODE) virtual std::string GetSupportCode() const{ return SUPPORT_CODE; }
-#define SET_EXTRA_GLOBAL_PARAMS(...) virtual StringPairVec GetExtraGlobalParams() const{ return __VA_ARGS__; }
+#define SET_SIM_CODE(SIM_CODE) virtual std::string getSimCode() const{ return SIM_CODE; }
+#define SET_THRESHOLD_CONDITION_CODE(THRESHOLD_CONDITION_CODE) virtual std::string getThresholdConditionCode() const{ return THRESHOLD_CONDITION_CODE; }
+#define SET_RESET_CODE(RESET_CODE) virtual std::string getResetCode() const{ return RESET_CODE; }
+#define SET_SUPPORT_CODE(SUPPORT_CODE) virtual std::string getSupportCode() const{ return SUPPORT_CODE; }
+#define SET_EXTRA_GLOBAL_PARAMS(...) virtual StringPairVec getExtraGlobalParams() const{ return __VA_ARGS__; }
 
 //----------------------------------------------------------------------------
 // NeuronModels::Base
@@ -32,13 +32,13 @@ public:
     //----------------------------------------------------------------------------
     // Declared virtuals
     //----------------------------------------------------------------------------
-    virtual std::string GetSimCode() const{ return ""; }
-    virtual std::string GetThresholdConditionCode() const{ return ""; }
-    virtual std::string GetResetCode() const{ return ""; }
-    virtual std::string GetSupportCode() const{ return ""; }
-    virtual std::vector<std::pair<std::string, std::string>> GetExtraGlobalParams() const{ return {}; }
+    virtual std::string getSimCode() const{ return ""; }
+    virtual std::string getThresholdConditionCode() const{ return ""; }
+    virtual std::string getResetCode() const{ return ""; }
+    virtual std::string getSupportCode() const{ return ""; }
+    virtual std::vector<std::pair<std::string, std::string>> getExtraGlobalParams() const{ return {}; }
 
-    virtual bool IsPoisson() const{ return false; }
+    virtual bool isPoisson() const{ return false; }
 };
 
 //----------------------------------------------------------------------------
@@ -55,13 +55,13 @@ public:
     //----------------------------------------------------------------------------
     // Base virtuals
     //----------------------------------------------------------------------------
-    virtual std::string GetSimCode() const;
-    virtual std::string GetThresholdConditionCode() const;
-    virtual std::string GetResetCode() const;
-    virtual std::string GetSupportCode() const;
-    virtual NewModels::Base::StringPairVec GetExtraGlobalParams() const;
+    virtual std::string getSimCode() const;
+    virtual std::string getThresholdConditionCode() const;
+    virtual std::string getResetCode() const;
+    virtual std::string getSupportCode() const;
+    virtual NewModels::Base::StringPairVec getExtraGlobalParams() const;
 
-    virtual bool IsPoisson() const;
+    virtual bool isPoisson() const;
 };
 
 //----------------------------------------------------------------------------
@@ -129,6 +129,6 @@ public:
     SET_VARS({{"V", "scalar"}, {"seed", "uint64_t"}, {"spikeTime", "scalar"}});
     SET_EXTRA_GLOBAL_PARAMS({{"rates", "uint64_t *"}, {"offset", "unsigned int"}});
 
-    virtual bool IsPoisson() const{ return true; }
+    virtual bool isPoisson() const{ return true; }
 };
 } // NeuronModels

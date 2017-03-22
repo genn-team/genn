@@ -148,8 +148,8 @@ public:
         // Add neuron group
         auto result = m_NeuronGroups.insert(
             pair<string, NeuronGroup>(
-                name, NeuronGroup(name, size, NeuronModel::GetInstance(),
-                                  paramValues.GetValues(), varValues.GetValues())));
+                name, NeuronGroup(name, size, NeuronModel::getInstance(),
+                                  paramValues.getValues(), varValues.getValues())));
 
         if(!result.second)
         {
@@ -228,8 +228,8 @@ public:
         auto result = m_SynapseGroups.insert(
             pair<string, SynapseGroup>(
                 name, SynapseGroup(name, mtype, delaySteps,
-                                   WeightUpdateModel::GetInstance(), weightParamValues.GetValues(), weightVarValues.GetValues(),
-                                   PostsynapticModel::GetInstance(), postsynapticParamValues.GetValues(), postsynapticVarValues.GetValues(),
+                                   WeightUpdateModel::getInstance(), weightParamValues.getValues(), weightVarValues.getValues(),
+                                   PostsynapticModel::getInstance(), postsynapticParamValues.getValues(), postsynapticVarValues.getValues(),
                                    srcNeuronGrp, trgNeuronGrp)));
 
         if(!result.second)

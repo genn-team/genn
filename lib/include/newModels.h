@@ -15,7 +15,7 @@
 private:                                                       \
     static TYPE *s_Instance;                                   \
 public:                                                        \
-    static const TYPE *GetInstance()                           \
+    static const TYPE *getInstance()                           \
     {                                                          \
         if(s_Instance == NULL)                                 \
         {                                                      \
@@ -29,9 +29,9 @@ public:                                                        \
 
 #define IMPLEMENT_MODEL(TYPE) TYPE *TYPE::s_Instance = NULL
 
-#define SET_PARAM_NAMES(...) virtual StringVec GetParamNames() const{ return __VA_ARGS__; }
-#define SET_DERIVED_PARAMS(...) virtual DerivedParamVec GetDerivedParams() const{ return __VA_ARGS__; }
-#define SET_VARS(...) virtual StringPairVec GetVars() const{ return __VA_ARGS__; }
+#define SET_PARAM_NAMES(...) virtual StringVec getParamNames() const{ return __VA_ARGS__; }
+#define SET_DERIVED_PARAMS(...) virtual DerivedParamVec getDerivedParams() const{ return __VA_ARGS__; }
+#define SET_VARS(...) virtual StringPairVec getVars() const{ return __VA_ARGS__; }
 
 //----------------------------------------------------------------------------
 // NewModels::ValueBase
@@ -59,7 +59,7 @@ public:
     //----------------------------------------------------------------------------
     // Public API
     //----------------------------------------------------------------------------
-    std::vector<double> GetValues() const
+    std::vector<double> getValues() const
     {
         return std::vector<double>(m_Values.cbegin(), m_Values.cend());
     }
@@ -89,7 +89,7 @@ public:
     //----------------------------------------------------------------------------
     // Public API
     //----------------------------------------------------------------------------
-    std::vector<double> GetValues() const
+    std::vector<double> getValues() const
     {
         return {};
     }
@@ -112,9 +112,9 @@ public:
     //----------------------------------------------------------------------------
     // Declared virtuals
     //----------------------------------------------------------------------------
-    virtual StringVec GetParamNames() const{ return {}; }
-    virtual DerivedParamVec GetDerivedParams() const{ return {}; }
-    virtual StringPairVec GetVars() const{ return {}; }
+    virtual StringVec getParamNames() const{ return {}; }
+    virtual DerivedParamVec getDerivedParams() const{ return {}; }
+    virtual StringPairVec getVars() const{ return {}; }
 };
 
 //----------------------------------------------------------------------------
@@ -138,13 +138,13 @@ public:
     //----------------------------------------------------------------------------
     // ModelBase virtuals
     //----------------------------------------------------------------------------
-    virtual StringVec GetParamNames() const
+    virtual StringVec getParamNames() const
     {
         const auto &nm = ModelArray[m_LegacyTypeIndex];
         return nm.pNames;
     }
 
-    virtual DerivedParamVec GetDerivedParams() const
+    virtual DerivedParamVec getDerivedParams() const
     {
         const auto &m = ModelArray[m_LegacyTypeIndex];
 
@@ -169,17 +169,17 @@ public:
         return derivedParams;
     }
 
-    virtual StringPairVec GetVars() const
+    virtual StringPairVec getVars() const
     {
         const auto &nm = ModelArray[m_LegacyTypeIndex];
-        return ZipStringVectors(nm.varNames, nm.varTypes);
+        return zipStringVectors(nm.varNames, nm.varTypes);
     }
 
 protected:
     //----------------------------------------------------------------------------
     // Static methods
     //----------------------------------------------------------------------------
-    static StringPairVec ZipStringVectors(const StringVec &a, const StringVec &b)
+    static StringPairVec zipStringVectors(const StringVec &a, const StringVec &b)
     {
         assert(a.size() == b.size());
 

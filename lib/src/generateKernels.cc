@@ -63,9 +63,9 @@ void generatePreParallelisedSparseCode(
     const auto *wu = sg.getWUModel();
 
     // Create iteration context to iterate over the variables; derived and extra global parameters
-    DerivedParamNameIterCtx wuDerivedParams(wu->GetDerivedParams());
-    ExtraGlobalParamNameIterCtx wuExtraGlobalParams(wu->GetExtraGlobalParams());
-    VarNameIterCtx wuVars(wu->GetVars());
+    DerivedParamNameIterCtx wuDerivedParams(wu->getDerivedParams());
+    ExtraGlobalParamNameIterCtx wuExtraGlobalParams(wu->getExtraGlobalParams());
+    VarNameIterCtx wuVars(wu->getVars());
 
     //int maxConnections;
     if (sg.isPSAtomicAddRequired(synapseBlkSz)) {
@@ -83,7 +83,7 @@ a max possible number of connections via the model.setMaxConn() function.\n");
         os << "dd_glbSpkCnt" << postfix << sg.getSrcNeuronGroup()->getName() << "[0])" << OB(102);
     }
 
-    if (!wu->GetSimSupportCode().empty()) {
+    if (!wu->getSimSupportCode().empty()) {
         os << "using namespace " << sg.getName() << "_weightupdate_simCode;" << ENDL;
     }
 
@@ -110,7 +110,7 @@ a max possible number of connections via the model.setMaxConn() function.\n");
         }
 
         // code substitutions ----
-        string eCode = wu->GetEventThresholdConditionCode();
+        string eCode = wu->getEventThresholdConditionCode();
         StandardSubstitutions::weightUpdateThresholdCondition(eCode, sg,
                                                               wuDerivedParams, wuExtraGlobalParams,
                                                               "preInd", "i", "dd_", ftype);
@@ -130,7 +130,7 @@ a max possible number of connections via the model.setMaxConn() function.\n");
     os << "        ipost = dd_ind" <<  sg.getName() << "[prePos];" << ENDL;
 
 // Code substitutions ----------------------------------------------------------------------------------
-    string wCode = evnt ? wu->GetEventCode() : wu->GetSimCode();
+    string wCode = evnt ? wu->getEventCode() : wu->getSimCode();
     substitute(wCode, "$(t)", "t");
 
     if (sg.isPSAtomicAddRequired(synapseBlkSz)) { // SPARSE using atomicAdd
@@ -179,9 +179,9 @@ void generatePostParallelisedCode(
     const auto *wu = sg.getWUModel();
 
     // Create iteration context to iterate over the variables; derived and extra global parameters
-    DerivedParamNameIterCtx wuDerivedParams(wu->GetDerivedParams());
-    ExtraGlobalParamNameIterCtx wuExtraGlobalParams(wu->GetExtraGlobalParams());
-    VarNameIterCtx wuVars(wu->GetVars());
+    DerivedParamNameIterCtx wuDerivedParams(wu->getDerivedParams());
+    ExtraGlobalParamNameIterCtx wuExtraGlobalParams(wu->getExtraGlobalParams());
+    VarNameIterCtx wuVars(wu->getVars());
 
     os << "// process presynaptic events: " << (evnt ? "Spike type events" : "True Spikes") << ENDL;
     os << "for (r = 0; r < numSpikeSubsets" << postfix << "; r++)" << OB(90);
@@ -220,7 +220,7 @@ a max possible number of connections via the model.setMaxConn() function.\n");
         os << "unsigned int gid = (shSpk" << postfix << "[j] * " << sg.getTrgNeuronGroup()->getNumNeurons() << " + " << localID << ");" << ENDL;
     }
 
-    if (!wu->GetSimSupportCode().empty()) {
+    if (!wu->getSimSupportCode().empty()) {
         os << "using namespace " << sg.getName() << "_weightupdate_simCode;" << ENDL;
     }
     if (evnt && sg.isEventThresholdReTestRequired()) {
@@ -231,7 +231,7 @@ a max possible number of connections via the model.setMaxConn() function.\n");
         }
 
         // code substitutions ----
-        string eCode = wu->GetEventThresholdConditionCode();
+        string eCode = wu->getEventThresholdConditionCode();
         StandardSubstitutions::weightUpdateThresholdCondition(eCode, sg, wuDerivedParams, wuExtraGlobalParams,
                                                               "shSpkEvnt[j]", "ipost", "dd_", ftype);
         // end code substitutions ----
@@ -258,7 +258,7 @@ a max possible number of connections via the model.setMaxConn() function.\n");
     }
 
     // Code substitutions ----------------------------------------------------------------------------------
-    string wCode = (evnt ? wu->GetEventCode() : wu->GetSimCode());
+    string wCode = (evnt ? wu->getEventCode() : wu->getSimCode());
     substitute(wCode, "$(t)", "t");
     if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) { // SPARSE
         if (sg.isPSAtomicAddRequired(synapseBlkSz)) { // SPARSE using atomicAdd
@@ -410,7 +410,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
 
     // these variables now deal only with true spikes, not high V "events"
     for(const auto &n : model.getNeuronGroups()) {
-        if(!n.second.getNeuronModel()->GetThresholdConditionCode().empty()) {
+        if(!n.second.getNeuronModel()->getThresholdConditionCode().empty()) {
             os << "__shared__ unsigned int shSpk[" << neuronBlkSz << "];" << ENDL;
             os << "__shared__ volatile unsigned int posSpk;" << ENDL;
             os << "unsigned int spkIdx;" << ENDL;
@@ -432,7 +432,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
 
     // Initialise shared spike count vars
     for(const auto &n : model.getNeuronGroups()) {
-        if (!n.second.getNeuronModel()->GetThresholdConditionCode().empty()) {
+        if (!n.second.getNeuronModel()->getThresholdConditionCode().empty()) {
             os << "if (threadIdx.x == 0)" << OB(8);
             os << "spkCount = 0;" << ENDL;
             os << CB(8);
@@ -481,16 +481,16 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
         const auto *nm = n.second.getNeuronModel();
 
         // Create iteration context to iterate over the variables; derived and extra global parameters
-        VarNameIterCtx nmVars(nm->GetVars());
-        DerivedParamNameIterCtx nmDerivedParams(nm->GetDerivedParams());
-        ExtraGlobalParamNameIterCtx nmExtraGlobalParams(nm->GetExtraGlobalParams());
+        VarNameIterCtx nmVars(nm->getVars());
+        DerivedParamNameIterCtx nmDerivedParams(nm->getDerivedParams());
+        ExtraGlobalParamNameIterCtx nmExtraGlobalParams(nm->getExtraGlobalParams());
 
         // Generate code to copy neuron state into local variables
         StandardGeneratedSections::neuronLocalVarInit(os, n.second, nmVars, "dd_", localID);
 
-        if ((nm->GetSimCode().find("$(sT)") != string::npos)
-            || (nm->GetThresholdConditionCode().find("$(sT)") != string::npos)
-            || (nm->GetResetCode().find("$(sT)") != string::npos)) { // load sT into local variable
+        if ((nm->getSimCode().find("$(sT)") != string::npos)
+            || (nm->getThresholdConditionCode().find("$(sT)") != string::npos)
+            || (nm->getResetCode().find("$(sT)") != string::npos)) { // load sT into local variable
             os << model.ftype << " lsT = dd_sT" <<  n.first << "[";
             if (n.second.isDelayRequired()) {
                 os << "(delaySlot * " << n.second.getNumNeurons() << ") + ";
@@ -499,7 +499,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
         }
         os << ENDL;
 
-        if (n.second.getInSyn().size() > 0 || (nm->GetSimCode().find("Isyn") != string::npos)) {
+        if (n.second.getInSyn().size() > 0 || (nm->getSimCode().find("Isyn") != string::npos)) {
             os << model.ftype << " Isyn = 0;" << ENDL;
         }
         for(const auto *sg : n.second.getInSyn()) {
@@ -508,30 +508,30 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
             os << "// pull inSyn values in a coalesced access" << ENDL;
             os << model.ftype << " linSyn" << sg->getName() << " = dd_inSyn" << sg->getName() << "[" << localID << "];" << ENDL;
             if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
-                for(const auto &v : psm->GetVars()) {
+                for(const auto &v : psm->getVars()) {
                     os << v.second << " lps" << v.first << sg->getName();
                     os << " = dd_" <<  v.first << sg->getName() << "[" << localID << "];" << ENDL;
                 }
             }
-            string psCode = psm->GetCurrentConverterCode();
+            string psCode = psm->getCurrentConverterCode();
             substitute(psCode, "$(id)", localID);
             substitute(psCode, "$(inSyn)", "linSyn" + sg->getName());
             StandardSubstitutions::postSynapseCurrentConverter(psCode, sg, n.second,
                 nmVars, nmDerivedParams, nmExtraGlobalParams, model.ftype);
 
-            if (!psm->GetSupportCode().empty()) {
+            if (!psm->getSupportCode().empty()) {
                 os << OB(29) << " using namespace " << sg->getName() << "_postsyn;" << ENDL;
             }
             os << "Isyn += " << psCode << ";" << ENDL;
-            if (!psm->GetSupportCode().empty()) {
+            if (!psm->getSupportCode().empty()) {
                 os << CB(29) << " // namespace bracket closed" << ENDL;
             }
         }
 
-        if (!nm->GetSupportCode().empty()) {
+        if (!nm->getSupportCode().empty()) {
             os << " using namespace " << n.first << "_neuron;" << ENDL;
         }
-        string thCode = nm->GetThresholdConditionCode();
+        string thCode = nm->getThresholdConditionCode();
         if (thCode.empty()) { // no condition provided
             cerr << "Warning: No thresholdConditionCode for neuron type " << typeid(*nm).name() << " used for population \"" << n.first << "\" was provided. There will be no spikes detected in this population!" << endl;
         }
@@ -547,7 +547,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
         }
 
         os << "// calculate membrane potential" << ENDL;
-        string sCode = nm->GetSimCode();
+        string sCode = nm->getSimCode();
         substitute(sCode, "$(id)", localID);
         StandardSubstitutions::neuronSim(sCode, n.second,
                                          nmVars, nmDerivedParams, nmExtraGlobalParams,
@@ -581,8 +581,8 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
             os << "shSpk[spkIdx] = " << localID << ";" << ENDL;
 
             // add after-spike reset if provided
-            if (!nm->GetResetCode().empty()) {
-                string rCode = nm->GetResetCode();
+            if (!nm->getResetCode().empty()) {
+                string rCode = nm->getResetCode();
                 substitute(rCode, "$(id)", localID);
                 StandardSubstitutions::neuronReset(rCode, n.second,
                                                    nmVars, nmDerivedParams, nmExtraGlobalParams,
@@ -602,22 +602,22 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
         for(const auto *sg : n.second.getInSyn()) {
             const auto *psm = sg->getPSModel();
 
-            string pdCode = psm->GetDecayCode();
+            string pdCode = psm->getDecayCode();
             substitute(pdCode, "$(id)", localID);
             substitute(pdCode, "$(inSyn)", "linSyn" + sg->getName());
             StandardSubstitutions::postSynapseDecay(pdCode, sg, n.second,
                                                     nmVars, nmDerivedParams, nmExtraGlobalParams,
                                                     model.ftype);
-            if (!psm->GetSupportCode().empty()) {
+            if (!psm->getSupportCode().empty()) {
                 os << OB(29) << " using namespace " << sg->getName() << "_postsyn;" << ENDL;
             }
             os << pdCode << ENDL;
-            if (!psm->GetSupportCode().empty()) {
+            if (!psm->getSupportCode().empty()) {
                 os << CB(29) << " // namespace bracket closed" << endl;
             }
 
             os << "dd_inSyn"  << sg->getName() << "[" << localID << "] = linSyn" << sg->getName() << ";" << ENDL;
-            for(const auto &v : psm->GetVars()) {
+            for(const auto &v : psm->getVars()) {
                 os << "dd_" <<  v.first << sg->getName() << "[" << localID << "] = lps" << v.first << sg->getName() << ";"<< ENDL;
             }
         }
@@ -638,7 +638,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
             os << "__syncthreads();" << ENDL;
         }
 
-        if (!nm->GetThresholdConditionCode().empty()) {
+        if (!nm->getThresholdConditionCode().empty()) {
             os << "if (threadIdx.x == 0)" << OB(51);
             os << "if (spkCount > 0) posSpk = atomicAdd((unsigned int *) &dd_glbSpkCnt" << n.first;
             if (n.second.isDelayRequired() && n.second.isTrueSpikeRequired()) {
@@ -659,7 +659,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
             os << CB(60); // end if (threadIdx.x < spkEvntCount)
         }
 
-        if (!nm->GetThresholdConditionCode().empty()) {
+        if (!nm->getThresholdConditionCode().empty()) {
             string queueOffsetTrueSpk = n.second.isTrueSpikeRequired() ? queueOffset : "";
 
             os << "if (threadIdx.x < spkCount)" << OB(70);
@@ -743,10 +743,10 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
             const auto *wu = sg->getWUModel();
 
             // if there is some internal synapse dynamics
-            if (!wu->GetSynapseDynamicsCode().empty()) {
+            if (!wu->getSynapseDynamicsCode().empty()) {
                 // Create iteration context to iterate over the variables and derived parameters
-                DerivedParamNameIterCtx wuDerivedParams(wu->GetDerivedParams());
-                VarNameIterCtx wuVars(wu->GetVars());
+                DerivedParamNameIterCtx wuDerivedParams(wu->getDerivedParams());
+                VarNameIterCtx wuVars(wu->getVars());
 
                 os << "// synapse group " << s.first << ENDL;
                 const auto &groupIDRange = sg->getPaddedKernelCumSum();
@@ -767,13 +767,13 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                     os << ") % " << sg->getSrcNeuronGroup()->getNumDelaySlots() << ";" << ENDL;
                 }
 
-                string SDcode = wu->GetSynapseDynamicsCode();
+                string SDcode = wu->getSynapseDynamicsCode();
                 substitute(SDcode, "$(t)", "t");
 
                 if (sg->getMatrixType() & SynapseMatrixConnectivity::SPARSE) { // SPARSE
                     os << "if (" << localID << " < dd_indInG" << s.first << "[" << sg->getSrcNeuronGroup()->getNumNeurons() << "])" << OB(25);
                     os << "// all threads participate that can work on an existing synapse" << ENDL;
-                    if (!wu->GetSynapseDynamicsSuppportCode().empty()) {
+                    if (!wu->getSynapseDynamicsSuppportCode().empty()) {
                         os << " using namespace " << s.first << "_weightupdate_synapseDynamics;" << ENDL;
                     }
                     if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
@@ -790,7 +790,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                 else { // DENSE
                     os << "if (" << localID << " < " << sg->getSrcNeuronGroup()->getNumNeurons() * sg->getTrgNeuronGroup()->getNumNeurons() << ")" << OB(25);
                     os << "// all threads participate that can work on an existing synapse" << ENDL;
-                    if (!wu->GetSynapseDynamicsSuppportCode().empty()) {
+                    if (!wu->getSynapseDynamicsSuppportCode().empty()) {
                             os << " using namespace " << s.first << "_weightupdate_synapseDynamics;" << ENDL;
                     }
                     if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
@@ -1055,16 +1055,16 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                 //os << "unsigned int ipre = dd_revInd" << sgName << "[iprePos];" << ENDL;
             }
 
-            if (!wu->GetLearnPostSupportCode().empty()) {
+            if (!wu->getLearnPostSupportCode().empty()) {
                 os << " using namespace " << s.first << "_weightupdate_simLearnPost;" << ENDL;
             }
             
              // Create iteration context to iterate over the variables; derived and extra global parameters
-            DerivedParamNameIterCtx wuDerivedParams(wu->GetDerivedParams());
-            ExtraGlobalParamNameIterCtx wuExtraGlobalParams(wu->GetExtraGlobalParams());
-            VarNameIterCtx wuVars(wu->GetVars());
+            DerivedParamNameIterCtx wuDerivedParams(wu->getDerivedParams());
+            ExtraGlobalParamNameIterCtx wuExtraGlobalParams(wu->getExtraGlobalParams());
+            VarNameIterCtx wuVars(wu->getVars());
 
-            string code = wu->GetLearnPostCode();
+            string code = wu->getLearnPostCode();
             substitute(code, "$(t)", "t");
             // Code substitutions ----------------------------------------------------------------------------------
             if (sparse) { // SPARSE

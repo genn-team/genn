@@ -116,14 +116,14 @@ void StandardSubstitutions::postSynapseCurrentConverter(
     const std::string &ftype)
 {
     // Create iterators to iterate over the names of the postsynaptic model's initial values
-    auto psmVars = VarNameIterCtx(sg->getPSModel()->GetVars());
-    auto psmDerivedParams = DerivedParamNameIterCtx(sg->getPSModel()->GetDerivedParams());
+    auto psmVars = VarNameIterCtx(sg->getPSModel()->getVars());
+    auto psmDerivedParams = DerivedParamNameIterCtx(sg->getPSModel()->getDerivedParams());
 
     // Substitute in time parameter
     substitute(psCode, "$(t)", "t");
 
     name_substitutions(psCode, "l", nmVars.nameBegin, nmVars.nameEnd, "");
-    value_substitutions(psCode, ng.getNeuronModel()->GetParamNames(), ng.getParams());
+    value_substitutions(psCode, ng.getNeuronModel()->getParamNames(), ng.getParams());
     value_substitutions(psCode, nmDerivedParams.nameBegin, nmDerivedParams.nameEnd, ng.getDerivedParams());
 
     if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
@@ -132,7 +132,7 @@ void StandardSubstitutions::postSynapseCurrentConverter(
     else {
         value_substitutions(psCode, psmVars.nameBegin, psmVars.nameEnd, sg->getPSInitVals());
     }
-    value_substitutions(psCode, sg->getPSModel()->GetParamNames(), sg->getPSParams());
+    value_substitutions(psCode, sg->getPSModel()->getParamNames(), sg->getPSParams());
 
     // Create iterators to iterate over the names of the postsynaptic model's derived parameters
     value_substitutions(psCode, psmDerivedParams.nameBegin, psmDerivedParams.nameEnd, sg->getPSDerivedParams());
@@ -151,16 +151,16 @@ void StandardSubstitutions::postSynapseDecay(
     const std::string &ftype)
 {
     // Create iterators to iterate over the names of the postsynaptic model's initial values
-    auto psmVars = VarNameIterCtx(sg->getPSModel()->GetVars());
-    auto psmDerivedParams = DerivedParamNameIterCtx(sg->getPSModel()->GetDerivedParams());
+    auto psmVars = VarNameIterCtx(sg->getPSModel()->getVars());
+    auto psmDerivedParams = DerivedParamNameIterCtx(sg->getPSModel()->getDerivedParams());
 
     substitute(pdCode, "$(t)", "t");
 
     name_substitutions(pdCode, "lps", psmVars.nameBegin, psmVars.nameEnd, sg->getName());
-    value_substitutions(pdCode, sg->getPSModel()->GetParamNames(), sg->getPSParams());
+    value_substitutions(pdCode, sg->getPSModel()->getParamNames(), sg->getPSParams());
     value_substitutions(pdCode, psmDerivedParams.nameBegin, psmDerivedParams.nameEnd, sg->getPSDerivedParams());
     name_substitutions(pdCode, "l", nmVars.nameBegin, nmVars.nameEnd, "");
-    value_substitutions(pdCode, ng.getNeuronModel()->GetParamNames(), ng.getParams());
+    value_substitutions(pdCode, ng.getNeuronModel()->getParamNames(), ng.getParams());
     value_substitutions(pdCode, nmDerivedParams.nameBegin, nmDerivedParams.nameEnd, ng.getDerivedParams());
 
     pdCode = ensureFtype(pdCode, ftype);
@@ -180,7 +180,7 @@ void StandardSubstitutions::neuronThresholdCondition(
     name_substitutions(thCode, "l", nmVars.nameBegin, nmVars.nameEnd, "");
     substitute(thCode, "$(Isyn)", "Isyn");
     substitute(thCode, "$(sT)", "lsT");
-    value_substitutions(thCode, ng.getNeuronModel()->GetParamNames(), ng.getParams());
+    value_substitutions(thCode, ng.getNeuronModel()->getParamNames(), ng.getParams());
     value_substitutions(thCode, nmDerivedParams.nameBegin, nmDerivedParams.nameEnd, ng.getDerivedParams());
     name_substitutions(thCode, "", nmExtraGlobalParams.nameBegin, nmExtraGlobalParams.nameEnd, ng.getName());
     thCode= ensureFtype(thCode, ftype);
@@ -197,7 +197,7 @@ void StandardSubstitutions::neuronSim(
 {
     substitute(sCode, "$(t)", "t");
     name_substitutions(sCode, "l", nmVars.nameBegin, nmVars.nameEnd, "");
-    value_substitutions(sCode, ng.getNeuronModel()->GetParamNames(), ng.getParams());
+    value_substitutions(sCode, ng.getNeuronModel()->getParamNames(), ng.getParams());
     value_substitutions(sCode, nmDerivedParams.nameBegin, nmDerivedParams.nameEnd, ng.getDerivedParams());
     name_substitutions(sCode, "", nmExtraGlobalParams.nameBegin, nmExtraGlobalParams.nameEnd, ng.getName());
     substitute(sCode, "$(Isyn)", "Isyn");
@@ -231,7 +231,7 @@ void StandardSubstitutions::neuronReset(
 {
     substitute(rCode, "$(t)", "t");
     name_substitutions(rCode, "l", nmVars.nameBegin, nmVars.nameEnd, "");
-    value_substitutions(rCode, ng.getNeuronModel()->GetParamNames(), ng.getParams());
+    value_substitutions(rCode, ng.getNeuronModel()->getParamNames(), ng.getParams());
     value_substitutions(rCode, nmDerivedParams.nameBegin, nmDerivedParams.nameEnd, ng.getDerivedParams());
     substitute(rCode, "$(Isyn)", "Isyn");
     substitute(rCode, "$(sT)", "lsT");
@@ -250,7 +250,7 @@ void StandardSubstitutions::weightUpdateThresholdCondition(
     const string &devPrefix,
     const std::string &ftype)
 {
-    value_substitutions(eCode, sg.getWUModel()->GetParamNames(), sg.getWUParams());
+    value_substitutions(eCode, sg.getWUModel()->getParamNames(), sg.getWUParams());
     value_substitutions(eCode, wuDerivedParams.nameBegin, wuDerivedParams.nameEnd, sg.getWUDerivedParams());
     name_substitutions(eCode, "", wuExtraGlobalParams.nameBegin, wuExtraGlobalParams.nameEnd, sg.getName());
     neuron_substitutions_in_synaptic_code(eCode, &sg, preIdx, postIdx, devPrefix);
@@ -273,7 +273,7 @@ void StandardSubstitutions::weightUpdateSim(
          value_substitutions(wCode, wuVars.nameBegin, wuVars.nameEnd, sg.getWUInitVals());
      }
 
-    value_substitutions(wCode, sg.getWUModel()->GetParamNames(), sg.getWUParams());
+    value_substitutions(wCode, sg.getWUModel()->getParamNames(), sg.getWUParams());
     value_substitutions(wCode, wuDerivedParams.nameBegin, wuDerivedParams.nameEnd, sg.getWUDerivedParams());
     name_substitutions(wCode, "", wuExtraGlobalParams.nameBegin, wuExtraGlobalParams.nameEnd, sg.getName());
     substitute(wCode, "$(addtoinSyn)", "addtoinSyn");
@@ -297,7 +297,7 @@ void StandardSubstitutions::weightUpdateDynamics(
      }
 
      // substitute parameter values for parameters in synapseDynamics code
-    value_substitutions(SDcode, sg->getWUModel()->GetParamNames(), sg->getWUParams());
+    value_substitutions(SDcode, sg->getWUModel()->getParamNames(), sg->getWUParams());
 
     // substitute values for derived parameters in synapseDynamics code
     value_substitutions(SDcode, wuDerivedParams.nameBegin, wuDerivedParams.nameEnd, sg->getWUDerivedParams());
@@ -316,7 +316,7 @@ void StandardSubstitutions::weightUpdatePostLearn(
     const string &devPrefix,
     const std::string &ftype)
 {
-    value_substitutions(code, sg->getWUModel()->GetParamNames(), sg->getWUParams());
+    value_substitutions(code, sg->getWUModel()->getParamNames(), sg->getWUParams());
     value_substitutions(code, wuDerivedParams.nameBegin, wuDerivedParams.nameEnd, sg->getWUDerivedParams());
     name_substitutions(code, "", wuExtraGlobalParams.nameBegin, wuExtraGlobalParams.nameEnd, sg->getName());
 
