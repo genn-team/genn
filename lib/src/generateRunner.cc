@@ -1006,10 +1006,9 @@ void genRunner(const NNmodel &model, //!< Model description
         }
 
         // Allocate memory for neuron model's state variables
-        auto nmVars = n.second.getNeuronModel()->GetVars();
-        for (size_t j = 0; j < nmVars.size(); j++) {
-            mem += allocate_variable(os, nmVars[j].second, nmVars[j].first + n.first, n.second.isVarZeroCopyEnabled(nmVars[j].first),
-                                     n.second.isVarQueueRequired(j) ? n.second.getNumNeurons() * n.second.getNumDelaySlots() : n.second.getNumNeurons());
+        for(const auto &v : n.second.getNeuronModel()->GetVars()) {
+            mem += allocate_variable(os, v.second, v.first + n.first, n.second.isVarZeroCopyEnabled(v.first),
+                                     n.second.isVarQueueRequired(v.first) ? n.second.getNumNeurons() * n.second.getNumDelaySlots() : n.second.getNumNeurons());
         }
         os << ENDL;
     }
@@ -1130,7 +1129,7 @@ void genRunner(const NNmodel &model, //!< Model description
         
         auto neuronModelVars = n.second.getNeuronModel()->GetVars();
         for (size_t j = 0; j < neuronModelVars.size(); j++) {
-            if (n.second.isVarQueueRequired(j)) {
+            if (n.second.isVarQueueRequired(neuronModelVars[j].first)) {
                 os << "    " << oB << "for (int i = 0; i < " << n.second.getNumNeurons() * n.second.getNumDelaySlots() << "; i++) {" << ENDL;
             }
             else {
@@ -1584,16 +1583,15 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
         os << "void push" << n.first << "StateToDevice()" << ENDL;
         os << OB(1050);
 
-        auto nmVars = n.second.getNeuronModel()->GetVars();
-        for (size_t k = 0, l = nmVars.size(); k < l; k++) {
+        for(const auto &v : n.second.getNeuronModel()->GetVars()) {
             // only copy non-zero-copied, non-pointers. Pointers don't transport between GPU and CPU
-            if (nmVars[k].second.find("*") == string::npos && !n.second.isVarZeroCopyEnabled(nmVars[k].first)) {
-                const size_t size = n.second.isVarQueueRequired(k)
+            if (v.second.find("*") == string::npos && !n.second.isVarZeroCopyEnabled(v.first)) {
+                const size_t size = n.second.isVarQueueRequired(v.first)
                     ? n.second.getNumNeurons() * n.second.getNumDelaySlots()
                     : n.second.getNumNeurons();
-                os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << nmVars[k].first << n.first;
-                os << ", " << nmVars[k].first << n.first;
-                os << ", " << size << " * sizeof(" << nmVars[k].second << "), cudaMemcpyHostToDevice));" << ENDL;
+                os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << v.first << n.first;
+                os << ", " << v.first << n.first;
+                os << ", " << size << " * sizeof(" << v.second << "), cudaMemcpyHostToDevice));" << ENDL;
             }
         }
 
@@ -1766,17 +1764,16 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
         os << "void pull" << n.first << "StateFromDevice()" << ENDL;
         os << OB(1050);
         
-        auto nmVars = n.second.getNeuronModel()->GetVars();
-        for (size_t k= 0, l= nmVars.size(); k < l; k++) {
+        for(const auto &v : n.second.getNeuronModel()->GetVars()) {
             // only copy non-zero-copied, non-pointers. Pointers don't transport between GPU and CPU
-            if (nmVars[k].second.find("*") == string::npos && !n.second.isVarZeroCopyEnabled(nmVars[k].first)) {
-                const size_t size = n.second.isVarQueueRequired(k)
+            if (v.second.find("*") == string::npos && !n.second.isVarZeroCopyEnabled(v.first)) {
+                const size_t size = n.second.isVarQueueRequired(v.first)
                     ? n.second.getNumNeurons() * n.second.getNumDelaySlots()
                     : n.second.getNumNeurons();
 
-                os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << nmVars[k].first << n.first;
-                os << ", d_" << nmVars[k].first << n.first;
-                os << ", " << size << " * sizeof(" << nmVars[k].second << "), cudaMemcpyDeviceToHost));" << ENDL;
+                os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << v.first << n.first;
+                os << ", d_" << v.first << n.first;
+                os << ", " << size << " * sizeof(" << v.second << "), cudaMemcpyDeviceToHost));" << ENDL;
             }
         }
 

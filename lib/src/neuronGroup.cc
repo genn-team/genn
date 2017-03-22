@@ -23,11 +23,10 @@ void NeuronGroup::checkNumDelaySlots(unsigned int requiredDelay)
 void NeuronGroup::updateVarQueues(const string &code)
 {
     // Loop through neuron variables
-    auto vars = getNeuronModel()->GetVars();
-    for (size_t v = 0; v < vars.size(); v++) {
+    for(const auto &v : getNeuronModel()->GetVars()) {
         // If the code contains a reference to this variable, set queued flag
-        if (code.find(vars[v].first + "_pre") != string::npos) {
-            m_VarQueueRequired[v] = true;
+        if (code.find(v.first + "_pre") != string::npos) {
+            m_VarQueueRequired.insert(v.first);
         }
     }
 }
@@ -89,9 +88,9 @@ void NeuronGroup::calcSizes(unsigned int blockSize, unsigned int &cumSum, unsign
     m_PaddedCumSumNeurons.second = paddedCumSum;
 }
 
-bool NeuronGroup::isVarQueueRequired() const
+bool NeuronGroup::isVarQueueRequired(const std::string &var) const
 {
-    return (find(begin(m_VarQueueRequired), end(m_VarQueueRequired), true) != end(m_VarQueueRequired));
+    return (m_VarQueueRequired.find(var) != std::end(m_VarQueueRequired));
 }
 
 bool NeuronGroup::isZeroCopyEnabled() const

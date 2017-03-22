@@ -24,7 +24,6 @@ public:
         m_SpikeZeroCopyEnabled(false), m_SpikeEventZeroCopyEnabled(false), m_SpikeTimeZeroCopyEnabled(false),
         m_HostID(0), m_DeviceID(0)
     {
-        m_VarQueueRequired.resize(initVals.size(), false);
     }
 
     //------------------------------------------------------------------------
@@ -87,8 +86,8 @@ public:
     bool isSpikeEventRequired() const{ return m_SpikeEventRequired; }
     bool isQueueRequired() const{ return m_QueueRequired; }
 
-    bool isVarQueueRequired(size_t v) const{ return m_VarQueueRequired[v]; }
-    bool isVarQueueRequired() const;
+    bool isVarQueueRequired(const std::string &var) const;
+    bool isVarQueueRequired() const{ return !m_VarQueueRequired.empty(); }
 
     const std::set<std::pair<std::string, std::string>> &getSpikeEventCondition() const{ return m_SpikeEventCondition; }
 
@@ -134,7 +133,7 @@ private:
     unsigned int m_NumDelaySlots;
 
     //!< Vector specifying which variables require queues
-    std::vector<bool> m_VarQueueRequired;
+    std::set<string> m_VarQueueRequired;
 
     //!< Whether spikes from neuron group should use zero-copied memory
     bool m_SpikeZeroCopyEnabled;

@@ -336,15 +336,14 @@ void neuron_substitutions_in_synaptic_code(
         substitute(wCode, "$(V_pre)", to_string(sg->getSrcNeuronGroup()->getParams()[2]));
     }
     substitute(wCode, "$(sT_pre)", devPrefix+ "sT" + sg->getSrcNeuronGroup()->getName() + "[" + sg->getOffsetPre() + preIdx + "]");
-    auto preVars = srcNeuronModel->GetVars();
-    for (size_t j = 0; j < preVars.size(); j++) {
-        if (sg->getSrcNeuronGroup()->isVarQueueRequired(j)) {
-            substitute(wCode, "$(" + preVars[j].first + "_pre)",
-                       devPrefix + preVars[j].first + sg->getSrcNeuronGroup()->getName() + "[" + sg->getOffsetPre() + preIdx + "]");
+    for(const auto &v : srcNeuronModel->GetVars()) {
+        if (sg->getSrcNeuronGroup()->isVarQueueRequired(v.first)) {
+            substitute(wCode, "$(" + v.first + "_pre)",
+                       devPrefix + v.first + sg->getSrcNeuronGroup()->getName() + "[" + sg->getOffsetPre() + preIdx + "]");
         }
         else {
-            substitute(wCode, "$(" + preVars[j].first + "_pre)",
-                       devPrefix + preVars[j].first + sg->getSrcNeuronGroup()->getName() + "[" + preIdx + "]");
+            substitute(wCode, "$(" + v.first + "_pre)",
+                       devPrefix + v.first + sg->getSrcNeuronGroup()->getName() + "[" + preIdx + "]");
         }
     }
     value_substitutions(wCode, srcNeuronModel->GetParamNames(), sg->getSrcNeuronGroup()->getParams(), "_pre");
@@ -358,15 +357,14 @@ void neuron_substitutions_in_synaptic_code(
     // postsynaptic neuron variables, parameters, and global parameters
     const auto *trgNeuronModel = sg->getTrgNeuronGroup()->getNeuronModel();
     substitute(wCode, "$(sT_post)", devPrefix + "sT" + sg->getTrgNeuronGroup()->getName() + "[" + sg->getOffsetPost(devPrefix) + postIdx + "]");
-    auto postVars = trgNeuronModel->GetVars();
-    for (size_t j = 0; j < postVars.size(); j++) {
-        if (sg->getTrgNeuronGroup()->isVarQueueRequired(j)) {
-            substitute(wCode, "$(" + postVars[j].first + "_post)",
-                       devPrefix + postVars[j].first + sg->getTrgNeuronGroup()->getName() + "[" + sg->getOffsetPost(devPrefix) + postIdx + "]");
+    for(const auto &v : trgNeuronModel->GetVars()) {
+        if (sg->getTrgNeuronGroup()->isVarQueueRequired(v.first)) {
+            substitute(wCode, "$(" + v.first + "_post)",
+                       devPrefix + v.first + sg->getTrgNeuronGroup()->getName() + "[" + sg->getOffsetPost(devPrefix) + postIdx + "]");
         }
         else {
-            substitute(wCode, "$(" + postVars[j].first + "_post)",
-                       devPrefix + postVars[j].first + sg->getTrgNeuronGroup()->getName() + "[" + postIdx + "]");
+            substitute(wCode, "$(" + v.first + "_post)",
+                       devPrefix + v.first + sg->getTrgNeuronGroup()->getName() + "[" + postIdx + "]");
         }
     }
     value_substitutions(wCode, trgNeuronModel->GetParamNames(), sg->getTrgNeuronGroup()->getParams(), "_post");

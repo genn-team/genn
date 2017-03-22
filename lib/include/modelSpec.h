@@ -100,10 +100,11 @@ public:
     unsigned int resetKernel;  //!< The identity of the kernel in which the spike counters will be reset.
 
 public:
-    // PUBLIC MODEL FUNCTIONS
-    //=======================
     NNmodel();
     ~NNmodel();
+
+    // PUBLIC MODEL FUNCTIONS
+    //=======================
     void setName(const std::string&); //!< Method to set the neuronal network model name
     void setPrecision(FloatType); //!< Set numerical precision for floating point
     void setDT(double); //!< Set the integration step size of the model
