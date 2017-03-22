@@ -32,18 +32,23 @@ void NeuronGroup::updateVarQueues(const string &code)
     }
 }
 
-void NeuronGroup::setVarZeroCopyEnabled(const std::string &var)
+void NeuronGroup::setVarZeroCopyEnabled(const std::string &var, bool enabled)
 {
     // If named variable doesn't exist give error
     VarNameIterCtx nmVars(getNeuronModel()->GetVars());
-    if(find(nmVars.nameBegin, nmVars.nameEnd, var) == nmVars.nameEnd)
-    {
+    if(find(nmVars.nameBegin, nmVars.nameEnd, var) == nmVars.nameEnd) {
         gennError("Cannot find variable " + var);
     }
     // Otherwise add name of variable to set
-    else
-    {
-        m_VarZeroCopyEnabled.insert(var);
+    else  {
+        // If enabled, add variable to set
+        if(enabled) {
+            m_VarZeroCopyEnabled.insert(var);
+        }
+        // Otherwise, remove it
+        else {
+            m_VarZeroCopyEnabled.erase(var);
+        }
     }
 }
 

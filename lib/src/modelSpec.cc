@@ -467,11 +467,11 @@ SynapseGroup *NNmodel::addSynapsePopulation(
     }
 
     if (weightUpdateModels[syntype].needPreSt) {
-        srcNeuronGrp->setSpikeTimeRequired();
+        srcNeuronGrp->setSpikeTimeRequired(true);
         needSt = true;
     }
     if (weightUpdateModels[syntype].needPostSt) {
-        trgNeuronGrp->setSpikeTimeRequired();
+        trgNeuronGrp->setSpikeTimeRequired(true);
         needSt = true;
     }
 
@@ -741,8 +741,8 @@ void NNmodel::finalize()
 
 
         if (!wu->GetSimCode().empty()) {
-            s.second.setTrueSpikeRequired();
-            s.second.getSrcNeuronGroup()->setTrueSpikeRequired();
+            s.second.setTrueSpikeRequired(true);
+            s.second.getSrcNeuronGroup()->setTrueSpikeRequired(true);
 
             // analyze which neuron variables need queues
             s.second.getSrcNeuronGroup()->updateVarQueues(wu->GetSimCode());
@@ -763,8 +763,8 @@ void NNmodel::finalize()
             const auto *wu = sg->getWUModel();
 
             if (!wu->GetEventCode().empty()) {
-                sg->setSpikeEventRequired();
-                n.second.setSpikeEventRequired();
+                sg->setSpikeEventRequired(true);
+                n.second.setSpikeEventRequired(true);
                 assert(!wu->GetEventThresholdConditionCode().empty());
 
                  // Create iteration context to iterate over derived and extra global parameters
@@ -791,7 +791,7 @@ void NNmodel::finalize()
         if (n.second.getNumSpikeEventConditions() > 1) {
             for(auto *sg : n.second.getOutSyn()) {
                 if (!sg->getWUModel()->GetEventCode().empty()) {
-                    sg->setEventThresholdReTestRequired();
+                    sg->setEventThresholdReTestRequired(true);
                 }
             }
         }

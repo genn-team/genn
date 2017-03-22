@@ -36,25 +36,25 @@ public:
     // Update which variables require queues based on piece of code
     void updateVarQueues(const std::string &code);
 
-    void setSpikeTimeRequired(){ m_SpikeTimeRequired = true; }
-    void setTrueSpikeRequired(){ m_TrueSpikeRequired = true; }
-    void setSpikeEventRequired(){ m_SpikeEventRequired = true; }
+    void setSpikeTimeRequired(bool req){ m_SpikeTimeRequired = req; }
+    void setTrueSpikeRequired(bool req){ m_TrueSpikeRequired = req; }
+    void setSpikeEventRequired(bool req){ m_SpikeEventRequired = req; }
 
     //!< Function to enable the use of zero-copied memory for spikes:
     //!< May improve IO performance at the expense of kernel performance
-    void setSpikeZeroCopyEnabled(){ m_SpikeZeroCopyEnabled = true; }
+    void setSpikeZeroCopyEnabled(bool enabled){ m_SpikeZeroCopyEnabled = enabled; }
 
     //!< Function to enable the use of zero-copied memory for spike-like events:
     //!< May improve IO performance at the expense of kernel performance
-    void setSpikeEventZeroCopyEnabled(){ m_SpikeEventZeroCopyEnabled = true; }
+    void setSpikeEventZeroCopyEnabled(bool enabled){ m_SpikeEventZeroCopyEnabled = enabled; }
 
     //!< Function to enable the use of zero-copied memory for spike times:
     //!< May improve IO performance at the expense of kernel performance
-    void setSpikeTimeZeroCopyEnabled(){ m_SpikeTimeZeroCopyEnabled = true; }
+    void setSpikeTimeZeroCopyEnabled(bool enabled){ m_SpikeTimeZeroCopyEnabled = enabled; }
 
      //!< Function to enable the use zero-copied memory for a particular state variable:
      //!< May improve IO performance at the expense of kernel performance
-    void setVarZeroCopyEnabled(const std::string &varName);
+    void setVarZeroCopyEnabled(const std::string &varName, bool enabled);
 
     void setClusterIndex(int hostID, int deviceID){ m_HostID = hostID; m_DeviceID = deviceID; }
 

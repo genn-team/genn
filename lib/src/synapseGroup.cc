@@ -12,33 +12,43 @@
 // ------------------------------------------------------------------------
 // SynapseGroup
 // ------------------------------------------------------------------------
-void SynapseGroup::setWUVarZeroCopyEnabled(const std::string &var)
+void SynapseGroup::setWUVarZeroCopyEnabled(const std::string &var, bool enabled)
 {
     // If named variable doesn't exist give error
     VarNameIterCtx wuVars(getWUModel()->GetVars());
-    if(find(wuVars.nameBegin, wuVars.nameEnd, var) == wuVars.nameEnd)
-    {
+    if(find(wuVars.nameBegin, wuVars.nameEnd, var) == wuVars.nameEnd) {
         gennError("Cannot find variable " + var);
     }
     // Otherwise add name of variable to set
-    else
-    {
-        m_WUVarZeroCopyEnabled.insert(var);
+    else {
+        // If enabled, add variable to set
+        if(enabled) {
+            m_WUVarZeroCopyEnabled.insert(var);
+        }
+        // Otherwise, remove it
+        else {
+            m_WUVarZeroCopyEnabled.erase(var);
+        }
     }
 }
 
-void SynapseGroup::setPSVarZeroCopyEnabled(const std::string &var)
+void SynapseGroup::setPSVarZeroCopyEnabled(const std::string &var, bool enabled)
 {
     // If named variable doesn't exist give error
     VarNameIterCtx psVars(getPSModel()->GetVars());
-    if(find(psVars.nameBegin, psVars.nameEnd, var) == psVars.nameEnd)
-    {
+    if(find(psVars.nameBegin, psVars.nameEnd, var) == psVars.nameEnd) {
         gennError("Cannot find variable " + var);
     }
-    // Otherwise add name of variable to set
-    else
-    {
-        m_WUVarZeroCopyEnabled.insert(var);
+    // Otherwise
+    else  {
+        // If enabled, add variable to set
+        if(enabled) {
+            m_PSVarZeroCopyEnabled.insert(var);
+        }
+        // Otherwise, remove it
+        else {
+            m_PSVarZeroCopyEnabled.erase(var);
+        }
     }
 }
 
