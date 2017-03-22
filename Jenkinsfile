@@ -66,7 +66,7 @@ node {
     
     stage("Uploading coverage summary") {
         dir("genn/tests") {
-            sh "curl -s https://codecov.io/bash | bash";
+            sh "curl -s https://codecov.io/bash | bash -s - -t 04054241-1f5e-4c42-9564-9b99ede08113";
         }
     }
     
