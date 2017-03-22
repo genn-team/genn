@@ -26,8 +26,8 @@ node {
         }
         
         // Setup google test and GeNN environment variables
-        env.GTEST_DIR = pwd() + "/googletest-release-1.8.0/googletest"
-        env.GENN_PATH = pwd() + "/genn"
+        env.GTEST_DIR = pwd() + "/googletest-release-1.8.0/googletest";
+        env.GENN_PATH = pwd() + "/genn";
         
         // Add GeNN binaries directory to path
         env.PATH += ":" + env.GENN_PATH + "/lib/bin";
@@ -39,7 +39,7 @@ node {
             echo "${env.PATH}";
             dir("genn/tests") {
                 // Run tests
-                sh "./run_tests.sh -c"
+                sh "./run_tests.sh -c";
             }
         } 
     }
@@ -47,10 +47,10 @@ node {
     stage("Gathering test results") {
         dir("genn/tests") {
             // Process JUnit test output
-            junit "**/test_results*.xml"
+            junit "**/test_results*.xml";
             
             // Archive compiler output
-            archive "msg"
+            archive "msg";
         }
     }
     
@@ -59,14 +59,14 @@ node {
         if (isUnix()) {
             echo "${env.PATH}";
             dir("genn/tests") {
-                sh "./calc_coverage.sh -c"
+                sh "./calc_coverage.sh -c";
             }
         } 
     }
     
-    tage("Uploading coverage summary") {
+    stage("Uploading coverage summary") {
         dir("genn/tests") {
-            
+            sh "curl -s https://codecov.io/bash | bash";
         }
     }
     
