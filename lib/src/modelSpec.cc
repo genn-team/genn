@@ -929,13 +929,14 @@ void NNmodel::setPopulationSums()
     // SYNAPSE DYNAMICS GROUPS
     padSumSynDynN.resize(synDynGroups);
     for (int i = 0; i < synDynGroups; i++) {
+        const unsigned int synGrp = synDynGrp[i];
         if (synapseConnType[i] == SPARSE) {
             // paddedSize is the lowest multiple of synDynBlkSz >= neuronN[synapseSource[i]] * maxConn[i]
-            paddedSize = ceil((double) neuronN[synapseSource[i]] * maxConn[i] / (double) synDynBlkSz) * (double) synDynBlkSz;
+            paddedSize = ceil((double) neuronN[synapseSource[synGrp]] * maxConn[synGrp] / (double) synDynBlkSz) * (double) synDynBlkSz;
         }
         else {
             // paddedSize is the lowest multiple of synDynBlkSz >= neuronN[synapseSource[i]] * neuronN[synapseTarget[i]]
-            paddedSize = ceil((double) neuronN[synapseSource[i]] * neuronN[synapseTarget[i]] / (double) synDynBlkSz) * (double) synDynBlkSz;
+            paddedSize = ceil((double) neuronN[synapseSource[synGrp]] * neuronN[synapseTarget[synGrp]] / (double) synDynBlkSz) * (double) synDynBlkSz;
         }
         if (i == 0) {
             padSumSynDynN[i] = paddedSize;
@@ -948,8 +949,9 @@ void NNmodel::setPopulationSums()
     // LEARN GROUPS
     padSumLearnN.resize(lrnGroups);
     for (int i = 0; i < lrnGroups; i++) {
+        const unsigned int synGrp = lrnSynGrp[i];
         // paddedSize is the lowest multiple of learnBlkSz >= neuronN[synapseTarget[i]]
-        paddedSize = ceil((double) neuronN[synapseSource[i]] / (double) learnBlkSz) * (double) learnBlkSz;
+        paddedSize = ceil((double) neuronN[synapseSource[synGrp]] / (double) learnBlkSz) * (double) learnBlkSz;
         if (i == 0) {
             padSumLearnN[i] = paddedSize;
         }
