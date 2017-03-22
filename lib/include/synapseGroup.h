@@ -22,13 +22,22 @@ public:
                  const WeightUpdateModels::Base *wu, const std::vector<double> &wuParams, const std::vector<double> &wuInitVals,
                  const PostsynapticModels::Base *ps, const std::vector<double> &psParams, const std::vector<double> &psInitVals,
                  NeuronGroup *srcNeuronGroup, NeuronGroup *trgNeuronGroup) :
-        m_PaddedKernelCumSum(0, 0), m_Name(name), m_SpanType(0), m_DelaySteps(delaySteps), m_MaxConnections(trgNeuronGroup->getNumNeurons()), m_MatrixType(matrixType),
+        m_PaddedKernelCumSum(0, 0), m_Name(name), m_SpanType(SpanType::POSTSYNAPTIC), m_DelaySteps(delaySteps), m_MaxConnections(trgNeuronGroup->getNumNeurons()), m_MatrixType(matrixType),
         m_SrcNeuronGroup(srcNeuronGroup), m_TrgNeuronGroup(trgNeuronGroup),
         m_TrueSpikeRequired(false), m_SpikeEventRequired(false), m_EventThresholdReTestRequired(false),
         m_WUModel(wu), m_WUParams(wuParams), m_WUInitVals(wuInitVals), m_PSModel(ps), m_PSParams(psParams), m_PSInitVals(psInitVals),
         m_HostID(0), m_DeviceID(0)
     {
     }
+
+    //------------------------------------------------------------------------
+    // Enumerations
+    //------------------------------------------------------------------------
+    enum class SpanType
+    {
+        POSTSYNAPTIC,
+        PRESYNAPTIC
+    };
 
     //------------------------------------------------------------------------
     // Public methods
@@ -50,7 +59,7 @@ public:
     void setClusterIndex(int hostID, int deviceID){ m_HostID = hostID; m_DeviceID = deviceID; }
 
     void setMaxConnections(unsigned int maxConnections);
-    void setSpanType(unsigned int spanType);
+    void setSpanType(SpanType spanType);
 
     void initDerivedParams(double dt);
     void calcKernelSizes(unsigned int blockSize, unsigned int &paddedCumSum);
@@ -62,7 +71,7 @@ public:
 
     const std::string &getName() const{ return m_Name; }
 
-    unsigned int getSpanType() const{ return m_SpanType; }
+    SpanType getSpanType() const{ return m_SpanType; }
     unsigned int getDelaySteps() const{ return m_DelaySteps; }
     unsigned int getMaxConnections() const{ return m_MaxConnections; }
     SynapseMatrixType getMatrixType() const{ return m_MatrixType; }
@@ -123,8 +132,8 @@ private:
     //!< Name of the synapse group
     std::string m_Name;
 
-    //!< Execution order of synapses in the kernel. It determines whether synapses are executed in parallel for every postsynaptic neuron (0, default), or for every presynaptic neuron (1).
-    unsigned int m_SpanType;
+    //!< Execution order of synapses in the kernel. It determines whether synapses are executed in parallel for every postsynaptic neuron, or for every presynaptic neuron.
+    SpanType m_SpanType;
 
     //!< Global synaptic conductance delay for the group (in time steps)
     unsigned int m_DelaySteps;

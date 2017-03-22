@@ -530,7 +530,7 @@ void NNmodel::setSpanTypeToPre(const string &sname /**< name of the synapse grou
     if (final) {
         gennError("Trying to set spanType in a finalized model.");
     }
-    findSynapseGroup(sname)->setSpanType(1);
+    findSynapseGroup(sname)->setSpanType(SynapseGroup::SpanType::PRESYNAPTIC);
 
 }
 

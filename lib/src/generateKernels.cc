@@ -329,11 +329,12 @@ void generate_process_presynaptic_events_code(
     const bool evnt = (postfix == "Evnt");
 
      if ((evnt && sg.isSpikeEventRequired()) || (!evnt && sg.isTrueSpikeRequired())) {
-        // Detect spike events or spikes and do the update
-        if ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && sg.getSpanType() == 1) { // parallelisation along pre-synaptic spikes, looped over post-synaptic neurons
+        // parallelisation along pre-synaptic spikes, looped over post-synaptic neurons
+        if ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && sg.getSpanType() == SynapseGroup::SpanType::PRESYNAPTIC) {
             generatePreParallelisedSparseCode(os, sg, localID, postfix, ftype);
         }
-        else { // classical parallelisation of post-synaptic neurons in parallel and spikes in a loop
+        // classical parallelisation of post-synaptic neurons in parallel and spikes in a loop
+        else {
             generatePostParallelisedCode(os, sg, localID, postfix, ftype);
         }
     }

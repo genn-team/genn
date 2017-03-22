@@ -52,7 +52,7 @@ void SynapseGroup::setMaxConnections(unsigned int maxConnections)
     }
 }
 
-void SynapseGroup::setSpanType(unsigned int spanType)
+void SynapseGroup::setSpanType(SpanType spanType)
 {
     if (getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
         m_SpanType = spanType;
@@ -87,7 +87,7 @@ void SynapseGroup::calcKernelSizes(unsigned int blockSize, unsigned int &paddedC
     m_PaddedKernelCumSum.first = paddedCumSum;
 
     if (getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-        if (getSpanType()== 1) {
+        if (getSpanType() == SpanType::PRESYNAPTIC) {
             // paddedSize is the lowest multiple of blockSize >= neuronN[synapseSource[i]
             paddedCumSum += ceil((double) getSrcNeuronGroup()->getNumNeurons() / (double) blockSize) * (double) blockSize;
         }
@@ -146,10 +146,10 @@ bool SynapseGroup::isPSVarZeroCopyEnabled(const std::string &var) const
 bool SynapseGroup::isPSAtomicAddRequired(unsigned int blockSize) const
 {
     if (getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-        if (getSpanType() == 0 && getTrgNeuronGroup()->getNumNeurons() > blockSize) {
+        if (getSpanType() == SpanType::POSTSYNAPTIC && getTrgNeuronGroup()->getNumNeurons() > blockSize) {
             return true;
         }
-        if (getSpanType() == 1 && getSrcNeuronGroup()->getNumNeurons() > blockSize) {
+        if (getSpanType()  == SpanType::PRESYNAPTIC && getSrcNeuronGroup()->getNumNeurons() > blockSize) {
             return true;
         }
     }
