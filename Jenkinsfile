@@ -65,6 +65,14 @@ node {
             dir("genn/tests") {
                 // Run tests
                 sh "./run_tests.sh -c";
+                
+                // Parse test output for GCC warnings
+                step([$class: "WarningsPublisher", 
+                    canComputeNew: false, canResolveRelativePaths: false, defaultEncoding: '', excludePattern: '', healthy: '', includePattern: '', messagesPattern: '', 
+                    parserConfigurations: [
+                        [parserName: "GNU Make + GNU C Compiler (gcc)", 
+                        pattern: "msg"]], 
+                    unHealthy: ""]); 
             }
         } 
     }
