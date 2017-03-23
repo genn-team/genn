@@ -2,7 +2,7 @@
 #include "gtest/gtest.h"
 
 // Auto-generated simulation code includess
-#include "extra_global_params_in_sim_code_CODE/definitions.h"
+#include DEFINITIONS_HEADER
 
 // **NOTE** base-class for simulation tests must be
 // included after auto-generated globals are includes
