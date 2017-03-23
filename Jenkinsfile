@@ -25,7 +25,7 @@ void setBuildStatus(String message, String state) {
 
 
 node {
-    step("Installation") {
+    stage("Installation") {
         echo "Checking out GeNN";
         
         // Deleting existing checked out version of GeNN
@@ -60,7 +60,7 @@ node {
             // Add GeNN binaries directory to path
             env.PATH += ":" + env.GENN_PATH + "/lib/bin";
         } catch (Exception e) {
-            setBuildStatus(message, "FAILURE");
+            setBuildStatus("Installation", "FAILURE");
         }
     }
     
