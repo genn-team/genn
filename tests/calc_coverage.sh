@@ -43,7 +43,13 @@ for f in features/*;
 echo "Combining coverage data..."
 
 # Combine all GCOV ouratput in child directories
-lcov --directory . --capture --output-file coverage.txt -rc lcov_branch_coverage=1 1>> ../../msg 2>> msg
+lcov --directory $GENN_PATH --capture --output-file coverage.txt -rc lcov_branch_coverage=1 1>> ../../msg 2>> msg
+
+# Remove standard library stuff from coverage report
+lcov --remove coverage.txt "/usr*" -o coverage.txt
+
+# Remove coverage of tests themselves as this seems dumb
+lcov --remove coverage.txt "tests*" -o coverage.txt
 
 if [ $REPORT -eq 1 ]; then
   echo "Generating HTML coverage report..."
