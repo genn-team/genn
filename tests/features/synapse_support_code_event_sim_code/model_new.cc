@@ -40,7 +40,7 @@ void modelDefinition(NNmodel &model)
     initGeNN();
 
     model.setDT(0.1);
-    model.setName("synapse_support_code_event_sim_code");
+    model.setName("synapse_support_code_event_sim_code_new");
 
     model.addNeuronPopulation<Neuron>("pre", 10, {}, Neuron::VarValues(0.0, 0.0));
     model.addNeuronPopulation<Neuron>("post", 10, {}, Neuron::VarValues(0.0, 0.0));

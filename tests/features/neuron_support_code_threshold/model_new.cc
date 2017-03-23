@@ -39,7 +39,7 @@ void modelDefinition(NNmodel &model)
     initGeNN();
 
     model.setDT(0.1);
-    model.setName("neuron_support_code_threshold");
+    model.setName("neuron_support_code_threshold_new");
 
     model.addNeuronPopulation<Neuron>("pre", 10, {}, Neuron::VarValues(0.0, 0.0));
     model.addNeuronPopulation<Neuron>("post", 10, {}, Neuron::VarValues(0.0, 0.0));

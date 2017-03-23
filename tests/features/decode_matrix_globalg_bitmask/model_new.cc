@@ -21,7 +21,7 @@ void modelDefinition(NNmodel &model)
     initGeNN();
 
     model.setDT(0.1);
-    model.setName("decode_matrix_globalg_bitmask");
+    model.setName("decode_matrix_globalg_bitmask_new");
 
     // Static synapse parameters
     WeightUpdateModels::StaticPulse::VarValues staticSynapseInit(1.0);    // 0 - Wij (nA)
