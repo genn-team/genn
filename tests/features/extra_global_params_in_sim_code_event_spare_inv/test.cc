@@ -108,10 +108,10 @@ private:
 };
 
 // Combine neuron and synapse policies together to build variable-testing fixture
-typedef SimulationTestVars<SimulationNeuronPolicyPreVar, SimulationSynapsePolicy> SimulationTestExtraGlobalParams;
+typedef SimulationTestVars<SimulationNeuronPolicyPreVar, SimulationSynapsePolicy> SimTest;
 
 
-TEST_P(SimulationTestExtraGlobalParams, AcceptableError)
+TEST_P(SimTest, AcceptableError)
 {
     float err = Simulate(
       [](unsigned int i, unsigned int d, unsigned int j, float t, float evntT, bool beforeSwap, float &newX)
@@ -146,6 +146,6 @@ auto simulatorBackends = ::testing::Values(true, false);
 auto simulatorBackends = ::testing::Values(false);
 #endif
 
-INSTANTIATE_TEST_CASE_P(SimCodeEventSparseInv,
-                        SimulationTestExtraGlobalParams,
-                        simulatorBackends);
+WRAPPED_INSTANTIATE_TEST_CASE_P(MODEL_NAME,
+                                SimTest,
+                                simulatorBackends);

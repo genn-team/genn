@@ -4,6 +4,12 @@
 #include "gtest/gtest.h"
 
 //----------------------------------------------------------------------------
+// Macros
+//----------------------------------------------------------------------------
+// **YUCK** in order to pass prefix from
+#define WRAPPED_INSTANTIATE_TEST_CASE_P(prefix, test_case_name, generator) INSTANTIATE_TEST_CASE_P(prefix, test_case_name, generator)
+
+//----------------------------------------------------------------------------
 // SimulationTest
 //----------------------------------------------------------------------------
 class SimulationTest : public ::testing::TestWithParam<bool>

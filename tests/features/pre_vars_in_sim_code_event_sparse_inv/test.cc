@@ -11,9 +11,9 @@
 #include "../../utils/simulation_synapse_policy_sparse.h"
 
 // Combine neuron and synapse policies together to build variable-testing fixture
-typedef SimulationTestVars<SimulationNeuronPolicyPreVar, SimulationSynapsePolicySparse> SimulationTestPreVars;
+typedef SimulationTestVars<SimulationNeuronPolicyPreVar, SimulationSynapsePolicySparse> SimTest;
 
-TEST_P(SimulationTestPreVars, AcceptableError)
+TEST_P(SimTest, AcceptableError)
 {
   float err = Simulate(
     [](unsigned int i, unsigned int d, unsigned int j, float t, float &newX)
@@ -39,6 +39,6 @@ auto simulatorBackends = ::testing::Values(true, false);
 auto simulatorBackends = ::testing::Values(false);
 #endif
 
-INSTANTIATE_TEST_CASE_P(SimCodeEventSparseInv,
-                        SimulationTestPreVars,
-                        simulatorBackends);
+WRAPPED_INSTANTIATE_TEST_CASE_P(MODEL_NAME,
+                                SimTest,
+                                simulatorBackends);

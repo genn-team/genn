@@ -11,9 +11,9 @@
 #include "../../utils/simulation_synapse_policy_dense.h"
 
 // Combine neuron and synapse policies together to build variable-testing fixture
-typedef SimulationTestVars<SimulationNeuronPolicyPrePostVar, SimulationSynapsePolicyDense> SimulationTestPostVars;
+typedef SimulationTestVars<SimulationNeuronPolicyPrePostVar, SimulationSynapsePolicyDense> SimTest;
 
-TEST_P(SimulationTestPostVars, AcceptableError)
+TEST_P(SimTest, AcceptableError)
 {
   float err = Simulate(
     [](unsigned int d, unsigned int j, unsigned int k, float t, float &newX)
@@ -39,6 +39,6 @@ auto simulatorBackends = ::testing::Values(true, false);
 auto simulatorBackends = ::testing::Values(false);
 #endif
 
-INSTANTIATE_TEST_CASE_P(SynapseDynamics,
-                        SimulationTestPostVars,
-                        simulatorBackends);
+WRAPPED_INSTANTIATE_TEST_CASE_P(MODEL_NAME,
+                                SimTest,
+                                simulatorBackends);
