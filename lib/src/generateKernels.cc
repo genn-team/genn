@@ -89,7 +89,7 @@ a max possible number of connections via the model.setMaxConn() function.\n");
 
     if (sg.getSrcNeuronGroup()->isDelayRequired()) {
         os << "int preInd = dd_glbSpk"  << postfix << sg.getSrcNeuronGroup()->getName();
-        os << "[(delaySlot * " << sg.getSrcNeuronGroup()->getNumNeurons() << ") + " << localID << "];";
+        os << "[(delaySlot * " << sg.getSrcNeuronGroup()->getNumNeurons() << ") + " << localID << "];" << ENDL;
     }
     else {
         os << "int preInd = dd_glbSpk"  << postfix << sg.getSrcNeuronGroup()->getName();
