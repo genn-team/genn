@@ -29,12 +29,16 @@ for f in features/*;
 
         # Push feature directory
         pushd $f
+    
+        # Loop through model suffixes
+        for s in "" _new;
+            do
+                # Clean
+                make clean 1>> ../../msg 2>> ../../msg
 
-        # Clean
-        make clean 1>> ../../msg 2>> ../../msg
-
-        # Build and generate model (measuring coverage)
-        genn-buildmodel.sh $BUILD_FLAGS -v model.cc  1>> ../../msg 2>>../../msg || exit $?
+                # Build and generate model (measuring coverage)
+                genn-buildmodel.sh $BUILD_FLAGS -v model$s.cc  1>> ../../msg 2>>../../msg || exit $?
+            done;
 
         # Pop feature directory
         popd
