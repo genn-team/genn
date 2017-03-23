@@ -102,8 +102,6 @@ public:
 
     bool isParamRequiredBySpikeEventCondition(const std::string &pnamefull) const;
 
-    bool getNumSpikeEventConditions() const{ return m_SpikeEventCondition.size(); }
-
     void addExtraGlobalParams(std::map<std::string, std::string> &kernelParameters) const;
 
     // **THINK** do this really belong here - it is very code-generation specific

@@ -746,7 +746,7 @@ void NNmodel::finalize()
                 n.second.updateVarQueues(wu->getEventCode());
             }
         }
-        if (n.second.getNumSpikeEventConditions() > 1) {
+        if (n.second.getSpikeEventCondition().size() > 1) {
             for(auto *sg : n.second.getOutSyn()) {
                 if (!sg->getWUModel()->getEventCode().empty()) {
                     sg->setEventThresholdReTestRequired(true);
