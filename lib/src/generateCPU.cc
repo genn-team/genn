@@ -453,7 +453,7 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
                 StandardSubstitutions::weightUpdateDynamics(SDcode, sg, wuVars, wuDerivedParams,
                                                             "C" + s.first + ".preInd[n]",
                                                             "C" + s.first + ".ind[n]",
-                                                            "dd_", model.ftype);
+                                                            "", model.ftype);
                 os << SDcode << ENDL;
                 os << CB(24);
             }
@@ -468,7 +468,7 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
                 }
 
                 StandardSubstitutions::weightUpdateDynamics(SDcode, sg, wuVars, wuDerivedParams,
-                                                            "i","j", "dd_", model.ftype);
+                                                            "i","j", "", model.ftype);
                 os << SDcode << ENDL;
                 os << CB(26);
                 os << CB(25);
