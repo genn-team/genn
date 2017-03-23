@@ -2,7 +2,7 @@
 #include "gtest/gtest.h"
 
 // Auto-generated simulation code includess
-#include "decode_matrix_globalg_dense_CODE/definitions.h"
+#include DEFINITIONS_HEADER
 
 // **NOTE** base-class for simulation tests must be
 // included after auto-generated globals are includes
