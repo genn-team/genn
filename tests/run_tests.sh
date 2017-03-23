@@ -43,8 +43,9 @@ for f in features/*;
                 # Build and generate model
                 genn-buildmodel.sh $BUILD_FLAGS model$s.cc 1>>../../msg 2>> ../../msg || exit $?
                 
-                # Build
-                make $MAKE_FLAGS 1>>../../msg 2>>../../msg || exit $?
+                # Determine where the sim code is located for this test and build
+                c=$(basename $f)$s"_CODE"
+                make $MAKE_FLAGS SIM_CODE=$c 1>>../../msg 2>>../../msg || exit $?
 
                 # Run tests
                 ./test --gtest_output="xml:test_results$s.xml"
