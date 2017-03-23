@@ -40,5 +40,5 @@ auto simulatorBackends = ::testing::Values(false);
 #endif
 
 WRAPPED_INSTANTIATE_TEST_CASE_P(MODEL_NAME,
-                                SimTest,
-                                simulatorBackends);
+                                        SimTest,
+                                        simulatorBackends);

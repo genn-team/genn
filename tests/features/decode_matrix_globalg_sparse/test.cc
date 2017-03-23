@@ -9,9 +9,9 @@
 #include "../../utils/simulation_test_decoder_matrix.h"
 
 //----------------------------------------------------------------------------
-// SimulationTestGlobalGSparse
+// SimTest
 //----------------------------------------------------------------------------
-class SimulationTestGlobalGSparse : public SimulationTestDecoderMatrix
+class SimTest : public SimulationTestDecoderMatrix
 {
 public:
     //----------------------------------------------------------------------------
@@ -46,7 +46,7 @@ public:
     }
 };
 
-TEST_P(SimulationTestGlobalGSparse, CorrectDecoding)
+TEST_P(SimTest, CorrectDecoding)
 {
 #ifndef CPU_ONLY
     // Initialize sparse arrays
@@ -63,6 +63,6 @@ auto simulatorBackends = ::testing::Values(true, false);
 auto simulatorBackends = ::testing::Values(false);
 #endif
 
-INSTANTIATE_TEST_CASE_P(DecodeMatrix,
-                        SimulationTestGlobalGSparse,
-                        simulatorBackends);
+WRAPPED_INSTANTIATE_TEST_CASE_P(MODEL_NAME,
+                                SimTest,
+                                simulatorBackends);

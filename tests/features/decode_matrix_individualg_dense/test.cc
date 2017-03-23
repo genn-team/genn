@@ -9,9 +9,9 @@
 #include "../../utils/simulation_test_decoder_matrix.h"
 
 //----------------------------------------------------------------------------
-// SimulationTestIndividualGDense
+// SimTest
 //----------------------------------------------------------------------------
-class SimulationTestIndividualGDense : public SimulationTestDecoderMatrix
+class SimTest : public SimulationTestDecoderMatrix
 {
 public:
     //----------------------------------------------------------------------------
@@ -37,7 +37,7 @@ public:
     }
 };
 
-TEST_P(SimulationTestIndividualGDense, CorrectDecoding)
+TEST_P(SimTest, CorrectDecoding)
 {
     // Check total error is less than some tolerance
     EXPECT_TRUE(Simulate());
@@ -49,6 +49,6 @@ auto simulatorBackends = ::testing::Values(true, false);
 auto simulatorBackends = ::testing::Values(false);
 #endif
 
-INSTANTIATE_TEST_CASE_P(DecodeMatrix,
-                        SimulationTestIndividualGDense,
-                        simulatorBackends);
+WRAPPED_INSTANTIATE_TEST_CASE_P(MODEL_NAME,
+                                SimTest,
+                                simulatorBackends);
