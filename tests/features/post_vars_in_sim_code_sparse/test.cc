@@ -15,7 +15,7 @@ typedef SimulationTestVars<SimulationNeuronPolicyPrePostVar, SimulationSynapsePo
 
 TEST_P(SimTest, AcceptableError)
 {
-  initpost_vars_in_sim_code_sparse();
+  INIT_SPARSE(MODEL_NAME);
 
   float err = Simulate(
     [](unsigned int i, unsigned int d, unsigned int j, float t, float &newX)

@@ -16,7 +16,7 @@ typedef SimulationTestVars<SimulationNeuronPolicyPrePostVar, SimulationSynapsePo
 TEST_P(SimTest, AcceptableError)
 {
   // Initialize sparse projection
-  initpost_vars_in_post_learn_sparse();
+  INIT_SPARSE(MODEL_NAME);
 
   float err = Simulate(
     [](unsigned int i, unsigned int d, unsigned int j, float t, float &newX)
