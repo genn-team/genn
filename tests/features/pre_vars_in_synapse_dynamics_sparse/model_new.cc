@@ -34,7 +34,7 @@ void modelDefinition(NNmodel &model)
 {
     initGeNN();
     model.setDT(0.1);
-    model.setName("pre_vars_in_synapse_dynamics_sparse");
+    model.setName("pre_vars_in_synapse_dynamics_sparse_new");
 
     model.addNeuronPopulation<Neuron>("pre", 10, {}, Neuron::VarValues(0.0, 0.0));
     model.addNeuronPopulation<Neuron>("post", 10, {}, Neuron::VarValues(0.0, 0.0));

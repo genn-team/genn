@@ -35,7 +35,7 @@ void modelDefinition(NNmodel &model)
 {
     initGeNN();
     model.setDT(0.1);
-    model.setName("synapse_support_code_synapse_dynamics");
+    model.setName("synapse_support_code_synapse_dynamics_new");
 
     model.addNeuronPopulation<Neuron>("pre", 10, {}, Neuron::VarValues(0.0, 0.0));
     model.addNeuronPopulation<Neuron>("post", 10, {}, Neuron::VarValues(0.0, 0.0));
