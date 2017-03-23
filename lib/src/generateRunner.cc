@@ -2189,7 +2189,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
         }
     }    
     for(auto &n : model.getNeuronGroups()) {
-        if (n.second.isDelayRequired() > 1) {
+        if (n.second.isDelayRequired()) {
             os << "spkQuePtr" << n.first << " = (spkQuePtr" << n.first << " + 1) % " << n.second.getNumDelaySlots() << ";" << ENDL;
         }
     }
