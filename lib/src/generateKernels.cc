@@ -749,15 +749,14 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                 VarNameIterCtx wuVars(wu->getVars());
 
                 os << "// synapse group " << s.first << ENDL;
-                const auto &groupIDRange = sg->getPaddedKernelCumSum();
                 if (firstSynapseDynamicsGroup) {
-                    os << "if (id < " << groupIDRange.second << ")" << OB(77);
+                    os << "if (id < " << s.second.second << ")" << OB(77);
                     localID = "id";
                     firstSynapseDynamicsGroup = false;
                 }
                 else {
-                    os << "if ((id >= " << groupIDRange.first << ") && (id < " << groupIDRange.second << "))" << OB(77);
-                    os << "unsigned int lid = id - " << groupIDRange.first << ";" << ENDL;
+                    os << "if ((id >= " << s.second.first << ") && (id < " << s.second.second << "))" << OB(77);
+                    os << "unsigned int lid = id - " << s.second.first << ";" << ENDL;
                     localID = "lid";
                 }
 
@@ -1003,7 +1002,6 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
 
 // NOTE: WE DO NOT USE THE AXONAL DELAY FOR BACKWARDS PROPAGATION - WE CAN TALK ABOUT BACKWARDS DELAYS IF WE WANT THEM
             os << "// synapse group " << s.first << ENDL;
-            //const auto &groupIDRange = s.second.getPaddedCumSumNeurons();
             if (firstPostLearnGroup) {
                 os << "if (id < " << s.second.second << ")" << OB(220);
                 localID = "id";
