@@ -1,6 +1,7 @@
 #!groovy​
 
 // Wrapper around setting of GitHUb commit status curtesy of https://groups.google.com/forum/#!topic/jenkinsci-issues/p-UFjxKkXRI
+// **NOTE** since that forum post, stage now takes a Closure as the last argument hence slight modification 
 void buildStep(String message, Closure closure) {
     stage(message)
     {
@@ -14,6 +15,7 @@ void buildStep(String message, Closure closure) {
 }
 
 void setBuildStatus(String message, String state) {
+    // **NOTE** ManuallyEnteredCommitContextSource set to match the value used by bits of Jenkins outside pipeline control
     step([
         $class: "GitHubCommitStatusSetter",
         reposSource: [$class: "ManuallyEnteredRepositorySource", url: "https://github.com/genn-team/genn/"],
@@ -73,6 +75,11 @@ node {
                 sh "./run_tests.sh -c";
                 
                 // Parse test output for GCC warnings
+                // **NOTE** driving WarningsPublisher from pipeline is entirely undocumented
+                // this is based mostly on examples here https://github.com/kitconcept/jenkins-pipeline-examples
+                // **YUCK** fatal errors aren't detected by the 'GNU Make + GNU C Compiler (gcc)' parser
+                // however https://issues.jenkins-ci.org/browse/JENKINS-18081 fixes this for 
+                // the 'GNU compiler 4 (gcc)' parser at the expense of it not detecting make errors...
                 step([$class: "WarningsPublisher", 
                     parserConfigurations: [[parserName: "GNU compiler 4 (gcc)", pattern: "msg"]], 
                     unstableTotalAll: '0', usePreviousBuildAsReference: true]); 
@@ -102,6 +109,8 @@ node {
     
     buildStep("Uploading coverage summary") {
         dir("genn/tests") {
+            // **NOTE** the calc_coverage script massages the gcov output into a more useful form so we want to
+            // upload this directly rather than allowing the codecov.io script to generate it's own coverage report
             sh "bash <(curl -s https://codecov.io/bash) -f coverage.txt -t 04054241-1f5e-4c42-9564-9b99ede08113";
         }
     }
