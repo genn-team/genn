@@ -74,9 +74,7 @@ node {
                 
                 // Parse test output for GCC warnings
                 step([$class: "WarningsPublisher", 
-                    parserConfigurations: [
-                        [parserName: "GNU Make + GNU C Compiler (gcc)", 
-                        pattern: "msg"]], 
+                    parserConfigurations: [[parserName: "GNU compiler 4 (gcc)", pattern: "msg"]], 
                     unstableTotalAll: '0', usePreviousBuildAsReference: true]); 
             }
         } 
