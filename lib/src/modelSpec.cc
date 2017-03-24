@@ -466,15 +466,6 @@ SynapseGroup *NNmodel::addSynapsePopulation(
         needSynapseDelay = true;
     }
 
-    if (weightUpdateModels[syntype].needPreSt) {
-        srcNeuronGrp->setSpikeTimeRequired(true);
-        needSt = true;
-    }
-    if (weightUpdateModels[syntype].needPostSt) {
-        trgNeuronGrp->setSpikeTimeRequired(true);
-        needSt = true;
-    }
-
     // Add synapse group
     auto result = m_SynapseGroups.insert(
         pair<string, SynapseGroup>(
@@ -492,6 +483,20 @@ SynapseGroup *NNmodel::addSynapsePopulation(
     {
         // Get pointer to new synapse group
         SynapseGroup *newSynapseGroup = &result.first->second;
+
+        // If the weight update model requires presynaptic
+        // spike times, set flag in source neuron group
+        if (newSynapseGroup->getWUModel()->isPreSpikeTimeRequired()) {
+            srcNeuronGrp->setSpikeTimeRequired(true);
+            needSt = true;
+        }
+
+        // If the weight update model requires postsynaptic
+        // spike times, set flag in target neuron group
+        if (newSynapseGroup->getWUModel()->isPostSpikeTimeRequired()) {
+            trgNeuronGrp->setSpikeTimeRequired(true);
+            needSt = true;
+        }
 
         // Add references to target and source neuron groups
         trgNeuronGrp->addInSyn(newSynapseGroup);

@@ -52,3 +52,13 @@ NewModels::Base::StringPairVec WeightUpdateModels::LegacyWrapper::getExtraGlobal
     const auto &wu = weightUpdateModels[m_LegacyTypeIndex];
     return zipStringVectors(wu.extraGlobalSynapseKernelParameters, wu.extraGlobalSynapseKernelParameterTypes);
 }
+//----------------------------------------------------------------------------
+bool WeightUpdateModels::LegacyWrapper::isPreSpikeTimeRequired() const
+{
+    return weightUpdateModels[m_LegacyTypeIndex].needPreSt;
+}
+ //----------------------------------------------------------------------------
+bool WeightUpdateModels::LegacyWrapper::isPostSpikeTimeRequired() const
+{
+    return weightUpdateModels[m_LegacyTypeIndex].needPostSt;
+}

@@ -19,8 +19,8 @@
 
 #define SET_EXTRA_GLOBAL_PARAMS(...) virtual StringPairVec getExtraGlobalParams() const{ return __VA_ARGS__; }
 
-#define SET_NEEDS_PRE_SPIKE_TIME(NEEDS_PRE_SPIKE_TIME) static const bool NeedsPreSpikeTime = NEEDS_PRE_SPIKE_TIME
-#define SET_NEEDS_POST_SPIKE_TIME(NEEDS_POST_SPIKE_TIME) static const bool NeedsPostSpikeTime = NEEDS_POST_SPIKE_TIME
+#define SET_NEEDS_PRE_SPIKE_TIME(PRE_SPIKE_TIME_REQUIRED) virtual bool isPreSpikeTimeRequired() const{ return PRE_SPIKE_TIME_REQUIRED; }
+#define SET_NEEDS_POST_SPIKE_TIME(POST_SPIKE_TIME_REQUIRED) virtual bool isPostSpikeTimeRequired() const{ return POST_SPIKE_TIME_REQUIRED; }
 
 //----------------------------------------------------------------------------
 // WeightUpdateModels::Base
@@ -45,11 +45,8 @@ public:
 
     virtual StringPairVec getExtraGlobalParams() const{ return {}; }
 
-    //----------------------------------------------------------------------------
-    // Constants
-    //----------------------------------------------------------------------------
-    static const bool NeedsPreSpikeTime = false;
-    static const bool NeedsPostSpikeTime = false;
+    virtual bool isPreSpikeTimeRequired() const{ return false; }
+    virtual bool isPostSpikeTimeRequired() const{ return false; }
 };
 
 //----------------------------------------------------------------------------
@@ -76,6 +73,9 @@ public:
     virtual std::string getSynapseDynamicsSuppportCode() const;
 
     virtual NewModels::Base::StringPairVec getExtraGlobalParams() const;
+
+    virtual bool isPreSpikeTimeRequired() const;
+    virtual bool isPostSpikeTimeRequired() const;
 };
 
 //----------------------------------------------------------------------------
