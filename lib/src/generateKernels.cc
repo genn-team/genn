@@ -22,6 +22,7 @@
 #include "generateKernels.h"
 #include "global.h"
 #include "utils.h"
+#include "standardGeneratedSections.h"
 #include "standardSubstitutions.h"
 #include "codeGenUtils.h"
 #include "CodeHelper.h"
