@@ -37,7 +37,7 @@ endif
 GENERATE_SPINEML_SOURCES      := pugixml/pugixml.cpp main.cc spineMLNeuronModel.cc
 GENERATE_SPINEML_SOURCES      :=$(addprefix $(GENERATE_SPINEML_PATH)/,$(GENERATE_SPINEML_SOURCES))
 
-INCLUDE_FLAGS                 += -I $(GENERATE_SPINEML_PATH)/pugixml
+INCLUDE_FLAGS                 += -I $(GENERATE_SPINEML_PATH)
 
 # Target rules
 .PHONY: all clean clean_generate_spine_ml always_compile

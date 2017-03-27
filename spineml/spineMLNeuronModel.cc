@@ -4,7 +4,7 @@
 #include <algorithm>
 
 // pugixml includes
-#include "pugixml.hpp"
+#include "pugixml/pugixml.hpp"
 
 //----------------------------------------------------------------------------
 // SpineMLGenerator::SpineMLNeuronModel
@@ -13,7 +13,18 @@ SpineMLGenerator::SpineMLNeuronModel::SpineMLNeuronModel(const pugi::xml_node &n
                                                          const std::string &url,
                                                          const std::set<std::string> &variableParams)
 {
+    // Load XML document
+    pugi::xml_document doc;
+    auto result = doc.load_file(url.c_str());
+    if(!result) {
+        throw std::runtime_error("Could not open file:" + url + ", error:" + result.description());
+    }
 
+    // Get SpineML root
+    auto spineML = doc.child("SpineML");
+    if(!spineML) {
+        throw std::runtime_error("XML file:" + url + " is not a SpineML component - it has no root SpineML node");
+    }
 }
 
 

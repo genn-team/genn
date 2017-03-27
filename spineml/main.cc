@@ -8,8 +8,11 @@
 #include <cassert>
 #include <cstdlib>
 
+// Filesystem includes
+#include "filesystem/path.h"
+
 // pugixml includes
-#include "pugixml.hpp"
+#include "pugixml/pugixml.hpp"
 
 // GeNN includes
 #include "modelSpec.h"
@@ -42,6 +45,9 @@ int main(int argc,
         return EXIT_FAILURE;
     }
 
+    // Use filesystem library to get parent path of the network XML file
+    auto basePath = filesystem::path(argv[1]).parent_path();
+
     typedef std::pair<std::string, std::set<std::string>> ModelParams;
     std::map<ModelParams, SpineMLNeuronModel> neuronModels;
 
@@ -63,7 +69,7 @@ int main(int argc,
 
         // Build uniquely identifying model parameters starting with its 'url'
         ModelParams modelParams;
-        modelParams.first = neuron.attribute("url").value();
+        modelParams.first = (basePath / neuron.attribute("url").value()).str();
 
         std::map<std::string, double> paramVals;
         std::map<std::string, double> varVals;
