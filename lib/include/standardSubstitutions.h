@@ -9,7 +9,6 @@
 
 // Forward declarations
 class NeuronGroup;
-class NNmodel;
 class SynapseGroup;
 
 //----------------------------------------------------------------------------
@@ -35,36 +34,6 @@ typedef NameIterCtx<NewModels::Base::StringPairVec> VarNameIterCtx;
 typedef NameIterCtx<NewModels::Base::DerivedParamVec> DerivedParamNameIterCtx;
 typedef NameIterCtx<NewModels::Base::StringPairVec> ExtraGlobalParamNameIterCtx;
 
-
-namespace StandardGeneratedSections
-{
-void neuronOutputInit(
-    std::ostream &os,
-    const NeuronGroup &ng,
-    const std::string &devPrefix);
-
-void neuronLocalVarInit(
-    std::ostream &os,
-    const NeuronGroup &ng,
-    const VarNameIterCtx &nmVars,
-    const std::string &devPrefix,
-    const std::string &localID);
-
-void neuronLocalVarWrite(
-    std::ostream &os,
-    const NeuronGroup &ng,
-    const VarNameIterCtx &nmVars,
-    const std::string &devPrefix,
-    const std::string &localID);
-
-void neuronSpikeEventTest(
-    std::ostream &os,
-    const NeuronGroup &ng,
-    const VarNameIterCtx &nmVars,
-    const ExtraGlobalParamNameIterCtx &nmExtraGlobalParams,
-    const std::string &localID,
-    const std::string &ftype);
-}
 //----------------------------------------------------------------------------
 // Standard substitution functins
 //----------------------------------------------------------------------------

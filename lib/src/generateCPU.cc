@@ -23,6 +23,7 @@
 #include "global.h"
 #include "utils.h"
 #include "codeGenUtils.h"
+#include "standardGeneratedSections.h"
 #include "standardSubstitutions.h"
 #include "CodeHelper.h"
 
