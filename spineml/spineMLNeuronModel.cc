@@ -3,6 +3,7 @@
 // Standard C++ includes
 #include <algorithm>
 #include <iostream>
+#include <regex>
 #include <sstream>
 
 // Standard C includes
@@ -12,8 +13,24 @@
 #include "pugixml/pugixml.hpp"
 
 // GeNN includes
+#include "codeGenUtils.h"
 #include "CodeHelper.h"
 
+//----------------------------------------------------------------------------
+// Anonymous namespace
+//----------------------------------------------------------------------------
+namespace
+{
+void wrapVariableNames(std::string &code, const std::string &variableName)
+{
+    // Build a regex to match variable name with at least one
+    // character that can't be in a variable name on either side
+    std::regex regex("([^a-zA-Z_])(" + variableName + ")([^a-zA-Z_])");
+
+    // Insert GeNN $(XXXX) wrapper around variable name
+    code = std::regex_replace(code,  regex, "$1$($2)$3");
+}
+}
 //----------------------------------------------------------------------------
 // SpineMLGenerator::SpineMLNeuronModel
 //----------------------------------------------------------------------------
@@ -51,39 +68,6 @@ SpineMLGenerator::SpineMLNeuronModel::SpineMLNeuronModel(const std::string &url,
                        return std::make_pair(n.attribute("name").value(), regimeIDs.size());
                    });
     const bool multipleRegimes = (regimeIDs.size() > 1);
-
-    // Starting with those the model needs to vary, create a set of genn variables
-    std::set<string> gennVariables(variableParams);
-
-    // Add model state variables to this
-    std::transform(dynamics.children("StateVariable").begin(), dynamics.children("StateVariable").end(),
-                   std::inserter(gennVariables, gennVariables.end()),
-                   [](const pugi::xml_node &n){ return n.attribute("name").value(); });
-
-    // Loop through model parameters
-    std::cout << "\t\tParameters:" << std::endl;
-    for(auto param : componentClass.children("Parameter")) {
-        // If parameter hasn't been declared variable by model, add it to vector of parameter names
-        const auto *paramName = param.attribute("name").value();
-        if(gennVariables.find(paramName) == gennVariables.end()) {
-            std::cout << "\t\t\t" << paramName << std::endl;
-            m_ParamNames.push_back(paramName);
-        }
-    }
-
-    // Add all GeNN variables
-    std::transform(gennVariables.begin(), gennVariables.end(), std::back_inserter(m_Vars),
-                   [](const std::string &vname){ return std::make_pair(vname, "scalar"); });
-
-    // If model has multiple regimes, add unsigned int regime ID to values
-    if(multipleRegimes) {
-        m_Vars.push_back(std::make_pair("_regimeID", "unsigned int"));
-    }
-
-    std::cout << "\t\tVariables:" << std::endl;
-    for(const auto &v : m_Vars) {
-        std::cout << "\t\t\t" << v.first << ":" << v.second << std::endl;
-    }
 
     // Loop through regimes
     std::stringstream simCode;
@@ -165,6 +149,49 @@ SpineMLGenerator::SpineMLNeuronModel::SpineMLNeuronModel(const std::string &url,
     // Store generated code in class
     m_SimCode = simCode.str();
     m_ThresholdConditionCode = thresholdCondition.str();
+
+    // Starting with those the model needs to vary, create a set of genn variables
+    std::set<string> gennVariables(variableParams);
+
+    // Add model state variables to this
+    std::transform(dynamics.children("StateVariable").begin(), dynamics.children("StateVariable").end(),
+                   std::inserter(gennVariables, gennVariables.end()),
+                   [](const pugi::xml_node &n){ return n.attribute("name").value(); });
+
+    // Loop through model parameters
+    std::cout << "\t\tParameters:" << std::endl;
+    for(auto param : componentClass.children("Parameter")) {
+        // If parameter hasn't been declared variable by model, add it to vector of parameter names
+        std::string paramName = param.attribute("name").value();
+        if(gennVariables.find(paramName) == gennVariables.end()) {
+            std::cout << "\t\t\t" << paramName << std::endl;
+            m_ParamNames.push_back(paramName);
+
+            // Wrap variable names so GeNN code generator can find them
+            wrapVariableNames(m_SimCode, paramName);
+            wrapVariableNames(m_ThresholdConditionCode, paramName);
+        }
+    }
+
+    // Add all GeNN variables
+    std::transform(gennVariables.begin(), gennVariables.end(), std::back_inserter(m_Vars),
+                   [](const std::string &vname){ return std::make_pair(vname, "scalar"); });
+
+    // If model has multiple regimes, add unsigned int regime ID to values
+    if(multipleRegimes) {
+        m_Vars.push_back(std::make_pair("_regimeID", "unsigned int"));
+    }
+
+    std::cout << "\t\tVariables:" << std::endl;
+    for(const auto &v : m_Vars) {
+        std::cout << "\t\t\t" << v.first << ":" << v.second << std::endl;
+
+        // Wrap variable names so GeNN code generator can find them
+        wrapVariableNames(m_SimCode, v.first);
+        wrapVariableNames(m_ThresholdConditionCode, v.first);
+    }
+
+
 
     std::cout << "SIM CODE:" << std::endl << m_SimCode << std::endl;
     std::cout << "THRESHOLD CONDITION CODE:" << std::endl << m_ThresholdConditionCode << std::endl;
