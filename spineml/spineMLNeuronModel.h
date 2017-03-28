@@ -25,7 +25,8 @@ public:
     class ParamValues
     {
     public:
-        ParamValues(const std::map<std::string, double> &values) : m_Values(values){}
+        ParamValues(const std::map<std::string, double> &values, const NeuronModels::Base &model)
+            : m_Values(values), m_Model(model){}
 
         //----------------------------------------------------------------------------
         // Public API
@@ -37,8 +38,30 @@ public:
         // Members
         //----------------------------------------------------------------------------
         const std::map<std::string, double> &m_Values;
+        const NeuronModels::Base &m_Model;
     };
-    typedef ParamValues VarValues;
+
+    //------------------------------------------------------------------------
+    // VarValues
+    //------------------------------------------------------------------------
+    class VarValues
+    {
+    public:
+        VarValues(const std::map<std::string, double> &values, const NeuronModels::Base &model)
+            : m_Values(values), m_Model(model){}
+
+        //----------------------------------------------------------------------------
+        // Public API
+        //----------------------------------------------------------------------------
+        std::vector<double> getValues() const;
+
+    private:
+        //----------------------------------------------------------------------------
+        // Members
+        //----------------------------------------------------------------------------
+        const std::map<std::string, double> &m_Values;
+        const NeuronModels::Base &m_Model;
+    };
 
     //------------------------------------------------------------------------
     // NeuronModels::Base virtuals

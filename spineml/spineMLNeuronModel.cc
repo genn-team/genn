@@ -177,13 +177,53 @@ SpineMLGenerator::SpineMLNeuronModel::SpineMLNeuronModel(const std::string &url,
 //----------------------------------------------------------------------------
 std::vector<double> SpineMLGenerator::SpineMLNeuronModel::ParamValues::getValues() const
 {
-    // Reserve vector to hold values
-    std::vector<double> values;
-    values.reserve(m_Values.size());
+    // Get parameter names from model
+    auto modelParamNames = m_Model.getParamNames();
 
-    // Transform values of value map into vector and return
-    std::transform(std::begin(m_Values), std::end(m_Values),
-                   std::back_inserter(values),
-                   [](const std::pair<std::string, double> &v){ return v.second; });
-    return values;
+    // Reserve vector of values to match it
+    std::vector<double> paramValues;
+    paramValues.reserve(modelParamNames.size());
+
+    // Populate this vector with either values from map or 0s
+    std::transform(modelParamNames.begin(), modelParamNames.end(),
+                   std::back_inserter(paramValues),
+                   [this](const std::string &n)
+                   {
+                       auto value = m_Values.find(n);
+                       if(value == m_Values.end()) {
+                           return 0.0;
+                       }
+                       else {
+                           return value->second;
+                       }
+                   });
+    return paramValues;
+}
+
+//----------------------------------------------------------------------------
+// SpineMLGenerator::SpineMLNeuronModel::VarValues
+//----------------------------------------------------------------------------
+std::vector<double> SpineMLGenerator::SpineMLNeuronModel::VarValues::getValues() const
+{
+    // Get variables from model
+    auto modelVars = m_Model.getVars();
+
+    // Reserve vector of values to match it
+    std::vector<double> varValues;
+    varValues.reserve(modelVars.size());
+
+    // Populate this vector with either values from map or 0s
+    std::transform(modelVars.begin(), modelVars.end(),
+                   std::back_inserter(varValues),
+                   [this](const std::pair<std::string, std::string> &n)
+                   {
+                       auto value = m_Values.find(n.first);
+                       if(value == m_Values.end()) {
+                           return 0.0;
+                       }
+                       else {
+                           return value->second;
+                       }
+                   });
+    return varValues;
 }
