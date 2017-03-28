@@ -17,8 +17,7 @@
 //----------------------------------------------------------------------------
 // SpineMLGenerator::SpineMLNeuronModel
 //----------------------------------------------------------------------------
-SpineMLGenerator::SpineMLNeuronModel::SpineMLNeuronModel(const pugi::xml_node &neuronNode,
-                                                         const std::string &url,
+SpineMLGenerator::SpineMLNeuronModel::SpineMLNeuronModel(const std::string &url,
                                                          const std::set<std::string> &variableParams)
 {
     // Load XML document
@@ -42,9 +41,8 @@ SpineMLGenerator::SpineMLNeuronModel::SpineMLNeuronModel(const pugi::xml_node &n
 
     std::cout << "\t\tModel name:" << componentClass.attribute("name").value() << std::endl;
 
-    auto dynamics = componentClass.child("Dynamics");
-
     // Build mapping from regime names to IDs
+    auto dynamics = componentClass.child("Dynamics");
     std::map<std::string, unsigned int> regimeIDs;
     std::transform(dynamics.children("Regime").begin(), dynamics.children("Regime").end(),
                    std::inserter(regimeIDs, regimeIDs.end()),
@@ -52,14 +50,47 @@ SpineMLGenerator::SpineMLNeuronModel::SpineMLNeuronModel(const pugi::xml_node &n
                    {
                        return std::make_pair(n.attribute("name").value(), regimeIDs.size());
                    });
+    const bool multipleRegimes = (regimeIDs.size() > 1);
 
+    // Starting with those the model needs to vary, create a set of genn variables
+    std::set<string> gennVariables(variableParams);
+
+    // Add model state variables to this
+    std::transform(dynamics.children("StateVariable").begin(), dynamics.children("StateVariable").end(),
+                   std::inserter(gennVariables, gennVariables.end()),
+                   [](const pugi::xml_node &n){ return n.attribute("name").value(); });
+
+    // Loop through model parameters
+    std::cout << "\t\tParameters:" << std::endl;
+    for(auto param : componentClass.children("Parameter")) {
+        // If parameter hasn't been declared variable by model, add it to vector of parameter names
+        const auto *paramName = param.attribute("name").value();
+        if(gennVariables.find(paramName) == gennVariables.end()) {
+            std::cout << "\t\t\t" << paramName << std::endl;
+            m_ParamNames.push_back(paramName);
+        }
+    }
+
+    // Add all GeNN variables
+    std::transform(gennVariables.begin(), gennVariables.end(), std::back_inserter(m_Vars),
+                   [](const std::string &vname){ return std::make_pair(vname, "scalar"); });
+
+    // If model has multiple regimes, add unsigned int regime ID to values
+    if(multipleRegimes) {
+        m_Vars.push_back(std::make_pair("_regimeID", "unsigned int"));
+    }
+
+    std::cout << "\t\tVariables:" << std::endl;
+    for(const auto &v : m_Vars) {
+        std::cout << "\t\t\t" << v.first << ":" << v.second << std::endl;
+    }
 
     // Loop through regimes
-    const bool multipleRegimes = (regimeIDs.size() > 1);
     std::stringstream simCode;
     std::stringstream thresholdCondition;
     CodeHelper hlp;
     bool firstRegime = true;
+    std::cout << "\t\tRegimes:" << std::endl;
     for(auto regime : dynamics.children("Regime")) {
         const auto *regimeName = regime.attribute("name").value();
         std::cout << "\t\t\tRegime name:" << regimeName << ", id:" << regimeIDs[regimeName] << std::endl;

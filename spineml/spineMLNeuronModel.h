@@ -9,12 +9,6 @@
 // GeNN includes
 #include "newNeuronModels.h"
 
-// Forward declarations
-namespace pugi
-{
-    class xml_node;
-}
-
 //----------------------------------------------------------------------------
 // SpineMLGenerator::SpineMLNeuronModel
 //----------------------------------------------------------------------------
@@ -23,8 +17,7 @@ namespace SpineMLGenerator
 class SpineMLNeuronModel : public NeuronModels::Base
 {
 public:
-    SpineMLNeuronModel(const pugi::xml_node &neuronNode,
-                       const std::string &url, const std::set<std::string> &variableParams);
+    SpineMLNeuronModel(const std::string &url, const std::set<std::string> &variableParams);
 
     //------------------------------------------------------------------------
     // ParamValues

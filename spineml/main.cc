@@ -98,7 +98,7 @@ int main(int argc,
         {
             std::cout << "\tCreating new neuron model" << std::endl;
             neuronModels.insert(std::make_pair(modelParams,
-                                               SpineMLNeuronModel(neuron, modelParams.first, modelParams.second)));
+                                               SpineMLNeuronModel(modelParams.first, modelParams.second)));
         }
         else
         {
