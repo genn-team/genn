@@ -21,15 +21,22 @@
 //----------------------------------------------------------------------------
 namespace
 {
-void wrapVariableNames(std::string &code, const std::string &variableName)
+void wrapAndReplaceVariableNames(std::string &code, const std::string &variableName,
+                                 const std::string &replaceVariableName)
 {
     // Build a regex to match variable name with at least one
     // character that can't be in a variable name on either side
-    std::regex regex("([^a-zA-Z_])(" + variableName + ")([^a-zA-Z_])");
+    std::regex regex("([^a-zA-Z_])" + variableName + "([^a-zA-Z_])");
 
     // Insert GeNN $(XXXX) wrapper around variable name
-    code = std::regex_replace(code,  regex, "$1$($2)$3");
+    code = std::regex_replace(code,  regex, "$1$(" + replaceVariableName + ")$2");
 }
+
+void wrapVariableNames(std::string &code, const std::string &variableName)
+{
+    wrapAndReplaceVariableNames(code, variableName, variableName);
+}
+
 }
 //----------------------------------------------------------------------------
 // SpineMLGenerator::SpineMLNeuronModel
@@ -191,6 +198,18 @@ SpineMLGenerator::SpineMLNeuronModel::SpineMLNeuronModel(const std::string &url,
         wrapVariableNames(m_ThresholdConditionCode, v.first);
     }
 
+    // If there is an analogue reduce port using the addition operator, it's probably a synaptic input current
+    auto linearReducePorts = componentClass.select_nodes("AnalogReducePort[@reduce_op='+']");
+    if(linearReducePorts.size() == 1) {
+        const auto *linearReducePortName = linearReducePorts.first().node().attribute("name").value();
+        wrapAndReplaceVariableNames(m_SimCode, linearReducePortName, "Isyn");
+        wrapAndReplaceVariableNames(m_ThresholdConditionCode, linearReducePortName, "Isyn");
+    }
+    // Otherwise, throw and exception
+    else if(linearReducePorts.size() > 1) {
+        // **TODO** 'Alias' nodes in dynamics may be used to combine these together
+        throw std::runtime_error("GeNN doesn't support multiple input currents going into neuron");
+    }
 
 
     std::cout << "SIM CODE:" << std::endl << m_SimCode << std::endl;
