@@ -25,6 +25,48 @@
 
 using namespace SpineMLGenerator;
 
+//----------------------------------------------------------------------------
+// Anonymous namespace
+//----------------------------------------------------------------------------
+namespace
+{
+typedef std::pair<std::string, std::set<std::string>> ModelParams;
+
+//----------------------------------------------------------------------------
+// Functions
+//----------------------------------------------------------------------------
+std::tuple<ModelParams, std::map<std::string, double>> readModelProperties(const filesystem::path &basePath,
+                                                                           const pugi::xml_node &node)
+{
+    // Build uniquely identifying model parameters starting with its 'url'
+    ModelParams modelParams;
+    modelParams.first = (basePath / node.attribute("url").value()).str();
+
+    // Determine which properties are variable (therefore
+    // can't be substituted directly into auto-generated code)
+    std::map<std::string, double> fixedParamVals;
+    for(auto param : node.children("Property")) {
+        const auto *paramName = param.attribute("name").value();
+
+        // If parameter has a fixed value, it can be hard-coded into either model or automatically initialized in simulator
+        // **TODO** annotation to say you don't want this to be hard-coded
+        auto fixedValue = param.child("FixedValue");
+        if(fixedValue) {
+            fixedParamVals.insert(std::make_pair(paramName, fixedValue.attribute("value").as_double()));
+        }
+        // Otherwise, in GeNN terms, it should be treated as a variable
+        else {
+            modelParams.second.insert(paramName);
+        }
+    }
+
+    return std::make_tuple(modelParams, fixedParamVals);
+}
+}
+
+//----------------------------------------------------------------------------
+// Entry point
+//----------------------------------------------------------------------------
 int main(int argc,
          char *argv[])
 {
@@ -61,20 +103,19 @@ int main(int argc,
         return EXIT_FAILURE;
     }
 
-
-
-    typedef std::pair<std::string, std::set<std::string>> ModelParams;
+    // Neuron models required by network
     std::map<ModelParams, SpineMLNeuronModel> neuronModels;
+
+    // Get the filename of the network and remove extension
+    // to get something usable as a network name
+    std::string networkName = networkPath.filename();
+    networkName = networkName.substr(0, networkName.find_last_of("."));
 
     // Initialize GeNN
     initGeNN();
 
     // The neuron model
     NNmodel model;
-
-    std::string networkName = networkPath.filename();
-    networkName = networkName.substr(0, networkName.find_last_of("."));
-
     model.setDT(1.0);
     model.setName(networkName);
 
@@ -86,32 +127,16 @@ int main(int argc,
             continue;
         }
 
+        // Read basic population properties
         const auto *popName = neuron.attribute("name").value();
         const unsigned int popSize = neuron.attribute("size").as_int();
         std::cout << "Population " << popName << " consisting of ";
         std::cout << popSize << " neurons" << std::endl;
 
-        // Build uniquely identifying model parameters starting with its 'url'
+        // Read neuron properties
         ModelParams modelParams;
-        modelParams.first = (basePath / neuron.attribute("url").value()).str();
-
-        // Determine which properties are variable (therefore
-        // can't be substituted directly into auto-generated code)
         std::map<std::string, double> fixedParamVals;
-        for(auto param : neuron.children("Property")) {
-            const auto *paramName = param.attribute("name").value();
-
-            // If parameter has a fixed value, it can be hard-coded into either model or automatically initialized in simulator
-            // **TODO** annotation to say you don't want this to be hard-coded
-            auto fixedValue = param.child("FixedValue");
-            if(fixedValue) {
-                fixedParamVals.insert(std::make_pair(paramName, fixedValue.attribute("value").as_double()));
-            }
-            // Otherwise, in GeNN terms, it should be treated as a variable
-            else {
-                modelParams.second.insert(paramName);
-            }
-        }
+        tie(modelParams, fixedParamVals) = readModelProperties(basePath, neuron);
 
         // If no existing model is found that matches parameters
         const auto existingModel = neuronModels.find(modelParams);
@@ -136,9 +161,6 @@ int main(int argc,
                                       SpineMLNeuronModel::ParamValues(fixedParamVals, existingModel->second),
                                       SpineMLNeuronModel::VarValues(fixedParamVals, existingModel->second));
         }
-
-        // **TODO** neuron model needs to be able to specify that some parameters, initialised with a fixed value are actually state variables
-
     }
 
     // Finalize model
