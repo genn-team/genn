@@ -71,11 +71,9 @@ int main(int argc,
         ModelParams modelParams;
         modelParams.first = (basePath / neuron.attribute("url").value()).str();
 
-        std::map<std::string, double> paramVals;
-        std::map<std::string, double> varVals;
-
         // Determine which properties are variable (therefore
         // can't be substituted directly into auto-generated code)
+        std::map<std::string, double> paramVals;
         for(auto param : neuron.children("Property")) {
             const auto *paramName = param.attribute("name").value();
 
@@ -83,16 +81,14 @@ int main(int argc,
             // **TODO** annotation to say you don't want this to be treated as a fixed value
             auto fixedValue = param.child("FixedValue");
             if(fixedValue) {
-                paramVals.insert(
-                    std::pair<std::string, double>(paramName, fixedValue.attribute("value").as_double()));
+                paramVals.insert(std::make_pair(paramName, fixedValue.attribute("value").as_double()));
             }
             // Otherwise, in GeNN terms, it should be treated as a variable
             else {
                 std::cout << "\t" << paramName << " is variable" << std::endl;
                 modelParams.second.insert(paramName);
 
-                varVals.insert(
-                    std::pair<std::string, double>(paramName, 0.0));
+                paramVals.insert(std::make_pair(paramName, 0.0));
             }
         }
 
@@ -101,10 +97,8 @@ int main(int argc,
         if(existingModel == neuronModels.end())
         {
             std::cout << "\tCreating new neuron model" << std::endl;
-            neuronModels.insert(
-                std::pair<ModelParams, SpineMLNeuronModel>(
-                    modelParams, SpineMLNeuronModel(neuron, modelParams.first,
-                                                    modelParams.second)));
+            neuronModels.insert(std::make_pair(modelParams,
+                                               SpineMLNeuronModel(neuron, modelParams.first, modelParams.second)));
         }
         else
         {
