@@ -135,8 +135,8 @@ public:
     NeuronGroup *addNeuronPopulation(const string&, unsigned int, unsigned int, const vector<double>&, const vector<double>&); //!< Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population
 
     template<typename NeuronModel>
-    NeuronGroup *addNeuronPopulation(const string &name, unsigned int size,
-                            const typename NeuronModel::ParamValues &paramValues, const typename NeuronModel::VarValues &varValues)
+    NeuronGroup *addNeuronPopulation(const string &name, unsigned int size, const NeuronModel *model,
+                                     const typename NeuronModel::ParamValues &paramValues, const typename NeuronModel::VarValues &varValues)
     {
         if (!GeNNReady) {
             gennError("You need to call initGeNN first.");
@@ -148,7 +148,7 @@ public:
         // Add neuron group
         auto result = m_NeuronGroups.insert(
             pair<string, NeuronGroup>(
-                name, NeuronGroup(name, size, NeuronModel::getInstance(),
+                name, NeuronGroup(name, size, model,
                                   paramValues.getValues(), varValues.getValues())));
 
         if(!result.second)
@@ -160,6 +160,13 @@ public:
         {
             return &result.first->second;
         }
+    }
+
+    template<typename NeuronModel>
+    NeuronGroup *addNeuronPopulation(const string &name, unsigned int size,
+                                     const typename NeuronModel::ParamValues &paramValues, const typename NeuronModel::VarValues &varValues)
+    {
+        return addNeuronPopulation<NeuronModel>(name, size, NeuronModel::getInstance(), paramValues, varValues);
     }
 
     void setNeuronClusterIndex(const string &neuronGroup, int hostID, int deviceID); //!< Function for setting which host and which device a neuron group will be simulated on
