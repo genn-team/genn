@@ -34,7 +34,7 @@ else
     GENERATE_SPINEML          =$(GENERATE_SPINEML_PATH)/generateSpineML_CPU_ONLY
 endif
 
-GENERATE_SPINEML_SOURCES      := pugixml/pugixml.cpp main.cc spineMLNeuronModel.cc
+GENERATE_SPINEML_SOURCES      := pugixml/pugixml.cpp main.cc spineMLModelCommon.cc spineMLNeuronModel.cc
 GENERATE_SPINEML_SOURCES      :=$(addprefix $(GENERATE_SPINEML_PATH)/,$(GENERATE_SPINEML_SOURCES))
 
 INCLUDE_FLAGS                 += -I $(GENERATE_SPINEML_PATH)

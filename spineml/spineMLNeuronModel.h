@@ -9,6 +9,9 @@
 // GeNN includes
 #include "newNeuronModels.h"
 
+// Spine ML generator includes
+#include "spineMLModelCommon.h"
+
 //----------------------------------------------------------------------------
 // SpineMLGenerator::SpineMLNeuronModel
 //----------------------------------------------------------------------------
@@ -20,48 +23,10 @@ public:
     SpineMLNeuronModel(const std::string &url, const std::set<std::string> &variableParams);
 
     //------------------------------------------------------------------------
-    // ParamValues
+    // Typedefines
     //------------------------------------------------------------------------
-    class ParamValues
-    {
-    public:
-        ParamValues(const std::map<std::string, double> &values, const NeuronModels::Base &model)
-            : m_Values(values), m_Model(model){}
-
-        //----------------------------------------------------------------------------
-        // Public API
-        //----------------------------------------------------------------------------
-        std::vector<double> getValues() const;
-
-    private:
-        //----------------------------------------------------------------------------
-        // Members
-        //----------------------------------------------------------------------------
-        const std::map<std::string, double> &m_Values;
-        const NeuronModels::Base &m_Model;
-    };
-
-    //------------------------------------------------------------------------
-    // VarValues
-    //------------------------------------------------------------------------
-    class VarValues
-    {
-    public:
-        VarValues(const std::map<std::string, double> &values, const NeuronModels::Base &model)
-            : m_Values(values), m_Model(model){}
-
-        //----------------------------------------------------------------------------
-        // Public API
-        //----------------------------------------------------------------------------
-        std::vector<double> getValues() const;
-
-    private:
-        //----------------------------------------------------------------------------
-        // Members
-        //----------------------------------------------------------------------------
-        const std::map<std::string, double> &m_Values;
-        const NeuronModels::Base &m_Model;
-    };
+    typedef SpineMLGenerator::ParamValues ParamValues;
+    typedef SpineMLGenerator::VarValues VarValues;
 
     //------------------------------------------------------------------------
     // NeuronModels::Base virtuals
