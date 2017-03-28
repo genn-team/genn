@@ -11,6 +11,9 @@
 // pugixml includes
 #include "pugixml/pugixml.hpp"
 
+// GeNN includes
+#include "CodeHelper.h"
+
 //----------------------------------------------------------------------------
 // SpineMLGenerator::SpineMLNeuronModel
 //----------------------------------------------------------------------------
@@ -50,82 +53,90 @@ SpineMLGenerator::SpineMLNeuronModel::SpineMLNeuronModel(const pugi::xml_node &n
                        return std::make_pair(n.attribute("name").value(), regimeIDs.size());
                    });
 
+
+    // Loop through regimes
+    const bool multipleRegimes = (regimeIDs.size() > 1);
     std::stringstream simCode;
     std::stringstream thresholdCondition;
+    CodeHelper hlp;
+    bool firstRegime = true;
+    for(auto regime : dynamics.children("Regime")) {
+        const auto *regimeName = regime.attribute("name").value();
+        std::cout << "\t\t\tRegime name:" << regimeName << ", id:" << regimeIDs[regimeName] << std::endl;
 
-    // If this model has a single regime
-    if(regimeIDs.size() == 1) {
-        auto regime = dynamics.child("Regime");
-    }
-    // Otherwise there are multiple regimes
-    else if(regimeIDs.size() > 1) {
-        // **TODO** add regime unsigned int state variable
-
-        // Loop through regimes
-        bool firstRegime = true;
-        for(auto regime : dynamics.children("Regime")) {
-            const auto *regimeName = regime.attribute("name").value();
-            std::cout << "\t\t\tRegime name:" << regimeName << ", id:" << regimeIDs[regimeName] << std::endl;
-
-            // Write regime condition test code to sim code
+        // Write regime condition test code to sim code
+        if(multipleRegimes) {
             if(firstRegime) {
                 firstRegime = false;
             }
             else {
                 simCode << "else ";
             }
-            simCode << "if(_regimeID == " << regimeIDs[regimeName] << ") {" << std::endl;
+            simCode << "if(_regimeID == " << regimeIDs[regimeName] << ")" << OB(1);
+        }
 
-            // Loop through conditions by which neuron might leave regime
-            for(auto condition : regime.children("OnCondition")) {
-                if(!condition.attribute("target_regime")) {
-                    throw std::runtime_error("Regime has a condition with no target");
-                }
+        // Loop through conditions by which neuron might leave regime
+        for(auto condition : regime.children("OnCondition")) {
+            const auto *targetRegimeName = condition.attribute("target_regime").value();
 
-                // Get triggering code
-                auto triggerCode = condition.child("Trigger").child("MathInline");
-                if(!triggerCode) {
-                    throw std::runtime_error("No trigger condition for transition between regimes");
-                }
-
-                // Write trigger condition
-                simCode << "\tif(" << triggerCode.text().get() << ") {" << std::endl;
-
-                // Loop through state assignements
-                for(auto stateAssign : condition.children("StateAssignment")) {
-                    simCode << "\t\t" << stateAssign.attribute("variable").value() << " = " << stateAssign.child_value("MathInline") << ";" << std::endl;
-                }
-
-                // Write transition to target regime
-                simCode << "\t\t_regimeID = " << regimeIDs[condition.attribute("target_regime").value()] << ";" << std::endl;
-
-                // End of trigger condition
-                simCode << "\t}" << std::endl;
-
-                // If this condition emits a spike
-                auto spikeEventOut = condition.select_node("EventOut[@port='spike']");
-                if(spikeEventOut) {
-                    // If there are existing threshold conditions, OR them with this one
-                    if(thresholdCondition.tellp() > 0) {
-                        thresholdCondition << " || ";
-                    }
-
-                    // Write trigger condition AND regime to threshold condition
-                    thresholdCondition << "(_regimeID == " << regimeIDs[regimeName] << " && (" << triggerCode.text().get() << "))";
-                }
+            // Get triggering code
+            auto triggerCode = condition.child("Trigger").child("MathInline");
+            if(!triggerCode) {
+                throw std::runtime_error("No trigger condition for transition between regimes");
             }
 
-            // Write dynamics
-            // **TODO** identify cases where Euler is REALLY stupid
-            auto timeDerivative = regime.child("TimeDerivative");
-            if(timeDerivative) {
-                simCode << "\t" << timeDerivative.attribute("variable").value() << " += DT * (" << timeDerivative.child_value("MathInline") << ");" << std::endl;
+            // Write trigger condition
+            simCode << "if(" << triggerCode.text().get() << ")" << OB(2);
+
+            // Loop through state assignements
+            for(auto stateAssign : condition.children("StateAssignment")) {
+                simCode << stateAssign.attribute("variable").value() << " = " << stateAssign.child_value("MathInline") << ";" << ENDL;
             }
 
-            // End of regime
-            simCode << "}" << std::endl;
+            // If this is a multiple-regime model, write transition to target regime
+            if(multipleRegimes) {
+                simCode << "_regimeID = " << regimeIDs[targetRegimeName] << ";" << ENDL;
+            }
+            // Otherwise check condition is targetting current regime
+            else if(strcmp(targetRegimeName, regimeName) != 0) {
+                throw std::runtime_error("Condition found in single-regime model which doesn't target itself");
+            }
+
+            // End of trigger condition
+            simCode << CB(2);
+
+            // If this condition emits a spike
+            auto spikeEventOut = condition.select_node("EventOut[@port='spike']");
+            if(spikeEventOut) {
+                // If there are existing threshold conditions, OR them with this one
+                if(thresholdCondition.tellp() > 0) {
+                    thresholdCondition << " || ";
+                }
+
+                // Write trigger condition AND regime to threshold condition
+                thresholdCondition << "(_regimeID == " << regimeIDs[regimeName] << " && (" << triggerCode.text().get() << "))";
+            }
+        }
+
+        // Write dynamics
+        // **TODO** identify cases where Euler is REALLY stupid
+        auto timeDerivative = regime.child("TimeDerivative");
+        if(timeDerivative) {
+            simCode << timeDerivative.attribute("variable").value() << " += DT * (" << timeDerivative.child_value("MathInline") << ");" << ENDL;
+        }
+
+        // End of regime
+        if(multipleRegimes) {
+            simCode << CB(1);
         }
     }
+
+    // Store generated code in class
+    m_SimCode = simCode.str();
+    m_ThresholdConditionCode = thresholdCondition.str();
+
+    std::cout << "SIM CODE:" << std::endl << m_SimCode << std::endl;
+    std::cout << "THRESHOLD CONDITION CODE:" << std::endl << m_ThresholdConditionCode << std::endl;
 }
 
 
