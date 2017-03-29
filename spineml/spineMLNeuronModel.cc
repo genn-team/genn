@@ -16,6 +16,10 @@
 #include "codeGenUtils.h"
 #include "CodeHelper.h"
 
+// Spine ML generator includes
+#include "objectHandlerCondition.h"
+#include "objectHandlerTimeDerivative.h"
+
 //----------------------------------------------------------------------------
 // Anonymous namespace
 //----------------------------------------------------------------------------
@@ -37,130 +41,94 @@ void wrapVariableNames(std::string &code, const std::string &variableName)
     wrapAndReplaceVariableNames(code, variableName, variableName);
 }
 
+//----------------------------------------------------------------------------
+// ObjectHandlerNeuronCondition
+//----------------------------------------------------------------------------
+class ObjectHandlerNeuronCondition : public SpineMLGenerator::ObjectHandlerCondition
+{
+public:
+    ObjectHandlerNeuronCondition(SpineMLGenerator::CodeStream &codeStream)
+        : ObjectHandlerCondition(codeStream){}
+
+    //----------------------------------------------------------------------------
+    // SpineMLGenerator::ObjectHandlerCondition virtuals
+    //----------------------------------------------------------------------------
+    void onObject(const pugi::xml_node &node, unsigned int currentRegimeID,
+                  unsigned int targetRegimeID)
+    {
+        // Superclass
+        SpineMLGenerator::ObjectHandlerCondition::onObject(node, currentRegimeID,
+                                                           targetRegimeID);
+
+        // If this condition emits a spike
+        auto spikeEventOut = node.select_node("EventOut[@port='spike']");
+        if(spikeEventOut) {
+            // If there are existing threshold conditions, OR them with this one
+            if(m_ThresholdCodeStream.tellp() > 0) {
+                m_ThresholdCodeStream << " || ";
+            }
+
+            // Write trigger condition AND regime to threshold condition
+            auto triggerCode = node.child("Trigger").child("MathInline");
+            m_ThresholdCodeStream << "(_regimeID == " << currentRegimeID << " && (" << triggerCode.text().get() << "))";
+        }
+    }
+
+    //----------------------------------------------------------------------------
+    // Public API
+    //----------------------------------------------------------------------------
+    std::string getThresholdCode() const{ return m_ThresholdCodeStream.str(); }
+
+private:
+    //----------------------------------------------------------------------------
+    // Members
+    //----------------------------------------------------------------------------
+    std::ostringstream m_ThresholdCodeStream;
+};
 }
+
+
 //----------------------------------------------------------------------------
 // SpineMLGenerator::SpineMLNeuronModel
 //----------------------------------------------------------------------------
 SpineMLGenerator::SpineMLNeuronModel::SpineMLNeuronModel(const std::string &url,
                                                          const std::set<std::string> &variableParams)
 {
-    // Load XML document
-    pugi::xml_document doc;
-    auto result = doc.load_file(url.c_str());
-    if(!result) {
-        throw std::runtime_error("Could not open file:" + url + ", error:" + result.description());
-    }
+    // Load the component class from file and check it's type
+    auto componentClass = loadComponent(url, "neuron_body");
 
-    // Get SpineML root
-    auto spineML = doc.child("SpineML");
-    if(!spineML) {
-        throw std::runtime_error("XML file:" + url + " is not a SpineML component - it has no root SpineML node");
-    }
+    // Create a code stream for generating sim code
+    CodeStream simCodeStream;
 
-    // Get component class
-    auto componentClass = spineML.child("ComponentClass");
-    if(!componentClass || strcmp(componentClass.attribute("type").value(), "neuron_body") != 0) {
-        throw std::runtime_error("XML file:" + url + " is not a SpineML neuron body component - it's ComponentClass node is either missing or of the incorrect type");
-    }
+    // Create lambda function to end regime on all code streams when required
+    auto regimeEndFunc =
+        [&simCodeStream]
+        (bool multipleRegimes, unsigned int currentRegimeID)
+        {
+            simCodeStream.onRegimeEnd(multipleRegimes, currentRegimeID);
+        };
 
-    std::cout << "\t\tModel name:" << componentClass.attribute("name").value() << std::endl;
-
-    // Build mapping from regime names to IDs
-    auto dynamics = componentClass.child("Dynamics");
-    std::map<std::string, unsigned int> regimeIDs;
-    std::transform(dynamics.children("Regime").begin(), dynamics.children("Regime").end(),
-                   std::inserter(regimeIDs, regimeIDs.end()),
-                   [&regimeIDs](const pugi::xml_node &n)
-                   {
-                       return std::make_pair(n.attribute("name").value(), regimeIDs.size());
-                   });
-    const bool multipleRegimes = (regimeIDs.size() > 1);
-
-    // Loop through regimes
-    std::stringstream simCode;
-    std::stringstream thresholdCondition;
-    CodeHelper hlp;
-    bool firstRegime = true;
-    std::cout << "\t\tRegimes:" << std::endl;
-    for(auto regime : dynamics.children("Regime")) {
-        const auto *regimeName = regime.attribute("name").value();
-        std::cout << "\t\t\tRegime name:" << regimeName << ", id:" << regimeIDs[regimeName] << std::endl;
-
-        // Write regime condition test code to sim code
-        if(multipleRegimes) {
-            if(firstRegime) {
-                firstRegime = false;
-            }
-            else {
-                simCode << "else ";
-            }
-            simCode << "if(_regimeID == " << regimeIDs[regimeName] << ")" << OB(1);
-        }
-
-        // Loop through conditions by which neuron might leave regime
-        for(auto condition : regime.children("OnCondition")) {
-            const auto *targetRegimeName = condition.attribute("target_regime").value();
-
-            // Get triggering code
-            auto triggerCode = condition.child("Trigger").child("MathInline");
-            if(!triggerCode) {
-                throw std::runtime_error("No trigger condition for transition between regimes");
-            }
-
-            // Write trigger condition
-            simCode << "if(" << triggerCode.text().get() << ")" << OB(2);
-
-            // Loop through state assignements
-            for(auto stateAssign : condition.children("StateAssignment")) {
-                simCode << stateAssign.attribute("variable").value() << " = " << stateAssign.child_value("MathInline") << ";" << ENDL;
-            }
-
-            // If this is a multiple-regime model, write transition to target regime
-            if(multipleRegimes) {
-                simCode << "_regimeID = " << regimeIDs[targetRegimeName] << ";" << ENDL;
-            }
-            // Otherwise check condition is targetting current regime
-            else if(strcmp(targetRegimeName, regimeName) != 0) {
-                throw std::runtime_error("Condition found in single-regime model which doesn't target itself");
-            }
-
-            // End of trigger condition
-            simCode << CB(2);
-
-            // If this condition emits a spike
-            auto spikeEventOut = condition.select_node("EventOut[@port='spike']");
-            if(spikeEventOut) {
-                // If there are existing threshold conditions, OR them with this one
-                if(thresholdCondition.tellp() > 0) {
-                    thresholdCondition << " || ";
-                }
-
-                // Write trigger condition AND regime to threshold condition
-                thresholdCondition << "(_regimeID == " << regimeIDs[regimeName] << " && (" << triggerCode.text().get() << "))";
-            }
-        }
-
-        // Write dynamics
-        // **TODO** identify cases where Euler is REALLY stupid
-        auto timeDerivative = regime.child("TimeDerivative");
-        if(timeDerivative) {
-            simCode << timeDerivative.attribute("variable").value() << " += DT * (" << timeDerivative.child_value("MathInline") << ");" << ENDL;
-        }
-
-        // End of regime
-        if(multipleRegimes) {
-            simCode << CB(1);
-        }
-    }
+    // Generate model code using specified condition handler
+    ObjectHandlerError objectHandlerError;
+    ObjectHandlerNeuronCondition objectHandlerCondition(simCodeStream);
+    ObjectHandlerTimeDerivative objectHandlerTimeDerivative(simCodeStream);
+    const bool multipleRegimes = generateModelCode(componentClass, objectHandlerError,
+                                                   objectHandlerCondition, objectHandlerError,
+                                                   objectHandlerTimeDerivative,
+                                                   regimeEndFunc);
 
     // Store generated code in class
-    m_SimCode = simCode.str();
-    m_ThresholdConditionCode = thresholdCondition.str();
+    m_SimCode = simCodeStream.str();
+    m_ThresholdConditionCode = objectHandlerCondition.getThresholdCode();
 
+    //*******************
+    // Generic begin
+    //*******************
     // Starting with those the model needs to vary, create a set of genn variables
     std::set<string> gennVariables(variableParams);
 
     // Add model state variables to this
+    auto dynamics = componentClass.child("Dynamics");
     std::transform(dynamics.children("StateVariable").begin(), dynamics.children("StateVariable").end(),
                    std::inserter(gennVariables, gennVariables.end()),
                    [](const pugi::xml_node &n){ return n.attribute("name").value(); });
@@ -197,6 +165,10 @@ SpineMLGenerator::SpineMLNeuronModel::SpineMLNeuronModel(const std::string &url,
         wrapVariableNames(m_SimCode, v.first);
         wrapVariableNames(m_ThresholdConditionCode, v.first);
     }
+
+    //*******************
+    // Generic end
+    //*******************
 
     // If there is an analogue reduce port using the addition operator, it's probably a synaptic input current
     auto linearReducePorts = componentClass.select_nodes("AnalogReducePort[@reduce_op='+']");

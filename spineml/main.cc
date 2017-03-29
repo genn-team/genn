@@ -92,15 +92,13 @@ int main(int argc,
     pugi::xml_document doc;
     auto result = doc.load_file(networkPath.str().c_str());
     if(!result) {
-        std::cerr << "Unable to load XML file:" << argv[1] << ", error:" << result.description() << std::endl;
-        return EXIT_FAILURE;
+        throw std::runtime_error("Unable to load XML file:" + networkPath.str() + ", error:" + result.description());
     }
 
     // Get SpineML root
     auto spineML = doc.child("SpineML");
     if(!spineML) {
-        std::cerr << "XML file:" << argv[1] << " is not a SpineML network - it has no root SpineML node" << std::endl;
-        return EXIT_FAILURE;
+        throw std::runtime_error("XML file:" + networkPath.str() + " is not a SpineML network - it has no root SpineML node");
     }
 
     // Neuron models required by network
@@ -119,12 +117,11 @@ int main(int argc,
     model.setDT(1.0);
     model.setName(networkName);
 
-    // Loop through populations
+    // Loop through populations once to build neuron populations
     for(auto population : spineML.children("Population")) {
         auto neuron = population.child("Neuron");
         if(!neuron) {
-            std::cerr << "Warning: 'Population' node has no 'Neuron' node" << std::endl;
-            continue;
+            throw std::runtime_error("'Population' node has no 'Neuron' node");
         }
 
         // Read basic population properties
@@ -160,6 +157,20 @@ int main(int argc,
             model.addNeuronPopulation(popName, popSize, &existingModel->second,
                                       SpineMLNeuronModel::ParamValues(fixedParamVals, existingModel->second),
                                       SpineMLNeuronModel::VarValues(fixedParamVals, existingModel->second));
+        }
+    }
+
+    // Loop through populations AGAIN to build projections
+    for(auto population : spineML.children("Population")) {
+        // Read source population name from neuron node
+        const auto *srcPopName = population.child("Neuron").attribute("name").value();
+
+        // Loop through outgoing projections
+        for(auto projection : population.children("Projection")) {
+            // Read destination population name from projection
+            const auto *trgPopName = projection.attribute("dst_population").value();
+
+            std::cout << "Projection from population:" << srcPopName << "->" << trgPopName << std::endl;
         }
     }
 

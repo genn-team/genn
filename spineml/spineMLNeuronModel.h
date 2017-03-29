@@ -1,10 +1,8 @@
 #pragma once
 
 // Standard includes
-#include <map>
 #include <set>
 #include <string>
-#include <vector>
 
 // GeNN includes
 #include "newNeuronModels.h"
