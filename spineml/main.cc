@@ -22,6 +22,7 @@
 
 // SpineMLGenerator includes
 #include "spineMLNeuronModel.h"
+#include "spineMLPostsynapticModel.h"
 
 using namespace SpineMLGenerator;
 
@@ -62,6 +63,27 @@ std::tuple<ModelParams, std::map<std::string, double>> readModelProperties(const
 
     return std::make_tuple(modelParams, fixedParamVals);
 }
+
+template<typename T>
+const T &getCreateModel(const ModelParams &params, std::map<ModelParams, T> &models)
+{
+    // If no existing model is found that matches parameters
+    const auto existingModel = models.find(params);
+    if(existingModel == models.end())
+    {
+        // Create new model
+        std::cout << "\tCreating new model" << std::endl;
+        auto newModel = models.insert(
+            std::make_pair(params, T(params.first, params.second)));
+
+        return newModel.first->second;
+    }
+    else
+    {
+        return existingModel->second;
+    }
+}
+
 }
 
 //----------------------------------------------------------------------------
@@ -103,6 +125,7 @@ int main(int argc,
 
     // Neuron models required by network
     std::map<ModelParams, SpineMLNeuronModel> neuronModels;
+    std::map<ModelParams, SpineMLPostsynapticModel> postsynapticModels;
 
     // Get the filename of the network and remove extension
     // to get something usable as a network name
@@ -135,29 +158,13 @@ int main(int argc,
         std::map<std::string, double> fixedParamVals;
         tie(modelParams, fixedParamVals) = readModelProperties(basePath, neuron);
 
-        // If no existing model is found that matches parameters
-        const auto existingModel = neuronModels.find(modelParams);
-        if(existingModel == neuronModels.end())
-        {
-            // Create new model
-            std::cout << "\tCreating new neuron model" << std::endl;
-            auto newModel = neuronModels.insert(
-                std::make_pair(modelParams, SpineMLNeuronModel(modelParams.first, modelParams.second)));
+        // Either get existing neuron model or create new one of no suitable models are available
+        const auto &neuronModel = getCreateModel(modelParams, neuronModels);
 
-            // Add population to model
-            model.addNeuronPopulation(popName, popSize, &newModel.first->second,
-                                      SpineMLNeuronModel::ParamValues(fixedParamVals, newModel.first->second),
-                                      SpineMLNeuronModel::VarValues(fixedParamVals, newModel.first->second));
-        }
-        else
-        {
-            std::cout << "\tUsing existing model" << std::endl;
-
-            // Add population to model
-            model.addNeuronPopulation(popName, popSize, &existingModel->second,
-                                      SpineMLNeuronModel::ParamValues(fixedParamVals, existingModel->second),
-                                      SpineMLNeuronModel::VarValues(fixedParamVals, existingModel->second));
-        }
+        // Add population to model
+        model.addNeuronPopulation(popName, popSize, &neuronModel,
+                                  SpineMLNeuronModel::ParamValues(fixedParamVals, neuronModel),
+                                  SpineMLNeuronModel::VarValues(fixedParamVals, neuronModel));
     }
 
     // Loop through populations AGAIN to build projections
@@ -171,6 +178,26 @@ int main(int argc,
             const auto *trgPopName = projection.attribute("dst_population").value();
 
             std::cout << "Projection from population:" << srcPopName << "->" << trgPopName << std::endl;
+
+            // Get main synapse node
+            auto synapse = projection.child("Synapse");
+            if(!synapse) {
+                throw std::runtime_error("'Projection' node has no 'Synapse' node");
+            }
+
+            // Get post synapse
+            auto postSynapse = synapse.child("PostSynapse");
+            if(!postSynapse) {
+                throw std::runtime_error("'Synapse' node has no 'PostSynapse' node");
+            }
+
+            // Read postsynapse properties
+            ModelParams postsynModelParams;
+            std::map<std::string, double> fixedPostsynParamVals;
+            tie(postsynModelParams, fixedPostsynParamVals) = readModelProperties(basePath, postSynapse);
+
+            // Either get existing postsynaptic model or create new one of no suitable models are available
+            const auto &postsynModel = getCreateModel(postsynModelParams, postsynapticModels);
         }
     }
 

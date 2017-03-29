@@ -127,11 +127,25 @@ bool SpineMLGenerator::generateModelCode(const pugi::xml_node &componentClass, O
         const unsigned int currentRegimeID = regimeIDs[currentRegimeName];
         std::cout << "\t\t\tRegime name:" << currentRegimeName << ", id:" << currentRegimeID << std::endl;
 
-        // Loop through conditions by which model might leave regime
+        // Loop through internal conditions by which model might leave regime
         for(auto condition : regime.children("OnCondition")) {
             const auto *targetRegimeName = condition.attribute("target_regime").value();
             const unsigned int targetRegimeID = regimeIDs[targetRegimeName];
             objectHandlerCondition.onObject(condition, currentRegimeID, targetRegimeID);
+        }
+
+        // Loop through events the model might receive
+        for(auto event : regime.children("OnEvent")) {
+            const auto *targetRegimeName = event.attribute("target_regime").value();
+            const unsigned int targetRegimeID = regimeIDs[targetRegimeName];
+            objectHandlerEvent.onObject(event, currentRegimeID, targetRegimeID);
+        }
+
+        // Loop through impulses the model might receive
+        for(auto impulse : regime.children("OnImpulse")) {
+            const auto *targetRegimeName = impulse.attribute("target_regime").value();
+            const unsigned int targetRegimeID = regimeIDs[targetRegimeName];
+            objectHandlerImpulse.onObject(impulse, currentRegimeID, targetRegimeID);
         }
 
         // Write out time derivatives
