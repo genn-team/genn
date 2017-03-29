@@ -3,6 +3,7 @@
 // Standard includes
 #include <functional>
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -11,12 +12,7 @@
 
 // GeNN includes
 #include "CodeHelper.h"
-
-// Forward declarations
-namespace NewModels
-{
-    class Base;
-}
+#include "newModels.h"
 
 //----------------------------------------------------------------------------
 // SpineMLGenerator::ParamValues
@@ -158,10 +154,22 @@ public:
 //------------------------------------------------------------------------
 // Helper functions
 //------------------------------------------------------------------------
-pugi::xml_node loadComponent(const std::string &url, const std::string &expectedType);
-
+//!< Generate model code from 'componentClass' node using specified object handlers
+//!< to process various components e.g. to generate GeNN code strings
 bool generateModelCode(const pugi::xml_node &componentClass, ObjectHandler &objectHandlerEvent,
                        ObjectHandler &objectHandlerCondition, ObjectHandler &objectHandlerImpulse,
                        ObjectHandler &objectHandlerTimeDerivative,
                        std::function<void(bool, unsigned int)> regimeEndFunc);
+
+//!< Search through code for references to named variable, rename it and wrap in GeNN's $(XXXX) tags
+void wrapAndReplaceVariableNames(std::string &code, const std::string &variableName,
+                                 const std::string &replaceVariableName);
+
+//!< Search through code for references to named variable and wrap in GeNN's $(XXXX) tags
+void wrapVariableNames(std::string &code, const std::string &variableName);
+
+std::tuple<NewModels::Base::StringVec, NewModels::Base::StringPairVec> processModelVariables(
+    const pugi::xml_node &componentClass, const std::set<std::string> &variableParams,
+    bool multipleRegimes, const std::vector<std::string*> &codeStrings);
+
 }   // namespace SpineMLGenerator

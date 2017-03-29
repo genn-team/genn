@@ -1,20 +1,11 @@
 #include "spineMLNeuronModel.h"
 
 // Standard C++ includes
-#include <algorithm>
 #include <iostream>
-#include <regex>
 #include <sstream>
-
-// Standard C includes
-#include <cstring>
 
 // pugixml includes
 #include "pugixml/pugixml.hpp"
-
-// GeNN includes
-#include "codeGenUtils.h"
-#include "CodeHelper.h"
 
 // Spine ML generator includes
 #include "objectHandlerCondition.h"
@@ -25,22 +16,6 @@
 //----------------------------------------------------------------------------
 namespace
 {
-void wrapAndReplaceVariableNames(std::string &code, const std::string &variableName,
-                                 const std::string &replaceVariableName)
-{
-    // Build a regex to match variable name with at least one
-    // character that can't be in a variable name on either side
-    std::regex regex("([^a-zA-Z_])" + variableName + "([^a-zA-Z_])");
-
-    // Insert GeNN $(XXXX) wrapper around variable name
-    code = std::regex_replace(code,  regex, "$1$(" + replaceVariableName + ")$2");
-}
-
-void wrapVariableNames(std::string &code, const std::string &variableName)
-{
-    wrapAndReplaceVariableNames(code, variableName, variableName);
-}
-
 //----------------------------------------------------------------------------
 // ObjectHandlerNeuronCondition
 //----------------------------------------------------------------------------
@@ -87,15 +62,32 @@ private:
 };
 }
 
-
 //----------------------------------------------------------------------------
 // SpineMLGenerator::SpineMLNeuronModel
 //----------------------------------------------------------------------------
 SpineMLGenerator::SpineMLNeuronModel::SpineMLNeuronModel(const std::string &url,
                                                          const std::set<std::string> &variableParams)
 {
-    // Load the component class from file and check it's type
-    auto componentClass = loadComponent(url, "neuron_body");
+    // Load XML document
+    pugi::xml_document doc;
+    auto result = doc.load_file(url.c_str());
+    if(!result) {
+        throw std::runtime_error("Could not open file:" + url + ", error:" + result.description());
+    }
+
+    // Get SpineML root
+    auto spineML = doc.child("SpineML");
+    if(!spineML) {
+        throw std::runtime_error("XML file:" + url + " is not a SpineML component - it has no root SpineML node");
+    }
+
+    // Get component class
+    auto componentClass = spineML.child("ComponentClass");
+    if(!componentClass || strcmp(componentClass.attribute("type").value(), "neuron_body") != 0) {
+        throw std::runtime_error("XML file:" + url + " is not a SpineML 'neuron_body' component - "
+                                 "it's ComponentClass node is either missing or of the incorrect type");
+    }
+
 
     // Create a code stream for generating sim code
     CodeStream simCodeStream;
@@ -121,54 +113,10 @@ SpineMLGenerator::SpineMLNeuronModel::SpineMLNeuronModel(const std::string &url,
     m_SimCode = simCodeStream.str();
     m_ThresholdConditionCode = objectHandlerCondition.getThresholdCode();
 
-    //*******************
-    // Generic begin
-    //*******************
-    // Starting with those the model needs to vary, create a set of genn variables
-    std::set<string> gennVariables(variableParams);
-
-    // Add model state variables to this
-    auto dynamics = componentClass.child("Dynamics");
-    std::transform(dynamics.children("StateVariable").begin(), dynamics.children("StateVariable").end(),
-                   std::inserter(gennVariables, gennVariables.end()),
-                   [](const pugi::xml_node &n){ return n.attribute("name").value(); });
-
-    // Loop through model parameters
-    std::cout << "\t\tParameters:" << std::endl;
-    for(auto param : componentClass.children("Parameter")) {
-        // If parameter hasn't been declared variable by model, add it to vector of parameter names
-        std::string paramName = param.attribute("name").value();
-        if(gennVariables.find(paramName) == gennVariables.end()) {
-            std::cout << "\t\t\t" << paramName << std::endl;
-            m_ParamNames.push_back(paramName);
-
-            // Wrap variable names so GeNN code generator can find them
-            wrapVariableNames(m_SimCode, paramName);
-            wrapVariableNames(m_ThresholdConditionCode, paramName);
-        }
-    }
-
-    // Add all GeNN variables
-    std::transform(gennVariables.begin(), gennVariables.end(), std::back_inserter(m_Vars),
-                   [](const std::string &vname){ return std::make_pair(vname, "scalar"); });
-
-    // If model has multiple regimes, add unsigned int regime ID to values
-    if(multipleRegimes) {
-        m_Vars.push_back(std::make_pair("_regimeID", "unsigned int"));
-    }
-
-    std::cout << "\t\tVariables:" << std::endl;
-    for(const auto &v : m_Vars) {
-        std::cout << "\t\t\t" << v.first << ":" << v.second << std::endl;
-
-        // Wrap variable names so GeNN code generator can find them
-        wrapVariableNames(m_SimCode, v.first);
-        wrapVariableNames(m_ThresholdConditionCode, v.first);
-    }
-
-    //*******************
-    // Generic end
-    //*******************
+    // Build the final vectors of parameter names and variables from model and
+    // correctly wrap references to them in newly-generated code strings
+    tie(m_ParamNames, m_Vars) = processModelVariables(componentClass, variableParams,
+                                                      multipleRegimes, {&m_SimCode, &m_ThresholdConditionCode});
 
     // If there is an analogue reduce port using the addition operator, it's probably a synaptic input current
     auto linearReducePorts = componentClass.select_nodes("AnalogReducePort[@reduce_op='+']");
@@ -177,7 +125,7 @@ SpineMLGenerator::SpineMLNeuronModel::SpineMLNeuronModel(const std::string &url,
         wrapAndReplaceVariableNames(m_SimCode, linearReducePortName, "Isyn");
         wrapAndReplaceVariableNames(m_ThresholdConditionCode, linearReducePortName, "Isyn");
     }
-    // Otherwise, throw and exception
+    // Otherwise, throw an exception
     else if(linearReducePorts.size() > 1) {
         // **TODO** 'Alias' nodes in dynamics may be used to combine these together
         throw std::runtime_error("GeNN doesn't support multiple input currents going into neuron");

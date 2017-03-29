@@ -2,9 +2,7 @@
 
 // Standard C++ includes
 #include <algorithm>
-
-// GeNN includes
-#include "newModels.h"
+#include <regex>
 
 //----------------------------------------------------------------------------
 // SpineMLGenerator::ParamValues
@@ -104,30 +102,6 @@ void SpineMLGenerator::ObjectHandlerError::onObject(const pugi::xml_node &node, 
 //----------------------------------------------------------------------------
 // Helper functions
 //----------------------------------------------------------------------------
-pugi::xml_node SpineMLGenerator::loadComponent(const std::string &url, const std::string &expectedType)
-{
-    // Load XML document
-    pugi::xml_document doc;
-    auto result = doc.load_file(url.c_str());
-    if(!result) {
-        throw std::runtime_error("Could not open file:" + url + ", error:" + result.description());
-    }
-
-    // Get SpineML root
-    auto spineML = doc.child("SpineML");
-    if(!spineML) {
-        throw std::runtime_error("XML file:" + url + " is not a SpineML component - it has no root SpineML node");
-    }
-
-    // Get component class
-    auto componentClass = spineML.child("ComponentClass");
-    if(!componentClass || strcmp(componentClass.attribute("type").value(), "neuron_body") != 0) {
-        throw std::runtime_error("XML file:" + url + " is not a SpineML " + expectedType + " component - it's ComponentClass node is either missing or of the incorrect type");
-    }
-
-    return componentClass;
-}
-//----------------------------------------------------------------------------
 bool SpineMLGenerator::generateModelCode(const pugi::xml_node &componentClass, ObjectHandler &objectHandlerEvent,
                                          ObjectHandler &objectHandlerCondition, ObjectHandler &objectHandlerImpulse,
                                          ObjectHandler &objectHandlerTimeDerivative,
@@ -170,4 +144,74 @@ bool SpineMLGenerator::generateModelCode(const pugi::xml_node &componentClass, O
     }
 
     return multipleRegimes;
+}
+//----------------------------------------------------------------------------
+void SpineMLGenerator::wrapAndReplaceVariableNames(std::string &code, const std::string &variableName,
+                                                   const std::string &replaceVariableName)
+{
+    // Build a regex to match variable name with at least one
+    // character that can't be in a variable name on either side
+    std::regex regex("([^a-zA-Z_])" + variableName + "([^a-zA-Z_])");
+
+    // Insert GeNN $(XXXX) wrapper around variable name
+    code = std::regex_replace(code,  regex, "$1$(" + replaceVariableName + ")$2");
+}
+//----------------------------------------------------------------------------
+void SpineMLGenerator::wrapVariableNames(std::string &code, const std::string &variableName)
+{
+    wrapAndReplaceVariableNames(code, variableName, variableName);
+}
+//----------------------------------------------------------------------------
+std::tuple<NewModels::Base::StringVec, NewModels::Base::StringPairVec> SpineMLGenerator::processModelVariables(
+    const pugi::xml_node &componentClass, const std::set<std::string> &variableParams,
+    bool multipleRegimes, const std::vector<std::string*> &codeStrings)
+{
+    // Starting with those the model needs to vary, create a set of genn variables
+    std::set<std::string> gennVariables(variableParams);
+
+    // Add model state variables to this
+    auto dynamics = componentClass.child("Dynamics");
+    std::transform(dynamics.children("StateVariable").begin(), dynamics.children("StateVariable").end(),
+                   std::inserter(gennVariables, gennVariables.end()),
+                   [](const pugi::xml_node &n){ return n.attribute("name").value(); });
+
+    // Loop through model parameters
+    std::cout << "\t\tParameters:" << std::endl;
+    NewModels::Base::StringVec paramNames;
+    for(auto param : componentClass.children("Parameter")) {
+        // If parameter hasn't been declared variable by model, add it to vector of parameter names
+        std::string paramName = param.attribute("name").value();
+        if(gennVariables.find(paramName) == gennVariables.end()) {
+            std::cout << "\t\t\t" << paramName << std::endl;
+            paramNames.push_back(paramName);
+
+            // Wrap variable names so GeNN code generator can find them
+            for(std::string *c : codeStrings) {
+                wrapVariableNames(*c, paramName);
+            }
+        }
+    }
+
+    // Add all GeNN variables
+    NewModels::Base::StringPairVec vars;
+    std::transform(gennVariables.begin(), gennVariables.end(), std::back_inserter(vars),
+                   [](const std::string &vname){ return std::make_pair(vname, "scalar"); });
+
+    // If model has multiple regimes, add unsigned int regime ID to values
+    if(multipleRegimes) {
+        vars.push_back(std::make_pair("_regimeID", "unsigned int"));
+    }
+
+    std::cout << "\t\tVariables:" << std::endl;
+    for(const auto &v : vars) {
+        std::cout << "\t\t\t" << v.first << ":" << v.second << std::endl;
+
+        // Wrap variable names so GeNN code generator can find them
+        for(std::string *c : codeStrings) {
+            wrapVariableNames(*c, v.first);
+        }
+    }
+
+    // Return parameter names and variables
+    return std::make_tuple(paramNames, vars);
 }
