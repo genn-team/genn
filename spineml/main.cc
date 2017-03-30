@@ -23,6 +23,7 @@
 // SpineMLGenerator includes
 #include "spineMLNeuronModel.h"
 #include "spineMLPostsynapticModel.h"
+#include "spineMLWeightUpdateModel.h"
 
 using namespace SpineMLGenerator;
 
@@ -123,9 +124,10 @@ int main(int argc,
         throw std::runtime_error("XML file:" + networkPath.str() + " is not a SpineML network - it has no root SpineML node");
     }
 
-    // Neuron models required by network
+    // Neuron, postsyaptic and weight update models required by network
     std::map<ModelParams, SpineMLNeuronModel> neuronModels;
     std::map<ModelParams, SpineMLPostsynapticModel> postsynapticModels;
+    std::map<ModelParams, SpineMLWeightUpdateModel> weightUpdateModels;
 
     // Get the filename of the network and remove extension
     // to get something usable as a network name
@@ -192,12 +194,27 @@ int main(int argc,
             }
 
             // Read postsynapse properties
-            ModelParams postsynModelParams;
-            std::map<std::string, double> fixedPostsynParamVals;
-            tie(postsynModelParams, fixedPostsynParamVals) = readModelProperties(basePath, postSynapse);
+            ModelParams postsynapticModelParams;
+            std::map<std::string, double> fixedPostsynapticParamVals;
+            tie(postsynapticModelParams, fixedPostsynapticParamVals) = readModelProperties(basePath, postSynapse);
 
             // Either get existing postsynaptic model or create new one of no suitable models are available
-            const auto &postsynModel = getCreateModel(postsynModelParams, postsynapticModels);
+            const auto &postsynapticModel = getCreateModel(postsynapticModelParams, postsynapticModels);
+
+            // Get weight update
+            auto weightUpdate = synapse.child("WeightUpdate");
+            if(!weightUpdate) {
+                throw std::runtime_error("'Synapse' node has no 'WeightUpdate' node");
+            }
+
+            // Read weight update properties
+            ModelParams weightUpdateModelParams;
+            std::map<std::string, double> fixedWeightUpdateParamVals;
+            tie(weightUpdateModelParams, fixedWeightUpdateParamVals) = readModelProperties(basePath, weightUpdate);
+
+            // Either get existing postsynaptic model or create new one of no suitable models are available
+            const auto &weightUpdateModel = getCreateModel(weightUpdateModelParams, weightUpdateModels);
+
         }
     }
 

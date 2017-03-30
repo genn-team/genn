@@ -35,7 +35,7 @@ else
 endif
 
 OBJECT_HANDLER_SOURCES        := objectHandlerCondition.cc objectHandlerTimeDerivative.cc 
-MODEL_SOURCES                 := spineMLModelCommon.cc spineMLNeuronModel.cc spineMLPostsynapticModel.cc
+MODEL_SOURCES                 := spineMLModelCommon.cc spineMLNeuronModel.cc spineMLPostsynapticModel.cc spineMLWeightUpdateModel.cc
 GENERATE_SPINEML_SOURCES      := pugixml/pugixml.cpp main.cc $(OBJECT_HANDLER_SOURCES) $(MODEL_SOURCES)
 GENERATE_SPINEML_SOURCES      :=$(addprefix $(GENERATE_SPINEML_PATH)/,$(GENERATE_SPINEML_SOURCES))
 
