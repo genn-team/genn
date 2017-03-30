@@ -85,7 +85,56 @@ const T &getCreateModel(const ModelParams &params, std::map<ModelParams, T> &mod
     }
 }
 
+unsigned int readDelaySteps(const pugi::xml_node &node, double dt)
+{
+    // Get delay node
+    auto delay = node.child("Delay");
+    if(delay) {
+        auto fixedValue = delay.child("FixedValue");
+        if(fixedValue) {
+            double delay = fixedValue.attribute("value").as_double();
+            return (unsigned int)std::round(delay / dt);
+        }
+        else {
+            throw std::runtime_error("GeNN currently only supports projections with a single delay value");
+        }
+    }
+    else
+    {
+        throw std::runtime_error("Connector has no 'Delay' node");
+    }
 }
+std::tuple<SynapseMatrixType, unsigned int> getSynapticMatrixType(const pugi::xml_node &node, bool globalG, double dt)
+{
+    auto oneToOne = node.child("OneToOneConnection");
+    if(oneToOne) {
+        return std::make_tuple(globalG ? SynapseMatrixType::SPARSE_GLOBALG : SynapseMatrixType::SPARSE_INDIVIDUALG,
+                               readDelaySteps(oneToOne, dt));
+    }
+
+    auto allToAll = node.child("AllToAllConnection");
+    if(allToAll) {
+        return std::make_tuple(globalG ? SynapseMatrixType::DENSE_GLOBALG : SynapseMatrixType::DENSE_INDIVIDUALG,
+                               readDelaySteps(allToAll, dt));
+    }
+
+    auto fixedProbability = node.child("FixedProbabilityConnection");
+    if(fixedProbability) {
+        // **TODO** there is almost certainly a probability above which dense is better
+        return std::make_tuple(globalG ? SynapseMatrixType::SPARSE_GLOBALG : SynapseMatrixType::SPARSE_INDIVIDUALG,
+                               readDelaySteps(fixedProbability, dt));
+    }
+
+    auto connectionList = node.child("ConnectionList");
+    if(connectionList) {
+        // **TODO** there is almost certainly a number of connections above which dense is better
+        return std::make_tuple(globalG ? SynapseMatrixType::SPARSE_GLOBALG : SynapseMatrixType::SPARSE_INDIVIDUALG,
+                               readDelaySteps(connectionList, dt));
+    }
+
+    throw std::runtime_error("No supported connection type found for projection");
+}
+}   // Anonymous namespace
 
 //----------------------------------------------------------------------------
 // Entry point
@@ -139,7 +188,7 @@ int main(int argc,
 
     // The neuron model
     NNmodel model;
-    model.setDT(1.0);
+    model.setDT(0.1);
     model.setName(networkName);
 
     // Loop through populations once to build neuron populations
@@ -212,9 +261,22 @@ int main(int argc,
             std::map<std::string, double> fixedWeightUpdateParamVals;
             tie(weightUpdateModelParams, fixedWeightUpdateParamVals) = readModelProperties(basePath, weightUpdate);
 
+            // Global weight value can be used if there are no variable parameters
+            const bool globalG = weightUpdateModelParams.second.empty();
+
             // Either get existing postsynaptic model or create new one of no suitable models are available
             const auto &weightUpdateModel = getCreateModel(weightUpdateModelParams, weightUpdateModels);
 
+            // Determine the GeNN matrix type and number of delay steps
+            SynapseMatrixType mtype;
+            unsigned int delaySteps;
+            tie(mtype, delaySteps) = getSynapticMatrixType(synapse, globalG, 0.1);
+
+            // Add synapse population to model
+            std::string synapsePopName = std::string(srcPopName) + "_" + trgPopName;
+            model.addSynapsePopulation(synapsePopName, mtype, delaySteps, srcPopName, trgPopName,
+                                       &weightUpdateModel, SpineMLWeightUpdateModel::ParamValues(fixedWeightUpdateParamVals, weightUpdateModel), SpineMLWeightUpdateModel::VarValues(fixedWeightUpdateParamVals, weightUpdateModel),
+                                       &postsynapticModel, SpineMLPostsynapticModel::ParamValues(fixedPostsynapticParamVals, postsynapticModel), SpineMLPostsynapticModel::VarValues(fixedPostsynapticParamVals, postsynapticModel));
         }
     }
 

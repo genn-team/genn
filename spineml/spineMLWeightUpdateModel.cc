@@ -41,7 +41,6 @@ public:
             throw std::runtime_error("GeNN weigh updates always output a single impulse");
         }
 
-
         // Loop through state assignements
         for(auto stateAssign : node.children("StateAssignment")) {
             m_CodeStream << stateAssign.attribute("variable").value() << " = " << stateAssign.child_value("MathInline") << ";" << m_CodeStream.endl();
