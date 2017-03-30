@@ -168,6 +168,14 @@ void wrapAndReplaceVariableNames(std::string &code, const std::string &variableN
 //!< Search through code for references to named variable and wrap in GeNN's $(XXXX) tags
 void wrapVariableNames(std::string &code, const std::string &variableName);
 
+std::tuple<NewModels::Base::StringVec, NewModels::Base::StringPairVec> findModelVariables(
+    const pugi::xml_node &componentClass, const std::set<std::string> &variableParams,
+    bool multipleRegimes);
+
+void substituteModelVariables(const NewModels::Base::StringVec &paramNames,
+                              const NewModels::Base::StringPairVec &vars,
+                              const std::vector<std::string*> &codeStrings);
+
 std::tuple<NewModels::Base::StringVec, NewModels::Base::StringPairVec> processModelVariables(
     const pugi::xml_node &componentClass, const std::set<std::string> &variableParams,
     bool multipleRegimes, const std::vector<std::string*> &codeStrings);

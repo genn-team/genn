@@ -164,8 +164,8 @@ void SpineMLGenerator::wrapAndReplaceVariableNames(std::string &code, const std:
                                                    const std::string &replaceVariableName)
 {
     // Build a regex to match variable name with at least one
-    // character that can't be in a variable name on either side
-    std::regex regex("([^a-zA-Z_])" + variableName + "([^a-zA-Z_])");
+    // character that can't be in a variable name on either side (or an end/beginning of string)
+    std::regex regex("(^|[^a-zA-Z_])" + variableName + "($|[^a-zA-Z_])");
 
     // Insert GeNN $(XXXX) wrapper around variable name
     code = std::regex_replace(code,  regex, "$1$(" + replaceVariableName + ")$2");
@@ -176,9 +176,8 @@ void SpineMLGenerator::wrapVariableNames(std::string &code, const std::string &v
     wrapAndReplaceVariableNames(code, variableName, variableName);
 }
 //----------------------------------------------------------------------------
-std::tuple<NewModels::Base::StringVec, NewModels::Base::StringPairVec> SpineMLGenerator::processModelVariables(
-    const pugi::xml_node &componentClass, const std::set<std::string> &variableParams,
-    bool multipleRegimes, const std::vector<std::string*> &codeStrings)
+std::tuple<NewModels::Base::StringVec, NewModels::Base::StringPairVec> SpineMLGenerator::findModelVariables(
+    const pugi::xml_node &componentClass, const std::set<std::string> &variableParams, bool multipleRegimes)
 {
     // Starting with those the model needs to vary, create a set of genn variables
     std::set<std::string> gennVariables(variableParams);
@@ -190,19 +189,12 @@ std::tuple<NewModels::Base::StringVec, NewModels::Base::StringPairVec> SpineMLGe
                    [](const pugi::xml_node &n){ return n.attribute("name").value(); });
 
     // Loop through model parameters
-    std::cout << "\t\tParameters:" << std::endl;
     NewModels::Base::StringVec paramNames;
     for(auto param : componentClass.children("Parameter")) {
         // If parameter hasn't been declared variable by model, add it to vector of parameter names
         std::string paramName = param.attribute("name").value();
         if(gennVariables.find(paramName) == gennVariables.end()) {
-            std::cout << "\t\t\t" << paramName << std::endl;
             paramNames.push_back(paramName);
-
-            // Wrap variable names so GeNN code generator can find them
-            for(std::string *c : codeStrings) {
-                wrapVariableNames(*c, paramName);
-            }
         }
     }
 
@@ -216,6 +208,25 @@ std::tuple<NewModels::Base::StringVec, NewModels::Base::StringPairVec> SpineMLGe
         vars.push_back(std::make_pair("_regimeID", "unsigned int"));
     }
 
+    // Return parameter names and variables
+    return std::make_tuple(paramNames, vars);
+}
+//----------------------------------------------------------------------------
+void SpineMLGenerator::substituteModelVariables(const NewModels::Base::StringVec &paramNames,
+                                                const NewModels::Base::StringPairVec &vars,
+                                                const std::vector<std::string*> &codeStrings)
+{
+    // Loop through model parameters
+    std::cout << "\t\tParameters:" << std::endl;
+    for(const auto &p : paramNames) {
+        std::cout << "\t\t\t" << p << std::endl;
+
+        // Wrap variable names so GeNN code generator can find them
+        for(std::string *c : codeStrings) {
+            wrapVariableNames(*c, p);
+        }
+    }
+
     std::cout << "\t\tVariables:" << std::endl;
     for(const auto &v : vars) {
         std::cout << "\t\t\t" << v.first << ":" << v.second << std::endl;
@@ -225,7 +236,17 @@ std::tuple<NewModels::Base::StringVec, NewModels::Base::StringPairVec> SpineMLGe
             wrapVariableNames(*c, v.first);
         }
     }
+}
+//----------------------------------------------------------------------------
+std::tuple<NewModels::Base::StringVec, NewModels::Base::StringPairVec> SpineMLGenerator::processModelVariables(
+    const pugi::xml_node &componentClass, const std::set<std::string> &variableParams,
+    bool multipleRegimes, const std::vector<std::string*> &codeStrings)
+{
+    // Find variables
+    auto paramNamesVars = findModelVariables(componentClass, variableParams, multipleRegimes);
 
-    // Return parameter names and variables
-    return std::make_tuple(paramNames, vars);
+    // Use them to perform substitutions
+    substituteModelVariables(std::get<0>(paramNamesVars), std::get<1>(paramNamesVars), codeStrings);
+
+    return paramNamesVars;
 }
