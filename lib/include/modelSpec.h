@@ -202,8 +202,8 @@ public:
 
     template<typename WeightUpdateModel, typename PostsynapticModel>
     SynapseGroup *addSynapsePopulation(const string &name, SynapseMatrixType mtype, unsigned int delaySteps, const string& src, const string& trg,
-                                       const typename WeightUpdateModel::ParamValues &weightParamValues, const typename WeightUpdateModel::VarValues &weightVarValues,
-                                       const typename PostsynapticModel::ParamValues &postsynapticParamValues, const typename PostsynapticModel::VarValues &postsynapticVarValues)
+                                       const WeightUpdateModel *wum, const typename WeightUpdateModel::ParamValues &weightParamValues, const typename WeightUpdateModel::VarValues &weightVarValues,
+                                       const PostsynapticModel *psm, const typename PostsynapticModel::ParamValues &postsynapticParamValues, const typename PostsynapticModel::VarValues &postsynapticVarValues)
     {
         if (!GeNNReady) {
             gennError("You need to call initGeNN first.");
@@ -226,8 +226,8 @@ public:
         auto result = m_SynapseGroups.insert(
             pair<string, SynapseGroup>(
                 name, SynapseGroup(name, mtype, delaySteps,
-                                   WeightUpdateModel::getInstance(), weightParamValues.getValues(), weightVarValues.getValues(),
-                                   PostsynapticModel::getInstance(), postsynapticParamValues.getValues(), postsynapticVarValues.getValues(),
+                                   wum, weightParamValues.getValues(), weightVarValues.getValues(),
+                                   psm, postsynapticParamValues.getValues(), postsynapticVarValues.getValues(),
                                    srcNeuronGrp, trgNeuronGrp)));
 
         if(!result.second)
@@ -261,6 +261,17 @@ public:
             // Return
             return newSynapseGroup;
         }
+    }
+
+    template<typename WeightUpdateModel, typename PostsynapticModel>
+    SynapseGroup *addSynapsePopulation(const string &name, SynapseMatrixType mtype, unsigned int delaySteps, const string& src, const string& trg,
+                                       const typename WeightUpdateModel::ParamValues &weightParamValues, const typename WeightUpdateModel::VarValues &weightVarValues,
+                                       const typename PostsynapticModel::ParamValues &postsynapticParamValues, const typename PostsynapticModel::VarValues &postsynapticVarValues)
+    {
+        return addSynapsePopulation(name, mtype, delaySteps, src, trg,
+                                    WeightUpdateModel::getInstance(), weightParamValues, weightVarValues,
+                                    PostsynapticModel::getInstance(), postsynapticParamValues, postsynapticVarValues);
+
     }
 
     void setSynapseG(const string&, double); //!< This function has been depreciated as of GeNN 2.2.
