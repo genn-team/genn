@@ -51,7 +51,7 @@ public:
 
 
 //----------------------------------------------------------------------------
-// SpineMLGenerator::spineMLPostsynapticModel
+// SpineMLGenerator::SpineMLPostsynapticModel
 //----------------------------------------------------------------------------
 SpineMLGenerator::SpineMLPostsynapticModel::SpineMLPostsynapticModel(const std::string &url,
                                                                      const std::set<std::string> &variableParams)
@@ -90,16 +90,15 @@ SpineMLGenerator::SpineMLPostsynapticModel::SpineMLPostsynapticModel(const std::
     // Generate model code using specified condition handler
     ObjectHandlerError objectHandlerError;
     ObjectHandlerCondition objectHandlerCondition(decayCodeStream);
-    ObjectHandlerImpulse ObjectHandlerImpulse;
+    ObjectHandlerImpulse objectHandlerImpulse;
     ObjectHandlerTimeDerivative objectHandlerTimeDerivative(decayCodeStream);
     const bool multipleRegimes = generateModelCode(componentClass, objectHandlerError,
-                                                   objectHandlerCondition, ObjectHandlerImpulse,
+                                                   objectHandlerCondition, objectHandlerImpulse,
                                                    objectHandlerTimeDerivative,
                                                    regimeEndFunc);
 
     // Store generated code in class
     m_DecayCode = decayCodeStream.str();
-    //m_CurrentConverterCode
 
     // Build the final vectors of parameter names and variables from model
     tie(m_ParamNames, m_Vars) = findModelVariables(componentClass, variableParams, multipleRegimes);
