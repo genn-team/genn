@@ -63,6 +63,7 @@ LINK_FLAGS              =$(LINK_FLAGS) "$(GENN_PATH)\lib\lib\genn_CPU_ONLY.lib"
 OBJECTS                 =$(SOURCES:.cc=.obj) $(SIM_CODE)\runner.obj
 OBJECTS                 =$(OBJECTS:.cpp=.obj)
 OBJECTS                 =$(OBJECTS:.cu=.obj)
+OBJECTS                 =$(OBJECTS:.c=.obj)
 
 
 # Target rules
@@ -75,6 +76,9 @@ $(EXECUTABLE): $(OBJECTS)
 
 $(SIM_CODE)\runner.obj:
 	cd $(SIM_CODE) && nmake /nologo
+
+.c.obj:
+	$(CXX) $(CXXFLAGS) /c /Fo$@ %s $(INCLUDE_FLAGS)
 
 .cc.obj:
 	$(CXX) $(CXXFLAGS) /c /Fo$@ %s $(INCLUDE_FLAGS)
