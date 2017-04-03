@@ -24,7 +24,7 @@ public:                                                        \
         return s_Instance;                                     \
     }                                                          \
     typedef NewModels::ValueBase<NUM_PARAMS> ParamValues;      \
-    typedef NewModels::ValueBase<NUM_VARS> VarValues;
+    typedef NewModels::ValueBase<NUM_VARS> VarValues;          \
 
 
 #define IMPLEMENT_MODEL(TYPE) TYPE *TYPE::s_Instance = NULL
@@ -98,6 +98,7 @@ public:
 //----------------------------------------------------------------------------
 // NewModels::Base
 //----------------------------------------------------------------------------
+//! Base class for all models
 class Base
 {
 public:
@@ -112,15 +113,21 @@ public:
     //----------------------------------------------------------------------------
     // Declared virtuals
     //----------------------------------------------------------------------------
+    //! Gets names of of (independent) model parameters
     virtual StringVec getParamNames() const{ return {}; }
+
+    //! Gets names of derived model parameters and the function objects to call to
+    //! Calculate their value from a vector of model parameter values
     virtual DerivedParamVec getDerivedParams() const{ return {}; }
+
+    //! Gets names and types (as strings) of model variables
     virtual StringPairVec getVars() const{ return {}; }
 };
 
 //----------------------------------------------------------------------------
 // NewModels::LegacyWrapper
 //----------------------------------------------------------------------------
-// Wrapper around old-style models stored in global arrays and referenced by index
+//! Wrapper around old-style models stored in global arrays and referenced by index
 template<typename ModelBase, typename LegacyModelType, const std::vector<LegacyModelType> &ModelArray>
 class LegacyWrapper : public ModelBase
 {
@@ -138,12 +145,15 @@ public:
     //----------------------------------------------------------------------------
     // ModelBase virtuals
     //----------------------------------------------------------------------------
+    //! Gets names of of (independent) model parameters
     virtual StringVec getParamNames() const
     {
         const auto &nm = ModelArray[m_LegacyTypeIndex];
         return nm.pNames;
     }
 
+    //! Gets names of derived model parameters and the function objects to call to
+    //! Calculate their value from a vector of model parameter values
     virtual DerivedParamVec getDerivedParams() const
     {
         const auto &m = ModelArray[m_LegacyTypeIndex];
@@ -169,6 +179,7 @@ public:
         return derivedParams;
     }
 
+    //! Gets names and types (as strings) of model variables
     virtual StringPairVec getVars() const
     {
         const auto &nm = ModelArray[m_LegacyTypeIndex];
@@ -199,6 +210,7 @@ protected:
     //----------------------------------------------------------------------------
     // Members
     //----------------------------------------------------------------------------
+    //! Index into the array of legacy models
     const unsigned int m_LegacyTypeIndex;
 };
 } // NewModels

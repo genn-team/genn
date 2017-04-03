@@ -26,25 +26,44 @@
 //----------------------------------------------------------------------------
 namespace NeuronModels
 {
+//! Base class for all neuron models
 class Base : public NewModels::Base
 {
 public:
     //----------------------------------------------------------------------------
     // Declared virtuals
     //----------------------------------------------------------------------------
+    //! Gets the code that defines the execution of one timestep of integration of the neuron model.
+    /*! The code will refer to $(NN) for the value of the variable with name "NN".
+        It needs to refer to the predefined variable "ISYN", i.e. contain $(ISYN), if it is to receive input. */
     virtual std::string getSimCode() const{ return ""; }
+
+    //! Gets code which defines the condition for a true spike in the described neuron model.
+    /*! This evaluates to a bool (e.g. "V > 20"). */
     virtual std::string getThresholdConditionCode() const{ return ""; }
+
+    //! Gets code that defines the reset action taken after a spike occurred. This can be empty
     virtual std::string getResetCode() const{ return ""; }
+
+    //! Gets support code to be made available within the neuron kernel/funcion.
+    /*! This is intended to contain user defined device functions that are used in the neuron codes.
+        Preprocessor defines are also allowed if appropriately safeguarded against multiple definition by using ifndef;
+        functions should be declared as "__host__ __device__" to be available for both GPU and CPU versions. */
     virtual std::string getSupportCode() const{ return ""; }
+
+    //! Gets names and types (as strings) of additional
+    //! per-population parameters for the weight update model.
     virtual std::vector<std::pair<std::string, std::string>> getExtraGlobalParams() const{ return {}; }
 
+    //! Is this neuron model the internal Poisson model (which requires a number of special cases)
+    //! \private
     virtual bool isPoisson() const{ return false; }
 };
 
 //----------------------------------------------------------------------------
 // NeuronModels::LegacyWrapper
 //----------------------------------------------------------------------------
-// Wrapper around neuron models stored in global
+//! Wrapper around legacy weight update models stored in #nModels array of neuronModel objects.
 class LegacyWrapper : public NewModels::LegacyWrapper<Base, neuronModel, nModels>
 {
 public:
@@ -55,12 +74,23 @@ public:
     //----------------------------------------------------------------------------
     // Base virtuals
     //----------------------------------------------------------------------------
+
+    //! \copydoc Base::getSimCode
     virtual std::string getSimCode() const;
+
+    //! \copydoc Base::getThresholdConditionCode
     virtual std::string getThresholdConditionCode() const;
+
+    //! \copydoc Base::getResetCode
     virtual std::string getResetCode() const;
+
+    //! \copydoc Base::getSupportCode
     virtual std::string getSupportCode() const;
+
+    //! \copydoc Base::getExtraGlobalParams
     virtual NewModels::Base::StringPairVec getExtraGlobalParams() const;
 
+    //! \copydoc Base::isPoisson
     virtual bool isPoisson() const;
 };
 
@@ -94,6 +124,9 @@ public:
 //----------------------------------------------------------------------------
 // NeuronModels::SpikeSource
 //----------------------------------------------------------------------------
+//! Empty neuron which allows setting spikes from external sources
+/*! This model does not contain any update code and can be used to implement
+    the equivalent of a SpikeGeneratorGroup in Brian or a SpikeSourceArray in PyNN. */
 class SpikeSource : public Base
 {
 public:
