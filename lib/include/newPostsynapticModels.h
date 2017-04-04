@@ -51,7 +51,7 @@ public:
 class ExpCond : public Base
 {
 public:
-    DECLARE_MODEL(ExpCond, 1, 0);
+    DECLARE_MODEL(ExpCond, 2, 0);
 
     SET_DECAY_CODE("$(inSyn)*=$(expDecay);");
 
