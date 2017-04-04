@@ -257,9 +257,7 @@ public:
     - \c gMid: Midpoint of sigmoid g filter curve
     - \c gSlope: Slope of sigmoid g filter curve
     - \c tauShift: Shift of learning curve
-    - \c gSyn0: Value of syn conductance g decays to
-
-    For more details about these built-in synapse models, see \cite Nowotny2010. */
+    - \c gSyn0: Value of syn conductance g decays to */
 class PiecewiseSTDP : public Base
 {
 public:

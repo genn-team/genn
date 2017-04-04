@@ -158,6 +158,24 @@ public:
 //----------------------------------------------------------------------------
 // NeuronModels::Izhikevich
 //----------------------------------------------------------------------------
+//! Izhikevich neuron with fixed parameters \cite izhikevich2003simple.
+/*! It is usually described as
+    \f{eqnarray*}
+    \frac{dV}{dt} &=& 0.04 V^2 + 5 V + 140 - U + I, \\
+    \frac{dU}{dt} &=& a (bV-U),
+    \f}
+    I is an external input current and the voltage V is reset to parameter c and U incremented by parameter d, whenever V >= 30 mV. This is paired with a particular integration procedure of two 0.5 ms Euler time steps for the V equation followed by one 1 ms time step of the U equation. Because of its popularity we provide this model in this form here event though due to the details of the usual implementation it is strictly speaking inconsistent with the displayed equations.
+
+    Variables are:
+
+    - \c V - Membrane potential
+    - \c U - Membrane recovery variable
+
+    Parameters are:
+    - \c a - time scale of U
+    - \c b - sensitivity of U
+    - \c c - after-spike reset value of V
+    - \c d - after-spike reset value of U*/
 class Izhikevich : public Base
 {
 public:
@@ -179,6 +197,33 @@ public:
 
     SET_PARAM_NAMES({"a", "b", "c", "d"});
     SET_VARS({{"V","scalar"}, {"U", "scalar"}});
+};
+
+//----------------------------------------------------------------------------
+// NeuronModels::IzhikevichVariable
+//----------------------------------------------------------------------------
+//! Izhikevich neuron with variable parameters \cite izhikevich2003simple.
+/*! This is the same model as Izhikevich but parameters are defined as
+    "variables" in order to allow users to provide individual values for each
+    individual neuron instead of fixed values for all neurons across the population.
+
+    Accordingly, the model has the Variables:
+    - \c V - Membrane potential
+    - \c U - Membrane recovery variable
+    - \c a - time scale of U
+    - \c b - sensitivity of U
+    - \c c - after-spike reset value of V
+    - \c d - after-spike reset value of U
+
+    and no parameters.*/
+class IzhikevichVariable : public Izhikevich
+{
+public:
+    DECLARE_MODEL(NeuronModels::IzhikevichVariable, 0, 6);
+
+    SET_PARAM_NAMES({});
+    SET_VARS({{"V","scalar"}, {"U", "scalar"}, {"a", "scalar"},
+             {"b", "scalar"}, {"c", "scalar"}, {"d", "scalar"}});
 };
 
 //----------------------------------------------------------------------------
