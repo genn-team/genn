@@ -132,7 +132,7 @@ void classol::read_pnkcsyns(FILE *f //!< File handle for a file containing PN to
 {
   // version 1
     auto *pn = model.findNeuronGroup("PN");
-    auto *kc = model.findNeuronGroup("PN");
+    auto *kc = model.findNeuronGroup("KC");
     int sz= pn->getNumNeurons()*kc->getNumNeurons();
     double *tmpg= new double[sz];
     fprintf(stdout, "%lu\n", sz * sizeof(double));
