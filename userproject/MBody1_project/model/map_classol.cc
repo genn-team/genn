@@ -30,9 +30,11 @@
 classol::classol()
 {
   modelDefinition(model);
-  p_pattern= new scalar[model.neuronN[0]*PATTERNNO];
-  pattern= new uint64_t[model.neuronN[0]*PATTERNNO];
-  baserates= new uint64_t[model.neuronN[0]];
+
+  auto *pn = model.findNeuronGroup("PN");
+  p_pattern= new scalar[pn->getNumNeurons()*PATTERNNO];
+  pattern= new uint64_t[pn->getNumNeurons()*PATTERNNO];
+  baserates= new uint64_t[pn->getNumNeurons()];
   allocateMem();
   initialize();
   sumPN= 0;
@@ -73,11 +75,12 @@ void classol::allocate_device_mem_patterns()
   unsigned int size;
 
   // allocate device memory for input patterns
-  size= model.neuronN[0]*PATTERNNO*sizeof(uint64_t);
+  auto *pn = model.findNeuronGroup("PN");
+  size= pn->getNumNeurons()*PATTERNNO*sizeof(uint64_t);
   CHECK_CUDA_ERRORS(cudaMalloc((void**) &d_pattern, size));
   fprintf(stdout, "allocated %lu elements for pattern.\n", size/sizeof(uint64_t));
   CHECK_CUDA_ERRORS(cudaMemcpy(d_pattern, pattern, size, cudaMemcpyHostToDevice));
-  size= model.neuronN[0]*sizeof(uint64_t);
+  size= pn->getNumNeurons()*sizeof(uint64_t);
   CHECK_CUDA_ERRORS(cudaMalloc((void**) &d_baserates, size));
   CHECK_CUDA_ERRORS(cudaMemcpy(d_baserates, baserates, size, cudaMemcpyHostToDevice)); 
 }
@@ -128,7 +131,9 @@ void classol::read_pnkcsyns(FILE *f //!< File handle for a file containing PN to
 			    )
 {
   // version 1
-    int sz= model.neuronN[0]*model.neuronN[1];
+    auto *pn = model.findNeuronGroup("PN");
+    auto *kc = model.findNeuronGroup("PN");
+    int sz= pn->getNumNeurons()*kc->getNumNeurons();
     double *tmpg= new double[sz];
     fprintf(stdout, "%lu\n", sz * sizeof(double));
     unsigned int retval = fread(tmpg, 1, sz * sizeof(double),f);
@@ -136,7 +141,7 @@ void classol::read_pnkcsyns(FILE *f //!< File handle for a file containing PN to
   // version 2
   /*  unsigned int UIntSz= sizeof(unsigned int)*8;   // in bit!
   unsigned int logUIntSz= (int) (logf((scalar) UIntSz)/logf(2.0f)+1e-5f);
-  unsigned int tmp= model.neuronN[0]*model.neuronN[1];
+  unsigned int tmp= pn->getNumNeurons()*kc->getNumNeurons();
   unsigned size= (tmp >> logUIntSz);
   if (tmp > (size << logUIntSz)) size++;
   size= size*sizeof(unsigned int);
@@ -162,10 +167,12 @@ void classol::read_pnkcsyns(FILE *f //!< File handle for a file containing PN to
 void classol::write_pnkcsyns(FILE *f //!< File handle for a file to write PN to KC conductivity values to
 			     )
 {
-    int sz= model.neuronN[0]*model.neuronN[1];
+    auto *pn = model.findNeuronGroup("PN");
+    auto *kc = model.findNeuronGroup("KC");
+    int sz= pn->getNumNeurons()*kc->getNumNeurons();
     double *tmpg= new double[sz];
     exportArray(tmpg, gPNKC, sz);
-    fwrite(tmpg, model.neuronN[0] * model.neuronN[1] * sizeof(double), 1, f);
+    fwrite(tmpg, pn->getNumNeurons() * kc->getNumNeurons() * sizeof(double), 1, f);
     fprintf(stdout, "wrote pnkc ... \n");
     delete[] tmpg;
 }
@@ -179,7 +186,9 @@ void classol::write_pnkcsyns(FILE *f //!< File handle for a file to write PN to 
 void classol::read_pnlhisyns(FILE *f //!< File handle for a file containing PN to LHI conductivity values
 			     )
 {
-    int sz= model.neuronN[0]*model.neuronN[2];
+    auto *pn = model.findNeuronGroup("PN");
+    auto *lhi = model.findNeuronGroup("LHI");
+    int sz= pn->getNumNeurons()*lhi->getNumNeurons();
     double *tmpg= new double[sz];
     unsigned int retval = fread(tmpg, 1, sz * sizeof(double),  f);
     importArray(gPNLHI, tmpg, sz);
@@ -200,7 +209,9 @@ void classol::read_pnlhisyns(FILE *f //!< File handle for a file containing PN t
 void classol::write_pnlhisyns(FILE *f //!< File handle for a file to write PN to LHI conductivity values to
 			      )
 {
-    int sz= model.neuronN[0]*model.neuronN[2];
+    auto *pn = model.findNeuronGroup("PN");
+    auto *lhi = model.findNeuronGroup("LHI");
+    int sz= pn->getNumNeurons()*lhi->getNumNeurons();
     double *tmpg= new double[sz];
     exportArray(tmpg, gPNLHI, sz);
     fwrite(tmpg, sz * sizeof(double), 1, f);
@@ -217,7 +228,9 @@ void classol::write_pnlhisyns(FILE *f //!< File handle for a file to write PN to
 void classol::read_kcdnsyns(FILE *f //!< File handle for a file containing KC to DN (detector neuron) conductivity values 
 			    )
 {
-    int sz= model.neuronN[1]*model.neuronN[3];
+    auto *kc = model.findNeuronGroup("KC");
+    auto *dn = model.findNeuronGroup("DN");
+    const int sz= kc->getNumNeurons()*dn->getNumNeurons();
     double *tmpg= new double[sz];   
     unsigned int retval =fread(tmpg, 1, sz *sizeof(double),f);
     importArray(gKCDN, tmpg, sz);
@@ -228,7 +241,7 @@ void classol::read_kcdnsyns(FILE *f //!< File handle for a file containing KC to
     }
     fprintf(stdout, "\n\n");
     int cnt= 0;
-    for (int i= 0; i < model.neuronN[1]*model.neuronN[3]; i++) {
+    for (int i= 0; i < sz; i++) {
 	if (gKCDN[i] < 2.0*SCALAR_MIN){
 	    cnt++;
 	    fprintf(stdout, "Too low conductance value %e detected and set to 2*SCALAR_MIN= %e, at index %d \n", gKCDN[i], 2*SCALAR_MIN, i);
@@ -250,7 +263,9 @@ void classol::read_kcdnsyns(FILE *f //!< File handle for a file containing KC to
 void classol::write_kcdnsyns(FILE *f //!< File handle for a file to write KC to DN (detectore neuron) conductivity values to
 			     )
 {
-    int sz= model.neuronN[1]*model.neuronN[3];
+    auto *kc = model.findNeuronGroup("KC");
+    auto *dn = model.findNeuronGroup("DN");
+    const int sz= kc->getNumNeurons()*dn->getNumNeurons();
     double *tmpg= new double[sz];
      exportArray(tmpg, gKCDN, sz);   
     fwrite(tmpg, sz*sizeof(double),1,f);
@@ -258,20 +273,21 @@ void classol::write_kcdnsyns(FILE *f //!< File handle for a file to write KC to 
     delete[] tmpg;
 }
 
-void classol::read_sparsesyns_par(int synInd, SparseProjection C, scalar* g, FILE *f_ind,FILE *f_indInG, FILE *f_g //!< File handle for a file containing sparse connectivity values
+void classol::read_sparsesyns_par(const char *sName, SparseProjection C, scalar* g, FILE *f_ind,FILE *f_indInG, FILE *f_g //!< File handle for a file containing sparse connectivity values
     )
 {
+    auto *synapseGroup = model.findSynapseGroup(sName);
     //allocateSparseArray(synInd,C.connN);
     int sz= C.connN;
     double *tmpg= new double[sz];
     int retval = fread(tmpg, 1, sz*sizeof(double),f_g);
     importArray(g, tmpg, sz);
     fprintf(stdout,"%d active synapses. \n", sz);
-    retval = fread(C.indInG, 1, (model.neuronN[model.synapseSource[synInd]]+1)*sizeof(unsigned int),f_indInG);
+    retval = fread(C.indInG, 1, (synapseGroup->getSrcNeuronGroup()->getNumNeurons()+1)*sizeof(unsigned int),f_indInG);
     retval = fread(C.ind, 1, sz*sizeof(int),f_ind);
     // general:
     fprintf(stdout,"Read Sparse Projection indices... \n");
-    fprintf(stdout, "Size is %d for synapse group %d. Values start with: \n",C.connN, synInd);
+    fprintf(stdout, "Size is %d for synapse group %s. Values start with: \n",C.connN, sName);
     for(int i= 0; i < 100; i++) {
 	fprintf(stdout, "%d, %d ", C.indInG[i], C.ind[i]);
     }
@@ -281,7 +297,7 @@ void classol::read_sparsesyns_par(int synInd, SparseProjection C, scalar* g, FIL
 	fprintf(stdout, "%d ", C.ind[i]);
     }  
     fprintf(stdout,"\n\n");
-    fprintf(stdout, "%d g indices read. Index in g array values start with: \n", model.neuronN[model.synapseSource[synInd]]+1);
+    fprintf(stdout, "%d g indices read. Index in g array values start with: \n", synapseGroup->getSrcNeuronGroup()->getNumNeurons()+1);
     for(int i= 0; i < 100; i++) {
 	fprintf(stdout, "%d ", C.indInG[i]);
     }  
@@ -297,7 +313,8 @@ void classol::read_input_patterns(FILE *f //!< File handle for a file containing
 				  )
 {
   // we use a predefined pattern number
-    int sz= model.neuronN[0]*PATTERNNO;
+    auto *pn = model.findNeuronGroup("PN");
+    int sz= pn->getNumNeurons()*PATTERNNO;
     double *tmpp= new double[sz];
     unsigned int retval = fread(tmpp, 1, sz*sizeof(double),f);
     importArray(p_pattern, tmpp, sz);
@@ -307,7 +324,7 @@ void classol::read_input_patterns(FILE *f //!< File handle for a file containing
 	fprintf(stdout, "%f ", p_pattern[i]);
     }
     fprintf(stdout, "\n\n");
-    convertRateToRandomNumberThreshold(p_pattern, pattern, model.neuronN[0]*PATTERNNO);
+    convertRateToRandomNumberThreshold(p_pattern, pattern, pn->getNumNeurons()*PATTERNNO);
     delete[] tmpp;
 }
 
@@ -319,9 +336,10 @@ void classol::read_input_patterns(FILE *f //!< File handle for a file containing
 void classol::generate_baserates()
 {
   // we use a predefined pattern number
+    auto *pn = model.findNeuronGroup("PN");
     uint64_t inputBase;
     convertRateToRandomNumberThreshold(&InputBaseRate, &inputBase, 1);
-    for (int i= 0; i < model.neuronN[0]; i++) {
+    for (int i= 0; i <  pn->getNumNeurons(); i++) {
 	baserates[i]= inputBase;
     }
     fprintf(stdout, "generated basereates ... \n");
@@ -338,6 +356,7 @@ void classol::generate_baserates()
 void classol::runGPU(scalar runtime //!< Duration of time to run the model for 
 		  )
 {
+  auto *pn = model.findNeuronGroup("PN");
   unsigned int pno;
   int riT= (int) (runtime/DT+1e-6);
 
@@ -345,7 +364,7 @@ void classol::runGPU(scalar runtime //!< Duration of time to run the model for
       if (iT%patSetTime == 0) {
 	  pno= (iT/patSetTime)%PATTERNNO;
 	  ratesPN= d_pattern;
-	  offsetPN= pno*model.neuronN[0];
+	  offsetPN= pno*pn->getNumNeurons();
       }
       if (iT%patSetTime == patFireTime) {
 	  ratesPN= d_baserates;
@@ -364,6 +383,7 @@ void classol::runGPU(scalar runtime //!< Duration of time to run the model for
 void classol::runCPU(scalar runtime //!< Duration of time to run the model for 
 		  )
 {
+  auto *pn = model.findNeuronGroup("PN");
   unsigned int pno;
   int riT= (int) (runtime/DT);
 
@@ -371,7 +391,7 @@ void classol::runCPU(scalar runtime //!< Duration of time to run the model for
     if (iT%patSetTime == 0) {
       pno= (iT/patSetTime)%PATTERNNO;
       ratesPN= pattern;
-      offsetPN= pno*model.neuronN[0];
+      offsetPN= pno*pn->getNumNeurons();
     }
     if (iT%patSetTime == patFireTime) {
 	ratesPN= baserates;
@@ -398,14 +418,18 @@ void classol::output_state(FILE *f, //!< File handle for a file to write the mod
 	copyStateFromDevice();
 #endif
 
+  auto *pn = model.findNeuronGroup("PN");
+  auto *kc = model.findNeuronGroup("KC");
+  auto *lhi = model.findNeuronGroup("LHI");
+  auto *dn = model.findNeuronGroup("DN");
   fprintf(f, "%f ", t);
-  for (int i= 0; i < model.neuronN[0]; i++) {
+  for (int i= 0; i < pn->getNumNeurons(); i++) {
     fprintf(f, "%f ", VPN[i]);
    }
-  // for (int i= 0; i < model.neuronN[0]; i++) {
+  // for (int i= 0; i < pn->getNumNeurons(); i++) {
   //   os << seedsPN[i] << " ";
   // }
-  // for (int i= 0; i < model.neuronN[0]; i++) {
+  // for (int i= 0; i < pn->getNumNeurons(); i++) {
   //   os << spikeTimesPN[i] << " ";
   // }
   //  os << glbSpkCnt0 << "  ";
@@ -431,11 +455,11 @@ void classol::output_state(FILE *f, //!< File handle for a file to write the mod
  // for (int i= 0; i < 20; i++) {
  //   os << VKC[i] << " ";
  // }
-   for (int i= 0; i < model.neuronN[1]; i++) {
+   for (int i= 0; i < kc->getNumNeurons(); i++) {
      fprintf(f, "%f ", VKC[i]);
    }
   //os << " * ";
-  //for (int i= 0; i < model.neuronN[1]; i++) {
+  //for (int i= 0; i < kc->getNumNeurons(); i++) {
   //  os << inSynKC0[i] << " ";
   //}
   //  os << " * ";
@@ -455,10 +479,10 @@ void classol::output_state(FILE *f, //!< File handle for a file to write the mod
   //  for (int i= 0; i < model.neuronN[3]; i++) {
   //    os << inSynDN1[i] << " ";
   //  }
-  for (int i= 0; i < model.neuronN[2]; i++) {
+  for (int i= 0; i < lhi->getNumNeurons(); i++) {
     fprintf(f, "%f ", VLHI[i]);
   }
-  for (int i= 0; i < model.neuronN[3]; i++) {
+  for (int i= 0; i < dn->getNumNeurons(); i++) {
     fprintf(f, "%f ", VDN[i]);
   }
   fprintf(f,"\n");
@@ -502,17 +526,28 @@ void classol::output_spikes(FILE *f, //!< File handle for a file to write spike 
 {
 
   //    fprintf(stdout, "%f %f %f %f %f\n", t, glbSpkCntPN, glbSpkCntKC, glbSpkCntLHI,glbSpkCntDN);
+  auto *pn = model.findNeuronGroup("PN");
+  unsigned int pnStart = pn->getCumSumNeurons().first;
   for (int i= 0; i < glbSpkCntPN[0]; i++) {
-    fprintf(f, "%f %d\n", t, glbSpkPN[i]);
+    fprintf(f, "%f %d\n", t, pnStart+glbSpkPN[i]);
   }
+
+  auto *kc = model.findNeuronGroup("KC");
+  unsigned int kcStart = kc->getCumSumNeurons().first;
   for (int i= 0; i < glbSpkCntKC[0]; i++) {
-    fprintf(f,  "%f %d\n", t, model.sumNeuronN[0]+glbSpkKC[i]);
+    fprintf(f,  "%f %d\n", t, kcStart+glbSpkKC[i]);
   }
+
+  auto *lhi = model.findNeuronGroup("LHI");
+  unsigned int lhiStart = lhi->getCumSumNeurons().first;
   for (int i= 0; i < glbSpkCntLHI[0]; i++) {
-    fprintf(f, "%f %d\n", t, model.sumNeuronN[1]+glbSpkLHI[i]);
+    fprintf(f, "%f %d\n", t, lhiStart+glbSpkLHI[i]);
   }
+
+  auto *dn = model.findNeuronGroup("DN");
+  unsigned int dnStart = dn->getCumSumNeurons().first;
   for (int i= 0; i < glbSpkCntDN[0]; i++) {
-    fprintf(f, "%f %d\n", t, model.sumNeuronN[2]+glbSpkDN[i]);
+    fprintf(f, "%f %d\n", t, dnStart+glbSpkDN[i]);
   }
 }
 
@@ -537,7 +572,9 @@ void classol::sum_spikes()
 
 void classol::get_kcdnsyns()
 {
-    CHECK_CUDA_ERRORS(cudaMemcpy(gKCDN, d_gKCDN, model.neuronN[1]*model.neuronN[3]*sizeof(scalar), cudaMemcpyDeviceToHost));
+     auto *kc = model.findNeuronGroup("KC");
+    auto *dn = model.findNeuronGroup("DN");
+    CHECK_CUDA_ERRORS(cudaMemcpy(gKCDN, d_gKCDN, kc->getNumNeurons()*dn->getNumNeurons()*sizeof(scalar), cudaMemcpyDeviceToHost));
 }
 #endif
 
