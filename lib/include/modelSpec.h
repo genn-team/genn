@@ -127,6 +127,7 @@ public:
     const map<string, string> &getNeuronKernelParameters() const{ return neuronKernelParameters; }
 
     unsigned int getNeuronGridSize() const;
+    unsigned int getNumNeurons() const;
 
     const NeuronGroup *findNeuronGroup(const std::string &name) const;
     NeuronGroup *findNeuronGroup(const std::string &name);

@@ -129,6 +129,16 @@ unsigned int NNmodel::getNeuronGridSize() const
 
 }
 
+unsigned int NNmodel::getNumNeurons() const
+{
+    if(m_NeuronGroups.empty()) {
+        return 0;
+    }
+    else {
+        return m_NeuronGroups.rbegin()->second.getCumSumNeurons().second;
+    }
+}
+
 const NeuronGroup *NNmodel::findNeuronGroup(const std::string &name) const
 {
     auto neuronGroup = m_NeuronGroups.find(name);

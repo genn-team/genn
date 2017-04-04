@@ -72,6 +72,7 @@ public:
 
     unsigned int getNumNeurons() const{ return m_NumNeurons; }
     const std::pair<unsigned int, unsigned int> &getPaddedCumSumNeurons() const{ return m_PaddedCumSumNeurons; }
+    const std::pair<unsigned int, unsigned int> &getCumSumNeurons() const{ return m_CumSumNeurons; }
     const NeuronModels::Base *getNeuronModel() const{ return m_NeuronModel; }
 
     const std::vector<double> &getParams() const{ return m_Params; }
