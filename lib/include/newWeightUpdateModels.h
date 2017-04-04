@@ -123,10 +123,10 @@ public:
     //! \copydoc Base::getExtraGlobalParams
     virtual NewModels::Base::StringPairVec getExtraGlobalParams() const;
 
-    //! \copydoc Base::isPreSpikeTimeRe
-    virtual bool isPreSpikeTimeRe
+    //! \copydoc Base::isPreSpikeTimeRequired
+    virtual bool isPreSpikeTimeRequired() const;
 
-    //! \copydoc Base::isPostSpikeTimeRequired() const;
+    //! \copydoc Base::isPostSpikeTimeRequired
     virtual bool isPostSpikeTimeRequired() const;
 };
 
@@ -263,7 +263,7 @@ public:
 class PiecewiseSTDP : public Base
 {
 public:
-    DECLARE_MODEL(PieceWiseSTDP, 10, 2);
+    DECLARE_MODEL(PiecewiseSTDP, 10, 2);
 
     SET_PARAM_NAMES({"tLrn", "tChng", "tDecay", "tPunish10", "tPunish01",
         "gMax", "gMid", "gSlope", "tauShift", "gSyn0"});
