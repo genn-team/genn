@@ -527,25 +527,25 @@ void classol::output_spikes(FILE *f, //!< File handle for a file to write spike 
 
   //    fprintf(stdout, "%f %f %f %f %f\n", t, glbSpkCntPN, glbSpkCntKC, glbSpkCntLHI,glbSpkCntDN);
   auto *pn = model.findNeuronGroup("PN");
-  unsigned int pnStart = pn->getCumSumNeurons().first;
+  unsigned int pnStart = pn->getIDRange().first;
   for (int i= 0; i < glbSpkCntPN[0]; i++) {
     fprintf(f, "%f %d\n", t, pnStart+glbSpkPN[i]);
   }
 
   auto *kc = model.findNeuronGroup("KC");
-  unsigned int kcStart = kc->getCumSumNeurons().first;
+  unsigned int kcStart = kc->getIDRange().first;
   for (int i= 0; i < glbSpkCntKC[0]; i++) {
     fprintf(f,  "%f %d\n", t, kcStart+glbSpkKC[i]);
   }
 
   auto *lhi = model.findNeuronGroup("LHI");
-  unsigned int lhiStart = lhi->getCumSumNeurons().first;
+  unsigned int lhiStart = lhi->getIDRange().first;
   for (int i= 0; i < glbSpkCntLHI[0]; i++) {
     fprintf(f, "%f %d\n", t, lhiStart+glbSpkLHI[i]);
   }
 
   auto *dn = model.findNeuronGroup("DN");
-  unsigned int dnStart = dn->getCumSumNeurons().first;
+  unsigned int dnStart = dn->getIDRange().first;
   for (int i= 0; i < glbSpkCntDN[0]; i++) {
     fprintf(f, "%f %d\n", t, dnStart+glbSpkDN[i]);
   }
