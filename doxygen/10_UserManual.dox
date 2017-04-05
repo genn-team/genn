@@ -82,18 +82,17 @@ tasks must be completed:
 
 Neuron populations are added using the function
 \code{.cc}
-model.addNeuronPopulation(name, num, type, para, ini);
+model.addNeuronPopulation<NeuronModel>(name, num, paramValues, varValues);
 \endcode
 where the arguments are:
-\arg `const string name`: Unique name of the neuron population
-\arg `unsigned int num`: number of neurons in the population
-\arg `unsigned int type`: Type of the neurons, refers to either a standard
-     	       	   	  type (see \ref sectNeuronModels) or user-defined
-			  type; this is an integer that indicates the
-			  position in the list of all neuron models where
-			  the model in question is stored.
-\arg `vector<double> para`: Parameters of this neuron type
-\arg `vector<double> ini`: Initial values for variables of this neuron type 
+\arg `NeuronModel`:        Template argument specifying the type of neuron model
+                           These should be derived off NeuronModels::Base and can
+                           either be one of the standard models or user-defined
+                           (see \ref sectNeuronModels).
+\arg `const string &name`: Unique name of the neuron population
+\arg `unsigned int size`: number of neurons in the population
+\arg `NeuronModel::ParamValues paramValues`: Parameters of this neuron type
+\arg `NeuronModel::VarValues varValues`: Initial values for variables of this neuron type 
 
 The user may add as many neuron populations as the model necessitates.
 They must all have unique names. The possible values for the arguments,
@@ -104,46 +103,39 @@ predefined models and their parameters and initial values are detailed
 
 Synapse populations are added with the function
 \code{.cc}
-model.addSynapsePopulation(name, sType, sConn, gType, delay, postSyn, preName, postName, sIni, sParam, postSynIni, postSynParam);
+model.addSynapsePopulation<WeightUpdateModel, PostsynapticModel>(name, mType, delay, preName, postName, weightParamValues, weightVarValues, postsynapticParamValues, postsynapticVarValues);
 \endcode
 where the arguments are
-\arg `const string name`: The name of the synapse population
-\arg `unsigned int sType`: The type of synapse to be added. See \ref
-     subsect31 below for the available predefined synapse types.
-\arg `unsigned int sConn`: The type of synaptic connectivity. the options
-     currently are "ALLTOALL", "DENSE", "SPARSE" (see \ref subsect32).
-\arg `unsigned int gType`: The way how the synaptic conductivity g will
-     be defined. Options are "INDIVIDUALG", "GLOBALG", "INDIVIDUALID"
-     (see \ref sect33).
+\arg `WeightUpdateModel`:   Template parameter specifying the type of weight update model.
+                            These should be derived off WeightUpdateModels::Base and can
+                            either be one of the standard models or user-defined
+                            (see \ref sectSynapseModels).
+\arg `PostsynapticModel`:   Template parameter specifying the type of postsynaptic integration model.
+                            These should be derived off PostsynapticModels::Base and can
+                            either be one of the standard models or user-defined
+                            (see \ref sect_postsyn).
+\arg `const string &name`: The name of the synapse population
+\arg `unsigned int mType`: How the synaptic metrix is stored. the options
+     currently are "SPARSE_GLOBALG", "SPARSE_INDIVIDUALG", "DENSE_GLOBALG", "DENSE_INDIVIDUALG" or "BITMASK_GLOBALG" (see \ref subsect34).
 \arg `unsigned int delay`: Synaptic delay (in multiples of the simulation
      time step `DT`). 
-\arg `unsigned int postSyn`: Postsynaptic integration method. See \ref
-     sect_postsyn for predefined types.
 \arg `const string preName`: Name of the (existing!) pre-synaptic
      neuron population.
 \arg `const string postName`: Name of the (existing!) post-synaptic
      neuron population.
-\arg `vector<double> sIni`: A vector of doubles containing initial values
-     for the (pre-) synaptic variables. 
-\arg `vector<double> sParam`: A vector of double precision that contains
-     parameter values (common to all synapses of the population) which will
-     be used for the defined synapses. The array must contain the right
-     number of parameters in the right order for the chosen synapse
-     type. If too few, segmentation faults will occur, if too many, excess
-     will be ignored. For pre-defined synapse types the required parameters
-     and their meaning are listed in \ref sect31 below. 
-\arg `vector<double> psIni`: A vector of double precision numbers
-     containing initial values for the post-synaptic model variables.
-\arg `vector<double> psPara`: A vector of double precision numbers
-     containing parameters fo the post-snaptic model.
+\arg `WeightUpdateModel::ParamValues weightParamValues`:    The parameter values (common to all synapses of 
+                                                            the population) for the weight update model. 
+\arg `WeightUpdateModel::VarValues weightVarValues`:    The initial values for the weight
+                                                        update model's state variables
+\arg `PostsynapticModel::ParamValues postsynapticParamValues`:  The parameter values (common to all 
+                                                                postsynaptic neurons) for the postsynaptic model. 
+\arg `PostsynapticModel::VarValues postsynapticVarValues`:  The initial values for the 
+                                                            postsynaptic model's state variables
 
 \note
 If the synapse conductance definition type is "GLOBALG" then the global
-value of the synapse conductances is taken from the initial value provided
-in `sINI`. (The function setSynapseG() from earlier versions of GeNN has
-been deprecated).
-
-Synaptic updates can occur per "true" spike (i.e at one point per spike, e.g. after a threshold was crossed) or for all "spike type events" (e.g. all points above a given threshold). This is defined within each given synapse type.
+value of the synapse parameters is taken from the initial value provided
+in `weightVarValues`.
 \n
 
 -----
@@ -211,7 +203,7 @@ for enhanced efficiency when running neuron models. If parameters with model-sid
 constants or conductances always appear in a certain combination in the model, then it is more efficient 
 to pre-compute this combination and define it as a dependent parameter.
 
-For example, because the previous leaky integrator example has an algebraic solution, it can be more accurately solved as follows using a derived parameter to calculate \f$\exp\left(\frac{-t}{\tau}\right)\f$:
+For example, because the equation defining the previous leaky integrator example has an algebraic solution, it can be more accurately solved as follows - using a derived parameter to calculate \f$\exp\left(\frac{-t}{\tau}\right)\f$:
 
 \code
 class LeakyIntegrator2 : public NeuronModels::Base
@@ -232,28 +224,25 @@ public:
 };
 \endcode
 
-- `supportCode` of type `string`: This allows to define a code snippet that contains supporting code that will be utilized in the otehr code snippets. Typically, these are functions that are needed in the `simCode` or `thresholdConditionCode`. If possible, these should be defined as `__host__ __device__` functions so that both GPU and CPU versions of GeNN code have an appropriate support code function available. The support code is protected with a namespace so that it is exclusively available for the neuronpopulation whose neurons define it. An example of a `supportCode` definition would be
+GeNN provides two additional features that might be useful when defining more complex neuron models.
+"Support code" enables a code snippet to be defined that contains supporting code that will be utilized in the other code snippets. Typically, these are functions that are needed in the sim code or threshold condition code. If possible, these should be defined as `__host__ __device__` functions so that both GPU and CPU versions of GeNN code have an appropriate support code function available. The support code is protected with a namespace so that it is exclusively available for the neuron population whose neurons define it. Support code is added to a model using the SET_SUPPORT_CODE() macro, for example:
 \code
-n.supportCode= tS(" __host__ __device__ mysin(float x) {\n\
-return sin(x);\n\
-}");
+SET_SUPPORT_CODE("__device__ __host__ scalar mysin(float x){ return sin(x); }");
 \endcode
 
-- `extraGlobalNeuronKernelParameters` of type `vector<string>`: On occasion, the neurons in a population share the same parameter. This could, for example, be a global reward signal. Such situations are implemented in GeNN with `extraGlobalNeuronKernelParameters`. This vector takes the names of such parameters. FOr each name, a variable will be created, with the name of the neuron population name appended, that can take a single value per population of the type defined in the extraGlobalNeuronKernelParameterTypes vector. This variable is available to all neurons in the population. It can also be used in synaptic code snippets; in this case it needs to be addressed with a `_pre` or `_post` postfix.
-For example, if teh pre-synaptic neuron population is of a neuron type that defines:
+The final feature is "Extra global parameters". These parameters are common to all neurons in the population and, unlike the standard neuron parameters, can be varied at runtime. This could, for example, be used to provide a global reward signal.
+These parameters are defined by using the SET_EXTRA_GLOBAL_PARAMS() macro to specify a list of variable names and type strings (like the SET_VARS() macro). For example:
 \code
-n.extraGlobalNeuronKernelParameters.push_back(tS("R"));
-n.extraGlobalNeuronKernelParameterTypes.push_back(tS("float"));
+SET_EXTRA_GLOBAL_PARAMS({{"R", "float"}});
 \endcode
-then, a synapse population could have simulation code like
+
+These variables are available to all neurons in the population. They can also be used in synaptic code snippets; in this case it need to be addressed with a `_pre` or `_post` postfix.
+
+For example, if the model with the "R" parameter was used for the pre-synaptic neuron population, the weight update model of a synapse population could have simulation code like:
 \code
-s.simCode= tS("$(x)= $(x)+$(R_pre);");
+SET_SIM_CODE("$(x)= $(x)+$(R_pre);");
 \endcode
-where we have assumed that the synapse type `s` has a variable `x` and the synapse type `s` will only be used in conjunction with pre-synaptic neuron populations that do have the extraGlobalNeuronKernelParameter `R`. If the pre-synaptic population does not have the required variable/parameter, GeNN will fail when compiling the kernels.
-
-- `extraGlobalNeuronKernelParameterTypes` of type `vector<string>`: These are the types of the `extraGlobalNeuronKernelParameters`. Types are matched to names by their position in the vector.
-
-Once defined in this way, new neuron models classes, can be used in network descriptions by referring to their type e.g.
+where we have assumed that the weight update model has a variable `x` and our synapse type will only be used in conjunction with pre-synaptic neuron populations that do have the extra global parameter `R`. If the pre-synaptic population does not have the required variable/parameter, GeNN will fail when compiling the kernels.
 
 \code
 networkModel.addNeuronPopulation<LeakyIntegrator>("Neurons", 1, 
