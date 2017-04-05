@@ -455,7 +455,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
     bool firstNeuronGroup = true;
     for(const auto &n : model.getNeuronGroups()) {
         os << "// neuron group " << n.first << ENDL;
-        const auto &groupIDRange = n.second.getPaddedCumSumNeurons();
+        const auto &groupIDRange = n.second.getPaddedIDRange();
         if (firstNeuronGroup) {
             os << "if (id < " << groupIDRange.second << ")" << OB(10);
             localID = "id";
@@ -866,7 +866,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
     bool firstSynapseGroup = true;
     for(const auto &s : model.getSynapseGroups()) {
         os << "// synapse group " << s.first << ENDL;
-        const auto &groupIDRange = s.second.getPaddedKernelCumSum();
+        const auto &groupIDRange = s.second.getPaddedKernelIDRange();
         if (firstSynapseGroup) {
             os << "if (id < " << groupIDRange.second << ")" << OB(77);
             localID = "id";

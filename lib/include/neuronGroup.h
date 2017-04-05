@@ -17,7 +17,7 @@ class NeuronGroup
 public:
     NeuronGroup(const std::string &name, int numNeurons, const NeuronModels::Base *neuronModel,
                 const std::vector<double> &params, const std::vector<double> &initVals) :
-        m_Name(name), m_NumNeurons(numNeurons), m_CumSumNeurons(0, 0), m_PaddedCumSumNeurons(0, 0),
+        m_Name(name), m_NumNeurons(numNeurons), m_IDRange(0, 0), m_PaddedIDRange(0, 0),
         m_NeuronModel(neuronModel), m_Params(params), m_InitVals(initVals),
         m_SpikeTimeRequired(false), m_TrueSpikeRequired(false), m_SpikeEventRequired(false), m_QueueRequired(false),
         m_NumDelaySlots(1),
@@ -63,7 +63,7 @@ public:
     void addOutSyn(SynapseGroup *synapseGroup){ m_OutSyn.push_back(synapseGroup); }
 
     void initDerivedParams(double dt);
-    void calcSizes(unsigned int blockSize, unsigned int &cumSum, unsigned int &paddedCumSum);
+    void calcSizes(unsigned int blockSize, unsigned int &idStart, unsigned int &paddedIDStart);
 
     //------------------------------------------------------------------------
     // Public const methods
@@ -71,8 +71,8 @@ public:
     const std::string &getName() const{ return m_Name; }
 
     unsigned int getNumNeurons() const{ return m_NumNeurons; }
-    const std::pair<unsigned int, unsigned int> &getPaddedCumSumNeurons() const{ return m_PaddedCumSumNeurons; }
-    const std::pair<unsigned int, unsigned int> &getCumSumNeurons() const{ return m_CumSumNeurons; }
+    const std::pair<unsigned int, unsigned int> &getPaddedIDRange() const{ return m_PaddedIDRange; }
+    const std::pair<unsigned int, unsigned int> &getIDRange() const{ return m_IDRange; }
     const NeuronModels::Base *getNeuronModel() const{ return m_NeuronModel; }
 
     const std::vector<double> &getParams() const{ return m_Params; }
@@ -115,8 +115,8 @@ private:
     std::string m_Name;
 
     unsigned int m_NumNeurons;
-    std::pair<unsigned int, unsigned int> m_CumSumNeurons;
-    std::pair<unsigned int, unsigned int> m_PaddedCumSumNeurons;
+    std::pair<unsigned int, unsigned int> m_IDRange;
+    std::pair<unsigned int, unsigned int> m_PaddedIDRange;
 
     const NeuronModels::Base *m_NeuronModel;
     std::vector<double> m_Params;
