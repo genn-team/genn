@@ -97,7 +97,7 @@ public:
 // NeuronModels::RulkovMap
 //----------------------------------------------------------------------------
 //! Rulkov Map neuron
-/*! The MAPNEURON type is a map based neuron model based on \cite Rulkov2002 but in
+/*! The RulkovMap type is a map based neuron model based on \cite Rulkov2002 but in
     the 1-dimensional map form used in \cite nowotny2005self :
     \f{eqnarray*}{
     V(t+\Delta t) &=& \left\{ \begin{array}{ll}
@@ -108,9 +108,9 @@ public:
     \right.
     \f}
     \note
-    The `MAPNEURON` type only works as intended for the single time step size of `DT`= 0.5.
+    The `RulkovMap` type only works as intended for the single time step size of `DT`= 0.5.
 
-    The `MAPNEURON` type has 2 variables:
+    The `RulkovMap` type has 2 variables:
     - \c V - the membrane potential
     - \c preV - the membrane potential at the previous time step
 
@@ -121,7 +121,7 @@ public:
     - \c beta - roughly speaking equivalent to the input resistance, i.e. it regulates the scale of the input into the neuron, typically \f$\beta\f$= 2.64 \f${\rm M}\Omega\f$.
 
     \note
-    The initial values array for the `MAPNEURON` type needs two entries for `V` and `Vpre` and the
+    The initial values array for the `RulkovMap` type needs two entries for `V` and `Vpre` and the
     parameter array needs four entries for `Vspike`, `alpha`, `y` and `beta`,  *in that order*.*/
 class RulkovMap : public Base
 {
@@ -260,7 +260,7 @@ public:
     - \c Vspike - Membrane potential at spike (mV)
     - \c Vrest - Membrane potential at rest (mV)
 
-    \note The initial values array for the `POISSONNEURON` type needs three entries
+    \note The initial values array for the `Poisson` type needs three entries
     for `V`, `Seed` and `SpikeTime` and the parameter array needs four entries for
     `therate`, `trefract`, `Vspike` and `Vrest`,  *in that order*.
 

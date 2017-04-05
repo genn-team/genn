@@ -150,7 +150,7 @@ public:
     //! Adds a new neuron group to the model
     /*! \tparam NeuronModel type of neuron model (derived from NeuronModels::Base).
         \param name string containing unique name of neuron population.
-        \param size integer specifying how many neurons make up the population.
+        \param size integer specifying how many neurons are in the population.
         \param paramValues parameters for model wrapped in NeuronModel::ParamValues object.
         \param varValues initial state variable values for model wrapped in NeuronModel::VarValues object.
         \return pointer to newly created NeuronGroup */
