@@ -110,31 +110,50 @@ public:
     void setDT(double); //!< Set the integration step size of the model
     void setTiming(bool); //!< Set whether timers and timing commands are to be included
     void setSeed(unsigned int); //!< Set the random seed (disables automatic seeding if argument not 0).
-    void checkSizes(unsigned int *, unsigned int *, unsigned int *); //< Check if the sizes of the initialized neuron and synapse groups are correct.
 #ifndef CPU_ONLY
     void setGPUDevice(int); //!< Method to choose the GPU to be used for the model. If "AUTODEVICE' (-1), GeNN will choose the device based on a heuristic rule.
 #endif
+    //! Get the string literal that should be used to represent a value in the model's floating-point type
     string scalarExpr(const double) const;
+
     void setPopulationSums(); //!< Set the accumulated sums of lowest multiple of kernel block size >= group sizes for all simulated groups.
     void finalize(); //!< Declare that the model specification is finalised in modelDefinition().
 
+    //! Are any variables in any populations in this model using zero-copy memory?
     bool zeroCopyInUse() const;
 
     // PUBLIC NEURON FUNCTIONS
     //========================
+    //! Get std::map containing all named NeuronGroup objects in model
     const map<string, NeuronGroup> &getNeuronGroups() const{ return m_NeuronGroups; }
 
+    //! Gets std::map containing names and types of each parameter that should be passed through to the neuron kernel
     const map<string, string> &getNeuronKernelParameters() const{ return neuronKernelParameters; }
 
+    //! Gets the size of the neuron kernel thread grid
+    /*! This is calculated by adding together the number of threads required by
+        each neuron population, padded to be a multiple of GPU's thread block size.*/
     unsigned int getNeuronGridSize() const;
+
+    //! How many neurons make up the entire model
     unsigned int getNumNeurons() const;
 
+    //! Find a neuron group by name
     const NeuronGroup *findNeuronGroup(const std::string &name) const;
+
+    //! Find a neuron group by name
     NeuronGroup *findNeuronGroup(const std::string &name);
 
     NeuronGroup *addNeuronPopulation(const string&, unsigned int, unsigned int, const double *, const double *); //!< Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population
     NeuronGroup *addNeuronPopulation(const string&, unsigned int, unsigned int, const vector<double>&, const vector<double>&); //!< Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population
 
+    //! Adds a new neuron group to the model
+    /*! \tparam NeuronModel type of neuron model (derived from NeuronModels::Base).
+        \param name string containing unique name of neuron population.
+        \param size integer specifying how many neurons make up the population.
+        \param paramValues parameters for model wrapped in NeuronModel::ParamValues object.
+        \param varValues initial state variable values for model wrapped in NeuronModel::VarValues object.
+        \return pointer to newly created NeuronGroup */
     template<typename NeuronModel>
     NeuronGroup *addNeuronPopulation(const string &name, unsigned int size,
                             const typename NeuronModel::ParamValues &paramValues, const typename NeuronModel::VarValues &varValues)
@@ -170,22 +189,51 @@ public:
 
     // PUBLIC SYNAPSE FUNCTIONS
     //=========================
+    //! Get std::map containing all named SynapseGroup objects in model
     const map<string, SynapseGroup> &getSynapseGroups() const{ return m_SynapseGroups; }
+
+    //! Get std::map containing names of synapse groups which require postsynaptic learning and their thread IDs within
+    //! the postsynaptic learning kernel (padded to multiples of the GPU thread block size)
     const map<string, std::pair<unsigned int, unsigned int>> &getSynapsePostLearnGroups() const{ return m_SynapsePostLearnGroups; }
+
+    //! Get std::map containing names of synapse groups which require synapse dynamics and their thread IDs within
+    //! the synapse dynamics kernel (padded to multiples of the GPU thread block size)
     const map<string, std::pair<unsigned int, unsigned int>> &getSynapseDynamicsGroups() const{ return m_SynapseDynamicsGroups; }
 
+    //! Gets std::map containing names and types of each parameter that should be passed through to the synapse kernel
     const map<string, string> &getSynapseKernelParameters() const{ return synapseKernelParameters; }
+
+    //! Gets std::map containing names and types of each parameter that should be passed through to the postsynaptic learning kernel
     const map<string, string> &getSimLearnPostKernelParameters() const{ return synapseDynamicsKernelParameters; }
+
+    //! Gets std::map containing names and types of each parameter that should be passed through to the synapse dynamics kernel
     const map<string, string> &getSynapseDynamicsKernelParameters() const{ return synapseDynamicsKernelParameters; }
 
+    //! Gets the size of the synapse kernel thread grid
+    /*! This is calculated by adding together the number of threads required by each
+        synapse population's synapse kernel, padded to be a multiple of GPU's thread block size.*/
     unsigned int getSynapseKernelGridSize() const;
+
+    //! Gets the size of the post-synaptic learning kernel thread grid
+    /*! This is calculated by adding together the number of threads required by each
+        synapse population's postsynaptic learning kernel, padded to be a multiple of GPU's thread block size.*/
     unsigned int getSynapsePostLearnGridSize() const;
+
+    //! Gets the size of the synapse dynamics kernel thread grid
+    /*! This is calculated by adding together the number of threads required by each
+        synapse population's synapse dynamics kernel, padded to be a multiple of GPU's thread block size.*/
     unsigned int getSynapseDynamicsGridSize() const;
 
+    //! Find a synapse group by name
     const SynapseGroup *findSynapseGroup(const std::string &name) const;
+
+    //! Find a synapse group by name
     SynapseGroup *findSynapseGroup(const std::string &name);    
 
+    //! Does named synapse group have synapse dynamics
     bool isSynapseGroupDynamicsRequired(const std::string &name) const;
+
+    //! Does named synapse group have post-synaptic learning
     bool isSynapseGroupPostLearningRequired(const std::string &name) const;
 
     SynapseGroup *addSynapsePopulation(const string &name, unsigned int syntype, SynapseConnType conntype, SynapseGType gtype, const string& src, const string& trg, const double *p); //!< This function has been depreciated as of GeNN 2.2.
@@ -194,6 +242,19 @@ public:
     SynapseGroup *addSynapsePopulation(const string&, unsigned int, SynapseConnType, SynapseGType, unsigned int, unsigned int, const string&, const string&,
                               const vector<double>&, const vector<double>&, const vector<double>&, const vector<double>&); //!< Method for adding a synapse population to a neuronal network model, using C++ string for the name of the population
 
+    //! Adds a new synapse group to the model
+    /*! \tparam WeightUpdateModel type of weight update model (derived from WeightUpdateModels::Base).
+        \tparam PostsynapticModel type of postsynaptic model (derived from PostsynapticModels::Base).
+        \param name string containing unique name of neuron population.
+        \param mtype how the synaptic matrix associated with this synapse population should be represented.
+        \param delayStep integer specifying number of timesteps delay this synaptic connection should incur (or NO_DELAY for none)
+        \param src string specifying name of presynaptic (source) population
+        \param trg string specifying name of postsynaptic (target) population
+        \param weightParamValues parameters for weight update model wrapped in WeightUpdateModel::ParamValues object.
+        \param weightVarValues initial state variable values for weight update model wrapped in WeightUpdateModel::VarValues object.
+        \param postsynapticParamValues parameters for postsynaptic model wrapped in PostsynapticModel::ParamValues object.
+        \param postsynapticVarValues initial state variable values for postsynaptic model wrapped in PostsynapticModel::VarValues object.
+        \return pointer to newly created SynapseGroup */
     template<typename WeightUpdateModel, typename PostsynapticModel>
     SynapseGroup *addSynapsePopulation(const string &name, SynapseMatrixType mtype, unsigned int delaySteps, const string& src, const string& trg,
                                        const typename WeightUpdateModel::ParamValues &weightParamValues, const typename WeightUpdateModel::VarValues &weightVarValues,
