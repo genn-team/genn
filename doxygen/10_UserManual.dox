@@ -161,16 +161,16 @@ There is a number of predefined models which can be used with the NNmodel::addNe
 
 In order to define a new neuron type for use in a GeNN application,
 it is necessary to define a new class derived from NeuronModels::Base. 
-This can be done conveniently within the modelDefinition function just before the model is needed. 
 For convenience the methods this class should implement can be implemented using macros:
 
-- DECLARE_MODEL(TYPE, NUM_PARAMS, NUM_VARS)  
+- DECLARE_MODEL(TYPE, NUM_PARAMS, NUM_VARS): declared the boilerplate code required for the model e.g. the correct
+  specialisations of NewModels::ValueBase used to wrap the neuron model parameters and values.
 - SET_SIM_CODE(SIM_CODE): where SIM_CODE contains the code for executing 
   the integration of the model for one time step. Within this code string, variables need to be
   referred to by $(NAME), where NAME is the name of the variable as
   defined in the vector varNames. The code may refer to the predefined
   primitives `DT` for the
-  time step size and `$(Isyn)` for the total incoming synaptic current. It can also refer to a unique ID (within the population) using $(id). <br />
+  time step size and `$(Isyn)` for the total incoming synaptic current. It can also refer to a unique ID (within the population) using $(id).
 - SET_THRESHOLD_CONDITION_CODE(THRESHOLD_CONDITION_CODE) defines the condition for true spike detection.
 - SET_PARAM_NAMES() defines the names of the model parameters. 
     If defined as `NAME` here, they can then be referenced as `$(NAME)` in the code string. 
@@ -244,6 +244,7 @@ SET_SIM_CODE("$(x)= $(x)+$(R_pre);");
 \endcode
 where we have assumed that the weight update model has a variable `x` and our synapse type will only be used in conjunction with pre-synaptic neuron populations that do have the extra global parameter `R`. If the pre-synaptic population does not have the required variable/parameter, GeNN will fail when compiling the kernels.
 
+Once defined in this way, new neuron models classes, can be used in network descriptions by referring to their type e.g.
 \code
 networkModel.addNeuronPopulation<LeakyIntegrator>("Neurons", 1, 
                                                   LeakyIntegrator::ParamValues(20.0 /*tau*/),
@@ -255,48 +256,49 @@ networkModel.addNeuronPopulation<LeakyIntegrator>("Neurons", 1,
 
 //----------------------------------------------------------------------------
 /*! 
-\page sectSynapseModels Synapse models
+\page sectSynapseModels Weight update models
 
-Currently 3 predefined synapse models are available: 
+Currently 3 predefined weight update models are available: 
 - WeightUpdateModels::StaticPulse
 - WeightUpdateModels::StaticGraded
 - WeightUpdateModels::PiecewiseSTDP
 
 For more details about these built-in synapse models, see \cite Nowotny2010.
 
-\section sect34 Defining a new synapse model
+\section sect34 Defining a new weight update model
 
-A synapse model is a weightUpdateModel object which consists of variables, parameters, and string objects which will be substituted in the code. The three strings that will be substituted in the code for synapse update are:
+Like the neuron models discussed in \ref sect_own, new weight update models are created by defining a class.
+Weight update models should all be derived from WeightUpdateModel::Base and, for convenience, the methods a new weight update model should implement can be implemented using macros:
 
-- \c simCode: Simulation code that is used when a true spike is detected. The update is performed only once, one time step after threshold condition detection, which is defined by \c thresholdConditionCode in the neuron model of the corresponding presynaptic neuron population. <br />
-Typically, spikes lead to update of synaptic variables that then lead to the activation of input into the post-synaptic neuron. Most of the time these inputs add linearly at the post-synaptic neuron. This is assumed in GeNN and the term to be added to the activation of the post-synaptic neuron should be provided as the value of the by the \$(addtoinsyn) snippet. 
+- DECLARE_MODEL(TYPE, NUM_PARAMS, NUM_VARS), SET_PARAM_NAMES(), SET_VARS() and SET_EXTRA_GLOBAL_PARAMS() perform the same roles as they do in the neuron
+  models discussed in \ref sect_own.
+- SET_SIM_CODE(SIM_CODE): defines the simulation code that is used when a true spike is detected. The update is performed only in timesteps after a neuron in the presynaptic population has fulfilled its threshold detection condition.
+Typically, spikes lead to update of synaptic variables that then lead to the activation of input into the post-synaptic neuron. Most of the time these inputs add linearly at the post-synaptic neuron. This is assumed in GeNN and the term to be added to the activation of the post-synaptic neuron should be assigned to the \$(addtoinsyn) variable. 
 For example
 \code
-"\$(addtoinsyn) = $(inc);"
+SET_SIM_CODE(
+    "\$(addtoinsyn) = $(inc);\n"
+    "\$(updatelinsyn)");
 \endcode
-where "inc" is a parameter of the weightupdate model, would define a constant increment of the synaptic input of a post-synaptic neuron for each pre-synaptic spike. <br />
-When a spike is detected in the presynaptic neuron population, the simCode is executed. Within the code snippet the \$(addtoinSyn) update just discussed should be be followed by the \$(updatelinsyn) keyword to indicate that the summation of synaptic inputs can now occur. This can then be followed by updates on the internal synapse variables that may have contributed to addtoinSyn. For an example, see \ref sect31 for a simple synapse update model and \ref sect33 for a more complicated model that uses STDP. 
-
-- \c evntThreshold: Code that defines the condition for a synaptic event. This typically involves the pre-synaptic variables, e.g. the membrane potential: 
+where "inc" is a parameter of the weight update model that defines a constant increment of the synaptic input of a post-synaptic neuron for each pre-synaptic spike. Once \$(addtoinsyn) has been assigned, the \$(updatelinsyn) keyword should be used to indicate that the summation of synaptic inputs can now occur. This can then be followed by updates on the internal synapse variables that may have contributed to addtoinSyn. For an example, see WeightUpdateModels::StaticPulse for a simple synapse update model and WeightUpdateModels::PiecewiseSTDP for a more complicated model that uses STDP. 
+- SET_EVENT_THRESHOLD_CONDITION_CODE(EVENT_THRESHOLD_CONDITION_CODE) defines a condition for a synaptic event. This typically involves the pre-synaptic variables, e.g. the membrane potential: 
 \code
-"$(V_pre) > -0.02"
+SET_EVENT_THRESHOLD_CONDITION_CODE("$(V_pre) > -0.02");
 \endcode
-Whenever this expression evaluates to true, the code in `simCodeEvnt` is executed. For an example, see \ref sect32.
+Whenever this expression evaluates to true, the event code set using the SET_EVENT_CODE() macro is executed. For an example, see WeightUpdateModels::StaticGraded.
 
-- \c simCodeEvnt: Simulation code that is used for spike like events, where updates are done for all instances in which the event condition defined by `evntThreshold` is met. `evntThreshold` is also be provided as a code string. For an example, see \ref sect32.
+- SET_EVENT_CODE(EVENT_CODE) defines the code that is used when the event threshold condition is met (as set using the SET_EVENT_THRESHOLD_CONDITION_CODE() macro). 
 
-- \c simLearnPost: Simulation code which is used in the learnSynapsesPost kernel/function, which performs updates to synapses that are triggered by post-synaptic spikes. This is rather unusual other than in learning rules like e.g. STDP. For an example that uses `simLearnPost`, see \ref sect33.
+- SET_LEARN_POST_CODE(LEARN_POST_CODE) defines the code which is used in the learnSynapsesPost kernel/function, which performs updates to synapses that are triggered by post-synaptic spikes. This is typically used in STDP-like models e.g. WeightUpdateModels::PiecewiseSTDP.
 
-- \c synapseDynamics: Simulation code that applies for every time step, i.e.is unlike the others not gated with a condition. This can be used where synapses have internal variables and dynamics that are described in continuous time, e.g. by ODEs. Usng this mechnanism is typically computationally veruy costly because of the large number of synapses in a typical network.
-
-- `extraGlobalSynapseKernelParameters` of type `vector<string>`: On occasion, the synapses in a synapse population share a global parameter. This could, for example, be a global reward signal. This is supported in GeNN with `extraGlobalSynapseKernelParameters`. The user defines the names of such parameters and pushes them into this vector. GeNN creates variables of this name, with the name of the synapse population appended, that can take a single value per population of the type defined in the extraGlobalSynapseKernelParameterTypes vector. This variable is then available to all synapses in the population. 
-\note No implicit or explicit copy of `extraGlobalSynapseKernelParameters` is necessary as they are communicated as kernel parameters.
-
-- `extraGlobalSynapseKernelParameterTypes` of type `vector<string>`: These are the types of the `extraGlobalSynapseKernelParameters`. Types are matched to names by their position in the vector.
+- SET_SYNAPSE_DYNAMICS_CODE(SYNAPSE_DYNAMICS_CODE) defines code that is run for each synapse, each timestep i.e. unlike the others it is not event driven. This can be used where synapses have internal variables and dynamics that are described in continuous time, e.g. by ODEs. However using this mechnanism is typically computationally very costly because of the large number of synapses in a typical network.
+- SET_NEEDS_PRE_SPIKE_TIME(PRE_SPIKE_TIME_REQUIRED) and SET_NEEDS_POST_SPIKE_TIME(POST_SPIKE_TIME_REQUIRED) define whether the weight update needs to know the times of the spikes emitted from the pre and postsynaptic populations. For example an STDP rule would be likely to require:
+\code
+SET_NEEDS_PRE_SPIKE_TIME(true);
+SET_NEEDS_POST_SPIKE_TIME(true);
+\endcode
 
 All code snippets can be used to manipulate any synapse variable and so implement both synaptic dynamics and learning processes.
-
-If users want to define their own models, they can add a new `weightUpdateModel` that includes the variables, parameters, and update codes as desired, and then push this object in the `weightUpdateModels` vector. The model can be used by referring to its index in the `weightUpdateModels` vector when adding a new population by with a call to `addSynapsePopulation`.
 
 \section subsect34 Conductance definition methods
 The available options work as follows:
