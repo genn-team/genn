@@ -38,6 +38,8 @@ public:                                                        \
 //----------------------------------------------------------------------------
 namespace NewModels
 {
+//! Wrapper to ensure at compile time that correct number of values are
+//! used when specifying the values of a model's parameters and initial state.
 template<size_t NumValues>
 class ValueBase
 {
@@ -59,6 +61,7 @@ public:
     //----------------------------------------------------------------------------
     // Public API
     //----------------------------------------------------------------------------
+    //! Gets values as a vector of doubles
     std::vector<double> getValues() const
     {
         return std::vector<double>(m_Values.cbegin(), m_Values.cend());
@@ -82,6 +85,8 @@ private:
 //----------------------------------------------------------------------------
 // NewModels::ValueBase<0>
 //----------------------------------------------------------------------------
+//! Template specialisation of ValueBase to avoid compiler warnings
+//! in the case when a model requires no parameters or state variables
 template<>
 class ValueBase<0>
 {
@@ -97,6 +102,7 @@ public:
     //----------------------------------------------------------------------------
     // Public API
     //----------------------------------------------------------------------------
+    //! Gets values as a vector of doubles
     std::vector<double> getValues() const
     {
         return {};
