@@ -63,12 +63,12 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// PostsynapticModels::Izhikevich
+// PostsynapticModels::DeltaCurr
 //----------------------------------------------------------------------------
-class Izhikevich : public Base
+class DeltaCurr : public Base
 {
 public:
-    DECLARE_MODEL(Izhikevich, 0, 0);
+    DECLARE_MODEL(DeltaCurr, 0, 0);
 
     SET_CURRENT_CONVERTER_CODE("$(inSyn); $(inSyn) = 0");
 
