@@ -22,10 +22,13 @@
 # Include makefile which builds libgenn
 include $(GENN_PATH)/lib/GNUMakefileLibGeNN
 
-
-# Source, Include, Object and Library directories
+# Get generate SpineML path i.e. directory of this Makefile
 GENERATE_SPINEML_PATH         :=$(CURDIR)
 
+# Get SpineML path i.e. parent directory
+SPINEML_PATH                  :=$(abspath $(GENERATE_SPINEML_PATH)/..)
+
+COMMON_SPINEML_PATH           :=$(SPINEML_PATH)/common
 
 # generateALL and libgenn.a targets
 ifndef CPU_ONLY
@@ -34,12 +37,12 @@ else
     GENERATE_SPINEML          =$(GENERATE_SPINEML_PATH)/generateSpineML_CPU_ONLY
 endif
 
-OBJECT_HANDLER_SOURCES        := objectHandlerCondition.cc objectHandlerTimeDerivative.cc 
-MODEL_SOURCES                 := spineMLModelCommon.cc spineMLNeuronModel.cc spineMLPostsynapticModel.cc spineMLWeightUpdateModel.cc
-GENERATE_SPINEML_SOURCES      := pugixml/pugixml.cpp main.cc $(OBJECT_HANDLER_SOURCES) $(MODEL_SOURCES)
-GENERATE_SPINEML_SOURCES      :=$(addprefix $(GENERATE_SPINEML_PATH)/,$(GENERATE_SPINEML_SOURCES))
+OBJECT_HANDLER_SOURCES        := generator/objectHandlerCondition.cc generator/objectHandlerTimeDerivative.cc 
+MODEL_SOURCES                 := generator/spineMLModelCommon.cc generator/spineMLNeuronModel.cc generator/spineMLPostsynapticModel.cc generator/spineMLWeightUpdateModel.cc
+GENERATE_SPINEML_SOURCES      := common/pugixml/pugixml.cpp generator/main.cc $(OBJECT_HANDLER_SOURCES) $(MODEL_SOURCES)
+GENERATE_SPINEML_SOURCES      :=$(addprefix $(SPINEML_PATH)/,$(GENERATE_SPINEML_SOURCES))
 
-INCLUDE_FLAGS                 += -I $(GENERATE_SPINEML_PATH)
+INCLUDE_FLAGS                 += -I $(GENERATE_SPINEML_PATH) -I $(COMMON_SPINEML_PATH)
 
 # Target rules
 .PHONY: all clean clean_generate_spine_ml always_compile
