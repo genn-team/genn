@@ -332,7 +332,7 @@ Their values must be initialised at runtime and, if running on the GPU, copied a
 - SynapseMatrixWeight::GLOBAL saves memory by only maintaining one copy of the weight update model variables.
 This is automatically initialized to the initial value passed to NNmodel::addSynapsePopulation.
 
-Only certain combinations of SynapseMatrixConnectivity and SynapseMatrixWeight are sensible and therefore, to reduce confusion, the SynapseMatrixType enumeration defines the following options which can be passed to NNmodel::addSynapsePopulation:
+Only certain combinations of SynapseMatrixConnectivity and SynapseMatrixWeight are sensible therefore, to reduce confusion, the SynapseMatrixType enumeration defines the following options which can be passed to NNmodel::addSynapsePopulation:
 - SynapseMatrixType::SPARSE_GLOBALG
 - SynapseMatrixType::SPARSE_INDIVIDUALG
 - SynapseMatrixType::DENSE_GLOBALG
