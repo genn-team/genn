@@ -32,7 +32,7 @@ Now we need to fill the actual model definition. Three standard elements to the 
   model.setName("tenHHModel");
 \endcode
 \note 
-With this we have fixed the integration time step to `0.1` in the usual time units. The typical units in GeNN are `ms`, `mV`, `nF`, and `\f$\mu\f$S`. Therefore, this defines `DT= 0.1 ms`. The name of the model given in the setName method does not need to match the file name of the model definition file. However, we strongly recommend it and if conflicting, the file name of the model definition file will prevail.
+With this we have fixed the integration time step to `0.1` in the usual time units. The typical units in GeNN are `ms`, `mV`, `nF`, and `&mu;S`. Therefore, this defines `DT= 0.1 ms`. The name of the model given in the setName method does not need to match the file name of the model definition file. However, we strongly recommend it and if conflicting, the file name of the model definition file will prevail.
 
 Making the actual model definition makes use of the NNmodel::addNeuronPopulation and NNmodel::addSynapsePopulation member functions of the NNmodel object. The arguments to a call to NNmodel::addNeuronPopulation are
 \arg `NeuronModel`: template parameter specifying the neuron model class to use
@@ -127,13 +127,15 @@ This boiler plate code includes the relevant model definition file we completed 
 
 Calling `allocateMem()` allocates the memory structures for all neuron variables and `initialize()` sets the initial values and copies values to the GPU.
 
-Now we can use the generated code to execute the integration of the neuron equations provided by GeNN. To do so, we add after `initialize();`
+Now we can use the generated code to integrate the neuron equations provided by GeNN for 1000ms (\f$ \frac{1000}{DT}\f$ timesteps). To do so, we add after `initialize();`
 \code
-  stepTimeGPU(1000.0);
+for(int t = 0; t < (int)(1000.0 / DT); t++) {
+  stepTimeGPU();
+}
 \endcode
 and we need to copy the result, and output it to stdout,
 \code
-  pullPop1fromDevice();
+  pullPop1StateFromDevice();
   for (int i= 0; i < 10; i++) {  
     cout << VPop1[i] << " ";
     cout << mPop1[i] << " ";
@@ -141,7 +143,7 @@ and we need to copy the result, and output it to stdout,
     cout << nPop1[i] << endl;
   }
 \endcode
-`pullPop1fromDevice()` copies all relevant state variables of the `Pop1` neuron group from the GPU to the CPU main memory. Then we can output the results to stdout by looping through all 10 neurons and outputting the state variables VPop1, mPop1, hPop1, nPop1.
+`pullPop1StateFromDevice()` copies all relevant state variables of the `Pop1` neuron group from the GPU to the CPU main memory. Then we can output the results to stdout by looping through all 10 neurons and outputting the state variables VPop1, mPop1, hPop1, nPop1.
 \note
 The naming convention for variables in GeNN is the variable name defined by the neuron type, here TraubMiles defining V, m, h, and n, followed by the population name, here `Pop1`.
 
@@ -154,8 +156,10 @@ int main()
 {
   allocateMem();
   initialize();
-  stepTimeGPU(1000.0);
-  pullPop1fromDevice();
+  for(int t = 0; t < (int)(1000.0 / DT); t++) {
+    stepTimeGPU();
+  }
+  pullPop1StateFromDevice();
   for (int i= 0; i < 10; i++) {  
     cout << VPop1[i] << " ";
     cout << mPop1[i] << " ";
@@ -210,13 +214,77 @@ This completes this tutorial. You have created a GeNN model and simulated it suc
 
 \section Input Adding External Input
 
-In the example we have created so far, the neurons are not connected and do not receive input. As the TRAUBMILES model is silent in such conditions, the ten neurons simply will simply rest at their resting potential.
-To make things more interesting, let us add a constant input to all neurons, add to the end of the `modelDefinition` function
+In the example we have created so far, the neurons are not connected and do not receive input. As the NeuronModels::TraubMiles model is silent in such conditions, the ten neurons simply will simply rest at their resting potential.
+To make things more interesting, let us add a constant input to all neurons. Unfortunately the built in NeuronModels::TraubMiles model doesn't support this functionality so we need to make our own version. By adding the following to the top of tenHHModel.cc.
 \code
-  model.activateDirectInput("Pop1", CONSTINP);
-  model.setConstInp("Pop1", 0.1);
+class MyTraubMiles : public NeuronModels::TraubMiles
+{
+public:
+    DECLARE_MODEL(MyTraubMiles, 8, 4);
+
+    SET_SIM_CODE(
+        "scalar Imem;\n"
+        "unsigned int mt;\n"
+        "scalar mdt= DT/25.0;\n"
+        "for (mt=0; mt < 25; mt++) {\n"
+        "   Imem= -($(m)*$(m)*$(m)*$(h)*$(gNa)*($(V)-($(ENa)))+\n"
+        "       $(n)*$(n)*$(n)*$(n)*$(gK)*($(V)-($(EK)))+\n"
+        "       $(gl)*($(V)-($(El)))-$(Isyn)-$(I0));\n"
+        "   scalar _a;\n"
+        "   if (lV == -52.0) {\n"
+        "       _a= 1.28;\n"
+        "   }\n"
+        "   else {\n"
+        "       _a= 0.32*(-52.0-$(V))/(exp((-52.0-$(V))/4.0)-1.0);\n"
+        "   }\n"
+        "   scalar _b;\n"
+        "   if (lV == -25.0) {\n"
+        "       _b= 1.4;\n"
+        "   }\n"
+        "   else {\n"
+        "       _b= 0.28*($(V)+25.0)/(exp(($(V)+25.0)/5.0)-1.0);\n"
+        "   }\n"
+        "   $(m)+= (_a*(1.0-$(m))-_b*$(m))*mdt;\n"
+        "   _a= 0.128*exp((-48.0-$(V))/18.0);\n"
+        "   _b= 4.0 / (exp((-25.0-$(V))/5.0)+1.0);\n"
+        "   $(h)+= (_a*(1.0-$(h))-_b*$(h))*mdt;\n"
+        "   if (lV == -50.0) {\n"
+        "       _a= 0.16;\n"
+        "   }\n"
+        "   else {\n"
+        "       _a= 0.032*(-50.0-$(V))/(exp((-50.0-$(V))/5.0)-1.0);\n"
+        "   }\n"
+        "   _b= 0.5*exp((-55.0-$(V))/40.0);\n"
+        "   $(n)+= (_a*(1.0-$(n))-_b*$(n))*mdt;\n"
+        "   $(V)+= Imem/$(C)*mdt;\n"
+        "}\n");
+
+    SET_PARAM_NAMES({"gNa", "ENa", "gK", "EK", "gl", "El", "C", "I0"});
+};
+IMPLEMENT_MODEL(MyTraubMiles);
 \endcode
-This will add a constant input of 0.1 nA to all ten neurons. When run with this addition you should observe the output
+By deriving this off the existing model, the configuration of the threshold condition and state variables remains the same but we are overriding the sim code to include an extra `$(I0)` term in the calculation of `Imem` and adding `I0` to the list of parameters. Switching our example over to this model we can include a 0.1 nA constant input to all 10 neurons as follows:
+\code
+MyTraubMiles::ParamValues p(
+  7.15,          // 0 - gNa: Na conductance in muS
+  50.0,          // 1 - ENa: Na equi potential in mV
+  1.43,          // 2 - gK: K conductance in muS
+  -95.0,          // 3 - EK: K equi potential in mV 
+  0.02672,       // 4 - gl: leak conductance in muS
+  -63.563,       // 5 - El: leak equi potential in mV
+  0.143,         // 6 - Cmem: membr. capacity density in nF
+  0.0623         //7 - I0: external input current in nA
+); 
+
+MyTraubMiles::VarValues ini(
+  -60.0,         // 0 - membrane potential V
+  0.0529324,     // 1 - prob. for Na channel activation m
+  0.3176767,     // 2 - prob. for not Na channel blocking h
+  0.5961207      // 3 - prob. for K channel activation n
+);
+model.addNeuronPopulation<MyTraubMiles>("Pop1", 10, p, ini);
+\endcode
+This will add a constant input of 0.0623 nA to all ten neurons. When run with this addition you should observe the output
 \code
 -63.1468 0.0211871 0.987233 0.0423695
 -63.1468 0.0211871 0.987233 0.0423695
@@ -230,26 +298,26 @@ This will add a constant input of 0.1 nA to all ten neurons. When run with this 
 -63.1468 0.0211871 0.987233 0.0423695
 \endcode
 This is still not particularly interesting as we are just observing the final value of the membrane potentials. To see what is going on in the meantime, we need to copy intermediate values from the device and best save them into a file.
-This can be done in many ways but one sensible way of doing this is to replace the line
-\code
-  stepTimeGPU(1000.0);
-\endcode
-in `tenHHSimulation.cc` to something like this:
+This can be done in many ways but one sensible way of doing this is to replace the calls to `stepTimeGPU` in `tenHHSimulation.cc` with something like this:
 \code
 ofstream os("tenHH_output.V.dat");
-double t= 0.0;
-for (int i= 0; i < 5000; i++) {
-  stepTimeGPU(0.2);
-  pullPop1fromDevice();
+for (int i= 0; i < 10000; i++) {
+  stepTimeGPU();
+  
+  pullPop1StateFromDevice();
   os << t << " ";
   for (int j= 0; j < 10; j++) {
     os << VPop1[j] << " ";
   }
   os << endl;
-  t+= 0.2;
 }
 os.close();
 \endcode
+You will also need to add:
+\code
+#include<fstream>
+\endcode
+to the top of tenHHSimulation.cc.
 After building, making and executing,
 \code
 genn-builmodel.sh tenHHModel.cc
@@ -259,8 +327,6 @@ make clean all
 there should be a file `tenHH_output.V.dat` in the same directory. If you plot column one (time) against column two (voltage of neuron 0), you should observe dynamics like this:
 \image html tenHHexample.png
 \image latex tenHHexample.png width=10cm
-
-The completed files from this tutorial can be found in `userproject/tenHH_project`.
 
 \link sectSynapseModels Previous\endlink | \link Tutorial1 Top\endlink | \link Tutorial2 Next\endlink
 
