@@ -37,7 +37,9 @@ else
     SIMULATE_SPINEML          =$(SIMULATE_SPINEML_PATH)/simulateSpineML_CPU_ONLY
 endif
 
-SIMULATE_SPINEML_SOURCES      := common/pugixml/pugixml.cpp simulator/main.cc
+
+MODEL_PROPERTY_SOURCES        := simulator/modelProperty.cc simulator/modelPropertyFixed.cc simulator/modelPropertyUniformDistribution.cc
+SIMULATE_SPINEML_SOURCES      := common/pugixml/pugixml.cpp simulator/main.cc simulator/connectors.cc $(MODEL_PROPERTY_SOURCES)
 SIMULATE_SPINEML_SOURCES      :=$(addprefix $(SPINEML_PATH)/,$(SIMULATE_SPINEML_SOURCES))
 
 INCLUDE_FLAGS                 += -I $(SIMULATE_SPINEML_PATH) -I $(COMMON_SPINEML_PATH)
