@@ -52,8 +52,8 @@ scalar meanInpInh = 2.0*inputFac; //2.0 for balanced regime
 MyIzhikevichVariable::VarValues IzhExc_ini(
 //Izhikevich model initial conditions - excitatory population
     -65.0,	//0 - V
-        0.0,	//1 - U
-        0.02,	// 2 - a
+    0.0,	//1 - U
+    0.02,	// 2 - a
     0.2, 	// 3 - b
     -65.0, 	// 4 - c
     8.0, 	// 5 - d
@@ -62,9 +62,9 @@ MyIzhikevichVariable::VarValues IzhExc_ini(
 
 MyIzhikevichVariable::VarValues IzhInh_ini(
 //Izhikevich model initial conditions - inhibitory population
-    -65,	//0 - V
-        0.0,	//1 - U
-        0.02,	// 2 - a
+    -65.0,	//0 - V
+    0.0,	//1 - U
+    0.02,	// 2 - a
     0.25, 	// 3 - b
     -65.0, 	// 4 - c
     2.0, 	// 5 - d
