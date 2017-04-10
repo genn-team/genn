@@ -24,6 +24,9 @@ extern "C"
 
 // SpineML simulator includes
 #include "connectors.h"
+#include "logOutput.h"
+#include "logOutputAnalogue.h"
+#include "logOutputSpike.h"
 #include "modelPropertyFixed.h"
 #include "modelPropertyUniformDistribution.h"
 #include "timer.h"
@@ -49,6 +52,21 @@ typedef void (*VoidFunction)(void);
 
 typedef std::map<std::string, std::map<std::string, std::unique_ptr<ModelProperty>>> PopulationProperties;
 
+template <typename T>
+std::pair<T*, T*> getStateVar(void *modelLibrary, const std::string &hostStateVarName)
+{
+    // Get host statevar
+    T *hostStateVar = (T*)dlsym(modelLibrary, hostStateVarName.c_str());
+
+#ifdef CPU_ONLY
+    T *deviceStateVar = NULL;
+#else
+    std::string deviceStateVarName = "d_" + hostStateVarName;
+     T *deviceStateVar = (T*)dlsym(modelLibrary, deviceStateVarName.c_str());
+#endif
+
+    return std::make_pair(hostStateVar, deviceStateVar);
+}
 unsigned int getNeuronPopSize(const std::string &popName, const std::map<std::string, unsigned int> &popSizes)
 {
     auto pop = popSizes.find(popName);
@@ -59,6 +77,7 @@ unsigned int getNeuronPopSize(const std::string &popName, const std::map<std::st
         return pop->second;
     }
 }
+
 std::unique_ptr<ModelProperty> createModelProperty(const pugi::xml_node &node, scalar *hostStateVar, scalar *deviceStateVar, unsigned int size)
 {
     auto fixedValue = node.child("FixedValue");
@@ -80,26 +99,23 @@ void addProperties(const pugi::xml_node &node, void *modelLibrary, const std::st
     // Loop through properties in network
     for(auto param : node.children("Property")) {
         std::string paramName = param.attribute("name").value();
-        std::cout << "\t" << paramName << std::endl;
-
-        // Determine name of global variable that will contain
-        std::string hostStateVarName = paramName + popName;
-        scalar **hostStateVar = (scalar**)dlsym(modelLibrary, hostStateVarName.c_str());
+        // Get pointers to state vars in model library
+        scalar **hostStateVar;
+        scalar **deviceStateVar;
+        std::tie(hostStateVar, deviceStateVar) = getStateVar<scalar*>(modelLibrary, paramName + popName);
 
         // If it's found
         // **NOTE** it not being found is not an error condition - it just suggests that
         if(hostStateVar != NULL) {
+            std::cout << "\t" << paramName << std::endl;
 #ifdef CPU_ONLY
-            scalar **deviceStateVar = NULL;
             std::cout << "\t\tState variable found host pointer:" << *hostStateVar << std::endl;
 #else
-            std::string deviceStateVarName = "d_" + hostStateVarName;
-            scalar **deviceStateVar = (scalar**)dlsym(modelLibrary, deviceStateVarName.c_str());
             if(deviceStateVar == NULL) {
                 throw std::runtime_error("Cannot find device-side state variable for property:" + paramName);
             }
 
-            std::cout << "\t\tState variable found host pointer:" << hostStateVar << ", device pointer:" << *deviceStateVar << std::endl;
+            std::cout << "\t\tState variable found host pointer:" << *hostStateVar << ", device pointer:" << *deviceStateVar << std::endl;
 #endif
             // Create model property object
             properties[popName].insert(
@@ -109,6 +125,7 @@ void addProperties(const pugi::xml_node &node, void *modelLibrary, const std::st
         }
     }
 }
+
 unsigned int initializeConnector(const pugi::xml_node &node, void *modelLibrary,
                                  const std::string &synPopName, unsigned int numPre, unsigned int numPost)
 {
@@ -150,6 +167,66 @@ unsigned int initializeConnector(const pugi::xml_node &node, void *modelLibrary,
 
     throw std::runtime_error("No supported connection type found for projection");
 }
+
+std::unique_ptr<LogOutput> createLogOutput(const pugi::xml_node &node, void *modelLibrary,
+                                           double dt, const PopulationProperties &neuronProperties)
+{
+    // Get name of target
+    std::string target = node.attribute("target").value();
+
+    // If this is a spike recorder
+    std::string port = node.attribute("port").value();
+    if(port == "spike") {
+        // Get pointers to spike counts in model library
+        unsigned int **hostSpikeCount;
+        unsigned int **deviceSpikeCount;
+        std::tie(hostSpikeCount, deviceSpikeCount) = getStateVar<unsigned int*>(modelLibrary, "glbSpkCnt" + target);
+#ifdef CPU_ONLY
+        if(hostSpikeCount == NULL) {
+#else
+        if(hostSpikeCount == NULL || deviceSpikeCount == NULL) {
+#endif
+            throw std::runtime_error("Cannot find spike count variable for population:" + target);
+        }
+
+        // Get pointers to spike counts in model library
+        unsigned int **hostSpikes;
+        unsigned int **deviceSpikes;
+        std::tie(hostSpikes, deviceSpikes) = getStateVar<unsigned int*>(modelLibrary, "glbSpk" + target);
+#ifdef CPU_ONLY
+        if(hostSpikes == NULL) {
+#else
+        if(hostSpikes == NULL || deviceSpikes == NULL) {
+#endif
+            throw std::runtime_error("Cannot find spike variable for population:" + target);
+        }
+
+         // Get host statevar
+        unsigned int *spikeQueuePtr = (unsigned int*)dlsym(modelLibrary, ("spkQuePtr" + target).c_str());
+        if(spikeQueuePtr == NULL) {
+            throw std::runtime_error("Cannot find spike queue pointer for population:" + target);
+        }
+
+        // Create spike logger
+        return std::unique_ptr<LogOutput>(new LogOutputSpike(node, dt, spikeQueuePtr,
+                                                             *hostSpikeCount, *deviceSpikeCount,
+                                                             *hostSpikes, *deviceSpikes));
+    }
+    // Otherwise we assume it's a neuron property
+    else {
+        // If there is a dictionary of properties for target population
+        auto targetProperties = neuronProperties.find(target);
+        if(targetProperties != neuronProperties.end()) {
+            // If there is a model property object for this port return an analogue log output to read it
+            auto portProperty = targetProperties->second.find(port);
+            if(portProperty != targetProperties->second.end()) {
+                return std::unique_ptr<LogOutput>(new LogOutputAnalogue(node, dt, portProperty->second.get()));
+            }
+        }
+    }
+
+    throw std::runtime_error("No supported logger found");
+}
 }   // Anonymous namespace
 
 //----------------------------------------------------------------------------
@@ -161,6 +238,9 @@ int main(int argc, char *argv[])
         std::cerr << "Expected model library and; experiment XML files passed as arguments" << std::endl;
         return EXIT_FAILURE;
     }
+
+    // **YUCK** hard coded 0.1ms time step as SpineML specifies this in experiment but GeNN in model
+    const double dt = 0.1;
 
     void *modelLibrary = NULL;
     try
@@ -205,13 +285,13 @@ int main(int argc, char *argv[])
         // Get experiment node
         auto experiment = experimentSpineML.child("Experiment");
         if(!experiment) {
-             throw std::runtime_error("XML file:" + std::string(argv[2]) + " is not a SpineML experiment - it has no root Experiment node");
+             throw std::runtime_error("No 'Experiment' node found");
         }
 
         // Get model
         auto model = experiment.child("Model");
         if(!model) {
-            throw std::runtime_error("XML file:" + std::string(argv[2]) + " does not specify a model to use for the experiment");
+            throw std::runtime_error("No 'Model' node found in experiment");
         }
 
 
@@ -327,9 +407,41 @@ int main(int argc, char *argv[])
             }
         }
 
+        // Loop through output loggers specified by experiment and create handler
+        std::vector<std::unique_ptr<LogOutput>> loggers;
+        for(auto logOutput : experiment.children("LogOutput")) {
+            loggers.push_back(createLogOutput(logOutput, modelLibrary, dt, neuronProperties));
+        }
+
+        auto simulation = experiment.child("Simulation");
+        if(!simulation) {
+            throw std::runtime_error("No 'Simulation' node found in experiment");
+        }
+
+        // Read duration from simulation and convert to timesteps
+        double durationMs = simulation.attribute("duration").as_double() * 1000.0;
+        unsigned int numTimeSteps = (unsigned int)std::ceil(durationMs / dt);
+        std::cout << "Simulating for " << numTimeSteps << " " << dt << "ms timesteps" << std::endl;
+
         // Perform final initialization
         initializeNetwork();
 
+        // Loop through time
+        for(unsigned int i = 0; i < numTimeSteps; i++)
+        {
+            // Advance time
+#ifdef CPU_ONLY
+            stepTimeCPU();
+#else
+            stepTimeGPU();
+#endif
+
+            // Perform any recording required this timestep
+            for(auto &logger : loggers)
+            {
+                logger->record(dt, i);
+            }
+        }
     }
     catch(...)
     {
