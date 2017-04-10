@@ -26,7 +26,7 @@ public:
     // ObjectHandler virtuals
     //------------------------------------------------------------------------
     virtual void onObject(const pugi::xml_node &node, unsigned int currentRegimeID,
-                          unsigned int targetRegimeID);
+                          unsigned int targetRegimeID) override;
 
 protected:
     //------------------------------------------------------------------------
