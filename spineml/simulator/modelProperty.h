@@ -15,15 +15,20 @@ public:
     {
     }
 
-protected:
     //------------------------------------------------------------------------
-    // Protected API
+    // Public API
     //------------------------------------------------------------------------
     scalar *getHostStateVarBegin() { return &m_HostStateVar[0]; }
     scalar *getHostStateVarEnd() { return &m_HostStateVar[m_Size]; }
 
-    void pushToDevice();
-    void pullFromDevice();
+    const scalar *getHostStateVarBegin() const{ return &m_HostStateVar[0]; }
+    const scalar *getHostStateVarEnd() const{ return &m_HostStateVar[m_Size]; }
+
+    void pushToDevice() const;
+    void pullFromDevice() const;
+
+    unsigned int getSize() const{ return m_Size; }
+
 private:
     //------------------------------------------------------------------------
     // Private members
