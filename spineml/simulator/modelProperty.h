@@ -22,8 +22,8 @@ protected:
     scalar *getHostStateVarBegin() { return &m_HostStateVar[0]; }
     scalar *getHostStateVarEnd() { return &m_HostStateVar[m_Size]; }
 
-    void PushToDevice();
-    void PullFromDevice();
+    void pushToDevice();
+    void pullFromDevice();
 private:
     //------------------------------------------------------------------------
     // Private members

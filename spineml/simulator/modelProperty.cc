@@ -5,14 +5,14 @@
 //------------------------------------------------------------------------
 // SpineMLSimulator::ModelProperty
 //------------------------------------------------------------------------
-void SpineMLSimulator::ModelProperty::PushToDevice()
+void SpineMLSimulator::ModelProperty::pushToDevice()
 {
 #ifndef CPU_ONLY
     CHECK_CUDA_ERRORS(cudaMemcpy(m_DeviceStateVar, m_HostStateVar, m_Size * sizeof(scalar), cudaMemcpyHostToDevice));
 #endif  // CPU_ONLY
 }
 //------------------------------------------------------------------------
-void SpineMLSimulator::ModelProperty::PullFromDevice()
+void SpineMLSimulator::ModelProperty::pullFromDevice()
 {
 #ifndef CPU_ONLY
     CHECK_CUDA_ERRORS(cudaMemcpy(m_HostStateVar, m_DeviceStateVar, m_Size * sizeof(scalar), cudaMemcpyDeviceToHost));
