@@ -157,8 +157,8 @@ unsigned int initializeConnector(const pugi::xml_node &node, void *modelLibrary,
 //----------------------------------------------------------------------------
 int main(int argc, char *argv[])
 {
-    if(argc != 4) {
-        std::cerr << "Expected model library and; network and experiment XML files passed as arguments" << std::endl;
+    if(argc != 3) {
+        std::cerr << "Expected model library and; experiment XML files passed as arguments" << std::endl;
         return EXIT_FAILURE;
     }
 
@@ -185,9 +185,43 @@ int main(int argc, char *argv[])
         LOAD_SYMBOL(modelLibrary, VoidFunction, stepTimeGPU);
 #endif // CPU_ONLY
 
+        // Use filesystem library to get parent path of the network XML file
+        auto experimentPath = filesystem::path(argv[2]);
+        auto basePath = experimentPath.parent_path();
+
+        // Load experiment document
+        pugi::xml_document experimentDoc;
+        auto experimentResult = experimentDoc.load_file(argv[2]);
+        if(!experimentResult) {
+            throw std::runtime_error("Unable to load experiment XML file:" + std::string(argv[2]) + ", error:" + experimentResult.description());
+        }
+
+        // Get SpineML root
+        auto experimentSpineML = experimentDoc.child("SpineML");
+        if(!experimentSpineML) {
+            throw std::runtime_error("XML file:" + std::string(argv[2]) + " is not a SpineML experiment - it has no root SpineML node");
+        }
+
+        // Get experiment node
+        auto experiment = experimentSpineML.child("Experiment");
+        if(!experiment) {
+             throw std::runtime_error("XML file:" + std::string(argv[2]) + " is not a SpineML experiment - it has no root Experiment node");
+        }
+
+        // Get model
+        auto model = experiment.child("Model");
+        if(!model) {
+            throw std::runtime_error("XML file:" + std::string(argv[2]) + " does not specify a model to use for the experiment");
+        }
+
+
+        // Build path to network from URL in model
+        auto networkPath = basePath / model.attribute("network_layer_url").value();
+        std::cout << "Experiment using model:" << networkPath << std::endl;
+
         // Get the filename of the network and remove extension
         // to get something usable as a network name
-        std::string networkName = filesystem::path(argv[2]).filename();
+        std::string networkName = networkPath.filename();
         networkName = networkName.substr(0, networkName.find_last_of("."));
 
         // Search for network initialization function
@@ -211,21 +245,21 @@ int main(int argc, char *argv[])
 
         // Load network document
         pugi::xml_document networkDoc;
-        auto result = networkDoc.load_file(argv[2]);
-        if(!result) {
-            throw std::runtime_error("Unable to load XML file:" + std::string(argv[2]) + ", error:" + result.description());
+        auto networkResult = networkDoc.load_file(networkPath.str().c_str());
+        if(!networkResult) {
+            throw std::runtime_error("Unable to load network XML file:" + std::string(argv[2]) + ", error:" + networkResult.description());
         }
 
         // Get SpineML root
-        auto spineML = networkDoc.child("SpineML");
-        if(!spineML) {
+        auto networkSpineML = networkDoc.child("SpineML");
+        if(!networkSpineML) {
             throw std::runtime_error("XML file:" + std::string(argv[2]) + " is not a SpineML network - it has no root SpineML node");
         }
 
         // Loop through populations once to initialize neuron population properties
         std::map<std::string, unsigned int> neuronPopulationSizes;
         PopulationProperties neuronProperties;
-        for(auto population : spineML.children("Population")) {
+        for(auto population : networkSpineML.children("Population")) {
             auto neuron = population.child("Neuron");
             if(!neuron) {
                 throw std::runtime_error("'Population' node has no 'Neuron' node");
@@ -247,7 +281,7 @@ int main(int argc, char *argv[])
         // Loop through populations AGAIN to build synapse population properties
         PopulationProperties postsynapticProperties;
         PopulationProperties weightUpdateProperties;
-        for(auto population : spineML.children("Population")) {
+        for(auto population : networkSpineML.children("Population")) {
             // Read source population name from neuron node
             const auto *srcPopName = population.child("Neuron").attribute("name").value();
             unsigned int srcPopSize = getNeuronPopSize(srcPopName, neuronPopulationSizes);
