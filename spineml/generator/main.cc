@@ -183,6 +183,9 @@ int main(int argc,
     std::string networkName = networkPath.filename();
     networkName = networkName.substr(0, networkName.find_last_of("."));
 
+    // Instruct GeNN to export all functions as extern "C"
+    GENN_PREFERENCES::exportFunctions = true;
+
     // Initialize GeNN
     initGeNN();
 
