@@ -28,18 +28,19 @@
 #include <string>
 
 namespace GENN_FLAGS {
-    extern unsigned int calcSynapseDynamics;
-    extern unsigned int calcSynapses;
-    extern unsigned int learnSynapsesPost;
-    extern unsigned int calcNeurons;
+    extern const unsigned int calcSynapseDynamics;
+    extern const unsigned int calcSynapses;
+    extern const unsigned int learnSynapsesPost;
+    extern const unsigned int calcNeurons;
 };
 
 namespace GENN_PREFERENCES {    
-    extern int optimiseBlockSize; //!< Flag for signalling whether or not block size optimisation should be performed
-    extern int autoChooseDevice; //!< Flag to signal whether the GPU device should be chosen automatically 
+    extern bool optimiseBlockSize; //!< Flag for signalling whether or not block size optimisation should be performed
+    extern bool autoChooseDevice; //!< Flag to signal whether the GPU device should be chosen automatically
     extern bool optimizeCode; //!< Request speed-optimized code, at the expense of floating-point accuracy
     extern bool debugCode; //!< Request debug data to be embedded in the generated code
     extern bool showPtxInfo; //!< Request that PTX assembler information be displayed for each CUDA kernel during compilation
+    extern bool exportFunctions; //!< Should functions be declared using extern "C" so model can be used as a shared library
     extern double asGoodAsZero; //!< Global variable that is used when detecting close to zero values, for example when setting sparse connectivity from a dense matrix
     extern int defaultDevice; //! default GPU device; used to determine which GPU to use if chooseDevice is 0 (off)
     extern unsigned int neuronBlockSize;

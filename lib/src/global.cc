@@ -25,18 +25,19 @@
 
 
 namespace GENN_FLAGS {
-    unsigned int calcSynapseDynamics= 0;
-    unsigned int calcSynapses= 1;
-    unsigned int learnSynapsesPost= 2;
-    unsigned int calcNeurons= 3;
+    const unsigned int calcSynapseDynamics= 0;
+    const unsigned int calcSynapses= 1;
+    const unsigned int learnSynapsesPost= 2;
+    const unsigned int calcNeurons= 3;
 };
 
 namespace GENN_PREFERENCES {    
-    int optimiseBlockSize = 1; //!< Flag for signalling whether or not block size optimisation should be performed
-    int autoChooseDevice= 1; //!< Flag to signal whether the GPU device should be chosen automatically 
+    bool optimiseBlockSize = true; //!< Flag for signalling whether or not block size optimisation should be performed
+    bool autoChooseDevice= true; //!< Flag to signal whether the GPU device should be chosen automatically
     bool optimizeCode = false; //!< Request speed-optimized code, at the expense of floating-point accuracy
     bool debugCode = false; //!< Request debug data to be embedded in the generated code
     bool showPtxInfo = false; //!< Request that PTX assembler information be displayed for each CUDA kernel during compilation
+    bool exportFunctions = false;   //!< Should functions be declared using extern "C" so model can be used as a shared library
     double asGoodAsZero = 1e-19; //!< Global variable that is used when detecting close to zero values, for example when setting sparse connectivity from a dense matrix
     int defaultDevice= 0; //! default GPU device; used to determine which GPU to use if chooseDevice is 0 (off)
     unsigned int neuronBlockSize= 32;
