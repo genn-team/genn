@@ -38,8 +38,8 @@ Making the actual model definition makes use of the NNmodel::addNeuronPopulation
 \arg `NeuronModel`: template parameter specifying the neuron model class to use
 \arg `const std::string &name`: the name of the population
 \arg `unsigned int size`: The number of neurons in the population
-\arg `const NeuronModel::ParamValues &paramValues`: Prameter values for the neurons in the population
-\arg `const NeuronModel::ParamValues &paramValues`: Initial values for neuron variables
+\arg `const NeuronModel::ParamValues &paramValues`: Parameter values for the neurons in the population
+\arg `const NeuronModel::VarValues &varValues`: Initial values for neuron variables
 
 We first create the parameter and initial variable arrays,
 \code
@@ -129,18 +129,18 @@ Calling `allocateMem()` allocates the memory structures for all neuron variables
 
 Now we can use the generated code to integrate the neuron equations provided by GeNN for 1000ms (\f$ \frac{1000}{DT}\f$ timesteps). To do so, we add after `initialize();`
 \code
-for(int t = 0; t < (int)(1000.0 / DT); t++) {
+for(int i = 0; i < (int)(1000.0 / DT); i++) {
   stepTimeGPU();
 }
 \endcode
 and we need to copy the result, and output it to stdout,
 \code
   pullPop1StateFromDevice();
-  for (int i= 0; i < 10; i++) {  
-    cout << VPop1[i] << " ";
-    cout << mPop1[i] << " ";
-    cout << hPop1[i] << " ";
-    cout << nPop1[i] << endl;
+  for (int j= 0; j < 10; j++) {  
+    cout << VPop1[j] << " ";
+    cout << mPop1[j] << " ";
+    cout << hPop1[j] << " ";
+    cout << nPop1[j] << endl;
   }
 \endcode
 `pullPop1StateFromDevice()` copies all relevant state variables of the `Pop1` neuron group from the GPU to the CPU main memory. Then we can output the results to stdout by looping through all 10 neurons and outputting the state variables VPop1, mPop1, hPop1, nPop1.
@@ -156,15 +156,15 @@ int main()
 {
   allocateMem();
   initialize();
-  for(int t = 0; t < (int)(1000.0 / DT); t++) {
+  for(int i = 0; i < (int)(1000.0 / DT); i++) {
     stepTimeGPU();
   }
   pullPop1StateFromDevice();
-  for (int i= 0; i < 10; i++) {  
-    cout << VPop1[i] << " ";
-    cout << mPop1[i] << " ";
-    cout << hPop1[i] << " ";
-    cout << nPop1[i] << endl;
+  for (int j= 0; j < 10; j++) {  
+    cout << VPop1[j] << " ";
+    cout << mPop1[j] << " ";
+    cout << hPop1[j] << " ";
+    cout << nPop1[j] << endl;
   }  
   return 0;
 }
@@ -228,6 +228,9 @@ for (int i= 0; i < 10000; i++) {
 }
 os.close();
 \endcode
+\note 
+t is a global variable updated by the GeNN code to keep track of elapsed simulation time in ms.
+
 You will also need to add:
 \code
 #include<fstream>

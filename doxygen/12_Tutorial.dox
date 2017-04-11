@@ -40,9 +40,9 @@ model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::
 The addSynapsePopulation parameters are
 \arg WeightUpdateModel: template parameter specifying the type of weight update model (derived from WeightUpdateModels::Base).
 \arg PostsynapticModel: template parameter specifying the  type of postsynaptic model (derived from PostsynapticModels::Base).
-\arg name string containing unique name of neuron population.
+\arg name string containing unique name of synapse population.
 \arg mtype how the synaptic matrix associated with this synapse population should be represented. Here SynapseMatrixType::DENSE_INDIVIDUALG means that there will be a dense connectivity matrix with seperate values for each entry.
-\arg delayStep integer specifying number of timesteps delay this synaptic connection should incur (or NO_DELAY for none)
+\arg delayStep integer specifying number of timesteps of propagation delay that spikes travelling through this synapses population should incur (or NO_DELAY for none)
 \arg src string specifying name of presynaptic (source) population
 \arg trg string specifying name of postsynaptic (target) population
 \arg weightParamValues parameters for weight update model wrapped in WeightUpdateModel::ParamValues object.
@@ -122,7 +122,7 @@ Now we need to add code to generate the desired ring connectivity.
   }
   pushPop1selfStateToDevice();
 \endcode
-After memory allocation and initialization `gPop1self` will contain only zeros. We then assign in the loop a non-zero conductivity of 0.01 \f$\mu\f$S to all synapses from neuron `i` to `i+1` (and `9` to `0` to close the ring).
+After memory allocation and initialization `gPop1self` will contain only zeros. We then assign in the loop a non-zero conductivity of 0.2 \f$\mu\f$S to all synapses from neuron `i` to `i+1` (and `9` to `0` to close the ring).
 
 After adjusting the GNUmakefile to read
 \code
