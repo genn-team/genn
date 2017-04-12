@@ -15,33 +15,41 @@
 #include "global.h"
 #include "sizes.h"
 
-double exIzh_p[5]={
+class MyIzhikevich : public NeuronModels::Izhikevich
+{
+public:
+    DECLARE_MODEL(MyIzhikevich, 5, 2);
+
+    SET_SIM_CODE(
+        "if ($(V) >= 30.0) {\n"
+        "    $(V)=$(c);\n"
+        "    $(U)+=$(d);\n"
+        "}\n"
+        "$(V) += 0.5*(0.04*$(V)*$(V)+5.0*$(V)+140.0-$(U)+$(I0)+$(Isyn))*DT; //at two times for numerical stability\n"
+        "$(V) += 0.5*(0.04*$(V)*$(V)+5.0*$(V)+140.0-$(U)+$(I0)+$(Isyn))*DT;\n"
+        "$(U) += $(a)*($(b)*$(V)-$(U))*DT;\n"
+        "//if ($(V) > 30.0) { // keep this only for visualisation -- not really necessaary otherwise\n"
+        "//    $(V) = 30.0;\n"
+        "//}\n");
+    SET_PARAM_NAMES({"a", "b", "c", "d", "I0"});
+};
+IMPLEMENT_MODEL(MyIzhikevich);
+
+MyIzhikevich::ParamValues exIzh_p(
 //Izhikevich model parameters - tonic spiking
-	0.02,	// 0 - a
-	0.2, 	// 1 - b
-	-65, 	// 2 - c
-	6, 	// 3 - d
-	4.0     // 4 - I0 (input current)
-};
+    0.02,       // 0 - a
+    0.2,        // 1 - b
+    -65,        // 2 - c
+    6,          // 3 - d
+    4.0         // 4 - I0 (input current)
+);
 
-double exIzh_ini[2]={
+MyIzhikevich::VarValues exIzh_ini(
 //Izhikevich model initial conditions - tonic spiking
-	-65,	//0 - V
-	-20	//1 - U
-};
+    -65,        //0 - V
+    -20         //1 - U
+);
 
-
-double mySyn_p[3]= {
-  0.0,           // 0 - Erev: Reversal potential
-  -20.0,         // 1 - Epre: Presynaptic threshold potential
-  1.0            // 2 - tau_S: decay time constant for S [ms]
-};
-
-double postExp[2]={
-  1.0,            // 0 - tau_S: decay time constant for S [ms]
-  0.0		  // 1 - Erev: Reversal potential
-};
-double *postSynV = NULL;
 
 
 void modelDefinition(NNmodel &model) 
@@ -59,21 +67,8 @@ void modelDefinition(NNmodel &model)
 #endif
   model.setName("OneComp");
   model.setDT(1.0);
-  neuronModel n= nModels[IZHIKEVICH];
-  n.pNames.push_back("I0");
-  n.simCode= "    if ($(V) >= 30.0){\n\
-      $(V)=$(c);\n\
-		  $(U)+=$(d);\n\
-    } \n\
-    $(V)+=0.5*(0.04*$(V)*$(V)+5.0*$(V)+140.0-$(U)+$(I0)+$(Isyn))*DT; //at two times for numerical stability\n\
-    $(V)+=0.5*(0.04*$(V)*$(V)+5.0*$(V)+140.0-$(U)+$(I0)+$(Isyn))*DT;\n\
-    $(U)+=$(a)*($(b)*$(V)-$(U))*DT;\n\
-   //if ($(V) > 30.0){   //keep this only for visualisation -- not really necessaary otherwise \n	\
-   //  $(V)=30.0; \n\
-   //}\n";
-  unsigned int MYIZHIKEVICH= nModels.size();
-  nModels.push_back(n);
-  model.addNeuronPopulation("Izh1", _NC1, MYIZHIKEVICH, exIzh_p, exIzh_ini);        	 
+
+  model.addNeuronPopulation<MyIzhikevich>("Izh1", _NC1, exIzh_p, exIzh_ini);
   model.setPrecision(GENN_FLOAT);
   model.finalize();
 }

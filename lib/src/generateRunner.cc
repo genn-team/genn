@@ -2272,7 +2272,7 @@ void genMakefile(const NNmodel &model, //!< Model description
     os << "\t-del runner.obj 2>nul" << endl;
 #else
     string nvccFlags = "-c -x cu -arch sm_";
-    nvccFlags += tS(deviceProp[theDevice].major) + tS(deviceProp[theDevice].minor);
+    nvccFlags += to_string(deviceProp[theDevice].major) + to_string(deviceProp[theDevice].minor);
     nvccFlags += " " + GENN_PREFERENCES::userNvccFlags;
     if (GENN_PREFERENCES::optimizeCode) nvccFlags += " -O3 -use_fast_math";
     if (GENN_PREFERENCES::debugCode) nvccFlags += " -O0 -g -G";

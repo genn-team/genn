@@ -22,7 +22,7 @@ public:
                  const WeightUpdateModels::Base *wu, const std::vector<double> &wuParams, const std::vector<double> &wuInitVals,
                  const PostsynapticModels::Base *ps, const std::vector<double> &psParams, const std::vector<double> &psInitVals,
                  NeuronGroup *srcNeuronGroup, NeuronGroup *trgNeuronGroup) :
-        m_PaddedKernelCumSum(0, 0), m_Name(name), m_SpanType(SpanType::POSTSYNAPTIC), m_DelaySteps(delaySteps), m_MaxConnections(trgNeuronGroup->getNumNeurons()), m_MatrixType(matrixType),
+        m_PaddedKernelIDRange(0, 0), m_Name(name), m_SpanType(SpanType::POSTSYNAPTIC), m_DelaySteps(delaySteps), m_MaxConnections(trgNeuronGroup->getNumNeurons()), m_MatrixType(matrixType),
         m_SrcNeuronGroup(srcNeuronGroup), m_TrgNeuronGroup(trgNeuronGroup),
         m_TrueSpikeRequired(false), m_SpikeEventRequired(false), m_EventThresholdReTestRequired(false),
         m_WUModel(wu), m_WUParams(wuParams), m_WUInitVals(wuInitVals), m_PSModel(ps), m_PSParams(psParams), m_PSInitVals(psInitVals),
@@ -62,12 +62,12 @@ public:
     void setSpanType(SpanType spanType);
 
     void initDerivedParams(double dt);
-    void calcKernelSizes(unsigned int blockSize, unsigned int &paddedCumSum);
+    void calcKernelSizes(unsigned int blockSize, unsigned int &paddedKernelIDStart);
 
     //------------------------------------------------------------------------
     // Public const methods
     //------------------------------------------------------------------------
-    std::pair<unsigned int, unsigned int> getPaddedKernelCumSum() const{ return m_PaddedKernelCumSum; }
+    std::pair<unsigned int, unsigned int> getPaddedKernelIDRange() const{ return m_PaddedKernelIDRange; }
 
     const std::string &getName() const{ return m_Name; }
 
@@ -127,8 +127,8 @@ private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    //!< Starting index of this synapse group in synapse kernel
-    std::pair<unsigned int, unsigned int> m_PaddedKernelCumSum;
+    //!< Range of indices of this synapse group in synapse kernel
+    std::pair<unsigned int, unsigned int> m_PaddedKernelIDRange;
 
     //!< Name of the synapse group
     std::string m_Name;

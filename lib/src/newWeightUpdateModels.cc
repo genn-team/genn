@@ -2,7 +2,7 @@
 
 IMPLEMENT_MODEL(WeightUpdateModels::StaticPulse);
 IMPLEMENT_MODEL(WeightUpdateModels::StaticGraded);
-IMPLEMENT_MODEL(WeightUpdateModels::Learn1);
+IMPLEMENT_MODEL(WeightUpdateModels::PiecewiseSTDP);
 
 //----------------------------------------------------------------------------
 // WeightUpdateModels::LegacyWrapper

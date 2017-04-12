@@ -70,22 +70,22 @@ void NeuronGroup::initDerivedParams(double dt)
     }
 }
 
-void NeuronGroup::calcSizes(unsigned int blockSize, unsigned int &cumSum, unsigned int &paddedCumSum)
+void NeuronGroup::calcSizes(unsigned int blockSize,  unsigned int &idStart, unsigned int &paddedIDStart)
 {
     // paddedSize is the lowest multiple of neuronBlkSz >= neuronN[i]
     const unsigned int paddedSize = ceil((double)getNumNeurons() / (double) blockSize) * (double) blockSize;
 
     // Store current cummulative sum in first
-    m_CumSumNeurons.first = cumSum;
-    m_PaddedCumSumNeurons.first = paddedCumSum;
+    m_IDRange.first = idStart;
+    m_PaddedIDRange.first = paddedIDStart;
 
     // Update global cummulative sums of neurons
-    cumSum += getNumNeurons();
-    paddedCumSum +=  paddedSize;
+    idStart += getNumNeurons();
+    paddedIDStart +=  paddedSize;
 
     // Store cummulative sums of point after this neuron group
-    m_CumSumNeurons.second = cumSum;
-    m_PaddedCumSumNeurons.second = paddedCumSum;
+    m_IDRange.second = idStart;
+    m_PaddedIDRange.second = paddedIDStart;
 }
 
 bool NeuronGroup::isVarQueueRequired(const std::string &var) const
