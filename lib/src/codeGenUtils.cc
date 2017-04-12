@@ -1,7 +1,21 @@
 #include "codeGenUtils.h"
 
+// Is C++ regex library operational?
+// We assume it is for:
+// 1) Non GCC compilers
+// 2) GCC 5.X.X and future
+// 3) Any future (4.10.X?) releases
+// 4) 4.9.1 and subsequent patch releases (GCC fully implemented regex in 4.9.0
+// BUT bug 61227 https://gcc.gnu.org/bugzilla/show_bug.cgi?id=61227 prevented \w from working)
+#if !defined(__GNUC__) || \
+    __GNUC__ > 4 || \
+    (__GNUC__ == 4 && (__GNUC_MINOR__ > 9 || \
+                      (__GNUC_MINOR__ == 9 && __GNUC_PATCHLEVEL__ >= 1)))
+    #define REGEX_OPERATIONAL
+#endif
+
 // Standard includes
-#if !defined(__GNUC__) || (__GNUC__ >= 4 && __GNUC_MINOR__ >= 9)
+#ifdef REGEX_OPERATIONAL
 #include <regex>
 #endif
 
@@ -297,7 +311,7 @@ string ensureFtype(const string &oldcode, const string &type)
 }
 
 
-#if !defined(__GNUC__) || (__GNUC__ >= 4 && __GNUC_MINOR__ >= 9)
+#ifdef REGEX_OPERATIONAL
 
 //--------------------------------------------------------------------------
 /*! \brief This function checks for unknown variable definitions and returns a gennError if any are found
