@@ -87,29 +87,18 @@ enum FloatType
 class NNmodel
 {
 public:
-    // Model members
-    string name; //!< Name of the neuronal newtwork model
-    string ftype; //!< Type of floating point variables (float, double, ...; default: float)
-    string RNtype; //!< Underlying type for random number generation (default: long)
-    double dt; //!< The integration time step of the model
-    bool final; //!< Flag for whether the model has been finalized
-    bool needSt; //!< Whether last spike times are needed at all in this network model (related to STDP)
-    bool needSynapseDelay; //!< Whether delayed synapse conductance is required in the network
-    bool timing;
-    unsigned int seed;
-    unsigned int resetKernel;  //!< The identity of the kernel in which the spike counters will be reset.
-
-public:
     NNmodel();
     ~NNmodel();
 
     // PUBLIC MODEL FUNCTIONS
     //=======================
     void setName(const std::string&); //!< Method to set the neuronal network model name
+
     void setPrecision(FloatType); //!< Set numerical precision for floating point
     void setDT(double); //!< Set the integration step size of the model
     void setTiming(bool); //!< Set whether timers and timing commands are to be included
     void setSeed(unsigned int); //!< Set the random seed (disables automatic seeding if argument not 0).
+    void setRNType(const std::string &type); //! Sets the underlying type for random number generation (default: uint64_t)
 #ifndef CPU_ONLY
     void setGPUDevice(int); //!< Method to choose the GPU to be used for the model. If "AUTODEVICE' (-1), GeNN will choose the device based on a heuristic rule.
 #endif
@@ -121,6 +110,30 @@ public:
 
     //! Are any variables in any populations in this model using zero-copy memory?
     bool zeroCopyInUse() const;
+
+    //! Gets the name of the neuronal network model
+    const std::string &getName() const{ return name; }
+
+    //! Gets the floating point numerical precision
+    const std::string &getPrecision() const{ return ftype; }
+
+    //! Which kernel should contain the reset logic? Specified in terms of GENN_FLAGS
+    unsigned int getResetKernel() const{ return resetKernel; }
+
+    //! Gets the model integration step size
+    double getDT() const { return dt; }
+
+    //! Get the random seed
+    unsigned int getSeed() const { return seed; }
+
+    //! Gets the underlying type for random number generation (default: uint64_t)
+    const std::string &getRNType() const{ return RNtype; }
+
+    //! Is the model specification finalized
+    bool isFinalized() const{ return final; }
+
+    //! Are timers and timing commands enabled
+    bool isTimingEnabled() const{ return timing; }
 
     // PUBLIC NEURON FUNCTIONS
     //========================
@@ -346,6 +359,18 @@ private:
     map<string, string> synapseKernelParameters;
     map<string, string> simLearnPostKernelParameters;
     map<string, string> synapseDynamicsKernelParameters;
+
+     // Model members
+    string name; //!< Name of the neuronal newtwork model
+    string ftype; //!< Type of floating point variables (float, double, ...; default: float)
+    string RNtype; //!< Underlying type for random number generation (default: uint64_t)
+    double dt; //!< The integration time step of the model
+    bool final; //!< Flag for whether the model has been finalized
+    bool needSt; //!< Whether last spike times are needed at all in this network model (related to STDP)
+    bool needSynapseDelay; //!< Whether delayed synapse conductance is required in the network
+    bool timing;
+    unsigned int seed;
+    unsigned int resetKernel;  //!< The identity of the kernel in which the spike counters will be reset.
 
 };
 

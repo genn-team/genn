@@ -183,12 +183,12 @@ void genRunner(const NNmodel &model, //!< Model description
   
     string SCLR_MIN;
     string SCLR_MAX;
-    if (model.ftype == "float") {
+    if (model.getPrecision() == "float") {
         SCLR_MIN= to_string(FLT_MIN)+"f";
         SCLR_MAX= to_string(FLT_MAX)+"f";
     }
 
-    if (model.ftype == "double") {
+    if (model.getPrecision() == "double") {
         SCLR_MIN= to_string(DBL_MIN);
         SCLR_MAX= to_string(DBL_MAX);
     }
@@ -198,7 +198,7 @@ void genRunner(const NNmodel &model, //!< Model description
     //=======================
 
     // this file contains helpful macros and is separated out so that it can also be used by other code that is compiled separately
-    string definitionsName= path + "/" + model.name + "_CODE/definitions.h";
+    string definitionsName= path + "/" + model.getName() + "_CODE/definitions.h";
     os.open(definitionsName.c_str());
     writeHeader(os);
     os << ENDL;
@@ -206,7 +206,7 @@ void genRunner(const NNmodel &model, //!< Model description
     // write doxygen comment
     os << "//-------------------------------------------------------------------------" << ENDL;
     os << "/*! \\file definitions.h" << ENDL << ENDL;
-    os << "\\brief File generated from GeNN for the model " << model.name << " containing useful Macros used for both GPU amd CPU versions." << ENDL;
+    os << "\\brief File generated from GeNN for the model " << model.getName() << " containing useful Macros used for both GPU amd CPU versions." << ENDL;
     os << "*/" << ENDL;
     os << "//-------------------------------------------------------------------------" << ENDL << ENDL;
     
@@ -215,7 +215,7 @@ void genRunner(const NNmodel &model, //!< Model description
     os << ENDL;
 
     os << "#include \"utils.h\"" << ENDL;
-    if (model.timing) os << "#include \"hr_time.h\"" << ENDL;
+    if (model.isTimingEnabled()) os << "#include \"hr_time.h\"" << ENDL;
     os << "#include \"sparseUtils.h\"" << ENDL << ENDL;
     os << "#include \"sparseProjection.h\"" << ENDL;
     os << "#include <stdint.h>" << ENDL;
@@ -244,10 +244,10 @@ void genRunner(const NNmodel &model, //!< Model description
 
     // write DT macro
     os << "#undef DT" << ENDL;
-    if (model.ftype == "float") {
-        os << "#define DT " << to_string(model.dt) << "f" << ENDL;
+    if (model.getPrecision() == "float") {
+        os << "#define DT " << to_string(model.getDT()) << "f" << ENDL;
     } else {
-        os << "#define DT " << to_string(model.dt) << ENDL;
+        os << "#define DT " << to_string(model.getDT()) << ENDL;
     }
 
     // write MYRAND macro
@@ -260,7 +260,7 @@ void genRunner(const NNmodel &model, //!< Model description
     os << ENDL;
 
     os << "#ifndef scalar" << ENDL;
-    os << "typedef " << model.ftype << " scalar;" << ENDL;
+    os << "typedef " << model.getPrecision() << " scalar;" << ENDL;
     os << "#endif" << ENDL;
     os << "#ifndef SCALAR_MIN" << ENDL;
     os << "#define SCALAR_MIN " << SCLR_MIN << ENDL;
@@ -279,8 +279,8 @@ void genRunner(const NNmodel &model, //!< Model description
     os << ENDL;
 
     os << "extern unsigned long long iT;" << ENDL;
-    os << "extern " << model.ftype << " t;" << ENDL;
-    if (model.timing) {
+    os << "extern " << model.getPrecision() << " t;" << ENDL;
+    if (model.isTimingEnabled()) {
 #ifndef CPU_ONLY
         os << "extern cudaEvent_t neuronStart, neuronStop;" << ENDL;
 #endif
@@ -329,7 +329,7 @@ void genRunner(const NNmodel &model, //!< Model description
             os << "extern unsigned int spkQuePtr" << n.first << ";" << ENDL;
         }
         if (n.second.isSpikeTimeRequired()) {
-            extern_variable_def(os, model.ftype+" *", "sT"+n.first);
+            extern_variable_def(os, model.getPrecision()+" *", "sT"+n.first);
         }
 
         auto neuronModel = n.second.getNeuronModel();
@@ -399,7 +399,7 @@ void genRunner(const NNmodel &model, //!< Model description
     os << ENDL;
 
     for(const auto &s : model.getSynapseGroups()) {
-        extern_variable_def(os, model.ftype+" *", "inSyn" + s.first);
+        extern_variable_def(os, model.getPrecision()+" *", "inSyn" + s.first);
         if (s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
             extern_variable_def(os, "uint32_t *", "gp" + s.first);
         }
@@ -606,7 +606,7 @@ void genRunner(const NNmodel &model, //!< Model description
     os << "// initialization of variables, e.g. reverse sparse arrays etc." << ENDL;
     os << "// that the user would not want to worry about" << ENDL;
     os << ENDL;
-    os << "void init" << model.name << "();" << ENDL;
+    os << "void init" << model.getName() << "();" << ENDL;
     os << ENDL;
 
     os << "// ------------------------------------------------------------------------" << ENDL;
@@ -619,14 +619,14 @@ void genRunner(const NNmodel &model, //!< Model description
     os << "// Function to convert a firing probability (per time step) to an integer of type uint64_t" << ENDL;
     os << "// that can be used as a threshold for the GeNN random number generator to generate events with the given probability." << ENDL;
     os << ENDL;
-    os << "void convertProbabilityToRandomNumberThreshold(" << model.ftype << " *p_pattern, " << model.RNtype << " *pattern, int N);" << ENDL;
+    os << "void convertProbabilityToRandomNumberThreshold(" << model.getPrecision() << " *p_pattern, " << model.getRNType() << " *pattern, int N);" << ENDL;
     os << ENDL;
 
     os << "//-------------------------------------------------------------------------" << ENDL;
     os << "// Function to convert a firing rate (in kHz) to an integer of type uint64_t that can be used" << ENDL;
     os << "// as a threshold for the GeNN random number generator to generate events with the given rate." << ENDL;
     os << ENDL;
-    os << "void convertRateToRandomNumberThreshold(" << model.ftype << " *rateKHz_pattern, " << model.RNtype << " *pattern, int N);" << ENDL;
+    os << "void convertRateToRandomNumberThreshold(" << model.getPrecision() << " *rateKHz_pattern, " << model.getRNType() << " *pattern, int N);" << ENDL;
     os << ENDL;
 
     os << "// ------------------------------------------------------------------------" << ENDL;
@@ -669,7 +669,7 @@ void genRunner(const NNmodel &model, //!< Model description
     // generate support_code.h
     //========================
 
-    string supportCodeName= path + "/" + model.name + "_CODE/support_code.h";
+    string supportCodeName= path + "/" + model.getName() + "_CODE/support_code.h";
     os.open(supportCodeName.c_str());
     writeHeader(os);
     os << ENDL;
@@ -677,7 +677,7 @@ void genRunner(const NNmodel &model, //!< Model description
        // write doxygen comment
     os << "//-------------------------------------------------------------------------" << ENDL;
     os << "/*! \\file support_code.h" << ENDL << ENDL;
-    os << "\\brief File generated from GeNN for the model " << model.name << " containing support code provided by the user and used for both GPU amd CPU versions." << ENDL;
+    os << "\\brief File generated from GeNN for the model " << model.getName() << " containing support code provided by the user and used for both GPU amd CPU versions." << ENDL;
     os << "*/" << ENDL;
     os << "//-------------------------------------------------------------------------" << ENDL << ENDL;
     
@@ -688,7 +688,7 @@ void genRunner(const NNmodel &model, //!< Model description
     for(const auto &n : model.getNeuronGroups()) {
         if (!n.second.getNeuronModel()->getSupportCode().empty()) {
             os << "namespace " << n.first << "_neuron" << OB(11) << ENDL;
-            os << ensureFtype(n.second.getNeuronModel()->getSupportCode(), model.ftype) << ENDL;
+            os << ensureFtype(n.second.getNeuronModel()->getSupportCode(), model.getPrecision()) << ENDL;
             os << CB(11) << " // end of support code namespace " << n.first << ENDL;
         }
     }
@@ -698,22 +698,22 @@ void genRunner(const NNmodel &model, //!< Model description
 
         if (!wu->getSimSupportCode().empty()) {
             os << "namespace " << s.first << "_weightupdate_simCode " << OB(11) << ENDL;
-            os << ensureFtype(wu->getSimSupportCode(), model.ftype) << ENDL;
+            os << ensureFtype(wu->getSimSupportCode(), model.getPrecision()) << ENDL;
             os << CB(11) << " // end of support code namespace " << s.first << "_weightupdate_simCode " << ENDL;
         }
         if (!wu->getLearnPostSupportCode().empty()) {
             os << "namespace " << s.first << "_weightupdate_simLearnPost " << OB(11) << ENDL;
-            os << ensureFtype(wu->getLearnPostSupportCode(), model.ftype) << ENDL;
+            os << ensureFtype(wu->getLearnPostSupportCode(), model.getPrecision()) << ENDL;
             os << CB(11) << " // end of support code namespace " << s.first << "_weightupdate_simLearnPost " << ENDL;
         }
         if (!wu->getSynapseDynamicsSuppportCode().empty()) {
             os << "namespace " << s.first << "_weightupdate_synapseDynamics " << OB(11) << ENDL;
-            os << ensureFtype(wu->getSynapseDynamicsSuppportCode(), model.ftype) << ENDL;
+            os << ensureFtype(wu->getSynapseDynamicsSuppportCode(), model.getPrecision()) << ENDL;
             os << CB(11) << " // end of support code namespace " << s.first << "_weightupdate_synapseDynamics " << ENDL;
         }
         if (!psm->getSupportCode().empty()) {
             os << "namespace " << s.first << "_postsyn " << OB(11) << ENDL;
-            os << ensureFtype(psm->getSupportCode(), model.ftype) << ENDL;
+            os << ensureFtype(psm->getSupportCode(), model.getPrecision()) << ENDL;
             os << CB(11) << " // end of support code namespace " << s.first << "_postsyn " << ENDL;
         }
 
@@ -723,7 +723,7 @@ void genRunner(const NNmodel &model, //!< Model description
     
 
     //cout << "entering genRunner" << ENDL;
-    string runnerName= path + "/" + model.name + "_CODE/runner.cc";
+    string runnerName= path + "/" + model.getName() + "_CODE/runner.cc";
     os.open(runnerName.c_str());
     writeHeader(os);
     os << ENDL;
@@ -731,7 +731,7 @@ void genRunner(const NNmodel &model, //!< Model description
     // write doxygen comment
     os << "//-------------------------------------------------------------------------" << ENDL;
     os << "/*! \\file runner.cc" << ENDL << ENDL;
-    os << "\\brief File generated from GeNN for the model " << model.name << " containing general control code." << ENDL;
+    os << "\\brief File generated from GeNN for the model " << model.getName() << " containing general control code." << ENDL;
     os << "*/" << ENDL;
     os << "//-------------------------------------------------------------------------" << ENDL;
     os << ENDL;
@@ -756,8 +756,8 @@ void genRunner(const NNmodel &model, //!< Model description
     os << ENDL;
 
     os << "unsigned long long iT= 0;" << ENDL;
-    os << model.ftype << " t;" << ENDL;
-    if (model.timing) {
+    os << model.getPrecision() << " t;" << ENDL;
+    if (model.isTimingEnabled()) {
 #ifndef CPU_ONLY
         os << "cudaEvent_t neuronStart, neuronStop;" << ENDL;
 #endif
@@ -812,7 +812,7 @@ void genRunner(const NNmodel &model, //!< Model description
 #endif
         }
         if (n.second.isSpikeTimeRequired()) {
-            variable_def(os, model.ftype+" *", "sT"+n.first);
+            variable_def(os, model.getPrecision()+" *", "sT"+n.first);
         }
 
         auto neuronModel = n.second.getNeuronModel();
@@ -837,7 +837,7 @@ void genRunner(const NNmodel &model, //!< Model description
         const auto *wu = s.second.getWUModel();
         const auto *psm = s.second.getPSModel();
 
-        variable_def(os, model.ftype+" *", "inSyn"+s.first);
+        variable_def(os, model.getPrecision()+" *", "inSyn"+s.first);
         if (s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
             variable_def(os, "uint32_t *", "gp"+s.first);
         }
@@ -889,12 +889,12 @@ void genRunner(const NNmodel &model, //!< Model description
     os << "*/" << ENDL;
     os << "//-------------------------------------------------------------------------" << ENDL << ENDL;
 
-    os << "void convertProbabilityToRandomNumberThreshold(" << model.ftype << " *p_pattern, " << model.RNtype << " *pattern, int N)" << ENDL;
+    os << "void convertProbabilityToRandomNumberThreshold(" << model.getPrecision() << " *p_pattern, " << model.getRNType() << " *pattern, int N)" << ENDL;
     os << "{" << ENDL;
-    os << "    " << model.ftype << " fac= pow(2.0, (double) sizeof(" << model.RNtype << ")*8-16);" << ENDL;
+    os << "    " << model.getPrecision() << " fac= pow(2.0, (double) sizeof(" << model.getRNType() << ")*8-16);" << ENDL;
     os << "    for (int i= 0; i < N; i++) {" << ENDL;
     //os << "        assert(p_pattern[i] <= 1.0);" << ENDL;
-    os << "        pattern[i]= (" << model.RNtype << ") (p_pattern[i]*fac);" << ENDL;
+    os << "        pattern[i]= (" << model.getRNType() << ") (p_pattern[i]*fac);" << ENDL;
     os << "    }" << ENDL;
     os << "}" << ENDL << ENDL;
 
@@ -905,12 +905,12 @@ void genRunner(const NNmodel &model, //!< Model description
     os << "*/" << ENDL;
     os << "//-------------------------------------------------------------------------" << ENDL << ENDL;
 
-    os << "void convertRateToRandomNumberThreshold(" << model.ftype << " *rateKHz_pattern, " << model.RNtype << " *pattern, int N)" << ENDL;
+    os << "void convertRateToRandomNumberThreshold(" << model.getPrecision() << " *rateKHz_pattern, " << model.getRNType() << " *pattern, int N)" << ENDL;
     os << "{" << ENDL;
-    os << "    " << model.ftype << " fac= pow(2.0, (double) sizeof(" << model.RNtype << ")*8-16)*DT;" << ENDL;
+    os << "    " << model.getPrecision() << " fac= pow(2.0, (double) sizeof(" << model.getRNType() << ")*8-16)*DT;" << ENDL;
     os << "    for (int i= 0; i < N; i++) {" << ENDL;
     //os << "        assert(rateKHz_pattern[i] <= 1.0);" << ENDL;
-    os << "        pattern[i]= (" << model.RNtype << ") (rateKHz_pattern[i]*fac);" << ENDL;
+    os << "        pattern[i]= (" << model.getRNType() << ") (rateKHz_pattern[i]*fac);" << ENDL;
     os << "    }" << ENDL;
     os << "}" << ENDL << ENDL;
 
@@ -946,10 +946,10 @@ void genRunner(const NNmodel &model, //!< Model description
     }
 #endif
     //cout << "model.neuronGroupN " << model.neuronGrpN << ENDL;
-    //os << "    " << model.ftype << " free_m, total_m;" << ENDL;
+    //os << "    " << model.getPrecision() << " free_m, total_m;" << ENDL;
     //os << "    cudaMemGetInfo((size_t*) &free_m, (size_t*) &total_m);" << ENDL;
 
-    if (model.timing) {
+    if (model.isTimingEnabled()) {
 #ifndef CPU_ONLY
         os << "    cudaEventCreate(&neuronStart);" << ENDL;
         os << "    cudaEventCreate(&neuronStop);" << ENDL;
@@ -1001,7 +1001,7 @@ void genRunner(const NNmodel &model, //!< Model description
 
         // Allocate buffer to hold last spike times if required
         if (n.second.isSpikeTimeRequired()) {
-            mem += allocate_variable(os, model.ftype, "sT" + n.first, n.second.isSpikeTimeZeroCopyEnabled(),
+            mem += allocate_variable(os, model.getPrecision(), "sT" + n.first, n.second.isSpikeTimeZeroCopyEnabled(),
                                      n.second.getNumNeurons() * n.second.getNumDelaySlots());
         }
 
@@ -1019,7 +1019,7 @@ void genRunner(const NNmodel &model, //!< Model description
         const auto *psm = s.second.getPSModel();
 
         // Allocate buffer to hold input coming from this synapse population
-        mem += allocate_variable(os, model.ftype, "inSyn" + s.first, false,
+        mem += allocate_variable(os, model.getPrecision(), "inSyn" + s.first, false,
                                  s.second.getTrgNeuronGroup()->getNumNeurons());
 
         // If connectivity is defined using a bitmask, allocate memory for bitmask
@@ -1071,11 +1071,11 @@ void genRunner(const NNmodel &model, //!< Model description
     string oB = "", cB = "";
 #endif // _WIN32
 
-    if (model.seed == 0) {
+    if (model.getSeed() == 0) {
         os << "    srand((unsigned int) time(NULL));" << ENDL;
     }
     else {
-        os << "    srand((unsigned int) " << model.seed << ");" << ENDL;
+        os << "    srand((unsigned int) " << model.getSeed() << ");" << ENDL;
     }
     os << ENDL;
 
@@ -1135,7 +1135,7 @@ void genRunner(const NNmodel &model, //!< Model description
             else {
                 os << "    " << oB << "for (int i = 0; i < " << n.second.getNumNeurons() << "; i++) {" << ENDL;
             }
-            if (neuronModelVars[j].second == model.ftype) {
+            if (neuronModelVars[j].second == model.getPrecision()) {
                 os << "        " << neuronModelVars[j].first << n.first << "[i] = " << model.scalarExpr(n.second.getInitVals()[j]) << ";" << ENDL;
             }
             else {
@@ -1150,7 +1150,7 @@ void genRunner(const NNmodel &model, //!< Model description
             os << "    }" << cB << ENDL;
         }
 
-        /*if ((model.neuronType[i] == IZHIKEVICH) && (model.dt != 1.0)) {
+        /*if ((model.neuronType[i] == IZHIKEVICH) && (model.getDT() != 1.0)) {
             os << "    fprintf(stderr,\"WARNING: You use a time step different than 1 ms. Izhikevich model behaviour may not be robust.\\n\"); " << ENDL;
         }*/
     }
@@ -1173,7 +1173,7 @@ void genRunner(const NNmodel &model, //!< Model description
             auto wuVars = wu->getVars();
             for (size_t k= 0, l= wuVars.size(); k < l; k++) {
                 os << "    " << oB << "for (int i = 0; i < " << numSrcNeurons * numTrgNeurons << "; i++) {" << ENDL;
-                if (wuVars[k].second == model.ftype) {
+                if (wuVars[k].second == model.getPrecision()) {
                     os << "        " << wuVars[k].first << s.first << "[i] = " << model.scalarExpr(s.second.getWUInitVals()[k]) << ";" << ENDL;
                 }
                 else {
@@ -1188,7 +1188,7 @@ void genRunner(const NNmodel &model, //!< Model description
             auto psmVars = psm->getVars();
             for (size_t k= 0, l= psmVars.size(); k < l; k++) {
                 os << "    " << oB << "for (int i = 0; i < " << numTrgNeurons << "; i++) {" << ENDL;
-                if (psmVars[k].second == model.ftype) {
+                if (psmVars[k].second == model.getPrecision()) {
                     os << "        " << psmVars[k].first << s.first << "[i] = " << model.scalarExpr(s.second.getPSInitVals()[k]) << ";" << ENDL;
                 }
                 else {
@@ -1278,7 +1278,7 @@ void genRunner(const NNmodel &model, //!< Model description
             os << "}" << ENDL;
             os << ENDL;
             //setup up helper fn for this (specific) popn to generate sparse from dense
-            os << "void createSparseConnectivityFromDense" << s.first << "(int preN,int postN, " << model.ftype << " *denseMatrix)" << "{" << ENDL;
+            os << "void createSparseConnectivityFromDense" << s.first << "(int preN,int postN, " << model.getPrecision() << " *denseMatrix)" << "{" << ENDL;
             os << "    gennError(\"The function createSparseConnectivityFromDense" << s.first << "() has been deprecated because with the introduction of synapse models that can be fully user-defined and may not contain a conductance variable g the existence condition for synapses has become ill-defined. \\n Please use your own logic and use the general tools allocate" << s.first << "(), countEntriesAbove(), and setSparseConnectivityFromDense().\");" << ENDL;
             os << "}" << ENDL;
             os << ENDL;
@@ -1336,7 +1336,7 @@ void genRunner(const NNmodel &model, //!< Model description
     // initialization of variables, e.g. reverse sparse arrays etc. 
     // that the user would not want to worry about
     
-    os << "void init" << model.name << "()" << ENDL;
+    os << "void init" << model.getName() << "()" << ENDL;
     os << OB(1130) << ENDL;
     bool anySparse = false;
     for(const auto &s : model.getSynapseGroups()) {
@@ -1450,31 +1450,31 @@ void genRunner(const NNmodel &model, //!< Model description
     os << "{" << ENDL;
     if (!model.getSynapseGroups().empty()) {
         if (!model.getSynapseDynamicsGroups().empty()) {
-            if (model.timing) os << "        synDyn_timer.startTimer();" << ENDL;
+            if (model.isTimingEnabled()) os << "        synDyn_timer.startTimer();" << ENDL;
             os << "        calcSynapseDynamicsCPU(t);" << ENDL;
-            if (model.timing) {
+            if (model.isTimingEnabled()) {
                 os << "        synDyn_timer.stopTimer();" << ENDL;
                 os << "        synDyn_tme+= synDyn_timer.getElapsedTime();" << ENDL;
             }
         }
-        if (model.timing) os << "        synapse_timer.startTimer();" << ENDL;
+        if (model.isTimingEnabled()) os << "        synapse_timer.startTimer();" << ENDL;
         os << "        calcSynapsesCPU(t);" << ENDL;
-        if (model.timing) {
+        if (model.isTimingEnabled()) {
             os << "        synapse_timer.stopTimer();" << ENDL;
             os << "        synapse_tme+= synapse_timer.getElapsedTime();"<< ENDL;
         }
         if (!model.getSynapsePostLearnGroups().empty()) {
-            if (model.timing) os << "        learning_timer.startTimer();" << ENDL;
+            if (model.isTimingEnabled()) os << "        learning_timer.startTimer();" << ENDL;
             os << "        learnSynapsesPostHost(t);" << ENDL;
-            if (model.timing) {
+            if (model.isTimingEnabled()) {
                 os << "        learning_timer.stopTimer();" << ENDL;
                 os << "        learning_tme+= learning_timer.getElapsedTime();" << ENDL;
             }
         }
     }
-    if (model.timing) os << "    neuron_timer.startTimer();" << ENDL;
+    if (model.isTimingEnabled()) os << "    neuron_timer.startTimer();" << ENDL;
     os << "    calcNeuronsCPU(t);" << ENDL;
-    if (model.timing) {
+    if (model.isTimingEnabled()) {
         os << "    neuron_timer.stopTimer();" << ENDL;
         os << "    neuron_tme+= neuron_timer.getElapsedTime();" << ENDL;
     }
@@ -1517,14 +1517,14 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     ofstream os;
 
 //    cout << "entering GenRunnerGPU" << ENDL;
-    string name= path + "/" + model.name + "_CODE/runnerGPU.cc";
+    string name= path + "/" + model.getName() + "_CODE/runnerGPU.cc";
     os.open(name.c_str());
     writeHeader(os);
 
     // write doxygen comment
     os << "//-------------------------------------------------------------------------" << ENDL;
     os << "/*! \\file runnerGPU.cc" << ENDL << ENDL;
-    os << "\\brief File generated from GeNN for the model " << model.name << " containing the host side code for a GPU simulator version." << ENDL;
+    os << "\\brief File generated from GeNN for the model " << model.getName() << " containing the host side code for a GPU simulator version." << ENDL;
     os << "*/" << ENDL;
     os << "//-------------------------------------------------------------------------" << ENDL << ENDL;
     os << ENDL;
@@ -1749,7 +1749,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
 
         os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_inSyn" << s.first;
         os << ", inSyn" << s.first;
-        os << ", " << numTrgNeurons << " * sizeof(" << model.ftype << "), cudaMemcpyHostToDevice));" << ENDL;
+        os << ", " << numTrgNeurons << " * sizeof(" << model.getPrecision() << "), cudaMemcpyHostToDevice));" << ENDL;
 
         os << CB(1100);
         os << ENDL;
@@ -1938,7 +1938,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
 
         os << "CHECK_CUDA_ERRORS(cudaMemcpy(inSyn" << s.first;
         os << ", d_inSyn" << s.first;
-        os << ", " << numTrgNeurons << " * sizeof(" << model.ftype << "), cudaMemcpyDeviceToHost));" << ENDL;
+        os << ", " << numTrgNeurons << " * sizeof(" << model.getPrecision() << "), cudaMemcpyDeviceToHost));" << ENDL;
 
         os << CB(1100);
         os << ENDL;
@@ -2150,7 +2150,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     os << ENDL;
     if (!model.getSynapseGroups().empty()) {
         if (!model.getSynapseDynamicsGroups().empty()) {
-            if (model.timing) {
+            if (model.isTimingEnabled()) {
                 os << "cudaEventRecord(synDynStart);" << ENDL;
             }
             os << "calcSynapseDynamics <<< sDGrid, sDThreads >>> (";
@@ -2158,11 +2158,11 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
                 os << p.first << ", ";
             }
             os << "t);" << ENDL;
-            if (model.timing) {
+            if (model.isTimingEnabled()) {
                 os << "cudaEventRecord(synDynStop);" << ENDL;
             }
         }
-        if (model.timing) {
+        if (model.isTimingEnabled()) {
             os << "cudaEventRecord(synapseStart);" << ENDL;
         }
         os << "calcSynapses <<< sGrid, sThreads >>> (";
@@ -2170,12 +2170,12 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
             os << p.first << ", ";
         }
         os << "t);" << ENDL;
-        if (model.timing) {
+        if (model.isTimingEnabled()) {
             os << "cudaEventRecord(synapseStop);" << ENDL;
         }
 
         if (!model.getSynapsePostLearnGroups().empty()) {
-            if (model.timing) {
+            if (model.isTimingEnabled()) {
                 os << "cudaEventRecord(learningStart);" << ENDL;
             }
             os << "learnSynapsesPost <<< lGrid, lThreads >>> (";
@@ -2183,7 +2183,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
                 os << p.first << ", ";
             }
             os << "t);" << ENDL;
-            if (model.timing) {
+            if (model.isTimingEnabled()) {
                 os << "cudaEventRecord(learningStop);" << ENDL;
             }
         }
@@ -2193,7 +2193,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
             os << "spkQuePtr" << n.first << " = (spkQuePtr" << n.first << " + 1) % " << n.second.getNumDelaySlots() << ";" << ENDL;
         }
     }
-    if (model.timing) {
+    if (model.isTimingEnabled()) {
         os << "cudaEventRecord(neuronStart);" << ENDL;
     }
 
@@ -2202,7 +2202,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
         os << p.first << ", ";
     }
     os << "t);" << ENDL;
-    if (model.timing) {
+    if (model.isTimingEnabled()) {
         os << "cudaEventRecord(neuronStop);" << ENDL;
         os << "cudaEventSynchronize(neuronStop);" << ENDL;
         os << "float tmp;" << ENDL;
@@ -2246,7 +2246,7 @@ void genMakefile(const NNmodel &model, //!< Model description
                  const string &path    //!< Path for code generation
                  )
 {
-    string name = path + "/" + model.name + "_CODE/Makefile";
+    string name = path + "/" + model.getName() + "_CODE/Makefile";
     ofstream os;
     os.open(name.c_str());
 

@@ -56,9 +56,9 @@ void generate_model_runner(const NNmodel &model,  //!< Model description
                            )
 {
 #ifdef _WIN32
-  _mkdir((path + "\\" + model.name + "_CODE").c_str());
+  _mkdir((path + "\\" + model.getName() + "_CODE").c_str());
 #else // UNIX
-  mkdir((path + "/" + model.name + "_CODE").c_str(), 0777);
+  mkdir((path + "/" + model.getName() + "_CODE").c_str(), 0777);
 #endif
 
   // general shared code for GPU and CPU versions
@@ -224,7 +224,7 @@ void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
             // Signal error and exit if SM version < 1.3 and double precision floats are requested.
             if ((deviceProp[theDevice].major == 1) && (deviceProp[theDevice].minor < 3))
             {
-                if (model.ftype != "float")
+                if (model.getPrecision() != "float")
                 {
                     cerr << "Error: This CUDA device does not support double precision floating-point." << endl;
                     cerr << "       Either change the ftype parameter to GENN_FLOAT or find a newer GPU" << endl;
@@ -256,13 +256,13 @@ void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
 
 #ifdef _WIN32
             nvccFlags += " -I\"%GENN_PATH%\\lib\\include\"";
-            string runnerPath = path + "\\" + model.name + "_CODE\\runner.cc";
+            string runnerPath = path + "\\" + model.getName() + "_CODE\\runner.cc";
             string cubinPath = path + "\\runner.cubin";
             string nvccCommand = "\"\"" NVCC "\" " + nvccFlags;
             nvccCommand += " -o \"" + cubinPath + "\" \"" + runnerPath + "\"\"";
 #else
             nvccFlags += " -I\"$GENN_PATH/lib/include\"";
-            string runnerPath = path + "/" + model.name + "_CODE/runner.cc";
+            string runnerPath = path + "/" + model.getName() + "_CODE/runner.cc";
             string cubinPath = path + "/runner.cubin";
             string nvccCommand = "\"" NVCC "\" " + nvccFlags;
             nvccCommand += " -o \"" + cubinPath + "\" \"" + runnerPath + "\"";
@@ -601,7 +601,7 @@ int main(int argc,     //!< number of arguments; expected to be 2
     cout << "Setting integration step size from global DT macro: " << DT << endl;
 #endif // DT
     modelDefinition(*model);
-    if (!model->final) {
+    if (!model->isFinalized()) {
         gennError("Model was not finalized in modelDefinition(). Please call model.finalize().");
     }
 

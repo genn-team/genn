@@ -641,7 +641,17 @@ void NNmodel::setSeed(unsigned int inseed /*!< the new seed  */)
     seed= inseed;
 }
 
-
+//--------------------------------------------------------------------------
+/*! \brief Sets the underlying type for random number generation (default: uint64_t)
+ */
+//--------------------------------------------------------------------------
+void NNmodel::setRNType(const std::string &type)
+{
+    if (final) {
+        gennError("Trying to set the random number type in a finalized model.");
+    }
+    RNtype= type;
+}
 #ifndef CPU_ONLY
 //--------------------------------------------------------------------------
 /*! \brief This function defines the way how the GPU is chosen. If "AUTODEVICE" (-1) is given as the argument, GeNN will use internal heuristics to choose the device. Otherwise the argument is the device number and the indicated device will be used.

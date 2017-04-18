@@ -356,7 +356,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
     string localID;
     ofstream os;
 
-    string name = path + "/" + model.name + "_CODE/neuronKrnl.cc";
+    string name = path + "/" + model.getName() + "_CODE/neuronKrnl.cc";
     os.open(name.c_str());
 
     // write header content
@@ -364,14 +364,14 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
     os << ENDL;
 
     // compiler/include control (include once)
-    os << "#ifndef _" << model.name << "_neuronKrnl_cc" << ENDL;
-    os << "#define _" << model.name << "_neuronKrnl_cc" << ENDL;
+    os << "#ifndef _" << model.getName() << "_neuronKrnl_cc" << ENDL;
+    os << "#define _" << model.getName() << "_neuronKrnl_cc" << ENDL;
     os << ENDL;
 
     // write doxygen comment
     os << "//-------------------------------------------------------------------------" << ENDL;
     os << "/*! \\file neuronKrnl.cc" << ENDL << ENDL;
-    os << "\\brief File generated from GeNN for the model " << model.name << " containing the neuron kernel function." << ENDL;
+    os << "\\brief File generated from GeNN for the model " << model.getName() << " containing the neuron kernel function." << ENDL;
     os << "*/" << ENDL;
     os << "//-------------------------------------------------------------------------" << ENDL << ENDL;
 
@@ -385,7 +385,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
     for(const auto &p : model.getNeuronKernelParameters()) {
         os << p.second << " " << p.first << ", ";
     }
-    os << model.ftype << " t)" << ENDL;
+    os << model.getPrecision() << " t)" << ENDL;
     os << OB(5);
 
     // kernel code
@@ -422,7 +422,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
     os << ENDL;
 
     // Reset global spike counting vars here if there are no synapses at all
-    if (model.resetKernel == GENN_FLAGS::calcNeurons) {
+    if (model.getResetKernel() == GENN_FLAGS::calcNeurons) {
         os << "if (id == 0)" << OB(6);
         for(const auto &n : model.getNeuronGroups()) {
             StandardGeneratedSections::neuronOutputInit(os, n.second, "dd_");
@@ -492,7 +492,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
         if ((nm->getSimCode().find("$(sT)") != string::npos)
             || (nm->getThresholdConditionCode().find("$(sT)") != string::npos)
             || (nm->getResetCode().find("$(sT)") != string::npos)) { // load sT into local variable
-            os << model.ftype << " lsT = dd_sT" <<  n.first << "[";
+            os << model.getPrecision() << " lsT = dd_sT" <<  n.first << "[";
             if (n.second.isDelayRequired()) {
                 os << "(delaySlot * " << n.second.getNumNeurons() << ") + ";
             }
@@ -501,13 +501,13 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
         os << ENDL;
 
         if (n.second.getInSyn().size() > 0 || (nm->getSimCode().find("Isyn") != string::npos)) {
-            os << model.ftype << " Isyn = 0;" << ENDL;
+            os << model.getPrecision() << " Isyn = 0;" << ENDL;
         }
         for(const auto *sg : n.second.getInSyn()) {
             const auto *psm = sg->getPSModel();
 
             os << "// pull inSyn values in a coalesced access" << ENDL;
-            os << model.ftype << " linSyn" << sg->getName() << " = dd_inSyn" << sg->getName() << "[" << localID << "];" << ENDL;
+            os << model.getPrecision() << " linSyn" << sg->getName() << " = dd_inSyn" << sg->getName() << "[" << localID << "];" << ENDL;
             if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
                 for(const auto &v : psm->getVars()) {
                     os << v.second << " lps" << v.first << sg->getName();
@@ -518,7 +518,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
             substitute(psCode, "$(id)", localID);
             substitute(psCode, "$(inSyn)", "linSyn" + sg->getName());
             StandardSubstitutions::postSynapseCurrentConverter(psCode, sg, n.second,
-                nmVars, nmDerivedParams, nmExtraGlobalParams, model.ftype);
+                nmVars, nmDerivedParams, nmExtraGlobalParams, model.getPrecision());
 
             if (!psm->getSupportCode().empty()) {
                 os << OB(29) << " using namespace " << sg->getName() << "_postsyn;" << ENDL;
@@ -541,7 +541,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
             substitute(thCode, "$(id)", localID);
             StandardSubstitutions::neuronThresholdCondition(thCode, n.second,
                                                             nmVars, nmDerivedParams, nmExtraGlobalParams,
-                                                            model.ftype);
+                                                            model.getPrecision());
             if (GENN_PREFERENCES::autoRefractory) {
                 os << "bool oldSpike= (" << thCode << ");" << ENDL;
             }
@@ -552,7 +552,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
         substitute(sCode, "$(id)", localID);
         StandardSubstitutions::neuronSim(sCode, n.second,
                                          nmVars, nmDerivedParams, nmExtraGlobalParams,
-                                         model.ftype);
+                                         model.getPrecision());
         os << sCode << ENDL;
 
         // look for spike type events first.
@@ -560,7 +560,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
            // Generate spike event test
             StandardGeneratedSections::neuronSpikeEventTest(os, n.second,
                                                             nmVars, nmExtraGlobalParams,
-                                                            localID, model.ftype);
+                                                            localID, model.getPrecision());
 
             os << "// register a spike-like event" << ENDL;
             os << "if (spikeLikeEvent)" << OB(30);
@@ -587,7 +587,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
                 substitute(rCode, "$(id)", localID);
                 StandardSubstitutions::neuronReset(rCode, n.second,
                                                    nmVars, nmDerivedParams, nmExtraGlobalParams,
-                                                   model.ftype);
+                                                   model.getPrecision());
                 os << "// spike reset code" << ENDL;
                 os << rCode << ENDL;
             }
@@ -608,7 +608,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
             substitute(pdCode, "$(inSyn)", "linSyn" + sg->getName());
             StandardSubstitutions::postSynapseDecay(pdCode, sg, n.second,
                                                     nmVars, nmDerivedParams, nmExtraGlobalParams,
-                                                    model.ftype);
+                                                    model.getPrecision());
             if (!psm->getSupportCode().empty()) {
                 os << OB(29) << " using namespace " << sg->getName() << "_postsyn;" << ENDL;
             }
@@ -696,7 +696,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
     ofstream os;
 
 //    cout << "entering genSynapseKernel" << endl;
-    string name = path + "/" + model.name + "_CODE/synapseKrnl.cc";
+    string name = path + "/" + model.getName() + "_CODE/synapseKrnl.cc";
     os.open(name.c_str());
 
     // write header content
@@ -704,15 +704,15 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
     os << ENDL;
 
     // compiler/include control (include once)
-    os << "#ifndef _" << model.name << "_synapseKrnl_cc" << ENDL;
-    os << "#define _" << model.name << "_synapseKrnl_cc" << ENDL;
+    os << "#ifndef _" << model.getName() << "_synapseKrnl_cc" << ENDL;
+    os << "#define _" << model.getName() << "_synapseKrnl_cc" << ENDL;
     os << "#define BLOCKSZ_SYN " << synapseBlkSz << ENDL;
     os << ENDL;
  
     // write doxygen comment
     os << "//-------------------------------------------------------------------------" << ENDL;
     os << "/*! \\file synapseKrnl.cc" << ENDL << ENDL;
-    os << "\\brief File generated from GeNN for the model " << model.name;
+    os << "\\brief File generated from GeNN for the model " << model.getName();
     os << " containing the synapse kernel and learning kernel functions." << ENDL;
     os << "*/" << ENDL;
     os << "//-------------------------------------------------------------------------" << ENDL << ENDL;
@@ -726,7 +726,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
         for(const auto &p : model.getSynapseDynamicsKernelParameters()) {
             os << p.second << " " << p.first << ", ";
         }
-        os << model.ftype << " t)" << ENDL; // end of synapse kernel header
+        os << model.getPrecision() << " t)" << ENDL; // end of synapse kernel header
 
         // synapse dynamics kernel code
         os << OB(75);
@@ -784,7 +784,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                     StandardSubstitutions::weightUpdateDynamics(SDcode, sg, wuVars, wuDerivedParams,
                                                                 "dd_preInd" + s.first +"[" + localID + "]",
                                                                 "dd_ind" + s.first + "[" + localID + "]",
-                                                                "dd_", model.ftype);
+                                                                "dd_", model.getPrecision());
                     os << SDcode << ENDL;
                 }
                 else { // DENSE
@@ -800,7 +800,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                     StandardSubstitutions::weightUpdateDynamics(SDcode, sg, wuVars, wuDerivedParams,
                                                                 localID +"/" + to_string(sg->getTrgNeuronGroup()->getNumNeurons()),
                                                                 localID +"%" + to_string(sg->getTrgNeuronGroup()->getNumNeurons()),
-                                                                "dd_", model.ftype);
+                                                                "dd_", model.getPrecision());
                     os << SDcode << ENDL;
                 }
                 os << CB(25);
@@ -819,7 +819,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
     for (const auto &p : model.getSynapseKernelParameters()) {
         os << p.second << " " << p.first << ", ";
     }
-    os << model.ftype << " t)" << ENDL; // end of synapse kernel header
+    os << model.getPrecision() << " t)" << ENDL; // end of synapse kernel header
 
     // synapse kernel code
     os << OB(75);
@@ -827,13 +827,13 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
     // common variables for all cases
     os << "unsigned int id = BLOCKSZ_SYN * blockIdx.x + threadIdx.x;" << ENDL;
     os << "unsigned int lmax, j, r;" << ENDL;
-    os << model.ftype << " addtoinSyn;" << ENDL;  
-    os << "volatile __shared__ " << model.ftype << " shLg[BLOCKSZ_SYN];" << ENDL;
+    os << model.getPrecision() << " addtoinSyn;" << ENDL;
+    os << "volatile __shared__ " << model.getPrecision() << " shLg[BLOCKSZ_SYN];" << ENDL;
 
     // case-dependent variables
     for(const auto &s : model.getSynapseGroups()) {
         if (!(s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) || !s.second.isPSAtomicAddRequired(synapseBlkSz)){
-            os << model.ftype << " linSyn;" << ENDL;
+            os << model.getPrecision() << " linSyn;" << ENDL;
             break;
         }
     }
@@ -849,7 +849,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
     for(const auto &s : model.getSynapseGroups()) {
         if (s.second.isTrueSpikeRequired() || model.isSynapseGroupPostLearningRequired(s.first)) {
             os << "__shared__ unsigned int shSpk[BLOCKSZ_SYN];" << ENDL;
-            //os << "__shared__ " << model.ftype << " shSpkV[BLOCKSZ_SYN];" << ENDL;
+            //os << "__shared__ " << model.getPrecision() << " shSpkV[BLOCKSZ_SYN];" << ENDL;
             os << "unsigned int lscnt, numSpikeSubsets;" << ENDL;
             break;
         }
@@ -915,12 +915,12 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
 
         // generate the code for processing spike-like events
         if (s.second.isSpikeEventRequired()) {
-            generate_process_presynaptic_events_code(os, s.second, localID, "Evnt", model.ftype);
+            generate_process_presynaptic_events_code(os, s.second, localID, "Evnt", model.getPrecision());
         }
 
         // generate the code for processing true spike events
         if (s.second.isTrueSpikeRequired()) {
-            generate_process_presynaptic_events_code(os, s.second, localID, "", model.ftype);
+            generate_process_presynaptic_events_code(os, s.second, localID, "", model.getPrecision());
         }
         os << ENDL;
 
@@ -931,7 +931,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
             os << CB(190);
         }
         // need to do reset operations in this kernel (no learning kernel)
-        if (model.resetKernel == GENN_FLAGS::calcSynapses) {
+        if (model.getResetKernel() == GENN_FLAGS::calcSynapses) {
             os << "__syncthreads();" << ENDL;
             os << "if (threadIdx.x == 0)" << OB(200);
             os << "j = atomicAdd((unsigned int *) &d_done, 1);" << ENDL;
@@ -984,7 +984,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
         for(const auto &p : model.getSimLearnPostKernelParameters()) {
             os << p.second << " " << p.first << ", ";
         }
-        os << model.ftype << " t)";
+        os << model.getPrecision() << " t)";
         os << ENDL;
 
         // kernel code
@@ -1074,7 +1074,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
             }
             StandardSubstitutions::weightUpdatePostLearn(code, sg, wuDerivedParams, wuExtraGlobalParams,
                                                          sparse ?  "dd_revInd" + s.first + "[iprePos]" : localID,
-                                                         "shSpk[j]", "dd_", model.ftype);
+                                                         "shSpk[j]", "dd_", model.getPrecision());
             // end Code substitutions -------------------------------------------------------------------------
             os << code << ENDL;
             if (sparse) {
@@ -1083,7 +1083,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
             os << CB(260);
             os << CB(250);
             os << CB(230);
-            if (model.resetKernel == GENN_FLAGS::learnSynapsesPost) {
+            if (model.getResetKernel() == GENN_FLAGS::learnSynapsesPost) {
                 os << "__syncthreads();" << ENDL;
                 os << "if (threadIdx.x == 0)" << OB(320);
                 os << "j = atomicAdd((unsigned int *) &d_done, 1);" << ENDL;
