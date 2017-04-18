@@ -174,7 +174,7 @@ void SynapseGroup::addExtraGlobalSynapseParams(std::map<std::string, std::string
     // parameters referenced in the sim code to the map of kernel parameters
     addExtraGlobalSimParams(getSrcNeuronGroup()->getName(), "_pre", getSrcNeuronGroup()->getNeuronModel()->getExtraGlobalParams(),
                              kernelParameters);
-    addExtraGlobalSimParams(getSrcNeuronGroup()->getName(), "_post", getTrgNeuronGroup()->getNeuronModel()->getExtraGlobalParams(),
+    addExtraGlobalSimParams(getTrgNeuronGroup()->getName(), "_post", getTrgNeuronGroup()->getNeuronModel()->getExtraGlobalParams(),
                              kernelParameters);
 
     // Finally add any weight update model extra global
@@ -187,7 +187,7 @@ void SynapseGroup::addExtraGlobalSynapseParams(std::map<std::string, std::string
     // parameters referenced in the sim code to the map of kernel parameters
     addExtraGlobalPostLearnParams(getSrcNeuronGroup()->getName(), "_pre", getSrcNeuronGroup()->getNeuronModel()->getExtraGlobalParams(),
                                   kernelParameters);
-    addExtraGlobalPostLearnParams(getSrcNeuronGroup()->getName(), "_post", getTrgNeuronGroup()->getNeuronModel()->getExtraGlobalParams(),
+    addExtraGlobalPostLearnParams(getTrgNeuronGroup()->getName(), "_post", getTrgNeuronGroup()->getNeuronModel()->getExtraGlobalParams(),
                                   kernelParameters);
 
     // Finally add any weight update model extra global
@@ -200,7 +200,7 @@ void SynapseGroup::addExtraGlobalSynapseParams(std::map<std::string, std::string
     // parameters referenced in the sim code to the map of kernel parameters
     addExtraGlobalSynapseDynamicsParams(getSrcNeuronGroup()->getName(), "_pre", getSrcNeuronGroup()->getNeuronModel()->getExtraGlobalParams(),
                                         kernelParameters);
-    addExtraGlobalSynapseDynamicsParams(getSrcNeuronGroup()->getName(), "_post", getTrgNeuronGroup()->getNeuronModel()->getExtraGlobalParams(),
+    addExtraGlobalSynapseDynamicsParams(getTrgNeuronGroup()->getName(), "_post", getTrgNeuronGroup()->getNeuronModel()->getExtraGlobalParams(),
                                         kernelParameters);
 
     // Finally add any weight update model extra global
