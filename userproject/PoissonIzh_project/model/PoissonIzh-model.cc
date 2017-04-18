@@ -118,7 +118,7 @@ void classol::read_sparsesyns_par(const char *synGrpName, //!< name of the synap
   auto *synGrp = model.findSynapseGroup(synGrpName);
   //allocateSparseArray(synInd,C.connN);
 
-  unsigned int retval = fread(g, C.connN*sizeof(model.ftype),1,f_g);
+  unsigned int retval = fread(g, C.connN*theSize(model.getPrecision()),1,f_g);
   fprintf(stderr,"%d active synapses. \n",C.connN);
   retval = fread(C.indInG, (synGrp->getSrcNeuronGroup()->getNumNeurons()+1)*sizeof(unsigned int),1,f_indInG);
   retval = fread(C.ind, C.connN*sizeof(int),1,f_ind);

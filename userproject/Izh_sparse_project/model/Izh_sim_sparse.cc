@@ -284,9 +284,9 @@ name= toString("inputfiles/gIzh_sparse_ind_ee");
   timer.stopTimer();
   
   cout << "Output files are created under the current directory. Output and parameters are logged in: " << logname << endl;
-  fprintf(timef, "%d %d %u %u %.4f %.2f %.1f %.2f %u %s %s\n",which, PCNN.model.getNumNeurons(), PCNN.sumPExc, PCNN.sumPInh, timer.getElapsedTime(),VPExc[0], TOTAL_TME, DT, sumSynapses, logname.c_str(), PCNN.model.ftype.c_str());
-  fprintf(flog, "%u neurons in total\n%u spikes in the excitatory population\n%u spikes in the inhibitory population\nElapsed time is %.4f\nLast Vm value of the 1st neuron is %.2f\nTotal time %f at DT+%f \nTotal number of synapses in the model is %u, %s precision\n\n#################\n", PCNN.model.getNumNeurons(), PCNN.sumPExc, PCNN.sumPInh, timer.getElapsedTime(),VPExc[0], TOTAL_TME, DT, sumSynapses, PCNN.model.ftype.c_str());
-  fprintf(stdout, "%u neurons in total\n%u spikes in the excitatory population\n%u spikes in the inhibitory population\nElapsed time is %.4f\nLast Vm value of the 1st neuron is %.2f\nTotal simulation of %f ms at DT=%f \nTotal number of synapses in the model is %u, %s precision\n\n#################\n", PCNN.model.getNumNeurons(), PCNN.sumPExc, PCNN.sumPInh, timer.getElapsedTime(),VPExc[0], TOTAL_TME, DT, sumSynapses, PCNN.model.ftype.c_str());
+  fprintf(timef, "%d %d %u %u %.4f %.2f %.1f %.2f %u %s %s\n",which, PCNN.model.getNumNeurons(), PCNN.sumPExc, PCNN.sumPInh, timer.getElapsedTime(),VPExc[0], TOTAL_TME, DT, sumSynapses, logname.c_str(), PCNN.model.getPrecision().c_str());
+  fprintf(flog, "%u neurons in total\n%u spikes in the excitatory population\n%u spikes in the inhibitory population\nElapsed time is %.4f\nLast Vm value of the 1st neuron is %.2f\nTotal time %f at DT+%f \nTotal number of synapses in the model is %u, %s precision\n\n#################\n", PCNN.model.getNumNeurons(), PCNN.sumPExc, PCNN.sumPInh, timer.getElapsedTime(),VPExc[0], TOTAL_TME, DT, sumSynapses, PCNN.model.getPrecision().c_str());
+  fprintf(stdout, "%u neurons in total\n%u spikes in the excitatory population\n%u spikes in the inhibitory population\nElapsed time is %.4f\nLast Vm value of the 1st neuron is %.2f\nTotal simulation of %f ms at DT=%f \nTotal number of synapses in the model is %u, %s precision\n\n#################\n", PCNN.model.getNumNeurons(), PCNN.sumPExc, PCNN.sumPInh, timer.getElapsedTime(),VPExc[0], TOTAL_TME, DT, sumSynapses, PCNN.model.getPrecision().c_str());
   fclose(osf);
   fclose(timef);
   fclose(osf2);
