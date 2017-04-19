@@ -45,20 +45,20 @@ void classIzh::exportArray(double *dest, scalar *src, int sz)
     }
 }
 
-void classIzh::randomizeVar(scalar * Var, scalar strength, unsigned int neuronGrp)
+void classIzh::randomizeVar(scalar * Var, scalar strength, const NeuronGroup *neuronGrp)
 {
   //kernel if gpu?
-  for (int j=0; j< model.neuronN[neuronGrp]; j++){
+  for (int j=0; j< neuronGrp->getNumNeurons(); j++){
     Var[j]=Var[j]+strength*((scalar) R.n());
   }
 }
 
-void classIzh::randomizeVarSq(scalar * Var, scalar strength, unsigned int neuronGrp)
+void classIzh::randomizeVarSq(scalar * Var, scalar strength, const NeuronGroup *neuronGrp)
 {
   //kernel if gpu?
   //randomGen R;
   scalar randNbr;
-  for (int j=0; j< model.neuronN[neuronGrp]; j++){
+  for (int j=0; j< neuronGrp->getNumNeurons(); j++){
     randNbr=((scalar) R.n());
     Var[j]=Var[j]+strength*randNbr*randNbr;
   }
@@ -67,26 +67,28 @@ void classIzh::randomizeVarSq(scalar * Var, scalar strength, unsigned int neuron
 
 void classIzh::initializeAllVars(unsigned int which)
 {
-  randomizeVar(aPInh,0.08,1);	
-  randomizeVar(bPInh,-0.05,1);
-  randomizeVarSq(cPExc,15.0,0);
-  randomizeVarSq(dPExc,-6.0,0);	
+  auto *pInh = model.findNeuronGroup("PInh");
+  auto *pExc = model.findNeuronGroup("PExc");
+  randomizeVar(aPInh,0.08, pInh);
+  randomizeVar(bPInh,-0.05,pInh);
+  randomizeVarSq(cPExc,15.0,pExc);
+  randomizeVarSq(dPExc,-6.0,pExc);
 
-  for (int j=0; j< model.neuronN[1]; j++){
+  for (int j=0; j< pInh->getNumNeurons(); j++){
     UPExc[j]=bPExc[j]*VPExc[j];
     UPInh[j]=bPInh[j]*VPInh[j];	
   }
-  for (int j=model.neuronN[1]; j< model.neuronN[0]; j++){
+  for (int j=pInh->getNumNeurons(); j< pExc->getNumNeurons(); j++){
     UPExc[j]=bPExc[j]*VPExc[j];
   }
 #ifndef CPU_ONLY
   if (which == GPU) {
-    CHECK_CUDA_ERRORS(cudaMemcpy(d_aPInh, aPInh, sizeof(scalar)*model.neuronN[1], cudaMemcpyHostToDevice));
-    CHECK_CUDA_ERRORS(cudaMemcpy(d_bPInh, bPInh, sizeof(scalar)*model.neuronN[1], cudaMemcpyHostToDevice));
-    CHECK_CUDA_ERRORS(cudaMemcpy(d_cPExc, cPExc, sizeof(scalar)*model.neuronN[0], cudaMemcpyHostToDevice));
-    CHECK_CUDA_ERRORS(cudaMemcpy(d_dPExc, dPExc, sizeof(scalar)*model.neuronN[0], cudaMemcpyHostToDevice));
-    CHECK_CUDA_ERRORS(cudaMemcpy(d_UPExc, UPExc, sizeof(scalar)*model.neuronN[0], cudaMemcpyHostToDevice));
-    CHECK_CUDA_ERRORS(cudaMemcpy(d_UPInh, UPInh, sizeof(scalar)*model.neuronN[1], cudaMemcpyHostToDevice));
+    CHECK_CUDA_ERRORS(cudaMemcpy(d_aPInh, aPInh, sizeof(scalar)*pInh->getNumNeurons(), cudaMemcpyHostToDevice));
+    CHECK_CUDA_ERRORS(cudaMemcpy(d_bPInh, bPInh, sizeof(scalar)*pInh->getNumNeurons(), cudaMemcpyHostToDevice));
+    CHECK_CUDA_ERRORS(cudaMemcpy(d_cPExc, cPExc, sizeof(scalar)*pExc->getNumNeurons(), cudaMemcpyHostToDevice));
+    CHECK_CUDA_ERRORS(cudaMemcpy(d_dPExc, dPExc, sizeof(scalar)*pExc->getNumNeurons(), cudaMemcpyHostToDevice));
+    CHECK_CUDA_ERRORS(cudaMemcpy(d_UPExc, UPExc, sizeof(scalar)*pExc->getNumNeurons(), cudaMemcpyHostToDevice));
+    CHECK_CUDA_ERRORS(cudaMemcpy(d_UPInh, UPInh, sizeof(scalar)*pInh->getNumNeurons(), cudaMemcpyHostToDevice));
   }
 #endif
 }
@@ -106,8 +108,10 @@ void classIzh::init(unsigned int which)
 void classIzh::copy_device_mem_input()
 {
 #ifndef CPU_ONLY
-  CHECK_CUDA_ERRORS(cudaMemcpy(d_I0PExc,I0PExc, model.neuronN[0]*sizeof(scalar), cudaMemcpyHostToDevice));
-  CHECK_CUDA_ERRORS(cudaMemcpy(d_I0PInh,I0PInh, model.neuronN[1]*sizeof(scalar), cudaMemcpyHostToDevice));
+  auto *pInh = model.findNeuronGroup("PInh");
+  auto *pExc = model.findNeuronGroup("PExc");
+  CHECK_CUDA_ERRORS(cudaMemcpy(d_I0PExc,I0PExc, pExc->getNumNeurons()*sizeof(scalar), cudaMemcpyHostToDevice));
+  CHECK_CUDA_ERRORS(cudaMemcpy(d_I0PInh,I0PInh, pInh->getNumNeurons()*sizeof(scalar), cudaMemcpyHostToDevice));
 #endif
 }
 
@@ -121,9 +125,10 @@ void classIzh::write_input_to_file(FILE *f)
 {
   printf("input is const, no need to write");
   unsigned int outno;
-  if (model.neuronN[0]>10) 
+  auto *pExc = model.findNeuronGroup("PExc");
+  if (pExc->getNumNeurons() > 10)
   outno=10;
-  else outno=model.neuronN[0];
+  else outno=pExc->getNumNeurons();
 
   fprintf(f, "%f ", t);
   for(int i=0;i<outno;i++) {
@@ -134,10 +139,13 @@ void classIzh::write_input_to_file(FILE *f)
 
 void classIzh::create_input_values() //define your explicit input rule here
 {
-    for (int x= 0; x < model.neuronN[0]; x++) {
+    auto *pExc = model.findNeuronGroup("PExc");
+    for (int x= 0; x < pExc->getNumNeurons(); x++) {
 	I0PExc[x]= meanInpExc*((scalar) RG.n());
     }
-    for (int x= 0; x < model.neuronN[1]; x++) {
+
+    auto *pInh = model.findNeuronGroup("PInh");
+    for (int x= 0; x < pInh->getNumNeurons(); x++) {
 	I0PInh[x]= meanInpInh*((scalar) RG.n());
     }
 }
@@ -147,7 +155,7 @@ void classIzh::create_input_values() //define your explicit input rule here
  */
 //--------------------------------------------------------------------------
 
-void classIzh::read_sparsesyns_par(int synInd, //!< index of the synapse population to be worked on
+void classIzh::read_sparsesyns_par(const char *synGrpName, //!< index of the synapse population to be worked on
 				   SparseProjection C, //!< contains teh arrays to be initialized from file
 				   FILE *f_ind, //!< file pointer for the indices of post-synaptic neurons
 				   FILE *f_indInG, //!< file pointer for the summed post-synaptic neurons numbers
@@ -162,18 +170,18 @@ void classIzh::read_sparsesyns_par(int synInd, //!< index of the synapse populat
   retval=fread(gtemp, 1, C.connN*sizeof(double),f_g);
 
   importArray(g, gtemp, C.connN);
-  
 
+  auto *synGrp = model.findSynapseGroup(synGrpName);
   if (retval!=C.connN*sizeof(double)) fprintf(stderr, "ERROR: Number of elements read is different than it should be.");
-  fprintf(stdout,"%d active synapses in group %d. \n",C.connN,synInd);
-  retval=fread(C.indInG, 1, (model.neuronN[model.synapseSource[synInd]]+1)*sizeof(unsigned int),f_indInG);
-  if (retval!=(model.neuronN[model.synapseSource[synInd]]+1)*sizeof(unsigned int)) fprintf(stderr, "ERROR: Number of elements read is different than it should be.");
+  fprintf(stdout,"%d active synapses in group %s. \n",C.connN,synGrpName);
+  retval=fread(C.indInG, 1, (synGrp->getSrcNeuronGroup()->getNumNeurons()+1)*sizeof(unsigned int),f_indInG);
+  if (retval!=(synGrp->getSrcNeuronGroup()->getNumNeurons()+1)*sizeof(unsigned int)) fprintf(stderr, "ERROR: Number of elements read is different than it should be.");
   retval=fread(C.ind, 1, C.connN*sizeof(int),f_ind);
   if (retval!=C.connN*sizeof(int)) fprintf(stderr, "ERROR: Number of elements read is different than it should be.");
 
   // general:
   fprintf(stdout,"Read sparse projection ... \n");
-  fprintf(stdout, "Size is %d for synapse group %d. Values start with: \n",C.connN, synInd);
+  fprintf(stdout, "Size is %d for synapse group %s. Values start with: \n",C.connN, synGrpName);
   for(int i= 0; i < 20; i++) {
       fprintf(stdout, "%f ", (scalar) g[i]);
   }
@@ -183,7 +191,7 @@ void classIzh::read_sparsesyns_par(int synInd, //!< index of the synapse populat
     fprintf(stdout, "%d ", C.ind[i]);
   }  
   fprintf(stdout,"\n\n");  
-  fprintf(stdout, "%d g indices read. Index in g array values start with: \n", model.neuronN[model.synapseSource[synInd]]+1);
+  fprintf(stdout, "%d g indices read. Index in g array values start with: \n", synGrp->getSrcNeuronGroup()->getNumNeurons()+1);
   for(int i= 0; i < 20; i++) {
     fprintf(stdout, "%d ", C.indInG[i]);
   }  
@@ -197,15 +205,17 @@ void classIzh::read_sparsesyns_par(int synInd, //!< index of the synapse populat
 //--------------------------------------------------------------------------
 
 void classIzh::gen_alltoall_syns( scalar * g, //!< the resulting synaptic conductances
-				  unsigned int nPre, //!< number of pre-synaptic neurons
-				  unsigned int nPost, //!< number of post-synaptic neurons
+				  const char *synGrpName, //!< name of synapse group
 				  scalar gscale //!< the maximal conductance of generated synapses
 			    )
 {
   //randomGen R;
-  for(int i= 0; i < model.neuronN[nPre]; i++) {
-  	 for(int j= 0; j < model.neuronN[nPost]; j++){
-	   g[i*model.neuronN[nPost]+j]=gscale*((scalar) R.n());
+  auto *synGrp = model.findSynapseGroup(synGrpName);
+  unsigned int numPre = synGrp->getSrcNeuronGroup()->getNumNeurons();
+  unsigned int numPost = synGrp->getTrgNeuronGroup()->getNumNeurons();
+  for(int i= 0; i < numPre; i++) {
+  	 for(int j= 0; j < numPost; j++){
+	   g[i*numPost+j]=gscale*((scalar) R.n());
     }
   }
   fprintf(stdout,"\n\n");
@@ -256,11 +266,13 @@ void classIzh::output_state(FILE *f, unsigned int which)
 
   fprintf(f, "%f ", t);
 
-   for (int i= 0; i < model.neuronN[0]-1; i++) {
+   auto *pExc = model.findNeuronGroup("PExc");
+   for (int i= 0; i < pExc->getNumNeurons()-1; i++) {
      fprintf(f, "%f ", VPExc[i]);
    }
    
-   for (int i= 0; i < model.neuronN[1]-1; i++) {
+   auto *pInh = model.findNeuronGroup("PInh");
+   for (int i= 0; i < pInh->getNumNeurons()-1; i++) {
      fprintf(f, "%f ", VPInh[i]);
    }
    
@@ -269,24 +281,26 @@ void classIzh::output_state(FILE *f, unsigned int which)
 
 void classIzh::output_params(FILE *f, FILE *f2)
 {
-	
-	for (int i= 0; i < model.neuronN[0]-1; i++) {
-		fprintf(f, "%f ", aPExc[i]);
-		fprintf(f, "%f ", bPExc[i]);
-		fprintf(f, "%f ", cPExc[i]);
-		fprintf(f, "%f ", dPExc[i]);
-		fprintf(f, "%f ", I0PExc[i]);
-		fprintf(f,"\n");
-	}
-	for (int i= 0; i < model.neuronN[1]-1; i++) {
-		fprintf(f2, "%f ", aPInh[i]);
-		fprintf(f2, "%f ", bPInh[i]);
-		fprintf(f2, "%f ", cPInh[i]);
-		fprintf(f2, "%f ", dPInh[i]);
-		fprintf(f2, "%f ", I0PInh[i]);
-		fprintf(f2,"\n");
-		
-	}
+    auto *pExc = model.findNeuronGroup("PExc");
+    for (int i= 0; i < pExc->getNumNeurons()-1; i++) {
+        fprintf(f, "%f ", aPExc[i]);
+        fprintf(f, "%f ", bPExc[i]);
+        fprintf(f, "%f ", cPExc[i]);
+        fprintf(f, "%f ", dPExc[i]);
+        fprintf(f, "%f ", I0PExc[i]);
+        fprintf(f,"\n");
+    }
+
+    auto *pInh = model.findNeuronGroup("PInh");
+    for (int i= 0; i < pInh->getNumNeurons()-1; i++) {
+        fprintf(f2, "%f ", aPInh[i]);
+        fprintf(f2, "%f ", bPInh[i]);
+        fprintf(f2, "%f ", cPInh[i]);
+        fprintf(f2, "%f ", dPInh[i]);
+        fprintf(f2, "%f ", I0PInh[i]);
+        fprintf(f2,"\n");
+
+    }
 }
 //--------------------------------------------------------------------------
 /*! \brief Method for copying all spikes of the last time step from the GPU
@@ -328,8 +342,10 @@ void classIzh::output_spikes(FILE *f, unsigned int which)
 	fprintf(f,"%f %d\n", t, glbSpkPExc[i]);
     }
 
+    auto *pInh = model.findNeuronGroup("PInh");
+    unsigned int inhOffset = pInh->getIDRange().first;
     for (int i= 0; i < glbSpkCntPInh[0]; i++) {
-	fprintf(f, "%f %d\n", t, model.sumNeuronN[0] + glbSpkPInh[i]);
+	fprintf(f, "%f %d\n", t, inhOffset + glbSpkPInh[i]);
     }
 }
 

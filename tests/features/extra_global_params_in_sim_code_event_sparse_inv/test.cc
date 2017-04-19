@@ -2,7 +2,7 @@
 #include "gtest/gtest.h"
 
 // Auto-generated simulation code includess
-#include "extra_global_params_in_sim_code_event_sparse_inv_CODE/definitions.h"
+#include DEFINITIONS_HEADER
 
 // **NOTE** base-class for simulation tests must be
 // included after auto-generated globals are includes
@@ -108,10 +108,10 @@ private:
 };
 
 // Combine neuron and synapse policies together to build variable-testing fixture
-typedef SimulationTestVars<SimulationNeuronPolicyPreVar, SimulationSynapsePolicy> SimulationTestExtraGlobalParams;
+typedef SimulationTestVars<SimulationNeuronPolicyPreVar, SimulationSynapsePolicy> SimTest;
 
 
-TEST_P(SimulationTestExtraGlobalParams, AcceptableError)
+TEST_P(SimTest, AcceptableError)
 {
     float err = Simulate(
       [](unsigned int i, unsigned int d, unsigned int j, float t, float evntT, bool beforeSwap, float &newX)
@@ -146,6 +146,6 @@ auto simulatorBackends = ::testing::Values(true, false);
 auto simulatorBackends = ::testing::Values(false);
 #endif
 
-INSTANTIATE_TEST_CASE_P(SimCodeEventSparseInv,
-                        SimulationTestExtraGlobalParams,
-                        simulatorBackends);
+WRAPPED_INSTANTIATE_TEST_CASE_P(MODEL_NAME,
+                                SimTest,
+                                simulatorBackends);

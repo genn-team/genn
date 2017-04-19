@@ -9,6 +9,8 @@ public:
     DECLARE_MODEL(Neuron, 0, 2);
 
     SET_SIM_CODE("$(x)= $(t)+$(shift);\n");
+    SET_EXTRA_GLOBAL_PARAMS({{"k", "scalar"}});
+    SET_THRESHOLD_CONDITION_CODE("(fmod($(x),1.0) < 1e-4)");
 
     SET_VARS({{"x", "scalar"}, {"shift", "scalar"}});
 };
@@ -24,10 +26,8 @@ public:
     DECLARE_MODEL(WeightUpdateModel, 0, 1);
 
     SET_VARS({{"w", "scalar"}});
-    SET_EXTRA_GLOBAL_PARAMS({{"thresh", "scalar"}});
 
-    SET_EVENT_THRESHOLD_CONDITION_CODE("(fmod($(x_pre),$(thresh)) < 1e-4)");
-    SET_EVENT_CODE("$(w)= $(x_pre);");
+    SET_SIM_CODE("$(w)= $(x_post) * $(k_post);");
 };
 
 IMPLEMENT_MODEL(WeightUpdateModel);
@@ -36,7 +36,7 @@ void modelDefinition(NNmodel &model)
 {
     initGeNN();
     model.setDT(0.1);
-    model.setName("extra_global_params_in_sim_code_event_sparse_inv");
+    model.setName("extra_global_post_param_in_sim_code");
 
     model.addNeuronPopulation<Neuron>("pre", 10, {}, Neuron::VarValues(0.0, 0.0));
     model.addNeuronPopulation<Neuron>("post", 10, {}, Neuron::VarValues(0.0, 0.0));
@@ -45,13 +45,11 @@ void modelDefinition(NNmodel &model)
     for (int i= 0; i < 10; i++)
     {
         string theName= synName + std::to_string(i);
-        model.addSynapsePopulation<WeightUpdateModel, PostsynapticModels::Izhikevich>(
-            theName, SynapseMatrixType::SPARSE_INDIVIDUALG, i, "pre", "post",
+        model.addSynapsePopulation<WeightUpdateModel, PostsynapticModels::DeltaCurr>(
+            theName, SynapseMatrixType::DENSE_INDIVIDUALG, i, "pre", "post",
             {}, WeightUpdateModel::VarValues(0.0),
             {}, {});
-        model.setSpanTypeToPre(theName);
     }
-
     model.setPrecision(GENN_FLOAT);
     model.finalize();
 }

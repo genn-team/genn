@@ -10,6 +10,7 @@ using namespace std;
 
 // Forward declarations
 class NNmodel;
+class SynapseGroup;
 
 namespace NeuronModels
 {
@@ -126,12 +127,7 @@ void checkUnreplacedVariables(const string &code, const string &codeName);
 
 void neuron_substitutions_in_synaptic_code(
     string &wCode, //!< the code string to work on
-    const NNmodel &model, //!< the neuronal network model to generate code for
-    unsigned int src, //!< the number of the src neuron population
-    unsigned int trg, //!< the number of the target neuron population
-    const string &offsetPre, //!< delay slot offset expression for pre-synaptic vars
-    const string &offsetPost, //!< delay slot offset expression for post-synaptic vars
+    const SynapseGroup *sg,
     const string &preIdx, //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
     const string &postIdx, //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
-    const string &devPrefix //!< device prefix, "dd_" for GPU, nothing for CPU
-                                           );
+    const string &devPrefix); //!< device prefix, "dd_" for GPU, nothing for CPU

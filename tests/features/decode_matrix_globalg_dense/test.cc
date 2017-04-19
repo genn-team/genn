@@ -2,16 +2,16 @@
 #include "gtest/gtest.h"
 
 // Auto-generated simulation code includess
-#include "decode_matrix_globalg_dense_CODE/definitions.h"
+#include DEFINITIONS_HEADER
 
 // **NOTE** base-class for simulation tests must be
 // included after auto-generated globals are includes
 #include "../../utils/simulation_test.h"
 
 //----------------------------------------------------------------------------
-// SimulationTestGlobalGDense
+// SimTest
 //----------------------------------------------------------------------------
-class SimulationTestGlobalGDense : public SimulationTest
+class SimTest : public SimulationTest
 {
 public:
     //----------------------------------------------------------------------------
@@ -64,7 +64,7 @@ public:
     }
 };
 
-TEST_P(SimulationTestGlobalGDense, CorrectDecoding)
+TEST_P(SimTest, CorrectDecoding)
 {
     // Check total error is less than some tolerance
     EXPECT_TRUE(Simulate());
@@ -76,6 +76,6 @@ auto simulatorBackends = ::testing::Values(true, false);
 auto simulatorBackends = ::testing::Values(false);
 #endif
 
-INSTANTIATE_TEST_CASE_P(DecodeMatrix,
-                        SimulationTestGlobalGDense,
-                        simulatorBackends);
+WRAPPED_INSTANTIATE_TEST_CASE_P(MODEL_NAME,
+                                SimTest,
+                                simulatorBackends);

@@ -2,24 +2,24 @@
 
 // Implement models
 IMPLEMENT_MODEL(PostsynapticModels::ExpCond);
-IMPLEMENT_MODEL(PostsynapticModels::Izhikevich);
+IMPLEMENT_MODEL(PostsynapticModels::DeltaCurr);
 
 //----------------------------------------------------------------------------
 // PostsynapticModels::LegacyWrapper
 //----------------------------------------------------------------------------
-std::string PostsynapticModels::LegacyWrapper::GetDecayCode() const
+std::string PostsynapticModels::LegacyWrapper::getDecayCode() const
 {
     const auto &ps = postSynModels[m_LegacyTypeIndex];
     return ps.postSynDecay;
 }
 //----------------------------------------------------------------------------
-std::string PostsynapticModels::LegacyWrapper::GetCurrentConverterCode() const
+std::string PostsynapticModels::LegacyWrapper::getCurrentConverterCode() const
 {
     const auto &ps = postSynModels[m_LegacyTypeIndex];
     return ps.postSyntoCurrent;
 }
 //----------------------------------------------------------------------------
-std::string PostsynapticModels::LegacyWrapper::GetSupportCode() const
+std::string PostsynapticModels::LegacyWrapper::getSupportCode() const
 {
     const auto &ps = postSynModels[m_LegacyTypeIndex];
     return ps.supportCode;

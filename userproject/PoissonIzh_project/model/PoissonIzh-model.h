@@ -41,7 +41,7 @@ private:
   void free_device_mem();
 #endif
   void read_PNIzh1syns(scalar *, FILE *);
-  void read_sparsesyns_par(int, struct SparseProjection, FILE *,FILE *,FILE *, double *);
+  void read_sparsesyns_par(const char*, struct SparseProjection, FILE *,FILE *,FILE *, double *);
   void generate_baserates();
   void run(float, unsigned int);
   void output_state(FILE *, unsigned int);

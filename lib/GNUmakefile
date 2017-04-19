@@ -41,7 +41,7 @@ else
     GENERATEALL          :=$(GENERATEALL_PATH)/generateALL_CPU_ONLY
     LIBGENN              :=$(LIBGENN_PATH)/libgenn_CPU_ONLY.a
 endif
-LIBGENN_OBJ              :=global.o modelSpec.o neuronModels.o synapseModels.o postSynapseModels.o utils.o codeGenUtils.o sparseUtils.o hr_time.o newNeuronModels.o newPostsynapticModels.o newWeightUpdateModels.o
+LIBGENN_OBJ              :=global.o modelSpec.o neuronGroup.o synapseGroup.o neuronModels.o synapseModels.o postSynapseModels.o utils.o codeGenUtils.o sparseUtils.o hr_time.o newNeuronModels.o newPostsynapticModels.o newWeightUpdateModels.o standardSubstitutions.o standardGeneratedSections.o
 LIBGENN_OBJ              :=$(addprefix $(LIBGENN_OBJ_PATH)/,$(LIBGENN_OBJ))
 
 # Global CUDA compiler settings

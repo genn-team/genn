@@ -21,7 +21,7 @@ void modelDefinition(NNmodel &model)
     initGeNN();
 
     model.setDT(0.1);
-    model.setName("decode_matrix_individualg_dense");
+    model.setName("decode_matrix_individualg_dense_new");
 
     // Static synapse parameters
     WeightUpdateModels::StaticPulse::VarValues staticSynapseInit(1.0);    // 0 - Wij (nA)
@@ -30,7 +30,7 @@ void modelDefinition(NNmodel &model)
     model.addNeuronPopulation<Neuron>("Post", 4, {}, Neuron::VarValues(0.0));
 
 
-    model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::Izhikevich>(
+    model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
         "Syn", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY, "Pre", "Post",
         {}, staticSynapseInit,
         {}, {});

@@ -61,7 +61,7 @@ private:
   void allocate_device_mem_patterns();
   void free_device_mem(); 
   void read_pnkcsyns(FILE *);
-  void read_sparsesyns_par(int, struct SparseProjection, scalar *, FILE *,FILE *,FILE *); 
+  void read_sparsesyns_par(const char*, struct SparseProjection, scalar *, FILE *,FILE *,FILE *);
   void write_pnkcsyns(FILE *); 
   void read_pnlhisyns(FILE *); 
   void write_pnlhisyns(FILE *); 
