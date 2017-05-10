@@ -16,6 +16,7 @@
 //----------------------------------------------------------------------------
 namespace PostsynapticModels
 {
+//! Base class for all postsynaptic models
 class Base : public NewModels::Base
 {
 public:
@@ -48,10 +49,16 @@ public:
 //----------------------------------------------------------------------------
 // PostsynapticModels::ExpConductance
 //----------------------------------------------------------------------------
+//! Exponential decay with synaptic input treated as a conductance value.
+/*! This model has no variables and two parameters:
+  - \c tau : Decay time constant
+  - \c E : Reversal potential
+
+  \c tau is used by the derived parameter \c expdecay which returns expf(-dt/tau). */
 class ExpCond : public Base
 {
 public:
-    DECLARE_MODEL(ExpCond, 1, 0);
+    DECLARE_MODEL(ExpCond, 2, 0);
 
     SET_DECAY_CODE("$(inSyn)*=$(expDecay);");
 
@@ -63,12 +70,14 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// PostsynapticModels::Izhikevich
+// PostsynapticModels::DeltaCurr
 //----------------------------------------------------------------------------
-class Izhikevich : public Base
+//! Simple delta current synapse.
+/*! Synaptic input provides a direct inject of instantaneous current*/
+class DeltaCurr : public Base
 {
 public:
-    DECLARE_MODEL(Izhikevich, 0, 0);
+    DECLARE_MODEL(DeltaCurr, 0, 0);
 
     SET_CURRENT_CONVERTER_CODE("$(inSyn); $(inSyn) = 0");
 

@@ -24,7 +24,7 @@ public:                                                        \
         return s_Instance;                                     \
     }                                                          \
     typedef NewModels::ValueBase<NUM_PARAMS> ParamValues;      \
-    typedef NewModels::ValueBase<NUM_VARS> VarValues;
+    typedef NewModels::ValueBase<NUM_VARS> VarValues;          \
 
 
 #define IMPLEMENT_MODEL(TYPE) TYPE *TYPE::s_Instance = NULL
@@ -38,6 +38,8 @@ public:                                                        \
 //----------------------------------------------------------------------------
 namespace NewModels
 {
+//! Wrapper to ensure at compile time that correct number of values are
+//! used when specifying the values of a model's parameters and initial state.
 template<size_t NumValues>
 class ValueBase
 {
@@ -51,7 +53,7 @@ public:
     // **NOTE** other less terrifying forms of constructor won't complain at compile time about
     // number of parameters e.g. std::array<double, 4> can be initialized with <= 4 elements
     template<typename... T>
-    ValueBase(T&&... vals) : m_Values(ValueArray{std::forward<double>(vals)...})
+    ValueBase(T&&... vals) : m_Values(ValueArray{std::forward<const double>(vals)...})
     {
         static_assert(sizeof...(vals) == NumValues, "Wrong number of values");
     }
@@ -59,9 +61,18 @@ public:
     //----------------------------------------------------------------------------
     // Public API
     //----------------------------------------------------------------------------
+    //! Gets values as a vector of doubles
     std::vector<double> getValues() const
     {
         return std::vector<double>(m_Values.cbegin(), m_Values.cend());
+    }
+
+    //----------------------------------------------------------------------------
+    // Operators
+    //----------------------------------------------------------------------------
+    double operator[](size_t pos) const
+    {
+        return m_Values[pos];
     }
 
 private:
@@ -74,6 +85,8 @@ private:
 //----------------------------------------------------------------------------
 // NewModels::ValueBase<0>
 //----------------------------------------------------------------------------
+//! Template specialisation of ValueBase to avoid compiler warnings
+//! in the case when a model requires no parameters or state variables
 template<>
 class ValueBase<0>
 {
@@ -89,6 +102,7 @@ public:
     //----------------------------------------------------------------------------
     // Public API
     //----------------------------------------------------------------------------
+    //! Gets values as a vector of doubles
     std::vector<double> getValues() const
     {
         return {};
@@ -98,6 +112,7 @@ public:
 //----------------------------------------------------------------------------
 // NewModels::Base
 //----------------------------------------------------------------------------
+//! Base class for all models
 class Base
 {
 public:
@@ -112,15 +127,21 @@ public:
     //----------------------------------------------------------------------------
     // Declared virtuals
     //----------------------------------------------------------------------------
+    //! Gets names of of (independent) model parameters
     virtual StringVec getParamNames() const{ return {}; }
+
+    //! Gets names of derived model parameters and the function objects to call to
+    //! Calculate their value from a vector of model parameter values
     virtual DerivedParamVec getDerivedParams() const{ return {}; }
+
+    //! Gets names and types (as strings) of model variables
     virtual StringPairVec getVars() const{ return {}; }
 };
 
 //----------------------------------------------------------------------------
 // NewModels::LegacyWrapper
 //----------------------------------------------------------------------------
-// Wrapper around old-style models stored in global arrays and referenced by index
+//! Wrapper around old-style models stored in global arrays and referenced by index
 template<typename ModelBase, typename LegacyModelType, const std::vector<LegacyModelType> &ModelArray>
 class LegacyWrapper : public ModelBase
 {
@@ -138,12 +159,15 @@ public:
     //----------------------------------------------------------------------------
     // ModelBase virtuals
     //----------------------------------------------------------------------------
+    //! Gets names of of (independent) model parameters
     virtual StringVec getParamNames() const
     {
         const auto &nm = ModelArray[m_LegacyTypeIndex];
         return nm.pNames;
     }
 
+    //! Gets names of derived model parameters and the function objects to call to
+    //! Calculate their value from a vector of model parameter values
     virtual DerivedParamVec getDerivedParams() const
     {
         const auto &m = ModelArray[m_LegacyTypeIndex];
@@ -169,6 +193,7 @@ public:
         return derivedParams;
     }
 
+    //! Gets names and types (as strings) of model variables
     virtual StringPairVec getVars() const
     {
         const auto &nm = ModelArray[m_LegacyTypeIndex];
@@ -199,6 +224,7 @@ protected:
     //----------------------------------------------------------------------------
     // Members
     //----------------------------------------------------------------------------
+    //! Index into the array of legacy models
     const unsigned int m_LegacyTypeIndex;
 };
 } // NewModels

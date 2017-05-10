@@ -37,7 +37,7 @@ void modelDefinition(NNmodel &model)
 {
     initGeNN();
     model.setDT(0.1);
-    model.setName("synapse_support_code_sim_code");
+    model.setName("synapse_support_code_sim_code_new");
 
     model.addNeuronPopulation<Neuron>("pre", 10, {}, Neuron::VarValues(0.0, 0.0));
     model.addNeuronPopulation<Neuron>("post", 10, {}, Neuron::VarValues(0.0, 0.0));
@@ -46,7 +46,7 @@ void modelDefinition(NNmodel &model)
     for (int i= 0; i < 10; i++)
     {
         string theName= synName + std::to_string(i);
-        model.addSynapsePopulation<WeightUpdateModel, PostsynapticModels::Izhikevich>(
+        model.addSynapsePopulation<WeightUpdateModel, PostsynapticModels::DeltaCurr>(
             theName, SynapseMatrixType::DENSE_INDIVIDUALG, i, "pre", "post",
             {}, WeightUpdateModel::VarValues(0.0),
             {}, {});

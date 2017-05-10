@@ -70,6 +70,3 @@ extern int deviceCount; //!< Global variable containing the number of CUDA devic
 extern int hostCount; //!< Global variable containing the number of hosts within the local compute cluster
 
 #endif // GLOBAL_H
-
-#define TRUE true
-#define FALSE false

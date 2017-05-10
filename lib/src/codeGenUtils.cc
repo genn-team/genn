@@ -1,7 +1,23 @@
 #include "codeGenUtils.h"
 
+// Is C++ regex library operational?
+// We assume it is for:
+// 1) Non GCC compilers
+// 2) GCC 5.X.X and future
+// 3) Any future (4.10.X?) releases
+// 4) 4.9.1 and subsequent patch releases (GCC fully implemented regex in 4.9.0
+// BUT bug 61227 https://gcc.gnu.org/bugzilla/show_bug.cgi?id=61227 prevented \w from working)
+#if !defined(__GNUC__) || \
+    __GNUC__ > 4 || \
+    (__GNUC__ == 4 && (__GNUC_MINOR__ > 9 || \
+                      (__GNUC_MINOR__ == 9 && __GNUC_PATCHLEVEL__ >= 1)))
+    #define REGEX_OPERATIONAL
+#endif
+
 // Standard includes
+#ifdef REGEX_OPERATIONAL
 #include <regex>
+#endif
 
 // GeNN includes
 #include "modelSpec.h"
@@ -295,6 +311,9 @@ string ensureFtype(const string &oldcode, const string &type)
     return code;
 }
 
+
+#ifdef REGEX_OPERATIONAL
+
 //--------------------------------------------------------------------------
 /*! \brief This function checks for unknown variable definitions and returns a gennError if any are found
  */
@@ -314,6 +333,12 @@ void checkUnreplacedVariables(const string &code, const string &codeName)
         gennError("The "+vars+"undefined in code "+codeName+".");
     }
 }
+#else
+void checkUnreplacedVariables(const string &, const string &)
+{
+}
+#endif
+
 
 //-------------------------------------------------------------------------
 /*!
@@ -352,7 +377,7 @@ void neuron_substitutions_in_synaptic_code(
     value_substitutions(wCode, preDerivedParams.nameBegin, preDerivedParams.nameEnd, sg->getSrcNeuronGroup()->getDerivedParams(), "_pre");
 
     ExtraGlobalParamNameIterCtx preExtraGlobalParams(srcNeuronModel->getExtraGlobalParams());
-    name_substitutions(wCode, devPrefix, preExtraGlobalParams.nameBegin, preExtraGlobalParams.nameEnd, sg->getSrcNeuronGroup()->getName(), "_pre");
+    name_substitutions(wCode, "", preExtraGlobalParams.nameBegin, preExtraGlobalParams.nameEnd, sg->getSrcNeuronGroup()->getName(), "_pre");
     
     // postsynaptic neuron variables, parameters, and global parameters
     const auto *trgNeuronModel = sg->getTrgNeuronGroup()->getNeuronModel();
@@ -373,5 +398,5 @@ void neuron_substitutions_in_synaptic_code(
     value_substitutions(wCode, postDerivedParams.nameBegin, postDerivedParams.nameEnd, sg->getTrgNeuronGroup()->getDerivedParams(), "_post");
 
     ExtraGlobalParamNameIterCtx postExtraGlobalParams(trgNeuronModel->getExtraGlobalParams());
-    name_substitutions(wCode, devPrefix, postExtraGlobalParams.nameBegin, postExtraGlobalParams.nameEnd, sg->getTrgNeuronGroup()->getName(), "_post");
+    name_substitutions(wCode, "", postExtraGlobalParams.nameBegin, postExtraGlobalParams.nameEnd, sg->getTrgNeuronGroup()->getName(), "_post");
 }

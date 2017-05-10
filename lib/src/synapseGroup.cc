@@ -92,27 +92,27 @@ void SynapseGroup::initDerivedParams(double dt)
     }
 }
 
-void SynapseGroup::calcKernelSizes(unsigned int blockSize, unsigned int &paddedCumSum)
+void SynapseGroup::calcKernelSizes(unsigned int blockSize, unsigned int &paddedKernelIDStart)
 {
-    m_PaddedKernelCumSum.first = paddedCumSum;
+    m_PaddedKernelIDRange.first = paddedKernelIDStart;
 
     if (getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
         if (getSpanType() == SpanType::PRESYNAPTIC) {
             // paddedSize is the lowest multiple of blockSize >= neuronN[synapseSource[i]
-            paddedCumSum += ceil((double) getSrcNeuronGroup()->getNumNeurons() / (double) blockSize) * (double) blockSize;
+            paddedKernelIDStart += ceil((double) getSrcNeuronGroup()->getNumNeurons() / (double) blockSize) * (double) blockSize;
         }
         else {
             // paddedSize is the lowest multiple of blockSize >= maxConn[i]
-            paddedCumSum += ceil((double) getMaxConnections() / (double) blockSize) * (double) blockSize;
+            paddedKernelIDStart += ceil((double) getMaxConnections() / (double) blockSize) * (double) blockSize;
         }
     }
     else {
         // paddedSize is the lowest multiple of blockSize >= neuronN[synapseTarget[i]]
-        paddedCumSum += ceil((double) getTrgNeuronGroup()->getNumNeurons() / (double) blockSize) * (double) blockSize;
+        paddedKernelIDStart += ceil((double) getTrgNeuronGroup()->getNumNeurons() / (double) blockSize) * (double) blockSize;
     }
 
     // Store padded cumulative sum
-    m_PaddedKernelCumSum.second = paddedCumSum;
+    m_PaddedKernelIDRange.second = paddedKernelIDStart;
 }
 
 unsigned int SynapseGroup::getPaddedDynKernelSize(unsigned int blockSize) const
@@ -174,7 +174,7 @@ void SynapseGroup::addExtraGlobalSynapseParams(std::map<std::string, std::string
     // parameters referenced in the sim code to the map of kernel parameters
     addExtraGlobalSimParams(getSrcNeuronGroup()->getName(), "_pre", getSrcNeuronGroup()->getNeuronModel()->getExtraGlobalParams(),
                              kernelParameters);
-    addExtraGlobalSimParams(getSrcNeuronGroup()->getName(), "_post", getTrgNeuronGroup()->getNeuronModel()->getExtraGlobalParams(),
+    addExtraGlobalSimParams(getTrgNeuronGroup()->getName(), "_post", getTrgNeuronGroup()->getNeuronModel()->getExtraGlobalParams(),
                              kernelParameters);
 
     // Finally add any weight update model extra global
@@ -187,7 +187,7 @@ void SynapseGroup::addExtraGlobalSynapseParams(std::map<std::string, std::string
     // parameters referenced in the sim code to the map of kernel parameters
     addExtraGlobalPostLearnParams(getSrcNeuronGroup()->getName(), "_pre", getSrcNeuronGroup()->getNeuronModel()->getExtraGlobalParams(),
                                   kernelParameters);
-    addExtraGlobalPostLearnParams(getSrcNeuronGroup()->getName(), "_post", getTrgNeuronGroup()->getNeuronModel()->getExtraGlobalParams(),
+    addExtraGlobalPostLearnParams(getTrgNeuronGroup()->getName(), "_post", getTrgNeuronGroup()->getNeuronModel()->getExtraGlobalParams(),
                                   kernelParameters);
 
     // Finally add any weight update model extra global
@@ -200,7 +200,7 @@ void SynapseGroup::addExtraGlobalSynapseParams(std::map<std::string, std::string
     // parameters referenced in the sim code to the map of kernel parameters
     addExtraGlobalSynapseDynamicsParams(getSrcNeuronGroup()->getName(), "_pre", getSrcNeuronGroup()->getNeuronModel()->getExtraGlobalParams(),
                                         kernelParameters);
-    addExtraGlobalSynapseDynamicsParams(getSrcNeuronGroup()->getName(), "_post", getTrgNeuronGroup()->getNeuronModel()->getExtraGlobalParams(),
+    addExtraGlobalSynapseDynamicsParams(getTrgNeuronGroup()->getName(), "_post", getTrgNeuronGroup()->getNeuronModel()->getExtraGlobalParams(),
                                         kernelParameters);
 
     // Finally add any weight update model extra global

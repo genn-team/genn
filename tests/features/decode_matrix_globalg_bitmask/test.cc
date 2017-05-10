@@ -2,16 +2,16 @@
 #include "gtest/gtest.h"
 
 // Auto-generated simulation code includess
-#include "decode_matrix_globalg_bitmask_CODE/definitions.h"
+#include DEFINITIONS_HEADER
 
 // **NOTE** base-class for simulation tests must be
 // included after auto-generated globals are includes
 #include "../../utils/simulation_test_decoder_matrix.h"
 
 //----------------------------------------------------------------------------
-// SimulationTestGlobalGBitmask
+// SimTest
 //----------------------------------------------------------------------------
-class SimulationTestGlobalGBitmask : public SimulationTestDecoderMatrix
+class SimTest : public SimulationTestDecoderMatrix
 {
 public:
     //----------------------------------------------------------------------------
@@ -45,7 +45,7 @@ public:
     }
 };
 
-TEST_P(SimulationTestGlobalGBitmask, CorrectDecoding)
+TEST_P(SimTest, CorrectDecoding)
 {
     // Check total error is less than some tolerance
     EXPECT_TRUE(Simulate());
@@ -57,6 +57,6 @@ auto simulatorBackends = ::testing::Values(true, false);
 auto simulatorBackends = ::testing::Values(false);
 #endif
 
-INSTANTIATE_TEST_CASE_P(DecodeMatrix,
-                        SimulationTestGlobalGBitmask,
-                        simulatorBackends);
+WRAPPED_INSTANTIATE_TEST_CASE_P(MODEL_NAME,
+                                SimTest,
+                                simulatorBackends);

@@ -22,10 +22,6 @@ popd
 # Delete existing output
 rm -f msg
 
-# Zero counters of test passes and fails
-NUM_SUCCESSES=0
-NUM_FAILURES=0
-
 # Loop through feature tests
 for f in features/*;
     do
@@ -41,17 +37,13 @@ for f in features/*;
                 make clean 1>> ../../msg 2>> ../../msg
 
                 # Build and generate model
-                genn-buildmodel.sh $BUILD_FLAGS model$s.cc 1>>../../msg 2>> ../../msg || exit $?
-                
-                # Build
-                make $MAKE_FLAGS 1>>../../msg 2>>../../msg || exit $?
-
-                # Run tests
-                ./test --gtest_output="xml:test_results$s.xml"
-                if [ $? -eq 0 ]; then
-                    NUM_SUCCESSES=$((NUM_SUCCESSES+1))
-                else
-                    NUM_FAILURES=$((NUM_FAILURES+1))
+                if genn-buildmodel.sh $BUILD_FLAGS model$s.cc 1>>../../msg 2>> ../../msg ; then
+                    # Determine where the sim code is located for this test and build
+                    c=$(basename $f)$s"_CODE"
+                    if make $MAKE_FLAGS SIM_CODE=$c 1>>../../msg 2>>../../msg ; then
+                        # Run tests
+                        ./test --gtest_output="xml:test_results$s.xml"
+                    fi
                 fi
             done;
 
@@ -66,19 +58,11 @@ pushd unit
 make clean 1>> ../../msg 2>> ../../msg
 
 # Build
-make $MAKE_FLAGS 1>>../../msg 2>>../../msg || exit $?
+make $MAKE_FLAGS 1>>../../msg 2>>../../msg 
 
 # Run tests
 ./test --gtest_output="xml:test_results$s.xml"
-if [ $? -eq 0 ]; then
-    NUM_SUCCESSES=$((NUM_SUCCESSES+1))
-else
-    NUM_FAILURES=$((NUM_FAILURES+1))
-fi
 
 # Pop unit tests directory
 popd
 
-# Print brief summary of output
-echo "$NUM_SUCCESSES tests succeeded"
-echo "$NUM_FAILURES tests failed"

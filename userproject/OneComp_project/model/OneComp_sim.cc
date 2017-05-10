@@ -44,9 +44,10 @@ int main(int argc, char *argv[])
 
   fprintf(stderr, "# neuronal circuitry built, start computation ... \n\n");
   unsigned int outno;
-  if (IzhikevichPop.model.neuronN[0]>10) 
+  auto *izh1 = IzhikevichPop.model.findNeuronGroup("Izh1");
+  if (izh1->getNumNeurons()>10)
   outno=10;
-  else outno=IzhikevichPop.model.neuronN[0];
+  else outno=izh1->getNumNeurons();
 
   //------------------------------------------------------------------
   // output general parameters to output file and start the simulation
@@ -85,7 +86,7 @@ int main(int argc, char *argv[])
   }
 
   timer.stopTimer();
-  fprintf(timef, "%d %d %u %f %f \n",which, IzhikevichPop.model.neuronN[0], IzhikevichPop.sumIzh1, timer.getElapsedTime(),VIzh1[0]);
+  fprintf(timef, "%d %d %u %f %f \n",which, izh1->getNumNeurons(), IzhikevichPop.sumIzh1, timer.getElapsedTime(),VIzh1[0]);
 //  cerr << "Output files are created under the current directory." << endl;
     cout << timer.getElapsedTime() << endl;
   fclose(osf);

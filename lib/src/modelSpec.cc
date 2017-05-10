@@ -124,9 +124,19 @@ unsigned int NNmodel::getNeuronGridSize() const
         return 0;
     }
     else {
-        return m_NeuronGroups.rbegin()->second.getPaddedCumSumNeurons().second;
+        return m_NeuronGroups.rbegin()->second.getPaddedIDRange().second;
     }
 
+}
+
+unsigned int NNmodel::getNumNeurons() const
+{
+    if(m_NeuronGroups.empty()) {
+        return 0;
+    }
+    else {
+        return m_NeuronGroups.rbegin()->second.getIDRange().second;
+    }
 }
 
 const NeuronGroup *NNmodel::findNeuronGroup(const std::string &name) const
@@ -243,7 +253,7 @@ unsigned int NNmodel::getSynapseKernelGridSize() const
         return 0;
     }
     else {
-        return  m_SynapseGroups.rbegin()->second.getPaddedKernelCumSum().second;
+        return  m_SynapseGroups.rbegin()->second.getPaddedKernelIDRange().second;
     }
 
 }
@@ -631,7 +641,17 @@ void NNmodel::setSeed(unsigned int inseed /*!< the new seed  */)
     seed= inseed;
 }
 
-
+//--------------------------------------------------------------------------
+/*! \brief Sets the underlying type for random number generation (default: uint64_t)
+ */
+//--------------------------------------------------------------------------
+void NNmodel::setRNType(const std::string &type)
+{
+    if (final) {
+        gennError("Trying to set the random number type in a finalized model.");
+    }
+    RNtype= type;
+}
 #ifndef CPU_ONLY
 //--------------------------------------------------------------------------
 /*! \brief This function defines the way how the GPU is chosen. If "AUTODEVICE" (-1) is given as the argument, GeNN will use internal heuristics to choose the device. Otherwise the argument is the device number and the indicated device will be used.
@@ -676,38 +696,38 @@ string NNmodel::scalarExpr(const double val) const
 void NNmodel::setPopulationSums()
 {
     // NEURON GROUPS
-    unsigned int cumSumNeurons = 0;
-    unsigned int paddedCumSumNeurons = 0;
+    unsigned int neuronIDStart = 0;
+    unsigned int paddedNeuronIDStart = 0;
     for(auto &n : m_NeuronGroups) {
-        n.second.calcSizes(neuronBlkSz, cumSumNeurons, paddedCumSumNeurons);
+        n.second.calcSizes(neuronBlkSz, neuronIDStart, paddedNeuronIDStart);
     }
 
     // SYNAPSE groups
-    unsigned int paddedCumSumSynGroups = 0;
-    unsigned int paddedCumSumSynDynGroups = 0;
-    unsigned int paddedCumSumSynPostLrnGroups = 0;
+    unsigned int paddedSynapseKernelIDStart = 0;
+    unsigned int paddedSynapseDynamicsIDStart = 0;
+    unsigned int paddedSynapsePostLearnIDStart = 0;
     for(auto &s : m_SynapseGroups) {
         // Calculate synapse kernel sizes
-        s.second.calcKernelSizes(synapseBlkSz, paddedCumSumSynGroups);
+        s.second.calcKernelSizes(synapseBlkSz, paddedSynapseKernelIDStart);
 
         if (!s.second.getWUModel()->getLearnPostCode().empty()) {
-            unsigned int startID = paddedCumSumSynPostLrnGroups;
-            paddedCumSumSynPostLrnGroups += s.second.getPaddedPostLearnKernelSize(learnBlkSz);
+            const unsigned int startID = paddedSynapsePostLearnIDStart;
+            paddedSynapsePostLearnIDStart += s.second.getPaddedPostLearnKernelSize(learnBlkSz);
 
             // Add this synapse group to map of synapse groups with postsynaptic learning
             // or update the existing entry with the new block sizes
             m_SynapsePostLearnGroups[s.first] = std::pair<unsigned int, unsigned int>(
-                startID, paddedCumSumSynPostLrnGroups);
+                startID, paddedSynapsePostLearnIDStart);
         }
 
          if (!s.second.getWUModel()->getSynapseDynamicsCode().empty()) {
-            unsigned int startID = paddedCumSumSynDynGroups;
-            paddedCumSumSynDynGroups += s.second.getPaddedDynKernelSize(synDynBlkSz);
+            const unsigned int startID = paddedSynapseDynamicsIDStart;
+            paddedSynapseDynamicsIDStart += s.second.getPaddedDynKernelSize(synDynBlkSz);
 
             // Add this synapse group to map of synapse groups with dynamics
             // or update the existing entry with the new block sizes
             m_SynapseDynamicsGroups[s.first] = std::pair<unsigned int, unsigned int>(
-                startID, paddedCumSumSynDynGroups);
+                startID, paddedSynapseDynamicsIDStart);
          }
     }
 }
