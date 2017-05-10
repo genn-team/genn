@@ -331,16 +331,16 @@ int main(int argc, char *argv[])
         }
 
         // Get SpineML root
-        auto networkSpineML = networkDoc.child("SpineML");
+        auto networkSpineML = networkDoc.child("LL:SpineML");
         if(!networkSpineML) {
-            throw std::runtime_error("XML file:" + std::string(argv[2]) + " is not a SpineML network - it has no root SpineML node");
+            throw std::runtime_error("XML file:" + std::string(argv[2]) + " is not a low-level SpineML network - it has no root SpineML node");
         }
 
         // Loop through populations once to initialize neuron population properties
         std::map<std::string, unsigned int> neuronPopulationSizes;
         PopulationProperties neuronProperties;
-        for(auto population : networkSpineML.children("Population")) {
-            auto neuron = population.child("Neuron");
+        for(auto population : networkSpineML.children("LL:Population")) {
+            auto neuron = population.child("LL:Neuron");
             if(!neuron) {
                 throw std::runtime_error("'Population' node has no 'Neuron' node");
             }
@@ -361,9 +361,9 @@ int main(int argc, char *argv[])
         // Loop through populations AGAIN to build synapse population properties
         PopulationProperties postsynapticProperties;
         PopulationProperties weightUpdateProperties;
-        for(auto population : networkSpineML.children("Population")) {
+        for(auto population : networkSpineML.children("LL:Population")) {
             // Read source population name from neuron node
-            const auto *srcPopName = population.child("Neuron").attribute("name").value();
+            const auto *srcPopName = population.child("LL:Neuron").attribute("name").value();
             unsigned int srcPopSize = getNeuronPopSize(srcPopName, neuronPopulationSizes);
 
             // Loop through outgoing projections
@@ -378,7 +378,7 @@ int main(int argc, char *argv[])
                 std::string synPopName = std::string(srcPopName) + "_" + trgPopName;
 
                 // Get main synapse node
-                auto synapse = projection.child("Synapse");
+                auto synapse = projection.child("LL:Synapse");
                 if(!synapse) {
                     throw std::runtime_error("'Projection' node has no 'Synapse' node");
                 }
@@ -388,7 +388,7 @@ int main(int argc, char *argv[])
                                                                synPopName, srcPopSize, trgPopSize);
 
                 // Get post synapse
-                auto postSynapse = synapse.child("PostSynapse");
+                auto postSynapse = synapse.child("LL:PostSynapse");
                 if(!postSynapse) {
                     throw std::runtime_error("'Synapse' node has no 'PostSynapse' node");
                 }
@@ -397,7 +397,7 @@ int main(int argc, char *argv[])
                 addProperties(postSynapse, modelLibrary, synPopName, trgPopSize, postsynapticProperties);
 
                 // Get weight update
-                auto weightUpdate = synapse.child("WeightUpdate");
+                auto weightUpdate = synapse.child("LL:WeightUpdate");
                 if(!weightUpdate) {
                     throw std::runtime_error("'Synapse' node has no 'WeightUpdate' node");
                 }
