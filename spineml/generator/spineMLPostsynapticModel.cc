@@ -117,24 +117,42 @@ SpineMLGenerator::SpineMLPostsynapticModel::SpineMLPostsynapticModel(const std::
                                                  return (v.first == analogueSendPortName);
                                              });
         if(correspondingVar != m_Vars.end()) {
-            // Remove state variable as GeNN uses an internal variable for this
-            m_Vars.erase(correspondingVar);
-
-            // Set current converter code to simply return internal variable
-            m_CurrentConverterCode = "$(inSyn)";
-
-            // Substitute name of analogue send port for internal variable
-            wrapAndReplaceVariableNames(m_DecayCode, analogueSendPortName, "inSyn");
+            // Set current converter code to simply return this variable
+            m_CurrentConverterCode = correspondingVar->first;
         }
         // Otherwise
         else {
-            // **TODO** follow back aliased variables
-            throw std::runtime_error("GeNN doesn't currently support postsynaptic models with aliased output");
+            // Search for an alias representing the analogue send port
+            pugi::xpath_variable_set aliasSearchVars;
+            aliasSearchVars.set("aliasName", analogueSendPortName);
+            auto alias = componentClass.select_node("Dynamics/Alias[@name=$aliasName]", &aliasSearchVars);
+
+            // If alias is found use it for current converter code
+            if(alias) {
+                m_CurrentConverterCode = alias.node().child_value("MathInline");
+            }
+            // Otherwise throw exception
+            else {
+                throw std::runtime_error("Cannot find alias:" + std::string(analogueSendPortName));
+            }
+
         }
     }
     // Otherwise, throw an exception
     else if(numAnalogueSendPorts > 1) {
         throw std::runtime_error("GeNN postsynapses always output a single current");
+    }
+
+    // Check we only have one state variable
+    // **NOTE** it could be possible to figure out what variable to replace with inSyn
+    if(m_Vars.size() != 1) {
+        throw std::runtime_error("GeNN currently only supports postsynaptic models with a single state variable");
+    }
+    else {
+        // Substitute name of analogue send port for internal variable
+        wrapAndReplaceVariableNames(m_DecayCode, m_Vars.front().first, "inSyn");
+        wrapAndReplaceVariableNames(m_CurrentConverterCode, m_Vars.front().first, "inSyn");
+        m_Vars.clear();
     }
 
     // Correctly wrap references to paramters and variables in code strings
