@@ -30,12 +30,12 @@ void setBuildStatus(String message, String state) {
 //    "cuda8 && linux && x86_64", 
 //    "cpu_only && linux && x86_64", 
 //    "cpu_only && linux && x86"] 
-def labels = ["cpu_only && linux && x86_64"];
+def labels = ["cpu_only&& linux && x86_64"];
 
 def builders = [:]
 for (x in labels) {
     def label = x // Need to bind the label variable before the closure - can't do 'for (label in labels)'
-    def labelComponents = label.tokenize("&&")
+    def labelComponents = label.split("\W*&&\W*")
     echo labelComponents.join(",");
     
     // Create a map to pass in to the 'parallel' step so we can fire all the builds at once
