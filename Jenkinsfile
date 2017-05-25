@@ -26,7 +26,7 @@ void setBuildStatus(String message, String state) {
 }
 
 // Labels for Jenkins node types we will build on
-def labels = ["cuda8,linux,x86_64"] 
+def labels = ["cuda8 && linux && x86_64"] 
 def builders = [:]
 for (x in labels) {
     def label = x // Need to bind the label variable before the closure - can't do 'for (label in labels)'
