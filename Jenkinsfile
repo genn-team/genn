@@ -26,14 +26,19 @@ void setBuildStatus(String message, String state) {
 }
 
 // Labels for Jenkins node types we will build on
-def labels = ["cuda8 && linux && x86_64"] 
+def labels = [
+    "cuda8 && linux && x86_64", 
+    "cpu_only && linux && x86_64", 
+    "cpu_only && linux && x86"] 
+
 def builders = [:]
 for (x in labels) {
     def label = x // Need to bind the label variable before the closure - can't do 'for (label in labels)'
-
+    def labelComponents = label.tokenize("&&")
+    
     // Create a map to pass in to the 'parallel' step so we can fire all the builds at once
     builders[label] = {
-        node {
+        node(label=label) {
             stage("Installation") {
                 echo "Checking out GeNN";
                 
@@ -79,7 +84,12 @@ for (x in labels) {
                     echo "${env.PATH}";
                     dir("genn/tests") {
                         // Run tests
-                        sh "./run_tests.sh -c";
+                        if(labelComponents.contains("cpu_only")) {
+                            sh "./run_tests.sh -c";
+                        }
+                        else {
+                            sh "./run_tests.sh";
+                        }
                         
                         // Parse test output for GCC warnings
                         // **NOTE** driving WarningsPublisher from pipeline is entirely undocumented
@@ -109,7 +119,13 @@ for (x in labels) {
                 if (isUnix()) {
                     echo "${env.PATH}";
                     dir("genn/tests") {
-                        sh "./calc_coverage.sh -c";
+                        // Run tests
+                        if(labelComponents.contains("cpu_only")) {
+                            sh "./calc_coverage.sh -c";
+                        }
+                        else {
+                            sh "./calc_coverage.sh";
+                        }
                     }
                 } 
             }
