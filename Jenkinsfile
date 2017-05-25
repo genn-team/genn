@@ -26,15 +26,17 @@ void setBuildStatus(String message, String state) {
 }
 
 // Labels for Jenkins node types we will build on
-def labels = [
-    "cuda8 && linux && x86_64", 
-    "cpu_only && linux && x86_64", 
-    "cpu_only && linux && x86"] 
+//def labels = [
+//    "cuda8 && linux && x86_64", 
+//    "cpu_only && linux && x86_64", 
+//    "cpu_only && linux && x86"] 
+def labels = ["cpu_only && linux && x86_64"];
 
 def builders = [:]
 for (x in labels) {
     def label = x // Need to bind the label variable before the closure - can't do 'for (label in labels)'
     def labelComponents = label.tokenize("&&")
+    echo labelComponents;
     
     // Create a map to pass in to the 'parallel' step so we can fire all the builds at once
     builders[label] = {
