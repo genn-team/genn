@@ -36,7 +36,7 @@ def builders = [:]
 for (x in labels) {
     def label = x // Need to bind the label variable before the closure - can't do 'for (label in labels)'
     def labelComponents = label.tokenize("&&")
-    echo labelComponents;
+    echo labelComponents.join(",");
     
     // Create a map to pass in to the 'parallel' step so we can fire all the builds at once
     builders[label] = {
