@@ -25,6 +25,19 @@ void setBuildStatus(String message, String state) {
     ]);*/
 }
 
+Boolean containsTest(String[] array, String string) {
+    for(a in array) {
+        if(a == string) {
+            return true;
+        }
+        if(a.equals(string)) {
+            echo "ERRR";
+            return true;
+        }
+    }
+    
+    return false;
+}
 // Labels for Jenkins node types we will build on
 //def labels = [
 //    "cuda8 && linux && x86_64", 
@@ -39,7 +52,6 @@ for (x in labels) {
     
     // Split label into it's constituent parts
     def labelComponents = label.split("\\W*&&\\W*");
-    echo labelComponents.class.toString();
     
     // Create a map to pass in to the 'parallel' step so we can fire all the builds at once
     builders[label] = {
@@ -88,7 +100,7 @@ for (x in labels) {
                 if (isUnix()) {
                     dir("genn/tests") {
                         echo "LC:" + labelComponents;
-                        echo "Cpu:" + labelComponents.contains("cpu_only") ? "CPU" : "GPU";
+                        echo "Cpu:" + containsTest(labelComponents,"cpu_only").toString();
                         // Run tests
                         //if(labelComponents.contains("cpu_only")) {
                         //    sh "./run_tests.sh -c";
