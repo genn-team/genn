@@ -25,13 +25,10 @@ void setBuildStatus(String message, String state) {
     ]);*/
 }
 
-Boolean containsTest(String[] array, String string) {
+// **YUCK** for some reason String[].contains() doesn't work in a WEIRD way
+Boolean arrayContains(String[] array, String string) {
     for(a in array) {
         if(a == string) {
-            return true;
-        }
-        if(a.equals(string)) {
-            echo "ERRR";
             return true;
         }
     }
@@ -99,15 +96,13 @@ for (x in labels) {
                 // Run automatic tests
                 if (isUnix()) {
                     dir("genn/tests") {
-                        echo "LC:" + labelComponents;
-                        echo "Cpu:" + containsTest(labelComponents,"cpu_only").toString();
                         // Run tests
-                        //if(labelComponents.contains("cpu_only")) {
-                        //    sh "./run_tests.sh -c";
-                        //}
-                        //else {
+                        if(arrayContains(labelComponents, "cpu_only")) {
+                            sh "./run_tests.sh -c";
+                        }
+                        else {
                             sh "./run_tests.sh";
-                        //}
+                        }
                         
                         // Parse test output for GCC warnings
                         // **NOTE** driving WarningsPublisher from pipeline is entirely undocumented
@@ -137,7 +132,7 @@ for (x in labels) {
                 if (isUnix()) {
                     dir("genn/tests") {
                         // Run tests
-                        if(labelComponents.contains("cpu_only")) {
+                        if(arrayContains(labelComponents, "cpu_only")) {
                             sh "./calc_coverage.sh -c";
                         }
                         else {
