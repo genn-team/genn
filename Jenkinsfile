@@ -53,8 +53,7 @@ for (x in labels) {
     // Create a map to pass in to the 'parallel' step so we can fire all the builds at once
     builders[label] = {
         node(label=label) {
-            echo "Running on:" + env.NODE_NAME;
-            def installationStageName =  "Installation (" + label + ")";
+            def installationStageName =  "Installation (" + env.NODE_NAME + ")";
             stage(installationStageName) {
                 echo "Checking out GeNN";
                 
@@ -94,7 +93,7 @@ for (x in labels) {
                 }
             }
             
-            buildStep("Running tests (" + label + ")") {
+            buildStep("Running tests (" + env.NODE_NAME + ")") {
                 // Run automatic tests
                 if (isUnix()) {
                     dir("genn/tests") {
@@ -120,7 +119,7 @@ for (x in labels) {
                 } 
             }
             
-            buildStep("Gathering test results (" + label + ")") {
+            buildStep("Gathering test results (" + env.NODE_NAME + ")") {
                 dir("genn/tests") {
                     // Process JUnit test output
                     junit "**/test_results*.xml";
@@ -145,7 +144,7 @@ for (x in labels) {
                 } 
             }
             
-            buildStep("Uploading coverage summary (" + label + ")") {
+            buildStep("Uploading coverage summary (" + env.NODE_NAME + ")") {
                 dir("genn/tests") {
                     // **NOTE** the calc_coverage script massages the gcov output into a more useful form so we want to
                     // upload this directly rather than allowing the codecov.io script to generate it's own coverage report
