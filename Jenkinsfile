@@ -86,7 +86,7 @@ for (x in labels) {
                 // Run automatic tests
                 if (isUnix()) {
                     dir("genn/tests") {
-                        echo labelComponents.contains("cpu_only");
+                        echo labelComponents;
                         // Run tests
                         if(labelComponents.contains("cpu_only")) {
                             sh "./run_tests.sh -c";
