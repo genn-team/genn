@@ -39,7 +39,7 @@ for (x in labels) {
     
     // Split label into it's constituent parts
     def labelComponents = label.split("\\W*&&\\W*");
-    echo labelComponents.class;
+    echo labelComponents.class.toString();
     
     // Create a map to pass in to the 'parallel' step so we can fire all the builds at once
     builders[label] = {
