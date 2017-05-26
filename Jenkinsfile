@@ -16,13 +16,13 @@ void buildStep(String message, Closure closure) {
 
 void setBuildStatus(String message, String state) {
     // **NOTE** ManuallyEnteredCommitContextSource set to match the value used by bits of Jenkins outside pipeline control
-    /*step([
+    step([
         $class: "GitHubCommitStatusSetter",
         reposSource: [$class: "ManuallyEnteredRepositorySource", url: "https://github.com/genn-team/genn/"],
         contextSource: [$class: "ManuallyEnteredCommitContextSource", context: "continuous-integration/jenkins/branch"],
         errorHandlers: [[$class: "ChangingBuildStatusErrorHandler", result: "UNSTABLE"]],
         statusResultSource: [ $class: "ConditionalStatusResultSource", results: [[$class: "AnyBuildResult", message: message, state: state]] ]
-    ]);*/
+    ]);
 }
 
 // **YUCK** for some reason String[].contains() doesn't work in a WEIRD way
@@ -36,11 +36,11 @@ Boolean arrayContains(String[] array, String string) {
     return false;
 }
 // Labels for Jenkins node types we will build on
-//def labels = [
-//    "cuda8 && linux && x86_64", 
-//    "cpu_only && linux && x86_64", 
-//    "cpu_only && linux && x86"] 
-def labels = ["cuda8 && linux && x86_64"];
+def labels = [
+    "cuda8 && linux && x86_64", 
+    "cpu_only && linux && x86_64", 
+    "cpu_only && linux && x86"] 
+//def labels = ["cuda8 && linux && x86_64"];
 
 def builders = [:]
 for (x in labels) {
@@ -53,7 +53,9 @@ for (x in labels) {
     // Create a map to pass in to the 'parallel' step so we can fire all the builds at once
     builders[label] = {
         node(label=label) {
-            stage("Installation") {
+            echo "Running on:" + build.getBuiltOnStr();
+            def installationStageName =  "Installation (" + label + ")";
+            stage(installationStageName) {
                 echo "Checking out GeNN";
                 
                 // Deleting existing checked out version of GeNN
@@ -67,7 +69,7 @@ for (x in labels) {
                 
                 // **NOTE** only try and set build status AFTER checkout
                 try {
-                    setBuildStatus("Installation", "PENDING");
+                    setBuildStatus(installationStageName, "PENDING");
                     
                     // If google test doesn't exist
                     def gtestExists = fileExists "googletest-release-1.8.0";
@@ -88,15 +90,16 @@ for (x in labels) {
                     // Add GeNN binaries directory to path
                     env.PATH += ":" + env.GENN_PATH + "/lib/bin";
                 } catch (Exception e) {
-                    setBuildStatus("Installation", "FAILURE");
+                    setBuildStatus(installationStageName, "FAILURE");
                 }
             }
             
-            buildStep("Running tests") {
+            buildStep("Running tests (" + label + ")") {
                 // Run automatic tests
                 if (isUnix()) {
                     dir("genn/tests") {
                         // Run tests
+                        echo "CP:" + ("cpu_only" in labelComponents) ? "YES" : "NO";
                         if(arrayContains(labelComponents, "cpu_only")) {
                             sh "./run_tests.sh -c";
                         }
@@ -117,7 +120,7 @@ for (x in labels) {
                 } 
             }
             
-            buildStep("Gathering test results") {
+            buildStep("Gathering test results (" + label + ")") {
                 dir("genn/tests") {
                     // Process JUnit test output
                     junit "**/test_results*.xml";
@@ -127,7 +130,7 @@ for (x in labels) {
                 }
             }
             
-            buildStep("Calculating code coverage") {
+            buildStep("Calculating code coverage (" + label + ")") {
                 // Calculate coverage
                 if (isUnix()) {
                     dir("genn/tests") {
@@ -142,7 +145,7 @@ for (x in labels) {
                 } 
             }
             
-            buildStep("Uploading coverage summary") {
+            buildStep("Uploading coverage summary (" + label + ")") {
                 dir("genn/tests") {
                     // **NOTE** the calc_coverage script massages the gcov output into a more useful form so we want to
                     // upload this directly rather than allowing the codecov.io script to generate it's own coverage report
