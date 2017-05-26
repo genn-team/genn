@@ -26,10 +26,11 @@ void setBuildStatus(String message, String state) {
 }
 
 // Labels for Jenkins node types we will build on
-def labels = [
-    "cuda8 && linux && x86_64", 
-    "cpu_only && linux && x86_64", 
-    "cpu_only && linux && x86"] 
+//def labels = [
+//    "cuda8 && linux && x86_64", 
+//    "cpu_only && linux && x86_64", 
+//    "cpu_only && linux && x86"] 
+def labels = ["cuda8 && linux && x86_64"];
 
 def builders = [:]
 for (x in labels) {
