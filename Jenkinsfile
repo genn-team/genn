@@ -38,7 +38,8 @@ for (x in labels) {
     def label = x
     
     // Split label into it's constituent parts
-    def labelComponents = label.split("\\W*&&\\W*");   
+    def labelComponents = label.split("\\W*&&\\W*");
+    echo labelComponents.class;
     
     // Create a map to pass in to the 'parallel' step so we can fire all the builds at once
     builders[label] = {
@@ -87,7 +88,7 @@ for (x in labels) {
                 if (isUnix()) {
                     dir("genn/tests") {
                         echo "LC:" + labelComponents;
-                        echo "Cpu:" + labelComponents.asList().contains("cpu_only");
+                        echo "Cpu:" + labelComponents.contains("cpu_only") ? "CPU" : "GPU";
                         // Run tests
                         //if(labelComponents.contains("cpu_only")) {
                         //    sh "./run_tests.sh -c";
