@@ -53,7 +53,7 @@ for (x in labels) {
     // Create a map to pass in to the 'parallel' step so we can fire all the builds at once
     builders[label] = {
         node(label=label) {
-            echo "Running on:" + build.getBuiltOnStr();
+            echo "Running on:" + env.NODE_NAME;
             def installationStageName =  "Installation (" + label + ")";
             stage(installationStageName) {
                 echo "Checking out GeNN";
