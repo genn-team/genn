@@ -85,15 +85,14 @@ for (x in labels) {
             buildStep("Running tests") {
                 // Run automatic tests
                 if (isUnix()) {
-                    echo "${env.PATH}";
                     dir("genn/tests") {
                         // Run tests
-                        if(labelComponents.contains("cpu_only")) {
-                            sh "./run_tests.sh -c";
-                        }
-                        else {
+                        //if(labelComponents.contains("cpu_only")) {
+                        //    sh "./run_tests.sh -c";
+                        //}
+                        //else {
                             sh "./run_tests.sh";
-                        }
+                        //}
                         
                         // Parse test output for GCC warnings
                         // **NOTE** driving WarningsPublisher from pipeline is entirely undocumented
@@ -121,7 +120,6 @@ for (x in labels) {
             buildStep("Calculating code coverage") {
                 // Calculate coverage
                 if (isUnix()) {
-                    echo "${env.PATH}";
                     dir("genn/tests") {
                         // Run tests
                         if(labelComponents.contains("cpu_only")) {
