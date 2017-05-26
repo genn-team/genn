@@ -86,13 +86,14 @@ for (x in labels) {
                 // Run automatic tests
                 if (isUnix()) {
                     dir("genn/tests") {
+                        echo labelComponents.contains("cpu_only");
                         // Run tests
-                        //if(labelComponents.contains("cpu_only")) {
-                        //    sh "./run_tests.sh -c";
-                        //}
-                        //else {
+                        if(labelComponents.contains("cpu_only")) {
+                            sh "./run_tests.sh -c";
+                        }
+                        else {
                             sh "./run_tests.sh";
-                        //}
+                        }
                         
                         // Parse test output for GCC warnings
                         // **NOTE** driving WarningsPublisher from pipeline is entirely undocumented
