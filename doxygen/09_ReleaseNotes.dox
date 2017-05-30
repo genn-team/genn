@@ -1,5 +1,25 @@
 /*! \page ReleaseNotes Release Notes
 
+Release Notes for GeNN v2.2.3
+====
+This release includes minor new features and several bug fixes for certain system configurations.
+
+User Side Changes
+----
+
+1. Transitioned feature tests to use Google Test framework.
+2. Added support for CUDA shader model 6.X
+
+Bug fixes:
+----
+
+1. Fixed problem using GeNN on systems running 32-bit Linux kernels on a 64-bit architecture (Nvidia Jetson modules running old software for example).
+2. Fixed problem linking against CUDA on Mac OS X El Capitan due to SIP (System Integrity Protection).
+3. Fixed problems with support code relating to its scope and usage in spike-like event threshold code.
+4. Disabled use of C++ regular expressions on older versions of GCC.
+
+-------------------------------------------------------------------
+
 Release Notes for GeNN v2.2.2
 ====
 
