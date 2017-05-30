@@ -19,20 +19,18 @@ var searchData=
   ['debugcode',['debugCode',['../d8/d27/namespaceGENN__PREFERENCES.html#a967223438a721ed5c23ba510df02c347',1,'GENN_PREFERENCES']]],
   ['defaultdevice',['defaultDevice',['../d8/d27/namespaceGENN__PREFERENCES.html#a1ae9bcfe428d00fd1f709cd7facf22b4',1,'GENN_PREFERENCES']]],
   ['delb',['delB',['../d5/d60/utils_8h.html#a6e900247bc34d6cbb25b903c4911f0df',1,'delB():&#160;utils.h'],['../d8/d08/gen__pnkc__syns__indivID_8cc.html#a6e900247bc34d6cbb25b903c4911f0df',1,'delB():&#160;gen_pnkc_syns_indivID.cc']]],
-  ['dense',['DENSE',['../dc/de1/modelSpec_8h.html#ad6b1ce8b615d4247eedb05c21f03ef71',1,'modelSpec.h']]],
+  ['dense',['DENSE',['../dc/de1/modelSpec_8h.html#ae0e2cb445d143e4dbe965614b4ac58aea6ac7a6371c0aa9606976335c895cadb0',1,'modelSpec.h']]],
   ['devicecount',['deviceCount',['../d2/d49/global_8h.html#aeae4d6852439dcd029768b91adabc33b',1,'deviceCount():&#160;global.cc'],['../d7/dd8/global_8cc.html#aeae4d6852439dcd029768b91adabc33b',1,'deviceCount():&#160;global.cc']]],
   ['deviceprop',['deviceProp',['../d2/d49/global_8h.html#a9c0bee1772862acc65b81c8a2fe14f28',1,'deviceProp():&#160;global.cc'],['../d7/dd8/global_8cc.html#a9c0bee1772862acc65b81c8a2fe14f28',1,'deviceProp():&#160;global.cc']]],
-  ['digits',['digits',['../dc/db6/stringUtils_8cc.html#afe7afc28942a656a6761c67b438a2e23',1,'stringUtils.cc']]],
   ['directoryexists',['directoryExists',['../d8/d39/experiment_8cc.html#a276a5f0f050852ed3fb75e10cfb551f8',1,'experiment.cc']]],
   ['divi',['divi',['../dc/d02/experiment_8h.html#a3e8e152a801a4318e377b0a271c40dd4',1,'experiment.h']]],
   ['dnp',['dnp',['../dc/de5/classNNmodel.html#a8199af3b9c937784502210645828d2fd',1,'NNmodel']]],
-  ['dofinal',['doFinal',['../dd/dc3/stringUtils_8h.html#af44e5e0f7a004b2ae0f987807f72da7d',1,'doFinal(string &amp;code, unsigned int i, string type, unsigned int &amp;state):&#160;stringUtils.cc'],['../dc/db6/stringUtils_8cc.html#af44e5e0f7a004b2ae0f987807f72da7d',1,'doFinal(string &amp;code, unsigned int i, string type, unsigned int &amp;state):&#160;stringUtils.cc']]],
   ['dpclass',['dpclass',['../db/de6/classdpclass.html',1,'']]],
   ['dpclass_2eh',['dpclass.h',['../da/dc8/dpclass_8h.html',1,'']]],
   ['dpnames',['dpNames',['../d3/dc9/classneuronModel.html#a051c0c704ce383c43cdf446accbeb201',1,'neuronModel::dpNames()'],['../d2/d1a/classpostSynModel.html#a1deddbf488ffa49ec90f084791d9ebe3',1,'postSynModel::dpNames()'],['../dd/db7/classweightUpdateModel.html#a508c032f1c92f8d3da42dfa9209f0eb8',1,'weightUpdateModel::dpNames()']]],
   ['dps',['dps',['../d3/dc9/classneuronModel.html#a9b9b9e5e66702eb114b268bbd08d7c34',1,'neuronModel::dps()'],['../d2/d1a/classpostSynModel.html#a5c0093ffd554c603c21cce0c1b440373',1,'postSynModel::dps()'],['../dd/db7/classweightUpdateModel.html#a7f23e71d08ca83e3f5941105b90814d5',1,'weightUpdateModel::dps()']]],
   ['dpsp',['dpsp',['../dc/de5/classNNmodel.html#a07fecb4ea288e69301af55e93297660c',1,'NNmodel']]],
   ['dsp_5fw',['dsp_w',['../dc/de5/classNNmodel.html#a285430d63d02f6bc1b339c35c41dda67',1,'NNmodel']]],
-  ['dt',['dt',['../dc/de5/classNNmodel.html#a9fb0319cd38554dfc294773bd54ad73b',1,'NNmodel::dt()'],['../d0/d73/myModel_8cc.html#a943f07034774ef1261d62cd0d3d1fec9',1,'DT():&#160;myModel.cc'],['../d5/df0/emurgano__project_2SynDelay_8cc.html#a943f07034774ef1261d62cd0d3d1fec9',1,'DT():&#160;SynDelay.cc'],['../dd/d0d/emurgano__project_2SynDelaySim_8h.html#a943f07034774ef1261d62cd0d3d1fec9',1,'DT():&#160;SynDelaySim.h'],['../de/d16/HHVclampGA__project_2model_2MBody1_8cc.html#a943f07034774ef1261d62cd0d3d1fec9',1,'DT():&#160;MBody1.cc'],['../d7/d22/Model__Schmuker__2014__classifier_8cc.html#a943f07034774ef1261d62cd0d3d1fec9',1,'DT():&#160;Model_Schmuker_2014_classifier.cc']]],
-  ['defining_20a_20network_20model',['Defining a network model',['../df/dc3/sectDefiningNetwork.html',1,'UserManual']]]
+  ['dt',['dt',['../dc/de5/classNNmodel.html#a9fb0319cd38554dfc294773bd54ad73b',1,'NNmodel::dt()'],['../de/d16/HHVclampGA__project_2model_2MBody1_8cc.html#a943f07034774ef1261d62cd0d3d1fec9',1,'DT():&#160;MBody1.cc'],['../d7/d22/Model__Schmuker__2014__classifier_8cc.html#a943f07034774ef1261d62cd0d3d1fec9',1,'DT():&#160;Model_Schmuker_2014_classifier.cc']]],
+  ['defining_20a_20network_20model',['Defining a network model',['../sectDefiningNetwork.html',1,'UserManual']]]
 ];

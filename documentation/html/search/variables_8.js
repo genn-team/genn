@@ -1,6 +1,28 @@
 var searchData=
 [
-  ['hexp',['hexp',['../d4/da1/helper_8h.html#a7e779242180c99f0614e8403fb9f4b7f',1,'helper.h']]],
-  ['hlp',['hlp',['../dd/d95/CodeHelper_8h.html#a528456f8f1feca5714ef5cef70156619',1,'hlp():&#160;generateALL.cc'],['../df/d10/generateALL_8cc.html#a528456f8f1feca5714ef5cef70156619',1,'hlp():&#160;generateALL.cc']]],
-  ['hostcount',['hostCount',['../d2/d49/global_8h.html#a3a9b1273e41b6ba85090fca0451c7693',1,'hostCount():&#160;global.cc'],['../d7/dd8/global_8cc.html#a3a9b1273e41b6ba85090fca0451c7693',1,'hostCount():&#160;global.cc']]]
+  ['id',['id',['../d4/da7/structerrTupel.html#a935755253156aeeda51214ef673690d0',1,'errTupel']]],
+  ['ind',['ind',['../d9/d91/structSparseProjection.html#a0694beeaa91aef06b0b7dd12176ba36f',1,'SparseProjection::ind()'],['../d8/d1e/gen__syns__sparse__izhModel_8cc.html#a5c88bd5b4e434f79aefe7e9ce760f9ee',1,'ind():&#160;gen_syns_sparse_izhModel.cc']]],
+  ['ind_5fee',['ind_ee',['../d8/d1e/gen__syns__sparse__izhModel_8cc.html#a9c7225db59924fb7930ebf150e5e09c0',1,'gen_syns_sparse_izhModel.cc']]],
+  ['ind_5fei',['ind_ei',['../d8/d1e/gen__syns__sparse__izhModel_8cc.html#ae558fecaa58942b18a222442c58fa89e',1,'gen_syns_sparse_izhModel.cc']]],
+  ['ind_5fie',['ind_ie',['../d8/d1e/gen__syns__sparse__izhModel_8cc.html#ad315786e690fa98b4ef5b1cc357ffb86',1,'gen_syns_sparse_izhModel.cc']]],
+  ['ind_5fii',['ind_ii',['../d8/d1e/gen__syns__sparse__izhModel_8cc.html#ae68a05464996470eeab47b05f494d029',1,'gen_syns_sparse_izhModel.cc']]],
+  ['inding',['indInG',['../d9/d91/structSparseProjection.html#a646975cdfbcea70c04b6c3e387fe1342',1,'SparseProjection']]],
+  ['inding_5fee',['indInG_ee',['../d8/d1e/gen__syns__sparse__izhModel_8cc.html#a3e14e121cfacf37895c72d4daf50afc5',1,'gen_syns_sparse_izhModel.cc']]],
+  ['inding_5fei',['indInG_ei',['../d8/d1e/gen__syns__sparse__izhModel_8cc.html#af2c6aa1ad3f35bcc30ff99aaf3b045f4',1,'gen_syns_sparse_izhModel.cc']]],
+  ['inding_5fie',['indInG_ie',['../d8/d1e/gen__syns__sparse__izhModel_8cc.html#a7bea201febba8bb8601c66005d8c05ea',1,'gen_syns_sparse_izhModel.cc']]],
+  ['inding_5fii',['indInG_ii',['../d8/d1e/gen__syns__sparse__izhModel_8cc.html#a74946f32eda1062ddbf15749e9ecbdb5',1,'gen_syns_sparse_izhModel.cc']]],
+  ['individualspikecountpn',['individualSpikeCountPN',['../d1/dc3/classSchmuker2014__classifier.html#ad2557add7a1e0c9e573f6acf198810a9',1,'Schmuker2014_classifier']]],
+  ['inhizh_5fp',['inhIzh_p',['../d7/d5b/Izh__sparse_8cc.html#a9020cf86b09ad751193dff00fe463270',1,'Izh_sparse.cc']]],
+  ['input1',['input1',['../de/dba/classclassIzh.html#ac1c0c249eceb2d61592b9ff531435a14',1,'classIzh']]],
+  ['input2',['input2',['../de/dba/classclassIzh.html#a9a793be6300aecbf730dc7e8d40eebdf',1,'classIzh']]],
+  ['inputbaserate',['InputBaseRate',['../d5/d8d/MBody1__project_2model_2classol__sim_8h.html#a5b04369a7558bcf7da0830c978a36bff',1,'InputBaseRate():&#160;classol_sim.h'],['../de/d54/MBody__delayedSyn__project_2model_2classol__sim_8h.html#a5b04369a7558bcf7da0830c978a36bff',1,'InputBaseRate():&#160;classol_sim.h'],['../d1/da6/MBody__individualID__project_2model_2classol__sim_8h.html#a5b04369a7558bcf7da0830c978a36bff',1,'InputBaseRate():&#160;classol_sim.h'],['../dc/ddd/MBody__userdef__project_2model_2classol__sim_8h.html#a5b04369a7558bcf7da0830c978a36bff',1,'InputBaseRate():&#160;classol_sim.h'],['../d9/d32/PoissonIzh__sim_8h.html#a5b04369a7558bcf7da0830c978a36bff',1,'InputBaseRate():&#160;PoissonIzh_sim.h']]],
+  ['inputrates',['inputRates',['../d1/dc3/classSchmuker2014__classifier.html#a798c8e94ac301c38149a1351e8c6ff12',1,'Schmuker2014_classifier']]],
+  ['inputratessize',['inputRatesSize',['../d1/dc3/classSchmuker2014__classifier.html#a47f2881f3ce90c5c36cdb6e465890db0',1,'Schmuker2014_classifier']]],
+  ['insyn',['inSyn',['../dc/de5/classNNmodel.html#af3f5459e9438989b12e4b675352dd258',1,'NNmodel']]],
+  ['isgrpvarneeded',['isGrpVarNeeded',['../da/d14/generateKernels_8cc.html#ab874b3d8c792b2a5b6657562cdb368de',1,'generateKernels.cc']]],
+  ['izhexc_5fini',['IzhExc_ini',['../d7/d5b/Izh__sparse_8cc.html#a33f96355cbf760b84d1e9327d9d555a1',1,'Izh_sparse.cc']]],
+  ['izhikevich',['IZHIKEVICH',['../d3/dc0/neuronModels_8h.html#a57aaf01a1c5e075bc2ad849b9b48db31',1,'IZHIKEVICH():&#160;neuronModels.cc'],['../dc/dbc/neuronModels_8cc.html#a57aaf01a1c5e075bc2ad849b9b48db31',1,'IZHIKEVICH():&#160;neuronModels.cc']]],
+  ['izhikevich_5fps',['IZHIKEVICH_PS',['../d4/d8a/postSynapseModels_8h.html#a2d91b997bdd2b94782f9cc01b9436632',1,'IZHIKEVICH_PS():&#160;postSynapseModels.cc'],['../d5/d21/postSynapseModels_8cc.html#a2d91b997bdd2b94782f9cc01b9436632',1,'IZHIKEVICH_PS():&#160;postSynapseModels.cc']]],
+  ['izhikevich_5fv',['IZHIKEVICH_V',['../d3/dc0/neuronModels_8h.html#aba25a26e6dc7ed280aad22326b787418',1,'IZHIKEVICH_V():&#160;neuronModels.cc'],['../dc/dbc/neuronModels_8cc.html#aba25a26e6dc7ed280aad22326b787418',1,'IZHIKEVICH_V():&#160;neuronModels.cc']]],
+  ['izhinh_5fini',['IzhInh_ini',['../d7/d5b/Izh__sparse_8cc.html#a6d8bf2bcd56012e29d04062feb70ef01',1,'Izh_sparse.cc']]]
 ];

@@ -25,5 +25,8 @@ var global_8h =
     [ "synapseBlockSize", "d2/d49/global_8h.html#a46f28153f078f519794ba872417fa4e1", null ],
     [ "synapseDynamicsBlockSize", "d2/d49/global_8h.html#ade2fa83150fa1af5c46b057c90c97aaa", null ],
     [ "synDynBlkSz", "d2/d49/global_8h.html#ab6746418e5ea3f2dc81f9d71a2c6f5b8", null ],
-    [ "theDevice", "d2/d49/global_8h.html#a23b3c32d04af422162d050484a76d11e", null ]
+    [ "theDevice", "d2/d49/global_8h.html#a23b3c32d04af422162d050484a76d11e", null ],
+    [ "userCxxFlagsGNU", "d2/d49/global_8h.html#abe37f0a788639c95373894742585a4c1", null ],
+    [ "userCxxFlagsWIN", "d2/d49/global_8h.html#ab9bae2537b17e65a4690a57e02eab698", null ],
+    [ "userNvccFlags", "d2/d49/global_8h.html#a06e6b119589f2254336090ab858ff72b", null ]
 ];

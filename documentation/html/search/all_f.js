@@ -11,7 +11,6 @@ var searchData=
   ['onecomp_5fmodel_2eh',['OneComp_model.h',['../db/d00/OneComp__model_8h.html',1,'']]],
   ['onecomp_5fsim_2ecc',['OneComp_sim.cc',['../d2/d53/OneComp__sim_8cc.html',1,'']]],
   ['onecomp_5fsim_2eh',['OneComp_sim.h',['../dc/d20/OneComp__sim_8h.html',1,'']]],
-  ['op',['op',['../dc/db6/stringUtils_8cc.html#af17b02dae63234716282ab2b71b89772',1,'stringUtils.cc']]],
   ['openbrace',['openBrace',['../d1/d03/classCodeHelper.html#a4524301cdac8abb8d326147496a16e1a',1,'CodeHelper']]],
   ['openfilegetmax',['openFileGetMax',['../de/de5/Izh__sparse__project_2generate__run_8cc.html#ad83c2fd31a05fd093813484812a6000b',1,'generate_run.cc']]],
   ['openrecordingfile',['openRecordingFile',['../d1/dc3/classSchmuker2014__classifier.html#a61d6748c06f594bceff7fd1fec4b024e',1,'Schmuker2014_classifier']]],
@@ -27,7 +26,6 @@ var searchData=
   ['outputrunparameters',['outputRunParameters',['../d8/d39/experiment_8cc.html#a34667dc46b4112c81c0501e60953019b',1,'experiment.cc']]],
   ['outputspikes',['outputSpikes',['../d1/dc3/classSchmuker2014__classifier.html#a188cd461465e2749f7dcda90078cbb24',1,'Schmuker2014_classifier']]],
   ['outsyn',['outSyn',['../dc/de5/classNNmodel.html#a6ba57b83448ab23eaa5a68d40b2ceac9',1,'NNmodel']]],
-  ['ov_2ecc',['ov.cc',['../d0/db2/ov_8cc.html',1,'']]],
   ['overallwinnerspikecountan',['overallWinnerSpikeCountAN',['../d1/dc3/classSchmuker2014__classifier.html#a64fc9826df2c328cdc307fd6ff5802bf',1,'Schmuker2014_classifier']]],
   ['sizes_2eh',['sizes.h',['../db/d40/OneComp__project_2model_2sizes_8h.html',1,'']]]
 ];

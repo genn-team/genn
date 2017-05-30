@@ -1,6 +1,5 @@
 var searchData=
 [
-  ['extra_5fpostsynapses_2eh',['extra_postsynapses.h',['../d1/de9/lib_2include_2extra__postsynapses_8h.html',1,'']]],
   ['learn1synapse',['LEARN1SYNAPSE',['../d2/d5b/synapseModels_8h.html#ae41b9869c1fd201fed3c85f4b0ea0380',1,'LEARN1SYNAPSE():&#160;synapseModels.cc'],['../d9/d5b/synapseModels_8cc.html#ae41b9869c1fd201fed3c85f4b0ea0380',1,'LEARN1SYNAPSE():&#160;synapseModels.cc']]],
   ['learnblksz',['learnBlkSz',['../d2/d49/global_8h.html#a1f16ea6bb3f329500a9f60fb4da7dd46',1,'learnBlkSz():&#160;global.cc'],['../d7/dd8/global_8cc.html#a1f16ea6bb3f329500a9f60fb4da7dd46',1,'learnBlkSz():&#160;global.cc']]],
   ['learning',['LEARNING',['../dc/de1/modelSpec_8h.html#a9d1a12bca0d256595c65ca333f66d421',1,'modelSpec.h']]],

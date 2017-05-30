@@ -23,9 +23,22 @@ var hierarchy =
     [ "randomGauss", "d5/d45/classrandomGauss.html", null ],
     [ "randomGen", "d8/d3b/classrandomGen.html", null ],
     [ "Schmuker2014_classifier", "d1/dc3/classSchmuker2014__classifier.html", null ],
+    [ "SimulationNeuronPolicyPrePostVar", "d4/db2/classSimulationNeuronPolicyPrePostVar.html", null ],
+    [ "SimulationNeuronPolicyPreVar", "d9/dfa/classSimulationNeuronPolicyPreVar.html", null ],
+    [ "SimulationSynapsePolicyDense", "de/dd5/classSimulationSynapsePolicyDense.html", [
+      [ "SimulationSynapsePolicySparse", "dc/d3f/classSimulationSynapsePolicySparse.html", [
+        [ "SimulationSynapsePolicy", "df/d1c/classSimulationSynapsePolicy.html", null ]
+      ] ]
+    ] ],
+    [ "SimulationSynapsePolicyNone", "d3/d68/classSimulationSynapsePolicyNone.html", null ],
     [ "SparseProjection", "d9/d91/structSparseProjection.html", null ],
     [ "stdRG", "db/d09/classstdRG.html", null ],
     [ "stopWatch", "d1/df5/structstopWatch.html", null ],
     [ "SynDelay", "db/df7/classSynDelay.html", null ],
+    [ "TestWithParam", null, [
+      [ "SimulationTest", "d4/ddd/classSimulationTest.html", [
+        [ "SimulationTestVars< NeuronPolicy, SynapsePolicy >", "dd/d58/classSimulationTestVars.html", null ]
+      ] ]
+    ] ],
     [ "weightUpdateModel", "dd/db7/classweightUpdateModel.html", null ]
 ];

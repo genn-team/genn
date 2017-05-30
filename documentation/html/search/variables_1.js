@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['asgoodaszero',['asGoodAsZero',['../d8/d27/namespaceGENN__PREFERENCES.html#a735be1f8a3fa1bb1eb74cf981d0525a2',1,'GENN_PREFERENCES']]],
-  ['autochoosedevice',['autoChooseDevice',['../d8/d27/namespaceGENN__PREFERENCES.html#adb99ec835aec37d566c69248798643bd',1,'GENN_PREFERENCES']]],
-  ['autorefractory',['autoRefractory',['../d8/d27/namespaceGENN__PREFERENCES.html#aea36da0f447200facdcd5ecad8b39a2a',1,'GENN_PREFERENCES']]]
+  ['baserates',['baserates',['../d1/d16/classclassol.html#a6274b206756a62789c2200def03f29c2',1,'classol']]],
+  ['basev',['baseV',['../de/dad/structinputSpec.html#a6aeb08095e0d0094123108c8a74950a4',1,'inputSpec']]],
+  ['blksz',['BlkSz',['../d1/d49/GeNNHelperKrnls_8h.html#ae4833e7704acd82d3677ca0b3e8fbe73',1,'GeNNHelperKrnls.h']]]
 ];

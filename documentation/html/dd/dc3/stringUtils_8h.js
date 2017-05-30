@@ -2,14 +2,12 @@ var stringUtils_8h =
 [
     [ "tS", "dd/dc3/stringUtils_8h.html#a59bb28cdc0693d03c5e7caee444be7db", null ],
     [ "checkUnreplacedVariables", "dd/dc3/stringUtils_8h.html#a0a0e8da70ac2272cb6106f9c0636493c", null ],
-    [ "doFinal", "dd/dc3/stringUtils_8h.html#af44e5e0f7a004b2ae0f987807f72da7d", null ],
-    [ "ensureFtype", "dd/dc3/stringUtils_8h.html#ad8ea93f3fcfb07e52bce918bd8df7e96", null ],
-    [ "ensureMathFunctionFtype", "dd/dc3/stringUtils_8h.html#abec7ad26d45cbdc8196ccf01f21f5b04", null ],
-    [ "extended_name_substitutions", "dd/dc3/stringUtils_8h.html#aabd96b5aa960e22fde8e31228a8b2404", null ],
-    [ "extended_value_substitutions", "dd/dc3/stringUtils_8h.html#a6695a138e731c5fd924a5571bc11599e", null ],
-    [ "name_substitutions", "dd/dc3/stringUtils_8h.html#a127ae8d36f6bcd88c56f0971cb0bf0b8", null ],
-    [ "neuron_substitutions_in_synaptic_code", "dd/dc3/stringUtils_8h.html#acc2ba6d0cf961722ae994c390e469716", null ],
-    [ "substitute", "dd/dc3/stringUtils_8h.html#a1176f6ba1f479a7a11dbb0bcfffaa426", null ],
+    [ "ensureFtype", "dd/dc3/stringUtils_8h.html#ae9b4b98729ff197b29d70419c7aebbae", null ],
+    [ "extended_name_substitutions", "dd/dc3/stringUtils_8h.html#add6cd2cf03a63f728a4723e5863537a2", null ],
+    [ "extended_value_substitutions", "dd/dc3/stringUtils_8h.html#ac717938c93aef991ca09646a301c41a9", null ],
+    [ "name_substitutions", "dd/dc3/stringUtils_8h.html#aca1c61ffd4252a68e97040f4576de512", null ],
+    [ "neuron_substitutions_in_synaptic_code", "dd/dc3/stringUtils_8h.html#a97705968aa3fa53d2ff002a6d775b271", null ],
+    [ "substitute", "dd/dc3/stringUtils_8h.html#aca2e31c8941d9fadf42ab5229555f5da", null ],
     [ "toString", "dd/dc3/stringUtils_8h.html#acd4836da644df996627ecc9823546f8a", null ],
-    [ "value_substitutions", "dd/dc3/stringUtils_8h.html#a2ade65c777bcb3c45d95ff77eaed475b", null ]
+    [ "value_substitutions", "dd/dc3/stringUtils_8h.html#abd0d35938d257ccc26f81b2ed82241e0", null ]
 ];

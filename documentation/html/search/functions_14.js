@@ -12,6 +12,6 @@ var searchData=
   ['_7erandomgen',['~randomGen',['../d8/d3b/classrandomGen.html#aff27fbad3b28842484acd1422c41ca66',1,'randomGen']]],
   ['_7eschmuker2014_5fclassifier',['~Schmuker2014_classifier',['../d1/dc3/classSchmuker2014__classifier.html#adcdc4b3f9e5d05bcae963a3b513f04b0',1,'Schmuker2014_classifier']]],
   ['_7estdrg',['~stdRG',['../db/d09/classstdRG.html#a0bbc8b513176fbf0fdadb5b568222ffe',1,'stdRG']]],
-  ['_7esyndelay',['~SynDelay',['../db/df7/classSynDelay.html#ad39ace0c45d15b6beb716c9efad2312f',1,'SynDelay::~SynDelay()'],['../db/df7/classSynDelay.html#ad39ace0c45d15b6beb716c9efad2312f',1,'SynDelay::~SynDelay()']]],
+  ['_7esyndelay',['~SynDelay',['../db/df7/classSynDelay.html#ad39ace0c45d15b6beb716c9efad2312f',1,'SynDelay']]],
   ['_7eweightupdatemodel',['~weightUpdateModel',['../dd/db7/classweightUpdateModel.html#aef2043ad128ea3b84a7259b2d4c77403',1,'weightUpdateModel']]]
 ];

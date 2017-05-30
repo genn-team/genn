@@ -22,3 +22,9 @@
 \form#21:$V$
 \form#22:$E_{pre}$
 \form#23:$I_{\rm syn}= g*s*(V_{\rm rev}-V_{\rm post})$
+\form#24:$\tau\frac{dV}{dt}= -V + I_{{\rm syn}}$
+\form#25:$\exp\left(\frac{-t}{\tau}\right)$
+\form#26:$\frac{1000ms}{DTms}$
+\form#27:$ \frac{1000}{DT}$
+\form#28:$ \mu$
+\form#29:$ \mu S $
