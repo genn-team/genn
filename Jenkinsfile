@@ -25,6 +25,17 @@ void setBuildStatus(String message, String state) {
     ]);
 }
 
+// **YUCK** for some reason String[].contains() doesn't work in a WEIRD way
+Boolean arrayContains(String[] array, String string) {
+    for(a in array) {
+        if(a == string) {
+            return true;
+        }
+    }
+    
+    return false;
+}
+
 // All the types of build we'll ideally run if suitable nodes exist
 def desiredBuilds = [
     ["cuda8", "linux", "x86_64"] as Set,
@@ -54,7 +65,7 @@ availableNodes["master"] = jenkins.model.Jenkins.instance.getLabelString().split
 
 
 // Loop through the desired builds
-def builders = [:]
+def builderNodes = [:]
 for(b in desiredBuilds) {
     // Loop through all available nodes
     for(n in availableNodes) {
@@ -63,116 +74,119 @@ for(b in desiredBuilds) {
             print "${n.key} -> ${b}";
             
             // Add node's name to list of builders and remove it from dictionary of available nodes
+            builderNodes[n.key] = n.value
             availableNodes.remove(n.key)
+            break
+        }
+    }
+}
+
+for (b in builderNodes) {
+    // **YUCK** meed to bind the label variable before the closure - can't do 'for (label in labels)'
+    def nodeName = b.key
+    def label = b.value
+   
+    // Create a map to pass in to the 'parallel' step so we can fire all the builds at once
+    builders[nodeName] = {
+        node(nodeName) {
+            def installationStageName =  "Installation (" + env.NODE_NAME + ")";
+            stage(installationStageName) {
+                echo "Checking out GeNN";
+                
+                // Deleting existing checked out version of GeNN
+                sh "rm -rf genn";
+                
+                dir("genn") {
+                    // Checkout GeNN into it
+                    // **NOTE** because we're using multi-branch project URL is substituted here
+                    checkout scm
+                }
+                
+                // **NOTE** only try and set build status AFTER checkout
+                try {
+                    setBuildStatus(installationStageName, "PENDING");
+                    
+                    // If google test doesn't exist
+                    def gtestExists = fileExists "googletest-release-1.8.0";
+                    if(!gtestExists) {
+                        echo "Downloading google test framework";
+                        
+                        // Download it
+                        sh "wget https://github.com/google/googletest/archive/release-1.8.0.tar.gz";
             
-            def nodeName = n.key
-            //def nodeLabel = n.value
-            
-            // Create a map to pass in to the 'parallel' step so we can fire all the builds at once
-            builders[nodeName] = {
-                node(nodeName) {
-                    def installationStageName =  "Installation (" + env.NODE_NAME + ")";
-                    stage(installationStageName) {
-                        echo "Checking out GeNN";
-                        
-                        // Deleting existing checked out version of GeNN
-                        sh "rm -rf genn";
-                        
-                        dir("genn") {
-                            // Checkout GeNN into it
-                            // **NOTE** because we're using multi-branch project URL is substituted here
-                            checkout scm
-                        }
-                        
-                        // **NOTE** only try and set build status AFTER checkout
-                        try {
-                            setBuildStatus(installationStageName, "PENDING");
-                            
-                            // If google test doesn't exist
-                            def gtestExists = fileExists "googletest-release-1.8.0";
-                            if(!gtestExists) {
-                                echo "Downloading google test framework";
-                                
-                                // Download it
-                                sh "wget https://github.com/google/googletest/archive/release-1.8.0.tar.gz";
-                    
-                                // Unarchive it
-                                sh "tar -zxvf release-1.8.0.tar.gz";
-                            }
-                            
-                            // Setup google test and GeNN environment variables
-                            env.GTEST_DIR = pwd() + "/googletest-release-1.8.0/googletest";
-                            env.GENN_PATH = pwd() + "/genn";
-                            
-                            // Add GeNN binaries directory to path
-                            env.PATH += ":" + env.GENN_PATH + "/lib/bin";
-                        } catch (Exception e) {
-                            setBuildStatus(installationStageName, "FAILURE");
-                        }
+                        // Unarchive it
+                        sh "tar -zxvf release-1.8.0.tar.gz";
                     }
                     
-                    buildStep("Running tests (" + env.NODE_NAME + ")") {
-                        // Run automatic tests
-                        if (isUnix()) {
-                            dir("genn/tests") {
-                                // Run tests
-                                if("cpu_only" in nodeLabel) {
-                                    sh "./run_tests.sh -c";
-                                }
-                                else {
-                                    sh "./run_tests.sh";
-                                }
-                                
-                                // Parse test output for GCC warnings
-                                // **NOTE** driving WarningsPublisher from pipeline is entirely undocumented
-                                // this is based mostly on examples here https://github.com/kitconcept/jenkins-pipeline-examples
-                                // **YUCK** fatal errors aren't detected by the 'GNU Make + GNU C Compiler (gcc)' parser
-                                // however https://issues.jenkins-ci.org/browse/JENKINS-18081 fixes this for 
-                                // the 'GNU compiler 4 (gcc)' parser at the expense of it not detecting make errors...
-                                step([$class: "WarningsPublisher", 
-                                    parserConfigurations: [[parserName: "GNU compiler 4 (gcc)", pattern: "msg"]], 
-                                    unstableTotalAll: '0', usePreviousBuildAsReference: true]); 
-                            }
-                        } 
-                    }
+                    // Setup google test and GeNN environment variables
+                    env.GTEST_DIR = pwd() + "/googletest-release-1.8.0/googletest";
+                    env.GENN_PATH = pwd() + "/genn";
                     
-                    buildStep("Gathering test results (" + env.NODE_NAME + ")") {
-                        dir("genn/tests") {
-                            // Process JUnit test output
-                            junit "**/test_results*.xml";
-                            
-                            // Archive compiler output
-                            archive "msg";
-                        }
-                    }
-                    
-                    buildStep("Calculating code coverage (" + label + ")") {
-                        // Calculate coverage
-                        if (isUnix()) {
-                            dir("genn/tests") {
-                                // Run tests
-                                if("cpu_only" in nodeLabel) {
-                                    sh "./calc_coverage.sh -c";
-                                }
-                                else {
-                                    sh "./calc_coverage.sh";
-                                }
-                            }
-                        } 
-                    }
-                    
-                    buildStep("Uploading coverage summary (" + env.NODE_NAME + ")") {
-                        dir("genn/tests") {
-                            // **NOTE** the calc_coverage script massages the gcov output into a more useful form so we want to
-                            // upload this directly rather than allowing the codecov.io script to generate it's own coverage report
-                            sh "bash <(curl -s https://codecov.io/bash) -f coverage.txt -t 04054241-1f5e-4c42-9564-9b99ede08113";
-                        }
-                    }
+                    // Add GeNN binaries directory to path
+                    env.PATH += ":" + env.GENN_PATH + "/lib/bin";
+                } catch (Exception e) {
+                    setBuildStatus(installationStageName, "FAILURE");
                 }
             }
             
-            // This build has been assigned to a node - stop searching
-            break
+            buildStep("Running tests (" + env.NODE_NAME + ")") {
+                // Run automatic tests
+                if (isUnix()) {
+                    dir("genn/tests") {
+                        // Run tests
+                        echo "CP:" + ("cpu_only" in labelComponents) ? "YES" : "NO";
+                        if(arrayContains(labelComponents, "cpu_only")) {
+                            sh "./run_tests.sh -c";
+                        }
+                        else {
+                            sh "./run_tests.sh";
+                        }
+                        
+                        // Parse test output for GCC warnings
+                        // **NOTE** driving WarningsPublisher from pipeline is entirely undocumented
+                        // this is based mostly on examples here https://github.com/kitconcept/jenkins-pipeline-examples
+                        // **YUCK** fatal errors aren't detected by the 'GNU Make + GNU C Compiler (gcc)' parser
+                        // however https://issues.jenkins-ci.org/browse/JENKINS-18081 fixes this for 
+                        // the 'GNU compiler 4 (gcc)' parser at the expense of it not detecting make errors...
+                        step([$class: "WarningsPublisher", 
+                            parserConfigurations: [[parserName: "GNU compiler 4 (gcc)", pattern: "msg"]], 
+                            unstableTotalAll: '0', usePreviousBuildAsReference: true]); 
+                    }
+                } 
+            }
+            
+            buildStep("Gathering test results (" + env.NODE_NAME + ")") {
+                dir("genn/tests") {
+                    // Process JUnit test output
+                    junit "**/test_results*.xml";
+                    
+                    // Archive compiler output
+                    archive "msg";
+                }
+            }
+            
+            buildStep("Calculating code coverage (" + label + ")") {
+                // Calculate coverage
+                if (isUnix()) {
+                    dir("genn/tests") {
+                        // Run tests
+                        if(arrayContains(labelComponents, "cpu_only")) {
+                            sh "./calc_coverage.sh -c";
+                        }
+                        else {
+                            sh "./calc_coverage.sh";
+                        }
+                    }
+                } 
+            }
+            
+            buildStep("Uploading coverage summary (" + env.NODE_NAME + ")") {
+                dir("genn/tests") {
+                    // **NOTE** the calc_coverage script massages the gcov output into a more useful form so we want to
+                    // upload this directly rather than allowing the codecov.io script to generate it's own coverage report
+                    sh "bash <(curl -s https://codecov.io/bash) -f coverage.txt -t 04054241-1f5e-4c42-9564-9b99ede08113";
+                }
+            }
         }
     }
 }
