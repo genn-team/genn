@@ -15,6 +15,7 @@ while getopts "c" opt; do
 done
 
 # Clean GeNN library
+echo $GENN_PATH
 pushd $GENN_PATH/lib
 make clean
 popd
