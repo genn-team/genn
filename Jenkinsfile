@@ -50,6 +50,12 @@ for (x in labels) {
     // Split label into it's constituent parts
     def labelComponents = label.split("\\W*&&\\W*");
     
+    for(node in jenkins.model.Jenkins.instance.nodes) {
+        print node.name
+        print node.getLabelCloud()
+        print node.getComputer().isOnline()
+    }
+    error('Stopping early')
     // Create a map to pass in to the 'parallel' step so we can fire all the builds at once
     builders[label] = {
         node(label=label) {
