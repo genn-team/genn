@@ -63,7 +63,7 @@ for(b in desiredBuilds) {
             print "${n.key} -> ${b}";
             
             // Add node's name to list of builders and remove it from dictionary of available nodes
-            builderNodes.add(new Tuple2(n.key, n.value))
+            builderNodes.add([n.key, n.value])
             availableNodes.remove(n.key)
             break
         }
@@ -73,8 +73,8 @@ for(b in desiredBuilds) {
 def builders = [:]
 for(b = 0; b < builderNodes.size; b++) {
     // **YUCK** meed to bind the label variable before the closure - can't do 'for (label in labels)'
-    def nodeName = builderNodes.get(b).first
-    def nodeLabel = builderNodes.get(b).second
+    def nodeName = builderNodes.get(b).get(0)
+    def nodeLabel = builderNodes.get(b).get(1)
    
     // Create a map to pass in to the 'parallel' step so we can fire all the builds at once
     builders[nodeName] = {
