@@ -56,11 +56,29 @@ print desiredBuilds
 // Build dictionary of available nodes and their labels
 def availableNodes = [:]
 for(node in jenkins.model.Jenkins.instance.nodes) {
-    if(node.getComputer().isOnline() && node.getComputer().countIdle() > 0) {
+    if(node.getComputer().isOnline() /*&& node.getComputer().countIdle() > 0*/) {
         availableNodes[node.name] = node.getLabelString().split("\\W*&&\\W*") as Set
     }
 }
 print availableNodes
+
+// Loop through the desired builds
+def builderNodes = []
+for(b in desiredBuilds) {
+    // Loop through all available nodes
+    for(n in availableNodes) {
+        // If, after subtracting this node's labels, all build properties are satisfied
+        if((b - n.value).size() == 0) {
+            print "${n.key} -> ${b}";
+            
+            // Add node's name to list of builders and remove it from dictionary of available nodes
+            builderNodes.add(n.key)
+            availableNodes.remove(n.key)
+            break
+        }
+    }
+}
+print builderNodes
 error('Stopping early')
 
 def builders = [:]
