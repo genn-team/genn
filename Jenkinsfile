@@ -25,17 +25,6 @@ void setBuildStatus(String message, String state) {
     ]);
 }
 
-// **YUCK** for some reason String[].contains() doesn't work in a WEIRD way
-Boolean arrayContains(String[] array, String string) {
-    for(a in array) {
-        if(a == string) {
-            return true;
-        }
-    }
-    
-    return false;
-}
-
 // All the types of build we'll ideally run if suitable nodes exist
 def desiredBuilds = [
     ["cuda8", "linux", "x86_64"] as Set,
@@ -81,6 +70,7 @@ for(b in desiredBuilds) {
     }
 }
 
+def builders = [:]
 for (b in builderNodes) {
     // **YUCK** meed to bind the label variable before the closure - can't do 'for (label in labels)'
     def nodeName = b.key
