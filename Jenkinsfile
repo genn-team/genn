@@ -56,6 +56,7 @@ print desiredBuilds
 // Build dictionary of available nodes and their labels
 def availableNodes = [:]
 for(node in jenkins.model.Jenkins.instance.nodes) {
+    print node.name
     if(node.getComputer().isOnline() /*&& node.getComputer().countIdle() > 0*/) {
         availableNodes[node.name] = node.getLabelString().split() as Set
     }
