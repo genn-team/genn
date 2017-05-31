@@ -56,15 +56,20 @@ print desiredBuilds
 // Build dictionary of available nodes and their labels
 def availableNodes = [:]
 for(node in jenkins.model.Jenkins.instance.nodes) {
-    print node.name
-    if(node.getComputer().isOnline() /*&& node.getComputer().countIdle() > 0*/) {
+    if(node.getComputer().isOnline() && node.getComputer().countIdle() > 0) {
         availableNodes[node.name] = node.getLabelString().split() as Set
     }
 }
+
+// Add master
+if(jenkins.model.Jenkins.instance.isOnline() && node.getComputer().countIdle() > 0) {
+    availableNodes["master"] = node.getLabelString().split() as Set
+}
+
 print availableNodes
 
 // Loop through the desired builds
-def builderNodes = []
+def builderNodes = [:]
 for(b in desiredBuilds) {
     // Loop through all available nodes
     for(n in availableNodes) {
@@ -73,7 +78,7 @@ for(b in desiredBuilds) {
             print "${n.key} -> ${b}";
             
             // Add node's name to list of builders and remove it from dictionary of available nodes
-            builderNodes.add(n.key)
+            builderNodes[n.key] = n.value
             availableNodes.remove(n.key)
             break
         }
