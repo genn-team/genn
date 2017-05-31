@@ -63,7 +63,7 @@ for(b in desiredBuilds) {
             print "${n.key} -> ${b}";
             
             // Add node's name to list of builders and remove it from dictionary of available nodes
-            builderNodes.add(n.key)
+            builderNodes.add(new Tuple2(n.key, n.value))
             availableNodes.remove(n.key)
             break
         }
@@ -73,8 +73,8 @@ for(b in desiredBuilds) {
 def builders = [:]
 for(b = 0; b < builderNodes.size; b++) {
     // **YUCK** meed to bind the label variable before the closure - can't do 'for (label in labels)'
-    def nodeName = builderNodes.get(b)
-    //def label = b.value
+    def nodeName = builderNodes.get(b).first
+    def nodeLabel = builderNodes.get(b).second
    
     // Create a map to pass in to the 'parallel' step so we can fire all the builds at once
     builders[nodeName] = {
@@ -124,8 +124,7 @@ for(b = 0; b < builderNodes.size; b++) {
                 if (isUnix()) {
                     dir("genn/tests") {
                         // Run tests
-                        echo "CP:" + ("cpu_only" in labelComponents) ? "YES" : "NO";
-                        if(arrayContains(labelComponents, "cpu_only")) {
+                        if("cpu_only" in nodeLabel) {
                             sh "./run_tests.sh -c";
                         }
                         else {
@@ -160,7 +159,7 @@ for(b = 0; b < builderNodes.size; b++) {
                 if (isUnix()) {
                     dir("genn/tests") {
                         // Run tests
-                        if(arrayContains(labelComponents, "cpu_only")) {
+                        if("cpu_only" in nodeLabel) {
                             sh "./calc_coverage.sh -c";
                         }
                         else {
