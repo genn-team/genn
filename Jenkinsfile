@@ -151,7 +151,7 @@ for(b in desiredBuilds) {
                         if (isUnix()) {
                             dir("genn/tests") {
                                 // Run tests
-                                if("cpu_only" in nodeLabel)) {
+                                if("cpu_only" in nodeLabel) {
                                     sh "./calc_coverage.sh -c";
                                 }
                                 else {
