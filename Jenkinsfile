@@ -62,7 +62,7 @@ for(node in jenkins.model.Jenkins.instance.nodes) {
 }
 
 // Add master
-if(node.getComputer().countIdle() > 0) {
+if(jenkins.model.Jenkins.instance.getComputer().countIdle() > 0) {
     availableNodes["master"] = node.getLabelString().split() as Set
 }
 
