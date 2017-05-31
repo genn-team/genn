@@ -63,7 +63,7 @@ for(b in desiredBuilds) {
             print "${n.key} -> ${b}";
             
             // Add node's name to list of builders and remove it from dictionary of available nodes
-            builderNodes[n.key] = n.value
+            builderNodes[n.key] = "fake label"//n.value
             availableNodes.remove(n.key)
             break
         }
