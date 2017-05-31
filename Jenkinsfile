@@ -44,7 +44,7 @@ def labels = [
 for(node in jenkins.model.Jenkins.instance.nodes) {
     print node.name
     for(l in node.getLabelCloud()) {
-        print l.getName()
+        print l.getDisplayName()
     }
     print node.getComputer().isOnline()
     print node.getComputer().countIdle()
