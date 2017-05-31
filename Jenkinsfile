@@ -54,7 +54,7 @@ availableNodes["master"] = jenkins.model.Jenkins.instance.getLabelString().split
 
 
 // Loop through the desired builds
-def builderNodes = [:]
+def builderNodes = []
 for(b in desiredBuilds) {
     // Loop through all available nodes
     for(n in availableNodes) {
@@ -63,7 +63,7 @@ for(b in desiredBuilds) {
             print "${n.key} -> ${b}";
             
             // Add node's name to list of builders and remove it from dictionary of available nodes
-            builderNodes[n.key] = "fake label"//n.value
+            builderNodes.add(n.key)
             availableNodes.remove(n.key)
             break
         }
@@ -71,9 +71,9 @@ for(b in desiredBuilds) {
 }
 
 def builders = [:]
-for (b in builderNodes) {
+for(b = 0; b < builderNodes.size; b++) {
     // **YUCK** meed to bind the label variable before the closure - can't do 'for (label in labels)'
-    def nodeName = b.key as String
+    def nodeName = builderNodes.get(b)
     //def label = b.value
    
     // Create a map to pass in to the 'parallel' step so we can fire all the builds at once
