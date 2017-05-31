@@ -35,18 +35,32 @@ Boolean arrayContains(String[] array, String string) {
     
     return false;
 }
-// Labels for Jenkins node types we will build on
-def labels = [
-    "cuda8 && linux && x86_64", 
-    "cpu_only && linux && x86_64", 
-    "cpu_only && linux && x86"] 
-//def labels = ["cuda8 && linux && x86_64"];
+
+// All the types of build we'll ideally run if suitable nodes exist
+def desiredBuilds = [
+    ["cuda8", "linux", "x86_64"] as Set,
+    ["cuda7", "linux", "x86_64"] as Set, 
+    ["cuda6", "linux", "x86_64"] as Set, 
+    ["cpu_only", "linux", "x86_64"] as Set, 
+    ["cuda8", "linux", "x86"] as Set,
+    ["cuda7", "linux", "x86"] as Set, 
+    ["cuda6", "linux", "x86"] as Set, 
+    ["cpu_only", "linux", "x86"] as Set,
+    ["cuda8", "mac"] as Set,
+    ["cuda7", "mac"] as Set, 
+    ["cuda6", "mac"] as Set, 
+    ["cpu_only", "mac"] as Set] 
+
+print desiredBuilds
+
+// Build dictionary of available nodes and their labels
+def availableNodes = [:]
 for(node in jenkins.model.Jenkins.instance.nodes) {
-    print node.name
-    print node.getLabelString()
-    print node.getComputer().isOnline()
-    print node.getComputer().countIdle()
+    if(node.getComputer().isOnline() && node.getComputer().countIdle() > 0) {
+        availableNodes[node.name] = node.getLabelString().split("\\W*&&\\W*") as Set
+    }
 }
+print availableNodes
 error('Stopping early')
 
 def builders = [:]
