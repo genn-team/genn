@@ -54,7 +54,7 @@ availableNodes["master"] = jenkins.model.Jenkins.instance.getLabelString().split
 
 
 // Loop through the desired builds
-def builders = []
+def builders = [:]
 for(b in desiredBuilds) {
     // Loop through all available nodes
     for(n in availableNodes) {
@@ -69,7 +69,7 @@ for(b in desiredBuilds) {
             def nodeLabel = n.value
             
             // Create a map to pass in to the 'parallel' step so we can fire all the builds at once
-            builders.add({
+            builders[nodeName] = {
                 node(nodeName) {
                     def installationStageName =  "Installation (" + env.NODE_NAME + ")";
                     stage(installationStageName) {
@@ -169,7 +169,7 @@ for(b in desiredBuilds) {
                         }
                     }
                 }
-            })
+            }
             
             // This build has been assigned to a node - stop searching
             break
