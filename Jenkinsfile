@@ -54,6 +54,7 @@ for (x in labels) {
         print node.name
         print node.getLabelCloud()
         print node.getComputer().isOnline()
+        print node.getComputer().countIdle()
     }
     error('Stopping early')
     // Create a map to pass in to the 'parallel' step so we can fire all the builds at once
