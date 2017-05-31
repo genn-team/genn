@@ -57,7 +57,7 @@ print desiredBuilds
 def availableNodes = [:]
 for(node in jenkins.model.Jenkins.instance.nodes) {
     if(node.getComputer().isOnline() /*&& node.getComputer().countIdle() > 0*/) {
-        availableNodes[node.name] = node.getLabelString().split("\\W*&&\\W*") as Set
+        availableNodes[node.name] = node.getLabelString().split() as Set
     }
 }
 print availableNodes
