@@ -66,7 +66,7 @@ for(b in desiredBuilds) {
             availableNodes.remove(n.key)
             
             def nodeName = n.key
-            def nodeLabel = n.value
+            //def nodeLabel = n.value
             
             // Create a map to pass in to the 'parallel' step so we can fire all the builds at once
             builders[nodeName] = {
