@@ -43,9 +43,7 @@ def labels = [
 //def labels = ["cuda8 && linux && x86_64"];
 for(node in jenkins.model.Jenkins.instance.nodes) {
     print node.name
-    for(l in node.getLabelCloud()) {
-        print l.getDisplayName()
-    }
+    print node.getLabelString()
     print node.getComputer().isOnline()
     print node.getComputer().countIdle()
 }
