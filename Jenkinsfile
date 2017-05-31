@@ -41,6 +41,15 @@ def labels = [
     "cpu_only && linux && x86_64", 
     "cpu_only && linux && x86"] 
 //def labels = ["cuda8 && linux && x86_64"];
+for(node in jenkins.model.Jenkins.instance.nodes) {
+    print node.name
+    for(l in node.getLabelCloud()) {
+        print l.toString()
+    }
+    print node.getComputer().isOnline()
+    print node.getComputer().countIdle()
+}
+error('Stopping early')
 
 def builders = [:]
 for (x in labels) {
@@ -50,13 +59,7 @@ for (x in labels) {
     // Split label into it's constituent parts
     def labelComponents = label.split("\\W*&&\\W*");
     
-    for(node in jenkins.model.Jenkins.instance.nodes) {
-        print node.name
-        print node.getLabelCloud()
-        print node.getComputer().isOnline()
-        print node.getComputer().countIdle()
-    }
-    error('Stopping early')
+   
     // Create a map to pass in to the 'parallel' step so we can fire all the builds at once
     builders[label] = {
         node(label=label) {
