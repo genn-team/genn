@@ -62,9 +62,9 @@ for(node in jenkins.model.Jenkins.instance.nodes) {
 }
 
 // Add master
-if(jenkins.model.Jenkins.instance.getComputer().countIdle() > 0) {
-    availableNodes["master"] = node.getLabelString().split() as Set
-}
+// **THINK** NO IDEA how to access it's computer instance
+availableNodes["master"] = jenkins.model.Jenkins.instance.getLabelString().split() as Set
+
 
 print availableNodes
 
