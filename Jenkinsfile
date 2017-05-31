@@ -73,8 +73,8 @@ for(b in desiredBuilds) {
 def builders = [:]
 for (b in builderNodes) {
     // **YUCK** meed to bind the label variable before the closure - can't do 'for (label in labels)'
-    def nodeName = b.key
-    def label = b.value
+    def nodeName = b.key as String
+    //def label = b.value
    
     // Create a map to pass in to the 'parallel' step so we can fire all the builds at once
     builders[nodeName] = {
