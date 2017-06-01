@@ -242,7 +242,7 @@ node {
 
             // **NOTE** the calc_coverage script massages the gcov output into a more useful form so we want to
             // upload this directly rather than allowing the codecov.io script to generate it's own coverage report
-            sh "bash <(curl -s https://codecov.io/bash) -f combined_coverage.txt -t 04054241-1f5e-4c42-9564-9b99ede08113";
+            sh "curl -s https://codecov.io/bash | bash -s - -f combined_coverage.txt -t 04054241-1f5e-4c42-9564-9b99ede08113";
         }
         else {
             echo "No coverage reports found"
