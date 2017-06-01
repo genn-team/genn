@@ -234,7 +234,7 @@ node {
         // If any coverage reports were found
         if(anyCoverage) {
             // Finalise lcov command line and execute
-            lcovCommandLine += "--output-file combined_coverage.txt"
+            lcovCommandLine += " --output-file combined_coverage.txt"
             sh lcovCommandLine
 
             // Archive raw coverage report
