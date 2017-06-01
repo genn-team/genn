@@ -25,6 +25,18 @@ void setBuildStatus(String message, String state) {
     ]);
 }
 
+void configureEnvironment() {
+    // Setup google test and GeNN environment variables
+    env.GTEST_DIR = pwd() + "/googletest-release-1.8.0/googletest";
+    env.GENN_PATH = pwd() + "/genn";
+    
+    // Add GeNN binaries directory to path
+    env.PATH += ":" + env.GENN_PATH + "/lib/bin";
+    
+    echo pwd()
+    echo env.GENN_PATH;
+}
+
 // All the types of build we'll ideally run if suitable nodes exist
 def desiredBuilds = [
     ["cuda8", "linux", "x86_64"] as Set,
@@ -109,22 +121,15 @@ for(b = 0; b < builderNodes.size; b++) {
                         // Unarchive it
                         sh "tar -zxvf release-1.8.0.tar.gz";
                     }
-                    
-                    // Setup google test and GeNN environment variables
-                    env.GTEST_DIR = pwd() + "/googletest-release-1.8.0/googletest";
-                    env.GENN_PATH = pwd() + "/genn";
-                    
-                    // Add GeNN binaries directory to path
-                    env.PATH += ":" + env.GENN_PATH + "/lib/bin";
-                    
-                    echo pwd()
-                    echo env.GENN_PATH;
                 } catch (Exception e) {
                     setBuildStatus(installationStageName, "FAILURE");
                 }
             }
             
             buildStep("Running tests (" + env.NODE_NAME + ")") {
+                // Set environment variables
+                configureEnvironment();
+                
                 // Run automatic tests
                 if (isUnix()) {
                     dir("genn/tests") {
@@ -153,9 +158,6 @@ for(b = 0; b < builderNodes.size; b++) {
             
             buildStep("Gathering test results (" + env.NODE_NAME + ")") {
                 dir("genn/tests") {
-                    echo pwd()
-                    echo env.GENN_PATH;
-                    
                     // Process JUnit test output
                     junit "**/test_results*.xml";
                     
@@ -165,6 +167,9 @@ for(b = 0; b < builderNodes.size; b++) {
             }
             
             buildStep("Calculating code coverage (" + env.NODE_NAME + ")") {
+                // Set environment variables
+                configureEnvironment();
+                
                 // Calculate coverage
                 if (isUnix()) {
                     dir("genn/tests") {
