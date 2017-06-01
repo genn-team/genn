@@ -15,7 +15,7 @@
 private:                                                       \
     static TYPE *s_Instance;                                   \
 public:                                                        \
-    static const TYPE *GetInstance()                           \
+    static const TYPE *getInstance()                           \
     {                                                          \
         if(s_Instance == NULL)                                 \
         {                                                      \
@@ -24,20 +24,22 @@ public:                                                        \
         return s_Instance;                                     \
     }                                                          \
     typedef NewModels::ValueBase<NUM_PARAMS> ParamValues;      \
-    typedef NewModels::ValueBase<NUM_VARS> VarValues;
+    typedef NewModels::ValueBase<NUM_VARS> VarValues;          \
 
 
 #define IMPLEMENT_MODEL(TYPE) TYPE *TYPE::s_Instance = NULL
 
-#define SET_PARAM_NAMES(...) virtual std::vector<std::string> GetParamNames() const{ return __VA_ARGS__; }
-#define SET_DERIVED_PARAMS(...) virtual std::vector<std::pair<std::string, DerivedParamFunc>> GetDerivedParams() const{ return __VA_ARGS__; }
-#define SET_VARS(...) virtual std::vector<std::pair<std::string, std::string>> GetVars() const{ return __VA_ARGS__; }
+#define SET_PARAM_NAMES(...) virtual StringVec getParamNames() const{ return __VA_ARGS__; }
+#define SET_DERIVED_PARAMS(...) virtual DerivedParamVec getDerivedParams() const{ return __VA_ARGS__; }
+#define SET_VARS(...) virtual StringPairVec getVars() const{ return __VA_ARGS__; }
 
 //----------------------------------------------------------------------------
 // NewModels::ValueBase
 //----------------------------------------------------------------------------
 namespace NewModels
 {
+//! Wrapper to ensure at compile time that correct number of values are
+//! used when specifying the values of a model's parameters and initial state.
 template<size_t NumValues>
 class ValueBase
 {
@@ -51,7 +53,7 @@ public:
     // **NOTE** other less terrifying forms of constructor won't complain at compile time about
     // number of parameters e.g. std::array<double, 4> can be initialized with <= 4 elements
     template<typename... T>
-    ValueBase(T&&... vals) : m_Values(ValueArray{std::forward<double>(vals)...})
+    ValueBase(T&&... vals) : m_Values(ValueArray{std::forward<const double>(vals)...})
     {
         static_assert(sizeof...(vals) == NumValues, "Wrong number of values");
     }
@@ -59,9 +61,18 @@ public:
     //----------------------------------------------------------------------------
     // Public API
     //----------------------------------------------------------------------------
-    std::vector<double> GetValues() const
+    //! Gets values as a vector of doubles
+    std::vector<double> getValues() const
     {
         return std::vector<double>(m_Values.cbegin(), m_Values.cend());
+    }
+
+    //----------------------------------------------------------------------------
+    // Operators
+    //----------------------------------------------------------------------------
+    double operator[](size_t pos) const
+    {
+        return m_Values[pos];
     }
 
 private:
@@ -74,6 +85,8 @@ private:
 //----------------------------------------------------------------------------
 // NewModels::ValueBase<0>
 //----------------------------------------------------------------------------
+//! Template specialisation of ValueBase to avoid compiler warnings
+//! in the case when a model requires no parameters or state variables
 template<>
 class ValueBase<0>
 {
@@ -89,15 +102,17 @@ public:
     //----------------------------------------------------------------------------
     // Public API
     //----------------------------------------------------------------------------
-    std::vector<double> GetValues() const
+    //! Gets values as a vector of doubles
+    std::vector<double> getValues() const
     {
         return {};
     }
 };
 
 //----------------------------------------------------------------------------
-// NeuronModels::Base
+// NewModels::Base
 //----------------------------------------------------------------------------
+//! Base class for all models
 class Base
 {
 public:
@@ -105,24 +120,36 @@ public:
     // Typedefines
     //----------------------------------------------------------------------------
     typedef std::function<double(const std::vector<double> &, double)> DerivedParamFunc;
+    typedef std::vector<std::string> StringVec;
+    typedef std::vector<std::pair<std::string, std::string>> StringPairVec;
+    typedef std::vector<std::pair<std::string, DerivedParamFunc>> DerivedParamVec;
 
     //----------------------------------------------------------------------------
     // Declared virtuals
     //----------------------------------------------------------------------------
-    virtual std::vector<std::string> GetParamNames() const{ return {}; }
-    virtual std::vector<std::pair<std::string, DerivedParamFunc>> GetDerivedParams() const{ return {}; }
-    virtual std::vector<std::pair<std::string, std::string>> GetVars() const{ return {}; }
+    //! Gets names of of (independent) model parameters
+    virtual StringVec getParamNames() const{ return {}; }
+
+    //! Gets names of derived model parameters and the function objects to call to
+    //! Calculate their value from a vector of model parameter values
+    virtual DerivedParamVec getDerivedParams() const{ return {}; }
+
+    //! Gets names and types (as strings) of model variables
+    virtual StringPairVec getVars() const{ return {}; }
 };
 
 //----------------------------------------------------------------------------
-// NeuronModels::LegacyWrapper
+// NewModels::LegacyWrapper
 //----------------------------------------------------------------------------
-// Wrapper around neuron models stored in global
+//! Wrapper around old-style models stored in global arrays and referenced by index
 template<typename ModelBase, typename LegacyModelType, const std::vector<LegacyModelType> &ModelArray>
 class LegacyWrapper : public ModelBase
 {
 private:
     typedef typename ModelBase::DerivedParamFunc DerivedParamFunc;
+    typedef typename ModelBase::StringVec StringVec;
+    typedef typename ModelBase::StringPairVec StringPairVec;
+    typedef typename ModelBase::DerivedParamVec DerivedParamVec;
 
 public:
     LegacyWrapper(unsigned int legacyTypeIndex) : m_LegacyTypeIndex(legacyTypeIndex)
@@ -132,18 +159,21 @@ public:
     //----------------------------------------------------------------------------
     // ModelBase virtuals
     //----------------------------------------------------------------------------
-    virtual std::vector<std::string>  GetParamNames() const
+    //! Gets names of of (independent) model parameters
+    virtual StringVec getParamNames() const
     {
         const auto &nm = ModelArray[m_LegacyTypeIndex];
         return nm.pNames;
     }
 
-    virtual std::vector<std::pair<std::string, DerivedParamFunc>> GetDerivedParams() const
+    //! Gets names of derived model parameters and the function objects to call to
+    //! Calculate their value from a vector of model parameter values
+    virtual DerivedParamVec getDerivedParams() const
     {
         const auto &m = ModelArray[m_LegacyTypeIndex];
 
         // Reserve vector to hold derived parameters
-        std::vector<std::pair<std::string, DerivedParamFunc>> derivedParams;
+        DerivedParamVec derivedParams;
         derivedParams.reserve(m.dpNames.size());
 
         // Loop through derived parameters
@@ -163,23 +193,23 @@ public:
         return derivedParams;
     }
 
-    virtual std::vector<std::pair<std::string, std::string>> GetVars() const
+    //! Gets names and types (as strings) of model variables
+    virtual StringPairVec getVars() const
     {
         const auto &nm = ModelArray[m_LegacyTypeIndex];
-        return ZipStringVectors(nm.varNames, nm.varTypes);
+        return zipStringVectors(nm.varNames, nm.varTypes);
     }
 
 protected:
     //----------------------------------------------------------------------------
     // Static methods
     //----------------------------------------------------------------------------
-    static std::vector<std::pair<std::string, std::string>> ZipStringVectors(const std::vector<std::string> &a,
-                                                                             const std::vector<std::string> &b)
+    static StringPairVec zipStringVectors(const StringVec &a, const StringVec &b)
     {
         assert(a.size() == b.size());
 
         // Reserve vector to hold initial values
-        std::vector<std::pair<std::string, std::string>> zip;
+        StringPairVec zip;
         zip.reserve(a.size());
 
         // Build vector from legacy neuron model
@@ -194,6 +224,7 @@ protected:
     //----------------------------------------------------------------------------
     // Members
     //----------------------------------------------------------------------------
+    //! Index into the array of legacy models
     const unsigned int m_LegacyTypeIndex;
 };
 } // NewModels

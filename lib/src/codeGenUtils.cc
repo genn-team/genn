@@ -1,12 +1,27 @@
 #include "codeGenUtils.h"
 
+// Is C++ regex library operational?
+// We assume it is for:
+// 1) Non GCC compilers
+// 2) GCC 5.X.X and future
+// 3) Any future (4.10.X?) releases
+// 4) 4.9.1 and subsequent patch releases (GCC fully implemented regex in 4.9.0
+// BUT bug 61227 https://gcc.gnu.org/bugzilla/show_bug.cgi?id=61227 prevented \w from working)
+#if !defined(__GNUC__) || \
+    __GNUC__ > 4 || \
+    (__GNUC__ == 4 && (__GNUC_MINOR__ > 9 || \
+                      (__GNUC_MINOR__ == 9 && __GNUC_PATCHLEVEL__ >= 1)))
+    #define REGEX_OPERATIONAL
+#endif
+
 // Standard includes
-#if !defined(__GNUC__) || (__GNUC__ >= 4 && __GNUC_MINOR__ >= 9)
+#ifdef REGEX_OPERATIONAL
 #include <regex>
 #endif
 
 // GeNN includes
 #include "modelSpec.h"
+#include "standardSubstitutions.h"
 #include "utils.h"
 
 //--------------------------------------------------------------------------
@@ -297,7 +312,7 @@ string ensureFtype(const string &oldcode, const string &type)
 }
 
 
-#if !defined(__GNUC__) || (__GNUC__ >= 4 && __GNUC_MINOR__ >= 9)
+#ifdef REGEX_OPERATIONAL
 
 //--------------------------------------------------------------------------
 /*! \brief This function checks for unknown variable definitions and returns a gennError if any are found
@@ -333,66 +348,55 @@ void checkUnreplacedVariables(const string &, const string &)
 
 void neuron_substitutions_in_synaptic_code(
     string &wCode, //!< the code string to work on
-    const NNmodel &model, //!< the neuronal network model to generate code for
-    unsigned int src, //!< the number of the src neuron population
-    unsigned int trg, //!< the number of the target neuron population
-    const string &offsetPre, //!< delay slot offset expression for pre-synaptic vars
-    const string &offsetPost, //!< delay slot offset expression for post-synaptic vars
-    const string &preIdx, //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
+    const SynapseGroup *sg,
+     const string &preIdx, //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
     const string &postIdx, //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
     const string &devPrefix //!< device prefix, "dd_" for GPU, nothing for CPU
     )
 {
+
     // presynaptic neuron variables, parameters, and global parameters
-    if (model.neuronModel[src]->IsPoisson()) {
-        substitute(wCode, "$(V_pre)", to_string(model.neuronPara[src][2]));
+    const auto *srcNeuronModel = sg->getSrcNeuronGroup()->getNeuronModel();
+    if (srcNeuronModel->isPoisson()) {
+        substitute(wCode, "$(V_pre)", to_string(sg->getSrcNeuronGroup()->getParams()[2]));
     }
-    substitute(wCode, "$(sT_pre)", devPrefix+ "sT" + model.neuronName[src] + "[" + offsetPre + preIdx + "]");
-    auto preVars = model.neuronModel[src]->GetVars();
-    for (size_t j = 0; j < preVars.size(); j++) {
-        if (model.neuronVarNeedQueue[src][j]) {
-            substitute(wCode, "$(" + preVars[j].first + "_pre)",
-                       devPrefix + preVars[j].first + model.neuronName[src] + "[" + offsetPre + preIdx + "]");
+    substitute(wCode, "$(sT_pre)", devPrefix+ "sT" + sg->getSrcNeuronGroup()->getName() + "[" + sg->getOffsetPre() + preIdx + "]");
+    for(const auto &v : srcNeuronModel->getVars()) {
+        if (sg->getSrcNeuronGroup()->isVarQueueRequired(v.first)) {
+            substitute(wCode, "$(" + v.first + "_pre)",
+                       devPrefix + v.first + sg->getSrcNeuronGroup()->getName() + "[" + sg->getOffsetPre() + preIdx + "]");
         }
         else {
-            substitute(wCode, "$(" + preVars[j].first + "_pre)",
-                       devPrefix + preVars[j].first + model.neuronName[src] + "[" + preIdx + "]");
+            substitute(wCode, "$(" + v.first + "_pre)",
+                       devPrefix + v.first + sg->getSrcNeuronGroup()->getName() + "[" + preIdx + "]");
         }
     }
-    value_substitutions(wCode, model.neuronModel[src]->GetParamNames(), model.neuronPara[src], "_pre");
+    value_substitutions(wCode, srcNeuronModel->getParamNames(), sg->getSrcNeuronGroup()->getParams(), "_pre");
 
-    auto preDerivedParams = model.neuronModel[src]->GetDerivedParams();
-    auto preDerivedParamNameBegin = GetPairKeyConstIter(preDerivedParams.cbegin());
-    auto preDerivedParamNameEnd = GetPairKeyConstIter(preDerivedParams.cend());
-    value_substitutions(wCode, preDerivedParamNameBegin, preDerivedParamNameEnd, model.dnp[src], "_pre");
+    DerivedParamNameIterCtx preDerivedParams(srcNeuronModel->getDerivedParams());
+    value_substitutions(wCode, preDerivedParams.nameBegin, preDerivedParams.nameEnd, sg->getSrcNeuronGroup()->getDerivedParams(), "_pre");
 
-    auto preExtraGlobalParams = model.neuronModel[src]->GetExtraGlobalParams();
-    auto preExtraGlobalParamsNameBegin = GetPairKeyConstIter(preExtraGlobalParams.cbegin());
-    auto preExtraGlobalParamsNameEnd = GetPairKeyConstIter(preExtraGlobalParams.cend());
-    name_substitutions(wCode, devPrefix, preExtraGlobalParamsNameBegin, preExtraGlobalParamsNameEnd, model.neuronName[src], "_pre");
+    ExtraGlobalParamNameIterCtx preExtraGlobalParams(srcNeuronModel->getExtraGlobalParams());
+    name_substitutions(wCode, "", preExtraGlobalParams.nameBegin, preExtraGlobalParams.nameEnd, sg->getSrcNeuronGroup()->getName(), "_pre");
     
     // postsynaptic neuron variables, parameters, and global parameters
-    substitute(wCode, "$(sT_post)", devPrefix + "sT" + model.neuronName[trg] + "[" + offsetPost + postIdx + "]");
-    auto postVars = model.neuronModel[trg]->GetVars();
-    for (size_t j = 0; j < postVars.size(); j++) {
-        if (model.neuronVarNeedQueue[trg][j]) {
-            substitute(wCode, "$(" + postVars[j].first + "_post)",
-                       devPrefix + postVars[j].first + model.neuronName[trg] + "[" + offsetPost + postIdx + "]");
+    const auto *trgNeuronModel = sg->getTrgNeuronGroup()->getNeuronModel();
+    substitute(wCode, "$(sT_post)", devPrefix + "sT" + sg->getTrgNeuronGroup()->getName() + "[" + sg->getOffsetPost(devPrefix) + postIdx + "]");
+    for(const auto &v : trgNeuronModel->getVars()) {
+        if (sg->getTrgNeuronGroup()->isVarQueueRequired(v.first)) {
+            substitute(wCode, "$(" + v.first + "_post)",
+                       devPrefix + v.first + sg->getTrgNeuronGroup()->getName() + "[" + sg->getOffsetPost(devPrefix) + postIdx + "]");
         }
         else {
-            substitute(wCode, "$(" + postVars[j].first + "_post)",
-                       devPrefix + postVars[j].first + model.neuronName[trg] + "[" + postIdx + "]");
+            substitute(wCode, "$(" + v.first + "_post)",
+                       devPrefix + v.first + sg->getTrgNeuronGroup()->getName() + "[" + postIdx + "]");
         }
     }
-    value_substitutions(wCode, model.neuronModel[trg]->GetParamNames(), model.neuronPara[trg], "_post");
+    value_substitutions(wCode, trgNeuronModel->getParamNames(), sg->getTrgNeuronGroup()->getParams(), "_post");
 
-    auto postDerivedParams = model.neuronModel[trg]->GetDerivedParams();
-    auto postDerivedParamNameBegin= GetPairKeyConstIter(postDerivedParams.cbegin());
-    auto postDerivedParamNameEnd = GetPairKeyConstIter(postDerivedParams.cend());
-    value_substitutions(wCode, postDerivedParamNameBegin, postDerivedParamNameEnd, model.dnp[trg], "_post");
+    DerivedParamNameIterCtx postDerivedParams(trgNeuronModel->getDerivedParams());
+    value_substitutions(wCode, postDerivedParams.nameBegin, postDerivedParams.nameEnd, sg->getTrgNeuronGroup()->getDerivedParams(), "_post");
 
-    auto postExtraGlobalParams = model.neuronModel[trg]->GetExtraGlobalParams();
-    auto postExtraGlobalParamsNameBegin = GetPairKeyConstIter(postExtraGlobalParams.cbegin());
-    auto postExtraGlobalParamsNameEnd = GetPairKeyConstIter(postExtraGlobalParams.cend());
-    name_substitutions(wCode, devPrefix, postExtraGlobalParamsNameBegin, postExtraGlobalParamsNameEnd, model.neuronName[trg], "_post");
+    ExtraGlobalParamNameIterCtx postExtraGlobalParams(trgNeuronModel->getExtraGlobalParams());
+    name_substitutions(wCode, "", postExtraGlobalParams.nameBegin, postExtraGlobalParams.nameEnd, sg->getTrgNeuronGroup()->getName(), "_post");
 }

@@ -77,7 +77,7 @@ ifndef SIM_CODE
     $(warning Using wildcard SIM_CODE=*_CODE.)
     SIM_CODE            :=*_CODE
 endif
-SOURCES                 ?=$(wildcard *.cc *.cpp *.cu)
+SOURCES                 ?=$(wildcard *.cc *.cpp *.cu *.c)
 OBJECTS                 :=$(foreach obj,$(basename $(SOURCES)),$(obj).o) $(SIM_CODE)/runner.o
 
 
@@ -91,6 +91,9 @@ $(EXECUTABLE): $(OBJECTS)
 
 $(SIM_CODE)/runner.o:
 	cd $(SIM_CODE) && make
+
+%.o: %.c
+	$(CXX) $(CXXFLAGS) -c -o $@ $< $(INCLUDE_FLAGS)
 
 %.o: %.cc
 	$(CXX) $(CXXFLAGS) -c -o $@ $< $(INCLUDE_FLAGS)

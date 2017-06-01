@@ -30,7 +30,7 @@ void modelDefinition(NNmodel &model)
     model.addNeuronPopulation<Neuron>("Post", 4, {}, Neuron::VarValues(0.0));
 
 
-    model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::Izhikevich>(
+    model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
         "Syn", SynapseMatrixType::DENSE_GLOBALG, NO_DELAY, "Pre", "Post",
         {}, staticSynapseInit,
         {}, {});

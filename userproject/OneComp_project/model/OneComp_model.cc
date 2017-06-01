@@ -73,9 +73,10 @@ void neuronpop::output_state(FILE *f, unsigned int which)
 
   fprintf(f, "%f ", t);
 
-   for (int i= 0; i < model.neuronN[0]-1; i++) {
+  auto *izh1 = model.findNeuronGroup("Izh1");
+  for (int i= 0; i < izh1->getNumNeurons()-1; i++) {
      fprintf(f, "%f ", VIzh1[i]);
-   }
+  }
 
   fprintf(f,"\n");
 }
