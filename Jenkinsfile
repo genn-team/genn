@@ -63,6 +63,7 @@ for(b in desiredBuilds) {
             print "${n.key} -> ${b}";
             
             // Add node's name to list of builders and remove it from dictionary of available nodes
+            // **YUCK** for some reason tuples aren't serializable so need to add an arraylist
             builderNodes.add([n.key, n.value])
             availableNodes.remove(n.key)
             break
@@ -70,6 +71,7 @@ for(b in desiredBuilds) {
     }
 }
 
+// **YUCK** need to do a C style loop here - probably due to JENKINS-27421 
 def builders = [:]
 for(b = 0; b < builderNodes.size; b++) {
     // **YUCK** meed to bind the label variable before the closure - can't do 'for (label in labels)'
@@ -154,7 +156,7 @@ for(b = 0; b < builderNodes.size; b++) {
                 }
             }
             
-            buildStep("Calculating code coverage (" + label + ")") {
+            buildStep("Calculating code coverage (" + env.NODE_NAME + ")") {
                 // Calculate coverage
                 if (isUnix()) {
                     dir("genn/tests") {
