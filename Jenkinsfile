@@ -116,6 +116,9 @@ for(b = 0; b < builderNodes.size; b++) {
                     
                     // Add GeNN binaries directory to path
                     env.PATH += ":" + env.GENN_PATH + "/lib/bin";
+                    
+                    echo pwd()
+                    echo env.GENN_PATH;
                 } catch (Exception e) {
                     setBuildStatus(installationStageName, "FAILURE");
                 }
@@ -125,6 +128,8 @@ for(b = 0; b < builderNodes.size; b++) {
                 // Run automatic tests
                 if (isUnix()) {
                     dir("genn/tests") {
+                        echo pwd()
+                        echo env.GENN_PATH;
                         // Run tests
                         if("cpu_only" in nodeLabel) {
                             sh "./run_tests.sh -c";
@@ -148,6 +153,9 @@ for(b = 0; b < builderNodes.size; b++) {
             
             buildStep("Gathering test results (" + env.NODE_NAME + ")") {
                 dir("genn/tests") {
+                    echo pwd()
+                    echo env.GENN_PATH;
+                    
                     // Process JUnit test output
                     junit "**/test_results*.xml";
                     
@@ -160,6 +168,9 @@ for(b = 0; b < builderNodes.size; b++) {
                 // Calculate coverage
                 if (isUnix()) {
                     dir("genn/tests") {
+                        echo pwd()
+                        echo env.GENN_PATH;
+                        
                         // Run tests
                         if("cpu_only" in nodeLabel) {
                             sh "./calc_coverage.sh -c";
