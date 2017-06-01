@@ -120,8 +120,7 @@ for(b = 0; b < builderNodes.size; b++) {
                     setBuildStatus(installationStageName, "PENDING");
                     
                     // If google test doesn't exist
-                    def gtestExists = fileExists "googletest-release-1.8.0";
-                    if(!gtestExists) {
+                    if(!fileExists("googletest-release-1.8.0")) {
                         echo "Downloading google test framework";
                         
                         // Download it
@@ -216,7 +215,7 @@ for(b = 0; b < builderNodes.size; b++) {
         unstash nodeCoverageName
         
         // If coverage file exists in stash
-        if(fileExists nodeCoverageName + "/coverage.txt") {
+        if(fileExists(nodeCoverageName + "/coverage.txt")) {
             // Add trace file within this directory to command line
             lcovCommandLine += "--add-tracefile " + nodeCoverageName + "/coverage.txt"
         }
