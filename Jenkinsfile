@@ -1,5 +1,23 @@
 #!groovy​
 
+// All the types of build we'll ideally run if suitable nodes exist
+def desiredBuilds = [
+    ["cuda8", "linux", "x86_64"] as Set,
+    ["cuda7", "linux", "x86_64"] as Set, 
+    ["cuda6", "linux", "x86_64"] as Set, 
+    ["cpu_only", "linux", "x86_64"] as Set, 
+    ["cuda8", "linux", "x86"] as Set,
+    ["cuda7", "linux", "x86"] as Set, 
+    ["cuda6", "linux", "x86"] as Set, 
+    ["cpu_only", "linux", "x86"] as Set,
+    ["cuda8", "mac"] as Set,
+    ["cuda7", "mac"] as Set, 
+    ["cuda6", "mac"] as Set, 
+    ["cpu_only", "mac"] as Set] 
+
+//--------------------------------------------------------------------------
+// Helper functions
+//--------------------------------------------------------------------------
 // Wrapper around setting of GitHUb commit status curtesy of https://groups.google.com/forum/#!topic/jenkinsci-issues/p-UFjxKkXRI
 // **NOTE** since that forum post, stage now takes a Closure as the last argument hence slight modification 
 void buildStep(String message, Closure closure) {
@@ -37,21 +55,10 @@ void configureEnvironment() {
     echo env.GENN_PATH;
 }
 
-// All the types of build we'll ideally run if suitable nodes exist
-def desiredBuilds = [
-    ["cuda8", "linux", "x86_64"] as Set,
-    ["cuda7", "linux", "x86_64"] as Set, 
-    ["cuda6", "linux", "x86_64"] as Set, 
-    ["cpu_only", "linux", "x86_64"] as Set, 
-    ["cuda8", "linux", "x86"] as Set,
-    ["cuda7", "linux", "x86"] as Set, 
-    ["cuda6", "linux", "x86"] as Set, 
-    ["cpu_only", "linux", "x86"] as Set,
-    ["cuda8", "mac"] as Set,
-    ["cuda7", "mac"] as Set, 
-    ["cuda6", "mac"] as Set, 
-    ["cpu_only", "mac"] as Set] 
 
+//--------------------------------------------------------------------------
+// Entry point
+//--------------------------------------------------------------------------
 // Build dictionary of available nodes and their labels
 def availableNodes = [:]
 for(node in jenkins.model.Jenkins.instance.nodes) {
@@ -61,9 +68,8 @@ for(node in jenkins.model.Jenkins.instance.nodes) {
 }
 
 // Add master
-// **THINK** NO IDEA how to access it's computer instance
+// **TODO** How can I access master's computer instance to see if it's executor is free?
 availableNodes["master"] = jenkins.model.Jenkins.instance.getLabelString().split() as Set
-
 
 // Loop through the desired builds
 def builderNodes = []
@@ -83,6 +89,9 @@ for(b in desiredBuilds) {
     }
 }
 
+//--------------------------------------------------------------------------
+// Parallel build step
+//--------------------------------------------------------------------------
 // **YUCK** need to do a C style loop here - probably due to JENKINS-27421 
 def builders = [:]
 for(b = 0; b < builderNodes.size; b++) {
@@ -133,8 +142,6 @@ for(b = 0; b < builderNodes.size; b++) {
                 // Run automatic tests
                 if (isUnix()) {
                     dir("genn/tests") {
-                        echo pwd()
-                        echo env.GENN_PATH;
                         // Run tests
                         if("cpu_only" in nodeLabel) {
                             sh "./run_tests.sh -c";
@@ -147,7 +154,7 @@ for(b = 0; b < builderNodes.size; b++) {
                         // **NOTE** driving WarningsPublisher from pipeline is entirely undocumented
                         // this is based mostly on examples here https://github.com/kitconcept/jenkins-pipeline-examples
                         // **YUCK** fatal errors aren't detected by the 'GNU Make + GNU C Compiler (gcc)' parser
-                        // however https://issues.jenkins-ci.org/browse/JENKINS-18081 fixes this for 
+                        // however JENKINS-18081 fixes this for 
                         // the 'GNU compiler 4 (gcc)' parser at the expense of it not detecting make errors...
                         step([$class: "WarningsPublisher", 
                             parserConfigurations: [[parserName: "GNU compiler 4 (gcc)", pattern: "msg"]], 
@@ -171,11 +178,8 @@ for(b = 0; b < builderNodes.size; b++) {
                 configureEnvironment();
                 
                 // Calculate coverage
-                if (isUnix()) {
-                    dir("genn/tests") {
-                        echo pwd()
-                        echo env.GENN_PATH;
-                        
+                dir("genn/tests") {
+                    if (isUnix()) {
                         // Run tests
                         if("cpu_only" in nodeLabel) {
                             sh "./calc_coverage.sh -c";
@@ -184,14 +188,9 @@ for(b = 0; b < builderNodes.size; b++) {
                             sh "./calc_coverage.sh";
                         }
                     }
-                } 
-            }
-            
-            buildStep("Uploading coverage summary (" + env.NODE_NAME + ")") {
-                dir("genn/tests") {
-                    // **NOTE** the calc_coverage script massages the gcov output into a more useful form so we want to
-                    // upload this directly rather than allowing the codecov.io script to generate it's own coverage report
-                    sh "bash <(curl -s https://codecov.io/bash) -f coverage.txt -t 04054241-1f5e-4c42-9564-9b99ede08113";
+                    
+                    // Stash coverage txt files so master can combine them all together again
+                    stash name: nodeName + "_coverage", includes: "coverage.txt"
                 }
             }
         }
@@ -200,3 +199,38 @@ for(b = 0; b < builderNodes.size; b++) {
 
 // Run builds in parallel
 parallel builders
+
+//--------------------------------------------------------------------------
+// Final combination of results
+//--------------------------------------------------------------------------
+// Loop through builders
+def lcovCommandLine = "lcov ";
+for(b = 0; b < builderNodes.size; b++) {
+    // **YUCK** meed to bind the label variable before the closure - can't do 'for (label in labels)'
+    def nodeName = builderNodes.get(b).get(0)
+    def nodeCoverageName = nodeName + "_coverage"
+    
+    // Create directory
+    dir(nodeCoverageName) {
+        // Unstash coverage
+        unstash nodeCoverageName
+        
+        // If coverage file exists in stash
+        if(fileExists nodeCoverageName + "/coverage.txt") {
+            // Add trace file within this directory to command line
+            lcovCommandLine += "--add-tracefile " + nodeCoverageName + "/coverage.txt"
+        }
+        else {
+            echo "Coverage file generated by node:" + nodeName + " not found in stash"
+        }
+        
+    }
+}
+
+// Complete command line and execute
+lcovCommandLine += "--output-file combined_coverage.txt"
+sh lcovCommandLine
+
+// **NOTE** the calc_coverage script massages the gcov output into a more useful form so we want to
+// upload this directly rather than allowing the codecov.io script to generate it's own coverage report
+sh "bash <(curl -s https://codecov.io/bash) -f combined_coverage.txt -t 04054241-1f5e-4c42-9564-9b99ede08113";
