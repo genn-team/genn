@@ -125,7 +125,9 @@ for(b = 0; b < builderNodes.size; b++) {
                         echo "Downloading google test framework";
                         
                         // Download it
-                        sh "wget https://github.com/google/googletest/archive/release-1.8.0.tar.gz";
+                        // **NOTE** wget is not standard on mac
+                        //sh "wget https://github.com/google/googletest/archive/release-1.8.0.tar.gz";
+                        sh 'curl "https://github.com/google/googletest/archive/release-1.8.0.tar.gz" -o "release-1.8.0.tar.gz"'
             
                         // Unarchive it
                         sh "tar -zxvf release-1.8.0.tar.gz";
