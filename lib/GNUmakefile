@@ -62,9 +62,7 @@ endif
 ifdef DEBUG
     CXXFLAGS             +=-g -O0 -DDEBUG
 endif
-ifdef COVERAGE
-    CXXFLAGS             +=-O0 --coverage
-endif
+
 ARFLAGS                  :=-rcs
 
 # Global include and link flags
@@ -85,6 +83,11 @@ else
     ifeq ($(DARWIN),DARWIN)
         LINK_FLAGS       :=-L"$(LIBGENN_PATH)" -lgenn_CPU_ONLY -lstdc++ -lc++
     endif
+endif
+
+ifdef COVERAGE
+    CXXFLAGS             +=-O0 --coverage
+    LINK_FLAGS           +=--coverage
 endif
 
 # Target rules
