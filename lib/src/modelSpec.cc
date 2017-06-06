@@ -442,7 +442,7 @@ SynapseGroup *NNmodel::addSynapsePopulation(
     }
 
     SynapseMatrixType mtype;
-    if(conntype == SPARSE && gtype == GLOBALG)mtype = SynapseMatrixType::BITMASK_GLOBALG;
+    if(conntype == SPARSE && gtype == GLOBALG)
     {
         mtype = SynapseMatrixType::SPARSE_GLOBALG;
     }
