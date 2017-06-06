@@ -158,8 +158,9 @@ for(b = 0; b < builderNodes.size; b++) {
                         // **YUCK** fatal errors aren't detected by the 'GNU Make + GNU C Compiler (gcc)' parser
                         // however JENKINS-18081 fixes this for 
                         // the 'GNU compiler 4 (gcc)' parser at the expense of it not detecting make errors...
+                        def parserName = ("mac" in nodeLabel) ? "Apple LLVM Compiler (Clang)" : "GNU compiler 4 (gcc)";
                         step([$class: "WarningsPublisher", 
-                            parserConfigurations: [[parserName: "GNU compiler 4 (gcc)", pattern: "msg"]], 
+                            parserConfigurations: [[parserName: parserName, pattern: "msg"]], 
                             unstableTotalAll: '0', usePreviousBuildAsReference: true]); 
                     }
                 } 
