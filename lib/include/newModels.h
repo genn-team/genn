@@ -53,7 +53,7 @@ public:
     // **NOTE** other less terrifying forms of constructor won't complain at compile time about
     // number of parameters e.g. std::array<double, 4> can be initialized with <= 4 elements
     template<typename... T>
-    ValueBase(T&&... vals) : m_Values(ValueArray{std::forward<const double>(vals)...})
+    ValueBase(T&&... vals) : m_Values(ValueArray{{std::forward<const double>(vals)...}})
     {
         static_assert(sizeof...(vals) == NumValues, "Wrong number of values");
     }

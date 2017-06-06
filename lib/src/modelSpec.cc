@@ -442,7 +442,7 @@ SynapseGroup *NNmodel::addSynapsePopulation(
     }
 
     SynapseMatrixType mtype;
-    if(conntype == SPARSE && gtype == GLOBALG)
+    if(conntype == SPARSE && gtype == GLOBALG)mtype = SynapseMatrixType::BITMASK_GLOBALG;
     {
         mtype = SynapseMatrixType::SPARSE_GLOBALG;
     }
@@ -465,6 +465,7 @@ SynapseGroup *NNmodel::addSynapsePopulation(
     else
     {
         gennError("Combination of connection type " + to_string(conntype) + " and weight type " + to_string(gtype) + " not supported");
+        return NULL;
     }
 
     auto srcNeuronGrp = findNeuronGroup(src);
