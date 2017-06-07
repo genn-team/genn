@@ -1,5 +1,16 @@
 /*! \page ReleaseNotes Release Notes
 
+Release Notes for GeNN v3.0.0
+====
+This release is the result of some fairly major refactoring of GeNN which we hope will make it more user-friendly and maintainable in the future.
+
+User Side Changes
+----
+1. Entirely new syntax for defining models - hopefully terser and less error-prone (see updated documentation and examples for details).
+2. Continuous integration testing using Jenkins - automated testing and code coverage calculation calculated automatically for Github pull requests etc.
+3. Support for using Zero-copy memory for model variables. Especially on devices such as NVIDIA Jetson TX1 with no physical GPU memory this can significantly improve performance when recording data or injecting it to the simulation from external sensors.
+
+
 Release Notes for GeNN v2.2.3
 ====
 This release includes minor new features and several bug fixes for certain system configurations.
