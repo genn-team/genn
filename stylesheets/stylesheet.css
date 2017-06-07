@@ -305,7 +305,7 @@ html input[disabled] {
 }
 
 /**
- * Remove inner padding and border in Firefox 4+.
+ * Remove inner padding and border in Firefox 4+.jt273
  */
 
 button::-moz-focus-inner,
@@ -371,7 +371,7 @@ input[type="search"]::-webkit-search-cancel-button,
 input[type="search"]::-webkit-search-decoration {
   -webkit-appearance: none;
 }
-
+jt273
 /**
  * Define consistent border, margin, and padding.
  */
@@ -424,6 +424,14 @@ table {
 td,
 th {
   padding: 0;
+}
+
+table.people td {
+    padding-bottom: 1em;
+}
+
+table.people td:nth-child(1) {
+    padding-top: 0.5em;
 }
 
 /* LAYOUT STYLES */
@@ -690,7 +698,7 @@ h4:before {
   content: "////";
   color: #9ddcff;
   padding-right: 0.3em;
-  margin-left: -2.8em;
+  /*margin-left: -2.8em;*/
 }
 
 #main-content h5 {
