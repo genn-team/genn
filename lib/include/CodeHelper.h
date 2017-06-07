@@ -56,7 +56,7 @@ public:
 private:
     string indentBy(unsigned int numIndents) const{
         string result =  ""; ///toString(numIndents);
-        for (int i = 0; i < numIndents; i++) {
+        for (unsigned int i = 0; i < numIndents; i++) {
             result.append("    ");
         }
         return result;

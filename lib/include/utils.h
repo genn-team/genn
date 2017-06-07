@@ -82,6 +82,12 @@ using namespace std;
 
 #define delB(x,i) x= ((x) & (~(0x80000000 >> (i)))) //!< Set the bit at the specified position i in x to 0
 
+//--------------------------------------------------------------------------
+/*! \brief Miscellaneous macros
+ */
+//--------------------------------------------------------------------------
+
+#define USE(expr) do { (void)(expr); } while (0) //!< Silence 'unused parameter' warnings
 
 #ifndef CPU_ONLY
 //--------------------------------------------------------------------------
@@ -98,14 +104,14 @@ CUresult cudaFuncGetAttributesDriver(cudaFuncAttributes *attr, CUfunction kern);
  */
 //--------------------------------------------------------------------------
 
-void gennError(string error);
+void gennError(const string &error);
 
 
 //--------------------------------------------------------------------------
 //! \brief Tool for determining the size of variable types on the current architecture
 //--------------------------------------------------------------------------
 
-unsigned int theSize(string type);
+unsigned int theSize(const string &type);
 
 
 //--------------------------------------------------------------------------

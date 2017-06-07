@@ -43,9 +43,12 @@ correctClass(0),winningClass(0),vrData(NULL),inputRatesSize(0),clearedDownDevice
 
 
     //convenience vars
-    countRN  = model.neuronN[0]; //size of receptor neurons RN population ( =  size of input )
-    countPN  = model.neuronN[1]; //size of projection neurons PN population
-    countAN  = model.neuronN[2]; //size of association neurons AN population
+    auto *rn = model.findNeuronGroup("RN");
+    auto *pn = model.findNeuronGroup("PN");
+    auto *an = model.findNeuronGroup("AN");
+    countRN  = rn->getNumNeurons(); //size of receptor neurons RN population ( =  size of input )
+    countPN  = pn->getNumNeurons(); //size of projection neurons PN population
+    countAN  = an->getNumNeurons(); //size of association neurons AN population
     //  timestepsPerRecording = RECORDING_TIME_MS / DT ; // = num timesteps contained in each data recording
 
 

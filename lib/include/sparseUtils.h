@@ -54,7 +54,7 @@ DATATYPE getG(DATATYPE *wuvar, SparseProjection *sparseStruct, int x, int y)
 }
 
 template <class DATATYPE>
-float getSparseVar(DATATYPE *wuvar, SparseProjection *sparseStruct, int x, int y)
+float getSparseVar(DATATYPE *wuvar, SparseProjection *sparseStruct, unsigned int x, unsigned int y)
 {
     DATATYPE g = 0.0; //default return value implies zero weighted for x,y
     int startSynapse = sparseStruct->indInG[x];

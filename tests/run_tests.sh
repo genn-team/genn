@@ -15,6 +15,7 @@ while getopts "c" opt; do
 done
 
 # Clean GeNN library
+echo $GENN_PATH
 pushd $GENN_PATH/lib
 make clean
 popd
@@ -23,36 +24,46 @@ popd
 rm -f msg
 
 # Loop through feature tests
-NUM_SUCCESSES=0
-NUM_FAILURES=0
 for f in features/*;
     do
         echo "Running test $f..."
 
         # Push feature directory
         pushd $f
+        
+        # Loop through model suffixes
+        for s in "" _new;
+            do
+                # Clean
+                make clean 1>> ../../msg 2>> ../../msg
 
-        # Clean
-        make clean 1>> ../../msg 2>> ../../msg
-
-        # Build and generate model
-        genn-buildmodel.sh $BUILD_FLAGS model.cc 1>>../../msg 2>> ../../msg || exit $?
-	
-        # Build
-        make $MAKE_FLAGS 1>>../../msg 2>>../../msg || exit $?
-
-        # Run tests
-        ./test --gtest_output="xml:test_results.xml"
-        if [ $? -eq 0 ]; then
-            NUM_SUCCESSES=$((NUM_SUCCESSES+1))
-        else
-            NUM_FAILURES=$((NUM_FAILURES+1))
-        fi
+                # Build and generate model
+                if genn-buildmodel.sh $BUILD_FLAGS model$s.cc 1>>../../msg 2>> ../../msg ; then
+                    # Determine where the sim code is located for this test and build
+                    c=$(basename $f)$s"_CODE"
+                    if make $MAKE_FLAGS SIM_CODE=$c 1>>../../msg 2>>../../msg ; then
+                        # Run tests
+                        ./test --gtest_output="xml:test_results$s.xml"
+                    fi
+                fi
+            done;
 
         # Pop feature directory
         popd
     done;
 
-# Print brief summary of output
-echo "$NUM_SUCCESSES feature tests succeeded"
-echo "$NUM_FAILURES feature tests failed"
+# Enter unit tests directory
+pushd unit
+
+# Clean
+make clean 1>> ../../msg 2>> ../../msg
+
+# Build
+make $MAKE_FLAGS 1>>../../msg 2>>../../msg 
+
+# Run tests
+./test --gtest_output="xml:test_results$s.xml"
+
+# Pop unit tests directory
+popd
+

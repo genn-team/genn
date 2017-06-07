@@ -29,10 +29,13 @@
 #include "generateKernels.h"
 #include "modelSpec.h"
 #include "utils.h"
-#include "stringUtils.h"
+#include "codeGenUtils.h"
 #include "CodeHelper.h"
 
+#include <algorithm>
 #include <cmath>
+#include <iterator>
+
 #ifdef _WIN32
 #include <direct.h>
 #else
@@ -53,9 +56,9 @@ void generate_model_runner(const NNmodel &model,  //!< Model description
                            )
 {
 #ifdef _WIN32
-  _mkdir((path + "\\" + model.name + "_CODE").c_str());
+  _mkdir((path + "\\" + model.getName() + "_CODE").c_str());
 #else // UNIX
-  mkdir((path + "/" + model.name + "_CODE").c_str(), 0777);
+  mkdir((path + "/" + model.getName() + "_CODE").c_str(), 0777);
 #endif
 
   // general shared code for GPU and CPU versions
@@ -69,14 +72,18 @@ void generate_model_runner(const NNmodel &model,  //!< Model description
   genNeuronKernel(model, path);
 
   // generate synapse and learning kernels
-  if (model.synapseGrpN > 0) genSynapseKernel(model, path);
+  if (!model.getSynapseGroups().empty()) {
+      genSynapseKernel(model, path);
+  }
 #endif
 
   // Generate the equivalent of neuron kernel
   genNeuronFunction(model, path);
 
   // Generate the equivalent of synapse and learning kernel
-  if (model.synapseGrpN > 0) genSynapseFunction(model, path);
+  if (!model.getSynapseGroups().empty()) {
+      genSynapseFunction(model, path);
+  }
 
   // Generate the Makefile for the generated code
   genMakefile(model, path);
@@ -96,8 +103,9 @@ void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
                   const string &path     //!< path the generated code will be deposited
     )
 {
-    const int krnlNo = 4;
-    const char *kernelName[krnlNo]= {"calcSynapses", "learnSynapsesPost", "calcSynapseDynamics", "calcNeurons"};
+    enum Kernel{ KernelCalcSynapses, KernelLearnSynapsesPost,
+        KernelCalcSynapseDynamics, KernelCalcNeurons, KernelMax };
+    const char *kernelName[KernelMax]= {"calcSynapses", "learnSynapsesPost", "calcSynapseDynamics", "calcNeurons"};
     size_t globalMem, mostGlobalMem = 0;
     int chosenDevice = 0;
 
@@ -107,49 +115,54 @@ void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
         int reqRegs, reqSmem, requiredBlocks;
         int warpSize= 32;
 
-        unsigned int **bestBlkSz= new unsigned int*[krnlNo];
-        int **smallModel= new int*[krnlNo];
-        int **deviceOccupancy= new int*[krnlNo];
-        vector<unsigned int> *groupSize= new vector<unsigned int>[krnlNo];
-        float blockLimit, mainBlockLimit;
         // initialise the smallXXX flags and bestBlkSz
-        for (int kernel= 0; kernel < krnlNo; kernel++) {
-            bestBlkSz[kernel]= new unsigned int[deviceCount];
-            smallModel[kernel]= new int[deviceCount];
-            deviceOccupancy[kernel]= new int[deviceCount];
-            for (theDevice = 0; theDevice < deviceCount; theDevice++) { // initialise all whether used or not
-                bestBlkSz[kernel][theDevice]= 0;
-                smallModel[kernel][theDevice]= 0;
-                deviceOccupancy[kernel][theDevice]= 0;
-            }
+        vector<unsigned int> bestBlkSz[KernelMax];
+        vector<int> smallModel[KernelMax];
+        vector<int> deviceOccupancy[KernelMax];
+        for (int kernel= 0; kernel < KernelMax; kernel++) {
+            bestBlkSz[kernel].resize(deviceCount, 0);
+            smallModel[kernel].resize(deviceCount, 0);
+            deviceOccupancy[kernel].resize(deviceCount, 0);
         }
 
         // Get the sizes of each synapse / learn group present on this host and device
-        vector<unsigned int> synapseN, learnN;
-        for (int group = 0; group < model.synapseGrpN; group++) {
-            if ((model.synapseConnType[group] == SPARSE) && (model.maxConn[group]>0)) {
-                groupSize[0].push_back(model.maxConn[group]);
+        vector<unsigned int> groupSize[KernelMax];
+        for(const auto &s : model.getSynapseGroups()) {
+            const unsigned int maxConnections = s.second.getMaxConnections();
+            const unsigned int numSrcNeurons = s.second.getSrcNeuronGroup()->getNumNeurons();
+            const unsigned int numTrgNeurons = s.second.getTrgNeuronGroup()->getNumNeurons();
+
+            if ((s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && maxConnections > 0) {
+                groupSize[KernelCalcSynapses].push_back(maxConnections);
             }
             else {
-                groupSize[0].push_back(model.neuronN[model.synapseTarget[group]]);
+                groupSize[KernelCalcSynapses].push_back(numTrgNeurons);
             }
-            if (model.synapseUsesPostLearning[group]) {     // TODO: this needs updating where learning is detected properly!
-                groupSize[1].push_back(model.neuronN[model.synapseSource[group]]);
+
+            if (model.isSynapseGroupPostLearningRequired(s.first)) {     // TODO: this needs updating where learning is detected properly!
+                groupSize[KernelLearnSynapsesPost].push_back(numSrcNeurons);
             }
-            if (model.synapseUsesSynapseDynamics[group]) {
-                if ((model.synapseConnType[group] == SPARSE) && (model.maxConn[group]>0)) {
-                    groupSize[2].push_back(model.neuronN[model.synapseSource[group]]*model.maxConn[group]);
+
+            if (model.isSynapseGroupDynamicsRequired(s.first)) {
+                if ((s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && maxConnections > 0) {
+                    groupSize[KernelCalcSynapseDynamics].push_back(numSrcNeurons * maxConnections);
                 }
                 else {
-                    groupSize[2].push_back(model.neuronN[model.synapseSource[group]]*model.neuronN[model.synapseTarget[group]]);
+                    groupSize[KernelCalcSynapseDynamics].push_back(numSrcNeurons * numTrgNeurons);
                 }
             }
         }
-        groupSize[3]= model.neuronN;
+
+        // Populate the neuron group size
+        std::transform(model.getNeuronGroups().cbegin(), model.getNeuronGroups().cend(),
+                       std::back_insert_iterator<vector<unsigned int>>(groupSize[KernelCalcNeurons]),
+                       [](const std::pair<std::string, NeuronGroup> &n){ return n.second.getNumNeurons(); });
+
+
 #ifdef BLOCKSZ_DEBUG
-        for (int i= 0; i < krnlNo; i++) {
+        for (int i= 0; i < KernelMax; i++) {
             cerr << "BLOCKSZ_DEBUG: ";
-            for (int j= 0; j < groupSize[i].size(); j++) {
+            for (int j = 0; j < groupSize[i].size(); j++) {
                 cerr << "groupSize[" << i << "][" << j << "]=" << groupSize[i][j] << "; ";
             }
             cerr << endl;
@@ -157,7 +170,9 @@ void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
 #endif
 
         for (theDevice = 0; theDevice < deviceCount; theDevice++) {
-            if (!(GENN_PREFERENCES::autoChooseDevice) && (theDevice != GENN_PREFERENCES::defaultDevice)) continue;
+            if (!(GENN_PREFERENCES::autoChooseDevice) && (theDevice != GENN_PREFERENCES::defaultDevice)) {
+                continue;
+            }
 
             // This data is required for block size optimisation, but cannot be found in deviceProp.
             float warpAllocGran, regAllocGran, smemAllocGran, maxBlocksPerSM;
@@ -209,7 +224,7 @@ void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
             // Signal error and exit if SM version < 1.3 and double precision floats are requested.
             if ((deviceProp[theDevice].major == 1) && (deviceProp[theDevice].minor < 3))
             {
-                if (model.ftype != "float")
+                if (model.getPrecision() != "float")
                 {
                     cerr << "Error: This CUDA device does not support double precision floating-point." << endl;
                     cerr << "       Either change the ftype parameter to GENN_FLOAT or find a newer GPU" << endl;
@@ -241,22 +256,22 @@ void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
 
 #ifdef _WIN32
             nvccFlags += " -I\"%GENN_PATH%\\lib\\include\"";
-            string runnerPath = path + "\\" + model.name + "_CODE\\runner.cc";
+            string runnerPath = path + "\\" + model.getName() + "_CODE\\runner.cc";
             string cubinPath = path + "\\runner.cubin";
             string nvccCommand = "\"\"" NVCC "\" " + nvccFlags;
             nvccCommand += " -o \"" + cubinPath + "\" \"" + runnerPath + "\"\"";
 #else
             nvccFlags += " -I\"$GENN_PATH/lib/include\"";
-            string runnerPath = path + "/" + model.name + "_CODE/runner.cc";
+            string runnerPath = path + "/" + model.getName() + "_CODE/runner.cc";
             string cubinPath = path + "/runner.cubin";
             string nvccCommand = "\"" NVCC "\" " + nvccFlags;
             nvccCommand += " -o \"" + cubinPath + "\" \"" + runnerPath + "\"";
 #endif
 
-            cudaFuncAttributes krnlAttr[2][krnlNo];
+            cudaFuncAttributes krnlAttr[2][KernelMax];
             CUfunction kern;
             CUresult res;
-            int KrnlExist[krnlNo];
+            bool KrnlExist[KernelMax];
             for (int rep= 0; rep < 2; rep++) {
                 // do two repititions with different candidate kernel size
                 synapseBlkSz = warpSize*(rep+1);
@@ -272,17 +287,17 @@ void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
                 system(nvccCommand.c_str());
 
                 CHECK_CU_ERRORS(cuModuleLoad(&module, cubinPath.c_str()));
-                for (int i= 0; i < krnlNo; i++) {
+                for (int i= 0; i < KernelMax; i++) {
 #ifdef BLOCKSZ_DEBUG
                     cerr << "BLOCKSZ_DEBUG: ptxas info for " << kernelName[i] << " ..." << endl;
 #endif
                     res= cuModuleGetFunction(&kern, module, kernelName[i]);
                     if (res == CUDA_SUCCESS) {
                         cudaFuncGetAttributesDriver(&krnlAttr[rep][i], kern);
-                        KrnlExist[i]= 1;
+                        KrnlExist[i]= true;
                     }
                     else {
-                        KrnlExist[i]= 0;
+                        KrnlExist[i]= false;
                     }
                 }
                 CHECK_CU_ERRORS(cuModuleUnload(module));
@@ -293,7 +308,8 @@ void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
                 }
             }
 
-            for (int kernel= 0; kernel < krnlNo; kernel++) {
+            float blockLimit, mainBlockLimit;
+            for (int kernel= 0; kernel < KernelMax; kernel++) {
                 if (KrnlExist[kernel]) {
                     reqRegs= krnlAttr[0][kernel].numRegs;
                     // estimate shared memory requirement as function of kernel size (assume constant+linear in size)
@@ -354,7 +370,7 @@ void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
 
                         // The number of thread blocks required to simulate all groups
                         requiredBlocks = 0;
-                        for (int group = 0; group < groupSize[kernel].size(); group++) {
+                        for (size_t group = 0; group < groupSize[kernel].size(); group++) {
                             requiredBlocks+= ceil(((float) groupSize[kernel][group])/(blkSz*warpSize));
                         }
 #ifdef BLOCKSZ_DEBUG
@@ -397,20 +413,20 @@ void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
 
         // Now choose the device
         if (GENN_PREFERENCES::autoChooseDevice) {
+             // initialise the smallXXX flags and bestBlkSz
 
-            int anySmall= 0;
-            int *smallModelCnt= new int[deviceCount];
-            int *sumOccupancy= new int[deviceCount];
+            vector<int> smallModelCnt(deviceCount, 0);
+            vector<int> sumOccupancy(deviceCount, 0);
             float smVersion, bestSmVersion = 0.0;
             int bestSmallModelCnt= 0;
             int bestDeviceOccupancy = 0;
 
             for (theDevice = 0; theDevice < deviceCount; theDevice++) {
-                if (!(GENN_PREFERENCES::autoChooseDevice) && (theDevice != GENN_PREFERENCES::defaultDevice)) continue;
+                if (!(GENN_PREFERENCES::autoChooseDevice) && (theDevice != GENN_PREFERENCES::defaultDevice)) {
+                    continue;
+                }
 
-                smallModelCnt[theDevice]= 0;
-                sumOccupancy[theDevice]= 0;
-                for (int kernel= 0; kernel < krnlNo; kernel++) {
+                for (int kernel= 0; kernel < KernelMax; kernel++) {
 #ifdef BLOCKSZ_DEBUG
                     cerr << "BLOCKSZ_DEBUG: smallModel[" << kernel << "][" << theDevice << "]= ";
                     cerr << smallModel[kernel][theDevice] << endl;
@@ -486,25 +502,14 @@ void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
             }
             cout << "Using device " << chosenDevice << " (" << deviceProp[chosenDevice].name << "), with up to ";
             cout << bestDeviceOccupancy << " warps of summed kernel occupancy." << endl;
-            delete[] smallModelCnt;
-            delete[] sumOccupancy;
         }
         else {
             chosenDevice= GENN_PREFERENCES::defaultDevice;
         }
-        synapseBlkSz = bestBlkSz[0][chosenDevice];
-        learnBlkSz = bestBlkSz[1][chosenDevice];
-        synDynBlkSz= bestBlkSz[2][chosenDevice];
-        neuronBlkSz = bestBlkSz[3][chosenDevice];
-        for (int kernel= 0; kernel < krnlNo; kernel++) {
-            delete[] bestBlkSz[kernel];
-            delete[] smallModel[kernel];
-            delete[] deviceOccupancy[kernel];
-        }
-        delete[] bestBlkSz;
-        delete[] smallModel;
-        delete[] deviceOccupancy;
-        delete[] groupSize;
+        synapseBlkSz = bestBlkSz[KernelCalcSynapses][chosenDevice];
+        learnBlkSz = bestBlkSz[KernelLearnSynapsesPost][chosenDevice];
+        synDynBlkSz= bestBlkSz[KernelCalcSynapseDynamics][chosenDevice];
+        neuronBlkSz = bestBlkSz[KernelCalcNeurons][chosenDevice];
     }
 
     // IF OPTIMISATION IS OFF: Simply choose the device with the most global memory.
@@ -596,7 +601,7 @@ int main(int argc,     //!< number of arguments; expected to be 2
     cout << "Setting integration step size from global DT macro: " << DT << endl;
 #endif // DT
     modelDefinition(*model);
-    if (!model->final) {
+    if (!model->isFinalized()) {
         gennError("Model was not finalized in modelDefinition(). Please call model.finalize().");
     }
 

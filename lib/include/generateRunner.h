@@ -29,20 +29,6 @@ using namespace std;
 
 
 //--------------------------------------------------------------------------
-//! \brief This fucntion generates host and device variable definitions, of the given type and name.
-//--------------------------------------------------------------------------
-
-void variable_def(ofstream &os, const string &type, const string &name);
-
-
-//--------------------------------------------------------------------------
-//! \brief This fucntion generates host extern variable definitions, of the given type and name.
-//--------------------------------------------------------------------------
-
-void extern_variable_def(ofstream &os, const string &type, const string &name);
-
-
-//--------------------------------------------------------------------------
 /*!
   \brief A function that generates predominantly host-side code.
 

@@ -52,10 +52,10 @@ namespace GENN_PREFERENCES {
     extern std::string userNvccFlags; //!< Allows users to set specific nvcc compiler options they may want to use for all GPU code (identical for windows and unix platforms)
 };
 
-extern int neuronBlkSz; //!< Global variable containing the GPU block size for the neuron kernel
-extern int synapseBlkSz; //!< Global variable containing the GPU block size for the synapse kernel
-extern int learnBlkSz; //!< Global variable containing the GPU block size for the learn kernel
-extern int synDynBlkSz; //!< Global variable containing the GPU block size for the synapse dynamics kernel
+extern unsigned int neuronBlkSz; //!< Global variable containing the GPU block size for the neuron kernel
+extern unsigned int synapseBlkSz; //!< Global variable containing the GPU block size for the synapse kernel
+extern unsigned int learnBlkSz; //!< Global variable containing the GPU block size for the learn kernel
+extern unsigned int synDynBlkSz; //!< Global variable containing the GPU block size for the synapse dynamics kernel
 //extern vector<cudaDeviceProp> deviceProp; //!< Global vector containing the properties of all CUDA-enabled devices
 //extern vector<int> synapseBlkSz; //!< Global vector containing the optimum synapse kernel block size for each device
 //extern vector<int> learnBlkSz; //!< Global vector containing the optimum learn kernel block size for each device
@@ -69,6 +69,3 @@ extern int deviceCount; //!< Global variable containing the number of CUDA devic
 extern int hostCount; //!< Global variable containing the number of hosts within the local compute cluster
 
 #endif // GLOBAL_H
-
-#define TRUE true
-#define FALSE false

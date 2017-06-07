@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
   	fprintf(stderr, "read %u times %d bytes \n", gPNIzh1.connN,sizeof(float));
  		allocateAllSparseArrays();
 
- 		PNIzhNN.read_sparsesyns_par(0, gPNIzh1, f_postind,f_postIndInG,f);
+ 		PNIzhNN.read_sparsesyns_par("PN", gPNIzh1, f_postind,f_postIndInG,f);
  		fclose(f); 
   	fclose(f_info); 
   	fclose(f_postIndInG); 

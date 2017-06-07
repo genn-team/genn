@@ -50,10 +50,10 @@ namespace GENN_PREFERENCES {
 };
 
 // These will eventually go inside e.g. some HardwareConfig class. Putting them here meanwhile.
-int neuronBlkSz; //!< Global variable containing the GPU block size for the neuron kernel
-int synapseBlkSz; //!< Global variable containing the GPU block size for the synapse kernel
-int learnBlkSz; //!< Global variable containing the GPU block size for the learn kernel
-int synDynBlkSz; //!< Global variable containing the GPU block size for the synapse dynamics kernel
+unsigned int neuronBlkSz; //!< Global variable containing the GPU block size for the neuron kernel
+unsigned int synapseBlkSz; //!< Global variable containing the GPU block size for the synapse kernel
+unsigned int learnBlkSz; //!< Global variable containing the GPU block size for the learn kernel
+unsigned int synDynBlkSz; //!< Global variable containing the GPU block size for the synapse dynamics kernel
 //vector<cudaDeviceProp> deviceProp; //!< Global vector containing the properties of all CUDA-enabled devices
 //vector<int> synapseBlkSz; //!< Global vector containing the optimum synapse kernel block size for each device
 //vector<int> learnBlkSz; //!< Global vector containing the optimum learn kernel block size for each device
