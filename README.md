@@ -1,3 +1,4 @@
+[![Build Status](https://gen-ci.inf.sussex.ac.uk/buildStatus/icon?job=GeNN/genn/master)](https://gen-ci.inf.sussex.ac.uk/job/GeNN/genn/master) [![codecov.io](https://codecov.io/github/genn-team/genn/coverage.svg?branch=master)](https://codecov.io/github/genn-team/genn?branch=master)
 # GPU-enhanced Neuronal Networks (GeNN)
 
 GeNN is a GPU-enhanced Neuronal Network simulation environment based on
