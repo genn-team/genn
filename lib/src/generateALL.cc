@@ -30,7 +30,7 @@
 #include "modelSpec.h"
 #include "utils.h"
 #include "codeGenUtils.h"
-#include "CodeHelper.h"
+#include "codeStream.h"
 
 #include <algorithm>
 #include <cmath>
@@ -41,10 +41,6 @@
 #else
 #include <sys/stat.h> // needed for mkdir
 #endif
-
-CodeHelper hlp;
-//hlp.setVerbose(true);//this will show the generation of bracketing (brace) levels. Helps to debug a bracketing issue
-
 
 //--------------------------------------------------------------------------
 /*! \brief This function will call the necessary sub-functions to generate the code for simulating a model.
@@ -62,6 +58,8 @@ void generate_model_runner(const NNmodel &model,  //!< Model description
 #endif
 
   // general shared code for GPU and CPU versions
+  genDefinitions(model, path);
+  genSupportCode(model, path);
   genRunner(model, path);
 
 #ifndef CPU_ONLY

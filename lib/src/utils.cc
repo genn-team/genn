@@ -23,9 +23,14 @@
 
 #include "utils.h"
 
+// C++ standard includes
 #include <fstream>
-#include <stdint.h>
 
+// C standard includes
+#include <cstdint>
+
+// GeNN includes
+#include "codeStream.h"
 
 #ifndef CPU_ONLY
 //--------------------------------------------------------------------------
@@ -92,7 +97,7 @@ void gennError(const string &error)
  */
 //--------------------------------------------------------------------------
 
-void writeHeader(ostream &os) 
+void writeHeader(CodeStream &os)
 {
     string s;
     ifstream is("../src/header.src");
