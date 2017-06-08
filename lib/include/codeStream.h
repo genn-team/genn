@@ -1,20 +1,10 @@
 #pragma once
 
 // Standard C++ includes
-#include <algorithm>
-#include <iomanip>
-#include <iostream>
-#include <sstream>
+#include <ostream>
 #include <streambuf>
 #include <string>
 #include <vector>
-
-// GeNN includes
-#include "utils.h"
-
-//#define OB(X) CodeStream::OB(X) //shortcut nomenclature to open the Xth curly brace { plus a new line
-//#define CB(X) CodeStream::CB(X) //shortcut nomenclature to close the Xth curly brace } plus a new line
-//#define ENDL std::endl  //shortcut nomenclature to generate a newline followed correct number of indentation characters for the current level
 
 //----------------------------------------------------------------------------
 // CodeStream
@@ -30,43 +20,31 @@ private:
     class IndentBuffer : public std::streambuf
     {
     public:
-        IndentBuffer(std::streambuf *sink) : m_Sink(sink), m_NewLine(false), m_IndentLevel(0){}
+        IndentBuffer() : m_Sink(NULL), m_NewLine(false), m_IndentLevel(0){}
 
         //--------------------------------------------------------------------
         // Public API
         //--------------------------------------------------------------------
-        void indent(){ m_IndentLevel++; }
-        void deindent(){ m_IndentLevel--; }
+        void indent()
+        {
+            m_IndentLevel++;
+        }
+
+        void deindent()
+        {
+            m_IndentLevel--;
+        }
+
+        void setSink(std::streambuf *sink)
+        {
+            m_Sink = sink;
+        }
 
     private:
         //--------------------------------------------------------------------
         // Streambuf overrides
         //--------------------------------------------------------------------
-        virtual int_type overflow(int_type c) override
-        {
-            // If the character is an end-of-file, pass it directly to the sink
-            if(traits_type::eq_int_type(c, traits_type::eof())) {
-                return m_Sink->sputc(c);
-            }
-
-            // If last character was a newline, indent and clear flag
-            if(m_NewLine) {
-                std::fill_n(std::ostreambuf_iterator<char>(m_Sink), m_IndentLevel * 4, ' ');
-                m_NewLine = false;
-            }
-
-            // If writing character to sink results in an end-of-file, return it
-            if (traits_type::eq_int_type(m_Sink->sputc(c), traits_type::eof())) {
-                return traits_type::eof();
-            }
-
-            // If character us a newline set flag
-            if (traits_type::eq_int_type(c, traits_type::to_char_type('\n'))) {
-                m_NewLine = true;
-            }
-
-            return traits_type::not_eof(c);
-        }
+        virtual int overflow(int c) override;
 
         //----------------------------------------------------------------------------
         // Members
@@ -97,7 +75,8 @@ public:
         const unsigned int Level;
     };
 
-    CodeStream(std::ostream &stream): m_Buffer(stream.rdbuf()), std::ostream(&m_Buffer) {
+    CodeStream(std::ostream &stream): std::ostream(&m_Buffer) {
+        m_Buffer.setSink(stream.rdbuf());
         m_Braces.push_back(0);
     }
 
@@ -111,44 +90,12 @@ private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    std::vector<unsigned int> m_Braces;
     IndentBuffer m_Buffer;
+    std::vector<unsigned int> m_Braces;
 };
 
 //------------------------------------------------------------------------
 // Operators
 //------------------------------------------------------------------------
-inline std::ostream& operator << (std::ostream& s, const CodeStream::OB &ob)
-{
-    CodeStream &c = dynamic_cast<CodeStream&>(s);
-
-    // Write open bracket and endline to self
-    c << "{" << std::endl;
-
-    // Add brace to list
-    c.m_Braces.push_back(ob.Level);
-
-    // Increase indent
-    c.m_Buffer.indent();
-
-    return c;
-}
-
-inline std::ostream& operator << (std::ostream& s, const CodeStream::CB &cb)
-{
-    CodeStream &c = dynamic_cast<CodeStream&>(s);
-
-    if (c.m_Braces.back() == cb.Level) {
-        c.m_Braces.pop_back();
-
-        // Decrease indent
-        c.m_Buffer.deindent();
-
-        // Write closed bracket and newline (setting flag)
-        c << "}" << std::endl;
-    } else {
-        gennError("Code generation error: Attempted to close brace " + std::to_string(cb.Level) + ", expecting brace " + std::to_string(c.m_Braces.back()));
-    }
-
-    return c;
-}
+std::ostream& operator << (std::ostream& s, const CodeStream::OB &ob);
+std::ostream& operator << (std::ostream& s, const CodeStream::CB &cb);
