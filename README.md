@@ -1,3 +1,4 @@
+[![Build Status](https://gen-ci.inf.sussex.ac.uk/buildStatus/icon?job=GeNN/genn/master)](https://gen-ci.inf.sussex.ac.uk/job/GeNN/genn/master) [![codecov.io](https://codecov.io/github/genn-team/genn/coverage.svg?branch=master)](https://codecov.io/github/genn-team/genn?branch=master)
 # GPU-enhanced Neuronal Networks (GeNN)
 
 GeNN is a GPU-enhanced Neuronal Network simulation environment based on
@@ -8,10 +9,10 @@ code generation for Nvidia CUDA.
 These instructions are for
 installing the release obtained from
 https://github.com/genn-team/genn/releases. For full instructions and
-cloning git branches of the project, see
-http://genn-team.github.io/genn/documentation/html/d8/d99/Installation.html
+cloning git branches of the project, see the documentation available at
+http://genn-team.github.io/genn/
 
-###WINDOWS INSTALL
+### WINDOWS INSTALL
 
 1. Download and unpack GeNN.zip to a convenient location, then download
     and install the Microsoft Visual C++ compiler and IDE from:
@@ -47,7 +48,7 @@ http://genn-team.github.io/genn/documentation/html/d8/d99/Installation.html
 This completes the installation. Note that the command window must be
 restarted to initialise the variables set using the `SETX` command.
 
-###LINUX / MAC INSTALL
+### LINUX / MAC INSTALL
 
 (1) Unpack GeNN.zip in a convenient location, then download and install
     a compatible version of the Nvidia CUDA toolkit from:
@@ -75,7 +76,7 @@ This completes the installation.
 
 ## USING GeNN 
 
-###SAMPLE PROJECTS
+### SAMPLE PROJECTS
 
 At the moment, the following example projects are provided with GeNN:
 
@@ -144,7 +145,7 @@ c)  The programmer defines their own modeling code along similar lines
 -   the simulation code is then produced in the following two steps:
     `genn-buildmodel.[sh|bat] ./modelFile.cc` and `make clean && make`
 
-For more details on how to use GeNN, please see the [documentation](http://genn-team.github.io/genn/documentation/html/index.html).
+For more details on how to use GeNN, please see [documentation](http://genn-team.github.io/genn/).
 
 If you use GeNN in your work, please cite 
 "Yavuz, E., Turner, J. and Nowotny, T. GeNN: a code generation framework for accelerated brain simulations. Scientific Reports, 6. (2016)"
