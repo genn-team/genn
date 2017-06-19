@@ -37,7 +37,7 @@ namespace GENN_PREFERENCES {
     bool optimizeCode = false; //!< Request speed-optimized code, at the expense of floating-point accuracy
     bool debugCode = false; //!< Request debug data to be embedded in the generated code
     bool showPtxInfo = false; //!< Request that PTX assembler information be displayed for each CUDA kernel during compilation
-    bool exportFunctions = false;   //!< Should functions be declared using extern "C" so model can be used as a shared library
+    bool buildSharedLibrary = false;   //!< Should generated code and Makefile build into a shared library e.g. for use in SpineML simulator
     double asGoodAsZero = 1e-19; //!< Global variable that is used when detecting close to zero values, for example when setting sparse connectivity from a dense matrix
     int defaultDevice= 0; //! default GPU device; used to determine which GPU to use if chooseDevice is 0 (off)
     unsigned int neuronBlockSize= 32;

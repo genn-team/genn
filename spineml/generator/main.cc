@@ -191,7 +191,7 @@ int main(int argc,
     networkName = networkName.substr(0, networkName.find_last_of("."));
 
     // Instruct GeNN to export all functions as extern "C"
-    GENN_PREFERENCES::exportFunctions = true;
+    GENN_PREFERENCES::buildSharedLibrary = true;
 
     // Initialize GeNN
     initGeNN();

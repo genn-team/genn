@@ -460,7 +460,7 @@ void genDefinitions(const NNmodel &model, //!< Model description
 #endif
 
     // End extern C block around function definitions
-    if(GENN_PREFERENCES::exportFunctions) {
+    if(GENN_PREFERENCES::buildSharedLibrary) {
         os << "extern \"C\" {" << std::endl;
     }
 
@@ -648,7 +648,7 @@ void genDefinitions(const NNmodel &model, //!< Model description
 #endif
 
     // End extern C block around function definitions
-    if(GENN_PREFERENCES::exportFunctions) {
+    if(GENN_PREFERENCES::buildSharedLibrary) {
         os << "}\t// extern \"C\"" << std::endl;
     }
 
