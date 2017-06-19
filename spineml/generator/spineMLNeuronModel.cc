@@ -4,6 +4,9 @@
 #include <iostream>
 #include <sstream>
 
+// Standard C includes
+#include <cstring>
+
 // pugixml includes
 #include "pugixml/pugixml.hpp"
 

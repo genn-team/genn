@@ -1,6 +1,7 @@
 #include "spineMLPostsynapticModel.h"
 
 // Standard C++ includes
+#include <iostream>
 #include <regex>
 
 // pugixml includes

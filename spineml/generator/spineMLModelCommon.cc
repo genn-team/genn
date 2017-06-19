@@ -2,6 +2,7 @@
 
 // Standard C++ includes
 #include <algorithm>
+#include <iostream>
 #include <regex>
 
 //----------------------------------------------------------------------------
@@ -66,7 +67,7 @@ std::vector<double> SpineMLGenerator::VarValues::getValues() const
 void SpineMLGenerator::CodeStream::onRegimeEnd(bool multipleRegimes, unsigned int currentRegimeID)
 {
     // If any code was written for this regime
-    if(m_CurrentRegimeCodeStream.tellp() > 0)
+    if(m_CurrentRegimeStream.tellp() > 0)
     {
         if(multipleRegimes) {
             if(m_FirstNonEmptyRegime) {
@@ -75,18 +76,18 @@ void SpineMLGenerator::CodeStream::onRegimeEnd(bool multipleRegimes, unsigned in
             else {
                 m_CodeStream << "else ";
             }
-            m_CodeStream << "if(_regimeID == " << currentRegimeID << ")" << ob(1);
+            m_CodeStream << "if(_regimeID == " << currentRegimeID << ")" << CodeStream::OB(1);
         }
 
         // Write contents of current region code stream to main code stream
-        m_CodeStream << m_CurrentRegimeCodeStream.str();
+        m_CodeStream << m_CurrentRegimeStream.str();
 
         // Clear current regime code stream
-        std::ostringstream().swap(m_CurrentRegimeCodeStream);
+        std::ostringstream().swap(m_CurrentRegimeStream);
 
         // End of regime
         if(multipleRegimes) {
-            m_CodeStream << cb(1);
+            m_CodeStream << CodeStream::CB(1);
         }
     }
 }

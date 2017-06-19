@@ -4,6 +4,7 @@
 #include <functional>
 #include <map>
 #include <set>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -11,7 +12,7 @@
 #include "pugixml/pugixml.hpp"
 
 // GeNN includes
-#include "CodeHelper.h"
+#include "codeStream.h"
 #include "newModels.h"
 
 //----------------------------------------------------------------------------
@@ -63,66 +64,38 @@ private:
 //------------------------------------------------------------------------
 // CodeStream
 //------------------------------------------------------------------------
-class CodeStream
+class CodeStream : public ::CodeStream
 {
 public:
-    CodeStream() : m_FirstNonEmptyRegime(true){}
+    CodeStream() : m_FirstNonEmptyRegime(true), m_CodeStream(m_Stream)
+    {
+        setSink(m_CurrentRegimeStream);
+    }
 
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
     void onRegimeEnd(bool multipleRegimes, unsigned int currentRegimeID);
 
-    std::string str() const{ return m_CodeStream.str(); }
-
-    std::string ob(unsigned int level)
-    {
-        return m_Helper.openBrace(level);
-    }
-
-    std::string cb(unsigned int level)
-    {
-        return m_Helper.closeBrace(level);
-    }
-
-    std::string endl() const
-    {
-        return m_Helper.endl();
-    }
-
-    //------------------------------------------------------------------------
-    // Operators
-    //------------------------------------------------------------------------
-    //!< Operators to wrap underlying code stream curtesy of
-    //!< http://stackoverflow.com/questions/25615253/correct-template-method-to-wrap-a-ostream
-    template <typename T>
-    CodeStream& operator << (T&& x) {
-        m_CurrentRegimeCodeStream << std::forward<T>(x);
-        return *this;
-    }
-
-    CodeStream& operator << (std::ostream& (*manip)(std::ostream&)) {
-        m_CurrentRegimeCodeStream << manip;
-        return *this;
-    }
+    std::string str() const{ return m_Stream.str(); }
 
 private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    //!< GeNN code helper class to provide automatic bracketting
-    //!< and intenting within this code stream
-    CodeHelper m_Helper;
-
-    //!< Reference to code stream that will be used to build
-    //!< entire GeNN code string e.g. a block of sim code
-    std::ostringstream m_CodeStream;
-
     //!< Flag used to determine whether this is the first regime written
     bool m_FirstNonEmptyRegime;
 
+    //!< Reference to code stream that will be used to build
+    //!< entire GeNN code string e.g. a block of sim code
+    std::ostringstream m_Stream;
+
+    //! < Second internal code stream used to correctly intent the
+    ::CodeStream m_CodeStream;
+
     //!< Internal codestream used to write regime code to
-    std::ostringstream m_CurrentRegimeCodeStream;
+    std::ostringstream m_CurrentRegimeStream;
+
 };
 
 //------------------------------------------------------------------------

@@ -75,9 +75,17 @@ public:
         const unsigned int Level;
     };
 
-    CodeStream(std::ostream &stream): std::ostream(&m_Buffer) {
-        m_Buffer.setSink(stream.rdbuf());
+    CodeStream(): std::ostream(&m_Buffer) {
         m_Braces.push_back(0);
+    }
+
+    CodeStream(std::ostream &stream): CodeStream() {
+        setSink(stream);
+    }
+
+    void setSink(std::ostream &stream)
+    {
+        m_Buffer.setSink(stream.rdbuf());
     }
 
 private:

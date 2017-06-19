@@ -10,5 +10,5 @@ void SpineMLGenerator::ObjectHandlerTimeDerivative::onObject(const pugi::xml_nod
                                                              unsigned int, unsigned int)
 {
     // **TODO** identify cases where Euler is REALLY stupid
-    m_CodeStream << node.attribute("variable").value() << " += DT * (" << node.child_value("MathInline") << ");" << m_CodeStream.endl();
+    m_CodeStream << node.attribute("variable").value() << " += DT * (" << node.child_value("MathInline") << ");" << std::endl;
 }

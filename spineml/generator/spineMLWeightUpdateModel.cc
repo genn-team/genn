@@ -1,6 +1,7 @@
 #include "spineMLWeightUpdateModel.h"
 
 // Standard C++ includes
+#include <iostream>
 #include <regex>
 
 // pugixml includes
@@ -33,8 +34,8 @@ public:
         auto outgoingImpulses = node.children("ImpulseOut");
         const size_t numOutgoingImpulses = std::distance(outgoingImpulses.begin(), outgoingImpulses.end());
         if(numOutgoingImpulses == 1) {
-            m_CodeStream << "addtoinSyn = " << outgoingImpulses.begin()->attribute("port").value() << ";" << m_CodeStream.endl();
-            m_CodeStream << "updatelinsyn;" << m_CodeStream.endl();
+            m_CodeStream << "addtoinSyn = " << outgoingImpulses.begin()->attribute("port").value() << ";" << std::endl;
+            m_CodeStream << "updatelinsyn;" << std::endl;
         }
         // Otherwise, throw an exception
         else if(numOutgoingImpulses > 1) {
@@ -43,12 +44,12 @@ public:
 
         // Loop through state assignements
         for(auto stateAssign : node.children("StateAssignment")) {
-            m_CodeStream << stateAssign.attribute("variable").value() << " = " << stateAssign.child_value("MathInline") << ";" << m_CodeStream.endl();
+            m_CodeStream << stateAssign.attribute("variable").value() << " = " << stateAssign.child_value("MathInline") << ";" << std::endl;
         }
 
         // If this condition results in a regime change
         if(currentRegimeID != targetRegimeID) {
-            m_CodeStream << "_regimeID = " << targetRegimeID << ";" << m_CodeStream.endl();
+            m_CodeStream << "_regimeID = " << targetRegimeID << ";" << std::endl;
         }
     }
 
