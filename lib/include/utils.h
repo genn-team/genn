@@ -106,8 +106,11 @@ CUresult cudaFuncGetAttributesDriver(cudaFuncAttributes *attr, CUfunction kern);
  */
 //--------------------------------------------------------------------------
 
-void gennError(const string &error);
-
+inline void gennError(const string &error)
+{
+    cerr << "GeNN error: " << error << endl;
+    exit(EXIT_FAILURE);
+}
 
 //--------------------------------------------------------------------------
 //! \brief Tool for determining the size of variable types on the current architecture
