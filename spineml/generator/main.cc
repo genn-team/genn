@@ -37,6 +37,8 @@ typedef std::pair<std::string, std::set<std::string>> ModelParams;
 //----------------------------------------------------------------------------
 // Functions
 //----------------------------------------------------------------------------
+// Helper function to take a SpineML model and determine which of it's parameters are fixed and thus can
+// potentially be hardcoded in GeNN or variable thus need to be implemented as GeNN model variables
 std::tuple<ModelParams, std::map<std::string, double>> readModelProperties(const filesystem::path &basePath,
                                                                            const pugi::xml_node &node)
 {
@@ -65,6 +67,8 @@ std::tuple<ModelParams, std::map<std::string, double>> readModelProperties(const
     return std::make_tuple(modelParams, fixedParamVals);
 }
 
+
+// Helper function to either find existing model that provides desired parameters or create new one
 template<typename T>
 const T &getCreateModel(const ModelParams &params, std::map<ModelParams, T> &models)
 {
@@ -85,6 +89,7 @@ const T &getCreateModel(const ModelParams &params, std::map<ModelParams, T> &mod
     }
 }
 
+// Helper function to read the delay value from a SpineML 'Synapse' node
 unsigned int readDelaySteps(const pugi::xml_node &node, double dt)
 {
     // Get delay node
@@ -104,6 +109,8 @@ unsigned int readDelaySteps(const pugi::xml_node &node, double dt)
         throw std::runtime_error("Connector has no 'Delay' node");
     }
 }
+
+// Helper function to determine the correct type of GeNN projection to use for a SpineML 'Synapse' node
 std::tuple<SynapseMatrixType, unsigned int> getSynapticMatrixType(const pugi::xml_node &node, bool globalG, double dt)
 {
     auto oneToOne = node.child("OneToOneConnection");
