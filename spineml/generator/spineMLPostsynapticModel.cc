@@ -104,12 +104,15 @@ SpineMLGenerator::SpineMLPostsynapticModel::SpineMLPostsynapticModel(const std::
     // Build the final vectors of parameter names and variables from model
     tie(m_ParamNames, m_Vars) = findModelVariables(componentClass, variableParams, multipleRegimes);
 
+    // Find names of analogue receive ports
+    auto analogueReceivePortNames = findAnalogueReceivePortNames(componentClass);
+
     // Postsynaptic models use an analogue send port to transmit to the neuron
     auto analogueSendPorts = componentClass.children("AnalogSendPort");
     const size_t numAnalogueSendPorts = std::distance(analogueSendPorts.begin(), analogueSendPorts.end());
     if(numAnalogueSendPorts == 1) {
         const auto *analogueSendPortName = analogueSendPorts.begin()->attribute("name").value();
-        std::cout << "Analogue send port:" << analogueSendPortName << std::endl;
+        std::cout << "\t\tAnalogue send port:" << analogueSendPortName << std::endl;
 
         // If this send port corresponds to a state variable
         auto correspondingVar = std::find_if(m_Vars.begin(), m_Vars.end(),
@@ -136,7 +139,6 @@ SpineMLGenerator::SpineMLPostsynapticModel::SpineMLPostsynapticModel(const std::
             else {
                 throw std::runtime_error("Cannot find alias:" + std::string(analogueSendPortName));
             }
-
         }
     }
     // Otherwise, throw an exception
@@ -156,8 +158,9 @@ SpineMLGenerator::SpineMLPostsynapticModel::SpineMLPostsynapticModel(const std::
         m_Vars.clear();
     }
 
-    // Correctly wrap references to paramters and variables in code strings
-    substituteModelVariables(m_ParamNames, m_Vars, {&m_DecayCode, &m_CurrentConverterCode});
+    // Correctly wrap references to parameters, variables and analogue receive ports in code strings
+    substituteModelVariables(m_ParamNames, m_Vars, analogueReceivePortNames,
+                             {&m_DecayCode, &m_CurrentConverterCode});
 
     std::cout << "DECAY CODE:" << std::endl << m_DecayCode << std::endl;
     std::cout << "CURRENT CONVERTER CODE:" << std::endl << m_CurrentConverterCode << std::endl;
