@@ -15,7 +15,7 @@
 //----------------------------------------------------------------------------
 SpineMLSimulator::LogOutput::LogOutput(const pugi::xml_node &node, double dt)
 {
-    m_Name = node.attribute("name").value();
+    m_Name = std::string(node.attribute("target").value()) + "_" + std::string(node.attribute("name").value());
     std::cout << "Output log:" << m_Name << std::endl;
 
     // Read start time
