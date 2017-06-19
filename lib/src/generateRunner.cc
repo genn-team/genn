@@ -459,6 +459,11 @@ void genDefinitions(const NNmodel &model, //!< Model description
     os << std::endl;
 #endif
 
+    // End extern C block around function definitions
+    if(GENN_PREFERENCES::exportFunctions) {
+        os << "extern \"C\" {" << std::endl;
+    }
+
 #ifndef CPU_ONLY
     // generate headers for the communication utility functions such as
     // pullXXXStateFromDevice() etc. This is useful for the brian2genn
@@ -629,19 +634,23 @@ void genDefinitions(const NNmodel &model, //!< Model description
     os << std::endl;
 
     os << "// ------------------------------------------------------------------------" << std::endl;
-    os << "// Throw an error for \"old style\" time stepping calls (using CPU)" << std::endl;
-    os << std::endl;
-    os << "template <class T>" << std::endl;
-    os << "void stepTimeCPU(T arg1, ...)" << CodeStream::OB(101);
-    os << "gennError(\"Since GeNN 2.2 the call to step time has changed to not take any arguments. You appear to attempt to pass arguments. This is no longer supported. See the GeNN 2.2. release notes and the manual for examples how to pass data like, e.g., Poisson rates and direct inputs, that were previously handled through arguments.\");" << std::endl;
-    os << CodeStream::CB(101);
-    os<< std::endl;
-
-    os << "// ------------------------------------------------------------------------" << std::endl;
     os << "// the actual time stepping procedure (using CPU)" << std::endl;
     os << std::endl;
     os << "void stepTimeCPU();" << std::endl;
     os << std::endl;
+
+#ifndef CPU_ONLY
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// the actual time stepping procedure (using GPU)" << std::endl;
+    os << std::endl;
+    os << "void stepTimeGPU();" << std::endl;
+    os << std::endl;
+#endif
+
+    // End extern C block around function definitions
+    if(GENN_PREFERENCES::exportFunctions) {
+        os << "}\t// extern \"C\"" << std::endl;
+    }
 
 #ifndef CPU_ONLY
     os << "// ------------------------------------------------------------------------" << std::endl;
@@ -651,14 +660,17 @@ void genDefinitions(const NNmodel &model, //!< Model description
     os << "void stepTimeGPU(T arg1, ...)" << CodeStream::OB(101);
     os << "gennError(\"Since GeNN 2.2 the call to step time has changed to not take any arguments. You appear to attempt to pass arguments. This is no longer supported. See the GeNN 2.2. release notes and the manual for examples how to pass data like, e.g., Poisson rates and direct inputs, that were previously handled through arguments.\");" << std::endl;
     os << CodeStream::CB(101);
-    os<< std::endl;
-
-    os << "// ------------------------------------------------------------------------" << std::endl;
-    os << "// the actual time stepping procedure (using GPU)" << std::endl;
-    os << std::endl;
-    os << "void stepTimeGPU();" << std::endl;
     os << std::endl;
 #endif
+
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// Throw an error for \"old style\" time stepping calls (using CPU)" << std::endl;
+    os << std::endl;
+    os << "template <class T>" << std::endl;
+    os << "void stepTimeCPU(T arg1, ...)" << CodeStream::OB(101);
+    os << "gennError(\"Since GeNN 2.2 the call to step time has changed to not take any arguments. You appear to attempt to pass arguments. This is no longer supported. See the GeNN 2.2. release notes and the manual for examples how to pass data like, e.g., Poisson rates and direct inputs, that were previously handled through arguments.\");" << std::endl;
+    os << CodeStream::CB(101);
+    os<< std::endl;
 
     os << "#endif" << std::endl;
     fs.close();
