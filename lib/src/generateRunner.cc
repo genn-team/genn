@@ -2286,6 +2286,9 @@ void genMakefile(const NNmodel &model, //!< Model description
     CodeStream os(fs);
 
 #ifdef _WIN32
+    if(GENN_PREFERENCES::buildSharedLibrary) {
+        gennError("Building shared libraries for Windows not currently supported");
+    }
 
 #ifdef CPU_ONLY
     string cxxFlags = "/c /DCPU_ONLY";
@@ -2331,6 +2334,10 @@ void genMakefile(const NNmodel &model, //!< Model description
 #else // UNIX
 
 #ifdef CPU_ONLY
+    if(GENN_PREFERENCES::buildSharedLibrary) {
+        gennError("Building shared libraries for CPU_ONLY simulation not currently supported");
+    }
+    
     string cxxFlags = "-c -DCPU_ONLY";
     cxxFlags += " " + GENN_PREFERENCES::userCxxFlagsGNU;
     if (GENN_PREFERENCES::optimizeCode) cxxFlags += " -O3 -ffast-math";
@@ -2349,12 +2356,21 @@ void genMakefile(const NNmodel &model, //!< Model description
     os << "clean:" << endl;
     os << "\trm -f runner.o" << endl;
 #else
-    string nvccFlags = "-c -x cu -arch sm_";
+    // Start with correct NVCC flags to build shared library or object file as appropriate
+    string nvccFlags = GENN_PREFERENCES::buildSharedLibrary ? "--shared --compiler-options '-fPIC'" : "-c";
+
+    nvccFlags += " -x cu -arch sm_";
     nvccFlags += to_string(deviceProp[theDevice].major) + to_string(deviceProp[theDevice].minor);
     nvccFlags += " " + GENN_PREFERENCES::userNvccFlags;
-    if (GENN_PREFERENCES::optimizeCode) nvccFlags += " -O3 -use_fast_math -Xcompiler \"-ffast-math\"";
-    if (GENN_PREFERENCES::debugCode) nvccFlags += " -O0 -g -G";
-    if (GENN_PREFERENCES::showPtxInfo) nvccFlags += " -Xptxas \"-v\"";
+    if (GENN_PREFERENCES::optimizeCode) {
+        nvccFlags += " -O3 -use_fast_math -Xcompiler \"-ffast-math\"";
+    }
+    if (GENN_PREFERENCES::debugCode) {
+        nvccFlags += " -O0 -g -G";
+    }
+    if (GENN_PREFERENCES::showPtxInfo) {
+        nvccFlags += " -Xptxas \"-v\"";
+    }
 
     os << endl;
     os << "NVCC           :=\"" << NVCC << "\"" << endl;
@@ -2362,13 +2378,26 @@ void genMakefile(const NNmodel &model, //!< Model description
     os << endl;
     os << "INCLUDEFLAGS   =-I\"$(GENN_PATH)/lib/include\"" << endl;
     os << endl;
-    os << "all: runner.o" << endl;
-    os << endl;
-    os << "runner.o: runner.cc" << endl;
-    os << "\t$(NVCC) $(NVCCFLAGS) $(INCLUDEFLAGS) runner.cc" << endl;
-    os << endl;
-    os << "clean:" << endl;
-    os << "\trm -f runner.o" << endl;
+
+    // Add correct rules for building either shared library or object file
+    if(GENN_PREFERENCES::buildSharedLibrary) {
+        os << "all: librunner.so" << endl;
+        os << endl;
+        os << "librunner.so: runner.cc" << endl;
+        os << "\t$(NVCC) $(NVCCFLAGS) $(INCLUDEFLAGS) runner.cc $(GENN_PATH)/lib/src/sparseUtils.cc -o librunner.so" << endl;
+        os << endl;
+        os << "clean:" << endl;
+        os << "\trm -f librunner.so" << endl;
+    }
+    else {
+        os << "all: runner.o" << endl;
+        os << endl;
+        os << "runner.o: runner.cc" << endl;
+        os << "\t$(NVCC) $(NVCCFLAGS) $(INCLUDEFLAGS) runner.cc" << endl;
+        os << endl;
+        os << "clean:" << endl;
+        os << "\trm -f runner.o" << endl;
+    }
 #endif
 
 #endif
