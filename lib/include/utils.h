@@ -30,6 +30,8 @@
 
 using namespace std;
 
+// Forward declarations
+class CodeStream;
 
 #ifndef CPU_ONLY
 //--------------------------------------------------------------------------
@@ -119,7 +121,7 @@ unsigned int theSize(const string &type);
  */
 //--------------------------------------------------------------------------
 
-void writeHeader(ostream &os);
+void writeHeader(CodeStream &os);
 
 
 #endif  // _UTILS_H_

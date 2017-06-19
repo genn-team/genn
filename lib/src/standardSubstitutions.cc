@@ -1,7 +1,7 @@
 #include "standardSubstitutions.h"
 
 // GeNN includes
-#include "CodeHelper.h"
+#include "codeStream.h"
 #include "modelSpec.h"
 
 //----------------------------------------------------------------------------

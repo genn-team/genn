@@ -1,5 +1,36 @@
 /*! \page ReleaseNotes Release Notes
 
+Release Notes for GeNN v3.0.0
+====
+This release is the result of some fairly major refactoring of GeNN which we hope will make it more user-friendly and maintainable in the future.
+
+User Side Changes
+----
+1. Entirely new syntax for defining models - hopefully terser and less error-prone (see updated documentation and examples for details).
+2. Continuous integration testing using Jenkins - automated testing and code coverage calculation calculated automatically for Github pull requests etc.
+3. Support for using Zero-copy memory for model variables. Especially on devices such as NVIDIA Jetson TX1 with no physical GPU memory this can significantly improve performance when recording data or injecting it to the simulation from external sensors.
+
+
+Release Notes for GeNN v2.2.3
+====
+This release includes minor new features and several bug fixes for certain system configurations.
+
+User Side Changes
+----
+
+1. Transitioned feature tests to use Google Test framework.
+2. Added support for CUDA shader model 6.X
+
+Bug fixes:
+----
+
+1. Fixed problem using GeNN on systems running 32-bit Linux kernels on a 64-bit architecture (Nvidia Jetson modules running old software for example).
+2. Fixed problem linking against CUDA on Mac OS X El Capitan due to SIP (System Integrity Protection).
+3. Fixed problems with support code relating to its scope and usage in spike-like event threshold code.
+4. Disabled use of C++ regular expressions on older versions of GCC.
+
+-------------------------------------------------------------------
+
 Release Notes for GeNN v2.2.2
 ====
 

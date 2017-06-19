@@ -465,6 +465,7 @@ SynapseGroup *NNmodel::addSynapsePopulation(
     else
     {
         gennError("Combination of connection type " + to_string(conntype) + " and weight type " + to_string(gtype) + " not supported");
+        return NULL;
     }
 
     auto srcNeuronGrp = findNeuronGroup(src);
