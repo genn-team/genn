@@ -367,7 +367,7 @@ int main(int argc, char *argv[])
             unsigned int srcPopSize = getNeuronPopSize(srcPopName, neuronPopulationSizes);
 
             // Loop through outgoing projections
-            for(auto projection : population.children("Projection")) {
+            for(auto projection : population.children("LL:Projection")) {
                 // Read destination population name from projection
                 const auto *trgPopName = projection.attribute("dst_population").value();
                 unsigned int trgPopSize = getNeuronPopSize(trgPopName, neuronPopulationSizes);
