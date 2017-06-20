@@ -125,6 +125,6 @@ SpineMLGenerator::SpineMLWeightUpdateModel::SpineMLWeightUpdateModel(const std::
     // Correctly wrap references to paramters and variables in code strings
     substituteModelVariables(m_ParamNames, m_Vars, {&m_SimCode, &m_SynapseDynamicsCode});
 
-    std::cout << "SIM CODE:" << std::endl << m_SimCode << std::endl;
-    std::cout << "SYNAPSE DYNAMICS CODE:" << std::endl << m_SynapseDynamicsCode << std::endl;
+    //std::cout << "SIM CODE:" << std::endl << m_SimCode << std::endl;
+    //std::cout << "SYNAPSE DYNAMICS CODE:" << std::endl << m_SynapseDynamicsCode << std::endl;
 }

@@ -20,11 +20,15 @@
 #include "modelSpec.h"
 #include "utils.h"
 
+// SpineMLCommon includes
+#include "spineMLUtils.h"
+
 // SpineMLGenerator includes
 #include "spineMLNeuronModel.h"
 #include "spineMLPostsynapticModel.h"
 #include "spineMLWeightUpdateModel.h"
 
+using namespace SpineMLCommon;
 using namespace SpineMLGenerator;
 
 //----------------------------------------------------------------------------
@@ -209,34 +213,41 @@ int main(int argc,
         }
 
         // Read basic population properties
-        const auto *popName = neuron.attribute("name").value();
+        auto popName = SpineMLUtils::getSafeName(neuron.attribute("name").value());
         const unsigned int popSize = neuron.attribute("size").as_int();
         std::cout << "Population " << popName << " consisting of ";
         std::cout << popSize << " neurons" << std::endl;
 
-        // Read neuron properties
-        ModelParams modelParams;
-        std::map<std::string, double> fixedParamVals;
-        tie(modelParams, fixedParamVals) = readModelProperties(basePath, neuron);
+        // If population is a spike source add GeNN spike source
+        // **TODO** is this the only special case?
+        if(strcmp(neuron.attribute("url").value(), "SpikeSource") == 0) {
+            model.addNeuronPopulation<NeuronModels::SpikeSource>(popName, popSize, {}, {});
+        }
+        else {
+            // Read neuron properties
+            ModelParams modelParams;
+            std::map<std::string, double> fixedParamVals;
+            tie(modelParams, fixedParamVals) = readModelProperties(basePath, neuron);
 
-        // Either get existing neuron model or create new one of no suitable models are available
-        const auto &neuronModel = getCreateModel(modelParams, neuronModels);
+            // Either get existing neuron model or create new one of no suitable models are available
+            const auto &neuronModel = getCreateModel(modelParams, neuronModels);
 
-        // Add population to model
-        model.addNeuronPopulation(popName, popSize, &neuronModel,
-                                  SpineMLNeuronModel::ParamValues(fixedParamVals, neuronModel),
-                                  SpineMLNeuronModel::VarValues(fixedParamVals, neuronModel));
+            // Add population to model
+            model.addNeuronPopulation(popName, popSize, &neuronModel,
+                                      SpineMLNeuronModel::ParamValues(fixedParamVals, neuronModel),
+                                      SpineMLNeuronModel::VarValues(fixedParamVals, neuronModel));
+        }
     }
 
     // Loop through populations AGAIN to build projections
     for(auto population : spineML.children("LL:Population")) {
         // Read source population name from neuron node
-        const auto *srcPopName = population.child("LL:Neuron").attribute("name").value();
+        auto srcPopName = SpineMLUtils::getSafeName(population.child("LL:Neuron").attribute("name").value());
 
         // Loop through outgoing projections
         for(auto projection : population.children("LL:Projection")) {
             // Read destination population name from projection
-            const auto *trgPopName = projection.attribute("dst_population").value();
+            auto trgPopName = SpineMLUtils::getSafeName(projection.attribute("dst_population").value());
 
             std::cout << "Projection from population:" << srcPopName << "->" << trgPopName << std::endl;
 

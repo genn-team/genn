@@ -162,6 +162,6 @@ SpineMLGenerator::SpineMLPostsynapticModel::SpineMLPostsynapticModel(const std::
     substituteModelVariables(m_ParamNames, m_Vars, analogueReceivePortNames,
                              {&m_DecayCode, &m_CurrentConverterCode});
 
-    std::cout << "DECAY CODE:" << std::endl << m_DecayCode << std::endl;
-    std::cout << "CURRENT CONVERTER CODE:" << std::endl << m_CurrentConverterCode << std::endl;
+    //std::cout << "DECAY CODE:" << std::endl << m_DecayCode << std::endl;
+    //std::cout << "CURRENT CONVERTER CODE:" << std::endl << m_CurrentConverterCode << std::endl;
 }

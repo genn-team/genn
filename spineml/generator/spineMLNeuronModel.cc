@@ -135,6 +135,6 @@ SpineMLGenerator::SpineMLNeuronModel::SpineMLNeuronModel(const std::string &url,
     }
 
 
-    std::cout << "SIM CODE:" << std::endl << m_SimCode << std::endl;
-    std::cout << "THRESHOLD CONDITION CODE:" << std::endl << m_ThresholdConditionCode << std::endl;
+    //std::cout << "SIM CODE:" << std::endl << m_SimCode << std::endl;
+    //std::cout << "THRESHOLD CONDITION CODE:" << std::endl << m_ThresholdConditionCode << std::endl;
 }

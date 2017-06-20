@@ -22,6 +22,9 @@ extern "C"
 // pugixml includes
 #include "pugixml/pugixml.hpp"
 
+// SpineMLCommon includes
+#include "spineMLUtils.h"
+
 // SpineML simulator includes
 #include "connectors.h"
 #include "logOutput.h"
@@ -31,6 +34,7 @@ extern "C"
 #include "modelPropertyUniformDistribution.h"
 #include "timer.h"
 
+using namespace SpineMLCommon;
 using namespace SpineMLSimulator;
 
 //----------------------------------------------------------------------------
@@ -172,7 +176,7 @@ std::unique_ptr<LogOutput> createLogOutput(const pugi::xml_node &node, void *mod
                                            const filesystem::path &basePath, const PopulationProperties &neuronProperties)
 {
     // Get name of target
-    std::string target = node.attribute("target").value();
+    std::string target = SpineMLUtils::getSafeName(node.attribute("target").value());
 
     // If this is a spike recorder
     std::string port = node.attribute("port").value();
@@ -347,7 +351,7 @@ int main(int argc, char *argv[])
             }
 
             // Read basic population properties
-            const auto *popName = neuron.attribute("name").value();
+            auto popName = SpineMLUtils::getSafeName(neuron.attribute("name").value());
             const unsigned int popSize = neuron.attribute("size").as_int();
             std::cout << "Population " << popName << " consisting of ";
             std::cout << popSize << " neurons" << std::endl;
@@ -364,13 +368,13 @@ int main(int argc, char *argv[])
         PopulationProperties weightUpdateProperties;
         for(auto population : networkSpineML.children("LL:Population")) {
             // Read source population name from neuron node
-            const auto *srcPopName = population.child("LL:Neuron").attribute("name").value();
+            auto srcPopName = SpineMLUtils::getSafeName(population.child("LL:Neuron").attribute("name").value());
             unsigned int srcPopSize = getNeuronPopSize(srcPopName, neuronPopulationSizes);
 
             // Loop through outgoing projections
             for(auto projection : population.children("LL:Projection")) {
                 // Read destination population name from projection
-                const auto *trgPopName = projection.attribute("dst_population").value();
+                auto trgPopName = SpineMLUtils::getSafeName(projection.attribute("dst_population").value());
                 unsigned int trgPopSize = getNeuronPopSize(trgPopName, neuronPopulationSizes);
 
                 std::cout << "Projection from population:" << srcPopName << "->" << trgPopName << std::endl;
