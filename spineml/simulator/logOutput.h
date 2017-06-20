@@ -9,6 +9,11 @@ namespace pugi
     class xml_node;
 }
 
+namespace filesystem
+{
+    class path;
+}
+
 //----------------------------------------------------------------------------
 // SpineMLSimulator::LogOutput
 //----------------------------------------------------------------------------
@@ -17,7 +22,7 @@ namespace SpineMLSimulator
 class LogOutput
 {
 public:
-    LogOutput(const pugi::xml_node &node, double dt);
+    LogOutput(const pugi::xml_node &node, double dt, const filesystem::path &basePath);
 
     //----------------------------------------------------------------------------
     // Declared virtuals

@@ -7,15 +7,22 @@
 // Standard C includes
 #include <cmath>
 
+// Filesystem includes
+#include "filesystem/path.h"
+
 // pugixml includes
 #include "pugixml/pugixml.hpp"
 
 //----------------------------------------------------------------------------
 // SpineMLSimulator::LogOutput
 //----------------------------------------------------------------------------
-SpineMLSimulator::LogOutput::LogOutput(const pugi::xml_node &node, double dt)
+SpineMLSimulator::LogOutput::LogOutput(const pugi::xml_node &node, double dt, const filesystem::path &basePath)
 {
-    m_Name = std::string(node.attribute("target").value()) + "_" + std::string(node.attribute("name").value());
+    // Combine node target and logger names to get file title
+    std::string fileTitle = std::string(node.attribute("target").value()) + "_" + std::string(node.attribute("name").value());
+
+    // Combine this with base path to get full file title
+    m_Name = (basePath / fileTitle).str();
     std::cout << "Output log:" << m_Name << std::endl;
 
     // Read start time

@@ -28,6 +28,7 @@ class LogOutputAnalogue : public LogOutput
 {
 public:
     LogOutputAnalogue(const pugi::xml_node &node, double dt,
+                      const filesystem::path &basePath,
                       const ModelProperty *modelProperty);
 
     //----------------------------------------------------------------------------

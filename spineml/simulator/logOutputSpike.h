@@ -20,7 +20,8 @@ namespace SpineMLSimulator
 class LogOutputSpike : public LogOutput
 {
 public:
-    LogOutputSpike(const pugi::xml_node &node, double dt, unsigned int *spikeQueuePtr,
+    LogOutputSpike(const pugi::xml_node &node, double dt,
+                   const filesystem::path &basePath, unsigned int *spikeQueuePtr,
                    unsigned int *hostSpikeCount, unsigned int *deviceSpikeCount,
                    unsigned int *hostSpikes, unsigned int *deviceSpikes);
 

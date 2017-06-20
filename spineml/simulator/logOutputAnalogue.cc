@@ -15,8 +15,9 @@
 // SpineMLSimulator::LogOutputAnalogue
 //----------------------------------------------------------------------------
 SpineMLSimulator::LogOutputAnalogue::LogOutputAnalogue(const pugi::xml_node &node, double dt,
+                                                       const filesystem::path &basePath,
                                                        const ModelProperty *modelProperty)
-    : LogOutput(node, dt), m_ModelProperty(modelProperty)
+    : LogOutput(node, dt, basePath), m_ModelProperty(modelProperty)
 {
     // If indices are specified
     auto indices = node.attribute("indices");

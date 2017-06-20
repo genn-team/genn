@@ -168,8 +168,8 @@ unsigned int initializeConnector(const pugi::xml_node &node, void *modelLibrary,
     throw std::runtime_error("No supported connection type found for projection");
 }
 
-std::unique_ptr<LogOutput> createLogOutput(const pugi::xml_node &node, void *modelLibrary,
-                                           double dt, const PopulationProperties &neuronProperties)
+std::unique_ptr<LogOutput> createLogOutput(const pugi::xml_node &node, void *modelLibrary, double dt,
+                                           const filesystem::path &basePath, const PopulationProperties &neuronProperties)
 {
     // Get name of target
     std::string target = node.attribute("target").value();
@@ -208,7 +208,7 @@ std::unique_ptr<LogOutput> createLogOutput(const pugi::xml_node &node, void *mod
         }
 
         // Create spike logger
-        return std::unique_ptr<LogOutput>(new LogOutputSpike(node, dt, spikeQueuePtr,
+        return std::unique_ptr<LogOutput>(new LogOutputSpike(node, dt, basePath, spikeQueuePtr,
                                                              *hostSpikeCount, *deviceSpikeCount,
                                                              *hostSpikes, *deviceSpikes));
     }
@@ -220,7 +220,8 @@ std::unique_ptr<LogOutput> createLogOutput(const pugi::xml_node &node, void *mod
             // If there is a model property object for this port return an analogue log output to read it
             auto portProperty = targetProperties->second.find(port);
             if(portProperty != targetProperties->second.end()) {
-                return std::unique_ptr<LogOutput>(new LogOutputAnalogue(node, dt, portProperty->second.get()));
+                return std::unique_ptr<LogOutput>(new LogOutputAnalogue(node, dt, basePath,
+                                                                        portProperty->second.get()));
             }
         }
     }
@@ -410,7 +411,7 @@ int main(int argc, char *argv[])
         // Loop through output loggers specified by experiment and create handler
         std::vector<std::unique_ptr<LogOutput>> loggers;
         for(auto logOutput : experiment.children("LogOutput")) {
-            loggers.push_back(createLogOutput(logOutput, modelLibrary, dt, neuronProperties));
+            loggers.push_back(createLogOutput(logOutput, modelLibrary, dt, basePath, neuronProperties));
         }
 
         auto simulation = experiment.child("Simulation");

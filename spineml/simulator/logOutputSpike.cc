@@ -6,10 +6,11 @@
 //----------------------------------------------------------------------------
 // SpineMLSimulator::LogOutputSpike
 //----------------------------------------------------------------------------
-SpineMLSimulator::LogOutputSpike::LogOutputSpike(const pugi::xml_node &node, double dt, unsigned int *spikeQueuePtr,
+SpineMLSimulator::LogOutputSpike::LogOutputSpike(const pugi::xml_node &node, double dt,
+                                                 const filesystem::path &basePath, unsigned int *spikeQueuePtr,
                                                  unsigned int *hostSpikeCount, unsigned int *deviceSpikeCount,
                                                  unsigned int *hostSpikes, unsigned int *deviceSpikes)
-    : LogOutput(node, dt), m_SpikeQueuePtr(spikeQueuePtr),
+    : LogOutput(node, dt, basePath), m_SpikeQueuePtr(spikeQueuePtr),
       m_HostSpikeCount(hostSpikeCount), m_DeviceSpikeCount(deviceSpikeCount),
       m_HostSpikes(hostSpikes), m_DeviceSpikes(deviceSpikes)
 {
