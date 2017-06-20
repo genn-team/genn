@@ -1,3 +1,5 @@
+#pragma once
+
 // Standard C++ includes
 #include <algorithm>
 
