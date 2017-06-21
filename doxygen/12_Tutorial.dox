@@ -95,7 +95,7 @@ void modelDefinition(NNmodel &model)
 
   model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::ExpCond>(
     "Pop1self", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
-    "Pop1", "Pop1",tenHHRingSimulation
+    "Pop1", "Pop1",
     {}, s_ini,
     ps_p, {});
   model.finalize();
@@ -208,10 +208,6 @@ int main()
       stepTimeGPU();
       
       pullPop1StateFromDevice();
-      if(glbSpkCntPop1[0] > 0)
-      {
-          printf("GADZOOKS!\n");
-      }
       os << t << " ";
       for (int j= 0; j < 10; j++) {
           os << VPop1[j] << " ";
