@@ -3,6 +3,7 @@
 // Standard C++ includes
 #include <functional>
 #include <map>
+#include <memory>
 
 // Forward declarations
 namespace pugi
@@ -10,13 +11,12 @@ namespace pugi
     class xml_node;
 }
 
-
 namespace SpineMLSimulator
 {
-namespace InputValue
-{
-    class Base;
-}
+    namespace InputValue
+    {
+        class Base;
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -29,14 +29,14 @@ namespace Input
 class Base
 {
 public:
-    Base(double dt, const pugi::xml_node &node, const InputValue::Base &value);
-
     //----------------------------------------------------------------------------
     // Declared virtuals
     //----------------------------------------------------------------------------
-    virtual void apply(double dt, unsigned int timestep, unsigned int numNeurons) = 0;
+    virtual void apply(double dt, unsigned int timestep) = 0;
 
 protected:
+     Base(double dt, const pugi::xml_node &node, std::unique_ptr<InputValue::Base> value);
+
     //----------------------------------------------------------------------------
     // Protected API
     //----------------------------------------------------------------------------
@@ -45,7 +45,7 @@ protected:
         return (timestep >= m_StartTimeStep && timestep < m_EndTimeStep);
     }
 
-    void updateValues(double dt, unsigned int timestep, unsigned int numNeurons,
+    void updateValues(double dt, unsigned int timestep,
                       std::function<void(unsigned int, double)> applyValueFunc) const;
 
 private:
@@ -55,7 +55,7 @@ private:
     unsigned int m_StartTimeStep;
     unsigned int m_EndTimeStep;
 
-    const InputValue::Base &m_Value;
+    std::unique_ptr<InputValue::Base> m_Value;
 };
 
 //----------------------------------------------------------------------------
@@ -63,12 +63,12 @@ private:
 //----------------------------------------------------------------------------
 class SpikeBase : public Base
 {
-public:
-    SpikeBase(double dt, const pugi::xml_node &node, const InputValue::Base &value,
+protected:
+    SpikeBase(double dt, const pugi::xml_node &node, std::unique_ptr<InputValue::Base> value,
               unsigned int *spikeQueuePtr,
               unsigned int *hostSpikeCount, unsigned int *deviceSpikeCount,
               unsigned int *hostSpikes, unsigned int *deviceSpikes);
-protected:
+
     //----------------------------------------------------------------------------
     // Protected API
     //----------------------------------------------------------------------------
@@ -94,7 +94,7 @@ private:
 class RegularSpikeRate : public SpikeBase
 {
 public:
-    RegularSpikeRate(double dt, const pugi::xml_node &node, const InputValue::Base &value,
+    RegularSpikeRate(double dt, const pugi::xml_node &node, std::unique_ptr<InputValue::Base> value,
                      unsigned int *spikeQueuePtr,
                      unsigned int *hostSpikeCount, unsigned int *deviceSpikeCount,
                      unsigned int *hostSpikes, unsigned int *deviceSpikes);
@@ -102,7 +102,7 @@ public:
     //----------------------------------------------------------------------------
     // SpikeBase virtuals
     //----------------------------------------------------------------------------
-    virtual void apply(double dt, unsigned int timestep, unsigned int numNeurons) override;
+    virtual void apply(double dt, unsigned int timestep) override;
 
 private:
     //----------------------------------------------------------------------------
@@ -124,7 +124,7 @@ private:
 class SpikeTime : public SpikeBase
 {
 public:
-    SpikeTime(double dt, const pugi::xml_node &node, const InputValue::Base &value,
+    SpikeTime(double dt, const pugi::xml_node &node, std::unique_ptr<InputValue::Base> value,
               unsigned int *spikeQueuePtr,
               unsigned int *hostSpikeCount, unsigned int *deviceSpikeCount,
               unsigned int *hostSpikes, unsigned int *deviceSpikes);
@@ -132,7 +132,7 @@ public:
     //----------------------------------------------------------------------------
     // SpikeBase virtuals
     //----------------------------------------------------------------------------
-    virtual void apply(double dt, unsigned int timestep, unsigned int numNeurons) override;
+    virtual void apply(double dt, unsigned int timestep) override;
 
 private:
 

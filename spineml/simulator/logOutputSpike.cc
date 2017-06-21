@@ -24,17 +24,20 @@ void SpineMLSimulator::LogOutputSpike::record(double dt, unsigned int timestep)
 {
     // If we should be recording this timestep
     if(shouldRecord(timestep)) {
+        // Determine current spike queue
+        const unsigned int spikeQueueIndex = (m_SpikeQueuePtr == NULL) ? 0 : *m_SpikeQueuePtr;
+
 #ifndef CPU_ONLY
         // Copy spike count from spike queue position to host
-        CHECK_CUDA_ERRORS(cudaMemcpy(&m_HostSpikeCount[*m_SpikeQueuePtr], &m_DeviceSpikeCount[*m_SpikeQueuePtr],
+        CHECK_CUDA_ERRORS(cudaMemcpy(&m_HostSpikeCount[spikeQueueIndex], &m_DeviceSpikeCount[spikeQueueIndex],
                                      sizeof(unsigned int), cudaMemcpyDeviceToHost));
 
         // Copy this many spikes to host
         CHECK_CUDA_ERRORS(cudaMemcpy(m_HostSpikes, m_DeviceSpikes,
-                                     sizeof(unsigned int) * m_HostSpikeCount[*m_SpikeQueuePtr], cudaMemcpyDeviceToHost));
+                                     sizeof(unsigned int) * m_HostSpikeCount[spikeQueueIndex], cudaMemcpyDeviceToHost));
 #endif  // CPU_ONLY
         const double t = dt * (double)timestep;
-        for(unsigned int i = 0; i < m_HostSpikeCount[*m_SpikeQueuePtr]; i++)
+        for(unsigned int i = 0; i < m_HostSpikeCount[spikeQueueIndex]; i++)
         {
             m_File << t << "," << m_HostSpikes[i] << std::endl;
         }

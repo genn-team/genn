@@ -24,21 +24,23 @@ public:
     //------------------------------------------------------------------------
     // Declared virtuals
     //------------------------------------------------------------------------
-    virtual void updateValues(double dt, unsigned int timestep, unsigned int numNeurons,
+    virtual void updateValues(double dt, unsigned int timestep,
                               std::function<void(unsigned int, double)> applyValueFunc) const = 0;
 
 protected:
-    Base(const pugi::xml_node &node);
+    Base(unsigned int numNeurons, const pugi::xml_node &node);
 
     //------------------------------------------------------------------------
     // Protected API
     //------------------------------------------------------------------------
     const std::vector<unsigned int> &getTargetIndices() const{ return m_TargetIndices; }
+    unsigned int getNumNeurons() const{ return m_NumNeurons; }
 
 private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
+    unsigned int m_NumNeurons;
     std::vector<unsigned int> m_TargetIndices;
 };
 
@@ -48,12 +50,12 @@ private:
 class ScalarBase : public Base
 {
 protected:
-    ScalarBase(const pugi::xml_node &node) : Base(node){}
+    ScalarBase(unsigned int numNeurons, const pugi::xml_node &node) : Base(numNeurons, node){}
 
     //----------------------------------------------------------------------------
     // Protected API
     //----------------------------------------------------------------------------
-    void applyScalar(unsigned int numNeurons, double value,
+    void applyScalar(double value,
                      std::function<void(unsigned int, double)> applyValueFunc) const;
 };
 
@@ -63,15 +65,15 @@ protected:
 class ArrayBase : public Base
 {
 protected:
-    ArrayBase(const pugi::xml_node &node) : Base(node){}
+    ArrayBase(unsigned int numNeurons, const pugi::xml_node &node) : Base(numNeurons, node){}
 
     //----------------------------------------------------------------------------
     // Protected API
     //----------------------------------------------------------------------------
-    void applyArray(unsigned int numNeurons, const std::vector<double> &values,
+    void applyArray(const std::vector<double> &values,
                     std::function<void(unsigned int, double)> applyValueFunc) const;
 
-    bool checkArrayDimensions(unsigned int numNeurons, const std::vector<double> &values) const;
+    bool checkArrayDimensions(const std::vector<double> &values) const;
 
 };
 
@@ -86,7 +88,7 @@ public:
     //------------------------------------------------------------------------
     // InputValue virtuals
     //------------------------------------------------------------------------
-    virtual void updateValues(double dt, unsigned int timestep, unsigned int numNeurons,
+    virtual void updateValues(double dt, unsigned int timestep,
                               std::function<void(unsigned int, double)> applyValueFunc) const override;
 private:
     //------------------------------------------------------------------------
@@ -106,7 +108,7 @@ public:
     //------------------------------------------------------------------------
     // InputValue virtuals
     //------------------------------------------------------------------------
-    virtual void updateValues(double dt, unsigned int timestep, unsigned int numNeurons,
+    virtual void updateValues(double dt, unsigned int timestep,
                               std::function<void(unsigned int, double)> applyValueFunc) const override;
 private:
     //------------------------------------------------------------------------
@@ -126,7 +128,7 @@ public:
     //------------------------------------------------------------------------
     // InputValue virtuals
     //------------------------------------------------------------------------
-    virtual void updateValues(double dt, unsigned int timestep, unsigned int numNeurons,
+    virtual void updateValues(double dt, unsigned int timestep,
                               std::function<void(unsigned int, double)> applyValueFunc) const override;
 private:
     //----------------------------------------------------------------------------

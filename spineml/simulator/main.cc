@@ -27,6 +27,8 @@ extern "C"
 
 // SpineML simulator includes
 #include "connectors.h"
+#include "input.h"
+#include "inputValue.h"
 #include "logOutput.h"
 #include "logOutputAnalogue.h"
 #include "logOutputSpike.h"
@@ -80,6 +82,41 @@ unsigned int getNeuronPopSize(const std::string &popName, const std::map<std::st
     else {
         return pop->second;
     }
+}
+
+std::tuple<unsigned int*, unsigned int*, unsigned int*, unsigned int*, unsigned int*> getNeuronPopSpikeVars(void *modelLibrary, const std::string &popName)
+{
+    // Get pointers to spike counts in model library
+    unsigned int **hostSpikeCount;
+    unsigned int **deviceSpikeCount;
+    std::tie(hostSpikeCount, deviceSpikeCount) = getStateVar<unsigned int*>(modelLibrary, "glbSpkCnt" + popName);
+#ifdef CPU_ONLY
+    if(hostSpikeCount == NULL) {
+#else
+    if(hostSpikeCount == NULL || deviceSpikeCount == NULL) {
+#endif
+        throw std::runtime_error("Cannot find spike count variable for population:" + popName);
+    }
+
+    // Get pointers to spike counts in model library
+    unsigned int **hostSpikes;
+    unsigned int **deviceSpikes;
+    std::tie(hostSpikes, deviceSpikes) = getStateVar<unsigned int*>(modelLibrary, "glbSpk" + popName);
+#ifdef CPU_ONLY
+    if(hostSpikes == NULL) {
+#else
+    if(hostSpikes == NULL || deviceSpikes == NULL) {
+#endif
+        throw std::runtime_error("Cannot find spike variable for population:" + popName);
+    }
+
+    // Get spike queue
+    unsigned int *spikeQueuePtr = (unsigned int*)dlsym(modelLibrary, ("spkQuePtr" + popName).c_str());
+
+    // Return pointers in tutple
+    return std::make_tuple(*hostSpikeCount, *deviceSpikeCount,
+                           *hostSpikes, *deviceSpikes,
+                           spikeQueuePtr);
 }
 
 std::unique_ptr<ModelProperty> createModelProperty(const pugi::xml_node &node, scalar *hostStateVar, scalar *deviceStateVar, unsigned int size)
@@ -172,49 +209,123 @@ unsigned int initializeConnector(const pugi::xml_node &node, void *modelLibrary,
     throw std::runtime_error("No supported connection type found for projection");
 }
 
+std::unique_ptr<InputValue::Base> createInputValue(double dt, unsigned int numNeurons, const pugi::xml_node &node)
+{
+    if(strcmp(node.name(), "ConstantInput") == 0) {
+        return std::unique_ptr<InputValue::Base>(new InputValue::Constant(dt, numNeurons, node));
+    }
+    else if(strcmp(node.name(), "ConstantArrayInput") == 0) {
+        return std::unique_ptr<InputValue::Base>(new InputValue::ConstantArray(dt, numNeurons, node));
+    }
+    else if(strcmp(node.name(), "TimeVaryingInput") == 0) {
+        return std::unique_ptr<InputValue::Base>(new InputValue::TimeVarying(dt, numNeurons, node));
+    }
+    //else if(strcmp(node.name(), "TimeVaryingArrayInput") == 0) {
+    //    return std::unique_ptr<InputValue::Base>(new InputValue::TimeVaryingArray(dt, numNeurons, node));
+    //}
+    else {
+        throw std::runtime_error("Input value type '" + std::string(node.name()) + "' not supported");
+    }
+
+}
+
+std::unique_ptr<Input::Base> createInput(const pugi::xml_node &node, void *modelLibrary, double dt,
+                                         const std::map<std::string, unsigned int> &neuronPopulationSizes,
+                                         const PopulationProperties &neuronProperties)
+{
+
+    // Get name of target
+    std::string target = SpineMLUtils::getSafeName(node.attribute("target").value());
+
+    // **TODO** handle weight update model and postsynaptic update model targets
+
+    // Find size of target population
+    auto targetPopSize = neuronPopulationSizes.find(target);
+    if(targetPopSize == neuronPopulationSizes.end()) {
+        throw std::runtime_error("Cannot find neural population '" + target + "'");
+    }
+
+    // Create suitable input value
+    std::unique_ptr<InputValue::Base> inputValue = createInputValue(dt, targetPopSize->second, node);
+
+    // If this is a spike recorder
+    // **TODO** better test - it is only convention that port is called spike
+    std::string port = node.attribute("port").value();
+    if(port == "spike") {
+        // Get host and device (if applicable) pointers to spike counts, spikes and queue
+        unsigned int *hostSpikeCount;
+        unsigned int *deviceSpikeCount;
+        unsigned int *hostSpikes;
+        unsigned int *deviceSpikes;
+        unsigned int *spikeQueuePtr;
+        std::tie(hostSpikeCount, deviceSpikeCount, hostSpikes, deviceSpikes, spikeQueuePtr) = getNeuronPopSpikeVars(modelLibrary, target);
+
+        // If this input has a rate distribution
+        auto rateDistribution = node.child("rate_based_input");
+        if(rateDistribution) {
+            if(strcmp(rateDistribution.value(), "regular") == 0) {
+                return std::unique_ptr<Input::Base>(
+                    new Input::RegularSpikeRate(dt, node, std::move(inputValue),
+                                                spikeQueuePtr,
+                                                hostSpikeCount, deviceSpikeCount,
+                                                hostSpikes, deviceSpikes));
+            }
+            //else if(strcmp(rateDistribution.value(), "poisson") == 0) {
+            //}
+            else {
+                throw std::runtime_error("Unsupport spike rate distribution '" + std::string(rateDistribution.value()) + "'");
+            }
+        }
+        // Otherwise, create an exact spike-time input
+        else {
+            return std::unique_ptr<Input::Base>(
+                new Input::SpikeTime(dt, node, std::move(inputValue),
+                                     spikeQueuePtr,
+                                     hostSpikeCount, deviceSpikeCount,
+                                     hostSpikes, deviceSpikes));
+        }
+    }
+    // Otherwise we assume it's a neuron property
+    /*else {
+        // If there is a dictionary of properties for target population
+        auto targetProperties = neuronProperties.find(target);
+        if(targetProperties != neuronProperties.end()) {
+            // If there is a model property object for this port return an analogue input to stimulate it
+            auto portProperty = targetProperties->second.find(port);
+            if(portProperty != targetProperties->second.end()) {
+                // **TODO**
+            }
+        }
+    }*/
+
+    throw std::runtime_error("No supported input found");
+
+}
+
 std::unique_ptr<LogOutput> createLogOutput(const pugi::xml_node &node, void *modelLibrary, double dt,
                                            const filesystem::path &basePath, const PopulationProperties &neuronProperties)
 {
     // Get name of target
     std::string target = SpineMLUtils::getSafeName(node.attribute("target").value());
 
+    // **TODO** handle weight update model and postsynaptic update model targets
+
     // If this is a spike recorder
+    // **TODO** better test - it is only convention that port is called spike
     std::string port = node.attribute("port").value();
     if(port == "spike") {
-        // Get pointers to spike counts in model library
-        unsigned int **hostSpikeCount;
-        unsigned int **deviceSpikeCount;
-        std::tie(hostSpikeCount, deviceSpikeCount) = getStateVar<unsigned int*>(modelLibrary, "glbSpkCnt" + target);
-#ifdef CPU_ONLY
-        if(hostSpikeCount == NULL) {
-#else
-        if(hostSpikeCount == NULL || deviceSpikeCount == NULL) {
-#endif
-            throw std::runtime_error("Cannot find spike count variable for population:" + target);
-        }
-
-        // Get pointers to spike counts in model library
-        unsigned int **hostSpikes;
-        unsigned int **deviceSpikes;
-        std::tie(hostSpikes, deviceSpikes) = getStateVar<unsigned int*>(modelLibrary, "glbSpk" + target);
-#ifdef CPU_ONLY
-        if(hostSpikes == NULL) {
-#else
-        if(hostSpikes == NULL || deviceSpikes == NULL) {
-#endif
-            throw std::runtime_error("Cannot find spike variable for population:" + target);
-        }
-
-         // Get host statevar
-        unsigned int *spikeQueuePtr = (unsigned int*)dlsym(modelLibrary, ("spkQuePtr" + target).c_str());
-        if(spikeQueuePtr == NULL) {
-            throw std::runtime_error("Cannot find spike queue pointer for population:" + target);
-        }
+        // Get host and device (if applicable) pointers to spike counts, spikes and queue
+        unsigned int *hostSpikeCount;
+        unsigned int *deviceSpikeCount;
+        unsigned int *hostSpikes;
+        unsigned int *deviceSpikes;
+        unsigned int *spikeQueuePtr;
+        std::tie(hostSpikeCount, deviceSpikeCount, hostSpikes, deviceSpikes, spikeQueuePtr) = getNeuronPopSpikeVars(modelLibrary, target);
 
         // Create spike logger
         return std::unique_ptr<LogOutput>(new LogOutputSpike(node, dt, basePath, spikeQueuePtr,
-                                                             *hostSpikeCount, *deviceSpikeCount,
-                                                             *hostSpikes, *deviceSpikes));
+                                                             hostSpikeCount, deviceSpikeCount,
+                                                             hostSpikes, deviceSpikes));
     }
     // Otherwise we assume it's a neuron property
     else {
@@ -417,6 +528,17 @@ int main(int argc, char *argv[])
             loggers.push_back(createLogOutput(logOutput, modelLibrary, dt, basePath, neuronProperties));
         }
 
+        // Loop through inputs specified by experiment and create handlers
+        // **YUCK** this is a gross way of testing name
+        std::vector<std::unique_ptr<Input::Base>> inputs;
+        for(auto node : experiment.children()) {
+            std::string nodeType = node.name();
+            if(nodeType.size() > 5 && nodeType.substr(nodeType.size() - 5) == "Input") {
+                inputs.push_back(createInput(node, modelLibrary, dt,
+                                             neuronPopulationSizes, neuronProperties));
+            }
+        }
+
         auto simulation = experiment.child("Simulation");
         if(!simulation) {
             throw std::runtime_error("No 'Simulation' node found in experiment");
@@ -433,6 +555,12 @@ int main(int argc, char *argv[])
         // Loop through time
         for(unsigned int i = 0; i < numTimeSteps; i++)
         {
+            // Apply inputs
+            for(auto &input : inputs)
+            {
+                input->apply(dt, i);
+            }
+
             // Advance time
 #ifdef CPU_ONLY
             stepTimeCPU();
