@@ -83,6 +83,9 @@ void SpineMLSimulator::Input::SpikeBase::uploadSpikes()
         // Copy this many spikes to device
         CHECK_CUDA_ERRORS(cudaMemcpy(m_DeviceSpikes, m_HostSpikes,
                                     sizeof(unsigned int) * m_HostSpikeCount[spikeQueueIndex], cudaMemcpyHostToDevice));
+
+        // Zero host spike count
+        m_HostSpikeCount[getSpikeQueueIndex()] = 0;
     }
 #endif  // CPU_ONLY
 }
