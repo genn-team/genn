@@ -54,7 +54,7 @@ unsigned int SpineMLSimulator::Connectors::fixedProbabilitySparse(const pugi::xm
         }
     }
 
-    std::cout << "\t\t" << "Fixed probability connector with " << tempInd.size() << " sparse synapses" << std::endl;
+    std::cout << "\tFixed probability connector with " << tempInd.size() << " sparse synapses" << std::endl;
 
     // Add final index
     tempIndInG[numPre] = tempInd.size();
