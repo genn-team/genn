@@ -41,8 +41,15 @@ if [[ -z "$GENN_PATH" ]]; then
     if [[ $(uname -s) == "Linux" ]]; then
         echo "GENN_PATH is not defined - trying to auto-detect"
         export GENN_PATH="$(readlink -f $(dirname $0)/../..)"
+        echo "GENN_PATH is $GENN_PATH" 
     else
-        genn_error $LINENO 1 "GENN_PATH is not defined"
+        if [[ $(uname -s) == "Darwin" ]]; then
+            echo "GENN_PATH is not defined - trying to auto-detect"
+            export GENN_PATH="$(cd $(dirname $0)/../.. && pwd -P)"
+            echo "GENN_PATH is $GENN_PATH"
+        else
+            genn_error $LINENO 1 "GENN_PATH is not defined"
+        fi
     fi
 fi
 if [[ -z "$MODEL" ]]; then

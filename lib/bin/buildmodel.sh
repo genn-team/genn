@@ -45,11 +45,18 @@ fi
 
 if [[ "$GENN_PATH" == "" ]]; then
     if [[ $(uname -s) == "Linux" ]]; then
-	echo "GENN_PATH is not defined. Auto-detecting..."
+	echo "GENN_PATH is not defined - trying to auto-detect"
 	export GENN_PATH=$(readlink -f $(dirname $0)/../..)
+        echo "GENN_PATH is $GENN_PATH"
     else
-	echo "buildmodel.sh: Error: GENN_PATH is not defined"
-	exit 1	
+        if [[ $(uname -s) == "Darwin" ]]; then
+            echo "GENN_PATH is not defined - trying to auto-detect"
+            export GENN_PATH="$(cd $(dirname $0)/../.. && pwd -P)"
+            echo "GENN_PATH is $GENN_PATH"
+        else   
+	    echo "buildmodel.sh: Error: GENN_PATH is not defined"
+	    exit 1	
+        fi
     fi
 fi
 
