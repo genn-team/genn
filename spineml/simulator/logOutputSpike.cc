@@ -15,9 +15,7 @@ SpineMLSimulator::LogOutputSpike::LogOutputSpike(const pugi::xml_node &node, dou
       m_HostSpikes(hostSpikes), m_DeviceSpikes(deviceSpikes)
 {
     // Open CSV file and write header
-    // **TEMP**
     m_File.open(getName() + ".csv");
-    m_File << "Time(ms), Neuron ID" << std::endl;
 }
 //----------------------------------------------------------------------------
 void SpineMLSimulator::LogOutputSpike::record(double dt, unsigned int timestep)

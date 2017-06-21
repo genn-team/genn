@@ -6,9 +6,6 @@ import sys
 with open(sys.argv[1], "rb") as spikes_csv_file:
     spikes_csv_reader = csv.reader(spikes_csv_file, delimiter = ",")
    
-    # Skip headers
-    spikes_csv_reader.next()
-    
     # Read data and zip into columns
     spikes_data_columns = zip(*spikes_csv_reader)
 
