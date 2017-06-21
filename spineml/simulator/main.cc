@@ -299,7 +299,6 @@ int main(int argc, char *argv[])
             throw std::runtime_error("No 'Model' node found in experiment");
         }
 
-
         // Build path to network from URL in model
         auto networkPath = basePath / model.attribute("network_layer_url").value();
         std::cout << "Experiment using model:" << networkPath << std::endl;

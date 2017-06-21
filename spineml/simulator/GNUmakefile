@@ -40,7 +40,7 @@ endif
 
 MODEL_PROPERTY_SOURCES        := simulator/modelProperty.cc simulator/modelPropertyFixed.cc simulator/modelPropertyUniformDistribution.cc
 LOG_OUTPUT_SOURCES            := simulator/logOutput.cc simulator/logOutputAnalogue.cc simulator/logOutputSpike.cc
-SIMULATE_SPINEML_SOURCES      := common/pugixml/pugixml.cpp simulator/main.cc simulator/connectors.cc simulator/inputValue.cc $(MODEL_PROPERTY_SOURCES) $(LOG_OUTPUT_SOURCES)
+SIMULATE_SPINEML_SOURCES      := common/pugixml/pugixml.cpp simulator/main.cc simulator/connectors.cc simulator/inputValue.cc simulator/input.cc $(MODEL_PROPERTY_SOURCES) $(LOG_OUTPUT_SOURCES)
 SIMULATE_SPINEML_SOURCES      :=$(addprefix $(SPINEML_PATH)/,$(SIMULATE_SPINEML_SOURCES))
 
 INCLUDE_FLAGS                 += -I $(SIMULATE_SPINEML_PATH) -I $(COMMON_SPINEML_PATH)

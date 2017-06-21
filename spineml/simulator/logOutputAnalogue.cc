@@ -22,6 +22,7 @@ SpineMLSimulator::LogOutputAnalogue::LogOutputAnalogue(const pugi::xml_node &nod
     // If indices are specified
     auto indices = node.attribute("indices");
     if(indices) {
+        // **TODO** maybe move somewhere common
         std::stringstream indicesStream(indices.value());
         while(indicesStream.good()) {
             std::string index;
