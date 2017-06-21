@@ -261,7 +261,7 @@ std::unique_ptr<Input::Base> createInput(const pugi::xml_node &node, void *model
         std::tie(hostSpikeCount, deviceSpikeCount, hostSpikes, deviceSpikes, spikeQueuePtr) = getNeuronPopSpikeVars(modelLibrary, target);
 
         // If this input has a rate distribution
-        auto rateDistribution = node.child("rate_based_input");
+        auto rateDistribution = node.attribute("rate_based_input");
         if(rateDistribution) {
             if(strcmp(rateDistribution.value(), "regular") == 0) {
                 return std::unique_ptr<Input::Base>(

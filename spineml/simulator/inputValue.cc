@@ -169,6 +169,7 @@ void SpineMLSimulator::InputValue::TimeVarying::updateValues(double, unsigned in
     // If there is a time value to apply at this timestep, do so
     auto timeValue = m_TimeValues.find(timestep);
     if(timeValue != m_TimeValues.end()) {
+        std::cout << "\tTimestep:" << timestep << ", applying:" << timeValue->second << std::endl;
         applyScalar(timeValue->second, applyValueFunc);
     }
 }
