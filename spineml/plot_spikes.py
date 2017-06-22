@@ -16,7 +16,8 @@ with open(sys.argv[1], "rb") as spikes_csv_file:
     # Determine ranges
     max_time = np.amax(spike_times);
     max_neuron = np.amax(spike_neuron_id)
-    
+    print max_time, max_neuron
+
     # Create plot
     figure, axes = plt.subplots(2, sharex=True)
 
@@ -25,8 +26,11 @@ with open(sys.argv[1], "rb") as spikes_csv_file:
 
     # Plot rates
     # **NOTE** using max_neuron here potentially isn't quite right
-    bins = np.arange(0, max_time + 1, 10)
-    rate = np.histogram(spike_times, bins=bins)[0] * (1000.0 / 10.0) * (1.0 / float(max_neuron))
+    dt = 0.1
+    bin_timesteps = 10
+    bin_time = dt * bin_timesteps
+    bins = np.arange(0, max_time + dt, bin_time)
+    rate = np.histogram(spike_times, bins=bins)[0] * (1000.0 / bin_time) * (1.0 / float(max_neuron))
     axes[1].plot(bins[0:-1], rate)
 
     axes[0].set_title("Spikes")

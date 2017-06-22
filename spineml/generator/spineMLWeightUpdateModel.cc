@@ -8,8 +8,7 @@
 #include "pugixml/pugixml.hpp"
 
 // Spine ML generator includes
-#include "objectHandlerCondition.h"
-#include "objectHandlerTimeDerivative.h"
+#include "objectHandler.h"
 
 //----------------------------------------------------------------------------
 // Anonymous namespace
@@ -19,13 +18,13 @@ namespace
 //----------------------------------------------------------------------------
 // ObjectHandlerEvent
 //----------------------------------------------------------------------------
-class ObjectHandlerEvent : public SpineMLGenerator::ObjectHandler
+class ObjectHandlerEvent : public SpineMLGenerator::ObjectHandler::Base
 {
 public:
     ObjectHandlerEvent(SpineMLGenerator::CodeStream &codeStream) : m_CodeStream(codeStream){}
 
     //------------------------------------------------------------------------
-    // ObjectHandler virtuals
+    // ObjectHandler::Base virtuals
     //------------------------------------------------------------------------
     virtual void onObject(const pugi::xml_node &node, unsigned int currentRegimeID,
                           unsigned int targetRegimeID)
@@ -102,10 +101,10 @@ SpineMLGenerator::SpineMLWeightUpdateModel::SpineMLWeightUpdateModel(const std::
         };
 
     // Generate model code using specified condition handler
-    ObjectHandlerError objectHandlerError;
-    ObjectHandlerCondition objectHandlerCondition(synapseDynamicsStream);
+    ObjectHandler::Error objectHandlerError;
+    ObjectHandler::Condition objectHandlerCondition(synapseDynamicsStream);
     ObjectHandlerEvent objectHandlerEvent(simCodeStream);
-    ObjectHandlerTimeDerivative objectHandlerTimeDerivative(synapseDynamicsStream);
+    ObjectHandler::TimeDerivative objectHandlerTimeDerivative(synapseDynamicsStream);
     const bool multipleRegimes = generateModelCode(componentClass, objectHandlerEvent,
                                                    objectHandlerCondition, objectHandlerError,
                                                    objectHandlerTimeDerivative,

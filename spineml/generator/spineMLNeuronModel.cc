@@ -11,8 +11,7 @@
 #include "pugixml/pugixml.hpp"
 
 // Spine ML generator includes
-#include "objectHandlerCondition.h"
-#include "objectHandlerTimeDerivative.h"
+#include "objectHandler.h"
 
 //----------------------------------------------------------------------------
 // Anonymous namespace
@@ -22,20 +21,20 @@ namespace
 //----------------------------------------------------------------------------
 // ObjectHandlerNeuronCondition
 //----------------------------------------------------------------------------
-class ObjectHandlerNeuronCondition : public SpineMLGenerator::ObjectHandlerCondition
+class ObjectHandlerNeuronCondition : public SpineMLGenerator::ObjectHandler::Condition
 {
 public:
     ObjectHandlerNeuronCondition(SpineMLGenerator::CodeStream &codeStream)
-        : ObjectHandlerCondition(codeStream){}
+        : SpineMLGenerator::ObjectHandler::Condition(codeStream){}
 
     //----------------------------------------------------------------------------
-    // SpineMLGenerator::ObjectHandlerCondition virtuals
+    // SpineMLGenerator::ObjectHandler::Condition virtuals
     //----------------------------------------------------------------------------
     void onObject(const pugi::xml_node &node, unsigned int currentRegimeID,
                   unsigned int targetRegimeID)
     {
         // Superclass
-        SpineMLGenerator::ObjectHandlerCondition::onObject(node, currentRegimeID,
+        SpineMLGenerator::ObjectHandler::Condition::onObject(node, currentRegimeID,
                                                            targetRegimeID);
 
         // If this condition emits a spike
@@ -104,9 +103,9 @@ SpineMLGenerator::SpineMLNeuronModel::SpineMLNeuronModel(const std::string &url,
         };
 
     // Generate model code using specified condition handler
-    ObjectHandlerError objectHandlerError;
+    ObjectHandler::Error objectHandlerError;
     ObjectHandlerNeuronCondition objectHandlerCondition(simCodeStream);
-    ObjectHandlerTimeDerivative objectHandlerTimeDerivative(simCodeStream);
+    ObjectHandler::TimeDerivative objectHandlerTimeDerivative(simCodeStream);
     const bool multipleRegimes = generateModelCode(componentClass, objectHandlerError,
                                                    objectHandlerCondition, objectHandlerError,
                                                    objectHandlerTimeDerivative,

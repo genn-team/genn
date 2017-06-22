@@ -15,6 +15,15 @@
 #include "codeStream.h"
 #include "newModels.h"
 
+// Forward declarations
+namespace SpineMLGenerator
+{
+    namespace ObjectHandler
+    {
+        class Base;
+    }
+}
+
 //----------------------------------------------------------------------------
 // SpineMLGenerator::ParamValues
 //----------------------------------------------------------------------------
@@ -99,39 +108,13 @@ private:
 };
 
 //------------------------------------------------------------------------
-// ObjectHandler
-//------------------------------------------------------------------------
-class ObjectHandler
-{
-public:
-    //------------------------------------------------------------------------
-    // Declared virtuals
-    //------------------------------------------------------------------------
-    virtual void onObject(const pugi::xml_node &node, unsigned int currentRegimeID,
-                          unsigned int targetRegimeID) = 0;
-};
-
-//------------------------------------------------------------------------
-// ObjectHandlerError
-//------------------------------------------------------------------------
-class ObjectHandlerError : public ObjectHandler
-{
-public:
-    //------------------------------------------------------------------------
-    // ObjectHandler virtuals
-    //------------------------------------------------------------------------
-    virtual void onObject(const pugi::xml_node &node, unsigned int currentRegimeID,
-                          unsigned int targetRegimeID);
-};
-
-//------------------------------------------------------------------------
 // Helper functions
 //------------------------------------------------------------------------
 //!< Generate model code from 'componentClass' node using specified object handlers
 //!< to process various components e.g. to generate GeNN code strings
-bool generateModelCode(const pugi::xml_node &componentClass, ObjectHandler &objectHandlerEvent,
-                       ObjectHandler &objectHandlerCondition, ObjectHandler &objectHandlerImpulse,
-                       ObjectHandler &objectHandlerTimeDerivative,
+bool generateModelCode(const pugi::xml_node &componentClass, ObjectHandler::Base &objectHandlerEvent,
+                       ObjectHandler::Base &objectHandlerCondition, ObjectHandler::Base &objectHandlerImpulse,
+                       ObjectHandler::Base &objectHandlerTimeDerivative,
                        std::function<void(bool, unsigned int)> regimeEndFunc);
 
 //!< Search through code for references to named variable, rename it and wrap in GeNN's $(XXXX) tags

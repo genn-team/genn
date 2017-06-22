@@ -5,6 +5,9 @@
 #include <iostream>
 #include <regex>
 
+// SpineML generator includes
+#include "objectHandler.h"
+
 //----------------------------------------------------------------------------
 // SpineMLGenerator::ParamValues
 //----------------------------------------------------------------------------
@@ -93,19 +96,11 @@ void SpineMLGenerator::CodeStream::onRegimeEnd(bool multipleRegimes, unsigned in
 }
 
 //----------------------------------------------------------------------------
-// SpineMLGenerator::ObjectHandlerError
-//----------------------------------------------------------------------------
-void SpineMLGenerator::ObjectHandlerError::onObject(const pugi::xml_node &node, unsigned int, unsigned int)
-{
-    throw std::runtime_error("GeNN cannot handle " + std::string(node.name()) + " objects in this context");
-}
-
-//----------------------------------------------------------------------------
 // Helper functions
 //----------------------------------------------------------------------------
-bool SpineMLGenerator::generateModelCode(const pugi::xml_node &componentClass, ObjectHandler &objectHandlerEvent,
-                                         ObjectHandler &objectHandlerCondition, ObjectHandler &objectHandlerImpulse,
-                                         ObjectHandler &objectHandlerTimeDerivative,
+bool SpineMLGenerator::generateModelCode(const pugi::xml_node &componentClass, ObjectHandler::Base &objectHandlerEvent,
+                                         ObjectHandler::Base &objectHandlerCondition, ObjectHandler::Base &objectHandlerImpulse,
+                                         ObjectHandler::Base &objectHandlerTimeDerivative,
                                          std::function<void(bool, unsigned int)> regimeEndFunc)
 {
     std::cout << "\t\tModel name:" << componentClass.attribute("name").value() << std::endl;
