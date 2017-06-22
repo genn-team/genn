@@ -98,8 +98,8 @@ SpineMLSimulator::InputValue::Constant::Constant(double, unsigned int numNeurons
     std::cout << "\tConstant value:" << m_Value << std::endl;
 }
 //------------------------------------------------------------------------
-void SpineMLSimulator::InputValue::Constant::updateValues(double, unsigned int timestep,
-                                                          std::function<void(unsigned int, double)> applyValueFunc) const
+void SpineMLSimulator::InputValue::Constant::update(double, unsigned int timestep,
+                                                    std::function<void(unsigned int, double)> applyValueFunc) const
 {
     // If this is the first timestep, apply constant value
     if(timestep == 0) {
@@ -133,8 +133,8 @@ SpineMLSimulator::InputValue::ConstantArray::ConstantArray(double, unsigned int 
 
 }
 //------------------------------------------------------------------------
-void SpineMLSimulator::InputValue::ConstantArray::updateValues(double, unsigned int timestep,
-                                                               std::function<void(unsigned int, double)> applyValueFunc) const
+void SpineMLSimulator::InputValue::ConstantArray::update(double, unsigned int timestep,
+                                                         std::function<void(unsigned int, double)> applyValueFunc) const
 {
     // If this is the first timestep, apply array of values
     if(timestep == 0) {
@@ -163,8 +163,8 @@ SpineMLSimulator::InputValue::TimeVarying::TimeVarying(double dt, unsigned int n
 
 }
 //------------------------------------------------------------------------
-void SpineMLSimulator::InputValue::TimeVarying::updateValues(double, unsigned int timestep,
-                                                             std::function<void(unsigned int, double)> applyValueFunc) const
+void SpineMLSimulator::InputValue::TimeVarying::update(double, unsigned int timestep,
+                                                       std::function<void(unsigned int, double)> applyValueFunc) const
 {
     // If there is a time value to apply at this timestep, do so
     auto timeValue = m_TimeValues.find(timestep);

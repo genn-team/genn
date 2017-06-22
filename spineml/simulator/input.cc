@@ -47,7 +47,7 @@ SpineMLSimulator::Input::Base::Base(double dt, const pugi::xml_node &node, std::
 void SpineMLSimulator::Input::Base::updateValues(double dt, unsigned int timestep,
                                                  std::function<void(unsigned int, double)> applyValueFunc) const
 {
-    m_Value->updateValues(dt, timestep, applyValueFunc);
+    m_Value->update(dt, timestep, applyValueFunc);
 }
 
 //----------------------------------------------------------------------------

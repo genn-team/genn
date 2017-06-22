@@ -24,8 +24,8 @@ public:
     //------------------------------------------------------------------------
     // Declared virtuals
     //------------------------------------------------------------------------
-    virtual void updateValues(double dt, unsigned int timestep,
-                              std::function<void(unsigned int, double)> applyValueFunc) const = 0;
+    virtual void update(double dt, unsigned int timestep,
+                        std::function<void(unsigned int, double)> applyValueFunc) const = 0;
 
 protected:
     Base(unsigned int numNeurons, const pugi::xml_node &node);
@@ -88,8 +88,8 @@ public:
     //------------------------------------------------------------------------
     // InputValue virtuals
     //------------------------------------------------------------------------
-    virtual void updateValues(double dt, unsigned int timestep,
-                              std::function<void(unsigned int, double)> applyValueFunc) const override;
+    virtual void update(double dt, unsigned int timestep,
+                        std::function<void(unsigned int, double)> applyValueFunc) const override;
 private:
     //------------------------------------------------------------------------
     // Members
@@ -108,8 +108,8 @@ public:
     //------------------------------------------------------------------------
     // InputValue virtuals
     //------------------------------------------------------------------------
-    virtual void updateValues(double dt, unsigned int timestep,
-                              std::function<void(unsigned int, double)> applyValueFunc) const override;
+    virtual void update(double dt, unsigned int timestep,
+                        std::function<void(unsigned int, double)> applyValueFunc) const override;
 private:
     //------------------------------------------------------------------------
     // Members
@@ -128,8 +128,8 @@ public:
     //------------------------------------------------------------------------
     // InputValue virtuals
     //------------------------------------------------------------------------
-    virtual void updateValues(double dt, unsigned int timestep,
-                              std::function<void(unsigned int, double)> applyValueFunc) const override;
+    virtual void update(double dt, unsigned int timestep,
+                        std::function<void(unsigned int, double)> applyValueFunc) const override;
 private:
     //----------------------------------------------------------------------------
     // Members
