@@ -309,5 +309,26 @@ int main(int argc,
 #endif // CPU_ONLY
     generate_model_runner(model, basePath.str());
 
+    // Build path to generated model code
+    auto modelPath = basePath / (networkName + "_CODE");
+
+    // Use this to build command line for building generated code
+    std::string cmd = "cd " + modelPath.str() + " && ";
+#ifdef _WIN32
+    cmd += "nmake /nologo clean all";
+#else // UNIX
+    cmd += "make clean all";
+#endif
+
+#ifdef CPU_ONLY
+    cmd += " CPU_ONLY=1";
+#endif  // CPU_ONLY
+
+    // Execute command
+    int retval = system(cmd.c_str());
+    if (retval != 0){
+        throw std::runtime_error("Building generated code with call:'" + cmd + "' failed with return value:" + std::to_string(retval));
+    }
+
     return EXIT_SUCCESS;
 }
