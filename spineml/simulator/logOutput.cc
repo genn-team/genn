@@ -59,7 +59,7 @@ SpineMLSimulator::LogOutput::Base::Base(const pugi::xml_node &node, double dt, c
 //----------------------------------------------------------------------------
 SpineMLSimulator::LogOutput::Analogue::Analogue(const pugi::xml_node &node, double dt,
                                                 const filesystem::path &basePath,
-                                                const ModelProperty *modelProperty)
+                                                const ModelProperty::Base *modelProperty)
     : Base(node, dt, basePath), m_ModelProperty(modelProperty)
 {
     // If indices are specified

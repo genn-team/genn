@@ -1,16 +1,26 @@
 #pragma once
 
+// Standard C++ includes
+#include <random>
+
+// Forward declarations
+namespace pugi
+{
+    class xml_node;
+}
+
 //------------------------------------------------------------------------
-// SpineMLSimulator::ModelProperty
+// SpineMLSimulator::ModelProperty::Base
 //------------------------------------------------------------------------
 namespace SpineMLSimulator
 {
 typedef float scalar;
-
-class ModelProperty
+namespace ModelProperty
+{
+class Base
 {
 public:
-    ModelProperty(scalar *hostStateVar, scalar *deviceStateVar, unsigned int size)
+    Base(scalar *hostStateVar, scalar *deviceStateVar, unsigned int size)
         : m_HostStateVar(hostStateVar), m_DeviceStateVar(deviceStateVar), m_Size(size)
     {
     }
@@ -37,4 +47,46 @@ private:
     scalar *m_DeviceStateVar;
     unsigned int m_Size;
 };
+
+//------------------------------------------------------------------------
+// SpineMLSimulator::ModelProperty::Fixed
+//------------------------------------------------------------------------
+class Fixed : public Base
+{
+public:
+    Fixed(const pugi::xml_node &node, scalar *hostStateVar, scalar *deviceStateVar, unsigned int size);
+
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    void setValue(scalar value);
+
+private:
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    scalar m_Value;
+};
+
+//------------------------------------------------------------------------
+// SpineMLSimulator::ModelProperty::UniformDistribution
+//------------------------------------------------------------------------
+class UniformDistribution : public Base
+{
+public:
+    UniformDistribution(const pugi::xml_node &node, scalar *hostStateVar, scalar *deviceStateVar, unsigned int size);
+
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    void setValue(scalar min, scalar max);
+
+private:
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    std::mt19937 m_RandomGenerator;
+    std::uniform_real_distribution<scalar> m_Distribution;
+};
+}   // namespace ModelProperty
 }   // namespace SpineMLSimulator

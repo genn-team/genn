@@ -18,7 +18,10 @@ namespace filesystem
 
 namespace SpineMLSimulator
 {
-    class ModelProperty;
+    namespace ModelProperty
+    {
+        class Base;
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -68,7 +71,7 @@ class Analogue : public Base
 public:
     Analogue(const pugi::xml_node &node, double dt,
              const filesystem::path &basePath,
-             const ModelProperty *modelProperty);
+             const ModelProperty::Base *modelProperty);
 
     //----------------------------------------------------------------------------
     // Declared virtuals
@@ -82,7 +85,7 @@ private:
     //----------------------------------------------------------------------------
     std::ofstream m_File;
 
-    const ModelProperty *m_ModelProperty;
+    const ModelProperty::Base *m_ModelProperty;
 
     std::vector<unsigned int> m_Indices;
 };

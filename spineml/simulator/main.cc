@@ -30,8 +30,7 @@ extern "C"
 #include "input.h"
 #include "inputValue.h"
 #include "logOutput.h"
-#include "modelPropertyFixed.h"
-#include "modelPropertyUniformDistribution.h"
+#include "modelProperty.h"
 #include "timer.h"
 
 using namespace SpineMLCommon;
@@ -54,7 +53,7 @@ namespace
 // Typedefines
 typedef void (*VoidFunction)(void);
 
-typedef std::map<std::string, std::map<std::string, std::unique_ptr<ModelProperty>>> PopulationProperties;
+typedef std::map<std::string, std::map<std::string, std::unique_ptr<ModelProperty::Base>>> PopulationProperties;
 
 template <typename T>
 std::pair<T*, T*> getStateVar(void *modelLibrary, const std::string &hostStateVarName)
@@ -117,16 +116,16 @@ std::tuple<unsigned int*, unsigned int*, unsigned int*, unsigned int*, unsigned 
                            spikeQueuePtr);
 }
 
-std::unique_ptr<ModelProperty> createModelProperty(const pugi::xml_node &node, scalar *hostStateVar, scalar *deviceStateVar, unsigned int size)
+std::unique_ptr<ModelProperty::Base> createModelProperty(const pugi::xml_node &node, scalar *hostStateVar, scalar *deviceStateVar, unsigned int size)
 {
     auto fixedValue = node.child("FixedValue");
     if(fixedValue) {
-        return std::unique_ptr<ModelProperty>(new ModelPropertyFixed(fixedValue, hostStateVar, deviceStateVar, size));
+        return std::unique_ptr<ModelProperty::Base>(new ModelProperty::Fixed(fixedValue, hostStateVar, deviceStateVar, size));
     }
 
     auto uniformDistribution = node.child("UniformDistribution");
     if(uniformDistribution) {
-        return std::unique_ptr<ModelProperty>(new ModelPropertyUniformDistribution(uniformDistribution, hostStateVar, deviceStateVar, size));
+        return std::unique_ptr<ModelProperty::Base>(new ModelProperty::UniformDistribution(uniformDistribution, hostStateVar, deviceStateVar, size));
     }
 
     throw std::runtime_error("Unsupported property type");
