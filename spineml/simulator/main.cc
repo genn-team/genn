@@ -350,8 +350,8 @@ std::unique_ptr<LogOutput> createLogOutput(const pugi::xml_node &node, void *mod
 //----------------------------------------------------------------------------
 int main(int argc, char *argv[])
 {
-    if(argc != 3) {
-        std::cerr << "Expected model library and; experiment XML files passed as arguments" << std::endl;
+    if(argc != 2) {
+        std::cerr << "Expected experiment XML file passed as arguments" << std::endl;
         return EXIT_FAILURE;
     }
 
@@ -361,41 +361,23 @@ int main(int argc, char *argv[])
     void *modelLibrary = NULL;
     try
     {
-        std::random_device rd;
-        std::mt19937 gen(rd());
-
-        // Attempt to load model library
-        modelLibrary = dlopen(argv[1], RTLD_NOW);
-
-        // If it fails throw
-        if(modelLibrary == NULL)
-        {
-            throw std::runtime_error("Unable to load library - error:" + std::string(dlerror()));
-        }
-
-        // Load statically-named symbols from library
-        LOAD_SYMBOL(modelLibrary, VoidFunction, initialize);
-        LOAD_SYMBOL(modelLibrary, VoidFunction, allocateMem);
-        LOAD_SYMBOL(modelLibrary, VoidFunction, stepTimeCPU);
-#ifndef CPU_ONLY
-        LOAD_SYMBOL(modelLibrary, VoidFunction, stepTimeGPU);
-#endif // CPU_ONLY
+        std::mt19937 gen;
 
         // Use filesystem library to get parent path of the network XML file
-        auto experimentPath = filesystem::path(argv[2]);
+        auto experimentPath = filesystem::path(argv[1]);
         auto basePath = experimentPath.parent_path();
 
         // Load experiment document
         pugi::xml_document experimentDoc;
-        auto experimentResult = experimentDoc.load_file(argv[2]);
+        auto experimentResult = experimentDoc.load_file(argv[1]);
         if(!experimentResult) {
-            throw std::runtime_error("Unable to load experiment XML file:" + std::string(argv[2]) + ", error:" + experimentResult.description());
+            throw std::runtime_error("Unable to load experiment XML file:" + std::string(argv[1]) + ", error:" + experimentResult.description());
         }
 
         // Get SpineML root
         auto experimentSpineML = experimentDoc.child("SpineML");
         if(!experimentSpineML) {
-            throw std::runtime_error("XML file:" + std::string(argv[2]) + " is not a SpineML experiment - it has no root SpineML node");
+            throw std::runtime_error("XML file:" + std::string(argv[1]) + " is not a SpineML experiment - it has no root SpineML node");
         }
 
         // Get experiment node
@@ -418,6 +400,27 @@ int main(int argc, char *argv[])
         // to get something usable as a network name
         std::string networkName = networkPath.filename();
         networkName = networkName.substr(0, networkName.find_last_of("."));
+
+        // Build path to generated model code
+        auto libraryPath = basePath / (networkName + "_CODE") / "librunner.so";
+        std::cout << "Experiment using model library:" << libraryPath  << std::endl;
+
+        // Attempt to load model library
+        modelLibrary = dlopen(libraryPath.str().c_str(), RTLD_NOW);
+
+        // If it fails throw
+        if(modelLibrary == NULL)
+        {
+            throw std::runtime_error("Unable to load library - error:" + std::string(dlerror()));
+        }
+
+        // Load statically-named symbols from library
+        LOAD_SYMBOL(modelLibrary, VoidFunction, initialize);
+        LOAD_SYMBOL(modelLibrary, VoidFunction, allocateMem);
+        LOAD_SYMBOL(modelLibrary, VoidFunction, stepTimeCPU);
+#ifndef CPU_ONLY
+        LOAD_SYMBOL(modelLibrary, VoidFunction, stepTimeGPU);
+#endif // CPU_ONLY
 
         // Search for network initialization function
         VoidFunction initializeNetwork = (VoidFunction)dlsym(modelLibrary, ("init" + networkName).c_str());

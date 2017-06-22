@@ -154,7 +154,7 @@ int main(int argc,
          char *argv[])
 {
     if(argc != 2) {
-        std::cerr << "Expected XML file passed as argument" << std::endl;
+        std::cerr << "Expected model XML file passed as argument" << std::endl;
         return EXIT_FAILURE;
     }
 
