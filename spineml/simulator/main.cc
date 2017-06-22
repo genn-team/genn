@@ -30,8 +30,6 @@ extern "C"
 #include "input.h"
 #include "inputValue.h"
 #include "logOutput.h"
-#include "logOutputAnalogue.h"
-#include "logOutputSpike.h"
 #include "modelPropertyFixed.h"
 #include "modelPropertyUniformDistribution.h"
 #include "timer.h"
@@ -302,8 +300,8 @@ std::unique_ptr<Input::Base> createInput(const pugi::xml_node &node, void *model
 
 }
 
-std::unique_ptr<LogOutput> createLogOutput(const pugi::xml_node &node, void *modelLibrary, double dt,
-                                           const filesystem::path &basePath, const PopulationProperties &neuronProperties)
+std::unique_ptr<LogOutput::Base> createLogOutput(const pugi::xml_node &node, void *modelLibrary, double dt,
+                                                 const filesystem::path &basePath, const PopulationProperties &neuronProperties)
 {
     // Get name of target
     std::string target = SpineMLUtils::getSafeName(node.attribute("target").value());
@@ -322,10 +320,10 @@ std::unique_ptr<LogOutput> createLogOutput(const pugi::xml_node &node, void *mod
         unsigned int *spikeQueuePtr;
         std::tie(hostSpikeCount, deviceSpikeCount, hostSpikes, deviceSpikes, spikeQueuePtr) = getNeuronPopSpikeVars(modelLibrary, target);
 
-        // Create spike logger
-        return std::unique_ptr<LogOutput>(new LogOutputSpike(node, dt, basePath, spikeQueuePtr,
-                                                             hostSpikeCount, deviceSpikeCount,
-                                                             hostSpikes, deviceSpikes));
+        // Create event logger
+        return std::unique_ptr<LogOutput::Base>(new LogOutput::Event(node, dt, basePath, spikeQueuePtr,
+                                                                     hostSpikeCount, deviceSpikeCount,
+                                                                     hostSpikes, deviceSpikes));
     }
     // Otherwise we assume it's a neuron property
     else {
@@ -335,8 +333,8 @@ std::unique_ptr<LogOutput> createLogOutput(const pugi::xml_node &node, void *mod
             // If there is a model property object for this port return an analogue log output to read it
             auto portProperty = targetProperties->second.find(port);
             if(portProperty != targetProperties->second.end()) {
-                return std::unique_ptr<LogOutput>(new LogOutputAnalogue(node, dt, basePath,
-                                                                        portProperty->second.get()));
+                return std::unique_ptr<LogOutput::Base>(new LogOutput::Analogue(node, dt, basePath,
+                                                                                portProperty->second.get()));
             }
         }
     }
@@ -526,7 +524,7 @@ int main(int argc, char *argv[])
         }
 
         // Loop through output loggers specified by experiment and create handler
-        std::vector<std::unique_ptr<LogOutput>> loggers;
+        std::vector<std::unique_ptr<LogOutput::Base>> loggers;
         for(auto logOutput : experiment.children("LogOutput")) {
             loggers.push_back(createLogOutput(logOutput, modelLibrary, dt, basePath, neuronProperties));
         }
