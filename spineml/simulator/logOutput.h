@@ -6,6 +6,9 @@
 #include <string>
 #include <vector>
 
+// SpineML simulator includes
+#include "modelProperty.h"
+
 // Forward declarations
 namespace pugi
 {
@@ -15,14 +18,6 @@ namespace pugi
 namespace filesystem
 {
     class path;
-}
-
-namespace SpineMLSimulator
-{
-    namespace ModelProperty
-    {
-        class Base;
-    }
 }
 
 //----------------------------------------------------------------------------
@@ -88,8 +83,7 @@ private:
 
     const ModelProperty::Base *m_ModelProperty;
 
-    //std::vector<scalar> m_OutputBuffer;
-    std::vector<double> m_OutputBuffer;
+    std::vector<scalar> m_OutputBuffer;
 
     std::vector<unsigned int> m_Indices;
 };

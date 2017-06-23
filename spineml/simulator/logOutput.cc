@@ -4,7 +4,6 @@
 #include <algorithm>
 #include <limits>
 #include <iostream>
-#include <typeinfo>
 
 // Standard C includes
 #include <cassert>
@@ -22,14 +21,13 @@
 // SpineML common includes
 #include "spineMLUtils.h"
 
-// SpineML simulator includes
-#include "modelProperty.h"
-
 //----------------------------------------------------------------------------
 // Anonymous namespace
 //----------------------------------------------------------------------------
-/*namespace
+namespace
 {
+// Irritatingly typeid(float).name() isn't actually guaranteed to return float
+// e.g. on GCC it returns "f" therefore we use a type trait to return correct SpineML type name
 template<typename T>
 struct SpineMLTypeName
 {
@@ -46,7 +44,7 @@ struct SpineMLTypeName<double>
 {
     static constexpr const char *name = "double";
 };
-}*/
+}
 
 //----------------------------------------------------------------------------
 // SpineMLSimulator::Base::Base
@@ -98,9 +96,6 @@ SpineMLSimulator::LogOutput::Analogue::Analogue(const pugi::xml_node &node, doub
         // Resize output buffer to match indices
         m_OutputBuffer.resize(m_Indices.size());
     }
-    else {
-        m_OutputBuffer.resize(popSize);
-    }
 
     // Combine node target and logger names to get file title
     std::string fileTitle = std::string(node.attribute("target").value()) + "_" + std::string(node.attribute("name").value());
@@ -124,7 +119,7 @@ SpineMLSimulator::LogOutput::Analogue::Analogue(const pugi::xml_node &node, doub
         logAll.append_attribute("size").set_value(popSize);
         logAll.append_attribute("heading").set_value(port.c_str());
         logAll.append_attribute("dims").set_value("");
-        logAll.append_attribute("type").set_value("double");//SpineMLTypeName<scalar>::name);
+        logAll.append_attribute("type").set_value(SpineMLTypeName<scalar>::name);
     }
     // Otherwise add LogCol node for each index
     else {
@@ -133,7 +128,7 @@ SpineMLSimulator::LogOutput::Analogue::Analogue(const pugi::xml_node &node, doub
             logCol.append_attribute("index").set_value(i);
             logCol.append_attribute("heading").set_value(port.c_str());
             logCol.append_attribute("dims").set_value("");
-            logCol.append_attribute("type").set_value("double");//SpineMLTypeName<scalar>::name);
+            logCol.append_attribute("type").set_value(SpineMLTypeName<scalar>::name);
         }
     }
 
@@ -157,29 +152,22 @@ void SpineMLSimulator::LogOutput::Analogue::record(double, unsigned int timestep
         // **TODO** simple min/max index optimisation
         m_ModelProperty->pullFromDevice();
 
-        // If no indices are specified
+        // If no indices are specified, directly write out data from model property
         if(m_Indices.empty()) {
-            // Copy data from model property into output buffer
-            std::copy(m_ModelProperty->getHostStateVarBegin(), m_ModelProperty->getHostStateVarEnd(),
-                      m_OutputBuffer.begin());
-            //m_File.write(reinterpret_cast<const char*>(m_ModelProperty->getHostStateVarBegin()), sizeof(scalar) * m_ModelProperty->getSize());
+            m_File.write(reinterpret_cast<const char*>(m_ModelProperty->getHostStateVarBegin()), sizeof(scalar) * m_ModelProperty->getSize());
         }
         // Otherwise
         else {
-            // **TODO** transform?
             // Transform indexed variables into output buffer so they can be written in one call
             std::transform(m_Indices.begin(), m_Indices.end(), m_OutputBuffer.begin(),
                            [this](unsigned int i)
                            {
-                               return (double)m_ModelProperty->getHostStateVarBegin()[i];
+                               return m_ModelProperty->getHostStateVarBegin()[i];
                            });
-            assert(m_OutputBuffer.size() == m_Indices.size());
 
-            //m_File.write(reinterpret_cast<char*>(m_OutputBuffer.data()), sizeof(scalar) * m_OutputBuffer.size());
+            // Write output buffer to file
+            m_File.write(reinterpret_cast<char*>(m_OutputBuffer.data()), sizeof(scalar) * m_OutputBuffer.size());
         }
-
-        // Write output buffer to file
-        m_File.write(reinterpret_cast<char*>(m_OutputBuffer.data()), sizeof(double) * m_OutputBuffer.size());
     }
 }
 
