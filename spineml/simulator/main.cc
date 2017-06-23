@@ -217,9 +217,9 @@ std::unique_ptr<InputValue::Base> createInputValue(double dt, unsigned int numNe
     else if(strcmp(node.name(), "TimeVaryingInput") == 0) {
         return std::unique_ptr<InputValue::Base>(new InputValue::TimeVarying(dt, numNeurons, node));
     }
-    //else if(strcmp(node.name(), "TimeVaryingArrayInput") == 0) {
-    //    return std::unique_ptr<InputValue::Base>(new InputValue::TimeVaryingArray(dt, numNeurons, node));
-    //}
+    else if(strcmp(node.name(), "TimeVaryingArrayInput") == 0) {
+        return std::unique_ptr<InputValue::Base>(new InputValue::TimeVaryingArray(dt, numNeurons, node));
+    }
     else {
         throw std::runtime_error("Input value type '" + std::string(node.name()) + "' not supported");
     }

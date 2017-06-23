@@ -62,24 +62,6 @@ protected:
 };
 
 //----------------------------------------------------------------------------
-// SpineMLSimulator::InputValue::ArrayBase
-//----------------------------------------------------------------------------
-class ArrayBase : public Base
-{
-protected:
-    ArrayBase(unsigned int numNeurons, const pugi::xml_node &node) : Base(numNeurons, node){}
-
-    //----------------------------------------------------------------------------
-    // Protected API
-    //----------------------------------------------------------------------------
-    void applyArray(const std::vector<double> &values,
-                    std::function<void(unsigned int, double)> applyValueFunc) const;
-
-    bool checkArrayDimensions(const std::vector<double> &values) const;
-
-};
-
-//----------------------------------------------------------------------------
 // SpineMLSimulator::InputValue::Constant
 //----------------------------------------------------------------------------
 class Constant : public ScalarBase
@@ -96,13 +78,14 @@ private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
+    // Value to apply to targetted neurons throughout simulation
     double m_Value;
 };
 
 //----------------------------------------------------------------------------
 // SpineMLSimulator::InputValue::ConstantArray
 //----------------------------------------------------------------------------
-class ConstantArray : public ArrayBase
+class ConstantArray : public Base
 {
 public:
     ConstantArray(double dt, unsigned int numNeurons, const pugi::xml_node &node);
@@ -116,6 +99,7 @@ private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
+    // Values to apply to targetted neurons throughout simulation
     std::vector<double> m_Values;
 };
 
@@ -136,7 +120,35 @@ private:
     //----------------------------------------------------------------------------
     // Members
     //----------------------------------------------------------------------------
+    // Values to apply to all neurons at certain timesteps
     std::map<unsigned int, double> m_TimeValues;
+};
+
+//----------------------------------------------------------------------------
+// SpineMLSimulator::InputValue::TimeVaryingArray
+//----------------------------------------------------------------------------
+class TimeVaryingArray : public Base
+{
+public:
+    TimeVaryingArray(double dt, unsigned int numNeurons, const pugi::xml_node &node);
+
+    //------------------------------------------------------------------------
+    // InputValue virtuals
+    //------------------------------------------------------------------------
+    virtual void update(double dt, unsigned int timestep,
+                        std::function<void(unsigned int, double)> applyValueFunc) const override;
+
+private:
+    //------------------------------------------------------------------------
+    // Typedefines
+    //------------------------------------------------------------------------
+    typedef std::vector<std::pair<unsigned int, double>> NeuronValueVec;
+
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    // Vector of neurons and values to apply at certain timesteps
+    std::map<unsigned int, NeuronValueVec> m_TimeArrays;
 };
 }   // namespace InputValue
 }   // namespace SpineMLSimulator

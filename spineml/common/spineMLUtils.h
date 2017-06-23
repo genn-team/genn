@@ -29,5 +29,17 @@ inline void readCSVIndices(const char *csvString, Iter outputIter)
         *outputIter++ = std::stoul(index);
     }
 }
+
+template<typename Iter>
+inline void readCSVValues(const char *csvString, Iter outputIter)
+{
+     // **TODO** maybe move somewhere common
+    std::stringstream indicesStream(csvString);
+    while(indicesStream.good()) {
+        std::string index;
+        std::getline(indicesStream, index, ',');
+        *outputIter++ = std::stod(index);
+    }
+}
 }   // namespace Utils
 }   // namespace SpineMLCommon
