@@ -151,10 +151,9 @@ void SpineMLSimulator::InputValue::TimeVarying::update(double, unsigned int time
 //----------------------------------------------------------------------------
 // SpineMLSimulator::InputValue::TimeVaryingArray
 //----------------------------------------------------------------------------
-SpineMLSimulator::InputValue::TimeVaryingArray::TimeVaryingArray(double dt, unsigned int numNeurons, const pugi::xml_node &node)
+SpineMLSimulator::InputValue::TimeVaryingArray::TimeVaryingArray(double, unsigned int numNeurons, const pugi::xml_node &node)
 : Base(numNeurons, node)
 {
-    /*<TimePointArrayValue index="0" array_time="0,10" array_value="10,20"/>*/
     // Loop through time points
     for(auto timePoint : node.children("TimePointArrayValue")) {
         // Read time and value
