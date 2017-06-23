@@ -2,6 +2,7 @@
 
 // Standard C++ includes
 #include <fstream>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -34,7 +35,8 @@ namespace LogOutput
 class Base
 {
 public:
-    Base(const pugi::xml_node &node, double dt, const filesystem::path &basePath);
+    Base(const pugi::xml_node &node, double dt, unsigned int numTimeSteps);
+    virtual ~Base(){}
 
     //----------------------------------------------------------------------------
     // Declared virtuals
@@ -51,7 +53,7 @@ protected:
         return (timestep >= m_StartTimeStep && timestep < m_EndTimeStep);
     }
 
-    const std::string &getName() const{ return m_Name; }
+    unsigned int getEndTimestep() const{ return m_EndTimeStep; }
 
 private:
     //----------------------------------------------------------------------------
@@ -59,8 +61,6 @@ private:
     //----------------------------------------------------------------------------
     unsigned int m_StartTimeStep;
     unsigned int m_EndTimeStep;
-
-    std::string m_Name;
 };
 
 //----------------------------------------------------------------------------
@@ -69,7 +69,8 @@ private:
 class Analogue : public Base
 {
 public:
-    Analogue(const pugi::xml_node &node, double dt,
+    Analogue(const pugi::xml_node &node, double dt, unsigned int numTimeSteps,
+             const std::string &port, unsigned int popSize,
              const filesystem::path &basePath,
              const ModelProperty::Base *modelProperty);
 
@@ -87,6 +88,9 @@ private:
 
     const ModelProperty::Base *m_ModelProperty;
 
+    //std::vector<scalar> m_OutputBuffer;
+    std::vector<double> m_OutputBuffer;
+
     std::vector<unsigned int> m_Indices;
 };
 
@@ -96,7 +100,8 @@ private:
 class Event : public Base
 {
 public:
-    Event(const pugi::xml_node &node, double dt,
+    Event(const pugi::xml_node &node, double dt, unsigned int numTimeSteps,
+          const std::string &port, unsigned int popSize,
           const filesystem::path &basePath, unsigned int *spikeQueuePtr,
           unsigned int *hostSpikeCount, unsigned int *deviceSpikeCount,
           unsigned int *hostSpikes, unsigned int *deviceSpikes);
@@ -119,6 +124,8 @@ private:
 
     unsigned int *m_HostSpikes;
     unsigned int *m_DeviceSpikes;
+
+    std::set<unsigned int> m_Indices;
 };
 }   // namespace LogOutput
 }   // namespace SpineMLSimulator

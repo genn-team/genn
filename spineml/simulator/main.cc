@@ -164,8 +164,8 @@ void addProperties(const pugi::xml_node &node, void *modelLibrary, const std::st
     }
 }
 
-unsigned int initializeConnector(const pugi::xml_node &node, void *modelLibrary,
-                                 const std::string &synPopName, unsigned int numPre, unsigned int numPost)
+unsigned int createConnector(const pugi::xml_node &node, void *modelLibrary,
+                             const std::string &synPopName, unsigned int numPre, unsigned int numPost)
 {
     // Find allocate function
     Connectors::AllocateFn allocateFn = (Connectors::AllocateFn)dlsym(modelLibrary, ("allocate" + synPopName).c_str());
@@ -299,13 +299,20 @@ std::unique_ptr<Input::Base> createInput(const pugi::xml_node &node, void *model
 
 }
 
-std::unique_ptr<LogOutput::Base> createLogOutput(const pugi::xml_node &node, void *modelLibrary, double dt,
-                                                 const filesystem::path &basePath, const PopulationProperties &neuronProperties)
+std::unique_ptr<LogOutput::Base> createLogOutput(const pugi::xml_node &node, void *modelLibrary, double dt, unsigned int numTimeSteps,
+                                                 const filesystem::path &basePath, const std::map<std::string, unsigned int> &neuronPopulationSizes,
+                                                 const PopulationProperties &neuronProperties)
 {
     // Get name of target
     std::string target = SpineMLUtils::getSafeName(node.attribute("target").value());
 
     // **TODO** handle weight update model and postsynaptic update model targets
+
+    // Find size of target population
+    auto targetPopSize = neuronPopulationSizes.find(target);
+    if(targetPopSize == neuronPopulationSizes.end()) {
+        throw std::runtime_error("Cannot find neural population '" + target + "'");
+    }
 
     // If this is a spike recorder
     // **TODO** better test - it is only convention that port is called spike
@@ -320,7 +327,8 @@ std::unique_ptr<LogOutput::Base> createLogOutput(const pugi::xml_node &node, voi
         std::tie(hostSpikeCount, deviceSpikeCount, hostSpikes, deviceSpikes, spikeQueuePtr) = getNeuronPopSpikeVars(modelLibrary, target);
 
         // Create event logger
-        return std::unique_ptr<LogOutput::Base>(new LogOutput::Event(node, dt, basePath, spikeQueuePtr,
+        return std::unique_ptr<LogOutput::Base>(new LogOutput::Event(node, dt, numTimeSteps, port, targetPopSize->second,
+                                                                     basePath, spikeQueuePtr,
                                                                      hostSpikeCount, deviceSpikeCount,
                                                                      hostSpikes, deviceSpikes));
     }
@@ -332,8 +340,8 @@ std::unique_ptr<LogOutput::Base> createLogOutput(const pugi::xml_node &node, voi
             // If there is a model property object for this port return an analogue log output to read it
             auto portProperty = targetProperties->second.find(port);
             if(portProperty != targetProperties->second.end()) {
-                return std::unique_ptr<LogOutput::Base>(new LogOutput::Analogue(node, dt, basePath,
-                                                                                portProperty->second.get()));
+                return std::unique_ptr<LogOutput::Base>(new LogOutput::Analogue(node, dt, numTimeSteps, port, targetPopSize->second,
+                                                                                basePath, portProperty->second.get()));
             }
         }
     }
@@ -499,8 +507,8 @@ int main(int argc, char *argv[])
                 }
 
                 // Initialize connector (will result in correct calculation for num synapses)
-                unsigned int numSynapses = initializeConnector(synapse, modelLibrary,
-                                                               synPopName, srcPopSize, trgPopSize);
+                unsigned int numSynapses = createConnector(synapse, modelLibrary,
+                                                           synPopName, srcPopSize, trgPopSize);
 
                 // Get post synapse
                 auto postSynapse = synapse.child("LL:PostSynapse");
@@ -522,10 +530,21 @@ int main(int argc, char *argv[])
             }
         }
 
+
+        auto simulation = experiment.child("Simulation");
+        if(!simulation) {
+            throw std::runtime_error("No 'Simulation' node found in experiment");
+        }
+
+        // Read duration from simulation and convert to timesteps
+        const double durationMs = simulation.attribute("duration").as_double() * 1000.0;
+        const unsigned int numTimeSteps = (unsigned int)std::ceil(durationMs / dt);
+
         // Loop through output loggers specified by experiment and create handler
         std::vector<std::unique_ptr<LogOutput::Base>> loggers;
         for(auto logOutput : experiment.children("LogOutput")) {
-            loggers.push_back(createLogOutput(logOutput, modelLibrary, dt, basePath, neuronProperties));
+            loggers.push_back(createLogOutput(logOutput, modelLibrary, dt, numTimeSteps, basePath,
+                                              neuronPopulationSizes, neuronProperties));
         }
 
         // Loop through inputs specified by experiment and create handlers
@@ -539,18 +558,14 @@ int main(int argc, char *argv[])
             }
         }
 
-        auto simulation = experiment.child("Simulation");
-        if(!simulation) {
-            throw std::runtime_error("No 'Simulation' node found in experiment");
+        // Call library function to perform final initialize
+        {
+            Timer t("Init network:");
+            initializeNetwork();
         }
 
-        // Read duration from simulation and convert to timesteps
-        double durationMs = simulation.attribute("duration").as_double() * 1000.0;
-        unsigned int numTimeSteps = (unsigned int)std::ceil(durationMs / dt);
-        std::cout << "Simulating for " << numTimeSteps << " " << dt << "ms timesteps" << std::endl;
 
-        // Perform final initialization
-        initializeNetwork();
+        std::cout << "Simulating for " << numTimeSteps << " " << dt << "ms timesteps" << std::endl;
 
         // Loop through time
         for(unsigned int i = 0; i < numTimeSteps; i++)

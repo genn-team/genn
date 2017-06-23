@@ -14,7 +14,7 @@ namespace pugi
 //------------------------------------------------------------------------
 namespace SpineMLSimulator
 {
-typedef float scalar;
+typedef float scalar;   // **TODO** move this somewhere more sensible
 namespace ModelProperty
 {
 class Base
