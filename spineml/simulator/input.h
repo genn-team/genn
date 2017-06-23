@@ -18,6 +18,11 @@ namespace SpineMLSimulator
     {
         class Base;
     }
+
+    namespace ModelProperty
+    {
+        class Base;
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -106,7 +111,7 @@ class InterSpikeIntervalBase : public SpikeBase
 {
 public:
     //----------------------------------------------------------------------------
-    // SpikeBase virtuals
+    // Base virtuals
     //----------------------------------------------------------------------------
     virtual void apply(double dt, unsigned int timestep) override;
 
@@ -196,9 +201,29 @@ public:
 //----------------------------------------------------------------------------
 // SpineMLSimulator::Input::Analogue
 //----------------------------------------------------------------------------
-/*class Analogue : public Base
+class Analogue : public Base
 {
-};*/
+public:
+    Analogue(double dt, const pugi::xml_node &node, std::unique_ptr<InputValue::Base> value,
+             ModelProperty::Base *modelProperty);
+
+    //----------------------------------------------------------------------------
+    // Base virtuals
+    //----------------------------------------------------------------------------
+    virtual void apply(double dt, unsigned int timestep) override;
+
+private:
+    //----------------------------------------------------------------------------
+    // Members
+    //----------------------------------------------------------------------------
+    //! Has a change been made to values which needs applying to model property
+    bool m_PropertyUpdateRequired;
+
+    ModelProperty::Base *m_ModelProperty;
+
+    // Current values to apply
+    std::map<unsigned int, double> m_CurrentValues;
+};
 
 }   // namespace Input
 }   // namespace SpineMLSimulator

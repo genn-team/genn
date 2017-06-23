@@ -15,6 +15,7 @@
 
 // SpineML simulator includes
 #include "inputValue.h"
+#include "modelProperty.h"
 
 //----------------------------------------------------------------------------
 // SpineMLSimulator::Input::Base
@@ -95,7 +96,7 @@ void SpineMLSimulator::Input::SpikeBase::uploadSpikes()
 //----------------------------------------------------------------------------
 void SpineMLSimulator::Input::InterSpikeIntervalBase::apply(double dt, unsigned int timestep)
 {
-    // Determine if there are any update values this timestep (spikes)
+    // Determine if there are any update values this timestep (rate changes)
     // **NOTE** even if we shouldn't be applying any input, rate updates still should happen
     updateValues(dt, timestep,
         [this, dt](unsigned int neuronID, double rate)
@@ -238,5 +239,50 @@ void SpineMLSimulator::Input::SpikeTime::apply(double dt, unsigned int timestep)
 
         // Upload spikes to GPU if required
         uploadSpikes();
+    }
+}
+
+//----------------------------------------------------------------------------
+// SpineMLSimulator::Input::Analogue
+//----------------------------------------------------------------------------
+SpineMLSimulator::Input::Analogue::Analogue(double dt, const pugi::xml_node &node, std::unique_ptr<InputValue::Base> value,
+                                            ModelProperty::Base *modelProperty)
+: Base(dt, node, std::move(value)), m_PropertyUpdateRequired(false), m_ModelProperty(modelProperty)
+{
+}
+//----------------------------------------------------------------------------
+void SpineMLSimulator::Input::Analogue::apply(double dt, unsigned int timestep)
+{
+    // Determine if there are any value update this timestep
+    // **NOTE** even if we shouldn't be applying any input, value updates still should happen
+    updateValues(dt, timestep,
+        [this](unsigned int neuronID, double value)
+        {
+            // If this neuron doesn't currently have a value, insert one
+            auto currentValue = m_CurrentValues.find(neuronID);
+            if(currentValue == m_CurrentValues.end()) {
+                m_CurrentValues.insert(std::make_pair(neuronID, value));
+            }
+            // Otherwise update existing value
+            else {
+                currentValue->second = value;
+            }
+
+            // Set flag so value will get updated
+            m_PropertyUpdateRequired = true;
+        });
+
+    // If we should apply updated this timestep and there are any to apply
+    if(shouldApply(timestep) && m_PropertyUpdateRequired) {
+        // Loop through current values and update corresponding model property values
+        for(const auto &v : m_CurrentValues) {
+            m_ModelProperty->getHostStateVarBegin()[v.first] = v.second;
+        }
+
+        // Upload model property if required
+        m_ModelProperty->pushToDevice();
+
+        // Reset flag
+        m_PropertyUpdateRequired = false;
     }
 }

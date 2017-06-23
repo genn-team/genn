@@ -288,17 +288,19 @@ std::unique_ptr<Input::Base> createInput(const pugi::xml_node &node, void *model
         }
     }
     // Otherwise we assume it's a neuron property
-    /*else {
+    else {
         // If there is a dictionary of properties for target population
         auto targetProperties = neuronProperties.find(target);
         if(targetProperties != neuronProperties.end()) {
             // If there is a model property object for this port return an analogue input to stimulate it
             auto portProperty = targetProperties->second.find(port);
             if(portProperty != targetProperties->second.end()) {
-                // **TODO**
+                return std::unique_ptr<Input::Base>(
+                    new Input::Analogue(dt, node, std::move(inputValue),
+                                        portProperty->second.get()));
             }
         }
-    }*/
+    }
 
     throw std::runtime_error("No supported input found");
 
