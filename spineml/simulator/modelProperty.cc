@@ -72,4 +72,26 @@ void SpineMLSimulator::ModelProperty::UniformDistribution::setValue(scalar min, 
     // Push to device
     pushToDevice();
 }
+
 //------------------------------------------------------------------------
+// SpineMLSimulator::ModelProperty::NormalDistribution
+//------------------------------------------------------------------------
+SpineMLSimulator::ModelProperty::NormalDistribution::NormalDistribution(const pugi::xml_node &node, scalar *hostStateVar, scalar *deviceStateVar, unsigned int size)
+    : Base(hostStateVar, deviceStateVar, size)
+{
+    setValue(node.attribute("mean").as_double(), node.attribute("variance").as_double());
+    std::cout << "\t\t\tMean:" << m_Distribution.min() << ", Variance:" << m_Distribution.stddev() * m_Distribution.stddev() << std::endl;
+}
+//------------------------------------------------------------------------
+void SpineMLSimulator::ModelProperty::NormalDistribution::setValue(scalar mean, scalar variance)
+{
+    // Create distribution
+    m_Distribution = std::normal_distribution<scalar>(mean, std::sqrt(variance));
+
+    // Generate uniformly distributed numbers to fill host array
+    std::generate(getHostStateVarBegin(), getHostStateVarEnd(),
+        [this](){ return m_Distribution(m_RandomGenerator); });
+
+    // Push to device
+    pushToDevice();
+}

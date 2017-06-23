@@ -89,5 +89,26 @@ private:
     std::mt19937 m_RandomGenerator;
     std::uniform_real_distribution<scalar> m_Distribution;
 };
+
+//------------------------------------------------------------------------
+// SpineMLSimulator::ModelProperty::NormalDistribution
+//------------------------------------------------------------------------
+class NormalDistribution : public Base
+{
+public:
+    NormalDistribution(const pugi::xml_node &node, scalar *hostStateVar, scalar *deviceStateVar, unsigned int size);
+
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    void setValue(scalar mean, scalar variance);
+
+private:
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    std::mt19937 m_RandomGenerator;
+    std::normal_distribution<scalar> m_Distribution;
+};
 }   // namespace ModelProperty
 }   // namespace SpineMLSimulator

@@ -128,6 +128,11 @@ std::unique_ptr<ModelProperty::Base> createModelProperty(const pugi::xml_node &n
         return std::unique_ptr<ModelProperty::Base>(new ModelProperty::UniformDistribution(uniformDistribution, hostStateVar, deviceStateVar, size));
     }
 
+    auto normalDistribution = node.child("NormalDistribution");
+    if(normalDistribution) {
+        return std::unique_ptr<ModelProperty::Base>(new ModelProperty::NormalDistribution(normalDistribution, hostStateVar, deviceStateVar, size));
+    }
+
     throw std::runtime_error("Unsupported property type");
 }
 
