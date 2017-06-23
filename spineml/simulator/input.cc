@@ -91,18 +91,9 @@ void SpineMLSimulator::Input::SpikeBase::uploadSpikes()
 }
 
 //----------------------------------------------------------------------------
-// SpineMLSimulator::Input::RegularSpikeRate
+// SpineMLSimulator::Input::InterSpikeIntervalBase
 //----------------------------------------------------------------------------
-SpineMLSimulator::Input::RegularSpikeRate::RegularSpikeRate(double dt, const pugi::xml_node &node, std::unique_ptr<InputValue::Base> value,
-                                                            unsigned int *spikeQueuePtr,
-                                                            unsigned int *hostSpikeCount, unsigned int *deviceSpikeCount,
-                                                            unsigned int *hostSpikes, unsigned int *deviceSpikes)
-: SpikeBase(dt, node, std::move(value), spikeQueuePtr, hostSpikeCount, deviceSpikeCount, hostSpikes, deviceSpikes)
-{
-    std::cout << "\tRegular spike rate" << std::endl;
-}
-//----------------------------------------------------------------------------
-void SpineMLSimulator::Input::RegularSpikeRate::apply(double dt, unsigned int timestep)
+void SpineMLSimulator::Input::InterSpikeIntervalBase::apply(double dt, unsigned int timestep)
 {
     // Determine if there are any update values this timestep (spikes)
     // **NOTE** even if we shouldn't be applying any input, rate updates still should happen
@@ -115,7 +106,7 @@ void SpineMLSimulator::Input::RegularSpikeRate::apply(double dt, unsigned int ti
             }
             // Otherwise
             else {
-                // Convert rate into interspike interval in timesteps
+                // Convert rate into interspike interval
                 const double isiMs = 1000.0 / rate;
 
                 // If this neuron has not had a rate set before, add it to map
@@ -126,7 +117,7 @@ void SpineMLSimulator::Input::RegularSpikeRate::apply(double dt, unsigned int ti
                 // Otherwise, update it's ISI to the new one and also reset it's time to spike
                 else {
                     neuronTTS->second.first = isiMs;
-                    neuronTTS->second.second = isiMs;
+                    neuronTTS->second.second = getTimeToSpike(isiMs);
                 }
             }
         });
@@ -141,8 +132,8 @@ void SpineMLSimulator::Input::RegularSpikeRate::apply(double dt, unsigned int ti
             }
             // Otherwise
             else {
-                // Reset time-to-spike to interspike interval
-                tts.second.second = tts.second.first;
+                // Reset time-to-spike
+                tts.second.second = getTimeToSpike(tts.second.first);
 
                 // Inject spike
                 injectSpike(tts.first);
@@ -151,6 +142,74 @@ void SpineMLSimulator::Input::RegularSpikeRate::apply(double dt, unsigned int ti
 
         // Upload spikes to GPU if required
         uploadSpikes();
+    }
+}
+//----------------------------------------------------------------------------
+SpineMLSimulator::Input::InterSpikeIntervalBase::InterSpikeIntervalBase(double dt, const pugi::xml_node &node, std::unique_ptr<InputValue::Base> value,
+                                                                        unsigned int *spikeQueuePtr,
+                                                                        unsigned int *hostSpikeCount, unsigned int *deviceSpikeCount,
+                                                                        unsigned int *hostSpikes, unsigned int *deviceSpikes)
+: SpikeBase(dt, node, std::move(value), spikeQueuePtr, hostSpikeCount, deviceSpikeCount, hostSpikes, deviceSpikes)
+{
+}
+
+
+//----------------------------------------------------------------------------
+// SpineMLSimulator::Input::RegularSpikeRate
+//----------------------------------------------------------------------------
+SpineMLSimulator::Input::RegularSpikeRate::RegularSpikeRate(double dt, const pugi::xml_node &node, std::unique_ptr<InputValue::Base> value,
+                                                            unsigned int *spikeQueuePtr,
+                                                            unsigned int *hostSpikeCount, unsigned int *deviceSpikeCount,
+                                                            unsigned int *hostSpikes, unsigned int *deviceSpikes)
+: InterSpikeIntervalBase(dt, node, std::move(value), spikeQueuePtr, hostSpikeCount, deviceSpikeCount, hostSpikes, deviceSpikes)
+{
+    std::cout << "\tRegular spike rate" << std::endl;
+}
+//----------------------------------------------------------------------------
+double SpineMLSimulator::Input::RegularSpikeRate::getTimeToSpike(double isiMs)
+{
+    return isiMs;
+}
+
+//----------------------------------------------------------------------------
+// SpineMLSimulator::Input::PoissonSpikeRate
+//----------------------------------------------------------------------------
+SpineMLSimulator::Input::PoissonSpikeRate::PoissonSpikeRate(double dt, const pugi::xml_node &node, std::unique_ptr<InputValue::Base> value,
+                                                            unsigned int *spikeQueuePtr,
+                                                            unsigned int *hostSpikeCount, unsigned int *deviceSpikeCount,
+                                                            unsigned int *hostSpikes, unsigned int *deviceSpikes)
+: InterSpikeIntervalBase(dt, node, std::move(value), spikeQueuePtr, hostSpikeCount, deviceSpikeCount, hostSpikes, deviceSpikes), m_Distribution(0.0, 1.0)
+{
+    std::cout << "\tPoisson spike rate" << std::endl;
+}
+//----------------------------------------------------------------------------
+double SpineMLSimulator::Input::PoissonSpikeRate::getTimeToSpike(double isiMs)
+{
+    return isiMs * exponentialDist();
+}
+//----------------------------------------------------------------------------
+double SpineMLSimulator::Input::PoissonSpikeRate::exponentialDist()
+{
+    double a = 0.0;
+
+    while (true) {
+        double u = m_Distribution(m_RandomGenerator);
+        const double u0 = u;
+
+        while (true) {
+            double uStar = m_Distribution(m_RandomGenerator);
+            if (u < uStar) {
+                return  a + u0;
+            }
+
+            u = m_Distribution(m_RandomGenerator);
+
+            if (u >= uStar) {
+                break;
+            }
+        }
+
+        a += 1.0;
     }
 }
 

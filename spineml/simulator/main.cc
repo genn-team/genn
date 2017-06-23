@@ -267,8 +267,13 @@ std::unique_ptr<Input::Base> createInput(const pugi::xml_node &node, void *model
                                                 hostSpikeCount, deviceSpikeCount,
                                                 hostSpikes, deviceSpikes));
             }
-            //else if(strcmp(rateDistribution.value(), "poisson") == 0) {
-            //}
+            else if(strcmp(rateDistribution.value(), "poisson") == 0) {
+                return std::unique_ptr<Input::Base>(
+                    new Input::PoissonSpikeRate(dt, node, std::move(inputValue),
+                                                spikeQueuePtr,
+                                                hostSpikeCount, deviceSpikeCount,
+                                                hostSpikes, deviceSpikes));
+            }
             else {
                 throw std::runtime_error("Unsupport spike rate distribution '" + std::string(rateDistribution.value()) + "'");
             }

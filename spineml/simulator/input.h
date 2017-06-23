@@ -4,6 +4,7 @@
 #include <functional>
 #include <map>
 #include <memory>
+#include <random>
 
 // Forward declarations
 namespace pugi
@@ -99,20 +100,26 @@ private:
 };
 
 //----------------------------------------------------------------------------
-// SpineMLSimulator::Input::RegularSpikeRate
+// SpineMLSimulator::Input::InterSpikeIntervalBase
 //----------------------------------------------------------------------------
-class RegularSpikeRate : public SpikeBase
+class InterSpikeIntervalBase : public SpikeBase
 {
 public:
-    RegularSpikeRate(double dt, const pugi::xml_node &node, std::unique_ptr<InputValue::Base> value,
-                     unsigned int *spikeQueuePtr,
-                     unsigned int *hostSpikeCount, unsigned int *deviceSpikeCount,
-                     unsigned int *hostSpikes, unsigned int *deviceSpikes);
-
     //----------------------------------------------------------------------------
     // SpikeBase virtuals
     //----------------------------------------------------------------------------
     virtual void apply(double dt, unsigned int timestep) override;
+
+protected:
+    InterSpikeIntervalBase(double dt, const pugi::xml_node &node, std::unique_ptr<InputValue::Base> value,
+                           unsigned int *spikeQueuePtr,
+                           unsigned int *hostSpikeCount, unsigned int *deviceSpikeCount,
+                           unsigned int *hostSpikes, unsigned int *deviceSpikes);
+
+    //----------------------------------------------------------------------------
+    // Declared virtuals
+    //----------------------------------------------------------------------------
+    virtual double getTimeToSpike(double isiMs) = 0;
 
 private:
     //----------------------------------------------------------------------------
@@ -122,11 +129,52 @@ private:
 };
 
 //----------------------------------------------------------------------------
+// SpineMLSimulator::Input::RegularSpikeRate
+//----------------------------------------------------------------------------
+class RegularSpikeRate : public InterSpikeIntervalBase
+{
+public:
+    RegularSpikeRate(double dt, const pugi::xml_node &node, std::unique_ptr<InputValue::Base> value,
+                     unsigned int *spikeQueuePtr,
+                     unsigned int *hostSpikeCount, unsigned int *deviceSpikeCount,
+                     unsigned int *hostSpikes, unsigned int *deviceSpikes);
+
+protected:
+    //----------------------------------------------------------------------------
+    // InterSpikeIntervalBase virtuals
+    //----------------------------------------------------------------------------
+    virtual double getTimeToSpike(double isiMs) override;
+};
+
+//----------------------------------------------------------------------------
 // SpineMLSimulator::Input::PoissonSpikeRate
 //----------------------------------------------------------------------------
-/*class PoissonSpikeRate : public SpikeBase
+class PoissonSpikeRate : public InterSpikeIntervalBase
 {
-};*/
+public:
+    PoissonSpikeRate(double dt, const pugi::xml_node &node, std::unique_ptr<InputValue::Base> value,
+                     unsigned int *spikeQueuePtr,
+                     unsigned int *hostSpikeCount, unsigned int *deviceSpikeCount,
+                     unsigned int *hostSpikes, unsigned int *deviceSpikes);
+
+protected:
+    //----------------------------------------------------------------------------
+    // InterSpikeIntervalBase virtuals
+    //----------------------------------------------------------------------------
+    virtual double getTimeToSpike(double isiMs);
+
+private:
+    //----------------------------------------------------------------------------
+    // Private methods
+    //----------------------------------------------------------------------------
+    double exponentialDist();
+
+    //----------------------------------------------------------------------------
+    // Members
+    //----------------------------------------------------------------------------
+    std::mt19937 m_RandomGenerator;
+    std::uniform_real_distribution<double> m_Distribution;
+};
 
 //----------------------------------------------------------------------------
 // SpineMLSimulator::Input::SpikeTime
@@ -143,9 +191,6 @@ public:
     // SpikeBase virtuals
     //----------------------------------------------------------------------------
     virtual void apply(double dt, unsigned int timestep) override;
-
-private:
-
 };
 
 //----------------------------------------------------------------------------
