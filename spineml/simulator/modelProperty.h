@@ -24,6 +24,7 @@ public:
         : m_HostStateVar(hostStateVar), m_DeviceStateVar(deviceStateVar), m_Size(size)
     {
     }
+    virtual ~Base(){}
 
     //------------------------------------------------------------------------
     // Public API
