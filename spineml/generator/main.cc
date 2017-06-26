@@ -21,6 +21,7 @@
 #include "utils.h"
 
 // SpineMLCommon includes
+#include "connectors.h"
 #include "spineMLUtils.h"
 
 // SpineMLGenerator includes
@@ -93,6 +94,17 @@ const T &getCreateModel(const ModelParams &params, std::map<ModelParams, T> &mod
     }
 }
 
+unsigned int getNeuronPopSize(const std::string &popName, const std::map<std::string, unsigned int> &popSizes)
+{
+    auto pop = popSizes.find(popName);
+    if(pop == popSizes.end()) {
+        throw std::runtime_error("Cannot find neuron population:" + popName);
+    }
+    else {
+        return pop->second;
+    }
+}
+
 // Helper function to read the delay value from a SpineML 'Synapse' node
 unsigned int readDelaySteps(const pugi::xml_node &node, double dt)
 {
@@ -115,33 +127,35 @@ unsigned int readDelaySteps(const pugi::xml_node &node, double dt)
 }
 
 // Helper function to determine the correct type of GeNN projection to use for a SpineML 'Synapse' node
-std::tuple<SynapseMatrixType, unsigned int> getSynapticMatrixType(const pugi::xml_node &node, bool globalG, double dt)
+std::tuple<SynapseMatrixType, unsigned int, unsigned int> getSynapticMatrixType(const pugi::xml_node &node, unsigned int numPre, unsigned int numPost, bool globalG, double dt)
 {
     auto oneToOne = node.child("OneToOneConnection");
     if(oneToOne) {
-        return std::make_tuple(globalG ? SynapseMatrixType::SPARSE_GLOBALG : SynapseMatrixType::SPARSE_INDIVIDUALG,
-                               readDelaySteps(oneToOne, dt));
+        return std::make_tuple(Connectors::OneToOne::getMatrixType(oneToOne, numPre, numPost, globalG),
+                               readDelaySteps(oneToOne, dt),
+                               Connectors::OneToOne::estimateMaxRowLength(oneToOne, numPre, numPost));
     }
 
     auto allToAll = node.child("AllToAllConnection");
     if(allToAll) {
-        return std::make_tuple(globalG ? SynapseMatrixType::DENSE_GLOBALG : SynapseMatrixType::DENSE_INDIVIDUALG,
-                               readDelaySteps(allToAll, dt));
+        return std::make_tuple(Connectors::AllToAll::getMatrixType(allToAll, numPre, numPost, globalG),
+                               readDelaySteps(allToAll, dt),
+                               Connectors::AllToAll::estimateMaxRowLength(allToAll, numPre, numPost));
     }
 
     auto fixedProbability = node.child("FixedProbabilityConnection");
     if(fixedProbability) {
-        // **TODO** there is almost certainly a probability above which dense is better
-        return std::make_tuple(globalG ? SynapseMatrixType::SPARSE_GLOBALG : SynapseMatrixType::SPARSE_INDIVIDUALG,
-                               readDelaySteps(fixedProbability, dt));
+        return std::make_tuple(Connectors::FixedProbability::getMatrixType(fixedProbability, numPre, numPost, globalG),
+                               readDelaySteps(fixedProbability, dt),
+                               Connectors::FixedProbability::estimateMaxRowLength(fixedProbability, numPre, numPost));
     }
 
-    auto connectionList = node.child("ConnectionList");
+    /*auto connectionList = node.child("ConnectionList");
     if(connectionList) {
         // **TODO** there is almost certainly a number of connections above which dense is better
         return std::make_tuple(globalG ? SynapseMatrixType::SPARSE_GLOBALG : SynapseMatrixType::SPARSE_INDIVIDUALG,
                                readDelaySteps(connectionList, dt));
-    }
+    }*/
 
     throw std::runtime_error("No supported connection type found for projection");
 }
@@ -206,6 +220,7 @@ int main(int argc,
     model.setName(networkName);
 
     // Loop through populations once to build neuron populations
+    std::map<std::string, unsigned int> neuronPopulationSizes;
     for(auto population : spineML.children("LL:Population")) {
         auto neuron = population.child("LL:Neuron");
         if(!neuron) {
@@ -217,6 +232,9 @@ int main(int argc,
         const unsigned int popSize = neuron.attribute("size").as_int();
         std::cout << "Population " << popName << " consisting of ";
         std::cout << popSize << " neurons" << std::endl;
+
+        // Add size to dictionary
+        neuronPopulationSizes.insert(std::make_pair(popName, popSize));
 
         // If population is a spike source add GeNN spike source
         // **TODO** is this the only special case?
@@ -243,11 +261,13 @@ int main(int argc,
     for(auto population : spineML.children("LL:Population")) {
         // Read source population name from neuron node
         auto srcPopName = SpineMLUtils::getSafeName(population.child("LL:Neuron").attribute("name").value());
+        const unsigned int srcPopSize = getNeuronPopSize(srcPopName, neuronPopulationSizes);
 
         // Loop through outgoing projections
         for(auto projection : population.children("LL:Projection")) {
             // Read destination population name from projection
             auto trgPopName = SpineMLUtils::getSafeName(projection.attribute("dst_population").value());
+            const unsigned int trgPopSize = getNeuronPopSize(trgPopName, neuronPopulationSizes);
 
             std::cout << "Projection from population:" << srcPopName << "->" << trgPopName << std::endl;
 
@@ -291,13 +311,19 @@ int main(int argc,
             // Determine the GeNN matrix type and number of delay steps
             SynapseMatrixType mtype;
             unsigned int delaySteps;
-            tie(mtype, delaySteps) = getSynapticMatrixType(synapse, globalG, 0.1);
+            unsigned int maxConnections;
+            tie(mtype, delaySteps, maxConnections) = getSynapticMatrixType(synapse, srcPopSize, trgPopSize, globalG, 0.1);
 
             // Add synapse population to model
             std::string synapsePopName = std::string(srcPopName) + "_" + trgPopName;
-            model.addSynapsePopulation(synapsePopName, mtype, delaySteps, srcPopName, trgPopName,
-                                       &weightUpdateModel, SpineMLWeightUpdateModel::ParamValues(fixedWeightUpdateParamVals, weightUpdateModel), SpineMLWeightUpdateModel::VarValues(fixedWeightUpdateParamVals, weightUpdateModel),
-                                       &postsynapticModel, SpineMLPostsynapticModel::ParamValues(fixedPostsynapticParamVals, postsynapticModel), SpineMLPostsynapticModel::VarValues(fixedPostsynapticParamVals, postsynapticModel));
+            auto synapsePop = model.addSynapsePopulation(synapsePopName, mtype, delaySteps, srcPopName, trgPopName,
+                                                         &weightUpdateModel, SpineMLWeightUpdateModel::ParamValues(fixedWeightUpdateParamVals, weightUpdateModel), SpineMLWeightUpdateModel::VarValues(fixedWeightUpdateParamVals, weightUpdateModel),
+                                                         &postsynapticModel, SpineMLPostsynapticModel::ParamValues(fixedPostsynapticParamVals, postsynapticModel), SpineMLPostsynapticModel::VarValues(fixedPostsynapticParamVals, postsynapticModel));
+
+            // If matrix uses sparse connectivity set max connections
+            if(mtype & SynapseMatrixConnectivity::SPARSE) {
+                synapsePop->setMaxConnections(maxConnections);
+            }
         }
     }
 
