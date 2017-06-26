@@ -71,8 +71,7 @@ std::tuple<ModelParams, std::map<std::string, double>> readModelProperties(const
 
     return std::make_tuple(modelParams, fixedParamVals);
 }
-
-
+//----------------------------------------------------------------------------
 // Helper function to either find existing model that provides desired parameters or create new one
 template<typename T>
 const T &getCreateModel(const ModelParams &params, std::map<ModelParams, T> &models)
@@ -93,7 +92,7 @@ const T &getCreateModel(const ModelParams &params, std::map<ModelParams, T> &mod
         return existingModel->second;
     }
 }
-
+//----------------------------------------------------------------------------
 unsigned int getNeuronPopSize(const std::string &popName, const std::map<std::string, unsigned int> &popSizes)
 {
     auto pop = popSizes.find(popName);
@@ -104,7 +103,7 @@ unsigned int getNeuronPopSize(const std::string &popName, const std::map<std::st
         return pop->second;
     }
 }
-
+//----------------------------------------------------------------------------
 // Helper function to read the delay value from a SpineML 'Synapse' node
 unsigned int readDelaySteps(const pugi::xml_node &node, double dt)
 {
@@ -125,9 +124,10 @@ unsigned int readDelaySteps(const pugi::xml_node &node, double dt)
         throw std::runtime_error("Connector has no 'Delay' node");
     }
 }
-
+//----------------------------------------------------------------------------
 // Helper function to determine the correct type of GeNN projection to use for a SpineML 'Synapse' node
-std::tuple<SynapseMatrixType, unsigned int, unsigned int> getSynapticMatrixType(const pugi::xml_node &node, unsigned int numPre, unsigned int numPost, bool globalG, double dt)
+std::tuple<SynapseMatrixType, unsigned int, unsigned int> getSynapticMatrixType(const filesystem::path &basePath, const pugi::xml_node &node,
+                                                                                unsigned int numPre, unsigned int numPost, bool globalG, double dt)
 {
     auto oneToOne = node.child("OneToOneConnection");
     if(oneToOne) {
@@ -150,12 +150,12 @@ std::tuple<SynapseMatrixType, unsigned int, unsigned int> getSynapticMatrixType(
                                Connectors::FixedProbability::estimateMaxRowLength(fixedProbability, numPre, numPost));
     }
 
-    /*auto connectionList = node.child("ConnectionList");
+    auto connectionList = node.child("ConnectionList");
     if(connectionList) {
-        // **TODO** there is almost certainly a number of connections above which dense is better
-        return std::make_tuple(globalG ? SynapseMatrixType::SPARSE_GLOBALG : SynapseMatrixType::SPARSE_INDIVIDUALG,
-                               readDelaySteps(connectionList, dt));
-    }*/
+        return std::make_tuple(Connectors::List::getMatrixType(fixedProbability, numPre, numPost, globalG),
+                               readDelaySteps(fixedProbability, dt),
+                               Connectors::List::estimateMaxRowLength(basePath, fixedProbability, numPre, numPost));
+    }
 
     throw std::runtime_error("No supported connection type found for projection");
 }
@@ -312,7 +312,7 @@ int main(int argc,
             SynapseMatrixType mtype;
             unsigned int delaySteps;
             unsigned int maxConnections;
-            tie(mtype, delaySteps, maxConnections) = getSynapticMatrixType(synapse, srcPopSize, trgPopSize, globalG, 0.1);
+            tie(mtype, delaySteps, maxConnections) = getSynapticMatrixType(basePath, synapse, srcPopSize, trgPopSize, globalG, 0.1);
 
             // Add synapse population to model
             std::string synapsePopName = std::string(srcPopName) + "_" + trgPopName;

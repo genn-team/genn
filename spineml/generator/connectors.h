@@ -6,6 +6,11 @@ namespace pugi
     class xml_node;
 }
 
+namespace filesystem
+{
+    class path;
+}
+
 enum class SynapseMatrixType : unsigned int;
 
 //----------------------------------------------------------------------------
@@ -43,10 +48,10 @@ namespace AllToAll
 //----------------------------------------------------------------------------
 // SpineMLGenerator::Connectors::List
 //----------------------------------------------------------------------------
-/*namespace List
+namespace List
 {
     SynapseMatrixType getMatrixType(const pugi::xml_node &node, unsigned int numPre, unsigned int numPost, bool globalG);
-    unsigned int estimateMaxRowLength(const pugi::xml_node &node, unsigned int numPre, unsigned int numPost);
-}   // namespace List*/
+    unsigned int estimateMaxRowLength(const filesystem::path &basePath, const pugi::xml_node &node, unsigned int numPre, unsigned int numPost);
+}   // namespace List
 }   // namespace Connectors
 }   // namespace SpineMLGenerator
