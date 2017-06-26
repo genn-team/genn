@@ -140,6 +140,12 @@ public:
     //! Get std::map containing all named NeuronGroup objects in model
     const map<string, NeuronGroup> &getNeuronGroups() const{ return m_NeuronGroups; }
 
+    //! Get std::map containing local named NeuronGroup objects in model
+    const map<string, NeuronGroup> &getLocalNeuronGroups() const{ return m_LocalNeuronGroups; }
+
+    //! Get std::map containing remote named NeuronGroup objects in model
+    const map<string, NeuronGroup> &getRemoteNeuronGroups() const{ return m_RemoteNeuronGroups; }
+
     //! Gets std::map containing names and types of each parameter that should be passed through to the neuron kernel
     const map<string, string> &getNeuronKernelParameters() const{ return neuronKernelParameters; }
 
@@ -204,6 +210,12 @@ public:
     //=========================
     //! Get std::map containing all named SynapseGroup objects in model
     const map<string, SynapseGroup> &getSynapseGroups() const{ return m_SynapseGroups; }
+
+    //! Get std::map containing local named SynapseGroup objects in model
+    const map<string, SynapseGroup> &getLocalSynapseGroups() const{ return m_LocalSynapseGroups; }
+
+    //! Get std::map containing remote named SynapseGroup objects in model
+    const map<string, SynapseGroup> &getRemoteSynapseGroups() const{ return m_RemoteSynapseGroups; }
 
     //! Get std::map containing names of synapse groups which require postsynaptic learning and their thread IDs within
     //! the postsynaptic learning kernel (padded to multiples of the GPU thread block size)
@@ -343,8 +355,20 @@ private:
     //!< Named neuron groups
     map<string, NeuronGroup> m_NeuronGroups;
 
+    //!< Named local neuron groups
+    map<string, NeuronGroup> m_LocalNeuronGroups;
+
+    //!< Named remote neuron groups
+    map<string, NeuronGroup> m_RemoteNeuronGroups;
+
     //!< Named synapse groups
     map<string, SynapseGroup> m_SynapseGroups;
+
+    //!< Named local synapse groups
+    map<string, SynapseGroup> m_LocalSynapseGroups;
+
+    //!< Named remote synapse groups
+    map<string, SynapseGroup> m_RemoteSynapseGroups;
 
     //!< Mapping  of synapse group names which have postsynaptic learning to their start and end padded indices
     //!< **THINK** is this the right container?

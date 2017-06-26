@@ -106,18 +106,6 @@ void NNmodel::setNeuronClusterIndex(const string &neuronGroup, /**< Name of the 
 }
 
 
-//--------------------------------------------------------------------------
-/*! \brief This function is for setting which host and which device a synapse group will be simulated on
- */
-//--------------------------------------------------------------------------
-
-void NNmodel::setSynapseClusterIndex(const string &synapseGroup, /**< Name of the synapse population */
-                                     int hostID, /**< ID of the host */
-                                     int deviceID /**< ID of the device */)
-{
-    findSynapseGroup(synapseGroup)->setClusterIndex(hostID, deviceID);
-}
-
 unsigned int NNmodel::getNeuronGridSize() const
 {
     if(m_NeuronGroups.empty()) {

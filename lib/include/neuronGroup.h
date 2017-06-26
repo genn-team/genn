@@ -57,6 +57,10 @@ public:
 
     void setClusterIndex(int hostID, int deviceID){ m_HostID = hostID; m_DeviceID = deviceID; }
 
+    int getClusterHostID(){ return m_HostID; }
+
+    int getClusterDeviceID(){ return m_DeviceID; }
+
     void addSpkEventCondition(const std::string &code, const std::string &supportCodeNamespace);
 
     void addInSyn(SynapseGroup *synapseGroup){ m_InSyn.push_back(synapseGroup); }
