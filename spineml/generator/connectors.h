@@ -11,7 +11,7 @@ enum class SynapseMatrixType : unsigned int;
 //----------------------------------------------------------------------------
 // SpineMLGenerator::Connectors::FixedProbability
 //----------------------------------------------------------------------------
-namespace SpineMLCommon
+namespace SpineMLGenerator
 {
 namespace Connectors
 {
@@ -49,4 +49,4 @@ namespace AllToAll
     unsigned int estimateMaxRowLength(const pugi::xml_node &node, unsigned int numPre, unsigned int numPost);
 }   // namespace List*/
 }   // namespace Connectors
-}   // namespace SpineMLCommon
+}   // namespace SpineMLGenerator

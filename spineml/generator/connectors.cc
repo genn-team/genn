@@ -203,9 +203,9 @@ SynapseMatrixType getMatrixType(unsigned int numPre, unsigned int numPost, unsig
 }   // anonymous namespace
 
 //----------------------------------------------------------------------------
-// SpineMLCommon::Connectors::FixedProbability
+// SpineMLGenerator::Connectors::FixedProbability
 //----------------------------------------------------------------------------
-SynapseMatrixType SpineMLCommon::Connectors::FixedProbability::getMatrixType(const pugi::xml_node &node, unsigned int numPre, unsigned int numPost, bool globalG)
+SynapseMatrixType SpineMLGenerator::Connectors::FixedProbability::getMatrixType(const pugi::xml_node &node, unsigned int numPre, unsigned int numPost, bool globalG)
 {
     const double connectionProbability = node.attribute("probability").as_double();
 
@@ -221,7 +221,7 @@ SynapseMatrixType SpineMLCommon::Connectors::FixedProbability::getMatrixType(con
     }
 }
 //----------------------------------------------------------------------------
-unsigned int SpineMLCommon::Connectors::FixedProbability::estimateMaxRowLength(const pugi::xml_node &node, unsigned int numPre, unsigned int numPost)
+unsigned int SpineMLGenerator::Connectors::FixedProbability::estimateMaxRowLength(const pugi::xml_node &node, unsigned int numPre, unsigned int numPost)
 {
     const double connectionProbability = node.attribute("probability").as_double();
 
@@ -235,9 +235,9 @@ unsigned int SpineMLCommon::Connectors::FixedProbability::estimateMaxRowLength(c
 
 
 //----------------------------------------------------------------------------
-// SpineMLCommon::Connectors::OneToOne
+// SpineMLGenerator::Connectors::OneToOne
 //----------------------------------------------------------------------------
-SynapseMatrixType SpineMLCommon::Connectors::OneToOne::getMatrixType(const pugi::xml_node&, unsigned int numPre, unsigned int numPost, bool globalG)
+SynapseMatrixType SpineMLGenerator::Connectors::OneToOne::getMatrixType(const pugi::xml_node&, unsigned int numPre, unsigned int numPost, bool globalG)
 {
     // If we're connecting to a single postsynaptic neuron and
     // individual weights aren't required we can use DENSE_GLOBALG
@@ -250,7 +250,7 @@ SynapseMatrixType SpineMLCommon::Connectors::OneToOne::getMatrixType(const pugi:
     }
 }
 //----------------------------------------------------------------------------
-unsigned int SpineMLCommon::Connectors::OneToOne::estimateMaxRowLength(const pugi::xml_node&, unsigned int, unsigned int)
+unsigned int SpineMLGenerator::Connectors::OneToOne::estimateMaxRowLength(const pugi::xml_node&, unsigned int, unsigned int)
 {
     return 1;
 }
@@ -259,24 +259,24 @@ unsigned int SpineMLCommon::Connectors::OneToOne::estimateMaxRowLength(const pug
 //----------------------------------------------------------------------------
 // SpineMLGenerator::Connectors::AllToAll
 //----------------------------------------------------------------------------
-SynapseMatrixType SpineMLCommon::Connectors::AllToAll::getMatrixType(const pugi::xml_node&, unsigned int, unsigned int, bool globalG)
+SynapseMatrixType SpineMLGenerator::Connectors::AllToAll::getMatrixType(const pugi::xml_node&, unsigned int, unsigned int, bool globalG)
 {
     return globalG ? SynapseMatrixType::DENSE_GLOBALG : SynapseMatrixType::DENSE_INDIVIDUALG;
 }
 //----------------------------------------------------------------------------
-unsigned int SpineMLCommon::Connectors::AllToAll::estimateMaxRowLength(const pugi::xml_node&, unsigned int, unsigned int numPost)
+unsigned int SpineMLGenerator::Connectors::AllToAll::estimateMaxRowLength(const pugi::xml_node&, unsigned int, unsigned int numPost)
 {
     return numPost;
 }
 
 //----------------------------------------------------------------------------
-// SpineMLCommon::Connectors::List
+// SpineMLGenerator::Connectors::List
 //----------------------------------------------------------------------------
-/*SynapseMatrixType SpineMLCommon::Connectors::List::getMatrixType(const pugi::xml_node &node, unsigned int numPre, unsigned int numPost, bool globalG)
+/*SynapseMatrixType SpineMLGenerator::Connectors::List::getMatrixType(const pugi::xml_node &node, unsigned int numPre, unsigned int numPost, bool globalG)
 {
 
 }
 //----------------------------------------------------------------------------
-unsigned int SpineMLCommon::Connectors::List::estimateMaxRowLength(const pugi::xml_node &node, unsigned int numPre, unsigned int numPost)
+unsigned int SpineMLGenerator::Connectors::List::estimateMaxRowLength(const pugi::xml_node &node, unsigned int numPre, unsigned int numPost)
 {
 }*/

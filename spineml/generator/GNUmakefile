@@ -37,7 +37,7 @@ else
     GENERATE_SPINEML          =$(GENERATE_SPINEML_PATH)/generateSpineML_CPU_ONLY
 endif
 
-GENERATE_SPINEML_SOURCES      := common/pugixml/pugixml.cpp common/connectors.cc generator/main.cc generator/objectHandler.cc  generator/spineMLModelCommon.cc generator/spineMLNeuronModel.cc generator/spineMLPostsynapticModel.cc generator/spineMLWeightUpdateModel.cc
+GENERATE_SPINEML_SOURCES      := common/pugixml/pugixml.cpp generator/main.cc generator/connectors.cc generator/objectHandler.cc  generator/spineMLModelCommon.cc generator/spineMLNeuronModel.cc generator/spineMLPostsynapticModel.cc generator/spineMLWeightUpdateModel.cc
 GENERATE_SPINEML_SOURCES      :=$(addprefix $(SPINEML_PATH)/,$(GENERATE_SPINEML_SOURCES))
 
 INCLUDE_FLAGS                 += -I $(GENERATE_SPINEML_PATH) -I $(COMMON_SPINEML_PATH)
