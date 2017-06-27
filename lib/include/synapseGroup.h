@@ -25,8 +25,7 @@ public:
         m_PaddedKernelIDRange(0, 0), m_Name(name), m_SpanType(SpanType::POSTSYNAPTIC), m_DelaySteps(delaySteps), m_MaxConnections(trgNeuronGroup->getNumNeurons()), m_MatrixType(matrixType),
         m_SrcNeuronGroup(srcNeuronGroup), m_TrgNeuronGroup(trgNeuronGroup),
         m_TrueSpikeRequired(false), m_SpikeEventRequired(false), m_EventThresholdReTestRequired(false),
-        m_WUModel(wu), m_WUParams(wuParams), m_WUInitVals(wuInitVals), m_PSModel(ps), m_PSParams(psParams), m_PSInitVals(psInitVals),
-        m_HostID(0), m_DeviceID(0)
+        m_WUModel(wu), m_WUParams(wuParams), m_WUInitVals(wuInitVals), m_PSModel(ps), m_PSParams(psParams), m_PSInitVals(psInitVals)
     {
     }
 
@@ -190,10 +189,4 @@ private:
 
     //!< Whether indidividual state variables of post synapse should use zero-copied memory
     std::set<string> m_PSVarZeroCopyEnabled;
-
-    //!< The ID of the cluster node which the synapse group is computed on
-    int m_HostID;
-
-    //!< The ID of the CUDA device which the synapse group is comnputed on
-    int m_DeviceID;
 };
