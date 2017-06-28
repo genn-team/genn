@@ -21,8 +21,12 @@ public:
         m_NeuronModel(neuronModel), m_Params(params), m_InitVals(initVals),
         m_SpikeTimeRequired(false), m_TrueSpikeRequired(false), m_SpikeEventRequired(false), m_QueueRequired(false),
         m_NumDelaySlots(1),
+#ifdef MPI_ENABLE
         m_SpikeZeroCopyEnabled(false), m_SpikeEventZeroCopyEnabled(false), m_SpikeTimeZeroCopyEnabled(false),
         m_HostID(0), m_DeviceID(0)
+#else
+        m_SpikeZeroCopyEnabled(false), m_SpikeEventZeroCopyEnabled(false), m_SpikeTimeZeroCopyEnabled(false)
+#endif
     {
     }
 
@@ -152,9 +156,11 @@ private:
     //!< Whether indidividual state variables of a neuron group should use zero-copied memory
     std::set<string> m_VarZeroCopyEnabled;
 
+#ifdef MPI_ENABLE
     //!< The ID of the cluster node which the neuron groups are computed on
     int m_HostID;
 
     //!< The ID of the CUDA device which the neuron groups are comnputed on
     int m_DeviceID;
+#endif
 };
