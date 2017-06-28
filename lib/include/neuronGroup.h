@@ -55,11 +55,13 @@ public:
      //!< May improve IO performance at the expense of kernel performance
     void setVarZeroCopyEnabled(const std::string &varName, bool enabled);
 
+#ifdef MPI_ENABLE
     void setClusterIndex(int hostID, int deviceID){ m_HostID = hostID; m_DeviceID = deviceID; }
 
     int getClusterHostID(){ return m_HostID; }
 
     int getClusterDeviceID(){ return m_DeviceID; }
+#endif
 
     void addSpkEventCondition(const std::string &code, const std::string &supportCodeNamespace);
 

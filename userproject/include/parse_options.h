@@ -3,6 +3,7 @@
   string ftype= "FLOAT";
   unsigned int fixsynapse= 0; 
   unsigned int cpu_only= 0;
+  unsigned int mpi_enable= 0;
   string option;
   for (int i= argStart; i < argc; i++) {
       if (extract_option(argv[i],option) != 0) {
@@ -32,6 +33,12 @@
 	  else if (option == "CPU_ONLY") {
 	      if (extract_bool_value(argv[i], cpu_only) != 0) {
 		  cerr << "illegal value for 'CPU_ONLY' option." << endl;
+		  exit(1);
+	      }
+	  }
+	  else if (option == "MPI_ENABLE") {
+	      if (extract_bool_value(argv[i], mpi_enable) != 0) {
+		  cerr << "illegal value for 'MPI_ENABLE' option." << endl;
 		  exit(1);
 	      }
 	  }

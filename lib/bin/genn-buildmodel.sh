@@ -6,6 +6,7 @@ genn_help () {
     echo "genn-buildmodel.sh [cdho] model"
     echo "-c            only generate simulation code for the CPU"
     echo "-d            enables the debugging mode"
+    echo "-m            generate MPI simulation code"
     echo "-v            generates coverage information"
     echo "-h            shows this help message"
     echo "-o outpath    changes the output directory"
@@ -21,10 +22,11 @@ trap 'genn_error $LINENO 50 "command failure"' ERR
 # parse command options
 OUT_PATH="$PWD";
 while [[ -n "${!OPTIND}" ]]; do
-    while getopts "cdvo:h" option; do
+    while getopts "cdmvo:h" option; do
     case $option in
         c) CPU_ONLY=1;;
         d) DEBUG=1;;
+        m) MPI_ENABLE=1;;
         v) COVERAGE=1;;
         h) genn_help; exit;;
         o) OUT_PATH="$OPTARG";;
@@ -66,6 +68,9 @@ if [[ -n "$DEBUG" ]]; then
 fi
 if [[ -n "$COVERAGE" ]]; then
     MACROS="$MACROS COVERAGE=1";
+fi
+if [[ -n "$MPI_ENABLE" ]]; then
+    MACROS="$MACROS MPI_ENABLE=1";
 fi
 if [[ -n "$CPU_ONLY" ]]; then
     MACROS="$MACROS CPU_ONLY=1";

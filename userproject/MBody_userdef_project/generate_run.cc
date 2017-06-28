@@ -112,6 +112,7 @@ CPU_ONLY=0 or CPU_ONLY=1 (default 0): Whether to compile in (CUDA independent) \
   cmd += modelName + ".cc";
   if (dbgMode) cmd += " -d";
   if (cpu_only) cmd += " -c";
+  if (mpi_enable) cmd += " -m";
 #ifdef _WIN32
   cmd += " && nmake /nologo /f WINmakefile clean all ";
 #else // UNIX
@@ -120,6 +121,7 @@ CPU_ONLY=0 or CPU_ONLY=1 (default 0): Whether to compile in (CUDA independent) \
   cmd += "SIM_CODE=" + modelName + "_CODE";
   if (dbgMode) cmd += " DEBUG=1";
   if (cpu_only) cmd += " CPU_ONLY=1";
+  if (mpi_enable) cmd += " MPI_ENABLE=1";
   cout << cmd << endl;
   retval=system(cmd.c_str());
   if (retval != 0){

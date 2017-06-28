@@ -93,6 +93,7 @@ bool NNmodel::zeroCopyInUse() const
     return false;
 }
 
+#ifdef MPI_ENABLE
 //--------------------------------------------------------------------------
 /*! \brief This function is for setting which host and which device a neuron group will be simulated on
  */
@@ -104,6 +105,7 @@ void NNmodel::setNeuronClusterIndex(const string &neuronGroup, /**< Name of the 
 {
     findNeuronGroup(neuronGroup)->setClusterIndex(hostID, deviceID);
 }
+#endif
 
 
 unsigned int NNmodel::getNeuronGridSize() const
