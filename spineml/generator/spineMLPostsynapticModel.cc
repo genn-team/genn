@@ -53,7 +53,7 @@ public:
 //----------------------------------------------------------------------------
 // SpineMLGenerator::SpineMLPostsynapticModel
 //----------------------------------------------------------------------------
-SpineMLGenerator::SpineMLPostsynapticModel::SpineMLPostsynapticModel(const ModelParams &params)
+SpineMLGenerator::SpineMLPostsynapticModel::SpineMLPostsynapticModel(const ModelParams::Postsynaptic &params)
 {
     // Load XML document
     pugi::xml_document doc;

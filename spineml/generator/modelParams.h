@@ -17,32 +17,15 @@ namespace pugi
 }
 
 //----------------------------------------------------------------------------
-// SpineMLGenerator::ModelParams
+// SpineMLGenerator::ModelParams::Base
 //----------------------------------------------------------------------------
 namespace SpineMLGenerator
 {
-class ModelParams
+namespace ModelParams
+{
+class Base
 {
 public:
-    ModelParams(const filesystem::path &basePath, const pugi::xml_node &node,
-                std::map<std::string, double> &fixedParamVals);
-
-    //----------------------------------------------------------------------------
-    // Public API
-    //----------------------------------------------------------------------------
-    const std::string &getURL() const{ return m_URL; }
-    const std::set<std::string> &getVariableParams() const{ return m_VariableParams; }
-
-    //----------------------------------------------------------------------------
-    // Operators
-    //----------------------------------------------------------------------------
-    bool operator < (const ModelParams &other) const
-    {
-        return (std::tie(m_URL, m_VariableParams, m_InputPortMappings)
-                < std::tie(other.m_URL, other.m_VariableParams, other.m_InputPortMappings));
-    }
-
-private:
     //----------------------------------------------------------------------------
     // Enumerations
     //----------------------------------------------------------------------------
@@ -54,6 +37,25 @@ private:
         WEIGHT_UPDATE
     };
 
+    Base(const filesystem::path &basePath, const pugi::xml_node &node,
+         std::map<std::string, double> &fixedParamVals);
+
+    //----------------------------------------------------------------------------
+    // Public API
+    //----------------------------------------------------------------------------
+    const std::string &getURL() const{ return m_URL; }
+    const std::set<std::string> &getVariableParams() const{ return m_VariableParams; }
+
+    //----------------------------------------------------------------------------
+    // Operators
+    //----------------------------------------------------------------------------
+    bool operator < (const Base &other) const
+    {
+        return (std::tie(m_URL, m_VariableParams, m_InputPortMappings)
+                < std::tie(other.m_URL, other.m_VariableParams, other.m_InputPortMappings));
+    }
+
+private:
     //----------------------------------------------------------------------------
     // Members
     //----------------------------------------------------------------------------
@@ -63,4 +65,35 @@ private:
     // Map of destination port names to their source component and port
     std::map<std::string, std::pair<PortSource, std::string>> m_InputPortMappings;
 };
+
+//----------------------------------------------------------------------------
+// SpineMLGenerator::ModelParams::Neuron
+//----------------------------------------------------------------------------
+class Neuron : public Base
+{
+public:
+    Neuron(const filesystem::path &basePath, const pugi::xml_node &node,
+           std::map<std::string, double> &fixedParamVals);
+};
+
+//----------------------------------------------------------------------------
+// SpineMLGenerator::ModelParams::WeightUpdate
+//----------------------------------------------------------------------------
+class WeightUpdate : public Base
+{
+public:
+    WeightUpdate(const filesystem::path &basePath, const pugi::xml_node &node,
+                 std::map<std::string, double> &fixedParamVals);
+};
+
+//----------------------------------------------------------------------------
+// SpineMLGenerator::ModelParams::Postsynaptic
+//----------------------------------------------------------------------------
+class Postsynaptic : public Base
+{
+public:
+    Postsynaptic(const filesystem::path &basePath, const pugi::xml_node &node,
+                 std::map<std::string, double> &fixedParamVals);
+};
+}   // namespace ModelParams
 }   // namespace SpineMLGenerator

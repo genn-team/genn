@@ -15,7 +15,10 @@
 // Forward declarations
 namespace SpineMLGenerator
 {
-    class ModelParams;
+    namespace ModelParams
+    {
+        class Postsynaptic;
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -26,7 +29,7 @@ namespace SpineMLGenerator
 class SpineMLPostsynapticModel : public PostsynapticModels::Base
 {
 public:
-    SpineMLPostsynapticModel(const ModelParams &params);
+    SpineMLPostsynapticModel(const ModelParams::Postsynaptic &params);
 
     //------------------------------------------------------------------------
     // Typedefines

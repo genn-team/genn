@@ -13,7 +13,10 @@
 // Forward declarations
 namespace SpineMLGenerator
 {
-    class ModelParams;
+    namespace ModelParams
+    {
+        class Neuron;
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -24,7 +27,7 @@ namespace SpineMLGenerator
 class SpineMLNeuronModel : public NeuronModels::Base
 {
 public:
-    SpineMLNeuronModel(const ModelParams &params);
+    SpineMLNeuronModel(const ModelParams::Neuron &params);
 
     //------------------------------------------------------------------------
     // Typedefines

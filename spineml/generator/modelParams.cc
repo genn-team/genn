@@ -8,10 +8,10 @@
 
 
 //----------------------------------------------------------------------------
-// SpineMLGenerator::ModelParams
+// SpineMLGenerator::Base
 //----------------------------------------------------------------------------
-SpineMLGenerator::ModelParams::ModelParams(const filesystem::path &basePath, const pugi::xml_node &node,
-                std::map<std::string, double> &fixedParamVals)
+SpineMLGenerator::ModelParams::Base::Base(const filesystem::path &basePath, const pugi::xml_node &node,
+                                          std::map<std::string, double> &fixedParamVals)
 {
     m_URL = (basePath / node.attribute("url").value()).str();
 
@@ -31,4 +31,31 @@ SpineMLGenerator::ModelParams::ModelParams(const filesystem::path &basePath, con
             m_VariableParams.insert(paramName);
         }
     }
+}
+
+//----------------------------------------------------------------------------
+// SpineMLGenerator::ModelParams::Neuron
+//----------------------------------------------------------------------------
+SpineMLGenerator::ModelParams::Neuron::Neuron(const filesystem::path &basePath, const pugi::xml_node &node,
+                                              std::map<std::string, double> &fixedParamVals)
+: Base(basePath, node, fixedParamVals)
+{
+}
+
+//----------------------------------------------------------------------------
+// SpineMLGenerator::ModelParams::WeightUpdate
+//----------------------------------------------------------------------------
+SpineMLGenerator::ModelParams::WeightUpdate::WeightUpdate(const filesystem::path &basePath, const pugi::xml_node &node,
+                                                          std::map<std::string, double> &fixedParamVals)
+: Base(basePath, node, fixedParamVals)
+{
+}
+
+//----------------------------------------------------------------------------
+// SpineMLGenerator::ModelParams::Postsynaptic
+//----------------------------------------------------------------------------
+SpineMLGenerator::ModelParams::Postsynaptic::Postsynaptic(const filesystem::path &basePath, const pugi::xml_node &node,
+                                                          std::map<std::string, double> &fixedParamVals)
+: Base(basePath, node, fixedParamVals)
+{
 }
