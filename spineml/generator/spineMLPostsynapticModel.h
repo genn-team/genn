@@ -12,6 +12,12 @@
 // Spine ML generator includes
 #include "spineMLModelCommon.h"
 
+// Forward declarations
+namespace SpineMLGenerator
+{
+    class ModelParams;
+}
+
 //----------------------------------------------------------------------------
 // SpineMLGenerator::SpineMLPostsynapticModel
 //----------------------------------------------------------------------------
@@ -20,7 +26,7 @@ namespace SpineMLGenerator
 class SpineMLPostsynapticModel : public PostsynapticModels::Base
 {
 public:
-    SpineMLPostsynapticModel(const std::string &url, const std::set<std::string> &variableParams);
+    SpineMLPostsynapticModel(const ModelParams &params);
 
     //------------------------------------------------------------------------
     // Typedefines

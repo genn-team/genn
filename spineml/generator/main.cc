@@ -25,6 +25,7 @@
 #include "spineMLUtils.h"
 
 // SpineMLGenerator includes
+#include "modelParams.h"
 #include "spineMLNeuronModel.h"
 #include "spineMLPostsynapticModel.h"
 #include "spineMLWeightUpdateModel.h"
@@ -37,40 +38,6 @@ using namespace SpineMLGenerator;
 //----------------------------------------------------------------------------
 namespace
 {
-typedef std::pair<std::string, std::set<std::string>> ModelParams;
-
-//----------------------------------------------------------------------------
-// Functions
-//----------------------------------------------------------------------------
-// Helper function to take a SpineML model and determine which of it's parameters are fixed and thus can
-// potentially be hardcoded in GeNN or variable thus need to be implemented as GeNN model variables
-std::tuple<ModelParams, std::map<std::string, double>> readModelProperties(const filesystem::path &basePath,
-                                                                           const pugi::xml_node &node)
-{
-    // Build uniquely identifying model parameters starting with its 'url'
-    ModelParams modelParams;
-    modelParams.first = (basePath / node.attribute("url").value()).str();
-
-    // Determine which properties are variable (therefore
-    // can't be substituted directly into auto-generated code)
-    std::map<std::string, double> fixedParamVals;
-    for(auto param : node.children("Property")) {
-        const auto *paramName = param.attribute("name").value();
-
-        // If parameter has a fixed value, it can be hard-coded into either model or automatically initialized in simulator
-        // **TODO** annotation to say you don't want this to be hard-coded
-        auto fixedValue = param.child("FixedValue");
-        if(fixedValue) {
-            fixedParamVals.insert(std::make_pair(paramName, fixedValue.attribute("value").as_double()));
-        }
-        // Otherwise, in GeNN terms, it should be treated as a variable
-        else {
-            modelParams.second.insert(paramName);
-        }
-    }
-
-    return std::make_tuple(modelParams, fixedParamVals);
-}
 //----------------------------------------------------------------------------
 // Helper function to either find existing model that provides desired parameters or create new one
 template<typename T>
@@ -83,7 +50,7 @@ const T &getCreateModel(const ModelParams &params, std::map<ModelParams, T> &mod
         // Create new model
         std::cout << "\tCreating new model" << std::endl;
         auto newModel = models.insert(
-            std::make_pair(params, T(params.first, params.second)));
+            std::make_pair(params, T(params)));
 
         return newModel.first->second;
     }
@@ -243,9 +210,9 @@ int main(int argc,
         }
         else {
             // Read neuron properties
-            ModelParams modelParams;
+
             std::map<std::string, double> fixedParamVals;
-            tie(modelParams, fixedParamVals) = readModelProperties(basePath, neuron);
+            ModelParams modelParams(basePath, neuron, fixedParamVals);
 
             // Either get existing neuron model or create new one of no suitable models are available
             const auto &neuronModel = getCreateModel(modelParams, neuronModels);
@@ -284,12 +251,11 @@ int main(int argc,
             }
 
             // Read weight update properties
-            ModelParams weightUpdateModelParams;
             std::map<std::string, double> fixedWeightUpdateParamVals;
-            tie(weightUpdateModelParams, fixedWeightUpdateParamVals) = readModelProperties(basePath, weightUpdate);
+            ModelParams weightUpdateModelParams(basePath, weightUpdate, fixedWeightUpdateParamVals);
 
             // Global weight value can be used if there are no variable parameters
-            const bool globalG = weightUpdateModelParams.second.empty();
+            const bool globalG = weightUpdateModelParams.getVariableParams().empty();
 
             // Either get existing postsynaptic model or create new one of no suitable models are available
             const auto &weightUpdateModel = getCreateModel(weightUpdateModelParams, weightUpdateModels);
@@ -301,9 +267,8 @@ int main(int argc,
             }
 
             // Read postsynapse properties
-            ModelParams postsynapticModelParams;
             std::map<std::string, double> fixedPostsynapticParamVals;
-            tie(postsynapticModelParams, fixedPostsynapticParamVals) = readModelProperties(basePath, postSynapse);
+            ModelParams postsynapticModelParams(basePath, postSynapse, fixedPostsynapticParamVals);
 
             // Either get existing postsynaptic model or create new one of no suitable models are available
             const auto &postsynapticModel = getCreateModel(postsynapticModelParams, postsynapticModels);

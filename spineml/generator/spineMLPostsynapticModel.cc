@@ -8,6 +8,7 @@
 #include "pugixml/pugixml.hpp"
 
 // Spine ML generator includes
+#include "modelParams.h"
 #include "objectHandler.h"
 
 //----------------------------------------------------------------------------
@@ -52,26 +53,25 @@ public:
 //----------------------------------------------------------------------------
 // SpineMLGenerator::SpineMLPostsynapticModel
 //----------------------------------------------------------------------------
-SpineMLGenerator::SpineMLPostsynapticModel::SpineMLPostsynapticModel(const std::string &url,
-                                                                     const std::set<std::string> &variableParams)
+SpineMLGenerator::SpineMLPostsynapticModel::SpineMLPostsynapticModel(const ModelParams &params)
 {
     // Load XML document
     pugi::xml_document doc;
-    auto result = doc.load_file(url.c_str());
+    auto result = doc.load_file(params.getURL().c_str());
     if(!result) {
-        throw std::runtime_error("Could not open file:" + url + ", error:" + result.description());
+        throw std::runtime_error("Could not open file:" + params.getURL() + ", error:" + result.description());
     }
 
     // Get SpineML root
     auto spineML = doc.child("SpineML");
     if(!spineML) {
-        throw std::runtime_error("XML file:" + url + " is not a SpineML component - it has no root SpineML node");
+        throw std::runtime_error("XML file:" + params.getURL() + " is not a SpineML component - it has no root SpineML node");
     }
 
     // Get component class
     auto componentClass = spineML.child("ComponentClass");
     if(!componentClass || strcmp(componentClass.attribute("type").value(), "postsynapse") != 0) {
-        throw std::runtime_error("XML file:" + url + " is not a SpineML 'postsynapse' component - "
+        throw std::runtime_error("XML file:" + params.getURL() + " is not a SpineML 'postsynapse' component - "
                                  "it's ComponentClass node is either missing or of the incorrect type");
     }
 
@@ -100,7 +100,7 @@ SpineMLGenerator::SpineMLPostsynapticModel::SpineMLPostsynapticModel(const std::
     m_DecayCode = decayCodeStream.str();
 
     // Build the final vectors of parameter names and variables from model
-    tie(m_ParamNames, m_Vars) = findModelVariables(componentClass, variableParams, multipleRegimes);
+    tie(m_ParamNames, m_Vars) = findModelVariables(componentClass, params.getVariableParams(), multipleRegimes);
 
     // Find names of analogue receive ports
     auto analogueReceivePortNames = findAnalogueReceivePortNames(componentClass);

@@ -12,6 +12,12 @@
 // Spine ML generator includes
 #include "spineMLModelCommon.h"
 
+// Forward declarations
+namespace SpineMLGenerator
+{
+    class ModelParams;
+}
+
 //----------------------------------------------------------------------------
 // SpineMLGenerator::SpineMLWeightUpdateModel
 //----------------------------------------------------------------------------
@@ -20,7 +26,7 @@ namespace SpineMLGenerator
 class SpineMLWeightUpdateModel : public WeightUpdateModels::Base
 {
 public:
-    SpineMLWeightUpdateModel(const std::string &url, const std::set<std::string> &variableParams);
+    SpineMLWeightUpdateModel(const ModelParams &params);
 
     //------------------------------------------------------------------------
     // Typedefines
