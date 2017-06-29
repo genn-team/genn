@@ -69,10 +69,10 @@ private:
 
 
 //----------------------------------------------------------------------------
-// SpineMLGenerator::SpineMLWeightUpdateModel
+// SpineMLGenerator::WeightUpdateModel
 //----------------------------------------------------------------------------
-SpineMLGenerator::SpineMLWeightUpdateModel::SpineMLWeightUpdateModel(const ModelParams::WeightUpdate &params,
-                                                                     const SpineMLNeuronModel *srcNeuronModel)
+SpineMLGenerator::WeightUpdateModel::WeightUpdateModel(const ModelParams::WeightUpdate &params,
+                                                                     const NeuronModel *srcNeuronModel)
 {
     // Load XML document
     pugi::xml_document doc;

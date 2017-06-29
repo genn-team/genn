@@ -86,11 +86,11 @@ private:
 
 
 //----------------------------------------------------------------------------
-// SpineMLGenerator::SpineMLPostsynapticModel
+// SpineMLGenerator::PostsynapticModel
 //----------------------------------------------------------------------------
-SpineMLGenerator::SpineMLPostsynapticModel::SpineMLPostsynapticModel(const ModelParams::Postsynaptic &params,
-                                                                     const SpineMLNeuronModel *trgNeuronModel,
-                                                                     const SpineMLWeightUpdateModel *weightUpdateModel)
+SpineMLGenerator::PostsynapticModel::PostsynapticModel(const ModelParams::Postsynaptic &params,
+                                                                     const NeuronModel *trgNeuronModel,
+                                                                     const WeightUpdateModel *weightUpdateModel)
 {
     // Load XML document
     pugi::xml_document doc;

@@ -1,4 +1,4 @@
-#include "spineMLModelCommon.h"
+#include "modelCommon.h"
 
 // Standard C++ includes
 #include <algorithm>

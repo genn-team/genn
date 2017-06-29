@@ -10,13 +10,13 @@
 #include "newPostsynapticModels.h"
 
 // Spine ML generator includes
-#include "spineMLModelCommon.h"
+#include "modelCommon.h"
 
 // Forward declarations
 namespace SpineMLGenerator
 {
-    class SpineMLNeuronModel;
-    class SpineMLWeightUpdateModel;
+    class NeuronModel;
+    class WeightUpdateModel;
 
     namespace ModelParams
     {
@@ -25,16 +25,16 @@ namespace SpineMLGenerator
 }
 
 //----------------------------------------------------------------------------
-// SpineMLGenerator::SpineMLPostsynapticModel
+// SpineMLGenerator::PostsynapticModel
 //----------------------------------------------------------------------------
 namespace SpineMLGenerator
 {
-class SpineMLPostsynapticModel : public PostsynapticModels::Base
+class PostsynapticModel : public PostsynapticModels::Base
 {
 public:
-    SpineMLPostsynapticModel(const ModelParams::Postsynaptic &params,
-                             const SpineMLNeuronModel *trgNeuronModel,
-                             const SpineMLWeightUpdateModel *weightUpdateModel);
+    PostsynapticModel(const ModelParams::Postsynaptic &params,
+                             const NeuronModel *trgNeuronModel,
+                             const WeightUpdateModel *weightUpdateModel);
 
     //------------------------------------------------------------------------
     // Typedefines

@@ -1,7 +1,7 @@
 #pragma once
 
 // SpineML generator includes
-#include "spineMLModelCommon.h"
+#include "modelCommon.h"
 
 // Forward declarations
 namespace pugi

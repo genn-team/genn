@@ -155,9 +155,9 @@ int main(int argc,
     }
 
     // Neuron, postsyaptic and weight update models required by network
-    std::map<ModelParams::Neuron, SpineMLNeuronModel> neuronModels;
-    std::map<ModelParams::Postsynaptic, SpineMLPostsynapticModel> postsynapticModels;
-    std::map<ModelParams::WeightUpdate, SpineMLWeightUpdateModel> weightUpdateModels;
+    std::map<ModelParams::Neuron, NeuronModel> neuronModels;
+    std::map<ModelParams::Postsynaptic, PostsynapticModel> postsynapticModels;
+    std::map<ModelParams::WeightUpdate, WeightUpdateModel> weightUpdateModels;
 
     // Get the filename of the network and remove extension
     // to get something usable as a network name
@@ -203,8 +203,8 @@ int main(int argc,
 
             // Add population to model
             model.addNeuronPopulation(popName, popSize, &neuronModel,
-                                      SpineMLNeuronModel::ParamValues(fixedParamVals, neuronModel),
-                                      SpineMLNeuronModel::VarValues(fixedParamVals, neuronModel));
+                                      NeuronModel::ParamValues(fixedParamVals, neuronModel),
+                                      NeuronModel::VarValues(fixedParamVals, neuronModel));
         }
     }
 
@@ -213,14 +213,14 @@ int main(int argc,
         // Read source population name from neuron node
         auto srcPopName = SpineMLUtils::getSafeName(population.child("LL:Neuron").attribute("name").value());
         const NeuronGroup *srcNeuronGroup = model.findNeuronGroup(srcPopName);
-        const SpineMLNeuronModel *srcNeuronModel = dynamic_cast<const SpineMLNeuronModel*>(srcNeuronGroup->getNeuronModel());
+        const NeuronModel *srcNeuronModel = dynamic_cast<const NeuronModel*>(srcNeuronGroup->getNeuronModel());
 
         // Loop through outgoing projections
         for(auto projection : population.children("LL:Projection")) {
             // Read destination population name from projection
             auto trgPopName = SpineMLUtils::getSafeName(projection.attribute("dst_population").value());
             const NeuronGroup *trgNeuronGroup = model.findNeuronGroup(trgPopName);
-            const SpineMLNeuronModel *trgNeuronModel = dynamic_cast<const SpineMLNeuronModel*>(trgNeuronGroup->getNeuronModel());
+            const NeuronModel *trgNeuronModel = dynamic_cast<const NeuronModel*>(trgNeuronGroup->getNeuronModel());
 
             std::cout << "Projection from population:" << srcPopName << "->" << trgPopName << std::endl;
 
@@ -277,8 +277,8 @@ int main(int argc,
             // Add synapse population to model
             std::string synapsePopName = std::string(srcPopName) + "_" + trgPopName;
             auto synapsePop = model.addSynapsePopulation(synapsePopName, mtype, delaySteps, srcPopName, trgPopName,
-                                                         &weightUpdateModel, SpineMLWeightUpdateModel::ParamValues(fixedWeightUpdateParamVals, weightUpdateModel), SpineMLWeightUpdateModel::VarValues(fixedWeightUpdateParamVals, weightUpdateModel),
-                                                         &postsynapticModel, SpineMLPostsynapticModel::ParamValues(fixedPostsynapticParamVals, postsynapticModel), SpineMLPostsynapticModel::VarValues(fixedPostsynapticParamVals, postsynapticModel));
+                                                         &weightUpdateModel, WeightUpdateModel::ParamValues(fixedWeightUpdateParamVals, weightUpdateModel), WeightUpdateModel::VarValues(fixedWeightUpdateParamVals, weightUpdateModel),
+                                                         &postsynapticModel, PostsynapticModel::ParamValues(fixedPostsynapticParamVals, postsynapticModel), PostsynapticModel::VarValues(fixedPostsynapticParamVals, postsynapticModel));
 
             // If matrix uses sparse connectivity set max connections
             if(mtype & SynapseMatrixConnectivity::SPARSE) {

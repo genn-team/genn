@@ -75,9 +75,9 @@ private:
 }
 
 //----------------------------------------------------------------------------
-// SpineMLGenerator::SpineMLNeuronModel
+// SpineMLGenerator::NeuronModel
 //----------------------------------------------------------------------------
-SpineMLGenerator::SpineMLNeuronModel::SpineMLNeuronModel(const ModelParams::Neuron &params)
+SpineMLGenerator::NeuronModel::NeuronModel(const ModelParams::Neuron &params)
 {
     // Load XML document
     pugi::xml_document doc;
