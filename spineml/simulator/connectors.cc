@@ -18,12 +18,16 @@
 unsigned int SpineMLSimulator::Connectors::fixedProbabilitySparse(const pugi::xml_node &node, unsigned int numPre, unsigned int numPost,
                                                                   SparseProjection &sparseProjection, AllocateFn allocateFn)
 {
+    // Create RNG and seed if required
+    std::mt19937 gen;
+    auto seed = node.attribute("seed");
+    if(seed) {
+        gen.seed(seed.as_uint());
+        std::cout << "\tSeed:" << seed.as_uint() << std::endl;
+    }
+
     // Read probability and seed from connector
     double probability = node.attribute("probability").as_double();
-    unsigned int seed = node.attribute("seed").as_uint();
-
-    // Create RNG
-    std::mt19937 gen(seed);
 
     // Allocate memory for indices
     // **NOTE** RESIZE as this vector is populated by index
