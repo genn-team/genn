@@ -251,7 +251,9 @@ int main(int argc,
 
             // Read weight update properties
             std::map<std::string, double> fixedWeightUpdateParamVals;
-            ModelParams::WeightUpdate weightUpdateModelParams(basePath, weightUpdate, fixedWeightUpdateParamVals);
+            ModelParams::WeightUpdate weightUpdateModelParams(basePath, weightUpdate,
+                                                              srcPopName, trgPopName,
+                                                              fixedWeightUpdateParamVals);
 
             // Global weight value can be used if there are no variable parameters
             const bool globalG = weightUpdateModelParams.getVariableParams().empty();
@@ -267,7 +269,9 @@ int main(int argc,
 
             // Read postsynapse properties
             std::map<std::string, double> fixedPostsynapticParamVals;
-            ModelParams::Postsynaptic postsynapticModelParams(basePath, postSynapse, fixedPostsynapticParamVals);
+            ModelParams::Postsynaptic postsynapticModelParams(basePath, postSynapse,
+                                                              trgPopName,
+                                                              fixedPostsynapticParamVals);
 
             // Either get existing postsynaptic model or create new one of no suitable models are available
             const auto &postsynapticModel = getCreateModel(postsynapticModelParams, postsynapticModels);

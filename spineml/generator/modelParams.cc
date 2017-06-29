@@ -9,6 +9,10 @@
 // pugixml includes
 #include "pugixml/pugixml.hpp"
 
+// SpineMLCommon includes
+#include "spineMLUtils.h"
+
+using namespace SpineMLCommon;
 
 //----------------------------------------------------------------------------
 // SpineMLGenerator::Base
@@ -36,6 +40,17 @@ SpineMLGenerator::ModelParams::Base::Base(const filesystem::path &basePath, cons
     }
 }
 //----------------------------------------------------------------------------
+const std::pair<SpineMLGenerator::ModelParams::Base::PortSource, std::string> &SpineMLGenerator::ModelParams::Base::getPortSrc(const std::string &dstPort) const
+{
+    auto port = m_PortMappings.find(dstPort);
+    if(port == m_PortMappings.end()) {
+        throw std::runtime_error("Cannot find destination port:" + dstPort);
+    }
+    else {
+        return port->second;
+    }
+}
+//----------------------------------------------------------------------------
 void SpineMLGenerator::ModelParams::Base::addPortMapping(const std::string &dstPort, PortSource srcComponent, const std::string &srcPort)
 {
     m_PortMappings.insert(std::make_pair(dstPort, std::make_pair(srcComponent, srcPort)));
@@ -54,6 +69,7 @@ SpineMLGenerator::ModelParams::Neuron::Neuron(const filesystem::path &basePath, 
 // SpineMLGenerator::ModelParams::WeightUpdate
 //----------------------------------------------------------------------------
 SpineMLGenerator::ModelParams::WeightUpdate::WeightUpdate(const filesystem::path &basePath, const pugi::xml_node &node,
+                                                          const std::string &srcPopName, const std::string &trgPopName,
                                                           std::map<std::string, double> &fixedParamVals)
 : Base(basePath, node, fixedParamVals)
 {
@@ -70,12 +86,28 @@ SpineMLGenerator::ModelParams::WeightUpdate::WeightUpdate(const filesystem::path
     if(feedbackSrcPort && feedbackDstPort) {
         addPortMapping(feedbackDstPort.value(), PortSource::POSTSYNAPTIC_NEURON, feedbackSrcPort.value());
     }
+
+    // Loop through low-level inputs
+    for(auto input : node.children("LL:Input")) {
+        // If the source of this input is our target neuron population, add port mapping
+        auto safeInputSrc = SpineMLUtils::getSafeName(input.attribute("src").value());
+        if(safeInputSrc == srcPopName) {
+            addPortMapping(input.attribute("dst_port").value(), PortSource::PRESYNAPTIC_NEURON, input.attribute("src_port").value());
+        }
+        else if(safeInputSrc == trgPopName) {
+            addPortMapping(input.attribute("dst_port").value(), PortSource::POSTSYNAPTIC_NEURON, input.attribute("src_port").value());
+        }
+        else {
+            throw std::runtime_error("GeNN postsynaptic models can only receive input from the postsynaptic neuron population");
+        }
+    }
 }
 
 //----------------------------------------------------------------------------
 // SpineMLGenerator::ModelParams::Postsynaptic
 //----------------------------------------------------------------------------
 SpineMLGenerator::ModelParams::Postsynaptic::Postsynaptic(const filesystem::path &basePath, const pugi::xml_node &node,
+                                                          const std::string &trgPopName,
                                                           std::map<std::string, double> &fixedParamVals)
 : Base(basePath, node, fixedParamVals)
 {
@@ -91,5 +123,16 @@ SpineMLGenerator::ModelParams::Postsynaptic::Postsynaptic(const filesystem::path
     auto outputDstPort = node.attribute("output_dst_port");
     if(outputSrcPort && outputDstPort) {
         addPortMapping(outputDstPort.value(), PortSource::POSTSYNAPTIC_NEURON, outputSrcPort.value());
+    }
+
+    // Loop through low-level inputs
+    for(auto input : node.children("LL:Input")) {
+        // If the source of this input is our target neuron population, add port mapping
+        if(SpineMLUtils::getSafeName(input.attribute("src").value()) == trgPopName) {
+            addPortMapping(input.attribute("dst_port").value(), PortSource::POSTSYNAPTIC_NEURON, input.attribute("src_port").value());
+        }
+        else {
+            throw std::runtime_error("GeNN postsynaptic models can only receive input from the postsynaptic neuron population");
+        }
     }
 }

@@ -45,6 +45,7 @@ public:
     //----------------------------------------------------------------------------
     const std::string &getURL() const{ return m_URL; }
     const std::set<std::string> &getVariableParams() const{ return m_VariableParams; }
+    const std::pair<PortSource, std::string> &getPortSrc(const std::string &dstPort) const;
 
     //----------------------------------------------------------------------------
     // Operators
@@ -89,6 +90,7 @@ class WeightUpdate : public Base
 {
 public:
     WeightUpdate(const filesystem::path &basePath, const pugi::xml_node &node,
+                 const std::string &srcPopName, const std::string &trgPopName,
                  std::map<std::string, double> &fixedParamVals);
 };
 
@@ -99,6 +101,7 @@ class Postsynaptic : public Base
 {
 public:
     Postsynaptic(const filesystem::path &basePath, const pugi::xml_node &node,
+                 const std::string &trgPopName,
                  std::map<std::string, double> &fixedParamVals);
 };
 }   // namespace ModelParams
