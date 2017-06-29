@@ -182,6 +182,13 @@ SpineMLSimulator::Input::PoissonSpikeRate::PoissonSpikeRate(double dt, const pug
 : InterSpikeIntervalBase(dt, node, std::move(value), spikeQueuePtr, hostSpikeCount, deviceSpikeCount, hostSpikes, deviceSpikes), m_Distribution(0.0, 1.0)
 {
     std::cout << "\tPoisson spike rate" << std::endl;
+
+    // Seed RNG if required
+    auto seed = node.attribute("rate_seed");
+    if(seed) {
+        m_RandomGenerator.seed(seed.as_uint());
+        std::cout << "\tSeed:" << seed.as_uint() << std::endl;
+    }
 }
 //----------------------------------------------------------------------------
 double SpineMLSimulator::Input::PoissonSpikeRate::getTimeToSpike(double isiMs)
