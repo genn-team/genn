@@ -31,9 +31,9 @@ public:
     //----------------------------------------------------------------------------
     enum class PortSource
     {
-        PRE_NEURON,
-        POST_NEURON,
-        POST_SYNAPSE,
+        PRESYNAPTIC_NEURON,
+        POSTSYNAPTIC_NEURON,
+        POSTSYNAPTIC_SYNAPSE,
         WEIGHT_UPDATE
     };
 
@@ -51,9 +51,15 @@ public:
     //----------------------------------------------------------------------------
     bool operator < (const Base &other) const
     {
-        return (std::tie(m_URL, m_VariableParams, m_InputPortMappings)
-                < std::tie(other.m_URL, other.m_VariableParams, other.m_InputPortMappings));
+        return (std::tie(m_URL, m_VariableParams, m_PortMappings)
+                < std::tie(other.m_URL, other.m_VariableParams, other.m_PortMappings));
     }
+
+protected:
+    //----------------------------------------------------------------------------
+    // Protected API
+    //----------------------------------------------------------------------------
+    void addPortMapping(const std::string &dstPort, PortSource srcComponent, const std::string &srcPort);
 
 private:
     //----------------------------------------------------------------------------
@@ -63,7 +69,7 @@ private:
     std::set<std::string> m_VariableParams;
 
     // Map of destination port names to their source component and port
-    std::map<std::string, std::pair<PortSource, std::string>> m_InputPortMappings;
+    std::map<std::string, std::pair<PortSource, std::string>> m_PortMappings;
 };
 
 //----------------------------------------------------------------------------

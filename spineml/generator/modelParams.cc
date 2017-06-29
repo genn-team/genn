@@ -1,5 +1,8 @@
 #include "modelParams.h"
 
+// Standard C++ includes
+#include <iostream>
+
 // Filesystem includes
 #include "filesystem/path.h"
 
@@ -32,6 +35,11 @@ SpineMLGenerator::ModelParams::Base::Base(const filesystem::path &basePath, cons
         }
     }
 }
+//----------------------------------------------------------------------------
+void SpineMLGenerator::ModelParams::Base::addPortMapping(const std::string &dstPort, PortSource srcComponent, const std::string &srcPort)
+{
+    m_PortMappings.insert(std::make_pair(dstPort, std::make_pair(srcComponent, srcPort)));
+}
 
 //----------------------------------------------------------------------------
 // SpineMLGenerator::ModelParams::Neuron
@@ -49,6 +57,19 @@ SpineMLGenerator::ModelParams::WeightUpdate::WeightUpdate(const filesystem::path
                                                           std::map<std::string, double> &fixedParamVals)
 : Base(basePath, node, fixedParamVals)
 {
+    // If an input src and destination port are specified add them to input port mapping
+    auto inputSrcPort = node.attribute("input_src_port");
+    auto inputDstPort = node.attribute("input_dst_port");
+    if(inputSrcPort && inputDstPort) {
+        addPortMapping(inputDstPort.value(), PortSource::PRESYNAPTIC_NEURON, inputSrcPort.value());
+    }
+
+    // If a feedback src and destination port are specified add them to input port mapping
+    auto feedbackSrcPort = node.attribute("feedback_src_port");
+    auto feedbackDstPort = node.attribute("feedback_dst_port");
+    if(feedbackSrcPort && feedbackDstPort) {
+        addPortMapping(feedbackDstPort.value(), PortSource::POSTSYNAPTIC_NEURON, feedbackSrcPort.value());
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -58,4 +79,17 @@ SpineMLGenerator::ModelParams::Postsynaptic::Postsynaptic(const filesystem::path
                                                           std::map<std::string, double> &fixedParamVals)
 : Base(basePath, node, fixedParamVals)
 {
+    // If an input src and destination port are specified add them to input port mapping
+    auto inputSrcPort = node.attribute("input_src_port");
+    auto inputDstPort = node.attribute("input_dst_port");
+    if(inputSrcPort && inputDstPort) {
+        addPortMapping(inputDstPort.value(), PortSource::WEIGHT_UPDATE, inputSrcPort.value());
+    }
+
+    // If an output src and destination port are specified add them to input port mapping
+    auto outputSrcPort = node.attribute("output_src_port");
+    auto outputDstPort = node.attribute("output_dst_port");
+    if(outputSrcPort && outputDstPort) {
+        addPortMapping(outputDstPort.value(), PortSource::POSTSYNAPTIC_NEURON, outputSrcPort.value());
+    }
 }
