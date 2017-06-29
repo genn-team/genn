@@ -1,6 +1,7 @@
 #include "spineMLPostsynapticModel.h"
 
 // Standard C++ includes
+#include <algorithm>
 #include <iostream>
 #include <regex>
 
@@ -24,6 +25,12 @@ namespace
 class ObjectHandlerImpulse : public SpineMLGenerator::ObjectHandler::Base
 {
 public:
+    ObjectHandlerImpulse(const std::string &spikeImpulseReceivePort)
+        : m_SpikeImpulseReceivePort(spikeImpulseReceivePort)
+    {
+
+    }
+
     //----------------------------------------------------------------------------
     // SpineMLGenerator::ObjectHandler::Base virtuals
     //----------------------------------------------------------------------------
@@ -36,18 +43,39 @@ public:
 
         auto stateAssigment = node.child("StateAssignment");
         if(!stateAssigment) {
-            throw std::runtime_error("GeNN only supports postsynaptic models where something other than state assignment occurs");
+            throw std::runtime_error("GeNN only supports postsynaptic models where state assignment occurs");
         }
 
+        // Match for A + B type expression with any amount of whitespace
         auto stateAssigmentCode = stateAssigment.child_value("MathInline");
         std::regex regex("\\s*([a-zA-Z_])+\\s*\\+\\s*([a-zA-Z_]+)\\s*");
-        if(!std::regex_match(stateAssigmentCode, regex)) {
-            throw std::runtime_error("GeNN only supports postsynaptic models which add incoming weight to state variable");
+        std::cmatch match;
+        if(std::regex_match(stateAssigmentCode, match, regex)) {
+            // If match is successful check which of the variables being added 
+            // match the impulse coming from the weight update 
+            if(match[1].str() == m_SpikeImpulseReceivePort) {
+                m_ImpulseAssignStateVar = match[2].str();
+                return;
+            }
+            else if(match[2].str() == m_SpikeImpulseReceivePort) {
+                m_ImpulseAssignStateVar = match[1].str();
+                return;
+            }
         }
-
-        // **TODO** check that variable is analogue send port
-        // **TODO** check that one of matched variables is analogue send port and other is impulse receive port
+        throw std::runtime_error("GeNN only supports postsynaptic models which add incoming weight to state variable");
     }
+
+    //----------------------------------------------------------------------------
+    // Public API
+    //----------------------------------------------------------------------------
+    const std::string &getImpulseAssignStateVar() const{ return m_ImpulseAssignStateVar; }
+
+private:
+    //----------------------------------------------------------------------------
+    // Members
+    //----------------------------------------------------------------------------
+    std::string m_SpikeImpulseReceivePort;
+    std::string m_ImpulseAssignStateVar;
 };
 }
 
@@ -142,7 +170,7 @@ SpineMLGenerator::SpineMLPostsynapticModel::SpineMLPostsynapticModel(const Model
 
     // Generate model code using specified condition handler
     ObjectHandler::Condition objectHandlerCondition(decayCodeStream);
-    ObjectHandlerImpulse objectHandlerImpulse;
+    ObjectHandlerImpulse objectHandlerImpulse(spikeImpulseReceivePort);
     ObjectHandler::TimeDerivative objectHandlerTimeDerivative(decayCodeStream);
     const bool multipleRegimes = generateModelCode(componentClass,
                                                    {}, &objectHandlerCondition,
@@ -187,16 +215,27 @@ SpineMLGenerator::SpineMLPostsynapticModel::SpineMLPostsynapticModel(const Model
         }
     }
 
-    // Check we only have one state variable
-    // **NOTE** it could be possible to figure out what variable to replace with inSyn
-    if(m_Vars.size() != 1) {
-        throw std::runtime_error("GeNN currently only supports postsynaptic models with a single state variable");
-    }
-    else {
-        // Subool hasSendPortVariable() const;bstitute name of analogue send port for internal variable
-        wrapAndReplaceVariableNames(m_DecayCode, m_Vars.front().first, "inSyn");
-        wrapAndReplaceVariableNames(m_CurrentConverterCode, m_Vars.front().first, "inSyn");
-        m_Vars.clear();
+    // If incoming impulse is being assigned to a state variable
+    const std::string &impulseAssignStateVar = objectHandlerImpulse.getImpulseAssignStateVar();
+    if(!impulseAssignStateVar.empty()) {
+        std::cout << "\t\tImpulse assign state variable:" << impulseAssignStateVar << std::endl;
+
+        // Substitute name of analogue send port for internal variable
+        wrapAndReplaceVariableNames(m_DecayCode, impulseAssignStateVar, "inSyn");
+        wrapAndReplaceVariableNames(m_CurrentConverterCode, impulseAssignStateVar, "inSyn");
+
+        // As this variable is being implemented using a built in GeNN state variable, remove it from variables
+        auto stateVar = std::find_if(m_Vars.begin(), m_Vars.end(),
+                                     [impulseAssignStateVar](const std::pair<std::string, std::string> &var)
+                                     {
+                                         return (var.first == impulseAssignStateVar);
+                                     });
+        if(stateVar == m_Vars.end()) {
+            throw std::runtime_error("State variable '" + impulseAssignStateVar + "' referenced in OnImpulse not found");
+        }
+        else {
+            m_Vars.erase(stateVar);
+        }
     }
 
     // Correctly wrap and replace references to receive port variable in code string
