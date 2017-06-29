@@ -277,20 +277,6 @@ int main(int argc,
                 throw std::runtime_error("'Projection' node has no 'Synapse' node");
             }
 
-            // Get post synapse
-            auto postSynapse = synapse.child("LL:PostSynapse");
-            if(!postSynapse) {
-                throw std::runtime_error("'Synapse' node has no 'PostSynapse' node");
-            }
-
-            // Read postsynapse properties
-            ModelParams postsynapticModelParams;
-            std::map<std::string, double> fixedPostsynapticParamVals;
-            tie(postsynapticModelParams, fixedPostsynapticParamVals) = readModelProperties(basePath, postSynapse);
-
-            // Either get existing postsynaptic model or create new one of no suitable models are available
-            const auto &postsynapticModel = getCreateModel(postsynapticModelParams, postsynapticModels);
-
             // Get weight update
             auto weightUpdate = synapse.child("LL:WeightUpdate");
             if(!weightUpdate) {
@@ -307,6 +293,20 @@ int main(int argc,
 
             // Either get existing postsynaptic model or create new one of no suitable models are available
             const auto &weightUpdateModel = getCreateModel(weightUpdateModelParams, weightUpdateModels);
+
+            // Get post synapse
+            auto postSynapse = synapse.child("LL:PostSynapse");
+            if(!postSynapse) {
+                throw std::runtime_error("'Synapse' node has no 'PostSynapse' node");
+            }
+
+            // Read postsynapse properties
+            ModelParams postsynapticModelParams;
+            std::map<std::string, double> fixedPostsynapticParamVals;
+            tie(postsynapticModelParams, fixedPostsynapticParamVals) = readModelProperties(basePath, postSynapse);
+
+            // Either get existing postsynaptic model or create new one of no suitable models are available
+            const auto &postsynapticModel = getCreateModel(postsynapticModelParams, postsynapticModels);
 
             // Determine the GeNN matrix type and number of delay steps
             SynapseMatrixType mtype;
