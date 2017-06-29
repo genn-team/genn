@@ -561,14 +561,10 @@ int main(int argc, char *argv[])
         }
 
         // Loop through inputs specified by experiment and create handlers
-        // **YUCK** this is a gross way of testing name
         std::vector<std::unique_ptr<Input::Base>> inputs;
-        for(auto node : experiment.children()) {
-            std::string nodeType = node.name();
-            if(nodeType.size() > 5 && nodeType.substr(nodeType.size() - 5) == "Input") {
-                inputs.push_back(createInput(node, modelLibrary, dt,
-                                             neuronPopulationSizes, neuronProperties));
-            }
+        for(auto input : experiment.select_nodes(SpineMLUtils::xPathNodeHasSuffix("Input").c_str())) {
+            inputs.push_back(createInput(input.node(), modelLibrary, dt,
+                                         neuronPopulationSizes, neuronProperties));
         }
 
         // Call library function to perform final initialize

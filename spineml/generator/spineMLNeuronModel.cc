@@ -10,9 +10,14 @@
 // pugixml includes
 #include "pugixml/pugixml.hpp"
 
+// SpineML common includes
+#include "spineMLUtils.h"
+
 // Spine ML generator includes
 #include "modelParams.h"
 #include "objectHandler.h"
+
+using namespace SpineMLCommon;
 
 //----------------------------------------------------------------------------
 // Anonymous namespace
@@ -95,30 +100,27 @@ SpineMLGenerator::SpineMLNeuronModel::SpineMLNeuronModel(const ModelParams::Neur
     }
 
     // Loop through send ports
-    // **YUCK** this is a gross way of testing name
     std::cout << "\t\tSend ports:" << std::endl;
-    for(auto node : componentClass.children()) {
-        std::string nodeType = node.name();
-        if(nodeType.size() > 8 && nodeType.substr(nodeType.size() - 8) == "SendPort") {
-            const char *portName = node.attribute("name").value();
-            if(nodeType == "AnalogSendPort") {
-                std::cout << "\t\t\tImplementing analogue send port '" << portName << "' using a GeNN model variable" << std::endl;
-                m_SendPortVariables.insert(portName);
-            }
-            else if(nodeType == "EventSendPort") {
-                if(m_SendPortSpike.empty()) {
-                    std::cout << "\t\t\tImplementing event send port '" << portName << "' as a GeNN spike" << std::endl;
-                    m_SendPortSpike = portName;
-                }
-                else {
-                    std::cout << "\t\t\tImplementing event send port '" << portName << "' as a GeNN spike-like-event" << std::endl;
-                    m_SendPortSpikeLikeEvent = portName;
-                    throw std::runtime_error("Spike-like event sending not currently implemented");
-                }
+    for(auto sendPort : componentClass.select_nodes(SpineMLUtils::xPathNodeHasSuffix("SendPort").c_str())) {
+        std::string nodeType = sendPort.node().name();
+        const char *portName = sendPort.node().attribute("name").value();
+        if(nodeType == "AnalogSendPort") {
+            std::cout << "\t\t\tImplementing analogue send port '" << portName << "' using a GeNN model variable" << std::endl;
+            m_SendPortVariables.insert(portName);
+        }
+        else if(nodeType == "EventSendPort") {
+            if(m_SendPortSpike.empty()) {
+                std::cout << "\t\t\tImplementing event send port '" << portName << "' as a GeNN spike" << std::endl;
+                m_SendPortSpike = portName;
             }
             else {
-                throw std::runtime_error("GeNN does not support '" + nodeType + "' send ports in neuron models");
+                std::cout << "\t\t\tImplementing event send port '" << portName << "' as a GeNN spike-like-event" << std::endl;
+                m_SendPortSpikeLikeEvent = portName;
+                throw std::runtime_error("Spike-like event sending not currently implemented");
             }
+        }
+        else {
+            throw std::runtime_error("GeNN does not support '" + nodeType + "' send ports in neuron models");
         }
     }
 

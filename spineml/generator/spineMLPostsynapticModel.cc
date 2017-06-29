@@ -8,11 +8,16 @@
 // pugixml includes
 #include "pugixml/pugixml.hpp"
 
+// SpineML common includes
+#include "spineMLUtils.h"
+
 // Spine ML generator includes
 #include "modelParams.h"
 #include "objectHandler.h"
 #include "spineMLNeuronModel.h"
 #include "spineMLWeightUpdateModel.h"
+
+using namespace SpineMLCommon;
 
 //----------------------------------------------------------------------------
 // Anonymous namespace
@@ -108,52 +113,47 @@ SpineMLGenerator::SpineMLPostsynapticModel::SpineMLPostsynapticModel(const Model
     }
 
     // Loop through send ports
-    // **YUCK** this is a gross way of testing name
     std::cout << "\t\tSend ports:" << std::endl;
     std::string neuronInputSendPort;
-    for(auto node : componentClass.children()) {
-        std::string nodeType = node.name();
-        if(nodeType.size() > 8 && nodeType.substr(nodeType.size() - 8) == "SendPort") {
-            const char *portName = node.attribute("name").value();
-            if(nodeType == "AnalogSendPort") {
-                if(neuronInputSendPort.empty()) {
-                    std::cout << "\t\t\tImplementing analogue send port '" << portName << "' as a GeNN neuron input current" << std::endl;
-                    neuronInputSendPort = portName;
-                }
-                else {
-                    throw std::runtime_error("GeNN postsynaptic models only support a single analogue send port");
-                }
+    for(auto sendPort : componentClass.select_nodes(SpineMLUtils::xPathNodeHasSuffix("SendPort").c_str())) {
+        std::string nodeType = sendPort.node().name();
+        const char *portName = sendPort.node().attribute("name").value();
+
+        if(nodeType == "AnalogSendPort") {
+            if(neuronInputSendPort.empty()) {
+                std::cout << "\t\t\tImplementing analogue send port '" << portName << "' as a GeNN neuron input current" << std::endl;
+                neuronInputSendPort = portName;
             }
             else {
-                throw std::runtime_error("GeNN does not support '" + nodeType + "' send ports in postsynaptic models");
+                throw std::runtime_error("GeNN postsynaptic models only support a single analogue send port");
             }
+        }
+        else {
+            throw std::runtime_error("GeNN does not support '" + nodeType + "' send ports in postsynaptic models");
         }
     }
 
     // Loop through receive ports
-    // **YUCK** this is a gross way of testing name
     std::cout << "\t\tReceive ports:" << std::endl;
     std::map<std::string, std::string> receivePortVariableMap;
     std::string spikeImpulseReceivePort;
-    for(auto node : componentClass.children()) {
-        std::string nodeType = node.name();
-        if(nodeType.size() > 11 && nodeType.substr(nodeType.size() - 11) == "ReceivePort") {
-            const char *portName = node.attribute("name").value();
-            const auto &portSrc = params.getPortSrc(portName);
+    for(auto receivePort : componentClass.select_nodes(SpineMLUtils::xPathNodeHasSuffix("ReceivePort").c_str())) {
+        std::string nodeType = receivePort.node().name();
+        const char *portName = receivePort.node().attribute("name").value();
+        const auto &portSrc = params.getPortSrc(portName);
 
-            // If this port is an analogue receive port for some sort of postsynaptic neuron state variable
-            if(nodeType == "AnalogReceivePort" && portSrc.first == ModelParams::Base::PortSource::POSTSYNAPTIC_NEURON && trgNeuronModel->hasSendPortVariable(portSrc.second)) {
-                std::cout << "\t\t\tImplementing analogue receive port '" << portName << "' using postsynaptic neuron send port variable '" << portSrc.second << "'" << std::endl;
-                receivePortVariableMap.insert(std::make_pair(portName, portSrc.second));
-            }
-            // Otherwise if this port is an impulse receive port which receives spike impulses from weight update model
-            else if(nodeType == "ImpulseReceivePort" && portSrc.first == ModelParams::Base::PortSource::WEIGHT_UPDATE && weightUpdateModel->getSendPortSpikeImpulse() == portSrc.second) {
-                std::cout << "\t\t\tImplementing impulse receive port '" << portName << "' as GeNN spike impulse" << std::endl;
-                spikeImpulseReceivePort = portName;
-            }
-            else {
-                throw std::runtime_error("GeNN does not currently support '" + nodeType + "' receive ports in postsynaptic models");
-            }
+        // If this port is an analogue receive port for some sort of postsynaptic neuron state variable
+        if(nodeType == "AnalogReceivePort" && portSrc.first == ModelParams::Base::PortSource::POSTSYNAPTIC_NEURON && trgNeuronModel->hasSendPortVariable(portSrc.second)) {
+            std::cout << "\t\t\tImplementing analogue receive port '" << portName << "' using postsynaptic neuron send port variable '" << portSrc.second << "'" << std::endl;
+            receivePortVariableMap.insert(std::make_pair(portName, portSrc.second));
+        }
+        // Otherwise if this port is an impulse receive port which receives spike impulses from weight update model
+        else if(nodeType == "ImpulseReceivePort" && portSrc.first == ModelParams::Base::PortSource::WEIGHT_UPDATE && weightUpdateModel->getSendPortSpikeImpulse() == portSrc.second) {
+            std::cout << "\t\t\tImplementing impulse receive port '" << portName << "' as GeNN spike impulse" << std::endl;
+            spikeImpulseReceivePort = portName;
+        }
+        else {
+            throw std::runtime_error("GeNN does not currently support '" + nodeType + "' receive ports in postsynaptic models");
         }
     }
 

@@ -41,5 +41,14 @@ inline void readCSVValues(const char *csvString, Iter outputIter)
         *outputIter++ = std::stod(index);
     }
 }
+
+inline std::string xPathNodeHasSuffix(const std::string &suffix, const std::string &nodePath = "*")
+{
+    // Build XPath 1.0 query to match nodes whose name ends in specified suffix
+    // https://stackoverflow.com/questions/4203119/xpath-wildcards-on-node-name
+    std::stringstream queryStream;
+    queryStream << nodePath << "[substring(name(), string-length(name()) - " << suffix.length() - 1 << ") = '" << suffix << "']";
+    return queryStream.str();
+}
 }   // namespace Utils
 }   // namespace SpineMLCommon
