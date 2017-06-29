@@ -1,4 +1,4 @@
-#include "spineMLPostsynapticModel.h"
+#include "postsynapticModel.h"
 
 // Standard C++ includes
 #include <algorithm>
@@ -14,8 +14,8 @@
 // Spine ML generator includes
 #include "modelParams.h"
 #include "objectHandler.h"
-#include "spineMLNeuronModel.h"
-#include "spineMLWeightUpdateModel.h"
+#include "neuronModel.h"
+#include "weightUpdateModel.h"
 
 using namespace SpineMLCommon;
 

@@ -1,4 +1,4 @@
-#include "spineMLNeuronModel.h"
+#include "neuronModel.h"
 
 // Standard C++ includes
 #include <iostream>

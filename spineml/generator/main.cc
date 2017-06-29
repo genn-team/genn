@@ -26,9 +26,9 @@
 
 // SpineMLGenerator includes
 #include "modelParams.h"
-#include "spineMLNeuronModel.h"
-#include "spineMLPostsynapticModel.h"
-#include "spineMLWeightUpdateModel.h"
+#include "neuronModel.h"
+#include "postsynapticModel.h"
+#include "weightUpdateModel.h"
 
 using namespace SpineMLCommon;
 using namespace SpineMLGenerator;

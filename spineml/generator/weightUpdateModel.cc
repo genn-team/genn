@@ -1,4 +1,4 @@
-#include "spineMLWeightUpdateModel.h"
+#include "weightUpdateModel.h"
 
 // Standard C++ includes
 #include <iostream>
@@ -13,7 +13,7 @@
 // Spine ML generator includes
 #include "modelParams.h"
 #include "objectHandler.h"
-#include "spineMLNeuronModel.h"
+#include "neuronModel.h"
 
 using namespace SpineMLCommon;
 
