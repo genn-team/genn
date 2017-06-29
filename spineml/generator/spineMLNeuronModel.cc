@@ -90,6 +90,35 @@ SpineMLGenerator::SpineMLNeuronModel::SpineMLNeuronModel(const ModelParams::Neur
                                  "it's ComponentClass node is either missing or of the incorrect type");
     }
 
+    // Loop through send ports
+    // **YUCK** this is a gross way of testing name
+    std::cout << "\t\tSend ports:" << std::endl;
+    bool spikeSendPortAssigned = false;
+    for(auto node : componentClass.children()) {
+        std::string nodeType = node.name();
+        if(nodeType.size() > 8 && nodeType.substr(nodeType.size() - 8) == "SendPort") {
+            const char *portName = node.attribute("name").value();
+            if(nodeType == "AnalogSendPort") {
+                std::cout << "\t\t\tImplementing analogue send port '" << portName << "' using a GeNN model variable" << std::endl;
+                m_SendPortMappings.insert(std::make_pair(portName, SendPort::VARIABLE));
+            }
+            else if(nodeType == "EventSendPort") {
+                if(spikeSendPortAssigned) {
+                    std::cout << "\t\t\tImplementing event send port '" << portName << "' as a GeNN spike-like-event" << std::endl;
+                    m_SendPortMappings.insert(std::make_pair(portName, SendPort::SPIKE_LIKE_EVENT));
+                    throw std::runtime_error("Spike-like event sending not currently implemented");
+                }
+                else {
+                    std::cout << "\t\t\tImplementing event send port '" << portName << "' as a GeNN spike" << std::endl;
+                    m_SendPortMappings.insert(std::make_pair(portName, SendPort::SPIKE));
+                    spikeSendPortAssigned = true;
+                }
+            }
+            else {
+                throw std::runtime_error("GeNN does not support '" + nodeType + "' send ports in neuron models");
+            }
+        }
+    }
 
     // Create a code stream for generating sim code
     CodeStream simCodeStream;

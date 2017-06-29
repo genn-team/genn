@@ -75,6 +75,30 @@ SpineMLGenerator::SpineMLPostsynapticModel::SpineMLPostsynapticModel(const Model
                                  "it's ComponentClass node is either missing or of the incorrect type");
     }
 
+    // Loop through send ports
+    // **YUCK** this is a gross way of testing name
+    std::cout << "\t\tSend ports:" << std::endl;
+    bool neuronInputCurrentSendPortAssigned = false;
+    for(auto node : componentClass.children()) {
+        std::string nodeType = node.name();
+        if(nodeType.size() > 8 && nodeType.substr(nodeType.size() - 8) == "SendPort") {
+            const char *portName = node.attribute("name").value();
+            if(nodeType == "AnalogSendPort") {
+                if(!neuronInputCurrentSendPortAssigned) {
+                    std::cout << "\t\t\tImplementing analogue send port '" << portName << "' as a GeNN neuron input current" << std::endl;
+                    m_SendPortMappings.insert(std::make_pair(portName, SendPort::NEURON_INPUT_CURRENT));
+                    neuronInputCurrentSendPortAssigned = true;
+                }
+                else {
+                    throw std::runtime_error("GeNN postsynaptic models only support a single analogue send port");
+                }
+            }
+            else {
+                throw std::runtime_error("GeNN does not support '" + nodeType + "' send ports in postsynaptic models");
+            }
+        }
+    }
+
     // Create a code stream for generating decay code
     CodeStream decayCodeStream;
 

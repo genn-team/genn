@@ -87,6 +87,34 @@ SpineMLGenerator::SpineMLWeightUpdateModel::SpineMLWeightUpdateModel(const Model
                                  "it's ComponentClass node is either missing or of the incorrect type");
     }
 
+    // Loop through send ports
+    // **YUCK** this is a gross way of testing name
+    std::cout << "\t\tSend ports:" << std::endl;
+    bool spikeImpulsePortAssigned = false;
+    for(auto node : componentClass.children()) {
+        std::string nodeType = node.name();
+        if(nodeType.size() > 8 && nodeType.substr(nodeType.size() - 8) == "SendPort") {
+            const char *portName = node.attribute("name").value();
+            if(nodeType == "AnalogSendPort") {
+                std::cout << "\t\t\tImplementing analogue send port '" << portName << "' using a GeNN model variable" << std::endl;
+                m_SendPortMappings.insert(std::make_pair(portName, SendPort::VARIABLE));
+            }
+            else if(nodeType == "ImpulseSendPort") {
+                if(!spikeImpulsePortAssigned) {
+                    std::cout << "\t\t\tImplementing impulse send port '" << portName << "' as a GeNN spike impulse" << std::endl;
+                    m_SendPortMappings.insert(std::make_pair(portName, SendPort::SPIKE_IMPULSE));
+                    spikeImpulsePortAssigned = true;
+                }
+                else {
+                    throw std::runtime_error("GeNN weight update models only support a single spike impulse port");
+                }
+            }
+            else {
+                throw std::runtime_error("GeNN does not support '" + nodeType + "' send ports in weight update models");
+            }
+        }
+    }
+
     // Create code streams for generating sim and synapse dynamics code
     CodeStream simCodeStream;
     CodeStream synapseDynamicsStream;
