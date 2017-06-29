@@ -37,15 +37,27 @@ public:
     typedef SpineMLGenerator::VarValues VarValues;
 
     //------------------------------------------------------------------------
-    // Enumerations
+    // Public API
     //------------------------------------------------------------------------
-    // Possible means by which neuron send ports can be mapped to GeNN
-    enum class SendPort
+    const std::string &getSendPortSpike() const
     {
-        VARIABLE,
-        SPIKE,
-        SPIKE_LIKE_EVENT,
-    };
+        return m_SendPortSpike;
+    }
+
+    const std::string &getSendPortSpikeLikeEvent() const
+    {
+        return m_SendPortSpikeLikeEvent;
+    }
+
+    const std::set<std::string> &getSendPortVariables() const
+    {
+        return m_SendPortVariables;
+    }
+
+    bool hasSendPortVariable(const std::string &port) const
+    {
+        return (m_SendPortVariables.find(port) != m_SendPortVariables.end());
+    }
 
     //------------------------------------------------------------------------
     // NeuronModels::Base virtuals
@@ -63,7 +75,9 @@ private:
     std::string m_ThresholdConditionCode;
 
     // How are send ports mapped to GeNN?
-    std::map<std::string, SendPort> m_SendPortMappings;
+    std::set<std::string> m_SendPortVariables;
+    std::string m_SendPortSpike;
+    std::string m_SendPortSpikeLikeEvent;
 
     NewModels::Base::StringVec m_ParamNames;
     NewModels::Base::StringPairVec m_Vars;

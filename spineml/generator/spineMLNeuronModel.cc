@@ -25,8 +25,8 @@ namespace
 class ObjectHandlerNeuronCondition : public SpineMLGenerator::ObjectHandler::Condition
 {
 public:
-    ObjectHandlerNeuronCondition(SpineMLGenerator::CodeStream &codeStream)
-        : SpineMLGenerator::ObjectHandler::Condition(codeStream){}
+    ObjectHandlerNeuronCondition(SpineMLGenerator::CodeStream &codeStream, const std::string &sendPortSpike)
+        : SpineMLGenerator::ObjectHandler::Condition(codeStream), m_SendPortSpike(sendPortSpike){}
 
     //----------------------------------------------------------------------------
     // SpineMLGenerator::ObjectHandler::Condition virtuals
@@ -39,7 +39,10 @@ public:
                                                            targetRegimeID);
 
         // If this condition emits a spike
-        auto spikeEventOut = node.select_node("EventOut[@port='spike']");
+        // **TODO** also handle spike like event clause
+        pugi::xpath_variable_set spikeEventsOutVars;
+        spikeEventsOutVars.set("portName", m_SendPortSpike.c_str());
+        auto spikeEventOut = node.select_node("EventOut[@port=$portName]", spikeEventsOutVars);
         if(spikeEventOut) {
             // If there are existing threshold conditions, OR them with this one
             if(m_ThresholdCodeStream.tellp() > 0) {
@@ -62,6 +65,7 @@ private:
     // Members
     //----------------------------------------------------------------------------
     std::ostringstream m_ThresholdCodeStream;
+    std::string m_SendPortSpike;
 };
 }
 
@@ -93,25 +97,23 @@ SpineMLGenerator::SpineMLNeuronModel::SpineMLNeuronModel(const ModelParams::Neur
     // Loop through send ports
     // **YUCK** this is a gross way of testing name
     std::cout << "\t\tSend ports:" << std::endl;
-    bool spikeSendPortAssigned = false;
     for(auto node : componentClass.children()) {
         std::string nodeType = node.name();
         if(nodeType.size() > 8 && nodeType.substr(nodeType.size() - 8) == "SendPort") {
             const char *portName = node.attribute("name").value();
             if(nodeType == "AnalogSendPort") {
                 std::cout << "\t\t\tImplementing analogue send port '" << portName << "' using a GeNN model variable" << std::endl;
-                m_SendPortMappings.insert(std::make_pair(portName, SendPort::VARIABLE));
+                m_SendPortVariables.insert(portName);
             }
             else if(nodeType == "EventSendPort") {
-                if(spikeSendPortAssigned) {
-                    std::cout << "\t\t\tImplementing event send port '" << portName << "' as a GeNN spike-like-event" << std::endl;
-                    m_SendPortMappings.insert(std::make_pair(portName, SendPort::SPIKE_LIKE_EVENT));
-                    throw std::runtime_error("Spike-like event sending not currently implemented");
+                if(m_SendPortSpike.empty()) {
+                    std::cout << "\t\t\tImplementing event send port '" << portName << "' as a GeNN spike" << std::endl;
+                    m_SendPortSpike = portName;
                 }
                 else {
-                    std::cout << "\t\t\tImplementing event send port '" << portName << "' as a GeNN spike" << std::endl;
-                    m_SendPortMappings.insert(std::make_pair(portName, SendPort::SPIKE));
-                    spikeSendPortAssigned = true;
+                    std::cout << "\t\t\tImplementing event send port '" << portName << "' as a GeNN spike-like-event" << std::endl;
+                    m_SendPortSpikeLikeEvent = portName;
+                    throw std::runtime_error("Spike-like event sending not currently implemented");
                 }
             }
             else {
@@ -133,7 +135,7 @@ SpineMLGenerator::SpineMLNeuronModel::SpineMLNeuronModel(const ModelParams::Neur
 
     // Generate model code using specified condition handler
     ObjectHandler::Error objectHandlerError;
-    ObjectHandlerNeuronCondition objectHandlerCondition(simCodeStream);
+    ObjectHandlerNeuronCondition objectHandlerCondition(simCodeStream, m_SendPortSpike);
     ObjectHandler::TimeDerivative objectHandlerTimeDerivative(simCodeStream);
     const bool multipleRegimes = generateModelCode(componentClass, objectHandlerError,
                                                    objectHandlerCondition, objectHandlerError,

@@ -130,17 +130,8 @@ std::tuple<NewModels::Base::StringVec, NewModels::Base::StringPairVec> findModel
     const pugi::xml_node &componentClass, const std::set<std::string> &variableParams,
     bool multipleRegimes);
 
-//!< Build vector of analogue receive ports names, optionally applying a suffix to each ones name e.g. for v_post
-NewModels::Base::StringVec findAnalogueReceivePortNames(const pugi::xml_node &componentClass,
-                                                        const std::string &suffix = "");
-
 void substituteModelVariables(const NewModels::Base::StringVec &paramNames,
                               const NewModels::Base::StringPairVec &vars,
-                              const std::vector<std::string*> &codeStrings);
-
-void substituteModelVariables(const NewModels::Base::StringVec &paramNames,
-                              const NewModels::Base::StringPairVec &vars,
-                              const NewModels::Base::StringVec &analogueReceivePortNames,
                               const std::vector<std::string*> &codeStrings);
 
 std::tuple<NewModels::Base::StringVec, NewModels::Base::StringPairVec> processModelVariables(

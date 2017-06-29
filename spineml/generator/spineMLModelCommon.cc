@@ -208,18 +208,6 @@ std::tuple<NewModels::Base::StringVec, NewModels::Base::StringPairVec> SpineMLGe
     return std::make_tuple(paramNames, vars);
 }
 //----------------------------------------------------------------------------
-NewModels::Base::StringVec SpineMLGenerator::findAnalogueReceivePortNames(const pugi::xml_node &componentClass,
-                                                                          const std::string &suffix)
-{
-     // Add analogue receive ports to this
-    NewModels::Base::StringVec ports;
-    std::transform(componentClass.children("AnalogReceivePort").begin(), componentClass.children("AnalogReceivePort").end(),
-                   std::back_inserter(ports),
-                   [suffix](const pugi::xml_node &n){ return n.attribute("name").value() + suffix; });
-    return ports;
-
-}
-//----------------------------------------------------------------------------
 void SpineMLGenerator::substituteModelVariables(const NewModels::Base::StringVec &paramNames,
                                                 const NewModels::Base::StringPairVec &vars,
                                                 const std::vector<std::string*> &codeStrings)
@@ -242,26 +230,6 @@ void SpineMLGenerator::substituteModelVariables(const NewModels::Base::StringVec
         // Wrap variable names so GeNN code generator can find them
         for(std::string *c : codeStrings) {
             wrapVariableNames(*c, v.first);
-        }
-    }
-}
-//----------------------------------------------------------------------------
-void SpineMLGenerator::substituteModelVariables(const NewModels::Base::StringVec &paramNames,
-                                                const NewModels::Base::StringPairVec &vars,
-                                                const NewModels::Base::StringVec &analogueReceivePortNames,
-                                                const std::vector<std::string*> &codeStrings)
-{
-    // Substitute parameters and variables
-    substituteModelVariables(paramNames, vars, codeStrings);
-
-    // Loop through model parameters
-    std::cout << "\t\tAnalogue receive ports:" << std::endl;
-    for(const auto &p : analogueReceivePortNames) {
-        std::cout << "\t\t\t" << p << std::endl;
-
-        // Wrap variable names so GeNN code generator can find them
-        for(std::string *c : codeStrings) {
-            wrapVariableNames(*c, p);
         }
     }
 }

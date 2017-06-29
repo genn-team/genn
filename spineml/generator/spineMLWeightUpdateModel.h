@@ -3,7 +3,6 @@
 #pragma once
 
 // Standard includes
-#include <map>
 #include <set>
 #include <string>
 
@@ -39,14 +38,12 @@ public:
     typedef SpineMLGenerator::VarValues VarValues;
 
     //------------------------------------------------------------------------
-    // Enumerations
+    // Public API
     //------------------------------------------------------------------------
-    // Possible means by which weight update send ports can be mapped to GeNN
-    enum class SendPort
+    const std::string &getSendPortSpikeImpulse() const
     {
-        VARIABLE,
-        SPIKE_IMPULSE,
-    };
+        return m_SendPortSpikeImpulse;
+    }
 
     //------------------------------------------------------------------------
     // PostsynapticModels::Base virtuals
@@ -65,7 +62,7 @@ private:
     std::string m_SynapseDynamicsCode;
 
     // How are send ports mapped to GeNN?
-    std::map<std::string, SendPort> m_SendPortMappings;
+    std::string m_SendPortSpikeImpulse;
 
     NewModels::Base::StringVec m_ParamNames;
     NewModels::Base::StringPairVec m_Vars;

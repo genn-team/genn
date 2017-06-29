@@ -10,6 +10,8 @@
 // Spine ML generator includes
 #include "modelParams.h"
 #include "objectHandler.h"
+#include "spineMLNeuronModel.h"
+#include "spineMLWeightUpdateModel.h"
 
 //----------------------------------------------------------------------------
 // Anonymous namespace
@@ -53,7 +55,9 @@ public:
 //----------------------------------------------------------------------------
 // SpineMLGenerator::SpineMLPostsynapticModel
 //----------------------------------------------------------------------------
-SpineMLGenerator::SpineMLPostsynapticModel::SpineMLPostsynapticModel(const ModelParams::Postsynaptic &params)
+SpineMLGenerator::SpineMLPostsynapticModel::SpineMLPostsynapticModel(const ModelParams::Postsynaptic &params,
+                                                                     const SpineMLNeuronModel *trgNeuronModel,
+                                                                     const SpineMLWeightUpdateModel *weightUpdateModel)
 {
     // Load XML document
     pugi::xml_document doc;
@@ -78,16 +82,15 @@ SpineMLGenerator::SpineMLPostsynapticModel::SpineMLPostsynapticModel(const Model
     // Loop through send ports
     // **YUCK** this is a gross way of testing name
     std::cout << "\t\tSend ports:" << std::endl;
-    bool neuronInputCurrentSendPortAssigned = false;
+    std::string neuronInputSendPort;
     for(auto node : componentClass.children()) {
         std::string nodeType = node.name();
         if(nodeType.size() > 8 && nodeType.substr(nodeType.size() - 8) == "SendPort") {
             const char *portName = node.attribute("name").value();
             if(nodeType == "AnalogSendPort") {
-                if(!neuronInputCurrentSendPortAssigned) {
+                if(neuronInputSendPort.empty()) {
                     std::cout << "\t\t\tImplementing analogue send port '" << portName << "' as a GeNN neuron input current" << std::endl;
-                    m_SendPortMappings.insert(std::make_pair(portName, SendPort::NEURON_INPUT_CURRENT));
-                    neuronInputCurrentSendPortAssigned = true;
+                    neuronInputSendPort = portName;
                 }
                 else {
                     throw std::runtime_error("GeNN postsynaptic models only support a single analogue send port");
@@ -95,6 +98,33 @@ SpineMLGenerator::SpineMLPostsynapticModel::SpineMLPostsynapticModel(const Model
             }
             else {
                 throw std::runtime_error("GeNN does not support '" + nodeType + "' send ports in postsynaptic models");
+            }
+        }
+    }
+
+    // Loop through receive ports
+    // **YUCK** this is a gross way of testing name
+    std::cout << "\t\tReceive ports:" << std::endl;
+    std::map<std::string, std::string> receivePortVariableMap;
+    std::string spikeImpulseReceivePort;
+    for(auto node : componentClass.children()) {
+        std::string nodeType = node.name();
+        if(nodeType.size() > 11 && nodeType.substr(nodeType.size() - 11) == "ReceivePort") {
+            const char *portName = node.attribute("name").value();
+            const auto &portSrc = params.getPortSrc(portName);
+
+            // If this port is an analogue receive port for some sort of postsynaptic neuron state variable
+            if(nodeType == "AnalogReceivePort" && portSrc.first == ModelParams::Base::PortSource::POSTSYNAPTIC_NEURON && trgNeuronModel->hasSendPortVariable(portSrc.second)) {
+                std::cout << "\t\t\tImplementing analogue receive port '" << portName << "' using postsynaptic neuron send port variable '" << portSrc.second << "'" << std::endl;
+                receivePortVariableMap.insert(std::make_pair(portName, portSrc.second));
+            }
+            // Otherwise if this port is an impulse receive port which receives spike impulses from weight update model
+            else if(nodeType == "ImpulseReceivePort" && portSrc.first == ModelParams::Base::PortSource::WEIGHT_UPDATE && weightUpdateModel->getSendPortSpikeImpulse() == portSrc.second) {
+                std::cout << "\t\t\tImplementing impulse receive port '" << portName << "' as GeNN spike impulse" << std::endl;
+                spikeImpulseReceivePort = portName;
+            }
+            else {
+                throw std::runtime_error("GeNN does not currently support '" + nodeType + "' receive ports in postsynaptic models");
             }
         }
     }
@@ -126,21 +156,15 @@ SpineMLGenerator::SpineMLPostsynapticModel::SpineMLPostsynapticModel(const Model
     // Build the final vectors of parameter names and variables from model
     tie(m_ParamNames, m_Vars) = findModelVariables(componentClass, params.getVariableParams(), multipleRegimes);
 
-    // Find names of analogue receive ports
-    auto analogueReceivePortNames = findAnalogueReceivePortNames(componentClass);
-
-    // Postsynaptic models use an analogue send port to transmit to the neuron
-    auto analogueSendPorts = componentClass.children("AnalogSendPort");
-    const size_t numAnalogueSendPorts = std::distance(analogueSendPorts.begin(), analogueSendPorts.end());
-    if(numAnalogueSendPorts == 1) {
-        const auto *analogueSendPortName = analogueSendPorts.begin()->attribute("name").value();
-        std::cout << "\t\tAnalogue send port:" << analogueSendPortName << std::endl;
+    // If an analogue send port has been assigned to provide neuron input
+    if(!neuronInputSendPort.empty()) {
+        std::cout << "\t\tAnalogue send port:" << neuronInputSendPort << std::endl;
 
         // If this send port corresponds to a state variable
         auto correspondingVar = std::find_if(m_Vars.begin(), m_Vars.end(),
-                                             [analogueSendPortName](const std::pair<std::string, std::string> &v)
+                                             [neuronInputSendPort](const std::pair<std::string, std::string> &v)
                                              {
-                                                 return (v.first == analogueSendPortName);
+                                                 return (v.first == neuronInputSendPort);
                                              });
         if(correspondingVar != m_Vars.end()) {
             // Set current converter code to simply return this variable
@@ -150,7 +174,7 @@ SpineMLGenerator::SpineMLPostsynapticModel::SpineMLPostsynapticModel(const Model
         else {
             // Search for an alias representing the analogue send port
             pugi::xpath_variable_set aliasSearchVars;
-            aliasSearchVars.set("aliasName", analogueSendPortName);
+            aliasSearchVars.set("aliasName", neuronInputSendPort.c_str());
             auto alias = componentClass.select_node("Dynamics/Alias[@name=$aliasName]", &aliasSearchVars);
 
             // If alias is found use it for current converter code
@@ -159,13 +183,9 @@ SpineMLGenerator::SpineMLPostsynapticModel::SpineMLPostsynapticModel(const Model
             }
             // Otherwise throw exception
             else {
-                throw std::runtime_error("Cannot find alias:" + std::string(analogueSendPortName));
+                throw std::runtime_error("Cannot find alias:" + neuronInputSendPort);
             }
         }
-    }
-    // Otherwise, throw an exception
-    else if(numAnalogueSendPorts > 1) {
-        throw std::runtime_error("GeNN postsynapses always output a single current");
     }
 
     // Check we only have one state variable
@@ -174,16 +194,19 @@ SpineMLGenerator::SpineMLPostsynapticModel::SpineMLPostsynapticModel(const Model
         throw std::runtime_error("GeNN currently only supports postsynaptic models with a single state variable");
     }
     else {
-        // Substitute name of analogue send port for internal variable
+        // Subool hasSendPortVariable() const;bstitute name of analogue send port for internal variable
         wrapAndReplaceVariableNames(m_DecayCode, m_Vars.front().first, "inSyn");
         wrapAndReplaceVariableNames(m_CurrentConverterCode, m_Vars.front().first, "inSyn");
         m_Vars.clear();
     }
 
-    // Correctly wrap references to parameters, variables and analogue receive ports in code strings
-    substituteModelVariables(m_ParamNames, m_Vars, analogueReceivePortNames,
-                             {&m_DecayCode, &m_CurrentConverterCode});
+    // Correctly wrap and replace references to receive port variable in code string
+    for(const auto &r : receivePortVariableMap) {
+        wrapAndReplaceVariableNames(m_DecayCode, r.first, r.second);
+        wrapAndReplaceVariableNames(m_CurrentConverterCode, r.first, r.second);
+    }
 
-    //std::cout << "DECAY CODE:" << std::endl << m_DecayCode << std::endl;
-    //std::cout << "CURRENT CONVERTER CODE:" << std::endl << m_CurrentConverterCode << std::endl;
+    // Correctly wrap references to parameters and variables in code strings
+    substituteModelVariables(m_ParamNames, m_Vars,
+                             {&m_DecayCode, &m_CurrentConverterCode});
 }

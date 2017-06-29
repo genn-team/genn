@@ -65,7 +65,8 @@ private:
 //----------------------------------------------------------------------------
 // SpineMLGenerator::SpineMLWeightUpdateModel
 //----------------------------------------------------------------------------
-SpineMLGenerator::SpineMLWeightUpdateModel::SpineMLWeightUpdateModel(const ModelParams::WeightUpdate &params)
+SpineMLGenerator::SpineMLWeightUpdateModel::SpineMLWeightUpdateModel(const ModelParams::WeightUpdate &params,
+                                                                     const SpineMLNeuronModel *srcNeuronModel)
 {
     // Load XML document
     pugi::xml_document doc;
@@ -90,20 +91,14 @@ SpineMLGenerator::SpineMLWeightUpdateModel::SpineMLWeightUpdateModel(const Model
     // Loop through send ports
     // **YUCK** this is a gross way of testing name
     std::cout << "\t\tSend ports:" << std::endl;
-    bool spikeImpulsePortAssigned = false;
     for(auto node : componentClass.children()) {
         std::string nodeType = node.name();
         if(nodeType.size() > 8 && nodeType.substr(nodeType.size() - 8) == "SendPort") {
             const char *portName = node.attribute("name").value();
-            if(nodeType == "AnalogSendPort") {
-                std::cout << "\t\t\tImplementing analogue send port '" << portName << "' using a GeNN model variable" << std::endl;
-                m_SendPortMappings.insert(std::make_pair(portName, SendPort::VARIABLE));
-            }
-            else if(nodeType == "ImpulseSendPort") {
-                if(!spikeImpulsePortAssigned) {
+            if(nodeType == "ImpulseSendPort") {
+                if(m_SendPortSpikeImpulse.empty()) {
                     std::cout << "\t\t\tImplementing impulse send port '" << portName << "' as a GeNN spike impulse" << std::endl;
-                    m_SendPortMappings.insert(std::make_pair(portName, SendPort::SPIKE_IMPULSE));
-                    spikeImpulsePortAssigned = true;
+                    m_SendPortSpikeImpulse = portName;
                 }
                 else {
                     throw std::runtime_error("GeNN weight update models only support a single spike impulse port");
@@ -114,6 +109,34 @@ SpineMLGenerator::SpineMLWeightUpdateModel::SpineMLWeightUpdateModel(const Model
             }
         }
     }
+
+    // Loop through receive ports
+    // **YUCK** this is a gross way of testing name
+    std::cout << "\t\tReceive ports:" << std::endl;
+    std::string trueSpikeReceivePort;
+    std::string spikeLikeEventReceivePort;
+    for(auto node : componentClass.children()) {
+        std::string nodeType = node.name();
+        if(nodeType.size() > 11 && nodeType.substr(nodeType.size() - 11) == "ReceivePort") {
+            const char *portName = node.attribute("name").value();
+            const auto &portSrc = params.getPortSrc(portName);
+
+            // If this port is an analogue receive port for some sort of postsynaptic neuron state variable
+            if(nodeType == "EventReceivePort" && portSrc.first == ModelParams::Base::PortSource::PRESYNAPTIC_NEURON && srcNeuronModel->getSendPortSpike() == portSrc.second) {
+                std::cout << "\t\t\tImplementing event receive port '" << portName << "' as GeNN true spike" << std::endl;
+                trueSpikeReceivePort = portName;
+            }
+            // Otherwise if this port is an impulse receive port which receives spike impulses from weight update model
+            else if(nodeType == "EventReceivePort" && portSrc.first == ModelParams::Base::PortSource::PRESYNAPTIC_NEURON && srcNeuronModel->getSendPortSpikeLikeEvent() == portSrc.second) {
+                std::cout << "\t\t\tImplementing impulse receive port '" << portName << "' as GeNN spike-like event" << std::endl;
+                spikeLikeEventReceivePort = portName;
+            }
+            else {
+                throw std::runtime_error("GeNN does not currently support '" + nodeType + "' receive ports in weight update models");
+            }
+        }
+    }
+
 
     // Create code streams for generating sim and synapse dynamics code
     CodeStream simCodeStream;

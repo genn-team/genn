@@ -39,8 +39,8 @@ using namespace SpineMLGenerator;
 namespace
 {
 // Helper function to either find existing model that provides desired parameters or create new one
-template<typename P, typename T>
-const T &getCreateModel(const P &params, std::map<P, T> &models)
+template<typename Param, typename Model, typename ...Args>
+const Model &getCreateModel(const Param &params, std::map<Param, Model> &models, Args... args)
 {
     // If no existing model is found that matches parameters
     const auto existingModel = models.find(params);
@@ -50,24 +50,13 @@ const T &getCreateModel(const P &params, std::map<P, T> &models)
         // **THINK** some sort of move-semantic magic could probably make this a move
         std::cout << "\tCreating new model" << std::endl;
         auto newModel = models.insert(
-            std::make_pair(params, T(params)));
+            std::make_pair(params, Model(params, args...)));
 
         return newModel.first->second;
     }
     else
     {
         return existingModel->second;
-    }
-}
-//----------------------------------------------------------------------------
-unsigned int getNeuronPopSize(const std::string &popName, const std::map<std::string, unsigned int> &popSizes)
-{
-    auto pop = popSizes.find(popName);
-    if(pop == popSizes.end()) {
-        throw std::runtime_error("Cannot find neuron population:" + popName);
-    }
-    else {
-        return pop->second;
     }
 }
 //----------------------------------------------------------------------------
@@ -187,7 +176,6 @@ int main(int argc,
     model.setName(networkName);
 
     // Loop through populations once to build neuron populations
-    std::map<std::string, unsigned int> neuronPopulationSizes;
     for(auto population : spineML.children("LL:Population")) {
         auto neuron = population.child("LL:Neuron");
         if(!neuron) {
@@ -199,9 +187,6 @@ int main(int argc,
         const unsigned int popSize = neuron.attribute("size").as_int();
         std::cout << "Population " << popName << " consisting of ";
         std::cout << popSize << " neurons" << std::endl;
-
-        // Add size to dictionary
-        neuronPopulationSizes.insert(std::make_pair(popName, popSize));
 
         // If population is a spike source add GeNN spike source
         // **TODO** is this the only special case?
@@ -227,13 +212,14 @@ int main(int argc,
     for(auto population : spineML.children("LL:Population")) {
         // Read source population name from neuron node
         auto srcPopName = SpineMLUtils::getSafeName(population.child("LL:Neuron").attribute("name").value());
-        const unsigned int srcPopSize = getNeuronPopSize(srcPopName, neuronPopulationSizes);
+        const NeuronGroup *srcNeuronGroup = model.findNeuronGroup(srcPopName);
 
         // Loop through outgoing projections
         for(auto projection : population.children("LL:Projection")) {
             // Read destination population name from projection
             auto trgPopName = SpineMLUtils::getSafeName(projection.attribute("dst_population").value());
-            const unsigned int trgPopSize = getNeuronPopSize(trgPopName, neuronPopulationSizes);
+            const NeuronGroup *trgNeuronGroup = model.findNeuronGroup(trgPopName);
+            const SpineMLNeuronModel *trgNeuronModel = dynamic_cast<const SpineMLNeuronModel*>(trgNeuronGroup->getNeuronModel());
 
             std::cout << "Projection from population:" << srcPopName << "->" << trgPopName << std::endl;
 
@@ -274,13 +260,17 @@ int main(int argc,
                                                               fixedPostsynapticParamVals);
 
             // Either get existing postsynaptic model or create new one of no suitable models are available
-            const auto &postsynapticModel = getCreateModel(postsynapticModelParams, postsynapticModels);
+            const auto &postsynapticModel = getCreateModel(postsynapticModelParams, postsynapticModels,
+                                                           trgNeuronModel, &weightUpdateModel);
 
             // Determine the GeNN matrix type and number of delay steps
             SynapseMatrixType mtype;
             unsigned int delaySteps;
             unsigned int maxConnections;
-            tie(mtype, delaySteps, maxConnections) = getSynapticMatrixType(basePath, synapse, srcPopSize, trgPopSize, globalG, 0.1);
+            tie(mtype, delaySteps, maxConnections) = getSynapticMatrixType(basePath, synapse,
+                                                                           srcNeuronGroup->getNumNeurons(),
+                                                                           trgNeuronGroup->getNumNeurons(),
+                                                                           globalG, 0.1);
 
             // Add synapse population to model
             std::string synapsePopName = std::string(srcPopName) + "_" + trgPopName;
