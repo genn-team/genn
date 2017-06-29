@@ -112,9 +112,9 @@ private:
 //------------------------------------------------------------------------
 //!< Generate model code from 'componentClass' node using specified object handlers
 //!< to process various components e.g. to generate GeNN code strings
-bool generateModelCode(const pugi::xml_node &componentClass, ObjectHandler::Base &objectHandlerEvent,
-                       ObjectHandler::Base &objectHandlerCondition, ObjectHandler::Base &objectHandlerImpulse,
-                       ObjectHandler::Base &objectHandlerTimeDerivative,
+bool generateModelCode(const pugi::xml_node &componentClass, const std::map<std::string, ObjectHandler::Base*> &objectHandlerEvent,
+                       ObjectHandler::Base *objectHandlerCondition, const std::map<std::string, ObjectHandler::Base*> &objectHandlerImpulse,
+                       ObjectHandler::Base *objectHandlerTimeDerivative,
                        std::function<void(bool, unsigned int)> regimeEndFunc);
 
 //!< Search through code for references to named variable, rename it and wrap in GeNN's $(XXXX) tags

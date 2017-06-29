@@ -141,14 +141,13 @@ SpineMLGenerator::SpineMLPostsynapticModel::SpineMLPostsynapticModel(const Model
         };
 
     // Generate model code using specified condition handler
-    ObjectHandler::Error objectHandlerError;
     ObjectHandler::Condition objectHandlerCondition(decayCodeStream);
     ObjectHandlerImpulse objectHandlerImpulse;
     ObjectHandler::TimeDerivative objectHandlerTimeDerivative(decayCodeStream);
-    const bool multipleRegimes = generateModelCode(componentClass, objectHandlerError,
-                                                   objectHandlerCondition, objectHandlerImpulse,
-                                                   objectHandlerTimeDerivative,
-                                                   regimeEndFunc);
+    const bool multipleRegimes = generateModelCode(componentClass,
+                                                   {}, &objectHandlerCondition,
+                                                   {{spikeImpulseReceivePort, &objectHandlerImpulse}},
+                                                   &objectHandlerTimeDerivative, regimeEndFunc);
 
     // Store generated code in class
     m_DecayCode = decayCodeStream.str();

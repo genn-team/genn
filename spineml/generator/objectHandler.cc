@@ -3,15 +3,6 @@
 // pugixml includes
 #include "pugixml/pugixml.hpp"
 
-
-//----------------------------------------------------------------------------
-// SpineMLGenerator::ObjectHandler::Error
-//----------------------------------------------------------------------------
-void SpineMLGenerator::ObjectHandler::Error::onObject(const pugi::xml_node &node, unsigned int, unsigned int)
-{
-    throw std::runtime_error("GeNN cannot handle " + std::string(node.name()) + " objects in this context");
-}
-
 //------------------------------------------------------------------------
 // SpineMLGenerator::ObjectHandler::Condition
 //------------------------------------------------------------------------

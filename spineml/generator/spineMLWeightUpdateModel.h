@@ -15,6 +15,8 @@
 // Forward declarations
 namespace SpineMLGenerator
 {
+    class SpineMLNeuronModel;
+
     namespace ModelParams
     {
         class WeightUpdate;
@@ -29,7 +31,8 @@ namespace SpineMLGenerator
 class SpineMLWeightUpdateModel : public WeightUpdateModels::Base
 {
 public:
-    SpineMLWeightUpdateModel(const ModelParams::WeightUpdate &params);
+    SpineMLWeightUpdateModel(const ModelParams::WeightUpdate &params,
+                             const SpineMLNeuronModel *srcNeuronModel);
 
     //------------------------------------------------------------------------
     // Typedefines

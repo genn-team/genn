@@ -213,6 +213,7 @@ int main(int argc,
         // Read source population name from neuron node
         auto srcPopName = SpineMLUtils::getSafeName(population.child("LL:Neuron").attribute("name").value());
         const NeuronGroup *srcNeuronGroup = model.findNeuronGroup(srcPopName);
+        const SpineMLNeuronModel *srcNeuronModel = dynamic_cast<const SpineMLNeuronModel*>(srcNeuronGroup->getNeuronModel());
 
         // Loop through outgoing projections
         for(auto projection : population.children("LL:Projection")) {
@@ -245,7 +246,8 @@ int main(int argc,
             const bool globalG = weightUpdateModelParams.getVariableParams().empty();
 
             // Either get existing postsynaptic model or create new one of no suitable models are available
-            const auto &weightUpdateModel = getCreateModel(weightUpdateModelParams, weightUpdateModels);
+            const auto &weightUpdateModel = getCreateModel(weightUpdateModelParams, weightUpdateModels,
+                                                           srcNeuronModel);
 
             // Get post synapse
             auto postSynapse = synapse.child("LL:PostSynapse");

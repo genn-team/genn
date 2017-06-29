@@ -98,9 +98,9 @@ void SpineMLGenerator::CodeStream::onRegimeEnd(bool multipleRegimes, unsigned in
 //----------------------------------------------------------------------------
 // Helper functions
 //----------------------------------------------------------------------------
-bool SpineMLGenerator::generateModelCode(const pugi::xml_node &componentClass, ObjectHandler::Base &objectHandlerEvent,
-                                         ObjectHandler::Base &objectHandlerCondition, ObjectHandler::Base &objectHandlerImpulse,
-                                         ObjectHandler::Base &objectHandlerTimeDerivative,
+bool SpineMLGenerator::generateModelCode(const pugi::xml_node &componentClass, const std::map<std::string, ObjectHandler::Base*> &objectHandlerEvent,
+                                         ObjectHandler::Base *objectHandlerCondition, const std::map<std::string, ObjectHandler::Base*> &objectHandlerImpulse,
+                                         ObjectHandler::Base *objectHandlerTimeDerivative,
                                          std::function<void(bool, unsigned int)> regimeEndFunc)
 {
     std::cout << "\t\tModel name:" << componentClass.attribute("name").value() << std::endl;
@@ -125,28 +125,58 @@ bool SpineMLGenerator::generateModelCode(const pugi::xml_node &componentClass, O
 
         // Loop through internal conditions by which model might leave regime
         for(auto condition : regime.children("OnCondition")) {
-            const auto *targetRegimeName = condition.attribute("target_regime").value();
-            const unsigned int targetRegimeID = regimeIDs[targetRegimeName];
-            objectHandlerCondition.onObject(condition, currentRegimeID, targetRegimeID);
+            if(objectHandlerCondition) {
+                const auto *targetRegimeName = condition.attribute("target_regime").value();
+                const unsigned int targetRegimeID = regimeIDs[targetRegimeName];
+                objectHandlerCondition->onObject(condition, currentRegimeID, targetRegimeID);
+            }
+            else {
+                throw std::runtime_error("No handler for OnCondition in models of type '"
+                                         + std::string(componentClass.attribute("type").value()));
+            }
         }
 
         // Loop through events the model might receive
         for(auto event : regime.children("OnEvent")) {
-            const auto *targetRegimeName = event.attribute("target_regime").value();
-            const unsigned int targetRegimeID = regimeIDs[targetRegimeName];
-            objectHandlerEvent.onObject(event, currentRegimeID, targetRegimeID);
+            // Search for object handler matching source port
+            const auto *srcPort = event.attribute("src_port").value();
+            auto objectHandler = objectHandlerEvent.find(srcPort);
+            if(objectHandler != objectHandlerEvent.end()) {
+                const auto *targetRegimeName = event.attribute("target_regime").value();
+                const unsigned int targetRegimeID = regimeIDs[targetRegimeName];
+                objectHandler->second->onObject(event, currentRegimeID, targetRegimeID);
+            }
+            else {
+                throw std::runtime_error("No handler for events from source port '" + std::string(srcPort)
+                                         + "' to model of type '" + componentClass.attribute("type").value());
+            }
         }
 
         // Loop through impulses the model might receive
         for(auto impulse : regime.children("OnImpulse")) {
-            const auto *targetRegimeName = impulse.attribute("target_regime").value();
-            const unsigned int targetRegimeID = regimeIDs[targetRegimeName];
-            objectHandlerImpulse.onObject(impulse, currentRegimeID, targetRegimeID);
+            // Search for object handler matching source port
+            const auto *srcPort = impulse.attribute("src_port").value();
+            auto objectHandler = objectHandlerImpulse.find(srcPort);
+            if(objectHandler != objectHandlerImpulse.end()) {
+                const auto *targetRegimeName = impulse.attribute("target_regime").value();
+                const unsigned int targetRegimeID = regimeIDs[targetRegimeName];
+                objectHandler->second->onObject(impulse, currentRegimeID, targetRegimeID);
+            }
+            else {
+                throw std::runtime_error("No handler for impulses from source port '" + std::string(srcPort)
+                                         + "' to model of type '" + componentClass.attribute("type").value());
+            }
         }
 
         // Write out time derivatives
         for(auto timeDerivative : regime.children("TimeDerivative")) {
-            objectHandlerTimeDerivative.onObject(timeDerivative, currentRegimeID, 0);
+            if(objectHandlerTimeDerivative) {
+                objectHandlerTimeDerivative->onObject(timeDerivative, currentRegimeID, 0);
+            }
+            else {
+                throw std::runtime_error("No handler for TimeDerivative in models of type '"
+                                         + std::string(componentClass.attribute("type").value()));
+            }
         }
 
         // Call function to notify all code streams of end of regime

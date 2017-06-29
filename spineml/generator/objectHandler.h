@@ -29,19 +29,6 @@ public:
 };
 
 //------------------------------------------------------------------------
-// SpineMLGenerator::ObjectHandler::Error
-//------------------------------------------------------------------------
-class Error : public Base
-{
-public:
-    //------------------------------------------------------------------------
-    // ObjectHandler virtuals
-    //------------------------------------------------------------------------
-    virtual void onObject(const pugi::xml_node &node, unsigned int currentRegimeID,
-                          unsigned int targetRegimeID);
-};
-
-//------------------------------------------------------------------------
 // SpineMLGenerator::ObjectHandler::Condition
 //------------------------------------------------------------------------
 class Condition : public Base

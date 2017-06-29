@@ -10,6 +10,7 @@
 // Spine ML generator includes
 #include "modelParams.h"
 #include "objectHandler.h"
+#include "spineMLNeuronModel.h"
 
 //----------------------------------------------------------------------------
 // Anonymous namespace
@@ -144,21 +145,23 @@ SpineMLGenerator::SpineMLWeightUpdateModel::SpineMLWeightUpdateModel(const Model
 
     // Create lambda function to end regime on all code streams when required
     auto regimeEndFunc =
-        [&simCodeStream, &synapseDynamicsStream]
-        (bool multipleRegimes, unsigned int currentRegimeID)
+        [&simCodeStream, &synapseDynamicsStream](bool multipleRegimes, unsigned int currentRegimeID)
         {
             simCodeStream.onRegimeEnd(multipleRegimes, currentRegimeID);
             synapseDynamicsStream.onRegimeEnd(multipleRegimes, currentRegimeID);
         };
 
     // Generate model code using specified condition handler
-    ObjectHandler::Error objectHandlerError;
     ObjectHandler::Condition objectHandlerCondition(synapseDynamicsStream);
-    ObjectHandlerEvent objectHandlerEvent(simCodeStream);
+    ObjectHandlerEvent objectHandlerTrueSpike(simCodeStream);
+    ObjectHandlerEvent objectHandlerSpikeLikeEvent(simCodeStream);
     ObjectHandler::TimeDerivative objectHandlerTimeDerivative(synapseDynamicsStream);
-    const bool multipleRegimes = generateModelCode(componentClass, objectHandlerEvent,
-                                                   objectHandlerCondition, objectHandlerError,
-                                                   objectHandlerTimeDerivative,
+    const bool multipleRegimes = generateModelCode(componentClass,
+                                                   {
+                                                       {trueSpikeReceivePort, &objectHandlerTrueSpike},
+                                                       {spikeLikeEventReceivePort, &objectHandlerSpikeLikeEvent}
+                                                   },
+                                                   &objectHandlerCondition, {}, &objectHandlerTimeDerivative,
                                                    regimeEndFunc);
 
     // Store generated code in class

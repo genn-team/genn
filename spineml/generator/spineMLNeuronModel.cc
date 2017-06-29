@@ -42,7 +42,7 @@ public:
         // **TODO** also handle spike like event clause
         pugi::xpath_variable_set spikeEventsOutVars;
         spikeEventsOutVars.set("portName", m_SendPortSpike.c_str());
-        auto spikeEventOut = node.select_node("EventOut[@port=$portName]", spikeEventsOutVars);
+        auto spikeEventOut = node.select_node("EventOut[@port=$portName]", &spikeEventsOutVars);
         if(spikeEventOut) {
             // If there are existing threshold conditions, OR them with this one
             if(m_ThresholdCodeStream.tellp() > 0) {
@@ -134,12 +134,10 @@ SpineMLGenerator::SpineMLNeuronModel::SpineMLNeuronModel(const ModelParams::Neur
         };
 
     // Generate model code using specified condition handler
-    ObjectHandler::Error objectHandlerError;
     ObjectHandlerNeuronCondition objectHandlerCondition(simCodeStream, m_SendPortSpike);
     ObjectHandler::TimeDerivative objectHandlerTimeDerivative(simCodeStream);
-    const bool multipleRegimes = generateModelCode(componentClass, objectHandlerError,
-                                                   objectHandlerCondition, objectHandlerError,
-                                                   objectHandlerTimeDerivative,
+    const bool multipleRegimes = generateModelCode(componentClass, {}, &objectHandlerCondition,
+                                                   {}, &objectHandlerTimeDerivative,
                                                    regimeEndFunc);
 
     // Store generated code in class
