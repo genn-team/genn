@@ -70,6 +70,7 @@ std::pair<T*, T*> getStateVar(void *modelLibrary, const std::string &hostStateVa
 
     return std::make_pair(hostStateVar, deviceStateVar);
 }
+//----------------------------------------------------------------------------
 unsigned int getNeuronPopSize(const std::string &popName, const std::map<std::string, unsigned int> &popSizes)
 {
     auto pop = popSizes.find(popName);
@@ -80,7 +81,7 @@ unsigned int getNeuronPopSize(const std::string &popName, const std::map<std::st
         return pop->second;
     }
 }
-
+//----------------------------------------------------------------------------
 std::tuple<unsigned int*, unsigned int*, unsigned int*, unsigned int*, unsigned int*> getNeuronPopSpikeVars(void *modelLibrary, const std::string &popName)
 {
     // Get pointers to spike counts in model library
@@ -115,7 +116,7 @@ std::tuple<unsigned int*, unsigned int*, unsigned int*, unsigned int*, unsigned 
                            *hostSpikes, *deviceSpikes,
                            spikeQueuePtr);
 }
-
+//----------------------------------------------------------------------------
 std::unique_ptr<ModelProperty::Base> createModelProperty(const pugi::xml_node &node, scalar *hostStateVar, scalar *deviceStateVar, unsigned int size)
 {
     auto fixedValue = node.child("FixedValue");
@@ -135,7 +136,7 @@ std::unique_ptr<ModelProperty::Base> createModelProperty(const pugi::xml_node &n
 
     throw std::runtime_error("Unsupported property type");
 }
-
+//----------------------------------------------------------------------------
 void addProperties(const pugi::xml_node &node, void *modelLibrary, const std::string &popName, unsigned int popSize,
                    PopulationProperties &properties)
 {
@@ -168,8 +169,8 @@ void addProperties(const pugi::xml_node &node, void *modelLibrary, const std::st
         }
     }
 }
-
-unsigned int createConnector(const pugi::xml_node &node, void *modelLibrary,
+//----------------------------------------------------------------------------
+unsigned int createConnector(const pugi::xml_node &node, void *modelLibrary, const filesystem::path &basePath,
                              const std::string &synPopName, unsigned int numPre, unsigned int numPost)
 {
     // Find allocate function
@@ -210,7 +211,7 @@ unsigned int createConnector(const pugi::xml_node &node, void *modelLibrary,
 
     throw std::runtime_error("No supported connection type found for projection");
 }
-
+//----------------------------------------------------------------------------
 std::unique_ptr<InputValue::Base> createInputValue(double dt, unsigned int numNeurons, const pugi::xml_node &node)
 {
     if(strcmp(node.name(), "ConstantInput") == 0) {
@@ -230,7 +231,7 @@ std::unique_ptr<InputValue::Base> createInputValue(double dt, unsigned int numNe
     }
 
 }
-
+//----------------------------------------------------------------------------
 std::unique_ptr<Input::Base> createInput(const pugi::xml_node &node, void *modelLibrary, double dt,
                                          const std::map<std::string, unsigned int> &neuronPopulationSizes,
                                          const PopulationProperties &neuronProperties)
@@ -310,7 +311,7 @@ std::unique_ptr<Input::Base> createInput(const pugi::xml_node &node, void *model
     throw std::runtime_error("No supported input found");
 
 }
-
+//----------------------------------------------------------------------------
 std::unique_ptr<LogOutput::Base> createLogOutput(const pugi::xml_node &node, void *modelLibrary, double dt, unsigned int numTimeSteps,
                                                  const filesystem::path &basePath, const std::map<std::string, unsigned int> &neuronPopulationSizes,
                                                  const PopulationProperties &neuronProperties)
@@ -499,13 +500,13 @@ int main(int argc, char *argv[])
         for(auto population : networkSpineML.children("LL:Population")) {
             // Read source population name from neuron node
             auto srcPopName = SpineMLUtils::getSafeName(population.child("LL:Neuron").attribute("name").value());
-            unsigned int srcPopSize = getNeuronPopSize(srcPopName, neuronPopulationSizes);
+            const unsigned int srcPopSize = getNeuronPopSize(srcPopName, neuronPopulationSizes);
 
             // Loop through outgoing projections
             for(auto projection : population.children("LL:Projection")) {
                 // Read destination population name from projection
                 auto trgPopName = SpineMLUtils::getSafeName(projection.attribute("dst_population").value());
-                unsigned int trgPopSize = getNeuronPopSize(trgPopName, neuronPopulationSizes);
+                const unsigned int trgPopSize = getNeuronPopSize(trgPopName, neuronPopulationSizes);
 
                 std::cout << "Projection from population:" << srcPopName << "->" << trgPopName << std::endl;
 
@@ -519,8 +520,8 @@ int main(int argc, char *argv[])
                 }
 
                 // Initialize connector (will result in correct calculation for num synapses)
-                unsigned int numSynapses = createConnector(synapse, modelLibrary,
-                                                           synPopName, srcPopSize, trgPopSize);
+                const unsigned int numSynapses = createConnector(synapse, modelLibrary, basePath,
+                                                                 synPopName, srcPopSize, trgPopSize);
 
                 // Get post synapse
                 auto postSynapse = synapse.child("LL:PostSynapse");
