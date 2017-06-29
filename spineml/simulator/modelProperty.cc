@@ -58,6 +58,13 @@ SpineMLSimulator::ModelProperty::UniformDistribution::UniformDistribution(const 
 {
     setValue(node.attribute("minimum").as_double(), node.attribute("maximum").as_double());
     std::cout << "\t\t\tMin value:" << m_Distribution.min() << ", Max value:" << m_Distribution.max() << std::endl;
+
+    // Seed RNG if required
+    auto seed = node.attribute("seed");
+    if(seed) {
+        m_RandomGenerator.seed(seed.as_uint());
+        std::cout << "\t\t\tSeed:" << seed.as_uint() << std::endl;
+    }
 }
 //------------------------------------------------------------------------
 void SpineMLSimulator::ModelProperty::UniformDistribution::setValue(scalar min, scalar max)
@@ -81,6 +88,13 @@ SpineMLSimulator::ModelProperty::NormalDistribution::NormalDistribution(const pu
 {
     setValue(node.attribute("mean").as_double(), node.attribute("variance").as_double());
     std::cout << "\t\t\tMean:" << m_Distribution.min() << ", Variance:" << m_Distribution.stddev() * m_Distribution.stddev() << std::endl;
+
+    // Seed RNG if required
+    auto seed = node.attribute("seed");
+    if(seed) {
+        m_RandomGenerator.seed(seed.as_uint());
+        std::cout << "\t\t\tSeed:" << seed.as_uint() << std::endl;
+    }
 }
 //------------------------------------------------------------------------
 void SpineMLSimulator::ModelProperty::NormalDistribution::setValue(scalar mean, scalar variance)
