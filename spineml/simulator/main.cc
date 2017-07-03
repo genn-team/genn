@@ -10,11 +10,15 @@
 #include <cassert>
 #include <cstdlib>
 
+#ifdef _WIN32
+#include <windows.h>
+#else
 // POSIX C includes
 extern "C"
 {
 #include <dlfcn.h>
 }
+#endif
 
 // Filesystem includes
 #include "filesystem/path.h"
@@ -39,12 +43,23 @@ using namespace SpineMLSimulator;
 //----------------------------------------------------------------------------
 // Macros
 //----------------------------------------------------------------------------
+#ifdef _WIN32
+#define LIBRARY_HANDLE HMODULE 
+
+#define LOAD_SYMBOL(LIBRARY, TYPE, NAME)                            \
+    TYPE NAME = (TYPE)GetProcAddress(LIBRARY, #NAME);                        \
+    if(NAME == NULL) {                                              \
+        throw std::runtime_error("Cannot find " #NAME " function"); \
+    }
+#else
+#define LIBRARY_HANDLE void*
+
 #define LOAD_SYMBOL(LIBRARY, TYPE, NAME)                            \
     TYPE NAME = (TYPE)dlsym(LIBRARY, #NAME);                        \
     if(NAME == NULL) {                                              \
         throw std::runtime_error("Cannot find " #NAME " function"); \
     }
-
+#endif
 //----------------------------------------------------------------------------
 // Anonymous namespace
 //----------------------------------------------------------------------------
@@ -55,17 +70,25 @@ typedef void (*VoidFunction)(void);
 
 typedef std::map<std::string, std::map<std::string, std::unique_ptr<ModelProperty::Base>>> PopulationProperties;
 
+void *getLibrarySymbol(LIBRARY_HANDLE modelLibrary, const char *name) {
+#ifdef _WIN32
+    return GetProcAddress(modelLibrary, name);
+#else
+    return dlsym(modelLibrary, name);
+#endif
+}
+
 template <typename T>
-std::pair<T*, T*> getStateVar(void *modelLibrary, const std::string &hostStateVarName)
+std::pair<T*, T*> getStateVar(LIBRARY_HANDLE modelLibrary, const std::string &hostStateVarName)
 {
     // Get host statevar
-    T *hostStateVar = (T*)dlsym(modelLibrary, hostStateVarName.c_str());
+    T *hostStateVar = (T*)getLibrarySymbol(modelLibrary, hostStateVarName.c_str());
 
 #ifdef CPU_ONLY
     T *deviceStateVar = NULL;
 #else
     std::string deviceStateVarName = "d_" + hostStateVarName;
-     T *deviceStateVar = (T*)dlsym(modelLibrary, deviceStateVarName.c_str());
+    T *deviceStateVar = (T*)getLibrarySymbol(modelLibrary, deviceStateVarName.c_str());
 #endif
 
     return std::make_pair(hostStateVar, deviceStateVar);
@@ -82,7 +105,7 @@ unsigned int getNeuronPopSize(const std::string &popName, const std::map<std::st
     }
 }
 //----------------------------------------------------------------------------
-std::tuple<unsigned int*, unsigned int*, unsigned int*, unsigned int*, unsigned int*> getNeuronPopSpikeVars(void *modelLibrary, const std::string &popName)
+std::tuple<unsigned int*, unsigned int*, unsigned int*, unsigned int*, unsigned int*> getNeuronPopSpikeVars(LIBRARY_HANDLE modelLibrary, const std::string &popName)
 {
     // Get pointers to spike counts in model library
     unsigned int **hostSpikeCount;
@@ -109,7 +132,7 @@ std::tuple<unsigned int*, unsigned int*, unsigned int*, unsigned int*, unsigned 
     }
 
     // Get spike queue
-    unsigned int *spikeQueuePtr = (unsigned int*)dlsym(modelLibrary, ("spkQuePtr" + popName).c_str());
+    unsigned int *spikeQueuePtr = (unsigned int*)getLibrarySymbol(modelLibrary, ("spkQuePtr" + popName).c_str());
 
     // Return pointers in tutple
     return std::make_tuple(*hostSpikeCount, *deviceSpikeCount,
@@ -137,7 +160,7 @@ std::unique_ptr<ModelProperty::Base> createModelProperty(const pugi::xml_node &n
     throw std::runtime_error("Unsupported property type");
 }
 //----------------------------------------------------------------------------
-void addProperties(const pugi::xml_node &node, void *modelLibrary, const std::string &popName, unsigned int popSize,
+void addProperties(const pugi::xml_node &node, LIBRARY_HANDLE modelLibrary, const std::string &popName, unsigned int popSize,
                    PopulationProperties &properties)
 {
     // Loop through properties in network
@@ -170,17 +193,17 @@ void addProperties(const pugi::xml_node &node, void *modelLibrary, const std::st
     }
 }
 //----------------------------------------------------------------------------
-unsigned int createConnector(const pugi::xml_node &node, void *modelLibrary, const filesystem::path &basePath,
+unsigned int createConnector(const pugi::xml_node &node, LIBRARY_HANDLE modelLibrary, const filesystem::path &basePath,
                              const std::string &synPopName, unsigned int numPre, unsigned int numPost)
 {
     // Find allocate function
-    Connectors::AllocateFn allocateFn = (Connectors::AllocateFn)dlsym(modelLibrary, ("allocate" + synPopName).c_str());
+    Connectors::AllocateFn allocateFn = (Connectors::AllocateFn)getLibrarySymbol(modelLibrary, ("allocate" + synPopName).c_str());
     if(allocateFn == NULL) {
         throw std::runtime_error("Cannot find allocate function for synapse population:" + synPopName);
     }
 
     // Find sparse projection
-    SparseProjection *sparseProjection = (SparseProjection*)dlsym(modelLibrary, ("C" + synPopName).c_str());
+    SparseProjection *sparseProjection = (SparseProjection*)getLibrarySymbol(modelLibrary, ("C" + synPopName).c_str());
 
     /*auto oneToOne = node.child("OneToOneConnection");
     if(oneToOne) {
@@ -232,7 +255,7 @@ std::unique_ptr<InputValue::Base> createInputValue(double dt, unsigned int numNe
 
 }
 //----------------------------------------------------------------------------
-std::unique_ptr<Input::Base> createInput(const pugi::xml_node &node, void *modelLibrary, double dt,
+std::unique_ptr<Input::Base> createInput(const pugi::xml_node &node, LIBRARY_HANDLE modelLibrary, double dt,
                                          const std::map<std::string, unsigned int> &neuronPopulationSizes,
                                          const PopulationProperties &neuronProperties)
 {
@@ -312,7 +335,7 @@ std::unique_ptr<Input::Base> createInput(const pugi::xml_node &node, void *model
 
 }
 //----------------------------------------------------------------------------
-std::unique_ptr<LogOutput::Base> createLogOutput(const pugi::xml_node &node, void *modelLibrary, double dt, unsigned int numTimeSteps,
+std::unique_ptr<LogOutput::Base> createLogOutput(const pugi::xml_node &node, LIBRARY_HANDLE modelLibrary, double dt, unsigned int numTimeSteps,
                                                  const filesystem::path &basePath, const std::map<std::string, unsigned int> &neuronPopulationSizes,
                                                  const PopulationProperties &neuronProperties)
 {
@@ -376,7 +399,7 @@ int main(int argc, char *argv[])
     // **YUCK** hard coded 0.1ms time step as SpineML specifies this in experiment but GeNN in model
     const double dt = 0.1;
 
-    void *modelLibrary = NULL;
+    LIBRARY_HANDLE modelLibrary = NULL;
     try
     {
         std::mt19937 gen;
@@ -424,12 +447,19 @@ int main(int argc, char *argv[])
         std::cout << "Experiment using model library:" << libraryPath  << std::endl;
 
         // Attempt to load model library
+#ifdef _WIN32
+        modelLibrary = LoadLibrary(libraryPath.str().c_str());
+#else
         modelLibrary = dlopen(libraryPath.str().c_str(), RTLD_NOW);
-
+#endif
         // If it fails throw
         if(modelLibrary == NULL)
         {
+#ifdef _WIN32
+            throw std::runtime_error("Unable to load library - error:" + std::to_string(GetLastError()));
+#else
             throw std::runtime_error("Unable to load library - error:" + std::string(dlerror()));
+#endif
         }
 
         // Load statically-named symbols from library
@@ -441,7 +471,7 @@ int main(int argc, char *argv[])
 #endif // CPU_ONLY
 
         // Search for network initialization function
-        VoidFunction initializeNetwork = (VoidFunction)dlsym(modelLibrary, ("init" + networkName).c_str());
+        VoidFunction initializeNetwork = (VoidFunction)getLibrarySymbol(modelLibrary, ("init" + networkName).c_str());
         if(initializeNetwork == NULL) {
             throw std::runtime_error("Cannot find network initialization function 'init" + networkName + "'");
         }
@@ -604,7 +634,11 @@ int main(int argc, char *argv[])
         // Close model library if loaded successfully
         if(modelLibrary)
         {
+#ifdef _WIN32
+            FreeLibrary(modelLibrary);
+#else
             dlclose(modelLibrary);
+#endif
         }
 
         // Re-raise
