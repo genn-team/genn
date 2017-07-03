@@ -442,16 +442,17 @@ int main(int argc, char *argv[])
         std::string networkName = networkPath.filename();
         networkName = networkName.substr(0, networkName.find_last_of("."));
 
-        // Build path to generated model code
-        auto libraryPath = basePath / (networkName + "_CODE") / "librunner.so";
-        std::cout << "Experiment using model library:" << libraryPath  << std::endl;
-
         // Attempt to load model library
 #ifdef _WIN32
+        auto libraryPath = basePath / (networkName + "_CODE") / "runner.dll";
+        std::cout << "Experiment using model library:" << libraryPath  << std::endl;
         modelLibrary = LoadLibrary(libraryPath.str().c_str());
 #else
+        auto libraryPath = basePath / (networkName + "_CODE") / "librunner.so";
+        std::cout << "Experiment using model library:" << libraryPath  << std::endl;
         modelLibrary = dlopen(libraryPath.str().c_str(), RTLD_NOW);
 #endif
+        
         // If it fails throw
         if(modelLibrary == NULL)
         {
