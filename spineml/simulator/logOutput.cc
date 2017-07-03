@@ -36,14 +36,18 @@ struct SpineMLTypeName
 template<>
 struct SpineMLTypeName<float>
 {
-    static constexpr const char *name = "float";
+    static const char *name;
 };
 
 template<>
 struct SpineMLTypeName<double>
 {
-    static constexpr const char *name = "double";
+    static const char *name;
 };
+
+// **YUCK** Visual C++ doesn't support constexpr so need to do this the old way
+const char *SpineMLTypeName<float>::name = "float";
+const char *SpineMLTypeName<double>::name = "double";
 }
 
 //----------------------------------------------------------------------------
