@@ -1,0 +1,50 @@
+##--------------------------------------------------------------------------
+##   Author: Thomas Nowotny
+##
+##   Institute: Center for Computational Neuroscience and Robotics
+##              University of Sussex
+##              Falmer, Brighton BN1 9QJ, UK
+##
+##   email to:  T.Nowotny@sussex.ac.uk
+##
+##   initial version: 2010-02-07
+##
+##--------------------------------------------------------------------------
+
+
+# Makefile for the GeNN "generateSpineML" executable
+# This is a UNIX Makefile, to be used by the GNU make build system
+#-----------------------------------------------------------------
+!INCLUDE $(GENN_PATH)\lib\WINmakefileBase
+
+# Get generate SpineML path i.e. directory of this Makefile
+GENERATE_SPINEML_PATH     =$(MAKEDIR)
+
+# Get SpineML path i.e. parent directory
+SPINEML_PATH              =$(GENN_PATH)/spineml
+
+COMMON_SPINEML_PATH       =$(SPINEML_PATH)/common
+
+# generateALL and libgenn.a targets
+!IFNDEF CPU_ONLY
+GENERATE_SPINEML          =$(GENERATE_SPINEML_PATH)/generateSpineML
+!ELSE
+GENERATE_SPINEML          =$(GENERATE_SPINEML_PATH)/generateSpineML_CPU_ONLY
+!ENDIF
+
+GENERATE_SPINEML_SOURCES   = $(SPINEML_PATH)/common/pugixml/pugixml.cpp $(SPINEML_PATH)/generator/main.cc $(SPINEML_PATH)/generator/connectors.cc $(SPINEML_PATH)/generator/objectHandler.cc $(SPINEML_PATH)/generator/modelParams.cc $(SPINEML_PATH)/generator/modelCommon.cc $(SPINEML_PATH)/generator/neuronModel.cc $(SPINEML_PATH)/generator/postsynapticModel.cc $(SPINEML_PATH)/generator/weightUpdateModel.cc
+
+# Target rules
+all: $(GENERATE_SPINEML)
+
+$(GENERATE_SPINEML): $(LIBGENN) always_compile
+	$(CXX) $(CXXFLAGS) /DGENERATOR_MAIN_HANDLED /Fe$@ $(SRC_PATH)\generate*.cc $(GENERATE_SPINEML_SOURCES) $(INCLUDE_FLAGS) /I"$(GENERATE_SPINEML_PATH)" /I"$(COMMON_SPINEML_PATH)" $(LINK_FLAGS)
+    
+clean: clean_generate_spine_ml clean_libgenn
+
+clean_generate_spine_ml:
+	-del $(GENERATE_SPINEML) 2>nul
+
+always_compile:
+
+!INCLUDE $(GENN_PATH)\lib\WINmakefileLibGeNNRules

@@ -253,7 +253,7 @@ unsigned int SpineMLGenerator::Connectors::List::estimateMaxRowLength(const file
         // Loop through
         for(size_t remainingWords = numConnections * 2; remainingWords > 0;) {
             // Read a block into buffer
-            const size_t blockWords = std::min(std::size_t{262144}, remainingWords);
+            const size_t blockWords = std::min<size_t>(262144, remainingWords);
             input.read(reinterpret_cast<char*>(&connectionBuffer[0]), blockWords * sizeof(uint32_t));
 
             // Check block was read succesfully

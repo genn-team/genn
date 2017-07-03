@@ -112,7 +112,7 @@ bool SpineMLGenerator::generateModelCode(const pugi::xml_node &componentClass, c
                    std::inserter(regimeIDs, regimeIDs.end()),
                    [&regimeIDs](const pugi::xml_node &n)
                    {
-                       return std::make_pair(n.attribute("name").value(), regimeIDs.size());
+                       return std::make_pair(n.attribute("name").value(), (unsigned int)regimeIDs.size());
                    });
     const bool multipleRegimes = (regimeIDs.size() > 1);
 
