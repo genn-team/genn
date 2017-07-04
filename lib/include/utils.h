@@ -21,8 +21,10 @@
 #ifndef _UTILS_H_
 #define _UTILS_H_ //!< macro for avoiding multiple inclusion during compilation
 
+#include <cstdlib>
 #include <iostream>
 #include <string>
+
 #ifndef CPU_ONLY
 #include <cuda.h>
 #include <cuda_runtime.h>
