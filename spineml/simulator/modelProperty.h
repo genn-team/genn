@@ -70,6 +70,26 @@ private:
 };
 
 //------------------------------------------------------------------------
+// SpineMLSimulator::ModelProperty::ValueList
+//------------------------------------------------------------------------
+class ValueList : public Base
+{
+public:
+    ValueList(const pugi::xml_node &node, scalar *hostStateVar, scalar *deviceStateVar, unsigned int size);
+
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    void setValue(const std::vector<scalar> &values);
+
+private:
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    std::vector<scalar> m_Values;
+};
+
+//------------------------------------------------------------------------
 // SpineMLSimulator::ModelProperty::UniformDistribution
 //------------------------------------------------------------------------
 class UniformDistribution : public Base

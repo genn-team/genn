@@ -190,6 +190,11 @@ std::unique_ptr<ModelProperty::Base> createModelProperty(const pugi::xml_node &n
         return std::unique_ptr<ModelProperty::Base>(new ModelProperty::Fixed(fixedValue, hostStateVar, deviceStateVar, size));
     }
 
+    auto valueList = node.child("ValueList");
+    if(valueList) {
+        return std::unique_ptr<ModelProperty::Base>(new ModelProperty::ValueList(fixedValue, hostStateVar, deviceStateVar, size));
+    }
+
     auto uniformDistribution = node.child("UniformDistribution");
     if(uniformDistribution) {
         return std::unique_ptr<ModelProperty::Base>(new ModelProperty::UniformDistribution(uniformDistribution, hostStateVar, deviceStateVar, size));
