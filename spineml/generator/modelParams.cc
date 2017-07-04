@@ -98,7 +98,7 @@ SpineMLGenerator::ModelParams::WeightUpdate::WeightUpdate(const filesystem::path
             addPortMapping(input.attribute("dst_port").value(), PortSource::POSTSYNAPTIC_NEURON, input.attribute("src_port").value());
         }
         else {
-            throw std::runtime_error("GeNN postsynaptic models can only receive input from the postsynaptic neuron population");
+            throw std::runtime_error("GeNN weight update models can only receive input from the pre or postsynaptic neuron population");
         }
     }
 }
