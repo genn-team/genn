@@ -135,9 +135,15 @@ std::tuple<unsigned int*, unsigned int*, unsigned int*, unsigned int*, unsigned 
     unsigned int *spikeQueuePtr = (unsigned int*)getLibrarySymbol(modelLibrary, ("spkQuePtr" + popName).c_str());
 
     // Return pointers in tutple
+#ifdef CPU_ONLY
+    return std::make_tuple(*hostSpikeCount, nullptr,
+                           *hostSpikes, nullptr,
+                           spikeQueuePtr);
+#else
     return std::make_tuple(*hostSpikeCount, *deviceSpikeCount,
                            *hostSpikes, *deviceSpikes,
                            spikeQueuePtr);
+#endif
 }
 //----------------------------------------------------------------------------
 std::unique_ptr<ModelProperty::Base> createModelProperty(const pugi::xml_node &node, scalar *hostStateVar, scalar *deviceStateVar, unsigned int size)
