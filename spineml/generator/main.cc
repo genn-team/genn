@@ -247,7 +247,7 @@ int main(int argc,
 
             // Either get existing postsynaptic model or create new one of no suitable models are available
             const auto &weightUpdateModel = getCreateModel(weightUpdateModelParams, weightUpdateModels,
-                                                           srcNeuronModel);
+                                                           srcNeuronModel, trgNeuronModel);
 
             // Get post synapse
             auto postSynapse = synapse.child("LL:PostSynapse");

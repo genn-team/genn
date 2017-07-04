@@ -32,7 +32,8 @@ class WeightUpdateModel : public WeightUpdateModels::Base
 {
 public:
     WeightUpdateModel(const ModelParams::WeightUpdate &params,
-                             const NeuronModel *srcNeuronModel);
+                      const NeuronModel *srcNeuronModel,
+                      const NeuronModel *trgNeuronModel);
 
     //------------------------------------------------------------------------
     // Typedefines

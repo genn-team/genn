@@ -72,7 +72,8 @@ private:
 // SpineMLGenerator::WeightUpdateModel
 //----------------------------------------------------------------------------
 SpineMLGenerator::WeightUpdateModel::WeightUpdateModel(const ModelParams::WeightUpdate &params,
-                                                                     const NeuronModel *srcNeuronModel)
+                                                       const NeuronModel *srcNeuronModel,
+                                                       const NeuronModel *trgNeuronModel)
 {
     // Load XML document
     pugi::xml_document doc;
@@ -118,6 +119,7 @@ SpineMLGenerator::WeightUpdateModel::WeightUpdateModel(const ModelParams::Weight
     std::cout << "\t\tReceive ports:" << std::endl;
     std::string trueSpikeReceivePort;
     std::string spikeLikeEventReceivePort;
+    std::map<std::string, std::string> receivePortVariableMap;
     for(auto receivePort : componentClass.select_nodes(SpineMLUtils::xPathNodeHasSuffix("ReceivePort").c_str())) {
         std::string nodeType = receivePort.node().name();
         const char *portName = receivePort.node().attribute("name").value();
@@ -132,6 +134,16 @@ SpineMLGenerator::WeightUpdateModel::WeightUpdateModel(const ModelParams::Weight
         else if(nodeType == "EventReceivePort" && portSrc.first == ModelParams::Base::PortSource::PRESYNAPTIC_NEURON && srcNeuronModel->getSendPortSpikeLikeEvent() == portSrc.second) {
             std::cout << "\t\t\tImplementing impulse receive port '" << portName << "' as GeNN spike-like event" << std::endl;
             spikeLikeEventReceivePort = portName;
+        }
+        // If this is an analog receive port from the presynaptic neuron, add send port variable to map with _pre suffix
+        else if(nodeType == "AnalogReceivePort" && portSrc.first == ModelParams::Base::PortSource::PRESYNAPTIC_NEURON && srcNeuronModel->hasSendPortVariable(portSrc.second)) {
+            std::cout << "\t\t\tImplementing analogue receive port '" << portName << "' using presynaptic neuron send port variable '" << portSrc.second << "'" << std::endl;
+            receivePortVariableMap.insert(std::make_pair(portName, portSrc.second + "_pre"));
+        }
+        // If this is an analog receive port from the postsynaptic neuron, add send port variable to map with _post suffix
+        else if(nodeType == "AnalogReceivePort" && portSrc.first == ModelParams::Base::PortSource::POSTSYNAPTIC_NEURON && trgNeuronModel->hasSendPortVariable(portSrc.second)) {
+            std::cout << "\t\t\tImplementing analogue receive port '" << portName << "' using postsynaptic neuron send port variable '" << portSrc.second << "'" << std::endl;
+            receivePortVariableMap.insert(std::make_pair(portName, portSrc.second + "_post"));
         }
         else {
             throw std::runtime_error("GeNN does not currently support '" + nodeType + "' receive ports in weight update models");
@@ -174,6 +186,12 @@ SpineMLGenerator::WeightUpdateModel::WeightUpdateModel(const ModelParams::Weight
     // Wrap internal variables used in sim code
     wrapVariableNames(m_SimCode, "addtoinSyn");
     wrapVariableNames(m_SimCode, "updatelinsyn");
+
+    // Correctly wrap and replace references to receive port variable in code string
+    for(const auto &r : receivePortVariableMap) {
+        wrapAndReplaceVariableNames(m_SimCode, r.first, r.second);
+        wrapAndReplaceVariableNames(m_SynapseDynamicsCode, r.first, r.second);
+    }
 
     // Correctly wrap references to paramters and variables in code strings
     substituteModelVariables(m_ParamNames, m_Vars, {&m_SimCode, &m_SynapseDynamicsCode});
