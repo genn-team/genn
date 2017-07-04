@@ -2309,6 +2309,7 @@ void genMakefile(const NNmodel &model, //!< Model description
     os << "\t-del runner.obj 2>nul" << endl;
 #else
     // Start with correct NVCC flags to build shared library or object file as appropriate
+    // **NOTE** -c = compile and assemble, don't link
     string nvccFlags = GENN_PREFERENCES::buildSharedLibrary ? "--shared" : "-c";
     nvccFlags += " -x cu -arch sm_";
     nvccFlags += to_string(deviceProp[theDevice].major) + to_string(deviceProp[theDevice].minor);
@@ -2355,29 +2356,46 @@ void genMakefile(const NNmodel &model, //!< Model description
 #else // UNIX
 
 #ifdef CPU_ONLY
-    if(GENN_PREFERENCES::buildSharedLibrary) {
-        gennError("Building shared libraries for CPU_ONLY simulation not currently supported");
-    }
-    
-    string cxxFlags = "-c -DCPU_ONLY";
+    // Start with correct NVCC flags to build shared library or object file as appropriate
+    // **NOTE** -c = compile and assemble, don't link
+    string cxxFlags = GENN_PREFERENCES::buildSharedLibrary ? "-shared -fPIC" : "-c";
+    cxxFlags += " -DCPU_ONLY";
     cxxFlags += " " + GENN_PREFERENCES::userCxxFlagsGNU;
-    if (GENN_PREFERENCES::optimizeCode) cxxFlags += " -O3 -ffast-math";
-    if (GENN_PREFERENCES::debugCode) cxxFlags += " -O0 -g";
+    if (GENN_PREFERENCES::optimizeCode) {
+        cxxFlags += " -O3 -ffast-math";
+    }
+    if (GENN_PREFERENCES::debugCode) {
+        cxxFlags += " -O0 -g";
+    }
 
     os << endl;
     os << "CXXFLAGS       :=" << cxxFlags << endl;
     os << endl;
     os << "INCLUDEFLAGS   =-I\"$(GENN_PATH)/lib/include\"" << endl;
     os << endl;
-    os << "all: runner.o" << endl;
-    os << endl;
-    os << "runner.o: runner.cc" << endl;
-    os << "\t$(CXX) $(CXXFLAGS) $(INCLUDEFLAGS) runner.cc" << endl;
-    os << endl;
-    os << "clean:" << endl;
-    os << "\trm -f runner.o" << endl;
+
+    // Add correct rules for building either shared library or object file
+    if(GENN_PREFERENCES::buildSharedLibrary) {
+        os << "all: librunner.so" << endl;
+        os << endl;
+        os << "librunner.so: runner.cc" << endl;
+        os << "\t$(CXX) $(CXXFLAGS) $(INCLUDEFLAGS) runner.cc $(GENN_PATH)/lib/src/sparseUtils.cc -o librunner.so" << endl;
+        os << endl;
+        os << "clean:" << endl;
+        os << "\trm -f librunner.so" << endl;
+    }
+    else {
+        os << "all: runner.o" << endl;
+        os << endl;
+        os << "runner.o: runner.cc" << endl;
+        os << "\t$(CXX) $(CXXFLAGS) $(INCLUDEFLAGS) runner.cc" << endl;
+        os << endl;
+        os << "clean:" << endl;
+        os << "\trm -f runner.o" << endl;
+    }
 #else
     // Start with correct NVCC flags to build shared library or object file as appropriate
+    // **NOTE** -c = compile and assemble, don't link
     string nvccFlags = GENN_PREFERENCES::buildSharedLibrary ? "--shared --compiler-options '-fPIC'" : "-c";
 
     nvccFlags += " -x cu -arch sm_";
