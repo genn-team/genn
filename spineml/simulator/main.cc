@@ -177,18 +177,21 @@ void addProperties(const pugi::xml_node &node, LIBRARY_HANDLE modelLibrary, cons
             std::cout << "\t" << paramName << std::endl;
 #ifdef CPU_ONLY
             std::cout << "\t\tState variable found host pointer:" << *hostStateVar << std::endl;
+
+            // Create model property object
+            properties[popName].insert(
+                std::make_pair(paramName, createModelProperty(param, *hostStateVar, nullptr, popSize)));
 #else
             if(deviceStateVar == NULL) {
                 throw std::runtime_error("Cannot find device-side state variable for property:" + paramName);
             }
 
             std::cout << "\t\tState variable found host pointer:" << *hostStateVar << ", device pointer:" << *deviceStateVar << std::endl;
-#endif
+
             // Create model property object
             properties[popName].insert(
                 std::make_pair(paramName, createModelProperty(param, *hostStateVar, *deviceStateVar, popSize)));
-
-
+#endif
         }
     }
 }
