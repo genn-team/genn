@@ -163,8 +163,4 @@ SpineMLGenerator::NeuronModel::NeuronModel(const ModelParams::Neuron &params)
         // **TODO** 'Alias' nodes in dynamics may be used to combine these together
         throw std::runtime_error("GeNN doesn't support multiple input currents going into neuron");
     }
-
-
-    //std::cout << "SIM CODE:" << std::endl << m_SimCode << std::endl;
-    //std::cout << "THRESHOLD CONDITION CODE:" << std::endl << m_ThresholdConditionCode << std::endl;
 }
