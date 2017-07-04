@@ -68,7 +68,10 @@ namespace
 // Typedefines
 typedef void (*VoidFunction)(void);
 
-typedef std::map<std::string, std::map<std::string, std::unique_ptr<ModelProperty::Base>>> PopulationProperties;
+typedef std::map<std::string, std::map<std::string, std::unique_ptr<ModelProperty::Base>>> ComponentProperties;
+
+typedef std::map<std::string, std::pair<std::set<std::string>, std::set<std::string>>> ComponentEventPorts;
+
 
 void *getLibrarySymbol(LIBRARY_HANDLE modelLibrary, const char *name) {
 #ifdef _WIN32
@@ -94,15 +97,49 @@ std::pair<T*, T*> getStateVar(LIBRARY_HANDLE modelLibrary, const std::string &ho
     return std::make_pair(hostStateVar, deviceStateVar);
 }
 //----------------------------------------------------------------------------
-unsigned int getNeuronPopSize(const std::string &popName, const std::map<std::string, unsigned int> &popSizes)
+unsigned int getComponentSize(const std::string &componentName, const std::map<std::string, unsigned int> &componentSizes)
 {
-    auto pop = popSizes.find(popName);
-    if(pop == popSizes.end()) {
-        throw std::runtime_error("Cannot find neuron population:" + popName);
+    auto component = componentSizes.find(componentName);
+    if(component == componentSizes.end()) {
+        throw std::runtime_error("Cannot find neuron population:" + componentName);
     }
     else {
-        return pop->second;
+        return component->second;
     }
+}
+//----------------------------------------------------------------------------
+bool isEventSendPort(const std::string &targetName, const std::string &portName,
+                     const std::map<std::string, std::string> &componentURLs,
+                     const ComponentEventPorts &componentEventPorts)
+{
+    auto targetURL = componentURLs.find(targetName);
+    if(targetURL != componentURLs.end()) {
+        std::cout << targetName << ":" << targetURL->second << std::endl;
+        auto urlEventPorts = componentEventPorts.find(targetURL->second);
+        if(urlEventPorts != componentEventPorts.end()) {
+
+            const auto &eventSendPorts = urlEventPorts->second.first;
+            return (eventSendPorts.find(portName) != eventSendPorts.end());
+        }
+    }
+
+    return false;
+}
+//----------------------------------------------------------------------------
+bool isEventReceivePort(const std::string &targetName, const std::string &portName,
+                     const std::map<std::string, std::string> &componentURLs,
+                     const ComponentEventPorts &componentEventPorts)
+{
+    auto targetURL = componentURLs.find(targetName);
+    if(targetURL != componentURLs.end()) {
+        auto urlEventPorts = componentEventPorts.find(targetURL->second);
+        if(urlEventPorts != componentEventPorts.end()) {
+            const auto &eventReceivePorts = urlEventPorts->second.second;
+            return (eventReceivePorts.find(portName) != eventReceivePorts.end());
+        }
+    }
+
+    return false;
 }
 //----------------------------------------------------------------------------
 std::tuple<unsigned int*, unsigned int*, unsigned int*, unsigned int*, unsigned int*> getNeuronPopSpikeVars(LIBRARY_HANDLE modelLibrary, const std::string &popName)
@@ -166,16 +203,88 @@ std::unique_ptr<ModelProperty::Base> createModelProperty(const pugi::xml_node &n
     throw std::runtime_error("Unsupported property type");
 }
 //----------------------------------------------------------------------------
-void addProperties(const pugi::xml_node &node, LIBRARY_HANDLE modelLibrary, const std::string &popName, unsigned int popSize,
-                   PopulationProperties &properties)
+void addEventPorts(const filesystem::path &basePath, const pugi::xml_node &node,
+                   std::map<std::string, std::string> &componentURLs, ComponentEventPorts &componentEventPorts)
 {
+    // Read component name and URL
+    auto name = node.attribute("name").value();
+    auto url = node.attribute("url").value();
+
+    // Add mapping between name and URL to map
+    componentURLs.insert(std::make_pair(name, url));
+
+    // If this component's ports have already been cached, stop
+    if(componentEventPorts.find(url) != componentEventPorts.end()) {
+        return;
+    }
+
+    auto &urlEventPorts = componentEventPorts[url];
+
+    // If this is a SpikeSource add event receive port called 'spike'
+    if(strcmp(url, "SpikeSource") == 0) {
+        urlEventPorts.second.insert("spike");
+        return;
+    }
+
+    // Get absolute URL
+    auto absoluteURL = (basePath / url).str();
+
+    // Load XML document
+    pugi::xml_document doc;
+    auto result = doc.load_file(absoluteURL.c_str());
+    if(!result) {
+        throw std::runtime_error("Could not open file:" + absoluteURL + ", error:" + result.description());
+    }
+
+    // Get SpineML root
+    auto spineML = doc.child("SpineML");
+    if(!spineML) {
+        throw std::runtime_error("XML file:" + absoluteURL + " is not a SpineML component - it has no root SpineML node");
+    }
+
+    // Get component class
+    auto componentClass = spineML.child("ComponentClass");
+    if(!componentClass) {
+        throw std::runtime_error("XML file:" + absoluteURL + " is not a SpineML component - it's ComponentClass node is missing ");
+    }
+
+    // Loop through send ports
+    for(auto sendPort : componentClass.select_nodes(SpineMLUtils::xPathNodeHasSuffix("SendPort").c_str())) {
+        std::string nodeType = sendPort.node().name();
+        const char *portName = sendPort.node().attribute("name").value();
+        if(nodeType == "EventSendPort") {
+            urlEventPorts.first.insert(portName);
+        }
+    }
+    // Loop through receive ports
+    std::cout << "\t\tEvent receive ports:" << std::endl;
+    for(auto receivePort : componentClass.select_nodes(SpineMLUtils::xPathNodeHasSuffix("ReceivePort").c_str())) {
+        std::string nodeType = receivePort.node().name();
+        const char *portName = receivePort.node().attribute("name").value();
+        if(nodeType == "EventReceivePort") {
+            urlEventPorts.second.insert(portName);
+        }
+    }
+}
+//----------------------------------------------------------------------------
+void addPropertiesAndSizes(const pugi::xml_node &node, LIBRARY_HANDLE modelLibrary, const std::string &geNNPopName, unsigned int popSize,
+                           std::map<std::string, unsigned int> &sizes, ComponentProperties &properties)
+{
+    // Get SpineML name of component
+    const char *spineMLName = node.attribute("name").value();
+
+    // Add sizes to map
+    if(!sizes.insert(std::make_pair(spineMLName, popSize)).second) {
+        throw std::runtime_error("Component name '" + std::string(spineMLName) + "' not unique");
+    }
+
     // Loop through properties in network
     for(auto param : node.children("Property")) {
         std::string paramName = param.attribute("name").value();
         // Get pointers to state vars in model library
         scalar **hostStateVar;
         scalar **deviceStateVar;
-        std::tie(hostStateVar, deviceStateVar) = getStateVar<scalar*>(modelLibrary, paramName + popName);
+        std::tie(hostStateVar, deviceStateVar) = getStateVar<scalar*>(modelLibrary, paramName + geNNPopName);
 
         // If it's found
         // **NOTE** it not being found is not an error condition - it just suggests that
@@ -185,7 +294,7 @@ void addProperties(const pugi::xml_node &node, LIBRARY_HANDLE modelLibrary, cons
             std::cout << "\t\tState variable found host pointer:" << *hostStateVar << std::endl;
 
             // Create model property object
-            properties[popName].insert(
+            properties[spineMLName].insert(
                 std::make_pair(paramName, createModelProperty(param, *hostStateVar, nullptr, popSize)));
 #else
             if(deviceStateVar == nullptr) {
@@ -195,7 +304,7 @@ void addProperties(const pugi::xml_node &node, LIBRARY_HANDLE modelLibrary, cons
             std::cout << "\t\tState variable found host pointer:" << *hostStateVar << ", device pointer:" << *deviceStateVar << std::endl;
 
             // Create model property object
-            properties[popName].insert(
+            properties[spineMLName].insert(
                 std::make_pair(paramName, createModelProperty(param, *hostStateVar, *deviceStateVar, popSize)));
 #endif
         }
@@ -265,35 +374,35 @@ std::unique_ptr<InputValue::Base> createInputValue(double dt, unsigned int numNe
 }
 //----------------------------------------------------------------------------
 std::unique_ptr<Input::Base> createInput(const pugi::xml_node &node, LIBRARY_HANDLE modelLibrary, double dt,
-                                         const std::map<std::string, unsigned int> &neuronPopulationSizes,
-                                         const PopulationProperties &neuronProperties)
+                                         const std::map<std::string, unsigned int> &componentSizes,
+                                         const ComponentProperties &componentProperties,
+                                         const std::map<std::string, std::string> &componentURLs,
+                                         const ComponentEventPorts &componentEventPorts)
 {
 
     // Get name of target
-    std::string target = SpineMLUtils::getSafeName(node.attribute("target").value());
-
-    // **TODO** handle weight update model and postsynaptic update model targets
+    std::string target = node.attribute("target").value();
 
     // Find size of target population
-    auto targetPopSize = neuronPopulationSizes.find(target);
-    if(targetPopSize == neuronPopulationSizes.end()) {
-        throw std::runtime_error("Cannot find neural population '" + target + "'");
+    auto targetSize = componentSizes.find(target);
+    if(targetSize == componentSizes.end()) {
+        throw std::runtime_error("Cannot find component '" + target + "'");
     }
 
     // Create suitable input value
-    std::unique_ptr<InputValue::Base> inputValue = createInputValue(dt, targetPopSize->second, node);
+    std::unique_ptr<InputValue::Base> inputValue = createInputValue(dt, targetSize->second, node);
 
-    // If this is a spike recorder
-    // **TODO** better test - it is only convention that port is called spike
+    // If target is an event receive port
     std::string port = node.attribute("port").value();
-    if(port == "spike") {
+    if(isEventReceivePort(target, port, componentURLs, componentEventPorts)) {
         // Get host and device (if applicable) pointers to spike counts, spikes and queue
         unsigned int *hostSpikeCount;
         unsigned int *deviceSpikeCount;
         unsigned int *hostSpikes;
         unsigned int *deviceSpikes;
         unsigned int *spikeQueuePtr;
-        std::tie(hostSpikeCount, deviceSpikeCount, hostSpikes, deviceSpikes, spikeQueuePtr) = getNeuronPopSpikeVars(modelLibrary, target);
+        std::tie(hostSpikeCount, deviceSpikeCount, hostSpikes, deviceSpikes, spikeQueuePtr) = getNeuronPopSpikeVars(
+            modelLibrary, SpineMLUtils::getSafeName(target));
 
         // If this input has a rate distribution
         auto rateDistribution = node.attribute("rate_based_input");
@@ -325,11 +434,11 @@ std::unique_ptr<Input::Base> createInput(const pugi::xml_node &node, LIBRARY_HAN
                                      hostSpikes, deviceSpikes));
         }
     }
-    // Otherwise we assume it's a neuron property
+    // Otherwise we assume it's an analogue receive port
     else {
         // If there is a dictionary of properties for target population
-        auto targetProperties = neuronProperties.find(target);
-        if(targetProperties != neuronProperties.end()) {
+        auto targetProperties = componentProperties.find(target);
+        if(targetProperties != componentProperties.end()) {
             // If there is a model property object for this port return an analogue input to stimulate it
             auto portProperty = targetProperties->second.find(port);
             if(portProperty != targetProperties->second.end()) {
@@ -344,48 +453,49 @@ std::unique_ptr<Input::Base> createInput(const pugi::xml_node &node, LIBRARY_HAN
 
 }
 //----------------------------------------------------------------------------
-std::unique_ptr<LogOutput::Base> createLogOutput(const pugi::xml_node &node, LIBRARY_HANDLE modelLibrary, double dt, unsigned int numTimeSteps,
-                                                 const filesystem::path &basePath, const std::map<std::string, unsigned int> &neuronPopulationSizes,
-                                                 const PopulationProperties &neuronProperties)
+std::unique_ptr<LogOutput::Base> createLogOutput(const pugi::xml_node &node, LIBRARY_HANDLE modelLibrary, double dt,
+                                                 unsigned int numTimeSteps, const filesystem::path &basePath,
+                                                 const std::map<std::string, unsigned int> &componentSizes,
+                                                 const ComponentProperties &componentProperties,
+                                                 const std::map<std::string, std::string> &componentURLs,
+                                                 const ComponentEventPorts &componentEventPorts)
 {
     // Get name of target
-    std::string target = SpineMLUtils::getSafeName(node.attribute("target").value());
+    std::string target = node.attribute("target").value();
 
-    // **TODO** handle weight update model and postsynaptic update model targets
-
-    // Find size of target population
-    auto targetPopSize = neuronPopulationSizes.find(target);
-    if(targetPopSize == neuronPopulationSizes.end()) {
-        throw std::runtime_error("Cannot find neural population '" + target + "'");
+    // Find size of target component
+    auto targetSize = componentSizes.find(target);
+    if(targetSize == componentSizes.end()) {
+        throw std::runtime_error("Cannot find component '" + target + "'");
     }
 
-    // If this is a spike recorder
-    // **TODO** better test - it is only convention that port is called spike
+    // If target is an event send port
     std::string port = node.attribute("port").value();
-    if(port == "spike") {
+    if(isEventSendPort(target, port, componentURLs, componentEventPorts)) {
         // Get host and device (if applicable) pointers to spike counts, spikes and queue
         unsigned int *hostSpikeCount;
         unsigned int *deviceSpikeCount;
         unsigned int *hostSpikes;
         unsigned int *deviceSpikes;
         unsigned int *spikeQueuePtr;
-        std::tie(hostSpikeCount, deviceSpikeCount, hostSpikes, deviceSpikes, spikeQueuePtr) = getNeuronPopSpikeVars(modelLibrary, target);
+        std::tie(hostSpikeCount, deviceSpikeCount, hostSpikes, deviceSpikes, spikeQueuePtr) = getNeuronPopSpikeVars(
+            modelLibrary, SpineMLUtils::getSafeName(target));
 
         // Create event logger
-        return std::unique_ptr<LogOutput::Base>(new LogOutput::Event(node, dt, numTimeSteps, port, targetPopSize->second,
+        return std::unique_ptr<LogOutput::Base>(new LogOutput::Event(node, dt, numTimeSteps, port, targetSize->second,
                                                                      basePath, spikeQueuePtr,
                                                                      hostSpikeCount, deviceSpikeCount,
                                                                      hostSpikes, deviceSpikes));
     }
-    // Otherwise we assume it's a neuron property
+    // Otherwise we assume it's an analogue send port
     else {
         // If there is a dictionary of properties for target population
-        auto targetProperties = neuronProperties.find(target);
-        if(targetProperties != neuronProperties.end()) {
+        auto targetProperties = componentProperties.find(target);
+        if(targetProperties != componentProperties.end()) {
             // If there is a model property object for this port return an analogue log output to read it
             auto portProperty = targetProperties->second.find(port);
             if(portProperty != targetProperties->second.end()) {
-                return std::unique_ptr<LogOutput::Base>(new LogOutput::Analogue(node, dt, numTimeSteps, port, targetPopSize->second,
+                return std::unique_ptr<LogOutput::Base>(new LogOutput::Analogue(node, dt, numTimeSteps, port, targetSize->second,
                                                                                 basePath, portProperty->second.get()));
             }
         }
@@ -512,9 +622,12 @@ int main(int argc, char *argv[])
             throw std::runtime_error("XML file:" + std::string(argv[2]) + " is not a low-level SpineML network - it has no root SpineML node");
         }
 
+        std::map<std::string, unsigned int> componentSizes;
+        ComponentProperties componentProperties;
+        std::map<std::string, std::string> componentURLs;
+        ComponentEventPorts componentEventPorts;
+
         // Loop through populations once to initialize neuron population properties
-        std::map<std::string, unsigned int> neuronPopulationSizes;
-        PopulationProperties neuronProperties;
         for(auto population : networkSpineML.children("LL:Population")) {
             auto neuron = population.child("LL:Neuron");
             if(!neuron) {
@@ -522,36 +635,34 @@ int main(int argc, char *argv[])
             }
 
             // Read basic population properties
-            auto popName = SpineMLUtils::getSafeName(neuron.attribute("name").value());
+            const char *popName = neuron.attribute("name").value();
             const unsigned int popSize = neuron.attribute("size").as_int();
-            std::cout << "Population " << popName << " consisting of ";
+            std::cout << "Population '" << popName << "' consisting of ";
             std::cout << popSize << " neurons" << std::endl;
 
             // Add neuron population properties to dictionary
-            addProperties(neuron, modelLibrary, popName, popSize, neuronProperties);
-
-            // Add size to dictionary
-            neuronPopulationSizes.insert(std::make_pair(popName, popSize));
+            auto geNNPopName = SpineMLUtils::getSafeName(popName);
+            addPropertiesAndSizes(neuron, modelLibrary, geNNPopName, popSize,
+                                  componentSizes, componentProperties);
+            addEventPorts(basePath, neuron, componentURLs, componentEventPorts);
         }
 
         // Loop through populations AGAIN to build synapse population properties
-        PopulationProperties postsynapticProperties;
-        PopulationProperties weightUpdateProperties;
         for(auto population : networkSpineML.children("LL:Population")) {
             // Read source population name from neuron node
-            auto srcPopName = SpineMLUtils::getSafeName(population.child("LL:Neuron").attribute("name").value());
-            const unsigned int srcPopSize = getNeuronPopSize(srcPopName, neuronPopulationSizes);
+            const char *srcPopName = population.child("LL:Neuron").attribute("name").value();
+            const unsigned int srcPopSize = getComponentSize(srcPopName, componentSizes);
 
             // Loop through outgoing projections
             for(auto projection : population.children("LL:Projection")) {
                 // Read destination population name from projection
-                auto trgPopName = SpineMLUtils::getSafeName(projection.attribute("dst_population").value());
-                const unsigned int trgPopSize = getNeuronPopSize(trgPopName, neuronPopulationSizes);
+                auto trgPopName = projection.attribute("dst_population").value();
+                const unsigned int trgPopSize = getComponentSize(trgPopName, componentSizes);
 
                 std::cout << "Projection from population:" << srcPopName << "->" << trgPopName << std::endl;
 
-                // Build name of synapse population from these two
-                std::string synPopName = std::string(srcPopName) + "_" + trgPopName;
+                // Build name of GeNN synapse population from these two
+                std::string geNNSynPopName = SpineMLUtils::getSafeName(srcPopName) + "_" + SpineMLUtils::getSafeName(trgPopName);
 
                 // Get main synapse node
                 auto synapse = projection.child("LL:Synapse");
@@ -561,7 +672,7 @@ int main(int argc, char *argv[])
 
                 // Initialize connector (will result in correct calculation for num synapses)
                 const unsigned int numSynapses = createConnector(synapse, modelLibrary, basePath,
-                                                                 synPopName, srcPopSize, trgPopSize);
+                                                                 geNNSynPopName, srcPopSize, trgPopSize);
 
                 // Get post synapse
                 auto postSynapse = synapse.child("LL:PostSynapse");
@@ -570,7 +681,9 @@ int main(int argc, char *argv[])
                 }
 
                 // Add postsynapse properties to dictionary
-                addProperties(postSynapse, modelLibrary, synPopName, trgPopSize, postsynapticProperties);
+                addPropertiesAndSizes(postSynapse, modelLibrary, geNNSynPopName, trgPopSize,
+                                      componentSizes, componentProperties);
+                addEventPorts(basePath, postSynapse, componentURLs, componentEventPorts);
 
                 // Get weight update
                 auto weightUpdate = synapse.child("LL:WeightUpdate");
@@ -579,7 +692,9 @@ int main(int argc, char *argv[])
                 }
 
                 // Add weight update properties to dictionary
-                addProperties(weightUpdate, modelLibrary, synPopName, numSynapses, weightUpdateProperties);
+                addPropertiesAndSizes(weightUpdate, modelLibrary, geNNSynPopName, numSynapses,
+                                      componentSizes, componentProperties);
+                addEventPorts(basePath, weightUpdate, componentURLs, componentEventPorts);
             }
         }
 
@@ -597,14 +712,16 @@ int main(int argc, char *argv[])
         std::vector<std::unique_ptr<LogOutput::Base>> loggers;
         for(auto logOutput : experiment.children("LogOutput")) {
             loggers.push_back(createLogOutput(logOutput, modelLibrary, dt, numTimeSteps, basePath,
-                                              neuronPopulationSizes, neuronProperties));
+                                              componentSizes, componentProperties,
+                                              componentURLs, componentEventPorts));
         }
 
         // Loop through inputs specified by experiment and create handlers
         std::vector<std::unique_ptr<Input::Base>> inputs;
         for(auto input : experiment.select_nodes(SpineMLUtils::xPathNodeHasSuffix("Input").c_str())) {
             inputs.push_back(createInput(input.node(), modelLibrary, dt,
-                                         neuronPopulationSizes, neuronProperties));
+                                         componentSizes, componentProperties,
+                                         componentURLs, componentEventPorts));
         }
 
         // Call library function to perform final initialize
