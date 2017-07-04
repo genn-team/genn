@@ -47,8 +47,8 @@ using namespace SpineMLSimulator;
 #define LIBRARY_HANDLE HMODULE 
 
 #define LOAD_SYMBOL(LIBRARY, TYPE, NAME)                            \
-    TYPE NAME = (TYPE)GetProcAddress(LIBRARY, #NAME);                        \
-    if(NAME == NULL) {                                              \
+    TYPE NAME = (TYPE)GetProcAddress(LIBRARY, #NAME);               \
+    if(NAME == nullptr) {                                           \
         throw std::runtime_error("Cannot find " #NAME " function"); \
     }
 #else
@@ -56,7 +56,7 @@ using namespace SpineMLSimulator;
 
 #define LOAD_SYMBOL(LIBRARY, TYPE, NAME)                            \
     TYPE NAME = (TYPE)dlsym(LIBRARY, #NAME);                        \
-    if(NAME == NULL) {                                              \
+    if(NAME == nullptr) {                                           \
         throw std::runtime_error("Cannot find " #NAME " function"); \
     }
 #endif
@@ -85,7 +85,7 @@ std::pair<T*, T*> getStateVar(LIBRARY_HANDLE modelLibrary, const std::string &ho
     T *hostStateVar = (T*)getLibrarySymbol(modelLibrary, hostStateVarName.c_str());
 
 #ifdef CPU_ONLY
-    T *deviceStateVar = NULL;
+    T *deviceStateVar = nullptr;
 #else
     std::string deviceStateVarName = "d_" + hostStateVarName;
     T *deviceStateVar = (T*)getLibrarySymbol(modelLibrary, deviceStateVarName.c_str());
@@ -112,9 +112,9 @@ std::tuple<unsigned int*, unsigned int*, unsigned int*, unsigned int*, unsigned 
     unsigned int **deviceSpikeCount;
     std::tie(hostSpikeCount, deviceSpikeCount) = getStateVar<unsigned int*>(modelLibrary, "glbSpkCnt" + popName);
 #ifdef CPU_ONLY
-    if(hostSpikeCount == NULL) {
+    if(hostSpikeCount == nullptr) {
 #else
-    if(hostSpikeCount == NULL || deviceSpikeCount == NULL) {
+    if(hostSpikeCount == nullptr || deviceSpikeCount == nullptr) {
 #endif
         throw std::runtime_error("Cannot find spike count variable for population:" + popName);
     }
@@ -124,9 +124,9 @@ std::tuple<unsigned int*, unsigned int*, unsigned int*, unsigned int*, unsigned 
     unsigned int **deviceSpikes;
     std::tie(hostSpikes, deviceSpikes) = getStateVar<unsigned int*>(modelLibrary, "glbSpk" + popName);
 #ifdef CPU_ONLY
-    if(hostSpikes == NULL) {
+    if(hostSpikes == nullptr) {
 #else
-    if(hostSpikes == NULL || deviceSpikes == NULL) {
+    if(hostSpikes == nullptr || deviceSpikes == nullptr) {
 #endif
         throw std::runtime_error("Cannot find spike variable for population:" + popName);
     }
@@ -179,7 +179,7 @@ void addProperties(const pugi::xml_node &node, LIBRARY_HANDLE modelLibrary, cons
 
         // If it's found
         // **NOTE** it not being found is not an error condition - it just suggests that
-        if(hostStateVar != NULL) {
+        if(hostStateVar != nullptr) {
             std::cout << "\t" << paramName << std::endl;
 #ifdef CPU_ONLY
             std::cout << "\t\tState variable found host pointer:" << *hostStateVar << std::endl;
@@ -188,7 +188,7 @@ void addProperties(const pugi::xml_node &node, LIBRARY_HANDLE modelLibrary, cons
             properties[popName].insert(
                 std::make_pair(paramName, createModelProperty(param, *hostStateVar, nullptr, popSize)));
 #else
-            if(deviceStateVar == NULL) {
+            if(deviceStateVar == nullptr) {
                 throw std::runtime_error("Cannot find device-side state variable for property:" + paramName);
             }
 
@@ -207,7 +207,7 @@ unsigned int createConnector(const pugi::xml_node &node, LIBRARY_HANDLE modelLib
 {
     // Find allocate function
     Connectors::AllocateFn allocateFn = (Connectors::AllocateFn)getLibrarySymbol(modelLibrary, ("allocate" + synPopName).c_str());
-    if(allocateFn == NULL) {
+    if(allocateFn == nullptr) {
         throw std::runtime_error("Cannot find allocate function for synapse population:" + synPopName);
     }
 
@@ -228,7 +228,7 @@ unsigned int createConnector(const pugi::xml_node &node, LIBRARY_HANDLE modelLib
 
     auto fixedProbability = node.child("FixedProbabilityConnection");
     if(fixedProbability) {
-        if(sparseProjection != NULL) {
+        if(sparseProjection != nullptr) {
             return Connectors::fixedProbabilitySparse(fixedProbability, numPre, numPost,
                                                       *sparseProjection, allocateFn);
         }
@@ -408,7 +408,7 @@ int main(int argc, char *argv[])
     // **YUCK** hard coded 0.1ms time step as SpineML specifies this in experiment but GeNN in model
     const double dt = 0.1;
 
-    LIBRARY_HANDLE modelLibrary = NULL;
+    LIBRARY_HANDLE modelLibrary = nullptr;
     try
     {
         std::mt19937 gen;
@@ -463,7 +463,7 @@ int main(int argc, char *argv[])
 #endif
         
         // If it fails throw
-        if(modelLibrary == NULL)
+        if(modelLibrary == nullptr)
         {
 #ifdef _WIN32
             throw std::runtime_error("Unable to load library - error:" + std::to_string(GetLastError()));
@@ -482,7 +482,7 @@ int main(int argc, char *argv[])
 
         // Search for network initialization function
         VoidFunction initializeNetwork = (VoidFunction)getLibrarySymbol(modelLibrary, ("init" + networkName).c_str());
-        if(initializeNetwork == NULL) {
+        if(initializeNetwork == nullptr) {
             throw std::runtime_error("Cannot find network initialization function 'init" + networkName + "'");
         }
 

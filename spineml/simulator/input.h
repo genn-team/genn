@@ -90,7 +90,7 @@ private:
     //----------------------------------------------------------------------------
     unsigned int getSpikeQueueIndex() const
     {
-        return (m_SpikeQueuePtr == NULL) ? 0 : *m_SpikeQueuePtr;
+        return (m_SpikeQueuePtr == nullptr) ? 0 : *m_SpikeQueuePtr;
     }
 
     //----------------------------------------------------------------------------

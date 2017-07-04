@@ -256,7 +256,7 @@ void SpineMLSimulator::LogOutput::Event::record(double dt, unsigned int timestep
     // If we should be recording this timestep
     if(shouldRecord(timestep)) {
         // Determine current spike queue
-        const unsigned int spikeQueueIndex = (m_SpikeQueuePtr == NULL) ? 0 : *m_SpikeQueuePtr;
+        const unsigned int spikeQueueIndex = (m_SpikeQueuePtr == nullptr) ? 0 : *m_SpikeQueuePtr;
 
 #ifndef CPU_ONLY
         // Copy spike count from spike queue position to host
