@@ -43,7 +43,6 @@ double lnFact(int n)
     else {
         return lgamma(n + 1.0);
     }
-
 }
 //----------------------------------------------------------------------------
 // Calculate binomial coefficient using log factorial
@@ -107,10 +106,10 @@ unsigned int binomialInverseCDF(double cdf, unsigned int a, double b)
     throw std::runtime_error("Invalid CDF parameterse");
 }
 //----------------------------------------------------------------------------
-SynapseMatrixType getMatrixType(unsigned int numPre, unsigned int numPost, unsigned int numSynapses, bool globalG)
+/*SynapseMatrixType getMatrixType(unsigned int numPre, unsigned int numPost, unsigned int numSynapses, bool globalG)
 {
     // Calculate the size of the dense weight matrix
-    const unsigned int denseSize = numPre * numPost * sizeof(float);    //**TODO** variable weight types
+    const unsigned int denseSize = numPre * numPost * sizeof(float);
 
     // Calculate the overheads of the Yale sparse matrix format
     const unsigned int sparseDataStructureSize = sizeof(unsigned int) * (numPre + 1 + numSynapses);
@@ -140,25 +139,23 @@ SynapseMatrixType getMatrixType(unsigned int numPre, unsigned int numPost, unsig
             return SynapseMatrixType::DENSE_INDIVIDUALG;
         }
     }
-}
+}*/
 }   // anonymous namespace
 
 //----------------------------------------------------------------------------
 // SpineMLGenerator::Connectors::FixedProbability
 //----------------------------------------------------------------------------
-SynapseMatrixType SpineMLGenerator::Connectors::FixedProbability::getMatrixType(const pugi::xml_node &node, unsigned int numPre, unsigned int numPost, bool globalG)
+SynapseMatrixType SpineMLGenerator::Connectors::FixedProbability::getMatrixType(const pugi::xml_node &node, unsigned int, unsigned int, bool globalG)
 {
     const double connectionProbability = node.attribute("probability").as_double();
 
-    // If we're implementing a dense matrix and individual
-    //  weights aren't required we can use DENSE_GLOBALG
-    if(connectionProbability == 1.0 && globalG) {
-        std::cout << "\tFully-connected FixedProbability connector implemented as DENSE_GLOBALG" << std::endl;
-        return SynapseMatrixType::DENSE_GLOBALG;
+    // If we're implementing a fully-connected matrix use DENSE format
+    if(connectionProbability == 1.0) {
+        std::cout << "\tFully-connected FixedProbability connector implemented as DENSE" << std::endl;
+        return globalG ? SynapseMatrixType::DENSE_GLOBALG : SynapseMatrixType::DENSE_INDIVIDUALG;
     }
     else {
-        const unsigned int numConnections = (unsigned int)((double)numPre * (double)numPost * connectionProbability);
-        return ::getMatrixType(numPre, numPost, numConnections, globalG);
+        return globalG ? SynapseMatrixType::SPARSE_GLOBALG : SynapseMatrixType::SPARSE_INDIVIDUALG;
     }
 }
 //----------------------------------------------------------------------------
@@ -174,20 +171,19 @@ unsigned int SpineMLGenerator::Connectors::FixedProbability::estimateMaxRowLengt
     return maxRowLength;
 }
 
-
 //----------------------------------------------------------------------------
 // SpineMLGenerator::Connectors::OneToOne
 //----------------------------------------------------------------------------
-SynapseMatrixType SpineMLGenerator::Connectors::OneToOne::getMatrixType(const pugi::xml_node&, unsigned int numPre, unsigned int numPost, bool globalG)
+SynapseMatrixType SpineMLGenerator::Connectors::OneToOne::getMatrixType(const pugi::xml_node&, unsigned int, unsigned int numPost, bool globalG)
 {
     // If we're connecting to a single postsynaptic neuron and
     // individual weights aren't required we can use DENSE_GLOBALG
-    if(numPost == 1 && globalG) {
-        std::cout << "\tOne-to-one connector to one neuron postsynaptic population implemented as DENSE_GLOBALG" << std::endl;
-        return SynapseMatrixType::DENSE_GLOBALG;
+    if(numPost == 1) {
+        std::cout << "\tOne-to-one connector to one neuron postsynaptic population implemented as DENSE" << std::endl;
+        return globalG ? SynapseMatrixType::DENSE_GLOBALG : SynapseMatrixType::DENSE_INDIVIDUALG;
     }
     else {
-        return ::getMatrixType(numPre, numPost, numPre, globalG);
+        return globalG ? SynapseMatrixType::SPARSE_GLOBALG : SynapseMatrixType::SPARSE_INDIVIDUALG;
     }
 }
 //----------------------------------------------------------------------------
@@ -195,7 +191,6 @@ unsigned int SpineMLGenerator::Connectors::OneToOne::estimateMaxRowLength(const 
 {
     return 1;
 }
-
 
 //----------------------------------------------------------------------------
 // SpineMLGenerator::Connectors::AllToAll
@@ -213,16 +208,9 @@ unsigned int SpineMLGenerator::Connectors::AllToAll::estimateMaxRowLength(const 
 //----------------------------------------------------------------------------
 // SpineMLGenerator::Connectors::List
 //----------------------------------------------------------------------------
-SynapseMatrixType SpineMLGenerator::Connectors::List::getMatrixType(const pugi::xml_node &node, unsigned int numPre, unsigned int numPost, bool globalG)
+SynapseMatrixType SpineMLGenerator::Connectors::List::getMatrixType(const pugi::xml_node&, unsigned int, unsigned int, bool globalG)
 {
-    // Determine number of connections, either by reading it from binary file attribute or counting Connection children
-    auto binaryFile = node.child("BinaryFile");
-    auto connections = node.children("Connection");
-    const unsigned int numConnections = binaryFile
-        ? binaryFile.attribute("num_connections").as_uint()
-        : std::distance(connections.begin(), connections.end());
-
-    return ::getMatrixType(numPre, numPost, numConnections, globalG);
+    return globalG ? SynapseMatrixType::SPARSE_GLOBALG : SynapseMatrixType::SPARSE_INDIVIDUALG;
 }
 //----------------------------------------------------------------------------
 unsigned int SpineMLGenerator::Connectors::List::estimateMaxRowLength(const filesystem::path &basePath, const pugi::xml_node &node,
