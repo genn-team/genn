@@ -344,6 +344,42 @@ public:
         }
 
         // Add synapse group
+#ifdef MPI_ENABLE
+        int hostID = trgNeuronGrp->getClusterHostID();
+        int deviceID = trgNeuronGrp->getClusterDeviceID();
+        bool isLocal = (hostID == 0) && (deviceID == 0);
+        if (isLocal) {
+            auto result = m_LocalSynapseGroups.insert(
+                    pair<string, SynapseGroup>(
+                        name, SynapseGroup(name, mtype, delaySteps,
+                            WeightUpdateModel::getInstance(), weightParamValues.getValues(), weightVarValues.getValues(),
+                            PostsynapticModel::getInstance(), postsynapticParamValues.getValues(), postsynapticVarValues.getValues(),
+                            srcNeuronGrp, trgNeuronGrp)));
+
+            if(!result.second)
+            {
+                gennError("Cannot add a synapse population with duplicate name:" + name);
+                return NULL;
+            } else {
+                //TODO: post process for synapse not implement
+            }
+        } else {
+            auto result = m_RemoteSynapseGroups.insert(
+                    pair<string, SynapseGroup>(
+                        name, SynapseGroup(name, mtype, delaySteps,
+                            WeightUpdateModel::getInstance(), weightParamValues.getValues(), weightVarValues.getValues(),
+                            PostsynapticModel::getInstance(), postsynapticParamValues.getValues(), postsynapticVarValues.getValues(),
+                            srcNeuronGrp, trgNeuronGrp)));
+
+            if(!result.second)
+            {
+                gennError("Cannot add a synapse population with duplicate name:" + name);
+                return NULL;
+            } else {
+                //TODO: post process for synapse not implement
+            }
+        }
+#endif
         auto result = m_SynapseGroups.insert(
             pair<string, SynapseGroup>(
                 name, SynapseGroup(name, mtype, delaySteps,
