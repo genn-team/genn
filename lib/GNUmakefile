@@ -62,6 +62,9 @@ endif
 ifdef DEBUG
     CXXFLAGS             +=-g -O0 -DDEBUG
 endif
+ifdef MPI_ENABLE
+    CXXFLAGS             +=-DMPI_ENABLE
+endif
 
 ARFLAGS                  :=-rcs
 

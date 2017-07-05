@@ -47,6 +47,11 @@ ifdef DEBUG
 else
     CXXFLAGS            +=$(OPTIMIZATIONFLAGS)
 endif
+ifndef MPI_ENABLE
+    CXXFLAGS            +=-std=c++11
+else
+    CXXFLAGS            +=-std=c++11 -DMPI_ENABLE
+endif
 
 # Global include and link flags
 ifndef CPU_ONLY

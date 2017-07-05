@@ -165,8 +165,13 @@ public:
     //! Find a neuron group by name
     NeuronGroup *findNeuronGroup(const std::string &name);
 
+#ifdef MPI_ENABLE
+    NeuronGroup *addNeuronPopulation(const string&, unsigned int, unsigned int, const double *, const double *, int, int); //!< Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population
+    NeuronGroup *addNeuronPopulation(const string&, unsigned int, unsigned int, const vector<double>&, const vector<double>&, int, int); //!< Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population
+#else
     NeuronGroup *addNeuronPopulation(const string&, unsigned int, unsigned int, const double *, const double *); //!< Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population
     NeuronGroup *addNeuronPopulation(const string&, unsigned int, unsigned int, const vector<double>&, const vector<double>&); //!< Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population
+#endif
 
     //! Adds a new neuron group to the model
     /*! \tparam NeuronModel type of neuron model (derived from NeuronModels::Base).
@@ -175,9 +180,15 @@ public:
         \param paramValues parameters for model wrapped in NeuronModel::ParamValues object.
         \param varValues initial state variable values for model wrapped in NeuronModel::VarValues object.
         \return pointer to newly created NeuronGroup */
+#ifdef MPI_ENABLE
+    template<typename NeuronModel>
+    NeuronGroup *addNeuronPopulation(const string &name, unsigned int size,
+                            const typename NeuronModel::ParamValues &paramValues, const typename NeuronModel::VarValues &varValues,int hostID, int deviceID)
+#else
     template<typename NeuronModel>
     NeuronGroup *addNeuronPopulation(const string &name, unsigned int size,
                             const typename NeuronModel::ParamValues &paramValues, const typename NeuronModel::VarValues &varValues)
+#endif
     {
         if (!GeNNReady) {
             gennError("You need to call initGeNN first.");
@@ -187,6 +198,32 @@ public:
         }
 
         // Add neuron group
+#ifdef MPI_ENABLE
+        bool isLocal = (hostID == 0) && (deviceID == 0);
+        if (isLocal) {
+            auto result = m_LocalNeuronGroups.insert(
+                    pair<string, NeuronGroup>(
+                        name, NeuronGroup(name, size, NeuronModel::getInstance(),
+                            paramValues.getValues(), varValues.getValues())));
+
+            if(!result.second)
+            {
+                gennError("Cannot add a neuron population with duplicate name:" + name);
+                return NULL;
+            }
+        } else {
+            auto result = m_RemoteNeuronGroups.insert(
+                    pair<string, NeuronGroup>(
+                        name, NeuronGroup(name, size, NeuronModel::getInstance(),
+                            paramValues.getValues(), varValues.getValues())));
+
+            if(!result.second)
+            {
+                gennError("Cannot add a neuron population with duplicate name:" + name);
+                return NULL;
+            }
+        }
+#endif
         auto result = m_NeuronGroups.insert(
             pair<string, NeuronGroup>(
                 name, NeuronGroup(name, size, NeuronModel::getInstance(),
