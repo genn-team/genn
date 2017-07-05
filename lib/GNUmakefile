@@ -55,9 +55,9 @@ ifeq ($(DARWIN),DARWIN)
     CXX                  :=clang++
 endif
 ifndef CPU_ONLY
-    CXXFLAGS             :=-std=c++11 -DNVCC=\"$(NVCC)\"
+    CXXFLAGS             +=-std=c++11 -DNVCC=\"$(NVCC)\"
 else
-    CXXFLAGS             :=-std=c++11 -DCPU_ONLY
+    CXXFLAGS             +=-std=c++11 -DCPU_ONLY
 endif
 ifdef DEBUG
     CXXFLAGS             +=-g -O0 -DDEBUG
@@ -65,25 +65,25 @@ endif
 ifdef COVERAGE
     CXXFLAGS             +=-O0 --coverage
 endif
-ARFLAGS                  :=-rcs
+ARFLAGS                  +=-rcs
 
 # Global include and link flags
 ifndef CPU_ONLY
-    INCLUDE_FLAGS        :=-I"$(INC_PATH)" -I"$(CUDA_PATH)/include"
+    INCLUDE_FLAGS        +=-I"$(INC_PATH)" -I"$(CUDA_PATH)/include"
     ifeq ($(DARWIN),DARWIN)
-        LINK_FLAGS       :=-rpath $(CUDA_PATH)/lib -L"$(LIBGENN_PATH)" -L"$(CUDA_PATH)/lib" -lgenn -lcuda -lcudart -lstdc++ -lc++
+        LINK_FLAGS       +=-rpath $(CUDA_PATH)/lib -L"$(LIBGENN_PATH)" -L"$(CUDA_PATH)/lib" -lgenn -lcuda -lcudart -lstdc++ -lc++
     else
         ifeq ($(OS_SIZE),32)
-            LINK_FLAGS   :=-L"$(LIBGENN_PATH)" -L"$(CUDA_PATH)/lib" -lgenn -lcuda -lcudart
+            LINK_FLAGS   +=-L"$(LIBGENN_PATH)" -L"$(CUDA_PATH)/lib" -lgenn -lcuda -lcudart
         else
-            LINK_FLAGS   :=-L"$(LIBGENN_PATH)" -L"$(CUDA_PATH)/lib64" -lgenn -lcuda -lcudart
+            LINK_FLAGS   +=-L"$(LIBGENN_PATH)" -L"$(CUDA_PATH)/lib64" -lgenn -lcuda -lcudart
         endif
     endif
 else
-    INCLUDE_FLAGS        :=-I"$(INC_PATH)"
-    LINK_FLAGS           :=-L"$(LIBGENN_PATH)" -lgenn_CPU_ONLY
+    INCLUDE_FLAGS        +=-I"$(INC_PATH)"
+    LINK_FLAGS           +=-L"$(LIBGENN_PATH)" -lgenn_CPU_ONLY
     ifeq ($(DARWIN),DARWIN)
-        LINK_FLAGS       :=-L"$(LIBGENN_PATH)" -lgenn_CPU_ONLY -lstdc++ -lc++
+        LINK_FLAGS       +=-L"$(LIBGENN_PATH)" -lgenn_CPU_ONLY -lstdc++ -lc++
     endif
 endif
 
