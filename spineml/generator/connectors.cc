@@ -174,17 +174,9 @@ unsigned int SpineMLGenerator::Connectors::FixedProbability::estimateMaxRowLengt
 //----------------------------------------------------------------------------
 // SpineMLGenerator::Connectors::OneToOne
 //----------------------------------------------------------------------------
-SynapseMatrixType SpineMLGenerator::Connectors::OneToOne::getMatrixType(const pugi::xml_node&, unsigned int, unsigned int numPost, bool globalG)
+SynapseMatrixType SpineMLGenerator::Connectors::OneToOne::getMatrixType(const pugi::xml_node&, unsigned int, unsigned int, bool globalG)
 {
-    // If we're connecting to a single postsynaptic neuron and
-    // individual weights aren't required we can use DENSE_GLOBALG
-    if(numPost == 1) {
-        std::cout << "\tOne-to-one connector to one neuron postsynaptic population implemented as DENSE" << std::endl;
-        return globalG ? SynapseMatrixType::DENSE_GLOBALG : SynapseMatrixType::DENSE_INDIVIDUALG;
-    }
-    else {
-        return globalG ? SynapseMatrixType::SPARSE_GLOBALG : SynapseMatrixType::SPARSE_INDIVIDUALG;
-    }
+    return globalG ? SynapseMatrixType::SPARSE_GLOBALG : SynapseMatrixType::SPARSE_INDIVIDUALG;
 }
 //----------------------------------------------------------------------------
 unsigned int SpineMLGenerator::Connectors::OneToOne::estimateMaxRowLength(const pugi::xml_node&, unsigned int, unsigned int)
