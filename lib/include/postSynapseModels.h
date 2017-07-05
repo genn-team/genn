@@ -52,8 +52,9 @@ public:
         }
         return -1;
     }
-
-    double expDecay(vector<double> pars, double dt) {
+    
+private:
+    double expDecay(const vector<double>& pars, double dt) {
         return exp(-dt/pars[0]);
     }
 };

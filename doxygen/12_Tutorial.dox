@@ -8,7 +8,7 @@ First, copy the files from Tutorial 1 into a new directory and rename them to ne
 >> cp -r tenHH_project tenHHRing_project
 >> cd tenHHRing_project
 >> mv tenHHModel.cc tenHHRingModel.cc
->> mv tenHHSimulation.cu tenHHRingSimulation.cu
+>> mv tenHHSimulation.cc tenHHRingSimulation.cc
 \endcode
 Now, we need to add a synapse group to the model that allows to connect neurons from the Pop1 group to connect to other neurons of this group. Open `tenHHRingModel.cc`, change the model name inside,
 \code
@@ -16,41 +16,39 @@ Now, we need to add a synapse group to the model that allows to connect neurons 
 \endcode
 
 \section addSynapse Adding Synaptic connections
-Now we need additional initial values and parameters for the synapse and post-synaptic models. We will use the standard `NSYNAPSE` weightupdate model and `EXPDECAY` post-synaptic model. They need intial variables and parameters as follows:
+Now we need additional initial values and parameters for the synapse and post-synaptic models. We will use the standard WeightUpdateModels::StaticPulse weight update model and PostsynapticModels::ExpCond post-synaptic model. They need the following initial variables and parameters:
 \code
-  double s_ini[1] = {
-    0.0      // 0 - g: the synaptic conductance value
-  };
-  double *s_p= NULL;
-  double *ps_ini= NULL;
-  double ps_p[2]= {
-    1.0,      // 0 - tau_S: decay time constant for S [ms]
-    -80.0     // 1 - Erev: Reversal potential
-  };
+WeightUpdateModels::StaticPulse::VarValues s_ini(
+  0.0 // 0 - g: the synaptic conductance value
+);
+
+PostsynapticModels::ExpCond::ParamValues ps_p(
+  1.0,      // 0 - tau_S: decay time constant for S [ms]
+  -80.0     // 1 - Erev: Reversal potential
+);
 \endcode
-If an array is not needed we set it to the NULL pointer. Here there are for example no synaptic parameters and no initial values for the post-synaptic mechanism. 
+\note the WeightUpdateModels::StaticPulse weight update model has no parameters and the PostsynapticModels::ExpCond post-synaptic model has no state variables.
+
 We can then add a synapse population at the end of the `modelDefinition(...)` function,
 \code
-  model.addSynapsePopulation("Pop1self", NSYNAPSE, DENSE, INDIVIDUALG, NO_DELAY, EXPDECAY, "Pop1", "Pop1", s_ini, s_p, ps_ini, ps_p);
+model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::ExpCond>(
+  "Pop1self", SynapseMatrixType::DENSE_INDIVIDUALG, 10,
+  "Pop1", "Pop1",
+  {}, s_ini,
+  ps_p, {});
 \endcode
 The addSynapsePopulation parameters are
-\arg `const char *name`: The name of the synapse population, here "Pop1self"
-\arg `int sType`: The type of synapse to be added, we here use the predefined typse `NSYNAPSE`. See \ref subsect31 for all available predefined synapse types.
-\arg `int sConn`: The type of synaptic connectivity, here `DENSE` which means we will provide a full connectivity mtrix later. 
-\arg \c int \c gType: The way how the synaptic conductivity g will be
-defined. With `GLOBALG` we indicate that all conductance are of the same conductance value, which will be the value given in `sPara`. 
-\arg `int delay`: `NO_DELAY` means that there wil be no delays for synaptic signal propagation.
-\arg `int postSyn`: Postsynaptic integration method, we are here using the standard model of an exponential decay of synaptic excitation. 
-\arg `char *preName`: Name of the pre-synaptic neuron
-population, here the `Pop1` population.
-\arg `char *postName`: Name of the post-synaptic neuron
-population, here also `Pop1`.
-\arg `double *sIni`: A C-array of doubles containing initial values for the synaptic variables. 
-\arg `double *sParam`: A C-array of double precision that contains
-parameter values (common to all synapses of the population) 
-\arg `double *psIni`: A C-array of double precision numbers containing initial values for the post-synaptic model variables
-\arg `double *psPara`: A C-array of double precision numbers containing parameters fo the post-snaptic model.
-
+\arg WeightUpdateModel: template parameter specifying the type of weight update model (derived from WeightUpdateModels::Base).
+\arg PostsynapticModel: template parameter specifying the  type of postsynaptic model (derived from PostsynapticModels::Base).
+\arg name string containing unique name of synapse population.
+\arg mtype how the synaptic matrix associated with this synapse population should be represented. Here SynapseMatrixType::DENSE_INDIVIDUALG means that there will be a dense connectivity matrix with seperate values for each entry.
+\arg delayStep integer specifying number of timesteps of propagation delay that spikes travelling through this synapses population should incur (or NO_DELAY for none)
+\arg src string specifying name of presynaptic (source) population
+\arg trg string specifying name of postsynaptic (target) population
+\arg weightParamValues parameters for weight update model wrapped in WeightUpdateModel::ParamValues object.
+\arg weightVarValues initial state variable values for weight update model wrapped in WeightUpdateModel::VarValues object.
+\arg postsynapticParamValues parameters for postsynaptic model wrapped in PostsynapticModel::ParamValues object.
+\arg postsynapticVarValues initial state variable values for postsynaptic model wrapped in PostsynapticModel::VarValues object.
 Adding the addSynapsePopulation command to the model definition informs GeNN that there will be synapses between the named neuron populations, here between population `Pop1` and itself. The detailed connectivity as defined by the variables `g`, we have still to define in the setup of our simulation. 
 As always, the `modelDefinition` function ends on 
 \code
@@ -58,51 +56,54 @@ As always, the `modelDefinition` function ends on
 \endcode 
 At this point our model definition file `tenHHRingModel.cc` should look like this
 \code
-// Model definintion file tenHHModel.cc
-
+// Model definition file tenHHRing.cc
 #include "modelSpec.h"
 
 void modelDefinition(NNmodel &model)
 {
-  // definition of tenHHModel
+  // definition of tenHHRing
   initGeNN();
   model.setDT(0.1);
-  model.setName("tenHHRingModel");
-  double p[7]= {
+  model.setName("tenHHRing");
+
+  NeuronModels::TraubMiles::ParamValues p(
     7.15,          // 0 - gNa: Na conductance in muS
     50.0,          // 1 - ENa: Na equi potential in mV
     1.43,          // 2 - gK: K conductance in muS
-   -95.0,          // 3 - EK: K equi potential in mV 
+    -95.0,          // 3 - EK: K equi potential in mV
     0.02672,       // 4 - gl: leak conductance in muS
     -63.563,       // 5 - El: leak equi potential in mV
-    0.143          // 6 - Cmem: membr. capacity density in nF
-  }; 
+    0.143         // 6 - Cmem: membr. capacity density in nF
+  );
 
-  double ini[4]= {
+  NeuronModels::TraubMiles::VarValues ini(
     -60.0,         // 0 - membrane potential V
     0.0529324,     // 1 - prob. for Na channel activation m
     0.3176767,     // 2 - prob. for not Na channel blocking h
     0.5961207      // 3 - prob. for K channel activation n
-  };
-  model.addNeuronPopulation("Pop1", 10, TRAUBMILES, p, ini);
-  model.activateDirectInput("Pop1", CONSTINP);
-  model.setConstInp("Pop1", 0.1);
-  double s_ini[1] = {
-    0.0       // 0 - g: the synaptic conductance value
-  };
-  double *s_p= NULL;
-  double *ps_ini= NULL;
-  double ps_p[2]= {
+  );
+  model.addNeuronPopulation<NeuronModels::TraubMiles>("Pop1", 10, p, ini);
+
+  WeightUpdateModels::StaticPulse::VarValues s_ini(
+    0.0 // 0 - g: the synaptic conductance value
+  );
+
+  PostsynapticModels::ExpCond::ParamValues ps_p(
     1.0,      // 0 - tau_S: decay time constant for S [ms]
     -80.0     // 1 - Erev: Reversal potential
-  };
-  model.addSynapsePopulation("Pop1self", NSYNAPSE, DENSE, INDIVIDUALG, NO_DELAY, EXPDECAY, "Pop1", "Pop1", s_ini, s_p, ps_ini, ps_p);
+  );
+
+  model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::ExpCond>(
+    "Pop1self", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+    "Pop1", "Pop1",
+    {}, s_ini,
+    ps_p, {});
   model.finalize();
 }
 \endcode
 
 \section SynapseMatrix Defining the Detailed Synaptic Connections
-Open the `tenHHRingSimulation.cu` file and update the file names of includes:
+Open the `tenHHRingSimulation.cc` file and update the file names of includes:
 \code
 // tenHHRingModel simulation code
 #include "tenHHRingModel.cc"
@@ -117,16 +118,16 @@ Now we need to add code to generate the desired ring connectivity.
   for (int i= 0; i < 10; i++) {
     pre= i;
     post= (i+1)%10;
-    gPop1self[pre*10+post]= 0.01;
+    gPop1self[pre*10+post]= -0.2;
   }
-  pushPop1selftoDevice();
+  pushPop1selfStateToDevice();
 \endcode
-After memory allocation and initialization `gPop1self` will contain only zeros. We then assign in the loop a non-zero conductivity of 0.01 \f$\mu\f$S to all synapses from neuron `i` to `i+1` (and `9` to `0` to close the ring).
+After memory allocation and initialization `gPop1self` will contain only zeros. We then assign in the loop a non-zero conductivity of 0.2 \f$\mu\f$S to all synapses from neuron `i` to `i+1` (and `9` to `0` to close the ring).
 
 After adjusting the GNUmakefile to read
 \code
 EXECUTABLE	:=tenHHRingSimulation
-SOURCES		:=tenHHRingSimulation.cu
+SOURCES		:=tenHHRingSimulation.cc
 
 include	$(GENN_PATH)/userproject/include/makefile_common_gnu.mk
 \endcode
@@ -138,56 +139,88 @@ and make it
 \code
 >> make clean all
 \endcode
-After this there should be an exectable `tenHHRingSimulation`, which can be executed,
+After this there should be an executable `tenHHRingSimulation`, which can be executed,
 \code
 >> ./tenHHRingSimulation
 \endcode
-which should again result in 
-\code
--64.9054 0.0147837 0.981337 0.030886
--64.9054 0.0147837 0.981337 0.030886
--64.9054 0.0147837 0.981337 0.030886
--64.9054 0.0147837 0.981337 0.030886
--64.9054 0.0147837 0.981337 0.030886
--64.9054 0.0147837 0.981337 0.030886
--64.9054 0.0147837 0.981337 0.030886
--64.9054 0.0147837 0.981337 0.030886
--64.9054 0.0147837 0.981337 0.030886
--64.9054 0.0147837 0.981337 0.030886
-\endcode
-If we plot the content of columns one and two of `tenHHexample.V.dat` it looks very similar as in \ref Tutorial1
+However if we plot the content of columns one against the subsequent 10 columns of `tenHHexample.V.dat` it looks very similar as in \ref Tutorial1
 \image html tenHHRingexample1.png
 \image latex tenHHRingexample1.png width=10cm
 
-This is because the inhibitory synapses we created were all triggered at the same time so that they act during a post-synaptic spike which makes their effect all but invisible. 
+This is because none of the neurons are spiking so there are no spikes to propagate around the ring.
 
-\section initialConditions Setting Heterogeneous Initial Conditions
-If we define different initial conditions for each of the ten neurons, i.e. add after `initialize()`,
+\section initialConditions Providing initial stimuli
+We can use a NeuronModels::SpikeSource to provide an initial spike in the first timestep to begin spikes propagating around the ring. Firstly we need to add it to the network by adding the following to the end of the `modelDefinition(...)` function:
 \code
-  // set initial variables
+model.addNeuronPopulation<NeuronModels::SpikeSource>("Stim", 1, {}, {});
+model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::ExpCond>(
+        "StimPop1", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Stim", "Pop1",
+        {}, s_ini,
+        ps_p, {});
+\endcode
+we can then initialise this connection's connectivity matrix in `tenHHRingSimulation.cc` file
+\code
+// define stimuli connectivity
+gStimPop1[0]= -0.2;
+pushStimPop1StateToDevice();
+\endcode
+and finally inject a spike in the first timestep
+\code
+if(i == 0) {
+  glbSpkStim[0] = 0;
+  glbSpkCntStim[0] = 1;
+  pushStimSpikesToDevice();
+}
+\endcode
+At this point our model definition file `tenHHRingSimulation.cc` should look like this
+\code
+// tenHHRing simulation code
+#include "tenHHRing_CODE/definitions.h"
+
+#include <fstream>
+
+int main()
+{
+  allocateMem();
+  initialize();
+
+  // define the connectivity
+  int pre, post;
   for (int i= 0; i < 10; i++) {
-    VPop1[i]= -60.0+i;
+      pre= i;
+      post= (i+1)%10;
+      gPop1self[pre*10+post]= -0.2;
   }
-  pushPop1toDevice();   
+  pushPop1selfStateToDevice();
+
+  // define stimuli connectivity
+  gStimPop1[0]= -0.2;
+  pushStimPop1StateToDevice();
+
+  ofstream os("tenHHRing_output.V.dat");
+  for (int i= 0; i < 10000; i++) {
+      if(i == 0) {
+          glbSpkStim[0] = 0;
+          glbSpkCntStim[0] = 1;
+          pushStimSpikesToDevice();
+      }
+      stepTimeGPU();
+      
+      pullPop1StateFromDevice();
+      os << t << " ";
+      for (int j= 0; j < 10; j++) {
+          os << VPop1[j] << " ";
+       
+       s << endl;
+   
+  os.close();
+  return 0;
+}
 \endcode
-then we observe different final values for each neuron,
-\code
--57.3412 0.06223 0.981374 0.104417
--53.3189 0.442962 0.0664687 0.764513
--73.1413 0.00253709 0.927251 0.0277236
--67.1179 0.00927304 0.986692 0.0206106
--63.5878 0.01938 0.991071 0.0387962
--62.2114 0.0255295 0.990933 0.0504799
--61.404 0.0298902 0.990949 0.0586459
--60.6691 0.034405 0.990225 0.0668015
--59.8977 0.0397467 0.988701 0.0758159
--58.9727 0.0470178 0.98615 0.0866963
-\endcode
-and zooming in on the first 200 ms, the voltage of the first neuron now looks like this
+Finally if we build, make and run this model; and plot the first 200 ms of the ten neurons' membrane voltages - they now looks like this:
 \image html tenHHRingexample2.png
 \image latex tenHHRingexample2.png width=10cm
-
-The complete codes for this tutorial are in `userproject\tenHHRing_project`.
 
 \link Tutorial1 Previous\endlink | \link Tutorial2 Top\endlink | \link UserGuide Next\endlink
 

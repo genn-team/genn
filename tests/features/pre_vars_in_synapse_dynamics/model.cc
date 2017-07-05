@@ -3,14 +3,6 @@
 // NEURONS
 //==============
 
-double neuron_p[1]={
-    1.0   // 0 - ISI for spiking
-};
-
-double neuron_p2[1]={
-    2.0   // 0 - ISI for spiking
-};
-
 double neuron_ini[2] = { // one neuron variable
     0.0, // 0 - the time
     0.0  // 1 - individual shift
@@ -33,8 +25,6 @@ void modelDefinition(NNmodel &model)
   n.varNames = {"x", "shift"};
   n.varTypes = {"scalar", "scalar"};
 
-  n.pNames = {"ISI"};
-
   n.simCode= "$(x)= $(t)+$(shift);";
 
   const int DUMMYNEURON= nModels.size();
@@ -47,8 +37,8 @@ void modelDefinition(NNmodel &model)
   const int DUMMYSYNAPSE= weightUpdateModels.size();
   weightUpdateModels.push_back(s);
 
-  model.addNeuronPopulation("pre", 10, DUMMYNEURON, neuron_p, neuron_ini);
-  model.addNeuronPopulation("post", 10, DUMMYNEURON, neuron_p2, neuron_ini);
+  model.addNeuronPopulation("pre", 10, DUMMYNEURON, NULL, neuron_ini);
+  model.addNeuronPopulation("post", 10, DUMMYNEURON, NULL, neuron_ini);
   string synName= "syn";
   for (int i= 0; i < 10; i++)
   {

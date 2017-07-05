@@ -15,51 +15,37 @@
 #include "global.h"
 #include "sizes.h"
 
-double myPOI_p[4]= {
+NeuronModels::Poisson::ParamValues myPOI_p(
 //POISSON neuron parameters
   1,        // 0 - firing rate
   2.5,        // 1 - refratory period
   20.0,       // 2 - Vspike
   -60.0       // 3 - Vrest
-};
+);
 
-double myPOI_ini[4]= {
+NeuronModels::Poisson::VarValues myPOI_ini(
  -60.0,        // 0 - V
   0,           // 1 - seed
   -10.0       // 2 - SpikeTime
-};
+);
 
-double exIzh_p[4]={
+NeuronModels::Izhikevich::ParamValues exIzh_p(
 //Izhikevich model parameters - tonic spiking
-	0.02,	// 0 - a
-	0.2,	// 1 - b
-	-65,	// 2 - c
-	6	// 3 - d
-};
+    0.02,       // 0 - a
+    0.2,        // 1 - b
+    -65,        // 2 - c
+    6           // 3 - d
+);
 
-double exIzh_ini[2]={
+NeuronModels::Izhikevich::VarValues exIzh_ini(
 //Izhikevich model initial conditions - tonic spiking
-	-65,	//0 - V
-	-20	//1 - U
-};
+    -65,        //0 - V
+    -20         //1 - U
+);
 
-double mySyn_p[3]= {
-  0.0,           // 0 - Erev: Reversal potential
-  -20.0,         // 1 - Epre: Presynaptic threshold potential
-  1.0            // 2 - tau_S: decay time constant for S [ms]
-};
-
-double mySyn_ini[1]={
+WeightUpdateModels::StaticPulse::VarValues mySyn_ini(
   0.0 //initial values of g
-};
-
-double postExp[2]={
-  1.0,            // 0 - tau_S: decay time constant for S [ms]
-  0.0		  // 1 - Erev: Reversal potential
-};
-double *postSynV = NULL;
-
-//float gPNIzh1= 0.001;
+);
 
 
 void modelDefinition(NNmodel &model) 
@@ -74,10 +60,13 @@ void modelDefinition(NNmodel &model)
 
   model.setName("PoissonIzh");
   model.setDT(1.0);
-  model.addNeuronPopulation("PN", _NPoisson, POISSONNEURON, myPOI_p, myPOI_ini);
-  model.addNeuronPopulation("Izh1", _NIzh, IZHIKEVICH, exIzh_p, exIzh_ini);
+  model.addNeuronPopulation<NeuronModels::Poisson>("PN", _NPoisson, myPOI_p, myPOI_ini);
+  model.addNeuronPopulation<NeuronModels::Izhikevich>("Izh1", _NIzh, exIzh_p, exIzh_ini);
 
-  model.addSynapsePopulation("PNIzh1", NSYNAPSE, ALLTOALL, INDIVIDUALG, NO_DELAY, IZHIKEVICH_PS, "PN", "Izh1", mySyn_ini, mySyn_p, postSynV, postExp);
+  model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>("PNIzh1", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+                                                                                             "PN", "Izh1",
+                                                                                             {}, mySyn_ini,
+                                                                                             {}, {});
   //model.setSynapseG("PNIzh1", gPNIzh1);
   model.setSeed(1234);
   model.setPrecision(_FTYPE);

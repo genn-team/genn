@@ -2,9 +2,8 @@
 #ifndef POSTSYNAPSEMODELS_CC
 #define POSTSYNAPSEMODELS_CC
 
+#include "codeGenUtils.h"
 #include "postSynapseModels.h"
-#include "stringUtils.h"
-
 
 //--------------------------------------------------------------------------
 /*! \brief Constructor for postSynModel objects

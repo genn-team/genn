@@ -2,8 +2,8 @@
 #ifndef SYNAPSEMODELS_CC
 #define SYNAPSEMODELS_CC
 
+#include "codeGenUtils.h"
 #include "synapseModels.h"
-#include "stringUtils.h"
 
 
 //--------------------------------------------------------------------------
