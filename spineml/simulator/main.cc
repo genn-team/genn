@@ -72,7 +72,7 @@ typedef std::map<std::string, std::map<std::string, std::unique_ptr<ModelPropert
 
 typedef std::map<std::string, std::pair<std::set<std::string>, std::set<std::string>>> ComponentEventPorts;
 
-
+//----------------------------------------------------------------------------
 void *getLibrarySymbol(LIBRARY_HANDLE modelLibrary, const char *name) {
 #ifdef _WIN32
     return GetProcAddress(modelLibrary, name);
@@ -80,7 +80,7 @@ void *getLibrarySymbol(LIBRARY_HANDLE modelLibrary, const char *name) {
     return dlsym(modelLibrary, name);
 #endif
 }
-
+//----------------------------------------------------------------------------
 template <typename T>
 std::pair<T*, T*> getStateVar(LIBRARY_HANDLE modelLibrary, const std::string &hostStateVarName)
 {
@@ -328,17 +328,26 @@ unsigned int createConnector(const pugi::xml_node &node, LIBRARY_HANDLE modelLib
     // Find sparse projection
     SparseProjection *sparseProjection = (SparseProjection*)getLibrarySymbol(modelLibrary, ("C" + synPopName).c_str());
 
-    /*auto oneToOne = node.child("OneToOneConnection");
+    auto oneToOne = node.child("OneToOneConnection");
     if(oneToOne) {
-        return std::make_tuple(globalG ? SynapseMatrixType::SPARSE_GLOBALG : SynapseMatrixType::SPARSE_INDIVIDUALG,
-                               readDelaySteps(oneToOne, dt));
+        if(sparseProjection != nullptr) {
+            return Connectors::oneToOneSparse(oneToOne, numPre, numPost,
+                                              *sparseProjection, allocateFn);
+        }
+        else {
+            throw std::runtime_error("OneToOneConnection does not have corresponding SparseProjection structure");
+        }
     }
 
     auto allToAll = node.child("AllToAllConnection");
     if(allToAll) {
-        return std::make_tuple(globalG ? SynapseMatrixType::DENSE_GLOBALG : SynapseMatrixType::DENSE_INDIVIDUALG,
-                               readDelaySteps(allToAll, dt));
-    }*/
+        if(sparseProjection == nullptr) {
+            return (numPre * numPost);
+        }
+        else {
+            throw std::runtime_error("AllToAllConnection should not have SparseProjection structure");
+        }
+    }
 
     auto fixedProbability = node.child("FixedProbabilityConnection");
     if(fixedProbability) {
@@ -346,14 +355,21 @@ unsigned int createConnector(const pugi::xml_node &node, LIBRARY_HANDLE modelLib
             return Connectors::fixedProbabilitySparse(fixedProbability, numPre, numPost,
                                                       *sparseProjection, allocateFn);
         }
+        else {
+            return (numPre * numPost);
+        }
     }
 
-    /*auto connectionList = node.child("ConnectionList");
+    auto connectionList = node.child("ConnectionList");
     if(connectionList) {
-        // **TODO** there is almost certainly a number of connections above which dense is better
-        return std::make_tuple(globalG ? SynapseMatrixType::SPARSE_GLOBALG : SynapseMatrixType::SPARSE_INDIVIDUALG,
-                               readDelaySteps(connectionList, dt));
-    }*/
+        if(sparseProjection != nullptr) {
+            return Connectors::listSparse(connectionList, numPre, numPost,
+                                          *sparseProjection, allocateFn, basePath);
+        }
+        else {
+            throw std::runtime_error("ConnectionList does not have corresponding SparseProjection structure");
+        }
+    }
 
     throw std::runtime_error("No supported connection type found for projection");
 }

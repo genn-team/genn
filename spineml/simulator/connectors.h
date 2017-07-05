@@ -8,6 +8,11 @@ namespace pugi
     class xml_node;
 }
 
+namespace filesystem
+{
+    class path;
+}
+
 //------------------------------------------------------------------------
 // SpineMLSimulator::Connectors
 //------------------------------------------------------------------------
@@ -19,5 +24,12 @@ namespace Connectors
 
     unsigned int fixedProbabilitySparse(const pugi::xml_node &node, unsigned int numPre, unsigned int numPost,
                                         SparseProjection &sparseProjection, AllocateFn allocateFn);
+
+    unsigned int oneToOneSparse(const pugi::xml_node &node, unsigned int numPre, unsigned int numPost,
+                                SparseProjection &sparseProjection, AllocateFn allocateFn);
+
+    unsigned int listSparse(const pugi::xml_node &node, unsigned int numPre, unsigned int numPost,
+                            SparseProjection &sparseProjection, AllocateFn allocateFn, const filesystem::path &basePath);
+
 }   // namespace Connectors
 }   // namespace SpineMLSimulator
