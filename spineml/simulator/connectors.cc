@@ -200,6 +200,13 @@ unsigned int createListSparse(const pugi::xml_node &node, unsigned int numPre, u
         }
     }
 
+    // Loop through rows and sort indices
+    for(unsigned int i = 0; i < numPre; i++) {
+        const unsigned int rowStartIndex = sparseProjection.indInG[i];
+        const unsigned int rowEndIndex = sparseProjection.indInG[i + 1];
+        std::sort(&sparseProjection.ind[rowStartIndex], &sparseProjection.ind[rowEndIndex]);
+    }
+
     // Check connection building has produced a data structure with the right number of synapses
     assert(sparseProjection.indInG[numPre] == numConnections);
 
