@@ -63,7 +63,7 @@ ifdef DEBUG
     CXXFLAGS             +=-g -O0 -DDEBUG
 endif
 
-ARFLAGS                  +=-rcs
+ARFLAGS                  :=-rcs
 
 # Global include and link flags
 ifndef CPU_ONLY
