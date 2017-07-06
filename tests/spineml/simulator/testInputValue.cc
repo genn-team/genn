@@ -1,6 +1,9 @@
 // Standard C++ includes
 #include <bitset>
 
+// Standard C includes
+#include <cmath>
+
 // Filesystem includes
 #include "filesystem/path.h"
 
@@ -19,7 +22,7 @@
 using namespace SpineMLSimulator;
 
 //------------------------------------------------------------------------
-// Constant tests
+// ConstantInput tests
 //------------------------------------------------------------------------
 TEST(ConstantTest, All) {
     // XML fragment specifying input
@@ -39,7 +42,7 @@ TEST(ConstantTest, All) {
                        [&valuesUpdate](unsigned int i, double v)
                        {
                            EXPECT_FALSE(valuesUpdate.test(i));
-                           EXPECT_EQ(v, 0.5);
+                           ASSERT_DOUBLE_EQ(v, 0.5);
                            valuesUpdate.set(i);
                        });
 
@@ -74,7 +77,7 @@ TEST(ConstantTest, Indices) {
                        [&valuesUpdate](unsigned int i, double v)
                        {
                            EXPECT_FALSE(valuesUpdate.test(i));
-                           EXPECT_EQ(v, 0.5);
+                           ASSERT_DOUBLE_EQ(v, 0.5);
                            valuesUpdate.set(i);
                        });
 
@@ -93,7 +96,7 @@ TEST(ConstantTest, Indices) {
 }
 
 //------------------------------------------------------------------------
-// ConstantArray tests
+// ConstantArrayInput tests
 //------------------------------------------------------------------------
 TEST(ConstantArrayTest, AllArraySizeDeath) {
     // XML fragment specifying input
@@ -136,16 +139,16 @@ TEST(ConstantArrayTest, All) {
                        {
                            EXPECT_FALSE(valuesUpdate.test(i));
                            if(i == 0) {
-                               EXPECT_EQ(v, 0.5);
+                               ASSERT_DOUBLE_EQ(v, 0.5);
                            }
                            else if(i == 1) {
-                               EXPECT_EQ(v, 0.2);
+                               ASSERT_DOUBLE_EQ(v, 0.2);
                            }
                            else if(i == 2) {
-                               EXPECT_EQ(v, 0.3);
+                               ASSERT_DOUBLE_EQ(v, 0.3);
                            }
                            else if(i == 3) {
-                               EXPECT_EQ(v, 0.35);
+                               ASSERT_DOUBLE_EQ(v, 0.35);
                            }
                            valuesUpdate.set(i);
                        });
@@ -204,16 +207,16 @@ TEST(ConstantArrayTest, Indices) {
                        {
                            EXPECT_FALSE(valuesUpdate.test(i));
                            if(i == 0) {
-                               EXPECT_EQ(v, 0.5);
+                               ASSERT_DOUBLE_EQ(v, 0.5);
                            }
                            else if(i == 2) {
-                               EXPECT_EQ(v, 0.2);
+                               ASSERT_DOUBLE_EQ(v, 0.2);
                            }
                            else if(i == 3) {
-                               EXPECT_EQ(v, 0.3);
+                               ASSERT_DOUBLE_EQ(v, 0.3);
                            }
                            else if(i == 7) {
-                               EXPECT_EQ(v, 0.35);
+                               ASSERT_DOUBLE_EQ(v, 0.35);
                            }
                            valuesUpdate.set(i);
                        });
@@ -228,5 +231,134 @@ TEST(ConstantArrayTest, Indices) {
                            {
                                FAIL();
                            });
+    }
+}
+
+//------------------------------------------------------------------------
+// TimeVaryingInput tests
+//------------------------------------------------------------------------
+TEST(TimeVaryingInput, All) {
+    // XML fragment specifying input
+    const char *inputXML =
+        "<TimeVaryingInput>\n"
+        "   <TimePointValue time=\"0\" value=\"0.0\"/>\n"
+        "   <TimePointValue time=\"10\" value=\"0.1\"/>\n"
+        "   <TimePointValue time=\"20\" value=\"0.2\"/>\n"
+        "   <TimePointValue time=\"30\" value=\"0.3\"/>\n"
+        "   <TimePointValue time=\"40\" value=\"0.4\"/>\n"
+        "</TimeVaryingInput>\n";
+
+    // Load XML and get root LL:Synapse element
+    pugi::xml_document inputDocument;
+    inputDocument.load_string(inputXML);
+    auto input = inputDocument.child("TimeVaryingInput");
+
+    // Parse XML and create input value
+    auto inputValue = InputValue::create(1.0, 10, input);
+
+    // Check nothing gets updated in subsequent updates
+    for(unsigned int t = 0; t < 50; t++) {
+        if(t % 10 == 0) {
+            std::bitset<10> valuesUpdate;
+            inputValue->update(1.0, t,
+                               [t, &valuesUpdate](unsigned int i, double v)
+                               {
+                                   EXPECT_FALSE(valuesUpdate.test(i));
+                                   ASSERT_DOUBLE_EQ(v, 0.01 * (double)t);
+                                   valuesUpdate.set(i);
+                               });
+
+            // Check all values have been updated
+            EXPECT_TRUE(valuesUpdate.all());
+        }
+        else {
+            inputValue->update(1.0, t,
+                               [](unsigned int, double)
+                               {
+                                   FAIL();
+                               });
+        }
+    }
+}
+//------------------------------------------------------------------------
+TEST(TimeVaryingInput, ShuffleAll) {
+    // XML fragment specifying input
+    const char *inputXML =
+        "<TimeVaryingInput>\n"
+        "   <TimePointValue time=\"20\" value=\"0.2\"/>\n"
+        "   <TimePointValue time=\"0\" value=\"0.0\"/>\n"
+        "   <TimePointValue time=\"10\" value=\"0.1\"/>\n"
+        "   <TimePointValue time=\"40\" value=\"0.4\"/>\n"
+        "   <TimePointValue time=\"30\" value=\"0.3\"/>\n"
+        "</TimeVaryingInput>\n";
+
+    // Load XML and get root LL:Synapse element
+    pugi::xml_document inputDocument;
+    inputDocument.load_string(inputXML);
+    auto input = inputDocument.child("TimeVaryingInput");
+
+    // Parse XML and create input value
+    auto inputValue = InputValue::create(1.0, 10, input);
+
+    // Check nothing gets updated in subsequent updates
+    for(unsigned int t = 0; t < 50; t++) {
+        if(t % 10 == 0) {
+            std::bitset<10> valuesUpdate;
+            inputValue->update(1.0, t,
+                               [t, &valuesUpdate](unsigned int i, double v)
+                               {
+                                   EXPECT_FALSE(valuesUpdate.test(i));
+                                   ASSERT_DOUBLE_EQ(v, 0.01 * (double)t);
+                                   valuesUpdate.set(i);
+                               });
+
+            // Check all values have been updated
+            EXPECT_TRUE(valuesUpdate.all());
+        }
+        else {
+            inputValue->update(1.0, t,
+                               [](unsigned int, double)
+                               {
+                                   FAIL();
+                               });
+        }
+    }
+}
+
+//------------------------------------------------------------------------
+// TimeVaryingArrayInput tests
+//------------------------------------------------------------------------
+TEST(TimeVaryingArrayInput, All) {
+    // XML fragment specifying input
+    const char *inputXML =
+        "<TimeVaryingArrayInput>\n"
+        "   <TimePointArrayValue index=\"0\" array_time=\"0,10,20,30\" array_value=\"0.1,0.2,0.3,0.4\"/>\n"
+        "   <TimePointArrayValue index=\"2\" array_time=\"2,12,22,32\" array_value=\"2.1,2.2,2.3,2.4\"/>\n"
+        "   <TimePointArrayValue index=\"4\" array_time=\"4,14,24,34\" array_value=\"4.1,4.2,4.3,4.4\"/>\n"
+        "   <TimePointArrayValue index=\"6\" array_time=\"6,16,26,36\" array_value=\"6.1,6.2,6.3,6.4\"/>\n"
+        "</TimeVaryingArrayInput>\n";
+
+    // Load XML and get root LL:Synapse element
+    pugi::xml_document inputDocument;
+    inputDocument.load_string(inputXML);
+    auto input = inputDocument.child("TimeVaryingArrayInput");
+
+    // Parse XML and create input value
+    auto inputValue = InputValue::create(1.0, 10, input);
+
+    // Check nothing gets updated in subsequent updates
+    for(unsigned int t = 0; t < 50; t++) {
+        inputValue->update(1.0, t,
+                           [t](unsigned int i, double v)
+                           {
+                               auto p = div(t - i, 10);
+                               if(p.rem == 0) {
+                                   ASSERT_DOUBLE_EQ(v, (double)i + (0.1 * (double)(1 + p.quot)));
+                               }
+                               else {
+                                   FAIL();
+                               }
+                           });
+
     }
 }
