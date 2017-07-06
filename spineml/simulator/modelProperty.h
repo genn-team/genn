@@ -1,6 +1,7 @@
 #pragma once
 
 // Standard C++ includes
+#include <memory>
 #include <random>
 
 // Forward declarations
@@ -130,5 +131,11 @@ private:
     std::mt19937 m_RandomGenerator;
     std::normal_distribution<scalar> m_Distribution;
 };
+
+//----------------------------------------------------------------------------
+// Functions
+//----------------------------------------------------------------------------
+std::unique_ptr<Base> create(const pugi::xml_node &node, scalar *hostStateVar, scalar *deviceStateVar, unsigned int size);
+
 }   // namespace ModelProperty
 }   // namespace SpineMLSimulator

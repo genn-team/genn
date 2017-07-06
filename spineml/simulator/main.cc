@@ -183,31 +183,6 @@ std::tuple<unsigned int*, unsigned int*, unsigned int*, unsigned int*, unsigned 
 #endif
 }
 //----------------------------------------------------------------------------
-std::unique_ptr<ModelProperty::Base> createModelProperty(const pugi::xml_node &node, scalar *hostStateVar, scalar *deviceStateVar, unsigned int size)
-{
-    auto fixedValue = node.child("FixedValue");
-    if(fixedValue) {
-        return std::unique_ptr<ModelProperty::Base>(new ModelProperty::Fixed(fixedValue, hostStateVar, deviceStateVar, size));
-    }
-
-    auto valueList = node.child("ValueList");
-    if(valueList) {
-        return std::unique_ptr<ModelProperty::Base>(new ModelProperty::ValueList(fixedValue, hostStateVar, deviceStateVar, size));
-    }
-
-    auto uniformDistribution = node.child("UniformDistribution");
-    if(uniformDistribution) {
-        return std::unique_ptr<ModelProperty::Base>(new ModelProperty::UniformDistribution(uniformDistribution, hostStateVar, deviceStateVar, size));
-    }
-
-    auto normalDistribution = node.child("NormalDistribution");
-    if(normalDistribution) {
-        return std::unique_ptr<ModelProperty::Base>(new ModelProperty::NormalDistribution(normalDistribution, hostStateVar, deviceStateVar, size));
-    }
-
-    throw std::runtime_error("Unsupported property type");
-}
-//----------------------------------------------------------------------------
 void addEventPorts(const filesystem::path &basePath, const pugi::xml_node &node,
                    std::map<std::string, std::string> &componentURLs, ComponentEventPorts &componentEventPorts)
 {
@@ -300,7 +275,7 @@ void addPropertiesAndSizes(const pugi::xml_node &node, LIBRARY_HANDLE modelLibra
 
             // Create model property object
             properties[spineMLName].insert(
-                std::make_pair(paramName, createModelProperty(param, *hostStateVar, nullptr, popSize)));
+                std::make_pair(paramName, ModelProperty::create(param, *hostStateVar, nullptr, popSize)));
 #else
             if(deviceStateVar == nullptr) {
                 throw std::runtime_error("Cannot find device-side state variable for property:" + paramName);
@@ -310,7 +285,7 @@ void addPropertiesAndSizes(const pugi::xml_node &node, LIBRARY_HANDLE modelLibra
 
             // Create model property object
             properties[spineMLName].insert(
-                std::make_pair(paramName, createModelProperty(param, *hostStateVar, *deviceStateVar, popSize)));
+                std::make_pair(paramName, ModelProperty::create(param, *hostStateVar, *deviceStateVar, popSize)));
 #endif
         }
     }

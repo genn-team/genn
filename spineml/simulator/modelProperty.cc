@@ -137,3 +137,32 @@ void SpineMLSimulator::ModelProperty::NormalDistribution::setValue(scalar mean, 
     // Push to device
     pushToDevice();
 }
+
+
+//----------------------------------------------------------------------------
+// SpineMLSimulator::ModelProperty
+//----------------------------------------------------------------------------
+std::unique_ptr<SpineMLSimulator::ModelProperty::Base> SpineMLSimulator::ModelProperty::create(const pugi::xml_node &node, scalar *hostStateVar, scalar *deviceStateVar, unsigned int size)
+{
+    auto fixedValue = node.child("FixedValue");
+    if(fixedValue) {
+        return std::unique_ptr<Base>(new Fixed(fixedValue, hostStateVar, deviceStateVar, size));
+    }
+
+    auto valueList = node.child("ValueList");
+    if(valueList) {
+        return std::unique_ptr<Base>(new ValueList(fixedValue, hostStateVar, deviceStateVar, size));
+    }
+
+    auto uniformDistribution = node.child("UniformDistribution");
+    if(uniformDistribution) {
+        return std::unique_ptr<Base>(new UniformDistribution(uniformDistribution, hostStateVar, deviceStateVar, size));
+    }
+
+    auto normalDistribution = node.child("NormalDistribution");
+    if(normalDistribution) {
+        return std::unique_ptr<Base>(new NormalDistribution(normalDistribution, hostStateVar, deviceStateVar, size));
+    }
+
+    throw std::runtime_error("Unsupported property type");
+}
