@@ -240,8 +240,11 @@ unsigned int SpineMLSimulator::Connectors::create(const pugi::xml_node &node, un
             return createFixedProbabilitySparse(fixedProbability, numPre, numPost,
                                                 *sparseProjection, allocateFn);
         }
-        else {
+        else if(fixedProbability.attribute("probability").as_double() == 1.0) {
             return (numPre * numPost);
+        }
+        else {
+            throw std::runtime_error("Unless connection probability is 1.0, FixedProbabilityConnection requires SparseProjection structure");
         }
     }
 
