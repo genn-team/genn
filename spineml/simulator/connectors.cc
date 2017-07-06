@@ -49,13 +49,9 @@ void addSynapseToSparseProjection(unsigned int i, unsigned int j, unsigned int n
                        return (index + 1);
                    });
 }
-}   // anonymous namespace
-
 //------------------------------------------------------------------------
-// SpineMLSimulator::Connectors
-//------------------------------------------------------------------------
-unsigned int SpineMLSimulator::Connectors::fixedProbabilitySparse(const pugi::xml_node &node, unsigned int numPre, unsigned int numPost,
-                                                                  SparseProjection &sparseProjection, AllocateFn allocateFn)
+unsigned int createFixedProbabilitySparse(const pugi::xml_node &node, unsigned int numPre, unsigned int numPost,
+                                          SparseProjection &sparseProjection, SpineMLSimulator::Connectors::AllocateFn allocateFn)
 {
     // Create RNG and seed if required
     std::mt19937 gen;
@@ -113,8 +109,8 @@ unsigned int SpineMLSimulator::Connectors::fixedProbabilitySparse(const pugi::xm
     return tempInd.size();
 }
 //------------------------------------------------------------------------
-unsigned int SpineMLSimulator::Connectors::oneToOneSparse(const pugi::xml_node &, unsigned int numPre, unsigned int numPost,
-                                                          SparseProjection &sparseProjection, AllocateFn allocateFn)
+unsigned int createOneToOneSparse(const pugi::xml_node &, unsigned int numPre, unsigned int numPost,
+                                  SparseProjection &sparseProjection, SpineMLSimulator::Connectors::AllocateFn allocateFn)
 {
     if(numPre != numPost) {
         throw std::runtime_error("One-to-one connector can only be used between two populations of the same size");
@@ -137,8 +133,9 @@ unsigned int SpineMLSimulator::Connectors::oneToOneSparse(const pugi::xml_node &
     return numPre;
 }
 //------------------------------------------------------------------------
-unsigned int SpineMLSimulator::Connectors::listSparse(const pugi::xml_node &node, unsigned int numPre, unsigned int,
-                                                      SparseProjection &sparseProjection, AllocateFn allocateFn, const filesystem::path &basePath)
+unsigned int createListSparse(const pugi::xml_node &node, unsigned int numPre, unsigned int,
+                              SparseProjection &sparseProjection, SpineMLSimulator::Connectors::AllocateFn allocateFn,
+                              const filesystem::path &basePath)
 {
     // Get number of connections, either from BinaryFile
     // node attribute or by counting Connection children
@@ -190,7 +187,7 @@ unsigned int SpineMLSimulator::Connectors::listSparse(const pugi::xml_node &node
                                              numPre, sparseProjection);
             }
 
-            // Subtract words in block from total
+            // Subtract words in block from totalConnectors
             remainingWords -= blockWords;
         }
     }
@@ -207,4 +204,57 @@ unsigned int SpineMLSimulator::Connectors::listSparse(const pugi::xml_node &node
     assert(sparseProjection.indInG[numPre] == numConnections);
 
     return numConnections;
+}
+}   // anonymous namespace
+
+//------------------------------------------------------------------------
+// SpineMLSimulator::Connectors
+//------------------------------------------------------------------------
+unsigned int SpineMLSimulator::Connectors::create(const pugi::xml_node &node, unsigned int numPre, unsigned int numPost,
+                                                  SparseProjection *sparseProjection, AllocateFn allocateFn, const filesystem::path &basePath)
+{
+    auto oneToOne = node.child("OneToOneConnection");
+    if(oneToOne) {
+        if(sparseProjection != nullptr) {
+            return createOneToOneSparse(oneToOne, numPre, numPost,
+                                        *sparseProjection, allocateFn);
+        }
+        else {
+            throw std::runtime_error("OneToOneConnection does not have corresponding SparseProjection structure");
+        }
+    }
+
+    auto allToAll = node.child("AllToAllConnection");
+    if(allToAll) {
+        if(sparseProjection == nullptr) {
+            return (numPre * numPost);
+        }
+        else {
+            throw std::runtime_error("AllToAllConnection should not have SparseProjection structure");
+        }
+    }
+
+    auto fixedProbability = node.child("FixedProbabilityConnection");
+    if(fixedProbability) {
+        if(sparseProjection != nullptr) {
+            return createFixedProbabilitySparse(fixedProbability, numPre, numPost,
+                                                *sparseProjection, allocateFn);
+        }
+        else {
+            return (numPre * numPost);
+        }
+    }
+
+    auto connectionList = node.child("ConnectionList");
+    if(connectionList) {
+        if(sparseProjection != nullptr) {
+            return createListSparse(connectionList, numPre, numPost,
+                                    *sparseProjection, allocateFn, basePath);
+        }
+        else {
+            throw std::runtime_error("ConnectionList does not have corresponding SparseProjection structure");
+        }
+    }
+
+    throw std::runtime_error("No supported connection type found for projection");
 }

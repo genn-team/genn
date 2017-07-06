@@ -291,64 +291,6 @@ void addPropertiesAndSizes(const pugi::xml_node &node, LIBRARY_HANDLE modelLibra
     }
 }
 //----------------------------------------------------------------------------
-unsigned int createConnector(const pugi::xml_node &node, LIBRARY_HANDLE modelLibrary, const filesystem::path &basePath,
-                             const std::string &synPopName, unsigned int numPre, unsigned int numPost)
-{
-    // Find allocate function
-    Connectors::AllocateFn allocateFn = (Connectors::AllocateFn)getLibrarySymbol(modelLibrary, ("allocate" + synPopName).c_str());
-    if(allocateFn == nullptr) {
-        throw std::runtime_error("Cannot find allocate function for synapse population:" + synPopName);
-    }
-
-    // Find sparse projection
-    SparseProjection *sparseProjection = (SparseProjection*)getLibrarySymbol(modelLibrary, ("C" + synPopName).c_str());
-
-    auto oneToOne = node.child("OneToOneConnection");
-    if(oneToOne) {
-        if(sparseProjection != nullptr) {
-            return Connectors::oneToOneSparse(oneToOne, numPre, numPost,
-                                              *sparseProjection, allocateFn);
-        }
-        else {
-            throw std::runtime_error("OneToOneConnection does not have corresponding SparseProjection structure");
-        }
-    }
-
-    auto allToAll = node.child("AllToAllConnection");
-    if(allToAll) {
-        if(sparseProjection == nullptr) {
-            return (numPre * numPost);
-        }
-        else {
-            throw std::runtime_error("AllToAllConnection should not have SparseProjection structure");
-        }
-    }
-
-    auto fixedProbability = node.child("FixedProbabilityConnection");
-    if(fixedProbability) {
-        if(sparseProjection != nullptr) {
-            return Connectors::fixedProbabilitySparse(fixedProbability, numPre, numPost,
-                                                      *sparseProjection, allocateFn);
-        }
-        else {
-            return (numPre * numPost);
-        }
-    }
-
-    auto connectionList = node.child("ConnectionList");
-    if(connectionList) {
-        if(sparseProjection != nullptr) {
-            return Connectors::listSparse(connectionList, numPre, numPost,
-                                          *sparseProjection, allocateFn, basePath);
-        }
-        else {
-            throw std::runtime_error("ConnectionList does not have corresponding SparseProjection structure");
-        }
-    }
-
-    throw std::runtime_error("No supported connection type found for projection");
-}
-//----------------------------------------------------------------------------
 std::unique_ptr<InputValue::Base> createInputValue(double dt, unsigned int numNeurons, const pugi::xml_node &node)
 {
     if(strcmp(node.name(), "ConstantInput") == 0) {
@@ -666,9 +608,18 @@ int main(int argc, char *argv[])
                     throw std::runtime_error("'Projection' node has no 'Synapse' node");
                 }
 
-                // Initialize connector (will result in correct calculation for num synapses)
-                const unsigned int numSynapses = createConnector(synapse, modelLibrary, basePath,
-                                                                 geNNSynPopName, srcPopSize, trgPopSize);
+                // Find allocate function
+                Connectors::AllocateFn allocateFn = (Connectors::AllocateFn)getLibrarySymbol(modelLibrary, ("allocate" + geNNSynPopName).c_str());
+                if(allocateFn == nullptr) {
+                    throw std::runtime_error("Cannot find allocate function for synapse population:" + geNNSynPopName);
+                }
+
+                // Find sparse projection
+                SparseProjection *sparseProjection = (SparseProjection*)getLibrarySymbol(modelLibrary, ("C" + geNNSynPopName).c_str());
+
+                // Create connector
+                const unsigned int numSynapses = Connectors::create(synapse, srcPopSize, trgPopSize,
+                                                                    sparseProjection, allocateFn, basePath);
 
                 // Get post synapse
                 auto postSynapse = synapse.child("LL:PostSynapse");
