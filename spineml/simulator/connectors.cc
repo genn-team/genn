@@ -43,7 +43,7 @@ void addSynapseToSparseProjection(unsigned int i, unsigned int j, unsigned int n
     sparseProjection.ind[rowEndIndex] = j;
 
     // Increment all subsequent indices
-    std::transform(&sparseProjection.indInG[i + 1], &sparseProjection.indInG[numPre], &sparseProjection.indInG[i + 1],
+    std::transform(&sparseProjection.indInG[i + 1], &sparseProjection.indInG[numPre + 1], &sparseProjection.indInG[i + 1],
                    [](unsigned int index)
                    {
                        return (index + 1);
