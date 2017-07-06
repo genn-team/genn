@@ -3,6 +3,7 @@
 // Standard C++ includes
 #include <functional>
 #include <map>
+#include <memory>
 #include <vector>
 
 // Forward declarations
@@ -150,5 +151,11 @@ private:
     // Vector of neurons and values to apply at certain timesteps
     std::map<unsigned int, NeuronValueVec> m_TimeArrays;
 };
+
+//----------------------------------------------------------------------------
+// Functions
+//----------------------------------------------------------------------------
+std::unique_ptr<Base> create(double dt, unsigned int numNeurons, const pugi::xml_node &node);
+
 }   // namespace InputValue
 }   // namespace SpineMLSimulator

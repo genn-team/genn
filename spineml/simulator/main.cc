@@ -291,26 +291,6 @@ void addPropertiesAndSizes(const pugi::xml_node &node, LIBRARY_HANDLE modelLibra
     }
 }
 //----------------------------------------------------------------------------
-std::unique_ptr<InputValue::Base> createInputValue(double dt, unsigned int numNeurons, const pugi::xml_node &node)
-{
-    if(strcmp(node.name(), "ConstantInput") == 0) {
-        return std::unique_ptr<InputValue::Base>(new InputValue::Constant(dt, numNeurons, node));
-    }
-    else if(strcmp(node.name(), "ConstantArrayInput") == 0) {
-        return std::unique_ptr<InputValue::Base>(new InputValue::ConstantArray(dt, numNeurons, node));
-    }
-    else if(strcmp(node.name(), "TimeVaryingInput") == 0) {
-        return std::unique_ptr<InputValue::Base>(new InputValue::TimeVarying(dt, numNeurons, node));
-    }
-    else if(strcmp(node.name(), "TimeVaryingArrayInput") == 0) {
-        return std::unique_ptr<InputValue::Base>(new InputValue::TimeVaryingArray(dt, numNeurons, node));
-    }
-    else {
-        throw std::runtime_error("Input value type '" + std::string(node.name()) + "' not supported");
-    }
-
-}
-//----------------------------------------------------------------------------
 std::unique_ptr<Input::Base> createInput(const pugi::xml_node &node, LIBRARY_HANDLE modelLibrary, double dt,
                                          const std::map<std::string, unsigned int> &componentSizes,
                                          const ComponentProperties &componentProperties,
@@ -328,7 +308,7 @@ std::unique_ptr<Input::Base> createInput(const pugi::xml_node &node, LIBRARY_HAN
     }
 
     // Create suitable input value
-    std::unique_ptr<InputValue::Base> inputValue = createInputValue(dt, targetSize->second, node);
+    std::unique_ptr<InputValue::Base> inputValue = InputValue::create(dt, targetSize->second, node);
 
     // If target is an event receive port
     std::string port = node.attribute("port").value();

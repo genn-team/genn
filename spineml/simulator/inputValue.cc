@@ -6,6 +6,7 @@
 
 // Standard C includes
 #include <cmath>
+#include <cstring>
 
 // pugixml includes
 #include "pugixml/pugixml.hpp"
@@ -230,5 +231,28 @@ void SpineMLSimulator::InputValue::TimeVaryingArray::update(double, unsigned int
         for(const auto &value : timeValue->second) {
             applyValueFunc(value.first, value.second);
         }
+    }
+}
+
+//------------------------------------------------------------------------
+// SpineMLSimulator::InputValue
+//------------------------------------------------------------------------
+std::unique_ptr<SpineMLSimulator::InputValue::Base> SpineMLSimulator::InputValue::create(double dt, unsigned int numNeurons,
+                                                                                         const pugi::xml_node &node)
+{
+    if(strcmp(node.name(), "ConstantInput") == 0) {
+        return std::unique_ptr<Base>(new Constant(dt, numNeurons, node));
+    }
+    else if(strcmp(node.name(), "ConstantArrayInput") == 0) {
+        return std::unique_ptr<Base>(new ConstantArray(dt, numNeurons, node));
+    }
+    else if(strcmp(node.name(), "TimeVaryingInput") == 0) {
+        return std::unique_ptr<Base>(new TimeVarying(dt, numNeurons, node));
+    }
+    else if(strcmp(node.name(), "TimeVaryingArrayInput") == 0) {
+        return std::unique_ptr<Base>(new TimeVaryingArray(dt, numNeurons, node));
+    }
+    else {
+        throw std::runtime_error("Input value type '" + std::string(node.name()) + "' not supported");
     }
 }
