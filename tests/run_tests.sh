@@ -15,7 +15,6 @@ while getopts "c" opt; do
 done
 
 # Clean GeNN library
-echo $GENN_PATH
 pushd $GENN_PATH/lib
 make clean
 popd
@@ -66,4 +65,24 @@ make $MAKE_FLAGS 1>>../../msg 2>>../../msg
 
 # Pop unit tests directory
 popd
+
+# Clean GeNN library
+pushd $GENN_PATH/lib
+make clean
+popd
+
+pushd spineml
+pushd simulator
+
+# Clean
+make clean 1>> ../../msg 2>> ../../msg
+
+# Build
+make $MAKE_FLAGS 1>>../../msg 2>>../../msg 
+
+# Run SpineML simulator tests
+./test --gtest_output="xml:test_results_spineml.xml"
+
+popd    # simulator
+popd    # spineml
 
