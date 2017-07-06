@@ -22,7 +22,7 @@ SpineMLSimulator::InputValue::Base::Base(unsigned int numNeurons, const pugi::xm
     std::cout << "Input value:" << std::endl;
 
     // If indices are specified
-    auto targetIndices = node.attribute("indices");
+    auto targetIndices = node.attribute("target_indices");
     if(targetIndices) {
         SpineMLCommon::SpineMLUtils::readCSVIndices(targetIndices.value(),
                                                     std::back_inserter(m_TargetIndices));
