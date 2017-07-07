@@ -33,8 +33,8 @@ class PostsynapticModel : public PostsynapticModels::Base
 {
 public:
     PostsynapticModel(const ModelParams::Postsynaptic &params,
-                             const NeuronModel *trgNeuronModel,
-                             const WeightUpdateModel *weightUpdateModel);
+                      const NeuronModel *trgNeuronModel,
+                      const WeightUpdateModel *weightUpdateModel);
 
     //------------------------------------------------------------------------
     // Typedefines
