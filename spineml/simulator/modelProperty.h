@@ -132,6 +132,27 @@ private:
     std::normal_distribution<scalar> m_Distribution;
 };
 
+//------------------------------------------------------------------------
+// SpineMLSimulator::ModelProperty::ExponentialDistribution
+//------------------------------------------------------------------------
+class ExponentialDistribution : public Base
+{
+public:
+    ExponentialDistribution(const pugi::xml_node &node, scalar *hostStateVar, scalar *deviceStateVar, unsigned int size);
+
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    void setValue(scalar lambda);
+
+private:
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    std::mt19937 m_RandomGenerator;
+    std::exponential_distribution<scalar> m_Distribution;
+};
+
 //----------------------------------------------------------------------------
 // Functions
 //----------------------------------------------------------------------------

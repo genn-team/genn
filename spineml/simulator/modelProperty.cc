@@ -115,7 +115,7 @@ SpineMLSimulator::ModelProperty::NormalDistribution::NormalDistribution(const pu
     : Base(hostStateVar, deviceStateVar, size)
 {
     setValue(node.attribute("mean").as_double(), node.attribute("variance").as_double());
-    std::cout << "\t\t\tMean:" << m_Distribution.min() << ", Variance:" << m_Distribution.stddev() * m_Distribution.stddev() << std::endl;
+    std::cout << "\t\t\tMean:" << m_Distribution.mean() << ", Variance:" << m_Distribution.stddev() * m_Distribution.stddev() << std::endl;
 
     // Seed RNG if required
     auto seed = node.attribute("seed");
@@ -138,6 +138,35 @@ void SpineMLSimulator::ModelProperty::NormalDistribution::setValue(scalar mean, 
     pushToDevice();
 }
 
+//------------------------------------------------------------------------
+// SpineMLSimulator::ModelProperty::ExponentialDistribution
+//------------------------------------------------------------------------
+SpineMLSimulator::ModelProperty::ExponentialDistribution::ExponentialDistribution(const pugi::xml_node &node, scalar *hostStateVar, scalar *deviceStateVar, unsigned int size)
+    : Base(hostStateVar, deviceStateVar, size)
+{
+    setValue(node.attribute("mean").as_double());
+    std::cout << "\t\t\tLambda:" << m_Distribution.lambda() << std::endl;
+
+    // Seed RNG if required
+    auto seed = node.attribute("seed");
+    if(seed) {
+        m_RandomGenerator.seed(seed.as_uint());
+        std::cout << "\t\t\tSeed:" << seed.as_uint() << std::endl;
+    }
+}
+//------------------------------------------------------------------------
+void SpineMLSimulator::ModelProperty::ExponentialDistribution::setValue(scalar lambda)
+{
+    // Create distribution
+    m_Distribution = std::exponential_distribution<scalar>(lambda);
+
+    // Generate uniformly distributed numbers to fill host array
+    std::generate(getHostStateVarBegin(), getHostStateVarEnd(),
+        [this](){ return m_Distribution(m_RandomGenerator); });
+
+    // Push to device
+    pushToDevice();
+}
 
 //----------------------------------------------------------------------------
 // SpineMLSimulator::ModelProperty
@@ -162,6 +191,13 @@ std::unique_ptr<SpineMLSimulator::ModelProperty::Base> SpineMLSimulator::ModelPr
     auto normalDistribution = node.child("NormalDistribution");
     if(normalDistribution) {
         return std::unique_ptr<Base>(new NormalDistribution(normalDistribution, hostStateVar, deviceStateVar, size));
+    }
+
+    // **NOTE** Poisson distribution isn't actually one - it is the exponential
+    // distribution (which models the inter-event-interval of a Poisson PROCESS)
+    auto poissonDistribution = node.child("PoissonDistribution");
+    if(poissonDistribution) {
+        return std::unique_ptr<Base>(new ExponentialDistribution(poissonDistribution, hostStateVar, deviceStateVar, size));
     }
 
     throw std::runtime_error("Unsupported property type");
