@@ -59,6 +59,11 @@ public:
         return (m_SendPortVariables.find(port) != m_SendPortVariables.end());
     }
 
+    const std::string &getReducePortIsyn() const
+    {
+        return m_ReducePortIsyn;
+    }
+
     //------------------------------------------------------------------------
     // NeuronModels::Base virtuals
     //------------------------------------------------------------------------
@@ -78,6 +83,9 @@ private:
     std::set<std::string> m_SendPortVariables;
     std::string m_SendPortSpike;
     std::string m_SendPortSpikeLikeEvent;
+
+    // What is the reduce port implemented as GeNN's Isyn variable
+    std::string m_ReducePortIsyn;
 
     NewModels::Base::StringVec m_ParamNames;
     NewModels::Base::StringPairVec m_Vars;

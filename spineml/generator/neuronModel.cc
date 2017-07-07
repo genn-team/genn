@@ -124,6 +124,25 @@ SpineMLGenerator::NeuronModel::NeuronModel(const ModelParams::Neuron &params)
         }
     }
 
+    // Check that there are no unhandled receive ports
+    for(auto receivePort : componentClass.select_nodes(SpineMLUtils::xPathNodeHasSuffix("ReceivePort").c_str())) {
+        throw std::runtime_error("GeNN does not currently support '" + std::string(receivePort.node().name()) + "' receive ports in neuron models");
+    }
+
+    // Loop through reduce ports
+    std::cout << "\t\tReduce ports:" << std::endl;
+    for(auto reducePort : componentClass.select_nodes(SpineMLUtils::xPathNodeHasSuffix("ReducePort").c_str())) {
+        std::string nodeType = reducePort.node().name();
+        const char *portName = reducePort.node().attribute("name").value();
+        if(nodeType == "AnalogReducePort" && m_ReducePortIsyn.empty() && strcmp(reducePort.node().attribute("reduce_op").value(), "+") == 0) {
+            std::cout << "\t\t\tImplementing analogue reduce port '" << portName << "' as GeNN Isyn variable" << std::endl;
+            m_ReducePortIsyn = portName;
+        }
+        else {
+            throw std::runtime_error("GeNN does not support '" + nodeType + "' reduce ports in neuron models");
+        }
+    }
+
     // Create a code stream for generating sim code
     CodeStream simCodeStream;
 
@@ -152,15 +171,8 @@ SpineMLGenerator::NeuronModel::NeuronModel(const ModelParams::Neuron &params)
                                                       multipleRegimes, {&m_SimCode, &m_ThresholdConditionCode});
 
     // If there is an analogue reduce port using the addition operator, it's probably a synaptic input current
-    auto linearReducePorts = componentClass.select_nodes("AnalogReducePort[@reduce_op='+']");
-    if(linearReducePorts.size() == 1) {
-        const auto *linearReducePortName = linearReducePorts.first().node().attribute("name").value();
-        wrapAndReplaceVariableNames(m_SimCode, linearReducePortName, "Isyn");
-        wrapAndReplaceVariableNames(m_ThresholdConditionCode, linearReducePortName, "Isyn");
-    }
-    // Otherwise, throw an exception
-    else if(linearReducePorts.size() > 1) {
-        // **TODO** 'Alias' nodes in dynamics may be used to combine these together
-        throw std::runtime_error("GeNN doesn't support multiple input currents going into neuron");
+    if(!m_ReducePortIsyn.empty()) {
+        wrapAndReplaceVariableNames(m_SimCode, m_ReducePortIsyn, "Isyn");
+        wrapAndReplaceVariableNames(m_ThresholdConditionCode, m_ReducePortIsyn, "Isyn");
     }
 }

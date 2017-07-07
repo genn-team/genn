@@ -112,6 +112,10 @@ SpineMLGenerator::PostsynapticModel::PostsynapticModel(const ModelParams::Postsy
                                  "it's ComponentClass node is either missing or of the incorrect type");
     }
 
+    // Search for source port in post synaptic update which targets the
+    // analogue reduce port used for Isyn in the target neuron population
+    const auto &trgNeuronReducePortSrc = params.getPortSrc(trgNeuronModel->getReducePortIsyn());
+
     // Loop through send ports
     std::cout << "\t\tSend ports:" << std::endl;
     std::string neuronInputSendPort;
@@ -120,7 +124,7 @@ SpineMLGenerator::PostsynapticModel::PostsynapticModel(const ModelParams::Postsy
         const char *portName = sendPort.node().attribute("name").value();
 
         if(nodeType == "AnalogSendPort") {
-            if(neuronInputSendPort.empty()) {
+            if(neuronInputSendPort.empty() && trgNeuronReducePortSrc.first == ModelParams::Base::PortSource::POSTSYNAPTIC_SYNAPSE && trgNeuronReducePortSrc.second == portName) {
                 std::cout << "\t\t\tImplementing analogue send port '" << portName << "' as a GeNN neuron input current" << std::endl;
                 neuronInputSendPort = portName;
             }

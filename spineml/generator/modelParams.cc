@@ -53,7 +53,9 @@ const std::pair<SpineMLGenerator::ModelParams::Base::PortSource, std::string> &S
 //----------------------------------------------------------------------------
 void SpineMLGenerator::ModelParams::Base::addPortMapping(const std::string &dstPort, PortSource srcComponent, const std::string &srcPort)
 {
-    m_PortMappings.insert(std::make_pair(dstPort, std::make_pair(srcComponent, srcPort)));
+    if(!m_PortMappings.insert(std::make_pair(dstPort, std::make_pair(srcComponent, srcPort))).second) {
+        throw std::runtime_error("Duplicate destination port name:" + dstPort);
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -122,7 +124,7 @@ SpineMLGenerator::ModelParams::Postsynaptic::Postsynaptic(const filesystem::path
     auto outputSrcPort = node.attribute("output_src_port");
     auto outputDstPort = node.attribute("output_dst_port");
     if(outputSrcPort && outputDstPort) {
-        addPortMapping(outputDstPort.value(), PortSource::POSTSYNAPTIC_NEURON, outputSrcPort.value());
+        addPortMapping(outputDstPort.value(), PortSource::POSTSYNAPTIC_SYNAPSE, outputSrcPort.value());
     }
 
     // Loop through low-level inputs
