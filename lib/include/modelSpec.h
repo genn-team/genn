@@ -163,8 +163,8 @@ public:
     //! Find a neuron group by name
     NeuronGroup *findNeuronGroup(const std::string &name);
 
-    NeuronGroup *addNeuronPopulation(const string&, unsigned int, unsigned int, const double *, const double *, int, int); //!< Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population
-    NeuronGroup *addNeuronPopulation(const string&, unsigned int, unsigned int, const vector<double>&, const vector<double>&, int, int); //!< Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population
+    NeuronGroup *addNeuronPopulation(const string&, unsigned int, unsigned int, const double *, const double *, int hostID = 0, int deviceID = 0); //!< Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population
+    NeuronGroup *addNeuronPopulation(const string&, unsigned int, unsigned int, const vector<double>&, const vector<double>&, int hostID = 0, int deviceID = 0); //!< Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population
 
     //! Adds a new neuron group to the model
     /*! \tparam NeuronModel type of neuron model (derived from NeuronModels::Base).

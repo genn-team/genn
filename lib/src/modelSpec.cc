@@ -170,8 +170,8 @@ NeuronGroup *NNmodel::addNeuronPopulation(
   unsigned int type, /**<  Type of the neurons, refers to either a standard type or user-defined type*/
   const double *p, /**< Parameters of this neuron type */
   const double *ini, /**< Initial values for variables of this neuron type */
-  int hostID = 0, /**< host ID for neuron group*/
-  int deviceID = 0 /*device ID for neuron group*/)
+  int hostID, /**< host ID for neuron group*/
+  int deviceID /*device ID for neuron group*/)
 {
   vector<double> vp;
   vector<double> vini;
@@ -196,8 +196,8 @@ NeuronGroup *NNmodel::addNeuronPopulation(
   unsigned int type, /**<  Type of the neurons, refers to either a standard type or user-defined type*/
   const vector<double> &p, /**< Parameters of this neuron type */
   const vector<double> &ini, /**< Initial values for variables of this neuron type */
-  int hostID = 0,
-  int deviceID = 0)
+  int hostID,
+  int deviceID)
 {
     if (!GeNNReady) {
         gennError("You need to call initGeNN first.");
