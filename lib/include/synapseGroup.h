@@ -55,10 +55,8 @@ public:
     //!< Function to enable the use zero-copied memory for a particular postsynaptic model state variable
     //!< May improve IO performance at the expense of kernel performance
     void setPSVarZeroCopyEnabled(const std::string &varName, bool enabled);
-#ifdef MPI_ENABLE
     int getClusterHostID(){ return m_TrgNeuronGroup->getClusterHostID(); }
     int getClusterDeviceID(){ return m_TrgNeuronGroup->getClusterDeviceID(); }
-#endif
 
     void setMaxConnections(unsigned int maxConnections);
     void setSpanType(SpanType spanType);

@@ -88,15 +88,9 @@ void modelDefinition(NNmodel &model)
   
   model.setName("Izh_sparse");
   model.setDT(1.0);
-#ifdef MPI_ENABLE
-  model.addNeuronPopulation<MyIzhikevichVariable>("PExc", _NExc, {}, IzhExc_ini, 0, 0);
-
-  model.addNeuronPopulation<MyIzhikevichVariable>("PInh", _NInh, {}, IzhInh_ini, 0, 0);
-#else
   model.addNeuronPopulation<MyIzhikevichVariable>("PExc", _NExc, {}, IzhExc_ini);
 
   model.addNeuronPopulation<MyIzhikevichVariable>("PInh", _NInh, {}, IzhInh_ini);
-#endif
   
   model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>("Exc_Exc", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY,
                                                                                              "PExc", "PExc",

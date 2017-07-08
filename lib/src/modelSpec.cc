@@ -93,7 +93,6 @@ bool NNmodel::zeroCopyInUse() const
     return false;
 }
 
-#ifdef MPI_ENABLE
 //--------------------------------------------------------------------------
 /*! \brief This function is for setting which host and which device a neuron group will be simulated on
  */
@@ -105,7 +104,6 @@ void NNmodel::setNeuronClusterIndex(const string &neuronGroup, /**< Name of the 
 {
     findNeuronGroup(neuronGroup)->setClusterIndex(hostID, deviceID);
 }
-#endif
 
 
 unsigned int NNmodel::getNeuronGridSize() const
@@ -166,23 +164,14 @@ NeuronGroup *NNmodel::findNeuronGroup(const std::string &name)
  */
 //--------------------------------------------------------------------------
 
-#ifdef MPI_ENABLE
 NeuronGroup *NNmodel::addNeuronPopulation(
   const string &name, /**<  The name of the neuron population*/
   unsigned int nNo, /**<  Number of neurons in the population */
   unsigned int type, /**<  Type of the neurons, refers to either a standard type or user-defined type*/
   const double *p, /**< Parameters of this neuron type */
   const double *ini, /**< Initial values for variables of this neuron type */
-  int hostID, /**< host ID for neuron group*/
-  int deviceID /**/)
-#else
-NeuronGroup *NNmodel::addNeuronPopulation(
-  const string &name, /**<  The name of the neuron population*/
-  unsigned int nNo, /**<  Number of neurons in the population */
-  unsigned int type, /**<  Type of the neurons, refers to either a standard type or user-defined type*/
-  const double *p, /**< Parameters of this neuron type */
-  const double *ini /**< Initial values for variables of this neuron type */)
-#endif
+  int hostID = 0, /**< host ID for neuron group*/
+  int deviceID = 0 /*device ID for neuron group*/)
 {
   vector<double> vp;
   vector<double> vini;
@@ -192,11 +181,7 @@ NeuronGroup *NNmodel::addNeuronPopulation(
   for (size_t i= 0; i < nModels[type].varNames.size(); i++) {
     vini.push_back(ini[i]);
   }
-#ifdef MPI_ENABLE
   return addNeuronPopulation(name, nNo, type, vp, vini, hostID, deviceID);
-#else
-  return addNeuronPopulation(name, nNo, type, vp, vini);
-#endif
 }
   
 
@@ -205,23 +190,14 @@ NeuronGroup *NNmodel::addNeuronPopulation(
  */
 //--------------------------------------------------------------------------
 
-#ifdef MPI_ENABLE
 NeuronGroup *NNmodel::addNeuronPopulation(
   const string &name, /**<  The name of the neuron population*/
   unsigned int nNo, /**<  Number of neurons in the population */
   unsigned int type, /**<  Type of the neurons, refers to either a standard type or user-defined type*/
   const vector<double> &p, /**< Parameters of this neuron type */
   const vector<double> &ini, /**< Initial values for variables of this neuron type */
-  int hostID,
-  int deviceID)
-#else
-NeuronGroup *NNmodel::addNeuronPopulation(
-  const string &name, /**<  The name of the neuron population*/
-  unsigned int nNo, /**<  Number of neurons in the population */
-  unsigned int type, /**<  Type of the neurons, refers to either a standard type or user-defined type*/
-  const vector<double> &p, /**< Parameters of this neuron type */
-  const vector<double> &ini /**< Initial values for variables of this neuron type */)
-#endif
+  int hostID = 0,
+  int deviceID = 0)
 {
     if (!GeNNReady) {
         gennError("You need to call initGeNN first.");
@@ -236,7 +212,6 @@ NeuronGroup *NNmodel::addNeuronPopulation(
         gennError("The number of variable initial values for neuron group " + name + " does not match that of their neuron type, " + to_string(ini.size()) + " != " + to_string(nModels[type].varNames.size()));
     }
 
-#ifdef MPI_ENABLE
     bool isLocal = (hostID == 0) && (deviceID == 0);
     if (isLocal) {
         auto result = m_LocalNeuronGroups.insert(
@@ -257,7 +232,6 @@ NeuronGroup *NNmodel::addNeuronPopulation(
             return NULL;
         }
     }
-#endif
     // Add neuron group
     auto result = m_NeuronGroups.insert(
         pair<string, NeuronGroup>(name, NeuronGroup(name, nNo, new NeuronModels::LegacyWrapper(type), p, ini)));

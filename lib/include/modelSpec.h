@@ -140,13 +140,11 @@ public:
     //! Get std::map containing all named NeuronGroup objects in model
     const map<string, NeuronGroup> &getNeuronGroups() const{ return m_NeuronGroups; }
 
-#ifdef MPI_ENABLE
     //! Get std::map containing local named NeuronGroup objects in model
     const map<string, NeuronGroup> &getLocalNeuronGroups() const{ return m_LocalNeuronGroups; }
 
     //! Get std::map containing remote named NeuronGroup objects in model
     const map<string, NeuronGroup> &getRemoteNeuronGroups() const{ return m_RemoteNeuronGroups; }
-#endif
 
     //! Gets std::map containing names and types of each parameter that should be passed through to the neuron kernel
     const map<string, string> &getNeuronKernelParameters() const{ return neuronKernelParameters; }
@@ -165,13 +163,8 @@ public:
     //! Find a neuron group by name
     NeuronGroup *findNeuronGroup(const std::string &name);
 
-#ifdef MPI_ENABLE
     NeuronGroup *addNeuronPopulation(const string&, unsigned int, unsigned int, const double *, const double *, int, int); //!< Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population
     NeuronGroup *addNeuronPopulation(const string&, unsigned int, unsigned int, const vector<double>&, const vector<double>&, int, int); //!< Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population
-#else
-    NeuronGroup *addNeuronPopulation(const string&, unsigned int, unsigned int, const double *, const double *); //!< Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population
-    NeuronGroup *addNeuronPopulation(const string&, unsigned int, unsigned int, const vector<double>&, const vector<double>&); //!< Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population
-#endif
 
     //! Adds a new neuron group to the model
     /*! \tparam NeuronModel type of neuron model (derived from NeuronModels::Base).
@@ -180,15 +173,9 @@ public:
         \param paramValues parameters for model wrapped in NeuronModel::ParamValues object.
         \param varValues initial state variable values for model wrapped in NeuronModel::VarValues object.
         \return pointer to newly created NeuronGroup */
-#ifdef MPI_ENABLE
     template<typename NeuronModel>
     NeuronGroup *addNeuronPopulation(const string &name, unsigned int size,
-                            const typename NeuronModel::ParamValues &paramValues, const typename NeuronModel::VarValues &varValues,int hostID, int deviceID)
-#else
-    template<typename NeuronModel>
-    NeuronGroup *addNeuronPopulation(const string &name, unsigned int size,
-                            const typename NeuronModel::ParamValues &paramValues, const typename NeuronModel::VarValues &varValues)
-#endif
+                            const typename NeuronModel::ParamValues &paramValues, const typename NeuronModel::VarValues &varValues,int hostID = 0, int deviceID = 0)
     {
         if (!GeNNReady) {
             gennError("You need to call initGeNN first.");
@@ -198,7 +185,6 @@ public:
         }
 
         // Add neuron group
-#ifdef MPI_ENABLE
         bool isLocal = (hostID == 0) && (deviceID == 0);
         if (isLocal) {
             auto result = m_LocalNeuronGroups.insert(
@@ -223,7 +209,6 @@ public:
                 return NULL;
             }
         }
-#endif
         auto result = m_NeuronGroups.insert(
             pair<string, NeuronGroup>(
                 name, NeuronGroup(name, size, NeuronModel::getInstance(),
@@ -250,13 +235,11 @@ public:
     //! Get std::map containing all named SynapseGroup objects in model
     const map<string, SynapseGroup> &getSynapseGroups() const{ return m_SynapseGroups; }
 
-#ifdef MPI_ENABLE
     //! Get std::map containing local named SynapseGroup objects in model
     const map<string, SynapseGroup> &getLocalSynapseGroups() const{ return m_LocalSynapseGroups; }
 
     //! Get std::map containing remote named SynapseGroup objects in model
     const map<string, SynapseGroup> &getRemoteSynapseGroups() const{ return m_RemoteSynapseGroups; }
-#endif
 
     //! Get std::map containing names of synapse groups which require postsynaptic learning and their thread IDs within
     //! the postsynaptic learning kernel (padded to multiples of the GPU thread block size)
@@ -344,7 +327,6 @@ public:
         }
 
         // Add synapse group
-#ifdef MPI_ENABLE
         int hostID = trgNeuronGrp->getClusterHostID();
         int deviceID = trgNeuronGrp->getClusterDeviceID();
         bool isLocal = (hostID == 0) && (deviceID == 0);
@@ -379,7 +361,6 @@ public:
                 //TODO: post process for synapse not implement
             }
         }
-#endif
         auto result = m_SynapseGroups.insert(
             pair<string, SynapseGroup>(
                 name, SynapseGroup(name, mtype, delaySteps,
@@ -432,24 +413,20 @@ private:
     //!< Named neuron groups
     map<string, NeuronGroup> m_NeuronGroups;
 
-#ifdef MPI_ENABLE
     //!< Named local neuron groups
     map<string, NeuronGroup> m_LocalNeuronGroups;
 
     //!< Named remote neuron groups
     map<string, NeuronGroup> m_RemoteNeuronGroups;
-#endif
 
     //!< Named synapse groups
     map<string, SynapseGroup> m_SynapseGroups;
 
-#ifdef MPI_ENABLE
     //!< Named local synapse groups
     map<string, SynapseGroup> m_LocalSynapseGroups;
 
     //!< Named remote synapse groups
     map<string, SynapseGroup> m_RemoteSynapseGroups;
-#endif
 
     //!< Mapping  of synapse group names which have postsynaptic learning to their start and end padded indices
     //!< **THINK** is this the right container?
