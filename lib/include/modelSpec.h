@@ -263,14 +263,17 @@ public:
         \param delayStep integer specifying number of timesteps delay this synaptic connection should incur (or NO_DELAY for none)
         \param src string specifying name of presynaptic (source) population
         \param trg string specifying name of postsynaptic (target) population
-        \param weightParamValues parameters for weight update model wrapped in WeightUpdateModel::ParamValues object.
-        \param weightVarValues initial state variable values for weight update model wrapped in WeightUpdateModel::VarValues object.
+        \param wumParamVals parameters for weight update model wrapped in WeightUpdateModel::ParamValues object.
+        \param wumVarVals initial state variable values for weight update model wrapped in WeightUpdateModel::VarValues object.
+        \param wumPreVarVals initial presynaptic state variable values for weight update model wrapped in WeightUpdateModel::PreVarValues object.
+        \param wumPostVarVals initial postsynaptic state variable values for weight update model wrapped in WeightUpdateModel::PostVarValues object.
         \param postsynapticParamValues parameters for postsynaptic model wrapped in PostsynapticModel::ParamValues object.
         \param postsynapticVarValues initial state variable values for postsynaptic model wrapped in PostsynapticModel::VarValues object.
         \return pointer to newly created SynapseGroup */
     template<typename WeightUpdateModel, typename PostsynapticModel>
     SynapseGroup *addSynapsePopulation(const string &name, SynapseMatrixType mtype, unsigned int delaySteps, const string& src, const string& trg,
-                                       const typename WeightUpdateModel::ParamValues &weightParamValues, const typename WeightUpdateModel::VarValues &weightVarValues,
+                                       const typename WeightUpdateModel::ParamValues &wumParamVals, const typename WeightUpdateModel::VarValues &wumVarVals,
+                                       const typename WeightUpdateModel::PreVarValues &wumPreVarVals, const typename WeightUpdateModel::PostVarValues &wumPostVarVals,
                                        const typename PostsynapticModel::ParamValues &postsynapticParamValues, const typename PostsynapticModel::VarValues &postsynapticVarValues)
     {
         if (!GeNNReady) {
@@ -294,7 +297,7 @@ public:
         auto result = m_SynapseGroups.insert(
             pair<string, SynapseGroup>(
                 name, SynapseGroup(name, mtype, delaySteps,
-                                   WeightUpdateModel::getInstance(), weightParamValues.getValues(), weightVarValues.getValues(),
+                                   WeightUpdateModel::getInstance(), wumParamVals.getValues(), wumVarVals.getValues(), wumPreVarVals.getValues(), wumPostVarVals.getValues(),
                                    PostsynapticModel::getInstance(), postsynapticParamValues.getValues(), postsynapticVarValues.getValues(),
                                    srcNeuronGrp, trgNeuronGrp)));
 
@@ -329,6 +332,29 @@ public:
             // Return
             return newSynapseGroup;
         }
+    }
+
+    //! Adds a new synapse group to the model
+    /*! \tparam WeightUpdateModel type of weight update model (derived from WeightUpdateModels::Base).
+        \tparam PostsynapticModel type of postsynaptic model (derived from PostsynapticModels::Base).
+        \param name string containing unique name of neuron population.
+        \param mtype how the synaptic matrix associated with this synapse population should be represented.
+        \param delayStep integer specifying number of timesteps delay this synaptic connection should incur (or NO_DELAY for none)
+        \param src string specifying name of presynaptic (source) population
+        \param trg string specifying name of postsynaptic (target) population
+        \param wumParamVals parameters for weight update model wrapped in WeightUpdateModel::ParamValues object.
+        \param wumVarVals initial state variable values for weight update model wrapped in WeightUpdateModel::VarValues object.
+        \param postsynapticParamValues parameters for postsynaptic model wrapped in PostsynapticModel::ParamValues object.
+        \param postsynapticVarValues initial state variable values for postsynaptic model wrapped in PostsynapticModel::VarValues object.
+        \return pointer to newly created SynapseGroup */
+    template<typename WeightUpdateModel, typename PostsynapticModel>
+    SynapseGroup *addSynapsePopulation(const string &name, SynapseMatrixType mtype, unsigned int delaySteps, const string& src, const string& trg,
+                                       const typename WeightUpdateModel::ParamValues &wumParamVals, const typename WeightUpdateModel::VarValues &wumVarVals,
+                                       const typename PostsynapticModel::ParamValues &postsynapticParamValues, const typename PostsynapticModel::VarValues &postsynapticVarValues)
+    {
+        return addSynapsePopulation<WeightUpdateModel, PostsynapticModel>(name, mtype, delaySteps, src, trg,
+                                                                          wumParamVals, wumVarVals, NewModels::ValueBase<0>(), NewModels::ValueBase<0>(),
+                                                                          postsynapticParamValues, postsynapticVarValues);
     }
 
     void setSynapseG(const string&, double); //!< This function has been depreciated as of GeNN 2.2.

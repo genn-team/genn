@@ -481,7 +481,7 @@ SynapseGroup *NNmodel::addSynapsePopulation(
     auto result = m_SynapseGroups.insert(
         pair<string, SynapseGroup>(
             name, SynapseGroup(name, mtype, delaySteps,
-                               new WeightUpdateModels::LegacyWrapper(syntype), p, synini,
+                               new WeightUpdateModels::LegacyWrapper(syntype), p, synini, {}, {},
                                new PostsynapticModels::LegacyWrapper(postsyn), ps, PSVini,
                                srcNeuronGrp, trgNeuronGrp)));
 
