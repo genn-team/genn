@@ -25,6 +25,8 @@ public:                                                        \
     }                                                          \
     typedef NewModels::ValueBase<NUM_PARAMS> ParamValues;      \
     typedef NewModels::ValueBase<NUM_VARS> VarValues;          \
+    typedef NewModels::ValueBase<0> PreVarValues;              \
+    typedef NewModels::ValueBase<0> PostVarValues;             \
 
 
 #define IMPLEMENT_MODEL(TYPE) TYPE *TYPE::s_Instance = NULL
