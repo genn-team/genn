@@ -33,8 +33,8 @@ public:                                                                         
 #define SET_SIM_SUPPORT_CODE(SIM_SUPPORT_CODE) virtual std::string getSimSupportCode() const{ return SIM_SUPPORT_CODE; }
 #define SET_LEARN_POST_SUPPORT_CODE(LEARN_POST_SUPPORT_CODE) virtual std::string getLearnPostSupportCode() const{ return LEARN_POST_SUPPORT_CODE; }
 #define SET_SYNAPSE_DYNAMICS_SUPPORT_CODE(SYNAPSE_DYNAMICS_SUPPORT_CODE) virtual std::string getSynapseDynamicsSuppportCode() const{ return SYNAPSE_DYNAMICS_SUPPORT_CODE; }
-#define SET_SIM_PREAMBLE_CODE(SIM_PREAMBLE_CODE) virtual std::string getSimPreambleCode() const{ return SIM_PREAMBLE_CODE; }
-#define SET_LEARN_POST_PREAMBLE_CODE(LEARN_POST_PREAMBLE_CODE) virtual std::string getLearnPostPreambleCode() const{ return LEARN_POST_PREAMBLE_CODE; }
+#define SET_PRE_SPIKE_CODE(PRE_SPIKE_CODE) virtual std::string getPreSpikeCode() const{ return PRE_SPIKE_CODE; }
+#define SET_POST_SPIKE_CODE(POST_SPIKE_CODE) virtual std::string getPostSpikeCode() const{ return POST_SPIKE_CODE; }
 
 #define SET_PRE_VARS(...) virtual StringPairVec getPreVars() const{ return __VA_ARGS__; }
 #define SET_POST_VARS(...) virtual StringPairVec getPostVars() const{ return __VA_ARGS__; }
@@ -95,15 +95,15 @@ public:
 
     //! Gets code to be run once per spiking presynaptic
     //! neuron before sim code is run on synapses
-    /*! This is typically for the code to update postsynaptic variables. Presynaptic
+    /*! This is typically for the code to update presynaptic variables. Postsynaptic
         and synapse variables are not accesible from within this code */
-    virtual std::string getSimPreambleCode() const{ return ""; }
+    virtual std::string getPreSpikeCode() const{ return ""; }
 
     //! Gets code to be run once per spiking postsynaptic
     //! neuron before learn post code is run on synapses
     /*! This is typically for the code to update postsynaptic variables. Presynaptic
         and synapse variables are not accesible from within this code */
-    virtual std::string getLearnPostPreambleCode() const{ return ""; }
+    virtual std::string getPostSpikeCode() const{ return ""; }
 
     //! Gets names and types (as strings) of state variables that are common
     //! across all synapses coming from the same presynaptic neuron
