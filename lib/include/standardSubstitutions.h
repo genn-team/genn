@@ -111,16 +111,6 @@ void weightUpdateSim(
     const string &devPrefix,
     const std::string &ftype);
 
-void weightUpdateSimPreamble(
-    std::string &pCode,
-    const SynapseGroup &sg,
-    const VarNameIterCtx &wuPreVars,
-    const DerivedParamNameIterCtx &wuDerivedParams,
-    const ExtraGlobalParamNameIterCtx &wuExtraGlobalParams,
-    const string &preIdx, //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
-    const string &devPrefix,
-    const std::string &ftype);
-
 void weightUpdateDynamics(
     std::string &SDcode,
     const SynapseGroup *sg,
@@ -145,7 +135,18 @@ void weightUpdatePostLearn(
     const string &devPrefix,
     const std::string &ftype);
 
-void weightUpdatePostLearnPreamble(
+void weightUpdatePreSpike(
+    std::string &pCode,
+    const SynapseGroup *sg,
+    const VarNameIterCtx &wuPreVars,
+    const DerivedParamNameIterCtx &wuDerivedParams,
+    const ExtraGlobalParamNameIterCtx &wuExtraGlobalParams,
+    const string &preIdx, //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
+    const string &devPrefix,
+    const std::string &ftype);
+
+
+void weightUpdatePostSpike(
     std::string &code,
     const SynapseGroup *sg,
     const VarNameIterCtx &wuPostVars,
