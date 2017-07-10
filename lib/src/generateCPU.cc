@@ -339,21 +339,11 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
 
             // Loop through outgoing synaptic populations
             for(const auto *sg : n.second.getOutSyn()) {
-                const auto *wu = sg->getWUModel();
-
                 // If weight update model has any presynaptic update code
-                if(!wu->getPreSpikeCode().empty()) {
-                    // Create iteration context to iterate over the weight update model
-                    // presynaptic variables; derived and extra global parameters
-                    DerivedParamNameIterCtx wuDerivedParams(wu->getDerivedParams());
-                    ExtraGlobalParamNameIterCtx wuExtraGlobalParams(wu->getExtraGlobalParams());
-                    VarNameIterCtx wuPreVars(wu->getPreVars());
-
+                if(!sg->getWUModel()->getPreSpikeCode().empty()) {
                     // Perform standard substitutions
-                    string pCode = wu->getPreSpikeCode();
-                    substitute(pCode, "$(t)", "t");
+                    string pCode = sg->getWUModel()->getPreSpikeCode();
                     StandardSubstitutions::weightUpdatePreSpike(pCode, sg,
-                                                                wuPreVars, wuDerivedParams, wuExtraGlobalParams,
                                                                 "n", "", model.getPrecision());
                     os << "// perform presynaptic update required for " << sg->getName() << std::endl;
                     os << CodeStream::OB(41) << pCode << CodeStream::CB(41);
@@ -362,21 +352,11 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
 
             // Loop through incoming synaptic populations
             for(const auto *sg : n.second.getInSyn()) {
-                const auto *wu = sg->getWUModel();
-
                 // If weight update model has any postsynaptic update code
-                if(!wu->getPostSpikeCode().empty()) {
-                    // Create iteration context to iterate over the weight update model
-                    // postsynaptic variables; derived and extra global parameters
-                    DerivedParamNameIterCtx wuDerivedParams(wu->getDerivedParams());
-                    ExtraGlobalParamNameIterCtx wuExtraGlobalParams(wu->getExtraGlobalParams());
-                    VarNameIterCtx wuPostVars(wu->getPostVars());
-
+                if(!sg->getWUModel()->getPostSpikeCode().empty()) {
                     // Perform standard substitutions
-                    string pCode = wu->getPostSpikeCode();
-                    substitute(pCode, "$(t)", "t");
+                    string pCode = sg->getWUModel()->getPostSpikeCode();
                     StandardSubstitutions::weightUpdatePostSpike(pCode, sg,
-                                                                 wuPostVars, wuDerivedParams, wuExtraGlobalParams,
                                                                  "n", "", model.getPrecision());
                     os << "// perform postsynaptic update required for " << sg->getName() << std::endl;
                     os << CodeStream::OB(42) << pCode << CodeStream::CB(42);

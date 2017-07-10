@@ -136,11 +136,8 @@ void weightUpdatePostLearn(
     const std::string &ftype);
 
 void weightUpdatePreSpike(
-    std::string &pCode,
+    std::string &code,
     const SynapseGroup *sg,
-    const VarNameIterCtx &wuPreVars,
-    const DerivedParamNameIterCtx &wuDerivedParams,
-    const ExtraGlobalParamNameIterCtx &wuExtraGlobalParams,
     const string &preIdx, //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
     const string &devPrefix,
     const std::string &ftype);
@@ -149,9 +146,6 @@ void weightUpdatePreSpike(
 void weightUpdatePostSpike(
     std::string &code,
     const SynapseGroup *sg,
-    const VarNameIterCtx &wuPostVars,
-    const DerivedParamNameIterCtx &wuDerivedParams,
-    const ExtraGlobalParamNameIterCtx &wuExtraGlobalParams,
     const string &postIdx, //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
     const string &devPrefix,
     const std::string &ftype);

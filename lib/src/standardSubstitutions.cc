@@ -248,34 +248,48 @@ void StandardSubstitutions::weightUpdatePostLearn(
 
 
 void StandardSubstitutions::weightUpdatePreSpike(
-    std::string &pCode,
+    std::string &code,
     const SynapseGroup *sg,
-    const VarNameIterCtx &wuPreVars,
-    const DerivedParamNameIterCtx &wuDerivedParams,
-    const ExtraGlobalParamNameIterCtx &wuExtraGlobalParams,
     const string &preIdx, //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
     const string &devPrefix,
     const std::string &ftype)
 {
-    value_substitutions(pCode, sg->getWUModel()->getParamNames(), sg->getWUParams());
-    value_substitutions(pCode, wuDerivedParams.nameBegin, wuDerivedParams.nameEnd, sg->getWUDerivedParams());
-    name_substitutions(pCode, "", wuExtraGlobalParams.nameBegin, wuExtraGlobalParams.nameEnd, sg->getName());
-    name_substitutions(pCode, devPrefix, wuPreVars.nameBegin, wuPreVars.nameEnd, sg->getName() + "[" + preIdx + "]");
-    preNeuronSubstitutionsInSynapticCode(pCode, sg, preIdx, devPrefix);
-    pCode = ensureFtype(pCode, ftype);
-    checkUnreplacedVariables(pCode, "simCodePreSpike");
+    // Create iteration context to iterate over the weight update model
+    // postsynaptic variables; derived and extra global parameters
+    DerivedParamNameIterCtx wuDerivedParams(sg->getWUModel()->getDerivedParams());
+    ExtraGlobalParamNameIterCtx wuExtraGlobalParams(sg->getWUModel()->getExtraGlobalParams());
+    VarNameIterCtx wuPreVars(sg->getWUModel()->getPreVars());
+
+    // Perform standard substitutions
+    substitute(code, "$(t)", "t");
+
+    value_substitutions(code, sg->getWUModel()->getParamNames(), sg->getWUParams());
+    value_substitutions(code, wuDerivedParams.nameBegin, wuDerivedParams.nameEnd, sg->getWUDerivedParams());
+    name_substitutions(code, "", wuExtraGlobalParams.nameBegin, wuExtraGlobalParams.nameEnd, sg->getName());
+    name_substitutions(code, devPrefix, wuPreVars.nameBegin, wuPreVars.nameEnd, sg->getName() + "[" + preIdx + "]");
+
+    preNeuronSubstitutionsInSynapticCode(code, sg, preIdx, devPrefix);
+
+    code = ensureFtype(code, ftype);
+    checkUnreplacedVariables(code, "simCodePreSpike");
 }
 
 void StandardSubstitutions::weightUpdatePostSpike(
     std::string &code,
     const SynapseGroup *sg,
-    const VarNameIterCtx &wuPostVars,
-    const DerivedParamNameIterCtx &wuDerivedParams,
-    const ExtraGlobalParamNameIterCtx &wuExtraGlobalParams,
     const string &postIdx, //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
     const string &devPrefix,
     const std::string &ftype)
 {
+    // Create iteration context to iterate over the weight update model
+    // postsynaptic variables; derived and extra global parameters
+    DerivedParamNameIterCtx wuDerivedParams(sg->getWUModel()->getDerivedParams());
+    ExtraGlobalParamNameIterCtx wuExtraGlobalParams(sg->getWUModel()->getExtraGlobalParams());
+    VarNameIterCtx wuPostVars(sg->getWUModel()->getPostVars());
+
+    // Perform standard substitutions
+    substitute(code, "$(t)", "t");
+
     value_substitutions(code, sg->getWUModel()->getParamNames(), sg->getWUParams());
     value_substitutions(code, wuDerivedParams.nameBegin, wuDerivedParams.nameEnd, sg->getWUDerivedParams());
     name_substitutions(code, "", wuExtraGlobalParams.nameBegin, wuExtraGlobalParams.nameEnd, sg->getName());
@@ -283,6 +297,7 @@ void StandardSubstitutions::weightUpdatePostSpike(
     name_substitutions(code, devPrefix, wuPostVars.nameBegin, wuPostVars.nameEnd, sg->getName() + "[" + postIdx + "]");
 
     postNeuronSubstitutionsInSynapticCode(code, sg, postIdx, devPrefix);
+
     code = ensureFtype(code, ftype);
     checkUnreplacedVariables(code, "simLearnPostSpike");
 }
