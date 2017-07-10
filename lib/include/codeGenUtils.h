@@ -124,6 +124,17 @@ void checkUnreplacedVariables(const string &code, const string &codeName);
   \brief Function for performing the code and value substitutions necessary to insert neuron related variables, parameters, and extraGlobal parameters into synaptic code.
 */
 //-------------------------------------------------------------------------
+void preNeuronSubstitutionsInSynapticCode(
+    string &wCode, //!< the code string to work on
+    const SynapseGroup *sg,
+    const string &postIdx,
+    const string &devPrefix); //!< device prefix, "dd_" for GPU, nothing for CPU
+
+void postNeuronSubstitutionsInSynapticCode(
+    string &wCode, //!< the code string to work on
+    const SynapseGroup *sg,
+    const string &preIdx,
+    const string &devPrefix); //!< device prefix, "dd_" for GPU, nothing for CPU
 
 void neuron_substitutions_in_synaptic_code(
     string &wCode, //!< the code string to work on
