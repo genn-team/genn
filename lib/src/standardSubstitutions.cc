@@ -181,8 +181,8 @@ void StandardSubstitutions::weightUpdateSim(
     name_substitutions(wCode, "", wuExtraGlobalParams.nameBegin, wuExtraGlobalParams.nameEnd, sg.getName());
 
     // Substitute names of pre and postsynaptic weight update variables
-    name_substitutions(wCode, "", wuPreVars.nameBegin, wuPreVars.nameEnd, sg.getName() + "[" + preIdx + "]");
-    name_substitutions(wCode, "", wuPostVars.nameBegin, wuPostVars.nameEnd, sg.getName() + "[" + postIdx + "]");
+    name_substitutions(wCode, devPrefix, wuPreVars.nameBegin, wuPreVars.nameEnd, sg.getName() + "[" + preIdx + "]");
+    name_substitutions(wCode, devPrefix, wuPostVars.nameBegin, wuPostVars.nameEnd, sg.getName() + "[" + postIdx + "]");
 
     substitute(wCode, "$(addtoinSyn)", "addtoinSyn");
     neuron_substitutions_in_synaptic_code(wCode, &sg, preIdx, postIdx, devPrefix);
@@ -210,8 +210,8 @@ void StandardSubstitutions::weightUpdateDynamics(
     value_substitutions(SDcode, sg->getWUModel()->getParamNames(), sg->getWUParams());
 
     // Substitute names of pre and postsynaptic weight update variables
-    name_substitutions(SDcode, "", wuPreVars.nameBegin, wuPreVars.nameEnd, sg->getName() + "[" + preIdx + "]");
-    name_substitutions(SDcode, "", wuPostVars.nameBegin, wuPostVars.nameEnd, sg->getName() + "[" + postIdx + "]");
+    name_substitutions(SDcode, devPrefix, wuPreVars.nameBegin, wuPreVars.nameEnd, sg->getName() + "[" + preIdx + "]");
+    name_substitutions(SDcode, devPrefix, wuPostVars.nameBegin, wuPostVars.nameEnd, sg->getName() + "[" + postIdx + "]");
 
     // substitute values for derived parameters in synapseDynamics code
     value_substitutions(SDcode, wuDerivedParams.nameBegin, wuDerivedParams.nameEnd, sg->getWUDerivedParams());
@@ -237,8 +237,8 @@ void StandardSubstitutions::weightUpdatePostLearn(
     name_substitutions(code, "", wuExtraGlobalParams.nameBegin, wuExtraGlobalParams.nameEnd, sg->getName());
 
     // Substitute names of pre and postsynaptic weight update variables
-    name_substitutions(code, "", wuPreVars.nameBegin, wuPreVars.nameEnd, sg->getName() + "[" + preIdx + "]");
-    name_substitutions(code, "", wuPostVars.nameBegin, wuPostVars.nameEnd, sg->getName() + "[" + postIdx + "]");
+    name_substitutions(code, devPrefix, wuPreVars.nameBegin, wuPreVars.nameEnd, sg->getName() + "[" + preIdx + "]");
+    name_substitutions(code, devPrefix, wuPostVars.nameBegin, wuPostVars.nameEnd, sg->getName() + "[" + postIdx + "]");
 
     // presynaptic neuron variables and parameters
     neuron_substitutions_in_synaptic_code(code, sg, preIdx, postIdx, devPrefix);
@@ -260,7 +260,7 @@ void StandardSubstitutions::weightUpdatePreSpike(
     value_substitutions(pCode, sg->getWUModel()->getParamNames(), sg->getWUParams());
     value_substitutions(pCode, wuDerivedParams.nameBegin, wuDerivedParams.nameEnd, sg->getWUDerivedParams());
     name_substitutions(pCode, "", wuExtraGlobalParams.nameBegin, wuExtraGlobalParams.nameEnd, sg->getName());
-    name_substitutions(pCode, "", wuPreVars.nameBegin, wuPreVars.nameEnd, sg->getName() + "[" + preIdx + "]");
+    name_substitutions(pCode, devPrefix, wuPreVars.nameBegin, wuPreVars.nameEnd, sg->getName() + "[" + preIdx + "]");
     preNeuronSubstitutionsInSynapticCode(pCode, sg, preIdx, devPrefix);
     pCode = ensureFtype(pCode, ftype);
     checkUnreplacedVariables(pCode, "simCodePreSpike");
@@ -280,7 +280,7 @@ void StandardSubstitutions::weightUpdatePostSpike(
     value_substitutions(code, wuDerivedParams.nameBegin, wuDerivedParams.nameEnd, sg->getWUDerivedParams());
     name_substitutions(code, "", wuExtraGlobalParams.nameBegin, wuExtraGlobalParams.nameEnd, sg->getName());
 
-    name_substitutions(code, "", wuPostVars.nameBegin, wuPostVars.nameEnd, sg->getName() + "[" + postIdx + "]");
+    name_substitutions(code, devPrefix, wuPostVars.nameBegin, wuPostVars.nameEnd, sg->getName() + "[" + postIdx + "]");
 
     postNeuronSubstitutionsInSynapticCode(code, sg, postIdx, devPrefix);
     code = ensureFtype(code, ftype);
