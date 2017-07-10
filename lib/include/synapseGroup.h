@@ -19,13 +19,14 @@ class SynapseGroup
 {
 public:
     SynapseGroup(const std::string name, SynapseMatrixType matrixType, unsigned int delaySteps,
-                 const WeightUpdateModels::Base *wu, const std::vector<double> &wuParams, const std::vector<double> &wuInitVals,
+                 const WeightUpdateModels::Base *wu, const std::vector<double> &wuParams, const std::vector<double> &wuInitVals, const std::vector<double> &wuInitPreVals, const std::vector<double> &wuInitPostVals,
                  const PostsynapticModels::Base *ps, const std::vector<double> &psParams, const std::vector<double> &psInitVals,
                  NeuronGroup *srcNeuronGroup, NeuronGroup *trgNeuronGroup) :
         m_PaddedKernelIDRange(0, 0), m_Name(name), m_SpanType(SpanType::POSTSYNAPTIC), m_DelaySteps(delaySteps), m_MaxConnections(trgNeuronGroup->getNumNeurons()), m_MatrixType(matrixType),
         m_SrcNeuronGroup(srcNeuronGroup), m_TrgNeuronGroup(trgNeuronGroup),
         m_TrueSpikeRequired(false), m_SpikeEventRequired(false), m_EventThresholdReTestRequired(false),
-        m_WUModel(wu), m_WUParams(wuParams), m_WUInitVals(wuInitVals), m_PSModel(ps), m_PSParams(psParams), m_PSInitVals(psInitVals),
+        m_WUModel(wu), m_WUParams(wuParams), m_WUInitVals(wuInitVals), m_WUInitPreVals(wuInitPreVals), m_WUInitPostVals(wuInitPostVals),
+        m_PSModel(ps), m_PSParams(psParams), m_PSInitVals(psInitVals),
         m_HostID(0), m_DeviceID(0)
     {
     }
@@ -91,6 +92,8 @@ public:
     const std::vector<double> &getWUParams() const{ return m_WUParams; }
     const std::vector<double> &getWUDerivedParams() const{ return m_WUDerivedParams; }
     const std::vector<double> &getWUInitVals() const{ return m_WUInitVals; }
+    const std::vector<double> &getWUInitPreVals() const{ return m_WUInitPreVals; }
+    const std::vector<double> &getWUInitPostVals() const{ return m_WUInitPostVals; }
 
     const PostsynapticModels::Base *getPSModel() const{ return m_PSModel; }
 
@@ -169,8 +172,14 @@ private:
     //!< Derived parameters for weight update model
     std::vector<double> m_WUDerivedParams;
 
-    //!< Initial values for weight update model
+    //!< Initial values for weight update model variables
     std::vector<double> m_WUInitVals;
+
+    //!< Initial values for weight update model presynaptic variables
+    std::vector<double> m_WUInitPreVals;
+
+    //!< Initial values for weight update model postsynaptic variables
+    std::vector<double> m_WUInitPostVals;
 
     //!< Post synapse update model type
     const PostsynapticModels::Base *m_PSModel;
