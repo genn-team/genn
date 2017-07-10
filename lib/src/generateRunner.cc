@@ -415,6 +415,14 @@ void genDefinitions(const NNmodel &model, //!< Model description
             }
         }
 
+        for(const auto &v : s.second.getWUModel()->getPreVars()) {
+            extern_variable_def(os, v.second + " *", v.first + s.first);
+        }
+
+        for(const auto &v : s.second.getWUModel()->getPostVars()) {
+            extern_variable_def(os, v.second + " *", v.first + s.first);
+        }
+
         for(auto const &p : s.second.getWUModel()->getExtraGlobalParams()) {
             extern_variable_def(os, p.second, p.first + s.first);
         }
@@ -888,8 +896,16 @@ void genRunner(const NNmodel &model, //!< Model description
             }
         }
 
+        for(const auto &v : wu->getPreVars()) {
+            variable_def(os, v.second + " *", v.first + s.first);
+        }
+
+        for(const auto &v : wu->getPostVars()) {
+            variable_def(os, v.second + " *", v.first + s.first);
+        }
+
         for(const auto &v : wu->getExtraGlobalParams()) {
-            os << v.second << " " <<  v.first<< s.first << ";" << std::endl;
+            os << v.second << " " <<  v.first << s.first << ";" << std::endl;
         }
     }
     os << std::endl;
@@ -1064,6 +1080,24 @@ void genRunner(const NNmodel &model, //!< Model description
                                          size);
             }
         }
+
+        // Allocate presynaptic weight update variables
+        // **NOTE** these are sized based on presynaptic population so there
+        // is no need to defer this until number of connections is known etc
+        const size_t preSize = s.second.getSrcNeuronGroup()->getNumNeurons();
+        for(const auto &v : wu->getPreVars()) {
+            mem += allocate_variable(os, v.second, v.first + s.first, s.second.isWUVarZeroCopyEnabled(v.first),
+                                     preSize);
+        }
+
+        // Allocate postsynaptic weight update variables
+        // **NOTE** these are sized based on postsynaptic population so there
+        // is no need to defer this until number of connections is known etc
+        const size_t postSize = s.second.getTrgNeuronGroup()->getNumNeurons();
+        for(const auto &v : wu->getPostVars()) {
+            mem += allocate_variable(os, v.second, v.first + s.first, s.second.isWUVarZeroCopyEnabled(v.first),
+                                     postSize);
+        }
         os << std::endl;
     }
     os << "}" << std::endl << std::endl;
@@ -1213,6 +1247,30 @@ void genRunner(const NNmodel &model, //!< Model description
                 }
                 os << "    }" << cB << std::endl;
             }
+        }
+
+        auto wuPreVars = wu->getPreVars();
+        for(size_t k = 0; k < wuPreVars.size(); k++) {
+            os << "    " << oB << "for (int i = 0; i < " << numSrcNeurons << "; i++) {" << std::endl;
+            if (wuPreVars[k].second == model.getPrecision()) {
+                os << "        " << wuPreVars[k].first << s.first << "[i] = " << model.scalarExpr(s.second.getWUInitPreVals()[k]) << ";" << std::endl;
+            }
+            else {
+                os << "        " << wuPreVars[k].first << s.first << "[i] = " << s.second.getWUInitPreVals()[k] << ";" << std::endl;
+            }
+            os << "    }" << cB << std::endl;
+        }
+
+        auto wuPostVars = wu->getPostVars();
+        for(size_t k = 0; k < wuPostVars.size(); k++) {
+            os << "    " << oB << "for (int i = 0; i < " << numTrgNeurons << "; i++) {" << std::endl;
+            if (wuPostVars[k].second == model.getPrecision()) {
+                os << "        " << wuPostVars[k].first << s.first << "[i] = " << model.scalarExpr(s.second.getWUInitPostVals()[k]) << ";" << std::endl;
+            }
+            else {
+                os << "        " << wuPostVars[k].first << s.first << "[i] = " << s.second.getWUInitPostVals()[k] << ";" << std::endl;
+            }
+            os << "    }" << cB << std::endl;
         }
     }
     os << std::endl << std::endl;
@@ -1409,6 +1467,14 @@ void genRunner(const NNmodel &model, //!< Model description
     // FREE SYNAPSE VARIABLES
     for(const auto &s : model.getSynapseGroups()) {
         free_variable(os, "inSyn" + s.first, false);
+
+        for(const auto &v : s.second.getWUModel()->getPreVars()) {
+            free_variable(os, v.first + s.first, s.second.isWUVarZeroCopyEnabled(v.first));
+        }
+
+        for(const auto &v : s.second.getWUModel()->getPreVars()) {
+            free_variable(os, v.first + s.first, s.second.isWUVarZeroCopyEnabled(v.first));
+        }
 
         if (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
             os << "    C" << s.first << ".connN= 0;" << std::endl;
@@ -1767,6 +1833,24 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
             os << ", " << size << " * sizeof(uint32_t), cudaMemcpyHostToDevice));" << std::endl;
         }
 
+        for(const auto &v : wu->getPreVars()) {
+            // only copy non-pointers and non-zero-copied. Pointers don't transport between GPU and CPU
+            if (v.second.find("*") == string::npos && !s.second.isWUVarZeroCopyEnabled(v.first)) {
+                os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << v.first << s.first;
+                os << ", " << v.first << s.first;
+                os << ", size * sizeof(" << v.second << "), cudaMemcpyHostToDevice));" << std::endl;
+            }
+        }
+
+        for(const auto &v : wu->getPostVars()) {
+            // only copy non-pointers and non-zero-copied. Pointers don't transport between GPU and CPU
+            if (v.second.find("*") == string::npos && !s.second.isWUVarZeroCopyEnabled(v.first)) {
+                os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << v.first << s.first;
+                os << ", " << v.first << s.first;
+                os << ", size * sizeof(" << v.second << "), cudaMemcpyHostToDevice));" << std::endl;
+            }
+        }
+
         os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_inSyn" << s.first;
         os << ", inSyn" << s.first;
         os << ", " << numTrgNeurons << " * sizeof(" << model.getPrecision() << "), cudaMemcpyHostToDevice));" << std::endl;
@@ -1954,6 +2038,24 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
             os << "CHECK_CUDA_ERRORS(cudaMemcpy(gp" << s.first;
             os << ", d_gp" << s.first;
             os << ", " << size << " * sizeof(uint32_t), cudaMemcpyDeviceToHost));" << std::endl;
+        }
+
+        for(const auto &v : wu->getPreVars()) {
+            // only copy non-pointers and non-zero-copied. Pointers don't transport between GPU and CPU
+            if (v.second.find("*") == string::npos && !s.second.isWUVarZeroCopyEnabled(v.first)) {
+                os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << v.first << s.first;
+                os << ", d_"  << v.first << s.first;
+                os << ", size * sizeof(" << v.second << "), cudaMemcpyDeviceToHost));" << std::endl;
+            }
+        }
+
+        for(const auto &v : wu->getPostVars()) {
+            // only copy non-pointers and non-zero-copied. Pointers don't transport between GPU and CPU
+            if (v.second.find("*") == string::npos && !s.second.isWUVarZeroCopyEnabled(v.first)) {
+                os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << v.first << s.first;
+                os << ", d_"  << v.first << s.first;
+                os << ", size * sizeof(" << v.second << "), cudaMemcpyDeviceToHost));" << std::endl;
+            }
         }
 
         os << "CHECK_CUDA_ERRORS(cudaMemcpy(inSyn" << s.first;
