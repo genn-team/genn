@@ -436,7 +436,6 @@ void genDefinitions(const NNmodel &model, //!< Model description
   and making g member a synapse variable.*/" << std::endl;
     os << std::endl;
 
-
     //--------------------------
     // HOST AND DEVICE FUNCTIONS
 
@@ -1838,7 +1837,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
             if (v.second.find("*") == string::npos && !s.second.isWUVarZeroCopyEnabled(v.first)) {
                 os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << v.first << s.first;
                 os << ", " << v.first << s.first;
-                os << ", size * sizeof(" << v.second << "), cudaMemcpyHostToDevice));" << std::endl;
+                os << ", " << numSrcNeurons << " * sizeof(" << v.second << "), cudaMemcpyHostToDevice));" << std::endl;
             }
         }
 
@@ -1847,7 +1846,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
             if (v.second.find("*") == string::npos && !s.second.isWUVarZeroCopyEnabled(v.first)) {
                 os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << v.first << s.first;
                 os << ", " << v.first << s.first;
-                os << ", size * sizeof(" << v.second << "), cudaMemcpyHostToDevice));" << std::endl;
+                os << ", " << numTrgNeurons << " * sizeof(" << v.second << "), cudaMemcpyHostToDevice));" << std::endl;
             }
         }
 
@@ -2045,7 +2044,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
             if (v.second.find("*") == string::npos && !s.second.isWUVarZeroCopyEnabled(v.first)) {
                 os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << v.first << s.first;
                 os << ", d_"  << v.first << s.first;
-                os << ", size * sizeof(" << v.second << "), cudaMemcpyDeviceToHost));" << std::endl;
+                os << ", " << numSrcNeurons << " * sizeof(" << v.second << "), cudaMemcpyDeviceToHost));" << std::endl;
             }
         }
 
@@ -2054,7 +2053,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
             if (v.second.find("*") == string::npos && !s.second.isWUVarZeroCopyEnabled(v.first)) {
                 os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << v.first << s.first;
                 os << ", d_"  << v.first << s.first;
-                os << ", size * sizeof(" << v.second << "), cudaMemcpyDeviceToHost));" << std::endl;
+                os << ", " << numTrgNeurons << " * sizeof(" << v.second << "), cudaMemcpyDeviceToHost));" << std::endl;
             }
         }
 
