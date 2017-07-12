@@ -91,16 +91,23 @@ SpineMLGenerator::ModelParams::WeightUpdate::WeightUpdate(const filesystem::path
 
     // Loop through low-level inputs
     for(auto input : node.children("LL:Input")) {
-        // If the source of this input is our target neuron population, add port mapping
-        auto safeInputSrc = SpineMLUtils::getSafeName(input.attribute("src").value());
-        if(safeInputSrc == srcPopName) {
-            addPortMapping(input.attribute("dst_port").value(), PortSource::PRESYNAPTIC_NEURON, input.attribute("src_port").value());
-        }
-        else if(safeInputSrc == trgPopName) {
-            addPortMapping(input.attribute("dst_port").value(), PortSource::POSTSYNAPTIC_NEURON, input.attribute("src_port").value());
+        // If this input is connected with a one-to-one connector
+        auto oneToOneConnector = input.child("OneToOneConnection");
+        if(oneToOneConnector) {
+            // If the source of this input is our target neuron population, add port mapping
+            auto safeInputSrc = SpineMLUtils::getSafeName(input.attribute("src").value());
+            if(safeInputSrc == srcPopName) {
+                addPortMapping(input.attribute("dst_port").value(), PortSource::PRESYNAPTIC_NEURON, input.attribute("src_port").value());
+            }
+            else if(safeInputSrc == trgPopName) {
+                addPortMapping(input.attribute("dst_port").value(), PortSource::POSTSYNAPTIC_NEURON, input.attribute("src_port").value());
+            }
+            else {
+                throw std::runtime_error("GeNN weight update models can only receive input from the pre or postsynaptic neuron population");
+            }
         }
         else {
-            throw std::runtime_error("GeNN weight update models can only receive input from the pre or postsynaptic neuron population");
+            throw std::runtime_error("GeNN weight update models can only receive input through OneToOneConnections");
         }
     }
 }
@@ -129,12 +136,19 @@ SpineMLGenerator::ModelParams::Postsynaptic::Postsynaptic(const filesystem::path
 
     // Loop through low-level inputs
     for(auto input : node.children("LL:Input")) {
-        // If the source of this input is our target neuron population, add port mapping
-        if(SpineMLUtils::getSafeName(input.attribute("src").value()) == trgPopName) {
-            addPortMapping(input.attribute("dst_port").value(), PortSource::POSTSYNAPTIC_NEURON, input.attribute("src_port").value());
+         // If this input is connected with a one-to-one connector
+        auto oneToOneConnector = input.child("OneToOneConnection");
+        if(oneToOneConnector) {
+            // If the source of this input is our target neuron population, add port mapping
+            if(SpineMLUtils::getSafeName(input.attribute("src").value()) == trgPopName) {
+                addPortMapping(input.attribute("dst_port").value(), PortSource::POSTSYNAPTIC_NEURON, input.attribute("src_port").value());
+            }
+            else {
+                throw std::runtime_error("GeNN postsynaptic models can only receive input from the postsynaptic neuron population");
+            }
         }
         else {
-            throw std::runtime_error("GeNN postsynaptic models can only receive input from the postsynaptic neuron population");
+            throw std::runtime_error("GeNN weight postsynaptic models can only receive input through OneToOneConnections");
         }
     }
 }
