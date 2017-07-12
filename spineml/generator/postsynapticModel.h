@@ -46,7 +46,7 @@ public:
     // PostsynapticModels::Base virtuals
     //------------------------------------------------------------------------
     virtual std::string getDecayCode() const{ return m_DecayCode; }
-    virtual std::string getCurrentConverterCode() const{ return m_CurrentConverterCode; }
+    virtual std::string getApplyInputCode() const{ return m_ApplyInputCode; }
     virtual NewModels::Base::StringVec getParamNames() const{ return m_ParamNames; }
     virtual NewModels::Base::StringPairVec getVars() const{ return m_Vars; }
 
@@ -55,7 +55,7 @@ private:
     // Members
     //------------------------------------------------------------------------
     std::string m_DecayCode;
-    std::string m_CurrentConverterCode;
+    std::string m_ApplyInputCode;
 
     NewModels::Base::StringVec m_ParamNames;
     NewModels::Base::StringPairVec m_Vars;
