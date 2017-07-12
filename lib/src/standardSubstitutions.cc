@@ -7,7 +7,7 @@
 //----------------------------------------------------------------------------
 // StandardSubstitutions
 //----------------------------------------------------------------------------
-void StandardSubstitutions::postSynapseCurrentConverter(
+void StandardSubstitutions::postSynapseApplyInput(
     std::string &psCode,          //!< the code string to work on
     const SynapseGroup *sg,
     const NeuronGroup &ng,
@@ -20,8 +20,9 @@ void StandardSubstitutions::postSynapseCurrentConverter(
     auto psmVars = VarNameIterCtx(sg->getPSModel()->getVars());
     auto psmDerivedParams = DerivedParamNameIterCtx(sg->getPSModel()->getDerivedParams());
 
-    // Substitute in time parameter
+    // Substitute in time and standard Isyn parameters
     substitute(psCode, "$(t)", "t");
+    substitute(psCode, "$(Isyn)", "Isyn");
 
     name_substitutions(psCode, "l", nmVars.nameBegin, nmVars.nameEnd, "");
     value_substitutions(psCode, ng.getNeuronModel()->getParamNames(), ng.getParams());

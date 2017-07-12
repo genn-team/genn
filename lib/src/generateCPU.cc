@@ -237,6 +237,8 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
             os << model.getPrecision() << " Isyn = 0;" << std::endl;
         }
 
+        // Generate code to intialize any additional postsynapse input vars
+        StandardGeneratedSections::neuronAdditionalPostsynapseInputVars(os, n.second);
 
         for(const auto *sg : n.second.getInSyn()) {
             const auto *psm = sg->getPSModel();
@@ -249,17 +251,16 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
             }
 
             // Apply substitutions to current converter code
-            string psCode = psm->getCurrentConverterCode();
+            string psCode = psm->getApplyInputCode();
             substitute(psCode, "$(id)", "n");
             substitute(psCode, "$(inSyn)", "inSyn" + sg->getName() + "[n]");
-            StandardSubstitutions::postSynapseCurrentConverter(psCode, sg, n.second,
+            StandardSubstitutions::postSynapseApplyInput(psCode, sg, n.second,
                 nmVars, nmDerivedParams, nmExtraGlobalParams, model.getPrecision());
 
             if (!psm->getSupportCode().empty()) {
                 os << CodeStream::OB(29) << " using namespace " << sg->getName() << "_postsyn;" << std::endl;
             }
-            os << "Isyn += ";
-            os << psCode << ";" << std::endl;
+            os << psCode << std::endl;
             if (!psm->getSupportCode().empty()) {
                 os << CodeStream::CB(29) << " // namespace bracket closed" << std::endl;
             }

@@ -505,6 +505,10 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
         if (n.second.getInSyn().size() > 0 || (nm->getSimCode().find("Isyn") != string::npos)) {
             os << model.getPrecision() << " Isyn = 0;" << std::endl;
         }
+
+        // Generate code to intialize any additional postsynapse input vars
+        StandardGeneratedSections::neuronAdditionalPostsynapseInputVars(os, n.second);
+
         for(const auto *sg : n.second.getInSyn()) {
             const auto *psm = sg->getPSModel();
 
@@ -516,16 +520,16 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
                     os << " = dd_" <<  v.first << sg->getName() << "[" << localID << "];" << std::endl;
                 }
             }
-            string psCode = psm->getCurrentConverterCode();
+            string psCode = psm->getApplyInputCode();
             substitute(psCode, "$(id)", localID);
             substitute(psCode, "$(inSyn)", "linSyn" + sg->getName());
-            StandardSubstitutions::postSynapseCurrentConverter(psCode, sg, n.second,
+            StandardSubstitutions::postSynapseApplyInput(psCode, sg, n.second,
                 nmVars, nmDerivedParams, nmExtraGlobalParams, model.getPrecision());
 
             if (!psm->getSupportCode().empty()) {
                 os << CodeStream::OB(29) << " using namespace " << sg->getName() << "_postsyn;" << std::endl;
             }
-            os << "Isyn += " << psCode << ";" << std::endl;
+            os << psCode << std::endl;
             if (!psm->getSupportCode().empty()) {
                 os << CodeStream::CB(29) << " // namespace bracket closed" << std::endl;
             }

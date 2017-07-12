@@ -53,7 +53,7 @@ public:
 
     //! Gets names and types (as strings) of additional
     //! per-population parameters for the weight update model.
-    virtual std::vector<std::pair<std::string, std::string>> getExtraGlobalParams() const{ return {}; }
+    virtual NewModels::Base::StringPairVec getExtraGlobalParams() const{ return {}; }
 
     //! Is this neuron model the internal Poisson model (which requires a number of special cases)
     //! \private

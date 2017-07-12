@@ -31,7 +31,7 @@ void StandardGeneratedSections::neuronOutputInit(
         os << devPrefix << "glbSpkCnt" << ng.getName() << "[0] = 0;" << std::endl;
     }
 }
-
+//----------------------------------------------------------------------------
 void StandardGeneratedSections::neuronLocalVarInit(
     CodeStream &os,
     const NeuronGroup &ng,
@@ -48,7 +48,7 @@ void StandardGeneratedSections::neuronLocalVarInit(
         os << localID << "];" << std::endl;
     }
 }
-
+//----------------------------------------------------------------------------
 void StandardGeneratedSections::neuronLocalVarWrite(
     CodeStream &os,
     const NeuronGroup &ng,
@@ -66,7 +66,7 @@ void StandardGeneratedSections::neuronLocalVarWrite(
         }
     }
 }
-
+//----------------------------------------------------------------------------
 void StandardGeneratedSections::neuronSpikeEventTest(
     CodeStream &os,
     const NeuronGroup &ng,
@@ -100,5 +100,34 @@ void StandardGeneratedSections::neuronSpikeEventTest(
 
         // Close scope for spike-like event test
         os << CodeStream::CB(31);
+    }
+}
+//----------------------------------------------------------------------------
+void StandardGeneratedSections::neuronAdditionalPostsynapseInputVars(
+    CodeStream &os,
+    const NeuronGroup &ng)
+{
+    // Loop through all incoming synapses
+    std::map<std::string, std::pair<std::string, double>> extraVars;
+    for(const auto *sg : ng.getInSyn()) {
+        // Loop through additional input variables provided by post synaptic model
+        const auto *psm = sg->getPSModel();
+        for(const auto &a : psm->getAdditionalInputVars()) {
+            // If variable isn't already in map, insert it
+            auto existingVar = extraVars.find(a.first);
+            if(existingVar == extraVars.end()) {
+                extraVars.insert(a);
+            }
+            // Otherwise check that existing version has same type and value
+            else if(a.second != existingVar->second)
+            {
+                gennError("Incoming presynaptic models provide different definitions of additional input variable '" + a.first + "'");
+            }
+        }
+    }
+
+    // Add extra variables
+    for(const auto &v : extraVars) {
+        os << v.second.first << " " << v.first << " = " << v.second.second << ";" << std::endl;
     }
 }
