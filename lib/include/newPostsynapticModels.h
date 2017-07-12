@@ -11,6 +11,7 @@
 #define SET_CURRENT_CONVERTER_CODE(CURRENT_CONVERTER_CODE) virtual std::string getApplyInputCode() const{ return "$(Isyn) += " CURRENT_CONVERTER_CODE ";"; }
 #define SET_APPLY_INPUT_CODE(APPLY_INPUT_CODE) virtual std::string getApplyInputCode() const{ return APPLY_INPUT_CODE; }
 #define SET_SUPPORT_CODE(SUPPORT_CODE) virtual std::string getSupportCode() const{ return SUPPORT_CODE; }
+#define SET_ADDITIONAL_INPUT_VARS(...) virtual NameTypeValVec getAdditionalInputVars() const{ return __VA_ARGS__; }
 
 //----------------------------------------------------------------------------
 // PostsynapticModels::Base
@@ -27,6 +28,7 @@ public:
     virtual std::string getDecayCode() const{ return ""; }
     virtual std::string getApplyInputCode() const{ return ""; }
     virtual std::string getSupportCode() const{ return ""; }
+    virtual NewModels::Base::NameTypeValVec getAdditionalInputVars() const{ return {}; }
 };
 
 //----------------------------------------------------------------------------
