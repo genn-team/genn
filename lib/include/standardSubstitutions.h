@@ -39,7 +39,7 @@ typedef NameIterCtx<NewModels::Base::StringPairVec> ExtraGlobalParamNameIterCtx;
 //----------------------------------------------------------------------------
 namespace StandardSubstitutions
 {
-void postSynapseCurrentConverter(
+void postSynapseApplyInput(
     std::string &psCode,          //!< the code string to work on
     const SynapseGroup *sg,
     const NeuronGroup &ng,
