@@ -20,6 +20,7 @@
 #define SET_RESET_CODE(RESET_CODE) virtual std::string getResetCode() const{ return RESET_CODE; }
 #define SET_SUPPORT_CODE(SUPPORT_CODE) virtual std::string getSupportCode() const{ return SUPPORT_CODE; }
 #define SET_EXTRA_GLOBAL_PARAMS(...) virtual StringPairVec getExtraGlobalParams() const{ return __VA_ARGS__; }
+#define SET_ADDITIONAL_INPUT_VARS(...) virtual NameTypeValVec getAdditionalInputVars() const{ return __VA_ARGS__; }
 
 //----------------------------------------------------------------------------
 // NeuronModels::Base
@@ -54,6 +55,10 @@ public:
     //! Gets names and types (as strings) of additional
     //! per-population parameters for the weight update model.
     virtual NewModels::Base::StringPairVec getExtraGlobalParams() const{ return {}; }
+
+    //! Gets names, types (as strings) and initial values of local variables into which
+    //! the 'apply input code' of (potentially) multiple postsynaptic input models can apply input
+    virtual NewModels::Base::NameTypeValVec getAdditionalInputVars() const{ return {}; }
 
     //! Is this neuron model the internal Poisson model (which requires a number of special cases)
     //! \private

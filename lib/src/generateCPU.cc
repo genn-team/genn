@@ -237,8 +237,10 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
             os << model.getPrecision() << " Isyn = 0;" << std::endl;
         }
 
-        // Generate code to intialize any additional postsynapse input vars
-        StandardGeneratedSections::neuronAdditionalPostsynapseInputVars(os, n.second);
+        // Initialise any additional input variables supported by neuron model
+        for(const auto &a : nm->getAdditionalInputVars()) {
+            os << a.second.first << " " << a.first << " = " << a.second.second << ";" << std::endl;
+        }
 
         for(const auto *sg : n.second.getInSyn()) {
             const auto *psm = sg->getPSModel();
