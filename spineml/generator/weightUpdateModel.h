@@ -49,6 +49,12 @@ public:
         return m_SendPortSpikeImpulse;
     }
 
+    const std::string &getSendPortAnalogue() const
+    {
+        return m_SendPortAnalogue;
+    }
+
+
     //------------------------------------------------------------------------
     // PostsynapticModels::Base virtuals
     //------------------------------------------------------------------------
@@ -67,6 +73,7 @@ private:
 
     // How are send ports mapped to GeNN?
     std::string m_SendPortSpikeImpulse;
+    std::string m_SendPortAnalogue;
 
     NewModels::Base::StringVec m_ParamNames;
     NewModels::Base::StringPairVec m_Vars;
