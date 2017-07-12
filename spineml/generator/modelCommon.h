@@ -86,9 +86,12 @@ public:
     //------------------------------------------------------------------------
     void onRegimeEnd(bool multipleRegimes, unsigned int currentRegimeID);
 
-    std::string str() const{ return m_Stream.str(); }
+    void flush();
+
+    std::string str(){ flush(); return m_Stream.str(); }
 
 private:
+
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
@@ -137,5 +140,10 @@ void substituteModelVariables(const NewModels::Base::StringVec &paramNames,
 std::tuple<NewModels::Base::StringVec, NewModels::Base::StringPairVec> processModelVariables(
     const pugi::xml_node &componentClass, const std::set<std::string> &variableParams,
     bool multipleRegimes, const std::vector<std::string*> &codeStrings);
+
+//! Return code to implement send port - will either return a variable directly or will expand an alias
+std::string resolveAlias(const pugi::xml_node &componentClass,
+                         const NewModels::Base::StringPairVec &vars,
+                         const std::string &sendPortName);
 
 }   // namespace SpineMLGenerator

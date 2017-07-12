@@ -82,17 +82,23 @@ void SpineMLGenerator::CodeStream::onRegimeEnd(bool multipleRegimes, unsigned in
             m_CodeStream << "if(_regimeID == " << currentRegimeID << ")" << CodeStream::OB(1);
         }
 
-        // Write contents of current region code stream to main code stream
-        m_CodeStream << m_CurrentRegimeStream.str();
-
-        // Clear current regime code stream
-        std::ostringstream().swap(m_CurrentRegimeStream);
+        // Flush contents of current regime to main codestream
+        flush();
 
         // End of regime
         if(multipleRegimes) {
             m_CodeStream << CodeStream::CB(1);
         }
     }
+}
+//----------------------------------------------------------------------------
+void SpineMLGenerator::CodeStream::flush()
+{
+     // Write contents of current region code stream to main code stream
+    m_CodeStream << m_CurrentRegimeStream.str();
+
+    // Clear current regime code stream
+    std::ostringstream().swap(m_CurrentRegimeStream);
 }
 
 //----------------------------------------------------------------------------
@@ -275,4 +281,37 @@ std::tuple<NewModels::Base::StringVec, NewModels::Base::StringPairVec> SpineMLGe
     substituteModelVariables(std::get<0>(paramNamesVars), std::get<1>(paramNamesVars), codeStrings);
 
     return paramNamesVars;
+}
+//----------------------------------------------------------------------------
+std::string SpineMLGenerator::resolveAlias(const pugi::xml_node &componentClass,
+                                           const NewModels::Base::StringPairVec &vars,
+                                           const std::string &sendPortName)
+{
+    std::cout << "\t\tAnalogue send port:" << sendPortName << std::endl;
+
+    // If this send port corresponds to a state variable
+    auto correspondingVar = std::find_if(vars.begin(), vars.end(),
+                                         [sendPortName](const std::pair<std::string, std::string> &v)
+                                         {
+                                             return (v.first == sendPortName);
+                                        });
+    if(correspondingVar != vars.end()) {
+        return correspondingVar->first;
+    }
+    // Otherwise
+    else {
+        // Search for an alias representing the analogue send port
+        pugi::xpath_variable_set aliasSearchVars;
+        aliasSearchVars.set("aliasName", sendPortName.c_str());
+        auto alias = componentClass.select_node("Dynamics/Alias[@name=$aliasName]", &aliasSearchVars);
+
+        // If alias is found use it for current converter code
+        if(alias) {
+            return alias.node().child_value("MathInline");
+        }
+        // Otherwise throw exception
+        else {
+            throw std::runtime_error("Cannot find alias:" + sendPortName);
+        }
+    }
 }
