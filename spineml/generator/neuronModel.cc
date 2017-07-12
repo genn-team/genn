@@ -134,9 +134,11 @@ SpineMLGenerator::NeuronModel::NeuronModel(const ModelParams::Neuron &params)
     for(auto reducePort : componentClass.select_nodes(SpineMLUtils::xPathNodeHasSuffix("ReducePort").c_str())) {
         std::string nodeType = reducePort.node().name();
         const char *portName = reducePort.node().attribute("name").value();
-        if(nodeType == "AnalogReducePort" && m_ReducePortIsyn.empty() && strcmp(reducePort.node().attribute("reduce_op").value(), "+") == 0) {
-            std::cout << "\t\t\tImplementing analogue reduce port '" << portName << "' as GeNN Isyn variable" << std::endl;
-            m_ReducePortIsyn = portName;
+
+        // **TODO** implement other reduce operations
+        if(nodeType == "AnalogReducePort" && strcmp(reducePort.node().attribute("reduce_op").value(), "+") == 0) {
+            std::cout << "\t\t\tImplementing analogue reduce port '" << portName << "' as GeNN additional input variable" << std::endl;
+            m_AdditionalInputVars.push_back(std::make_pair(portName, std::make_pair("scalar", 0.0)));
         }
         else {
             throw std::runtime_error("GeNN does not support '" + nodeType + "' reduce ports in neuron models");
@@ -169,10 +171,4 @@ SpineMLGenerator::NeuronModel::NeuronModel(const ModelParams::Neuron &params)
     // correctly wrap references to them in newly-generated code strings
     tie(m_ParamNames, m_Vars) = processModelVariables(componentClass, params.getVariableParams(),
                                                       multipleRegimes, {&m_SimCode, &m_ThresholdConditionCode});
-
-    // If there is an analogue reduce port using the addition operator, it's probably a synaptic input current
-    if(!m_ReducePortIsyn.empty()) {
-        wrapAndReplaceVariableNames(m_SimCode, m_ReducePortIsyn, "Isyn");
-        wrapAndReplaceVariableNames(m_ThresholdConditionCode, m_ReducePortIsyn, "Isyn");
-    }
 }

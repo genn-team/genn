@@ -59,11 +59,6 @@ public:
         return (m_SendPortVariables.find(port) != m_SendPortVariables.end());
     }
 
-    const std::string &getReducePortIsyn() const
-    {
-        return m_ReducePortIsyn;
-    }
-
     //------------------------------------------------------------------------
     // NeuronModels::Base virtuals
     //------------------------------------------------------------------------
@@ -71,6 +66,7 @@ public:
     virtual std::string getThresholdConditionCode() const{ return m_ThresholdConditionCode; }
     virtual NewModels::Base::StringVec getParamNames() const{ return m_ParamNames; }
     virtual NewModels::Base::StringPairVec getVars() const{ return m_Vars; }
+    virtual NewModels::Base::NameTypeValVec getAdditionalInputVars() const{ return m_AdditionalInputVars; }
 
 private:
     //------------------------------------------------------------------------
@@ -84,9 +80,8 @@ private:
     std::string m_SendPortSpike;
     std::string m_SendPortSpikeLikeEvent;
 
-    // What is the reduce port implemented as GeNN's Isyn variable
-    std::string m_ReducePortIsyn;
-
+    // GeNN model data
+    NewModels::Base::NameTypeValVec m_AdditionalInputVars;
     NewModels::Base::StringVec m_ParamNames;
     NewModels::Base::StringPairVec m_Vars;
 };
