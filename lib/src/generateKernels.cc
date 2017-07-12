@@ -505,6 +505,10 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
         if (n.second.getInSyn().size() > 0 || (nm->getSimCode().find("Isyn") != string::npos)) {
             os << model.getPrecision() << " Isyn = 0;" << std::endl;
         }
+
+        // Generate code to intialize any additional postsynapse input vars
+        StandardGeneratedSections::neuronAdditionalPostsynapseInputVars(os, n.second);
+
         for(const auto *sg : n.second.getInSyn()) {
             const auto *psm = sg->getPSModel();
 
