@@ -43,8 +43,4 @@ void neuronSpikeEventTest(
     const ExtraGlobalParamNameIterCtx &nmExtraGlobalParams,
     const std::string &localID,
     const std::string &ftype);
-
-void neuronAdditionalPostsynapseInputVars(
-    CodeStream &ox,
-    const NeuronGroup &ng);
-}
+}   // namespace StandardGeneratedSections
