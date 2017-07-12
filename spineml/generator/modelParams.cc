@@ -51,6 +51,18 @@ const std::pair<SpineMLGenerator::ModelParams::Base::PortSource, std::string> &S
     }
 }
 //----------------------------------------------------------------------------
+const std::string &SpineMLGenerator::ModelParams::Base::getPortTrg(PortSource src, const std::string srcPort) const
+{
+    auto srcPair = std::make_pair(src, srcPort);
+    for(const auto &src : m_PortMappings) {
+        if(src.second == srcPair) {
+            return src.first;
+        }
+    }
+
+    throw std::runtime_error("Cannot find stc port:" + srcPort);
+}
+//----------------------------------------------------------------------------
 void SpineMLGenerator::ModelParams::Base::addPortMapping(const std::string &dstPort, PortSource srcComponent, const std::string &srcPort)
 {
     if(!m_PortMappings.insert(std::make_pair(dstPort, std::make_pair(srcComponent, srcPort))).second) {

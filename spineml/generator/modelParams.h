@@ -46,6 +46,7 @@ public:
     const std::string &getURL() const{ return m_URL; }
     const std::set<std::string> &getVariableParams() const{ return m_VariableParams; }
     const std::pair<PortSource, std::string> &getPortSrc(const std::string &dstPort) const;
+    const std::string &getPortTrg(PortSource src, const std::string srcPort) const;
 
     //----------------------------------------------------------------------------
     // Operators
