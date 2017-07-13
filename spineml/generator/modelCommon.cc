@@ -98,7 +98,7 @@ void SpineMLGenerator::CodeStream::flush()
     m_CodeStream << m_CurrentRegimeStream.str();
 
     // Clear current regime code stream
-    std::ostringstream().swap(m_CurrentRegimeStream);
+    m_CurrentRegimeStream.str("");
 }
 
 //----------------------------------------------------------------------------
