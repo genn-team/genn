@@ -166,7 +166,7 @@ SpineMLGenerator::ModelParams::Postsynaptic::Postsynaptic(const filesystem::path
             }
         }
         else {
-            throw std::runtime_error("GeNN weight postsynaptic models can only receive input through OneToOneConnections");
+            throw std::runtime_error("GeNN postsynaptic models can only receive input through OneToOneConnections");
         }
     }
 }
