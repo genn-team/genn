@@ -1,7 +1,7 @@
 #pragma once
 
 // Forward declarations
-class SparseProjection;
+struct SparseProjection;
 
 namespace pugi
 {
@@ -24,6 +24,5 @@ namespace Connectors
 
     unsigned int create(const pugi::xml_node &node, unsigned int numPre, unsigned int numPost,
                         SparseProjection *sparseProjection, AllocateFn allocateFn, const filesystem::path &basePath);
-
 }   // namespace Connectors
 }   // namespace SpineMLSimulator
