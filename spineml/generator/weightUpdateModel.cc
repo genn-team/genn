@@ -125,7 +125,7 @@ SpineMLGenerator::WeightUpdateModel::WeightUpdateModel(const ModelParams::Weight
     for(auto receivePort : componentClass.select_nodes(SpineMLUtils::xPathNodeHasSuffix("ReceivePort").c_str())) {
         std::string nodeType = receivePort.node().name();
         const char *portName = receivePort.node().attribute("name").value();
-        const auto &portSrc = params.getPortSrc(portName);
+        const auto &portSrc = params.getInputPortSrc(portName);
 
         // If this port is an analogue receive port for some sort of postsynaptic neuron state variable
         if(nodeType == "EventReceivePort" && portSrc.first == ModelParams::Base::PortSource::PRESYNAPTIC_NEURON
@@ -164,7 +164,7 @@ SpineMLGenerator::WeightUpdateModel::WeightUpdateModel(const ModelParams::Weight
     for(auto reducePort : componentClass.select_nodes(SpineMLUtils::xPathNodeHasSuffix("ReducePort").c_str())) {
         std::string nodeType = reducePort.node().name();
         const char *portName = reducePort.node().attribute("name").value();
-        const auto &portSrc = params.getPortSrc(portName);
+        const auto &portSrc = params.getInputPortSrc(portName);
 
         if(nodeType == "AnalogReducePort" && portSrc.first == ModelParams::Base::PortSource::PRESYNAPTIC_NEURON
             && srcNeuronModel->hasSendPortVariable(portSrc.second) && strcmp(reducePort.node().attribute("reduce_op").value(), "+") == 0)

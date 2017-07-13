@@ -45,23 +45,24 @@ public:
     //----------------------------------------------------------------------------
     const std::string &getURL() const{ return m_URL; }
     const std::set<std::string> &getVariableParams() const{ return m_VariableParams; }
-    const std::pair<PortSource, std::string> &getPortSrc(const std::string &dstPort) const;
-    const std::string &getPortTrg(PortSource src, const std::string srcPort) const;
+    const std::pair<PortSource, std::string> &getInputPortSrc(const std::string &dstPort) const;
+    const std::pair<PortSource, std::string> &getOutputPortTrg(const std::string &srcPort) const;
 
     //----------------------------------------------------------------------------
     // Operators
     //----------------------------------------------------------------------------
     bool operator < (const Base &other) const
     {
-        return (std::tie(m_URL, m_VariableParams, m_PortMappings)
-                < std::tie(other.m_URL, other.m_VariableParams, other.m_PortMappings));
+        return (std::tie(m_URL, m_VariableParams, m_InputPortSources, m_OutputPortTargets)
+                < std::tie(other.m_URL, other.m_VariableParams, other.m_InputPortSources, other.m_OutputPortTargets));
     }
 
 protected:
     //----------------------------------------------------------------------------
     // Protected API
     //----------------------------------------------------------------------------
-    void addPortMapping(const std::string &dstPort, PortSource srcComponent, const std::string &srcPort);
+    void addInputPortMapping(const std::string &dstPort, PortSource srcComponent, const std::string &srcPort);
+    void addOutputPortMapping(const std::string &srcPort, PortSource dstComponent, const std::string &dstPort);
 
 private:
     //----------------------------------------------------------------------------
@@ -71,7 +72,8 @@ private:
     std::set<std::string> m_VariableParams;
 
     // Map of destination port names to their source component and port
-    std::map<std::string, std::pair<PortSource, std::string>> m_PortMappings;
+    std::map<std::string, std::pair<PortSource, std::string>> m_InputPortSources;
+    std::map<std::string, std::pair<PortSource, std::string>> m_OutputPortTargets;
 };
 
 //----------------------------------------------------------------------------

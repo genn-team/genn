@@ -125,11 +125,16 @@ SpineMLGenerator::PostsynapticModel::PostsynapticModel(const ModelParams::Postsy
         // If this is an analogue send port
         if(nodeType == "AnalogSendPort") {
             // Find the name of the port on the neuron which this send port targets
-            std::string neuronPortTrg = params.getPortTrg(ModelParams::Base::PortSource::POSTSYNAPTIC_SYNAPSE, portName);
-            std::cout << "\t\t\tImplementing analogue send port '" << portName << "' using postsynaptic neuron additional input var '" << neuronPortTrg << "'" << std::endl;
+            const auto &neuronPortTrg = params.getOutputPortTrg(portName);
+            if(neuronPortTrg.first == ModelParams::Base::PortSource::POSTSYNAPTIC_NEURON) {
+                std::cout << "\t\t\tImplementing analogue send port '" << portName << "' using postsynaptic neuron additional input var '" << neuronPortTrg.second << "'" << std::endl;
 
-            // Add mapping to vector
-            sendPortVariables.push_back(std::make_pair(neuronPortTrg, portName));
+                // Add mapping to vector
+                sendPortVariables.push_back(std::make_pair(neuronPortTrg.second, portName));
+            }
+            else {
+                throw std::runtime_error("GeNN does not support AnalogSendPorts which target anything other than postsynaptic neurons");
+            }
         }
         else {
             throw std::runtime_error("GeNN does not support '" + nodeType + "' send ports in postsynaptic models");
@@ -143,7 +148,7 @@ SpineMLGenerator::PostsynapticModel::PostsynapticModel(const ModelParams::Postsy
     for(auto receivePort : componentClass.select_nodes(SpineMLUtils::xPathNodeHasSuffix("ReceivePort").c_str())) {
         std::string nodeType = receivePort.node().name();
         const char *portName = receivePort.node().attribute("name").value();
-        const auto &portSrc = params.getPortSrc(portName);
+        const auto &portSrc = params.getInputPortSrc(portName);
 
         // If this port is an analogue receive port for some sort of postsynaptic neuron state variable
         if(nodeType == "AnalogReceivePort" && portSrc.first == ModelParams::Base::PortSource::POSTSYNAPTIC_NEURON && trgNeuronModel->hasSendPortVariable(portSrc.second)) {

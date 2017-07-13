@@ -40,10 +40,10 @@ SpineMLGenerator::ModelParams::Base::Base(const filesystem::path &basePath, cons
     }
 }
 //----------------------------------------------------------------------------
-const std::pair<SpineMLGenerator::ModelParams::Base::PortSource, std::string> &SpineMLGenerator::ModelParams::Base::getPortSrc(const std::string &dstPort) const
+const std::pair<SpineMLGenerator::ModelParams::Base::PortSource, std::string> &SpineMLGenerator::ModelParams::Base::getInputPortSrc(const std::string &dstPort) const
 {
-    auto port = m_PortMappings.find(dstPort);
-    if(port == m_PortMappings.end()) {
+    auto port = m_InputPortSources.find(dstPort);
+    if(port == m_InputPortSources.end()) {
         throw std::runtime_error("Cannot find destination port:" + dstPort);
     }
     else {
@@ -51,22 +51,28 @@ const std::pair<SpineMLGenerator::ModelParams::Base::PortSource, std::string> &S
     }
 }
 //----------------------------------------------------------------------------
-const std::string &SpineMLGenerator::ModelParams::Base::getPortTrg(PortSource src, const std::string srcPort) const
+const std::pair<SpineMLGenerator::ModelParams::Base::PortSource, std::string> &SpineMLGenerator::ModelParams::Base::getOutputPortTrg(const std::string &srcPort) const
 {
-    auto srcPair = std::make_pair(src, srcPort);
-    for(const auto &src : m_PortMappings) {
-        if(src.second == srcPair) {
-            return src.first;
-        }
+    auto port = m_OutputPortTargets.find(srcPort);
+    if(port == m_OutputPortTargets.end()) {
+        throw std::runtime_error("Cannot find source port:" + srcPort);
     }
-
-    throw std::runtime_error("Cannot find stc port:" + srcPort);
+    else {
+        return port->second;
+    }
 }
 //----------------------------------------------------------------------------
-void SpineMLGenerator::ModelParams::Base::addPortMapping(const std::string &dstPort, PortSource srcComponent, const std::string &srcPort)
+void SpineMLGenerator::ModelParams::Base::addInputPortMapping(const std::string &dstPort, PortSource srcComponent, const std::string &srcPort)
 {
-    if(!m_PortMappings.insert(std::make_pair(dstPort, std::make_pair(srcComponent, srcPort))).second) {
-        throw std::runtime_error("Duplicate destination port name:" + dstPort);
+    if(!m_InputPortSources.insert(std::make_pair(dstPort, std::make_pair(srcComponent, srcPort))).second) {
+        throw std::runtime_error("Duplicate input port destination:" + dstPort);
+    }
+}
+//----------------------------------------------------------------------------
+void SpineMLGenerator::ModelParams::Base::addOutputPortMapping(const std::string &srcPort, PortSource dstComponent, const std::string &dstPort)
+{
+    if(!m_OutputPortTargets.insert(std::make_pair(srcPort, std::make_pair(dstComponent, dstPort))).second) {
+        throw std::runtime_error("Duplicate output port source:" + srcPort);
     }
 }
 
@@ -91,14 +97,14 @@ SpineMLGenerator::ModelParams::WeightUpdate::WeightUpdate(const filesystem::path
     auto inputSrcPort = node.attribute("input_src_port");
     auto inputDstPort = node.attribute("input_dst_port");
     if(inputSrcPort && inputDstPort) {
-        addPortMapping(inputDstPort.value(), PortSource::PRESYNAPTIC_NEURON, inputSrcPort.value());
+        addInputPortMapping(inputDstPort.value(), PortSource::PRESYNAPTIC_NEURON, inputSrcPort.value());
     }
 
     // If a feedback src and destination port are specified add them to input port mapping
     auto feedbackSrcPort = node.attribute("feedback_src_port");
     auto feedbackDstPort = node.attribute("feedback_dst_port");
     if(feedbackSrcPort && feedbackDstPort) {
-        addPortMapping(feedbackDstPort.value(), PortSource::POSTSYNAPTIC_NEURON, feedbackSrcPort.value());
+        addInputPortMapping(feedbackDstPort.value(), PortSource::POSTSYNAPTIC_NEURON, feedbackSrcPort.value());
     }
 
     // Loop through low-level inputs
@@ -109,10 +115,10 @@ SpineMLGenerator::ModelParams::WeightUpdate::WeightUpdate(const filesystem::path
             // If the source of this input is our target neuron population, add port mapping
             auto safeInputSrc = SpineMLUtils::getSafeName(input.attribute("src").value());
             if(safeInputSrc == srcPopName) {
-                addPortMapping(input.attribute("dst_port").value(), PortSource::PRESYNAPTIC_NEURON, input.attribute("src_port").value());
+                addInputPortMapping(input.attribute("dst_port").value(), PortSource::PRESYNAPTIC_NEURON, input.attribute("src_port").value());
             }
             else if(safeInputSrc == trgPopName) {
-                addPortMapping(input.attribute("dst_port").value(), PortSource::POSTSYNAPTIC_NEURON, input.attribute("src_port").value());
+                addInputPortMapping(input.attribute("dst_port").value(), PortSource::POSTSYNAPTIC_NEURON, input.attribute("src_port").value());
             }
             else {
                 throw std::runtime_error("GeNN weight update models can only receive input from the pre or postsynaptic neuron population");
@@ -136,14 +142,14 @@ SpineMLGenerator::ModelParams::Postsynaptic::Postsynaptic(const filesystem::path
     auto inputSrcPort = node.attribute("input_src_port");
     auto inputDstPort = node.attribute("input_dst_port");
     if(inputSrcPort && inputDstPort) {
-        addPortMapping(inputDstPort.value(), PortSource::WEIGHT_UPDATE, inputSrcPort.value());
+        addInputPortMapping(inputDstPort.value(), PortSource::WEIGHT_UPDATE, inputSrcPort.value());
     }
 
     // If an output src and destination port are specified add them to input port mapping
     auto outputSrcPort = node.attribute("output_src_port");
     auto outputDstPort = node.attribute("output_dst_port");
     if(outputSrcPort && outputDstPort) {
-        addPortMapping(outputDstPort.value(), PortSource::POSTSYNAPTIC_SYNAPSE, outputSrcPort.value());
+        addOutputPortMapping(outputSrcPort.value(), PortSource::POSTSYNAPTIC_NEURON, outputDstPort.value());
     }
 
     // Loop through low-level inputs
@@ -153,7 +159,7 @@ SpineMLGenerator::ModelParams::Postsynaptic::Postsynaptic(const filesystem::path
         if(oneToOneConnector) {
             // If the source of this input is our target neuron population, add port mapping
             if(SpineMLUtils::getSafeName(input.attribute("src").value()) == trgPopName) {
-                addPortMapping(input.attribute("dst_port").value(), PortSource::POSTSYNAPTIC_NEURON, input.attribute("src_port").value());
+                addInputPortMapping(input.attribute("dst_port").value(), PortSource::POSTSYNAPTIC_NEURON, input.attribute("src_port").value());
             }
             else {
                 throw std::runtime_error("GeNN postsynaptic models can only receive input from the postsynaptic neuron population");
