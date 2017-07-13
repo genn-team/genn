@@ -9,6 +9,7 @@
 
 // Standard C includes
 #include <cassert>
+#include <cstdint>
 
 // Filesystem includes
 #include "filesystem/path.h"
