@@ -123,7 +123,7 @@ std::tuple<SynapseMatrixType, unsigned int, unsigned int> getSynapticMatrixType(
     auto connectionList = node.child("ConnectionList");
     if(connectionList) {
         return std::make_tuple(Connectors::List::getMatrixType(fixedProbability, numPre, numPost, globalG),
-                               readDelaySteps(fixedProbability, dt),
+                               readDelaySteps(connectionList, dt),
                                Connectors::List::estimateMaxRowLength(basePath, fixedProbability, numPre, numPost));
     }
 
