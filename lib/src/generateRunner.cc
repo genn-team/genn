@@ -2287,26 +2287,44 @@ void genMakefile(const NNmodel &model, //!< Model description
 
 #ifdef _WIN32
 #ifdef CPU_ONLY
-     if(GENN_PREFERENCES::buildSharedLibrary) {
-        gennError("Building shared libraries for CPU_ONLY simulation not currently supported");
-    }
-    string cxxFlags = "/c /DCPU_ONLY";
+    string cxxFlags = GENN_PREFERENCES::buildSharedLibrary ? "/LD" : "/C";
+    cxxFlags += " /DCPU_ONLY";
     cxxFlags += " " + GENN_PREFERENCES::userCxxFlagsWIN;
-    if (GENN_PREFERENCES::optimizeCode) cxxFlags += " /O2";
-    if (GENN_PREFERENCES::debugCode) cxxFlags += " /debug /Zi /Od";
+    if (GENN_PREFERENCES::optimizeCode) {
+        cxxFlags += " /O2";
+    }
+    if (GENN_PREFERENCES::debugCode) {
+        cxxFlags += " /debug /Zi /Od";
+    }
 
     os << endl;
     os << "CXXFLAGS       =/nologo /EHsc " << cxxFlags << endl;
     os << endl;
     os << "INCLUDEFLAGS   =/I\"$(GENN_PATH)\\lib\\include\"" << endl;
     os << endl;
-    os << "all: runner.obj" << endl;
-    os << endl;
-    os << "runner.obj: runner.cc" << endl;
-    os << "\t$(CXX) $(CXXFLAGS) $(INCLUDEFLAGS) runner.cc" << endl;
-    os << endl;
-    os << "clean:" << endl;
-    os << "\t-del runner.obj 2>nul" << endl;
+    
+    // Add correct rules for building either shared library or object file
+    // **NOTE** no idea how Visual C++ figures out that the dll should be called runner.dll but...it does
+    // **NOTE** adding /OUT:runner.dll to make this explicit actually causes it to complain about ignoring options
+    if(GENN_PREFERENCES::buildSharedLibrary) {
+        os << "all: runner.dll" << endl;
+        os << endl;
+        os << "runner.dll: runner.cc" << endl;
+        os << "\t$(CXX) $(CXXFLAGS) $(INCLUDEFLAGS) runner.cc $(GENN_PATH)\\lib\\src\\sparseUtils.cc" << endl;
+        os << endl;
+        os << "clean:" << endl;
+        os << "\t-del runner.dll 2>nul" << endl;
+    }
+    else
+    {
+        os << "all: runner.obj" << endl;
+        os << endl;
+        os << "runner.obj: runner.cc" << endl;
+        os << "\t$(CXX) $(CXXFLAGS) $(INCLUDEFLAGS) runner.cc" << endl;
+        os << endl;
+        os << "clean:" << endl;
+        os << "\t-del runner.obj 2>nul" << endl;
+    }
 #else
     // Start with correct NVCC flags to build shared library or object file as appropriate
     // **NOTE** -c = compile and assemble, don't link
