@@ -33,6 +33,20 @@
 using namespace SpineMLCommon;
 using namespace SpineMLGenerator;
 
+// SpineML generator requires the C++ regex library to be operational
+// We assume it is for:
+// 1) Non GCC compilers
+// 2) GCC 5.X.X and future
+// 3) Any future (4.10.X?) releases
+// 4) 4.9.1 and subsequent patch releases (GCC fully implemented regex in 4.9.0
+// BUT bug 61227 https://gcc.gnu.org/bugzilla/show_bug.cgi?id=61227 prevented \w from working)
+#if defined(__GNUC__) && \
+    __GNUC__ <= 4 && \
+    (__GNUC__ != 4 || (__GNUC_MINOR__ <= 9 && \
+                      (__GNUC_MINOR__ != 9 || __GNUC_PATCHLEVEL__ < 1)))
+    #error "GeNN SpineML generator requires at least GCC 4.9.1 for functional <regex> library"
+#endif
+
 //----------------------------------------------------------------------------
 // Anonymous namespace
 //----------------------------------------------------------------------------
