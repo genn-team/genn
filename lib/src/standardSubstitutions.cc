@@ -40,7 +40,7 @@ void StandardSubstitutions::postSynapseApplyInput(
     value_substitutions(psCode, psmDerivedParams.nameBegin, psmDerivedParams.nameEnd, sg->getPSDerivedParams());
     name_substitutions(psCode, "", nmExtraGlobalParams.nameBegin, nmExtraGlobalParams.nameEnd, ng.getName());
     psCode = ensureFtype(psCode, ftype);
-    checkUnreplacedVariables(psCode, "postSyntoCurrent");
+    checkUnreplacedVariables(psCode, sg->getName() + " : postSyntoCurrent");
 }
 
 void StandardSubstitutions::postSynapseDecay(
@@ -66,7 +66,7 @@ void StandardSubstitutions::postSynapseDecay(
     value_substitutions(pdCode, nmDerivedParams.nameBegin, nmDerivedParams.nameEnd, ng.getDerivedParams());
 
     pdCode = ensureFtype(pdCode, ftype);
-    checkUnreplacedVariables(pdCode, "postSynDecay");
+    checkUnreplacedVariables(pdCode, sg->getName() + " : postSynDecay");
 }
 
 
@@ -86,7 +86,7 @@ void StandardSubstitutions::neuronThresholdCondition(
     value_substitutions(thCode, nmDerivedParams.nameBegin, nmDerivedParams.nameEnd, ng.getDerivedParams());
     name_substitutions(thCode, "", nmExtraGlobalParams.nameBegin, nmExtraGlobalParams.nameEnd, ng.getName());
     thCode= ensureFtype(thCode, ftype);
-    checkUnreplacedVariables(thCode,"thresholdConditionCode");
+    checkUnreplacedVariables(thCode, ng.getName() + " : thresholdConditionCode");
 }
 
 void StandardSubstitutions::neuronSim(
@@ -105,7 +105,7 @@ void StandardSubstitutions::neuronSim(
     substitute(sCode, "$(Isyn)", "Isyn");
     substitute(sCode, "$(sT)", "lsT");
     sCode = ensureFtype(sCode, ftype);
-    checkUnreplacedVariables(sCode, "neuron simCode");
+    checkUnreplacedVariables(sCode, ng.getName() + " : neuron simCode");
 }
 
 void StandardSubstitutions::neuronSpikeEventCondition(
@@ -120,7 +120,7 @@ void StandardSubstitutions::neuronSpikeEventCondition(
     name_substitutions(eCode, "l", nmVars.nameBegin, nmVars.nameEnd, "", "_pre");
     name_substitutions(eCode, "", nmExtraGlobalParams.nameBegin, nmExtraGlobalParams.nameEnd, ng.getName());
     eCode = ensureFtype(eCode, ftype);
-    checkUnreplacedVariables(eCode, "neuronSpkEvntCondition");
+    checkUnreplacedVariables(eCode, ng.getName() + " : neuronSpkEvntCondition");
 }
 
 void StandardSubstitutions::neuronReset(
@@ -139,7 +139,7 @@ void StandardSubstitutions::neuronReset(
     substitute(rCode, "$(sT)", "lsT");
     name_substitutions(rCode, "", nmExtraGlobalParams.nameBegin, nmExtraGlobalParams.nameEnd, ng.getName());
     rCode = ensureFtype(rCode, ftype);
-    checkUnreplacedVariables(rCode, "resetCode");
+    checkUnreplacedVariables(rCode, ng.getName() + " : resetCode");
 }
 
 void StandardSubstitutions::weightUpdateThresholdCondition(
@@ -157,7 +157,7 @@ void StandardSubstitutions::weightUpdateThresholdCondition(
     name_substitutions(eCode, "", wuExtraGlobalParams.nameBegin, wuExtraGlobalParams.nameEnd, sg.getName());
     neuron_substitutions_in_synaptic_code(eCode, &sg, preIdx, postIdx, devPrefix);
     eCode= ensureFtype(eCode, ftype);
-    checkUnreplacedVariables(eCode, "evntThreshold");
+    checkUnreplacedVariables(eCode, sg.getName() + " : evntThreshold");
 }
 
 void StandardSubstitutions::weightUpdateSim(
@@ -181,7 +181,7 @@ void StandardSubstitutions::weightUpdateSim(
     substitute(wCode, "$(addtoinSyn)", "addtoinSyn");
     neuron_substitutions_in_synaptic_code(wCode, &sg, preIdx, postIdx, devPrefix);
     wCode= ensureFtype(wCode, ftype);
-    checkUnreplacedVariables(wCode, "simCode");
+    checkUnreplacedVariables(wCode, sg.getName() + " : simCode");
 }
 
 void StandardSubstitutions::weightUpdateDynamics(
@@ -208,7 +208,7 @@ void StandardSubstitutions::weightUpdateDynamics(
     substitute(SDcode, "$(addtoinSyn)", "addtoinSyn");
     neuron_substitutions_in_synaptic_code(SDcode, sg, preIdx, postIdx, devPrefix);
     SDcode= ensureFtype(SDcode, ftype);
-    checkUnreplacedVariables(SDcode, "synapseDynamics");
+    checkUnreplacedVariables(SDcode, sg->getName() + " : synapseDynamics");
 }
 
 void StandardSubstitutions::weightUpdatePostLearn(
@@ -228,5 +228,5 @@ void StandardSubstitutions::weightUpdatePostLearn(
     // presynaptic neuron variables and parameters
     neuron_substitutions_in_synaptic_code(code, sg, preIdx, postIdx, devPrefix);
     code= ensureFtype(code, ftype);
-    checkUnreplacedVariables(code, "simLearnPost");
+    checkUnreplacedVariables(code, sg->getName() + " : simLearnPost");
 }
