@@ -213,6 +213,7 @@ std::pair<unsigned int, float> SpineMLGenerator::Connectors::List::readMaxRowLen
     std::vector<unsigned int> rowLengths(numPre);
     auto binaryFile = node.child("BinaryFile");
     float explicitDelayValue = std::numeric_limits<float>::quiet_NaN();
+    bool heterogeneousWarningShown = false;
     if(binaryFile) {
         // If each synapse
         const bool explicitDelay = (binaryFile.attribute("explicit_delay_flag").as_uint() != 0);
@@ -258,9 +259,12 @@ std::pair<unsigned int, float> SpineMLGenerator::Connectors::List::readMaxRowLen
                         std::cout << "\tReading delay value of:" << explicitDelayValue << "ms from synapse" << std::endl;
                     }
                     // Otherwise if this is different than previously read value, give error
-                    else if(std::abs(explicitDelayValue - *synapseDelay) > std::numeric_limits<float>::epsilon()) {
-                        throw std::runtime_error("GeNN does not support heterogeneous synaptic delays - different values (" +
-                                                 std::to_string(explicitDelayValue) + ", " + std::to_string(*synapseDelay) + ") encountered");
+                    else if(!heterogeneousWarningShown && std::abs(explicitDelayValue - *synapseDelay) > std::numeric_limits<float>::epsilon()) {
+                        std::cout << "\tWARNING: GeNN does not support heterogeneous synaptic delays - different values (";
+                        std::cout << explicitDelayValue << ", " << *synapseDelay << ") encountered" << std::endl;
+                        heterogeneousWarningShown = true;
+                        //throw std::runtime_error("GeNN does not support heterogeneous synaptic delays - different values (" +
+                        //                         std::to_string(explicitDelayValue) + ", " + std::to_string(*synapseDelay) + ") encountered");
                     }
                 }
             }
@@ -285,9 +289,12 @@ std::pair<unsigned int, float> SpineMLGenerator::Connectors::List::readMaxRowLen
                     std::cout << "\tReading delay value of:" << explicitDelayValue << "ms from synapse" << std::endl;
                 }
                 // Otherwise if this is different than previously read value, give error
-                else if(std::abs(explicitDelayValue - synapseDelay) > std::numeric_limits<float>::epsilon()) {
-                    throw std::runtime_error("GeNN does not support heterogeneous synaptic delays - different values (" +
-                                                std::to_string(explicitDelayValue) + ", " + std::to_string(synapseDelay) + ") encountered");
+                else if(!heterogeneousWarningShown && std::abs(explicitDelayValue - synapseDelay) > std::numeric_limits<float>::epsilon()) {
+                    std::cout << "\tWARNING: GeNN does not support heterogeneous synaptic delays - different values (";
+                    std::cout << explicitDelayValue << ", " << synapseDelay << ") encountered" << std::endl;
+                    heterogeneousWarningShown = true;
+                    //throw std::runtime_error("GeNN does not support heterogeneous synaptic delays - different values (" +
+                    //                            std::to_string(explicitDelayValue) + ", " + std::to_string(synapseDelay) + ") encountered");
                 }
             }
         }
