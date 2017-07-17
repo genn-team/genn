@@ -723,7 +723,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
 
     if (!model.getSynapseDynamicsGroups().empty()) {
         os << "#define BLOCKSZ_SYNDYN " << synDynBlkSz << endl;
-	
+
         // SynapseDynamics kernel header
         os << "extern \"C\" __global__ void calcSynapseDynamics(";
         for(const auto &p : model.getSynapseDynamicsKernelParameters()) {
@@ -736,9 +736,10 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
 
         // common variables for all cases
         os << "unsigned int id = BLOCKSZ_SYNDYN * blockIdx.x + threadIdx.x;" << std::endl;
+        os << model.getPrecision() << " addtoinSyn;" << std::endl;
+        os << std::endl;
 
         os << "// execute internal synapse dynamics if any" << std::endl;
-        os << std::endl;
 
         bool firstSynapseDynamicsGroup = true;
         for(const auto &s : model.getSynapseDynamicsGroups())
