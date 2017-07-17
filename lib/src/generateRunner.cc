@@ -274,10 +274,13 @@ void genDefinitions(const NNmodel &model, //!< Model description
     os << "#endif" << std::endl;
     os << std::endl;
     
-    // Begin extern C block around function definitions
+#ifdef CPU_ONLY
+    // Begin extern C block around ALL definitions
+    // **YUCK** NVCC doens't seem to link happily when you do this
     if(GENN_PREFERENCES::buildSharedLibrary) {
         os << "extern \"C\" {" << std::endl;
     }
+#endif
         
     // In windows making variables extern isn't enough to export then as DLL symbols - you need to add __declspec(dllexport)
 #ifdef _WIN32
@@ -444,7 +447,13 @@ void genDefinitions(const NNmodel &model, //!< Model description
   and making g member a synapse variable.*/" << std::endl;
     os << std::endl;
 
-
+#ifndef CPU_ONLY
+    // Begin extern C block around FUNCTION definitions
+    // **YUCK** no idea why NVCC does't link happily when you have this around all definitions
+    if(GENN_PREFERENCES::buildSharedLibrary) {
+        os << "extern \"C\" {" << std::endl;
+    }
+#endif
 
     // In windows wrapping functions in extern "C" isn't enough to export then as DLL symbols - you need to add __declspec(dllexport)
 #ifdef _WIN32
