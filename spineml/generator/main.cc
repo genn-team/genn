@@ -6,6 +6,7 @@
 
 // Standard C includes
 #include <cassert>
+#include <cmath>
 #include <cstdlib>
 
 // Filesystem includes
@@ -124,9 +125,16 @@ std::tuple<SynapseMatrixType, unsigned int, unsigned int> getSynapticMatrixType(
 
     auto connectionList = node.child("ConnectionList");
     if(connectionList) {
-        return std::make_tuple(Connectors::List::getMatrixType(fixedProbability, numPre, numPost, globalG),
-                               readDelaySteps(connectionList, dt),
-                               Connectors::List::estimateMaxRowLength(basePath, fixedProbability, numPre, numPost));
+        // Read maximum row length and any explicit delay from connector
+        unsigned int maxRowLength;
+        double explicitDelay;
+        tie(maxRowLength, explicitDelay) = Connectors::List::readMaxRowLengthAndDelay(basePath, connectionList,
+                                                                                      numPre, numPost);
+
+        // If explicit delay wasn't specified, read it from delay child. Otherwise convert explicit delay to timesteps
+        unsigned int delay = std::isnan(explicitDelay) ? readDelaySteps(connectionList, dt) : (unsigned int)std::round(explicitDelay / dt);
+        return std::make_tuple(Connectors::List::getMatrixType(connectionList, numPre, numPost, globalG),
+                               delay, maxRowLength);
     }
 
     throw std::runtime_error("No supported connection type found for projection");

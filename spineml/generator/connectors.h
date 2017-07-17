@@ -1,5 +1,8 @@
 #pragma once
 
+// Standard C++ includes
+#include <utility>
+
 // Forward declarations
 namespace pugi
 {
@@ -51,7 +54,8 @@ namespace AllToAll
 namespace List
 {
     SynapseMatrixType getMatrixType(const pugi::xml_node &node, unsigned int numPre, unsigned int numPost, bool globalG);
-    unsigned int estimateMaxRowLength(const filesystem::path &basePath, const pugi::xml_node &node, unsigned int numPre, unsigned int numPost);
+    std::pair<unsigned int, float> readMaxRowLengthAndDelay(const filesystem::path &basePath, const pugi::xml_node &node,
+                                                            unsigned int numPre, unsigned int numPost);
 }   // namespace List
 }   // namespace Connectors
 }   // namespace SpineMLGenerator

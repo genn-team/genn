@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <fstream>
 #include <iostream>
+#include <limits>
 
 // Standard C includes
 #include <cassert>
@@ -205,17 +206,17 @@ SynapseMatrixType SpineMLGenerator::Connectors::List::getMatrixType(const pugi::
     return globalG ? SynapseMatrixType::SPARSE_GLOBALG : SynapseMatrixType::SPARSE_INDIVIDUALG;
 }
 //----------------------------------------------------------------------------
-unsigned int SpineMLGenerator::Connectors::List::estimateMaxRowLength(const filesystem::path &basePath, const pugi::xml_node &node,
-                                                                      unsigned int numPre, unsigned int)
+std::pair<unsigned int, float> SpineMLGenerator::Connectors::List::readMaxRowLengthAndDelay(const filesystem::path &basePath, const pugi::xml_node &node,
+                                                                                             unsigned int numPre, unsigned int)
 {
     // If connectivity should be read from a binary file
     std::vector<unsigned int> rowLengths(numPre);
     auto binaryFile = node.child("BinaryFile");
+    float explicitDelayValue = std::numeric_limits<float>::quiet_NaN();
     if(binaryFile) {
         // If each synapse
-        if(binaryFile.attribute("explicit_delay_flag").as_uint() != 0) {
-            throw std::runtime_error("GeNN does not currently support individual delays");
-        }
+        const bool explicitDelay = (binaryFile.attribute("explicit_delay_flag").as_uint() != 0);
+        const unsigned int wordsPerSynapse = explicitDelay ? 3 : 2;
 
         // Read number of connections and filename of file fr
         const unsigned int numConnections = binaryFile.attribute("num_connections").as_uint();
@@ -231,7 +232,7 @@ unsigned int SpineMLGenerator::Connectors::List::estimateMaxRowLength(const file
         uint32_t connectionBuffer[262144];
 
         // Loop through
-        for(size_t remainingWords = numConnections * 2; remainingWords > 0;) {
+        for(size_t remainingWords = numConnections * wordsPerSynapse; remainingWords > 0;) {
             // Read a block into buffer
             const size_t blockWords = std::min<size_t>(262144, remainingWords);
             input.read(reinterpret_cast<char*>(&connectionBuffer[0]), blockWords * sizeof(uint32_t));
@@ -241,22 +242,57 @@ unsigned int SpineMLGenerator::Connectors::List::estimateMaxRowLength(const file
                 throw std::runtime_error("Unexpected end of binary connection file");
             }
 
-            // Loop through presynaptic words in buffer and update histogram
-            for(size_t w = 0; w < blockWords; w += 2) {
+            // Loop through presynaptic words in buffer
+            for(size_t w = 0; w < blockWords; w += wordsPerSynapse) {
+                // Update row length histogram
                 rowLengths[connectionBuffer[w]]++;
+
+                // If this file contains explicit delays
+                if(explicitDelay) {
+                    // Cast delay word to float
+                    const float *synapseDelay = reinterpret_cast<float*>(&connectionBuffer[w + 2]);
+
+                    // If this is the first delay value to be read, use as explcit delay value
+                    if(std::isnan(explicitDelayValue)) {
+                        explicitDelayValue = *synapseDelay;
+                        std::cout << "\tReading delay value of:" << explicitDelayValue << "ms from synapse" << std::endl;
+                    }
+                    // Otherwise if this is different than previously read value, give error
+                    else if(std::abs(explicitDelayValue - *synapseDelay) > std::numeric_limits<float>::epsilon()) {
+                        throw std::runtime_error("GeNN does not support heterogeneous synaptic delays - different values (" +
+                                                 std::to_string(explicitDelayValue) + ", " + std::to_string(*synapseDelay) + ") encountered");
+                    }
+                }
             }
 
             // Subtract words in block from total
             remainingWords -= blockWords;
         }
     }
-    // Otherwise loop through connections and increment histogram bins based on their source neuron
+    // Otherwise loop through connections
     else {
         for(auto c : node.children("Connection")) {
+            // Increment histogram bin based on source neuron
             rowLengths[c.attribute("src_neuron").as_uint()]++;
+
+            // If this synapse has a delay
+            auto delay = c.attribute("delay");
+            if(delay) {
+                // If this is the first delay value to be read, use as explcit delay value
+                const float synapseDelay = delay.as_float();
+                if(std::isnan(explicitDelayValue)) {
+                    explicitDelayValue = synapseDelay;
+                    std::cout << "\tReading delay value of:" << explicitDelayValue << "ms from synapse" << std::endl;
+                }
+                // Otherwise if this is different than previously read value, give error
+                else if(std::abs(explicitDelayValue - synapseDelay) > std::numeric_limits<float>::epsilon()) {
+                    throw std::runtime_error("GeNN does not support heterogeneous synaptic delays - different values (" +
+                                                std::to_string(explicitDelayValue) + ", " + std::to_string(synapseDelay) + ") encountered");
+                }
+            }
         }
     }
 
-    // Return size of largest histogram bin
-    return *std::max_element(rowLengths.begin(), rowLengths.end());
+    // Return size of largest histogram bin and explicit delay value
+    return std::make_pair(*std::max_element(rowLengths.begin(), rowLengths.end()), explicitDelayValue);
 }
