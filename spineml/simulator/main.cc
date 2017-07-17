@@ -579,8 +579,10 @@ int main(int argc, char *argv[])
 
                 std::cout << "Projection from population:" << srcPopName << "->" << trgPopName << std::endl;
 
-                // Build name of GeNN synapse population from these two
-                std::string geNNSynPopName = SpineMLUtils::getSafeName(srcPopName) + "_" + SpineMLUtils::getSafeName(trgPopName);
+                // Build synapse population name from name of weight update
+                // **NOTE** this is an arbitrary choice but these are guaranteed unique
+                auto weightUpdate = synapse.child("LL:WeightUpdate");
+                std::string geNNSynPopName = SpineMLUtils::getSafeName(weightUpdate.attribute("name").value());
 
                 // Get main synapse node
                 auto synapse = projection.child("LL:Synapse");

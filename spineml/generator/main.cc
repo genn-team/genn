@@ -264,7 +264,7 @@ int main(int argc,
                                                                            true, 0.1);
 
             // Add synapse population to model
-            std::string passthroughSynapsePopName = std::string(srcPopName) + "_" + popName;
+            std::string passthroughSynapsePopName = std::string(srcPopName) + "_" + srcPort + "_" + popName + "_"  + dstPort;
             auto synapsePop = model.addSynapsePopulation(passthroughSynapsePopName, mtype, delaySteps, srcPopName, popName,
                                                          &passthroughWeightUpdateModel, {}, {},
                                                          &passthroughPostsynapticModel, {}, {});
@@ -334,8 +334,11 @@ int main(int argc,
                                                                            trgNeuronGroup->getNumNeurons(),
                                                                            globalG, 0.1);
 
+            // Build synapse population name from name of weight update
+            // **NOTE** this is an arbitrary choice but these are guaranteed unique
+            const std::string synapsePopName = SpineMLUtils::getSafeName(weightUpdate.attribute("name").value());
+
             // Add synapse population to model
-            std::string synapsePopName = std::string(popName) + "_" + trgPopName;
             auto synapsePop = model.addSynapsePopulation(synapsePopName, mtype, delaySteps, popName, trgPopName,
                                                          &weightUpdateModel, WeightUpdateModel::ParamValues(fixedWeightUpdateParamVals, weightUpdateModel), WeightUpdateModel::VarValues(fixedWeightUpdateParamVals, weightUpdateModel),
                                                          &postsynapticModel, PostsynapticModel::ParamValues(fixedPostsynapticParamVals, postsynapticModel), PostsynapticModel::VarValues(fixedPostsynapticParamVals, postsynapticModel));
