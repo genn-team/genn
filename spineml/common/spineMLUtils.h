@@ -15,6 +15,7 @@ inline std::string getSafeName(const std::string &name)
 {
     std::string safeName = name;
     std::replace(safeName.begin(), safeName.end(), ' ', '_');
+    std::replace(safeName.begin(), safeName.end(), '-', '_');
     return safeName;
 }
 
