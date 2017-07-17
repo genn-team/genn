@@ -56,7 +56,7 @@ public:
 
         // Match for A + B type expression with any amount of whitespace
         auto stateAssigmentCode = stateAssigment.child_value("MathInline");
-        std::regex regex("\\s*([a-zA-Z_])+\\s*\\+\\s*([a-zA-Z_]+)\\s*");
+        std::regex regex("\\s*([a-zA-Z_]+)\\s*\\+\\s*([a-zA-Z_]+)\\s*");
         std::cmatch match;
         if(std::regex_match(stateAssigmentCode, match, regex)) {
             // If match is successful check which of the variables being added 
