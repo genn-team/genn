@@ -283,6 +283,24 @@ std::tuple<NewModels::Base::StringVec, NewModels::Base::StringPairVec> SpineMLGe
     return paramNamesVars;
 }
 //----------------------------------------------------------------------------
+bool SpineMLGenerator::findAlias(const pugi::xml_node &componentClass, const std::string &aliasName,
+                                 std::string &aliasCode)
+{
+     // Search for an alias representing the analogue send port
+    pugi::xpath_variable_set aliasSearchVars;
+    aliasSearchVars.set("aliasName", aliasName.c_str());
+    auto alias = componentClass.select_node("Dynamics/Alias[@name=$aliasName]", &aliasSearchVars);
+
+    // If alias is found use it for current converter code
+    if(alias) {
+        aliasCode = alias.node().child_value("MathInline");
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+//----------------------------------------------------------------------------
 std::string SpineMLGenerator::resolveAlias(const pugi::xml_node &componentClass,
                                            const NewModels::Base::StringPairVec &vars,
                                            const std::string &sendPortName)
@@ -300,14 +318,10 @@ std::string SpineMLGenerator::resolveAlias(const pugi::xml_node &componentClass,
     }
     // Otherwise
     else {
-        // Search for an alias representing the analogue send port
-        pugi::xpath_variable_set aliasSearchVars;
-        aliasSearchVars.set("aliasName", sendPortName.c_str());
-        auto alias = componentClass.select_node("Dynamics/Alias[@name=$aliasName]", &aliasSearchVars);
-
-        // If alias is found use it for current converter code
-        if(alias) {
-            return alias.node().child_value("MathInline");
+        // If an alias matching send port is found, return alias code
+        std::string aliasCode;
+        if(findAlias(componentClass, sendPortName, aliasCode)) {
+            return aliasCode;
         }
         // Otherwise throw exception
         else {
