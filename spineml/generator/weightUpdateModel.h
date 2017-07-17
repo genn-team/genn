@@ -1,7 +1,5 @@
 #pragma once
 
-#pragma once
-
 // Standard includes
 #include <set>
 #include <string>
@@ -56,7 +54,7 @@ public:
 
 
     //------------------------------------------------------------------------
-    // PostsynapticModels::Base virtuals
+    // WeightUpdateModels::Base virtuals
     //------------------------------------------------------------------------
     virtual std::string getSimCode() const{ return m_SimCode; }
     virtual std::string getSynapseDynamicsCode() const{ return m_SynapseDynamicsCode; }
