@@ -370,7 +370,7 @@ int main(int argc,
     auto modelPath = basePath / (networkName + "_CODE");
 
     // Use this to build command line for building generated code
-    std::string cmd = "cd " + modelPath.str() + " && ";
+    std::string cmd = "cd \"" + modelPath.str() + "\" && ";
 #ifdef _WIN32
     cmd += "nmake /nologo clean all";
 #else // UNIX
