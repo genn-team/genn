@@ -125,8 +125,18 @@ SpineMLGenerator::NeuronModel::NeuronModel(const ModelParams::Neuron &params)
     }
 
     // Check that there are no unhandled receive ports
+    std::cout << "\t\tReceive ports:" << std::endl;
     for(auto receivePort : componentClass.select_nodes(SpineMLUtils::xPathNodeHasSuffix("ReceivePort").c_str())) {
-        throw std::runtime_error("GeNN does not currently support '" + std::string(receivePort.node().name()) + "' receive ports in neuron models");
+        std::string nodeType = receivePort.node().name();
+        const char *portName = receivePort.node().attribute("name").value();
+
+        if(nodeType == "AnalogReceivePort") {
+            std::cout << "\t\t\tImplementing analogue receive port '" << portName << "' as GeNN additional input variable" << std::endl;
+            m_AdditionalInputVars.push_back(std::make_pair(portName, std::make_pair("scalar", 0.0)));
+        }
+        else {
+            throw std::runtime_error("GeNN does not support '" + nodeType + "' reduce ports in neuron models");
+        }
     }
 
     // Loop through reduce ports
