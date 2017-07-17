@@ -60,9 +60,15 @@ public:
         return (m_SendPortVariables.find(port) != m_SendPortVariables.end());
     }
 
-    bool getSendPortAlias(const std::string &port, const std::string &suffix, std::string &aliasCode) const;
-
-    bool hasAdditionalInputVar(const std::string &port) const;
+    bool hasAdditionalInputVar(const std::string &port) const
+    {
+        auto iVar = std::find_if(m_AdditionalInputVars.begin(), m_AdditionalInputVars.end(),
+                                 [port](const std::pair<std::string, std::pair<std::string, double>> &var)
+                                 {
+                                     return (var.first == port);
+                                 });
+        return (iVar != m_AdditionalInputVars.end());
+    }
 
     //------------------------------------------------------------------------
     // NeuronModels::Base virtuals
@@ -82,7 +88,6 @@ private:
 
     // How are send ports mapped to GeNN?
     std::set<std::string> m_SendPortVariables;
-    std::map<std::string, std::string> m_SendPortAliases;
     std::string m_SendPortSpike;
     std::string m_SendPortSpikeLikeEvent;
 

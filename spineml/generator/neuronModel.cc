@@ -126,20 +126,23 @@ SpineMLGenerator::NeuronModel::NeuronModel(const ModelParams::Neuron &params)
 
     // Loop through send ports
     std::cout << "\t\tSend ports:" << std::endl;
+    std::map<std::string, std::string> sendPortAliases;
     for(auto sendPort : componentClass.select_nodes(SpineMLUtils::xPathNodeHasSuffix("SendPort").c_str())) {
         std::string nodeType = sendPort.node().name();
         const char *portName = sendPort.node().attribute("name").value();
         if(nodeType == "AnalogSendPort") {
-            // If there is an alias matching this port name
+            // If there is an alias matching this port name, add alias code to map to resolve later
             std::string aliasCode;
             if(findAlias(componentClass, portName, aliasCode)) {
                 std::cout << "\t\t\tImplementing analogue send port '" << portName << "' as an alias" << std::endl;
-                m_SendPortAliases.insert(std::make_pair(portName, aliasCode));
+                sendPortAliases.insert(std::make_pair(portName, aliasCode));
             }
             else {
                 std::cout << "\t\t\tImplementing analogue send port '" << portName << "' using a GeNN model variable" << std::endl;
-                m_SendPortVariables.insert(portName);
             }
+
+            // Add send port to set
+            m_SendPortVariables.insert(portName);
         }
         else if(nodeType == "EventSendPort") {
             if(m_SendPortSpike.empty()) {
@@ -206,46 +209,22 @@ SpineMLGenerator::NeuronModel::NeuronModel(const ModelParams::Neuron &params)
                                                    {}, &objectHandlerTimeDerivative,
                                                    regimeEndFunc);
 
+    // Loop through send ports which send an alias
+    auto variableParams = params.getVariableParams();
+    for(const auto &s : sendPortAliases) {
+        // Add simulation code to calculate send port value and store in state variable
+        simCodeStream << s.first << " = " << s.second << ";" << std::endl;
+
+        // Add this state variable to variable params set
+        variableParams.insert(s.first);
+    }
+
     // Store generated code in class
     m_SimCode = simCodeStream.str();
     m_ThresholdConditionCode = objectHandlerCondition.getThresholdCode(multipleRegimes);
 
     // Build the final vectors of parameter names and variables from model and
     // correctly wrap references to them in newly-generated code strings
-    tie(m_ParamNames, m_Vars) = processModelVariables(componentClass, params.getVariableParams(),
+    tie(m_ParamNames, m_Vars) = processModelVariables(componentClass, variableParams,
                                                       multipleRegimes, {&m_SimCode, &m_ThresholdConditionCode});
-}
-//----------------------------------------------------------------------------
-bool SpineMLGenerator::NeuronModel::getSendPortAlias(const std::string &port, const std::string &suffix, std::string &aliasCode) const
-{
-    // If alias code corresponding to send port isn't found, return false
-    auto iAlias = m_SendPortAliases.find(port);
-    if(iAlias == m_SendPortAliases.end()) {
-        return false;
-    }
-    // Otherwise
-    else {
-        // Wrap and apply suffix to neuron model parameters referenced in alias
-        aliasCode = iAlias->second;
-        for(const auto &p : getParamNames()) {
-            wrapAndReplaceVariableNames(aliasCode, p, p + suffix);
-        }
-
-        // Wrap and apply suffix to neuron model variables referenced in alias
-        for(const auto &v : getVars()) {
-            wrapAndReplaceVariableNames(aliasCode, v.first, v.first + suffix);
-        }
-
-        return true;
-    }
-}
-//----------------------------------------------------------------------------
-bool SpineMLGenerator::NeuronModel::hasAdditionalInputVar(const std::string &port) const
-{
-    auto iVar = std::find_if(m_AdditionalInputVars.begin(), m_AdditionalInputVars.end(),
-                                [port](const std::pair<std::string, std::pair<std::string, double>> &var)
-                                {
-                                    return (var.first == port);
-                                });
-    return (iVar != m_AdditionalInputVars.end());
 }
