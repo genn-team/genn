@@ -189,6 +189,7 @@ void StandardSubstitutions::weightUpdateDynamics(
     const SynapseGroup *sg,
     const VarNameIterCtx &wuVars,
     const DerivedParamNameIterCtx &wuDerivedParams,
+    const ExtraGlobalParamNameIterCtx &wuExtraGlobalParams,
     const string &preIdx, //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
     const string &postIdx, //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
     const string &devPrefix,
@@ -198,11 +199,13 @@ void StandardSubstitutions::weightUpdateDynamics(
          value_substitutions(SDcode, wuVars.nameBegin, wuVars.nameEnd, sg->getWUInitVals());
      }
 
-     // substitute parameter values for parameters in synapseDynamics code
+    // substitute parameter values for parameters in synapseDynamics code
     value_substitutions(SDcode, sg->getWUModel()->getParamNames(), sg->getWUParams());
 
     // substitute values for derived parameters in synapseDynamics code
     value_substitutions(SDcode, wuDerivedParams.nameBegin, wuDerivedParams.nameEnd, sg->getWUDerivedParams());
+    name_substitutions(SDcode, "", wuExtraGlobalParams.nameBegin, wuExtraGlobalParams.nameEnd, sg->getName());
+    substitute(SDcode, "$(addtoinSyn)", "addtoinSyn");
     neuron_substitutions_in_synaptic_code(SDcode, sg, preIdx, postIdx, devPrefix);
     SDcode= ensureFtype(SDcode, ftype);
     checkUnreplacedVariables(SDcode, "synapseDynamics");

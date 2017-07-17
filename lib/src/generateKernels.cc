@@ -729,7 +729,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
 
     if (!model.getSynapseDynamicsGroups().empty()) {
         os << "#define BLOCKSZ_SYNDYN " << synDynBlkSz << endl;
-	
+
         // SynapseDynamics kernel header
         os << "extern \"C\" __global__ void calcSynapseDynamics(";
         for(const auto &p : model.getSynapseDynamicsKernelParameters()) {
@@ -742,9 +742,10 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
 
         // common variables for all cases
         os << "unsigned int id = BLOCKSZ_SYNDYN * blockIdx.x + threadIdx.x;" << std::endl;
+        os << model.getPrecision() << " addtoinSyn;" << std::endl;
+        os << std::endl;
 
         os << "// execute internal synapse dynamics if any" << std::endl;
-        os << std::endl;
 
         bool firstSynapseDynamicsGroup = true;
         for(const auto &s : model.getSynapseDynamicsGroups())
@@ -756,6 +757,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
             if (!wu->getSynapseDynamicsCode().empty()) {
                 // Create iteration context to iterate over the variables and derived parameters
                 DerivedParamNameIterCtx wuDerivedParams(wu->getDerivedParams());
+                ExtraGlobalParamNameIterCtx wuExtraGlobalParams(wu->getExtraGlobalParams());
                 VarNameIterCtx wuVars(wu->getVars());
 
                 os << "// synapse group " << s.first << std::endl;
@@ -790,10 +792,13 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                         name_substitutions(SDcode, "dd_", wuVars.nameBegin, wuVars.nameEnd, s.first + "[" + localID +"]");
                     }
 
-                    StandardSubstitutions::weightUpdateDynamics(SDcode, sg, wuVars, wuDerivedParams,
+                    const std::string postIdx = "dd_ind" + s.first + "[" + localID + "]";
+                    substitute(SDcode, "$(updatelinsyn)", getFloatAtomicAdd(model.getPrecision()) + "(&$(inSyn), $(addtoinSyn))");
+                    substitute(SDcode, "$(inSyn)", "dd_inSyn" + s.first + "[" + postIdx + "]");
+
+                    StandardSubstitutions::weightUpdateDynamics(SDcode, sg, wuVars, wuDerivedParams, wuExtraGlobalParams,
                                                                 "dd_preInd" + s.first +"[" + localID + "]",
-                                                                "dd_ind" + s.first + "[" + localID + "]",
-                                                                "dd_", model.getPrecision());
+                                                                postIdx, "dd_", model.getPrecision());
                     os << SDcode << std::endl;
                 }
                 else { // DENSE
@@ -806,10 +811,14 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                         // name substitute synapse var names in synapseDynamics code
                         name_substitutions(SDcode, "dd_", wuVars.nameBegin, wuVars.nameEnd, s.first + "[" + localID + "]");
                     }
-                    StandardSubstitutions::weightUpdateDynamics(SDcode, sg, wuVars, wuDerivedParams,
+
+                    const std::string postIdx = localID +"%" + to_string(sg->getTrgNeuronGroup()->getNumNeurons());
+                    substitute(SDcode, "$(updatelinsyn)", getFloatAtomicAdd(model.getPrecision()) + "(&$(inSyn), $(addtoinSyn))");
+                    substitute(SDcode, "$(inSyn)", "dd_inSyn" + s.first + "[" + postIdx + "]");
+
+                    StandardSubstitutions::weightUpdateDynamics(SDcode, sg, wuVars, wuDerivedParams, wuExtraGlobalParams,
                                                                 localID +"/" + to_string(sg->getTrgNeuronGroup()->getNumNeurons()),
-                                                                localID +"%" + to_string(sg->getTrgNeuronGroup()->getNumNeurons()),
-                                                                "dd_", model.getPrecision());
+                                                                postIdx, "dd_", model.getPrecision());
                     os << SDcode << std::endl;
                 }
                 os << CodeStream::CB(25);
