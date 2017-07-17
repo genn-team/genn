@@ -32,7 +32,7 @@ GENERATE_SPINEML          =$(GENERATE_SPINEML_PATH)/generateSpineML
 GENERATE_SPINEML          =$(GENERATE_SPINEML_PATH)/generateSpineML_CPU_ONLY
 !ENDIF
 
-GENERATE_SPINEML_SOURCES   = $(SPINEML_PATH)/common/pugixml/pugixml.cpp $(SPINEML_PATH)/generator/main.cc $(SPINEML_PATH)/generator/connectors.cc $(SPINEML_PATH)/generator/objectHandler.cc $(SPINEML_PATH)/generator/modelParams.cc $(SPINEML_PATH)/generator/modelCommon.cc $(SPINEML_PATH)/generator/neuronModel.cc $(SPINEML_PATH)/generator/postsynapticModel.cc $(SPINEML_PATH)/generator/weightUpdateModel.cc
+GENERATE_SPINEML_SOURCES   = $(SPINEML_PATH)/common/pugixml/pugixml.cpp $(SPINEML_PATH)/generator/main.cc $(SPINEML_PATH)/generator/connectors.cc $(SPINEML_PATH)/generator/objectHandler.cc $(SPINEML_PATH)/generator/modelParams.cc $(SPINEML_PATH)/generator/modelCommon.cc $(SPINEML_PATH)/generator/neuronModel.cc $(SPINEML_PATH)/generator/postsynapticModel.cc $(SPINEML_PATH)/generator/weightUpdateModel.cc $(SPINEML_PATH)/generator/passthroughPostsynapticModel.cc $(SPINEML_PATH)/generator/passthroughWeightUpdateModel.cc
 
 # Target rules
 all: $(GENERATE_SPINEML)

@@ -1,6 +1,7 @@
 #pragma once
 
 // Standard includes
+#include <algorithm>
 #include <map>
 #include <set>
 #include <string>
@@ -57,6 +58,16 @@ public:
     bool hasSendPortVariable(const std::string &port) const
     {
         return (m_SendPortVariables.find(port) != m_SendPortVariables.end());
+    }
+
+    bool hasAdditionalInputVar(const std::string &port) const
+    {
+        auto iVar = std::find_if(m_AdditionalInputVars.begin(), m_AdditionalInputVars.end(),
+                                 [port](const std::pair<std::string, std::pair<std::string, double>> &var)
+                                 {
+                                     return (var.first == port);
+                                 });
+        return (iVar != m_AdditionalInputVars.end());
     }
 
     //------------------------------------------------------------------------

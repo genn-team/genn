@@ -27,6 +27,8 @@
 // SpineMLGenerator includes
 #include "modelParams.h"
 #include "neuronModel.h"
+#include "passthroughPostsynapticModel.h"
+#include "passthroughWeightUpdateModel.h"
 #include "postsynapticModel.h"
 #include "weightUpdateModel.h"
 
@@ -172,6 +174,8 @@ int main(int argc,
     std::map<ModelParams::Neuron, NeuronModel> neuronModels;
     std::map<ModelParams::Postsynaptic, PostsynapticModel> postsynapticModels;
     std::map<ModelParams::WeightUpdate, WeightUpdateModel> weightUpdateModels;
+    std::map<std::string, PassthroughWeightUpdateModel> passthroughWeightUpdateModels;
+    std::map<std::string, PassthroughPostsynapticModel> passthroughPostsynapticModels;
 
     // Get the filename of the network and remove extension
     // to get something usable as a network name
@@ -222,12 +226,54 @@ int main(int argc,
         }
     }
 
-    // Loop through populations AGAIN to build projections
+    // Loop through populations AGAIN to build projections and low-level inputs
     for(auto population : spineML.children("LL:Population")) {
+        auto neuron = population.child("LL:Neuron");
+
         // Read source population name from neuron node
-        auto srcPopName = SpineMLUtils::getSafeName(population.child("LL:Neuron").attribute("name").value());
-        const NeuronGroup *srcNeuronGroup = model.findNeuronGroup(srcPopName);
-        const NeuronModel *srcNeuronModel = dynamic_cast<const NeuronModel*>(srcNeuronGroup->getNeuronModel());
+        auto popName = SpineMLUtils::getSafeName(neuron.attribute("name").value());
+        const NeuronGroup *neuronGroup = model.findNeuronGroup(popName);
+        const NeuronModel *neuronModel = dynamic_cast<const NeuronModel*>(neuronGroup->getNeuronModel());
+
+        // Loop through low-level inputs
+        for(auto input : neuron.children("LL:Input")) {
+            auto srcPopName = SpineMLUtils::getSafeName(input.attribute("src").value());
+            const NeuronGroup *srcNeuronGroup = model.findNeuronGroup(srcPopName);
+            const NeuronModel *srcNeuronModel = dynamic_cast<const NeuronModel*>(srcNeuronGroup->getNeuronModel());
+
+            std::string srcPort = input.attribute("src_port").value();
+            std::string dstPort = input.attribute("dst_port").value();
+
+            std::cout << "Low-level input from population:" << srcPopName << "(" << srcPort << ")->" << popName << "(" << dstPort << ")" << std::endl;
+
+            // Either get existing passthrough weight update model or create new one of no suitable models are available
+            const auto &passthroughWeightUpdateModel = getCreateModel(srcPort, passthroughWeightUpdateModels,
+                                                                      srcNeuronModel);
+
+            // Either get existing passthrough postsynaptic model or create new one of no suitable models are available
+            const auto &passthroughPostsynapticModel = getCreateModel(dstPort, passthroughPostsynapticModels,
+                                                                      neuronModel);
+
+            // Determine the GeNN matrix type and number of delay steps
+            SynapseMatrixType mtype;
+            unsigned int delaySteps;
+            unsigned int maxConnections;
+            tie(mtype, delaySteps, maxConnections) = getSynapticMatrixType(basePath, input,
+                                                                           srcNeuronGroup->getNumNeurons(),
+                                                                           neuronGroup->getNumNeurons(),
+                                                                           true, 0.1);
+
+            // Add synapse population to model
+            std::string passthroughSynapsePopName = std::string(srcPopName) + "_" + popName;
+            auto synapsePop = model.addSynapsePopulation(passthroughSynapsePopName, mtype, delaySteps, srcPopName, popName,
+                                                         &passthroughWeightUpdateModel, {}, {},
+                                                         &passthroughPostsynapticModel, {}, {});
+
+            // If matrix uses sparse connectivity set max connections
+            if(mtype & SynapseMatrixConnectivity::SPARSE) {
+                synapsePop->setMaxConnections(maxConnections);
+            }
+        }
 
         // Loop through outgoing projections
         for(auto projection : population.children("LL:Projection")) {
@@ -236,7 +282,7 @@ int main(int argc,
             const NeuronGroup *trgNeuronGroup = model.findNeuronGroup(trgPopName);
             const NeuronModel *trgNeuronModel = dynamic_cast<const NeuronModel*>(trgNeuronGroup->getNeuronModel());
 
-            std::cout << "Projection from population:" << srcPopName << "->" << trgPopName << std::endl;
+            std::cout << "Projection from population:" << popName << "->" << trgPopName << std::endl;
 
             // Get main synapse node
             auto synapse = projection.child("LL:Synapse");
@@ -253,7 +299,7 @@ int main(int argc,
             // Read weight update properties
             std::map<std::string, double> fixedWeightUpdateParamVals;
             ModelParams::WeightUpdate weightUpdateModelParams(basePath, weightUpdate,
-                                                              srcPopName, trgPopName,
+                                                              popName, trgPopName,
                                                               fixedWeightUpdateParamVals);
 
             // Global weight value can be used if there are no variable parameters
@@ -261,7 +307,7 @@ int main(int argc,
 
             // Either get existing postsynaptic model or create new one of no suitable models are available
             const auto &weightUpdateModel = getCreateModel(weightUpdateModelParams, weightUpdateModels,
-                                                           srcNeuronModel, trgNeuronModel);
+                                                           neuronModel, trgNeuronModel);
 
             // Get post synapse
             auto postSynapse = synapse.child("LL:PostSynapse");
@@ -284,13 +330,13 @@ int main(int argc,
             unsigned int delaySteps;
             unsigned int maxConnections;
             tie(mtype, delaySteps, maxConnections) = getSynapticMatrixType(basePath, synapse,
-                                                                           srcNeuronGroup->getNumNeurons(),
+                                                                           neuronGroup->getNumNeurons(),
                                                                            trgNeuronGroup->getNumNeurons(),
                                                                            globalG, 0.1);
 
             // Add synapse population to model
-            std::string synapsePopName = std::string(srcPopName) + "_" + trgPopName;
-            auto synapsePop = model.addSynapsePopulation(synapsePopName, mtype, delaySteps, srcPopName, trgPopName,
+            std::string synapsePopName = std::string(popName) + "_" + trgPopName;
+            auto synapsePop = model.addSynapsePopulation(synapsePopName, mtype, delaySteps, popName, trgPopName,
                                                          &weightUpdateModel, WeightUpdateModel::ParamValues(fixedWeightUpdateParamVals, weightUpdateModel), WeightUpdateModel::VarValues(fixedWeightUpdateParamVals, weightUpdateModel),
                                                          &postsynapticModel, PostsynapticModel::ParamValues(fixedPostsynapticParamVals, postsynapticModel), PostsynapticModel::VarValues(fixedPostsynapticParamVals, postsynapticModel));
 
