@@ -445,10 +445,13 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
 
             // Create iteration context to iterate over the variables and derived parameters
             DerivedParamNameIterCtx wuDerivedParams(wu->getDerivedParams());
+            ExtraGlobalParamNameIterCtx wuExtraGlobalParams(wu->getExtraGlobalParams());
             VarNameIterCtx wuVars(wu->getVars());
 
             string SDcode= wu->getSynapseDynamicsCode();
             substitute(SDcode, "$(t)", "t");
+            substitute(SDcode, "$(updatelinsyn)", "$(inSyn) += $(addtoinSyn)");
+
             if (sg->getMatrixType() & SynapseMatrixConnectivity::SPARSE) { // SPARSE
                 os << "for (int n= 0; n < C" << s.first << ".connN; n++)" << CodeStream::OB(24) << std::endl;
                 if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
@@ -456,10 +459,12 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
                     name_substitutions(SDcode, "", wuVars.nameBegin, wuVars.nameEnd, s.first + "[n]");
                 }
 
-                StandardSubstitutions::weightUpdateDynamics(SDcode, sg, wuVars, wuDerivedParams,
+                const std::string postIdx = "C" + s.first + ".ind[n]";
+                substitute(SDcode, "$(inSyn)", "inSyn" + s.first + "[" + postIdx + "]");
+
+                StandardSubstitutions::weightUpdateDynamics(SDcode, sg, wuVars, wuDerivedParams, wuExtraGlobalParams,
                                                             "C" + s.first + ".preInd[n]",
-                                                            "C" + s.first + ".ind[n]",
-                                                            "", model.getPrecision());
+                                                            postIdx, "", model.getPrecision());
                 os << SDcode << std::endl;
                 os << CodeStream::CB(24);
             }
@@ -473,7 +478,9 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
                                        s.first + "[i*" + to_string(sg->getTrgNeuronGroup()->getNumNeurons()) + "+j]");
                 }
 
-                StandardSubstitutions::weightUpdateDynamics(SDcode, sg, wuVars, wuDerivedParams,
+                substitute(SDcode, "$(inSyn)", "inSyn" + s.first + "[j]");
+
+                StandardSubstitutions::weightUpdateDynamics(SDcode, sg, wuVars, wuDerivedParams, wuExtraGlobalParams,
                                                             "i","j", "", model.getPrecision());
                 os << SDcode << std::endl;
                 os << CodeStream::CB(26);
