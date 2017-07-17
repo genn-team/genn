@@ -801,7 +801,7 @@ void genRunner(const NNmodel &model, //!< Model description
     os << "// global variables" << std::endl;
     os << std::endl;
 
-    os << "unsigned long long iT= 0;" << std::endl;
+    os << "unsigned long long iT;" << std::endl;
     os << model.getPrecision() << " t;" << std::endl;
     if (model.isTimingEnabled()) {
 #ifndef CPU_ONLY
@@ -1117,6 +1117,11 @@ void genRunner(const NNmodel &model, //!< Model description
 #else
     string oB = "", cB = "";
 #endif // _WIN32
+
+    // Initialize time
+    os << "    // reset time" << std::endl;
+    os << "    iT = 0;" << std::endl;
+    os << std::endl;
 
     if (model.getSeed() == 0) {
         os << "    srand((unsigned int) time(NULL));" << std::endl;
