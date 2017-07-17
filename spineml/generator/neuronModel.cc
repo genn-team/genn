@@ -49,27 +49,52 @@ public:
         spikeEventsOutVars.set("portName", m_SendPortSpike.c_str());
         auto spikeEventOut = node.select_node("EventOut[@port=$portName]", &spikeEventsOutVars);
         if(spikeEventOut) {
-            // If there are existing threshold conditions, OR them with this one
-            if(m_ThresholdCodeStream.tellp() > 0) {
-                m_ThresholdCodeStream << " || ";
-            }
-
-            // Write trigger condition AND regime to threshold condition
+            // Add current regime and trigger condition to map
+            // **NOTE** cannot build code immediately as we don't know if there are multiple regimes
             auto triggerCode = node.child("Trigger").child("MathInline");
-            m_ThresholdCodeStream << "(_regimeID == " << currentRegimeID << " && (" << triggerCode.text().get() << "))";
+            if(!m_RegimeThresholds.insert(std::make_pair(currentRegimeID, triggerCode.text().get())).second) {
+                throw std::runtime_error("Only one spike trigger is supported per regime");
+            }
         }
     }
 
     //----------------------------------------------------------------------------
     // Public API
     //----------------------------------------------------------------------------
-    std::string getThresholdCode() const{ return m_ThresholdCodeStream.str(); }
+    std::string getThresholdCode(bool multipleRegimes) const
+    {
+        // If there are multiple regimes
+        std::ostringstream thresholdCodeStream;
+        if(multipleRegimes) {
+            // Loop through them
+            for(const auto &r : m_RegimeThresholds) {
+                // If there are existing threshold conditions, OR them with this one
+                if(thresholdCodeStream.tellp() > 0) {
+                    thresholdCodeStream << " || ";
+                }
+                
+                // Add test, ANDing test for correct regime ID with threshold condition
+                thresholdCodeStream << "(_regimeID == " << r.first << " && (" << r.second << "))";
+            }
+        }
+        // Otherwise, if there are any threshold tests
+        else if(!m_RegimeThresholds.empty()) {
+            if(m_RegimeThresholds.size() > 1) {
+                throw std::runtime_error("Multiple regimes have not been found but there are thresholds specified for different regimes");
+            }
+
+            // Code should simple be that test
+            thresholdCodeStream << "(" << m_RegimeThresholds.begin()->second << ")";
+        }
+        return thresholdCodeStream.str();
+
+    }
 
 private:
     //----------------------------------------------------------------------------
     // Members
     //----------------------------------------------------------------------------
-    std::ostringstream m_ThresholdCodeStream;
+    std::map<unsigned int, std::string> m_RegimeThresholds;
     std::string m_SendPortSpike;
 };
 }
@@ -183,7 +208,7 @@ SpineMLGenerator::NeuronModel::NeuronModel(const ModelParams::Neuron &params)
 
     // Store generated code in class
     m_SimCode = simCodeStream.str();
-    m_ThresholdConditionCode = objectHandlerCondition.getThresholdCode();
+    m_ThresholdConditionCode = objectHandlerCondition.getThresholdCode(multipleRegimes);
 
     // Build the final vectors of parameter names and variables from model and
     // correctly wrap references to them in newly-generated code strings
