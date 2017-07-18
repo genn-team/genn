@@ -260,6 +260,10 @@ void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
             nvccCommand += " -o \"" + cubinPath + "\" \"" + runnerPath + "\"\"";
 #else
             nvccFlags += " -I\"$GENN_PATH/lib/include\"";
+
+#ifdef MPI_ENABLE
+            nvccFlags += " -I\"$MPI_PATH/include\"";
+#endif
             string runnerPath = path + "/" + model.getName() + "_CODE/runner.cc";
             string cubinPath = path + "/runner.cubin";
             string nvccCommand = "\"" NVCC "\" " + nvccFlags;

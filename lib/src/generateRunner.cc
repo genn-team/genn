@@ -1078,9 +1078,17 @@ void genRunner(const NNmodel &model, //!< Model description
     os << "*/" << std::endl;
     os << "//-------------------------------------------------------------------------" << std::endl << std::endl;
 
+#ifdef MPI_ENABLE
+    os << "#include <mpi.h>" << std::endl;
+    os << std::endl;
+#endif
     os << "void initialize()" << std::endl;
     os << "{" << std::endl;
 
+#ifdef MPI_ENABLE
+    os << "    MPI_Init(NULL, NULL);" << std::endl;
+    os << "    printf(\"#MPI initialized!\\n\");" << std::endl;
+#endif
     // Extra braces around Windows for loops to fix https://support.microsoft.com/en-us/kb/315481
 #ifdef _WIN32
     string oB = "{", cB = "}";
@@ -2349,6 +2357,8 @@ void genMakefile(const NNmodel &model, //!< Model description
     os << "NVCCFLAGS      :=" << nvccFlags << endl;
     os << endl;
     os << "INCLUDEFLAGS   =-I\"$(GENN_PATH)/lib/include\"" << endl;
+    os << endl;
+    os << "INCLUDEFLAGS   +=-I\"$(MPI_PATH)/include\"" << endl;
     os << endl;
     os << "all: runner.o" << endl;
     os << endl;

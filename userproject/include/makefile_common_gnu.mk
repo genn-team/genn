@@ -62,7 +62,11 @@ ifndef CPU_ONLY
         ifeq ($(OS_SIZE),32)
             LINK_FLAGS  +=-L"$(GENN_PATH)/lib/lib" -L"$(CUDA_PATH)/lib" -lgenn -lcuda -lcudart
         else
-            LINK_FLAGS  +=-L"$(GENN_PATH)/lib/lib" -L"$(CUDA_PATH)/lib64" -lgenn -lcuda -lcudart
+            ifndef MPI_ENABLE
+                LINK_FLAGS   :=-L"$(GENN_PATH)/lib/lib" -L"$(CUDA_PATH)/lib64" -lgenn -lcuda -lcudart
+            else
+                LINK_FLAGS   :=-L"$(GENN_PATH)/lib/lib" -L"$(CUDA_PATH)/lib64" -lgenn -lcuda -lcudart $(shell mpiCC -showme:link)
+            endif
         endif
     endif
 else
