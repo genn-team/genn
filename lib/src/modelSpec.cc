@@ -814,9 +814,10 @@ void NNmodel::finalize()
         }
 
         // Make extra global parameter lists
-        s.second.addExtraGlobalSynapseParams(synapseKernelParameters);
         s.second.addExtraGlobalNeuronParams(neuronKernelParameters);
-
+        s.second.addExtraGlobalSynapseParams(synapseKernelParameters);
+        s.second.addExtraGlobalPostLearnParams(simLearnPostKernelParameters);
+        s.second.addExtraGlobalSynapseDynamicsParams(synapseDynamicsKernelParameters);
     }
 
     setPopulationSums();
