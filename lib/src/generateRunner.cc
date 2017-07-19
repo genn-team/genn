@@ -1466,6 +1466,10 @@ void genRunner(const NNmodel &model, //!< Model description
 #ifndef CPU_ONLY
     os << "  cudaDeviceReset();" << std::endl;
 #endif
+#ifdef MPI_ENABLE
+    os << "    MPI_Finalize();" << std::endl;
+    os << "    printf(\"#MPI finalized!\\n\");" << std::endl;
+#endif
     os << "}" << std::endl;
     os << std::endl;
 

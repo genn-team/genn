@@ -24,9 +24,9 @@ randomGen R;
 
 classIzh::classIzh()
 {
-  modelDefinition(model);
   allocateMem();
   initialize();
+  modelDefinition(model);
   sumPExc = 0;
   sumPInh = 0;
 }

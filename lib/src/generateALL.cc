@@ -557,6 +557,9 @@ void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
 }
 #endif
 
+#ifdef MPI_ENABLE
+#include <mpi.h>
+#endif
 
 //--------------------------------------------------------------------------
 /*! \brief Main entry point for the generateALL executable that generates
@@ -596,6 +599,11 @@ int main(int argc,     //!< number of arguments; expected to be 2
         CHECK_CUDA_ERRORS(cudaGetDeviceProperties(&(deviceProp[device]), device));
     }
 #endif // CPU_ONLY
+
+#ifdef MPI_ENABLE
+    MPI_Init(NULL, NULL);
+    printf("#MPI initialized!\n");
+#endif
 
     NNmodel *model = new NNmodel();
 #ifdef DT

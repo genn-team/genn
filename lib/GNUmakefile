@@ -70,14 +70,22 @@ ARFLAGS                  :=-rcs
 
 # Global include and link flags
 ifndef CPU_ONLY
-    INCLUDE_FLAGS        :=-I"$(INC_PATH)" -I"$(CUDA_PATH)/include"
+    ifndef MPI_ENABLE
+        INCLUDE_FLAGS        :=-I"$(INC_PATH)" -I"$(CUDA_PATH)/include"
+    else
+        INCLUDE_FLAGS        :=-I"$(INC_PATH)" -I"$(CUDA_PATH)/include" -I"$(MPI_PATH)/include"
+    endif
     ifeq ($(DARWIN),DARWIN)
         LINK_FLAGS       :=-rpath $(CUDA_PATH)/lib -L"$(LIBGENN_PATH)" -L"$(CUDA_PATH)/lib" -lgenn -lcuda -lcudart -lstdc++ -lc++
     else
         ifeq ($(OS_SIZE),32)
             LINK_FLAGS   :=-L"$(LIBGENN_PATH)" -L"$(CUDA_PATH)/lib" -lgenn -lcuda -lcudart
         else
-            LINK_FLAGS   :=-L"$(LIBGENN_PATH)" -L"$(CUDA_PATH)/lib64" -lgenn -lcuda -lcudart
+            ifndef MPI_ENABLE
+                LINK_FLAGS   :=-L"$(LIBGENN_PATH)" -L"$(CUDA_PATH)/lib64" -lgenn -lcuda -lcudart
+            else
+                LINK_FLAGS   :=-L"$(LIBGENN_PATH)" -L"$(CUDA_PATH)/lib64" -L"$(MPI_PATH)/lib64" -lgenn -lcuda -lcudart $(shell mpiCC -showme:link)
+            endif
         endif
     endif
 else
@@ -98,11 +106,21 @@ endif
 
 all: $(GENERATEALL)
 
+ifndef MPI_ENABLE
 $(GENERATEALL): $(LIBGENN) always_compile
 	$(CXX) $(CXXFLAGS) -DMODEL=\"$(MODEL)\" -o $@ $(SRC_PATH)/generate*.cc $(INCLUDE_FLAGS) $(LINK_FLAGS)
+else
+$(GENERATEALL): $(LIBGENN) always_compile
+	mpiCC $(CXXFLAGS) -DMODEL=\"$(MODEL)\" -o $@ $(SRC_PATH)/generate*.cc $(INCLUDE_FLAGS) $(LINK_FLAGS)
+endif
 
 $(LIBGENN): $(LIBGENN_OBJ_PATH) $(LIBGENN_OBJ) $(LIBGENN_PATH)
 	$(AR) $(ARFLAGS) $@ $(LIBGENN_OBJ)
+
+ifdef MPI_ENABLE
+$(LIBGENN_OBJ_PATH)/modelSpec.o: $(SRC_PATH)/modelSpec.cc
+	mpiCC $(CXXFLAGS) -MMD -MP -c -o $@ $< $(INCLUDE_FLAGS)
+endif
 
 $(LIBGENN_OBJ_PATH)/%.o: $(SRC_PATH)/%.cc
 	$(CXX) $(CXXFLAGS) -MMD -MP -c -o $@ $< $(INCLUDE_FLAGS)
