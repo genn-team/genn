@@ -212,7 +212,11 @@ NeuronGroup *NNmodel::addNeuronPopulation(
         gennError("The number of variable initial values for neuron group " + name + " does not match that of their neuron type, " + to_string(ini.size()) + " != " + to_string(nModels[type].varNames.size()));
     }
 
-    bool isLocal = (hostID == 0) && (deviceID == 0);
+    int MPIHostID = 0;
+#ifdef MPI_ENABLE
+    MPI_Comm_rank(MPI_COMM_WORLD, &MPIHostID);
+#endif
+    bool isLocal = (hostID == MPIHostID) && (deviceID == 0);
     if (isLocal) {
         auto result = m_LocalNeuronGroups.insert(
                 pair<string, NeuronGroup>(name, NeuronGroup(name, nNo, new NeuronModels::LegacyWrapper(type), p, ini)));

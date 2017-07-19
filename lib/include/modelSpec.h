@@ -33,6 +33,9 @@ Part of the code generation and generated code sections.
 #include <set>
 #include <string>
 #include <vector>
+#ifdef MPI_ENABLE
+#include <mpi.h>
+#endif
 
 using namespace std;
 
@@ -185,7 +188,11 @@ public:
         }
 
         // Add neuron group
-        bool isLocal = (hostID == 0) && (deviceID == 0);
+        int MPIHostID = 0;
+#ifdef MPI_ENABLE
+        MPI_Comm_rank(MPI_COMM_WORLD, &MPIHostID);
+#endif
+        bool isLocal = (hostID == MPIHostID) && (deviceID == 0);
         if (isLocal) {
             auto result = m_LocalNeuronGroups.insert(
                     pair<string, NeuronGroup>(
