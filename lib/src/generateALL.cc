@@ -621,5 +621,10 @@ int main(int argc,     //!< number of arguments; expected to be 2
 #endif // CPU_ONLY
     generate_model_runner(*model, path);
 
+#ifdef MPI_ENABLE
+    MPI_Finalize();
+    printf("#MPI finalized!\n");
+#endif
+
     return EXIT_SUCCESS;
 }
