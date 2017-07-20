@@ -217,7 +217,7 @@ public:
     const map<string, string> &getSynapseKernelParameters() const{ return synapseKernelParameters; }
 
     //! Gets std::map containing names and types of each parameter that should be passed through to the postsynaptic learning kernel
-    const map<string, string> &getSimLearnPostKernelParameters() const{ return synapseDynamicsKernelParameters; }
+    const map<string, string> &getSimLearnPostKernelParameters() const{ return simLearnPostKernelParameters; }
 
     //! Gets std::map containing names and types of each parameter that should be passed through to the synapse dynamics kernel
     const map<string, string> &getSynapseDynamicsKernelParameters() const{ return synapseDynamicsKernelParameters; }

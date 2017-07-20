@@ -166,6 +166,21 @@ bool SynapseGroup::isPSAtomicAddRequired(unsigned int blockSize) const
     return false;
 }
 
+void SynapseGroup::addExtraGlobalNeuronParams(std::map<std::string, std::string> &kernelParameters) const
+{
+    // Loop through list of extra global weight update parameters
+    for(auto const &p : getWUModel()->getExtraGlobalParams()) {
+        // If it's not already in set
+        std::string pnamefull = p.first + getName();
+        if (kernelParameters.find(pnamefull) == kernelParameters.end()) {
+            // If the presynaptic neuron requires this parameter in it's spike event conditions, add it
+            if (getSrcNeuronGroup()->isParamRequiredBySpikeEventCondition(pnamefull)) {
+                kernelParameters.insert(pair<string, string>(pnamefull, p.second));
+            }
+        }
+    }
+}
+
 void SynapseGroup::addExtraGlobalSynapseParams(std::map<std::string, std::string> &kernelParameters) const
 {
     // Synapse kernel
@@ -180,9 +195,11 @@ void SynapseGroup::addExtraGlobalSynapseParams(std::map<std::string, std::string
     // Finally add any weight update model extra global
     // parameters referenced in the sim to the map of kernel paramters
     addExtraGlobalSimParams(getName(), "", getWUModel()->getExtraGlobalParams(), kernelParameters);
+}
 
-    // Learn post
-    // -----------
+
+void SynapseGroup::addExtraGlobalPostLearnParams(std::map<string, string> &kernelParameters) const
+{
     // Add any of the pre or postsynaptic neuron group's extra global
     // parameters referenced in the sim code to the map of kernel parameters
     addExtraGlobalPostLearnParams(getSrcNeuronGroup()->getName(), "_pre", getSrcNeuronGroup()->getNeuronModel()->getExtraGlobalParams(),
@@ -194,8 +211,10 @@ void SynapseGroup::addExtraGlobalSynapseParams(std::map<std::string, std::string
     // parameters referenced in the sim to the map of kernel paramters
     addExtraGlobalPostLearnParams(getName(), "", getWUModel()->getExtraGlobalParams(), kernelParameters);
 
-    // Synapse dynamics
-    // ----------------
+}
+
+void SynapseGroup::addExtraGlobalSynapseDynamicsParams(std::map<string, string> &kernelParameters) const
+{
     // Add any of the pre or postsynaptic neuron group's extra global
     // parameters referenced in the sim code to the map of kernel parameters
     addExtraGlobalSynapseDynamicsParams(getSrcNeuronGroup()->getName(), "_pre", getSrcNeuronGroup()->getNeuronModel()->getExtraGlobalParams(),
@@ -206,21 +225,6 @@ void SynapseGroup::addExtraGlobalSynapseParams(std::map<std::string, std::string
     // Finally add any weight update model extra global
     // parameters referenced in the sim to the map of kernel paramters
     addExtraGlobalSynapseDynamicsParams(getName(), "", getWUModel()->getExtraGlobalParams(), kernelParameters);
-}
-
-void SynapseGroup::addExtraGlobalNeuronParams(std::map<std::string, std::string> &kernelParameters) const
-{
-    // Loop through list of extra global weight update parameters
-    for(auto const &p : getWUModel()->getExtraGlobalParams()) {
-        // If it's not already in set
-        std::string pnamefull = p.first + getName();
-        if (kernelParameters.find(pnamefull) == kernelParameters.end()) {
-            // If the presynaptic neuron requires this parameter in it's spike event conditions, add it
-            if (getSrcNeuronGroup()->isParamRequiredBySpikeEventCondition(pnamefull)) {
-                kernelParameters.insert(pair<string, string>(pnamefull, p.second));
-            }
-        }
-    }
 }
 
 void SynapseGroup::addExtraGlobalSimParams(const std::string &prefix, const std::string &suffix, const NewModels::Base::StringPairVec &extraGlobalParameters,

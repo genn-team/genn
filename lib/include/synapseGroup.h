@@ -106,8 +106,10 @@ public:
     // **THINK** this is very cuda-specific
     bool isPSAtomicAddRequired(unsigned int blockSize) const;
 
-    void addExtraGlobalSynapseParams(std::map<string, string> &kernelParameters) const;
     void addExtraGlobalNeuronParams(std::map<string, string> &kernelParameters) const;
+    void addExtraGlobalSynapseParams(std::map<string, string> &kernelParameters) const;
+    void addExtraGlobalPostLearnParams(std::map<string, string> &kernelParameters) const;
+    void addExtraGlobalSynapseDynamicsParams(std::map<string, string> &kernelParameters) const;
 
     // **THINK** do these really belong here - they are very code-generation specific
     std::string getOffsetPre() const;
