@@ -91,9 +91,9 @@ void neuronReset(
 void weightUpdateThresholdCondition(
     std::string &eCode,
     const SynapseGroup &sg,
-    const DerivedParamNameIterCtx &nmDerivedParams,
-    const ExtraGlobalParamNameIterCtx &nmExtraGlobalParams,
-   const string &preIdx, //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
+    const DerivedParamNameIterCtx &wuDerivedParams,
+    const ExtraGlobalParamNameIterCtx &wuExtraGlobalParams,
+    const string &preIdx, //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
     const string &postIdx, //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
     const string &devPrefix,
     const std::string &ftype);
@@ -114,6 +114,7 @@ void weightUpdateDynamics(
     const SynapseGroup *sg,
     const VarNameIterCtx &wuVars,
     const DerivedParamNameIterCtx &wuDerivedParams,
+    const ExtraGlobalParamNameIterCtx &wuExtraGlobalParams,
     const string &preIdx, //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
     const string &postIdx, //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
     const string &devPrefix,

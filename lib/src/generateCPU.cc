@@ -417,72 +417,85 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
     os << "*/" << std::endl;
     os << "//-------------------------------------------------------------------------" << std::endl << std::endl;
 
-    // synapse dynamics function
-    os << "void calcSynapseDynamicsCPU(" << model.getPrecision() << " t)" << std::endl;
-    os << CodeStream::OB(1000);
-    os << "// execute internal synapse dynamics if any" << std::endl;
+    if (!model.getSynapseDynamicsGroups().empty()) {
+        // synapse dynamics function
+        os << "void calcSynapseDynamicsCPU(" << model.getPrecision() << " t)" << std::endl;
+        os << CodeStream::OB(1000);
 
-    for(const auto &s : model.getSynapseDynamicsGroups())
-    {
-        const SynapseGroup *sg = model.findSynapseGroup(s.first);
-        const auto *wu = sg->getWUModel();
+        os << model.getPrecision() << " addtoinSyn;" << std::endl;
+        os << std::endl;
 
-        // there is some internal synapse dynamics
-        if (!wu->getSynapseDynamicsCode().empty()) {
+        os << "// execute internal synapse dynamics if any" << std::endl;
 
-            os << "// synapse group " << s.first << std::endl;
-            os << CodeStream::OB(1005);
+        for(const auto &s : model.getSynapseDynamicsGroups())
+        {
+            const SynapseGroup *sg = model.findSynapseGroup(s.first);
+            const auto *wu = sg->getWUModel();
 
-            if (sg->getSrcNeuronGroup()->isDelayRequired()) {
-                os << "unsigned int delaySlot = (spkQuePtr" << sg->getSrcNeuronGroup()->getName();
-                os << " + " << (sg->getSrcNeuronGroup()->getNumDelaySlots() - sg->getDelaySteps());
-                os << ") % " << sg->getSrcNeuronGroup()->getNumDelaySlots() << ";" << std::endl;
-            }
+            // there is some internal synapse dynamics
+            if (!wu->getSynapseDynamicsCode().empty()) {
 
-            if (!wu->getSynapseDynamicsSuppportCode().empty()) {
-                os << "using namespace " << s.first << "_weightupdate_synapseDynamics;" << std::endl;
-            }
+                os << "// synapse group " << s.first << std::endl;
+                os << CodeStream::OB(1005);
 
-            // Create iteration context to iterate over the variables and derived parameters
-            DerivedParamNameIterCtx wuDerivedParams(wu->getDerivedParams());
-            VarNameIterCtx wuVars(wu->getVars());
-
-            string SDcode= wu->getSynapseDynamicsCode();
-            substitute(SDcode, "$(t)", "t");
-            if (sg->getMatrixType() & SynapseMatrixConnectivity::SPARSE) { // SPARSE
-                os << "for (int n= 0; n < C" << s.first << ".connN; n++)" << CodeStream::OB(24) << std::endl;
-                if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
-                    // name substitute synapse var names in synapseDynamics code
-                    name_substitutions(SDcode, "", wuVars.nameBegin, wuVars.nameEnd, s.first + "[n]");
+                if (sg->getSrcNeuronGroup()->isDelayRequired()) {
+                    os << "unsigned int delaySlot = (spkQuePtr" << sg->getSrcNeuronGroup()->getName();
+                    os << " + " << (sg->getSrcNeuronGroup()->getNumDelaySlots() - sg->getDelaySteps());
+                    os << ") % " << sg->getSrcNeuronGroup()->getNumDelaySlots() << ";" << std::endl;
                 }
 
-                StandardSubstitutions::weightUpdateDynamics(SDcode, sg, wuVars, wuDerivedParams,
-                                                            "C" + s.first + ".preInd[n]",
-                                                            "C" + s.first + ".ind[n]",
-                                                            "", model.getPrecision());
-                os << SDcode << std::endl;
-                os << CodeStream::CB(24);
-            }
-            else { // DENSE
-                os << "for (int i = 0; i < " <<  sg->getSrcNeuronGroup()->getNumNeurons() << "; i++)" << CodeStream::OB(25);
-                os << "for (int j = 0; j < " <<  sg->getTrgNeuronGroup()->getNumNeurons() << "; j++)" << CodeStream::OB(26);
-                os << "// loop through all synapses" << endl;
-                // substitute initial values as constants for synapse var names in synapseDynamics code
-                if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
-                    name_substitutions(SDcode, "", wuVars.nameBegin, wuVars.nameEnd,
-                                       s.first + "[i*" + to_string(sg->getTrgNeuronGroup()->getNumNeurons()) + "+j]");
+                if (!wu->getSynapseDynamicsSuppportCode().empty()) {
+                    os << "using namespace " << s.first << "_weightupdate_synapseDynamics;" << std::endl;
                 }
 
-                StandardSubstitutions::weightUpdateDynamics(SDcode, sg, wuVars, wuDerivedParams,
-                                                            "i","j", "", model.getPrecision());
-                os << SDcode << std::endl;
-                os << CodeStream::CB(26);
-                os << CodeStream::CB(25);
+                // Create iteration context to iterate over the variables and derived parameters
+                DerivedParamNameIterCtx wuDerivedParams(wu->getDerivedParams());
+                ExtraGlobalParamNameIterCtx wuExtraGlobalParams(wu->getExtraGlobalParams());
+                VarNameIterCtx wuVars(wu->getVars());
+
+                string SDcode= wu->getSynapseDynamicsCode();
+                substitute(SDcode, "$(t)", "t");
+                substitute(SDcode, "$(updatelinsyn)", "$(inSyn) += $(addtoinSyn)");
+
+                if (sg->getMatrixType() & SynapseMatrixConnectivity::SPARSE) { // SPARSE
+                    os << "for (int n= 0; n < C" << s.first << ".connN; n++)" << CodeStream::OB(24) << std::endl;
+                    if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
+                        // name substitute synapse var names in synapseDynamics code
+                        name_substitutions(SDcode, "", wuVars.nameBegin, wuVars.nameEnd, s.first + "[n]");
+                    }
+
+                    const std::string postIdx = "C" + s.first + ".ind[n]";
+                    substitute(SDcode, "$(inSyn)", "inSyn" + s.first + "[" + postIdx + "]");
+
+                    StandardSubstitutions::weightUpdateDynamics(SDcode, sg, wuVars, wuDerivedParams, wuExtraGlobalParams,
+                                                                "C" + s.first + ".preInd[n]",
+                                                                postIdx, "", model.getPrecision());
+                    os << SDcode << std::endl;
+                    os << CodeStream::CB(24);
+                }
+                else { // DENSE
+                    os << "for (int i = 0; i < " <<  sg->getSrcNeuronGroup()->getNumNeurons() << "; i++)" << CodeStream::OB(25);
+                    os << "for (int j = 0; j < " <<  sg->getTrgNeuronGroup()->getNumNeurons() << "; j++)" << CodeStream::OB(26);
+                    os << "// loop through all synapses" << endl;
+                    // substitute initial values as constants for synapse var names in synapseDynamics code
+                    if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
+                        name_substitutions(SDcode, "", wuVars.nameBegin, wuVars.nameEnd,
+                                        s.first + "[i*" + to_string(sg->getTrgNeuronGroup()->getNumNeurons()) + "+j]");
+                    }
+
+                    substitute(SDcode, "$(inSyn)", "inSyn" + s.first + "[j]");
+
+                    StandardSubstitutions::weightUpdateDynamics(SDcode, sg, wuVars, wuDerivedParams, wuExtraGlobalParams,
+                                                                "i","j", "", model.getPrecision());
+                    os << SDcode << std::endl;
+                    os << CodeStream::CB(26);
+                    os << CodeStream::CB(25);
+                }
+                os << CodeStream::CB(1005);
             }
-            os << CodeStream::CB(1005);
         }
+        os << CodeStream::CB(1000);
     }
-    os << CodeStream::CB(1000);
 
     // synapse function header
     os << "void calcSynapsesCPU(" << model.getPrecision() << " t)" << std::endl;
@@ -501,7 +514,7 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
     os << model.getPrecision() << " addtoinSyn;" << std::endl;
     os << std::endl;
 
-   for(const auto &s : model.getSynapseGroups()) {
+    for(const auto &s : model.getSynapseGroups()) {
         os << "// synapse group " << s.first << std::endl;
         os << CodeStream::OB(1006);
 
