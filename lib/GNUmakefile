@@ -120,6 +120,8 @@ $(LIBGENN): $(LIBGENN_OBJ_PATH) $(LIBGENN_OBJ) $(LIBGENN_PATH)
 ifdef MPI_ENABLE
 $(LIBGENN_OBJ_PATH)/modelSpec.o: $(SRC_PATH)/modelSpec.cc
 	mpiCC $(CXXFLAGS) -MMD -MP -c -o $@ $< $(INCLUDE_FLAGS)
+$(LIBGENN_OBJ_PATH)/generateMPI.o: $(SRC_PATH)/generateMPI.cc
+	mpiCC $(CXXFLAGS) -MMD -MP -c -o $@ $< $(INCLUDE_FLAGS)
 endif
 
 $(LIBGENN_OBJ_PATH)/%.o: $(SRC_PATH)/%.cc

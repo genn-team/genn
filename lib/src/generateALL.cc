@@ -25,6 +25,7 @@
 #include MODEL
 #include "generateALL.h"
 #include "generateRunner.h"
+#include "generateMPI.h"
 #include "generateCPU.h"
 #include "generateKernels.h"
 #include "modelSpec.h"
@@ -61,6 +62,7 @@ void generate_model_runner(const NNmodel &model,  //!< Model description
   genDefinitions(model, path);
   genSupportCode(model, path);
   genRunner(model, path);
+  genMPI(model, path);
 
 #ifndef CPU_ONLY
   // GPU specific code generation
