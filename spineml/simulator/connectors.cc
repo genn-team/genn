@@ -231,28 +231,28 @@ unsigned int SpineMLSimulator::Connectors::create(const pugi::xml_node &node, un
 {
     auto oneToOne = node.child("OneToOneConnection");
     if(oneToOne) {
-        if(sparseProjection != nullptr) {
+        if(sparseProjection != nullptr && allocateFn != nullptr) {
             return createOneToOneSparse(oneToOne, numPre, numPost,
                                         *sparseProjection, allocateFn);
         }
         else {
-            throw std::runtime_error("OneToOneConnection does not have corresponding SparseProjection structure");
+            throw std::runtime_error("OneToOneConnection does not have corresponding SparseProjection structure and allocate function");
         }
     }
 
     auto allToAll = node.child("AllToAllConnection");
     if(allToAll) {
-        if(sparseProjection == nullptr) {
+        if(sparseProjection == nullptr && allocateFn == nullptr) {
             return (numPre * numPost);
         }
         else {
-            throw std::runtime_error("AllToAllConnection should not have SparseProjection structure");
+            throw std::runtime_error("AllToAllConnection should not have SparseProjection structure or allocate function");
         }
     }
 
     auto fixedProbability = node.child("FixedProbabilityConnection");
     if(fixedProbability) {
-        if(sparseProjection != nullptr) {
+        if(sparseProjection != nullptr && allocateFn != nullptr) {
             return createFixedProbabilitySparse(fixedProbability, numPre, numPost,
                                                 *sparseProjection, allocateFn);
         }
@@ -260,18 +260,18 @@ unsigned int SpineMLSimulator::Connectors::create(const pugi::xml_node &node, un
             return (numPre * numPost);
         }
         else {
-            throw std::runtime_error("Unless connection probability is 1.0, FixedProbabilityConnection requires SparseProjection structure");
+            throw std::runtime_error("Unless connection probability is 1.0, FixedProbabilityConnection requires SparseProjection structure and allocate function");
         }
     }
 
     auto connectionList = node.child("ConnectionList");
     if(connectionList) {
-        if(sparseProjection != nullptr) {
+        if(sparseProjection != nullptr && allocateFn != nullptr) {
             return createListSparse(connectionList, numPre, numPost,
                                     *sparseProjection, allocateFn, basePath);
         }
         else {
-            throw std::runtime_error("ConnectionList does not have corresponding SparseProjection structure");
+            throw std::runtime_error("ConnectionList does not have corresponding SparseProjection structure and allocate function");
         }
     }
 
