@@ -154,10 +154,9 @@ unsigned int createListSparse(const pugi::xml_node &node, unsigned int numPre, u
 
     // If connectivity is specified using a binary file
     if(binaryFile) {
-        // If each synapse
-        if(binaryFile.attribute("explicit_delay_flag").as_uint() != 0) {
-            throw std::runtime_error("GeNN does not currently support individual delays");
-        }
+        // If there are individual delays then each synapse is 3 words rather than 2
+        const bool explicitDelay = (binaryFile.attribute("explicit_delay_flag").as_uint() != 0);
+        const unsigned int wordsPerSynapse = explicitDelay ? 3 : 2;
 
         // Read binary connection filename from node
         std::string filename = (basePath / binaryFile.attribute("file_name").value()).str();
@@ -168,13 +167,16 @@ unsigned int createListSparse(const pugi::xml_node &node, unsigned int numPre, u
             throw std::runtime_error("Cannot open binary connection file:" + filename);
         }
 
-        // Create 1Mbyte buffer to hold pre and postsynaptic indicces
-        uint32_t connectionBuffer[262144];
+        // Create approximately 1Mbyte buffer to hold pre and postsynaptic indices
+        // **NOTE** this is also a multiple of both 2 and 3 so
+        // will hold a whole number of either format of synapse
+        constexpr unsigned int  bufferSize = 2 * 3 * 43690;
+        uint32_t connectionBuffer[bufferSize];
 
         // Loop through binary file
-        for(size_t remainingWords = numConnections * 2; remainingWords > 0;) {
+        for(size_t remainingWords = numConnections * wordsPerSynapse; remainingWords > 0;) {
             // Read a block into buffer
-            const size_t blockWords = std::min<size_t>(262144, remainingWords);
+            const size_t blockWords = std::min<size_t>(bufferSize, remainingWords);
             input.read(reinterpret_cast<char*>(&connectionBuffer[0]), blockWords * sizeof(uint32_t));
 
             // Check block was read succesfully
@@ -183,7 +185,7 @@ unsigned int createListSparse(const pugi::xml_node &node, unsigned int numPre, u
             }
 
             // Loop through synapses in buffer and add to projection
-            for(size_t w = 0; w < blockWords; w += 2) {
+            for(size_t w = 0; w < blockWords; w += wordsPerSynapse) {
                 addSynapseToSparseProjection(connectionBuffer[w], connectionBuffer[w + 1],
                                              numPre, sparseProjection);
             }
@@ -207,6 +209,8 @@ unsigned int createListSparse(const pugi::xml_node &node, unsigned int numPre, u
         const unsigned int rowEndIndex = sparseProjection.indInG[i + 1];
         std::sort(&sparseProjection.ind[rowStartIndex], &sparseProjection.ind[rowEndIndex]);
     }
+
+    std::cout << "\tList connector with " << numConnections << " sparse synapses" << std::endl;
 
     // Check connection building has produced a data structure with the right number of synapses
     assert(sparseProjection.indInG[numPre] == numConnections);
