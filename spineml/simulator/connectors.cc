@@ -25,9 +25,13 @@
 //------------------------------------------------------------------------
 namespace
 {
-void addSynapseToSparseProjection(unsigned int i, unsigned int j, unsigned int numPre,
+void addSynapseToSparseProjection(unsigned int i, unsigned int j,
+                                  unsigned int numPre, unsigned int numPost,
                                   SparseProjection &sparseProjection)
 {
+    assert(i < numPre);
+    assert(j < numPost);
+
     // Get index of current end of row in sparse projection
     const unsigned int rowEndIndex = sparseProjection.indInG[i + 1];
 
@@ -134,7 +138,7 @@ unsigned int createOneToOneSparse(const pugi::xml_node &, unsigned int numPre, u
     return numPre;
 }
 //------------------------------------------------------------------------
-unsigned int createListSparse(const pugi::xml_node &node, unsigned int numPre, unsigned int,
+unsigned int createListSparse(const pugi::xml_node &node, unsigned int numPre, unsigned int numPost,
                               SparseProjection &sparseProjection, SpineMLSimulator::Connectors::AllocateFn allocateFn,
                               const filesystem::path &basePath)
 {
@@ -187,7 +191,7 @@ unsigned int createListSparse(const pugi::xml_node &node, unsigned int numPre, u
             // Loop through synapses in buffer and add to projection
             for(size_t w = 0; w < blockWords; w += wordsPerSynapse) {
                 addSynapseToSparseProjection(connectionBuffer[w], connectionBuffer[w + 1],
-                                             numPre, sparseProjection);
+                                             numPre, numPost, sparseProjection);
             }
 
             // Subtract words in block from totalConnectors
@@ -199,7 +203,7 @@ unsigned int createListSparse(const pugi::xml_node &node, unsigned int numPre, u
         // Loop through connections
         for(auto c : connections) {
             addSynapseToSparseProjection(c.attribute("src_neuron").as_uint(), c.attribute("trg_neuron").as_uint(),
-                                         numPre, sparseProjection);
+                                         numPre, numPost, sparseProjection);
         }
     }
 
