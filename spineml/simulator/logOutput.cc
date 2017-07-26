@@ -121,7 +121,7 @@ SpineMLSimulator::LogOutput::Analogue::Analogue(const pugi::xml_node &node, doub
     if(m_Indices.empty()) {
         auto logAll = report.append_child("LogAll");
         logAll.append_attribute("size").set_value(popSize);
-        logAll.append_attribute("heading").set_value(port.c_str());
+        logAll.append_attribute("headings").set_value(port.c_str());
         logAll.append_attribute("dims").set_value("");
         logAll.append_attribute("type").set_value(SpineMLTypeName<scalar>::name);
     }
