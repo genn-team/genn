@@ -567,9 +567,36 @@ int main(int argc, char *argv[])
 
         // Loop through populations AGAIN to build synapse population properties
         for(auto population : networkSpineML.children("LL:Population")) {
+            auto neuron = population.child("LL:Neuron");
+
             // Read source population name from neuron node
-            const char *srcPopName = population.child("LL:Neuron").attribute("name").value();
-            const unsigned int srcPopSize = getComponentSize(srcPopName, componentSizes);
+            const char *popName = neuron.attribute("name").value();
+            const unsigned int popSize = getComponentSize(popName, componentSizes);
+
+            // Loop through low-level inputs
+            for(auto input : neuron.children("LL:Input")) {
+                auto srcPopName = SpineMLUtils::getSafeName(input.attribute("src").value());
+                const unsigned int srcPopSize = getComponentSize(srcPopName, componentSizes);
+
+                std::string srcPort = input.attribute("src_port").value();
+                std::string dstPort = input.attribute("dst_port").value();
+
+                std::cout << "Low-level input from population:" << srcPopName << "(" << srcPort << ")->" << popName << "(" << dstPort << ")" << std::endl;
+
+                std::string geNNSynPopName = std::string(srcPopName) + "_" + srcPort + "_" + popName + "_"  + dstPort;
+
+                // Find allocate function
+                Connectors::AllocateFn allocateFn = (Connectors::AllocateFn)getLibrarySymbol(modelLibrary, ("allocate" + geNNSynPopName).c_str());
+                if(allocateFn == nullptr) {
+                    throw std::runtime_error("Cannot find allocate function for synapse population:" + geNNSynPopName);
+                }
+
+                // Find sparse projection
+                SparseProjection *sparseProjection = (SparseProjection*)getLibrarySymbol(modelLibrary, ("C" + geNNSynPopName).c_str());
+
+                // Create connector
+                Connectors::create(input, srcPopSize, popSize, sparseProjection, allocateFn, basePath);
+            }
 
             // Loop through outgoing projections
             for(auto projection : population.children("LL:Projection")) {
@@ -577,7 +604,7 @@ int main(int argc, char *argv[])
                 auto trgPopName = projection.attribute("dst_population").value();
                 const unsigned int trgPopSize = getComponentSize(trgPopName, componentSizes);
 
-                std::cout << "Projection from population:" << srcPopName << "->" << trgPopName << std::endl;
+                std::cout << "Projection from population:" << popName << "->" << trgPopName << std::endl;
 
                 // Get main synapse node
                 auto synapse = projection.child("LL:Synapse");
@@ -611,7 +638,7 @@ int main(int argc, char *argv[])
                 SparseProjection *sparseProjection = (SparseProjection*)getLibrarySymbol(modelLibrary, ("C" + geNNSynPopName).c_str());
 
                 // Create connector
-                const unsigned int numSynapses = Connectors::create(synapse, srcPopSize, trgPopSize,
+                const unsigned int numSynapses = Connectors::create(synapse, popSize, trgPopSize,
                                                                     sparseProjection, allocateFn, basePath);
 
                 // Add postsynapse properties to dictionary
