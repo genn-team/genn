@@ -22,8 +22,6 @@
 //----------------------------------------------------------------------------
 SpineMLSimulator::Input::Base::Base(double dt, const pugi::xml_node &node, std::unique_ptr<InputValue::Base> value) : m_Value(std::move(value))
 {
-    std::cout << "Input:" << std::endl;
-
     // Read start time
     auto startAttr = node.attribute("start_time");
     if(startAttr.empty()) {

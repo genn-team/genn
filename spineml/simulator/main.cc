@@ -114,7 +114,6 @@ bool isEventSendPort(const std::string &targetName, const std::string &portName,
 {
     auto targetURL = componentURLs.find(targetName);
     if(targetURL != componentURLs.end()) {
-        std::cout << targetName << ":" << targetURL->second << std::endl;
         auto urlEventPorts = componentEventPorts.find(targetURL->second);
         if(urlEventPorts != componentEventPorts.end()) {
 
@@ -300,6 +299,7 @@ std::unique_ptr<Input::Base> createInput(const pugi::xml_node &node, LIBRARY_HAN
 
     // Get name of target
     std::string target = node.attribute("target").value();
+    std::cout << "Input targetting '" << target << "'" << std::endl;
 
     // Find size of target population
     auto targetSize = componentSizes.find(target);

@@ -19,8 +19,6 @@
 //------------------------------------------------------------------------
 SpineMLSimulator::InputValue::Base::Base(unsigned int numNeurons, const pugi::xml_node &node) : m_NumNeurons(numNeurons)
 {
-    std::cout << "Input value:" << std::endl;
-
     // If indices are specified
     auto targetIndices = node.attribute("target_indices");
     if(targetIndices) {

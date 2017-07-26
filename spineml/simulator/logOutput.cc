@@ -55,7 +55,7 @@ const char *SpineMLTypeName<double>::name = "double";
 //----------------------------------------------------------------------------
 SpineMLSimulator::LogOutput::Base::Base(const pugi::xml_node &node, double dt, unsigned int numTimeSteps)
 {
-    std::cout << "Log " << node.attribute("name").value() << std::endl;
+    std::cout << "Log '" << node.attribute("name").value() << "'" << std::endl;
 
     // Read start time
     auto startAttr = node.attribute("start_time");
