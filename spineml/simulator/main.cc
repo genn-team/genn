@@ -228,25 +228,16 @@ void addEventPorts(const filesystem::path &basePath, const pugi::xml_node &node,
     }
 
     // Loop through send ports
-    for(auto sendPort : componentClass.select_nodes(SpineMLUtils::xPathNodeHasSuffix("SendPort").c_str())) {
-        std::string nodeType = sendPort.node().name();
-        const char *portName = sendPort.node().attribute("name").value();
-        if(nodeType == "EventSendPort") {
-            urlEventPorts.first.insert(portName);
-        }
+    for(auto eventSendPort : componentClass.children("EventSendPort")) {
+        urlEventPorts.first.insert(eventSendPort.attribute("name").value());
     }
     // Loop through receive ports
-    std::cout << "\t\tEvent receive ports:" << std::endl;
-    for(auto receivePort : componentClass.select_nodes(SpineMLUtils::xPathNodeHasSuffix("ReceivePort").c_str())) {
-        std::string nodeType = receivePort.node().name();
-        const char *portName = receivePort.node().attribute("name").value();
-        if(nodeType == "EventReceivePort") {
-            urlEventPorts.second.insert(portName);
-        }
+    for(auto eventReceivePort : componentClass.children("EventReceivePort")) {
+        urlEventPorts.second.insert(eventReceivePort.attribute("name").value());
     }
 }
 //----------------------------------------------------------------------------
-void addPropertiesAndSizes(const pugi::xml_node &node, LIBRARY_HANDLE modelLibrary, const std::string &geNNPopName, unsigned int popSize,
+void addPropertiesAndSizes(const filesystem::path &basePath, const pugi::xml_node &node, LIBRARY_HANDLE modelLibrary, const std::string &geNNPopName, unsigned int popSize,
                            std::map<std::string, unsigned int> &sizes, ComponentProperties &properties)
 {
     // Get SpineML name of component
@@ -256,6 +247,8 @@ void addPropertiesAndSizes(const pugi::xml_node &node, LIBRARY_HANDLE modelLibra
     if(!sizes.insert(std::make_pair(spineMLName, popSize)).second) {
         throw std::runtime_error("Component name '" + std::string(spineMLName) + "' not unique");
     }
+
+    auto &componentProperties = properties[spineMLName];
 
     // Loop through properties in network
     for(auto param : node.children("Property")) {
@@ -273,7 +266,7 @@ void addPropertiesAndSizes(const pugi::xml_node &node, LIBRARY_HANDLE modelLibra
             std::cout << "\t\tState variable found host pointer:" << *hostStateVar << std::endl;
 
             // Create model property object
-            properties[spineMLName].insert(
+            componentProperties.insert(
                 std::make_pair(paramName, ModelProperty::create(param, *hostStateVar, nullptr, popSize)));
 #else
             if(deviceStateVar == nullptr) {
@@ -283,9 +276,72 @@ void addPropertiesAndSizes(const pugi::xml_node &node, LIBRARY_HANDLE modelLibra
             std::cout << "\t\tState variable found host pointer:" << *hostStateVar << ", device pointer:" << *deviceStateVar << std::endl;
 
             // Create model property object
-            properties[spineMLName].insert(
+            componentProperties.insert(
                 std::make_pair(paramName, ModelProperty::create(param, *hostStateVar, *deviceStateVar, popSize)));
 #endif
+        }
+    }
+
+    auto url = node.attribute("url").value();
+
+    // If this is a SpikeSource add event receive port called 'spike'
+    if(strcmp(url, "SpikeSource") == 0) {
+        return;
+    }
+
+    // Get absolute URL
+    auto absoluteURL = (basePath / url).str();
+
+    // Load XML document
+    pugi::xml_document doc;
+    auto result = doc.load_file(absoluteURL.c_str());
+    if(!result) {
+        throw std::runtime_error("Could not open file:" + absoluteURL + ", error:" + result.description());
+    }
+
+    // Get SpineML root
+    auto spineML = doc.child("SpineML");
+    if(!spineML) {
+        throw std::runtime_error("XML file:" + absoluteURL + " is not a SpineML component - it has no root SpineML node");
+    }
+
+    // Get component class
+    auto componentClass = spineML.child("ComponentClass");
+    if(!componentClass) {
+        throw std::runtime_error("XML file:" + absoluteURL + " is not a SpineML component - it's ComponentClass node is missing ");
+    }
+
+    // Loop through analogue send ports
+    for(auto analogueSendPort : componentClass.children("AnalogSendPort")) {
+        std::string paramName = analogueSendPort.attribute("name").value();
+        if(componentProperties.find(paramName) == componentProperties.end()) {
+            // Get pointers to state vars in model library
+            scalar **hostStateVar;
+            scalar **deviceStateVar;
+            std::tie(hostStateVar, deviceStateVar) = getStateVar<scalar*>(modelLibrary, paramName + geNNPopName);
+
+            // If it's found
+            // **NOTE** it not being found is not an error condition - it just suggests that
+            if(hostStateVar != nullptr) {
+                std::cout << "\t" << paramName << std::endl;
+#ifdef CPU_ONLY
+                std::cout << "\t\tAnalogue send port found host pointer:" << *hostStateVar << std::endl;
+
+                // Create model property object
+                componentProperties.insert(
+                    std::make_pair(paramName, std::unique_ptr<ModelProperty::Base>(new ModelProperty::Base(*hostStateVar, nullptr, popSize))));
+#else
+                if(deviceStateVar == nullptr) {
+                    throw std::runtime_error("Cannot find device-side state variable for property:" + paramName);
+                }
+
+                std::cout << "\t\tAnalogue send port found host pointer:" << *hostStateVar << ", device pointer:" << *deviceStateVar << std::endl;
+
+                // Create model property object
+                componentProperties.insert(
+                    std::make_pair(paramName, std::unique_ptr<ModelProperty::Base>(new ModelProperty::Base(*hostStateVar, *deviceStateVar, popSize))));
+#endif
+            }
         }
     }
 }
@@ -364,11 +420,14 @@ std::unique_ptr<Input::Base> createInput(const pugi::xml_node &node, LIBRARY_HAN
                     new Input::Analogue(dt, node, std::move(inputValue),
                                         portProperty->second.get()));
             }
+            else {
+                throw std::runtime_error("Port '" + port + "' not found");
+            }
+        }
+        else {
+            throw std::runtime_error("No properties found for '" + target + "'");
         }
     }
-
-    throw std::runtime_error("No supported input found");
-
 }
 //----------------------------------------------------------------------------
 std::unique_ptr<LogOutput::Base> createLogOutput(const pugi::xml_node &node, LIBRARY_HANDLE modelLibrary, double dt,
@@ -416,10 +475,14 @@ std::unique_ptr<LogOutput::Base> createLogOutput(const pugi::xml_node &node, LIB
                 return std::unique_ptr<LogOutput::Base>(new LogOutput::Analogue(node, dt, numTimeSteps, port, targetSize->second,
                                                                                 basePath, portProperty->second.get()));
             }
+            else {
+                throw std::runtime_error("Port '" + port + "' not found");
+            }
+        }
+        else {
+            throw std::runtime_error("No properties found for '" + target + "'");
         }
     }
-
-    throw std::runtime_error("No supported logger found");
 }
 }   // Anonymous namespace
 
@@ -560,7 +623,7 @@ int main(int argc, char *argv[])
 
             // Add neuron population properties to dictionary
             auto geNNPopName = SpineMLUtils::getSafeName(popName);
-            addPropertiesAndSizes(neuron, modelLibrary, geNNPopName, popSize,
+            addPropertiesAndSizes(basePath, neuron, modelLibrary, geNNPopName, popSize,
                                   componentSizes, componentProperties);
             addEventPorts(basePath, neuron, componentURLs, componentEventPorts);
         }
@@ -632,12 +695,12 @@ int main(int argc, char *argv[])
                                                                     sparseProjection, allocateFn, basePath);
 
                 // Add postsynapse properties to dictionary
-                addPropertiesAndSizes(postSynapse, modelLibrary, geNNSynPopName, trgPopSize,
+                addPropertiesAndSizes(basePath, postSynapse, modelLibrary, geNNSynPopName, trgPopSize,
                                       componentSizes, componentProperties);
                 addEventPorts(basePath, postSynapse, componentURLs, componentEventPorts);
 
                 // Add weight update properties to dictionary
-                addPropertiesAndSizes(weightUpdate, modelLibrary, geNNSynPopName, numSynapses,
+                addPropertiesAndSizes(basePath, weightUpdate, modelLibrary, geNNSynPopName, numSynapses,
                                       componentSizes, componentProperties);
                 addEventPorts(basePath, weightUpdate, componentURLs, componentEventPorts);
             }
