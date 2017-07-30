@@ -56,19 +56,31 @@ static void genHeader(const NNmodel &model, //!< Model description
 #endif
 
     os << "// ------------------------------------------------------------------------" << std::endl;
-    os << "// copying things to remote node" << std::endl;
+    os << "// copying things to remote" << std::endl;
     os << std::endl;
-    for(const auto &s : model.getLocalSynapseGroups()) {
-        os << "void push" << s.first << "StateToRemote();" << std::endl;
+    for(const auto &n : model.getLocalNeuronGroups()) {
+        os << "void push" << n.first << "SpikesToRemote(int remote);" << std::endl;
     }
     os << std::endl;
 
     os << "// ------------------------------------------------------------------------" << std::endl;
     os << "// copying things from remote" << std::endl;
     os << std::endl;
-    for(const auto &s : model.getLocalSynapseGroups()) {
-        os << "void pull" << s.first << "StateFromRemote();" << std::endl;
+    for(const auto &n : model.getLocalNeuronGroups()) {
+        os << "void pull" << n.first << "SpikesFromRemote(int remote);" << std::endl;
     }
+    os << std::endl;
+
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// global copying spikes to remote" << std::endl;
+    os << std::endl;
+    os << "void copySpikesToRemote(int remote);" << std::endl;
+    os << std::endl;
+
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// global copying spikes from remote" << std::endl;
+    os << std::endl;
+    os << "void copySpikesFromRemote(int remote);" << std::endl;
     os << std::endl;
 
     os << "#endif" << std::endl;
@@ -100,10 +112,90 @@ static void genCode(const NNmodel &model, //!< Model description
     os << "//-------------------------------------------------------------------------" << std::endl;
     os << std::endl;
 
+#ifdef MPI_ENABLE
+    os << "#include <mpi.h>" << std::endl;
+#endif
+
     os << "#include \"infraMPI.h\"" << std::endl;
     os << std::endl;
+
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// copying spikes to remote" << std::endl << std::endl;
+
+    for(const auto &n : model.getLocalNeuronGroups()) {
+        // neuron spike variables
+        os << "void push" << n.first << "SpikesToRemote(int remote)" << std::endl;
+        os << CodeStream::OB(1050);
+
+        if(!n.second.isSpikeZeroCopyEnabled()) {
+            const size_t glbSpkCntSize = n.second.isTrueSpikeRequired() ? n.second.getNumDelaySlots() : 1;
+            os << "MPI_Send(glbSpkCnt" << n.first;
+            os << ", "<< glbSpkCntSize;
+            os << ", MPI_INT";
+            os << ", remote, 0, MPI_COMM_WORLD);" << std::endl;
+
+            const size_t glbSpkSize = n.second.isTrueSpikeRequired() ? n.second.getNumNeurons() * n.second.getNumDelaySlots() : n.second.getNumNeurons();
+            os << "MPI_Send(glbSpk" << n.first;
+            os << ", "<< glbSpkSize;
+            os << ", MPI_INT";
+            os << ", remote, 0, MPI_COMM_WORLD);" << std::endl;
+        }
+
+        os << CodeStream::CB(1050);
+        os << std::endl;
+    }
+
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// copying spikes from remote" << std::endl << std::endl;
+
+    for(const auto &n : model.getLocalNeuronGroups()) {
+        // neuron spike variables
+        os << "void pull" << n.first << "SpikesFromRemote(int remote)" << std::endl;
+        os << CodeStream::OB(1051);
+
+        if(!n.second.isSpikeZeroCopyEnabled()) {
+            const size_t glbSpkCntSize = n.second.isTrueSpikeRequired() ? n.second.getNumDelaySlots() : 1;
+            os << "MPI_Recv(glbSpkCnt" << n.first;
+            os << ", "<< glbSpkCntSize;
+            os << ", MPI_INT";
+            os << ", remote, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);" << std::endl;
+
+            const size_t glbSpkSize = n.second.isTrueSpikeRequired() ? n.second.getNumNeurons() * n.second.getNumDelaySlots() : n.second.getNumNeurons();
+            os << "MPI_Recv(glbSpk" << n.first;
+            os << ", "<< glbSpkSize;
+            os << ", MPI_INT";
+            os << ", remote, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);" << std::endl;
+        }
+
+        os << CodeStream::CB(1051);
+        os << std::endl;
+    }
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// global copying spikes to remote" << std::endl << std::endl;
+
+    os << "void copySpikesToRemote(int remote)" << std::endl;
+    os << CodeStream::OB(1052);
+    for(const auto &n : model.getLocalNeuronGroups()) {
+        os << "push" << n.first << "SpikesToRemote(int remote);" << std::endl;
+    }
+    os << CodeStream::CB(1052);
+    os << std::endl;
+
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// global copying spikes from remote" << std::endl << std::endl;
+
+    os << "void copySpikesFromRemote(int remote)" << std::endl;
+    os << CodeStream::OB(1053) << std::endl;
+
+    for(const auto &n : model.getLocalNeuronGroups()) {
+      os << "pull" << n.first << "SpikesFromRemote(int remote);" << std::endl;
+    }
+    os << CodeStream::CB(1053);
+    os << std::endl;
+
     fs.close();
 }
+
 //--------------------------------------------------------------------------
 /*!
   \brief A function that generates predominantly MPI infrastructure code.
