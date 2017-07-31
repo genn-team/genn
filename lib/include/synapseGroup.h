@@ -55,8 +55,6 @@ public:
     //!< Function to enable the use zero-copied memory for a particular postsynaptic model state variable
     //!< May improve IO performance at the expense of kernel performance
     void setPSVarZeroCopyEnabled(const std::string &varName, bool enabled);
-    int getClusterHostID() const{ return m_TrgNeuronGroup->getClusterHostID(); }
-    int getClusterDeviceID() const{ return m_TrgNeuronGroup->getClusterDeviceID(); }
 
     void setMaxConnections(unsigned int maxConnections);
     void setSpanType(SpanType spanType);
@@ -81,6 +79,9 @@ public:
 
     const NeuronGroup *getSrcNeuronGroup() const{ return m_SrcNeuronGroup; }
     const NeuronGroup *getTrgNeuronGroup() const{ return m_TrgNeuronGroup; }
+
+    int getClusterHostID() const{ return m_TrgNeuronGroup->getClusterHostID(); }
+    int getClusterDeviceID() const{ return m_TrgNeuronGroup->getClusterDeviceID(); }
 
     bool isTrueSpikeRequired() const{ return m_TrueSpikeRequired; }
     bool isSpikeEventRequired() const{ return m_SpikeEventRequired; }

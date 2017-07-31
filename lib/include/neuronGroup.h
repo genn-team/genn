@@ -57,10 +57,6 @@ public:
 
     void setClusterIndex(int hostID, int deviceID){ m_HostID = hostID; m_DeviceID = deviceID; }
 
-    int getClusterHostID(){ return m_HostID; }
-
-    int getClusterDeviceID(){ return m_DeviceID; }
-
     void addSpkEventCondition(const std::string &code, const std::string &supportCodeNamespace);
 
     void addInSyn(SynapseGroup *synapseGroup){ m_InSyn.push_back(synapseGroup); }
@@ -85,6 +81,10 @@ public:
 
     const std::vector<SynapseGroup*> &getInSyn() const{ return m_InSyn; }
     const std::vector<SynapseGroup*> &getOutSyn() const{ return m_OutSyn; }
+
+    int getClusterHostID() const{ return m_HostID; }
+
+    int getClusterDeviceID() const{ return m_DeviceID; }
 
     bool isSpikeTimeRequired() const{ return m_SpikeTimeRequired; }
     bool isTrueSpikeRequired() const{ return m_TrueSpikeRequired; }
