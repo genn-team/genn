@@ -32,7 +32,7 @@ namespace GENN_FLAGS {
     extern unsigned int calcSynapses;
     extern unsigned int learnSynapsesPost;
     extern unsigned int calcNeurons;
-};
+}
 
 namespace GENN_PREFERENCES {    
     extern int optimiseBlockSize; //!< Flag for signalling whether or not block size optimisation should be performed
@@ -50,7 +50,7 @@ namespace GENN_PREFERENCES {
     extern std::string userCxxFlagsWIN; //!< Allows users to set specific C++ compiler options they may want to use for all host side code (used for windows platforms)
     extern std::string userCxxFlagsGNU; //!< Allows users to set specific C++ compiler options they may want to use for all host side code (used for unix based platforms)
     extern std::string userNvccFlags; //!< Allows users to set specific nvcc compiler options they may want to use for all GPU code (identical for windows and unix platforms)
-};
+}
 
 extern unsigned int neuronBlkSz; //!< Global variable containing the GPU block size for the neuron kernel
 extern unsigned int synapseBlkSz; //!< Global variable containing the GPU block size for the synapse kernel
