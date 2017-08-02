@@ -193,6 +193,31 @@ static void genCode(const NNmodel &model, //!< Model description
     os << CodeStream::CB(1053);
     os << std::endl;
 
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// communication function to sync spikes" << std::endl << std::endl;
+
+    os << "void CommunicateSpikes()" << std::endl;
+    os << CodeStream::OB(1054) << std::endl;
+
+    os << "    int localID;" << std::endl;
+    os << "    MPI_Comm_rank(MPI_COMM_WORLD, &localID);" << std::endl;
+    for(const auto &n : model.getLocalNeuronGroups()) {
+        for(auto *s : n.second.getOutSyn()) {
+            os << "    if (" << " localID != " << s->getClusterHostID() << ")" << std::endl;
+            os << CodeStream::OB(1055) << std::endl;
+            os << "copySpikesToRemote(" << s->getClusterHostID() << ");" <<std::endl;
+            os << CodeStream::CB(1055);
+        }
+        for(auto *s : n.second.getInSyn()) {
+            os << "    if (" << " localID != " << s->getClusterHostID() << ")" << std::endl;
+            os << CodeStream::OB(1055) << std::endl;
+            os << "copySpikesFromRemote(" << s->getClusterHostID() << ");" <<std::endl;
+            os << CodeStream::CB(1055);
+        }
+    }
+    os << CodeStream::CB(1054);
+    os << std::endl;
+
     fs.close();
 }
 
