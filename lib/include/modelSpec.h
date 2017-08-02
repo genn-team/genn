@@ -166,6 +166,12 @@ public:
     //! Find a neuron group by name
     NeuronGroup *findNeuronGroup(const std::string &name);
 
+    //! Find a MPI neuron group by name
+    const NeuronGroup *findMPINeuronGroup(const std::string &name) const;
+
+    //! Find a MPI neuron group by name
+    NeuronGroup *findMPINeuronGroup(const std::string &name);
+
     NeuronGroup *addNeuronPopulation(const string&, unsigned int, unsigned int, const double *, const double *, int hostID = 0, int deviceID = 0); //!< Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population
     NeuronGroup *addNeuronPopulation(const string&, unsigned int, unsigned int, const vector<double>&, const vector<double>&, int hostID = 0, int deviceID = 0); //!< Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population
 
@@ -323,19 +329,17 @@ public:
             gennError("Trying to add a synapse population to a finalized model.");
         }
 
+        auto srcMPINeuronGrp = findMPINeuronGroup(src);
+        auto trgMPINeuronGrp = findMPINeuronGroup(trg);
 
-        auto srcNeuronGrp = findNeuronGroup(src);
-        auto trgNeuronGrp = findNeuronGroup(trg);
-
-        srcNeuronGrp->checkNumDelaySlots(delaySteps);
+        srcMPINeuronGrp->checkNumDelaySlots(delaySteps);
         if (delaySteps != NO_DELAY)
         {
             needSynapseDelay = true;
         }
 
-        // Add synapse group
-        int hostID = trgNeuronGrp->getClusterHostID();
-        int deviceID = trgNeuronGrp->getClusterDeviceID();
+        int hostID = trgMPINeuronGrp->getClusterHostID();
+        int deviceID = trgMPINeuronGrp->getClusterDeviceID();
         int MPIHostID = 0;
 #ifdef MPI_ENABLE
         MPI_Comm_rank(MPI_COMM_WORLD, &MPIHostID);
@@ -347,14 +351,36 @@ public:
                         name, SynapseGroup(name, mtype, delaySteps,
                             WeightUpdateModel::getInstance(), weightParamValues.getValues(), weightVarValues.getValues(),
                             PostsynapticModel::getInstance(), postsynapticParamValues.getValues(), postsynapticVarValues.getValues(),
-                            srcNeuronGrp, trgNeuronGrp)));
+                            srcMPINeuronGrp, trgMPINeuronGrp)));
 
             if(!result.second)
             {
                 gennError("Cannot add a synapse population with duplicate name:" + name);
                 return NULL;
             } else {
-                //TODO: post process for synapse not implement
+                // Get pointer to new synapse group
+                SynapseGroup *newSynapseGroup = &result.first->second;
+
+                // If the weight update model requires presynaptic
+                // spike times, set flag in source neuron group
+                if (newSynapseGroup->getWUModel()->isPreSpikeTimeRequired()) {
+                    srcMPINeuronGrp->setSpikeTimeRequired(true);
+                    needSt = true;
+                }
+
+                // If the weight update model requires postsynaptic
+                // spike times, set flag in target neuron group
+                if (newSynapseGroup->getWUModel()->isPostSpikeTimeRequired()) {
+                    trgMPINeuronGrp->setSpikeTimeRequired(true);
+                    needSt = true;
+                }
+
+                // Add references to target and source neuron groups
+                trgMPINeuronGrp->addInSyn(newSynapseGroup);
+                srcMPINeuronGrp->addOutSyn(newSynapseGroup);
+
+                // Return
+                //return newSynapseGroup;
             }
         } else {
             auto result = m_RemoteSynapseGroups.insert(
@@ -362,16 +388,49 @@ public:
                         name, SynapseGroup(name, mtype, delaySteps,
                             WeightUpdateModel::getInstance(), weightParamValues.getValues(), weightVarValues.getValues(),
                             PostsynapticModel::getInstance(), postsynapticParamValues.getValues(), postsynapticVarValues.getValues(),
-                            srcNeuronGrp, trgNeuronGrp)));
+                            srcMPINeuronGrp, trgMPINeuronGrp)));
 
             if(!result.second)
             {
                 gennError("Cannot add a synapse population with duplicate name:" + name);
                 return NULL;
             } else {
-                //TODO: post process for synapse not implement
+                // Get pointer to new synapse group
+                SynapseGroup *newSynapseGroup = &result.first->second;
+
+                // If the weight update model requires presynaptic
+                // spike times, set flag in source neuron group
+                if (newSynapseGroup->getWUModel()->isPreSpikeTimeRequired()) {
+                    srcMPINeuronGrp->setSpikeTimeRequired(true);
+                    needSt = true;
+                }
+
+                // If the weight update model requires postsynaptic
+                // spike times, set flag in target neuron group
+                if (newSynapseGroup->getWUModel()->isPostSpikeTimeRequired()) {
+                    trgMPINeuronGrp->setSpikeTimeRequired(true);
+                    needSt = true;
+                }
+
+                // Add references to target and source neuron groups
+                trgMPINeuronGrp->addInSyn(newSynapseGroup);
+                srcMPINeuronGrp->addOutSyn(newSynapseGroup);
+
+                // Return
+                //return newSynapseGroup;
             }
         }
+
+        auto srcNeuronGrp = findNeuronGroup(src);
+        auto trgNeuronGrp = findNeuronGroup(trg);
+
+        srcNeuronGrp->checkNumDelaySlots(delaySteps);
+        if (delaySteps != NO_DELAY)
+        {
+            needSynapseDelay = true;
+        }
+
+        // Add synapse group
         auto result = m_SynapseGroups.insert(
             pair<string, SynapseGroup>(
                 name, SynapseGroup(name, mtype, delaySteps,
