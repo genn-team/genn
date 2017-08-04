@@ -177,7 +177,7 @@ SpineMLSimulator::Input::PoissonSpikeRate::PoissonSpikeRate(double dt, const pug
                                                             unsigned int *spikeQueuePtr,
                                                             unsigned int *hostSpikeCount, unsigned int *deviceSpikeCount,
                                                             unsigned int *hostSpikes, unsigned int *deviceSpikes)
-: InterSpikeIntervalBase(dt, node, std::move(value), spikeQueuePtr, hostSpikeCount, deviceSpikeCount, hostSpikes, deviceSpikes), m_Distribution(0.0, 1.0)
+: InterSpikeIntervalBase(dt, node, std::move(value), spikeQueuePtr, hostSpikeCount, deviceSpikeCount, hostSpikes, deviceSpikes)
 {
     std::cout << "\tPoisson spike rate" << std::endl;
 
@@ -191,32 +191,8 @@ SpineMLSimulator::Input::PoissonSpikeRate::PoissonSpikeRate(double dt, const pug
 //----------------------------------------------------------------------------
 double SpineMLSimulator::Input::PoissonSpikeRate::getTimeToSpike(double isiMs)
 {
-    return isiMs * exponentialDist();
-}
-//----------------------------------------------------------------------------
-double SpineMLSimulator::Input::PoissonSpikeRate::exponentialDist()
-{
-    double a = 0.0;
-
-    while (true) {
-        double u = m_Distribution(m_RandomGenerator);
-        const double u0 = u;
-
-        while (true) {
-            double uStar = m_Distribution(m_RandomGenerator);
-            if (u < uStar) {
-                return  a + u0;
-            }
-
-            u = m_Distribution(m_RandomGenerator);
-
-            if (u >= uStar) {
-                break;
-            }
-        }
-
-        a += 1.0;
-    }
+    std::exponential_distribution<double> distribution(isiMs);
+    return distribution(m_RandomGenerator);
 }
 
 //----------------------------------------------------------------------------
