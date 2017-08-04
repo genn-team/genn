@@ -157,11 +157,29 @@ SpineMLGenerator::PostsynapticModel::PostsynapticModel(const ModelParams::Postsy
         }
         // Otherwise if this port is an impulse receive port which receives spike impulses from weight update model
         else if(nodeType == "ImpulseReceivePort" && portSrc.first == ModelParams::Base::PortSource::WEIGHT_UPDATE && weightUpdateModel->getSendPortSpikeImpulse() == portSrc.second) {
-            std::cout << "\t\t\tImplementing impulse receive port '" << portName << "' as GeNN spike impulse" << std::endl;
+            std::cout << "\t\t\tImplementing impulse receive port '" << portName << "' as GeNN weight update model input" << std::endl;
             spikeImpulseReceivePort = portName;
         }
         else {
             throw std::runtime_error("GeNN does not currently support '" + nodeType + "' receive ports in postsynaptic models");
+        }
+    }
+
+    // Loop through reduce ports
+    std::cout << "\t\tReduce ports:" << std::endl;
+    std::string analogueReducePort;
+    for(auto reducePort : componentClass.select_nodes(SpineMLUtils::xPathNodeHasSuffix("ReducePort").c_str())) {
+        std::string nodeType = reducePort.node().name();
+        const char *portName = reducePort.node().attribute("name").value();
+        const auto &portSrc = params.getInputPortSrc(portName);
+
+        // If this is an analogue reduce port which receives analogue input from weight update model
+        if(nodeType == "AnalogReducePort" && portSrc.first == ModelParams::Base::PortSource::WEIGHT_UPDATE && weightUpdateModel->getSendPortAnalogue() == portSrc.second) {
+            std::cout << "\t\t\tImplementing analogue reduce port '" << portName << "' as GeNN weight update model input" << std::endl;
+            analogueReducePort = portName;
+        }
+        else {
+            throw std::runtime_error("GeNN does not currently support '" + nodeType + "' reduce ports in postsynaptic models");
         }
     }
 
@@ -191,19 +209,43 @@ SpineMLGenerator::PostsynapticModel::PostsynapticModel(const ModelParams::Postsy
     // Build the final vectors of parameter names and variables from model
     tie(m_ParamNames, m_Vars) = findModelVariables(componentClass, params.getVariableParams(), multipleRegimes);
 
+    // Determine what state variable inpulse is applied to
+    const std::string &impulseAssignStateVar = objectHandlerImpulse.getImpulseAssignStateVar();
+
     // Loop through send port variables and build apply input code to update them
     for(const auto s : sendPortVariables) {
-        m_ApplyInputCode += s.first + " += " + resolveAlias(componentClass, m_Vars, s.second) + ";\n";
+        // Resolve the alias used to get input value to sent
+        std::string inputCode = resolveAlias(componentClass, m_Vars, s.second);
+
+        // If incoming impulse is being assigned to a state variable, substitute it within the input code
+        // **NOTE** we do this here to avoid ambiguity between port names in the postsynaptic and neuron models
+        if(!impulseAssignStateVar.empty()) {
+            wrapAndReplaceVariableNames(inputCode, impulseAssignStateVar, "inSyn");
+
+            // Add code string to apply input
+            m_ApplyInputCode += s.first + " += " + inputCode + ";\n";
+        }
+        // If the weight update is applying analogue input directly, substitute the name port this is coming in from with inSyn
+        else if(!analogueReducePort.empty()) {
+            wrapAndReplaceVariableNames(inputCode, analogueReducePort, "inSyn");
+
+            // Add code string to apply input and zero it
+            m_ApplyInputCode += s.first + " += " + inputCode + "; $(inSyn) = 0;\n";
+
+            if(!m_DecayCode.empty()) {
+                throw std::runtime_error("Postsynaptic decay dynamics not supported when weight update provides continuous input");
+            }
+        }
+
+
     }
 
     // If incoming impulse is being assigned to a state variable
-    const std::string &impulseAssignStateVar = objectHandlerImpulse.getImpulseAssignStateVar();
     if(!impulseAssignStateVar.empty()) {
         std::cout << "\t\tImpulse assign state variable:" << impulseAssignStateVar << std::endl;
 
         // Substitute name of analogue send port for internal variable
         wrapAndReplaceVariableNames(m_DecayCode, impulseAssignStateVar, "inSyn");
-        wrapAndReplaceVariableNames(m_ApplyInputCode, impulseAssignStateVar, "inSyn");
 
         // As this variable is being implemented using a built in GeNN state variable, remove it from variables
         auto stateVar = std::find_if(m_Vars.begin(), m_Vars.end(),
