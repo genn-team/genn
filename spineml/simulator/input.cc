@@ -53,10 +53,10 @@ void SpineMLSimulator::Input::Base::updateValues(double dt, unsigned int timeste
 // SpineMLSimulator::Input::SpikeBase
 //----------------------------------------------------------------------------
 SpineMLSimulator::Input::SpikeBase::SpikeBase(double dt, const pugi::xml_node &node, std::unique_ptr<InputValue::Base> value,
-                                              unsigned int *spikeQueuePtr,
+                                              unsigned int popSize, unsigned int *spikeQueuePtr,
                                               unsigned int *hostSpikeCount, unsigned int *deviceSpikeCount,
                                               unsigned int *hostSpikes, unsigned int *deviceSpikes)
-: Base(dt, node, std::move(value)), m_SpikeQueuePtr(spikeQueuePtr),
+: Base(dt, node, std::move(value)), m_PopSize(popSize), m_SpikeQueuePtr(spikeQueuePtr),
   m_HostSpikeCount(hostSpikeCount), m_DeviceSpikeCount(deviceSpikeCount),
   m_HostSpikes(hostSpikes), m_DeviceSpikes(deviceSpikes)
 {
@@ -64,7 +64,10 @@ SpineMLSimulator::Input::SpikeBase::SpikeBase(double dt, const pugi::xml_node &n
 //----------------------------------------------------------------------------
 void SpineMLSimulator::Input::SpikeBase::injectSpike(unsigned int neuronID)
 {
-    m_HostSpikes[m_HostSpikeCount[getSpikeQueueIndex()]++] = neuronID;
+    const unsigned int spikeQueueIndex = getSpikeQueueIndex();
+    const unsigned int spikeOffset = m_PopSize * spikeQueueIndex;
+
+    m_HostSpikes[spikeOffset + m_HostSpikeCount[spikeQueueIndex]++] = neuronID;
 }
 //----------------------------------------------------------------------------
 void SpineMLSimulator::Input::SpikeBase::uploadSpikes()
@@ -72,6 +75,7 @@ void SpineMLSimulator::Input::SpikeBase::uploadSpikes()
 #ifndef CPU_ONLY
     // Determine current spike queue
     const unsigned int spikeQueueIndex = getSpikeQueueIndex();
+    const unsigned int spikeOffset = m_PopSize * spikeQueueIndex;
 
     // If therea any spikes to inject
     if(m_HostSpikeCount[getSpikeQueueIndex()] > 0) {
@@ -80,7 +84,7 @@ void SpineMLSimulator::Input::SpikeBase::uploadSpikes()
                                     sizeof(unsigned int), cudaMemcpyHostToDevice));
 
         // Copy this many spikes to device
-        CHECK_CUDA_ERRORS(cudaMemcpy(m_DeviceSpikes, m_HostSpikes,
+        CHECK_CUDA_ERRORS(cudaMemcpy(&m_DeviceSpikes[spikeOffset], &m_HostSpikes[spikeOffset],
                                     sizeof(unsigned int) * m_HostSpikeCount[spikeQueueIndex], cudaMemcpyHostToDevice));
 
         // Zero host spike count
@@ -91,6 +95,14 @@ void SpineMLSimulator::Input::SpikeBase::uploadSpikes()
 
 //----------------------------------------------------------------------------
 // SpineMLSimulator::Input::InterSpikeIntervalBase
+//----------------------------------------------------------------------------
+SpineMLSimulator::Input::InterSpikeIntervalBase::InterSpikeIntervalBase(double dt, const pugi::xml_node &node, std::unique_ptr<InputValue::Base> value,
+                                                                        unsigned int popSize, unsigned int *spikeQueuePtr,
+                                                                        unsigned int *hostSpikeCount, unsigned int *deviceSpikeCount,
+                                                                        unsigned int *hostSpikes, unsigned int *deviceSpikes)
+: SpikeBase(dt, node, std::move(value), popSize, spikeQueuePtr, hostSpikeCount, deviceSpikeCount, hostSpikes, deviceSpikes)
+{
+}
 //----------------------------------------------------------------------------
 void SpineMLSimulator::Input::InterSpikeIntervalBase::apply(double dt, unsigned int timestep)
 {
@@ -108,7 +120,7 @@ void SpineMLSimulator::Input::InterSpikeIntervalBase::apply(double dt, unsigned 
                 // Convert rate into interspike interval and calculate time to first spike
                 const double isiMs = 1000.0 / rate;
                 const double tts = getTimeToSpike(isiMs);
-                
+
                 // If this neuron has not had a rate set before, add it to map
                 auto neuronTTS = m_TimeToSpike.find(neuronID);
                 if(neuronTTS == m_TimeToSpike.end()) {
@@ -144,24 +156,16 @@ void SpineMLSimulator::Input::InterSpikeIntervalBase::apply(double dt, unsigned 
         uploadSpikes();
     }
 }
-//----------------------------------------------------------------------------
-SpineMLSimulator::Input::InterSpikeIntervalBase::InterSpikeIntervalBase(double dt, const pugi::xml_node &node, std::unique_ptr<InputValue::Base> value,
-                                                                        unsigned int *spikeQueuePtr,
-                                                                        unsigned int *hostSpikeCount, unsigned int *deviceSpikeCount,
-                                                                        unsigned int *hostSpikes, unsigned int *deviceSpikes)
-: SpikeBase(dt, node, std::move(value), spikeQueuePtr, hostSpikeCount, deviceSpikeCount, hostSpikes, deviceSpikes)
-{
-}
 
 
 //----------------------------------------------------------------------------
 // SpineMLSimulator::Input::RegularSpikeRate
 //----------------------------------------------------------------------------
 SpineMLSimulator::Input::RegularSpikeRate::RegularSpikeRate(double dt, const pugi::xml_node &node, std::unique_ptr<InputValue::Base> value,
-                                                            unsigned int *spikeQueuePtr,
+                                                            unsigned int popSize, unsigned int *spikeQueuePtr,
                                                             unsigned int *hostSpikeCount, unsigned int *deviceSpikeCount,
                                                             unsigned int *hostSpikes, unsigned int *deviceSpikes)
-: InterSpikeIntervalBase(dt, node, std::move(value), spikeQueuePtr, hostSpikeCount, deviceSpikeCount, hostSpikes, deviceSpikes)
+: InterSpikeIntervalBase(dt, node, std::move(value), popSize, spikeQueuePtr, hostSpikeCount, deviceSpikeCount, hostSpikes, deviceSpikes)
 {
     std::cout << "\tRegular spike rate" << std::endl;
 }
@@ -175,10 +179,10 @@ double SpineMLSimulator::Input::RegularSpikeRate::getTimeToSpike(double isiMs)
 // SpineMLSimulator::Input::PoissonSpikeRate
 //----------------------------------------------------------------------------
 SpineMLSimulator::Input::PoissonSpikeRate::PoissonSpikeRate(double dt, const pugi::xml_node &node, std::unique_ptr<InputValue::Base> value,
-                                                            unsigned int *spikeQueuePtr,
+                                                            unsigned int popSize, unsigned int *spikeQueuePtr,
                                                             unsigned int *hostSpikeCount, unsigned int *deviceSpikeCount,
                                                             unsigned int *hostSpikes, unsigned int *deviceSpikes)
-: InterSpikeIntervalBase(dt, node, std::move(value), spikeQueuePtr, hostSpikeCount, deviceSpikeCount, hostSpikes, deviceSpikes)
+: InterSpikeIntervalBase(dt, node, std::move(value), popSize, spikeQueuePtr, hostSpikeCount, deviceSpikeCount, hostSpikes, deviceSpikes)
 {
     std::cout << "\tPoisson spike rate" << std::endl;
 
@@ -200,10 +204,10 @@ double SpineMLSimulator::Input::PoissonSpikeRate::getTimeToSpike(double isiMs)
 // SpineMLSimulator::Input::SpikeTime
 //----------------------------------------------------------------------------
 SpineMLSimulator::Input::SpikeTime::SpikeTime(double dt, const pugi::xml_node &node, std::unique_ptr<InputValue::Base> value,
-                                              unsigned int *spikeQueuePtr,
+                                              unsigned int popSize, unsigned int *spikeQueuePtr,
                                               unsigned int *hostSpikeCount, unsigned int *deviceSpikeCount,
                                               unsigned int *hostSpikes, unsigned int *deviceSpikes)
-: SpikeBase(dt, node, std::move(value), spikeQueuePtr, hostSpikeCount, deviceSpikeCount, hostSpikes, deviceSpikes)
+: SpikeBase(dt, node, std::move(value), popSize, spikeQueuePtr, hostSpikeCount, deviceSpikeCount, hostSpikes, deviceSpikes)
 {
     std::cout << "\tSpike time" << std::endl;
 }

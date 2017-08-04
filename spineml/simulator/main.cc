@@ -393,14 +393,14 @@ std::unique_ptr<Input::Base> createInput(const pugi::xml_node &node, LIBRARY_HAN
             if(strcmp(rateDistribution.value(), "regular") == 0) {
                 return std::unique_ptr<Input::Base>(
                     new Input::RegularSpikeRate(dt, node, std::move(inputValue),
-                                                spikeQueuePtr,
+                                                targetSize->second, spikeQueuePtr,
                                                 hostSpikeCount, deviceSpikeCount,
                                                 hostSpikes, deviceSpikes));
             }
             else if(strcmp(rateDistribution.value(), "poisson") == 0) {
                 return std::unique_ptr<Input::Base>(
                     new Input::PoissonSpikeRate(dt, node, std::move(inputValue),
-                                                spikeQueuePtr,
+                                                targetSize->second, spikeQueuePtr,
                                                 hostSpikeCount, deviceSpikeCount,
                                                 hostSpikes, deviceSpikes));
             }
@@ -412,7 +412,7 @@ std::unique_ptr<Input::Base> createInput(const pugi::xml_node &node, LIBRARY_HAN
         else {
             return std::unique_ptr<Input::Base>(
                 new Input::SpikeTime(dt, node, std::move(inputValue),
-                                     spikeQueuePtr,
+                                     targetSize->second, spikeQueuePtr,
                                      hostSpikeCount, deviceSpikeCount,
                                      hostSpikes, deviceSpikes));
         }

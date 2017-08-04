@@ -73,7 +73,7 @@ class SpikeBase : public Base
 {
 protected:
     SpikeBase(double dt, const pugi::xml_node &node, std::unique_ptr<InputValue::Base> value,
-              unsigned int *spikeQueuePtr,
+              unsigned int popSize, unsigned int *spikeQueuePtr,
               unsigned int *hostSpikeCount, unsigned int *deviceSpikeCount,
               unsigned int *hostSpikes, unsigned int *deviceSpikes);
 
@@ -96,6 +96,8 @@ private:
     //----------------------------------------------------------------------------
     // Members
     //----------------------------------------------------------------------------
+    const unsigned int m_PopSize;
+
     unsigned int *m_SpikeQueuePtr;
     unsigned int *m_HostSpikeCount;
     unsigned int *m_DeviceSpikeCount;
@@ -117,7 +119,7 @@ public:
 
 protected:
     InterSpikeIntervalBase(double dt, const pugi::xml_node &node, std::unique_ptr<InputValue::Base> value,
-                           unsigned int *spikeQueuePtr,
+                           unsigned int popSize, unsigned int *spikeQueuePtr,
                            unsigned int *hostSpikeCount, unsigned int *deviceSpikeCount,
                            unsigned int *hostSpikes, unsigned int *deviceSpikes);
 
@@ -140,7 +142,7 @@ class RegularSpikeRate : public InterSpikeIntervalBase
 {
 public:
     RegularSpikeRate(double dt, const pugi::xml_node &node, std::unique_ptr<InputValue::Base> value,
-                     unsigned int *spikeQueuePtr,
+                     unsigned int popSize, unsigned int *spikeQueuePtr,
                      unsigned int *hostSpikeCount, unsigned int *deviceSpikeCount,
                      unsigned int *hostSpikes, unsigned int *deviceSpikes);
 
@@ -158,7 +160,7 @@ class PoissonSpikeRate : public InterSpikeIntervalBase
 {
 public:
     PoissonSpikeRate(double dt, const pugi::xml_node &node, std::unique_ptr<InputValue::Base> value,
-                     unsigned int *spikeQueuePtr,
+                     unsigned int popSize, unsigned int *spikeQueuePtr,
                      unsigned int *hostSpikeCount, unsigned int *deviceSpikeCount,
                      unsigned int *hostSpikes, unsigned int *deviceSpikes);
 
@@ -182,7 +184,7 @@ class SpikeTime : public SpikeBase
 {
 public:
     SpikeTime(double dt, const pugi::xml_node &node, std::unique_ptr<InputValue::Base> value,
-              unsigned int *spikeQueuePtr,
+              unsigned int popSize, unsigned int *spikeQueuePtr,
               unsigned int *hostSpikeCount, unsigned int *deviceSpikeCount,
               unsigned int *hostSpikes, unsigned int *deviceSpikes);
 
