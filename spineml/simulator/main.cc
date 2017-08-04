@@ -671,47 +671,45 @@ int main(int argc, char *argv[])
                 auto trgPopName = projection.attribute("dst_population").value();
                 const unsigned int trgPopSize = getComponentSize(trgPopName, componentSizes);
 
-                std::cout << "Projection from population:" << popName << "->" << trgPopName << std::endl;
+                // Loop through synapse children
+                // **NOTE** multiple projections between the same two populations of neurons are implemented in this way
+                for(auto synapse : projection.children("LL:Synapse")) {
+                    std::cout << "Projection from population:" << popName << "->" << trgPopName << std::endl;
 
-                // Get main synapse node
-                auto synapse = projection.child("LL:Synapse");
-                if(!synapse) {
-                    throw std::runtime_error("'Projection' node has no 'Synapse' node");
+                    // Get weight update
+                    auto weightUpdate = synapse.child("LL:WeightUpdate");
+                    if(!weightUpdate) {
+                        throw std::runtime_error("'Synapse' node has no 'WeightUpdate' node");
+                    }
+
+                    // Get post synapse
+                    auto postSynapse = synapse.child("LL:PostSynapse");
+                    if(!postSynapse) {
+                        throw std::runtime_error("'Synapse' node has no 'PostSynapse' node");
+                    }
+
+                    // Build synapse population name from name of weight update
+                    // **NOTE** this is an arbitrary choice but these are guaranteed unique
+                    std::string geNNSynPopName = SpineMLUtils::getSafeName(weightUpdate.attribute("name").value());
+
+                    // Find allocate function and sparse projection
+                    Connectors::AllocateFn allocateFn = (Connectors::AllocateFn)getLibrarySymbol(modelLibrary, ("allocate" + geNNSynPopName).c_str());
+                    SparseProjection *sparseProjection = (SparseProjection*)getLibrarySymbol(modelLibrary, ("C" + geNNSynPopName).c_str());
+
+                    // Create connector
+                    const unsigned int numSynapses = Connectors::create(synapse, popSize, trgPopSize,
+                                                                        sparseProjection, allocateFn, basePath);
+
+                    // Add postsynapse properties to dictionary
+                    addPropertiesAndSizes(basePath, postSynapse, modelLibrary, geNNSynPopName, trgPopSize,
+                                        componentSizes, componentProperties);
+                    addEventPorts(basePath, postSynapse, componentURLs, componentEventPorts);
+
+                    // Add weight update properties to dictionary
+                    addPropertiesAndSizes(basePath, weightUpdate, modelLibrary, geNNSynPopName, numSynapses,
+                                        componentSizes, componentProperties);
+                    addEventPorts(basePath, weightUpdate, componentURLs, componentEventPorts);
                 }
-                
-                // Get weight update
-                auto weightUpdate = synapse.child("LL:WeightUpdate");
-                if(!weightUpdate) {
-                    throw std::runtime_error("'Synapse' node has no 'WeightUpdate' node");
-                }
-
-                // Get post synapse
-                auto postSynapse = synapse.child("LL:PostSynapse");
-                if(!postSynapse) {
-                    throw std::runtime_error("'Synapse' node has no 'PostSynapse' node");
-                }
-                
-                // Build synapse population name from name of weight update
-                // **NOTE** this is an arbitrary choice but these are guaranteed unique
-                std::string geNNSynPopName = SpineMLUtils::getSafeName(weightUpdate.attribute("name").value());
-
-                // Find allocate function and sparse projection
-                Connectors::AllocateFn allocateFn = (Connectors::AllocateFn)getLibrarySymbol(modelLibrary, ("allocate" + geNNSynPopName).c_str());
-                SparseProjection *sparseProjection = (SparseProjection*)getLibrarySymbol(modelLibrary, ("C" + geNNSynPopName).c_str());
-
-                // Create connector
-                const unsigned int numSynapses = Connectors::create(synapse, popSize, trgPopSize,
-                                                                    sparseProjection, allocateFn, basePath);
-
-                // Add postsynapse properties to dictionary
-                addPropertiesAndSizes(basePath, postSynapse, modelLibrary, geNNSynPopName, trgPopSize,
-                                      componentSizes, componentProperties);
-                addEventPorts(basePath, postSynapse, componentURLs, componentEventPorts);
-
-                // Add weight update properties to dictionary
-                addPropertiesAndSizes(basePath, weightUpdate, modelLibrary, geNNSynPopName, numSynapses,
-                                      componentSizes, componentProperties);
-                addEventPorts(basePath, weightUpdate, componentURLs, componentEventPorts);
             }
         }
 

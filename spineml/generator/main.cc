@@ -290,70 +290,68 @@ int main(int argc,
             const NeuronGroup *trgNeuronGroup = model.findNeuronGroup(trgPopName);
             const NeuronModel *trgNeuronModel = dynamic_cast<const NeuronModel*>(trgNeuronGroup->getNeuronModel());
 
-            std::cout << "Projection from population:" << popName << "->" << trgPopName << std::endl;
+            // Loop through synapse children
+            // **NOTE** multiple projections between the same two populations of neurons are implemented in this way
+            for(auto synapse : projection.children("LL:Synapse")) {
+                std::cout << "Projection from population:" << popName << "->" << trgPopName << std::endl;
 
-            // Get main synapse node
-            auto synapse = projection.child("LL:Synapse");
-            if(!synapse) {
-                throw std::runtime_error("'Projection' node has no 'Synapse' node");
-            }
+                // Get weight update
+                auto weightUpdate = synapse.child("LL:WeightUpdate");
+                if(!weightUpdate) {
+                    throw std::runtime_error("'Synapse' node has no 'WeightUpdate' node");
+                }
 
-            // Get weight update
-            auto weightUpdate = synapse.child("LL:WeightUpdate");
-            if(!weightUpdate) {
-                throw std::runtime_error("'Synapse' node has no 'WeightUpdate' node");
-            }
+                // Read weight update properties
+                std::map<std::string, double> fixedWeightUpdateParamVals;
+                ModelParams::WeightUpdate weightUpdateModelParams(basePath, weightUpdate,
+                                                                popName, trgPopName,
+                                                                fixedWeightUpdateParamVals);
 
-            // Read weight update properties
-            std::map<std::string, double> fixedWeightUpdateParamVals;
-            ModelParams::WeightUpdate weightUpdateModelParams(basePath, weightUpdate,
-                                                              popName, trgPopName,
-                                                              fixedWeightUpdateParamVals);
+                // Global weight value can be used if there are no variable parameters
+                const bool globalG = weightUpdateModelParams.getVariableParams().empty();
 
-            // Global weight value can be used if there are no variable parameters
-            const bool globalG = weightUpdateModelParams.getVariableParams().empty();
+                // Either get existing postsynaptic model or create new one of no suitable models are available
+                const auto &weightUpdateModel = getCreateModel(weightUpdateModelParams, weightUpdateModels,
+                                                            neuronModel, trgNeuronModel);
 
-            // Either get existing postsynaptic model or create new one of no suitable models are available
-            const auto &weightUpdateModel = getCreateModel(weightUpdateModelParams, weightUpdateModels,
-                                                           neuronModel, trgNeuronModel);
+                // Get post synapse
+                auto postSynapse = synapse.child("LL:PostSynapse");
+                if(!postSynapse) {
+                    throw std::runtime_error("'Synapse' node has no 'PostSynapse' node");
+                }
 
-            // Get post synapse
-            auto postSynapse = synapse.child("LL:PostSynapse");
-            if(!postSynapse) {
-                throw std::runtime_error("'Synapse' node has no 'PostSynapse' node");
-            }
+                // Read postsynapse properties
+                std::map<std::string, double> fixedPostsynapticParamVals;
+                ModelParams::Postsynaptic postsynapticModelParams(basePath, postSynapse,
+                                                                trgPopName,
+                                                                fixedPostsynapticParamVals);
 
-            // Read postsynapse properties
-            std::map<std::string, double> fixedPostsynapticParamVals;
-            ModelParams::Postsynaptic postsynapticModelParams(basePath, postSynapse,
-                                                              trgPopName,
-                                                              fixedPostsynapticParamVals);
+                // Either get existing postsynaptic model or create new one of no suitable models are available
+                const auto &postsynapticModel = getCreateModel(postsynapticModelParams, postsynapticModels,
+                                                            trgNeuronModel, &weightUpdateModel);
 
-            // Either get existing postsynaptic model or create new one of no suitable models are available
-            const auto &postsynapticModel = getCreateModel(postsynapticModelParams, postsynapticModels,
-                                                           trgNeuronModel, &weightUpdateModel);
+                // Determine the GeNN matrix type and number of delay steps
+                SynapseMatrixType mtype;
+                unsigned int delaySteps;
+                unsigned int maxConnections;
+                tie(mtype, delaySteps, maxConnections) = getSynapticMatrixType(basePath, synapse,
+                                                                            neuronGroup->getNumNeurons(),
+                                                                            trgNeuronGroup->getNumNeurons(),
+                                                                            globalG, 0.1);
 
-            // Determine the GeNN matrix type and number of delay steps
-            SynapseMatrixType mtype;
-            unsigned int delaySteps;
-            unsigned int maxConnections;
-            tie(mtype, delaySteps, maxConnections) = getSynapticMatrixType(basePath, synapse,
-                                                                           neuronGroup->getNumNeurons(),
-                                                                           trgNeuronGroup->getNumNeurons(),
-                                                                           globalG, 0.1);
+                // Build synapse population name from name of weight update
+                // **NOTE** this is an arbitrary choice but these are guaranteed unique
+                const std::string synapsePopName = SpineMLUtils::getSafeName(weightUpdate.attribute("name").value());
 
-            // Build synapse population name from name of weight update
-            // **NOTE** this is an arbitrary choice but these are guaranteed unique
-            const std::string synapsePopName = SpineMLUtils::getSafeName(weightUpdate.attribute("name").value());
+                // Add synapse population to model
+                auto synapsePop = model.addSynapsePopulation(synapsePopName, mtype, delaySteps, popName, trgPopName,
+                                                            &weightUpdateModel, WeightUpdateModel::ParamValues(fixedWeightUpdateParamVals, weightUpdateModel), WeightUpdateModel::VarValues(fixedWeightUpdateParamVals, weightUpdateModel),
+                                                            &postsynapticModel, PostsynapticModel::ParamValues(fixedPostsynapticParamVals, postsynapticModel), PostsynapticModel::VarValues(fixedPostsynapticParamVals, postsynapticModel));
 
-            // Add synapse population to model
-            auto synapsePop = model.addSynapsePopulation(synapsePopName, mtype, delaySteps, popName, trgPopName,
-                                                         &weightUpdateModel, WeightUpdateModel::ParamValues(fixedWeightUpdateParamVals, weightUpdateModel), WeightUpdateModel::VarValues(fixedWeightUpdateParamVals, weightUpdateModel),
-                                                         &postsynapticModel, PostsynapticModel::ParamValues(fixedPostsynapticParamVals, postsynapticModel), PostsynapticModel::VarValues(fixedPostsynapticParamVals, postsynapticModel));
-
-            // If matrix uses sparse connectivity set max connections
-            if(mtype & SynapseMatrixConnectivity::SPARSE) {
-                synapsePop->setMaxConnections(maxConnections);
+                // If matrix uses sparse connectivity set max connections
+                if(mtype & SynapseMatrixConnectivity::SPARSE) {
+                    synapsePop->setMaxConnections(maxConnections);
+                }
             }
         }
     }
