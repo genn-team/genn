@@ -150,7 +150,7 @@ void SpineMLSimulator::InputValue::TimeVarying::update(double, unsigned int time
 //----------------------------------------------------------------------------
 // SpineMLSimulator::InputValue::TimeVaryingArray
 //----------------------------------------------------------------------------
-SpineMLSimulator::InputValue::TimeVaryingArray::TimeVaryingArray(double, unsigned int numNeurons, const pugi::xml_node &node)
+SpineMLSimulator::InputValue::TimeVaryingArray::TimeVaryingArray(double dt, unsigned int numNeurons, const pugi::xml_node &node)
 : Base(numNeurons, node)
 {
     // Loop through time points
@@ -158,12 +158,22 @@ SpineMLSimulator::InputValue::TimeVaryingArray::TimeVaryingArray(double, unsigne
         // Read time and value
         const unsigned int index = timePoint.attribute("index").as_uint();
 
-        // Read array of times
+        // If an array of times is specified
         std::vector<unsigned int> times;
         auto arrayTime = timePoint.attribute("array_time");
         if(arrayTime) {
-            SpineMLCommon::SpineMLUtils::readCSVIndices(arrayTime.value(),
-                                                        std::back_inserter(times));
+            // Read array of times in milliseconds
+            std::vector<double> timesMs;
+            SpineMLCommon::SpineMLUtils::readCSVValues(arrayTime.value(),
+                                                       std::back_inserter(timesMs));
+
+            // Convert milliseconds to timesteps
+            times.reserve(timesMs.size());
+            std::transform(timesMs.cbegin(), timesMs.cend(), std::back_inserter(times),
+                           [dt](double t)
+                           {
+                               return (unsigned int)std::floor(t / dt);
+                           });
         }
         else {
             throw std::runtime_error("No array of times specified in TimePointArrayValue");
