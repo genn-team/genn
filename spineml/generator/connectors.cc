@@ -25,54 +25,53 @@ namespace
 {
 // Calculate log factorial using lookup table and log gamma function from standard library
 // Adopted from numerical recipes in C p170
-double lnFact(int n)
+inline double lnFact(int n)
 {
     // **NOTE** a static array is automatically initialized  to zero.
     static double a[101];
-
     if (n < 0) {
         throw std::runtime_error("Negative factorial in routine factln");
     }
     else if (n <= 1) {
         return 0.0;
     }
-    //In range of table.
+    // In range of table.
     else if (n <= 100) {
         return a[n] ? a[n] : (a[n] = lgamma(n + 1.0));
     }
-    // Out  of range  of  table.
+    // Out of range of table.
     else {
         return lgamma(n + 1.0);
     }
 }
 //----------------------------------------------------------------------------
-// Calculate binomial coefficient using log factorial
+// Calculate natural log of binomial coefficient using log factorial
 // Adopted from numerical recipes in C p169
-double binomialCoefficient(int n, int k)
+inline double lnBinomialCoefficient(int n, int k)
 {
-    return floor(0.5 + exp(lnFact(n) - lnFact(k) - lnFact(n - k)));
+    return lnFact(n) - lnFact(k) - lnFact(n - k);
 }
 //----------------------------------------------------------------------------
 // Evaluates PDF of binomial distribution
 // Adopted from C++ 'prob' libray found https://people.sc.fsu.edu/~jburkardt/
-double binomialPDF(int x, int a, double b)
+inline double binomialPDF(int n, int k, double p)
 {
-    if(a < 1) {
+    if(n < 1) {
         return 0.0;
     }
-    else if(x < 0 || a < x) {
+    else if(k < 0 || n < k) {
         return 0.0;
     }
-    else if(b == 0.0) {
-        if(x == 0) {
+    else if(p == 0.0) {
+        if(k == 0) {
             return 1.0;
         }
         else {
             return 0.0;
         }
     }
-    else if(b == 1.0) {
-        if(x == a) {
+    else if(p == 1.0) {
+        if(k == n) {
            return 1.0;
         }
         else {
@@ -80,7 +79,7 @@ double binomialPDF(int x, int a, double b)
         }
     }
     else {
-        return binomialCoefficient(a, x) * pow(b, x) * pow(1.0 - b, a - x);
+        return exp(lnBinomialCoefficient(n, k) + (k * log(p)) + ((n - k) * log(1.0 - p)));
     }
 }
 //----------------------------------------------------------------------------
@@ -212,15 +211,18 @@ std::pair<unsigned int, float> SpineMLGenerator::Connectors::List::readMaxRowLen
     // If connectivity should be read from a binary file
     std::vector<unsigned int> rowLengths(numPre);
     auto binaryFile = node.child("BinaryFile");
-    float explicitDelayValue = std::numeric_limits<float>::quiet_NaN();
-    bool heterogeneousWarningShown = false;
+
+    bool explicitDelay = false;
+    float sumDelayMs = 0.0;
+    unsigned int numConnections = 0;
+
     if(binaryFile) {
         // If there are individual delays then each synapse is 3 words rather than 2
-        const bool explicitDelay = (binaryFile.attribute("explicit_delay_flag").as_uint() != 0);
+        explicitDelay = (binaryFile.attribute("explicit_delay_flag").as_uint() != 0);
         const unsigned int wordsPerSynapse = explicitDelay ? 3 : 2;
 
         // Read number of connections and filename of file fr
-        const unsigned int numConnections = binaryFile.attribute("num_connections").as_uint();
+        numConnections = binaryFile.attribute("num_connections").as_uint();
         std::string filename = (basePath / binaryFile.attribute("file_name").value()).str();
 
         // Open file for binary IO
@@ -256,19 +258,8 @@ std::pair<unsigned int, float> SpineMLGenerator::Connectors::List::readMaxRowLen
                     // Cast delay word to float
                     const float *synapseDelay = reinterpret_cast<float*>(&connectionBuffer[w + 2]);
 
-                    // If this is the first delay value to be read, use as explcit delay value
-                    if(std::isnan(explicitDelayValue)) {
-                        explicitDelayValue = *synapseDelay;
-                        std::cout << "\tReading delay value of:" << explicitDelayValue << "ms from synapse" << std::endl;
-                    }
-                    // Otherwise if this is different than previously read value, give error
-                    else if(!heterogeneousWarningShown && std::abs(explicitDelayValue - *synapseDelay) > std::numeric_limits<float>::epsilon()) {
-                        std::cout << "\tWARNING: GeNN does not support heterogeneous synaptic delays - different values (";
-                        std::cout << explicitDelayValue << ", " << *synapseDelay << ") encountered" << std::endl;
-                        heterogeneousWarningShown = true;
-                        //throw std::runtime_error("GeNN does not support heterogeneous synaptic delays - different values (" +
-                        //                         std::to_string(explicitDelayValue) + ", " + std::to_string(*synapseDelay) + ") encountered");
-                    }
+                    // Add to total
+                    sumDelayMs += *synapseDelay;
                 }
             }
 
@@ -282,27 +273,38 @@ std::pair<unsigned int, float> SpineMLGenerator::Connectors::List::readMaxRowLen
             // Increment histogram bin based on source neuron
             rowLengths[c.attribute("src_neuron").as_uint()]++;
 
-            // If this synapse has a delay
+            // Increment connections counter
+            numConnections++;
+
+            // If this synapse has a delay, set explicit delay flag and add delay to total
             auto delay = c.attribute("delay");
             if(delay) {
-                // If this is the first delay value to be read, use as explcit delay value
-                const float synapseDelay = delay.as_float();
-                if(std::isnan(explicitDelayValue)) {
-                    explicitDelayValue = synapseDelay;
-                    std::cout << "\tReading delay value of:" << explicitDelayValue << "ms from synapse" << std::endl;
-                }
-                // Otherwise if this is different than previously read value, give error
-                else if(!heterogeneousWarningShown && std::abs(explicitDelayValue - synapseDelay) > std::numeric_limits<float>::epsilon()) {
-                    std::cout << "\tWARNING: GeNN does not support heterogeneous synaptic delays - different values (";
-                    std::cout << explicitDelayValue << ", " << synapseDelay << ") encountered" << std::endl;
-                    heterogeneousWarningShown = true;
-                    //throw std::runtime_error("GeNN does not support heterogeneous synaptic delays - different values (" +
-                    //                            std::to_string(explicitDelayValue) + ", " + std::to_string(synapseDelay) + ") encountered");
-                }
+                explicitDelay = true;
+                sumDelayMs += delay.as_float();
+            }
+            // Otherwise, if previous synapses have had specific delays, error
+            else if(explicitDelay) {
+                throw std::runtime_error("GeNN doesn't support connection lists with partial explicit delays");
             }
         }
     }
 
-    // Return size of largest histogram bin and explicit delay value
-    return std::make_pair(*std::max_element(rowLengths.begin(), rowLengths.end()), explicitDelayValue);
+    // Calculate max row length from histogram
+    const unsigned int maxRowLength = *std::max_element(rowLengths.begin(), rowLengths.end());
+
+    // If there are explicit delays
+    if(explicitDelay) {
+        // Calculate mean delay
+        const float meanDelay = sumDelayMs / (float)numConnections;
+
+        // Give warning regarding how they will actually be implemented
+        std::cout << "\tWARNING: GeNN doesn't support heterogenous synaptic delays - mean delay of " << meanDelay << "ms will be used for all synapses" << std::endl;
+
+        // Return size of largest histogram bin and explicit delay value
+        return std::make_pair(maxRowLength, meanDelay);
+    }
+    // Otherwise, return NaN to signal that no explicit delays are set
+    else {
+        return std::make_pair(maxRowLength, std::numeric_limits<float>::quiet_NaN());
+    }
 }
