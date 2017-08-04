@@ -112,13 +112,22 @@ bool isEventSendPort(const std::string &targetName, const std::string &portName,
                      const std::map<std::string, std::string> &componentURLs,
                      const ComponentEventPorts &componentEventPorts)
 {
+    // Find URL of target component
     auto targetURL = componentURLs.find(targetName);
     if(targetURL != componentURLs.end()) {
-        auto urlEventPorts = componentEventPorts.find(targetURL->second);
-        if(urlEventPorts != componentEventPorts.end()) {
-
-            const auto &eventSendPorts = urlEventPorts->second.first;
-            return (eventSendPorts.find(portName) != eventSendPorts.end());
+        // If then target is a spike source
+        if(targetURL->second == "SpikeSource" && portName == "spike") {
+            return true;
+        }
+        // Otherwise
+        else {
+            // If there is a map of event ports for components with this URL,
+            // Return true if our portname is within that map
+            auto urlEventPorts = componentEventPorts.find(targetURL->second);
+            if(urlEventPorts != componentEventPorts.end()) {
+                const auto &eventSendPorts = urlEventPorts->second.first;
+                return (eventSendPorts.find(portName) != eventSendPorts.end());
+            }
         }
     }
 
