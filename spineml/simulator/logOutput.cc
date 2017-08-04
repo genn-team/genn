@@ -183,7 +183,7 @@ SpineMLSimulator::LogOutput::Event::Event(const pugi::xml_node &node, double dt,
                                           const filesystem::path &basePath, unsigned int *spikeQueuePtr,
                                           unsigned int *hostSpikeCount, unsigned int *deviceSpikeCount,
                                           unsigned int *hostSpikes, unsigned int *deviceSpikes)
-    : Base(node, dt, numTimeSteps), m_SpikeQueuePtr(spikeQueuePtr),
+    : Base(node, dt, numTimeSteps), m_PopSize(popSize), m_SpikeQueuePtr(spikeQueuePtr),
       m_HostSpikeCount(hostSpikeCount), m_DeviceSpikeCount(deviceSpikeCount),
       m_HostSpikes(hostSpikes), m_DeviceSpikes(deviceSpikes)
 {
@@ -257,28 +257,30 @@ void SpineMLSimulator::LogOutput::Event::record(double dt, unsigned int timestep
     if(shouldRecord(timestep)) {
         // Determine current spike queue
         const unsigned int spikeQueueIndex = (m_SpikeQueuePtr == nullptr) ? 0 : *m_SpikeQueuePtr;
-
+        const unsigned int spikeOffset = m_PopSize * spikeQueueIndex;
 #ifndef CPU_ONLY
         // Copy spike count from spike queue position to host
         CHECK_CUDA_ERRORS(cudaMemcpy(&m_HostSpikeCount[spikeQueueIndex], &m_DeviceSpikeCount[spikeQueueIndex],
                                      sizeof(unsigned int), cudaMemcpyDeviceToHost));
 
         // Copy this many spikes to host
-        CHECK_CUDA_ERRORS(cudaMemcpy(m_HostSpikes, m_DeviceSpikes,
+        CHECK_CUDA_ERRORS(cudaMemcpy(&m_HostSpikes[spikeOffset], &m_DeviceSpikes[spikeOffset],
                                      sizeof(unsigned int) * m_HostSpikeCount[spikeQueueIndex], cudaMemcpyDeviceToHost));
 #endif  // CPU_ONLY
         const double t = dt * (double)timestep;
+
         if(m_Indices.empty()) {
             for(unsigned int i = 0; i < m_HostSpikeCount[spikeQueueIndex]; i++)
             {
-                m_File << t << "," << m_HostSpikes[i] << std::endl;
+                m_File << t << "," << m_HostSpikes[spikeOffset + i] << std::endl;
             }
         }
         else {
             for(unsigned int i = 0; i < m_HostSpikeCount[spikeQueueIndex]; i++)
             {
-                if(m_Indices.find(m_HostSpikes[i]) != m_Indices.end()) {
-                    m_File << t << "," << m_HostSpikes[i] << std::endl;
+                const unsigned int spikeID = m_HostSpikes[spikeOffset + i];
+                if(m_Indices.find(spikeID) != m_Indices.end()) {
+                    m_File << t << "," << spikeID << std::endl;
                 }
             }
         }

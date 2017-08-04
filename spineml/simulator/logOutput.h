@@ -112,6 +112,8 @@ private:
     //----------------------------------------------------------------------------
     std::ofstream m_File;
 
+    const unsigned int m_PopSize;
+
     unsigned int *m_SpikeQueuePtr;
     unsigned int *m_HostSpikeCount;
     unsigned int *m_DeviceSpikeCount;
