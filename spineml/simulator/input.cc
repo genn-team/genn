@@ -105,18 +105,19 @@ void SpineMLSimulator::Input::InterSpikeIntervalBase::apply(double dt, unsigned 
             }
             // Otherwise
             else {
-                // Convert rate into interspike interval
+                // Convert rate into interspike interval and calculate time to first spike
                 const double isiMs = 1000.0 / rate;
-
+                const double tts = getTimeToSpike(isiMs);
+                
                 // If this neuron has not had a rate set before, add it to map
                 auto neuronTTS = m_TimeToSpike.find(neuronID);
                 if(neuronTTS == m_TimeToSpike.end()) {
-                    m_TimeToSpike.insert(std::make_pair(neuronID, std::make_pair(isiMs, isiMs)));
+                    m_TimeToSpike.insert(std::make_pair(neuronID, std::make_pair(isiMs, tts)));
                 }
                 // Otherwise, update it's ISI to the new one and also reset it's time to spike
                 else {
                     neuronTTS->second.first = isiMs;
-                    neuronTTS->second.second = getTimeToSpike(isiMs);
+                    neuronTTS->second.second = tts;
                 }
             }
         });
@@ -125,18 +126,18 @@ void SpineMLSimulator::Input::InterSpikeIntervalBase::apply(double dt, unsigned 
     if(shouldApply(timestep)) {
         // Loop through all times to spike
         for(auto &tts : m_TimeToSpike) {
-            // If this neuron isn't going to spike this timestep, decrement ISI
-            if(tts.second.second > 0.0) {
-                tts.second.second -= dt;
-            }
-            // Otherwise
-            else {
-                // Reset time-to-spike
-                tts.second.second = getTimeToSpike(tts.second.first);
+            // If this neuron should spike this timestep
+            if(tts.second.second <= 0.0) {
+                // Add on time until next spike
+                // **NOTE** this means sub-timestep remainders don't get ignored
+                tts.second.second += getTimeToSpike(tts.second.first);
 
                 // Inject spike
                 injectSpike(tts.first);
             }
+
+            // Decrement time-to-spike
+            tts.second.second -= dt;
         }
 
         // Upload spikes to GPU if required
@@ -191,7 +192,7 @@ SpineMLSimulator::Input::PoissonSpikeRate::PoissonSpikeRate(double dt, const pug
 //----------------------------------------------------------------------------
 double SpineMLSimulator::Input::PoissonSpikeRate::getTimeToSpike(double isiMs)
 {
-    std::exponential_distribution<double> distribution(isiMs);
+    std::exponential_distribution<double> distribution(1.0 / isiMs);
     return distribution(m_RandomGenerator);
 }
 
