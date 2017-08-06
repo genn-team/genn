@@ -67,20 +67,20 @@ static void genHeader(const NNmodel &model, //!< Model description
     os << "// copying things from remote" << std::endl;
     os << std::endl;
     for(const auto &n : model.getLocalNeuronGroups()) {
-        os << "void pull" << n.first << "SpikesFromRemote(int remote);" << std::endl;
+        os << "void pull" << n.first << "SpikesFromRemote(int remote, int tag);" << std::endl;
     }
     os << std::endl;
 
     os << "// ------------------------------------------------------------------------" << std::endl;
     os << "// global copying spikes to remote" << std::endl;
     os << std::endl;
-    os << "void copySpikesToRemote(int remote);" << std::endl;
+    os << "void copySpikesToRemote(int remote, int tag);" << std::endl;
     os << std::endl;
 
     os << "// ------------------------------------------------------------------------" << std::endl;
     os << "// global copying spikes from remote" << std::endl;
     os << std::endl;
-    os << "void copySpikesFromRemote(int remote);" << std::endl;
+    os << "void copySpikesFromRemote(int remote, int tag);" << std::endl;
     os << std::endl;
 
     os << "#endif" << std::endl;
@@ -124,20 +124,20 @@ static void genCode(const NNmodel &model, //!< Model description
 
     for(const auto &n : model.getLocalNeuronGroups()) {
         // neuron spike variables
-        os << "void push" << n.first << "SpikesToRemote(int remote)" << std::endl;
+        os << "void push" << n.first << "SpikesToRemote(int remote, int tag)" << std::endl;
         os << CodeStream::OB(1050);
 
         const size_t glbSpkCntSize = n.second.isTrueSpikeRequired() ? n.second.getNumDelaySlots() : 1;
         os << "MPI_Send(glbSpkCnt" << n.first;
         os << ", "<< glbSpkCntSize;
         os << ", MPI_INT";
-        os << ", remote, 0, MPI_COMM_WORLD);" << std::endl;
+        os << ", remote, tag, MPI_COMM_WORLD);" << std::endl;
 
         const size_t glbSpkSize = n.second.isTrueSpikeRequired() ? n.second.getNumNeurons() * n.second.getNumDelaySlots() : n.second.getNumNeurons();
         os << "MPI_Send(glbSpk" << n.first;
         os << ", "<< glbSpkSize;
         os << ", MPI_INT";
-        os << ", remote, 0, MPI_COMM_WORLD);" << std::endl;
+        os << ", remote, tag, MPI_COMM_WORLD);" << std::endl;
 
         os << CodeStream::CB(1050);
         os << std::endl;
@@ -148,20 +148,20 @@ static void genCode(const NNmodel &model, //!< Model description
 
     for(const auto &n : model.getLocalNeuronGroups()) {
         // neuron spike variables
-        os << "void pull" << n.first << "SpikesFromRemote(int remote)" << std::endl;
+        os << "void pull" << n.first << "SpikesFromRemote(int remote, int tag)" << std::endl;
         os << CodeStream::OB(1051);
 
         const size_t glbSpkCntSize = n.second.isTrueSpikeRequired() ? n.second.getNumDelaySlots() : 1;
         os << "MPI_Recv(glbSpkCnt" << n.first;
         os << ", "<< glbSpkCntSize;
         os << ", MPI_INT";
-        os << ", remote, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);" << std::endl;
+        os << ", remote, tag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);" << std::endl;
 
         const size_t glbSpkSize = n.second.isTrueSpikeRequired() ? n.second.getNumNeurons() * n.second.getNumDelaySlots() : n.second.getNumNeurons();
         os << "MPI_Recv(glbSpk" << n.first;
         os << ", "<< glbSpkSize;
         os << ", MPI_INT";
-        os << ", remote, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);" << std::endl;
+        os << ", remote, tag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);" << std::endl;
 
         os << CodeStream::CB(1051);
         os << std::endl;
@@ -169,10 +169,10 @@ static void genCode(const NNmodel &model, //!< Model description
     os << "// ------------------------------------------------------------------------" << std::endl;
     os << "// global copying spikes to remote" << std::endl << std::endl;
 
-    os << "void copySpikesToRemote(int remote)" << std::endl;
+    os << "void copySpikesToRemote(int remote, int tag)" << std::endl;
     os << CodeStream::OB(1052);
     for(const auto &n : model.getLocalNeuronGroups()) {
-        os << "push" << n.first << "SpikesToRemote(int remote);" << std::endl;
+        os << "push" << n.first << "SpikesToRemote(int remote, int tag);" << std::endl;
     }
     os << CodeStream::CB(1052);
     os << std::endl;
@@ -180,11 +180,11 @@ static void genCode(const NNmodel &model, //!< Model description
     os << "// ------------------------------------------------------------------------" << std::endl;
     os << "// global copying spikes from remote" << std::endl << std::endl;
 
-    os << "void copySpikesFromRemote(int remote)" << std::endl;
+    os << "void copySpikesFromRemote(int remote, int tag)" << std::endl;
     os << CodeStream::OB(1053) << std::endl;
 
     for(const auto &n : model.getLocalNeuronGroups()) {
-      os << "pull" << n.first << "SpikesFromRemote(int remote);" << std::endl;
+      os << "pull" << n.first << "SpikesFromRemote(int remote, int tag);" << std::endl;
     }
     os << CodeStream::CB(1053);
     os << std::endl;
@@ -197,23 +197,29 @@ static void genCode(const NNmodel &model, //!< Model description
 
     os << "    int localID;" << std::endl;
     os << "    MPI_Comm_rank(MPI_COMM_WORLD, &localID);" << std::endl;
+    std::map<string, int> neuronToTag;
+    int nextTag = 0;
     for(const auto &n : model.getNeuronGroups()) {
             os << "    // Handling neuron " << n.first << std::endl;
+            if (neuronToTag.find(n.first) == neuronToTag.cend()) {
+                neuronToTag.insert(pair<string, int>(n.first, nextTag));
+                nextTag++;
+            }
         for(auto *s : n.second.getOutSyn()) {
             os << "    // send to synapse" << s->getName()<< std::endl;
             os << "    if (" << " localID != " << s->getClusterHostID() << ")" << std::endl;
             os << CodeStream::OB(1055) << std::endl;
-            os << "copySpikesToRemote(" << s->getClusterHostID() << ");" <<std::endl;
+            os << "copySpikesToRemote(" << s->getClusterHostID() << ", " << (neuronToTag.find(n.first))->second << ");" << std::endl;
             os << CodeStream::CB(1055);
         }
     }
     for(const auto &n : model.getNeuronGroups()) {
             os << "    // Handling neuron " << n.first << std::endl;
         for(auto *s : n.second.getInSyn()) {
-            os << "    // receive from synapse" << s->getName()<< std::endl;
+            os << "    // receive from synapse" << s->getName() << " " << s->getSrcNeuronGroup()->getName() << std::endl;
             os << "    if (" << " localID != " << s->getClusterHostID() << ")" << std::endl;
             os << CodeStream::OB(1055) << std::endl;
-            os << "copySpikesFromRemote(" << s->getClusterHostID() << ");" <<std::endl;
+            os << "copySpikesFromRemote(" << s->getClusterHostID() << ", " << (neuronToTag.find(s->getSrcNeuronGroup()->getName()))->second << ");" << std::endl;
             os << CodeStream::CB(1055);
         }
     }
