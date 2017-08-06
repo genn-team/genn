@@ -198,13 +198,16 @@ static void genCode(const NNmodel &model, //!< Model description
     os << "    int localID;" << std::endl;
     os << "    MPI_Comm_rank(MPI_COMM_WORLD, &localID);" << std::endl;
     for(const auto &n : model.getLocalNeuronGroups()) {
+            os << "    // Handling neuron " << n.first << std::endl;
         for(auto *s : n.second.getOutSyn()) {
+            os << "    // send to synapse" << s->getName()<< std::endl;
             os << "    if (" << " localID != " << s->getClusterHostID() << ")" << std::endl;
             os << CodeStream::OB(1055) << std::endl;
             os << "copySpikesToRemote(" << s->getClusterHostID() << ");" <<std::endl;
             os << CodeStream::CB(1055);
         }
         for(auto *s : n.second.getInSyn()) {
+            os << "    // receive from synapse" << s->getName()<< std::endl;
             os << "    if (" << " localID != " << s->getClusterHostID() << ")" << std::endl;
             os << CodeStream::OB(1055) << std::endl;
             os << "copySpikesFromRemote(" << s->getClusterHostID() << ");" <<std::endl;
