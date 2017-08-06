@@ -127,19 +127,17 @@ static void genCode(const NNmodel &model, //!< Model description
         os << "void push" << n.first << "SpikesToRemote(int remote)" << std::endl;
         os << CodeStream::OB(1050);
 
-        if(!n.second.isSpikeZeroCopyEnabled()) {
-            const size_t glbSpkCntSize = n.second.isTrueSpikeRequired() ? n.second.getNumDelaySlots() : 1;
-            os << "MPI_Send(glbSpkCnt" << n.first;
-            os << ", "<< glbSpkCntSize;
-            os << ", MPI_INT";
-            os << ", remote, 0, MPI_COMM_WORLD);" << std::endl;
+        const size_t glbSpkCntSize = n.second.isTrueSpikeRequired() ? n.second.getNumDelaySlots() : 1;
+        os << "MPI_Send(glbSpkCnt" << n.first;
+        os << ", "<< glbSpkCntSize;
+        os << ", MPI_INT";
+        os << ", remote, 0, MPI_COMM_WORLD);" << std::endl;
 
-            const size_t glbSpkSize = n.second.isTrueSpikeRequired() ? n.second.getNumNeurons() * n.second.getNumDelaySlots() : n.second.getNumNeurons();
-            os << "MPI_Send(glbSpk" << n.first;
-            os << ", "<< glbSpkSize;
-            os << ", MPI_INT";
-            os << ", remote, 0, MPI_COMM_WORLD);" << std::endl;
-        }
+        const size_t glbSpkSize = n.second.isTrueSpikeRequired() ? n.second.getNumNeurons() * n.second.getNumDelaySlots() : n.second.getNumNeurons();
+        os << "MPI_Send(glbSpk" << n.first;
+        os << ", "<< glbSpkSize;
+        os << ", MPI_INT";
+        os << ", remote, 0, MPI_COMM_WORLD);" << std::endl;
 
         os << CodeStream::CB(1050);
         os << std::endl;
@@ -153,19 +151,17 @@ static void genCode(const NNmodel &model, //!< Model description
         os << "void pull" << n.first << "SpikesFromRemote(int remote)" << std::endl;
         os << CodeStream::OB(1051);
 
-        if(!n.second.isSpikeZeroCopyEnabled()) {
-            const size_t glbSpkCntSize = n.second.isTrueSpikeRequired() ? n.second.getNumDelaySlots() : 1;
-            os << "MPI_Recv(glbSpkCnt" << n.first;
-            os << ", "<< glbSpkCntSize;
-            os << ", MPI_INT";
-            os << ", remote, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);" << std::endl;
+        const size_t glbSpkCntSize = n.second.isTrueSpikeRequired() ? n.second.getNumDelaySlots() : 1;
+        os << "MPI_Recv(glbSpkCnt" << n.first;
+        os << ", "<< glbSpkCntSize;
+        os << ", MPI_INT";
+        os << ", remote, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);" << std::endl;
 
-            const size_t glbSpkSize = n.second.isTrueSpikeRequired() ? n.second.getNumNeurons() * n.second.getNumDelaySlots() : n.second.getNumNeurons();
-            os << "MPI_Recv(glbSpk" << n.first;
-            os << ", "<< glbSpkSize;
-            os << ", MPI_INT";
-            os << ", remote, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);" << std::endl;
-        }
+        const size_t glbSpkSize = n.second.isTrueSpikeRequired() ? n.second.getNumNeurons() * n.second.getNumDelaySlots() : n.second.getNumNeurons();
+        os << "MPI_Recv(glbSpk" << n.first;
+        os << ", "<< glbSpkSize;
+        os << ", MPI_INT";
+        os << ", remote, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);" << std::endl;
 
         os << CodeStream::CB(1051);
         os << std::endl;
