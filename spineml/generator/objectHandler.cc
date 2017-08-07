@@ -15,12 +15,21 @@ void SpineMLGenerator::ObjectHandler::Condition::onObject(const pugi::xml_node &
         throw std::runtime_error("No trigger condition for transition between regimes");
     }
 
+    // Expand out any aliases
+    std::string triggerCodeString = triggerCode.text().get();
+    expandAliases(triggerCodeString, m_Aliases);
+
     // Write trigger condition
-    m_CodeStream << "if(" << triggerCode.text().get() << ")" << CodeStream::OB(2);
+    m_CodeStream << "if(" << triggerCodeString << ")" << CodeStream::OB(2);
 
     // Loop through state assignements
     for(auto stateAssign : node.children("StateAssignment")) {
-        m_CodeStream << stateAssign.attribute("variable").value() << " = " << stateAssign.child_value("MathInline") << ";" << std::endl;
+        // Expand out any aliases in code string
+        std::string stateAssignCodeString = stateAssign.child_value("MathInline");
+        expandAliases(stateAssignCodeString, m_Aliases);
+
+        // Write state assignement
+        m_CodeStream << stateAssign.attribute("variable").value() << " = " << stateAssignCodeString << ";" << std::endl;
     }
 
     // If this condition results in a regime change
@@ -38,6 +47,10 @@ void SpineMLGenerator::ObjectHandler::Condition::onObject(const pugi::xml_node &
 void SpineMLGenerator::ObjectHandler::TimeDerivative::onObject(const pugi::xml_node &node,
                                                                unsigned int, unsigned int)
 {
+    // Expand out any aliases in code string
+    std::string codeString = node.child_value("MathInline");
+    expandAliases(codeString, m_Aliases);
+
     // **TODO** identify cases where Euler is REALLY stupid
-    m_CodeStream << node.attribute("variable").value() << " += DT * (" << node.child_value("MathInline") << ");" << std::endl;
+    m_CodeStream << node.attribute("variable").value() << " += DT * (" << codeString << ");" << std::endl;
 }

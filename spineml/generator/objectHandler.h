@@ -1,5 +1,9 @@
 #pragma once
 
+// Standard C++ includes
+#include <map>
+#include <string>
+
 // SpineML generator includes
 #include "modelCommon.h"
 
@@ -34,7 +38,7 @@ public:
 class Condition : public Base
 {
 public:
-    Condition(CodeStream &codeStream) : m_CodeStream(codeStream){}
+    Condition(CodeStream &codeStream, const std::map<std::string, std::string> &aliases) : m_CodeStream(codeStream), m_Aliases(aliases){}
 
     //------------------------------------------------------------------------
     // ObjectHandler virtuals
@@ -47,6 +51,7 @@ protected:
     // Members
     //------------------------------------------------------------------------
     CodeStream &m_CodeStream;
+    const std::map<std::string, std::string> &m_Aliases;
 };
 
 //------------------------------------------------------------------------
@@ -55,7 +60,8 @@ protected:
 class TimeDerivative : public Base
 {
 public:
-    TimeDerivative(CodeStream &codeStream) : m_CodeStream(codeStream){}
+    TimeDerivative(CodeStream &codeStream, const std::map<std::string, std::string> &aliases)
+        : m_CodeStream(codeStream), m_Aliases(aliases){}
 
     //------------------------------------------------------------------------
     // ObjectHandler virtuals
@@ -68,6 +74,7 @@ protected:
     // Members
     //------------------------------------------------------------------------
     CodeStream &m_CodeStream;
+    const std::map<std::string, std::string> &m_Aliases;
 };
 }   // namespace ObjectHandler
 }   // namespace SpineMLGenerator

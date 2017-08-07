@@ -194,10 +194,10 @@ SpineMLGenerator::WeightUpdateModel::WeightUpdateModel(const ModelParams::Weight
         };
 
     // Generate model code using specified condition handler
-    ObjectHandler::Condition objectHandlerCondition(synapseDynamicsStream);
+    ObjectHandler::Condition objectHandlerCondition(synapseDynamicsStream, aliases);
     ObjectHandlerEvent objectHandlerTrueSpike(simCodeStream);
     ObjectHandlerEvent objectHandlerSpikeLikeEvent(simCodeStream);
-    ObjectHandler::TimeDerivative objectHandlerTimeDerivative(synapseDynamicsStream);
+    ObjectHandler::TimeDerivative objectHandlerTimeDerivative(synapseDynamicsStream, aliases);
     const bool multipleRegimes = generateModelCode(componentClass,
                                                    {
                                                        {trueSpikeReceivePort, &objectHandlerTrueSpike},

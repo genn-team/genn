@@ -192,15 +192,22 @@ bool SpineMLGenerator::generateModelCode(const pugi::xml_node &componentClass, c
     return multipleRegimes;
 }
 //----------------------------------------------------------------------------
-void SpineMLGenerator::wrapAndReplaceVariableNames(std::string &code, const std::string &variableName,
-                                                   const std::string &replaceVariableName)
+void SpineMLGenerator::replaceVariableNames(std::string &code, const std::string &variableName,
+                                            const std::string &replaceText)
 {
     // Build a regex to match variable name with at least one
     // character that can't be in a variable name on either side (or an end/beginning of string)
     std::regex regex("(^|[^a-zA-Z_])" + variableName + "($|[^a-zA-Z_])");
 
-    // Insert GeNN $(XXXX) wrapper around variable name
-    code = std::regex_replace(code,  regex, "$1$(" + replaceVariableName + ")$2");
+    // Replace variable within code string
+    code = std::regex_replace(code, regex, "$1" + replaceText + "$2");
+}
+//----------------------------------------------------------------------------
+void SpineMLGenerator::wrapAndReplaceVariableNames(std::string &code, const std::string &variableName,
+                                                   const std::string &replaceVariableName)
+{
+    // Replace variable name with replacement variable name, within GeNN $(XXXX) wrapper
+    replaceVariableNames(code, variableName, "$(" + replaceVariableName + ")");
 }
 //----------------------------------------------------------------------------
 void SpineMLGenerator::wrapVariableNames(std::string &code, const std::string &variableName)
@@ -296,6 +303,14 @@ void SpineMLGenerator::readAliases(const pugi::xml_node &componentClass, std::ma
         std::cout << "\t\t\t" << name << std::endl;
 
         aliases.insert(std::make_pair(name, code));
+    }
+}
+//----------------------------------------------------------------------------
+void SpineMLGenerator::expandAliases(std::string &code, const std::map<std::string, std::string> &aliases)
+{
+    // Replace all alias names with their code string
+    for(const auto &alias : aliases) {
+        replaceVariableNames(code, alias.first, alias.second);
     }
 }
 //----------------------------------------------------------------------------

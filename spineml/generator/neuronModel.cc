@@ -30,8 +30,8 @@ namespace
 class ObjectHandlerNeuronCondition : public SpineMLGenerator::ObjectHandler::Condition
 {
 public:
-    ObjectHandlerNeuronCondition(SpineMLGenerator::CodeStream &codeStream, const std::string &sendPortSpike)
-        : SpineMLGenerator::ObjectHandler::Condition(codeStream), m_SendPortSpike(sendPortSpike){}
+    ObjectHandlerNeuronCondition(SpineMLGenerator::CodeStream &codeStream, const std::map<std::string, std::string> &aliases, const std::string &sendPortSpike)
+        : SpineMLGenerator::ObjectHandler::Condition(codeStream, aliases), m_SendPortSpike(sendPortSpike){}
 
     //----------------------------------------------------------------------------
     // SpineMLGenerator::ObjectHandler::Condition virtuals
@@ -41,8 +41,7 @@ public:
     {
         // Superclass
         SpineMLGenerator::ObjectHandler::Condition::onObject(node, currentRegimeID,
-                                                           targetRegimeID);
-
+                                                             targetRegimeID);
         // If this condition emits a spike
         // **TODO** also handle spike like event clause
         pugi::xpath_variable_set spikeEventsOutVars;
@@ -51,8 +50,9 @@ public:
         if(spikeEventOut) {
             // Add current regime and trigger condition to map
             // **NOTE** cannot build code immediately as we don't know if there are multiple regimes
-            auto triggerCode = node.child("Trigger").child("MathInline");
-            if(!m_RegimeThresholds.insert(std::make_pair(currentRegimeID, triggerCode.text().get())).second) {
+            std::string triggerCodeString = node.child("Trigger").child("MathInline").text().get();
+            SpineMLGenerator::expandAliases(triggerCodeString, m_Aliases);
+            if(!m_RegimeThresholds.insert(std::make_pair(currentRegimeID, triggerCodeString)).second) {
                 throw std::runtime_error("Only one spike trigger is supported per regime");
             }
         }
@@ -206,8 +206,8 @@ SpineMLGenerator::NeuronModel::NeuronModel(const ModelParams::Neuron &params)
         };
 
     // Generate model code using specified condition handler
-    ObjectHandlerNeuronCondition objectHandlerCondition(simCodeStream, m_SendPortSpike);
-    ObjectHandler::TimeDerivative objectHandlerTimeDerivative(simCodeStream);
+    ObjectHandlerNeuronCondition objectHandlerCondition(simCodeStream, aliases, m_SendPortSpike);
+    ObjectHandler::TimeDerivative objectHandlerTimeDerivative(simCodeStream, aliases);
     const bool multipleRegimes = generateModelCode(componentClass, {}, &objectHandlerCondition,
                                                    {}, &objectHandlerTimeDerivative,
                                                    regimeEndFunc);
