@@ -85,25 +85,25 @@ inline double binomialPDF(int n, int k, double p)
 //----------------------------------------------------------------------------
 // Evaluates inverse CDF of binomial distribution
 // Adopted from C++ 'prob' libray found https://people.sc.fsu.edu/~jburkardt/
-unsigned int binomialInverseCDF(double cdf, unsigned int a, double b)
+unsigned int binomialInverseCDF(double cdf, unsigned int n, double p)
 {
-    if(cdf < 0.0 || 1.0 < cdf) {
+    if(cdf < 0.0 || cdf >= 1.0) {
         throw std::runtime_error("binomialInverseCDF error - CDF < 0 or 1 < CDF");
     }
 
-    double cdf2 = 0.0;
-    for (unsigned int x = 0; x <= a; x++)
+     double cdf2 = 0.0;
+    for (unsigned int k = 0; k <= n; k++)
     {
-        const double pdf = binomialPDF(x, a, b);
+        const double pdf = binomialPDF(n, k, p);
         cdf2 += pdf;
 
-        if (cdf <= cdf2) {
-            return x;
+        if (cdf2 > cdf) {
+            return k;
         }
 
     }
 
-    throw std::runtime_error("Invalid CDF parameterse");
+    throw std::runtime_error("Invalid CDF parameters");
 }
 //----------------------------------------------------------------------------
 /*SynapseMatrixType getMatrixType(unsigned int numPre, unsigned int numPost, unsigned int numSynapses, bool globalG)
