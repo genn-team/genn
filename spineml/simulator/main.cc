@@ -749,27 +749,43 @@ int main(int argc, char *argv[])
         std::cout << "Simulating for " << numTimeSteps << " " << dt << "ms timesteps" << std::endl;
 
         // Loop through time
+        double inputMs = 0.0;
+        double simulateMs = 0.0;
+        double logMs = 0.0;
         for(unsigned int i = 0; i < numTimeSteps; i++)
         {
             // Apply inputs
-            for(auto &input : inputs)
             {
-                input->apply(dt, i);
+                TimerAccumulate t(inputMs);
+
+                for(auto &input : inputs)
+                {
+                    input->apply(dt, i);
+                }
             }
 
             // Advance time
+            {
+                TimerAccumulate t(simulateMs);
 #ifdef CPU_ONLY
-            stepTimeCPU();
+                stepTimeCPU();
 #else
-            stepTimeGPU();
+                stepTimeGPU();
 #endif
+            }
 
             // Perform any recording required this timestep
-            for(auto &logger : loggers)
             {
-                logger->record(dt, i);
+                TimerAccumulate t(logMs);
+
+                for(auto &logger : loggers)
+                {
+                    logger->record(dt, i);
+                }
             }
         }
+
+        std::cout << "Applying input: " << inputMs << "ms, simulating:" << simulateMs << "ms, logging:" << logMs << "ms" << std::endl;
     }
     catch(...)
     {
