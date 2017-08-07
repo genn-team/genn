@@ -47,6 +47,8 @@ public:
     //------------------------------------------------------------------------
     virtual std::string getDecayCode() const{ return m_DecayCode; }
     virtual std::string getApplyInputCode() const{ return m_ApplyInputCode; }
+    virtual std::string getUpdateLinSynCode() const{ return m_UpdateLinSynCode; }
+
     virtual NewModels::Base::StringVec getParamNames() const{ return m_ParamNames; }
     virtual NewModels::Base::StringPairVec getVars() const{ return m_Vars; }
 
@@ -56,6 +58,7 @@ private:
     //------------------------------------------------------------------------
     std::string m_DecayCode;
     std::string m_ApplyInputCode;
+    std::string m_UpdateLinSynCode;
 
     NewModels::Base::StringVec m_ParamNames;
     NewModels::Base::StringPairVec m_Vars;

@@ -54,6 +54,9 @@ public:
             throw std::runtime_error("GeNN only supports postsynaptic models where state assignment occurs");
         }
 
+        // Determine which variable impulse is being assigned to
+        m_ImpulseAssignStateVar = stateAssigment.attribute("variable").value();
+
         // Match for A + B type expression with any amount of whitespace
         auto stateAssigmentCode = stateAssigment.child_value("MathInline");
         std::regex regex("\\s*([a-zA-Z_]+)\\s*\\+\\s*([a-zA-Z_]+)\\s*");
@@ -62,21 +65,28 @@ public:
             // If match is successful check which of the variables being added 
             // match the impulse coming from the weight update 
             if(match[1].str() == m_SpikeImpulseReceivePort) {
-                m_ImpulseAssignStateVar = match[2].str();
+                if(match[2].str() != m_ImpulseAssignStateVar) {
+                    throw std::runtime_error("Mismatch between impulse handling expression and variable");
+                }
                 return;
             }
             else if(match[2].str() == m_SpikeImpulseReceivePort) {
-                m_ImpulseAssignStateVar = match[1].str();
+                if(match[1].str() != m_ImpulseAssignStateVar) {
+                    throw std::runtime_error("Mismatch between impulse handling expression and variable");
+                }
                 return;
             }
         }
-        throw std::runtime_error("GeNN only supports postsynaptic models which add incoming weight to state variable");
+
+        // If standard impulse code can't be identified, implement it as custom update lin syn code
+        m_UpdateLinSynCode = stateAssigmentCode;
     }
 
     //----------------------------------------------------------------------------
     // Public API
     //----------------------------------------------------------------------------
     const std::string &getImpulseAssignStateVar() const{ return m_ImpulseAssignStateVar; }
+    const std::string &getUpdateLinSynCode() const{ return m_UpdateLinSynCode; }
 
 private:
     //----------------------------------------------------------------------------
@@ -84,6 +94,7 @@ private:
     //----------------------------------------------------------------------------
     std::string m_SpikeImpulseReceivePort;
     std::string m_ImpulseAssignStateVar;
+    std::string m_UpdateLinSynCode;
 };
 }
 
@@ -205,6 +216,7 @@ SpineMLGenerator::PostsynapticModel::PostsynapticModel(const ModelParams::Postsy
 
     // Store generated code in class
     m_DecayCode = decayCodeStream.str();
+    m_UpdateLinSynCode = objectHandlerImpulse.getUpdateLinSynCode();
 
     // Build the final vectors of parameter names and variables from model
     tie(m_ParamNames, m_Vars) = findModelVariables(componentClass, params.getVariableParams(), multipleRegimes);
@@ -236,8 +248,6 @@ SpineMLGenerator::PostsynapticModel::PostsynapticModel(const ModelParams::Postsy
                 throw std::runtime_error("Postsynaptic decay dynamics not supported when weight update provides continuous input");
             }
         }
-
-
     }
 
     // If incoming impulse is being assigned to a state variable
@@ -246,6 +256,10 @@ SpineMLGenerator::PostsynapticModel::PostsynapticModel(const ModelParams::Postsy
 
         // Substitute name of analogue send port for internal variable
         wrapAndReplaceVariableNames(m_DecayCode, impulseAssignStateVar, "inSyn");
+
+        // Substitute the name of the incoming impulse with $(addtoinSyn) and the state variable with $(inSyn)
+        wrapAndReplaceVariableNames(m_UpdateLinSynCode, impulseAssignStateVar, "inSyn");
+        wrapAndReplaceVariableNames(m_UpdateLinSynCode, spikeImpulseReceivePort, "addtoinSyn");
 
         // As this variable is being implemented using a built in GeNN state variable, remove it from variables
         auto stateVar = std::find_if(m_Vars.begin(), m_Vars.end(),
@@ -265,9 +279,12 @@ SpineMLGenerator::PostsynapticModel::PostsynapticModel(const ModelParams::Postsy
     for(const auto &r : receivePortVariableMap) {
         wrapAndReplaceVariableNames(m_DecayCode, r.first, r.second);
         wrapAndReplaceVariableNames(m_ApplyInputCode, r.first, r.second);
+        wrapAndReplaceVariableNames(m_UpdateLinSynCode, r.first, r.second);
     }
 
     // Correctly wrap references to parameters and variables in code strings
     substituteModelVariables(m_ParamNames, m_Vars,
-                             {&m_DecayCode, &m_ApplyInputCode});
+                             {&m_DecayCode, &m_ApplyInputCode, &m_UpdateLinSynCode});
+
+    std::cout << "CUSTOM:" << m_UpdateLinSynCode << std::endl;
 }
