@@ -8,6 +8,7 @@
 
 // Standard C includes
 #include <cassert>
+#include <cmath>
 #include <cstdlib>
 
 #ifdef _WIN32
@@ -500,13 +501,14 @@ std::unique_ptr<LogOutput::Base> createLogOutput(const pugi::xml_node &node, LIB
 //----------------------------------------------------------------------------
 int main(int argc, char *argv[])
 {
-    if(argc != 2) {
+    if(argc < 2) {
         std::cerr << "Expected experiment XML file passed as arguments" << std::endl;
         return EXIT_FAILURE;
     }
 
-    // **YUCK** hard coded 0.1ms time step as SpineML specifies this in experiment but GeNN in model
-    const double dt = 0.1;
+    // Read timestep from command line or use 0.1ms default
+    const double dt = (argc < 3) ? 0.1 : atof(argv[2]);
+    std::cout << "DT = " << dt << "ms" << std::endl;
 
     LIBRARY_HANDLE modelLibrary = nullptr;
     try
@@ -579,6 +581,13 @@ int main(int argc, char *argv[])
 #ifndef CPU_ONLY
         LOAD_SYMBOL(modelLibrary, VoidFunction, stepTimeGPU);
 #endif // CPU_ONLY
+
+        // Search for internal time counter
+        // **NOTE** this is only used for checking timesteps are configured correctly
+        float *simulationTime = (float*)getLibrarySymbol(modelLibrary, "t");
+        if(simulationTime == nullptr) {
+            throw std::runtime_error("Cannot find network simulation time 't'");
+        }
 
         // Search for network initialization function
         VoidFunction initializeNetwork = (VoidFunction)getLibrarySymbol(modelLibrary, ("init" + networkName).c_str());
@@ -772,6 +781,17 @@ int main(int argc, char *argv[])
 #else
                 stepTimeGPU();
 #endif
+            }
+
+            // If this is the first timestep
+            if(i == 0) {
+                // Calculate difference between the time elapsed according to GeNN's internal counter and our desired tiemstep
+                const scalar timestepDifference = fabs(*simulationTime - (scalar)dt);
+
+                // If they differ, give an error
+                if(timestepDifference > std::numeric_limits<scalar>::epsilon()) {
+                    throw std::runtime_error("Timestep mismatch - model was built with " + std::to_string(*simulationTime) + "ms timestep but we are simulating with " + std::to_string(dt) + "ms timestep");
+                }
             }
 
             // Perform any recording required this timestep

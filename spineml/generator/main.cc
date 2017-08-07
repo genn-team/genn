@@ -144,13 +144,16 @@ std::tuple<SynapseMatrixType, unsigned int, unsigned int> getSynapticMatrixType(
 //----------------------------------------------------------------------------
 // Entry point
 //----------------------------------------------------------------------------
-int main(int argc,
-         char *argv[])
+int main(int argc, char *argv[])
 {
-    if(argc != 2) {
+    if(argc < 2) {
         std::cerr << "Expected model XML file passed as argument" << std::endl;
         return EXIT_FAILURE;
     }
+
+    // Read timestep from command line or use 0.1ms default
+    const double dt = (argc < 3) ? 0.1 : atof(argv[2]);
+    std::cout << "DT = " << dt << "ms" << std::endl;
 
 #ifndef CPU_ONLY
     CHECK_CUDA_ERRORS(cudaGetDeviceCount(&deviceCount));
@@ -198,7 +201,7 @@ int main(int argc,
 
     // The neuron model
     NNmodel model;
-    model.setDT(0.1);
+    model.setDT(dt);
     model.setName(networkName);
 
     // Loop through populations once to build neuron populations
@@ -269,7 +272,7 @@ int main(int argc,
             tie(mtype, delaySteps, maxConnections) = getSynapticMatrixType(basePath, input,
                                                                            srcNeuronGroup->getNumNeurons(),
                                                                            neuronGroup->getNumNeurons(),
-                                                                           true, 0.1);
+                                                                           true, dt);
 
             // Add synapse population to model
             std::string passthroughSynapsePopName = std::string(srcPopName) + "_" + srcPort + "_" + popName + "_"  + dstPort;
@@ -337,7 +340,7 @@ int main(int argc,
                 tie(mtype, delaySteps, maxConnections) = getSynapticMatrixType(basePath, synapse,
                                                                             neuronGroup->getNumNeurons(),
                                                                             trgNeuronGroup->getNumNeurons(),
-                                                                            globalG, 0.1);
+                                                                            globalG, dt);
 
                 // Build synapse population name from name of weight update
                 // **NOTE** this is an arbitrary choice but these are guaranteed unique
