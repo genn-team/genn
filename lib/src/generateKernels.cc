@@ -60,6 +60,7 @@ std::tuple<std::string, std::string, std::string> getCASTypeAndIntrinsics(const 
     }
     else {
         gennError("CUDA doesn't support CAS instruction of suitable size for floating point type '" + ftype + "'");
+        return std::make_tuple("", "", "");
     }
 }
 //--------------------------------------------------------------------------
