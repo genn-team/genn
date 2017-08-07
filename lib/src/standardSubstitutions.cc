@@ -182,8 +182,10 @@ void StandardSubstitutions::weightUpdateSim(
 
     // substitute post-synaptic model parameter values into weight update code
     DerivedParamNameIterCtx psmDerivedParams(sg.getPSModel()->getDerivedParams());
+    VarNameIterCtx psmVars(sg.getPSModel()->getVars());
     value_substitutions(wCode, sg.getPSModel()->getParamNames(), sg.getPSParams());
     value_substitutions(wCode, psmDerivedParams.nameBegin, psmDerivedParams.nameEnd, sg.getPSDerivedParams());
+    name_substitutions(wCode, devPrefix, psmVars.nameBegin, psmVars.nameEnd, sg.getName() + "[" + postIdx + "]");
 
     substitute(wCode, "$(addtoinSyn)", "addtoinSyn");
     neuron_substitutions_in_synaptic_code(wCode, &sg, preIdx, postIdx, devPrefix);
@@ -214,8 +216,10 @@ void StandardSubstitutions::weightUpdateDynamics(
 
     // substitute post-synaptic model parameter values into weight update code
     DerivedParamNameIterCtx psmDerivedParams(sg->getPSModel()->getDerivedParams());
+    VarNameIterCtx psmVars(sg->getPSModel()->getVars());
     value_substitutions(SDcode, sg->getPSModel()->getParamNames(), sg->getPSParams());
     value_substitutions(SDcode, psmDerivedParams.nameBegin, psmDerivedParams.nameEnd, sg->getPSDerivedParams());
+    name_substitutions(SDcode, devPrefix, psmVars.nameBegin, psmVars.nameEnd, sg->getName() + "[" + postIdx + "]");
 
     substitute(SDcode, "$(addtoinSyn)", "addtoinSyn");
     neuron_substitutions_in_synaptic_code(SDcode, sg, preIdx, postIdx, devPrefix);
