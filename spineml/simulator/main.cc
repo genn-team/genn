@@ -45,22 +45,11 @@ using namespace SpineMLSimulator;
 // Macros
 //----------------------------------------------------------------------------
 #ifdef _WIN32
-#define LIBRARY_HANDLE HMODULE 
-
-#define LOAD_SYMBOL(LIBRARY, TYPE, NAME)                            \
-    TYPE NAME = (TYPE)GetProcAddress(LIBRARY, #NAME);               \
-    if(NAME == nullptr) {                                           \
-        throw std::runtime_error("Cannot find " #NAME " function"); \
-    }
+    #define LIBRARY_HANDLE HMODULE
 #else
-#define LIBRARY_HANDLE void*
-
-#define LOAD_SYMBOL(LIBRARY, TYPE, NAME)                            \
-    TYPE NAME = (TYPE)dlsym(LIBRARY, #NAME);                        \
-    if(NAME == nullptr) {                                           \
-        throw std::runtime_error("Cannot find " #NAME " function"); \
-    }
+    #define LIBRARY_HANDLE void*
 #endif
+
 //----------------------------------------------------------------------------
 // Anonymous namespace
 //----------------------------------------------------------------------------
@@ -74,25 +63,32 @@ typedef std::map<std::string, std::map<std::string, std::unique_ptr<ModelPropert
 typedef std::map<std::string, std::pair<std::set<std::string>, std::set<std::string>>> ComponentEventPorts;
 
 //----------------------------------------------------------------------------
-void *getLibrarySymbol(LIBRARY_HANDLE modelLibrary, const char *name) {
+void *getLibrarySymbol(LIBRARY_HANDLE modelLibrary, const char *name, bool allowMissing = false) {
 #ifdef _WIN32
-    return GetProcAddress(modelLibrary, name);
+    void *symbol = GetProcAddress(modelLibrary, name);
 #else
-    return dlsym(modelLibrary, name);
+    void *symbol = dlsym(modelLibrary, name);
 #endif
+
+    // If this symbol isn't allowed to be missing but it is, raise exception
+    if(!allowMissing && symbol == nullptr) {
+        throw std::runtime_error("Cannot find symbol '" + std::string(name) + "'");
+    }
+
+    return symbol;
 }
 //----------------------------------------------------------------------------
 template <typename T>
 std::pair<T*, T*> getStateVar(LIBRARY_HANDLE modelLibrary, const std::string &hostStateVarName)
 {
     // Get host statevar
-    T *hostStateVar = (T*)getLibrarySymbol(modelLibrary, hostStateVarName.c_str());
+    T *hostStateVar = (T*)getLibrarySymbol(modelLibrary, hostStateVarName.c_str(), true);
 
 #ifdef CPU_ONLY
     T *deviceStateVar = nullptr;
 #else
     std::string deviceStateVarName = "d_" + hostStateVarName;
-    T *deviceStateVar = (T*)getLibrarySymbol(modelLibrary, deviceStateVarName.c_str());
+    T *deviceStateVar = (T*)getLibrarySymbol(modelLibrary, deviceStateVarName.c_str(), true);
 #endif
 
     return std::make_pair(hostStateVar, deviceStateVar);
@@ -178,7 +174,8 @@ std::tuple<unsigned int*, unsigned int*, unsigned int*, unsigned int*, unsigned 
     }
 
     // Get spike queue
-    unsigned int *spikeQueuePtr = (unsigned int*)getLibrarySymbol(modelLibrary, ("spkQuePtr" + popName).c_str());
+    // **NOTE** neuron populations without any outgoing synapses with delay won't have one so it can be missing
+    unsigned int *spikeQueuePtr = (unsigned int*)getLibrarySymbol(modelLibrary, ("spkQuePtr" + popName).c_str(), true);
 
     // Return pointers in tutple
 #ifdef CPU_ONLY
@@ -575,25 +572,20 @@ int main(int argc, char *argv[])
         }
 
         // Load statically-named symbols from library
-        LOAD_SYMBOL(modelLibrary, VoidFunction, initialize);
-        LOAD_SYMBOL(modelLibrary, VoidFunction, allocateMem);
-        LOAD_SYMBOL(modelLibrary, VoidFunction, stepTimeCPU);
-#ifndef CPU_ONLY
-        LOAD_SYMBOL(modelLibrary, VoidFunction, stepTimeGPU);
+        VoidFunction initialize = (VoidFunction)getLibrarySymbol(modelLibrary, "initialize");
+        VoidFunction allocateMem = (VoidFunction)getLibrarySymbol(modelLibrary, "allocateMem");
+#ifdef CPU_ONLY
+        VoidFunction stepTimeCPU = (VoidFunction)getLibrarySymbol(modelLibrary, "stepTimeCPU");
+#else
+        VoidFunction stepTimeGPU = (VoidFunction)getLibrarySymbol(modelLibrary, "stepTimeGPU");
 #endif // CPU_ONLY
 
         // Search for internal time counter
         // **NOTE** this is only used for checking timesteps are configured correctly
         float *simulationTime = (float*)getLibrarySymbol(modelLibrary, "t");
-        if(simulationTime == nullptr) {
-            throw std::runtime_error("Cannot find network simulation time 't'");
-        }
 
         // Search for network initialization function
         VoidFunction initializeNetwork = (VoidFunction)getLibrarySymbol(modelLibrary, ("init" + networkName).c_str());
-        if(initializeNetwork == nullptr) {
-            throw std::runtime_error("Cannot find network initialization function 'init" + networkName + "'");
-        }
 
         // Call library function to allocate memory
         {
