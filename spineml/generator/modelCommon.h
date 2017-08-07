@@ -141,12 +141,12 @@ std::tuple<NewModels::Base::StringVec, NewModels::Base::StringPairVec> processMo
     const pugi::xml_node &componentClass, const std::set<std::string> &variableParams,
     bool multipleRegimes, const std::vector<std::string*> &codeStrings);
 
-//! Searches for alias - return true and sets aliasCode if found, otherwise returns false
-bool findAlias(const pugi::xml_node &componentClass, const std::string &aliasName, std::string &aliasCode);
+// Read aliases into map
+void readAliases(const pugi::xml_node &componentClass, std::map<std::string, std::string> &aliases);
 
 //! Return code to implement send port - will either return a variable directly or will expand an alias
-std::string resolveAlias(const pugi::xml_node &componentClass,
-                         const NewModels::Base::StringPairVec &vars,
-                         const std::string &sendPortName);
+std::string getSendPortCode(const std::map<std::string, std::string> &aliases,
+                            const NewModels::Base::StringPairVec &vars,
+                            const std::string &sendPortName);
 
 }   // namespace SpineMLGenerator

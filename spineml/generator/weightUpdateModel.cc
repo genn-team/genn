@@ -98,6 +98,10 @@ SpineMLGenerator::WeightUpdateModel::WeightUpdateModel(const ModelParams::Weight
                                  "it's ComponentClass node is either missing or of the incorrect type");
     }
 
+    // Read aliases
+    std::map<std::string, std::string> aliases;
+    readAliases(componentClass, aliases);
+
     // Loop through send ports
     std::cout << "\t\tSend ports:" << std::endl;
     for(auto sendPort : componentClass.select_nodes(SpineMLUtils::xPathNodeHasSuffix("SendPort").c_str())) {
@@ -207,7 +211,7 @@ SpineMLGenerator::WeightUpdateModel::WeightUpdateModel(const ModelParams::Weight
 
     // If we have an analogue send port, add code to apply it to synapse dynamics
     if(!m_SendPortAnalogue.empty()) {
-        synapseDynamicsStream << "addtoinSyn = " << resolveAlias(componentClass, m_Vars, m_SendPortAnalogue) << ";" << std::endl;
+        synapseDynamicsStream << "addtoinSyn = " << getSendPortCode(aliases, m_Vars, m_SendPortAnalogue) << ";" << std::endl;
         synapseDynamicsStream << "updatelinsyn;" << std::endl;
     }
 
@@ -229,7 +233,4 @@ SpineMLGenerator::WeightUpdateModel::WeightUpdateModel(const ModelParams::Weight
 
     // Correctly wrap references to paramters and variables in code strings
     substituteModelVariables(m_ParamNames, m_Vars, {&m_SimCode, &m_SynapseDynamicsCode});
-
-    //std::cout << "SIM CODE:" << std::endl << m_SimCode << std::endl;
-    //std::cout << "SYNAPSE DYNAMICS CODE:" << std::endl << m_SynapseDynamicsCode << std::endl;
 }

@@ -124,18 +124,21 @@ SpineMLGenerator::NeuronModel::NeuronModel(const ModelParams::Neuron &params)
                                  "it's ComponentClass node is either missing or of the incorrect type");
     }
 
+    // Read aliases
+    std::map<std::string, std::string> aliases;
+    readAliases(componentClass, aliases);
+
     // Loop through send ports
     std::cout << "\t\tSend ports:" << std::endl;
-    std::map<std::string, std::string> sendPortAliases;
+    std::vector<std::string> sendPortAliases;
     for(auto sendPort : componentClass.select_nodes(SpineMLUtils::xPathNodeHasSuffix("SendPort").c_str())) {
         std::string nodeType = sendPort.node().name();
         const char *portName = sendPort.node().attribute("name").value();
         if(nodeType == "AnalogSendPort") {
             // If there is an alias matching this port name, add alias code to map to resolve later
-            std::string aliasCode;
-            if(findAlias(componentClass, portName, aliasCode)) {
+            if(aliases.find(portName) != aliases.end()) {
                 std::cout << "\t\t\tImplementing analogue send port '" << portName << "' as an alias" << std::endl;
-                sendPortAliases.insert(std::make_pair(portName, aliasCode));
+                sendPortAliases.push_back(portName);
             }
             else {
                 std::cout << "\t\t\tImplementing analogue send port '" << portName << "' using a GeNN model variable" << std::endl;
@@ -213,10 +216,10 @@ SpineMLGenerator::NeuronModel::NeuronModel(const ModelParams::Neuron &params)
     auto variableParams = params.getVariableParams();
     for(const auto &s : sendPortAliases) {
         // Add simulation code to calculate send port value and store in state variable
-        simCodeStream << s.first << " = " << s.second << ";" << std::endl;
+        simCodeStream << s << " = " << aliases[s] << ";" << std::endl;
 
         // Add this state variable to variable params set
-        variableParams.insert(s.first);
+        variableParams.insert(s);
     }
 
     // Store generated code in class

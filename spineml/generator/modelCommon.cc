@@ -283,27 +283,25 @@ std::tuple<NewModels::Base::StringVec, NewModels::Base::StringPairVec> SpineMLGe
     return paramNamesVars;
 }
 //----------------------------------------------------------------------------
-bool SpineMLGenerator::findAlias(const pugi::xml_node &componentClass, const std::string &aliasName,
-                                 std::string &aliasCode)
+void SpineMLGenerator::readAliases(const pugi::xml_node &componentClass, std::map<std::string, std::string> &aliases)
 {
-     // Search for an alias representing the analogue send port
-    pugi::xpath_variable_set aliasSearchVars;
-    aliasSearchVars.set("aliasName", aliasName.c_str());
-    auto alias = componentClass.select_node("Dynamics/Alias[@name=$aliasName]", &aliasSearchVars);
+    std::cout << "\t\tAliases:" << std::endl;
 
-    // If alias is found use it for current converter code
-    if(alias) {
-        aliasCode = alias.node().child_value("MathInline");
-        return true;
-    }
-    else {
-        return false;
+    // Loop through aliases and add to map
+    auto dynamics = componentClass.child("Dynamics");
+    for(auto alias : dynamics.children("Alias")) {
+        const std::string name = alias.attribute("name").value();
+        const std::string code = alias.child_value("MathInline");
+
+        std::cout << "\t\t\t" << name << std::endl;
+
+        aliases.insert(std::make_pair(name, code));
     }
 }
 //----------------------------------------------------------------------------
-std::string SpineMLGenerator::resolveAlias(const pugi::xml_node &componentClass,
-                                           const NewModels::Base::StringPairVec &vars,
-                                           const std::string &sendPortName)
+std::string SpineMLGenerator::getSendPortCode(const std::map<std::string, std::string> &aliases,
+                                              const NewModels::Base::StringPairVec &vars,
+                                              const std::string &sendPortName)
 {
     std::cout << "\t\tAnalogue send port:" << sendPortName << std::endl;
 
@@ -319,9 +317,9 @@ std::string SpineMLGenerator::resolveAlias(const pugi::xml_node &componentClass,
     // Otherwise
     else {
         // If an alias matching send port is found, return alias code
-        std::string aliasCode;
-        if(findAlias(componentClass, sendPortName, aliasCode)) {
-            return aliasCode;
+        const auto alias = aliases.find(sendPortName);
+        if(alias != aliases.end()){
+            return alias->second;
         }
         // Otherwise throw exception
         else {

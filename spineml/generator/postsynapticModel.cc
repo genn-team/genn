@@ -152,6 +152,10 @@ SpineMLGenerator::PostsynapticModel::PostsynapticModel(const ModelParams::Postsy
         }
     }
 
+    // Read aliases
+    std::map<std::string, std::string> aliases;
+    readAliases(componentClass, aliases);
+
     // Loop through receive ports
     std::cout << "\t\tReceive ports:" << std::endl;
     std::map<std::string, std::string> receivePortVariableMap;
@@ -227,7 +231,7 @@ SpineMLGenerator::PostsynapticModel::PostsynapticModel(const ModelParams::Postsy
     // Loop through send port variables and build apply input code to update them
     for(const auto s : sendPortVariables) {
         // Resolve the alias used to get input value to sent
-        std::string inputCode = resolveAlias(componentClass, m_Vars, s.second);
+        std::string inputCode = getSendPortCode(aliases, m_Vars, s.second);
 
         // If incoming impulse is being assigned to a state variable, substitute it within the input code
         // **NOTE** we do this here to avoid ambiguity between port names in the postsynaptic and neuron models
@@ -242,6 +246,7 @@ SpineMLGenerator::PostsynapticModel::PostsynapticModel(const ModelParams::Postsy
             wrapAndReplaceVariableNames(inputCode, analogueReducePort, "inSyn");
 
             // Add code string to apply input and zero it
+            // **NOTE** analogue send ports don't have decay dynamics so this is required so only this timestep's inputs are applied
             m_ApplyInputCode += s.first + " += " + inputCode + "; $(inSyn) = 0;\n";
 
             if(!m_DecayCode.empty()) {
