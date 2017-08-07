@@ -285,6 +285,4 @@ SpineMLGenerator::PostsynapticModel::PostsynapticModel(const ModelParams::Postsy
     // Correctly wrap references to parameters and variables in code strings
     substituteModelVariables(m_ParamNames, m_Vars,
                              {&m_DecayCode, &m_ApplyInputCode, &m_UpdateLinSynCode});
-
-    std::cout << "CUSTOM:" << m_UpdateLinSynCode << std::endl;
 }
