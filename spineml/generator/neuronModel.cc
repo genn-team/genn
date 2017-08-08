@@ -174,7 +174,7 @@ SpineMLGenerator::NeuronModel::NeuronModel(const ModelParams::Neuron &params)
             m_AdditionalInputVars.push_back(std::make_pair(portName, std::make_pair("scalar", 0.0)));
         }
         else {
-            throw std::runtime_error("GeNN does not support '" + nodeType + "' reduce ports in neuron models");
+            throw std::runtime_error("GeNN does not support '" + nodeType + "' receive ports in neuron models");
         }
     }
 
