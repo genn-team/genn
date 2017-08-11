@@ -92,10 +92,14 @@ static void genCode(const NNmodel &model, //!< Model description
                const string &path) //!< Path for code generationn
 {
     //=======================
-    // generate infraMPI.cc
+    // generate infraMPI_<hostID>.cc
     //=======================
 
-    string infraMPICodeName= path + "/" + model.getName() + "_CODE/infraMPI.cc";
+    int MPIHostID = 0;
+#ifdef MPI_ENABLE
+    MPI_Comm_rank(MPI_COMM_WORLD, &MPIHostID);
+#endif
+    string infraMPICodeName= path + "/" + model.getName() + "_CODE/infraMPI_" + std::to_string(MPIHostID) + ".cc";
     ofstream fs;
     fs.open(infraMPICodeName.c_str());
 
@@ -199,7 +203,7 @@ static void genCode(const NNmodel &model, //!< Model description
     os << "    int localID;" << std::endl;
     os << "    MPI_Comm_rank(MPI_COMM_WORLD, &localID);" << std::endl;
     std::hash<std::string> hash_fn;
-    for(const auto &n : model.getNeuronGroups()) {
+    for(const auto &n : model.getLocalNeuronGroups()) {
             os << "    // Handling neuron " << n.first << std::endl;
         for(auto *s : n.second.getOutSyn()) {
             os << "    // send to synapse" << s->getName()<< std::endl;
@@ -209,7 +213,7 @@ static void genCode(const NNmodel &model, //!< Model description
             os << CodeStream::CB(1055);
         }
     }
-    for(const auto &n : model.getNeuronGroups()) {
+    for(const auto &n : model.getLocalNeuronGroups()) {
             os << "    // Handling neuron " << n.first << std::endl;
         for(auto *s : n.second.getInSyn()) {
             os << "    // receive from synapse" << s->getName() << " " << s->getSrcNeuronGroup()->getName() << std::endl;
