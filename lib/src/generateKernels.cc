@@ -355,7 +355,13 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
 {
     string localID;
     ofstream fs;
+#ifdef MPI_ENABLE
+    int MPIHostID = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &MPIHostID);
+    string name = path + "/" + model.getName() + "_CODE/neuronKrnl_" + std::to_string(MPIHostID) + ".cc";
+#else
     string name = path + "/" + model.getName() + "_CODE/neuronKrnl.cc";
+#endif
     fs.open(name.c_str());
 
     // Attach this to a code stream
@@ -455,7 +461,11 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
 
     
     bool firstNeuronGroup = true;
+#ifdef MPI_ENABLE
+    for(const auto &n : model.getLocalNeuronGroups()) {
+#else
     for(const auto &n : model.getNeuronGroups()) {
+#endif
         os << "// neuron group " << n.first << std::endl;
         const auto &groupIDRange = n.second.getPaddedIDRange();
         if (firstNeuronGroup) {

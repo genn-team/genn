@@ -203,7 +203,7 @@ public:
             auto result = m_LocalNeuronGroups.insert(
                     pair<string, NeuronGroup>(
                         name, NeuronGroup(name, size, NeuronModel::getInstance(),
-                            paramValues.getValues(), varValues.getValues())));
+                            paramValues.getValues(), varValues.getValues(), hostID, deviceID)));
 
             if(!result.second)
             {
@@ -214,7 +214,7 @@ public:
             auto result = m_RemoteNeuronGroups.insert(
                     pair<string, NeuronGroup>(
                         name, NeuronGroup(name, size, NeuronModel::getInstance(),
-                            paramValues.getValues(), varValues.getValues())));
+                            paramValues.getValues(), varValues.getValues(), hostID, deviceID)));
 
             if(!result.second)
             {

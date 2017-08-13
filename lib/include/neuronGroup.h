@@ -16,13 +16,13 @@ class NeuronGroup
 {
 public:
     NeuronGroup(const std::string &name, int numNeurons, const NeuronModels::Base *neuronModel,
-                const std::vector<double> &params, const std::vector<double> &initVals) :
+                const std::vector<double> &params, const std::vector<double> &initVals, int hostID = 0, int deviceID = 0) :
         m_Name(name), m_NumNeurons(numNeurons), m_IDRange(0, 0), m_PaddedIDRange(0, 0),
         m_NeuronModel(neuronModel), m_Params(params), m_InitVals(initVals),
         m_SpikeTimeRequired(false), m_TrueSpikeRequired(false), m_SpikeEventRequired(false), m_QueueRequired(false),
         m_NumDelaySlots(1),
         m_SpikeZeroCopyEnabled(false), m_SpikeEventZeroCopyEnabled(false), m_SpikeTimeZeroCopyEnabled(false),
-        m_HostID(0), m_DeviceID(0)
+        m_HostID(hostID), m_DeviceID(deviceID)
     {
     }
 

@@ -261,7 +261,7 @@ NeuronGroup *NNmodel::addNeuronPopulation(
     bool isLocal = (hostID == MPIHostID) && (deviceID == 0);
     if (isLocal) {
         auto result = m_LocalNeuronGroups.insert(
-                pair<string, NeuronGroup>(name, NeuronGroup(name, nNo, new NeuronModels::LegacyWrapper(type), p, ini)));
+                pair<string, NeuronGroup>(name, NeuronGroup(name, nNo, new NeuronModels::LegacyWrapper(type), p, ini, hostID, deviceID)));
 
         if(!result.second)
         {
@@ -270,7 +270,7 @@ NeuronGroup *NNmodel::addNeuronPopulation(
         }
     } else {
         auto result = m_RemoteNeuronGroups.insert(
-                pair<string, NeuronGroup>(name, NeuronGroup(name, nNo, new NeuronModels::LegacyWrapper(type), p, ini)));
+                pair<string, NeuronGroup>(name, NeuronGroup(name, nNo, new NeuronModels::LegacyWrapper(type), p, ini, hostID, deviceID)));
 
         if(!result.second)
         {
@@ -854,9 +854,15 @@ void NNmodel::setPopulationSums()
     // NEURON GROUPS
     unsigned int neuronIDStart = 0;
     unsigned int paddedNeuronIDStart = 0;
+#ifdef MPI_ENABLE
+    for(auto &n : m_LocalNeuronGroups) {
+        n.second.calcSizes(neuronBlkSz, neuronIDStart, paddedNeuronIDStart);
+    }
+#else
     for(auto &n : m_NeuronGroups) {
         n.second.calcSizes(neuronBlkSz, neuronIDStart, paddedNeuronIDStart);
     }
+#endif
 
     // SYNAPSE groups
     unsigned int paddedSynapseKernelIDStart = 0;
@@ -944,6 +950,15 @@ void NNmodel::finalize()
         // Make extra global parameter lists
         n.second.addExtraGlobalParams(neuronKernelParameters);
     }
+#ifdef MPI_ENABLE
+    for(auto &n : m_LocalNeuronGroups) {
+        // Initialize derived parameters
+        n.second.initDerivedParams(dt);
+
+        // Make extra global parameter lists
+        n.second.addExtraGlobalParams(neuronKernelParameters);
+    }
+#endif
 
     // SYNAPSE groups
     for(auto &s : m_SynapseGroups) {
@@ -973,6 +988,35 @@ void NNmodel::finalize()
         s.second.addExtraGlobalNeuronParams(neuronKernelParameters);
 
     }
+#ifdef MPI_ENABLE
+    for(auto &s : m_LocalSynapseGroups) {
+        const auto *wu = s.second.getWUModel();
+
+        // Initialize derived parameters
+        s.second.initDerivedParams(dt);
+
+        if (!wu->getSimCode().empty()) {
+            s.second.setTrueSpikeRequired(true);
+            s.second.getSrcNeuronGroup()->setTrueSpikeRequired(true);
+
+            // analyze which neuron variables need queues
+            s.second.getSrcNeuronGroup()->updateVarQueues(wu->getSimCode());
+        }
+
+        if (!wu->getLearnPostCode().empty()) {
+            s.second.getSrcNeuronGroup()->updateVarQueues(wu->getLearnPostCode());
+        }
+
+        if (!wu->getSynapseDynamicsCode().empty()) {
+            s.second.getSrcNeuronGroup()->updateVarQueues(wu->getSynapseDynamicsCode());
+        }
+
+        // Make extra global parameter lists
+        s.second.addExtraGlobalSynapseParams(synapseKernelParameters);
+        s.second.addExtraGlobalNeuronParams(neuronKernelParameters);
+
+    }
+#endif
 
     setPopulationSums();
 
