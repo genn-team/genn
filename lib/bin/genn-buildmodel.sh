@@ -81,10 +81,19 @@ fi
 
 # generate model code
 make -f "$GENN_PATH/lib/GNUmakefile" $MACROS
+
+if [[ -n "$MPI_ENABLE" ]]; then
+    cp "$GENERATEALL" "$GENERATEALL"_"$OMPI_COMM_WORLD_RANK"
+fi
+
 if [[ -n "$DEBUG" ]]; then
     gdb -tui --args "$GENERATEALL" "$OUT_PATH"
 else
-    "$GENERATEALL" "$OUT_PATH"
+    if [[ -n "$MPI_ENABLE" ]]; then
+        "$GENERATEALL"_"$OMPI_COMM_WORLD_RANK" "$OUT_PATH"
+    else
+        "$GENERATEALL" "$OUT_PATH"
+    fi
 fi
 
 echo "model build complete"
