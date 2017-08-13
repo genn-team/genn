@@ -306,10 +306,11 @@ void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
                 }
                 CHECK_CU_ERRORS(cuModuleUnload(module));
 
-                if (remove(cubinPath.c_str())) {
-                    cerr << "generateALL: Error deleting dry-run cubin file" << endl;
-                    exit(EXIT_FAILURE);
-                }
+                //TODO: Conflicts if one node delete the cubinPath and other nodes cannot find it
+                //if (remove(cubinPath.c_str())) {
+                //    cerr << "generateALL: Error deleting dry-run cubin file" << endl;
+                //    exit(EXIT_FAILURE);
+                //}
             }
 
             float blockLimit, mainBlockLimit;
