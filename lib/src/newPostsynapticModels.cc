@@ -13,10 +13,10 @@ std::string PostsynapticModels::LegacyWrapper::getDecayCode() const
     return ps.postSynDecay;
 }
 //----------------------------------------------------------------------------
-std::string PostsynapticModels::LegacyWrapper::getCurrentConverterCode() const
+std::string PostsynapticModels::LegacyWrapper::getApplyInputCode() const
 {
     const auto &ps = postSynModels[m_LegacyTypeIndex];
-    return ps.postSyntoCurrent;
+    return "$(Isyn) += " + ps.postSyntoCurrent + ";";
 }
 //----------------------------------------------------------------------------
 std::string PostsynapticModels::LegacyWrapper::getSupportCode() const

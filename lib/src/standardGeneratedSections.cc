@@ -31,7 +31,7 @@ void StandardGeneratedSections::neuronOutputInit(
         os << devPrefix << "glbSpkCnt" << ng.getName() << "[0] = 0;" << std::endl;
     }
 }
-
+//----------------------------------------------------------------------------
 void StandardGeneratedSections::neuronLocalVarInit(
     CodeStream &os,
     const NeuronGroup &ng,
@@ -48,7 +48,7 @@ void StandardGeneratedSections::neuronLocalVarInit(
         os << localID << "];" << std::endl;
     }
 }
-
+//----------------------------------------------------------------------------
 void StandardGeneratedSections::neuronLocalVarWrite(
     CodeStream &os,
     const NeuronGroup &ng,
@@ -66,7 +66,7 @@ void StandardGeneratedSections::neuronLocalVarWrite(
         }
     }
 }
-
+//----------------------------------------------------------------------------
 void StandardGeneratedSections::neuronSpikeEventTest(
     CodeStream &os,
     const NeuronGroup &ng,
