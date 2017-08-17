@@ -182,7 +182,7 @@ static void genCode(const NNmodel &model, //!< Model description
     os << "void copySpikesToRemote(int remote, int tag)" << std::endl;
     os << CodeStream::OB(1052);
     for(const auto &n : model.getLocalNeuronGroups()) {
-        os << "push" << n.first << "SpikesToRemote(int remote, int tag);" << std::endl;
+        os << "push" << n.first << "SpikesToRemote(remote, tag);" << std::endl;
     }
     os << CodeStream::CB(1052);
     os << std::endl;
@@ -194,7 +194,7 @@ static void genCode(const NNmodel &model, //!< Model description
     os << CodeStream::OB(1053) << std::endl;
 
     for(const auto &n : model.getLocalNeuronGroups()) {
-      os << "pull" << n.first << "SpikesFromRemote(int remote, int tag);" << std::endl;
+      os << "pull" << n.first << "SpikesFromRemote(remote, tag);" << std::endl;
     }
     os << CodeStream::CB(1053);
     os << std::endl;
