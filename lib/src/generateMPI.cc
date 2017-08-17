@@ -21,7 +21,6 @@
 
 #include "generateMPI.h"
 #include "codeStream.h"
-#include <functional>
 
 static void genHeader(const NNmodel &model, //!< Model description
                const string &path) //!< Path for code generationn
@@ -127,7 +126,7 @@ static void genCode(const NNmodel &model, //!< Model description
     os << "#include <mpi.h>" << std::endl;
 #endif
 
-    os << "#include \"infraMPI.h\"" << std::endl;
+    os << "#include \"definitions.h\"" << std::endl;
     os << std::endl;
 
     os << "// ------------------------------------------------------------------------" << std::endl;
@@ -208,14 +207,19 @@ static void genCode(const NNmodel &model, //!< Model description
 
     os << "    int localID;" << std::endl;
     os << "    MPI_Comm_rank(MPI_COMM_WORLD, &localID);" << std::endl;
-    std::hash<std::string> hash_fn;
+    std::map<string, int> neuronToTag;
+    int nextTag = 0;
     for(const auto &n : model.getLocalNeuronGroups()) {
             os << "    // Handling neuron " << n.first << std::endl;
+            if (neuronToTag.find(n.first) == neuronToTag.cend()) {
+                neuronToTag.insert(pair<string, int>(n.first, nextTag));
+                nextTag++;
+            }
         for(auto *s : n.second.getOutSyn()) {
             os << "    // send to synapse" << s->getName()<< std::endl;
             os << "    if (" << " localID != " << s->getClusterHostID() << ")" << std::endl;
             os << CodeStream::OB(1055) << std::endl;
-            os << "copySpikesToRemote(" << s->getClusterHostID() << ", " << hash_fn(n.first) << ");" << std::endl;
+            os << "copySpikesToRemote(" << s->getClusterHostID() << ", " << (neuronToTag.find(n.first))->second << ");" << std::endl;
             os << CodeStream::CB(1055);
         }
     }
@@ -225,7 +229,7 @@ static void genCode(const NNmodel &model, //!< Model description
             os << "    // receive from synapse" << s->getName() << " " << s->getSrcNeuronGroup()->getName() << std::endl;
             os << "    if (" << " localID != " << s->getClusterHostID() << ")" << std::endl;
             os << CodeStream::OB(1055) << std::endl;
-            os << "copySpikesFromRemote(" << s->getClusterHostID() << ", " << hash_fn(s->getSrcNeuronGroup()->getName()) << ");" << std::endl;
+            os << "copySpikesFromRemote(" << s->getClusterHostID() << ", " << (neuronToTag.find(s->getSrcNeuronGroup()->getName()))->second << ");" << std::endl;
             os << CodeStream::CB(1055);
         }
     }
