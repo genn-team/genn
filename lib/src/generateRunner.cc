@@ -219,6 +219,9 @@ void genDefinitions(const NNmodel &model, //!< Model description
     os << "#include \"sparseProjection.h\"" << std::endl;
     os << "#include <stdint.h>" << std::endl;
     os << std::endl;
+#ifdef MPI_ENABLE
+    os << "#include \"infraMPI.h\"" << std::endl;
+#endif
 
 #ifndef CPU_ONLY
     // write CUDA error handler macro

@@ -84,6 +84,12 @@ static void genHeader(const NNmodel &model, //!< Model description
     os << "void copySpikesFromRemote(int remote, int tag);" << std::endl;
     os << std::endl;
 
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// global spikes communication" << std::endl;
+    os << std::endl;
+    os << "void communicateSpikes();" << std::endl;
+    os << std::endl;
+
     os << "#endif" << std::endl;
     fs.close();
 }
@@ -197,7 +203,7 @@ static void genCode(const NNmodel &model, //!< Model description
     os << "// ------------------------------------------------------------------------" << std::endl;
     os << "// communication function to sync spikes" << std::endl << std::endl;
 
-    os << "void CommunicateSpikes()" << std::endl;
+    os << "void communicateSpikes()" << std::endl;
     os << CodeStream::OB(1054) << std::endl;
 
     os << "    int localID;" << std::endl;

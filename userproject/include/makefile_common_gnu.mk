@@ -91,7 +91,7 @@ ifndef SIM_CODE
     SIM_CODE            :=*_CODE
 endif
 SOURCES                 ?=$(wildcard *.cc *.cpp *.cu *.c)
-OBJECTS                 :=$(foreach obj,$(basename $(SOURCES)),$(obj).o) $(SIM_CODE)/runner.o
+OBJECTS                 :=$(foreach obj,$(basename $(SOURCES)),$(obj).o) $(SIM_CODE)/runner.o $(SIM_CODE)/infraMPI_${OMPI_COMM_WORLD_RANK}.o
 
 
 # Target rules
@@ -104,6 +104,9 @@ $(EXECUTABLE): $(OBJECTS)
 
 $(SIM_CODE)/runner.o:
 	cd $(SIM_CODE) && make
+
+$(SIM_CODE)/infraMPI_${OMPI_COMM_WORLD_RANK}.o: $(SIM_CODE)/infraMPI_${OMPI_COMM_WORLD_RANK}.cc
+	echo "make infraMPI" && mpiCC $(CXXFLAGS) -c -o $@ $< $(INCLUDE_FLAGS)
 
 %.o: %.c
 	$(CXX) $(CXXFLAGS) -c -o $@ $< $(INCLUDE_FLAGS)
