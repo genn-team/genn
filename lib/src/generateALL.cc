@@ -265,9 +265,12 @@ void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
 
 #ifdef MPI_ENABLE
             nvccFlags += " -I\"$MPI_PATH/include\"";
-#endif
+            string runnerPath = path + "/" + model.getName() + "_CODE/runner_$OMPI_COMM_WORLD_RANK.cc";
+            string cubinPath = path + "/runner_$OMPI_COMM_WORLD_RANK.cubin";
+#else
             string runnerPath = path + "/" + model.getName() + "_CODE/runner.cc";
             string cubinPath = path + "/runner.cubin";
+#endif
             string nvccCommand = "\"" NVCC "\" " + nvccFlags;
             nvccCommand += " -o \"" + cubinPath + "\" \"" + runnerPath + "\"";
 #endif
