@@ -737,7 +737,13 @@ void genRunner(const NNmodel &model, //!< Model description
 
 {
     //cout << "entering genRunner" << std::endl;
+#ifdef MPI_ENABLE
+    int MPIHostID = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &MPIHostID);
+    string runnerName= path + "/" + model.getName() + "_CODE/runner_" + std::to_string(MPIHostID) + ".cc";
+#else
     string runnerName= path + "/" + model.getName() + "_CODE/runner.cc";
+#endif
     ofstream fs;
     fs.open(runnerName.c_str());
 
@@ -935,7 +941,11 @@ void genRunner(const NNmodel &model, //!< Model description
 
     // include simulation kernels
 #ifndef CPU_ONLY
+#ifdef MPI_ENABLE
+    os << "#include \"runnerGPU_" + std::to_string(MPIHostID) + ".cc\"" << std::endl << std::endl;
+#else
     os << "#include \"runnerGPU.cc\"" << std::endl << std::endl;
+#endif
 #endif
     os << "#include \"neuronFnct.cc\"" << std::endl;
     if (!model.getSynapseGroups().empty()) {
@@ -1547,7 +1557,13 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     )
 {
 //    cout << "entering GenRunnerGPU" << std::endl;
+#ifdef MPI_ENABLE
+    int MPIHostID = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &MPIHostID);
+    string name = path + "/" + model.getName() + "_CODE/runnerGPU_" + std::to_string(MPIHostID) + ".cc";
+#else
     string name= path + "/" + model.getName() + "_CODE/runnerGPU.cc";
+#endif
     ofstream fs;
     fs.open(name.c_str());
 
@@ -1605,9 +1621,17 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
         os << std::endl;
     }
 
+#ifdef MPI_ENABLE
+    os << "#include \"neuronKrnl_" + std::to_string(MPIHostID) + ".cc\"" << std::endl;
+#else
     os << "#include \"neuronKrnl.cc\"" << std::endl;
+#endif
     if (!model.getSynapseGroups().empty()) {
+#ifdef MPI_ENABLE
+        os << "#include \"synapseKrnl_" + std::to_string(MPIHostID) + ".cc\"" << std::endl;
+#else
         os << "#include \"synapseKrnl.cc\"" << std::endl;
+#endif
     }
 
     os << "// ------------------------------------------------------------------------" << std::endl;
@@ -2369,9 +2393,15 @@ void genMakefile(const NNmodel &model, //!< Model description
     os << endl;
     os << "all: runner.o" << endl;
     os << endl;
+    os << "ifdef MPI_ENABLE" << endl;
+    os << "runner_${OMPI_COMM_WORLD_RANK}.o: runner_${OMPI_COMM_WORLD_RANK}.cc" << endl;
+    os << "\t$(NVCC) $(NVCCFLAGS) $(INCLUDEFLAGS) runner_${OMPI_COMM_WORLD_RANK}.cc" << endl;
+    os << endl;
+    os << "else" << endl;
     os << "runner.o: runner.cc" << endl;
     os << "\t$(NVCC) $(NVCCFLAGS) $(INCLUDEFLAGS) runner.cc" << endl;
     os << endl;
+    os << "endif" << endl;
     os << "clean:" << endl;
     os << "\trm -f runner.o" << endl;
 #endif
