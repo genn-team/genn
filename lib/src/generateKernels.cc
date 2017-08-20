@@ -706,7 +706,13 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
 {
     string localID; //!< "id" if first synapse group, else "lid". lid =(thread index- last thread of the last synapse group)
     ofstream fs;
+#ifdef MPI_ENABLE
+    int MPIHostID = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &MPIHostID);
+    string name = path + "/" + model.getName() + "_CODE/synapseKrnl_" + std::to_string(MPIHostID) + ".cc";
+#else
     string name = path + "/" + model.getName() + "_CODE/synapseKrnl.cc";
+#endif
     fs.open(name.c_str());
 
     // Attach this to a code stream
