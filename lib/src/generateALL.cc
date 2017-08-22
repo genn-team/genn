@@ -265,8 +265,10 @@ void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
 
 #ifdef MPI_ENABLE
             nvccFlags += " -I\"$MPI_PATH/include\"";
-            string runnerPath = path + "/" + model.getName() + "_CODE/runner_$OMPI_COMM_WORLD_RANK.cc";
-            string cubinPath = path + "/runner_$OMPI_COMM_WORLD_RANK.cubin";
+            int MPIHostID = 0;
+            MPI_Comm_rank(MPI_COMM_WORLD, &MPIHostID);
+            string runnerPath = path + "/" + model.getName() + "_CODE/runner_" + std::to_string(MPIHostID)+ ".cc";
+            string cubinPath = path + "/runner_" + std::to_string(MPIHostID)+ ".cubin";
 #else
             string runnerPath = path + "/" + model.getName() + "_CODE/runner.cc";
             string cubinPath = path + "/runner.cubin";

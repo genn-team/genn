@@ -2391,8 +2391,13 @@ void genMakefile(const NNmodel &model, //!< Model description
     os << endl;
     os << "INCLUDEFLAGS   +=-I\"$(MPI_PATH)/include\"" << endl;
     os << endl;
+    os << "ifdef MPI_ENABLE" << endl;
+    os << "all: runner_${OMPI_COMM_WORLD_RANK}.o" << endl;
+    os << endl;
+    os << "else" << endl;
     os << "all: runner.o" << endl;
     os << endl;
+    os << "endif" << endl;
     os << "ifdef MPI_ENABLE" << endl;
     os << "runner_${OMPI_COMM_WORLD_RANK}.o: runner_${OMPI_COMM_WORLD_RANK}.cc" << endl;
     os << "\t$(NVCC) $(NVCCFLAGS) $(INCLUDEFLAGS) runner_${OMPI_COMM_WORLD_RANK}.cc" << endl;
