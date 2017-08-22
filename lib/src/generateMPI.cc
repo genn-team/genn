@@ -156,7 +156,7 @@ static void genCode(const NNmodel &model, //!< Model description
     os << "// ------------------------------------------------------------------------" << std::endl;
     os << "// copying spikes from remote" << std::endl << std::endl;
 
-    for(const auto &n : model.getLocalNeuronGroups()) {
+    for(const auto &n : model.getRemoteNeuronGroups()) {
         // neuron spike variables
         os << "void pull" << n.first << "SpikesFromRemote(int remote, int tag)" << std::endl;
         os << CodeStream::OB(1051);
@@ -193,7 +193,7 @@ static void genCode(const NNmodel &model, //!< Model description
     os << "void copySpikesFromRemote(int remote, int tag)" << std::endl;
     os << CodeStream::OB(1053) << std::endl;
 
-    for(const auto &n : model.getLocalNeuronGroups()) {
+    for(const auto &n : model.getRemoteNeuronGroups()) {
       os << "pull" << n.first << "SpikesFromRemote(remote, tag);" << std::endl;
     }
     os << CodeStream::CB(1053);
@@ -216,21 +216,19 @@ static void genCode(const NNmodel &model, //!< Model description
                 nextTag++;
             }
         for(auto *s : n.second.getOutSyn()) {
-            os << "    // send to synapse" << s->getName()<< std::endl;
-            os << "    if (" << " localID != " << s->getClusterHostID() << ")" << std::endl;
-            os << CodeStream::OB(1055) << std::endl;
-            os << "copySpikesToRemote(" << s->getClusterHostID() << ", " << (neuronToTag.find(n.first))->second << ");" << std::endl;
-            os << CodeStream::CB(1055);
+            if (s->getClusterHostID() != MPIHostID) {
+                os << "    // send to synapse" << s->getName()<< std::endl;
+                os << "copySpikesToRemote(" << s->getClusterHostID() << ", " << (neuronToTag.find(n.first))->second << ");" << std::endl;
+            }
         }
     }
     for(const auto &n : model.getLocalNeuronGroups()) {
             os << "    // Handling neuron " << n.first << std::endl;
         for(auto *s : n.second.getInSyn()) {
-            os << "    // receive from synapse" << s->getName() << " " << s->getSrcNeuronGroup()->getName() << std::endl;
-            os << "    if (" << " localID != " << s->getClusterHostID() << ")" << std::endl;
-            os << CodeStream::OB(1055) << std::endl;
-            os << "copySpikesFromRemote(" << s->getClusterHostID() << ", " << (neuronToTag.find(s->getSrcNeuronGroup()->getName()))->second << ");" << std::endl;
-            os << CodeStream::CB(1055);
+            if (s->getSrcNeuronGroup()->getClusterHostID() != MPIHostID) {
+                os << "    // receive from synapse" << s->getName() << " " << s->getSrcNeuronGroup()->getName() << std::endl;
+                os << "copySpikesFromRemote(" << s->getSrcNeuronGroup()->getClusterHostID() << ", " << (neuronToTag.find(s->getSrcNeuronGroup()->getName()))->second << ");" << std::endl;
+            }
         }
     }
     os << CodeStream::CB(1054);
