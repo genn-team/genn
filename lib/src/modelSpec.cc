@@ -854,15 +854,15 @@ void NNmodel::setPopulationSums()
     // NEURON GROUPS
     unsigned int neuronIDStart = 0;
     unsigned int paddedNeuronIDStart = 0;
-#ifdef MPI_ENABLE
-    for(auto &n : m_LocalNeuronGroups) {
-        n.second.calcSizes(neuronBlkSz, neuronIDStart, paddedNeuronIDStart);
-    }
-#else
+//#ifdef MPI_ENABLE
+//    for(auto &n : m_LocalNeuronGroups) {
+//        n.second.calcSizes(neuronBlkSz, neuronIDStart, paddedNeuronIDStart);
+//    }
+//#else
     for(auto &n : m_NeuronGroups) {
         n.second.calcSizes(neuronBlkSz, neuronIDStart, paddedNeuronIDStart);
     }
-#endif
+//#endif
 
     // SYNAPSE groups
     unsigned int paddedSynapseKernelIDStart = 0;
