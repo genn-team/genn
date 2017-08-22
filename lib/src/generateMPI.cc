@@ -136,18 +136,19 @@ static void genCode(const NNmodel &model, //!< Model description
         // neuron spike variables
         os << "void push" << n.first << "SpikesToRemote(int remote, int tag)" << std::endl;
         os << CodeStream::OB(1050);
+        os << "MPI_Request req;" << std::endl;
 
         const size_t glbSpkCntSize = n.second.isTrueSpikeRequired() ? n.second.getNumDelaySlots() : 1;
-        os << "MPI_Send(glbSpkCnt" << n.first;
+        os << "MPI_Isend(glbSpkCnt" << n.first;
         os << ", "<< glbSpkCntSize;
         os << ", MPI_INT";
-        os << ", remote, tag, MPI_COMM_WORLD);" << std::endl;
+        os << ", remote, tag, MPI_COMM_WORLD, &req);" << std::endl;
 
         const size_t glbSpkSize = n.second.isTrueSpikeRequired() ? n.second.getNumNeurons() * n.second.getNumDelaySlots() : n.second.getNumNeurons();
-        os << "MPI_Send(glbSpk" << n.first;
+        os << "MPI_Isend(glbSpk" << n.first;
         os << ", "<< glbSpkSize;
         os << ", MPI_INT";
-        os << ", remote, tag, MPI_COMM_WORLD);" << std::endl;
+        os << ", remote, tag, MPI_COMM_WORLD, &req);" << std::endl;
 
         os << CodeStream::CB(1050);
         os << std::endl;
@@ -209,12 +210,14 @@ static void genCode(const NNmodel &model, //!< Model description
     os << "    MPI_Comm_rank(MPI_COMM_WORLD, &localID);" << std::endl;
     std::map<string, int> neuronToTag;
     int nextTag = 0;
+    for(const auto &n : model.getNeuronGroups()) {
+        if (neuronToTag.find(n.first) == neuronToTag.cend()) {
+            neuronToTag.insert(pair<string, int>(n.first, nextTag));
+            nextTag = nextTag + 1;
+        }
+    }
     for(const auto &n : model.getLocalNeuronGroups()) {
             os << "    // Handling neuron " << n.first << std::endl;
-            if (neuronToTag.find(n.first) == neuronToTag.cend()) {
-                neuronToTag.insert(pair<string, int>(n.first, nextTag));
-                nextTag++;
-            }
         for(auto *s : n.second.getOutSyn()) {
             if (s->getClusterHostID() != MPIHostID) {
                 os << "    // send to synapse" << s->getName()<< std::endl;
