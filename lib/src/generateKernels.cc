@@ -461,11 +461,11 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
 
     
     bool firstNeuronGroup = true;
-//#ifdef MPI_ENABLE
-//    for(const auto &n : model.getLocalNeuronGroups()) {
-//#else
+#ifdef MPI_ENABLE
+    for(const auto &n : model.getLocalNeuronGroups()) {
+#else
     for(const auto &n : model.getNeuronGroups()) {
-//#endif
+#endif
         os << "// neuron group " << n.first << std::endl;
         const auto &groupIDRange = n.second.getPaddedIDRange();
         if (firstNeuronGroup) {
