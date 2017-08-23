@@ -883,7 +883,11 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
     os << std::endl;
 
     bool firstSynapseGroup = true;
+#ifdef MPI_ENABLE
+    for(const auto &s : model.getLocalSynapseGroups()) {
+#else
     for(const auto &s : model.getSynapseGroups()) {
+#endif
         os << "// synapse group " << s.first << std::endl;
         const auto &groupIDRange = s.second.getPaddedKernelIDRange();
         if (firstSynapseGroup) {

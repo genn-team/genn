@@ -869,6 +869,35 @@ void NNmodel::setPopulationSums()
     unsigned int paddedSynapseKernelIDStart = 0;
     unsigned int paddedSynapseDynamicsIDStart = 0;
     unsigned int paddedSynapsePostLearnIDStart = 0;
+#ifdef MPI_ENABLE
+    for(auto &s : m_LocalSynapseGroups) {
+        // Calculate synapse kernel sizes
+        s.second.calcKernelSizes(synapseBlkSz, paddedSynapseKernelIDStart);
+
+        if (!s.second.getWUModel()->getLearnPostCode().empty()) {
+            const unsigned int startID = paddedSynapsePostLearnIDStart;
+            paddedSynapsePostLearnIDStart += s.second.getPaddedPostLearnKernelSize(learnBlkSz);
+
+            // Add this synapse group to map of synapse groups with postsynaptic learning
+            // or update the existing entry with the new block sizes
+            m_SynapsePostLearnGroups[s.first] = std::pair<unsigned int, unsigned int>(
+                startID, paddedSynapsePostLearnIDStart);
+        }
+
+         if (!s.second.getWUModel()->getSynapseDynamicsCode().empty()) {
+            const unsigned int startID = paddedSynapseDynamicsIDStart;
+            paddedSynapseDynamicsIDStart += s.second.getPaddedDynKernelSize(synDynBlkSz);
+
+            // Add this synapse group to map of synapse groups with dynamics
+            // or update the existing entry with the new block sizes
+            m_SynapseDynamicsGroups[s.first] = std::pair<unsigned int, unsigned int>(
+                startID, paddedSynapseDynamicsIDStart);
+         }
+    }
+#endif
+    paddedSynapseKernelIDStart = 0;
+    paddedSynapseDynamicsIDStart = 0;
+    paddedSynapsePostLearnIDStart = 0;
     for(auto &s : m_SynapseGroups) {
         // Calculate synapse kernel sizes
         s.second.calcKernelSizes(synapseBlkSz, paddedSynapseKernelIDStart);
