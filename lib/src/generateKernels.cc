@@ -50,66 +50,6 @@ string getFloatAtomicAdd(const string &ftype)
         return "atomicAdd";
     }
 }
-//--------------------------------------------------------------------------
-std::tuple<std::string, std::string, std::string> getCASTypeAndIntrinsics(const std::string &ftype) {
-    if(ftype == "float") {
-        return std::make_tuple("unsigned int", "__uint_as_float", "__float_as_uint");
-    }
-    else if(ftype == "double") {
-        return std::make_tuple("unsigned long long int", "__longlong_as_double", "__double_as_longlong");
-    }
-    else {
-        gennError("CUDA doesn't support CAS instruction of suitable size for floating point type '" + ftype + "'");
-    }
-}
-//--------------------------------------------------------------------------
-std::string getUpdateLinSynCode(const PostsynapticModels::Base *psm, bool atomicRequired, const std::string &ftype)
-{
-    // If the post synaptic model has no custom code for updating linear synapses
-    if(psm->getUpdateLinSynCode().empty()) {
-        // If atomics are required, use cuda atomic add operation
-        if(atomicRequired) {
-            return getFloatAtomicAdd(ftype) + "(&$(inSyn), $(addtoinSyn))";
-        }
-        // Otherwise use standard increment
-        else {
-            return "$(inSyn) += $(addtoinSyn)";
-        }
-    }
-    // Otherwise
-    else {
-        // If atomic is required
-        if(atomicRequired) {
-            // Determine what sort of CAS type and intrinsic are required for this floating point type
-            std::string casType;
-            std::string toFloatIntrinsic;
-            std::string fromFloatIntrinsic;
-            std::tie(casType, toFloatIntrinsic, fromFloatIntrinsic) = getCASTypeAndIntrinsics(ftype);
-
-            // Substitute the current value of variable with 'assumed' (and correct intrinsic to convert)
-            std::string uCode = psm->getUpdateLinSynCode();
-            substitute(uCode, "$(inSyn)", toFloatIntrinsic + "(assumed)");
-
-            // Generate custom atomic operation based using atomicCAS
-            std::ostringstream casStream;
-            casStream << casType << " addressOfInSyn = (" << casType << "*)&($inSyn);" << std::endl;
-            casStream << casType << " old = *addressOfInSyn;" << std::endl;
-            casStream << casType << " assumed;" << std::endl;
-            casStream << "do" << "{" << std::endl;
-            casStream << "    assumed = old;" << std::endl;
-            casStream << "    old = atomicCAS(addressOfInSyn, assumes, " << fromFloatIntrinsic << "(" << uCode << "));" << std::endl;
-            casStream << "}" << " while(assumed != old);";
-
-            // Return generated code
-            return casStream.str();
-        }
-        // Otherwise set $(inSyn) to the code string
-        else {
-            return "$(inSyn) = " + psm->getUpdateLinSynCode();
-        }
-    }
-}
-//--------------------------------------------------------------------------
 // parallelisation along pre-synaptic spikes, looped over post-synaptic neurons
 void generatePreParallelisedSparseCode(
     CodeStream &os, //!< output stream for code
@@ -122,7 +62,6 @@ void generatePreParallelisedSparseCode(
     const int UIntSz = sizeof(unsigned int) * 8;
     const int logUIntSz = (int) (logf((float) UIntSz) / logf(2.0f) + 1e-5f);
     const auto *wu = sg.getWUModel();
-    const auto *psm = sg.getPSModel();
 
     // Create iteration context to iterate over the variables; derived and extra global parameters
     DerivedParamNameIterCtx wuDerivedParams(wu->getDerivedParams());
@@ -193,15 +132,14 @@ a max possible number of connections via the model.setMaxConn() function.\n");
 
 // Code substitutions ----------------------------------------------------------------------------------
     string wCode = evnt ? wu->getEventCode() : wu->getSimCode();
-    const bool atomicRequired = sg.isPSAtomicAddRequired(synapseBlkSz);
-
     substitute(wCode, "$(t)", "t");
-    substitute(wCode, "$(updatelinsyn)", getUpdateLinSynCode(psm, atomicRequired, ftype));
 
-    if (atomicRequired) { // SPARSE using atomicAdd
+    if (sg.isPSAtomicAddRequired(synapseBlkSz)) { // SPARSE using atomicAdd
+        substitute(wCode, "$(updatelinsyn)", getFloatAtomicAdd(ftype) + "(&$(inSyn), $(addtoinSyn))");
         substitute(wCode, "$(inSyn)", "dd_inSyn" + sg.getName() + "[ipost]");
     }
     else { // using shared memory
+        substitute(wCode, "$(updatelinsyn)", "$(inSyn) += $(addtoinSyn)");
         substitute(wCode, "$(inSyn)", "shLg[ipost]");
     }
 
@@ -227,7 +165,7 @@ a max possible number of connections via the model.setMaxConn() function.\n");
     os << CodeStream::CB(102);
     //os << CodeStream::CB(101);
 }
-//--------------------------------------------------------------------------
+
 // classical parallelisation of post-synaptic neurons in parallel and spikes in a loop
 void generatePostParallelisedCode(
     CodeStream &os, //!< output stream for code
@@ -239,7 +177,6 @@ void generatePostParallelisedCode(
     const bool evnt = (postfix == "Evnt");
     const int UIntSz = sizeof(unsigned int) * 8;
     const int logUIntSz = (int) (logf((float) UIntSz) / logf(2.0f) + 1e-5f);
-    const auto *psm = sg.getPSModel();
     const auto *wu = sg.getWUModel();
 
     // Create iteration context to iterate over the variables; derived and extra global parameters
@@ -323,17 +260,14 @@ a max possible number of connections via the model.setMaxConn() function.\n");
 
     // Code substitutions ----------------------------------------------------------------------------------
     string wCode = (evnt ? wu->getEventCode() : wu->getSimCode());
-    const bool atomicRequired = sg.isPSAtomicAddRequired(synapseBlkSz);
-    const bool sparse = (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE);
-
     substitute(wCode, "$(t)", "t");
-    substitute(wCode, "$(updatelinsyn)", getUpdateLinSynCode(psm, atomicRequired && sparse, ftype));
-
-    if (sparse) { // SPARSE
-        if (atomicRequired) { // SPARSE using atomicAdd
+    if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) { // SPARSE
+        if (sg.isPSAtomicAddRequired(synapseBlkSz)) { // SPARSE using atomicAdd
+            substitute(wCode, "$(updatelinsyn)", getFloatAtomicAdd(ftype) + "(&$(inSyn), $(addtoinSyn))");
             substitute(wCode, "$(inSyn)", "dd_inSyn" + sg.getName() + "[ipost]");
         }
         else { // SPARSE using shared memory
+            substitute(wCode, "$(updatelinsyn)", "$(inSyn) += $(addtoinSyn)");
             substitute(wCode, "$(inSyn)", "shLg[ipost]");
         }
 
@@ -342,6 +276,7 @@ a max possible number of connections via the model.setMaxConn() function.\n");
         }
     }
     else { // DENSE
+        substitute(wCode, "$(updatelinsyn)", "$(inSyn) += $(addtoinSyn)");
         substitute(wCode, "$(inSyn)", "linSyn");
         if (sg.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
             name_substitutions(wCode, "dd_", wuVars.nameBegin, wuVars.nameEnd, sg.getName() + "[shSpk"

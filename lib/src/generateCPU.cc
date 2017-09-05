@@ -35,18 +35,6 @@
 //-------------------------------------------------------------------------
 namespace
 {
-std::string getUpdateLinSynCode(const PostsynapticModels::Base *psm)
-{
-    // If the post synaptic model has no custom code for updating
-    // linear synapses just return standard increment
-    if(psm->getUpdateLinSynCode().empty()) {
-        return "$(inSyn) += $(addtoinSyn)";
-    }
-    // Otherwise set $(inSyn) to the code string
-    else {
-        return "$(inSyn) = " + psm->getUpdateLinSynCode();
-    }
-}
 //-------------------------------------------------------------------------
 /*!
   \brief Function for generating the CUDA synapse kernel code that handles presynaptic
@@ -66,7 +54,6 @@ void generate_process_presynaptic_events_code_CPU(
 
     if ((evnt && sg.isSpikeEventRequired()) || (!evnt && sg.isTrueSpikeRequired())) {
         const auto *wu = sg.getWUModel();
-        const auto *psm = sg.getPSModel();
         const bool sparse = sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE;
 
         // Detect spike events or spikes and do the update
@@ -130,7 +117,7 @@ void generate_process_presynaptic_events_code_CPU(
 
         // Code substitutions ----------------------------------------------------------------------------------
         string wCode = evnt ? wu->getEventCode() : wu->getSimCode();
-        substitute(wCode, "$(updatelinsyn)", getUpdateLinSynCode(psm));
+        substitute(wCode, "$(updatelinsyn)", "$(inSyn) += $(addtoinSyn)");
         substitute(wCode, "$(t)", "t");
         if (sparse) { // SPARSE
             if (sg.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
@@ -447,7 +434,6 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
         {
             const SynapseGroup *sg = model.findSynapseGroup(s.first);
             const auto *wu = sg->getWUModel();
-            const auto *psm = sg->getPSModel();
 
             // there is some internal synapse dynamics
             if (!wu->getSynapseDynamicsCode().empty()) {
@@ -472,7 +458,7 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
 
                 string SDcode= wu->getSynapseDynamicsCode();
                 substitute(SDcode, "$(t)", "t");
-                substitute(SDcode, "$(updatelinsyn)", getUpdateLinSynCode(psm));
+                substitute(SDcode, "$(updatelinsyn)", "$(inSyn) += $(addtoinSyn)");
 
                 if (sg->getMatrixType() & SynapseMatrixConnectivity::SPARSE) { // SPARSE
                     os << "for (int n= 0; n < C" << s.first << ".connN; n++)" << CodeStream::OB(24) << std::endl;
