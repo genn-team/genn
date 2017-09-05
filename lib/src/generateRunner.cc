@@ -1140,7 +1140,7 @@ void genRunner(const NNmodel &model, //!< Model description
 
         if (n.second.isSpikeTimeRequired()) {
             os << "    " << oB << "for (int i = 0; i < " << n.second.getNumNeurons() * n.second.getNumDelaySlots() << "; i++) {" << std::endl;
-            os << "        sT" <<  n.first << "[i] = -10.0;" << std::endl;
+            os << "        sT" <<  n.first << "[i] = -SCALAR_MAX;" << std::endl;
             os << "    }" << cB << std::endl;
         }
         
