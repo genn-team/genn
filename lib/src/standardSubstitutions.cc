@@ -171,21 +171,13 @@ void StandardSubstitutions::weightUpdateSim(
     const string &devPrefix,
     const std::string &ftype)
 {
-    // If the synapse group has global (immutable) state, substitute in the initial values
-    if (sg.getMatrixType() & SynapseMatrixWeight::GLOBAL) {
-        value_substitutions(wCode, wuVars.nameBegin, wuVars.nameEnd, sg.getWUInitVals());
-    }
+     if (sg.getMatrixType() & SynapseMatrixWeight::GLOBAL) {
+         value_substitutions(wCode, wuVars.nameBegin, wuVars.nameEnd, sg.getWUInitVals());
+     }
 
-    // substitute weight update parameter values into weight update code
     value_substitutions(wCode, sg.getWUModel()->getParamNames(), sg.getWUParams());
     value_substitutions(wCode, wuDerivedParams.nameBegin, wuDerivedParams.nameEnd, sg.getWUDerivedParams());
     name_substitutions(wCode, "", wuExtraGlobalParams.nameBegin, wuExtraGlobalParams.nameEnd, sg.getName());
-
-    // substitute post-synaptic model parameter values into weight update code
-    DerivedParamNameIterCtx psmDerivedParams(sg.getPSModel()->getDerivedParams());
-    value_substitutions(wCode, sg.getPSModel()->getParamNames(), sg.getPSParams());
-    value_substitutions(wCode, psmDerivedParams.nameBegin, psmDerivedParams.nameEnd, sg.getPSDerivedParams());
-
     substitute(wCode, "$(addtoinSyn)", "addtoinSyn");
     neuron_substitutions_in_synaptic_code(wCode, &sg, preIdx, postIdx, devPrefix);
     wCode= ensureFtype(wCode, ftype);
@@ -203,21 +195,16 @@ void StandardSubstitutions::weightUpdateDynamics(
     const string &devPrefix,
     const std::string &ftype)
 {
-    // If the synapse group has global (immutable) state, substitute in the initial values
-    if (sg->getMatrixType() & SynapseMatrixWeight::GLOBAL) {
-        value_substitutions(SDcode, wuVars.nameBegin, wuVars.nameEnd, sg->getWUInitVals());
-    }
+     if (sg->getMatrixType() & SynapseMatrixWeight::GLOBAL) {
+         value_substitutions(SDcode, wuVars.nameBegin, wuVars.nameEnd, sg->getWUInitVals());
+     }
 
-    // substitute weight update parameter values into synapseDynamics code
+    // substitute parameter values for parameters in synapseDynamics code
     value_substitutions(SDcode, sg->getWUModel()->getParamNames(), sg->getWUParams());
+
+    // substitute values for derived parameters in synapseDynamics code
     value_substitutions(SDcode, wuDerivedParams.nameBegin, wuDerivedParams.nameEnd, sg->getWUDerivedParams());
     name_substitutions(SDcode, "", wuExtraGlobalParams.nameBegin, wuExtraGlobalParams.nameEnd, sg->getName());
-
-    // substitute post-synaptic model parameter values into weight update code
-    DerivedParamNameIterCtx psmDerivedParams(sg->getPSModel()->getDerivedParams());
-    value_substitutions(SDcode, sg->getPSModel()->getParamNames(), sg->getPSParams());
-    value_substitutions(SDcode, psmDerivedParams.nameBegin, psmDerivedParams.nameEnd, sg->getPSDerivedParams());
-
     substitute(SDcode, "$(addtoinSyn)", "addtoinSyn");
     neuron_substitutions_in_synaptic_code(SDcode, sg, preIdx, postIdx, devPrefix);
     SDcode= ensureFtype(SDcode, ftype);
