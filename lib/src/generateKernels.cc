@@ -92,7 +92,7 @@ std::string getUpdateLinSynCode(const PostsynapticModels::Base *psm, bool atomic
 
             // Generate custom atomic operation based using atomicCAS
             std::ostringstream casStream;
-            casStream << casType << " addressOfInSyn = (" << casType << "*)&$(inSyn);" << std::endl;
+            casStream << casType << " addressOfInSyn = (" << casType << "*)&($inSyn);" << std::endl;
             casStream << casType << " old = *addressOfInSyn;" << std::endl;
             casStream << casType << " assumed;" << std::endl;
             casStream << "do" << "{" << std::endl;
