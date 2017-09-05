@@ -48,6 +48,12 @@ public:
 
 protected:
     //------------------------------------------------------------------------
+    // Protected API
+    //------------------------------------------------------------------------
+    const std::map<std::string, std::string> &getAliases() const{ return m_Aliases; }
+
+private:
+    //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
     CodeStream &m_CodeStream;
@@ -69,10 +75,17 @@ public:
     virtual void onObject(const pugi::xml_node &node, unsigned int currentRegimeID,
                           unsigned int targetRegimeID) override;
 
-protected:
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    void addDerivedParams(const NewModels::Base::StringVec &paramNames,
+                          NewModels::Base::DerivedParamVec &derivedParams) const;
+
+private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
+    std::string m_ClosedFormTauParamName;
     CodeStream &m_CodeStream;
     const std::map<std::string, std::string> &m_Aliases;
 };

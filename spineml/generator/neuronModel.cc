@@ -51,7 +51,7 @@ public:
             // Add current regime and trigger condition to map
             // **NOTE** cannot build code immediately as we don't know if there are multiple regimes
             std::string triggerCodeString = node.child("Trigger").child("MathInline").text().get();
-            SpineMLGenerator::expandAliases(triggerCodeString, m_Aliases);
+            SpineMLGenerator::expandAliases(triggerCodeString, getAliases());
             if(!m_RegimeThresholds.insert(std::make_pair(currentRegimeID, triggerCodeString)).second) {
                 throw std::runtime_error("Only one spike trigger is supported per regime");
             }
@@ -226,8 +226,13 @@ SpineMLGenerator::NeuronModel::NeuronModel(const ModelParams::Neuron &params)
     m_SimCode = simCodeStream.str();
     m_ThresholdConditionCode = objectHandlerCondition.getThresholdCode(multipleRegimes);
 
-    // Build the final vectors of parameter names and variables from model and
-    // correctly wrap references to them in newly-generated code strings
-    tie(m_ParamNames, m_Vars) = processModelVariables(componentClass, variableParams,
-                                                      multipleRegimes, {&m_SimCode, &m_ThresholdConditionCode});
+    // Build the final vectors of parameter names and variables from model
+    tie(m_ParamNames, m_Vars) = findModelVariables(componentClass, variableParams, multipleRegimes);
+
+    // Add any derived parameters required for time-derivative
+    objectHandlerTimeDerivative.addDerivedParams(m_ParamNames, m_DerivedParams);
+
+    // Correctly wrap references to parameters and variables in code strings
+    substituteModelVariables(m_ParamNames, m_Vars, m_DerivedParams,
+                             {&m_SimCode, &m_ThresholdConditionCode});
 }

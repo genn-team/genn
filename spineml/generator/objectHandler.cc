@@ -58,12 +58,43 @@ void SpineMLGenerator::ObjectHandler::TimeDerivative::onObject(const pugi::xml_n
     // Find name of state variable
     const std::string stateVariable = node.attribute("variable").value();
 
+    // If regex locates obvious linear first-order ODEs of the form '-x / tau' with a closed-form solution
     std::regex regex("\\s*-\\s*" + stateVariable + "\\s*\\/\\s*([a-zA-Z_]+)\\s*");
     std::cmatch match;
     if(std::regex_match(codeString.c_str(), match, regex)) {
-        std::cout << "POTENTIAL FIRST-ORDER LINEAR ODE TAU:" << match[1].str() << std::endl;
-    }
+        std::cout << "\t\t\tLinear dynamics with time constant:" << match[1].str() << " identified" << std::endl;
 
-    // **TODO** identify cases where Euler is REALLY stupid
-    m_CodeStream << stateVariable << " += DT * (" << codeString << ");" << std::endl;
+        // Stash name of tau parameter in class
+        m_ClosedFormTauParamName = match[1].str();
+
+        // Build code to decay state variable
+        m_CodeStream << stateVariable << " *=  _expDecay" << m_ClosedFormTauParamName << ";" << std::endl;
+    }
+    // Otherwise use Euler
+    else {
+        m_CodeStream << stateVariable << " += DT * (" << codeString << ");" << std::endl;
+    }
+}
+//------------------------------------------------------------------------
+void SpineMLGenerator::ObjectHandler::TimeDerivative::addDerivedParams(const NewModels::Base::StringVec &paramNames,
+                                                                       NewModels::Base::DerivedParamVec &derivedParams) const
+{
+    // If a closed form tau parameter exists
+    if(!m_ClosedFormTauParamName.empty()) {
+        // If tau parameter exists
+        const size_t tauParamIndex = std::distance(
+            paramNames.cbegin(), std::find(paramNames.cbegin(), paramNames.cend(), m_ClosedFormTauParamName));
+        if(tauParamIndex < paramNames.size()) {
+            // Add a derived parameter to calculate e ^ (-dt / tau)
+            derivedParams.push_back(std::make_pair("_expDecay" + m_ClosedFormTauParamName,
+                                                   [tauParamIndex](const std::vector<double> &params, double dt)
+                                                   {
+                                                       return std::exp(-dt / params[tauParamIndex]);
+                                                   }));
+        }
+        // Otherwise, give an error
+        else {
+            throw std::runtime_error("Time derivative uses time constant '" + m_ClosedFormTauParamName + "' which isn't a model parameter");
+        }
+    }
 }

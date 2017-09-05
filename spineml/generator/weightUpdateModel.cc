@@ -209,6 +209,9 @@ SpineMLGenerator::WeightUpdateModel::WeightUpdateModel(const ModelParams::Weight
     // Build the final vectors of parameter names and variables from model
     tie(m_ParamNames, m_Vars) = findModelVariables(componentClass, params.getVariableParams(), multipleRegimes);
 
+    // Add any derived parameters required for time-derivative
+    objectHandlerTimeDerivative.addDerivedParams(m_ParamNames, m_DerivedParams);
+
     // If we have an analogue send port, add code to apply it to synapse dynamics
     if(!m_SendPortAnalogue.empty()) {
         synapseDynamicsStream << "addtoinSyn = " << getSendPortCode(aliases, m_Vars, m_SendPortAnalogue) << ";" << std::endl;
@@ -232,5 +235,6 @@ SpineMLGenerator::WeightUpdateModel::WeightUpdateModel(const ModelParams::Weight
     }
 
     // Correctly wrap references to paramters and variables in code strings
-    substituteModelVariables(m_ParamNames, m_Vars, {&m_SimCode, &m_SynapseDynamicsCode});
+    substituteModelVariables(m_ParamNames, m_Vars, m_DerivedParams,
+                             {&m_SimCode, &m_SynapseDynamicsCode});
 }

@@ -253,6 +253,7 @@ std::tuple<NewModels::Base::StringVec, NewModels::Base::StringPairVec> SpineMLGe
 //----------------------------------------------------------------------------
 void SpineMLGenerator::substituteModelVariables(const NewModels::Base::StringVec &paramNames,
                                                 const NewModels::Base::StringPairVec &vars,
+                                                const NewModels::Base::DerivedParamVec &derivedParams,
                                                 const std::vector<std::string*> &codeStrings)
 {
     // Loop through model parameters
@@ -275,19 +276,16 @@ void SpineMLGenerator::substituteModelVariables(const NewModels::Base::StringVec
             wrapVariableNames(*c, v.first);
         }
     }
-}
-//----------------------------------------------------------------------------
-std::tuple<NewModels::Base::StringVec, NewModels::Base::StringPairVec> SpineMLGenerator::processModelVariables(
-    const pugi::xml_node &componentClass, const std::set<std::string> &variableParams,
-    bool multipleRegimes, const std::vector<std::string*> &codeStrings)
-{
-    // Find variables
-    auto paramNamesVars = findModelVariables(componentClass, variableParams, multipleRegimes);
 
-    // Use them to perform substitutions
-    substituteModelVariables(std::get<0>(paramNamesVars), std::get<1>(paramNamesVars), codeStrings);
+    std::cout << "\t\tDerived params:" << std::endl;
+    for(const auto &d : derivedParams) {
+        std::cout << "\t\t\t" << d.first << std::endl;
 
-    return paramNamesVars;
+        // Wrap derived param names so GeNN code generator can find them
+        for(std::string *c : codeStrings) {
+            wrapVariableNames(*c, d.first);
+        }
+    }
 }
 //----------------------------------------------------------------------------
 void SpineMLGenerator::readAliases(const pugi::xml_node &componentClass, std::map<std::string, std::string> &aliases)

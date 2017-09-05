@@ -61,6 +61,7 @@ public:
 
     virtual NewModels::Base::StringVec getParamNames() const{ return m_ParamNames; }
     virtual NewModels::Base::StringPairVec getVars() const{ return m_Vars; }
+    virtual NewModels::Base::DerivedParamVec getDerivedParams() const{ return m_DerivedParams; }
 
 private:
     //------------------------------------------------------------------------
@@ -75,5 +76,6 @@ private:
 
     NewModels::Base::StringVec m_ParamNames;
     NewModels::Base::StringPairVec m_Vars;
+    NewModels::Base::DerivedParamVec m_DerivedParams;
 };
 }   // namespace SpineMLGenerator

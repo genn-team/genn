@@ -139,11 +139,8 @@ std::tuple<NewModels::Base::StringVec, NewModels::Base::StringPairVec> findModel
 
 void substituteModelVariables(const NewModels::Base::StringVec &paramNames,
                               const NewModels::Base::StringPairVec &vars,
+                              const NewModels::Base::DerivedParamVec &derivedParams,
                               const std::vector<std::string*> &codeStrings);
-
-std::tuple<NewModels::Base::StringVec, NewModels::Base::StringPairVec> processModelVariables(
-    const pugi::xml_node &componentClass, const std::set<std::string> &variableParams,
-    bool multipleRegimes, const std::vector<std::string*> &codeStrings);
 
 // Read aliases into map
 void readAliases(const pugi::xml_node &componentClass, std::map<std::string, std::string> &aliases);
