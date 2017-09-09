@@ -54,6 +54,9 @@ endif
 ifeq ($(DARWIN),DARWIN)
     CXX                  :=clang++
 endif
+ifdef MPI_ENABLE
+    CXX                  :=mpiCC
+endif
 ifndef CPU_ONLY
     CXXFLAGS             :=-std=c++11 -Wall -Wextra -DNVCC=\"$(NVCC)\"
 else
@@ -70,10 +73,9 @@ ARFLAGS                  :=-rcs
 
 # Global include and link flags
 ifndef CPU_ONLY
-    ifndef MPI_ENABLE
-        INCLUDE_FLAGS        :=-I"$(INC_PATH)" -I"$(CUDA_PATH)/include"
-    else
-        INCLUDE_FLAGS        :=-I"$(INC_PATH)" -I"$(CUDA_PATH)/include" -I"$(MPI_PATH)/include"
+    INCLUDE_FLAGS        :=-I"$(INC_PATH)" -I"$(CUDA_PATH)/include"
+    ifdef MPI_ENABLE
+        INCLUDE_FLAGS        +=-I"$(MPI_PATH)/include"
     endif
     ifeq ($(DARWIN),DARWIN)
         LINK_FLAGS       :=-rpath $(CUDA_PATH)/lib -L"$(LIBGENN_PATH)" -L"$(CUDA_PATH)/lib" -lgenn -lcuda -lcudart -lstdc++ -lc++
@@ -81,10 +83,9 @@ ifndef CPU_ONLY
         ifeq ($(OS_SIZE),32)
             LINK_FLAGS   :=-L"$(LIBGENN_PATH)" -L"$(CUDA_PATH)/lib" -lgenn -lcuda -lcudart
         else
-            ifndef MPI_ENABLE
-                LINK_FLAGS   :=-L"$(LIBGENN_PATH)" -L"$(CUDA_PATH)/lib64" -lgenn -lcuda -lcudart
-            else
-                LINK_FLAGS   :=-L"$(LIBGENN_PATH)" -L"$(CUDA_PATH)/lib64" -L"$(MPI_PATH)/lib64" -lgenn -lcuda -lcudart $(shell mpiCC -showme:link)
+            LINK_FLAGS   :=-L"$(LIBGENN_PATH)" -L"$(CUDA_PATH)/lib64" -lgenn -lcuda -lcudart
+            ifdef MPI_ENABLE
+                LINK_FLAGS   +=$(shell mpiCC -showme:link)
             endif
         endif
     endif
@@ -106,23 +107,12 @@ endif
 
 all: $(GENERATEALL)
 
-ifndef MPI_ENABLE
 $(GENERATEALL): $(LIBGENN) always_compile
 	$(CXX) $(CXXFLAGS) -DMODEL=\"$(MODEL)\" -o $@ $(SRC_PATH)/generate*.cc $(INCLUDE_FLAGS) $(LINK_FLAGS)
-else
-$(GENERATEALL): $(LIBGENN) always_compile
-	mpiCC $(CXXFLAGS) -DMODEL=\"$(MODEL)\" -o $@ $(SRC_PATH)/generate*.cc $(INCLUDE_FLAGS) $(LINK_FLAGS)
-endif
 
 $(LIBGENN): $(LIBGENN_OBJ_PATH) $(LIBGENN_OBJ) $(LIBGENN_PATH)
 	$(AR) $(ARFLAGS) $@ $(LIBGENN_OBJ)
 
-ifdef MPI_ENABLE
-$(LIBGENN_OBJ_PATH)/modelSpec.o: $(SRC_PATH)/modelSpec.cc
-	mpiCC $(CXXFLAGS) -MMD -MP -c -o $@ $< $(INCLUDE_FLAGS)
-$(LIBGENN_OBJ_PATH)/generateMPI.o: $(SRC_PATH)/generateMPI.cc
-	mpiCC $(CXXFLAGS) -MMD -MP -c -o $@ $< $(INCLUDE_FLAGS)
-endif
 
 $(LIBGENN_OBJ_PATH)/%.o: $(SRC_PATH)/%.cc
 	$(CXX) $(CXXFLAGS) -MMD -MP -c -o $@ $< $(INCLUDE_FLAGS)
