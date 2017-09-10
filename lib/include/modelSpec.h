@@ -138,6 +138,24 @@ public:
     //! Are timers and timing commands enabled
     bool isTimingEnabled() const{ return timing; }
 
+    //! Generate path for generated code
+    std::string getGeneratedCodePath(const std::string &path, const std::string &fileTitle, const std::string &extension) const{
+        std::string genPath = "";
+        if (path.empty()) {
+            genPath =  fileTitle;
+        } else {
+            genPath =  path + "/" + fileTitle;
+        }
+#ifdef MPI_ENABLE
+        int MPIHostID = 0;
+        MPI_Comm_rank(MPI_COMM_WORLD, &MPIHostID);
+        genPath += "_" + std::to_string(MPIHostID) + "." + extension;
+#else
+        genPath += "." + extension;
+#endif
+        return genPath;
+    }
+
     // PUBLIC NEURON FUNCTIONS
     //========================
     //! Get std::map containing all named NeuronGroup objects in model

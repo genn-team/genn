@@ -104,7 +104,7 @@ static void genCode(const NNmodel &model, //!< Model description
 #ifdef MPI_ENABLE
     MPI_Comm_rank(MPI_COMM_WORLD, &MPIHostID);
 #endif
-    string infraMPICodeName= path + "/" + model.getName() + "_CODE/infraMPI_" + std::to_string(MPIHostID) + ".cc";
+    string infraMPICodeName= model.getGeneratedCodePath(path + "/" + model.getName() + "_CODE", "infraMPI", "cc");
     ofstream fs;
     fs.open(infraMPICodeName.c_str());
 

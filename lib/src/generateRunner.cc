@@ -737,13 +737,7 @@ void genRunner(const NNmodel &model, //!< Model description
 
 {
     //cout << "entering genRunner" << std::endl;
-#ifdef MPI_ENABLE
-    int MPIHostID = 0;
-    MPI_Comm_rank(MPI_COMM_WORLD, &MPIHostID);
-    string runnerName= path + "/" + model.getName() + "_CODE/runner_" + std::to_string(MPIHostID) + ".cc";
-#else
-    string runnerName= path + "/" + model.getName() + "_CODE/runner.cc";
-#endif
+    string runnerName= model.getGeneratedCodePath(path + "/" + model.getName() + "_CODE", "runner", "cc");
     ofstream fs;
     fs.open(runnerName.c_str());
 
@@ -941,11 +935,7 @@ void genRunner(const NNmodel &model, //!< Model description
 
     // include simulation kernels
 #ifndef CPU_ONLY
-#ifdef MPI_ENABLE
-    os << "#include \"runnerGPU_" + std::to_string(MPIHostID) + ".cc\"" << std::endl << std::endl;
-#else
-    os << "#include \"runnerGPU.cc\"" << std::endl << std::endl;
-#endif
+    os << "#include \"" + model.getGeneratedCodePath("", "runnerGPU", "cc") + "\"" << std::endl << std::endl;
 #endif
     os << "#include \"neuronFnct.cc\"" << std::endl;
     if (!model.getSynapseGroups().empty()) {
@@ -1557,13 +1547,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     )
 {
 //    cout << "entering GenRunnerGPU" << std::endl;
-#ifdef MPI_ENABLE
-    int MPIHostID = 0;
-    MPI_Comm_rank(MPI_COMM_WORLD, &MPIHostID);
-    string name = path + "/" + model.getName() + "_CODE/runnerGPU_" + std::to_string(MPIHostID) + ".cc";
-#else
-    string name= path + "/" + model.getName() + "_CODE/runnerGPU.cc";
-#endif
+    string name = model.getGeneratedCodePath(path + "/" + model.getName() + "_CODE", "runnerGPU", "cc");
     ofstream fs;
     fs.open(name.c_str());
 
@@ -1621,17 +1605,9 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
         os << std::endl;
     }
 
-#ifdef MPI_ENABLE
-    os << "#include \"neuronKrnl_" + std::to_string(MPIHostID) + ".cc\"" << std::endl;
-#else
-    os << "#include \"neuronKrnl.cc\"" << std::endl;
-#endif
+    os << "#include \"" + model.getGeneratedCodePath("", "neuronKrnl", "cc") + "\"" << std::endl;
     if (!model.getSynapseGroups().empty()) {
-#ifdef MPI_ENABLE
-        os << "#include \"synapseKrnl_" + std::to_string(MPIHostID) + ".cc\"" << std::endl;
-#else
-        os << "#include \"synapseKrnl.cc\"" << std::endl;
-#endif
+        os << "#include \"" + model.getGeneratedCodePath("", "synapseKrnl", "cc") + "\"" << std::endl;
     }
 
     os << "// ------------------------------------------------------------------------" << std::endl;
