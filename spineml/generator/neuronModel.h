@@ -21,6 +21,11 @@ namespace SpineMLGenerator
     }
 }
 
+namespace pugi
+{
+    class xml_node;
+}
+
 //----------------------------------------------------------------------------
 // SpineMLGenerator::NeuronModel
 //----------------------------------------------------------------------------
@@ -29,7 +34,7 @@ namespace SpineMLGenerator
 class NeuronModel : public NeuronModels::Base
 {
 public:
-    NeuronModel(const ModelParams::Neuron &params);
+    NeuronModel(const ModelParams::Neuron &params, const pugi::xml_node &componentClass);
 
     //------------------------------------------------------------------------
     // Typedefines

@@ -21,6 +21,11 @@ namespace SpineMLGenerator
     }
 }
 
+namespace pugi
+{
+    class xml_node;
+}
+
 //----------------------------------------------------------------------------
 // SpineMLGenerator::WeightUpdateModel
 //----------------------------------------------------------------------------
@@ -30,6 +35,7 @@ class WeightUpdateModel : public WeightUpdateModels::Base
 {
 public:
     WeightUpdateModel(const ModelParams::WeightUpdate &params,
+                      const pugi::xml_node &componentClass,
                       const NeuronModel *srcNeuronModel,
                       const NeuronModel *trgNeuronModel);
 

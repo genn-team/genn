@@ -92,29 +92,10 @@ private:
 // SpineMLGenerator::PostsynapticModel
 //----------------------------------------------------------------------------
 SpineMLGenerator::PostsynapticModel::PostsynapticModel(const ModelParams::Postsynaptic &params,
+                                                       const pugi::xml_node &componentClass,
                                                        const NeuronModel *trgNeuronModel,
                                                        const WeightUpdateModel *weightUpdateModel)
 {
-    // Load XML document
-    pugi::xml_document doc;
-    auto result = doc.load_file(params.getURL().c_str());
-    if(!result) {
-        throw std::runtime_error("Could not open file:" + params.getURL() + ", error:" + result.description());
-    }
-
-    // Get SpineML root
-    auto spineML = doc.child("SpineML");
-    if(!spineML) {
-        throw std::runtime_error("XML file:" + params.getURL() + " is not a SpineML component - it has no root SpineML node");
-    }
-
-    // Get component class
-    auto componentClass = spineML.child("ComponentClass");
-    if(!componentClass || strcmp(componentClass.attribute("type").value(), "postsynapse") != 0) {
-        throw std::runtime_error("XML file:" + params.getURL() + " is not a SpineML 'postsynapse' component - "
-                                 "it's ComponentClass node is either missing or of the incorrect type");
-    }
-
     // Loop through send ports
     std::cout << "\t\tSend ports:" << std::endl;
     std::vector<std::pair<std::string, std::string>> sendPortVariables;

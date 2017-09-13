@@ -24,6 +24,11 @@ namespace SpineMLGenerator
     }
 }
 
+namespace pugi
+{
+    class xml_node;
+}
+
 //----------------------------------------------------------------------------
 // SpineMLGenerator::PostsynapticModel
 //----------------------------------------------------------------------------
@@ -33,6 +38,7 @@ class PostsynapticModel : public PostsynapticModels::Base
 {
 public:
     PostsynapticModel(const ModelParams::Postsynaptic &params,
+                      const pugi::xml_node &componentClass,
                       const NeuronModel *trgNeuronModel,
                       const WeightUpdateModel *weightUpdateModel);
 

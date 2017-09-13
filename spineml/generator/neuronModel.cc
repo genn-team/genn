@@ -102,28 +102,8 @@ private:
 //----------------------------------------------------------------------------
 // SpineMLGenerator::NeuronModel
 //----------------------------------------------------------------------------
-SpineMLGenerator::NeuronModel::NeuronModel(const ModelParams::Neuron &params)
+SpineMLGenerator::NeuronModel::NeuronModel(const ModelParams::Neuron &params, const pugi::xml_node &componentClass)
 {
-    // Load XML document
-    pugi::xml_document doc;
-    auto result = doc.load_file(params.getURL().c_str());
-    if(!result) {
-        throw std::runtime_error("Could not open file:" + params.getURL() + ", error:" + result.description());
-    }
-
-    // Get SpineML root
-    auto spineML = doc.child("SpineML");
-    if(!spineML) {
-        throw std::runtime_error("XML file:" + params.getURL() + " is not a SpineML component - it has no root SpineML node");
-    }
-
-    // Get component class
-    auto componentClass = spineML.child("ComponentClass");
-    if(!componentClass || strcmp(componentClass.attribute("type").value(), "neuron_body") != 0) {
-        throw std::runtime_error("XML file:" + params.getURL() + " is not a SpineML 'neuron_body' component - "
-                                 "it's ComponentClass node is either missing or of the incorrect type");
-    }
-
     // Read aliases
     std::map<std::string, std::string> aliases;
     readAliases(componentClass, aliases);

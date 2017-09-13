@@ -57,7 +57,49 @@ namespace
 {
 // Helper function to either find existing model that provides desired parameters or create new one
 template<typename Param, typename Model, typename ...Args>
-const Model &getCreateModel(const Param &params, std::map<Param, Model> &models, Args... args)
+const Model &getCreateModel(const std::string &componentClassType, const Param &params, std::map<Param, Model> &models, Args... args)
+{
+    // If no existing model is found that matches parameters
+    const auto existingModel = models.find(params);
+    if(existingModel == models.end())
+    {
+        // Load XML document
+        pugi::xml_document doc;
+        auto result = doc.load_file(params.getURL().c_str());
+        if(!result) {
+            throw std::runtime_error("Could not open file:" + params.getURL() + ", error:" + result.description());
+        }
+
+        // Get SpineML root
+        auto spineML = doc.child("SpineML");
+        if(!spineML) {
+            throw std::runtime_error("XML file:" + params.getURL() + " is not a SpineML component - it has no root SpineML node");
+        }
+
+        // Get component class
+        auto componentClass = spineML.child("ComponentClass");
+        if(!componentClass || strcmp(componentClass.attribute("type").value(), componentClassType.c_str()) != 0) {
+            throw std::runtime_error("XML file:" + params.getURL() + " is not a SpineML '" + componentClassType + "' component - "
+                                    "it's ComponentClass node is either missing or of the incorrect type");
+        }
+
+        // Create new model
+        // **THINK** some sort of move-semantic magic could probably make this a move
+        std::cout << "\tCreating new model" << std::endl;
+        auto newModel = models.insert(
+            std::make_pair(params, Model(params, componentClass, args...)));
+
+        return newModel.first->second;
+    }
+    else
+    {
+        return existingModel->second;
+    }
+}
+//----------------------------------------------------------------------------
+// Helper function to either find existing model that provides desired parameters or create new one
+template<typename Param, typename Model, typename ...Args>
+const Model &getCreatePassthroughModel(const Param &params, std::map<Param, Model> &models, Args... args)
 {
     // If no existing model is found that matches parameters
     const auto existingModel = models.find(params);
@@ -228,7 +270,7 @@ int main(int argc, char *argv[])
             ModelParams::Neuron modelParams(basePath, neuron, fixedParamVals);
 
             // Either get existing neuron model or create new one of no suitable models are available
-            const auto &neuronModel = getCreateModel(modelParams, neuronModels);
+            const auto &neuronModel = getCreateModel("neuron_body", modelParams, neuronModels);
 
             // Add population to model
             model.addNeuronPopulation(popName, popSize, &neuronModel,
@@ -258,12 +300,12 @@ int main(int argc, char *argv[])
             std::cout << "Low-level input from population:" << srcPopName << "(" << srcPort << ")->" << popName << "(" << dstPort << ")" << std::endl;
 
             // Either get existing passthrough weight update model or create new one of no suitable models are available
-            const auto &passthroughWeightUpdateModel = getCreateModel(srcPort, passthroughWeightUpdateModels,
-                                                                      srcNeuronModel);
+            const auto &passthroughWeightUpdateModel = getCreatePassthroughModel(srcPort, passthroughWeightUpdateModels,
+                                                                                 srcNeuronModel);
 
             // Either get existing passthrough postsynaptic model or create new one of no suitable models are available
-            const auto &passthroughPostsynapticModel = getCreateModel(dstPort, passthroughPostsynapticModels,
-                                                                      neuronModel);
+            const auto &passthroughPostsynapticModel = getCreatePassthroughModel(dstPort, passthroughPostsynapticModels,
+                                                                                 neuronModel);
 
             // Determine the GeNN matrix type and number of delay steps
             SynapseMatrixType mtype;
@@ -307,15 +349,15 @@ int main(int argc, char *argv[])
                 // Read weight update properties
                 std::map<std::string, double> fixedWeightUpdateParamVals;
                 ModelParams::WeightUpdate weightUpdateModelParams(basePath, weightUpdate,
-                                                                popName, trgPopName,
-                                                                fixedWeightUpdateParamVals);
+                                                                  popName, trgPopName,
+                                                                  fixedWeightUpdateParamVals);
 
                 // Global weight value can be used if there are no variable parameters
                 const bool globalG = weightUpdateModelParams.getVariableParams().empty();
 
                 // Either get existing postsynaptic model or create new one of no suitable models are available
-                const auto &weightUpdateModel = getCreateModel(weightUpdateModelParams, weightUpdateModels,
-                                                            neuronModel, trgNeuronModel);
+                const auto &weightUpdateModel = getCreateModel("weight_update", weightUpdateModelParams, weightUpdateModels,
+                                                               neuronModel, trgNeuronModel);
 
                 // Get post synapse
                 auto postSynapse = synapse.child("LL:PostSynapse");
@@ -326,12 +368,12 @@ int main(int argc, char *argv[])
                 // Read postsynapse properties
                 std::map<std::string, double> fixedPostsynapticParamVals;
                 ModelParams::Postsynaptic postsynapticModelParams(basePath, postSynapse,
-                                                                trgPopName,
-                                                                fixedPostsynapticParamVals);
+                                                                  trgPopName,
+                                                                  fixedPostsynapticParamVals);
 
                 // Either get existing postsynaptic model or create new one of no suitable models are available
-                const auto &postsynapticModel = getCreateModel(postsynapticModelParams, postsynapticModels,
-                                                            trgNeuronModel, &weightUpdateModel);
+                const auto &postsynapticModel = getCreateModel("postsynapse", postsynapticModelParams, postsynapticModels,
+                                                               trgNeuronModel, &weightUpdateModel);
 
                 // Determine the GeNN matrix type and number of delay steps
                 SynapseMatrixType mtype;
