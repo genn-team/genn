@@ -694,8 +694,8 @@ int main(int argc, char *argv[])
                     std::string geNNSynPopName = SpineMLUtils::getSafeName(weightUpdate.attribute("name").value());
 
                     // Find allocate function and sparse projection
-                    Connectors::AllocateFn allocateFn = (Connectors::AllocateFn)getLibrarySymbol(modelLibrary, ("allocate" + geNNSynPopName).c_str());
-                    SparseProjection *sparseProjection = (SparseProjection*)getLibrarySymbol(modelLibrary, ("C" + geNNSynPopName).c_str());
+                    Connectors::AllocateFn allocateFn = (Connectors::AllocateFn)getLibrarySymbol(modelLibrary, ("allocate" + geNNSynPopName).c_str(), true);
+                    SparseProjection *sparseProjection = (SparseProjection*)getLibrarySymbol(modelLibrary, ("C" + geNNSynPopName).c_str(), true);
 
                     // Create connector
                     const unsigned int numSynapses = Connectors::create(synapse, popSize, trgPopSize,
