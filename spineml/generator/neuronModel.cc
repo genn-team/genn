@@ -102,6 +102,8 @@ private:
 //----------------------------------------------------------------------------
 // SpineMLGenerator::NeuronModel
 //----------------------------------------------------------------------------
+const char *SpineMLGenerator::NeuronModel::componentClassName = "neuron_body";
+//----------------------------------------------------------------------------
 SpineMLGenerator::NeuronModel::NeuronModel(const ModelParams::Neuron &params, const pugi::xml_node &componentClass)
 {
     // Read aliases

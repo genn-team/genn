@@ -91,6 +91,8 @@ private:
 //----------------------------------------------------------------------------
 // SpineMLGenerator::PostsynapticModel
 //----------------------------------------------------------------------------
+const char *SpineMLGenerator::PostsynapticModel::componentClassName = "postsynapse";
+//----------------------------------------------------------------------------
 SpineMLGenerator::PostsynapticModel::PostsynapticModel(const ModelParams::Postsynaptic &params,
                                                        const pugi::xml_node &componentClass,
                                                        const NeuronModel *trgNeuronModel,

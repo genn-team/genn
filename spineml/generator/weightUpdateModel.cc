@@ -74,6 +74,8 @@ private:
 //----------------------------------------------------------------------------
 // SpineMLGenerator::WeightUpdateModel
 //----------------------------------------------------------------------------
+const char *SpineMLGenerator::WeightUpdateModel::componentClassName = "weight_update";
+//----------------------------------------------------------------------------
 SpineMLGenerator::WeightUpdateModel::WeightUpdateModel(const ModelParams::WeightUpdate &params,
                                                        const pugi::xml_node &componentClass,
                                                        const NeuronModel *srcNeuronModel,

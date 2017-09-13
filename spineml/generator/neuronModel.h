@@ -86,6 +86,11 @@ public:
     virtual NewModels::Base::NameTypeValVec getAdditionalInputVars() const{ return m_AdditionalInputVars; }
     virtual NewModels::Base::DerivedParamVec getDerivedParams() const{ return m_DerivedParams; }
 
+    //------------------------------------------------------------------------
+    // Constants
+    //------------------------------------------------------------------------
+    static const char *componentClassName;
+
 private:
     //------------------------------------------------------------------------
     // Members

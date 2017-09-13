@@ -1,6 +1,7 @@
 // Standard C++ includes
 #include <iostream>
 #include <map>
+#include <memory>
 #include <set>
 #include <string>
 
@@ -57,7 +58,7 @@ namespace
 {
 // Helper function to either find existing model that provides desired parameters or create new one
 template<typename Param, typename Model, typename ...Args>
-const Model &getCreateModel(const std::string &componentClassType, const Param &params, std::map<Param, Model> &models, Args... args)
+const Model &getCreateModel(const Param &params, std::map<Param, Model> &models, Args... args)
 {
     // If no existing model is found that matches parameters
     const auto existingModel = models.find(params);
@@ -78,8 +79,8 @@ const Model &getCreateModel(const std::string &componentClassType, const Param &
 
         // Get component class
         auto componentClass = spineML.child("ComponentClass");
-        if(!componentClass || strcmp(componentClass.attribute("type").value(), componentClassType.c_str()) != 0) {
-            throw std::runtime_error("XML file:" + params.getURL() + " is not a SpineML '" + componentClassType + "' component - "
+        if(!componentClass || strcmp(componentClass.attribute("type").value(), Model::componentClassName) != 0) {
+            throw std::runtime_error("XML file:" + params.getURL() + " is not a SpineML component - "
                                     "it's ComponentClass node is either missing or of the incorrect type");
         }
 
@@ -270,7 +271,7 @@ int main(int argc, char *argv[])
             ModelParams::Neuron modelParams(basePath, neuron, fixedParamVals);
 
             // Either get existing neuron model or create new one of no suitable models are available
-            const auto &neuronModel = getCreateModel("neuron_body", modelParams, neuronModels);
+            const auto &neuronModel = getCreateModel(modelParams, neuronModels);
 
             // Add population to model
             model.addNeuronPopulation(popName, popSize, &neuronModel,
@@ -356,7 +357,7 @@ int main(int argc, char *argv[])
                 const bool globalG = weightUpdateModelParams.getVariableParams().empty();
 
                 // Either get existing postsynaptic model or create new one of no suitable models are available
-                const auto &weightUpdateModel = getCreateModel("weight_update", weightUpdateModelParams, weightUpdateModels,
+                const auto &weightUpdateModel = getCreateModel(weightUpdateModelParams, weightUpdateModels,
                                                                neuronModel, trgNeuronModel);
 
                 // Get post synapse
@@ -372,7 +373,7 @@ int main(int argc, char *argv[])
                                                                   fixedPostsynapticParamVals);
 
                 // Either get existing postsynaptic model or create new one of no suitable models are available
-                const auto &postsynapticModel = getCreateModel("postsynapse", postsynapticModelParams, postsynapticModels,
+                const auto &postsynapticModel = getCreateModel(postsynapticModelParams, postsynapticModels,
                                                                trgNeuronModel, &weightUpdateModel);
 
                 // Determine the GeNN matrix type and number of delay steps

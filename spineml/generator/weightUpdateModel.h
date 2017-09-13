@@ -69,6 +69,11 @@ public:
     virtual NewModels::Base::StringPairVec getVars() const{ return m_Vars; }
     virtual NewModels::Base::DerivedParamVec getDerivedParams() const{ return m_DerivedParams; }
 
+    //------------------------------------------------------------------------
+    // Constants
+    //------------------------------------------------------------------------
+    static const char *componentClassName;
+
 private:
     //------------------------------------------------------------------------
     // Members
