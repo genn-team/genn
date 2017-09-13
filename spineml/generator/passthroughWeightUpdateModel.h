@@ -32,12 +32,14 @@ public:
     //------------------------------------------------------------------------
     // WeightUpdateModels::Base virtuals
     //------------------------------------------------------------------------
+    virtual std::string getSimCode() const{ return m_SimCode; }
     virtual std::string getSynapseDynamicsCode() const override{ return m_SynapseDynamicsCode; }
 
 private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
+    std::string m_SimCode;
     std::string m_SynapseDynamicsCode;
 };
 }   // namespace SpineMLGenerator

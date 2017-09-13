@@ -21,7 +21,16 @@ SpineMLGenerator::PassthroughWeightUpdateModel::PassthroughWeightUpdateModel(con
             "$(addtoinSyn) = $(" + srcPortName + "_pre);\n"
             "$(updatelinsyn);\n";
     }
+    // Otherwise, if the source port is the source neuron's spike send port,
+    // create event handler code to add 1 to state variable
+    else if(srcNeuronModel->getSendPortSpike() == srcPortName) {
+        std::cout << "\t\tPassing through event '" << srcPortName << "' to postsynaptic model" << std::endl;
+
+        m_SimCode =
+            "$(addtoinSyn) = 1;\n"
+            "$(updatelinsyn);\n";
+    }
     else {
-        throw std::runtime_error("Passthrough weight update models can only operate on input from analog send ports");
+        throw std::runtime_error("Passthrough weight update models can only operate on input from analog or event send ports");
     }
 }
