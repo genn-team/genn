@@ -17,7 +17,7 @@ SpineMLGenerator::PassthroughPostsynapticModel::PassthroughPostsynapticModel(con
     if(trgNeuronModel->hasAdditionalInputVar(trgPortName)) {
         std::cout << "\t\tPassing through input to postsynaptic neuron port '" << trgPortName << "'" << std::endl;
 
-        m_ApplyInputCode = trgPortName + " += $(inSyn);\n";
+        m_ApplyInputCode = trgPortName + " += $(inSyn); $(inSyn) = 0;\n";
     }
     else {
         throw std::runtime_error("Passthrough post synaptic models can only provide input to impulse receive ports");
