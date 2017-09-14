@@ -51,12 +51,24 @@ public:
             throw std::runtime_error("GeNN weigh updates always output a single impulse");
         }
 
+        // If this event handler outputs an event
+        auto outgoingEvents = node.children("EventOut");
+        const size_t numOutgoingEvents = std::distance(outgoingEvents.begin(), outgoingEvents.end());
+        if(numOutgoingEvents == 1) {
+            m_CodeStream << "addtoinSyn = 1;" << std::endl;
+            m_CodeStream << "updatelinsyn;" << std::endl;
+        }
+        // Otherwise, throw an exception
+        else if(numOutgoingEvents > 1) {
+            throw std::runtime_error("GeNN weigh updates always output a single event");
+        }
+
         // Loop through state assignements
         for(auto stateAssign : node.children("StateAssignment")) {
             m_CodeStream << stateAssign.attribute("variable").value() << " = " << stateAssign.child_value("MathInline") << ";" << std::endl;
         }
 
-        // If this condition results in a regime change
+        // If this event results in a regime change
         if(currentRegimeID != targetRegimeID) {
             m_CodeStream << "_regimeID = " << targetRegimeID << ";" << std::endl;
         }
@@ -99,6 +111,10 @@ SpineMLGenerator::WeightUpdateModel::WeightUpdateModel(const ModelParams::Weight
             std::cout << "\t\t\tImplementing analogue send port '" << portName << "' as a GeNN linear synapse" << std::endl;
             m_SendPortAnalogue = portName;
         }
+        else if(nodeType == "EventSendPort" && m_SendPortSpikeImpulse.empty() && m_SendPortAnalogue.empty()) {
+            std::cout << "\t\t\tImplementing event send port '" << portName << "' as a GeNN linear synapse" << std::endl;
+            m_SendPortSpikeImpulse = portName;
+        }
         else {
             throw std::runtime_error("GeNN does not support '" + nodeType + "' send ports in weight update models");
         }
@@ -114,9 +130,10 @@ SpineMLGenerator::WeightUpdateModel::WeightUpdateModel(const ModelParams::Weight
         const char *portName = receivePort.node().attribute("name").value();
         const auto &portSrc = params.getInputPortSrc(portName);
 
-        // If this port is an analogue receive port for some sort of postsynaptic neuron state variable
+        // If this port is an event receive port which receives events from presynaptic neuron
+        // **NOTE** hard-coded spike sources are indicated by nullptr and emit spikes from hardcoded port "spike"
         if(nodeType == "EventReceivePort" && portSrc.first == ModelParams::Base::PortSource::PRESYNAPTIC_NEURON
-            && srcNeuronModel->getSendPortSpike() == portSrc.second)
+            && ((srcNeuronModel == nullptr && portSrc.second == "spike") || srcNeuronModel->getSendPortSpike() == portSrc.second))
         {
             std::cout << "\t\t\tImplementing event receive port '" << portName << "' as GeNN true spike" << std::endl;
             trueSpikeReceivePort = portName;
