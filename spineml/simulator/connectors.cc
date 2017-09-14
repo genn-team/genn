@@ -202,7 +202,7 @@ unsigned int createListSparse(const pugi::xml_node &node, unsigned int numPre, u
     else {
         // Loop through connections
         for(auto c : connections) {
-            addSynapseToSparseProjection(c.attribute("src_neuron").as_uint(), c.attribute("trg_neuron").as_uint(),
+            addSynapseToSparseProjection(c.attribute("src_neuron").as_uint(), c.attribute("dst_neuron").as_uint(),
                                          numPre, numPost, sparseProjection);
         }
     }
