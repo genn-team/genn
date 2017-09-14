@@ -194,17 +194,19 @@ SpineMLGenerator::WeightUpdateModel::WeightUpdateModel(const ModelParams::Weight
         };
 
     // Generate model code using specified condition handler
+    bool multipleRegimes;
     ObjectHandler::Condition objectHandlerCondition(synapseDynamicsStream, aliases);
     ObjectHandlerEvent objectHandlerTrueSpike(simCodeStream);
     ObjectHandlerEvent objectHandlerSpikeLikeEvent(simCodeStream);
     ObjectHandler::TimeDerivative objectHandlerTimeDerivative(synapseDynamicsStream, aliases);
-    const bool multipleRegimes = generateModelCode(componentClass,
-                                                   {
-                                                       {trueSpikeReceivePort, &objectHandlerTrueSpike},
-                                                       {spikeLikeEventReceivePort, &objectHandlerSpikeLikeEvent}
-                                                   },
-                                                   &objectHandlerCondition, {}, &objectHandlerTimeDerivative,
-                                                   regimeEndFunc);
+    std::tie(multipleRegimes, m_InitialRegimeID) = generateModelCode(componentClass,
+                                                                     {
+                                                                         {trueSpikeReceivePort, &objectHandlerTrueSpike},
+                                                                         {spikeLikeEventReceivePort, &objectHandlerSpikeLikeEvent}
+                                                                     },
+                                                                     &objectHandlerCondition,
+                                                                     {}, &objectHandlerTimeDerivative,
+                                                                     regimeEndFunc);
 
     // Build the final vectors of parameter names and variables from model
     tie(m_ParamNames, m_Vars) = findModelVariables(componentClass, params.getVariableParams(), multipleRegimes);

@@ -40,7 +40,7 @@ public:
     // Typedefines
     //------------------------------------------------------------------------
     typedef SpineMLGenerator::ParamValues ParamValues;
-    typedef SpineMLGenerator::VarValues VarValues;
+    typedef SpineMLGenerator::VarValues<NeuronModel> VarValues;
 
     //------------------------------------------------------------------------
     // Public API
@@ -73,6 +73,11 @@ public:
                                      return (var.first == port);
                                  });
         return (iVar != m_AdditionalInputVars.end());
+    }
+
+    unsigned int getInitialRegimeID() const
+    {
+        return m_InitialRegimeID;
     }
 
     //------------------------------------------------------------------------
@@ -108,5 +113,7 @@ private:
     NewModels::Base::StringVec m_ParamNames;
     NewModels::Base::StringPairVec m_Vars;
     NewModels::Base::DerivedParamVec m_DerivedParams;
+
+    unsigned int m_InitialRegimeID;
 };
 }   // namespace SpineMLGenerator

@@ -1,7 +1,6 @@
 #include "modelCommon.h"
 
 // Standard C++ includes
-#include <algorithm>
 #include <iostream>
 #include <regex>
 
@@ -34,34 +33,6 @@ std::vector<double> SpineMLGenerator::ParamValues::getValues() const
                        }
                    });
     return paramValues;
-}
-
-//----------------------------------------------------------------------------
-// SpineMLGenerator::VarValues
-//----------------------------------------------------------------------------
-std::vector<double> SpineMLGenerator::VarValues::getValues() const
-{
-    // Get variables from model
-    auto modelVars = m_Model.getVars();
-
-    // Reserve vector of values to match it
-    std::vector<double> varValues;
-    varValues.reserve(modelVars.size());
-
-    // Populate this vector with either values from map or 0s
-    std::transform(modelVars.begin(), modelVars.end(),
-                   std::back_inserter(varValues),
-                   [this](const std::pair<std::string, std::string> &n)
-                   {
-                       auto value = m_Values.find(n.first);
-                       if(value == m_Values.end()) {
-                           return 0.0;
-                       }
-                       else {
-                           return value->second;
-                       }
-                   });
-    return varValues;
 }
 
 //----------------------------------------------------------------------------
@@ -104,10 +75,12 @@ void SpineMLGenerator::CodeStream::flush()
 //----------------------------------------------------------------------------
 // Helper functions
 //----------------------------------------------------------------------------
-bool SpineMLGenerator::generateModelCode(const pugi::xml_node &componentClass, const std::map<std::string, ObjectHandler::Base*> &objectHandlerEvent,
-                                         ObjectHandler::Base *objectHandlerCondition, const std::map<std::string, ObjectHandler::Base*> &objectHandlerImpulse,
-                                         ObjectHandler::Base *objectHandlerTimeDerivative,
-                                         std::function<void(bool, unsigned int)> regimeEndFunc)
+std::pair<bool, unsigned int> SpineMLGenerator::generateModelCode(const pugi::xml_node &componentClass,
+                                                                  const std::map<std::string, ObjectHandler::Base*> &objectHandlerEvent,
+                                                                  ObjectHandler::Base *objectHandlerCondition,
+                                                                  const std::map<std::string, ObjectHandler::Base*> &objectHandlerImpulse,
+                                                                  ObjectHandler::Base *objectHandlerTimeDerivative,
+                                                                  std::function<void(bool, unsigned int)> regimeEndFunc)
 {
     std::cout << "\t\tModel name:" << componentClass.attribute("name").value() << std::endl;
 
@@ -189,7 +162,16 @@ bool SpineMLGenerator::generateModelCode(const pugi::xml_node &componentClass, c
         regimeEndFunc(multipleRegimes, currentRegimeID);
     }
 
-    return multipleRegimes;
+    // Search for initial regime
+    auto initialRegime = regimeIDs.find(dynamics.attribute("initial_regime").value());
+    if(initialRegime == regimeIDs.end()) {
+        throw std::runtime_error("No initial regime set");
+    }
+
+    std::cout << "\t\t\tInitial regime ID:" << initialRegime->second << std::endl;
+
+    // Return whether this model has multiple regimes and what the ID of the initial regime is
+    return std::make_pair(multipleRegimes, initialRegime->second);
 }
 //----------------------------------------------------------------------------
 void SpineMLGenerator::replaceVariableNames(std::string &code, const std::string &variableName,

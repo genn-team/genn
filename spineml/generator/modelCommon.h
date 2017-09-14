@@ -1,6 +1,7 @@
 #pragma once
 
 // Standard includes
+#include <algorithm>
 #include <functional>
 #include <map>
 #include <set>
@@ -51,23 +52,52 @@ private:
 //------------------------------------------------------------------------
 // VarValues
 //------------------------------------------------------------------------
+template<typename M>
 class VarValues
 {
 public:
-    VarValues(const std::map<std::string, double> &values, const NewModels::Base &model)
+    VarValues(const std::map<std::string, double> &values, const M &model)
         : m_Values(values), m_Model(model){}
 
     //----------------------------------------------------------------------------
     // Public API
     //----------------------------------------------------------------------------
-    std::vector<double> getValues() const;
+    std::vector<double> getValues() const
+    {
+        // Get variables from model
+        auto modelVars = m_Model.getVars();
+
+        // Reserve vector of values to match it
+        std::vector<double> varValues;
+        varValues.reserve(modelVars.size());
+
+        // Populate this vector with either values from map or 0s
+        std::transform(modelVars.begin(), modelVars.end(),
+                       std::back_inserter(varValues),
+                       [this](const std::pair<std::string, std::string> &n)
+                       {
+                           if(n.first == "_regimeID") {
+                               return (double)m_Model.getInitialRegimeID();
+                           }
+                           else {
+                               auto value = m_Values.find(n.first);
+                               if(value == m_Values.end()) {
+                                   return 0.0;
+                               }
+                               else {
+                                   return value->second;
+                               }
+                           }
+                        });
+        return varValues;
+    }
 
 private:
     //----------------------------------------------------------------------------
     // Members
     //----------------------------------------------------------------------------
     const std::map<std::string, double> &m_Values;
-    const NewModels::Base &m_Model;
+    const M &m_Model;
 };
 
 //------------------------------------------------------------------------
@@ -158,10 +188,12 @@ private:
 //------------------------------------------------------------------------
 //!< Generate model code from 'componentClass' node using specified object handlers
 //!< to process various components e.g. to generate GeNN code strings
-bool generateModelCode(const pugi::xml_node &componentClass, const std::map<std::string, ObjectHandler::Base*> &objectHandlerEvent,
-                       ObjectHandler::Base *objectHandlerCondition, const std::map<std::string, ObjectHandler::Base*> &objectHandlerImpulse,
-                       ObjectHandler::Base *objectHandlerTimeDerivative,
-                       std::function<void(bool, unsigned int)> regimeEndFunc);
+std::pair<bool, unsigned int> generateModelCode(const pugi::xml_node &componentClass,
+                                                const std::map<std::string, ObjectHandler::Base*> &objectHandlerEvent,
+                                                ObjectHandler::Base *objectHandlerCondition,
+                                                const std::map<std::string, ObjectHandler::Base*> &objectHandlerImpulse,
+                                                ObjectHandler::Base *objectHandlerTimeDerivative,
+                                                std::function<void(bool, unsigned int)> regimeEndFunc);
 
 //!< Search through code for references to named variable and replace it with text
 void replaceVariableNames(std::string &code, const std::string &variableName,

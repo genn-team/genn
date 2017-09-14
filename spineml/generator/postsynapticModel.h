@@ -46,7 +46,7 @@ public:
     // Typedefines
     //------------------------------------------------------------------------
     typedef SpineMLGenerator::ParamValues ParamValues;
-    typedef SpineMLGenerator::VarValues VarValues;
+    typedef SpineMLGenerator::VarValues<PostsynapticModel> VarValues;
 
     //------------------------------------------------------------------------
     // PostsynapticModels::Base virtuals
@@ -56,6 +56,14 @@ public:
     virtual NewModels::Base::StringVec getParamNames() const{ return m_ParamNames; }
     virtual NewModels::Base::StringPairVec getVars() const{ return m_Vars; }
     virtual NewModels::Base::DerivedParamVec getDerivedParams() const{ return m_DerivedParams; }
+
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    unsigned int getInitialRegimeID() const
+    {
+        return m_InitialRegimeID;
+    }
 
     //------------------------------------------------------------------------
     // Constants
@@ -72,5 +80,7 @@ private:
     NewModels::Base::StringVec m_ParamNames;
     NewModels::Base::StringPairVec m_Vars;
     NewModels::Base::DerivedParamVec m_DerivedParams;
+
+    unsigned int m_InitialRegimeID;
 };
 }   // namespace SpineMLGenerator

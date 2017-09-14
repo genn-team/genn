@@ -43,7 +43,7 @@ public:
     // Typedefines
     //------------------------------------------------------------------------
     typedef SpineMLGenerator::ParamValues ParamValues;
-    typedef SpineMLGenerator::VarValues VarValues;
+    typedef SpineMLGenerator::VarValues<WeightUpdateModel> VarValues;
 
     //------------------------------------------------------------------------
     // Public API
@@ -58,6 +58,10 @@ public:
         return m_SendPortAnalogue;
     }
 
+    unsigned int getInitialRegimeID() const
+    {
+        return m_InitialRegimeID;
+    }
 
     //------------------------------------------------------------------------
     // WeightUpdateModels::Base virtuals
@@ -88,5 +92,7 @@ private:
     NewModels::Base::StringVec m_ParamNames;
     NewModels::Base::StringPairVec m_Vars;
     NewModels::Base::DerivedParamVec m_DerivedParams;
+
+    unsigned int m_InitialRegimeID;
 };
 }   // namespace SpineMLGenerator

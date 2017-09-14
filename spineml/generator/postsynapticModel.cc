@@ -229,15 +229,20 @@ SpineMLGenerator::PostsynapticModel::PostsynapticModel(const ModelParams::Postsy
         };
 
     // Generate model code using specified condition handler
+    bool multipleRegimes;
     ObjectHandler::Condition objectHandlerCondition(decayCodeStream, aliases);
     ObjectHandlerImpulse objectHandlerImpulse(wumInputPort.getName(WUMInputType::ImpulseReceive));
     ObjectHandlerEvent objectHandlerEvent;
     ObjectHandler::TimeDerivative objectHandlerTimeDerivative(decayCodeStream, aliases);
-    const bool multipleRegimes = generateModelCode(componentClass,
-                                                   {{wumInputPort.getName(WUMInputType::EventReceive), &objectHandlerEvent}},
-                                                   &objectHandlerCondition,
-                                                   {{wumInputPort.getName(WUMInputType::ImpulseReceive), &objectHandlerImpulse}},
-                                                   &objectHandlerTimeDerivative, regimeEndFunc);
+    std::tie(multipleRegimes, m_InitialRegimeID) = generateModelCode(componentClass,
+                                                                     {
+                                                                         { wumInputPort.getName(WUMInputType::EventReceive), &objectHandlerEvent }
+                                                                     },
+                                                                     &objectHandlerCondition,
+                                                                     {
+                                                                         { wumInputPort.getName(WUMInputType::ImpulseReceive), &objectHandlerImpulse }
+                                                                     },
+                                                                     &objectHandlerTimeDerivative, regimeEndFunc);
 
     // Store generated code in class
     m_DecayCode = decayCodeStream.str();

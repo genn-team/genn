@@ -288,15 +288,18 @@ SpineMLGenerator::NeuronModel::NeuronModel(const ModelParams::Neuron &params, co
 
     // Generate model code using specified condition handler
     RegimeThresholds regimeThresholds;
+    bool multipleRegimes;
     ObjectHandlerCondition objectHandlerCondition(simCodeStream, aliases, m_SendPortSpike, regimeThresholds);
     ObjectHandlerEvent objectHandlerTrueSpike(simCodeStream, regimeThresholds);
     ObjectHandler::TimeDerivative objectHandlerTimeDerivative(simCodeStream, aliases);
-    const bool multipleRegimes = generateModelCode(componentClass,
-                                                   {
-                                                       {trueSpikeReceivePort, &objectHandlerTrueSpike},
-                                                   },
-                                                   &objectHandlerCondition, {}, &objectHandlerTimeDerivative,
-                                                   regimeEndFunc);
+    std::tie(multipleRegimes, m_InitialRegimeID) = generateModelCode(componentClass,
+                                                                     {
+                                                                         {trueSpikeReceivePort, &objectHandlerTrueSpike},
+                                                                     },
+                                                                     &objectHandlerCondition,
+                                                                     {},
+                                                                     &objectHandlerTimeDerivative,
+                                                                     regimeEndFunc);
 
     // Loop through send ports which send an alias
     auto variableParams = params.getVariableParams();
