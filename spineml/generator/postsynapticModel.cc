@@ -49,24 +49,23 @@ public:
             throw std::runtime_error("GeNN cannot handle postsynaptic models where impulses cause a regime-change");
         }
 
-        auto stateAssigment = node.child("StateAssignment");
-        if(!stateAssigment) {
+        auto stateAssign = node.child("StateAssignment");
+        if(!stateAssign) {
             throw std::runtime_error("GeNN only supports postsynaptic models where state assignment occurs");
         }
 
+        // Get name of the variable state is assigned to
+        m_ImpulseAssignStateVar = stateAssign.attribute("variable").value();
+
         // Match for A + B type expression with any amount of whitespace
-        auto stateAssigmentCode = stateAssigment.child_value("MathInline");
+        auto stateAssigmentCode = stateAssign.child_value("MathInline");
         std::regex regex("\\s*([a-zA-Z_]+)\\s*\\+\\s*([a-zA-Z_]+)\\s*");
         std::cmatch match;
         if(std::regex_match(stateAssigmentCode, match, regex)) {
-            // If match is successful check which of the variables being added 
-            // match the impulse coming from the weight update 
-            if(match[1].str() == m_SpikeImpulseReceivePort) {
-                m_ImpulseAssignStateVar = match[2].str();
-                return;
-            }
-            else if(match[2].str() == m_SpikeImpulseReceivePort) {
-                m_ImpulseAssignStateVar = match[1].str();
+            // If match is successful check that the two variables being added are the state variable and the spike impulse
+            if((match[1].str() == m_SpikeImpulseReceivePort && match[2].str() == m_ImpulseAssignStateVar)
+                || (match[1].str() == m_ImpulseAssignStateVar && match[2].str() == m_SpikeImpulseReceivePort))
+            {
                 return;
             }
         }
@@ -85,7 +84,32 @@ private:
     std::string m_SpikeImpulseReceivePort;
     std::string m_ImpulseAssignStateVar;
 };
-}
+
+//----------------------------------------------------------------------------
+// ObjectHandlerEvent
+//----------------------------------------------------------------------------
+class ObjectHandlerEvent : public SpineMLGenerator::ObjectHandler::Base
+{
+public:
+    //----------------------------------------------------------------------------
+    // SpineMLGenerator::ObjectHandler::Base virtuals
+    //----------------------------------------------------------------------------
+    void onObject(const pugi::xml_node &node, unsigned int currentRegimeID,
+                  unsigned int targetRegimeID)
+    {
+        if(currentRegimeID != targetRegimeID) {
+            throw std::runtime_error("GeNN cannot handle postsynaptic models where events cause a regime-change");
+        }
+
+        // If this event doesn't output a a single event
+        auto outgoingEvents = node.children("EventOut");
+        const size_t numOutgoingEvents = std::distance(outgoingEvents.begin(), outgoingEvents.end());
+        if(numOutgoingEvents != 1) {
+            throw std::runtime_error("GeNN only supports postsynaptic models which handle events by emitting a single event");
+        }
+    }
+};
+}   // Anonymous namespace
 
 
 //----------------------------------------------------------------------------
@@ -100,29 +124,38 @@ SpineMLGenerator::PostsynapticModel::PostsynapticModel(const ModelParams::Postsy
 {
     // Loop through send ports
     std::cout << "\t\tSend ports:" << std::endl;
-    std::vector<std::pair<std::string, std::string>> sendPortVariables;
+    std::vector<std::tuple<std::string, std::string, bool>> sendPortVariables;
     for(auto sendPort : componentClass.select_nodes(SpineMLUtils::xPathNodeHasSuffix("SendPort").c_str())) {
         std::string nodeType = sendPort.node().name();
         const char *portName = sendPort.node().attribute("name").value();
 
-        // If this is an analogue send port
-        if(nodeType == "AnalogSendPort") {
+        // If this is an analogue send port or event send port
+        if(nodeType == "AnalogSendPort" || nodeType == "EventSendPort") {
             // Find the name of the port on the neuron which this send port targets
             const auto &neuronPortTrg = params.getOutputPortTrg(portName);
             if(neuronPortTrg.first == ModelParams::Base::PortSource::POSTSYNAPTIC_NEURON) {
-                std::cout << "\t\t\tImplementing analogue send port '" << portName << "' using postsynaptic neuron additional input var '" << neuronPortTrg.second << "'" << std::endl;
+                std::cout << "\t\t\tImplementing " << nodeType << " '" << portName << "' using postsynaptic neuron additional input var '" << neuronPortTrg.second << "'" << std::endl;
 
                 // Add mapping to vector
-                sendPortVariables.push_back(std::make_pair(neuronPortTrg.second, portName));
+                sendPortVariables.push_back(std::make_tuple(neuronPortTrg.second, portName, nodeType == "EventSendPort"));
             }
             else {
-                throw std::runtime_error("GeNN does not support AnalogSendPorts which target anything other than postsynaptic neurons");
+                throw std::runtime_error("GeNN does not support " + nodeType + " which target anything other than postsynaptic neurons");
             }
         }
         else {
             throw std::runtime_error("GeNN does not support '" + nodeType + "' send ports in postsynaptic models");
         }
     }
+
+    // Possible means by which this postsynaptic model can receive input from the weight update model
+    enum class WUMInputType
+    {
+        None,
+        AnalogueReduce,
+        ImpulseReceive,
+        EventReceive,
+    };
 
     // Read aliases
     std::map<std::string, std::string> aliases;
@@ -131,41 +164,55 @@ SpineMLGenerator::PostsynapticModel::PostsynapticModel(const ModelParams::Postsy
     // Loop through receive ports
     std::cout << "\t\tReceive ports:" << std::endl;
     std::map<std::string, std::string> receivePortVariableMap;
-    std::string spikeImpulseReceivePort;
+    PortTypeName<WUMInputType, WUMInputType::None> wumInputPort;
     for(auto receivePort : componentClass.select_nodes(SpineMLUtils::xPathNodeHasSuffix("ReceivePort").c_str())) {
         std::string nodeType = receivePort.node().name();
         const char *portName = receivePort.node().attribute("name").value();
         const auto &portSrc = params.getInputPortSrc(portName);
 
         // If this port is an analogue receive port for some sort of postsynaptic neuron state variable
-        if(nodeType == "AnalogReceivePort" && portSrc.first == ModelParams::Base::PortSource::POSTSYNAPTIC_NEURON && trgNeuronModel->hasSendPortVariable(portSrc.second)) {
+        if(nodeType == "AnalogReceivePort" && portSrc.first == ModelParams::Base::PortSource::POSTSYNAPTIC_NEURON
+            && trgNeuronModel->hasSendPortVariable(portSrc.second))
+        {
             std::cout << "\t\t\tImplementing analogue receive port '" << portName << "' using postsynaptic neuron send port variable '" << portSrc.second << "'" << std::endl;
             receivePortVariableMap.insert(std::make_pair(portName, portSrc.second));
         }
         // Otherwise if this port is an impulse receive port which receives spike impulses from weight update model
-        else if(nodeType == "ImpulseReceivePort" && portSrc.first == ModelParams::Base::PortSource::WEIGHT_UPDATE && weightUpdateModel->getSendPortSpikeImpulse() == portSrc.second) {
+        else if(nodeType == "ImpulseReceivePort" && portSrc.first == ModelParams::Base::PortSource::WEIGHT_UPDATE
+            && weightUpdateModel->getSendPortSpikeImpulse() == portSrc.second)
+        {
             std::cout << "\t\t\tImplementing impulse receive port '" << portName << "' as GeNN weight update model input" << std::endl;
-            spikeImpulseReceivePort = portName;
+            wumInputPort.set(WUMInputType::ImpulseReceive, portName);
         }
-        else {
+        // Otherwise if this port is an event receive port which receives spikes from weight update model
+        else if(nodeType == "EventReceivePort" && portSrc.first == ModelParams::Base::PortSource::WEIGHT_UPDATE
+            && weightUpdateModel->getSendPortSpikeImpulse() == portSrc.second)
+        {
+            std::cout << "\t\t\tImplementing event receive port '" << portName << "' as GeNN weight update model input" << std::endl;
+            wumInputPort.set(WUMInputType::EventReceive, portName);
+        }
+        else
+        {
             throw std::runtime_error("GeNN does not currently support '" + nodeType + "' receive ports in postsynaptic models");
         }
     }
 
     // Loop through reduce ports
     std::cout << "\t\tReduce ports:" << std::endl;
-    std::string analogueReducePort;
     for(auto reducePort : componentClass.select_nodes(SpineMLUtils::xPathNodeHasSuffix("ReducePort").c_str())) {
         std::string nodeType = reducePort.node().name();
         const char *portName = reducePort.node().attribute("name").value();
         const auto &portSrc = params.getInputPortSrc(portName);
 
         // If this is an analogue reduce port which receives analogue input from weight update model
-        if(nodeType == "AnalogReducePort" && portSrc.first == ModelParams::Base::PortSource::WEIGHT_UPDATE && weightUpdateModel->getSendPortAnalogue() == portSrc.second) {
+        if(nodeType == "AnalogReducePort" && portSrc.first == ModelParams::Base::PortSource::WEIGHT_UPDATE
+            && weightUpdateModel->getSendPortAnalogue() == portSrc.second)
+        {
             std::cout << "\t\t\tImplementing analogue reduce port '" << portName << "' as GeNN weight update model input" << std::endl;
-            analogueReducePort = portName;
+            wumInputPort.set(WUMInputType::AnalogueReduce, portName);
         }
-        else {
+        else
+        {
             throw std::runtime_error("GeNN does not currently support '" + nodeType + "' reduce ports in postsynaptic models");
         }
     }
@@ -183,11 +230,13 @@ SpineMLGenerator::PostsynapticModel::PostsynapticModel(const ModelParams::Postsy
 
     // Generate model code using specified condition handler
     ObjectHandler::Condition objectHandlerCondition(decayCodeStream, aliases);
-    ObjectHandlerImpulse objectHandlerImpulse(spikeImpulseReceivePort);
+    ObjectHandlerImpulse objectHandlerImpulse(wumInputPort.getName(WUMInputType::ImpulseReceive));
+    ObjectHandlerEvent objectHandlerEvent;
     ObjectHandler::TimeDerivative objectHandlerTimeDerivative(decayCodeStream, aliases);
     const bool multipleRegimes = generateModelCode(componentClass,
-                                                   {}, &objectHandlerCondition,
-                                                   {{spikeImpulseReceivePort, &objectHandlerImpulse}},
+                                                   {{wumInputPort.getName(WUMInputType::EventReceive), &objectHandlerEvent}},
+                                                   &objectHandlerCondition,
+                                                   {{wumInputPort.getName(WUMInputType::ImpulseReceive), &objectHandlerImpulse}},
                                                    &objectHandlerTimeDerivative, regimeEndFunc);
 
     // Store generated code in class
@@ -202,35 +251,43 @@ SpineMLGenerator::PostsynapticModel::PostsynapticModel(const ModelParams::Postsy
     // Determine what state variable inpulse is applied to
     const std::string &impulseAssignStateVar = objectHandlerImpulse.getImpulseAssignStateVar();
 
-    // Loop through send port variables and build apply input code to update them
+    // Loop through send port variables
     for(const auto s : sendPortVariables) {
-        // Resolve the alias used to get input value to sent
-        std::string inputCode = getSendPortCode(aliases, m_Vars, s.second);
-
-        // If incoming impulse is being assigned to a state variable, substitute it within the input code
-        // **NOTE** we do this here to avoid ambiguity between port names in the postsynaptic and neuron models
-        if(!impulseAssignStateVar.empty()) {
-            wrapAndReplaceVariableNames(inputCode, impulseAssignStateVar, "inSyn");
-
-            // Add code string to apply input
-            m_ApplyInputCode += s.first + " += " + inputCode + ";\n";
+        // If this is an event send port
+        if(std::get<2>(s)) {
+            m_ApplyInputCode += std::get<0>(s) + " += $(inSyn); $(inSyn) = 0;\n";
         }
-        // If the weight update is applying analogue input directly, substitute the name port this is coming in from with inSyn
-        else if(!analogueReducePort.empty()) {
-            wrapAndReplaceVariableNames(inputCode, analogueReducePort, "inSyn");
+        // Otherwise, if it's an analogue send port
+        else {
+            // Resolve any aliases to get value to send through this send port
+            std::string inputCode = getSendPortCode(aliases, m_Vars, std::get<1>(s));
 
-            // Add code string to apply input and zero it
-            // **NOTE** analogue send ports don't have decay dynamics so this is required so only this timestep's inputs are applied
-            m_ApplyInputCode += s.first + " += " + inputCode + "; $(inSyn) = 0;\n";
-
-            if(!m_DecayCode.empty()) {
-                throw std::runtime_error("Postsynaptic decay dynamics not supported when weight update provides continuous input");
+            // If input to postsynaptic model is provided as an impulse, use the
+            // internal $(inSyn) variable in place of the state variable input is added to
+            if(wumInputPort.getType() == WUMInputType::ImpulseReceive) {
+                wrapAndReplaceVariableNames(inputCode, impulseAssignStateVar, "inSyn");
             }
+            // Otherwise, if input is provided through an analogue reduce port, use the
+            // internal $(inSyn) variable in place of the name oft he reduce port
+            else if(wumInputPort.getType() == WUMInputType::AnalogueReduce) {
+                wrapAndReplaceVariableNames(inputCode, wumInputPort.getName(), "inSyn");
+            }
+
+            // Generate code to write to send port
+            m_ApplyInputCode += std::get<0>(s) + " += " + inputCode + ";";
+
+            // If there is no decay code, zero the synaptic input after it's read
+            if(m_DecayCode.empty()) {
+                m_ApplyInputCode += "$(inSyn) = 0;";
+            }
+
+            // Add a line ending
+            m_ApplyInputCode += "\n";
         }
     }
 
     // If incoming impulse is being assigned to a state variable
-    if(!impulseAssignStateVar.empty()) {
+    if(wumInputPort.getType() == WUMInputType::ImpulseReceive && !impulseAssignStateVar.empty()) {
         std::cout << "\t\tImpulse assign state variable:" << impulseAssignStateVar << std::endl;
 
         // Substitute name of analogue send port for internal variable
