@@ -91,7 +91,6 @@ public:
     std::string str(){ flush(); return m_Stream.str(); }
 
 private:
-
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
@@ -108,6 +107,50 @@ private:
     //!< Internal codestream used to write regime code to
     std::ostringstream m_CurrentRegimeStream;
 
+};
+
+//------------------------------------------------------------------------
+// PortTypeName
+//------------------------------------------------------------------------
+template<typename T, T InvalidPortType>
+class PortTypeName
+{
+public:
+    PortTypeName() : m_Type(InvalidPortType){}
+
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    void set(T type, const std::string &name)
+    {
+        if(m_Type != InvalidPortType) {
+            throw std::runtime_error("Port type and name already assigned");
+        }
+        else {
+            m_Type = type;
+            m_Name = name;
+        }
+    }
+
+    std::string getName(T type) const
+    {
+        if(m_Type == type) {
+            return m_Name;
+        }
+        else {
+            return "";
+        }
+    }
+
+    const std::string &getName() const { return m_Name; }
+    T getType() const{ return m_Type; }
+
+private:
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    T m_Type;
+    std::string m_Name;
 };
 
 //------------------------------------------------------------------------
