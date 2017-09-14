@@ -239,6 +239,10 @@ int main(int argc, char *argv[])
     // Instruct GeNN to export all functions as extern "C"
     GENN_PREFERENCES::buildSharedLibrary = true;
 
+    // Turn off autorefractory behaviour
+    // **THINK** this allows inputs to be used in threshold conditions but is it actually a good idea more generally?
+    GENN_PREFERENCES::autoRefractory = false;
+
     // Initialize GeNN
     initGeNN();
 
