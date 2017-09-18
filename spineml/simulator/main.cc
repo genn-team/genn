@@ -799,6 +799,13 @@ int main(int argc, char *argv[])
 
         std::cout << "Applying input: " << inputMs << "ms, simulating:" << simulateMs << "ms, logging:" << logMs << "ms" << std::endl;
     }
+    catch(const std::exception &exception)
+    {
+        std::cerr << "Exception: " << exception.what() << std::endl;
+
+        // Re-raise
+        throw;
+    }
     catch(...)
     {
         // Close model library if loaded successfully
@@ -811,9 +818,8 @@ int main(int argc, char *argv[])
 #endif
         }
 
-        // Re-raise
-        throw;
+        return EXIT_FAILURE;
     }
 
-    return 0;
+    return EXIT_SUCCESS;
 }
