@@ -161,7 +161,7 @@ unsigned int createListSparse(const pugi::xml_node &node, unsigned int numPre, u
         // Create approximately 1Mbyte buffer to hold pre and postsynaptic indices
         // **NOTE** this is also a multiple of both 2 and 3 so
         // will hold a whole number of either format of synapse
-        constexpr unsigned int bufferSize = 2 * 3 * 43690;
+        const unsigned int bufferSize = 2 * 3 * 43690;
         std::vector<uint32_t> connectionBuffer(bufferSize);
 
         // If there are individual delays then each synapse is 3 words rather than 2
