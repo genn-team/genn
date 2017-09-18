@@ -659,8 +659,8 @@ int main(int argc, char *argv[])
                 std::string geNNSynPopName = std::string(srcPopName) + "_" + srcPort + "_" + popName + "_"  + dstPort;
 
                 // Find allocate function and sparse projection
-                Connectors::AllocateFn allocateFn = (Connectors::AllocateFn)getLibrarySymbol(modelLibrary, ("allocate" + geNNSynPopName).c_str());
-                SparseProjection *sparseProjection = (SparseProjection*)getLibrarySymbol(modelLibrary, ("C" + geNNSynPopName).c_str());
+                Connectors::AllocateFn allocateFn = (Connectors::AllocateFn)getLibrarySymbol(modelLibrary, ("allocate" + geNNSynPopName).c_str(), true);
+                SparseProjection *sparseProjection = (SparseProjection*)getLibrarySymbol(modelLibrary, ("C" + geNNSynPopName).c_str(), true);
 
                 // Create connector
                 Connectors::create(input, srcPopSize, popSize, sparseProjection, allocateFn, basePath);
