@@ -52,7 +52,7 @@ CXXFLAGS                 =$(CXXFLAGS) /debug /Zi /Od /DDEBUG
 # Global include and link flags
 !IFNDEF CPU_ONLY
 INCLUDE_FLAGS            =/I"$(INC_PATH)" /I"$(CUDA_PATH)\include"
-!IF "$(PROCESSOR_ARCHITECTURE)" == "AMD64" || "$(PROCESSOR_ARCHITEW6432)" == "AMD64"
+!IF ([CL 2>&1 | FINDSTR /C:"x64" > nul] == 0)
 LINK_FLAGS               ="$(LIBGENN_PATH)\genn.lib" "$(CUDA_PATH)\lib\x64\cudart.lib" "$(CUDA_PATH)\lib\x64\cuda.lib"
 !ELSE
 LINK_FLAGS               ="$(LIBGENN_PATH)\genn.lib" "$(CUDA_PATH)\lib\Win32\cudart.lib" "$(CUDA_PATH)\lib\Win32\cuda.lib"
