@@ -189,70 +189,69 @@ std::tuple<SynapseMatrixType, unsigned int, unsigned int> getSynapticMatrixType(
 //----------------------------------------------------------------------------
 int main(int argc, char *argv[])
 {
-    if(argc < 2) {
-        std::cerr << "Expected model XML file passed as argument" << std::endl;
-        return EXIT_FAILURE;
-    }
-
-    // Read timestep from command line or use 0.1ms default
-    const double dt = (argc < 3) ? 0.1 : atof(argv[2]);
-    std::cout << "DT = " << dt << "ms" << std::endl;
-
-#ifndef CPU_ONLY
-    CHECK_CUDA_ERRORS(cudaGetDeviceCount(&deviceCount));
-    deviceProp = new cudaDeviceProp[deviceCount];
-    for (int device = 0; device < deviceCount; device++) {
-        CHECK_CUDA_ERRORS(cudaSetDevice(device));
-        CHECK_CUDA_ERRORS(cudaGetDeviceProperties(&(deviceProp[device]), device));
-    }
-#endif // CPU_ONLY
-
-    // Use filesystem library to get parent path of the network XML file
-    auto networkPath = filesystem::path(argv[1]).make_absolute();
-    auto basePath = networkPath.parent_path();
-
-    // Load XML document
-    pugi::xml_document doc;
-    auto result = doc.load_file(networkPath.str().c_str());
-    if(!result) {
-        throw std::runtime_error("Unable to load XML file:" + networkPath.str() + ", error:" + result.description());
-    }
-
-    // Get SpineML root
-    auto spineML = doc.child("LL:SpineML");
-    if(!spineML) {
-        throw std::runtime_error("XML file:" + networkPath.str() + " is not a low-level SpineML network - it has no root SpineML node");
-    }
-
-    // Neuron, postsyaptic and weight update models required by network
-    std::map<ModelParams::Neuron, NeuronModel> neuronModels;
-    std::map<ModelParams::Postsynaptic, PostsynapticModel> postsynapticModels;
-    std::map<ModelParams::WeightUpdate, WeightUpdateModel> weightUpdateModels;
-    std::map<std::string, PassthroughWeightUpdateModel> passthroughWeightUpdateModels;
-    std::map<std::string, PassthroughPostsynapticModel> passthroughPostsynapticModels;
-
-    // Get the filename of the network and remove extension
-    // to get something usable as a network name
-    std::string networkName = networkPath.filename();
-    networkName = networkName.substr(0, networkName.find_last_of("."));
-
-    // Instruct GeNN to export all functions as extern "C"
-    GENN_PREFERENCES::buildSharedLibrary = true;
-
-    // Turn off autorefractory behaviour
-    // **THINK** this allows inputs to be used in threshold conditions but is it actually a good idea more generally?
-    GENN_PREFERENCES::autoRefractory = false;
-
-    // Initialize GeNN
-    initGeNN();
-
-    // The neuron model
-    NNmodel model;
-    model.setDT(dt);
-    model.setName(networkName);
-
     try
     {
+        if(argc < 2) {
+            throw std::runtime_error("Expected model XML file passed as argument");
+        }
+
+        // Read timestep from command line or use 0.1ms default
+        const double dt = (argc < 3) ? 0.1 : atof(argv[2]);
+        std::cout << "DT = " << dt << "ms" << std::endl;
+
+#ifndef CPU_ONLY
+        CHECK_CUDA_ERRORS(cudaGetDeviceCount(&deviceCount));
+        deviceProp = new cudaDeviceProp[deviceCount];
+        for (int device = 0; device < deviceCount; device++) {
+            CHECK_CUDA_ERRORS(cudaSetDevice(device));
+            CHECK_CUDA_ERRORS(cudaGetDeviceProperties(&(deviceProp[device]), device));
+        }
+#endif // CPU_ONLY
+
+        // Use filesystem library to get parent path of the network XML file
+        auto networkPath = filesystem::path(argv[1]).make_absolute();
+        auto basePath = networkPath.parent_path();
+
+        // Load XML document
+        pugi::xml_document doc;
+        auto result = doc.load_file(networkPath.str().c_str());
+        if(!result) {
+            throw std::runtime_error("Unable to load XML file:" + networkPath.str() + ", error:" + result.description());
+        }
+
+        // Get SpineML root
+        auto spineML = doc.child("LL:SpineML");
+        if(!spineML) {
+            throw std::runtime_error("XML file:" + networkPath.str() + " is not a low-level SpineML network - it has no root SpineML node");
+        }
+
+        // Neuron, postsyaptic and weight update models required by network
+        std::map<ModelParams::Neuron, NeuronModel> neuronModels;
+        std::map<ModelParams::Postsynaptic, PostsynapticModel> postsynapticModels;
+        std::map<ModelParams::WeightUpdate, WeightUpdateModel> weightUpdateModels;
+        std::map<std::string, PassthroughWeightUpdateModel> passthroughWeightUpdateModels;
+        std::map<std::string, PassthroughPostsynapticModel> passthroughPostsynapticModels;
+
+        // Get the filename of the network and remove extension
+        // to get something usable as a network name
+        std::string networkName = networkPath.filename();
+        networkName = networkName.substr(0, networkName.find_last_of("."));
+
+        // Instruct GeNN to export all functions as extern "C"
+        GENN_PREFERENCES::buildSharedLibrary = true;
+
+        // Turn off autorefractory behaviour
+        // **THINK** this allows inputs to be used in threshold conditions but is it actually a good idea more generally?
+        GENN_PREFERENCES::autoRefractory = false;
+
+        // Initialize GeNN
+        initGeNN();
+
+        // The neuron model
+        NNmodel model;
+        model.setDT(dt);
+        model.setName(networkName);
+
         // Loop through populations once to build neuron populations
         for(auto population : spineML.children("LL:Population")) {
             auto neuron = population.child("LL:Neuron");
@@ -407,40 +406,41 @@ int main(int argc, char *argv[])
                 }
             }
         }
-    }
-    catch(const std::exception &exception)
-    {
-        std::cerr << "Exception: " << exception.what() << std::endl;
-        return EXIT_FAILURE;
-    }
+    
 
-    // Finalize model
-    model.finalize();
+        // Finalize model
+        model.finalize();
 
 #ifndef CPU_ONLY
-    chooseDevice(model, basePath.str());
+        chooseDevice(model, basePath.str());
 #endif // CPU_ONLY
-    generate_model_runner(model, basePath.str());
+        generate_model_runner(model, basePath.str());
 
-    // Build path to generated model code
-    auto modelPath = basePath / (networkName + "_CODE");
+        // Build path to generated model code
+        auto modelPath = basePath / (networkName + "_CODE");
 
-    // Use this to build command line for building generated code
-    std::string cmd = "cd \"" + modelPath.str() + "\" && ";
+        // Use this to build command line for building generated code
+        std::string cmd = "cd \"" + modelPath.str() + "\" && ";
 #ifdef _WIN32
-    cmd += "nmake /nologo clean all";
+        cmd += "nmake /nologo clean all";
 #else // UNIX
-    cmd += "make clean all";
+        cmd += "make clean all";
 #endif
 
 #ifdef CPU_ONLY
-    cmd += " CPU_ONLY=1";
+        cmd += " CPU_ONLY=1";
 #endif  // CPU_ONLY
 
-    // Execute command
-    int retval = system(cmd.c_str());
-    if (retval != 0){
-        throw std::runtime_error("Building generated code with call:'" + cmd + "' failed with return value:" + std::to_string(retval));
+        // Execute command
+        int retval = system(cmd.c_str());
+        if (retval != 0){
+            throw std::runtime_error("Building generated code with call:'" + cmd + "' failed with return value:" + std::to_string(retval));
+        }
+    }
+    catch(const std::exception &exception)
+    {
+        std::cerr << exception.what() << std::endl;
+        return EXIT_FAILURE;
     }
 
     return EXIT_SUCCESS;

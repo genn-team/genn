@@ -94,6 +94,19 @@ std::pair<T*, T*> getStateVar(LIBRARY_HANDLE modelLibrary, const std::string &ho
     return std::make_pair(hostStateVar, deviceStateVar);
 }
 //----------------------------------------------------------------------------
+void closeLibrary(LIBRARY_HANDLE modelLibrary)
+{
+    // Close model library if loaded successfully
+    if(modelLibrary)
+    {
+#ifdef _WIN32
+        FreeLibrary(modelLibrary);
+#else
+        dlclose(modelLibrary);
+#endif
+    }
+}
+//----------------------------------------------------------------------------
 unsigned int getComponentSize(const std::string &componentName, const std::map<std::string, unsigned int> &componentSizes)
 {
     auto component = componentSizes.find(componentName);
@@ -498,18 +511,17 @@ std::unique_ptr<LogOutput::Base> createLogOutput(const pugi::xml_node &node, LIB
 //----------------------------------------------------------------------------
 int main(int argc, char *argv[])
 {
-    if(argc < 2) {
-        std::cerr << "Expected experiment XML file passed as arguments" << std::endl;
-        return EXIT_FAILURE;
-    }
-
-    // Read timestep from command line or use 0.1ms default
-    const double dt = (argc < 3) ? 0.1 : atof(argv[2]);
-    std::cout << "DT = " << dt << "ms" << std::endl;
-
     LIBRARY_HANDLE modelLibrary = nullptr;
     try
     {
+        if(argc < 2) {
+            throw std::runtime_error("Expected experiment XML file passed as arguments");
+        }
+
+        // Read timestep from command line or use 0.1ms default
+        const double dt = (argc < 3) ? 0.1 : atof(argv[2]);
+        std::cout << "DT = " << dt << "ms" << std::endl;
+
         std::mt19937 gen;
 
         // Use filesystem library to get parent path of the network XML file
@@ -801,23 +813,12 @@ int main(int argc, char *argv[])
     }
     catch(const std::exception &exception)
     {
-        std::cerr << "Exception: " << exception.what() << std::endl;
-
-        // Re-raise
-        throw;
+        std::cerr << exception.what() << std::endl;
+        closeLibrary(modelLibrary);
     }
     catch(...)
     {
-        // Close model library if loaded successfully
-        if(modelLibrary)
-        {
-#ifdef _WIN32
-            FreeLibrary(modelLibrary);
-#else
-            dlclose(modelLibrary);
-#endif
-        }
-
+        closeLibrary(modelLibrary);
         return EXIT_FAILURE;
     }
 
