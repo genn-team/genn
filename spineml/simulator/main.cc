@@ -648,7 +648,7 @@ int main(int argc, char *argv[])
 
             // Loop through low-level inputs
             for(auto input : neuron.children("LL:Input")) {
-                auto srcPopName = SpineMLUtils::getSafeName(input.attribute("src").value());
+                const char *srcPopName = input.attribute("src").value();
                 const unsigned int srcPopSize = getComponentSize(srcPopName, componentSizes);
 
                 std::string srcPort = input.attribute("src_port").value();
@@ -656,7 +656,7 @@ int main(int argc, char *argv[])
 
                 std::cout << "Low-level input from population:" << srcPopName << "(" << srcPort << ")->" << popName << "(" << dstPort << ")" << std::endl;
 
-                std::string geNNSynPopName = std::string(srcPopName) + "_" + srcPort + "_" + popName + "_"  + dstPort;
+                std::string geNNSynPopName = SpineMLUtils::getSafeName(srcPopName) + "_" + srcPort + "_" + SpineMLUtils::getSafeName(popName) + "_"  + dstPort;
 
                 // Find allocate function and sparse projection
                 Connectors::AllocateFn allocateFn = (Connectors::AllocateFn)getLibrarySymbol(modelLibrary, ("allocate" + geNNSynPopName).c_str(), true);
