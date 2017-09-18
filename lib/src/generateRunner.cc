@@ -273,14 +273,11 @@ void genDefinitions(const NNmodel &model, //!< Model description
     os << "#define SCALAR_MAX " << SCLR_MAX << std::endl;
     os << "#endif" << std::endl;
     os << std::endl;
-    
-#ifdef CPU_ONLY
+  
     // Begin extern C block around ALL definitions
-    // **YUCK** NVCC doens't seem to link happily when you do this
     if(GENN_PREFERENCES::buildSharedLibrary) {
         os << "extern \"C\" {" << std::endl;
     }
-#endif
         
     // In windows making variables extern isn't enough to export then as DLL symbols - you need to add __declspec(dllexport)
 #ifdef _WIN32
@@ -446,14 +443,6 @@ void genDefinitions(const NNmodel &model, //!< Model description
   Please consider updating your user code by renaming Conductance as SparseProjection \n\
   and making g member a synapse variable.*/" << std::endl;
     os << std::endl;
-
-#ifndef CPU_ONLY
-    // Begin extern C block around FUNCTION definitions
-    // **YUCK** no idea why NVCC does't link happily when you have this around all definitions
-    if(GENN_PREFERENCES::buildSharedLibrary) {
-        os << "extern \"C\" {" << std::endl;
-    }
-#endif
 
     // In windows wrapping functions in extern "C" isn't enough to export then as DLL symbols - you need to add __declspec(dllexport)
 #ifdef _WIN32
@@ -646,7 +635,7 @@ void genDefinitions(const NNmodel &model, //!< Model description
     os << std::endl;
 #endif
 
-    // End extern C block around function definitions
+    // End extern C block around definitions
     if(GENN_PREFERENCES::buildSharedLibrary) {
         os << "}\t// extern \"C\"" << std::endl;
     }
@@ -809,7 +798,12 @@ void genRunner(const NNmodel &model, //!< Model description
     os << "// ------------------------------------------------------------------------" << std::endl;
     os << "// global variables" << std::endl;
     os << std::endl;
-
+    
+    // Begin extern C block around variable declarations
+    if(GENN_PREFERENCES::buildSharedLibrary) {
+        os << "extern \"C\" {" << std::endl;
+    }
+    
     os << "unsigned long long iT;" << std::endl;
     os << model.getPrecision() << " t;" << std::endl;
     if (model.isTimingEnabled()) {
@@ -932,7 +926,11 @@ void genRunner(const NNmodel &model, //!< Model description
         }
     }
     os << std::endl;
-
+    
+    // End extern C block around variable declarations
+    if(GENN_PREFERENCES::buildSharedLibrary) {
+        os << "}\t// extern \"C\"" << std::endl;
+    }
 
     //--------------------------
     // HOST AND DEVICE FUNCTIONS
