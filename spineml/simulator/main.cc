@@ -513,20 +513,20 @@ int main(int argc, char *argv[])
         std::mt19937 gen;
 
         // Use filesystem library to get parent path of the network XML file
-        auto experimentPath = filesystem::path(argv[1]);
+        auto experimentPath = filesystem::path(argv[1]).make_absolute();
         auto basePath = experimentPath.parent_path();
 
         // Load experiment document
         pugi::xml_document experimentDoc;
-        auto experimentResult = experimentDoc.load_file(argv[1]);
+        auto experimentResult = experimentDoc.load_file(experimentPath.str().c_str());
         if(!experimentResult) {
-            throw std::runtime_error("Unable to load experiment XML file:" + std::string(argv[1]) + ", error:" + experimentResult.description());
+            throw std::runtime_error("Unable to load experiment XML file:" + experimentPath.str() + ", error:" + experimentResult.description());
         }
 
         // Get SpineML root
         auto experimentSpineML = experimentDoc.child("SpineML");
         if(!experimentSpineML) {
-            throw std::runtime_error("XML file:" + std::string(argv[1]) + " is not a SpineML experiment - it has no root SpineML node");
+            throw std::runtime_error("XML file:" + experimentPath.str() + " is not a SpineML experiment - it has no root SpineML node");
         }
 
         // Get experiment node

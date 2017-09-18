@@ -208,7 +208,7 @@ int main(int argc, char *argv[])
 #endif // CPU_ONLY
 
     // Use filesystem library to get parent path of the network XML file
-    auto networkPath = filesystem::path(argv[1]);
+    auto networkPath = filesystem::path(argv[1]).make_absolute();
     auto basePath = networkPath.parent_path();
 
     // Load XML document
