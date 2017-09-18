@@ -217,6 +217,12 @@ std::pair<unsigned int, float> SpineMLGenerator::Connectors::List::readMaxRowLen
     unsigned int numConnections = 0;
 
     if(binaryFile) {
+        // Create approximately 1Mbyte buffer to hold pre and postsynaptic indices
+        // **NOTE** this is also a multiple of both 2 and 3 so
+        // will hold a whole number of either format of synapse
+        constexpr unsigned int bufferSize = 2 * 3 * 43690;
+        std::vector<uint32_t> connectionBuffer(bufferSize);
+
         // If there are individual delays then each synapse is 3 words rather than 2
         explicitDelay = (binaryFile.attribute("explicit_delay_flag").as_uint() != 0);
         const unsigned int wordsPerSynapse = explicitDelay ? 3 : 2;
@@ -231,17 +237,11 @@ std::pair<unsigned int, float> SpineMLGenerator::Connectors::List::readMaxRowLen
             throw std::runtime_error("Cannot open binary connection file:" + filename);
         }
 
-        // Create approximately 1Mbyte buffer to hold pre and postsynaptic indices
-        // **NOTE** this is also a multiple of both 2 and 3 so
-        // will hold a whole number of either format of synapse
-        constexpr unsigned int  bufferSize = 2 * 3 * 43690;
-        uint32_t connectionBuffer[bufferSize];
-
         // Loop through
         for(size_t remainingWords = numConnections * wordsPerSynapse; remainingWords > 0;) {
             // Read a block into buffer
             const size_t blockWords = std::min<size_t>(bufferSize, remainingWords);
-            input.read(reinterpret_cast<char*>(&connectionBuffer[0]), blockWords * sizeof(uint32_t));
+            input.read(reinterpret_cast<char*>(connectionBuffer.data()), blockWords * sizeof(uint32_t));
 
             // Check block was read succesfully
             if((size_t)input.gcount() != (blockWords * sizeof(uint32_t))) {
