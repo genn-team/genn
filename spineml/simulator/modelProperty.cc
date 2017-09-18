@@ -4,6 +4,9 @@
 #include <algorithm>
 #include <iostream>
 
+// Standard C includes
+#include <cstring>
+
 // pugixml includes
 #include "pugixml/pugixml.hpp"
 
@@ -31,9 +34,14 @@ void SpineMLSimulator::ModelProperty::Base::pullFromDevice() const
 // SpineMLSimulator::ModelProperty::Fixed
 //------------------------------------------------------------------------
 SpineMLSimulator::ModelProperty::Fixed::Fixed(const pugi::xml_node &node, scalar *hostStateVar, scalar *deviceStateVar, unsigned int size)
+    : Fixed(node.attribute("value").as_double(), hostStateVar, deviceStateVar, size)
+{
+}
+//------------------------------------------------------------------------
+SpineMLSimulator::ModelProperty::Fixed::Fixed(double value, scalar *hostStateVar, scalar *deviceStateVar, unsigned int size)
     : Base(hostStateVar, deviceStateVar, size)
 {
-    setValue(node.attribute("value").as_double());
+    setValue(value);
     std::cout << "\t\t\tFixed value:" << m_Value << std::endl;
 }
 //------------------------------------------------------------------------
@@ -168,37 +176,37 @@ void SpineMLSimulator::ModelProperty::ExponentialDistribution::setValue(scalar l
     pushToDevice();
 }
 
-//----------------------------------------------------------------------------
+//----------------------------------------------------------------------------SpineMLSimulator
 // SpineMLSimulator::ModelProperty
 //----------------------------------------------------------------------------
 std::unique_ptr<SpineMLSimulator::ModelProperty::Base> SpineMLSimulator::ModelProperty::create(const pugi::xml_node &node, scalar *hostStateVar, scalar *deviceStateVar, unsigned int size)
 {
-    auto fixedValue = node.child("FixedValue");
-    if(fixedValue) {
-        return std::unique_ptr<Base>(new Fixed(fixedValue, hostStateVar, deviceStateVar, size));
+    // If this property has a child
+    auto valueChild = node.first_child();
+    if(valueChild) {
+        if(strcmp(valueChild.name(), "FixedValue") == 0) {
+            return std::unique_ptr<Base>(new Fixed(valueChild, hostStateVar, deviceStateVar, size));
+        }
+        else if(strcmp(valueChild.name(), "ValueList") == 0) {
+            return std::unique_ptr<Base>(new ValueList(valueChild, hostStateVar, deviceStateVar, size));
+        }
+        else if(strcmp(valueChild.name(), "UniformDistribution") == 0) {
+            return std::unique_ptr<Base>(new UniformDistribution(valueChild, hostStateVar, deviceStateVar, size));
+        }
+        else if(strcmp(valueChild.name(), "NormalDistribution") == 0) {
+            return std::unique_ptr<Base>(new NormalDistribution(valueChild, hostStateVar, deviceStateVar, size));
+        }
+        // **NOTE** Poisson distribution isn't actually one - it is the exponential
+        // distribution (which models the inter-event-interval of a Poisson PROCESS)
+        else if(strcmp(valueChild.name(), "PoissonDistribution") == 0) {
+            return std::unique_ptr<Base>(new ExponentialDistribution(valueChild, hostStateVar, deviceStateVar, size));
+        }
+        else {
+            throw std::runtime_error("Unsupported type '" + std::string(valueChild.name()) + "' for property '" + std::string(node.attribute("name").value()) + "'");
+        }
     }
-
-    auto valueList = node.child("ValueList");
-    if(valueList) {
-        return std::unique_ptr<Base>(new ValueList(fixedValue, hostStateVar, deviceStateVar, size));
+    // Otherwise value defaults to fixed value of zero
+    else {
+        return std::unique_ptr<Base>(new Fixed(0.0, hostStateVar, deviceStateVar, size));
     }
-
-    auto uniformDistribution = node.child("UniformDistribution");
-    if(uniformDistribution) {
-        return std::unique_ptr<Base>(new UniformDistribution(uniformDistribution, hostStateVar, deviceStateVar, size));
-    }
-
-    auto normalDistribution = node.child("NormalDistribution");
-    if(normalDistribution) {
-        return std::unique_ptr<Base>(new NormalDistribution(normalDistribution, hostStateVar, deviceStateVar, size));
-    }
-
-    // **NOTE** Poisson distribution isn't actually one - it is the exponential
-    // distribution (which models the inter-event-interval of a Poisson PROCESS)
-    auto poissonDistribution = node.child("PoissonDistribution");
-    if(poissonDistribution) {
-        return std::unique_ptr<Base>(new ExponentialDistribution(poissonDistribution, hostStateVar, deviceStateVar, size));
-    }
-
-    throw std::runtime_error("Unsupported property type");
 }

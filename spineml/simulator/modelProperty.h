@@ -57,6 +57,7 @@ class Fixed : public Base
 {
 public:
     Fixed(const pugi::xml_node &node, scalar *hostStateVar, scalar *deviceStateVar, unsigned int size);
+    Fixed(double value, scalar *hostStateVar, scalar *deviceStateVar, unsigned int size);
 
     //------------------------------------------------------------------------
     // Public API
