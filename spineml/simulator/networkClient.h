@@ -3,6 +3,7 @@
 // Standard C++ includes
 #include <iostream>
 #include <string>
+#include <vector>
 
 // POSIX includes
 #ifdef _WIN32
@@ -49,6 +50,8 @@ public:
     //----------------------------------------------------------------------------
     bool connect(const std::string &hostname, int port, int size, DataType dataType, Mode mode, const std::string &connectionName);
 
+    bool receive(std::vector<double> &buffer);
+
 private:
     //------------------------------------------------------------------------
     // Enumerations
@@ -56,7 +59,7 @@ private:
     enum class Response : char
     {
         Hello = 41,
-        Receive = 42,
+        Received = 42,
         Abort = 43,
         Finished = 44,
     };
@@ -92,7 +95,7 @@ private:
 // Template specializations
 //----------------------------------------------------------------------------
 template<>
-bool NetworkClient::sendRequestReadResponse<const std::string &>(const std::string &data, Response &response)
+inline bool NetworkClient::sendRequestReadResponse<const std::string &>(const std::string &data, Response &response)
 {
     // Send string length
     const int stringLength = data.size();

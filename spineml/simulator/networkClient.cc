@@ -103,3 +103,31 @@ bool SpineMLSimulator::NetworkClient::connect(const std::string &hostname, int p
     // Success!
     return true;
 }
+//----------------------------------------------------------------------------
+bool SpineMLSimulator::NetworkClient::receive(std::vector<double> &buffer)
+{
+    // Get buffer size and write pointer as bytes
+    const int bufferSizeBytes = buffer.size() * sizeof(double);
+    char *bufferBytes = reinterpret_cast<char*>(buffer.data());
+
+    // get data
+    int totalReceivedBytes = 0;
+    while (totalReceivedBytes < bufferSizeBytes) {
+        const int receivedBytes = recv(m_Socket, bufferBytes + totalReceivedBytes, bufferSizeBytes, MSG_WAITALL);
+        if(receivedBytes < 1) {
+            std::cerr << "Error reading from socket" << std::endl;
+            return false;
+        }
+
+        totalReceivedBytes += receivedBytes;
+    }
+
+    // Send response
+    const Response response = Response::Received;
+    if (send(m_Socket, &response, 1, MSG_DONTWAIT) < 1) {
+        std::cerr << "Error writing to socket" << std::endl;
+        return false;
+    }
+
+    return true;
+}

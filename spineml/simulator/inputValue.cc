@@ -5,6 +5,7 @@
 #include <sstream>
 
 // Standard C includes
+#include <cassert>
 #include <cmath>
 #include <cstring>
 
@@ -58,7 +59,7 @@ SpineMLSimulator::InputValue::Constant::Constant(double, unsigned int numNeurons
 }
 //------------------------------------------------------------------------
 void SpineMLSimulator::InputValue::Constant::update(double, unsigned int timestep,
-                                                    std::function<void(unsigned int, double)> applyValueFunc) const
+                                                    std::function<void(unsigned int, double)> applyValueFunc)
 {
     // If this is the first timestep, apply constant value
     if(timestep == 0) {
@@ -96,7 +97,7 @@ SpineMLSimulator::InputValue::ConstantArray::ConstantArray(double, unsigned int 
 }
 //------------------------------------------------------------------------
 void SpineMLSimulator::InputValue::ConstantArray::update(double, unsigned int timestep,
-                                                         std::function<void(unsigned int, double)> applyValueFunc) const
+                                                         std::function<void(unsigned int, double)> applyValueFunc)
 {
     // If this is the first timestep, apply array of values
     if(timestep == 0) {
@@ -137,7 +138,7 @@ SpineMLSimulator::InputValue::TimeVarying::TimeVarying(double dt, unsigned int n
 }
 //------------------------------------------------------------------------
 void SpineMLSimulator::InputValue::TimeVarying::update(double, unsigned int timestep,
-                                                       std::function<void(unsigned int, double)> applyValueFunc) const
+                                                       std::function<void(unsigned int, double)> applyValueFunc)
 {
     // If there is a time value to apply at this timestep, do so
     auto timeValue = m_TimeValues.find(timestep);
@@ -230,7 +231,7 @@ SpineMLSimulator::InputValue::TimeVaryingArray::TimeVaryingArray(double dt, unsi
 }
 //------------------------------------------------------------------------
 void SpineMLSimulator::InputValue::TimeVaryingArray::update(double, unsigned int timestep,
-                                                            std::function<void(unsigned int, double)> applyValueFunc) const
+                                                            std::function<void(unsigned int, double)> applyValueFunc)
 {
     // If there is a time value to apply at this timestep, do so
     auto timeValue = m_TimeArrays.find(timestep);
@@ -238,6 +239,65 @@ void SpineMLSimulator::InputValue::TimeVaryingArray::update(double, unsigned int
         std::cout << "\tTimestep:" << timestep << ", applying " << timeValue->second.size() << " values" << std::endl;
         for(const auto &value : timeValue->second) {
             applyValueFunc(value.first, value.second);
+        }
+    }
+}
+
+//----------------------------------------------------------------------------
+// SpineMLSimulator::InputValue::External
+//----------------------------------------------------------------------------
+SpineMLSimulator::InputValue::External::External(double, unsigned int numNeurons, const pugi::xml_node &node)
+: Base(numNeurons, node)
+{
+    // Assert that the size specified for the external input matches either the number of neurons or the number of target indices
+    const unsigned int size = node.attribute("size").as_uint();
+    if(getTargetIndices().empty()) {
+        assert(size == numNeurons);
+    }
+    else {
+        assert(size == getTargetIndices().size());
+    }
+
+    // **TODO** understand meaning
+    assert(node.attribute("timestep").as_uint() == 0);
+
+    // Resize buffer
+    m_Buffer.resize(size);
+
+    // Read connection stats
+    const std::string connectionName = node.attribute("name").value();
+    const std::string hostname = node.attribute("host").value();
+    const int port = node.attribute("tcp_port").as_int();
+
+    // Attempt to connect network client
+    if(!m_Client.connect(hostname, port, size, NetworkClient::DataType::Analogue,
+        NetworkClient::Mode::Target, connectionName))
+    {
+        throw std::runtime_error("Cannot connect network client");
+    }
+
+}
+//------------------------------------------------------------------------
+void SpineMLSimulator::InputValue::External::update(double, unsigned int timestep,
+                                                    std::function<void(unsigned int, double)> applyValueFunc)
+{
+    // **TODO** handle timestep
+
+    // Read buffer from network client
+    if(!m_Client.receive(m_Buffer)) {
+        throw std::runtime_error("Cannot receive data from socket");
+    }
+
+    // If we have no target indices, apply array values to each neuron
+    if(getTargetIndices().empty()) {
+        for(unsigned int i = 0; i < getNumNeurons(); i++) {
+            applyValueFunc(i, m_Buffer[i]);
+        }
+    }
+    // Otherwise, apply to each target index
+    else {
+        for(unsigned int i = 0; i < getTargetIndices().size(); i++) {
+            applyValueFunc(getTargetIndices()[i], m_Buffer[i]);
         }
     }
 }
@@ -259,6 +319,9 @@ std::unique_ptr<SpineMLSimulator::InputValue::Base> SpineMLSimulator::InputValue
     }
     else if(strcmp(node.name(), "TimeVaryingArrayInput") == 0) {
         return std::unique_ptr<Base>(new TimeVaryingArray(dt, numNeurons, node));
+    }
+    else if(strcmp(node.name(), "ExternalInput") == 0) {
+        return std::unique_ptr<Base>(new External(dt, numNeurons, node));
     }
     else {
         throw std::runtime_error("Input value type '" + std::string(node.name()) + "' not supported");

@@ -6,6 +6,9 @@
 #include <memory>
 #include <vector>
 
+// Simulator includes
+#include "networkClient.h"
+
 // Forward declarations
 namespace pugi
 {
@@ -28,7 +31,7 @@ public:
     // Declared virtuals
     //------------------------------------------------------------------------
     virtual void update(double dt, unsigned int timestep,
-                        std::function<void(unsigned int, double)> applyValueFunc) const = 0;
+                        std::function<void(unsigned int, double)> applyValueFunc) = 0;
 
 protected:
     Base(unsigned int numNeurons, const pugi::xml_node &node);
@@ -74,7 +77,7 @@ public:
     // InputValue virtuals
     //------------------------------------------------------------------------
     virtual void update(double dt, unsigned int timestep,
-                        std::function<void(unsigned int, double)> applyValueFunc) const override;
+                        std::function<void(unsigned int, double)> applyValueFunc) override;
 private:
     //------------------------------------------------------------------------
     // Members
@@ -95,7 +98,7 @@ public:
     // InputValue virtuals
     //------------------------------------------------------------------------
     virtual void update(double dt, unsigned int timestep,
-                        std::function<void(unsigned int, double)> applyValueFunc) const override;
+                        std::function<void(unsigned int, double)> applyValueFunc) override;
 private:
     //------------------------------------------------------------------------
     // Members
@@ -116,7 +119,7 @@ public:
     // InputValue virtuals
     //------------------------------------------------------------------------
     virtual void update(double dt, unsigned int timestep,
-                        std::function<void(unsigned int, double)> applyValueFunc) const override;
+                        std::function<void(unsigned int, double)> applyValueFunc) override;
 private:
     //----------------------------------------------------------------------------
     // Members
@@ -137,7 +140,7 @@ public:
     // InputValue virtuals
     //------------------------------------------------------------------------
     virtual void update(double dt, unsigned int timestep,
-                        std::function<void(unsigned int, double)> applyValueFunc) const override;
+                        std::function<void(unsigned int, double)> applyValueFunc) override;
 
 private:
     //------------------------------------------------------------------------
@@ -150,6 +153,28 @@ private:
     //------------------------------------------------------------------------
     // Vector of neurons and values to apply at certain timesteps
     std::map<unsigned int, NeuronValueVec> m_TimeArrays;
+};
+
+//----------------------------------------------------------------------------
+// SpineMLSimulator::InputValue::External
+//----------------------------------------------------------------------------
+class External : public Base
+{
+public:
+    External(double dt, unsigned int numNeurons, const pugi::xml_node &node);
+
+    //------------------------------------------------------------------------
+    // InputValue virtuals
+    //------------------------------------------------------------------------
+    virtual void update(double dt, unsigned int timestep,
+                        std::function<void(unsigned int, double)> applyValueFunc) override;
+
+private:
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    NetworkClient m_Client;
+    std::vector<double> m_Buffer;
 };
 
 //----------------------------------------------------------------------------
