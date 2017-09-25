@@ -32,7 +32,7 @@ SIMULATE_SPINEML          =$(SIMULATE_SPINEML_PATH)/simulateSpineML
 SIMULATE_SPINEML          =$(SIMULATE_SPINEML_PATH)/simulateSpineML_CPU_ONLY
 !ENDIF
 
-SIMULATE_SPINEML_SOURCES      = $(SPINEML_PATH)/common/pugixml/pugixml.cpp $(SPINEML_PATH)/simulator/main.cc $(SPINEML_PATH)/simulator/connectors.cc $(SPINEML_PATH)/simulator/inputValue.cc $(SPINEML_PATH)/simulator/input.cc $(SPINEML_PATH)/simulator/modelProperty.cc $(SPINEML_PATH)/simulator/logOutput.cc 
+SIMULATE_SPINEML_SOURCES      = $(SPINEML_PATH)/common/pugixml/pugixml.cpp $(SPINEML_PATH)/simulator/networkClient.cc $(SPINEML_PATH)/simulator/main.cc $(SPINEML_PATH)/simulator/connectors.cc $(SPINEML_PATH)/simulator/inputValue.cc $(SPINEML_PATH)/simulator/input.cc $(SPINEML_PATH)/simulator/modelProperty.cc $(SPINEML_PATH)/simulator/logOutput.cc
 
 # Target rules
 all: $(SIMULATE_SPINEML)
