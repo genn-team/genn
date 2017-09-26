@@ -246,20 +246,28 @@ void SpineMLSimulator::InputValue::TimeVaryingArray::update(double, unsigned int
 //----------------------------------------------------------------------------
 // SpineMLSimulator::InputValue::External
 //----------------------------------------------------------------------------
-SpineMLSimulator::InputValue::External::External(double, unsigned int numNeurons, const pugi::xml_node &node)
-: Base(numNeurons, node)
+SpineMLSimulator::InputValue::External::External(double dt, unsigned int numNeurons, const pugi::xml_node &node)
+: Base(numNeurons, node), m_CurrentIntervalTimesteps(0)
 {
-    // Assert that the size specified for the external input matches either the number of neurons or the number of target indices
-    const unsigned int size = node.attribute("size").as_uint();
-    if(getTargetIndices().empty()) {
-        assert(size == numNeurons);
-    }
-    else {
-        assert(size == getTargetIndices().size());
-    }
+    // Check size determined by indices/population size matches attribute
+    const unsigned int size = getTargetIndices().empty() ? numNeurons : getTargetIndices().size();
+    //assert(node.attribute("size").as_uint() == size);
 
-    // **TODO** understand meaning
-    assert(node.attribute("timestep").as_uint() == 0);
+    // If external timestep is zero then send every timestep
+    const double externalTimestepMs = node.attribute("timestep").as_double();
+    if(externalTimestepMs == 0.0) {
+        m_IntervalTimesteps = 0;
+    }
+    // Otherwise
+    else {
+        // Check we're not trying to use an external timestep smaller than GeNN timestep
+        assert(externalTimestepMs > dt);
+
+        // Calculate how many GeNN timesteps to count down before logging
+        // **NOTE** subtract one because we are checking BEFORE we subtract
+        m_IntervalTimesteps = ((unsigned int)std::round(externalTimestepMs / dt)) - 1;
+        std::cout << "\tExternal timestep:" << externalTimestepMs << "ms - interval:" << m_IntervalTimesteps << std::endl;
+    }
 
     // Resize buffer
     m_Buffer.resize(size);
@@ -268,7 +276,7 @@ SpineMLSimulator::InputValue::External::External(double, unsigned int numNeurons
     const std::string connectionName = node.attribute("name").value();
     const std::string hostname = node.attribute("host").value();
     const int port = node.attribute("tcp_port").as_int();
-    std::cout << "\tNetwork " << hostname << ":" << port << std::endl;
+    std::cout << "\tNetwork input '" << connectionName << "' (" << hostname << ":" << port << ")" << std::endl;
 
     // Attempt to connect network client
     if(!m_Client.connect(hostname, port, size, NetworkClient::DataType::Analogue,
@@ -279,27 +287,35 @@ SpineMLSimulator::InputValue::External::External(double, unsigned int numNeurons
 
 }
 //------------------------------------------------------------------------
-void SpineMLSimulator::InputValue::External::update(double, unsigned int timestep,
+void SpineMLSimulator::InputValue::External::update(double, unsigned int,
                                                     std::function<void(unsigned int, double)> applyValueFunc)
 {
-    // **TODO** handle timestep
-
-    // Read buffer from network client
-    if(!m_Client.receive(m_Buffer)) {
-        throw std::runtime_error("Cannot receive data from socket");
-    }
-
-    // If we have no target indices, apply array values to each neuron
-    if(getTargetIndices().empty()) {
-        for(unsigned int i = 0; i < getNumNeurons(); i++) {
-            applyValueFunc(i, m_Buffer[i]);
+    // If we should update this timestep
+    if(m_CurrentIntervalTimesteps == 0) {
+        // Read buffer from network client
+        if(!m_Client.receive(m_Buffer)) {
+            throw std::runtime_error("Cannot receive data from socket");
         }
+
+        // If we have no target indices, apply array values to each neuron
+        if(getTargetIndices().empty()) {
+            for(unsigned int i = 0; i < getNumNeurons(); i++) {
+                applyValueFunc(i, m_Buffer[i]);
+            }
+        }
+        // Otherwise, apply to each target index
+        else {
+            for(unsigned int i = 0; i < getTargetIndices().size(); i++) {
+                applyValueFunc(getTargetIndices()[i], m_Buffer[i]);
+            }
+        }
+
+        // Reset interval
+        m_CurrentIntervalTimesteps = m_IntervalTimesteps;
     }
-    // Otherwise, apply to each target index
+    // Otherwise decrement interval
     else {
-        for(unsigned int i = 0; i < getTargetIndices().size(); i++) {
-            applyValueFunc(getTargetIndices()[i], m_Buffer[i]);
-        }
+        m_CurrentIntervalTimesteps--;
     }
 }
 

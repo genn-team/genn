@@ -175,6 +175,12 @@ private:
     //------------------------------------------------------------------------
     NetworkClient m_Client;
     std::vector<double> m_Buffer;
+
+    // How many GeNN timesteps do we wait before updating
+    unsigned int m_IntervalTimesteps;
+
+    // Count down to next time we update
+    unsigned int m_CurrentIntervalTimesteps;
 };
 
 //----------------------------------------------------------------------------
