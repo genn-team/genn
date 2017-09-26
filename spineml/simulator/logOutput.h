@@ -60,15 +60,46 @@ private:
 };
 
 //----------------------------------------------------------------------------
-// SpineMLSimulator::LogOutput::Analogue
+// SpineMLSimulator::LogOutput::AnalogueBase
 //----------------------------------------------------------------------------
-class Analogue : public Base
+class AnalogueBase : public Base
 {
 public:
-    Analogue(const pugi::xml_node &node, double dt, unsigned int numTimeSteps,
-             const std::string &port, unsigned int popSize,
-             const filesystem::path &basePath,
-             const ModelProperty::Base *modelProperty);
+    AnalogueBase(const pugi::xml_node &node, double dt, unsigned int numTimeSteps,
+                 const ModelProperty::Base *modelProperty);
+
+protected:
+    //----------------------------------------------------------------------------
+    // Protected API
+    //----------------------------------------------------------------------------
+    const scalar *getModelPropertyHostStateVarBegin() const{ return m_ModelProperty->getHostStateVarBegin(); }
+    const scalar *getModelPropertyHostStateVarEnd() const{ return m_ModelProperty->getHostStateVarEnd(); }
+    void pullModelPropertyFromDevice() const{ m_ModelProperty->pullFromDevice(); }
+    unsigned int getModelPropertySize() const{ return m_ModelProperty->getSize(); }
+
+    const std::vector<unsigned int> &getIndices() const{ return m_Indices; }
+
+private:
+    //----------------------------------------------------------------------------
+    // Members
+    //----------------------------------------------------------------------------
+    // The property that is being logged
+    const ModelProperty::Base *m_ModelProperty;
+
+    // Which members of population to log (all if empty)
+    std::vector<unsigned int> m_Indices;
+};
+
+//----------------------------------------------------------------------------
+// SpineMLSimulator::LogOutput::AnalogueFile
+//----------------------------------------------------------------------------
+class AnalogueFile : public AnalogueBase
+{
+public:
+    AnalogueFile(const pugi::xml_node &node, double dt, unsigned int numTimeSteps,
+                 const std::string &port, unsigned int popSize,
+                 const filesystem::path &basePath,
+                 const ModelProperty::Base *modelProperty);
 
     //----------------------------------------------------------------------------
     // Declared virtuals
@@ -78,29 +109,46 @@ public:
 
 private:
     //----------------------------------------------------------------------------
-    // Private API
+    // Members
     //----------------------------------------------------------------------------
-    void openFile(const pugi::xml_node &node, double dt,
-                  const std::string &port, unsigned int popSize,
-                  const filesystem::path &basePath);
-    void openNetworkClient(const pugi::xml_node &node, unsigned int popSize);
+    std::ofstream m_File;
 
+    // Buffer used, if indices are in use, to store contiguous output data
+    std::vector<scalar> m_OutputBuffer;
+};
+
+//----------------------------------------------------------------------------
+// SpineMLSimulator::LogOutput::AnalogueNetwork
+//----------------------------------------------------------------------------
+class AnalogueNetwork : public AnalogueBase
+{
+public:
+    AnalogueNetwork(const pugi::xml_node &node, double dt, unsigned int numTimeSteps,
+                    const std::string &port, unsigned int popSize,
+                    const filesystem::path &basePath,
+                    const ModelProperty::Base *modelProperty);
+
+    //----------------------------------------------------------------------------
+    // Declared virtuals
+    //----------------------------------------------------------------------------
+    // Record any data required during this timestep
+    virtual void record(double dt, unsigned int timestep) override;
+
+private:
     //----------------------------------------------------------------------------
     // Members
     //----------------------------------------------------------------------------
-    // **THINK** a seperate hierarchy of 'LogWriter' classes
-    // might be a more elegant solution in future
-    std::ofstream m_File;
     NetworkClient m_Client;
 
-    // The property that is being logged
-    const ModelProperty::Base *m_ModelProperty;
+    // How many GeNN timesteps do we wait before logging
+    unsigned int m_IntervalTimesteps;
 
-    // Buffer used, if indices are in use, to generate contiguous output data
-    std::vector<scalar> m_OutputBuffer;
+    // Count down to next time we log
+    unsigned int m_CurrentIntervalTimesteps;
 
-    // Which members of population to log (all if empty)
-    std::vector<unsigned int> m_Indices;
+    // Buffer used to generate contiguous output data
+    // **NOTE** network protocol always uses double precision
+    std::vector<double> m_OutputBuffer;
 };
 
 //----------------------------------------------------------------------------

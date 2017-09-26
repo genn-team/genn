@@ -466,9 +466,15 @@ std::unique_ptr<LogOutput::Base> createLogOutput(const pugi::xml_node &node, LIB
         throw std::runtime_error("Cannot find component '" + target + "'");
     }
 
+     // If this writing to file or network
+    const bool shouldLogToFile = (strcmp(node.attribute("host").value(), "") == 0);
+
     // If target is an event send port
-    std::string port = node.attribute("port").value();
+    const std::string port = node.attribute("port").value();
     if(isEventSendPort(target, port, componentURLs, componentEventPorts)) {
+        // **TODO** spike-based network logging not supported
+        assert(shouldLogToFile);
+
         // Get host and device (if applicable) pointers to spike counts, spikes and queue
         unsigned int *hostSpikeCount;
         unsigned int *deviceSpikeCount;
@@ -492,8 +498,14 @@ std::unique_ptr<LogOutput::Base> createLogOutput(const pugi::xml_node &node, LIB
             // If there is a model property object for this port return an analogue log output to read it
             auto portProperty = targetProperties->second.find(port);
             if(portProperty != targetProperties->second.end()) {
-                return std::unique_ptr<LogOutput::Base>(new LogOutput::Analogue(node, dt, numTimeSteps, port, targetSize->second,
-                                                                                basePath, portProperty->second.get()));
+                if(shouldLogToFile) {
+                    return std::unique_ptr<LogOutput::Base>(new LogOutput::AnalogueFile(node, dt, numTimeSteps, port, targetSize->second,
+                                                                                        basePath, portProperty->second.get()));
+                }
+                else {
+                    return std::unique_ptr<LogOutput::Base>(new LogOutput::AnalogueNetwork(node, dt, numTimeSteps, port, targetSize->second,
+                                                                                           basePath, portProperty->second.get()));
+                }
             }
             else {
                 throw std::runtime_error("Port '" + port + "' not found");
