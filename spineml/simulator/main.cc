@@ -441,7 +441,7 @@ std::unique_ptr<Input::Base> createInput(const pugi::xml_node &node, LIBRARY_HAN
                                         portProperty->second.get()));
             }
             else {
-                throw std::runtime_error("Port '" + port + "' not found");
+                throw std::runtime_error("Port '" + port + "' not found on target '" + target + "'");
             }
         }
         else {
@@ -508,7 +508,7 @@ std::unique_ptr<LogOutput::Base> createLogOutput(const pugi::xml_node &node, LIB
                 }
             }
             else {
-                throw std::runtime_error("Port '" + port + "' not found");
+                throw std::runtime_error("Port '" + port + "' not found on target '" + target + "'");
             }
         }
         else {
