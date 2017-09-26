@@ -105,7 +105,7 @@ SpineMLSimulator::LogOutput::AnalogueFile::AnalogueFile(const pugi::xml_node &no
                                                         const ModelProperty::Base *modelProperty)
     : AnalogueBase(node, dt, numTimeSteps, modelProperty)
 {
-    // If indices are specified, resize output buffer to match indices
+    // If indices are specified, allocate output buffer to match indices
     if(!getIndices().empty()) {
         m_OutputBuffer.resize(getIndices().size());
     }
@@ -197,7 +197,7 @@ SpineMLSimulator::LogOutput::AnalogueNetwork::AnalogueNetwork(const pugi::xml_no
     //assert(size == node.attribute("size").as_uint());
 
     // Allocate output buffer
-    m_OutputBuffer.resize(getIndices().size());
+    m_OutputBuffer.resize(size);
 
     // If external timestep is zero then send every timestep
     const double externalTimestepMs = node.attribute("timestep").as_double();
@@ -260,7 +260,7 @@ void SpineMLSimulator::LogOutput::AnalogueNetwork::record(double, unsigned int t
 
             // Send output data over network client
             if(!m_Client.send(m_OutputBuffer)) {
-                throw std::runtime_error("Cannot send data tosocket");
+                throw std::runtime_error("Cannot send data to socket");
             }
 
             // Reset interval
