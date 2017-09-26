@@ -51,6 +51,7 @@ public:
     bool connect(const std::string &hostname, int port, int size, DataType dataType, Mode mode, const std::string &connectionName);
 
     bool receive(std::vector<double> &buffer);
+    bool send(const std::vector<double> &buffer);
 
 private:
     //------------------------------------------------------------------------
@@ -71,13 +72,13 @@ private:
     bool sendRequestReadResponse(Type data, Response &response)
     {
         // Send request
-        if(send(m_Socket, &data, sizeof(Type), MSG_DONTWAIT) < 0) {
+        if(::send(m_Socket, &data, sizeof(Type), MSG_DONTWAIT) < 0) {
             std::cerr << "Unable to send request" << std::endl;
             return false;
         }
 
         // Receive handshake response
-        if (recv(m_Socket, &response, sizeof(Response), MSG_WAITALL) < 1) {
+        if(::recv(m_Socket, &response, sizeof(Response), MSG_WAITALL) < 1) {
             std::cerr << "Unable to receive response" << std::endl;
             return false;
         }
@@ -99,19 +100,19 @@ inline bool NetworkClient::sendRequestReadResponse<const std::string &>(const st
 {
     // Send string length
     const int stringLength = data.size();
-    if(send(m_Socket, &stringLength, sizeof(int), MSG_DONTWAIT) < 0) {
+    if(::send(m_Socket, &stringLength, sizeof(int), MSG_DONTWAIT) < 0) {
         std::cerr << "Unable to send size" << std::endl;
         return false;
     }
 
     // Send string
-    if(send(m_Socket, data.c_str(), stringLength, MSG_DONTWAIT) < 0) {
+    if(::send(m_Socket, data.c_str(), stringLength, MSG_DONTWAIT) < 0) {
         std::cerr << "Unable to send string" << std::endl;
         return false;
     }
 
     // Receive handshake response
-    if (recv(m_Socket, &response, sizeof(Response), MSG_WAITALL) < 1) {
+    if(::recv(m_Socket, &response, sizeof(Response), MSG_WAITALL) < 1) {
         std::cerr << "Unable to receive response" << std::endl;
         return false;
     }

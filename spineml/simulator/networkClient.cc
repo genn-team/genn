@@ -113,7 +113,7 @@ bool SpineMLSimulator::NetworkClient::receive(std::vector<double> &buffer)
     // get data
     int totalReceivedBytes = 0;
     while (totalReceivedBytes < bufferSizeBytes) {
-        const int receivedBytes = recv(m_Socket, bufferBytes + totalReceivedBytes, bufferSizeBytes, MSG_WAITALL);
+        const int receivedBytes = ::recv(m_Socket, bufferBytes + totalReceivedBytes, bufferSizeBytes, MSG_WAITALL);
         if(receivedBytes < 1) {
             std::cerr << "Error reading from socket" << std::endl;
             return false;
@@ -124,10 +124,46 @@ bool SpineMLSimulator::NetworkClient::receive(std::vector<double> &buffer)
 
     // Send response
     const Response response = Response::Received;
-    if (send(m_Socket, &response, 1, MSG_DONTWAIT) < 1) {
+    if (::send(m_Socket, &response, sizeof(Response), MSG_DONTWAIT) < 1) {
         std::cerr << "Error writing to socket" << std::endl;
         return false;
     }
 
     return true;
+}
+//----------------------------------------------------------------------------
+bool SpineMLSimulator::NetworkClient::send(const std::vector<double> &buffer)
+{
+     // Get buffer size and write pointer as bytes
+    const int bufferSizeBytes = buffer.size() * sizeof(double);
+    const char *bufferBytes = reinterpret_cast<const char*>(buffer.data());
+
+    // send data
+    int totalSentBytes = 0;
+    while (totalSentBytes < bufferSizeBytes) {
+        const int sentBytes = ::send(m_Socket, bufferBytes + totalSentBytes, bufferSizeBytes, MSG_DONTWAIT);
+        if(sentBytes < 1) {
+            std::cerr << "Error writing to socket" << std::endl;
+            return false;
+        }
+
+        totalSentBytes += sentBytes;
+    }
+
+    // Read response
+    Response response;
+    if (::recv(m_Socket, &response, sizeof(Response), MSG_WAITALL) < 1) {
+        std::cerr << "Unable to receive response" << std::endl;
+        return false;
+    }
+
+    // If response is an abort - error
+    if (response == Response::Abort) {
+        std::cerr << "Remote host aborted" << std::endl;
+        return false;
+    }
+    // Otherwise - success!
+    else {
+        return true;
+    }
 }

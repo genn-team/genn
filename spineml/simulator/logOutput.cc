@@ -101,6 +101,57 @@ SpineMLSimulator::LogOutput::Analogue::Analogue(const pugi::xml_node &node, doub
         m_OutputBuffer.resize(m_Indices.size());
     }
 
+    // If no hostname is specified open file for logging
+    if(strcmp(node.attribute("host").value(), "") == 0) {
+        openFile(node, dt, port, popSize, basePath);
+    }
+    // Otherwise, open network client
+    else {
+        openNetworkClient(node, popSize);
+    }
+}
+//----------------------------------------------------------------------------
+void SpineMLSimulator::LogOutput::Analogue::record(double, unsigned int timestep)
+{
+    // If we should be recording this timestep
+    if(shouldRecord(timestep)) {
+        // Pull state variable from device
+        // **TODO** simple min/max index optimisation
+        m_ModelProperty->pullFromDevice();
+
+        // If no indices are specified
+        if(m_Indices.empty()) {
+            // If we are logging to file, directly write out data from model property
+            if(m_File.is_open()) {
+                m_File.write(reinterpret_cast<const char*>(m_ModelProperty->getHostStateVarBegin()), sizeof(scalar) * m_ModelProperty->getSize());
+            }
+            else {
+                //m_Client.send(
+            }
+        }
+        // Otherwise
+        else {
+            // Transform indexed variables into output buffer so they can be written in one call
+            std::transform(m_Indices.begin(), m_Indices.end(), m_OutputBuffer.begin(),
+                           [this](unsigned int i)
+                           {
+                               return m_ModelProperty->getHostStateVarBegin()[i];
+                           });
+
+            // If we are logging to file, write output buffer to file
+            if(m_File.is_open()) {
+                m_File.write(reinterpret_cast<char*>(m_OutputBuffer.data()), sizeof(scalar) * m_OutputBuffer.size());
+            }
+            else {
+            }
+        }
+    }
+}
+//----------------------------------------------------------------------------
+void SpineMLSimulator::LogOutput::Analogue::openFile(const pugi::xml_node &node, double dt,
+                                                     const std::string &port, unsigned int popSize,
+                                                     const filesystem::path &basePath)
+{
     // Combine node target and logger names to get file title
     std::string fileTitle = std::string(node.attribute("target").value()) + "_" + std::string(node.attribute("name").value());
 
@@ -115,7 +166,6 @@ SpineMLSimulator::LogOutput::Analogue::Analogue(const pugi::xml_node &node, doub
     report.append_child("LogFile").text().set((fileTitle + ".bin").c_str());
     report.append_child("LogFileType").text().set("binary");
     report.append_child("LogEndTime").text().set((double)getEndTimestep() * dt);
-
 
     // If we're logging data from all neurons, add LogAll node to report
     if(m_Indices.empty()) {
@@ -142,36 +192,38 @@ SpineMLSimulator::LogOutput::Analogue::Analogue(const pugi::xml_node &node, doub
     // Save report
     reportDoc.save_file((absoluteFileTitle + "rep.xml").c_str());
 
-    std::cout << "\tAnalogue log:" << absoluteFileTitle << ".bin" << std::endl;
+    std::cout << "\tAnalogue file log:" << absoluteFileTitle << ".bin" << std::endl;
 
     // Open file for binary writing
     m_File.open(absoluteFileTitle + ".bin", std::ios::binary);
 }
 //----------------------------------------------------------------------------
-void SpineMLSimulator::LogOutput::Analogue::record(double, unsigned int timestep)
+void SpineMLSimulator::LogOutput::Analogue::openNetworkClient(const pugi::xml_node &node, unsigned int popSize)
 {
-    // If we should be recording this timestep
-    if(shouldRecord(timestep)) {
-        // Pull state variable from device
-        // **TODO** simple min/max index optimisation
-        m_ModelProperty->pullFromDevice();
+    // Assert that the size specified for the external input matches either the number of neurons or the number of target indices
+    const unsigned int size = node.attribute("size").as_uint();
+    if(m_Indices.empty()) {
+        assert(size == popSize);
+    }
+    else {
+        assert(size == m_Indices.size());
+    }
 
-        // If no indices are specified, directly write out data from model property
-        if(m_Indices.empty()) {
-            m_File.write(reinterpret_cast<const char*>(m_ModelProperty->getHostStateVarBegin()), sizeof(scalar) * m_ModelProperty->getSize());
-        }
-        // Otherwise
-        else {
-            // Transform indexed variables into output buffer so they can be written in one call
-            std::transform(m_Indices.begin(), m_Indices.end(), m_OutputBuffer.begin(),
-                           [this](unsigned int i)
-                           {
-                               return m_ModelProperty->getHostStateVarBegin()[i];
-                           });
+    // **TODO** understand meaning
+    assert(node.attribute("timestep").as_uint() == 0);
 
-            // Write output buffer to file
-            m_File.write(reinterpret_cast<char*>(m_OutputBuffer.data()), sizeof(scalar) * m_OutputBuffer.size());
-        }
+    // Read connection stats
+    const std::string connectionName = node.attribute("name").value();
+    const std::string hostname = node.attribute("host").value();
+    const int port = node.attribute("tcp_port").as_int();
+
+    std::cout << "\tAnalogue network log:" << hostname << ":" << port << std::endl;
+
+    // Attempt to connect network client
+    if(!m_Client.connect(hostname, port, size, NetworkClient::DataType::Analogue,
+        NetworkClient::Mode::Source, connectionName))
+    {
+        throw std::runtime_error("Cannot connect network client");
     }
 }
 

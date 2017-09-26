@@ -8,6 +8,7 @@
 
 // SpineML simulator includes
 #include "modelProperty.h"
+#include "networkClient.h"
 
 // Forward declarations
 namespace pugi
@@ -77,14 +78,28 @@ public:
 
 private:
     //----------------------------------------------------------------------------
+    // Private API
+    //----------------------------------------------------------------------------
+    void openFile(const pugi::xml_node &node, double dt,
+                  const std::string &port, unsigned int popSize,
+                  const filesystem::path &basePath);
+    void openNetworkClient(const pugi::xml_node &node, unsigned int popSize);
+
+    //----------------------------------------------------------------------------
     // Members
     //----------------------------------------------------------------------------
+    // **THINK** a seperate hierarchy of 'LogWriter' classes
+    // might be a more elegant solution in future
     std::ofstream m_File;
+    NetworkClient m_Client;
 
+    // The property that is being logged
     const ModelProperty::Base *m_ModelProperty;
 
+    // Buffer used, if indices are in use, to generate contiguous output data
     std::vector<scalar> m_OutputBuffer;
 
+    // Which members of population to log (all if empty)
     std::vector<unsigned int> m_Indices;
 };
 

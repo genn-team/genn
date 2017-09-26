@@ -268,6 +268,7 @@ SpineMLSimulator::InputValue::External::External(double, unsigned int numNeurons
     const std::string connectionName = node.attribute("name").value();
     const std::string hostname = node.attribute("host").value();
     const int port = node.attribute("tcp_port").as_int();
+    std::cout << "\tNetwork " << hostname << ":" << port << std::endl;
 
     // Attempt to connect network client
     if(!m_Client.connect(hostname, port, size, NetworkClient::DataType::Analogue,
