@@ -33,14 +33,14 @@ bool SpineMLSimulator::NetworkClient::connect(const std::string &hostname, int p
         std::cerr << "Unable to create socket" << std::endl;
         return false;
     }
-    
+
     // Disable Nagle algorithm
     // **THINK** should we?
     const int disableNagle = 1;
     if(setsockopt(m_Socket, IPPROTO_TCP, TCP_NODELAY, reinterpret_cast<const char*>(&disableNagle), sizeof(int)) < 0) {
         std::cerr << "Unable to set socket options" << std::endl;
         return false;
-    }
+}
     
     // Create address structure
     sockaddr_in destAddress = {
@@ -49,13 +49,13 @@ bool SpineMLSimulator::NetworkClient::connect(const std::string &hostname, int p
         .sin_addr = { .s_addr = inet_addr(hostname.c_str()) },
         .sin_zero = {0},
     };
-   
+
    // Connect socket
    if (::connect(m_Socket, reinterpret_cast<sockaddr*>(&destAddress), sizeof(destAddress)) < 0) {
         std::cerr << "Unable to connect to " << hostname << ":" << port << std::endl;
         return false;
     }
-    
+
     // Handshake
     Response handshakeResponse;
     if(!sendRequestReadResponse(mode, handshakeResponse)) {
@@ -66,7 +66,7 @@ bool SpineMLSimulator::NetworkClient::connect(const std::string &hostname, int p
         std::cerr << "Invalid handshake response:" << static_cast<int>(handshakeResponse) << std::endl;
         return false;
     }
-    
+
     // Send data type
     Response dataTypeResponse;
     if(!sendRequestReadResponse(dataType, dataTypeResponse)) {
@@ -77,7 +77,7 @@ bool SpineMLSimulator::NetworkClient::connect(const std::string &hostname, int p
         std::cerr << "Remote host aborted" << std::endl;
         return false;
     }
-    
+
     // Send size
     Response sizeResponse;
     if(!sendRequestReadResponse(size, sizeResponse)) {
@@ -88,7 +88,7 @@ bool SpineMLSimulator::NetworkClient::connect(const std::string &hostname, int p
         std::cerr << "Remote host aborted" << std::endl;
         return false;
     }
-    
+
     // Send connection name
     Response connectionNameResponse;
     if(!sendRequestReadResponse(connectionName, connectionNameResponse)) {
@@ -166,4 +166,28 @@ bool SpineMLSimulator::NetworkClient::send(const std::vector<double> &buffer)
     else {
         return true;
     }
+}
+//----------------------------------------------------------------------------
+bool SpineMLSimulator::NetworkClient::sendRequestReadResponse(const std::string &data, Response &response)
+{
+    // Send string length
+    const int stringLength = data.size();
+    if(::send(m_Socket, &stringLength, sizeof(int), MSG_DONTWAIT) < 0) {
+        std::cerr << "Unable to send size" << std::endl;
+        return false;
+    }
+
+    // Send string
+    if(::send(m_Socket, data.c_str(), stringLength, MSG_DONTWAIT) < 0) {
+        std::cerr << "Unable to send string" << std::endl;
+        return false;
+    }
+
+    // Receive handshake response
+    if(::recv(m_Socket, &response, sizeof(Response), MSG_WAITALL) < 1) {
+        std::cerr << "Unable to receive response" << std::endl;
+        return false;
+    }
+
+    return true;
 }

@@ -86,37 +86,12 @@ private:
         return true;
     }
 
+    bool sendRequestReadResponse(const std::string &data, Response &response);
+
     //----------------------------------------------------------------------------
     // Private members
     //----------------------------------------------------------------------------
     int m_Socket;
 };
 
-//----------------------------------------------------------------------------
-// Template specializations
-//----------------------------------------------------------------------------
-template<>
-inline bool NetworkClient::sendRequestReadResponse<const std::string &>(const std::string &data, Response &response)
-{
-    // Send string length
-    const int stringLength = data.size();
-    if(::send(m_Socket, &stringLength, sizeof(int), MSG_DONTWAIT) < 0) {
-        std::cerr << "Unable to send size" << std::endl;
-        return false;
-    }
-
-    // Send string
-    if(::send(m_Socket, data.c_str(), stringLength, MSG_DONTWAIT) < 0) {
-        std::cerr << "Unable to send string" << std::endl;
-        return false;
-    }
-
-    // Receive handshake response
-    if(::recv(m_Socket, &response, sizeof(Response), MSG_WAITALL) < 1) {
-        std::cerr << "Unable to receive response" << std::endl;
-        return false;
-    }
-
-    return true;
-}
 }   // namespace SpineMLSimulator
