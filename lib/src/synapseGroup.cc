@@ -62,16 +62,6 @@ void SynapseGroup::setMaxConnections(unsigned int maxConnections)
     }
 }
 
-void SynapseGroup::setSpanType(SpanType spanType)
-{
-    if (getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-        m_SpanType = spanType;
-    }
-    else {
-        gennError("setSpanType: This function is not enabled for dense connectivity type.");
-    }
-}
-
 void SynapseGroup::initDerivedParams(double dt)
 {
     auto wuDerivedParams = getWUModel()->getDerivedParams();
@@ -96,19 +86,19 @@ void SynapseGroup::calcKernelSizes(unsigned int blockSize, unsigned int &paddedK
 {
     m_PaddedKernelIDRange.first = paddedKernelIDStart;
 
-    if (getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-        if (getSpanType() == SpanType::PRESYNAPTIC) {
-            // paddedSize is the lowest multiple of blockSize >= neuronN[synapseSource[i]
-            paddedKernelIDStart += ceil((double) getSrcNeuronGroup()->getNumNeurons() / (double) blockSize) * (double) blockSize;
-        }
-        else {
+    if (getSpanType() == SpanType::PRESYNAPTIC) {
+        // paddedSize is the lowest multiple of blockSize >= neuronN[synapseSource[i]
+        paddedKernelIDStart += ceil((double) getSrcNeuronGroup()->getNumNeurons() / (double) blockSize) * (double) blockSize;
+    }
+    else {
+        if (getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
             // paddedSize is the lowest multiple of blockSize >= maxConn[i]
             paddedKernelIDStart += ceil((double) getMaxConnections() / (double) blockSize) * (double) blockSize;
         }
-    }
-    else {
-        // paddedSize is the lowest multiple of blockSize >= neuronN[synapseTarget[i]]
-        paddedKernelIDStart += ceil((double) getTrgNeuronGroup()->getNumNeurons() / (double) blockSize) * (double) blockSize;
+        else {
+            // paddedSize is the lowest multiple of blockSize >= neuronN[synapseTarget[i]]
+            paddedKernelIDStart += ceil((double) getTrgNeuronGroup()->getNumNeurons() / (double) blockSize) * (double) blockSize;
+        }
     }
 
     // Store padded cumulative sum
@@ -151,19 +141,6 @@ bool SynapseGroup::isWUVarZeroCopyEnabled(const std::string &var) const
 bool SynapseGroup::isPSVarZeroCopyEnabled(const std::string &var) const
 {
     return (m_PSVarZeroCopyEnabled.find(var) != std::end(m_PSVarZeroCopyEnabled));
-}
-
-bool SynapseGroup::isPSAtomicAddRequired(unsigned int blockSize) const
-{
-    if (getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-        if (getSpanType() == SpanType::POSTSYNAPTIC && getTrgNeuronGroup()->getNumNeurons() > blockSize) {
-            return true;
-        }
-        if (getSpanType()  == SpanType::PRESYNAPTIC && getSrcNeuronGroup()->getNumNeurons() > blockSize) {
-            return true;
-        }
-    }
-    return false;
 }
 
 void SynapseGroup::addExtraGlobalNeuronParams(std::map<std::string, std::string> &kernelParameters) const

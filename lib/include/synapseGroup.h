@@ -59,7 +59,7 @@ public:
     void setClusterIndex(int hostID, int deviceID){ m_HostID = hostID; m_DeviceID = deviceID; }
 
     void setMaxConnections(unsigned int maxConnections);
-    void setSpanType(SpanType spanType);
+    void setSpanType(SpanType spanType){ m_SpanType = spanType; }
 
     void initDerivedParams(double dt);
     void calcKernelSizes(unsigned int blockSize, unsigned int &paddedKernelIDStart);
@@ -101,10 +101,6 @@ public:
     bool isZeroCopyEnabled() const;
     bool isWUVarZeroCopyEnabled(const std::string &var) const;
     bool isPSVarZeroCopyEnabled(const std::string &var) const;
-
-    //!< Is this synapse group too large to use shared memory for combining postsynaptic output
-    // **THINK** this is very cuda-specific
-    bool isPSAtomicAddRequired(unsigned int blockSize) const;
 
     void addExtraGlobalNeuronParams(std::map<string, string> &kernelParameters) const;
     void addExtraGlobalSynapseParams(std::map<string, string> &kernelParameters) const;
