@@ -62,16 +62,6 @@ void SynapseGroup::setMaxConnections(unsigned int maxConnections)
     }
 }
 
-void SynapseGroup::setSpanType(SpanType spanType)
-{
-    if (getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-        m_SpanType = spanType;
-    }
-    else {
-        gennError("setSpanType: This function is not enabled for dense connectivity type.");
-    }
-}
-
 void SynapseGroup::initDerivedParams(double dt)
 {
     auto wuDerivedParams = getWUModel()->getDerivedParams();
@@ -96,19 +86,19 @@ void SynapseGroup::calcKernelSizes(unsigned int blockSize, unsigned int &paddedK
 {
     m_PaddedKernelIDRange.first = paddedKernelIDStart;
 
-    if (getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-        if (getSpanType() == SpanType::PRESYNAPTIC) {
-            // paddedSize is the lowest multiple of blockSize >= neuronN[synapseSource[i]
-            paddedKernelIDStart += ceil((double) getSrcNeuronGroup()->getNumNeurons() / (double) blockSize) * (double) blockSize;
-        }
-        else {
+    if (getSpanType() == SpanType::PRESYNAPTIC) {
+        // paddedSize is the lowest multiple of blockSize >= neuronN[synapseSource[i]
+        paddedKernelIDStart += ceil((double) getSrcNeuronGroup()->getNumNeurons() / (double) blockSize) * (double) blockSize;
+    }
+    else {
+        if (getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
             // paddedSize is the lowest multiple of blockSize >= maxConn[i]
             paddedKernelIDStart += ceil((double) getMaxConnections() / (double) blockSize) * (double) blockSize;
         }
-    }
-    else {
-        // paddedSize is the lowest multiple of blockSize >= neuronN[synapseTarget[i]]
-        paddedKernelIDStart += ceil((double) getTrgNeuronGroup()->getNumNeurons() / (double) blockSize) * (double) blockSize;
+        else {
+            // paddedSize is the lowest multiple of blockSize >= neuronN[synapseTarget[i]]
+            paddedKernelIDStart += ceil((double) getTrgNeuronGroup()->getNumNeurons() / (double) blockSize) * (double) blockSize;
+        }
     }
 
     // Store padded cumulative sum
@@ -153,16 +143,34 @@ bool SynapseGroup::isPSVarZeroCopyEnabled(const std::string &var) const
     return (m_PSVarZeroCopyEnabled.find(var) != std::end(m_PSVarZeroCopyEnabled));
 }
 
-bool SynapseGroup::isPSAtomicAddRequired(unsigned int blockSize) const
+bool SynapseGroup::arePreVarsRequiredForSynapse(const std::string &code) const
 {
-    if (getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-        if (getSpanType() == SpanType::POSTSYNAPTIC && getTrgNeuronGroup()->getNumNeurons() > blockSize) {
-            return true;
-        }
-        if (getSpanType()  == SpanType::PRESYNAPTIC && getSrcNeuronGroup()->getNumNeurons() > blockSize) {
+    // Get presynaptic neuron model
+    const auto *preNeuronModel = getSrcNeuronGroup()->getNeuronModel();
+
+    // If presynaptic neuron is poisson and code references it's voltage - return true
+    if (preNeuronModel->isPoisson() && code.find("$(V_pre)") != std::string::npos) {
+        return true;
+    }
+
+    // If code references presynaptic spike time - return true
+    if(code.find("$(sT_pre)") != std::string::npos)
+    {
+        return true;
+    }
+
+    // Loop through presynaptic neuron model variables
+    for(const auto &v : preNeuronModel->getVars()) {
+        // Get name this variable would be referred to in synapse code
+        const std::string preVarName = "$(" + v.first + "_pre)";
+
+        // If code references variable - return true
+        if(code.find(preVarName) != std::string::npos)
+        {
             return true;
         }
     }
+
     return false;
 }
 
