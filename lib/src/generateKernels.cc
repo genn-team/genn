@@ -82,6 +82,21 @@ bool doesSynapseGroupUseLinSyn(const SynapseGroup &sg)
     return false;
 }
 
+bool shouldSynapseGroupUseSharedSparse(const SynapseGroup &sg)
+{
+    // This synapse group can copy it's sparse structure into shared memory if it is
+    // postsynaptically parallelised and uses sparse connectivity not implemented as a bitmask
+    if(sg.getSpanType() == SynapseGroup::SpanType::POSTSYNAPTIC
+        && (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE)
+        && !(sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK))
+    {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
 string getFloatAtomicAdd(const string &ftype)
 {
     int version;
@@ -234,13 +249,27 @@ void generatePostParallelisedCode(
     ExtraGlobalParamNameIterCtx wuExtraGlobalParams(wu->getExtraGlobalParams());
     VarNameIterCtx wuVars(wu->getVars());
 
+    // We can copy sparse matrix structure into shared variables if matrix is sparse but not implemented as a bitmask
+    const bool useSharedSparse = shouldSynapseGroupUseSharedSparse(sg);
+
+    // shSpk isn't required at all if there are no presynaptic variables
+    const bool shSpkRequired = evnt ? sg.arePreVarsRequiredForSpikeLikeEvent() : sg.arePreVarsRequiredForTrueSpike();
+
     os << "// process presynaptic events: " << (evnt ? "Spike type events" : "True Spikes") << std::endl;
     os << "for (r = 0; r < numSpikeSubsets" << postfix << "; r++)" << CodeStream::OB(90);
     os << "if (r == numSpikeSubsets" << postfix << " - 1) lmax = ((lscnt" << postfix << "-1) % BLOCKSZ_SYN) +1;" << std::endl;
     os << "else lmax = BLOCKSZ_SYN;" << std::endl;
     os << "__syncthreads();" << std::endl;
     os << "if (threadIdx.x < lmax)" << CodeStream::OB(100);
-    os << "shSpk" << postfix << "[threadIdx.x] = dd_glbSpk" << postfix << sg.getSrcNeuronGroup()->getName() << "[" << sg.getOffsetPre() << "(r * BLOCKSZ_SYN) + threadIdx.x];" << std::endl;
+    os << "j = dd_glbSpk" << postfix << sg.getSrcNeuronGroup()->getName() << "[" << sg.getOffsetPre() << "(r * BLOCKSZ_SYN) + threadIdx.x];" << std::endl;
+    if(!useSharedSparse || shSpkRequired) {
+        os << "shSpk" << postfix << "[threadIdx.x] = j;" << std::endl;
+    }
+    if(useSharedSparse) {
+        os << "prePos = dd_indInG" << sg.getName() << "[j];" << std::endl;
+        os << "shSpk" << postfix << "PrePos[threadIdx.x] = prePos;" << std::endl;
+        os << "shSpk" << postfix << "NPost[threadIdx.x] = dd_indInG" << sg.getName() << "[j + 1] - prePos;" << std::endl;
+    }
     os << CodeStream::CB(100);
 
     // If input should be applied via shared memory, zero this
@@ -288,8 +317,16 @@ void generatePostParallelisedCode(
     }
 
     if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) { // SPARSE
-        os << "prePos = dd_indInG" << sg.getName() << "[shSpk" << postfix << "[j]];" << std::endl;
-        os << "npost = dd_indInG" << sg.getName() << "[shSpk" << postfix << "[j] + 1] - prePos;" << std::endl;
+        // If sparse structure has been copied into shared memory, copy offsets from shared memory
+        if(useSharedSparse) {
+            os << "prePos = shSpk" << postfix << "PrePos[j];" << std::endl;
+            os << "npost = shSpk" << postfix << "NPost[j];" << std::endl;
+        }
+        // Otherwise, load from global memory indices
+        else {
+            os << "prePos = dd_indInG" << sg.getName() << "[shSpk" << postfix << "[j]];" << std::endl;
+            os << "npost = dd_indInG" << sg.getName() << "[shSpk" << postfix << "[j] + 1] - prePos;" << std::endl;
+        }
         os << "if (" << localID << " < npost)" << CodeStream::OB(140);
         os << "prePos += " << localID << ";" << std::endl;
         os << "ipost = dd_ind" << sg.getName() << "[prePos];" << std::endl;
@@ -910,21 +947,61 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
         os << "unsigned int npost; " << std::endl;
     }
 
-    // we need a shared memory spike buffer and counters if there are any synapse groups that process spikes
-    // **NOTE** only need counters if they are postsynaptic parallelised
+    // we need a shared memory spike buffer and counters if there are any
+    // postsynaptically-parallelised synapse groups that process true spikes
     if(any_of(begin(model.getSynapseGroups()), end(model.getSynapseGroups()),
-        [&model](const std::pair<string, SynapseGroup> &s){ return s.second.isTrueSpikeRequired() || model.isSynapseGroupPostLearningRequired(s.first); }))
+        [&model](const std::pair<string, SynapseGroup> &s)
+        {
+            return ((s.second.getSpanType() == SynapseGroup::SpanType::POSTSYNAPTIC)
+                && (s.second.isTrueSpikeRequired() || model.isSynapseGroupPostLearningRequired(s.first)));
+        }))
     {
-        os << "__shared__ unsigned int shSpk[BLOCKSZ_SYN];" << std::endl;
+        // We need to allocate the shSpk variable if any of the synapse groups are dense,
+        // use the bitmask structure or require it to index presynaptic variables
+        const bool shSpkRequired = any_of(begin(model.getSynapseGroups()), end(model.getSynapseGroups()),
+                                          [](const std::pair<string, SynapseGroup> &s){ return !shouldSynapseGroupUseSharedSparse(s.second) || s.second.arePreVarsRequiredForTrueSpike(); });
+
+        // We need to allocate shSpkPrePost and shSpkNPost variables if any
+        // synapse groups are sparse but don't use birmask structure
+        const bool useSharedSparse = any_of(begin(model.getSynapseGroups()), end(model.getSynapseGroups()),
+                                            [](const std::pair<string, SynapseGroup> &s){ return shouldSynapseGroupUseSharedSparse(s.second); });
+        if(shSpkRequired) {
+            os << "__shared__ unsigned int shSpk[BLOCKSZ_SYN];" << std::endl;
+        }
+
+        if(useSharedSparse) {
+            os << "__shared__ unsigned int shSpkPrePos[BLOCKSZ_SYN];" << std::endl;
+            os << "__shared__ unsigned int shSpkNPost[BLOCKSZ_SYN];" << std::endl;
+        }
         os << "unsigned int lscnt, numSpikeSubsets;" << std::endl;
     }
 
-    // we need a shared memory event buffer and counters if there are any synapse groups that process spikes
-    // **NOTE** only need counters if they are postsynaptic parallelised
+    // we need a shared memory event buffer and counters if there are any
+    // postsynaptically-parallelised synapse groups that process spike-like events
     if(any_of(begin(model.getSynapseGroups()), end(model.getSynapseGroups()),
-        [](const std::pair<string, SynapseGroup> &s){ return s.second.isSpikeEventRequired(); }))
+        [](const std::pair<string, SynapseGroup> &s)
+        {
+            return (s.second.getSpanType() == SynapseGroup::SpanType::POSTSYNAPTIC)
+                && s.second.isSpikeEventRequired();
+        }))
     {
-        os << "__shared__ unsigned int shSpkEvnt[BLOCKSZ_SYN];" << std::endl;
+        // We need to allocate the shSpkEvnt variable if synapse group can't use shared sparse optimisation
+        // or shSpkEvent is required to index presynaptic variables
+        const bool shSpkRequired = any_of(begin(model.getSynapseGroups()), end(model.getSynapseGroups()),
+                                          [](const std::pair<string, SynapseGroup> &s){ return !shouldSynapseGroupUseSharedSparse(s.second) || s.second.arePreVarsRequiredForSpikeLikeEvent(); });
+
+        // We need to allocate shSpkPrePost and shSpkNPost variables if any
+        // synapse groups are sparse but don't use birmask structure
+        const bool useSharedSparse = any_of(begin(model.getSynapseGroups()), end(model.getSynapseGroups()),
+                                            [](const std::pair<string, SynapseGroup> &s){ return shouldSynapseGroupUseSharedSparse(s.second); });
+        if(shSpkRequired) {
+            os << "__shared__ unsigned int shSpkEvnt[BLOCKSZ_SYN];" << std::endl;
+        }
+
+        if(useSharedSparse) {
+            os << "__shared__ unsigned int shSpkEvntPrePos[BLOCKSZ_SYN];" << std::endl;
+            os << "__shared__ unsigned int shSpkEvntNPost[BLOCKSZ_SYN];" << std::endl;
+        }
         os << "unsigned int lscntEvnt, numSpikeSubsetsEvnt;" << std::endl;
     }
 
@@ -951,34 +1028,39 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
             os << ") % " << s.second.getSrcNeuronGroup()->getNumDelaySlots() << ";" << std::endl;
         }
 
-        // If each threads will add input to a register, copy current value to this register
-        if (doesSynapseGroupUseLinSyn(s.second)){
-            os << "// only do this for existing neurons" << std::endl;
-            os << "if (" << localID << " < " << s.second.getTrgNeuronGroup()->getNumNeurons() << ")" << CodeStream::OB(80);
-            os << "linSyn = dd_inSyn" << s.first << "[" << localID << "];" << std::endl;
-            os << CodeStream::CB(80);
-        }
+        // If matrix is postsynaptically parallelised
+        if(s.second.getSpanType() == SynapseGroup::SpanType::POSTSYNAPTIC) {
+            // If each threads will add input to a register, copy current value to this register
+            if (doesSynapseGroupUseLinSyn(s.second)){
+                os << "// only do this for existing neurons" << std::endl;
+                os << "if (" << localID << " < " << s.second.getTrgNeuronGroup()->getNumNeurons() << ")" << CodeStream::OB(80);
+                os << "linSyn = dd_inSyn" << s.first << "[" << localID << "];" << std::endl;
+                os << CodeStream::CB(80);
+            }
 
-        if (s.second.isSpikeEventRequired()) {
-            os << "lscntEvnt = dd_glbSpkCntEvnt" << s.second.getSrcNeuronGroup()->getName();
-            if (s.second.getSrcNeuronGroup()->isDelayRequired()) {
-                os << "[delaySlot];" << std::endl;
+            // If spike-like events are processed, extract spike count
+            if (s.second.isSpikeEventRequired()) {
+                os << "lscntEvnt = dd_glbSpkCntEvnt" << s.second.getSrcNeuronGroup()->getName();
+                if (s.second.getSrcNeuronGroup()->isDelayRequired()) {
+                    os << "[delaySlot];" << std::endl;
+                }
+                else {
+                    os << "[0];" << std::endl;
+                }
+                os << "numSpikeSubsetsEvnt = (lscntEvnt+BLOCKSZ_SYN-1) / BLOCKSZ_SYN;" << std::endl;
             }
-            else {
-                os << "[0];" << std::endl;
+
+            // If true spikes are processed, extract spike count
+            if (s.second.isTrueSpikeRequired() || model.isSynapseGroupPostLearningRequired(s.first)) {
+                os << "lscnt = dd_glbSpkCnt" << s.second.getSrcNeuronGroup()->getName();
+                if (s.second.getSrcNeuronGroup()->isDelayRequired()) {
+                    os << "[delaySlot];" << std::endl;
+                }
+                else {
+                    os << "[0];" << std::endl;
+                }
+                os << "numSpikeSubsets = (lscnt+BLOCKSZ_SYN-1) / BLOCKSZ_SYN;" << std::endl;
             }
-            os << "numSpikeSubsetsEvnt = (lscntEvnt+BLOCKSZ_SYN-1) / BLOCKSZ_SYN;" << std::endl;
-        }
-  
-        if (s.second.isTrueSpikeRequired() || model.isSynapseGroupPostLearningRequired(s.first)) {
-            os << "lscnt = dd_glbSpkCnt" << s.second.getSrcNeuronGroup()->getName();
-            if (s.second.getSrcNeuronGroup()->isDelayRequired()) {
-                os << "[delaySlot];" << std::endl;
-            }
-            else {
-                os << "[0];" << std::endl;
-            }
-            os << "numSpikeSubsets = (lscnt+BLOCKSZ_SYN-1) / BLOCKSZ_SYN;" << std::endl;
         }
 
         // generate the code for processing spike-like events

@@ -143,6 +143,37 @@ bool SynapseGroup::isPSVarZeroCopyEnabled(const std::string &var) const
     return (m_PSVarZeroCopyEnabled.find(var) != std::end(m_PSVarZeroCopyEnabled));
 }
 
+bool SynapseGroup::arePreVarsRequiredForSynapse(const std::string &code) const
+{
+    // Get presynaptic neuron model
+    const auto *preNeuronModel = getSrcNeuronGroup()->getNeuronModel();
+
+    // If presynaptic neuron is poisson and code references it's voltage - return true
+    if (preNeuronModel->isPoisson() && code.find("$(V_pre)") != std::string::npos) {
+        return true;
+    }
+
+    // If code references presynaptic spike time - return true
+    if(code.find("$(sT_pre)") != std::string::npos)
+    {
+        return true;
+    }
+
+    // Loop through presynaptic neuron model variables
+    for(const auto &v : preNeuronModel->getVars()) {
+        // Get name this variable would be referred to in synapse code
+        const std::string preVarName = "$(" + v.first + "_pre)";
+
+        // If code references variable - return true
+        if(code.find(preVarName) != std::string::npos)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 void SynapseGroup::addExtraGlobalNeuronParams(std::map<std::string, std::string> &kernelParameters) const
 {
     // Loop through list of extra global weight update parameters

@@ -102,6 +102,11 @@ public:
     bool isWUVarZeroCopyEnabled(const std::string &var) const;
     bool isPSVarZeroCopyEnabled(const std::string &var) const;
 
+    //!< Do true spikes or spike event handlers require access to presynaptic variables?
+    //!< If they do not, additional optimisations can be made
+    bool arePreVarsRequiredForTrueSpike() const{ return arePreVarsRequiredForSynapse(getWUModel()->getSimCode()); }
+    bool arePreVarsRequiredForSpikeLikeEvent() const{ return arePreVarsRequiredForSynapse(getWUModel()->getEventCode()); }
+
     void addExtraGlobalNeuronParams(std::map<string, string> &kernelParameters) const;
     void addExtraGlobalSynapseParams(std::map<string, string> &kernelParameters) const;
     void addExtraGlobalPostLearnParams(std::map<string, string> &kernelParameters) const;
@@ -115,6 +120,8 @@ private:
     //------------------------------------------------------------------------
     // Private methods
     //------------------------------------------------------------------------
+    bool arePreVarsRequiredForSynapse(const std::string &code) const;
+
     void addExtraGlobalSimParams(const std::string &prefix, const std::string &suffix, const NewModels::Base::StringPairVec &extraGlobalParameters,
                                  std::map<std::string, std::string> &kernelParameters) const;
     void addExtraGlobalPostLearnParams(const std::string &prefix, const std::string &suffix, const NewModels::Base::StringPairVec &extraGlobalParameters,
