@@ -32,123 +32,70 @@ namespace
 const string digits= string("0123456789");
 const string op= string("+-*/(<>= ,;")+string("\n")+string("\t");
 
-const int __mathFN = 56;
-const char *__dnames[__mathFN]= {
-    "cos",
-    "sin",
-    "tan",
-    "acos",
-    "asin",
-    "atan",
-    "atan2",
-    "cosh",
-    "sinh",
-    "tanh",
-    "acosh",
-    "asinh",
-    "atanh",
-    "exp",
-    "frexp",
-    "ldexp",
-    "log",
-    "log10",
-    "modf",
-    "exp2",
-    "expm1",
-    "ilogb",
-    "log1p",
-    "log2",
-    "logb",
-    "scalbn",
-    "scalbln",
-    "pow",
-    "sqrt",
-    "cbrt",
-    "hypot",
-    "erf",
-    "erfc",
-    "tgamma",
-    "lgamma",
-    "ceil",
-    "floor",
-    "fmod",
-    "trunc",
-    "round",
-    "lround",
-    "llround",
-    "rint",
-    "lrint",
-    "nearbyint",
-    "remainder",
-    "remquo",
-    "copysign",
-    "nan",
-    "nextafter",
-    "nexttoward",
-    "fdim",
-    "fmax",
-    "fmin",
-    "fabs",
-    "fma"
+enum MathsFunc
+{
+    MathsFuncDouble,
+    MathsFuncSingle,
+    MathsFuncMax,
 };
 
-const char *__fnames[__mathFN]= {
-    "cosf",
-    "sinf",
-    "tanf",
-    "acosf",
-    "asinf",
-    "atanf",
-    "atan2f",
-    "coshf",
-    "sinhf",
-    "tanhf",
-    "acoshf",
-    "asinhf",
-    "atanhf",
-    "expf",
-    "frexpf",
-    "ldexpf",
-    "logf",
-    "log10f",
-    "modff",
-    "exp2f",
-    "expm1f",
-    "ilogbf",
-    "log1pf",
-    "log2f",
-    "logbf",
-    "scalbnf",
-    "scalblnf",
-    "powf",
-    "sqrtf",
-    "cbrtf",
-    "hypotf",
-    "erff",
-    "erfcf",
-    "tgammaf",
-    "lgammaf",
-    "ceilf",
-    "floorf",
-    "fmodf",
-    "truncf",
-    "roundf",
-    "lroundf",
-    "llroundf",
-    "rintf",
-    "lrintf",
-    "nearbyintf",
-    "remainderf",
-    "remquof",
-    "copysignf",
-    "nanf",
-    "nextafterf",
-    "nexttowardf",
-    "fdimf",
-    "fmaxf",
-    "fminf",
-    "fabsf",
-    "fmaf"
+const char *mathsFuncs[][MathsFuncMax] = {
+    {"cos", "cosf"},
+    {"sin", "sinf"},
+    {"tan", "tanf"},
+    {"acos", "acosf"},
+    {"asin", "asinf"},
+    {"atan", "atanf"},
+    {"atan2", "atan2f"},
+    {"cosh", "coshf"},
+    {"sinh", "sinhf"},
+    {"tanh", "tanhf"},
+    {"acosh", "acoshf"},
+    {"asinh", "asinhf"},
+    {"atanh", "atanhf"},
+    {"exp", "expf"},
+    {"frexp", "frexpf"},
+    {"ldexp", "ldexpf"},
+    {"log", "logf"},
+    {"log10", "log10f"},
+    {"modf", "modff"},
+    {"exp2", "exp2f"},
+    {"expm1", "expm1f"},
+    {"ilogb", "ilogbf"},
+    {"log1p", "log1pf"},
+    {"log2", "log2f"},
+    {"logb", "logbf"},
+    {"scalbn", "scalbnf"},
+    {"scalbln", "scalblnf"},
+    {"pow", "powf"},
+    {"sqrt", "sqrtf"},
+    {"cbrt", "cbrtf"},
+    {"hypot", "hypotf"},
+    {"erf", "erff"},
+    {"erfc", "erfcf"},
+    {"tgamma", "tgammaf"},
+    {"lgamma", "lgammaf"},
+    {"ceil", "ceilf"},
+    {"floor", "floorf"},
+    {"fmod", "fmodf"},
+    {"trunc", "truncf"},
+    {"round", "roundf"},
+    {"lround", "lroundf"},
+    {"llround", "llroundf"},
+    {"rint", "rintf"},
+    {"lrint", "lrintf"},
+    {"nearbyint", "nearbyintf"},
+    {"remainder", "remainderf"},
+    {"remquo", "remquof"},
+    {"copysign", "copysignf"},
+    {"nan", "nanf"},
+    {"nextafter", "nextafterf"},
+    {"nexttoward", "nexttowardf"},
+    {"fdim", "fdimf"},
+    {"fmax", "fmaxf"},
+    {"fmin", "fminf"},
+    {"fabs", "fabsf"},
+    {"fma", "fmaf"}
 };
 
 //--------------------------------------------------------------------------
@@ -157,14 +104,19 @@ const char *__fnames[__mathFN]= {
 //--------------------------------------------------------------------------
 void ensureMathFunctionFtype(string &code, const string &type)
 {
-    if (type == string("double")) {
-        for (int i= 0; i < __mathFN; i++) {
-            substitute(code, string(__fnames[i])+string("("), string(__dnames[i])+string("("));
+    // Get number of maths functions
+    constexpr size_t numMathsFuncs = sizeof(mathsFuncs) / sizeof(mathsFuncs[0]);
+
+    // If type is double, substitute any single precision maths functions for double precision version
+    if (type == "double") {
+        for (size_t i = 0; i < numMathsFuncs; i++) {
+            substitute(code, string(mathsFuncs[i][MathsFuncSingle])+string("("), string(mathsFuncs[i][MathsFuncDouble])+string("("));
         }
     }
+    // Otherwise, substitute any double precision maths functions for single precision version
     else {
-        for (int i= 0; i < __mathFN; i++) {
-            substitute(code, string(__dnames[i])+string("("), string(__fnames[i])+string("("));
+        for (size_t i = 0; i < numMathsFuncs; i++) {
+            substitute(code, string(mathsFuncs[i][MathsFuncDouble])+string("("), string(mathsFuncs[i][MathsFuncSingle])+string("("));
         }
     }
 }
