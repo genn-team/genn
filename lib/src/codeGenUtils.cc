@@ -210,6 +210,105 @@ void substitute(string &s, const string &trg, const string &rep)
 }
 
 //--------------------------------------------------------------------------
+/*! \brief This function substitutes function calls in the form:
+ *
+ *  $(functionName, parameter1, param2Function(0.12, "string"))
+ *
+ * with replacement templates in the form:
+ *
+ *  actualFunction(CONSTANT, $(0), $(1))
+ *
+ */
+//--------------------------------------------------------------------------
+void functionSubstitutions(std::string &code, const std::string &funcName,
+                           unsigned int numParams, const std::string &replaceFuncTemplate)
+{
+    // Cache length of function name (including leading '$(')
+    const size_t funcNameLength = funcName.size() + 2;
+
+    // Reserve vector to hold parameters
+    std::vector<std::string> parameters;
+    parameters.reserve(numParams);
+
+    // String to hold parameter currently being parsed
+    std::string parameter = "";
+
+    // Find first occurance of function with leading '$(' in code
+    size_t found = code.find("$(" + funcName);
+
+    // While functions are found
+    while (found != std::string::npos) {
+        // Loop through subsequent characerters of code
+        unsigned int bracketDepth = 0;
+        for(size_t i = found + funcNameLength; i < code.size(); i++) {
+            // If this character is a comma at function bracket depth
+            if(code[i] == ',' && bracketDepth == 0) {
+                // If there was no parameter was read before comma, check that this is the first parameter
+                if(parameter.empty()) {
+                    assert(parameters.empty());
+                }
+                // Otherwise, add parameter to array
+                else if(parameter.length() > 0) {
+                    parameters.push_back(parameter);
+                    parameter = "";
+                }
+            }
+            // Otherwise
+            else {
+                // If this is an open bracket, increase bracket depth
+                if(code[i] == '(') {
+                    bracketDepth++;
+                }
+                // Otherwise, it's a close bracket
+                else if(code[i] == ')') {
+                    // If we are at a deeper bracket depth than function, decrease bracket depth
+                    if(bracketDepth > 0) {
+                        bracketDepth--;
+                    }
+                    // Otherwise
+                    else {
+                        // If there was no parameter was read before comma, check that this is the first parameter
+                        if(parameter.empty()) {
+                            assert(parameters.empty());
+                        }
+                        // Otherwise, add parameter to array
+                        else if(parameter.length() > 0) {
+                            parameters.push_back(parameter);
+                            parameter = "";
+                        }
+
+                        // Check parameters match
+                        assert(parameters.size() == numParams);
+
+                        // Substitute parsed parameters into template
+                        std::string replaceFunc = replaceFuncTemplate;
+                        for(unsigned int p = 0; p < numParams; p++) {
+                            substitute(replaceFunc, "$(" + std::to_string(p) + ")", parameters[p]);
+                        }
+
+                        // Clear parameters now they have been substituted
+                        // into the final string to replace in to code
+                        parameters.clear();
+
+                        // Replace this into code
+                        code.replace(found, i - found + 1, replaceFunc);
+                        break;
+                    }
+                }
+
+                // If this isn't a space at function bracket depth, add to parameter string
+                if(bracketDepth > 0 || !std::isspace(code[i])) {
+                    parameter += code[i];
+                }
+            }
+        }
+
+        // Find next function to replace
+        found = code.find("$(" + funcName);
+    }
+}
+
+//--------------------------------------------------------------------------
 /*! \brief This function implements a parser that converts any floating point constant in a code snippet to a floating point constant with an explicit precision (by appending "f" or removing it). 
  */
 //--------------------------------------------------------------------------

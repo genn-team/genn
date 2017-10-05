@@ -60,6 +60,19 @@ inline PairKeyConstIter<BaseIter> GetPairKeyConstIter(BaseIter iter)
 
 void substitute(string &s, const string &trg, const string &rep);
 
+//--------------------------------------------------------------------------
+/*! \brief This function substitutes function calls in the form:
+ *
+ *  $(functionName, parameter1, param2Function(0.12, "string"))
+ *
+ * with replacement templates in the form:
+ *
+ *  actualFunction(CONSTANT, $(0), $(1))
+ *
+ */
+//--------------------------------------------------------------------------
+void functionSubstitutions(std::string &code, const std::string &funcName,
+                           unsigned int numParams, const std::string &replaceFuncTemplate);
 
 //--------------------------------------------------------------------------
 //! \brief This function performs a list of name substitutions for variables in code snippets.
