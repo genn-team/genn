@@ -317,6 +317,45 @@ public:
     virtual bool isPoisson() const{ return true; }
 };
 
+class PoissonNew : public Base
+{
+public:
+    DECLARE_MODEL(NeuronModels::PoissonNew, 1, 1);
+
+    SET_SUPPORT_CODE(
+        "__device__ scalar exponentialDist() {\n"
+        "    scalar a = 0.0;\n"
+        "    while (true) {\n"
+        "        float u = $(gennrand_uniform);\n"
+        "        const scalar u0 = u;\n"
+        "        while (true) {\n"
+        "            float uStar = $(gennrand_uniform));\n"
+        "            if (u < uStar) {\n"
+        "                return  a + u0;\n"
+        "            }\n"
+        "            u = $(gennrand_uniform);\n"
+        "            if (u >= uStar) {\n"
+        "                break;\n"
+        "            }\n"
+        "        }\n"
+        "        a += 1.0;\n"
+        "    }\n"
+        "}");
+
+    SET_SIM_CODE(
+        "if($(timeStepToSpike) <= 0.0f) {\n"
+        "    $(timeStepToSpike) += $(isi) * exponentialDist();\n"
+        "}\n"
+        "$(timeStepToSpike) -= 1.0;\n"
+    );
+
+    SET_THRESHOLD_CONDITION_CODE("$(timeStepToSpike) <= 0.0)");
+
+    SET_PARAM_NAMES({"rate"});
+    SET_VARS({{"timeStepToSpike", "scalar"}});
+    SET_DERIVED_PARAMS({{"isi", [](const vector<double> &pars, double dt){ return 1000.0 / (pars[0] * dt); }}});
+};
+
 //----------------------------------------------------------------------------
 // NeuronModels::TraubMiles
 //----------------------------------------------------------------------------
