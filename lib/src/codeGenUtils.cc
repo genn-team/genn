@@ -175,88 +175,90 @@ void substitute(string &s, const string &trg, const string &rep)
 void functionSubstitutions(std::string &code, const std::string &funcName,
                            unsigned int numParams, const std::string &replaceFuncTemplate)
 {
-    // Cache length of function name (including leading '$(')
-    const size_t funcNameLength = funcName.size() + 2;
+    // If there are no parameters, just replace the function name (wrapped in '$()')
+    // with the template (which will, inherantly, not have any parameters)
+    if(numParams == 0) {
+        substitute(code, "$(" + funcName + ")", replaceFuncTemplate);
+    }
+    // Otherwise
+    else {
+        // Reserve vector to hold parameters
+        std::vector<std::string> params;
+        params.reserve(numParams);
 
-    // Reserve vector to hold parameters
-    std::vector<std::string> parameters;
-    parameters.reserve(numParams);
+        // String to hold parameter currently being parsed
+        std::string currentParam = "";
 
-    // String to hold parameter currently being parsed
-    std::string parameter = "";
+        // Function will start with opening GeNN wrapper, name and comma before first argument
+        // **NOTE** need to match up to comma so longer function names with same prefix aren't matched
+        const std::string funcStart = "$(" + funcName + ",";
 
-    // Find first occurance of function with leading '$(' in code
-    size_t found = code.find("$(" + funcName);
+        // Find first occurance of start of function
+        size_t found = code.find(funcStart);
 
-    // While functions are found
-    while (found != std::string::npos) {
-        // Loop through subsequent characerters of code
-        unsigned int bracketDepth = 0;
-        for(size_t i = found + funcNameLength; i < code.size(); i++) {
-            // If this character is a comma at function bracket depth
-            if(code[i] == ',' && bracketDepth == 0) {
-                // If there was no parameter was read before comma, check that this is the first parameter
-                if(parameter.empty()) {
-                    assert(parameters.empty());
+        // While functions are found
+        while (found != std::string::npos) {
+            // Loop through subsequent characerters of code
+            unsigned int bracketDepth = 0;
+            for(size_t i = found + funcStart.length(); i < code.size(); i++) {
+                // If this character is a comma at function bracket depth
+                if(code[i] == ',' && bracketDepth == 0) {
+                    assert(!currentParam.empty());
+
+                    // Add parameter to array
+                    params.push_back(currentParam);
+                    currentParam = "";
                 }
-                // Otherwise, add parameter to array
-                else if(parameter.length() > 0) {
-                    parameters.push_back(parameter);
-                    parameter = "";
+                // Otherwise
+                else {
+                    // If this is an open bracket, increase bracket depth
+                    if(code[i] == '(') {
+                        bracketDepth++;
+                    }
+                    // Otherwise, it's a close bracket
+                    else if(code[i] == ')') {
+                        // If we are at a deeper bracket depth than function, decrease bracket depth
+                        if(bracketDepth > 0) {
+                            bracketDepth--;
+                        }
+                        // Otherwise
+                        else {
+                            assert(!currentParam.empty());
+
+                            // Add parameter to array
+                            params.push_back(currentParam);
+                            currentParam = "";
+
+                            // Check parameters match
+                            assert(params.size() == numParams);
+
+                            // Substitute parsed parameters into function template
+                            std::string replaceFunc = replaceFuncTemplate;
+                            for(unsigned int p = 0; p < numParams; p++) {
+                                substitute(replaceFunc, "$(" + std::to_string(p) + ")", params[p]);
+                            }
+
+                            // Clear parameters now they have been substituted
+                            // into the final string to replace in to code
+                            params.clear();
+
+                            // Replace this into code
+                            code.replace(found, i - found + 1, replaceFunc);
+                            break;
+                        }
+                    }
+
+                    // If this isn't a space at function bracket depth,
+                    // add to parameter string
+                    if(bracketDepth > 0 || !std::isspace(code[i])) {
+                        currentParam += code[i];
+                    }
                 }
             }
-            // Otherwise
-            else {
-                // If this is an open bracket, increase bracket depth
-                if(code[i] == '(') {
-                    bracketDepth++;
-                }
-                // Otherwise, it's a close bracket
-                else if(code[i] == ')') {
-                    // If we are at a deeper bracket depth than function, decrease bracket depth
-                    if(bracketDepth > 0) {
-                        bracketDepth--;
-                    }
-                    // Otherwise
-                    else {
-                        // If there was no parameter was read before comma, check that this is the first parameter
-                        if(parameter.empty()) {
-                            assert(parameters.empty());
-                        }
-                        // Otherwise, add parameter to array
-                        else if(parameter.length() > 0) {
-                            parameters.push_back(parameter);
-                            parameter = "";
-                        }
 
-                        // Check parameters match
-                        assert(parameters.size() == numParams);
-
-                        // Substitute parsed parameters into template
-                        std::string replaceFunc = replaceFuncTemplate;
-                        for(unsigned int p = 0; p < numParams; p++) {
-                            substitute(replaceFunc, "$(" + std::to_string(p) + ")", parameters[p]);
-                        }
-
-                        // Clear parameters now they have been substituted
-                        // into the final string to replace in to code
-                        parameters.clear();
-
-                        // Replace this into code
-                        code.replace(found, i - found + 1, replaceFunc);
-                        break;
-                    }
-                }
-
-                // If this isn't a space at function bracket depth, add to parameter string
-                if(bracketDepth > 0 || !std::isspace(code[i])) {
-                    parameter += code[i];
-                }
-            }
+            // Find start of next function to replace
+            found = code.find(funcStart);
         }
-
-        // Find next function to replace
-        found = code.find("$(" + funcName);
     }
 }
 
