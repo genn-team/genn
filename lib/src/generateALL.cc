@@ -24,9 +24,10 @@
 #include "global.h"
 #include MODEL
 #include "generateALL.h"
-#include "generateRunner.h"
 #include "generateCPU.h"
+#include "generateInit.h"
 #include "generateKernels.h"
+#include "generateRunner.h"
 #include "modelSpec.h"
 #include "utils.h"
 #include "codeGenUtils.h"
@@ -61,6 +62,9 @@ void generate_model_runner(const NNmodel &model,  //!< Model description
   genDefinitions(model, path);
   genSupportCode(model, path);
   genRunner(model, path);
+
+  // Generate initialization functions and kernel
+  genInit(model, path);
 
 #ifndef CPU_ONLY
   // GPU specific code generation
