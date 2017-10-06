@@ -220,7 +220,7 @@ void genDefinitions(const NNmodel &model, //!< Model description
     os << "#include \"sparseUtils.h\"" << std::endl << std::endl;
     os << "#include \"sparseProjection.h\"" << std::endl;
     os << "#include <cstdint>" << std::endl;
-    if (model.requiresRNG()) {
+    if (model.isRNGRequired()) {
         os << "#include <random>" << std::endl;
 #ifndef CPU_ONLY
         os << "#include <curand_kernel.h>" << std::endl;
@@ -316,7 +316,7 @@ void genDefinitions(const NNmodel &model, //!< Model description
         }
     }
     os << std::endl;
-    if(model.requiresRNG()) {
+    if(model.isRNGRequired()) {
         os << "extern std::mt19937 rng;" << std::endl;
     }
     os << std::endl;
@@ -343,7 +343,7 @@ void genDefinitions(const NNmodel &model, //!< Model description
         }
 #ifndef CPU_ONLY
         // **TODO** Phillox option
-        if(n.second.requiresRNG()) {
+        if(n.second.isRNGRequired()) {
             os << "extern curandState *d_rng" << n.first << ";" << std::endl;
         }
 #endif
@@ -818,7 +818,7 @@ void genRunner(const NNmodel &model, //!< Model description
         }
     } 
     os << std::endl;
-    if(model.requiresRNG()) {
+    if(model.isRNGRequired()) {
         os << "std::mt19937 rng;" << std::endl;
     }
     os << std::endl;
@@ -850,7 +850,7 @@ void genRunner(const NNmodel &model, //!< Model description
             variable_def(os, model.getPrecision()+" *", "sT"+n.first);
         }
 #ifndef CPU_ONLY
-        if(n.second.requiresRNG()) {
+        if(n.second.isRNGRequired()) {
             os << "curandState *d_rng" << n.first << ";" << std::endl;
             os << "__device__ curandState *dd_rng" << n.first << ";" << std::endl;
         }
@@ -1049,7 +1049,7 @@ void genRunner(const NNmodel &model, //!< Model description
         }
 
 #ifndef CPU_ONLY
-        if(n.second.requiresRNG()) {
+        if(n.second.isRNGRequired()) {
             allocate_device_variable(os, "curandState", "rng" + n.first, false,
                                      n.second.getNumNeurons());
         }
@@ -1278,7 +1278,7 @@ void genRunner(const NNmodel &model, //!< Model description
         }
 
 #ifndef CPU_ONLY
-        if(n.second.requiresRNG()) {
+        if(n.second.isRNGRequired()) {
             free_device_variable(os, "rng" + n.first, false);
         }
 #endif
@@ -1473,7 +1473,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
         os << std::endl;
     }
 
-    if (model.requiresRNG()) {
+    if (model.isRNGRequired()) {
         os << "__device__ float exponentialDistFloat(curandState *rng) {" << std::endl;
         os << "    float a = 0.0f;" << std::endl;
         os << "    while (true) {" << std::endl;
@@ -2247,7 +2247,7 @@ void genMakefile(const NNmodel &model, //!< Model description
     cxxFlags += " " + GENN_PREFERENCES::userCxxFlagsGNU;
     if (GENN_PREFERENCES::optimizeCode) cxxFlags += " -O3 -ffast-math";
     if (GENN_PREFERENCES::debugCode) cxxFlags += " -O0 -g";
-    if (model.requiresRNG()) cxxFlags += " -std=c++11";
+    if (model.isRNGRequired()) cxxFlags += " -std=c++11";
     os << endl;
     os << "CXXFLAGS       :=" << cxxFlags << endl;
     os << endl;
@@ -2267,7 +2267,7 @@ void genMakefile(const NNmodel &model, //!< Model description
     if (GENN_PREFERENCES::optimizeCode) nvccFlags += " -O3 -use_fast_math -Xcompiler \"-ffast-math\"";
     if (GENN_PREFERENCES::debugCode) nvccFlags += " -O0 -g -G";
     if (GENN_PREFERENCES::showPtxInfo) nvccFlags += " -Xptxas \"-v\"";
-    if (model.requiresRNG()) nvccFlags += " -std=c++11";
+    if (model.isRNGRequired()) nvccFlags += " -std=c++11";
 
     os << endl;
     os << "NVCC           :=\"" << NVCC << "\"" << endl;

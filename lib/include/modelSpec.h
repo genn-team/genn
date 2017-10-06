@@ -112,7 +112,7 @@ public:
     bool zeroCopyInUse() const;
 
     //! Do any populations in this model require an RNG?
-    bool requiresRNG() const;
+    bool isRNGRequired() const;
 
     //! Gets the name of the neuronal network model
     const std::string &getName() const{ return name; }

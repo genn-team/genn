@@ -93,11 +93,11 @@ bool NNmodel::zeroCopyInUse() const
     return false;
 }
 
-bool NNmodel::requiresRNG() const
+bool NNmodel::isRNGRequired() const
 {
     // If any neuron groups require an RNG return true
     if(any_of(begin(m_NeuronGroups), end(m_NeuronGroups),
-        [](const std::pair<string, NeuronGroup> &n){ return n.second.requiresRNG(); }))
+        [](const std::pair<string, NeuronGroup> &n){ return n.second.isRNGRequired(); }))
     {
         return true;
     }

@@ -33,7 +33,7 @@ unsigned int genInitNeuronKernel(CodeStream &os, const NNmodel &model)
     unsigned int sequence = 0;
     for(const auto &n : model.getNeuronGroups()) {
         // If this group requires an RNG
-        if(n.second.requiresRNG()) {
+        if(n.second.isRNGRequired()) {
             // Get padded size of group and hence it's end thread
             const unsigned int paddedSize = (unsigned int)(ceil((double)n.second.getNumNeurons() / (double)initBlkSz) * (double)initBlkSz);
             const unsigned int endThread = startThread + paddedSize;

@@ -145,12 +145,12 @@ void NeuronGroup::addExtraGlobalParams(std::map<string, string> &kernelParameter
     }
 }
 
-bool NeuronGroup::requiresRNG() const
+bool NeuronGroup::isRNGRequired() const
 {
     // Returns true if any parts of the neuron code require an RNG
-    if(::requiresRNG(getNeuronModel()->getSimCode())
-        || ::requiresRNG(getNeuronModel()->getThresholdConditionCode())
-        || ::requiresRNG(getNeuronModel()->getResetCode()))
+    if(::isRNGRequired(getNeuronModel()->getSimCode())
+        || ::isRNGRequired(getNeuronModel()->getThresholdConditionCode())
+        || ::isRNGRequired(getNeuronModel()->getResetCode()))
     {
         return true;
     }
@@ -159,8 +159,8 @@ bool NeuronGroup::requiresRNG() const
     for(const auto *sg : getInSyn()) {
         // Return true if any parts of the postsynaptic model require an RNG
         // **NOTE** these are included as they are simulated in the neuron kernel/function
-        if(::requiresRNG(sg->getPSModel()->getApplyInputCode())
-            || ::requiresRNG(sg->getPSModel()->getDecayCode()))
+        if(::isRNGRequired(sg->getPSModel()->getApplyInputCode())
+            || ::isRNGRequired(sg->getPSModel()->getDecayCode()))
         {
             return true;
         }

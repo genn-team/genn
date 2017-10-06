@@ -167,7 +167,7 @@ void substitute(string &s, const string &trg, const string &rep)
 //--------------------------------------------------------------------------
 //! \brief Does the code string contain any functions requiring random number generator
 //--------------------------------------------------------------------------
-bool requiresRNG(const std::string &code)
+bool isRNGRequired(const std::string &code)
 {
     // Loop through random functions
     for(const auto &r : randomFuncs) {
