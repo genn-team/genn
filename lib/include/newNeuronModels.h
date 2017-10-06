@@ -320,6 +320,18 @@ public:
 //----------------------------------------------------------------------------
 // NeuronModels::PoissonNew
 //----------------------------------------------------------------------------
+//! Poisson neurons
+/*! It has 1 state variable:
+
+    - \c timeStepToSpike - Number of timesteps to next spike
+
+    and 1 parameter:
+
+    - \c rate - Mean firing rate (Hz)
+
+    \note Internally this samples from the exponential distribution using
+    the C++ 11 <random> library on the CPU and Von Neumann's exponential
+    generator (Ripley p.230) implemented using cuRAND on the GPU. */
 class PoissonNew : public Base
 {
 public:
