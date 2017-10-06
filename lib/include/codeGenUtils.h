@@ -4,6 +4,7 @@
 #include <limits>
 #include <string>
 #include <sstream>
+#include <tuple>
 #include <vector>
 
 using namespace std;
@@ -16,6 +17,19 @@ namespace NeuronModels
 {
     class Base;
 }
+
+//--------------------------------------------------------------------------
+// FunctionTemplate
+//--------------------------------------------------------------------------
+// Immutable structure for specifying how to implement a generic function e.g. gennrand_uniform
+struct FunctionTemplate
+{
+    const std::string genericName;
+    const unsigned int numArguments;
+
+    const std::string doublePrecisionTemplate;
+    const std::string singlePrecisionTemplate;
+};
 
 //--------------------------------------------------------------------------
 // PairKeyConstIter
@@ -71,8 +85,8 @@ void substitute(string &s, const string &trg, const string &rep);
  *
  */
 //--------------------------------------------------------------------------
-void functionSubstitutions(std::string &code, const std::string &funcName,
-                           unsigned int numParams, const std::string &replaceFuncTemplate);
+void functionSubstitute(std::string &code, const std::string &funcName,
+                        unsigned int numParams, const std::string &replaceFuncTemplate);
 
 //--------------------------------------------------------------------------
 //! \brief This function performs a list of name substitutions for variables in code snippets.
@@ -115,6 +129,12 @@ inline void value_substitutions(string &code, const vector<string> &names, const
 {
     value_substitutions(code, names.cbegin(), names.cend(), values, ext);
 }
+
+//--------------------------------------------------------------------------
+//! \brief This function performs a list of function substitutions in code snipped
+//--------------------------------------------------------------------------
+void functionSubstitutions(std::string &code, const std::string &ftype,
+                           const std::vector<FunctionTemplate> functions);
 
 //--------------------------------------------------------------------------
 /*! \brief This function implements a parser that converts any floating point constant in a code snippet to a floating point constant with an explicit precision (by appending "f" or removing it).

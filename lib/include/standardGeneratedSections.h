@@ -42,5 +42,6 @@ void neuronSpikeEventTest(
     const VarNameIterCtx &nmVars,
     const ExtraGlobalParamNameIterCtx &nmExtraGlobalParams,
     const std::string &localID,
+    const std::vector<FunctionTemplate> functions,
     const std::string &ftype);
 }   // namespace StandardGeneratedSections

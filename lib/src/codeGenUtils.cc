@@ -172,8 +172,8 @@ void substitute(string &s, const string &trg, const string &rep)
  *
  */
 //--------------------------------------------------------------------------
-void functionSubstitutions(std::string &code, const std::string &funcName,
-                           unsigned int numParams, const std::string &replaceFuncTemplate)
+void functionSubstitute(std::string &code, const std::string &funcName,
+                        unsigned int numParams, const std::string &replaceFuncTemplate)
 {
     // If there are no parameters, just replace the function name (wrapped in '$()')
     // with the template (which will, inherantly, not have any parameters)
@@ -259,6 +259,19 @@ void functionSubstitutions(std::string &code, const std::string &funcName,
             // Find start of next function to replace
             found = code.find(funcStart);
         }
+    }
+}
+
+//--------------------------------------------------------------------------
+//! \brief This function performs a list of function substitutions in code snipped
+//--------------------------------------------------------------------------
+void functionSubstitutions(std::string &code, const std::string &ftype,
+                           const std::vector<FunctionTemplate> functions)
+{
+    // Substitute generic GeNN random functions for desired destination type
+    for(const auto &f : functions) {
+        const std::string &funcTemplate = (ftype == "double") ? f.doublePrecisionTemplate : f.singlePrecisionTemplate;
+        functionSubstitute(code, f.genericName, f.numArguments, funcTemplate);
     }
 }
 

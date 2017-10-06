@@ -46,6 +46,7 @@ void postSynapseApplyInput(
     const VarNameIterCtx &nmVars,
     const DerivedParamNameIterCtx &nmDerivedParams,
     const ExtraGlobalParamNameIterCtx &nmExtraGlobalParams,
+    const std::vector<FunctionTemplate> functions,
     const std::string &ftype);
 
 void postSynapseDecay(
@@ -55,6 +56,7 @@ void postSynapseDecay(
     const VarNameIterCtx &nmVars,
     const DerivedParamNameIterCtx &nmDerivedParams,
     const ExtraGlobalParamNameIterCtx &nmExtraGlobalParams,
+    const std::vector<FunctionTemplate> functions,
     const std::string &ftype);
 
 void neuronThresholdCondition(
@@ -63,6 +65,7 @@ void neuronThresholdCondition(
     const VarNameIterCtx &nmVars,
     const DerivedParamNameIterCtx &nmDerivedParams,
     const ExtraGlobalParamNameIterCtx &nmExtraGlobalParams,
+    const std::vector<FunctionTemplate> functions,
     const std::string &ftype);
 
 void neuronSim(
@@ -71,6 +74,7 @@ void neuronSim(
     const VarNameIterCtx &nmVars,
     const DerivedParamNameIterCtx &nmDerivedParams,
     const ExtraGlobalParamNameIterCtx &nmExtraGlobalParams,
+    const std::vector<FunctionTemplate> functions,
     const std::string &ftype);
 
 void neuronSpikeEventCondition(
@@ -78,6 +82,7 @@ void neuronSpikeEventCondition(
     const NeuronGroup &ng,
     const VarNameIterCtx &nmVars,
     const ExtraGlobalParamNameIterCtx &nmExtraGlobalParams,
+    const std::vector<FunctionTemplate> functions,
     const std::string &ftype);
 
 void neuronReset(
@@ -86,6 +91,7 @@ void neuronReset(
     const VarNameIterCtx &nmVars,
     const DerivedParamNameIterCtx &nmDerivedParams,
     const ExtraGlobalParamNameIterCtx &nmExtraGlobalParams,
+    const std::vector<FunctionTemplate> functions,
     const std::string &ftype);
 
 void weightUpdateThresholdCondition(
@@ -96,6 +102,7 @@ void weightUpdateThresholdCondition(
     const string &preIdx, //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
     const string &postIdx, //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
     const string &devPrefix,
+    const std::vector<FunctionTemplate> functions,
     const std::string &ftype);
 
 void weightUpdateSim(
@@ -107,6 +114,7 @@ void weightUpdateSim(
     const string &preIdx, //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
     const string &postIdx, //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
     const string &devPrefix,
+    const std::vector<FunctionTemplate> functions,
     const std::string &ftype);
 
 void weightUpdateDynamics(
@@ -118,6 +126,7 @@ void weightUpdateDynamics(
     const string &preIdx, //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
     const string &postIdx, //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
     const string &devPrefix,
+    const std::vector<FunctionTemplate> functions,
     const std::string &ftype);
 
 void weightUpdatePostLearn(
@@ -128,5 +137,6 @@ void weightUpdatePostLearn(
     const string &preIdx, //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
     const string &postIdx, //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
     const string &devPrefix,
+    const std::vector<FunctionTemplate> functions,
     const std::string &ftype);
 }   // StandardSubstitions
