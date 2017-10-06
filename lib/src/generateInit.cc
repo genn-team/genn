@@ -16,10 +16,9 @@
 // ------------------------------------------------------------------------
 namespace
 {
+#ifndef CPU_ONLY
 unsigned int genInitNeuronKernel(CodeStream &os, const NNmodel &model)
 {
-    unsigned int startThread = 0;
-#ifndef CPU_ONLY
      // init kernel header
     os << "extern \"C\" __global__ void init()" << std::endl;
 
@@ -30,6 +29,7 @@ unsigned int genInitNeuronKernel(CodeStream &os, const NNmodel &model)
     os << "const unsigned int id = " << initBlkSz << " * blockIdx.x + threadIdx.x;" << std::endl;
 
     // Loop through neuron groups
+    unsigned int startThread = 0;
     unsigned int sequence = 0;
     for(const auto &n : model.getNeuronGroups()) {
         // If this group requires an RNG
@@ -64,10 +64,10 @@ unsigned int genInitNeuronKernel(CodeStream &os, const NNmodel &model)
 
     // initialization kernel code
     os << CodeStream::CB(10);
-#endif  // CPU_ONLY
 
     return startThread;
 }
+#endif  // CPU_ONLY
 }   // Anonymous namespace
 
 void genInit(const NNmodel &model,          //!< Model description
@@ -84,7 +84,9 @@ void genInit(const NNmodel &model,          //!< Model description
     os << std::endl;
 
     // Insert kernel to initialize neurons
+#ifndef CPU_ONLY
     const unsigned int numInitThreads = genInitNeuronKernel(os, model);
+#endif  // CPU_ONLY
 
     // ------------------------------------------------------------------------
     // initializing variables
@@ -107,12 +109,32 @@ void genInit(const NNmodel &model,          //!< Model description
 
     if (model.getSeed() == 0) {
         os << "    srand((unsigned int) time(NULL));" << std::endl;
-        //os << std::endl;
-        //os << "    std::random_device rd;" << std::endl;
-        //os << "    rng.seed(rd);" << std::endl;
     }
     else {
         os << "    srand((unsigned int) " << model.getSeed() << ");" << std::endl;
+    }
+
+    // If model requires an RNG
+    if(model.isRNGRequired()) {
+        // If no seed is specified, use system randomness to generate seed sequence
+        os << "    {" << std::endl;
+        if (model.getSeed() == 0) {
+            os << "        uint32_t seedData[std::mt19937::state_size];" << std::endl;
+            os << "        std::random_device seedSource;" << std::endl;
+            os << "        " << oB << "for(int i = 0; i < std::mt19937::state_size; i++) {" << std::endl;
+            os << "            seedData[i] = seedSource();" << std::endl;
+            os << "        }" << cB << std::endl;
+            os << "        std::seed_seq seeds(std::begin(seedData), std::end(seedData));" << std::endl;
+        }
+        // Otherwise, create a seed sequence from model seed
+        // **NOTE** this is a terrible idea see http://www.pcg-random.org/posts/cpp-seeding-surprises.html
+        else {
+            os << "        std::seed_seq seeds{" << model.getSeed() << "};" << std::endl;
+        }
+
+        // Seed RNG from seed sequence
+        os << "        rng.seed(seeds);" << std::endl;
+        os << "    }" << std::endl;
     }
     os << std::endl;
 
