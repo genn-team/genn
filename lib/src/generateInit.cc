@@ -3,16 +3,65 @@
 // Standard C++ includes
 #include <fstream>
 
+// Standard C includes
+#include <cmath>
+
 // GeNN includes
 #include "codeStream.h"
+#include "global.h"
 #include "modelSpec.h"
 
 // ------------------------------------------------------------------------
-// Anonymouse namespace
+// Anonymous namespace
 // ------------------------------------------------------------------------
 namespace
 {
+unsigned int genInitNeuronKernel(CodeStream &os, const NNmodel &model)
+{
+    unsigned int startThread = 0;
+#ifndef CPU_ONLY
+     // init kernel header
+    os << "extern \"C\" __global__ void init()" << std::endl;
+
+    // initialization kernel code
+    os << CodeStream::OB(10);
+
+    // common variables for all cases
+    os << "const unsigned int id = " << initBlkSz << " * blockIdx.x + threadIdx.x;" << std::endl;
+
+    // Loop through neuron groups
+    for(const auto &n : model.getNeuronGroups()) {
+        // If this group requires an RNG
+        if(n.second.requiresRNG()) {
+            // Get padded size of group and hence it's end thread
+            const unsigned int paddedSize = (unsigned int)(ceil((double)n.second.getNumNeurons() / (double)initBlkSz) * (double)initBlkSz);
+            const unsigned int endThread = startThread + paddedSize;
+
+            // Write if block to determine if this thread should be used for this neuron group
+            os << "// neuron group " << n.first << std::endl;
+            if(startThread == 0) {
+                os << "if (id < " << endThread << ")" << CodeStream::OB(20);
+            }
+            else {
+                os << "if ((id >= " << startThread << ") && (id < " << endThread << "))" << CodeStream::OB(20);
+            }
+            os << "const unsigned int lid = id - " << startThread << ";" << std::endl;
+
+
+            os << CodeStream::CB(20);
+
+            // Update start thread
+            startThread = endThread;
+        }
+    }
+
+    // initialization kernel code
+    os << CodeStream::CB(10);
+#endif  // CPU_ONLY
+
+    return startThread;
 }
+}   // Anonymous namespace
 
 void genInit(const NNmodel &model,          //!< Model description
              const std::string &path)       //!< Path for code generationn
@@ -26,6 +75,9 @@ void genInit(const NNmodel &model,          //!< Model description
 
     writeHeader(os);
     os << std::endl;
+
+    // Insert kernel to initialize neurons
+    const unsigned int numInitThreads = genInitNeuronKernel(os, model);
 
     // ------------------------------------------------------------------------
     // initializing variables

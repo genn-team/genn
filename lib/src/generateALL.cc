@@ -106,8 +106,8 @@ void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
     )
 {
     enum Kernel{ KernelCalcSynapses, KernelLearnSynapsesPost,
-        KernelCalcSynapseDynamics, KernelCalcNeurons, KernelMax };
-    const char *kernelName[KernelMax]= {"calcSynapses", "learnSynapsesPost", "calcSynapseDynamics", "calcNeurons"};
+        KernelCalcSynapseDynamics, KernelCalcNeurons, KernelInit, KernelMax };
+    const char *kernelName[KernelMax]= {"calcSynapses", "learnSynapsesPost", "calcSynapseDynamics", "calcNeurons", "init"};
     size_t globalMem, mostGlobalMem = 0;
     int chosenDevice = 0;
 
@@ -160,6 +160,12 @@ void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
                        std::back_insert_iterator<vector<unsigned int>>(groupSize[KernelCalcNeurons]),
                        [](const std::pair<std::string, NeuronGroup> &n){ return n.second.getNumNeurons(); });
 
+
+        // Populate the init group size
+        // **TODO** synapses
+        std::transform(model.getNeuronGroups().cbegin(), model.getNeuronGroups().cend(),
+                       std::back_insert_iterator<vector<unsigned int>>(groupSize[KernelInit]),
+                       [](const std::pair<std::string, NeuronGroup> &n){ return n.second.getNumNeurons(); });
 
 #ifdef BLOCKSZ_DEBUG
         for (int i= 0; i < KernelMax; i++) {
@@ -255,6 +261,7 @@ void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
             if (GENN_PREFERENCES::optimizeCode) nvccFlags += " -O3 -use_fast_math";
             if (GENN_PREFERENCES::debugCode) nvccFlags += " -O0 -g -G";
             if (GENN_PREFERENCES::showPtxInfo) nvccFlags += " -Xptxas \"-v\"";
+            if (model.requiresRNG()) nvccFlags += " -std=c++11";
 
 #ifdef _WIN32
             nvccFlags += " -I\"%GENN_PATH%\\lib\\include\"";
@@ -280,6 +287,8 @@ void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
                 learnBlkSz = warpSize*(rep+1);
                 synDynBlkSz= warpSize*(rep+1);
                 neuronBlkSz = warpSize*(rep+1);
+                initBlkSz = warpSize*(rep+1);
+
                 model.setPopulationSums();
                 generate_model_runner(model, path);
 
@@ -512,6 +521,7 @@ void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
         learnBlkSz = bestBlkSz[KernelLearnSynapsesPost][chosenDevice];
         synDynBlkSz= bestBlkSz[KernelCalcSynapseDynamics][chosenDevice];
         neuronBlkSz = bestBlkSz[KernelCalcNeurons][chosenDevice];
+        initBlkSz = bestBlkSz[KernelInit][chosenDevice];
     }
 
     // IF OPTIMISATION IS OFF: Simply choose the device with the most global memory.
@@ -521,6 +531,7 @@ void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
         learnBlkSz= GENN_PREFERENCES::learningBlockSize;
         synDynBlkSz= GENN_PREFERENCES::synapseDynamicsBlockSize;
         neuronBlkSz= GENN_PREFERENCES::neuronBlockSize;
+        initBlkSz = GENN_PREFERENCES::initBlockSize;
         if (GENN_PREFERENCES::autoChooseDevice) {
             for (theDevice = 0; theDevice < deviceCount; theDevice++) {
                 CHECK_CUDA_ERRORS(cudaSetDevice(theDevice));
@@ -554,6 +565,7 @@ void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
     cout << "learn block size: " << learnBlkSz << endl;
     cout << "synapseDynamics block size: " << synDynBlkSz << endl;
     cout << "neuron block size: " << neuronBlkSz << endl;
+    cout << "init block size:" << initBlkSz << endl;
 }
 #endif
 
