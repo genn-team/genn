@@ -7,6 +7,7 @@
 // GeNN includes
 #include "codeGenUtils.h"
 #include "standardSubstitutions.h"
+#include "synapseGroup.h"
 #include "utils.h"
 
 // ------------------------------------------------------------------------
@@ -142,6 +143,30 @@ void NeuronGroup::addExtraGlobalParams(std::map<string, string> &kernelParameter
             }
         }
     }
+}
+
+bool NeuronGroup::requiresRNG() const
+{
+    // Returns true if any parts of the neuron code require an RNG
+    if(::requiresRNG(getNeuronModel()->getSimCode())
+        || ::requiresRNG(getNeuronModel()->getThresholdConditionCode())
+        || ::requiresRNG(getNeuronModel()->getResetCode()))
+    {
+        return true;
+    }
+
+    // Loop through incoming synapse groups
+    for(const auto *sg : getInSyn()) {
+        // Return true if any parts of the postsynaptic model require an RNG
+        // **NOTE** these are included as they are simulated in the neuron kernel/function
+        if(::requiresRNG(sg->getPSModel()->getApplyInputCode())
+            || ::requiresRNG(sg->getPSModel()->getDecayCode()))
+        {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 std::string NeuronGroup::getQueueOffset(const std::string &devPrefix) const

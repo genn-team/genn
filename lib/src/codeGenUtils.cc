@@ -98,25 +98,28 @@ const char *mathsFuncs[][MathsFuncMax] = {
     {"fma", "fmaf"}
 };
 
+GenericFunction randomFuncs[] = {
+    {"gennrand_uniform", 0},
+    {"gennrand_normal", 0},
+    {"gennrand_log_normal", 2}
+};
+
 //--------------------------------------------------------------------------
 /*! \brief This function converts code to contain only explicit single precision (float) function calls (C99 standard)
  */
 //--------------------------------------------------------------------------
 void ensureMathFunctionFtype(string &code, const string &type)
 {
-    // Get number of maths functions
-    constexpr size_t numMathsFuncs = sizeof(mathsFuncs) / sizeof(mathsFuncs[0]);
-
     // If type is double, substitute any single precision maths functions for double precision version
     if (type == "double") {
-        for (size_t i = 0; i < numMathsFuncs; i++) {
-            substitute(code, string(mathsFuncs[i][MathsFuncSingle])+string("("), string(mathsFuncs[i][MathsFuncDouble])+string("("));
+        for(const auto &m : mathsFuncs) {
+            substitute(code, string(m[MathsFuncSingle])+string("("), string(m[MathsFuncDouble])+string("("));
         }
     }
     // Otherwise, substitute any double precision maths functions for single precision version
     else {
-        for (size_t i = 0; i < numMathsFuncs; i++) {
-            substitute(code, string(mathsFuncs[i][MathsFuncDouble])+string("("), string(mathsFuncs[i][MathsFuncSingle])+string("("));
+        for(const auto &m : mathsFuncs) {
+            substitute(code, string(m[MathsFuncDouble])+string("("), string(m[MathsFuncSingle])+string("("));
         }
     }
 }
@@ -151,7 +154,6 @@ void doFinal(string &code, unsigned int i, const string &type, unsigned int &sta
 //--------------------------------------------------------------------------
 //! \brief Tool for substituting strings in the neuron code strings or other templates
 //--------------------------------------------------------------------------
-
 void substitute(string &s, const string &trg, const string &rep)
 {
     size_t found= s.find(trg);
@@ -161,6 +163,29 @@ void substitute(string &s, const string &trg, const string &rep)
     }
 }
 
+//--------------------------------------------------------------------------
+//! \brief Does the code string contain any functions requiring random number generator
+//--------------------------------------------------------------------------
+bool requiresRNG(const std::string &code)
+{
+    // Loop through random functions
+    for(const auto &r : randomFuncs) {
+        // If this function takes no arguments, return true if
+        // generic function name enclosed in $() markers is found
+        if(r.numArguments == 0) {
+            if(code.find("$(" + r.genericName + ")") != std::string::npos) {
+                return true;
+            }
+        }
+        // Otherwise, return true if generic function name
+        // prefixed by $( and suffixed with comma is found
+        else if(code.find("$(" + r.genericName + ",") != std::string::npos) {
+            return true;
+        }
+    }
+    return false;
+
+}
 //--------------------------------------------------------------------------
 /*! \brief This function substitutes function calls in the form:
  *

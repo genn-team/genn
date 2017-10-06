@@ -19,9 +19,22 @@ namespace NeuronModels
 }
 
 //--------------------------------------------------------------------------
+// GenericFunction
+//--------------------------------------------------------------------------
+// Immutable structure for specifying the name and number of
+// arguments of a generic funcion e.g. gennrand_uniform
+struct GenericFunction
+{
+    const std::string genericName;
+    const unsigned int numArguments;
+};
+
+//--------------------------------------------------------------------------
 // FunctionTemplate
 //--------------------------------------------------------------------------
-// Immutable structure for specifying how to implement a generic function e.g. gennrand_uniform
+// Immutable structure for specifying how to implement
+// a generic function e.g. gennrand_uniform
+// **NOTE** for the sake of easy initialisation first two parameters of GenericFunction are repeated (C++17 fixes)
 struct FunctionTemplate
 {
     const std::string genericName;
@@ -71,8 +84,13 @@ inline PairKeyConstIter<BaseIter> GetPairKeyConstIter(BaseIter iter)
 //--------------------------------------------------------------------------
 //! \brief Tool for substituting strings in the neuron code strings or other templates
 //--------------------------------------------------------------------------
-
 void substitute(string &s, const string &trg, const string &rep);
+
+
+//--------------------------------------------------------------------------
+//! \brief Does the code string contain any functions requiring random number generator
+//--------------------------------------------------------------------------
+bool requiresRNG(const std::string &code);
 
 //--------------------------------------------------------------------------
 /*! \brief This function substitutes function calls in the form:

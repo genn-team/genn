@@ -111,6 +111,9 @@ public:
     //! Are any variables in any populations in this model using zero-copy memory?
     bool zeroCopyInUse() const;
 
+    //! Do any populations in this model require an RNG?
+    bool requiresRNG() const;
+
     //! Gets the name of the neuronal network model
     const std::string &getName() const{ return name; }
 

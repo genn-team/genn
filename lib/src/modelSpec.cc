@@ -83,9 +83,21 @@ bool NNmodel::zeroCopyInUse() const
         return true;
     }
 
-    // If any neuron groups use zero copy return true
+    // If any synapse groups use zero copy return true
     if(any_of(begin(m_SynapseGroups), end(m_SynapseGroups),
         [](const std::pair<string, SynapseGroup> &s){ return s.second.isZeroCopyEnabled(); }))
+    {
+        return true;
+    }
+
+    return false;
+}
+
+bool NNmodel::requiresRNG() const
+{
+    // If any neuron groups require an RNG return true
+    if(any_of(begin(m_NeuronGroups), end(m_NeuronGroups),
+        [](const std::pair<string, NeuronGroup> &n){ return n.second.requiresRNG(); }))
     {
         return true;
     }
