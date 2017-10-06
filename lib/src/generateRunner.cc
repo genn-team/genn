@@ -1048,6 +1048,13 @@ void genRunner(const NNmodel &model, //!< Model description
                                      n.second.getNumNeurons() * n.second.getNumDelaySlots());
         }
 
+#ifndef CPU_ONLY
+        if(n.second.requiresRNG()) {
+            allocate_device_variable(os, "curandState", "rng" + n.first, false,
+                                     n.second.getNumNeurons());
+        }
+#endif  // CPU_ONLY
+
         // Allocate memory for neuron model's state variables
         for(const auto &v : n.second.getNeuronModel()->getVars()) {
             mem += allocate_variable(os, v.second, v.first + n.first, n.second.isVarZeroCopyEnabled(v.first),
@@ -1270,6 +1277,11 @@ void genRunner(const NNmodel &model, //!< Model description
             free_variable(os, "sT" + n.first, n.second.isSpikeTimeZeroCopyEnabled());
         }
 
+#ifndef CPU_ONLY
+        if(n.second.requiresRNG()) {
+            free_device_variable(os, "rng" + n.first, false);
+        }
+#endif
         // Free neuron state variables
         for (auto const &v : n.second.getNeuronModel()->getVars()) {
             free_variable(os, v.first + n.first,
@@ -1457,6 +1469,47 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
         os << "                        __int_as_float(assumed)));" << std::endl;
         os << "    } while (assumed != old);" << std::endl;
         os << "    return __int_as_float(old);" << std::endl;
+        os << "}" << std::endl;
+        os << std::endl;
+    }
+
+    if (model.requiresRNG()) {
+        os << "__device__ float exponentialDistFloat(curandState *rng) {" << std::endl;
+        os << "    float a = 0.0f;" << std::endl;
+        os << "    while (true) {" << std::endl;
+        os << "        float u = curand_uniform(rng);" << std::endl;
+        os << "        const float u0 = u;" << std::endl;
+        os << "        while (true) {" << std::endl;
+        os << "            float uStar = curand_uniform(rng);" << std::endl;
+        os << "            if (u < uStar) {" << std::endl;
+        os << "                return  a + u0;" << std::endl;
+        os << "            }" << std::endl;
+        os << "            u = curand_uniform(rng);" << std::endl;
+        os << "            if (u >= uStar) {" << std::endl;
+        os << "                break;" << std::endl;
+        os << "            }" << std::endl;
+        os << "        }" << std::endl;
+        os << "        a += 1.0f;" << std::endl;
+        os << "    }" << std::endl;
+        os << "}" << std::endl;
+        os << std::endl;
+        os << "__device__ double exponentialDistDouble(curandState *rng) {" << std::endl;
+        os << "    double a = 0.0f;" << std::endl;
+        os << "    while (true) {" << std::endl;
+        os << "        double u = curand_uniform_double(rng);" << std::endl;
+        os << "        const double u0 = u;" << std::endl;
+        os << "        while (true) {" << std::endl;
+        os << "            double uStar = curand_uniform_double(rng);" << std::endl;
+        os << "            if (u < uStar) {" << std::endl;
+        os << "                return  a + u0;" << std::endl;
+        os << "            }" << std::endl;
+        os << "            u = curand_uniform_double(rng);" << std::endl;
+        os << "            if (u >= uStar) {" << std::endl;
+        os << "                break;" << std::endl;
+        os << "            }" << std::endl;
+        os << "        }" << std::endl;
+        os << "        a += 1.0;" << std::endl;
+        os << "    }" << std::endl;
         os << "}" << std::endl;
         os << std::endl;
     }
