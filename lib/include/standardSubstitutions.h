@@ -47,7 +47,8 @@ void postSynapseApplyInput(
     const DerivedParamNameIterCtx &nmDerivedParams,
     const ExtraGlobalParamNameIterCtx &nmExtraGlobalParams,
     const std::vector<FunctionTemplate> functions,
-    const std::string &ftype);
+    const std::string &ftype,
+    const std::string &rng);
 
 void postSynapseDecay(
     std::string &pdCode,
@@ -57,7 +58,8 @@ void postSynapseDecay(
     const DerivedParamNameIterCtx &nmDerivedParams,
     const ExtraGlobalParamNameIterCtx &nmExtraGlobalParams,
     const std::vector<FunctionTemplate> functions,
-    const std::string &ftype);
+    const std::string &ftype,
+    const std::string &rng);
 
 void neuronThresholdCondition(
     std::string &thCode,
@@ -66,7 +68,8 @@ void neuronThresholdCondition(
     const DerivedParamNameIterCtx &nmDerivedParams,
     const ExtraGlobalParamNameIterCtx &nmExtraGlobalParams,
     const std::vector<FunctionTemplate> functions,
-    const std::string &ftype);
+    const std::string &ftype,
+    const std::string &rng);
 
 void neuronSim(
     std::string &sCode,
@@ -75,7 +78,8 @@ void neuronSim(
     const DerivedParamNameIterCtx &nmDerivedParams,
     const ExtraGlobalParamNameIterCtx &nmExtraGlobalParams,
     const std::vector<FunctionTemplate> functions,
-    const std::string &ftype);
+    const std::string &ftype,
+    const std::string &rng);
 
 void neuronSpikeEventCondition(
     std::string &eCode,
@@ -83,7 +87,8 @@ void neuronSpikeEventCondition(
     const VarNameIterCtx &nmVars,
     const ExtraGlobalParamNameIterCtx &nmExtraGlobalParams,
     const std::vector<FunctionTemplate> functions,
-    const std::string &ftype);
+    const std::string &ftype,
+    const std::string &rng);
 
 void neuronReset(
     std::string &rCode,
@@ -92,7 +97,8 @@ void neuronReset(
     const DerivedParamNameIterCtx &nmDerivedParams,
     const ExtraGlobalParamNameIterCtx &nmExtraGlobalParams,
     const std::vector<FunctionTemplate> functions,
-    const std::string &ftype);
+    const std::string &ftype,
+    const std::string &rng);
 
 void weightUpdateThresholdCondition(
     std::string &eCode,

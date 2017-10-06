@@ -15,7 +15,8 @@ void StandardSubstitutions::postSynapseApplyInput(
     const DerivedParamNameIterCtx &nmDerivedParams,
     const ExtraGlobalParamNameIterCtx &nmExtraGlobalParams,
     const std::vector<FunctionTemplate> functions,
-    const std::string &ftype)
+    const std::string &ftype,
+    const std::string &rng)
 {
     // Create iterators to iterate over the names of the postsynaptic model's initial values
     auto psmVars = VarNameIterCtx(sg->getPSModel()->getVars());
@@ -42,6 +43,7 @@ void StandardSubstitutions::postSynapseApplyInput(
     name_substitutions(psCode, "", nmExtraGlobalParams.nameBegin, nmExtraGlobalParams.nameEnd, ng.getName());
 
     functionSubstitutions(psCode, ftype, functions);
+    substitute(psCode, "$(rng)", rng);
     psCode = ensureFtype(psCode, ftype);
     checkUnreplacedVariables(psCode, "postSyntoCurrent");
 }
@@ -54,7 +56,8 @@ void StandardSubstitutions::postSynapseDecay(
     const DerivedParamNameIterCtx &nmDerivedParams,
     const ExtraGlobalParamNameIterCtx &,
     const std::vector<FunctionTemplate> functions,
-    const std::string &ftype)
+    const std::string &ftype,
+    const std::string &rng)
 {
     // Create iterators to iterate over the names of the postsynaptic model's initial values
     auto psmVars = VarNameIterCtx(sg->getPSModel()->getVars());
@@ -70,6 +73,7 @@ void StandardSubstitutions::postSynapseDecay(
     value_substitutions(pdCode, nmDerivedParams.nameBegin, nmDerivedParams.nameEnd, ng.getDerivedParams());
 
     functionSubstitutions(pdCode, ftype, functions);
+    substitute(pdCode, "$(rng)", rng);
     pdCode = ensureFtype(pdCode, ftype);
     checkUnreplacedVariables(pdCode, "postSynDecay");
 }
@@ -82,7 +86,8 @@ void StandardSubstitutions::neuronThresholdCondition(
     const DerivedParamNameIterCtx &nmDerivedParams,
     const ExtraGlobalParamNameIterCtx &nmExtraGlobalParams,
     const std::vector<FunctionTemplate> functions,
-    const std::string &ftype)
+    const std::string &ftype,
+    const std::string &rng)
 {
     substitute(thCode, "$(t)", "t");
     name_substitutions(thCode, "l", nmVars.nameBegin, nmVars.nameEnd, "");
@@ -93,6 +98,7 @@ void StandardSubstitutions::neuronThresholdCondition(
     name_substitutions(thCode, "", nmExtraGlobalParams.nameBegin, nmExtraGlobalParams.nameEnd, ng.getName());
 
     functionSubstitutions(thCode, ftype, functions);
+    substitute(thCode, "$(rng)", rng);
     thCode= ensureFtype(thCode, ftype);
     checkUnreplacedVariables(thCode,"thresholdConditionCode");
 }
@@ -104,7 +110,8 @@ void StandardSubstitutions::neuronSim(
     const DerivedParamNameIterCtx &nmDerivedParams,
     const ExtraGlobalParamNameIterCtx &nmExtraGlobalParams,
     const std::vector<FunctionTemplate> functions,
-    const std::string &ftype)
+    const std::string &ftype,
+    const std::string &rng)
 {
     substitute(sCode, "$(t)", "t");
     name_substitutions(sCode, "l", nmVars.nameBegin, nmVars.nameEnd, "");
@@ -115,6 +122,7 @@ void StandardSubstitutions::neuronSim(
     substitute(sCode, "$(sT)", "lsT");
 
     functionSubstitutions(sCode, ftype, functions);
+    substitute(sCode, "$(rng)", rng);
     sCode = ensureFtype(sCode, ftype);
     checkUnreplacedVariables(sCode, "neuron simCode");
 }
@@ -125,7 +133,8 @@ void StandardSubstitutions::neuronSpikeEventCondition(
     const VarNameIterCtx &nmVars,
     const ExtraGlobalParamNameIterCtx &nmExtraGlobalParams,
     const std::vector<FunctionTemplate> functions,
-    const std::string &ftype)
+    const std::string &ftype,
+    const std::string &rng)
 {
     // code substitutions ----
     substitute(eCode, "$(t)", "t");
@@ -133,6 +142,7 @@ void StandardSubstitutions::neuronSpikeEventCondition(
     name_substitutions(eCode, "", nmExtraGlobalParams.nameBegin, nmExtraGlobalParams.nameEnd, ng.getName());
 
     functionSubstitutions(eCode, ftype, functions);
+    substitute(eCode, "$(rng)", rng);
     eCode = ensureFtype(eCode, ftype);
     checkUnreplacedVariables(eCode, "neuronSpkEvntCondition");
 }
@@ -144,7 +154,8 @@ void StandardSubstitutions::neuronReset(
     const DerivedParamNameIterCtx &nmDerivedParams,
     const ExtraGlobalParamNameIterCtx &nmExtraGlobalParams,
     const std::vector<FunctionTemplate> functions,
-    const std::string &ftype)
+    const std::string &ftype,
+    const std::string &rng)
 {
     substitute(rCode, "$(t)", "t");
     name_substitutions(rCode, "l", nmVars.nameBegin, nmVars.nameEnd, "");
@@ -155,6 +166,7 @@ void StandardSubstitutions::neuronReset(
     name_substitutions(rCode, "", nmExtraGlobalParams.nameBegin, nmExtraGlobalParams.nameEnd, ng.getName());
 
     functionSubstitutions(rCode, ftype, functions);
+    substitute(rCode, "$(rng)", rng);
     rCode = ensureFtype(rCode, ftype);
     checkUnreplacedVariables(rCode, "resetCode");
 }

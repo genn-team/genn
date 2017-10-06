@@ -265,7 +265,7 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
             substitute(psCode, "$(id)", "n");
             substitute(psCode, "$(inSyn)", "inSyn" + sg->getName() + "[n]");
             StandardSubstitutions::postSynapseApplyInput(psCode, sg, n.second,
-                nmVars, nmDerivedParams, nmExtraGlobalParams, cpuFunctions, model.getPrecision());
+                nmVars, nmDerivedParams, nmExtraGlobalParams, cpuFunctions, model.getPrecision(), "rng");
 
             if (!psm->getSupportCode().empty()) {
                 os << CodeStream::OB(29) << " using namespace " << sg->getName() << "_postsyn;" << std::endl;
@@ -289,7 +289,7 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
             substitute(thCode, "$(id)", "n");
             StandardSubstitutions::neuronThresholdCondition(thCode, n.second,
                                                             nmVars, nmDerivedParams, nmExtraGlobalParams,
-                                                            cpuFunctions, model.getPrecision());
+                                                            cpuFunctions, model.getPrecision(), "rng");
             if (GENN_PREFERENCES::autoRefractory) {
                 os << "bool oldSpike= (" << thCode << ");" << std::endl;
             }
@@ -300,7 +300,7 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
         substitute(sCode, "$(id)", "n");
         StandardSubstitutions::neuronSim(sCode, n.second,
                                          nmVars, nmDerivedParams, nmExtraGlobalParams,
-                                         cpuFunctions, model.getPrecision());
+                                         cpuFunctions, model.getPrecision(), "rng");
         if (nm->isPoisson()) {
             substitute(sCode, "lrate", "rates" + n.first + "[n + offset" + n.first + "]");
         }
@@ -312,8 +312,8 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
         if (n.second.isSpikeEventRequired()) {
             // Generate spike event test
             StandardGeneratedSections::neuronSpikeEventTest(os, n.second,
-                                                            nmVars, nmExtraGlobalParams,
-                                                            "n", cpuFunctions, model.getPrecision());
+                                                            nmVars, nmExtraGlobalParams, "n",
+                                                            cpuFunctions, model.getPrecision(), "rng");
 
             os << "// register a spike-like event" << std::endl;
             os << "if (spikeLikeEvent)" << CodeStream::OB(30);
@@ -355,7 +355,7 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
                 substitute(rCode, "$(id)", "n");
                 StandardSubstitutions::neuronReset(rCode, n.second,
                                                    nmVars, nmDerivedParams, nmExtraGlobalParams,
-                                                   cpuFunctions, model.getPrecision());
+                                                   cpuFunctions, model.getPrecision(), "rng");
                 os << "// spike reset code" << std::endl;
                 os << rCode << std::endl;
             }
@@ -373,7 +373,7 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
             substitute(pdCode, "$(inSyn)", "inSyn" + sg->getName() + "[n]");
             StandardSubstitutions::postSynapseDecay(pdCode, sg, n.second,
                                                     nmVars, nmDerivedParams, nmExtraGlobalParams,
-                                                    cpuFunctions, model.getPrecision());
+                                                    cpuFunctions, model.getPrecision(), "rng");
             os << "// the post-synaptic dynamics" << std::endl;
             if (!psm->getSupportCode().empty()) {
                 os << CodeStream::OB(29) << " using namespace " << sg->getName() << "_postsyn;" << std::endl;
