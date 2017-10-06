@@ -2200,6 +2200,7 @@ void genMakefile(const NNmodel &model, //!< Model description
     if (GENN_PREFERENCES::optimizeCode) nvccFlags += " -O3 -use_fast_math -Xcompiler \"-ffast-math\"";
     if (GENN_PREFERENCES::debugCode) nvccFlags += " -O0 -g -G";
     if (GENN_PREFERENCES::showPtxInfo) nvccFlags += " -Xptxas \"-v\"";
+    if (model.requiresRNG()) nvccFlags += " -std=c++11";
 
     os << endl;
     os << "NVCC           :=\"" << NVCC << "\"" << endl;
