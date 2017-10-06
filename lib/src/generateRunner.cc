@@ -214,10 +214,15 @@ void genDefinitions(const NNmodel &model, //!< Model description
     os << std::endl;
 
     os << "#include \"utils.h\"" << std::endl;
-    if (model.isTimingEnabled()) os << "#include \"hr_time.h\"" << std::endl;
+    if (model.isTimingEnabled()) {
+        os << "#include \"hr_time.h\"" << std::endl;
+    }
     os << "#include \"sparseUtils.h\"" << std::endl << std::endl;
     os << "#include \"sparseProjection.h\"" << std::endl;
-    os << "#include <stdint.h>" << std::endl;
+    os << "#include <cstdint>" << std::endl;
+    if (model.requiresRNG()) {
+        os << "#include <random>" << std::endl;
+    }
     os << std::endl;
 
 #ifndef CPU_ONLY
@@ -308,7 +313,10 @@ void genDefinitions(const NNmodel &model, //!< Model description
         }
     }
     os << std::endl;
-
+    if(model.requiresRNG()) {
+        os << "extern std::mt19937 rng;" << std::endl;
+    }
+    os << std::endl;
 
     //---------------------------------
     // HOST AND DEVICE NEURON VARIABLES
@@ -601,7 +609,7 @@ void genDefinitions(const NNmodel &model, //!< Model description
     os << std::endl;
 #endif
 
-    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// --------------3200----------------------------------------------------------" << std::endl;
     os << "// initialization of variables, e.g. reverse sparse arrays etc." << std::endl;
     os << "// that the user would not want to worry about" << std::endl;
     os << std::endl;
@@ -802,7 +810,10 @@ void genRunner(const NNmodel &model, //!< Model description
         }
     } 
     os << std::endl;
-
+    if(model.requiresRNG()) {
+        os << "std::mt19937 rng;" << std::endl;
+    }
+    os << std::endl;
 
     //---------------------------------
     // HOST AND DEVICE NEURON VARIABLES
@@ -1090,6 +1101,9 @@ void genRunner(const NNmodel &model, //!< Model description
 
     if (model.getSeed() == 0) {
         os << "    srand((unsigned int) time(NULL));" << std::endl;
+        //os << std::endl;
+        //os << "    std::random_device rd;" << std::endl;
+        //os << "    rng.seed(rd);" << std::endl;
     }
     else {
         os << "    srand((unsigned int) " << model.getSeed() << ");" << std::endl;
@@ -2323,7 +2337,7 @@ void genMakefile(const NNmodel &model, //!< Model description
     cxxFlags += " " + GENN_PREFERENCES::userCxxFlagsGNU;
     if (GENN_PREFERENCES::optimizeCode) cxxFlags += " -O3 -ffast-math";
     if (GENN_PREFERENCES::debugCode) cxxFlags += " -O0 -g";
-
+    if (model.requiresRNG()) cxxFlags += " -std=c++11";
     os << endl;
     os << "CXXFLAGS       :=" << cxxFlags << endl;
     os << endl;
