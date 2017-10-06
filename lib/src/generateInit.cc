@@ -30,6 +30,7 @@ unsigned int genInitNeuronKernel(CodeStream &os, const NNmodel &model)
     os << "const unsigned int id = " << initBlkSz << " * blockIdx.x + threadIdx.x;" << std::endl;
 
     // Loop through neuron groups
+    unsigned int sequence = 0;
     for(const auto &n : model.getNeuronGroups()) {
         // If this group requires an RNG
         if(n.second.requiresRNG()) {
@@ -47,8 +48,14 @@ unsigned int genInitNeuronKernel(CodeStream &os, const NNmodel &model)
             }
             os << "const unsigned int lid = id - " << startThread << ";" << std::endl;
 
-
+            os << "// only do this for existing neurons" << std::endl;
+            os << "if (lid < " << n.second.getNumNeurons() << ")" << CodeStream::OB(30);
+            os << "curand_init(" << model.getSeed() << ", " << sequence << " + lid, 0, &dd_rng" << n.first << "[lid]);" << std::endl;
+            os << CodeStream::CB(30);
             os << CodeStream::CB(20);
+
+            // Increment sequence number
+            sequence++;
 
             // Update start thread
             startThread = endThread;
@@ -203,7 +210,7 @@ void genInit(const NNmodel &model,          //!< Model description
             auto wuVars = wu->getVars();
             for (size_t k= 0, l= wuVars.size(); k < l; k++) {
                 os << "    " << oB << "for (int i = 0; i < " << numSrcNeurons * numTrgNeurons << "; i++) {" << std::endl;
-                if (wuVars[k].second == model.getPrecision()) {
+                if     (wuVars[k].second == model.getPrecision()) {
                     os << "        " << wuVars[k].first << s.first << "[i] = " << model.scalarExpr(s.second.getWUInitVals()[k]) << ";" << std::endl;
                 }
                 else {
@@ -231,6 +238,14 @@ void genInit(const NNmodel &model,          //!< Model description
     os << std::endl << std::endl;
 #ifndef CPU_ONLY
     os << "    copyStateToDevice();" << std::endl << std::endl;
+
+    // If any init threads were required, perform init kernel launch
+    if(numInitThreads > 0) {
+        os << "    // perform on-device init" << std::endl;
+        os << "    dim3 iThreads(" << initBlkSz << ", 1);" << std::endl;
+        os << "    dim3 iGrid(" << numInitThreads / initBlkSz << ", 1);" << std::endl;
+        os << "    init <<<iGrid, iThreads>>>();" << std::endl;
+    }
     os << "    //initializeAllSparseArrays(); //I comment this out instead of removing to keep in mind that sparse arrays need to be initialised manually by hand later" << std::endl;
 #endif
     os << "}" << std::endl << std::endl;
