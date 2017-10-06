@@ -39,9 +39,9 @@
 namespace
 {
 const std::vector<FunctionTemplate> cudaFunctions = {
-    {"gennrand_uniform", 0, "curand_uniform_double($(rngState))", "curand_uniform($(rngState))"},
-    {"gennrand_normal", 0, "curand_normal_double($(rngState))", "curand_normal($(rngState))"},
-    {"gennrand_log_normal", 2, "curand_log_normal_double($(rngState), $(0), $(1))", "curand_log_normal_float($(rngState), $(0), $(1))"},
+    {"gennrand_uniform", 0, "curand_uniform_double($(rng))", "curand_uniform($(rng))"},
+    {"gennrand_normal", 0, "curand_normal_double($(rng))", "curand_normal($(rng))"},
+    {"gennrand_log_normal", 2, "curand_log_normal_double($(rng), $(0), $(1))", "curand_log_normal_float($(rng), $(0), $(1))"},
 };
 
 
@@ -492,6 +492,10 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
 
         const auto *nm = n.second.getNeuronModel();
 
+        // Get name of rng to use for this neuron
+        // **TODO** Phillox option
+        const std::string rngName = "&dd_rng" + n.first + "[" + localID + "]";
+
         // Create iteration context to iterate over the variables; derived and extra global parameters
         VarNameIterCtx nmVars(nm->getVars());
         DerivedParamNameIterCtx nmDerivedParams(nm->getDerivedParams());
@@ -536,7 +540,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
             substitute(psCode, "$(inSyn)", "linSyn" + sg->getName());
             StandardSubstitutions::postSynapseApplyInput(psCode, sg, n.second,
                 nmVars, nmDerivedParams, nmExtraGlobalParams,
-                cudaFunctions, model.getPrecision());
+                cudaFunctions, model.getPrecision(), rngName);
 
             if (!psm->getSupportCode().empty()) {
                 os << CodeStream::OB(29) << " using namespace " << sg->getName() << "_postsyn;" << std::endl;
@@ -559,7 +563,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
             substitute(thCode, "$(id)", localID);
             StandardSubstitutions::neuronThresholdCondition(thCode, n.second,
                                                             nmVars, nmDerivedParams, nmExtraGlobalParams,
-                                                            cudaFunctions, model.getPrecision());
+                                                            cudaFunctions, model.getPrecision(), rngName);
             if (GENN_PREFERENCES::autoRefractory) {
                 os << "bool oldSpike= (" << thCode << ");" << std::endl;
             }
@@ -570,15 +574,15 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
         substitute(sCode, "$(id)", localID);
         StandardSubstitutions::neuronSim(sCode, n.second,
                                          nmVars, nmDerivedParams, nmExtraGlobalParams,
-                                         cudaFunctions, model.getPrecision());
+                                         cudaFunctions, model.getPrecision(), rngName);
         os << sCode << std::endl;
 
         // look for spike type events first.
         if (n.second.isSpikeEventRequired()) {
            // Generate spike event test
             StandardGeneratedSections::neuronSpikeEventTest(os, n.second,
-                                                            nmVars, nmExtraGlobalParams,
-                                                            localID, cudaFunctions, model.getPrecision());
+                                                            nmVars, nmExtraGlobalParams, localID,
+                                                            cudaFunctions, model.getPrecision(), rngName);
 
             os << "// register a spike-like event" << std::endl;
             os << "if (spikeLikeEvent)" << CodeStream::OB(30);
@@ -605,7 +609,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
                 substitute(rCode, "$(id)", localID);
                 StandardSubstitutions::neuronReset(rCode, n.second,
                                                    nmVars, nmDerivedParams, nmExtraGlobalParams,
-                                                   cudaFunctions, model.getPrecision());
+                                                   cudaFunctions, model.getPrecision(), rngName);
                 os << "// spike reset code" << std::endl;
                 os << rCode << std::endl;
             }
@@ -626,7 +630,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
             substitute(pdCode, "$(inSyn)", "linSyn" + sg->getName());
             StandardSubstitutions::postSynapseDecay(pdCode, sg, n.second,
                                                     nmVars, nmDerivedParams, nmExtraGlobalParams,
-                                                    cudaFunctions, model.getPrecision());
+                                                    cudaFunctions, model.getPrecision(), rngName);
             if (!psm->getSupportCode().empty()) {
                 os << CodeStream::OB(29) << " using namespace " << sg->getName() << "_postsyn;" << std::endl;
             }

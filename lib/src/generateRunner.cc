@@ -222,6 +222,9 @@ void genDefinitions(const NNmodel &model, //!< Model description
     os << "#include <cstdint>" << std::endl;
     if (model.requiresRNG()) {
         os << "#include <random>" << std::endl;
+#ifndef CPU_ONLY
+        os << "#include <curand_kernel.h>" << std::endl;
+#endif
     }
     os << std::endl;
 
@@ -338,7 +341,12 @@ void genDefinitions(const NNmodel &model, //!< Model description
         if (n.second.isSpikeTimeRequired()) {
             extern_variable_def(os, model.getPrecision()+" *", "sT"+n.first);
         }
-
+#ifndef CPU_ONLY
+        // **TODO** Phillox option
+        if(n.second.requiresRNG()) {
+            os << "extern curandState *d_rng" << n.first << ";" << std::endl;
+        }
+#endif
         auto neuronModel = n.second.getNeuronModel();
         for(auto const &v : neuronModel->getVars()) {
             extern_variable_def(os, v.second +" *", v.first + n.first);
@@ -841,6 +849,12 @@ void genRunner(const NNmodel &model, //!< Model description
         if (n.second.isSpikeTimeRequired()) {
             variable_def(os, model.getPrecision()+" *", "sT"+n.first);
         }
+#ifndef CPU_ONLY
+        if(n.second.requiresRNG()) {
+            os << "curandState *d_rng" << n.first << ";" << std::endl;
+            os << "__device__ curandState *dd_rng" << n.first << ";" << std::endl;
+        }
+#endif
 
         auto neuronModel = n.second.getNeuronModel();
         for(auto const &v : neuronModel->getVars()) {
