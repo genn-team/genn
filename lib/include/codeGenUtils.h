@@ -36,6 +36,13 @@ struct GenericFunction
 // **NOTE** for the sake of easy initialisation first two parameters of GenericFunction are repeated (C++17 fixes)
 struct FunctionTemplate
 {
+	// **HACK** while GCC and CLang automatically generate this fine/don't require it, VS2013 seems to need it
+	FunctionTemplate operator = (const FunctionTemplate &o)
+	{
+		return FunctionTemplate{o.genericName, o.numArguments,
+								o.doublePrecisionTemplate, o.singlePrecisionTemplate};
+	}
+	
     const std::string genericName;
     const unsigned int numArguments;
 

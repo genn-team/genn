@@ -261,8 +261,7 @@ void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
             if (GENN_PREFERENCES::optimizeCode) nvccFlags += " -O3 -use_fast_math";
             if (GENN_PREFERENCES::debugCode) nvccFlags += " -O0 -g -G";
             if (GENN_PREFERENCES::showPtxInfo) nvccFlags += " -Xptxas \"-v\"";
-            if (model.isRNGRequired()) nvccFlags += " -std=c++11";
-
+            
 #ifdef _WIN32
             nvccFlags += " -I\"%GENN_PATH%\\lib\\include\"";
             string runnerPath = path + "\\" + model.getName() + "_CODE\\runner.cc";
@@ -270,6 +269,7 @@ void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
             string nvccCommand = "\"\"" NVCC "\" " + nvccFlags;
             nvccCommand += " -o \"" + cubinPath + "\" \"" + runnerPath + "\"\"";
 #else
+			if (model.isRNGRequired()) nvccFlags += " -std=c++11";
             nvccFlags += " -I\"$GENN_PATH/lib/include\"";
             string runnerPath = path + "/" + model.getName() + "_CODE/runner.cc";
             string cubinPath = path + "/runner.cubin";

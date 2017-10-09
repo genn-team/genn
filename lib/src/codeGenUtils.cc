@@ -276,7 +276,7 @@ void functionSubstitute(std::string &code, const std::string &funcName,
 
                     // If this isn't a space at function bracket depth,
                     // add to parameter string
-                    if(bracketDepth > 0 || !std::isspace(code[i])) {
+                    if(bracketDepth > 0 || !::isspace(code[i])) {
                         currentParam += code[i];
                     }
                 }
