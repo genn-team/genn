@@ -26,9 +26,9 @@
 #include "codeGenUtils.h"
 #include "codeStream.h"
 
-#include <stdint.h>
 #include <algorithm>
 #include <cfloat>
+#include <cstdint>
 
 //--------------------------------------------------------------------------
 // Anonymous namespace
@@ -219,7 +219,8 @@ void genDefinitions(const NNmodel &model, //!< Model description
     }
     os << "#include \"sparseUtils.h\"" << std::endl << std::endl;
     os << "#include \"sparseProjection.h\"" << std::endl;
-    os << "#include <cstdint>" << std::endl;
+    // **YUCK** because code is, by default, not build with C++11 the <cstdint> header is not present
+    os << "#include <stdint.h>" << std::endl;
     if (model.isRNGRequired()) {
         os << "#include <random>" << std::endl;
 #ifndef CPU_ONLY
