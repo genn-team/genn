@@ -6,37 +6,42 @@
 
 // **NOTE** base-class for simulation tests must be
 // included after auto-generated globals are includes
-#include "../../utils/simulation_test_histogram.h"
+#include "../../utils/simulation_test_samples.h"
 #include "../../utils/stats.h"
 
 //----------------------------------------------------------------------------
 // SimTest
 //----------------------------------------------------------------------------
-class SimTest : public SimulationTestHistogram
+class SimTest : public SimulationTestSamples
 {
 public:
-    SimTest() : SimulationTestHistogram(0, 1.0, 100){}
-
     //----------------------------------------------------------------------------
     // SimulationTestHistogram virtuals
     //----------------------------------------------------------------------------
-    virtual bool Test(const std::vector<double> &bins) const
+    virtual bool Test(std::vector<double> &samples) const
     {
-        // Expected probability mass in each bin
-        std::vector<double> ebins(100);
-        std::fill(ebins.begin(), ebins.end(), 10000.0 * 1000.0 / 100.0);
-
-        // Calculate chi-squared
-        double df;
-        double chiSquared;
+        // Perform Kolmogorov-Smirnov test
+        double d;
         double prob;
-        std::tie(df, chiSquared, prob) = Stats::chiSquared(bins, ebins);
-        std::cout << chiSquared << "," << prob << std::endl;
-        return true;
+        std::tie(d, prob) = Stats::kolmogorovSmirnovTest(samples,
+            [](double x)
+            {
+                if(x < 0.0) {
+                    return 0.0;
+                }
+                else if(x > 1.0) {
+                    return 0.0;
+                }
+                else {
+                    return x;
+                }
+            });
+
+        return (prob > 0.05);
     }
 };
 
-TEST_P(SimTest, ChiSquared)
+TEST_P(SimTest, KolmogorovSmirnovTest)
 {
     // Check total error is less than some tolerance
     EXPECT_TRUE(Simulate());
