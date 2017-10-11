@@ -20,7 +20,7 @@ public:
     //----------------------------------------------------------------------------
     // Declared virtuals
     //----------------------------------------------------------------------------
-    virtual bool Test(std::vector<double> &samples) const = 0;
+    virtual double Test(std::vector<double> &samples) const = 0;
 
     //----------------------------------------------------------------------------
     // SimulationTest virtuals

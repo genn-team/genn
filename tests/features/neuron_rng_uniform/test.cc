@@ -18,7 +18,7 @@ public:
     //----------------------------------------------------------------------------
     // SimulationTestHistogram virtuals
     //----------------------------------------------------------------------------
-    virtual bool Test(std::vector<double> &samples) const
+    virtual double Test(std::vector<double> &samples) const
     {
         // Perform Kolmogorov-Smirnov test
         double d;
@@ -29,15 +29,15 @@ public:
                 if(x < 0.0) {
                     return 0.0;
                 }
-                else if(x > 1.0) {
-                    return 0.0;
+                else if(x >= 1.0) {
+                    return 1.0;
                 }
                 else {
                     return x;
                 }
             });
 
-        return (prob > 0.05);
+        return prob;
     }
 };
 

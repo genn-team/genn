@@ -18,7 +18,7 @@ public:
     //----------------------------------------------------------------------------
     // SimulationTestHistogram virtuals
     //----------------------------------------------------------------------------
-    virtual bool Test(std::vector<double> &samples) const
+    virtual double Test(std::vector<double> &samples) const
     {
         // Perform Kolmogorov-Smirnov test
         double d;
@@ -29,14 +29,14 @@ public:
                 return 0.5 * (1.0 + erf(x / sqrt(2.0)));
             });
 
-        return (prob > 0.05);
+        return prob;
     }
 };
 
 TEST_P(SimTest, KolmogorovSmirnovTest)
 {
-    // Check total error is less than some tolerance
-    EXPECT_TRUE(Simulate());
+    // Check p value passes 95% confidence interval
+    EXPECT_GT(Simulate(), 0.05);
 }
 
 #ifndef CPU_ONLY
