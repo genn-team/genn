@@ -83,9 +83,21 @@ bool NNmodel::zeroCopyInUse() const
         return true;
     }
 
-    // If any neuron groups use zero copy return true
+    // If any synapse groups use zero copy return true
     if(any_of(begin(m_SynapseGroups), end(m_SynapseGroups),
         [](const std::pair<string, SynapseGroup> &s){ return s.second.isZeroCopyEnabled(); }))
+    {
+        return true;
+    }
+
+    return false;
+}
+
+bool NNmodel::isRNGRequired() const
+{
+    // If any neuron groups require an RNG return true
+    if(any_of(begin(m_NeuronGroups), end(m_NeuronGroups),
+        [](const std::pair<string, NeuronGroup> &n){ return n.second.isRNGRequired(); }))
     {
         return true;
     }
@@ -333,7 +345,7 @@ SynapseGroup *NNmodel::addSynapsePopulation(
   SynapseGType, /**< The way how the synaptic conductivity g will be defined*/
   const string &, /**< Name of the (existing!) pre-synaptic neuron population*/
   const string &, /**< Name of the (existing!) post-synaptic neuron population*/
-  const double */**< A C-type array of doubles that contains synapse parameter values (common to all synapses of the population) which will be used for the defined synapses.*/)
+  const double*) /**< A C-type array of doubles that contains synapse parameter values (common to all synapses of the population) which will be used for the defined synapses.*/
 {
   gennError("This version of addSynapsePopulation() has been deprecated since GeNN 2.2. Please use the newer addSynapsePopulation functions instead.");
   return NULL;

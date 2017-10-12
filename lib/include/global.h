@@ -46,16 +46,19 @@ namespace GENN_PREFERENCES {
     extern unsigned int synapseBlockSize;
     extern unsigned int learningBlockSize;
     extern unsigned int synapseDynamicsBlockSize;
+    extern unsigned int initBlockSize;
     extern unsigned int autoRefractory; //!< Flag for signalling whether spikes are only reported if thresholdCondition changes from false to true (autoRefractory == 1) or spikes are emitted whenever thresholdCondition is true no matter what.%
     extern std::string userCxxFlagsWIN; //!< Allows users to set specific C++ compiler options they may want to use for all host side code (used for windows platforms)
     extern std::string userCxxFlagsGNU; //!< Allows users to set specific C++ compiler options they may want to use for all host side code (used for unix based platforms)
     extern std::string userNvccFlags; //!< Allows users to set specific nvcc compiler options they may want to use for all GPU code (identical for windows and unix platforms)
 }
 
-extern unsigned int neuronBlkSz; //!< Global variable containing the GPU block size for the neuron kernel
-extern unsigned int synapseBlkSz; //!< Global variable containing the GPU block size for the synapse kernel
-extern unsigned int learnBlkSz; //!< Global variable containing the GPU block size for the learn kernel
-extern unsigned int synDynBlkSz; //!< Global variable containing the GPU block size for the synapse dynamics kernel
+extern unsigned int neuronBlkSz;    //!< Global variable containing the GPU block size for the neuron kernel
+extern unsigned int synapseBlkSz;   //!< Global variable containing the GPU block size for the synapse kernel
+extern unsigned int learnBlkSz;     //!< Global variable containing the GPU block size for the learn kernel
+extern unsigned int synDynBlkSz;    //!< Global variable containing the GPU block size for the synapse dynamics kernel
+extern unsigned int initBlkSz;      //!< Global variable containing the GPU block size for the initialization kernel
+
 //extern vector<cudaDeviceProp> deviceProp; //!< Global vector containing the properties of all CUDA-enabled devices
 //extern vector<int> synapseBlkSz; //!< Global vector containing the optimum synapse kernel block size for each device
 //extern vector<int> learnBlkSz; //!< Global vector containing the optimum learn kernel block size for each device
