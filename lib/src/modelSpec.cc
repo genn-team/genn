@@ -232,9 +232,18 @@ NeuronGroup *NNmodel::addNeuronPopulation(
         gennError("The number of variable initial values for neuron group " + name + " does not match that of their neuron type, " + to_string(ini.size()) + " != " + to_string(nModels[type].varNames.size()));
     }
 
+    // Create variable initialisers from old-style values
+    std::vector<NewModels::VarInit> varInitialisers;
+    varInitialisers.reserve(ini.size());
+    std::transform(ini.cbegin(), ini.cend(), std::back_inserter(varInitialisers),
+                   [](double v)
+                   {
+                       return NewModels::VarInit::create(v);
+                   });
+
     // Add neuron group
     auto result = m_NeuronGroups.insert(
-        pair<string, NeuronGroup>(name, NeuronGroup(name, nNo, new NeuronModels::LegacyWrapper(type), p, ini)));
+        pair<string, NeuronGroup>(name, NeuronGroup(name, nNo, new NeuronModels::LegacyWrapper(type), p, varInitialisers)));
 
     if(!result.second)
     {

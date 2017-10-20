@@ -31,16 +31,20 @@ namespace NewModels
 class VarInit
 {
 public:
+    VarInit(const VarInitSnippet::Base *snippet, const std::vector<double> &params)
+        : m_Snippet(snippet), m_Params(params)
+    {
+    }
+
     template<typename Snippet>
-    static VarInit init(const typename Snippet::ParamValues &params)
+    static VarInit create(const typename Snippet::ParamValues &params)
     {
         return VarInit(Snippet::getInstance(), params.getValues());
     }
 
-
-    VarInit(const VarInitSnippet::Base *snippet, const std::vector<double> &params)
-        : m_Snippet(snippet), m_Params(params)
+    static VarInit create(double value)
     {
+        return VarInit(VarInitSnippet::Constant::getInstance(), {value});
     }
 
 private:
@@ -63,7 +67,7 @@ private:
     //----------------------------------------------------------------------------
     // Typedefines
     //----------------------------------------------------------------------------
-    typedef std::array<VarInit, NumVars> InitialiserArray;
+    typedef std::vector<VarInit> InitialiserArray;
 
 public:
     // **NOTE** other less terrifying forms of constructor won't complain at compile time about
@@ -74,13 +78,22 @@ public:
         static_assert(sizeof...(initialisers) == NumVars, "Wrong number of initialisers");
     }
 
+    VarInitContainerBase(const Snippet::ValueBase<NumVars> &varValues)
+    {
+        m_Initialisers.reserve(NumVars);
+
+        for(size_t i = 0; i < NumVars; i++) {
+            m_Initialisers.push_back(VarInit::create(varValues[i]));
+        }
+    }
+
     //----------------------------------------------------------------------------
     // Public API
     //----------------------------------------------------------------------------
     //! Gets initialisers as a vector of Values
-    std::vector<VarInit> getInitialisers() const
+    const std::vector<VarInit> &getInitialisers() const
     {
-        return std::vector<VarInit>(m_Initialisers.cbegin(), m_Initialisers.cend());
+        return m_Initialisers;
     }
 
     //----------------------------------------------------------------------------
@@ -103,7 +116,7 @@ private:
 //----------------------------------------------------------------------------
 //! Template specialisation of ValueInitBase to avoid compiler warnings
 //! in the case when a model requires no variable initialisers
-template<>
+/*template<>
 class VarInitContainerBase<0>
 {
 public:
@@ -115,15 +128,19 @@ public:
         static_assert(sizeof...(initialisers) == 0, "Wrong number of initialisers");
     }
 
+    VarInitContainerBase(const Snippet::ValueBase<0> &)
+    {
+    }
+
     //----------------------------------------------------------------------------
     // Public API
     //----------------------------------------------------------------------------
     //! Gets initialisers as a vector of Values
-    std::vector<VarInit> getInitialisers() const
+    const std::vector<VarInit> getInitialisers() const
     {
         return {};
     }
-};
+};*/
 
 //----------------------------------------------------------------------------
 // NewModels::Base
@@ -173,7 +190,7 @@ public:
         return nm.pNames;
     }
 
-    //! Gets names of derived model parameters and the function objects to call to
+    //! Gets names of derived model parameters and theNeuronModel function objects to call to
     //! Calculate their value from a vector of model parameter values
     virtual DerivedParamVec getDerivedParams() const
     {

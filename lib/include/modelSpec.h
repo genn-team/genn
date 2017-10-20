@@ -172,7 +172,40 @@ public:
         \return pointer to newly created NeuronGroup */
     template<typename NeuronModel>
     NeuronGroup *addNeuronPopulation(const string &name, unsigned int size,
-                            const typename NeuronModel::ParamValues &paramValues, const typename NeuronModel::VarValues &varValues)
+                                     const typename NeuronModel::ParamValues &paramValues,
+                                     const typename NeuronModel::VarValues &varValues)
+    {
+        if (!GeNNReady) {
+            gennError("You need to call initGeNN first.");
+        }
+        if (final) {
+            gennError("Trying to add a neuron population to a finalized model.");
+        }
+
+        // Create variable initialisers from old-style values
+        typename NeuronModel::VarInitialisers varInitialisers(varValues);
+
+        // Add neuron group
+        auto result = m_NeuronGroups.insert(
+            pair<string, NeuronGroup>(
+                name, NeuronGroup(name, size, NeuronModel::getInstance(),
+                                  paramValues.getValues(), varInitialisers.getInitialisers())));
+
+        if(!result.second)
+        {
+            gennError("Cannot add a neuron population with duplicate name:" + name);
+            return NULL;
+        }
+        else
+        {
+            return &result.first->second;
+        }
+    }
+
+    template<typename NeuronModel>
+    NeuronGroup *addNeuronPopulation(const string &name, unsigned int size,
+                                     const typename NeuronModel::ParamValues &paramValues,
+                                     const typename NeuronModel::VarInitialisers &varInitialisers)
     {
         if (!GeNNReady) {
             gennError("You need to call initGeNN first.");
@@ -185,7 +218,7 @@ public:
         auto result = m_NeuronGroups.insert(
             pair<string, NeuronGroup>(
                 name, NeuronGroup(name, size, NeuronModel::getInstance(),
-                                  paramValues.getValues(), varValues.getValues())));
+                                  paramValues.getValues(), varInitialisers.getInitialisers())));
 
         if(!result.second)
         {
