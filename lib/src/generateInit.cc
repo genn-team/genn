@@ -10,6 +10,7 @@
 #include "codeStream.h"
 #include "global.h"
 #include "modelSpec.h"
+#include "standardSubstitutions.h"
 
 // ------------------------------------------------------------------------
 // Anonymous namespace
@@ -32,8 +33,8 @@ unsigned int genInitNeuronKernel(CodeStream &os, const NNmodel &model)
     unsigned int startThread = 0;
     unsigned int sequence = 0;
     for(const auto &n : model.getNeuronGroups()) {
-        // If this group requires an RNG
-        if(n.second.isRNGRequired()) {
+        // If this group requires an RNG or intialisation code to be run
+        if(n.second.isRNGRequired() || n.second.isInitCodeRequired()) {
             // Get padded size of group and hence it's end thread
             const unsigned int paddedSize = (unsigned int)(ceil((double)n.second.getNumNeurons() / (double)initBlkSz) * (double)initBlkSz);
             const unsigned int endThread = startThread + paddedSize;
@@ -50,7 +51,14 @@ unsigned int genInitNeuronKernel(CodeStream &os, const NNmodel &model)
 
             os << "// only do this for existing neurons" << std::endl;
             os << "if (lid < " << n.second.getNumNeurons() << ")" << CodeStream::OB(30);
-            os << "curand_init(" << model.getSeed() << ", " << sequence << " + lid, 0, &dd_rng" << n.first << "[lid]);" << std::endl;
+            if(n.second.isRNGRequired()) {
+                os << "curand_init(" << model.getSeed() << ", " << sequence << " + lid, 0, &dd_rng" << n.first << "[lid]);" << std::endl;
+            }
+            auto neuronModelVars = n.second.getNeuronModel()->getVars();
+            for (size_t j = 0; j < neuronModelVars.size(); j++) {
+                const auto &varInit = n.second.getVarInitialisers()[j];
+                os << StandardSubstitutions::initVariable(varInit, "dd_" +  neuronModelVars[j].first + n.first + "[lid] = $(0)", model.getPrecision()) << std::endl;
+            }
             os << CodeStream::CB(30);
             os << CodeStream::CB(20);
 
@@ -98,7 +106,7 @@ void genInit(const NNmodel &model,          //!< Model description
     os << "//-------------------------------------------------------------------------" << std::endl << std::endl;
 
     os << "void initialize()" << std::endl;
-    os << "{" << std::endl;
+    os << CodeStream::OB(10) << std::endl;
 
     // Extra braces around Windows for loops to fix https://support.microsoft.com/en-us/kb/315481
 #ifdef _WIN32
@@ -107,39 +115,40 @@ void genInit(const NNmodel &model,          //!< Model description
     std::string oB = "", cB = "";
 #endif // _WIN32
 
+    // Seed legacy RNG
     if (model.getSeed() == 0) {
-        os << "    srand((unsigned int) time(NULL));" << std::endl;
+        os << "srand((unsigned int) time(NULL));" << std::endl;
     }
     else {
-        os << "    srand((unsigned int) " << model.getSeed() << ");" << std::endl;
+        os << "srand((unsigned int) " << model.getSeed() << ");" << std::endl;
     }
 
     // If model requires an RNG
     if(model.isRNGRequired()) {
         // If no seed is specified, use system randomness to generate seed sequence
-        os << "    {" << std::endl;
+        os << CodeStream::OB(20);
         if (model.getSeed() == 0) {
-            os << "        uint32_t seedData[std::mt19937::state_size];" << std::endl;
-            os << "        std::random_device seedSource;" << std::endl;
-            os << "        " << oB << "for(int i = 0; i < std::mt19937::state_size; i++) {" << std::endl;
-            os << "            seedData[i] = seedSource();" << std::endl;
-            os << "        }" << cB << std::endl;
-            os << "        std::seed_seq seeds(std::begin(seedData), std::end(seedData));" << std::endl;
+            os << "uint32_t seedData[std::mt19937::state_size];" << std::endl;
+            os << "std::random_device seedSource;" << std::endl;
+            os << CodeStream::OB(30) << "for(int i = 0; i < std::mt19937::state_size; i++)" << CodeStream::OB(40);
+            os << "seedData[i] = seedSource();" << std::endl;
+            os << CodeStream::CB(40) << CodeStream::CB(30);
+            os << "std::seed_seq seeds(std::begin(seedData), std::end(seedData));" << std::endl;
         }
         // Otherwise, create a seed sequence from model seed
         // **NOTE** this is a terrible idea see http://www.pcg-random.org/posts/cpp-seeding-surprises.html
         else {
-            os << "        std::seed_seq seeds{" << model.getSeed() << "};" << std::endl;
+            os << "std::seed_seq seeds{" << model.getSeed() << "};" << std::endl;
         }
 
         // Seed RNG from seed sequence
-        os << "        rng.seed(seeds);" << std::endl;
-        os << "    }" << std::endl;
+        os << "rng.seed(seeds);" << std::endl;
+        os << CodeStream::CB(20);
     }
     os << std::endl;
 
     // INITIALISE NEURON VARIABLES
-    os << "    // neuron variables" << std::endl;
+    os << "// neuron variables" << std::endl;
     for(const auto &n : model.getNeuronGroups()) {
         if (n.second.isDelayRequired()) {
             os << "    spkQuePtr" << n.first << " = 0;" << std::endl;
@@ -151,62 +160,64 @@ void genInit(const NNmodel &model,          //!< Model description
         }
 
         if (n.second.isTrueSpikeRequired() && n.second.isDelayRequired()) {
-            os << "    " << oB << "for (int i = 0; i < " << n.second.getNumDelaySlots() << "; i++) {" << std::endl;
-            os << "        glbSpkCnt" << n.first << "[i] = 0;" << std::endl;
-            os << "    }" << cB << std::endl;
-            os << "    " << oB << "for (int i = 0; i < " << n.second.getNumNeurons() * n.second.getNumDelaySlots() << "; i++) {" << std::endl;
-            os << "        glbSpk" << n.first << "[i] = 0;" << std::endl;
-            os << "    }" << cB << std::endl;
+            os << CodeStream::OB(50) << "for (int i = 0; i < " << n.second.getNumDelaySlots() << "; i++)" << CodeStream::OB(60);
+            os << "glbSpkCnt" << n.first << "[i] = 0;" << std::endl;
+            os << CodeStream::CB(60) << CodeStream::CB(50) << std::endl;
+            os << CodeStream::OB(70) << "for (int i = 0; i < " << n.second.getNumNeurons() * n.second.getNumDelaySlots() << "; i++)" << CodeStream::OB(80);
+            os << "glbSpk" << n.first << "[i] = 0;" << std::endl;
+            os << CodeStream::CB(80) << CodeStream::CB(70) << std::endl;
         }
         else {
-            os << "    glbSpkCnt" << n.first << "[0] = 0;" << std::endl;
-            os << "    " << oB << "for (int i = 0; i < " << n.second.getNumNeurons() << "; i++) {" << std::endl;
-            os << "        glbSpk" << n.first << "[i] = 0;" << std::endl;
-            os << "    }" << cB << std::endl;
+            os << "glbSpkCnt" << n.first << "[0] = 0;" << std::endl;
+            os << CodeStream::OB(90) << "for (int i = 0; i < " << n.second.getNumNeurons() << "; i++)" << CodeStream::OB(100);
+            os << "glbSpk" << n.first << "[i] = 0;" << std::endl;
+            os << CodeStream::CB(100) << CodeStream::CB(90) << std::endl;
         }
 
         if (n.second.isSpikeEventRequired() && n.second.isDelayRequired()) {
-            os << "    " << oB << "for (int i = 0; i < " << n.second.getNumDelaySlots() << "; i++) {" << std::endl;
+            os << CodeStream::OB(110) << "for (int i = 0; i < " << n.second.getNumDelaySlots() << "; i++)" << CodeStream::OB(120);
             os << "        glbSpkCntEvnt" << n.first << "[i] = 0;" << std::endl;
-            os << "    }" << cB << std::endl;
-            os << "    " << oB << "for (int i = 0; i < " << n.second.getNumNeurons() * n.second.getNumDelaySlots() << "; i++) {" << std::endl;
-            os << "        glbSpkEvnt" << n.first << "[i] = 0;" << std::endl;
-            os << "    }" << cB << std::endl;
+            os << CodeStream::CB(120) << CodeStream::CB(110) << std::endl;
+            os << CodeStream::OB(130) << "for (int i = 0; i < " << n.second.getNumNeurons() * n.second.getNumDelaySlots() << "; i++)" << CodeStream::OB(140);
+            os << "glbSpkEvnt" << n.first << "[i] = 0;" << std::endl;
+            os << CodeStream::CB(140) << CodeStream::CB(130) << std::endl;
         }
         else if (n.second.isSpikeEventRequired()) {
-            os << "    glbSpkCntEvnt" << n.first << "[0] = 0;" << std::endl;
-            os << "    " << oB << "for (int i = 0; i < " << n.second.getNumNeurons() << "; i++) {" << std::endl;
-            os << "        glbSpkEvnt" << n.first << "[i] = 0;" << std::endl;
-            os << "    }" << cB << std::endl;
+            os << "glbSpkCntEvnt" << n.first << "[0] = 0;" << std::endl;
+            os << CodeStream::OB(150) << "for (int i = 0; i < " << n.second.getNumNeurons() << "; i++)" << CodeStream::OB(160);
+            os << "glbSpkEvnt" << n.first << "[i] = 0;" << std::endl;
+            os << CodeStream::CB(160) << CodeStream::OB(150) << std::endl;
         }
 
         if (n.second.isSpikeTimeRequired()) {
-            os << "    " << oB << "for (int i = 0; i < " << n.second.getNumNeurons() * n.second.getNumDelaySlots() << "; i++) {" << std::endl;
+            os << CodeStream::OB(170) << "for (int i = 0; i < " << n.second.getNumNeurons() * n.second.getNumDelaySlots() << "; i++)" << CodeStream::OB(180);
             os << "        sT" <<  n.first << "[i] = -SCALAR_MAX;" << std::endl;
-            os << "    }" << cB << std::endl;
+            os << CodeStream::CB(180) << CodeStream::CB(170) << std::endl;
         }
 
         auto neuronModelVars = n.second.getNeuronModel()->getVars();
         for (size_t j = 0; j < neuronModelVars.size(); j++) {
-            if (n.second.isVarQueueRequired(neuronModelVars[j].first)) {
-                os << "    " << oB << "for (int i = 0; i < " << n.second.getNumNeurons() * n.second.getNumDelaySlots() << "; i++) {" << std::endl;
+            const auto &varInit = n.second.getVarInitialisers()[j];
+
+            // If this variable has any initialisation code
+            if(!varInit.getSnippet()->getCode().empty()) {
+                if (n.second.isVarQueueRequired(neuronModelVars[j].first)) {
+                    os << CodeStream::OB(190) << "for (int i = 0; i < " << n.second.getNumNeurons() * n.second.getNumDelaySlots() << "; i++)" << CodeStream::OB(200);
+                }
+                else {
+                    os << CodeStream::OB(190) << "for (int i = 0; i < " << n.second.getNumNeurons() << "; i++)" << CodeStream::OB(200);
+                }
+
+                os << StandardSubstitutions::initVariable(varInit, neuronModelVars[j].first + n.first + "[i] = $(0)", model.getPrecision()) << std::endl;
+
+                os << CodeStream::CB(200) << CodeStream::CB(190) << std::endl;
             }
-            else {
-                os << "    " << oB << "for (int i = 0; i < " << n.second.getNumNeurons() << "; i++) {" << std::endl;
-            }
-            if (neuronModelVars[j].second == model.getPrecision()) {
-                os << "        " << neuronModelVars[j].first << n.first << "[i] = " << model.scalarExpr(n.second.getInitVals()[j]) << ";" << std::endl;
-            }
-            else {
-                os << "        " << neuronModelVars[j].first << n.first << "[i] = " << n.second.getInitVals()[j] << ";" << std::endl;
-            }
-            os << "    }" << cB << std::endl;
         }
 
         if (n.second.getNeuronModel()->isPoisson()) {
-            os << "    " << oB << "for (int i = 0; i < " << n.second.getNumNeurons() << "; i++) {" << std::endl;
-            os << "        seed" << n.first << "[i] = rand();" << std::endl;
-            os << "    }" << cB << std::endl;
+            os << CodeStream::OB(210) << "for (int i = 0; i < " << n.second.getNumNeurons() << "; i++)" << CodeStream::OB(220);
+            os << "seed" << n.first << "[i] = rand();" << std::endl;
+            os << CodeStream::CB(220) << CodeStream::CB(210) << std::endl;
         }
 
         /*if ((model.neuronType[i] == IZHIKEVICH) && (model.getDT() != 1.0)) {
@@ -270,6 +281,6 @@ void genInit(const NNmodel &model,          //!< Model description
     }
     os << "    //initializeAllSparseArrays(); //I comment this out instead of removing to keep in mind that sparse arrays need to be initialised manually by hand later" << std::endl;
 #endif
-    os << "}" << std::endl << std::endl;
+    os << CodeStream::CB(10) << std::endl;
 
 }

@@ -69,6 +69,11 @@ void NeuronGroup::initDerivedParams(double dt)
     for(const auto &d : derivedParams) {
         m_DerivedParams.push_back(d.second(m_Params, dt));
     }
+
+    // Initialise derived parameters for variable initialisers
+    for(auto &v : m_VarInitialisers) {
+        v.initDerivedParams(dt);
+    }
 }
 
 void NeuronGroup::calcSizes(unsigned int blockSize,  unsigned int &idStart, unsigned int &paddedIDStart)
@@ -167,6 +172,16 @@ bool NeuronGroup::isRNGRequired() const
     }
 
     return false;
+}
+
+bool NeuronGroup::isInitCodeRequired() const
+{
+    // Return true if any of the variables initialisers have any code
+    return std::any_of(m_VarInitialisers.cbegin(), m_VarInitialisers.cend(),
+                       [](const NewModels::VarInit &v)
+                       {
+                           return !v.getSnippet()->getCode().empty();
+                       });
 }
 
 std::string NeuronGroup::getQueueOffset(const std::string &devPrefix) const

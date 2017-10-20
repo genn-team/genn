@@ -108,6 +108,9 @@ public:
     //!< Does this neuron group require an RNG to simulate
     bool isRNGRequired() const;
 
+    //!< Does this neuron group require any init code to be run
+    bool isInitCodeRequired() const;
+
     // **THINK** do this really belong here - it is very code-generation specific
     std::string getQueueOffset(const std::string &devPrefix) const;
 

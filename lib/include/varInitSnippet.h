@@ -31,7 +31,7 @@ class Constant : public Base
 public:
     DECLARE_SNIPPET(VarInitSnippet::Constant, 1);
 
-    SET_CODE("$(set_value, $(value))");
+    SET_CODE("$(set_value, $(value));");
 
     SET_PARAM_NAMES({"value"});
 };

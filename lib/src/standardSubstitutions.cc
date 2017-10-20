@@ -271,3 +271,25 @@ void StandardSubstitutions::weightUpdatePostLearn(
     code= ensureFtype(code, ftype);
     checkUnreplacedVariables(code, "simLearnPost");
 }
+
+std::string StandardSubstitutions::initVariable(
+    const NewModels::VarInit &varInit,
+    const std::string &setValueFunctionTemplate,
+    const std::string &ftype)
+{
+    // Get user code string
+    std::string code = varInit.getSnippet()->getCode();
+
+    // Substitue derived and standard parameters into init code
+    DerivedParamNameIterCtx viDerivedParams(varInit.getSnippet()->getDerivedParams());
+    value_substitutions(code, varInit.getSnippet()->getParamNames(), varInit.getParams());
+    value_substitutions(code, viDerivedParams.nameBegin, viDerivedParams.nameEnd, varInit.getDerivedParams());
+
+    // Substitute the set value function template
+    functionSubstitute(code, "set_value", 1, setValueFunctionTemplate);
+
+    code = ensureFtype(code, ftype);
+    checkUnreplacedVariables(code, "initVar");
+
+    return code;
+}

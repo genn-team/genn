@@ -34,8 +34,32 @@ public:
     VarInit(const VarInitSnippet::Base *snippet, const std::vector<double> &params)
         : m_Snippet(snippet), m_Params(params)
     {
+
     }
 
+    //----------------------------------------------------------------------------
+    // Public API
+    //----------------------------------------------------------------------------
+    const VarInitSnippet::Base *getSnippet() const{ return m_Snippet; }
+    const std::vector<double> &getParams() const{ return m_Params; }
+    const std::vector<double> &getDerivedParams() const{ return m_DerivedParams; }
+
+    void initDerivedParams(double dt)
+    {
+        auto derivedParams = m_Snippet->getDerivedParams();
+
+        // Reserve vector to hold derived parameters
+        m_DerivedParams.reserve(derivedParams.size());
+
+        // Loop through derived parameters
+        for(const auto &d : derivedParams) {
+            m_DerivedParams.push_back(d.second(m_Params, dt));
+        }
+    }
+
+    //----------------------------------------------------------------------------
+    // Static API
+    //----------------------------------------------------------------------------
     template<typename Snippet>
     static VarInit create(const typename Snippet::ParamValues &params)
     {
@@ -53,6 +77,7 @@ private:
     //----------------------------------------------------------------------------
     const VarInitSnippet::Base *m_Snippet;
     std::vector<double> m_Params;
+    std::vector<double> m_DerivedParams;
 };
 
 //----------------------------------------------------------------------------
