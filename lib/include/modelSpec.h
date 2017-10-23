@@ -300,11 +300,35 @@ public:
         \param weightParamValues parameters for weight update model wrapped in WeightUpdateModel::ParamValues object.
         \param weightVarValues initial state variable values for weight update model wrapped in WeightUpdateModel::VarValues object.
         \param postsynapticParamValues parameters for postsynaptic model wrapped in PostsynapticModel::ParamValues object.
-        \param postsynapticVarValues postsynaptic model state variable initialiser snippets and parameters wrapped in NeuronModel::VarInitialisers object.
+        \param postsynapticVarValues initial state variable values for postsynaptic model wrapped in PostsynapticModel::VarValues object..
         \return pointer to newly created SynapseGroup */
     template<typename WeightUpdateModel, typename PostsynapticModel>
     SynapseGroup *addSynapsePopulation(const string &name, SynapseMatrixType mtype, unsigned int delaySteps, const string& src, const string& trg,
                                        const typename WeightUpdateModel::ParamValues &weightParamValues, const typename WeightUpdateModel::VarValues &weightVarValues,
+                                       const typename PostsynapticModel::ParamValues &postsynapticParamValues, const typename PostsynapticModel::VarValues &postsynapticVarValues)
+    {
+        typename WeightUpdateModel::VarInitialisers weightVarInitialisers(weightVarValues);
+        typename PostsynapticModel::VarInitialisers postsynapticVarInitialisers(postsynapticVarValues);
+        return addSynapsePopulation<WeightUpdateModel, PostsynapticModel>(name, mtype, delaySteps, src, trg,
+                                                                          weightParamValues, weightVarInitialisers,
+                                                                          postsynapticParamValues, postsynapticVarInitialisers);
+    }
+
+    /*! \tparam WeightUpdateModel type of weight update model (derived from WeightUpdateModels::Base).
+        \tparam PostsynapticModel type of postsynaptic model (derived from PostsynapticModels::Base).
+        \param name string containing unique name of neuron population.
+        \param mtype how the synaptic matrix associated with this synapse population should be represented.
+        \param delayStep integer specifying number of timesteps delay this synaptic connection should incur (or NO_DELAY for none)
+        \param src string specifying name of presynaptic (source) population
+        \param trg string specifying name of postsynaptic (target) population
+        \param weightParamValues parameters for weight update model wrapped in WeightUpdateModel::ParamValues object.
+        \param weightVarInitialisers weight update model state variable initialiser snippets and parameters wrapped in WeightUpdateModel::VarInitialisers object.
+        \param postsynapticParamValues parameters for postsynaptic model wrapped in PostsynapticModel::ParamValues object.
+        \param postsynapticVarInitialisers postsynaptic model state variable initialiser snippets and parameters wrapped in NeuronModel::VarInitialisers object.
+        \return pointer to newly created SynapseGroup */
+    template<typename WeightUpdateModel, typename PostsynapticModel>
+    SynapseGroup *addSynapsePopulation(const string &name, SynapseMatrixType mtype, unsigned int delaySteps, const string& src, const string& trg,
+                                       const typename WeightUpdateModel::ParamValues &weightParamValues, const typename WeightUpdateModel::VarInitialisers &weightVarInitialisers,
                                        const typename PostsynapticModel::ParamValues &postsynapticParamValues, const typename PostsynapticModel::VarInitialisers &postsynapticVarInitialisers)
     {
         if (!GeNNReady) {
@@ -328,7 +352,7 @@ public:
         auto result = m_SynapseGroups.insert(
             pair<string, SynapseGroup>(
                 name, SynapseGroup(name, mtype, delaySteps,
-                                   WeightUpdateModel::getInstance(), weightParamValues.getValues(), weightVarValues.getValues(),
+                                   WeightUpdateModel::getInstance(), weightParamValues.getValues(), weightVarInitialisers.getInitialisers(),
                                    PostsynapticModel::getInstance(), postsynapticParamValues.getValues(), postsynapticVarInitialisers.getInitialisers(),
                                    srcNeuronGrp, trgNeuronGrp)));
 

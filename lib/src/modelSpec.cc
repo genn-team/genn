@@ -518,11 +518,14 @@ SynapseGroup *NNmodel::addSynapsePopulation(
     std::vector<NewModels::VarInit> psVarInitialisers;
     createVarInitialiserFromLegacyVars(PSVini, psVarInitialisers);
 
+    std::vector<NewModels::VarInit> wuVarInitialisers;
+    createVarInitialiserFromLegacyVars(synini, wuVarInitialisers);
+
     // Add synapse group
     auto result = m_SynapseGroups.insert(
         pair<string, SynapseGroup>(
             name, SynapseGroup(name, mtype, delaySteps,
-                               new WeightUpdateModels::LegacyWrapper(syntype), p, synini,
+                               new WeightUpdateModels::LegacyWrapper(syntype), p, wuVarInitialisers,
                                new PostsynapticModels::LegacyWrapper(postsyn), ps, psVarInitialisers,
                                srcNeuronGrp, trgNeuronGrp)));
 

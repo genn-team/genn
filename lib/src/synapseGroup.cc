@@ -91,6 +91,11 @@ void SynapseGroup::initDerivedParams(double dt)
         m_PSDerivedParams.push_back(d.second(m_PSParams, dt));
     }
 
+    // Initialise derived parameters for WU variable initialisers
+    for(auto &v : m_WUVarInitialisers) {
+        v.initDerivedParams(dt);
+    }
+
     // Initialise derived parameters for PSM variable initialisers
     for(auto &v : m_PSVarInitialisers) {
         v.initDerivedParams(dt);

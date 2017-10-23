@@ -255,14 +255,11 @@ void genInit(const NNmodel &model,          //!< Model description
             if ((s.second.getMatrixType() & SynapseMatrixConnectivity::DENSE) && (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL)) {
                 auto wuVars = wu->getVars();
                 for (size_t k= 0, l= wuVars.size(); k < l; k++) {
-                    os << CodeStream::OB(250) << "for (int i = 0; i < " << numSrcNeurons * numTrgNeurons << "; i++)" << CodeStream::OB(260);
-                    if(wuVars[k].second == model.getPrecision()) {
-                        os << wuVars[k].first << s.first << "[i] = " << model.scalarExpr(s.second.getWUInitVals()[k]) << ";" << std::endl;
-                    }
-                    else {
-                        os << wuVars[k].first << s.first << "[i] = " << s.second.getWUInitVals()[k] << ";" << std::endl;
-                    }
+                    const auto &varInit = s.second.getWUVarInitialisers()[k];
 
+                    os << CodeStream::OB(250) << "for (int i = 0; i < " << numSrcNeurons * numTrgNeurons << "; i++)" << CodeStream::OB(260);
+                    os << StandardSubstitutions::initVariable(varInit, wuVars[k].first + s.first + "[i] = $(0)",
+                                                              cpuFunctions, model.getPrecision(), "rng") << std::endl;
                     os << CodeStream::CB(260) << CodeStream::CB(250) << std::endl;
                 }
             }
