@@ -288,16 +288,16 @@ void genInit(const NNmodel &model,          //!< Model description
     }
     os << std::endl << std::endl;
 #ifndef CPU_ONLY
-    os << "    copyStateToDevice();" << std::endl << std::endl;
+    os << "copyStateToDevice();" << std::endl << std::endl;
 
     // If any init threads were required, perform init kernel launch
     if(numInitThreads > 0) {
-        os << "    // perform on-device init" << std::endl;
-        os << "    dim3 iThreads(" << initBlkSz << ", 1);" << std::endl;
-        os << "    dim3 iGrid(" << numInitThreads / initBlkSz << ", 1);" << std::endl;
-        os << "    init <<<iGrid, iThreads>>>();" << std::endl;
+        os << "// perform on-device init" << std::endl;
+        os << "dim3 iThreads(" << initBlkSz << ", 1);" << std::endl;
+        os << "dim3 iGrid(" << numInitThreads / initBlkSz << ", 1);" << std::endl;
+        os << "init <<<iGrid, iThreads>>>();" << std::endl;
     }
-    os << "    //initializeAllSparseArrays(); //I comment this out instead of removing to keep in mind that sparse arrays need to be initialised manually by hand later" << std::endl;
+    os << "//initializeAllSparseArrays(); //I comment this out instead of removing to keep in mind that sparse arrays need to be initialised manually by hand later" << std::endl;
 #endif
     os << CodeStream::CB(10) << std::endl;
 
