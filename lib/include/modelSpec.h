@@ -87,6 +87,17 @@ enum FloatType
 
 #define AUTODEVICE -1  //!< Macro attaching the label AUTODEVICE to flag -1. Used by setGPUDevice
 
+// Wrappers to save typing when declaring VarInitialisers structures
+template<typename Snippet>
+inline NewModels::VarInit initVar(const typename Snippet::ParamValues &params)
+{
+    return NewModels::VarInit::create<Snippet>(params);
+}
+
+inline NewModels::VarInit initVar(double value)
+{
+    return NewModels::VarInit::create(value);
+}
 
 /*===============================================================
 //! \brief class NNmodel for specifying a neuronal network model.
