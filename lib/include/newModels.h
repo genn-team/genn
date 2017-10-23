@@ -137,11 +137,11 @@ private:
 };
 
 //----------------------------------------------------------------------------
-// NewModels::VarInitBase<0>
+// NewModels::VarInitContainerBase<0>
 //----------------------------------------------------------------------------
 //! Template specialisation of ValueInitBase to avoid compiler warnings
 //! in the case when a model requires no variable initialisers
-/*template<>
+template<>
 class VarInitContainerBase<0>
 {
 public:
@@ -165,7 +165,7 @@ public:
     {
         return {};
     }
-};*/
+};
 
 //----------------------------------------------------------------------------
 // NewModels::Base
