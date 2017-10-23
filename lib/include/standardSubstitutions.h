@@ -149,6 +149,8 @@ void weightUpdatePostLearn(
 std::string initVariable(
     const NewModels::VarInit &varInit,
     const std::string &setValueFunctionTemplate,
-    const std::string &ftype);
+    const std::vector<FunctionTemplate> functions,
+    const std::string &ftype,
+    const std::string &rng);
 
 }   // StandardSubstitions

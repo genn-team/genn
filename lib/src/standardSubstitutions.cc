@@ -275,7 +275,9 @@ void StandardSubstitutions::weightUpdatePostLearn(
 std::string StandardSubstitutions::initVariable(
     const NewModels::VarInit &varInit,
     const std::string &setValueFunctionTemplate,
-    const std::string &ftype)
+    const std::vector<FunctionTemplate> functions,
+    const std::string &ftype,
+    const std::string &rng)
 {
     // Get user code string
     std::string code = varInit.getSnippet()->getCode();
@@ -288,6 +290,8 @@ std::string StandardSubstitutions::initVariable(
     // Substitute the set value function template
     functionSubstitute(code, "set_value", 1, setValueFunctionTemplate);
 
+    functionSubstitutions(code, ftype, functions);
+    substitute(code, "$(rng)", rng);
     code = ensureFtype(code, ftype);
     checkUnreplacedVariables(code, "initVar");
 
