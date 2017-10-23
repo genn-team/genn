@@ -34,7 +34,7 @@ void StandardSubstitutions::postSynapseApplyInput(
         name_substitutions(psCode, "lps", psmVars.nameBegin, psmVars.nameEnd, sg->getName());
     }
     else {
-        value_substitutions(psCode, psmVars.nameBegin, psmVars.nameEnd, sg->getPSInitVals());
+        value_substitutions(psCode, psmVars.nameBegin, psmVars.nameEnd, sg->getPSConstInitVals());
     }
     value_substitutions(psCode, sg->getPSModel()->getParamNames(), sg->getPSParams());
 
@@ -205,7 +205,7 @@ void StandardSubstitutions::weightUpdateSim(
     const std::string &ftype)
 {
      if (sg.getMatrixType() & SynapseMatrixWeight::GLOBAL) {
-         value_substitutions(wCode, wuVars.nameBegin, wuVars.nameEnd, sg.getWUInitVals());
+         value_substitutions(wCode, wuVars.nameBegin, wuVars.nameEnd, sg.getWUConstInitVals());
      }
 
     value_substitutions(wCode, sg.getWUModel()->getParamNames(), sg.getWUParams());
@@ -232,7 +232,7 @@ void StandardSubstitutions::weightUpdateDynamics(
     const std::string &ftype)
 {
      if (sg->getMatrixType() & SynapseMatrixWeight::GLOBAL) {
-         value_substitutions(SDcode, wuVars.nameBegin, wuVars.nameEnd, sg->getWUInitVals());
+         value_substitutions(SDcode, wuVars.nameBegin, wuVars.nameEnd, sg->getWUConstInitVals());
      }
 
     // substitute parameter values for parameters in synapseDynamics code

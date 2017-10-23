@@ -91,12 +91,14 @@ public:
     const std::vector<double> &getWUParams() const{ return m_WUParams; }
     const std::vector<double> &getWUDerivedParams() const{ return m_WUDerivedParams; }
     const std::vector<NewModels::VarInit> &getWUVarInitialisers() const{ return m_WUVarInitialisers; }
+    const std::vector<double> getWUConstInitVals() const;
 
     const PostsynapticModels::Base *getPSModel() const{ return m_PSModel; }
 
     const std::vector<double> &getPSParams() const{ return m_PSParams; }
     const std::vector<double> &getPSDerivedParams() const{ return m_PSDerivedParams; }
     const std::vector<NewModels::VarInit> &getPSVarInitialisers() const{ return m_PSVarInitialisers; }
+    const std::vector<double> getPSConstInitVals() const;
 
     bool isZeroCopyEnabled() const;
     bool isWUVarZeroCopyEnabled(const std::string &var) const;

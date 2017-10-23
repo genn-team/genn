@@ -9,6 +9,34 @@
 #include "standardSubstitutions.h"
 #include "utils.h"
 
+//----------------------------------------------------------------------------
+// Anonymous namespace
+//----------------------------------------------------------------------------
+namespace
+{
+std::vector<double> getConstInitVals(const std::vector<NewModels::VarInit> &varInitialisers)
+{
+    // Reserve initial values to match initialisers
+    std::vector<double> initVals;
+    initVals.reserve(varInitialisers.size());
+
+    // Transform variable initialisers into a vector of doubles
+    std::transform(varInitialisers.cbegin(), varInitialisers.cend(), std::back_inserter(initVals),
+                   [](const NewModels::VarInit &v)
+                   {
+                       // Check
+                       if(dynamic_cast<const VarInitSnippet::Constant*>(v.getSnippet()) == nullptr) {
+                           throw std::runtime_error("Only 'Constant' variable initialisation snippets can be used to initialise state variables of synapse groups using GLOBALG");
+                       }
+
+                       // Return the first parameter (the value)
+                       return v.getParams()[0];
+                   });
+
+    return initVals;
+}
+}   // Anonymous namespace
+
 // ------------------------------------------------------------------------
 // SynapseGroup
 // ------------------------------------------------------------------------
@@ -140,6 +168,16 @@ unsigned int SynapseGroup::getPaddedDynKernelSize(unsigned int blockSize) const
 unsigned int SynapseGroup::getPaddedPostLearnKernelSize(unsigned int blockSize) const
 {
     return ceil((double) getSrcNeuronGroup()->getNumNeurons() / (double) blockSize) * (double) blockSize;
+}
+
+const std::vector<double> SynapseGroup::getWUConstInitVals() const
+{
+    return getConstInitVals(m_WUVarInitialisers);
+}
+
+const std::vector<double> SynapseGroup::getPSConstInitVals() const
+{
+    return getConstInitVals(m_PSVarInitialisers);
 }
 
 bool SynapseGroup::isZeroCopyEnabled() const
