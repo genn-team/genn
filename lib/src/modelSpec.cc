@@ -47,7 +47,7 @@ void initGeNN()
 // ------------------------------------------------------------------------
 // class NNmodel for specifying a neuronal network model
 
-NNmodel::NNmodel() 
+NNmodel::NNmodel()
 {
     final= false;
     needSt= false;
@@ -55,6 +55,7 @@ NNmodel::NNmodel()
     setDT(0.5);
     setPrecision(GENN_FLOAT);
     setTiming(false);
+    setInitMode(InitMode::HOST);
     RNtype= "uint64_t";
 #ifndef CPU_ONLY
     setGPUDevice(AUTODEVICE);
@@ -97,10 +98,15 @@ bool NNmodel::isRNGRequired() const
 {
     // If any neuron groups require an RNG return true
     if(any_of(begin(m_NeuronGroups), end(m_NeuronGroups),
-        [](const std::pair<string, NeuronGroup> &n){ return n.second.isRNGRequired(); }))
+        [](const std::pair<string, NeuronGroup> &n)
+        {
+            return (n.second.isSimRNGRequired() || n.second.isInitRNGRequired());
+        }))
     {
         return true;
     }
+
+    // **TODO** synapse groups
 
     return false;
 }
@@ -673,6 +679,19 @@ void NNmodel::setRNType(const std::string &type)
         gennError("Trying to set the random number type in a finalized model.");
     }
     RNtype= type;
+}
+
+//--------------------------------------------------------------------------
+/*! \brief Sets the initialisation mode (default: InitMode::HOST)
+ */
+//--------------------------------------------------------------------------
+void NNmodel::setInitMode(InitMode initMode)
+{
+    if (final) {
+        gennError("Trying to set the init mode on a finalized model.");
+    }
+    m_InitMode = initMode;
+
 }
 #ifndef CPU_ONLY
 //--------------------------------------------------------------------------

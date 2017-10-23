@@ -105,11 +105,14 @@ public:
 
     void addExtraGlobalParams(std::map<std::string, std::string> &kernelParameters) const;
 
-    //!< Does this neuron group require an RNG to simulate
-    bool isRNGRequired() const;
-
     //!< Does this neuron group require any init code to be run
     bool isInitCodeRequired() const;
+
+    //!< Does this neuron group require an RNG to simulate
+    bool isSimRNGRequired() const;
+
+    //!< Does this neuron group require an RNG for it's init code
+    bool isInitRNGRequired() const;
 
     // **THINK** do this really belong here - it is very code-generation specific
     std::string getQueueOffset(const std::string &devPrefix) const;

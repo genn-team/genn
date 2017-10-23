@@ -33,8 +33,8 @@ unsigned int genInitNeuronKernel(CodeStream &os, const NNmodel &model)
     unsigned int startThread = 0;
     unsigned int sequence = 0;
     for(const auto &n : model.getNeuronGroups()) {
-        // If this group requires an RNG or intialisation code to be run
-        if(n.second.isRNGRequired() || n.second.isInitCodeRequired()) {
+        // If this group requires an RNG to simulate or intialisation code to be run on device
+        if(n.second.isSimRNGRequired() || (model.getInitMode() == InitMode::DEVICE && n.second.isInitCodeRequired())) {
             // Get padded size of group and hence it's end thread
             const unsigned int paddedSize = (unsigned int)(ceil((double)n.second.getNumNeurons() / (double)initBlkSz) * (double)initBlkSz);
             const unsigned int endThread = startThread + paddedSize;
@@ -51,14 +51,18 @@ unsigned int genInitNeuronKernel(CodeStream &os, const NNmodel &model)
 
             os << "// only do this for existing neurons" << std::endl;
             os << "if (lid < " << n.second.getNumNeurons() << ")" << CodeStream::OB(30);
-            if(n.second.isRNGRequired()) {
+            if(n.second.isSimRNGRequired()) {
                 os << "curand_init(" << model.getSeed() << ", " << sequence << " + lid, 0, &dd_rng" << n.first << "[lid]);" << std::endl;
             }
-            auto neuronModelVars = n.second.getNeuronModel()->getVars();
-            for (size_t j = 0; j < neuronModelVars.size(); j++) {
-                const auto &varInit = n.second.getVarInitialisers()[j];
-                os << StandardSubstitutions::initVariable(varInit, "dd_" +  neuronModelVars[j].first + n.first + "[lid] = $(0)", model.getPrecision()) << std::endl;
-            }
+
+            // If initialisation should be performed on device
+            /*if(model.getInitMode() == InitMode::DEVICE) {
+                auto neuronModelVars = n.second.getNeuronModel()->getVars();
+                for (size_t j = 0; j < neuronModelVars.size(); j++) {
+                    const auto &varInit = n.second.getVarInitialisers()[j];
+                    os << StandardSubstitutions::initVariable(varInit, "dd_" +  neuronModelVars[j].first + n.first + "[lid] = $(0)", model.getPrecision()) << std::endl;
+                }
+            }*/
             os << CodeStream::CB(30);
             os << CodeStream::CB(20);
 
@@ -163,6 +167,7 @@ void genInit(const NNmodel &model,          //!< Model description
             os << CodeStream::OB(50) << "for (int i = 0; i < " << n.second.getNumDelaySlots() << "; i++)" << CodeStream::OB(60);
             os << "glbSpkCnt" << n.first << "[i] = 0;" << std::endl;
             os << CodeStream::CB(60) << CodeStream::CB(50) << std::endl;
+
             os << CodeStream::OB(70) << "for (int i = 0; i < " << n.second.getNumNeurons() * n.second.getNumDelaySlots() << "; i++)" << CodeStream::OB(80);
             os << "glbSpk" << n.first << "[i] = 0;" << std::endl;
             os << CodeStream::CB(80) << CodeStream::CB(70) << std::endl;
@@ -176,8 +181,9 @@ void genInit(const NNmodel &model,          //!< Model description
 
         if (n.second.isSpikeEventRequired() && n.second.isDelayRequired()) {
             os << CodeStream::OB(110) << "for (int i = 0; i < " << n.second.getNumDelaySlots() << "; i++)" << CodeStream::OB(120);
-            os << "        glbSpkCntEvnt" << n.first << "[i] = 0;" << std::endl;
+            os << "glbSpkCntEvnt" << n.first << "[i] = 0;" << std::endl;
             os << CodeStream::CB(120) << CodeStream::CB(110) << std::endl;
+
             os << CodeStream::OB(130) << "for (int i = 0; i < " << n.second.getNumNeurons() * n.second.getNumDelaySlots() << "; i++)" << CodeStream::OB(140);
             os << "glbSpkEvnt" << n.first << "[i] = 0;" << std::endl;
             os << CodeStream::CB(140) << CodeStream::CB(130) << std::endl;
@@ -191,26 +197,30 @@ void genInit(const NNmodel &model,          //!< Model description
 
         if (n.second.isSpikeTimeRequired()) {
             os << CodeStream::OB(170) << "for (int i = 0; i < " << n.second.getNumNeurons() * n.second.getNumDelaySlots() << "; i++)" << CodeStream::OB(180);
-            os << "        sT" <<  n.first << "[i] = -SCALAR_MAX;" << std::endl;
+            os << "sT" <<  n.first << "[i] = -SCALAR_MAX;" << std::endl;
             os << CodeStream::CB(180) << CodeStream::CB(170) << std::endl;
         }
 
-        auto neuronModelVars = n.second.getNeuronModel()->getVars();
-        for (size_t j = 0; j < neuronModelVars.size(); j++) {
-            const auto &varInit = n.second.getVarInitialisers()[j];
+        // If intialisation mode should occur on the host
+        if(model.getInitMode() == InitMode::HOST) {
+            auto neuronModelVars = n.second.getNeuronModel()->getVars();
+            for (size_t j = 0; j < neuronModelVars.size(); j++) {
+                const auto &varInit = n.second.getVarInitialisers()[j];
 
-            // If this variable has any initialisation code
-            if(!varInit.getSnippet()->getCode().empty()) {
-                if (n.second.isVarQueueRequired(neuronModelVars[j].first)) {
-                    os << CodeStream::OB(190) << "for (int i = 0; i < " << n.second.getNumNeurons() * n.second.getNumDelaySlots() << "; i++)" << CodeStream::OB(200);
+                // If this variable has any initialisation code
+                if(!varInit.getSnippet()->getCode().empty()) {
+                    if (n.second.isVarQueueRequired(neuronModelVars[j].first)) {
+                        os << CodeStream::OB(190) << "for (int i = 0; i < " << n.second.getNumNeurons() * n.second.getNumDelaySlots() << "; i++)" << CodeStream::OB(200);
+                    }
+                    else {
+                        os << CodeStream::OB(190) << "for (int i = 0; i < " << n.second.getNumNeurons() << "; i++)" << CodeStream::OB(200);
+                    }
+
+                    os << StandardSubstitutions::initVariable(varInit, neuronModelVars[j].first + n.first + "[i] = $(0)",
+                                                              cpuFunctions, model.getPrecision(), "rng") << std::endl;
+
+                    os << CodeStream::CB(200) << CodeStream::CB(190) << std::endl;
                 }
-                else {
-                    os << CodeStream::OB(190) << "for (int i = 0; i < " << n.second.getNumNeurons() << "; i++)" << CodeStream::OB(200);
-                }
-
-                os << StandardSubstitutions::initVariable(varInit, neuronModelVars[j].first + n.first + "[i] = $(0)", model.getPrecision()) << std::endl;
-
-                os << CodeStream::CB(200) << CodeStream::CB(190) << std::endl;
             }
         }
 

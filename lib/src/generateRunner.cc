@@ -343,8 +343,7 @@ void genDefinitions(const NNmodel &model, //!< Model description
             extern_variable_def(os, model.getPrecision()+" *", "sT"+n.first);
         }
 #ifndef CPU_ONLY
-        // **TODO** Phillox option
-        if(n.second.isRNGRequired()) {
+        if(n.second.isSimRNGRequired()) {
             os << "extern curandState *d_rng" << n.first << ";" << std::endl;
         }
 #endif
@@ -851,7 +850,7 @@ void genRunner(const NNmodel &model, //!< Model description
             variable_def(os, model.getPrecision()+" *", "sT"+n.first);
         }
 #ifndef CPU_ONLY
-        if(n.second.isRNGRequired()) {
+        if(n.second.isSimRNGRequired()) {
             os << "curandState *d_rng" << n.first << ";" << std::endl;
             os << "__device__ curandState *dd_rng" << n.first << ";" << std::endl;
         }
@@ -1050,7 +1049,7 @@ void genRunner(const NNmodel &model, //!< Model description
         }
 
 #ifndef CPU_ONLY
-        if(n.second.isRNGRequired()) {
+        if(n.second.isSimRNGRequired()) {
             allocate_device_variable(os, "curandState", "rng" + n.first, false,
                                      n.second.getNumNeurons());
         }
@@ -1279,7 +1278,7 @@ void genRunner(const NNmodel &model, //!< Model description
         }
 
 #ifndef CPU_ONLY
-        if(n.second.isRNGRequired()) {
+        if(n.second.isSimRNGRequired()) {
             free_device_variable(os, "rng" + n.first, false);
         }
 #endif

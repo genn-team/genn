@@ -56,6 +56,15 @@ enum SynapseGType
     INDIVIDUALID,
 };
 
+//!< Where does initialisation code get run?
+//!< If using HOST, initialised variables will need PUSHING to GPU
+//!< If using DEVICE initialised variables will need PULLING from GPU
+enum class InitMode
+{
+    HOST,
+    DEVICE,
+};
+
 
 #define NO_DELAY 0 //!< Macro used to indicate no synapse delay for the group (only one queue slot will be generated)
 
@@ -99,6 +108,8 @@ public:
     void setTiming(bool); //!< Set whether timers and timing commands are to be included
     void setSeed(unsigned int); //!< Set the random seed (disables automatic seeding if argument not 0).
     void setRNType(const std::string &type); //! Sets the underlying type for random number generation (default: uint64_t)
+    void setInitMode(InitMode initMode);   //! Sets the initialisation mode (default: InitMode::HOST)
+
 #ifndef CPU_ONLY
     void setGPUDevice(int); //!< Method to choose the GPU to be used for the model. If "AUTODEVICE' (-1), GeNN will choose the device based on a heuristic rule.
 #endif
@@ -111,7 +122,7 @@ public:
     //! Are any variables in any populations in this model using zero-copy memory?
     bool zeroCopyInUse() const;
 
-    //! Do any populations in this model require an RNG?
+    //! Do any populations or initialisation code in this model require an RNG?
     bool isRNGRequired() const;
 
     //! Gets the name of the neuronal network model
@@ -131,6 +142,9 @@ public:
 
     //! Gets the underlying type for random number generation (default: uint64_t)
     const std::string &getRNType() const{ return RNtype; }
+
+    //! Gets the initialisation mode (default: InitMode::HOST)
+    InitMode getInitMode() const{ return m_InitMode; }
 
     //! Is the model specification finalized
     bool isFinalized() const{ return final; }
@@ -397,17 +411,17 @@ private:
     map<string, string> synapseDynamicsKernelParameters;
 
      // Model members
-    string name; //!< Name of the neuronal newtwork model
-    string ftype; //!< Type of floating point variables (float, double, ...; default: float)
-    string RNtype; //!< Underlying type for random number generation (default: uint64_t)
-    double dt; //!< The integration time step of the model
-    bool final; //!< Flag for whether the model has been finalized
-    bool needSt; //!< Whether last spike times are needed at all in this network model (related to STDP)
-    bool needSynapseDelay; //!< Whether delayed synapse conductance is required in the network
+    string name;                //!< Name of the neuronal newtwork model
+    string ftype;               //!< Type of floating point variables (float, double, ...; default: float)
+    string RNtype;              //!< Underlying type for random number generation (default: uint64_t)
+    double dt;                  //!< The integration time step of the model
+    bool final;                 //!< Flag for whether the model has been finalized
+    bool needSt;                //!< Whether last spike times are needed at all in this network model (related to STDP)
+    bool needSynapseDelay;      //!< Whether delayed synapse conductance is required in the network
     bool timing;
     unsigned int seed;
-    unsigned int resetKernel;  //!< The identity of the kernel in which the spike counters will be reset.
-
+    unsigned int resetKernel;   //!< The identity of the kernel in which the spike counters will be reset.
+    InitMode m_InitMode;        //!< Where should initialisation code be run for this model?
 };
 
 #endif
