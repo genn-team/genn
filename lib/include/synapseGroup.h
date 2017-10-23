@@ -20,12 +20,12 @@ class SynapseGroup
 public:
     SynapseGroup(const std::string name, SynapseMatrixType matrixType, unsigned int delaySteps,
                  const WeightUpdateModels::Base *wu, const std::vector<double> &wuParams, const std::vector<double> &wuInitVals,
-                 const PostsynapticModels::Base *ps, const std::vector<double> &psParams, const std::vector<double> &psInitVals,
+                 const PostsynapticModels::Base *ps, const std::vector<double> &psParams, const std::vector<NewModels::VarInit> &psVarInitialisers,
                  NeuronGroup *srcNeuronGroup, NeuronGroup *trgNeuronGroup) :
         m_PaddedKernelIDRange(0, 0), m_Name(name), m_SpanType(SpanType::POSTSYNAPTIC), m_DelaySteps(delaySteps), m_MaxConnections(trgNeuronGroup->getNumNeurons()), m_MatrixType(matrixType),
         m_SrcNeuronGroup(srcNeuronGroup), m_TrgNeuronGroup(trgNeuronGroup),
         m_TrueSpikeRequired(false), m_SpikeEventRequired(false), m_EventThresholdReTestRequired(false),
-        m_WUModel(wu), m_WUParams(wuParams), m_WUInitVals(wuInitVals), m_PSModel(ps), m_PSParams(psParams), m_PSInitVals(psInitVals),
+        m_WUModel(wu), m_WUParams(wuParams), m_WUInitVals(wuInitVals), m_PSModel(ps), m_PSParams(psParams), m_PSVarInitialisers(psVarInitialisers),
         m_HostID(0), m_DeviceID(0)
     {
     }
@@ -96,7 +96,7 @@ public:
 
     const std::vector<double> &getPSParams() const{ return m_PSParams; }
     const std::vector<double> &getPSDerivedParams() const{ return m_PSDerivedParams; }
-    const std::vector<double> &getPSInitVals() const{ return m_PSInitVals; }
+    const std::vector<NewModels::VarInit> &getPSVarInitialisers() const{ return m_PSVarInitialisers; }
 
     bool isZeroCopyEnabled() const;
     bool isWUVarZeroCopyEnabled(const std::string &var) const;
@@ -183,8 +183,8 @@ private:
     //!< Derived parameters for post synapse model
     std::vector<double> m_PSDerivedParams;
 
-    //!< Initial values for post synapse model
-    std::vector<double> m_PSInitVals;
+    //!< Initialisers for post synapse model variables
+    std::vector<NewModels::VarInit> m_PSVarInitialisers;
 
     //!< Whether indidividual state variables of weight update model should use zero-copied memory
     std::set<string> m_WUVarZeroCopyEnabled;

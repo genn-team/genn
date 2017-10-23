@@ -31,7 +31,6 @@
 
 unsigned int GeNNReady = 0;
 
-// ------------------------------------------------------------------------
 //! \brief Method for GeNN initialisation (by preparing standard models)
     
 void initGeNN()
@@ -40,6 +39,22 @@ void initGeNN()
     preparePostSynModels();
     prepareWeightUpdateModels();
     GeNNReady= 1;
+}
+
+// ------------------------------------------------------------------------
+// Anonymous namespace
+// ------------------------------------------------------------------------
+namespace
+{
+void createVarInitialiserFromLegacyVars(const std::vector<double> &ini, std::vector<NewModels::VarInit> &varInitialisers)
+{
+    varInitialisers.reserve(ini.size());
+    std::transform(ini.cbegin(), ini.cend(), std::back_inserter(varInitialisers),
+                   [](double v)
+                   {
+                       return NewModels::VarInit::create(v);
+                   });
+}
 }
 
 // ------------------------------------------------------------------------
@@ -240,12 +255,7 @@ NeuronGroup *NNmodel::addNeuronPopulation(
 
     // Create variable initialisers from old-style values
     std::vector<NewModels::VarInit> varInitialisers;
-    varInitialisers.reserve(ini.size());
-    std::transform(ini.cbegin(), ini.cend(), std::back_inserter(varInitialisers),
-                   [](double v)
-                   {
-                       return NewModels::VarInit::create(v);
-                   });
+    createVarInitialiserFromLegacyVars(ini, varInitialisers);
 
     // Add neuron group
     auto result = m_NeuronGroups.insert(
@@ -504,12 +514,16 @@ SynapseGroup *NNmodel::addSynapsePopulation(
         needSynapseDelay = true;
     }
 
+    // Create variable initialisers from old-style values
+    std::vector<NewModels::VarInit> psVarInitialisers;
+    createVarInitialiserFromLegacyVars(PSVini, psVarInitialisers);
+
     // Add synapse group
     auto result = m_SynapseGroups.insert(
         pair<string, SynapseGroup>(
             name, SynapseGroup(name, mtype, delaySteps,
                                new WeightUpdateModels::LegacyWrapper(syntype), p, synini,
-                               new PostsynapticModels::LegacyWrapper(postsyn), ps, PSVini,
+                               new PostsynapticModels::LegacyWrapper(postsyn), ps, psVarInitialisers,
                                srcNeuronGrp, trgNeuronGrp)));
 
     if(!result.second)

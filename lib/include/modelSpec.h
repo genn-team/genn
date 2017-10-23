@@ -189,33 +189,17 @@ public:
                                      const typename NeuronModel::ParamValues &paramValues,
                                      const typename NeuronModel::VarValues &varValues)
     {
-        if (!GeNNReady) {
-            gennError("You need to call initGeNN first.");
-        }
-        if (final) {
-            gennError("Trying to add a neuron population to a finalized model.");
-        }
-
-        // Create variable initialisers from old-style values
         typename NeuronModel::VarInitialisers varInitialisers(varValues);
-
-        // Add neuron group
-        auto result = m_NeuronGroups.insert(
-            pair<string, NeuronGroup>(
-                name, NeuronGroup(name, size, NeuronModel::getInstance(),
-                                  paramValues.getValues(), varInitialisers.getInitialisers())));
-
-        if(!result.second)
-        {
-            gennError("Cannot add a neuron population with duplicate name:" + name);
-            return NULL;
-        }
-        else
-        {
-            return &result.first->second;
-        }
+        return addNeuronPopulation<NeuronModel>(name, size, paramValues, varInitialisers);
     }
 
+     //! Adds a new neuron group to the model
+    /*! \tparam NeuronModel type of neuron model (derived from NeuronModels::Base).
+        \param name string containing unique name of neuron population.
+        \param size integer specifying how many neurons are in the population.
+        \param paramValues parameters for model wrapped in NeuronModel::ParamValues object.
+        \param varInitialisers state variable initialiser snippets and parameters wrapped in NeuronModel::VarInitialisers object.
+        \return pointer to newly created NeuronGroup */
     template<typename NeuronModel>
     NeuronGroup *addNeuronPopulation(const string &name, unsigned int size,
                                      const typename NeuronModel::ParamValues &paramValues,
@@ -316,12 +300,12 @@ public:
         \param weightParamValues parameters for weight update model wrapped in WeightUpdateModel::ParamValues object.
         \param weightVarValues initial state variable values for weight update model wrapped in WeightUpdateModel::VarValues object.
         \param postsynapticParamValues parameters for postsynaptic model wrapped in PostsynapticModel::ParamValues object.
-        \param postsynapticVarValues initial state variable values for postsynaptic model wrapped in PostsynapticModel::VarValues object.
+        \param postsynapticVarValues postsynaptic model state variable initialiser snippets and parameters wrapped in NeuronModel::VarInitialisers object.
         \return pointer to newly created SynapseGroup */
     template<typename WeightUpdateModel, typename PostsynapticModel>
     SynapseGroup *addSynapsePopulation(const string &name, SynapseMatrixType mtype, unsigned int delaySteps, const string& src, const string& trg,
                                        const typename WeightUpdateModel::ParamValues &weightParamValues, const typename WeightUpdateModel::VarValues &weightVarValues,
-                                       const typename PostsynapticModel::ParamValues &postsynapticParamValues, const typename PostsynapticModel::VarValues &postsynapticVarValues)
+                                       const typename PostsynapticModel::ParamValues &postsynapticParamValues, const typename PostsynapticModel::VarInitialisers &postsynapticVarInitialisers)
     {
         if (!GeNNReady) {
             gennError("You need to call initGeNN first.");
@@ -345,7 +329,7 @@ public:
             pair<string, SynapseGroup>(
                 name, SynapseGroup(name, mtype, delaySteps,
                                    WeightUpdateModel::getInstance(), weightParamValues.getValues(), weightVarValues.getValues(),
-                                   PostsynapticModel::getInstance(), postsynapticParamValues.getValues(), postsynapticVarValues.getValues(),
+                                   PostsynapticModel::getInstance(), postsynapticParamValues.getValues(), postsynapticVarInitialisers.getInitialisers(),
                                    srcNeuronGrp, trgNeuronGrp)));
 
         if(!result.second)

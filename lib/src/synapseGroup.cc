@@ -81,14 +81,19 @@ void SynapseGroup::initDerivedParams(double dt)
     m_WUDerivedParams.reserve(wuDerivedParams.size());
     m_PSDerivedParams.reserve(psDerivedParams.size());
 
-    // Loop through derived parameters
+    // Loop through WU derived parameters
     for(const auto &d : wuDerivedParams) {
         m_WUDerivedParams.push_back(d.second(m_WUParams, dt));
     }
 
-    // Loop through derived parameters
+    // Loop through PSM derived parameters
     for(const auto &d : psDerivedParams) {
         m_PSDerivedParams.push_back(d.second(m_PSParams, dt));
+    }
+
+    // Initialise derived parameters for PSM variable initialisers
+    for(auto &v : m_PSVarInitialisers) {
+        v.initDerivedParams(dt);
     }
 }
 
