@@ -87,6 +87,12 @@ enum FloatType
 class NNmodel
 {
 public:
+    // Typedefines
+    //=======================
+    typedef map<string, NeuronGroup>::value_type NeuronGroupValueType;
+    typedef map<string, SynapseGroup>::value_type SynapseGroupValueType;
+
+
     NNmodel();
     ~NNmodel();
 
@@ -283,23 +289,17 @@ public:
             gennError("Trying to add a synapse population to a finalized model.");
         }
 
-
         auto srcNeuronGrp = findNeuronGroup(src);
         auto trgNeuronGrp = findNeuronGroup(trg);
 
-        srcNeuronGrp->checkNumDelaySlots(delaySteps);
-        if (delaySteps != NO_DELAY)
-        {
-            needSynapseDelay = true;
-        }
-
         // Add synapse group
-        auto result = m_SynapseGroups.insert(
-            pair<string, SynapseGroup>(
-                name, SynapseGroup(name, mtype, delaySteps,
-                                   WeightUpdateModel::getInstance(), weightParamValues.getValues(), weightVarValues.getValues(),
-                                   PostsynapticModel::getInstance(), postsynapticParamValues.getValues(), postsynapticVarValues.getValues(),
-                                   srcNeuronGrp, trgNeuronGrp)));
+        auto result = m_SynapseGroups.emplace(
+            std::piecewise_construct,
+            std::forward_as_tuple(name),
+            std::forward_as_tuple(name, mtype, delaySteps,
+                                  WeightUpdateModel::getInstance(), weightParamValues.getValues(), weightVarValues.getValues(),
+                                  PostsynapticModel::getInstance(), postsynapticParamValues.getValues(), postsynapticVarValues.getValues(),
+                                  srcNeuronGrp, trgNeuronGrp));
 
         if(!result.second)
         {
@@ -308,29 +308,7 @@ public:
         }
         else
         {
-            // Get pointer to new synapse group
-            SynapseGroup *newSynapseGroup = &result.first->second;
-
-            // If the weight update model requires presynaptic
-            // spike times, set flag in source neuron group
-            if (newSynapseGroup->getWUModel()->isPreSpikeTimeRequired()) {
-                srcNeuronGrp->setSpikeTimeRequired(true);
-                needSt = true;
-            }
-
-            // If the weight update model requires postsynaptic
-            // spike times, set flag in target neuron group
-            if (newSynapseGroup->getWUModel()->isPostSpikeTimeRequired()) {
-                trgNeuronGrp->setSpikeTimeRequired(true);
-                needSt = true;
-            }
-
-            // Add references to target and source neuron groups
-            trgNeuronGrp->addInSyn(newSynapseGroup);
-            srcNeuronGrp->addOutSyn(newSynapseGroup);
-
-            // Return
-            return newSynapseGroup;
+            return &result.first->second;
         }
     }
 
@@ -369,8 +347,6 @@ private:
     string RNtype; //!< Underlying type for random number generation (default: uint64_t)
     double dt; //!< The integration time step of the model
     bool final; //!< Flag for whether the model has been finalized
-    bool needSt; //!< Whether last spike times are needed at all in this network model (related to STDP)
-    bool needSynapseDelay; //!< Whether delayed synapse conductance is required in the network
     bool timing;
     unsigned int seed;
     unsigned int resetKernel;  //!< The identity of the kernel in which the spike counters will be reset.
