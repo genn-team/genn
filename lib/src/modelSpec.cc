@@ -231,8 +231,9 @@ NeuronGroup *NNmodel::addNeuronPopulation(
     }
 
     // Add neuron group
-    auto result = m_NeuronGroups.insert(
-        pair<string, NeuronGroup>(name, NeuronGroup(name, nNo, new NeuronModels::LegacyWrapper(type), p, ini)));
+    auto result = m_NeuronGroups.emplace(std::piecewise_construct,
+        std::forward_as_tuple(name),
+        std::forward_as_tuple(name, nNo, new NeuronModels::LegacyWrapper(type), p, ini));
 
     if(!result.second)
     {

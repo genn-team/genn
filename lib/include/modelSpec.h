@@ -188,10 +188,10 @@ public:
         }
 
         // Add neuron group
-        auto result = m_NeuronGroups.insert(
-            pair<string, NeuronGroup>(
-                name, NeuronGroup(name, size, NeuronModel::getInstance(),
-                                  paramValues.getValues(), varValues.getValues())));
+        auto result = m_NeuronGroups.emplace(std::piecewise_construct,
+            std::forward_as_tuple(name),
+            std::forward_as_tuple(name, size, NeuronModel::getInstance(),
+                                  paramValues.getValues(), varValues.getValues()));
 
         if(!result.second)
         {
