@@ -1,6 +1,7 @@
 #include "generateInit.h"
 
 // Standard C++ includes
+#include <algorithm>
 #include <fstream>
 
 // Standard C includes
@@ -20,6 +21,16 @@ namespace
 #ifndef CPU_ONLY
 unsigned int genInitNeuronKernel(CodeStream &os, const NNmodel &model)
 {
+    // If no neuron groups require an RNG for simulation, return zero and don't write kernel
+    if(std::none_of(std::begin(model.getNeuronGroups()), std::end(model.getNeuronGroups()),
+                               [](const std::pair<std::string, NeuronGroup> &n)
+                               {
+                                   return n.second.isSimRNGRequired();
+                               }))
+    {
+        return 0;
+    }
+
      // init kernel header
     os << "extern \"C\" __global__ void init()" << std::endl;
 
@@ -33,8 +44,8 @@ unsigned int genInitNeuronKernel(CodeStream &os, const NNmodel &model)
     unsigned int startThread = 0;
     unsigned int sequence = 0;
     for(const auto &n : model.getNeuronGroups()) {
-        // If this group requires an RNG to simulate or intialisation code to be run on device
-        if(n.second.isSimRNGRequired() || (model.getInitMode() == InitMode::DEVICE && n.second.isInitCodeRequired())) {
+        // If this group requires an RNG to simulate
+        if(n.second.isSimRNGRequired()) {
             // Get padded size of group and hence it's end thread
             const unsigned int paddedSize = (unsigned int)(ceil((double)n.second.getNumNeurons() / (double)initBlkSz) * (double)initBlkSz);
             const unsigned int endThread = startThread + paddedSize;
@@ -55,14 +66,6 @@ unsigned int genInitNeuronKernel(CodeStream &os, const NNmodel &model)
                 os << "curand_init(" << model.getSeed() << ", " << sequence << " + lid, 0, &dd_rng" << n.first << "[lid]);" << std::endl;
             }
 
-            // If initialisation should be performed on device
-            /*if(model.getInitMode() == InitMode::DEVICE) {
-                auto neuronModelVars = n.second.getNeuronModel()->getVars();
-                for (size_t j = 0; j < neuronModelVars.size(); j++) {
-                    const auto &varInit = n.second.getVarInitialisers()[j];
-                    os << StandardSubstitutions::initVariable(varInit, "dd_" +  neuronModelVars[j].first + n.first + "[lid] = $(0)", model.getPrecision()) << std::endl;
-                }
-            }*/
             os << CodeStream::CB(30);
             os << CodeStream::CB(20);
 
@@ -201,26 +204,23 @@ void genInit(const NNmodel &model,          //!< Model description
             os << CodeStream::CB(180) << CodeStream::CB(170) << std::endl;
         }
 
-        // If intialisation mode should occur on the host
-        if(model.getInitMode() == InitMode::HOST) {
-            auto neuronModelVars = n.second.getNeuronModel()->getVars();
-            for (size_t j = 0; j < neuronModelVars.size(); j++) {
-                const auto &varInit = n.second.getVarInitialisers()[j];
+        auto neuronModelVars = n.second.getNeuronModel()->getVars();
+        for (size_t j = 0; j < neuronModelVars.size(); j++) {
+            const auto &varInit = n.second.getVarInitialisers()[j];
 
-                // If this variable has any initialisation code
-                if(!varInit.getSnippet()->getCode().empty()) {
-                    if (n.second.isVarQueueRequired(neuronModelVars[j].first)) {
-                        os << CodeStream::OB(190) << "for (int i = 0; i < " << n.second.getNumNeurons() * n.second.getNumDelaySlots() << "; i++)" << CodeStream::OB(200);
-                    }
-                    else {
-                        os << CodeStream::OB(190) << "for (int i = 0; i < " << n.second.getNumNeurons() << "; i++)" << CodeStream::OB(200);
-                    }
-
-                    os << StandardSubstitutions::initVariable(varInit, neuronModelVars[j].first + n.first + "[i] = $(0)",
-                                                              cpuFunctions, model.getPrecision(), "rng") << std::endl;
-
-                    os << CodeStream::CB(200) << CodeStream::CB(190) << std::endl;
+            // If this variable has any initialisation code
+            if(!varInit.getSnippet()->getCode().empty()) {
+                if (n.second.isVarQueueRequired(neuronModelVars[j].first)) {
+                    os << CodeStream::OB(190) << "for (int i = 0; i < " << n.second.getNumNeurons() * n.second.getNumDelaySlots() << "; i++)" << CodeStream::OB(200);
                 }
+                else {
+                    os << CodeStream::OB(190) << "for (int i = 0; i < " << n.second.getNumNeurons() << "; i++)" << CodeStream::OB(200);
+                }
+
+                os << StandardSubstitutions::initVariable(varInit, neuronModelVars[j].first + n.first + "[i] = $(0)",
+                                                            cpuFunctions, model.getPrecision(), "rng") << std::endl;
+
+                os << CodeStream::CB(200) << CodeStream::CB(190) << std::endl;
             }
         }
 
@@ -236,56 +236,56 @@ void genInit(const NNmodel &model,          //!< Model description
     }
     os << std::endl;
 
-    // If intialisation mode should occur on the host
-    if(model.getInitMode() == InitMode::HOST) {
-        // INITIALISE SYNAPSE VARIABLES
-        os << "// synapse variables" << std::endl;
-        for(const auto &s : model.getSynapseGroups()) {
-            const auto *wu = s.second.getWUModel();
-            const auto *psm = s.second.getPSModel();
+    // INITIALISE SYNAPSE VARIABLES
+    os << "// synapse variables" << std::endl;
+    for(const auto &s : model.getSynapseGroups()) {
+        const auto *wu = s.second.getWUModel();
+        const auto *psm = s.second.getPSModel();
 
-            const unsigned int numSrcNeurons = s.second.getSrcNeuronGroup()->getNumNeurons();
-            const unsigned int numTrgNeurons = s.second.getTrgNeuronGroup()->getNumNeurons();
+        const unsigned int numSrcNeurons = s.second.getSrcNeuronGroup()->getNumNeurons();
+        const unsigned int numTrgNeurons = s.second.getTrgNeuronGroup()->getNumNeurons();
 
-            os << CodeStream::OB(230) << "for (int i = 0; i < " << numTrgNeurons << "; i++)" << CodeStream::OB(240);
-            os << "inSyn" << s.first << "[i] = " << model.scalarExpr(0.0) << ";" << std::endl;
-            os << CodeStream::CB(240) << CodeStream::CB(230) << std::endl;
+        os << CodeStream::OB(230) << "for (int i = 0; i < " << numTrgNeurons << "; i++)" << CodeStream::OB(240);
+        os << "inSyn" << s.first << "[i] = " << model.scalarExpr(0.0) << ";" << std::endl;
+        os << CodeStream::CB(240) << CodeStream::CB(230) << std::endl;
 
-            // If matrix is dense (i.e. can be initialised here) and each synapse has individual values (i.e. needs initialising at all)
-            if ((s.second.getMatrixType() & SynapseMatrixConnectivity::DENSE) && (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL)) {
-                auto wuVars = wu->getVars();
-                for (size_t k= 0, l= wuVars.size(); k < l; k++) {
-                    const auto &varInit = s.second.getWUVarInitialisers()[k];
+        // If matrix is dense (i.e. can be initialised here) and each synapse has individual values (i.e. needs initialising at all)
+        if ((s.second.getMatrixType() & SynapseMatrixConnectivity::DENSE) && (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL)) {
+            auto wuVars = wu->getVars();
+            for (size_t k= 0, l= wuVars.size(); k < l; k++) {
+                const auto &varInit = s.second.getWUVarInitialisers()[k];
 
-                    os << CodeStream::OB(250) << "for (int i = 0; i < " << numSrcNeurons * numTrgNeurons << "; i++)" << CodeStream::OB(260);
-                    os << StandardSubstitutions::initVariable(varInit, wuVars[k].first + s.first + "[i] = $(0)",
-                                                              cpuFunctions, model.getPrecision(), "rng") << std::endl;
-                    os << CodeStream::CB(260) << CodeStream::CB(250) << std::endl;
-                }
+                os << CodeStream::OB(250) << "for (int i = 0; i < " << numSrcNeurons * numTrgNeurons << "; i++)" << CodeStream::OB(260);
+                os << StandardSubstitutions::initVariable(varInit, wuVars[k].first + s.first + "[i] = $(0)",
+                                                            cpuFunctions, model.getPrecision(), "rng") << std::endl;
+                os << CodeStream::CB(260) << CodeStream::CB(250) << std::endl;
             }
+        }
 
-            // If matrix has individual state variables
-            // **THINK** should this REALLY also apply to postsynaptic models
-            if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
-                auto psmVars = psm->getVars();
-                for (size_t k= 0, l= psmVars.size(); k < l; k++) {
-                    const auto &varInit = s.second.getPSVarInitialisers()[k];
+        // If matrix has individual state variables
+        // **THINK** should this REALLY also apply to postsynaptic models
+        if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
+            auto psmVars = psm->getVars();
+            for (size_t k= 0, l= psmVars.size(); k < l; k++) {
+                const auto &varInit = s.second.getPSVarInitialisers()[k];
 
-                    // If this variable has any initialisation code
-                    if(!varInit.getSnippet()->getCode().empty()) {
-                        // Loop through postsynaptic neurons and substitute in initialisation code
-                        os << CodeStream::OB(270) << "for (int i = 0; i < " << numTrgNeurons << "; i++)" << CodeStream::OB(280);
-                        os << StandardSubstitutions::initVariable(varInit, psmVars[k].first + s.first + "[i] = $(0)",
-                                                                  cpuFunctions, model.getPrecision(), "rng") << std::endl;
-                        os << CodeStream::CB(280) << CodeStream::CB(270) << std::endl;
-                    }
+                // If this variable has any initialisation code
+                if(!varInit.getSnippet()->getCode().empty()) {
+                    // Loop through postsynaptic neurons and substitute in initialisation code
+                    os << CodeStream::OB(270) << "for (int i = 0; i < " << numTrgNeurons << "; i++)" << CodeStream::OB(280);
+                    os << StandardSubstitutions::initVariable(varInit, psmVars[k].first + s.first + "[i] = $(0)",
+                                                                cpuFunctions, model.getPrecision(), "rng") << std::endl;
+                    os << CodeStream::CB(280) << CodeStream::CB(270) << std::endl;
                 }
             }
         }
     }
+
     os << std::endl << std::endl;
 #ifndef CPU_ONLY
-    os << "copyStateToDevice();" << std::endl << std::endl;
+    if(!GENN_PREFERENCES::autoInitSparseVars) {
+        os << "copyStateToDevice();" << std::endl << std::endl;
+    }
 
     // If any init threads were required, perform init kernel launch
     if(numInitThreads > 0) {
@@ -294,8 +294,94 @@ void genInit(const NNmodel &model,          //!< Model description
         os << "dim3 iGrid(" << numInitThreads / initBlkSz << ", 1);" << std::endl;
         os << "init <<<iGrid, iThreads>>>();" << std::endl;
     }
-    os << "//initializeAllSparseArrays(); //I comment this out instead of removing to keep in mind that sparse arrays need to be initialised manually by hand later" << std::endl;
 #endif
     os << CodeStream::CB(10) << std::endl;
+
+     // ------------------------------------------------------------------------
+    // initializing sparse arrays
+#ifndef CPU_ONLY
+    os << "void initializeAllSparseArrays()" << std::endl;
+    os << CodeStream::OB(300) << std::endl;
+    for(const auto &s : model.getSynapseGroups()) {
+        if (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE){
+            os << "initializeSparseArray(C" << s.first << ", ";
+            os << "d_ind" << s.first << ", ";
+            os << "d_indInG" << s.first << ", ";
+            os << s.second.getSrcNeuronGroup()->getNumNeurons() <<");" << std::endl;
+            if (model.isSynapseGroupDynamicsRequired(s.first)) {
+                os << "initializeSparseArrayPreInd(C" << s.first << ", ";
+                os << "d_preInd" << s.first << ");" << std::endl;
+            }
+            if (model.isSynapseGroupPostLearningRequired(s.first)) {
+                os << "initializeSparseArrayRev(C" << s.first << ", ";
+                os << "d_revInd" << s.first << ",";
+                os << "d_revIndInG" << s.first << ",";
+                os << "d_remap" << s.first << ",";
+                os << s.second.getTrgNeuronGroup()->getNumNeurons() <<");" << std::endl;
+            }
+
+            if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
+                for(const auto &v : s.second.getWUModel()->getVars()) {
+                    if(!s.second.isWUVarZeroCopyEnabled(v.first)) {
+                        os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << v.first << s.first << ", ";
+                        os << v.first << s.first << ", ";
+                        os << "sizeof(" << v.second << ") * C" << s.first << ".connN , cudaMemcpyHostToDevice));" << std::endl;
+                    }
+                }
+            }
+        }
+    }
+    os << CodeStream::CB(300) << std::endl;
+    os << std::endl;
+#endif
+
+    // ------------------------------------------------------------------------
+    // initialization of variables, e.g. reverse sparse arrays etc.
+    // that the user would not want to worry about
+
+    os << "void init" << model.getName() << "()" << std::endl;
+    os << CodeStream::OB(300) << std::endl;
+    bool anySparse = false;
+    for(const auto &s : model.getSynapseGroups()) {
+        if (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+            anySparse = true;
+            if (model.isSynapseGroupDynamicsRequired(s.first)) {
+                os << "createPreIndices(" << s.second.getSrcNeuronGroup()->getNumNeurons() << ", " << s.second.getTrgNeuronGroup()->getNumNeurons() << ", &C" << s.first << ");" << std::endl;
+            }
+            if (model.isSynapseGroupPostLearningRequired(s.first)) {
+                os << "createPosttoPreArray(" << s.second.getSrcNeuronGroup()->getNumNeurons() << ", " << s.second.getTrgNeuronGroup()->getNumNeurons() << ", &C" << s.first << ");" << std::endl;
+            }
+
+            // If synapses in this population have individual variables
+            if(s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL && GENN_PREFERENCES::autoInitSparseVars) {
+                auto wuVars = s.second.getWUModel()->getVars();
+                for (size_t k= 0, l= wuVars.size(); k < l; k++) {
+                    const auto &varInit = s.second.getWUVarInitialisers()[k];
+
+                    os << CodeStream::OB(310) << "for (int i = 0; i < C" << s.first << ".connN; i++)" << CodeStream::OB(320);
+                    os << StandardSubstitutions::initVariable(varInit, wuVars[k].first + s.first + "[i] = $(0)",
+                                                              cpuFunctions, model.getPrecision(), "rng") << std::endl;
+                    os << CodeStream::CB(320) << CodeStream::CB(310) << std::endl;
+                }
+            }
+
+
+        }
+    }
+
+#ifndef CPU_ONLY
+    if(GENN_PREFERENCES::autoInitSparseVars) {
+        os << "copyStateToDevice();" << std::endl << std::endl;
+    }
+#endif
+
+    // If there are any sparse synapse projections, initialise them
+    if (anySparse) {
+#ifndef CPU_ONLY
+        os << "initializeAllSparseArrays();" << std::endl;
+#endif
+    }
+
+    os << CodeStream::CB(300) << std::endl;
 
 }
