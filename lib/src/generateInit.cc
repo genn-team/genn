@@ -195,7 +195,7 @@ void genInit(const NNmodel &model,          //!< Model description
             os << "glbSpkCntEvnt" << n.first << "[0] = 0;" << std::endl;
             os << CodeStream::OB(150) << "for (int i = 0; i < " << n.second.getNumNeurons() << "; i++)" << CodeStream::OB(160);
             os << "glbSpkEvnt" << n.first << "[i] = 0;" << std::endl;
-            os << CodeStream::CB(160) << CodeStream::OB(150) << std::endl;
+            os << CodeStream::CB(160) << CodeStream::CB(150) << std::endl;
         }
 
         if (n.second.isSpikeTimeRequired()) {
