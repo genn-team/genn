@@ -70,7 +70,6 @@ NNmodel::NNmodel()
     setDT(0.5);
     setPrecision(GENN_FLOAT);
     setTiming(false);
-    setInitMode(InitMode::HOST);
     RNtype= "uint64_t";
 #ifndef CPU_ONLY
     setGPUDevice(AUTODEVICE);
@@ -698,18 +697,6 @@ void NNmodel::setRNType(const std::string &type)
     RNtype= type;
 }
 
-//--------------------------------------------------------------------------
-/*! \brief Sets the initialisation mode (default: InitMode::HOST)
- */
-//--------------------------------------------------------------------------
-void NNmodel::setInitMode(InitMode initMode)
-{
-    if (final) {
-        gennError("Trying to set the init mode on a finalized model.");
-    }
-    m_InitMode = initMode;
-
-}
 #ifndef CPU_ONLY
 //--------------------------------------------------------------------------
 /*! \brief This function defines the way how the GPU is chosen. If "AUTODEVICE" (-1) is given as the argument, GeNN will use internal heuristics to choose the device. Otherwise the argument is the device number and the indicated device will be used.

@@ -56,16 +56,6 @@ enum SynapseGType
     INDIVIDUALID,
 };
 
-//!< Where does initialisation code get run?
-//!< If using HOST, initialised variables will need PUSHING to GPU
-//!< If using DEVICE initialised variables will need PULLING from GPU
-enum class InitMode
-{
-    HOST,
-    DEVICE,
-};
-
-
 #define NO_DELAY 0 //!< Macro used to indicate no synapse delay for the group (only one queue slot will be generated)
 
 #define NOLEARNING 0 //!< Macro attaching the label "NOLEARNING" to flag 0 
@@ -119,7 +109,6 @@ public:
     void setTiming(bool); //!< Set whether timers and timing commands are to be included
     void setSeed(unsigned int); //!< Set the random seed (disables automatic seeding if argument not 0).
     void setRNType(const std::string &type); //! Sets the underlying type for random number generation (default: uint64_t)
-    void setInitMode(InitMode initMode);   //! Sets the initialisation mode (default: InitMode::HOST)
 
 #ifndef CPU_ONLY
     void setGPUDevice(int); //!< Method to choose the GPU to be used for the model. If "AUTODEVICE' (-1), GeNN will choose the device based on a heuristic rule.
@@ -153,9 +142,6 @@ public:
 
     //! Gets the underlying type for random number generation (default: uint64_t)
     const std::string &getRNType() const{ return RNtype; }
-
-    //! Gets the initialisation mode (default: InitMode::HOST)
-    InitMode getInitMode() const{ return m_InitMode; }
 
     //! Is the model specification finalized
     bool isFinalized() const{ return final; }
@@ -440,7 +426,6 @@ private:
     bool timing;
     unsigned int seed;
     unsigned int resetKernel;   //!< The identity of the kernel in which the spike counters will be reset.
-    InitMode m_InitMode;        //!< Where should initialisation code be run for this model?
 };
 
 #endif
