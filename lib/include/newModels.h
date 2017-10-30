@@ -2,6 +2,7 @@
 
 // Standard C++ includes
 #include <string>
+#include <type_traits>
 #include <vector>
 
 // Standard C includes
@@ -34,7 +35,11 @@ public:
     VarInit(const VarInitSnippet::Base *snippet, const std::vector<double> &params)
         : m_Snippet(snippet), m_Params(params)
     {
+    }
 
+    VarInit(double constant)
+        : m_Snippet(VarInitSnippet::Constant::getInstance()), m_Params{constant}
+    {
     }
 
     //----------------------------------------------------------------------------
@@ -64,11 +69,6 @@ public:
     static VarInit create(const typename Snippet::ParamValues &params)
     {
         return VarInit(Snippet::getInstance(), params.getValues());
-    }
-
-    static VarInit create(double value)
-    {
-        return VarInit(VarInitSnippet::Constant::getInstance(), {value});
     }
 
 private:
@@ -108,7 +108,25 @@ public:
         m_Initialisers.reserve(NumVars);
 
         for(size_t i = 0; i < NumVars; i++) {
-            m_Initialisers.push_back(VarInit::create(varValues[i]));
+            m_Initialisers.push_back(VarInit(varValues[i]));
+        }
+    }
+
+    VarInitContainerBase(Snippet::ValueBase<NumVars> &varValues)
+    {
+        m_Initialisers.reserve(NumVars);
+
+        for(size_t i = 0; i < NumVars; i++) {
+            m_Initialisers.push_back(VarInit(varValues[i]));
+        }
+    }
+
+    VarInitContainerBase(Snippet::ValueBase<NumVars> &&varValues)
+    {
+        m_Initialisers.reserve(NumVars);
+
+        for(size_t i = 0; i < NumVars; i++) {
+            m_Initialisers.push_back(VarInit(varValues[i]));
         }
     }
 
@@ -154,6 +172,14 @@ public:
     }
 
     VarInitContainerBase(const Snippet::ValueBase<0> &)
+    {
+    }
+
+    VarInitContainerBase(Snippet::ValueBase<0> &)
+    {
+    }
+
+    VarInitContainerBase(Snippet::ValueBase<0> &&)
     {
     }
 

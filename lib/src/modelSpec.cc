@@ -52,7 +52,7 @@ void createVarInitialiserFromLegacyVars(const std::vector<double> &ini, std::vec
     std::transform(ini.cbegin(), ini.cend(), std::back_inserter(varInitialisers),
                    [](double v)
                    {
-                       return NewModels::VarInit::create(v);
+                       return NewModels::VarInit(v);
                    });
 }
 }

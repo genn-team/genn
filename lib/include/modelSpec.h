@@ -84,11 +84,6 @@ inline NewModels::VarInit initVar(const typename Snippet::ParamValues &params)
     return NewModels::VarInit::create<Snippet>(params);
 }
 
-inline NewModels::VarInit initVar(double value)
-{
-    return NewModels::VarInit::create(value);
-}
-
 /*===============================================================
 //! \brief class NNmodel for specifying a neuronal network model.
 //
@@ -173,22 +168,6 @@ public:
 
     NeuronGroup *addNeuronPopulation(const string&, unsigned int, unsigned int, const double *, const double *); //!< Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population
     NeuronGroup *addNeuronPopulation(const string&, unsigned int, unsigned int, const vector<double>&, const vector<double>&); //!< Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population
-
-    //! Adds a new neuron group to the model
-    /*! \tparam NeuronModel type of neuron model (derived from NeuronModels::Base).
-        \param name string containing unique name of neuron population.
-        \param size integer specifying how many neurons are in the population.
-        \param paramValues parameters for model wrapped in NeuronModel::ParamValues object.
-        \param varValues initial state variable values for model wrapped in NeuronModel::VarValues object.
-        \return pointer to newly created NeuronGroup */
-    template<typename NeuronModel>
-    NeuronGroup *addNeuronPopulation(const string &name, unsigned int size,
-                                     const typename NeuronModel::ParamValues &paramValues,
-                                     const typename NeuronModel::VarValues &varValues)
-    {
-        typename NeuronModel::VarInitialisers varInitialisers(varValues);
-        return addNeuronPopulation<NeuronModel>(name, size, paramValues, varInitialisers);
-    }
 
      //! Adds a new neuron group to the model
     /*! \tparam NeuronModel type of neuron model (derived from NeuronModels::Base).
@@ -285,31 +264,6 @@ public:
     SynapseGroup *addSynapsePopulation(const string&, unsigned int, SynapseConnType, SynapseGType, unsigned int, unsigned int, const string&, const string&, const double *, const double *, const double *, const double *); //!< Method for adding a synapse population to a neuronal network model, using C++ string for the name of the population
     SynapseGroup *addSynapsePopulation(const string&, unsigned int, SynapseConnType, SynapseGType, unsigned int, unsigned int, const string&, const string&,
                               const vector<double>&, const vector<double>&, const vector<double>&, const vector<double>&); //!< Method for adding a synapse population to a neuronal network model, using C++ string for the name of the population
-
-    //! Adds a new synapse group to the model
-    /*! \tparam WeightUpdateModel type of weight update model (derived from WeightUpdateModels::Base).
-        \tparam PostsynapticModel type of postsynaptic model (derived from PostsynapticModels::Base).
-        \param name string containing unique name of neuron population.
-        \param mtype how the synaptic matrix associated with this synapse population should be represented.
-        \param delayStep integer specifying number of timesteps delay this synaptic connection should incur (or NO_DELAY for none)
-        \param src string specifying name of presynaptic (source) population
-        \param trg string specifying name of postsynaptic (target) population
-        \param weightParamValues parameters for weight update model wrapped in WeightUpdateModel::ParamValues object.
-        \param weightVarValues initial state variable values for weight update model wrapped in WeightUpdateModel::VarValues object.
-        \param postsynapticParamValues parameters for postsynaptic model wrapped in PostsynapticModel::ParamValues object.
-        \param postsynapticVarValues initial state variable values for postsynaptic model wrapped in PostsynapticModel::VarValues object..
-        \return pointer to newly created SynapseGroup */
-    template<typename WeightUpdateModel, typename PostsynapticModel>
-    SynapseGroup *addSynapsePopulation(const string &name, SynapseMatrixType mtype, unsigned int delaySteps, const string& src, const string& trg,
-                                       const typename WeightUpdateModel::ParamValues &weightParamValues, const typename WeightUpdateModel::VarValues &weightVarValues,
-                                       const typename PostsynapticModel::ParamValues &postsynapticParamValues, const typename PostsynapticModel::VarValues &postsynapticVarValues)
-    {
-        typename WeightUpdateModel::VarInitialisers weightVarInitialisers(weightVarValues);
-        typename PostsynapticModel::VarInitialisers postsynapticVarInitialisers(postsynapticVarValues);
-        return addSynapsePopulation<WeightUpdateModel, PostsynapticModel>(name, mtype, delaySteps, src, trg,
-                                                                          weightParamValues, weightVarInitialisers,
-                                                                          postsynapticParamValues, postsynapticVarInitialisers);
-    }
 
     /*! \tparam WeightUpdateModel type of weight update model (derived from WeightUpdateModels::Base).
         \tparam PostsynapticModel type of postsynaptic model (derived from PostsynapticModels::Base).
