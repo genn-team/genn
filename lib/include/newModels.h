@@ -204,7 +204,7 @@ public:
         return nm.pNames;
     }
 
-    //! Gets names of derived model parameters and theNeuronModel function objects to call to
+    //! Gets names of derived model parameters and the function objects to call to
     //! Calculate their value from a vector of model parameter values
     virtual DerivedParamVec getDerivedParams() const
     {
