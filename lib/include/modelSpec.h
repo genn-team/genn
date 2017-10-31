@@ -179,7 +179,7 @@ public:
     template<typename NeuronModel>
     NeuronGroup *addNeuronPopulation(const string &name, unsigned int size,
                                      const typename NeuronModel::ParamValues &paramValues,
-                                     const typename NeuronModel::VarInitialisers &varInitialisers)
+                                     const typename NeuronModel::VarValues &varInitialisers)
     {
         if (!GeNNReady) {
             gennError("You need to call initGeNN first.");
@@ -279,8 +279,8 @@ public:
         \return pointer to newly created SynapseGroup */
     template<typename WeightUpdateModel, typename PostsynapticModel>
     SynapseGroup *addSynapsePopulation(const string &name, SynapseMatrixType mtype, unsigned int delaySteps, const string& src, const string& trg,
-                                       const typename WeightUpdateModel::ParamValues &weightParamValues, const typename WeightUpdateModel::VarInitialisers &weightVarInitialisers,
-                                       const typename PostsynapticModel::ParamValues &postsynapticParamValues, const typename PostsynapticModel::VarInitialisers &postsynapticVarInitialisers)
+                                       const typename WeightUpdateModel::ParamValues &weightParamValues, const typename WeightUpdateModel::VarValues &weightVarInitialisers,
+                                       const typename PostsynapticModel::ParamValues &postsynapticParamValues, const typename PostsynapticModel::VarValues &postsynapticVarInitialisers)
     {
         if (!GeNNReady) {
             gennError("You need to call initGeNN first.");
