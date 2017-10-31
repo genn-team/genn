@@ -150,7 +150,7 @@ public:
     // Public API
     //----------------------------------------------------------------------------
     //! Gets initialisers as a vector of Values
-    const std::vector<VarInit> getInitialisers() const
+    std::vector<VarInit> getInitialisers() const
     {
         return {};
     }
