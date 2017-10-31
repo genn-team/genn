@@ -2,7 +2,6 @@
 
 // Standard C++ includes
 #include <string>
-#include <type_traits>
 #include <vector>
 
 // Standard C includes
