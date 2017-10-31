@@ -81,7 +81,7 @@ enum FloatType
 template<typename Snippet>
 inline NewModels::VarInit initVar(const typename Snippet::ParamValues &params)
 {
-    return NewModels::VarInit::create<Snippet>(params);
+    return NewModels::VarInit(Snippet::getInstance(), params.getValues());
 }
 
 /*===============================================================

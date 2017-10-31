@@ -60,15 +60,6 @@ public:
         }
     }
 
-    //----------------------------------------------------------------------------
-    // Static API
-    //----------------------------------------------------------------------------
-    template<typename Snippet>
-    static VarInit create(const typename Snippet::ParamValues &params)
-    {
-        return VarInit(Snippet::getInstance(), params.getValues());
-    }
-
 private:
     //----------------------------------------------------------------------------
     // Members
