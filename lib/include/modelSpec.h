@@ -84,6 +84,11 @@ inline NewModels::VarInit initVar(const typename Snippet::ParamValues &params)
     return NewModels::VarInit(Snippet::getInstance(), params.getValues());
 }
 
+inline NewModels::VarInit uninitialisedVar()
+{
+    return NewModels::VarInit(VarInitSnippet::Uninitialised::getInstance(), {});
+}
+
 /*===============================================================
 //! \brief class NNmodel for specifying a neuronal network model.
 //
