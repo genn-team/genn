@@ -38,7 +38,7 @@ public:
     }
 
     VarInit(double constant)
-        : m_Snippet(VarInitSnippet::Constant::getInstance()), m_Params{constant}
+        : m_Snippet(VarInitSnippet::Constant::getInstance()), m_Params(std::vector<double>{constant})
     {
     }
 
