@@ -174,7 +174,7 @@ public:
         \param name string containing unique name of neuron population.
         \param size integer specifying how many neurons are in the population.
         \param paramValues parameters for model wrapped in NeuronModel::ParamValues object.
-        \param varInitialisers state variable initialiser snippets and parameters wrapped in NeuronModel::VarInitialisers object.
+        \param varInitialisers state variable initialiser snippets and parameters wrapped in NeuronModel::VarValues object.
         \return pointer to newly created NeuronGroup */
     template<typename NeuronModel>
     NeuronGroup *addNeuronPopulation(const string &name, unsigned int size,
@@ -273,9 +273,9 @@ public:
         \param src string specifying name of presynaptic (source) population
         \param trg string specifying name of postsynaptic (target) population
         \param weightParamValues parameters for weight update model wrapped in WeightUpdateModel::ParamValues object.
-        \param weightVarInitialisers weight update model state variable initialiser snippets and parameters wrapped in WeightUpdateModel::VarInitialisers object.
+        \param weightVarInitialisers weight update model state variable initialiser snippets and parameters wrapped in WeightUpdateModel::VarValues object.
         \param postsynapticParamValues parameters for postsynaptic model wrapped in PostsynapticModel::ParamValues object.
-        \param postsynapticVarInitialisers postsynaptic model state variable initialiser snippets and parameters wrapped in NeuronModel::VarInitialisers object.
+        \param postsynapticVarInitialisers postsynaptic model state variable initialiser snippets and parameters wrapped in NeuronModel::VarValues object.
         \return pointer to newly created SynapseGroup */
     template<typename WeightUpdateModel, typename PostsynapticModel>
     SynapseGroup *addSynapsePopulation(const string &name, SynapseMatrixType mtype, unsigned int delaySteps, const string& src, const string& trg,
