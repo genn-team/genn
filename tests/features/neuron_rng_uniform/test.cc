@@ -23,19 +23,7 @@ public:
         // Perform Kolmogorov-Smirnov test
         double d;
         double prob;
-        std::tie(d, prob) = Stats::kolmogorovSmirnovTest(samples,
-            [](double x)
-            {
-                if(x < 0.0) {
-                    return 0.0;
-                }
-                else if(x >= 1.0) {
-                    return 1.0;
-                }
-                else {
-                    return x;
-                }
-            });
+        std::tie(d, prob) = Stats::kolmogorovSmirnovTest(samples, Stats::uniformCDF);
 
         return prob;
     }
