@@ -1,7 +1,6 @@
 #pragma once
 
 // Standard C++ includes
-#include <array>
 #include <functional>
 #include <string>
 #include <vector>
@@ -32,24 +31,18 @@ public:                                                 \
 //----------------------------------------------------------------------------
 // Snippet::ValueBase
 //----------------------------------------------------------------------------
-namespace Snippet
-{
 //! Wrapper to ensure at compile time that correct number of values are
 //! used when specifying the values of a model's parameters and initial state.
+namespace Snippet
+{
 template<size_t NumVars>
 class ValueBase
 {
-private:
-    //----------------------------------------------------------------------------
-    // Typedefines
-    //----------------------------------------------------------------------------
-    typedef std::array<double, NumVars> ValueArray;
-
 public:
     // **NOTE** other less terrifying forms of constructor won't complain at compile time about
     // number of parameters e.g. std::array<double, 4> can be initialized with <= 4 elements
     template<typename... T>
-    ValueBase(T&&... vals) : m_Values(ValueArray{{std::forward<const double>(vals)...}})
+    ValueBase(T&&... vals) : m_Values(std::vector<double>{{std::forward<const double>(vals)...}})
     {
         static_assert(sizeof...(vals) == NumVars, "Wrong number of values");
     }
@@ -58,9 +51,9 @@ public:
     // Public API
     //----------------------------------------------------------------------------
     //! Gets values as a vector of doubles
-    std::vector<double> getValues() const
+    const std::vector<double> &getValues() const
     {
-        return std::vector<double>(m_Values.cbegin(), m_Values.cend());
+        return m_Values;
     }
 
     //----------------------------------------------------------------------------
@@ -75,7 +68,7 @@ private:
     //----------------------------------------------------------------------------
     // Members
     //----------------------------------------------------------------------------
-    ValueArray m_Values;
+    std::vector<double> m_Values;
 };
 
 //----------------------------------------------------------------------------
