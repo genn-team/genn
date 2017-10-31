@@ -60,4 +60,19 @@ public:
 
     SET_PARAM_NAMES({"min", "max"});
 };
+
+//----------------------------------------------------------------------------
+// VarInitSnippet::Normal
+//----------------------------------------------------------------------------
+class Normal : public Base
+{
+public:
+    DECLARE_SNIPPET(VarInitSnippet::Normal, 2);
+
+    SET_CODE(
+        "const scalar value = $(mean) + ($(gennrand_normal) * $(sd));\n"
+        "$(set_value, value);");
+
+    SET_PARAM_NAMES({"mean", "sd"});
+};
 }   // namespace VarInitSnippet

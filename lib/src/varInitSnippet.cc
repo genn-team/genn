@@ -4,3 +4,4 @@
 IMPLEMENT_SNIPPET(VarInitSnippet::Uninitialised);
 IMPLEMENT_SNIPPET(VarInitSnippet::Constant);
 IMPLEMENT_SNIPPET(VarInitSnippet::Uniform);
+IMPLEMENT_SNIPPET(VarInitSnippet::Normal);
