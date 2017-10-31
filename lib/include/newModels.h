@@ -81,6 +81,14 @@ private:
 };
 
 //----------------------------------------------------------------------------
+// NewModels::Typelist
+//----------------------------------------------------------------------------
+// Helper to make the ensuing std::enable_if directives less unpleasant
+// **TODO** move elsewhere
+template<typename... >
+struct Typelist;
+
+//----------------------------------------------------------------------------
 // NewModels::VarInitContainerBase
 //----------------------------------------------------------------------------
 //! Wrapper to ensure at compile time that correct number of value initialisers
@@ -97,31 +105,20 @@ private:
 public:
     // **NOTE** other less terrifying forms of constructor won't complain at compile time about
     // number of parameters e.g. std::array<VarInit, 4> can be initialized with <= 4 elements
-    template<typename... T>
+    // **NOTE** as discussed in https://stackoverflow.com/questions/31464666/why-variadic-template-constructor-matches-better-than-copy-constructor,
+    // Variadic constructor is a 'better' match than the const Snippet::ValueBase<NumVars>& constructor below SO
+    // we can use std::enable_if to only enable it if after removing all the const etc (std::decay) the typelist
+    // doesn't boil down to being a single Snippet::ValueBase<NumVars>
+    template<typename... T,
+             typename = typename std::enable_if<!std::is_same<Typelist<Snippet::ValueBase<NumVars>>,
+                                                              Typelist<typename std::decay<T>::type...>>::value >::type>
+
     VarInitContainerBase(T&&... initialisers) : m_Initialisers(InitialiserArray{{std::forward<const VarInit>(initialisers)...}})
     {
         static_assert(sizeof...(initialisers) == NumVars, "Wrong number of initialisers");
     }
 
     VarInitContainerBase(const Snippet::ValueBase<NumVars> &varValues)
-    {
-        m_Initialisers.reserve(NumVars);
-
-        for(size_t i = 0; i < NumVars; i++) {
-            m_Initialisers.push_back(VarInit(varValues[i]));
-        }
-    }
-
-    VarInitContainerBase(Snippet::ValueBase<NumVars> &varValues)
-    {
-        m_Initialisers.reserve(NumVars);
-
-        for(size_t i = 0; i < NumVars; i++) {
-            m_Initialisers.push_back(VarInit(varValues[i]));
-        }
-    }
-
-    VarInitContainerBase(Snippet::ValueBase<NumVars> &&varValues)
     {
         m_Initialisers.reserve(NumVars);
 
@@ -165,21 +162,19 @@ class VarInitContainerBase<0>
 public:
     // **NOTE** other less terrifying forms of constructor won't complain at compile time about
     // number of parameters e.g. std::array<VarInit, 4> can be initialized with <= 4 elements
-    template<typename... T>
+    // **NOTE** as discussed in https://stackoverflow.com/questions/31464666/why-variadic-template-constructor-matches-better-than-copy-constructor,
+    // Variadic constructor is a 'better' match than the const Snippet::ValueBase<0>& constructor below SO
+    // we can use std::enable_if to only enable it if after removing all the const etc (std::decay) the typelist
+    // doesn't boil down to being a single Snippet::ValueBase<0>
+    template<typename... T,
+             typename = typename std::enable_if<!std::is_same<Typelist<Snippet::ValueBase<0>>,
+                                                              Typelist<typename std::decay<T>::type...>>::value >::type>
     VarInitContainerBase(T&&... initialisers)
     {
         static_assert(sizeof...(initialisers) == 0, "Wrong number of initialisers");
     }
 
     VarInitContainerBase(const Snippet::ValueBase<0> &)
-    {
-    }
-
-    VarInitContainerBase(Snippet::ValueBase<0> &)
-    {
-    }
-
-    VarInitContainerBase(Snippet::ValueBase<0> &&)
     {
     }
 
