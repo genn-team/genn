@@ -1187,7 +1187,7 @@ void genRunner(const NNmodel &model, //!< Model description
 #ifndef CPU_ONLY
     os << "void initializeAllSparseArrays() {" << std::endl;
     if(any_of(begin(model.getSynapseGroups()), end(model.getSynapseGroups()),
-        [](const std::pair<string, SynapseGroup> &s)
+        [](const NNmodel::SynapseGroupValueType &s)
         {
             return (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE);
 

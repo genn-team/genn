@@ -50,8 +50,6 @@ void initGeNN()
 NNmodel::NNmodel() 
 {
     final= false;
-    needSt= false;
-    needSynapseDelay = false;
     setDT(0.5);
     setPrecision(GENN_FLOAT);
     setTiming(false);
@@ -78,14 +76,14 @@ bool NNmodel::zeroCopyInUse() const
 {
     // If any neuron groups use zero copy return true
     if(any_of(begin(m_NeuronGroups), end(m_NeuronGroups),
-        [](const std::pair<string, NeuronGroup> &n){ return n.second.isZeroCopyEnabled(); }))
+        [](const NeuronGroupValueType &n){ return n.second.isZeroCopyEnabled(); }))
     {
         return true;
     }
 
     // If any synapse groups use zero copy return true
     if(any_of(begin(m_SynapseGroups), end(m_SynapseGroups),
-        [](const std::pair<string, SynapseGroup> &s){ return s.second.isZeroCopyEnabled(); }))
+        [](const SynapseGroupValueType &s){ return s.second.isZeroCopyEnabled(); }))
     {
         return true;
     }
@@ -97,7 +95,7 @@ bool NNmodel::isRNGRequired() const
 {
     // If any neuron groups require an RNG return true
     if(any_of(begin(m_NeuronGroups), end(m_NeuronGroups),
-        [](const std::pair<string, NeuronGroup> &n){ return n.second.isRNGRequired(); }))
+        [](const NeuronGroupValueType &n){ return n.second.isRNGRequired(); }))
     {
         return true;
     }
@@ -233,8 +231,9 @@ NeuronGroup *NNmodel::addNeuronPopulation(
     }
 
     // Add neuron group
-    auto result = m_NeuronGroups.insert(
-        pair<string, NeuronGroup>(name, NeuronGroup(name, nNo, new NeuronModels::LegacyWrapper(type), p, ini)));
+    auto result = m_NeuronGroups.emplace(std::piecewise_construct,
+        std::forward_as_tuple(name),
+        std::forward_as_tuple(name, nNo, new NeuronModels::LegacyWrapper(type), p, ini));
 
     if(!result.second)
     {
@@ -483,19 +482,14 @@ SynapseGroup *NNmodel::addSynapsePopulation(
     auto srcNeuronGrp = findNeuronGroup(src);
     auto trgNeuronGrp = findNeuronGroup(trg);
 
-    srcNeuronGrp->checkNumDelaySlots(delaySteps);
-    if (delaySteps != NO_DELAY)
-    {
-        needSynapseDelay = true;
-    }
-
     // Add synapse group
-    auto result = m_SynapseGroups.insert(
-        pair<string, SynapseGroup>(
-            name, SynapseGroup(name, mtype, delaySteps,
-                               new WeightUpdateModels::LegacyWrapper(syntype), p, synini,
-                               new PostsynapticModels::LegacyWrapper(postsyn), ps, PSVini,
-                               srcNeuronGrp, trgNeuronGrp)));
+    auto result = m_SynapseGroups.emplace(
+        std::piecewise_construct,
+        std::forward_as_tuple(name),
+        std::forward_as_tuple(name, mtype, delaySteps,
+                              new WeightUpdateModels::LegacyWrapper(syntype), p, synini,
+                              new PostsynapticModels::LegacyWrapper(postsyn), ps, PSVini,
+                              srcNeuronGrp, trgNeuronGrp));
 
     if(!result.second)
     {
@@ -504,29 +498,7 @@ SynapseGroup *NNmodel::addSynapsePopulation(
     }
     else
     {
-        // Get pointer to new synapse group
-        SynapseGroup *newSynapseGroup = &result.first->second;
-
-        // If the weight update model requires presynaptic
-        // spike times, set flag in source neuron group
-        if (newSynapseGroup->getWUModel()->isPreSpikeTimeRequired()) {
-            srcNeuronGrp->setSpikeTimeRequired(true);
-            needSt = true;
-        }
-
-        // If the weight update model requires postsynaptic
-        // spike times, set flag in target neuron group
-        if (newSynapseGroup->getWUModel()->isPostSpikeTimeRequired()) {
-            trgNeuronGrp->setSpikeTimeRequired(true);
-            needSt = true;
-        }
-
-        // Add references to target and source neuron groups
-        trgNeuronGrp->addInSyn(newSynapseGroup);
-        srcNeuronGrp->addOutSyn(newSynapseGroup);
-
-        // Return
-        return newSynapseGroup;
+        return &result.first->second;
     }
 }
 
@@ -729,8 +701,7 @@ void NNmodel::setPopulationSums()
 
             // Add this synapse group to map of synapse groups with postsynaptic learning
             // or update the existing entry with the new block sizes
-            m_SynapsePostLearnGroups[s.first] = std::pair<unsigned int, unsigned int>(
-                startID, paddedSynapsePostLearnIDStart);
+            m_SynapsePostLearnGroups[s.first] = std::make_pair(startID, paddedSynapsePostLearnIDStart);
         }
 
          if (!s.second.getWUModel()->getSynapseDynamicsCode().empty()) {
@@ -739,8 +710,7 @@ void NNmodel::setPopulationSums()
 
             // Add this synapse group to map of synapse groups with dynamics
             // or update the existing entry with the new block sizes
-            m_SynapseDynamicsGroups[s.first] = std::pair<unsigned int, unsigned int>(
-                startID, paddedSynapseDynamicsIDStart);
+            m_SynapseDynamicsGroups[s.first] = std::make_pair(startID, paddedSynapseDynamicsIDStart);
          }
     }
 }

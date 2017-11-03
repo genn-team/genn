@@ -182,7 +182,7 @@ public:
         {
             // Add pair consisting of parameter name and lambda function which calls
             // through to the DPS object associated with the legacy model
-            derivedParams.push_back(std::pair<std::string, DerivedParamFunc>(
+            derivedParams.push_back(std::make_pair(
               m.dpNames[p],
               [this, p](const std::vector<double> &pars, double dt)
               {
@@ -216,7 +216,7 @@ protected:
         // Build vector from legacy neuron model
         for(size_t v = 0; v < a.size(); v++)
         {
-            zip.push_back(std::pair<std::string, std::string>(a[v], b[v]));
+            zip.push_back(std::make_pair(a[v], b[v]));
         }
 
         return zip;

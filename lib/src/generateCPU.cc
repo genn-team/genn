@@ -567,7 +567,7 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
 
         // If any synapse groups have sparse connectivity
         if(any_of(begin(model.getSynapseGroups()), end(model.getSynapseGroups()),
-            [](const std::pair<string, SynapseGroup> &s)
+            [](const NNmodel::SynapseGroupValueType &s)
             {
                 return (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE);
 

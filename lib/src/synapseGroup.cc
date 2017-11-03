@@ -12,6 +12,36 @@
 // ------------------------------------------------------------------------
 // SynapseGroup
 // ------------------------------------------------------------------------
+SynapseGroup::SynapseGroup(const std::string name, SynapseMatrixType matrixType, unsigned int delaySteps,
+                           const WeightUpdateModels::Base *wu, const std::vector<double> &wuParams, const std::vector<double> &wuInitVals,
+                           const PostsynapticModels::Base *ps, const std::vector<double> &psParams, const std::vector<double> &psInitVals,
+                           NeuronGroup *srcNeuronGroup, NeuronGroup *trgNeuronGroup)
+    : m_PaddedKernelIDRange(0, 0), m_Name(name), m_SpanType(SpanType::POSTSYNAPTIC), m_DelaySteps(delaySteps), m_MaxConnections(trgNeuronGroup->getNumNeurons()), m_MatrixType(matrixType),
+    m_SrcNeuronGroup(srcNeuronGroup), m_TrgNeuronGroup(trgNeuronGroup),
+    m_TrueSpikeRequired(false), m_SpikeEventRequired(false), m_EventThresholdReTestRequired(false),
+    m_WUModel(wu), m_WUParams(wuParams), m_WUInitVals(wuInitVals), m_PSModel(ps), m_PSParams(psParams), m_PSInitVals(psInitVals),
+    m_HostID(0), m_DeviceID(0)
+{
+    // Check that the source neuron group supports the desired number of delay steps
+    srcNeuronGroup->checkNumDelaySlots(delaySteps);
+
+    // If the weight update model requires presynaptic
+    // spike times, set flag in source neuron group
+    if (getWUModel()->isPreSpikeTimeRequired()) {
+        srcNeuronGroup->setSpikeTimeRequired(true);
+    }
+
+    // If the weight update model requires postsynaptic
+    // spike times, set flag in target neuron group
+    if (getWUModel()->isPostSpikeTimeRequired()) {
+        trgNeuronGroup->setSpikeTimeRequired(true);
+    }
+
+    // Add references to target and source neuron groups
+    trgNeuronGroup->addInSyn(this);
+    srcNeuronGroup->addOutSyn(this);
+}
+
 void SynapseGroup::setWUVarZeroCopyEnabled(const std::string &var, bool enabled)
 {
     // If named variable doesn't exist give error
