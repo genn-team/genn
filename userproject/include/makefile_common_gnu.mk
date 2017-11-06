@@ -17,10 +17,25 @@
 #-----------------------------------------------------------------
 
 # OS name (Linux or Darwin) and kernel architecture (32 bit or 64 bit)
-OS_SIZE                  :=$(shell getconf LONG_BIT)
+OS_SIZE                 :=$(shell getconf LONG_BIT)
 OS_UPPER                :=$(shell uname -s 2>/dev/null | tr [:lower:] [:upper:])
 OS_LOWER                :=$(shell uname -s 2>/dev/null | tr [:upper:] [:lower:])
+OS_ARCH                 :=$(shell uname -m 2>/dev/null)
 DARWIN                  :=$(strip $(findstring DARWIN,$(OS_UPPER)))
+GLIBC                   :=$(shell ldd --version | grep -oP "([0-9]+\.[0-9]+)$$")
+
+# **NOTE** if we are using GCC on x86_64, a bug in glibc 2.23 or 2.24 causes bad performance
+# (https://bugs.launchpad.net/ubuntu/+source/glibc/+bug/1663280) so detect this combination of events here
+ifeq ($(OS_ARCH),x86_64)
+	ifneq ($(DARWIN),DARWIN)
+		ifeq ($(GLIBC),2.23)
+			LIBC_BUG := 1
+		endif
+		ifeq ($(GLIBC),2.24)
+			LIBC_BUG := 1
+		endif
+	endif
+endif
 
 # Global CUDA compiler settings
 ifndef CPU_ONLY
@@ -80,14 +95,23 @@ endif
 SOURCES                 ?=$(wildcard *.cc *.cpp *.cu *.c)
 OBJECTS                 :=$(foreach obj,$(basename $(SOURCES)),$(obj).o) $(SIM_CODE)/runner.o
 
-
 # Target rules
 .PHONY: all clean purge show
 
 all: $(EXECUTABLE)
 
+# Best solution to bug in glibc 2.23 or 2.24 is to set LD_BIND_NOW=1. 
+# Therefore we build our actual executable with a _wrapper suffix and 
+# generate a shell script to call it with environment variable set
+ifdef LIBC_BUG
+$(EXECUTABLE): $(OBJECTS)
+	$(CXX) $(CXXFLAGS) -o $@_wrapper $(OBJECTS) $(LINK_FLAGS)
+	@echo "#!/bin/bash\nexport LD_BIND_NOW=1\n./$@_wrapper \"\$$@\"" >> $@
+	@chmod +x $@
+else
 $(EXECUTABLE): $(OBJECTS)
 	$(CXX) $(CXXFLAGS) -o $@ $(OBJECTS) $(LINK_FLAGS)
+endif
 
 $(SIM_CODE)/runner.o:
 	cd $(SIM_CODE) && make
@@ -107,7 +131,7 @@ ifndef CPU_ONLY
 endif
 
 clean:
-	rm -rf $(EXECUTABLE) *.o *.dSYM/ generateALL
+	rm -rf $(EXECUTABLE) $(EXECUTABLE)_wrapper *.o *.dSYM/ generateALL
 	cd $(SIM_CODE) && make clean
 
 purge: clean
