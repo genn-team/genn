@@ -6,6 +6,7 @@
 
 // Standard C includes
 #include <cmath>
+#include <cstdlib>
 
 // GeNN includes
 #include "codeStream.h"
@@ -121,6 +122,15 @@ void genInit(const NNmodel &model,          //!< Model description
 #else
     std::string oB = "", cB = "";
 #endif // _WIN32
+
+    // **NOTE** if we are using GCC on x86_64, bugs in some version of glibc can cause bad performance issues.
+    // Best solution involves setting LD_BIND_NOW=1 so check whether this has been applied
+    os << "#if defined(__GNUG__) && !defined(__clang__) && defined(__x86_64__) && __GLIBC__ == 2 && (__GLIBC_MINOR__ == 23 || __GLIBC_MINOR__ == 24)" << std::endl;
+    os << "if(std::getenv(\"LD_BIND_NOW\") == NULL)" << CodeStream::OB(11);
+    os << "fprintf(stderr, \"Warning: a bug has been found in glibc 2.23 or glibc 2.24 (https://bugs.launchpad.net/ubuntu/+source/glibc/+bug/1663280) \"" << std::endl;
+    os << "                \"which results in poor CPU maths performance. We recommend setting the environment variable LD_BIND_NOW=1 to work around this issue.\\n\");" << std::endl;
+    os << CodeStream::CB(11);
+    os << "#endif" << std::endl;
 
     // Seed legacy RNG
     if (model.getSeed() == 0) {
