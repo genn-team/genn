@@ -158,14 +158,14 @@ void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
         // Populate the neuron group size
         std::transform(model.getNeuronGroups().cbegin(), model.getNeuronGroups().cend(),
                        std::back_insert_iterator<vector<unsigned int>>(groupSize[KernelCalcNeurons]),
-                       [](const std::pair<std::string, NeuronGroup> &n){ return n.second.getNumNeurons(); });
+                       [](const NNmodel::NeuronGroupValueType &n){ return n.second.getNumNeurons(); });
 
 
         // Populate the init group size
         // **TODO** synapses
         std::transform(model.getNeuronGroups().cbegin(), model.getNeuronGroups().cend(),
                        std::back_insert_iterator<vector<unsigned int>>(groupSize[KernelInit]),
-                       [](const std::pair<std::string, NeuronGroup> &n){ return n.second.getNumNeurons(); });
+                       [](const NNmodel::NeuronGroupValueType &n){ return n.second.getNumNeurons(); });
 
 #ifdef BLOCKSZ_DEBUG
         for (int i= 0; i < KernelMax; i++) {

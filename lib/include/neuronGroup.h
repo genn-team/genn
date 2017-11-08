@@ -25,6 +25,8 @@ public:
         m_HostID(0), m_DeviceID(0)
     {
     }
+    NeuronGroup(const NeuronGroup&) = delete;
+    NeuronGroup() = delete;
 
     //------------------------------------------------------------------------
     // Public methods

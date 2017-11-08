@@ -23,7 +23,7 @@ unsigned int genInitNeuronKernel(CodeStream &os, const NNmodel &model)
 {
     // If no neuron groups require an RNG for simulation, return zero and don't write kernel
     if(std::none_of(std::begin(model.getNeuronGroups()), std::end(model.getNeuronGroups()),
-                               [](const std::pair<std::string, NeuronGroup> &n)
+                               [](const NNmodel::NeuronGroupValueType &n)
                                {
                                    return n.second.isSimRNGRequired();
                                }))
