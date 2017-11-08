@@ -7,8 +7,6 @@
 #include <cmath>
 #include <cstdlib>
 
-
-
 // GeNN includes
 #include "codeStream.h"
 #include "global.h"
@@ -113,8 +111,7 @@ void genInit(const NNmodel &model,          //!< Model description
     // **NOTE** if we are using GCC on x86_64, bugs in some version of glibc can cause bad performance issues.
     // Best solution involves setting LD_BIND_NOW=1 so check whether this has been applied
     os << "#if defined(__GNUG__) && !defined(__clang__) && defined(__x86_64__) && __GLIBC__ == 2 && (__GLIBC_MINOR__ == 23 || __GLIBC_MINOR__ == 24)" << std::endl;
-    os << "    const char *ldBindNow = std::getenv(\"LD_BIND_NOW\");" << std::endl;
-    os << "    if(ldBindNow == NULL || strcmp(ldBindNow, \"1\") != 0) {" << std::endl;
+    os << "    if(std::getenv(\"LD_BIND_NOW\") == NULL) {" << std::endl;
     os << "        fprintf(stderr, \"Warning: a bug has been found in glibc 2.23 or glibc 2.24 (https://bugs.launchpad.net/ubuntu/+source/glibc/+bug/1663280) \"" << std::endl;
     os << "                        \"which results in poor CPU maths performance. We recommend setting the environment variable LD_BIND_NOW=1 to work around this issue.\\n\");" << std::endl;
     os << "    }" << std::endl;
