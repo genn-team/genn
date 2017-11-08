@@ -778,6 +778,12 @@ void genRunner(const NNmodel &model, //!< Model description
     os << "#include <ctime>" << std::endl;
     os << "#include <cassert>" << std::endl;
     os << "#include <stdint.h>" << std::endl;
+
+    // **NOTE** if we are using GCC on x86_64, bugs in some version of glibc can cause
+    // bad performance issues so need this to allow us to perform a runtime check
+    os << "#if defined(__GNUG__) && !defined(__clang__) && defined(__x86_64__)" << std::endl;
+    os << "    #include <gnu/libc-version.h>" << std::endl;
+    os << "#endif" << std::endl;
     os << std::endl;
 
 
