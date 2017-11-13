@@ -47,31 +47,31 @@ void modelDefinition(NNmodel &model)
     GENN_PREFERENCES::autoInitSparseVars = true;
 
     // Parameters for configuring uniform and normal distributions
-    VarInitSnippet::Uniform::ParamValues uniformParams(
+    InitVarSnippet::Uniform::ParamValues uniformParams(
         0.0,        // 0 - min
         1.0);       // 1 - max
 
-    VarInitSnippet::Uniform::ParamValues normalParams(
+    InitVarSnippet::Uniform::ParamValues normalParams(
         0.0,        // 0 - mean
         1.0);       // 1 - sd
 
     // Neuron parameters
     Neuron::VarValues neuronInit(
         13.0,
-        initVar<VarInitSnippet::Uniform>(uniformParams),
-        initVar<VarInitSnippet::Normal>(normalParams));
+        initVar<InitVarSnippet::Uniform>(uniformParams),
+        initVar<InitVarSnippet::Normal>(normalParams));
 
     // PostsynapticModel parameters
     PostsynapticModel::VarValues postsynapticInit(
         13.0,
-        initVar<VarInitSnippet::Uniform>(uniformParams),
-        initVar<VarInitSnippet::Normal>(normalParams));
+        initVar<InitVarSnippet::Uniform>(uniformParams),
+        initVar<InitVarSnippet::Normal>(normalParams));
 
     // WeightUpdateModel parameters
     WeightUpdateModel::VarValues weightUpdateInit(
         13.0,
-        initVar<VarInitSnippet::Uniform>(uniformParams),
-        initVar<VarInitSnippet::Normal>(normalParams));
+        initVar<InitVarSnippet::Uniform>(uniformParams),
+        initVar<InitVarSnippet::Normal>(normalParams));
 
     // Neuron populations
     model.addNeuronPopulation<NeuronModels::SpikeSource>("SpikeSource", 1, {}, {});
