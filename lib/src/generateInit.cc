@@ -227,7 +227,7 @@ void genInit(const NNmodel &model,          //!< Model description
                     os << CodeStream::OB(190) << "for (int i = 0; i < " << n.second.getNumNeurons() << "; i++)" << CodeStream::OB(200);
                 }
 
-                os << StandardSubstitutions::initVariable(varInit, neuronModelVars[j].first + n.first + "[i] = $(0)",
+                os << StandardSubstitutions::initVariable(varInit, neuronModelVars[j].first + n.first + "[i]",
                                                             cpuFunctions, model.getPrecision(), "rng") << std::endl;
 
                 os << CodeStream::CB(200) << CodeStream::CB(190) << std::endl;
@@ -266,7 +266,7 @@ void genInit(const NNmodel &model,          //!< Model description
                 const auto &varInit = s.second.getWUVarInitialisers()[k];
 
                 os << CodeStream::OB(250) << "for (int i = 0; i < " << numSrcNeurons * numTrgNeurons << "; i++)" << CodeStream::OB(260);
-                os << StandardSubstitutions::initVariable(varInit, wuVars[k].first + s.first + "[i] = $(0)",
+                os << StandardSubstitutions::initVariable(varInit, wuVars[k].first + s.first + "[i]",
                                                             cpuFunctions, model.getPrecision(), "rng") << std::endl;
                 os << CodeStream::CB(260) << CodeStream::CB(250) << std::endl;
             }
@@ -283,7 +283,7 @@ void genInit(const NNmodel &model,          //!< Model description
                 if(!varInit.getSnippet()->getCode().empty()) {
                     // Loop through postsynaptic neurons and substitute in initialisation code
                     os << CodeStream::OB(270) << "for (int i = 0; i < " << numTrgNeurons << "; i++)" << CodeStream::OB(280);
-                    os << StandardSubstitutions::initVariable(varInit, psmVars[k].first + s.first + "[i] = $(0)",
+                    os << StandardSubstitutions::initVariable(varInit, psmVars[k].first + s.first + "[i]",
                                                                 cpuFunctions, model.getPrecision(), "rng") << std::endl;
                     os << CodeStream::CB(280) << CodeStream::CB(270) << std::endl;
                 }
@@ -369,7 +369,7 @@ void genInit(const NNmodel &model,          //!< Model description
                     const auto &varInit = s.second.getWUVarInitialisers()[k];
 
                     os << CodeStream::OB(310) << "for (int i = 0; i < C" << s.first << ".connN; i++)" << CodeStream::OB(320);
-                    os << StandardSubstitutions::initVariable(varInit, wuVars[k].first + s.first + "[i] = $(0)",
+                    os << StandardSubstitutions::initVariable(varInit, wuVars[k].first + s.first + "[i]",
                                                               cpuFunctions, model.getPrecision(), "rng") << std::endl;
                     os << CodeStream::CB(320) << CodeStream::CB(310) << std::endl;
                 }

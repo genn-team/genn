@@ -180,8 +180,7 @@ void StandardSubstitutions::weightUpdateThresholdCondition(
     const string &postIdx, //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
     const string &devPrefix,
     const std::vector<FunctionTemplate> functions,
-    const std::string &ftype)
-{
+    const std::string &ftype){
     value_substitutions(eCode, sg.getWUModel()->getParamNames(), sg.getWUParams());
     value_substitutions(eCode, wuDerivedParams.nameBegin, wuDerivedParams.nameEnd, sg.getWUDerivedParams());
     name_substitutions(eCode, "", wuExtraGlobalParams.nameBegin, wuExtraGlobalParams.nameEnd, sg.getName());
@@ -274,7 +273,7 @@ void StandardSubstitutions::weightUpdatePostLearn(
 
 std::string StandardSubstitutions::initVariable(
     const NewModels::VarInit &varInit,
-    const std::string &setValueFunctionTemplate,
+    const std::string &varName,
     const std::vector<FunctionTemplate> functions,
     const std::string &ftype,
     const std::string &rng)
@@ -287,8 +286,8 @@ std::string StandardSubstitutions::initVariable(
     value_substitutions(code, varInit.getSnippet()->getParamNames(), varInit.getParams());
     value_substitutions(code, viDerivedParams.nameBegin, viDerivedParams.nameEnd, varInit.getDerivedParams());
 
-    // Substitute the set value function template
-    functionSubstitute(code, "set_value", 1, setValueFunctionTemplate);
+    // Substitute the name of the variable we're initialising
+    substitute(code, "$(value)", varName);
 
     functionSubstitutions(code, ftype, functions);
     substitute(code, "$(rng)", rng);
