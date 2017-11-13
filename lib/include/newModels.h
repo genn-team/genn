@@ -9,7 +9,7 @@
 
 // GeNN includes
 #include "snippet.h"
-#include "varInitSnippet.h"
+#include "initVarSnippet.h"
 
 //----------------------------------------------------------------------------
 // Macros
@@ -30,20 +30,20 @@ namespace NewModels
 class VarInit
 {
 public:
-    VarInit(const VarInitSnippet::Base *snippet, const std::vector<double> &params)
+    VarInit(const InitVarSnippet::Base *snippet, const std::vector<double> &params)
         : m_Snippet(snippet), m_Params(params)
     {
     }
 
     VarInit(double constant)
-        : m_Snippet(VarInitSnippet::Constant::getInstance()), m_Params(std::vector<double>{constant})
+        : m_Snippet(InitVarSnippet::Constant::getInstance()), m_Params(std::vector<double>{constant})
     {
     }
 
     //----------------------------------------------------------------------------
     // Public API
     //----------------------------------------------------------------------------
-    const VarInitSnippet::Base *getSnippet() const{ return m_Snippet; }
+    const InitVarSnippet::Base *getSnippet() const{ return m_Snippet; }
     const std::vector<double> &getParams() const{ return m_Params; }
     const std::vector<double> &getDerivedParams() const{ return m_DerivedParams; }
 
@@ -64,7 +64,7 @@ private:
     //----------------------------------------------------------------------------
     // Members
     //----------------------------------------------------------------------------
-    const VarInitSnippet::Base *m_Snippet;
+    const InitVarSnippet::Base *m_Snippet;
     std::vector<double> m_Params;
     std::vector<double> m_DerivedParams;
 };

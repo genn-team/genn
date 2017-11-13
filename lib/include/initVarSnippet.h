@@ -9,10 +9,10 @@
 #define SET_CODE(CODE) virtual std::string getCode() const{ return CODE; }
 
 //----------------------------------------------------------------------------
-// VarInitSnippet::Base
+// InitVarSnippet::Base
 //----------------------------------------------------------------------------
 //! Base class for all value initialisation snippets
-namespace VarInitSnippet
+namespace InitVarSnippet
 {
 class Base : public Snippet::Base
 {
@@ -24,21 +24,21 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// VarInitSnippet::Uninitialised
+// InitVarSnippet::Uninitialised
 //----------------------------------------------------------------------------
 class Uninitialised : public Base
 {
 public:
-    DECLARE_SNIPPET(VarInitSnippet::Uninitialised, 0);
+    DECLARE_SNIPPET(InitVarSnippet::Uninitialised, 0);
 };
 
 //----------------------------------------------------------------------------
-// VarInitSnippet::Constant
+// InitVarSnippet::Constant
 //----------------------------------------------------------------------------
 class Constant : public Base
 {
 public:
-    DECLARE_SNIPPET(VarInitSnippet::Constant, 1);
+    DECLARE_SNIPPET(InitVarSnippet::Constant, 1);
 
     SET_CODE("$(set_value, $(value));");
 
@@ -46,12 +46,12 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// VarInitSnippet::Uniform
+// InitVarSnippet::Uniform
 //----------------------------------------------------------------------------
 class Uniform : public Base
 {
 public:
-    DECLARE_SNIPPET(VarInitSnippet::Uniform, 2);
+    DECLARE_SNIPPET(InitVarSnippet::Uniform, 2);
 
     SET_CODE(
         "const scalar scale = $(max) - $(min);\n"
@@ -62,12 +62,12 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// VarInitSnippet::Normal
+// InitVarSnippet::Normal
 //----------------------------------------------------------------------------
 class Normal : public Base
 {
 public:
-    DECLARE_SNIPPET(VarInitSnippet::Normal, 2);
+    DECLARE_SNIPPET(InitVarSnippet::Normal, 2);
 
     SET_CODE(
         "const scalar value = $(mean) + ($(gennrand_normal) * $(sd));\n"
@@ -75,4 +75,4 @@ public:
 
     SET_PARAM_NAMES({"mean", "sd"});
 };
-}   // namespace VarInitSnippet
+}   // namespace InitVarSnippet

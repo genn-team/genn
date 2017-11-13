@@ -86,7 +86,7 @@ inline NewModels::VarInit initVar(const typename Snippet::ParamValues &params)
 
 inline NewModels::VarInit uninitialisedVar()
 {
-    return NewModels::VarInit(VarInitSnippet::Uninitialised::getInstance(), {});
+    return NewModels::VarInit(InitVarSnippet::Uninitialised::getInstance(), {});
 }
 
 /*===============================================================
