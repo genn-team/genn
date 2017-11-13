@@ -69,6 +69,11 @@ void NeuronGroup::initDerivedParams(double dt)
     for(const auto &d : derivedParams) {
         m_DerivedParams.push_back(d.second(m_Params, dt));
     }
+
+    // Initialise derived parameters for variable initialisers
+    for(auto &v : m_VarInitialisers) {
+        v.initDerivedParams(dt);
+    }
 }
 
 void NeuronGroup::calcSizes(unsigned int blockSize,  unsigned int &idStart, unsigned int &paddedIDStart)
@@ -145,7 +150,17 @@ void NeuronGroup::addExtraGlobalParams(std::map<string, string> &kernelParameter
     }
 }
 
-bool NeuronGroup::isRNGRequired() const
+bool NeuronGroup::isInitCodeRequired() const
+{
+    // Return true if any of the variables initialisers have any code
+    return std::any_of(m_VarInitialisers.cbegin(), m_VarInitialisers.cend(),
+                       [](const NewModels::VarInit &v)
+                       {
+                           return !v.getSnippet()->getCode().empty();
+                       });
+}
+
+bool NeuronGroup::isSimRNGRequired() const
 {
     // Returns true if any parts of the neuron code require an RNG
     if(::isRNGRequired(getNeuronModel()->getSimCode())
@@ -167,6 +182,18 @@ bool NeuronGroup::isRNGRequired() const
     }
 
     return false;
+}
+
+bool NeuronGroup::isInitRNGRequired() const
+{
+    // Return true if any of the variables initialisers use rngs
+    return std::any_of(m_VarInitialisers.cbegin(), m_VarInitialisers.cend(),
+                       [](const NewModels::VarInit &v)
+                       {
+                           return ::isRNGRequired(v.getSnippet()->getCode());
+                       });
+
+    // **TODO** return true if any PSM variable initialisers use rngs
 }
 
 std::string NeuronGroup::getQueueOffset(const std::string &devPrefix) const

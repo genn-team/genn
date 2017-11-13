@@ -31,7 +31,6 @@
 
 unsigned int GeNNReady = 0;
 
-// ------------------------------------------------------------------------
 //! \brief Method for GeNN initialisation (by preparing standard models)
     
 void initGeNN()
@@ -43,11 +42,27 @@ void initGeNN()
 }
 
 // ------------------------------------------------------------------------
+// Anonymous namespace
+// ------------------------------------------------------------------------
+namespace
+{
+void createVarInitialiserFromLegacyVars(const std::vector<double> &ini, std::vector<NewModels::VarInit> &varInitialisers)
+{
+    varInitialisers.reserve(ini.size());
+    std::transform(ini.cbegin(), ini.cend(), std::back_inserter(varInitialisers),
+                   [](double v)
+                   {
+                       return NewModels::VarInit(v);
+                   });
+}
+}
+
+// ------------------------------------------------------------------------
 // NNmodel
 // ------------------------------------------------------------------------
 // class NNmodel for specifying a neuronal network model
 
-NNmodel::NNmodel() 
+NNmodel::NNmodel()
 {
     final= false;
     setDT(0.5);
@@ -95,10 +110,15 @@ bool NNmodel::isRNGRequired() const
 {
     // If any neuron groups require an RNG return true
     if(any_of(begin(m_NeuronGroups), end(m_NeuronGroups),
-        [](const NeuronGroupValueType &n){ return n.second.isRNGRequired(); }))
+        [](const NeuronGroupValueType &n)
+        {
+            return (n.second.isSimRNGRequired() || n.second.isInitRNGRequired());
+        }))
     {
         return true;
     }
+
+    // **TODO** synapse groups
 
     return false;
 }
@@ -230,10 +250,14 @@ NeuronGroup *NNmodel::addNeuronPopulation(
         gennError("The number of variable initial values for neuron group " + name + " does not match that of their neuron type, " + to_string(ini.size()) + " != " + to_string(nModels[type].varNames.size()));
     }
 
+    // Create variable initialisers from old-style values
+    std::vector<NewModels::VarInit> varInitialisers;
+    createVarInitialiserFromLegacyVars(ini, varInitialisers);
+
     // Add neuron group
     auto result = m_NeuronGroups.emplace(std::piecewise_construct,
         std::forward_as_tuple(name),
-        std::forward_as_tuple(name, nNo, new NeuronModels::LegacyWrapper(type), p, ini));
+        std::forward_as_tuple(name, nNo, new NeuronModels::LegacyWrapper(type), p, varInitialisers));
 
     if(!result.second)
     {
@@ -482,13 +506,20 @@ SynapseGroup *NNmodel::addSynapsePopulation(
     auto srcNeuronGrp = findNeuronGroup(src);
     auto trgNeuronGrp = findNeuronGroup(trg);
 
+    // Create variable initialisers from old-style values
+    std::vector<NewModels::VarInit> psVarInitialisers;
+    createVarInitialiserFromLegacyVars(PSVini, psVarInitialisers);
+
+    std::vector<NewModels::VarInit> wuVarInitialisers;
+    createVarInitialiserFromLegacyVars(synini, wuVarInitialisers);
+
     // Add synapse group
     auto result = m_SynapseGroups.emplace(
         std::piecewise_construct,
         std::forward_as_tuple(name),
         std::forward_as_tuple(name, mtype, delaySteps,
-                              new WeightUpdateModels::LegacyWrapper(syntype), p, synini,
-                              new PostsynapticModels::LegacyWrapper(postsyn), ps, PSVini,
+                              new WeightUpdateModels::LegacyWrapper(syntype), p, wuVarInitialisers,
+                              new PostsynapticModels::LegacyWrapper(postsyn), ps, psVarInitialisers,
                               srcNeuronGrp, trgNeuronGrp));
 
     if(!result.second)
@@ -637,6 +668,7 @@ void NNmodel::setRNType(const std::string &type)
     }
     RNtype= type;
 }
+
 #ifndef CPU_ONLY
 //--------------------------------------------------------------------------
 /*! \brief This function defines the way how the GPU is chosen. If "AUTODEVICE" (-1) is given as the argument, GeNN will use internal heuristics to choose the device. Otherwise the argument is the device number and the indicated device will be used.

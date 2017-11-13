@@ -35,14 +35,6 @@
 //-------------------------------------------------------------------------
 namespace
 {
-
-const std::vector<FunctionTemplate> cpuFunctions = {
-    {"gennrand_uniform", 0, "std::uniform_real_distribution<double>(0.0, 1.0)($(rng))", "std::uniform_real_distribution<float>(0.0f, 1.0f)($(rng))"},
-    {"gennrand_normal", 0, "std::normal_distribution<double>(0.0, 1.0)($(rng))", "std::normal_distribution<float>(0.0f, 1.0f)($(rng))"},
-    {"gennrand_exponential", 0, "std::exponential_distribution<double>(1.0)($(rng))", "std::exponential_distribution<float>(1.0)($(rng))"},
-    {"gennrand_log_normal", 2, "std::lognormal_distribution<double>($(0), $(1))($(rng))", "std::lognormal_distribution<float>($(0), $(1))($(rng))"},
-};
-
 //-------------------------------------------------------------------------
 /*!
   \brief Function for generating the CUDA synapse kernel code that handles presynaptic

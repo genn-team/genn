@@ -9,18 +9,46 @@
 #include "standardSubstitutions.h"
 #include "utils.h"
 
+//----------------------------------------------------------------------------
+// Anonymous namespace
+//----------------------------------------------------------------------------
+namespace
+{
+std::vector<double> getConstInitVals(const std::vector<NewModels::VarInit> &varInitialisers)
+{
+    // Reserve initial values to match initialisers
+    std::vector<double> initVals;
+    initVals.reserve(varInitialisers.size());
+
+    // Transform variable initialisers into a vector of doubles
+    std::transform(varInitialisers.cbegin(), varInitialisers.cend(), std::back_inserter(initVals),
+                   [](const NewModels::VarInit &v)
+                   {
+                       // Check
+                       if(dynamic_cast<const InitVarSnippet::Constant*>(v.getSnippet()) == nullptr) {
+                           throw std::runtime_error("Only 'Constant' variable initialisation snippets can be used to initialise state variables of synapse groups using GLOBALG");
+                       }
+
+                       // Return the first parameter (the value)
+                       return v.getParams()[0];
+                   });
+
+    return initVals;
+}
+}   // Anonymous namespace
+
 // ------------------------------------------------------------------------
 // SynapseGroup
 // ------------------------------------------------------------------------
 SynapseGroup::SynapseGroup(const std::string name, SynapseMatrixType matrixType, unsigned int delaySteps,
-                           const WeightUpdateModels::Base *wu, const std::vector<double> &wuParams, const std::vector<double> &wuInitVals,
-                           const PostsynapticModels::Base *ps, const std::vector<double> &psParams, const std::vector<double> &psInitVals,
+                           const WeightUpdateModels::Base *wu, const std::vector<double> &wuParams, const std::vector<NewModels::VarInit> &wuVarInitialisers,
+                           const PostsynapticModels::Base *ps, const std::vector<double> &psParams, const std::vector<NewModels::VarInit> &psVarInitialisers,
                            NeuronGroup *srcNeuronGroup, NeuronGroup *trgNeuronGroup)
-    : m_PaddedKernelIDRange(0, 0), m_Name(name), m_SpanType(SpanType::POSTSYNAPTIC), m_DelaySteps(delaySteps), m_MaxConnections(trgNeuronGroup->getNumNeurons()), m_MatrixType(matrixType),
-    m_SrcNeuronGroup(srcNeuronGroup), m_TrgNeuronGroup(trgNeuronGroup),
-    m_TrueSpikeRequired(false), m_SpikeEventRequired(false), m_EventThresholdReTestRequired(false),
-    m_WUModel(wu), m_WUParams(wuParams), m_WUInitVals(wuInitVals), m_PSModel(ps), m_PSParams(psParams), m_PSInitVals(psInitVals),
-    m_HostID(0), m_DeviceID(0)
+    :   m_PaddedKernelIDRange(0, 0), m_Name(name), m_SpanType(SpanType::POSTSYNAPTIC), m_DelaySteps(delaySteps), m_MaxConnections(trgNeuronGroup->getNumNeurons()), m_MatrixType(matrixType),
+        m_SrcNeuronGroup(srcNeuronGroup), m_TrgNeuronGroup(trgNeuronGroup),
+        m_TrueSpikeRequired(false), m_SpikeEventRequired(false), m_EventThresholdReTestRequired(false),
+        m_WUModel(wu), m_WUParams(wuParams), m_WUVarInitialisers(wuVarInitialisers), m_PSModel(ps), m_PSParams(psParams), m_PSVarInitialisers(psVarInitialisers),
+        m_HostID(0), m_DeviceID(0)
 {
     // Check that the source neuron group supports the desired number of delay steps
     srcNeuronGroup->checkNumDelaySlots(delaySteps);
@@ -111,14 +139,24 @@ void SynapseGroup::initDerivedParams(double dt)
     m_WUDerivedParams.reserve(wuDerivedParams.size());
     m_PSDerivedParams.reserve(psDerivedParams.size());
 
-    // Loop through derived parameters
+    // Loop through WU derived parameters
     for(const auto &d : wuDerivedParams) {
         m_WUDerivedParams.push_back(d.second(m_WUParams, dt));
     }
 
-    // Loop through derived parameters
+    // Loop through PSM derived parameters
     for(const auto &d : psDerivedParams) {
         m_PSDerivedParams.push_back(d.second(m_PSParams, dt));
+    }
+
+    // Initialise derived parameters for WU variable initialisers
+    for(auto &v : m_WUVarInitialisers) {
+        v.initDerivedParams(dt);
+    }
+
+    // Initialise derived parameters for PSM variable initialisers
+    for(auto &v : m_PSVarInitialisers) {
+        v.initDerivedParams(dt);
     }
 }
 
@@ -160,6 +198,16 @@ unsigned int SynapseGroup::getPaddedDynKernelSize(unsigned int blockSize) const
 unsigned int SynapseGroup::getPaddedPostLearnKernelSize(unsigned int blockSize) const
 {
     return ceil((double) getSrcNeuronGroup()->getNumNeurons() / (double) blockSize) * (double) blockSize;
+}
+
+const std::vector<double> SynapseGroup::getWUConstInitVals() const
+{
+    return getConstInitVals(m_WUVarInitialisers);
+}
+
+const std::vector<double> SynapseGroup::getPSConstInitVals() const
+{
+    return getConstInitVals(m_PSVarInitialisers);
 }
 
 bool SynapseGroup::isZeroCopyEnabled() const

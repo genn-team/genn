@@ -34,7 +34,7 @@ void StandardSubstitutions::postSynapseApplyInput(
         name_substitutions(psCode, "lps", psmVars.nameBegin, psmVars.nameEnd, sg->getName());
     }
     else {
-        value_substitutions(psCode, psmVars.nameBegin, psmVars.nameEnd, sg->getPSInitVals());
+        value_substitutions(psCode, psmVars.nameBegin, psmVars.nameEnd, sg->getPSConstInitVals());
     }
     value_substitutions(psCode, sg->getPSModel()->getParamNames(), sg->getPSParams());
 
@@ -180,8 +180,7 @@ void StandardSubstitutions::weightUpdateThresholdCondition(
     const string &postIdx, //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
     const string &devPrefix,
     const std::vector<FunctionTemplate> functions,
-    const std::string &ftype)
-{
+    const std::string &ftype){
     value_substitutions(eCode, sg.getWUModel()->getParamNames(), sg.getWUParams());
     value_substitutions(eCode, wuDerivedParams.nameBegin, wuDerivedParams.nameEnd, sg.getWUDerivedParams());
     name_substitutions(eCode, "", wuExtraGlobalParams.nameBegin, wuExtraGlobalParams.nameEnd, sg.getName());
@@ -205,7 +204,7 @@ void StandardSubstitutions::weightUpdateSim(
     const std::string &ftype)
 {
      if (sg.getMatrixType() & SynapseMatrixWeight::GLOBAL) {
-         value_substitutions(wCode, wuVars.nameBegin, wuVars.nameEnd, sg.getWUInitVals());
+         value_substitutions(wCode, wuVars.nameBegin, wuVars.nameEnd, sg.getWUConstInitVals());
      }
 
     value_substitutions(wCode, sg.getWUModel()->getParamNames(), sg.getWUParams());
@@ -232,7 +231,7 @@ void StandardSubstitutions::weightUpdateDynamics(
     const std::string &ftype)
 {
      if (sg->getMatrixType() & SynapseMatrixWeight::GLOBAL) {
-         value_substitutions(SDcode, wuVars.nameBegin, wuVars.nameEnd, sg->getWUInitVals());
+         value_substitutions(SDcode, wuVars.nameBegin, wuVars.nameEnd, sg->getWUConstInitVals());
      }
 
     // substitute parameter values for parameters in synapseDynamics code
@@ -270,4 +269,30 @@ void StandardSubstitutions::weightUpdatePostLearn(
     functionSubstitutions(code, ftype, functions);
     code= ensureFtype(code, ftype);
     checkUnreplacedVariables(code, "simLearnPost");
+}
+
+std::string StandardSubstitutions::initVariable(
+    const NewModels::VarInit &varInit,
+    const std::string &varName,
+    const std::vector<FunctionTemplate> functions,
+    const std::string &ftype,
+    const std::string &rng)
+{
+    // Get user code string
+    std::string code = varInit.getSnippet()->getCode();
+
+    // Substitue derived and standard parameters into init code
+    DerivedParamNameIterCtx viDerivedParams(varInit.getSnippet()->getDerivedParams());
+    value_substitutions(code, varInit.getSnippet()->getParamNames(), varInit.getParams());
+    value_substitutions(code, viDerivedParams.nameBegin, viDerivedParams.nameEnd, varInit.getDerivedParams());
+
+    // Substitute the name of the variable we're initialising
+    substitute(code, "$(value)", varName);
+
+    functionSubstitutions(code, ftype, functions);
+    substitute(code, "$(rng)", rng);
+    code = ensureFtype(code, ftype);
+    checkUnreplacedVariables(code, "initVar");
+
+    return code;
 }

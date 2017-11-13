@@ -343,8 +343,7 @@ void genDefinitions(const NNmodel &model, //!< Model description
             extern_variable_def(os, model.getPrecision()+" *", "sT"+n.first);
         }
 #ifndef CPU_ONLY
-        // **TODO** Phillox option
-        if(n.second.isRNGRequired()) {
+        if(n.second.isSimRNGRequired()) {
             os << "extern curandState *d_rng" << n.first << ";" << std::endl;
         }
 #endif
@@ -857,7 +856,7 @@ void genRunner(const NNmodel &model, //!< Model description
             variable_def(os, model.getPrecision()+" *", "sT"+n.first);
         }
 #ifndef CPU_ONLY
-        if(n.second.isRNGRequired()) {
+        if(n.second.isSimRNGRequired()) {
             os << "curandState *d_rng" << n.first << ";" << std::endl;
             os << "__device__ curandState *dd_rng" << n.first << ";" << std::endl;
         }
@@ -1056,7 +1055,7 @@ void genRunner(const NNmodel &model, //!< Model description
         }
 
 #ifndef CPU_ONLY
-        if(n.second.isRNGRequired()) {
+        if(n.second.isSimRNGRequired()) {
             allocate_device_variable(os, "curandState", "rng" + n.first, false,
                                      n.second.getNumNeurons());
         }
@@ -1188,80 +1187,6 @@ void genRunner(const NNmodel &model, //!< Model description
     }
 
     // ------------------------------------------------------------------------
-    // initializing sparse arrays
-
-#ifndef CPU_ONLY
-    os << "void initializeAllSparseArrays() {" << std::endl;
-    if(any_of(begin(model.getSynapseGroups()), end(model.getSynapseGroups()),
-        [](const NNmodel::SynapseGroupValueType &s)
-        {
-            return (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE);
-
-        }))
-    {
-        os << "size_t size;" << std::endl;
-    }
-
-    for(const auto &s : model.getSynapseGroups()) {
-        if (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE){
-            os << "size = C" << s.first << ".connN;" << std::endl;
-            os << "  initializeSparseArray(C" << s.first << ",";
-            os << " d_ind" << s.first << ",";
-            os << " d_indInG" << s.first << ",";
-            os << s.second.getSrcNeuronGroup()->getNumNeurons() <<");" << std::endl;
-            if (model.isSynapseGroupDynamicsRequired(s.first)) {
-                os << "  initializeSparseArrayPreInd(C" << s.first << ",";
-                os << " d_preInd" << s.first << ");" << std::endl;
-            }
-            if (model.isSynapseGroupPostLearningRequired(s.first)) {
-                os << "  initializeSparseArrayRev(C" << s.first << ",";
-                os << "  d_revInd" << s.first << ",";
-                os << "  d_revIndInG" << s.first << ",";
-                os << "  d_remap" << s.first << ",";
-                os << s.second.getTrgNeuronGroup()->getNumNeurons() <<");" << std::endl;
-            }
-           
-            if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
-                for(const auto &v : s.second.getWUModel()->getVars()) {
-                    if(!s.second.isWUVarZeroCopyEnabled(v.first)) {
-                        os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << v.first << s.first << ", "  << v.first << s.first << ", sizeof(" << v.second << ") * size , cudaMemcpyHostToDevice));" << std::endl;
-                    }
-                }
-            }
-        }
-    }
-    os << "}" << std::endl;
-    os << std::endl;
-#endif
-
-    // ------------------------------------------------------------------------
-    // initialization of variables, e.g. reverse sparse arrays etc. 
-    // that the user would not want to worry about
-    
-    os << "void init" << model.getName() << "()" << std::endl;
-    os << CodeStream::OB(1130) << std::endl;
-    bool anySparse = false;
-    for(const auto &s : model.getSynapseGroups()) {
-        if (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-            anySparse = true;
-            if (model.isSynapseGroupDynamicsRequired(s.first)) {
-                os << "createPreIndices(" << s.second.getSrcNeuronGroup()->getNumNeurons() << ", " << s.second.getTrgNeuronGroup()->getNumNeurons() << ", &C" << s.first << ");" << std::endl;
-            }
-            if (model.isSynapseGroupPostLearningRequired(s.first)) {
-                os << "createPosttoPreArray(" << s.second.getSrcNeuronGroup()->getNumNeurons() << ", " << s.second.getTrgNeuronGroup()->getNumNeurons() << ", &C" << s.first << ");" << std::endl;
-            }
-        }
-    }
-
-    if (anySparse) {
-#ifndef CPU_ONLY
-        os << "initializeAllSparseArrays();" << std::endl;
-#endif
-    }
-
-    os << CodeStream::CB(1130) << std::endl;
-
-    // ------------------------------------------------------------------------
     // freeing global memory structures
 
     os << "void freeMem()" << std::endl;
@@ -1285,7 +1210,7 @@ void genRunner(const NNmodel &model, //!< Model description
         }
 
 #ifndef CPU_ONLY
-        if(n.second.isRNGRequired()) {
+        if(n.second.isSimRNGRequired()) {
             free_device_variable(os, "rng" + n.first, false);
         }
 #endif

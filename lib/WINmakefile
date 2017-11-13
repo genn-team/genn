@@ -35,7 +35,7 @@ LIBGENN                  =$(LIBGENN_PATH)\genn.lib
 GENERATEALL              =$(GENERATEALL_PATH)\generateALL_CPU_ONLY.exe
 LIBGENN                  =$(LIBGENN_PATH)\genn_CPU_ONLY.lib
 !ENDIF
-LIBGENN_OBJ              =$(LIBGENN_OBJ_PATH)\global.obj $(LIBGENN_OBJ_PATH)\modelSpec.obj $(LIBGENN_OBJ_PATH)\neuronModels.obj $(LIBGENN_OBJ_PATH)\synapseModels.obj $(LIBGENN_OBJ_PATH)\postSynapseModels.obj $(LIBGENN_OBJ_PATH)\utils.obj $(LIBGENN_OBJ_PATH)\codeStream.obj $(LIBGENN_OBJ_PATH)\codeGenUtils.obj $(LIBGENN_OBJ_PATH)\sparseUtils.obj $(LIBGENN_OBJ_PATH)\hr_time.obj $(LIBGENN_OBJ_PATH)\newNeuronModels.obj $(LIBGENN_OBJ_PATH)\newWeightUpdateModels.obj $(LIBGENN_OBJ_PATH)\newPostsynapticModels.obj $(LIBGENN_OBJ_PATH)\neuronGroup.obj $(LIBGENN_OBJ_PATH)\synapseGroup.obj  $(LIBGENN_OBJ_PATH)\standardSubstitutions.obj  $(LIBGENN_OBJ_PATH)\standardGeneratedSections.obj
+LIBGENN_OBJ              =$(LIBGENN_OBJ_PATH)\global.obj $(LIBGENN_OBJ_PATH)\modelSpec.obj $(LIBGENN_OBJ_PATH)\neuronModels.obj $(LIBGENN_OBJ_PATH)\synapseModels.obj $(LIBGENN_OBJ_PATH)\postSynapseModels.obj $(LIBGENN_OBJ_PATH)\utils.obj $(LIBGENN_OBJ_PATH)\codeStream.obj $(LIBGENN_OBJ_PATH)\codeGenUtils.obj $(LIBGENN_OBJ_PATH)\sparseUtils.obj $(LIBGENN_OBJ_PATH)\hr_time.obj $(LIBGENN_OBJ_PATH)\newNeuronModels.obj $(LIBGENN_OBJ_PATH)\newWeightUpdateModels.obj $(LIBGENN_OBJ_PATH)\newPostsynapticModels.obj $(LIBGENN_OBJ_PATH)\initVarSnippet.obj $(LIBGENN_OBJ_PATH)\neuronGroup.obj $(LIBGENN_OBJ_PATH)\synapseGroup.obj  $(LIBGENN_OBJ_PATH)\standardSubstitutions.obj  $(LIBGENN_OBJ_PATH)\standardGeneratedSections.obj
 
 # Global CUDA compiler settings
 !IFNDEF CPU_ONLY

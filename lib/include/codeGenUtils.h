@@ -36,13 +36,12 @@ struct GenericFunction
 // **NOTE** for the sake of easy initialisation first two parameters of GenericFunction are repeated (C++17 fixes)
 struct FunctionTemplate
 {
-	// **HACK** while GCC and CLang automatically generate this fine/don't require it, VS2013 seems to need it
-	FunctionTemplate operator = (const FunctionTemplate &o)
-	{
-		return FunctionTemplate{o.genericName, o.numArguments,
-								o.doublePrecisionTemplate, o.singlePrecisionTemplate};
-	}
-	
+    // **HACK** while GCC and CLang automatically generate this fine/don't require it, VS2013 seems to need it
+    FunctionTemplate operator = (const FunctionTemplate &o)
+    {
+        return FunctionTemplate{o.genericName, o.numArguments, o.doublePrecisionTemplate, o.singlePrecisionTemplate};
+    }
+
     const std::string genericName;
     const unsigned int numArguments;
 
@@ -86,6 +85,26 @@ inline PairKeyConstIter<BaseIter> GetPairKeyConstIter(BaseIter iter)
 {
   return iter;
 }
+
+//--------------------------------------------------------------------------
+//! \brief CUDA implementations of standard functions
+//--------------------------------------------------------------------------
+const std::vector<FunctionTemplate> cudaFunctions = {
+    {"gennrand_uniform", 0, "curand_uniform_double($(rng))", "curand_uniform($(rng))"},
+    {"gennrand_normal", 0, "curand_normal_double($(rng))", "curand_normal($(rng))"},
+    {"gennrand_exponential", 0, "exponentialDistFloat($(rng))", "exponentialDistDouble($(rng))"},
+    {"gennrand_log_normal", 2, "curand_log_normal_double($(rng), $(0), $(1))", "curand_log_normal_float($(rng), $(0), $(1))"},
+};
+
+//--------------------------------------------------------------------------
+//! \brief CPU implementations of standard functions
+//--------------------------------------------------------------------------
+const std::vector<FunctionTemplate> cpuFunctions = {
+    {"gennrand_uniform", 0, "std::uniform_real_distribution<double>(0.0, 1.0)($(rng))", "std::uniform_real_distribution<float>(0.0f, 1.0f)($(rng))"},
+    {"gennrand_normal", 0, "std::normal_distribution<double>(0.0, 1.0)($(rng))", "std::normal_distribution<float>(0.0f, 1.0f)($(rng))"},
+    {"gennrand_exponential", 0, "std::exponential_distribution<double>(1.0)($(rng))", "std::exponential_distribution<float>(1.0)($(rng))"},
+    {"gennrand_log_normal", 2, "std::lognormal_distribution<double>($(0), $(1))($(rng))", "std::lognormal_distribution<float>($(0), $(1))($(rng))"},
+};
 
 //--------------------------------------------------------------------------
 //! \brief Tool for substituting strings in the neuron code strings or other templates

@@ -155,7 +155,7 @@ public:
 
     SET_SIM_CODE(
         "$(addtoinSyn) = $(g);\n"
-        " $(updatelinsyn);\n");
+        "$(updatelinsyn);\n");
 };
 
 //----------------------------------------------------------------------------
@@ -196,7 +196,7 @@ public:
     SET_EVENT_CODE(
         "$(addtoinSyn) = $(g) * tanh(($(V_pre) - $(Epre)) / $(Vslope))* DT;\n"
         "if ($(addtoinSyn) < 0) $(addtoinSyn) = 0.0;\n"
-        " $(updatelinsyn);\n");
+        "$(updatelinsyn);\n");
 
     SET_EVENT_THRESHOLD_CONDITION_CODE("$(V_pre) > $(Epre)");
 };

@@ -38,14 +38,6 @@
 //-------------------------------------------------------------------------
 namespace
 {
-const std::vector<FunctionTemplate> cudaFunctions = {
-    {"gennrand_uniform", 0, "curand_uniform_double($(rng))", "curand_uniform($(rng))"},
-    {"gennrand_normal", 0, "curand_normal_double($(rng))", "curand_normal($(rng))"},
-    {"gennrand_exponential", 0, "exponentialDistFloat($(rng))", "exponentialDistDouble($(rng))"},
-    {"gennrand_log_normal", 2, "curand_log_normal_double($(rng), $(0), $(1))", "curand_log_normal_float($(rng), $(0), $(1))"},
-};
-
-
 string getFloatAtomicAdd(const string &ftype)
 {
     int version;

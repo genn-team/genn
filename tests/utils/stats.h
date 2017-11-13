@@ -146,6 +146,7 @@ double probks(double alam)
     // Failing to converse
     return 1.0;
 }
+
 //----------------------------------------------------------------------------
 // Stats::chiSquared
 //----------------------------------------------------------------------------
@@ -173,6 +174,34 @@ std::tuple<double, double, double> chiSquaredTest(const std::vector<double> &bin
 
     const double prob = gammaQ(0.5 * df, 0.5 * chsq);
     return std::make_tuple(df, chsq, prob);
+}
+
+//----------------------------------------------------------------------------
+// Stats::uniformCDF
+//----------------------------------------------------------------------------
+//!< Cumulative distribution function for standardised
+//!< uniform distribution for use in tests
+double uniformCDF(double x)
+{
+    if(x < 0.0) {
+        return 0.0;
+    }
+    else if(x >= 1.0) {
+        return 1.0;
+    }
+    else {
+        return x;
+    }
+}
+
+//----------------------------------------------------------------------------
+// Stats::normalCDF
+//----------------------------------------------------------------------------
+//!< Cumulative distribution function for standardised
+//!< normal distribution for use in tests
+double normalCDF(double x)
+{
+    return 0.5 * (1.0 + erf(x / sqrt(2.0)));
 }
 
 //----------------------------------------------------------------------------

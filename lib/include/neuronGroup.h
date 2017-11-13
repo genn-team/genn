@@ -16,9 +16,9 @@ class NeuronGroup
 {
 public:
     NeuronGroup(const std::string &name, int numNeurons, const NeuronModels::Base *neuronModel,
-                const std::vector<double> &params, const std::vector<double> &initVals) :
+                const std::vector<double> &params, const std::vector<NewModels::VarInit> &varInitialisers) :
         m_Name(name), m_NumNeurons(numNeurons), m_IDRange(0, 0), m_PaddedIDRange(0, 0),
-        m_NeuronModel(neuronModel), m_Params(params), m_InitVals(initVals),
+        m_NeuronModel(neuronModel), m_Params(params), m_VarInitialisers(varInitialisers),
         m_SpikeTimeRequired(false), m_TrueSpikeRequired(false), m_SpikeEventRequired(false), m_QueueRequired(false),
         m_NumDelaySlots(1),
         m_SpikeZeroCopyEnabled(false), m_SpikeEventZeroCopyEnabled(false), m_SpikeTimeZeroCopyEnabled(false),
@@ -79,7 +79,7 @@ public:
 
     const std::vector<double> &getParams() const{ return m_Params; }
     const std::vector<double> &getDerivedParams() const{ return m_DerivedParams; }
-    const std::vector<double> &getInitVals() const{ return m_InitVals; }
+    const std::vector<NewModels::VarInit> &getVarInitialisers() const{ return m_VarInitialisers; }
 
     const std::vector<SynapseGroup*> &getInSyn() const{ return m_InSyn; }
     const std::vector<SynapseGroup*> &getOutSyn() const{ return m_OutSyn; }
@@ -107,8 +107,14 @@ public:
 
     void addExtraGlobalParams(std::map<std::string, std::string> &kernelParameters) const;
 
+    //!< Does this neuron group require any init code to be run
+    bool isInitCodeRequired() const;
+
     //!< Does this neuron group require an RNG to simulate
-    bool isRNGRequired() const;
+    bool isSimRNGRequired() const;
+
+    //!< Does this neuron group require an RNG for it's init code
+    bool isInitRNGRequired() const;
 
     // **THINK** do this really belong here - it is very code-generation specific
     std::string getQueueOffset(const std::string &devPrefix) const;
@@ -126,7 +132,7 @@ private:
     const NeuronModels::Base *m_NeuronModel;
     std::vector<double> m_Params;
     std::vector<double> m_DerivedParams;
-    std::vector<double> m_InitVals;
+    std::vector<NewModels::VarInit> m_VarInitialisers;
     std::vector<SynapseGroup*> m_InSyn;
     std::vector<SynapseGroup*> m_OutSyn;
     bool m_SpikeTimeRequired;
