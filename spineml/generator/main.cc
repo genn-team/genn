@@ -280,8 +280,8 @@ int main(int argc, char *argv[])
 
                 // Add population to model
                 model.addNeuronPopulation(popName, popSize, &neuronModel,
-                                        NeuronModel::ParamValues(fixedParamVals, neuronModel),
-                                        NeuronModel::VarValues(fixedParamVals, neuronModel));
+                                          NeuronModel::ParamValues(fixedParamVals, neuronModel),
+                                          NeuronModel::VarValues(fixedParamVals, neuronModel));
             }
         }
 
@@ -307,26 +307,26 @@ int main(int argc, char *argv[])
 
                 // Either get existing passthrough weight update model or create new one of no suitable models are available
                 const auto &passthroughWeightUpdateModel = getCreatePassthroughModel(srcPort, passthroughWeightUpdateModels,
-                                                                                    srcNeuronModel);
+                                                                                     srcNeuronModel);
 
                 // Either get existing passthrough postsynaptic model or create new one of no suitable models are available
                 const auto &passthroughPostsynapticModel = getCreatePassthroughModel(dstPort, passthroughPostsynapticModels,
-                                                                                    neuronModel);
+                                                                                     neuronModel);
 
                 // Determine the GeNN matrix type and number of delay steps
                 SynapseMatrixType mtype;
                 unsigned int delaySteps;
                 unsigned int maxConnections;
                 tie(mtype, delaySteps, maxConnections) = getSynapticMatrixType(basePath, input,
-                                                                            srcNeuronGroup->getNumNeurons(),
-                                                                            neuronGroup->getNumNeurons(),
-                                                                            true, dt);
+                                                                               srcNeuronGroup->getNumNeurons(),
+                                                                               neuronGroup->getNumNeurons(),
+                                                                               true, dt);
 
                 // Add synapse population to model
                 std::string passthroughSynapsePopName = std::string(srcPopName) + "_" + srcPort + "_" + popName + "_"  + dstPort;
                 auto synapsePop = model.addSynapsePopulation(passthroughSynapsePopName, mtype, delaySteps, srcPopName, popName,
-                                                            &passthroughWeightUpdateModel, {}, {},
-                                                            &passthroughPostsynapticModel, {}, {});
+                                                             &passthroughWeightUpdateModel, {}, {},
+                                                             &passthroughPostsynapticModel, {}, {});
 
                 // If matrix uses sparse connectivity set max connections
                 if(mtype & SynapseMatrixConnectivity::SPARSE) {
@@ -363,7 +363,7 @@ int main(int argc, char *argv[])
 
                     // Either get existing postsynaptic model or create new one of no suitable models are available
                     const auto &weightUpdateModel = getCreateModel(weightUpdateModelParams, weightUpdateModels,
-                                                                neuronModel, trgNeuronModel);
+                                                                   neuronModel, trgNeuronModel);
 
                     // Get post synapse
                     auto postSynapse = synapse.child("LL:PostSynapse");
@@ -396,8 +396,8 @@ int main(int argc, char *argv[])
 
                     // Add synapse population to model
                     auto synapsePop = model.addSynapsePopulation(synapsePopName, mtype, delaySteps, popName, trgPopName,
-                                                                &weightUpdateModel, WeightUpdateModel::ParamValues(fixedWeightUpdateParamVals, weightUpdateModel), WeightUpdateModel::VarValues(fixedWeightUpdateParamVals, weightUpdateModel),
-                                                                &postsynapticModel, PostsynapticModel::ParamValues(fixedPostsynapticParamVals, postsynapticModel), PostsynapticModel::VarValues(fixedPostsynapticParamVals, postsynapticModel));
+                                                                 &weightUpdateModel, WeightUpdateModel::ParamValues(fixedWeightUpdateParamVals, weightUpdateModel), WeightUpdateModel::VarValues(fixedWeightUpdateParamVals, weightUpdateModel),
+                                                                 &postsynapticModel, PostsynapticModel::ParamValues(fixedPostsynapticParamVals, postsynapticModel), PostsynapticModel::VarValues(fixedPostsynapticParamVals, postsynapticModel));
 
                     // If matrix uses sparse connectivity set max connections
                     if(mtype & SynapseMatrixConnectivity::SPARSE) {
