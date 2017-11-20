@@ -26,8 +26,8 @@ public:
     //------------------------------------------------------------------------
     // Typedefines
     //------------------------------------------------------------------------
-    typedef NewModels::ValueBase<0> ParamValues;
-    typedef NewModels::ValueBase<0> VarValues;
+    typedef Snippet::ValueBase<0> ParamValues;
+    typedef NewModels::VarInitContainerBase<0> VarValues;
 
     //------------------------------------------------------------------------
     // PostsynapticModels::Base virtuals
