@@ -268,6 +268,19 @@ void SpineMLGenerator::substituteModelVariables(const NewModels::Base::StringVec
             wrapVariableNames(*c, d.first);
         }
     }
+
+    // Loop throug code strings to perform some standard substitutions
+    for(std::string *c : codeStrings) {
+        // Wrap time
+        wrapVariableNames(*c, "t");
+
+        // Replace standard functions with their GeNN equivalent so GeNN code
+        // generator can correcly insert platform-specific versions
+        wrapAndReplaceVariableNames(*c, "randomNormal", "gennrand_normal");
+        wrapAndReplaceVariableNames(*c, "randomUniform", "gennrand_uniform");
+
+        // **TODO** random.binomial(N,P), random.poisson(L), random.exponential(L)
+    }
 }
 //----------------------------------------------------------------------------
 void SpineMLGenerator::readAliases(const pugi::xml_node &componentClass, std::map<std::string, std::string> &aliases)
