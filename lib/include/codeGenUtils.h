@@ -18,6 +18,38 @@ namespace NeuronModels
 }
 
 //--------------------------------------------------------------------------
+// GenericFunction
+//--------------------------------------------------------------------------
+// Immutable structure for specifying the name and number of
+// arguments of a generic funcion e.g. gennrand_uniform
+struct GenericFunction
+{
+    const std::string genericName;
+    const unsigned int numArguments;
+};
+
+//--------------------------------------------------------------------------
+// FunctionTemplate
+//--------------------------------------------------------------------------
+// Immutable structure for specifying how to implement
+// a generic function e.g. gennrand_uniform
+// **NOTE** for the sake of easy initialisation first two parameters of GenericFunction are repeated (C++17 fixes)
+struct FunctionTemplate
+{
+    // **HACK** while GCC and CLang automatically generate this fine/don't require it, VS2013 seems to need it
+    FunctionTemplate operator = (const FunctionTemplate &o)
+    {
+        return FunctionTemplate{o.genericName, o.numArguments, o.doublePrecisionTemplate, o.singlePrecisionTemplate};
+    }
+
+    const std::string genericName;
+    const unsigned int numArguments;
+
+    const std::string doublePrecisionTemplate;
+    const std::string singlePrecisionTemplate;
+};
+
+//--------------------------------------------------------------------------
 // PairKeyConstIter
 //--------------------------------------------------------------------------
 // Custom iterator for iterating through the keys of containers containing pairs
@@ -55,11 +87,49 @@ inline PairKeyConstIter<BaseIter> GetPairKeyConstIter(BaseIter iter)
 }
 
 //--------------------------------------------------------------------------
+//! \brief CUDA implementations of standard functions
+//--------------------------------------------------------------------------
+const std::vector<FunctionTemplate> cudaFunctions = {
+    {"gennrand_uniform", 0, "curand_uniform_double($(rng))", "curand_uniform($(rng))"},
+    {"gennrand_normal", 0, "curand_normal_double($(rng))", "curand_normal($(rng))"},
+    {"gennrand_exponential", 0, "exponentialDistFloat($(rng))", "exponentialDistDouble($(rng))"},
+    {"gennrand_log_normal", 2, "curand_log_normal_double($(rng), $(0), $(1))", "curand_log_normal_float($(rng), $(0), $(1))"},
+};
+
+//--------------------------------------------------------------------------
+//! \brief CPU implementations of standard functions
+//--------------------------------------------------------------------------
+const std::vector<FunctionTemplate> cpuFunctions = {
+    {"gennrand_uniform", 0, "std::uniform_real_distribution<double>(0.0, 1.0)($(rng))", "std::uniform_real_distribution<float>(0.0f, 1.0f)($(rng))"},
+    {"gennrand_normal", 0, "std::normal_distribution<double>(0.0, 1.0)($(rng))", "std::normal_distribution<float>(0.0f, 1.0f)($(rng))"},
+    {"gennrand_exponential", 0, "std::exponential_distribution<double>(1.0)($(rng))", "std::exponential_distribution<float>(1.0)($(rng))"},
+    {"gennrand_log_normal", 2, "std::lognormal_distribution<double>($(0), $(1))($(rng))", "std::lognormal_distribution<float>($(0), $(1))($(rng))"},
+};
+
+//--------------------------------------------------------------------------
 //! \brief Tool for substituting strings in the neuron code strings or other templates
 //--------------------------------------------------------------------------
-
 void substitute(string &s, const string &trg, const string &rep);
 
+
+//--------------------------------------------------------------------------
+//! \brief Does the code string contain any functions requiring random number generator
+//--------------------------------------------------------------------------
+bool isRNGRequired(const std::string &code);
+
+//--------------------------------------------------------------------------
+/*! \brief This function substitutes function calls in the form:
+ *
+ *  $(functionName, parameter1, param2Function(0.12, "string"))
+ *
+ * with replacement templates in the form:
+ *
+ *  actualFunction(CONSTANT, $(0), $(1))
+ *
+ */
+//--------------------------------------------------------------------------
+void functionSubstitute(std::string &code, const std::string &funcName,
+                        unsigned int numParams, const std::string &replaceFuncTemplate);
 
 //--------------------------------------------------------------------------
 //! \brief This function performs a list of name substitutions for variables in code snippets.
@@ -102,6 +172,12 @@ inline void value_substitutions(string &code, const vector<string> &names, const
 {
     value_substitutions(code, names.cbegin(), names.cend(), values, ext);
 }
+
+//--------------------------------------------------------------------------
+//! \brief This function performs a list of function substitutions in code snipped
+//--------------------------------------------------------------------------
+void functionSubstitutions(std::string &code, const std::string &ftype,
+                           const std::vector<FunctionTemplate> functions);
 
 //--------------------------------------------------------------------------
 /*! \brief This function implements a parser that converts any floating point constant in a code snippet to a floating point constant with an explicit precision (by appending "f" or removing it).

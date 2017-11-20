@@ -26,9 +26,9 @@
 #include "codeGenUtils.h"
 #include "codeStream.h"
 
-#include <stdint.h>
 #include <algorithm>
 #include <cfloat>
+#include <cstdint>
 
 //--------------------------------------------------------------------------
 // Anonymous namespace
@@ -219,10 +219,19 @@ void genDefinitions(const NNmodel &model, //!< Model description
     os << std::endl;
 
     os << "#include \"utils.h\"" << std::endl;
-    if (model.isTimingEnabled()) os << "#include \"hr_time.h\"" << std::endl;
+    if (model.isTimingEnabled()) {
+        os << "#include \"hr_time.h\"" << std::endl;
+    }
     os << "#include \"sparseUtils.h\"" << std::endl << std::endl;
     os << "#include \"sparseProjection.h\"" << std::endl;
+    // **YUCK** because code is, by default, not build with C++11 the <cstdint> header is not present
     os << "#include <stdint.h>" << std::endl;
+    if (model.isRNGRequired()) {
+        os << "#include <random>" << std::endl;
+#ifndef CPU_ONLY
+        os << "#include <curand_kernel.h>" << std::endl;
+#endif
+    }
     os << std::endl;
 
 #ifndef CPU_ONLY
@@ -324,7 +333,10 @@ void genDefinitions(const NNmodel &model, //!< Model description
         }
     }
     os << std::endl;
-
+    if(model.isRNGRequired()) {
+        os << "extern std::mt19937 rng;" << std::endl;
+    }
+    os << std::endl;
 
     //---------------------------------
     // HOST AND DEVICE NEURON VARIABLES
@@ -346,7 +358,11 @@ void genDefinitions(const NNmodel &model, //!< Model description
         if (n.second.isSpikeTimeRequired()) {
             extern_variable_def(os, model.getPrecision()+" *", "sT"+n.first);
         }
-
+#ifndef CPU_ONLY
+        if(n.second.isSimRNGRequired()) {
+            os << "extern curandState *d_rng" << n.first << ";" << std::endl;
+        }
+#endif
         auto neuronModel = n.second.getNeuronModel();
         for(auto const &v : neuronModel->getVars()) {
             extern_variable_def(os, v.second +" *", v.first + n.first);
@@ -594,7 +610,7 @@ void genDefinitions(const NNmodel &model, //!< Model description
     os << std::endl;
 #endif
 
-    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// --------------3200----------------------------------------------------------" << std::endl;
     os << "// initialization of variables, e.g. reverse sparse arrays etc." << std::endl;
     os << "// that the user would not want to worry about" << std::endl;
     os << std::endl;
@@ -789,6 +805,12 @@ void genRunner(const NNmodel &model, //!< Model description
     os << "#include <ctime>" << std::endl;
     os << "#include <cassert>" << std::endl;
     os << "#include <stdint.h>" << std::endl;
+
+    // **NOTE** if we are using GCC on x86_64, bugs in some version of glibc can cause
+    // bad performance issues so need this to allow us to perform a runtime check
+    os << "#if defined(__GNUG__) && !defined(__clang__) && defined(__x86_64__)" << std::endl;
+    os << "    #include <gnu/libc-version.h>" << std::endl;
+    os << "#endif" << std::endl;
     os << std::endl;
 
 
@@ -835,7 +857,10 @@ void genRunner(const NNmodel &model, //!< Model description
         }
     } 
     os << std::endl;
-
+    if(model.isRNGRequired()) {
+        os << "std::mt19937 rng;" << std::endl;
+    }
+    os << std::endl;
 
     //---------------------------------
     // HOST AND DEVICE NEURON VARIABLES
@@ -863,6 +888,12 @@ void genRunner(const NNmodel &model, //!< Model description
         if (n.second.isSpikeTimeRequired()) {
             variable_def(os, model.getPrecision()+" *", "sT"+n.first);
         }
+#ifndef CPU_ONLY
+        if(n.second.isSimRNGRequired()) {
+            os << "curandState *d_rng" << n.first << ";" << std::endl;
+            os << "__device__ curandState *dd_rng" << n.first << ";" << std::endl;
+        }
+#endif
 
         auto neuronModel = n.second.getNeuronModel();
         for(auto const &v : neuronModel->getVars()) {
@@ -971,6 +1002,7 @@ void genRunner(const NNmodel &model, //!< Model description
 #ifndef CPU_ONLY
     os << "#include \"runnerGPU.cc\"" << std::endl << std::endl;
 #endif
+    os << "#include \"init.cc\"" << std::endl;
     os << "#include \"neuronFnct.cc\"" << std::endl;
     if (!model.getSynapseGroups().empty()) {
         os << "#include \"synapseFnct.cc\"" << std::endl;
@@ -1059,6 +1091,13 @@ void genRunner(const NNmodel &model, //!< Model description
                                      n.second.getNumNeurons() * n.second.getNumDelaySlots());
         }
 
+#ifndef CPU_ONLY
+        if(n.second.isSimRNGRequired()) {
+            allocate_device_variable(os, "curandState", "rng" + n.first, false,
+                                     n.second.getNumNeurons());
+        }
+#endif  // CPU_ONLY
+
         // Allocate memory for neuron model's state variables
         for(const auto &v : n.second.getNeuronModel()->getVars()) {
             mem += allocate_variable(os, v.second, v.first + n.first, n.second.isVarZeroCopyEnabled(v.first),
@@ -1104,166 +1143,6 @@ void genRunner(const NNmodel &model, //!< Model description
         os << std::endl;
     }
     os << "}" << std::endl << std::endl;
-
-
-    // ------------------------------------------------------------------------
-    // initializing variables
-    // write doxygen comment
-    os << "//-------------------------------------------------------------------------" << std::endl;
-    os << "/*! \\brief Function to (re)set all model variables to their compile-time, homogeneous initial values." << std::endl;
-    os << " Note that this typically includes synaptic weight values. The function (re)sets host side variables and copies them to the GPU device." << std::endl;
-    os << "*/" << std::endl;
-    os << "//-------------------------------------------------------------------------" << std::endl << std::endl;
-
-    os << "void initialize()" << std::endl;
-    os << "{" << std::endl;
-
-    // Extra braces around Windows for loops to fix https://support.microsoft.com/en-us/kb/315481
-#ifdef _WIN32
-    string oB = "{", cB = "}";
-#else
-    string oB = "", cB = "";
-#endif // _WIN32
-
-    // Initialize time
-    os << "    // reset time" << std::endl;
-    os << "    iT = 0;" << std::endl;
-    os << std::endl;
-
-    if (model.getSeed() == 0) {
-        os << "    srand((unsigned int) time(NULL));" << std::endl;
-    }
-    else {
-        os << "    srand((unsigned int) " << model.getSeed() << ");" << std::endl;
-    }
-    os << std::endl;
-
-    // INITIALISE NEURON VARIABLES
-    os << "    // neuron variables" << std::endl;
-    for(const auto &n : model.getNeuronGroups()) {
-        if (n.second.isDelayRequired()) {
-            os << "    spkQuePtr" << n.first << " = 0;" << std::endl;
-#ifndef CPU_ONLY
-            os << "CHECK_CUDA_ERRORS(cudaMemcpyToSymbol(dd_spkQuePtr" << n.first;
-            os << ", &spkQuePtr" << n.first;
-            os << ", sizeof(unsigned int), 0, cudaMemcpyHostToDevice));" << std::endl;
-#endif
-        }
-
-        if (n.second.isTrueSpikeRequired() && n.second.isDelayRequired()) {
-            os << "    " << oB << "for (int i = 0; i < " << n.second.getNumDelaySlots() << "; i++) {" << std::endl;
-            os << "        glbSpkCnt" << n.first << "[i] = 0;" << std::endl;
-            os << "    }" << cB << std::endl;
-            os << "    " << oB << "for (int i = 0; i < " << n.second.getNumNeurons() * n.second.getNumDelaySlots() << "; i++) {" << std::endl;
-            os << "        glbSpk" << n.first << "[i] = 0;" << std::endl;
-            os << "    }" << cB << std::endl;
-        }
-        else {
-            os << "    glbSpkCnt" << n.first << "[0] = 0;" << std::endl;
-            os << "    " << oB << "for (int i = 0; i < " << n.second.getNumNeurons() << "; i++) {" << std::endl;
-            os << "        glbSpk" << n.first << "[i] = 0;" << std::endl;
-            os << "    }" << cB << std::endl;
-        }
-
-        if (n.second.isSpikeEventRequired() && n.second.isDelayRequired()) {
-            os << "    " << oB << "for (int i = 0; i < " << n.second.getNumDelaySlots() << "; i++) {" << std::endl;
-            os << "        glbSpkCntEvnt" << n.first << "[i] = 0;" << std::endl;
-            os << "    }" << cB << std::endl;
-            os << "    " << oB << "for (int i = 0; i < " << n.second.getNumNeurons() * n.second.getNumDelaySlots() << "; i++) {" << std::endl;
-            os << "        glbSpkEvnt" << n.first << "[i] = 0;" << std::endl;
-            os << "    }" << cB << std::endl;
-        }
-        else if (n.second.isSpikeEventRequired()) {
-            os << "    glbSpkCntEvnt" << n.first << "[0] = 0;" << std::endl;
-            os << "    " << oB << "for (int i = 0; i < " << n.second.getNumNeurons() << "; i++) {" << std::endl;
-            os << "        glbSpkEvnt" << n.first << "[i] = 0;" << std::endl;
-            os << "    }" << cB << std::endl;
-        }
-
-        if (n.second.isSpikeTimeRequired()) {
-            os << "    " << oB << "for (int i = 0; i < " << n.second.getNumNeurons() * n.second.getNumDelaySlots() << "; i++) {" << std::endl;
-            os << "        sT" <<  n.first << "[i] = -10.0;" << std::endl;
-            os << "    }" << cB << std::endl;
-        }
-        
-        auto neuronModelVars = n.second.getNeuronModel()->getVars();
-        for (size_t j = 0; j < neuronModelVars.size(); j++) {
-            if (n.second.isVarQueueRequired(neuronModelVars[j].first)) {
-                os << "    " << oB << "for (int i = 0; i < " << n.second.getNumNeurons() * n.second.getNumDelaySlots() << "; i++) {" << std::endl;
-            }
-            else {
-                os << "    " << oB << "for (int i = 0; i < " << n.second.getNumNeurons() << "; i++) {" << std::endl;
-            }
-            if (neuronModelVars[j].second == model.getPrecision()) {
-                os << "        " << neuronModelVars[j].first << n.first << "[i] = " << model.scalarExpr(n.second.getInitVals()[j]) << ";" << std::endl;
-            }
-            else {
-                os << "        " << neuronModelVars[j].first << n.first << "[i] = " << n.second.getInitVals()[j] << ";" << std::endl;
-            }
-            os << "    }" << cB << std::endl;
-        }
-
-        if (n.second.getNeuronModel()->isPoisson()) {
-            os << "    " << oB << "for (int i = 0; i < " << n.second.getNumNeurons() << "; i++) {" << std::endl;
-            os << "        seed" << n.first << "[i] = rand();" << std::endl;
-            os << "    }" << cB << std::endl;
-        }
-
-        /*if ((model.neuronType[i] == IZHIKEVICH) && (model.getDT() != 1.0)) {
-            os << "    fprintf(stderr,\"WARNING: You use a time step different than 1 ms. Izhikevich model behaviour may not be robust.\\n\"); " << std::endl;
-        }*/
-    }
-    os << std::endl;
-
-    // INITIALISE SYNAPSE VARIABLES
-    os << "    // synapse variables" << std::endl;
-    for(const auto &s : model.getSynapseGroups()) {
-        const auto *wu = s.second.getWUModel();
-        const auto *psm = s.second.getPSModel();
-
-        const unsigned int numSrcNeurons = s.second.getSrcNeuronGroup()->getNumNeurons();
-        const unsigned int numTrgNeurons = s.second.getTrgNeuronGroup()->getNumNeurons();
-
-        os << "    " << oB << "for (int i = 0; i < " << numTrgNeurons << "; i++) {" << std::endl;
-        os << "        inSyn" << s.first << "[i] = " << model.scalarExpr(0.0) << ";" << std::endl;
-        os << "    }" << cB << std::endl;
-
-        if ((s.second.getMatrixType() & SynapseMatrixConnectivity::DENSE) && (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL)) {
-            auto wuVars = wu->getVars();
-            for (size_t k= 0, l= wuVars.size(); k < l; k++) {
-                os << "    " << oB << "for (int i = 0; i < " << numSrcNeurons * numTrgNeurons << "; i++) {" << std::endl;
-                if (wuVars[k].second == model.getPrecision()) {
-                    os << "        " << wuVars[k].first << s.first << "[i] = " << model.scalarExpr(s.second.getWUInitVals()[k]) << ";" << std::endl;
-                }
-                else {
-                    os << "        " << wuVars[k].first << s.first << "[i] = " << s.second.getWUInitVals()[k] << ";" << std::endl;
-                }
-        
-                os << "    }" << cB << std::endl;
-            }
-        }
-
-        if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
-            auto psmVars = psm->getVars();
-            for (size_t k= 0, l= psmVars.size(); k < l; k++) {
-                os << "    " << oB << "for (int i = 0; i < " << numTrgNeurons << "; i++) {" << std::endl;
-                if (psmVars[k].second == model.getPrecision()) {
-                    os << "        " << psmVars[k].first << s.first << "[i] = " << model.scalarExpr(s.second.getPSInitVals()[k]) << ";" << std::endl;
-                }
-                else {
-                    os << "        " << psmVars[k].first << s.first << "[i] = " << s.second.getPSInitVals()[k] << ";" << std::endl;
-                }
-                os << "    }" << cB << std::endl;
-            }
-        }
-    }
-    os << std::endl << std::endl;
-#ifndef CPU_ONLY
-    os << "    copyStateToDevice();" << std::endl << std::endl;
-    os << "    //initializeAllSparseArrays(); //I comment this out instead of removing to keep in mind that sparse arrays need to be initialised manually by hand later" << std::endl;
-#endif
-    os << "}" << std::endl << std::endl;
-
 
     // ------------------------------------------------------------------------
     // allocating conductance arrays for sparse matrices
@@ -1345,80 +1224,6 @@ void genRunner(const NNmodel &model, //!< Model description
     }
 
     // ------------------------------------------------------------------------
-    // initializing sparse arrays
-
-#ifndef CPU_ONLY
-    os << "void initializeAllSparseArrays() {" << std::endl;
-    if(any_of(begin(model.getSynapseGroups()), end(model.getSynapseGroups()),
-        [](const std::pair<string, SynapseGroup> &s)
-        {
-            return (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE);
-
-        }))
-    {
-        os << "size_t size;" << std::endl;
-    }
-
-    for(const auto &s : model.getSynapseGroups()) {
-        if (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE){
-            os << "size = C" << s.first << ".connN;" << std::endl;
-            os << "  initializeSparseArray(C" << s.first << ",";
-            os << " d_ind" << s.first << ",";
-            os << " d_indInG" << s.first << ",";
-            os << s.second.getSrcNeuronGroup()->getNumNeurons() <<");" << std::endl;
-            if (model.isSynapseGroupDynamicsRequired(s.first)) {
-                os << "  initializeSparseArrayPreInd(C" << s.first << ",";
-                os << " d_preInd" << s.first << ");" << std::endl;
-            }
-            if (model.isSynapseGroupPostLearningRequired(s.first)) {
-                os << "  initializeSparseArrayRev(C" << s.first << ",";
-                os << "  d_revInd" << s.first << ",";
-                os << "  d_revIndInG" << s.first << ",";
-                os << "  d_remap" << s.first << ",";
-                os << s.second.getTrgNeuronGroup()->getNumNeurons() <<");" << std::endl;
-            }
-           
-            if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
-                for(const auto &v : s.second.getWUModel()->getVars()) {
-                    if(!s.second.isWUVarZeroCopyEnabled(v.first)) {
-                        os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << v.first << s.first << ", "  << v.first << s.first << ", sizeof(" << v.second << ") * size , cudaMemcpyHostToDevice));" << std::endl;
-                    }
-                }
-            }
-        }
-    }
-    os << "}" << std::endl;
-    os << std::endl;
-#endif
-
-    // ------------------------------------------------------------------------
-    // initialization of variables, e.g. reverse sparse arrays etc. 
-    // that the user would not want to worry about
-    
-    os << "void init" << model.getName() << "()" << std::endl;
-    os << CodeStream::OB(1130) << std::endl;
-    bool anySparse = false;
-    for(const auto &s : model.getSynapseGroups()) {
-        if (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-            anySparse = true;
-            if (model.isSynapseGroupDynamicsRequired(s.first)) {
-                os << "createPreIndices(" << s.second.getSrcNeuronGroup()->getNumNeurons() << ", " << s.second.getTrgNeuronGroup()->getNumNeurons() << ", &C" << s.first << ");" << std::endl;
-            }
-            if (model.isSynapseGroupPostLearningRequired(s.first)) {
-                os << "createPosttoPreArray(" << s.second.getSrcNeuronGroup()->getNumNeurons() << ", " << s.second.getTrgNeuronGroup()->getNumNeurons() << ", &C" << s.first << ");" << std::endl;
-            }
-        }
-    }
-
-    if (anySparse) {
-#ifndef CPU_ONLY
-        os << "initializeAllSparseArrays();" << std::endl;
-#endif
-    }
-
-    os << CodeStream::CB(1130) << std::endl;
-
-    // ------------------------------------------------------------------------
     // freeing global memory structures
 
     os << "void freeMem()" << std::endl;
@@ -1441,6 +1246,11 @@ void genRunner(const NNmodel &model, //!< Model description
             free_variable(os, "sT" + n.first, n.second.isSpikeTimeZeroCopyEnabled());
         }
 
+#ifndef CPU_ONLY
+        if(n.second.isSimRNGRequired()) {
+            free_device_variable(os, "rng" + n.first, false);
+        }
+#endif
         // Free neuron state variables
         for (auto const &v : n.second.getNeuronModel()->getVars()) {
             free_variable(os, v.first + n.first,
@@ -1628,6 +1438,47 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
         os << "                        __int_as_float(assumed)));" << std::endl;
         os << "    } while (assumed != old);" << std::endl;
         os << "    return __int_as_float(old);" << std::endl;
+        os << "}" << std::endl;
+        os << std::endl;
+    }
+
+    if (model.isRNGRequired()) {
+        os << "__device__ float exponentialDistFloat(curandState *rng) {" << std::endl;
+        os << "    float a = 0.0f;" << std::endl;
+        os << "    while (true) {" << std::endl;
+        os << "        float u = curand_uniform(rng);" << std::endl;
+        os << "        const float u0 = u;" << std::endl;
+        os << "        while (true) {" << std::endl;
+        os << "            float uStar = curand_uniform(rng);" << std::endl;
+        os << "            if (u < uStar) {" << std::endl;
+        os << "                return  a + u0;" << std::endl;
+        os << "            }" << std::endl;
+        os << "            u = curand_uniform(rng);" << std::endl;
+        os << "            if (u >= uStar) {" << std::endl;
+        os << "                break;" << std::endl;
+        os << "            }" << std::endl;
+        os << "        }" << std::endl;
+        os << "        a += 1.0f;" << std::endl;
+        os << "    }" << std::endl;
+        os << "}" << std::endl;
+        os << std::endl;
+        os << "__device__ double exponentialDistDouble(curandState *rng) {" << std::endl;
+        os << "    double a = 0.0f;" << std::endl;
+        os << "    while (true) {" << std::endl;
+        os << "        double u = curand_uniform_double(rng);" << std::endl;
+        os << "        const double u0 = u;" << std::endl;
+        os << "        while (true) {" << std::endl;
+        os << "            double uStar = curand_uniform_double(rng);" << std::endl;
+        os << "            if (u < uStar) {" << std::endl;
+        os << "                return  a + u0;" << std::endl;
+        os << "            }" << std::endl;
+        os << "            u = curand_uniform_double(rng);" << std::endl;
+        os << "            if (u >= uStar) {" << std::endl;
+        os << "                break;" << std::endl;
+        os << "            }" << std::endl;
+        os << "        }" << std::endl;
+        os << "        a += 1.0;" << std::endl;
+        os << "    }" << std::endl;
         os << "}" << std::endl;
         os << std::endl;
     }
@@ -2415,6 +2266,9 @@ void genMakefile(const NNmodel &model, //!< Model description
     if (GENN_PREFERENCES::debugCode) {
         cxxFlags += " -O0 -g";
     }
+    if (model.isRNGRequired()) {
+        cxxFlags += " -std=c++11";
+    }
 
     os << endl;
     os << "CXXFLAGS       :=" << cxxFlags << endl;
@@ -2457,6 +2311,9 @@ void genMakefile(const NNmodel &model, //!< Model description
     }
     if (GENN_PREFERENCES::showPtxInfo) {
         nvccFlags += " -Xptxas \"-v\"";
+    }
+    if (model.isRNGRequired()) {
+        nvccFlags += " -std=c++11";
     }
 
     os << endl;

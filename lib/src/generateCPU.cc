@@ -101,7 +101,8 @@ void generate_process_presynaptic_events_code_CPU(
             substitute(eCode, "$(t)", "t");
             StandardSubstitutions::weightUpdateThresholdCondition(eCode, sg,
                                                                   wuDerivedParams, wuExtraGlobalParams,
-                                                                  "ipre", "ipost", "", ftype);
+                                                                  "ipre", "ipost", "",
+                                                                  cpuFunctions, ftype);
 
            // end code substitutions ----
             os << "(" << eCode << ")";
@@ -137,7 +138,7 @@ void generate_process_presynaptic_events_code_CPU(
 
         StandardSubstitutions::weightUpdateSim(wCode, sg,
                                                wuVars, wuDerivedParams, wuExtraGlobalParams,
-                                               "ipre", "ipost", "", ftype);
+                                               "ipre", "ipost", "", cpuFunctions, ftype);
         // end Code substitutions -------------------------------------------------------------------------
         os << wCode << std::endl;
 
@@ -257,7 +258,7 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
             substitute(psCode, "$(id)", "n");
             substitute(psCode, "$(inSyn)", "inSyn" + sg->getName() + "[n]");
             StandardSubstitutions::postSynapseApplyInput(psCode, sg, n.second,
-                nmVars, nmDerivedParams, nmExtraGlobalParams, model.getPrecision());
+                nmVars, nmDerivedParams, nmExtraGlobalParams, cpuFunctions, model.getPrecision(), "rng");
 
             if (!psm->getSupportCode().empty()) {
                 os << CodeStream::OB(29) << " using namespace " << sg->getName() << "_postsyn;" << std::endl;
@@ -281,7 +282,7 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
             substitute(thCode, "$(id)", "n");
             StandardSubstitutions::neuronThresholdCondition(thCode, n.second,
                                                             nmVars, nmDerivedParams, nmExtraGlobalParams,
-                                                            model.getPrecision());
+                                                            cpuFunctions, model.getPrecision(), "rng");
             if (GENN_PREFERENCES::autoRefractory) {
                 os << "bool oldSpike= (" << thCode << ");" << std::endl;
             }
@@ -292,7 +293,7 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
         substitute(sCode, "$(id)", "n");
         StandardSubstitutions::neuronSim(sCode, n.second,
                                          nmVars, nmDerivedParams, nmExtraGlobalParams,
-                                         model.getPrecision());
+                                         cpuFunctions, model.getPrecision(), "rng");
         if (nm->isPoisson()) {
             substitute(sCode, "lrate", "rates" + n.first + "[n + offset" + n.first + "]");
         }
@@ -304,8 +305,8 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
         if (n.second.isSpikeEventRequired()) {
             // Generate spike event test
             StandardGeneratedSections::neuronSpikeEventTest(os, n.second,
-                                                            nmVars, nmExtraGlobalParams,
-                                                            "n", model.getPrecision());
+                                                            nmVars, nmExtraGlobalParams, "n",
+                                                            cpuFunctions, model.getPrecision(), "rng");
 
             os << "// register a spike-like event" << std::endl;
             os << "if (spikeLikeEvent)" << CodeStream::OB(30);
@@ -347,7 +348,7 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
                 substitute(rCode, "$(id)", "n");
                 StandardSubstitutions::neuronReset(rCode, n.second,
                                                    nmVars, nmDerivedParams, nmExtraGlobalParams,
-                                                   model.getPrecision());
+                                                   cpuFunctions, model.getPrecision(), "rng");
                 os << "// spike reset code" << std::endl;
                 os << rCode << std::endl;
             }
@@ -365,7 +366,7 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
             substitute(pdCode, "$(inSyn)", "inSyn" + sg->getName() + "[n]");
             StandardSubstitutions::postSynapseDecay(pdCode, sg, n.second,
                                                     nmVars, nmDerivedParams, nmExtraGlobalParams,
-                                                    model.getPrecision());
+                                                    cpuFunctions, model.getPrecision(), "rng");
             os << "// the post-synaptic dynamics" << std::endl;
             if (!psm->getSupportCode().empty()) {
                 os << CodeStream::OB(29) << " using namespace " << sg->getName() << "_postsyn;" << std::endl;
@@ -471,8 +472,8 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
                     substitute(SDcode, "$(inSyn)", "inSyn" + s.first + "[" + postIdx + "]");
 
                     StandardSubstitutions::weightUpdateDynamics(SDcode, sg, wuVars, wuDerivedParams, wuExtraGlobalParams,
-                                                                "C" + s.first + ".preInd[n]",
-                                                                postIdx, "", model.getPrecision());
+                                                                "C" + s.first + ".preInd[n]", postIdx, "",
+                                                                cpuFunctions, model.getPrecision());
                     os << SDcode << std::endl;
                     os << CodeStream::CB(24);
                 }
@@ -489,7 +490,7 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
                     substitute(SDcode, "$(inSyn)", "inSyn" + s.first + "[j]");
 
                     StandardSubstitutions::weightUpdateDynamics(SDcode, sg, wuVars, wuDerivedParams, wuExtraGlobalParams,
-                                                                "i","j", "", model.getPrecision());
+                                                                "i","j", "", cpuFunctions, model.getPrecision());
                     os << SDcode << std::endl;
                     os << CodeStream::CB(26);
                     os << CodeStream::CB(25);
@@ -558,7 +559,7 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
 
         // If any synapse groups have sparse connectivity
         if(any_of(begin(model.getSynapseGroups()), end(model.getSynapseGroups()),
-            [](const std::pair<string, SynapseGroup> &s)
+            [](const NNmodel::SynapseGroupValueType &s)
             {
                 return (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE);
 
@@ -628,7 +629,7 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
             StandardSubstitutions::weightUpdatePostLearn(code, sg,
                                                          wuDerivedParams, wuExtraGlobalParams,
                                                          sparse ?  "C" + s.first + ".revInd[ipre]" : "ipre",
-                                                         "lSpk", "", model.getPrecision());
+                                                         "lSpk", "", cpuFunctions, model.getPrecision());
             // end Code substitutions -------------------------------------------------------------------------
             os << code << std::endl;
 

@@ -46,7 +46,9 @@ void postSynapseApplyInput(
     const VarNameIterCtx &nmVars,
     const DerivedParamNameIterCtx &nmDerivedParams,
     const ExtraGlobalParamNameIterCtx &nmExtraGlobalParams,
-    const std::string &ftype);
+    const std::vector<FunctionTemplate> functions,
+    const std::string &ftype,
+    const std::string &rng);
 
 void postSynapseDecay(
     std::string &pdCode,
@@ -55,7 +57,9 @@ void postSynapseDecay(
     const VarNameIterCtx &nmVars,
     const DerivedParamNameIterCtx &nmDerivedParams,
     const ExtraGlobalParamNameIterCtx &nmExtraGlobalParams,
-    const std::string &ftype);
+    const std::vector<FunctionTemplate> functions,
+    const std::string &ftype,
+    const std::string &rng);
 
 void neuronThresholdCondition(
     std::string &thCode,
@@ -63,7 +67,9 @@ void neuronThresholdCondition(
     const VarNameIterCtx &nmVars,
     const DerivedParamNameIterCtx &nmDerivedParams,
     const ExtraGlobalParamNameIterCtx &nmExtraGlobalParams,
-    const std::string &ftype);
+    const std::vector<FunctionTemplate> functions,
+    const std::string &ftype,
+    const std::string &rng);
 
 void neuronSim(
     std::string &sCode,
@@ -71,14 +77,18 @@ void neuronSim(
     const VarNameIterCtx &nmVars,
     const DerivedParamNameIterCtx &nmDerivedParams,
     const ExtraGlobalParamNameIterCtx &nmExtraGlobalParams,
-    const std::string &ftype);
+    const std::vector<FunctionTemplate> functions,
+    const std::string &ftype,
+    const std::string &rng);
 
 void neuronSpikeEventCondition(
     std::string &eCode,
     const NeuronGroup &ng,
     const VarNameIterCtx &nmVars,
     const ExtraGlobalParamNameIterCtx &nmExtraGlobalParams,
-    const std::string &ftype);
+    const std::vector<FunctionTemplate> functions,
+    const std::string &ftype,
+    const std::string &rng);
 
 void neuronReset(
     std::string &rCode,
@@ -86,16 +96,19 @@ void neuronReset(
     const VarNameIterCtx &nmVars,
     const DerivedParamNameIterCtx &nmDerivedParams,
     const ExtraGlobalParamNameIterCtx &nmExtraGlobalParams,
-    const std::string &ftype);
+    const std::vector<FunctionTemplate> functions,
+    const std::string &ftype,
+    const std::string &rng);
 
 void weightUpdateThresholdCondition(
     std::string &eCode,
     const SynapseGroup &sg,
-    const DerivedParamNameIterCtx &nmDerivedParams,
-    const ExtraGlobalParamNameIterCtx &nmExtraGlobalParams,
-   const string &preIdx, //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
+    const DerivedParamNameIterCtx &wuDerivedParams,
+    const ExtraGlobalParamNameIterCtx &wuExtraGlobalParams,
+    const string &preIdx, //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
     const string &postIdx, //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
     const string &devPrefix,
+    const std::vector<FunctionTemplate> functions,
     const std::string &ftype);
 
 void weightUpdateSim(
@@ -107,6 +120,7 @@ void weightUpdateSim(
     const string &preIdx, //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
     const string &postIdx, //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
     const string &devPrefix,
+    const std::vector<FunctionTemplate> functions,
     const std::string &ftype);
 
 void weightUpdateDynamics(
@@ -118,6 +132,7 @@ void weightUpdateDynamics(
     const string &preIdx, //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
     const string &postIdx, //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
     const string &devPrefix,
+    const std::vector<FunctionTemplate> functions,
     const std::string &ftype);
 
 void weightUpdatePostLearn(
@@ -128,5 +143,14 @@ void weightUpdatePostLearn(
     const string &preIdx, //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
     const string &postIdx, //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
     const string &devPrefix,
+    const std::vector<FunctionTemplate> functions,
     const std::string &ftype);
+
+std::string initVariable(
+    const NewModels::VarInit &varInit,
+    const std::string &varName,
+    const std::vector<FunctionTemplate> functions,
+    const std::string &ftype,
+    const std::string &rng);
+
 }   // StandardSubstitions

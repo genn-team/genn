@@ -114,7 +114,7 @@ a max possible number of connections via the model.setMaxConn() function.\n");
         string eCode = wu->getEventThresholdConditionCode();
         StandardSubstitutions::weightUpdateThresholdCondition(eCode, sg,
                                                               wuDerivedParams, wuExtraGlobalParams,
-                                                              "preInd", "i", "dd_", ftype);
+                                                              "preInd", "i", "dd_", cudaFunctions, ftype);
         // end code substitutions ----
         os << "(" << eCode << ")";
 
@@ -149,7 +149,7 @@ a max possible number of connections via the model.setMaxConn() function.\n");
 
     StandardSubstitutions::weightUpdateSim(wCode, sg,
                                            wuVars, wuDerivedParams, wuExtraGlobalParams,
-                                           "preInd", "ipost", "dd_", ftype);
+                                           "preInd", "ipost", "dd_", cudaFunctions, ftype);
     // end code substitutions -------------------------------------------------------------------------
 
     os << wCode << std::endl;
@@ -234,7 +234,8 @@ a max possible number of connections via the model.setMaxConn() function.\n");
         // code substitutions ----
         string eCode = wu->getEventThresholdConditionCode();
         StandardSubstitutions::weightUpdateThresholdCondition(eCode, sg, wuDerivedParams, wuExtraGlobalParams,
-                                                              "shSpkEvnt[j]", "ipost", "dd_", ftype);
+                                                              "shSpkEvnt[j]", "ipost", "dd_",
+                                                              cudaFunctions, ftype);
         // end code substitutions ----
         os << "(" << eCode << ")";
 
@@ -285,7 +286,8 @@ a max possible number of connections via the model.setMaxConn() function.\n");
     }
 
     StandardSubstitutions::weightUpdateSim(wCode, sg, wuVars, wuDerivedParams, wuExtraGlobalParams,
-                                           "shSpk" + postfix + "[j]", "ipost", "dd_", ftype);
+                                           "shSpk" + postfix + "[j]", "ipost", "dd_",
+                                           cudaFunctions, ftype);
     // end Code substitutions -------------------------------------------------------------------------
     os << wCode << std::endl;
 
@@ -483,6 +485,10 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
 
         const auto *nm = n.second.getNeuronModel();
 
+        // Get name of rng to use for this neuron
+        // **TODO** Phillox option
+        const std::string rngName = "&dd_rng" + n.first + "[" + localID + "]";
+
         // Create iteration context to iterate over the variables; derived and extra global parameters
         VarNameIterCtx nmVars(nm->getVars());
         DerivedParamNameIterCtx nmDerivedParams(nm->getDerivedParams());
@@ -526,7 +532,8 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
             substitute(psCode, "$(id)", localID);
             substitute(psCode, "$(inSyn)", "linSyn" + sg->getName());
             StandardSubstitutions::postSynapseApplyInput(psCode, sg, n.second,
-                nmVars, nmDerivedParams, nmExtraGlobalParams, model.getPrecision());
+                nmVars, nmDerivedParams, nmExtraGlobalParams,
+                cudaFunctions, model.getPrecision(), rngName);
 
             if (!psm->getSupportCode().empty()) {
                 os << CodeStream::OB(29) << " using namespace " << sg->getName() << "_postsyn;" << std::endl;
@@ -549,7 +556,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
             substitute(thCode, "$(id)", localID);
             StandardSubstitutions::neuronThresholdCondition(thCode, n.second,
                                                             nmVars, nmDerivedParams, nmExtraGlobalParams,
-                                                            model.getPrecision());
+                                                            cudaFunctions, model.getPrecision(), rngName);
             if (GENN_PREFERENCES::autoRefractory) {
                 os << "bool oldSpike= (" << thCode << ");" << std::endl;
             }
@@ -560,15 +567,15 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
         substitute(sCode, "$(id)", localID);
         StandardSubstitutions::neuronSim(sCode, n.second,
                                          nmVars, nmDerivedParams, nmExtraGlobalParams,
-                                         model.getPrecision());
+                                         cudaFunctions, model.getPrecision(), rngName);
         os << sCode << std::endl;
 
         // look for spike type events first.
         if (n.second.isSpikeEventRequired()) {
            // Generate spike event test
             StandardGeneratedSections::neuronSpikeEventTest(os, n.second,
-                                                            nmVars, nmExtraGlobalParams,
-                                                            localID, model.getPrecision());
+                                                            nmVars, nmExtraGlobalParams, localID,
+                                                            cudaFunctions, model.getPrecision(), rngName);
 
             os << "// register a spike-like event" << std::endl;
             os << "if (spikeLikeEvent)" << CodeStream::OB(30);
@@ -595,7 +602,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
                 substitute(rCode, "$(id)", localID);
                 StandardSubstitutions::neuronReset(rCode, n.second,
                                                    nmVars, nmDerivedParams, nmExtraGlobalParams,
-                                                   model.getPrecision());
+                                                   cudaFunctions, model.getPrecision(), rngName);
                 os << "// spike reset code" << std::endl;
                 os << rCode << std::endl;
             }
@@ -616,7 +623,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
             substitute(pdCode, "$(inSyn)", "linSyn" + sg->getName());
             StandardSubstitutions::postSynapseDecay(pdCode, sg, n.second,
                                                     nmVars, nmDerivedParams, nmExtraGlobalParams,
-                                                    model.getPrecision());
+                                                    cudaFunctions, model.getPrecision(), rngName);
             if (!psm->getSupportCode().empty()) {
                 os << CodeStream::OB(29) << " using namespace " << sg->getName() << "_postsyn;" << std::endl;
             }
@@ -798,7 +805,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
 
                     StandardSubstitutions::weightUpdateDynamics(SDcode, sg, wuVars, wuDerivedParams, wuExtraGlobalParams,
                                                                 "dd_preInd" + s.first +"[" + localID + "]",
-                                                                postIdx, "dd_", model.getPrecision());
+                                                                postIdx, "dd_", cudaFunctions, model.getPrecision());
                     os << SDcode << std::endl;
                 }
                 else { // DENSE
@@ -818,7 +825,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
 
                     StandardSubstitutions::weightUpdateDynamics(SDcode, sg, wuVars, wuDerivedParams, wuExtraGlobalParams,
                                                                 localID +"/" + to_string(sg->getTrgNeuronGroup()->getNumNeurons()),
-                                                                postIdx, "dd_", model.getPrecision());
+                                                                postIdx, "dd_", cudaFunctions, model.getPrecision());
                     os << SDcode << std::endl;
                 }
                 os << CodeStream::CB(25);
@@ -1092,7 +1099,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
             }
             StandardSubstitutions::weightUpdatePostLearn(code, sg, wuDerivedParams, wuExtraGlobalParams,
                                                          sparse ?  "dd_revInd" + s.first + "[iprePos]" : localID,
-                                                         "shSpk[j]", "dd_", model.getPrecision());
+                                                         "shSpk[j]", "dd_", cudaFunctions, model.getPrecision());
             // end Code substitutions -------------------------------------------------------------------------
             os << code << std::endl;
             if (sparse) {

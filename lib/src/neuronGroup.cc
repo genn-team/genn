@@ -7,6 +7,7 @@
 // GeNN includes
 #include "codeGenUtils.h"
 #include "standardSubstitutions.h"
+#include "synapseGroup.h"
 #include "utils.h"
 
 // ------------------------------------------------------------------------
@@ -67,6 +68,11 @@ void NeuronGroup::initDerivedParams(double dt)
     // Loop through derived parameters
     for(const auto &d : derivedParams) {
         m_DerivedParams.push_back(d.second(m_Params, dt));
+    }
+
+    // Initialise derived parameters for variable initialisers
+    for(auto &v : m_VarInitialisers) {
+        v.initDerivedParams(dt);
     }
 }
 
@@ -142,6 +148,52 @@ void NeuronGroup::addExtraGlobalParams(std::map<string, string> &kernelParameter
             }
         }
     }
+}
+
+bool NeuronGroup::isInitCodeRequired() const
+{
+    // Return true if any of the variables initialisers have any code
+    return std::any_of(m_VarInitialisers.cbegin(), m_VarInitialisers.cend(),
+                       [](const NewModels::VarInit &v)
+                       {
+                           return !v.getSnippet()->getCode().empty();
+                       });
+}
+
+bool NeuronGroup::isSimRNGRequired() const
+{
+    // Returns true if any parts of the neuron code require an RNG
+    if(::isRNGRequired(getNeuronModel()->getSimCode())
+        || ::isRNGRequired(getNeuronModel()->getThresholdConditionCode())
+        || ::isRNGRequired(getNeuronModel()->getResetCode()))
+    {
+        return true;
+    }
+
+    // Loop through incoming synapse groups
+    for(const auto *sg : getInSyn()) {
+        // Return true if any parts of the postsynaptic model require an RNG
+        // **NOTE** these are included as they are simulated in the neuron kernel/function
+        if(::isRNGRequired(sg->getPSModel()->getApplyInputCode())
+            || ::isRNGRequired(sg->getPSModel()->getDecayCode()))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool NeuronGroup::isInitRNGRequired() const
+{
+    // Return true if any of the variables initialisers use rngs
+    return std::any_of(m_VarInitialisers.cbegin(), m_VarInitialisers.cend(),
+                       [](const NewModels::VarInit &v)
+                       {
+                           return ::isRNGRequired(v.getSnippet()->getCode());
+                       });
+
+    // **TODO** return true if any PSM variable initialisers use rngs
 }
 
 std::string NeuronGroup::getQueueOffset(const std::string &devPrefix) const

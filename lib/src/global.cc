@@ -38,12 +38,14 @@ namespace GENN_PREFERENCES {
     bool debugCode = false; //!< Request debug data to be embedded in the generated code
     bool showPtxInfo = false; //!< Request that PTX assembler information be displayed for each CUDA kernel during compilation
     bool buildSharedLibrary = false;   //!< Should generated code and Makefile build into a shared library e.g. for use in SpineML simulator
+    bool autoInitSparseVars = false; //!< Previously, variables associated with sparse synapse populations were not automatically initialised. If this flag is set this now occurs in the initMODEL_NAME function and copyStateToDevice is deferred until here
     double asGoodAsZero = 1e-19; //!< Global variable that is used when detecting close to zero values, for example when setting sparse connectivity from a dense matrix
     int defaultDevice= 0; //! default GPU device; used to determine which GPU to use if chooseDevice is 0 (off)
     unsigned int neuronBlockSize= 32;
     unsigned int synapseBlockSize= 32;
     unsigned int learningBlockSize= 32;
     unsigned int synapseDynamicsBlockSize= 32;
+    unsigned int initBlockSize= 32;
     unsigned int autoRefractory= 1; //!< Flag for signalling whether spikes are only reported if thresholdCondition changes from false to true (autoRefractory == 1) or spikes are emitted whenever thresholdCondition is true no matter what.
     std::string userCxxFlagsWIN = ""; //!< Allows users to set specific C++ compiler options they may want to use for all host side code (used for windows platforms)
     std::string userCxxFlagsGNU = ""; //!< Allows users to set specific C++ compiler options they may want to use for all host side code (used for unix based platforms)
@@ -55,6 +57,8 @@ unsigned int neuronBlkSz; //!< Global variable containing the GPU block size for
 unsigned int synapseBlkSz; //!< Global variable containing the GPU block size for the synapse kernel
 unsigned int learnBlkSz; //!< Global variable containing the GPU block size for the learn kernel
 unsigned int synDynBlkSz; //!< Global variable containing the GPU block size for the synapse dynamics kernel
+unsigned int initBlkSz; //!< Global variable containing the GPU block size for the initialization kernel
+
 //vector<cudaDeviceProp> deviceProp; //!< Global vector containing the properties of all CUDA-enabled devices
 //vector<int> synapseBlkSz; //!< Global vector containing the optimum synapse kernel block size for each device
 //vector<int> learnBlkSz; //!< Global vector containing the optimum learn kernel block size for each device

@@ -32,123 +32,77 @@ namespace
 const string digits= string("0123456789");
 const string op= string("+-*/(<>= ,;")+string("\n")+string("\t");
 
-const int __mathFN = 56;
-const char *__dnames[__mathFN]= {
-    "cos",
-    "sin",
-    "tan",
-    "acos",
-    "asin",
-    "atan",
-    "atan2",
-    "cosh",
-    "sinh",
-    "tanh",
-    "acosh",
-    "asinh",
-    "atanh",
-    "exp",
-    "frexp",
-    "ldexp",
-    "log",
-    "log10",
-    "modf",
-    "exp2",
-    "expm1",
-    "ilogb",
-    "log1p",
-    "log2",
-    "logb",
-    "scalbn",
-    "scalbln",
-    "pow",
-    "sqrt",
-    "cbrt",
-    "hypot",
-    "erf",
-    "erfc",
-    "tgamma",
-    "lgamma",
-    "ceil",
-    "floor",
-    "fmod",
-    "trunc",
-    "round",
-    "lround",
-    "llround",
-    "rint",
-    "lrint",
-    "nearbyint",
-    "remainder",
-    "remquo",
-    "copysign",
-    "nan",
-    "nextafter",
-    "nexttoward",
-    "fdim",
-    "fmax",
-    "fmin",
-    "fabs",
-    "fma"
+enum MathsFunc
+{
+    MathsFuncDouble,
+    MathsFuncSingle,
+    MathsFuncMax,
 };
 
-const char *__fnames[__mathFN]= {
-    "cosf",
-    "sinf",
-    "tanf",
-    "acosf",
-    "asinf",
-    "atanf",
-    "atan2f",
-    "coshf",
-    "sinhf",
-    "tanhf",
-    "acoshf",
-    "asinhf",
-    "atanhf",
-    "expf",
-    "frexpf",
-    "ldexpf",
-    "logf",
-    "log10f",
-    "modff",
-    "exp2f",
-    "expm1f",
-    "ilogbf",
-    "log1pf",
-    "log2f",
-    "logbf",
-    "scalbnf",
-    "scalblnf",
-    "powf",
-    "sqrtf",
-    "cbrtf",
-    "hypotf",
-    "erff",
-    "erfcf",
-    "tgammaf",
-    "lgammaf",
-    "ceilf",
-    "floorf",
-    "fmodf",
-    "truncf",
-    "roundf",
-    "lroundf",
-    "llroundf",
-    "rintf",
-    "lrintf",
-    "nearbyintf",
-    "remainderf",
-    "remquof",
-    "copysignf",
-    "nanf",
-    "nextafterf",
-    "nexttowardf",
-    "fdimf",
-    "fmaxf",
-    "fminf",
-    "fabsf",
-    "fmaf"
+const char *mathsFuncs[][MathsFuncMax] = {
+    {"cos", "cosf"},
+    {"sin", "sinf"},
+    {"tan", "tanf"},
+    {"acos", "acosf"},
+    {"asin", "asinf"},
+    {"atan", "atanf"},
+    {"atan2", "atan2f"},
+    {"cosh", "coshf"},
+    {"sinh", "sinhf"},
+    {"tanh", "tanhf"},
+    {"acosh", "acoshf"},
+    {"asinh", "asinhf"},
+    {"atanh", "atanhf"},
+    {"exp", "expf"},
+    {"frexp", "frexpf"},
+    {"ldexp", "ldexpf"},
+    {"log", "logf"},
+    {"log10", "log10f"},
+    {"modf", "modff"},
+    {"exp2", "exp2f"},
+    {"expm1", "expm1f"},
+    {"ilogb", "ilogbf"},
+    {"log1p", "log1pf"},
+    {"log2", "log2f"},
+    {"logb", "logbf"},
+    {"scalbn", "scalbnf"},
+    {"scalbln", "scalblnf"},
+    {"pow", "powf"},
+    {"sqrt", "sqrtf"},
+    {"cbrt", "cbrtf"},
+    {"hypot", "hypotf"},
+    {"erf", "erff"},
+    {"erfc", "erfcf"},
+    {"tgamma", "tgammaf"},
+    {"lgamma", "lgammaf"},
+    {"ceil", "ceilf"},
+    {"floor", "floorf"},
+    {"fmod", "fmodf"},
+    {"trunc", "truncf"},
+    {"round", "roundf"},
+    {"lround", "lroundf"},
+    {"llround", "llroundf"},
+    {"rint", "rintf"},
+    {"lrint", "lrintf"},
+    {"nearbyint", "nearbyintf"},
+    {"remainder", "remainderf"},
+    {"remquo", "remquof"},
+    {"copysign", "copysignf"},
+    {"nan", "nanf"},
+    {"nextafter", "nextafterf"},
+    {"nexttoward", "nexttowardf"},
+    {"fdim", "fdimf"},
+    {"fmax", "fmaxf"},
+    {"fmin", "fminf"},
+    {"fabs", "fabsf"},
+    {"fma", "fmaf"}
+};
+
+GenericFunction randomFuncs[] = {
+    {"gennrand_uniform", 0},
+    {"gennrand_normal", 0},
+    {"gennrand_exponential", 0},
+    {"gennrand_log_normal", 2}
 };
 
 //--------------------------------------------------------------------------
@@ -157,14 +111,16 @@ const char *__fnames[__mathFN]= {
 //--------------------------------------------------------------------------
 void ensureMathFunctionFtype(string &code, const string &type)
 {
-    if (type == string("double")) {
-        for (int i= 0; i < __mathFN; i++) {
-            substitute(code, string(__fnames[i])+string("("), string(__dnames[i])+string("("));
+    // If type is double, substitute any single precision maths functions for double precision version
+    if (type == "double") {
+        for(const auto &m : mathsFuncs) {
+            substitute(code, string(m[MathsFuncSingle])+string("("), string(m[MathsFuncDouble])+string("("));
         }
     }
+    // Otherwise, substitute any double precision maths functions for single precision version
     else {
-        for (int i= 0; i < __mathFN; i++) {
-            substitute(code, string(__dnames[i])+string("("), string(__fnames[i])+string("("));
+        for(const auto &m : mathsFuncs) {
+            substitute(code, string(m[MathsFuncDouble])+string("("), string(m[MathsFuncSingle])+string("("));
         }
     }
 }
@@ -199,13 +155,149 @@ void doFinal(string &code, unsigned int i, const string &type, unsigned int &sta
 //--------------------------------------------------------------------------
 //! \brief Tool for substituting strings in the neuron code strings or other templates
 //--------------------------------------------------------------------------
-
 void substitute(string &s, const string &trg, const string &rep)
 {
     size_t found= s.find(trg);
     while (found != string::npos) {
         s.replace(found,trg.length(),rep);
         found= s.find(trg);
+    }
+}
+
+//--------------------------------------------------------------------------
+//! \brief Does the code string contain any functions requiring random number generator
+//--------------------------------------------------------------------------
+bool isRNGRequired(const std::string &code)
+{
+    // Loop through random functions
+    for(const auto &r : randomFuncs) {
+        // If this function takes no arguments, return true if
+        // generic function name enclosed in $() markers is found
+        if(r.numArguments == 0) {
+            if(code.find("$(" + r.genericName + ")") != std::string::npos) {
+                return true;
+            }
+        }
+        // Otherwise, return true if generic function name
+        // prefixed by $( and suffixed with comma is found
+        else if(code.find("$(" + r.genericName + ",") != std::string::npos) {
+            return true;
+        }
+    }
+    return false;
+
+}
+//--------------------------------------------------------------------------
+/*! \brief This function substitutes function calls in the form:
+ *
+ *  $(functionName, parameter1, param2Function(0.12, "string"))
+ *
+ * with replacement templates in the form:
+ *
+ *  actualFunction(CONSTANT, $(0), $(1))
+ *
+ */
+//--------------------------------------------------------------------------
+void functionSubstitute(std::string &code, const std::string &funcName,
+                        unsigned int numParams, const std::string &replaceFuncTemplate)
+{
+    // If there are no parameters, just replace the function name (wrapped in '$()')
+    // with the template (which will, inherantly, not have any parameters)
+    if(numParams == 0) {
+        substitute(code, "$(" + funcName + ")", replaceFuncTemplate);
+    }
+    // Otherwise
+    else {
+        // Reserve vector to hold parameters
+        std::vector<std::string> params;
+        params.reserve(numParams);
+
+        // String to hold parameter currently being parsed
+        std::string currentParam = "";
+
+        // Function will start with opening GeNN wrapper, name and comma before first argument
+        // **NOTE** need to match up to comma so longer function names with same prefix aren't matched
+        const std::string funcStart = "$(" + funcName + ",";
+
+        // Find first occurance of start of function
+        size_t found = code.find(funcStart);
+
+        // While functions are found
+        while (found != std::string::npos) {
+            // Loop through subsequent characerters of code
+            unsigned int bracketDepth = 0;
+            for(size_t i = found + funcStart.length(); i < code.size(); i++) {
+                // If this character is a comma at function bracket depth
+                if(code[i] == ',' && bracketDepth == 0) {
+                    assert(!currentParam.empty());
+
+                    // Add parameter to array
+                    params.push_back(currentParam);
+                    currentParam = "";
+                }
+                // Otherwise
+                else {
+                    // If this is an open bracket, increase bracket depth
+                    if(code[i] == '(') {
+                        bracketDepth++;
+                    }
+                    // Otherwise, it's a close bracket
+                    else if(code[i] == ')') {
+                        // If we are at a deeper bracket depth than function, decrease bracket depth
+                        if(bracketDepth > 0) {
+                            bracketDepth--;
+                        }
+                        // Otherwise
+                        else {
+                            assert(!currentParam.empty());
+
+                            // Add parameter to array
+                            params.push_back(currentParam);
+                            currentParam = "";
+
+                            // Check parameters match
+                            assert(params.size() == numParams);
+
+                            // Substitute parsed parameters into function template
+                            std::string replaceFunc = replaceFuncTemplate;
+                            for(unsigned int p = 0; p < numParams; p++) {
+                                substitute(replaceFunc, "$(" + std::to_string(p) + ")", params[p]);
+                            }
+
+                            // Clear parameters now they have been substituted
+                            // into the final string to replace in to code
+                            params.clear();
+
+                            // Replace this into code
+                            code.replace(found, i - found + 1, replaceFunc);
+                            break;
+                        }
+                    }
+
+                    // If this isn't a space at function bracket depth,
+                    // add to parameter string
+                    if(bracketDepth > 0 || !::isspace(code[i])) {
+                        currentParam += code[i];
+                    }
+                }
+            }
+
+            // Find start of next function to replace
+            found = code.find(funcStart);
+        }
+    }
+}
+
+//--------------------------------------------------------------------------
+//! \brief This function performs a list of function substitutions in code snipped
+//--------------------------------------------------------------------------
+void functionSubstitutions(std::string &code, const std::string &ftype,
+                           const std::vector<FunctionTemplate> functions)
+{
+    // Substitute generic GeNN random functions for desired destination type
+    for(const auto &f : functions) {
+        const std::string &funcTemplate = (ftype == "double") ? f.doublePrecisionTemplate : f.singlePrecisionTemplate;
+        functionSubstitute(code, f.genericName, f.numArguments, funcTemplate);
     }
 }
 

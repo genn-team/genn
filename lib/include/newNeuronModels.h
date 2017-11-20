@@ -318,6 +318,40 @@ public:
 };
 
 //----------------------------------------------------------------------------
+// NeuronModels::PoissonNew
+//----------------------------------------------------------------------------
+//! Poisson neurons
+/*! It has 1 state variable:
+
+    - \c timeStepToSpike - Number of timesteps to next spike
+
+    and 1 parameter:
+
+    - \c rate - Mean firing rate (Hz)
+
+    \note Internally this samples from the exponential distribution using
+    the C++ 11 <random> library on the CPU and Von Neumann's exponential
+    generator (Ripley p.230) implemented using cuRAND on the GPU. */
+class PoissonNew : public Base
+{
+public:
+    DECLARE_MODEL(NeuronModels::PoissonNew, 1, 1);
+
+    SET_SIM_CODE(
+        "if($(timeStepToSpike) <= 0.0f) {\n"
+        "    $(timeStepToSpike) += $(isi) * $(gennrand_exponential);\n"
+        "}\n"
+        "$(timeStepToSpike) -= 1.0;\n"
+    );
+
+    SET_THRESHOLD_CONDITION_CODE("$(timeStepToSpike) <= 0.0");
+
+    SET_PARAM_NAMES({"rate"});
+    SET_VARS({{"timeStepToSpike", "scalar"}});
+    SET_DERIVED_PARAMS({{"isi", [](const vector<double> &pars, double dt){ return 1000.0 / (pars[0] * dt); }}});
+};
+
+//----------------------------------------------------------------------------
 // NeuronModels::TraubMiles
 //----------------------------------------------------------------------------
 //! Hodgkin-Huxley neurons with Traub & Miles algorithm.

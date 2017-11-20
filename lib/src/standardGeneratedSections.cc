@@ -73,7 +73,9 @@ void StandardGeneratedSections::neuronSpikeEventTest(
     const VarNameIterCtx &nmVars,
     const ExtraGlobalParamNameIterCtx &nmExtraGlobalParams,
     const std::string &,
-    const std::string &ftype)
+    const std::vector<FunctionTemplate> functions,
+    const std::string &ftype,
+    const std::string &rng)
 {
     // Create local variable
     os << "bool spikeLikeEvent = false;" << std::endl;
@@ -85,7 +87,8 @@ void StandardGeneratedSections::neuronSpikeEventTest(
 
         // code substitutions ----
         substitute(eCode, "$(id)", "n");
-        StandardSubstitutions::neuronSpikeEventCondition(eCode, ng, nmVars, nmExtraGlobalParams, ftype);
+        StandardSubstitutions::neuronSpikeEventCondition(eCode, ng, nmVars, nmExtraGlobalParams,
+                                                         functions, ftype, rng);
 
         // Open scope for spike-like event test
         os << CodeStream::OB(31);
