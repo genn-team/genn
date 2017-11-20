@@ -355,8 +355,8 @@ int main(int argc, char *argv[])
                     // Read weight update properties
                     std::map<std::string, double> fixedWeightUpdateParamVals;
                     ModelParams::WeightUpdate weightUpdateModelParams(basePath, weightUpdate,
-                                                                    popName, trgPopName,
-                                                                    fixedWeightUpdateParamVals);
+                                                                      popName, trgPopName,
+                                                                      fixedWeightUpdateParamVals);
 
                     // Global weight value can be used if there are no variable parameters
                     const bool globalG = weightUpdateModelParams.getVariableParams().empty();
@@ -374,21 +374,21 @@ int main(int argc, char *argv[])
                     // Read postsynapse properties
                     std::map<std::string, double> fixedPostsynapticParamVals;
                     ModelParams::Postsynaptic postsynapticModelParams(basePath, postSynapse,
-                                                                    trgPopName,
-                                                                    fixedPostsynapticParamVals);
+                                                                      trgPopName,
+                                                                      fixedPostsynapticParamVals);
 
                     // Either get existing postsynaptic model or create new one of no suitable models are available
                     const auto &postsynapticModel = getCreateModel(postsynapticModelParams, postsynapticModels,
-                                                                trgNeuronModel, &weightUpdateModel);
+                                                                   trgNeuronModel, &weightUpdateModel);
 
                     // Determine the GeNN matrix type and number of delay steps
                     SynapseMatrixType mtype;
                     unsigned int delaySteps;
                     unsigned int maxConnections;
                     tie(mtype, delaySteps, maxConnections) = getSynapticMatrixType(basePath, synapse,
-                                                                                neuronGroup->getNumNeurons(),
-                                                                                trgNeuronGroup->getNumNeurons(),
-                                                                                globalG, dt);
+                                                                                   neuronGroup->getNumNeurons(),
+                                                                                   trgNeuronGroup->getNumNeurons(),
+                                                                                   globalG, dt);
 
                     // Build synapse population name from name of weight update
                     // **NOTE** this is an arbitrary choice but these are guaranteed unique

@@ -14,6 +14,7 @@
 
 // GeNN includes
 #include "codeStream.h"
+#include "initVarSnippet.h"
 #include "newModels.h"
 
 // Forward declarations
@@ -62,13 +63,13 @@ public:
     //----------------------------------------------------------------------------
     // Public API
     //----------------------------------------------------------------------------
-    std::vector<double> getValues() const
+    std::vector<NewModels::VarInit> getInitialisers() const
     {
         // Get variables from model
         auto modelVars = m_Model.getVars();
 
         // Reserve vector of values to match it
-        std::vector<double> varValues;
+        std::vector<NewModels::VarInit> varValues;
         varValues.reserve(modelVars.size());
 
         // Populate this vector with either values from map or 0s
@@ -77,15 +78,17 @@ public:
                        [this](const std::pair<std::string, std::string> &n)
                        {
                            if(n.first == "_regimeID") {
-                               return (double)m_Model.getInitialRegimeID();
+                               return NewModels::VarInit(InitVarSnippet::Constant::getInstance(),
+                                                         {(double)m_Model.getInitialRegimeID()});
                            }
                            else {
                                auto value = m_Values.find(n.first);
                                if(value == m_Values.end()) {
-                                   return 0.0;
+                                   return NewModels::VarInit(InitVarSnippet::Uninitialised::getInstance(), {});
                                }
                                else {
-                                   return value->second;
+                                   return NewModels::VarInit(InitVarSnippet::Constant::getInstance(),
+                                                             {value->second});
                                }
                            }
                         });
