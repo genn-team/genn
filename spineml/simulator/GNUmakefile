@@ -51,7 +51,7 @@ all: $(SIMULATE_SPINEML)
 $(SIMULATE_SPINEML): $(LIBGENN) always_compile
 	$(CXX) $(CXXFLAGS) -o $@ $(SIMULATE_SPINEML_SOURCES) $(INCLUDE_FLAGS) $(LINK_FLAGS)
 
-clean: clean_generate_spine_ml clean_libgenn
+clean: clean_simulate_spine_ml clean_libgenn
 
 clean_simulate_spine_ml:
 	rm -f $(SIMULATE_SPINEML) $(SIMULATE_SPINEML).d
