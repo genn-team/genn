@@ -35,7 +35,7 @@ SPINEML_PATH                  :=$(GENN_PATH)/spineml
 TEST          =$(TEST_PATH)/test
 
 
-SPINEML_SOURCES   := $(SPINEML_PATH)/common/pugixml/pugixml.cpp $(SPINEML_PATH)/simulator/connectors.cc $(SPINEML_PATH)/simulator/inputValue.cc
+SPINEML_SOURCES   := $(SPINEML_PATH)/common/pugixml/pugixml.cpp $(SPINEML_PATH)/simulator/networkClient.cc $(SPINEML_PATH)/simulator/connectors.cc $(SPINEML_PATH)/simulator/inputValue.cc 
 GTEST_SOURCES     := $(GTEST_DIR)/src/gtest-all.cc $(GTEST_DIR)/src/gtest_main.cc
 
 TEST_SOURCES      := $(SPINEML_SOURCES) $(GTEST_SOURCES) $(TEST_PATH)/*.cc
