@@ -24,12 +24,16 @@ std::vector<double> SpineMLGenerator::ParamValues::getValues() const
                    std::back_inserter(paramValues),
                    [this](const std::string &n)
                    {
-                       auto value = m_Values.find(n);
-                       if(value == m_Values.end()) {
+                       auto v = m_VarInitialisers.find(n);
+                       if(v == m_VarInitialisers.end()) {
                            return 0.0;
                        }
                        else {
-                           return value->second;
+                           // Check that this parameter actually has a constant value
+                           assert(dynamic_cast<const InitVarSnippet::Constant*>(v->second.getSnippet()) != nullptr);
+
+                           // Return the first parameter (the value)
+                           return v->second.getParams()[0];
                        }
                    });
     return paramValues;

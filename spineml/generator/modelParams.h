@@ -16,6 +16,11 @@ namespace pugi
     class xml_node;
 }
 
+namespace NewModels
+{
+    class VarInit;
+}
+
 //----------------------------------------------------------------------------
 // SpineMLGenerator::ModelParams::Base
 //----------------------------------------------------------------------------
@@ -38,7 +43,7 @@ public:
     };
 
     Base(const filesystem::path &basePath, const pugi::xml_node &node,
-         std::map<std::string, double> &fixedParamVals);
+         std::map<std::string, NewModels::VarInit> &varInitialisers);
 
     //----------------------------------------------------------------------------
     // Public API
@@ -83,7 +88,7 @@ class Neuron : public Base
 {
 public:
     Neuron(const filesystem::path &basePath, const pugi::xml_node &node,
-           std::map<std::string, double> &fixedParamVals);
+           std::map<std::string, NewModels::VarInit> &varInitialisers);
 };
 
 //----------------------------------------------------------------------------
@@ -94,7 +99,7 @@ class WeightUpdate : public Base
 public:
     WeightUpdate(const filesystem::path &basePath, const pugi::xml_node &node,
                  const std::string &srcPopName, const std::string &trgPopName,
-                 std::map<std::string, double> &fixedParamVals);
+                 std::map<std::string, NewModels::VarInit> &varInitialisers);
 };
 
 //----------------------------------------------------------------------------
@@ -105,7 +110,7 @@ class Postsynaptic : public Base
 public:
     Postsynaptic(const filesystem::path &basePath, const pugi::xml_node &node,
                  const std::string &trgPopName,
-                 std::map<std::string, double> &fixedParamVals);
+                 std::map<std::string, NewModels::VarInit> &varInitialisers);
 };
 }   // namespace ModelParams
 }   // namespace SpineMLGenerator

@@ -9,6 +9,9 @@
 // pugixml includes
 #include "pugixml/pugixml.hpp"
 
+// GeNN includes
+#include "newModels.h"
+
 // SpineMLCommon includes
 #include "spineMLUtils.h"
 
@@ -18,7 +21,7 @@ using namespace SpineMLCommon;
 // SpineMLGenerator::Base
 //----------------------------------------------------------------------------
 SpineMLGenerator::ModelParams::Base::Base(const filesystem::path &basePath, const pugi::xml_node &node,
-                                          std::map<std::string, double> &fixedParamVals)
+                                          std::map<std::string, NewModels::VarInit> &varInitialisers)
 {
     m_URL = (basePath / node.attribute("url").value()).str();
 
@@ -31,11 +34,27 @@ SpineMLGenerator::ModelParams::Base::Base(const filesystem::path &basePath, cons
         // **TODO** annotation to say you don't want this to be hard-coded
         auto fixedValue = param.child("FixedValue");
         if(fixedValue) {
-            fixedParamVals.insert(std::make_pair(paramName, fixedValue.attribute("value").as_double()));
+            varInitialisers.insert(std::make_pair(paramName, NewModels::VarInit(InitVarSnippet::Constant::getInstance(), {
+                fixedValue.attribute("value").as_double() })));
         }
-        // Otherwise, in GeNN terms, it should be treated as a variable
+        // Otherwise
         else {
+            // In GeNN terms, it should be treated as a variable so add it to set of potential variable names
             m_VariableParams.insert(paramName);
+
+            // If property is uniformly distributed, add initialiser
+            auto uniformDistribution = param.child("UniformDistribution");
+            if(uniformDistribution) {
+                varInitialisers.insert(std::make_pair(paramName, NewModels::VarInit(InitVarSnippet::Uniform::getInstance(), {
+                    uniformDistribution.attribute("minimum").as_double(), uniformDistribution.attribute("maximum").as_double() })));
+            }
+
+            // If property is normally distributed, add initialiser
+            auto normalDistribution = param.child("NormalDistribution");
+            if(normalDistribution) {
+                varInitialisers.insert(std::make_pair(paramName, NewModels::VarInit(InitVarSnippet::Normal::getInstance(), {
+                    normalDistribution.attribute("mean").as_double(), sqrt(normalDistribution.attribute("variance").as_double()) })));
+            }
         }
     }
 }
@@ -80,8 +99,8 @@ void SpineMLGenerator::ModelParams::Base::addOutputPortMapping(const std::string
 // SpineMLGenerator::ModelParams::Neuron
 //----------------------------------------------------------------------------
 SpineMLGenerator::ModelParams::Neuron::Neuron(const filesystem::path &basePath, const pugi::xml_node &node,
-                                              std::map<std::string, double> &fixedParamVals)
-: Base(basePath, node, fixedParamVals)
+                                              std::map<std::string, NewModels::VarInit> &varInitialisers)
+: Base(basePath, node, varInitialisers)
 {
 }
 
@@ -90,8 +109,8 @@ SpineMLGenerator::ModelParams::Neuron::Neuron(const filesystem::path &basePath, 
 //----------------------------------------------------------------------------
 SpineMLGenerator::ModelParams::WeightUpdate::WeightUpdate(const filesystem::path &basePath, const pugi::xml_node &node,
                                                           const std::string &srcPopName, const std::string &trgPopName,
-                                                          std::map<std::string, double> &fixedParamVals)
-: Base(basePath, node, fixedParamVals)
+                                                          std::map<std::string, NewModels::VarInit> &varInitialisers)
+: Base(basePath, node, varInitialisers)
 {
     // If an input src and destination port are specified add them to input port mapping
     auto inputSrcPort = node.attribute("input_src_port");
@@ -135,8 +154,8 @@ SpineMLGenerator::ModelParams::WeightUpdate::WeightUpdate(const filesystem::path
 //----------------------------------------------------------------------------
 SpineMLGenerator::ModelParams::Postsynaptic::Postsynaptic(const filesystem::path &basePath, const pugi::xml_node &node,
                                                           const std::string &trgPopName,
-                                                          std::map<std::string, double> &fixedParamVals)
-: Base(basePath, node, fixedParamVals)
+                                                          std::map<std::string, NewModels::VarInit> &varInitialisers)
+: Base(basePath, node, varInitialisers)
 {
     // If an input src and destination port are specified add them to input port mapping
     auto inputSrcPort = node.attribute("input_src_port");

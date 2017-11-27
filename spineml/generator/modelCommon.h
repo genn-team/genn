@@ -34,8 +34,8 @@ namespace SpineMLGenerator
 class ParamValues
 {
 public:
-    ParamValues(const std::map<std::string, double> &values, const NewModels::Base &model)
-        : m_Values(values), m_Model(model){}
+    ParamValues(const std::map<std::string, NewModels::VarInit> &varInitialisers, const NewModels::Base &model)
+        : m_VarInitialisers(varInitialisers), m_Model(model){}
 
     //----------------------------------------------------------------------------
     // Public API
@@ -46,7 +46,7 @@ private:
     //----------------------------------------------------------------------------
     // Members
     //----------------------------------------------------------------------------
-    const std::map<std::string, double> &m_Values;
+    const std::map<std::string, NewModels::VarInit> &m_VarInitialisers;
     const NewModels::Base &m_Model;
 };
 
@@ -57,8 +57,8 @@ template<typename M>
 class VarValues
 {
 public:
-    VarValues(const std::map<std::string, double> &values, const M &model)
-        : m_Values(values), m_Model(model){}
+    VarValues(const std::map<std::string, NewModels::VarInit> &varInitialisers, const M &model)
+        : m_VarInitialisers(varInitialisers), m_Model(model){}
 
     //----------------------------------------------------------------------------
     // Public API
@@ -82,13 +82,12 @@ public:
                                                          {(double)m_Model.getInitialRegimeID()});
                            }
                            else {
-                               auto value = m_Values.find(n.first);
-                               if(value == m_Values.end()) {
+                               auto v = m_VarInitialisers.find(n.first);
+                               if(v == m_VarInitialisers.end()) {
                                    return NewModels::VarInit(InitVarSnippet::Uninitialised::getInstance(), {});
                                }
                                else {
-                                   return NewModels::VarInit(InitVarSnippet::Constant::getInstance(),
-                                                             {value->second});
+                                   return v->second;
                                }
                            }
                         });
@@ -99,7 +98,7 @@ private:
     //----------------------------------------------------------------------------
     // Members
     //----------------------------------------------------------------------------
-    const std::map<std::string, double> &m_Values;
+    const std::map<std::string, NewModels::VarInit> &m_VarInitialisers;
     const M &m_Model;
 };
 

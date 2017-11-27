@@ -272,16 +272,16 @@ int main(int argc, char *argv[])
             }
             else {
                 // Read neuron properties
-                std::map<std::string, double> fixedParamVals;
-                ModelParams::Neuron modelParams(basePath, neuron, fixedParamVals);
+                std::map<std::string, NewModels::VarInit> varInitialisers;
+                ModelParams::Neuron modelParams(basePath, neuron, varInitialisers);
 
                 // Either get existing neuron model or create new one of no suitable models are available
                 const auto &neuronModel = getCreateModel(modelParams, neuronModels);
 
                 // Add population to model
                 model.addNeuronPopulation(popName, popSize, &neuronModel,
-                                          NeuronModel::ParamValues(fixedParamVals, neuronModel),
-                                          NeuronModel::VarValues(fixedParamVals, neuronModel));
+                                          NeuronModel::ParamValues(varInitialisers, neuronModel),
+                                          NeuronModel::VarValues(varInitialisers, neuronModel));
             }
         }
 
@@ -353,10 +353,10 @@ int main(int argc, char *argv[])
                     }
 
                     // Read weight update properties
-                    std::map<std::string, double> fixedWeightUpdateParamVals;
+                    std::map<std::string, NewModels::VarInit> weightUpdateVarInitialisers;
                     ModelParams::WeightUpdate weightUpdateModelParams(basePath, weightUpdate,
                                                                       popName, trgPopName,
-                                                                      fixedWeightUpdateParamVals);
+                                                                      weightUpdateVarInitialisers);
 
                     // Global weight value can be used if there are no variable parameters
                     const bool globalG = weightUpdateModelParams.getVariableParams().empty();
@@ -372,10 +372,10 @@ int main(int argc, char *argv[])
                     }
 
                     // Read postsynapse properties
-                    std::map<std::string, double> fixedPostsynapticParamVals;
+                    std::map<std::string, NewModels::VarInit> postsynapticVarInitialisers;
                     ModelParams::Postsynaptic postsynapticModelParams(basePath, postSynapse,
                                                                       trgPopName,
-                                                                      fixedPostsynapticParamVals);
+                                                                      postsynapticVarInitialisers);
 
                     // Either get existing postsynaptic model or create new one of no suitable models are available
                     const auto &postsynapticModel = getCreateModel(postsynapticModelParams, postsynapticModels,
@@ -396,8 +396,8 @@ int main(int argc, char *argv[])
 
                     // Add synapse population to model
                     auto synapsePop = model.addSynapsePopulation(synapsePopName, mtype, delaySteps, popName, trgPopName,
-                                                                 &weightUpdateModel, WeightUpdateModel::ParamValues(fixedWeightUpdateParamVals, weightUpdateModel), WeightUpdateModel::VarValues(fixedWeightUpdateParamVals, weightUpdateModel),
-                                                                 &postsynapticModel, PostsynapticModel::ParamValues(fixedPostsynapticParamVals, postsynapticModel), PostsynapticModel::VarValues(fixedPostsynapticParamVals, postsynapticModel));
+                                                                 &weightUpdateModel, WeightUpdateModel::ParamValues(weightUpdateVarInitialisers, weightUpdateModel), WeightUpdateModel::VarValues(weightUpdateVarInitialisers, weightUpdateModel),
+                                                                 &postsynapticModel, PostsynapticModel::ParamValues(postsynapticVarInitialisers, postsynapticModel), PostsynapticModel::VarValues(postsynapticVarInitialisers, postsynapticModel));
 
                     // If matrix uses sparse connectivity set max connections
                     if(mtype & SynapseMatrixConnectivity::SPARSE) {
