@@ -35,6 +35,13 @@ public:
 //----------------------------------------------------------------------------
 // InitVarSnippet::Constant
 //----------------------------------------------------------------------------
+//! Initialises variable to a constant value
+/*! This snippet takes 1 parameter:
+ *
+    - \c value - The value to intialise the variable to
+
+    \note This snippet type is seldom used directly - NewModels::VarInit
+    has an implicit constructor that, internally, creates one of these snippets*/
 class Constant : public Base
 {
 public:
@@ -48,6 +55,11 @@ public:
 //----------------------------------------------------------------------------
 // InitVarSnippet::Uniform
 //----------------------------------------------------------------------------
+//! Initialises variable by sampling from the uniform distribution
+/*! This snippet takes 2 parameters:
+ *
+    - \c min - The minimum value
+    - \c max - The maximum value */
 class Uniform : public Base
 {
 public:
@@ -63,6 +75,11 @@ public:
 //----------------------------------------------------------------------------
 // InitVarSnippet::Normal
 //----------------------------------------------------------------------------
+//! Initialises variable by sampling from the normal distribution
+/*! This snippet takes 2 parameters:
+ *
+    - \c mean - The mean
+    - \c sd - The standard distribution*/
 class Normal : public Base
 {
 public:
@@ -71,5 +88,22 @@ public:
     SET_CODE("$(value) = $(mean) + ($(gennrand_normal) * $(sd));");
 
     SET_PARAM_NAMES({"mean", "sd"});
+};
+
+//----------------------------------------------------------------------------
+// InitVarSnippet::Exponential
+//----------------------------------------------------------------------------
+//! Initialises variable by sampling from the exponential distribution
+/*! This snippet takes 1 parameter:
+ *
+    - \c lambda - mean event rate (events per unit time/distance)*/
+class Exponential : public Base
+{
+public:
+    DECLARE_SNIPPET(InitVarSnippet::Exponential, 1);
+
+    SET_CODE("$(value) = $(lambda) * $(gennrand_exponential);");
+
+    SET_PARAM_NAMES({"lambda"});
 };
 }   // namespace InitVarSnippet
