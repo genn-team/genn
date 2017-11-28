@@ -53,6 +53,7 @@ void configureEnvironment() {
     
     echo pwd()
     echo env.GENN_PATH;
+    echo env.LD_LIBRARY_PATH;
 }
 
 
