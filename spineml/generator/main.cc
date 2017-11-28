@@ -244,6 +244,9 @@ int main(int argc, char *argv[])
         // **THINK** this allows inputs to be used in threshold conditions but is it actually a good idea more generally?
         GENN_PREFERENCES::autoRefractory = false;
 
+        // Enable new intialization mode for sparse projections where their variables are automatically initialised
+        GENN_PREFERENCES::autoInitSparseVars = true;
+
         // Initialize GeNN
         initGeNN();
 
