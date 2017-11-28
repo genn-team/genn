@@ -16,7 +16,7 @@ class SimTest : public SimulationTest
 {
 public:
     //----------------------------------------------------------------------------
-    // SimulationTestHistogram virtuals
+    // SimulationTest virtuals
     //----------------------------------------------------------------------------
     virtual void Init()
     {
@@ -41,7 +41,7 @@ double getProb(scalar *data, unsigned int size, F cdf)
     doubleData.reserve(size);
     std::copy_n(data, size, std::back_inserter(doubleData));
 
-    //
+    // Perform Kolmogorov-Smirnow test
     double d;
     double prob;
     std::tie(d, prob) = Stats::kolmogorovSmirnovTest(doubleData, cdf);
@@ -50,29 +50,43 @@ double getProb(scalar *data, unsigned int size, F cdf)
 
 TEST_P(SimTest, Vars)
 {
-    double uniformNeuronProb = getProb(uniformPop, 10000, Stats::uniformCDF);
-    EXPECT_GT(uniformNeuronProb, 0.05);
+    const double p = 0.05;
 
-    double normalNeuronProb = getProb(normalPop, 10000, Stats::normalCDF);
-    EXPECT_GT(normalNeuronProb, 0.05);
+    const double uniformNeuronProb = getProb(uniformPop, 10000, Stats::uniformCDF);
+    EXPECT_GT(uniformNeuronProb, p);
 
-    double uniformPSProb = getProb(puniformDense, 10000, Stats::uniformCDF);
-    EXPECT_GT(uniformPSProb, 0.05);
+    const double normalNeuronProb = getProb(normalPop, 10000, Stats::normalCDF);
+    EXPECT_GT(normalNeuronProb, p);
 
-    double normalPSProb = getProb(pnormalDense, 10000, Stats::normalCDF);
-    EXPECT_GT(normalPSProb, 0.05);
+    const double exponentialNeuronProb = getProb(exponentialPop, 10000, Stats::exponentialCDF);
+    EXPECT_GT(exponentialNeuronProb, p);
 
-    double uniformWUDenseProb = getProb(uniformDense, 10000, Stats::uniformCDF);
-    EXPECT_GT(uniformWUDenseProb, 0.05);
+    const double uniformPSProb = getProb(puniformDense, 10000, Stats::uniformCDF);
+    EXPECT_GT(uniformPSProb, p);
 
-    double normalWUDenseProb = getProb(normalDense, 10000, Stats::normalCDF);
-    EXPECT_GT(normalWUDenseProb, 0.05);
+    const double normalPSProb = getProb(pnormalDense, 10000, Stats::normalCDF);
+    EXPECT_GT(normalPSProb, p);
 
-    double uniformWUSparseProb = getProb(uniformSparse, 10000, Stats::uniformCDF);
-    EXPECT_GT(uniformWUSparseProb, 0.05);
+    const double exponentialPSProb = getProb(pexponentialDense, 10000, Stats::exponentialCDF);
+    EXPECT_GT(exponentialPSProb, p);
 
-    double normalWUSparseProb = getProb(normalSparse, 10000, Stats::normalCDF);
-    EXPECT_GT(normalWUSparseProb, 0.05);
+    const double uniformWUDenseProb = getProb(uniformDense, 10000, Stats::uniformCDF);
+    EXPECT_GT(uniformWUDenseProb, p);
+
+    const double normalWUDenseProb = getProb(normalDense, 10000, Stats::normalCDF);
+    EXPECT_GT(normalWUDenseProb, p);
+
+    const double exponentialWUDenseProb = getProb(exponentialDense, 10000, Stats::exponentialCDF);
+    EXPECT_GT(exponentialWUDenseProb, p);
+
+    const double uniformWUSparseProb = getProb(uniformSparse, 10000, Stats::uniformCDF);
+    EXPECT_GT(uniformWUSparseProb, p);
+
+    const double normalWUSparseProb = getProb(normalSparse, 10000, Stats::normalCDF);
+    EXPECT_GT(normalWUSparseProb, p);
+
+    const double exponentialWUSparseProb = getProb(exponentialSparse, 10000, Stats::exponentialCDF);
+    EXPECT_GT(exponentialWUSparseProb, p);
 }
 
 
