@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!-- Define project configurations - we support x64 and Win32, debug, release and CPU_ONLY mode -->
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug_CPU_ONLY|x64">
+      <Configuration>Debug_CPU_ONLY</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release_CPU_ONLY|x64">
+      <Configuration>Release_CPU_ONLY</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+
+  <!-- Configure global properties to build application (rather than library) and to use latest platform toolkit
+  **NOTE** Very important to set platform toolset BEFORE importing CUDA properties -->
+  <PropertyGroup>
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  
+  <!-- Import built in C++ and CUDA properties -->
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.default.props" />
+  
+  <ImportGroup Condition="!$(Configuration.Contains('CPU_ONLY'))" Label="ExtensionSettings">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 7.5.props" />
+  </ImportGroup>
+  
+  <!-- Customise C++ and CUDA compilation; and linking tasks -->
+  <ItemDefinitionGroup Condition="!$(Configuration.Contains('CPU_ONLY'))">
+    <CudaCompile>
+      <Include>$(GENN_PATH)\lib\include;$(GENN_PATH)\userproject\include;$(CUDA_PATH)\include</Include>
+      <CodeGeneration>compute_30,sm_30</CodeGeneration>
+      <GenerateLineInfo>true</GenerateLineInfo>
+      <TargetMachinePlatform Condition="'$(Platform)'=='x64'">64</TargetMachinePlatform>
+      <TargetMachinePlatform Condition="'$(Platform)'=='Win32'">32</TargetMachinePlatform>
+    </CudaCompile>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(GENN_PATH)\lib\include;$(GENN_PATH)\userproject\include;$(CUDA_PATH)\include</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <DebugInformationFormat Condition="$(Configuration.Contains('Debug'))">ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>$(GENN_PATH)\lib\lib\genn.lib;$(CUDA_PATH)\lib\$(Platform)\cudart.lib;$(CUDA_PATH)\lib\$(Platform)\cuda.lib</AdditionalDependencies>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <GenerateDebugInformation Condition="$(Configuration.Contains('Debug'))">true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  
+  <!-- Customise C++  compilation and linking tasks for CPU_ONLY mode -->
+  <ItemDefinitionGroup Condition="$(Configuration.Contains('CPU_ONLY'))">
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(GENN_PATH)\lib\include;$(GENN_PATH)\userproject\include</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <DebugInformationFormat Condition="$(Configuration.Contains('Debug'))">ProgramDatabase</DebugInformationFormat>
+      <PreprocessorDefinitions>CPU_ONLY=1</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>$(GENN_PATH)\lib\lib\genn_CPU_ONLY.lib</AdditionalDependencies>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <GenerateDebugInformation Condition="$(Configuration.Contains('Debug'))">true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  
+  <!-- Import built in C++ and CUDA targets -->
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Targets" />
+  <ImportGroup Condition="!$(Configuration.Contains('CPU_ONLY'))" Label="ExtensionTargets">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 7.5.targets" />
+  </ImportGroup>
+</Project>
