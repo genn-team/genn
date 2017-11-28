@@ -205,6 +205,16 @@ double normalCDF(double x)
 }
 
 //----------------------------------------------------------------------------
+// Stats::exponentialCDF
+//----------------------------------------------------------------------------
+//!< Cumulative distribution function for standardised
+//!< exponential distribution for use in tests
+double exponentialCDF(double x)
+{
+    return (1.0 - exp(-x));
+}
+
+//----------------------------------------------------------------------------
 // Stats::kolmogorovSmirnovTest
 //----------------------------------------------------------------------------
 //!< Given the array data and given a user-supplied callable of the single
