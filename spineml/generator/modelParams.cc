@@ -55,6 +55,14 @@ SpineMLGenerator::ModelParams::Base::Base(const filesystem::path &basePath, cons
                 varInitialisers.insert(std::make_pair(paramName, NewModels::VarInit(InitVarSnippet::Normal::getInstance(), {
                     normalDistribution.attribute("mean").as_double(), sqrt(normalDistribution.attribute("variance").as_double()) })));
             }
+
+            // If property is exponentially distributed, add initialiser
+            // **NOTE** Poisson distribution isn't actually one - it is the exponential
+            auto exponentialDistribution = param.child("PoissonDistribution");
+            if(exponentialDistribution) {
+                varInitialisers.insert(std::make_pair(paramName, NewModels::VarInit(InitVarSnippet::Exponential::getInstance(), {
+                    exponentialDistribution.attribute("mean").as_double() })));
+            }
         }
     }
 }
