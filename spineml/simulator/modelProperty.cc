@@ -176,37 +176,51 @@ void SpineMLSimulator::ModelProperty::ExponentialDistribution::setValue(scalar l
     pushToDevice();
 }
 
-//----------------------------------------------------------------------------SpineMLSimulator
+//----------------------------------------------------------------------------
 // SpineMLSimulator::ModelProperty
 //----------------------------------------------------------------------------
-std::unique_ptr<SpineMLSimulator::ModelProperty::Base> SpineMLSimulator::ModelProperty::create(const pugi::xml_node &node, scalar *hostStateVar, scalar *deviceStateVar, unsigned int size)
+std::unique_ptr<SpineMLSimulator::ModelProperty::Base> SpineMLSimulator::ModelProperty::create(const pugi::xml_node &node, scalar *hostStateVar, scalar *deviceStateVar,
+                                                                                               unsigned int size, bool skipGeNNInitialised)
 {
     // If this property has a child
     auto valueChild = node.first_child();
     if(valueChild) {
-        if(strcmp(valueChild.name(), "FixedValue") == 0) {
-            return std::unique_ptr<Base>(new Fixed(valueChild, hostStateVar, deviceStateVar, size));
-        }
-        else if(strcmp(valueChild.name(), "ValueList") == 0) {
+        // If this property is intialised with a list of values - create a value list model property to manually
+        if(strcmp(valueChild.name(), "ValueList") == 0) {
             return std::unique_ptr<Base>(new ValueList(valueChild, hostStateVar, deviceStateVar, size));
         }
-        else if(strcmp(valueChild.name(), "UniformDistribution") == 0) {
-            return std::unique_ptr<Base>(new UniformDistribution(valueChild, hostStateVar, deviceStateVar, size));
+        // Otherwise if we can skip property types that GeNN can initialise
+        else if(skipGeNNInitialised) {
+            // If property type is one supported by GeNN, add standard model property
+            if(strcmp(valueChild.name(), "FixedValue") == 0 ||
+                strcmp(valueChild.name(), "UniformDistribution") == 0 ||
+                strcmp(valueChild.name(), "NormalDistribution") == 0 ||
+                strcmp(valueChild.name(), "PoissonDistribution") == 0)
+            {
+                return std::unique_ptr<Base>(new Base(hostStateVar, deviceStateVar, size));
+            }
         }
-        else if(strcmp(valueChild.name(), "NormalDistribution") == 0) {
-            return std::unique_ptr<Base>(new NormalDistribution(valueChild, hostStateVar, deviceStateVar, size));
+        // Otherwise, if we can't skip property types supported by GeNN i.e. when we are overriding model properties
+        else if(!skipGeNNInitialised) {
+            if(strcmp(valueChild.name(), "FixedValue") == 0) {
+                return std::unique_ptr<Base>(new Fixed(valueChild, hostStateVar, deviceStateVar, size));
+            }
+            else if(strcmp(valueChild.name(), "UniformDistribution") == 0) {
+                return std::unique_ptr<Base>(new UniformDistribution(valueChild, hostStateVar, deviceStateVar, size));
+            }
+            else if(strcmp(valueChild.name(), "NormalDistribution") == 0) {
+                return std::unique_ptr<Base>(new NormalDistribution(valueChild, hostStateVar, deviceStateVar, size));
+            }
+            // **NOTE** Poisson distribution isn't actually one - it is the exponential
+            // distribution (which models the inter-event-interval of a Poisson PROCESS)
+            else if(strcmp(valueChild.name(), "PoissonDistribution") == 0) {
+                return std::unique_ptr<Base>(new ExponentialDistribution(valueChild, hostStateVar, deviceStateVar, size));
+            }
         }
-        // **NOTE** Poisson distribution isn't actually one - it is the exponential
-        // distribution (which models the inter-event-interval of a Poisson PROCESS)
-        else if(strcmp(valueChild.name(), "PoissonDistribution") == 0) {
-            return std::unique_ptr<Base>(new ExponentialDistribution(valueChild, hostStateVar, deviceStateVar, size));
-        }
-        else {
-            throw std::runtime_error("Unsupported type '" + std::string(valueChild.name()) + "' for property '" + std::string(node.attribute("name").value()) + "'");
-        }
+        throw std::runtime_error("Unsupported type '" + std::string(valueChild.name()) + "' for property '" + std::string(node.attribute("name").value()) + "'");
     }
-    // Otherwise value defaults to fixed value of zero
+    // Otherwise assume that GeNN has initialised variable to something sensible and add standard model property
     else {
-        return std::unique_ptr<Base>(new Fixed(0.0, hostStateVar, deviceStateVar, size));
+        return std::unique_ptr<Base>(new Base(hostStateVar, deviceStateVar, size));
     }
 }

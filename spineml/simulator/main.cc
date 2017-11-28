@@ -285,9 +285,9 @@ void addPropertiesAndSizes(const filesystem::path &basePath, const pugi::xml_nod
 #ifdef CPU_ONLY
             std::cout << "\t\tState variable found host pointer:" << *hostStateVar << std::endl;
 
-            // Create model property object
+            // Create model property object (skipping those that will have already been initialised by GeNN)
             componentProperties.insert(
-                std::make_pair(paramName, ModelProperty::create(param, *hostStateVar, nullptr, popSize)));
+                std::make_pair(paramName, ModelProperty::create(param, *hostStateVar, nullptr, popSize, true)));
 #else
             if(deviceStateVar == nullptr) {
                 throw std::runtime_error("Cannot find device-side state variable for property:" + paramName);
@@ -297,7 +297,7 @@ void addPropertiesAndSizes(const filesystem::path &basePath, const pugi::xml_nod
 
             // Create model property object
             componentProperties.insert(
-                std::make_pair(paramName, ModelProperty::create(param, *hostStateVar, *deviceStateVar, popSize)));
+                std::make_pair(paramName, ModelProperty::create(param, *hostStateVar, *deviceStateVar, popSize, true)));
 #endif
         }
     }
