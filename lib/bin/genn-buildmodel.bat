@@ -55,19 +55,29 @@ if not defined MODEL (
     goto :eof
 )
 for /f %%I in ("%-o%") do set "-o=%%~fI"
-for /f %%I in ("%MODEL%") do set "MACROS=MODEL=%%~fI GENERATEALL_PATH=%-o%"
+for /f %%I in ("%MODEL%") do set "MACROS=/p:ModelFile=%%~fI /p:GeneratePath=%-o%"
+
 if defined -d (
-    set "MACROS=%MACROS% DEBUG=1"
-)
-if defined -c (
-    set "MACROS=%MACROS% CPU_ONLY=1"
-    set GENERATEALL=.\generateALL_CPU_ONLY.exe
+	if defined -c (
+		set "MACROS=%MACROS% /p:Configuration=Debug_CPU_ONLY"
+		set GENERATEALL=.\generateALL_debug_CPU_ONLY.exe
+	) else (
+		set "MACROS=%MACROS% /p:Configuration=Debug"
+		set GENERATEALL=.\generateALL_debug.exe
+	)    
 ) else (
-    set GENERATEALL=.\generateALL.exe
+	if defined -c (
+		set "MACROS=%MACROS% /p:Configuration=Release_CPU_ONLY"
+		set GENERATEALL=.\generateALL_CPU_ONLY.exe
+	) else (
+		set "MACROS=%MACROS% /p:Configuration=Release"
+		set GENERATEALL=.\generateALL.exe
+	)
 )
 
+
 rem :: generate model code
-nmake /nologo /f "%GENN_PATH%\lib\WINmakefile" %MACROS%
+msbuild "%GENN_PATH%\lib\generate.vcxproj" %MACROS%
 if defined -d (
     devenv /debugexe "%GENERATEALL%" "%-o%"
 ) else (
