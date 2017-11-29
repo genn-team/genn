@@ -2114,10 +2114,53 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
 
 //----------------------------------------------------------------------------
 /*!
-  \brief A function that generates the Makefile for all generated GeNN code.
+  \brief A function that generates an MSBuild script for all generated GeNN code.
 */
 //----------------------------------------------------------------------------
+void genMSBuild(const NNmodel &model,   //!< Model description
+                const string &path)     //!< Path for code generation
+{
+    string name = path + "/" + model.getName() + "_CODE/generated_code.props";
+    ofstream fs;
+    fs.open(name.c_str());
 
+    // Attach this to a code stream
+    CodeStream os(fs);
+
+    os << "<?xml version=\"1.0\" encoding=\"utf-8\"?>" << endl;
+    os << "<Project DefaultTargets=\"Build\" ToolsVersion=\"12.0\" xmlns=\"http://schemas.microsoft.com/developer/msbuild/2003\">" << endl;
+#ifdef CPU_ONLY
+    os << "  <Import Project=\"$(GENN_PATH)\\userproject\\include\\genn_cpu_only.props\"/>" << endl;
+    os << endl;
+    os << "  <!-- Compile runner using C++ compiler -->" << endl;
+    os << "  <ItemGroup>" << endl;
+    os << "    <ClCompile Include=\"" << model.getName() + "_CODE\\runner.cc\"/>"
+    os << "  </ItemGroup>" << endl;
+#else
+    os << "  <Import Project=\"$(GENN_PATH)\\userproject\\include\\genn.props\"/>" << endl;
+    os << endl;
+    const string computeCapability = to_string(deviceProp[theDevice].major) + to_string(deviceProp[theDevice].minor);
+    os << "  <ItemDefinitionGroup>" << endl;
+    os << "    <CudaCompile>" << endl;
+    os << "      <CodeGeneration>compute_" << computeCapability <<",sm_" << computeCapability << "</CodeGeneration>" << endl;
+    os << "    </CudaCompile>" << endl;
+    os << "  </ItemDefinitionGroup>" << endl;
+    os << "  <!-- Compile runner using CUDA compiler -->" << endl;
+    os << "  <ItemGroup>" << endl;
+    os << "    <CudaCompile Include=\"" << model.getName() + "_CODE\\runner.cc\">" << endl;
+    os << "        <AdditionalOptions>-x cu %(AdditionalOptions)</AdditionalOptions>" << endl;
+    os << "    </CudaCompile>" << endl;
+    os << "  </ItemGroup>" << endl;
+#endif  // !CPU_ONLY
+    os << "</Project>" << endl;
+    
+}
+
+//----------------------------------------------------------------------------
+/*!
+\brief A function that generates the Makefile for all generated GeNN code.
+*/
+//----------------------------------------------------------------------------
 void genMakefile(const NNmodel &model, //!< Model description
                  const string &path    //!< Path for code generation
                  )
