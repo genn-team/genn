@@ -50,7 +50,7 @@
  
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   
-  <!-- Import built in C++ and CUDA targets -->
+  <!-- Import builtin C++ and CUDA targets -->
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 7.5.targets" />

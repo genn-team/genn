@@ -20,7 +20,7 @@
     <PlatformToolset>v120</PlatformToolset>
   </PropertyGroup>
   
-  <!-- Import built in C++ and CUDA properties -->
+  <!-- Import builtin C++ properties -->
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.default.props" />
  
   <!-- Customise C++  compilation and linking tasks for CPU_ONLY mode -->
@@ -39,6 +39,6 @@
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   
-  <!-- Import built in C++ and CUDA targets -->
+  <!-- Import builtin C++ targets -->
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Targets" />
 </Project>
