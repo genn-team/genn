@@ -52,13 +52,18 @@
     </Link>
   </ItemDefinitionGroup>
   
+  <!-- Import builtin C++ properties -->
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+    
   <!-- Reference libgenn so it gets built automatically if required -->
   <ItemGroup>
-    <ProjectReference Include="$(GENN_PATH)\lib\lib_genn.vcxproj"/>
-  </ItemGroup>
+    <ProjectReference Include="$(GENN_PATH)\lib\lib_genn.vcxproj">
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+      <UseLibraryDependencyInputs>false</UseLibraryDependencyInputs>
+    </ProjectReference>
+  </ItemGroup> 
   
   <!-- Import builtin C++ and CUDA targets -->
-  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 7.5.targets" />

@@ -21,6 +21,9 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{8A4E2BFC-0242-40D2-A183-2A2E9483C4EC}</ProjectGuid>
+    
+    <!-- **YUCK** When libgenn is referenced from other projects this seems to somehow get lost -->
+    <Platform Condition=" '$(Platform)' == '' ">x64</Platform>
   </PropertyGroup>
   <!-- Configure global properties to build static library and to use latest platform toolkit -->
   <PropertyGroup>
