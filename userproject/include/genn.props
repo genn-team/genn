@@ -18,6 +18,8 @@
   <PropertyGroup>
     <ConfigurationType>Application</ConfigurationType>
     <PlatformToolset>v120</PlatformToolset>
+    <IntDir>obj\$(Platform)\$(Configuration)\</IntDir>
+    <OutDir>.\</OutDir>
   </PropertyGroup>
   
   <!-- Import built in C++ and CUDA properties -->
@@ -32,26 +34,31 @@
     <CudaCompile>
       <Include>$(GENN_PATH)\lib\include;$(GENN_PATH)\userproject\include;$(CUDA_PATH)\include</Include>
       <GenerateLineInfo>true</GenerateLineInfo>
-      <TargetMachinePlatform Condition="'$(Platform)'=='x64'">64</TargetMachinePlatform>
-      <TargetMachinePlatform Condition="'$(Platform)'=='Win32'">32</TargetMachinePlatform>
+      <TargetMachinePlatform Condition=" '$(Platform)'=='x64' ">64</TargetMachinePlatform>
+      <TargetMachinePlatform Condition=" '$(Platform)'=='Win32' ">32</TargetMachinePlatform>
     </CudaCompile>
     <ClCompile>
       <AdditionalIncludeDirectories>$(GENN_PATH)\lib\include;$(GENN_PATH)\userproject\include;$(CUDA_PATH)\include</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <DebugInformationFormat Condition="$(Configuration.Contains('Debug'))">ProgramDatabase</DebugInformationFormat>
-      <Optimization Condition=" $(Configuration.Contains('Debug')) ">Disabled</Optimization>
+      <DebugInformationFormat Condition=" '$(Configuration)' == 'Debug' ">ProgramDatabase</DebugInformationFormat>
+      <Optimization Condition=" '$(Configuration)' == 'Debug' ">Disabled</Optimization>
       <ExceptionHandling>Sync</ExceptionHandling>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>$(GENN_PATH)\lib\lib\genn.lib;$(CUDA_PATH)\lib\$(Platform)\cudart.lib;$(CUDA_PATH)\lib\$(Platform)\cuda.lib</AdditionalDependencies>
+      <AdditionalDependencies Condition=" '$(Configuration)' == 'Debug' ">$(GENN_PATH)\lib\lib\genn_debug.lib;$(CUDA_PATH)\lib\$(Platform)\cudart.lib;$(CUDA_PATH)\lib\$(Platform)\cuda.lib</AdditionalDependencies>
+      <AdditionalDependencies Condition=" '$(Configuration)' != 'Debug' ">$(GENN_PATH)\lib\lib\genn.lib;$(CUDA_PATH)\lib\$(Platform)\cudart.lib;$(CUDA_PATH)\lib\$(Platform)\cuda.lib</AdditionalDependencies>
       <SuppressStartupBanner>true</SuppressStartupBanner>
-      <GenerateDebugInformation Condition="$(Configuration.Contains('Debug'))">true</GenerateDebugInformation>
+      <GenerateDebugInformation Condition=" '$(Configuration)' == 'Debug' ">true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
- 
-  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  
+  <!-- Reference libgenn so it gets built automatically if required -->
+  <ItemGroup>
+    <ProjectReference Include="$(GENN_PATH)\lib\lib_genn.vcxproj"/>
+  </ItemGroup>
   
   <!-- Import builtin C++ and CUDA targets -->
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 7.5.targets" />

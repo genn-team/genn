@@ -18,6 +18,8 @@
   <PropertyGroup>
     <ConfigurationType>Application</ConfigurationType>
     <PlatformToolset>v120</PlatformToolset>
+    <IntDir>obj\$(Platform)\$(Configuration)_CPU_ONLY\</IntDir>
+    <OutDir>.\</OutDir>
   </PropertyGroup>
   
   <!-- Import builtin C++ properties -->
@@ -30,17 +32,23 @@
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <DebugInformationFormat Condition=" '$(Configuration)' == 'Debug' ">ProgramDatabase</DebugInformationFormat>
       <PreprocessorDefinitions>CPU_ONLY=1</PreprocessorDefinitions>
-      <Optimization Condition=" $(Configuration.Contains('Debug')) ">Disabled</Optimization>
+      <Optimization Condition=" '$(Configuration)' == 'Debug' ">Disabled</Optimization>
       <ExceptionHandling>Sync</ExceptionHandling>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>$(GENN_PATH)\lib\lib\genn_CPU_ONLY.lib</AdditionalDependencies>
+      <AdditionalDependencies Condition=" '$(Configuration)' == 'Debug' ">$(GENN_PATH)\lib\lib\genn_debug_CPU_ONLY.lib</AdditionalDependencies>
+      <AdditionalDependencies Condition=" '$(Configuration)' != 'Debug' ">$(GENN_PATH)\lib\lib\genn_CPU_ONLY.lib</AdditionalDependencies>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <GenerateDebugInformation Condition=" '$(Configuration)' == 'Debug' ">true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
-  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  
+  <!-- Reference libgenn so it gets built automatically if required -->
+  <ItemGroup>
+    <ProjectReference Include="$(GENN_PATH)\lib\lib_genn.vcxproj"/>
+  </ItemGroup>
   
   <!-- Import builtin C++ targets -->
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Targets" />
 </Project>

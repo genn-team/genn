@@ -26,12 +26,15 @@
   <PropertyGroup>
     <ConfigurationType>Application</ConfigurationType>
     <PlatformToolset>v120</PlatformToolset>
+    
+    <!-- Depending on configuration, call generator different names -->
     <TargetName Condition=" '$(Configuration)' == 'Release_CPU_ONLY' ">generateALL_CPU_ONLY</TargetName>
     <TargetName Condition=" '$(Configuration)' == 'Release' ">generateALL</TargetName>
     <TargetName Condition=" '$(Configuration)' == 'Debug_CPU_ONLY' ">generateALL_debug_CPU_ONLY</TargetName>
     <TargetName Condition=" '$(Configuration)' == 'Debug' ">generateALL_debug</TargetName>
+    
     <!-- We want intermediate files and executable to be build in model directory i.e. where generateALL is being run from -->
-    <IntDir>$(MSBuildStartupDirectory)\$(Platform)\$(Configuration)\</IntDir>
+    <IntDir>$(MSBuildStartupDirectory)\obj_generate\$(Platform)\$(Configuration)\</IntDir>
     <OutDir>$(MSBuildStartupDirectory)\</OutDir>
   </PropertyGroup>
   <!-- Import builtin C++ properties -->
@@ -51,6 +54,7 @@
       <ExceptionHandling>Sync</ExceptionHandling>
     </ClCompile>
     <Link>
+      <!-- Depending on configuration, link to libraries different names -->
       <AdditionalDependencies Condition=" '$(Configuration)' == 'Release_CPU_ONLY' ">lib\genn_CPU_ONLY.lib</AdditionalDependencies>
       <AdditionalDependencies Condition=" '$(Configuration)' == 'Release' ">lib\genn.lib;$(CUDA_PATH)\lib\$(Platform)\cudart.lib;$(CUDA_PATH)\lib\$(Platform)\cuda.lib</AdditionalDependencies>
       <AdditionalDependencies Condition=" '$(Configuration)' == 'Debug_CPU_ONLY' ">lib\genn_debug_CPU_ONLY.lib</AdditionalDependencies>
@@ -67,9 +71,12 @@
     <ClCompile Include="src\generateKernels.cc" />
     <ClCompile Include="src\generateRunner.cc" />
   </ItemGroup>
+  
+  <!-- Reference libgenn so it gets built automatically if required -->
   <ItemGroup>
     <ProjectReference Include="lib_genn.vcxproj"/>
   </ItemGroup>
+  
   <!-- Import builtin C++ targets -->
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Targets" />
 </Project>
