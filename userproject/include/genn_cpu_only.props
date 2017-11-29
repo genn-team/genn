@@ -2,13 +2,13 @@
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <!-- Define project configurations - we support x64 and Win32, debug, release and CPU_ONLY mode -->
   <ItemGroup Label="ProjectConfigurations">
-    <ProjectConfiguration Include="Release|x64">
-      <Configuration>Release</Configuration>
+    <ProjectConfiguration Include="Release_CPU_ONLY|x64">
+      <Configuration>Release_CPU_ONLY</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
    
-    <ProjectConfiguration Include="Debug|x64">
-      <Configuration>Debug</Configuration>
+    <ProjectConfiguration Include="Debug_CPU_ONLY|x64">
+      <Configuration>Debug_CPU_ONLY</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
@@ -30,16 +30,16 @@
     <ClCompile>
       <AdditionalIncludeDirectories>$(GENN_PATH)\lib\include;$(GENN_PATH)\userproject\include</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <DebugInformationFormat Condition=" '$(Configuration)' == 'Debug' ">ProgramDatabase</DebugInformationFormat>
+      <DebugInformationFormat Condition=" '$(Configuration)' == 'Debug_CPU_ONLY' ">ProgramDatabase</DebugInformationFormat>
       <PreprocessorDefinitions>CPU_ONLY=1</PreprocessorDefinitions>
-      <Optimization Condition=" '$(Configuration)' == 'Debug' ">Disabled</Optimization>
+      <Optimization Condition=" '$(Configuration)' == 'Debug_CPU_ONLY' ">Disabled</Optimization>
       <ExceptionHandling>Sync</ExceptionHandling>
     </ClCompile>
     <Link>
-      <AdditionalDependencies Condition=" '$(Configuration)' == 'Debug' ">$(GENN_PATH)\lib\lib\genn_debug_CPU_ONLY.lib</AdditionalDependencies>
-      <AdditionalDependencies Condition=" '$(Configuration)' != 'Debug' ">$(GENN_PATH)\lib\lib\genn_CPU_ONLY.lib</AdditionalDependencies>
+      <AdditionalDependencies Condition=" '$(Configuration)' == 'Debug_CPU_ONLY' ">$(GENN_PATH)\lib\lib\genn_debug_CPU_ONLY.lib</AdditionalDependencies>
+      <AdditionalDependencies Condition=" '$(Configuration)' == 'Release_CPU_ONLY' ">$(GENN_PATH)\lib\lib\genn_CPU_ONLY.lib</AdditionalDependencies>
       <SuppressStartupBanner>true</SuppressStartupBanner>
-      <GenerateDebugInformation Condition=" '$(Configuration)' == 'Debug' ">true</GenerateDebugInformation>
+      <GenerateDebugInformation Condition=" '$(Configuration)' == 'Debug_CPU_ONLY' ">true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
   
