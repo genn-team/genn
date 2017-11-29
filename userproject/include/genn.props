@@ -31,7 +31,6 @@
   <ItemDefinitionGroup>
     <CudaCompile>
       <Include>$(GENN_PATH)\lib\include;$(GENN_PATH)\userproject\include;$(CUDA_PATH)\include</Include>
-      <CodeGeneration>compute_30,sm_30</CodeGeneration>
       <GenerateLineInfo>true</GenerateLineInfo>
       <TargetMachinePlatform Condition="'$(Platform)'=='x64'">64</TargetMachinePlatform>
       <TargetMachinePlatform Condition="'$(Platform)'=='Win32'">32</TargetMachinePlatform>
