@@ -31,7 +31,7 @@
     <TargetName Condition=" '$(Configuration)' == 'Debug_CPU_ONLY' ">generateALL_debug_CPU_ONLY</TargetName>
     <TargetName Condition=" '$(Configuration)' == 'Debug' ">generateALL_debug</TargetName>
     <!-- We want intermediate files and executable to be build in model directory i.e. where generateALL is being run from -->
-    <IntDir>$(MSBuildStartupDirectory)\$(Platform)\</IntDir>
+    <IntDir>$(MSBuildStartupDirectory)\$(Platform)\$(Configuration)\</IntDir>
     <OutDir>$(MSBuildStartupDirectory)\</OutDir>
   </PropertyGroup>
   <!-- Import builtin C++ properties -->
@@ -66,6 +66,9 @@
     <ClCompile Include="src\generateInit.cc" />
     <ClCompile Include="src\generateKernels.cc" />
     <ClCompile Include="src\generateRunner.cc" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="lib_genn.vcxproj"/>
   </ItemGroup>
   <!-- Import builtin C++ targets -->
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Targets" />
