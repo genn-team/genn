@@ -46,8 +46,10 @@
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <DebugInformationFormat Condition=" $(Configuration.Contains('Debug')) ">ProgramDatabase</DebugInformationFormat>
       <Optimization Condition=" $(Configuration.Contains('Debug')) ">Disabled</Optimization>
-      <PreprocessorDefinitions Condition=" $(Configuration.Contains('Debug')) ">%(PreprocessorDefinitions);DEBUG</PreprocessorDefinitions>
-      <PreprocessorDefinitions Condition=" $(Configuration.Contains('CPU_ONLY')) ">%(PreprocessorDefinitions);CPU_ONLY=1</PreprocessorDefinitions>
+      <!-- Depending on configuration, set preprocessor options -->
+      <PreprocessorDefinitions Condition=" '$(Configuration)' == 'Release_CPU_ONLY' ">CPU_ONLY=1</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition=" '$(Configuration)' == 'Debug_CPU_ONLY' ">DEBUG;CPU_ONLY=1</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition=" '$(Configuration)' == 'Debug' ">DEBUG</PreprocessorDefinitions>
       <ExceptionHandling>Sync</ExceptionHandling>
     </ClCompile>
     <LIB>

@@ -26,13 +26,11 @@
   <PropertyGroup>
     <ConfigurationType>Application</ConfigurationType>
     <PlatformToolset>v120</PlatformToolset>
-    
     <!-- Depending on configuration, call generator different names -->
     <TargetName Condition=" '$(Configuration)' == 'Release_CPU_ONLY' ">generateALL_CPU_ONLY</TargetName>
     <TargetName Condition=" '$(Configuration)' == 'Release' ">generateALL</TargetName>
     <TargetName Condition=" '$(Configuration)' == 'Debug_CPU_ONLY' ">generateALL_debug_CPU_ONLY</TargetName>
     <TargetName Condition=" '$(Configuration)' == 'Debug' ">generateALL_debug</TargetName>
-    
     <!-- We want intermediate files and executable to be build in model directory i.e. where generateALL is being run from -->
     <IntDir>$(GeneratePath)\obj_generate\$(Platform)\$(Configuration)\</IntDir>
     <OutDir>$(GeneratePath)\</OutDir>
@@ -42,15 +40,16 @@
   <!-- Customise C++  compilation and linking tasks -->
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>include</AdditionalIncludeDirectories>
-      <AdditionalIncludeDirectories Condition=" !$(Configuration.Contains('CPU_ONLY')) ">%(AdditionalIncludeDirectories);$(CUDA_PATH)\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition=" $(Configuration.Contains('CPU_ONLY')) ">include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition=" !$(Configuration.Contains('CPU_ONLY')) ">include;$(CUDA_PATH)\include</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <DebugInformationFormat Condition=" $(Configuration.Contains('Debug')) ">ProgramDatabase</DebugInformationFormat>
       <Optimization Condition=" $(Configuration.Contains('Debug')) ">Disabled</Optimization>
-      <PreprocessorDefinitions>%(PreprocessorDefinitions);MODEL="$(ModelFile)"</PreprocessorDefinitions>
-      <PreprocessorDefinitions Condition=" $(Configuration.Contains('Debug')) ">%(PreprocessorDefinitions);DEBUG</PreprocessorDefinitions>
-      <PreprocessorDefinitions Condition=" $(Configuration.Contains('CPU_ONLY')) ">%(PreprocessorDefinitions);CPU_ONLY=1</PreprocessorDefinitions>
-      <PreprocessorDefinitions Condition=" !$(Configuration.Contains('CPU_ONLY')) ">%(PreprocessorDefinitions);NVCC="$(CUDA_PATH.Replace('\', '/'))/bin/nvcc.exe"</PreprocessorDefinitions>
+      <!-- Depending on configuration, set preprocessor options -->
+      <PreprocessorDefinitions Condition=" '$(Configuration)' == 'Release_CPU_ONLY' ">MODEL="$(ModelFile)";CPU_ONLY=1</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition=" '$(Configuration)' == 'Release' ">MODEL="$(ModelFile)";NVCC="$(CUDA_PATH.Replace('\', '/'))/bin/nvcc.exe"</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition=" '$(Configuration)' == 'Debug_CPU_ONLY' ">MODEL="$(ModelFile)";DEBUG;CPU_ONLY=1</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition=" '$(Configuration)' == 'Debug' ">MODEL="$(ModelFile)";DEBUG;NVCC="$(CUDA_PATH.Replace('\', '/'))/bin/nvcc.exe"</PreprocessorDefinitions>
       <ExceptionHandling>Sync</ExceptionHandling>
     </ClCompile>
     <Link>
@@ -71,12 +70,13 @@
     <ClCompile Include="src\generateKernels.cc" />
     <ClCompile Include="src\generateRunner.cc" />
   </ItemGroup>
-  
   <!-- Reference libgenn so it gets built automatically if required -->
   <ItemGroup>
-    <ProjectReference Include="lib_genn.vcxproj"/>
+    <ProjectReference Include="$(GENN_PATH)\lib\lib_genn.vcxproj">
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+      <UseLibraryDependencyInputs>false</UseLibraryDependencyInputs>
+    </ProjectReference>
   </ItemGroup>
-  
   <!-- Import builtin C++ targets -->
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Targets" />
 </Project>
