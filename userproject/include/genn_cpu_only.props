@@ -30,6 +30,8 @@
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <DebugInformationFormat Condition=" '$(Configuration)' == 'Debug' ">ProgramDatabase</DebugInformationFormat>
       <PreprocessorDefinitions>CPU_ONLY=1</PreprocessorDefinitions>
+      <Optimization Condition=" $(Configuration.Contains('Debug')) ">Disabled</Optimization>
+      <ExceptionHandling>Sync</ExceptionHandling>
     </ClCompile>
     <Link>
       <AdditionalDependencies>$(GENN_PATH)\lib\lib\genn_CPU_ONLY.lib</AdditionalDependencies>

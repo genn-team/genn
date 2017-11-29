@@ -40,6 +40,8 @@
       <AdditionalIncludeDirectories>$(GENN_PATH)\lib\include;$(GENN_PATH)\userproject\include;$(CUDA_PATH)\include</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <DebugInformationFormat Condition="$(Configuration.Contains('Debug'))">ProgramDatabase</DebugInformationFormat>
+      <Optimization Condition=" $(Configuration.Contains('Debug')) ">Disabled</Optimization>
+      <ExceptionHandling>Sync</ExceptionHandling>
     </ClCompile>
     <Link>
       <AdditionalDependencies>$(GENN_PATH)\lib\lib\genn.lib;$(CUDA_PATH)\lib\$(Platform)\cudart.lib;$(CUDA_PATH)\lib\$(Platform)\cuda.lib</AdditionalDependencies>
