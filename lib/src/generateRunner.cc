@@ -2140,6 +2140,7 @@ void genMSBuild(const NNmodel &model,   //!< Model description
     os << "  <Import Project=\"$(GENN_PATH)\\userproject\\include\\genn.props\"/>" << endl;
     os << endl;
     const string computeCapability = to_string(deviceProp[theDevice].major) + to_string(deviceProp[theDevice].minor);
+	os << "  <!-- Set CUDA code generation options based on selected device -->" << endl;
     os << "  <ItemDefinitionGroup>" << endl;
     os << "    <CudaCompile>" << endl;
     os << "      <CodeGeneration>compute_" << computeCapability <<",sm_" << computeCapability << "</CodeGeneration>" << endl;
