@@ -23,10 +23,13 @@
     <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
     <IntDir>obj\$(Platform)\$(Configuration)\</IntDir>
     <OutDir>.\</OutDir>
+    
+    <!-- **HACK** determine the installed CUDA version by regexing CUDA path -->
+    <CudaVersion>$([System.Text.RegularExpressions.Regex]::Match($(CUDA_PATH), "\\v([0-9.]+)$").Groups[1].Value)</CudaVersion>
   </PropertyGroup>
   
   <ImportGroup Label="ExtensionSettings">
-    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 7.5.props" />
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA $(CudaVersion).props" />
   </ImportGroup>
   
   <!-- Customise C++ and CUDA compilation; and linking tasks -->
@@ -66,6 +69,6 @@
   <!-- Import builtin C++ and CUDA targets -->
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Targets" />
   <ImportGroup Label="ExtensionTargets">
-    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 7.5.targets" />
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA $(CudaVersion).targets" />
   </ImportGroup>
 </Project>
