@@ -20,13 +20,12 @@
     </ProjectConfiguration>
   </ItemGroup>
 
-  <!-- Configure global properties to build application (rather than library) and to use latest platform toolkit -->
+  <!-- Configure global properties to build static library and to use latest platform toolkit -->
   <PropertyGroup>
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <PlatformToolset>v120</PlatformToolset>
     <TargetName Condition=" $(Configuration.Contains('CPU_ONLY')) ">genn_CPU_ONLY</TargetName>
     <TargetName Condition=" !$(Configuration.Contains('CPU_ONLY')) ">genn</TargetName>
-    <TargetExt>.lib</TargetExt>
     <OutDir>lib\</OutDir>
   </PropertyGroup>
   
@@ -40,9 +39,8 @@
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <DebugInformationFormat Condition=" $(Configuration.Contains('Debug')) ">ProgramDatabase</DebugInformationFormat>
       <Optimization Condition=" $(Configuration.Contains('Debug')) ">Disabled</Optimization>
-      <PreprocessorDefinitions Condition=" $(Configuration.Contains('Debug')) ">DEBUG</PreprocessorDefinitions>
-      <PreprocessorDefinitions Condition=" $(Configuration.Contains('CPU_ONLY')) ">CPU_ONLY=1</PreprocessorDefinitions>
-      <PreprocessorDefinitions Condition=" !$(Configuration.Contains('CPU_ONLY')) ">NVCC=$(CUDA_PATH)\bin\nvcc.exe</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition=" $(Configuration.Contains('Debug')) ">%(PreprocessorDefinitions);DEBUG</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition=" $(Configuration.Contains('CPU_ONLY')) ">%(PreprocessorDefinitions);CPU_ONLY=1</PreprocessorDefinitions>
       <ExceptionHandling>Sync</ExceptionHandling>
     </ClCompile>
     <LIB>
