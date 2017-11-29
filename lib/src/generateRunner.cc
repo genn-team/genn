@@ -2134,7 +2134,7 @@ void genMSBuild(const NNmodel &model,   //!< Model description
     os << endl;
     os << "  <!-- Compile runner using C++ compiler -->" << endl;
     os << "  <ItemGroup>" << endl;
-    os << "    <ClCompile Include=\"" << model.getName() + "_CODE\\runner.cc\"/>"
+    os << "    <ClCompile Include=\"" << model.getName() + "_CODE\\runner.cc\"/>";
     os << "  </ItemGroup>" << endl;
 #else
     os << "  <Import Project=\"$(GENN_PATH)\\userproject\\include\\genn.props\"/>" << endl;
