@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <!-- Define project configurations - we support x64 and Win32, debug, release and CPU_ONLY mode -->
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Release|x64">
@@ -25,10 +25,14 @@
     <!-- **YUCK** When libgenn is referenced from other projects this seems to somehow get lost -->
     <Platform Condition=" '$(Platform)' == '' ">x64</Platform>
   </PropertyGroup>
-  <!-- Configure global properties to build static library and to use latest platform toolkit -->
+  
+  <!-- Import builtin C++ properties -->
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.default.props" />
+  
+  <!-- Configure global properties to build static library and to use default platform toolkit -->
   <PropertyGroup>
     <ConfigurationType>StaticLibrary</ConfigurationType>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
     <TargetName Condition=" '$(Configuration)' == 'Release_CPU_ONLY' ">genn_CPU_ONLY</TargetName>
     <TargetName Condition=" '$(Configuration)' == 'Release' ">genn</TargetName>
     <TargetName Condition=" '$(Configuration)' == 'Debug_CPU_ONLY' ">genn_debug_CPU_ONLY</TargetName>
@@ -36,8 +40,7 @@
     <OutDir>lib\</OutDir>
     <IntDir>obj\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
-  <!-- Import builtin C++ properties -->
-  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.default.props" />
+ 
   <!-- Customise C++  compilation and linking tasks for CPU_ONLY mode -->
   <ItemDefinitionGroup>
     <ClCompile>
