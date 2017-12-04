@@ -45,8 +45,8 @@
       <Optimization Condition=" $(Configuration.Contains('Debug')) ">Disabled</Optimization>
       <!-- Depending on configuration, set preprocessor options 
       **NOTE** there's some compile-order issue with windows.h and winsock2.h - good 'ole WIN32_LEAN_AND_MEAN solves this-->
-      <PreprocessorDefinitions Condition=" $(Configuration.Contains('CPU_ONLY')) ">WIN32_LEAN_AND_MEAN;CPU_ONLY=1</PreprocessorDefinitions>
-      <PreprocessorDefinitions Condition=" !$(Configuration.Contains('CPU_ONLY')) ">WIN32_LEAN_AND_MEAN</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition=" $(Configuration.Contains('CPU_ONLY')) ">NOMINMAX;WIN32_LEAN_AND_MEAN;CPU_ONLY=1</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition=" !$(Configuration.Contains('CPU_ONLY')) ">NOMINMAX;WIN32_LEAN_AND_MEAN</PreprocessorDefinitions>
       <ExceptionHandling>Sync</ExceptionHandling>
     </ClCompile>
     <Link>
@@ -68,13 +68,6 @@
     <ClCompile Include="modelProperty.cc" />
     <ClCompile Include="networkClient.cc" />
   </ItemGroup>
-  <!-- Reference libgenn so it gets built automatically if required -->
-  <!--   <ItemGroup>
-    <ProjectReference Include="$(GENN_PATH)\lib\lib_genn.vcxproj">
-      <LinkLibraryDependencies>false</LinkLibraryDependencies>
-      <UseLibraryDependencyInputs>false</UseLibraryDependencyInputs>
-    </ProjectReference>
-  </ItemGroup> -->
   <!-- Import builtin C++ targets -->
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Targets" />
 </Project>
