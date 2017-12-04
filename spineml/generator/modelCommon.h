@@ -87,7 +87,7 @@ public:
                                    return NewModels::VarInit(InitVarSnippet::Uninitialised::getInstance(), {});
                                }
                                else {
-                                   return v->second;
+								   return NewModels::VarInit(v->second);
                                }
                            }
                         });
