@@ -37,8 +37,8 @@
   <!-- Customise C++  compilation and linking tasks -->
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories Condition=" $(Configuration.Contains('CPU_ONLY')) ">..\common\;..\..\lib\include</AdditionalIncludeDirectories>
-      <AdditionalIncludeDirectories Condition=" !$(Configuration.Contains('CPU_ONLY')) ">..\common\;..\..\lib\include;$(CUDA_PATH)\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition=" $(Configuration.Contains('CPU_ONLY')) ">..\common\;$(GENN_PATH)\lib\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition=" !$(Configuration.Contains('CPU_ONLY')) ">..\common\;$(GENN_PATH)\lib\include;$(CUDA_PATH)\include</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <DebugInformationFormat Condition=" $(Configuration.Contains('Debug')) ">ProgramDatabase</DebugInformationFormat>
       <Optimization Condition=" $(Configuration.Contains('Debug')) ">Disabled</Optimization>
@@ -51,10 +51,10 @@
     </ClCompile>
     <Link>
       <!-- Depending on configuration, link to libraries different names -->
-      <AdditionalDependencies Condition=" '$(Configuration)' == 'Release_CPU_ONLY' ">lib\genn_CPU_ONLY.lib</AdditionalDependencies>
-      <AdditionalDependencies Condition=" '$(Configuration)' == 'Release' ">lib\genn.lib;$(CUDA_PATH)\lib\$(Platform)\cudart.lib;$(CUDA_PATH)\lib\$(Platform)\cuda.lib</AdditionalDependencies>
-      <AdditionalDependencies Condition=" '$(Configuration)' == 'Debug_CPU_ONLY' ">lib\genn_debug_CPU_ONLY.lib</AdditionalDependencies>
-      <AdditionalDependencies Condition=" '$(Configuration)' == 'Debug' ">lib\genn_debug.lib;$(CUDA_PATH)\lib\$(Platform)\cudart.lib;$(CUDA_PATH)\lib\$(Platform)\cuda.lib</AdditionalDependencies>
+      <AdditionalDependencies Condition=" '$(Configuration)' == 'Release_CPU_ONLY' ">$(GENN_PATH)\lib\lib\genn_CPU_ONLY.lib</AdditionalDependencies>
+      <AdditionalDependencies Condition=" '$(Configuration)' == 'Release' ">$(GENN_PATH)\lib\lib\genn.lib;$(CUDA_PATH)\lib\$(Platform)\cudart.lib;$(CUDA_PATH)\lib\$(Platform)\cuda.lib</AdditionalDependencies>
+      <AdditionalDependencies Condition=" '$(Configuration)' == 'Debug_CPU_ONLY' ">$(GENN_PATH)\lib\lib\genn_debug_CPU_ONLY.lib</AdditionalDependencies>
+      <AdditionalDependencies Condition=" '$(Configuration)' == 'Debug' ">$(GENN_PATH)\lib\lib\genn_debug.lib;$(CUDA_PATH)\lib\$(Platform)\cudart.lib;$(CUDA_PATH)\lib\$(Platform)\cuda.lib</AdditionalDependencies>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <GenerateDebugInformation Condition=" $(Configuration.Contains('Debug')) ">true</GenerateDebugInformation>
     </Link>
@@ -62,12 +62,13 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ItemGroup>
     <ClCompile Include="..\common\pugixml\pugixml.cpp" />
+    <ClCompile Include="connectors.cc" />
     <ClCompile Include="main.cc" />
-    <ClCompile Include="..\..\lib\src\generateALL.cc" />
-    <ClCompile Include="..\..\lib\src\generateCPU.cc" />
-    <ClCompile Include="..\..\lib\src\generateInit.cc" />
-    <ClCompile Include="..\..\lib\src\generateKernels.cc" />
-    <ClCompile Include="..\..\lib\src\generateRunner.cc" />
+    <ClCompile Include="$(GENN_PATH)\lib\src\generateALL.cc" />
+    <ClCompile Include="$(GENN_PATH)\lib\src\generateCPU.cc" />
+    <ClCompile Include="$(GENN_PATH)\lib\src\generateInit.cc" />
+    <ClCompile Include="$(GENN_PATH)\lib\src\generateKernels.cc" />
+    <ClCompile Include="$(GENN_PATH)\lib\src\generateRunner.cc" />
     <ClCompile Include="modelCommon.cc" />
     <ClCompile Include="modelParams.cc" />
     <ClCompile Include="neuronModel.cc" />
