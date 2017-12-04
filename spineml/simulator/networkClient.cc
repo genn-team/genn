@@ -21,7 +21,11 @@ SpineMLSimulator::NetworkClient::~NetworkClient()
 {
     // Close socket
     if(m_Socket >= 0) {
+#ifdef _WIN32
+        closesocket(m_Socket);
+#else
         close(m_Socket);
+#endif
     }
 }
 //----------------------------------------------------------------------------
@@ -43,12 +47,11 @@ bool SpineMLSimulator::NetworkClient::connect(const std::string &hostname, int p
 }
     
     // Create address structure
-    sockaddr_in destAddress = {
-        .sin_family = AF_INET, 
-        .sin_port = htons(port), 
-        .sin_addr = { .s_addr = inet_addr(hostname.c_str()) },
-        .sin_zero = {0},
-    };
+    sockaddr_in destAddress;
+    memset(&destAddress, 0, sizeof(sockaddr_in));
+    destAddress.sin_family = AF_INET;
+    destAddress.sin_port = htons(port);
+    destAddress.sin_addr.s_addr = inet_addr(hostname.c_str());
 
    // Connect socket
    if (::connect(m_Socket, reinterpret_cast<sockaddr*>(&destAddress), sizeof(destAddress)) < 0) {
@@ -122,18 +125,27 @@ bool SpineMLSimulator::NetworkClient::receive(std::vector<double> &buffer)
         totalReceivedBytes += receivedBytes;
     }
 
+    // Start non-blocking send mode and get flags for send (if any)
+    const int sendFlags = startNonBlockingSend();
+
     // Send response
     const Response response = Response::Received;
-    if (::send(m_Socket, &response, sizeof(Response), MSG_DONTWAIT) < 1) {
+    if (::send(m_Socket, reinterpret_cast<const char*>(&response), sizeof(Response), sendFlags) < 1) {
         std::cerr << "Error writing to socket" << std::endl;
         return false;
     }
+
+    // End non-blocking send mode
+    endNonBlockingSend();
 
     return true;
 }
 //----------------------------------------------------------------------------
 bool SpineMLSimulator::NetworkClient::send(const std::vector<double> &buffer)
 {
+    // Start non-blocking send mode and get flags for send (if any)
+    const int sendFlags = startNonBlockingSend();
+
      // Get buffer size and write pointer as bytes
     const int bufferSizeBytes = buffer.size() * sizeof(double);
     const char *bufferBytes = reinterpret_cast<const char*>(buffer.data());
@@ -141,7 +153,7 @@ bool SpineMLSimulator::NetworkClient::send(const std::vector<double> &buffer)
     // send data
     int totalSentBytes = 0;
     while (totalSentBytes < bufferSizeBytes) {
-        const int sentBytes = ::send(m_Socket, bufferBytes + totalSentBytes, bufferSizeBytes, MSG_DONTWAIT);
+        const int sentBytes = ::send(m_Socket, bufferBytes + totalSentBytes, bufferSizeBytes, sendFlags);
         if(sentBytes < 1) {
             std::cerr << "Error writing to socket" << std::endl;
             return false;
@@ -150,9 +162,12 @@ bool SpineMLSimulator::NetworkClient::send(const std::vector<double> &buffer)
         totalSentBytes += sentBytes;
     }
 
+    // End non-blocking send mode
+    endNonBlockingSend();
+
     // Read response
     Response response;
-    if (::recv(m_Socket, &response, sizeof(Response), MSG_WAITALL) < 1) {
+    if (::recv(m_Socket, reinterpret_cast<char*>(&response), sizeof(Response), MSG_WAITALL) < 1) {
         std::cerr << "Unable to receive response" << std::endl;
         return false;
     }
@@ -170,21 +185,27 @@ bool SpineMLSimulator::NetworkClient::send(const std::vector<double> &buffer)
 //----------------------------------------------------------------------------
 bool SpineMLSimulator::NetworkClient::sendRequestReadResponse(const std::string &data, Response &response)
 {
+    // Start non-blocking send mode and get flags for send (if any)
+    const int sendFlags = startNonBlockingSend();
+
     // Send string length
     const int stringLength = data.size();
-    if(::send(m_Socket, &stringLength, sizeof(int), MSG_DONTWAIT) < 0) {
+    if(::send(m_Socket, reinterpret_cast<const char*>(&stringLength), sizeof(int), sendFlags) < 0) {
         std::cerr << "Unable to send size" << std::endl;
         return false;
     }
 
     // Send string
-    if(::send(m_Socket, data.c_str(), stringLength, MSG_DONTWAIT) < 0) {
+    if(::send(m_Socket, data.c_str(), stringLength, sendFlags) < 0) {
         std::cerr << "Unable to send string" << std::endl;
         return false;
     }
 
+    // End non-blocking send mode
+    endNonBlockingSend();
+
     // Receive handshake response
-    if(::recv(m_Socket, &response, sizeof(Response), MSG_WAITALL) < 1) {
+    if(::recv(m_Socket, reinterpret_cast<char*>(&response), sizeof(Response), MSG_WAITALL) < 1) {
         std::cerr << "Unable to receive response" << std::endl;
         return false;
     }
