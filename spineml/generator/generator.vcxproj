@@ -33,6 +33,7 @@
     <TargetName Condition=" '$(Configuration)' == 'Release' ">generateSpineML</TargetName>
     <TargetName Condition=" '$(Configuration)' == 'Debug_CPU_ONLY' ">generateSpineML_debug_CPU_ONLY</TargetName>
     <TargetName Condition=" '$(Configuration)' == 'Debug' ">generateSpineML_debug</TargetName>
+    <OutDir>.\</OutDir>
   </PropertyGroup>
   <!-- Customise C++  compilation and linking tasks -->
   <ItemDefinitionGroup>
