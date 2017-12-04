@@ -52,42 +52,46 @@ void generate_model_runner(const NNmodel &model,  //!< Model description
                            )
 {
 #ifdef _WIN32
-  _mkdir((path + "\\" + model.getName() + "_CODE").c_str());
+    _mkdir((path + "\\" + model.getName() + "_CODE").c_str());
 #else // UNIX
-  mkdir((path + "/" + model.getName() + "_CODE").c_str(), 0777);
+    mkdir((path + "/" + model.getName() + "_CODE").c_str(), 0777);
 #endif
 
-  // general shared code for GPU and CPU versions
-  genDefinitions(model, path);
-  genSupportCode(model, path);
-  genRunner(model, path);
+    // general shared code for GPU and CPU versions
+    genDefinitions(model, path);
+    genSupportCode(model, path);
+    genRunner(model, path);
 
-  // Generate initialization functions and kernel
-  genInit(model, path);
+    // Generate initialization functions and kernel
+    genInit(model, path);
 
-#ifndef CPU_ONLY
-  // GPU specific code generation
-  genRunnerGPU(model, path);
+    #ifndef CPU_ONLY
+    // GPU specific code generation
+    genRunnerGPU(model, path);
 
-  // generate neuron kernels
-  genNeuronKernel(model, path);
+    // generate neuron kernels
+    genNeuronKernel(model, path);
 
-  // generate synapse and learning kernels
-  if (!model.getSynapseGroups().empty()) {
-      genSynapseKernel(model, path);
-  }
+    // generate synapse and learning kernels
+    if (!model.getSynapseGroups().empty()) {
+        genSynapseKernel(model, path);
+    }
 #endif
+    // Generate the equivalent of neuron kernel
+    genNeuronFunction(model, path);
 
-  // Generate the equivalent of neuron kernel
-  genNeuronFunction(model, path);
+    // Generate the equivalent of synapse and learning kernel
+    if (!model.getSynapseGroups().empty()) {
+        genSynapseFunction(model, path);
+    }
 
-  // Generate the equivalent of synapse and learning kernel
-  if (!model.getSynapseGroups().empty()) {
-      genSynapseFunction(model, path);
-  }
+    // Generate the Makefile for the generated code
+    genMakefile(model, path);
 
-  // Generate the Makefile for the generated code
-  genMakefile(model, path);
+#ifdef _WIN32
+    // On Windows, also generate MSBuild scripts
+    genMSBuild(model, path);
+#endif
 }
 
 
