@@ -361,12 +361,12 @@ int main(int argc, char *argv[])
                                                                       popName, trgPopName,
                                                                       weightUpdateVarInitialisers);
 
-                    // Global weight value can be used if there are no variable parameters
-                    const bool globalG = weightUpdateModelParams.getVariableParams().empty();
-
                     // Either get existing postsynaptic model or create new one of no suitable models are available
                     const auto &weightUpdateModel = getCreateModel(weightUpdateModelParams, weightUpdateModels,
                                                                    neuronModel, trgNeuronModel);
+
+                    // Global weight value can be used if there are no state variables
+                    const bool globalG = weightUpdateModel.getVars().empty();
 
                     // Get post synapse
                     auto postSynapse = synapse.child("LL:PostSynapse");
