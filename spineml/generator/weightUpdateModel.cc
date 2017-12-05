@@ -176,6 +176,12 @@ SpineMLGenerator::WeightUpdateModel::WeightUpdateModel(const ModelParams::Weight
             std::cout << "\t\t\tImplementing analogue reduce port '" << portName << "' using presynaptic neuron send port variable '" << portSrc.second << "'" << std::endl;
             receivePortVariableMap.insert(std::make_pair(portName, portSrc.second + "_pre"));
         }
+        else if(nodeType == "AnalogReducePort" && portSrc.first == ModelParams::Base::PortSource::POSTSYNAPTIC_NEURON
+            && trgNeuronModel->hasSendPortVariable(portSrc.second) && strcmp(reducePort.node().attribute("reduce_op").value(), "+") == 0)
+        {
+            std::cout << "\t\t\tImplementing analogue reduce port '" << portName << "' using postsynaptic neuron send port variable '" << portSrc.second << "'" << std::endl;
+            receivePortVariableMap.insert(std::make_pair(portName, portSrc.second + "_post"));
+        }
         else {
             throw std::runtime_error("GeNN does not currently support '" + std::string(reducePort.node().name()) + "' reduce ports in weight update models");
         }
