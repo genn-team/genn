@@ -3,6 +3,9 @@
 // Standard C++ includes
 #include <stdexcept>
 
+// Standard C includes
+#include <cstring>
+
 //----------------------------------------------------------------------------
 // SpineMLSimulator::NetworkClient
 //----------------------------------------------------------------------------
