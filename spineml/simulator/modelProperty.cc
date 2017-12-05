@@ -2,10 +2,15 @@
 
 // Standard C++ includes
 #include <algorithm>
+#include <fstream>
 #include <iostream>
 
 // Standard C includes
+#include <cassert>
 #include <cstring>
+
+// Filesystem includes
+#include "filesystem/path.h"
 
 // pugixml includes
 #include "pugixml/pugixml.hpp"
@@ -60,17 +65,53 @@ void SpineMLSimulator::ModelProperty::Fixed::setValue(scalar value)
 //------------------------------------------------------------------------
 // SpineMLSimulator::ModelProperty::ValueList
 //------------------------------------------------------------------------
-SpineMLSimulator::ModelProperty::ValueList::ValueList(const pugi::xml_node &node, scalar *hostStateVar, scalar *deviceStateVar, unsigned int size)
+SpineMLSimulator::ModelProperty::ValueList::ValueList(const pugi::xml_node &node, scalar *hostStateVar, scalar *deviceStateVar, unsigned int size, const filesystem::path &basePath)
     : Base(hostStateVar, deviceStateVar, size)
 {
-    // Copy values into vector
+    // Allocate vector
     std::vector<scalar> values(size);
-    for(const auto v : node.children("Value")) {
-        values[v.attribute("index").as_uint()] = v.attribute("value").as_double();
+
+    // If there's a binary file
+    auto binaryFile = node.child("BinaryFile");
+    if(binaryFile) {
+        // Check number of elements matches
+        const unsigned int numElements =  binaryFile.attribute("num_elements").as_uint();
+        const std::string filename = (basePath / binaryFile.attribute("file_name").value()).str();
+
+        // Open file for binary IO
+        // **TODO** basepath here
+        std::ifstream input(filename, std::ios::binary);
+        if(!input.good()) {
+            throw std::runtime_error("Cannot open binary model property file:" + filename);
+        }
+
+        // Loop through elements in file
+        for(unsigned int i = 0; i < numElements; i++) {
+            // Read index and value
+            // **TODO** this is probably a very sub-optimal way of doing this
+            uint32_t index;
+            input.read(reinterpret_cast<char*>(&index), sizeof(uint32_t));
+            double value;
+            input.read(reinterpret_cast<char*>(&value), sizeof(double));
+
+            // Check index is safe and set value
+            assert(index < size);
+            values[index] = value;
+        }
+
+        std::cout << "\t\t\tValue list (from file)" << std::endl;
+    }
+    // Otherwise
+    else {
+        std::cout << "\t\t\tValue list (inline)" << std::endl;
+
+        // Loop through inline values
+        for(const auto v : node.children("Value")) {
+            values[v.attribute("index").as_uint()] = v.attribute("value").as_double();
+        }
     }
 
     setValue(values);
-    std::cout << "\t\t\tValue list" << std::endl;
 }
 //------------------------------------------------------------------------
 void SpineMLSimulator::ModelProperty::ValueList::setValue(const std::vector<scalar> &values)
@@ -180,14 +221,14 @@ void SpineMLSimulator::ModelProperty::ExponentialDistribution::setValue(scalar l
 // SpineMLSimulator::ModelProperty
 //----------------------------------------------------------------------------
 std::unique_ptr<SpineMLSimulator::ModelProperty::Base> SpineMLSimulator::ModelProperty::create(const pugi::xml_node &node, scalar *hostStateVar, scalar *deviceStateVar,
-                                                                                               unsigned int size, bool skipGeNNInitialised)
+                                                                                               unsigned int size, bool skipGeNNInitialised, const filesystem::path &basePath)
 {
     // If this property has a child
     auto valueChild = node.first_child();
     if(valueChild) {
         // If this property is intialised with a list of values - create a value list model property to manually
         if(strcmp(valueChild.name(), "ValueList") == 0) {
-            return std::unique_ptr<Base>(new ValueList(valueChild, hostStateVar, deviceStateVar, size));
+            return std::unique_ptr<Base>(new ValueList(valueChild, hostStateVar, deviceStateVar, size, basePath));
         }
         // Otherwise if we can skip property types that GeNN can initialise
         else if(skipGeNNInitialised) {

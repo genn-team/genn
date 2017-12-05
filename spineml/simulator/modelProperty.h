@@ -10,6 +10,11 @@ namespace pugi
     class xml_node;
 }
 
+namespace filesystem
+{
+    class path;
+}
+
 //------------------------------------------------------------------------
 // SpineMLSimulator::ModelProperty::Base
 //------------------------------------------------------------------------
@@ -77,7 +82,7 @@ private:
 class ValueList : public Base
 {
 public:
-    ValueList(const pugi::xml_node &node, scalar *hostStateVar, scalar *deviceStateVar, unsigned int size);
+    ValueList(const pugi::xml_node &node, scalar *hostStateVar, scalar *deviceStateVar, unsigned int size, const filesystem::path &basePath);
 
     //------------------------------------------------------------------------
     // Public API
@@ -157,7 +162,8 @@ private:
 //----------------------------------------------------------------------------
 // Functions
 //----------------------------------------------------------------------------
-std::unique_ptr<Base> create(const pugi::xml_node &node, scalar *hostStateVar, scalar *deviceStateVar, unsigned int size, bool skipGeNNInitialised);
+std::unique_ptr<Base> create(const pugi::xml_node &node, scalar *hostStateVar, scalar *deviceStateVar, unsigned int size,
+                             bool skipGeNNInitialised, const filesystem::path &basePath);
 
 }   // namespace ModelProperty
 }   // namespace SpineMLSimulator
