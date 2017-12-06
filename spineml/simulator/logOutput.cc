@@ -111,7 +111,7 @@ SpineMLSimulator::LogOutput::AnalogueFile::AnalogueFile(const pugi::xml_node &no
     }
 
     // Combine node target and logger names to get file title
-    std::string fileTitle = std::string(node.attribute("target").value()) + "_" + std::string(node.attribute("name").value());
+    std::string fileTitle = std::string(node.attribute("target").value()) + "_" + std::string(node.attribute("port").value());
 
     // Combine this with base path to get full file title
     std::string absoluteFileTitle = (basePath / fileTitle).str();
@@ -148,12 +148,12 @@ SpineMLSimulator::LogOutput::AnalogueFile::AnalogueFile(const pugi::xml_node &no
     report.append_child("TimeStep").append_attribute("dt").set_value(dt);
 
     // Save report
-    reportDoc.save_file((absoluteFileTitle + "rep.xml").c_str());
+    reportDoc.save_file((absoluteFileTitle + "_logrep.xml").c_str());
 
-    std::cout << "\tAnalogue file log:" << absoluteFileTitle << ".bin" << std::endl;
+    std::cout << "\tAnalogue file log:" << absoluteFileTitle << "_log.bin" << std::endl;
 
     // Open file for binary writing
-    m_File.open(absoluteFileTitle + ".bin", std::ios::binary);
+    m_File.open(absoluteFileTitle + "_log.bin", std::ios::binary);
 }
 //----------------------------------------------------------------------------
 void SpineMLSimulator::LogOutput::AnalogueFile::record(double, unsigned int timestep)
@@ -297,7 +297,7 @@ SpineMLSimulator::LogOutput::Event::Event(const pugi::xml_node &node, double dt,
     }
 
     // Combine node target and logger names to get file title
-    std::string fileTitle = std::string(node.attribute("target").value()) + "_" + std::string(node.attribute("name").value());
+    std::string fileTitle = std::string(node.attribute("target").value()) + "_" + std::string(node.attribute("port").value());
 
     // Combine this with base path to get full file title
     std::string absoluteFileTitle = (basePath / fileTitle).str();
@@ -342,12 +342,12 @@ SpineMLSimulator::LogOutput::Event::Event(const pugi::xml_node &node, double dt,
     report.append_child("TimeStep").append_attribute("dt").set_value(dt);
 
     // Save report
-    reportDoc.save_file((absoluteFileTitle + "rep.xml").c_str());
+    reportDoc.save_file((absoluteFileTitle + "_logrep.xml").c_str());
 
     std::cout << "\tEvent log:" << absoluteFileTitle << ".csv" << std::endl;
 
     // Open CSV file
-    m_File.open(absoluteFileTitle + ".csv");
+    m_File.open(absoluteFileTitle + "_log.csv");
 }
 //----------------------------------------------------------------------------
 void SpineMLSimulator::LogOutput::Event::record(double dt, unsigned int timestep)
