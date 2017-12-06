@@ -183,7 +183,7 @@ std::tuple<SynapseMatrixType, unsigned int, unsigned int> getSynapticMatrixType(
 
     throw std::runtime_error("No supported connection type found for projection");
 }
-//----------------------------------------------------------------------------//----------------------------------------------------------------------------
+//----------------------------------------------------------------------------
 const std::set<std::string> *getExternalInputPorts(const std::map<std::string, std::set<std::string>> &externalInputs, const std::string &target)
 {
     // If there is no input for this target return NULL
