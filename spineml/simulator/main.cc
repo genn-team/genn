@@ -548,9 +548,6 @@ int main(int argc, char *argv[])
         auto experimentPath = filesystem::path(argv[1]).make_absolute();
         auto basePath = experimentPath.parent_path();
 
-        // Create directory for logs (if required)
-        filesystem::create_directory(basePath / ".." / "log");
-
         // Load experiment document
         pugi::xml_document experimentDoc;
         auto experimentResult = experimentDoc.load_file(experimentPath.str().c_str());
@@ -770,6 +767,9 @@ int main(int argc, char *argv[])
         // Read duration from simulation and convert to timesteps
         const double durationMs = simulation.attribute("duration").as_double() * 1000.0;
         const unsigned int numTimeSteps = (unsigned int)std::ceil(durationMs / dt);
+
+        // Create directory for logs (if required)
+        filesystem::create_directory(basePath / ".." / "log");
 
         // Loop through output loggers specified by experiment and create handler
         std::vector<std::unique_ptr<LogOutput::Base>> loggers;
