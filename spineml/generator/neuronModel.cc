@@ -241,13 +241,20 @@ SpineMLGenerator::NeuronModel::NeuronModel(const ModelParams::Neuron &params, co
     // Check that there are no unhandled receive ports
     std::cout << "\t\tReceive ports:" << std::endl;
     std::string trueSpikeReceivePort;
+    std::vector<std::string> externalInputPorts;
     for(auto receivePort : componentClass.select_nodes(SpineMLUtils::xPathNodeHasSuffix("ReceivePort").c_str())) {
         std::string nodeType = receivePort.node().name();
         const char *portName = receivePort.node().attribute("name").value();
 
         if(nodeType == "AnalogReceivePort") {
-            std::cout << "\t\t\tImplementing analogue receive port '" << portName << "' as GeNN additional input variable" << std::endl;
-            m_AdditionalInputVars.push_back(std::make_pair(portName, std::make_pair("scalar", 0.0)));
+            if(params.isInputPortExternal(portName)) {
+                std::cout << "\t\t\tImplementing analogue receive port '" << portName << "' as state variable to receive external input" << std::endl;
+                externalInputPorts.push_back(portName);
+            }
+            else {
+                std::cout << "\t\t\tImplementing analogue receive port '" << portName << "' as GeNN additional input variable" << std::endl;
+                m_AdditionalInputVars.push_back(std::make_pair(portName, std::make_pair("scalar", 0.0)));
+            }
         }
         else if(nodeType == "EventReceivePort") {
             std::cout << "\t\t\tImplementing event receive port '" << portName << "' as a GeNN additional input variable" << std::endl;
@@ -267,8 +274,14 @@ SpineMLGenerator::NeuronModel::NeuronModel(const ModelParams::Neuron &params, co
 
         // **TODO** implement other reduce operations
         if(nodeType == "AnalogReducePort" && strcmp(reducePort.node().attribute("reduce_op").value(), "+") == 0) {
-            std::cout << "\t\t\tImplementing analogue reduce port '" << portName << "' as GeNN additional input variable" << std::endl;
-            m_AdditionalInputVars.push_back(std::make_pair(portName, std::make_pair("scalar", 0.0)));
+            if(params.isInputPortExternal(portName)) {
+                std::cout << "\t\t\tImplementing analogue reduce port '" << portName << "' as state variable to receive external input" << std::endl;
+                externalInputPorts.push_back(portName);
+            }
+            else {
+                std::cout << "\t\t\tImplementing analogue reduce port '" << portName << "' as GeNN additional input variable" << std::endl;
+                m_AdditionalInputVars.push_back(std::make_pair(portName, std::make_pair("scalar", 0.0)));
+            }
         }
         else {
             throw std::runtime_error("GeNN does not support '" + nodeType + "' reduce ports in neuron models");
@@ -309,6 +322,11 @@ SpineMLGenerator::NeuronModel::NeuronModel(const ModelParams::Neuron &params, co
 
         // Add this state variable to variable params set
         variableParams.insert(s);
+    }
+
+    // Add state variables for external input ports
+    for(const auto &p : externalInputPorts) {
+        variableParams.insert(p);
     }
 
     // Store generated code in class

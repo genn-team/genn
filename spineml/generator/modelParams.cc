@@ -21,6 +21,7 @@ using namespace SpineMLCommon;
 // SpineMLGenerator::Base
 //----------------------------------------------------------------------------
 SpineMLGenerator::ModelParams::Base::Base(const filesystem::path &basePath, const pugi::xml_node &node,
+                                          const std::set<std::string> *externalInputPorts,
                                           std::map<std::string, NewModels::VarInit> &varInitialisers)
 {
     m_URL = (basePath / node.attribute("url").value()).str();
@@ -65,6 +66,13 @@ SpineMLGenerator::ModelParams::Base::Base(const filesystem::path &basePath, cons
             }
         }
     }
+
+    // If this model has any external input ports, add input port mapping
+    if(externalInputPorts != nullptr) {
+        for(const auto &p : *externalInputPorts) {
+            addInputPortMapping(p, PortSource::EXTERNAL, "");
+        }
+    }
 }
 //----------------------------------------------------------------------------
 const std::pair<SpineMLGenerator::ModelParams::Base::PortSource, std::string> &SpineMLGenerator::ModelParams::Base::getInputPortSrc(const std::string &dstPort) const
@@ -89,6 +97,13 @@ const std::pair<SpineMLGenerator::ModelParams::Base::PortSource, std::string> &S
     }
 }
 //----------------------------------------------------------------------------
+bool SpineMLGenerator::ModelParams::Base::isInputPortExternal(const std::string &dstPort) const
+{
+    auto port = m_InputPortSources.find(dstPort);
+
+    return (port != m_InputPortSources.end() && port->second.first == PortSource::EXTERNAL);
+}
+//----------------------------------------------------------------------------
 void SpineMLGenerator::ModelParams::Base::addInputPortMapping(const std::string &dstPort, PortSource srcComponent, const std::string &srcPort)
 {
     if(!m_InputPortSources.insert(std::make_pair(dstPort, std::make_pair(srcComponent, srcPort))).second) {
@@ -107,8 +122,9 @@ void SpineMLGenerator::ModelParams::Base::addOutputPortMapping(const std::string
 // SpineMLGenerator::ModelParams::Neuron
 //----------------------------------------------------------------------------
 SpineMLGenerator::ModelParams::Neuron::Neuron(const filesystem::path &basePath, const pugi::xml_node &node,
+                                              const std::set<std::string> *externalInputPorts,
                                               std::map<std::string, NewModels::VarInit> &varInitialisers)
-: Base(basePath, node, varInitialisers)
+: Base(basePath, node, externalInputPorts, varInitialisers)
 {
 }
 
@@ -117,8 +133,9 @@ SpineMLGenerator::ModelParams::Neuron::Neuron(const filesystem::path &basePath, 
 //----------------------------------------------------------------------------
 SpineMLGenerator::ModelParams::WeightUpdate::WeightUpdate(const filesystem::path &basePath, const pugi::xml_node &node,
                                                           const std::string &srcPopName, const std::string &trgPopName,
+                                                          const std::set<std::string> *externalInputPorts,
                                                           std::map<std::string, NewModels::VarInit> &varInitialisers)
-: Base(basePath, node, varInitialisers)
+: Base(basePath, node, externalInputPorts, varInitialisers)
 {
     // If an input src and destination port are specified add them to input port mapping
     auto inputSrcPort = node.attribute("input_src_port");
@@ -162,8 +179,9 @@ SpineMLGenerator::ModelParams::WeightUpdate::WeightUpdate(const filesystem::path
 //----------------------------------------------------------------------------
 SpineMLGenerator::ModelParams::Postsynaptic::Postsynaptic(const filesystem::path &basePath, const pugi::xml_node &node,
                                                           const std::string &trgPopName,
+                                                          const std::set<std::string> *externalInputPorts,
                                                           std::map<std::string, NewModels::VarInit> &varInitialisers)
-: Base(basePath, node, varInitialisers)
+: Base(basePath, node, externalInputPorts, varInitialisers)
 {
     // If an input src and destination port are specified add them to input port mapping
     auto inputSrcPort = node.attribute("input_src_port");

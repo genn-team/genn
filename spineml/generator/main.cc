@@ -27,6 +27,7 @@
 #include "spineMLUtils.h"
 
 // SpineMLGenerator includes
+#include "experimentParser.h"
 #include "modelParams.h"
 #include "neuronModel.h"
 #include "passthroughPostsynapticModel.h"
@@ -182,6 +183,19 @@ std::tuple<SynapseMatrixType, unsigned int, unsigned int> getSynapticMatrixType(
 
     throw std::runtime_error("No supported connection type found for projection");
 }
+//----------------------------------------------------------------------------//----------------------------------------------------------------------------
+const std::set<std::string> *getExternalInputPorts(const std::map<std::string, std::set<std::string>> &externalInputs, const std::string &target)
+{
+    // If there is no input for this target return NULL
+    auto e = externalInputs.find(target);
+    if(e == externalInputs.end()) {
+        return nullptr;
+    }
+    // Otherwise, return the set of ports associated with target
+    else {
+        return &e->second;
+    }
+}
 }   // Anonymous namespace
 
 //----------------------------------------------------------------------------
@@ -207,6 +221,12 @@ int main(int argc, char *argv[])
             CHECK_CUDA_ERRORS(cudaGetDeviceProperties(&(deviceProp[device]), device));
         }
 #endif // CPU_ONLY
+
+        // If second argument is specified, parse experiment file
+        std::map<std::string, std::set<std::string>> externalInputs;
+        if(argc > 2) {
+            parseExperiment(argv[2], externalInputs);
+        }
 
         // Use filesystem library to get parent path of the network XML file
         auto networkPath = filesystem::path(argv[1]).make_absolute();
@@ -274,9 +294,12 @@ int main(int argc, char *argv[])
                 model.addNeuronPopulation<NeuronModels::SpikeSource>(popName, popSize, {}, {});
             }
             else {
+                // Get set of external input being applied to this population
+                const auto *externalInputPorts = getExternalInputPorts(externalInputs, popName);
+
                 // Read neuron properties
                 std::map<std::string, NewModels::VarInit> varInitialisers;
-                ModelParams::Neuron modelParams(basePath, neuron, varInitialisers);
+                ModelParams::Neuron modelParams(basePath, neuron, externalInputPorts, varInitialisers);
 
                 // Either get existing neuron model or create new one of no suitable models are available
                 const auto &neuronModel = getCreateModel(modelParams, neuronModels);
@@ -355,10 +378,17 @@ int main(int argc, char *argv[])
                         throw std::runtime_error("'Synapse' node has no 'WeightUpdate' node");
                     }
 
+                    // Get name of weight update
+                    const std::string weightUpdateName = SpineMLUtils::getSafeName(weightUpdate.attribute("name").value());
+
+                    // Get set of external input being applied to this weight update
+                    const auto *weightUpdateExternalInputPorts = getExternalInputPorts(externalInputs, weightUpdateName);
+
                     // Read weight update properties
                     std::map<std::string, NewModels::VarInit> weightUpdateVarInitialisers;
                     ModelParams::WeightUpdate weightUpdateModelParams(basePath, weightUpdate,
                                                                       popName, trgPopName,
+                                                                      weightUpdateExternalInputPorts,
                                                                       weightUpdateVarInitialisers);
 
                     // Either get existing postsynaptic model or create new one of no suitable models are available
@@ -374,10 +404,17 @@ int main(int argc, char *argv[])
                         throw std::runtime_error("'Synapse' node has no 'PostSynapse' node");
                     }
 
+                    // Get name of post synapse
+                    const std::string postSynapseName = SpineMLUtils::getSafeName(postSynapse.attribute("name").value());
+
+                    // Get set of external input being applied to this post synapse
+                    const auto *postSynapseExternalInputPorts = getExternalInputPorts(externalInputs, postSynapseName);
+
                     // Read postsynapse properties
                     std::map<std::string, NewModels::VarInit> postsynapticVarInitialisers;
                     ModelParams::Postsynaptic postsynapticModelParams(basePath, postSynapse,
                                                                       trgPopName,
+                                                                      postSynapseExternalInputPorts,
                                                                       postsynapticVarInitialisers);
 
                     // Either get existing postsynaptic model or create new one of no suitable models are available
@@ -393,12 +430,9 @@ int main(int argc, char *argv[])
                                                                                    trgNeuronGroup->getNumNeurons(),
                                                                                    globalG, dt);
 
-                    // Build synapse population name from name of weight update
-                    // **NOTE** this is an arbitrary choice but these are guaranteed unique
-                    const std::string synapsePopName = SpineMLUtils::getSafeName(weightUpdate.attribute("name").value());
-
                     // Add synapse population to model
-                    auto synapsePop = model.addSynapsePopulation(synapsePopName, mtype, delaySteps, popName, trgPopName,
+                    // **NOTE** using weight update name is an arbitrary choice but these are guaranteed unique
+                    auto synapsePop = model.addSynapsePopulation(weightUpdateName, mtype, delaySteps, popName, trgPopName,
                                                                  &weightUpdateModel, WeightUpdateModel::ParamValues(weightUpdateVarInitialisers, weightUpdateModel), WeightUpdateModel::VarValues(weightUpdateVarInitialisers, weightUpdateModel),
                                                                  &postsynapticModel, PostsynapticModel::ParamValues(postsynapticVarInitialisers, postsynapticModel), PostsynapticModel::VarValues(postsynapticVarInitialisers, postsynapticModel));
 

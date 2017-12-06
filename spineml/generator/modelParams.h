@@ -39,19 +39,22 @@ public:
         PRESYNAPTIC_NEURON,
         POSTSYNAPTIC_NEURON,
         POSTSYNAPTIC_SYNAPSE,
-        WEIGHT_UPDATE
+        WEIGHT_UPDATE,
+        EXTERNAL,
     };
 
     Base(const filesystem::path &basePath, const pugi::xml_node &node,
+         const std::set<std::string> *externalInputPorts,
          std::map<std::string, NewModels::VarInit> &varInitialisers);
 
-    //----------------------------------------------------------------------------
+    //----------------------------------------------------------------- -----------
     // Public API
     //----------------------------------------------------------------------------
     const std::string &getURL() const{ return m_URL; }
     const std::set<std::string> &getVariableParams() const{ return m_VariableParams; }
     const std::pair<PortSource, std::string> &getInputPortSrc(const std::string &dstPort) const;
     const std::pair<PortSource, std::string> &getOutputPortTrg(const std::string &srcPort) const;
+    bool isInputPortExternal(const std::string &dstPort) const;
 
     //----------------------------------------------------------------------------
     // Operators
@@ -88,6 +91,7 @@ class Neuron : public Base
 {
 public:
     Neuron(const filesystem::path &basePath, const pugi::xml_node &node,
+           const std::set<std::string> *externalInputPorts,
            std::map<std::string, NewModels::VarInit> &varInitialisers);
 };
 
@@ -99,6 +103,7 @@ class WeightUpdate : public Base
 public:
     WeightUpdate(const filesystem::path &basePath, const pugi::xml_node &node,
                  const std::string &srcPopName, const std::string &trgPopName,
+                 const std::set<std::string> *externalInputPorts,
                  std::map<std::string, NewModels::VarInit> &varInitialisers);
 };
 
@@ -110,6 +115,7 @@ class Postsynaptic : public Base
 public:
     Postsynaptic(const filesystem::path &basePath, const pugi::xml_node &node,
                  const std::string &trgPopName,
+                 const std::set<std::string> *externalInputPorts,
                  std::map<std::string, NewModels::VarInit> &varInitialisers);
 };
 }   // namespace ModelParams
