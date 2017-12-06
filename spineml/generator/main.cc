@@ -206,11 +206,11 @@ int main(int argc, char *argv[])
     try
     {
         if(argc < 2) {
-            throw std::runtime_error("Expected model XML file passed as argument");
+            throw std::runtime_error("Expected experiment XML file passed as argument");
         }
 
         // Read timestep from command line or use 0.1ms default
-        const double dt = (argc < 3) ? 0.1 : atof(argv[2]);
+        const double dt = 0.1;
         std::cout << "DT = " << dt << "ms" << std::endl;
 
 #ifndef CPU_ONLY
@@ -448,13 +448,18 @@ int main(int argc, char *argv[])
         // Finalize model
         model.finalize();
 
+        // Build SpineCreator-compliant path to write generated code to
+        auto runPath = (basePath / ".." / "run");
+        filesystem::create_directory(runPath);
+        runPath = runPath.make_absolute();
+
 #ifndef CPU_ONLY
-        chooseDevice(model, basePath.str());
+        chooseDevice(model, runPath.str());
 #endif // CPU_ONLY
-        generate_model_runner(model, basePath.str());
+        generate_model_runner(model, runPath.str());
 
         // Build path to generated model code
-        auto modelPath = basePath / (networkName + "_CODE");
+        auto modelPath = runPath / (networkName + "_CODE");
 
         // Use this to build command line for building generated code
         std::string cmd = "cd \"" + modelPath.str() + "\" && ";

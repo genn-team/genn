@@ -114,7 +114,7 @@ SpineMLSimulator::LogOutput::AnalogueFile::AnalogueFile(const pugi::xml_node &no
     std::string fileTitle = std::string(node.attribute("target").value()) + "_" + std::string(node.attribute("port").value());
 
     // Combine this with base path to get full file title
-    std::string absoluteFileTitle = (basePath / fileTitle).str();
+    std::string absoluteFileTitle = (basePath / ".." / "log" / fileTitle).str();
 
     // Create report document
     pugi::xml_document reportDoc;
@@ -300,7 +300,7 @@ SpineMLSimulator::LogOutput::Event::Event(const pugi::xml_node &node, double dt,
     std::string fileTitle = std::string(node.attribute("target").value()) + "_" + std::string(node.attribute("port").value());
 
     // Combine this with base path to get full file title
-    std::string absoluteFileTitle = (basePath / fileTitle).str();
+    std::string absoluteFileTitle = (basePath / ".." / "log" / fileTitle).str();
 
     // Create report document
     pugi::xml_document reportDoc;

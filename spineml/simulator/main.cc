@@ -333,9 +333,10 @@ void addPropertiesAndSizes(const filesystem::path &basePath, const pugi::xml_nod
         throw std::runtime_error("XML file:" + absoluteURL + " is not a SpineML component - it's ComponentClass node is missing ");
     }
 
-    // Loop through analogue send ports
-    for(auto analogueSendPort : componentClass.children("AnalogSendPort")) {
-        std::string paramName = analogueSendPort.attribute("name").value();
+    // Loop through analogue ports which might also be implemented as GeNN state variables
+    for(auto analoguePort : componentClass.select_nodes("*[name() = 'AnalogSendPort' or name() = 'AnalogReducePort' or name() = 'AnalogReceivePort']")) {
+        const std::string paramName = analoguePort.node().attribute("name").value();
+        const std::string portType = analoguePort.node().name();
         if(componentProperties.find(paramName) == componentProperties.end()) {
             // Get pointers to state vars in model library
             scalar **hostStateVar;
@@ -347,7 +348,7 @@ void addPropertiesAndSizes(const filesystem::path &basePath, const pugi::xml_nod
             if(hostStateVar != nullptr) {
                 std::cout << "\t" << paramName << std::endl;
 #ifdef CPU_ONLY
-                std::cout << "\t\tAnalogue send port found host pointer:" << *hostStateVar << std::endl;
+                std::cout << "\t\t" << portType << " found host pointer:" << *hostStateVar << std::endl;
 
                 // Create model property object
                 componentProperties.insert(
@@ -357,7 +358,7 @@ void addPropertiesAndSizes(const filesystem::path &basePath, const pugi::xml_nod
                     throw std::runtime_error("Cannot find device-side state variable for property:" + paramName);
                 }
 
-                std::cout << "\t\tAnalogue send port found host pointer:" << *hostStateVar << ", device pointer:" << *deviceStateVar << std::endl;
+                std::cout << "\t\t" << portType << " found host pointer:" << *hostStateVar << ", device pointer:" << *deviceStateVar << std::endl;
 
                 // Create model property object
                 componentProperties.insert(
@@ -540,15 +541,15 @@ int main(int argc, char *argv[])
         }
 
 #endif  // _WIN32
-        // Read timestep from command line or use 0.1ms default
-        const double dt = (argc < 3) ? 0.1 : atof(argv[2]);
-        std::cout << "DT = " << dt << "ms" << std::endl;
 
         std::mt19937 gen;
 
         // Use filesystem library to get parent path of the network XML file
         auto experimentPath = filesystem::path(argv[1]).make_absolute();
         auto basePath = experimentPath.parent_path();
+
+        // Create directory for logs (if required)
+        filesystem::create_directory(basePath / ".." / "log");
 
         // Load experiment document
         pugi::xml_document experimentDoc;
@@ -586,11 +587,11 @@ int main(int argc, char *argv[])
 
         // Attempt to load model library
 #ifdef _WIN32
-        auto libraryPath = basePath / (networkName + "_CODE") / "runner.dll";
+        auto libraryPath = basePath / ".." / "run" / (networkName + "_CODE") / "runner.dll";
         std::cout << "Experiment using model library:" << libraryPath  << std::endl;
         modelLibrary = LoadLibrary(libraryPath.str().c_str());
 #else
-        auto libraryPath = basePath / (networkName + "_CODE") / "librunner.so";
+        auto libraryPath = basePath / ".." / "run" / (networkName + "_CODE") / "librunner.so";
         std::cout << "Experiment using model library:" << libraryPath  << std::endl;
         modelLibrary = dlopen(libraryPath.str().c_str(), RTLD_NOW);
 #endif
@@ -757,6 +758,15 @@ int main(int argc, char *argv[])
             throw std::runtime_error("No 'Simulation' node found in experiment");
         }
 
+        auto eulerIntegration = simulation.child("EulerIntegration");
+        if(!eulerIntegration) {
+            throw std::runtime_error("GeNN only currently supports Euler integration scheme");
+        }
+
+        // Read integration timestep
+        const double dt = eulerIntegration.attribute("dt").as_double(0.1);
+        std::cout << "DT = " << dt << "ms" << std::endl;
+        
         // Read duration from simulation and convert to timesteps
         const double durationMs = simulation.attribute("duration").as_double() * 1000.0;
         const unsigned int numTimeSteps = (unsigned int)std::ceil(durationMs / dt);
