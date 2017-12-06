@@ -27,7 +27,6 @@
 #include "spineMLUtils.h"
 
 // SpineMLGenerator includes
-#include "experimentParser.h"
 #include "modelParams.h"
 #include "neuronModel.h"
 #include "passthroughPostsynapticModel.h"
@@ -209,10 +208,6 @@ int main(int argc, char *argv[])
             throw std::runtime_error("Expected experiment XML file passed as argument");
         }
 
-        // Read timestep from command line or use 0.1ms default
-        const double dt = 0.1;
-        std::cout << "DT = " << dt << "ms" << std::endl;
-
 #ifndef CPU_ONLY
         CHECK_CUDA_ERRORS(cudaGetDeviceCount(&deviceCount));
         deviceProp = new cudaDeviceProp[deviceCount];
@@ -222,15 +217,68 @@ int main(int argc, char *argv[])
         }
 #endif // CPU_ONLY
 
-        // If second argument is specified, parse experiment file
-        std::map<std::string, std::set<std::string>> externalInputs;
-        if(argc > 2) {
-            parseExperiment(argv[2], externalInputs);
+        // Use filesystem library to get parent path of the network XML file
+        auto experimentPath = filesystem::path(argv[1]).make_absolute();
+        auto basePath = experimentPath.parent_path();
+
+        std::cout << "Parsing experiment '" << experimentPath.str() << "'" << std::endl;
+
+        // Load experiment document
+        pugi::xml_document experimentDoc;
+        auto experimentResult = experimentDoc.load_file(experimentPath.str().c_str());
+        if(!experimentResult) {
+            throw std::runtime_error("Unable to load experiment XML file:" + experimentPath.str() + ", error:" + experimentResult.description());
         }
 
-        // Use filesystem library to get parent path of the network XML file
-        auto networkPath = filesystem::path(argv[1]).make_absolute();
-        auto basePath = networkPath.parent_path();
+        // Get SpineML root
+        auto experimentSpineML = experimentDoc.child("SpineML");
+        if(!experimentSpineML) {
+            throw std::runtime_error("XML file:" + experimentPath.str() + " is not a SpineML experiment - it has no root SpineML node");
+        }
+
+        // Get experiment node
+        auto experiment = experimentSpineML.child("Experiment");
+        if(!experiment) {
+            throw std::runtime_error("No 'Experiment' node found");
+        }
+
+        // Loop through inputs
+        std::map<std::string, std::set<std::string>> externalInputs;
+        for(auto input : experiment.select_nodes(SpineMLUtils::xPathNodeHasSuffix("Input").c_str())) {
+            // Read target and port
+            const std::string target = SpineMLUtils::getSafeName(input.node().attribute("target").value());
+            const std::string port = input.node().attribute("port").value();
+
+            // Add to map
+            std::cout << "\tInput targetting '" << target << "':'" << port << "'" << std::endl;
+            if(!externalInputs[target].emplace(port).second) {
+                throw std::runtime_error("Multiple inputs targetting " + target + ":" + port);
+            }
+        }
+
+        auto simulation = experiment.child("Simulation");
+        if(!simulation) {
+            throw std::runtime_error("No 'Simulation' node found in experiment");
+        }
+
+        auto eulerIntegration = simulation.child("EulerIntegration");
+        if(!eulerIntegration) {
+            throw std::runtime_error("GeNN only currently supports Euler integration scheme");
+        }
+
+        // Read integration timestep
+        const double dt = eulerIntegration.attribute("dt").as_double(0.1);
+        std::cout << "\tDT = " << dt << "ms" << std::endl;
+
+        // Get model
+        auto experimentModel = experiment.child("Model");
+        if(!experimentModel) {
+            throw std::runtime_error("No 'Model' node found in experiment");
+        }
+
+        // Build path to network from URL in model
+        auto networkPath = basePath / experimentModel.attribute("network_layer_url").value();
+        std::cout << "\tExperiment using model:" << networkPath << std::endl;
 
         // Load XML document
         pugi::xml_document doc;
