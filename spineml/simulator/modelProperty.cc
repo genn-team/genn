@@ -65,7 +65,8 @@ void SpineMLSimulator::ModelProperty::Fixed::setValue(scalar value)
 //------------------------------------------------------------------------
 // SpineMLSimulator::ModelProperty::ValueList
 //------------------------------------------------------------------------
-SpineMLSimulator::ModelProperty::ValueList::ValueList(const pugi::xml_node &node, scalar *hostStateVar, scalar *deviceStateVar, unsigned int size, const filesystem::path &basePath)
+SpineMLSimulator::ModelProperty::ValueList::ValueList(const pugi::xml_node &node, scalar *hostStateVar, scalar *deviceStateVar, unsigned int size,
+                                                      const filesystem::path &basePath, const std::vector<unsigned int> *remapIndices)
     : Base(hostStateVar, deviceStateVar, size)
 {
     // Allocate vector
@@ -111,14 +112,27 @@ SpineMLSimulator::ModelProperty::ValueList::ValueList(const pugi::xml_node &node
         }
     }
 
-    setValue(values);
+    setValue(values, remapIndices);
 }
 //------------------------------------------------------------------------
-void SpineMLSimulator::ModelProperty::ValueList::setValue(const std::vector<scalar> &values)
+void SpineMLSimulator::ModelProperty::ValueList::setValue(const std::vector<scalar> &values, const std::vector<unsigned int> *remapIndices)
 {
     // Cache value
-    m_Values = values;
+    if(remapIndices == nullptr) {
+        m_Values = values;
+    }
+    else {
+        assert(remapIndices->size() == values.size());
 
+        m_Values.resize(values.size());
+        for(unsigned int i = 0; i < values.size(); i++) {
+            m_Values[i] = values[(*remapIndices)[i]];
+        }
+    }
+
+    for(auto v : m_Values) {
+        std::cout << v << std::endl;
+    }
     // Copy vector of values into state variable
     std::copy(m_Values.begin(), m_Values.end(),
               getHostStateVarBegin());
@@ -221,14 +235,16 @@ void SpineMLSimulator::ModelProperty::ExponentialDistribution::setValue(scalar l
 // SpineMLSimulator::ModelProperty
 //----------------------------------------------------------------------------
 std::unique_ptr<SpineMLSimulator::ModelProperty::Base> SpineMLSimulator::ModelProperty::create(const pugi::xml_node &node, scalar *hostStateVar, scalar *deviceStateVar,
-                                                                                               unsigned int size, bool skipGeNNInitialised, const filesystem::path &basePath)
+                                                                                               unsigned int size, bool skipGeNNInitialised, const filesystem::path &basePath,
+                                                                                               const std::vector<unsigned int> *remapIndices)
 {
     // If this property has a child
     auto valueChild = node.first_child();
     if(valueChild) {
         // If this property is intialised with a list of values - create a value list model property to manually
         if(strcmp(valueChild.name(), "ValueList") == 0) {
-            return std::unique_ptr<Base>(new ValueList(valueChild, hostStateVar, deviceStateVar, size, basePath));
+            return std::unique_ptr<Base>(new ValueList(valueChild, hostStateVar, deviceStateVar, size,
+                                                       basePath, remapIndices));
         }
         // Otherwise if we can skip property types that GeNN can initialise
         else if(skipGeNNInitialised) {

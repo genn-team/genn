@@ -93,8 +93,10 @@ TEST(FixedProbabilityConnectionTest, LowProbabilitySparse) {
 
     // Parse XML and create sparse connector
     filesystem::path basePath;
+    std::vector<unsigned int> remapIndices;
     Connectors::create(synapse, 42, 42,
-                       &sparse42, allocate42, basePath);
+                       &sparse42, allocate42, basePath,
+                       remapIndices);
 }
 //------------------------------------------------------------------------
 TEST(FixedProbabilityConnectionTest, LowProbabilityDenseDeath) {
@@ -113,8 +115,10 @@ TEST(FixedProbabilityConnectionTest, LowProbabilityDenseDeath) {
     filesystem::path basePath;
     try
     {
+        std::vector<unsigned int> remapIndices;
         Connectors::create(synapse, 42, 42,
-                           nullptr, nullptr, basePath);
+                           nullptr, nullptr, basePath,
+                           remapIndices);
         FAIL();
     }
     catch(const std::runtime_error &)
@@ -138,8 +142,10 @@ TEST(FixedProbabilityConnectionTest, FullyConnectedDense) {
     // this should be implemented as dense matrix and thus
     // doesn't require SparseProjection or allocation function
     filesystem::path basePath;
+    std::vector<unsigned int> remapIndices;
     unsigned int n = Connectors::create(synapse, 100, 100,
-                                        nullptr, nullptr, basePath);
+                                        nullptr, nullptr, basePath,
+                                        remapIndices);
     EXPECT_EQ(n, 100 * 100);
 }
 
@@ -162,8 +168,10 @@ TEST(AllToAllConnectionTest, Dense) {
     // this should be implemented as dense matrix and thus
     // doesn't require SparseProjection or allocation function
     filesystem::path basePath;
+    std::vector<unsigned int> remapIndices;
     unsigned int n = Connectors::create(synapse, 100, 100,
-                                        nullptr, nullptr, basePath);
+                                        nullptr, nullptr, basePath,
+                                        remapIndices);
     EXPECT_EQ(n, 100 * 100);
 }
 //------------------------------------------------------------------------
@@ -183,10 +191,12 @@ TEST(AllToAllConnectionTest, SparseDeath) {
     // this should be implemented as dense matrix and thus
     // doesn't require SparseProjection or allocation function
     filesystem::path basePath;
+    std::vector<unsigned int> remapIndices;
     try
     {
         Connectors::create(synapse, 42, 42,
-                           &sparse42, allocate42, basePath);
+                           &sparse42, allocate42, basePath,
+                           remapIndices);
         FAIL();
     }
     catch(const std::runtime_error &)
@@ -213,10 +223,12 @@ TEST(OneToOneConnectionTest, DenseDeath) {
     // this should be implemented as dense matrix and thus
     // doesn't require SparseProjection or allocation function
     filesystem::path basePath;
+    std::vector<unsigned int> remapIndices;
     try
     {
         Connectors::create(synapse, 100, 100,
-                           nullptr, nullptr, basePath);
+                           nullptr, nullptr, basePath,
+                           remapIndices);
         FAIL();
     }
     catch(const std::runtime_error &)
@@ -240,8 +252,10 @@ TEST(OneToOneConnectionTest, Sparse) {
     // this should be implemented as dense matrix and thus
     // doesn't require SparseProjection or allocation function
     filesystem::path basePath;
+    std::vector<unsigned int> remapIndices;
     Connectors::create(synapse, 42, 42,
-                       &sparse42, allocate42, basePath);
+                       &sparse42, allocate42, basePath,
+                       remapIndices);
 
     checkOneToOne(sparse42, 42);
 }
@@ -266,10 +280,12 @@ TEST(ConnectionListTest, DenseDeath) {
     // this should be implemented as dense matrix and thus
     // doesn't require SparseProjection or allocation function
     filesystem::path basePath;
+    std::vector<unsigned int> remapIndices;
     try
     {
         Connectors::create(synapse, 42, 42,
-                           nullptr, nullptr, basePath);
+                           nullptr, nullptr, basePath,
+                           remapIndices);
         FAIL();
     }
     catch(const std::runtime_error &)
@@ -302,8 +318,10 @@ TEST(ConnectionListTest, InlineOneToOneSparse) {
 
     // Parse XML and create sparse connector
     filesystem::path basePath;
+    std::vector<unsigned int> remapIndices;
     Connectors::create(synapse, 10, 10,
-                       &sparse10, allocate10, basePath);
+                       &sparse10, allocate10, basePath,
+                       remapIndices);
 
     // Check number of connections matches XML
     EXPECT_EQ(sparse10.connN, 10);
@@ -338,8 +356,10 @@ TEST(ConnectionListTest, InlineTriangleSparse) {
 
     // Parse XML and create sparse connector
     filesystem::path basePath;
+    std::vector<unsigned int> remapIndices;
     Connectors::create(synapse, 5, 5,
-                       &sparse5, allocate5, basePath);
+                       &sparse5, allocate5, basePath,
+                       remapIndices);
 
     // Check number of connections matches XML
     EXPECT_EQ(sparse5.connN, 10);
@@ -371,8 +391,10 @@ TEST(ConnectionListTest, InlineShuffleTriangleSparse) {
 
     // Parse XML and create sparse connector
     filesystem::path basePath;
+    std::vector<unsigned int> remapIndices;
     Connectors::create(synapse, 5, 5,
-                       &sparse5, allocate5, basePath);
+                       &sparse5, allocate5, basePath,
+                       remapIndices);
 
     // Check number of connections matches XML
     EXPECT_EQ(sparse5.connN, 10);
@@ -404,8 +426,10 @@ TEST(ConnectionListTest, InlineShuffleOneToOneSparse) {
 
     // Parse XML and create sparse connector
     filesystem::path basePath;
+    std::vector<unsigned int> remapIndices;
     Connectors::create(synapse, 10, 10,
-                       &sparse10, allocate10, basePath);
+                       &sparse10, allocate10, basePath,
+                       remapIndices);
 
     // Check number of connections matches XML
     EXPECT_EQ(sparse10.connN, 10);
@@ -428,8 +452,10 @@ TEST(ConnectionListTest, BinaryFileSparse) {
 
     // Parse XML and create sparse connector
     filesystem::path basePath;
+    std::vector<unsigned int> remapIndices;
     Connectors::create(synapse, 42, 42,
-                       &sparse42, allocate42, basePath);
+                       &sparse42, allocate42, basePath,
+                       remapIndices);
 
     // Check number of connections matches XML
     EXPECT_EQ(sparse42.connN, 294);

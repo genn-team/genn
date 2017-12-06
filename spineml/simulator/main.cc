@@ -258,7 +258,7 @@ void addEventPorts(const filesystem::path &basePath, const pugi::xml_node &node,
 }
 //----------------------------------------------------------------------------
 void addPropertiesAndSizes(const filesystem::path &basePath, const pugi::xml_node &node, LIBRARY_HANDLE modelLibrary, const std::string &geNNPopName, unsigned int popSize,
-                           std::map<std::string, unsigned int> &sizes, ComponentProperties &properties)
+                           std::map<std::string, unsigned int> &sizes, ComponentProperties &properties, const std::vector<unsigned int> *remapIndices = nullptr)
 {
     // Get SpineML name of component
     const char *spineMLName = node.attribute("name").value();
@@ -287,7 +287,8 @@ void addPropertiesAndSizes(const filesystem::path &basePath, const pugi::xml_nod
 
             // Create model property object (skipping those that will have already been initialised by GeNN)
             componentProperties.insert(
-                std::make_pair(paramName, ModelProperty::create(param, *hostStateVar, nullptr, popSize, true, basePath)));
+                std::make_pair(paramName, ModelProperty::create(param, *hostStateVar, nullptr, popSize, true,
+                                                                basePath, remapIndices)));
 #else
             if(deviceStateVar == nullptr) {
                 throw std::runtime_error("Cannot find device-side state variable for property:" + paramName);
@@ -297,7 +298,8 @@ void addPropertiesAndSizes(const filesystem::path &basePath, const pugi::xml_nod
 
             // Create model property object
             componentProperties.insert(
-                std::make_pair(paramName, ModelProperty::create(param, *hostStateVar, *deviceStateVar, popSize, true, basePath)));
+                std::make_pair(paramName, ModelProperty::create(param, *hostStateVar, *deviceStateVar, popSize, true,
+                                                                basePath, remapIndices)));
 #endif
         }
     }
@@ -695,7 +697,8 @@ int main(int argc, char *argv[])
                 SparseProjection *sparseProjection = (SparseProjection*)getLibrarySymbol(modelLibrary, ("C" + geNNSynPopName).c_str(), true);
 
                 // Create connector
-                Connectors::create(input, srcPopSize, popSize, sparseProjection, allocateFn, basePath);
+                std::vector<unsigned int> remapIndices;
+                Connectors::create(input, srcPopSize, popSize, sparseProjection, allocateFn, basePath, remapIndices);
             }
 
             // Loop through outgoing projections
@@ -730,17 +733,19 @@ int main(int argc, char *argv[])
                     SparseProjection *sparseProjection = (SparseProjection*)getLibrarySymbol(modelLibrary, ("C" + geNNSynPopName).c_str(), true);
 
                     // Create connector
+                    std::vector<unsigned int> remapIndices;
                     const unsigned int numSynapses = Connectors::create(synapse, popSize, trgPopSize,
-                                                                        sparseProjection, allocateFn, basePath);
+                                                                        sparseProjection, allocateFn,
+                                                                        basePath, remapIndices);
 
                     // Add postsynapse properties to dictionary
                     addPropertiesAndSizes(basePath, postSynapse, modelLibrary, geNNSynPopName, trgPopSize,
-                                        componentSizes, componentProperties);
+                                          componentSizes, componentProperties);
                     addEventPorts(basePath, postSynapse, componentURLs, componentEventPorts);
 
                     // Add weight update properties to dictionary
                     addPropertiesAndSizes(basePath, weightUpdate, modelLibrary, geNNSynPopName, numSynapses,
-                                        componentSizes, componentProperties);
+                                          componentSizes, componentProperties, remapIndices.empty() ? nullptr : &remapIndices);
                     addEventPorts(basePath, weightUpdate, componentURLs, componentEventPorts);
                 }
             }

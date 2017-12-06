@@ -5,6 +5,7 @@
 #include <fstream>
 #include <iostream>
 #include <random>
+#include <tuple>
 #include <vector>
 
 // Standard C includes
@@ -25,36 +26,6 @@
 //------------------------------------------------------------------------
 namespace
 {
-void addSynapseToSparseProjection(unsigned int i, unsigned int j,
-                                  unsigned int numPre, unsigned int numPost,
-                                  SparseProjection &sparseProjection)
-{
-    assert(i < numPre);
-    assert(j < numPost);
-
-    // Get index of current end of row in sparse projection
-    const unsigned int rowEndIndex = sparseProjection.indInG[i + 1];
-
-    // Also get index of last synapse
-    const unsigned int lastSynapseIndex = sparseProjection.indInG[numPre];
-
-    // If these aren't the same (there are existing synapses after this one), shuffle up the indices
-    if(rowEndIndex != lastSynapseIndex) {
-        std::move_backward(&sparseProjection.ind[rowEndIndex], &sparseProjection.ind[lastSynapseIndex],
-                            &sparseProjection.ind[lastSynapseIndex + 1]);
-    }
-
-    // Insert new synapse
-    sparseProjection.ind[rowEndIndex] = j;
-
-    // Increment all subsequent indices
-    std::transform(&sparseProjection.indInG[i + 1], &sparseProjection.indInG[numPre + 1], &sparseProjection.indInG[i + 1],
-                   [](unsigned int index)
-                   {
-                       return (index + 1);
-                   });
-}
-//------------------------------------------------------------------------
 unsigned int createFixedProbabilitySparse(const pugi::xml_node &node, unsigned int numPre, unsigned int numPost,
                                           SparseProjection &sparseProjection, SpineMLSimulator::Connectors::AllocateFn allocateFn)
 {
@@ -138,9 +109,9 @@ unsigned int createOneToOneSparse(const pugi::xml_node &, unsigned int numPre, u
     return numPre;
 }
 //------------------------------------------------------------------------
-unsigned int createListSparse(const pugi::xml_node &node, unsigned int numPre, unsigned int numPost,
+unsigned int createListSparse(const pugi::xml_node &node, unsigned int numPre, unsigned int,
                               SparseProjection &sparseProjection, SpineMLSimulator::Connectors::AllocateFn allocateFn,
-                              const filesystem::path &basePath)
+                              const filesystem::path &basePath, std::vector<unsigned int> &remapIndices)
 {
     // Get number of connections, either from BinaryFile
     // node attribute or by counting Connection children
@@ -153,9 +124,14 @@ unsigned int createListSparse(const pugi::xml_node &node, unsigned int numPre, u
     // Allocate SparseProjection arrays
     allocateFn(numConnections);
 
-     // Zero all indInG
-    std::fill(&sparseProjection.indInG[0], &sparseProjection.indInG[numPre + 1], 0);
+    // Create temporary vector to hold indices
+    std::vector<std::pair<unsigned int, unsigned int>> tempIndices;
+    tempIndices.reserve(numConnections);
 
+    // Zero all indInG
+    // **NOTE** these are initially used to store row lengths
+    std::fill(&sparseProjection.indInG[0], &sparseProjection.indInG[numPre + 1], 0);
+    
     // If connectivity is specified using a binary file
     if(binaryFile) {
         // Create approximately 1Mbyte buffer to hold pre and postsynaptic indices
@@ -177,7 +153,7 @@ unsigned int createListSparse(const pugi::xml_node &node, unsigned int numPre, u
             throw std::runtime_error("Cannot open binary connection file:" + filename);
         }
 
-        // Loop through binary file
+        // Loop through binary words
         for(size_t remainingWords = numConnections * wordsPerSynapse; remainingWords > 0;) {
             // Read a block into buffer
             const size_t blockWords = std::min<size_t>(bufferSize, remainingWords);
@@ -188,10 +164,13 @@ unsigned int createListSparse(const pugi::xml_node &node, unsigned int numPre, u
                 throw std::runtime_error("Unexpected end of binary connection file");
             }
 
-            // Loop through synapses in buffer and add to projection
+            // Loop through synapses in buffer
             for(size_t w = 0; w < blockWords; w += wordsPerSynapse) {
-                addSynapseToSparseProjection(connectionBuffer[w], connectionBuffer[w + 1],
-                                             numPre, numPost, sparseProjection);
+                // Add to temporary indices
+                tempIndices.emplace_back(connectionBuffer[w], connectionBuffer[w + 1]);
+
+                // Increment row length
+                sparseProjection.indInG[connectionBuffer[w]]++;
             }
 
             // Subtract words in block from totalConnectors
@@ -202,17 +181,44 @@ unsigned int createListSparse(const pugi::xml_node &node, unsigned int numPre, u
     else {
         // Loop through connections
         for(auto c : connections) {
-            addSynapseToSparseProjection(c.attribute("src_neuron").as_uint(), c.attribute("dst_neuron").as_uint(),
-                                         numPre, numPost, sparseProjection);
+            // Add to temporary indices
+            const unsigned int pre = c.attribute("src_neuron").as_uint();
+            const unsigned int post = c.attribute("dst_neuron").as_uint();
+            tempIndices.emplace_back(pre, post);
+
+            // Increment row length
+            sparseProjection.indInG[pre]++;
         }
     }
 
-    // Loop through rows and sort indices
-    for(unsigned int i = 0; i < numPre; i++) {
-        const unsigned int rowStartIndex = sparseProjection.indInG[i];
-        const unsigned int rowEndIndex = sparseProjection.indInG[i + 1];
-        std::sort(&sparseProjection.ind[rowStartIndex], &sparseProjection.ind[rowEndIndex]);
-    }
+    // Resize remap indices and initialise to SpineML order
+    remapIndices.resize(numConnections);
+    std::iota(remapIndices.begin(), remapIndices.end(), 0);
+
+    // Sort indirectly (using remap indices) so connections are in SparseProjection order
+    std::sort(remapIndices.begin(), remapIndices.end(),
+              [&tempIndices](unsigned int a, unsigned int b)
+              {
+                  return (tempIndices[a] < tempIndices[b]);
+              });
+
+
+    // Calculate partial sum of row lengths to build presynaptic indices
+    std::partial_sum(&sparseProjection.indInG[0], &sparseProjection.indInG[numPre],
+                     &sparseProjection.indInG[0]);
+
+    // Because partial sum doesn't handle overlap - copy the partial sums forward
+    // by one element and insert a zero in first index to make correct structure
+    std::copy_backward(&sparseProjection.indInG[0], &sparseProjection.indInG[numPre],
+                       &sparseProjection.indInG[numPre + 1]);
+    sparseProjection.indInG[0] = 0;
+
+    // Reorder temporary postsynaptic indices into sparse projection
+    std::transform(remapIndices.cbegin(), remapIndices.cend(), &sparseProjection.ind[0],
+                   [&tempIndices](unsigned int index)
+                   {
+                       return tempIndices[index].second;
+                   });
 
     std::cout << "\tList connector with " << numConnections << " sparse synapses" << std::endl;
 
@@ -227,7 +233,8 @@ unsigned int createListSparse(const pugi::xml_node &node, unsigned int numPre, u
 // SpineMLSimulator::Connectors
 //------------------------------------------------------------------------
 unsigned int SpineMLSimulator::Connectors::create(const pugi::xml_node &node, unsigned int numPre, unsigned int numPost,
-                                                  SparseProjection *sparseProjection, AllocateFn allocateFn, const filesystem::path &basePath)
+                                                  SparseProjection *sparseProjection, AllocateFn allocateFn,
+                                                  const filesystem::path &basePath, std::vector<unsigned int> &remapIndices)
 {
     auto oneToOne = node.child("OneToOneConnection");
     if(oneToOne) {
@@ -268,7 +275,8 @@ unsigned int SpineMLSimulator::Connectors::create(const pugi::xml_node &node, un
     if(connectionList) {
         if(sparseProjection != nullptr && allocateFn != nullptr) {
             return createListSparse(connectionList, numPre, numPost,
-                                    *sparseProjection, allocateFn, basePath);
+                                    *sparseProjection, allocateFn, basePath,
+                                    remapIndices);
         }
         else {
             throw std::runtime_error("ConnectionList does not have corresponding SparseProjection structure and allocate function");

@@ -3,6 +3,7 @@
 // Standard C++ includes
 #include <memory>
 #include <random>
+#include <vector>
 
 // Forward declarations
 namespace pugi
@@ -82,12 +83,13 @@ private:
 class ValueList : public Base
 {
 public:
-    ValueList(const pugi::xml_node &node, scalar *hostStateVar, scalar *deviceStateVar, unsigned int size, const filesystem::path &basePath);
+    ValueList(const pugi::xml_node &node, scalar *hostStateVar, scalar *deviceStateVar, unsigned int size,
+              const filesystem::path &basePath, const std::vector<unsigned int> *remapIndices);
 
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    void setValue(const std::vector<scalar> &values);
+    void setValue(const std::vector<scalar> &values, const std::vector<unsigned int> *remapIndices);
 
 private:
     //------------------------------------------------------------------------
@@ -163,7 +165,7 @@ private:
 // Functions
 //----------------------------------------------------------------------------
 std::unique_ptr<Base> create(const pugi::xml_node &node, scalar *hostStateVar, scalar *deviceStateVar, unsigned int size,
-                             bool skipGeNNInitialised, const filesystem::path &basePath);
+                             bool skipGeNNInitialised, const filesystem::path &basePath, const std::vector<unsigned int> *remapIndices);
 
 }   // namespace ModelProperty
 }   // namespace SpineMLSimulator
