@@ -121,7 +121,7 @@ SpineMLSimulator::LogOutput::AnalogueFile::AnalogueFile(const pugi::xml_node &no
     auto report = reportDoc.append_child("LogReport").append_child("AnalogLog");
 
     // Write standard report metadata here
-    report.append_child("LogFile").text().set((fileTitle + ".bin").c_str());
+    report.append_child("LogFile").text().set((fileTitle + "_log.bin").c_str());
     report.append_child("LogFileType").text().set("binary");
     report.append_child("LogEndTime").text().set((double)getEndTimestep() * dt);
 
@@ -307,7 +307,7 @@ SpineMLSimulator::LogOutput::Event::Event(const pugi::xml_node &node, double dt,
     auto report = reportDoc.append_child("LogReport").append_child("EventLog");
 
     // Write standard report metadata here
-    report.append_child("LogFile").text().set((fileTitle + ".csv").c_str());
+    report.append_child("LogFile").text().set((fileTitle + "_log.csv").c_str());
     report.append_child("LogFileType").text().set("csv");
     report.append_child("LogPort").text().set(port.c_str());
     report.append_child("LogEndTime").text().set((double)getEndTimestep() * dt);
