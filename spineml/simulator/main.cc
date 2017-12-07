@@ -454,7 +454,7 @@ std::unique_ptr<Input::Base> createInput(const pugi::xml_node &node, LIBRARY_HAN
 }
 //----------------------------------------------------------------------------
 std::unique_ptr<LogOutput::Base> createLogOutput(const pugi::xml_node &node, LIBRARY_HANDLE modelLibrary, double dt,
-                                                 unsigned int numTimeSteps, const filesystem::path &basePath,
+                                                 unsigned int numTimeSteps, const filesystem::path &logPath,
                                                  const std::map<std::string, unsigned int> &componentSizes,
                                                  const ComponentProperties &componentProperties,
                                                  const std::map<std::string, std::string> &componentURLs,
@@ -489,7 +489,7 @@ std::unique_ptr<LogOutput::Base> createLogOutput(const pugi::xml_node &node, LIB
 
         // Create event logger
         return std::unique_ptr<LogOutput::Base>(new LogOutput::Event(node, dt, numTimeSteps, port, targetSize->second,
-                                                                     basePath, spikeQueuePtr,
+                                                                     logPath, spikeQueuePtr,
                                                                      hostSpikeCount, deviceSpikeCount,
                                                                      hostSpikes, deviceSpikes));
     }
@@ -503,11 +503,11 @@ std::unique_ptr<LogOutput::Base> createLogOutput(const pugi::xml_node &node, LIB
             if(portProperty != targetProperties->second.end()) {
                 if(shouldLogToFile) {
                     return std::unique_ptr<LogOutput::Base>(new LogOutput::AnalogueFile(node, dt, numTimeSteps, port, targetSize->second,
-                                                                                        basePath, portProperty->second.get()));
+                                                                                        logPath, portProperty->second.get()));
                 }
                 else {
                     return std::unique_ptr<LogOutput::Base>(new LogOutput::AnalogueNetwork(node, dt, numTimeSteps, port, targetSize->second,
-                                                                                           basePath, portProperty->second.get()));
+                                                                                           logPath, portProperty->second.get()));
                 }
             }
             else {
@@ -769,12 +769,13 @@ int main(int argc, char *argv[])
         const unsigned int numTimeSteps = (unsigned int)std::ceil(durationMs / dt);
 
         // Create directory for logs (if required)
-        filesystem::create_directory(basePath / ".." / "log");
+        const auto logPath = basePath / ".." / "log";
+        filesystem::create_directory(logPath);
 
         // Loop through output loggers specified by experiment and create handler
         std::vector<std::unique_ptr<LogOutput::Base>> loggers;
         for(auto logOutput : experiment.children("LogOutput")) {
-            loggers.push_back(createLogOutput(logOutput, modelLibrary, dt, numTimeSteps, basePath,
+            loggers.push_back(createLogOutput(logOutput, modelLibrary, dt, numTimeSteps, logPath,
                                               componentSizes, componentProperties,
                                               componentURLs, componentEventPorts));
         }
