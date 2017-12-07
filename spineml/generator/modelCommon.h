@@ -84,10 +84,10 @@ public:
                            else {
                                auto v = m_VarInitialisers.find(n.first);
                                if(v == m_VarInitialisers.end()) {
-                                   return NewModels::VarInit(InitVarSnippet::Uninitialised::getInstance(), {});
+                                   return NewModels::VarInit(InitVarSnippet::Constant::getInstance(), {0.0});
                                }
                                else {
-								   return NewModels::VarInit(v->second);
+                                   return NewModels::VarInit(v->second);
                                }
                            }
                         });
