@@ -1,4 +1,4 @@
-#!/bin/python
+#!/usr/bin/python
 
 ##############################################################
 # SpineML to GENN platform independent wrapper               #
