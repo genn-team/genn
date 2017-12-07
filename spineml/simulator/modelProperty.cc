@@ -130,9 +130,6 @@ void SpineMLSimulator::ModelProperty::ValueList::setValue(const std::vector<scal
         }
     }
 
-    for(auto v : m_Values) {
-        std::cout << v << std::endl;
-    }
     // Copy vector of values into state variable
     std::copy(m_Values.begin(), m_Values.end(),
               getHostStateVarBegin());
