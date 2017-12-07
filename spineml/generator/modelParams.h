@@ -45,6 +45,7 @@ public:
 
     Base(const filesystem::path &basePath, const pugi::xml_node &node,
          const std::set<std::string> *externalInputPorts,
+         const std::set<std::string> *overridenPropertyNames,
          std::map<std::string, NewModels::VarInit> &varInitialisers);
 
     //----------------------------------------------------------------- -----------
@@ -92,6 +93,7 @@ class Neuron : public Base
 public:
     Neuron(const filesystem::path &basePath, const pugi::xml_node &node,
            const std::set<std::string> *externalInputPorts,
+           const std::set<std::string> *overridenPropertyNames,
            std::map<std::string, NewModels::VarInit> &varInitialisers);
 };
 
@@ -104,6 +106,7 @@ public:
     WeightUpdate(const filesystem::path &basePath, const pugi::xml_node &node,
                  const std::string &srcPopName, const std::string &trgPopName,
                  const std::set<std::string> *externalInputPorts,
+                 const std::set<std::string> *overridenPropertyNames,
                  std::map<std::string, NewModels::VarInit> &varInitialisers);
 };
 
@@ -116,6 +119,7 @@ public:
     Postsynaptic(const filesystem::path &basePath, const pugi::xml_node &node,
                  const std::string &trgPopName,
                  const std::set<std::string> *externalInputPorts,
+                 const std::set<std::string> *overridenPropertyNames,
                  std::map<std::string, NewModels::VarInit> &varInitialisers);
 };
 }   // namespace ModelParams

@@ -183,16 +183,16 @@ std::tuple<SynapseMatrixType, unsigned int, unsigned int> getSynapticMatrixType(
     throw std::runtime_error("No supported connection type found for projection");
 }
 //----------------------------------------------------------------------------
-const std::set<std::string> *getExternalInputPorts(const std::map<std::string, std::set<std::string>> &externalInputs, const std::string &target)
+const std::set<std::string> *getNamedSet(const std::map<std::string, std::set<std::string>> &sets, const std::string &name)
 {
-    // If there is no input for this target return NULL
-    auto e = externalInputs.find(target);
-    if(e == externalInputs.end()) {
+    // If there is no set with this name return NULL
+    auto s = sets.find(name);
+    if(s == sets.end()) {
         return nullptr;
     }
-    // Otherwise, return the set of ports associated with target
+    // Otherwise, return a pointer to the set
     else {
-        return &e->second;
+        return &s->second;
     }
 }
 }   // Anonymous namespace
@@ -254,9 +254,37 @@ int main(int argc, char *argv[])
             const std::string port = input.node().attribute("port").value();
 
             // Add to map
-            std::cout << "\tInput targetting '" << target << "':'" << port << "'" << std::endl;
+            std::cout << "\tInput targetting: " << target << ":" << port << std::endl;
             if(!externalInputs[target].emplace(port).second) {
                 throw std::runtime_error("Multiple inputs targetting " + target + ":" + port);
+            }
+        }
+
+        // Get model
+        auto experimentModel = experiment.child("Model");
+        if(!experimentModel) {
+            throw std::runtime_error("No 'Model' node found in experiment");
+        }
+
+        // Build path to network from URL in model
+        auto networkPath = basePath / experimentModel.attribute("network_layer_url").value();
+        std::cout << "\tExperiment using model:" << networkPath << std::endl;
+
+        // Loop through configurations (overriden property values)
+        std::map<std::string, std::set<std::string>> overridenProperties;
+        for(auto config : experimentModel.children("Configuration")) {
+            const std::string target = SpineMLUtils::getSafeName(config.attribute("target").value());
+
+            // If this configuration has a property (it probably should)
+            auto property = config.child("UL:Property");
+            if(property) {
+                const std::string propertyName = property.attribute("name").value();
+
+                // Add to map
+                std::cout << "\tOverriding property " << target << ":" << propertyName << std::endl;
+                if(!overridenProperties[target].emplace(propertyName).second) {
+                    throw std::runtime_error("Multiple overrides for property " + target + ":" + propertyName);
+                }
             }
         }
 
@@ -273,16 +301,6 @@ int main(int argc, char *argv[])
         // Read integration timestep
         const double dt = eulerIntegration.attribute("dt").as_double(0.1);
         std::cout << "\tDT = " << dt << "ms" << std::endl;
-
-        // Get model
-        auto experimentModel = experiment.child("Model");
-        if(!experimentModel) {
-            throw std::runtime_error("No 'Model' node found in experiment");
-        }
-
-        // Build path to network from URL in model
-        auto networkPath = basePath / experimentModel.attribute("network_layer_url").value();
-        std::cout << "\tExperiment using model:" << networkPath << std::endl;
 
         // Load XML document
         pugi::xml_document doc;
@@ -346,12 +364,14 @@ int main(int argc, char *argv[])
                 model.addNeuronPopulation<NeuronModels::SpikeSource>(popName, popSize, {}, {});
             }
             else {
-                // Get set of external input being applied to this population
-                const auto *externalInputPorts = getExternalInputPorts(externalInputs, popName);
+                // Get sets of external input and overriden properties for this population
+                const auto *externalInputPorts = getNamedSet(externalInputs, popName);
+                const auto *overridenPropertyNames = getNamedSet(overridenProperties, popName);
 
                 // Read neuron properties
                 std::map<std::string, NewModels::VarInit> varInitialisers;
-                ModelParams::Neuron modelParams(basePath, neuron, externalInputPorts, varInitialisers);
+                ModelParams::Neuron modelParams(basePath, neuron, externalInputPorts,
+                                                overridenPropertyNames, varInitialisers);
 
                 // Either get existing neuron model or create new one of no suitable models are available
                 const auto &neuronModel = getCreateModel(modelParams, neuronModels);
@@ -433,14 +453,16 @@ int main(int argc, char *argv[])
                     // Get name of weight update
                     const std::string weightUpdateName = SpineMLUtils::getSafeName(weightUpdate.attribute("name").value());
 
-                    // Get set of external input being applied to this weight update
-                    const auto *weightUpdateExternalInputPorts = getExternalInputPorts(externalInputs, weightUpdateName);
+                    // Get sets of external input and overriden properties for this weight update
+                    const auto *weightUpdateExternalInputPorts = getNamedSet(externalInputs, weightUpdateName);
+                    const auto *weightUpdateOverridenPropertyNames = getNamedSet(overridenProperties, weightUpdateName);
 
                     // Read weight update properties
                     std::map<std::string, NewModels::VarInit> weightUpdateVarInitialisers;
                     ModelParams::WeightUpdate weightUpdateModelParams(basePath, weightUpdate,
                                                                       popName, trgPopName,
                                                                       weightUpdateExternalInputPorts,
+                                                                      weightUpdateOverridenPropertyNames,
                                                                       weightUpdateVarInitialisers);
 
                     // Either get existing postsynaptic model or create new one of no suitable models are available
@@ -459,14 +481,16 @@ int main(int argc, char *argv[])
                     // Get name of post synapse
                     const std::string postSynapseName = SpineMLUtils::getSafeName(postSynapse.attribute("name").value());
 
-                    // Get set of external input being applied to this post synapse
-                    const auto *postSynapseExternalInputPorts = getExternalInputPorts(externalInputs, postSynapseName);
+                    // Get sets of external input and overriden properties for this post synapse
+                    const auto *postSynapseExternalInputPorts = getNamedSet(externalInputs, postSynapseName);
+                    const auto *postSynapseOverridenPropertyNames = getNamedSet(overridenProperties, postSynapseName);
 
                     // Read postsynapse properties
                     std::map<std::string, NewModels::VarInit> postsynapticVarInitialisers;
                     ModelParams::Postsynaptic postsynapticModelParams(basePath, postSynapse,
                                                                       trgPopName,
                                                                       postSynapseExternalInputPorts,
+                                                                      postSynapseOverridenPropertyNames,
                                                                       postsynapticVarInitialisers);
 
                     // Either get existing postsynaptic model or create new one of no suitable models are available
