@@ -101,7 +101,7 @@ bool SpineMLSimulator::NetworkClient::connect(const std::string &hostname, int p
         return false;
     }
     // Check it's not an abort
-    if(sizeResponse == Response::Abort) {
+    if(connectionNameResponse == Response::Abort) {
         std::cerr << "Remote host aborted" << std::endl;
         return false;
     }
