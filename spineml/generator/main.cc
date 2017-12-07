@@ -218,9 +218,13 @@ int main(int argc, char *argv[])
 #endif // CPU_ONLY
 
         // Use filesystem library to get parent path of the network XML file
-        auto experimentPath = filesystem::path(argv[1]).make_absolute();
-        auto basePath = experimentPath.parent_path();
+        const auto experimentPath = filesystem::path(argv[1]).make_absolute();
+        const auto basePath = experimentPath.parent_path();
 
+        // If 2nd argument is specified use as output path otherwise use SpineCreator-compliant location
+        const auto outputPath = (argc > 2) ? filesystem::path(argv[2]).make_absolute() : basePath.parent_path();
+
+        std::cout << "Output path:" << outputPath.str() << std::endl;
         std::cout << "Parsing experiment '" << experimentPath.str() << "'" << std::endl;
 
         // Load experiment document
@@ -496,8 +500,8 @@ int main(int argc, char *argv[])
         // Finalize model
         model.finalize();
 
-        // Build SpineCreator-compliant path to write generated code to
-        auto runPath = (basePath / ".." / "run");
+        // Write generated code to run directory beneath output path (creating it if necessary)
+        auto runPath = (outputPath / "run");
         filesystem::create_directory(runPath);
         runPath = runPath.make_absolute();
 

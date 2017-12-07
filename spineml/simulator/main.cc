@@ -545,8 +545,13 @@ int main(int argc, char *argv[])
         std::mt19937 gen;
 
         // Use filesystem library to get parent path of the network XML file
-        auto experimentPath = filesystem::path(argv[1]).make_absolute();
-        auto basePath = experimentPath.parent_path();
+        const auto experimentPath = filesystem::path(argv[1]).make_absolute();
+        const auto basePath = experimentPath.parent_path();
+
+        // If 2nd argument is specified use as output path otherwise use SpineCreator-compliant location
+        const auto outputPath = (argc > 2) ? filesystem::path(argv[2]).make_absolute() : basePath.parent_path();
+
+        std::cout << "Output path:" << outputPath.str() << std::endl;
 
         // Load experiment document
         pugi::xml_document experimentDoc;
@@ -584,11 +589,11 @@ int main(int argc, char *argv[])
 
         // Attempt to load model library
 #ifdef _WIN32
-        auto libraryPath = basePath / ".." / "run" / (networkName + "_CODE") / "runner.dll";
+        auto libraryPath = outputPath / "run" / (networkName + "_CODE") / "runner.dll";
         std::cout << "Experiment using model library:" << libraryPath  << std::endl;
         modelLibrary = LoadLibrary(libraryPath.str().c_str());
 #else
-        auto libraryPath = basePath / ".." / "run" / (networkName + "_CODE") / "librunner.so";
+        auto libraryPath = outputPath / "run" / (networkName + "_CODE") / "librunner.so";
         std::cout << "Experiment using model library:" << libraryPath  << std::endl;
         modelLibrary = dlopen(libraryPath.str().c_str(), RTLD_NOW);
 #endif
@@ -769,7 +774,7 @@ int main(int argc, char *argv[])
         const unsigned int numTimeSteps = (unsigned int)std::ceil(durationMs / dt);
 
         // Create directory for logs (if required)
-        const auto logPath = basePath / ".." / "log";
+        const auto logPath = outputPath / "log";
         filesystem::create_directory(logPath);
 
         // Loop through output loggers specified by experiment and create handler
