@@ -98,7 +98,7 @@ class AnalogueFile : public AnalogueBase
 public:
     AnalogueFile(const pugi::xml_node &node, double dt, unsigned int numTimeSteps,
                  const std::string &port, unsigned int popSize,
-                 const filesystem::path &basePath,
+                 const filesystem::path &logPath,
                  const ModelProperty::Base *modelProperty);
 
     //----------------------------------------------------------------------------
@@ -125,7 +125,7 @@ class AnalogueNetwork : public AnalogueBase
 public:
     AnalogueNetwork(const pugi::xml_node &node, double dt, unsigned int numTimeSteps,
                     const std::string &port, unsigned int popSize,
-                    const filesystem::path &basePath,
+                    const filesystem::path &logPath,
                     const ModelProperty::Base *modelProperty);
 
     //----------------------------------------------------------------------------
@@ -159,7 +159,7 @@ class Event : public Base
 public:
     Event(const pugi::xml_node &node, double dt, unsigned int numTimeSteps,
           const std::string &port, unsigned int popSize,
-          const filesystem::path &basePath, unsigned int *spikeQueuePtr,
+          const filesystem::path &logPath, unsigned int *spikeQueuePtr,
           unsigned int *hostSpikeCount, unsigned int *deviceSpikeCount,
           unsigned int *hostSpikes, unsigned int *deviceSpikes);
 

@@ -22,6 +22,7 @@ using namespace SpineMLCommon;
 //----------------------------------------------------------------------------
 SpineMLGenerator::ModelParams::Base::Base(const filesystem::path &basePath, const pugi::xml_node &node,
                                           const std::set<std::string> *externalInputPorts,
+                                          const std::set<std::string> *overridenPropertyNames,
                                           std::map<std::string, NewModels::VarInit> &varInitialisers)
 {
     m_URL = (basePath / node.attribute("url").value()).str();
@@ -31,12 +32,18 @@ SpineMLGenerator::ModelParams::Base::Base(const filesystem::path &basePath, cons
     for(auto param : node.children("Property")) {
         const auto *paramName = param.attribute("name").value();
 
-        // If parameter has a fixed value, it can be hard-coded into either model or automatically initialized in simulator
-        // **TODO** annotation to say you don't want this to be hard-coded
+        // If parameter has a fixed value
         auto fixedValue = param.child("FixedValue");
         if(fixedValue) {
+            // Add initialiser
             varInitialisers.insert(std::make_pair(paramName, NewModels::VarInit(InitVarSnippet::Constant::getInstance(), {
                 fixedValue.attribute("value").as_double() })));
+
+            // Typically fixed-value parameters are candidates for hard-coding into model however,
+            // if they are overriden in experiment, they should be implemented as state variables so mark them as such
+            if(overridenPropertyNames && overridenPropertyNames->find(paramName) != overridenPropertyNames->cend()) {
+                m_VariableParams.insert(paramName);
+            }
         }
         // Otherwise
         else {
@@ -123,8 +130,9 @@ void SpineMLGenerator::ModelParams::Base::addOutputPortMapping(const std::string
 //----------------------------------------------------------------------------
 SpineMLGenerator::ModelParams::Neuron::Neuron(const filesystem::path &basePath, const pugi::xml_node &node,
                                               const std::set<std::string> *externalInputPorts,
+                                              const std::set<std::string> *overridenPropertyNames,
                                               std::map<std::string, NewModels::VarInit> &varInitialisers)
-: Base(basePath, node, externalInputPorts, varInitialisers)
+: Base(basePath, node, externalInputPorts, overridenPropertyNames, varInitialisers)
 {
 }
 
@@ -134,8 +142,9 @@ SpineMLGenerator::ModelParams::Neuron::Neuron(const filesystem::path &basePath, 
 SpineMLGenerator::ModelParams::WeightUpdate::WeightUpdate(const filesystem::path &basePath, const pugi::xml_node &node,
                                                           const std::string &srcPopName, const std::string &trgPopName,
                                                           const std::set<std::string> *externalInputPorts,
+                                                          const std::set<std::string> *overridenPropertyNames,
                                                           std::map<std::string, NewModels::VarInit> &varInitialisers)
-: Base(basePath, node, externalInputPorts, varInitialisers)
+: Base(basePath, node, externalInputPorts, overridenPropertyNames, varInitialisers)
 {
     // If an input src and destination port are specified add them to input port mapping
     auto inputSrcPort = node.attribute("input_src_port");
@@ -180,8 +189,9 @@ SpineMLGenerator::ModelParams::WeightUpdate::WeightUpdate(const filesystem::path
 SpineMLGenerator::ModelParams::Postsynaptic::Postsynaptic(const filesystem::path &basePath, const pugi::xml_node &node,
                                                           const std::string &trgPopName,
                                                           const std::set<std::string> *externalInputPorts,
+                                                          const std::set<std::string> *overridenPropertyNames,
                                                           std::map<std::string, NewModels::VarInit> &varInitialisers)
-: Base(basePath, node, externalInputPorts, varInitialisers)
+: Base(basePath, node, externalInputPorts, overridenPropertyNames, varInitialisers)
 {
     // If an input src and destination port are specified add them to input port mapping
     auto inputSrcPort = node.attribute("input_src_port");

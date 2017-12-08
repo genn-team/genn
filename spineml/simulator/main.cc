@@ -454,7 +454,7 @@ std::unique_ptr<Input::Base> createInput(const pugi::xml_node &node, LIBRARY_HAN
 }
 //----------------------------------------------------------------------------
 std::unique_ptr<LogOutput::Base> createLogOutput(const pugi::xml_node &node, LIBRARY_HANDLE modelLibrary, double dt,
-                                                 unsigned int numTimeSteps, const filesystem::path &basePath,
+                                                 unsigned int numTimeSteps, const filesystem::path &logPath,
                                                  const std::map<std::string, unsigned int> &componentSizes,
                                                  const ComponentProperties &componentProperties,
                                                  const std::map<std::string, std::string> &componentURLs,
@@ -489,7 +489,7 @@ std::unique_ptr<LogOutput::Base> createLogOutput(const pugi::xml_node &node, LIB
 
         // Create event logger
         return std::unique_ptr<LogOutput::Base>(new LogOutput::Event(node, dt, numTimeSteps, port, targetSize->second,
-                                                                     basePath, spikeQueuePtr,
+                                                                     logPath, spikeQueuePtr,
                                                                      hostSpikeCount, deviceSpikeCount,
                                                                      hostSpikes, deviceSpikes));
     }
@@ -503,11 +503,11 @@ std::unique_ptr<LogOutput::Base> createLogOutput(const pugi::xml_node &node, LIB
             if(portProperty != targetProperties->second.end()) {
                 if(shouldLogToFile) {
                     return std::unique_ptr<LogOutput::Base>(new LogOutput::AnalogueFile(node, dt, numTimeSteps, port, targetSize->second,
-                                                                                        basePath, portProperty->second.get()));
+                                                                                        logPath, portProperty->second.get()));
                 }
                 else {
                     return std::unique_ptr<LogOutput::Base>(new LogOutput::AnalogueNetwork(node, dt, numTimeSteps, port, targetSize->second,
-                                                                                           basePath, portProperty->second.get()));
+                                                                                           logPath, portProperty->second.get()));
                 }
             }
             else {
@@ -545,8 +545,13 @@ int main(int argc, char *argv[])
         std::mt19937 gen;
 
         // Use filesystem library to get parent path of the network XML file
-        auto experimentPath = filesystem::path(argv[1]).make_absolute();
-        auto basePath = experimentPath.parent_path();
+        const auto experimentPath = filesystem::path(argv[1]).make_absolute();
+        const auto basePath = experimentPath.parent_path();
+
+        // If 2nd argument is specified use as output path otherwise use SpineCreator-compliant location
+        const auto outputPath = (argc > 2) ? filesystem::path(argv[2]).make_absolute() : basePath.parent_path();
+
+        std::cout << "Output path:" << outputPath.str() << std::endl;
 
         // Load experiment document
         pugi::xml_document experimentDoc;
@@ -584,11 +589,11 @@ int main(int argc, char *argv[])
 
         // Attempt to load model library
 #ifdef _WIN32
-        auto libraryPath = basePath / ".." / "run" / (networkName + "_CODE") / "runner.dll";
+        auto libraryPath = outputPath / "run" / (networkName + "_CODE") / "runner.dll";
         std::cout << "Experiment using model library:" << libraryPath  << std::endl;
         modelLibrary = LoadLibrary(libraryPath.str().c_str());
 #else
-        auto libraryPath = basePath / ".." / "run" / (networkName + "_CODE") / "librunner.so";
+        auto libraryPath = outputPath / "run" / (networkName + "_CODE") / "librunner.so";
         std::cout << "Experiment using model library:" << libraryPath  << std::endl;
         modelLibrary = dlopen(libraryPath.str().c_str(), RTLD_NOW);
 #endif
@@ -769,12 +774,13 @@ int main(int argc, char *argv[])
         const unsigned int numTimeSteps = (unsigned int)std::ceil(durationMs / dt);
 
         // Create directory for logs (if required)
-        filesystem::create_directory(basePath / ".." / "log");
+        const auto logPath = outputPath / "log";
+        filesystem::create_directory(logPath);
 
         // Loop through output loggers specified by experiment and create handler
         std::vector<std::unique_ptr<LogOutput::Base>> loggers;
         for(auto logOutput : experiment.children("LogOutput")) {
-            loggers.push_back(createLogOutput(logOutput, modelLibrary, dt, numTimeSteps, basePath,
+            loggers.push_back(createLogOutput(logOutput, modelLibrary, dt, numTimeSteps, logPath,
                                               componentSizes, componentProperties,
                                               componentURLs, componentEventPorts));
         }

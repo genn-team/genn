@@ -101,7 +101,7 @@ SpineMLSimulator::LogOutput::AnalogueBase::AnalogueBase(const pugi::xml_node &no
 //----------------------------------------------------------------------------
 SpineMLSimulator::LogOutput::AnalogueFile::AnalogueFile(const pugi::xml_node &node, double dt, unsigned int numTimeSteps,
                                                         const std::string &port, unsigned int popSize,
-                                                        const filesystem::path &basePath,
+                                                        const filesystem::path &logPath,
                                                         const ModelProperty::Base *modelProperty)
     : AnalogueBase(node, dt, numTimeSteps, modelProperty)
 {
@@ -114,7 +114,7 @@ SpineMLSimulator::LogOutput::AnalogueFile::AnalogueFile(const pugi::xml_node &no
     std::string fileTitle = std::string(node.attribute("target").value()) + "_" + std::string(node.attribute("port").value());
 
     // Combine this with base path to get full file title
-    std::string absoluteFileTitle = (basePath / ".." / "log" / fileTitle).str();
+    std::string absoluteFileTitle = (logPath / fileTitle).str();
 
     // Create report document
     pugi::xml_document reportDoc;
@@ -279,7 +279,7 @@ void SpineMLSimulator::LogOutput::AnalogueNetwork::record(double, unsigned int t
 //----------------------------------------------------------------------------
 SpineMLSimulator::LogOutput::Event::Event(const pugi::xml_node &node, double dt, unsigned int numTimeSteps,
                                           const std::string &port, unsigned int popSize,
-                                          const filesystem::path &basePath, unsigned int *spikeQueuePtr,
+                                          const filesystem::path &logPath, unsigned int *spikeQueuePtr,
                                           unsigned int *hostSpikeCount, unsigned int *deviceSpikeCount,
                                           unsigned int *hostSpikes, unsigned int *deviceSpikes)
     : Base(node, dt, numTimeSteps), m_PopSize(popSize), m_SpikeQueuePtr(spikeQueuePtr),
@@ -300,7 +300,7 @@ SpineMLSimulator::LogOutput::Event::Event(const pugi::xml_node &node, double dt,
     std::string fileTitle = std::string(node.attribute("target").value()) + "_" + std::string(node.attribute("port").value());
 
     // Combine this with base path to get full file title
-    std::string absoluteFileTitle = (basePath / ".." / "log" / fileTitle).str();
+    std::string absoluteFileTitle = (logPath / fileTitle).str();
 
     // Create report document
     pugi::xml_document reportDoc;
