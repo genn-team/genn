@@ -153,8 +153,10 @@ shutil.copy(os.path.join(out_dir,"experiment" + str(args.e) + ".xml"), os.path.j
 
 prog = ""
 if os.name == "nt":
-    #vcvarsall.bat or
+    #vcvarsall.bat or vcbuildtools.bat
     # Windows only
+    if os.path.isfile("C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\VC\\Auxiliary\Build\\vcvarsall.bat"):
+        prog = '"C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\VC\\Auxiliary\Build\\vcvarsall.bat" amd64'
     if os.path.isfile("C:\\Program Files (x86)\\Microsoft Visual C++ Build Tools\\vcvarsall.bat"):
         prog = '"C:\\Program Files (x86)\\Microsoft Visual C++ Build Tools\\vcvarsall.bat" amd64'
     if os.path.isfile("C:\\Program Files (x86)\\Microsoft Visual C++ Build Tools\\vcbuildtools.bat"):
@@ -184,8 +186,7 @@ else:
         os.system("cd " + os.path.join(genn_path,"spineml","simulator") + " && make")
 
 # Recompile if needed
-if recompile or not recompile:
-    #os.system(prog + "&&" + os.path.join(genn_path,"spineml","generator","generateSpineML") + " " + os.path.join(out_dir,"experiment" + str(args.e) + ".xml"))
+if recompile:
     os.system(prog + "&&" + os.path.join(genn_path,"spineml","generator","generateSpineML") + " " + os.path.join(out_dir,"experiment" + str(args.e) + ".xml"))
 
 os.system(prog + "&&" + os.path.join(genn_path,"spineml","simulator","simulateSpineML") + " " + os.path.join(out_dir,"experiment" + str(args.e) + ".xml"))
