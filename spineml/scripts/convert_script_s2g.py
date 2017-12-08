@@ -167,25 +167,36 @@ else:
     prog = "echo NIX"
     print "On Linux / OSX"
 
+# Determine whether we should run GeNN in CPU_ONLY mode
+cpu_only = (os.environ["GENN_SPINEML_CPU_ONLY"] is not None)
+
+# Determine names of executables
+generate_executable = "generateSpineML"
+simulate_executable = "simulateSpineML"
+if cpu_only:
+    generate_executable += "_CPU_ONLY"
+    simulate_executable += "_CPU_ONLY"
+
 # check if GeNN initial compile complete
 if os.name == "nt":
-    if not os.path.isfile(os.path.join(genn_path,"spineml","generator","generateSpineML.exe")):
+    config = "Release_CPU_ONLY" if cpu_only else "Release"
+    if not os.path.isfile(os.path.join(genn_path,"spineml","generator",generate_executable + ".exe")):
         print "Compiling Generate tool"
-        os.system(prog + "&& cd " + os.path.join(genn_path,"spineml","generator") + "&&" + "msbuild /p:Configuration=Release")
-    if not os.path.isfile(os.path.join(genn_path,"spineml","simulator","simulateSpineML.exe")):
+        os.system(prog + "&& cd " + os.path.join(genn_path,"spineml","generator") + "&&" + "msbuild /p:Configuration=" + config)
+    if not os.path.isfile(os.path.join(genn_path,"spineml","simulator",simulate_executable + ".exe")):
         print "Compiling Simulate tool"
-        os.system(prog + "&& cd " + os.path.join(genn_path,"spineml","simulator") + "&&" + "msbuild /p:Configuration=Release")
+        os.system(prog + "&& cd " + os.path.join(genn_path,"spineml","simulator") + "&&" + "msbuild /p:Configuration=" + config)
 else:
-    if not os.path.isfile(os.path.join(genn_path,"spineml","generator","generateSpineML")):
+    if not os.path.isfile(os.path.join(genn_path,"spineml","generator",generate_executable)):
         print "Compiling Generate tool"
         os.system("cd " + os.path.join(genn_path,"spineml","generator") + " && make")
-    if not os.path.isfile(os.path.join(genn_path,"spineml","simulator","simulateSpineML")):
+    if not os.path.isfile(os.path.join(genn_path,"spineml","simulator",simulate_executable)):
         print "Compiling Simulate tool"
         os.system("cd " + os.path.join(genn_path,"spineml","simulator") + " && make")
 
 # Recompile if needed
 if recompile or not recompile:
     #os.system(prog + "&&" + os.path.join(genn_path,"spineml","generator","generateSpineML") + " " + os.path.join(out_dir,"experiment" + str(args.e) + ".xml"))
-    os.system(prog + "&&" + os.path.join(genn_path,"spineml","generator","generateSpineML") + " " + os.path.join(out_dir,"experiment" + str(args.e) + ".xml"))
+    os.system(prog + "&&" + os.path.join(genn_path,"spineml","generator",generate_executable) + " " + os.path.join(out_dir,"experiment" + str(args.e) + ".xml"))
 
-os.system(prog + "&&" + os.path.join(genn_path,"spineml","simulator","simulateSpineML") + " " + os.path.join(out_dir,"experiment" + str(args.e) + ".xml"))
+os.system(prog + "&&" + os.path.join(genn_path,"spineml","simulator",simulate_executable) + " " + os.path.join(out_dir,"experiment" + str(args.e) + ".xml"))
