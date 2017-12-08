@@ -155,8 +155,8 @@ prog = ""
 if os.name == "nt":
     #vcvarsall.bat or vcbuildtools.bat
     # Windows only
-    if os.path.isfile("C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\VC\\Auxiliary\Build\\vcvarsall.bat"):
-        prog = '"C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\VC\\Auxiliary\Build\\vcvarsall.bat" amd64'
+    if os.path.isfile("C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\VC\\Auxiliary\Build\\vcvarsall.bat"):
+        prog = '"C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\VC\\Auxiliary\Build\\vcvarsall.bat" amd64'
     if os.path.isfile("C:\\Program Files (x86)\\Microsoft Visual C++ Build Tools\\vcvarsall.bat"):
         prog = '"C:\\Program Files (x86)\\Microsoft Visual C++ Build Tools\\vcvarsall.bat" amd64'
     if os.path.isfile("C:\\Program Files (x86)\\Microsoft Visual C++ Build Tools\\vcbuildtools.bat"):
@@ -170,7 +170,7 @@ else:
     print "On Linux / OSX"
 
 # Determine whether we should run GeNN in CPU_ONLY mode
-cpu_only = (os.environ["GENN_SPINEML_CPU_ONLY"] is not None)
+cpu_only = (os.environ.get("GENN_SPINEML_CPU_ONLY") is not None)
 
 # Determine names of executables
 generate_executable = "generateSpineML"
