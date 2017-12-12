@@ -91,6 +91,9 @@ for(b = 0; b < builderNodes.size; b++) {
     builders[nodeName] = {
         node(nodeName) {
             def installationStageName =  "Installation (" + env.NODE_NAME + ")";
+            
+            // Customise this nodes environment so GeNN and googletest environment variables are set and genn binaries are in path
+            // **NOTE** these are NOT set directly using env.PATH as this makes the change across ALL nodes which means you get a randomly mangled path depending on node startup order
             withEnv(["GTEST_DIR=" + pwd() + "/googletest-release-1.8.0/googletest",
                      "GENN_PATH=" + pwd() + "/genn",
                      "PATH+GENN=" + pwd() + "/genn/lib/bin"]) {
@@ -170,17 +173,17 @@ for(b = 0; b < builderNodes.size; b++) {
                     // Calculate coverage
                     dir("genn/tests") {
                         if (isUnix()) {
-                            // Run tests
+                            // Run correct coverage calculation script
                             if("cpu_only" in nodeLabel) {
                                 sh "./calc_coverage.sh -c";
                             }
                             else {
                                 sh "./calc_coverage.sh";
                             }
+                            
+                            // Stash coverage txt files so master can combine them all together again
+                            stash name: nodeName + "_coverage", includes: "coverage.txt"
                         }
-                        
-                        // Stash coverage txt files so master can combine them all together again
-                        stash name: nodeName + "_coverage", includes: "coverage.txt"
                     }
                 }
             }
