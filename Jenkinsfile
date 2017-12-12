@@ -52,8 +52,7 @@ void configureEnvironment() {
     env.PATH += ":" + env.GENN_PATH + "/lib/bin";
     
     echo pwd()
-    echo env.GENN_PATH;
-    echo env.LD_LIBRARY_PATH;
+    echo env.PATH;
 }
 
 
