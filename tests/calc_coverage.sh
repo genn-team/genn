@@ -19,9 +19,9 @@ pushd $GENN_PATH/lib
 make clean
 popd
 
-# Delete existing output
+# Delete existing output and library coverage data
 rm -f msg
-rm -rf *.gcno *.gcda
+rm -rf $GENN_PATH/lib/**/*.gcno $GENN_PATH/lib/**/*.gcda
 
 # Loop through feature tests
 LCOV_INPUTS="";
@@ -38,9 +38,10 @@ for f in features/*;
                 if [ -f "model$s.cc" ]; then
                     # On OSX remove existing raw coverage files before running each test
                     # **NOTE** GCC can successfully combine gcno and gcda files itself but not LLVM
+                    # **NOTE** only remove library coverage COUNTS as library itself and hence its .gcdo files don't get rebuilt
                     if [[ "$(uname)" = "Darwin" ]]; then
                         rm -f *.gcno *.gcda
-                        rm -rf $GENN_PATH/lib/**/*.gcno $GENN_PATH/lib/**/*.gcda
+                        rm -rf $GENN_PATH/lib/**/*.gcda
                     fi
 
                     # Clean
