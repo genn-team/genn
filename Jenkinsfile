@@ -92,7 +92,7 @@ for(b = 0; b < builderNodes.size; b++) {
         node(nodeName) {
             def installationStageName =  "Installation (" + env.NODE_NAME + ")";
             withEnv(["GTEST_DIR=" + pwd() + "/googletest-release-1.8.0/googletest",
-                     "GENN_PATH=" + pwd() + "/genn"
+                     "GENN_PATH=" + pwd() + "/genn",
                      "PATH+GENN=" + pwd() + "/genn/lib/bin"]) {
                 stage(installationStageName) {
                     echo "Checking out GeNN";
