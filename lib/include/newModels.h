@@ -1,6 +1,7 @@
 #pragma once
 
 // Standard C++ includes
+#include <algorithm>
 #include <string>
 #include <vector>
 
@@ -23,10 +24,21 @@
 #define SET_VARS(...) virtual StringPairVec getVars() const{ return __VA_ARGS__; }
 
 //----------------------------------------------------------------------------
-// NewModels::VarInit
+// NewModels::VarMode
 //----------------------------------------------------------------------------
 namespace NewModels
 {
+//! Enumeration of
+enum class VarMode
+{
+    HOST_AND_DEVICE,  //!< Copies of variable are allocated on both device and host - must be synchronised manually using push and pull operations
+    DEVICE_ONLY,      //!< Variable is only allocated as device memory meaning it must be initialised on device and cannot be accessed by CPU
+    ZERO_COPY,        //!< Variable is allocated as 'zero-copy' memory, accessable by both host and device without push and pull operations
+};
+
+//----------------------------------------------------------------------------
+// NewModels::VarInit
+//----------------------------------------------------------------------------
 class VarInit
 {
 public:
@@ -162,9 +174,24 @@ public:
 
     //----------------------------------------------------------------------------
     // Declared virtuals
-    //----------------------------------------------------------------------------
+    //------------------------------------------------------------------------
     //! Gets names and types (as strings) of model variables
     virtual StringPairVec getVars() const{ return {}; }
+
+    //------------------------------------------------------------------------
+    // Public methods
+    //------------------------------------------------------------------------
+    //! Find the index of a named variable
+    size_t getVarIndex(const std::string &varName) const
+    {
+        auto vars = getVars();
+        auto varIter = std::find_if(vars.begin(), vars.end(),
+            [varName](const StringPairVec::value_type &v){ return (v.first == varName); });
+        assert(varIter != vars.end());
+
+        // Return flag corresponding to variable
+        return distance(vars.begin(), varIter);
+    }
 };
 
 //----------------------------------------------------------------------------

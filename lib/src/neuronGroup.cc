@@ -23,35 +23,28 @@ void NeuronGroup::checkNumDelaySlots(unsigned int requiredDelay)
 
 void NeuronGroup::updateVarQueues(const string &code)
 {
-    // Loop through neuron variables
-    for(const auto &v : getNeuronModel()->getVars()) {
-        // If the code contains a reference to this variable, set queued flag
-        if (code.find(v.first + "_pre") != string::npos) {
-            m_VarQueueRequired.insert(v.first);
+    // Loop through variables
+    const auto vars = getNeuronModel()->getVars();
+    for(size_t i = 0; i < vars.size(); i++) {
+        const std::string &varName = vars[i].first;
+
+        // If the code contains a reference to this variable, set corresponding flag
+        if (code.find(varName + "_pre") != string::npos) {
+            m_AnyVarQueuesRequired = true;
+            m_VarQueueRequired[i] = true;
         }
     }
 }
 
-void NeuronGroup::setVarZeroCopyEnabled(const std::string &var, bool enabled)
+void NeuronGroup::setVarMode(const std::string &varName, NewModels::VarMode mode)
 {
-    // If named variable doesn't exist give error
-    VarNameIterCtx nmVars(getNeuronModel()->getVars());
-    if(find(nmVars.nameBegin, nmVars.nameEnd, var) == nmVars.nameEnd) {
-        gennError("Cannot find variable " + var);
-    }
-    // Otherwise add name of variable to set
-    else  {
-        // If enabled, add variable to set
-        if(enabled) {
-            m_VarZeroCopyEnabled.insert(var);
-        }
-        // Otherwise, remove it
-        else {
-            m_VarZeroCopyEnabled.erase(var);
-        }
-    }
+    m_VarMode[getNeuronModel()->getVarIndex(varName)] = mode;
 }
 
+NewModels::VarMode NeuronGroup::getVarMode(const std::string &varName) const
+{
+    return m_VarMode[getNeuronModel()->getVarIndex(varName)];
+}
 
 void NeuronGroup::addSpkEventCondition(const std::string &code, const std::string &supportCodeNamespace)
 {
@@ -96,29 +89,25 @@ void NeuronGroup::calcSizes(unsigned int blockSize,  unsigned int &idStart, unsi
 
 bool NeuronGroup::isVarQueueRequired(const std::string &var) const
 {
-    return (m_VarQueueRequired.find(var) != std::end(m_VarQueueRequired));
+    // Return flag corresponding to variable
+    return m_VarQueueRequired[getNeuronModel()->getVarIndex(var)];
 }
 
 bool NeuronGroup::isZeroCopyEnabled() const
 {
     // If any bits of spikes require zero-copy return true
-    if(isSpikeZeroCopyEnabled() || isSpikeEventZeroCopyEnabled() || isSpikeTimeZeroCopyEnabled())
-    {
+    if(isSpikeZeroCopyEnabled() || isSpikeEventZeroCopyEnabled() || isSpikeTimeZeroCopyEnabled()) {
         return true;
     }
 
-    // If there are any variables return true
-    if(!m_VarZeroCopyEnabled.empty())
+    // If there are any variables implemented in zero-copy mode return true
+    if(any_of(m_VarMode.begin(), m_VarMode.end(),
+        [](NewModels::VarMode mode){ return (mode == NewModels::VarMode::ZERO_COPY); }))
     {
         return true;
     }
 
     return false;
-}
-
-bool NeuronGroup::isVarZeroCopyEnabled(const std::string &var) const
-{
-    return (m_VarZeroCopyEnabled.find(var) != std::end(m_VarZeroCopyEnabled));
 }
 
 bool NeuronGroup::isParamRequiredBySpikeEventCondition(const std::string &pnamefull) const
