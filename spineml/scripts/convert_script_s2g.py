@@ -137,7 +137,7 @@ if os.path.isdir(os.path.join(out_dir, "prev")):
 else:
     recompile = True
 
-if recompile:
+if recompile is True:
     print "Recompiling model..."
 else:
     print "Model has not changed - no recompile required"
@@ -197,8 +197,14 @@ else:
         os.system("cd " + os.path.join(genn_path,"spineml","simulator") + " && make")
 
 # Recompile if needed
-if recompile:
+if recompile is True:
+    f = open(os.path.join(out_dir,"time.txt"),'w')
+    f.write('*Compiling...')
+    f.close()
     #os.system(prog + "&&" + os.path.join(genn_path,"spineml","generator","generateSpineML") + " " + os.path.join(out_dir,"experiment" + str(args.e) + ".xml"))
     os.system(prog + "&&" + os.path.join(genn_path,"spineml","generator",generate_executable) + " " + os.path.join(out_dir,"experiment" + str(args.e) + ".xml"))
 
+f = open(os.path.join(out_dir,"time.txt"),'w')
+f.write('*Running...')
+f.close()
 os.system(prog + "&&" + os.path.join(genn_path,"spineml","simulator",simulate_executable) + " " + os.path.join(out_dir,"experiment" + str(args.e) + ".xml"))
