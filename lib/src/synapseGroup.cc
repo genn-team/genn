@@ -78,7 +78,7 @@ void SynapseGroup::setWUVarMode(const std::string &varName, NewModels::VarMode m
 
 void SynapseGroup::setPSVarMode(const std::string &varName, NewModels::VarMode mode)
 {
-    m_WUVarMode[getPSModel()->getVarIndex(varName)] = mode;
+    m_PSVarMode[getPSModel()->getVarIndex(varName)] = mode;
 }
 
 void SynapseGroup::setMaxConnections(unsigned int maxConnections)
@@ -202,12 +202,12 @@ bool SynapseGroup::isZeroCopyEnabled() const
 
 NewModels::VarMode SynapseGroup::getWUVarMode(const std::string &var) const
 {
-    return m_PSVarMode[getPSModel()->getVarIndex(var)];
+    return m_WUVarMode[getWUModel()->getVarIndex(var)];
 }
 
 NewModels::VarMode SynapseGroup::getPSVarMode(const std::string &var) const
 {
-    return m_WUVarMode[getWUModel()->getVarIndex(var)];
+    return m_PSVarMode[getPSModel()->getVarIndex(var)];
 }
 
 bool SynapseGroup::isPSAtomicAddRequired(unsigned int blockSize) const
