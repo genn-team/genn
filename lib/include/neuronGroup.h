@@ -7,7 +7,9 @@
 #include <vector>
 
 // GeNN includes
+#include "global.h"
 #include "newNeuronModels.h"
+#include "variableMode.h"
 
 //------------------------------------------------------------------------
 // NeuronGroup
@@ -21,8 +23,8 @@ public:
         m_NeuronModel(neuronModel), m_Params(params), m_VarInitialisers(varInitialisers),
         m_SpikeTimeRequired(false), m_TrueSpikeRequired(false), m_SpikeEventRequired(false), m_QueueRequired(false),
         m_NumDelaySlots(1), m_AnyVarQueuesRequired(false), m_VarQueueRequired(varInitialisers.size(), false),
-        m_SpikeMode(NewModels::VarMode::HOST_AND_DEVICE), m_SpikeEventMode(NewModels::VarMode::HOST_AND_DEVICE), m_SpikeTimeMode(NewModels::VarMode::HOST_AND_DEVICE),
-        m_VarMode(varInitialisers.size(), NewModels::VarMode::HOST_AND_DEVICE), m_HostID(0), m_DeviceID(0)
+        m_SpikeMode(GENN_PREFERENCES::defaultVarMode), m_SpikeEventMode(GENN_PREFERENCES::defaultVarMode), m_SpikeTimeMode(GENN_PREFERENCES::defaultVarMode),
+        m_VarMode(varInitialisers.size(), GENN_PREFERENCES::defaultVarMode), m_HostID(0), m_DeviceID(0)
     {
     }
     NeuronGroup(const NeuronGroup&) = delete;
@@ -45,37 +47,37 @@ public:
     //!< May improve IO performance at the expense of kernel performance
     void setSpikeZeroCopyEnabled(bool enabled)
     {
-        m_SpikeMode = enabled ? NewModels::VarMode::ZERO_COPY : NewModels::VarMode::HOST_AND_DEVICE;
+        m_SpikeMode = enabled ? VarMode::LOC_ZERO_COPY_INIT_HOST : VarMode::LOC_HOST_DEVICE_INIT_HOST;
     }
 
     //!< Function to enable the use of zero-copied memory for spike-like events:
     //!< May improve IO performance at the expense of kernel performance
     void setSpikeEventZeroCopyEnabled(bool enabled)
     {
-        m_SpikeEventMode = enabled ? NewModels::VarMode::ZERO_COPY : NewModels::VarMode::HOST_AND_DEVICE;
+        m_SpikeEventMode = enabled ? VarMode::LOC_ZERO_COPY_INIT_HOST : VarMode::LOC_HOST_DEVICE_INIT_HOST;
     }
 
     //!< Function to enable the use of zero-copied memory for spike times:
     //!< May improve IO performance at the expense of kernel performance
     void setSpikeTimeZeroCopyEnabled(bool enabled)
     {
-        m_SpikeTimeMode = enabled ? NewModels::VarMode::ZERO_COPY : NewModels::VarMode::HOST_AND_DEVICE; 
+        m_SpikeTimeMode = enabled ? VarMode::LOC_ZERO_COPY_INIT_HOST : VarMode::LOC_HOST_DEVICE_INIT_HOST;
     }
 
      //!< Function to enable the use zero-copied memory for a particular state variable:
      //!< May improve IO performance at the expense of kernel performance
     void setVarZeroCopyEnabled(const std::string &varName, bool enabled)
     {
-        setVarMode(varName, enabled ? NewModels::VarMode::ZERO_COPY : NewModels::VarMode::HOST_AND_DEVICE);
+        setVarMode(varName, enabled ? VarMode::LOC_ZERO_COPY_INIT_HOST : VarMode::LOC_HOST_DEVICE_INIT_HOST);
     }
 
-    void setSpikeMode(NewModels::VarMode mode) { m_SpikeMode = mode; }
-    void setSpikeEventMode(NewModels::VarMode mode) { m_SpikeEventMode = mode; }
-    void setSpikeTimeMode(NewModels::VarMode mode) { m_SpikeTimeMode = mode; }
+    void setSpikeMode(VarMode mode) { m_SpikeMode = mode; }
+    void setSpikeEventMode(VarMode mode) { m_SpikeEventMode = mode; }
+    void setSpikeTimeMode(VarMode mode) { m_SpikeTimeMode = mode; }
 
     //!< Function to set variable 'mode' - how variable is implemented in GPU simulation
     //!< This is ignored for CPU simulations
-    void setVarMode(const std::string &varName, NewModels::VarMode mode);
+    void setVarMode(const std::string &varName, VarMode mode);
 
     void setClusterIndex(int hostID, int deviceID){ m_HostID = hostID; m_DeviceID = deviceID; }
 
@@ -117,16 +119,16 @@ public:
     unsigned int getNumDelaySlots() const{ return m_NumDelaySlots; }
     bool isDelayRequired() const{ return (m_NumDelaySlots > 1); }
 
-    bool isSpikeZeroCopyEnabled() const{ return (m_SpikeMode == NewModels::VarMode::ZERO_COPY); }
-    bool isSpikeEventZeroCopyEnabled() const{ return (m_SpikeEventMode == NewModels::VarMode::ZERO_COPY); }
-    bool isSpikeTimeZeroCopyEnabled() const{ return (m_SpikeTimeMode == NewModels::VarMode::ZERO_COPY); }
+    bool isSpikeZeroCopyEnabled() const{ return (m_SpikeMode & VarLocation::ZERO_COPY); }
+    bool isSpikeEventZeroCopyEnabled() const{ return (m_SpikeEventMode & VarLocation::ZERO_COPY); }
+    bool isSpikeTimeZeroCopyEnabled() const{ return (m_SpikeTimeMode & VarLocation::ZERO_COPY); }
     bool isZeroCopyEnabled() const;
-    bool isVarZeroCopyEnabled(const std::string &var) const{ return (getVarMode(var) == NewModels::VarMode::ZERO_COPY); }
+    bool isVarZeroCopyEnabled(const std::string &var) const{ return (getVarMode(var) & VarLocation::ZERO_COPY); }
 
-    NewModels::VarMode getSpikeMode() const{ return m_SpikeMode; }
-    NewModels::VarMode getSpikeEventMode() const{ return m_SpikeEventMode; }
-    NewModels::VarMode getSpikeTimeMode() const{ return m_SpikeTimeMode; }
-    NewModels::VarMode getVarMode(const std::string &varName) const;
+    VarMode getSpikeMode() const{ return m_SpikeMode; }
+    VarMode getSpikeEventMode() const{ return m_SpikeEventMode; }
+    VarMode getSpikeTimeMode() const{ return m_SpikeTimeMode; }
+    VarMode getVarMode(const std::string &varName) const;
 
     bool isParamRequiredBySpikeEventCondition(const std::string &pnamefull) const;
 
@@ -172,16 +174,16 @@ private:
     std::vector<bool> m_VarQueueRequired;
 
     //!< Whether spikes from neuron group should use zero-copied memory
-    NewModels::VarMode m_SpikeMode;
+    VarMode m_SpikeMode;
 
     //!< Whether spike-like events from neuron group should use zero-copied memory
-    NewModels::VarMode m_SpikeEventMode;
+    VarMode m_SpikeEventMode;
 
     //!< Whether spike times from neuron group should use zero-copied memory
-    NewModels::VarMode m_SpikeTimeMode;
+    VarMode m_SpikeTimeMode;
 
     //!< Whether indidividual state variables of a neuron group should use zero-copied memory
-    std::vector<NewModels::VarMode> m_VarMode;
+    std::vector<VarMode> m_VarMode;
 
     //!< The ID of the cluster node which the neuron groups are computed on
     int m_HostID;

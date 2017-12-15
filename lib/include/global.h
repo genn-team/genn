@@ -21,11 +21,17 @@
 #ifndef GLOBAL_H
 #define GLOBAL_H
 
+// C++ includes
+#include <string>
+
+// CUDA includes
 #ifndef CPU_ONLY
 #include <cuda.h>
 #include <cuda_runtime.h>
 #endif
-#include <string>
+
+// GeNN includes
+#include "variableMode.h"
 
 namespace GENN_FLAGS {
     extern unsigned int calcSynapseDynamics;
@@ -41,6 +47,7 @@ namespace GENN_PREFERENCES {
     extern bool debugCode; //!< Request debug data to be embedded in the generated code
     extern bool showPtxInfo; //!< Request that PTX assembler information be displayed for each CUDA kernel during compilation
     extern bool autoInitSparseVars; //!< Previously, variables associated with sparse synapse populations were not automatically initialised. If this flag is set this now occurs in the initMODEL_NAME function and copyStateToDevice is deferred until here
+    extern VarMode defaultVarMode;  //!< What is the default behaviour for model state variables? Historically, everything was allocated on both host AND device and initialised on HOST.
     extern double asGoodAsZero; //!< Global variable that is used when detecting close to zero values, for example when setting sparse connectivity from a dense matrix
     extern int defaultDevice; //! default GPU device; used to determine which GPU to use if chooseDevice is 0 (off)
     extern unsigned int neuronBlockSize;

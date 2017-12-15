@@ -24,21 +24,10 @@
 #define SET_VARS(...) virtual StringPairVec getVars() const{ return __VA_ARGS__; }
 
 //----------------------------------------------------------------------------
-// NewModels::VarMode
+// NewModels::VarInit
 //----------------------------------------------------------------------------
 namespace NewModels
 {
-//! Enumeration of
-enum class VarMode
-{
-    HOST_AND_DEVICE,  //!< Copies of variable are allocated on both device and host - must be synchronised manually using push and pull operations
-    DEVICE_ONLY,      //!< Variable is only allocated as device memory meaning it must be initialised on device and cannot be accessed by CPU
-    ZERO_COPY,        //!< Variable is allocated as 'zero-copy' memory, accessable by both host and device without push and pull operations
-};
-
-//----------------------------------------------------------------------------
-// NewModels::VarInit
-//----------------------------------------------------------------------------
 class VarInit
 {
 public:

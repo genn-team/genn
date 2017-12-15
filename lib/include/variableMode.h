@@ -27,8 +27,8 @@ enum class VarMode : uint8_t
     LOC_DEVICE_INIT_DEVICE      = static_cast<uint8_t>(VarLocation::DEVICE) | static_cast<uint8_t>(VarInit::DEVICE),
     LOC_HOST_DEVICE_INIT_HOST   = static_cast<uint8_t>(VarLocation::HOST) | static_cast<uint8_t>(VarLocation::DEVICE) | static_cast<uint8_t>(VarInit::HOST),
     LOC_HOST_DEVICE_INIT_DEVICE = static_cast<uint8_t>(VarLocation::HOST) | static_cast<uint8_t>(VarLocation::DEVICE) | static_cast<uint8_t>(VarInit::DEVICE),
-    LOC_ZERO_COPY_INIT_HOST     = static_cast<uint8_t>(VarLocation::ZERO_COPY) | static_cast<uint8_t>(VarInit::HOST),
-    LOC_ZERO_COPY_INIT_DEVICE   = static_cast<uint8_t>(VarLocation::ZERO_COPY) | static_cast<uint8_t>(VarInit::DEVICE),
+    LOC_ZERO_COPY_INIT_HOST     = static_cast<uint8_t>(VarLocation::HOST) | static_cast<uint8_t>(VarLocation::DEVICE) | static_cast<uint8_t>(VarLocation::ZERO_COPY) | static_cast<uint8_t>(VarInit::HOST),
+    LOC_ZERO_COPY_INIT_DEVICE   = static_cast<uint8_t>(VarLocation::HOST) | static_cast<uint8_t>(VarLocation::DEVICE) | static_cast<uint8_t>(VarLocation::ZERO_COPY) | static_cast<uint8_t>(VarInit::DEVICE),
 };
 
 //----------------------------------------------------------------------------

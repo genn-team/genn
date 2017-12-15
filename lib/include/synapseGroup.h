@@ -48,18 +48,18 @@ public:
     //!< May improve IO performance at the expense of kernel performance
     void setWUVarZeroCopyEnabled(const std::string &varName, bool enabled)
     {
-        setWUVarMode(varName, enabled ? NewModels::VarMode::ZERO_COPY : NewModels::VarMode::HOST_AND_DEVICE);
+        setWUVarMode(varName, enabled ? VarMode::LOC_ZERO_COPY_INIT_HOST : VarMode::LOC_HOST_DEVICE_INIT_HOST);
     }
 
     //!< Function to enable the use zero-copied memory for a particular postsynaptic model state variable
     //!< May improve IO performance at the expense of kernel performance
     void setPSVarZeroCopyEnabled(const std::string &varName, bool enabled)
     {
-        setPSVarMode(varName, enabled ? NewModels::VarMode::ZERO_COPY : NewModels::VarMode::HOST_AND_DEVICE);
+        setPSVarMode(varName, enabled ? VarMode::LOC_ZERO_COPY_INIT_HOST : VarMode::LOC_HOST_DEVICE_INIT_HOST);
     }
 
-    void setWUVarMode(const std::string &varName, NewModels::VarMode mode);
-    void setPSVarMode(const std::string &varName, NewModels::VarMode mode);
+    void setWUVarMode(const std::string &varName, VarMode mode);
+    void setPSVarMode(const std::string &varName, VarMode mode);
 
     void setClusterIndex(int hostID, int deviceID){ m_HostID = hostID; m_DeviceID = deviceID; }
 
@@ -106,11 +106,11 @@ public:
     const std::vector<double> getPSConstInitVals() const;
 
     bool isZeroCopyEnabled() const;
-    bool isWUVarZeroCopyEnabled(const std::string &var) const{ return (getWUVarMode(var) == NewModels::VarMode::ZERO_COPY); }
-    bool isPSVarZeroCopyEnabled(const std::string &var) const{ return (getPSVarMode(var) == NewModels::VarMode::ZERO_COPY); }
+    bool isWUVarZeroCopyEnabled(const std::string &var) const{ return (getWUVarMode(var) & VarLocation::ZERO_COPY); }
+    bool isPSVarZeroCopyEnabled(const std::string &var) const{ return (getPSVarMode(var) & VarLocation::ZERO_COPY); }
 
-    NewModels::VarMode getWUVarMode(const std::string &var) const;
-    NewModels::VarMode getPSVarMode(const std::string &var) const;
+    VarMode getWUVarMode(const std::string &var) const;
+    VarMode getPSVarMode(const std::string &var) const;
 
     //!< Is this synapse group too large to use shared memory for combining postsynaptic output
     // **THINK** this is very cuda-specific
@@ -197,10 +197,10 @@ private:
     std::vector<NewModels::VarInit> m_PSVarInitialisers;
 
     //!< Whether indidividual state variables of weight update model should use zero-copied memory
-    std::vector<NewModels::VarMode> m_WUVarMode;
+    std::vector<VarMode> m_WUVarMode;
 
     //!< Whether indidividual state variables of post synapse should use zero-copied memory
-    std::vector<NewModels::VarMode> m_PSVarMode;
+    std::vector<VarMode> m_PSVarMode;
 
     //!< The ID of the cluster node which the synapse group is computed on
     int m_HostID;
