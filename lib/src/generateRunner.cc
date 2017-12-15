@@ -39,12 +39,17 @@ namespace
 //! \brief This function generates host and device variable definitions, of the given type and name.
 //--------------------------------------------------------------------------
 
-void variable_def(CodeStream &os, const string &type, const string &name)
+void variable_def(CodeStream &os, const string &type, const string &name, NewModels::VarMode mode)
 {
-    os << type << " " << name << ";" << std::endl;
 #ifndef CPU_ONLY
+    if(mode != NewModels::VarMode::DEVICE_ONLY) {
+        os << type << " " << name << ";" << std::endl;
+    }
     os << type << " d_" << name << ";" << std::endl;
     os << "__device__ " << type << " dd_" << name << ";" << std::endl;
+#else
+    USE(mode);
+    os << type << " " << name << ";" << std::endl;
 #endif
 }
 
@@ -53,11 +58,16 @@ void variable_def(CodeStream &os, const string &type, const string &name)
 //! \brief This function generates host extern variable definitions, of the given type and name.
 //--------------------------------------------------------------------------
 
-void extern_variable_def(CodeStream &os, const string &type, const string &name)
+void extern_variable_def(CodeStream &os, const string &type, const string &name, NewModels::VarMode mode)
 {
-    os << "extern " << type << " " << name << ";" << std::endl;
 #ifndef CPU_ONLY
+    if(mode != NewModels::VarMode::DEVICE_ONLY) {
+        os << "extern " << type << " " << name << ";" << std::endl;
+    }
     os << "extern " << type << " d_" << name << ";" << std::endl;
+#else
+    USE(mode);
+    os << "extern " << type << " " << name << ";" << std::endl;
 #endif
 }
 
@@ -335,17 +345,17 @@ void genDefinitions(const NNmodel &model, //!< Model description
     os << std::endl;
 
     for(const auto &n : model.getNeuronGroups()) {
-        extern_variable_def(os, "unsigned int *", "glbSpkCnt"+n.first);
-        extern_variable_def(os, "unsigned int *", "glbSpk"+n.first);
+        extern_variable_def(os, "unsigned int *", "glbSpkCnt"+n.first, n.second.getSpikeMode());
+        extern_variable_def(os, "unsigned int *", "glbSpk"+n.first, n.second.getSpikeMode());
         if (n.second.isSpikeEventRequired()) {
-            extern_variable_def(os, "unsigned int *", "glbSpkCntEvnt"+n.first);
-            extern_variable_def(os, "unsigned int *", "glbSpkEvnt"+n.first);
+            extern_variable_def(os, "unsigned int *", "glbSpkCntEvnt"+n.first, n.second.getSpikeEventMode());
+            extern_variable_def(os, "unsigned int *", "glbSpkEvnt"+n.first, n.second.getSpikeEventMode());
         }
         if (n.second.isDelayRequired()) {
             os << "extern unsigned int spkQuePtr" << n.first << ";" << std::endl;
         }
         if (n.second.isSpikeTimeRequired()) {
-            extern_variable_def(os, model.getPrecision()+" *", "sT"+n.first);
+            extern_variable_def(os, model.getPrecision()+" *", "sT"+n.first, n.second.getSpikeTimeMode());
         }
 #ifndef CPU_ONLY
         if(n.second.isSimRNGRequired()) {
@@ -354,10 +364,11 @@ void genDefinitions(const NNmodel &model, //!< Model description
 #endif
         auto neuronModel = n.second.getNeuronModel();
         for(auto const &v : neuronModel->getVars()) {
-            extern_variable_def(os, v.second +" *", v.first + n.first);
+            extern_variable_def(os, v.second +" *", v.first + n.first, n.second.getVarMode(v.first));
         }
         for(auto const &v : neuronModel->getExtraGlobalParams()) {
-            extern_variable_def(os, v.second, v.first + n.first);
+            // **TODO** external variables could, almost certainly, use DEVICE_ONLY mode
+            extern_variable_def(os, v.second, v.first + n.first, NewModels::VarMode::HOST_AND_DEVICE);
         }
     }
     os << std::endl;
@@ -419,9 +430,9 @@ void genDefinitions(const NNmodel &model, //!< Model description
     os << std::endl;
 
     for(const auto &s : model.getSynapseGroups()) {
-        extern_variable_def(os, model.getPrecision()+" *", "inSyn" + s.first);
+        extern_variable_def(os, model.getPrecision()+" *", "inSyn" + s.first, NewModels::VarMode::HOST_AND_DEVICE);
         if (s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-            extern_variable_def(os, "uint32_t *", "gp" + s.first);
+            extern_variable_def(os, "uint32_t *", "gp" + s.first, NewModels::VarMode::HOST_AND_DEVICE);
         }
         else if (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
             os << "extern SparseProjection C" << s.first << ";" << std::endl;
@@ -429,15 +440,15 @@ void genDefinitions(const NNmodel &model, //!< Model description
 
         if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) { // not needed for GLOBALG
             for(const auto &v : s.second.getWUModel()->getVars()) {
-                extern_variable_def(os, v.second + " *", v.first + s.first);
+                extern_variable_def(os, v.second + " *", v.first + s.first, NewModels::VarMode::HOST_AND_DEVICE);
             }
             for(const auto &v : s.second.getPSModel()->getVars()) {
-                extern_variable_def(os, v.second + " *", v.first + s.first);
+                extern_variable_def(os, v.second + " *", v.first + s.first, NewModels::VarMode::HOST_AND_DEVICE);
             }
         }
 
         for(auto const &p : s.second.getWUModel()->getExtraGlobalParams()) {
-            extern_variable_def(os, p.second, p.first + s.first);
+            extern_variable_def(os, p.second, p.first + s.first, NewModels::VarMode::HOST_AND_DEVICE);
         }
     }
     os << std::endl;
@@ -845,11 +856,11 @@ void genRunner(const NNmodel &model, //!< Model description
     os << "__device__ volatile unsigned int d_done;" << std::endl;
 #endif
     for(const auto &n : model.getNeuronGroups()) {
-        variable_def(os, "unsigned int *", "glbSpkCnt"+n.first);
-        variable_def(os, "unsigned int *", "glbSpk"+n.first);
+        variable_def(os, "unsigned int *", "glbSpkCnt"+n.first, n.second.getSpikeMode());
+        variable_def(os, "unsigned int *", "glbSpk"+n.first, n.second.getSpikeMode());
         if (n.second.isSpikeEventRequired()) {
-            variable_def(os, "unsigned int *", "glbSpkCntEvnt"+n.first);
-            variable_def(os, "unsigned int *", "glbSpkEvnt"+n.first);
+            variable_def(os, "unsigned int *", "glbSpkCntEvnt"+n.first, n.second.getSpikeEventMode());
+            variable_def(os, "unsigned int *", "glbSpkEvnt"+n.first, n.second.getSpikeEventMode());
         }
         if (n.second.isDelayRequired()) {
             os << "unsigned int spkQuePtr" << n.first << ";" << std::endl;
@@ -858,7 +869,7 @@ void genRunner(const NNmodel &model, //!< Model description
 #endif
         }
         if (n.second.isSpikeTimeRequired()) {
-            variable_def(os, model.getPrecision()+" *", "sT"+n.first);
+            variable_def(os, model.getPrecision()+" *", "sT"+n.first, n.second.getSpikeTimeMode());
         }
 #ifndef CPU_ONLY
         if(n.second.isSimRNGRequired()) {
@@ -869,7 +880,7 @@ void genRunner(const NNmodel &model, //!< Model description
 
         auto neuronModel = n.second.getNeuronModel();
         for(auto const &v : neuronModel->getVars()) {
-            variable_def(os, v.second + " *", v.first + n.first);
+            variable_def(os, v.second + " *", v.first + n.first, n.second.getVarMode(v.first));
         }
         for(auto const &v : neuronModel->getExtraGlobalParams()) {
             os << v.second << " " <<  v.first << n.first << ";" << std::endl;
@@ -889,9 +900,9 @@ void genRunner(const NNmodel &model, //!< Model description
         const auto *wu = s.second.getWUModel();
         const auto *psm = s.second.getPSModel();
 
-        variable_def(os, model.getPrecision()+" *", "inSyn"+s.first);
+        variable_def(os, model.getPrecision()+" *", "inSyn"+s.first, NewModels::VarMode::HOST_AND_DEVICE);
         if (s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-            variable_def(os, "uint32_t *", "gp"+s.first);
+            variable_def(os, "uint32_t *", "gp"+s.first, NewModels::VarMode::HOST_AND_DEVICE);
         }
         if (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
             os << "SparseProjection C" << s.first << ";" << std::endl;
@@ -917,10 +928,10 @@ void genRunner(const NNmodel &model, //!< Model description
         }
         if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) { // not needed for GLOBALG, INDIVIDUALID
             for(const auto &v : wu->getVars()) {
-                variable_def(os, v.second + " *", v.first + s.first);
+                variable_def(os, v.second + " *", v.first + s.first, s.second.getWUVarMode(v.first));
             }
             for(const auto &v : psm->getVars()) {
-                variable_def(os, v.second+" *", v.first + s.first);
+                variable_def(os, v.second+" *", v.first + s.first, s.second.getPSVarMode(v.first));
             }
         }
 
