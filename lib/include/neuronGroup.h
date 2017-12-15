@@ -43,15 +43,24 @@ public:
 
     //!< Function to enable the use of zero-copied memory for spikes:
     //!< May improve IO performance at the expense of kernel performance
-    void setSpikeZeroCopyEnabled(bool enabled){ m_SpikeMode = enabled ? NewModels::VarMode::ZERO_COPY : NewModels::VarMode::HOST_AND_DEVICE; }
+    void setSpikeZeroCopyEnabled(bool enabled)
+    {
+        m_SpikeMode = enabled ? NewModels::VarMode::ZERO_COPY : NewModels::VarMode::HOST_AND_DEVICE;
+    }
 
     //!< Function to enable the use of zero-copied memory for spike-like events:
     //!< May improve IO performance at the expense of kernel performance
-    void setSpikeEventZeroCopyEnabled(bool enabled){ m_SpikeEventMode = enabled ? NewModels::VarMode::ZERO_COPY : NewModels::VarMode::HOST_AND_DEVICE; }
+    void setSpikeEventZeroCopyEnabled(bool enabled)
+    {
+        m_SpikeEventMode = enabled ? NewModels::VarMode::ZERO_COPY : NewModels::VarMode::HOST_AND_DEVICE;
+    }
 
     //!< Function to enable the use of zero-copied memory for spike times:
     //!< May improve IO performance at the expense of kernel performance
-    void setSpikeTimeZeroCopyEnabled(bool enabled){ m_SpikeTimeMode = enabled ? NewModels::VarMode::ZERO_COPY : NewModels::VarMode::HOST_AND_DEVICE; }
+    void setSpikeTimeZeroCopyEnabled(bool enabled)
+    {
+        m_SpikeTimeMode = enabled ? NewModels::VarMode::ZERO_COPY : NewModels::VarMode::HOST_AND_DEVICE; 
+    }
 
      //!< Function to enable the use zero-copied memory for a particular state variable:
      //!< May improve IO performance at the expense of kernel performance
@@ -59,6 +68,10 @@ public:
     {
         setVarMode(varName, enabled ? NewModels::VarMode::ZERO_COPY : NewModels::VarMode::HOST_AND_DEVICE);
     }
+
+    void setSpikeMode(NewModels::VarMode mode) { m_SpikeMode = mode; }
+    void setSpikeEventMode(NewModels::VarMode mode) { m_SpikeEventMode = mode; }
+    void setSpikeTimeMode(NewModels::VarMode mode) { m_SpikeTimeMode = mode; }
 
     //!< Function to set variable 'mode' - how variable is implemented in GPU simulation
     //!< This is ignored for CPU simulations
@@ -110,6 +123,9 @@ public:
     bool isZeroCopyEnabled() const;
     bool isVarZeroCopyEnabled(const std::string &var) const{ return (getVarMode(var) == NewModels::VarMode::ZERO_COPY); }
 
+    NewModels::VarMode getSpikeMode() const{ return m_SpikeMode; }
+    NewModels::VarMode getSpikeEventMode() const{ return m_SpikeEventMode; }
+    NewModels::VarMode getSpikeTimeMode() const{ return m_SpikeTimeMode; }
     NewModels::VarMode getVarMode(const std::string &varName) const;
 
     bool isParamRequiredBySpikeEventCondition(const std::string &pnamefull) const;
@@ -154,7 +170,6 @@ private:
     //!< Vector specifying which variables require queues
     bool m_AnyVarQueuesRequired;
     std::vector<bool> m_VarQueueRequired;
-    //std::set<string> m_VarQueueRequired;
 
     //!< Whether spikes from neuron group should use zero-copied memory
     NewModels::VarMode m_SpikeMode;
