@@ -144,6 +144,10 @@ public:
     //!< Does this neuron group require an RNG for it's init code
     bool isInitRNGRequired() const;
 
+    //! Can this neuron group run on the CPU? If we are running in CPU_ONLY mode this is always true,
+    //! but some GPU functionality will prevent models being run on both CPU and GPU.
+    bool canRunOnCPU() const;
+
     // **THINK** do this really belong here - it is very code-generation specific
     std::string getQueueOffset(const std::string &devPrefix) const;
 

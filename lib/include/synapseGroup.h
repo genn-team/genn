@@ -125,6 +125,10 @@ public:
     std::string getOffsetPre() const;
     std::string getOffsetPost(const std::string &devPrefix) const;
 
+    //! Can this synapse group run on the CPU? If we are running in CPU_ONLY mode this is always true,
+    //! but some GPU functionality will prevent models being run on both CPU and GPU.
+    bool canRunOnCPU() const;
+
 private:
     //------------------------------------------------------------------------
     // Private methods

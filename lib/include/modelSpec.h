@@ -131,6 +131,10 @@ public:
     //! Do any populations or initialisation code in this model require an RNG?
     bool isRNGRequired() const;
 
+    //! Can this model run on the CPU? If we are running in CPU_ONLY mode this is always true,
+    //! but some GPU functionality will prevent models being run on both CPU and GPU.
+    bool canRunOnCPU() const;
+
     //! Gets the name of the neuronal network model
     const std::string &getName() const{ return name; }
 

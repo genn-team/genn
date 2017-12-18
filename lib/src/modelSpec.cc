@@ -123,6 +123,32 @@ bool NNmodel::isRNGRequired() const
     return false;
 }
 
+bool NNmodel::canRunOnCPU() const
+{
+#ifndef CPU_ONLY
+    // If any of the neuron groups can't run on the CPU, return false
+    if(any_of(begin(m_NeuronGroups), end(m_NeuronGroups),
+        [](const NeuronGroupValueType &n)
+        {
+            return !n.second.canRunOnCPU();
+        }))
+    {
+        return false;
+    }
+
+    // If any of the synapse groups can't run on the CPU, return false
+    if(any_of(begin(m_SynapseGroups), end(m_SynapseGroups),
+        [](const SynapseGroupValueType &s)
+        {
+            return !s.second.canRunOnCPU();
+        }))
+    {
+        return false;
+    }
+#endif
+    return true;
+}
+
 //--------------------------------------------------------------------------
 /*! \brief This function is for setting which host and which device a neuron group will be simulated on
  */

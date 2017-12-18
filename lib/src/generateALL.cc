@@ -66,7 +66,7 @@ void generate_model_runner(const NNmodel &model,  //!< Model description
     // Generate initialization functions and kernel
     genInit(model, path);
 
-    #ifndef CPU_ONLY
+#ifndef CPU_ONLY
     // GPU specific code generation
     genRunnerGPU(model, path);
 
@@ -78,12 +78,15 @@ void generate_model_runner(const NNmodel &model,  //!< Model description
         genSynapseKernel(model, path);
     }
 #endif
-    // Generate the equivalent of neuron kernel
-    genNeuronFunction(model, path);
+    // If model can be run on CPU
+    if(model.canRunOnCPU()) {
+        // Generate the equivalent of neuron kernel
+        genNeuronFunction(model, path);
 
-    // Generate the equivalent of synapse and learning kernel
-    if (!model.getSynapseGroups().empty()) {
-        genSynapseFunction(model, path);
+        // Generate the equivalent of synapse and learning kernel
+        if (!model.getSynapseGroups().empty()) {
+            genSynapseFunction(model, path);
+        }
     }
 
     // Generate the Makefile for the generated code

@@ -1000,9 +1000,13 @@ void genRunner(const NNmodel &model, //!< Model description
     os << "#include \"runnerGPU.cc\"" << std::endl << std::endl;
 #endif
     os << "#include \"init.cc\"" << std::endl;
-    os << "#include \"neuronFnct.cc\"" << std::endl;
-    if (!model.getSynapseGroups().empty()) {
-        os << "#include \"synapseFnct.cc\"" << std::endl;
+
+    // If model can be run on GPU, include CPU simulation functions
+    if(model.canRunOnCPU()) {
+        os << "#include \"neuronFnct.cc\"" << std::endl;
+        if (!model.getSynapseGroups().empty()) {
+            os << "#include \"synapseFnct.cc\"" << std::endl;
+        }
     }
 
 
@@ -1307,43 +1311,46 @@ void genRunner(const NNmodel &model, //!< Model description
     os << "}" << std::endl;
     os << std::endl;
 
-    os << "// ------------------------------------------------------------------------" << std::endl;
-    os << "// the actual time stepping procedure (using CPU)" << std::endl;
-    os << "void stepTimeCPU()" << std::endl;
-    os << "{" << std::endl;
-    if (!model.getSynapseGroups().empty()) {
-        if (!model.getSynapseDynamicsGroups().empty()) {
-            if (model.isTimingEnabled()) os << "        synDyn_timer.startTimer();" << std::endl;
-            os << "        calcSynapseDynamicsCPU(t);" << std::endl;
+    // If model can be run on CPU
+    if(model.canRunOnCPU()) {
+        os << "// ------------------------------------------------------------------------" << std::endl;
+        os << "// the actual time stepping procedure (using CPU)" << std::endl;
+        os << "void stepTimeCPU()" << std::endl;
+        os << "{" << std::endl;
+        if (!model.getSynapseGroups().empty()) {
+            if (!model.getSynapseDynamicsGroups().empty()) {
+                if (model.isTimingEnabled()) os << "        synDyn_timer.startTimer();" << std::endl;
+                os << "        calcSynapseDynamicsCPU(t);" << std::endl;
+                if (model.isTimingEnabled()) {
+                    os << "        synDyn_timer.stopTimer();" << std::endl;
+                    os << "        synDyn_tme+= synDyn_timer.getElapsedTime();" << std::endl;
+                }
+            }
+            if (model.isTimingEnabled()) os << "        synapse_timer.startTimer();" << std::endl;
+            os << "        calcSynapsesCPU(t);" << std::endl;
             if (model.isTimingEnabled()) {
-                os << "        synDyn_timer.stopTimer();" << std::endl;
-                os << "        synDyn_tme+= synDyn_timer.getElapsedTime();" << std::endl;
+                os << "        synapse_timer.stopTimer();" << std::endl;
+                os << "        synapse_tme+= synapse_timer.getElapsedTime();"<< std::endl;
+            }
+            if (!model.getSynapsePostLearnGroups().empty()) {
+                if (model.isTimingEnabled()) os << "        learning_timer.startTimer();" << std::endl;
+                os << "        learnSynapsesPostHost(t);" << std::endl;
+                if (model.isTimingEnabled()) {
+                    os << "        learning_timer.stopTimer();" << std::endl;
+                    os << "        learning_tme+= learning_timer.getElapsedTime();" << std::endl;
+                }
             }
         }
-        if (model.isTimingEnabled()) os << "        synapse_timer.startTimer();" << std::endl;
-        os << "        calcSynapsesCPU(t);" << std::endl;
+        if (model.isTimingEnabled()) os << "    neuron_timer.startTimer();" << std::endl;
+        os << "    calcNeuronsCPU(t);" << std::endl;
         if (model.isTimingEnabled()) {
-            os << "        synapse_timer.stopTimer();" << std::endl;
-            os << "        synapse_tme+= synapse_timer.getElapsedTime();"<< std::endl;
+            os << "    neuron_timer.stopTimer();" << std::endl;
+            os << "    neuron_tme+= neuron_timer.getElapsedTime();" << std::endl;
         }
-        if (!model.getSynapsePostLearnGroups().empty()) {
-            if (model.isTimingEnabled()) os << "        learning_timer.startTimer();" << std::endl;
-            os << "        learnSynapsesPostHost(t);" << std::endl;
-            if (model.isTimingEnabled()) {
-                os << "        learning_timer.stopTimer();" << std::endl;
-                os << "        learning_tme+= learning_timer.getElapsedTime();" << std::endl;
-            }
-        }
+        os << "iT++;" << std::endl;
+        os << "t= iT*DT;" << std::endl;
+        os << "}" << std::endl;
     }
-    if (model.isTimingEnabled()) os << "    neuron_timer.startTimer();" << std::endl;
-    os << "    calcNeuronsCPU(t);" << std::endl;
-    if (model.isTimingEnabled()) {
-        os << "    neuron_timer.stopTimer();" << std::endl;
-        os << "    neuron_tme+= neuron_timer.getElapsedTime();" << std::endl;
-    }
-    os << "iT++;" << std::endl;
-    os << "t= iT*DT;" << std::endl;
-    os << "}" << std::endl;
     fs.close();
 
 

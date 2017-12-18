@@ -285,6 +285,40 @@ void SynapseGroup::addExtraGlobalSynapseDynamicsParams(std::map<string, string> 
     addExtraGlobalSynapseDynamicsParams(getName(), "", getWUModel()->getExtraGlobalParams(), kernelParameters);
 }
 
+
+std::string SynapseGroup::getOffsetPre() const
+{
+    return getSrcNeuronGroup()->isDelayRequired()
+        ? "(delaySlot * " + to_string(getSrcNeuronGroup()->getNumNeurons()) + ") + "
+        : "";
+}
+
+std::string SynapseGroup::getOffsetPost(const std::string &devPrefix) const
+{
+    return getTrgNeuronGroup()->getQueueOffset(devPrefix);
+}
+
+bool SynapseGroup::canRunOnCPU() const
+{
+#ifndef CPU_ONLY
+    // Return false if any of the weight update variables aren't present on the host
+    if(std::any_of(m_WUVarMode.cbegin(), m_WUVarMode.cend(),
+                   [](const VarMode mode){ return !(mode & VarLocation::HOST); }))
+    {
+        return false;
+    }
+
+    // Return false if any of the postsynaptic variables aren't present on the host
+    if(std::any_of(m_PSVarMode.cbegin(), m_PSVarMode.cend(),
+                   [](const VarMode mode){ return !(mode & VarLocation::HOST); }))
+    {
+        return false;
+    }
+#endif
+
+    return true;
+}
+
 void SynapseGroup::addExtraGlobalSimParams(const std::string &prefix, const std::string &suffix, const NewModels::Base::StringPairVec &extraGlobalParameters,
                                            std::map<std::string, std::string> &kernelParameters) const
 {
@@ -330,16 +364,4 @@ void SynapseGroup::addExtraGlobalSynapseDynamicsParams(const std::string &prefix
             }
         }
     }
-}
-
-std::string SynapseGroup::getOffsetPre() const
-{
-    return getSrcNeuronGroup()->isDelayRequired()
-        ? "(delaySlot * " + to_string(getSrcNeuronGroup()->getNumNeurons()) + ") + "
-        : "";
-}
-
-std::string SynapseGroup::getOffsetPost(const std::string &devPrefix) const
-{
-    return getTrgNeuronGroup()->getQueueOffset(devPrefix);
 }

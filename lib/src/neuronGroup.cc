@@ -185,6 +185,28 @@ bool NeuronGroup::isInitRNGRequired() const
     // **TODO** return true if any PSM variable initialisers use rngs
 }
 
+bool NeuronGroup::canRunOnCPU() const
+{
+    // If spike var isn't present on host return false
+    if(!(m_SpikeVarMode & VarLocation::HOST)) {
+        return false;
+    }
+
+    // If spike event var isn't present on host return false
+    if(!(m_SpikeEventVarMode & VarLocation::HOST)) {
+        return false;
+    }
+
+    // If spike event var isn't present on host return false
+    if(!(m_SpikeTimeVarMode & VarLocation::HOST)) {
+        return false;
+    }
+
+    // Return true if all of the variables are present on the host
+    return std::all_of(m_VarMode.cbegin(), m_VarMode.cend(),
+                       [](const VarMode mode){ return (mode & VarLocation::HOST); });
+}
+
 std::string NeuronGroup::getQueueOffset(const std::string &devPrefix) const
 {
     return isDelayRequired()
