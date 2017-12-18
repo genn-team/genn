@@ -273,8 +273,7 @@ void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
             string nvccCommand = "\"\"" NVCC "\" " + nvccFlags;
             nvccCommand += " -o \"" + cubinPath + "\" \"" + runnerPath + "\"\"";
 #else
-            if (model.isRNGRequired()) nvccFlags += " -std=c++11";
-            nvccFlags += " -I\"$GENN_PATH/lib/include\"";
+            nvccFlags += " -std=c++11 -I\"$GENN_PATH/lib/include\"";
             string runnerPath = path + "/" + model.getName() + "_CODE/runner.cc";
             string cubinPath = path + "/runner.cubin";
             string nvccCommand = "\"" NVCC "\" " + nvccFlags;
