@@ -1751,7 +1751,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
         os << "void pull" << n.first << "CurrentSpikesFromDevice()" << std::endl;
         os << CodeStream::OB(1061);
 
-        if(canPushPullVar(n.second.getSpikeEventVarMode())) {
+        if(canPushPullVar(n.second.getSpikeVarMode())) {
             if (n.second.isTrueSpikeRequired() && n.second.isDelayRequired()) {
                 os << "CHECK_CUDA_ERRORS(cudaMemcpy(glbSpkCnt" << n.first;
                 os << "+spkQuePtr" << n.first << ", d_glbSpkCnt" << n.first;
