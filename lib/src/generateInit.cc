@@ -22,15 +22,17 @@ namespace
 #ifndef CPU_ONLY
 unsigned int genInitNeuronKernel(CodeStream &os, const NNmodel &model)
 {
-    // If no neuron groups require an RNG for simulation, return zero and don't write kernel
+    // If no neuron groups require an RNG for simulation or on-device variable initialisation, return zero and don't write kernel
     if(std::none_of(std::begin(model.getNeuronGroups()), std::end(model.getNeuronGroups()),
                                [](const NNmodel::NeuronGroupValueType &n)
                                {
-                                   return n.second.isSimRNGRequired();
+                                   return (n.second.isSimRNGRequired() || n.second.isDeviceVarInitRequired());
                                }))
     {
         return 0;
     }
+
+    // **TODO** synapse groups
 
      // init kernel header
     os << "extern \"C\" __global__ void init()" << std::endl;
@@ -45,8 +47,8 @@ unsigned int genInitNeuronKernel(CodeStream &os, const NNmodel &model)
     unsigned int startThread = 0;
     unsigned int sequence = 0;
     for(const auto &n : model.getNeuronGroups()) {
-        // If this group requires an RNG to simulate
-        if(n.second.isSimRNGRequired()) {
+        // If this group requires an RNG to simulate or requires variables to be initialised on device
+        if(n.second.isSimRNGRequired() || n.second.isDeviceVarInitRequired()) {
             // Get padded size of group and hence it's end thread
             const unsigned int paddedSize = (unsigned int)(ceil((double)n.second.getNumNeurons() / (double)initBlkSz) * (double)initBlkSz);
             const unsigned int endThread = startThread + paddedSize;
@@ -61,10 +63,153 @@ unsigned int genInitNeuronKernel(CodeStream &os, const NNmodel &model)
             }
             os << "const unsigned int lid = id - " << startThread << ";" << std::endl;
 
+            // Determine which built in variables should be initialised on device
+            const bool shouldInitSpikeVar = (n.second.getSpikeVarMode() & VarInit::DEVICE);
+            const bool shouldInitSpikeEventVar = n.second.isSpikeEventRequired() && (n.second.getSpikeEventVarMode() & VarInit::DEVICE);
+            const bool shouldInitSpikeTimeVar = n.second.isSpikeTimeRequired() && (n.second.getSpikeTimeVarMode() & VarInit::DEVICE);
+
+            // If per-population spike variables should be initialised on device
+            // **NOTE** could optimise here and use getNumDelaySlots threads if getNumDelaySlots < numthreads
+            if(shouldInitSpikeVar || shouldInitSpikeEventVar)
+            {
+                os << "if(lid == 0)" << CodeStream::OB(21);
+
+                // If delay is required, loop over delay bins
+                if(n.second.isDelayRequired()) {
+                    os << "for (int i = 0; i < " << n.second.getNumDelaySlots() << "; i++)" << CodeStream::OB(22);
+                }
+
+                // Zero spike count
+                if(shouldInitSpikeVar) {
+                    if(n.second.isTrueSpikeRequired() && n.second.isDelayRequired()) {
+                        os << "dd_glbSpkCnt" << n.first << "[i] = 0;" << std::endl;
+                    }
+                    else {
+                        os << "dd_glbSpkCnt" << n.first << "[0] = 0;" << std::endl;
+                    }
+                }
+
+                // Zero spike event count
+                if(shouldInitSpikeEventVar) {
+                    if(n.second.isDelayRequired()) {
+                        os << "dd_glbSpkCntEvnt" << n.first << "[i] = 0;" << std::endl;
+                    }
+                    else {
+                        os << "dd_glbSpkCntEvnt" << n.first << "[0] = 0;" << std::endl;
+                    }
+                }
+
+                // If delay was required, close loop brace
+                if(n.second.isDelayRequired()) {
+                    os << CodeStream::CB(22);
+                }
+                os << CodeStream::CB(21);
+            }
+
             os << "// only do this for existing neurons" << std::endl;
             os << "if (lid < " << n.second.getNumNeurons() << ")" << CodeStream::OB(30);
             if(n.second.isSimRNGRequired()) {
                 os << "curand_init(" << model.getSeed() << ", " << sequence << " + lid, 0, &dd_rng" << n.first << "[lid]);" << std::endl;
+            }
+
+            // Build string to use for delayed variable index
+            const std::string delayedIndex = "(i * " + std::to_string(n.second.getNumNeurons()) + ") + lid";
+
+            // If spike variables are initialised on device
+            if(shouldInitSpikeVar || shouldInitSpikeEventVar || shouldInitSpikeTimeVar) {
+                // If delay is required, loop over delay bins
+                if(n.second.isDelayRequired()) {
+                    os << "for (int i = 0; i < " << n.second.getNumDelaySlots() << "; i++)" << CodeStream::OB(31);
+                }
+
+                // Zero spikes
+                if(shouldInitSpikeVar) {
+                    if(n.second.isTrueSpikeRequired() && n.second.isDelayRequired()) {
+                        os << "dd_glbSpk" << n.first << "[" << delayedIndex << "] = 0;" << std::endl;
+                    }
+                    else {
+                        os << "dd_glbSpk" << n.first << "[lid] = 0;" << std::endl;
+                    }
+                }
+
+                // Zero spike events
+                if(shouldInitSpikeEventVar) {
+                    if(n.second.isDelayRequired()) {
+                        os << "dd_glbSpkEvnt" << n.first << "[" << delayedIndex << "] = 0;" << std::endl;
+                    }
+                    else {
+                        os << "dd_glbSpkCnt" << n.first << "[lid] = 0;" << std::endl;
+                    }
+                }
+
+                // Reset spike times
+                if(shouldInitSpikeTimeVar) {
+                    if(n.second.isDelayRequired()) {
+                        os << "dd_sT" << n.first << "[" << delayedIndex << "] = -SCALAR_MAX;" << std::endl;
+                    }
+                    else {
+                        os << "dd_sT" << n.first << "[lid] = -SCALAR_MAX;" << std::endl;
+                    }
+                }
+
+                // If delay was required, close loop brace
+                if(n.second.isDelayRequired()) {
+                    os << CodeStream::CB(31) << std::endl;
+                }
+            }
+
+            // Loop through neuron variables
+            auto neuronModelVars = n.second.getNeuronModel()->getVars();
+            for (size_t j = 0; j < neuronModelVars.size(); j++) {
+                const auto &varInit = n.second.getVarInitialisers()[j];
+                const VarMode varMode = n.second.getVarMode(j);
+
+                // If this variable should be initialised on the device and has any initialisation code
+                if((varMode & VarInit::DEVICE) && !varInit.getSnippet()->getCode().empty()) {
+                    os << CodeStream::OB(32);
+
+                    // If variable requires a queue
+                    if (n.second.isVarQueueRequired(j)) {
+                        // Generate initial value into temporary variable
+                        os << neuronModelVars[j].second << " initVal;" << std::endl;
+                        os << StandardSubstitutions::initVariable(varInit, "initVal", cudaFunctions,
+                                                                  model.getPrecision(), "rng") << std::endl;
+
+                        // Copy this into all delay slots
+                        os << "for (int i = 0; i < " << n.second.getNumDelaySlots() << "; i++)" << CodeStream::OB(33);
+                        os << "dd_" << neuronModelVars[j].first << n.first << "[" << delayedIndex << "] = initVal;" << std::endl;
+                        os << CodeStream::CB(33) << std::endl;
+                    }
+                    // Otherwise, initialise directly into device variable
+                    else {
+                        os << StandardSubstitutions::initVariable(varInit, "dd_" + neuronModelVars[j].first + n.first + "[lid]",
+                                                                  cudaFunctions, model.getPrecision(), "rng") << std::endl;
+                    }
+
+
+                    os << CodeStream::CB(32);
+                }
+            }
+
+            // Loop through incoming synaptic populations
+            for(const auto *s : n.second.getInSyn()) {
+                // If matrix has individual state variables
+                // **THINK** should this REALLY also apply to postsynaptic models
+                if(s->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
+                    auto psmVars = s->getPSModel()->getVars();
+                    for(size_t j = 0; j < psmVars.size(); j++) {
+                        const auto &varInit = s->getPSVarInitialisers()[j];
+                        const VarMode varMode = s->getPSVarMode(j);
+
+                        // Initialise directly into device variable
+                        if((varMode & VarInit::DEVICE) && !varInit.getSnippet()->getCode().empty()) {
+                            os << CodeStream::OB(34);
+                            os << StandardSubstitutions::initVariable(varInit, "dd_" + psmVars[j].first + s->getName() + "[lid]",
+                                                                      cudaFunctions, model.getPrecision(), "rng") << std::endl;
+                            os << CodeStream::CB(34);
+                        }
+                    }
+                }
             }
 
             os << CodeStream::CB(30);
@@ -225,7 +370,7 @@ void genInit(const NNmodel &model,          //!< Model description
 
             // If this variable should be initialised on the host and has any initialisation code
             if((varMode & VarInit::HOST) && !varInit.getSnippet()->getCode().empty()) {
-                if (n.second.isVarQueueRequired(neuronModelVars[j].first)) {
+                if (n.second.isVarQueueRequired(j)) {
                     os << CodeStream::OB(190) << "for (int i = 0; i < " << n.second.getNumNeurons() * n.second.getNumDelaySlots() << "; i++)" << CodeStream::OB(200);
                 }
                 else {
@@ -342,7 +487,7 @@ void genInit(const NNmodel &model,          //!< Model description
 
             if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
                 for(const auto &v : s.second.getWUModel()->getVars()) {
-                    const VarMode varMode = s.second.getVarMode(v.first);
+                    const VarMode varMode = s.second.getWUVarMode(v.first);
 
                     // If variable is located on both host and device;
                     // and it isn't zero-copied, copy state variables to device
