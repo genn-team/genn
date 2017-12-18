@@ -164,8 +164,12 @@ for(b = 0; b < builderNodes.size; b++) {
                         // Process JUnit test output
                         junit "**/test_results*.xml";
                         
-                        // Archive compiler output
-                        archive "msg";
+                        // Rename output so name is unique 
+                        def uniqueMsg = "msg_" + env.NODE_NAME;
+                        sh "mv msg \"" + uniqueMsg + "\"";
+                        
+                        // Archive output
+                        archive uniqueMsg;
                     }
                 }
                 
