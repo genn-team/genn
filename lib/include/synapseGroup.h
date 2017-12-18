@@ -127,6 +127,12 @@ public:
     std::string getOffsetPre() const;
     std::string getOffsetPost(const std::string &devPrefix) const;
 
+    //!< Is device var init code required for any variables in this synapse group's postsynaptic model
+    bool isPSDeviceVarInitRequired() const;
+
+    //!< Is device var init code required for any variables in this synapse group's weight update model
+    bool isWUDeviceVarInitRequired() const;
+
     //! Can this synapse group run on the CPU? If we are running in CPU_ONLY mode this is always true,
     //! but some GPU functionality will prevent models being run on both CPU and GPU.
     bool canRunOnCPU() const;

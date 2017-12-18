@@ -113,6 +113,7 @@ public:
     bool isQueueRequired() const{ return m_QueueRequired; }
 
     bool isVarQueueRequired(const std::string &var) const;
+    bool isVarQueueRequired(size_t index) const{ return m_VarQueueRequired[index]; }
     bool isVarQueueRequired() const{ return m_AnyVarQueuesRequired; }
 
     const std::set<std::pair<std::string, std::string>> &getSpikeEventCondition() const{ return m_SpikeEventCondition; }
@@ -144,6 +145,9 @@ public:
 
     //!< Does this neuron group require an RNG for it's init code
     bool isInitRNGRequired() const;
+
+    //!< Is device var init code required for any variables in this neuron group
+    bool isDeviceVarInitRequired() const;
 
     //! Can this neuron group run on the CPU? If we are running in CPU_ONLY mode this is always true,
     //! but some GPU functionality will prevent models being run on both CPU and GPU.

@@ -159,18 +159,14 @@ bool NeuronGroup::isSimRNGRequired() const
         return true;
     }
 
-    // Loop through incoming synapse groups
-    for(const auto *sg : getInSyn()) {
-        // Return true if any parts of the postsynaptic model require an RNG
-        // **NOTE** these are included as they are simulated in the neuron kernel/function
-        if(::isRNGRequired(sg->getPSModel()->getApplyInputCode())
-            || ::isRNGRequired(sg->getPSModel()->getDecayCode()))
-        {
-            return true;
-        }
-    }
-
-    return false;
+    // Return true if any of the incoming synapse groups require an RNG in their postsynaptic model
+    // **NOTE** these are included as they are simulated in the neuron kernel/function
+    return std::any_of(getInSyn().cbegin(), getInSyn().cend(),
+                       [](const SynapseGroup *sg)
+                       {
+                           return (::isRNGRequired(sg->getPSModel()->getApplyInputCode()) ||
+                                   ::isRNGRequired(sg->getPSModel()->getDecayCode()));
+                       });
 }
 
 bool NeuronGroup::isInitRNGRequired() const
@@ -185,6 +181,35 @@ bool NeuronGroup::isInitRNGRequired() const
     // **TODO** return true if any PSM variable initialisers use rngs
 }
 
+bool NeuronGroup::isDeviceVarInitRequired() const
+{
+    // If spike var is initialised on device, return true
+    if(m_SpikeVarMode & VarInit::DEVICE) {
+        return true;
+    }
+
+    // If spike event var is initialised on device, return true
+    if(isSpikeEventRequired() && m_SpikeEventVarMode & VarInit::DEVICE) {
+        return true;
+    }
+
+    // If spike time var is initialised on device, return true
+    if(isSpikeTimeRequired() && m_SpikeTimeVarMode & VarInit::DEVICE) {
+        return true;
+    }
+
+    // Return true if any of the variables are initialised on the device
+    if(std::any_of(m_VarMode.cbegin(), m_VarMode.cend(),
+                   [](const VarMode mode){ return (mode & VarInit::DEVICE); })) {
+        return true;
+    }
+
+    // Return true if any of the incoming synapse groups have state variables which should be initialised on device
+    // **NOTE** these are included here as they are initialised in neuron initialisation threads
+    return std::any_of(getInSyn().cbegin(), getInSyn().cend(),
+                       [](const SynapseGroup *sg){ return sg->isPSDeviceVarInitRequired(); });
+}
+
 bool NeuronGroup::canRunOnCPU() const
 {
     // If spike var isn't present on host return false
@@ -193,12 +218,12 @@ bool NeuronGroup::canRunOnCPU() const
     }
 
     // If spike event var isn't present on host return false
-    if(!(m_SpikeEventVarMode & VarLocation::HOST)) {
+    if(isSpikeEventRequired() && !(m_SpikeEventVarMode & VarLocation::HOST)) {
         return false;
     }
 
-    // If spike event var isn't present on host return false
-    if(!(m_SpikeTimeVarMode & VarLocation::HOST)) {
+    // If spike time var isn't present on host return false
+    if(isSpikeTimeRequired() && !(m_SpikeTimeVarMode & VarLocation::HOST)) {
         return false;
     }
 

@@ -298,6 +298,32 @@ std::string SynapseGroup::getOffsetPost(const std::string &devPrefix) const
     return getTrgNeuronGroup()->getQueueOffset(devPrefix);
 }
 
+bool SynapseGroup::isPSDeviceVarInitRequired() const
+{
+    // If this synapse group has per-synapse state variables,
+    // return true if any of the postsynapse variables are initialised on the device
+    if (getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
+        return std::any_of(m_PSVarMode.cbegin(), m_PSVarMode.cend(),
+                        [](const VarMode mode){ return (mode & VarInit::DEVICE); });
+    }
+    else {
+        return false;
+    }
+}
+
+bool SynapseGroup::isWUDeviceVarInitRequired() const
+{
+    // If this synapse group has per-synapse state variables,
+    // return true if any of the weight update variables are initialised on the device
+    if (getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
+        return std::any_of(m_WUVarMode.cbegin(), m_WUVarMode.cend(),
+                        [](const VarMode mode){ return (mode & VarInit::DEVICE); });
+    }
+    else {
+        return false;
+    }
+}
+
 bool SynapseGroup::canRunOnCPU() const
 {
 #ifndef CPU_ONLY
