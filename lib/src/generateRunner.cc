@@ -39,14 +39,16 @@ namespace
 //! \brief This function generates host and device variable definitions, of the given type and name.
 //--------------------------------------------------------------------------
 
-void variable_def(CodeStream &os, const string &type, const string &name, NewModels::VarMode mode)
+void variable_def(CodeStream &os, const string &type, const string &name, VarMode mode)
 {
 #ifndef CPU_ONLY
-    if(mode != NewModels::VarMode::DEVICE_ONLY) {
+    if(mode & VarLocation::HOST) {
         os << type << " " << name << ";" << std::endl;
     }
-    os << type << " d_" << name << ";" << std::endl;
-    os << "__device__ " << type << " dd_" << name << ";" << std::endl;
+    if(mode & VarLocation::DEVICE) {
+        os << type << " d_" << name << ";" << std::endl;
+        os << "__device__ " << type << " dd_" << name << ";" << std::endl;
+    }
 #else
     USE(mode);
     os << type << " " << name << ";" << std::endl;
@@ -58,13 +60,15 @@ void variable_def(CodeStream &os, const string &type, const string &name, NewMod
 //! \brief This function generates host extern variable definitions, of the given type and name.
 //--------------------------------------------------------------------------
 
-void extern_variable_def(CodeStream &os, const string &type, const string &name, NewModels::VarMode mode)
+void extern_variable_def(CodeStream &os, const string &type, const string &name, VarMode mode)
 {
 #ifndef CPU_ONLY
-    if(mode != NewModels::VarMode::DEVICE_ONLY) {
+    if(mode & VarLocation::HOST) {
         os << "extern " << type << " " << name << ";" << std::endl;
     }
-    os << "extern " << type << " d_" << name << ";" << std::endl;
+    if(mode & VarLocation::DEVICE) {
+        os << "extern " << type << " d_" << name << ";" << std::endl;
+    }
 #else
     USE(mode);
     os << "extern " << type << " " << name << ";" << std::endl;
@@ -76,11 +80,11 @@ void extern_variable_def(CodeStream &os, const string &type, const string &name,
 //! \brief This function generates host allocation code
 //--------------------------------------------------------------------------
 
-void allocate_host_variable(CodeStream &os, const string &type, const string &name, NewModels::VarMode mode, const string &size)
+void allocate_host_variable(CodeStream &os, const string &type, const string &name, VarMode mode, const string &size)
 {
 #ifndef CPU_ONLY
-    if(mode != NewModels::VarMode::DEVICE_ONLY) {
-        const char *flags = (mode == NewModels::VarMode::ZERO_COPY) ? "cudaHostAllocMapped" : "cudaHostAllocPortable";
+    if(mode & VarLocation::HOST) {
+        const char *flags = (mode & VarLocation::ZERO_COPY) ? "cudaHostAllocMapped" : "cudaHostAllocPortable";
         os << "    cudaHostAlloc(&" << name << ", " << size << " * sizeof(" << type << "), " << flags << ");" << std::endl;
     }
 #else
@@ -90,20 +94,23 @@ void allocate_host_variable(CodeStream &os, const string &type, const string &na
 #endif
 }
 
-void allocate_host_variable(CodeStream &os, const string &type, const string &name, NewModels::VarMode mode, size_t size)
+void allocate_host_variable(CodeStream &os, const string &type, const string &name, VarMode mode, size_t size)
 {
     allocate_host_variable(os, type, name, mode, to_string(size));
 }
 
-void allocate_device_variable(CodeStream &os, const string &type, const string &name, NewModels::VarMode mode, const string &size)
+void allocate_device_variable(CodeStream &os, const string &type, const string &name, VarMode mode, const string &size)
 {
 #ifndef CPU_ONLY
-    // Insert call to correct helper depending on whether variable should be allocated in zero-copy mode or not
-    if(mode == NewModels::VarMode::ZERO_COPY) {
-        os << "    deviceZeroCopy(" << name << ", &d_" << name << ", dd_" << name << ");" << std::endl;
-    }
-    else {
-        os << "    deviceMemAllocate(&d_" << name << ", dd_" << name << ", " << size << " * sizeof(" << type << "));" << std::endl;
+    // If variable is present on device at all
+    if(mode & VarLocation::DEVICE) {
+        // Insert call to correct helper depending on whether variable should be allocated in zero-copy mode or not
+        if(mode & VarLocation::ZERO_COPY) {
+            os << "    deviceZeroCopy(" << name << ", &d_" << name << ", dd_" << name << ");" << std::endl;
+        }
+        else {
+            os << "    deviceMemAllocate(&d_" << name << ", dd_" << name << ", " << size << " * sizeof(" << type << "));" << std::endl;
+        }
     }
 #else
     USE(os);
@@ -114,7 +121,7 @@ void allocate_device_variable(CodeStream &os, const string &type, const string &
 #endif
 }
 
-void allocate_device_variable(CodeStream &os, const string &type, const string &name, NewModels::VarMode mode, size_t size)
+void allocate_device_variable(CodeStream &os, const string &type, const string &name, VarMode mode, size_t size)
 {
     allocate_device_variable(os, type, name, mode, to_string(size));
 }
@@ -122,7 +129,7 @@ void allocate_device_variable(CodeStream &os, const string &type, const string &
 //--------------------------------------------------------------------------
 //! \brief This function generates host and device allocation with standard names (name, d_name, dd_name) and estimates size based on size known at generate-time
 //--------------------------------------------------------------------------
-unsigned int allocate_variable(CodeStream &os, const string &type, const string &name, NewModels::VarMode mode, size_t size)
+unsigned int allocate_variable(CodeStream &os, const string &type, const string &name, VarMode mode, size_t size)
 {
     // Allocate host and device variables
     allocate_host_variable(os, type, name, mode, size);
@@ -132,17 +139,17 @@ unsigned int allocate_variable(CodeStream &os, const string &type, const string 
     return size * theSize(type);
 }
 
-void allocate_variable(CodeStream &os, const string &type, const string &name, NewModels::VarMode mode, const string &size)
+void allocate_variable(CodeStream &os, const string &type, const string &name, VarMode mode, const string &size)
 {
     // Allocate host and device variables
     allocate_host_variable(os, type, name, mode, size);
     allocate_device_variable(os, type, name, mode, size);
 }
 
-void free_host_variable(CodeStream &os, const string &name, NewModels::VarMode mode)
+void free_host_variable(CodeStream &os, const string &name, VarMode mode)
 {
 #ifndef CPU_ONLY
-    if(mode != NewModels::VarMode::DEVICE_ONLY) {
+    if(mode & VarLocation::HOST) {
         os << "    CHECK_CUDA_ERRORS(cudaFreeHost(" << name << "));" << std::endl;
     }
 #else
@@ -151,11 +158,11 @@ void free_host_variable(CodeStream &os, const string &name, NewModels::VarMode m
 #endif
 }
 
-void free_device_variable(CodeStream &os, const string &name, NewModels::VarMode mode)
+void free_device_variable(CodeStream &os, const string &name, VarMode mode)
 {
 #ifndef CPU_ONLY
     // If this variable wasn't allocated in zero-copy mode, free it
-    if(mode != NewModels::VarMode::ZERO_COPY) {
+    if(mode & VarLocation::DEVICE) {
         os << "    CHECK_CUDA_ERRORS(cudaFree(d_" << name << "));" << std::endl;
     }
 #else
@@ -168,7 +175,7 @@ void free_device_variable(CodeStream &os, const string &name, NewModels::VarMode
 //--------------------------------------------------------------------------
 //! \brief This function generates code to free host and device allocations with standard names (name, d_name, dd_name)
 //--------------------------------------------------------------------------
-void free_variable(CodeStream &os, const string &name, NewModels::VarMode mode)
+void free_variable(CodeStream &os, const string &name, VarMode mode)
 {
     free_host_variable(os, name, mode);
     free_device_variable(os, name, mode);
@@ -367,8 +374,7 @@ void genDefinitions(const NNmodel &model, //!< Model description
             extern_variable_def(os, v.second +" *", v.first + n.first, n.second.getVarMode(v.first));
         }
         for(auto const &v : neuronModel->getExtraGlobalParams()) {
-            // **TODO** external variables could, almost certainly, use DEVICE_ONLY mode
-            extern_variable_def(os, v.second, v.first + n.first, NewModels::VarMode::HOST_AND_DEVICE);
+            os << "extern " << v.second << " " << v.first + n.first << ";" << std::endl;
         }
     }
     os << std::endl;
@@ -430,9 +436,9 @@ void genDefinitions(const NNmodel &model, //!< Model description
     os << std::endl;
 
     for(const auto &s : model.getSynapseGroups()) {
-        extern_variable_def(os, model.getPrecision()+" *", "inSyn" + s.first, NewModels::VarMode::HOST_AND_DEVICE);
+        extern_variable_def(os, model.getPrecision()+" *", "inSyn" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST);
         if (s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-            extern_variable_def(os, "uint32_t *", "gp" + s.first, NewModels::VarMode::HOST_AND_DEVICE);
+            extern_variable_def(os, "uint32_t *", "gp" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST);
         }
         else if (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
             os << "extern SparseProjection C" << s.first << ";" << std::endl;
@@ -440,15 +446,15 @@ void genDefinitions(const NNmodel &model, //!< Model description
 
         if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) { // not needed for GLOBALG
             for(const auto &v : s.second.getWUModel()->getVars()) {
-                extern_variable_def(os, v.second + " *", v.first + s.first, NewModels::VarMode::HOST_AND_DEVICE);
+                extern_variable_def(os, v.second + " *", v.first + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST);
             }
             for(const auto &v : s.second.getPSModel()->getVars()) {
-                extern_variable_def(os, v.second + " *", v.first + s.first, NewModels::VarMode::HOST_AND_DEVICE);
+                extern_variable_def(os, v.second + " *", v.first + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST);
             }
         }
 
         for(auto const &p : s.second.getWUModel()->getExtraGlobalParams()) {
-            extern_variable_def(os, p.second, p.first + s.first, NewModels::VarMode::HOST_AND_DEVICE);
+            os << "extern " << p.second << " " << p.first + s.first << ";" << std::endl;
         }
     }
     os << std::endl;
@@ -900,9 +906,9 @@ void genRunner(const NNmodel &model, //!< Model description
         const auto *wu = s.second.getWUModel();
         const auto *psm = s.second.getPSModel();
 
-        variable_def(os, model.getPrecision()+" *", "inSyn"+s.first, NewModels::VarMode::HOST_AND_DEVICE);
+        variable_def(os, model.getPrecision()+" *", "inSyn"+s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST);
         if (s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-            variable_def(os, "uint32_t *", "gp"+s.first, NewModels::VarMode::HOST_AND_DEVICE);
+            variable_def(os, "uint32_t *", "gp"+s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST);
         }
         if (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
             os << "SparseProjection C" << s.first << ";" << std::endl;
@@ -936,7 +942,7 @@ void genRunner(const NNmodel &model, //!< Model description
         }
 
         for(const auto &v : wu->getExtraGlobalParams()) {
-            os << v.second << " " <<  v.first<< s.first << ";" << std::endl;
+            os << v.second << " " <<  v.first << s.first << ";" << std::endl;
         }
     }
     os << std::endl;
@@ -1072,7 +1078,7 @@ void genRunner(const NNmodel &model, //!< Model description
 
 #ifndef CPU_ONLY
         if(n.second.isSimRNGRequired()) {
-            allocate_device_variable(os, "curandState", "rng" + n.first, NewModels::VarMode::DEVICE_ONLY,
+            allocate_device_variable(os, "curandState", "rng" + n.first, VarMode::LOC_DEVICE_INIT_DEVICE,
                                      n.second.getNumNeurons());
         }
 #endif  // CPU_ONLY
@@ -1091,15 +1097,13 @@ void genRunner(const NNmodel &model, //!< Model description
         const auto *psm = s.second.getPSModel();
 
         // Allocate buffer to hold input coming from this synapse population
-        // **TODO** insyn could totally be DEVICE_ONLY
-        mem += allocate_variable(os, model.getPrecision(), "inSyn" + s.first, NewModels::VarMode::HOST_AND_DEVICE,
+        mem += allocate_variable(os, model.getPrecision(), "inSyn" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST,
                                  s.second.getTrgNeuronGroup()->getNumNeurons());
 
         // If connectivity is defined using a bitmask, allocate memory for bitmask
         if (s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
             const size_t gpSize = (s.second.getSrcNeuronGroup()->getNumNeurons() * s.second.getTrgNeuronGroup()->getNumNeurons()) / 32 + 1;
-            mem += allocate_variable(os, "uint32_t", "gp" + s.first, NewModels::VarMode::HOST_AND_DEVICE,
-                                     gpSize);
+            mem += allocate_variable(os, "uint32_t", "gp" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST, gpSize);
         }
         // Otherwise, if matrix connectivity is defined using a dense matrix, allocate user-defined weight model variables
         // **NOTE** if matrix is sparse, allocate later in the allocatesparsearrays function when we know the size of the network
@@ -1107,8 +1111,7 @@ void genRunner(const NNmodel &model, //!< Model description
             const size_t size = s.second.getSrcNeuronGroup()->getNumNeurons() * s.second.getTrgNeuronGroup()->getNumNeurons();
 
             for(const auto &v : wu->getVars()) {
-                mem += allocate_variable(os, v.second, v.first + s.first, s.second.getWUVarMode(v.first),
-                                         size);
+                mem += allocate_variable(os, v.second, v.first + s.first, s.second.getWUVarMode(v.first), size);
             }
         }
 
@@ -1116,8 +1119,7 @@ void genRunner(const NNmodel &model, //!< Model description
             const size_t size = s.second.getTrgNeuronGroup()->getNumNeurons();
 
             for(const auto &v : psm->getVars()) {
-                mem += allocate_variable(os, v.second, v.first + s.first, s.second.getPSVarMode(v.first),
-                                         size);
+                mem += allocate_variable(os, v.second, v.first + s.first, s.second.getPSVarMode(v.first), size);
             }
         }
         os << std::endl;
@@ -1134,30 +1136,30 @@ void genRunner(const NNmodel &model, //!< Model description
             os << "  C" << s.first << ".connN= connN;" << std::endl;
 
             // Allocate indices pointing to synapses in each presynaptic neuron's sparse matrix row
-            allocate_host_variable(os, "unsigned int", "C" + s.first + ".indInG", NewModels::VarMode::HOST_AND_DEVICE,
+            allocate_host_variable(os, "unsigned int", "C" + s.first + ".indInG", VarMode::LOC_HOST_DEVICE_INIT_HOST,
                                    s.second.getSrcNeuronGroup()->getNumNeurons() + 1);
 
             // Allocate the postsynaptic neuron indices that make up sparse matrix
-            allocate_host_variable(os, "unsigned int", "C" + s.first + ".ind", NewModels::VarMode::HOST_AND_DEVICE,
+            allocate_host_variable(os, "unsigned int", "C" + s.first + ".ind", VarMode::LOC_HOST_DEVICE_INIT_HOST,
                                    "connN");
 
             if (model.isSynapseGroupDynamicsRequired(s.first)) {
-                allocate_host_variable(os, "unsigned int", "C" + s.first + ".preInd", NewModels::VarMode::HOST_AND_DEVICE,
+                allocate_host_variable(os, "unsigned int", "C" + s.first + ".preInd", VarMode::LOC_HOST_DEVICE_INIT_HOST,
                                        "connN");
             } else {
                 os << "  C" << s.first << ".preInd= NULL;" << std::endl;
             }
             if (model.isSynapseGroupPostLearningRequired(s.first)) {
                 // Allocate indices pointing to synapses in each postsynaptic neuron's sparse matrix column
-                allocate_host_variable(os, "unsigned int", "C" + s.first + ".revIndInG", NewModels::VarMode::HOST_AND_DEVICE,
+                allocate_host_variable(os, "unsigned int", "C" + s.first + ".revIndInG", VarMode::LOC_HOST_DEVICE_INIT_HOST,
                                        s.second.getTrgNeuronGroup()->getNumNeurons() + 1);
 
                 // Allocate presynaptic neuron indices that make up postsynaptically indexed sparse matrix
-                allocate_host_variable(os, "unsigned int", "C" + s.first + ".revInd", NewModels::VarMode::HOST_AND_DEVICE,
+                allocate_host_variable(os, "unsigned int", "C" + s.first + ".revInd", VarMode::LOC_HOST_DEVICE_INIT_HOST,
                                        "connN");
 
                 // Allocate array mapping from postsynaptically to presynaptically indexed sparse matrix
-                allocate_host_variable(os, "unsigned int", "C" + s.first + ".remap", NewModels::VarMode::HOST_AND_DEVICE,
+                allocate_host_variable(os, "unsigned int", "C" + s.first + ".remap", VarMode::LOC_HOST_DEVICE_INIT_HOST,
                                        "connN");
             } else {
                 os << "  C" << s.first << ".revIndInG= NULL;" << std::endl;
@@ -1167,22 +1169,22 @@ void genRunner(const NNmodel &model, //!< Model description
 
             const string numConnections = "C" + s.first + ".connN";
 
-            allocate_device_variable(os, "unsigned int", "indInG" + s.first, NewModels::VarMode::HOST_AND_DEVICE,
+            allocate_device_variable(os, "unsigned int", "indInG" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST,
                                      s.second.getSrcNeuronGroup()->getNumNeurons() + 1);
 
-            allocate_device_variable(os, "unsigned int", "ind" + s.first, NewModels::VarMode::HOST_AND_DEVICE,
+            allocate_device_variable(os, "unsigned int", "ind" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST,
                                      numConnections);
 
             if (model.isSynapseGroupDynamicsRequired(s.first)) {
-                allocate_device_variable(os, "unsigned int", "preInd" + s.first, NewModels::VarMode::HOST_AND_DEVICE,
+                allocate_device_variable(os, "unsigned int", "preInd" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST,
                                          numConnections);
             }
             if (model.isSynapseGroupPostLearningRequired(s.first)) {
-                allocate_device_variable(os, "unsigned int", "revIndInG" + s.first, NewModels::VarMode::HOST_AND_DEVICE,
+                allocate_device_variable(os, "unsigned int", "revIndInG" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST,
                                          s.second.getTrgNeuronGroup()->getNumNeurons() + 1);
-                allocate_device_variable(os, "unsigned int", "revInd" + s.first, NewModels::VarMode::HOST_AND_DEVICE,
+                allocate_device_variable(os, "unsigned int", "revInd" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST,
                                          numConnections);
-                allocate_device_variable(os, "unsigned int", "remap" + s.first, NewModels::VarMode::HOST_AND_DEVICE,
+                allocate_device_variable(os, "unsigned int", "remap" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST,
                                          numConnections);
             }
 
@@ -1228,7 +1230,7 @@ void genRunner(const NNmodel &model, //!< Model description
 
 #ifndef CPU_ONLY
         if(n.second.isSimRNGRequired()) {
-            free_device_variable(os, "rng" + n.first, NewModels::VarMode::DEVICE_ONLY);
+            free_device_variable(os, "rng" + n.first, VarMode::LOC_DEVICE_INIT_DEVICE);
         }
 #endif
         // Free neuron state variables
@@ -1240,35 +1242,35 @@ void genRunner(const NNmodel &model, //!< Model description
 
     // FREE SYNAPSE VARIABLES
     for(const auto &s : model.getSynapseGroups()) {
-        free_variable(os, "inSyn" + s.first, NewModels::VarMode::HOST_AND_DEVICE);
+        free_variable(os, "inSyn" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST);
 
         if (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
             os << "    C" << s.first << ".connN= 0;" << std::endl;
 
-            free_host_variable(os, "C" + s.first + ".indInG", NewModels::VarMode::HOST_AND_DEVICE);
-            free_device_variable(os, "indInG" + s.first, NewModels::VarMode::HOST_AND_DEVICE);
+            free_host_variable(os, "C" + s.first + ".indInG", VarMode::LOC_HOST_DEVICE_INIT_HOST);
+            free_device_variable(os, "indInG" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST);
 
-            free_host_variable(os, "C" + s.first + ".ind", NewModels::VarMode::HOST_AND_DEVICE);
-            free_device_variable(os, "ind" + s.first, NewModels::VarMode::HOST_AND_DEVICE);
+            free_host_variable(os, "C" + s.first + ".ind", VarMode::LOC_HOST_DEVICE_INIT_HOST);
+            free_device_variable(os, "ind" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST);
 
             if (model.isSynapseGroupPostLearningRequired(s.first)) {
-                free_host_variable(os, "C" + s.first + ".revIndInG", NewModels::VarMode::HOST_AND_DEVICE);
-                free_device_variable(os, "revIndInG" + s.first, NewModels::VarMode::HOST_AND_DEVICE);
+                free_host_variable(os, "C" + s.first + ".revIndInG", VarMode::LOC_HOST_DEVICE_INIT_HOST);
+                free_device_variable(os, "revIndInG" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST);
 
-                free_host_variable(os, "C" + s.first + ".revInd", NewModels::VarMode::HOST_AND_DEVICE);
-                free_device_variable(os, "revInd" + s.first, NewModels::VarMode::HOST_AND_DEVICE);
+                free_host_variable(os, "C" + s.first + ".revInd", VarMode::LOC_HOST_DEVICE_INIT_HOST);
+                free_device_variable(os, "revInd" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST);
 
-                free_host_variable(os, "C" + s.first + ".remap", NewModels::VarMode::HOST_AND_DEVICE);
-                free_device_variable(os, "remap" + s.first, NewModels::VarMode::HOST_AND_DEVICE);
+                free_host_variable(os, "C" + s.first + ".remap", VarMode::LOC_HOST_DEVICE_INIT_HOST);
+                free_device_variable(os, "remap" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST);
             }
 
             if (model.isSynapseGroupDynamicsRequired(s.first)) {
-                free_host_variable(os, "C" + s.first + ".preInd", NewModels::VarMode::HOST_AND_DEVICE);
-                free_device_variable(os, "preInd" + s.first, NewModels::VarMode::HOST_AND_DEVICE);
+                free_host_variable(os, "C" + s.first + ".preInd", VarMode::LOC_HOST_DEVICE_INIT_HOST);
+                free_device_variable(os, "preInd" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST);
             }
         }
         if (s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-            free_variable(os, "gp" + s.first, NewModels::VarMode::HOST_AND_DEVICE);
+            free_variable(os, "gp" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST);
         }
         if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
             for(const auto &v : s.second.getWUModel()->getVars()) {

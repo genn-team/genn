@@ -6,6 +6,7 @@
 
 // GeNN includes
 #include "codeGenUtils.h"
+#include "global.h"
 #include "standardSubstitutions.h"
 #include "utils.h"
 
@@ -48,7 +49,7 @@ SynapseGroup::SynapseGroup(const std::string name, SynapseMatrixType matrixType,
         m_SrcNeuronGroup(srcNeuronGroup), m_TrgNeuronGroup(trgNeuronGroup),
         m_TrueSpikeRequired(false), m_SpikeEventRequired(false), m_EventThresholdReTestRequired(false),
         m_WUModel(wu), m_WUParams(wuParams), m_WUVarInitialisers(wuVarInitialisers), m_PSModel(ps), m_PSParams(psParams), m_PSVarInitialisers(psVarInitialisers),
-        m_WUVarMode(wuVarInitialisers.size(), NewModels::VarMode::HOST_AND_DEVICE), m_PSVarMode(psVarInitialisers.size(), NewModels::VarMode::HOST_AND_DEVICE),
+        m_WUVarMode(wuVarInitialisers.size(), GENN_PREFERENCES::defaultVarMode), m_PSVarMode(psVarInitialisers.size(), GENN_PREFERENCES::defaultVarMode),
         m_HostID(0), m_DeviceID(0)
 {
     // Check that the source neuron group supports the desired number of delay steps
@@ -71,12 +72,12 @@ SynapseGroup::SynapseGroup(const std::string name, SynapseMatrixType matrixType,
     srcNeuronGroup->addOutSyn(this);
 }
 
-void SynapseGroup::setWUVarMode(const std::string &varName, NewModels::VarMode mode)
+void SynapseGroup::setWUVarMode(const std::string &varName, VarMode mode)
 {
     m_WUVarMode[getWUModel()->getVarIndex(varName)] = mode;
 }
 
-void SynapseGroup::setPSVarMode(const std::string &varName, NewModels::VarMode mode)
+void SynapseGroup::setPSVarMode(const std::string &varName, VarMode mode)
 {
     m_PSVarMode[getPSModel()->getVarIndex(varName)] = mode;
 }
@@ -185,14 +186,14 @@ bool SynapseGroup::isZeroCopyEnabled() const
 {
     // If there are any postsynaptic variables implemented in zero-copy mode return true
     if(any_of(m_PSVarMode.begin(), m_PSVarMode.end(),
-        [](NewModels::VarMode mode){ return (mode == NewModels::VarMode::ZERO_COPY); }))
+        [](VarMode mode){ return (mode & VarLocation::ZERO_COPY); }))
     {
         return true;
     }
 
     // If there are any weight update variables implemented in zero-copy mode return true
     if(any_of(m_WUVarMode.begin(), m_WUVarMode.end(),
-        [](NewModels::VarMode mode){ return (mode == NewModels::VarMode::ZERO_COPY); }))
+        [](VarMode mode){ return (mode & VarLocation::ZERO_COPY); }))
     {
         return true;
     }
@@ -200,12 +201,12 @@ bool SynapseGroup::isZeroCopyEnabled() const
     return false;
 }
 
-NewModels::VarMode SynapseGroup::getWUVarMode(const std::string &var) const
+VarMode SynapseGroup::getWUVarMode(const std::string &var) const
 {
     return m_WUVarMode[getWUModel()->getVarIndex(var)];
 }
 
-NewModels::VarMode SynapseGroup::getPSVarMode(const std::string &var) const
+VarMode SynapseGroup::getPSVarMode(const std::string &var) const
 {
     return m_PSVarMode[getPSModel()->getVarIndex(var)];
 }

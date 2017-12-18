@@ -36,12 +36,12 @@ void NeuronGroup::updateVarQueues(const string &code)
     }
 }
 
-void NeuronGroup::setVarMode(const std::string &varName, NewModels::VarMode mode)
+void NeuronGroup::setVarMode(const std::string &varName, VarMode mode)
 {
     m_VarMode[getNeuronModel()->getVarIndex(varName)] = mode;
 }
 
-NewModels::VarMode NeuronGroup::getVarMode(const std::string &varName) const
+VarMode NeuronGroup::getVarMode(const std::string &varName) const
 {
     return m_VarMode[getNeuronModel()->getVarIndex(varName)];
 }
@@ -102,7 +102,7 @@ bool NeuronGroup::isZeroCopyEnabled() const
 
     // If there are any variables implemented in zero-copy mode return true
     if(any_of(m_VarMode.begin(), m_VarMode.end(),
-        [](NewModels::VarMode mode){ return (mode == NewModels::VarMode::ZERO_COPY); }))
+        [](VarMode mode){ return (mode & VarLocation::ZERO_COPY); }))
     {
         return true;
     }
