@@ -22,17 +22,28 @@ namespace
 #ifndef CPU_ONLY
 unsigned int genInitNeuronKernel(CodeStream &os, const NNmodel &model)
 {
-    // If no neuron groups require an RNG for simulation or on-device variable initialisation, return zero and don't write kernel
-    if(std::none_of(std::begin(model.getNeuronGroups()), std::end(model.getNeuronGroups()),
-                               [](const NNmodel::NeuronGroupValueType &n)
-                               {
-                                   return (n.second.isSimRNGRequired() || n.second.isDeviceVarInitRequired());
-                               }))
+    // Check whether any neuron groups require initialisation in this kernel
+    // **NOTE** this includes both simulation RNG seeds and variables initialised on device
+    const bool noNeuronInit = std::none_of(std::begin(model.getNeuronGroups()), std::end(model.getNeuronGroups()),
+                                           [](const NNmodel::NeuronGroupValueType &n)
+                                           {
+                                               return (n.second.isSimRNGRequired() || n.second.isDeviceVarInitRequired());
+                                           });
+
+    // Check whether any synapse groups require initialisation in this kernel
+    // **NOTE** this only includes dense matrices
+    const bool noSynapseInit = std::none_of(std::begin(model.getSynapseGroups()), std::end(model.getSynapseGroups()),
+                                            [](const NNmodel::SynapseGroupValueType &s)
+                                            {
+                                                return ((s.second.getMatrixType() & SynapseMatrixConnectivity::DENSE) &&
+                                                        s.second.isWUDeviceVarInitRequired());
+                                            });
+
+    // If no neuron or synapse groups require initialisation - return 0 - no kernel is required
+    if(noNeuronInit && noSynapseInit)
     {
         return 0;
     }
-
-    // **TODO** synapse groups
 
      // init kernel header
     os << "extern \"C\" __global__ void init()" << std::endl;
@@ -214,6 +225,39 @@ unsigned int genInitNeuronKernel(CodeStream &os, const NNmodel &model)
 
             os << CodeStream::CB(30);
             os << CodeStream::CB(20);
+
+            // Increment sequence number
+            sequence++;
+
+            // Update start thread
+            startThread = endThread;
+        }
+    }
+
+
+    // Loop through synapse groups
+    for(const auto &s : model.getSynapseGroups()) {
+        // If this group has dense connectivity and it's weight update has variables that require initialising on GPU
+        if((s.second->getMatrixType() & SynapseMatrixConnectivity::DENSE) && s.second.isWUDeviceVarInitRequired()) {
+            // Get padded size of group and hence it's end thread
+            const unsigned int paddedSize = (unsigned int)(ceil((double)n.second.getNumNeurons() / (double)initBlkSz) * (double)initBlkSz);
+            const unsigned int endThread = startThread + paddedSize;
+
+            // Write if block to determine if this thread should be used for this neuron group
+            os << "// synapse group " << s.first << std::endl;
+            if(startThread == 0) {
+                os << "if (id < " << endThread << ")" << CodeStream::OB(40);
+            }
+            else {
+                os << "if ((id >= " << startThread << ") && (id < " << endThread << "))" << CodeStream::OB(40);
+            }
+            os << "const unsigned int lid = id - " << startThread << ";" << std::endl;
+
+            os << "// only do this for existing neurons" << std::endl;
+            os << "if (lid < " << n.second.getNumNeurons() << ")" << CodeStream::OB(50);
+
+            os << CodeStream::CB(50);
+            os << CodeStream::CB(40);
 
             // Increment sequence number
             sequence++;
@@ -420,7 +464,7 @@ void genInit(const NNmodel &model,          //!< Model description
                 if((varMode & VarInit::HOST) && !varInit.getSnippet()->getCode().empty()) {
                     os << CodeStream::OB(250) << "for (int i = 0; i < " << numSrcNeurons * numTrgNeurons << "; i++)" << CodeStream::OB(260);
                     os << StandardSubstitutions::initVariable(varInit, wuVars[k].first + s.first + "[i]",
-                                                                cpuFunctions, model.getPrecision(), "rng") << std::endl;
+                                                              cpuFunctions, model.getPrecision(), "rng") << std::endl;
                     os << CodeStream::CB(260) << CodeStream::CB(250) << std::endl;
                 }
             }
