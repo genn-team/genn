@@ -110,7 +110,9 @@ public:
     bool isPSVarZeroCopyEnabled(const std::string &var) const{ return (getPSVarMode(var) & VarLocation::ZERO_COPY); }
 
     VarMode getWUVarMode(const std::string &var) const;
+    VarMode getWUVarMode(size_t index) const{ return m_WUVarMode[index]; }
     VarMode getPSVarMode(const std::string &var) const;
+    VarMode getPSVarMode(size_t index) const{ return m_PSVarMode[index]; }
 
     //!< Is this synapse group too large to use shared memory for combining postsynaptic output
     // **THINK** this is very cuda-specific

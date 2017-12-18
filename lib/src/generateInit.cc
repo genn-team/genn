@@ -176,39 +176,43 @@ void genInit(const NNmodel &model,          //!< Model description
 #endif
         }
 
-        if (n.second.isTrueSpikeRequired() && n.second.isDelayRequired()) {
-            os << CodeStream::OB(50) << "for (int i = 0; i < " << n.second.getNumDelaySlots() << "; i++)" << CodeStream::OB(60);
-            os << "glbSpkCnt" << n.first << "[i] = 0;" << std::endl;
-            os << CodeStream::CB(60) << CodeStream::CB(50) << std::endl;
+        if(n.second.getSpikeVarMode() & VarInit::HOST) {
+            if (n.second.isTrueSpikeRequired() && n.second.isDelayRequired()) {
+                os << CodeStream::OB(50) << "for (int i = 0; i < " << n.second.getNumDelaySlots() << "; i++)" << CodeStream::OB(60);
+                os << "glbSpkCnt" << n.first << "[i] = 0;" << std::endl;
+                os << CodeStream::CB(60) << CodeStream::CB(50) << std::endl;
 
-            os << CodeStream::OB(70) << "for (int i = 0; i < " << n.second.getNumNeurons() * n.second.getNumDelaySlots() << "; i++)" << CodeStream::OB(80);
-            os << "glbSpk" << n.first << "[i] = 0;" << std::endl;
-            os << CodeStream::CB(80) << CodeStream::CB(70) << std::endl;
-        }
-        else {
-            os << "glbSpkCnt" << n.first << "[0] = 0;" << std::endl;
-            os << CodeStream::OB(90) << "for (int i = 0; i < " << n.second.getNumNeurons() << "; i++)" << CodeStream::OB(100);
-            os << "glbSpk" << n.first << "[i] = 0;" << std::endl;
-            os << CodeStream::CB(100) << CodeStream::CB(90) << std::endl;
-        }
-
-        if (n.second.isSpikeEventRequired() && n.second.isDelayRequired()) {
-            os << CodeStream::OB(110) << "for (int i = 0; i < " << n.second.getNumDelaySlots() << "; i++)" << CodeStream::OB(120);
-            os << "glbSpkCntEvnt" << n.first << "[i] = 0;" << std::endl;
-            os << CodeStream::CB(120) << CodeStream::CB(110) << std::endl;
-
-            os << CodeStream::OB(130) << "for (int i = 0; i < " << n.second.getNumNeurons() * n.second.getNumDelaySlots() << "; i++)" << CodeStream::OB(140);
-            os << "glbSpkEvnt" << n.first << "[i] = 0;" << std::endl;
-            os << CodeStream::CB(140) << CodeStream::CB(130) << std::endl;
-        }
-        else if (n.second.isSpikeEventRequired()) {
-            os << "glbSpkCntEvnt" << n.first << "[0] = 0;" << std::endl;
-            os << CodeStream::OB(150) << "for (int i = 0; i < " << n.second.getNumNeurons() << "; i++)" << CodeStream::OB(160);
-            os << "glbSpkEvnt" << n.first << "[i] = 0;" << std::endl;
-            os << CodeStream::CB(160) << CodeStream::CB(150) << std::endl;
+                os << CodeStream::OB(70) << "for (int i = 0; i < " << n.second.getNumNeurons() * n.second.getNumDelaySlots() << "; i++)" << CodeStream::OB(80);
+                os << "glbSpk" << n.first << "[i] = 0;" << std::endl;
+                os << CodeStream::CB(80) << CodeStream::CB(70) << std::endl;
+            }
+            else {
+                os << "glbSpkCnt" << n.first << "[0] = 0;" << std::endl;
+                os << CodeStream::OB(90) << "for (int i = 0; i < " << n.second.getNumNeurons() << "; i++)" << CodeStream::OB(100);
+                os << "glbSpk" << n.first << "[i] = 0;" << std::endl;
+                os << CodeStream::CB(100) << CodeStream::CB(90) << std::endl;
+            }
         }
 
-        if (n.second.isSpikeTimeRequired()) {
+        if(n.second.isSpikeEventRequired() && (n.second.getSpikeEventVarMode() & VarInit::HOST)) {
+            if (n.second.isDelayRequired()) {
+                os << CodeStream::OB(110) << "for (int i = 0; i < " << n.second.getNumDelaySlots() << "; i++)" << CodeStream::OB(120);
+                os << "glbSpkCntEvnt" << n.first << "[i] = 0;" << std::endl;
+                os << CodeStream::CB(120) << CodeStream::CB(110) << std::endl;
+
+                os << CodeStream::OB(130) << "for (int i = 0; i < " << n.second.getNumNeurons() * n.second.getNumDelaySlots() << "; i++)" << CodeStream::OB(140);
+                os << "glbSpkEvnt" << n.first << "[i] = 0;" << std::endl;
+                os << CodeStream::CB(140) << CodeStream::CB(130) << std::endl;
+            }
+            else {
+                os << "glbSpkCntEvnt" << n.first << "[0] = 0;" << std::endl;
+                os << CodeStream::OB(150) << "for (int i = 0; i < " << n.second.getNumNeurons() << "; i++)" << CodeStream::OB(160);
+                os << "glbSpkEvnt" << n.first << "[i] = 0;" << std::endl;
+                os << CodeStream::CB(160) << CodeStream::CB(150) << std::endl;
+            }
+        }
+
+        if (n.second.isSpikeTimeRequired() && (n.second.getSpikeTimeVarMode() & VarInit::HOST)) {
             os << CodeStream::OB(170) << "for (int i = 0; i < " << n.second.getNumNeurons() * n.second.getNumDelaySlots() << "; i++)" << CodeStream::OB(180);
             os << "sT" <<  n.first << "[i] = -SCALAR_MAX;" << std::endl;
             os << CodeStream::CB(180) << CodeStream::CB(170) << std::endl;
@@ -217,9 +221,10 @@ void genInit(const NNmodel &model,          //!< Model description
         auto neuronModelVars = n.second.getNeuronModel()->getVars();
         for (size_t j = 0; j < neuronModelVars.size(); j++) {
             const auto &varInit = n.second.getVarInitialisers()[j];
+            const VarMode varMode = n.second.getVarMode(j);
 
-            // If this variable has any initialisation code
-            if(!varInit.getSnippet()->getCode().empty()) {
+            // If this variable should be initialised on the host and has any initialisation code
+            if((varMode & VarInit::HOST) && !varInit.getSnippet()->getCode().empty()) {
                 if (n.second.isVarQueueRequired(neuronModelVars[j].first)) {
                     os << CodeStream::OB(190) << "for (int i = 0; i < " << n.second.getNumNeurons() * n.second.getNumDelaySlots() << "; i++)" << CodeStream::OB(200);
                 }
@@ -264,11 +269,15 @@ void genInit(const NNmodel &model,          //!< Model description
             auto wuVars = wu->getVars();
             for (size_t k= 0, l= wuVars.size(); k < l; k++) {
                 const auto &varInit = s.second.getWUVarInitialisers()[k];
+                const VarMode varMode = s.second.getWUVarMode(k);
 
-                os << CodeStream::OB(250) << "for (int i = 0; i < " << numSrcNeurons * numTrgNeurons << "; i++)" << CodeStream::OB(260);
-                os << StandardSubstitutions::initVariable(varInit, wuVars[k].first + s.first + "[i]",
-                                                            cpuFunctions, model.getPrecision(), "rng") << std::endl;
-                os << CodeStream::CB(260) << CodeStream::CB(250) << std::endl;
+                // If this variable should be initialised on the host and has any initialisation code
+                if((varMode & VarInit::HOST) && !varInit.getSnippet()->getCode().empty()) {
+                    os << CodeStream::OB(250) << "for (int i = 0; i < " << numSrcNeurons * numTrgNeurons << "; i++)" << CodeStream::OB(260);
+                    os << StandardSubstitutions::initVariable(varInit, wuVars[k].first + s.first + "[i]",
+                                                                cpuFunctions, model.getPrecision(), "rng") << std::endl;
+                    os << CodeStream::CB(260) << CodeStream::CB(250) << std::endl;
+                }
             }
         }
 
@@ -278,9 +287,10 @@ void genInit(const NNmodel &model,          //!< Model description
             auto psmVars = psm->getVars();
             for (size_t k= 0, l= psmVars.size(); k < l; k++) {
                 const auto &varInit = s.second.getPSVarInitialisers()[k];
+                const VarMode varMode = s.second.getPSVarMode(k);
 
-                // If this variable has any initialisation code
-                if(!varInit.getSnippet()->getCode().empty()) {
+                // If this variable should be initialised on the host and has any initialisation code
+                if((varMode & VarInit::HOST) && !varInit.getSnippet()->getCode().empty()) {
                     // Loop through postsynaptic neurons and substitute in initialisation code
                     os << CodeStream::OB(270) << "for (int i = 0; i < " << numTrgNeurons << "; i++)" << CodeStream::OB(280);
                     os << StandardSubstitutions::initVariable(varInit, psmVars[k].first + s.first + "[i]",
@@ -332,7 +342,13 @@ void genInit(const NNmodel &model,          //!< Model description
 
             if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
                 for(const auto &v : s.second.getWUModel()->getVars()) {
-                    if(!s.second.isWUVarZeroCopyEnabled(v.first)) {
+                    const VarMode varMode = s.second.getVarMode(v.first);
+
+                    // If variable is located on both host and device;
+                    // and it isn't zero-copied, copy state variables to device
+                    if((varMode & VarLocation::HOST) && (varMode & VarLocation::DEVICE) &&
+                        !(varMode & VarLocation::ZERO_COPY))
+                    {
                         os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << v.first << s.first << ", ";
                         os << v.first << s.first << ", ";
                         os << "sizeof(" << v.second << ") * C" << s.first << ".connN , cudaMemcpyHostToDevice));" << std::endl;
@@ -367,11 +383,15 @@ void genInit(const NNmodel &model,          //!< Model description
                 auto wuVars = s.second.getWUModel()->getVars();
                 for (size_t k= 0, l= wuVars.size(); k < l; k++) {
                     const auto &varInit = s.second.getWUVarInitialisers()[k];
+                    const VarMode varMode = s.second.getWUVarMode(k);
 
-                    os << CodeStream::OB(310) << "for (int i = 0; i < C" << s.first << ".connN; i++)" << CodeStream::OB(320);
-                    os << StandardSubstitutions::initVariable(varInit, wuVars[k].first + s.first + "[i]",
-                                                              cpuFunctions, model.getPrecision(), "rng") << std::endl;
-                    os << CodeStream::CB(320) << CodeStream::CB(310) << std::endl;
+                    // If this variable should be initialised on the host and has any initialisation code
+                    if((varMode & VarInit::HOST) && !varInit.getSnippet()->getCode().empty()) {
+                        os << CodeStream::OB(310) << "for (int i = 0; i < C" << s.first << ".connN; i++)" << CodeStream::OB(320);
+                        os << StandardSubstitutions::initVariable(varInit, wuVars[k].first + s.first + "[i]",
+                                                                cpuFunctions, model.getPrecision(), "rng") << std::endl;
+                        os << CodeStream::CB(320) << CodeStream::CB(310) << std::endl;
+                    }
                 }
             }
 

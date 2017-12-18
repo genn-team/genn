@@ -130,6 +130,7 @@ public:
     VarMode getSpikeEventVarMode() const{ return m_SpikeEventVarMode; }
     VarMode getSpikeTimeVarMode() const{ return m_SpikeTimeVarMode; }
     VarMode getVarMode(const std::string &varName) const;
+    VarMode getVarMode(size_t index) const{ return m_VarMode[index]; }
 
     bool isParamRequiredBySpikeEventCondition(const std::string &pnamefull) const;
 
