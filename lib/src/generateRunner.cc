@@ -180,6 +180,18 @@ void free_variable(CodeStream &os, const string &name, VarMode mode)
     free_host_variable(os, name, mode);
     free_device_variable(os, name, mode);
 }
+
+//--------------------------------------------------------------------------
+//! \brief Can a variable with this mode be pushed and pulled between device and host
+//--------------------------------------------------------------------------
+bool canPushPullVar(VarMode varMode)
+{
+    // A variable can be pushed and pulled if it is located
+    // on both host and device and doesn't use zero-copy memory
+    return ((varMode & VarLocation::HOST) &&
+            (varMode & VarLocation::DEVICE) &&
+            !(varMode & VarLocation::ZERO_COPY));
+}
 }
 
 //--------------------------------------------------------------------------
@@ -352,17 +364,17 @@ void genDefinitions(const NNmodel &model, //!< Model description
     os << std::endl;
 
     for(const auto &n : model.getNeuronGroups()) {
-        extern_variable_def(os, "unsigned int *", "glbSpkCnt"+n.first, n.second.getSpikeMode());
-        extern_variable_def(os, "unsigned int *", "glbSpk"+n.first, n.second.getSpikeMode());
+        extern_variable_def(os, "unsigned int *", "glbSpkCnt"+n.first, n.second.getSpikeVarMode());
+        extern_variable_def(os, "unsigned int *", "glbSpk"+n.first, n.second.getSpikeVarMode());
         if (n.second.isSpikeEventRequired()) {
-            extern_variable_def(os, "unsigned int *", "glbSpkCntEvnt"+n.first, n.second.getSpikeEventMode());
-            extern_variable_def(os, "unsigned int *", "glbSpkEvnt"+n.first, n.second.getSpikeEventMode());
+            extern_variable_def(os, "unsigned int *", "glbSpkCntEvnt"+n.first, n.second.getSpikeEventVarMode());
+            extern_variable_def(os, "unsigned int *", "glbSpkEvnt"+n.first, n.second.getSpikeEventVarMode());
         }
         if (n.second.isDelayRequired()) {
             os << "extern unsigned int spkQuePtr" << n.first << ";" << std::endl;
         }
         if (n.second.isSpikeTimeRequired()) {
-            extern_variable_def(os, model.getPrecision()+" *", "sT"+n.first, n.second.getSpikeTimeMode());
+            extern_variable_def(os, model.getPrecision()+" *", "sT"+n.first, n.second.getSpikeTimeVarMode());
         }
 #ifndef CPU_ONLY
         if(n.second.isSimRNGRequired()) {
@@ -862,11 +874,11 @@ void genRunner(const NNmodel &model, //!< Model description
     os << "__device__ volatile unsigned int d_done;" << std::endl;
 #endif
     for(const auto &n : model.getNeuronGroups()) {
-        variable_def(os, "unsigned int *", "glbSpkCnt"+n.first, n.second.getSpikeMode());
-        variable_def(os, "unsigned int *", "glbSpk"+n.first, n.second.getSpikeMode());
+        variable_def(os, "unsigned int *", "glbSpkCnt"+n.first, n.second.getSpikeVarMode());
+        variable_def(os, "unsigned int *", "glbSpk"+n.first, n.second.getSpikeVarMode());
         if (n.second.isSpikeEventRequired()) {
-            variable_def(os, "unsigned int *", "glbSpkCntEvnt"+n.first, n.second.getSpikeEventMode());
-            variable_def(os, "unsigned int *", "glbSpkEvnt"+n.first, n.second.getSpikeEventMode());
+            variable_def(os, "unsigned int *", "glbSpkCntEvnt"+n.first, n.second.getSpikeEventVarMode());
+            variable_def(os, "unsigned int *", "glbSpkEvnt"+n.first, n.second.getSpikeEventVarMode());
         }
         if (n.second.isDelayRequired()) {
             os << "unsigned int spkQuePtr" << n.first << ";" << std::endl;
@@ -875,7 +887,7 @@ void genRunner(const NNmodel &model, //!< Model description
 #endif
         }
         if (n.second.isSpikeTimeRequired()) {
-            variable_def(os, model.getPrecision()+" *", "sT"+n.first, n.second.getSpikeTimeMode());
+            variable_def(os, model.getPrecision()+" *", "sT"+n.first, n.second.getSpikeTimeVarMode());
         }
 #ifndef CPU_ONLY
         if(n.second.isSimRNGRequired()) {
@@ -1052,27 +1064,27 @@ void genRunner(const NNmodel &model, //!< Model description
     unsigned int mem = 0;
     for(const auto &n : model.getNeuronGroups()) {
         // Allocate population spike count
-        mem += allocate_variable(os, "unsigned int", "glbSpkCnt" + n.first, n.second.getSpikeMode(),
+        mem += allocate_variable(os, "unsigned int", "glbSpkCnt" + n.first, n.second.getSpikeVarMode(),
                                  n.second.isTrueSpikeRequired() ? n.second.getNumDelaySlots() : 1);
 
         // Allocate population spike output buffer
-        mem += allocate_variable(os, "unsigned int", "glbSpk" + n.first, n.second.getSpikeMode(),
+        mem += allocate_variable(os, "unsigned int", "glbSpk" + n.first, n.second.getSpikeVarMode(),
                                  n.second.isTrueSpikeRequired() ? n.second.getNumNeurons() * n.second.getNumDelaySlots() : n.second.getNumNeurons());
 
 
         if (n.second.isSpikeEventRequired()) {
             // Allocate population spike-like event counters
-            mem += allocate_variable(os, "unsigned int", "glbSpkCntEvnt" + n.first, n.second.getSpikeEventMode(),
+            mem += allocate_variable(os, "unsigned int", "glbSpkCntEvnt" + n.first, n.second.getSpikeEventVarMode(),
                                      n.second.getNumDelaySlots());
 
             // Allocate population spike-like event output buffer
-            mem += allocate_variable(os, "unsigned int", "glbSpkEvnt" + n.first, n.second.getSpikeEventMode(),
+            mem += allocate_variable(os, "unsigned int", "glbSpkEvnt" + n.first, n.second.getSpikeEventVarMode(),
                                      n.second.getNumNeurons() * n.second.getNumDelaySlots());
         }
 
         // Allocate buffer to hold last spike times if required
         if (n.second.isSpikeTimeRequired()) {
-            mem += allocate_variable(os, model.getPrecision(), "sT" + n.first, n.second.getSpikeTimeMode(),
+            mem += allocate_variable(os, model.getPrecision(), "sT" + n.first, n.second.getSpikeTimeVarMode(),
                                      n.second.getNumNeurons() * n.second.getNumDelaySlots());
         }
 
@@ -1214,18 +1226,18 @@ void genRunner(const NNmodel &model, //!< Model description
     // FREE NEURON VARIABLES
     for(const auto &n : model.getNeuronGroups()) {
         // Free spike buffer
-        free_variable(os, "glbSpkCnt" + n.first, n.second.getSpikeMode());
-        free_variable(os, "glbSpk" + n.first, n.second.getSpikeMode());
+        free_variable(os, "glbSpkCnt" + n.first, n.second.getSpikeVarMode());
+        free_variable(os, "glbSpk" + n.first, n.second.getSpikeVarMode());
 
         // Free spike-like event buffer if allocated
         if (n.second.isSpikeEventRequired()) {
-            free_variable(os, "glbSpkCntEvnt" + n.first, n.second.getSpikeEventMode());
-            free_variable(os, "glbSpkEvnt" + n.first, n.second.getSpikeEventMode());
+            free_variable(os, "glbSpkCntEvnt" + n.first, n.second.getSpikeEventVarMode());
+            free_variable(os, "glbSpkEvnt" + n.first, n.second.getSpikeEventVarMode());
         }
 
         // Free last spike time buffer if allocated
         if (n.second.isSpikeTimeRequired()) {
-            free_variable(os, "sT" + n.first, n.second.getSpikeTimeMode());
+            free_variable(os, "sT" + n.first, n.second.getSpikeTimeVarMode());
         }
 
 #ifndef CPU_ONLY
@@ -1479,8 +1491,9 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
         os << CodeStream::OB(1050);
 
         for(const auto &v : n.second.getNeuronModel()->getVars()) {
-            // only copy non-zero-copied, non-pointers. Pointers don't transport between GPU and CPU
-            if (v.second.find("*") == string::npos && !n.second.isVarZeroCopyEnabled(v.first)) {
+            // only copy variables which aren't pointers (pointers don't transport between GPU and CPU)
+            // and are present on both device and host.
+            if (v.second.find("*") == string::npos && canPushPullVar(n.second.getVarMode(v.first))){
                 const size_t size = n.second.isVarQueueRequired(v.first)
                     ? n.second.getNumNeurons() * n.second.getNumDelaySlots()
                     : n.second.getNumNeurons();
@@ -1497,7 +1510,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
         os << "void push" << n.first << "SpikesToDevice()" << std::endl;
         os << CodeStream::OB(1060);
 
-        if(!n.second.isSpikeZeroCopyEnabled()) {
+        if(canPushPullVar(n.second.getSpikeVarMode())) {
             const size_t glbSpkCntSize = n.second.isTrueSpikeRequired() ? n.second.getNumDelaySlots() : 1;
             os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_glbSpkCnt" << n.first;
             os << ", glbSpkCnt" << n.first;
@@ -1513,7 +1526,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
           os << "push" << n.first << "SpikeEventsToDevice();" << std::endl;
         }
 
-        if (n.second.isSpikeTimeRequired() && !n.second.isSpikeTimeZeroCopyEnabled()) {
+        if (n.second.isSpikeTimeRequired() && canPushPullVar(n.second.getSpikeEventVarMode())) {
             size_t size = n.second.getNumNeurons() * n.second.getNumDelaySlots();
             os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_sT" << n.first;
             os << ", sT" << n.first;
@@ -1527,7 +1540,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
         os << "void push" << n.first << "SpikeEventsToDevice()" << std::endl;
         os << CodeStream::OB(1060);
 
-        if (n.second.isSpikeEventRequired() && !n.second.isSpikeEventZeroCopyEnabled()) {
+        if (n.second.isSpikeEventRequired() && canPushPullVar(n.second.getSpikeEventVarMode())) {
             const size_t glbSpkCntEventSize = n.second.getNumDelaySlots();
             os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_glbSpkCntEvnt" << n.first;
             os << ", glbSpkCntEvnt" << n.first;
@@ -1546,7 +1559,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
         os << "void push" << n.first << "CurrentSpikesToDevice()" << std::endl;
         os << CodeStream::OB(1061);
 
-        if(!n.second.isSpikeZeroCopyEnabled()) {
+        if(canPushPullVar(n.second.getSpikeVarMode())) {
             if (n.second.isTrueSpikeRequired() && n.second.isDelayRequired()) {
                 os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_glbSpkCnt" << n.first;
                 os << "+spkQuePtr" << n.first << ", glbSpkCnt" << n.first;
@@ -1574,7 +1587,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
         os << "void push" << n.first << "CurrentSpikeEventsToDevice()" << std::endl;
         os << CodeStream::OB(1062);
 
-        if (n.second.isSpikeEventRequired() && !n.second.isSpikeEventZeroCopyEnabled()) {
+        if (n.second.isSpikeEventRequired() && canPushPullVar(n.second.getSpikeEventVarMode())) {
           if (n.second.isDelayRequired()) {
             os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_glbSpkCntEvnt" << n.first;
             os << "+spkQuePtr" << n.first << ", glbSpkCntEvnt" << n.first;
@@ -1619,7 +1632,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
 
             for(const auto &v : wu->getVars()) {
                  // only copy non-pointers and non-zero-copied. Pointers don't transport between GPU and CPU
-                if (v.second.find("*") == string::npos && !s.second.isWUVarZeroCopyEnabled(v.first)) {
+                if (v.second.find("*") == string::npos && canPushPullVar(s.second.getWUVarMode(v.first))) {
                     os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << v.first << s.first;
                     os << ", " << v.first << s.first;
                     os << ", size * sizeof(" << v.second << "), cudaMemcpyHostToDevice));" << std::endl;
@@ -1628,7 +1641,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
 
             for(const auto &v : psm->getVars()) {
                 // only copy non-pointers and non-zero-copied. Pointers don't transport between GPU and CPU
-                if (v.second.find("*") == string::npos && !s.second.isPSVarZeroCopyEnabled(v.first)) {
+                if (v.second.find("*") == string::npos && canPushPullVar(s.second.getPSVarMode(v.first))) {
                     os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << v.first << s.first;
                     os << ", " << v.first << s.first;
                     os << ", " << numTrgNeurons << " * sizeof(" << v.second << "), cudaMemcpyHostToDevice));" << std::endl;
@@ -1661,7 +1674,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
         
         for(const auto &v : n.second.getNeuronModel()->getVars()) {
             // only copy non-zero-copied, non-pointers. Pointers don't transport between GPU and CPU
-            if (v.second.find("*") == string::npos && !n.second.isVarZeroCopyEnabled(v.first)) {
+            if (v.second.find("*") == string::npos && canPushPullVar(n.second.getVarMode(v.first))) {
                 const size_t size = n.second.isVarQueueRequired(v.first)
                     ? n.second.getNumNeurons() * n.second.getNumDelaySlots()
                     : n.second.getNumNeurons();
@@ -1679,7 +1692,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
         os << "void pull" << n.first << "SpikeEventsFromDevice()" << std::endl;
         os << CodeStream::OB(1061);
 
-        if (n.second.isSpikeEventRequired() && !n.second.isSpikeEventZeroCopyEnabled()) {
+        if (n.second.isSpikeEventRequired() && canPushPullVar(n.second.getSpikeEventVarMode())) {
           const size_t glbSpkCntEvntSize = n.second.getNumDelaySlots();
           os << "CHECK_CUDA_ERRORS(cudaMemcpy(glbSpkCntEvnt" << n.first;
           os << ", d_glbSpkCntEvnt" << n.first;
@@ -1698,7 +1711,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
         os << "void pull" << n.first << "SpikesFromDevice()" << std::endl;
         os << CodeStream::OB(1060);
 
-        if(!n.second.isSpikeZeroCopyEnabled()) {
+        if(canPushPullVar(n.second.getSpikeVarMode())) {
             size_t glbSpkCntSize = n.second.isTrueSpikeRequired() ? n.second.getNumDelaySlots() : 1;
             os << "CHECK_CUDA_ERRORS(cudaMemcpy(glbSpkCnt" << n.first;
             os << ", d_glbSpkCnt" << n.first;
@@ -1719,7 +1732,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
         os << "void pull" << n.first << "SpikeTimesFromDevice()" << std::endl;
         os << CodeStream::OB(10601);
         os << "//Assumes that spike numbers are already copied back from the device" << std::endl;
-        if (n.second.isSpikeTimeRequired() && !n.second.isSpikeTimeZeroCopyEnabled()) {
+        if (n.second.isSpikeTimeRequired() && canPushPullVar(n.second.getSpikeTimeVarMode())) {
             os << "CHECK_CUDA_ERRORS(cudaMemcpy(sT" << n.first;
             os << ", d_sT" << n.first;
             os << ", " << "glbSpkCnt" << n.first << "[0] * sizeof(unsigned int), cudaMemcpyDeviceToHost));" << std::endl;
@@ -1731,26 +1744,26 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
         os << "void pull" << n.first << "CurrentSpikesFromDevice()" << std::endl;
         os << CodeStream::OB(1061);
 
-        if(!n.second.isSpikeZeroCopyEnabled()) {
-            if ((n.second.isTrueSpikeRequired()) && n.second.isDelayRequired()) {
-            os << "CHECK_CUDA_ERRORS(cudaMemcpy(glbSpkCnt" << n.first;
-            os << "+spkQuePtr" << n.first << ", d_glbSpkCnt" << n.first;
-            os << "+spkQuePtr" << n.first;
-            os << ", sizeof(unsigned int), cudaMemcpyDeviceToHost));" << std::endl;
+        if(canPushPullVar(n.second.getSpikeEventVarMode())) {
+            if (n.second.isTrueSpikeRequired() && n.second.isDelayRequired()) {
+                os << "CHECK_CUDA_ERRORS(cudaMemcpy(glbSpkCnt" << n.first;
+                os << "+spkQuePtr" << n.first << ", d_glbSpkCnt" << n.first;
+                os << "+spkQuePtr" << n.first;
+                os << ", sizeof(unsigned int), cudaMemcpyDeviceToHost));" << std::endl;
 
-            os << "CHECK_CUDA_ERRORS(cudaMemcpy(glbSpk" << n.first;
-            os << "+(spkQuePtr" << n.first << "*" << n.second.getNumNeurons() << ")";
-            os << ", d_glbSpk" << n.first;
-            os << "+(spkQuePtr" << n.first << "*" << n.second.getNumNeurons() << ")";
-            os << ", " << "glbSpkCnt" << n.first << "[spkQuePtr" << n.first << "] * sizeof(unsigned int), cudaMemcpyDeviceToHost));" << std::endl;
+                os << "CHECK_CUDA_ERRORS(cudaMemcpy(glbSpk" << n.first;
+                os << "+(spkQuePtr" << n.first << "*" << n.second.getNumNeurons() << ")";
+                os << ", d_glbSpk" << n.first;
+                os << "+(spkQuePtr" << n.first << "*" << n.second.getNumNeurons() << ")";
+                os << ", " << "glbSpkCnt" << n.first << "[spkQuePtr" << n.first << "] * sizeof(unsigned int), cudaMemcpyDeviceToHost));" << std::endl;
             }
             else {
-            os << "CHECK_CUDA_ERRORS(cudaMemcpy(glbSpkCnt" << n.first;
-            os << ", d_glbSpkCnt" << n.first;
-            os << ", sizeof(unsigned int), cudaMemcpyDeviceToHost));" << std::endl;
-            os << "CHECK_CUDA_ERRORS(cudaMemcpy(glbSpk" << n.first;
-            os << ", d_glbSpk" << n.first;
-            os << ", " << "glbSpkCnt" << n.first << "[0] * sizeof(unsigned int), cudaMemcpyDeviceToHost));" << std::endl;
+                os << "CHECK_CUDA_ERRORS(cudaMemcpy(glbSpkCnt" << n.first;
+                os << ", d_glbSpkCnt" << n.first;
+                os << ", sizeof(unsigned int), cudaMemcpyDeviceToHost));" << std::endl;
+                os << "CHECK_CUDA_ERRORS(cudaMemcpy(glbSpk" << n.first;
+                os << ", d_glbSpk" << n.first;
+                os << ", " << "glbSpkCnt" << n.first << "[0] * sizeof(unsigned int), cudaMemcpyDeviceToHost));" << std::endl;
             }
         }
 
@@ -1760,7 +1773,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
         os << "void pull" << n.first << "CurrentSpikeEventsFromDevice()" << std::endl;
         os << CodeStream::OB(1062);
 
-        if (n.second.isSpikeEventRequired() && !n.second.isSpikeEventZeroCopyEnabled()) {
+        if (n.second.isSpikeEventRequired() && canPushPullVar(n.second.getSpikeEventVarMode())) {
           if (n.second.isDelayRequired()) {
             os << "CHECK_CUDA_ERRORS(cudaMemcpy(glbSpkCntEvnt" << n.first;
             os << "+spkQuePtr" << n.first << ", d_glbSpkCntEvnt" << n.first;
@@ -1808,7 +1821,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
 
             for(const auto &v : wu->getVars()) {
                 // only copy non-pointers and non-zero-copied. Pointers don't transport between GPU and CPU
-                if (v.second.find("*") == string::npos && !s.second.isWUVarZeroCopyEnabled(v.first)) {
+                if (v.second.find("*") == string::npos && canPushPullVar(s.second.getWUVarMode(v.first))) {
                     os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << v.first << s.first;
                     os << ", d_"  << v.first << s.first;
                     os << ", size * sizeof(" << v.second << "), cudaMemcpyDeviceToHost));" << std::endl;
@@ -1817,7 +1830,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
 
             for(const auto &v : psm->getVars()) {
                 // only copy non-pointers and non-zero-copied. Pointers don't transport between GPU and CPU
-                if (v.second.find("*") == string::npos && !s.second.isPSVarZeroCopyEnabled(v.first)) {
+                if (v.second.find("*") == string::npos && canPushPullVar(s.second.getPSVarMode(v.first))) {
                     os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << v.first << s.first;
                     os << ", d_"  << v.first << s.first;
                     os << ", " << numTrgNeurons << " * sizeof(" << v.second << "), cudaMemcpyDeviceToHost));" << std::endl;
@@ -1951,7 +1964,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     os << CodeStream::OB(1123) << std::endl;
 
     for(const auto &n : model.getNeuronGroups()) {
-        if(!n.second.isSpikeZeroCopyEnabled()) {
+        if(canPushPullVar(n.second.getSpikeVarMode())) {
             size_t size = (n.second.isTrueSpikeRequired() && n.second.isDelayRequired())
                 ? n.second.getNumDelaySlots() : 1;
 
@@ -1996,7 +2009,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     os << CodeStream::OB(1126) << std::endl;
 
     for(const auto &n : model.getNeuronGroups()) {
-        if (n.second.isSpikeEventRequired() && !n.second.isSpikeEventZeroCopyEnabled()) {
+        if (n.second.isSpikeEventRequired() && canPushPullVar(n.second.getSpikeEventVarMode())) {
             const size_t size = n.second.isDelayRequired() ? n.second.getNumDelaySlots() : 1;
 
             os << "CHECK_CUDA_ERRORS(cudaMemcpy(glbSpkCntEvnt" << n.first;
