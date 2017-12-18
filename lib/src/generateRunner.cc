@@ -2251,11 +2251,9 @@ void genMakefile(const NNmodel &model, //!< Model description
 #else // UNIX
 
 #ifdef CPU_ONLY
-    string cxxFlags = "-c -DCPU_ONLY";
-    cxxFlags += " " + GENN_PREFERENCES::userCxxFlagsGNU;
+    string cxxFlags = "-c -DCPU_ONLY -std=c++11 " + GENN_PREFERENCES::userCxxFlagsGNU;
     if (GENN_PREFERENCES::optimizeCode) cxxFlags += " -O3 -ffast-math";
     if (GENN_PREFERENCES::debugCode) cxxFlags += " -O0 -g";
-    if (model.isRNGRequired()) cxxFlags += " -std=c++11";
     os << endl;
     os << "CXXFLAGS       :=" << cxxFlags << endl;
     os << endl;
@@ -2269,13 +2267,12 @@ void genMakefile(const NNmodel &model, //!< Model description
     os << "clean:" << endl;
     os << "\trm -f runner.o" << endl;
 #else
-    string nvccFlags = "-c -x cu -arch sm_";
+    string nvccFlags = "-std=c++11 -c -x cu -arch sm_";
     nvccFlags += to_string(deviceProp[theDevice].major) + to_string(deviceProp[theDevice].minor);
     nvccFlags += " " + GENN_PREFERENCES::userNvccFlags;
     if (GENN_PREFERENCES::optimizeCode) nvccFlags += " -O3 -use_fast_math -Xcompiler \"-ffast-math\"";
     if (GENN_PREFERENCES::debugCode) nvccFlags += " -O0 -g -G";
     if (GENN_PREFERENCES::showPtxInfo) nvccFlags += " -Xptxas \"-v\"";
-    if (model.isRNGRequired()) nvccFlags += " -std=c++11";
 
     os << endl;
     os << "NVCC           :=\"" << NVCC << "\"" << endl;
