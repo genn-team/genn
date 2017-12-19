@@ -55,6 +55,7 @@ namespace GENN_PREFERENCES {
     extern unsigned int learningBlockSize;
     extern unsigned int synapseDynamicsBlockSize;
     extern unsigned int initBlockSize;
+    extern unsigned int initSparseBlockSize;
     extern unsigned int autoRefractory; //!< Flag for signalling whether spikes are only reported if thresholdCondition changes from false to true (autoRefractory == 1) or spikes are emitted whenever thresholdCondition is true no matter what.%
     extern std::string userCxxFlagsWIN; //!< Allows users to set specific C++ compiler options they may want to use for all host side code (used for windows platforms)
     extern std::string userCxxFlagsGNU; //!< Allows users to set specific C++ compiler options they may want to use for all host side code (used for unix based platforms)
@@ -66,6 +67,7 @@ extern unsigned int synapseBlkSz;   //!< Global variable containing the GPU bloc
 extern unsigned int learnBlkSz;     //!< Global variable containing the GPU block size for the learn kernel
 extern unsigned int synDynBlkSz;    //!< Global variable containing the GPU block size for the synapse dynamics kernel
 extern unsigned int initBlkSz;      //!< Global variable containing the GPU block size for the initialization kernel
+extern unsigned int initSparseBlkSz;      //!< Global variable containing the GPU block size for the sparse initialization kernel
 
 //extern vector<cudaDeviceProp> deviceProp; //!< Global vector containing the properties of all CUDA-enabled devices
 //extern vector<int> synapseBlkSz; //!< Global vector containing the optimum synapse kernel block size for each device
