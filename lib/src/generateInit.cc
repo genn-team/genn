@@ -20,7 +20,7 @@
 namespace
 {
 #ifndef CPU_ONLY
-unsigned int genInitNeuronKernel(CodeStream &os, const NNmodel &model)
+unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model)
 {
     // Check whether any neuron groups require initialisation in this kernel
     // **NOTE** this includes both simulation RNG seeds and variables initialised on device
@@ -45,8 +45,8 @@ unsigned int genInitNeuronKernel(CodeStream &os, const NNmodel &model)
         return 0;
     }
 
-     // init kernel header
-    os << "extern \"C\" __global__ void init()" << std::endl;
+    // init kernel header
+    os << "extern \"C\" __global__ void initializeDevice()" << std::endl;
 
     // initialization kernel code
     os << CodeStream::OB(10);
@@ -237,10 +237,14 @@ unsigned int genInitNeuronKernel(CodeStream &os, const NNmodel &model)
 
     // Loop through synapse groups
     for(const auto &s : model.getSynapseGroups()) {
-        // If this group has dense connectivity and it's weight update has variables that require initialising on GPU
-        if((s.second->getMatrixType() & SynapseMatrixConnectivity::DENSE) && s.second.isWUDeviceVarInitRequired()) {
+        // If this group has dense connectivity with individual synapse variables
+        // and it's weight update has variables that require initialising on GPU
+        if((s.second.getMatrixType() & SynapseMatrixConnectivity::DENSE) && (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) &&
+            s.second.isWUDeviceVarInitRequired())
+        {
             // Get padded size of group and hence it's end thread
-            const unsigned int paddedSize = (unsigned int)(ceil((double)n.second.getNumNeurons() / (double)initBlkSz) * (double)initBlkSz);
+            const unsigned int numSynapses = s.second.getSrcNeuronGroup()->getNumNeurons() * s.second.getTrgNeuronGroup()->getNumNeurons();
+            const unsigned int paddedSize = (unsigned int)(ceil((double)numSynapses / (double)initBlkSz) * (double)initBlkSz);
             const unsigned int endThread = startThread + paddedSize;
 
             // Write if block to determine if this thread should be used for this neuron group
@@ -251,11 +255,23 @@ unsigned int genInitNeuronKernel(CodeStream &os, const NNmodel &model)
             else {
                 os << "if ((id >= " << startThread << ") && (id < " << endThread << "))" << CodeStream::OB(40);
             }
-            os << "const unsigned int lid = id - " << startThread << ";" << std::endl;
+            os << "const unsigned int lid = id - " << numSynapses << ";" << std::endl;
 
-            os << "// only do this for existing neurons" << std::endl;
-            os << "if (lid < " << n.second.getNumNeurons() << ")" << CodeStream::OB(50);
+            os << "// only do this for existing synapses" << std::endl;
+            os << "if (lid < " << numSynapses << ")" << CodeStream::OB(50);
 
+            // Write loop through rows (presynaptic neurons)
+            auto wuVars = s.second.getWUModel()->getVars();
+            for (size_t k= 0, l= wuVars.size(); k < l; k++) {
+                const auto &varInit = s.second.getWUVarInitialisers()[k];
+                const VarMode varMode = s.second.getWUVarMode(k);
+
+                // If this variable should be initialised on the device and has any initialisation code
+                if((varMode & VarInit::DEVICE) && !varInit.getSnippet()->getCode().empty()) {
+                    os << StandardSubstitutions::initVariable(varInit, "dd_" + wuVars[k].first + s.first + "[lid]",
+                                                              cudaFunctions, model.getPrecision(), "rng") << std::endl;
+                }
+            }
             os << CodeStream::CB(50);
             os << CodeStream::CB(40);
 
@@ -271,6 +287,79 @@ unsigned int genInitNeuronKernel(CodeStream &os, const NNmodel &model)
     os << CodeStream::CB(10);
 
     return startThread;
+}
+//----------------------------------------------------------------------------
+void genInitializeSparseDeviceKernel(CodeStream &os, const NNmodel &model)
+{
+    // Count number of sparse synapse groups
+    size_t numSparseSynapseGroups = std::count_if(std::begin(model.getSynapseGroups()), std::end(model.getSynapseGroups()),
+                                                  [](const NNmodel::SynapseGroupValueType &s)
+                                                  {
+                                                      return ((s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) &&
+                                                              s.second.isWUDeviceVarInitRequired());
+                                                  });
+
+    // If there are none - return
+    if(numSparseSynapseGroups == 0){
+        return;
+    }
+
+    // init kernel header
+    os << "extern \"C\" __global__ void initializeSparseDevice(";
+    for(const auto &s : model.getSynapseGroups()) {
+        // Add paramater to pass padded size of each sparse projection
+        if((s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && s.second.isWUDeviceVarInitRequired()) {
+            os << "unsigned int endThread" << s.first << ", unsigned int numSynapses" << s.first;
+            if((--numSparseSynapseGroups) > 0) {
+                os << ", ";
+            }
+        }
+    }
+    os << ")" << std::endl;
+
+    // initialization kernel code
+    os << CodeStream::OB(10);
+
+    // common variables for all cases
+    os << "const unsigned int id = " << initBlkSz << " * blockIdx.x + threadIdx.x;" << std::endl;
+
+    std::string lastEndThreadName;
+    for(const auto &s : model.getSynapseGroups()) {
+        if((s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && s.second.isWUDeviceVarInitRequired()) {
+            // Write if block to determine if this thread should be used for this neuron group
+            os << "// synapse group " << s.first << std::endl;
+            if(lastEndThreadName.empty()) {
+                os << "if (id < endThread" << s.first << ")" << CodeStream::OB(40);
+                os << "const unsigned int lid = id;" << std::endl;
+            }
+            else {
+                os << "if ((id >= endThread" << lastEndThreadName << ") && (id < endThread" << s.first << "))" << CodeStream::OB(40);
+                os << "const unsigned int lid = id - endThread" << lastEndThreadName << ";" << std::endl;
+            }
+            lastEndThreadName = s.first;
+
+
+            os << "// only do this for existing synapses" << std::endl;
+            os << "if (lid < numSynapses" << s.first << ")" << CodeStream::OB(50);
+
+            // Loop through variables
+            auto wuVars = s.second.getWUModel()->getVars();
+            for (size_t k= 0, l= wuVars.size(); k < l; k++) {
+                const auto &varInit = s.second.getWUVarInitialisers()[k];
+                const VarMode varMode = s.second.getWUVarMode(k);
+
+                // If this variable should be initialised on the device and has any initialisation code
+                if((varMode & VarInit::DEVICE) && !varInit.getSnippet()->getCode().empty()) {
+                    os << StandardSubstitutions::initVariable(varInit, "dd_" + wuVars[k].first + s.first + "[lid]",
+                                                              cudaFunctions, model.getPrecision(), "rng") << std::endl;
+                }
+            }
+
+            os << CodeStream::CB(50);
+            os << CodeStream::CB(40);
+        }
+    }
+    os << CodeStream::CB(10);
 }
 #endif  // CPU_ONLY
 }   // Anonymous namespace
@@ -288,9 +377,10 @@ void genInit(const NNmodel &model,          //!< Model description
     writeHeader(os);
     os << std::endl;
 
-    // Insert kernel to initialize neurons
+    // Insert kernels to initialize neurons and dense matrices; and to generate sparse connectivity
 #ifndef CPU_ONLY
-    const unsigned int numInitThreads = genInitNeuronKernel(os, model);
+    const unsigned int numInitThreads = genInitializeDeviceKernel(os, model);
+    genInitializeSparseDeviceKernel(os, model);
 #endif  // CPU_ONLY
 
     // ------------------------------------------------------------------------
@@ -501,7 +591,7 @@ void genInit(const NNmodel &model,          //!< Model description
         os << "// perform on-device init" << std::endl;
         os << "dim3 iThreads(" << initBlkSz << ", 1);" << std::endl;
         os << "dim3 iGrid(" << numInitThreads / initBlkSz << ", 1);" << std::endl;
-        os << "init <<<iGrid, iThreads>>>();" << std::endl;
+        os << "initializeDevice <<<iGrid, iThreads>>>();" << std::endl;
     }
 #endif
     os << CodeStream::CB(10) << std::endl;
