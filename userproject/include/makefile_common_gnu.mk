@@ -106,7 +106,7 @@ all: $(EXECUTABLE)
 ifdef LIBC_BUG
 $(EXECUTABLE): $(OBJECTS)
 	$(CXX) $(CXXFLAGS) -o $@_wrapper $(OBJECTS) $(LINK_FLAGS)
-	@echo "#!/bin/bash\nexport LD_BIND_NOW=1\nSCRIPT_PATH=\$$(dirname \"\$$0\")\n\$$SCRIPT_PATH/$@_wrapper \"\$$@\"" >> $@
+	@echo "#!/bin/bash\nexport LD_BIND_NOW=1\nSCRIPT_PATH=\$$(dirname \"\$$0\")\n\$$SCRIPT_PATH/$@_wrapper \"\$$@\"" > $@
 	@chmod +x $@
 else
 $(EXECUTABLE): $(OBJECTS)
