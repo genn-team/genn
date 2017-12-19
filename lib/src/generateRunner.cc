@@ -353,6 +353,9 @@ void genDefinitions(const NNmodel &model, //!< Model description
     os << std::endl;
     if(model.isRNGRequired()) {
         os << "extern std::mt19937 rng;" << std::endl;
+#ifndef CPU_ONLY
+        os << "extern curandStatePhilox4_32_10_t *d_rng;" << std::endl;
+#endif  // CPU_ONLY
     }
     os << std::endl;
 
@@ -651,7 +654,7 @@ void genDefinitions(const NNmodel &model, //!< Model description
     os << std::endl;
 #endif
 
-    os << "// --------------3200----------------------------------------------------------" << std::endl;
+    os << "// ------------------------------------------------------------------------" << std::endl;
     os << "// initialization of variables, e.g. reverse sparse arrays etc." << std::endl;
     os << "// that the user would not want to worry about" << std::endl;
     os << std::endl;
@@ -860,6 +863,10 @@ void genRunner(const NNmodel &model, //!< Model description
     os << std::endl;
     if(model.isRNGRequired()) {
         os << "std::mt19937 rng;" << std::endl;
+#ifndef CPU_ONLY
+        os << "curandStatePhilox4_32_10_t *d_rng;" << std::endl;
+        os << "__device__ curandStatePhilox4_32_10_t *dd_rng;" << std::endl;
+#endif
     }
     os << std::endl;
 
@@ -1020,8 +1027,7 @@ void genRunner(const NNmodel &model, //!< Model description
     os << "    CHECK_CUDA_ERRORS(cudaSetDevice(" << theDevice << "));" << std::endl;
 
     // If the model requires zero-copy
-    if(model.zeroCopyInUse())
-    {
+    if(model.zeroCopyInUse()) {
         // If device doesn't support mapping host memory error
         if(!deviceProp[theDevice].canMapHostMemory) {
             gennError("Device does not support mapping CPU host memory!");
@@ -1029,6 +1035,11 @@ void genRunner(const NNmodel &model, //!< Model description
 
         // set appropriate device flags
         os << "    CHECK_CUDA_ERRORS(cudaSetDeviceFlags(cudaDeviceMapHost));" << std::endl;
+    }
+
+    // If RNG is required, allocate memory for global philox RNG
+    if(model.isRNGRequired()) {
+        allocate_device_variable(os, "curandStatePhilox4_32_10_t", "rng", VarMode::LOC_DEVICE_INIT_DEVICE, 1);
     }
 #endif
     //cout << "model.neuronGroupN " << model.neuronGrpN << std::endl;
@@ -1226,6 +1237,12 @@ void genRunner(const NNmodel &model, //!< Model description
 
     os << "void freeMem()" << std::endl;
     os << "{" << std::endl;
+
+#ifndef CPU_ONLY
+    if(model.isRNGRequired()) {
+        free_device_variable(os, "rng", VarMode::LOC_DEVICE_INIT_DEVICE);
+    }
+#endif
 
     // FREE NEURON VARIABLES
     for(const auto &n : model.getNeuronGroups()) {

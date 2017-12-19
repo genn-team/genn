@@ -40,8 +40,8 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model)
                                                         s.second.isWUDeviceVarInitRequired());
                                             });
 
-    // If no neuron or synapse groups require initialisation - return 0 - no kernel is required
-    if(noNeuronInit && noSynapseInit)
+    // If no neuron or synapse groups require initialisation and model doesn't require RNG - return 0 - no kernel is required
+    if(noNeuronInit && noSynapseInit && !model.isRNGRequired())
     {
         return 0;
     }
@@ -55,9 +55,21 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model)
     // common variables for all cases
     os << "const unsigned int id = " << initBlkSz << " * blockIdx.x + threadIdx.x;" << std::endl;
 
+    // If RNG is required
+    if(model.isRNGRequired()) {
+        os << "// Initialise global GPU RNG" << std::endl;
+        os << "if(id == 0)" << CodeStream::OB(11);
+        os << "curand_init(" << model.getSeed() << ", 0, 0, &dd_rng[0]);" << std::endl;
+        os << CodeStream::CB(11) << std::endl;
+
+        // If no neurons or synapses need initialising in this kernel,
+        // Return 1 so a single block is created to allocate RNG
+        if(noNeuronInit && noSynapseInit) {
+            return initBlkSz;
+        }
+    }
     // Loop through neuron groups
     unsigned int startThread = 0;
-    unsigned int sequence = 0;
     for(const auto &n : model.getNeuronGroups()) {
         // If this group requires an RNG to simulate or requires variables to be initialised on device
         if(n.second.isSimRNGRequired() || n.second.isDeviceVarInitRequired()) {
@@ -120,8 +132,17 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model)
 
             os << "// only do this for existing neurons" << std::endl;
             os << "if (lid < " << n.second.getNumNeurons() << ")" << CodeStream::OB(30);
+
+            // If this neuron is going to require a simulation RNG, initialise one using thread id for sequence
             if(n.second.isSimRNGRequired()) {
-                os << "curand_init(" << model.getSeed() << ", " << sequence << " + lid, 0, &dd_rng" << n.first << "[lid]);" << std::endl;
+                os << "curand_init(" << model.getSeed() << ", id, 0, &dd_rng" << n.first << "[lid]);" << std::endl;
+            }
+
+            // If this neuron requires an RNG for initialisation,
+            // make copy of global phillox RNG and skip ahead by thread id
+            if(n.second.isInitRNGRequired()) {
+                os << "curandStatePhilox4_32_10_t initRNG = dd_rng[0];" << std::endl;
+                os << "skipahead_sequence((unsigned long long)id, &initRNG);" << std::endl;
             }
 
             // Build string to use for delayed variable index
@@ -185,7 +206,7 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model)
                         // Generate initial value into temporary variable
                         os << neuronModelVars[j].second << " initVal;" << std::endl;
                         os << StandardSubstitutions::initVariable(varInit, "initVal", cudaFunctions,
-                                                                  model.getPrecision(), "rng") << std::endl;
+                                                                  model.getPrecision(), "&initRNG") << std::endl;
 
                         // Copy this into all delay slots
                         os << "for (int i = 0; i < " << n.second.getNumDelaySlots() << "; i++)" << CodeStream::OB(33);
@@ -195,7 +216,7 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model)
                     // Otherwise, initialise directly into device variable
                     else {
                         os << StandardSubstitutions::initVariable(varInit, "dd_" + neuronModelVars[j].first + n.first + "[lid]",
-                                                                  cudaFunctions, model.getPrecision(), "rng") << std::endl;
+                                                                  cudaFunctions, model.getPrecision(), "&initRNG") << std::endl;
                     }
 
 
@@ -217,7 +238,7 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model)
                         if((varMode & VarInit::DEVICE) && !varInit.getSnippet()->getCode().empty()) {
                             os << CodeStream::OB(34);
                             os << StandardSubstitutions::initVariable(varInit, "dd_" + psmVars[j].first + s->getName() + "[lid]",
-                                                                      cudaFunctions, model.getPrecision(), "rng") << std::endl;
+                                                                      cudaFunctions, model.getPrecision(), "&initRNG") << std::endl;
                             os << CodeStream::CB(34);
                         }
                     }
@@ -226,9 +247,6 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model)
 
             os << CodeStream::CB(30);
             os << CodeStream::CB(20);
-
-            // Increment sequence number
-            sequence++;
 
             // Update start thread
             startThread = endThread;
@@ -261,6 +279,13 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model)
             os << "// only do this for existing synapses" << std::endl;
             os << "if (lid < " << numSynapses << ")" << CodeStream::OB(50);
 
+            // If this post synapse requires an RNG for initialisation,
+            // make copy of global phillox RNG and skip ahead by thread id
+            if(s.second.isPSInitRNGRequired()) {
+                os << "curandStatePhilox4_32_10_t initRNG = dd_rng[0];" << std::endl;
+                os << "skipahead_sequence((unsigned long long)id, &initRNG);" << std::endl;
+            }
+
             // Write loop through rows (presynaptic neurons)
             auto wuVars = s.second.getWUModel()->getVars();
             for (size_t k= 0, l= wuVars.size(); k < l; k++) {
@@ -270,14 +295,11 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model)
                 // If this variable should be initialised on the device and has any initialisation code
                 if((varMode & VarInit::DEVICE) && !varInit.getSnippet()->getCode().empty()) {
                     os << StandardSubstitutions::initVariable(varInit, "dd_" + wuVars[k].first + s.first + "[lid]",
-                                                              cudaFunctions, model.getPrecision(), "rng") << std::endl;
+                                                              cudaFunctions, model.getPrecision(), "&initRNG") << std::endl;
                 }
             }
             os << CodeStream::CB(50);
             os << CodeStream::CB(40);
-
-            // Increment sequence number
-            sequence++;
 
             // Update start thread
             startThread = endThread;
@@ -290,7 +312,8 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model)
     return startThread;
 }
 //----------------------------------------------------------------------------
-void genInitializeSparseDeviceKernel(const std::vector<const SynapseGroup*> &sparseSynapseGroups, CodeStream &os, const NNmodel &model)
+void genInitializeSparseDeviceKernel(const std::vector<const SynapseGroup*> &sparseSynapseGroups, unsigned int numStaticInitThreads,
+                                     CodeStream &os, const NNmodel &model)
 {
 
     // init kernel header
@@ -307,7 +330,7 @@ void genInitializeSparseDeviceKernel(const std::vector<const SynapseGroup*> &spa
     os << CodeStream::OB(10);
 
     // common variables for all cases
-    os << "const unsigned int id = " << initBlkSz << " * blockIdx.x + threadIdx.x;" << std::endl;
+    os << "const unsigned int id = " << initSparseBlkSz << " * blockIdx.x + threadIdx.x;" << std::endl;
 
     std::string lastEndThreadName;
     for(const auto &s : sparseSynapseGroups) {
@@ -327,6 +350,12 @@ void genInitializeSparseDeviceKernel(const std::vector<const SynapseGroup*> &spa
         os << "// only do this for existing synapses" << std::endl;
         os << "if (lid < numSynapses" << s->getName() << ")" << CodeStream::OB(50);
 
+        // If this weight update requires an RNG for initialisation,
+        // make copy of global phillox RNG and skip ahead by thread id
+        if(s->isWUInitRNGRequired()) {
+            os << "curandStatePhilox4_32_10_t initRNG = dd_rng[0];" << std::endl;
+            os << "skipahead_sequence((unsigned long long)" << numStaticInitThreads << " + id, &initRNG);" << std::endl;
+        }
         // Loop through variables
         auto wuVars = s->getWUModel()->getVars();
         for (size_t k= 0, l= wuVars.size(); k < l; k++) {
@@ -336,7 +365,7 @@ void genInitializeSparseDeviceKernel(const std::vector<const SynapseGroup*> &spa
             // If this variable should be initialised on the device and has any initialisation code
             if((varMode & VarInit::DEVICE) && !varInit.getSnippet()->getCode().empty()) {
                 os << StandardSubstitutions::initVariable(varInit, "dd_" + wuVars[k].first + s->getName() + "[lid]",
-                                                          cudaFunctions, model.getPrecision(), "rng") << std::endl;
+                                                          cudaFunctions, model.getPrecision(), "&initRNG") << std::endl;
             }
         }
 
@@ -362,7 +391,7 @@ void genInit(const NNmodel &model,          //!< Model description
     os << std::endl;
 
 #ifndef CPU_ONLY
-	// Insert kernels to initialize neurons and dense matrices
+    // Insert kernels to initialize neurons and dense matrices
     const unsigned int numInitThreads = genInitializeDeviceKernel(os, model);
 
     // If the variables associated with sparse projections should be automatically initialised
@@ -381,7 +410,7 @@ void genInit(const NNmodel &model,          //!< Model description
 
         // If there are any sparse synapse groups, generate kernel to initialise them
         if(!sparseSynapseGroups.empty()) {
-            genInitializeSparseDeviceKernel(sparseSynapseGroups, os, model);
+            genInitializeSparseDeviceKernel(sparseSynapseGroups, numInitThreads, os, model);
         }
     }
 #endif  // CPU_ONLY
@@ -734,6 +763,8 @@ void genInit(const NNmodel &model,          //!< Model description
 
         os << CodeStream::CB(330);
     }
+#else
+    USE(anySparse);
 #endif
     os << CodeStream::CB(300) << std::endl;
 
