@@ -298,6 +298,26 @@ std::string SynapseGroup::getOffsetPost(const std::string &devPrefix) const
     return getTrgNeuronGroup()->getQueueOffset(devPrefix);
 }
 
+bool SynapseGroup::isPSInitRNGRequired() const
+{
+    // Return true if any of the postsynaptic variables initialisers use rngs
+    return std::any_of(m_PSVarInitialisers.cbegin(), m_PSVarInitialisers.cend(),
+                       [](const NewModels::VarInit &v)
+                       {
+                           return ::isRNGRequired(v.getSnippet()->getCode());
+                       });
+}
+
+bool SynapseGroup::isWUInitRNGRequired() const
+{
+    // Return true if any of the weight update variables initialisers use rngs
+    return std::any_of(m_WUVarInitialisers.cbegin(), m_WUVarInitialisers.cend(),
+                       [](const NewModels::VarInit &v)
+                       {
+                           return ::isRNGRequired(v.getSnippet()->getCode());
+                       });
+}
+
 bool SynapseGroup::isPSDeviceVarInitRequired() const
 {
     // If this synapse group has per-synapse state variables,

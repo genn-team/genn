@@ -118,7 +118,15 @@ bool NNmodel::isRNGRequired() const
         return true;
     }
 
-    // **TODO** synapse groups
+    // If any neuron groups require an RNG return true
+    if(any_of(begin(m_SynapseGroups), end(m_SynapseGroups),
+        [](const SynapseGroupValueType &s)
+        {
+            return (s.second.isWUInitRNGRequired());
+        }))
+    {
+        return true;
+    }
 
     return false;
 }

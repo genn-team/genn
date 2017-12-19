@@ -172,13 +172,19 @@ bool NeuronGroup::isSimRNGRequired() const
 bool NeuronGroup::isInitRNGRequired() const
 {
     // Return true if any of the variables initialisers use rngs
-    return std::any_of(m_VarInitialisers.cbegin(), m_VarInitialisers.cend(),
-                       [](const NewModels::VarInit &v)
-                       {
-                           return ::isRNGRequired(v.getSnippet()->getCode());
-                       });
+    if(std::any_of(m_VarInitialisers.cbegin(), m_VarInitialisers.cend(),
+                   [](const NewModels::VarInit &v)
+                   {
+                       return ::isRNGRequired(v.getSnippet()->getCode());
+                   }))
+    {
+        return true;
+    }
 
-    // **TODO** return true if any PSM variable initialisers use rngs
+    // Return true if any of the incoming synapse groups have state variables which require an RNG to initialise
+    // **NOTE** these are included here as they are initialised in neuron initialisation threads
+    return std::any_of(getInSyn().cbegin(), getInSyn().cend(),
+                       [](const SynapseGroup *sg){ return sg->isPSInitRNGRequired(); });
 }
 
 bool NeuronGroup::isDeviceVarInitRequired() const
