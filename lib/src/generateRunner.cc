@@ -1460,7 +1460,9 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
         os << "}" << std::endl;
         os << std::endl;
     }
-    os << "__device__ float exponentialDistFloat(curandState *rng) {" << std::endl;
+
+    os << "template<typename RNG>" << std::endl;
+    os << "__device__ float exponentialDistFloat(RNG *rng) {" << std::endl;
     os << "    float a = 0.0f;" << std::endl;
     os << "    while (true) {" << std::endl;
     os << "        float u = curand_uniform(rng);" << std::endl;
@@ -1479,7 +1481,8 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     os << "    }" << std::endl;
     os << "}" << std::endl;
     os << std::endl;
-    os << "__device__ double exponentialDistDouble(curandState *rng) {" << std::endl;
+    os << "template<typename RNG>" << std::endl;
+    os << "__device__ double exponentialDistDouble(RNG *rng) {" << std::endl;
     os << "    double a = 0.0f;" << std::endl;
     os << "    while (true) {" << std::endl;
     os << "        double u = curand_uniform_double(rng);" << std::endl;
