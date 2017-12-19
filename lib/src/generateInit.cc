@@ -295,8 +295,10 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model)
 
                 // If this variable should be initialised on the device and has any initialisation code
                 if((varMode & VarInit::DEVICE) && !varInit.getSnippet()->getCode().empty()) {
+                    os << CodeStream::OB(51);
                     os << StandardSubstitutions::initVariable(varInit, "dd_" + wuVars[k].first + s.first + "[lid]",
                                                               cudaFunctions, model.getPrecision(), "&initRNG") << std::endl;
+                    os << CodeStream::CB(51);
                 }
             }
             os << CodeStream::CB(50);
@@ -365,8 +367,10 @@ void genInitializeSparseDeviceKernel(const std::vector<const SynapseGroup*> &spa
 
             // If this variable should be initialised on the device and has any initialisation code
             if((varMode & VarInit::DEVICE) && !varInit.getSnippet()->getCode().empty()) {
+                os << CodeStream::OB(51);
                 os << StandardSubstitutions::initVariable(varInit, "dd_" + wuVars[k].first + s->getName() + "[lid]",
                                                           cudaFunctions, model.getPrecision(), "&initRNG") << std::endl;
+                os << CodeStream::CB(51);
             }
         }
 
