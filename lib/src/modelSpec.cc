@@ -106,23 +106,52 @@ bool NNmodel::zeroCopyInUse() const
     return false;
 }
 
-bool NNmodel::isRNGRequired() const
+bool NNmodel::isHostRNGRequired() const
 {
-    // If any neuron groups require an RNG return true
+    // Cache whether the model can run on the CPU
+    const bool cpu = canRunOnCPU();
+
+    // If model can run on the CPU and any neuron groups require simulation RNGs
+    // or if any require host RNG for initialisation, return true
     if(any_of(begin(m_NeuronGroups), end(m_NeuronGroups),
-        [](const NeuronGroupValueType &n)
+        [cpu](const NeuronGroupValueType &n)
         {
-            return (n.second.isSimRNGRequired() || n.second.isInitRNGRequired());
+            return ((cpu && n.second.isSimRNGRequired()) || n.second.isInitRNGRequired(VarInit::HOST));
         }))
     {
         return true;
     }
 
-    // If any neuron groups require an RNG return true
+    // If any synapse groups require a host RNG return true
     if(any_of(begin(m_SynapseGroups), end(m_SynapseGroups),
         [](const SynapseGroupValueType &s)
         {
-            return (s.second.isWUInitRNGRequired());
+            return s.second.isWUInitRNGRequired(VarInit::HOST);
+        }))
+    {
+        return true;
+    }
+
+    return false;
+}
+
+bool NNmodel::isDeviceRNGRequired() const
+{
+    // If any neuron groupsrequire device RNG for initialisation, return true
+    if(any_of(begin(m_NeuronGroups), end(m_NeuronGroups),
+        [](const NeuronGroupValueType &n)
+        {
+            return n.second.isInitRNGRequired(VarInit::DEVICE);
+        }))
+    {
+        return true;
+    }
+
+    // If any synapse groups require a device RNG for initialisation, return true
+    if(any_of(begin(m_SynapseGroups), end(m_SynapseGroups),
+        [](const SynapseGroupValueType &s)
+        {
+            return s.second.isWUInitRNGRequired(VarInit::DEVICE);
         }))
     {
         return true;

@@ -128,10 +128,10 @@ public:
     std::string getOffsetPost(const std::string &devPrefix) const;
 
     //!< Does this synapse group require an RNG for it's postsynaptic init code
-    bool isPSInitRNGRequired() const;
+    bool isPSInitRNGRequired(VarInit varInitMode) const;
 
     //!< Does this synapse group require an RNG for it's weight update init code
-    bool isWUInitRNGRequired() const;
+    bool isWUInitRNGRequired(VarInit varInitMode) const;
 
     //!< Is device var init code required for any variables in this synapse group's postsynaptic model
     bool isPSDeviceVarInitRequired() const;

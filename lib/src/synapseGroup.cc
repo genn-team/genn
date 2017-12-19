@@ -298,24 +298,16 @@ std::string SynapseGroup::getOffsetPost(const std::string &devPrefix) const
     return getTrgNeuronGroup()->getQueueOffset(devPrefix);
 }
 
-bool SynapseGroup::isPSInitRNGRequired() const
+bool SynapseGroup::isPSInitRNGRequired(VarInit varInitMode) const
 {
-    // Return true if any of the postsynaptic variables initialisers use rngs
-    return std::any_of(m_PSVarInitialisers.cbegin(), m_PSVarInitialisers.cend(),
-                       [](const NewModels::VarInit &v)
-                       {
-                           return ::isRNGRequired(v.getSnippet()->getCode());
-                       });
+    // If initialising the postsynaptic variables require an RNG, return true
+    return isInitRNGRequired(m_PSVarInitialisers, m_PSVarMode, varInitMode);
 }
 
-bool SynapseGroup::isWUInitRNGRequired() const
+bool SynapseGroup::isWUInitRNGRequired(VarInit varInitMode) const
 {
-    // Return true if any of the weight update variables initialisers use rngs
-    return std::any_of(m_WUVarInitialisers.cbegin(), m_WUVarInitialisers.cend(),
-                       [](const NewModels::VarInit &v)
-                       {
-                           return ::isRNGRequired(v.getSnippet()->getCode());
-                       });
+    // If initialising the weight update variables require an RNG, return true
+    return isInitRNGRequired(m_WUVarInitialisers, m_WUVarMode, varInitMode);
 }
 
 bool SynapseGroup::isPSDeviceVarInitRequired() const

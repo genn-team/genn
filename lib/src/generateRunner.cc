@@ -253,14 +253,11 @@ void genDefinitions(const NNmodel &model, //!< Model description
     }
     os << "#include \"sparseUtils.h\"" << std::endl << std::endl;
     os << "#include \"sparseProjection.h\"" << std::endl;
-    // **YUCK** because code is, by default, not build with C++11 the <cstdint> header is not present
-    os << "#include <stdint.h>" << std::endl;
-    if (model.isRNGRequired()) {
-        os << "#include <random>" << std::endl;
+    os << "#include <cstdint>" << std::endl;
+    os << "#include <random>" << std::endl;
 #ifndef CPU_ONLY
-        os << "#include <curand_kernel.h>" << std::endl;
+    os << "#include <curand_kernel.h>" << std::endl;
 #endif
-    }
     os << std::endl;
 
 #ifndef CPU_ONLY
@@ -351,12 +348,14 @@ void genDefinitions(const NNmodel &model, //!< Model description
         }
     }
     os << std::endl;
-    if(model.isRNGRequired()) {
+    if(model.isHostRNGRequired()) {
         os << "extern std::mt19937 rng;" << std::endl;
-#ifndef CPU_ONLY
-        os << "extern curandStatePhilox4_32_10_t *d_rng;" << std::endl;
-#endif  // CPU_ONLY
     }
+#ifndef CPU_ONLY
+    if(model.isDeviceRNGRequired()) {
+        os << "extern curandStatePhilox4_32_10_t *d_rng;" << std::endl;
+    }
+#endif  // CPU_ONLY
     os << std::endl;
 
     //---------------------------------
@@ -861,13 +860,15 @@ void genRunner(const NNmodel &model, //!< Model description
         }
     } 
     os << std::endl;
-    if(model.isRNGRequired()) {
+    if(model.isHostRNGRequired()) {
         os << "std::mt19937 rng;" << std::endl;
+    }
 #ifndef CPU_ONLY
+    if(model.isDeviceRNGRequired()) {
         os << "curandStatePhilox4_32_10_t *d_rng;" << std::endl;
         os << "__device__ curandStatePhilox4_32_10_t *dd_rng;" << std::endl;
-#endif
     }
+#endif
     os << std::endl;
 
     //---------------------------------
@@ -1038,7 +1039,7 @@ void genRunner(const NNmodel &model, //!< Model description
     }
 
     // If RNG is required, allocate memory for global philox RNG
-    if(model.isRNGRequired()) {
+    if(model.isDeviceRNGRequired()) {
         allocate_device_variable(os, "curandStatePhilox4_32_10_t", "rng", VarMode::LOC_DEVICE_INIT_DEVICE, 1);
     }
 #endif
@@ -1239,7 +1240,7 @@ void genRunner(const NNmodel &model, //!< Model description
     os << "{" << std::endl;
 
 #ifndef CPU_ONLY
-    if(model.isRNGRequired()) {
+    if(model.isDeviceRNGRequired()) {
         free_device_variable(os, "rng", VarMode::LOC_DEVICE_INIT_DEVICE);
     }
 #endif
@@ -1459,47 +1460,44 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
         os << "}" << std::endl;
         os << std::endl;
     }
-
-    if (model.isRNGRequired()) {
-        os << "__device__ float exponentialDistFloat(curandState *rng) {" << std::endl;
-        os << "    float a = 0.0f;" << std::endl;
-        os << "    while (true) {" << std::endl;
-        os << "        float u = curand_uniform(rng);" << std::endl;
-        os << "        const float u0 = u;" << std::endl;
-        os << "        while (true) {" << std::endl;
-        os << "            float uStar = curand_uniform(rng);" << std::endl;
-        os << "            if (u < uStar) {" << std::endl;
-        os << "                return  a + u0;" << std::endl;
-        os << "            }" << std::endl;
-        os << "            u = curand_uniform(rng);" << std::endl;
-        os << "            if (u >= uStar) {" << std::endl;
-        os << "                break;" << std::endl;
-        os << "            }" << std::endl;
-        os << "        }" << std::endl;
-        os << "        a += 1.0f;" << std::endl;
-        os << "    }" << std::endl;
-        os << "}" << std::endl;
-        os << std::endl;
-        os << "__device__ double exponentialDistDouble(curandState *rng) {" << std::endl;
-        os << "    double a = 0.0f;" << std::endl;
-        os << "    while (true) {" << std::endl;
-        os << "        double u = curand_uniform_double(rng);" << std::endl;
-        os << "        const double u0 = u;" << std::endl;
-        os << "        while (true) {" << std::endl;
-        os << "            double uStar = curand_uniform_double(rng);" << std::endl;
-        os << "            if (u < uStar) {" << std::endl;
-        os << "                return  a + u0;" << std::endl;
-        os << "            }" << std::endl;
-        os << "            u = curand_uniform_double(rng);" << std::endl;
-        os << "            if (u >= uStar) {" << std::endl;
-        os << "                break;" << std::endl;
-        os << "            }" << std::endl;
-        os << "        }" << std::endl;
-        os << "        a += 1.0;" << std::endl;
-        os << "    }" << std::endl;
-        os << "}" << std::endl;
-        os << std::endl;
-    }
+    os << "__device__ float exponentialDistFloat(curandState *rng) {" << std::endl;
+    os << "    float a = 0.0f;" << std::endl;
+    os << "    while (true) {" << std::endl;
+    os << "        float u = curand_uniform(rng);" << std::endl;
+    os << "        const float u0 = u;" << std::endl;
+    os << "        while (true) {" << std::endl;
+    os << "            float uStar = curand_uniform(rng);" << std::endl;
+    os << "            if (u < uStar) {" << std::endl;
+    os << "                return  a + u0;" << std::endl;
+    os << "            }" << std::endl;
+    os << "            u = curand_uniform(rng);" << std::endl;
+    os << "            if (u >= uStar) {" << std::endl;
+    os << "                break;" << std::endl;
+    os << "            }" << std::endl;
+    os << "        }" << std::endl;
+    os << "        a += 1.0f;" << std::endl;
+    os << "    }" << std::endl;
+    os << "}" << std::endl;
+    os << std::endl;
+    os << "__device__ double exponentialDistDouble(curandState *rng) {" << std::endl;
+    os << "    double a = 0.0f;" << std::endl;
+    os << "    while (true) {" << std::endl;
+    os << "        double u = curand_uniform_double(rng);" << std::endl;
+    os << "        const double u0 = u;" << std::endl;
+    os << "        while (true) {" << std::endl;
+    os << "            double uStar = curand_uniform_double(rng);" << std::endl;
+    os << "            if (u < uStar) {" << std::endl;
+    os << "                return  a + u0;" << std::endl;
+    os << "            }" << std::endl;
+    os << "            u = curand_uniform_double(rng);" << std::endl;
+    os << "            if (u >= uStar) {" << std::endl;
+    os << "                break;" << std::endl;
+    os << "            }" << std::endl;
+    os << "        }" << std::endl;
+    os << "        a += 1.0;" << std::endl;
+    os << "    }" << std::endl;
+    os << "}" << std::endl;
+    os << std::endl;
 
     os << "#include \"neuronKrnl.cc\"" << std::endl;
     if (!model.getSynapseGroups().empty()) {

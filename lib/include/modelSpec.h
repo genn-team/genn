@@ -128,8 +128,12 @@ public:
     //! Are any variables in any populations in this model using zero-copy memory?
     bool zeroCopyInUse() const;
 
-    //! Do any populations or initialisation code in this model require an RNG?
-    bool isRNGRequired() const;
+    //! Do any populations or initialisation code in this model require a host RNG?
+    bool isHostRNGRequired() const;
+
+    //! Do any populations or initialisation code in this model require a device RNG?
+    //! **NOTE** some model code will use per-neuron RNGs instead
+    bool isDeviceRNGRequired() const;
 
     //! Can this model run on the CPU? If we are running in CPU_ONLY mode this is always true,
     //! but some GPU functionality will prevent models being run on both CPU and GPU.

@@ -144,7 +144,7 @@ public:
     bool isSimRNGRequired() const;
 
     //!< Does this neuron group require an RNG for it's init code
-    bool isInitRNGRequired() const;
+    bool isInitRNGRequired(VarInit varInitMode) const;
 
     //!< Is device var init code required for any variables in this neuron group
     bool isDeviceVarInitRequired() const;

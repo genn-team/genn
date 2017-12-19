@@ -40,8 +40,9 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model)
                                                         s.second.isWUDeviceVarInitRequired());
                                             });
 
-    // If no neuron or synapse groups require initialisation and model doesn't require RNG - return 0 - no kernel is required
-    if(noNeuronInit && noSynapseInit && !model.isRNGRequired())
+    // If no neuron or synapse groups require initialisation and
+    // model doesn't require a device RNG - return 0 - no kernel is required
+    if(noNeuronInit && noSynapseInit && !model.isDeviceRNGRequired())
     {
         return 0;
     }
@@ -56,7 +57,7 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model)
     os << "const unsigned int id = " << initBlkSz << " * blockIdx.x + threadIdx.x;" << std::endl;
 
     // If RNG is required
-    if(model.isRNGRequired()) {
+    if(model.isDeviceRNGRequired()) {
         os << "// Initialise global GPU RNG" << std::endl;
         os << "if(id == 0)" << CodeStream::OB(11);
         os << "curand_init(" << model.getSeed() << ", 0, 0, &dd_rng[0]);" << std::endl;
@@ -140,7 +141,7 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model)
 
             // If this neuron requires an RNG for initialisation,
             // make copy of global phillox RNG and skip ahead by thread id
-            if(n.second.isInitRNGRequired()) {
+            if(n.second.isInitRNGRequired(VarInit::DEVICE)) {
                 os << "curandStatePhilox4_32_10_t initRNG = dd_rng[0];" << std::endl;
                 os << "skipahead_sequence((unsigned long long)id, &initRNG);" << std::endl;
             }
@@ -281,7 +282,7 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model)
 
             // If this post synapse requires an RNG for initialisation,
             // make copy of global phillox RNG and skip ahead by thread id
-            if(s.second.isPSInitRNGRequired()) {
+            if(s.second.isWUInitRNGRequired(VarInit::DEVICE)) {
                 os << "curandStatePhilox4_32_10_t initRNG = dd_rng[0];" << std::endl;
                 os << "skipahead_sequence((unsigned long long)id, &initRNG);" << std::endl;
             }
@@ -352,7 +353,7 @@ void genInitializeSparseDeviceKernel(const std::vector<const SynapseGroup*> &spa
 
         // If this weight update requires an RNG for initialisation,
         // make copy of global phillox RNG and skip ahead by thread id
-        if(s->isWUInitRNGRequired()) {
+        if(s->isWUInitRNGRequired(VarInit::DEVICE)) {
             os << "curandStatePhilox4_32_10_t initRNG = dd_rng[0];" << std::endl;
             os << "skipahead_sequence((unsigned long long)" << numStaticInitThreads << " + id, &initRNG);" << std::endl;
         }
@@ -451,8 +452,8 @@ void genInit(const NNmodel &model,          //!< Model description
         os << "srand((unsigned int) " << model.getSeed() << ");" << std::endl;
     }
 
-    // If model requires an RNG
-    if(model.isRNGRequired()) {
+    // If model requires a host RNG
+    if(model.isHostRNGRequired()) {
         // If no seed is specified, use system randomness to generate seed sequence
         os << CodeStream::OB(20);
         if (model.getSeed() == 0) {

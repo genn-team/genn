@@ -6,6 +6,9 @@
 #include <sstream>
 #include <vector>
 
+// GeNN includes
+#include "variableMode.h"
+
 using namespace std;
 
 // Forward declarations
@@ -15,6 +18,11 @@ class SynapseGroup;
 namespace NeuronModels
 {
     class Base;
+}
+
+namespace NewModels
+{
+    class VarInit;
 }
 
 //--------------------------------------------------------------------------
@@ -116,6 +124,12 @@ void substitute(string &s, const string &trg, const string &rep);
 //! \brief Does the code string contain any functions requiring random number generator
 //--------------------------------------------------------------------------
 bool isRNGRequired(const std::string &code);
+
+//--------------------------------------------------------------------------
+//! \brief Does the model with the vectors of variable initialisers and modes require an RNG for the specified init mode
+//--------------------------------------------------------------------------
+bool isInitRNGRequired(const std::vector<NewModels::VarInit> &varInitialisers, const std::vector<VarMode> &varModes,
+                       VarInit varInitMode);
 
 //--------------------------------------------------------------------------
 /*! \brief This function substitutes function calls in the form:
