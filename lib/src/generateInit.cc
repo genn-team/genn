@@ -275,7 +275,7 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model)
             else {
                 os << "if ((id >= " << startThread << ") && (id < " << endThread << "))" << CodeStream::OB(40);
             }
-            os << "const unsigned int lid = id - " << numSynapses << ";" << std::endl;
+            os << "const unsigned int lid = id - " << startThread << ";" << std::endl;
 
             os << "// only do this for existing synapses" << std::endl;
             os << "if (lid < " << numSynapses << ")" << CodeStream::OB(50);
