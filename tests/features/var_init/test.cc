@@ -80,15 +80,14 @@ TEST_P(SimTest, Vars)
 
 #ifndef CPU_ONLY
     // Pull device-generated vars back to host
-    //pullPopGPUStateFromDevice();
-    //pullDenseGPUStateFromDevice();
+    pullPopGPUStateFromDevice();
+    pullDenseGPUStateFromDevice();
     pullSparseGPUStateFromDevice();
 
-    printf("%f, %f\n", constantSparseGPU[0], constantSparseGPU[1000]);
     // Test device-generated vars
-    //PROB_TEST(, PopGPU, 10000)
-    //PROB_TEST(p, DenseGPU, 10000)
-    //PROB_TEST(, DenseGPU, 10000)
+    PROB_TEST(, PopGPU, 10000)
+    PROB_TEST(p, DenseGPU, 10000)
+    PROB_TEST(, DenseGPU, 10000)
     PROB_TEST(, SparseGPU, 10000)
 
 #endif
