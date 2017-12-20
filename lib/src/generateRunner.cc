@@ -522,15 +522,15 @@ void genDefinitions(const NNmodel &model, //!< Model description
     os << "// copying things to device" << std::endl;
     os << std::endl;
     for(const auto &n : model.getNeuronGroups()) {
-        os << "void push" << n.first << "StateToDevice();" << std::endl;
-        os << "void push" << n.first << "SpikesToDevice();" << std::endl;
-        os << "void push" << n.first << "SpikeEventsToDevice();" << std::endl;
+        os << "void push" << n.first << "StateToDevice(bool hostInitialisedOnly = false);" << std::endl;
+        os << "void push" << n.first << "SpikesToDevice(bool hostInitialisedOnly = false);" << std::endl;
+        os << "void push" << n.first << "SpikeEventsToDevice(bool hostInitialisedOnly = false);" << std::endl;
         os << "void push" << n.first << "CurrentSpikesToDevice();" << std::endl;
         os << "void push" << n.first << "CurrentSpikeEventsToDevice();" << std::endl;
     }
     for(const auto &s : model.getSynapseGroups()) {
         os << "#define push" << s.first << "ToDevice push" << s.first << "StateToDevice" << std::endl;
-        os << "void push" << s.first << "StateToDevice();" << std::endl;
+        os << "void push" << s.first << "StateToDevice(bool hostInitialisedOnly = false);" << std::endl;
     }
     os << std::endl;
 
@@ -553,7 +553,7 @@ void genDefinitions(const NNmodel &model, //!< Model description
     os << "// ------------------------------------------------------------------------" << std::endl;
     os << "// global copying values to device" << std::endl;
     os << std::endl;
-    os << "void copyStateToDevice();" << std::endl;
+    os << "void copyStateToDevice(bool hostInitialisedOnly = false);" << std::endl;
     os << std::endl;
 
     os << "// ------------------------------------------------------------------------" << std::endl;
@@ -1512,19 +1512,29 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
 
     for(const auto &n : model.getNeuronGroups()) {
         // neuron state variables
-        os << "void push" << n.first << "StateToDevice()" << std::endl;
+        os << "void push" << n.first << "StateToDevice(bool hostInitialisedOnly)" << std::endl;
         os << CodeStream::OB(1050);
 
         for(const auto &v : n.second.getNeuronModel()->getVars()) {
             // only copy variables which aren't pointers (pointers don't transport between GPU and CPU)
             // and are present on both device and host.
-            if (v.second.find("*") == string::npos && canPushPullVar(n.second.getVarMode(v.first))){
+            const VarMode varMode = n.second.getVarMode(v.first);
+            if (v.second.find("*") == string::npos && canPushPullVar(varMode)){
                 const size_t size = n.second.isVarQueueRequired(v.first)
                     ? n.second.getNumNeurons() * n.second.getNumDelaySlots()
                     : n.second.getNumNeurons();
+                // If variable is initialised on device, only copy if hostInitialisedOnly isn't set
+                if(varMode & VarInit::DEVICE) {
+                    os << "if(!hostInitialisedOnly)" << CodeStream::OB(1051);
+                }
+
                 os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << v.first << n.first;
                 os << ", " << v.first << n.first;
                 os << ", " << size << " * sizeof(" << v.second << "), cudaMemcpyHostToDevice));" << std::endl;
+
+                if(varMode & VarInit::DEVICE) {
+                    os << CodeStream::CB(1051);
+                }
             }
         }
 
@@ -1532,10 +1542,15 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
         os << std::endl;
 
         // neuron spike variables
-        os << "void push" << n.first << "SpikesToDevice()" << std::endl;
+        os << "void push" << n.first << "SpikesToDevice(bool hostInitialisedOnly)" << std::endl;
         os << CodeStream::OB(1060);
 
-        if(canPushPullVar(n.second.getSpikeVarMode())) {
+        const VarMode spikeVarMode = n.second.getSpikeVarMode();
+        if(canPushPullVar(spikeVarMode)) {
+            // If spikes are initialised on device, only copy if hostInitialisedOnly isn't set
+            if(spikeVarMode & VarInit::DEVICE) {
+                os << "if(!hostInitialisedOnly)" << CodeStream::OB(1061);
+            }
             const size_t glbSpkCntSize = n.second.isTrueSpikeRequired() ? n.second.getNumDelaySlots() : 1;
             os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_glbSpkCnt" << n.first;
             os << ", glbSpkCnt" << n.first;
@@ -1545,27 +1560,47 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
             os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_glbSpk" << n.first;
             os << ", glbSpk" << n.first;
             os << ", " << glbSpkSize << " * sizeof(unsigned int), cudaMemcpyHostToDevice));" << std::endl;
+
+            if(spikeVarMode & VarInit::DEVICE) {
+                os << CodeStream::CB(1061);
+            }
         }
         
         if (n.second.isSpikeEventRequired()) {
-          os << "push" << n.first << "SpikeEventsToDevice();" << std::endl;
+          os << "push" << n.first << "SpikeEventsToDevice(hostInitialisedOnly);" << std::endl;
         }
 
-        if (n.second.isSpikeTimeRequired() && canPushPullVar(n.second.getSpikeEventVarMode())) {
+        const VarMode spikeTimeVarMode = n.second.getSpikeTimeVarMode();
+        if (n.second.isSpikeTimeRequired() && canPushPullVar(spikeTimeVarMode)) {
+            // If spikes times are initialised on device, only copy if hostInitialisedOnly isn't set
+            if(spikeTimeVarMode & VarInit::DEVICE) {
+                os << "if(!hostInitialisedOnly)" << CodeStream::OB(1062);
+            }
+
             size_t size = n.second.getNumNeurons() * n.second.getNumDelaySlots();
             os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_sT" << n.first;
             os << ", sT" << n.first;
             os << ", " << size << " * sizeof(unsigned int), cudaMemcpyHostToDevice));" << std::endl;
+
+            if(spikeTimeVarMode & VarInit::DEVICE) {
+                os << CodeStream::CB(1062);
+            }
         }
 
         os << CodeStream::CB(1060);
         os << std::endl;
 
         // neuron spike variables
-        os << "void push" << n.first << "SpikeEventsToDevice()" << std::endl;
+        os << "void push" << n.first << "SpikeEventsToDevice(bool hostInitialisedOnly)" << std::endl;
         os << CodeStream::OB(1060);
 
-        if (n.second.isSpikeEventRequired() && canPushPullVar(n.second.getSpikeEventVarMode())) {
+        const VarMode varMode = n.second.getSpikeEventVarMode();
+        if (n.second.isSpikeEventRequired() && canPushPullVar(varMode)) {
+            // If spikes events are initialised on device, only copy if hostInitialisedOnly isn't set
+            if(varMode & VarInit::DEVICE) {
+                os << "if(!hostInitialisedOnly)" << CodeStream::OB(1061);
+            }
+
             const size_t glbSpkCntEventSize = n.second.getNumDelaySlots();
             os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_glbSpkCntEvnt" << n.first;
             os << ", glbSpkCntEvnt" << n.first;
@@ -1575,6 +1610,10 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
             os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_glbSpkEvnt" << n.first;
             os << ", glbSpkEvnt" << n.first;
             os << ", " << glbSpkEventSize << " * sizeof(unsigned int), cudaMemcpyHostToDevice));" << std::endl;
+
+            if(varMode & VarInit::DEVICE) {
+                os << CodeStream::CB(1061);
+            }
         }
 
         os << CodeStream::CB(1060);
@@ -1642,34 +1681,55 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
         const auto *wu = s.second.getWUModel();
         const auto *psm = s.second.getPSModel();
 
-        os << "void push" << s.first << "StateToDevice()" << std::endl;
+        os << "void push" << s.first << "StateToDevice(bool hostInitialisedOnly)" << std::endl;
         os << CodeStream::OB(1100);
 
         const unsigned int numSrcNeurons = s.second.getSrcNeuronGroup()->getNumNeurons();
         const unsigned int numTrgNeurons = s.second.getTrgNeuronGroup()->getNumNeurons();
         if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) { // INDIVIDUALG
             if (s.second.getMatrixType() & SynapseMatrixConnectivity::DENSE) {
-                os << "size_t size = " << numSrcNeurons * numTrgNeurons << ";" << std::endl;
+                os << "const size_t size = " << numSrcNeurons * numTrgNeurons << ";" << std::endl;
             }
             else {
-                os << "size_t size = C" << s.first << ".connN;" << std::endl;
+                os << "const size_t size = C" << s.first << ".connN;" << std::endl;
             }
 
             for(const auto &v : wu->getVars()) {
+                const VarMode varMode = s.second.getWUVarMode(v.first);
+
                  // only copy non-pointers and non-zero-copied. Pointers don't transport between GPU and CPU
-                if (v.second.find("*") == string::npos && canPushPullVar(s.second.getWUVarMode(v.first))) {
+                if (v.second.find("*") == string::npos && canPushPullVar(varMode)) {
+                    // If variable is initialised on device, only copy if hostInitialisedOnly isn't set
+                    if(varMode & VarInit::DEVICE) {
+                        os << "if(!hostInitialisedOnly)" << CodeStream::OB(1101);
+                    }
+
                     os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << v.first << s.first;
                     os << ", " << v.first << s.first;
                     os << ", size * sizeof(" << v.second << "), cudaMemcpyHostToDevice));" << std::endl;
+
+                    if(varMode & VarInit::DEVICE) {
+                        os << CodeStream::CB(1101);
+                    }
                 }
             }
 
             for(const auto &v : psm->getVars()) {
+                const VarMode varMode = s.second.getPSVarMode(v.first);
                 // only copy non-pointers and non-zero-copied. Pointers don't transport between GPU and CPU
-                if (v.second.find("*") == string::npos && canPushPullVar(s.second.getPSVarMode(v.first))) {
+                if (v.second.find("*") == string::npos && canPushPullVar(varMode)) {
+                    // If variable is initialised on device, only copy if hostInitialisedOnly isn't set
+                    if(varMode & VarInit::DEVICE) {
+                        os << "if(!hostInitialisedOnly)" << CodeStream::OB(1102);
+                    }
+
                     os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << v.first << s.first;
                     os << ", " << v.first << s.first;
                     os << ", " << numTrgNeurons << " * sizeof(" << v.second << "), cudaMemcpyHostToDevice));" << std::endl;
+
+                    if(varMode & VarInit::DEVICE) {
+                        os << CodeStream::CB(1102);
+                    }
                 }
             }
         }
@@ -1881,16 +1941,16 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     os << "// ------------------------------------------------------------------------" << std::endl;
     os << "// global copying values to device" << std::endl;
     
-    os << "void copyStateToDevice()" << std::endl;
+    os << "void copyStateToDevice(bool hostInitialisedOnly)" << std::endl;
     os << CodeStream::OB(1110);
 
     for(const auto &n : model.getNeuronGroups()) {
-        os << "push" << n.first << "StateToDevice();" << std::endl;
-        os << "push" << n.first << "SpikesToDevice();" << std::endl;
+        os << "push" << n.first << "StateToDevice(hostInitialisedOnly);" << std::endl;
+        os << "push" << n.first << "SpikesToDevice(hostInitialisedOnly);" << std::endl;
     }
 
     for(const auto &s : model.getSynapseGroups()) {
-        os << "push" << s.first << "StateToDevice();" << std::endl;
+        os << "push" << s.first << "StateToDevice(hostInitialisedOnly);" << std::endl;
     }
 
     os << CodeStream::CB(1110);

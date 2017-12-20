@@ -620,7 +620,7 @@ void genInit(const NNmodel &model,          //!< Model description
     os << std::endl << std::endl;
 #ifndef CPU_ONLY
     if(!GENN_PREFERENCES::autoInitSparseVars) {
-        os << "copyStateToDevice();" << std::endl << std::endl;
+        os << "copyStateToDevice(true);" << std::endl << std::endl;
     }
 
     // If any init threads were required, perform init kernel launch
@@ -717,7 +717,7 @@ void genInit(const NNmodel &model,          //!< Model description
 
 #ifndef CPU_ONLY
     if(GENN_PREFERENCES::autoInitSparseVars) {
-        os << "copyStateToDevice();" << std::endl << std::endl;
+        os << "copyStateToDevice(true);" << std::endl << std::endl;
     }
 
     // If there are any sparse synapse projections, initialise them
