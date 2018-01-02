@@ -754,6 +754,11 @@ int main(int argc, char *argv[])
             }
         }
 
+        // Call library function to perform final initialize
+        {
+            Timer t("Init network:");
+            initializeNetwork();
+        }
 
         auto simulation = experiment.child("Simulation");
         if(!simulation) {
@@ -792,13 +797,6 @@ int main(int argc, char *argv[])
                                          componentSizes, componentProperties,
                                          componentURLs, componentEventPorts));
         }
-
-        // Call library function to perform final initialize
-        {
-            Timer t("Init network:");
-            initializeNetwork();
-        }
-
 
         std::cout << "Simulating for " << numTimeSteps << " " << dt << "ms timesteps" << std::endl;
 
