@@ -106,6 +106,40 @@ bool NNmodel::zeroCopyInUse() const
     return false;
 }
 
+bool NNmodel::isDeviceInitRequired() const
+{
+    // If device RNG is required, device init is required to initialise it
+    if(isDeviceRNGRequired()) {
+        return true;
+    }
+
+    // If any neuron groups require a sim RNG
+    // **NOTE** this includes both simulation RNG seeds and variables initialised on device
+    if(std::any_of(std::begin(m_NeuronGroups), std::end(m_NeuronGroups),
+        [](const NNmodel::NeuronGroupValueType &n)
+        {
+            return (n.second.isSimRNGRequired() || n.second.isDeviceVarInitRequired());
+        }))
+    {
+        return true;
+    }
+
+    // Check whether any synapse groups require initialisation in this kernel
+    // **NOTE** this only includes dense matrices
+    if(std::any_of(std::begin(m_SynapseGroups), std::end(m_SynapseGroups),
+        [](const NNmodel::SynapseGroupValueType &s)
+        {
+            return ((s.second.getMatrixType() & SynapseMatrixConnectivity::DENSE) &&
+                    (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) &&
+                    s.second.isWUDeviceVarInitRequired());
+        }))
+    {
+        return true;
+    }
+
+    return false;
+}
+
 bool NNmodel::isHostRNGRequired() const
 {
     // Cache whether the model can run on the CPU

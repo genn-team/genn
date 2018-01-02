@@ -22,31 +22,6 @@ namespace
 #ifndef CPU_ONLY
 unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model)
 {
-    // Check whether any neuron groups require initialisation in this kernel
-    // **NOTE** this includes both simulation RNG seeds and variables initialised on device
-    const bool noNeuronInit = std::none_of(std::begin(model.getNeuronGroups()), std::end(model.getNeuronGroups()),
-                                           [](const NNmodel::NeuronGroupValueType &n)
-                                           {
-                                               return (n.second.isSimRNGRequired() || n.second.isDeviceVarInitRequired());
-                                           });
-
-    // Check whether any synapse groups require initialisation in this kernel
-    // **NOTE** this only includes dense matrices
-    const bool noSynapseInit = std::none_of(std::begin(model.getSynapseGroups()), std::end(model.getSynapseGroups()),
-                                            [](const NNmodel::SynapseGroupValueType &s)
-                                            {
-                                                return ((s.second.getMatrixType() & SynapseMatrixConnectivity::DENSE) &&
-                                                        (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) &&
-                                                        s.second.isWUDeviceVarInitRequired());
-                                            });
-
-    // If no neuron or synapse groups require initialisation and
-    // model doesn't require a device RNG - return 0 - no kernel is required
-    if(noNeuronInit && noSynapseInit && !model.isDeviceRNGRequired())
-    {
-        return 0;
-    }
-
     // init kernel header
     os << "extern \"C\" __global__ void initializeDevice()" << std::endl;
 
@@ -62,12 +37,6 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model)
         os << "if(id == 0)" << CodeStream::OB(11);
         os << "curand_init(" << model.getSeed() << ", 0, 0, &dd_rng[0]);" << std::endl;
         os << CodeStream::CB(11) << std::endl;
-
-        // If no neurons or synapses need initialising in this kernel,
-        // Return 1 so a single block is created to allocate RNG
-        if(noNeuronInit && noSynapseInit) {
-            return initBlkSz;
-        }
     }
     // Loop through neuron groups
     unsigned int startThread = 0;
@@ -312,13 +281,14 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model)
     // initialization kernel code
     os << CodeStream::CB(10);
 
-    return startThread;
+    // Return maximum of last thread and 1
+    // **NOTE** start thread may be zero if only device RNG is being initialised
+    return std::max<unsigned int>(1, startThread);
 }
 //----------------------------------------------------------------------------
 void genInitializeSparseDeviceKernel(const std::vector<const SynapseGroup*> &sparseSynapseGroups, unsigned int numStaticInitThreads,
                                      CodeStream &os, const NNmodel &model)
 {
-
     // init kernel header
     os << "extern \"C\" __global__ void initializeSparseDevice(";
     for(auto s = sparseSynapseGroups.cbegin(); s != sparseSynapseGroups.cend(); ++s) {
@@ -396,8 +366,8 @@ void genInit(const NNmodel &model,          //!< Model description
     os << std::endl;
 
 #ifndef CPU_ONLY
-    // Insert kernels to initialize neurons and dense matrices
-    const unsigned int numInitThreads = genInitializeDeviceKernel(os, model);
+    // If required, insert kernels to initialize neurons and dense matrices
+    const unsigned int numInitThreads = model.isDeviceInitRequired() ? genInitializeDeviceKernel(os, model) : 0;
 
     // If the variables associated with sparse projections should be automatically initialised
     std::vector<const SynapseGroup*> sparseSynapseGroups;

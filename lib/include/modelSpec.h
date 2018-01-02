@@ -128,6 +128,10 @@ public:
     //! Are any variables in any populations in this model using zero-copy memory?
     bool zeroCopyInUse() const;
 
+    //! Does this model require device initialisation kernel
+    //! **NOTE** this is for neuron groups and densely connected synapse groups only
+    bool isDeviceInitRequired() const;
+
     //! Do any populations or initialisation code in this model require a host RNG?
     bool isHostRNGRequired() const;
 
