@@ -165,7 +165,8 @@ private:
 // Functions
 //----------------------------------------------------------------------------
 std::unique_ptr<Base> create(const pugi::xml_node &node, scalar *hostStateVar, scalar *deviceStateVar, unsigned int size,
-                             bool skipGeNNInitialised, const filesystem::path &basePath, const std::vector<unsigned int> *remapIndices);
+                             bool skipGeNNInitialised, const filesystem::path &basePath,
+                             const std::string &valueNamespace, const std::vector<unsigned int> *remapIndices);
 
 }   // namespace ModelProperty
 }   // namespace SpineMLSimulator

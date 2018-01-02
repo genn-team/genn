@@ -257,7 +257,7 @@ void addEventPorts(const filesystem::path &basePath, const pugi::xml_node &node,
     }
 }
 //----------------------------------------------------------------------------
-void addPropertiesAndSizes(const filesystem::path &basePath, const pugi::xml_node &node, LIBRARY_HANDLE modelLibrary, const std::string &geNNPopName, unsigned int popSize,
+void addPropertiesAndSizes(const filesystem::path &basePath, const pugi::xml_node &node, const pugi::xml_node &modelNode, LIBRARY_HANDLE modelLibrary, const std::string &geNNPopName, unsigned int popSize,
                            std::map<std::string, unsigned int> &sizes, ComponentProperties &properties, const std::vector<unsigned int> *remapIndices = nullptr)
 {
     // Get SpineML name of component
@@ -268,27 +268,57 @@ void addPropertiesAndSizes(const filesystem::path &basePath, const pugi::xml_nod
         throw std::runtime_error("Component name '" + std::string(spineMLName) + "' not unique");
     }
 
+    // Use XPath query to determine whether there's a corresponding
+    // 'Configuration' containing overriden properties
+    pugi::xpath_variable_set configurationTargetVars;
+    configurationTargetVars.set("target", spineMLName);
+    auto overridenProperties = modelNode.select_node("Configuration[@target=$target]",
+                                                     &configurationTargetVars);
+
+    // Get map to hold properties associated with this component
     auto &componentProperties = properties[spineMLName];
 
     // Loop through properties in network
     for(auto param : node.children("Property")) {
         std::string paramName = param.attribute("name").value();
+
         // Get pointers to state vars in model library
         scalar **hostStateVar;
         scalar **deviceStateVar;
         std::tie(hostStateVar, deviceStateVar) = getStateVar<scalar*>(modelLibrary, paramName + geNNPopName);
 
         // If it's found
-        // **NOTE** it not being found is not an error condition - it just suggests that
+        // **NOTE** it not being found is not an error condition - it just suggests that it was optimised out by generator
         if(hostStateVar != nullptr) {
             std::cout << "\t" << paramName << std::endl;
+
+            // If any properties are overriden
+            pugi::xml_node overridenParam;
+            if(overridenProperties) {
+                // Use XPath to determine whether THIS property is overriden
+                pugi::xpath_variable_set propertyNameVars;
+                propertyNameVars.set("name", paramName.c_str());
+                if((overridenParam = overridenProperties.node().select_node("UL:Property[@name=$name]",
+                                                                            &propertyNameVars).node()))
+                {
+                    std::cout << "\t\tOverriden in experiment" << std::endl;
+                }
+            }
+
+            // Skip initialisation for properties whose type means that will have already been
+            // initialised by GeNN UNLESS parameter is overriden in experiment
+            const bool skipGeNNInitialised = !overridenParam;
+
+            // If property is overriden then the value types will be in 'UL:' namespace otherwise root
+            const std::string valueNamespace = overridenParam ? "UL:" : "";
+
 #ifdef CPU_ONLY
             std::cout << "\t\tState variable found host pointer:" << *hostStateVar << std::endl;
 
-            // Create model property object (skipping those that will have already been initialised by GeNN)
+            // Create model property object
             componentProperties.insert(
-                std::make_pair(paramName, ModelProperty::create(param, *hostStateVar, nullptr, popSize, true,
-                                                                basePath, remapIndices)));
+                std::make_pair(paramName, ModelProperty::create(overridenParam ? overridenParam : param, *hostStateVar, nullptr, popSize,
+                                                                skipGeNNInitialised, basePath, valueNamespace, remapIndices)));
 #else
             if(deviceStateVar == nullptr) {
                 throw std::runtime_error("Cannot find device-side state variable for property:" + paramName);
@@ -298,8 +328,8 @@ void addPropertiesAndSizes(const filesystem::path &basePath, const pugi::xml_nod
 
             // Create model property object
             componentProperties.insert(
-                std::make_pair(paramName, ModelProperty::create(param, *hostStateVar, *deviceStateVar, popSize, true,
-                                                                basePath, remapIndices)));
+                std::make_pair(paramName, ModelProperty::create(overridenParam ? overridenParam : param, *hostStateVar, *deviceStateVar, popSize,
+                                                                skipGeNNInitialised, basePath, valueNamespace, remapIndices)));
 #endif
         }
     }
@@ -344,7 +374,7 @@ void addPropertiesAndSizes(const filesystem::path &basePath, const pugi::xml_nod
             std::tie(hostStateVar, deviceStateVar) = getStateVar<scalar*>(modelLibrary, paramName + geNNPopName);
 
             // If it's found
-            // **NOTE** it not being found is not an error condition - it just suggests that
+            // **NOTE** it not being found is not an error condition - it just suggests that it was optimised out by generator
             if(hostStateVar != nullptr) {
                 std::cout << "\t" << paramName << std::endl;
 #ifdef CPU_ONLY
@@ -670,7 +700,7 @@ int main(int argc, char *argv[])
 
             // Add neuron population properties to dictionary
             auto geNNPopName = SpineMLUtils::getSafeName(popName);
-            addPropertiesAndSizes(basePath, neuron, modelLibrary, geNNPopName, popSize,
+            addPropertiesAndSizes(basePath, neuron, model, modelLibrary, geNNPopName, popSize,
                                   componentSizes, componentProperties);
             addEventPorts(basePath, neuron, componentURLs, componentEventPorts);
         }
@@ -742,12 +772,12 @@ int main(int argc, char *argv[])
                                                                         basePath, remapIndices);
 
                     // Add postsynapse properties to dictionary
-                    addPropertiesAndSizes(basePath, postSynapse, modelLibrary, geNNSynPopName, trgPopSize,
+                    addPropertiesAndSizes(basePath, postSynapse, model, modelLibrary, geNNSynPopName, trgPopSize,
                                           componentSizes, componentProperties);
                     addEventPorts(basePath, postSynapse, componentURLs, componentEventPorts);
 
                     // Add weight update properties to dictionary
-                    addPropertiesAndSizes(basePath, weightUpdate, modelLibrary, geNNSynPopName, numSynapses,
+                    addPropertiesAndSizes(basePath, weightUpdate, model, modelLibrary, geNNSynPopName, numSynapses,
                                           componentSizes, componentProperties, remapIndices.empty() ? nullptr : &remapIndices);
                     addEventPorts(basePath, weightUpdate, componentURLs, componentEventPorts);
                 }

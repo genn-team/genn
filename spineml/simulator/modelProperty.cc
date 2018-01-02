@@ -233,41 +233,48 @@ void SpineMLSimulator::ModelProperty::ExponentialDistribution::setValue(scalar l
 //----------------------------------------------------------------------------
 std::unique_ptr<SpineMLSimulator::ModelProperty::Base> SpineMLSimulator::ModelProperty::create(const pugi::xml_node &node, scalar *hostStateVar, scalar *deviceStateVar,
                                                                                                unsigned int size, bool skipGeNNInitialised, const filesystem::path &basePath,
-                                                                                               const std::vector<unsigned int> *remapIndices)
+                                                                                               const std::string &valueNamespace, const std::vector<unsigned int> *remapIndices)
 {
+    // Prepend namespace onto names of various types of model property
+    const std::string valueListName = valueNamespace + "ValueList";
+    const std::string fixedValueName = valueNamespace + "FixedValue";
+    const std::string uniformDistributionName = valueNamespace + "UniformDistribution";
+    const std::string normalDistribution = valueNamespace + "NormalDistribution";
+    const std::string poissonDistributionName = valueNamespace + "PoissonDistribution";
+
     // If this property has a child
     auto valueChild = node.first_child();
     if(valueChild) {
         // If this property is intialised with a list of values - create a value list model property to manually
-        if(strcmp(valueChild.name(), "ValueList") == 0) {
+        if(strcmp(valueChild.name(), valueListName.c_str()) == 0) {
             return std::unique_ptr<Base>(new ValueList(valueChild, hostStateVar, deviceStateVar, size,
                                                        basePath, remapIndices));
         }
         // Otherwise if we can skip property types that GeNN can initialise
         else if(skipGeNNInitialised) {
             // If property type is one supported by GeNN, add standard model property
-            if(strcmp(valueChild.name(), "FixedValue") == 0 ||
-                strcmp(valueChild.name(), "UniformDistribution") == 0 ||
-                strcmp(valueChild.name(), "NormalDistribution") == 0 ||
-                strcmp(valueChild.name(), "PoissonDistribution") == 0)
+            if(strcmp(valueChild.name(), fixedValueName.c_str()) == 0 ||
+                strcmp(valueChild.name(), uniformDistributionName.c_str()) == 0 ||
+                strcmp(valueChild.name(), normalDistribution.c_str()) == 0 ||
+                strcmp(valueChild.name(), poissonDistributionName.c_str()) == 0)
             {
                 return std::unique_ptr<Base>(new Base(hostStateVar, deviceStateVar, size));
             }
         }
         // Otherwise, if we can't skip property types supported by GeNN i.e. when we are overriding model properties
         else if(!skipGeNNInitialised) {
-            if(strcmp(valueChild.name(), "FixedValue") == 0) {
+            if(strcmp(valueChild.name(), fixedValueName.c_str()) == 0) {
                 return std::unique_ptr<Base>(new Fixed(valueChild, hostStateVar, deviceStateVar, size));
             }
-            else if(strcmp(valueChild.name(), "UniformDistribution") == 0) {
+            else if(strcmp(valueChild.name(), uniformDistributionName.c_str()) == 0) {
                 return std::unique_ptr<Base>(new UniformDistribution(valueChild, hostStateVar, deviceStateVar, size));
             }
-            else if(strcmp(valueChild.name(), "NormalDistribution") == 0) {
+            else if(strcmp(valueChild.name(), normalDistribution.c_str()) == 0) {
                 return std::unique_ptr<Base>(new NormalDistribution(valueChild, hostStateVar, deviceStateVar, size));
             }
             // **NOTE** Poisson distribution isn't actually one - it is the exponential
             // distribution (which models the inter-event-interval of a Poisson PROCESS)
-            else if(strcmp(valueChild.name(), "PoissonDistribution") == 0) {
+            else if(strcmp(valueChild.name(), poissonDistributionName.c_str()) == 0) {
                 return std::unique_ptr<Base>(new ExponentialDistribution(valueChild, hostStateVar, deviceStateVar, size));
             }
         }
