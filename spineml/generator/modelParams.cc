@@ -50,26 +50,25 @@ SpineMLGenerator::ModelParams::Base::Base(const filesystem::path &basePath, cons
             // In GeNN terms, it should be treated as a variable so add it to set of potential variable names
             m_VariableParams.insert(paramName);
 
-            // If property is uniformly distributed, add initialiser
-            auto uniformDistribution = param.child("UniformDistribution");
-            if(uniformDistribution) {
+            // If property is uniformly distributed, add uniform initialiser
+            if(pugi::xml_node uniformDistribution = param.child("UniformDistribution")) {
                 varInitialisers.insert(std::make_pair(paramName, NewModels::VarInit(InitVarSnippet::Uniform::getInstance(), {
                     uniformDistribution.attribute("minimum").as_double(), uniformDistribution.attribute("maximum").as_double() })));
             }
-
-            // If property is normally distributed, add initialiser
-            auto normalDistribution = param.child("NormalDistribution");
-            if(normalDistribution) {
+            // Otherwise, if property is normally distributed, add normal initialiser
+            else if(pugi::xml_node normalDistribution = param.child("NormalDistribution")) {
                 varInitialisers.insert(std::make_pair(paramName, NewModels::VarInit(InitVarSnippet::Normal::getInstance(), {
                     normalDistribution.attribute("mean").as_double(), sqrt(normalDistribution.attribute("variance").as_double()) })));
             }
-
-            // If property is exponentially distributed, add initialiser
+            // Otherwise, if property is exponentially distributed, add poisson initialiser
             // **NOTE** Poisson distribution isn't actually one - it is the exponential
-            auto exponentialDistribution = param.child("PoissonDistribution");
-            if(exponentialDistribution) {
+            else if(pugi::xml_node exponentialDistribution = param.child("PoissonDistribution")) {
                 varInitialisers.insert(std::make_pair(paramName, NewModels::VarInit(InitVarSnippet::Exponential::getInstance(), {
                     exponentialDistribution.attribute("mean").as_double() })));
+            }
+            // Otherwise, as this type of property cannot be initialised by GeNN, mark it as unitialised
+            else {
+                varInitialisers.insert(std::make_pair(paramName, NewModels::VarInit(InitVarSnippet::Uninitialised::getInstance(), {})));
             }
         }
     }
