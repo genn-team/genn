@@ -9,6 +9,7 @@ genn_help () {
     echo "-v            generates coverage information"
     echo "-h            shows this help message"
     echo "-o outpath    changes the output directory"
+    echo "-i flags      prepend compiler options with flags"
 }
 
 # handle script errors
@@ -20,14 +21,16 @@ trap 'genn_error $LINENO 50 "command failure"' ERR
 
 # parse command options
 OUT_PATH="$PWD";
+INCLUDE_FLAGS=""
 while [[ -n "${!OPTIND}" ]]; do
-    while getopts "cdvo:h" option; do
+    while getopts "cdvo:i:h" option; do
     case $option in
         c) CPU_ONLY=1;;
         d) DEBUG=1;;
         v) COVERAGE=1;;
         h) genn_help; exit;;
         o) OUT_PATH="$OPTARG";;
+        i) INCLUDE_FLAGS="$OPTARG";;
         ?) genn_help; exit;;
     esac
     done
@@ -59,7 +62,7 @@ pushd $OUT_PATH > /dev/null
 OUT_PATH="$PWD"
 popd > /dev/null
 pushd $(dirname $MODEL) > /dev/null
-MACROS="MODEL=$PWD/$(basename $MODEL) GENERATEALL_PATH=$OUT_PATH"
+MACROS="MODEL=$PWD/$(basename $MODEL) GENERATEALL_PATH=$OUT_PATH INCLUDE_FLAGS=$INCLUDE_FLAGS"
 popd > /dev/null
 if [[ -n "$DEBUG" ]]; then
     MACROS="$MACROS DEBUG=1";
