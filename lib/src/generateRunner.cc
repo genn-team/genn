@@ -356,6 +356,10 @@ void genDefinitions(const NNmodel &model, //!< Model description
     os << std::endl;
     if(model.isHostRNGRequired()) {
         os << "extern std::mt19937 rng;" << std::endl;
+
+        os << "extern std::uniform_real_distribution<" << model.getPrecision() << "> standardUniformDistribution;" << std::endl;
+        os << "extern std::normal_distribution<" << model.getPrecision() << "> standardNormalDistribution;" << std::endl;
+        os << "extern std::exponential_distribution<" << model.getPrecision() << "> standardExponentialDistribution;" << std::endl;
     }
 #ifndef CPU_ONLY
     if(model.isDeviceRNGRequired()) {
@@ -874,6 +878,11 @@ void genRunner(const NNmodel &model, //!< Model description
     os << std::endl;
     if(model.isHostRNGRequired()) {
         os << "std::mt19937 rng;" << std::endl;
+
+        // Construct standard host distributions as recreating them each call is slow
+        os << "std::uniform_real_distribution<" << model.getPrecision() << "> standardUniformDistribution(" << model.scalarExpr(0.0) << ", " << model.scalarExpr(1.0) << ");" << std::endl;
+        os << "std::normal_distribution<" << model.getPrecision() << "> standardNormalDistribution(" << model.scalarExpr(0.0) << ", " << model.scalarExpr(1.0) << ");" << std::endl;
+        os << "std::exponential_distribution<" << model.getPrecision() << "> standardExponentialDistribution(" << model.scalarExpr(1.0) << ");" << std::endl;
     }
 #ifndef CPU_ONLY
     if(model.isDeviceRNGRequired()) {
