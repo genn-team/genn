@@ -409,6 +409,10 @@ void genInit(const NNmodel &model,          //!< Model description
     std::string oB = "", cB = "";
 #endif // _WIN32
 
+    if (model.isTimingEnabled()) {
+        os << "initHost_timer.startTimer();" << std::endl;
+    }
+
     // **NOTE** if we are using GCC on x86_64, bugs in some version of glibc can cause bad performance issues.
     // Best solution involves setting LD_BIND_NOW=1 so check whether this has been applied
     os << "#if defined(__GNUG__) && !defined(__clang__) && defined(__x86_64__) && __GLIBC__ == 2 && (__GLIBC_MINOR__ == 23 || __GLIBC_MINOR__ == 24)" << std::endl;
@@ -592,13 +596,34 @@ void genInit(const NNmodel &model,          //!< Model description
     if(!GENN_PREFERENCES::autoInitSparseVars) {
         os << "copyStateToDevice(true);" << std::endl << std::endl;
     }
+#endif
 
+    if (model.isTimingEnabled()) {
+        os << "initHost_timer.stopTimer();" << std::endl;
+        os << "initHost_tme+= initHost_timer.getElapsedTime();" << std::endl;
+    }
+
+#ifndef CPU_ONLY
     // If any init threads were required, perform init kernel launch
     if(numInitThreads > 0) {
+        if (model.isTimingEnabled()) {
+            os << "cudaEventRecord(initDeviceStart);" << std::endl;
+        }
+
         os << "// perform on-device init" << std::endl;
         os << "dim3 iThreads(" << initBlkSz << ", 1);" << std::endl;
         os << "dim3 iGrid(" << numInitThreads / initBlkSz << ", 1);" << std::endl;
         os << "initializeDevice <<<iGrid, iThreads>>>();" << std::endl;
+
+        if (model.isTimingEnabled()) {
+            os << "cudaEventRecord(initDeviceStop);" << std::endl;
+            os << "cudaEventSynchronize(initDeviceStop);" << std::endl;
+            os << "float tmp;" << std::endl;
+            if (!model.getSynapseGroups().empty()) {
+                os << "cudaEventElapsedTime(&tmp, initDeviceStart, initDeviceStop);" << std::endl;
+                os << "initDevice_tme+= tmp/1000.0;" << std::endl;
+            }
+        }
     }
 #endif
     os << CodeStream::CB(10) << std::endl;

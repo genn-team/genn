@@ -346,6 +346,12 @@ void genDefinitions(const NNmodel &model, //!< Model description
             os << "extern double synDyn_tme;" << std::endl;
             os << "extern CStopWatch synDyn_timer;" << std::endl;
         }
+        if(model.isDeviceInitRequired()) {
+            os << "extern cudaEvent_t initDeviceStart, initDeviceStop;" << std::endl;
+        }
+        os << "extern double initHost_tme;" << std::endl;
+        os << "extern double initDevice_tme;" << std::endl;
+        os << "extern CStopWatch initHost_timer;" << std::endl;
     }
     os << std::endl;
     if(model.isHostRNGRequired()) {
@@ -858,6 +864,12 @@ void genRunner(const NNmodel &model, //!< Model description
             os << "double synDyn_tme;" << std::endl;
             os << "CStopWatch synDyn_timer;" << std::endl;
         }
+        if(model.isDeviceInitRequired()) {
+            os << "cudaEvent_t initDeviceStart, initDeviceStop;" << std::endl;
+        }
+        os << "double initHost_tme;" << std::endl;
+        os << "double initDevice_tme;" << std::endl;
+        os << "CStopWatch initHost_timer;" << std::endl;
     } 
     os << std::endl;
     if(model.isHostRNGRequired()) {
@@ -1074,6 +1086,12 @@ void genRunner(const NNmodel &model, //!< Model description
 #endif
             os << "    synDyn_tme= 0.0;" << std::endl;
         }
+        if(model.isDeviceInitRequired()) {
+            os << "cudaEventCreate(&initDeviceStart);" << std::endl;
+            os << "cudaEventCreate(&initDeviceStop);" << std::endl;
+        }
+        os << "initHost_tme = 0.0;" << std::endl;
+        os << "initDevice_tme = 0.0;" << std::endl;
     }
 
     // ALLOCATE NEURON VARIABLES
