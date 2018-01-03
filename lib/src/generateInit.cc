@@ -592,18 +592,16 @@ void genInit(const NNmodel &model,          //!< Model description
     }
 
     os << std::endl << std::endl;
-#ifndef CPU_ONLY
-    if(!GENN_PREFERENCES::autoInitSparseVars) {
-        os << "copyStateToDevice(true);" << std::endl << std::endl;
-    }
-#endif
-
     if (model.isTimingEnabled()) {
         os << "initHost_timer.stopTimer();" << std::endl;
         os << "initHost_tme+= initHost_timer.getElapsedTime();" << std::endl;
     }
 
 #ifndef CPU_ONLY
+    if(!GENN_PREFERENCES::autoInitSparseVars) {
+        os << "copyStateToDevice(true);" << std::endl << std::endl;
+    }
+
     // If any init threads were required, perform init kernel launch
     if(numInitThreads > 0) {
         if (model.isTimingEnabled()) {
