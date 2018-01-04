@@ -470,10 +470,10 @@ void genDefinitions(const NNmodel &model, //!< Model description
 
         if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) { // not needed for GLOBALG
             for(const auto &v : s.second.getWUModel()->getVars()) {
-                extern_variable_def(os, v.second + " *", v.first + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST);
+                extern_variable_def(os, v.second + " *", v.first + s.first, s.second.getWUVarMode(v.first));
             }
             for(const auto &v : s.second.getPSModel()->getVars()) {
-                extern_variable_def(os, v.second + " *", v.first + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST);
+                extern_variable_def(os, v.second + " *", v.first + s.first, s.second.getWUVarMode(v.first));
             }
         }
 
