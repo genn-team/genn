@@ -9,7 +9,7 @@ genn_help () {
     echo "-v                generates coverage information"
     echo "-h                shows this help message"
     echo "-o outpath        changes the output directory"
-    echo "-i includepath    add additional include directories (seperated by semicolons)"
+    echo "-i includepath    add additional include directories (seperated by colons)"
 }
 
 # handle script errors
