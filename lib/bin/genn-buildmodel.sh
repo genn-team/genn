@@ -4,11 +4,12 @@
 genn_help () {
     echo "genn-buildmodel.sh script usage:"
     echo "genn-buildmodel.sh [cdho] model"
-    echo "-c            only generate simulation code for the CPU"
-    echo "-d            enables the debugging mode"
-    echo "-v            generates coverage information"
-    echo "-h            shows this help message"
-    echo "-o outpath    changes the output directory"
+    echo "-c                only generate simulation code for the CPU"
+    echo "-d                enables the debugging mode"
+    echo "-v                generates coverage information"
+    echo "-h                shows this help message"
+    echo "-o outpath        changes the output directory"
+    echo "-i includepath    add additional include directories (seperated by colons)"
 }
 
 # handle script errors
@@ -20,14 +21,16 @@ trap 'genn_error $LINENO 50 "command failure"' ERR
 
 # parse command options
 OUT_PATH="$PWD";
+BUILD_MODEL_INCLUDE=""
 while [[ -n "${!OPTIND}" ]]; do
-    while getopts "cdvo:h" option; do
+    while getopts "cdvo:i:h" option; do
     case $option in
         c) CPU_ONLY=1;;
         d) DEBUG=1;;
         v) COVERAGE=1;;
         h) genn_help; exit;;
         o) OUT_PATH="$OPTARG";;
+        i) BUILD_MODEL_INCLUDE="$OPTARG";;
         ?) genn_help; exit;;
     esac
     done
@@ -59,7 +62,7 @@ pushd $OUT_PATH > /dev/null
 OUT_PATH="$PWD"
 popd > /dev/null
 pushd $(dirname $MODEL) > /dev/null
-MACROS="MODEL=$PWD/$(basename $MODEL) GENERATEALL_PATH=$OUT_PATH"
+MACROS="MODEL=$PWD/$(basename $MODEL) GENERATEALL_PATH=$OUT_PATH BUILD_MODEL_INCLUDE=$BUILD_MODEL_INCLUDE"
 popd > /dev/null
 if [[ -n "$DEBUG" ]]; then
     MACROS="$MACROS DEBUG=1";

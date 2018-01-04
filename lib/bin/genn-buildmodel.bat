@@ -6,10 +6,11 @@ goto :genn_begin
 rem :: display genn-buildmodel.bat help
 echo genn-buildmodel.bat script usage:
 echo genn-buildmodel.bat [cdho] model
-echo -c            only generate simulation code for the CPU
-echo -d            enables the debugging mode
-echo -h            shows this help message
-echo -o outpath    changes the output directory
+echo -c             only generate simulation code for the CPU
+echo -d             enables the debugging mode
+echo -h             shows this help message
+echo -o outpath     changes the output directory
+echo -i includepath add additional include directories (seperated by semicolons)
 goto :eof
 
 :genn_begin
@@ -17,7 +18,7 @@ rem :: define genn-buildmodel.bat options separated by spaces
 rem :: -<option>:              option
 rem :: -<option>:""            option with argument
 rem :: -<option>:"<default>"   option with argument and default value
-set "OPTIONS=-o:"%CD%" -d: -c: -h:"
+set "OPTIONS=-o:"%CD%" -i:"" -d: -c: -h:"
 for %%O in (%OPTIONS%) do for /f "tokens=1,* delims=:" %%A in ("%%O") do set "%%A=%%~B"
 
 :genn_option
@@ -55,7 +56,8 @@ if not defined MODEL (
     goto :eof
 )
 for /f %%I in ("%-o%") do set "-o=%%~fI"
-for /f %%I in ("%MODEL%") do set "MACROS=/p:ModelFile=%%~fI /p:GeneratePath=%-o%"
+for /f %%I in ("%-i%") do set "-i=%%~fI"
+for /f %%I in ("%MODEL%") do set "MACROS=/p:ModelFile=%%~fI /p:GeneratePath=%-o% /p:BuildModelInclude=%-i%"
 
 if defined -d (
 	if defined -c (
