@@ -47,7 +47,7 @@ SynapseGroup::SynapseGroup(const std::string name, SynapseMatrixType matrixType,
                            NeuronGroup *srcNeuronGroup, NeuronGroup *trgNeuronGroup)
     :   m_PaddedKernelIDRange(0, 0), m_Name(name), m_SpanType(SpanType::POSTSYNAPTIC), m_DelaySteps(delaySteps), m_MaxConnections(trgNeuronGroup->getNumNeurons()), m_MatrixType(matrixType),
         m_SrcNeuronGroup(srcNeuronGroup), m_TrgNeuronGroup(trgNeuronGroup),
-        m_TrueSpikeRequired(false), m_SpikeEventRequired(false), m_EventThresholdReTestRequired(false),
+        m_TrueSpikeRequired(false), m_SpikeEventRequired(false), m_EventThresholdReTestRequired(false), m_InSynVarMode(GENN_PREFERENCES::defaultVarMode),
         m_WUModel(wu), m_WUParams(wuParams), m_WUVarInitialisers(wuVarInitialisers), m_PSModel(ps), m_PSParams(psParams), m_PSVarInitialisers(psVarInitialisers),
         m_WUVarMode(wuVarInitialisers.size(), GENN_PREFERENCES::defaultVarMode), m_PSVarMode(psVarInitialisers.size(), GENN_PREFERENCES::defaultVarMode),
         m_HostID(0), m_DeviceID(0)
@@ -339,6 +339,11 @@ bool SynapseGroup::isWUDeviceVarInitRequired() const
 bool SynapseGroup::canRunOnCPU() const
 {
 #ifndef CPU_ONLY
+    // Return false if insyn variable isn't present on the host
+    if(!(getInSynVarMode() & VarLocation::HOST)) {
+        return false;
+    }
+
     // Return false if any of the weight update variables aren't present on the host
     if(std::any_of(m_WUVarMode.cbegin(), m_WUVarMode.cend(),
                    [](const VarMode mode){ return !(mode & VarLocation::HOST); }))

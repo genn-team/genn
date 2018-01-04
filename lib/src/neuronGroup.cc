@@ -205,10 +205,13 @@ bool NeuronGroup::isDeviceVarInitRequired() const
         return true;
     }
 
-    // Return true if any of the incoming synapse groups have state variables which should be initialised on device
+    // Return true if any of the incoming synapse groups have state variables or input variables which should be initialised on device
     // **NOTE** these are included here as they are initialised in neuron initialisation threads
     return std::any_of(getInSyn().cbegin(), getInSyn().cend(),
-                       [](const SynapseGroup *sg){ return sg->isPSDeviceVarInitRequired(); });
+                       [](const SynapseGroup *sg)
+                       {
+                           return sg->isPSDeviceVarInitRequired() || (sg->getInSynVarMode() & VarInit::DEVICE);
+                       });
 }
 
 bool NeuronGroup::canRunOnCPU() const

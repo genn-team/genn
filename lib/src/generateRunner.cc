@@ -460,7 +460,8 @@ void genDefinitions(const NNmodel &model, //!< Model description
     os << std::endl;
 
     for(const auto &s : model.getSynapseGroups()) {
-        extern_variable_def(os, model.getPrecision()+" *", "inSyn" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST);
+        extern_variable_def(os, model.getPrecision()+" *", "inSyn" + s.first, s.second.getInSynVarMode());
+
         if (s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
             extern_variable_def(os, "uint32_t *", "gp" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST);
         }
@@ -947,7 +948,8 @@ void genRunner(const NNmodel &model, //!< Model description
         const auto *wu = s.second.getWUModel();
         const auto *psm = s.second.getPSModel();
 
-        variable_def(os, model.getPrecision()+" *", "inSyn"+s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST);
+        variable_def(os, model.getPrecision() + " *", "inSyn" + s.first, s.second.getInSynVarMode());
+
         if (s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
             variable_def(os, "uint32_t *", "gp"+s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST);
         }
@@ -1152,7 +1154,7 @@ void genRunner(const NNmodel &model, //!< Model description
         const auto *psm = s.second.getPSModel();
 
         // Allocate buffer to hold input coming from this synapse population
-        mem += allocate_variable(os, model.getPrecision(), "inSyn" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST,
+        mem += allocate_variable(os, model.getPrecision(), "inSyn" + s.first, s.second.getInSynVarMode(),
                                  s.second.getTrgNeuronGroup()->getNumNeurons());
 
         // If connectivity is defined using a bitmask, allocate memory for bitmask
@@ -1303,7 +1305,7 @@ void genRunner(const NNmodel &model, //!< Model description
 
     // FREE SYNAPSE VARIABLES
     for(const auto &s : model.getSynapseGroups()) {
-        free_variable(os, "inSyn" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST);
+        free_variable(os, "inSyn" + s.first, s.second.getInSynVarMode());
 
         if (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
             os << "    C" << s.first << ".connN= 0;" << std::endl;
@@ -1767,9 +1769,20 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
             os << ", " << size << " * sizeof(uint32_t), cudaMemcpyHostToDevice));" << std::endl;
         }
 
-        os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_inSyn" << s.first;
-        os << ", inSyn" << s.first;
-        os << ", " << numTrgNeurons << " * sizeof(" << model.getPrecision() << "), cudaMemcpyHostToDevice));" << std::endl;
+        // If synapse input variables can be pushed and pulled add copy code
+        if(canPushPullVar(s.second.getInSynVarMode())) {
+            // If variable is initialised on device, only copy if hostInitialisedOnly isn't set
+            if(s.second.getInSynVarMode() & VarInit::DEVICE) {
+                os << "if(!hostInitialisedOnly)" << CodeStream::OB(1103);
+            }
+            os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_inSyn" << s.first;
+            os << ", inSyn" << s.first;
+            os << ", " << numTrgNeurons << " * sizeof(" << model.getPrecision() << "), cudaMemcpyHostToDevice));" << std::endl;
+
+            if(s.second.getInSynVarMode() & VarInit::DEVICE) {
+                os << CodeStream::CB(1103);
+            }
+        }
 
         os << CodeStream::CB(1100);
         os << std::endl;
@@ -1956,9 +1969,11 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
             os << ", " << size << " * sizeof(uint32_t), cudaMemcpyDeviceToHost));" << std::endl;
         }
 
-        os << "CHECK_CUDA_ERRORS(cudaMemcpy(inSyn" << s.first;
-        os << ", d_inSyn" << s.first;
-        os << ", " << numTrgNeurons << " * sizeof(" << model.getPrecision() << "), cudaMemcpyDeviceToHost));" << std::endl;
+        if(canPushPullVar(s.second.getInSynVarMode())) {
+            os << "CHECK_CUDA_ERRORS(cudaMemcpy(inSyn" << s.first;
+            os << ", d_inSyn" << s.first;
+            os << ", " << numTrgNeurons << " * sizeof(" << model.getPrecision() << "), cudaMemcpyDeviceToHost));" << std::endl;
+        }
 
         os << CodeStream::CB(1100);
         os << std::endl;

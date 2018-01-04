@@ -196,6 +196,11 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model)
 
             // Loop through incoming synaptic populations
             for(const auto *s : n.second.getInSyn()) {
+                // If this synapse group's input variable should be initialised on device
+                if(s->getInSynVarMode() & VarInit::DEVICE) {
+                    os << "dd_inSyn" << s->getName() << "[lid] = " << model.scalarExpr(0.0) << ";" << std::endl;
+                }
+
                 // If matrix has individual state variables
                 // **THINK** should this REALLY also apply to postsynaptic models
                 if(s->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
@@ -550,9 +555,12 @@ void genInit(const NNmodel &model,          //!< Model description
         const unsigned int numSrcNeurons = s.second.getSrcNeuronGroup()->getNumNeurons();
         const unsigned int numTrgNeurons = s.second.getTrgNeuronGroup()->getNumNeurons();
 
-        os << CodeStream::OB(230) << "for (int i = 0; i < " << numTrgNeurons << "; i++)" << CodeStream::OB(240);
-        os << "inSyn" << s.first << "[i] = " << model.scalarExpr(0.0) << ";" << std::endl;
-        os << CodeStream::CB(240) << CodeStream::CB(230) << std::endl;
+        // If insyn variables should be initialised on the host
+        if(s.second.getInSynVarMode() & VarInit::HOST) {
+            os << CodeStream::OB(230) << "for (int i = 0; i < " << numTrgNeurons << "; i++)" << CodeStream::OB(240);
+            os << "inSyn" << s.first << "[i] = " << model.scalarExpr(0.0) << ";" << std::endl;
+            os << CodeStream::CB(240) << CodeStream::CB(230) << std::endl;
+        }
 
         // If matrix is dense (i.e. can be initialised here) and each synapse has individual values (i.e. needs initialising at all)
         if ((s.second.getMatrixType() & SynapseMatrixConnectivity::DENSE) && (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL)) {

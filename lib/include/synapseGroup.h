@@ -63,6 +63,9 @@ public:
 
     void setClusterIndex(int hostID, int deviceID){ m_HostID = hostID; m_DeviceID = deviceID; }
 
+    //!< Set variable mode used for variables used to combine input from this synapse group
+    void setInSynVarMode(VarMode mode) { m_InSynVarMode = mode; }
+
     void setMaxConnections(unsigned int maxConnections);
     void setSpanType(SpanType spanType);
 
@@ -80,6 +83,9 @@ public:
     unsigned int getDelaySteps() const{ return m_DelaySteps; }
     unsigned int getMaxConnections() const{ return m_MaxConnections; }
     SynapseMatrixType getMatrixType() const{ return m_MatrixType; }
+
+    //!< Get variable mode used for variables used to combine input from this synapse group
+    VarMode getInSynVarMode() const { return m_InSynVarMode; }
 
     unsigned int getPaddedDynKernelSize(unsigned int blockSize) const;
     unsigned int getPaddedPostLearnKernelSize(unsigned int blockSize) const;
@@ -189,6 +195,9 @@ private:
 
     //!< Defines whether the Evnt Threshold needs to be retested in the synapse kernel due to multiple non-identical events in the pre-synaptic neuron population
     bool m_EventThresholdReTestRequired;
+
+    //!< Variable mode used for variables used to combine input from this synapse group
+    VarMode m_InSynVarMode;
 
     //!< Weight update model type
     const WeightUpdateModels::Base *m_WUModel;
