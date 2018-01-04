@@ -6,11 +6,11 @@ goto :genn_begin
 rem :: display genn-buildmodel.bat help
 echo genn-buildmodel.bat script usage:
 echo genn-buildmodel.bat [cdho] model
-echo -c            only generate simulation code for the CPU
-echo -d            enables the debugging mode
-echo -h            shows this help message
-echo -o outpath    changes the output directory
-echo -i include    add additional include directories (seperated by semicolons)
+echo -c             only generate simulation code for the CPU
+echo -d             enables the debugging mode
+echo -h             shows this help message
+echo -o outpath     changes the output directory
+echo -i includepath add additional include directories (seperated by semicolons)
 goto :eof
 
 :genn_begin
