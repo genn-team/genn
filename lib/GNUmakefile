@@ -65,6 +65,10 @@ endif
 
 ARFLAGS                  :=-rcs
 
+# BUILD_MODEL_INCLUDE contains a colon-seperated list of additional include paths.
+# substitute :s for spaces and then prepend each path with -I so it gets turned into an include directory
+INCLUDE_FLAGS            +=$(patsubst %,-I%,$(subst :, ,$(BUILD_MODEL_INCLUDE)))
+
 # Global include and link flags
 ifndef CPU_ONLY
     INCLUDE_FLAGS        +=-I"$(INC_PATH)" -I"$(CUDA_PATH)/include"
