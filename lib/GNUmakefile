@@ -55,39 +55,39 @@ ifeq ($(DARWIN),DARWIN)
     CXX                  :=clang++
 endif
 ifndef CPU_ONLY
-    override CXXFLAGS             +=-std=c++11 -Wall -Wextra -DNVCC=\"$(NVCC)\"
+    CXXFLAGS             :=-std=c++11 -Wall -Wextra -DNVCC=\"$(NVCC)\"
 else
-    override CXXFLAGS             +=-std=c++11 -Wall -Wextra -DCPU_ONLY
+    CXXFLAGS             :=-std=c++11 -Wall -Wextra -DCPU_ONLY
 endif
 ifdef DEBUG
-    override CXXFLAGS             +=-g -O0 -DDEBUG
+    CXXFLAGS             +=-g -O0 -DDEBUG
 endif
 
 ARFLAGS                  :=-rcs
 
 # Global include and link flags
 ifndef CPU_ONLY
-    override INCLUDE_FLAGS        +=-I"$(INC_PATH)" -I"$(CUDA_PATH)/include"
+    INCLUDE_FLAGS        :=-I"$(INC_PATH)" -I"$(CUDA_PATH)/include"
     ifeq ($(DARWIN),DARWIN)
-        override LINK_FLAGS       +=-rpath $(CUDA_PATH)/lib -L"$(LIBGENN_PATH)" -L"$(CUDA_PATH)/lib" -lgenn -lcuda -lcudart -lstdc++ -lc++
+        LINK_FLAGS       :=-rpath $(CUDA_PATH)/lib -L"$(LIBGENN_PATH)" -L"$(CUDA_PATH)/lib" -lgenn -lcuda -lcudart -lstdc++ -lc++
     else
         ifeq ($(OS_SIZE),32)
-            override LINK_FLAGS   +=-L"$(LIBGENN_PATH)" -L"$(CUDA_PATH)/lib" -lgenn -lcuda -lcudart
+            LINK_FLAGS   :=-L"$(LIBGENN_PATH)" -L"$(CUDA_PATH)/lib" -lgenn -lcuda -lcudart
         else
-            override LINK_FLAGS   +=-L"$(LIBGENN_PATH)" -L"$(CUDA_PATH)/lib64" -lgenn -lcuda -lcudart
+            LINK_FLAGS   :=-L"$(LIBGENN_PATH)" -L"$(CUDA_PATH)/lib64" -lgenn -lcuda -lcudart
         endif
     endif
 else
-    override INCLUDE_FLAGS        +=-I"$(INC_PATH)"
-    override LINK_FLAGS           +=-L"$(LIBGENN_PATH)" -lgenn_CPU_ONLY
+    INCLUDE_FLAGS        :=-I"$(INC_PATH)"
+    LINK_FLAGS           :=-L"$(LIBGENN_PATH)" -lgenn_CPU_ONLY
     ifeq ($(DARWIN),DARWIN)
-        override LINK_FLAGS       +=-L"$(LIBGENN_PATH)" -lgenn_CPU_ONLY -lstdc++ -lc++
+        LINK_FLAGS       :=-L"$(LIBGENN_PATH)" -lgenn_CPU_ONLY -lstdc++ -lc++
     endif
 endif
 
 ifdef COVERAGE
-    override CXXFLAGS             +=-O0 --coverage
-    override LINK_FLAGS           +=--coverage
+    CXXFLAGS             +=-O0 --coverage
+    LINK_FLAGS           +=--coverage
 endif
 
 # Target rules
