@@ -22,10 +22,10 @@ namespace
 bool shouldInitOnHost(VarMode varMode)
 {
 #ifndef CPU_ONLY
-	return (varMode & VarInit::HOST);
+    return (varMode & VarInit::HOST);
 #else
-	USE(varMode);
-	return true;
+    USE(varMode);
+    return true;
 #endif
 }
 // ------------------------------------------------------------------------

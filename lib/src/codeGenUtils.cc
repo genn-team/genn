@@ -197,14 +197,15 @@ bool isInitRNGRequired(const std::vector<NewModels::VarInit> &varInitialisers, c
     // Loop through variables
     for(unsigned int v = 0; v < varInitialisers.size(); v++) {
         const auto &varInit = varInitialisers[v];
-        const auto varMode = varModes[v];
         
 #ifndef CPU_ONLY
-		// If initialisation snippet requires RNG and var mode matches, return true
+        const auto varMode = varModes[v];
+        
+        // If initialisation snippet requires RNG and var mode matches, return true
         if(::isRNGRequired(varInit.getSnippet()->getCode()) && (varMode & varInitMode)) {
 #else
-		// If initialisation snippet requires RNG and var init mode is set to host
-		if(::isRNGRequired(varInit.getSnippet()->getCode()) && (varInitMode == VarInit::HOST)) {
+        // If initialisation snippet requires RNG and var init mode is set to host
+        if(::isRNGRequired(varInit.getSnippet()->getCode()) && (varInitMode == VarInit::HOST)) {
 #endif
             return true;
         }

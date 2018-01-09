@@ -184,6 +184,7 @@ void free_variable(CodeStream &os, const string &name, VarMode mode)
 //--------------------------------------------------------------------------
 //! \brief Can a variable with this mode be pushed and pulled between device and host
 //--------------------------------------------------------------------------
+#ifndef CPU_ONLY
 bool canPushPullVar(VarMode varMode)
 {
     // A variable can be pushed and pulled if it is located
@@ -192,6 +193,7 @@ bool canPushPullVar(VarMode varMode)
             (varMode & VarLocation::DEVICE) &&
             !(varMode & VarLocation::ZERO_COPY));
 }
+#endif  // CPU_ONLY
 }
 
 //--------------------------------------------------------------------------
