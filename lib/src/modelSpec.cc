@@ -140,6 +140,23 @@ bool NNmodel::isDeviceInitRequired() const
     return false;
 }
 
+bool NNmodel::isDeviceSparseInitRequired() const
+{
+    // If automatic initialisation of sparse variables isn't enabled, return false
+    if(!GENN_PREFERENCES::autoInitSparseVars) {
+        return false;
+    }
+
+    // Return true if any of the synapse groups have sparse connectivity which requires device initialiation
+    return std::any_of(std::begin(m_SynapseGroups), std::end(m_SynapseGroups),
+        [](const NNmodel::SynapseGroupValueType &s)
+        {
+            return ((s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) &&
+                (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) &&
+                s.second.isWUDeviceVarInitRequired());
+        });
+}
+
 bool NNmodel::isHostRNGRequired() const
 {
     // Cache whether the model can run on the CPU

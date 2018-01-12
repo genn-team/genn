@@ -132,6 +132,10 @@ public:
     //! **NOTE** this is for neuron groups and densely connected synapse groups only
     bool isDeviceInitRequired() const;
 
+    //! Does this model require a device sparse initialisation kernel
+    //! **NOTE** this is for sparsely connected synapse groups only
+    bool isDeviceSparseInitRequired() const;
+
     //! Do any populations or initialisation code in this model require a host RNG?
     bool isHostRNGRequired() const;
 

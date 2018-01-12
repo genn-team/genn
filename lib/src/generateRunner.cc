@@ -348,12 +348,20 @@ void genDefinitions(const NNmodel &model, //!< Model description
             os << "extern double synDyn_tme;" << std::endl;
             os << "extern CStopWatch synDyn_timer;" << std::endl;
         }
+#ifndef CPU_ONLY
         if(model.isDeviceInitRequired()) {
             os << "extern cudaEvent_t initDeviceStart, initDeviceStop;" << std::endl;
         }
+        if(model.isDeviceSparseInitRequired()) {
+            os << "extern cudaEvent_t sparseInitDeviceStart, sparseInitDeviceStop;" << std::endl;
+        }
+#endif
         os << "extern double initHost_tme;" << std::endl;
         os << "extern double initDevice_tme;" << std::endl;
         os << "extern CStopWatch initHost_timer;" << std::endl;
+        os << "extern double sparseInitHost_tme;" << std::endl;
+        os << "extern double sparseInitDevice_tme;" << std::endl;
+        os << "extern CStopWatch sparseInitHost_timer;" << std::endl;
     }
     os << std::endl;
     if(model.isHostRNGRequired()) {
@@ -871,12 +879,20 @@ void genRunner(const NNmodel &model, //!< Model description
             os << "double synDyn_tme;" << std::endl;
             os << "CStopWatch synDyn_timer;" << std::endl;
         }
+#ifndef CPU_ONLY
         if(model.isDeviceInitRequired()) {
             os << "cudaEvent_t initDeviceStart, initDeviceStop;" << std::endl;
         }
+        if(model.isDeviceSparseInitRequired()) {
+            os << "cudaEvent_t sparseInitDeviceStart, sparseInitDeviceStop;" << std::endl;
+        }
+#endif
         os << "double initHost_tme;" << std::endl;
         os << "double initDevice_tme;" << std::endl;
         os << "CStopWatch initHost_timer;" << std::endl;
+        os << "double sparseInitHost_tme;" << std::endl;
+        os << "double sparseInitDevice_tme;" << std::endl;
+        os << "CStopWatch sparseInitHost_timer;" << std::endl;
     } 
     os << std::endl;
     if(model.isHostRNGRequired()) {
@@ -1099,12 +1115,20 @@ void genRunner(const NNmodel &model, //!< Model description
 #endif
             os << "    synDyn_tme= 0.0;" << std::endl;
         }
+#ifndef CPU_ONLY
         if(model.isDeviceInitRequired()) {
             os << "cudaEventCreate(&initDeviceStart);" << std::endl;
             os << "cudaEventCreate(&initDeviceStop);" << std::endl;
         }
+        if(model.isDeviceSparseInitRequired()) {
+            os << "cudaEventCreate(&sparseInitDeviceStart);" << std::endl;
+            os << "cudaEventCreate(&sparseInitDeviceStop);" << std::endl;
+        }
+#endif
         os << "initHost_tme = 0.0;" << std::endl;
         os << "initDevice_tme = 0.0;" << std::endl;
+        os << "sparseInitHost_tme = 0.0;" << std::endl;
+        os << "sparseInitDevice_tme = 0.0;" << std::endl;
     }
 
     // ALLOCATE NEURON VARIABLES
