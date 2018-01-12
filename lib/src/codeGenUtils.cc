@@ -191,28 +191,41 @@ bool isRNGRequired(const std::string &code)
 //--------------------------------------------------------------------------
 //! \brief Does the model with the vectors of variable initialisers and modes require an RNG for the specified init mode
 //--------------------------------------------------------------------------
+#ifndef CPU_ONLY
 bool isInitRNGRequired(const std::vector<NewModels::VarInit> &varInitialisers, const std::vector<VarMode> &varModes,
-                       VarInit varInitMode)
+                       VarInit initLocation)
 {
     // Loop through variables
     for(unsigned int v = 0; v < varInitialisers.size(); v++) {
         const auto &varInit = varInitialisers[v];
-        
-#ifndef CPU_ONLY
         const auto varMode = varModes[v];
-        
-        // If initialisation snippet requires RNG and var mode matches, return true
-        if(::isRNGRequired(varInit.getSnippet()->getCode()) && (varMode & varInitMode)) {
-#else
-        // If initialisation snippet requires RNG and var init mode is set to host
-        if(::isRNGRequired(varInit.getSnippet()->getCode()) && (varInitMode == VarInit::HOST)) {
-#endif
+
+        // If initialisation snippet requires RNG and var should be initialised on this location, return true
+        if(::isRNGRequired(varInit.getSnippet()->getCode()) && (varMode & initLocation)) {
+
             return true;
         }
     }
 
     return false;
 }
+#else
+bool isInitRNGRequired(const std::vector<NewModels::VarInit> &varInitialisers, const std::vector<VarMode> &,
+                       VarInit initLocation)
+{
+    // Loop through variables
+    for(unsigned int v = 0; v < varInitialisers.size(); v++) {
+        const auto &varInit = varInitialisers[v];
+
+        // If initialisation snippet requires RNG and var init mode is set to host
+        if(::isRNGRequired(varInit.getSnippet()->getCode()) && (initLocation == VarInit::HOST)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+#endif
 //--------------------------------------------------------------------------
 /*! \brief This function substitutes function calls in the form:
  *

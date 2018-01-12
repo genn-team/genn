@@ -126,10 +126,10 @@ void substitute(string &s, const string &trg, const string &rep);
 bool isRNGRequired(const std::string &code);
 
 //--------------------------------------------------------------------------
-//! \brief Does the model with the vectors of variable initialisers and modes require an RNG for the specified init mode
+//! \brief Does the model with the vectors of variable initialisers and modes require an RNG for the specified init location i.e. host or device
 //--------------------------------------------------------------------------
 bool isInitRNGRequired(const std::vector<NewModels::VarInit> &varInitialisers, const std::vector<VarMode> &varModes,
-                       VarInit varInitMode);
+                       VarInit initLocation);
 
 //--------------------------------------------------------------------------
 /*! \brief This function substitutes function calls in the form:
