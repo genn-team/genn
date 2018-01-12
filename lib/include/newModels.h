@@ -1,6 +1,7 @@
 #pragma once
 
 // Standard C++ includes
+#include <algorithm>
 #include <string>
 #include <vector>
 
@@ -162,9 +163,24 @@ public:
 
     //----------------------------------------------------------------------------
     // Declared virtuals
-    //----------------------------------------------------------------------------
+    //------------------------------------------------------------------------
     //! Gets names and types (as strings) of model variables
     virtual StringPairVec getVars() const{ return {}; }
+
+    //------------------------------------------------------------------------
+    // Public methods
+    //------------------------------------------------------------------------
+    //! Find the index of a named variable
+    size_t getVarIndex(const std::string &varName) const
+    {
+        auto vars = getVars();
+        auto varIter = std::find_if(vars.begin(), vars.end(),
+            [varName](const StringPairVec::value_type &v){ return (v.first == varName); });
+        assert(varIter != vars.end());
+
+        // Return flag corresponding to variable
+        return distance(vars.begin(), varIter);
+    }
 };
 
 //----------------------------------------------------------------------------

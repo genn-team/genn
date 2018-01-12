@@ -6,6 +6,9 @@
 #include <sstream>
 #include <vector>
 
+// GeNN includes
+#include "variableMode.h"
+
 using namespace std;
 
 // Forward declarations
@@ -15,6 +18,11 @@ class SynapseGroup;
 namespace NeuronModels
 {
     class Base;
+}
+
+namespace NewModels
+{
+    class VarInit;
 }
 
 //--------------------------------------------------------------------------
@@ -100,9 +108,9 @@ const std::vector<FunctionTemplate> cudaFunctions = {
 //! \brief CPU implementations of standard functions
 //--------------------------------------------------------------------------
 const std::vector<FunctionTemplate> cpuFunctions = {
-    {"gennrand_uniform", 0, "std::uniform_real_distribution<double>(0.0, 1.0)($(rng))", "std::uniform_real_distribution<float>(0.0f, 1.0f)($(rng))"},
-    {"gennrand_normal", 0, "std::normal_distribution<double>(0.0, 1.0)($(rng))", "std::normal_distribution<float>(0.0f, 1.0f)($(rng))"},
-    {"gennrand_exponential", 0, "std::exponential_distribution<double>(1.0)($(rng))", "std::exponential_distribution<float>(1.0)($(rng))"},
+    {"gennrand_uniform", 0, "standardUniformDistribution($(rng))", "standardUniformDistribution($(rng))"},
+    {"gennrand_normal", 0, "standardNormalDistribution($(rng))", "standardNormalDistribution($(rng))"},
+    {"gennrand_exponential", 0, "standardExponentialDistribution($(rng))", "standardExponentialDistribution($(rng))"},
     {"gennrand_log_normal", 2, "std::lognormal_distribution<double>($(0), $(1))($(rng))", "std::lognormal_distribution<float>($(0), $(1))($(rng))"},
 };
 
@@ -116,6 +124,12 @@ void substitute(string &s, const string &trg, const string &rep);
 //! \brief Does the code string contain any functions requiring random number generator
 //--------------------------------------------------------------------------
 bool isRNGRequired(const std::string &code);
+
+//--------------------------------------------------------------------------
+//! \brief Does the model with the vectors of variable initialisers and modes require an RNG for the specified init location i.e. host or device
+//--------------------------------------------------------------------------
+bool isInitRNGRequired(const std::vector<NewModels::VarInit> &varInitialisers, const std::vector<VarMode> &varModes,
+                       VarInit initLocation);
 
 //--------------------------------------------------------------------------
 /*! \brief This function substitutes function calls in the form:

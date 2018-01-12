@@ -46,12 +46,25 @@ public:
 
     //!< Function to enable the use of zero-copied memory for a particular weight update model state variable:
     //!< May improve IO performance at the expense of kernel performance
-    void setWUVarZeroCopyEnabled(const std::string &varName, bool enabled);
+    void setWUVarZeroCopyEnabled(const std::string &varName, bool enabled)
+    {
+        setWUVarMode(varName, enabled ? VarMode::LOC_ZERO_COPY_INIT_HOST : VarMode::LOC_HOST_DEVICE_INIT_HOST);
+    }
 
     //!< Function to enable the use zero-copied memory for a particular postsynaptic model state variable
     //!< May improve IO performance at the expense of kernel performance
-    void setPSVarZeroCopyEnabled(const std::string &varName, bool enabled);
+    void setPSVarZeroCopyEnabled(const std::string &varName, bool enabled)
+    {
+        setPSVarMode(varName, enabled ? VarMode::LOC_ZERO_COPY_INIT_HOST : VarMode::LOC_HOST_DEVICE_INIT_HOST);
+    }
+
+    void setWUVarMode(const std::string &varName, VarMode mode);
+    void setPSVarMode(const std::string &varName, VarMode mode);
+
     void setClusterIndex(int hostID, int deviceID){ m_HostID = hostID; m_DeviceID = deviceID; }
+
+    //!< Set variable mode used for variables used to combine input from this synapse group
+    void setInSynVarMode(VarMode mode) { m_InSynVarMode = mode; }
 
     void setMaxConnections(unsigned int maxConnections);
     void setSpanType(SpanType spanType);
@@ -70,6 +83,9 @@ public:
     unsigned int getDelaySteps() const{ return m_DelaySteps; }
     unsigned int getMaxConnections() const{ return m_MaxConnections; }
     SynapseMatrixType getMatrixType() const{ return m_MatrixType; }
+
+    //!< Get variable mode used for variables used to combine input from this synapse group
+    VarMode getInSynVarMode() const { return m_InSynVarMode; }
 
     unsigned int getPaddedDynKernelSize(unsigned int blockSize) const;
     unsigned int getPaddedPostLearnKernelSize(unsigned int blockSize) const;
@@ -96,8 +112,13 @@ public:
     const std::vector<double> getPSConstInitVals() const;
 
     bool isZeroCopyEnabled() const;
-    bool isWUVarZeroCopyEnabled(const std::string &var) const;
-    bool isPSVarZeroCopyEnabled(const std::string &var) const;
+    bool isWUVarZeroCopyEnabled(const std::string &var) const{ return (getWUVarMode(var) & VarLocation::ZERO_COPY); }
+    bool isPSVarZeroCopyEnabled(const std::string &var) const{ return (getPSVarMode(var) & VarLocation::ZERO_COPY); }
+
+    VarMode getWUVarMode(const std::string &var) const;
+    VarMode getWUVarMode(size_t index) const{ return m_WUVarMode[index]; }
+    VarMode getPSVarMode(const std::string &var) const;
+    VarMode getPSVarMode(size_t index) const{ return m_PSVarMode[index]; }
 
     //!< Is this synapse group too large to use shared memory for combining postsynaptic output
     // **THINK** this is very cuda-specific
@@ -111,6 +132,22 @@ public:
     // **THINK** do these really belong here - they are very code-generation specific
     std::string getOffsetPre() const;
     std::string getOffsetPost(const std::string &devPrefix) const;
+
+    //!< Does this synapse group require an RNG for it's postsynaptic init code
+    bool isPSInitRNGRequired(VarInit varInitMode) const;
+
+    //!< Does this synapse group require an RNG for it's weight update init code
+    bool isWUInitRNGRequired(VarInit varInitMode) const;
+
+    //!< Is device var init code required for any variables in this synapse group's postsynaptic model
+    bool isPSDeviceVarInitRequired() const;
+
+    //!< Is device var init code required for any variables in this synapse group's weight update model
+    bool isWUDeviceVarInitRequired() const;
+
+    //! Can this synapse group run on the CPU? If we are running in CPU_ONLY mode this is always true,
+    //! but some GPU functionality will prevent models being run on both CPU and GPU.
+    bool canRunOnCPU() const;
 
 private:
     //------------------------------------------------------------------------
@@ -159,6 +196,9 @@ private:
     //!< Defines whether the Evnt Threshold needs to be retested in the synapse kernel due to multiple non-identical events in the pre-synaptic neuron population
     bool m_EventThresholdReTestRequired;
 
+    //!< Variable mode used for variables used to combine input from this synapse group
+    VarMode m_InSynVarMode;
+
     //!< Weight update model type
     const WeightUpdateModels::Base *m_WUModel;
 
@@ -184,10 +224,10 @@ private:
     std::vector<NewModels::VarInit> m_PSVarInitialisers;
 
     //!< Whether indidividual state variables of weight update model should use zero-copied memory
-    std::set<string> m_WUVarZeroCopyEnabled;
+    std::vector<VarMode> m_WUVarMode;
 
     //!< Whether indidividual state variables of post synapse should use zero-copied memory
-    std::set<string> m_PSVarZeroCopyEnabled;
+    std::vector<VarMode> m_PSVarMode;
 
     //!< The ID of the cluster node which the synapse group is computed on
     int m_HostID;

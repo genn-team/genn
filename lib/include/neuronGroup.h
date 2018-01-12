@@ -7,7 +7,9 @@
 #include <vector>
 
 // GeNN includes
+#include "global.h"
 #include "newNeuronModels.h"
+#include "variableMode.h"
 
 //------------------------------------------------------------------------
 // NeuronGroup
@@ -20,8 +22,9 @@ public:
         m_Name(name), m_NumNeurons(numNeurons), m_IDRange(0, 0), m_PaddedIDRange(0, 0),
         m_NeuronModel(neuronModel), m_Params(params), m_VarInitialisers(varInitialisers),
         m_SpikeTimeRequired(false), m_TrueSpikeRequired(false), m_SpikeEventRequired(false), m_QueueRequired(false),
-        m_NumDelaySlots(1),
-        m_SpikeZeroCopyEnabled(false), m_SpikeEventZeroCopyEnabled(false), m_SpikeTimeZeroCopyEnabled(false),
+        m_NumDelaySlots(1), m_AnyVarQueuesRequired(false), m_VarQueueRequired(varInitialisers.size(), false),
+        m_SpikeVarMode(GENN_PREFERENCES::defaultVarMode), m_SpikeEventVarMode(GENN_PREFERENCES::defaultVarMode),
+        m_SpikeTimeVarMode(GENN_PREFERENCES::defaultVarMode), m_VarMode(varInitialisers.size(), GENN_PREFERENCES::defaultVarMode),
         m_HostID(0), m_DeviceID(0)
     {
     }
@@ -43,19 +46,39 @@ public:
 
     //!< Function to enable the use of zero-copied memory for spikes:
     //!< May improve IO performance at the expense of kernel performance
-    void setSpikeZeroCopyEnabled(bool enabled){ m_SpikeZeroCopyEnabled = enabled; }
+    void setSpikeZeroCopyEnabled(bool enabled)
+    {
+        m_SpikeVarMode = enabled ? VarMode::LOC_ZERO_COPY_INIT_HOST : VarMode::LOC_HOST_DEVICE_INIT_HOST;
+    }
 
     //!< Function to enable the use of zero-copied memory for spike-like events:
     //!< May improve IO performance at the expense of kernel performance
-    void setSpikeEventZeroCopyEnabled(bool enabled){ m_SpikeEventZeroCopyEnabled = enabled; }
+    void setSpikeEventZeroCopyEnabled(bool enabled)
+    {
+        m_SpikeEventVarMode = enabled ? VarMode::LOC_ZERO_COPY_INIT_HOST : VarMode::LOC_HOST_DEVICE_INIT_HOST;
+    }
 
     //!< Function to enable the use of zero-copied memory for spike times:
     //!< May improve IO performance at the expense of kernel performance
-    void setSpikeTimeZeroCopyEnabled(bool enabled){ m_SpikeTimeZeroCopyEnabled = enabled; }
+    void setSpikeTimeZeroCopyEnabled(bool enabled)
+    {
+        m_SpikeTimeVarMode = enabled ? VarMode::LOC_ZERO_COPY_INIT_HOST : VarMode::LOC_HOST_DEVICE_INIT_HOST;
+    }
 
      //!< Function to enable the use zero-copied memory for a particular state variable:
      //!< May improve IO performance at the expense of kernel performance
-    void setVarZeroCopyEnabled(const std::string &varName, bool enabled);
+    void setVarZeroCopyEnabled(const std::string &varName, bool enabled)
+    {
+        setVarMode(varName, enabled ? VarMode::LOC_ZERO_COPY_INIT_HOST : VarMode::LOC_HOST_DEVICE_INIT_HOST);
+    }
+
+    void setSpikeVarMode(VarMode mode) { m_SpikeVarMode = mode; }
+    void setSpikeEventVarMode(VarMode mode) { m_SpikeEventVarMode = mode; }
+    void setSpikeTimeVarMode(VarMode mode) { m_SpikeTimeVarMode = mode; }
+
+    //!< Function to set variable 'mode' - how variable is implemented in GPU simulation
+    //!< This is ignored for CPU simulations
+    void setVarMode(const std::string &varName, VarMode mode);
 
     void setClusterIndex(int hostID, int deviceID){ m_HostID = hostID; m_DeviceID = deviceID; }
 
@@ -90,18 +113,25 @@ public:
     bool isQueueRequired() const{ return m_QueueRequired; }
 
     bool isVarQueueRequired(const std::string &var) const;
-    bool isVarQueueRequired() const{ return !m_VarQueueRequired.empty(); }
+    bool isVarQueueRequired(size_t index) const{ return m_VarQueueRequired[index]; }
+    bool isVarQueueRequired() const{ return m_AnyVarQueuesRequired; }
 
     const std::set<std::pair<std::string, std::string>> &getSpikeEventCondition() const{ return m_SpikeEventCondition; }
 
     unsigned int getNumDelaySlots() const{ return m_NumDelaySlots; }
     bool isDelayRequired() const{ return (m_NumDelaySlots > 1); }
 
-    bool isSpikeZeroCopyEnabled() const{ return m_SpikeZeroCopyEnabled; }
-    bool isSpikeEventZeroCopyEnabled() const{ return m_SpikeEventZeroCopyEnabled; }
-    bool isSpikeTimeZeroCopyEnabled() const{ return m_SpikeTimeZeroCopyEnabled; }
+    bool isSpikeZeroCopyEnabled() const{ return (m_SpikeVarMode & VarLocation::ZERO_COPY); }
+    bool isSpikeEventZeroCopyEnabled() const{ return (m_SpikeEventVarMode & VarLocation::ZERO_COPY); }
+    bool isSpikeTimeZeroCopyEnabled() const{ return (m_SpikeTimeVarMode & VarLocation::ZERO_COPY); }
     bool isZeroCopyEnabled() const;
-    bool isVarZeroCopyEnabled(const std::string &var) const;
+    bool isVarZeroCopyEnabled(const std::string &var) const{ return (getVarMode(var) & VarLocation::ZERO_COPY); }
+
+    VarMode getSpikeVarMode() const{ return m_SpikeVarMode; }
+    VarMode getSpikeEventVarMode() const{ return m_SpikeEventVarMode; }
+    VarMode getSpikeTimeVarMode() const{ return m_SpikeTimeVarMode; }
+    VarMode getVarMode(const std::string &varName) const;
+    VarMode getVarMode(size_t index) const{ return m_VarMode[index]; }
 
     bool isParamRequiredBySpikeEventCondition(const std::string &pnamefull) const;
 
@@ -114,7 +144,14 @@ public:
     bool isSimRNGRequired() const;
 
     //!< Does this neuron group require an RNG for it's init code
-    bool isInitRNGRequired() const;
+    bool isInitRNGRequired(VarInit varInitMode) const;
+
+    //!< Is device var init code required for any variables in this neuron group
+    bool isDeviceVarInitRequired() const;
+
+    //! Can this neuron group run on the CPU? If we are running in CPU_ONLY mode this is always true,
+    //! but some GPU functionality will prevent models being run on both CPU and GPU.
+    bool canRunOnCPU() const;
 
     // **THINK** do this really belong here - it is very code-generation specific
     std::string getQueueOffset(const std::string &devPrefix) const;
@@ -143,19 +180,20 @@ private:
     unsigned int m_NumDelaySlots;
 
     //!< Vector specifying which variables require queues
-    std::set<string> m_VarQueueRequired;
+    bool m_AnyVarQueuesRequired;
+    std::vector<bool> m_VarQueueRequired;
 
     //!< Whether spikes from neuron group should use zero-copied memory
-    bool m_SpikeZeroCopyEnabled;
+    VarMode m_SpikeVarMode;
 
     //!< Whether spike-like events from neuron group should use zero-copied memory
-    bool m_SpikeEventZeroCopyEnabled;
+    VarMode m_SpikeEventVarMode;
 
     //!< Whether spike times from neuron group should use zero-copied memory
-    bool m_SpikeTimeZeroCopyEnabled;
+    VarMode m_SpikeTimeVarMode;
 
     //!< Whether indidividual state variables of a neuron group should use zero-copied memory
-    std::set<string> m_VarZeroCopyEnabled;
+    std::vector<VarMode> m_VarMode;
 
     //!< The ID of the cluster node which the neuron groups are computed on
     int m_HostID;
