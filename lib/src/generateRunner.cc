@@ -484,7 +484,7 @@ void genDefinitions(const NNmodel &model, //!< Model description
                 extern_variable_def(os, v.second + " *", v.first + s.first, s.second.getWUVarMode(v.first));
             }
             for(const auto &v : s.second.getPSModel()->getVars()) {
-                extern_variable_def(os, v.second + " *", v.first + s.first, s.second.getWUVarMode(v.first));
+                extern_variable_def(os, v.second + " *", v.first + s.first, s.second.getPSVarMode(v.first));
             }
         }
 
