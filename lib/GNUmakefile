@@ -41,7 +41,7 @@ else
     GENERATEALL          :=$(GENERATEALL_PATH)/generateALL_CPU_ONLY
     LIBGENN              :=$(LIBGENN_PATH)/libgenn_CPU_ONLY.a
 endif
-LIBGENN_OBJ              :=global.o modelSpec.o neuronGroup.o synapseGroup.o neuronModels.o synapseModels.o postSynapseModels.o utils.o codeStream.o codeGenUtils.o sparseUtils.o hr_time.o newNeuronModels.o newPostsynapticModels.o newWeightUpdateModels.o standardSubstitutions.o standardGeneratedSections.o
+LIBGENN_OBJ              :=global.o modelSpec.o neuronGroup.o synapseGroup.o neuronModels.o synapseModels.o postSynapseModels.o utils.o codeStream.o codeGenUtils.o sparseUtils.o hr_time.o newNeuronModels.o newPostsynapticModels.o newWeightUpdateModels.o initVarSnippet.o standardSubstitutions.o standardGeneratedSections.o
 LIBGENN_OBJ              :=$(addprefix $(LIBGENN_OBJ_PATH)/,$(LIBGENN_OBJ))
 
 # Global CUDA compiler settings
@@ -58,9 +58,9 @@ ifdef MPI_ENABLE
     CXX                  :=mpiCC
 endif
 ifndef CPU_ONLY
-    CXXFLAGS             :=-std=c++11 -Wall -Wextra -DNVCC=\"$(NVCC)\"
+    CXXFLAGS             +=-std=c++11 -Wall -Wextra -DNVCC=\"$(NVCC)\"
 else
-    CXXFLAGS             :=-std=c++11 -Wall -Wextra -DCPU_ONLY
+    CXXFLAGS             +=-std=c++11 -Wall -Wextra -DCPU_ONLY
 endif
 ifdef DEBUG
     CXXFLAGS             +=-g -O0 -DDEBUG
@@ -71,29 +71,34 @@ endif
 
 ARFLAGS                  :=-rcs
 
+# BUILD_MODEL_INCLUDE contains a colon-seperated list of additional include paths.
+# substitute :s for spaces and then prepend each path with -I so it gets turned into an include directory
+INCLUDE_FLAGS            +=$(patsubst %,-I%,$(subst :, ,$(BUILD_MODEL_INCLUDE)))
+
 # Global include and link flags
 ifndef CPU_ONLY
-    INCLUDE_FLAGS        :=-I"$(INC_PATH)" -I"$(CUDA_PATH)/include"
+    INCLUDE_FLAGS        +=-I"$(INC_PATH)" -I"$(CUDA_PATH)/include"
     ifdef MPI_ENABLE
         INCLUDE_FLAGS        +=-I"$(MPI_PATH)/include"
     endif
     ifeq ($(DARWIN),DARWIN)
-        LINK_FLAGS       :=-rpath $(CUDA_PATH)/lib -L"$(LIBGENN_PATH)" -L"$(CUDA_PATH)/lib" -lgenn -lcuda -lcudart -lstdc++ -lc++
+        LINK_FLAGS       +=-rpath $(CUDA_PATH)/lib -L"$(LIBGENN_PATH)" -L"$(CUDA_PATH)/lib" -lgenn -lcuda -lcudart -lstdc++ -lc++
     else
         ifeq ($(OS_SIZE),32)
-            LINK_FLAGS   :=-L"$(LIBGENN_PATH)" -L"$(CUDA_PATH)/lib" -lgenn -lcuda -lcudart
+            LINK_FLAGS   +=-L"$(LIBGENN_PATH)" -L"$(CUDA_PATH)/lib" -lgenn -lcuda -lcudart
         else
-            LINK_FLAGS   :=-L"$(LIBGENN_PATH)" -L"$(CUDA_PATH)/lib64" -lgenn -lcuda -lcudart
-            ifdef MPI_ENABLE
+            LINK_FLAGS   +=-L"$(LIBGENN_PATH)" -L"$(CUDA_PATH)/lib64" -lgenn -lcuda -lcudart
+        endif
+
+        ifdef MPI_ENABLE
                 LINK_FLAGS   +=$(shell mpiCC -showme:link)
-            endif
         endif
     endif
 else
-    INCLUDE_FLAGS        :=-I"$(INC_PATH)"
-    LINK_FLAGS           :=-L"$(LIBGENN_PATH)" -lgenn_CPU_ONLY
+    INCLUDE_FLAGS        +=-I"$(INC_PATH)"
+    LINK_FLAGS           +=-L"$(LIBGENN_PATH)" -lgenn_CPU_ONLY
     ifeq ($(DARWIN),DARWIN)
-        LINK_FLAGS       :=-L"$(LIBGENN_PATH)" -lgenn_CPU_ONLY -lstdc++ -lc++
+        LINK_FLAGS       +=-L"$(LIBGENN_PATH)" -lgenn_CPU_ONLY -lstdc++ -lc++
     endif
 endif
 

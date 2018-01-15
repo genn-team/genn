@@ -1,3 +1,9 @@
 /lib/
 /obj/
 /obj_CPU_ONLY/
+
+# Ignore MSBuild/Visual Studio files
+**/*.suo
+**/*.sdf
+**/*.sln
+**/*.vcxproj.user

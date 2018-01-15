@@ -19,15 +19,11 @@ class SynapseGroup
 {
 public:
     SynapseGroup(const std::string name, SynapseMatrixType matrixType, unsigned int delaySteps,
-                 const WeightUpdateModels::Base *wu, const std::vector<double> &wuParams, const std::vector<double> &wuInitVals,
-                 const PostsynapticModels::Base *ps, const std::vector<double> &psParams, const std::vector<double> &psInitVals,
-                 NeuronGroup *srcNeuronGroup, NeuronGroup *trgNeuronGroup) :
-        m_PaddedKernelIDRange(0, 0), m_Name(name), m_SpanType(SpanType::POSTSYNAPTIC), m_DelaySteps(delaySteps), m_MaxConnections(trgNeuronGroup->getNumNeurons()), m_MatrixType(matrixType),
-        m_SrcNeuronGroup(srcNeuronGroup), m_TrgNeuronGroup(trgNeuronGroup),
-        m_TrueSpikeRequired(false), m_SpikeEventRequired(false), m_EventThresholdReTestRequired(false),
-        m_WUModel(wu), m_WUParams(wuParams), m_WUInitVals(wuInitVals), m_PSModel(ps), m_PSParams(psParams), m_PSInitVals(psInitVals)
-    {
-    }
+                 const WeightUpdateModels::Base *wu, const std::vector<double> &wuParams, const std::vector<NewModels::VarInit> &wuVarInitialisers,
+                 const PostsynapticModels::Base *ps, const std::vector<double> &psParams, const std::vector<NewModels::VarInit> &psVarInitialisers,
+                 NeuronGroup *srcNeuronGroup, NeuronGroup *trgNeuronGroup);
+    SynapseGroup(const SynapseGroup&) = delete;
+    SynapseGroup() = delete;
 
     //------------------------------------------------------------------------
     // Enumerations
@@ -50,11 +46,23 @@ public:
 
     //!< Function to enable the use of zero-copied memory for a particular weight update model state variable:
     //!< May improve IO performance at the expense of kernel performance
-    void setWUVarZeroCopyEnabled(const std::string &varName, bool enabled);
+    void setWUVarZeroCopyEnabled(const std::string &varName, bool enabled)
+    {
+        setWUVarMode(varName, enabled ? VarMode::LOC_ZERO_COPY_INIT_HOST : VarMode::LOC_HOST_DEVICE_INIT_HOST);
+    }
 
     //!< Function to enable the use zero-copied memory for a particular postsynaptic model state variable
     //!< May improve IO performance at the expense of kernel performance
-    void setPSVarZeroCopyEnabled(const std::string &varName, bool enabled);
+    void setPSVarZeroCopyEnabled(const std::string &varName, bool enabled)
+    {
+        setPSVarMode(varName, enabled ? VarMode::LOC_ZERO_COPY_INIT_HOST : VarMode::LOC_HOST_DEVICE_INIT_HOST);
+    }
+
+    void setWUVarMode(const std::string &varName, VarMode mode);
+    void setPSVarMode(const std::string &varName, VarMode mode);
+
+    //!< Set variable mode used for variables used to combine input from this synapse group
+    void setInSynVarMode(VarMode mode) { m_InSynVarMode = mode; }
 
     void setMaxConnections(unsigned int maxConnections);
     void setSpanType(SpanType spanType);
@@ -74,6 +82,9 @@ public:
     unsigned int getMaxConnections() const{ return m_MaxConnections; }
     SynapseMatrixType getMatrixType() const{ return m_MatrixType; }
 
+    //!< Get variable mode used for variables used to combine input from this synapse group
+    VarMode getInSynVarMode() const { return m_InSynVarMode; }
+
     unsigned int getPaddedDynKernelSize(unsigned int blockSize) const;
     unsigned int getPaddedPostLearnKernelSize(unsigned int blockSize) const;
 
@@ -91,28 +102,53 @@ public:
 
     const std::vector<double> &getWUParams() const{ return m_WUParams; }
     const std::vector<double> &getWUDerivedParams() const{ return m_WUDerivedParams; }
-    const std::vector<double> &getWUInitVals() const{ return m_WUInitVals; }
+    const std::vector<NewModels::VarInit> &getWUVarInitialisers() const{ return m_WUVarInitialisers; }
+    const std::vector<double> getWUConstInitVals() const;
 
     const PostsynapticModels::Base *getPSModel() const{ return m_PSModel; }
 
     const std::vector<double> &getPSParams() const{ return m_PSParams; }
     const std::vector<double> &getPSDerivedParams() const{ return m_PSDerivedParams; }
-    const std::vector<double> &getPSInitVals() const{ return m_PSInitVals; }
+    const std::vector<NewModels::VarInit> &getPSVarInitialisers() const{ return m_PSVarInitialisers; }
+    const std::vector<double> getPSConstInitVals() const;
 
     bool isZeroCopyEnabled() const;
-    bool isWUVarZeroCopyEnabled(const std::string &var) const;
-    bool isPSVarZeroCopyEnabled(const std::string &var) const;
+    bool isWUVarZeroCopyEnabled(const std::string &var) const{ return (getWUVarMode(var) & VarLocation::ZERO_COPY); }
+    bool isPSVarZeroCopyEnabled(const std::string &var) const{ return (getPSVarMode(var) & VarLocation::ZERO_COPY); }
+
+    VarMode getWUVarMode(const std::string &var) const;
+    VarMode getWUVarMode(size_t index) const{ return m_WUVarMode[index]; }
+    VarMode getPSVarMode(const std::string &var) const;
+    VarMode getPSVarMode(size_t index) const{ return m_PSVarMode[index]; }
 
     //!< Is this synapse group too large to use shared memory for combining postsynaptic output
     // **THINK** this is very cuda-specific
     bool isPSAtomicAddRequired(unsigned int blockSize) const;
 
-    void addExtraGlobalSynapseParams(std::map<string, string> &kernelParameters) const;
     void addExtraGlobalNeuronParams(std::map<string, string> &kernelParameters) const;
+    void addExtraGlobalSynapseParams(std::map<string, string> &kernelParameters) const;
+    void addExtraGlobalPostLearnParams(std::map<string, string> &kernelParameters) const;
+    void addExtraGlobalSynapseDynamicsParams(std::map<string, string> &kernelParameters) const;
 
     // **THINK** do these really belong here - they are very code-generation specific
     std::string getOffsetPre() const;
     std::string getOffsetPost(const std::string &devPrefix) const;
+
+    //!< Does this synapse group require an RNG for it's postsynaptic init code
+    bool isPSInitRNGRequired(VarInit varInitMode) const;
+
+    //!< Does this synapse group require an RNG for it's weight update init code
+    bool isWUInitRNGRequired(VarInit varInitMode) const;
+
+    //!< Is device var init code required for any variables in this synapse group's postsynaptic model
+    bool isPSDeviceVarInitRequired() const;
+
+    //!< Is device var init code required for any variables in this synapse group's weight update model
+    bool isWUDeviceVarInitRequired() const;
+
+    //! Can this synapse group run on the CPU? If we are running in CPU_ONLY mode this is always true,
+    //! but some GPU functionality will prevent models being run on both CPU and GPU.
+    bool canRunOnCPU() const;
 
 private:
     //------------------------------------------------------------------------
@@ -161,6 +197,9 @@ private:
     //!< Defines whether the Evnt Threshold needs to be retested in the synapse kernel due to multiple non-identical events in the pre-synaptic neuron population
     bool m_EventThresholdReTestRequired;
 
+    //!< Variable mode used for variables used to combine input from this synapse group
+    VarMode m_InSynVarMode;
+
     //!< Weight update model type
     const WeightUpdateModels::Base *m_WUModel;
 
@@ -170,8 +209,8 @@ private:
     //!< Derived parameters for weight update model
     std::vector<double> m_WUDerivedParams;
 
-    //!< Initial values for weight update model
-    std::vector<double> m_WUInitVals;
+    //!< Initialisers for weight update model variables
+    std::vector<NewModels::VarInit> m_WUVarInitialisers;
 
     //!< Post synapse update model type
     const PostsynapticModels::Base *m_PSModel;
@@ -182,12 +221,9 @@ private:
     //!< Derived parameters for post synapse model
     std::vector<double> m_PSDerivedParams;
 
-    //!< Initial values for post synapse model
-    std::vector<double> m_PSInitVals;
+    //!< Initialisers for post synapse model variables
+    std::vector<NewModels::VarInit> m_PSVarInitialisers;
 
     //!< Whether indidividual state variables of weight update model should use zero-copied memory
-    std::set<string> m_WUVarZeroCopyEnabled;
-
-    //!< Whether indidividual state variables of post synapse should use zero-copied memory
-    std::set<string> m_PSVarZeroCopyEnabled;
+    std::vector<VarMode> m_WUVarMode;
 };

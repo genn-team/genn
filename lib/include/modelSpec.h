@@ -59,7 +59,6 @@ enum SynapseGType
     INDIVIDUALID,
 };
 
-
 #define NO_DELAY 0 //!< Macro used to indicate no synapse delay for the group (only one queue slot will be generated)
 
 #define NOLEARNING 0 //!< Macro attaching the label "NOLEARNING" to flag 0 
@@ -81,6 +80,17 @@ enum FloatType
 
 #define AUTODEVICE -1  //!< Macro attaching the label AUTODEVICE to flag -1. Used by setGPUDevice
 
+// Wrappers to save typing when declaring VarInitialisers structures
+template<typename Snippet>
+inline NewModels::VarInit initVar(const typename Snippet::ParamValues &params)
+{
+    return NewModels::VarInit(Snippet::getInstance(), params.getValues());
+}
+
+inline NewModels::VarInit uninitialisedVar()
+{
+    return NewModels::VarInit(InitVarSnippet::Uninitialised::getInstance(), {});
+}
 
 /*===============================================================
 //! \brief class NNmodel for specifying a neuronal network model.
@@ -90,6 +100,12 @@ enum FloatType
 class NNmodel
 {
 public:
+    // Typedefines
+    //=======================
+    typedef map<string, NeuronGroup>::value_type NeuronGroupValueType;
+    typedef map<string, SynapseGroup>::value_type SynapseGroupValueType;
+
+
     NNmodel();
     ~NNmodel();
 
@@ -102,6 +118,7 @@ public:
     void setTiming(bool); //!< Set whether timers and timing commands are to be included
     void setSeed(unsigned int); //!< Set the random seed (disables automatic seeding if argument not 0).
     void setRNType(const std::string &type); //! Sets the underlying type for random number generation (default: uint64_t)
+
 #ifndef CPU_ONLY
     void setGPUDevice(int); //!< Method to choose the GPU to be used for the model. If "AUTODEVICE' (-1), GeNN will choose the device based on a heuristic rule.
 #endif
@@ -113,6 +130,25 @@ public:
 
     //! Are any variables in any populations in this model using zero-copy memory?
     bool zeroCopyInUse() const;
+
+    //! Does this model require device initialisation kernel
+    //! **NOTE** this is for neuron groups and densely connected synapse groups only
+    bool isDeviceInitRequired() const;
+
+    //! Does this model require a device sparse initialisation kernel
+    //! **NOTE** this is for sparsely connected synapse groups only
+    bool isDeviceSparseInitRequired() const;
+
+    //! Do any populations or initialisation code in this model require a host RNG?
+    bool isHostRNGRequired() const;
+
+    //! Do any populations or initialisation code in this model require a device RNG?
+    //! **NOTE** some model code will use per-neuron RNGs instead
+    bool isDeviceRNGRequired() const;
+
+    //! Can this model run on the CPU? If we are running in CPU_ONLY mode this is always true,
+    //! but some GPU functionality will prevent models being run on both CPU and GPU.
+    bool canRunOnCPU() const;
 
     //! Gets the name of the neuronal network model
     const std::string &getName() const{ return name; }
@@ -193,16 +229,18 @@ public:
     NeuronGroup *addNeuronPopulation(const string&, unsigned int, unsigned int, const double *, const double *, int hostID = 0, int deviceID = 0); //!< Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population
     NeuronGroup *addNeuronPopulation(const string&, unsigned int, unsigned int, const vector<double>&, const vector<double>&, int hostID = 0, int deviceID = 0); //!< Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population
 
-    //! Adds a new neuron group to the model
+     //! Adds a new neuron group to the model
     /*! \tparam NeuronModel type of neuron model (derived from NeuronModels::Base).
         \param name string containing unique name of neuron population.
         \param size integer specifying how many neurons are in the population.
         \param paramValues parameters for model wrapped in NeuronModel::ParamValues object.
-        \param varValues initial state variable values for model wrapped in NeuronModel::VarValues object.
+        \param varInitialisers state variable initialiser snippets and parameters wrapped in NeuronModel::VarValues object.
         \return pointer to newly created NeuronGroup */
     template<typename NeuronModel>
     NeuronGroup *addNeuronPopulation(const string &name, unsigned int size,
-                            const typename NeuronModel::ParamValues &paramValues, const typename NeuronModel::VarValues &varValues,int hostID = 0, int deviceID = 0)
+                                     const typename NeuronModel::ParamValues &paramValues,
+                                     const typename NeuronModel::VarValues &varInitialisers,
+                                     int hostID = 0, int deviceID = 0)
     {
         if (!GeNNReady) {
             gennError("You need to call initGeNN first.");
@@ -211,8 +249,7 @@ public:
             gennError("Trying to add a neuron population to a finalized model.");
         }
 
-        // Add neuron group
-        int MPIHostID = 0;
+        /*int MPIHostID = 0;
 #ifdef MPI_ENABLE
         MPI_Comm_rank(MPI_COMM_WORLD, &MPIHostID);
 #endif
@@ -243,7 +280,12 @@ public:
         auto result = m_NeuronGroups.insert(
             pair<string, NeuronGroup>(
                 name, NeuronGroup(name, size, NeuronModel::getInstance(),
-                                  paramValues.getValues(), varValues.getValues())));
+                                  paramValues.getValues(), varValues.getValues())));*/
+        // Add neuron group
+        auto result = m_NeuronGroups.emplace(std::piecewise_construct,
+            std::forward_as_tuple(name),
+            std::forward_as_tuple(name, size, NeuronModel::getInstance(),
+                                  paramValues.getValues(), varInitialisers.getInitialisers()));
 
         if(!result.second)
         {
@@ -284,7 +326,7 @@ public:
     const map<string, string> &getSynapseKernelParameters() const{ return synapseKernelParameters; }
 
     //! Gets std::map containing names and types of each parameter that should be passed through to the postsynaptic learning kernel
-    const map<string, string> &getSimLearnPostKernelParameters() const{ return synapseDynamicsKernelParameters; }
+    const map<string, string> &getSimLearnPostKernelParameters() const{ return simLearnPostKernelParameters; }
 
     //! Gets std::map containing names and types of each parameter that should be passed through to the synapse dynamics kernel
     const map<string, string> &getSynapseDynamicsKernelParameters() const{ return synapseDynamicsKernelParameters; }
@@ -322,7 +364,6 @@ public:
     SynapseGroup *addSynapsePopulation(const string&, unsigned int, SynapseConnType, SynapseGType, unsigned int, unsigned int, const string&, const string&,
                               const vector<double>&, const vector<double>&, const vector<double>&, const vector<double>&); //!< Method for adding a synapse population to a neuronal network model, using C++ string for the name of the population
 
-    //! Adds a new synapse group to the model
     /*! \tparam WeightUpdateModel type of weight update model (derived from WeightUpdateModels::Base).
         \tparam PostsynapticModel type of postsynaptic model (derived from PostsynapticModels::Base).
         \param name string containing unique name of neuron population.
@@ -331,14 +372,14 @@ public:
         \param src string specifying name of presynaptic (source) population
         \param trg string specifying name of postsynaptic (target) population
         \param weightParamValues parameters for weight update model wrapped in WeightUpdateModel::ParamValues object.
-        \param weightVarValues initial state variable values for weight update model wrapped in WeightUpdateModel::VarValues object.
+        \param weightVarInitialisers weight update model state variable initialiser snippets and parameters wrapped in WeightUpdateModel::VarValues object.
         \param postsynapticParamValues parameters for postsynaptic model wrapped in PostsynapticModel::ParamValues object.
-        \param postsynapticVarValues initial state variable values for postsynaptic model wrapped in PostsynapticModel::VarValues object.
+        \param postsynapticVarInitialisers postsynaptic model state variable initialiser snippets and parameters wrapped in NeuronModel::VarValues object.
         \return pointer to newly created SynapseGroup */
     template<typename WeightUpdateModel, typename PostsynapticModel>
     SynapseGroup *addSynapsePopulation(const string &name, SynapseMatrixType mtype, unsigned int delaySteps, const string& src, const string& trg,
-                                       const typename WeightUpdateModel::ParamValues &weightParamValues, const typename WeightUpdateModel::VarValues &weightVarValues,
-                                       const typename PostsynapticModel::ParamValues &postsynapticParamValues, const typename PostsynapticModel::VarValues &postsynapticVarValues)
+                                       const typename WeightUpdateModel::ParamValues &weightParamValues, const typename WeightUpdateModel::VarValues &weightVarInitialisers,
+                                       const typename PostsynapticModel::ParamValues &postsynapticParamValues, const typename PostsynapticModel::VarValues &postsynapticVarInitialisers)
     {
         if (!GeNNReady) {
             gennError("You need to call initGeNN first.");
@@ -347,7 +388,7 @@ public:
             gennError("Trying to add a synapse population to a finalized model.");
         }
 
-        auto srcMPINeuronGrp = findMPINeuronGroup(src);
+        /*auto srcMPINeuronGrp = findMPINeuronGroup(src);
         auto trgMPINeuronGrp = findMPINeuronGroup(trg);
 
         srcMPINeuronGrp->checkNumDelaySlots(delaySteps);
@@ -437,24 +478,18 @@ public:
                 // Return
                 //return newSynapseGroup;
             }
-        }
-
+        }*/
         auto srcNeuronGrp = findNeuronGroup(src);
         auto trgNeuronGrp = findNeuronGroup(trg);
 
-        srcNeuronGrp->checkNumDelaySlots(delaySteps);
-        if (delaySteps != NO_DELAY)
-        {
-            needSynapseDelay = true;
-        }
-
         // Add synapse group
-        auto result = m_SynapseGroups.insert(
-            pair<string, SynapseGroup>(
-                name, SynapseGroup(name, mtype, delaySteps,
-                                   WeightUpdateModel::getInstance(), weightParamValues.getValues(), weightVarValues.getValues(),
-                                   PostsynapticModel::getInstance(), postsynapticParamValues.getValues(), postsynapticVarValues.getValues(),
-                                   srcNeuronGrp, trgNeuronGrp)));
+        auto result = m_SynapseGroups.emplace(
+            std::piecewise_construct,
+            std::forward_as_tuple(name),
+            std::forward_as_tuple(name, mtype, delaySteps,
+                                  WeightUpdateModel::getInstance(), weightParamValues.getValues(), weightVarInitialisers.getInitialisers(),
+                                  PostsynapticModel::getInstance(), postsynapticParamValues.getValues(), postsynapticVarInitialisers.getInitialisers(),
+                                  srcNeuronGrp, trgNeuronGrp));
 
         if(!result.second)
         {
@@ -463,29 +498,7 @@ public:
         }
         else
         {
-            // Get pointer to new synapse group
-            SynapseGroup *newSynapseGroup = &result.first->second;
-
-            // If the weight update model requires presynaptic
-            // spike times, set flag in source neuron group
-            if (newSynapseGroup->getWUModel()->isPreSpikeTimeRequired()) {
-                srcNeuronGrp->setSpikeTimeRequired(true);
-                needSt = true;
-            }
-
-            // If the weight update model requires postsynaptic
-            // spike times, set flag in target neuron group
-            if (newSynapseGroup->getWUModel()->isPostSpikeTimeRequired()) {
-                trgNeuronGrp->setSpikeTimeRequired(true);
-                needSt = true;
-            }
-
-            // Add references to target and source neuron groups
-            trgNeuronGrp->addInSyn(newSynapseGroup);
-            srcNeuronGrp->addOutSyn(newSynapseGroup);
-
-            // Return
-            return newSynapseGroup;
+            return &result.first->second;
         }
     }
 
@@ -531,17 +544,14 @@ private:
     map<string, string> synapseDynamicsKernelParameters;
 
      // Model members
-    string name; //!< Name of the neuronal newtwork model
-    string ftype; //!< Type of floating point variables (float, double, ...; default: float)
-    string RNtype; //!< Underlying type for random number generation (default: uint64_t)
-    double dt; //!< The integration time step of the model
-    bool final; //!< Flag for whether the model has been finalized
-    bool needSt; //!< Whether last spike times are needed at all in this network model (related to STDP)
-    bool needSynapseDelay; //!< Whether delayed synapse conductance is required in the network
+    string name;                //!< Name of the neuronal newtwork model
+    string ftype;               //!< Type of floating point variables (float, double, ...; default: float)
+    string RNtype;              //!< Underlying type for random number generation (default: uint64_t)
+    double dt;                  //!< The integration time step of the model
+    bool final;                 //!< Flag for whether the model has been finalized
     bool timing;
     unsigned int seed;
-    unsigned int resetKernel;  //!< The identity of the kernel in which the spike counters will be reset.
-
+    unsigned int resetKernel;   //!< The identity of the kernel in which the spike counters will be reset.
 };
 
 #endif

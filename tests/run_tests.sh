@@ -34,16 +34,20 @@ for f in features/*;
         # Loop through model suffixes
         for s in "" _new;
             do
-                # Clean
-                make clean 1>> ../../msg 2>> ../../msg
-
-                # Build and generate model
-                if genn-buildmodel.sh $BUILD_FLAGS model$s.cc 1>>../../msg 2>> ../../msg ; then
-                    # Determine where the sim code is located for this test and build
+                if [ -f "model$s.cc" ]; then
+                    # Determine where the sim code is located for this test
                     c=$(basename $f)$s"_CODE"
-                    if make $MAKE_FLAGS SIM_CODE=$c 1>>../../msg 2>>../../msg ; then
-                        # Run tests
-                        ./test --gtest_output="xml:test_results$s.xml"
+
+                    # Clean
+                    make $MAKE_FLAGS SIM_CODE=$c clean 1>> ../../msg 2>> ../../msg
+
+                    # Build and generate model
+                    if genn-buildmodel.sh $BUILD_FLAGS model$s.cc 1>>../../msg 2>> ../../msg ; then
+                        # Make
+                        if make $MAKE_FLAGS SIM_CODE=$c 1>>../../msg 2>>../../msg ; then
+                            # Run tests
+                            ./test --gtest_output="xml:test_results$s.xml"
+                        fi
                     fi
                 fi
             done;

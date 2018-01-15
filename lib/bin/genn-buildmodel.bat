@@ -6,10 +6,11 @@ goto :genn_begin
 rem :: display genn-buildmodel.bat help
 echo genn-buildmodel.bat script usage:
 echo genn-buildmodel.bat [cdho] model
-echo -c            only generate simulation code for the CPU
-echo -d            enables the debugging mode
-echo -h            shows this help message
-echo -o outpath    changes the output directory
+echo -c             only generate simulation code for the CPU
+echo -d             enables the debugging mode
+echo -h             shows this help message
+echo -o outpath     changes the output directory
+echo -i includepath add additional include directories (seperated by semicolons)
 goto :eof
 
 :genn_begin
@@ -17,7 +18,7 @@ rem :: define genn-buildmodel.bat options separated by spaces
 rem :: -<option>:              option
 rem :: -<option>:""            option with argument
 rem :: -<option>:"<default>"   option with argument and default value
-set "OPTIONS=-o:"%CD%" -d: -c: -h:"
+set "OPTIONS=-o:"%CD%" -i:"" -d: -c: -h:"
 for %%O in (%OPTIONS%) do for /f "tokens=1,* delims=:" %%A in ("%%O") do set "%%A=%%~B"
 
 :genn_option
@@ -55,19 +56,30 @@ if not defined MODEL (
     goto :eof
 )
 for /f %%I in ("%-o%") do set "-o=%%~fI"
-for /f %%I in ("%MODEL%") do set "MACROS=MODEL=%%~fI GENERATEALL_PATH=%-o%"
+for /f %%I in ("%-i%") do set "-i=%%~fI"
+for /f %%I in ("%MODEL%") do set "MACROS=/p:ModelFile=%%~fI /p:GeneratePath=%-o% /p:BuildModelInclude=%-i%"
+
 if defined -d (
-    set "MACROS=%MACROS% DEBUG=1"
-)
-if defined -c (
-    set "MACROS=%MACROS% CPU_ONLY=1"
-    set GENERATEALL=.\generateALL_CPU_ONLY.exe
+	if defined -c (
+		set "MACROS=%MACROS% /p:Configuration=Debug_CPU_ONLY"
+		set GENERATEALL=.\generateALL_debug_CPU_ONLY.exe
+	) else (
+		set "MACROS=%MACROS% /p:Configuration=Debug"
+		set GENERATEALL=.\generateALL_debug.exe
+	)    
 ) else (
-    set GENERATEALL=.\generateALL.exe
+	if defined -c (
+		set "MACROS=%MACROS% /p:Configuration=Release_CPU_ONLY"
+		set GENERATEALL=.\generateALL_CPU_ONLY.exe
+	) else (
+		set "MACROS=%MACROS% /p:Configuration=Release"
+		set GENERATEALL=.\generateALL.exe
+	)
 )
 
+
 rem :: generate model code
-nmake /nologo /f "%GENN_PATH%\lib\WINmakefile" %MACROS%
+msbuild "%GENN_PATH%\lib\generate.vcxproj" %MACROS%
 if defined -d (
     devenv /debugexe "%GENERATEALL%" "%-o%"
 ) else (
