@@ -229,7 +229,7 @@ void genDefinitions(const NNmodel &model,   //!< Model description
     //=======================
 
     // this file contains helpful macros and is separated out so that it can also be used by other code that is compiled separately
-    string definitionsName= path + "/" + model.getName() + "_CODE/definitions.h";
+    string definitionsName= model.getGeneratedCodePath(path + "/" + model.getName() + "_CODE", "definitions", "h");
     ofstream fs;
     fs.open(definitionsName.c_str());
 
@@ -262,10 +262,6 @@ void genDefinitions(const NNmodel &model,   //!< Model description
     os << "#include <curand_kernel.h>" << std::endl;
 #endif
     os << std::endl;
-#ifdef MPI_ENABLE
-    os << "#include \"infraMPI.h\"" << std::endl;
-#endif
-
 #ifndef CPU_ONLY
     // write CUDA error handler macro
     os << "#ifndef CHECK_CUDA_ERRORS" << std::endl;
@@ -769,7 +765,7 @@ void genSupportCode(const NNmodel &model, //!< Model description
     // generate support_code.h
     //========================
 
-    string supportCodeName= path + "/" + model.getName() + "_CODE/support_code.h";
+    string supportCodeName= model.getGeneratedCodePath(path + "/" + model.getName() + "_CODE", "support_code", "h");
     ofstream fs;
     fs.open(supportCodeName.c_str());
 
@@ -853,7 +849,7 @@ void genRunner(const NNmodel &model,    //!< Model description
 
     os << "#define RUNNER_CC_COMPILE" << std::endl;
     os << std::endl;
-    os << "#include \"definitions.h\"" << std::endl;
+    os << "#include \"" + model.getGeneratedCodePath("", "definitions", "h") + "\"" << std::endl;
     os << "#include <cstdlib>" << std::endl;
     os << "#include <cstdio>" << std::endl;
     os << "#include <cmath>" << std::endl;
@@ -1088,15 +1084,18 @@ void genRunner(const NNmodel &model,    //!< Model description
 
     // include simulation kernels
 #ifndef CPU_ONLY
-    os << "#include \"" + model.getGeneratedCodePath("", "runnerGPU", "cc") + "\"" << std::endl << std::endl;
+    os << "#include \"" + model.getGeneratedCodePath("", "runnerGPU", "cc") + "\"" << std::endl;
 #endif
-    os << "#include \"init.cc\"" << std::endl;
+#ifdef MPI_ENABLE
+    os << "#include \"" + model.getGeneratedCodePath("", "mpi", "cc") + "\"" << std::endl;
+#endif
+    os << "#include \"" + model.getGeneratedCodePath("", "init", "cc") + "\"" << std::endl;
 
     // If model can be run on GPU, include CPU simulation functions
     if(model.canRunOnCPU()) {
-        os << "#include \"neuronFnct.cc\"" << std::endl;
+        os << "#include \"" + model.getGeneratedCodePath("", "neuronFnct", "cc") + "\"" << std::endl;
         if (!model.getLocalSynapseGroups().empty()) {
-            os << "#include \"synapseFnct.cc\"" << std::endl;
+            os << "#include \"" + model.getGeneratedCodePath("", "synapseFnct", "cc") + "\"" << std::endl;
         }
     }
 

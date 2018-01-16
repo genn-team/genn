@@ -370,7 +370,7 @@ void genInitializeSparseDeviceKernel(const std::vector<const SynapseGroup*> &spa
 void genInit(const NNmodel &model,          //!< Model description
              const std::string &path)       //!< Path for code generationn
 {
-    const std::string runnerName= path + "/" + model.getName() + "_CODE/init.cc";
+    const std::string runnerName= model.getGeneratedCodePath(path + "/" + model.getName() + "_CODE", "init", "cc");
     std::ofstream fs;
     fs.open(runnerName.c_str());
 

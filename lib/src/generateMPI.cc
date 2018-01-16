@@ -27,91 +27,24 @@
 // GeNN includes
 #include "codeStream.h"
 #include "modelSpec.h"
+ // Anonymous namespace
 
 //--------------------------------------------------------------------------
-// Anonymous namespace
+/*!
+  \brief A function that generates predominantly MPI infrastructure code.
+
+  In this function MPI infrastructure code are generated,
+  including: MPI send and receive functions.
+*/
 //--------------------------------------------------------------------------
-namespace
-{
-void genHeader(const NNmodel &model,    //!< Model description
-               const string &path)      //!< Path for code generationn
-{
-    //=======================
-    // generate infraMPI.h
-    //=======================
-
-    // this file contains helpful macros and is separated out so that it can also be used by other code that is compiled separately
-    string infraMPIName= path + "/" + model.getName() + "_CODE/infraMPI.h";
-    ofstream fs;
-    fs.open(infraMPIName.c_str());
-
-    // Attach this to a code stream
-    CodeStream os(fs);
-
-    writeHeader(os);
-    os << std::endl;
-
-    // write doxygen comment
-    os << "//-------------------------------------------------------------------------" << std::endl;
-    os << "/*! \\file infraMPI.h" << std::endl << std::endl;
-    os << "\\brief File generated from GeNN for the model " << model.getName() << " containing MPI function definition." << std::endl;
-    os << "*/" << std::endl;
-    os << "//-------------------------------------------------------------------------" << std::endl << std::endl;
-
-    os << "#ifndef INFRAMPI_H" << std::endl;
-    os << "#define INFRAMPI_H" << std::endl;
-    os << std::endl;
-
-#ifdef MPI_ENABLE
-    os << "#include <mpi.h>" << std::endl;
-#endif
-
-    os << "// ------------------------------------------------------------------------" << std::endl;
-    os << "// copying things to remote" << std::endl;
-    os << std::endl;
-    for(const auto &n : model.getLocalNeuronGroups()) {
-        os << "void push" << n.first << "SpikesToRemote(int remote);" << std::endl;
-    }
-    os << std::endl;
-
-    os << "// ------------------------------------------------------------------------" << std::endl;
-    os << "// copying things from remote" << std::endl;
-    os << std::endl;
-    for(const auto &n : model.getRemoteNeuronGroups()) {
-        os << "void pull" << n.first << "SpikesFromRemote(int remote, int tag);" << std::endl;
-    }
-    os << std::endl;
-
-    os << "// ------------------------------------------------------------------------" << std::endl;
-    os << "// global copying spikes to remote" << std::endl;
-    os << std::endl;
-    os << "void copySpikesToRemote(int remote, int tag);" << std::endl;
-    os << std::endl;
-
-    os << "// ------------------------------------------------------------------------" << std::endl;
-    os << "// global copying spikes from remote" << std::endl;
-    os << std::endl;
-    os << "void copySpikesFromRemote(int remote, int tag);" << std::endl;
-    os << std::endl;
-
-    os << "// ------------------------------------------------------------------------" << std::endl;
-    os << "// global spikes communication" << std::endl;
-    os << std::endl;
-    os << "void communicateSpikes();" << std::endl;
-    os << std::endl;
-
-    os << "#endif" << std::endl;
-    fs.close();
-}
-
-void genCode(const NNmodel &model,  //!< Model description
-             const string &path,    //!< Path for code generationn
-             int localHostID)       //!< ID of local host
+void genMPI(const NNmodel &model,   //!< Model description
+            const string &path,     //!< Path for code generation
+            int localHostID)        //!< ID of local host
 {
     //=======================
     // generate infraMPI_<hostID>.cc
     //=======================
-    string infraMPICodeName= model.getGeneratedCodePath(path + "/" + model.getName() + "_CODE", "infraMPI", "cc");
+    string infraMPICodeName= model.getGeneratedCodePath(path + "/" + model.getName() + "_CODE", "mpi", "cc");
     ofstream fs;
     fs.open(infraMPICodeName.c_str());
 
@@ -132,8 +65,6 @@ void genCode(const NNmodel &model,  //!< Model description
 #ifdef MPI_ENABLE
     os << "#include <mpi.h>" << std::endl;
 #endif
-
-    os << "#include \"definitions.h\"" << std::endl;
     os << std::endl;
 
     os << "// ------------------------------------------------------------------------" << std::endl;
@@ -223,7 +154,7 @@ void genCode(const NNmodel &model,  //!< Model description
             const int trgClusterHostID = s->getTrgNeuronGroup()->getClusterHostID();
             if (trgClusterHostID != localHostID) {
                 os << "// send to synapse" << s->getName()<< std::endl;
-                os << "copySpikesToRemote(" << trgClusterHostID << ", " << hashString(n.first) << ");" << std::endl;
+                os << "copySpikesToRemote(" << trgClusterHostID << ", " << (hashString(n.first) & 0x7FFFFFFF) << ");" << std::endl;
             }
         }
     }
@@ -234,7 +165,7 @@ void genCode(const NNmodel &model,  //!< Model description
             const int srcClusterHostID = s->getSrcNeuronGroup()->getClusterHostID();
             if (srcClusterHostID != localHostID) {
                 os << "// receive from synapse" << s->getName() << " " << s->getSrcNeuronGroup()->getName() << std::endl;
-                os << "copySpikesFromRemote(" << srcClusterHostID << ", " << hashString(s->getSrcNeuronGroup()->getName()) << ");" << std::endl;
+                os << "copySpikesFromRemote(" << srcClusterHostID << ", " << (hashString(s->getSrcNeuronGroup()->getName()) & 0x7FFFFFFF) << ");" << std::endl;
             }
         }
     }
@@ -242,21 +173,4 @@ void genCode(const NNmodel &model,  //!< Model description
     os << std::endl;
 
     fs.close();
-}
-}   // Anonymous namespace
-
-//--------------------------------------------------------------------------
-/*!
-  \brief A function that generates predominantly MPI infrastructure code.
-
-  In this function MPI infrastructure code are generated,
-  including: MPI send and receive functions.
-*/
-//--------------------------------------------------------------------------
-void genMPI(const NNmodel &model,   //!< Model description
-            const string &path,     //!< Path for code generation
-            int localHostID)        //!< ID of local host
-{
-    genHeader(model, path);
-    genCode(model, path, localHostID);
 }

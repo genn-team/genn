@@ -382,7 +382,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
     //os << "__device__ __host__ float exp(int i) { return exp((float) i); }" << endl;
 
     os << "// include the support codes provided by the user for neuron or synaptic models" << std::endl;
-    os << "#include \"support_code.h\"" << std::endl << std::endl;
+    os << "#include \"" + model.getGeneratedCodePath("", "support_code", "h") + "\"" << std::endl << std::endl;
 
     // kernel header
     os << "extern \"C\" __global__ void calcNeurons(";
