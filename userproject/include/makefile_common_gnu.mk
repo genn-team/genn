@@ -101,9 +101,8 @@ ifndef SIM_CODE
     SIM_CODE            :=*_CODE
 endif
 
-OBJECT_PATH             ?=.
 SOURCES                 ?=$(wildcard *.cc *.cpp *.cu *.c)
-OBJECTS                 :=$(foreach obj,$(basename $(SOURCES)),$(OBJECT_PATH)/$(obj).o) $(SIM_CODE)/runner.o
+OBJECTS                 :=$(foreach obj,$(basename $(SOURCES)),$(OBJECT_PATH)$(obj).o) $(SIM_CODE)/runner.o
 
 # Target rules
 .PHONY: all clean purge show
@@ -126,22 +125,22 @@ endif
 $(SIM_CODE)/runner.o:
 	cd $(SIM_CODE) && make
 
-$(OBJECT_PATH)/%.o: %.c
+$(OBJECT_PATH)%.o: %.c
 	$(CXX) $(CXXFLAGS) -c -o $@ $< $(INCLUDE_FLAGS)
 
-$(OBJECT_PATH)/%.o: %.cc
+$(OBJECT_PATH)%.o: %.cc
 	$(CXX) $(CXXFLAGS) -c -o $@ $< $(INCLUDE_FLAGS)
 
-$(OBJECT_PATH)/%.o: %.cpp
+$(OBJECT_PATH)%.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $< $(INCLUDE_FLAGS)
 
 ifndef CPU_ONLY
-$(OBJECT_PATH)/%.o: %.cu
+$(OBJECT_PATH)%.o: %.cu
 	$(NVCC) $(NVCCFLAGS) -c -o $@ $< $(INCLUDE_FLAGS)
 endif
 
 clean:
-	rm -rf $(EXECUTABLE) $(EXECUTABLE)_wrapper $(OBJECT_PATH)/*.o *.dSYM/ generateALL*
+	rm -rf $(EXECUTABLE) $(EXECUTABLE)_wrapper $(OBJECT_PATH)*.o *.dSYM/ generateALL*
 	cd $(SIM_CODE) && make clean
 
 purge: clean
