@@ -396,6 +396,12 @@ void genDefinitions(const NNmodel &model,   //!< Model description
 
         // If this neuron group has outputs to local host
         if(n.second.hasOutputToHost(localHostID)) {
+            // Check that, whatever variable mode is set for these variables,
+            // they are instantiated on host so they can be copied using MPI
+            if(!(n.second.getSpikeVarMode() & VarLocation::HOST)) {
+                gennError("Remote neuron group '" + n.first + "' has its spike variable mode set so it is not instantiated on the host - this is not supported");
+            }
+
             extern_variable_def(os, "unsigned int *", "glbSpkCnt"+n.first, n.second.getSpikeVarMode());
             extern_variable_def(os, "unsigned int *", "glbSpk"+n.first, n.second.getSpikeVarMode());
         }
