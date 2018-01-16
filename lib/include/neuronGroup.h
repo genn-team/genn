@@ -80,8 +80,6 @@ public:
     //!< This is ignored for CPU simulations
     void setVarMode(const std::string &varName, VarMode mode);
 
-    void setClusterIndex(int hostID, int deviceID){ m_HostID = hostID; m_DeviceID = deviceID; }
-
     void addSpkEventCondition(const std::string &code, const std::string &supportCodeNamespace);
 
     void addInSyn(SynapseGroup *synapseGroup){ m_InSyn.push_back(synapseGroup); }

@@ -90,14 +90,14 @@ void NNmodel::setName(const string &inname)
 bool NNmodel::zeroCopyInUse() const
 {
     // If any neuron groups use zero copy return true
-    if(any_of(begin(m_NeuronGroups), end(m_NeuronGroups),
+    if(any_of(begin(m_LocalNeuronGroups), end(m_LocalNeuronGroups),
         [](const NeuronGroupValueType &n){ return n.second.isZeroCopyEnabled(); }))
     {
         return true;
     }
 
     // If any synapse groups use zero copy return true
-    if(any_of(begin(m_SynapseGroups), end(m_SynapseGroups),
+    if(any_of(begin(m_LocalSynapseGroups), end(m_LocalSynapseGroups),
         [](const SynapseGroupValueType &s){ return s.second.isZeroCopyEnabled(); }))
     {
         return true;
@@ -115,7 +115,7 @@ bool NNmodel::isDeviceInitRequired() const
 
     // If any neuron groups require a sim RNG
     // **NOTE** this includes both simulation RNG seeds and variables initialised on device
-    if(std::any_of(std::begin(m_NeuronGroups), std::end(m_NeuronGroups),
+    if(std::any_of(std::begin(m_LocalNeuronGroups), std::end(m_LocalNeuronGroups),
         [](const NNmodel::NeuronGroupValueType &n)
         {
             return (n.second.isSimRNGRequired() || n.second.isDeviceVarInitRequired());
@@ -126,7 +126,7 @@ bool NNmodel::isDeviceInitRequired() const
 
     // Check whether any synapse groups require initialisation in this kernel
     // **NOTE** this only includes dense matrices
-    if(std::any_of(std::begin(m_SynapseGroups), std::end(m_SynapseGroups),
+    if(std::any_of(std::begin(m_LocalSynapseGroups), std::end(m_LocalSynapseGroups),
         [](const NNmodel::SynapseGroupValueType &s)
         {
             return ((s.second.getMatrixType() & SynapseMatrixConnectivity::DENSE) &&
@@ -148,7 +148,7 @@ bool NNmodel::isDeviceSparseInitRequired() const
     }
 
     // Return true if any of the synapse groups have sparse connectivity which requires device initialiation
-    return std::any_of(std::begin(m_SynapseGroups), std::end(m_SynapseGroups),
+    return std::any_of(std::begin(m_LocalSynapseGroups), std::end(m_LocalSynapseGroups),
         [](const NNmodel::SynapseGroupValueType &s)
         {
             return ((s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) &&
@@ -164,7 +164,7 @@ bool NNmodel::isHostRNGRequired() const
 
     // If model can run on the CPU and any neuron groups require simulation RNGs
     // or if any require host RNG for initialisation, return true
-    if(any_of(begin(m_NeuronGroups), end(m_NeuronGroups),
+    if(any_of(begin(m_LocalNeuronGroups), end(m_LocalNeuronGroups),
         [cpu](const NeuronGroupValueType &n)
         {
             return ((cpu && n.second.isSimRNGRequired()) || n.second.isInitRNGRequired(VarInit::HOST));
@@ -174,7 +174,7 @@ bool NNmodel::isHostRNGRequired() const
     }
 
     // If any synapse groups require a host RNG return true
-    if(any_of(begin(m_SynapseGroups), end(m_SynapseGroups),
+    if(any_of(begin(m_LocalSynapseGroups), end(m_LocalSynapseGroups),
         [](const SynapseGroupValueType &s)
         {
             return s.second.isWUInitRNGRequired(VarInit::HOST);
@@ -189,7 +189,7 @@ bool NNmodel::isHostRNGRequired() const
 bool NNmodel::isDeviceRNGRequired() const
 {
     // If any neuron groupsrequire device RNG for initialisation, return true
-    if(any_of(begin(m_NeuronGroups), end(m_NeuronGroups),
+    if(any_of(begin(m_LocalNeuronGroups), end(m_LocalNeuronGroups),
         [](const NeuronGroupValueType &n)
         {
             return n.second.isInitRNGRequired(VarInit::DEVICE);
@@ -199,7 +199,7 @@ bool NNmodel::isDeviceRNGRequired() const
     }
 
     // If any synapse groups require a device RNG for initialisation, return true
-    if(any_of(begin(m_SynapseGroups), end(m_SynapseGroups),
+    if(any_of(begin(m_LocalSynapseGroups), end(m_LocalSynapseGroups),
         [](const SynapseGroupValueType &s)
         {
             return s.second.isWUInitRNGRequired(VarInit::DEVICE);
@@ -215,7 +215,7 @@ bool NNmodel::canRunOnCPU() const
 {
 #ifndef CPU_ONLY
     // If any of the neuron groups can't run on the CPU, return false
-    if(any_of(begin(m_NeuronGroups), end(m_NeuronGroups),
+    if(any_of(begin(m_LocalNeuronGroups), end(m_LocalNeuronGroups),
         [](const NeuronGroupValueType &n)
         {
             return !n.second.canRunOnCPU();
@@ -225,7 +225,7 @@ bool NNmodel::canRunOnCPU() const
     }
 
     // If any of the synapse groups can't run on the CPU, return false
-    if(any_of(begin(m_SynapseGroups), end(m_SynapseGroups),
+    if(any_of(begin(m_LocalSynapseGroups), end(m_LocalSynapseGroups),
         [](const SynapseGroupValueType &s)
         {
             return !s.second.canRunOnCPU();
@@ -242,104 +242,80 @@ bool NNmodel::canRunOnCPU() const
  */
 //--------------------------------------------------------------------------
 
-void NNmodel::setNeuronClusterIndex(const string &neuronGroup, /**< Name of the neuron population */
-                                    int hostID, /**< ID of the host */
-                                    int deviceID /**< ID of the device */)
+void NNmodel::setNeuronClusterIndex(const string &, int, int)
 {
-    findNeuronGroup(neuronGroup)->setClusterIndex(hostID, deviceID);
+    gennError("This function has been deprecated since GeNN 3.1.0. Specify neuron cluster index in call to addNeuronPopulation instead.");
 }
-
 
 unsigned int NNmodel::getNeuronGridSize() const
 {
-    if(m_NeuronGroups.empty()) {
+    if(m_LocalNeuronGroups.empty()) {
         return 0;
     }
     else {
-        return m_NeuronGroups.rbegin()->second.getPaddedIDRange().second;
+        return m_LocalNeuronGroups.rbegin()->second.getPaddedIDRange().second;
     }
 
 }
 
-unsigned int NNmodel::getNumNeurons() const
+unsigned int NNmodel::getNumLocalNeurons() const
 {
-    if(m_NeuronGroups.empty()) {
-        return 0;
-    }
-    else {
-        return m_NeuronGroups.rbegin()->second.getIDRange().second;
-    }
+    // Return sum of local neuron group sizes
+    return std::accumulate(m_LocalNeuronGroups.cbegin(), m_LocalNeuronGroups.cend(), 0,
+                           [](unsigned int total, const NeuronGroupValueType &n)
+                           {
+                               return total + n.second.getNumNeurons();
+                           });
+}
+
+unsigned int NNmodel::getNumRemoteNeurons() const
+{
+    // Return sum of local remote neuron group sizes
+    return std::accumulate(m_RemoteNeuronGroups.cbegin(), m_RemoteNeuronGroups.cend(), 0,
+                           [](unsigned int total, const NeuronGroupValueType &n)
+                           {
+                               return total + n.second.getNumNeurons();
+                           });
 }
 
 const NeuronGroup *NNmodel::findNeuronGroup(const std::string &name) const
 {
-    auto neuronGroup = m_NeuronGroups.find(name);
+    // If a matching local neuron group is found, return it
+    auto localNeuronGroup = m_LocalNeuronGroups.find(name);
+    if(localNeuronGroup != m_LocalNeuronGroups.cend()) {
+        return &localNeuronGroup->second;
+    }
 
-    if(neuronGroup == m_NeuronGroups.cend())
-    {
+    // Otherwise, if a matching remote neuron group is found, return it
+    auto remoteNeuronGroup = m_RemoteNeuronGroups.find(name);
+    if(remoteNeuronGroup != m_RemoteNeuronGroups.cend()) {
+        return &remoteNeuronGroup->second;
+
+    }
+    // Otherwise, error
+    else {
         gennError("neuron group " + name + " not found, aborting ...");
         return NULL;
-    }
-    else
-    {
-        return &neuronGroup->second;
     }
 }
 
 NeuronGroup *NNmodel::findNeuronGroup(const std::string &name)
 {
-    auto neuronGroup = m_NeuronGroups.find(name);
+    // If a matching local neuron group is found, return it
+    auto localNeuronGroup = m_LocalNeuronGroups.find(name);
+    if(localNeuronGroup != m_LocalNeuronGroups.cend()) {
+        return &localNeuronGroup->second;
+    }
 
-    if(neuronGroup == m_NeuronGroups.cend())
-    {
+    // Otherwise, if a matching remote neuron group is found, return it
+    auto remoteNeuronGroup = m_RemoteNeuronGroups.find(name);
+    if(remoteNeuronGroup != m_RemoteNeuronGroups.cend()) {
+        return &remoteNeuronGroup->second;
+    }
+    // Otherwise, error
+    else {
         gennError("neuron group " + name + " not found, aborting ...");
         return NULL;
-    }
-    else
-    {
-        return &neuronGroup->second;
-    }
-}
-
-const NeuronGroup *NNmodel::findMPINeuronGroup(const std::string &name) const
-{
-    auto neuronGroup = m_LocalNeuronGroups.find(name);
-
-    if(neuronGroup != m_LocalNeuronGroups.cend())
-    {
-        return &neuronGroup->second;
-    }
-
-    auto neuronGroup1 = m_RemoteNeuronGroups.find(name);
-    if(neuronGroup1 == m_RemoteNeuronGroups.cend())
-    {
-        gennError("neuron group " + name + " not found, aborting ...");
-        return NULL;
-    }
-    else
-    {
-        return &neuronGroup1->second;
-    }
-}
-
-NeuronGroup *NNmodel::findMPINeuronGroup(const std::string &name)
-{
-    auto neuronGroup = m_LocalNeuronGroups.find(name);
-
-    if(neuronGroup != m_LocalNeuronGroups.cend())
-    {
-        return &neuronGroup->second;
-    }
-
-    auto neuronGroup1 = m_RemoteNeuronGroups.find(name);
-    if(neuronGroup1 == m_RemoteNeuronGroups.cend())
-    {
-        gennError("neuron group " + name + " not found, aborting ...");
-        return NULL;
-    }
-    else
-    {
-        return &neuronGroup1->second;
     }
 }
 
@@ -398,36 +374,19 @@ NeuronGroup *NNmodel::addNeuronPopulation(
         gennError("The number of variable initial values for neuron group " + name + " does not match that of their neuron type, " + to_string(ini.size()) + " != " + to_string(nModels[type].varNames.size()));
     }
 
-    /*int MPIHostID = 0;
-#ifdef MPI_ENABLE
-    MPI_Comm_rank(MPI_COMM_WORLD, &MPIHostID);
-#endif
-    bool isLocal = (hostID == MPIHostID) && (deviceID == 0);
-    if (isLocal) {
-        auto result = m_LocalNeuronGroups.insert(
-                pair<string, NeuronGroup>(name, NeuronGroup(name, nNo, new NeuronModels::LegacyWrapper(type), p, ini, hostID, deviceID)));
-
-        if(!result.second)
-        {
-            gennError("Cannot add a neuron population with duplicate name:" + name);
-            return NULL;
-        }
-    } else {
-        auto result = m_RemoteNeuronGroups.insert(
-                pair<string, NeuronGroup>(name, NeuronGroup(name, nNo, new NeuronModels::LegacyWrapper(type), p, ini, hostID, deviceID)));
-
-        if(!result.second)
-        {
-            gennError("Cannot add a neuron population with duplicate name:" + name);
-            return NULL;
-        }
-    }*/
     // Create variable initialisers from old-style values
     std::vector<NewModels::VarInit> varInitialisers;
     createVarInitialiserFromLegacyVars(ini, varInitialisers);
 
-    // Add neuron group
-    auto result = m_NeuronGroups.emplace(std::piecewise_construct,
+    // Determine the host ID
+    int mpiHostID = 0;
+#ifdef MPI_ENABLE
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpiHostID);
+#endif
+
+    // Depending on whether specified ids are local, add neuron group to local or remote neuron groups map
+    auto &groupMap = ((hostID == mpiHostID) && (deviceID == 0)) ? m_LocalNeuronGroups : m_RemoteNeuronGroups;
+    auto result = groupMap.emplace(std::piecewise_construct,
         std::forward_as_tuple(name),
         std::forward_as_tuple(name, nNo, new NeuronModels::LegacyWrapper(type), p, varInitialisers));
 
@@ -456,11 +415,11 @@ void NNmodel::activateDirectInput(
 
 unsigned int NNmodel::getSynapseKernelGridSize() const
 {
-    if(m_SynapseGroups.empty()) {
+    if(m_LocalSynapseGroups.empty()) {
         return 0;
     }
     else {
-        return  m_SynapseGroups.rbegin()->second.getPaddedKernelIDRange().second;
+        return m_LocalSynapseGroups.rbegin()->second.getPaddedKernelIDRange().second;
     }
 
 }
@@ -487,31 +446,43 @@ unsigned int NNmodel::getSynapseDynamicsGridSize() const
 
 const SynapseGroup *NNmodel::findSynapseGroup(const std::string &name) const
 {
-    auto synapseGroup = m_SynapseGroups.find(name);
+    // If a matching local synapse group is found, return it
+    auto localSynapseGroup = m_LocalSynapseGroups.find(name);
+    if(localSynapseGroup != m_LocalSynapseGroups.cend()) {
+        return &localSynapseGroup->second;
+    }
 
-    if(synapseGroup == m_SynapseGroups.cend())
-    {
+    // Otherwise, if a matching remote synapse group is found, return it
+    auto remoteSynapseGroup = m_RemoteSynapseGroups.find(name);
+    if(remoteSynapseGroup != m_RemoteSynapseGroups.cend()) {
+        return &remoteSynapseGroup->second;
+
+    }
+    // Otherwise, error
+    else {
         gennError("synapse group " + name + " not found, aborting ...");
         return NULL;
-    }
-    else
-    {
-        return &synapseGroup->second;
     }
 }
 
 SynapseGroup *NNmodel::findSynapseGroup(const std::string &name)
 {
-    auto synapseGroup = m_SynapseGroups.find(name);
+    // If a matching local synapse group is found, return it
+    auto localSynapseGroup = m_LocalSynapseGroups.find(name);
+    if(localSynapseGroup != m_LocalSynapseGroups.cend()) {
+        return &localSynapseGroup->second;
+    }
 
-    if(synapseGroup == m_SynapseGroups.cend())
-    {
+    // Otherwise, if a matching remote synapse group is found, return it
+    auto remoteSynapseGroup = m_RemoteSynapseGroups.find(name);
+    if(remoteSynapseGroup != m_RemoteSynapseGroups.cend()) {
+        return &remoteSynapseGroup->second;
+
+    }
+    // Otherwise, error
+    else {
         gennError("synapse group " + name + " not found, aborting ...");
         return NULL;
-    }
-    else
-    {
-        return &synapseGroup->second;
     }
 }
 
@@ -675,103 +646,7 @@ SynapseGroup *NNmodel::addSynapsePopulation(
         return NULL;
     }
 
-    auto srcMPINeuronGrp = findMPINeuronGroup(src);
-    auto trgMPINeuronGrp = findMPINeuronGroup(trg);
-
-    srcMPINeuronGrp->checkNumDelaySlots(delaySteps);
-    if (delaySteps != NO_DELAY)
-    {
-        needSynapseDelay = true;
-    }
-
-    int hostID = trgMPINeuronGrp->getClusterHostID();
-    int deviceID = trgMPINeuronGrp->getClusterDeviceID();
-    int MPIHostID = 0;
-#ifdef MPI_ENABLE
-    MPI_Comm_rank(MPI_COMM_WORLD, &MPIHostID);
-#endif
-    bool isLocal = (hostID == MPIHostID) && (deviceID == 0);
-    // Add synapse group
-    if (isLocal) {
-        auto result = m_LocalSynapseGroups.insert(
-                pair<string, SynapseGroup>(
-                    name, SynapseGroup(name, mtype, delaySteps,
-                        new WeightUpdateModels::LegacyWrapper(syntype), p, synini,
-                        new PostsynapticModels::LegacyWrapper(postsyn), ps, PSVini,
-                        srcMPINeuronGrp, trgMPINeuronGrp)));
-
-        if(!result.second)
-        {
-            gennError("Cannot add a synapse population with duplicate name:" + name);
-            return NULL;
-        }
-        else
-        {
-            // Get pointer to new synapse group
-            SynapseGroup *newSynapseGroup = &result.first->second;
-
-            // If the weight update model requires presynaptic
-            // spike times, set flag in source neuron group
-            if (newSynapseGroup->getWUModel()->isPreSpikeTimeRequired()) {
-                srcMPINeuronGrp->setSpikeTimeRequired(true);
-                needSt = true;
-            }
-
-            // If the weight update model requires postsynaptic
-            // spike times, set flag in target neuron group
-            if (newSynapseGroup->getWUModel()->isPostSpikeTimeRequired()) {
-                trgMPINeuronGrp->setSpikeTimeRequired(true);
-                needSt = true;
-            }
-
-            // Add references to target and source neuron groups
-            trgMPINeuronGrp->addInSyn(newSynapseGroup);
-            srcMPINeuronGrp->addOutSyn(newSynapseGroup);
-
-            // Return
-            //return newSynapseGroup;
-        }
-    } else {
-        auto result = m_RemoteSynapseGroups.insert(
-                pair<string, SynapseGroup>(
-                    name, SynapseGroup(name, mtype, delaySteps,
-                        new WeightUpdateModels::LegacyWrapper(syntype), p, synini,
-                        new PostsynapticModels::LegacyWrapper(postsyn), ps, PSVini,
-                        srcMPINeuronGrp, trgMPINeuronGrp)));
-
-        if(!result.second)
-        {
-            gennError("Cannot add a synapse population with duplicate name:" + name);
-            return NULL;
-        }
-        else
-        {
-            // Get pointer to new synapse group
-            SynapseGroup *newSynapseGroup = &result.first->second;
-
-            // If the weight update model requires presynaptic
-            // spike times, set flag in source neuron group
-            if (newSynapseGroup->getWUModel()->isPreSpikeTimeRequired()) {
-                srcMPINeuronGrp->setSpikeTimeRequired(true);
-                needSt = true;
-            }
-
-            // If the weight update model requires postsynaptic
-            // spike times, set flag in target neuron group
-            if (newSynapseGroup->getWUModel()->isPostSpikeTimeRequired()) {
-                trgMPINeuronGrp->setSpikeTimeRequired(true);
-                needSt = true;
-            }
-
-            // Add references to target and source neuron groups
-            trgMPINeuronGrp->addInSyn(newSynapseGroup);
-            srcMPINeuronGrp->addOutSyn(newSynapseGroup);
-
-            // Return
-            //return newSynapseGroup;
-        }
-    }
-
+    // Get source and target neuron groups
     auto srcNeuronGrp = findNeuronGroup(src);
     auto trgNeuronGrp = findNeuronGroup(trg);
 
@@ -782,8 +657,18 @@ SynapseGroup *NNmodel::addSynapsePopulation(
     std::vector<NewModels::VarInit> wuVarInitialisers;
     createVarInitialiserFromLegacyVars(synini, wuVarInitialisers);
 
-    // Add synapse group
-    auto result = m_SynapseGroups.emplace(
+     // Get host and device IDs of target neuron group
+    const int hostID = trgNeuronGrp->getClusterHostID();
+    const int deviceID = trgNeuronGrp->getClusterDeviceID();
+
+    // Determine the host ID
+    int mpiHostID = 0;
+#ifdef MPI_ENABLE
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpiHostID);
+#endif
+    // Depending on whether target neuron group is local, add synapse group to local or remote synapse groups map
+    auto &groupMap = ((hostID == mpiHostID) && (deviceID == 0)) ? m_LocalSynapseGroups : m_RemoteSynapseGroups;
+    auto result = groupMap.emplace(
         std::piecewise_construct,
         std::forward_as_tuple(name),
         std::forward_as_tuple(name, mtype, delaySteps,
@@ -984,14 +869,7 @@ void NNmodel::setPopulationSums()
     // NEURON GROUPS
     unsigned int neuronIDStart = 0;
     unsigned int paddedNeuronIDStart = 0;
-#ifdef MPI_ENABLE
     for(auto &n : m_LocalNeuronGroups) {
-        n.second.calcSizes(neuronBlkSz, neuronIDStart, paddedNeuronIDStart);
-    }
-#endif
-    neuronIDStart = 0;
-    paddedNeuronIDStart = 0;
-    for(auto &n : m_NeuronGroups) {
         n.second.calcSizes(neuronBlkSz, neuronIDStart, paddedNeuronIDStart);
     }
 
@@ -999,36 +877,7 @@ void NNmodel::setPopulationSums()
     unsigned int paddedSynapseKernelIDStart = 0;
     unsigned int paddedSynapseDynamicsIDStart = 0;
     unsigned int paddedSynapsePostLearnIDStart = 0;
-#ifdef MPI_ENABLE
     for(auto &s : m_LocalSynapseGroups) {
-        // Calculate synapse kernel sizes
-        s.second.calcKernelSizes(synapseBlkSz, paddedSynapseKernelIDStart);
-
-        if (!s.second.getWUModel()->getLearnPostCode().empty()) {
-            const unsigned int startID = paddedSynapsePostLearnIDStart;
-            paddedSynapsePostLearnIDStart += s.second.getPaddedPostLearnKernelSize(learnBlkSz);
-
-            // Add this synapse group to map of synapse groups with postsynaptic learning
-            // or update the existing entry with the new block sizes
-            m_SynapsePostLearnGroups[s.first] = std::pair<unsigned int, unsigned int>(
-                startID, paddedSynapsePostLearnIDStart);
-        }
-
-         if (!s.second.getWUModel()->getSynapseDynamicsCode().empty()) {
-            const unsigned int startID = paddedSynapseDynamicsIDStart;
-            paddedSynapseDynamicsIDStart += s.second.getPaddedDynKernelSize(synDynBlkSz);
-
-            // Add this synapse group to map of synapse groups with dynamics
-            // or update the existing entry with the new block sizes
-            m_SynapseDynamicsGroups[s.first] = std::pair<unsigned int, unsigned int>(
-                startID, paddedSynapseDynamicsIDStart);
-         }
-    }
-#endif
-    paddedSynapseKernelIDStart = 0;
-    paddedSynapseDynamicsIDStart = 0;
-    paddedSynapsePostLearnIDStart = 0;
-    for(auto &s : m_SynapseGroups) {
         // Calculate synapse kernel sizes
         s.second.calcKernelSizes(synapseBlkSz, paddedSynapseKernelIDStart);
 
@@ -1061,7 +910,7 @@ void NNmodel::finalize()
     final = true;
 
     // Loop through neuron populations and their outgoing synapse populations
-    for(auto &n : m_NeuronGroups) {
+    for(auto &n : m_LocalNeuronGroups) {
         for(auto *sg : n.second.getOutSyn()) {
             const auto *wu = sg->getWUModel();
 
@@ -1101,14 +950,6 @@ void NNmodel::finalize()
     }
 
     // NEURON GROUPS
-    for(auto &n : m_NeuronGroups) {
-        // Initialize derived parameters
-        n.second.initDerivedParams(dt);
-
-        // Make extra global parameter lists
-        n.second.addExtraGlobalParams(neuronKernelParameters);
-    }
-#ifdef MPI_ENABLE
     for(auto &n : m_LocalNeuronGroups) {
         // Initialize derived parameters
         n.second.initDerivedParams(dt);
@@ -1116,10 +957,9 @@ void NNmodel::finalize()
         // Make extra global parameter lists
         n.second.addExtraGlobalParams(neuronKernelParameters);
     }
-#endif
 
     // SYNAPSE groups
-    for(auto &s : m_SynapseGroups) {
+    for(auto &s : m_LocalSynapseGroups) {
         const auto *wu = s.second.getWUModel();
 
         // Initialize derived parameters
@@ -1147,41 +987,12 @@ void NNmodel::finalize()
         s.second.addExtraGlobalPostLearnParams(simLearnPostKernelParameters);
         s.second.addExtraGlobalSynapseDynamicsParams(synapseDynamicsKernelParameters);
     }
-#ifdef MPI_ENABLE
-    for(auto &s : m_LocalSynapseGroups) {
-        const auto *wu = s.second.getWUModel();
-
-        // Initialize derived parameters
-        s.second.initDerivedParams(dt);
-
-        if (!wu->getSimCode().empty()) {
-            s.second.setTrueSpikeRequired(true);
-            s.second.getSrcNeuronGroup()->setTrueSpikeRequired(true);
-
-            // analyze which neuron variables need queues
-            s.second.getSrcNeuronGroup()->updateVarQueues(wu->getSimCode());
-        }
-
-        if (!wu->getLearnPostCode().empty()) {
-            s.second.getSrcNeuronGroup()->updateVarQueues(wu->getLearnPostCode());
-        }
-
-        if (!wu->getSynapseDynamicsCode().empty()) {
-            s.second.getSrcNeuronGroup()->updateVarQueues(wu->getSynapseDynamicsCode());
-        }
-
-        // Make extra global parameter lists
-        s.second.addExtraGlobalSynapseParams(synapseKernelParameters);
-        s.second.addExtraGlobalNeuronParams(neuronKernelParameters);
-
-    }
-#endif
 
     setPopulationSums();
 
 #ifndef CPU_ONLY
     // figure out where to reset the spike counters
-    if (m_SynapseGroups.empty()) { // no synapses -> reset in neuron kernel
+    if (m_LocalSynapseGroups.empty()) { // no synapses -> reset in neuron kernel
         resetKernel= GENN_FLAGS::calcNeurons;
     }
     else { // there are synapses

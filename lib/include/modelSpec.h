@@ -194,9 +194,6 @@ public:
 
     // PUBLIC NEURON FUNCTIONS
     //========================
-    //! Get std::map containing all named NeuronGroup objects in model
-    const map<string, NeuronGroup> &getNeuronGroups() const{ return m_NeuronGroups; }
-
     //! Get std::map containing local named NeuronGroup objects in model
     const map<string, NeuronGroup> &getLocalNeuronGroups() const{ return m_LocalNeuronGroups; }
 
@@ -211,20 +208,20 @@ public:
         each neuron population, padded to be a multiple of GPU's thread block size.*/
     unsigned int getNeuronGridSize() const;
 
+    //! How many neurons are simulated locally in this model
+    unsigned int getNumLocalNeurons() const;
+
+    //! How many neurons are simulated remotely in this model
+    unsigned int getNumRemoteNeurons() const;
+
     //! How many neurons make up the entire model
-    unsigned int getNumNeurons() const;
+    unsigned int getNumNeurons() const{ return getNumLocalNeurons() + getNumRemoteNeurons(); }
 
     //! Find a neuron group by name
     const NeuronGroup *findNeuronGroup(const std::string &name) const;
 
     //! Find a neuron group by name
     NeuronGroup *findNeuronGroup(const std::string &name);
-
-    //! Find a MPI neuron group by name
-    const NeuronGroup *findMPINeuronGroup(const std::string &name) const;
-
-    //! Find a MPI neuron group by name
-    NeuronGroup *findMPINeuronGroup(const std::string &name);
 
     NeuronGroup *addNeuronPopulation(const string&, unsigned int, unsigned int, const double *, const double *, int hostID = 0, int deviceID = 0); //!< Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population
     NeuronGroup *addNeuronPopulation(const string&, unsigned int, unsigned int, const vector<double>&, const vector<double>&, int hostID = 0, int deviceID = 0); //!< Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population
@@ -249,40 +246,14 @@ public:
             gennError("Trying to add a neuron population to a finalized model.");
         }
 
-        /*int MPIHostID = 0;
+        // Determine the host ID
+        int mpiHostID = 0;
 #ifdef MPI_ENABLE
-        MPI_Comm_rank(MPI_COMM_WORLD, &MPIHostID);
+        MPI_Comm_rank(MPI_COMM_WORLD, &mpiHostID);
 #endif
-        bool isLocal = (hostID == MPIHostID) && (deviceID == 0);
-        if (isLocal) {
-            auto result = m_LocalNeuronGroups.insert(
-                    pair<string, NeuronGroup>(
-                        name, NeuronGroup(name, size, NeuronModel::getInstance(),
-                            paramValues.getValues(), varValues.getValues(), hostID, deviceID)));
-
-            if(!result.second)
-            {
-                gennError("Cannot add a neuron population with duplicate name:" + name);
-                return NULL;
-            }
-        } else {
-            auto result = m_RemoteNeuronGroups.insert(
-                    pair<string, NeuronGroup>(
-                        name, NeuronGroup(name, size, NeuronModel::getInstance(),
-                            paramValues.getValues(), varValues.getValues(), hostID, deviceID)));
-
-            if(!result.second)
-            {
-                gennError("Cannot add a neuron population with duplicate name:" + name);
-                return NULL;
-            }
-        }
-        auto result = m_NeuronGroups.insert(
-            pair<string, NeuronGroup>(
-                name, NeuronGroup(name, size, NeuronModel::getInstance(),
-                                  paramValues.getValues(), varValues.getValues())));*/
-        // Add neuron group
-        auto result = m_NeuronGroups.emplace(std::piecewise_construct,
+        // Depending on whether specified ids are local, add neuron group to local or remote neuron groups map
+        auto &groupMap = ((hostID == mpiHostID) && (deviceID == 0)) ? m_LocalNeuronGroups : m_RemoteNeuronGroups;
+        auto result = groupMap.emplace(std::piecewise_construct,
             std::forward_as_tuple(name),
             std::forward_as_tuple(name, size, NeuronModel::getInstance(),
                                   paramValues.getValues(), varInitialisers.getInitialisers()));
@@ -298,16 +269,13 @@ public:
         }
     }
 
-    void setNeuronClusterIndex(const string &neuronGroup, int hostID, int deviceID); //!< Function for setting which host and which device a neuron group will be simulated on
+    void setNeuronClusterIndex(const string &neuronGroup, int hostID, int deviceID); //!< This function has been deprecated in GeNN 3.1.0
 
     void activateDirectInput(const string&, unsigned int type); //! This function has been deprecated in GeNN 2.2
     void setConstInp(const string&, double);
 
     // PUBLIC SYNAPSE FUNCTIONS
     //=========================
-    //! Get std::map containing all named SynapseGroup objects in model
-    const map<string, SynapseGroup> &getSynapseGroups() const{ return m_SynapseGroups; }
-
     //! Get std::map containing local named SynapseGroup objects in model
     const map<string, SynapseGroup> &getLocalSynapseGroups() const{ return m_LocalSynapseGroups; }
 
@@ -388,102 +356,22 @@ public:
             gennError("Trying to add a synapse population to a finalized model.");
         }
 
-        /*auto srcMPINeuronGrp = findMPINeuronGroup(src);
-        auto trgMPINeuronGrp = findMPINeuronGroup(trg);
-
-        srcMPINeuronGrp->checkNumDelaySlots(delaySteps);
-        if (delaySteps != NO_DELAY)
-        {
-            needSynapseDelay = true;
-        }
-
-        int hostID = trgMPINeuronGrp->getClusterHostID();
-        int deviceID = trgMPINeuronGrp->getClusterDeviceID();
-        int MPIHostID = 0;
-#ifdef MPI_ENABLE
-        MPI_Comm_rank(MPI_COMM_WORLD, &MPIHostID);
-#endif
-        bool isLocal = (hostID == MPIHostID) && (deviceID == 0);
-        if (isLocal) {
-            auto result = m_LocalSynapseGroups.insert(
-                    pair<string, SynapseGroup>(
-                        name, SynapseGroup(name, mtype, delaySteps,
-                            WeightUpdateModel::getInstance(), weightParamValues.getValues(), weightVarValues.getValues(),
-                            PostsynapticModel::getInstance(), postsynapticParamValues.getValues(), postsynapticVarValues.getValues(),
-                            srcMPINeuronGrp, trgMPINeuronGrp)));
-
-            if(!result.second)
-            {
-                gennError("Cannot add a synapse population with duplicate name:" + name);
-                return NULL;
-            } else {
-                // Get pointer to new synapse group
-                SynapseGroup *newSynapseGroup = &result.first->second;
-
-                // If the weight update model requires presynaptic
-                // spike times, set flag in source neuron group
-                if (newSynapseGroup->getWUModel()->isPreSpikeTimeRequired()) {
-                    srcMPINeuronGrp->setSpikeTimeRequired(true);
-                    needSt = true;
-                }
-
-                // If the weight update model requires postsynaptic
-                // spike times, set flag in target neuron group
-                if (newSynapseGroup->getWUModel()->isPostSpikeTimeRequired()) {
-                    trgMPINeuronGrp->setSpikeTimeRequired(true);
-                    needSt = true;
-                }
-
-                // Add references to target and source neuron groups
-                trgMPINeuronGrp->addInSyn(newSynapseGroup);
-                srcMPINeuronGrp->addOutSyn(newSynapseGroup);
-
-                // Return
-                //return newSynapseGroup;
-            }
-        } else {
-            auto result = m_RemoteSynapseGroups.insert(
-                    pair<string, SynapseGroup>(
-                        name, SynapseGroup(name, mtype, delaySteps,
-                            WeightUpdateModel::getInstance(), weightParamValues.getValues(), weightVarValues.getValues(),
-                            PostsynapticModel::getInstance(), postsynapticParamValues.getValues(), postsynapticVarValues.getValues(),
-                            srcMPINeuronGrp, trgMPINeuronGrp)));
-
-            if(!result.second)
-            {
-                gennError("Cannot add a synapse population with duplicate name:" + name);
-                return NULL;
-            } else {
-                // Get pointer to new synapse group
-                SynapseGroup *newSynapseGroup = &result.first->second;
-
-                // If the weight update model requires presynaptic
-                // spike times, set flag in source neuron group
-                if (newSynapseGroup->getWUModel()->isPreSpikeTimeRequired()) {
-                    srcMPINeuronGrp->setSpikeTimeRequired(true);
-                    needSt = true;
-                }
-
-                // If the weight update model requires postsynaptic
-                // spike times, set flag in target neuron group
-                if (newSynapseGroup->getWUModel()->isPostSpikeTimeRequired()) {
-                    trgMPINeuronGrp->setSpikeTimeRequired(true);
-                    needSt = true;
-                }
-
-                // Add references to target and source neuron groups
-                trgMPINeuronGrp->addInSyn(newSynapseGroup);
-                srcMPINeuronGrp->addOutSyn(newSynapseGroup);
-
-                // Return
-                //return newSynapseGroup;
-            }
-        }*/
+        // Get source and target neuron groups
         auto srcNeuronGrp = findNeuronGroup(src);
         auto trgNeuronGrp = findNeuronGroup(trg);
 
-        // Add synapse group
-        auto result = m_SynapseGroups.emplace(
+        // Get host and device IDs of target neuron group
+        const int hostID = trgNeuronGrp->getClusterHostID();
+        const int deviceID = trgNeuronGrp->getClusterDeviceID();
+
+        // Determine the host ID
+        int mpiHostID = 0;
+#ifdef MPI_ENABLE
+        MPI_Comm_rank(MPI_COMM_WORLD, &mpiHostID);
+#endif
+        // Depending on whether target neuron group is local, add synapse group to local or remote synapse groups map
+        auto &groupMap = ((hostID == mpiHostID) && (deviceID == 0)) ? m_LocalSynapseGroups : m_RemoteSynapseGroups;
+        auto result = groupMap.emplace(
             std::piecewise_construct,
             std::forward_as_tuple(name),
             std::forward_as_tuple(name, mtype, delaySteps,
@@ -511,17 +399,11 @@ private:
     //--------------------------------------------------------------------------
     // Private members
     //--------------------------------------------------------------------------
-    //!< Named neuron groups
-    map<string, NeuronGroup> m_NeuronGroups;
-
     //!< Named local neuron groups
     map<string, NeuronGroup> m_LocalNeuronGroups;
 
     //!< Named remote neuron groups
     map<string, NeuronGroup> m_RemoteNeuronGroups;
-
-    //!< Named synapse groups
-    map<string, SynapseGroup> m_SynapseGroups;
 
     //!< Named local synapse groups
     map<string, SynapseGroup> m_LocalSynapseGroups;
