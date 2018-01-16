@@ -254,6 +254,9 @@ void genDefinitions(const NNmodel &model,   //!< Model description
     if (model.isTimingEnabled()) {
         os << "#include \"hr_time.h\"" << std::endl;
     }
+#ifdef MPI_ENABLE
+    os << "#include \"mpi.h\"" << std::endl;
+#endif
     os << "#include \"sparseUtils.h\"" << std::endl << std::endl;
     os << "#include \"sparseProjection.h\"" << std::endl;
     os << "#include <cstdint>" << std::endl;
