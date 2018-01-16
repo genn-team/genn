@@ -367,8 +367,9 @@ void genInitializeSparseDeviceKernel(const std::vector<const SynapseGroup*> &spa
 #endif  // CPU_ONLY
 }   // Anonymous namespace
 
-void genInit(const NNmodel &model,          //!< Model description
-             const std::string &path)       //!< Path for code generationn
+void genInit(const NNmodel &model,      //!< Model description
+             const std::string &path,   //!< Path for code generation
+             int localHostID)           //!< ID of local host
 {
     const std::string runnerName= model.getGeneratedCodePath(path, "init.cc");
     std::ofstream fs;
@@ -437,6 +438,13 @@ void genInit(const NNmodel &model,          //!< Model description
     os << CodeStream::CB(11);
     os << "#endif" << std::endl;
 
+#ifdef MPI_ENABLE
+    os << "MPI_Init(NULL, NULL);" << std::endl;
+    os << "int localHostID;" << std::endl;
+    os << "MPI_Comm_rank(MPI_COMM_WORLD, &localHostID);" << std::endl;
+    os << "printf(\"MPI initialized - host ID:%d\\n\", localHostID);" << std::endl;
+#endif
+
     // Seed legacy RNG
     if (model.getSeed() == 0) {
         os << "srand((unsigned int) time(NULL));" << std::endl;
@@ -468,6 +476,29 @@ void genInit(const NNmodel &model,          //!< Model description
         os << CodeStream::CB(20);
     }
     os << std::endl;
+
+    // INITIALISE REMOTE NEURON SPIKE COUNTS
+    os << "// remote neuron spike counts" << std::endl;
+    for(const auto &n : model.getRemoteNeuronGroups()) {
+        // If this neuron group has outputs to local host and spike variables should be initialised on host
+        if(shouldInitOnHost(n.second.getSpikeVarMode()) && n.second.hasOutputToHost(localHostID)) {
+            if (n.second.isTrueSpikeRequired() && n.second.isDelayRequired()) {
+                os << CodeStream::OB(41) << "for (int i = 0; i < " << n.second.getNumDelaySlots() << "; i++)" << CodeStream::OB(42);
+                os << "glbSpkCnt" << n.first << "[i] = 0;" << std::endl;
+                os << CodeStream::CB(42) << CodeStream::CB(41) << std::endl;
+
+                os << CodeStream::OB(43) << "for (int i = 0; i < " << n.second.getNumNeurons() * n.second.getNumDelaySlots() << "; i++)" << CodeStream::OB(44);
+                os << "glbSpk" << n.first << "[i] = 0;" << std::endl;
+                os << CodeStream::CB(44) << CodeStream::CB(43) << std::endl;
+            }
+            else {
+                os << "glbSpkCnt" << n.first << "[0] = 0;" << std::endl;
+                os << CodeStream::OB(45) << "for (int i = 0; i < " << n.second.getNumNeurons() << "; i++)" << CodeStream::OB(46);
+                os << "glbSpk" << n.first << "[i] = 0;" << std::endl;
+                os << CodeStream::CB(46) << CodeStream::CB(45) << std::endl;
+            }
+        }
+    }
 
     // INITIALISE NEURON VARIABLES
     os << "// neuron variables" << std::endl;

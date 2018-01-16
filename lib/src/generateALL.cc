@@ -73,7 +73,7 @@ void generate_model_runner(const NNmodel &model,    //!< Model description
     genRunner(model, path, localHostID);
 
     // Generate initialization functions and kernel
-    genInit(model, path);
+    genInit(model, path, localHostID);
 
 #ifdef MPI_ENABLE
     // Generate MPI functions
