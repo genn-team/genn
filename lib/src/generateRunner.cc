@@ -382,6 +382,19 @@ void genDefinitions(const NNmodel &model, //!< Model description
     os << std::endl;
 
     //---------------------------------
+    // REMOTE NEURON GROUPS
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// remote neuron groups" << std::endl;
+    os << std::endl;
+
+    for(const auto &n : model.getRemoteNeuronGroups()) {
+        // Write macro so whether a neuron group is remote or not can be determined at compile time
+        // **NOTE** we do this for REMOTE groups so #ifdef GROUP_NAME_REMOTE is backward compatible
+        os << "#define " << n.first << "_REMOTE" << std::endl;
+    }
+    os << std::endl;
+
+    //---------------------------------
     // HOST AND DEVICE NEURON VARIABLES
 
     os << "// ------------------------------------------------------------------------" << std::endl;
