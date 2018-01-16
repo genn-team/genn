@@ -54,9 +54,17 @@ void generate_model_runner(const NNmodel &model,    //!< Model description
                            int localHostID)         //!< ID of local host
 {
 #ifdef _WIN32
+#ifdef MPI_ENABLE
+    _mkdir((path + "\\" + model.getName() + "_" + std::to_string(localHostID) + "_CODE").c_str());
+#else
     _mkdir((path + "\\" + model.getName() + "_CODE").c_str());
+#endif
 #else // UNIX
+#ifdef MPI_ENABLE
+    mkdir((path + "/" + model.getName() + "_" + std::to_string(localHostID) + "_CODE").c_str(), 0777);
+#else
     mkdir((path + "/" + model.getName() + "_CODE").c_str(), 0777);
+#endif
 #endif
 
     // general shared code for GPU and CPU versions
@@ -305,8 +313,8 @@ void chooseDevice(NNmodel &model,       //!< the nn model we are generating code
 #ifdef MPI_ENABLE
             nvccFlags += " -I\"$MPI_PATH/include\"";
 #endif
-            string runnerPath = model.getGeneratedCodePath(path + "/" + model.getName() + "_CODE", "runner", "cc");
-            string cubinPath = model.getGeneratedCodePath(path, "runner", "cubin");
+            string runnerPath = model.getGeneratedCodePath(path, "runner.cc");
+            string cubinPath = model.getGeneratedCodePath(path, "runner.cubin");
             string nvccCommand = "\"" NVCC "\" " + nvccFlags;
             nvccCommand += " -o \"" + cubinPath + "\" \"" + runnerPath + "\"";
 #endif

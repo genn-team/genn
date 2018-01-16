@@ -229,7 +229,7 @@ void genDefinitions(const NNmodel &model,   //!< Model description
     //=======================
 
     // this file contains helpful macros and is separated out so that it can also be used by other code that is compiled separately
-    string definitionsName= model.getGeneratedCodePath(path + "/" + model.getName() + "_CODE", "definitions", "h");
+    string definitionsName= model.getGeneratedCodePath(path, "definitions.h");
     ofstream fs;
     fs.open(definitionsName.c_str());
 
@@ -765,7 +765,7 @@ void genSupportCode(const NNmodel &model, //!< Model description
     // generate support_code.h
     //========================
 
-    string supportCodeName= model.getGeneratedCodePath(path + "/" + model.getName() + "_CODE", "support_code", "h");
+    string supportCodeName= model.getGeneratedCodePath(path, "support_code.h");
     ofstream fs;
     fs.open(supportCodeName.c_str());
 
@@ -829,7 +829,7 @@ void genRunner(const NNmodel &model,    //!< Model description
 
 {
     //cout << "entering genRunner" << std::endl;
-    string runnerName= model.getGeneratedCodePath(path + "/" + model.getName() + "_CODE", "runner", "cc");
+    string runnerName= model.getGeneratedCodePath(path, "runner.cc");
     ofstream fs;
     fs.open(runnerName.c_str());
 
@@ -849,7 +849,7 @@ void genRunner(const NNmodel &model,    //!< Model description
 
     os << "#define RUNNER_CC_COMPILE" << std::endl;
     os << std::endl;
-    os << "#include \"" + model.getGeneratedCodePath("", "definitions", "h") + "\"" << std::endl;
+    os << "#include \"definitions.h\"" << std::endl;
     os << "#include <cstdlib>" << std::endl;
     os << "#include <cstdio>" << std::endl;
     os << "#include <cmath>" << std::endl;
@@ -1084,18 +1084,18 @@ void genRunner(const NNmodel &model,    //!< Model description
 
     // include simulation kernels
 #ifndef CPU_ONLY
-    os << "#include \"" + model.getGeneratedCodePath("", "runnerGPU", "cc") + "\"" << std::endl;
+    os << "#include \"runnerGPU.cc\"" << std::endl;
 #endif
 #ifdef MPI_ENABLE
-    os << "#include \"" + model.getGeneratedCodePath("", "mpi", "cc") + "\"" << std::endl;
+    os << "#include \"mpi.cc\"" << std::endl;
 #endif
-    os << "#include \"" + model.getGeneratedCodePath("", "init", "cc") + "\"" << std::endl;
+    os << "#include \"init.cc\"" << std::endl;
 
     // If model can be run on GPU, include CPU simulation functions
     if(model.canRunOnCPU()) {
-        os << "#include \"" + model.getGeneratedCodePath("", "neuronFnct", "cc") + "\"" << std::endl;
+        os << "#include \"neuronFnct.cc\"" << std::endl;
         if (!model.getLocalSynapseGroups().empty()) {
-            os << "#include \"" + model.getGeneratedCodePath("", "synapseFnct", "cc") + "\"" << std::endl;
+            os << "#include \"synapseFnct.cc\"" << std::endl;
         }
     }
 
@@ -1524,8 +1524,7 @@ void genRunner(const NNmodel &model,    //!< Model description
 void genRunnerGPU(const NNmodel &model, //!< Model description
                   const string &path)   //!< Path for code generation
 {
-//    cout << "entering GenRunnerGPU" << std::endl;
-    string name = model.getGeneratedCodePath(path + "/" + model.getName() + "_CODE", "runnerGPU", "cc");
+    string name = model.getGeneratedCodePath(path, "runnerGPU.cc");
     ofstream fs;
     fs.open(name.c_str());
 
@@ -1624,9 +1623,9 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     os << "}" << std::endl;
     os << std::endl;
 
-    os << "#include \"" + model.getGeneratedCodePath("", "neuronKrnl", "cc") + "\"" << std::endl;
+    os << "#include \"neuronKrnl.cc\"" << std::endl;
     if (!model.getLocalSynapseGroups().empty()) {
-        os << "#include \"" + model.getGeneratedCodePath("", "synapseKrnl", "cc") + "\"" << std::endl;
+        os << "#include \"synapseKrnl.cc\"" << std::endl;
     }
 
     os << "// ------------------------------------------------------------------------" << std::endl;
@@ -2372,7 +2371,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
 void genMSBuild(const NNmodel &model,   //!< Model description
                 const string &path)     //!< Path for code generation
 {
-    string name = path + "/" + model.getName() + "_CODE/generated_code.props";
+    string name = model.getGeneratedCodePath(path, "generated_code.props");
     ofstream fs;
     fs.open(name.c_str());
 
@@ -2415,10 +2414,9 @@ void genMSBuild(const NNmodel &model,   //!< Model description
 */
 //----------------------------------------------------------------------------
 void genMakefile(const NNmodel &model, //!< Model description
-                 const string &path    //!< Path for code generation
-                 )
+                 const string &path)  //!< Path for code generation
 {
-    string name = path + "/" + model.getName() + "_CODE/Makefile";
+    string name = model.getGeneratedCodePath(path, "Makefile");
     ofstream fs;
     fs.open(name.c_str());
 
@@ -2477,7 +2475,11 @@ void genMakefile(const NNmodel &model, //!< Model description
     os << endl;
     os << "CXXFLAGS       :=" << cxxFlags << endl;
     os << endl;
+#ifdef MPI_ENABLE
+    os << "INCLUDEFLAGS   =-I\"$(GENN_PATH)/lib/include\" -I\"$(MPI_PATH)/include\"" << endl;
+#else
     os << "INCLUDEFLAGS   =-I\"$(GENN_PATH)/lib/include\"" << endl;
+#endif
     os << endl;
     os << "all: runner.o" << endl;
     os << endl;
@@ -2498,26 +2500,17 @@ void genMakefile(const NNmodel &model, //!< Model description
     os << "NVCC           :=\"" << NVCC << "\"" << endl;
     os << "NVCCFLAGS      :=" << nvccFlags << endl;
     os << endl;
+#ifdef MPI_ENABLE
+    os << "INCLUDEFLAGS   =-I\"$(GENN_PATH)/lib/include\" -I\"$(MPI_PATH)/include\"" << endl;
+#else
     os << "INCLUDEFLAGS   =-I\"$(GENN_PATH)/lib/include\"" << endl;
+#endif
     os << endl;
-    os << "INCLUDEFLAGS   +=-I\"$(MPI_PATH)/include\"" << endl;
-    os << endl;
-    os << "ifdef MPI_ENABLE" << endl;
-    os << "all: runner_${OMPI_COMM_WORLD_RANK}.o" << endl;
-    os << endl;
-    os << "else" << endl;
     os << "all: runner.o" << endl;
     os << endl;
-    os << "endif" << endl;
-    os << "ifdef MPI_ENABLE" << endl;
-    os << "runner_${OMPI_COMM_WORLD_RANK}.o: runner_${OMPI_COMM_WORLD_RANK}.cc" << endl;
-    os << "\t$(NVCC) $(NVCCFLAGS) $(INCLUDEFLAGS) runner_${OMPI_COMM_WORLD_RANK}.cc" << endl;
-    os << endl;
-    os << "else" << endl;
     os << "runner.o: runner.cc" << endl;
     os << "\t$(NVCC) $(NVCCFLAGS) $(INCLUDEFLAGS) runner.cc" << endl;
     os << endl;
-    os << "endif" << endl;
     os << "clean:" << endl;
     os << "\trm -f runner.o" << endl;
 #endif

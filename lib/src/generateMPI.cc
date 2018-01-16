@@ -42,11 +42,11 @@ void genMPI(const NNmodel &model,   //!< Model description
             int localHostID)        //!< ID of local host
 {
     //=======================
-    // generate infraMPI_<hostID>.cc
+    // generate mpi.cc
     //=======================
-    string infraMPICodeName= model.getGeneratedCodePath(path + "/" + model.getName() + "_CODE", "mpi", "cc");
+    string name= model.getGeneratedCodePath(path, "mpi.cc");
     ofstream fs;
-    fs.open(infraMPICodeName.c_str());
+    fs.open(name.c_str());
 
     // Attach this to a code stream
     CodeStream os(fs);

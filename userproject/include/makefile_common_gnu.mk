@@ -101,8 +101,9 @@ ifndef SIM_CODE
     SIM_CODE            :=*_CODE
 endif
 
+OBJECT_PATH             ?=.
 SOURCES                 ?=$(wildcard *.cc *.cpp *.cu *.c)
-OBJECTS                 :=$(foreach obj,$(basename $(SOURCES)),$(obj).o) $(SIM_CODE)/runner.o
+OBJECTS                 :=$(foreach obj,$(basename $(SOURCES)),$(OBJECT_PATH)/$(obj).o) $(SIM_CODE)/runner.o
 
 # Target rules
 .PHONY: all clean purge show
@@ -122,34 +123,25 @@ $(EXECUTABLE): $(OBJECTS)
 	$(CXX) $(CXXFLAGS) -o $@ $(OBJECTS) $(LINK_FLAGS)
 endif
 
-ifndef MPI_ENABLE
 $(SIM_CODE)/runner.o:
 	cd $(SIM_CODE) && make
-else
 
-$(SIM_CODE)/runner_${OMPI_COMM_WORLD_RANK}.o:
-	cd $(SIM_CODE) && make
-endif
-
-$(SIM_CODE)/infraMPI_${OMPI_COMM_WORLD_RANK}.o: $(SIM_CODE)/infraMPI_${OMPI_COMM_WORLD_RANK}.cc
-	echo "make infraMPI" && mpiCC $(CXXFLAGS) -c -o $@ $< $(INCLUDE_FLAGS)
-
-%.o: %.c
+$(OBJECT_PATH)/%.o: %.c
 	$(CXX) $(CXXFLAGS) -c -o $@ $< $(INCLUDE_FLAGS)
 
-%.o: %.cc
+$(OBJECT_PATH)/%.o: %.cc
 	$(CXX) $(CXXFLAGS) -c -o $@ $< $(INCLUDE_FLAGS)
 
-%.o: %.cpp
+$(OBJECT_PATH)/%.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $< $(INCLUDE_FLAGS)
 
 ifndef CPU_ONLY
-%.o: %.cu
+$(OBJECT_PATH)/%.o: %.cu
 	$(NVCC) $(NVCCFLAGS) -c -o $@ $< $(INCLUDE_FLAGS)
 endif
 
 clean:
-	rm -rf $(EXECUTABLE) $(EXECUTABLE)_wrapper *.o *.dSYM/ generateALL
+	rm -rf $(EXECUTABLE) $(EXECUTABLE)_wrapper $(OBJECT_PATH)/*.o *.dSYM/ generateALL*
 	cd $(SIM_CODE) && make clean
 
 purge: clean

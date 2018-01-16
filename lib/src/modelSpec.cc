@@ -240,6 +240,16 @@ bool NNmodel::canRunOnCPU() const
     return true;
 }
 
+std::string NNmodel::getGeneratedCodePath(const std::string &path, const std::string &filename) const{
+#ifdef MPI_ENABLE
+    int localHostID = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &localHostID);
+    return path + "/" + getName() + "_" + std::to_string(localHostID) + "_CODE/" + filename;
+#else
+    return path + "/" + getName() + "_CODE/" + filename;
+#endif
+    }
+
 //--------------------------------------------------------------------------
 /*! \brief This function is for setting which host and which device a neuron group will be simulated on
  */

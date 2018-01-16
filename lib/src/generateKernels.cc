@@ -357,7 +357,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
 {
     string localID;
     ofstream fs;
-    string name = model.getGeneratedCodePath(path + "/" + model.getName() + "_CODE", "neuronKrnl", "cc");
+    string name = model.getGeneratedCodePath(path, "neuronKrnl.cc");
     fs.open(name.c_str());
 
     // Attach this to a code stream
@@ -382,7 +382,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
     //os << "__device__ __host__ float exp(int i) { return exp((float) i); }" << endl;
 
     os << "// include the support codes provided by the user for neuron or synaptic models" << std::endl;
-    os << "#include \"" + model.getGeneratedCodePath("", "support_code", "h") + "\"" << std::endl << std::endl;
+    os << "#include \"support_code.h\"" << std::endl << std::endl;
 
     // kernel header
     os << "extern \"C\" __global__ void calcNeurons(";
@@ -709,7 +709,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
 {
     string localID; //!< "id" if first synapse group, else "lid". lid =(thread index- last thread of the last synapse group)
     ofstream fs;
-    string name = model.getGeneratedCodePath(path + "/" + model.getName() + "_CODE", "synapseKrnl", "cc");
+    string name = model.getGeneratedCodePath(path, "synapseKrnl.cc");
     fs.open(name.c_str());
 
     // Attach this to a code stream

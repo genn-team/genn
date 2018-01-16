@@ -165,7 +165,7 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
 {
     // Open a file output stream for writing synapse function
     ofstream fs;
-    string name = model.getGeneratedCodePath(path + "/" + model.getName() + "_CODE", "neuronFnct", "cc");
+    string name = model.getGeneratedCodePath(path, "neuronFnct.cc");
     fs.open(name.c_str());
 
     // Attach this to a code stream
@@ -189,7 +189,7 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
     os << "//-------------------------------------------------------------------------" << std::endl << std::endl;
 
     os << "// include the support codes provided by the user for neuron or synaptic models" << std::endl;
-    os << "#include \"" + model.getGeneratedCodePath("", "support_code", "h") + "\"" << std::endl << std::endl;
+    os << "#include \"support_code.h\"" << std::endl << std::endl;
 
     // function header
     os << "void calcNeuronsCPU(" << model.getPrecision() << " t)" << std::endl;
@@ -399,7 +399,7 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
 {
     // Open a file output stream for writing synapse function
     ofstream fs;
-    string name = model.getGeneratedCodePath(path + "/" + model.getName() + "_CODE", "synapseFnct", "cc");
+    string name = model.getGeneratedCodePath(path, "synapseFnct.cc");
     fs.open(name.c_str());
 
     // Attach this to a code stream
