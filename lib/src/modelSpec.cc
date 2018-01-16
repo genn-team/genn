@@ -16,18 +16,21 @@
 #ifndef MODELSPEC_CC
 #define MODELSPEC_CC
 
+// Standard C++ includes
+#include <algorithm>
+#include <numeric>
+
+// Standard C includes
+#include <cstdio>
+#include <cmath>
+#include <cassert>
+
 // GeNN includes
 #include "codeGenUtils.h"
 #include "global.h"
 #include "modelSpec.h"
 #include "standardSubstitutions.h"
 #include "utils.h"
-
-// Standard includes
-#include <cstdio>
-#include <cmath>
-#include <cassert>
-#include <algorithm>
 
 unsigned int GeNNReady = 0;
 

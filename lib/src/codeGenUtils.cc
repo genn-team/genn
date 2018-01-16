@@ -14,10 +14,13 @@
     #define REGEX_OPERATIONAL
 #endif
 
-// Standard includes
+// Standard C++ includes
 #ifdef REGEX_OPERATIONAL
 #include <regex>
 #endif
+
+// Standard C includes
+#include <cstring>
 
 // GeNN includes
 #include "modelSpec.h"
