@@ -1386,7 +1386,7 @@ void genRunner(const NNmodel &model, //!< Model description
 #endif
 #ifdef MPI_ENABLE
     os << "    MPI_Finalize();" << std::endl;
-    os << "    printf(\"#MPI finalized!\\n\");" << std::endl;
+    os << "    printf(\"MPI finalized.\\n\");" << std::endl;
 #endif
     os << "}" << std::endl;
     os << std::endl;

@@ -650,7 +650,11 @@ int main(int argc,     //!< number of arguments; expected to be 2
 
 #ifdef MPI_ENABLE
     MPI_Init(NULL, NULL);
-    printf("#MPI initialized!\n");
+
+    // Determine the host ID
+    int mpiHostID = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpiHostID);
+    cout << "MPI initialized - host ID:" << mpiHostID << endl;
 #endif
 
     NNmodel *model = new NNmodel();
@@ -671,7 +675,7 @@ int main(int argc,     //!< number of arguments; expected to be 2
 
 #ifdef MPI_ENABLE
     MPI_Finalize();
-    printf("#MPI finalized!\n");
+    cout << "MPI finalized." << endl;
 #endif
 
     return EXIT_SUCCESS;
