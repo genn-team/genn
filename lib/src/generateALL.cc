@@ -78,7 +78,7 @@ void generate_model_runner(const NNmodel &model,  //!< Model description
     genNeuronKernel(model, path);
 
     // generate synapse and learning kernels
-    if (!model.getSynapseGroups().empty()) {
+    if (!model.getLocalSynapseGroups().empty()) {
         genSynapseKernel(model, path);
     }
 #endif
@@ -88,7 +88,7 @@ void generate_model_runner(const NNmodel &model,  //!< Model description
         genNeuronFunction(model, path);
 
         // Generate the equivalent of synapse and learning kernel
-        if (!model.getSynapseGroups().empty()) {
+        if (!model.getLocalSynapseGroups().empty()) {
             genSynapseFunction(model, path);
         }
     }
@@ -142,7 +142,7 @@ void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
         vector<unsigned int> groupSize[KernelMax];
 
         // Loop through neuron groups
-        for(const auto &n : model.getNeuronGroups()) {
+        for(const auto &n : model.getLocalNeuronGroups()) {
             // Add number of neurons to vector of neuron kernels
             groupSize[KernelCalcNeurons].push_back(n.second.getNumNeurons());
 
@@ -153,7 +153,7 @@ void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
         }
 
         // Loop through synapse groups
-        for(const auto &s : model.getSynapseGroups()) {
+        for(const auto &s : model.getLocalSynapseGroups()) {
             const unsigned int maxConnections = s.second.getMaxConnections();
             const unsigned int numSrcNeurons = s.second.getSrcNeuronGroup()->getNumNeurons();
             const unsigned int numTrgNeurons = s.second.getTrgNeuronGroup()->getNumNeurons();

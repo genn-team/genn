@@ -208,6 +208,11 @@ string ensureFtype(const string &oldcode, const string &type);
 
 void checkUnreplacedVariables(const string &code, const string &codeName);
 
+//--------------------------------------------------------------------------
+/*! \brief This function returns the 32-bit hash of a string - because these are used across MPI nodes which may have different libstdc++ it would be risky to use std::hash
+ */
+//--------------------------------------------------------------------------
+uint32_t hashString(const std::string &string);
 
 //-------------------------------------------------------------------------
 /*!

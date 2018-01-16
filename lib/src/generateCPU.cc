@@ -196,7 +196,7 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
     os << CodeStream::OB(51);
 
     // function code
-    for(const auto &n : model.getNeuronGroups()) {
+    for(const auto &n : model.getLocalNeuronGroups()) {
         os << "// neuron group " << n.first << std::endl;
         os << CodeStream::OB(55);
 
@@ -509,7 +509,7 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
 
     os << "unsigned int ipost;" << std::endl;
     os << "unsigned int ipre;" << std::endl;
-    for(const auto &s : model.getSynapseGroups()) {
+    for(const auto &s : model.getLocalSynapseGroups()) {
         if (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
             os << "unsigned int npost;" << std::endl;
             break;
@@ -518,7 +518,7 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
     os << model.getPrecision() << " addtoinSyn;" << std::endl;
     os << std::endl;
 
-    for(const auto &s : model.getSynapseGroups()) {
+    for(const auto &s : model.getLocalSynapseGroups()) {
         os << "// synapse group " << s.first << std::endl;
         os << CodeStream::OB(1006);
 
@@ -558,7 +558,7 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
         os << "unsigned int lSpk;" << std::endl;
 
         // If any synapse groups have sparse connectivity
-        if(any_of(begin(model.getSynapseGroups()), end(model.getSynapseGroups()),
+        if(any_of(begin(model.getLocalSynapseGroups()), end(model.getLocalSynapseGroups()),
             [](const NNmodel::SynapseGroupValueType &s)
             {
                 return (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE);

@@ -50,7 +50,7 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model)
     }
     // Loop through neuron groups
     unsigned int startThread = 0;
-    for(const auto &n : model.getNeuronGroups()) {
+    for(const auto &n : model.getLocalNeuronGroups()) {
         // If this group requires an RNG to simulate or requires variables to be initialised on device
         if(n.second.isSimRNGRequired() || n.second.isDeviceVarInitRequired()) {
             // Get padded size of group and hence it's end thread
@@ -240,7 +240,7 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model)
 
 
     // Loop through synapse groups
-    for(const auto &s : model.getSynapseGroups()) {
+    for(const auto &s : model.getLocalSynapseGroups()) {
         // If this group has dense connectivity with individual synapse variables
         // and it's weight update has variables that require initialising on GPU
         if((s.second.getMatrixType() & SynapseMatrixConnectivity::DENSE) && (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) &&
@@ -388,7 +388,7 @@ void genInit(const NNmodel &model,          //!< Model description
     std::vector<const SynapseGroup*> sparseDeviceSynapseGroups;
     if(GENN_PREFERENCES::autoInitSparseVars) {
         // Loop through synapse groups
-        for(const auto &s : model.getSynapseGroups()) {
+        for(const auto &s : model.getLocalSynapseGroups()) {
             // If synapse group is sparse and requires on device initialisation,
             if((s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) &&
                 (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) &&
@@ -471,7 +471,7 @@ void genInit(const NNmodel &model,          //!< Model description
 
     // INITIALISE NEURON VARIABLES
     os << "// neuron variables" << std::endl;
-    for(const auto &n : model.getNeuronGroups()) {
+    for(const auto &n : model.getLocalNeuronGroups()) {
         if (n.second.isDelayRequired()) {
             os << "    spkQuePtr" << n.first << " = 0;" << std::endl;
 #ifndef CPU_ONLY
@@ -558,7 +558,7 @@ void genInit(const NNmodel &model,          //!< Model description
 
     // INITIALISE SYNAPSE VARIABLES
     os << "// synapse variables" << std::endl;
-    for(const auto &s : model.getSynapseGroups()) {
+    for(const auto &s : model.getLocalSynapseGroups()) {
         const auto *wu = s.second.getWUModel();
         const auto *psm = s.second.getPSModel();
 
@@ -635,7 +635,7 @@ void genInit(const NNmodel &model,          //!< Model description
             os << "cudaEventRecord(initDeviceStop);" << std::endl;
             os << "cudaEventSynchronize(initDeviceStop);" << std::endl;
             os << "float tmp;" << std::endl;
-            if (!model.getSynapseGroups().empty()) {
+            if (!model.getLocalSynapseGroups().empty()) {
                 os << "cudaEventElapsedTime(&tmp, initDeviceStart, initDeviceStop);" << std::endl;
                 os << "initDevice_tme+= tmp/1000.0;" << std::endl;
             }
@@ -649,7 +649,7 @@ void genInit(const NNmodel &model,          //!< Model description
 #ifndef CPU_ONLY
     os << "void initializeAllSparseArrays()" << std::endl;
     os << CodeStream::OB(300) << std::endl;
-    for(const auto &s : model.getSynapseGroups()) {
+    for(const auto &s : model.getLocalSynapseGroups()) {
         if (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE){
             os << "initializeSparseArray(C" << s.first << ", ";
             os << "d_ind" << s.first << ", ";
@@ -698,7 +698,7 @@ void genInit(const NNmodel &model,          //!< Model description
         os << "sparseInitHost_timer.startTimer();" << std::endl;
     }
     bool anySparse = false;
-    for(const auto &s : model.getSynapseGroups()) {
+    for(const auto &s : model.getLocalSynapseGroups()) {
         if (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
             anySparse = true;
             if (model.isSynapseGroupDynamicsRequired(s.first)) {
@@ -794,7 +794,7 @@ void genInit(const NNmodel &model,          //!< Model description
             os << "cudaEventRecord(sparseInitDeviceStop);" << std::endl;
             os << "cudaEventSynchronize(sparseInitDeviceStop);" << std::endl;
             os << "float tmp;" << std::endl;
-            if (!model.getSynapseGroups().empty()) {
+            if (!model.getLocalSynapseGroups().empty()) {
                 os << "cudaEventElapsedTime(&tmp, sparseInitDeviceStart, sparseInitDeviceStop);" << std::endl;
                 os << "sparseInitDevice_tme+= tmp/1000.0;" << std::endl;
             }

@@ -35,4 +35,4 @@ using namespace std;
 */
 //--------------------------------------------------------------------------
 void genMPI(const NNmodel &model, //!< Model description
-               const string &path); //!< Path for code generationn
+            const string &path); //!< Path for code generationn

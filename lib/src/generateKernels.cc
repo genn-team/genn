@@ -403,7 +403,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
     }
 
     // these variables deal with high V "spike type events"
-    for(const auto &n : model.getNeuronGroups()) {
+    for(const auto &n : model.getLocalNeuronGroups()) {
         if (n.second.isSpikeEventRequired()) {
             os << "__shared__ volatile unsigned int posSpkEvnt;" << std::endl;
             os << "__shared__ unsigned int shSpkEvnt[" << neuronBlkSz << "];" << std::endl;
@@ -414,7 +414,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
     }
 
     // these variables now deal only with true spikes, not high V "events"
-    for(const auto &n : model.getNeuronGroups()) {
+    for(const auto &n : model.getLocalNeuronGroups()) {
         if(!n.second.getNeuronModel()->getThresholdConditionCode().empty()) {
             os << "__shared__ unsigned int shSpk[" << neuronBlkSz << "];" << std::endl;
             os << "__shared__ volatile unsigned int posSpk;" << std::endl;
@@ -428,7 +428,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
     // Reset global spike counting vars here if there are no synapses at all
     if (model.getResetKernel() == GENN_FLAGS::calcNeurons) {
         os << "if (id == 0)" << CodeStream::OB(6);
-        for(const auto &n : model.getNeuronGroups()) {
+        for(const auto &n : model.getLocalNeuronGroups()) {
             StandardGeneratedSections::neuronOutputInit(os, n.second, "dd_");
         }
         os << CodeStream::CB(6);
@@ -436,7 +436,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
     }
 
     // Initialise shared spike count vars
-    for(const auto &n : model.getNeuronGroups()) {
+    for(const auto &n : model.getLocalNeuronGroups()) {
         if (!n.second.getNeuronModel()->getThresholdConditionCode().empty()) {
             os << "if (threadIdx.x == 0)" << CodeStream::OB(8);
             os << "spkCount = 0;" << std::endl;
@@ -444,7 +444,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
             break;
         }
     }
-    for(const auto &n : model.getNeuronGroups()) {
+    for(const auto &n : model.getLocalNeuronGroups()) {
         if (n.second.isSpikeEventRequired()) {
             os << "if (threadIdx.x == 1)" << CodeStream::OB(7);
             os << "spkEvntCount = 0;" << std::endl;
@@ -457,11 +457,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
 
     
     bool firstNeuronGroup = true;
-#ifdef MPI_ENABLE
     for(const auto &n : model.getLocalNeuronGroups()) {
-#else
-    for(const auto &n : model.getNeuronGroups()) {
-#endif
         os << "// neuron group " << n.first << std::endl;
         const auto &groupIDRange = n.second.getPaddedIDRange();
         if (firstNeuronGroup) {
@@ -860,7 +856,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
     os << "volatile __shared__ " << model.getPrecision() << " shLg[BLOCKSZ_SYN];" << std::endl;
 
     // case-dependent variables
-    for(const auto &s : model.getSynapseGroups()) {
+    for(const auto &s : model.getLocalSynapseGroups()) {
         if (!(s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) || !s.second.isPSAtomicAddRequired(synapseBlkSz)){
             os << model.getPrecision() << " linSyn;" << std::endl;
             break;
@@ -868,14 +864,14 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
     }
     // we need ipost in any case, and we need npost if there are any SPARSE connections
     os << "unsigned int ipost;" << std::endl;
-    for(const auto &s : model.getSynapseGroups()) {
+    for(const auto &s : model.getLocalSynapseGroups()) {
         if (s.second.getMatrixType()  & SynapseMatrixConnectivity::SPARSE) {
             os << "unsigned int prePos; " << std::endl;
             os << "unsigned int npost; " << std::endl;
             break;
         }
     }
-    for(const auto &s : model.getSynapseGroups()) {
+    for(const auto &s : model.getLocalSynapseGroups()) {
         if (s.second.isTrueSpikeRequired() || model.isSynapseGroupPostLearningRequired(s.first)) {
             os << "__shared__ unsigned int shSpk[BLOCKSZ_SYN];" << std::endl;
             //os << "__shared__ " << model.getPrecision() << " shSpkV[BLOCKSZ_SYN];" << std::endl;
@@ -883,7 +879,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
             break;
         }
     }
-    for(const auto &s : model.getSynapseGroups()) {
+    for(const auto &s : model.getLocalSynapseGroups()) {
         if (s.second.isSpikeEventRequired()) {
             os << "__shared__ unsigned int shSpkEvnt[BLOCKSZ_SYN];" << std::endl;
             os << "unsigned int lscntEvnt, numSpikeSubsetsEvnt;" << std::endl;
@@ -893,11 +889,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
     os << std::endl;
 
     bool firstSynapseGroup = true;
-#ifdef MPI_ENABLE
     for(const auto &s : model.getLocalSynapseGroups()) {
-#else
-    for(const auto &s : model.getSynapseGroups()) {
-#endif
         os << "// synapse group " << s.first << std::endl;
         const auto &groupIDRange = s.second.getPaddedKernelIDRange();
         if (firstSynapseGroup) {
@@ -970,7 +962,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
             os << "j = atomicAdd((unsigned int *) &d_done, 1);" << std::endl;
             os << "if (j == " << numSynapseBlocks - 1 << ")" << CodeStream::OB(210);
 
-            for(const auto &n : model.getNeuronGroups()) {
+            for(const auto &n : model.getLocalNeuronGroups()) {
                 if (n.second.isDelayRequired()) { // WITH DELAY
                     os << "dd_spkQuePtr" << n.first << " = (dd_spkQuePtr" << n.first << " + 1) % " << n.second.getNumDelaySlots() << ";" << std::endl;
                     if (n.second.isSpikeEventRequired()) {
@@ -1122,7 +1114,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                 os << "j = atomicAdd((unsigned int *) &d_done, 1);" << std::endl;
                 os << "if (j == " << numPostLearnBlocks - 1 << ")" << CodeStream::OB(330);
 
-                for(const auto &n : model.getNeuronGroups()) {
+                for(const auto &n : model.getLocalNeuronGroups()) {
                     if (n.second.isDelayRequired()) { // WITH DELAY
                         os << "dd_spkQuePtr" << n.first << " = (dd_spkQuePtr" << n.first << " + 1) % " << n.second.getNumDelaySlots() << ";" << std::endl;
                         if (n.second.isSpikeEventRequired()) {

@@ -470,7 +470,71 @@ void checkUnreplacedVariables(const string &, const string &)
 }
 #endif
 
+//--------------------------------------------------------------------------
+/*! \brief This function returns the 32-bit hash of a string - because these are used across MPI nodes which may have different libstdc++ it would be risky to use std::hash
+ */
+//--------------------------------------------------------------------------
+//! https://stackoverflow.com/questions/19411742/what-is-the-default-hash-function-used-in-c-stdunordered-map
+//! suggests that libstdc++ uses MurmurHash2 so this seems as good a bet as any
+//! MurmurHash2, by Austin Appleby
+//! It has a few limitations -
+//! 1. It will not work incrementally.
+//! 2. It will not produce the same results on little-endian and big-endian
+//!    machines.
+uint32_t hashString(const std::string &string)
+{
+    // 'm' and 'r' are mixing constants generated offline.
+    // They're not really 'magic', they just happen to work well.
 
+    const uint32_t m = 0x5bd1e995;
+    const unsigned int r = 24;
+
+    // Get string length
+    size_t len = string.length();
+
+    // Initialize the hash to a 'random' value
+
+    uint32_t h = 0xc70f6907 ^ len;
+
+    // Mix 4 bytes at a time into the hash
+    const char *data = string.c_str();
+    while(len >= 4)
+    {
+        // **NOTE** one of the assumptions of the original MurmurHash2 was that
+        // "We can read a 4-byte value from any address without crashing".
+        // Bad experiance tells me this may not be the case on ARM so use memcpy
+        uint32_t k;
+        memcpy(&k, data, 4);
+
+        k *= m;
+        k ^= k >> r;
+        k *= m;
+
+        h *= m;
+        h ^= k;
+
+        data += 4;
+        len -= 4;
+    }
+
+    // Handle the last few bytes of the input array
+    switch(len)
+    {
+        case 3: h ^= data[2] << 16;
+        case 2: h ^= data[1] << 8;
+        case 1: h ^= data[0];
+                h *= m;
+    };
+
+    // Do a few final mixes of the hash to ensure the last few
+    // bytes are well-incorporated.
+
+    h ^= h >> 13;
+    h *= m;
+    h ^= h >> 15;
+
+    return h;
+}
 //-------------------------------------------------------------------------
 /*!
   \brief Function for performing the code and value substitutions necessary to insert neuron related variables, parameters, and extraGlobal parameters into synaptic code.

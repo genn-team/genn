@@ -66,7 +66,7 @@ static void genHeader(const NNmodel &model, //!< Model description
     os << "// ------------------------------------------------------------------------" << std::endl;
     os << "// copying things from remote" << std::endl;
     os << std::endl;
-    for(const auto &n : model.getLocalNeuronGroups()) {
+    for(const auto &n : model.getRemoteNeuronGroups()) {
         os << "void pull" << n.first << "SpikesFromRemote(int remote, int tag);" << std::endl;
     }
     os << std::endl;
@@ -100,9 +100,9 @@ static void genCode(const NNmodel &model, //!< Model description
     // generate infraMPI_<hostID>.cc
     //=======================
 
-    int MPIHostID = 0;
+    int mpiHostID = 0;
 #ifdef MPI_ENABLE
-    MPI_Comm_rank(MPI_COMM_WORLD, &MPIHostID);
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpiHostID);
 #endif
     string infraMPICodeName= model.getGeneratedCodePath(path + "/" + model.getName() + "_CODE", "infraMPI", "cc");
     ofstream fs;
@@ -206,31 +206,28 @@ static void genCode(const NNmodel &model, //!< Model description
     os << "void communicateSpikes()" << std::endl;
     os << CodeStream::OB(1054) << std::endl;
 
-    os << "    int localID;" << std::endl;
-    os << "    MPI_Comm_rank(MPI_COMM_WORLD, &localID);" << std::endl;
-    std::map<string, int> neuronToTag;
-    int nextTag = 0;
-    for(const auto &n : model.getNeuronGroups()) {
-        if (neuronToTag.find(n.first) == neuronToTag.cend()) {
-            neuronToTag.insert(pair<string, int>(n.first, nextTag));
-            nextTag = nextTag + 1;
-        }
-    }
+    os << "int localID;" << std::endl;
+    os << "MPI_Comm_rank(MPI_COMM_WORLD, &localID);" << std::endl;
+
     for(const auto &n : model.getLocalNeuronGroups()) {
-            os << "    // Handling neuron " << n.first << std::endl;
+        os << "// Neuron group '" << n.first << "' - outgoing connections" << std::endl;
         for(auto *s : n.second.getOutSyn()) {
-            if (s->getClusterHostID() != MPIHostID) {
-                os << "    // send to synapse" << s->getName()<< std::endl;
-                os << "copySpikesToRemote(" << s->getClusterHostID() << ", " << (neuronToTag.find(n.first))->second << ");" << std::endl;
+            // If the TARGET neuron group is not running on this machine
+            const int trgClusterHostID = s->getTrgNeuronGroup()->getClusterHostID();
+            if (trgClusterHostID != mpiHostID) {
+                os << "// send to synapse" << s->getName()<< std::endl;
+                os << "copySpikesToRemote(" << trgClusterHostID << ", " << hashString(n.first) << ");" << std::endl;
             }
         }
     }
     for(const auto &n : model.getLocalNeuronGroups()) {
-            os << "    // Handling neuron " << n.first << std::endl;
+        os << "// Neuron group '" << n.first << "' - incoming connections" << std::endl;
         for(auto *s : n.second.getInSyn()) {
-            if (s->getSrcNeuronGroup()->getClusterHostID() != MPIHostID) {
-                os << "    // receive from synapse" << s->getName() << " " << s->getSrcNeuronGroup()->getName() << std::endl;
-                os << "copySpikesFromRemote(" << s->getSrcNeuronGroup()->getClusterHostID() << ", " << (neuronToTag.find(s->getSrcNeuronGroup()->getName()))->second << ");" << std::endl;
+            // If the SOURCE neuron group is not running on this machine
+            const int srcClusterHostID = s->getSrcNeuronGroup()->getClusterHostID();
+            if (srcClusterHostID != mpiHostID) {
+                os << "// receive from synapse" << s->getName() << " " << s->getSrcNeuronGroup()->getName() << std::endl;
+                os << "copySpikesFromRemote(" << srcClusterHostID << ", " << hashString(s->getSrcNeuronGroup()->getName()) << ");" << std::endl;
             }
         }
     }

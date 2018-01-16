@@ -330,7 +330,7 @@ void genDefinitions(const NNmodel &model, //!< Model description
 #endif
         os << "extern double neuron_tme;" << std::endl;
         os << "extern CStopWatch neuron_timer;" << std::endl;
-        if (!model.getSynapseGroups().empty()) {
+        if (!model.getLocalSynapseGroups().empty()) {
 #ifndef CPU_ONLY
             os << "extern cudaEvent_t synapseStart, synapseStop;" << std::endl;
 #endif
@@ -388,7 +388,7 @@ void genDefinitions(const NNmodel &model, //!< Model description
     os << "// neuron variables" << std::endl;
     os << std::endl;
 
-    for(const auto &n : model.getNeuronGroups()) {
+    for(const auto &n : model.getLocalNeuronGroups()) {
         extern_variable_def(os, "unsigned int *", "glbSpkCnt"+n.first, n.second.getSpikeVarMode());
         extern_variable_def(os, "unsigned int *", "glbSpk"+n.first, n.second.getSpikeVarMode());
         if (n.second.isSpikeEventRequired()) {
@@ -415,7 +415,7 @@ void genDefinitions(const NNmodel &model, //!< Model description
         }
     }
     os << std::endl;
-    for(auto &n : model.getNeuronGroups()) {
+    for(auto &n : model.getLocalNeuronGroups()) {
         os << "#define glbSpkShift" << n.first;
         if (n.second.isDelayRequired()) {
             os << " spkQuePtr" << n.first << "*" << n.second.getNumNeurons();
@@ -426,7 +426,7 @@ void genDefinitions(const NNmodel &model, //!< Model description
         os << std::endl;
     }
 
-    for(const auto &n : model.getNeuronGroups()) {
+    for(const auto &n : model.getLocalNeuronGroups()) {
         // convenience macros for accessing spike count
         os << "#define spikeCount_" << n.first << " glbSpkCnt" << n.first;
         if (n.second.isDelayRequired() && n.second.isTrueSpikeRequired()) {
@@ -472,7 +472,7 @@ void genDefinitions(const NNmodel &model, //!< Model description
     os << "// synapse variables" << std::endl;
     os << std::endl;
 
-    for(const auto &s : model.getSynapseGroups()) {
+    for(const auto &s : model.getLocalSynapseGroups()) {
         extern_variable_def(os, model.getPrecision()+" *", "inSyn" + s.first, s.second.getInSynVarMode());
 
         if (s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
@@ -545,14 +545,14 @@ void genDefinitions(const NNmodel &model, //!< Model description
     os << "// ------------------------------------------------------------------------" << std::endl;
     os << "// copying things to device" << std::endl;
     os << std::endl;
-    for(const auto &n : model.getNeuronGroups()) {
+    for(const auto &n : model.getLocalNeuronGroups()) {
         os << "void push" << n.first << "StateToDevice(bool hostInitialisedOnly = false);" << std::endl;
         os << "void push" << n.first << "SpikesToDevice(bool hostInitialisedOnly = false);" << std::endl;
         os << "void push" << n.first << "SpikeEventsToDevice(bool hostInitialisedOnly = false);" << std::endl;
         os << "void push" << n.first << "CurrentSpikesToDevice();" << std::endl;
         os << "void push" << n.first << "CurrentSpikeEventsToDevice();" << std::endl;
     }
-    for(const auto &s : model.getSynapseGroups()) {
+    for(const auto &s : model.getLocalSynapseGroups()) {
         os << "#define push" << s.first << "ToDevice push" << s.first << "StateToDevice" << std::endl;
         os << "void push" << s.first << "StateToDevice(bool hostInitialisedOnly = false);" << std::endl;
     }
@@ -561,14 +561,14 @@ void genDefinitions(const NNmodel &model, //!< Model description
     os << "// ------------------------------------------------------------------------" << std::endl;
     os << "// copying things from device" << std::endl;
     os << std::endl;
-    for(const auto &n : model.getNeuronGroups()) {
+    for(const auto &n : model.getLocalNeuronGroups()) {
          os << "void pull" << n.first << "StateFromDevice();" << std::endl;
         os << "void pull" << n.first << "SpikesFromDevice();" << std::endl;
         os << "void pull" << n.first << "SpikeEventsFromDevice();" << std::endl;
         os << "void pull" << n.first << "CurrentSpikesFromDevice();" << std::endl;
         os << "void pull" << n.first << "CurrentSpikeEventsFromDevice();" << std::endl;
     }
-    for(const auto &s : model.getSynapseGroups()) {
+    for(const auto &s : model.getLocalSynapseGroups()) {
         os << "#define pull" << s.first << "FromDevice pull" << s.first << "StateFromDevice" << std::endl;
         os << "void pull" << s.first << "StateFromDevice();" << std::endl;
     }
@@ -656,7 +656,7 @@ void genDefinitions(const NNmodel &model, //!< Model description
     os << "void allocateMem();" << std::endl;
     os << std::endl;
 
-    for(const auto &s : model.getSynapseGroups()) {
+    for(const auto &s : model.getLocalSynapseGroups()) {
         if (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
             os << "void allocate" << s.first << "(unsigned int connN);" << std::endl;
             os << std::endl;
@@ -768,14 +768,14 @@ void genSupportCode(const NNmodel &model, //!< Model description
     os << "#define SUPPORT_CODE_H" << std::endl;
     // write the support codes
     os << "// support code for neuron and synapse models" << std::endl;
-    for(const auto &n : model.getNeuronGroups()) {
+    for(const auto &n : model.getLocalNeuronGroups()) {
         if (!n.second.getNeuronModel()->getSupportCode().empty()) {
             os << "namespace " << n.first << "_neuron" << CodeStream::OB(11) << std::endl;
             os << ensureFtype(n.second.getNeuronModel()->getSupportCode(), model.getPrecision()) << std::endl;
             os << CodeStream::CB(11) << " // end of support code namespace " << n.first << std::endl;
         }
     }
-    for(const auto &s : model.getSynapseGroups()) {
+    for(const auto &s : model.getLocalSynapseGroups()) {
         const auto *wu = s.second.getWUModel();
         const auto *psm = s.second.getPSModel();
 
@@ -861,7 +861,7 @@ void genRunner(const NNmodel &model, //!< Model description
 #endif
         os << "double neuron_tme;" << std::endl;
         os << "CStopWatch neuron_timer;" << std::endl;
-        if (!model.getSynapseGroups().empty()) {
+        if (!model.getLocalSynapseGroups().empty()) {
 #ifndef CPU_ONLY
             os << "cudaEvent_t synapseStart, synapseStop;" << std::endl;
 #endif
@@ -924,7 +924,7 @@ void genRunner(const NNmodel &model, //!< Model description
 #ifndef CPU_ONLY
     os << "__device__ volatile unsigned int d_done;" << std::endl;
 #endif
-    for(const auto &n : model.getNeuronGroups()) {
+    for(const auto &n : model.getLocalNeuronGroups()) {
         variable_def(os, "unsigned int *", "glbSpkCnt"+n.first, n.second.getSpikeVarMode());
         variable_def(os, "unsigned int *", "glbSpk"+n.first, n.second.getSpikeVarMode());
         if (n.second.isSpikeEventRequired()) {
@@ -965,7 +965,7 @@ void genRunner(const NNmodel &model, //!< Model description
     os << "// synapse variables" << std::endl;
     os << std::endl;
 
-   for(const auto &s : model.getSynapseGroups()) {
+   for(const auto &s : model.getLocalSynapseGroups()) {
         const auto *wu = s.second.getWUModel();
         const auto *psm = s.second.getPSModel();
 
@@ -1056,7 +1056,7 @@ void genRunner(const NNmodel &model, //!< Model description
     // If model can be run on GPU, include CPU simulation functions
     if(model.canRunOnCPU()) {
         os << "#include \"neuronFnct.cc\"" << std::endl;
-        if (!model.getSynapseGroups().empty()) {
+        if (!model.getLocalSynapseGroups().empty()) {
             os << "#include \"synapseFnct.cc\"" << std::endl;
         }
     }
@@ -1097,7 +1097,7 @@ void genRunner(const NNmodel &model, //!< Model description
         os << "    cudaEventCreate(&neuronStop);" << std::endl;
 #endif
         os << "    neuron_tme= 0.0;" << std::endl;
-        if (!model.getSynapseGroups().empty()) {
+        if (!model.getLocalSynapseGroups().empty()) {
 #ifndef CPU_ONLY
             os << "    cudaEventCreate(&synapseStart);" << std::endl;
             os << "    cudaEventCreate(&synapseStop);" << std::endl;
@@ -1136,7 +1136,7 @@ void genRunner(const NNmodel &model, //!< Model description
 
     // ALLOCATE NEURON VARIABLES
     unsigned int mem = 0;
-    for(const auto &n : model.getNeuronGroups()) {
+    for(const auto &n : model.getLocalNeuronGroups()) {
         // Allocate population spike count
         mem += allocate_variable(os, "unsigned int", "glbSpkCnt" + n.first, n.second.getSpikeVarMode(),
                                  n.second.isTrueSpikeRequired() ? n.second.getNumDelaySlots() : 1);
@@ -1178,7 +1178,7 @@ void genRunner(const NNmodel &model, //!< Model description
     }
 
     // ALLOCATE SYNAPSE VARIABLES
-    for(const auto &s : model.getSynapseGroups()) {
+    for(const auto &s : model.getLocalSynapseGroups()) {
         const auto *wu = s.second.getWUModel();
         const auto *psm = s.second.getPSModel();
 
@@ -1215,7 +1215,7 @@ void genRunner(const NNmodel &model, //!< Model description
     // ------------------------------------------------------------------------
     // allocating conductance arrays for sparse matrices
 
-    for(const auto &s : model.getSynapseGroups()) {
+    for(const auto &s : model.getLocalSynapseGroups()) {
         if (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
             os << "void allocate" << s.first << "(unsigned int connN)" << "{" << std::endl;
             os << "// Allocate host side variables" << std::endl;
@@ -1304,7 +1304,7 @@ void genRunner(const NNmodel &model, //!< Model description
 #endif
 
     // FREE NEURON VARIABLES
-    for(const auto &n : model.getNeuronGroups()) {
+    for(const auto &n : model.getLocalNeuronGroups()) {
         // Free spike buffer
         free_variable(os, "glbSpkCnt" + n.first, n.second.getSpikeVarMode());
         free_variable(os, "glbSpk" + n.first, n.second.getSpikeVarMode());
@@ -1333,7 +1333,7 @@ void genRunner(const NNmodel &model, //!< Model description
     }
 
     // FREE SYNAPSE VARIABLES
-    for(const auto &s : model.getSynapseGroups()) {
+    for(const auto &s : model.getLocalSynapseGroups()) {
         free_variable(os, "inSyn" + s.first, s.second.getInSynVarMode());
 
         if (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
@@ -1397,7 +1397,7 @@ void genRunner(const NNmodel &model, //!< Model description
         os << "// the actual time stepping procedure (using CPU)" << std::endl;
         os << "void stepTimeCPU()" << std::endl;
         os << "{" << std::endl;
-        if (!model.getSynapseGroups().empty()) {
+        if (!model.getLocalSynapseGroups().empty()) {
             if (!model.getSynapseDynamicsGroups().empty()) {
                 if (model.isTimingEnabled()) os << "        synDyn_timer.startTimer();" << std::endl;
                 os << "        calcSynapseDynamicsCPU(t);" << std::endl;
@@ -1565,14 +1565,14 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     os << std::endl;
 
     os << "#include \"" + model.getGeneratedCodePath("", "neuronKrnl", "cc") + "\"" << std::endl;
-    if (!model.getSynapseGroups().empty()) {
+    if (!model.getLocalSynapseGroups().empty()) {
         os << "#include \"" + model.getGeneratedCodePath("", "synapseKrnl", "cc") + "\"" << std::endl;
     }
 
     os << "// ------------------------------------------------------------------------" << std::endl;
     os << "// copying things to device" << std::endl << std::endl;
 
-    for(const auto &n : model.getNeuronGroups()) {
+    for(const auto &n : model.getLocalNeuronGroups()) {
         // neuron state variables
         os << "void push" << n.first << "StateToDevice(bool hostInitialisedOnly)" << std::endl;
         os << CodeStream::OB(1050);
@@ -1739,7 +1739,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
         os << std::endl;
     }
     // synapse variables
-    for(const auto &s : model.getSynapseGroups()) {
+    for(const auto &s : model.getLocalSynapseGroups()) {
         const auto *wu = s.second.getWUModel();
         const auto *psm = s.second.getPSModel();
 
@@ -1825,7 +1825,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     os << "// ------------------------------------------------------------------------" << std::endl;
     os << "// copying things from device" << std::endl << std::endl;
 
-    for(const auto &n : model.getNeuronGroups()) {
+    for(const auto &n : model.getLocalNeuronGroups()) {
         // neuron state variables
         os << "void pull" << n.first << "StateFromDevice()" << std::endl;
         os << CodeStream::OB(1050);
@@ -1959,7 +1959,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     }
 
     // synapse variables
-    for(const auto &s : model.getSynapseGroups()) {
+    for(const auto &s : model.getLocalSynapseGroups()) {
         const auto *wu = s.second.getWUModel();
         const auto *psm = s.second.getPSModel();
 
@@ -2019,12 +2019,12 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     os << "void copyStateToDevice(bool hostInitialisedOnly)" << std::endl;
     os << CodeStream::OB(1110);
 
-    for(const auto &n : model.getNeuronGroups()) {
+    for(const auto &n : model.getLocalNeuronGroups()) {
         os << "push" << n.first << "StateToDevice(hostInitialisedOnly);" << std::endl;
         os << "push" << n.first << "SpikesToDevice(hostInitialisedOnly);" << std::endl;
     }
 
-    for(const auto &s : model.getSynapseGroups()) {
+    for(const auto &s : model.getLocalSynapseGroups()) {
         os << "push" << s.first << "StateToDevice(hostInitialisedOnly);" << std::endl;
     }
 
@@ -2036,7 +2036,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     
     os << "void copySpikesToDevice()" << std::endl;
     os << CodeStream::OB(1111);
-    for(const auto &n : model.getNeuronGroups()) {
+    for(const auto &n : model.getLocalNeuronGroups()) {
       os << "push" << n.first << "SpikesToDevice();" << std::endl;
     }
     os << CodeStream::CB(1111);
@@ -2046,7 +2046,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     
     os << "void copyCurrentSpikesToDevice()" << std::endl;
     os << CodeStream::OB(1112);
-    for(const auto &n : model.getNeuronGroups()) {
+    for(const auto &n : model.getLocalNeuronGroups()) {
       os << "push" << n.first << "CurrentSpikesToDevice();" << std::endl;
     }
     os << CodeStream::CB(1112);
@@ -2057,7 +2057,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     
     os << "void copySpikeEventsToDevice()" << std::endl;
     os << CodeStream::OB(1113);
-    for(const auto &n : model.getNeuronGroups()) {
+    for(const auto &n : model.getLocalNeuronGroups()) {
       os << "push" << n.first << "SpikeEventsToDevice();" << std::endl;
     }
     os << CodeStream::CB(1113);
@@ -2067,7 +2067,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     
     os << "void copyCurrentSpikeEventsToDevice()" << std::endl;
     os << CodeStream::OB(1114);
-    for(const auto &n : model.getNeuronGroups()) {
+    for(const auto &n : model.getLocalNeuronGroups()) {
       os << "push" << n.first << "CurrentSpikeEventsToDevice();" << std::endl;
     }
     os << CodeStream::CB(1114);
@@ -2078,12 +2078,12 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     os << "void copyStateFromDevice()" << std::endl;
     os << CodeStream::OB(1120);
     
-    for(const auto &n : model.getNeuronGroups()) {
+    for(const auto &n : model.getLocalNeuronGroups()) {
         os << "pull" << n.first << "StateFromDevice();" << std::endl;
         os << "pull" << n.first << "SpikesFromDevice();" << std::endl;
     }
 
-    for(const auto &s : model.getSynapseGroups()) {
+    for(const auto &s : model.getLocalNeuronGroups()) {
         os << "pull" << s.first << "StateFromDevice();" << std::endl;
     }
     
@@ -2097,7 +2097,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     os << "void copySpikesFromDevice()" << std::endl;
     os << CodeStream::OB(1121) << std::endl;
 
-    for(const auto &n : model.getNeuronGroups()) {
+    for(const auto &n : model.getLocalNeuronGroups()) {
       os << "pull" << n.first << "SpikesFromDevice();" << std::endl;
     }
     os << CodeStream::CB(1121) << std::endl;
@@ -2109,7 +2109,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     os << "void copyCurrentSpikesFromDevice()" << std::endl;
     os << CodeStream::OB(1122) << std::endl;
 
-    for(const auto &n : model.getNeuronGroups()) {
+    for(const auto &n : model.getLocalNeuronGroups()) {
       os << "pull" << n.first << "CurrentSpikesFromDevice();" << std::endl;
     }
     os << CodeStream::CB(1122) << std::endl;
@@ -2123,7 +2123,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     os << "void copySpikeNFromDevice()" << std::endl;
     os << CodeStream::OB(1123) << std::endl;
 
-    for(const auto &n : model.getNeuronGroups()) {
+    for(const auto &n : model.getLocalNeuronGroups()) {
         if(canPushPullVar(n.second.getSpikeVarMode())) {
             size_t size = (n.second.isTrueSpikeRequired() && n.second.isDelayRequired())
                 ? n.second.getNumDelaySlots() : 1;
@@ -2143,7 +2143,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     os << "void copySpikeEventsFromDevice()" << std::endl;
     os << CodeStream::OB(1124) << std::endl;
 
-    for(const auto &n : model.getNeuronGroups()) {
+    for(const auto &n : model.getLocalNeuronGroups()) {
       os << "pull" << n.first << "SpikeEventsFromDevice();" << std::endl;
     }
     os << CodeStream::CB(1124) << std::endl;
@@ -2155,7 +2155,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     os << "void copyCurrentSpikeEventsFromDevice()" << std::endl;
     os << CodeStream::OB(1125) << std::endl;
 
-    for(const auto &n : model.getNeuronGroups()) {
+    for(const auto &n : model.getLocalNeuronGroups()) {
       os << "pull" << n.first << "CurrentSpikeEventsFromDevice();" << std::endl;
     }
     os << CodeStream::CB(1125) << std::endl;
@@ -2168,7 +2168,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     os << "void copySpikeEventNFromDevice()" << std::endl;
     os << CodeStream::OB(1126) << std::endl;
 
-    for(const auto &n : model.getNeuronGroups()) {
+    for(const auto &n : model.getLocalNeuronGroups()) {
         if (n.second.isSpikeEventRequired() && canPushPullVar(n.second.getSpikeEventVarMode())) {
             const size_t size = n.second.isDelayRequired() ? n.second.getNumDelaySlots() : 1;
 
@@ -2184,7 +2184,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     os << "void stepTimeGPU()" << std::endl;
     os << CodeStream::OB(1130) << std::endl;
 
-    if (!model.getSynapseGroups().empty()) {
+    if (!model.getLocalSynapseGroups().empty()) {
         unsigned int synapseGridSz = model.getSynapseKernelGridSize();
         os << "//model.padSumSynapseTrgN[model.synapseGrpN - 1] is " << synapseGridSz << std::endl;
         synapseGridSz = synapseGridSz / synapseBlkSz;
@@ -2216,7 +2216,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
         os << "dim3 nGrid(" << sqGridSize << ","<< sqGridSize <<");" << std::endl;
     }
     os << std::endl;
-    if (!model.getSynapseGroups().empty()) {
+    if (!model.getLocalSynapseGroups().empty()) {
         if (!model.getSynapseDynamicsGroups().empty()) {
             if (model.isTimingEnabled()) {
                 os << "cudaEventRecord(synDynStart);" << std::endl;
@@ -2256,7 +2256,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
             }
         }
     }    
-    for(auto &n : model.getNeuronGroups()) {
+    for(auto &n : model.getLocalNeuronGroups()) {
         if (n.second.isDelayRequired()) {
             os << "spkQuePtr" << n.first << " = (spkQuePtr" << n.first << " + 1) % " << n.second.getNumDelaySlots() << ";" << std::endl;
         }
@@ -2274,7 +2274,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
         os << "cudaEventRecord(neuronStop);" << std::endl;
         os << "cudaEventSynchronize(neuronStop);" << std::endl;
         os << "float tmp;" << std::endl;
-        if (!model.getSynapseGroups().empty()) {
+        if (!model.getLocalSynapseGroups().empty()) {
             os << "cudaEventElapsedTime(&tmp, synapseStart, synapseStop);" << std::endl;
             os << "synapse_tme+= tmp/1000.0;" << std::endl;
         }
