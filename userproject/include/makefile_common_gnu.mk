@@ -52,48 +52,43 @@ endif
 ifeq ($(DARWIN),DARWIN)
     CXX                 :=clang++
 endif
+
 ifndef CPU_ONLY
     CXXFLAGS            +=-std=c++11
 else
     CXXFLAGS            +=-std=c++11 -DCPU_ONLY
 endif
+
 ifdef DEBUG
     CXXFLAGS            +=-g -O0 -DDEBUG
 else
     CXXFLAGS            +=$(OPTIMIZATIONFLAGS)
 endif
-ifndef MPI_ENABLE
-    CXXFLAGS            +=-std=c++11
-else
-    CXXFLAGS            +=-std=c++11 -DMPI_ENABLE
-endif
 
 # Global include and link flags
 ifndef CPU_ONLY
-    ifndef MPI_ENABLE
-        INCLUDE_FLAGS       +=-I"$(GENN_PATH)/lib/include" -I"$(GENN_PATH)/userproject/include" -I"$(CUDA_PATH)/include"
-    else
-        INCLUDE_FLAGS       +=-I"$(GENN_PATH)/lib/include" -I"$(GENN_PATH)/userproject/include" -I"$(CUDA_PATH)/include" -I"$(MPI_PATH)/include"
-    endif
+    INCLUDE_FLAGS       +=-I"$(GENN_PATH)/lib/include" -I"$(GENN_PATH)/userproject/include" -I"$(CUDA_PATH)/include"
+    
     ifeq ($(DARWIN),DARWIN)
         LINK_FLAGS      +=-rpath $(CUDA_PATH)/lib -L"$(GENN_PATH)/lib/lib" -L"$(CUDA_PATH)/lib" -lgenn -lcuda -lcudart -lstdc++ -lc++
     else
         ifeq ($(OS_SIZE),32)
             LINK_FLAGS  +=-L"$(GENN_PATH)/lib/lib" -L"$(CUDA_PATH)/lib" -lgenn -lcuda -lcudart
         else
-            ifndef MPI_ENABLE
-                LINK_FLAGS   :=-L"$(GENN_PATH)/lib/lib" -L"$(CUDA_PATH)/lib64" -lgenn -lcuda -lcudart
-            else
-                LINK_FLAGS   :=-L"$(GENN_PATH)/lib/lib" -L"$(CUDA_PATH)/lib64" -lgenn -lcuda -lcudart $(shell mpiCC -showme:link)
-            endif
+            LINK_FLAGS  +=-L"$(GENN_PATH)/lib/lib" -L"$(CUDA_PATH)/lib64" -lgenn -lcuda -lcudart
         endif
     endif
 else
-    INCLUDE_FLAGS       +=-I"$(GENN_PATH)/lib/include" -I"$(GENN_PATH)/userproject/include"
     LINK_FLAGS          +=-L"$(GENN_PATH)/lib/lib" -lgenn_CPU_ONLY
     ifeq ($(DARWIN),DARWIN)
         LINK_FLAGS      +=-L"$(GENN_PATH)/lib/lib" -lgenn_CPU_ONLY -lstdc++ -lc++
     endif
+endif
+
+ifdef MPI_ENABLE
+    CXXFLAGS            +=-DMPI_ENABLE
+    INCLUDE_FLAGS       +=-I"$(MPI_PATH)/include"
+    LINK_FLAGS          +=$(shell mpiCC -showme:link)
 endif
 
 # An auto-generated file containing your cuda device's compute capability
@@ -105,12 +100,9 @@ ifndef SIM_CODE
     $(warning Using wildcard SIM_CODE=*_CODE.)
     SIM_CODE            :=*_CODE
 endif
+
 SOURCES                 ?=$(wildcard *.cc *.cpp *.cu *.c)
-ifdef MPI_ENABLE
-OBJECTS                 :=$(foreach obj,$(basename $(SOURCES)),$(obj).o) $(SIM_CODE)/runner_${OMPI_COMM_WORLD_RANK}.o $(SIM_CODE)/infraMPI_${OMPI_COMM_WORLD_RANK}.o
-else
 OBJECTS                 :=$(foreach obj,$(basename $(SOURCES)),$(obj).o) $(SIM_CODE)/runner.o
-endif
 
 # Target rules
 .PHONY: all clean purge show
