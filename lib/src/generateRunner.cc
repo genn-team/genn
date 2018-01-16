@@ -2151,7 +2151,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
         os << "pull" << n.first << "SpikesFromDevice();" << std::endl;
     }
 
-    for(const auto &s : model.getLocalNeuronGroups()) {
+    for(const auto &s : model.getLocalSynapseGroups()) {
         os << "pull" << s.first << "StateFromDevice();" << std::endl;
     }
     
