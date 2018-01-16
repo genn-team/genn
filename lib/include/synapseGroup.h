@@ -226,4 +226,7 @@ private:
 
     //!< Whether indidividual state variables of weight update model should use zero-copied memory
     std::vector<VarMode> m_WUVarMode;
+
+    //!< Whether indidividual state variables of post synapse should use zero-copied memory
+    std::vector<VarMode> m_PSVarMode;
 };
