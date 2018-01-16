@@ -381,17 +381,23 @@ NeuronGroup *NNmodel::addNeuronPopulation(
     std::vector<NewModels::VarInit> varInitialisers;
     createVarInitialiserFromLegacyVars(ini, varInitialisers);
 
+#ifdef MPI_ENABLE
     // Determine the host ID
     int mpiHostID = 0;
-#ifdef MPI_ENABLE
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiHostID);
+
+    // Pick map to add group to appropriately
+    auto &groupMap = (hostID == mpiHostID) ? m_LocalNeuronGroups : m_RemoteNeuronGroups;
+#else
+    // If MPI is disabled always add to local neuron groups and zero host id
+    auto &groupMap = m_LocalNeuronGroups;
+    hostID = 0;
 #endif
 
-    // Depending on whether specified ids are local, add neuron group to local or remote neuron groups map
-    auto &groupMap = ((hostID == mpiHostID) && (deviceID == 0)) ? m_LocalNeuronGroups : m_RemoteNeuronGroups;
+    // Add neuron group to map
     auto result = groupMap.emplace(std::piecewise_construct,
         std::forward_as_tuple(name),
-        std::forward_as_tuple(name, nNo, new NeuronModels::LegacyWrapper(type), p, varInitialisers));
+        std::forward_as_tuple(name, nNo, new NeuronModels::LegacyWrapper(type), p, varInitialisers, hostID, deviceID));
 
     if(!result.second)
     {
@@ -660,17 +666,22 @@ SynapseGroup *NNmodel::addSynapsePopulation(
     std::vector<NewModels::VarInit> wuVarInitialisers;
     createVarInitialiserFromLegacyVars(synini, wuVarInitialisers);
 
-     // Get host and device IDs of target neuron group
+#ifdef MPI_ENABLE
+    // Get host ID of target neuron group
     const int hostID = trgNeuronGrp->getClusterHostID();
-    const int deviceID = trgNeuronGrp->getClusterDeviceID();
 
     // Determine the host ID
     int mpiHostID = 0;
-#ifdef MPI_ENABLE
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiHostID);
+
+    // Pick map to add group to appropriately
+    auto &groupMap = (hostID == mpiHostID) ? m_LocalSynapseGroups : m_RemoteSynapseGroups;
+#else
+    // If MPI is disabled always add to local synapse groups
+    auto &groupMap = m_LocalSynapseGroups;
 #endif
-    // Depending on whether target neuron group is local, add synapse group to local or remote synapse groups map
-    auto &groupMap = ((hostID == mpiHostID) && (deviceID == 0)) ? m_LocalSynapseGroups : m_RemoteSynapseGroups;
+
+    // Add synapse group to map
     auto result = groupMap.emplace(
         std::piecewise_construct,
         std::forward_as_tuple(name),
