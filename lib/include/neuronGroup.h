@@ -155,6 +155,9 @@ public:
     //! but some GPU functionality will prevent models being run on both CPU and GPU.
     bool canRunOnCPU() const;
 
+    //! Does this neuron group have outgoing connections specified host id
+    bool hasOutputToHost(int targetHostID) const;
+
     // **THINK** do this really belong here - it is very code-generation specific
     std::string getQueueOffset(const std::string &devPrefix) const;
 

@@ -194,7 +194,7 @@ bool canPushPullVar(VarMode varMode)
             !(varMode & VarLocation::ZERO_COPY));
 }
 #endif  // CPU_ONLY
-}
+}   // Anonymous namespace
 
 //--------------------------------------------------------------------------
 /*!
@@ -208,8 +208,9 @@ bool canPushPullVar(VarMode varMode)
   the model.  
 */
 //--------------------------------------------------------------------------
-void genDefinitions(const NNmodel &model, //!< Model description
-               const string &path) //!< Path for code generationn
+void genDefinitions(const NNmodel &model,   //!< Model description
+                    const string &path,     //!< Path for code generationn
+                    int localHostID)        //!< Host ID of local machine
 {
     string SCLR_MIN;
     string SCLR_MAX;
@@ -383,14 +384,22 @@ void genDefinitions(const NNmodel &model, //!< Model description
 
     //---------------------------------
     // REMOTE NEURON GROUPS
+
     os << "// ------------------------------------------------------------------------" << std::endl;
     os << "// remote neuron groups" << std::endl;
     os << std::endl;
 
+    // Loop through remote neuron groups
     for(const auto &n : model.getRemoteNeuronGroups()) {
         // Write macro so whether a neuron group is remote or not can be determined at compile time
         // **NOTE** we do this for REMOTE groups so #ifdef GROUP_NAME_REMOTE is backward compatible
         os << "#define " << n.first << "_REMOTE" << std::endl;
+
+        // If this neuron group has outputs to local host
+        if(n.second.hasOutputToHost(localHostID)) {
+            extern_variable_def(os, "unsigned int *", "glbSpkCnt"+n.first, n.second.getSpikeVarMode());
+            extern_variable_def(os, "unsigned int *", "glbSpk"+n.first, n.second.getSpikeVarMode());
+        }
     }
     os << std::endl;
 
@@ -818,8 +827,9 @@ void genSupportCode(const NNmodel &model, //!< Model description
     fs.close();
 }
 
-void genRunner(const NNmodel &model, //!< Model description
-               const string &path) //!< Path for code generationn
+void genRunner(const NNmodel &model,    //!< Model description
+               const string &path,      //!< Path for code generationn
+               int localHostID)         //!< ID of local host
 
 {
     //cout << "entering genRunner" << std::endl;
@@ -925,6 +935,22 @@ void genRunner(const NNmodel &model, //!< Model description
         os << "__device__ curandStatePhilox4_32_10_t *dd_rng;" << std::endl;
     }
 #endif
+    os << std::endl;
+
+    //---------------------------------
+    // REMOTE NEURON GROUPS
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// remote neuron groups" << std::endl;
+    os << std::endl;
+
+    // Loop through remote neuron groups
+    for(const auto &n : model.getRemoteNeuronGroups()) {
+        // If this neuron group has outputs to local host
+        if(n.second.hasOutputToHost(localHostID)) {
+            variable_def(os, "unsigned int *", "glbSpkCnt"+n.first, n.second.getSpikeVarMode());
+            variable_def(os, "unsigned int *", "glbSpk"+n.first, n.second.getSpikeVarMode());
+        }
+    }
     os << std::endl;
 
     //---------------------------------
@@ -1147,8 +1173,31 @@ void genRunner(const NNmodel &model, //!< Model description
         os << "sparseInitDevice_tme = 0.0;" << std::endl;
     }
 
-    // ALLOCATE NEURON VARIABLES
+    // ALLOCATE REMOTE NEURON VARIABLES
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// remote neuron groups" << std::endl;
+    os << std::endl;
+
+    // Loop through remote neuron groups
     unsigned int mem = 0;
+    for(const auto &n : model.getRemoteNeuronGroups()) {
+        // If this neuron group has outputs to local host
+        if(n.second.hasOutputToHost(localHostID)) {
+            // Allocate population spike count
+            mem += allocate_variable(os, "unsigned int", "glbSpkCnt" + n.first, n.second.getSpikeVarMode(),
+                                     n.second.isTrueSpikeRequired() ? n.second.getNumDelaySlots() : 1);
+
+            // Allocate population spike output buffer
+            mem += allocate_variable(os, "unsigned int", "glbSpk" + n.first, n.second.getSpikeVarMode(),
+                                     n.second.isTrueSpikeRequired() ? n.second.getNumNeurons() * n.second.getNumDelaySlots() : n.second.getNumNeurons());
+        }
+    }
+    os << std::endl;
+
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// local neuron groups" << std::endl;
+
+    // ALLOCATE NEURON VARIABLES
     for(const auto &n : model.getLocalNeuronGroups()) {
         // Allocate population spike count
         mem += allocate_variable(os, "unsigned int", "glbSpkCnt" + n.first, n.second.getSpikeVarMode(),
@@ -1474,8 +1523,7 @@ void genRunner(const NNmodel &model, //!< Model description
 
 #ifndef CPU_ONLY
 void genRunnerGPU(const NNmodel &model, //!< Model description
-                  const string &path //!< Path for code generation
-    )
+                  const string &path)   //!< Path for code generation
 {
 //    cout << "entering GenRunnerGPU" << std::endl;
     string name = model.getGeneratedCodePath(path + "/" + model.getName() + "_CODE", "runnerGPU", "cc");

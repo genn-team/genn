@@ -49,9 +49,9 @@
  */
 //--------------------------------------------------------------------------
 
-void generate_model_runner(const NNmodel &model,  //!< Model description
-                           const string &path      //!< Path where the generated code will be deposited
-                           )
+void generate_model_runner(const NNmodel &model,    //!< Model description
+                           const string &path,      //!< Path where the generated code will be deposited
+                           int localHostID)         //!< ID of local host
 {
 #ifdef _WIN32
     _mkdir((path + "\\" + model.getName() + "_CODE").c_str());
@@ -60,16 +60,18 @@ void generate_model_runner(const NNmodel &model,  //!< Model description
 #endif
 
     // general shared code for GPU and CPU versions
-    genDefinitions(model, path);
+    genDefinitions(model, path, localHostID);
     genSupportCode(model, path);
-    genRunner(model, path);
+    genRunner(model, path, localHostID);
 
     // Generate initialization functions and kernel
     genInit(model, path);
 
+#ifdef MPI_ENABLE
     // Generate MPI functions
-    genMPI(model, path);
-    
+    genMPI(model, path, localHostID);
+#endif  // MPI_ENABLE
+
 #ifndef CPU_ONLY
     // GPU specific code generation
     genRunnerGPU(model, path);
@@ -112,9 +114,9 @@ void generate_model_runner(const NNmodel &model,  //!< Model description
 //--------------------------------------------------------------------------
 
 #ifndef CPU_ONLY
-void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
-                  const string &path     //!< path the generated code will be deposited
-    )
+void chooseDevice(NNmodel &model,       //!< the nn model we are generating code for
+                  const string &path,   //!< path the generated code will be deposited
+                  int localHostID)      //!< ID of local host
 {
     enum Kernel{ KernelCalcSynapses, KernelLearnSynapsesPost,
         KernelCalcSynapseDynamics, KernelCalcNeurons, KernelInit, KernelInitSparse, KernelMax };
@@ -322,7 +324,7 @@ void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
                 initBlkSz = warpSize*(rep+1);
 
                 model.setPopulationSums();
-                generate_model_runner(model, path);
+                generate_model_runner(model, path, localHostID);
 
                 // Run NVCC
                 cout << "dry-run compile for device " << theDevice << endl;
@@ -648,13 +650,12 @@ int main(int argc,     //!< number of arguments; expected to be 2
     }
 #endif // CPU_ONLY
 
+    int localHostID = 0;
+
 #ifdef MPI_ENABLE
     MPI_Init(NULL, NULL);
-
-    // Determine the host ID
-    int mpiHostID = 0;
-    MPI_Comm_rank(MPI_COMM_WORLD, &mpiHostID);
-    cout << "MPI initialized - host ID:" << mpiHostID << endl;
+    MPI_Comm_rank(MPI_COMM_WORLD, &localHostID);
+    cout << "MPI initialized - host ID:" << localHostID << endl;
 #endif
 
     NNmodel *model = new NNmodel();
@@ -669,9 +670,9 @@ int main(int argc,     //!< number of arguments; expected to be 2
 
     string path = argv[1];
 #ifndef CPU_ONLY
-    chooseDevice(*model, path);
+    chooseDevice(*model, path, localHostID);
 #endif // CPU_ONLY
-    generate_model_runner(*model, path);
+    generate_model_runner(*model, path, localHostID);
 
 #ifdef MPI_ENABLE
     MPI_Finalize();

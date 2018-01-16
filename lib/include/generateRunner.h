@@ -40,11 +40,13 @@ using namespace std;
   the model.  
 */
 //--------------------------------------------------------------------------
-void genDefinitions(const NNmodel &model, //!< Model description
-                    const string &path); //!< Path for code generationn
+void genDefinitions(const NNmodel &model,   //!< Model description
+                    const string &path,     //!< Path for code generation
+                    int localHostID);       //!< ID of local host
 
-void genRunner(const NNmodel &model, //!< Model description
-               const string &path); //!< Path for code generationn
+void genRunner(const NNmodel &model,    //!< Model description
+               const string &path,      //!< Path for code generation
+               int localHostID);        //!< ID of local host
 
 void genSupportCode(const NNmodel &model, //!< Model description
                     const string &path); //!< Path for code generationn

@@ -20,10 +20,21 @@
 //--------------------------------------------------------------------------
 
 #include "generateMPI.h"
-#include "codeStream.h"
 
-static void genHeader(const NNmodel &model, //!< Model description
-               const string &path) //!< Path for code generationn
+// Standard C++ includes
+#include <fstream>
+
+// GeNN includes
+#include "codeStream.h"
+#include "modelSpec.h"
+
+//--------------------------------------------------------------------------
+// Anonymous namespace
+//--------------------------------------------------------------------------
+namespace
+{
+void genHeader(const NNmodel &model,    //!< Model description
+               const string &path)      //!< Path for code generationn
 {
     //=======================
     // generate infraMPI.h
@@ -93,17 +104,13 @@ static void genHeader(const NNmodel &model, //!< Model description
     fs.close();
 }
 
-static void genCode(const NNmodel &model, //!< Model description
-               const string &path) //!< Path for code generationn
+void genCode(const NNmodel &model,  //!< Model description
+             const string &path,    //!< Path for code generationn
+             int localHostID)       //!< ID of local host
 {
     //=======================
     // generate infraMPI_<hostID>.cc
     //=======================
-
-    int mpiHostID = 0;
-#ifdef MPI_ENABLE
-    MPI_Comm_rank(MPI_COMM_WORLD, &mpiHostID);
-#endif
     string infraMPICodeName= model.getGeneratedCodePath(path + "/" + model.getName() + "_CODE", "infraMPI", "cc");
     ofstream fs;
     fs.open(infraMPICodeName.c_str());
@@ -214,7 +221,7 @@ static void genCode(const NNmodel &model, //!< Model description
         for(auto *s : n.second.getOutSyn()) {
             // If the TARGET neuron group is not running on this machine
             const int trgClusterHostID = s->getTrgNeuronGroup()->getClusterHostID();
-            if (trgClusterHostID != mpiHostID) {
+            if (trgClusterHostID != localHostID) {
                 os << "// send to synapse" << s->getName()<< std::endl;
                 os << "copySpikesToRemote(" << trgClusterHostID << ", " << hashString(n.first) << ");" << std::endl;
             }
@@ -225,7 +232,7 @@ static void genCode(const NNmodel &model, //!< Model description
         for(auto *s : n.second.getInSyn()) {
             // If the SOURCE neuron group is not running on this machine
             const int srcClusterHostID = s->getSrcNeuronGroup()->getClusterHostID();
-            if (srcClusterHostID != mpiHostID) {
+            if (srcClusterHostID != localHostID) {
                 os << "// receive from synapse" << s->getName() << " " << s->getSrcNeuronGroup()->getName() << std::endl;
                 os << "copySpikesFromRemote(" << srcClusterHostID << ", " << hashString(s->getSrcNeuronGroup()->getName()) << ");" << std::endl;
             }
@@ -236,6 +243,7 @@ static void genCode(const NNmodel &model, //!< Model description
 
     fs.close();
 }
+}   // Anonymous namespace
 
 //--------------------------------------------------------------------------
 /*!
@@ -245,9 +253,10 @@ static void genCode(const NNmodel &model, //!< Model description
   including: MPI send and receive functions.
 */
 //--------------------------------------------------------------------------
-void genMPI(const NNmodel &model, //!< Model description
-               const string &path) //!< Path for code generationn
+void genMPI(const NNmodel &model,   //!< Model description
+            const string &path,     //!< Path for code generation
+            int localHostID)        //!< ID of local host
 {
     genHeader(model, path);
-    genCode(model, path);
+    genCode(model, path, localHostID);
 }

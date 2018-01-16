@@ -1,3 +1,5 @@
+#pragma once
+
 /*--------------------------------------------------------------------------
   Author: Mengchi Zhang
   
@@ -19,10 +21,11 @@
 */
 //--------------------------------------------------------------------------
 
-#include "modelSpec.h"
-
+// Standard C++ includes
 #include <string>
-#include <fstream>
+
+// Forward declarations
+class NNmodel;
 
 using namespace std;
 
@@ -34,5 +37,6 @@ using namespace std;
   including: MPI send and receive functions.
 */
 //--------------------------------------------------------------------------
-void genMPI(const NNmodel &model, //!< Model description
-            const string &path); //!< Path for code generationn
+void genMPI(const NNmodel &model,   //!< Model description
+            const string &path,     //!< Path for code generation
+            int localHostID);       //!< ID of local host
