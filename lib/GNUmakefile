@@ -78,9 +78,7 @@ INCLUDE_FLAGS            +=$(patsubst %,-I%,$(subst :, ,$(BUILD_MODEL_INCLUDE)))
 # Global include and link flags
 ifndef CPU_ONLY
     INCLUDE_FLAGS        +=-I"$(INC_PATH)" -I"$(CUDA_PATH)/include"
-    ifdef MPI_ENABLE
-        INCLUDE_FLAGS        +=-I"$(MPI_PATH)/include"
-    endif
+
     ifeq ($(DARWIN),DARWIN)
         LINK_FLAGS       +=-rpath $(CUDA_PATH)/lib -L"$(LIBGENN_PATH)" -L"$(CUDA_PATH)/lib" -lgenn -lcuda -lcudart -lstdc++ -lc++
     else
@@ -89,10 +87,6 @@ ifndef CPU_ONLY
         else
             LINK_FLAGS   +=-L"$(LIBGENN_PATH)" -L"$(CUDA_PATH)/lib64" -lgenn -lcuda -lcudart
         endif
-
-        ifdef MPI_ENABLE
-                LINK_FLAGS   +=$(shell mpiCC -showme:link)
-        endif
     endif
 else
     INCLUDE_FLAGS        +=-I"$(INC_PATH)"
@@ -100,6 +94,11 @@ else
     ifeq ($(DARWIN),DARWIN)
         LINK_FLAGS       +=-L"$(LIBGENN_PATH)" -lgenn_CPU_ONLY -lstdc++ -lc++
     endif
+endif
+
+ifdef MPI_ENABLE
+    INCLUDE_FLAGS        +=-I"$(MPI_PATH)/include"
+    LINK_FLAGS           +=$(shell mpiCC -showme:link)
 endif
 
 ifdef COVERAGE
