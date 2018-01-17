@@ -78,7 +78,7 @@ void genHeader(const NNmodel &model,    //!< Model description
     os << "// copying things from remote" << std::endl;
     os << std::endl;
     for(const auto &n : model.getRemoteNeuronGroups()) {
-        os << "void pull" << n.first << "CurrentSpikesFromRemote(int remote, int tag);" << std::endl;
+        os << "void pull" << n.first << "CurrentSpikesFromRemote(int remote);" << std::endl;
     }
     os << std::endl;
 
@@ -126,23 +126,24 @@ void genCode(const NNmodel &model,  //!< Model description
     os << "// copying spikes to remote" << std::endl << std::endl;
     for(const auto &n : model.getLocalNeuronGroups()) {
         // neuron spike variables
-        os << "void push" << n.first << "CurrentSpikesToRemote(int remote, int tag)" << std::endl;
+        os << "void push" << n.first << "CurrentSpikesToRemote(int remote)" << std::endl;
         os << CodeStream::OB(1050);
+        os << "const int spikeCountTag = " << (hashString("glbSpkCnt" + n.first) & 0x7FFFFFFF) << ";" << std::endl;
+        os << "const int spikeTag = " << (hashString("glbSpk" + n.first) & 0x7FFFFFFF) << ";" << std::endl;
         os << "MPI_Request req;" << std::endl;
-
         // If delay is required
         if(n.second.isTrueSpikeRequired() && n.second.isDelayRequired()) {
             os << "MPI_Isend(glbSpkCnt" << n.first << " + spkQuePtr" << n.first << ", 1";
-            os << ", MPI_UNSIGNED, remote, tag, MPI_COMM_WORLD, &req);" << std::endl;
+            os << ", MPI_UNSIGNED, remote, spikeCountTag, MPI_COMM_WORLD, &req);" << std::endl;
             os << "MPI_Isend(glbSpk" << n.first << " + (spkQuePtr" << n.first << " * " << n.second.getNumNeurons() << "),";
             os << ", glbSpkCnt" << n.first << "[spkQuePtr" << n.first << "]";
-            os << ", MPI_UNSIGNED, remote, tag, MPI_COMM_WORLD, &req);" << std::endl;
+            os << ", MPI_UNSIGNED, remote, spikeTag, MPI_COMM_WORLD, &req);" << std::endl;
         }
         else {
             os << "MPI_Isend(glbSpkCnt" << n.first << ", 1";
-            os << ", MPI_UNSIGNED, remote, tag, MPI_COMM_WORLD, &req);" << std::endl;
+            os << ", MPI_UNSIGNED, remote, spikeCountTag, MPI_COMM_WORLD, &req);" << std::endl;
             os << "MPI_Isend(glbSpk" << n.first << ", glbSpkCnt" << n.first << "[0]";
-            os << ", MPI_UNSIGNED, remote, tag, MPI_COMM_WORLD, &req);" << std::endl;
+            os << ", MPI_UNSIGNED, remote, spikeTag, MPI_COMM_WORLD, &req);" << std::endl;
         }
         os << CodeStream::CB(1050);
         os << std::endl;
@@ -152,22 +153,22 @@ void genCode(const NNmodel &model,  //!< Model description
     os << "// copying spikes from remote" << std::endl << std::endl;
     for(const auto &n : model.getRemoteNeuronGroups()) {
         // neuron spike variables
-        os << "void pull" << n.first << "CurrentSpikesFromRemote(int remote, int tag)" << std::endl;
+        os << "void pull" << n.first << "CurrentSpikesFromRemote(int remote)" << std::endl;
         os << CodeStream::OB(1051);
-
+        os << "const int spikeCountTag = " << (hashString("glbSpkCnt" + n.first) & 0x7FFFFFFF) << ";" << std::endl;
+        os << "const int spikeTag = " << (hashString("glbSpk" + n.first) & 0x7FFFFFFF) << ";" << std::endl;
         if(n.second.isTrueSpikeRequired() && n.second.isDelayRequired()) {
             os << "MPI_Recv(glbSpkCnt" << n.first << " + spkQuePtr" << n.first << ", 1";
-            os << ", MPI_UNSIGNED, remote, tag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);" << std::endl;
-
+            os << ", MPI_UNSIGNED, remote, spikeCountTag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);" << std::endl;
             os << "MPI_Recv(glbSpk" << n.first << " + (spkQuePtr" << n.first << " * " << n.second.getNumNeurons() << "),";
             os << ", glbSpkCnt" << n.first << "[spkQuePtr" << n.first << "]";
-            os << ", MPI_UNSIGNED, remote, tag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);" << std::endl;
+            os << ", MPI_UNSIGNED, remote, spikeTag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);" << std::endl;
         }
         else {
             os << "MPI_Recv(glbSpkCnt" << n.first << ", 1";
-            os << ", MPI_UNSIGNED, remote, tag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);" << std::endl;
+            os << ", MPI_UNSIGNED, remote, spikeCountTag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);" << std::endl;
             os << "MPI_Recv(glbSpk" << n.first << ", glbSpkCnt" << n.first << "[0]";
-            os << ", MPI_UNSIGNED, remote, tag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);" << std::endl;
+            os << ", MPI_UNSIGNED, remote, spikeTag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);" << std::endl;
         }
         os << CodeStream::CB(1051);
         os << std::endl;
@@ -182,26 +183,35 @@ void genCode(const NNmodel &model,  //!< Model description
     os << "int localID;" << std::endl;
     os << "MPI_Comm_rank(MPI_COMM_WORLD, &localID);" << std::endl;
 
+    // Loop through local neuron groups
     for(const auto &n : model.getLocalNeuronGroups()) {
-        os << "// Neuron group '" << n.first << "' - outgoing connections" << std::endl;
+        // Build set of unique remote targets who should receive spikes from this population
+        std::set<int> remoteTargetIDs;
         for(auto *s : n.second.getOutSyn()) {
-            // If the TARGET neuron group is not running on this machine 'push' this neuron group's current spikes to the remote machine
             const int trgClusterHostID = s->getTrgNeuronGroup()->getClusterHostID();
             if (trgClusterHostID != localHostID) {
-                os << "// send to remote" << s->getName()<< std::endl;
-                os << "push" << s->getSrcNeuronGroup()->getName() << "CurrentSpikesToRemote(" << trgClusterHostID << ", " << (hashString(n.first) & 0x7FFFFFFF) << ");" << std::endl;
+                remoteTargetIDs.insert(trgClusterHostID);
+            }
+        }
+
+        // If there are any remote targets
+        if(!remoteTargetIDs.empty()) {
+            os << "// Local neuron group '" << n.first << "' - outgoing connections" << std::endl;
+
+            // Send current spikes to each remote target
+            for(int t : remoteTargetIDs) {
+                os << "// send to remote node " << t << std::endl;
+                os << "push" << n.first << "CurrentSpikesToRemote(" << t << ");" << std::endl;
             }
         }
     }
-    for(const auto &n : model.getLocalNeuronGroups()) {
-        os << "// Neuron group '" << n.first << "' - incoming connections" << std::endl;
-        for(auto *s : n.second.getInSyn()) {
-            // If the SOURCE neuron group is not running on this machine 'pull' this neuron group's current spikes from the remote machine
-            const int srcClusterHostID = s->getSrcNeuronGroup()->getClusterHostID();
-            if (srcClusterHostID != localHostID) {
-                os << "// receive from synapse" << s->getName() << " " << s->getSrcNeuronGroup()->getName() << std::endl;
-                os << "pull" << s->getSrcNeuronGroup()->getName() << "CurrentSpikesFromRemote(" << srcClusterHostID << ", " << (hashString(s->getSrcNeuronGroup()->getName()) & 0x7FFFFFFF) << ");" << std::endl;
-            }
+
+    // Loop through remote neuron groups
+    for(const auto &n : model.getRemoteNeuronGroups()) {
+        // If neuron group provides output to local host pull
+        if(n.second.hasOutputToHost(localHostID)) {
+            os << "// Remote neuron group '" << n.first << "'" << std::endl;
+            os << "pull" << n.first << "CurrentSpikesFromRemote(" << n.second.getClusterHostID() << ");" << std::endl;
         }
     }
     os << CodeStream::CB(1054);
