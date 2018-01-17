@@ -146,13 +146,13 @@ void genCode(const NNmodel &model,  //!< Model description
         const size_t glbSpkCntSize = n.second.isTrueSpikeRequired() ? n.second.getNumDelaySlots() : 1;
         os << "MPI_Isend(glbSpkCnt" << n.first;
         os << ", "<< glbSpkCntSize;
-        os << ", MPI_INT";
+        os << ", MPI_UNSIGNED";
         os << ", remote, tag, MPI_COMM_WORLD, &req);" << std::endl;
 
         const size_t glbSpkSize = n.second.isTrueSpikeRequired() ? n.second.getNumNeurons() * n.second.getNumDelaySlots() : n.second.getNumNeurons();
         os << "MPI_Isend(glbSpk" << n.first;
         os << ", "<< glbSpkSize;
-        os << ", MPI_INT";
+        os << ", MPI_UNSIGNED";
         os << ", remote, tag, MPI_COMM_WORLD, &req);" << std::endl;
 
         os << CodeStream::CB(1050);
@@ -170,13 +170,13 @@ void genCode(const NNmodel &model,  //!< Model description
         const size_t glbSpkCntSize = n.second.isTrueSpikeRequired() ? n.second.getNumDelaySlots() : 1;
         os << "MPI_Recv(glbSpkCnt" << n.first;
         os << ", "<< glbSpkCntSize;
-        os << ", MPI_INT";
+        os << ", MPI_UNSIGNED";
         os << ", remote, tag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);" << std::endl;
 
         const size_t glbSpkSize = n.second.isTrueSpikeRequired() ? n.second.getNumNeurons() * n.second.getNumDelaySlots() : n.second.getNumNeurons();
         os << "MPI_Recv(glbSpk" << n.first;
         os << ", "<< glbSpkSize;
-        os << ", MPI_INT";
+        os << ", MPI_UNSIGNED";
         os << ", remote, tag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);" << std::endl;
 
         os << CodeStream::CB(1051);

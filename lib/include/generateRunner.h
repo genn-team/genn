@@ -61,7 +61,8 @@ void genSupportCode(const NNmodel &model, //!< Model description
 
 #ifndef CPU_ONLY
 void genRunnerGPU(const NNmodel &model, //!< Model description
-                  const string &path);  //!< Path for code generation
+                  const string &path,   //!< Path for code generation
+                  int localHostID);     //!< ID of local host
 #endif // CPU_ONLY
 
 

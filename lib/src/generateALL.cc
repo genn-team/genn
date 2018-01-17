@@ -82,7 +82,7 @@ void generate_model_runner(const NNmodel &model,    //!< Model description
 
 #ifndef CPU_ONLY
     // GPU specific code generation
-    genRunnerGPU(model, path);
+    genRunnerGPU(model, path, localHostID);
 
     // generate neuron kernels
     genNeuronKernel(model, path);
@@ -355,11 +355,10 @@ void chooseDevice(NNmodel &model,       //!< the nn model we are generating code
                 }
                 CHECK_CU_ERRORS(cuModuleUnload(module));
 
-                //TODO: Conflicts if one node delete the cubinPath and other nodes cannot find it
-                //if (remove(cubinPath.c_str())) {
-                //    cerr << "generateALL: Error deleting dry-run cubin file" << endl;
-                //    exit(EXIT_FAILURE);
-                //}
+                if (remove(cubinPath.c_str())) {
+                    cerr << "generateALL: Error deleting dry-run cubin file" << endl;
+                    exit(EXIT_FAILURE);
+                }
             }
 
             float blockLimit, mainBlockLimit;
