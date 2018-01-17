@@ -193,7 +193,6 @@ bool canPushPullVar(VarMode varMode)
             (varMode & VarLocation::DEVICE) &&
             !(varMode & VarLocation::ZERO_COPY));
 }
-#endif  // CPU_ONLY
 
 void genPushSpikeCode(CodeStream &os, const NeuronGroup &ng, bool spikeEvent)
 {
@@ -330,6 +329,7 @@ void genPullCurrentSpikeFunctions(CodeStream &os, const NeuronGroup &ng, bool sp
     os << CodeStream::CB(1061);
     os << std::endl;
 }
+#endif  // CPU_ONLY
 }   // Anonymous namespace
 
 //--------------------------------------------------------------------------
