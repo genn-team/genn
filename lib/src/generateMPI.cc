@@ -85,7 +85,7 @@ void genHeader(const NNmodel &model,    //!< Model description
     os << "// ------------------------------------------------------------------------" << std::endl;
     os << "// global spikes communication" << std::endl;
     os << std::endl;
-    os << "void communicateSpikes();" << std::endl;
+    os << "void synchroniseMPI();" << std::endl;
     os << std::endl;
 
     os << "#endif" << std::endl;
@@ -177,12 +177,8 @@ void genCode(const NNmodel &model,  //!< Model description
     os << "// ------------------------------------------------------------------------" << std::endl;
     os << "// communication function to sync spikes" << std::endl << std::endl;
 
-    os << "void communicateSpikes()" << std::endl;
+    os << "void synchroniseMPI()" << std::endl;
     os << CodeStream::OB(1054) << std::endl;
-
-    os << "int localID;" << std::endl;
-    os << "MPI_Comm_rank(MPI_COMM_WORLD, &localID);" << std::endl;
-
     // Loop through local neuron groups
     for(const auto &n : model.getLocalNeuronGroups()) {
         // Build set of unique remote targets who should receive spikes from this population
