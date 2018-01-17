@@ -52,13 +52,11 @@ endif
 ifeq ($(DARWIN),DARWIN)
     CXX                 :=clang++
 endif
-
 ifndef CPU_ONLY
     CXXFLAGS            +=-std=c++11
 else
     CXXFLAGS            +=-std=c++11 -DCPU_ONLY
 endif
-
 ifdef DEBUG
     CXXFLAGS            +=-g -O0 -DDEBUG
 else
@@ -68,7 +66,6 @@ endif
 # Global include and link flags
 ifndef CPU_ONLY
     INCLUDE_FLAGS       +=-I"$(GENN_PATH)/lib/include" -I"$(GENN_PATH)/userproject/include" -I"$(CUDA_PATH)/include"
-    
     ifeq ($(DARWIN),DARWIN)
         LINK_FLAGS      +=-rpath $(CUDA_PATH)/lib -L"$(GENN_PATH)/lib/lib" -L"$(CUDA_PATH)/lib" -lgenn -lcuda -lcudart -lstdc++ -lc++
     else
@@ -79,6 +76,7 @@ ifndef CPU_ONLY
         endif
     endif
 else
+    INCLUDE_FLAGS       +=-I"$(GENN_PATH)/lib/include" -I"$(GENN_PATH)/userproject/include"
     LINK_FLAGS          +=-L"$(GENN_PATH)/lib/lib" -lgenn_CPU_ONLY
     ifeq ($(DARWIN),DARWIN)
         LINK_FLAGS      +=-L"$(GENN_PATH)/lib/lib" -lgenn_CPU_ONLY -lstdc++ -lc++
