@@ -135,7 +135,7 @@ void genCode(const NNmodel &model,  //!< Model description
         if(n.second.isTrueSpikeRequired() && n.second.isDelayRequired()) {
             os << "MPI_Isend(glbSpkCnt" << n.first << " + spkQuePtr" << n.first << ", 1";
             os << ", MPI_UNSIGNED, remote, spikeCountTag, MPI_COMM_WORLD, &req);" << std::endl;
-            os << "MPI_Isend(glbSpk" << n.first << " + (spkQuePtr" << n.first << " * " << n.second.getNumNeurons() << "),";
+            os << "MPI_Isend(glbSpk" << n.first << " + (spkQuePtr" << n.first << " * " << n.second.getNumNeurons() << ")";
             os << ", glbSpkCnt" << n.first << "[spkQuePtr" << n.first << "]";
             os << ", MPI_UNSIGNED, remote, spikeTag, MPI_COMM_WORLD, &req);" << std::endl;
         }
@@ -160,7 +160,7 @@ void genCode(const NNmodel &model,  //!< Model description
         if(n.second.isTrueSpikeRequired() && n.second.isDelayRequired()) {
             os << "MPI_Recv(glbSpkCnt" << n.first << " + spkQuePtr" << n.first << ", 1";
             os << ", MPI_UNSIGNED, remote, spikeCountTag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);" << std::endl;
-            os << "MPI_Recv(glbSpk" << n.first << " + (spkQuePtr" << n.first << " * " << n.second.getNumNeurons() << "),";
+            os << "MPI_Recv(glbSpk" << n.first << " + (spkQuePtr" << n.first << " * " << n.second.getNumNeurons() << ")";
             os << ", glbSpkCnt" << n.first << "[spkQuePtr" << n.first << "]";
             os << ", MPI_UNSIGNED, remote, spikeTag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);" << std::endl;
         }

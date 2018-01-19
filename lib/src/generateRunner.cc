@@ -1103,6 +1103,13 @@ void genRunner(const NNmodel &model,    //!< Model description
         if(n.second.hasOutputToHost(localHostID)) {
             variable_def(os, "unsigned int *", "glbSpkCnt"+n.first, n.second.getSpikeVarMode());
             variable_def(os, "unsigned int *", "glbSpk"+n.first, n.second.getSpikeVarMode());
+
+            if (n.second.isDelayRequired()) {
+                os << "unsigned int spkQuePtr" << n.first << ";" << std::endl;
+#ifndef CPU_ONLY
+                os << "__device__ volatile unsigned int dd_spkQuePtr" << n.first << ";" << std::endl;
+#endif
+            }
         }
     }
     os << std::endl;
@@ -2347,7 +2354,12 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
                 os << "cudaEventRecord(learningStop);" << std::endl;
             }
         }
-    }    
+    }
+    for(auto &n : model.getRemoteNeuronGroups()) {
+        if(n.second.isDelayRequired() && n.second.hasOutputToHost(localHostID)) {
+            os << "spkQuePtr" << n.first << " = (spkQuePtr" << n.first << " + 1) % " << n.second.getNumDelaySlots() << ";" << std::endl;
+        }
+    }
     for(auto &n : model.getLocalNeuronGroups()) {
         if (n.second.isDelayRequired()) {
             os << "spkQuePtr" << n.first << " = (spkQuePtr" << n.first << " + 1) % " << n.second.getNumDelaySlots() << ";" << std::endl;
