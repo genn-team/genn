@@ -1537,8 +1537,15 @@ void genRunner(const NNmodel &model,    //!< Model description
         free_device_variable(os, "rng", VarMode::LOC_DEVICE_INIT_DEVICE);
     }
 #endif
+    // FREE REMOTE NEURON VARIABLES
+    for(const auto &n : model.getRemoteNeuronGroups()) {
+        if(n.second.hasOutputToHost(localHostID)) {
+            free_variable(os, "glbSpkCnt" + n.first, n.second.getSpikeVarMode());
+            free_variable(os, "glbSpk" + n.first, n.second.getSpikeVarMode());
+        }
+    }
 
-    // FREE NEURON VARIABLES
+    // FREE LOCAL NEURON VARIABLES
     for(const auto &n : model.getLocalNeuronGroups()) {
         // Free spike buffer
         free_variable(os, "glbSpkCnt" + n.first, n.second.getSpikeVarMode());
