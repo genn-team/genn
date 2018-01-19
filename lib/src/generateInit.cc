@@ -29,6 +29,43 @@ bool shouldInitOnHost(VarMode varMode)
 #endif
 }
 // ------------------------------------------------------------------------
+void genHostInitSpikeCode(CodeStream &os, const NeuronGroup &ng, bool spikeEvent)
+{
+    // Get variable mode
+    const VarMode varMode = spikeEvent ? ng.getSpikeEventVarMode() : ng.getSpikeVarMode();
+
+    // Is host initialisation required at all
+    const bool hostInitRequired = spikeEvent ?
+        (ng.isSpikeEventRequired() && shouldInitOnHost(varMode))
+        : shouldInitOnHost(varMode);
+
+    // Is delay required
+    const bool delayRequired = spikeEvent ?
+        ng.isDelayRequired() :
+        (ng.isTrueSpikeRequired() && ng.isDelayRequired());
+
+    const char *spikeCntPrefix = spikeEvent ? "glbSpkCntEvnt" : "glbSpkCnt";
+    const char *spikePrefix = spikeEvent ? "glbSpkEvnt" : "glbSpk";
+
+    if(hostInitRequired) {
+        if (delayRequired) {
+            os << CodeStream::OB(50) << "for (int i = 0; i < " << ng.getNumDelaySlots() << "; i++)" << CodeStream::OB(60);
+            os << spikeCntPrefix << ng.getName() << "[i] = 0;" << std::endl;
+            os << CodeStream::CB(60) << CodeStream::CB(50) << std::endl;
+
+            os << CodeStream::OB(70) << "for (int i = 0; i < " << ng.getNumNeurons() * ng.getNumDelaySlots() << "; i++)" << CodeStream::OB(80);
+            os << spikePrefix << ng.getName() << "[i] = 0;" << std::endl;
+            os << CodeStream::CB(80) << CodeStream::CB(70) << std::endl;
+        }
+        else {
+            os << spikeCntPrefix << ng.getName() << "[0] = 0;" << std::endl;
+            os << CodeStream::OB(90) << "for (int i = 0; i < " << ng.getNumNeurons() << "; i++)" << CodeStream::OB(100);
+            os << spikePrefix << ng.getName() << "[i] = 0;" << std::endl;
+            os << CodeStream::CB(100) << CodeStream::CB(90) << std::endl;
+        }
+    }
+}
+// ------------------------------------------------------------------------
 #ifndef CPU_ONLY
 unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model)
 {
@@ -480,23 +517,9 @@ void genInit(const NNmodel &model,      //!< Model description
     // INITIALISE REMOTE NEURON SPIKE COUNTS
     os << "// remote neuron spike counts" << std::endl;
     for(const auto &n : model.getRemoteNeuronGroups()) {
-        // If this neuron group has outputs to local host and spike variables should be initialised on host
-        if(shouldInitOnHost(n.second.getSpikeVarMode()) && n.second.hasOutputToHost(localHostID)) {
-            if (n.second.isTrueSpikeRequired() && n.second.isDelayRequired()) {
-                os << CodeStream::OB(41) << "for (int i = 0; i < " << n.second.getNumDelaySlots() << "; i++)" << CodeStream::OB(42);
-                os << "glbSpkCnt" << n.first << "[i] = 0;" << std::endl;
-                os << CodeStream::CB(42) << CodeStream::CB(41) << std::endl;
-
-                os << CodeStream::OB(43) << "for (int i = 0; i < " << n.second.getNumNeurons() * n.second.getNumDelaySlots() << "; i++)" << CodeStream::OB(44);
-                os << "glbSpk" << n.first << "[i] = 0;" << std::endl;
-                os << CodeStream::CB(44) << CodeStream::CB(43) << std::endl;
-            }
-            else {
-                os << "glbSpkCnt" << n.first << "[0] = 0;" << std::endl;
-                os << CodeStream::OB(45) << "for (int i = 0; i < " << n.second.getNumNeurons() << "; i++)" << CodeStream::OB(46);
-                os << "glbSpk" << n.first << "[i] = 0;" << std::endl;
-                os << CodeStream::CB(46) << CodeStream::CB(45) << std::endl;
-            }
+        // If this neuron group has outputs to local host 
+        if(n.second.hasOutputToHost(localHostID)) {
+            genHostInitSpikeCode(os, n.second, false);
         }
     }
 
@@ -512,41 +535,9 @@ void genInit(const NNmodel &model,      //!< Model description
 #endif
         }
 
-        if(shouldInitOnHost(n.second.getSpikeVarMode())) {
-            if (n.second.isTrueSpikeRequired() && n.second.isDelayRequired()) {
-                os << CodeStream::OB(50) << "for (int i = 0; i < " << n.second.getNumDelaySlots() << "; i++)" << CodeStream::OB(60);
-                os << "glbSpkCnt" << n.first << "[i] = 0;" << std::endl;
-                os << CodeStream::CB(60) << CodeStream::CB(50) << std::endl;
-
-                os << CodeStream::OB(70) << "for (int i = 0; i < " << n.second.getNumNeurons() * n.second.getNumDelaySlots() << "; i++)" << CodeStream::OB(80);
-                os << "glbSpk" << n.first << "[i] = 0;" << std::endl;
-                os << CodeStream::CB(80) << CodeStream::CB(70) << std::endl;
-            }
-            else {
-                os << "glbSpkCnt" << n.first << "[0] = 0;" << std::endl;
-                os << CodeStream::OB(90) << "for (int i = 0; i < " << n.second.getNumNeurons() << "; i++)" << CodeStream::OB(100);
-                os << "glbSpk" << n.first << "[i] = 0;" << std::endl;
-                os << CodeStream::CB(100) << CodeStream::CB(90) << std::endl;
-            }
-        }
-
-        if(n.second.isSpikeEventRequired() && shouldInitOnHost(n.second.getSpikeEventVarMode())) {
-            if (n.second.isDelayRequired()) {
-                os << CodeStream::OB(110) << "for (int i = 0; i < " << n.second.getNumDelaySlots() << "; i++)" << CodeStream::OB(120);
-                os << "glbSpkCntEvnt" << n.first << "[i] = 0;" << std::endl;
-                os << CodeStream::CB(120) << CodeStream::CB(110) << std::endl;
-
-                os << CodeStream::OB(130) << "for (int i = 0; i < " << n.second.getNumNeurons() * n.second.getNumDelaySlots() << "; i++)" << CodeStream::OB(140);
-                os << "glbSpkEvnt" << n.first << "[i] = 0;" << std::endl;
-                os << CodeStream::CB(140) << CodeStream::CB(130) << std::endl;
-            }
-            else {
-                os << "glbSpkCntEvnt" << n.first << "[0] = 0;" << std::endl;
-                os << CodeStream::OB(150) << "for (int i = 0; i < " << n.second.getNumNeurons() << "; i++)" << CodeStream::OB(160);
-                os << "glbSpkEvnt" << n.first << "[i] = 0;" << std::endl;
-                os << CodeStream::CB(160) << CodeStream::CB(150) << std::endl;
-            }
-        }
+        // Generate code to intialise spike and spike event variables
+        genHostInitSpikeCode(os, n.second, false);
+        genHostInitSpikeCode(os, n.second, true);
 
         if (n.second.isSpikeTimeRequired() && shouldInitOnHost(n.second.getSpikeTimeVarMode())) {
             os << CodeStream::OB(170) << "for (int i = 0; i < " << n.second.getNumNeurons() * n.second.getNumDelaySlots() << "; i++)" << CodeStream::OB(180);
