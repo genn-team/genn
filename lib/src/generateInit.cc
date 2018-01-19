@@ -580,12 +580,21 @@ void genInit(const NNmodel &model,      //!< Model description
     }
     os << std::endl;
 
-    // INITIALISE REMOTE NEURON SPIKE COUNTS
-    os << "// remote neuron spike counts" << std::endl;
+    // INITIALISE REMOTE NEURON SPIKE VARIABLES
+    os << "// remote neuron spike variables" << std::endl;
     for(const auto &n : model.getRemoteNeuronGroups()) {
         // If this neuron group has outputs to local host 
         if(n.second.hasOutputToHost(localHostID)) {
             genHostInitSpikeCode(os, n.second, false);
+
+            if (n.second.isDelayRequired()) {
+                os << "spkQuePtr" << n.first << " = 0;" << std::endl;
+#ifndef CPU_ONLY
+                os << "CHECK_CUDA_ERRORS(cudaMemcpyToSymbol(dd_spkQuePtr" << n.first;
+                os << ", &spkQuePtr" << n.first;
+                os << ", sizeof(unsigned int), 0, cudaMemcpyHostToDevice));" << std::endl;
+#endif
+            }
         }
     }
 
@@ -593,7 +602,7 @@ void genInit(const NNmodel &model,      //!< Model description
     os << "// neuron variables" << std::endl;
     for(const auto &n : model.getLocalNeuronGroups()) {
         if (n.second.isDelayRequired()) {
-            os << "    spkQuePtr" << n.first << " = 0;" << std::endl;
+            os << "spkQuePtr" << n.first << " = 0;" << std::endl;
 #ifndef CPU_ONLY
             os << "CHECK_CUDA_ERRORS(cudaMemcpyToSymbol(dd_spkQuePtr" << n.first;
             os << ", &spkQuePtr" << n.first;
