@@ -34,7 +34,8 @@
 namespace
 {
 void genHeader(const NNmodel &model,    //!< Model description
-               const string &path)      //!< Path for code generationn
+               const string &path,      //!< Path for code generationn
+               int localHostID)         //!< ID of local host
 {
     //=======================
     // generate mpi.h
@@ -53,19 +54,14 @@ void genHeader(const NNmodel &model,    //!< Model description
 
     // write doxygen comment
     os << "//-------------------------------------------------------------------------" << std::endl;
-    os << "/*! \\file infraMPI.h" << std::endl << std::endl;
+    os << "/*! \\file mpi.h" << std::endl << std::endl;
     os << "\\brief File generated from GeNN for the model " << model.getName() << " containing MPI function definition." << std::endl;
     os << "*/" << std::endl;
     os << "//-------------------------------------------------------------------------" << std::endl << std::endl;
 
-    os << "#ifndef INFRAMPI_H" << std::endl;
-    os << "#define INFRAMPI_H" << std::endl;
+    os << "#ifndef MPI_H" << std::endl;
+    os << "#define MPI_H" << std::endl;
     os << std::endl;
-
-#ifdef MPI_ENABLE
-    os << "#include <mpi.h>" << std::endl;
-#endif
-
     os << "// ------------------------------------------------------------------------" << std::endl;
     os << "// copying things to remote" << std::endl;
     os << std::endl;
@@ -78,7 +74,9 @@ void genHeader(const NNmodel &model,    //!< Model description
     os << "// copying things from remote" << std::endl;
     os << std::endl;
     for(const auto &n : model.getRemoteNeuronGroups()) {
-        os << "void pull" << n.first << "CurrentSpikesFromRemote(int remote);" << std::endl;
+        if(n.second.hasOutputToHost(localHostID)) {
+            os << "void pull" << n.first << "CurrentSpikesFromRemote(int remote);" << std::endl;
+        }
     }
     os << std::endl;
 
@@ -111,15 +109,13 @@ void genCode(const NNmodel &model,  //!< Model description
 
     // write doxygen comment
     os << "//-------------------------------------------------------------------------" << std::endl;
-    os << "/*! \\file inftraMPI.cc" << std::endl << std::endl;
+    os << "/*! \\file mpi.cc" << std::endl << std::endl;
     os << "\\brief File generated from GeNN for the model " << model.getName() << " containing MPI infrastructure code." << std::endl;
     os << "*/" << std::endl;
     os << "//-------------------------------------------------------------------------" << std::endl;
     os << std::endl;
 
-#ifdef MPI_ENABLE
     os << "#include <mpi.h>" << std::endl;
-#endif
     os << std::endl;
 
     os << "// ------------------------------------------------------------------------" << std::endl;
@@ -152,26 +148,28 @@ void genCode(const NNmodel &model,  //!< Model description
     os << "// ------------------------------------------------------------------------" << std::endl;
     os << "// copying spikes from remote" << std::endl << std::endl;
     for(const auto &n : model.getRemoteNeuronGroups()) {
-        // neuron spike variables
-        os << "void pull" << n.first << "CurrentSpikesFromRemote(int remote)" << std::endl;
-        os << CodeStream::OB(1051);
-        os << "const int spikeCountTag = " << (hashString("glbSpkCnt" + n.first) & 0x7FFFFFFF) << ";" << std::endl;
-        os << "const int spikeTag = " << (hashString("glbSpk" + n.first) & 0x7FFFFFFF) << ";" << std::endl;
-        if(n.second.isTrueSpikeRequired() && n.second.isDelayRequired()) {
-            os << "MPI_Recv(glbSpkCnt" << n.first << " + spkQuePtr" << n.first << ", 1";
-            os << ", MPI_UNSIGNED, remote, spikeCountTag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);" << std::endl;
-            os << "MPI_Recv(glbSpk" << n.first << " + (spkQuePtr" << n.first << " * " << n.second.getNumNeurons() << ")";
-            os << ", glbSpkCnt" << n.first << "[spkQuePtr" << n.first << "]";
-            os << ", MPI_UNSIGNED, remote, spikeTag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);" << std::endl;
+        if(n.second.hasOutputToHost(localHostID)) {
+            // neuron spike variables
+            os << "void pull" << n.first << "CurrentSpikesFromRemote(int remote)" << std::endl;
+            os << CodeStream::OB(1051);
+            os << "const int spikeCountTag = " << (hashString("glbSpkCnt" + n.first) & 0x7FFFFFFF) << ";" << std::endl;
+            os << "const int spikeTag = " << (hashString("glbSpk" + n.first) & 0x7FFFFFFF) << ";" << std::endl;
+            if(n.second.isTrueSpikeRequired() && n.second.isDelayRequired()) {
+                os << "MPI_Recv(glbSpkCnt" << n.first << " + spkQuePtr" << n.first << ", 1";
+                os << ", MPI_UNSIGNED, remote, spikeCountTag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);" << std::endl;
+                os << "MPI_Recv(glbSpk" << n.first << " + (spkQuePtr" << n.first << " * " << n.second.getNumNeurons() << ")";
+                os << ", glbSpkCnt" << n.first << "[spkQuePtr" << n.first << "]";
+                os << ", MPI_UNSIGNED, remote, spikeTag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);" << std::endl;
+            }
+            else {
+                os << "MPI_Recv(glbSpkCnt" << n.first << ", 1";
+                os << ", MPI_UNSIGNED, remote, spikeCountTag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);" << std::endl;
+                os << "MPI_Recv(glbSpk" << n.first << ", glbSpkCnt" << n.first << "[0]";
+                os << ", MPI_UNSIGNED, remote, spikeTag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);" << std::endl;
+            }
+            os << CodeStream::CB(1051);
+            os << std::endl;
         }
-        else {
-            os << "MPI_Recv(glbSpkCnt" << n.first << ", 1";
-            os << ", MPI_UNSIGNED, remote, spikeCountTag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);" << std::endl;
-            os << "MPI_Recv(glbSpk" << n.first << ", glbSpkCnt" << n.first << "[0]";
-            os << ", MPI_UNSIGNED, remote, spikeTag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);" << std::endl;
-        }
-        os << CodeStream::CB(1051);
-        os << std::endl;
     }
 
     os << "// ------------------------------------------------------------------------" << std::endl;
@@ -229,6 +227,6 @@ void genMPI(const NNmodel &model,   //!< Model description
             const string &path,     //!< Path for code generation
             int localHostID)        //!< ID of local host
 {
-    genHeader(model, path);
+    genHeader(model, path, localHostID);
     genCode(model, path, localHostID);
 }
