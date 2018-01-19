@@ -65,6 +65,7 @@ OUT_PATH="$PWD"
 popd > /dev/null
 pushd $(dirname $MODEL) > /dev/null
 MACROS="MODEL=$PWD/$(basename $MODEL) GENERATEALL_PATH=$OUT_PATH BUILD_MODEL_INCLUDE=$BUILD_MODEL_INCLUDE"
+GENERATEALL=./generateALL
 popd > /dev/null
 if [[ -n "$DEBUG" ]]; then
     MACROS="$MACROS DEBUG=1";
@@ -72,14 +73,15 @@ fi
 if [[ -n "$COVERAGE" ]]; then
     MACROS="$MACROS COVERAGE=1";
 fi
-if [[ -n "$MPI_ENABLE" ]]; then
-    MACROS="$MACROS MPI_ENABLE=1";
-fi
+
 if [[ -n "$CPU_ONLY" ]]; then
     MACROS="$MACROS CPU_ONLY=1";
-    GENERATEALL=./generateALL_CPU_ONLY
-else
-    GENERATEALL=./generateALL
+    GENERATEALL="$GENERATEALL"_CPU_ONLY
+fi
+
+if [[ -n "$MPI_ENABLE" ]]; then
+    MACROS="$MACROS MPI_ENABLE=1";
+    GENERATEALL="$GENERATEALL"_MPI
 fi
 
 # generate model code

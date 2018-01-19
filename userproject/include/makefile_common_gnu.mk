@@ -55,6 +55,7 @@ endif
 ifndef CPU_ONLY
     CXXFLAGS            +=-std=c++11
 else
+    LIBGENN_PREFIX      :=$(LIBGENN_PREFIX)_CPU_ONLY
     CXXFLAGS            +=-std=c++11 -DCPU_ONLY
 endif
 ifdef DEBUG
@@ -62,31 +63,31 @@ ifdef DEBUG
 else
     CXXFLAGS            +=$(OPTIMIZATIONFLAGS)
 endif
+ifdef MPI_ENABLE
+    LIBGENN_PREFIX      :=$(LIBGENN_PREFIX)_MPI
+    CXXFLAGS            +=-DMPI_ENABLE
+    INCLUDE_FLAGS       +=-I"$(MPI_PATH)/include"
+    LINK_FLAGS          +=$(shell mpiCC -showme:link)
+endif
 
 # Global include and link flags
 ifndef CPU_ONLY
     INCLUDE_FLAGS       +=-I"$(GENN_PATH)/lib/include" -I"$(GENN_PATH)/userproject/include" -I"$(CUDA_PATH)/include"
     ifeq ($(DARWIN),DARWIN)
-        LINK_FLAGS      +=-rpath $(CUDA_PATH)/lib -L"$(GENN_PATH)/lib/lib" -L"$(CUDA_PATH)/lib" -lgenn -lcuda -lcudart -lstdc++ -lc++
+        LINK_FLAGS      +=-rpath $(CUDA_PATH)/lib -L"$(GENN_PATH)/lib/lib" -L"$(CUDA_PATH)/lib" -lgenn$(LIBGENN_PREFIX) -lcuda -lcudart -lstdc++ -lc++
     else
         ifeq ($(OS_SIZE),32)
-            LINK_FLAGS  +=-L"$(GENN_PATH)/lib/lib" -L"$(CUDA_PATH)/lib" -lgenn -lcuda -lcudart
+            LINK_FLAGS  +=-L"$(GENN_PATH)/lib/lib" -L"$(CUDA_PATH)/lib" -lgenn$(LIBGENN_PREFIX) -lcuda -lcudart
         else
-            LINK_FLAGS  +=-L"$(GENN_PATH)/lib/lib" -L"$(CUDA_PATH)/lib64" -lgenn -lcuda -lcudart
+            LINK_FLAGS  +=-L"$(GENN_PATH)/lib/lib" -L"$(CUDA_PATH)/lib64" -lgenn$(LIBGENN_PREFIX) -lcuda -lcudart
         endif
     endif
 else
     INCLUDE_FLAGS       +=-I"$(GENN_PATH)/lib/include" -I"$(GENN_PATH)/userproject/include"
-    LINK_FLAGS          +=-L"$(GENN_PATH)/lib/lib" -lgenn_CPU_ONLY
+    LINK_FLAGS          +=-L"$(GENN_PATH)/lib/lib" -lgenn$(LIBGENN_PREFIX)
     ifeq ($(DARWIN),DARWIN)
-        LINK_FLAGS      +=-L"$(GENN_PATH)/lib/lib" -lgenn_CPU_ONLY -lstdc++ -lc++
+        LINK_FLAGS      +=-L"$(GENN_PATH)/lib/lib" -lgenn$(LIBGENN_PREFIX) -lstdc++ -lc++
     endif
-endif
-
-ifdef MPI_ENABLE
-    CXXFLAGS            +=-DMPI_ENABLE
-    INCLUDE_FLAGS       +=-I"$(MPI_PATH)/include"
-    LINK_FLAGS          +=$(shell mpiCC -showme:link)
 endif
 
 # An auto-generated file containing your cuda device's compute capability
