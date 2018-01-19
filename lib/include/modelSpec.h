@@ -133,7 +133,7 @@ public:
 
     //! Does this model require device initialisation kernel
     //! **NOTE** this is for neuron groups and densely connected synapse groups only
-    bool isDeviceInitRequired() const;
+    bool isDeviceInitRequired(int localHostID) const;
 
     //! Does this model require a device sparse initialisation kernel
     //! **NOTE** this is for sparsely connected synapse groups only

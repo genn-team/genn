@@ -109,19 +109,29 @@ bool NNmodel::zeroCopyInUse() const
     return false;
 }
 
-bool NNmodel::isDeviceInitRequired() const
+bool NNmodel::isDeviceInitRequired(int localHostID) const
 {
     // If device RNG is required, device init is required to initialise it
     if(isDeviceRNGRequired()) {
         return true;
     }
 
-    // If any neuron groups require a sim RNG
+    // If any local neuron groups require a sim RNG or device initialisation
     // **NOTE** this includes both simulation RNG seeds and variables initialised on device
     if(std::any_of(std::begin(m_LocalNeuronGroups), std::end(m_LocalNeuronGroups),
         [](const NNmodel::NeuronGroupValueType &n)
         {
             return (n.second.isSimRNGRequired() || n.second.isDeviceVarInitRequired());
+        }))
+    {
+        return true;
+    }
+
+    // If any remote neuron groups with local outputs require their spike variables to be initialised on device
+    if(std::any_of(std::begin(m_RemoteNeuronGroups), std::end(m_RemoteNeuronGroups),
+        [localHostID](const NNmodel::NeuronGroupValueType &n)
+        {
+            return (n.second.hasOutputToHost(localHostID) && (n.second.getSpikeVarMode() & VarInit::DEVICE));
         }))
     {
         return true;

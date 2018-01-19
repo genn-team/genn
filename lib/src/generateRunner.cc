@@ -488,7 +488,7 @@ void genDefinitions(const NNmodel &model,   //!< Model description
             os << "extern CStopWatch synDyn_timer;" << std::endl;
         }
 #ifndef CPU_ONLY
-        if(model.isDeviceInitRequired()) {
+        if(model.isDeviceInitRequired(localHostID)) {
             os << "extern cudaEvent_t initDeviceStart, initDeviceStop;" << std::endl;
         }
         if(model.isDeviceSparseInitRequired()) {
@@ -1060,7 +1060,7 @@ void genRunner(const NNmodel &model,    //!< Model description
             os << "CStopWatch synDyn_timer;" << std::endl;
         }
 #ifndef CPU_ONLY
-        if(model.isDeviceInitRequired()) {
+        if(model.isDeviceInitRequired(localHostID)) {
             os << "cudaEvent_t initDeviceStart, initDeviceStop;" << std::endl;
         }
         if(model.isDeviceSparseInitRequired()) {
@@ -1315,7 +1315,7 @@ void genRunner(const NNmodel &model,    //!< Model description
             os << "    synDyn_tme= 0.0;" << std::endl;
         }
 #ifndef CPU_ONLY
-        if(model.isDeviceInitRequired()) {
+        if(model.isDeviceInitRequired(localHostID)) {
             os << "cudaEventCreate(&initDeviceStart);" << std::endl;
             os << "cudaEventCreate(&initDeviceStop);" << std::endl;
         }
