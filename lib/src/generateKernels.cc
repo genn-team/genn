@@ -970,24 +970,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                 }
             }
             for(const auto &n : model.getLocalNeuronGroups()) {
-                if (n.second.isDelayRequired()) { // WITH DELAY
-                    os << "dd_spkQuePtr" << n.first << " = (dd_spkQuePtr" << n.first << " + 1) % " << n.second.getNumDelaySlots() << ";" << std::endl;
-                    if (n.second.isSpikeEventRequired()) {
-                        os << "dd_glbSpkCntEvnt" << n.first << "[dd_spkQuePtr" << n.first << "] = 0;" << std::endl;
-                    }
-                    if (n.second.isTrueSpikeRequired()) {
-                        os << "dd_glbSpkCnt" << n.first << "[dd_spkQuePtr" << n.first << "] = 0;" << std::endl;
-                    }
-                    else {
-                        os << "dd_glbSpkCnt" << n.first << "[0] = 0;" << std::endl;
-                    }
-                }
-                else { // NO DELAY
-                    if (n.second.isSpikeEventRequired()) {
-                        os << "dd_glbSpkCntEvnt" << n.first << "[0] = 0;" << std::endl;
-                    }
-                    os << "dd_glbSpkCnt" << n.first << "[0] = 0;" << std::endl;
-                }
+                StandardGeneratedSections::neuronOutputInit(os, n.second, "dd_");
             }
             os << "d_done = 0;" << std::endl;
 
@@ -1128,24 +1111,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                     }
                 }
                 for(const auto &n : model.getLocalNeuronGroups()) {
-                    if (n.second.isDelayRequired()) { // WITH DELAY
-                        os << "dd_spkQuePtr" << n.first << " = (dd_spkQuePtr" << n.first << " + 1) % " << n.second.getNumDelaySlots() << ";" << std::endl;
-                        if (n.second.isSpikeEventRequired()) {
-                            os << "dd_glbSpkCntEvnt" << n.first << "[dd_spkQuePtr" << n.first << "] = 0;" << std::endl;
-                        }
-                        if (n.second.isTrueSpikeRequired()) {
-                            os << "dd_glbSpkCnt" << n.first << "[dd_spkQuePtr" << n.first << "] = 0;" << std::endl;
-                        }
-                        else {
-                            os << "dd_glbSpkCnt" << n.first << "[0] = 0;" << std::endl;
-                        }
-                    }
-                    else { // NO DELAY
-                        if (n.second.isSpikeEventRequired()) {
-                            os << "dd_glbSpkCntEvnt" << n.first << "[0] = 0;" << std::endl;
-                        }
-                        os << "dd_glbSpkCnt" << n.first << "[0] = 0;" << std::endl;
-                    }
+                    StandardGeneratedSections::neuronOutputInit(os, n.second, "dd_");
                 }
                 os << "d_done = 0;" << std::endl;
 

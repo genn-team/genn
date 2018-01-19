@@ -181,6 +181,20 @@ void free_variable(CodeStream &os, const string &name, VarMode mode)
     free_device_variable(os, name, mode);
 }
 
+void genHostSpikeQueueAdvance(CodeStream &os, const NNmodel &model, int localHostID)
+{
+    for(auto &n : model.getRemoteNeuronGroups()) {
+        if(n.second.isDelayRequired() && n.second.hasOutputToHost(localHostID)) {
+            os << "spkQuePtr" << n.first << " = (spkQuePtr" << n.first << " + 1) % " << n.second.getNumDelaySlots() << ";" << std::endl;
+        }
+    }
+    for(auto &n : model.getLocalNeuronGroups()) {
+        if (n.second.isDelayRequired()) {
+            os << "spkQuePtr" << n.first << " = (spkQuePtr" << n.first << " + 1) % " << n.second.getNumDelaySlots() << ";" << std::endl;
+        }
+    }
+}
+
 //--------------------------------------------------------------------------
 //! \brief Can a variable with this mode be pushed and pulled between device and host
 //--------------------------------------------------------------------------
@@ -1642,6 +1656,10 @@ void genRunner(const NNmodel &model,    //!< Model description
                 }
             }
         }
+
+        // Generate code to advance host-side spike queues
+        genHostSpikeQueueAdvance(os, model, localHostID);
+
         if (model.isTimingEnabled()) os << "    neuron_timer.startTimer();" << std::endl;
         os << "    calcNeuronsCPU(t);" << std::endl;
         if (model.isTimingEnabled()) {
@@ -2350,16 +2368,9 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
             }
         }
     }
-    for(auto &n : model.getRemoteNeuronGroups()) {
-        if(n.second.isDelayRequired() && n.second.hasOutputToHost(localHostID)) {
-            os << "spkQuePtr" << n.first << " = (spkQuePtr" << n.first << " + 1) % " << n.second.getNumDelaySlots() << ";" << std::endl;
-        }
-    }
-    for(auto &n : model.getLocalNeuronGroups()) {
-        if (n.second.isDelayRequired()) {
-            os << "spkQuePtr" << n.first << " = (spkQuePtr" << n.first << " + 1) % " << n.second.getNumDelaySlots() << ";" << std::endl;
-        }
-    }
+    // Generate code to advance host-side spike queues
+    genHostSpikeQueueAdvance(os, model, localHostID);
+
     if (model.isTimingEnabled()) {
         os << "cudaEventRecord(neuronStart);" << std::endl;
     }
