@@ -89,7 +89,7 @@ void generate_model_runner(const NNmodel &model,    //!< Model description
 
     // generate synapse and learning kernels
     if (!model.getLocalSynapseGroups().empty()) {
-        genSynapseKernel(model, path);
+        genSynapseKernel(model, path, localHostID);
     }
 #endif
     // If model can be run on CPU

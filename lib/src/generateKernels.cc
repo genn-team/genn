@@ -705,7 +705,8 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
 //-------------------------------------------------------------------------
 
 void genSynapseKernel(const NNmodel &model, //!< Model description
-                      const string &path) //!< Path for code generation
+                      const string &path,   //!< Path for code generation
+                      int localHostID)      //!< ID of local host
 {
     string localID; //!< "id" if first synapse group, else "lid". lid =(thread index- last thread of the last synapse group)
     ofstream fs;
@@ -962,6 +963,12 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
             os << "j = atomicAdd((unsigned int *) &d_done, 1);" << std::endl;
             os << "if (j == " << numSynapseBlocks - 1 << ")" << CodeStream::OB(210);
 
+            // Update device delay slot pointers for remote neuorn groups that require them
+            for(const auto &n : model.getRemoteNeuronGroups()) {
+                if(n.second.hasOutputToHost(localHostID) && n.second.isDelayRequired()) {
+                    os << "dd_spkQuePtr" << n.first << " = (dd_spkQuePtr" << n.first << " + 1) % " << n.second.getNumDelaySlots() << ";" << std::endl;
+                }
+            }
             for(const auto &n : model.getLocalNeuronGroups()) {
                 if (n.second.isDelayRequired()) { // WITH DELAY
                     os << "dd_spkQuePtr" << n.first << " = (dd_spkQuePtr" << n.first << " + 1) % " << n.second.getNumDelaySlots() << ";" << std::endl;
@@ -1114,6 +1121,12 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                 os << "j = atomicAdd((unsigned int *) &d_done, 1);" << std::endl;
                 os << "if (j == " << numPostLearnBlocks - 1 << ")" << CodeStream::OB(330);
 
+                // Update device delay slot pointers for remote neuorn groups that require them
+                for(const auto &n : model.getRemoteNeuronGroups()) {
+                    if(n.second.hasOutputToHost(localHostID) && n.second.isDelayRequired()) {
+                        os << "dd_spkQuePtr" << n.first << " = (dd_spkQuePtr" << n.first << " + 1) % " << n.second.getNumDelaySlots() << ";" << std::endl;
+                    }
+                }
                 for(const auto &n : model.getLocalNeuronGroups()) {
                     if (n.second.isDelayRequired()) { // WITH DELAY
                         os << "dd_spkQuePtr" << n.first << " = (dd_spkQuePtr" << n.first << " + 1) % " << n.second.getNumDelaySlots() << ";" << std::endl;
