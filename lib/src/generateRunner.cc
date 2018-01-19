@@ -255,14 +255,12 @@ void genPushCurrentSpikeFunctions(CodeStream &os, const NeuronGroup &ng, bool sp
 
     if(pushRequired) {
         if (delayRequired) {
-            os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << spikeCntPrefix << ng.getName();
-            os << "+spkQuePtr" << ng.getName() << ", " << spikeCntPrefix << ng.getName();
-            os << "+spkQuePtr" << ng.getName();
+            os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << spikeCntPrefix << ng.getName() << "+spkQuePtr" << ng.getName();
+            os << ", " << spikeCntPrefix << ng.getName() << " + spkQuePtr" << ng.getName();
             os << ", sizeof(unsigned int), cudaMemcpyHostToDevice));" << std::endl;
-            os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << spikePrefix << ng.getName();
-            os << "+(spkQuePtr" << ng.getName() << "*" << ng.getNumNeurons() << ")";
+            os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << spikePrefix << ng.getName() << " + (spkQuePtr" << ng.getName() << "*" << ng.getNumNeurons() << ")";
             os << ", " << spikePrefix << ng.getName();
-            os << "+(spkQuePtr" << ng.getName() << "*" << ng.getNumNeurons() << ")";
+            os << "+(spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
             os << ", " << spikeCntPrefix << ng.getName() << "[spkQuePtr" << ng.getName() << "] * sizeof(unsigned int), cudaMemcpyHostToDevice));" << std::endl;
         }
         else {
@@ -305,15 +303,12 @@ void genPullCurrentSpikeFunctions(CodeStream &os, const NeuronGroup &ng, bool sp
 
     if(pullRequired) {
         if (delayRequired) {
-            os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << spikeCntPrefix << ng.getName();
-            os << "+spkQuePtr" << ng.getName() << ", d_" << spikeCntPrefix << ng.getName();
-            os << "+spkQuePtr" << ng.getName();
+            os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << spikeCntPrefix << ng.getName() << " + spkQuePtr" << ng.getName();
+            os << ", d_" << spikeCntPrefix << ng.getName() << " + spkQuePtr" << ng.getName();
             os << ", sizeof(unsigned int), cudaMemcpyDeviceToHost));" << std::endl;
 
-            os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << spikePrefix << ng.getName();
-            os << "+(spkQuePtr" << ng.getName() << "*" << ng.getNumNeurons() << ")";
-            os << ", " << spikePrefix << ng.getName();
-            os << "+(spkQuePtr" << ng.getName() << "*" << ng.getNumNeurons() << ")";
+            os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << spikePrefix << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
+            os << ", d_" << spikePrefix << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
             os << ", " << spikeCntPrefix << ng.getName() << "[spkQuePtr" << ng.getName() << "] * sizeof(unsigned int), cudaMemcpyDeviceToHost));" << std::endl;
         }
         else {
