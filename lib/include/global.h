@@ -21,11 +21,17 @@
 #ifndef GLOBAL_H
 #define GLOBAL_H
 
+// C++ includes
+#include <string>
+
+// CUDA includes
 #ifndef CPU_ONLY
 #include <cuda.h>
 #include <cuda_runtime.h>
 #endif
-#include <string>
+
+// GeNN includes
+#include "variableMode.h"
 
 namespace GENN_FLAGS {
     extern const unsigned int calcSynapseDynamics;
@@ -42,6 +48,7 @@ namespace GENN_PREFERENCES {
     extern bool showPtxInfo; //!< Request that PTX assembler information be displayed for each CUDA kernel during compilation
     extern bool buildSharedLibrary; //!< Should generated code and Makefile build into a shared library e.g. for use in SpineML simulator
     extern bool autoInitSparseVars; //!< Previously, variables associated with sparse synapse populations were not automatically initialised. If this flag is set this now occurs in the initMODEL_NAME function and copyStateToDevice is deferred until here
+    extern VarMode defaultVarMode;  //!< What is the default behaviour for model state variables? Historically, everything was allocated on both host AND device and initialised on HOST.
     extern double asGoodAsZero; //!< Global variable that is used when detecting close to zero values, for example when setting sparse connectivity from a dense matrix
     extern int defaultDevice; //! default GPU device; used to determine which GPU to use if chooseDevice is 0 (off)
     extern unsigned int neuronBlockSize;
@@ -49,6 +56,7 @@ namespace GENN_PREFERENCES {
     extern unsigned int learningBlockSize;
     extern unsigned int synapseDynamicsBlockSize;
     extern unsigned int initBlockSize;
+    extern unsigned int initSparseBlockSize;
     extern unsigned int autoRefractory; //!< Flag for signalling whether spikes are only reported if thresholdCondition changes from false to true (autoRefractory == 1) or spikes are emitted whenever thresholdCondition is true no matter what.%
     extern std::string userCxxFlagsWIN; //!< Allows users to set specific C++ compiler options they may want to use for all host side code (used for windows platforms)
     extern std::string userCxxFlagsGNU; //!< Allows users to set specific C++ compiler options they may want to use for all host side code (used for unix based platforms)
@@ -60,6 +68,7 @@ extern unsigned int synapseBlkSz;   //!< Global variable containing the GPU bloc
 extern unsigned int learnBlkSz;     //!< Global variable containing the GPU block size for the learn kernel
 extern unsigned int synDynBlkSz;    //!< Global variable containing the GPU block size for the synapse dynamics kernel
 extern unsigned int initBlkSz;      //!< Global variable containing the GPU block size for the initialization kernel
+extern unsigned int initSparseBlkSz;      //!< Global variable containing the GPU block size for the sparse initialization kernel
 
 //extern vector<cudaDeviceProp> deviceProp; //!< Global vector containing the properties of all CUDA-enabled devices
 //extern vector<int> synapseBlkSz; //!< Global vector containing the optimum synapse kernel block size for each device

@@ -106,21 +106,135 @@ bool NNmodel::zeroCopyInUse() const
     return false;
 }
 
-bool NNmodel::isRNGRequired() const
+bool NNmodel::isDeviceInitRequired() const
 {
-    // If any neuron groups require an RNG return true
-    if(any_of(begin(m_NeuronGroups), end(m_NeuronGroups),
-        [](const NeuronGroupValueType &n)
+    // If device RNG is required, device init is required to initialise it
+    if(isDeviceRNGRequired()) {
+        return true;
+    }
+
+    // If any neuron groups require a sim RNG
+    // **NOTE** this includes both simulation RNG seeds and variables initialised on device
+    if(std::any_of(std::begin(m_NeuronGroups), std::end(m_NeuronGroups),
+        [](const NNmodel::NeuronGroupValueType &n)
         {
-            return (n.second.isSimRNGRequired() || n.second.isInitRNGRequired());
+            return (n.second.isSimRNGRequired() || n.second.isDeviceVarInitRequired());
         }))
     {
         return true;
     }
 
-    // **TODO** synapse groups
+    // Check whether any synapse groups require initialisation in this kernel
+    // **NOTE** this only includes dense matrices
+    if(std::any_of(std::begin(m_SynapseGroups), std::end(m_SynapseGroups),
+        [](const NNmodel::SynapseGroupValueType &s)
+        {
+            return ((s.second.getMatrixType() & SynapseMatrixConnectivity::DENSE) &&
+                    (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) &&
+                    s.second.isWUDeviceVarInitRequired());
+        }))
+    {
+        return true;
+    }
 
     return false;
+}
+
+bool NNmodel::isDeviceSparseInitRequired() const
+{
+    // If automatic initialisation of sparse variables isn't enabled, return false
+    if(!GENN_PREFERENCES::autoInitSparseVars) {
+        return false;
+    }
+
+    // Return true if any of the synapse groups have sparse connectivity which requires device initialiation
+    return std::any_of(std::begin(m_SynapseGroups), std::end(m_SynapseGroups),
+        [](const NNmodel::SynapseGroupValueType &s)
+        {
+            return ((s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) &&
+                (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) &&
+                s.second.isWUDeviceVarInitRequired());
+        });
+}
+
+bool NNmodel::isHostRNGRequired() const
+{
+    // Cache whether the model can run on the CPU
+    const bool cpu = canRunOnCPU();
+
+    // If model can run on the CPU and any neuron groups require simulation RNGs
+    // or if any require host RNG for initialisation, return true
+    if(any_of(begin(m_NeuronGroups), end(m_NeuronGroups),
+        [cpu](const NeuronGroupValueType &n)
+        {
+            return ((cpu && n.second.isSimRNGRequired()) || n.second.isInitRNGRequired(VarInit::HOST));
+        }))
+    {
+        return true;
+    }
+
+    // If any synapse groups require a host RNG return true
+    if(any_of(begin(m_SynapseGroups), end(m_SynapseGroups),
+        [](const SynapseGroupValueType &s)
+        {
+            return s.second.isWUInitRNGRequired(VarInit::HOST);
+        }))
+    {
+        return true;
+    }
+
+    return false;
+}
+
+bool NNmodel::isDeviceRNGRequired() const
+{
+    // If any neuron groupsrequire device RNG for initialisation, return true
+    if(any_of(begin(m_NeuronGroups), end(m_NeuronGroups),
+        [](const NeuronGroupValueType &n)
+        {
+            return n.second.isInitRNGRequired(VarInit::DEVICE);
+        }))
+    {
+        return true;
+    }
+
+    // If any synapse groups require a device RNG for initialisation, return true
+    if(any_of(begin(m_SynapseGroups), end(m_SynapseGroups),
+        [](const SynapseGroupValueType &s)
+        {
+            return s.second.isWUInitRNGRequired(VarInit::DEVICE);
+        }))
+    {
+        return true;
+    }
+
+    return false;
+}
+
+bool NNmodel::canRunOnCPU() const
+{
+#ifndef CPU_ONLY
+    // If any of the neuron groups can't run on the CPU, return false
+    if(any_of(begin(m_NeuronGroups), end(m_NeuronGroups),
+        [](const NeuronGroupValueType &n)
+        {
+            return !n.second.canRunOnCPU();
+        }))
+    {
+        return false;
+    }
+
+    // If any of the synapse groups can't run on the CPU, return false
+    if(any_of(begin(m_SynapseGroups), end(m_SynapseGroups),
+        [](const SynapseGroupValueType &s)
+        {
+            return !s.second.canRunOnCPU();
+        }))
+    {
+        return false;
+    }
+#endif
+    return true;
 }
 
 //--------------------------------------------------------------------------

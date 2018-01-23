@@ -40,8 +40,9 @@
   <!-- Customise C++  compilation and linking tasks -->
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories Condition=" $(Configuration.Contains('CPU_ONLY')) ">include</AdditionalIncludeDirectories>
-      <AdditionalIncludeDirectories Condition=" !$(Configuration.Contains('CPU_ONLY')) ">include;$(CUDA_PATH)\include</AdditionalIncludeDirectories>
+      <!-- Set additional include directories **NOTE** these can be modified from command line using the BuildModelInclude property -->
+      <AdditionalIncludeDirectories Condition=" $(Configuration.Contains('CPU_ONLY')) ">$(BuildModelInclude);include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition=" !$(Configuration.Contains('CPU_ONLY')) ">$(BuildModelInclude);include;$(CUDA_PATH)\include</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <DebugInformationFormat Condition=" $(Configuration.Contains('Debug')) ">ProgramDatabase</DebugInformationFormat>
       <Optimization Condition=" $(Configuration.Contains('Debug')) ">Disabled</Optimization>

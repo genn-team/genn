@@ -26,6 +26,10 @@ include $(GENN_PATH)/lib/GNUMakefileLibGeNN
 # Source, Include, Object and Library directories
 GENERATEALL_PATH         :=$(CURDIR)
 
+# BUILD_MODEL_INCLUDE contains a colon-seperated list of additional include paths.
+# substitute :s for spaces and then prepend each path with -I so it gets turned into an include directory
+INCLUDE_FLAGS            +=$(patsubst %,-I%,$(subst :, ,$(BUILD_MODEL_INCLUDE)))
+
 
 # generateALL and libgenn.a targets
 ifndef CPU_ONLY

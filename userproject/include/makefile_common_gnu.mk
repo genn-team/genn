@@ -22,12 +22,12 @@ OS_UPPER                :=$(shell uname -s 2>/dev/null | tr [:lower:] [:upper:])
 OS_LOWER                :=$(shell uname -s 2>/dev/null | tr [:upper:] [:lower:])
 OS_ARCH                 :=$(shell uname -m 2>/dev/null)
 DARWIN                  :=$(strip $(findstring DARWIN,$(OS_UPPER)))
-GLIBC                   :=$(shell ldd --version | grep -oP "([0-9]+\.[0-9]+)$$")
 
 # **NOTE** if we are using GCC on x86_64, a bug in glibc 2.23 or 2.24 causes bad performance
 # (https://bugs.launchpad.net/ubuntu/+source/glibc/+bug/1663280) so detect this combination of events here
 ifeq ($(OS_ARCH),x86_64)
 	ifneq ($(DARWIN),DARWIN)
+		GLIBC:=$(shell ldd --version | grep -oP "([0-9]+\.[0-9]+)$$")
 		ifeq ($(GLIBC),2.23)
 			LIBC_BUG := 1
 		endif
@@ -106,7 +106,7 @@ all: $(EXECUTABLE)
 ifdef LIBC_BUG
 $(EXECUTABLE): $(OBJECTS)
 	$(CXX) $(CXXFLAGS) -o $@_wrapper $(OBJECTS) $(LINK_FLAGS)
-	@echo "#!/bin/bash\nexport LD_BIND_NOW=1\nSCRIPT_PATH=\$$(dirname \"\$$0\")\n\$$SCRIPT_PATH/$@_wrapper \"\$$@\"" >> $@
+	@echo "#!/bin/bash\nexport LD_BIND_NOW=1\nSCRIPT_PATH=\$$(dirname \"\$$0\")\n\$$SCRIPT_PATH/$@_wrapper \"\$$@\"" > $@
 	@chmod +x $@
 else
 $(EXECUTABLE): $(OBJECTS)

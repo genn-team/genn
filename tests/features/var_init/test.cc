@@ -9,6 +9,18 @@
 #include "../../utils/simulation_test.h"
 #include "../../utils/stats.h"
 
+// Macro to generate full set of tests for a particular model
+#define PROB_TEST(PREFIX, SUFFIX, N) \
+    { \
+        EXPECT_TRUE(std::all_of(&PREFIX##constant##SUFFIX[0], &PREFIX##constant##SUFFIX[N], [](scalar x){ return (x == 13.0); })); \
+        const double PREFIX##uniform##SUFFIX##Prob = getProb(PREFIX##uniform##SUFFIX, N, Stats::uniformCDF); \
+        EXPECT_GT(PREFIX##uniform##SUFFIX##Prob, p); \
+        const double PREFIX##normal##SUFFIX##Prob = getProb(PREFIX##normal##SUFFIX, N, Stats::normalCDF); \
+        EXPECT_GT(PREFIX##normal##SUFFIX##Prob, p); \
+        const double PREFIX##exponential##SUFFIX##Prob = getProb(PREFIX##exponential##SUFFIX, N, Stats::exponentialCDF); \
+        EXPECT_GT(PREFIX##exponential##SUFFIX##Prob, p); \
+    } \
+
 //----------------------------------------------------------------------------
 // SimTest
 //----------------------------------------------------------------------------
@@ -27,6 +39,14 @@ public:
             CSparse.ind[i] = i;
         }
         CSparse.indInG[10000] = 10000;
+#ifndef CPU_ONLY
+        allocateSparseGPU(10000);
+        CSparseGPU.indInG[0] = 0;
+        for(unsigned int i = 0; i < 10000; i++) {
+            CSparseGPU.ind[i] = i;
+        }
+        CSparseGPU.indInG[10000] = 10000;
+#endif
 
         // Call sparse initialisation function
         initvar_init_new();
@@ -52,46 +72,30 @@ TEST_P(SimTest, Vars)
 {
     const double p = 0.05;
 
-    const double uniformNeuronProb = getProb(uniformPop, 10000, Stats::uniformCDF);
-    EXPECT_GT(uniformNeuronProb, p);
+    // Test host-generated vars
+    PROB_TEST(, Pop, 10000)
+    PROB_TEST(p, Dense, 10000)
+    PROB_TEST(, Dense, 10000)
+    PROB_TEST(, Sparse, 10000)
 
-    const double normalNeuronProb = getProb(normalPop, 10000, Stats::normalCDF);
-    EXPECT_GT(normalNeuronProb, p);
+#ifndef CPU_ONLY
+    // Pull device-generated vars back to host
+    pullPopGPUStateFromDevice();
+    pullDenseGPUStateFromDevice();
+    pullSparseGPUStateFromDevice();
 
-    const double exponentialNeuronProb = getProb(exponentialPop, 10000, Stats::exponentialCDF);
-    EXPECT_GT(exponentialNeuronProb, p);
+    // Test device-generated vars
+    PROB_TEST(, PopGPU, 10000)
+    PROB_TEST(p, DenseGPU, 10000)
+    PROB_TEST(, DenseGPU, 10000)
+    PROB_TEST(, SparseGPU, 10000)
 
-    const double uniformPSProb = getProb(puniformDense, 10000, Stats::uniformCDF);
-    EXPECT_GT(uniformPSProb, p);
-
-    const double normalPSProb = getProb(pnormalDense, 10000, Stats::normalCDF);
-    EXPECT_GT(normalPSProb, p);
-
-    const double exponentialPSProb = getProb(pexponentialDense, 10000, Stats::exponentialCDF);
-    EXPECT_GT(exponentialPSProb, p);
-
-    const double uniformWUDenseProb = getProb(uniformDense, 10000, Stats::uniformCDF);
-    EXPECT_GT(uniformWUDenseProb, p);
-
-    const double normalWUDenseProb = getProb(normalDense, 10000, Stats::normalCDF);
-    EXPECT_GT(normalWUDenseProb, p);
-
-    const double exponentialWUDenseProb = getProb(exponentialDense, 10000, Stats::exponentialCDF);
-    EXPECT_GT(exponentialWUDenseProb, p);
-
-    const double uniformWUSparseProb = getProb(uniformSparse, 10000, Stats::uniformCDF);
-    EXPECT_GT(uniformWUSparseProb, p);
-
-    const double normalWUSparseProb = getProb(normalSparse, 10000, Stats::normalCDF);
-    EXPECT_GT(normalWUSparseProb, p);
-
-    const double exponentialWUSparseProb = getProb(exponentialSparse, 10000, Stats::exponentialCDF);
-    EXPECT_GT(exponentialWUSparseProb, p);
+#endif
 }
 
 
 #ifndef CPU_ONLY
-auto simulatorBackends = ::testing::Values(true, false);
+auto simulatorBackends = ::testing::Values(true);
 #else
 auto simulatorBackends = ::testing::Values(false);
 #endif

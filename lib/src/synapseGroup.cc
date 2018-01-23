@@ -6,6 +6,7 @@
 
 // GeNN includes
 #include "codeGenUtils.h"
+#include "global.h"
 #include "standardSubstitutions.h"
 #include "utils.h"
 
@@ -46,8 +47,9 @@ SynapseGroup::SynapseGroup(const std::string name, SynapseMatrixType matrixType,
                            NeuronGroup *srcNeuronGroup, NeuronGroup *trgNeuronGroup)
     :   m_PaddedKernelIDRange(0, 0), m_Name(name), m_SpanType(SpanType::POSTSYNAPTIC), m_DelaySteps(delaySteps), m_MaxConnections(trgNeuronGroup->getNumNeurons()), m_MatrixType(matrixType),
         m_SrcNeuronGroup(srcNeuronGroup), m_TrgNeuronGroup(trgNeuronGroup),
-        m_TrueSpikeRequired(false), m_SpikeEventRequired(false), m_EventThresholdReTestRequired(false),
+        m_TrueSpikeRequired(false), m_SpikeEventRequired(false), m_EventThresholdReTestRequired(false), m_InSynVarMode(GENN_PREFERENCES::defaultVarMode),
         m_WUModel(wu), m_WUParams(wuParams), m_WUVarInitialisers(wuVarInitialisers), m_PSModel(ps), m_PSParams(psParams), m_PSVarInitialisers(psVarInitialisers),
+        m_WUVarMode(wuVarInitialisers.size(), GENN_PREFERENCES::defaultVarMode), m_PSVarMode(psVarInitialisers.size(), GENN_PREFERENCES::defaultVarMode),
         m_HostID(0), m_DeviceID(0)
 {
     // Check that the source neuron group supports the desired number of delay steps
@@ -70,44 +72,14 @@ SynapseGroup::SynapseGroup(const std::string name, SynapseMatrixType matrixType,
     srcNeuronGroup->addOutSyn(this);
 }
 
-void SynapseGroup::setWUVarZeroCopyEnabled(const std::string &var, bool enabled)
+void SynapseGroup::setWUVarMode(const std::string &varName, VarMode mode)
 {
-    // If named variable doesn't exist give error
-    VarNameIterCtx wuVars(getWUModel()->getVars());
-    if(find(wuVars.nameBegin, wuVars.nameEnd, var) == wuVars.nameEnd) {
-        gennError("Cannot find variable " + var);
-    }
-    // Otherwise add name of variable to set
-    else {
-        // If enabled, add variable to set
-        if(enabled) {
-            m_WUVarZeroCopyEnabled.insert(var);
-        }
-        // Otherwise, remove it
-        else {
-            m_WUVarZeroCopyEnabled.erase(var);
-        }
-    }
+    m_WUVarMode[getWUModel()->getVarIndex(varName)] = mode;
 }
 
-void SynapseGroup::setPSVarZeroCopyEnabled(const std::string &var, bool enabled)
+void SynapseGroup::setPSVarMode(const std::string &varName, VarMode mode)
 {
-    // If named variable doesn't exist give error
-    VarNameIterCtx psVars(getPSModel()->getVars());
-    if(find(psVars.nameBegin, psVars.nameEnd, var) == psVars.nameEnd) {
-        gennError("Cannot find variable " + var);
-    }
-    // Otherwise
-    else  {
-        // If enabled, add variable to set
-        if(enabled) {
-            m_PSVarZeroCopyEnabled.insert(var);
-        }
-        // Otherwise, remove it
-        else {
-            m_PSVarZeroCopyEnabled.erase(var);
-        }
-    }
+    m_PSVarMode[getPSModel()->getVarIndex(varName)] = mode;
 }
 
 void SynapseGroup::setMaxConnections(unsigned int maxConnections)
@@ -212,8 +184,16 @@ const std::vector<double> SynapseGroup::getPSConstInitVals() const
 
 bool SynapseGroup::isZeroCopyEnabled() const
 {
-    // If there are any variables return true
-    if(!m_WUVarZeroCopyEnabled.empty() || !m_PSVarZeroCopyEnabled.empty())
+    // If there are any postsynaptic variables implemented in zero-copy mode return true
+    if(any_of(m_PSVarMode.begin(), m_PSVarMode.end(),
+        [](VarMode mode){ return (mode & VarLocation::ZERO_COPY); }))
+    {
+        return true;
+    }
+
+    // If there are any weight update variables implemented in zero-copy mode return true
+    if(any_of(m_WUVarMode.begin(), m_WUVarMode.end(),
+        [](VarMode mode){ return (mode & VarLocation::ZERO_COPY); }))
     {
         return true;
     }
@@ -221,14 +201,14 @@ bool SynapseGroup::isZeroCopyEnabled() const
     return false;
 }
 
-bool SynapseGroup::isWUVarZeroCopyEnabled(const std::string &var) const
+VarMode SynapseGroup::getWUVarMode(const std::string &var) const
 {
-    return (m_WUVarZeroCopyEnabled.find(var) != std::end(m_WUVarZeroCopyEnabled));
+    return m_WUVarMode[getWUModel()->getVarIndex(var)];
 }
 
-bool SynapseGroup::isPSVarZeroCopyEnabled(const std::string &var) const
+VarMode SynapseGroup::getPSVarMode(const std::string &var) const
 {
-    return (m_PSVarZeroCopyEnabled.find(var) != std::end(m_PSVarZeroCopyEnabled));
+    return m_PSVarMode[getPSModel()->getVarIndex(var)];
 }
 
 bool SynapseGroup::isPSAtomicAddRequired(unsigned int blockSize) const
@@ -305,6 +285,83 @@ void SynapseGroup::addExtraGlobalSynapseDynamicsParams(std::map<string, string> 
     addExtraGlobalSynapseDynamicsParams(getName(), "", getWUModel()->getExtraGlobalParams(), kernelParameters);
 }
 
+
+std::string SynapseGroup::getOffsetPre() const
+{
+    return getSrcNeuronGroup()->isDelayRequired()
+        ? "(delaySlot * " + to_string(getSrcNeuronGroup()->getNumNeurons()) + ") + "
+        : "";
+}
+
+std::string SynapseGroup::getOffsetPost(const std::string &devPrefix) const
+{
+    return getTrgNeuronGroup()->getQueueOffset(devPrefix);
+}
+
+bool SynapseGroup::isPSInitRNGRequired(VarInit varInitMode) const
+{
+    // If initialising the postsynaptic variables require an RNG, return true
+    return isInitRNGRequired(m_PSVarInitialisers, m_PSVarMode, varInitMode);
+}
+
+bool SynapseGroup::isWUInitRNGRequired(VarInit varInitMode) const
+{
+    // If initialising the weight update variables require an RNG, return true
+    return isInitRNGRequired(m_WUVarInitialisers, m_WUVarMode, varInitMode);
+}
+
+bool SynapseGroup::isPSDeviceVarInitRequired() const
+{
+    // If this synapse group has per-synapse state variables,
+    // return true if any of the postsynapse variables are initialised on the device
+    if (getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
+        return std::any_of(m_PSVarMode.cbegin(), m_PSVarMode.cend(),
+                        [](const VarMode mode){ return (mode & VarInit::DEVICE); });
+    }
+    else {
+        return false;
+    }
+}
+
+bool SynapseGroup::isWUDeviceVarInitRequired() const
+{
+    // If this synapse group has per-synapse state variables,
+    // return true if any of the weight update variables are initialised on the device
+    if (getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
+        return std::any_of(m_WUVarMode.cbegin(), m_WUVarMode.cend(),
+                        [](const VarMode mode){ return (mode & VarInit::DEVICE); });
+    }
+    else {
+        return false;
+    }
+}
+
+bool SynapseGroup::canRunOnCPU() const
+{
+#ifndef CPU_ONLY
+    // Return false if insyn variable isn't present on the host
+    if(!(getInSynVarMode() & VarLocation::HOST)) {
+        return false;
+    }
+
+    // Return false if any of the weight update variables aren't present on the host
+    if(std::any_of(m_WUVarMode.cbegin(), m_WUVarMode.cend(),
+                   [](const VarMode mode){ return !(mode & VarLocation::HOST); }))
+    {
+        return false;
+    }
+
+    // Return false if any of the postsynaptic variables aren't present on the host
+    if(std::any_of(m_PSVarMode.cbegin(), m_PSVarMode.cend(),
+                   [](const VarMode mode){ return !(mode & VarLocation::HOST); }))
+    {
+        return false;
+    }
+#endif
+
+    return true;
+}
+
 void SynapseGroup::addExtraGlobalSimParams(const std::string &prefix, const std::string &suffix, const NewModels::Base::StringPairVec &extraGlobalParameters,
                                            std::map<std::string, std::string> &kernelParameters) const
 {
@@ -350,16 +407,4 @@ void SynapseGroup::addExtraGlobalSynapseDynamicsParams(const std::string &prefix
             }
         }
     }
-}
-
-std::string SynapseGroup::getOffsetPre() const
-{
-    return getSrcNeuronGroup()->isDelayRequired()
-        ? "(delaySlot * " + to_string(getSrcNeuronGroup()->getNumNeurons()) + ") + "
-        : "";
-}
-
-std::string SynapseGroup::getOffsetPost(const std::string &devPrefix) const
-{
-    return getTrgNeuronGroup()->getQueueOffset(devPrefix);
 }

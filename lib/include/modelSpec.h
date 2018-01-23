@@ -128,8 +128,24 @@ public:
     //! Are any variables in any populations in this model using zero-copy memory?
     bool zeroCopyInUse() const;
 
-    //! Do any populations or initialisation code in this model require an RNG?
-    bool isRNGRequired() const;
+    //! Does this model require device initialisation kernel
+    //! **NOTE** this is for neuron groups and densely connected synapse groups only
+    bool isDeviceInitRequired() const;
+
+    //! Does this model require a device sparse initialisation kernel
+    //! **NOTE** this is for sparsely connected synapse groups only
+    bool isDeviceSparseInitRequired() const;
+
+    //! Do any populations or initialisation code in this model require a host RNG?
+    bool isHostRNGRequired() const;
+
+    //! Do any populations or initialisation code in this model require a device RNG?
+    //! **NOTE** some model code will use per-neuron RNGs instead
+    bool isDeviceRNGRequired() const;
+
+    //! Can this model run on the CPU? If we are running in CPU_ONLY mode this is always true,
+    //! but some GPU functionality will prevent models being run on both CPU and GPU.
+    bool canRunOnCPU() const;
 
     //! Gets the name of the neuronal network model
     const std::string &getName() const{ return name; }
