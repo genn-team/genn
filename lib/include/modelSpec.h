@@ -219,7 +219,7 @@ public:
         \param varInitialisers state variable initialiser snippets and parameters wrapped in NeuronModel::VarValues object.
         \return pointer to newly created NeuronGroup */
     template<typename NeuronModel>
-    NeuronGroup *addNeuronPopulation(const string &name, unsigned int size,
+    NeuronGroup *addNeuronPopulation(const string &name, unsigned int size, const NeuronModel *model,
                                      const typename NeuronModel::ParamValues &paramValues,
                                      const typename NeuronModel::VarValues &varInitialisers,
                                      int hostID = 0, int deviceID = 0)
@@ -247,7 +247,7 @@ public:
         // Add neuron group to map
         auto result = groupMap.emplace(std::piecewise_construct,
             std::forward_as_tuple(name),
-            std::forward_as_tuple(name, size, NeuronModel::getInstance(),
+            std::forward_as_tuple(name, size, model,
                                   paramValues.getValues(), varInitialisers.getInitialisers(), hostID, deviceID));
 
         if(!result.second)
@@ -259,6 +259,14 @@ public:
         {
             return &result.first->second;
         }
+    }
+
+    template<typename NeuronModel>
+    NeuronGroup *addNeuronPopulation(const string &name, unsigned int size,
+                                     const typename NeuronModel::ParamValues &paramValues, const typename NeuronModel::VarValues &varInitialisers,
+                                     int hostID = 0, int deviceID = 0)
+    {
+        return addNeuronPopulation<NeuronModel>(name, size, NeuronModel::getInstance(), paramValues, varInitialisers, hostID, deviceID);
     }
 
     void setNeuronClusterIndex(const string &neuronGroup, int hostID, int deviceID); //!< This function has been deprecated in GeNN 3.1.0
@@ -338,8 +346,8 @@ public:
         \return pointer to newly created SynapseGroup */
     template<typename WeightUpdateModel, typename PostsynapticModel>
     SynapseGroup *addSynapsePopulation(const string &name, SynapseMatrixType mtype, unsigned int delaySteps, const string& src, const string& trg,
-                                       const typename WeightUpdateModel::ParamValues &weightParamValues, const typename WeightUpdateModel::VarValues &weightVarInitialisers,
-                                       const typename PostsynapticModel::ParamValues &postsynapticParamValues, const typename PostsynapticModel::VarValues &postsynapticVarInitialisers)
+                                       const WeightUpdateModel *wum, const typename WeightUpdateModel::ParamValues &weightParamValues, const typename WeightUpdateModel::VarValues &weightVarInitialisers,
+                                       const PostsynapticModel *psm, const typename PostsynapticModel::ParamValues &postsynapticParamValues, const typename PostsynapticModel::VarValues &postsynapticVarInitialisers)
     {
         if (!GeNNReady) {
             gennError("You need to call initGeNN first.");
@@ -372,8 +380,8 @@ public:
             std::piecewise_construct,
             std::forward_as_tuple(name),
             std::forward_as_tuple(name, mtype, delaySteps,
-                                  WeightUpdateModel::getInstance(), weightParamValues.getValues(), weightVarInitialisers.getInitialisers(),
-                                  PostsynapticModel::getInstance(), postsynapticParamValues.getValues(), postsynapticVarInitialisers.getInitialisers(),
+                                  wum, weightParamValues.getValues(), weightVarInitialisers.getInitialisers(),
+                                  psm, postsynapticParamValues.getValues(), postsynapticVarInitialisers.getInitialisers(),
                                   srcNeuronGrp, trgNeuronGrp));
 
         if(!result.second)
@@ -385,6 +393,17 @@ public:
         {
             return &result.first->second;
         }
+    }
+
+    template<typename WeightUpdateModel, typename PostsynapticModel>
+    SynapseGroup *addSynapsePopulation(const string &name, SynapseMatrixType mtype, unsigned int delaySteps, const string& src, const string& trg,
+                                       const typename WeightUpdateModel::ParamValues &weightParamValues, const typename WeightUpdateModel::VarValues &weightVarInitialisers,
+                                       const typename PostsynapticModel::ParamValues &postsynapticParamValues, const typename PostsynapticModel::VarValues &postsynapticVarInitialisers)
+    {
+        return addSynapsePopulation(name, mtype, delaySteps, src, trg,
+                                    WeightUpdateModel::getInstance(), weightParamValues, weightVarInitialisers,
+                                    PostsynapticModel::getInstance(), postsynapticParamValues, postsynapticVarInitialisers);
+
     }
 
     void setSynapseG(const string&, double); //!< This function has been depreciated as of GeNN 2.2.

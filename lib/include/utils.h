@@ -21,8 +21,10 @@
 #ifndef _UTILS_H_
 #define _UTILS_H_ //!< macro for avoiding multiple inclusion during compilation
 
+#include <cstdlib>
 #include <iostream>
 #include <string>
+
 #ifndef CPU_ONLY
 #include <cuda.h>
 #include <cuda_runtime.h>
@@ -106,8 +108,11 @@ CUresult cudaFuncGetAttributesDriver(cudaFuncAttributes *attr, CUfunction kern);
  */
 //--------------------------------------------------------------------------
 
-void gennError(const string &error);
-
+inline void gennError(const string &error)
+{
+    cerr << "GeNN error: " << error << endl;
+    exit(EXIT_FAILURE);
+}
 
 //--------------------------------------------------------------------------
 //! \brief Tool for determining the size of variable types on the current architecture
