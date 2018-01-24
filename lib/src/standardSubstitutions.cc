@@ -45,7 +45,7 @@ void StandardSubstitutions::postSynapseApplyInput(
     functionSubstitutions(psCode, ftype, functions);
     substitute(psCode, "$(rng)", rng);
     psCode = ensureFtype(psCode, ftype);
-    checkUnreplacedVariables(psCode, "postSyntoCurrent");
+    checkUnreplacedVariables(psCode, sg->getName() + " : postSyntoCurrent");
 }
 
 void StandardSubstitutions::postSynapseDecay(
@@ -75,7 +75,7 @@ void StandardSubstitutions::postSynapseDecay(
     functionSubstitutions(pdCode, ftype, functions);
     substitute(pdCode, "$(rng)", rng);
     pdCode = ensureFtype(pdCode, ftype);
-    checkUnreplacedVariables(pdCode, "postSynDecay");
+    checkUnreplacedVariables(pdCode, sg->getName() + " : postSynDecay");
 }
 
 
@@ -100,7 +100,7 @@ void StandardSubstitutions::neuronThresholdCondition(
     functionSubstitutions(thCode, ftype, functions);
     substitute(thCode, "$(rng)", rng);
     thCode= ensureFtype(thCode, ftype);
-    checkUnreplacedVariables(thCode,"thresholdConditionCode");
+    checkUnreplacedVariables(thCode, ng.getName() + " : thresholdConditionCode");
 }
 
 void StandardSubstitutions::neuronSim(
@@ -124,7 +124,7 @@ void StandardSubstitutions::neuronSim(
     functionSubstitutions(sCode, ftype, functions);
     substitute(sCode, "$(rng)", rng);
     sCode = ensureFtype(sCode, ftype);
-    checkUnreplacedVariables(sCode, "neuron simCode");
+    checkUnreplacedVariables(sCode, ng.getName() + " : neuron simCode");
 }
 
 void StandardSubstitutions::neuronSpikeEventCondition(
@@ -144,7 +144,7 @@ void StandardSubstitutions::neuronSpikeEventCondition(
     functionSubstitutions(eCode, ftype, functions);
     substitute(eCode, "$(rng)", rng);
     eCode = ensureFtype(eCode, ftype);
-    checkUnreplacedVariables(eCode, "neuronSpkEvntCondition");
+    checkUnreplacedVariables(eCode, ng.getName() + " : neuronSpkEvntCondition");
 }
 
 void StandardSubstitutions::neuronReset(
@@ -168,7 +168,7 @@ void StandardSubstitutions::neuronReset(
     functionSubstitutions(rCode, ftype, functions);
     substitute(rCode, "$(rng)", rng);
     rCode = ensureFtype(rCode, ftype);
-    checkUnreplacedVariables(rCode, "resetCode");
+    checkUnreplacedVariables(rCode, ng.getName() + " : resetCode");
 }
 
 void StandardSubstitutions::weightUpdateThresholdCondition(
@@ -188,7 +188,7 @@ void StandardSubstitutions::weightUpdateThresholdCondition(
 
     functionSubstitutions(eCode, ftype, functions);
     eCode= ensureFtype(eCode, ftype);
-    checkUnreplacedVariables(eCode, "evntThreshold");
+    checkUnreplacedVariables(eCode, sg.getName() + " : evntThreshold");
 }
 
 void StandardSubstitutions::weightUpdateSim(
@@ -215,7 +215,7 @@ void StandardSubstitutions::weightUpdateSim(
 
     functionSubstitutions(wCode, ftype, functions);
     wCode= ensureFtype(wCode, ftype);
-    checkUnreplacedVariables(wCode, "simCode");
+    checkUnreplacedVariables(wCode, sg.getName() + " : simCode");
 }
 
 void StandardSubstitutions::weightUpdateDynamics(
@@ -245,7 +245,7 @@ void StandardSubstitutions::weightUpdateDynamics(
 
     functionSubstitutions(SDcode, ftype, functions);
     SDcode= ensureFtype(SDcode, ftype);
-    checkUnreplacedVariables(SDcode, "synapseDynamics");
+    checkUnreplacedVariables(SDcode, sg->getName() + " : synapseDynamics");
 }
 
 void StandardSubstitutions::weightUpdatePostLearn(
@@ -268,7 +268,7 @@ void StandardSubstitutions::weightUpdatePostLearn(
 
     functionSubstitutions(code, ftype, functions);
     code= ensureFtype(code, ftype);
-    checkUnreplacedVariables(code, "simLearnPost");
+    checkUnreplacedVariables(code, sg->getName() + " : simLearnPost");
 }
 
 std::string StandardSubstitutions::initVariable(

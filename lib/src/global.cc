@@ -25,18 +25,19 @@
 
 
 namespace GENN_FLAGS {
-    unsigned int calcSynapseDynamics= 0;
-    unsigned int calcSynapses= 1;
-    unsigned int learnSynapsesPost= 2;
-    unsigned int calcNeurons= 3;
+    const unsigned int calcSynapseDynamics= 0;
+    const unsigned int calcSynapses= 1;
+    const unsigned int learnSynapsesPost= 2;
+    const unsigned int calcNeurons= 3;
 };
 
 namespace GENN_PREFERENCES {    
-    int optimiseBlockSize = 1; //!< Flag for signalling whether or not block size optimisation should be performed
-    int autoChooseDevice= 1; //!< Flag to signal whether the GPU device should be chosen automatically 
+    bool optimiseBlockSize = true; //!< Flag for signalling whether or not block size optimisation should be performed
+    bool autoChooseDevice= true; //!< Flag to signal whether the GPU device should be chosen automatically
     bool optimizeCode = false; //!< Request speed-optimized code, at the expense of floating-point accuracy
     bool debugCode = false; //!< Request debug data to be embedded in the generated code
     bool showPtxInfo = false; //!< Request that PTX assembler information be displayed for each CUDA kernel during compilation
+    bool buildSharedLibrary = false;   //!< Should generated code and Makefile build into a shared library e.g. for use in SpineML simulator
     bool autoInitSparseVars = false; //!< Previously, variables associated with sparse synapse populations were not automatically initialised. If this flag is set this now occurs in the initMODEL_NAME function and copyStateToDevice is deferred until here
     VarMode defaultVarMode = VarMode::LOC_HOST_DEVICE_INIT_HOST;  //!< What is the default behaviour for model state variables? Historically, everything was allocated on both host AND device and initialised on HOST.
     double asGoodAsZero = 1e-19; //!< Global variable that is used when detecting close to zero values, for example when setting sparse connectivity from a dense matrix

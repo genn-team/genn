@@ -34,18 +34,19 @@
 #include "variableMode.h"
 
 namespace GENN_FLAGS {
-    extern unsigned int calcSynapseDynamics;
-    extern unsigned int calcSynapses;
-    extern unsigned int learnSynapsesPost;
-    extern unsigned int calcNeurons;
+    extern const unsigned int calcSynapseDynamics;
+    extern const unsigned int calcSynapses;
+    extern const unsigned int learnSynapsesPost;
+    extern const unsigned int calcNeurons;
 }
 
 namespace GENN_PREFERENCES {    
-    extern int optimiseBlockSize; //!< Flag for signalling whether or not block size optimisation should be performed
-    extern int autoChooseDevice; //!< Flag to signal whether the GPU device should be chosen automatically 
+    extern bool optimiseBlockSize; //!< Flag for signalling whether or not block size optimisation should be performed
+    extern bool autoChooseDevice; //!< Flag to signal whether the GPU device should be chosen automatically
     extern bool optimizeCode; //!< Request speed-optimized code, at the expense of floating-point accuracy
     extern bool debugCode; //!< Request debug data to be embedded in the generated code
     extern bool showPtxInfo; //!< Request that PTX assembler information be displayed for each CUDA kernel during compilation
+    extern bool buildSharedLibrary; //!< Should generated code and Makefile build into a shared library e.g. for use in SpineML simulator
     extern bool autoInitSparseVars; //!< Previously, variables associated with sparse synapse populations were not automatically initialised. If this flag is set this now occurs in the initMODEL_NAME function and copyStateToDevice is deferred until here
     extern VarMode defaultVarMode;  //!< What is the default behaviour for model state variables? Historically, everything was allocated on both host AND device and initialised on HOST.
     extern double asGoodAsZero; //!< Global variable that is used when detecting close to zero values, for example when setting sparse connectivity from a dense matrix

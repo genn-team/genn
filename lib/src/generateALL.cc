@@ -22,7 +22,6 @@
 //--------------------------------------------------------------------------
 
 #include "global.h"
-#include MODEL
 #include "generateALL.h"
 #include "generateCPU.h"
 #include "generateInit.h"
@@ -607,7 +606,8 @@ void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
   the different parts of actual code generation.
 */
 //--------------------------------------------------------------------------
-
+#ifndef GENERATOR_MAIN_HANDLED
+#include MODEL
 int main(int argc,     //!< number of arguments; expected to be 2
          char *argv[]  //!< Arguments; expected to contain the target directory for code generation.
     )
@@ -655,3 +655,4 @@ int main(int argc,     //!< number of arguments; expected to be 2
 
     return EXIT_SUCCESS;
 }
+#endif // GENERATOR_MAIN_HANDLED

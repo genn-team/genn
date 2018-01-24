@@ -62,19 +62,25 @@ void variable_def(CodeStream &os, const string &type, const string &name, VarMod
 
 void extern_variable_def(CodeStream &os, const string &type, const string &name, VarMode mode)
 {
+    // In windows making variables extern isn't enough to export then as DLL symbols - you need to add __declspec(dllexport)
+#ifdef _WIN32
+    const std::string varExportPrefix = GENN_PREFERENCES::buildSharedLibrary ? "__declspec(dllexport) extern" : "extern";
+#else
+    const std::string varExportPrefix = "extern";
+#endif
+
 #ifndef CPU_ONLY
     if(mode & VarLocation::HOST) {
-        os << "extern " << type << " " << name << ";" << std::endl;
+        os << varExportPrefix << " " << type << " " << name << ";" << std::endl;
     }
     if(mode & VarLocation::DEVICE) {
-        os << "extern " << type << " d_" << name << ";" << std::endl;
+        os << varExportPrefix << " " << type << " d_" << name << ";" << std::endl;
     }
 #else
     USE(mode);
-    os << "extern " << type << " " << name << ";" << std::endl;
+    os << varExportPrefix << " " << type << " " << name << ";" << std::endl;
 #endif
 }
-
 
 //--------------------------------------------------------------------------
 //! \brief This function generates host allocation code
@@ -226,7 +232,6 @@ void genDefinitions(const NNmodel &model, //!< Model description
     //=======================
     // generate definitions.h
     //=======================
-
     // this file contains helpful macros and is separated out so that it can also be used by other code that is compiled separately
     string definitionsName= path + "/" + model.getName() + "_CODE/definitions.h";
     ofstream fs;
@@ -310,7 +315,18 @@ void genDefinitions(const NNmodel &model, //!< Model description
     os << "#define SCALAR_MAX " << SCLR_MAX << std::endl;
     os << "#endif" << std::endl;
     os << std::endl;
-
+  
+    // Begin extern C block around ALL definitions
+    if(GENN_PREFERENCES::buildSharedLibrary) {
+        os << "extern \"C\" {" << std::endl;
+    }
+        
+    // In windows making variables extern isn't enough to export then as DLL symbols - you need to add __declspec(dllexport)
+#ifdef _WIN32
+    const std::string varExportPrefix = GENN_PREFERENCES::buildSharedLibrary ? "__declspec(dllexport) extern" : "extern";
+#else
+    const std::string varExportPrefix = "extern";
+#endif
 
     //-----------------
     // GLOBAL VARIABLES
@@ -319,34 +335,34 @@ void genDefinitions(const NNmodel &model, //!< Model description
     os << "// global variables" << std::endl;
     os << std::endl;
 
-    os << "extern unsigned long long iT;" << std::endl;
-    os << "extern " << model.getPrecision() << " t;" << std::endl;
+    os << varExportPrefix << " unsigned long long iT;" << std::endl;
+    os << varExportPrefix << " " << model.getPrecision() << " t;" << std::endl;
     if (model.isTimingEnabled()) {
 #ifndef CPU_ONLY
-        os << "extern cudaEvent_t neuronStart, neuronStop;" << std::endl;
+        os << varExportPrefix << " cudaEvent_t neuronStart, neuronStop;" << std::endl;
 #endif
-        os << "extern double neuron_tme;" << std::endl;
-        os << "extern CStopWatch neuron_timer;" << std::endl;
+        os << varExportPrefix << " double neuron_tme;" << std::endl;
+        os << varExportPrefix << " CStopWatch neuron_timer;" << std::endl;
         if (!model.getSynapseGroups().empty()) {
 #ifndef CPU_ONLY
-            os << "extern cudaEvent_t synapseStart, synapseStop;" << std::endl;
+            os << varExportPrefix << " cudaEvent_t synapseStart, synapseStop;" << std::endl;
 #endif
-            os << "extern double synapse_tme;" << std::endl;
-            os << "extern CStopWatch synapse_timer;" << std::endl;
+            os << varExportPrefix << " double synapse_tme;" << std::endl;
+            os << varExportPrefix << " CStopWatch synapse_timer;" << std::endl;
         }
         if (!model.getSynapsePostLearnGroups().empty()) {
 #ifndef CPU_ONLY
-            os << "extern cudaEvent_t learningStart, learningStop;" << std::endl;
+            os << varExportPrefix << " cudaEvent_t learningStart, learningStop;" << std::endl;
 #endif
-            os << "extern double learning_tme;" << std::endl;
-            os << "extern CStopWatch learning_timer;" << std::endl;
+            os << varExportPrefix << " double learning_tme;" << std::endl;
+            os << varExportPrefix << " CStopWatch learning_timer;" << std::endl;
         }
         if (!model.getSynapseDynamicsGroups().empty()) {
 #ifndef CPU_ONLY
-            os << "extern cudaEvent_t synDynStart, synDynStop;" << std::endl;
+            os << varExportPrefix << " cudaEvent_t synDynStart, synDynStop;" << std::endl;
 #endif
-            os << "extern double synDyn_tme;" << std::endl;
-            os << "extern CStopWatch synDyn_timer;" << std::endl;
+            os << varExportPrefix << " double synDyn_tme;" << std::endl;
+            os << varExportPrefix << " CStopWatch synDyn_timer;" << std::endl;
         }
 #ifndef CPU_ONLY
         if(model.isDeviceInitRequired()) {
@@ -393,7 +409,7 @@ void genDefinitions(const NNmodel &model, //!< Model description
             extern_variable_def(os, "unsigned int *", "glbSpkEvnt"+n.first, n.second.getSpikeEventVarMode());
         }
         if (n.second.isDelayRequired()) {
-            os << "extern unsigned int spkQuePtr" << n.first << ";" << std::endl;
+            os << varExportPrefix << " unsigned int spkQuePtr" << n.first << ";" << std::endl;
         }
         if (n.second.isSpikeTimeRequired()) {
             extern_variable_def(os, model.getPrecision()+" *", "sT"+n.first, n.second.getSpikeTimeVarMode());
@@ -476,7 +492,7 @@ void genDefinitions(const NNmodel &model, //!< Model description
             extern_variable_def(os, "uint32_t *", "gp" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST);
         }
         else if (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-            os << "extern SparseProjection C" << s.first << ";" << std::endl;
+            os << varExportPrefix << " SparseProjection C" << s.first << ";" << std::endl;
         }
 
         if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) { // not needed for GLOBALG
@@ -501,11 +517,214 @@ void genDefinitions(const NNmodel &model, //!< Model description
   and making g member a synapse variable.*/" << std::endl;
     os << std::endl;
 
+    // In windows wrapping functions in extern "C" isn't enough to export then as DLL symbols - you need to add __declspec(dllexport)
+#ifdef _WIN32
+    const string funcExportPrefix = GENN_PREFERENCES::buildSharedLibrary ? "__declspec(dllexport) " : "";
+#else
+    const string funcExportPrefix = "";
+#endif
 
-    //--------------------------
-    // HOST AND DEVICE FUNCTIONS
 
 #ifndef CPU_ONLY
+    // generate headers for the communication utility functions such as
+    // pullXXXStateFromDevice() etc. This is useful for the brian2genn
+    // interface where we do more proper compile/link and do not want
+    // to include runnerGPU.cc into all relevant code_objects (e.g.
+    // spike and state monitors
+
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// copying things to device" << std::endl;
+    os << std::endl;
+    for(const auto &n : model.getNeuronGroups()) {
+        os << funcExportPrefix << "void push" << n.first << "StateToDevice(bool hostInitialisedOnly = false);" << std::endl;
+        os << funcExportPrefix << "void push" << n.first << "SpikesToDevice(bool hostInitialisedOnly = false);" << std::endl;
+        os << funcExportPrefix << "void push" << n.first << "SpikeEventsToDevice(bool hostInitialisedOnly = false);" << std::endl;
+        os << funcExportPrefix << "void push" << n.first << "CurrentSpikesToDevice();" << std::endl;
+        os << funcExportPrefix << "void push" << n.first << "CurrentSpikeEventsToDevice();" << std::endl;
+    }
+    for(const auto &s : model.getSynapseGroups()) {
+        os << "#define push" << s.first << "ToDevice push" << s.first << "StateToDevice" << std::endl;
+        os << funcExportPrefix << "void push" << s.first << "StateToDevice(bool hostInitialisedOnly = false);" << std::endl;
+    }
+    os << std::endl;
+
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// copying things from device" << std::endl;
+    os << std::endl;
+    for(const auto &n : model.getNeuronGroups()) {
+        os << funcExportPrefix << "void pull" << n.first << "StateFromDevice();" << std::endl;
+        os << funcExportPrefix << "void pull" << n.first << "SpikesFromDevice();" << std::endl;
+        os << funcExportPrefix << "void pull" << n.first << "SpikeEventsFromDevice();" << std::endl;
+        os << funcExportPrefix << "void pull" << n.first << "CurrentSpikesFromDevice();" << std::endl;
+        os << funcExportPrefix << "void pull" << n.first << "CurrentSpikeEventsFromDevice();" << std::endl;
+    }
+    for(const auto &s : model.getSynapseGroups()) {
+        os << "#define pull" << s.first << "FromDevice pull" << s.first << "StateFromDevice" << std::endl;
+        os << funcExportPrefix << "void pull" << s.first << "StateFromDevice();" << std::endl;
+    }
+    os << std::endl;
+
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// global copying values to device" << std::endl;
+    os << std::endl;
+    os << funcExportPrefix << "void copyStateToDevice(bool hostInitialisedOnly = false);" << std::endl;
+    os << std::endl;
+
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// global copying spikes to device" << std::endl;
+    os << std::endl;
+    os << funcExportPrefix << "void copySpikesToDevice();" << std::endl;
+    os << std::endl;
+
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// copying current spikes to device" << std::endl;
+    os << std::endl;
+    os << funcExportPrefix << "void copyCurrentSpikesToDevice();" << std::endl;
+    os << std::endl;
+
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// global copying spike events to device" << std::endl;
+    os << std::endl;
+    os << funcExportPrefix << "void copySpikeEventsToDevice();" << std::endl;
+    os << std::endl;
+
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// copying current spikes to device" << std::endl;
+    os << std::endl;
+    os << funcExportPrefix << "void copyCurrentSpikeEventsToDevice();" << std::endl;
+    os << std::endl;
+
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// global copying values from device" << std::endl;
+    os << std::endl;
+    os << funcExportPrefix << "void copyStateFromDevice();" << std::endl;
+    os << std::endl;
+
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// global copying spikes from device" << std::endl;
+    os << std::endl;
+    os << funcExportPrefix << "void copySpikesFromDevice();" << std::endl;
+    os << std::endl;
+
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// copying current spikes from device" << std::endl;
+    os << std::endl;
+    os << funcExportPrefix << "void copyCurrentSpikesFromDevice();" << std::endl;
+    os << std::endl;
+
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// copying spike numbers from device (note, only use when only interested"<< std::endl;
+    os << "// in spike numbers; copySpikesFromDevice() already includes this)" << std::endl;
+    os << std::endl;
+    os << funcExportPrefix << "void copySpikeNFromDevice();" << std::endl;
+    os << std::endl;
+
+    os << "// ------------------------------------------------------------------------"<< std::endl;
+    os << "// global copying spikeEvents from device" << std::endl;
+    os << std::endl;
+    os << funcExportPrefix << "void copySpikeEventsFromDevice();" << std::endl;
+    os << std::endl;
+
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// copying current spikeEvents from device" << std::endl;
+    os << std::endl;
+    os << funcExportPrefix << "void copyCurrentSpikeEventsFromDevice();" << std::endl;
+    os << std::endl;
+
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// global copying spike event numbers from device (note, only use when only interested" << std::endl;
+    os << "// in spike numbers; copySpikeEventsFromDevice() already includes this)" << std::endl;
+    os << std::endl;
+    os << funcExportPrefix << "void copySpikeEventNFromDevice();" << std::endl;
+    os << std::endl;
+#endif
+
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// Function for setting the CUDA device and the host's global variables." << std::endl;
+    os << "// Also estimates memory usage on device." << std::endl;
+    os << std::endl;
+    os << funcExportPrefix << "void allocateMem();" << std::endl;
+    os << std::endl;
+
+    for(const auto &s : model.getSynapseGroups()) {
+        if (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+            os << funcExportPrefix << "void allocate" << s.first << "(unsigned int connN);" << std::endl;
+            os << std::endl;
+        }
+    }
+
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// Function to (re)set all model variables to their compile-time, homogeneous initial" << std::endl;
+    os << "// values. Note that this typically includes synaptic weight values. The function" << std::endl;
+    os << "// (re)sets host side variables and copies them to the GPU device." << std::endl;
+    os << std::endl;
+    os << funcExportPrefix << "void initialize();" << std::endl;
+    os << std::endl;
+
+
+#ifndef CPU_ONLY
+    os << funcExportPrefix << "void initializeAllSparseArrays();" << std::endl;
+    os << std::endl;
+#endif
+
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// initialization of variables, e.g. reverse sparse arrays etc." << std::endl;
+    os << "// that the user would not want to worry about" << std::endl;
+    os << std::endl;
+    os << funcExportPrefix << "void init" << model.getName() << "();" << std::endl;
+    os << std::endl;
+
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// Function to free all global memory structures." << std::endl;
+    os << std::endl;
+    os << funcExportPrefix << "void freeMem();" << std::endl;
+    os << std::endl;
+
+    os << "//-------------------------------------------------------------------------" << std::endl;
+    os << "// Function to convert a firing probability (per time step) to an integer of type uint64_t" << std::endl;
+    os << "// that can be used as a threshold for the GeNN random number generator to generate events with the given probability." << std::endl;
+    os << std::endl;
+    os << funcExportPrefix << "void convertProbabilityToRandomNumberThreshold(" << model.getPrecision() << " *p_pattern, " << model.getRNType() << " *pattern, int N);" << std::endl;
+    os << std::endl;
+
+    os << "//-------------------------------------------------------------------------" << std::endl;
+    os << "// Function to convert a firing rate (in kHz) to an integer of type uint64_t that can be used" << std::endl;
+    os << "// as a threshold for the GeNN random number generator to generate events with the given rate." << std::endl;
+    os << std::endl;
+    os << funcExportPrefix << "void convertRateToRandomNumberThreshold(" << model.getPrecision() << " *rateKHz_pattern, " << model.getRNType() << " *pattern, int N);" << std::endl;
+    os << std::endl;
+
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// the actual time stepping procedure (using CPU)" << std::endl;
+    os << std::endl;
+    os << funcExportPrefix << "void stepTimeCPU();" << std::endl;
+    os << std::endl;
+
+#ifndef CPU_ONLY
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// the actual time stepping procedure (using GPU)" << std::endl;
+    os << std::endl;
+    os << funcExportPrefix << "void stepTimeGPU();" << std::endl;
+    os << std::endl;
+#endif
+
+    // End extern C block around definitions
+    if(GENN_PREFERENCES::buildSharedLibrary) {
+        os << "}\t// extern \"C\"" << std::endl;
+    }
+
+    //--------------------------
+    // HELPER FUNCTIONS
+#ifndef CPU_ONLY
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// Throw an error for \"old style\" time stepping calls (using GPU)" << std::endl;
+    os << std::endl;
+    os << "template <class T>" << std::endl;
+    os << "void stepTimeGPU(T arg1, ...)" << CodeStream::OB(101);
+    os << "gennError(\"Since GeNN 2.2 the call to step time has changed to not take any arguments. You appear to attempt to pass arguments. This is no longer supported. See the GeNN 2.2. release notes and the manual for examples how to pass data like, e.g., Poisson rates and direct inputs, that were previously handled through arguments.\");" << std::endl;
+    os << CodeStream::CB(101);
+    os << std::endl;
+
     os << "// ------------------------------------------------------------------------" << std::endl;
     os << "// Helper function for allocating memory blocks on the GPU device" << std::endl;
     os << std::endl;
@@ -518,6 +737,7 @@ void genDefinitions(const NNmodel &model, //!< Model description
     os << "    CHECK_CUDA_ERRORS(cudaMemcpy(devptr, hostPtr, sizeof(void*), cudaMemcpyHostToDevice));" << std::endl;
     os << "}" << std::endl;
     os << std::endl;
+
     os << "// ------------------------------------------------------------------------" << std::endl;
     os << "// Helper function for getting the device pointer corresponding to a zero-copied host pointer and assigning it to a symbol" << std::endl;
     os << std::endl;
@@ -532,175 +752,6 @@ void genDefinitions(const NNmodel &model, //!< Model description
     os << std::endl;
 #endif
 
-#ifndef CPU_ONLY
-    // generate headers for the communication utility functions such as
-    // pullXXXStateFromDevice() etc. This is useful for the brian2genn
-    // interface where we do more proper compile/link and do not want
-    // to include runnerGPU.cc into all relevant code_objects (e.g.
-    // spike and state monitors
-
-    os << "// ------------------------------------------------------------------------" << std::endl;
-    os << "// copying things to device" << std::endl;
-    os << std::endl;
-    for(const auto &n : model.getNeuronGroups()) {
-        os << "void push" << n.first << "StateToDevice(bool hostInitialisedOnly = false);" << std::endl;
-        os << "void push" << n.first << "SpikesToDevice(bool hostInitialisedOnly = false);" << std::endl;
-        os << "void push" << n.first << "SpikeEventsToDevice(bool hostInitialisedOnly = false);" << std::endl;
-        os << "void push" << n.first << "CurrentSpikesToDevice();" << std::endl;
-        os << "void push" << n.first << "CurrentSpikeEventsToDevice();" << std::endl;
-    }
-    for(const auto &s : model.getSynapseGroups()) {
-        os << "#define push" << s.first << "ToDevice push" << s.first << "StateToDevice" << std::endl;
-        os << "void push" << s.first << "StateToDevice(bool hostInitialisedOnly = false);" << std::endl;
-    }
-    os << std::endl;
-
-    os << "// ------------------------------------------------------------------------" << std::endl;
-    os << "// copying things from device" << std::endl;
-    os << std::endl;
-    for(const auto &n : model.getNeuronGroups()) {
-         os << "void pull" << n.first << "StateFromDevice();" << std::endl;
-        os << "void pull" << n.first << "SpikesFromDevice();" << std::endl;
-        os << "void pull" << n.first << "SpikeEventsFromDevice();" << std::endl;
-        os << "void pull" << n.first << "CurrentSpikesFromDevice();" << std::endl;
-        os << "void pull" << n.first << "CurrentSpikeEventsFromDevice();" << std::endl;
-    }
-    for(const auto &s : model.getSynapseGroups()) {
-        os << "#define pull" << s.first << "FromDevice pull" << s.first << "StateFromDevice" << std::endl;
-        os << "void pull" << s.first << "StateFromDevice();" << std::endl;
-    }
-    os << std::endl;
-
-    os << "// ------------------------------------------------------------------------" << std::endl;
-    os << "// global copying values to device" << std::endl;
-    os << std::endl;
-    os << "void copyStateToDevice(bool hostInitialisedOnly = false);" << std::endl;
-    os << std::endl;
-
-    os << "// ------------------------------------------------------------------------" << std::endl;
-    os << "// global copying spikes to device" << std::endl;
-    os << std::endl;
-    os << "void copySpikesToDevice();" << std::endl;
-    os << std::endl;
-
-    os << "// ------------------------------------------------------------------------" << std::endl;
-    os << "// copying current spikes to device" << std::endl;
-    os << std::endl;
-    os << "void copyCurrentSpikesToDevice();" << std::endl;
-    os << std::endl;
-
-    os << "// ------------------------------------------------------------------------" << std::endl;
-    os << "// global copying spike events to device" << std::endl;
-    os << std::endl;
-    os << "void copySpikeEventsToDevice();" << std::endl;
-    os << std::endl;
-
-    os << "// ------------------------------------------------------------------------" << std::endl;
-    os << "// copying current spikes to device" << std::endl;
-    os << std::endl;
-    os << "void copyCurrentSpikeEventsToDevice();" << std::endl;
-    os << std::endl;
-
-    os << "// ------------------------------------------------------------------------" << std::endl;
-    os << "// global copying values from device" << std::endl;
-    os << std::endl;
-    os << "void copyStateFromDevice();" << std::endl;
-    os << std::endl;
-
-    os << "// ------------------------------------------------------------------------" << std::endl;
-    os << "// global copying spikes from device" << std::endl;
-    os << std::endl;
-    os << "void copySpikesFromDevice();" << std::endl;
-    os << std::endl;
-
-    os << "// ------------------------------------------------------------------------" << std::endl;
-    os << "// copying current spikes from device" << std::endl;
-    os << std::endl;
-    os << "void copyCurrentSpikesFromDevice();" << std::endl;
-    os << std::endl;
-
-    os << "// ------------------------------------------------------------------------" << std::endl;
-    os << "// copying spike numbers from device (note, only use when only interested"<< std::endl;
-    os << "// in spike numbers; copySpikesFromDevice() already includes this)" << std::endl;
-    os << std::endl;
-    os << "void copySpikeNFromDevice();" << std::endl;
-    os << std::endl;
-
-    os << "// ------------------------------------------------------------------------"<< std::endl;
-    os << "// global copying spikeEvents from device" << std::endl;
-    os << std::endl;
-    os << "void copySpikeEventsFromDevice();" << std::endl;
-    os << std::endl;
-
-    os << "// ------------------------------------------------------------------------" << std::endl;
-    os << "// copying current spikeEvents from device" << std::endl;
-    os << std::endl;
-    os << "void copyCurrentSpikeEventsFromDevice();" << std::endl;
-    os << std::endl;
-
-    os << "// ------------------------------------------------------------------------" << std::endl;
-    os << "// global copying spike event numbers from device (note, only use when only interested" << std::endl;
-    os << "// in spike numbers; copySpikeEventsFromDevice() already includes this)" << std::endl;
-    os << std::endl;
-    os << "void copySpikeEventNFromDevice();" << std::endl;
-    os << std::endl;
-#endif
-
-    os << "// ------------------------------------------------------------------------" << std::endl;
-    os << "// Function for setting the CUDA device and the host's global variables." << std::endl;
-    os << "// Also estimates memory usage on device." << std::endl;
-    os << std::endl;
-    os << "void allocateMem();" << std::endl;
-    os << std::endl;
-
-    for(const auto &s : model.getSynapseGroups()) {
-        if (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-            os << "void allocate" << s.first << "(unsigned int connN);" << std::endl;
-            os << std::endl;
-        }
-    }
-
-    os << "// ------------------------------------------------------------------------" << std::endl;
-    os << "// Function to (re)set all model variables to their compile-time, homogeneous initial" << std::endl;
-    os << "// values. Note that this typically includes synaptic weight values. The function" << std::endl;
-    os << "// (re)sets host side variables and copies them to the GPU device." << std::endl;
-    os << std::endl;
-    os << "void initialize();" << std::endl;
-    os << std::endl;
-
-
-#ifndef CPU_ONLY
-    os << "void initializeAllSparseArrays();" << std::endl;
-    os << std::endl;
-#endif
-
-    os << "// ------------------------------------------------------------------------" << std::endl;
-    os << "// initialization of variables, e.g. reverse sparse arrays etc." << std::endl;
-    os << "// that the user would not want to worry about" << std::endl;
-    os << std::endl;
-    os << "void init" << model.getName() << "();" << std::endl;
-    os << std::endl;
-
-    os << "// ------------------------------------------------------------------------" << std::endl;
-    os << "// Function to free all global memory structures." << std::endl;
-    os << std::endl;
-    os << "void freeMem();" << std::endl;
-    os << std::endl;
-
-    os << "//-------------------------------------------------------------------------" << std::endl;
-    os << "// Function to convert a firing probability (per time step) to an integer of type uint64_t" << std::endl;
-    os << "// that can be used as a threshold for the GeNN random number generator to generate events with the given probability." << std::endl;
-    os << std::endl;
-    os << "void convertProbabilityToRandomNumberThreshold(" << model.getPrecision() << " *p_pattern, " << model.getRNType() << " *pattern, int N);" << std::endl;
-    os << std::endl;
-
-    os << "//-------------------------------------------------------------------------" << std::endl;
-    os << "// Function to convert a firing rate (in kHz) to an integer of type uint64_t that can be used" << std::endl;
-    os << "// as a threshold for the GeNN random number generator to generate events with the given rate." << std::endl;
-    os << std::endl;
-    os << "void convertRateToRandomNumberThreshold(" << model.getPrecision() << " *rateKHz_pattern, " << model.getRNType() << " *pattern, int N);" << std::endl;
-    os << std::endl;
-
     os << "// ------------------------------------------------------------------------" << std::endl;
     os << "// Throw an error for \"old style\" time stepping calls (using CPU)" << std::endl;
     os << std::endl;
@@ -709,29 +760,6 @@ void genDefinitions(const NNmodel &model, //!< Model description
     os << "gennError(\"Since GeNN 2.2 the call to step time has changed to not take any arguments. You appear to attempt to pass arguments. This is no longer supported. See the GeNN 2.2. release notes and the manual for examples how to pass data like, e.g., Poisson rates and direct inputs, that were previously handled through arguments.\");" << std::endl;
     os << CodeStream::CB(101);
     os<< std::endl;
-
-    os << "// ------------------------------------------------------------------------" << std::endl;
-    os << "// the actual time stepping procedure (using CPU)" << std::endl;
-    os << std::endl;
-    os << "void stepTimeCPU();" << std::endl;
-    os << std::endl;
-
-#ifndef CPU_ONLY
-    os << "// ------------------------------------------------------------------------" << std::endl;
-    os << "// Throw an error for \"old style\" time stepping calls (using GPU)" << std::endl;
-    os << std::endl;
-    os << "template <class T>" << std::endl;
-    os << "void stepTimeGPU(T arg1, ...)" << CodeStream::OB(101);
-    os << "gennError(\"Since GeNN 2.2 the call to step time has changed to not take any arguments. You appear to attempt to pass arguments. This is no longer supported. See the GeNN 2.2. release notes and the manual for examples how to pass data like, e.g., Poisson rates and direct inputs, that were previously handled through arguments.\");" << std::endl;
-    os << CodeStream::CB(101);
-    os<< std::endl;
-
-    os << "// ------------------------------------------------------------------------" << std::endl;
-    os << "// the actual time stepping procedure (using GPU)" << std::endl;
-    os << std::endl;
-    os << "void stepTimeGPU();" << std::endl;
-    os << std::endl;
-#endif
 
     os << "#endif" << std::endl;
     fs.close();
@@ -849,8 +877,13 @@ void genRunner(const NNmodel &model, //!< Model description
     os << "// ------------------------------------------------------------------------" << std::endl;
     os << "// global variables" << std::endl;
     os << std::endl;
-
-    os << "unsigned long long iT= 0;" << std::endl;
+    
+    // Begin extern C block around variable declarations
+    if(GENN_PREFERENCES::buildSharedLibrary) {
+        os << "extern \"C\" {" << std::endl;
+    }
+    
+    os << "unsigned long long iT;" << std::endl;
     os << model.getPrecision() << " t;" << std::endl;
     if (model.isTimingEnabled()) {
 #ifndef CPU_ONLY
@@ -1007,7 +1040,11 @@ void genRunner(const NNmodel &model, //!< Model description
         }
     }
     os << std::endl;
-
+    
+    // End extern C block around variable declarations
+    if(GENN_PREFERENCES::buildSharedLibrary) {
+        os << "}\t// extern \"C\"" << std::endl;
+    }
 
     //--------------------------
     // HOST AND DEVICE FUNCTIONS
@@ -2359,32 +2396,62 @@ void genMakefile(const NNmodel &model, //!< Model description
     CodeStream os(fs);
 
 #ifdef _WIN32
-
 #ifdef CPU_ONLY
-    string cxxFlags = "/c /DCPU_ONLY";
+    string cxxFlags = GENN_PREFERENCES::buildSharedLibrary ? "/LD" : "/C";
+    cxxFlags += " /DCPU_ONLY";
     cxxFlags += " " + GENN_PREFERENCES::userCxxFlagsWIN;
-    if (GENN_PREFERENCES::optimizeCode) cxxFlags += " /O2";
-    if (GENN_PREFERENCES::debugCode) cxxFlags += " /debug /Zi /Od";
+    if (GENN_PREFERENCES::optimizeCode) {
+        cxxFlags += " /O2";
+    }
+    if (GENN_PREFERENCES::debugCode) {
+        cxxFlags += " /debug /Zi /Od";
+    }
 
     os << endl;
     os << "CXXFLAGS       =/nologo /EHsc " << cxxFlags << endl;
     os << endl;
     os << "INCLUDEFLAGS   =/I\"$(GENN_PATH)\\lib\\include\"" << endl;
     os << endl;
-    os << "all: runner.obj" << endl;
-    os << endl;
-    os << "runner.obj: runner.cc" << endl;
-    os << "\t$(CXX) $(CXXFLAGS) $(INCLUDEFLAGS) runner.cc" << endl;
-    os << endl;
-    os << "clean:" << endl;
-    os << "\t-del runner.obj 2>nul" << endl;
+    
+    // Add correct rules for building either shared library or object file
+    // **NOTE** no idea how Visual C++ figures out that the dll should be called runner.dll but...it does
+    // **NOTE** adding /OUT:runner.dll to make this explicit actually causes it to complain about ignoring options
+    if(GENN_PREFERENCES::buildSharedLibrary) {
+        os << "all: runner.dll" << endl;
+        os << endl;
+        os << "runner.dll: runner.cc" << endl;
+        os << "\t$(CXX) $(CXXFLAGS) $(INCLUDEFLAGS) runner.cc $(GENN_PATH)\\lib\\src\\sparseUtils.cc" << endl;
+        os << endl;
+        os << "clean:" << endl;
+        os << "\t-del runner.dll *.obj 2>nul" << endl;
+    }
+    else
+    {
+        os << "all: runner.obj" << endl;
+        os << endl;
+        os << "runner.obj: runner.cc" << endl;
+        os << "\t$(CXX) $(CXXFLAGS) $(INCLUDEFLAGS) runner.cc" << endl;
+        os << endl;
+        os << "clean:" << endl;
+        os << "\t-del runner.obj 2>nul" << endl;
+    }
 #else
-    string nvccFlags = "-c -x cu -arch sm_";
+    // Start with correct NVCC flags to build shared library or object file as appropriate
+    // **NOTE** -c = compile and assemble, don't link
+    string nvccFlags = GENN_PREFERENCES::buildSharedLibrary ? "--shared" : "-c";
+    nvccFlags += " -x cu -arch sm_";
     nvccFlags += to_string(deviceProp[theDevice].major) + to_string(deviceProp[theDevice].minor);
     nvccFlags += " " + GENN_PREFERENCES::userNvccFlags;
-    if (GENN_PREFERENCES::optimizeCode) nvccFlags += " -O3 -use_fast_math";
-    if (GENN_PREFERENCES::debugCode) nvccFlags += " -O0 -g -G";
-    if (GENN_PREFERENCES::showPtxInfo) nvccFlags += " -Xptxas \"-v\"";
+    
+    if (GENN_PREFERENCES::optimizeCode) {
+        nvccFlags += " -O3 -use_fast_math";
+    }
+    if (GENN_PREFERENCES::debugCode) {
+        nvccFlags += " -O0 -g -G";
+    }
+    if (GENN_PREFERENCES::showPtxInfo) {
+        nvccFlags += " -Xptxas \"-v\"";
+    }
 
     os << endl;
     os << "NVCC           =\"" << NVCC << "\"" << endl;
@@ -2392,40 +2459,85 @@ void genMakefile(const NNmodel &model, //!< Model description
     os << endl;
     os << "INCLUDEFLAGS   =-I\"$(GENN_PATH)\\lib\\include\"" << endl;
     os << endl;
-    os << "all: runner.obj" << endl;
-    os << endl;
-    os << "runner.obj: runner.cc" << endl;
-    os << "\t$(NVCC) $(NVCCFLAGS) $(INCLUDEFLAGS) runner.cc" << endl;
-    os << endl;
-    os << "clean:" << endl;
-    os << "\t-del runner.obj 2>nul" << endl;
+    
+    // Add correct rules for building either shared library or object file
+    if(GENN_PREFERENCES::buildSharedLibrary) {
+        os << "all: runner.dll" << endl;
+        os << endl;
+        os << "runner.dll: runner.cc" << endl;
+        os << "\t$(NVCC) $(NVCCFLAGS) $(INCLUDEFLAGS) runner.cc $(GENN_PATH)\\lib\\src\\sparseUtils.cc -o runner.dll" << endl;
+        os << endl;
+        os << "clean:" << endl;
+        os << "\t-del runner.dll 2>nul" << endl;
+    }
+    else {
+        os << "all: runner.obj" << endl;
+        os << endl;
+        os << "runner.obj: runner.cc" << endl;
+        os << "\t$(NVCC) $(NVCCFLAGS) $(INCLUDEFLAGS) runner.cc" << endl;
+        os << endl;
+        os << "clean:" << endl;
+        os << "\t-del runner.obj 2>nul" << endl;
+    }
 #endif
 
 #else // UNIX
 
 #ifdef CPU_ONLY
-    string cxxFlags = "-c -DCPU_ONLY -std=c++11 " + GENN_PREFERENCES::userCxxFlagsGNU;
-    if (GENN_PREFERENCES::optimizeCode) cxxFlags += " -O3 -ffast-math";
-    if (GENN_PREFERENCES::debugCode) cxxFlags += " -O0 -g";
+    // Start with correct NVCC flags to build shared library or object file as appropriate
+    // **NOTE** -c = compile and assemble, don't link
+    string cxxFlags = GENN_PREFERENCES::buildSharedLibrary ? "-shared -fPIC" : "-c";
+    cxxFlags += " -DCPU_ONLY -std=c++11";
+    cxxFlags += " " + GENN_PREFERENCES::userCxxFlagsGNU;
+    if (GENN_PREFERENCES::optimizeCode) {
+        cxxFlags += " -O3 -ffast-math";
+    }
+    if (GENN_PREFERENCES::debugCode) {
+        cxxFlags += " -O0 -g";
+    }
+
     os << endl;
     os << "CXXFLAGS       :=" << cxxFlags << endl;
     os << endl;
     os << "INCLUDEFLAGS   =-I\"$(GENN_PATH)/lib/include\"" << endl;
     os << endl;
-    os << "all: runner.o" << endl;
-    os << endl;
-    os << "runner.o: runner.cc" << endl;
-    os << "\t$(CXX) $(CXXFLAGS) $(INCLUDEFLAGS) runner.cc" << endl;
-    os << endl;
-    os << "clean:" << endl;
-    os << "\trm -f runner.o" << endl;
+
+    // Add correct rules for building either shared library or object file
+    if(GENN_PREFERENCES::buildSharedLibrary) {
+        os << "all: librunner.so" << endl;
+        os << endl;
+        os << "librunner.so: runner.cc" << endl;
+        os << "\t$(CXX) $(CXXFLAGS) $(INCLUDEFLAGS) runner.cc $(GENN_PATH)/lib/src/sparseUtils.cc -o librunner.so" << endl;
+        os << endl;
+        os << "clean:" << endl;
+        os << "\trm -f librunner.so" << endl;
+    }
+    else {
+        os << "all: runner.o" << endl;
+        os << endl;
+        os << "runner.o: runner.cc" << endl;
+        os << "\t$(CXX) $(CXXFLAGS) $(INCLUDEFLAGS) runner.cc" << endl;
+        os << endl;
+        os << "clean:" << endl;
+        os << "\trm -f runner.o" << endl;
+    }
 #else
-    string nvccFlags = "-std=c++11 -c -x cu -arch sm_";
+    // Start with correct NVCC flags to build shared library or object file as appropriate
+    // **NOTE** -c = compile and assemble, don't link
+    string nvccFlags = GENN_PREFERENCES::buildSharedLibrary ? "--shared --compiler-options '-fPIC'" : "-c";
+
+    nvccFlags += " -std=c++11 -x cu -arch sm_";
     nvccFlags += to_string(deviceProp[theDevice].major) + to_string(deviceProp[theDevice].minor);
     nvccFlags += " " + GENN_PREFERENCES::userNvccFlags;
-    if (GENN_PREFERENCES::optimizeCode) nvccFlags += " -O3 -use_fast_math -Xcompiler \"-ffast-math\"";
-    if (GENN_PREFERENCES::debugCode) nvccFlags += " -O0 -g -G";
-    if (GENN_PREFERENCES::showPtxInfo) nvccFlags += " -Xptxas \"-v\"";
+    if (GENN_PREFERENCES::optimizeCode) {
+        nvccFlags += " -O3 -use_fast_math -Xcompiler \"-ffast-math\"";
+    }
+    if (GENN_PREFERENCES::debugCode) {
+        nvccFlags += " -O0 -g -G";
+    }
+    if (GENN_PREFERENCES::showPtxInfo) {
+        nvccFlags += " -Xptxas \"-v\"";
+    }
 
     os << endl;
     os << "NVCC           :=\"" << NVCC << "\"" << endl;
@@ -2433,13 +2545,26 @@ void genMakefile(const NNmodel &model, //!< Model description
     os << endl;
     os << "INCLUDEFLAGS   =-I\"$(GENN_PATH)/lib/include\"" << endl;
     os << endl;
-    os << "all: runner.o" << endl;
-    os << endl;
-    os << "runner.o: runner.cc" << endl;
-    os << "\t$(NVCC) $(NVCCFLAGS) $(INCLUDEFLAGS) runner.cc" << endl;
-    os << endl;
-    os << "clean:" << endl;
-    os << "\trm -f runner.o" << endl;
+
+    // Add correct rules for building either shared library or object file
+    if(GENN_PREFERENCES::buildSharedLibrary) {
+        os << "all: librunner.so" << endl;
+        os << endl;
+        os << "librunner.so: runner.cc" << endl;
+        os << "\t$(NVCC) $(NVCCFLAGS) $(INCLUDEFLAGS) runner.cc $(GENN_PATH)/lib/src/sparseUtils.cc -o librunner.so" << endl;
+        os << endl;
+        os << "clean:" << endl;
+        os << "\trm -f librunner.so" << endl;
+    }
+    else {
+        os << "all: runner.o" << endl;
+        os << endl;
+        os << "runner.o: runner.cc" << endl;
+        os << "\t$(NVCC) $(NVCCFLAGS) $(INCLUDEFLAGS) runner.cc" << endl;
+        os << endl;
+        os << "clean:" << endl;
+        os << "\trm -f runner.o" << endl;
+    }
 #endif
 
 #endif
