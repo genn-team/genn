@@ -50,25 +50,24 @@ WeightUpdateModels::StaticPulse::VarValues mySyn_ini(
 
 void modelDefinition(NNmodel &model) 
 {
-  initGeNN();
+    initGeNN();
 
 #ifdef DEBUG
-  GENN_PREFERENCES::debugCode = true;
+    GENN_PREFERENCES::debugCode = true;
 #else
-  GENN_PREFERENCES::optimizeCode = true;
+    GENN_PREFERENCES::optimizeCode = true;
 #endif // DEBUG
 
-  model.setName("PoissonIzh");
-  model.setDT(1.0);
-  model.addNeuronPopulation<NeuronModels::Poisson>("PN", _NPoisson, myPOI_p, myPOI_ini);
-  model.addNeuronPopulation<NeuronModels::Izhikevich>("Izh1", _NIzh, exIzh_p, exIzh_ini);
+    model.setName("PoissonIzh");
+    model.setDT(1.0);
+    model.addNeuronPopulation<NeuronModels::Poisson>("PN", _NPoisson, myPOI_p, myPOI_ini);
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Izh1", _NIzh, exIzh_p, exIzh_ini);
 
-  model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>("PNIzh1", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
-                                                                                             "PN", "Izh1",
-                                                                                             {}, mySyn_ini,
-                                                                                             {}, {});
-  //model.setSynapseG("PNIzh1", gPNIzh1);
-  model.setSeed(1234);
-  model.setPrecision(_FTYPE);
-  model.finalize();
+    model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>("PNIzh1", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+                                                                                                "PN", "Izh1",
+                                                                                                {}, mySyn_ini,
+                                                                                                {}, {});
+    model.setSeed(1234);
+    model.setPrecision(_FTYPE);
+    model.finalize();
 }

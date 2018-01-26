@@ -65,7 +65,7 @@ CPU_ONLY=0 or CPU_ONLY=1 (default 0): Whether to compile in (CUDA independent) \
   int nIzh = atoi(argv[3]);
   float pConn = atof(argv[4]);
   float gscale = atof(argv[5]);
-  string outdir = toString(argv[6]) + "_output";  
+  string outdir = string(argv[6]) + "_output";
   string modelName = argv[7];
 
   int argStart= 8;
@@ -79,17 +79,8 @@ CPU_ONLY=0 or CPU_ONLY=1 (default 0): Whether to compile in (CUDA independent) \
   ofstream os(fname.c_str());
   os << "#define _NPoisson " << nPoisson << endl;
   os << "#define _NIzh " << nIzh << endl;
-  string tmps= tS(ftype);
+  string tmps= ftype;
   os << "#define _FTYPE " << "GENN_" << toUpper(tmps) << endl;
-  os << "#define scalar " << toLower(tmps) << endl;
-  if (toLower(ftype) == "double") {
-      os << "#define SCALAR_MIN " << DBL_MIN << endl;
-      os << "#define SCALAR_MAX " << DBL_MAX << endl;
-  }
-  else {
-      os << "#define SCALAR_MIN " << FLT_MIN << "f" << endl;
-      os << "#define SCALAR_MAX " << FLT_MAX << "f" << endl;
-  } 
   os.close();
 
   // build it
@@ -128,12 +119,12 @@ CPU_ONLY=0 or CPU_ONLY=1 (default 0): Whether to compile in (CUDA independent) \
   
   // generate Poisson-Izhikevich synapses
   cmd = gennPath + "/userproject/tools/gen_syns_sparse ";
-  cmd += toString(nPoisson) + " ";
-  cmd += toString(nIzh) + " ";
-  cmd += toString(pConn) + " ";
-  cmd += toString(meangsyn) + " ";
-  cmd += toString(gsyn_sigma) + " ";
-  cmd += outdir + "/g" + toString(argv[7]);
+  cmd += to_string(nPoisson) + " ";
+  cmd += to_string(nIzh) + " ";
+  cmd += to_string(pConn) + " ";
+  cmd += to_string(meangsyn) + " ";
+  cmd += to_string(gsyn_sigma) + " ";
+  cmd += outdir + "/g" + string(argv[7]);
   retval=system(cmd.c_str());
   if (retval != 0){
     cerr << "ERROR: Following call failed with status " << retval << ":" << endl << cmd << endl;
@@ -145,14 +136,14 @@ CPU_ONLY=0 or CPU_ONLY=1 (default 0): Whether to compile in (CUDA independent) \
   cout << "running test..." << endl;
 #ifdef _WIN32
   if (dbgMode == 1) {
-    cmd = "devenv /debugexe model\\PoissonIzh_sim.exe " + toString(argv[6]) + " " + toString(which);
+    cmd = "devenv /debugexe model\\PoissonIzh_sim.exe " + string(argv[6]) + " " + string(which);
   }
   else {
-    cmd = "model\\PoissonIzh_sim.exe " + toString(argv[6]) + " " + toString(which);
+    cmd = "model\\PoissonIzh_sim.exe " + string(argv[6]) + " " + to_string(which);
   }
 #else // UNIX
   if (dbgMode == 1) {
-    cmd = "cuda-gdb -tui --args model/PoissonIzh_sim " + toString(argv[6]) + " " + toString(which);
+    cmd = "cuda-gdb -tui --args model/PoissonIzh_sim " + string(argv[6]) + " " + to_string(which);
   }
   else {
     cmd = "model/PoissonIzh_sim " + toString(argv[6]) + " " + toString(which);

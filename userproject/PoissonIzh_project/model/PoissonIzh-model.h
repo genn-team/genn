@@ -10,21 +10,19 @@
    initial version: 2002-09-26
   
 --------------------------------------------------------------------------*/
+#pragma once
 
+#include <cstdint>
 
-#ifndef POISSONIZHMODEL_H 
-#define POISSONIZHMODEL_H
-
-#include <stdint.h>
-
+#include "PoissonIzh_CODE/definitions.h"
 
 class classol
 {
 private:
     void importArray(scalar *, double *, int);
     void exportArray(double *, scalar *, int);
- public:
-  NNmodel model;
+
+public:
   uint64_t *baserates;
   //------------------------------------------------------------------------
   // on the device:
@@ -41,7 +39,7 @@ private:
   void free_device_mem();
 #endif
   void read_PNIzh1syns(scalar *, FILE *);
-  void read_sparsesyns_par(const char*, struct SparseProjection, FILE *,FILE *,FILE *, double *);
+  void read_sparsesyns_par(unsigned int numPre, struct SparseProjection, FILE *,FILE *,FILE *, double *);
   void generate_baserates();
   void run(float, unsigned int);
   void output_state(FILE *, unsigned int);
@@ -52,5 +50,3 @@ private:
   void output_spikes(FILE *, unsigned int);
   void sum_spikes();
 };
-
-#endif
