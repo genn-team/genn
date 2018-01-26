@@ -23,40 +23,25 @@
 
 classol::classol()
 {
-  baserates= new uint64_t[_NPoisson];
   allocateMem();
   initialize();
   sumPN= 0;
   sumIzh1= 0;
 }
 
-void classol::init(unsigned int which)
-{
-  if (which == CPU) {
-    ratesPN= baserates;
-  }
-  else {
-#ifndef CPU_ONLY
-    copyStateToDevice();
-    ratesPN= d_baserates;
-#endif
-  }
-}
-
-#ifndef CPU_ONLY
-void classol::free_device_mem()
-{
-  // clean up memory
-  CHECK_CUDA_ERRORS(cudaFree(d_baserates));
-}
-#endif
-
 classol::~classol()
 {
-  free(baserates);
   freeMem();
 }
 
+void classol::init(unsigned int which)
+{
+    if (which == GPU) {
+#ifndef CPU_ONLY
+        copyStateToDevice();
+#endif
+    }
+}
 //--------------------------------------------------------------------------
 /*! \brief Helper function to cast an array to the appropriate floating point type for the current model
  */
@@ -107,7 +92,7 @@ void classol::read_PNIzh1syns(scalar *gp, FILE *f)
 //--------------------------------------------------------------------------
 
 void classol::read_sparsesyns_par(unsigned int numPre, //!< number of presynaptic neurons
-                                  SparseProjection C, //!< contains the arrays to be initialized from file
+                                  SparseProjection &C, //!< contains the arrays to be initialized from file
                                   FILE *f_ind, //!< file pointer for the indices of post-synaptic neurons
                                   FILE *f_indInG, //!< file pointer for the summed post-synaptic neurons numbers
                                   FILE *f_g, //!< File handle for a file containing sparse conductivity values
@@ -141,26 +126,6 @@ void classol::read_sparsesyns_par(unsigned int numPre, //!< number of presynapti
     }
 }
 
-
-void classol::generate_baserates()
-{
-    scalar InputBaseRate= 2e-02;
-    // we use a predefined pattern number
-    uint64_t inputBase;
-    convertRateToRandomNumberThreshold(&InputBaseRate, &inputBase, 1);
-    for (int i= 0; i < _NPoisson; i++) {
-        baserates[i]= inputBase;
-    }
-    fprintf(stderr, "generated baserates ... \n");
-    fprintf(stderr, "baserate value %f, converted random number: %lu ", InputBaseRate, inputBase);
-    fprintf(stderr, "\n\n");
-#ifndef CPU_ONLY
-    int size= _NPoisson*sizeof(uint64_t);
-    CHECK_CUDA_ERRORS(cudaMalloc((void**) &d_baserates, size));
-    CHECK_CUDA_ERRORS(cudaMemcpy(d_baserates, baserates, size, cudaMemcpyHostToDevice));
-#endif
-}
-
 void classol::run(float runtime, unsigned int which)
 {
     unsigned int offsetPN= 0;
@@ -189,9 +154,6 @@ void classol::output_state(FILE *f, unsigned int which)
 #endif
     }
     fprintf(f, "%f ", t);
-    for (int i= 0; i < _NPoisson; i++) {
-        fprintf(f, "%f ", VPN[i]);
-    }
 
     for (int i= 0; i < _NIzh; i++) {
         fprintf(f, "%f ", VIzh1[i]);

@@ -49,8 +49,6 @@ int main(int argc, char *argv[])
 
     name= OutDir+ "/" + argv[1] + ".out.Vm";
     FILE *osf= fopen(name.c_str(),"w");
-    name= OutDir+ "/" + argv[1] + ".outPN.Vm";
-    FILE *osfpn= fopen(name.c_str(),"w");
     //-----------------------------------------------------------------
     // build the neuronal circuitery
     classol PNIzhNN;
@@ -88,9 +86,6 @@ int main(int argc, char *argv[])
     fclose(f);
     //DENSE CONNECTIVITY END
 
-
-    PNIzhNN.generate_baserates();
-
     PNIzhNN.init(which);         // this includes copying g's for the GPU version
 
     fprintf(stderr, "# neuronal circuitery built, start computation ... \n\n");
@@ -125,14 +120,11 @@ int main(int argc, char *argv[])
         //    PNIzhNN.output_spikes(os, which);
         //   PNIzhNN.output_state(os, which);  // while outputting the current one ...
         fprintf(osf, "%f ", t);
-        fprintf(osfpn,"%f ",t);
         for(int i=0;i<10;i++) {
             fprintf(osf, "%f ", float(VIzh1[i]));
-            fprintf(osfpn, "%f ", float(VPN[i]));
 
         }
         fprintf(osf, "\n");
-        fprintf(osfpn, "\n");
         //      cudaThreadSynchronize();
 
         // report progress
@@ -179,5 +171,5 @@ int main(int argc, char *argv[])
     fprintf(timef, "%d %d %f \n", PNIzhNN.sumPN, PNIzhNN.sumIzh1, elapsedTime);
     fprintf(stdout, "%d Poisson spikes evoked spikes on %d Izhikevich neurons in %f seconds.\n", PNIzhNN.sumPN, PNIzhNN.sumIzh1, elapsedTime);
 
-  return 0;
+    return 0;
 }

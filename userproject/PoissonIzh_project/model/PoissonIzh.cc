@@ -15,18 +15,13 @@
 #include "global.h"
 #include "sizes.h"
 
-NeuronModels::Poisson::ParamValues myPOI_p(
+NeuronModels::PoissonNew::ParamValues myPOI_p(
 //POISSON neuron parameters
-  1,        // 0 - firing rate
-  2.5,        // 1 - refratory period
-  20.0,       // 2 - Vspike
-  -60.0       // 3 - Vrest
+    20.0        // 0 - firing rate [hZ]
 );
 
-NeuronModels::Poisson::VarValues myPOI_ini(
- -60.0,        // 0 - V
-  0,           // 1 - seed
-  -10.0       // 2 - SpikeTime
+NeuronModels::PoissonNew::VarValues myPOI_ini(
+    0.0        // 0 - Time to spike
 );
 
 NeuronModels::Izhikevich::ParamValues exIzh_p(
@@ -44,7 +39,7 @@ NeuronModels::Izhikevich::VarValues exIzh_ini(
 );
 
 WeightUpdateModels::StaticPulse::VarValues mySyn_ini(
-  0.0 //initial values of g
+    uninitialisedVar() // Weights are initialised in simulator so don't initialise here
 );
 
 
@@ -60,7 +55,7 @@ void modelDefinition(NNmodel &model)
 
     model.setName("PoissonIzh");
     model.setDT(1.0);
-    model.addNeuronPopulation<NeuronModels::Poisson>("PN", _NPoisson, myPOI_p, myPOI_ini);
+    model.addNeuronPopulation<NeuronModels::PoissonNew>("PN", _NPoisson, myPOI_p, myPOI_ini);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Izh1", _NIzh, exIzh_p, exIzh_ini);
 
     model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>("PNIzh1", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
