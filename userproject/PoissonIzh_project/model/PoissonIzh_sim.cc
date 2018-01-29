@@ -99,7 +99,6 @@ int main(int argc, char *argv[])
     t= 0.0;
     int done= 0;
     double last_t_report=  t;
-    PNIzhNN.run(DT, which);
     while (!done)
     {
 //    if (which == GPU) PNIzhNN.getSpikeNumbersFromGPU();

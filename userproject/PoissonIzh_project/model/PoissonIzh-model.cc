@@ -15,9 +15,6 @@
 // GeNN includes
 #include "modelSpec.h"
 
-// Auto-generated model code
-#include "PoissonIzh_CODE/definitions.h"
-
 // generate_run generated code
 #include "sizes.h"
 
