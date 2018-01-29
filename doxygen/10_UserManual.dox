@@ -84,7 +84,7 @@ tasks must be completed:
 
 Neuron populations are added using the function
 \code{.cc}
-model.addNeuronPopulation<NeuronModel>(name, num, paramValues, varValues);
+model.addNeuronPopulation<NeuronModel>(name, num, paramValues, varInitialisers);
 \endcode
 where the arguments are:
 \arg `NeuronModel`:        Template argument specifying the type of neuron model
@@ -94,7 +94,7 @@ where the arguments are:
 \arg `const string &name`: Unique name of the neuron population
 \arg `unsigned int size`: number of neurons in the population
 \arg `NeuronModel::ParamValues paramValues`: Parameters of this neuron type
-\arg `NeuronModel::VarValues varValues`: Initial values for variables of this neuron type 
+\arg `NeuronModel::VarValues varInitialisers`: Initial values or initialisation snippets for variables of this neuron type 
 
 The user may add as many neuron populations as the model necessitates.
 They must all have unique names. The possible values for the arguments,
@@ -127,11 +127,11 @@ where the arguments are
      neuron population.
 \arg `WeightUpdateModel::ParamValues weightParamValues`:    The parameter values (common to all synapses of 
                                                             the population) for the weight update model. 
-\arg `WeightUpdateModel::VarValues weightVarValues`:    The initial values for the weight
+\arg `WeightUpdateModel::VarValues weightVarInitialisers`:    Initial values or initialisation snippets for the weight
                                                         update model's state variables
 \arg `PostsynapticModel::ParamValues postsynapticParamValues`:  The parameter values (common to all 
                                                                 postsynaptic neurons) for the postsynaptic model. 
-\arg `PostsynapticModel::VarValues postsynapticVarValues`:  The initial values for the 
+\arg `PostsynapticModel::VarValues postsynapticVarInitialisers`:  Initial values or initialisation snippets for variables for the 
                                                             postsynaptic model's state variables
 
 \note
