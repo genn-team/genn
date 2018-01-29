@@ -1,5 +1,22 @@
 /*! \page ReleaseNotes Release Notes
 
+Release Notes for GeNN v3.1.0
+====
+This release builds on the changes made in 3.0.0 to further streamline the process of building models with GeNN. 
+
+User Side Changes
+----
+1. Support for simulating models described using the [SpineML](http://spineml.github.io/) model description language with GeNN.
+2. Basic support for distributing GeNN simulations amongst multiple machines using MPI.
+3. Neuron models can now sample from uniform, normal, exponential or log-normal distributions - these calls are translated to [cuRAND](http://docs.nvidia.com/cuda/curand/index.html) when run on GPUs and calls to the C++11 <random> library when run on CPU.
+4. Model state variables can now be initialised using small _snippets_ of code run either on GPU or CPU. This can save significant amounts of initialisation time for large models.
+5. New [MSBuild](https://docs.microsoft.com/en-us/visualstudio/msbuild/msbuild-reference) build system for Windows - makes developing user code from within Visual Studio much more streamlined.
+
+Bug fixes:
+----
+1. Workaround for [bug](https://bugs.launchpad.net/ubuntu/+source/glibc/+bug/1663280) found in Glibc which causes poor performance on some Linux systems (namely on Ubuntu 16.04 LTS).
+2. Fixed bug encountered when using extra global variables in weight updates.
+
 Release Notes for GeNN v3.0.0
 ====
 This release is the result of some fairly major refactoring of GeNN which we hope will make it more user-friendly and maintainable in the future.
