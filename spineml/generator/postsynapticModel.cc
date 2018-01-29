@@ -134,10 +134,15 @@ SpineMLGenerator::PostsynapticModel::PostsynapticModel(const ModelParams::Postsy
             // Find the name of the port on the neuron which this send port targets
             const auto &neuronPortTrg = params.getOutputPortTrg(portName);
             if(neuronPortTrg.first == ModelParams::Base::PortSource::POSTSYNAPTIC_NEURON) {
-                std::cout << "\t\t\tImplementing " << nodeType << " '" << portName << "' using postsynaptic neuron additional input var '" << neuronPortTrg.second << "'" << std::endl;
+                if(trgNeuronModel->hasAdditionalInputVar(neuronPortTrg.second)) {
+                    std::cout << "\t\t\tImplementing " << nodeType << " '" << portName << "' using postsynaptic neuron additional input var '" << neuronPortTrg.second << "'" << std::endl;
 
-                // Add mapping to vector
-                sendPortVariables.push_back(std::make_tuple(neuronPortTrg.second, portName, nodeType == "EventSendPort"));
+                    // Add mapping to vector
+                    sendPortVariables.push_back(std::make_tuple(neuronPortTrg.second, portName, nodeType == "EventSendPort"));
+                }
+                else {
+                    throw std::runtime_error("Post synaptic models can only provide input to impulse receive ports");
+                }
             }
             else {
                 throw std::runtime_error("GeNN does not support " + nodeType + " which target anything other than postsynaptic neurons");
