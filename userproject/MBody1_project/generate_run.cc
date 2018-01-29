@@ -92,15 +92,6 @@ CPU_ONLY=0 or CPU_ONLY=1 (default 0): Whether to compile in (CUDA independent) \
   os << "#define _NLB " << nLB << endl;
   string tmps= tS(ftype);
   os << "#define _FTYPE " << "GENN_" << toUpper(tmps) << endl;
-  os << "#define scalar " << toLower(tmps) << endl;
-  if (toLower(ftype) == "double") {
-      os << "#define SCALAR_MIN " << DBL_MIN << endl;
-      os << "#define SCALAR_MAX " << DBL_MAX << endl;
-  }
-  else {
-      os << "#define SCALAR_MIN " << FLT_MIN << "f" << endl;
-      os << "#define SCALAR_MAX " << FLT_MAX << "f" << endl;
-  } 
   os.close();
 
   // build it

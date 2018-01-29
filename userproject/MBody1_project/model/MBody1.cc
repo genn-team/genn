@@ -19,7 +19,6 @@
 //--------------------------------------------------------------------------
 
 #include "modelSpec.h"
-#include "global.h"
 #include "sizes.h"
 
 //uncomment the following line to turn on timing measures
@@ -58,7 +57,7 @@ NeuronModels::TraubMiles::VarValues stdTM_ini(
 );
 
 WeightUpdateModels::StaticPulse::VarValues myPNKC_ini(
-  0.01            // 0 - g: initial synaptic conductance
+  uninitialisedVar()    // 0 - g: initial synaptic conductance
 );
 
 PostsynapticModels::ExpCond::ParamValues postExpPNKC(
@@ -67,7 +66,7 @@ PostsynapticModels::ExpCond::ParamValues postExpPNKC(
 );
 
 WeightUpdateModels::StaticPulse::VarValues myPNLHI_ini(
-    0.0          // 0 - g: initial synaptic conductance
+    uninitialisedVar()  // 0 - g: initial synaptic conductance
 );
 
 PostsynapticModels::ExpCond::ParamValues postExpPNLHI(
@@ -103,8 +102,8 @@ WeightUpdateModels::PiecewiseSTDP::ParamValues myKCDN_p(
 );
 
 WeightUpdateModels::PiecewiseSTDP::VarValues myKCDN_ini(
-  0.01,            // 0 - g: synaptic conductance
-  0.01             // 1 - graw: raw synaptic conductance
+  uninitialisedVar(),   // 0 - g: synaptic conductance
+  uninitialisedVar()    // 1 - graw: raw synaptic conductance
 );
 
 PostsynapticModels::ExpCond::ParamValues postExpKCDN(
@@ -142,10 +141,11 @@ void modelDefinition(NNmodel &model)
 #endif // DEBUG
 
     GENN_PREFERENCES::userNvccFlags = " -O3 -use_fast_math";
-     GENN_PREFERENCES::optimizeCode = false;
-   //GENN_PREFERENCES::autoChooseDevice= 0;
+    //GENN_PREFERENCES::optimizeCode = false;
+    //GENN_PREFERENCES::autoChooseDevice= 0;
     //GENN_PREFERENCES::optimiseBlockSize= 0;
-    //GENN_PREFERENCES::neuronBlockSize= 192; 
+    //GENN_PREFERENCES::neuronBlockSize= 192;
+    GENN_PREFERENCES::defaultVarMode = VarMode::LOC_HOST_DEVICE_INIT_DEVICE;
 
     model.setName("MBody1");
     model.setDT(0.1);
