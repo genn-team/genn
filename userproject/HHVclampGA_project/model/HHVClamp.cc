@@ -25,7 +25,7 @@
 class MyHH : public NeuronModels::Base
 {
 public:
-    DECLARE_MODEL(MyHH, 0, 11);
+    DECLARE_MODEL(MyHH, 0, 12);
 
     SET_SIM_CODE(
         "scalar Imem;\n"
@@ -71,8 +71,9 @@ MyHH::VarValues myHH_ini(
   -72.0,         // 7 - EK: K equi potential in mV
   0.3,           // 8 - gl: leak conductance in 1/(mOhms * cm^2)
   -50.0,         // 9 - El: leak equi potential in mV
-  1.0            // 10 - Cmem: membr. capacity density in muF/cm^2
-);
+  1.0,           // 10 - Cmem: membr. capacity density in muF/cm^2
+  0.0);          // 11 - error
+
 
 //--------------------------------------------------------------------------
 /*! \brief This function defines the HH model with variable parameters.
