@@ -42,12 +42,10 @@ void classIzh::exportArray(double *dest, scalar *src, int sz)
 
 void classIzh::initializeAllVars(unsigned int which)
 {
-    // Initialise U variables based on auto-initialised
+    // Because they are calculated based on other, randomly-distributed initial values
+    // these cannot be automatically initialised so do this here
     for (int j=0; j< _NInh; j++){
         UPInh[j]=bPInh[j]*VPInh[j];
-    }
-    for (int j=0; j< _NExc; j++){
-        UPExc[j]=bPExc[j]*VPExc[j];
     }
 }
 

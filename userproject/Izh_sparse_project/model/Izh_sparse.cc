@@ -15,6 +15,7 @@
 
 #include "sizes.h"
 
+// Snippet for randomizing variables by adding the square of a uniformly distributed offset
 class RandomizeSq : public InitVarSnippet::Base
 {
 public:
@@ -28,20 +29,8 @@ public:
 };
 IMPLEMENT_SNIPPET(RandomizeSq);
 
-class Randomize : public InitVarSnippet::Base
-{
-public:
-    DECLARE_SNIPPET(Randomize, 2);
 
-    SET_CODE(
-        "const scalar random = $(gennrand_uniform);\n"
-        "$(value) = $(min) + (random * $(scale));");
-
-    SET_PARAM_NAMES({"min", "scale"});
-};
-IMPLEMENT_SNIPPET(Randomize);
-
-//we modify the IzhikevichVariable neuron to add noise to input current
+// IzhikevichVariable neuron modified to add noise to input current
 class MyIzhikevichVariableNoise : public NeuronModels::Base
 {
 public:
@@ -70,58 +59,59 @@ public:
 };
 IMPLEMENT_MODEL(MyIzhikevichVariableNoise);
 
-Randomize::ParamValues randomizedA(
-    0.02,   // 0 - min
-    0.08);  // 1 - scale
+// Izhikevich model fixed parameters - excitatory population
+MyIzhikevichVariableNoise::ParamValues IzhExc_par(
+    0.0,                // 0 -I0Mean
+    5.0 * inputFac);    // 1 - I0SD
 
-Randomize::ParamValues randomizedB(
-    0.2,   // 0 - min
-    -0.05);  // 1 - scale
-
-RandomizeSq::ParamValues randomizedC(
+// Parameters for randomizing C parameter - inhibitory population
+RandomizeSq::ParamValues randomizedExcC(
     -65.0,  // 0 - min
     15.0);  // 1 - scale
 
-RandomizeSq::ParamValues randomizedD(
-    8.0,  // 0 - min
-    -6.0    // 1 - scale
-);
+// Parameters for randomizing C parameter - inhibitory population
+RandomizeSq::ParamValues randomizedExcD(
+    8.0,    // 0 - min
+    -6.0);  // 1 - scale
 
-MyIzhikevichVariableNoise::ParamValues IzhExc_par(
-    0.0,            // 0 -I0Mean
-    5.0 * inputFac  // 1 - I0SD
-);
-
+// Izhikevich model initial conditions - excitatory population
 MyIzhikevichVariableNoise::VarValues IzhExc_ini(
-//Izhikevich model initial conditions - excitatory population
-    -65.0,                              // 0 - V
-    uninitialisedVar(),                 // 1 - U
-    0.02,                               // 2 - a
-    0.2,                                // 3 - b
-    initVar<RandomizeSq>(randomizedC),  // 4 - c
-    initVar<RandomizeSq>(randomizedD)); // 5 - d
+    -65.0,                                  // 0 - V
+    -65.0 * 0.2,                            // 1 - U
+    0.02,                                   // 2 - a
+    0.2,                                    // 3 - b
+    initVar<RandomizeSq>(randomizedExcC),   // 4 - c
+    initVar<RandomizeSq>(randomizedExcD));  // 5 - d
 
 
+// Izhikevich model fixed parameters - inhibitory population
 MyIzhikevichVariableNoise::ParamValues IzhInh_par(
     0.0,                // 0 -I0Mean
     2.0 * inputFac);    // 1 - I0SD
 
+// Parameters for uniformly distributing A parameter - inhibitory population
+InitVarSnippet::Uniform::ParamValues randomizedInhA(
+    0.02,           // 0 - min
+    0.02 + 0.08);   // 1 - max
 
+// Parameters for uniformly distributing B parameter - inhibitory population
+InitVarSnippet::Uniform::ParamValues randomizedInhB(
+    0.25 - 0.05,    // 0 - min
+    0.25);          // 1 - max
+
+// Izhikevich model initial conditions - inhibitory population
 MyIzhikevichVariableNoise::VarValues IzhInh_ini(
-//Izhikevich model initial conditions - inhibitory population
-    -65.0,                              // 0 - V
-    uninitialisedVar(),                 // 1 - U
-    initVar<Randomize>(randomizedA),    // 2 - a
-    initVar<Randomize>(randomizedB),    // 3 - b
-    -65.0,                              // 4 - c
-    2.0);                               // 5 - d
+    -65.0,                                              // 0 - V
+    uninitialisedVar(),                                 // 1 - U
+    initVar<InitVarSnippet::Uniform>(randomizedInhA),   // 2 - a
+    initVar<InitVarSnippet::Uniform>(randomizedInhB),   // 3 - b
+    -65.0,                                              // 4 - c
+    2.0);                                               // 5 - d
 
 
 // Weights are initialised from file so don't initialise
 WeightUpdateModels::StaticPulse::VarValues SynIzh_ini(
-    uninitialisedVar());    // default synaptic conductance
-
-
+    uninitialisedVar());
 
 void modelDefinition(NNmodel &model) 
 {
@@ -133,16 +123,18 @@ void modelDefinition(NNmodel &model)
     GENN_PREFERENCES::optimizeCode = true;
 #endif // DEBUG
 
-    // For this model we want to initialise variables on host as weights are not initialised anyway and
-    // we need to manually initialise U parameters based on other parameters
+    // By default we want to initialise variables on device
     GENN_PREFERENCES::autoInitSparseVars = true;
-    GENN_PREFERENCES::defaultVarMode = VarMode::LOC_HOST_DEVICE_INIT_HOST;
+    GENN_PREFERENCES::defaultVarMode = VarMode::LOC_HOST_DEVICE_INIT_DEVICE;
   
     model.setName("Izh_sparse");
     model.setDT(1.0);
     model.addNeuronPopulation<MyIzhikevichVariableNoise>("PExc", _NExc, IzhExc_par, IzhExc_ini);
+    auto *inh = model.addNeuronPopulation<MyIzhikevichVariableNoise>("PInh", _NInh, IzhInh_par, IzhInh_ini);
 
-    model.addNeuronPopulation<MyIzhikevichVariableNoise>("PInh", _NInh, IzhInh_par, IzhInh_ini);
+    // Override the variable mode of V and b so they can be used to calculate U on host
+    inh->setVarMode("V", VarMode::LOC_HOST_DEVICE_INIT_HOST);
+    inh->setVarMode("b", VarMode::LOC_HOST_DEVICE_INIT_HOST);
 
     model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>("Exc_Exc", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY,
                                                                                                "PExc", "PExc",
