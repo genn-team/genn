@@ -154,7 +154,7 @@ There is a number of predefined models which can be used with the NNmodel::addNe
 - NeuronModels::Izhikevich
 - NeuronModels::IzhikevichVariable
 - NeuronModels::SpikeSource
-- NeuronModels::Poisson
+- NeuronModels::PoissonNew
 - NeuronModels::TraubMiles
 - NeuronModels::TraubMilesFast
 - NeuronModels::TraubMilesAlt
@@ -193,7 +193,7 @@ public:
     
     SET_SIM_CODE("$(V)+= (-$(V)+$(Isyn))*(DT/$(tau));");
     
-    SET_THRESHOLD_CONDITION_CODE("$(V) >= -50.0");
+    SET_THRESHOLD_CONDITION_CODE("$(V) >= 1.0");
     
     SET_PARAM_NAMES({"tau"});
     
@@ -216,7 +216,7 @@ public:
     
     SET_SIM_CODE("$(V) = $(Isyn) - $(ExpTC)*($(Isyn) - $(V));");
     
-    SET_THRESHOLD_CONDITION_CODE("$(V) >= -50.0");
+    SET_THRESHOLD_CONDITION_CODE("$(V) >= 1.0");
     
     SET_PARAM_NAMES({"tau"});
     
@@ -228,7 +228,7 @@ public:
 \endcode
 
 GeNN provides two additional features that might be useful when defining more complex neuron models.
-"Support code" enables a code snippet to be defined that contains supporting code that will be utilized in the other code snippets. Typically, these are functions that are needed in the sim code or threshold condition code. If possible, these should be defined as `__host__ __device__` functions so that both GPU and CPU versions of GeNN code have an appropriate support code function available. The support code is protected with a namespace so that it is exclusively available for the neuron population whose neurons define it. Support code is added to a model using the SET_SUPPORT_CODE() macro, for example:
+"Support code" enables a code block to be defined that contains supporting code that will be utilized in multiple pieces of user code. Typically, these are functions that are needed in the sim code or threshold condition code. If possible, these should be defined as `__host__ __device__` functions so that both GPU and CPU versions of GeNN code have an appropriate support code function available. The support code is protected with a namespace so that it is exclusively available for the neuron population whose neurons define it. Support code is added to a model using the SET_SUPPORT_CODE() macro, for example:
 \code
 SET_SUPPORT_CODE("__device__ __host__ scalar mysin(float x){ return sin(x); }");
 \endcode
@@ -246,6 +246,12 @@ For example, if the model with the "R" parameter was used for the pre-synaptic n
 SET_SIM_CODE("$(x)= $(x)+$(R_pre);");
 \endcode
 where we have assumed that the weight update model has a variable `x` and our synapse type will only be used in conjunction with pre-synaptic neuron populations that do have the extra global parameter `R`. If the pre-synaptic population does not have the required variable/parameter, GeNN will fail when compiling the kernels.
+
+Many neuron models have probabilistic terms, for example a source of noise or a probabilistic spiking mechanism. In GeNN this can be implemented by using the following functions in blocks of model code:
+- <code>\$(gennrand_uniform)</code> returns a number drawn uniformly from the interval \f$[0.0, 1.0]\f$
+- <code>\$(gennrand_normal)</code> returns a number drawn from a normal distribution with a mean of 0 and a standard deviation of 1.
+- <code>\$(gennrand_exponential)</code> returns a number drawn from an exponential distribution with \f$\lambda=1\f$.
+- <code>\$(gennrand_log_normal, MEAN, STDDEV)</code> returns a number drawn from a log-normal distribution with the specified mean and standard deviation.
 
 Once defined in this way, new neuron models classes, can be used in network descriptions by referring to their type e.g.
 \code
