@@ -26,6 +26,7 @@
 - \subpage sectSynapseModels
 - \subpage subsect34
 - \subpage sect_postsyn
+- \subpage sectVariableInitialisation
 
 \section sIntro Introduction
 
@@ -358,8 +359,70 @@ SET_CURRENT_CONVERTER_CODE("$(inSyn) * ($(E) - $(V))");
 where "E" is a postsynaptic model parameter specifying reversal potential and "V" is the variable containing the postsynaptic neuron's membrane potential.
 
 -----
-\link sectNeuronModels Previous\endlink | \link UserManual Top\endlink | \link Tutorial1 Next\endlink
+\link sectNeuronModels Previous\endlink | \link UserManual Top\endlink | \link sectVariableInitialisation Next\endlink
 
+\page sectVariableInitialisation Variable initialisation
 
+Neuron, weight update and postsynaptic models all have state variables which GeNN can automatically initialise. 
+\note
+In previous versions of GeNN, weight update models state variables for synapse populations with sparse connectivity were not automatically initialised. 
+This behaviour remains the default, but by setting `GENN_PREFERENCES::autoInitSparseVars=true;`, it can be overriden.
+
+Previously we have shown variables being initialised to constant values such as:
+\code
+NeuronModels::TraubMiles::VarValues ini(
+    0.0529324,     // 1 - prob. for Na channel activation m
+    ...
+);
+\endcode
+state variables can also be left _uninitialised_ leaving it up to the user code to initialise them:
+\code
+NeuronModels::TraubMiles::VarValues ini(
+    uninitialisedVar(),     // 1 - prob. for Na channel activation m
+    ...
+);
+\endcode
+or initialised using one of a number of predefined _variable initialisation snippets_:
+- InitVarSnippet::Uniform
+- InitVarSnippet::Normal
+- InitVarSnippet::Exponential
+
+For example, to initialise a parameter using values drawn from the normal distribution:
+\code
+InitVarSnippet::Normal::ParamValues params(
+    0.05,   // 0 - mean
+    0.01);  // 1 - standard deviation
+    
+NeuronModels::TraubMiles::VarValues ini(
+    initVar<InitVarSnippet::Normal>(params),     // 1 - prob. for Na channel activation m
+    ...
+);
+\endcode
+\section sect_new_var_init Defining a new variable initialisation snippet
+Similarly to neuron, weight update and postsynaptic models, new variable initialisation snippets can be created by simply defining a class in the model description.
+For example, when initialising excitatory (positive) synaptic weights with a normal distribution they should be clipped at 0 so the long tail of the normal distribution doesn't result in negative weights.
+This could be implemented using the following variable initialisation snippet which redraws until samples are within the desired bounds:
+\code
+class NormalPositive : public InitVarSnippet::Base
+{
+public:
+    DECLARE_SNIPPET(NormalPositive, 2);
+
+    SET_CODE(
+        "scalar normal;"
+        "do\n"
+        "{\n"
+        "   normal = $(mean) + ($(gennrand_normal) * $(sd));\n"
+        "} while (normal < 0.0);\n"
+        "$(value) = normal;\n");
+
+    SET_PARAM_NAMES({"mean", "sd"});
+};
+IMPLEMENT_SNIPPET(NormalPositive);
+\endcode
+.
+
+-----
+\link sect_new_postsynaptic Previous\endlink | \link UserManual Top\endlink | \link Tutorial1 Next\endlink
 */
 
