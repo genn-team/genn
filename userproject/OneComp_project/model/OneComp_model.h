@@ -10,17 +10,13 @@
    initial version: 2002-09-26
   
 --------------------------------------------------------------------------*/
+#pragma once
 
-
-#ifndef ONECOMP_H 
-#define ONECOMP_H
-
-#include "OneComp.cc"
+#include "OneComp_CODE/definitions.h"
 
 class neuronpop
 {
  public:
-  NNmodel model;
   unsigned int sumIzh1;
   neuronpop();
   ~neuronpop();
@@ -34,5 +30,3 @@ class neuronpop
   void output_spikes(FILE *, unsigned int);
   void sum_spikes();
 };
-
-#endif
