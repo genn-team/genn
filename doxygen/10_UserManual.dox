@@ -372,7 +372,11 @@ where "E" is a postsynaptic model parameter specifying reversal potential and "V
 Neuron, weight update and postsynaptic models all have state variables which GeNN can automatically initialise. 
 \note
 In previous versions of GeNN, weight update models state variables for synapse populations with sparse connectivity were not automatically initialised. 
-This behaviour remains the default, but by setting `GENN_PREFERENCES::autoInitSparseVars=true;`, it can be overriden.
+This behaviour remains the default, but by setting 
+\code
+GENN_PREFERENCES::autoInitSparseVars=true;
+\endcode
+this can be overriden.
 
 Previously we have shown variables being initialised to constant values such as:
 \code
@@ -426,7 +430,29 @@ public:
 };
 IMPLEMENT_SNIPPET(NormalPositive);
 \endcode
-.
+
+\section sect_var_init_modes Variable initialisation modes
+Once you have defined <b>how</b> your variables are going to be initialised you need to configure <b>where</b> they will be initialised and allocated. 
+By default memory is allocated for variables on both the GPU and the host; and variables are initialised on the host as described in section \ref sectVariableInitialisation and then uploaded to the GPU.
+However, variable initialisation can also be offloaded to the GPU, potentially reducing the time spent both calculating the initial values and uploading them. 
+To enable this functionality the following alternative modes of operation are available:
+- VarMode::LOC_DEVICE_INIT_DEVICE - Variables are only allocated on the GPU (and thus initialised there), saving memory but meaning that they can't easily be copied to the host - best for internal state variables.
+- VarMode::LOC_HOST_DEVICE_INIT_HOST - Variables are allocated on both the GPU and the host and are initialised on the host and automatically uploaded - the default.
+- VarMode::LOC_HOST_DEVICE_INIT_DEVICE - Variables are allocated on both the GPU and the host and are initialised on the GPU - best default for new models.
+- VarMode::LOC_ZERO_COPY_INIT_HOST - Variables are allocated as 'zero-copy' memory accessible to the host and GPU and initialised on the host.
+- VarMode::LOC_ZERO_COPY_INIT_DEVICE - Variables are allocated as 'zero-copy' memory accessible to the host and GPU and initialised on the GPU.
+
+\note
+'Zero copy' memory is only supported on newer embedded systems such as the Jetson TX1 where there is no physical seperation between GPU and host memory and thus the same block of memory can be shared between them. 
+
+These modes can be set as a global default using ``GENN_PREFERENCES::defaultVarMode`` or on a per-variable basis using one of the following functions:
+- NeuronGroup::setSpikeVarMode
+- NeuronGroup::setSpikeEventVarMode
+- NeuronGroup::setSpikeTimeVarMode
+- NeuronGroup::setVarMode
+- SynapseGroup::setWUVarMode
+- SynapseGroup::setPSVarMode
+- SynapseGroup::setInSynVarMode
 
 -----
 \link sect_new_postsynaptic Previous\endlink | \link UserManual Top\endlink | \link Tutorial1 Next\endlink
