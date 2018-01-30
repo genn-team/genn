@@ -162,6 +162,13 @@ void modelDefinition(NNmodel &model)
     const SynapseMatrixType pnkcMatrixType = SynapseMatrixType::DENSE_INDIVIDUALG;
 #endif
 
+#ifdef DELAYED_SYNAPSES
+    const unsigned int kcDNDelaySteps = 5;
+    const unsigned int dnDNDelaySteps = 3;
+#else
+    const unsigned int kcDNDelaySteps = NO_DELAY;
+    const unsigned int dnDNDelaySteps = NO_DELAY;
+#endif
     model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::ExpCond>("PNKC", pnkcMatrixType, NO_DELAY,
                                                                                              "PN", "KC",
                                                                                              {}, myPNKC_ini,
@@ -174,11 +181,11 @@ void modelDefinition(NNmodel &model)
                                                                                               "LHI", "KC",
                                                                                               myLHIKC_p, myLHIKC_ini,
                                                                                               postExpLHIKC, {});
-    model.addSynapsePopulation<WeightUpdateModels::PiecewiseSTDP, PostsynapticModels::ExpCond>("KCDN", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+    model.addSynapsePopulation<WeightUpdateModels::PiecewiseSTDP, PostsynapticModels::ExpCond>("KCDN", SynapseMatrixType::DENSE_INDIVIDUALG, kcDNDelaySteps,
                                                                                                "KC", "DN",
                                                                                                myKCDN_p, myKCDN_ini,
                                                                                                postExpKCDN, {});
-    model.addSynapsePopulation<WeightUpdateModels::StaticGraded, PostsynapticModels::ExpCond>("DNDN", SynapseMatrixType::DENSE_GLOBALG, NO_DELAY,
+    model.addSynapsePopulation<WeightUpdateModels::StaticGraded, PostsynapticModels::ExpCond>("DNDN", SynapseMatrixType::DENSE_GLOBALG, dnDNDelaySteps,
                                                                                               "DN", "DN",
                                                                                               myDNDN_p, myDNDN_ini,
                                                                                               postExpDNDN, {});
@@ -193,5 +200,5 @@ void modelDefinition(NNmodel &model)
 #else
     model.setTiming(false);
 #endif // TIMING
-  model.finalize();
+    model.finalize();
 }

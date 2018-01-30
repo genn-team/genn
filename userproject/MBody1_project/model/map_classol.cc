@@ -473,7 +473,7 @@ void classol::output_state(FILE *f, //!< File handle for a file to write the mod
 
 void classol::getSpikesFromGPU()
 {
-    copySpikesFromDevice();
+    copyCurrentSpikesFromDevice();
 }
 
 //--------------------------------------------------------------------------
@@ -499,23 +499,23 @@ void classol::output_spikes(FILE *f, //!< File handle for a file to write spike 
 {
 
     //    fprintf(stdout, "%f %f %f %f %f\n", t, glbSpkCntPN, glbSpkCntKC, glbSpkCntLHI,glbSpkCntDN);
-    for (int i= 0; i < glbSpkCntPN[0]; i++) {
-        fprintf(f, "%f %d\n", t, glbSpkPN[i]);
+    for (int i= 0; i < spikeCount_PN; i++) {
+        fprintf(f, "%f %d\n", t, spike_PN[i]);
     }
 
     const unsigned int kcStart = _NAL;
-    for (int i= 0; i < glbSpkCntKC[0]; i++) {
-        fprintf(f,  "%f %d\n", t, kcStart+glbSpkKC[i]);
+    for (int i= 0; i < spikeCount_KC; i++) {
+        fprintf(f,  "%f %d\n", t, kcStart+spike_KC[i]);
     }
 
     const unsigned int lhiStart = kcStart + _NMB;
-    for (int i= 0; i < glbSpkCntLHI[0]; i++) {
-        fprintf(f, "%f %d\n", t, lhiStart+glbSpkLHI[i]);
+    for (int i= 0; i < spikeCount_LHI; i++) {
+        fprintf(f, "%f %d\n", t, lhiStart+spike_LHI[i]);
     }
 
     const unsigned int dnStart = lhiStart + _NLHI;
-    for (int i= 0; i < glbSpkCntDN[0]; i++) {
-        fprintf(f, "%f %d\n", t, dnStart+glbSpkDN[i]);
+    for (int i= 0; i < spikeCount_DN; i++) {
+        fprintf(f, "%f %d\n", t, dnStart+spike_DN[i]);
     }
 }
 
@@ -526,10 +526,10 @@ void classol::output_spikes(FILE *f, //!< File handle for a file to write spike 
 
 void classol::sum_spikes()
 {
-  sumPN+= glbSpkCntPN[0];
-  sumKC+= glbSpkCntKC[0];
-  sumLHI+= glbSpkCntLHI[0];
-  sumDN+= glbSpkCntDN[0];
+  sumPN+= spikeCount_PN;
+  sumKC+= spikeCount_KC;
+  sumLHI+= spikeCount_LHI;
+  sumDN+= spikeCount_DN;
 }
 
 #ifndef CPU_ONLY

@@ -4,6 +4,7 @@ string ftype= "FLOAT";
 unsigned int fixsynapse= 0;
 unsigned int cpu_only= 0;
 unsigned int bitmask = 0;
+unsigned int delayed_synapses = 0;
 string option;
 for (int i= argStart; i < argc; i++) {
     if (extract_option(argv[i],option) != 0) {
@@ -39,6 +40,12 @@ for (int i= argStart; i < argc; i++) {
         else if (option == "BITMASK") {
             if(extract_bool_value(argv[i], bitmask) != 0) {
                 cerr << "illegal value for 'BITMASK' option." << endl;
+                exit(1);
+            }
+        }
+        else if (option == "DELAYED_SYNAPSES") {
+            if(extract_bool_value(argv[i], delayed_synapses) != 0) {
+                cerr << "illegal value for 'DELAYED_SYNAPSES' option." << endl;
                 exit(1);
             }
         }

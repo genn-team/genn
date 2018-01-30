@@ -47,7 +47,7 @@ using namespace std;
 
 int main(int argc, char *argv[])
 {
-    if ((argc < 9) || (argc > 14))
+    if ((argc < 9) || (argc > 15))
     {
         cerr << "usage: generate_run <CPU=0, AUTO GPU=1, GPU n= \"n+2\"> <nAL> <nMB> <nLHI> <nLb> <gscale> <outdir> <model name> <OPTIONS> \n\
 Possible options: \n\
@@ -55,23 +55,24 @@ DEBUG=0 or DEBUG=1 (default 0): Whether to run in a debugger \n\
 FTYPE=DOUBLE of FTYPE=FLOAT (default FLOAT): What floating point type to use \n\
 REUSE=0 or REUSE=1 (default 0): Whether to reuse generated connectivity from an earlier run \n\
 BITMASK=0 or BITMASK=1 (default 0): Whether to use bitmasks to represent sparse PN->KC connectivity\n\
+DELAYED_SYNAPSES=0 or DELAYED_SYNAPSES=1 (default 0): Whether to simulate delays of (5 * DT) ms on KC->DN and of (3 * DT) ms on DN->DN synapse populations\n\
 CPU_ONLY=0 or CPU_ONLY=1 (default 0): Whether to compile in (CUDA independent) \"CPU only\" mode." << endl;
         exit(1);
     }
 
     int retval;
     string cmd;
-    string gennPath = getenv("GENN_PATH");
     int which = atoi(argv[1]);
-    int nAL = atoi(argv[2]);
-    int nMB = atoi(argv[3]);
-    int nLHI = atoi(argv[4]);
-    int nLB = atoi(argv[5]);
-    double gscale = atof(argv[6]);
-    string outdir = toString(argv[7]) + "_output";
-    string modelName = argv[8];
+    const string gennPath = getenv("GENN_PATH");
+    const int nAL = atoi(argv[2]);
+    const int nMB = atoi(argv[3]);
+    const int nLHI = atoi(argv[4]);
+    const int nLB = atoi(argv[5]);
+    const double gscale = atof(argv[6]);
+    const string outdir = toString(argv[7]) + "_output";
+    const string modelName = argv[8];
 
-    int argStart= 9;
+    const int argStart= 9;
 #include "parse_options.h"  // parse options
 
     const double pnkc_gsyn = 100.0 / nAL * gscale;
@@ -81,8 +82,7 @@ CPU_ONLY=0 or CPU_ONLY=1 (default 0): Whether to compile in (CUDA independent) \
     const double pnlhi_theta = 100.0 / nAL * 14.0 * gscale;
 
     // write neuron population sizes
-    string fname = "./model/sizes.h";
-    ofstream os(fname.c_str());
+    ofstream os("./model/sizes.h");
     if (which > 1) {
         os << "#define nGPU " << which-2 << endl;
         which= 1;
@@ -93,9 +93,16 @@ CPU_ONLY=0 or CPU_ONLY=1 (default 0): Whether to compile in (CUDA independent) \
     os << "#define _NLB " << nLB << endl;
     string tmps= tS(ftype);
     os << "#define _FTYPE " << "GENN_" << toUpper(tmps) << endl;
+
+    // If bitmask mode is enabled, write flag and value to use for global PN->KC weights
     if(bitmask) {
         os << "#define BITMASK" << endl;
         os << "#define gPNKC_GLOBAL " << pnkc_gsyn << endl;
+    }
+
+    // If delayed synapse mode is enabled, write flag
+    if(delayed_synapses) {
+        os << "#define DELAYED_SYNAPSES" << endl;
     }
     os.close();
 

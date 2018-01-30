@@ -172,7 +172,6 @@ int main(int argc, char *argv[])
     float last_t_report=  t;
     timer.startTimer();
 
-
     while (!done)
     {
         if (which == GPU) {
