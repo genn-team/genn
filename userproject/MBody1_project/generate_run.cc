@@ -104,13 +104,21 @@ CPU_ONLY=0 or CPU_ONLY=1 (default 0): Whether to compile in (CUDA independent) \
   if (dbgMode) cmd += " -d";
   if (cpu_only) cmd += " -c";
 #ifdef _WIN32
-  cmd += " && nmake /nologo /f WINmakefile clean all ";
+  cmd += " && msbuild MBody1.vcxproj /p:Configuration=";
+  if (dbgMode) {
+	  cmd += "Debug";
+  }
+  else {
+	  cmd += "Release";
+  }
+  if (cpu_only) {
+	  cmd += "_CPU_ONLY";
+  }
 #else // UNIX
-  cmd += " && make clean all ";
-#endif
-  cmd += "SIM_CODE=" + modelName + "_CODE";
+  cmd += " && make clean all SIM_CODE=" + modelName + "_CODE";
   if (dbgMode) cmd += " DEBUG=1";
   if (cpu_only) cmd += " CPU_ONLY=1";
+#endif
   cout << cmd << endl;
   retval=system(cmd.c_str());
   if (retval != 0){
@@ -198,10 +206,10 @@ CPU_ONLY=0 or CPU_ONLY=1 (default 0): Whether to compile in (CUDA independent) \
   cout << "running test..." << endl;
 #ifdef _WIN32
   if (dbgMode == 1) {
-      cmd = "devenv /debugexe model\\classol_sim.exe " + toString(argv[7]) + " " + toString(which);
+      cmd = "devenv /debugexe model\\MBody1.exe " + toString(argv[7]) + " " + toString(which);
   }
   else {
-    cmd = "model\\classol_sim.exe " + toString(argv[7]) + " " + toString(which);
+    cmd = "model\\MBody1.exe " + toString(argv[7]) + " " + toString(which);
   }
 #else // UNIX
   if (dbgMode == 1) {
