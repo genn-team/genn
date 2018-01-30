@@ -372,11 +372,10 @@ void classol::runCPU(scalar runtime) //!< Duration of time to run the model for
             ratesPN= pattern;
             offsetPN= pno*_NAL;
         }
-        if (iT%m_PatFireTime == m_PatFireTime) {
+        if (iT%m_PatSetTime == m_PatFireTime) {
             ratesPN= baserates;
             offsetPN= 0;
         }
-
         stepTimeCPU();
     }
 }
