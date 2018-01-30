@@ -22,7 +22,7 @@ The model definition file contains the definition of the network model we want t
 
 void modelDefinition(NNmodel &model)
 {
-  // definition of tenHHModel
+    // definition of tenHHModel
 }
 \endcode
 First we should set some options:
@@ -32,9 +32,9 @@ GENN_PREFERENCES::defaultVarMode = VarMode::LOC_HOST_DEVICE_INIT_DEVICE;
 The ``defaultVarMode`` option controls how model state variables will be initialised. The ``VarMode::LOC_HOST_DEVICE_INIT_DEVICE`` setting means that initialisation will be done on the GPU, but memory will be allocated on both the host and GPU so the values can be copied back into host memory so they can be recorded. This setting should generally be the default for new models, but section \ref sect_var_init_modes outlines the full range of options as well as how you can control this option on a per-variable level.
 Now we need to fill the actual model definition. Three standard elements to the `modelDefinition function are initialising GeNN, setting the simulation step size and setting the name of the model:
 \code
-  initGeNN();
-  model.setDT(0.1);
-  model.setName("tenHHModel");
+initGeNN();
+model.setDT(0.1);
+model.setName("tenHHModel");
 \endcode
 \note 
 With this we have fixed the integration time step to `0.1` in the usual time units. The typical units in GeNN are `ms`, `mV`, `nF`, and `&mu;S`. Therefore, this defines `DT= 0.1 ms`.
@@ -48,30 +48,30 @@ Making the actual model definition makes use of the NNmodel::addNeuronPopulation
 
 We first create the parameter and initial variable arrays,
 \code
-  // definition of tenHHModel
-  NeuronModels::TraubMiles::ParamValues p(
+// definition of tenHHModel
+NeuronModels::TraubMiles::ParamValues p(
     7.15,          // 0 - gNa: Na conductance in muS
     50.0,          // 1 - ENa: Na equi potential in mV
     1.43,          // 2 - gK: K conductance in muS
-   -95.0,          // 3 - EK: K equi potential in mV 
+    -95.0,          // 3 - EK: K equi potential in mV 
     0.02672,       // 4 - gl: leak conductance in muS
     -63.563,       // 5 - El: leak equi potential in mV
     0.143          // 6 - Cmem: membr. capacity density in nF
-  ); 
+); 
 
-  NeuronModels::TraubMiles::VarValues ini(
+NeuronModels::TraubMiles::VarValues ini(
     -60.0,         // 0 - membrane potential V
     0.0529324,     // 1 - prob. for Na channel activation m
     0.3176767,     // 2 - prob. for not Na channel blocking h
     0.5961207      // 3 - prob. for K channel activation n
-  );
+);
 \endcode
 \note
 The comments are obviously only for clarity, they can in principle be omitted. To avoid any confusion about the meaning of parameters and variables, however, we recommend strongly to always include comments of this type.
 
 Having defined the parameter values and initial values we can now create the neuron population,
 \code
-  model.addNeuronPopulation<NeuronModels::TraubMiles>("Pop1", 10, p, ini);
+model.addNeuronPopulation<NeuronModels::TraubMiles>("Pop1", 10, p, ini);
 \endcode
 
 The model definition then needs to end on calling
@@ -87,32 +87,32 @@ This completes the model definition in this example. The complete `tenHHModel.cc
 
 void modelDefinition(NNmodel &model)
 {
-  // Settings
-  GENN_PREFERENCES::defaultVarMode = VarMode::LOC_HOST_DEVICE_INIT_DEVICE;
-  
-  // definition of tenHHModel
-  initGeNN();
-  model.setDT(0.1);
-  model.setName("tenHHModel");
-  
-  NeuronModels::TraubMiles::ParamValues p(
-    7.15,          // 0 - gNa: Na conductance in muS
-    50.0,          // 1 - ENa: Na equi potential in mV
-    1.43,          // 2 - gK: K conductance in muS
-   -95.0,          // 3 - EK: K equi potential in mV 
-    0.02672,       // 4 - gl: leak conductance in muS
-    -63.563,       // 5 - El: leak equi potential in mV
-    0.143          // 6 - Cmem: membr. capacity density in nF
-  ); 
+    // Settings
+    GENN_PREFERENCES::defaultVarMode = VarMode::LOC_HOST_DEVICE_INIT_DEVICE;
 
-  NeuronModels::TraubMiles::VarValues ini(
-    -60.0,         // 0 - membrane potential V
-    0.0529324,     // 1 - prob. for Na channel activation m
-    0.3176767,     // 2 - prob. for not Na channel blocking h
-    0.5961207      // 3 - prob. for K channel activation n
-  );
-  model.addNeuronPopulation<NeuronModels::TraubMiles>("Pop1", 10, p, ini);
-  model.finalize();
+    // definition of tenHHModel
+    initGeNN();
+    model.setDT(0.1);
+    model.setName("tenHHModel");
+
+    NeuronModels::TraubMiles::ParamValues p(
+        7.15,          // 0 - gNa: Na conductance in muS
+        50.0,          // 1 - ENa: Na equi potential in mV
+        1.43,          // 2 - gK: K conductance in muS
+        -95.0,          // 3 - EK: K equi potential in mV 
+        0.02672,       // 4 - gl: leak conductance in muS
+        -63.563,       // 5 - El: leak equi potential in mV
+        0.143          // 6 - Cmem: membr. capacity density in nF
+    ); 
+
+    NeuronModels::TraubMiles::VarValues ini(
+        -60.0,         // 0 - membrane potential V
+        0.0529324,     // 1 - prob. for Na channel activation m
+        0.3176767,     // 2 - prob. for not Na channel blocking h
+        0.5961207      // 3 - prob. for K channel activation n
+    );
+    model.addNeuronPopulation<NeuronModels::TraubMiles>("Pop1", 10, p, ini);
+    model.finalize();
 }
 \endcode
 This model definition suffices to generate code for simulating the ten Hodgkin-Huxley neurons on the a GPU or CPU. The second part of a GeNN simulation is the user code that sets up the simulation, does the data handling for input and output and generally defines the numerical experiment to be run.
@@ -137,10 +137,10 @@ For the purposes of this tutorial we will initially simply run the model for one
 
 int main()
 {
-  allocateMem();
-  initialize();
-  
-  return 0;
+    allocateMem();
+    initialize();
+
+    return 0;
 }
 \endcode
 This boiler plate code includes the header file for the generated code `definitions.h` in the subdirectory `tenHHModel_CODE` where GeNN deposits all generated code (this corresponds to the name passed to the ``NNmodel::setName`` function).
@@ -153,13 +153,13 @@ for(int i = 0; i < (int)(1000.0 / DT); i++) {
 \endcode
 and we need to copy the result, and output it to stdout,
 \code
-  pullPop1StateFromDevice();
-  for (int j= 0; j < 10; j++) {  
+pullPop1StateFromDevice();
+for (int j= 0; j < 10; j++) {  
     cout << VPop1[j] << " ";
     cout << mPop1[j] << " ";
     cout << hPop1[j] << " ";
     cout << nPop1[j] << endl;
-  }
+}
 \endcode
 `pullPop1StateFromDevice()` copies all relevant state variables of the `Pop1` neuron group from the GPU to the CPU main memory. Then we can output the results to stdout by looping through all 10 neurons and outputting the state variables VPop1, mPop1, hPop1, nPop1.
 \note
@@ -172,19 +172,19 @@ This completes the user code. The complete `tenHHSimulation.cc` file should now 
 
 int main()
 {
-  allocateMem();
-  initialize();
-  for(int i = 0; i < (int)(1000.0 / DT); i++) {
-    stepTimeGPU();
-  }
-  pullPop1StateFromDevice();
-  for (int j= 0; j < 10; j++) {  
-    cout << VPop1[j] << " ";
-    cout << mPop1[j] << " ";
-    cout << hPop1[j] << " ";
-    cout << nPop1[j] << endl;
-  }  
-  return 0;
+    allocateMem();
+    initialize();
+    for(int i = 0; i < (int)(1000.0 / DT); i++) {
+        stepTimeGPU();
+    }
+    pullPop1StateFromDevice();
+    for (int j= 0; j < 10; j++) {  
+        cout << VPop1[j] << " ";
+        cout << mPop1[j] << " ";
+        cout << hPop1[j] << " ";
+        cout << nPop1[j] << endl;
+    }  
+    return 0;
 }
 
 \endcode
@@ -248,14 +248,14 @@ This can be done in many ways but one sensible way of doing this is to replace t
 \code
 ofstream os("tenHH_output.V.dat");
 for (int i= 0; i < 10000; i++) {
-  stepTimeGPU();
-  
-  pullPop1StateFromDevice();
-  os << t << " ";
-  for (int j= 0; j < 10; j++) {
-    os << VPop1[j] << " ";
-  }
-  os << endl;
+    stepTimeGPU();
+
+    pullPop1StateFromDevice();
+    os << t << " ";
+    for (int j= 0; j < 10; j++) {
+        os << VPop1[j] << " ";
+    }
+    os << endl;
 }
 os.close();
 \endcode
