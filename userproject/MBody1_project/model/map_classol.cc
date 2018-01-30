@@ -91,9 +91,9 @@ void classol::allocate_device_mem_patterns()
 
 void classol::free_device_mem()
 {
-  // clean up memory
-  CHECK_CUDA_ERRORS(cudaFree(d_pattern));
-  CHECK_CUDA_ERRORS(cudaFree(d_baserates));
+    // clean up memory
+    CHECK_CUDA_ERRORS(cudaFree(d_pattern));
+    CHECK_CUDA_ERRORS(cudaFree(d_baserates));
 }
 #endif
 
@@ -102,22 +102,22 @@ void classol::free_device_mem()
 
 classol::~classol()
 {
-  free(pattern);
-  free(baserates);
-  freeMem();
+    free(pattern);
+    free(baserates);
+    freeMem();
 }
 
 void classol::importArray(scalar *dest, double *src, int sz) 
 {
     for (int i= 0; i < sz; i++) {
-	dest[i]= (scalar) src[i];
+        dest[i]= (scalar) src[i];
     }
 }
 
 void classol::exportArray(double *dest, scalar *src, int sz) 
 {
     for (int i= 0; i < sz; i++) {
-	dest[i]= (scalar) src[i];
+        dest[i]= (scalar) src[i];
     }
 }
 
@@ -126,33 +126,33 @@ void classol::exportArray(double *dest, scalar *src, int sz)
  */
 //--------------------------------------------------------------------------
 
-void classol::read_pnkcsyns(FILE *f //!< File handle for a file containing PN to KC conductivity values
-			    )
+void classol::read_pnkcsyns(FILE *f) //!< File handle for a file containing PN to KC conductivity values
 {
-  // version 1
-    int sz= _NAL*_NMB;
-    double *tmpg= new double[sz];
-    fprintf(stdout, "%lu\n", sz * sizeof(double));
-    unsigned int retval = fread(tmpg, 1, sz * sizeof(double),f);
-    importArray(gPNKC, tmpg, sz);
-    // version 2
-    /*  unsigned int UIntSz= sizeof(unsigned int)*8;   // in bit!
-    unsigned int logUIntSz= (int) (logf((scalar) UIntSz)/logf(2.0f)+1e-5f);
-    unsigned int tmp= _NAL*_NMB;
-    unsigned size= (tmp >> logUIntSz);
-    if (tmp > (size << logUIntSz)) size++;
-    size= size*sizeof(unsigned int);
-    is.read((char *)gPNKC, size);*/
 
-    // general:
-    //assert(is.good());
+    int size = _NAL*_NMB;
+#ifdef BITMASK
+    size = (size/32+1)*sizeof(uint32_t);
+
+    unsigned int retval = fread(gpPNKC, 1, size, f);
+    fprintf(stdout,"read pnkc ... \n");
+    fprintf(stdout, "%u bytes, values start with: \n", retval);
+    for(int i= 0; i < 20; i++) {
+        fprintf(stdout, "%u ", gpPNKC[i]);
+    }
+#else
+    double *tmpg= new double[size];
+    fprintf(stdout, "%lu\n", size * sizeof(double));
+    unsigned int retval = fread(tmpg, 1, size * sizeof(double),f);
+    importArray(gPNKC, tmpg, size);
+
     fprintf(stdout,"read pnkc ... \n");
     fprintf(stdout, "%u bytes, values start with: \n", retval);
     for(int i= 0; i < 20; i++) {
         fprintf(stdout, "%f ", gPNKC[i]);
     }
-    fprintf(stdout,"\n\n");
     delete[] tmpg;
+#endif
+     fprintf(stdout,"\n\n");
 }
 
 //--------------------------------------------------------------------------
@@ -163,12 +163,17 @@ void classol::read_pnkcsyns(FILE *f //!< File handle for a file containing PN to
 
 void classol::write_pnkcsyns(FILE *f) //!< File handle for a file to write PN to KC conductivity values to
 {
-    int sz= _NAL*_NMB;
-    double *tmpg= new double[sz];
-    exportArray(tmpg, gPNKC, sz);
-    fwrite(tmpg, sz * sizeof(double), 1, f);
-    fprintf(stdout, "wrote pnkc ... \n");
+    int size= _NAL*_NMB;
+#ifdef BITMASK
+    size= (size/32+1)*sizeof(uint32_t);
+    fwrite(gpPNKC, size, 1, f);
+#else
+    double *tmpg= new double[size];
+    exportArray(tmpg, gPNKC, size);
+    fwrite(tmpg, size * sizeof(double), 1, f);
     delete[] tmpg;
+#endif
+    fprintf(stdout, "wrote pnkc ... \n");
 }
 
 

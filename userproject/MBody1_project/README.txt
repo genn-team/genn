@@ -42,6 +42,7 @@ Optional arguments:
 DEBUG=0 or DEBUG=1 (default 0): Whether to run in a debugger
 FTYPE=DOUBLE of FTYPE=FLOAT (default FLOAT): What floating point type to use
 REUSE=0 or REUSE=1 (default 0): Whether to reuse generated connectivity from an earlier run
+BITMASK=0 or BITMASK=1 (default 0): Whether to use bitmasks to represent sparse PN->KC connectivity.
 CPU_ONLY=0 or CPU_ONLY=1 (default 0): Whether to compile in (CUDA independent) "CPU only" mode.
 
 An example invocation of generate_run is:

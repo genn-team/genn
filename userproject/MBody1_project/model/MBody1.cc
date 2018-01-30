@@ -56,9 +56,15 @@ NeuronModels::TraubMiles::VarValues stdTM_ini(
     0.5961207   // 3 - prob. for K channel activation n
 );
 
+#ifdef BITMASK
+WeightUpdateModels::StaticPulse::VarValues myPNKC_ini(
+    gPNKC_GLOBAL            // 0 - g: initial synaptic conductance
+);
+#else
 WeightUpdateModels::StaticPulse::VarValues myPNKC_ini(
     uninitialisedVar()  // 0 - g: initial synaptic conductance
 );
+#endif
 
 PostsynapticModels::ExpCond::ParamValues postExpPNKC(
     1.0,    // 0 - tau_S: decay time constant for S [ms]
@@ -149,7 +155,14 @@ void modelDefinition(NNmodel &model)
     model.addNeuronPopulation<NeuronModels::TraubMiles>("LHI", _NLHI, stdTM_p, stdTM_ini);
     model.addNeuronPopulation<NeuronModels::TraubMiles>("DN", _NLB, stdTM_p, stdTM_ini);
     
-    model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::ExpCond>("PNKC", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+    // Determine matrix type for PNKC
+#ifdef BITMASK
+    const SynapseMatrixType pnkcMatrixType = SynapseMatrixType::BITMASK_GLOBALG;
+#else
+    const SynapseMatrixType pnkcMatrixType = SynapseMatrixType::DENSE_INDIVIDUALG;
+#endif
+
+    model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::ExpCond>("PNKC", pnkcMatrixType, NO_DELAY,
                                                                                              "PN", "KC",
                                                                                              {}, myPNKC_ini,
                                                                                              postExpPNKC, {});
