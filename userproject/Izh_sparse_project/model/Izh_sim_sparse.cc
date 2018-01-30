@@ -10,9 +10,12 @@
    initial version: 2002-09-26
   
 --------------------------------------------------------------------------*/
-
+// Standard C++ includes
 #include <iostream>
 #include <fstream>
+
+// Standard C includes
+#include <ctime>
 
 // GeNN includes
 #include "hr_time.h"
