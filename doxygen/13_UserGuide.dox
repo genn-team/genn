@@ -171,11 +171,14 @@ In Linux, users can call `cuda-gdb` to debug on the GPU. Example projects in the
 If you are executing a project with debugging on, the code will be compiled with -g -G flags. In CPU mode the executable will be run in gdb,
 and in GPU mode it will be run in cuda-gdb in tui mode. 
 
-On Mac, some versions of `clang` aren't supported by the CUDA toolkit. This is a recurring problem on Fedora as well, where CUDA doesn't keep up with GCC releases. You can either hack the CUDA header which checks compiler versions - `cuda/include/host_config.h` - or just use an older XCode version (6.4 works fine).
-
 \note
 Do not forget to switch debugging flags -g and -G off after debugging is complete as they may negatively affect performance.
-\n
+
+On Mac, some versions of `clang` aren't supported by the CUDA toolkit. This is a recurring problem on Fedora as well, where CUDA doesn't keep up with GCC releases. You can either hack the CUDA header which checks compiler versions - `cuda/include/host_config.h` - or just use an older XCode version (6.4 works fine).
+
+On Windows models can also be debugged and developed by opening the vcxproj file used to build the model in Visual Studio. From here files can be added to the project, build settings can be adjusted and the full suite of Visual Studio debugging and profiling tools can be used. 
+\note
+When opening the models in the `userproject` directory in Visual Studio, right-click on the project in the solution explorer, select 'Properties'. Then, making sure the desired configuration is selected, navigate to 'Debugging' under 'Configuration Properties', set the 'Working Directory' to '..' and the 'Command Arguments' to match those passed to genn-buildmodel e.g. 'outdir 1' to use an output directory called outdir and to run the model on the GPU.
 
 -----
 \link Tutorial2 Previous\endlink | \link UserGuide Top\endlink | \link Credits Next\endlink
