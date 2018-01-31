@@ -43,6 +43,9 @@ void modelDefinition(NNmodel &model)
     GENN_PREFERENCES::optimizeCode = true;
 #endif // DEBUG
 
+    // By default we want to initialise variables on device
+    GENN_PREFERENCES::defaultVarMode = VarMode::LOC_HOST_DEVICE_INIT_DEVICE;
+
     model.setName("SynDelay");
     model.setDT(1.0);
     model.setPrecision(GENN_FLOAT);
@@ -103,12 +106,12 @@ void modelDefinition(NNmodel &model)
     );
 
     NeuronModels::Izhikevich::VarValues output_ini( // Izhikevich variables - tonic spiking
-        -65,       // 0 - V
-        -20    // 1 - U
+        -65,    // 0 - V
+        -20     // 1 - U
     );
     PostsynapticModels::ExpCond::ParamValues postExpOut(
         1.0,            // 0 - tau_S: decay time constant for S [ms]
-        0.0		  // 1 - Erev: Reversal potential
+        0.0             // 1 - Erev: Reversal potential
     );
 
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Output", 500, output_p, output_ini);

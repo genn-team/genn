@@ -12,7 +12,6 @@
 --------------------------------------------------------------------------*/
 
 #include "modelSpec.h"
-#include "global.h"
 #include "sizes.h"
 
 class MyIzhikevich : public NeuronModels::Izhikevich
@@ -35,8 +34,8 @@ public:
 };
 IMPLEMENT_MODEL(MyIzhikevich);
 
-MyIzhikevich::ParamValues exIzh_p(
 //Izhikevich model parameters - tonic spiking
+MyIzhikevich::ParamValues exIzh_p(
     0.02,       // 0 - a
     0.2,        // 1 - b
     -65,        // 2 - c
@@ -44,8 +43,8 @@ MyIzhikevich::ParamValues exIzh_p(
     4.0         // 4 - I0 (input current)
 );
 
-MyIzhikevich::VarValues exIzh_ini(
 //Izhikevich model initial conditions - tonic spiking
+MyIzhikevich::VarValues exIzh_ini(
     -65,        //0 - V
     -20         //1 - U
 );
@@ -54,21 +53,20 @@ MyIzhikevich::VarValues exIzh_ini(
 
 void modelDefinition(NNmodel &model) 
 {
-  initGeNN();
+    initGeNN();
 
 #ifdef DEBUG
-  GENN_PREFERENCES::debugCode = true;
+    GENN_PREFERENCES::debugCode = true;
 #else
-  GENN_PREFERENCES::optimizeCode = true;
+    GENN_PREFERENCES::optimizeCode = true;
 #endif // DEBUG
+    GENN_PREFERENCES::defaultVarMode = VarMode::LOC_HOST_DEVICE_INIT_DEVICE;
 
-#ifndef CPU_ONLY
-  model.setGPUDevice(0);
-#endif
-  model.setName("OneComp");
-  model.setDT(1.0);
 
-  model.addNeuronPopulation<MyIzhikevich>("Izh1", _NC1, exIzh_p, exIzh_ini);
-  model.setPrecision(GENN_FLOAT);
-  model.finalize();
+    model.setName("OneComp");
+    model.setDT(1.0);
+
+    model.addNeuronPopulation<MyIzhikevich>("Izh1", _NC1, exIzh_p, exIzh_ini);
+    model.setPrecision(_FTYPE);
+    model.finalize();
 }

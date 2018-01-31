@@ -150,15 +150,6 @@ CPU_ONLY=0 or CPU_ONLY=1 (default 0): Whether to compile in (CUDA independent) \
   os << "#define inputFac " << inputFac << endl;
   string tmps= tS(ftype);
   os << "#define _FTYPE " << "GENN_" << toUpper(tmps) << endl;
-  os << "#define scalar " << toLower(tmps) << endl;
-  if (toLower(ftype) == "double") {
-      os << "#define SCALAR_MIN DBL_MIN" << endl;
-      os << "#define SCALAR_MAX DBL_MAX" << endl;
-  }
-  else {
-      os << "#define SCALAR_MIN FLT_MIN" << endl;
-      os << "#define SCALAR_MAX FLT_MAX" << endl;
-  } 
   os.close();
 
   // build it
@@ -171,13 +162,21 @@ CPU_ONLY=0 or CPU_ONLY=1 (default 0): Whether to compile in (CUDA independent) \
   if (dbgMode) cmd += " -d";
   if (cpu_only) cmd += " -c";
 #ifdef _WIN32
-  cmd += " && nmake /nologo /f WINmakefile clean all ";
+  cmd += " && msbuild Izh_sparse.vcxproj /p:Configuration=";
+  if (dbgMode) {
+	  cmd += "Debug";
+  }
+  else {
+	  cmd += "Release";
+  }
+  if (cpu_only) {
+	  cmd += "_CPU_ONLY";
+  }
 #else // UNIX
-  cmd += " && make clean all ";
-#endif
-  cmd += "SIM_CODE=" + modelName + "_CODE";
+  cmd += " && make clean all SIM_CODE=" + modelName + "_CODE";
   if (dbgMode) cmd += " DEBUG=1";
   if (cpu_only) cmd += " CPU_ONLY=1";
+#endif
   cout << cmd << endl;
   retval=system(cmd.c_str());
   if (retval != 0){
