@@ -13,7 +13,7 @@ User Side Changes
 
 Bug fixes:
 ----
-1. Workaround for [bug](https://bugs.launchpad.net/ubuntu/+source/glibc/+bug/1663280) found in Glibc which causes poor performance on some Linux systems (namely on Ubuntu 16.04 LTS).
+1. Workaround for [bug](https://bugs.launchpad.net/ubuntu/+source/glibc/+bug/1663280) found in Glibc 2.23 and 2.24 which causes poor performance on some 64-bit Linux systems (namely on Ubuntu 16.04 LTS).
 2. Fixed bug encountered when using extra global variables in weight updates.
 
 Release Notes for GeNN v3.0.0
