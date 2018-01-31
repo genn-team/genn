@@ -358,11 +358,13 @@ The postsynaptic model defines how synaptic activation translates into an input 
 In the same manner as to both the neuron and weight update models discussed in \ref sect_own and \ref sect34, postsynamic model definitions are encapsulated in a class derived from PostsynapticModels::Base. Again, the methods that a postsynaptic model should implement can be implemented using the following macros:
 - DECLARE_MODEL(TYPE, NUM_PARAMS, NUM_VARS), SET_DERIVED_PARAMS(), SET_PARAM_NAMES(), SET_VARS() perform the same roles as they do in the neuron models discussed in \ref sect_own.
 - SET_DECAY_CODE(DECAY_CODE) defines the code which provides the continuous time dynamics for the summed presynaptic inputs to the postsynaptic neuron. This usually consists of some kind of decay function.
-- SET_CURRENT_CONVERTER_CODE(CURRENT_CONVERTER_CODE) defines the code specifying the conversion from synaptic inputs to a postsynaptic neuron input current (Isyn). e.g. for a conductance model:
+- SET_APPLY_INPUT_CODE(APPLY_INPUT_CODE) defines the code specifying the conversion from synaptic inputs to a postsynaptic neuron input current. e.g. for a conductance model:
 \code
-SET_CURRENT_CONVERTER_CODE("$(inSyn) * ($(E) - $(V))");
+SET_APPLY_INPUT_CODE("$(Isyn) += $(inSyn) * ($(E) - $(V))");
 \endcode
-where "E" is a postsynaptic model parameter specifying reversal potential and "V" is the variable containing the postsynaptic neuron's membrane potential.
+where ``E`` is a postsynaptic model parameter specifying reversal potential and ``V`` is the variable containing the postsynaptic neuron's membrane potential.
+As discussed in \ref predefinedVars, ``Isyn`` is the built in variable used to sum neuron input.
+However additional input variables can be added to a neuron model using the SET_ADDITIONAL_INPUT_VARS() macro (see \ref sect_own for more details).
 
 -----
 \link sectNeuronModels Previous\endlink | \link UserManual Top\endlink | \link sectVariableInitialisation Next\endlink

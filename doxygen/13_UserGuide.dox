@@ -146,7 +146,7 @@ Neuron integration can be done in multiple sub-steps inside the neuron model for
 - \c Isyn : This is a local variable which contains the (summed) input current to a neuron. It is typically the sum of any explicit current input 
 and all synaptic inputs. The way its value is calculated during the update of the postsynaptic neuron is defined by the code provided in the postsynaptic model. For example, the standard PostsynapticModels::ExpCond postsynaptic model defines
 \code
-SET_CURRENT_CONVERTER_CODE("$(inSyn)*($(E)-$(V))");
+SET_APPLY_INPUT_CODE("$(Isyn) += $(inSyn)*($(E)-$(V))");
 \endcode
 which implements a conductance based synapse in which the postsynaptic current is given by \f$I_{\rm syn}= g*s*(V_{\rm rev}-V_{\rm post})\f$. 
 \note
