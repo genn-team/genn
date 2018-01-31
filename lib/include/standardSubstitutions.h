@@ -39,17 +39,19 @@ typedef NameIterCtx<NewModels::Base::StringPairVec> ExtraGlobalParamNameIterCtx;
 //----------------------------------------------------------------------------
 namespace StandardSubstitutions
 {
+//! Applies standard set of variable substitutions to postsynaptic model's "apply input" code
 void postSynapseApplyInput(
-    std::string &psCode,          //!< the code string to work on
-    const SynapseGroup *sg,
-    const NeuronGroup &ng,
+    std::string &psCode,                                    //!< the code string to work on
+    const SynapseGroup *sg,                                 //! Synapse group postsynaptic model is used in
+    const NeuronGroup &ng,                                  //! The postsynaptic neuron group
     const VarNameIterCtx &nmVars,
     const DerivedParamNameIterCtx &nmDerivedParams,
-    const ExtraGlobalParamNameIterCtx &nmExtraGlobalParams,
-    const std::vector<FunctionTemplate> functions,
-    const std::string &ftype,
-    const std::string &rng);
+    const ExtraGlobalParamNameIterCtx &nmExtraGlobalParams, //!
+    const std::vector<FunctionTemplate> functions,          //! Appropriate array of platform-specific function templates used to implement platform-specific functions e.g. gennrand_uniform
+    const std::string &ftype,                               //! Floating point type used by model e.g. "float"
+    const std::string &rng);                                //! Name of the RNG to use for any probabilistic operations
 
+//! Applies standard set of variable substitutions to postsynaptic model's "decay" code
 void postSynapseDecay(
     std::string &pdCode,
     const SynapseGroup *sg,
@@ -61,6 +63,7 @@ void postSynapseDecay(
     const std::string &ftype,
     const std::string &rng);
 
+//! Applies standard set of variable substitutions to neuron model's "threshold condition" code
 void neuronThresholdCondition(
     std::string &thCode,
     const NeuronGroup &ng,

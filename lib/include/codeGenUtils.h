@@ -28,20 +28,23 @@ namespace NewModels
 //--------------------------------------------------------------------------
 // GenericFunction
 //--------------------------------------------------------------------------
-// Immutable structure for specifying the name and number of
-// arguments of a generic funcion e.g. gennrand_uniform
+//! Immutable structure for specifying the name and number of
+//! arguments of a generic funcion e.g. gennrand_uniform
 struct GenericFunction
 {
+    //! Generic name used to refer to function in user code
     const std::string genericName;
+
+    //! Number of function arguments
     const unsigned int numArguments;
 };
 
 //--------------------------------------------------------------------------
 // FunctionTemplate
 //--------------------------------------------------------------------------
-// Immutable structure for specifying how to implement
-// a generic function e.g. gennrand_uniform
-// **NOTE** for the sake of easy initialisation first two parameters of GenericFunction are repeated (C++17 fixes)
+//! Immutable structure for specifying how to implement
+//! a generic function e.g. gennrand_uniform
+/*! **NOTE** for the sake of easy initialisation first two parameters of GenericFunction are repeated (C++17 fixes) */
 struct FunctionTemplate
 {
     // **HACK** while GCC and CLang automatically generate this fine/don't require it, VS2013 seems to need it
@@ -50,17 +53,23 @@ struct FunctionTemplate
         return FunctionTemplate{o.genericName, o.numArguments, o.doublePrecisionTemplate, o.singlePrecisionTemplate};
     }
 
+    //! Generic name used to refer to function in user code
     const std::string genericName;
+
+    //! Number of function arguments
     const unsigned int numArguments;
 
+    //! The function template (for use with ::functionSubstitute) used when model uses double precision
     const std::string doublePrecisionTemplate;
+
+    //! The function template (for use with ::functionSubstitute) used when model uses single precision
     const std::string singlePrecisionTemplate;
 };
 
 //--------------------------------------------------------------------------
 // PairKeyConstIter
 //--------------------------------------------------------------------------
-// Custom iterator for iterating through the keys of containers containing pairs
+//! Custom iterator for iterating through the keys of containers containing pairs
 template<typename BaseIter>
 class PairKeyConstIter : public BaseIter
 {
@@ -88,10 +97,11 @@ public:
     }
 };
 
+//! Helper function for creating a PairKeyConstIter from an iterator
 template<typename BaseIter>
 inline PairKeyConstIter<BaseIter> GetPairKeyConstIter(BaseIter iter)
 {
-  return iter;
+    return iter;
 }
 
 //--------------------------------------------------------------------------
@@ -158,6 +168,9 @@ inline void name_substitutions(string &code, const string &prefix, NameIter name
     }
 }
 
+//--------------------------------------------------------------------------
+//! \brief This function performs a list of name substitutions for variables in code snippets.
+//--------------------------------------------------------------------------
 inline void name_substitutions(string &code, const string &prefix, const vector<string> &names, const string &postfix= "", const string &ext = "")
 {
     name_substitutions(code, prefix, names.cbegin(), names.cend(), postfix, ext);
@@ -182,6 +195,9 @@ inline void value_substitutions(string &code, NameIter namesBegin, NameIter name
     }
 }
 
+//--------------------------------------------------------------------------
+//! \brief This function performs a list of value substitutions for parameters in code snippets.
+//--------------------------------------------------------------------------
 inline void value_substitutions(string &code, const vector<string> &names, const vector<double> &values, const string &ext = "")
 {
     value_substitutions(code, names.cbegin(), names.cend(), values, ext);
@@ -197,7 +213,6 @@ void functionSubstitutions(std::string &code, const std::string &ftype,
 /*! \brief This function implements a parser that converts any floating point constant in a code snippet to a floating point constant with an explicit precision (by appending "f" or removing it).
  */
 //--------------------------------------------------------------------------
-
 string ensureFtype(const string &oldcode, const string &type);
 
 
@@ -205,7 +220,6 @@ string ensureFtype(const string &oldcode, const string &type);
 /*! \brief This function checks for unknown variable definitions and returns a gennError if any are found
  */
 //--------------------------------------------------------------------------
-
 void checkUnreplacedVariables(const string &code, const string &codeName);
 
 
@@ -214,10 +228,9 @@ void checkUnreplacedVariables(const string &code, const string &codeName);
   \brief Function for performing the code and value substitutions necessary to insert neuron related variables, parameters, and extraGlobal parameters into synaptic code.
 */
 //-------------------------------------------------------------------------
-
 void neuron_substitutions_in_synaptic_code(
-    string &wCode, //!< the code string to work on
-    const SynapseGroup *sg,
-    const string &preIdx, //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
-    const string &postIdx, //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
-    const string &devPrefix); //!< device prefix, "dd_" for GPU, nothing for CPU
+    string &wCode,              //!< the code string to work on
+    const SynapseGroup *sg,     //!< the synapse group connecting the pre and postsynaptic neuron populations whose parameters might need to be substituted
+    const string &preIdx,       //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
+    const string &postIdx,      //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
+    const string &devPrefix);   //!< device prefix, "dd_" for GPU, nothing for CPU
