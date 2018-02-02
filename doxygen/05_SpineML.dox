@@ -32,7 +32,7 @@ Once you have loaded a model, click "Expts" from the menu on the left hand side 
 Now click "Run experiment" and, after a short time, the results of your GeNN simulation will be available for plotting by clicking the "Graphs" option in the menu on the left hand side of SpineCreator.
 
 -----
-\link Examples Previous\endlink | \link SpineML Top\endlink | \link ReleaseNotes  Next\endlink
+\link Examples Previous\endlink | \link SpineML Top\endlink | \link brian2genn  Next\endlink
 
 */
 //----------------------------------------------------------------------------
