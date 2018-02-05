@@ -10,12 +10,9 @@
    initial version: 2002-09-26
   
 --------------------------------------------------------------------------*/
+#pragma once
 
-
-#ifndef IZH_SPARSE_MODEL_H 
-#define IZH_SPARSE_MODEL_H
-
-//#include "Izh_sparse.cc"
+#include "Izh_sparse_CODE/definitions.h"
 
 class classIzh
 {
@@ -23,21 +20,13 @@ class classIzh
   void importArray(scalar *, double *, int);
   void exportArray(double *, scalar *, int);
  public:
-  NNmodel model;
-  scalar *input1, *input2;
-  //------------------------------------------------------------------------
-  // on the device:
-  scalar *d_input1, *d_input2;
   //------------------------------------------------------------------------
   unsigned int sumPExc, sumPInh;
   classIzh();
   ~classIzh();
-  void init(unsigned int);
   void allocate_device_mem_patterns();
   void allocate_device_mem_input();
-  void copy_device_mem_input();
-  void read_sparsesyns_par(const char*, struct SparseProjection, FILE *,FILE *,FILE *, scalar *);
-  void gen_alltoall_syns(scalar *, const char*, scalar);
+  void read_sparsesyns_par(unsigned int, SparseProjection&, FILE *,FILE *,FILE *, scalar *);
   void free_device_mem();
   void write_input_to_file(FILE *);
   void read_input_values(FILE *);
@@ -49,10 +38,5 @@ class classIzh
   void output_spikes(FILE *, unsigned int);
   void output_params(FILE *, FILE *);
   void sum_spikes();
-  void setInput(unsigned int);
-  void randomizeVar(scalar *, scalar, const NeuronGroup *);
-  void randomizeVarSq(scalar *, scalar, const NeuronGroup *);
   void initializeAllVars(unsigned int);
 };
-
-#endif

@@ -12,7 +12,7 @@
 ##--------------------------------------------------------------------------
 
 EXECUTABLE         :=PoissonIzh_sim
-SOURCES            :=$(EXECUTABLE).cc
+SOURCES            :=PoissonIzh_sim.cc PoissonIzh-model.cc
 OPTIMIZATIONFLAGS  :=-O3
 
 include	$(GENN_PATH)/userproject/include/makefile_common_gnu.mk

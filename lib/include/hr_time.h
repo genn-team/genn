@@ -36,6 +36,8 @@ typedef struct {
     timeval stop;
 } stopWatch;
 
+//! Helper class for timing sections of host code in a cross-plarform manner
+/*! Uses performance counters on windows and microsecond time on Unix*/
 class CStopWatch {
 private:
     stopWatch timer;

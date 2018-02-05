@@ -15,7 +15,6 @@ while getopts "c" opt; do
 done
 
 # Clean GeNN library
-echo $GENN_PATH
 pushd $GENN_PATH/lib
 make clean
 popd
@@ -34,16 +33,20 @@ for f in features/*;
         # Loop through model suffixes
         for s in "" _new;
             do
-                # Clean
-                make clean 1>> ../../msg 2>> ../../msg
-
-                # Build and generate model
-                if genn-buildmodel.sh $BUILD_FLAGS model$s.cc 1>>../../msg 2>> ../../msg ; then
-                    # Determine where the sim code is located for this test and build
+                if [ -f "model$s.cc" ]; then
+                    # Determine where the sim code is located for this test
                     c=$(basename $f)$s"_CODE"
-                    if make $MAKE_FLAGS SIM_CODE=$c 1>>../../msg 2>>../../msg ; then
-                        # Run tests
-                        ./test --gtest_output="xml:test_results$s.xml"
+
+                    # Clean
+                    make $MAKE_FLAGS SIM_CODE=$c clean 1>> ../../msg 2>> ../../msg
+
+                    # Build and generate model
+                    if genn-buildmodel.sh $BUILD_FLAGS model$s.cc 1>>../../msg 2>> ../../msg ; then
+                        # Make
+                        if make $MAKE_FLAGS SIM_CODE=$c 1>>../../msg 2>>../../msg ; then
+                            # Run tests
+                            ./test --gtest_output="xml:test_results$s.xml"
+                        fi
                     fi
                 fi
             done;
@@ -66,4 +69,24 @@ make $MAKE_FLAGS 1>>../../msg 2>>../../msg
 
 # Pop unit tests directory
 popd
+
+# Clean GeNN library
+pushd $GENN_PATH/lib
+make clean
+popd
+
+pushd spineml
+pushd simulator
+
+# Clean
+make clean 1>> ../../msg 2>> ../../msg
+
+# Build
+make $MAKE_FLAGS 1>>../../msg 2>>../../msg 
+
+# Run SpineML simulator tests
+./test --gtest_output="xml:test_results_spineml.xml"
+
+popd    # simulator
+popd    # spineml
 

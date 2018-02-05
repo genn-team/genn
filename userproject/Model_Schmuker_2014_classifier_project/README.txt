@@ -32,11 +32,11 @@ Then to compile the experiment plus the GeNN created C/CUDA code type:-
 
 make
 
-for Linux, Mac and other UNIX users, or:
+for Linux, Mac and other UNIX users (add DEBUG=1 if using debug mode), or:
 
-nmake /f WINmakefile
+msbuild Schmuker2014_classifier.vcxproj /p:Configuration=Release
 
-for Windows users (add DEBUG=1 if using debug mode).
+for Windows users (change Release to Debug if using debug mode).
 
 Once it compiles you should be able to run the classifier against the included Iris dataset.
 
@@ -46,7 +46,7 @@ type
 
 for Linux, Mac and other UNIX systems, or:
 
-experiment .
+Schmuker2014_classifier .
 
 for Windows systems.
 

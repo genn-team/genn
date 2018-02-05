@@ -31,7 +31,6 @@
 
 unsigned int GeNNReady = 0;
 
-// ------------------------------------------------------------------------
 //! \brief Method for GeNN initialisation (by preparing standard models)
     
 void initGeNN()
@@ -43,15 +42,29 @@ void initGeNN()
 }
 
 // ------------------------------------------------------------------------
+// Anonymous namespace
+// ------------------------------------------------------------------------
+namespace
+{
+void createVarInitialiserFromLegacyVars(const std::vector<double> &ini, std::vector<NewModels::VarInit> &varInitialisers)
+{
+    varInitialisers.reserve(ini.size());
+    std::transform(ini.cbegin(), ini.cend(), std::back_inserter(varInitialisers),
+                   [](double v)
+                   {
+                       return NewModels::VarInit(v);
+                   });
+}
+}
+
+// ------------------------------------------------------------------------
 // NNmodel
 // ------------------------------------------------------------------------
 // class NNmodel for specifying a neuronal network model
 
-NNmodel::NNmodel() 
+NNmodel::NNmodel()
 {
     final= false;
-    needSt= false;
-    needSynapseDelay = false;
     setDT(0.5);
     setPrecision(GENN_FLOAT);
     setTiming(false);
@@ -78,19 +91,150 @@ bool NNmodel::zeroCopyInUse() const
 {
     // If any neuron groups use zero copy return true
     if(any_of(begin(m_NeuronGroups), end(m_NeuronGroups),
-        [](const std::pair<string, NeuronGroup> &n){ return n.second.isZeroCopyEnabled(); }))
+        [](const NeuronGroupValueType &n){ return n.second.isZeroCopyEnabled(); }))
     {
         return true;
     }
 
-    // If any neuron groups use zero copy return true
+    // If any synapse groups use zero copy return true
     if(any_of(begin(m_SynapseGroups), end(m_SynapseGroups),
-        [](const std::pair<string, SynapseGroup> &s){ return s.second.isZeroCopyEnabled(); }))
+        [](const SynapseGroupValueType &s){ return s.second.isZeroCopyEnabled(); }))
     {
         return true;
     }
 
     return false;
+}
+
+bool NNmodel::isDeviceInitRequired() const
+{
+    // If device RNG is required, device init is required to initialise it
+    if(isDeviceRNGRequired()) {
+        return true;
+    }
+
+    // If any neuron groups require a sim RNG
+    // **NOTE** this includes both simulation RNG seeds and variables initialised on device
+    if(std::any_of(std::begin(m_NeuronGroups), std::end(m_NeuronGroups),
+        [](const NNmodel::NeuronGroupValueType &n)
+        {
+            return (n.second.isSimRNGRequired() || n.second.isDeviceVarInitRequired());
+        }))
+    {
+        return true;
+    }
+
+    // Check whether any synapse groups require initialisation in this kernel
+    // **NOTE** this only includes dense matrices
+    if(std::any_of(std::begin(m_SynapseGroups), std::end(m_SynapseGroups),
+        [](const NNmodel::SynapseGroupValueType &s)
+        {
+            return ((s.second.getMatrixType() & SynapseMatrixConnectivity::DENSE) &&
+                    (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) &&
+                    s.second.isWUDeviceVarInitRequired());
+        }))
+    {
+        return true;
+    }
+
+    return false;
+}
+
+bool NNmodel::isDeviceSparseInitRequired() const
+{
+    // If automatic initialisation of sparse variables isn't enabled, return false
+    if(!GENN_PREFERENCES::autoInitSparseVars) {
+        return false;
+    }
+
+    // Return true if any of the synapse groups have sparse connectivity which requires device initialiation
+    return std::any_of(std::begin(m_SynapseGroups), std::end(m_SynapseGroups),
+        [](const NNmodel::SynapseGroupValueType &s)
+        {
+            return ((s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) &&
+                (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) &&
+                s.second.isWUDeviceVarInitRequired());
+        });
+}
+
+bool NNmodel::isHostRNGRequired() const
+{
+    // Cache whether the model can run on the CPU
+    const bool cpu = canRunOnCPU();
+
+    // If model can run on the CPU and any neuron groups require simulation RNGs
+    // or if any require host RNG for initialisation, return true
+    if(any_of(begin(m_NeuronGroups), end(m_NeuronGroups),
+        [cpu](const NeuronGroupValueType &n)
+        {
+            return ((cpu && n.second.isSimRNGRequired()) || n.second.isInitRNGRequired(VarInit::HOST));
+        }))
+    {
+        return true;
+    }
+
+    // If any synapse groups require a host RNG return true
+    if(any_of(begin(m_SynapseGroups), end(m_SynapseGroups),
+        [](const SynapseGroupValueType &s)
+        {
+            return s.second.isWUInitRNGRequired(VarInit::HOST);
+        }))
+    {
+        return true;
+    }
+
+    return false;
+}
+
+bool NNmodel::isDeviceRNGRequired() const
+{
+    // If any neuron groupsrequire device RNG for initialisation, return true
+    if(any_of(begin(m_NeuronGroups), end(m_NeuronGroups),
+        [](const NeuronGroupValueType &n)
+        {
+            return n.second.isInitRNGRequired(VarInit::DEVICE);
+        }))
+    {
+        return true;
+    }
+
+    // If any synapse groups require a device RNG for initialisation, return true
+    if(any_of(begin(m_SynapseGroups), end(m_SynapseGroups),
+        [](const SynapseGroupValueType &s)
+        {
+            return s.second.isWUInitRNGRequired(VarInit::DEVICE);
+        }))
+    {
+        return true;
+    }
+
+    return false;
+}
+
+bool NNmodel::canRunOnCPU() const
+{
+#ifndef CPU_ONLY
+    // If any of the neuron groups can't run on the CPU, return false
+    if(any_of(begin(m_NeuronGroups), end(m_NeuronGroups),
+        [](const NeuronGroupValueType &n)
+        {
+            return !n.second.canRunOnCPU();
+        }))
+    {
+        return false;
+    }
+
+    // If any of the synapse groups can't run on the CPU, return false
+    if(any_of(begin(m_SynapseGroups), end(m_SynapseGroups),
+        [](const SynapseGroupValueType &s)
+        {
+            return !s.second.canRunOnCPU();
+        }))
+    {
+        return false;
+    }
+#endif
+    return true;
 }
 
 //--------------------------------------------------------------------------
@@ -220,9 +364,14 @@ NeuronGroup *NNmodel::addNeuronPopulation(
         gennError("The number of variable initial values for neuron group " + name + " does not match that of their neuron type, " + to_string(ini.size()) + " != " + to_string(nModels[type].varNames.size()));
     }
 
+    // Create variable initialisers from old-style values
+    std::vector<NewModels::VarInit> varInitialisers;
+    createVarInitialiserFromLegacyVars(ini, varInitialisers);
+
     // Add neuron group
-    auto result = m_NeuronGroups.insert(
-        pair<string, NeuronGroup>(name, NeuronGroup(name, nNo, new NeuronModels::LegacyWrapper(type), p, ini)));
+    auto result = m_NeuronGroups.emplace(std::piecewise_construct,
+        std::forward_as_tuple(name),
+        std::forward_as_tuple(name, nNo, new NeuronModels::LegacyWrapper(type), p, varInitialisers));
 
     if(!result.second)
     {
@@ -333,7 +482,7 @@ SynapseGroup *NNmodel::addSynapsePopulation(
   SynapseGType, /**< The way how the synaptic conductivity g will be defined*/
   const string &, /**< Name of the (existing!) pre-synaptic neuron population*/
   const string &, /**< Name of the (existing!) post-synaptic neuron population*/
-  const double */**< A C-type array of doubles that contains synapse parameter values (common to all synapses of the population) which will be used for the defined synapses.*/)
+  const double*) /**< A C-type array of doubles that contains synapse parameter values (common to all synapses of the population) which will be used for the defined synapses.*/
 {
   gennError("This version of addSynapsePopulation() has been deprecated since GeNN 2.2. Please use the newer addSynapsePopulation functions instead.");
   return NULL;
@@ -471,19 +620,21 @@ SynapseGroup *NNmodel::addSynapsePopulation(
     auto srcNeuronGrp = findNeuronGroup(src);
     auto trgNeuronGrp = findNeuronGroup(trg);
 
-    srcNeuronGrp->checkNumDelaySlots(delaySteps);
-    if (delaySteps != NO_DELAY)
-    {
-        needSynapseDelay = true;
-    }
+    // Create variable initialisers from old-style values
+    std::vector<NewModels::VarInit> psVarInitialisers;
+    createVarInitialiserFromLegacyVars(PSVini, psVarInitialisers);
+
+    std::vector<NewModels::VarInit> wuVarInitialisers;
+    createVarInitialiserFromLegacyVars(synini, wuVarInitialisers);
 
     // Add synapse group
-    auto result = m_SynapseGroups.insert(
-        pair<string, SynapseGroup>(
-            name, SynapseGroup(name, mtype, delaySteps,
-                               new WeightUpdateModels::LegacyWrapper(syntype), p, synini,
-                               new PostsynapticModels::LegacyWrapper(postsyn), ps, PSVini,
-                               srcNeuronGrp, trgNeuronGrp)));
+    auto result = m_SynapseGroups.emplace(
+        std::piecewise_construct,
+        std::forward_as_tuple(name),
+        std::forward_as_tuple(name, mtype, delaySteps,
+                              new WeightUpdateModels::LegacyWrapper(syntype), p, wuVarInitialisers,
+                              new PostsynapticModels::LegacyWrapper(postsyn), ps, psVarInitialisers,
+                              srcNeuronGrp, trgNeuronGrp));
 
     if(!result.second)
     {
@@ -492,29 +643,7 @@ SynapseGroup *NNmodel::addSynapsePopulation(
     }
     else
     {
-        // Get pointer to new synapse group
-        SynapseGroup *newSynapseGroup = &result.first->second;
-
-        // If the weight update model requires presynaptic
-        // spike times, set flag in source neuron group
-        if (newSynapseGroup->getWUModel()->isPreSpikeTimeRequired()) {
-            srcNeuronGrp->setSpikeTimeRequired(true);
-            needSt = true;
-        }
-
-        // If the weight update model requires postsynaptic
-        // spike times, set flag in target neuron group
-        if (newSynapseGroup->getWUModel()->isPostSpikeTimeRequired()) {
-            trgNeuronGrp->setSpikeTimeRequired(true);
-            needSt = true;
-        }
-
-        // Add references to target and source neuron groups
-        trgNeuronGrp->addInSyn(newSynapseGroup);
-        srcNeuronGrp->addOutSyn(newSynapseGroup);
-
-        // Return
-        return newSynapseGroup;
+        return &result.first->second;
     }
 }
 
@@ -653,6 +782,7 @@ void NNmodel::setRNType(const std::string &type)
     }
     RNtype= type;
 }
+
 #ifndef CPU_ONLY
 //--------------------------------------------------------------------------
 /*! \brief This function defines the way how the GPU is chosen. If "AUTODEVICE" (-1) is given as the argument, GeNN will use internal heuristics to choose the device. Otherwise the argument is the device number and the indicated device will be used.
@@ -717,8 +847,7 @@ void NNmodel::setPopulationSums()
 
             // Add this synapse group to map of synapse groups with postsynaptic learning
             // or update the existing entry with the new block sizes
-            m_SynapsePostLearnGroups[s.first] = std::pair<unsigned int, unsigned int>(
-                startID, paddedSynapsePostLearnIDStart);
+            m_SynapsePostLearnGroups[s.first] = std::make_pair(startID, paddedSynapsePostLearnIDStart);
         }
 
          if (!s.second.getWUModel()->getSynapseDynamicsCode().empty()) {
@@ -727,8 +856,7 @@ void NNmodel::setPopulationSums()
 
             // Add this synapse group to map of synapse groups with dynamics
             // or update the existing entry with the new block sizes
-            m_SynapseDynamicsGroups[s.first] = std::pair<unsigned int, unsigned int>(
-                startID, paddedSynapseDynamicsIDStart);
+            m_SynapseDynamicsGroups[s.first] = std::make_pair(startID, paddedSynapseDynamicsIDStart);
          }
     }
 }
@@ -814,9 +942,10 @@ void NNmodel::finalize()
         }
 
         // Make extra global parameter lists
-        s.second.addExtraGlobalSynapseParams(synapseKernelParameters);
         s.second.addExtraGlobalNeuronParams(neuronKernelParameters);
-
+        s.second.addExtraGlobalSynapseParams(synapseKernelParameters);
+        s.second.addExtraGlobalPostLearnParams(simLearnPostKernelParameters);
+        s.second.addExtraGlobalSynapseDynamicsParams(synapseDynamicsKernelParameters);
     }
 
     setPopulationSums();

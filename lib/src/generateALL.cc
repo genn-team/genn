@@ -22,15 +22,15 @@
 //--------------------------------------------------------------------------
 
 #include "global.h"
-#include MODEL
 #include "generateALL.h"
-#include "generateRunner.h"
 #include "generateCPU.h"
+#include "generateInit.h"
 #include "generateKernels.h"
+#include "generateRunner.h"
 #include "modelSpec.h"
 #include "utils.h"
 #include "codeGenUtils.h"
-#include "CodeHelper.h"
+#include "codeStream.h"
 
 #include <algorithm>
 #include <cmath>
@@ -42,10 +42,6 @@
 #include <sys/stat.h> // needed for mkdir
 #endif
 
-CodeHelper hlp;
-//hlp.setVerbose(true);//this will show the generation of bracketing (brace) levels. Helps to debug a bracketing issue
-
-
 //--------------------------------------------------------------------------
 /*! \brief This function will call the necessary sub-functions to generate the code for simulating a model.
  */
@@ -56,37 +52,49 @@ void generate_model_runner(const NNmodel &model,  //!< Model description
                            )
 {
 #ifdef _WIN32
-  _mkdir((path + "\\" + model.getName() + "_CODE").c_str());
+    _mkdir((path + "\\" + model.getName() + "_CODE").c_str());
 #else // UNIX
-  mkdir((path + "/" + model.getName() + "_CODE").c_str(), 0777);
+    mkdir((path + "/" + model.getName() + "_CODE").c_str(), 0777);
 #endif
 
-  // general shared code for GPU and CPU versions
-  genRunner(model, path);
+    // general shared code for GPU and CPU versions
+    genDefinitions(model, path);
+    genSupportCode(model, path);
+    genRunner(model, path);
+
+    // Generate initialization functions and kernel
+    genInit(model, path);
 
 #ifndef CPU_ONLY
-  // GPU specific code generation
-  genRunnerGPU(model, path);
+    // GPU specific code generation
+    genRunnerGPU(model, path);
 
-  // generate neuron kernels
-  genNeuronKernel(model, path);
+    // generate neuron kernels
+    genNeuronKernel(model, path);
 
-  // generate synapse and learning kernels
-  if (!model.getSynapseGroups().empty()) {
-      genSynapseKernel(model, path);
-  }
+    // generate synapse and learning kernels
+    if (!model.getSynapseGroups().empty()) {
+        genSynapseKernel(model, path);
+    }
 #endif
+    // If model can be run on CPU
+    if(model.canRunOnCPU()) {
+        // Generate the equivalent of neuron kernel
+        genNeuronFunction(model, path);
 
-  // Generate the equivalent of neuron kernel
-  genNeuronFunction(model, path);
+        // Generate the equivalent of synapse and learning kernel
+        if (!model.getSynapseGroups().empty()) {
+            genSynapseFunction(model, path);
+        }
+    }
 
-  // Generate the equivalent of synapse and learning kernel
-  if (!model.getSynapseGroups().empty()) {
-      genSynapseFunction(model, path);
-  }
+    // Generate the Makefile for the generated code
+    genMakefile(model, path);
 
-  // Generate the Makefile for the generated code
-  genMakefile(model, path);
+#ifdef _WIN32
+    // On Windows, also generate MSBuild scripts
+    genMSBuild(model, path);
+#endif
 }
 
 
@@ -104,8 +112,9 @@ void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
     )
 {
     enum Kernel{ KernelCalcSynapses, KernelLearnSynapsesPost,
-        KernelCalcSynapseDynamics, KernelCalcNeurons, KernelMax };
-    const char *kernelName[KernelMax]= {"calcSynapses", "learnSynapsesPost", "calcSynapseDynamics", "calcNeurons"};
+        KernelCalcSynapseDynamics, KernelCalcNeurons, KernelInit, KernelInitSparse, KernelMax };
+    const char *kernelName[KernelMax]= {"calcSynapses", "learnSynapsesPost", "calcSynapseDynamics", "calcNeurons",
+                                        "initializeDevice", "initializeSparseDevice"};
     size_t globalMem, mostGlobalMem = 0;
     int chosenDevice = 0;
 
@@ -125,13 +134,26 @@ void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
             deviceOccupancy[kernel].resize(deviceCount, 0);
         }
 
-        // Get the sizes of each synapse / learn group present on this host and device
         vector<unsigned int> groupSize[KernelMax];
+
+        // Loop through neuron groups
+        for(const auto &n : model.getNeuronGroups()) {
+            // Add number of neurons to vector of neuron kernels
+            groupSize[KernelCalcNeurons].push_back(n.second.getNumNeurons());
+
+            // If this neuron group requires on-device initialisation
+            if(n.second.isSimRNGRequired() || n.second.isDeviceVarInitRequired()) {
+                groupSize[KernelInit].push_back(n.second.getNumNeurons());
+            }
+        }
+
+        // Loop through synapse groups
         for(const auto &s : model.getSynapseGroups()) {
             const unsigned int maxConnections = s.second.getMaxConnections();
             const unsigned int numSrcNeurons = s.second.getSrcNeuronGroup()->getNumNeurons();
             const unsigned int numTrgNeurons = s.second.getTrgNeuronGroup()->getNumNeurons();
 
+            // **TODO** presynaptic parallelism?
             if ((s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && maxConnections > 0) {
                 groupSize[KernelCalcSynapses].push_back(maxConnections);
             }
@@ -139,7 +161,8 @@ void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
                 groupSize[KernelCalcSynapses].push_back(numTrgNeurons);
             }
 
-            if (model.isSynapseGroupPostLearningRequired(s.first)) {     // TODO: this needs updating where learning is detected properly!
+            // TODO: this needs updating where learning is detected properly!
+            if (model.isSynapseGroupPostLearningRequired(s.first)) {
                 groupSize[KernelLearnSynapsesPost].push_back(numSrcNeurons);
             }
 
@@ -151,13 +174,23 @@ void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
                     groupSize[KernelCalcSynapseDynamics].push_back(numSrcNeurons * numTrgNeurons);
                 }
             }
+
+            // If synapse group has individual weights and needs device initialisation
+            if((s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) && s.second.isWUDeviceVarInitRequired()) {
+                // If matrix is dense
+                if(s.second.getMatrixType() & SynapseMatrixConnectivity::DENSE) {
+                    groupSize[KernelInit].push_back(numSrcNeurons * numTrgNeurons);
+                }
+                else if(s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                    if(maxConnections > 0) {
+                        groupSize[KernelInitSparse].push_back(numSrcNeurons * maxConnections);
+                    }
+                    else {
+                        groupSize[KernelInitSparse].push_back(numSrcNeurons * numTrgNeurons);
+                    }
+                }
+            }
         }
-
-        // Populate the neuron group size
-        std::transform(model.getNeuronGroups().cbegin(), model.getNeuronGroups().cend(),
-                       std::back_insert_iterator<vector<unsigned int>>(groupSize[KernelCalcNeurons]),
-                       [](const std::pair<std::string, NeuronGroup> &n){ return n.second.getNumNeurons(); });
-
 
 #ifdef BLOCKSZ_DEBUG
         for (int i= 0; i < KernelMax; i++) {
@@ -261,7 +294,7 @@ void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
             string nvccCommand = "\"\"" NVCC "\" " + nvccFlags;
             nvccCommand += " -o \"" + cubinPath + "\" \"" + runnerPath + "\"\"";
 #else
-            nvccFlags += " -I\"$GENN_PATH/lib/include\"";
+            nvccFlags += " -std=c++11 -I\"$GENN_PATH/lib/include\"";
             string runnerPath = path + "/" + model.getName() + "_CODE/runner.cc";
             string cubinPath = path + "/runner.cubin";
             string nvccCommand = "\"" NVCC "\" " + nvccFlags;
@@ -278,6 +311,8 @@ void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
                 learnBlkSz = warpSize*(rep+1);
                 synDynBlkSz= warpSize*(rep+1);
                 neuronBlkSz = warpSize*(rep+1);
+                initBlkSz = warpSize*(rep+1);
+
                 model.setPopulationSums();
                 generate_model_runner(model, path);
 
@@ -510,6 +545,8 @@ void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
         learnBlkSz = bestBlkSz[KernelLearnSynapsesPost][chosenDevice];
         synDynBlkSz= bestBlkSz[KernelCalcSynapseDynamics][chosenDevice];
         neuronBlkSz = bestBlkSz[KernelCalcNeurons][chosenDevice];
+        initBlkSz = bestBlkSz[KernelInit][chosenDevice];
+        initSparseBlkSz = bestBlkSz[KernelInitSparse][chosenDevice];
     }
 
     // IF OPTIMISATION IS OFF: Simply choose the device with the most global memory.
@@ -519,6 +556,8 @@ void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
         learnBlkSz= GENN_PREFERENCES::learningBlockSize;
         synDynBlkSz= GENN_PREFERENCES::synapseDynamicsBlockSize;
         neuronBlkSz= GENN_PREFERENCES::neuronBlockSize;
+        initBlkSz = GENN_PREFERENCES::initBlockSize;
+        initSparseBlkSz = GENN_PREFERENCES::initSparseBlockSize;
         if (GENN_PREFERENCES::autoChooseDevice) {
             for (theDevice = 0; theDevice < deviceCount; theDevice++) {
                 CHECK_CUDA_ERRORS(cudaSetDevice(theDevice));
@@ -552,6 +591,8 @@ void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
     cout << "learn block size: " << learnBlkSz << endl;
     cout << "synapseDynamics block size: " << synDynBlkSz << endl;
     cout << "neuron block size: " << neuronBlkSz << endl;
+    cout << "init block size:" << initBlkSz << endl;
+    cout << "sparse init block size:" << initSparseBlkSz << endl;
 }
 #endif
 
@@ -565,7 +606,8 @@ void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
   the different parts of actual code generation.
 */
 //--------------------------------------------------------------------------
-
+#ifndef GENERATOR_MAIN_HANDLED
+#include MODEL
 int main(int argc,     //!< number of arguments; expected to be 2
          char *argv[]  //!< Arguments; expected to contain the target directory for code generation.
     )
@@ -613,3 +655,4 @@ int main(int argc,     //!< number of arguments; expected to be 2
 
     return EXIT_SUCCESS;
 }
+#endif // GENERATOR_MAIN_HANDLED

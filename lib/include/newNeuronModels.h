@@ -20,6 +20,7 @@
 #define SET_RESET_CODE(RESET_CODE) virtual std::string getResetCode() const{ return RESET_CODE; }
 #define SET_SUPPORT_CODE(SUPPORT_CODE) virtual std::string getSupportCode() const{ return SUPPORT_CODE; }
 #define SET_EXTRA_GLOBAL_PARAMS(...) virtual StringPairVec getExtraGlobalParams() const{ return __VA_ARGS__; }
+#define SET_ADDITIONAL_INPUT_VARS(...) virtual NameTypeValVec getAdditionalInputVars() const{ return __VA_ARGS__; }
 
 //----------------------------------------------------------------------------
 // NeuronModels::Base
@@ -53,7 +54,11 @@ public:
 
     //! Gets names and types (as strings) of additional
     //! per-population parameters for the weight update model.
-    virtual std::vector<std::pair<std::string, std::string>> getExtraGlobalParams() const{ return {}; }
+    virtual NewModels::Base::StringPairVec getExtraGlobalParams() const{ return {}; }
+
+    //! Gets names, types (as strings) and initial values of local variables into which
+    //! the 'apply input code' of (potentially) multiple postsynaptic input models can apply input
+    virtual NewModels::Base::NameTypeValVec getAdditionalInputVars() const{ return {}; }
 
     //! Is this neuron model the internal Poisson model (which requires a number of special cases)
     //! \private
@@ -310,6 +315,40 @@ public:
     SET_EXTRA_GLOBAL_PARAMS({{"rates", "uint64_t *"}, {"offset", "unsigned int"}});
 
     virtual bool isPoisson() const{ return true; }
+};
+
+//----------------------------------------------------------------------------
+// NeuronModels::PoissonNew
+//----------------------------------------------------------------------------
+//! Poisson neurons
+/*! It has 1 state variable:
+
+    - \c timeStepToSpike - Number of timesteps to next spike
+
+    and 1 parameter:
+
+    - \c rate - Mean firing rate (Hz)
+
+    \note Internally this samples from the exponential distribution using
+    the C++ 11 \<random\> library on the CPU and Von Neumann's exponential
+    generator (Ripley p.230) implemented using cuRAND on the GPU. */
+class PoissonNew : public Base
+{
+public:
+    DECLARE_MODEL(NeuronModels::PoissonNew, 1, 1);
+
+    SET_SIM_CODE(
+        "if($(timeStepToSpike) <= 0.0f) {\n"
+        "    $(timeStepToSpike) += $(isi) * $(gennrand_exponential);\n"
+        "}\n"
+        "$(timeStepToSpike) -= 1.0;\n"
+    );
+
+    SET_THRESHOLD_CONDITION_CODE("$(timeStepToSpike) <= 0.0");
+
+    SET_PARAM_NAMES({"rate"});
+    SET_VARS({{"timeStepToSpike", "scalar"}});
+    SET_DERIVED_PARAMS({{"isi", [](const vector<double> &pars, double dt){ return 1000.0 / (pars[0] * dt); }}});
 };
 
 //----------------------------------------------------------------------------

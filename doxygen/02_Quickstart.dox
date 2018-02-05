@@ -133,56 +133,55 @@ from defining the fundamentals of the model, inputs to the model,
 details of the model like specific connectivity matrices or initial
 values, running the model, and analyzing or saving the data.
 
-GeNN code is generally created by passing the C / C++ model file (see \link
+GeNN code is generally created by passing the C++ model file (see \link
 ownmodel below\endlink) directly to the genn-buildmodel script. Another
 way to use GeNN is to create or modify a script or executable such as
 `userproject/MBody1_project/generate_run.cc` that wraps around the other
 programs that are used for each of the steps listed above.
 In more detail, the GeNN workflow consists of: 
 
-1. Either using tools (programs) to generate connectivity and input matrix
-   files, which are then loaded into the user's simulation code at runtime,
-   or generating these matrices directly inside the user's simulation code.
+1. Either use external programs to generate connectivity and input files to be loaded into the user side code at runtime
+   or generate these matrices directly inside the user side code.
 
 2. Building the source code of a model simulation using `genn-buildmodel.sh`
-   (On Linux or Mac) or `genn-buildmodel.bat` (on Windows). In the example of
-   the MBody1_project this entails writing neuron numbers into
-   `userproject/include/sizes.h`, and executing 
+   (On Linux or Mac) or `genn-buildmodel.bat` (on Windows). For example, 
+   inside the `generate_run` engine used by the MBody1_project, the following command is executed on Linux: 
    \code
    genn-buildmodel.sh MBody1.cc
    \endcode
-   The `genn-buildmodel` script compiles the installed GeNN code generator
+   The `genn-buildmodel` script compiles the GeNN code generator
    in conjunction with the user-provided model description `model/MBody1.cc`.
    It then executes the GeNN code generator to generate the complete model
-   simulation code for the MBody1 model.
-
-3. Compiling the generated code, found in `model/MBody1_CODE/`, by calling:
+   simulation code for the model.
+3. Provide a build script to compile the generated model simulation and the user side code into a simulator executable (in the case of the MBody1 example this consists of two files ``classol_sim.cc`` and ``map_classol.cc``).
+    On Linux or Mac this typically consists of a GNU makefile:
+    \code
+    EXECUTABLE      := classol_sim
+    SOURCES         := classol_sim.cc map_classol.cc
+    include $(GENN_PATH)/userproject/include/makefile_common_gnu.mk
+    \endcode
+    And on Windows an MSBuild script:
+    \code
+    <?xml version="1.0" encoding="utf-8"?>
+    <Project DefaultTargets="Build"  xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <Import Project="MBody1_CODE\generated_code.props" />    
+    <ItemGroup>
+        <ClCompile Include="classol_sim.cc" />
+        <ClCompile Include="map_classol.cc" />
+    </ItemGroup>
+    </Project>
+    \endcode
+4. Compile the simulator executable by invoking GNU make on Linux or Mac:
    \code
    make clean all
    \endcode
-   It is at this stage that GeNN generated model simulation code is combined
-   with user-side code. In this example, `classol_sim.cu`
-   (classify-olfaction-simulation) which uses the `map_classol`
-   (map-neuron-based-classifier-olfaction) class.
+   or by invoking MSbuild on Windows:
+   \code
+   msbuild MBody1.vcxproj /p:Configuration=Release
+   \endcode
 
-4. Finally, running the resulting stand-alone simulator executable. In the
-   MBody1 example `classol_sim` in the `model` directory.
-
-The `generate_run` tool is only a suggested usage scenario of GeNN. Users
-have more control by manually executing the four steps above, or integrating
-GeNN into the development environment of their choice. 
-
-\note
-The usage scenario described was made explicit for Unix
-environments. In Windows the setup is essentially the same except for
-the usual operating system dependent syntax differences, e.g. the
-build script is named genn-buildmodel.bat, compilation of the generated
-model simulator would be `nmake /f WINmakefile clean all`, and the resulting
-executable would be named `classol_sim.exe`.
-
-GeNN comes with several example projects which showcase its features.
-The MBody1 example discussed above is one of the many provided examples
-that are described in more detail in \link Examples Example projects\endlink.
+5. Finally, run the resulting stand-alone simulator executable. In the
+   MBody1 example, this is called `classol_sim` on Linux and `MBody1.exe` on Windows.
 
 \section ownmodel Defining a New Model in GeNN
 According to the work flow outlined above, there are several steps to be
@@ -202,11 +201,8 @@ completed to define a neuronal network model.
    b) The values for initial variables and parameters for neuron and synapse
       populations need to be defined, e.g.
       \code
-      NeuronModels::Poisson::ParamValues poissonParams(
-        10.0,        // firing rate
-        2.5,        // refratory period
-        20.0,       // Vspike
-        -60.0);       // Vrest
+      NeuronModels::PoissonNew::ParamValues poissonParams(
+        10.0);      // 0 - firing rate
       \endcode
       would define the (homogeneous) parameters for a population of Poisson
       neurons.
@@ -217,11 +213,12 @@ completed to define a neuronal network model.
       in the above example to achieve maximal clarity of each parameter's
       meaning.
 
-      If heterogeneous parameter values are needed for any particular
-      population of neurons (synapses), a new neuron (synapse) type needs
-      to be defined in which these parameters are defined as "variables"
-      rather than parameters. See the \link UserManual User  Manual
-      \endlink for how to define new neuron (synapse) types.
+      If heterogeneous parameter values are required for a particular
+      population of neurons (or synapses), they need to be defined as "variables"
+      rather than parameters.  See the \link UserManual User  Manual
+      \endlink for how to define new neuron (or synapse) types and the
+      \ref sect_new_var_init section for more information on 
+      initialising these variables to hetererogenous values.
 
    c) The actual network needs to be defined in the form of a function
       `modelDefinition`, i.e. 
@@ -253,8 +250,7 @@ completed to define a neuronal network model.
    `userproject/MBody1_project/model/classol_sim.*`. In this code,
 
    a) They define the connectivity matrices between neuron groups. (In
-      the MBody1 example those are read from files). Refer to the \link
-      UserManual User Manual\endlink for the required format of
+      the MBody1 example those are read from files). Refer to the \ref subsect34 section for the required format of
       connectivity matrices for dense or sparse connectivities.
 
    b) They define input patterns (e.g. for Poisson neurons like in the
@@ -266,9 +262,9 @@ completed to define a neuronal network model.
       of the neuron or synapse groups. 
 
    c) They use `stepTimeGPU(...);` to run one time step on the GPU or
-      `stepTimeCPU(...);` to run one on the CPU. (both GPU and CPU versions
-      are always compiled, unless `-c` is used with genn-buildmodel). 
+      `stepTimeCPU(...);` to run one on the CPU.
       \note
+      Both GPU and CPU versions are always compiled, unless `-c` is used with genn-buildmodel to build a CPU-only model or the model uses features not supported by the CPU simulator (see **TODO**).
       However, mixing CPU and GPU execution does not make too much
       sense. Among other things, The CPU version uses the same host side
       memory where to results from the GPU version are copied, which would

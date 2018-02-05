@@ -11,54 +11,52 @@
   
 --------------------------------------------------------------------------*/
 
-#ifndef _ONECOMP_MODEL_CC_
-#define _ONECOMP_MODEL_CC_
+#include "OneComp_model.h"
 
-#include "OneComp_CODE/definitions.h"
+#include "modelSpec.h"
 
+#include "sizes.h"
 neuronpop::neuronpop()
 {
-  modelDefinition(model);
-  allocateMem();
-  initialize();
-  sumIzh1 = 0;
+    allocateMem();
+    initialize();
+    sumIzh1 = 0;
 }
 
 void neuronpop::init(unsigned int which)
 {
-  if (which == CPU) {
-  }
-  if (which == GPU) {
+    if (which == GPU) {
 #ifndef CPU_ONLY
-    copyStateToDevice();
+        copyStateToDevice();
 #endif
-  }
+    }
 }
 
 
 neuronpop::~neuronpop()
 {
-  freeMem();
+    freeMem();
 }
 
 void neuronpop::run(float runtime, unsigned int which)
 {
-  int riT= (int) (runtime/DT+1e-6);
+    int riT= (int) (runtime/DT+1e-6);
 
-  for (int i= 0; i < riT; i++) {
-    if (which == GPU){
+    for (int i= 0; i < riT; i++) {
+        if (which == GPU){
 #ifndef CPU_ONLY
-       stepTimeGPU();
+            stepTimeGPU();
 #endif
+        }
+        if (which == CPU) {
+            stepTimeCPU();
+        }
     }
-    if (which == CPU)
-       stepTimeCPU();
-  }
 }
 
 void neuronpop::sum_spikes()
 {
-  sumIzh1+= glbSpkCntIzh1[0];
+    sumIzh1+= glbSpkCntIzh1[0];
 }
 
 //--------------------------------------------------------------------------
@@ -66,19 +64,19 @@ void neuronpop::sum_spikes()
 
 void neuronpop::output_state(FILE *f, unsigned int which)
 {
-  if (which == GPU) 
+    if (which == GPU) {
 #ifndef CPU_ONLY
-    copyStateFromDevice();
+        copyStateFromDevice();
 #endif
+    }
 
-  fprintf(f, "%f ", t);
+    fprintf(f, "%f ", t);
 
-  auto *izh1 = model.findNeuronGroup("Izh1");
-  for (int i= 0; i < izh1->getNumNeurons()-1; i++) {
-     fprintf(f, "%f ", VIzh1[i]);
-  }
+    for (int i= 0; i < _NC1; i++) {
+        fprintf(f, "%f ", VIzh1[i]);
+    }
 
-  fprintf(f,"\n");
+    fprintf(f,"\n");
 }
 
 #ifndef CPU_ONLY
@@ -91,7 +89,7 @@ void neuronpop::output_state(FILE *f, unsigned int which)
 
 void neuronpop::getSpikesFromGPU()
 {
-  copySpikesFromDevice();
+    copySpikesFromDevice();
 }
 
 //--------------------------------------------------------------------------
@@ -103,17 +101,15 @@ This method is a simple wrapper for the convenience function copySpikeNFromDevic
 
 void neuronpop::getSpikeNumbersFromGPU() 
 {
-  copySpikeNFromDevice();
+    copySpikeNFromDevice();
 }
 #endif
 
 void neuronpop::output_spikes(FILE *f, unsigned int which)
 {
 
-   for (int i= 0; i < glbSpkCntIzh1[0]; i++) {
-     fprintf(f, "%f %d\n", t, glbSpkIzh1[i]);
-   }
+    for (int i= 0; i < glbSpkCntIzh1[0]; i++) {
+        fprintf(f, "%f %d\n", t, glbSpkIzh1[i]);
+    }
 
 }
-#endif	
-

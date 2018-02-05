@@ -26,4 +26,15 @@ __global__ void generate_random_gpuInput_xorwow (curandState *state, T *result, 
 /*********************************/
 
 template <typename T>
+__global__ void generate_uniform_random_gpuInput_xorwow (curandState *state, T *result, int sizeofResult, T min, T range);
+
+
+/*********************************/
+
+template <typename T>
 void generate_random_gpuInput_xorwow (curandState *state, T *result, int sizeofResult, T Rstrength, T Rshift, dim3 sGrid, dim3 sThreads);
+
+/*********************************/
+
+template <typename T>
+void generate_uniform_random_gpuInput_xorwow (curandState *state, T *result, int sizeofResult, T min, T max, dim3 sGrid, dim3 sThreads);

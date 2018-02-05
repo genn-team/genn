@@ -9,6 +9,7 @@
 #include "standardSubstitutions.h"
 
 // Forward declarations
+class CodeStream;
 class NeuronGroup;
 
 //----------------------------------------------------------------------------
@@ -17,29 +18,31 @@ class NeuronGroup;
 namespace StandardGeneratedSections
 {
 void neuronOutputInit(
-    std::ostream &os,
+    CodeStream &os,
     const NeuronGroup &ng,
     const std::string &devPrefix);
 
 void neuronLocalVarInit(
-    std::ostream &os,
+    CodeStream &os,
     const NeuronGroup &ng,
     const VarNameIterCtx &nmVars,
     const std::string &devPrefix,
     const std::string &localID);
 
 void neuronLocalVarWrite(
-    std::ostream &os,
+    CodeStream &os,
     const NeuronGroup &ng,
     const VarNameIterCtx &nmVars,
     const std::string &devPrefix,
     const std::string &localID);
 
 void neuronSpikeEventTest(
-    std::ostream &os,
+    CodeStream &os,
     const NeuronGroup &ng,
     const VarNameIterCtx &nmVars,
     const ExtraGlobalParamNameIterCtx &nmExtraGlobalParams,
     const std::string &localID,
-    const std::string &ftype);
-}
+    const std::vector<FunctionTemplate> functions,
+    const std::string &ftype,
+    const std::string &rng);
+}   // namespace StandardGeneratedSections

@@ -8,7 +8,8 @@
 // Macros
 //----------------------------------------------------------------------------
 #define SET_DECAY_CODE(DECAY_CODE) virtual std::string getDecayCode() const{ return DECAY_CODE; }
-#define SET_CURRENT_CONVERTER_CODE(CURRENT_CONVERTER_CODE) virtual std::string getCurrentConverterCode() const{ return CURRENT_CONVERTER_CODE; }
+#define SET_CURRENT_CONVERTER_CODE(CURRENT_CONVERTER_CODE) virtual std::string getApplyInputCode() const{ return "$(Isyn) += " CURRENT_CONVERTER_CODE ";"; }
+#define SET_APPLY_INPUT_CODE(APPLY_INPUT_CODE) virtual std::string getApplyInputCode() const{ return APPLY_INPUT_CODE; }
 #define SET_SUPPORT_CODE(SUPPORT_CODE) virtual std::string getSupportCode() const{ return SUPPORT_CODE; }
 
 //----------------------------------------------------------------------------
@@ -24,7 +25,7 @@ public:
     // Declared virtuals
     //----------------------------------------------------------------------------
     virtual std::string getDecayCode() const{ return ""; }
-    virtual std::string getCurrentConverterCode() const{ return ""; }
+    virtual std::string getApplyInputCode() const{ return ""; }
     virtual std::string getSupportCode() const{ return ""; }
 };
 
@@ -42,7 +43,7 @@ public:
     // Base virtuals
     //----------------------------------------------------------------------------
     virtual std::string getDecayCode() const;
-    virtual std::string getCurrentConverterCode() const;
+    virtual std::string getApplyInputCode() const;
     virtual std::string getSupportCode() const;
 };
 

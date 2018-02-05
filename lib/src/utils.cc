@@ -23,9 +23,14 @@
 
 #include "utils.h"
 
+// C++ standard includes
 #include <fstream>
-#include <stdint.h>
 
+// C standard includes
+#include <cstdint>
+
+// GeNN includes
+#include "codeStream.h"
 
 #ifndef CPU_ONLY
 //--------------------------------------------------------------------------
@@ -74,25 +79,12 @@ CUresult cudaFuncGetAttributesDriver(cudaFuncAttributes *attr, CUfunction kern) 
 }
 #endif
 
-
-//--------------------------------------------------------------------------
-/*! \brief Function called upon the detection of an error. Outputs an error message and then exits.
- */
-//--------------------------------------------------------------------------
-
-void gennError(const string &error)
-{
-    cerr << "GeNN error: " << error << endl;
-    exit(EXIT_FAILURE);
-}
-
-
 //--------------------------------------------------------------------------
 /*! \brief Function to write the comment header denoting file authorship and contact details into the generated code.
  */
 //--------------------------------------------------------------------------
 
-void writeHeader(ostream &os) 
+void writeHeader(CodeStream &os)
 {
     string s;
     ifstream is("../src/header.src");
