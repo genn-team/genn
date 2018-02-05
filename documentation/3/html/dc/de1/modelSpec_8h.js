@@ -26,5 +26,7 @@ var modelSpec_8h =
       [ "INDIVIDUALID", "dc/de1/modelSpec_8h.html#afa025c957fa0683d6555d7a3f651901ba3d20262ff90c61f8811cfa1ea0f67847", null ]
     ] ],
     [ "initGeNN", "dc/de1/modelSpec_8h.html#a62ce532f6f7e535adfb9fe151a1c0c6b", null ],
+    [ "initVar", "dc/de1/modelSpec_8h.html#ae06d1e97897f6f566d58ded3be6d2476", null ],
+    [ "uninitialisedVar", "dc/de1/modelSpec_8h.html#a4916e3559295d02263b13092e3d4e2e1", null ],
     [ "GeNNReady", "dc/de1/modelSpec_8h.html#a048755827fecbf17e9ff6e801462d132", null ]
 ];

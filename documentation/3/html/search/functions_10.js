@@ -1,9 +1,9 @@
 var searchData=
 [
-  ['update_5finput_5fdata_5fon_5fdevice',['update_input_data_on_device',['../d1/dc3/classSchmuker2014__classifier.html#aafe65d25d9b696ace6df90a48dc9c083',1,'Schmuker2014_classifier']]],
-  ['updateclusterspikecountan',['updateClusterSpikeCountAN',['../d1/dc3/classSchmuker2014__classifier.html#a7e07a8d7307532ad42866a15189c5663',1,'Schmuker2014_classifier']]],
-  ['updateindividualspikecountpn',['updateIndividualSpikeCountPN',['../d1/dc3/classSchmuker2014__classifier.html#a9ff0dbbaab61a4b958feee210e3d975a',1,'Schmuker2014_classifier']]],
-  ['updatevarqueues',['updateVarQueues',['../d7/d3b/classNeuronGroup.html#a59966c1058ce93cc197418311ad20c72',1,'NeuronGroup']]],
-  ['updateweights_5fpn_5fan',['updateWeights_PN_AN',['../d1/dc3/classSchmuker2014__classifier.html#a5c666e878a2db1006dc93e0d9b2a1853',1,'Schmuker2014_classifier']]],
-  ['updateweights_5fpn_5fan_5fon_5fdevice',['updateWeights_PN_AN_on_device',['../d1/dc3/classSchmuker2014__classifier.html#a8093a2d70a4021da485c636ee1b00540',1,'Schmuker2014_classifier']]]
+  ['weightupdatedynamics',['weightUpdateDynamics',['../dd/d2d/namespaceStandardSubstitutions.html#a8d6ef6c5ca746ef5f154d0b80232c449',1,'StandardSubstitutions']]],
+  ['weightupdatemodel',['weightUpdateModel',['../dd/db7/classweightUpdateModel.html#ae83d9e39690aaa754ab5be7b72ca60d5',1,'weightUpdateModel']]],
+  ['weightupdatepostlearn',['weightUpdatePostLearn',['../dd/d2d/namespaceStandardSubstitutions.html#a874aaa163456b654238b36d074cffcc3',1,'StandardSubstitutions']]],
+  ['weightupdatesim',['weightUpdateSim',['../dd/d2d/namespaceStandardSubstitutions.html#a64d9d6dd97da67058804c6d3d3a05d38',1,'StandardSubstitutions']]],
+  ['weightupdatethresholdcondition',['weightUpdateThresholdCondition',['../dd/d2d/namespaceStandardSubstitutions.html#a00a8f4941f969b2a7ece04d1d10920da',1,'StandardSubstitutions']]],
+  ['writeheader',['writeHeader',['../d5/d60/utils_8h.html#ae3073b91bfb261ce4e37689060e3420a',1,'writeHeader(CodeStream &amp;os):&#160;utils.cc'],['../d7/da9/utils_8cc.html#ae3073b91bfb261ce4e37689060e3420a',1,'writeHeader(CodeStream &amp;os):&#160;utils.cc']]]
 ];

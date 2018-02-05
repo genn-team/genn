@@ -45,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">3.0.0</span>
+   &#160;<span id="projectnumber">3.1.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -128,7 +128,8 @@ $(document).ready(function(){initNavTree('d7/da9/utils_8cc.html','../../');});
 <div class="contents">
 <div class="textblock"><code>#include &quot;<a class="el" href="../../d5/d60/utils_8h_source.html">utils.h</a>&quot;</code><br />
 <code>#include &lt;fstream&gt;</code><br />
-<code>#include &lt;stdint.h&gt;</code><br />
+<code>#include &lt;cstdint&gt;</code><br />
+<code>#include &quot;<a class="el" href="../../d0/dbb/codeStream_8h_source.html">codeStream.h</a>&quot;</code><br />
 </div><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="define-members"></a>
 Macros</h2></td></tr>
@@ -140,12 +141,9 @@ Functions</h2></td></tr>
 <tr class="memitem:a40e4d6de9cd558e30ad854d30a048608"><td class="memItemLeft" align="right" valign="top">CUresult&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/da9/utils_8cc.html#a40e4d6de9cd558e30ad854d30a048608">cudaFuncGetAttributesDriver</a> (cudaFuncAttributes *attr, CUfunction kern)</td></tr>
 <tr class="memdesc:a40e4d6de9cd558e30ad854d30a048608"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function for getting the capabilities of a CUDA device via the driver API.  <a href="#a40e4d6de9cd558e30ad854d30a048608">More...</a><br /></td></tr>
 <tr class="separator:a40e4d6de9cd558e30ad854d30a048608"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af0b0c8b43bbddd565de67f17b6d9955d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/da9/utils_8cc.html#af0b0c8b43bbddd565de67f17b6d9955d">gennError</a> (const string &amp;error)</td></tr>
-<tr class="memdesc:af0b0c8b43bbddd565de67f17b6d9955d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function called upon the detection of an error. Outputs an error message and then exits.  <a href="#af0b0c8b43bbddd565de67f17b6d9955d">More...</a><br /></td></tr>
-<tr class="separator:af0b0c8b43bbddd565de67f17b6d9955d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a25920bbe5c1f08854c7162c4cd0b5796"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/da9/utils_8cc.html#a25920bbe5c1f08854c7162c4cd0b5796">writeHeader</a> (ostream &amp;os)</td></tr>
-<tr class="memdesc:a25920bbe5c1f08854c7162c4cd0b5796"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function to write the comment header denoting file authorship and contact details into the generated code.  <a href="#a25920bbe5c1f08854c7162c4cd0b5796">More...</a><br /></td></tr>
-<tr class="separator:a25920bbe5c1f08854c7162c4cd0b5796"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae3073b91bfb261ce4e37689060e3420a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/da9/utils_8cc.html#ae3073b91bfb261ce4e37689060e3420a">writeHeader</a> (<a class="el" href="../../da/da8/classCodeStream.html">CodeStream</a> &amp;os)</td></tr>
+<tr class="memdesc:ae3073b91bfb261ce4e37689060e3420a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function to write the comment header denoting file authorship and contact details into the generated code.  <a href="#ae3073b91bfb261ce4e37689060e3420a">More...</a><br /></td></tr>
+<tr class="separator:ae3073b91bfb261ce4e37689060e3420a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7579c2e0bac1447fd480bf3619ac29f2"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/da9/utils_8cc.html#a7579c2e0bac1447fd480bf3619ac29f2">theSize</a> (const string &amp;type)</td></tr>
 <tr class="memdesc:a7579c2e0bac1447fd480bf3619ac29f2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Tool for determining the size of variable types on the current architecture.  <a href="#a7579c2e0bac1447fd480bf3619ac29f2">More...</a><br /></td></tr>
 <tr class="separator:a7579c2e0bac1447fd480bf3619ac29f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -192,24 +190,6 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="af0b0c8b43bbddd565de67f17b6d9955d"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void gennError </td>
-          <td>(</td>
-          <td class="paramtype">const string &amp;&#160;</td>
-          <td class="paramname"><em>error</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Function called upon the detection of an error. Outputs an error message and then exits. </p>
-
-</div>
-</div>
 <a class="anchor" id="a7579c2e0bac1447fd480bf3619ac29f2"></a>
 <div class="memitem">
 <div class="memproto">
@@ -228,14 +208,14 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a25920bbe5c1f08854c7162c4cd0b5796"></a>
+<a class="anchor" id="ae3073b91bfb261ce4e37689060e3420a"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
           <td class="memname">void writeHeader </td>
           <td>(</td>
-          <td class="paramtype">ostream &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="../../da/da8/classCodeStream.html">CodeStream</a> &amp;&#160;</td>
           <td class="paramname"><em>os</em></td><td>)</td>
           <td></td>
         </tr>
@@ -252,7 +232,7 @@ Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dir_97aefd0d527b934f1d99a682da8fe6a9.html">lib</a></li><li class="navelem"><a class="el" href="../../dir_a065c5f60305fee3569f887679366939.html">src</a></li><li class="navelem"><a class="el" href="../../d7/da9/utils_8cc.html">utils.cc</a></li>
-    <li class="footer">Generated on Wed Jun 21 2017 15:41:57 for GeNN by
+    <li class="footer">Generated on Mon Feb 5 2018 15:31:14 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.11 </li>
   </ul>

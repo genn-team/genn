@@ -45,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">3.0.0</span>
+   &#160;<span id="projectnumber">3.1.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -139,9 +139,15 @@ Functions</h2></td></tr>
 <tr class="memitem:a2db3ae938dc2abab2cbaa036846e6b40"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
 <tr class="memitem:a2db3ae938dc2abab2cbaa036846e6b40"><td class="memTemplItemLeft" align="right" valign="top">__global__ void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../d1/d49/GeNNHelperKrnls_8h.html#a2db3ae938dc2abab2cbaa036846e6b40">generate_random_gpuInput_xorwow</a> (curandState *state, T *result, int sizeofResult, T Rstrength, T Rshift)</td></tr>
 <tr class="separator:a2db3ae938dc2abab2cbaa036846e6b40"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afe742b0db5ff42379dc6c6de43319612"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
+<tr class="memitem:afe742b0db5ff42379dc6c6de43319612"><td class="memTemplItemLeft" align="right" valign="top">__global__ void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../d1/d49/GeNNHelperKrnls_8h.html#afe742b0db5ff42379dc6c6de43319612">generate_uniform_random_gpuInput_xorwow</a> (curandState *state, T *result, int sizeofResult, T min, T range)</td></tr>
+<tr class="separator:afe742b0db5ff42379dc6c6de43319612"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac03c2d83996f5eb7a33c1c560a7aac56"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
 <tr class="memitem:ac03c2d83996f5eb7a33c1c560a7aac56"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../d1/d49/GeNNHelperKrnls_8h.html#ac03c2d83996f5eb7a33c1c560a7aac56">generate_random_gpuInput_xorwow</a> (curandState *state, T *result, int sizeofResult, T Rstrength, T Rshift, dim3 sGrid, dim3 sThreads)</td></tr>
 <tr class="separator:ac03c2d83996f5eb7a33c1c560a7aac56"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa67edaf0aafc9f79d4cc830b75c9da90"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
+<tr class="memitem:aa67edaf0aafc9f79d4cc830b75c9da90"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../d1/d49/GeNNHelperKrnls_8h.html#aa67edaf0aafc9f79d4cc830b75c9da90">generate_uniform_random_gpuInput_xorwow</a> (curandState *state, T *result, int sizeofResult, T min, T max, dim3 sGrid, dim3 sThreads)</td></tr>
+<tr class="separator:aa67edaf0aafc9f79d4cc830b75c9da90"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="var-members"></a>
 Variables</h2></td></tr>
@@ -253,6 +259,110 @@ template&lt;typename T &gt; </div>
 
 </div>
 </div>
+<a class="anchor" id="afe742b0db5ff42379dc6c6de43319612"></a>
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">__global__ void generate_uniform_random_gpuInput_xorwow </td>
+          <td>(</td>
+          <td class="paramtype">curandState *&#160;</td>
+          <td class="paramname"><em>state</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">T *&#160;</td>
+          <td class="paramname"><em>result</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>sizeofResult</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">T&#160;</td>
+          <td class="paramname"><em>min</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">T&#160;</td>
+          <td class="paramname"><em>range</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="aa67edaf0aafc9f79d4cc830b75c9da90"></a>
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">void generate_uniform_random_gpuInput_xorwow </td>
+          <td>(</td>
+          <td class="paramtype">curandState *&#160;</td>
+          <td class="paramname"><em>state</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">T *&#160;</td>
+          <td class="paramname"><em>result</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>sizeofResult</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">T&#160;</td>
+          <td class="paramname"><em>min</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">T&#160;</td>
+          <td class="paramname"><em>max</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">dim3&#160;</td>
+          <td class="paramname"><em>sGrid</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">dim3&#160;</td>
+          <td class="paramname"><em>sThreads</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a class="anchor" id="adb85534870a979bdcefda11d2d40de54"></a>
 <div class="memitem">
 <div class="memproto">
@@ -336,7 +446,7 @@ template&lt;typename T &gt; </div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dir_66fc3ae5585a02e310a487b6a12e9e11.html">userproject</a></li><li class="navelem"><a class="el" href="../../dir_9222b5078f0808679094f1464c7a7eaf.html">include</a></li><li class="navelem"><a class="el" href="../../d1/d49/GeNNHelperKrnls_8h.html">GeNNHelperKrnls.h</a></li>
-    <li class="footer">Generated on Wed Jun 21 2017 15:41:57 for GeNN by
+    <li class="footer">Generated on Tue Jan 30 2018 16:18:20 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.11 </li>
   </ul>

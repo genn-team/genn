@@ -45,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">3.0.0</span>
+   &#160;<span id="projectnumber">3.1.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -341,7 +341,7 @@ genn-buildmodel.bat SynDelay.cc
 
 then compile the project by typing:
 
-nmake /f WINmakefile
+msbuild SynDelay.vcxproj /p:Configuration=Release
 
 
 COMPILE (MAC AND LINUX)
@@ -408,6 +408,8 @@ Optional arguments:
 DEBUG=0 or DEBUG=1 (default 0): Whether to run in a debugger
 FTYPE=DOUBLE of FTYPE=FLOAT (default FLOAT): What floating point type to use
 REUSE=0 or REUSE=1 (default 0): Whether to reuse generated connectivity from an earlier run
+BITMASK=0 or BITMASK=1 (default 0): Whether to use bitmasks to represent sparse PN-&gt;KC connectivity.
+DELAYED_SYNAPSES=0 or DELAYED_SYNAPSES=1 (default 0): Whether to simulate delays of (5 * DT) ms on KC-&gt;DN and of (3 * DT) ms on DN-&gt;DN synapse populations.
 CPU_ONLY=0 or CPU_ONLY=1 (default 0): Whether to compile in (CUDA independent) "CPU only" mode.
 
 An example invocation of generate_run is:
@@ -471,288 +473,7 @@ T. Nowotny, R. Huerta, H. D. I. Abarbanel, and M. I. Rabinovich Self-organizatio
 olfactory system: One shot odor recognition in insects, Biol Cyber, 93 (6): 436-446 (2005),
 doi:10.1007/s00422-005-0019-7 
 </pre><p> Nowotny insect olfaction model: <a class="el" href="d0/de3/citelist.html#CITEREF_nowotny2005self">[2]</a>; Traub-Miles Hodgkin-Huxley neuron model: <a class="el" href="d0/de3/citelist.html#CITEREF_Traub1991">[5]</a> <br />
-</p>
-<h1><a class="anchor" id="ex_mbody_userdef"></a>
-Insect olfaction model with user-defined neuron and synapse models</h1>
-<pre class="fragment">
-Locust olfactory system (Nowotny et al. 2005) with user-defined synapses
-========================================================================
-
-This examples recapitulates the exact same model as MBody1_project,
-but with user-defined model types for neurons and synapses. Also
-sparse connectivity is used instead of dense. The way user-defined
-types are used should be very instructive to advanced users wishing
-to do the same with their models. This example project contains a
-helper executable called "generate_run", which also prepares
-additional synapse connectivity and input pattern data, before
-compiling and executing the model.
-
-To compile it, navigate to genn/userproject/MBody_userdef_project and type:
-
-nmake /f WINmakefile
-
-for Windows users, or:
-
-make
-
-for Linux, Mac and other UNIX users. 
-
-
-  USAGE
-  -----
-
-generate_run &lt;0(CPU)/1(GPU)/n(GPU n-2)&gt; &lt;nAL&gt; &lt;nKC&gt; &lt;nLH&gt; &lt;nDN&gt; &lt;gScale&gt; &lt;DIR&gt; &lt;MODEL&gt; 
-
-Mandatory parameters:
-CPU/GPU: Choose whether to run the simulation on CPU (`0`), auto GPU (`1`), or GPU (n-2) (`n`).
-nAL: Number of neurons in the antennal lobe (AL), the input neurons to this model
-nKC: Number of Kenyon cells (KC) in the "hidden layer"
-nLH: Number of lateral horn interneurons, implementing gain control
-nDN: Number of decision neurons (DN) in the output layer
-gScale: A general rescaling factor for snaptic strength
-outname: The base name of the output location and output files
-model: The name of the model to execute, as provided this would be `MBody1`
-
-Optional arguments:
-DEBUG=0 or DEBUG=1 (default 0): Whether to run in a debugger
-FTYPE=DOUBLE of FTYPE=FLOAT (default FLOAT): What floating point type to use
-REUSE=0 or REUSE=1 (default 0): Whether to reuse generated connectivity from an earlier run
-CPU_ONLY=0 or CPU_ONLY=1 (default 0): Whether to compile in (CUDA independent) "CPU only" mode.
-
-An example invocation of generate_run is:
-
-generate_run.exe 1 100 1000 20 100 0.0025 outname MBody_userdef
-
-for Windows users, or:
-
-./generate_run 1 100 1000 20 100 0.0025 outname MBody_userdef
-
-for Linux, Mac and other UNIX users. 
-
-Such a command would generate a locust olfaction model with 100
-antennal lobe neurons, 1000 mushroom body Kenyon cells, 20 lateral
-horn interneurons and 100 mushroom body output neurons, and launch
-a simulation of it on a CUDA-enabled GPU using single precision
-floating point numbers. All output files will be prefixed with
-"outname" and will be created under the "outname" directory.
-
-In more details, what generate_run program does is: 
-a) use some other tools to generate the appropriate connectivity
-   matrices and store them in files.
-
-b) build the source code for the model by writing neuron numbers into
-   ./model/sizes.h, and executing "genn-buildmodel.sh ./model/MBody_userdef.cc".  
-
-c) compile the generated code by invoking "make clean &amp;&amp; make" 
-   running the code, e.g. "./classol_sim r1 1".
-
-Another example of an invocation would be: 
-
-generate_run.exe 0 100 1000 20 100 0.0025 outname MBody_userdef FTYPE=DOUBLE CPU_ONLY=1
-
-for Windows users, or:
-
-./generate_run 0 100 1000 20 100 0.0025 outname MBody_userdef FTYPE=DOUBLE CPU_ONLY=1
-
-for Linux, Mac and other UNIX users. 
-
-
-MODEL INFORMATION
------------------
-
-For information regarding the locust olfaction model implemented in this example project, see:
-
-T. Nowotny, R. Huerta, H. D. I. Abarbanel, and M. I. Rabinovich Self-organization in the
-olfactory system: One shot odor recognition in insects, Biol Cyber, 93 (6): 436-446 (2005),
-doi:10.1007/s00422-005-0019-7 
-</pre><p> Nowotny insect olfaction model: <a class="el" href="d0/de3/citelist.html#CITEREF_nowotny2005self">[2]</a>; Traub-Miles Hodgkin-Huxley neuron model: <a class="el" href="d0/de3/citelist.html#CITEREF_Traub1991">[5]</a> <br />
-</p>
-<h1><a class="anchor" id="ex_mbody_indID"></a>
-Insect Olfaction Model using INDIVIDUALID connectivity scheme</h1>
-<pre class="fragment">
-Locust olfactory system (Nowotny et al. 2005)
-=============================================
-
-This example is very similar to the MBody1_project example. The
-only difference is that PN to KC connections are defined with
-the INDIVIDUALID mechanism.
-
-To compile it, navigate to genn/userproject/MBody_individualID_project and type:
-
-nmake /f WINmakefile
-
-for Windows users, or:
-
-make
-
-for Linux, Mac and other UNIX users. 
-
-
-USAGE
------
-
-generate_run &lt;0(CPU)/1(GPU)/n(GPU n-2)&gt; &lt;nAL&gt; &lt;nKC&gt; &lt;nLH&gt; &lt;nDN&gt; &lt;gScale&gt; &lt;DIR&gt; &lt;MODEL&gt; 
-
-Mandatory parameters:
-CPU/GPU: Choose whether to run the simulation on CPU (`0`), auto GPU (`1`), or GPU (n-2) (`n`).
-nAL: Number of neurons in the antennal lobe (AL), the input neurons to this model
-nKC: Number of Kenyon cells (KC) in the "hidden layer"
-nLH: Number of lateral horn interneurons, implementing gain control
-nDN: Number of decision neurons (DN) in the output layer
-gScale: A general rescaling factor for snaptic strength
-outname: The base name of the output location and output files
-model: The name of the model to execute, as provided this would be `MBody1`
-
-Optional arguments:
-DEBUG=0 or DEBUG=1 (default 0): Whether to run in a debugger
-FTYPE=DOUBLE of FTYPE=FLOAT (default FLOAT): What floating point type to use
-REUSE=0 or REUSE=1 (default 0): Whether to reuse generated connectivity from an earlier run
-CPU_ONLY=0 or CPU_ONLY=1 (default 0): Whether to compile in (CUDA independent) "CPU only" mode.
-
-An example invocation of generate_run is:
-
-generate_run.exe 1 100 1000 20 100 0.0025 outname MBody_individualID
-
-for Windows users, or:
-
-./generate_run 1 100 1000 20 100 0.0025 outname MBody_individualID
-
-for Linux, Mac and other UNIX users. 
-
-Such a command would generate a locust olfaction model with 100
-antennal lobe neurons, 1000 mushroom body Kenyon cells, 20 lateral
-horn interneurons and 100 mushroom body output neurons, and launch
-a simulation of it on a CUDA-enabled GPU using single precision
-floating point numbers. All output files will be prefixed with
-"outname" and will be created under the "outname" directory.
-
-In more details, what generate_run program does is: 
-a) use some other tools to generate the appropriate connectivity
-   matrices and store them in files.
-
-b) build the source code for the model by writing neuron numbers into
-   ./model/sizes.h, and executing "genn-buildmodel.sh ./model/MBody_individualID.cc".  
-
-c) compile the generated code by invoking "make clean &amp;&amp; make" 
-   running the code, e.g. "./classol_sim r1 1".
-
-Another example of an invocation would be: 
-
-generate_run.exe 0 100 1000 20 100 0.0025 outname MBody_individualID FTYPE=DOUBLE CPU_ONLY=1
-
-for Windows users, or:
-
-./generate_run 0 100 1000 20 100 0.0025 outname MBody_individualID FTYPE=DOUBLE CPU_ONLY=1
-
-for Linux, Mac and other UNIX users. 
-
-
-MODEL INFORMATION
------------------
-
-For information regarding the locust olfaction model implemented in this example project, see:
-
-T. Nowotny, R. Huerta, H. D. I. Abarbanel, and M. I. Rabinovich Self-organization in the
-olfactory system: One shot odor recognition in insects, Biol Cyber, 93 (6): 436-446 (2005),
-doi:10.1007/s00422-005-0019-7 
-</pre><p> Nowotny insect olfaction model: <a class="el" href="d0/de3/citelist.html#CITEREF_nowotny2005self">[2]</a>; Traub-Miles Hodgkin-Huxley neuron model: <a class="el" href="d0/de3/citelist.html#CITEREF_Traub1991">[5]</a> <br />
-</p>
-<h1><a class="anchor" id="ex_mbody_delay"></a>
-Insect Olfaction Model using delayed synapses</h1>
-<pre class="fragment">
-Locust olfactory system (Nowotny et al. 2005)
-=============================================
-
-A variation of the \ref ex_mbody example using synaptic delays.
-In this example, the Kenyon Cell-Decision Neuron synapses are
-delayed by (5 * DT) ms, and the Decision Neuron-Decision Neuron
-synapses are delayed by (3 * DT) ms. The example is intended
-to test the operation of synapses which have a combination of
-delayed spike propagation and STDP (plasticity). This example
-project contains a helper executable called "generate_run",
-which also prepares additional synapse connectivity and input
-pattern data, before compiling and executing the model.
-
-To compile it, navigate to genn/userproject/MBody_delayedSyn_project and type:
-
-nmake /f WINmakefile
-
-for Windows users, or:
-
-make
-
-for Linux, Mac and other UNIX users. 
-
-
-USAGE
------
-
-generate_run &lt;0(CPU)/1(GPU)/n(GPU n-2)&gt; &lt;nAL&gt; &lt;nKC&gt; &lt;nLH&gt; &lt;nDN&gt; &lt;gScale&gt; &lt;DIR&gt; &lt;MODEL&gt; 
-
-Mandatory parameters:
-CPU/GPU: Choose whether to run the simulation on CPU (`0`), auto GPU (`1`), or GPU (n-2) (`n`).
-nAL: Number of neurons in the antennal lobe (AL), the input neurons to this model
-nKC: Number of Kenyon cells (KC) in the "hidden layer"
-nLH: Number of lateral horn interneurons, implementing gain control
-nDN: Number of decision neurons (DN) in the output layer
-gScale: A general rescaling factor for snaptic strength
-outname: The base name of the output location and output files
-model: The name of the model to execute, as provided this would be `MBody1`
-
-Optional arguments:
-DEBUG=0 or DEBUG=1 (default 0): Whether to run in a debugger
-FTYPE=DOUBLE of FTYPE=FLOAT (default FLOAT): What floating point type to use
-REUSE=0 or REUSE=1 (default 0): Whether to reuse generated connectivity from an earlier run
-CPU_ONLY=0 or CPU_ONLY=1 (default 0): Whether to compile in (CUDA independent) "CPU only" mode.
-
-An example invocation of generate_run is:
-
-generate_run.exe 1 100 1000 20 100 0.0025 outname MBody_delayedSyn
-
-for Windows users, or:
-
-./generate_run 1 100 1000 20 100 0.0025 outname MBody_delayedSyn
-
-for Linux, Mac and other UNIX users. 
-
-Such a command would generate a locust olfaction model with 100
-antennal lobe neurons, 1000 mushroom body Kenyon cells, 20 lateral
-horn interneurons and 100 mushroom body output neurons, and launch
-a simulation of it on a CUDA-enabled GPU using single precision
-floating point numbers. All output files will be prefixed with
-"outname" and will be created under the "outname" directory.
-
-In more details, what generate_run program does is: 
-a) use some other tools to generate the appropriate connectivity
-   matrices and store them in files.
-
-b) build the source code for the model by writing neuron numbers into
-   ./model/sizes.h, and executing "genn-buildmodel.sh ./model/MBody_delayedSyn.cc".  
-
-c) compile the generated code by invoking "make clean &amp;&amp; make" 
-   running the code, e.g. "./classol_sim r1 1".
-
-Another example of an invocation would be: 
-
-generate_run.exe 0 100 1000 20 100 0.0025 outname MBody_delayedSyn FTYPE=DOUBLE CPU_ONLY=1
-
-for Windows users, or:
-
-./generate_run 0 100 1000 20 100 0.0025 outname MBody_delayedSyn FTYPE=DOUBLE CPU_ONLY=1
-
-for Linux, Mac and other UNIX users. 
-
-
-MODEL INFORMATION
------------------
-
-For information regarding the locust olfaction model implemented in this example project, see:
-
-T. Nowotny, R. Huerta, H. D. I. Abarbanel, and M. I. Rabinovich Self-organization in the
-olfactory system: One shot odor recognition in insects, Biol Cyber, 93 (6): 436-446 (2005),
-doi:10.1007/s00422-005-0019-7 
-</pre><p> Nowotny insect olfaction model: <a class="el" href="d0/de3/citelist.html#CITEREF_nowotny2005self">[2]</a>; Traub-Miles Hodgkin-Huxley neuron model: <a class="el" href="d0/de3/citelist.html#CITEREF_Traub1991">[5]</a> <br />
-</p>
+ </p>
 <h1><a class="anchor" id="ex_Vclamp"></a>
 Voltage clamp simulation to estimate Hodgkin-Huxley parameters</h1>
 <pre class="fragment">
@@ -819,14 +540,84 @@ for Windows users, or:
 
 for Linux, Mac and other UNIX users.
 </pre><p> Traub-Miles Hodgkin-Huxley neuron model: <a class="el" href="d0/de3/citelist.html#CITEREF_Traub1991">[5]</a> <br />
- </p><hr/>
-<p> <a class="el" href="Quickstart.html">Previous</a> | <a class="el" href="Examples.html">Top</a> | <a class="el" href="ReleaseNotes.html">Next</a> </p>
+ </p>
+<h1><a class="anchor" id="ex_Schmuker"></a>
+A neuromorphic network for generic multivariate data classification</h1>
+<pre class="fragment">Author: Alan Diamond, University of Sussex, 2014
+
+This project recreates using GeNN the spiking classifier design used in the paper
+
+"A neuromorphic network for generic multivariate data classification"
+ Authors: Michael Schmuker, Thomas Pfeil, Martin Paul Nawrota
+    
+The classifier design is based on an abstraction of the insect olfactory system.
+This example uses the IRIS stadard data set as a test for the classifier
+
+BUILD / RUN INSTRUCTIONS 
+
+Install GeNN from the internet released build, following instruction on setting your PATH etc
+
+Start a terminal session
+
+cd to this project directory (userproject/Model_Schmuker_2014_project)
+
+To build the model using the GENN meta compiler type:
+
+genn-buildmodel.sh Model_Schmuker_2014_classifier.cc
+
+for Linux, Mac and other UNIX systems, or:
+
+genn-buildmodel.bat Model_Schmuker_2014_classifier.cc
+
+for Windows systems (add -d for a debug build).
+
+You should only have to do this at the start, or when you change your actual network model  (i.e. editing the file Model_Schmuker_2014_classifier.cc )
+
+Then to compile the experiment plus the GeNN created C/CUDA code type:-
+
+make
+
+for Linux, Mac and other UNIX users (add DEBUG=1 if using debug mode), or:
+
+msbuild Schmuker2014_classifier.vcxproj /p:Configuration=Release
+
+for Windows users (change Release to Debug if using debug mode).
+
+Once it compiles you should be able to run the classifier against the included Iris dataset.
+
+type
+
+./experiment .
+
+for Linux, Mac and other UNIX systems, or:
+
+Schmuker2014_classifier .
+
+for Windows systems.
+
+This is how it works roughly.
+The experiment (experiment.cu) controls the experiment at a high level. It mostly does this by instructing the classifier (Schmuker2014_classifier.cu) which does the grunt work.
+
+So the experiment first tells the classifier to set up the GPU with the model and synapse data.
+
+Then it chooses the training and test set data.
+
+It runs through the training set , with plasticity ON , telling the classifier to run with the specfied observation and collecting the classifier decision.
+
+Then it runs through the test set with plasticity OFF  and collects the results in various reporting files.
+
+At the highest level it also has a loop where you can cycle through a list of parameter values e.g. some threshold value for the classifier to use. It will then report on the performance for each value. You should be aware that some parameter changes won't actually affect the classifier unless you invoke a re-initialisation of some sort. E.g. anything to do with VRs will require the input data cache to be reset between values, anything to do with non-plastic synapse weights won't get cleared down until you upload a changed set to the GPU etc.
+
+You should also note there is no option currently to run on CPU, this is not due to the demanding task, it just hasn't been tweaked yet to allow for this (small change).
+</pre><p> <br />
+</p><hr/>
+<p> <a class="el" href="Quickstart.html">Previous</a> | <a class="el" href="Examples.html">Top</a> | <a class="el" href="SpineML.html">Next</a> </p>
 </div></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Wed Jun 21 2017 15:41:57 for GeNN by
+    <li class="footer">Generated on Mon Feb 5 2018 15:31:14 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.11 </li>
   </ul>

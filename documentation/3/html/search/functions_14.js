@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['zerocopyinuse',['zeroCopyInUse',['../dc/de5/classNNmodel.html#a2b9775b414235f7f9844c5c9d88b5a9c',1,'NNmodel']]],
-  ['zipstringvectors',['zipStringVectors',['../d7/d5c/classNewModels_1_1LegacyWrapper.html#a58b31a2532ddcc5625303c4d3a5f1201',1,'NewModels::LegacyWrapper']]]
+  ['xorwow_5fsetup',['xorwow_setup',['../db/d69/GeNNHelperKrnls_8cu.html#a55aab8e08cbedc1c8d54ac90803f2a46',1,'xorwow_setup(curandState *devStates, long int sampleSize, long long int seed):&#160;GeNNHelperKrnls.cu'],['../d1/d49/GeNNHelperKrnls_8h.html#a55aab8e08cbedc1c8d54ac90803f2a46',1,'xorwow_setup(curandState *devStates, long int sampleSize, long long int seed):&#160;GeNNHelperKrnls.cu']]]
 ];

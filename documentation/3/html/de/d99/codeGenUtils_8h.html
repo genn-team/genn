@@ -45,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">3.0.0</span>
+   &#160;<span id="projectnumber">3.1.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -122,7 +122,8 @@ $(document).ready(function(){initNavTree('de/d99/codeGenUtils_8h.html','../../')
   <div class="summary">
 <a href="#nested-classes">Classes</a> &#124;
 <a href="#namespaces">Namespaces</a> &#124;
-<a href="#func-members">Functions</a>  </div>
+<a href="#func-members">Functions</a> &#124;
+<a href="#var-members">Variables</a>  </div>
   <div class="headertitle">
 <div class="title">codeGenUtils.h File Reference</div>  </div>
 </div><!--header-->
@@ -131,45 +132,77 @@ $(document).ready(function(){initNavTree('de/d99/codeGenUtils_8h.html','../../')
 <code>#include &lt;string&gt;</code><br />
 <code>#include &lt;sstream&gt;</code><br />
 <code>#include &lt;vector&gt;</code><br />
+<code>#include &quot;<a class="el" href="../../d6/d8f/variableMode_8h_source.html">variableMode.h</a>&quot;</code><br />
 </div>
 <p><a href="../../de/d99/codeGenUtils_8h_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
 Classes</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/da1/structGenericFunction.html">GenericFunction</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/da7/structFunctionTemplate.html">FunctionTemplate</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d2/dab/classPairKeyConstIter.html">PairKeyConstIter&lt; BaseIter &gt;</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Custom iterator for iterating through the keys of containers containing pairs.  <a href="../../d2/dab/classPairKeyConstIter.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="namespaces"></a>
 Namespaces</h2></td></tr>
 <tr class="memitem:da/dac/namespaceNeuronModels"><td class="memItemLeft" align="right" valign="top"> &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/dac/namespaceNeuronModels.html">NeuronModels</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:d2/d9d/namespaceNewModels"><td class="memItemLeft" align="right" valign="top"> &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d2/d9d/namespaceNewModels.html">NewModels</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
 <tr class="memitem:ace7ac47c329a00705e2ec2e2bf3d5db5"><td class="memTemplParams" colspan="2">template&lt;typename BaseIter &gt; </td></tr>
 <tr class="memitem:ace7ac47c329a00705e2ec2e2bf3d5db5"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="../../d2/dab/classPairKeyConstIter.html">PairKeyConstIter</a>&lt; BaseIter &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../de/d99/codeGenUtils_8h.html#ace7ac47c329a00705e2ec2e2bf3d5db5">GetPairKeyConstIter</a> (BaseIter iter)</td></tr>
+<tr class="memdesc:ace7ac47c329a00705e2ec2e2bf3d5db5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Helper function for creating a <a class="el" href="../../d2/dab/classPairKeyConstIter.html" title="Custom iterator for iterating through the keys of containers containing pairs. ">PairKeyConstIter</a> from an iterator.  <a href="#ace7ac47c329a00705e2ec2e2bf3d5db5">More...</a><br /></td></tr>
 <tr class="separator:ace7ac47c329a00705e2ec2e2bf3d5db5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aca2e31c8941d9fadf42ab5229555f5da"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d99/codeGenUtils_8h.html#aca2e31c8941d9fadf42ab5229555f5da">substitute</a> (string &amp;s, const string &amp;trg, const string &amp;rep)</td></tr>
 <tr class="memdesc:aca2e31c8941d9fadf42ab5229555f5da"><td class="mdescLeft">&#160;</td><td class="mdescRight">Tool for substituting strings in the neuron code strings or other templates.  <a href="#aca2e31c8941d9fadf42ab5229555f5da">More...</a><br /></td></tr>
 <tr class="separator:aca2e31c8941d9fadf42ab5229555f5da"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad67ee4ca2abda90738d77cbe98df0bcd"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d99/codeGenUtils_8h.html#ad67ee4ca2abda90738d77cbe98df0bcd">isRNGRequired</a> (const std::string &amp;code)</td></tr>
+<tr class="memdesc:ad67ee4ca2abda90738d77cbe98df0bcd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Does the code string contain any functions requiring random number generator.  <a href="#ad67ee4ca2abda90738d77cbe98df0bcd">More...</a><br /></td></tr>
+<tr class="separator:ad67ee4ca2abda90738d77cbe98df0bcd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5c9df97ea98c37aba3679e15cbac34f2"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d99/codeGenUtils_8h.html#a5c9df97ea98c37aba3679e15cbac34f2">isInitRNGRequired</a> (const std::vector&lt; <a class="el" href="../../d7/db2/classNewModels_1_1VarInit.html">NewModels::VarInit</a> &gt; &amp;varInitialisers, const std::vector&lt; <a class="el" href="../../d6/d8f/variableMode_8h.html#a21a79f2184074500f38877a503a4716d">VarMode</a> &gt; &amp;varModes, <a class="el" href="../../d6/d8f/variableMode_8h.html#aa7ccb7c73652058a320136c533e79ffd">VarInit</a> initLocation)</td></tr>
+<tr class="memdesc:a5c9df97ea98c37aba3679e15cbac34f2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Does the model with the vectors of variable initialisers and modes require an RNG for the specified init location i.e. host or device.  <a href="#a5c9df97ea98c37aba3679e15cbac34f2">More...</a><br /></td></tr>
+<tr class="separator:a5c9df97ea98c37aba3679e15cbac34f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aab4265c6d7306a311b190d11769221a0"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d99/codeGenUtils_8h.html#aab4265c6d7306a311b190d11769221a0">functionSubstitute</a> (std::string &amp;code, const std::string &amp;funcName, unsigned int numParams, const std::string &amp;replaceFuncTemplate)</td></tr>
+<tr class="memdesc:aab4265c6d7306a311b190d11769221a0"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function substitutes function calls in the form:  <a href="#aab4265c6d7306a311b190d11769221a0">More...</a><br /></td></tr>
+<tr class="separator:aab4265c6d7306a311b190d11769221a0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4859009add81ed0f979f2a522fd093bf"><td class="memTemplParams" colspan="2">template&lt;typename NameIter &gt; </td></tr>
 <tr class="memitem:a4859009add81ed0f979f2a522fd093bf"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../de/d99/codeGenUtils_8h.html#a4859009add81ed0f979f2a522fd093bf">name_substitutions</a> (string &amp;code, const string &amp;prefix, NameIter namesBegin, NameIter namesEnd, const string &amp;postfix=&quot;&quot;, const string &amp;ext=&quot;&quot;)</td></tr>
 <tr class="memdesc:a4859009add81ed0f979f2a522fd093bf"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function performs a list of name substitutions for variables in code snippets.  <a href="#a4859009add81ed0f979f2a522fd093bf">More...</a><br /></td></tr>
 <tr class="separator:a4859009add81ed0f979f2a522fd093bf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1bb74bba3ea3e0e15fd6ec68dc8a04e7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d99/codeGenUtils_8h.html#a1bb74bba3ea3e0e15fd6ec68dc8a04e7">name_substitutions</a> (string &amp;code, const string &amp;prefix, const vector&lt; string &gt; &amp;names, const string &amp;postfix=&quot;&quot;, const string &amp;ext=&quot;&quot;)</td></tr>
+<tr class="memdesc:a1bb74bba3ea3e0e15fd6ec68dc8a04e7"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function performs a list of name substitutions for variables in code snippets.  <a href="#a1bb74bba3ea3e0e15fd6ec68dc8a04e7">More...</a><br /></td></tr>
 <tr class="separator:a1bb74bba3ea3e0e15fd6ec68dc8a04e7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aff9a16e581980a601799155fd2b8bada"><td class="memTemplParams" colspan="2">template&lt;typename NameIter &gt; </td></tr>
 <tr class="memitem:aff9a16e581980a601799155fd2b8bada"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../de/d99/codeGenUtils_8h.html#aff9a16e581980a601799155fd2b8bada">value_substitutions</a> (string &amp;code, NameIter namesBegin, NameIter namesEnd, const vector&lt; double &gt; &amp;values, const string &amp;ext=&quot;&quot;)</td></tr>
 <tr class="memdesc:aff9a16e581980a601799155fd2b8bada"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function performs a list of value substitutions for parameters in code snippets.  <a href="#aff9a16e581980a601799155fd2b8bada">More...</a><br /></td></tr>
 <tr class="separator:aff9a16e581980a601799155fd2b8bada"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9aa4f8a220215fcc9e05013ff6560ad4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d99/codeGenUtils_8h.html#a9aa4f8a220215fcc9e05013ff6560ad4">value_substitutions</a> (string &amp;code, const vector&lt; string &gt; &amp;names, const vector&lt; double &gt; &amp;values, const string &amp;ext=&quot;&quot;)</td></tr>
+<tr class="memdesc:a9aa4f8a220215fcc9e05013ff6560ad4"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function performs a list of value substitutions for parameters in code snippets.  <a href="#a9aa4f8a220215fcc9e05013ff6560ad4">More...</a><br /></td></tr>
 <tr class="separator:a9aa4f8a220215fcc9e05013ff6560ad4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab7bd7b9284cea44fb8f8c49ba6026c80"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d99/codeGenUtils_8h.html#ab7bd7b9284cea44fb8f8c49ba6026c80">functionSubstitutions</a> (std::string &amp;code, const std::string &amp;ftype, const std::vector&lt; <a class="el" href="../../d4/da7/structFunctionTemplate.html">FunctionTemplate</a> &gt; functions)</td></tr>
+<tr class="memdesc:ab7bd7b9284cea44fb8f8c49ba6026c80"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function performs a list of function substitutions in code snipped.  <a href="#ab7bd7b9284cea44fb8f8c49ba6026c80">More...</a><br /></td></tr>
+<tr class="separator:ab7bd7b9284cea44fb8f8c49ba6026c80"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae9b4b98729ff197b29d70419c7aebbae"><td class="memItemLeft" align="right" valign="top">string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d99/codeGenUtils_8h.html#ae9b4b98729ff197b29d70419c7aebbae">ensureFtype</a> (const string &amp;oldcode, const string &amp;type)</td></tr>
 <tr class="memdesc:ae9b4b98729ff197b29d70419c7aebbae"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function implements a parser that converts any floating point constant in a code snippet to a floating point constant with an explicit precision (by appending "f" or removing it).  <a href="#ae9b4b98729ff197b29d70419c7aebbae">More...</a><br /></td></tr>
 <tr class="separator:ae9b4b98729ff197b29d70419c7aebbae"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7558f23b931fcfe8d249a58a8777a205"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d99/codeGenUtils_8h.html#a7558f23b931fcfe8d249a58a8777a205">checkUnreplacedVariables</a> (const string &amp;code, const string &amp;codeName)</td></tr>
 <tr class="memdesc:a7558f23b931fcfe8d249a58a8777a205"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function checks for unknown variable definitions and returns a gennError if any are found.  <a href="#a7558f23b931fcfe8d249a58a8777a205">More...</a><br /></td></tr>
 <tr class="separator:a7558f23b931fcfe8d249a58a8777a205"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="var-members"></a>
+Variables</h2></td></tr>
+<tr class="memitem:a3316bc1340b03185e4596399878705e0"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; <a class="el" href="../../d4/da7/structFunctionTemplate.html">FunctionTemplate</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d99/codeGenUtils_8h.html#a3316bc1340b03185e4596399878705e0">cudaFunctions</a></td></tr>
+<tr class="memdesc:a3316bc1340b03185e4596399878705e0"><td class="mdescLeft">&#160;</td><td class="mdescRight">CUDA implementations of standard functions.  <a href="#a3316bc1340b03185e4596399878705e0">More...</a><br /></td></tr>
+<tr class="separator:a3316bc1340b03185e4596399878705e0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a799c4c46dd8f022378502c6afa27e28b"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; <a class="el" href="../../d4/da7/structFunctionTemplate.html">FunctionTemplate</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d99/codeGenUtils_8h.html#a799c4c46dd8f022378502c6afa27e28b">cpuFunctions</a></td></tr>
+<tr class="memdesc:a799c4c46dd8f022378502c6afa27e28b"><td class="mdescLeft">&#160;</td><td class="mdescRight">CPU implementations of standard functions.  <a href="#a799c4c46dd8f022378502c6afa27e28b">More...</a><br /></td></tr>
+<tr class="separator:a799c4c46dd8f022378502c6afa27e28b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Function Documentation</h2>
 <a class="anchor" id="a7558f23b931fcfe8d249a58a8777a205"></a>
@@ -228,6 +261,83 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="aab4265c6d7306a311b190d11769221a0"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void functionSubstitute </td>
+          <td>(</td>
+          <td class="paramtype">std::string &amp;&#160;</td>
+          <td class="paramname"><em>code</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>funcName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>numParams</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>replaceFuncTemplate</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>This function substitutes function calls in the form: </p>
+<p>$(functionName, parameter1, param2Function(0.12, "string"))</p>
+<p>with replacement templates in the form:</p>
+<p>actualFunction(CONSTANT, $(0), $(1)) </p>
+
+</div>
+</div>
+<a class="anchor" id="ab7bd7b9284cea44fb8f8c49ba6026c80"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void functionSubstitutions </td>
+          <td>(</td>
+          <td class="paramtype">std::string &amp;&#160;</td>
+          <td class="paramname"><em>code</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>ftype</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::vector&lt; <a class="el" href="../../d4/da7/structFunctionTemplate.html">FunctionTemplate</a> &gt;&#160;</td>
+          <td class="paramname"><em>functions</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>This function performs a list of function substitutions in code snipped. </p>
+
+</div>
+</div>
 <a class="anchor" id="ace7ac47c329a00705e2ec2e2bf3d5db5"></a>
 <div class="memitem">
 <div class="memproto">
@@ -251,6 +361,61 @@ template&lt;typename BaseIter &gt; </div>
   </tr>
 </table>
 </div><div class="memdoc">
+
+<p>Helper function for creating a <a class="el" href="../../d2/dab/classPairKeyConstIter.html" title="Custom iterator for iterating through the keys of containers containing pairs. ">PairKeyConstIter</a> from an iterator. </p>
+
+</div>
+</div>
+<a class="anchor" id="a5c9df97ea98c37aba3679e15cbac34f2"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool isInitRNGRequired </td>
+          <td>(</td>
+          <td class="paramtype">const std::vector&lt; <a class="el" href="../../d7/db2/classNewModels_1_1VarInit.html">NewModels::VarInit</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>varInitialisers</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::vector&lt; <a class="el" href="../../d6/d8f/variableMode_8h.html#a21a79f2184074500f38877a503a4716d">VarMode</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>varModes</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="../../d6/d8f/variableMode_8h.html#aa7ccb7c73652058a320136c533e79ffd">VarInit</a>&#160;</td>
+          <td class="paramname"><em>initLocation</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Does the model with the vectors of variable initialisers and modes require an RNG for the specified init location i.e. host or device. </p>
+<p>Does the model with the vectors of variable initialisers and modes require an RNG for the specified init location i.e. host or device. </p>
+
+</div>
+</div>
+<a class="anchor" id="ad67ee4ca2abda90738d77cbe98df0bcd"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool isRNGRequired </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>code</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Does the code string contain any functions requiring random number generator. </p>
 
 </div>
 </div>
@@ -365,6 +530,8 @@ template&lt;typename NameIter &gt; </div>
   </tr>
 </table>
 </div><div class="memdoc">
+
+<p>This function performs a list of name substitutions for variables in code snippets. </p>
 
 </div>
 </div>
@@ -502,6 +669,37 @@ template&lt;typename NameIter &gt; </div>
 </table>
 </div><div class="memdoc">
 
+<p>This function performs a list of value substitutions for parameters in code snippets. </p>
+
+</div>
+</div>
+<h2 class="groupheader">Variable Documentation</h2>
+<a class="anchor" id="a799c4c46dd8f022378502c6afa27e28b"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">const std::vector&lt;<a class="el" href="../../d4/da7/structFunctionTemplate.html">FunctionTemplate</a>&gt; cpuFunctions</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= {</div><div class="line">    {<span class="stringliteral">&quot;gennrand_uniform&quot;</span>, 0, <span class="stringliteral">&quot;standardUniformDistribution($(rng))&quot;</span>, <span class="stringliteral">&quot;standardUniformDistribution($(rng))&quot;</span>},</div><div class="line">    {<span class="stringliteral">&quot;gennrand_normal&quot;</span>, 0, <span class="stringliteral">&quot;standardNormalDistribution($(rng))&quot;</span>, <span class="stringliteral">&quot;standardNormalDistribution($(rng))&quot;</span>},</div><div class="line">    {<span class="stringliteral">&quot;gennrand_exponential&quot;</span>, 0, <span class="stringliteral">&quot;standardExponentialDistribution($(rng))&quot;</span>, <span class="stringliteral">&quot;standardExponentialDistribution($(rng))&quot;</span>},</div><div class="line">    {<span class="stringliteral">&quot;gennrand_log_normal&quot;</span>, 2, <span class="stringliteral">&quot;std::lognormal_distribution&lt;double&gt;($(0), $(1))($(rng))&quot;</span>, <span class="stringliteral">&quot;std::lognormal_distribution&lt;float&gt;($(0), $(1))($(rng))&quot;</span>},</div><div class="line">}</div></div><!-- fragment -->
+<p>CPU implementations of standard functions. </p>
+
+</div>
+</div>
+<a class="anchor" id="a3316bc1340b03185e4596399878705e0"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">const std::vector&lt;<a class="el" href="../../d4/da7/structFunctionTemplate.html">FunctionTemplate</a>&gt; cudaFunctions</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= {</div><div class="line">    {<span class="stringliteral">&quot;gennrand_uniform&quot;</span>, 0, <span class="stringliteral">&quot;curand_uniform_double($(rng))&quot;</span>, <span class="stringliteral">&quot;curand_uniform($(rng))&quot;</span>},</div><div class="line">    {<span class="stringliteral">&quot;gennrand_normal&quot;</span>, 0, <span class="stringliteral">&quot;curand_normal_double($(rng))&quot;</span>, <span class="stringliteral">&quot;curand_normal($(rng))&quot;</span>},</div><div class="line">    {<span class="stringliteral">&quot;gennrand_exponential&quot;</span>, 0, <span class="stringliteral">&quot;exponentialDistFloat($(rng))&quot;</span>, <span class="stringliteral">&quot;exponentialDistDouble($(rng))&quot;</span>},</div><div class="line">    {<span class="stringliteral">&quot;gennrand_log_normal&quot;</span>, 2, <span class="stringliteral">&quot;curand_log_normal_double($(rng), $(0), $(1))&quot;</span>, <span class="stringliteral">&quot;curand_log_normal_float($(rng), $(0), $(1))&quot;</span>},</div><div class="line">}</div></div><!-- fragment -->
+<p>CUDA implementations of standard functions. </p>
+
 </div>
 </div>
 </div><!-- contents -->
@@ -510,7 +708,7 @@ template&lt;typename NameIter &gt; </div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dir_97aefd0d527b934f1d99a682da8fe6a9.html">lib</a></li><li class="navelem"><a class="el" href="../../dir_5a30104352ef4255dc24354b02eb2d20.html">include</a></li><li class="navelem"><a class="el" href="../../de/d99/codeGenUtils_8h.html">codeGenUtils.h</a></li>
-    <li class="footer">Generated on Wed Jun 21 2017 15:41:57 for GeNN by
+    <li class="footer">Generated on Mon Feb 5 2018 15:31:13 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.11 </li>
   </ul>

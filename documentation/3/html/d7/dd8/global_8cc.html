@@ -45,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">3.0.0</span>
+   &#160;<span id="projectnumber">3.1.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -155,6 +155,12 @@ Variables</h2></td></tr>
 <tr class="memitem:a8c2aa50f902d9a25ce30f2d22d819a6a"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/dd8/global_8cc.html#a8c2aa50f902d9a25ce30f2d22d819a6a">synDynBlkSz</a></td></tr>
 <tr class="memdesc:a8c2aa50f902d9a25ce30f2d22d819a6a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Global variable containing the GPU block size for the synapse dynamics kernel.  <a href="#a8c2aa50f902d9a25ce30f2d22d819a6a">More...</a><br /></td></tr>
 <tr class="separator:a8c2aa50f902d9a25ce30f2d22d819a6a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3a4af0c443e740fe299e2f12bf6a6ad0"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/dd8/global_8cc.html#a3a4af0c443e740fe299e2f12bf6a6ad0">initBlkSz</a></td></tr>
+<tr class="memdesc:a3a4af0c443e740fe299e2f12bf6a6ad0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Global variable containing the GPU block size for the initialization kernel.  <a href="#a3a4af0c443e740fe299e2f12bf6a6ad0">More...</a><br /></td></tr>
+<tr class="separator:a3a4af0c443e740fe299e2f12bf6a6ad0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a93d447447577337bf16b8487c2199ec7"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/dd8/global_8cc.html#a93d447447577337bf16b8487c2199ec7">initSparseBlkSz</a></td></tr>
+<tr class="memdesc:a93d447447577337bf16b8487c2199ec7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Global variable containing the GPU block size for the sparse initialization kernel.  <a href="#a93d447447577337bf16b8487c2199ec7">More...</a><br /></td></tr>
+<tr class="separator:a93d447447577337bf16b8487c2199ec7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9c0bee1772862acc65b81c8a2fe14f28"><td class="memItemLeft" align="right" valign="top">cudaDeviceProp *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/dd8/global_8cc.html#a9c0bee1772862acc65b81c8a2fe14f28">deviceProp</a></td></tr>
 <tr class="separator:a9c0bee1772862acc65b81c8a2fe14f28"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a23b3c32d04af422162d050484a76d11e"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/dd8/global_8cc.html#a23b3c32d04af422162d050484a76d11e">theDevice</a></td></tr>
@@ -218,6 +224,34 @@ Variables</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Global variable containing the number of hosts within the local compute cluster. </p>
+
+</div>
+</div>
+<a class="anchor" id="a3a4af0c443e740fe299e2f12bf6a6ad0"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">unsigned int initBlkSz</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Global variable containing the GPU block size for the initialization kernel. </p>
+
+</div>
+</div>
+<a class="anchor" id="a93d447447577337bf16b8487c2199ec7"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">unsigned int initSparseBlkSz</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Global variable containing the GPU block size for the sparse initialization kernel. </p>
 
 </div>
 </div>
@@ -297,7 +331,7 @@ Variables</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dir_97aefd0d527b934f1d99a682da8fe6a9.html">lib</a></li><li class="navelem"><a class="el" href="../../dir_a065c5f60305fee3569f887679366939.html">src</a></li><li class="navelem"><a class="el" href="../../d7/dd8/global_8cc.html">global.cc</a></li>
-    <li class="footer">Generated on Wed Jun 21 2017 15:41:57 for GeNN by
+    <li class="footer">Generated on Mon Feb 5 2018 15:31:13 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.11 </li>
   </ul>

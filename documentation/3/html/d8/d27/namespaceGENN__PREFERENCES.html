@@ -45,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">3.0.0</span>
+   &#160;<span id="projectnumber">3.1.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -128,12 +128,12 @@ $(document).ready(function(){initNavTree('d8/d27/namespaceGENN__PREFERENCES.html
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="var-members"></a>
 Variables</h2></td></tr>
-<tr class="memitem:a24fbefb33f64f717b24b6f9892342472"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d27/namespaceGENN__PREFERENCES.html#a24fbefb33f64f717b24b6f9892342472">optimiseBlockSize</a> = 1</td></tr>
-<tr class="memdesc:a24fbefb33f64f717b24b6f9892342472"><td class="mdescLeft">&#160;</td><td class="mdescRight">Flag for signalling whether or not block size optimisation should be performed.  <a href="#a24fbefb33f64f717b24b6f9892342472">More...</a><br /></td></tr>
-<tr class="separator:a24fbefb33f64f717b24b6f9892342472"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:adb99ec835aec37d566c69248798643bd"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d27/namespaceGENN__PREFERENCES.html#adb99ec835aec37d566c69248798643bd">autoChooseDevice</a> = 1</td></tr>
-<tr class="memdesc:adb99ec835aec37d566c69248798643bd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Flag to signal whether the GPU device should be chosen automatically.  <a href="#adb99ec835aec37d566c69248798643bd">More...</a><br /></td></tr>
-<tr class="separator:adb99ec835aec37d566c69248798643bd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa0eb3e22db3e508d753794160a9f50ff"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d27/namespaceGENN__PREFERENCES.html#aa0eb3e22db3e508d753794160a9f50ff">optimiseBlockSize</a> = true</td></tr>
+<tr class="memdesc:aa0eb3e22db3e508d753794160a9f50ff"><td class="mdescLeft">&#160;</td><td class="mdescRight">Flag for signalling whether or not block size optimisation should be performed.  <a href="#aa0eb3e22db3e508d753794160a9f50ff">More...</a><br /></td></tr>
+<tr class="separator:aa0eb3e22db3e508d753794160a9f50ff"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6922b0be770078c883d5b9270cece84e"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d27/namespaceGENN__PREFERENCES.html#a6922b0be770078c883d5b9270cece84e">autoChooseDevice</a> = true</td></tr>
+<tr class="memdesc:a6922b0be770078c883d5b9270cece84e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Flag to signal whether the GPU device should be chosen automatically.  <a href="#a6922b0be770078c883d5b9270cece84e">More...</a><br /></td></tr>
+<tr class="separator:a6922b0be770078c883d5b9270cece84e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac1fd3b45ea8f157c8d5f779d7603fa35"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d27/namespaceGENN__PREFERENCES.html#ac1fd3b45ea8f157c8d5f779d7603fa35">optimizeCode</a> = false</td></tr>
 <tr class="memdesc:ac1fd3b45ea8f157c8d5f779d7603fa35"><td class="mdescLeft">&#160;</td><td class="mdescRight">Request speed-optimized code, at the expense of floating-point accuracy.  <a href="#ac1fd3b45ea8f157c8d5f779d7603fa35">More...</a><br /></td></tr>
 <tr class="separator:ac1fd3b45ea8f157c8d5f779d7603fa35"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -143,6 +143,15 @@ Variables</h2></td></tr>
 <tr class="memitem:a4751653b0c4b7c43c163776650f23116"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d27/namespaceGENN__PREFERENCES.html#a4751653b0c4b7c43c163776650f23116">showPtxInfo</a> = false</td></tr>
 <tr class="memdesc:a4751653b0c4b7c43c163776650f23116"><td class="mdescLeft">&#160;</td><td class="mdescRight">Request that PTX assembler information be displayed for each CUDA kernel during compilation.  <a href="#a4751653b0c4b7c43c163776650f23116">More...</a><br /></td></tr>
 <tr class="separator:a4751653b0c4b7c43c163776650f23116"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7848e1de02f155abf95c3e27914d8918"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d27/namespaceGENN__PREFERENCES.html#a7848e1de02f155abf95c3e27914d8918">buildSharedLibrary</a> = false</td></tr>
+<tr class="memdesc:a7848e1de02f155abf95c3e27914d8918"><td class="mdescLeft">&#160;</td><td class="mdescRight">Should generated code and Makefile build into a shared library e.g. for use in SpineML simulator.  <a href="#a7848e1de02f155abf95c3e27914d8918">More...</a><br /></td></tr>
+<tr class="separator:a7848e1de02f155abf95c3e27914d8918"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a708fe713881a49526d8787d9fc00a2b6"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d27/namespaceGENN__PREFERENCES.html#a708fe713881a49526d8787d9fc00a2b6">autoInitSparseVars</a> = false</td></tr>
+<tr class="memdesc:a708fe713881a49526d8787d9fc00a2b6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Previously, variables associated with sparse synapse populations were not automatically initialised. If this flag is set this now occurs in the initMODEL_NAME function and copyStateToDevice is deferred until here.  <a href="#a708fe713881a49526d8787d9fc00a2b6">More...</a><br /></td></tr>
+<tr class="separator:a708fe713881a49526d8787d9fc00a2b6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1f2baab3bda8720e90ef46685f2a6559"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d6/d8f/variableMode_8h.html#a21a79f2184074500f38877a503a4716d">VarMode</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d27/namespaceGENN__PREFERENCES.html#a1f2baab3bda8720e90ef46685f2a6559">defaultVarMode</a> = <a class="el" href="../../d6/d8f/variableMode_8h.html#a21a79f2184074500f38877a503a4716da261805b94ce3201a8d520e6e516eb960">VarMode::LOC_HOST_DEVICE_INIT_HOST</a></td></tr>
+<tr class="memdesc:a1f2baab3bda8720e90ef46685f2a6559"><td class="mdescLeft">&#160;</td><td class="mdescRight">What is the default behaviour for model state variables? Historically, everything was allocated on both host AND device and initialised on HOST.  <a href="#a1f2baab3bda8720e90ef46685f2a6559">More...</a><br /></td></tr>
+<tr class="separator:a1f2baab3bda8720e90ef46685f2a6559"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a735be1f8a3fa1bb1eb74cf981d0525a2"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d27/namespaceGENN__PREFERENCES.html#a735be1f8a3fa1bb1eb74cf981d0525a2">asGoodAsZero</a> = 1e-19</td></tr>
 <tr class="memdesc:a735be1f8a3fa1bb1eb74cf981d0525a2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Global variable that is used when detecting close to zero values, for example when setting sparse connectivity from a dense matrix.  <a href="#a735be1f8a3fa1bb1eb74cf981d0525a2">More...</a><br /></td></tr>
 <tr class="separator:a735be1f8a3fa1bb1eb74cf981d0525a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -157,6 +166,10 @@ Variables</h2></td></tr>
 <tr class="separator:a8fe9767c3de6e4ef52e8987ed50a5bd9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ade2fa83150fa1af5c46b057c90c97aaa"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d27/namespaceGENN__PREFERENCES.html#ade2fa83150fa1af5c46b057c90c97aaa">synapseDynamicsBlockSize</a> = 32</td></tr>
 <tr class="separator:ade2fa83150fa1af5c46b057c90c97aaa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac1fdecbe7b0fb47adae2d879bd3351c3"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d27/namespaceGENN__PREFERENCES.html#ac1fdecbe7b0fb47adae2d879bd3351c3">initBlockSize</a> = 32</td></tr>
+<tr class="separator:ac1fdecbe7b0fb47adae2d879bd3351c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad6a5da8909f5de7dd370a29d2aa7d660"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d27/namespaceGENN__PREFERENCES.html#ad6a5da8909f5de7dd370a29d2aa7d660">initSparseBlockSize</a> = 32</td></tr>
+<tr class="separator:ad6a5da8909f5de7dd370a29d2aa7d660"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aea36da0f447200facdcd5ecad8b39a2a"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d27/namespaceGENN__PREFERENCES.html#aea36da0f447200facdcd5ecad8b39a2a">autoRefractory</a> = 1</td></tr>
 <tr class="memdesc:aea36da0f447200facdcd5ecad8b39a2a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Flag for signalling whether spikes are only reported if thresholdCondition changes from false to true (autoRefractory == 1) or spikes are emitted whenever thresholdCondition is true no matter what.%.  <a href="#aea36da0f447200facdcd5ecad8b39a2a">More...</a><br /></td></tr>
 <tr class="separator:aea36da0f447200facdcd5ecad8b39a2a"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -185,17 +198,31 @@ Variables</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="adb99ec835aec37d566c69248798643bd"></a>
+<a class="anchor" id="a6922b0be770078c883d5b9270cece84e"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">int GENN_PREFERENCES::autoChooseDevice = 1</td>
+          <td class="memname">bool GENN_PREFERENCES::autoChooseDevice = true</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
 <p>Flag to signal whether the GPU device should be chosen automatically. </p>
+
+</div>
+</div>
+<a class="anchor" id="a708fe713881a49526d8787d9fc00a2b6"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool GENN_PREFERENCES::autoInitSparseVars = false</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Previously, variables associated with sparse synapse populations were not automatically initialised. If this flag is set this now occurs in the initMODEL_NAME function and copyStateToDevice is deferred until here. </p>
 
 </div>
 </div>
@@ -211,6 +238,20 @@ Variables</h2></td></tr>
 
 <p>Flag for signalling whether spikes are only reported if thresholdCondition changes from false to true (autoRefractory == 1) or spikes are emitted whenever thresholdCondition is true no matter what.%. </p>
 <p>Flag for signalling whether spikes are only reported if thresholdCondition changes from false to true (autoRefractory == 1) or spikes are emitted whenever thresholdCondition is true no matter what. </p>
+
+</div>
+</div>
+<a class="anchor" id="a7848e1de02f155abf95c3e27914d8918"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool GENN_PREFERENCES::buildSharedLibrary = false</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Should generated code and Makefile build into a shared library e.g. for use in SpineML simulator. </p>
 
 </div>
 </div>
@@ -234,6 +275,44 @@ Variables</h2></td></tr>
       <table class="memname">
         <tr>
           <td class="memname">int GENN_PREFERENCES::defaultDevice = 0</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a1f2baab3bda8720e90ef46685f2a6559"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="../../d6/d8f/variableMode_8h.html#a21a79f2184074500f38877a503a4716d">VarMode</a> GENN_PREFERENCES::defaultVarMode = <a class="el" href="../../d6/d8f/variableMode_8h.html#a21a79f2184074500f38877a503a4716da261805b94ce3201a8d520e6e516eb960">VarMode::LOC_HOST_DEVICE_INIT_HOST</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>What is the default behaviour for model state variables? Historically, everything was allocated on both host AND device and initialised on HOST. </p>
+
+</div>
+</div>
+<a class="anchor" id="ac1fdecbe7b0fb47adae2d879bd3351c3"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">unsigned int GENN_PREFERENCES::initBlockSize = 32</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="ad6a5da8909f5de7dd370a29d2aa7d660"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">unsigned int GENN_PREFERENCES::initSparseBlockSize = 32</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -266,12 +345,12 @@ Variables</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a24fbefb33f64f717b24b6f9892342472"></a>
+<a class="anchor" id="aa0eb3e22db3e508d753794160a9f50ff"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">int GENN_PREFERENCES::optimiseBlockSize = 1</td>
+          <td class="memname">bool GENN_PREFERENCES::optimiseBlockSize = true</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -380,7 +459,7 @@ Variables</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../d8/d27/namespaceGENN__PREFERENCES.html">GENN_PREFERENCES</a></li>
-    <li class="footer">Generated on Wed Jun 21 2017 15:42:00 for GeNN by
+    <li class="footer">Generated on Mon Feb 5 2018 15:31:14 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.11 </li>
   </ul>

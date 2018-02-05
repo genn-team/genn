@@ -45,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">3.0.0</span>
+   &#160;<span id="projectnumber">3.1.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -122,6 +122,7 @@ $(document).ready(function(){initNavTree('dc/de5/classNNmodel.html','../../');})
 
 <div class="header">
   <div class="summary">
+<a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="../../d6/dc5/classNNmodel-members.html">List of all members</a>  </div>
   <div class="headertitle">
@@ -131,6 +132,13 @@ $(document).ready(function(){initNavTree('dc/de5/classNNmodel.html','../../');})
 
 <p><code>#include &lt;<a class="el" href="../../dc/de1/modelSpec_8h_source.html">modelSpec.h</a>&gt;</code></p>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
+Public Types</h2></td></tr>
+<tr class="memitem:aaea894e0ec326403c4293dbf276d2979"><td class="memItemLeft" align="right" valign="top">typedef map&lt; string, <a class="el" href="../../d7/d3b/classNeuronGroup.html">NeuronGroup</a> &gt;::value_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#aaea894e0ec326403c4293dbf276d2979">NeuronGroupValueType</a></td></tr>
+<tr class="separator:aaea894e0ec326403c4293dbf276d2979"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8a211f03944dec3f6b7f3cddf9767a08"><td class="memItemLeft" align="right" valign="top">typedef map&lt; string, <a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a> &gt;::value_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#a8a211f03944dec3f6b7f3cddf9767a08">SynapseGroupValueType</a></td></tr>
+<tr class="separator:a8a211f03944dec3f6b7f3cddf9767a08"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a91216d74536a5871c507af7f40cd2d64"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#a91216d74536a5871c507af7f40cd2d64">NNmodel</a> ()</td></tr>
@@ -165,11 +173,26 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a63d26f88fd7ccf40d6414bb236c9b3f5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the accumulated sums of lowest multiple of kernel block size &gt;= group sizes for all simulated groups.  <a href="#a63d26f88fd7ccf40d6414bb236c9b3f5">More...</a><br /></td></tr>
 <tr class="separator:a63d26f88fd7ccf40d6414bb236c9b3f5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aaee7f16c9627dddb2588bad24afe5d15"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#aaee7f16c9627dddb2588bad24afe5d15">finalize</a> ()</td></tr>
-<tr class="memdesc:aaee7f16c9627dddb2588bad24afe5d15"><td class="mdescLeft">&#160;</td><td class="mdescRight">Declare that the model specification is finalised in <a class="el" href="../../df/db4/decode__matrix__globalg__bitmask_2model_8cc.html#a9aeaa0a22980484b2c472564fc9f686e">modelDefinition()</a>.  <a href="#aaee7f16c9627dddb2588bad24afe5d15">More...</a><br /></td></tr>
+<tr class="memdesc:aaee7f16c9627dddb2588bad24afe5d15"><td class="mdescLeft">&#160;</td><td class="mdescRight">Declare that the model specification is finalised in modelDefinition().  <a href="#aaee7f16c9627dddb2588bad24afe5d15">More...</a><br /></td></tr>
 <tr class="separator:aaee7f16c9627dddb2588bad24afe5d15"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2b9775b414235f7f9844c5c9d88b5a9c"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#a2b9775b414235f7f9844c5c9d88b5a9c">zeroCopyInUse</a> () const </td></tr>
 <tr class="memdesc:a2b9775b414235f7f9844c5c9d88b5a9c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Are any variables in any populations in this model using zero-copy memory?  <a href="#a2b9775b414235f7f9844c5c9d88b5a9c">More...</a><br /></td></tr>
 <tr class="separator:a2b9775b414235f7f9844c5c9d88b5a9c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a23e7baef0b9b6574fddfc47ae641d457"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#a23e7baef0b9b6574fddfc47ae641d457">isDeviceInitRequired</a> () const </td></tr>
+<tr class="memdesc:a23e7baef0b9b6574fddfc47ae641d457"><td class="mdescLeft">&#160;</td><td class="mdescRight">Does this model require device initialisation kernel.  <a href="#a23e7baef0b9b6574fddfc47ae641d457">More...</a><br /></td></tr>
+<tr class="separator:a23e7baef0b9b6574fddfc47ae641d457"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aacae0b8c73fed8b837e84c9981578e3f"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#aacae0b8c73fed8b837e84c9981578e3f">isDeviceSparseInitRequired</a> () const </td></tr>
+<tr class="memdesc:aacae0b8c73fed8b837e84c9981578e3f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Does this model require a device sparse initialisation kernel.  <a href="#aacae0b8c73fed8b837e84c9981578e3f">More...</a><br /></td></tr>
+<tr class="separator:aacae0b8c73fed8b837e84c9981578e3f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a02ab822048c3b9f2dc5b25754fb9f8fe"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#a02ab822048c3b9f2dc5b25754fb9f8fe">isHostRNGRequired</a> () const </td></tr>
+<tr class="memdesc:a02ab822048c3b9f2dc5b25754fb9f8fe"><td class="mdescLeft">&#160;</td><td class="mdescRight">Do any populations or initialisation code in this model require a host RNG?  <a href="#a02ab822048c3b9f2dc5b25754fb9f8fe">More...</a><br /></td></tr>
+<tr class="separator:a02ab822048c3b9f2dc5b25754fb9f8fe"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a82166782cd40d21c2212c7750ba997ee"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#a82166782cd40d21c2212c7750ba997ee">isDeviceRNGRequired</a> () const </td></tr>
+<tr class="memdesc:a82166782cd40d21c2212c7750ba997ee"><td class="mdescLeft">&#160;</td><td class="mdescRight">Do any populations or initialisation code in this model require a device RNG?  <a href="#a82166782cd40d21c2212c7750ba997ee">More...</a><br /></td></tr>
+<tr class="separator:a82166782cd40d21c2212c7750ba997ee"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a40e50536474c74c93053543d21aa7251"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#a40e50536474c74c93053543d21aa7251">canRunOnCPU</a> () const </td></tr>
+<tr class="memdesc:a40e50536474c74c93053543d21aa7251"><td class="mdescLeft">&#160;</td><td class="mdescRight">Can this model run on the CPU?  <a href="#a40e50536474c74c93053543d21aa7251">More...</a><br /></td></tr>
+<tr class="separator:a40e50536474c74c93053543d21aa7251"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5ff72a1352e0abd1ea06c5d993cda01d"><td class="memItemLeft" align="right" valign="top">const std::string &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#a5ff72a1352e0abd1ea06c5d993cda01d">getName</a> () const </td></tr>
 <tr class="memdesc:a5ff72a1352e0abd1ea06c5d993cda01d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the name of the neuronal network model.  <a href="#a5ff72a1352e0abd1ea06c5d993cda01d">More...</a><br /></td></tr>
 <tr class="separator:a5ff72a1352e0abd1ea06c5d993cda01d"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -218,10 +241,14 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a36cd02056ae5920d278a3afb89fd2eaa"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d7/d3b/classNeuronGroup.html">NeuronGroup</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#a36cd02056ae5920d278a3afb89fd2eaa">addNeuronPopulation</a> (const string &amp;, unsigned int, unsigned int, const vector&lt; double &gt; &amp;, const vector&lt; double &gt; &amp;)</td></tr>
 <tr class="memdesc:a36cd02056ae5920d278a3afb89fd2eaa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population.  <a href="#a36cd02056ae5920d278a3afb89fd2eaa">More...</a><br /></td></tr>
 <tr class="separator:a36cd02056ae5920d278a3afb89fd2eaa"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afff614eab12960d9fc91561b5ec04d14"><td class="memTemplParams" colspan="2">template&lt;typename NeuronModel &gt; </td></tr>
-<tr class="memitem:afff614eab12960d9fc91561b5ec04d14"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="../../d7/d3b/classNeuronGroup.html">NeuronGroup</a> *&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#afff614eab12960d9fc91561b5ec04d14">addNeuronPopulation</a> (const string &amp;name, unsigned int size, const typename NeuronModel::ParamValues &amp;paramValues, const typename NeuronModel::VarValues &amp;varValues)</td></tr>
-<tr class="memdesc:afff614eab12960d9fc91561b5ec04d14"><td class="mdescLeft">&#160;</td><td class="mdescRight">Adds a new neuron group to the model.  <a href="#afff614eab12960d9fc91561b5ec04d14">More...</a><br /></td></tr>
-<tr class="separator:afff614eab12960d9fc91561b5ec04d14"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4e6d344e8d320d5775b06b1984a37c98"><td class="memTemplParams" colspan="2">template&lt;typename NeuronModel &gt; </td></tr>
+<tr class="memitem:a4e6d344e8d320d5775b06b1984a37c98"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="../../d7/d3b/classNeuronGroup.html">NeuronGroup</a> *&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#a4e6d344e8d320d5775b06b1984a37c98">addNeuronPopulation</a> (const string &amp;name, unsigned int size, const NeuronModel *model, const typename NeuronModel::ParamValues &amp;paramValues, const typename NeuronModel::VarValues &amp;varInitialisers)</td></tr>
+<tr class="memdesc:a4e6d344e8d320d5775b06b1984a37c98"><td class="mdescLeft">&#160;</td><td class="mdescRight">Adds a new neuron group to the model using a neuron model managed by the user.  <a href="#a4e6d344e8d320d5775b06b1984a37c98">More...</a><br /></td></tr>
+<tr class="separator:a4e6d344e8d320d5775b06b1984a37c98"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a87ca7a3ab6ba280f8bf65cff967f2d79"><td class="memTemplParams" colspan="2">template&lt;typename NeuronModel &gt; </td></tr>
+<tr class="memitem:a87ca7a3ab6ba280f8bf65cff967f2d79"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="../../d7/d3b/classNeuronGroup.html">NeuronGroup</a> *&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#a87ca7a3ab6ba280f8bf65cff967f2d79">addNeuronPopulation</a> (const string &amp;name, unsigned int size, const typename NeuronModel::ParamValues &amp;paramValues, const typename NeuronModel::VarValues &amp;varInitialisers)</td></tr>
+<tr class="memdesc:a87ca7a3ab6ba280f8bf65cff967f2d79"><td class="mdescLeft">&#160;</td><td class="mdescRight">Adds a new neuron group to the model using a singleton neuron model created using standard DECLARE_MODEL and IMPLEMENT_MODEL macros.  <a href="#a87ca7a3ab6ba280f8bf65cff967f2d79">More...</a><br /></td></tr>
+<tr class="separator:a87ca7a3ab6ba280f8bf65cff967f2d79"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac9dd0689ed5e0d9205d8dbc546b66eb3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#ac9dd0689ed5e0d9205d8dbc546b66eb3">setNeuronClusterIndex</a> (const string &amp;neuronGroup, int hostID, int deviceID)</td></tr>
 <tr class="memdesc:ac9dd0689ed5e0d9205d8dbc546b66eb3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function for setting which host and which device a neuron group will be simulated on.  <a href="#ac9dd0689ed5e0d9205d8dbc546b66eb3">More...</a><br /></td></tr>
 <tr class="separator:ac9dd0689ed5e0d9205d8dbc546b66eb3"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -280,10 +307,14 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a09fa20aa43b21db5bf88784a1a8524bc"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#a09fa20aa43b21db5bf88784a1a8524bc">addSynapsePopulation</a> (const string &amp;, unsigned int, <a class="el" href="../../dc/de1/modelSpec_8h.html#ae0e2cb445d143e4dbe965614b4ac58ae">SynapseConnType</a>, <a class="el" href="../../dc/de1/modelSpec_8h.html#afa025c957fa0683d6555d7a3f651901b">SynapseGType</a>, unsigned int, unsigned int, const string &amp;, const string &amp;, const vector&lt; double &gt; &amp;, const vector&lt; double &gt; &amp;, const vector&lt; double &gt; &amp;, const vector&lt; double &gt; &amp;)</td></tr>
 <tr class="memdesc:a09fa20aa43b21db5bf88784a1a8524bc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Method for adding a synapse population to a neuronal network model, using C++ string for the name of the population.  <a href="#a09fa20aa43b21db5bf88784a1a8524bc">More...</a><br /></td></tr>
 <tr class="separator:a09fa20aa43b21db5bf88784a1a8524bc"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a25243be62dbf93063f9bf4fa96e4fc25"><td class="memTemplParams" colspan="2">template&lt;typename WeightUpdateModel , typename PostsynapticModel &gt; </td></tr>
-<tr class="memitem:a25243be62dbf93063f9bf4fa96e4fc25"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a> *&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#a25243be62dbf93063f9bf4fa96e4fc25">addSynapsePopulation</a> (const string &amp;name, <a class="el" href="../../dd/dd5/synapseMatrixType_8h.html#a24a045033b9a7e987843a67ff5ddec9c">SynapseMatrixType</a> mtype, unsigned int delaySteps, const string &amp;src, const string &amp;trg, const typename <a class="el" href="../../d1/daf/classWeightUpdateModel.html#a58c1c8e4fa09cb367826ec2a10c24a1f">WeightUpdateModel::ParamValues</a> &amp;weightParamValues, const typename <a class="el" href="../../d1/daf/classWeightUpdateModel.html#a584911427ff03dedd35a1d4981844994">WeightUpdateModel::VarValues</a> &amp;weightVarValues, const typename PostsynapticModel::ParamValues &amp;postsynapticParamValues, const typename PostsynapticModel::VarValues &amp;postsynapticVarValues)</td></tr>
-<tr class="memdesc:a25243be62dbf93063f9bf4fa96e4fc25"><td class="mdescLeft">&#160;</td><td class="mdescRight">Adds a new synapse group to the model.  <a href="#a25243be62dbf93063f9bf4fa96e4fc25">More...</a><br /></td></tr>
-<tr class="separator:a25243be62dbf93063f9bf4fa96e4fc25"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0238c35c1bd3de683c385edd7bf83d02"><td class="memTemplParams" colspan="2">template&lt;typename WeightUpdateModel , typename PostsynapticModel &gt; </td></tr>
+<tr class="memitem:a0238c35c1bd3de683c385edd7bf83d02"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a> *&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#a0238c35c1bd3de683c385edd7bf83d02">addSynapsePopulation</a> (const string &amp;name, <a class="el" href="../../dd/dd5/synapseMatrixType_8h.html#a24a045033b9a7e987843a67ff5ddec9c">SynapseMatrixType</a> mtype, unsigned int delaySteps, const string &amp;src, const string &amp;trg, const WeightUpdateModel *wum, const typename WeightUpdateModel::ParamValues &amp;weightParamValues, const typename WeightUpdateModel::VarValues &amp;weightVarInitialisers, const PostsynapticModel *psm, const typename PostsynapticModel::ParamValues &amp;postsynapticParamValues, const typename PostsynapticModel::VarValues &amp;postsynapticVarInitialisers)</td></tr>
+<tr class="memdesc:a0238c35c1bd3de683c385edd7bf83d02"><td class="mdescLeft">&#160;</td><td class="mdescRight">Adds a synapse population to the model using weight update and postsynaptic models managed by the user.  <a href="#a0238c35c1bd3de683c385edd7bf83d02">More...</a><br /></td></tr>
+<tr class="separator:a0238c35c1bd3de683c385edd7bf83d02"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a47a23c344993756fbb5d8cd524123e5b"><td class="memTemplParams" colspan="2">template&lt;typename WeightUpdateModel , typename PostsynapticModel &gt; </td></tr>
+<tr class="memitem:a47a23c344993756fbb5d8cd524123e5b"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a> *&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#a47a23c344993756fbb5d8cd524123e5b">addSynapsePopulation</a> (const string &amp;name, <a class="el" href="../../dd/dd5/synapseMatrixType_8h.html#a24a045033b9a7e987843a67ff5ddec9c">SynapseMatrixType</a> mtype, unsigned int delaySteps, const string &amp;src, const string &amp;trg, const typename WeightUpdateModel::ParamValues &amp;weightParamValues, const typename WeightUpdateModel::VarValues &amp;weightVarInitialisers, const typename PostsynapticModel::ParamValues &amp;postsynapticParamValues, const typename PostsynapticModel::VarValues &amp;postsynapticVarInitialisers)</td></tr>
+<tr class="memdesc:a47a23c344993756fbb5d8cd524123e5b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Adds a synapse population to the model using singleton weight update and postsynaptic models created using standard DECLARE_MODEL and IMPLEMENT_MODEL macros.  <a href="#a47a23c344993756fbb5d8cd524123e5b">More...</a><br /></td></tr>
+<tr class="separator:a47a23c344993756fbb5d8cd524123e5b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5877708d29e06d03a88e16803d61852c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de5/classNNmodel.html#a5877708d29e06d03a88e16803d61852c">setSynapseG</a> (const string &amp;, double)</td></tr>
 <tr class="memdesc:a5877708d29e06d03a88e16803d61852c"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function has been depreciated as of GeNN 2.2.  <a href="#a5877708d29e06d03a88e16803d61852c">More...</a><br /></td></tr>
 <tr class="separator:a5877708d29e06d03a88e16803d61852c"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -297,6 +328,31 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a841541eabee8c4eaf7d5881fdfa21787"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function for setting which host and which device a synapse group will be simulated on.  <a href="#a841541eabee8c4eaf7d5881fdfa21787">More...</a><br /></td></tr>
 <tr class="separator:a841541eabee8c4eaf7d5881fdfa21787"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<h2 class="groupheader">Member Typedef Documentation</h2>
+<a class="anchor" id="aaea894e0ec326403c4293dbf276d2979"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">typedef map&lt;string, <a class="el" href="../../d7/d3b/classNeuronGroup.html">NeuronGroup</a>&gt;::value_type <a class="el" href="../../dc/de5/classNNmodel.html#aaea894e0ec326403c4293dbf276d2979">NNmodel::NeuronGroupValueType</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a8a211f03944dec3f6b7f3cddf9767a08"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">typedef map&lt;string, <a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a>&gt;::value_type <a class="el" href="../../dc/de5/classNNmodel.html#a8a211f03944dec3f6b7f3cddf9767a08">NNmodel::SynapseGroupValueType</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a class="anchor" id="a91216d74536a5871c507af7f40cd2d64"></a>
 <div class="memitem">
@@ -478,7 +534,80 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="afff614eab12960d9fc91561b5ec04d14"></a>
+<a class="anchor" id="a4e6d344e8d320d5775b06b1984a37c98"></a>
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename NeuronModel &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="../../d7/d3b/classNeuronGroup.html">NeuronGroup</a>* NNmodel::addNeuronPopulation </td>
+          <td>(</td>
+          <td class="paramtype">const string &amp;&#160;</td>
+          <td class="paramname"><em>name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>size</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const NeuronModel *&#160;</td>
+          <td class="paramname"><em>model</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const typename NeuronModel::ParamValues &amp;&#160;</td>
+          <td class="paramname"><em>paramValues</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const typename NeuronModel::VarValues &amp;&#160;</td>
+          <td class="paramname"><em>varInitialisers</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Adds a new neuron group to the model using a neuron model managed by the user. </p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">NeuronModel</td><td>type of neuron model (derived from <a class="el" href="../../d7/dad/classNeuronModels_1_1Base.html" title="Base class for all neuron models. ">NeuronModels::Base</a>). </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">name</td><td>string containing unique name of neuron population. </td></tr>
+    <tr><td class="paramname">size</td><td>integer specifying how many neurons are in the population. </td></tr>
+    <tr><td class="paramname">model</td><td>neuron model to use for neuron group. </td></tr>
+    <tr><td class="paramname">paramValues</td><td>parameters for model wrapped in NeuronModel::ParamValues object. </td></tr>
+    <tr><td class="paramname">varInitialisers</td><td>state variable initialiser snippets and parameters wrapped in NeuronModel::VarValues object. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>pointer to newly created <a class="el" href="../../d7/d3b/classNeuronGroup.html">NeuronGroup</a> </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="a87ca7a3ab6ba280f8bf65cff967f2d79"></a>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
@@ -509,7 +638,7 @@ template&lt;typename NeuronModel &gt; </div>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">const typename NeuronModel::VarValues &amp;&#160;</td>
-          <td class="paramname"><em>varValues</em>&#160;</td>
+          <td class="paramname"><em>varInitialisers</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -524,7 +653,7 @@ template&lt;typename NeuronModel &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Adds a new neuron group to the model. </p>
+<p>Adds a new neuron group to the model using a singleton neuron model created using standard DECLARE_MODEL and IMPLEMENT_MODEL macros. </p>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
     <tr><td class="paramname">NeuronModel</td><td>type of neuron model (derived from <a class="el" href="../../d7/dad/classNeuronModels_1_1Base.html" title="Base class for all neuron models. ">NeuronModels::Base</a>). </td></tr>
@@ -536,7 +665,7 @@ template&lt;typename NeuronModel &gt; </div>
     <tr><td class="paramname">name</td><td>string containing unique name of neuron population. </td></tr>
     <tr><td class="paramname">size</td><td>integer specifying how many neurons are in the population. </td></tr>
     <tr><td class="paramname">paramValues</td><td>parameters for model wrapped in NeuronModel::ParamValues object. </td></tr>
-    <tr><td class="paramname">varValues</td><td>initial state variable values for model wrapped in NeuronModel::VarValues object. </td></tr>
+    <tr><td class="paramname">varInitialisers</td><td>state variable initialiser snippets and parameters wrapped in NeuronModel::VarValues object. </td></tr>
   </table>
   </dd>
 </dl>
@@ -927,7 +1056,7 @@ template&lt;typename NeuronModel &gt; </div>
 
 </div>
 </div>
-<a class="anchor" id="a25243be62dbf93063f9bf4fa96e4fc25"></a>
+<a class="anchor" id="a0238c35c1bd3de683c385edd7bf83d02"></a>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
@@ -969,14 +1098,26 @@ template&lt;typename WeightUpdateModel , typename PostsynapticModel &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const typename <a class="el" href="../../d1/daf/classWeightUpdateModel.html#a58c1c8e4fa09cb367826ec2a10c24a1f">WeightUpdateModel::ParamValues</a> &amp;&#160;</td>
+          <td class="paramtype">const WeightUpdateModel *&#160;</td>
+          <td class="paramname"><em>wum</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const typename WeightUpdateModel::ParamValues &amp;&#160;</td>
           <td class="paramname"><em>weightParamValues</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const typename <a class="el" href="../../d1/daf/classWeightUpdateModel.html#a584911427ff03dedd35a1d4981844994">WeightUpdateModel::VarValues</a> &amp;&#160;</td>
-          <td class="paramname"><em>weightVarValues</em>, </td>
+          <td class="paramtype">const typename WeightUpdateModel::VarValues &amp;&#160;</td>
+          <td class="paramname"><em>weightVarInitialisers</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const PostsynapticModel *&#160;</td>
+          <td class="paramname"><em>psm</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -988,7 +1129,7 @@ template&lt;typename WeightUpdateModel , typename PostsynapticModel &gt; </div>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">const typename PostsynapticModel::VarValues &amp;&#160;</td>
-          <td class="paramname"><em>postsynapticVarValues</em>&#160;</td>
+          <td class="paramname"><em>postsynapticVarInitialisers</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -1003,10 +1144,10 @@ template&lt;typename WeightUpdateModel , typename PostsynapticModel &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Adds a new synapse group to the model. </p>
+<p>Adds a synapse population to the model using weight update and postsynaptic models managed by the user. </p>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
-    <tr><td class="paramname"><a class="el" href="../../d1/daf/classWeightUpdateModel.html">WeightUpdateModel</a></td><td>type of weight update model (derived from <a class="el" href="../../d2/d05/classWeightUpdateModels_1_1Base.html" title="Base class for all weight update models. ">WeightUpdateModels::Base</a>). </td></tr>
+    <tr><td class="paramname">WeightUpdateModel</td><td>type of weight update model (derived from <a class="el" href="../../d2/d05/classWeightUpdateModels_1_1Base.html" title="Base class for all weight update models. ">WeightUpdateModels::Base</a>). </td></tr>
     <tr><td class="paramname">PostsynapticModel</td><td>type of postsynaptic model (derived from <a class="el" href="../../d1/d3a/classPostsynapticModels_1_1Base.html" title="Base class for all postsynaptic models. ">PostsynapticModels::Base</a>). </td></tr>
   </table>
   </dd>
@@ -1015,17 +1156,139 @@ template&lt;typename WeightUpdateModel , typename PostsynapticModel &gt; </div>
   <table class="params">
     <tr><td class="paramname">name</td><td>string containing unique name of neuron population. </td></tr>
     <tr><td class="paramname">mtype</td><td>how the synaptic matrix associated with this synapse population should be represented. </td></tr>
-    <tr><td class="paramname">delayStep</td><td>integer specifying number of timesteps delay this synaptic connection should incur (or NO_DELAY for none) </td></tr>
+    <tr><td class="paramname">delaySteps</td><td>integer specifying number of timesteps delay this synaptic connection should incur (or NO_DELAY for none) </td></tr>
     <tr><td class="paramname">src</td><td>string specifying name of presynaptic (source) population </td></tr>
     <tr><td class="paramname">trg</td><td>string specifying name of postsynaptic (target) population </td></tr>
-    <tr><td class="paramname">weightParamValues</td><td>parameters for weight update model wrapped in <a class="el" href="../../d1/daf/classWeightUpdateModel.html#a58c1c8e4fa09cb367826ec2a10c24a1f">WeightUpdateModel::ParamValues</a> object. </td></tr>
-    <tr><td class="paramname">weightVarValues</td><td>initial state variable values for weight update model wrapped in <a class="el" href="../../d1/daf/classWeightUpdateModel.html#a584911427ff03dedd35a1d4981844994">WeightUpdateModel::VarValues</a> object. </td></tr>
+    <tr><td class="paramname">wum</td><td>weight update model to use for synapse group. </td></tr>
+    <tr><td class="paramname">weightParamValues</td><td>parameters for weight update model wrapped in WeightUpdateModel::ParamValues object. </td></tr>
+    <tr><td class="paramname">weightVarInitialisers</td><td>weight update model state variable initialiser snippets and parameters wrapped in WeightUpdateModel::VarValues object. </td></tr>
+    <tr><td class="paramname">psm</td><td>postsynaptic model to use for synapse group. </td></tr>
     <tr><td class="paramname">postsynapticParamValues</td><td>parameters for postsynaptic model wrapped in PostsynapticModel::ParamValues object. </td></tr>
-    <tr><td class="paramname">postsynapticVarValues</td><td>initial state variable values for postsynaptic model wrapped in PostsynapticModel::VarValues object. </td></tr>
+    <tr><td class="paramname">postsynapticVarInitialisers</td><td>postsynaptic model state variable initialiser snippets and parameters wrapped in NeuronModel::VarValues object. </td></tr>
   </table>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>pointer to newly created <a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a> </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="a47a23c344993756fbb5d8cd524123e5b"></a>
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename WeightUpdateModel , typename PostsynapticModel &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a>* NNmodel::addSynapsePopulation </td>
+          <td>(</td>
+          <td class="paramtype">const string &amp;&#160;</td>
+          <td class="paramname"><em>name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="../../dd/dd5/synapseMatrixType_8h.html#a24a045033b9a7e987843a67ff5ddec9c">SynapseMatrixType</a>&#160;</td>
+          <td class="paramname"><em>mtype</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>delaySteps</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const string &amp;&#160;</td>
+          <td class="paramname"><em>src</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const string &amp;&#160;</td>
+          <td class="paramname"><em>trg</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const typename WeightUpdateModel::ParamValues &amp;&#160;</td>
+          <td class="paramname"><em>weightParamValues</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const typename WeightUpdateModel::VarValues &amp;&#160;</td>
+          <td class="paramname"><em>weightVarInitialisers</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const typename PostsynapticModel::ParamValues &amp;&#160;</td>
+          <td class="paramname"><em>postsynapticParamValues</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const typename PostsynapticModel::VarValues &amp;&#160;</td>
+          <td class="paramname"><em>postsynapticVarInitialisers</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Adds a synapse population to the model using singleton weight update and postsynaptic models created using standard DECLARE_MODEL and IMPLEMENT_MODEL macros. </p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">WeightUpdateModel</td><td>type of weight update model (derived from <a class="el" href="../../d2/d05/classWeightUpdateModels_1_1Base.html" title="Base class for all weight update models. ">WeightUpdateModels::Base</a>). </td></tr>
+    <tr><td class="paramname">PostsynapticModel</td><td>type of postsynaptic model (derived from <a class="el" href="../../d1/d3a/classPostsynapticModels_1_1Base.html" title="Base class for all postsynaptic models. ">PostsynapticModels::Base</a>). </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">name</td><td>string containing unique name of neuron population. </td></tr>
+    <tr><td class="paramname">mtype</td><td>how the synaptic matrix associated with this synapse population should be represented. </td></tr>
+    <tr><td class="paramname">delaySteps</td><td>integer specifying number of timesteps delay this synaptic connection should incur (or NO_DELAY for none) </td></tr>
+    <tr><td class="paramname">src</td><td>string specifying name of presynaptic (source) population </td></tr>
+    <tr><td class="paramname">trg</td><td>string specifying name of postsynaptic (target) population </td></tr>
+    <tr><td class="paramname">weightParamValues</td><td>parameters for weight update model wrapped in WeightUpdateModel::ParamValues object. </td></tr>
+    <tr><td class="paramname">weightVarInitialisers</td><td>weight update model state variable initialiser snippets and parameters wrapped in WeightUpdateModel::VarValues object. </td></tr>
+    <tr><td class="paramname">postsynapticParamValues</td><td>parameters for postsynaptic model wrapped in PostsynapticModel::ParamValues object. </td></tr>
+    <tr><td class="paramname">postsynapticVarInitialisers</td><td>postsynaptic model state variable initialiser snippets and parameters wrapped in NeuronModel::VarValues object. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>pointer to newly created <a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a> </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="a40e50536474c74c93053543d21aa7251"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool NNmodel::canRunOnCPU </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Can this model run on the CPU? </p>
+<p>If we are running in CPU_ONLY mode this is always true, but some GPU functionality will prevent models being run on both CPU and GPU. </p>
 
 </div>
 </div>
@@ -1042,7 +1305,7 @@ template&lt;typename WeightUpdateModel , typename PostsynapticModel &gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p>Declare that the model specification is finalised in <a class="el" href="../../df/db4/decode__matrix__globalg__bitmask_2model_8cc.html#a9aeaa0a22980484b2c472564fc9f686e">modelDefinition()</a>. </p>
+<p>Declare that the model specification is finalised in modelDefinition(). </p>
 
 </div>
 </div>
@@ -1555,6 +1818,60 @@ template&lt;typename WeightUpdateModel , typename PostsynapticModel &gt; </div>
 
 </div>
 </div>
+<a class="anchor" id="a23e7baef0b9b6574fddfc47ae641d457"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool NNmodel::isDeviceInitRequired </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Does this model require device initialisation kernel. </p>
+<p><b>NOTE</b> this is for neuron groups and densely connected synapse groups only </p>
+
+</div>
+</div>
+<a class="anchor" id="a82166782cd40d21c2212c7750ba997ee"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool NNmodel::isDeviceRNGRequired </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Do any populations or initialisation code in this model require a device RNG? </p>
+<p><b>NOTE</b> some model code will use per-neuron RNGs instead </p>
+
+</div>
+</div>
+<a class="anchor" id="aacae0b8c73fed8b837e84c9981578e3f"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool NNmodel::isDeviceSparseInitRequired </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Does this model require a device sparse initialisation kernel. </p>
+<p><b>NOTE</b> this is for sparsely connected synapse groups only </p>
+
+</div>
+</div>
 <a class="anchor" id="a4989a43ef0558e2500e9f1317a075875"></a>
 <div class="memitem">
 <div class="memproto">
@@ -1577,6 +1894,23 @@ template&lt;typename WeightUpdateModel , typename PostsynapticModel &gt; </div>
 </div><div class="memdoc">
 
 <p>Is the model specification finalized. </p>
+
+</div>
+</div>
+<a class="anchor" id="a02ab822048c3b9f2dc5b25754fb9f8fe"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool NNmodel::isHostRNGRequired </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Do any populations or initialisation code in this model require a host RNG? </p>
 
 </div>
 </div>
@@ -2040,7 +2374,7 @@ template&lt;typename WeightUpdateModel , typename PostsynapticModel &gt; </div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dc/de5/classNNmodel.html">NNmodel</a></li>
-    <li class="footer">Generated on Wed Jun 21 2017 15:41:59 for GeNN by
+    <li class="footer">Generated on Mon Feb 5 2018 15:31:14 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.11 </li>
   </ul>

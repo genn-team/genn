@@ -45,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">3.0.0</span>
+   &#160;<span id="projectnumber">3.1.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -98,13 +98,12 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
       <li><a href="functions_vars.html"><span>Variables</span></a></li>
       <li><a href="functions_type.html"><span>Typedefs</span></a></li>
       <li><a href="functions_enum.html"><span>Enumerations</span></a></li>
-      <li><a href="functions_eval.html"><span>Enumerator</span></a></li>
+      <li><a href="functions_rela.html"><span>Related&#160;Functions</span></a></li>
     </ul>
   </div>
   <div id="navrow4" class="tabs3">
     <ul class="tablist">
       <li class="current"><a href="functions.html#index_a"><span>a</span></a></li>
-      <li><a href="functions_b.html#index_b"><span>b</span></a></li>
       <li><a href="functions_c.html#index_c"><span>c</span></a></li>
       <li><a href="functions_d.html#index_d"><span>d</span></a></li>
       <li><a href="functions_e.html#index_e"><span>e</span></a></li>
@@ -116,7 +115,6 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
       <li><a href="functions_n.html#index_n"><span>n</span></a></li>
       <li><a href="functions_o.html#index_o"><span>o</span></a></li>
       <li><a href="functions_p.html#index_p"><span>p</span></a></li>
-      <li><a href="functions_q.html#index_q"><span>q</span></a></li>
       <li><a href="functions_r.html#index_r"><span>r</span></a></li>
       <li><a href="functions_s.html#index_s"><span>s</span></a></li>
       <li><a href="functions_t.html#index_t"><span>t</span></a></li>
@@ -169,17 +167,20 @@ $(document).ready(function(){initNavTree('functions.html','');});
 <li>addExtraGlobalParams()
 : <a class="el" href="d7/d3b/classNeuronGroup.html#a9f12603e7de577a4b75bfd91f0e8146e">NeuronGroup</a>
 </li>
+<li>addExtraGlobalPostLearnParams()
+: <a class="el" href="dc/dfa/classSynapseGroup.html#a8c02e60c4cf7572eebec674d690e7575">SynapseGroup</a>
+</li>
+<li>addExtraGlobalSynapseDynamicsParams()
+: <a class="el" href="dc/dfa/classSynapseGroup.html#a29dd18a24113004d1efec5363365abdb">SynapseGroup</a>
+</li>
 <li>addExtraGlobalSynapseParams()
 : <a class="el" href="dc/dfa/classSynapseGroup.html#abd939b244af1b5052f6c5a0bb3acd5ca">SynapseGroup</a>
-</li>
-<li>addInputRate()
-: <a class="el" href="d1/dc3/classSchmuker2014__classifier.html#a1f1589b6a1ee4509bb294631fb44598e">Schmuker2014_classifier</a>
 </li>
 <li>addInSyn()
 : <a class="el" href="d7/d3b/classNeuronGroup.html#af012e41b13a59fe348fc7b4959dbe2ff">NeuronGroup</a>
 </li>
 <li>addNeuronPopulation()
-: <a class="el" href="dc/de5/classNNmodel.html#a36cd02056ae5920d278a3afb89fd2eaa">NNmodel</a>
+: <a class="el" href="dc/de5/classNNmodel.html#a8d7d593837882775dfb89a9780c06fab">NNmodel</a>
 </li>
 <li>addOutSyn()
 : <a class="el" href="d7/d3b/classNeuronGroup.html#a6a7c5fa4577c48b6682b60a3b07b9dc5">NeuronGroup</a>
@@ -188,21 +189,7 @@ $(document).ready(function(){initNavTree('functions.html','');});
 : <a class="el" href="d7/d3b/classNeuronGroup.html#a4b0aa0380df4cf7d51ec68caf9a703c2">NeuronGroup</a>
 </li>
 <li>addSynapsePopulation()
-: <a class="el" href="dc/de5/classNNmodel.html#a25243be62dbf93063f9bf4fa96e4fc25">NNmodel</a>
-</li>
-<li>allocate_device_mem_input()
-: <a class="el" href="de/dba/classclassIzh.html#af7e70326650adf3445f7d36e2135a505">classIzh</a>
-, <a class="el" href="d1/d16/classclassol.html#aec30118b75a92ebca10eb227345cddfe">classol</a>
-</li>
-<li>allocate_device_mem_patterns()
-: <a class="el" href="de/dba/classclassIzh.html#afb7e0ee19c092c388b7c9a892aea5f1c">classIzh</a>
-, <a class="el" href="d1/d16/classclassol.html#a224bf755bd74d7512606518ae2658215">classol</a>
-</li>
-<li>allocateHostAndDeviceMemory()
-: <a class="el" href="d1/dc3/classSchmuker2014__classifier.html#aa05f17d8a30734ec7ff7fc4a9b9f886c">Schmuker2014_classifier</a>
-</li>
-<li>applyLearningRuleSynapses()
-: <a class="el" href="d1/dc3/classSchmuker2014__classifier.html#af5bbace91cf566361149c8e92d025996">Schmuker2014_classifier</a>
+: <a class="el" href="dc/de5/classNNmodel.html#a95a917ca52397247174381f12757bac4">NNmodel</a>
 </li>
 </ul>
 </div><!-- contents -->
@@ -210,7 +197,7 @@ $(document).ready(function(){initNavTree('functions.html','');});
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Wed Jun 21 2017 15:42:02 for GeNN by
+    <li class="footer">Generated on Mon Feb 5 2018 15:31:17 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.11 </li>
   </ul>

@@ -1,25 +1,8 @@
 var searchData=
 [
-  ['id',['id',['../d4/da7/structerrTupel.html#a935755253156aeeda51214ef673690d0',1,'errTupel']]],
-  ['ind',['ind',['../d9/d91/structSparseProjection.html#a0694beeaa91aef06b0b7dd12176ba36f',1,'SparseProjection::ind()'],['../d8/d1e/gen__syns__sparse__izhModel_8cc.html#a5c88bd5b4e434f79aefe7e9ce760f9ee',1,'ind():&#160;gen_syns_sparse_izhModel.cc']]],
-  ['ind_5fee',['ind_ee',['../d8/d1e/gen__syns__sparse__izhModel_8cc.html#a9c7225db59924fb7930ebf150e5e09c0',1,'gen_syns_sparse_izhModel.cc']]],
-  ['ind_5fei',['ind_ei',['../d8/d1e/gen__syns__sparse__izhModel_8cc.html#ae558fecaa58942b18a222442c58fa89e',1,'gen_syns_sparse_izhModel.cc']]],
-  ['ind_5fie',['ind_ie',['../d8/d1e/gen__syns__sparse__izhModel_8cc.html#ad315786e690fa98b4ef5b1cc357ffb86',1,'gen_syns_sparse_izhModel.cc']]],
-  ['ind_5fii',['ind_ii',['../d8/d1e/gen__syns__sparse__izhModel_8cc.html#ae68a05464996470eeab47b05f494d029',1,'gen_syns_sparse_izhModel.cc']]],
-  ['inding',['indInG',['../d9/d91/structSparseProjection.html#a646975cdfbcea70c04b6c3e387fe1342',1,'SparseProjection']]],
-  ['inding_5fee',['indInG_ee',['../d8/d1e/gen__syns__sparse__izhModel_8cc.html#a3e14e121cfacf37895c72d4daf50afc5',1,'gen_syns_sparse_izhModel.cc']]],
-  ['inding_5fei',['indInG_ei',['../d8/d1e/gen__syns__sparse__izhModel_8cc.html#af2c6aa1ad3f35bcc30ff99aaf3b045f4',1,'gen_syns_sparse_izhModel.cc']]],
-  ['inding_5fie',['indInG_ie',['../d8/d1e/gen__syns__sparse__izhModel_8cc.html#a7bea201febba8bb8601c66005d8c05ea',1,'gen_syns_sparse_izhModel.cc']]],
-  ['inding_5fii',['indInG_ii',['../d8/d1e/gen__syns__sparse__izhModel_8cc.html#a74946f32eda1062ddbf15749e9ecbdb5',1,'gen_syns_sparse_izhModel.cc']]],
-  ['individualspikecountpn',['individualSpikeCountPN',['../d1/dc3/classSchmuker2014__classifier.html#ad2557add7a1e0c9e573f6acf198810a9',1,'Schmuker2014_classifier']]],
-  ['input1',['input1',['../de/dba/classclassIzh.html#ac1c0c249eceb2d61592b9ff531435a14',1,'classIzh']]],
-  ['input2',['input2',['../de/dba/classclassIzh.html#a9a793be6300aecbf730dc7e8d40eebdf',1,'classIzh']]],
-  ['inputbaserate',['InputBaseRate',['../d5/d8d/MBody1__project_2model_2classol__sim_8h.html#a5b04369a7558bcf7da0830c978a36bff',1,'InputBaseRate():&#160;classol_sim.h'],['../de/d54/MBody__delayedSyn__project_2model_2classol__sim_8h.html#a5b04369a7558bcf7da0830c978a36bff',1,'InputBaseRate():&#160;classol_sim.h'],['../d1/da6/MBody__individualID__project_2model_2classol__sim_8h.html#a5b04369a7558bcf7da0830c978a36bff',1,'InputBaseRate():&#160;classol_sim.h'],['../d2/d41/MBody__map__project_2model_2classol__sim_8h.html#a5b04369a7558bcf7da0830c978a36bff',1,'InputBaseRate():&#160;classol_sim.h'],['../d9/d7d/MBody__map__robot1__project_2model_2classol__sim_8h.html#a5b04369a7558bcf7da0830c978a36bff',1,'InputBaseRate():&#160;classol_sim.h'],['../dc/ddd/MBody__userdef__project_2model_2classol__sim_8h.html#a5b04369a7558bcf7da0830c978a36bff',1,'InputBaseRate():&#160;classol_sim.h'],['../d9/d32/PoissonIzh__sim_8h.html#a5b04369a7558bcf7da0830c978a36bff',1,'InputBaseRate():&#160;PoissonIzh_sim.h']]],
-  ['inputrates',['inputRates',['../d1/dc3/classSchmuker2014__classifier.html#a798c8e94ac301c38149a1351e8c6ff12',1,'Schmuker2014_classifier']]],
-  ['inputratessize',['inputRatesSize',['../d1/dc3/classSchmuker2014__classifier.html#a47f2881f3ce90c5c36cdb6e465890db0',1,'Schmuker2014_classifier']]],
-  ['izhexc_5fini',['IzhExc_ini',['../d7/d5b/Izh__sparse_8cc.html#a4dce1dc21ef25d819b3db74e9be56b92',1,'Izh_sparse.cc']]],
-  ['izhikevich',['IZHIKEVICH',['../d3/dc0/neuronModels_8h.html#a57aaf01a1c5e075bc2ad849b9b48db31',1,'IZHIKEVICH():&#160;neuronModels.cc'],['../dc/dbc/neuronModels_8cc.html#a57aaf01a1c5e075bc2ad849b9b48db31',1,'IZHIKEVICH():&#160;neuronModels.cc']]],
-  ['izhikevich_5fps',['IZHIKEVICH_PS',['../d4/d8a/postSynapseModels_8h.html#a2d91b997bdd2b94782f9cc01b9436632',1,'IZHIKEVICH_PS():&#160;postSynapseModels.cc'],['../d5/d21/postSynapseModels_8cc.html#a2d91b997bdd2b94782f9cc01b9436632',1,'IZHIKEVICH_PS():&#160;postSynapseModels.cc']]],
-  ['izhikevich_5fv',['IZHIKEVICH_V',['../d3/dc0/neuronModels_8h.html#aba25a26e6dc7ed280aad22326b787418',1,'IZHIKEVICH_V():&#160;neuronModels.cc'],['../dc/dbc/neuronModels_8cc.html#aba25a26e6dc7ed280aad22326b787418',1,'IZHIKEVICH_V():&#160;neuronModels.cc']]],
-  ['izhinh_5fini',['IzhInh_ini',['../d7/d5b/Izh__sparse_8cc.html#ab5b2385ae707f61394f373cde2c36601',1,'Izh_sparse.cc']]]
+  ['learn1synapse',['LEARN1SYNAPSE',['../d2/d5b/synapseModels_8h.html#ae41b9869c1fd201fed3c85f4b0ea0380',1,'LEARN1SYNAPSE():&#160;synapseModels.cc'],['../d9/d5b/synapseModels_8cc.html#ae41b9869c1fd201fed3c85f4b0ea0380',1,'LEARN1SYNAPSE():&#160;synapseModels.cc']]],
+  ['learnblksz',['learnBlkSz',['../d2/d49/global_8h.html#a8f4f479cbd48532e51855884de8dc966',1,'learnBlkSz():&#160;global.cc'],['../d7/dd8/global_8cc.html#a8f4f479cbd48532e51855884de8dc966',1,'learnBlkSz():&#160;global.cc']]],
+  ['learningblocksize',['learningBlockSize',['../d8/d27/namespaceGENN__PREFERENCES.html#a8fe9767c3de6e4ef52e8987ed50a5bd9',1,'GENN_PREFERENCES']]],
+  ['learnsynapsespost',['learnSynapsesPost',['../d4/dd6/namespaceGENN__FLAGS.html#ac42b7395c404abcfb7b975cf578e6b9b',1,'GENN_FLAGS']]],
+  ['level',['Level',['../d5/ddf/structCodeStream_1_1OB.html#a54dcf72f1d0b61191cd5893922dae200',1,'CodeStream::OB::Level()'],['../d2/dff/structCodeStream_1_1CB.html#a887484791debd81c5c202a5ca6eacd67',1,'CodeStream::CB::Level()']]]
 ];

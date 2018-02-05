@@ -45,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">3.0.0</span>
+   &#160;<span id="projectnumber">3.1.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -132,19 +132,28 @@ $(document).ready(function(){initNavTree('d3/dad/generateRunner_8cc.html','../..
 <code>#include &quot;<a class="el" href="../../d2/d49/global_8h_source.html">global.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="../../d5/d60/utils_8h_source.html">utils.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="../../de/d99/codeGenUtils_8h_source.html">codeGenUtils.h</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="../../dd/d95/CodeHelper_8h_source.html">CodeHelper.h</a>&quot;</code><br />
-<code>#include &lt;stdint.h&gt;</code><br />
+<code>#include &quot;<a class="el" href="../../d0/dbb/codeStream_8h_source.html">codeStream.h</a>&quot;</code><br />
 <code>#include &lt;algorithm&gt;</code><br />
 <code>#include &lt;cfloat&gt;</code><br />
+<code>#include &lt;cstdint&gt;</code><br />
 </div><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
+<tr class="memitem:a32b25bed3edda2d0afeb308e36dbcc1c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dad/generateRunner_8cc.html#a32b25bed3edda2d0afeb308e36dbcc1c">genDefinitions</a> (const <a class="el" href="../../dc/de5/classNNmodel.html">NNmodel</a> &amp;model, const string &amp;path)</td></tr>
+<tr class="memdesc:a32b25bed3edda2d0afeb308e36dbcc1c"><td class="mdescLeft">&#160;</td><td class="mdescRight">A function that generates predominantly host-side code.  <a href="#a32b25bed3edda2d0afeb308e36dbcc1c">More...</a><br /></td></tr>
+<tr class="separator:a32b25bed3edda2d0afeb308e36dbcc1c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4926f58cffc68050554173bc96133505"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dad/generateRunner_8cc.html#a4926f58cffc68050554173bc96133505">genSupportCode</a> (const <a class="el" href="../../dc/de5/classNNmodel.html">NNmodel</a> &amp;model, const string &amp;path)</td></tr>
+<tr class="memdesc:a4926f58cffc68050554173bc96133505"><td class="mdescLeft">&#160;</td><td class="mdescRight">Path for code generationn.  <a href="#a4926f58cffc68050554173bc96133505">More...</a><br /></td></tr>
+<tr class="separator:a4926f58cffc68050554173bc96133505"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a78852c39319678d62bd3d8fe8555f4eb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dad/generateRunner_8cc.html#a78852c39319678d62bd3d8fe8555f4eb">genRunner</a> (const <a class="el" href="../../dc/de5/classNNmodel.html">NNmodel</a> &amp;model, const string &amp;path)</td></tr>
-<tr class="memdesc:a78852c39319678d62bd3d8fe8555f4eb"><td class="mdescLeft">&#160;</td><td class="mdescRight">A function that generates predominantly host-side code.  <a href="#a78852c39319678d62bd3d8fe8555f4eb">More...</a><br /></td></tr>
+<tr class="memdesc:a78852c39319678d62bd3d8fe8555f4eb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Path for code generationn.  <a href="#a78852c39319678d62bd3d8fe8555f4eb">More...</a><br /></td></tr>
 <tr class="separator:a78852c39319678d62bd3d8fe8555f4eb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a162c2d66623e48c92a49bb2ed2ebc86f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dad/generateRunner_8cc.html#a162c2d66623e48c92a49bb2ed2ebc86f">genRunnerGPU</a> (const <a class="el" href="../../dc/de5/classNNmodel.html">NNmodel</a> &amp;model, const string &amp;path)</td></tr>
 <tr class="memdesc:a162c2d66623e48c92a49bb2ed2ebc86f"><td class="mdescLeft">&#160;</td><td class="mdescRight">A function to generate the code that simulates the model on the GPU.  <a href="#a162c2d66623e48c92a49bb2ed2ebc86f">More...</a><br /></td></tr>
 <tr class="separator:a162c2d66623e48c92a49bb2ed2ebc86f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a79bec7312ad445e67dc91f07c6c4c833"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dad/generateRunner_8cc.html#a79bec7312ad445e67dc91f07c6c4c833">genMSBuild</a> (const <a class="el" href="../../dc/de5/classNNmodel.html">NNmodel</a> &amp;model, const string &amp;path)</td></tr>
+<tr class="memdesc:a79bec7312ad445e67dc91f07c6c4c833"><td class="mdescLeft">&#160;</td><td class="mdescRight">A function that generates an MSBuild script for all generated GeNN code.  <a href="#a79bec7312ad445e67dc91f07c6c4c833">More...</a><br /></td></tr>
+<tr class="separator:a79bec7312ad445e67dc91f07c6c4c833"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a86532baf4208a3cf3deeeedef5eef7ad"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/dad/generateRunner_8cc.html#a86532baf4208a3cf3deeeedef5eef7ad">genMakefile</a> (const <a class="el" href="../../dc/de5/classNNmodel.html">NNmodel</a> &amp;model, const string &amp;path)</td></tr>
 <tr class="memdesc:a86532baf4208a3cf3deeeedef5eef7ad"><td class="mdescLeft">&#160;</td><td class="mdescRight">A function that generates the Makefile for all generated GeNN code.  <a href="#a86532baf4208a3cf3deeeedef5eef7ad">More...</a><br /></td></tr>
 <tr class="separator:a86532baf4208a3cf3deeeedef5eef7ad"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -152,6 +161,42 @@ Functions</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Contains functions to generate code for running the simulation on the GPU, and for I/O convenience functions between GPU and CPU space. Part of the code generation section. </p>
 </div><h2 class="groupheader">Function Documentation</h2>
+<a class="anchor" id="a32b25bed3edda2d0afeb308e36dbcc1c"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void genDefinitions </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="../../dc/de5/classNNmodel.html">NNmodel</a> &amp;&#160;</td>
+          <td class="paramname"><em>model</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const string &amp;&#160;</td>
+          <td class="paramname"><em>path</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>A function that generates predominantly host-side code. </p>
+<p>In this function host-side functions and other code are generated, including: Global host variables, "allocatedMem()" function for allocating memories, "freeMem" function for freeing the allocated memories, "initialize" for initializing host variables, "gFunc" and "initGRaw()" for use with plastic synapses if such synapses exist in the model. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">model</td><td>Model description </td></tr>
+    <tr><td class="paramname">path</td><td>Path for code generationn </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a class="anchor" id="a86532baf4208a3cf3deeeedef5eef7ad"></a>
 <div class="memitem">
 <div class="memproto">
@@ -177,6 +222,43 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>A function that generates the Makefile for all generated GeNN code. </p>
+<p>Path for code generation </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">model</td><td>Model description </td></tr>
+    <tr><td class="paramname">path</td><td>Path for code generation </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a79bec7312ad445e67dc91f07c6c4c833"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void genMSBuild </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="../../dc/de5/classNNmodel.html">NNmodel</a> &amp;&#160;</td>
+          <td class="paramname"><em>model</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const string &amp;&#160;</td>
+          <td class="paramname"><em>path</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>A function that generates an MSBuild script for all generated GeNN code. </p>
+<p>Path for code generation </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">model</td><td>Model description </td></tr>
@@ -211,8 +293,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>A function that generates predominantly host-side code. </p>
-<p>In this function host-side functions and other code are generated, including: Global host variables, "allocatedMem()" function for allocating memories, "freeMem" function for freeing the allocated memories, "initialize" for initializing host variables, "gFunc" and "initGRaw()" for use with plastic synapses if such synapses exist in the model. </p>
+<p>Path for code generationn. </p>
 <p>Method for cleaning up and resetting device while quitting GeNN </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
@@ -260,13 +341,48 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="a4926f58cffc68050554173bc96133505"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void genSupportCode </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="../../dc/de5/classNNmodel.html">NNmodel</a> &amp;&#160;</td>
+          <td class="paramname"><em>model</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const string &amp;&#160;</td>
+          <td class="paramname"><em>path</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Path for code generationn. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">model</td><td>Model description </td></tr>
+    <tr><td class="paramname">path</td><td>Path for code generationn </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dir_97aefd0d527b934f1d99a682da8fe6a9.html">lib</a></li><li class="navelem"><a class="el" href="../../dir_a065c5f60305fee3569f887679366939.html">src</a></li><li class="navelem"><a class="el" href="../../d3/dad/generateRunner_8cc.html">generateRunner.cc</a></li>
-    <li class="footer">Generated on Wed Jun 21 2017 15:41:57 for GeNN by
+    <li class="footer">Generated on Mon Feb 5 2018 15:31:13 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.11 </li>
   </ul>

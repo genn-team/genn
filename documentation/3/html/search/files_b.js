@@ -1,10 +1,18 @@
 var searchData=
 [
-  ['generate_5frun_2ecc',['generate_run.cc',['../df/d1c/OneComp__project_2generate__run_8cc.html',1,'']]],
-  ['onecomp_2ecc',['OneComp.cc',['../db/d47/OneComp_8cc.html',1,'']]],
-  ['onecomp_5fmodel_2ecc',['OneComp_model.cc',['../da/de9/OneComp__model_8cc.html',1,'']]],
-  ['onecomp_5fmodel_2eh',['OneComp_model.h',['../db/d00/OneComp__model_8h.html',1,'']]],
-  ['onecomp_5fsim_2ecc',['OneComp_sim.cc',['../d2/d53/OneComp__sim_8cc.html',1,'']]],
-  ['onecomp_5fsim_2eh',['OneComp_sim.h',['../dc/d20/OneComp__sim_8h.html',1,'']]],
-  ['sizes_2eh',['sizes.h',['../db/d40/OneComp__project_2model_2sizes_8h.html',1,'']]]
+  ['modelspec_2ecc',['modelSpec.cc',['../d8/d9a/src_2modelSpec_8cc.html',1,'']]],
+  ['snippet_2eh',['snippet.h',['../de/d6c/snippet_8h.html',1,'']]],
+  ['sparseprojection_2eh',['sparseProjection.h',['../d6/d2e/sparseProjection_8h.html',1,'']]],
+  ['sparseutils_2ecc',['sparseUtils.cc',['../da/d23/sparseUtils_8cc.html',1,'']]],
+  ['sparseutils_2eh',['sparseUtils.h',['../d8/d69/sparseUtils_8h.html',1,'']]],
+  ['standardgeneratedsections_2ecc',['standardGeneratedSections.cc',['../da/d58/standardGeneratedSections_8cc.html',1,'']]],
+  ['standardgeneratedsections_2eh',['standardGeneratedSections.h',['../d7/d6f/standardGeneratedSections_8h.html',1,'']]],
+  ['standardsubstitutions_2ecc',['standardSubstitutions.cc',['../d2/d64/standardSubstitutions_8cc.html',1,'']]],
+  ['standardsubstitutions_2eh',['standardSubstitutions.h',['../d5/db9/standardSubstitutions_8h.html',1,'']]],
+  ['stringutils_2eh',['stringUtils.h',['../dd/dc3/stringUtils_8h.html',1,'']]],
+  ['synapsegroup_2ecc',['synapseGroup.cc',['../da/d3e/synapseGroup_8cc.html',1,'']]],
+  ['synapsegroup_2eh',['synapseGroup.h',['../de/db0/synapseGroup_8h.html',1,'']]],
+  ['synapsematrixtype_2eh',['synapseMatrixType.h',['../dd/dd5/synapseMatrixType_8h.html',1,'']]],
+  ['synapsemodels_2ecc',['synapseModels.cc',['../d9/d5b/synapseModels_8cc.html',1,'']]],
+  ['synapsemodels_2eh',['synapseModels.h',['../d2/d5b/synapseModels_8h.html',1,'']]]
 ];

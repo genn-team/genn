@@ -45,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">3.0.0</span>
+   &#160;<span id="projectnumber">3.1.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -129,7 +129,8 @@ $(document).ready(function(){initNavTree('d5/d60/utils_8h.html','../../');});
 
 <p>This file contains standard utility functions provide within the NVIDIA CUDA software development toolkit (SDK). The remainder of the file contains a function that defines the standard neuron models.  
 <a href="#details">More...</a></p>
-<div class="textblock"><code>#include &lt;iostream&gt;</code><br />
+<div class="textblock"><code>#include &lt;cstdlib&gt;</code><br />
+<code>#include &lt;iostream&gt;</code><br />
 <code>#include &lt;string&gt;</code><br />
 <code>#include &lt;cuda.h&gt;</code><br />
 <code>#include &lt;cuda_runtime.h&gt;</code><br />
@@ -170,9 +171,9 @@ Functions</h2></td></tr>
 <tr class="memitem:a7579c2e0bac1447fd480bf3619ac29f2"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/d60/utils_8h.html#a7579c2e0bac1447fd480bf3619ac29f2">theSize</a> (const string &amp;type)</td></tr>
 <tr class="memdesc:a7579c2e0bac1447fd480bf3619ac29f2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Tool for determining the size of variable types on the current architecture.  <a href="#a7579c2e0bac1447fd480bf3619ac29f2">More...</a><br /></td></tr>
 <tr class="separator:a7579c2e0bac1447fd480bf3619ac29f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a25920bbe5c1f08854c7162c4cd0b5796"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/d60/utils_8h.html#a25920bbe5c1f08854c7162c4cd0b5796">writeHeader</a> (ostream &amp;os)</td></tr>
-<tr class="memdesc:a25920bbe5c1f08854c7162c4cd0b5796"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function to write the comment header denoting file authorship and contact details into the generated code.  <a href="#a25920bbe5c1f08854c7162c4cd0b5796">More...</a><br /></td></tr>
-<tr class="separator:a25920bbe5c1f08854c7162c4cd0b5796"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae3073b91bfb261ce4e37689060e3420a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/d60/utils_8h.html#ae3073b91bfb261ce4e37689060e3420a">writeHeader</a> (<a class="el" href="../../da/da8/classCodeStream.html">CodeStream</a> &amp;os)</td></tr>
+<tr class="memdesc:ae3073b91bfb261ce4e37689060e3420a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function to write the comment header denoting file authorship and contact details into the generated code.  <a href="#ae3073b91bfb261ce4e37689060e3420a">More...</a><br /></td></tr>
+<tr class="separator:ae3073b91bfb261ce4e37689060e3420a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>This file contains standard utility functions provide within the NVIDIA CUDA software development toolkit (SDK). The remainder of the file contains a function that defines the standard neuron models. </p>
@@ -251,8 +252,7 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<b>Value:</b><div class="fragment"><div class="line">{                                                                \</div><div class="line">    cudaError_t error = call;                                        <a class="code" href="../../d7/d44/parse__options_8h.html#a5bb38b27f5b2a3a404368daccaebc153">\</a></div><div class="line"><a class="code" href="../../d7/d44/parse__options_8h.html#a5bb38b27f5b2a3a404368daccaebc153">    if</a> (error != cudaSuccess)                                        \</div><div class="line">      {                                                                \</div><div class="line">        cerr &lt;&lt; __FILE__ &lt;&lt; <span class="stringliteral">&quot;: &quot;</span> &lt;&lt;  __LINE__;                        \</div><div class="line">        cerr &lt;&lt; <span class="stringliteral">&quot;: cuda runtime error &quot;</span> &lt;&lt; error &lt;&lt; <span class="stringliteral">&quot;: &quot;</span>;        \</div><div class="line">        cerr &lt;&lt; cudaGetErrorString(error) &lt;&lt; endl;                \</div><div class="line">        exit(EXIT_FAILURE);                                        \</div><div class="line">      }                                                                \</div><div class="line">  }</div><div class="ttc" id="parse__options_8h_html_a5bb38b27f5b2a3a404368daccaebc153"><div class="ttname"><a href="../../d7/d44/parse__options_8h.html#a5bb38b27f5b2a3a404368daccaebc153">if</a></div><div class="ttdeci">if(cpu_only &amp;&amp;(which==1))</div><div class="ttdef"><b>Definition:</b> parse_options.h:40</div></div>
-</div><!-- fragment -->
+<b>Value:</b><div class="fragment"><div class="line">{                                                                \</div><div class="line">    cudaError_t error = call;                                        \</div><div class="line">    if (error != cudaSuccess)                                        \</div><div class="line">      {                                                                \</div><div class="line">        cerr &lt;&lt; __FILE__ &lt;&lt; <span class="stringliteral">&quot;: &quot;</span> &lt;&lt;  __LINE__;                        \</div><div class="line">        cerr &lt;&lt; <span class="stringliteral">&quot;: cuda runtime error &quot;</span> &lt;&lt; error &lt;&lt; <span class="stringliteral">&quot;: &quot;</span>;        \</div><div class="line">        cerr &lt;&lt; cudaGetErrorString(error) &lt;&lt; endl;                \</div><div class="line">        exit(EXIT_FAILURE);                                        \</div><div class="line">      }                                                                \</div><div class="line">  }</div></div><!-- fragment -->
 </div>
 </div>
 <a class="anchor" id="a6e900247bc34d6cbb25b903c4911f0df"></a>
@@ -362,6 +362,9 @@ Functions</h2></td></tr>
 <a class="anchor" id="af0b0c8b43bbddd565de67f17b6d9955d"></a>
 <div class="memitem">
 <div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">void gennError </td>
@@ -371,6 +374,11 @@ Functions</h2></td></tr>
           <td></td>
         </tr>
       </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
 
 <p>Function called upon the detection of an error. Outputs an error message and then exits. </p>
@@ -395,14 +403,14 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a25920bbe5c1f08854c7162c4cd0b5796"></a>
+<a class="anchor" id="ae3073b91bfb261ce4e37689060e3420a"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
           <td class="memname">void writeHeader </td>
           <td>(</td>
-          <td class="paramtype">ostream &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="../../da/da8/classCodeStream.html">CodeStream</a> &amp;&#160;</td>
           <td class="paramname"><em>os</em></td><td>)</td>
           <td></td>
         </tr>
@@ -419,7 +427,7 @@ Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dir_97aefd0d527b934f1d99a682da8fe6a9.html">lib</a></li><li class="navelem"><a class="el" href="../../dir_5a30104352ef4255dc24354b02eb2d20.html">include</a></li><li class="navelem"><a class="el" href="../../d5/d60/utils_8h.html">utils.h</a></li>
-    <li class="footer">Generated on Wed Jun 21 2017 15:41:57 for GeNN by
+    <li class="footer">Generated on Mon Feb 5 2018 15:31:14 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.11 </li>
   </ul>

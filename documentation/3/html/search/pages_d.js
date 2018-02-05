@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['weight_20update_20models',['Weight update models',['../sectSynapseModels.html',1,'UserManual']]]
+  ['variable_20initialisation',['Variable initialisation',['../sectVariableInitialisation.html',1,'UserManual']]]
 ];

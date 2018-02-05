@@ -1,6 +1,5 @@
 var searchData=
 [
-  ['myhh',['MyHH',['../d0/d8a/classMyHH.html',1,'']]],
-  ['myizhikevich',['MyIzhikevich',['../d1/d27/classMyIzhikevich.html',1,'']]],
-  ['myizhikevichvariable',['MyIzhikevichVariable',['../d0/d4c/classMyIzhikevichVariable.html',1,'']]]
+  ['izhikevich',['Izhikevich',['../d7/d0a/classNeuronModels_1_1Izhikevich.html',1,'NeuronModels']]],
+  ['izhikevichvariable',['IzhikevichVariable',['../dc/d87/classNeuronModels_1_1IzhikevichVariable.html',1,'NeuronModels']]]
 ];

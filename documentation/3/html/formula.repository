@@ -28,3 +28,13 @@
 \form#27:$ \frac{1000}{DT}$
 \form#28:$ \mu$
 \form#29:$ \mu S $
+\form#30:$[0.0, 1.0]$
+\form#31:$\lambda=1$
+\form#32:$\frac{1000}{DT}$
+\form#33:$n \in [0, spikeCount_Stim)$
+\form#34:$n \in [0, \textrm{spikeCount_Stim} )$
+\form#35:$n \in [0, \mbox{spikeCount_Stim} )$
+\form#36:$n \in [0, \mbox{spikeCount\_Stim} )$
+\form#37:$I = I_AMPA + B(v)I_NMDA$
+\form#38:$ I = I_AMPA + B(v)I_NMDA $
+\form#39:$ I = I_{AMPA} + B(v)I_{NMDA} $

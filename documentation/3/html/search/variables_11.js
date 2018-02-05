@@ -1,7 +1,5 @@
 var searchData=
 [
-  ['uniquerunid',['uniqueRunId',['../d1/dc3/classSchmuker2014__classifier.html#a58966899fc63a52f44d441ec44e7cc31',1,'Schmuker2014_classifier']]],
-  ['usercxxflagsgnu',['userCxxFlagsGNU',['../d8/d27/namespaceGENN__PREFERENCES.html#abe37f0a788639c95373894742585a4c1',1,'GENN_PREFERENCES']]],
-  ['usercxxflagswin',['userCxxFlagsWIN',['../d8/d27/namespaceGENN__PREFERENCES.html#ab9bae2537b17e65a4690a57e02eab698',1,'GENN_PREFERENCES']]],
-  ['usernvccflags',['userNvccFlags',['../d8/d27/namespaceGENN__PREFERENCES.html#a06e6b119589f2254336090ab858ff72b',1,'GENN_PREFERENCES']]]
+  ['varnames',['varNames',['../d3/dc9/classneuronModel.html#a9a9156ffb643572fd67f6e585ef79ad0',1,'neuronModel::varNames()'],['../d2/d1a/classpostSynModel.html#a3ade04dd55a74c018cb3c3c16a0c4a47',1,'postSynModel::varNames()'],['../dd/db7/classweightUpdateModel.html#a130dc4796aef818562cd9ab112a6dc98',1,'weightUpdateModel::varNames()']]],
+  ['vartypes',['varTypes',['../d3/dc9/classneuronModel.html#a86788cb29131da0a26ce79693a076352',1,'neuronModel::varTypes()'],['../d2/d1a/classpostSynModel.html#a5afb775c8211cb7591bb3c50526267fc',1,'postSynModel::varTypes()'],['../dd/db7/classweightUpdateModel.html#a77fdb9d1287b883d227f1b50fef9889c',1,'weightUpdateModel::varTypes()']]]
 ];

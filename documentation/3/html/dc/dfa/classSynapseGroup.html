@@ -45,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">3.0.0</span>
+   &#160;<span id="projectnumber">3.1.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -141,8 +141,12 @@ Public Types</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a78e78171cad0464019fac5107e947d62"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a78e78171cad0464019fac5107e947d62">SynapseGroup</a> (const std::string name, <a class="el" href="../../dd/dd5/synapseMatrixType_8h.html#a24a045033b9a7e987843a67ff5ddec9c">SynapseMatrixType</a> matrixType, unsigned int delaySteps, const <a class="el" href="../../d2/d05/classWeightUpdateModels_1_1Base.html">WeightUpdateModels::Base</a> *wu, const std::vector&lt; double &gt; &amp;wuParams, const std::vector&lt; double &gt; &amp;wuInitVals, const <a class="el" href="../../d1/d3a/classPostsynapticModels_1_1Base.html">PostsynapticModels::Base</a> *ps, const std::vector&lt; double &gt; &amp;psParams, const std::vector&lt; double &gt; &amp;psInitVals, <a class="el" href="../../d7/d3b/classNeuronGroup.html">NeuronGroup</a> *srcNeuronGroup, <a class="el" href="../../d7/d3b/classNeuronGroup.html">NeuronGroup</a> *trgNeuronGroup)</td></tr>
-<tr class="separator:a78e78171cad0464019fac5107e947d62"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab873ea7822edcbb19b6c941d8255373f"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#ab873ea7822edcbb19b6c941d8255373f">SynapseGroup</a> (const std::string name, <a class="el" href="../../dd/dd5/synapseMatrixType_8h.html#a24a045033b9a7e987843a67ff5ddec9c">SynapseMatrixType</a> matrixType, unsigned int delaySteps, const <a class="el" href="../../d2/d05/classWeightUpdateModels_1_1Base.html">WeightUpdateModels::Base</a> *wu, const std::vector&lt; double &gt; &amp;wuParams, const std::vector&lt; <a class="el" href="../../d7/db2/classNewModels_1_1VarInit.html">NewModels::VarInit</a> &gt; &amp;wuVarInitialisers, const <a class="el" href="../../d1/d3a/classPostsynapticModels_1_1Base.html">PostsynapticModels::Base</a> *ps, const std::vector&lt; double &gt; &amp;psParams, const std::vector&lt; <a class="el" href="../../d7/db2/classNewModels_1_1VarInit.html">NewModels::VarInit</a> &gt; &amp;psVarInitialisers, <a class="el" href="../../d7/d3b/classNeuronGroup.html">NeuronGroup</a> *srcNeuronGroup, <a class="el" href="../../d7/d3b/classNeuronGroup.html">NeuronGroup</a> *trgNeuronGroup)</td></tr>
+<tr class="separator:ab873ea7822edcbb19b6c941d8255373f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7a2a79cb1c07b90fb4070aa77c084411"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a7a2a79cb1c07b90fb4070aa77c084411">SynapseGroup</a> (const <a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a> &amp;)=delete</td></tr>
+<tr class="separator:a7a2a79cb1c07b90fb4070aa77c084411"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6d6697d4dd8b60bc78be702d75d87c75"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a6d6697d4dd8b60bc78be702d75d87c75">SynapseGroup</a> ()=delete</td></tr>
+<tr class="separator:a6d6697d4dd8b60bc78be702d75d87c75"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a759a1bd3b6bd873b9c3f8e268b89522b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d7/d3b/classNeuronGroup.html">NeuronGroup</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a759a1bd3b6bd873b9c3f8e268b89522b">getSrcNeuronGroup</a> ()</td></tr>
 <tr class="separator:a759a1bd3b6bd873b9c3f8e268b89522b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a435d75bda6ceb2bf44ab73ce11de53c4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d7/d3b/classNeuronGroup.html">NeuronGroup</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a435d75bda6ceb2bf44ab73ce11de53c4">getTrgNeuronGroup</a> ()</td></tr>
@@ -152,16 +156,29 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:aceb3430642324f99f3acbd4af62fb8e0"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#aceb3430642324f99f3acbd4af62fb8e0">setSpikeEventRequired</a> (bool req)</td></tr>
 <tr class="separator:aceb3430642324f99f3acbd4af62fb8e0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3ec881945c4a9559545b8fa98e5748f3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a3ec881945c4a9559545b8fa98e5748f3">setEventThresholdReTestRequired</a> (bool req)</td></tr>
+<tr class="memdesc:a3ec881945c4a9559545b8fa98e5748f3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function to enable the use of zero-copied memory for a particular weight update model state variable (deprecated use <a class="el" href="../../dc/dfa/classSynapseGroup.html#a089bb49a5d2b694f3e00a437b4f55407" title="Set variable mode of weight update model state variable. ">SynapseGroup::setWUVarMode</a>):  <a href="#a3ec881945c4a9559545b8fa98e5748f3">More...</a><br /></td></tr>
 <tr class="separator:a3ec881945c4a9559545b8fa98e5748f3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a19d9e2ec1f342222d5b14f739dd67c18"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a19d9e2ec1f342222d5b14f739dd67c18">setWUVarZeroCopyEnabled</a> (const std::string &amp;varName, bool enabled)</td></tr>
+<tr class="memdesc:a19d9e2ec1f342222d5b14f739dd67c18"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function to enable the use zero-copied memory for a particular postsynaptic model state variable (deprecated use <a class="el" href="../../dc/dfa/classSynapseGroup.html#a089bb49a5d2b694f3e00a437b4f55407" title="Set variable mode of weight update model state variable. ">SynapseGroup::setWUVarMode</a>)  <a href="#a19d9e2ec1f342222d5b14f739dd67c18">More...</a><br /></td></tr>
 <tr class="separator:a19d9e2ec1f342222d5b14f739dd67c18"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5b49d94440242eebda6e7d40958af1fc"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a5b49d94440242eebda6e7d40958af1fc">setPSVarZeroCopyEnabled</a> (const std::string &amp;varName, bool enabled)</td></tr>
 <tr class="separator:a5b49d94440242eebda6e7d40958af1fc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a089bb49a5d2b694f3e00a437b4f55407"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a089bb49a5d2b694f3e00a437b4f55407">setWUVarMode</a> (const std::string &amp;varName, <a class="el" href="../../d6/d8f/variableMode_8h.html#a21a79f2184074500f38877a503a4716d">VarMode</a> mode)</td></tr>
+<tr class="memdesc:a089bb49a5d2b694f3e00a437b4f55407"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set variable mode of weight update model state variable.  <a href="#a089bb49a5d2b694f3e00a437b4f55407">More...</a><br /></td></tr>
+<tr class="separator:a089bb49a5d2b694f3e00a437b4f55407"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5db0d96c5244b6e3eb10181a94ff04b3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a5db0d96c5244b6e3eb10181a94ff04b3">setPSVarMode</a> (const std::string &amp;varName, <a class="el" href="../../d6/d8f/variableMode_8h.html#a21a79f2184074500f38877a503a4716d">VarMode</a> mode)</td></tr>
+<tr class="memdesc:a5db0d96c5244b6e3eb10181a94ff04b3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set variable mode of postsynaptic model state variable.  <a href="#a5db0d96c5244b6e3eb10181a94ff04b3">More...</a><br /></td></tr>
+<tr class="separator:a5db0d96c5244b6e3eb10181a94ff04b3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a28b3a34ee4d0bba93ae3c0fb49ffa4c4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a28b3a34ee4d0bba93ae3c0fb49ffa4c4">setClusterIndex</a> (int hostID, int deviceID)</td></tr>
 <tr class="separator:a28b3a34ee4d0bba93ae3c0fb49ffa4c4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a56bed62cefac16ddc39bb70090599742"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a56bed62cefac16ddc39bb70090599742">setInSynVarMode</a> (<a class="el" href="../../d6/d8f/variableMode_8h.html#a21a79f2184074500f38877a503a4716d">VarMode</a> mode)</td></tr>
+<tr class="memdesc:a56bed62cefac16ddc39bb70090599742"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set variable mode used for variables used to combine input from this synapse group.  <a href="#a56bed62cefac16ddc39bb70090599742">More...</a><br /></td></tr>
+<tr class="separator:a56bed62cefac16ddc39bb70090599742"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aab6b2fb0ad30189bc11ee3dd7d48dbb2"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#aab6b2fb0ad30189bc11ee3dd7d48dbb2">setMaxConnections</a> (unsigned int maxConnections)</td></tr>
+<tr class="memdesc:aab6b2fb0ad30189bc11ee3dd7d48dbb2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the maximum number of target neurons any source neurons can connect to.  <a href="#aab6b2fb0ad30189bc11ee3dd7d48dbb2">More...</a><br /></td></tr>
 <tr class="separator:aab6b2fb0ad30189bc11ee3dd7d48dbb2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a97cfec638d856e6e07628bc19490690c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a97cfec638d856e6e07628bc19490690c">setSpanType</a> (<a class="el" href="../../dc/dfa/classSynapseGroup.html#a3da23a0e726b05a12e95c3d58645b1a2">SpanType</a> spanType)</td></tr>
+<tr class="memdesc:a97cfec638d856e6e07628bc19490690c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set how CUDA implementation is parallelised.  <a href="#a97cfec638d856e6e07628bc19490690c">More...</a><br /></td></tr>
 <tr class="separator:a97cfec638d856e6e07628bc19490690c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a46f29a2fdfe2b86ffe00aeb0574c9f05"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a46f29a2fdfe2b86ffe00aeb0574c9f05">initDerivedParams</a> (double dt)</td></tr>
 <tr class="separator:a46f29a2fdfe2b86ffe00aeb0574c9f05"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -179,6 +196,9 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:ae75ccb1f35d13752ee677b75b693ccc7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae6502734aacf09f229ce8c7ea7cac404"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../dd/dd5/synapseMatrixType_8h.html#a24a045033b9a7e987843a67ff5ddec9c">SynapseMatrixType</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#ae6502734aacf09f229ce8c7ea7cac404">getMatrixType</a> () const </td></tr>
 <tr class="separator:ae6502734aacf09f229ce8c7ea7cac404"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a304b04d55b9dfedd7d34020b9148f3bd"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d6/d8f/variableMode_8h.html#a21a79f2184074500f38877a503a4716d">VarMode</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a304b04d55b9dfedd7d34020b9148f3bd">getInSynVarMode</a> () const </td></tr>
+<tr class="memdesc:a304b04d55b9dfedd7d34020b9148f3bd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get variable mode used for variables used to combine input from this synapse group.  <a href="#a304b04d55b9dfedd7d34020b9148f3bd">More...</a><br /></td></tr>
+<tr class="separator:a304b04d55b9dfedd7d34020b9148f3bd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8a772e22445896a2f1aea2212a9ec2bd"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a8a772e22445896a2f1aea2212a9ec2bd">getPaddedDynKernelSize</a> (unsigned int blockSize) const </td></tr>
 <tr class="separator:a8a772e22445896a2f1aea2212a9ec2bd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a42d2f2d048fd59b236432ecf596b58d9"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a42d2f2d048fd59b236432ecf596b58d9">getPaddedPostLearnKernelSize</a> (unsigned int blockSize) const </td></tr>
@@ -199,33 +219,68 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:ae15a32b099d6f64e8889ea61d594d168"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a75ac872e722f112effc5c2c3253616e2"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; double &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a75ac872e722f112effc5c2c3253616e2">getWUDerivedParams</a> () const </td></tr>
 <tr class="separator:a75ac872e722f112effc5c2c3253616e2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3fb817ac41c6163c2c5464d5ea1f6299"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; double &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a3fb817ac41c6163c2c5464d5ea1f6299">getWUInitVals</a> () const </td></tr>
-<tr class="separator:a3fb817ac41c6163c2c5464d5ea1f6299"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8507ed5ce7aff896923654843f4899a0"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; <a class="el" href="../../d7/db2/classNewModels_1_1VarInit.html">NewModels::VarInit</a> &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a8507ed5ce7aff896923654843f4899a0">getWUVarInitialisers</a> () const </td></tr>
+<tr class="separator:a8507ed5ce7aff896923654843f4899a0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af0b547cd9f24072506b5e499a822a0de"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; double &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#af0b547cd9f24072506b5e499a822a0de">getWUConstInitVals</a> () const </td></tr>
+<tr class="separator:af0b547cd9f24072506b5e499a822a0de"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8ec4b129d947dd428de59b239b9e9131"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="../../d1/d3a/classPostsynapticModels_1_1Base.html">PostsynapticModels::Base</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a8ec4b129d947dd428de59b239b9e9131">getPSModel</a> () const </td></tr>
 <tr class="separator:a8ec4b129d947dd428de59b239b9e9131"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0cf2bf6100bab1160d280c59e278d07e"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; double &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a0cf2bf6100bab1160d280c59e278d07e">getPSParams</a> () const </td></tr>
 <tr class="separator:a0cf2bf6100bab1160d280c59e278d07e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5469e38e010a68528255408631e9e648"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; double &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a5469e38e010a68528255408631e9e648">getPSDerivedParams</a> () const </td></tr>
 <tr class="separator:a5469e38e010a68528255408631e9e648"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abacacb2e51de98aad1168dc3a57c64a3"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; double &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#abacacb2e51de98aad1168dc3a57c64a3">getPSInitVals</a> () const </td></tr>
-<tr class="separator:abacacb2e51de98aad1168dc3a57c64a3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa75d72f9e68108480115b862633bdce2"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; <a class="el" href="../../d7/db2/classNewModels_1_1VarInit.html">NewModels::VarInit</a> &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#aa75d72f9e68108480115b862633bdce2">getPSVarInitialisers</a> () const </td></tr>
+<tr class="separator:aa75d72f9e68108480115b862633bdce2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa031a395d0e0b3014af664aedae79402"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; double &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#aa031a395d0e0b3014af664aedae79402">getPSConstInitVals</a> () const </td></tr>
+<tr class="separator:aa031a395d0e0b3014af664aedae79402"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a55eaaa7eb11ddbfcd87f892f455b0931"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a55eaaa7eb11ddbfcd87f892f455b0931">isZeroCopyEnabled</a> () const </td></tr>
 <tr class="separator:a55eaaa7eb11ddbfcd87f892f455b0931"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac96fdec73910bbbd9154998faa6537bf"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#ac96fdec73910bbbd9154998faa6537bf">isWUVarZeroCopyEnabled</a> (const std::string &amp;var) const </td></tr>
 <tr class="separator:ac96fdec73910bbbd9154998faa6537bf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a27165d23ac73b3063e2ba6e0983ecf58"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a27165d23ac73b3063e2ba6e0983ecf58">isPSVarZeroCopyEnabled</a> (const std::string &amp;var) const </td></tr>
-<tr class="memdesc:a27165d23ac73b3063e2ba6e0983ecf58"><td class="mdescLeft">&#160;</td><td class="mdescRight">Is this synapse group too large to use shared memory for combining postsynaptic output.  <a href="#a27165d23ac73b3063e2ba6e0983ecf58">More...</a><br /></td></tr>
 <tr class="separator:a27165d23ac73b3063e2ba6e0983ecf58"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6f93ee5f4ea176c2b9255441379c97cc"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d6/d8f/variableMode_8h.html#a21a79f2184074500f38877a503a4716d">VarMode</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a6f93ee5f4ea176c2b9255441379c97cc">getWUVarMode</a> (const std::string &amp;var) const </td></tr>
+<tr class="memdesc:a6f93ee5f4ea176c2b9255441379c97cc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get variable mode used by weight update model state variable.  <a href="#a6f93ee5f4ea176c2b9255441379c97cc">More...</a><br /></td></tr>
+<tr class="separator:a6f93ee5f4ea176c2b9255441379c97cc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac84cdf84c31899fdbc5567b976c13747"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d6/d8f/variableMode_8h.html#a21a79f2184074500f38877a503a4716d">VarMode</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#ac84cdf84c31899fdbc5567b976c13747">getWUVarMode</a> (size_t index) const </td></tr>
+<tr class="memdesc:ac84cdf84c31899fdbc5567b976c13747"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get variable mode used by weight update model state variable.  <a href="#ac84cdf84c31899fdbc5567b976c13747">More...</a><br /></td></tr>
+<tr class="separator:ac84cdf84c31899fdbc5567b976c13747"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abaf182d2161a8191d7a6e66572dbf15a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d6/d8f/variableMode_8h.html#a21a79f2184074500f38877a503a4716d">VarMode</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#abaf182d2161a8191d7a6e66572dbf15a">getPSVarMode</a> (const std::string &amp;var) const </td></tr>
+<tr class="memdesc:abaf182d2161a8191d7a6e66572dbf15a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get variable mode used by postsynaptic model state variable.  <a href="#abaf182d2161a8191d7a6e66572dbf15a">More...</a><br /></td></tr>
+<tr class="separator:abaf182d2161a8191d7a6e66572dbf15a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab01b904bfa3af2008b53fc438471a0d4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d6/d8f/variableMode_8h.html#a21a79f2184074500f38877a503a4716d">VarMode</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#ab01b904bfa3af2008b53fc438471a0d4">getPSVarMode</a> (size_t index) const </td></tr>
+<tr class="memdesc:ab01b904bfa3af2008b53fc438471a0d4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get variable mode used by postsynaptic model state variable.  <a href="#ab01b904bfa3af2008b53fc438471a0d4">More...</a><br /></td></tr>
+<tr class="separator:ab01b904bfa3af2008b53fc438471a0d4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7fe3c9fbcb27b40024221d867460279e"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a7fe3c9fbcb27b40024221d867460279e">isPSAtomicAddRequired</a> (unsigned int blockSize) const </td></tr>
+<tr class="memdesc:a7fe3c9fbcb27b40024221d867460279e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Is this synapse group too large to use shared memory for combining postsynaptic output.  <a href="#a7fe3c9fbcb27b40024221d867460279e">More...</a><br /></td></tr>
 <tr class="separator:a7fe3c9fbcb27b40024221d867460279e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abd939b244af1b5052f6c5a0bb3acd5ca"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#abd939b244af1b5052f6c5a0bb3acd5ca">addExtraGlobalSynapseParams</a> (std::map&lt; string, string &gt; &amp;kernelParameters) const </td></tr>
-<tr class="separator:abd939b244af1b5052f6c5a0bb3acd5ca"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad57bb85759076e1410979b4c6f426081"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#ad57bb85759076e1410979b4c6f426081">addExtraGlobalNeuronParams</a> (std::map&lt; string, string &gt; &amp;kernelParameters) const </td></tr>
 <tr class="separator:ad57bb85759076e1410979b4c6f426081"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abd939b244af1b5052f6c5a0bb3acd5ca"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#abd939b244af1b5052f6c5a0bb3acd5ca">addExtraGlobalSynapseParams</a> (std::map&lt; string, string &gt; &amp;kernelParameters) const </td></tr>
+<tr class="separator:abd939b244af1b5052f6c5a0bb3acd5ca"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8c02e60c4cf7572eebec674d690e7575"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a8c02e60c4cf7572eebec674d690e7575">addExtraGlobalPostLearnParams</a> (std::map&lt; string, string &gt; &amp;kernelParameters) const </td></tr>
+<tr class="separator:a8c02e60c4cf7572eebec674d690e7575"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a29dd18a24113004d1efec5363365abdb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a29dd18a24113004d1efec5363365abdb">addExtraGlobalSynapseDynamicsParams</a> (std::map&lt; string, string &gt; &amp;kernelParameters) const </td></tr>
+<tr class="separator:a29dd18a24113004d1efec5363365abdb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0acca523fadddd870c446688b7bf9c10"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a0acca523fadddd870c446688b7bf9c10">getOffsetPre</a> () const </td></tr>
 <tr class="separator:a0acca523fadddd870c446688b7bf9c10"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acaed03aa04cbcb3730b24384983129c7"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#acaed03aa04cbcb3730b24384983129c7">getOffsetPost</a> (const std::string &amp;devPrefix) const </td></tr>
 <tr class="separator:acaed03aa04cbcb3730b24384983129c7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:affddf2325b30dbcc2829f2d5853ee9aa"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#affddf2325b30dbcc2829f2d5853ee9aa">isPSInitRNGRequired</a> (<a class="el" href="../../d6/d8f/variableMode_8h.html#aa7ccb7c73652058a320136c533e79ffd">VarInit</a> varInitMode) const </td></tr>
+<tr class="memdesc:affddf2325b30dbcc2829f2d5853ee9aa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Does this synapse group require an RNG for it's postsynaptic init code.  <a href="#affddf2325b30dbcc2829f2d5853ee9aa">More...</a><br /></td></tr>
+<tr class="separator:affddf2325b30dbcc2829f2d5853ee9aa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac89f1183647eb3f72d09a5870e526051"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#ac89f1183647eb3f72d09a5870e526051">isWUInitRNGRequired</a> (<a class="el" href="../../d6/d8f/variableMode_8h.html#aa7ccb7c73652058a320136c533e79ffd">VarInit</a> varInitMode) const </td></tr>
+<tr class="memdesc:ac89f1183647eb3f72d09a5870e526051"><td class="mdescLeft">&#160;</td><td class="mdescRight">Does this synapse group require an RNG for it's weight update init code.  <a href="#ac89f1183647eb3f72d09a5870e526051">More...</a><br /></td></tr>
+<tr class="separator:ac89f1183647eb3f72d09a5870e526051"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a249ff6f548f3c4dd19f7d5a1b140cc2d"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a249ff6f548f3c4dd19f7d5a1b140cc2d">isPSDeviceVarInitRequired</a> () const </td></tr>
+<tr class="memdesc:a249ff6f548f3c4dd19f7d5a1b140cc2d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Is device var init code required for any variables in this synapse group's postsynaptic model.  <a href="#a249ff6f548f3c4dd19f7d5a1b140cc2d">More...</a><br /></td></tr>
+<tr class="separator:a249ff6f548f3c4dd19f7d5a1b140cc2d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae1f19f072ffa0659c1fc1854b4a906d6"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#ae1f19f072ffa0659c1fc1854b4a906d6">isWUDeviceVarInitRequired</a> () const </td></tr>
+<tr class="memdesc:ae1f19f072ffa0659c1fc1854b4a906d6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Is device var init code required for any variables in this synapse group's weight update model.  <a href="#ae1f19f072ffa0659c1fc1854b4a906d6">More...</a><br /></td></tr>
+<tr class="separator:ae1f19f072ffa0659c1fc1854b4a906d6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a261494b6b8b9ac22ed5f9c5d13091e2b"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a261494b6b8b9ac22ed5f9c5d13091e2b">canRunOnCPU</a> () const </td></tr>
+<tr class="memdesc:a261494b6b8b9ac22ed5f9c5d13091e2b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Can this synapse group run on the CPU?  <a href="#a261494b6b8b9ac22ed5f9c5d13091e2b">More...</a><br /></td></tr>
+<tr class="separator:a261494b6b8b9ac22ed5f9c5d13091e2b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Member Enumeration Documentation</h2>
 <a class="anchor" id="a3da23a0e726b05a12e95c3d58645b1a2"></a>
@@ -255,12 +310,9 @@ Public Member Functions</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a class="anchor" id="a78e78171cad0464019fac5107e947d62"></a>
+<a class="anchor" id="ab873ea7822edcbb19b6c941d8255373f"></a>
 <div class="memitem">
 <div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">SynapseGroup::SynapseGroup </td>
@@ -295,8 +347,8 @@ Public Member Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const std::vector&lt; double &gt; &amp;&#160;</td>
-          <td class="paramname"><em>wuInitVals</em>, </td>
+          <td class="paramtype">const std::vector&lt; <a class="el" href="../../d7/db2/classNewModels_1_1VarInit.html">NewModels::VarInit</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>wuVarInitialisers</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -313,8 +365,8 @@ Public Member Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const std::vector&lt; double &gt; &amp;&#160;</td>
-          <td class="paramname"><em>psInitVals</em>, </td>
+          <td class="paramtype">const std::vector&lt; <a class="el" href="../../d7/db2/classNewModels_1_1VarInit.html">NewModels::VarInit</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>psVarInitialisers</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -334,9 +386,51 @@ Public Member Functions</h2></td></tr>
           <td></td><td></td>
         </tr>
       </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a7a2a79cb1c07b90fb4070aa77c084411"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">SynapseGroup::SynapseGroup </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a> &amp;&#160;</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+<span class="mlabels"><span class="mlabel">delete</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a6d6697d4dd8b60bc78be702d75d87c75"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">SynapseGroup::SynapseGroup </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">delete</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -350,6 +444,38 @@ Public Member Functions</h2></td></tr>
       <table class="memname">
         <tr>
           <td class="memname">void SynapseGroup::addExtraGlobalNeuronParams </td>
+          <td>(</td>
+          <td class="paramtype">std::map&lt; string, string &gt; &amp;&#160;</td>
+          <td class="paramname"><em>kernelParameters</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a8c02e60c4cf7572eebec674d690e7575"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void SynapseGroup::addExtraGlobalPostLearnParams </td>
+          <td>(</td>
+          <td class="paramtype">std::map&lt; string, string &gt; &amp;&#160;</td>
+          <td class="paramname"><em>kernelParameters</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a29dd18a24113004d1efec5363365abdb"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void SynapseGroup::addExtraGlobalSynapseDynamicsParams </td>
           <td>(</td>
           <td class="paramtype">std::map&lt; string, string &gt; &amp;&#160;</td>
           <td class="paramname"><em>kernelParameters</em></td><td>)</td>
@@ -402,6 +528,24 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="a261494b6b8b9ac22ed5f9c5d13091e2b"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool SynapseGroup::canRunOnCPU </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Can this synapse group run on the CPU? </p>
+<p>If we are running in CPU_ONLY mode this is always true, but some GPU functionality will prevent models being run on both CPU and GPU. </p>
+
+</div>
+</div>
 <a class="anchor" id="a7201e5a054f27f7b7eaea947134d852d"></a>
 <div class="memitem">
 <div class="memproto">
@@ -422,6 +566,31 @@ Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a304b04d55b9dfedd7d34020b9148f3bd"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="../../d6/d8f/variableMode_8h.html#a21a79f2184074500f38877a503a4716d">VarMode</a> SynapseGroup::getInSynVarMode </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Get variable mode used for variables used to combine input from this synapse group. </p>
 
 </div>
 </div>
@@ -580,6 +749,21 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="aa031a395d0e0b3014af664aedae79402"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">const std::vector&lt; double &gt; SynapseGroup::getPSConstInitVals </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a class="anchor" id="a5469e38e010a68528255408631e9e648"></a>
 <div class="memitem">
 <div class="memproto">
@@ -589,29 +773,6 @@ Public Member Functions</h2></td></tr>
       <table class="memname">
         <tr>
           <td class="memname">const std::vector&lt;double&gt;&amp; SynapseGroup::getPSDerivedParams </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a class="anchor" id="abacacb2e51de98aad1168dc3a57c64a3"></a>
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">const std::vector&lt;double&gt;&amp; SynapseGroup::getPSInitVals </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -669,6 +830,73 @@ Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="aa75d72f9e68108480115b862633bdce2"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const std::vector&lt;<a class="el" href="../../d7/db2/classNewModels_1_1VarInit.html">NewModels::VarInit</a>&gt;&amp; SynapseGroup::getPSVarInitialisers </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="abaf182d2161a8191d7a6e66572dbf15a"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="../../d6/d8f/variableMode_8h.html#a21a79f2184074500f38877a503a4716d">VarMode</a> SynapseGroup::getPSVarMode </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>var</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Get variable mode used by postsynaptic model state variable. </p>
+
+</div>
+</div>
+<a class="anchor" id="ab01b904bfa3af2008b53fc438471a0d4"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="../../d6/d8f/variableMode_8h.html#a21a79f2184074500f38877a503a4716d">VarMode</a> SynapseGroup::getPSVarMode </td>
+          <td>(</td>
+          <td class="paramtype">size_t&#160;</td>
+          <td class="paramname"><em>index</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Get variable mode used by postsynaptic model state variable. </p>
 
 </div>
 </div>
@@ -787,6 +1015,21 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="af0b547cd9f24072506b5e499a822a0de"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">const std::vector&lt; double &gt; SynapseGroup::getWUConstInitVals </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a class="anchor" id="a75ac872e722f112effc5c2c3253616e2"></a>
 <div class="memitem">
 <div class="memproto">
@@ -796,29 +1039,6 @@ Public Member Functions</h2></td></tr>
       <table class="memname">
         <tr>
           <td class="memname">const std::vector&lt;double&gt;&amp; SynapseGroup::getWUDerivedParams </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a class="anchor" id="a3fb817ac41c6163c2c5464d5ea1f6299"></a>
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">const std::vector&lt;double&gt;&amp; SynapseGroup::getWUInitVals </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -879,6 +1099,73 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="a8507ed5ce7aff896923654843f4899a0"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const std::vector&lt;<a class="el" href="../../d7/db2/classNewModels_1_1VarInit.html">NewModels::VarInit</a>&gt;&amp; SynapseGroup::getWUVarInitialisers </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a6f93ee5f4ea176c2b9255441379c97cc"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="../../d6/d8f/variableMode_8h.html#a21a79f2184074500f38877a503a4716d">VarMode</a> SynapseGroup::getWUVarMode </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>var</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Get variable mode used by weight update model state variable. </p>
+
+</div>
+</div>
+<a class="anchor" id="ac84cdf84c31899fdbc5567b976c13747"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="../../d6/d8f/variableMode_8h.html#a21a79f2184074500f38877a503a4716d">VarMode</a> SynapseGroup::getWUVarMode </td>
+          <td>(</td>
+          <td class="paramtype">size_t&#160;</td>
+          <td class="paramname"><em>index</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Get variable mode used by weight update model state variable. </p>
+
+</div>
+</div>
 <a class="anchor" id="a46f29a2fdfe2b86ffe00aeb0574c9f05"></a>
 <div class="memitem">
 <div class="memproto">
@@ -932,11 +1219,51 @@ Public Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
+<p>Is this synapse group too large to use shared memory for combining postsynaptic output. </p>
+
+</div>
+</div>
+<a class="anchor" id="a249ff6f548f3c4dd19f7d5a1b140cc2d"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool SynapseGroup::isPSDeviceVarInitRequired </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Is device var init code required for any variables in this synapse group's postsynaptic model. </p>
+
+</div>
+</div>
+<a class="anchor" id="affddf2325b30dbcc2829f2d5853ee9aa"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool SynapseGroup::isPSInitRNGRequired </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="../../d6/d8f/variableMode_8h.html#aa7ccb7c73652058a320136c533e79ffd">VarInit</a>&#160;</td>
+          <td class="paramname"><em>varInitMode</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Does this synapse group require an RNG for it's postsynaptic init code. </p>
+
 </div>
 </div>
 <a class="anchor" id="a27165d23ac73b3063e2ba6e0983ecf58"></a>
 <div class="memitem">
 <div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">bool SynapseGroup::isPSVarZeroCopyEnabled </td>
@@ -946,9 +1273,12 @@ Public Member Functions</h2></td></tr>
           <td> const</td>
         </tr>
       </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
-
-<p>Is this synapse group too large to use shared memory for combining postsynaptic output. </p>
 
 </div>
 </div>
@@ -998,9 +1328,47 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="ae1f19f072ffa0659c1fc1854b4a906d6"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool SynapseGroup::isWUDeviceVarInitRequired </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Is device var init code required for any variables in this synapse group's weight update model. </p>
+
+</div>
+</div>
+<a class="anchor" id="ac89f1183647eb3f72d09a5870e526051"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool SynapseGroup::isWUInitRNGRequired </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="../../d6/d8f/variableMode_8h.html#aa7ccb7c73652058a320136c533e79ffd">VarInit</a>&#160;</td>
+          <td class="paramname"><em>varInitMode</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Does this synapse group require an RNG for it's weight update init code. </p>
+
+</div>
+</div>
 <a class="anchor" id="ac96fdec73910bbbd9154998faa6537bf"></a>
 <div class="memitem">
 <div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">bool SynapseGroup::isWUVarZeroCopyEnabled </td>
@@ -1010,6 +1378,11 @@ Public Member Functions</h2></td></tr>
           <td> const</td>
         </tr>
       </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
 
 </div>
@@ -1084,7 +1457,35 @@ Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Function to enable the use of zero-copied memory for a particular weight update model state variable: May improve IO performance at the expense of kernel performance </p>
+
+<p>Function to enable the use of zero-copied memory for a particular weight update model state variable (deprecated use <a class="el" href="../../dc/dfa/classSynapseGroup.html#a089bb49a5d2b694f3e00a437b4f55407" title="Set variable mode of weight update model state variable. ">SynapseGroup::setWUVarMode</a>): </p>
+
+</div>
+</div>
+<a class="anchor" id="a56bed62cefac16ddc39bb70090599742"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void SynapseGroup::setInSynVarMode </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="../../d6/d8f/variableMode_8h.html#a21a79f2184074500f38877a503a4716d">VarMode</a>&#160;</td>
+          <td class="paramname"><em>mode</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Set variable mode used for variables used to combine input from this synapse group. </p>
+<p>This is ignored for CPU simulations </p>
 
 </div>
 </div>
@@ -1102,11 +1503,46 @@ Public Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
+<p>Sets the maximum number of target neurons any source neurons can connect to. </p>
+<p>Use with <a class="el" href="../../dd/dd5/synapseMatrixType_8h.html#a24a045033b9a7e987843a67ff5ddec9ca14329718a99dc337fa3bd33b9104d75d">SynapseMatrixType::SPARSE_GLOBALG</a> and <a class="el" href="../../dd/dd5/synapseMatrixType_8h.html#a24a045033b9a7e987843a67ff5ddec9cae7658b74f700d52b421afc540c892d2e">SynapseMatrixType::SPARSE_INDIVIDUALG</a> to optimise CUDA implementation </p>
+
+</div>
+</div>
+<a class="anchor" id="a5db0d96c5244b6e3eb10181a94ff04b3"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void SynapseGroup::setPSVarMode </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>varName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="../../d6/d8f/variableMode_8h.html#a21a79f2184074500f38877a503a4716d">VarMode</a>&#160;</td>
+          <td class="paramname"><em>mode</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Set variable mode of postsynaptic model state variable. </p>
+<p>This is ignored for CPU simulations </p>
+
 </div>
 </div>
 <a class="anchor" id="a5b49d94440242eebda6e7d40958af1fc"></a>
 <div class="memitem">
 <div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">void SynapseGroup::setPSVarZeroCopyEnabled </td>
@@ -1126,7 +1562,13 @@ Public Member Functions</h2></td></tr>
           <td></td><td></td>
         </tr>
       </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
+<p>May improve IO performance at the expense of kernel performance </p>
 
 </div>
 </div>
@@ -1143,6 +1585,9 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Set how CUDA implementation is parallelised. </p>
+<p>with a thread per target neuron (default) or a thread per source spike </p>
 
 </div>
 </div>
@@ -1194,9 +1639,41 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="a089bb49a5d2b694f3e00a437b4f55407"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void SynapseGroup::setWUVarMode </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>varName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="../../d6/d8f/variableMode_8h.html#a21a79f2184074500f38877a503a4716d">VarMode</a>&#160;</td>
+          <td class="paramname"><em>mode</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Set variable mode of weight update model state variable. </p>
+<p>This is ignored for CPU simulations </p>
+
+</div>
+</div>
 <a class="anchor" id="a19d9e2ec1f342222d5b14f739dd67c18"></a>
 <div class="memitem">
 <div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">void SynapseGroup::setWUVarZeroCopyEnabled </td>
@@ -1216,8 +1693,15 @@ Public Member Functions</h2></td></tr>
           <td></td><td></td>
         </tr>
       </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
-<p>Function to enable the use zero-copied memory for a particular postsynaptic model state variable May improve IO performance at the expense of kernel performance </p>
+
+<p>Function to enable the use zero-copied memory for a particular postsynaptic model state variable (deprecated use <a class="el" href="../../dc/dfa/classSynapseGroup.html#a089bb49a5d2b694f3e00a437b4f55407" title="Set variable mode of weight update model state variable. ">SynapseGroup::setWUVarMode</a>) </p>
+<p>May improve IO performance at the expense of kernel performance </p>
 
 </div>
 </div>
@@ -1231,7 +1715,7 @@ Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a></li>
-    <li class="footer">Generated on Wed Jun 21 2017 15:42:00 for GeNN by
+    <li class="footer">Generated on Mon Feb 5 2018 15:31:14 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.11 </li>
   </ul>

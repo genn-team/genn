@@ -5,6 +5,7 @@ var namespaceNeuronModels =
     [ "IzhikevichVariable", "dc/d87/classNeuronModels_1_1IzhikevichVariable.html", "dc/d87/classNeuronModels_1_1IzhikevichVariable" ],
     [ "LegacyWrapper", "df/d83/classNeuronModels_1_1LegacyWrapper.html", "df/d83/classNeuronModels_1_1LegacyWrapper" ],
     [ "Poisson", "de/d1d/classNeuronModels_1_1Poisson.html", "de/d1d/classNeuronModels_1_1Poisson" ],
+    [ "PoissonNew", "dc/dc0/classNeuronModels_1_1PoissonNew.html", "dc/dc0/classNeuronModels_1_1PoissonNew" ],
     [ "RulkovMap", "db/d23/classNeuronModels_1_1RulkovMap.html", "db/d23/classNeuronModels_1_1RulkovMap" ],
     [ "SpikeSource", "d5/d1f/classNeuronModels_1_1SpikeSource.html", "d5/d1f/classNeuronModels_1_1SpikeSource" ],
     [ "TraubMiles", "d2/dc3/classNeuronModels_1_1TraubMiles.html", "d2/dc3/classNeuronModels_1_1TraubMiles" ],

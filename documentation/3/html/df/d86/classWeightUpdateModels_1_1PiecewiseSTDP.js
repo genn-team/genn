@@ -1,7 +1,7 @@
 var classWeightUpdateModels_1_1PiecewiseSTDP =
 [
-    [ "ParamValues", "df/d86/classWeightUpdateModels_1_1PiecewiseSTDP.html#a3ca38833e31c159480819090bf351809", null ],
-    [ "VarValues", "df/d86/classWeightUpdateModels_1_1PiecewiseSTDP.html#a3e9af36859620c02eeb6396470e01d51", null ],
+    [ "ParamValues", "df/d86/classWeightUpdateModels_1_1PiecewiseSTDP.html#a45ac05a82b0dd248b13e4aa1ebaabe82", null ],
+    [ "VarValues", "df/d86/classWeightUpdateModels_1_1PiecewiseSTDP.html#a4c958653ed0ddc0ae5f82de620b49596", null ],
     [ "getDerivedParams", "df/d86/classWeightUpdateModels_1_1PiecewiseSTDP.html#af7b0f08fe1dca0aa7420b719625eeeee", null ],
     [ "getLearnPostCode", "df/d86/classWeightUpdateModels_1_1PiecewiseSTDP.html#a24654b023d3c59245a28c9c255b162ea", null ],
     [ "getParamNames", "df/d86/classWeightUpdateModels_1_1PiecewiseSTDP.html#a0a881b5adc9ef7d50316494fdd817892", null ],

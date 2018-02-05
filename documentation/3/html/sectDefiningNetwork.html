@@ -45,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">3.0.0</span>
+   &#160;<span id="projectnumber">3.1.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -117,36 +117,36 @@ $(document).ready(function(){initNavTree('sectDefiningNetwork.html','');});
 <div class="title">Defining a network model </div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p>A network model is defined by the user by providing the function </p><div class="fragment"><div class="line"><span class="keywordtype">void</span> <a class="code" href="df/db4/decode__matrix__globalg__bitmask_2model_8cc.html#a9aeaa0a22980484b2c472564fc9f686e">modelDefinition</a>(<a class="code" href="dc/de5/classNNmodel.html">NNmodel</a> &amp;model) </div></div><!-- fragment --><p> in a separate file, such as <code>MyModel.cc</code>. In this function, the following tasks must be completed:</p>
+<div class="textblock"><p>A network model is defined by the user by providing the function </p><div class="fragment"><div class="line"><span class="keywordtype">void</span> modelDefinition(<a class="code" href="dc/de5/classNNmodel.html">NNmodel</a> &amp;model) </div></div><!-- fragment --><p> in a separate file, such as <code>MyModel.cc</code>. In this function, the following tasks must be completed:</p>
 <ol type="1">
 <li>The name of the model must be defined: <div class="fragment"><div class="line">model.<a class="code" href="dc/de5/classNNmodel.html#aba858ed73e029de0366ab23f973b1273">setName</a>(<span class="stringliteral">&quot;MyModel&quot;</span>);</div></div><!-- fragment --></li>
-<li><a class="el" href="d3/df4/classNeuron.html">Neuron</a> populations (at least one) must be added (see <a class="el" href="sectDefiningNetwork.html#subsect11">Defining neuron populations</a>). The user may add as many neuron populations as they wish. If resources run out, there will not be a warning but GeNN will fail. However, before this breaking point is reached, GeNN will make all necessary efforts in terms of block size optimisation to accommodate the defined models. All populations must have a unique name.</li>
+<li>Neuron populations (at least one) must be added (see <a class="el" href="sectDefiningNetwork.html#subsect11">Defining neuron populations</a>). The user may add as many neuron populations as they wish. If resources run out, there will not be a warning but GeNN will fail. However, before this breaking point is reached, GeNN will make all necessary efforts in terms of block size optimisation to accommodate the defined models. All populations must have a unique name.</li>
 <li>Synapse populations (zero or more) can be added (see <a class="el" href="sectDefiningNetwork.html#subsect12">Defining synapse populations</a>). Again, the number of synaptic connection populations is unlimited other than by resources.</li>
 </ol>
 <h1><a class="anchor" id="subsect11"></a>
 Defining neuron populations</h1>
-<p><a class="el" href="d3/df4/classNeuron.html">Neuron</a> populations are added using the function </p><div class="fragment"><div class="line">model.<a class="code" href="dc/de5/classNNmodel.html#a8d7d593837882775dfb89a9780c06fab">addNeuronPopulation</a>&lt;NeuronModel&gt;(name, num, paramValues, varValues);</div></div><!-- fragment --><p> where the arguments are: </p><ul>
+<p>Neuron populations are added using the function </p><div class="fragment"><div class="line">model.<a class="code" href="dc/de5/classNNmodel.html#a8d7d593837882775dfb89a9780c06fab">addNeuronPopulation</a>&lt;NeuronModel&gt;(name, num, paramValues, varInitialisers);</div></div><!-- fragment --><p> where the arguments are: </p><ul>
 <li><code>NeuronModel</code>: Template argument specifying the type of neuron model These should be derived off <a class="el" href="d7/dad/classNeuronModels_1_1Base.html" title="Base class for all neuron models. ">NeuronModels::Base</a> and can either be one of the standard models or user-defined (see <a class="el" href="sectNeuronModels.html">Neuron models</a>). </li>
 <li><code>const string &amp;name</code>: Unique name of the neuron population </li>
 <li><code>unsigned int size</code>: number of neurons in the population </li>
 <li><code>NeuronModel::ParamValues paramValues</code>: Parameters of this neuron type </li>
-<li><code>NeuronModel::VarValues varValues</code>: Initial values for variables of this neuron type</li>
+<li><code>NeuronModel::VarValues varInitialisers</code>: Initial values or initialisation snippets for variables of this neuron type</li>
 </ul>
 <p>The user may add as many neuron populations as the model necessitates. They must all have unique names. The possible values for the arguments, predefined models and their parameters and initial values are detailed <a class="el" href="sectNeuronModels.html">Neuron models</a> below.</p>
 <h1><a class="anchor" id="subsect12"></a>
 Defining synapse populations</h1>
-<p>Synapse populations are added with the function </p><div class="fragment"><div class="line">model.<a class="code" href="dc/de5/classNNmodel.html#aae817535d08ab6b35ef1e2348b03a37c">addSynapsePopulation</a>&lt;<a class="code" href="d1/daf/classWeightUpdateModel.html">WeightUpdateModel</a>, PostsynapticModel&gt;(name, mType, delay, preName, postName, weightParamValues, weightVarValues, postsynapticParamValues, postsynapticVarValues);</div></div><!-- fragment --><p> where the arguments are </p><ul>
-<li><code><a class="el" href="d1/daf/classWeightUpdateModel.html">WeightUpdateModel</a></code>: Template parameter specifying the type of weight update model. These should be derived off <a class="el" href="d2/d05/classWeightUpdateModels_1_1Base.html" title="Base class for all weight update models. ">WeightUpdateModels::Base</a> and can either be one of the standard models or user-defined (see <a class="el" href="sectSynapseModels.html">Weight update models</a>). </li>
+<p>Synapse populations are added with the function </p><div class="fragment"><div class="line">model.<a class="code" href="dc/de5/classNNmodel.html#aae817535d08ab6b35ef1e2348b03a37c">addSynapsePopulation</a>&lt;WeightUpdateModel, PostsynapticModel&gt;(name, mType, delay, preName, postName, weightParamValues, weightVarValues, postsynapticParamValues, postsynapticVarValues);</div></div><!-- fragment --><p> where the arguments are </p><ul>
+<li><code>WeightUpdateModel</code>: Template parameter specifying the type of weight update model. These should be derived off <a class="el" href="d2/d05/classWeightUpdateModels_1_1Base.html" title="Base class for all weight update models. ">WeightUpdateModels::Base</a> and can either be one of the standard models or user-defined (see <a class="el" href="sectSynapseModels.html">Weight update models</a>). </li>
 <li><code>PostsynapticModel</code>: Template parameter specifying the type of postsynaptic integration model. These should be derived off <a class="el" href="d1/d3a/classPostsynapticModels_1_1Base.html" title="Base class for all postsynaptic models. ">PostsynapticModels::Base</a> and can either be one of the standard models or user-defined (see <a class="el" href="sect_postsyn.html">Postsynaptic integration methods</a>). </li>
 <li><code>const string &amp;name</code>: The name of the synapse population </li>
 <li><code>unsigned int mType</code>: How the synaptic matrix is stored. the options currently are "SPARSE_GLOBALG", "SPARSE_INDIVIDUALG", "DENSE_GLOBALG", "DENSE_INDIVIDUALG" or "BITMASK_GLOBALG" (see <a class="el" href="subsect34.html">Synaptic matrix types</a>). </li>
 <li><code>unsigned int delay</code>: Synaptic delay (in multiples of the simulation time step <code>DT</code>). </li>
 <li><code>const string preName</code>: Name of the (existing!) pre-synaptic neuron population. </li>
 <li><code>const string postName</code>: Name of the (existing!) post-synaptic neuron population. </li>
-<li><code><a class="el" href="d1/daf/classWeightUpdateModel.html#a58c1c8e4fa09cb367826ec2a10c24a1f">WeightUpdateModel::ParamValues</a> weightParamValues</code>: The parameter values (common to all synapses of the population) for the weight update model. </li>
-<li><code><a class="el" href="d1/daf/classWeightUpdateModel.html#a584911427ff03dedd35a1d4981844994">WeightUpdateModel::VarValues</a> weightVarValues</code>: The initial values for the weight update model's state variables </li>
+<li><code>WeightUpdateModel::ParamValues weightParamValues</code>: The parameter values (common to all synapses of the population) for the weight update model. </li>
+<li><code>WeightUpdateModel::VarValues weightVarInitialisers</code>: Initial values or initialisation snippets for the weight update model's state variables </li>
 <li><code>PostsynapticModel::ParamValues postsynapticParamValues</code>: The parameter values (common to all postsynaptic neurons) for the postsynaptic model. </li>
-<li><code>PostsynapticModel::VarValues postsynapticVarValues</code>: The initial values for the postsynaptic model's state variables</li>
+<li><code>PostsynapticModel::VarValues postsynapticVarInitialisers</code>: Initial values or initialisation snippets for variables for the postsynaptic model's state variables</li>
 </ul>
 <dl class="section note"><dt>Note</dt><dd>If the synapse conductance definition type is "GLOBALG" then the global value of the synapse parameters is taken from the initial value provided in <code>weightVarValues</code>. <br />
 <hr/>
@@ -157,7 +157,7 @@ Defining synapse populations</h1>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="UserManual.html">User Manual</a></li>
-    <li class="footer">Generated on Wed Jun 21 2017 15:41:57 for GeNN by
+    <li class="footer">Generated on Mon Feb 5 2018 15:31:14 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.11 </li>
   </ul>

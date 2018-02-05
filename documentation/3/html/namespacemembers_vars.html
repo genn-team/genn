@@ -45,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">3.0.0</span>
+   &#160;<span id="projectnumber">3.1.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -131,19 +131,25 @@ $(document).ready(function(){initNavTree('namespacemembers_vars.html','');});
 : <a class="el" href="d8/d27/namespaceGENN__PREFERENCES.html#a735be1f8a3fa1bb1eb74cf981d0525a2">GENN_PREFERENCES</a>
 </li>
 <li>autoChooseDevice
-: <a class="el" href="d8/d27/namespaceGENN__PREFERENCES.html#adb99ec835aec37d566c69248798643bd">GENN_PREFERENCES</a>
+: <a class="el" href="d8/d27/namespaceGENN__PREFERENCES.html#a6922b0be770078c883d5b9270cece84e">GENN_PREFERENCES</a>
+</li>
+<li>autoInitSparseVars
+: <a class="el" href="d8/d27/namespaceGENN__PREFERENCES.html#a708fe713881a49526d8787d9fc00a2b6">GENN_PREFERENCES</a>
 </li>
 <li>autoRefractory
 : <a class="el" href="d8/d27/namespaceGENN__PREFERENCES.html#aea36da0f447200facdcd5ecad8b39a2a">GENN_PREFERENCES</a>
 </li>
+<li>buildSharedLibrary
+: <a class="el" href="d8/d27/namespaceGENN__PREFERENCES.html#a7848e1de02f155abf95c3e27914d8918">GENN_PREFERENCES</a>
+</li>
 <li>calcNeurons
-: <a class="el" href="d4/dd6/namespaceGENN__FLAGS.html#a70d6722298f30838c00baf136c110902">GENN_FLAGS</a>
+: <a class="el" href="d4/dd6/namespaceGENN__FLAGS.html#a631ef752d5ce4479cf8b333f666e90b2">GENN_FLAGS</a>
 </li>
 <li>calcSynapseDynamics
-: <a class="el" href="d4/dd6/namespaceGENN__FLAGS.html#a3b1f267e861503db8c2371bfe0989531">GENN_FLAGS</a>
+: <a class="el" href="d4/dd6/namespaceGENN__FLAGS.html#ae014e483c4d208132905a83d6910d3ba">GENN_FLAGS</a>
 </li>
 <li>calcSynapses
-: <a class="el" href="d4/dd6/namespaceGENN__FLAGS.html#aa9e7f573246d5738188a5c7950b2cd35">GENN_FLAGS</a>
+: <a class="el" href="d4/dd6/namespaceGENN__FLAGS.html#af12806867f9ad3b23ffedee4c01cfef7">GENN_FLAGS</a>
 </li>
 <li>debugCode
 : <a class="el" href="d8/d27/namespaceGENN__PREFERENCES.html#a967223438a721ed5c23ba510df02c347">GENN_PREFERENCES</a>
@@ -151,17 +157,26 @@ $(document).ready(function(){initNavTree('namespacemembers_vars.html','');});
 <li>defaultDevice
 : <a class="el" href="d8/d27/namespaceGENN__PREFERENCES.html#a1ae9bcfe428d00fd1f709cd7facf22b4">GENN_PREFERENCES</a>
 </li>
+<li>defaultVarMode
+: <a class="el" href="d8/d27/namespaceGENN__PREFERENCES.html#a1f2baab3bda8720e90ef46685f2a6559">GENN_PREFERENCES</a>
+</li>
+<li>initBlockSize
+: <a class="el" href="d8/d27/namespaceGENN__PREFERENCES.html#ac1fdecbe7b0fb47adae2d879bd3351c3">GENN_PREFERENCES</a>
+</li>
+<li>initSparseBlockSize
+: <a class="el" href="d8/d27/namespaceGENN__PREFERENCES.html#ad6a5da8909f5de7dd370a29d2aa7d660">GENN_PREFERENCES</a>
+</li>
 <li>learningBlockSize
 : <a class="el" href="d8/d27/namespaceGENN__PREFERENCES.html#a8fe9767c3de6e4ef52e8987ed50a5bd9">GENN_PREFERENCES</a>
 </li>
 <li>learnSynapsesPost
-: <a class="el" href="d4/dd6/namespaceGENN__FLAGS.html#ab711c6c2ef7ff24596840043244153b5">GENN_FLAGS</a>
+: <a class="el" href="d4/dd6/namespaceGENN__FLAGS.html#ac42b7395c404abcfb7b975cf578e6b9b">GENN_FLAGS</a>
 </li>
 <li>neuronBlockSize
 : <a class="el" href="d8/d27/namespaceGENN__PREFERENCES.html#a9ead15e70419d90b29f5a0da7417c92d">GENN_PREFERENCES</a>
 </li>
 <li>optimiseBlockSize
-: <a class="el" href="d8/d27/namespaceGENN__PREFERENCES.html#a24fbefb33f64f717b24b6f9892342472">GENN_PREFERENCES</a>
+: <a class="el" href="d8/d27/namespaceGENN__PREFERENCES.html#aa0eb3e22db3e508d753794160a9f50ff">GENN_PREFERENCES</a>
 </li>
 <li>optimizeCode
 : <a class="el" href="d8/d27/namespaceGENN__PREFERENCES.html#ac1fd3b45ea8f157c8d5f779d7603fa35">GENN_PREFERENCES</a>
@@ -190,7 +205,7 @@ $(document).ready(function(){initNavTree('namespacemembers_vars.html','');});
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Wed Jun 21 2017 15:42:02 for GeNN by
+    <li class="footer">Generated on Mon Feb 5 2018 15:31:17 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.11 </li>
   </ul>

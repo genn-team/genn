@@ -1,7 +1,7 @@
 var classPiecewiseSTDPUserDef =
 [
-    [ "ParamValues", "d9/d25/classPiecewiseSTDPUserDef.html#afb5fee7d63717e53ae01f95a3ac6197c", null ],
-    [ "VarValues", "d9/d25/classPiecewiseSTDPUserDef.html#a75dd2f54b6ca36d7f74d1e613c0d7cd3", null ],
+    [ "ParamValues", "d9/d25/classPiecewiseSTDPUserDef.html#a04dded8cfa2bb8a2fffb8181744d5eb6", null ],
+    [ "VarValues", "d9/d25/classPiecewiseSTDPUserDef.html#ac929c3b2c65cbe21e77afb6ca58e1a1e", null ],
     [ "getDerivedParams", "d9/d25/classPiecewiseSTDPUserDef.html#ac135654794424e3b16b5dad7cb5b188f", null ],
     [ "getLearnPostCode", "d9/d25/classPiecewiseSTDPUserDef.html#a0c5dde85cecd52fceb7ea60a13be119b", null ],
     [ "getParamNames", "d9/d25/classPiecewiseSTDPUserDef.html#a92332cb29a2af145fc0abc5756b85cb4", null ],

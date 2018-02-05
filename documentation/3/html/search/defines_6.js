@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['flag_5frun_5fon_5fcpu',['FLAG_RUN_ON_CPU',['../dc/d02/experiment_8h.html#a6cbc9f91aa8d89c1efa64fb24dc9679f',1,'experiment.h']]]
+  ['global_5fcc',['GLOBAL_CC',['../d7/dd8/global_8cc.html#aab39068ee3baa91e6d8b214118852d28',1,'global.cc']]],
+  ['gpu',['GPU',['../dc/de1/modelSpec_8h.html#a39cb9803524b6f3b783344b2f89867b4',1,'modelSpec.h']]]
 ];

@@ -1,8 +1,9 @@
 var searchData=
 [
-  ['randctx',['randctx',['../d6/dc7/structQTIsaac_1_1randctx.html',1,'QTIsaac']]],
-  ['randomgauss',['randomGauss',['../d5/d45/classrandomGauss.html',1,'']]],
-  ['randomgen',['randomGen',['../d8/d3b/classrandomGen.html',1,'']]],
-  ['rulkovdp',['rulkovdp',['../d6/d9e/classrulkovdp.html',1,'']]],
-  ['rulkovmap',['RulkovMap',['../db/d23/classNeuronModels_1_1RulkovMap.html',1,'NeuronModels']]]
+  ['pairkeyconstiter',['PairKeyConstIter',['../d2/dab/classPairKeyConstIter.html',1,'']]],
+  ['piecewisestdp',['PiecewiseSTDP',['../df/d86/classWeightUpdateModels_1_1PiecewiseSTDP.html',1,'WeightUpdateModels']]],
+  ['poisson',['Poisson',['../de/d1d/classNeuronModels_1_1Poisson.html',1,'NeuronModels']]],
+  ['poissonnew',['PoissonNew',['../dc/dc0/classNeuronModels_1_1PoissonNew.html',1,'NeuronModels']]],
+  ['postsynmodel',['postSynModel',['../d2/d1a/classpostSynModel.html',1,'']]],
+  ['pwstdp',['pwSTDP',['../d0/dba/classpwSTDP.html',1,'']]]
 ];

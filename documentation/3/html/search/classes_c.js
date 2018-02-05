@@ -1,7 +1,9 @@
 var searchData=
 [
-  ['traubmiles',['TraubMiles',['../d2/dc3/classNeuronModels_1_1TraubMiles.html',1,'NeuronModels']]],
-  ['traubmilesalt',['TraubMilesAlt',['../d0/df2/classNeuronModels_1_1TraubMilesAlt.html',1,'NeuronModels']]],
-  ['traubmilesfast',['TraubMilesFast',['../dc/d4c/classNeuronModels_1_1TraubMilesFast.html',1,'NeuronModels']]],
-  ['traubmilesnstep',['TraubMilesNStep',['../d6/d08/classNeuronModels_1_1TraubMilesNStep.html',1,'NeuronModels']]]
+  ['sparseprojection',['SparseProjection',['../d9/d91/structSparseProjection.html',1,'']]],
+  ['spikesource',['SpikeSource',['../d5/d1f/classNeuronModels_1_1SpikeSource.html',1,'NeuronModels']]],
+  ['staticgraded',['StaticGraded',['../d6/d64/classWeightUpdateModels_1_1StaticGraded.html',1,'WeightUpdateModels']]],
+  ['staticpulse',['StaticPulse',['../d9/d74/classWeightUpdateModels_1_1StaticPulse.html',1,'WeightUpdateModels']]],
+  ['stopwatch',['stopWatch',['../d1/df5/structstopWatch.html',1,'']]],
+  ['synapsegroup',['SynapseGroup',['../dc/dfa/classSynapseGroup.html',1,'']]]
 ];

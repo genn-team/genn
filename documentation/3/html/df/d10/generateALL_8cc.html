@@ -45,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">3.0.0</span>
+   &#160;<span id="projectnumber">3.1.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -120,8 +120,7 @@ $(document).ready(function(){initNavTree('df/d10/generateALL_8cc.html','../../')
 
 <div class="header">
   <div class="summary">
-<a href="#func-members">Functions</a> &#124;
-<a href="#var-members">Variables</a>  </div>
+<a href="#func-members">Functions</a>  </div>
   <div class="headertitle">
 <div class="title">generateALL.cc File Reference</div>  </div>
 </div><!--header-->
@@ -130,19 +129,20 @@ $(document).ready(function(){initNavTree('df/d10/generateALL_8cc.html','../../')
 <p>Main file combining the code for code generation. Part of the code generation section.  
 <a href="#details">More...</a></p>
 <div class="textblock"><code>#include &quot;<a class="el" href="../../d2/d49/global_8h_source.html">global.h</a>&quot;</code><br />
-<code>#include &lt;MODEL&gt;</code><br />
 <code>#include &quot;<a class="el" href="../../d8/deb/generateALL_8h_source.html">generateALL.h</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="../../d2/d75/generateRunner_8h_source.html">generateRunner.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="../../d2/dfd/generateCPU_8h_source.html">generateCPU.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="../../d7/d53/generateInit_8h_source.html">generateInit.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="../../d9/d4c/generateKernels_8h_source.html">generateKernels.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="../../d2/d75/generateRunner_8h_source.html">generateRunner.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="../../dc/de1/modelSpec_8h_source.html">modelSpec.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="../../d5/d60/utils_8h_source.html">utils.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="../../de/d99/codeGenUtils_8h_source.html">codeGenUtils.h</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="../../dd/d95/CodeHelper_8h_source.html">CodeHelper.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="../../d0/dbb/codeStream_8h_source.html">codeStream.h</a>&quot;</code><br />
 <code>#include &lt;algorithm&gt;</code><br />
 <code>#include &lt;cmath&gt;</code><br />
 <code>#include &lt;iterator&gt;</code><br />
 <code>#include &lt;sys/stat.h&gt;</code><br />
+<code>#include &lt;MODEL&gt;</code><br />
 </div><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
@@ -155,11 +155,6 @@ Functions</h2></td></tr>
 <tr class="memitem:a0ddf1224851353fc92bfbff6f499fa97"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d10/generateALL_8cc.html#a0ddf1224851353fc92bfbff6f499fa97">main</a> (int argc, char *argv[])</td></tr>
 <tr class="memdesc:a0ddf1224851353fc92bfbff6f499fa97"><td class="mdescLeft">&#160;</td><td class="mdescRight">Main entry point for the generateALL executable that generates the code for GPU and CPU.  <a href="#a0ddf1224851353fc92bfbff6f499fa97">More...</a><br /></td></tr>
 <tr class="separator:a0ddf1224851353fc92bfbff6f499fa97"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="var-members"></a>
-Variables</h2></td></tr>
-<tr class="memitem:a528456f8f1feca5714ef5cef70156619"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d1/d03/classCodeHelper.html">CodeHelper</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d10/generateALL_8cc.html#a528456f8f1feca5714ef5cef70156619">hlp</a></td></tr>
-<tr class="separator:a528456f8f1feca5714ef5cef70156619"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Main file combining the code for code generation. Part of the code generation section. </p>
@@ -272,26 +267,13 @@ Variables</h2></td></tr>
 
 </div>
 </div>
-<h2 class="groupheader">Variable Documentation</h2>
-<a class="anchor" id="a528456f8f1feca5714ef5cef70156619"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="../../d1/d03/classCodeHelper.html">CodeHelper</a> hlp</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dir_97aefd0d527b934f1d99a682da8fe6a9.html">lib</a></li><li class="navelem"><a class="el" href="../../dir_a065c5f60305fee3569f887679366939.html">src</a></li><li class="navelem"><a class="el" href="../../df/d10/generateALL_8cc.html">generateALL.cc</a></li>
-    <li class="footer">Generated on Wed Jun 21 2017 15:41:57 for GeNN by
+    <li class="footer">Generated on Mon Feb 5 2018 15:31:13 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.11 </li>
   </ul>
