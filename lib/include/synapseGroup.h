@@ -44,29 +44,40 @@ public:
     void setSpikeEventRequired(bool req){ m_SpikeEventRequired = req; }
     void setEventThresholdReTestRequired(bool req){ m_EventThresholdReTestRequired = req; }
 
-    //!< Function to enable the use of zero-copied memory for a particular weight update model state variable:
-    //!< May improve IO performance at the expense of kernel performance
+    //!< Function to enable the use of zero-copied memory for a particular weight update model state variable (deprecated use SynapseGroup::setWUVarMode):
+    /*! May improve IO performance at the expense of kernel performance */
     void setWUVarZeroCopyEnabled(const std::string &varName, bool enabled)
     {
         setWUVarMode(varName, enabled ? VarMode::LOC_ZERO_COPY_INIT_HOST : VarMode::LOC_HOST_DEVICE_INIT_HOST);
     }
 
-    //!< Function to enable the use zero-copied memory for a particular postsynaptic model state variable
-    //!< May improve IO performance at the expense of kernel performance
+    //!< Function to enable the use zero-copied memory for a particular postsynaptic model state variable (deprecated use SynapseGroup::setWUVarMode)
+    /*! May improve IO performance at the expense of kernel performance */
     void setPSVarZeroCopyEnabled(const std::string &varName, bool enabled)
     {
         setPSVarMode(varName, enabled ? VarMode::LOC_ZERO_COPY_INIT_HOST : VarMode::LOC_HOST_DEVICE_INIT_HOST);
     }
 
+    //! Set variable mode of weight update model state variable
+    /*! This is ignored for CPU simulations */
     void setWUVarMode(const std::string &varName, VarMode mode);
+
+    //! Set variable mode of postsynaptic model state variable
+    /*! This is ignored for CPU simulations */
     void setPSVarMode(const std::string &varName, VarMode mode);
 
     void setClusterIndex(int hostID, int deviceID){ m_HostID = hostID; m_DeviceID = deviceID; }
 
-    //!< Set variable mode used for variables used to combine input from this synapse group
+    //! Set variable mode used for variables used to combine input from this synapse group
+    /*! This is ignored for CPU simulations */
     void setInSynVarMode(VarMode mode) { m_InSynVarMode = mode; }
 
+    //! Sets the maximum number of target neurons any source neurons can connect to
+    /*! Use with SynapseMatrixType::SPARSE_GLOBALG and SynapseMatrixType::SPARSE_INDIVIDUALG to optimise CUDA implementation */
     void setMaxConnections(unsigned int maxConnections);
+
+    //! Set how CUDA implementation is parallelised
+    /*! with a thread per target neuron (default) or a thread per source spike */
     void setSpanType(SpanType spanType);
 
     void initDerivedParams(double dt);
@@ -84,7 +95,7 @@ public:
     unsigned int getMaxConnections() const{ return m_MaxConnections; }
     SynapseMatrixType getMatrixType() const{ return m_MatrixType; }
 
-    //!< Get variable mode used for variables used to combine input from this synapse group
+    //! Get variable mode used for variables used to combine input from this synapse group
     VarMode getInSynVarMode() const { return m_InSynVarMode; }
 
     unsigned int getPaddedDynKernelSize(unsigned int blockSize) const;
@@ -115,12 +126,19 @@ public:
     bool isWUVarZeroCopyEnabled(const std::string &var) const{ return (getWUVarMode(var) & VarLocation::ZERO_COPY); }
     bool isPSVarZeroCopyEnabled(const std::string &var) const{ return (getPSVarMode(var) & VarLocation::ZERO_COPY); }
 
+    //! Get variable mode used by weight update model state variable
     VarMode getWUVarMode(const std::string &var) const;
+
+    //! Get variable mode used by weight update model state variable
     VarMode getWUVarMode(size_t index) const{ return m_WUVarMode[index]; }
+
+    //! Get variable mode used by postsynaptic model state variable
     VarMode getPSVarMode(const std::string &var) const;
+
+    //! Get variable mode used by postsynaptic model state variable
     VarMode getPSVarMode(size_t index) const{ return m_PSVarMode[index]; }
 
-    //!< Is this synapse group too large to use shared memory for combining postsynaptic output
+    //! Is this synapse group too large to use shared memory for combining postsynaptic output
     // **THINK** this is very cuda-specific
     bool isPSAtomicAddRequired(unsigned int blockSize) const;
 
@@ -133,20 +151,21 @@ public:
     std::string getOffsetPre() const;
     std::string getOffsetPost(const std::string &devPrefix) const;
 
-    //!< Does this synapse group require an RNG for it's postsynaptic init code
+    //! Does this synapse group require an RNG for it's postsynaptic init code
     bool isPSInitRNGRequired(VarInit varInitMode) const;
 
-    //!< Does this synapse group require an RNG for it's weight update init code
+    //! Does this synapse group require an RNG for it's weight update init code
     bool isWUInitRNGRequired(VarInit varInitMode) const;
 
-    //!< Is device var init code required for any variables in this synapse group's postsynaptic model
+    //! Is device var init code required for any variables in this synapse group's postsynaptic model
     bool isPSDeviceVarInitRequired() const;
 
-    //!< Is device var init code required for any variables in this synapse group's weight update model
+    //! Is device var init code required for any variables in this synapse group's weight update model
     bool isWUDeviceVarInitRequired() const;
 
-    //! Can this synapse group run on the CPU? If we are running in CPU_ONLY mode this is always true,
-    //! but some GPU functionality will prevent models being run on both CPU and GPU.
+    //! Can this synapse group run on the CPU?
+    /*! If we are running in CPU_ONLY mode this is always true,
+        but some GPU functionality will prevent models being run on both CPU and GPU.*/
     bool canRunOnCPU() const;
 
 private:

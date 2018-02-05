@@ -26,6 +26,7 @@ public:
 //----------------------------------------------------------------------------
 // InitVarSnippet::Uninitialised
 //----------------------------------------------------------------------------
+//! Used to mark variables as uninitialised - no initialisation code will be run
 class Uninitialised : public Base
 {
 public:

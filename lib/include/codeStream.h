@@ -9,8 +9,8 @@
 //----------------------------------------------------------------------------
 // CodeStream
 //----------------------------------------------------------------------------
-// Code-generation helper which automatically inserts brackets, indents etc
-// Based heavily on: https://stackoverflow.com/questions/15053753/writing-a-manipulator-for-a-custom-stream-class
+//! Helper class for generating code - automatically inserts brackets, indents etc
+/*! Based heavily on: https://stackoverflow.com/questions/15053753/writing-a-manipulator-for-a-custom-stream-class */
 class CodeStream : public std::ostream
 {
 private:
@@ -58,6 +58,9 @@ public:
     //------------------------------------------------------------------------
     // OB
     //------------------------------------------------------------------------
+    //! An open bracket marker
+    /*! Write to code stream ``os`` using:
+     * \code os << OB(16); \endcode */
     struct OB
     {
         OB(unsigned int level) : Level(level){}
@@ -68,6 +71,9 @@ public:
     //------------------------------------------------------------------------
     // CB
     //------------------------------------------------------------------------
+    //! A close bracket marker
+    /*! Write to code stream ``os`` using:
+     * \code os << CB(16); \endcode */
     struct CB
     {
         CB(unsigned int level) : Level(level){}

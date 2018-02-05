@@ -26,6 +26,7 @@
 - \subpage sectSynapseModels
 - \subpage subsect34
 - \subpage sect_postsyn
+- \subpage sectVariableInitialisation
 
 \section sIntro Introduction
 
@@ -84,7 +85,7 @@ tasks must be completed:
 
 Neuron populations are added using the function
 \code{.cc}
-model.addNeuronPopulation<NeuronModel>(name, num, paramValues, varValues);
+model.addNeuronPopulation<NeuronModel>(name, num, paramValues, varInitialisers);
 \endcode
 where the arguments are:
 \arg `NeuronModel`:        Template argument specifying the type of neuron model
@@ -94,7 +95,7 @@ where the arguments are:
 \arg `const string &name`: Unique name of the neuron population
 \arg `unsigned int size`: number of neurons in the population
 \arg `NeuronModel::ParamValues paramValues`: Parameters of this neuron type
-\arg `NeuronModel::VarValues varValues`: Initial values for variables of this neuron type 
+\arg `NeuronModel::VarValues varInitialisers`: Initial values or initialisation snippets for variables of this neuron type 
 
 The user may add as many neuron populations as the model necessitates.
 They must all have unique names. The possible values for the arguments,
@@ -127,11 +128,11 @@ where the arguments are
      neuron population.
 \arg `WeightUpdateModel::ParamValues weightParamValues`:    The parameter values (common to all synapses of 
                                                             the population) for the weight update model. 
-\arg `WeightUpdateModel::VarValues weightVarValues`:    The initial values for the weight
+\arg `WeightUpdateModel::VarValues weightVarInitialisers`:    Initial values or initialisation snippets for the weight
                                                         update model's state variables
 \arg `PostsynapticModel::ParamValues postsynapticParamValues`:  The parameter values (common to all 
                                                                 postsynaptic neurons) for the postsynaptic model. 
-\arg `PostsynapticModel::VarValues postsynapticVarValues`:  The initial values for the 
+\arg `PostsynapticModel::VarValues postsynapticVarInitialisers`:  Initial values or initialisation snippets for variables for the 
                                                             postsynaptic model's state variables
 
 \note
@@ -153,7 +154,7 @@ There is a number of predefined models which can be used with the NNmodel::addNe
 - NeuronModels::Izhikevich
 - NeuronModels::IzhikevichVariable
 - NeuronModels::SpikeSource
-- NeuronModels::Poisson
+- NeuronModels::PoissonNew
 - NeuronModels::TraubMiles
 - NeuronModels::TraubMilesFast
 - NeuronModels::TraubMilesAlt
@@ -179,7 +180,8 @@ For convenience the methods this class should implement can be implemented using
     The length of this list should match the NUM_PARAM specified in DECLARE_MODEL. 
     Parameters are assumed to be always of type double.
 - SET_VARS() defines the names and type strings (e.g. "float", "double", etc) 
-    of the neuron state variables. The variables defined here as `NAME` can then be used in the
+    of the neuron state variables. The type string "scalar" can be used for variables which should be implemented using the precision set globally for the model with NNmodel::setPrecision.
+    The variables defined here as `NAME` can then be used in the
     syntax `$(NAME)` in the code string. 
 
 For example, using these macros, we can define a leaky integrator \f$\tau\frac{dV}{dt}= -V + I_{{\rm syn}}\f$ solved using Euler's method:
@@ -192,7 +194,7 @@ public:
     
     SET_SIM_CODE("$(V)+= (-$(V)+$(Isyn))*(DT/$(tau));");
     
-    SET_THRESHOLD_CONDITION_CODE("$(V) >= -50.0");
+    SET_THRESHOLD_CONDITION_CODE("$(V) >= 1.0");
     
     SET_PARAM_NAMES({"tau"});
     
@@ -215,7 +217,7 @@ public:
     
     SET_SIM_CODE("$(V) = $(Isyn) - $(ExpTC)*($(Isyn) - $(V));");
     
-    SET_THRESHOLD_CONDITION_CODE("$(V) >= -50.0");
+    SET_THRESHOLD_CONDITION_CODE("$(V) >= 1.0");
     
     SET_PARAM_NAMES({"tau"});
     
@@ -226,13 +228,15 @@ public:
 };
 \endcode
 
-GeNN provides two additional features that might be useful when defining more complex neuron models.
-"Support code" enables a code snippet to be defined that contains supporting code that will be utilized in the other code snippets. Typically, these are functions that are needed in the sim code or threshold condition code. If possible, these should be defined as `__host__ __device__` functions so that both GPU and CPU versions of GeNN code have an appropriate support code function available. The support code is protected with a namespace so that it is exclusively available for the neuron population whose neurons define it. Support code is added to a model using the SET_SUPPORT_CODE() macro, for example:
+GeNN provides several additional features that might be useful when defining more complex neuron models.
+\subsection neuron_support_code Support code
+Support code enables a code block to be defined that contains supporting code that will be utilized in multiple pieces of user code. Typically, these are functions that are needed in the sim code or threshold condition code. If possible, these should be defined as `__host__ __device__` functions so that both GPU and CPU versions of GeNN code have an appropriate support code function available. The support code is protected with a namespace so that it is exclusively available for the neuron population whose neurons define it. Support code is added to a model using the SET_SUPPORT_CODE() macro, for example:
 \code
 SET_SUPPORT_CODE("__device__ __host__ scalar mysin(float x){ return sin(x); }");
 \endcode
 
-The final feature is "Extra global parameters". These parameters are common to all neurons in the population and, unlike the standard neuron parameters, can be varied at runtime. This could, for example, be used to provide a global reward signal.
+\subsection neuron_extra_global_param Extra global parameters
+Extra global parameters are parameters common to all neurons in the population. However, unlike the standard neuron parameters, they can be varied at runtime meaning they could, for example, be used to provide a global reward signal.
 These parameters are defined by using the SET_EXTRA_GLOBAL_PARAMS() macro to specify a list of variable names and type strings (like the SET_VARS() macro). For example:
 \code
 SET_EXTRA_GLOBAL_PARAMS({{"R", "float"}});
@@ -245,6 +249,24 @@ For example, if the model with the "R" parameter was used for the pre-synaptic n
 SET_SIM_CODE("$(x)= $(x)+$(R_pre);");
 \endcode
 where we have assumed that the weight update model has a variable `x` and our synapse type will only be used in conjunction with pre-synaptic neuron populations that do have the extra global parameter `R`. If the pre-synaptic population does not have the required variable/parameter, GeNN will fail when compiling the kernels.
+
+\subsection neuron_additional_input Additional input variables
+Normally, neuron models receive the linear sum of the inputs coming from all of their synaptic inputs through the \$(inSyn) variable. 
+However neuron models can define additional input variables - allowing input from different synaptic inputs to be combined non-linearly.
+For example, if we wanted our leaky integrator to operate on the the product of two input currents, it could be defined as follows:
+\code
+SET_ADDITIONAL_INPUT_VARS({{"Isyn2", {"scalar", 1.0}}});
+SET_SIM_CODE("const scalar input = $(Isyn) * $(Isyn2);\n"
+             "$(V) = input - $(ExpTC)*(input - $(V));");
+\endcode
+Where the SET_ADDITIONAL_INPUT_VARS() macro defines the name, type and its initial value before postsynaptic inputs are applyed (see section \ref sect_postsyn for more details).
+
+\subsection neuron_rng Random number generation
+Many neuron models have probabilistic terms, for example a source of noise or a probabilistic spiking mechanism. In GeNN this can be implemented by using the following functions in blocks of model code:
+- <code>\$(gennrand_uniform)</code> returns a number drawn uniformly from the interval \f$[0.0, 1.0]\f$
+- <code>\$(gennrand_normal)</code> returns a number drawn from a normal distribution with a mean of 0 and a standard deviation of 1.
+- <code>\$(gennrand_exponential)</code> returns a number drawn from an exponential distribution with \f$\lambda=1\f$.
+- <code>\$(gennrand_log_normal, MEAN, STDDEV)</code> returns a number drawn from a log-normal distribution with the specified mean and standard deviation.
 
 Once defined in this way, new neuron models classes, can be used in network descriptions by referring to their type e.g.
 \code
@@ -351,15 +373,105 @@ The postsynaptic model defines how synaptic activation translates into an input 
 In the same manner as to both the neuron and weight update models discussed in \ref sect_own and \ref sect34, postsynamic model definitions are encapsulated in a class derived from PostsynapticModels::Base. Again, the methods that a postsynaptic model should implement can be implemented using the following macros:
 - DECLARE_MODEL(TYPE, NUM_PARAMS, NUM_VARS), SET_DERIVED_PARAMS(), SET_PARAM_NAMES(), SET_VARS() perform the same roles as they do in the neuron models discussed in \ref sect_own.
 - SET_DECAY_CODE(DECAY_CODE) defines the code which provides the continuous time dynamics for the summed presynaptic inputs to the postsynaptic neuron. This usually consists of some kind of decay function.
-- SET_CURRENT_CONVERTER_CODE(CURRENT_CONVERTER_CODE) defines the code specifying the conversion from synaptic inputs to a postsynaptic neuron input current (Isyn). e.g. for a conductance model:
+- SET_APPLY_INPUT_CODE(APPLY_INPUT_CODE) defines the code specifying the conversion from synaptic inputs to a postsynaptic neuron input current. e.g. for a conductance model:
 \code
-SET_CURRENT_CONVERTER_CODE("$(inSyn) * ($(E) - $(V))");
+SET_APPLY_INPUT_CODE("$(Isyn) += $(inSyn) * ($(E) - $(V))");
 \endcode
-where "E" is a postsynaptic model parameter specifying reversal potential and "V" is the variable containing the postsynaptic neuron's membrane potential.
+where \$(E) is a postsynaptic model parameter specifying reversal potential and \$(V) is the variable containing the postsynaptic neuron's membrane potential.
+As discussed in \ref predefinedVars, \$(Isyn) is the built in variable used to sum neuron input.
+However additional input variables can be added to a neuron model using the SET_ADDITIONAL_INPUT_VARS() macro (see \ref sect_own for more details).
 
 -----
-\link sectNeuronModels Previous\endlink | \link UserManual Top\endlink | \link Tutorial1 Next\endlink
+\link sectNeuronModels Previous\endlink | \link UserManual Top\endlink | \link sectVariableInitialisation Next\endlink
 
+\page sectVariableInitialisation Variable initialisation
 
+Neuron, weight update and postsynaptic models all have state variables which GeNN can automatically initialise. 
+\note
+In previous versions of GeNN, weight update models state variables for synapse populations with sparse connectivity were not automatically initialised. 
+This behaviour remains the default, but by setting 
+\code
+GENN_PREFERENCES::autoInitSparseVars=true;
+\endcode
+this can be overriden.
+
+Previously we have shown variables being initialised to constant values such as:
+\code
+NeuronModels::TraubMiles::VarValues ini(
+    0.0529324,     // 1 - prob. for Na channel activation m
+    ...
+);
+\endcode
+state variables can also be left _uninitialised_ leaving it up to the user code to initialise them:
+\code
+NeuronModels::TraubMiles::VarValues ini(
+    uninitialisedVar(),     // 1 - prob. for Na channel activation m
+    ...
+);
+\endcode
+or initialised using one of a number of predefined _variable initialisation snippets_:
+- InitVarSnippet::Uniform
+- InitVarSnippet::Normal
+- InitVarSnippet::Exponential
+
+For example, to initialise a parameter using values drawn from the normal distribution:
+\code
+InitVarSnippet::Normal::ParamValues params(
+    0.05,   // 0 - mean
+    0.01);  // 1 - standard deviation
+    
+NeuronModels::TraubMiles::VarValues ini(
+    initVar<InitVarSnippet::Normal>(params),     // 1 - prob. for Na channel activation m
+    ...
+);
+\endcode
+\section sect_new_var_init Defining a new variable initialisation snippet
+Similarly to neuron, weight update and postsynaptic models, new variable initialisation snippets can be created by simply defining a class in the model description.
+For example, when initialising excitatory (positive) synaptic weights with a normal distribution they should be clipped at 0 so the long tail of the normal distribution doesn't result in negative weights.
+This could be implemented using the following variable initialisation snippet which redraws until samples are within the desired bounds:
+\code
+class NormalPositive : public InitVarSnippet::Base
+{
+public:
+    DECLARE_SNIPPET(NormalPositive, 2);
+
+    SET_CODE(
+        "scalar normal;"
+        "do\n"
+        "{\n"
+        "   normal = $(mean) + ($(gennrand_normal) * $(sd));\n"
+        "} while (normal < 0.0);\n"
+        "$(value) = normal;\n");
+
+    SET_PARAM_NAMES({"mean", "sd"});
+};
+IMPLEMENT_SNIPPET(NormalPositive);
+\endcode
+
+\section sect_var_init_modes Variable initialisation modes
+Once you have defined <b>how</b> your variables are going to be initialised you need to configure <b>where</b> they will be initialised and allocated. 
+By default memory is allocated for variables on both the GPU and the host; and variables are initialised on the host as described in section \ref sectVariableInitialisation and then uploaded to the GPU.
+However, variable initialisation can also be offloaded to the GPU, potentially reducing the time spent both calculating the initial values and uploading them. 
+To enable this functionality the following alternative modes of operation are available:
+- VarMode::LOC_DEVICE_INIT_DEVICE - Variables are only allocated on the GPU (and thus initialised there), saving memory but meaning that they can't easily be copied to the host - best for internal state variables.
+- VarMode::LOC_HOST_DEVICE_INIT_HOST - Variables are allocated on both the GPU and the host and are initialised on the host and automatically uploaded - the default.
+- VarMode::LOC_HOST_DEVICE_INIT_DEVICE - Variables are allocated on both the GPU and the host and are initialised on the GPU - best default for new models.
+- VarMode::LOC_ZERO_COPY_INIT_HOST - Variables are allocated as 'zero-copy' memory accessible to the host and GPU and initialised on the host.
+- VarMode::LOC_ZERO_COPY_INIT_DEVICE - Variables are allocated as 'zero-copy' memory accessible to the host and GPU and initialised on the GPU.
+
+\note
+'Zero copy' memory is only supported on newer embedded systems such as the Jetson TX1 where there is no physical seperation between GPU and host memory and thus the same block of memory can be shared between them. 
+
+These modes can be set as a global default using ``GENN_PREFERENCES::defaultVarMode`` or on a per-variable basis using one of the following functions:
+- NeuronGroup::setSpikeVarMode
+- NeuronGroup::setSpikeEventVarMode
+- NeuronGroup::setSpikeTimeVarMode
+- NeuronGroup::setVarMode
+- SynapseGroup::setWUVarMode
+- SynapseGroup::setPSVarMode
+- SynapseGroup::setInSynVarMode
+
+-----
+\link sect_new_postsynaptic Previous\endlink | \link UserManual Top\endlink | \link Tutorial1 Next\endlink
 */
 
