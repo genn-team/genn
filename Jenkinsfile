@@ -239,11 +239,11 @@ node {
 
                 // Remove standard library stuff from coverage report
                 // **NOTE** this doesn't seem to work reliably on Mac so doing globally on master
-                sh "lcov --remove combined_coverage.txt "/usr*" --output-file combined_coverage.txt"
+                sh "lcov --remove combined_coverage.txt \"/usr*\" --output-file combined_coverage.txt"
 
                 // Remove coverage of tests themselves as this seems dumb
                 // **NOTE** this doesn't seem to work reliably on Mac so doing globally on master
-                sh "lcov --remove combined_coverage.txt "tests*" --output-file combined_coverage.txt"
+                sh "lcov --remove combined_coverage.txt \"tests*\" --output-file combined_coverage.txt"
 
                 // Archive raw coverage report
                 archive "combined_coverage.txt"
