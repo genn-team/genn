@@ -3,7 +3,7 @@
 
 GeNN can simulate models written for the [Brian simulator](http://brian2.readthedocs.io) via the [Brian2GeNN](http://brian2genn.readthedocs.io) interface.
 The easiest way to install everything needed is to install the [Anaconda](https://www.anaconda.com/download) or [Miniconda](https://conda.io/miniconda.html) Python distribution and then follow the [instructions to install Brian2GeNN](http://brian2genn.readthedocs.io/en/latest/introduction/index.html#installing-the-brian2genn-interface) with the conda package manager.
-When Brian2GeNN is installed in this way, it comes with a bundled version of GeNN itself and not further configuration to use it is necessary. In all other cases (e.g. an installation from source), the path to GeNN and the CUDA libraries has to be configured via the `GENN_PATH` and `CUDA_PATH` environment variables, or via the `devices.genn.path` and `devices.genn.cuda_path` [Brian preferences](http://brian2.readthedocs.io/en/stable/advanced/preferences.html).
+When Brian2GeNN is installed in this way, it comes with a bundled version of GeNN and no further configuration is required. In all other cases (e.g. an installation from source), the path to GeNN and the CUDA libraries has to be configured via the `GENN_PATH` and `CUDA_PATH` environment variables as described in \ref Installation or via the `devices.genn.path` and `devices.genn.cuda_path` [Brian preferences](http://brian2.readthedocs.io/en/stable/advanced/preferences.html).
 
 To use GeNN to simulate a Brian script, import the `brian2genn` package and switch Brian to the `genn` device.
 As an example, the following Python script will simulate Leaky-integrate-and-fire neurons with varying input currents to construct an f/I curve:
