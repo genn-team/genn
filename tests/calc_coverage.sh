@@ -75,12 +75,6 @@ else
     lcov --directory $GENN_PATH --capture -rc lcov_branch_coverage=1 --output-file coverage.txt  1>> ../../msg 2>> msg
 fi
 
-# Remove standard library stuff from coverage report
-lcov --remove coverage.txt "/usr*" --output-file coverage.txt
-
-# Remove coverage of tests themselves as this seems dumb
-lcov --remove coverage.txt "tests*" --output-file coverage.txt
-
 if [ $REPORT -eq 1 ]; then
   echo "Generating HTML coverage report..."
 
