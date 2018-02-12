@@ -183,10 +183,12 @@ void SpineMLGenerator::replaceVariableNames(std::string &code, const std::string
 {
     // Build a regex to match variable name with at least one
     // character that can't be in a variable name on either side (or an end/beginning of string)
-    std::regex regex("(^|[^a-zA-Z_])" + variableName + "($|[^a-zA-Z_])");
+    // **NOTE** the suffix is non-capturing so two instances of variables separated by a single character are matched e.g. a*a
+    std::regex regex("(^|[^a-zA-Z_])" + variableName + "(?=$|[^a-zA-Z_])");
 
     // Replace variable within code string
-    code = std::regex_replace(code, regex, "$1" + replaceText + "$2");
+    // **NOTE** preceding character is captured as C++ regex doesn't support lookbehind so this needs to be replaced in
+    code = std::regex_replace(code, regex, "$1" + replaceText);
 }
 //----------------------------------------------------------------------------
 void SpineMLGenerator::wrapAndReplaceVariableNames(std::string &code, const std::string &variableName,
