@@ -148,7 +148,7 @@ Defining synapse populations</h1>
 <li><code>PostsynapticModel::ParamValues postsynapticParamValues</code>: The parameter values (common to all postsynaptic neurons) for the postsynaptic model. </li>
 <li><code>PostsynapticModel::VarValues postsynapticVarInitialisers</code>: Initial values or initialisation snippets for variables for the postsynaptic model's state variables</li>
 </ul>
-<dl class="section note"><dt>Note</dt><dd>If the synapse conductance definition type is "GLOBALG" then the global value of the synapse parameters is taken from the initial value provided in <code>weightVarValues</code>. <br />
+<dl class="section note"><dt>Note</dt><dd>If the synapse matrix uses one of the "GLOBALG" types then the global value of the synapse parameters are taken from the initial value provided in <code>weightVarInitialisers</code> therefore these must be constant rather than sampled from a distribution etc. <br />
 <hr/>
  <a class="el" href="UserManual.html">Previous</a> | <a class="el" href="sectDefiningNetwork.html">Top</a> | <a class="el" href="sectNeuronModels.html">Next</a> </dd></dl>
 </div></div><!-- contents -->
@@ -157,7 +157,7 @@ Defining synapse populations</h1>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="UserManual.html">User Manual</a></li>
-    <li class="footer">Generated on Mon Feb 5 2018 15:31:14 for GeNN by
+    <li class="footer">Generated on Wed Feb 14 2018 11:31:59 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.11 </li>
   </ul>
