@@ -136,9 +136,9 @@ where the arguments are
                                                             postsynaptic model's state variables
 
 \note
-If the synapse conductance definition type is "GLOBALG" then the global
-value of the synapse parameters is taken from the initial value provided
-in `weightVarValues`.
+If the synapse matrix uses one of the "GLOBALG" types then the global
+value of the synapse parameters are taken from the initial value provided
+in `weightVarInitialisers` therefore these must be constant rather than sampled from a distribution etc.
 \n
 
 -----
