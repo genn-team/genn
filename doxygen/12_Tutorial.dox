@@ -123,13 +123,18 @@ for (int i= 0; i < 10; i++) {
     const int post= (i+1)%10;
     gPop1self[pre*10+post]= -0.2;
 }
+#ifndef CPU_ONLY
 pushPop1selfStateToDevice();
+#endif
 \endcode
 
 We can now build our new model:
 \code
 >> genn-buildmodel.sh tenHHRingModel.cc
 \endcode
+\note
+Again, if you don't have an NVIDIA GPU and are running GeNN in CPU_ONLY mode, you can instead build with the `-c` option as described in \ref Tutorial1.
+
 and, after adjusting the GNUmakefile or MSBuild script to point to ``tenHHRingSimulation.cc`` rather than ``tenHHSimulation.cc``,  we can build and run our new simulator in the same way described in \ref Tutorial1.
 However if we plot the content of columns one against the subsequent 10 columns of `tenHHexample.V.dat` it looks very similar as in \ref Tutorial1
 \image html tenHHRingexample1.png
@@ -154,14 +159,18 @@ all other synapses will be initialised to zero because the synapse population us
 \code
 // define stimuli connectivity
 gStimPop1[0]= -0.2;
+#ifndef CPU_ONLY
 pushStimPop1StateToDevice();
+#endif
 \endcode
 and finally inject a spike in the first timestep
 \code
 if(i == 0) {
     spikeCount_Stim = 1;
     spike_Stim[0] = 0;
+#ifndef CPU_ONLY
     pushStimSpikesToDevice();
+#endif
 }
 \endcode
 \note
@@ -185,22 +194,33 @@ int main()
         const int post= (i+1)%10;
         gPop1self[pre*10+post]= -0.2;
     }
+#ifndef CPU_ONLY
     pushPop1selfStateToDevice();
+#endif
 
     // define stimuli connectivity
     gStimPop1[0]= -0.2;
+#ifndef CPU_ONLY
     pushStimPop1StateToDevice();
+#endif
 
     ofstream os("tenHHRing_output.V.dat");
     for (int i= 0; i < 10000; i++) {
         if(i == 0) {
             spikeCount_Stim = 1;
             spike_Stim[0] = 0;
+#ifndef CPU_ONLY
             pushStimSpikesToDevice();
+#endif
         }
+#ifdef CPU_ONLY
+        stepTimeCPU();
+#else
         stepTimeGPU();
         
         pullPop1StateFromDevice();
+#endif
+
         os << t << " ";
         for (int j= 0; j < 10; j++) {
             os << VPop1[j] << " ";

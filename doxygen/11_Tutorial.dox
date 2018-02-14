@@ -126,6 +126,14 @@ Alternatively, on Windows, type:
 \code
 >> genn-buildmodel.bat tenHHModel.cc
 \endcode
+If you don't have an NVIDIA GPU and are running GeNN in CPU_ONLY mode, you can invoke `genn-buildmodel` with a `-c` option so, on Linux or Mac:
+\code
+>> genn-buildmodel.sh -c tenHHModel.cc
+\endcode
+or on Windows:
+\code
+>> genn-buildmodel.bat -c tenHHModel.cc
+\endcode
 If your environment variables `GENN_PATH` and `CUDA_PATH` are correctly configured, you should see some compile output ending in `Model build complete ...`.
 
 \section userCode User Code
@@ -145,15 +153,21 @@ int main()
 \endcode
 This boiler plate code includes the header file for the generated code `definitions.h` in the subdirectory `tenHHModel_CODE` where GeNN deposits all generated code (this corresponds to the name passed to the ``NNmodel::setName`` function).
 Calling `allocateMem()` allocates the memory structures for all neuron variables and `initialize()` launches a GPU kernel which initialise all state variables to their initial values.
-Now we can use the generated code to integrate the neuron equations provided by GeNN for 1000ms (\f$ \frac{1000}{DT}\f$ timesteps). To do so, we add after `initialize();`
+Now we can use the generated code to integrate the neuron equations provided by GeNN for 1000ms (\f$ \frac{1000}{DT}\f$ timesteps) using the GPU unless we are running CPU_ONLY mode. To do so, we add after `initialize();`
 \code
 for(int i = 0; i < (int)(1000.0 / DT); i++) {
-  stepTimeGPU();
+#ifdef CPU_ONLY
+    stepTimeCPU();
+#else
+    stepTimeGPU();
+#endif
 }
 \endcode
-and we need to copy the result, and output it to stdout,
+and, if we are running the model on the GPU, we need to copy the result back to the host before outputting it to stdout,
 \code
+#ifndef CPU_ONLY
 pullPop1StateFromDevice();
+#endif
 for (int j= 0; j < 10; j++) {  
     cout << VPop1[j] << " ";
     cout << mPop1[j] << " ";
@@ -175,9 +189,15 @@ int main()
     allocateMem();
     initialize();
     for(int i = 0; i < (int)(1000.0 / DT); i++) {
+#ifdef CPU_ONLY
+        stepTimeCPU();
+#else
         stepTimeGPU();
+#endif
     }
+#ifndef CPU_ONLY
     pullPop1StateFromDevice();
+#endif
     for (int j= 0; j < 10; j++) {  
         cout << VPop1[j] << " ";
         cout << mPop1[j] << " ";
@@ -202,6 +222,11 @@ Now type
 \code
 make
 \endcode
+or, if you don't have an NVIDIA GPU and are running GeNN in CPU_ONLY mode, type:
+\code
+make CPU_ONLY=1
+\endcode
+
 \section BuildingSimWindows Building the simulator (Windows)
 So that projects can be easily debugged within the Visual Studio IDE (see section \ref Debugging for more details), Windows projects are built using an MSBuild script typically with the same title as the final executable.
 Therefore create ``tenHHSimulation.vcxproj`` and type:
@@ -217,6 +242,10 @@ Therefore create ``tenHHSimulation.vcxproj`` and type:
 Now type
 \code
 msbuild tenHHSimulation.vcxproj /p:Configuration=Release
+\endcode
+or, if you don't have an NVIDIA GPU and are running GeNN in CPU_ONLY mode, type:
+\code
+msbuild tenHHSimulation.vcxproj /p:Configuration=Release_CPU_ONLY
 \endcode
 
 \section RunningSim Running the Simulation
@@ -248,9 +277,15 @@ This can be done in many ways but one sensible way of doing this is to replace t
 \code
 ofstream os("tenHH_output.V.dat");
 for (int i= 0; i < 10000; i++) {
+#ifdef CPU_ONLY
+    stepTimeCPU();
+#else
     stepTimeGPU();
+#endif
 
+#ifndef CPU_ONLY
     pullPop1StateFromDevice();
+#endif
     os << t << " ";
     for (int j= 0; j < 10; j++) {
         os << VPop1[j] << " ";
