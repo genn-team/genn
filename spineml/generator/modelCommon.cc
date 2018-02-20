@@ -178,7 +178,7 @@ std::pair<bool, unsigned int> SpineMLGenerator::generateModelCode(const pugi::xm
     return std::make_pair(multipleRegimes, initialRegime->second);
 }
 //----------------------------------------------------------------------------
-void SpineMLGenerator::replaceVariableNames(std::string &code, const std::string &variableName,
+bool SpineMLGenerator::replaceVariableNames(std::string &code, const std::string &variableName,
                                             const std::string &replaceText)
 {
     // Build a regex to match variable name with at least one
@@ -186,9 +186,49 @@ void SpineMLGenerator::replaceVariableNames(std::string &code, const std::string
     // **NOTE** the suffix is non-capturing so two instances of variables separated by a single character are matched e.g. a*a
     std::regex regex("(^|[^a-zA-Z_])" + variableName + "(?=$|[^a-zA-Z_])");
 
-    // Replace variable within code string
+    // Create format string to replace in text
     // **NOTE** preceding character is captured as C++ regex doesn't support lookbehind so this needs to be replaced in
-    code = std::regex_replace(code, regex, "$1" + replaceText);
+    const std::string format = "$1" + replaceText;
+
+    // **NOTE** the following code performs the same function as std::regex_replace 
+    // but has a return value indicating whether any replacements are made
+    // see http://en.cppreference.com/w/cpp/regex/regex_replace
+
+    // Create regex iterator to iterate over matches found in code
+    std::sregex_iterator matchesBegin(code.cbegin(), code.cend(), regex);
+    std::sregex_iterator matchesEnd;
+
+    // If there are no matches, leave code unmodified and return false
+    if(matchesBegin == matchesEnd) {
+        return false;
+    }
+    // Otherwise
+    else {
+        // Loop through matches
+        std::string outputCode;
+        for(std::sregex_iterator m = matchesBegin;;) {
+            // Copy the non-matched subsequence (m->prefix()) onto output
+            std::copy(m->prefix().first, m->prefix().second, std::back_inserter(outputCode));
+
+            // Then replaces the matched subsequence with the formatted replacement string 
+            m->format(std::back_inserter(outputCode), format);
+
+            // If there are no subsequent matches
+            if(std::next(m) == matchesEnd) {
+                // Copy the remaining non-matched characters onto output
+                std::copy(m->suffix().first, m->suffix().second, std::back_inserter(outputCode)); 
+                break;
+            }
+            // Otherwise go onto next match
+            else {
+                m++;
+            }
+        }
+
+        // Set code reference to newly processed version and return true
+        code = outputCode;
+        return true;
+    }
 }
 //----------------------------------------------------------------------------
 void SpineMLGenerator::wrapAndReplaceVariableNames(std::string &code, const std::string &variableName,
@@ -292,7 +332,7 @@ void SpineMLGenerator::substituteModelVariables(const NewModels::Base::StringVec
 void SpineMLGenerator::readAliases(const pugi::xml_node &componentClass, std::map<std::string, std::string> &aliases)
 {
     std::cout << "\t\tAliases:" << std::endl;
-
+    
     // Loop through aliases and add to map
     auto dynamics = componentClass.child("Dynamics");
     for(auto alias : dynamics.children("Alias")) {
@@ -303,14 +343,35 @@ void SpineMLGenerator::readAliases(const pugi::xml_node &componentClass, std::ma
 
         aliases.insert(std::make_pair(name, code));
     }
+
+    // Loop through aliases
+    for(auto &alias : aliases) {
+        // Loop to handle multiple levels of alias recursion
+        // **NOTE** this is somewhat naive but number of recursive aliases is likely to be very small
+        for(unsigned int r = 0;; r++) {
+            // Attempt to expand any references to other aliases within alias - if there are no more stop
+            if(!expandAliases(alias.second, aliases)) {
+                break;
+            }
+            // Otherwise if recursion limit is reached
+            // **THINK** is this a sane limit for recursion?
+            else if(r > aliases.size()) {
+                throw std::runtime_error("Expanding alias " + alias.first + " results in an infinite loop of alias references");
+            }
+        }
+    }
+    
+    
 }
 //----------------------------------------------------------------------------
-void SpineMLGenerator::expandAliases(std::string &code, const std::map<std::string, std::string> &aliases)
+bool SpineMLGenerator::expandAliases(std::string &code, const std::map<std::string, std::string> &aliases)
 {
     // Replace all alias names with their code string
+    bool aliasesExpanded = false;
     for(const auto &alias : aliases) {
-        replaceVariableNames(code, alias.first, alias.second);
+        aliasesExpanded |= replaceVariableNames(code, alias.first, alias.second);
     }
+    return aliasesExpanded;
 }
 //----------------------------------------------------------------------------
 std::string SpineMLGenerator::getSendPortCode(const std::map<std::string, std::string> &aliases,
