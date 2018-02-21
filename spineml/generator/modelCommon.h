@@ -198,7 +198,7 @@ std::pair<bool, unsigned int> generateModelCode(const pugi::xml_node &componentC
                                                 std::function<void(bool, unsigned int)> regimeEndFunc);
 
 //!< Search through code for references to named variable and replace it with text
-void replaceVariableNames(std::string &code, const std::string &variableName,
+bool replaceVariableNames(std::string &code, const std::string &variableName,
                           const std::string &replaceText);
 
 //!< Search through code for references to named variable, rename it and wrap in GeNN's $(XXXX) tags
@@ -223,7 +223,7 @@ void substituteModelVariables(const NewModels::Base::StringVec &paramNames,
 void readAliases(const pugi::xml_node &componentClass, std::map<std::string, std::string> &aliases);
 
 // Expand out any aliases within code string
-void expandAliases(std::string &code, const std::map<std::string, std::string> &aliases);
+bool expandAliases(std::string &code, const std::map<std::string, std::string> &aliases);
 
 //! Return code to implement send port - will either return a variable directly or will expand an alias
 std::string getSendPortCode(const std::map<std::string, std::string> &aliases,
