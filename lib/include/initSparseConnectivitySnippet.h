@@ -1,5 +1,11 @@
 #pragma once
 
+// Standard C++ includes
+#include <vector>
+
+// Standard C includes
+#include <cmath>
+
 // GeNN includes
 #include "snippet.h"
 
@@ -40,7 +46,7 @@ public:
 class OneToOne : public Base
 {
 public:
-    DECLARE_SNIPPET(InitSparseConnectivitySnippet::Constant, 0);
+    DECLARE_SNIPPET(InitSparseConnectivitySnippet::OneToOne, 0);
 
     SET_ROW_BUILD_CODE(
         "$(addSynapse, $(i));\n"
@@ -67,7 +73,7 @@ public:
         "}\n");
 
     SET_PARAM_NAMES({"prob"});
-    SET_DERIVED_PARAMS({{"probLogRecip", [](const vector<double> &pars, double){ 1.0 / log(1.0 - pars[0]); }}});
+    SET_DERIVED_PARAMS({{"probLogRecip", [](const std::vector<double> &pars, double){ return 1.0 / log(1.0 - pars[0]); }}});
 };
 
 }   // namespace InitVarSnippet
