@@ -55,26 +55,28 @@ for f in features/*;
         popd
     done;
 
-# Enter unit tests directory
-pushd unit
-
-# Clean
-make clean 1>> ../../msg 2>> ../../msg
-
-# Build
-make $MAKE_FLAGS 1>>../../msg 2>>../../msg 
-
-# Run tests
-./test --gtest_output="xml:test_results$s.xml"
-
-# Pop unit tests directory
-popd
 
 # Clean GeNN library
 pushd $GENN_PATH/lib
 make clean
 popd
 
+# Run unit tests
+pushd unit
+
+# Clean
+make clean 1>> ../msg 2>> ../msg
+
+# Build
+make $MAKE_FLAGS 1>>../msg 2>>../msg 
+
+# Run tests
+./test --gtest_output="xml:test_results_unit.xml"
+
+# Pop unit tests directory
+popd
+
+# Run SpineML tests
 pushd spineml
 pushd simulator
 
