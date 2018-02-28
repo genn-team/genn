@@ -12,7 +12,7 @@
 ##--------------------------------------------------------------------------
 
 
-# Makefile for the SpineML simulator test executable
+# Makefile for the GeNN simulator test executable
 # This is a UNIX Makefile, to be used by the GNU make build system
 #-----------------------------------------------------------------
 # Because we're including another Makefile which includes 
@@ -28,18 +28,12 @@ include $(GENN_PATH)/lib/GNUMakefileLibGeNN
 # Get simulate SpineML path i.e. directory of this Makefile
 TEST_PATH         :=$(CURDIR)
 
-# Get SpineML path
-SPINEML_PATH                  :=$(GENN_PATH)/spineml
-
 # generateALL and libgenn.a targets
 TEST          =$(TEST_PATH)/test
 
-
-SPINEML_SOURCES   := $(SPINEML_PATH)/common/pugixml/pugixml.cpp $(SPINEML_PATH)/simulator/networkClient.cc $(SPINEML_PATH)/simulator/connectors.cc $(SPINEML_PATH)/simulator/inputValue.cc 
 GTEST_SOURCES     := $(GTEST_DIR)/src/gtest-all.cc $(GTEST_DIR)/src/gtest_main.cc
 
-TEST_SOURCES      := $(SPINEML_SOURCES) $(GTEST_SOURCES) $(TEST_PATH)/*.cc
-
+TEST_SOURCES      := $(GTEST_SOURCES) $(TEST_PATH)/*.cc
 INCLUDE_FLAGS                 += -I "$(GTEST_DIR)" -isystem "$(GTEST_DIR)/include" -I $(SPINEML_PATH)/simulator -I $(SPINEML_PATH)/common
 LINK_FLAGS                    += -lpthread
 
