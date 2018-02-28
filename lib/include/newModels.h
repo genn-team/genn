@@ -31,46 +31,18 @@ namespace NewModels
 //! Class used to bind together everything required to initialise a variable:
 //! 1. A pointer to a variable initialisation snippet
 //! 2. The parameters required to control the variable initialisation snippet
-class VarInit
+class VarInit : public Snippet::Init<InitVarSnippet::Base>
 {
 public:
     VarInit(const InitVarSnippet::Base *snippet, const std::vector<double> &params)
-        : m_Snippet(snippet), m_Params(params)
+        : Snippet::Init<InitVarSnippet::Base>(snippet, params)
     {
     }
 
     VarInit(double constant)
-        : m_Snippet(InitVarSnippet::Constant::getInstance()), m_Params(std::vector<double>{constant})
+        : Snippet::Init<InitVarSnippet::Base>(InitVarSnippet::Constant::getInstance(), {constant})
     {
     }
-
-    //----------------------------------------------------------------------------
-    // Public API
-    //----------------------------------------------------------------------------
-    const InitVarSnippet::Base *getSnippet() const{ return m_Snippet; }
-    const std::vector<double> &getParams() const{ return m_Params; }
-    const std::vector<double> &getDerivedParams() const{ return m_DerivedParams; }
-
-    void initDerivedParams(double dt)
-    {
-        auto derivedParams = m_Snippet->getDerivedParams();
-
-        // Reserve vector to hold derived parameters
-        m_DerivedParams.reserve(derivedParams.size());
-
-        // Loop through derived parameters
-        for(const auto &d : derivedParams) {
-            m_DerivedParams.push_back(d.second(m_Params, dt));
-        }
-    }
-
-private:
-    //----------------------------------------------------------------------------
-    // Members
-    //----------------------------------------------------------------------------
-    const InitVarSnippet::Base *m_Snippet;
-    std::vector<double> m_Params;
-    std::vector<double> m_DerivedParams;
 };
 
 //----------------------------------------------------------------------------
