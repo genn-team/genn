@@ -31,12 +31,8 @@ GENERATEALL_PATH         :=$(CURDIR)
 INCLUDE_FLAGS            +=$(patsubst %,-I%,$(subst :, ,$(BUILD_MODEL_INCLUDE)))
 
 
-# generateALL and libgenn.a targets
-ifndef CPU_ONLY
-    GENERATEALL          :=$(GENERATEALL_PATH)/generateALL
-else
-    GENERATEALL          :=$(GENERATEALL_PATH)/generateALL_CPU_ONLY
-endif
+# generateALL target
+GENERATEALL          :=$(GENERATEALL_PATH)/generateALL$(LIBGENN_PREFIX)
 
 # Target rules
 .PHONY: all clean clean_libgenn clean_generateall always_compile

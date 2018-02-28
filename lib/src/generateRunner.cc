@@ -187,6 +187,20 @@ void free_variable(CodeStream &os, const string &name, VarMode mode)
     free_device_variable(os, name, mode);
 }
 
+void genHostSpikeQueueAdvance(CodeStream &os, const NNmodel &model, int localHostID)
+{
+    for(auto &n : model.getRemoteNeuronGroups()) {
+        if(n.second.isDelayRequired() && n.second.hasOutputToHost(localHostID)) {
+            os << "spkQuePtr" << n.first << " = (spkQuePtr" << n.first << " + 1) % " << n.second.getNumDelaySlots() << ";" << std::endl;
+        }
+    }
+    for(auto &n : model.getLocalNeuronGroups()) {
+        if (n.second.isDelayRequired()) {
+            os << "spkQuePtr" << n.first << " = (spkQuePtr" << n.first << " + 1) % " << n.second.getNumDelaySlots() << ";" << std::endl;
+        }
+    }
+}
+
 //--------------------------------------------------------------------------
 //! \brief Can a variable with this mode be pushed and pulled between device and host
 //--------------------------------------------------------------------------
@@ -199,8 +213,139 @@ bool canPushPullVar(VarMode varMode)
             (varMode & VarLocation::DEVICE) &&
             !(varMode & VarLocation::ZERO_COPY));
 }
-#endif  // CPU_ONLY
+
+void genPushSpikeCode(CodeStream &os, const NeuronGroup &ng, bool spikeEvent)
+{
+    // Get variable mode
+    const VarMode varMode = spikeEvent ? ng.getSpikeEventVarMode() : ng.getSpikeVarMode();
+
+    // Is push required at all
+    const bool pushRequired = spikeEvent ?
+        (ng.isSpikeEventRequired() && canPushPullVar(varMode))
+        : canPushPullVar(varMode);
+
+    const char *spikeCntPrefix = spikeEvent ? "glbSpkCntEvnt" : "glbSpkCnt";
+    const char *spikePrefix = spikeEvent ? "glbSpkEvnt" : "glbSpk";
+
+    if(pushRequired) {
+        // If spikes are initialised on device, only copy if hostInitialisedOnly isn't set
+        if(varMode & VarInit::DEVICE) {
+            os << "if(!hostInitialisedOnly)" << CodeStream::OB(1061);
+        }
+        const size_t spkCntSize = (spikeEvent || ng.isTrueSpikeRequired()) ? ng.getNumDelaySlots() : 1;
+        os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << spikeCntPrefix << ng.getName();
+        os << ", " << spikeCntPrefix << ng.getName();
+        os << ", " << spkCntSize << " * sizeof(unsigned int), cudaMemcpyHostToDevice));" << std::endl;
+
+        const size_t spkSize = (spikeEvent || ng.isTrueSpikeRequired()) ? ng.getNumNeurons() * ng.getNumDelaySlots() : ng.getNumNeurons();
+        os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << spikePrefix << ng.getName();
+        os << ", " << spikePrefix << ng.getName();
+        os << ", " << spkSize << " * sizeof(unsigned int), cudaMemcpyHostToDevice));" << std::endl;
+
+        if(varMode & VarInit::DEVICE) {
+            os << CodeStream::CB(1061);
+        }
+    }
 }
+
+void genPushCurrentSpikeFunctions(CodeStream &os, const NeuronGroup &ng, bool spikeEvent)
+{
+    // Is push required at all
+    const bool pushRequired = spikeEvent ?
+        (ng.isSpikeEventRequired() && canPushPullVar(ng.getSpikeEventVarMode()))
+        : canPushPullVar(ng.getSpikeVarMode());
+
+    // Is delay required
+    const bool delayRequired = spikeEvent ?
+        ng.isDelayRequired() :
+        (ng.isTrueSpikeRequired() && ng.isDelayRequired());
+
+    const char *spikeCntPrefix = spikeEvent ? "glbSpkCntEvnt" : "glbSpkCnt";
+    const char *spikePrefix = spikeEvent ? "glbSpkEvnt" : "glbSpk";
+
+    // current neuron spike variables
+    os << "void push" << ng.getName();
+    if(spikeEvent) {
+        os << "CurrentSpikeEventsToDevice";
+    }
+    else {
+        os << "CurrentSpikesToDevice";
+    }
+    os << "()" << std::endl << CodeStream::OB(1061);
+
+    if(pushRequired) {
+        if (delayRequired) {
+            os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << spikeCntPrefix << ng.getName() << "+spkQuePtr" << ng.getName();
+            os << ", " << spikeCntPrefix << ng.getName() << " + spkQuePtr" << ng.getName();
+            os << ", sizeof(unsigned int), cudaMemcpyHostToDevice));" << std::endl;
+            os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << spikePrefix << ng.getName() << " + (spkQuePtr" << ng.getName() << "*" << ng.getNumNeurons() << ")";
+            os << ", " << spikePrefix << ng.getName();
+            os << "+(spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
+            os << ", " << spikeCntPrefix << ng.getName() << "[spkQuePtr" << ng.getName() << "] * sizeof(unsigned int), cudaMemcpyHostToDevice));" << std::endl;
+        }
+        else {
+            os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << spikeCntPrefix << ng.getName();
+            os << ", " << spikeCntPrefix << ng.getName();
+            os << ", sizeof(unsigned int), cudaMemcpyHostToDevice));" << std::endl;
+            os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << spikePrefix << ng.getName();
+            os << ", " << spikePrefix << ng.getName();
+            os << ", " << spikeCntPrefix << ng.getName() << "[0] * sizeof(unsigned int), cudaMemcpyHostToDevice));" << std::endl;
+        }
+    }
+    os << CodeStream::CB(1061);
+    os << std::endl;
+}
+
+void genPullCurrentSpikeFunctions(CodeStream &os, const NeuronGroup &ng, bool spikeEvent)
+{
+    // Is push required at all
+    const bool pullRequired = spikeEvent ?
+        (ng.isSpikeEventRequired() && canPushPullVar(ng.getSpikeEventVarMode()))
+        : canPushPullVar(ng.getSpikeVarMode());
+
+    // Is delay required
+    const bool delayRequired = spikeEvent ?
+        ng.isDelayRequired() :
+        (ng.isTrueSpikeRequired() && ng.isDelayRequired());
+
+    const char *spikeCntPrefix = spikeEvent ? "glbSpkCntEvnt" : "glbSpkCnt";
+    const char *spikePrefix = spikeEvent ? "glbSpkEvnt" : "glbSpk";
+
+    os << "void pull" << ng.getName();
+    if(spikeEvent) {
+        os << "CurrentSpikeEventsFromDevice";
+    }
+    else {
+        os << "CurrentSpikesFromDevice";
+    }
+    os << "()" << std::endl;
+    os << CodeStream::OB(1061);
+
+    if(pullRequired) {
+        if (delayRequired) {
+            os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << spikeCntPrefix << ng.getName() << " + spkQuePtr" << ng.getName();
+            os << ", d_" << spikeCntPrefix << ng.getName() << " + spkQuePtr" << ng.getName();
+            os << ", sizeof(unsigned int), cudaMemcpyDeviceToHost));" << std::endl;
+
+            os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << spikePrefix << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
+            os << ", d_" << spikePrefix << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
+            os << ", " << spikeCntPrefix << ng.getName() << "[spkQuePtr" << ng.getName() << "] * sizeof(unsigned int), cudaMemcpyDeviceToHost));" << std::endl;
+        }
+        else {
+            os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << spikeCntPrefix << ng.getName();
+            os << ", d_" << spikeCntPrefix << ng.getName();
+            os << ", sizeof(unsigned int), cudaMemcpyDeviceToHost));" << std::endl;
+            os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << spikePrefix << ng.getName();
+            os << ", d_" << spikePrefix << ng.getName();
+            os << ", " << spikeCntPrefix << ng.getName() << "[0] * sizeof(unsigned int), cudaMemcpyDeviceToHost));" << std::endl;
+        }
+    }
+
+    os << CodeStream::CB(1061);
+    os << std::endl;
+}
+#endif  // CPU_ONLY
+}   // Anonymous namespace
 
 //--------------------------------------------------------------------------
 /*!
@@ -214,8 +359,9 @@ bool canPushPullVar(VarMode varMode)
   the model.  
 */
 //--------------------------------------------------------------------------
-void genDefinitions(const NNmodel &model, //!< Model description
-               const string &path) //!< Path for code generationn
+void genDefinitions(const NNmodel &model,   //!< Model description
+                    const string &path,     //!< Path for code generationn
+                    int localHostID)        //!< Host ID of local machine
 {
     string SCLR_MIN;
     string SCLR_MAX;
@@ -233,7 +379,7 @@ void genDefinitions(const NNmodel &model, //!< Model description
     // generate definitions.h
     //=======================
     // this file contains helpful macros and is separated out so that it can also be used by other code that is compiled separately
-    string definitionsName= path + "/" + model.getName() + "_CODE/definitions.h";
+    string definitionsName= model.getGeneratedCodePath(path, "definitions.h");
     ofstream fs;
     fs.open(definitionsName.c_str());
 
@@ -258,6 +404,9 @@ void genDefinitions(const NNmodel &model, //!< Model description
     if (model.isTimingEnabled()) {
         os << "#include \"hr_time.h\"" << std::endl;
     }
+#ifdef MPI_ENABLE
+    os << "#include \"mpi.h\"" << std::endl;
+#endif
     os << "#include \"sparseUtils.h\"" << std::endl << std::endl;
     os << "#include \"sparseProjection.h\"" << std::endl;
     os << "#include <cstdint>" << std::endl;
@@ -266,7 +415,6 @@ void genDefinitions(const NNmodel &model, //!< Model description
     os << "#include <curand_kernel.h>" << std::endl;
 #endif
     os << std::endl;
-
 #ifndef CPU_ONLY
     // write CUDA error handler macro
     os << "#ifndef CHECK_CUDA_ERRORS" << std::endl;
@@ -343,7 +491,7 @@ void genDefinitions(const NNmodel &model, //!< Model description
 #endif
         os << varExportPrefix << " double neuron_tme;" << std::endl;
         os << varExportPrefix << " CStopWatch neuron_timer;" << std::endl;
-        if (!model.getSynapseGroups().empty()) {
+        if (!model.getLocalSynapseGroups().empty()) {
 #ifndef CPU_ONLY
             os << varExportPrefix << " cudaEvent_t synapseStart, synapseStop;" << std::endl;
 #endif
@@ -365,7 +513,7 @@ void genDefinitions(const NNmodel &model, //!< Model description
             os << varExportPrefix << " CStopWatch synDyn_timer;" << std::endl;
         }
 #ifndef CPU_ONLY
-        if(model.isDeviceInitRequired()) {
+        if(model.isDeviceInitRequired(localHostID)) {
             os << "extern cudaEvent_t initDeviceStart, initDeviceStop;" << std::endl;
         }
         if(model.isDeviceSparseInitRequired()) {
@@ -395,13 +543,40 @@ void genDefinitions(const NNmodel &model, //!< Model description
     os << std::endl;
 
     //---------------------------------
+    // REMOTE NEURON GROUPS
+
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// remote neuron groups" << std::endl;
+    os << std::endl;
+
+    // Loop through remote neuron groups
+    for(const auto &n : model.getRemoteNeuronGroups()) {
+        // Write macro so whether a neuron group is remote or not can be determined at compile time
+        // **NOTE** we do this for REMOTE groups so #ifdef GROUP_NAME_REMOTE is backward compatible
+        os << "#define " << n.first << "_REMOTE" << std::endl;
+
+        // If this neuron group has outputs to local host
+        if(n.second.hasOutputToHost(localHostID)) {
+            // Check that, whatever variable mode is set for these variables,
+            // they are instantiated on host so they can be copied using MPI
+            if(!(n.second.getSpikeVarMode() & VarLocation::HOST)) {
+                gennError("Remote neuron group '" + n.first + "' has its spike variable mode set so it is not instantiated on the host - this is not supported");
+            }
+
+            extern_variable_def(os, "unsigned int *", "glbSpkCnt"+n.first, n.second.getSpikeVarMode());
+            extern_variable_def(os, "unsigned int *", "glbSpk"+n.first, n.second.getSpikeVarMode());
+        }
+    }
+    os << std::endl;
+
+    //---------------------------------
     // HOST AND DEVICE NEURON VARIABLES
 
     os << "// ------------------------------------------------------------------------" << std::endl;
     os << "// neuron variables" << std::endl;
     os << std::endl;
 
-    for(const auto &n : model.getNeuronGroups()) {
+    for(const auto &n : model.getLocalNeuronGroups()) {
         extern_variable_def(os, "unsigned int *", "glbSpkCnt"+n.first, n.second.getSpikeVarMode());
         extern_variable_def(os, "unsigned int *", "glbSpk"+n.first, n.second.getSpikeVarMode());
         if (n.second.isSpikeEventRequired()) {
@@ -428,7 +603,7 @@ void genDefinitions(const NNmodel &model, //!< Model description
         }
     }
     os << std::endl;
-    for(auto &n : model.getNeuronGroups()) {
+    for(auto &n : model.getLocalNeuronGroups()) {
         os << "#define glbSpkShift" << n.first;
         if (n.second.isDelayRequired()) {
             os << " spkQuePtr" << n.first << "*" << n.second.getNumNeurons();
@@ -439,7 +614,7 @@ void genDefinitions(const NNmodel &model, //!< Model description
         os << std::endl;
     }
 
-    for(const auto &n : model.getNeuronGroups()) {
+    for(const auto &n : model.getLocalNeuronGroups()) {
         // convenience macros for accessing spike count
         os << "#define spikeCount_" << n.first << " glbSpkCnt" << n.first;
         if (n.second.isDelayRequired() && n.second.isTrueSpikeRequired()) {
@@ -485,7 +660,7 @@ void genDefinitions(const NNmodel &model, //!< Model description
     os << "// synapse variables" << std::endl;
     os << std::endl;
 
-    for(const auto &s : model.getSynapseGroups()) {
+    for(const auto &s : model.getLocalSynapseGroups()) {
         extern_variable_def(os, model.getPrecision()+" *", "inSyn" + s.first, s.second.getInSynVarMode());
 
         if (s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
@@ -531,18 +706,26 @@ void genDefinitions(const NNmodel &model, //!< Model description
     // interface where we do more proper compile/link and do not want
     // to include runnerGPU.cc into all relevant code_objects (e.g.
     // spike and state monitors
-
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// copying remote data to device" << std::endl << std::endl;
+    for(const auto &n : model.getRemoteNeuronGroups()) {
+        if(n.second.hasOutputToHost(localHostID)) {
+            os << "void push" << n.first << "SpikesToDevice(bool hostInitialisedOnly = false);" << std::endl;
+            os << "void push" << n.first << "CurrentSpikesToDevice();" << std::endl;
+        }
+    }
+    os << std::endl;
     os << "// ------------------------------------------------------------------------" << std::endl;
     os << "// copying things to device" << std::endl;
     os << std::endl;
-    for(const auto &n : model.getNeuronGroups()) {
+    for(const auto &n : model.getLocalNeuronGroups()) {
         os << funcExportPrefix << "void push" << n.first << "StateToDevice(bool hostInitialisedOnly = false);" << std::endl;
         os << funcExportPrefix << "void push" << n.first << "SpikesToDevice(bool hostInitialisedOnly = false);" << std::endl;
         os << funcExportPrefix << "void push" << n.first << "SpikeEventsToDevice(bool hostInitialisedOnly = false);" << std::endl;
         os << funcExportPrefix << "void push" << n.first << "CurrentSpikesToDevice();" << std::endl;
         os << funcExportPrefix << "void push" << n.first << "CurrentSpikeEventsToDevice();" << std::endl;
     }
-    for(const auto &s : model.getSynapseGroups()) {
+    for(const auto &s : model.getLocalSynapseGroups()) {
         os << "#define push" << s.first << "ToDevice push" << s.first << "StateToDevice" << std::endl;
         os << funcExportPrefix << "void push" << s.first << "StateToDevice(bool hostInitialisedOnly = false);" << std::endl;
     }
@@ -551,14 +734,14 @@ void genDefinitions(const NNmodel &model, //!< Model description
     os << "// ------------------------------------------------------------------------" << std::endl;
     os << "// copying things from device" << std::endl;
     os << std::endl;
-    for(const auto &n : model.getNeuronGroups()) {
+    for(const auto &n : model.getLocalNeuronGroups()) {
         os << funcExportPrefix << "void pull" << n.first << "StateFromDevice();" << std::endl;
         os << funcExportPrefix << "void pull" << n.first << "SpikesFromDevice();" << std::endl;
         os << funcExportPrefix << "void pull" << n.first << "SpikeEventsFromDevice();" << std::endl;
         os << funcExportPrefix << "void pull" << n.first << "CurrentSpikesFromDevice();" << std::endl;
         os << funcExportPrefix << "void pull" << n.first << "CurrentSpikeEventsFromDevice();" << std::endl;
     }
-    for(const auto &s : model.getSynapseGroups()) {
+    for(const auto &s : model.getLocalSynapseGroups()) {
         os << "#define pull" << s.first << "FromDevice pull" << s.first << "StateFromDevice" << std::endl;
         os << funcExportPrefix << "void pull" << s.first << "StateFromDevice();" << std::endl;
     }
@@ -646,7 +829,7 @@ void genDefinitions(const NNmodel &model, //!< Model description
     os << funcExportPrefix << "void allocateMem();" << std::endl;
     os << std::endl;
 
-    for(const auto &s : model.getSynapseGroups()) {
+    for(const auto &s : model.getLocalSynapseGroups()) {
         if (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
             os << funcExportPrefix << "void allocate" << s.first << "(unsigned int connN);" << std::endl;
             os << std::endl;
@@ -661,6 +844,11 @@ void genDefinitions(const NNmodel &model, //!< Model description
     os << funcExportPrefix << "void initialize();" << std::endl;
     os << std::endl;
 
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// Method for cleaning up and resetting device while quitting GeNN." << std::endl;
+    os << std::endl;
+    os << "void exitGeNN();" << std::endl;
+    os << std::endl;
 
 #ifndef CPU_ONLY
     os << funcExportPrefix << "void initializeAllSparseArrays();" << std::endl;
@@ -772,7 +960,7 @@ void genSupportCode(const NNmodel &model, //!< Model description
     // generate support_code.h
     //========================
 
-    string supportCodeName= path + "/" + model.getName() + "_CODE/support_code.h";
+    string supportCodeName= model.getGeneratedCodePath(path, "support_code.h");
     ofstream fs;
     fs.open(supportCodeName.c_str());
 
@@ -793,14 +981,14 @@ void genSupportCode(const NNmodel &model, //!< Model description
     os << "#define SUPPORT_CODE_H" << std::endl;
     // write the support codes
     os << "// support code for neuron and synapse models" << std::endl;
-    for(const auto &n : model.getNeuronGroups()) {
+    for(const auto &n : model.getLocalNeuronGroups()) {
         if (!n.second.getNeuronModel()->getSupportCode().empty()) {
             os << "namespace " << n.first << "_neuron" << CodeStream::OB(11) << std::endl;
             os << ensureFtype(n.second.getNeuronModel()->getSupportCode(), model.getPrecision()) << std::endl;
             os << CodeStream::CB(11) << " // end of support code namespace " << n.first << std::endl;
         }
     }
-    for(const auto &s : model.getSynapseGroups()) {
+    for(const auto &s : model.getLocalSynapseGroups()) {
         const auto *wu = s.second.getWUModel();
         const auto *psm = s.second.getPSModel();
 
@@ -830,12 +1018,13 @@ void genSupportCode(const NNmodel &model, //!< Model description
     fs.close();
 }
 
-void genRunner(const NNmodel &model, //!< Model description
-               const string &path) //!< Path for code generationn
+void genRunner(const NNmodel &model,    //!< Model description
+               const string &path,      //!< Path for code generationn
+               int localHostID)         //!< ID of local host
 
 {
     //cout << "entering genRunner" << std::endl;
-    string runnerName= path + "/" + model.getName() + "_CODE/runner.cc";
+    string runnerName= model.getGeneratedCodePath(path, "runner.cc");
     ofstream fs;
     fs.open(runnerName.c_str());
 
@@ -891,7 +1080,7 @@ void genRunner(const NNmodel &model, //!< Model description
 #endif
         os << "double neuron_tme;" << std::endl;
         os << "CStopWatch neuron_timer;" << std::endl;
-        if (!model.getSynapseGroups().empty()) {
+        if (!model.getLocalSynapseGroups().empty()) {
 #ifndef CPU_ONLY
             os << "cudaEvent_t synapseStart, synapseStop;" << std::endl;
 #endif
@@ -913,7 +1102,7 @@ void genRunner(const NNmodel &model, //!< Model description
             os << "CStopWatch synDyn_timer;" << std::endl;
         }
 #ifndef CPU_ONLY
-        if(model.isDeviceInitRequired()) {
+        if(model.isDeviceInitRequired(localHostID)) {
             os << "cudaEvent_t initDeviceStart, initDeviceStop;" << std::endl;
         }
         if(model.isDeviceSparseInitRequired()) {
@@ -945,6 +1134,29 @@ void genRunner(const NNmodel &model, //!< Model description
     os << std::endl;
 
     //---------------------------------
+    // REMOTE NEURON GROUPS
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// remote neuron groups" << std::endl;
+    os << std::endl;
+
+    // Loop through remote neuron groups
+    for(const auto &n : model.getRemoteNeuronGroups()) {
+        // If this neuron group has outputs to local host
+        if(n.second.hasOutputToHost(localHostID)) {
+            variable_def(os, "unsigned int *", "glbSpkCnt"+n.first, n.second.getSpikeVarMode());
+            variable_def(os, "unsigned int *", "glbSpk"+n.first, n.second.getSpikeVarMode());
+
+            if (n.second.isDelayRequired()) {
+                os << "unsigned int spkQuePtr" << n.first << ";" << std::endl;
+#ifndef CPU_ONLY
+                os << "__device__ volatile unsigned int dd_spkQuePtr" << n.first << ";" << std::endl;
+#endif
+            }
+        }
+    }
+    os << std::endl;
+
+    //---------------------------------
     // HOST AND DEVICE NEURON VARIABLES
 
     os << "// ------------------------------------------------------------------------" << std::endl;
@@ -954,7 +1166,7 @@ void genRunner(const NNmodel &model, //!< Model description
 #ifndef CPU_ONLY
     os << "__device__ volatile unsigned int d_done;" << std::endl;
 #endif
-    for(const auto &n : model.getNeuronGroups()) {
+    for(const auto &n : model.getLocalNeuronGroups()) {
         variable_def(os, "unsigned int *", "glbSpkCnt"+n.first, n.second.getSpikeVarMode());
         variable_def(os, "unsigned int *", "glbSpk"+n.first, n.second.getSpikeVarMode());
         if (n.second.isSpikeEventRequired()) {
@@ -995,7 +1207,7 @@ void genRunner(const NNmodel &model, //!< Model description
     os << "// synapse variables" << std::endl;
     os << std::endl;
 
-   for(const auto &s : model.getSynapseGroups()) {
+   for(const auto &s : model.getLocalSynapseGroups()) {
         const auto *wu = s.second.getWUModel();
         const auto *psm = s.second.getPSModel();
 
@@ -1083,14 +1295,17 @@ void genRunner(const NNmodel &model, //!< Model description
 
     // include simulation kernels
 #ifndef CPU_ONLY
-    os << "#include \"runnerGPU.cc\"" << std::endl << std::endl;
+    os << "#include \"runnerGPU.cc\"" << std::endl;
+#endif
+#ifdef MPI_ENABLE
+    os << "#include \"mpi.cc\"" << std::endl;
 #endif
     os << "#include \"init.cc\"" << std::endl;
 
     // If model can be run on GPU, include CPU simulation functions
     if(model.canRunOnCPU()) {
         os << "#include \"neuronFnct.cc\"" << std::endl;
-        if (!model.getSynapseGroups().empty()) {
+        if (!model.getLocalSynapseGroups().empty()) {
             os << "#include \"synapseFnct.cc\"" << std::endl;
         }
     }
@@ -1131,7 +1346,7 @@ void genRunner(const NNmodel &model, //!< Model description
         os << "    cudaEventCreate(&neuronStop);" << std::endl;
 #endif
         os << "    neuron_tme= 0.0;" << std::endl;
-        if (!model.getSynapseGroups().empty()) {
+        if (!model.getLocalSynapseGroups().empty()) {
 #ifndef CPU_ONLY
             os << "    cudaEventCreate(&synapseStart);" << std::endl;
             os << "    cudaEventCreate(&synapseStop);" << std::endl;
@@ -1153,7 +1368,7 @@ void genRunner(const NNmodel &model, //!< Model description
             os << "    synDyn_tme= 0.0;" << std::endl;
         }
 #ifndef CPU_ONLY
-        if(model.isDeviceInitRequired()) {
+        if(model.isDeviceInitRequired(localHostID)) {
             os << "cudaEventCreate(&initDeviceStart);" << std::endl;
             os << "cudaEventCreate(&initDeviceStop);" << std::endl;
         }
@@ -1168,9 +1383,32 @@ void genRunner(const NNmodel &model, //!< Model description
         os << "sparseInitDevice_tme = 0.0;" << std::endl;
     }
 
-    // ALLOCATE NEURON VARIABLES
+    // ALLOCATE REMOTE NEURON VARIABLES
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// remote neuron groups" << std::endl;
+    os << std::endl;
+
+    // Loop through remote neuron groups
     unsigned int mem = 0;
-    for(const auto &n : model.getNeuronGroups()) {
+    for(const auto &n : model.getRemoteNeuronGroups()) {
+        // If this neuron group has outputs to local host
+        if(n.second.hasOutputToHost(localHostID)) {
+            // Allocate population spike count
+            mem += allocate_variable(os, "unsigned int", "glbSpkCnt" + n.first, n.second.getSpikeVarMode(),
+                                     n.second.isTrueSpikeRequired() ? n.second.getNumDelaySlots() : 1);
+
+            // Allocate population spike output buffer
+            mem += allocate_variable(os, "unsigned int", "glbSpk" + n.first, n.second.getSpikeVarMode(),
+                                     n.second.isTrueSpikeRequired() ? n.second.getNumNeurons() * n.second.getNumDelaySlots() : n.second.getNumNeurons());
+        }
+    }
+    os << std::endl;
+
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// local neuron groups" << std::endl;
+
+    // ALLOCATE NEURON VARIABLES
+    for(const auto &n : model.getLocalNeuronGroups()) {
         // Allocate population spike count
         mem += allocate_variable(os, "unsigned int", "glbSpkCnt" + n.first, n.second.getSpikeVarMode(),
                                  n.second.isTrueSpikeRequired() ? n.second.getNumDelaySlots() : 1);
@@ -1212,7 +1450,7 @@ void genRunner(const NNmodel &model, //!< Model description
     }
 
     // ALLOCATE SYNAPSE VARIABLES
-    for(const auto &s : model.getSynapseGroups()) {
+    for(const auto &s : model.getLocalSynapseGroups()) {
         const auto *wu = s.second.getWUModel();
         const auto *psm = s.second.getPSModel();
 
@@ -1249,7 +1487,7 @@ void genRunner(const NNmodel &model, //!< Model description
     // ------------------------------------------------------------------------
     // allocating conductance arrays for sparse matrices
 
-    for(const auto &s : model.getSynapseGroups()) {
+    for(const auto &s : model.getLocalSynapseGroups()) {
         if (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
             os << "void allocate" << s.first << "(unsigned int connN)" << "{" << std::endl;
             os << "// Allocate host side variables" << std::endl;
@@ -1336,9 +1574,16 @@ void genRunner(const NNmodel &model, //!< Model description
         free_device_variable(os, "rng", VarMode::LOC_DEVICE_INIT_DEVICE);
     }
 #endif
+    // FREE REMOTE NEURON VARIABLES
+    for(const auto &n : model.getRemoteNeuronGroups()) {
+        if(n.second.hasOutputToHost(localHostID)) {
+            free_variable(os, "glbSpkCnt" + n.first, n.second.getSpikeVarMode());
+            free_variable(os, "glbSpk" + n.first, n.second.getSpikeVarMode());
+        }
+    }
 
-    // FREE NEURON VARIABLES
-    for(const auto &n : model.getNeuronGroups()) {
+    // FREE LOCAL NEURON VARIABLES
+    for(const auto &n : model.getLocalNeuronGroups()) {
         // Free spike buffer
         free_variable(os, "glbSpkCnt" + n.first, n.second.getSpikeVarMode());
         free_variable(os, "glbSpk" + n.first, n.second.getSpikeVarMode());
@@ -1367,7 +1612,7 @@ void genRunner(const NNmodel &model, //!< Model description
     }
 
     // FREE SYNAPSE VARIABLES
-    for(const auto &s : model.getSynapseGroups()) {
+    for(const auto &s : model.getLocalSynapseGroups()) {
         free_variable(os, "inSyn" + s.first, s.second.getInSynVarMode());
 
         if (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
@@ -1418,6 +1663,10 @@ void genRunner(const NNmodel &model, //!< Model description
 #ifndef CPU_ONLY
     os << "  cudaDeviceReset();" << std::endl;
 #endif
+#ifdef MPI_ENABLE
+    os << "    MPI_Finalize();" << std::endl;
+    os << "    printf(\"MPI finalized.\\n\");" << std::endl;
+#endif
     os << "}" << std::endl;
     os << std::endl;
 
@@ -1427,7 +1676,7 @@ void genRunner(const NNmodel &model, //!< Model description
         os << "// the actual time stepping procedure (using CPU)" << std::endl;
         os << "void stepTimeCPU()" << std::endl;
         os << "{" << std::endl;
-        if (!model.getSynapseGroups().empty()) {
+        if (!model.getLocalSynapseGroups().empty()) {
             if (!model.getSynapseDynamicsGroups().empty()) {
                 if (model.isTimingEnabled()) os << "        synDyn_timer.startTimer();" << std::endl;
                 os << "        calcSynapseDynamicsCPU(t);" << std::endl;
@@ -1451,6 +1700,10 @@ void genRunner(const NNmodel &model, //!< Model description
                 }
             }
         }
+
+        // Generate code to advance host-side spike queues
+        genHostSpikeQueueAdvance(os, model, localHostID);
+
         if (model.isTimingEnabled()) os << "    neuron_timer.startTimer();" << std::endl;
         os << "    calcNeuronsCPU(t);" << std::endl;
         if (model.isTimingEnabled()) {
@@ -1491,11 +1744,10 @@ void genRunner(const NNmodel &model, //!< Model description
 
 #ifndef CPU_ONLY
 void genRunnerGPU(const NNmodel &model, //!< Model description
-                  const string &path //!< Path for code generation
-    )
+                  const string &path,   //!< Path for code generation
+                  int localHostID)      //!< ID of local host
 {
-//    cout << "entering GenRunnerGPU" << std::endl;
-    string name= path + "/" + model.getName() + "_CODE/runnerGPU.cc";
+    string name = model.getGeneratedCodePath(path, "runnerGPU.cc");
     ofstream fs;
     fs.open(name.c_str());
 
@@ -1595,14 +1847,32 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     os << std::endl;
 
     os << "#include \"neuronKrnl.cc\"" << std::endl;
-    if (!model.getSynapseGroups().empty()) {
+    if (!model.getLocalSynapseGroups().empty()) {
         os << "#include \"synapseKrnl.cc\"" << std::endl;
+    }
+    os << std::endl;
+
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// copying remote data to device" << std::endl << std::endl;
+    // Loop through remote neuron groups
+    for(const auto &n : model.getRemoteNeuronGroups()) {
+        // If this neuron group has outputs to local host
+        if(n.second.hasOutputToHost(localHostID)) {
+            // Write spike pushing function
+            os << "void push" << n.first << "SpikesToDevice(bool hostInitialisedOnly)" << std::endl;
+            os << CodeStream::OB(1060);
+            genPushSpikeCode(os, n.second, false);
+            os << CodeStream::CB(1060);
+
+            // Write current spike pushing function
+            genPushCurrentSpikeFunctions(os, n.second, false);
+        }
+
     }
 
     os << "// ------------------------------------------------------------------------" << std::endl;
     os << "// copying things to device" << std::endl << std::endl;
-
-    for(const auto &n : model.getNeuronGroups()) {
+    for(const auto &n : model.getLocalNeuronGroups()) {
         // neuron state variables
         os << "void push" << n.first << "StateToDevice(bool hostInitialisedOnly)" << std::endl;
         os << CodeStream::OB(1050);
@@ -1637,29 +1907,10 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
         os << "void push" << n.first << "SpikesToDevice(bool hostInitialisedOnly)" << std::endl;
         os << CodeStream::OB(1060);
 
-        const VarMode spikeVarMode = n.second.getSpikeVarMode();
-        if(canPushPullVar(spikeVarMode)) {
-            // If spikes are initialised on device, only copy if hostInitialisedOnly isn't set
-            if(spikeVarMode & VarInit::DEVICE) {
-                os << "if(!hostInitialisedOnly)" << CodeStream::OB(1061);
-            }
-            const size_t glbSpkCntSize = n.second.isTrueSpikeRequired() ? n.second.getNumDelaySlots() : 1;
-            os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_glbSpkCnt" << n.first;
-            os << ", glbSpkCnt" << n.first;
-            os << ", " << glbSpkCntSize << " * sizeof(unsigned int), cudaMemcpyHostToDevice));" << std::endl;
-
-            const size_t glbSpkSize = n.second.isTrueSpikeRequired() ? n.second.getNumNeurons() * n.second.getNumDelaySlots() : n.second.getNumNeurons();
-            os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_glbSpk" << n.first;
-            os << ", glbSpk" << n.first;
-            os << ", " << glbSpkSize << " * sizeof(unsigned int), cudaMemcpyHostToDevice));" << std::endl;
-
-            if(spikeVarMode & VarInit::DEVICE) {
-                os << CodeStream::CB(1061);
-            }
-        }
+        genPushSpikeCode(os, n.second, false);
         
         if (n.second.isSpikeEventRequired()) {
-          os << "push" << n.first << "SpikeEventsToDevice(hostInitialisedOnly);" << std::endl;
+            os << "push" << n.first << "SpikeEventsToDevice(hostInitialisedOnly);" << std::endl;
         }
 
         const VarMode spikeTimeVarMode = n.second.getSpikeTimeVarMode();
@@ -1685,91 +1936,16 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
         // neuron spike variables
         os << "void push" << n.first << "SpikeEventsToDevice(bool hostInitialisedOnly)" << std::endl;
         os << CodeStream::OB(1060);
-
-        const VarMode varMode = n.second.getSpikeEventVarMode();
-        if (n.second.isSpikeEventRequired() && canPushPullVar(varMode)) {
-            // If spikes events are initialised on device, only copy if hostInitialisedOnly isn't set
-            if(varMode & VarInit::DEVICE) {
-                os << "if(!hostInitialisedOnly)" << CodeStream::OB(1061);
-            }
-
-            const size_t glbSpkCntEventSize = n.second.getNumDelaySlots();
-            os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_glbSpkCntEvnt" << n.first;
-            os << ", glbSpkCntEvnt" << n.first;
-            os << ", " << glbSpkCntEventSize << " * sizeof(unsigned int), cudaMemcpyHostToDevice));" << std::endl;
-
-            const size_t glbSpkEventSize = n.second.getNumNeurons() * n.second.getNumDelaySlots();
-            os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_glbSpkEvnt" << n.first;
-            os << ", glbSpkEvnt" << n.first;
-            os << ", " << glbSpkEventSize << " * sizeof(unsigned int), cudaMemcpyHostToDevice));" << std::endl;
-
-            if(varMode & VarInit::DEVICE) {
-                os << CodeStream::CB(1061);
-            }
-        }
-
+        genPushSpikeCode(os, n.second, true);
         os << CodeStream::CB(1060);
         os << std::endl;
 
-        // current neuron spike variables
-        os << "void push" << n.first << "CurrentSpikesToDevice()" << std::endl;
-        os << CodeStream::OB(1061);
-
-        if(canPushPullVar(n.second.getSpikeVarMode())) {
-            if (n.second.isTrueSpikeRequired() && n.second.isDelayRequired()) {
-                os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_glbSpkCnt" << n.first;
-                os << "+spkQuePtr" << n.first << ", glbSpkCnt" << n.first;
-                os << "+spkQuePtr" << n.first;
-                os << ", sizeof(unsigned int), cudaMemcpyHostToDevice));" << std::endl;
-                os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_glbSpk" << n.first;
-                os << "+(spkQuePtr" << n.first << "*" << n.second.getNumNeurons() << ")";
-                os << ", glbSpk" << n.first;
-                os << "+(spkQuePtr" << n.first << "*" << n.second.getNumNeurons() << ")";
-                os << ", " << "glbSpkCnt" << n.first << "[spkQuePtr" << n.first << "] * sizeof(unsigned int), cudaMemcpyHostToDevice));" << std::endl;
-            }
-            else {
-                os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_glbSpkCnt" << n.first;
-                os << ", glbSpkCnt" << n.first;
-                os << ", sizeof(unsigned int), cudaMemcpyHostToDevice));" << std::endl;
-                os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_glbSpk" << n.first;
-                os << ", glbSpk" << n.first;
-                os << ", " << "glbSpkCnt" << n.first << "[0] * sizeof(unsigned int), cudaMemcpyHostToDevice));" << std::endl;
-            }
-        }
-        os << CodeStream::CB(1061);
-        os << std::endl;
-
-        // current neuron spike event variables
-        os << "void push" << n.first << "CurrentSpikeEventsToDevice()" << std::endl;
-        os << CodeStream::OB(1062);
-
-        if (n.second.isSpikeEventRequired() && canPushPullVar(n.second.getSpikeEventVarMode())) {
-          if (n.second.isDelayRequired()) {
-            os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_glbSpkCntEvnt" << n.first;
-            os << "+spkQuePtr" << n.first << ", glbSpkCntEvnt" << n.first;
-            os << "+spkQuePtr" << n.first;
-            os << ", sizeof(unsigned int), cudaMemcpyHostToDevice));" << std::endl;
-            os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_glbSpkEvnt" << n.first;
-            os << "+(spkQuePtr" << n.first << "*" << n.second.getNumNeurons() << ")";
-            os << ", glbSpkEvnt" << n.first;
-            os << "+(spkQuePtr" << n.first << "*" << n.second.getNumNeurons() << ")";
-            os << ", " << "glbSpkCnt" << n.first << "[spkQuePtr" << n.first << "] * sizeof(unsigned int), cudaMemcpyHostToDevice));" << std::endl;
-          }
-          else {
-            os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_glbSpkCntEvnt" << n.first;
-            os << ", glbSpkCntEvnt" << n.first;
-            os << ", sizeof(unsigned int), cudaMemcpyHostToDevice));" << std::endl;
-            os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_glbSpkEvnt" << n.first;
-            os << ", glbSpkEvnt" << n.first;
-            os << ", " << "glbSpkCntEvnt" << n.first << "[0] * sizeof(unsigned int), cudaMemcpyHostToDevice));" << std::endl;
-          }
-        }
-
-        os << CodeStream::CB(1062);
-        os << std::endl;
+        // Generate functions to push current spikes and spike events to device
+        genPushCurrentSpikeFunctions(os, n.second, false);
+        genPushCurrentSpikeFunctions(os, n.second, true);
     }
     // synapse variables
-    for(const auto &s : model.getSynapseGroups()) {
+    for(const auto &s : model.getLocalSynapseGroups()) {
         const auto *wu = s.second.getWUModel();
         const auto *psm = s.second.getPSModel();
 
@@ -1855,7 +2031,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     os << "// ------------------------------------------------------------------------" << std::endl;
     os << "// copying things from device" << std::endl << std::endl;
 
-    for(const auto &n : model.getNeuronGroups()) {
+    for(const auto &n : model.getLocalNeuronGroups()) {
         // neuron state variables
         os << "void pull" << n.first << "StateFromDevice()" << std::endl;
         os << CodeStream::OB(1050);
@@ -1911,7 +2087,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
         }
 
         if (n.second.isSpikeEventRequired()) {
-          os << "pull" << n.first << "SpikeEventsFromDevice();" << std::endl;
+            os << "pull" << n.first << "SpikeEventsFromDevice();" << std::endl;
         }
         os << CodeStream::CB(1060);
         os << std::endl;
@@ -1929,67 +2105,12 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
         os << CodeStream::CB(10601);
         os << std::endl;
 
-        os << "void pull" << n.first << "CurrentSpikesFromDevice()" << std::endl;
-        os << CodeStream::OB(1061);
-
-        if(canPushPullVar(n.second.getSpikeVarMode())) {
-            if (n.second.isTrueSpikeRequired() && n.second.isDelayRequired()) {
-                os << "CHECK_CUDA_ERRORS(cudaMemcpy(glbSpkCnt" << n.first;
-                os << "+spkQuePtr" << n.first << ", d_glbSpkCnt" << n.first;
-                os << "+spkQuePtr" << n.first;
-                os << ", sizeof(unsigned int), cudaMemcpyDeviceToHost));" << std::endl;
-
-                os << "CHECK_CUDA_ERRORS(cudaMemcpy(glbSpk" << n.first;
-                os << "+(spkQuePtr" << n.first << "*" << n.second.getNumNeurons() << ")";
-                os << ", d_glbSpk" << n.first;
-                os << "+(spkQuePtr" << n.first << "*" << n.second.getNumNeurons() << ")";
-                os << ", " << "glbSpkCnt" << n.first << "[spkQuePtr" << n.first << "] * sizeof(unsigned int), cudaMemcpyDeviceToHost));" << std::endl;
-            }
-            else {
-                os << "CHECK_CUDA_ERRORS(cudaMemcpy(glbSpkCnt" << n.first;
-                os << ", d_glbSpkCnt" << n.first;
-                os << ", sizeof(unsigned int), cudaMemcpyDeviceToHost));" << std::endl;
-                os << "CHECK_CUDA_ERRORS(cudaMemcpy(glbSpk" << n.first;
-                os << ", d_glbSpk" << n.first;
-                os << ", " << "glbSpkCnt" << n.first << "[0] * sizeof(unsigned int), cudaMemcpyDeviceToHost));" << std::endl;
-            }
-        }
-
-        os << CodeStream::CB(1061);
-        os << std::endl;
-
-        os << "void pull" << n.first << "CurrentSpikeEventsFromDevice()" << std::endl;
-        os << CodeStream::OB(1062);
-
-        if (n.second.isSpikeEventRequired() && canPushPullVar(n.second.getSpikeEventVarMode())) {
-          if (n.second.isDelayRequired()) {
-            os << "CHECK_CUDA_ERRORS(cudaMemcpy(glbSpkCntEvnt" << n.first;
-            os << "+spkQuePtr" << n.first << ", d_glbSpkCntEvnt" << n.first;
-            os << "+spkQuePtr" << n.first;
-            os << ", sizeof(unsigned int), cudaMemcpyDeviceToHost));" << std::endl;
-
-            os << "CHECK_CUDA_ERRORS(cudaMemcpy(glbSpkEvnt" << n.first;
-            os << "+(spkQuePtr" << n.first << "*" << n.second.getNumNeurons() << ")";
-            os << ", d_glbSpkEvnt" << n.first;
-            os << "+(spkQuePtr" << n.first << "*" << n.second.getNumNeurons() << ")";
-            os << ", " << "glbSpkCntEvnt" << n.first << "[spkQuePtr" << n.first << "] * sizeof(unsigned int), cudaMemcpyDeviceToHost));" << std::endl;
-          }
-          else {
-            os << "CHECK_CUDA_ERRORS(cudaMemcpy(glbSpkCntEvnt" << n.first;
-            os << ", d_glbSpkCntEvnt" << n.first;
-            os << ", sizeof(unsigned int), cudaMemcpyDeviceToHost));" << std::endl;
-            os << "CHECK_CUDA_ERRORS(cudaMemcpy(glbSpkEvnt" << n.first;
-            os << ", d_glbSpkEvnt" << n.first;
-            os << ", " << "glbSpkCntEvnt" << n.first << "[0] * sizeof(unsigned int), cudaMemcpyDeviceToHost));" << std::endl;
-          }
-        }
-
-        os << CodeStream::CB(1062);
-        os << std::endl;
+        genPullCurrentSpikeFunctions(os, n.second, false);
+        genPullCurrentSpikeFunctions(os, n.second, true);
     }
 
     // synapse variables
-    for(const auto &s : model.getSynapseGroups()) {
+    for(const auto &s : model.getLocalSynapseGroups()) {
         const auto *wu = s.second.getWUModel();
         const auto *psm = s.second.getPSModel();
 
@@ -2048,13 +2169,18 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     
     os << "void copyStateToDevice(bool hostInitialisedOnly)" << std::endl;
     os << CodeStream::OB(1110);
+    for(const auto &n : model.getRemoteNeuronGroups()) {
+        if(n.second.hasOutputToHost(localHostID)) {
+            os << "push" << n.first << "SpikesToDevice(hostInitialisedOnly);" << std::endl;
+        }
+    }
 
-    for(const auto &n : model.getNeuronGroups()) {
+    for(const auto &n : model.getLocalNeuronGroups()) {
         os << "push" << n.first << "StateToDevice(hostInitialisedOnly);" << std::endl;
         os << "push" << n.first << "SpikesToDevice(hostInitialisedOnly);" << std::endl;
     }
 
-    for(const auto &s : model.getSynapseGroups()) {
+    for(const auto &s : model.getLocalSynapseGroups()) {
         os << "push" << s.first << "StateToDevice(hostInitialisedOnly);" << std::endl;
     }
 
@@ -2066,7 +2192,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     
     os << "void copySpikesToDevice()" << std::endl;
     os << CodeStream::OB(1111);
-    for(const auto &n : model.getNeuronGroups()) {
+    for(const auto &n : model.getLocalNeuronGroups()) {
       os << "push" << n.first << "SpikesToDevice();" << std::endl;
     }
     os << CodeStream::CB(1111);
@@ -2076,7 +2202,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     
     os << "void copyCurrentSpikesToDevice()" << std::endl;
     os << CodeStream::OB(1112);
-    for(const auto &n : model.getNeuronGroups()) {
+    for(const auto &n : model.getLocalNeuronGroups()) {
       os << "push" << n.first << "CurrentSpikesToDevice();" << std::endl;
     }
     os << CodeStream::CB(1112);
@@ -2087,7 +2213,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     
     os << "void copySpikeEventsToDevice()" << std::endl;
     os << CodeStream::OB(1113);
-    for(const auto &n : model.getNeuronGroups()) {
+    for(const auto &n : model.getLocalNeuronGroups()) {
       os << "push" << n.first << "SpikeEventsToDevice();" << std::endl;
     }
     os << CodeStream::CB(1113);
@@ -2097,7 +2223,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     
     os << "void copyCurrentSpikeEventsToDevice()" << std::endl;
     os << CodeStream::OB(1114);
-    for(const auto &n : model.getNeuronGroups()) {
+    for(const auto &n : model.getLocalNeuronGroups()) {
       os << "push" << n.first << "CurrentSpikeEventsToDevice();" << std::endl;
     }
     os << CodeStream::CB(1114);
@@ -2108,12 +2234,12 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     os << "void copyStateFromDevice()" << std::endl;
     os << CodeStream::OB(1120);
     
-    for(const auto &n : model.getNeuronGroups()) {
+    for(const auto &n : model.getLocalNeuronGroups()) {
         os << "pull" << n.first << "StateFromDevice();" << std::endl;
         os << "pull" << n.first << "SpikesFromDevice();" << std::endl;
     }
 
-    for(const auto &s : model.getSynapseGroups()) {
+    for(const auto &s : model.getLocalSynapseGroups()) {
         os << "pull" << s.first << "StateFromDevice();" << std::endl;
     }
     
@@ -2127,7 +2253,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     os << "void copySpikesFromDevice()" << std::endl;
     os << CodeStream::OB(1121) << std::endl;
 
-    for(const auto &n : model.getNeuronGroups()) {
+    for(const auto &n : model.getLocalNeuronGroups()) {
       os << "pull" << n.first << "SpikesFromDevice();" << std::endl;
     }
     os << CodeStream::CB(1121) << std::endl;
@@ -2139,7 +2265,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     os << "void copyCurrentSpikesFromDevice()" << std::endl;
     os << CodeStream::OB(1122) << std::endl;
 
-    for(const auto &n : model.getNeuronGroups()) {
+    for(const auto &n : model.getLocalNeuronGroups()) {
       os << "pull" << n.first << "CurrentSpikesFromDevice();" << std::endl;
     }
     os << CodeStream::CB(1122) << std::endl;
@@ -2153,7 +2279,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     os << "void copySpikeNFromDevice()" << std::endl;
     os << CodeStream::OB(1123) << std::endl;
 
-    for(const auto &n : model.getNeuronGroups()) {
+    for(const auto &n : model.getLocalNeuronGroups()) {
         if(canPushPullVar(n.second.getSpikeVarMode())) {
             size_t size = (n.second.isTrueSpikeRequired() && n.second.isDelayRequired())
                 ? n.second.getNumDelaySlots() : 1;
@@ -2173,7 +2299,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     os << "void copySpikeEventsFromDevice()" << std::endl;
     os << CodeStream::OB(1124) << std::endl;
 
-    for(const auto &n : model.getNeuronGroups()) {
+    for(const auto &n : model.getLocalNeuronGroups()) {
       os << "pull" << n.first << "SpikeEventsFromDevice();" << std::endl;
     }
     os << CodeStream::CB(1124) << std::endl;
@@ -2185,7 +2311,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     os << "void copyCurrentSpikeEventsFromDevice()" << std::endl;
     os << CodeStream::OB(1125) << std::endl;
 
-    for(const auto &n : model.getNeuronGroups()) {
+    for(const auto &n : model.getLocalNeuronGroups()) {
       os << "pull" << n.first << "CurrentSpikeEventsFromDevice();" << std::endl;
     }
     os << CodeStream::CB(1125) << std::endl;
@@ -2198,7 +2324,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     os << "void copySpikeEventNFromDevice()" << std::endl;
     os << CodeStream::OB(1126) << std::endl;
 
-    for(const auto &n : model.getNeuronGroups()) {
+    for(const auto &n : model.getLocalNeuronGroups()) {
         if (n.second.isSpikeEventRequired() && canPushPullVar(n.second.getSpikeEventVarMode())) {
             const size_t size = n.second.isDelayRequired() ? n.second.getNumDelaySlots() : 1;
 
@@ -2214,7 +2340,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     os << "void stepTimeGPU()" << std::endl;
     os << CodeStream::OB(1130) << std::endl;
 
-    if (!model.getSynapseGroups().empty()) {
+    if (!model.getLocalSynapseGroups().empty()) {
         unsigned int synapseGridSz = model.getSynapseKernelGridSize();
         os << "//model.padSumSynapseTrgN[model.synapseGrpN - 1] is " << synapseGridSz << std::endl;
         synapseGridSz = synapseGridSz / synapseBlkSz;
@@ -2246,7 +2372,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
         os << "dim3 nGrid(" << sqGridSize << ","<< sqGridSize <<");" << std::endl;
     }
     os << std::endl;
-    if (!model.getSynapseGroups().empty()) {
+    if (!model.getLocalSynapseGroups().empty()) {
         if (!model.getSynapseDynamicsGroups().empty()) {
             if (model.isTimingEnabled()) {
                 os << "cudaEventRecord(synDynStart);" << std::endl;
@@ -2285,12 +2411,10 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
                 os << "cudaEventRecord(learningStop);" << std::endl;
             }
         }
-    }    
-    for(auto &n : model.getNeuronGroups()) {
-        if (n.second.isDelayRequired()) {
-            os << "spkQuePtr" << n.first << " = (spkQuePtr" << n.first << " + 1) % " << n.second.getNumDelaySlots() << ";" << std::endl;
-        }
     }
+    // Generate code to advance host-side spike queues
+    genHostSpikeQueueAdvance(os, model, localHostID);
+
     if (model.isTimingEnabled()) {
         os << "cudaEventRecord(neuronStart);" << std::endl;
     }
@@ -2304,7 +2428,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
         os << "cudaEventRecord(neuronStop);" << std::endl;
         os << "cudaEventSynchronize(neuronStop);" << std::endl;
         os << "float tmp;" << std::endl;
-        if (!model.getSynapseGroups().empty()) {
+        if (!model.getLocalSynapseGroups().empty()) {
             os << "cudaEventElapsedTime(&tmp, synapseStart, synapseStop);" << std::endl;
             os << "synapse_tme+= tmp/1000.0;" << std::endl;
         }
@@ -2342,7 +2466,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
 void genMSBuild(const NNmodel &model,   //!< Model description
                 const string &path)     //!< Path for code generation
 {
-    string name = path + "/" + model.getName() + "_CODE/generated_code.props";
+    string name = model.getGeneratedCodePath(path, "generated_code.props");
     ofstream fs;
     fs.open(name.c_str());
 
@@ -2385,10 +2509,9 @@ void genMSBuild(const NNmodel &model,   //!< Model description
 */
 //----------------------------------------------------------------------------
 void genMakefile(const NNmodel &model, //!< Model description
-                 const string &path    //!< Path for code generation
-                 )
+                 const string &path)  //!< Path for code generation
 {
-    string name = path + "/" + model.getName() + "_CODE/Makefile";
+    string name = model.getGeneratedCodePath(path, "Makefile");
     ofstream fs;
     fs.open(name.c_str());
 
@@ -2499,7 +2622,11 @@ void genMakefile(const NNmodel &model, //!< Model description
     os << endl;
     os << "CXXFLAGS       :=" << cxxFlags << endl;
     os << endl;
+#ifdef MPI_ENABLE
+    os << "INCLUDEFLAGS   =-I\"$(GENN_PATH)/lib/include\" -I\"$(MPI_PATH)/include\"" << endl;
+#else
     os << "INCLUDEFLAGS   =-I\"$(GENN_PATH)/lib/include\"" << endl;
+#endif
     os << endl;
 
     // Add correct rules for building either shared library or object file
@@ -2543,7 +2670,11 @@ void genMakefile(const NNmodel &model, //!< Model description
     os << "NVCC           :=\"" << NVCC << "\"" << endl;
     os << "NVCCFLAGS      :=" << nvccFlags << endl;
     os << endl;
+#ifdef MPI_ENABLE
+    os << "INCLUDEFLAGS   =-I\"$(GENN_PATH)/lib/include\" -I\"$(MPI_PATH)/include\"" << endl;
+#else
     os << "INCLUDEFLAGS   =-I\"$(GENN_PATH)/lib/include\"" << endl;
+#endif
     os << endl;
 
     // Add correct rules for building either shared library or object file

@@ -18,14 +18,14 @@ class NeuronGroup
 {
 public:
     NeuronGroup(const std::string &name, int numNeurons, const NeuronModels::Base *neuronModel,
-                const std::vector<double> &params, const std::vector<NewModels::VarInit> &varInitialisers) :
+                const std::vector<double> &params, const std::vector<NewModels::VarInit> &varInitialisers, int hostID, int deviceID) :
         m_Name(name), m_NumNeurons(numNeurons), m_IDRange(0, 0), m_PaddedIDRange(0, 0),
         m_NeuronModel(neuronModel), m_Params(params), m_VarInitialisers(varInitialisers),
         m_SpikeTimeRequired(false), m_TrueSpikeRequired(false), m_SpikeEventRequired(false), m_QueueRequired(false),
         m_NumDelaySlots(1), m_AnyVarQueuesRequired(false), m_VarQueueRequired(varInitialisers.size(), false),
         m_SpikeVarMode(GENN_PREFERENCES::defaultVarMode), m_SpikeEventVarMode(GENN_PREFERENCES::defaultVarMode),
         m_SpikeTimeVarMode(GENN_PREFERENCES::defaultVarMode), m_VarMode(varInitialisers.size(), GENN_PREFERENCES::defaultVarMode),
-        m_HostID(0), m_DeviceID(0)
+        m_HostID(hostID), m_DeviceID(deviceID)
     {
     }
     NeuronGroup(const NeuronGroup&) = delete;
@@ -88,8 +88,6 @@ public:
     /*! This is ignored for CPU simulations */
     void setVarMode(const std::string &varName, VarMode mode);
 
-    void setClusterIndex(int hostID, int deviceID){ m_HostID = hostID; m_DeviceID = deviceID; }
-
     void addSpkEventCondition(const std::string &code, const std::string &supportCodeNamespace);
 
     void addInSyn(SynapseGroup *synapseGroup){ m_InSyn.push_back(synapseGroup); }
@@ -120,6 +118,10 @@ public:
 
     //! Gets pointers to all synapse groups emanating from this neuron group
     const std::vector<SynapseGroup*> &getOutSyn() const{ return m_OutSyn; }
+
+    int getClusterHostID() const{ return m_HostID; }
+
+    int getClusterDeviceID() const{ return m_DeviceID; }
 
     bool isSpikeTimeRequired() const{ return m_SpikeTimeRequired; }
     bool isTrueSpikeRequired() const{ return m_TrueSpikeRequired; }
@@ -177,6 +179,9 @@ public:
     /*! If we are running in CPU_ONLY mode this is always true,
         but some GPU functionality will prevent models being run on both CPU and GPU. */
     bool canRunOnCPU() const;
+
+    //! Does this neuron group have outgoing connections specified host id
+    bool hasOutputToHost(int targetHostID) const;
 
     // **THINK** do this really belong here - it is very code-generation specific
     std::string getQueueOffset(const std::string &devPrefix) const;

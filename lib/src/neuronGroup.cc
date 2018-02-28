@@ -236,6 +236,17 @@ bool NeuronGroup::canRunOnCPU() const
                        [](const VarMode mode){ return (mode & VarLocation::HOST); });
 }
 
+bool NeuronGroup::hasOutputToHost(int targetHostID) const
+{
+    // Return true if any of the outgoing synapse groups have target populations on specified host ID
+    return std::any_of(getOutSyn().cbegin(), getOutSyn().cend(),
+                       [targetHostID](SynapseGroup *sg)
+                       {
+                           return (sg->getTrgNeuronGroup()->getClusterHostID() == targetHostID);
+                       });
+
+}
+
 std::string NeuronGroup::getQueueOffset(const std::string &devPrefix) const
 {
     return isDelayRequired()

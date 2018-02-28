@@ -14,5 +14,6 @@
 // Forward declarations
 class NNmodel;
 
-void genInit(const NNmodel &model,          //!< Model description
-             const std::string &path);      //!< Path for code generationn
+void genInit(const NNmodel &model,      //!< Model description
+             const std::string &path,   //!< Path for code generationn
+             int localHostID);          //!< ID of local host

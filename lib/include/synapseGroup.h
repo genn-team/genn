@@ -66,8 +66,6 @@ public:
     /*! This is ignored for CPU simulations */
     void setPSVarMode(const std::string &varName, VarMode mode);
 
-    void setClusterIndex(int hostID, int deviceID){ m_HostID = hostID; m_DeviceID = deviceID; }
-
     //! Set variable mode used for variables used to combine input from this synapse group
     /*! This is ignored for CPU simulations */
     void setInSynVarMode(VarMode mode) { m_InSynVarMode = mode; }
@@ -103,6 +101,9 @@ public:
 
     const NeuronGroup *getSrcNeuronGroup() const{ return m_SrcNeuronGroup; }
     const NeuronGroup *getTrgNeuronGroup() const{ return m_TrgNeuronGroup; }
+
+    int getClusterHostID() const{ return m_TrgNeuronGroup->getClusterHostID(); }
+    int getClusterDeviceID() const{ return m_TrgNeuronGroup->getClusterDeviceID(); }
 
     bool isTrueSpikeRequired() const{ return m_TrueSpikeRequired; }
     bool isSpikeEventRequired() const{ return m_SpikeEventRequired; }
@@ -247,10 +248,4 @@ private:
 
     //!< Whether indidividual state variables of post synapse should use zero-copied memory
     std::vector<VarMode> m_PSVarMode;
-
-    //!< The ID of the cluster node which the synapse group is computed on
-    int m_HostID;
-
-    //!< The ID of the CUDA device which the synapse group is comnputed on
-    int m_DeviceID;
 };

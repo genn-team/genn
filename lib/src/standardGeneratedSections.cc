@@ -13,7 +13,11 @@ void StandardGeneratedSections::neuronOutputInit(
     const std::string &devPrefix)
 {
     if (ng.isDelayRequired()) { // with delay
-        os << devPrefix << "spkQuePtr" << ng.getName() << " = (" << devPrefix << "spkQuePtr" << ng.getName() << " + 1) % " << ng.getNumDelaySlots() << ";" << std::endl;
+        // **NOTE** only device spike queue pointers should be reset here
+        if(!devPrefix.empty()) {
+            os << devPrefix << "spkQuePtr" << ng.getName() << " = (" << devPrefix << "spkQuePtr" << ng.getName() << " + 1) % " << ng.getNumDelaySlots() << ";" << std::endl;
+        }
+
         if (ng.isSpikeEventRequired()) {
             os << devPrefix << "glbSpkCntEvnt" << ng.getName() << "[" << devPrefix << "spkQuePtr" << ng.getName() << "] = 0;" << std::endl;
         }

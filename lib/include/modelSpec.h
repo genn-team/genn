@@ -33,6 +33,9 @@ Part of the code generation and generated code sections.
 #include <set>
 #include <string>
 #include <vector>
+#ifdef MPI_ENABLE
+#include <mpi.h>
+#endif
 
 using namespace std;
 
@@ -130,7 +133,7 @@ public:
 
     //! Does this model require device initialisation kernel
     /*! **NOTE** this is for neuron groups and densely connected synapse groups only */
-    bool isDeviceInitRequired() const;
+    bool isDeviceInitRequired(int localHostID) const;
 
     //! Does this model require a device sparse initialisation kernel
     /*! **NOTE** this is for sparsely connected synapse groups only */
@@ -172,10 +175,16 @@ public:
     //! Are timers and timing commands enabled
     bool isTimingEnabled() const{ return timing; }
 
+    //! Generate path for generated code
+    std::string getGeneratedCodePath(const std::string &path, const std::string &filename) const;
+
     // PUBLIC NEURON FUNCTIONS
     //========================
-    //! Get std::map containing all named NeuronGroup objects in model
-    const map<string, NeuronGroup> &getNeuronGroups() const{ return m_NeuronGroups; }
+    //! Get std::map containing local named NeuronGroup objects in model
+    const map<string, NeuronGroup> &getLocalNeuronGroups() const{ return m_LocalNeuronGroups; }
+
+    //! Get std::map containing remote named NeuronGroup objects in model
+    const map<string, NeuronGroup> &getRemoteNeuronGroups() const{ return m_RemoteNeuronGroups; }
 
     //! Gets std::map containing names and types of each parameter that should be passed through to the neuron kernel
     const map<string, string> &getNeuronKernelParameters() const{ return neuronKernelParameters; }
@@ -185,8 +194,14 @@ public:
         each neuron population, padded to be a multiple of GPU's thread block size.*/
     unsigned int getNeuronGridSize() const;
 
+    //! How many neurons are simulated locally in this model
+    unsigned int getNumLocalNeurons() const;
+
+    //! How many neurons are simulated remotely in this model
+    unsigned int getNumRemoteNeurons() const;
+
     //! How many neurons make up the entire model
-    unsigned int getNumNeurons() const;
+    unsigned int getNumNeurons() const{ return getNumLocalNeurons() + getNumRemoteNeurons(); }
 
     //! Find a neuron group by name
     const NeuronGroup *findNeuronGroup(const std::string &name) const;
@@ -194,8 +209,8 @@ public:
     //! Find a neuron group by name
     NeuronGroup *findNeuronGroup(const std::string &name);
 
-    NeuronGroup *addNeuronPopulation(const string&, unsigned int, unsigned int, const double *, const double *); //!< Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population
-    NeuronGroup *addNeuronPopulation(const string&, unsigned int, unsigned int, const vector<double>&, const vector<double>&); //!< Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population
+    NeuronGroup *addNeuronPopulation(const string&, unsigned int, unsigned int, const double *, const double *, int hostID = 0, int deviceID = 0); //!< Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population
+    NeuronGroup *addNeuronPopulation(const string&, unsigned int, unsigned int, const vector<double>&, const vector<double>&, int hostID = 0, int deviceID = 0); //!< Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population
 
     //! Adds a new neuron group to the model using a neuron model managed by the user
     /*! \tparam NeuronModel type of neuron model (derived from NeuronModels::Base).
@@ -208,7 +223,8 @@ public:
     template<typename NeuronModel>
     NeuronGroup *addNeuronPopulation(const string &name, unsigned int size, const NeuronModel *model,
                                      const typename NeuronModel::ParamValues &paramValues,
-                                     const typename NeuronModel::VarValues &varInitialisers)
+                                     const typename NeuronModel::VarValues &varInitialisers,
+                                     int hostID = 0, int deviceID = 0)
     {
         if (!GeNNReady) {
             gennError("You need to call initGeNN first.");
@@ -217,11 +233,24 @@ public:
             gennError("Trying to add a neuron population to a finalized model.");
         }
 
-        // Add neuron group
-        auto result = m_NeuronGroups.emplace(std::piecewise_construct,
+#ifdef MPI_ENABLE
+        // Determine the host ID
+        int mpiHostID = 0;
+        MPI_Comm_rank(MPI_COMM_WORLD, &mpiHostID);
+
+        // Pick map to add group to appropriately
+        auto &groupMap = (hostID == mpiHostID) ? m_LocalNeuronGroups : m_RemoteNeuronGroups;
+#else
+        // If MPI is disabled always add to local neuron groups and zero host id
+        auto &groupMap = m_LocalNeuronGroups;
+        hostID = 0;
+#endif
+
+        // Add neuron group to map
+        auto result = groupMap.emplace(std::piecewise_construct,
             std::forward_as_tuple(name),
             std::forward_as_tuple(name, size, model,
-                                  paramValues.getValues(), varInitialisers.getInitialisers()));
+                                  paramValues.getValues(), varInitialisers.getInitialisers(), hostID, deviceID));
 
         if(!result.second)
         {
@@ -243,20 +272,24 @@ public:
         \return pointer to newly created NeuronGroup */
     template<typename NeuronModel>
     NeuronGroup *addNeuronPopulation(const string &name, unsigned int size,
-                                     const typename NeuronModel::ParamValues &paramValues, const typename NeuronModel::VarValues &varInitialisers)
+                                     const typename NeuronModel::ParamValues &paramValues, const typename NeuronModel::VarValues &varInitialisers,
+                                     int hostID = 0, int deviceID = 0)
     {
-        return addNeuronPopulation<NeuronModel>(name, size, NeuronModel::getInstance(), paramValues, varInitialisers);
+        return addNeuronPopulation<NeuronModel>(name, size, NeuronModel::getInstance(), paramValues, varInitialisers, hostID, deviceID);
     }
 
-    void setNeuronClusterIndex(const string &neuronGroup, int hostID, int deviceID); //!< Function for setting which host and which device a neuron group will be simulated on
+    void setNeuronClusterIndex(const string &neuronGroup, int hostID, int deviceID); //!< This function has been deprecated in GeNN 3.1.0
 
     void activateDirectInput(const string&, unsigned int type); //! This function has been deprecated in GeNN 2.2
     void setConstInp(const string&, double);
 
     // PUBLIC SYNAPSE FUNCTIONS
     //=========================
-    //! Get std::map containing all named SynapseGroup objects in model
-    const map<string, SynapseGroup> &getSynapseGroups() const{ return m_SynapseGroups; }
+    //! Get std::map containing local named SynapseGroup objects in model
+    const map<string, SynapseGroup> &getLocalSynapseGroups() const{ return m_LocalSynapseGroups; }
+
+    //! Get std::map containing remote named SynapseGroup objects in model
+    const map<string, SynapseGroup> &getRemoteSynapseGroups() const{ return m_RemoteSynapseGroups; }
 
     //! Get std::map containing names of synapse groups which require postsynaptic learning and their thread IDs within
     //! the postsynaptic learning kernel (padded to multiples of the GPU thread block size)
@@ -335,11 +368,27 @@ public:
             gennError("Trying to add a synapse population to a finalized model.");
         }
 
+        // Get source and target neuron groups
         auto srcNeuronGrp = findNeuronGroup(src);
         auto trgNeuronGrp = findNeuronGroup(trg);
 
-        // Add synapse group
-        auto result = m_SynapseGroups.emplace(
+#ifdef MPI_ENABLE
+        // Get host ID of target neuron group
+        const int hostID = trgNeuronGrp->getClusterHostID();
+
+        // Determine the host ID
+        int mpiHostID = 0;
+        MPI_Comm_rank(MPI_COMM_WORLD, &mpiHostID);
+
+        // Pick map to add group to appropriately
+        auto &groupMap = (hostID == mpiHostID) ? m_LocalSynapseGroups : m_RemoteSynapseGroups;
+#else
+        // If MPI is disabled always add to local synapse groups
+        auto &groupMap = m_LocalSynapseGroups;
+#endif
+
+        // Add synapse group to map
+        auto result = groupMap.emplace(
             std::piecewise_construct,
             std::forward_as_tuple(name),
             std::forward_as_tuple(name, mtype, delaySteps,
@@ -391,11 +440,17 @@ private:
     //--------------------------------------------------------------------------
     // Private members
     //--------------------------------------------------------------------------
-    //!< Named neuron groups
-    map<string, NeuronGroup> m_NeuronGroups;
+    //!< Named local neuron groups
+    map<string, NeuronGroup> m_LocalNeuronGroups;
 
-    //!< Named synapse groups
-    map<string, SynapseGroup> m_SynapseGroups;
+    //!< Named remote neuron groups
+    map<string, NeuronGroup> m_RemoteNeuronGroups;
+
+    //!< Named local synapse groups
+    map<string, SynapseGroup> m_LocalSynapseGroups;
+
+    //!< Named remote synapse groups
+    map<string, SynapseGroup> m_RemoteSynapseGroups;
 
     //!< Mapping  of synapse group names which have postsynaptic learning to their start and end padded indices
     //!< **THINK** is this the right container?
