@@ -30,6 +30,11 @@ public:
 };
 
 //----------------------------------------------------------------------------
+// Typedefines
+//----------------------------------------------------------------------------
+typedef Snippet::Init<Base> Init;
+
+//----------------------------------------------------------------------------
 // InitSparseConnectivitySnippet::Uninitialised
 //----------------------------------------------------------------------------
 //! Used to mark connectivity as uninitialised - no initialisation code will be run

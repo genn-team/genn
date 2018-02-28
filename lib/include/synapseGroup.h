@@ -7,6 +7,7 @@
 #include <vector>
 
 // GeNN includes
+#include "initSparseConnectivitySnippet.h"
 #include "neuronGroup.h"
 #include "newPostsynapticModels.h"
 #include "newWeightUpdateModels.h"
@@ -21,7 +22,8 @@ public:
     SynapseGroup(const std::string name, SynapseMatrixType matrixType, unsigned int delaySteps,
                  const WeightUpdateModels::Base *wu, const std::vector<double> &wuParams, const std::vector<NewModels::VarInit> &wuVarInitialisers,
                  const PostsynapticModels::Base *ps, const std::vector<double> &psParams, const std::vector<NewModels::VarInit> &psVarInitialisers,
-                 NeuronGroup *srcNeuronGroup, NeuronGroup *trgNeuronGroup);
+                 NeuronGroup *srcNeuronGroup, NeuronGroup *trgNeuronGroup,
+                 const InitSparseConnectivitySnippet::Init &connectivityInitialiser);
     SynapseGroup(const SynapseGroup&) = delete;
     SynapseGroup() = delete;
 
@@ -248,4 +250,7 @@ private:
 
     //!< Whether indidividual state variables of post synapse should use zero-copied memory
     std::vector<VarMode> m_PSVarMode;
+
+    //!< Initialiser used for creating sparse connectivity
+    const InitSparseConnectivitySnippet::Init m_ConnectivityInitialiser;
 };

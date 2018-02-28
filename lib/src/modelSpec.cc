@@ -708,7 +708,8 @@ SynapseGroup *NNmodel::addSynapsePopulation(
         std::forward_as_tuple(name, mtype, delaySteps,
                               new WeightUpdateModels::LegacyWrapper(syntype), p, wuVarInitialisers,
                               new PostsynapticModels::LegacyWrapper(postsyn), ps, psVarInitialisers,
-                              srcNeuronGrp, trgNeuronGrp));
+                              srcNeuronGrp, trgNeuronGrp,
+                              uninitialisedConnectivity()));
 
     if(!result.second)
     {
