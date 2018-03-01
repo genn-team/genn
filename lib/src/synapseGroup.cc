@@ -312,7 +312,13 @@ bool SynapseGroup::isPSInitRNGRequired(VarInit varInitMode) const
 bool SynapseGroup::isWUInitRNGRequired(VarInit varInitMode) const
 {
     // If initialising the weight update variables require an RNG, return true
-    return isInitRNGRequired(m_WUVarInitialisers, m_WUVarMode, varInitMode);
+    if(isInitRNGRequired(m_WUVarInitialisers, m_WUVarMode, varInitMode)) {
+        return true;
+    }
+
+    // Return true if the var init mode we're querying is HOSt and the connectivity initialiser requires an RNG
+    // **TODO** implement connectivity initialiser var mode
+    return ((varInitMode == VarInit::HOST) && ::isRNGRequired(m_ConnectivityInitialiser.getSnippet()->getRowBuildCode()));
 }
 
 bool SynapseGroup::isPSDeviceVarInitRequired() const
