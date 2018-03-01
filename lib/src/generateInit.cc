@@ -65,56 +65,6 @@ void genHostInitSpikeCode(CodeStream &os, const NeuronGroup &ng, bool spikeEvent
         }
     }
 }
-void genSparseRowLengthCalc(
-    CodeStream &os,
-    const SynapseGroup &sg,
-    const std::string &countVarName,
-    const std::vector<FunctionTemplate> functions,
-    const std::string &ftype,
-    const std::string &rng)
-{
-    // Get connectivity initialiser for synapse group
-    const auto &connectInit = sg.getConnectivityInitialiser();
-    
-    // Build function template to check that post synaptic neuron index is valid
-    const std::string isPostNeuronValidTemplate = "($(0) < " + std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()) + ")";
-    
-    // Build function template to increment count var
-    const std::string addSynapseTemplate = "(" + countVarName + ")++";
-    
-    os << countVarName << " = 0;" << std::endl;
-    os << "for(int prevJ = -1;;)" << CodeStream::OB(223);
-    
-    // Get user code string
-    std::string code = connectInit.getSnippet()->getRowBuildCode();
-    
-    substitute(code, "$(prevJ)", "prevJ");
-    
-    // Replace endRow() with break to stop loop
-    functionSubstitute(code, "endRow", 0, "break");
-    
-    // Replace addSynapse(j) with template to increment count var
-    functionSubstitute(code, "addSynapse", 1, addSynapseTemplate);
-    
-    // Replace isPostNeuronValid(j) for test against size of target neuron group
-    functionSubstitute(code, "isPostNeuronValid", 1, isPostNeuronValidTemplate);
-    
-    // Substitue derived and standard parameters into init code
-    DerivedParamNameIterCtx viDerivedParams(connectInit.getSnippet()->getDerivedParams());
-    value_substitutions(code, connectInit.getSnippet()->getParamNames(), connectInit.getParams());
-    value_substitutions(code, viDerivedParams.nameBegin, viDerivedParams.nameEnd, connectInit.getDerivedParams());
-    
-    // Perform standard substitutions
-    functionSubstitutions(code, ftype, functions);
-    substitute(code, "$(rng)", rng);
-    code = ensureFtype(code, ftype);
-    checkUnreplacedVariables(code, "connectivityCalcSparseRowLength");
-    
-    // Write code
-    os << code << std::endl;
-    
-    os << CodeStream::CB(223);
-}
 // ------------------------------------------------------------------------
 #ifndef CPU_ONLY
 unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int localHostID)
@@ -713,15 +663,77 @@ void genInit(const NNmodel &model,      //!< Model description
         const unsigned int numTrgNeurons = s.second.getTrgNeuronGroup()->getNumNeurons();
 
         // If this synapse group has a connectivity initialisation snippet
-        // **TODO** device version as well as some means of determining if repeated calling of row build code works to determine row length
-        if(!s.second.getConnectivityInitialiser().getSnippet()->getRowBuildCode().empty()) {
-            os << "printf(\"" << s.first << "\");" << std::endl;
-            os << CodeStream::OB(221) << "for (int i = 0; i < " << numSrcNeurons << "; i++)" << CodeStream::OB(222);
-            const std::string indg = "C" + s.first + ".indInG[i]";
+        // **TODO** device version
+        const auto &connectInit = s.second.getConnectivityInitialiser();
+        if(!connectInit.getSnippet()->getRowBuildCode().empty()) {
+            const std::string indInG = "C" + s.first + ".indInG";
+            const std::string ind = "C" + s.first + ".ind";
             
-            genSparseRowLengthCalc(os, s.second, indg, cpuFunctions, model.getPrecision(), "rng");
-            os << "printf(\"\\tRow %u length = %u\\n\", i, " << indg << ");" << std::endl;
-            os << CodeStream::CB(222) << CodeStream::CB(221) << std::endl;
+            // Open scope
+            os << CodeStream::OB(221);
+            
+            // Over allocate indices
+            // **TODO** some connector types can tell exact number of synapses so this is unnecessary
+            // **TODO** this is hack - maybe this should be done in allocateMem too
+            os << "cudaHostAlloc(&" << ind << ", " << numSrcNeurons * s.second.getMaxConnections() << " * sizeof(unsigned int), cudaHostAllocPortable);" << std::endl;
+            
+            // Zero offset for first row
+            os << indInG << "[0] = 0;" << std::endl;
+            
+            // Loop through source neurons
+            os << "for (int i = 0; i < " << numSrcNeurons << "; i++)" << CodeStream::OB(222);
+            
+            // Build function template to check that post synaptic neuron index is valid
+            const std::string isPostNeuronValidTemplate = "($(0) < " + std::to_string(numTrgNeurons) + ")";
+            
+            // Build function template to increment row length and insert synapse into ind array
+            const std::string addSynapseTemplate = ind + "[" + indInG + "[i] + (rowLength++)] = $(0)";
+            
+            // Zero counter of number of synapses in row
+            os << "unsigned int rowLength = 0;" << std::endl;
+            
+            // Loop through synapses in row
+            os << "for(int prevJ = -1;;)" << CodeStream::OB(223);
+            
+            // Get user code string
+            std::string code = connectInit.getSnippet()->getRowBuildCode();
+            
+            substitute(code, "$(prevJ)", "prevJ");
+            
+            // Replace endRow() with break to stop loop
+            functionSubstitute(code, "endRow", 0, "break");
+            
+            // Replace addSynapse(j) with template to increment count var
+            functionSubstitute(code, "addSynapse", 1, addSynapseTemplate);
+            
+            // Replace isPostNeuronValid(j) for test against size of target neuron group
+            functionSubstitute(code, "isPostNeuronValid", 1, isPostNeuronValidTemplate);
+            
+            // Substitue derived and standard parameters into init code
+            DerivedParamNameIterCtx viDerivedParams(connectInit.getSnippet()->getDerivedParams());
+            value_substitutions(code, connectInit.getSnippet()->getParamNames(), connectInit.getParams());
+            value_substitutions(code, viDerivedParams.nameBegin, viDerivedParams.nameEnd, connectInit.getDerivedParams());
+            
+            // Perform standard substitutions
+            functionSubstitutions(code, model.getPrecision(), cpuFunctions);
+            substitute(code, "$(rng)", "rng");
+            code = ensureFtype(code, model.getPrecision());
+            checkUnreplacedVariables(code, "connectivityCalcSparseRowLength");
+            
+            // Write code
+            os << code << std::endl;
+            
+            os << CodeStream::CB(223);
+            
+            // Calculate the starting offset for the NEXT row by adding row length to starting offset of current row
+            os << indInG << "[i + 1] = " << indInG << "[i] + rowLength;" << std::endl;
+            
+            os << CodeStream::CB(222) << std::endl;
+            
+            // Finally set number of connections
+            os << "C" << s.first << ".connN = " << indInG << "[" << numSrcNeurons << "];" << std::endl;
+            
+            os << CodeStream::CB(221);
         }
         // If insyn variables should be initialised on the host
         if(shouldInitOnHost(s.second.getInSynVarMode())) {
