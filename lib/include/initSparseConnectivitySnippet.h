@@ -55,7 +55,7 @@ public:
 
     SET_ROW_BUILD_CODE(
         "$(addSynapse, $(i));\n"
-        "$(stop);\n");
+        "$(endRow);\n");
 };
 
 //----------------------------------------------------------------------------
@@ -69,12 +69,12 @@ public:
 
     SET_ROW_BUILD_CODE(
         "const scalar u = $(gennrand_uniform);\n"
-        "$(j) += (1 + (int)(log(u) * $(probLogRecip)));\n"
-        "if($(isPostNeuronValid($(j)) {\n"
-        "   $(addSynapse, $(j));\n"
+        "$(prevJ) += (1 + (int)(log(u) * $(probLogRecip)));\n"
+        "if($(isPostNeuronValid, $(prevJ))) {\n"
+        "   $(addSynapse, $(prevJ));\n"
         "}\n"
         "else {\n"
-        "   $(stop);\n"
+        "   $(endRow);\n"
         "}\n");
 
     SET_PARAM_NAMES({"prob"});

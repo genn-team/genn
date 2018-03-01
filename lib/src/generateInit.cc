@@ -65,6 +65,56 @@ void genHostInitSpikeCode(CodeStream &os, const NeuronGroup &ng, bool spikeEvent
         }
     }
 }
+void genSparseRowLengthCalc(
+    CodeStream &os,
+    const SynapseGroup &sg,
+    const std::string &countVarName,
+    const std::vector<FunctionTemplate> functions,
+    const std::string &ftype,
+    const std::string &rng)
+{
+    // Get connectivity initialiser for synapse group
+    const auto &connectInit = sg.getConnectivityInitialiser();
+    
+    // Build function template to check that post synaptic neuron index is valid
+    const std::string isPostNeuronValidTemplate = "($(0) < " + std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()) + ")";
+    
+    // Build function template to increment count var
+    const std::string addSynapseTemplate = "(" + countVarName + ")++";
+    
+    os << countVarName << " = 0;" << std::endl;
+    os << "for(int prevJ = -1;;)" << CodeStream::OB(223);
+    
+    // Get user code string
+    std::string code = connectInit.getSnippet()->getRowBuildCode();
+    
+    substitute(code, "$(prevJ)", "prevJ");
+    
+    // Replace endRow() with break to stop loop
+    functionSubstitute(code, "endRow", 0, "break");
+    
+    // Replace addSynapse(j) with template to increment count var
+    functionSubstitute(code, "addSynapse", 1, addSynapseTemplate);
+    
+    // Replace isPostNeuronValid(j) for test against size of target neuron group
+    functionSubstitute(code, "isPostNeuronValid", 1, isPostNeuronValidTemplate);
+    
+    // Substitue derived and standard parameters into init code
+    DerivedParamNameIterCtx viDerivedParams(connectInit.getSnippet()->getDerivedParams());
+    value_substitutions(code, connectInit.getSnippet()->getParamNames(), connectInit.getParams());
+    value_substitutions(code, viDerivedParams.nameBegin, viDerivedParams.nameEnd, connectInit.getDerivedParams());
+    
+    // Perform standard substitutions
+    functionSubstitutions(code, ftype, functions);
+    substitute(code, "$(rng)", rng);
+    code = ensureFtype(code, ftype);
+    checkUnreplacedVariables(code, "connectivityCalcSparseRowLength");
+    
+    // Write code
+    os << code << std::endl;
+    
+    os << CodeStream::CB(223);
+}
 // ------------------------------------------------------------------------
 #ifndef CPU_ONLY
 unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int localHostID)
@@ -662,6 +712,17 @@ void genInit(const NNmodel &model,      //!< Model description
         const unsigned int numSrcNeurons = s.second.getSrcNeuronGroup()->getNumNeurons();
         const unsigned int numTrgNeurons = s.second.getTrgNeuronGroup()->getNumNeurons();
 
+        // If this synapse group has a connectivity initialisation snippet
+        // **TODO** device version as well as some means of determining if repeated calling of row build code works to determine row length
+        if(!s.second.getConnectivityInitialiser().getSnippet()->getRowBuildCode().empty()) {
+            os << "printf(\"" << s.first << "\");" << std::endl;
+            os << CodeStream::OB(221) << "for (int i = 0; i < " << numSrcNeurons << "; i++)" << CodeStream::OB(222);
+            const std::string indg = "C" + s.first + ".indInG[i]";
+            
+            genSparseRowLengthCalc(os, s.second, indg, cpuFunctions, model.getPrecision(), "rng");
+            os << "printf(\"\\tRow %u length = %u\\n\", i, " << indg << ");" << std::endl;
+            os << CodeStream::CB(222) << CodeStream::CB(221) << std::endl;
+        }
         // If insyn variables should be initialised on the host
         if(shouldInitOnHost(s.second.getInSynVarMode())) {
             os << CodeStream::OB(230) << "for (int i = 0; i < " << numTrgNeurons << "; i++)" << CodeStream::OB(240);
