@@ -132,6 +132,9 @@ void SynapseGroup::initDerivedParams(double dt)
     for(auto &v : m_PSVarInitialisers) {
         v.initDerivedParams(dt);
     }
+    
+    // Initialise any derived connectivity initialiser parameters
+    m_ConnectivityInitialiser.initDerivedParams(dt);
 }
 
 void SynapseGroup::calcKernelSizes(unsigned int blockSize, unsigned int &paddedKernelIDStart)

@@ -125,6 +125,8 @@ public:
     const std::vector<NewModels::VarInit> &getPSVarInitialisers() const{ return m_PSVarInitialisers; }
     const std::vector<double> getPSConstInitVals() const;
 
+    const InitSparseConnectivitySnippet::Init &getConnectivityInitialiser() const{ return m_ConnectivityInitialiser; }
+    
     bool isZeroCopyEnabled() const;
     bool isWUVarZeroCopyEnabled(const std::string &var) const{ return (getWUVarMode(var) & VarLocation::ZERO_COPY); }
     bool isPSVarZeroCopyEnabled(const std::string &var) const{ return (getPSVarMode(var) & VarLocation::ZERO_COPY); }
@@ -252,5 +254,5 @@ private:
     std::vector<VarMode> m_PSVarMode;
 
     //!< Initialiser used for creating sparse connectivity
-    const InitSparseConnectivitySnippet::Init m_ConnectivityInitialiser;
+    InitSparseConnectivitySnippet::Init m_ConnectivityInitialiser;
 };
