@@ -1464,13 +1464,21 @@ void genRunner(const NNmodel &model,    //!< Model description
             mem += allocate_variable(os, "uint32_t", "gp" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST, gpSize);
         }
         // Otherwise, if matrix connectivity is defined using a dense matrix, allocate user-defined weight model variables
-        // **NOTE** if matrix is sparse, allocate later in the allocatesparsearrays function when we know the size of the network
         else if ((s.second.getMatrixType() & SynapseMatrixConnectivity::DENSE) && (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL)) {
             const size_t size = s.second.getSrcNeuronGroup()->getNumNeurons() * s.second.getTrgNeuronGroup()->getNumNeurons();
 
             for(const auto &v : wu->getVars()) {
                 mem += allocate_variable(os, v.second, v.first + s.first, s.second.getWUVarMode(v.first), size);
             }
+        }
+        // Otherwise, if matrix is sparse, allocate row indices only at this point
+        // **NOTE** ind and other variables are allocated later when size of network in known
+        else if(s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+             // Allocate indices pointing to synapses in each presynaptic neuron's sparse matrix row
+            allocate_host_variable(os, "unsigned int", "C" + s.first + ".indInG", VarMode::LOC_HOST_DEVICE_INIT_HOST,
+                                   s.second.getSrcNeuronGroup()->getNumNeurons() + 1);
+            allocate_device_variable(os, "unsigned int", "indInG" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST,
+                                     s.second.getSrcNeuronGroup()->getNumNeurons() + 1);
         }
 
         if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) { // not needed for GLOBALG
@@ -1493,66 +1501,55 @@ void genRunner(const NNmodel &model,    //!< Model description
             os << "// Allocate host side variables" << std::endl;
             os << "  C" << s.first << ".connN= connN;" << std::endl;
 
-            // Allocate indices pointing to synapses in each presynaptic neuron's sparse matrix row
-            allocate_host_variable(os, "unsigned int", "C" + s.first + ".indInG", VarMode::LOC_HOST_DEVICE_INIT_HOST,
-                                   s.second.getSrcNeuronGroup()->getNumNeurons() + 1);
-
             // Allocate the postsynaptic neuron indices that make up sparse matrix
             allocate_host_variable(os, "unsigned int", "C" + s.first + ".ind", VarMode::LOC_HOST_DEVICE_INIT_HOST,
                                    "connN");
-
+            allocate_device_variable(os, "unsigned int", "ind" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST,
+                                     "connN");
+            
+            // Allocate extra indices for synapse dynamics if required
             if (model.isSynapseGroupDynamicsRequired(s.first)) {
                 allocate_host_variable(os, "unsigned int", "C" + s.first + ".preInd", VarMode::LOC_HOST_DEVICE_INIT_HOST,
                                        "connN");
+                                       
+                allocate_device_variable(os, "unsigned int", "preInd" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST,
+                                         "connN");
             } else {
                 os << "  C" << s.first << ".preInd= NULL;" << std::endl;
             }
+            
+            // Allocate extra indices for postsynaptic learning kernel if required
             if (model.isSynapseGroupPostLearningRequired(s.first)) {
                 // Allocate indices pointing to synapses in each postsynaptic neuron's sparse matrix column
                 allocate_host_variable(os, "unsigned int", "C" + s.first + ".revIndInG", VarMode::LOC_HOST_DEVICE_INIT_HOST,
                                        s.second.getTrgNeuronGroup()->getNumNeurons() + 1);
-
+                allocate_device_variable(os, "unsigned int", "revIndInG" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST,
+                                         s.second.getTrgNeuronGroup()->getNumNeurons() + 1);
+                                         
                 // Allocate presynaptic neuron indices that make up postsynaptically indexed sparse matrix
                 allocate_host_variable(os, "unsigned int", "C" + s.first + ".revInd", VarMode::LOC_HOST_DEVICE_INIT_HOST,
                                        "connN");
-
+                allocate_device_variable(os, "unsigned int", "revInd" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST,
+                                         "connN");
+                                         
                 // Allocate array mapping from postsynaptically to presynaptically indexed sparse matrix
                 allocate_host_variable(os, "unsigned int", "C" + s.first + ".remap", VarMode::LOC_HOST_DEVICE_INIT_HOST,
                                        "connN");
+                allocate_device_variable(os, "unsigned int", "remap" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST,
+                                         "connN");
             } else {
                 os << "  C" << s.first << ".revIndInG= NULL;" << std::endl;
                 os << "  C" << s.first << ".revInd= NULL;" << std::endl;
                 os << "  C" << s.first << ".remap= NULL;" << std::endl;
             }
 
-            const string numConnections = "C" + s.first + ".connN";
-
-            allocate_device_variable(os, "unsigned int", "indInG" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST,
-                                     s.second.getSrcNeuronGroup()->getNumNeurons() + 1);
-
-            allocate_device_variable(os, "unsigned int", "ind" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST,
-                                     numConnections);
-
-            if (model.isSynapseGroupDynamicsRequired(s.first)) {
-                allocate_device_variable(os, "unsigned int", "preInd" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST,
-                                         numConnections);
-            }
-            if (model.isSynapseGroupPostLearningRequired(s.first)) {
-                allocate_device_variable(os, "unsigned int", "revIndInG" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST,
-                                         s.second.getTrgNeuronGroup()->getNumNeurons() + 1);
-                allocate_device_variable(os, "unsigned int", "revInd" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST,
-                                         numConnections);
-                allocate_device_variable(os, "unsigned int", "remap" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST,
-                                         numConnections);
-            }
-
-            // Allocate synapse variables
+            // Allocate synapse variables if synapse population has individual state per system
             if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
                 for(const auto &v : s.second.getWUModel()->getVars()) {
-                    allocate_variable(os, v.second, v.first + s.first, s.second.getWUVarMode(v.first), numConnections);
+                    allocate_variable(os, v.second, v.first + s.first, s.second.getWUVarMode(v.first), "connN");
                 }
             }
-
+            
             os << "}" << std::endl;
             os << std::endl;
             //setup up helper fn for this (specific) popn to generate sparse from dense
