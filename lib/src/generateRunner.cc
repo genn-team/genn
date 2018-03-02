@@ -1315,7 +1315,7 @@ void genRunner(const NNmodel &model,    //!< Model description
         }
     }
     os << std::endl;
-    
+
     // include simulation kernels
 #ifndef CPU_ONLY
     os << "#include \"runnerGPU.cc\"" << std::endl;
@@ -1332,7 +1332,7 @@ void genRunner(const NNmodel &model,    //!< Model description
             os << "#include \"synapseFnct.cc\"" << std::endl;
         }
     }
-
+    os << std::endl;
 
     // ---------------------------------------------------------------------
     // Function for setting the CUDA device and the host's global variables.
@@ -1530,7 +1530,7 @@ void genRunner(const NNmodel &model,    //!< Model description
                     allocate_host_variable(os, "unsigned int", "C" + s.first + ".preInd", VarMode::LOC_HOST_DEVICE_INIT_HOST,
                                         "connN");
                 } else {
-                    os << "  C" << s.first << ".preInd= NULL;" << std::endl;
+                    os << "C" << s.first << ".preInd= NULL;" << std::endl;
                 }
                 if (model.isSynapseGroupPostLearningRequired(s.first)) {
                     // Allocate indices pointing to synapses in each postsynaptic neuron's sparse matrix column
@@ -1545,9 +1545,9 @@ void genRunner(const NNmodel &model,    //!< Model description
                     allocate_host_variable(os, "unsigned int", "C" + s.first + ".remap", VarMode::LOC_HOST_DEVICE_INIT_HOST,
                                         "connN");
                 } else {
-                    os << "  C" << s.first << ".revIndInG= NULL;" << std::endl;
-                    os << "  C" << s.first << ".revInd= NULL;" << std::endl;
-                    os << "  C" << s.first << ".remap= NULL;" << std::endl;
+                    os << "C" << s.first << ".revIndInG= NULL;" << std::endl;
+                    os << "C" << s.first << ".revInd= NULL;" << std::endl;
+                    os << "C" << s.first << ".remap= NULL;" << std::endl;
                 }
 
                 const string numConnections = "C" + s.first + ".connN";
@@ -1642,7 +1642,7 @@ void genRunner(const NNmodel &model,    //!< Model description
             free_variable(os, "inSyn" + s.first, s.second.getInSynVarMode());
 
             if (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                os << "    C" << s.first << ".connN= 0;" << std::endl;
+                os << "C" << s.first << ".connN= 0;" << std::endl;
 
                 free_host_variable(os, "C" + s.first + ".indInG", VarMode::LOC_HOST_DEVICE_INIT_HOST);
                 free_device_variable(os, "indInG" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST);
@@ -1679,7 +1679,7 @@ void genRunner(const NNmodel &model,    //!< Model description
             }
         }
     }
-
+    os << std::endl;
 
     // ------------------------------------------------------------------------
     //! \brief Method for cleaning up and resetting device while quitting GeNN
