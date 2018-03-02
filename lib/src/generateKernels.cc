@@ -105,7 +105,7 @@ a max possible number of connections via the model.setMaxConn() function.\n");
         os << "if ";
         if (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
             // Note: we will just access global mem. For compute >= 1.2 simultaneous access to same global mem in the (half-)warp will be coalesced - no worries
-            os << "((B(dd_gp" << sg.getName() << "[gid / 32], gid & 31")) && ";
+            os << "((B(dd_gp" << sg.getName() << "[gid / 32], gid & 31)) && ";
         }
 
         // code substitutions ----
