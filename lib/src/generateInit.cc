@@ -718,13 +718,12 @@ void genInit(const NNmodel &model,      //!< Model description
             // **TODO** device version
             const auto &connectInit = s.second.getConnectivityInitialiser();
             if(!connectInit.getSnippet()->getRowBuildCode().empty()) {
+                CodeStream::Scope b(os);
+
                 // If matrix connectivity is sparse
                 if(s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                     const std::string indInG = "C" + s.first + ".indInG";
                     const std::string ind = "C" + s.first + ".ind";
-
-                    // Open scope
-                    os << CodeStream::OB(221);
 
                     // Over allocate indices
                     // **TODO** some connector types can tell exact number of synapses so this is unnecessary
@@ -735,59 +734,60 @@ void genInit(const NNmodel &model,      //!< Model description
                     os << indInG << "[0] = 0;" << std::endl;
 
                     // Loop through source neurons
-                    os << "for (int i = 0; i < " << numSrcNeurons << "; i++)" << CodeStream::OB(222);
+                    os << "for (int i = 0; i < " << numSrcNeurons << "; i++)";
+                    {
+                        CodeStream::Scope b(os);
 
-                    // Build function template to check that post synaptic neuron index is valid
-                    const std::string isPostNeuronValidTemplate = "($(0) < " + std::to_string(numTrgNeurons) + ")";
+                        // Build function template to check that post synaptic neuron index is valid
+                        const std::string isPostNeuronValidTemplate = "($(0) < " + std::to_string(numTrgNeurons) + ")";
 
-                    // Build function template to increment row length and insert synapse into ind array
-                    const std::string addSynapseTemplate = ind + "[" + indInG + "[i] + (rowLength++)] = $(0)";
+                        // Build function template to increment row length and insert synapse into ind array
+                        const std::string addSynapseTemplate = ind + "[" + indInG + "[i] + (rowLength++)] = $(0)";
 
-                    // Zero counter of number of synapses in row
-                    os << "unsigned int rowLength = 0;" << std::endl;
+                        // Zero counter of number of synapses in row
+                        os << "unsigned int rowLength = 0;" << std::endl;
 
-                    // Loop through synapses in row
-                    os << "for(int prevJ = -1;;)" << CodeStream::OB(223);
+                        // Loop through synapses in row
+                        os << "for(int prevJ = -1;;)";
+                        {
+                            CodeStream::Scope b(os);
 
-                    // Get user code string
-                    std::string code = connectInit.getSnippet()->getRowBuildCode();
+                            // Get user code string
+                            std::string code = connectInit.getSnippet()->getRowBuildCode();
 
-                    substitute(code, "$(prevJ)", "prevJ");
+                            substitute(code, "$(prevJ)", "prevJ");
 
-                    // Replace endRow() with break to stop loop
-                    functionSubstitute(code, "endRow", 0, "break");
+                            // Replace endRow() with break to stop loop
+                            functionSubstitute(code, "endRow", 0, "break");
 
-                    // Replace addSynapse(j) with template to increment count var
-                    functionSubstitute(code, "addSynapse", 1, addSynapseTemplate);
+                            // Replace addSynapse(j) with template to increment count var
+                            functionSubstitute(code, "addSynapse", 1, addSynapseTemplate);
 
-                    // Replace isPostNeuronValid(j) for test against size of target neuron group
-                    functionSubstitute(code, "isPostNeuronValid", 1, isPostNeuronValidTemplate);
+                            // Replace isPostNeuronValid(j) for test against size of target neuron group
+                            functionSubstitute(code, "isPostNeuronValid", 1, isPostNeuronValidTemplate);
 
-                    // Substitue derived and standard parameters into init code
-                    DerivedParamNameIterCtx viDerivedParams(connectInit.getSnippet()->getDerivedParams());
-                    value_substitutions(code, connectInit.getSnippet()->getParamNames(), connectInit.getParams());
-                    value_substitutions(code, viDerivedParams.nameBegin, viDerivedParams.nameEnd, connectInit.getDerivedParams());
+                            // Substitue derived and standard parameters into init code
+                            DerivedParamNameIterCtx viDerivedParams(connectInit.getSnippet()->getDerivedParams());
+                            value_substitutions(code, connectInit.getSnippet()->getParamNames(), connectInit.getParams());
+                            value_substitutions(code, viDerivedParams.nameBegin, viDerivedParams.nameEnd, connectInit.getDerivedParams());
 
-                    // Perform standard substitutions
-                    functionSubstitutions(code, model.getPrecision(), cpuFunctions);
-                    substitute(code, "$(rng)", "rng");
-                    code = ensureFtype(code, model.getPrecision());
-                    checkUnreplacedVariables(code, "connectivityCalcSparseRowLength");
+                            // Perform standard substitutions
+                            functionSubstitutions(code, model.getPrecision(), cpuFunctions);
+                            substitute(code, "$(rng)", "rng");
+                            code = ensureFtype(code, model.getPrecision());
+                            checkUnreplacedVariables(code, "connectivityCalcSparseRowLength");
 
-                    // Write code
-                    os << code << std::endl;
+                            // Write code
+                            os << code << std::endl;
+                        }
 
-                    os << CodeStream::CB(223);
-
-                    // Calculate the starting offset for the NEXT row by adding row length to starting offset of current row
-                    os << indInG << "[i + 1] = " << indInG << "[i] + rowLength;" << std::endl;
-
-                    os << CodeStream::CB(222) << std::endl;
+                        // Calculate the starting offset for the NEXT row by adding row length to starting offset of current row
+                        os << indInG << "[i + 1] = " << indInG << "[i] + rowLength;" << std::endl;
+                    }
 
                     // Finally set number of connections
                     os << "C" << s.first << ".connN = " << indInG << "[" << numSrcNeurons << "];" << std::endl;
 
-                    os << CodeStream::CB(221);
                 }
                 // Otherwise, if matrix connectivity is a bitmask
                 else if(s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
