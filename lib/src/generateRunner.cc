@@ -1288,11 +1288,11 @@ void genRunner(const NNmodel &model,    //!< Model description
     os << "//-------------------------------------------------------------------------" << std::endl << std::endl;
     os << "void convertProbabilityToRandomNumberThreshold(" << model.getPrecision() << " *p_pattern, " << model.getRNType() << " *pattern, int N)";
     {
-        CodeStream::Scope b1(os);
+        CodeStream::Scope b(os);
         os << model.getPrecision() << " fac= pow(2.0, (double) sizeof(" << model.getRNType() << ")*8-16);" << std::endl;
         os << "for (int i= 0; i < N; i++)";
         {
-            CodeStream::Scope b2(os);
+            CodeStream::Scope b(os);
             os << "pattern[i]= (" << model.getRNType() << ") (p_pattern[i]*fac);" << std::endl;
         }
     }
@@ -1306,11 +1306,11 @@ void genRunner(const NNmodel &model,    //!< Model description
     os << "//-------------------------------------------------------------------------" << std::endl << std::endl;
     os << "void convertRateToRandomNumberThreshold(" << model.getPrecision() << " *rateKHz_pattern, " << model.getRNType() << " *pattern, int N)";
     {
-        CodeStream::Scope b1(os);
+        CodeStream::Scope b(os);
         os << model.getPrecision() << " fac= pow(2.0, (double) sizeof(" << model.getRNType() << ")*8-16)*DT;" << std::endl;
         os << "for (int i= 0; i < N; i++)";
         {
-            CodeStream::Scope b2(os);
+            CodeStream::Scope b(os);
             os << "pattern[i]= (" << model.getRNType() << ") (rateKHz_pattern[i]*fac);" << std::endl;
         }
     }
@@ -1801,12 +1801,12 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
         os << "// software version of atomic add for double precision" << std::endl;
         os << "__device__ double atomicAddSW(double* address, double val)";
         {
-            CodeStream::Scope b1(os);
+            CodeStream::Scope b(os);
             os << "unsigned long long int* address_as_ull = (unsigned long long int*)address;" << std::endl;
             os << "unsigned long long int old = *address_as_ull, assumed;" << std::endl;
             os << "do";
             {
-                CodeStream::Scope b2(os);
+                CodeStream::Scope b(os);
                 os << "assumed = old;" << std::endl;
                 os << "old = atomicCAS(address_as_ull, assumed, __double_as_longlong(val + __longlong_as_double(assumed)));" << std::endl;
             }
@@ -1820,12 +1820,12 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
         os << "// software version of atomic add for single precision float" << std::endl;
         os << "__device__ float atomicAddSW(float* address, float val)" << std::endl;
         {
-            CodeStream::Scope b1(os);
+            CodeStream::Scope b(os);
             os << "int* address_as_ull = (int*)address;" << std::endl;
             os << "int old = *address_as_ull, assumed;" << std::endl;
             os << "do";
             {
-                CodeStream::Scope b2(os);
+                CodeStream::Scope b(os);
                 os << "assumed = old;" << std::endl;
                 os << "old = atomicCAS(address_as_ull, assumed, __float_as_int(val + __int_as_float(assumed)));" << std::endl;
             }
@@ -1838,26 +1838,26 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     os << "template<typename RNG>" << std::endl;
     os << "__device__ float exponentialDistFloat(RNG *rng)";
     {
-        CodeStream::Scope b1(os);
+        CodeStream::Scope b(os);
         os << "float a = 0.0f;" << std::endl;
         os << "while (true)";
         {
-            CodeStream::Scope b2(os);
+            CodeStream::Scope b(os);
             os << "float u = curand_uniform(rng);" << std::endl;
             os << "const float u0 = u;" << std::endl;
             os << "while (true)";
             {
-                CodeStream::Scope b3(os);
+                CodeStream::Scope b(os);
                 os << "float uStar = curand_uniform(rng);" << std::endl;
                 os << "if (u < uStar)";
                 {
-                    CodeStream::Scope b4(os);
+                    CodeStream::Scope b(os);
                     os << "return  a + u0;" << std::endl;
                 }
                 os << "u = curand_uniform(rng);" << std::endl;
                 os << "if (u >= uStar)";
                 {
-                    CodeStream::Scope b4(os);
+                    CodeStream::Scope b(os);
                     os << "break;" << std::endl;
                 }
             }
@@ -1868,26 +1868,26 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     os << "template<typename RNG>" << std::endl;
     os << "__device__ double exponentialDistDouble(RNG *rng)";
     {
-        CodeStream::Scope b1(os);
+        CodeStream::Scope b(os);
         os << "double a = 0.0f;" << std::endl;
         os << "while (true)";
         {
-            CodeStream::Scope b2(os);
+            CodeStream::Scope b(os);
             os << "double u = curand_uniform_double(rng);" << std::endl;
             os << "const double u0 = u;" << std::endl;
             os << "while (true)";
             {
-                CodeStream::Scope b3(os);
+                CodeStream::Scope b(os);
                 os << "double uStar = curand_uniform_double(rng);" << std::endl;
                 os << "if (u < uStar)" << std::endl;
                 {
-                    CodeStream::Scope b4(os);
+                    CodeStream::Scope b(os);
                     os << "return  a + u0;" << std::endl;
                 }
                 os << "u = curand_uniform_double(rng);" << std::endl;
                 os << "if (u >= uStar)" << std::endl;
                 {
-                    CodeStream::Scope b4(os);
+                    CodeStream::Scope b(os);
                     os << "break;" << std::endl;
                 }
             }
@@ -1927,7 +1927,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
         // neuron state variables
         os << "void push" << n.first << "StateToDevice(bool hostInitialisedOnly)";
         {
-            CodeStream::Scope b1(os);
+            CodeStream::Scope b(os);
             for(const auto &v : n.second.getNeuronModel()->getVars()) {
                 // only copy variables which aren't pointers (pointers don't transport between GPU and CPU)
                 // and are present on both device and host.
