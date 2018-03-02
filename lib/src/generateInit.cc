@@ -722,6 +722,7 @@ void genInit(const NNmodel &model,      //!< Model description
 
                 // If matrix connectivity is sparse
                 if(s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                    assert(false);
                     const std::string indInG = "C" + s.first + ".indInG";
                     const std::string ind = "C" + s.first + ".ind";
 
@@ -738,9 +739,6 @@ void genInit(const NNmodel &model,      //!< Model description
                     {
                         CodeStream::Scope b(os);
 
-                        // Build function template to check that post synaptic neuron index is valid
-                        const std::string isPostNeuronValidTemplate = "($(0) < " + std::to_string(numTrgNeurons) + ")";
-
                         // Build function template to increment row length and insert synapse into ind array
                         const std::string addSynapseTemplate = ind + "[" + indInG + "[i] + (rowLength++)] = $(0)";
 
@@ -752,33 +750,8 @@ void genInit(const NNmodel &model,      //!< Model description
                         {
                             CodeStream::Scope b(os);
 
-                            // Get user code string
-                            std::string code = connectInit.getSnippet()->getRowBuildCode();
-
-                            substitute(code, "$(prevJ)", "prevJ");
-
-                            // Replace endRow() with break to stop loop
-                            functionSubstitute(code, "endRow", 0, "break");
-
-                            // Replace addSynapse(j) with template to increment count var
-                            functionSubstitute(code, "addSynapse", 1, addSynapseTemplate);
-
-                            // Replace isPostNeuronValid(j) for test against size of target neuron group
-                            functionSubstitute(code, "isPostNeuronValid", 1, isPostNeuronValidTemplate);
-
-                            // Substitue derived and standard parameters into init code
-                            DerivedParamNameIterCtx viDerivedParams(connectInit.getSnippet()->getDerivedParams());
-                            value_substitutions(code, connectInit.getSnippet()->getParamNames(), connectInit.getParams());
-                            value_substitutions(code, viDerivedParams.nameBegin, viDerivedParams.nameEnd, connectInit.getDerivedParams());
-
-                            // Perform standard substitutions
-                            functionSubstitutions(code, model.getPrecision(), cpuFunctions);
-                            substitute(code, "$(rng)", "rng");
-                            code = ensureFtype(code, model.getPrecision());
-                            checkUnreplacedVariables(code, "connectivityCalcSparseRowLength");
-
-                            // Write code
-                            os << code << std::endl;
+                            os << StandardSubstitutions::initSparseConnectivity(connectInit, addSynapseTemplate, numTrgNeurons,
+                                                                                cpuFunctions, model.getPrecision(), "rng");
                         }
 
                         // Calculate the starting offset for the NEXT row by adding row length to starting offset of current row
@@ -791,7 +764,28 @@ void genInit(const NNmodel &model,      //!< Model description
                 }
                 // Otherwise, if matrix connectivity is a bitmask
                 else if(s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
+                    // Zero memory before setting sparse bits
+                    os << "memset(gp" << s.first << ", 0, " << (numSrcNeurons * numTrgNeurons) / 32 + 1 << ");" << std::endl;
 
+                    // Loop through source neurons
+                    os << "for (int i = 0; i < " << numSrcNeurons << "; i++)";
+                    {
+                        // Calculate index of bit at start of this row
+                        CodeStream::Scope b(os);
+                        os << "const int rowStartGID = i * " << numTrgNeurons << ";" << std::endl;
+
+                        // Build function template to set correct bit in bitmask
+                        const std::string addSynapseTemplate = "setB(gp" + s.first + "[(rowStartGID + $(0)) / 32], (rowStartGID + $(0)) & 31)";
+
+                        // Loop through synapses in row
+                        os << "for(int prevJ = -1;;)";
+                        {
+                            CodeStream::Scope b(os);
+
+                            os << StandardSubstitutions::initSparseConnectivity(connectInit, addSynapseTemplate, numTrgNeurons,
+                                                                                cpuFunctions, model.getPrecision(), "rng");
+                        }
+                    }
                 }
             }
 
