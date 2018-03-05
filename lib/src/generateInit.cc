@@ -421,29 +421,31 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
                 const unsigned int numSrcNeurons = s.second.getSrcNeuronGroup()->getNumNeurons();
                 const unsigned int numTrgNeurons = s.second.getTrgNeuronGroup()->getNumNeurons();
 
-                // If the synapse group has bitmask connectivity
-                if(s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-                    os << "// synapse group " << s.first << std::endl;
-                    PaddedSizeScope p(os, numSrcNeurons, initBlkSz, startThread);
+                os << "// synapse group " << s.first << std::endl;
+                PaddedSizeScope p(os, numSrcNeurons, initBlkSz, startThread);
 
-                    os << "// only do this for existing synapses" << std::endl;
-                    os << "if (lid < " << numSrcNeurons << ")";
-                    {
-                        CodeStream::Scope b(os);
+                os << "// only do this for existing synapses" << std::endl;
+                os << "if (lid < " << numSrcNeurons << ")";
+                {
+                    CodeStream::Scope b(os);
 
-                        // If this connectivity requires an RNG for initialisation,
-                        // make copy of global phillox RNG and skip ahead by thread id
-                        if(::isRNGRequired(connectInit.getSnippet()->getRowBuildCode())) {
-                            os << "curandStatePhilox4_32_10_t initRNG = dd_rng[0];" << std::endl;
-                            os << "skipahead_sequence((unsigned long long)id, &initRNG);" << std::endl;
-                        }
+                    // If this connectivity requires an RNG for initialisation,
+                    // make copy of global phillox RNG and skip ahead by thread id
+                    if(::isRNGRequired(connectInit.getSnippet()->getRowBuildCode())) {
+                        os << "curandStatePhilox4_32_10_t initRNG = dd_rng[0];" << std::endl;
+                        os << "skipahead_sequence((unsigned long long)id, &initRNG);" << std::endl;
+                    }
 
+                    // If the synapse group has bitmask connectivity
+                    if(s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
                         // Calculate indices of bits at start and end of row
+                        os << "// Calculate indices" << std::endl;
                         os << "const unsigned int rowStartGID = lid * " << numTrgNeurons << ";" << std::endl;
                         os << "const unsigned int rowEndGID = rowStartGID + " << numTrgNeurons << ";" << std::endl;
 
                         // Loop through the words in this row without overlaps and zero
                         // **NOTE** (x + y - 1) / y is essentially ceil(x / y)
+                        os << "// Zero row words" << std::endl;
                         os << "const unsigned int rowStartWord = (rowStartGID + 32 - 1) / 32;" << std::endl;
                         os << "const unsigned int rowEndWord = (rowEndGID + 32 - 1) / 32;" << std::endl;
                         os << "for(unsigned int i = rowStartWord; i < rowEndWord; i++)";
@@ -456,6 +458,7 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
                         const std::string addSynapseTemplate = "setB(dd_gp" + s.first + "[(rowStartGID + $(0)) / 32], (rowStartGID + $(0)) & 31)";
 
                         // Loop through synapses in row and generate code to initialise sparse connectivity
+                        os << "// Build sparse connectivity" << std::endl;
                         os << "for(int prevJ = -1;;)";
                         {
                             CodeStream::Scope b(os);
@@ -464,9 +467,10 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
                                                                                 cudaFunctions, model.getPrecision(), "&initRNG");
                         }
                     }
-                }
-                else {
-                    assert(false);
+                    // Otherwise, assert
+                    else {
+                        assert(false);
+                    }
                 }
             }
         }
