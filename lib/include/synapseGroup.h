@@ -72,6 +72,10 @@ public:
     /*! This is ignored for CPU simulations */
     void setInSynVarMode(VarMode mode) { m_InSynVarMode = mode; }
 
+    //! Set variable mode used for sparse connectivity
+    /*! This is ignored for CPU simulations */
+    void setSparseConnectivityVarMode(VarMode mode){ m_SparseConnectivityVarMode = mode; }
+
     //! Sets the maximum number of target neurons any source neurons can connect to
     /*! Use with SynapseMatrixType::SPARSE_GLOBALG and SynapseMatrixType::SPARSE_INDIVIDUALG to optimise CUDA implementation */
     void setMaxConnections(unsigned int maxConnections);
@@ -97,6 +101,9 @@ public:
 
     //! Get variable mode used for variables used to combine input from this synapse group
     VarMode getInSynVarMode() const { return m_InSynVarMode; }
+
+    //! Get variable mode used for sparse connectivity
+    VarMode getSparseConnectivityVarMode() const{ return m_SparseConnectivityVarMode; }
 
     unsigned int getPaddedDynKernelSize(unsigned int blockSize) const;
     unsigned int getPaddedPostLearnKernelSize(unsigned int blockSize) const;
@@ -222,6 +229,9 @@ private:
 
     //!< Variable mode used for variables used to combine input from this synapse group
     VarMode m_InSynVarMode;
+
+    //!< Variable mode used for sparse connectivity
+    VarMode m_SparseConnectivityVarMode;
 
     //!< Weight update model type
     const WeightUpdateModels::Base *m_WUModel;
