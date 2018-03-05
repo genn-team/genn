@@ -714,10 +714,13 @@ void genInit(const NNmodel &model,      //!< Model description
             const unsigned int numSrcNeurons = s.second.getSrcNeuronGroup()->getNumNeurons();
             const unsigned int numTrgNeurons = s.second.getTrgNeuronGroup()->getNumNeurons();
 
-            // If this synapse group has a connectivity initialisation snippet
+            // If we should initialise this synapse group's connectivity on the
+            // host and it has a connectivity initialisation snippet
             // **TODO** device version
             const auto &connectInit = s.second.getConnectivityInitialiser();
-            if(!connectInit.getSnippet()->getRowBuildCode().empty()) {
+            if(shouldInitOnHost(s.second.getSparseConnectivityVarMode())
+                && !connectInit.getSnippet()->getRowBuildCode().empty())
+            {
                 CodeStream::Scope b(os);
 
                 // If matrix connectivity is sparse
