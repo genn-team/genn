@@ -59,8 +59,6 @@ void generatePreParallelisedSparseCode(
     const string &ftype)
 {
     const bool evnt = (postfix == "Evnt");
-    const int UIntSz = sizeof(unsigned int) * 8;
-    const int logUIntSz = (int) (logf((float) UIntSz) / logf(2.0f) + 1e-5f);
     const auto *wu = sg.getWUModel();
 
     // Create iteration context to iterate over the variables; derived and extra global parameters
@@ -107,7 +105,7 @@ a max possible number of connections via the model.setMaxConn() function.\n");
         os << "if ";
         if (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
             // Note: we will just access global mem. For compute >= 1.2 simultaneous access to same global mem in the (half-)warp will be coalesced - no worries
-            os << "((B(dd_gp" << sg.getName() << "[gid >> " << logUIntSz << "], gid & " << UIntSz - 1 << ")) && ";
+            os << "((B(dd_gp" << sg.getName() << "[gid / 32], gid & 31)) && ";
         }
 
         // code substitutions ----
@@ -124,7 +122,7 @@ a max possible number of connections via the model.setMaxConn() function.\n");
         os << CodeStream::OB(130);
     }
     else if (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-        os << "if (B(dd_gp" << sg.getName() << "[gid >> " << logUIntSz << "], gid & " << UIntSz - 1 << "))" << CodeStream::OB(135);
+        os << "if (B(dd_gp" << sg.getName() << "[gid / 32], gid & 31))" << CodeStream::OB(135);
     }
 
     os << "for (int i = 0; i < npost; ++i)" << CodeStream::OB(103);
@@ -175,8 +173,6 @@ void generatePostParallelisedCode(
     const string &ftype)
 {
     const bool evnt = (postfix == "Evnt");
-    const int UIntSz = sizeof(unsigned int) * 8;
-    const int logUIntSz = (int) (logf((float) UIntSz) / logf(2.0f) + 1e-5f);
     const auto *wu = sg.getWUModel();
 
     // Create iteration context to iterate over the variables; derived and extra global parameters
@@ -228,7 +224,7 @@ a max possible number of connections via the model.setMaxConn() function.\n");
         os << "if ";
         if (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
             // Note: we will just access global mem. For compute >= 1.2 simultaneous access to same global mem in the (half-)warp will be coalesced - no worries
-            os << "((B(dd_gp" << sg.getName() << "[gid >> " << logUIntSz << "], gid & " << UIntSz - 1 << ")) && ";
+            os << "((B(dd_gp" << sg.getName() << "[gid / 32], gid & 31)) && ";
         }
 
         // code substitutions ----
@@ -245,7 +241,7 @@ a max possible number of connections via the model.setMaxConn() function.\n");
         os << CodeStream::OB(130);
     }
     else if (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-        os << "if (B(dd_gp" << sg.getName() << "[gid >> " << logUIntSz << "], gid & " << UIntSz - 1 << "))" << CodeStream::OB(135);
+        os << "if (B(dd_gp" << sg.getName() << "[gid / 32], gid & 31))" << CodeStream::OB(135);
     }
 
     if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) { // SPARSE
@@ -299,7 +295,7 @@ a max possible number of connections via the model.setMaxConn() function.\n");
         os << CodeStream::CB(130); // end if (eCode)
     }
     else if (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-        os << CodeStream::CB(135); // end if (B(dd_gp" << sg.getName() << "[gid >> " << logUIntSz << "], gid
+        os << CodeStream::CB(135); // end if (B(dd_gp" << sg.getName() << "[gid / 32], gid
     }
     os << CodeStream::CB(120) << std::endl;
 

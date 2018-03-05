@@ -49,8 +49,6 @@ void generate_process_presynaptic_events_code_CPU(
     const string &ftype)
 {
     bool evnt = postfix == "Evnt";
-    int UIntSz = sizeof(unsigned int) * 8;
-    int logUIntSz = (int) (logf((float) UIntSz) / logf(2.0f) + 1e-5f);
 
     if ((evnt && sg.isSpikeEventRequired()) || (!evnt && sg.isTrueSpikeRequired())) {
         const auto *wu = sg.getWUModel();
@@ -92,7 +90,7 @@ void generate_process_presynaptic_events_code_CPU(
         if (evnt) {
             os << "if ";
             if (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-                os << "((B(gp" << sgName << "[gid >> " << logUIntSz << "], gid & " << UIntSz - 1 << ")) && ";
+                os << "((B(gp" << sgName << "[gid / 32], gid & 31)) && ";
             }
 
             // code substitutions ----
@@ -113,7 +111,7 @@ void generate_process_presynaptic_events_code_CPU(
             os << CodeStream::OB(2041);
         }
         else if (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-            os << "if (B(gp" << sgName << "[gid >> " << logUIntSz << "], gid & " << UIntSz - 1 << "))" << CodeStream::OB(2041);
+            os << "if (B(gp" << sgName << "[gid / 32], gid & 31))" << CodeStream::OB(2041);
         }
 
         // Code substitutions ----------------------------------------------------------------------------------
@@ -146,7 +144,7 @@ void generate_process_presynaptic_events_code_CPU(
             os << CodeStream::CB(2041); // end if (eCode)
         }
         else if (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-            os << CodeStream::CB(2041); // end if (B(gp" << sgName << "[gid >> " << logUIntSz << "], gid
+            os << CodeStream::CB(2041); // end if (B(gp" << sgName << "[gid / 32], gid
         }
         os << CodeStream::CB(202);
         os << CodeStream::CB(201);
