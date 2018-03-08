@@ -203,25 +203,12 @@ void generatePostParallelisedCode(
         }
         os << "__syncthreads();" << std::endl;
 
-        int maxConnections;
-        if ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && sg.isPSAtomicAddRequired(synapseBlkSz)) {
-            if (sg.getMaxConnections() < 1) {
-                fprintf(stderr, "Model Generation warning: for every SPARSE synapse group used you must also supply (in your model) a max possible number of connections via the model.setMaxConn() function.\n");
-                maxConnections = sg.getTrgNeuronGroup()->getNumNeurons();
-            }
-            else {
-                maxConnections = sg.getMaxConnections();
-            }
-        }
-        else {
-            maxConnections = sg.getTrgNeuronGroup()->getNumNeurons();
-        }
         os << "// loop through all incoming spikes" << std::endl;
         os << "for (j = 0; j < lmax; j++)";
         {
             CodeStream::Scope b(os);
             os << "// only work on existing neurons" << std::endl;
-            os << "if (" << localID << " < " << maxConnections << ")";
+            os << "if (" << localID << " < " << sg.getMaxConnections() << ")";
             {
                 CodeStream::Scope b(os);
                 if (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
