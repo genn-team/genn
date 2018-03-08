@@ -184,6 +184,9 @@ void generatePostParallelisedCode(
     ExtraGlobalParamNameIterCtx wuExtraGlobalParams(wu->getExtraGlobalParams());
     VarNameIterCtx wuVars(wu->getVars());
 
+    const bool sparseOrRagged = (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE)
+        || (sg.getMatrixType() & SynapseMatrixConnectivity::RAGGED);
+
     os << "// process presynaptic events: " << (evnt ? "Spike type events" : "True Spikes") << std::endl;
     os << "for (r = 0; r < numSpikeSubsets" << postfix << "; r++)";
     {
@@ -242,12 +245,17 @@ void generatePostParallelisedCode(
                     os << "if (B(dd_gp" << sg.getName() << "[gid / 32], gid & 31))" << CodeStream::OB(135);
                 }
 
-                if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) { // SPARSE
+                if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                     os << "prePos = dd_indInG" << sg.getName() << "[shSpk" << postfix << "[j]];" << std::endl;
                     os << "npost = dd_indInG" << sg.getName() << "[shSpk" << postfix << "[j] + 1] - prePos;" << std::endl;
                     os << "if (" << localID << " < npost)" << CodeStream::OB(140);
                     os << "prePos += " << localID << ";" << std::endl;
                     os << "ipost = dd_ind" << sg.getName() << "[prePos];" << std::endl;
+                }
+                else if(sg.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
+                    os << "npost = dd_rowLength" << sg.getName() << "[shSpk" << postfix << "[j]];" << std::endl;
+                    os << "if (" << localID << " < npost)" << CodeStream::OB(140);
+                    os << "ipost = dd_trgInd" << sg.getName() << "[localID];" << std::endl;
                 }
                 else { // DENSE
                     os << "ipost = " << localID << ";" << std::endl;
@@ -256,7 +264,7 @@ void generatePostParallelisedCode(
                 // Code substitutions ----------------------------------------------------------------------------------
                 string wCode = (evnt ? wu->getEventCode() : wu->getSimCode());
                 substitute(wCode, "$(t)", "t");
-                if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) { // SPARSE
+                if (sparseOrRagged) {
                     if (sg.isPSAtomicAddRequired(synapseBlkSz)) { // SPARSE using atomicAdd
                         substitute(wCode, "$(updatelinsyn)", getFloatAtomicAdd(ftype) + "(&$(inSyn), $(addtoinSyn))");
                         substitute(wCode, "$(inSyn)", "dd_inSyn" + sg.getName() + "[ipost]");
@@ -267,15 +275,22 @@ void generatePostParallelisedCode(
                     }
 
                     if (sg.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
-                        name_substitutions(wCode, "dd_", wuVars.nameBegin, wuVars.nameEnd, sg.getName() + "[prePos]");
+                        if(sg.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
+                            name_substitutions(wCode, "dd_", wuVars.nameBegin, wuVars.nameEnd,
+                                               sg.getName() + "[(shSpk" + postfix + "[j] * " + to_string(sg.getMaxConnections()) + ") + " << localID << "]");
+                        }
+                        else {
+                            name_substitutions(wCode, "dd_", wuVars.nameBegin, wuVars.nameEnd,
+                                               sg.getName() + "[prePos]");
+                        }
                     }
                 }
                 else { // DENSE
                     substitute(wCode, "$(updatelinsyn)", "$(inSyn) += $(addtoinSyn)");
                     substitute(wCode, "$(inSyn)", "linSyn");
                     if (sg.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
-                        name_substitutions(wCode, "dd_", wuVars.nameBegin, wuVars.nameEnd, sg.getName() + "[shSpk"
-                                            + postfix + "[j] * " + to_string(sg.getTrgNeuronGroup()->getNumNeurons()) + "+ ipost]");
+                        name_substitutions(wCode, "dd_", wuVars.nameBegin, wuVars.nameEnd,
+                                           sg.getName() + "[shSpk" + postfix + "[j] * " + to_string(sg.getTrgNeuronGroup()->getNumNeurons()) + "+ ipost]");
                     }
                 }
 
@@ -285,7 +300,7 @@ void generatePostParallelisedCode(
                 // end Code substitutions -------------------------------------------------------------------------
                 os << wCode << std::endl;
 
-                if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                if (sparseOrRagged) {
                     os << CodeStream::CB(140); // end if (id < npost)
                 }
 
@@ -297,13 +312,14 @@ void generatePostParallelisedCode(
                 }
             }
 
-            if ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && !sg.isPSAtomicAddRequired(synapseBlkSz)) {
+            if (sparseOrRagged && !sg.isPSAtomicAddRequired(synapseBlkSz)) {
                 os << "__syncthreads();" << std::endl;
-                os << "if (threadIdx.x < " << sg.getTrgNeuronGroup()->getNumNeurons() << ")" << CodeStream::OB(136); // need to write back results
-                os << "linSyn += shLg[" << localID << "];" << std::endl;
-                os << "shLg[" << localID << "] = 0;" << std::endl;
-                os << CodeStream::CB(136) << std::endl;
-
+                os << "if (threadIdx.x < " << sg.getTrgNeuronGroup()->getNumNeurons() << ")";
+                {
+                    CodeStream::Scope b(os);
+                    os << "linSyn += shLg[" << localID << "];" << std::endl;
+                    os << "shLg[" << localID << "] = 0;" << std::endl;
+                }
                 os << "__syncthreads();" << std::endl;
             }
         }
@@ -327,7 +343,8 @@ void generate_process_presynaptic_events_code(
 
      if ((evnt && sg.isSpikeEventRequired()) || (!evnt && sg.isTrueSpikeRequired())) {
         // parallelisation along pre-synaptic spikes, looped over post-synaptic neurons
-        if ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && sg.getSpanType() == SynapseGroup::SpanType::PRESYNAPTIC) {
+        if(sg.getSpanType() == SynapseGroup::SpanType::PRESYNAPTIC) {
+            assert(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE);
             generatePreParallelisedSparseCode(os, sg, localID, postfix, ftype);
         }
         // classical parallelisation of post-synaptic neurons in parallel and spikes in a loop
