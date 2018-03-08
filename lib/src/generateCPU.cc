@@ -53,6 +53,7 @@ void generate_process_presynaptic_events_code_CPU(
     if ((evnt && sg.isSpikeEventRequired()) || (!evnt && sg.isTrueSpikeRequired())) {
         const auto *wu = sg.getWUModel();
         const bool sparse = sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE;
+        const bool ragged = sg.getMatrixType() & SynapseMatrixConnectivity::RAGGED;
 
         // Detect spike events or spikes and do the update
         os << "// process presynaptic events: " << (evnt ? "Spike type events" : "True Spikes") << std::endl;
@@ -67,11 +68,17 @@ void generate_process_presynaptic_events_code_CPU(
 
             os << "ipre = glbSpk" << postfix << sg.getSrcNeuronGroup()->getName() << "[" << sg.getOffsetPre() << "i];" << std::endl;
 
-            if (sparse) { // SPARSE
-                os << "npost = C" << sgName << ".indInG[ipre + 1] - C" << sgName << ".indInG[ipre];" << std::endl;
+            if (sparse || ragged) {
+                if(sparse) {
+                    os << "npost = C" << sgName << ".indInG[ipre + 1] - C" << sgName << ".indInG[ipre];" << std::endl;
+                }
+                else {
+                    os << "npost = C" << sgName << ".rowLength[ipre];" << std::endl;
+                }
                 os << "for (int j = 0; j < npost; j++)";
             }
-            else { // DENSE
+            // Otherwise (DENSE or BITMASK)
+            else {
                 os << "for (ipost = 0; ipost < " << sg.getTrgNeuronGroup()->getNumNeurons() << "; ipost++)";
             }
             {
@@ -79,9 +86,12 @@ void generate_process_presynaptic_events_code_CPU(
                 if(sparse) {
                     os << "ipost = C" << sgName << ".ind[C" << sgName << ".indInG[ipre] + j];" << std::endl;
                 }
-
-                if (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-                    os << "unsigned int gid = (ipre * " << sg.getTrgNeuronGroup()->getNumNeurons() << " + ipost);" << std::endl;
+                else if(ragged)
+                    // **TODO** seperate stride from max connections
+                    os << "ipost = C" << sgName << ".trgInd[(ipre * " << sg.getMaxConnections() << ") + j];" << std::endl;
+                }
+                else if (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
+                    os << "const unsigned int gid = (ipre * " << sg.getTrgNeuronGroup()->getNumNeurons() << " + ipost);" << std::endl;
                 }
 
                 if (!wu->getSimSupportCode().empty()) {
@@ -124,19 +134,20 @@ void generate_process_presynaptic_events_code_CPU(
                 string wCode = evnt ? wu->getEventCode() : wu->getSimCode();
                 substitute(wCode, "$(updatelinsyn)", "$(inSyn) += $(addtoinSyn)");
                 substitute(wCode, "$(t)", "t");
-                if (sparse) { // SPARSE
-                    if (sg.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
+                if (sg.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
+                    if (sparse) { // SPARSE
                         name_substitutions(wCode, "", wuVars.nameBegin, wuVars.nameEnd,
                                            sgName + "[C" + sgName + ".indInG[ipre] + j]");
                     }
-
-                }
-                else { // DENSE
-                    if (sg.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
+                    else if(ragged) {
+                        // **TODO** seperate stride from max connections
+                        name_substitutions(wCode, "", wuVars.nameBegin, wuVars.nameEnd,
+                                           sgName + "[(ipre * " << sg.getMaxConnections() << ") + j]");
+                    }
+                    else { // DENSE
                         name_substitutions(wCode, "", wuVars.nameBegin, wuVars.nameEnd,
                                            sgName + "[ipre * " + to_string(sg.getTrgNeuronGroup()->getNumNeurons()) + " + ipost]");
                     }
-
                 }
                 substitute(wCode, "$(inSyn)", "inSyn" + sgName + "[ipost]");
 
@@ -493,6 +504,29 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
                                 os << SDcode << std::endl;
                             }
                         }
+                        else if(sg->getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
+                            os << "for (int i = 0; i < " <<  sg->getSrcNeuronGroup()->getNumNeurons() << "; i++)";
+                            {
+                                CodeStream::Scope b(os);
+                                os << "for (int j = 0; j < C" << s.first << ".rowLength[i]; j++)";
+                                {
+                                    CodeStream::Scope b(os);
+                                    if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
+                                        // name substitute synapse var names in synapseDynamics code
+                                        // **TODO** seperate stride from max connections
+                                        name_substitutions(SDcode, "", wuVars.nameBegin, wuVars.nameEnd, s.first + "[(ipre * " + std::to_string(sg.getMaxConnections()) + ") + j]");
+                                    }
+
+                                    const std::string postIdx = "C" + s.first + ".trgInd[(i * " + to_string(sg.getMaxConnections()) + ") + j";
+
+                                    substitute(SDcode, "$(inSyn)", "inSyn" + s.first + "[" + postIdx + "]");
+
+                                    StandardSubstitutions::weightUpdateDynamics(SDcode, sg, wuVars, wuDerivedParams, wuExtraGlobalParams,
+                                                                                "i", postIdx, "", cpuFunctions, model.getPrecision());
+                                    os << SDcode << std::endl;
+                                }
+                            }
+                        }
                         else { // DENSE
                             os << "for (int i = 0; i < " <<  sg->getSrcNeuronGroup()->getNumNeurons() << "; i++)";
                             {
@@ -593,6 +627,7 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
                 const SynapseGroup *sg = model.findSynapseGroup(s.first);
                 const auto *wu = sg->getWUModel();
                 const bool sparse = sg->getMatrixType() & SynapseMatrixConnectivity::SPARSE;
+                const bool ragged = sg->getMatrixType() & SynapseMatrixConnectivity::RAGGED;
 
                 // Create iteration context to iterate over the variables; derived and extra global parameters
                 DerivedParamNameIterCtx wuDerivedParams(wu->getDerivedParams());
@@ -631,6 +666,9 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
                             // TODO: THIS NEEDS CHECKING AND FUNCTIONAL C.POST* ARRAYS
                             os << "npre = C" << s.first << ".revIndInG[lSpk + 1] - C" << s.first << ".revIndInG[lSpk];" << std::endl;
                             os << "for (int l = 0; l < npre; l++)";
+                        }
+                        else if(ragged) {
+                            assert(false);
                         }
                         else { // DENSE
                             os << "for (ipre = 0; ipre < " << sg->getSrcNeuronGroup()->getNumNeurons() << "; ipre++)";

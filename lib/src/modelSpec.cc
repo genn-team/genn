@@ -164,7 +164,7 @@ bool NNmodel::isDeviceSparseInitRequired() const
     return std::any_of(std::begin(m_LocalSynapseGroups), std::end(m_LocalSynapseGroups),
         [](const NNmodel::SynapseGroupValueType &s)
         {
-            return ((s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) &&
+            return ((s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE || s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED) &&
                 (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) &&
                 s.second.isWUDeviceVarInitRequired());
         });

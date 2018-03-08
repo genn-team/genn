@@ -129,6 +129,7 @@ void generatePreParallelisedSparseCode(
         os << "for (int i = 0; i < npost; ++i)";
         {
             CodeStream::Scope b(os);
+            // **TODO** pretty sure __ldg will boost performance here - basically will bring whole row into cache
             os << "ipost = dd_ind" <<  sg.getName() << "[prePos];" << std::endl;
 
             // Code substitutions ----------------------------------------------------------------------------------

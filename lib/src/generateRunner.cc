@@ -669,6 +669,10 @@ void genDefinitions(const NNmodel &model,   //!< Model description
         else if (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
             os << varExportPrefix << " SparseProjection C" << s.first << ";" << std::endl;
         }
+        else if(s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
+            // **TODO** different types
+            os << varExportPrefix << " RaggedProjection<unsigned int> C" << s.first << ";" << std::endl;
+        }
 
         if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) { // not needed for GLOBALG
             for(const auto &v : s.second.getWUModel()->getVars()) {
@@ -1235,7 +1239,7 @@ void genRunner(const NNmodel &model,    //!< Model description
         if (s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
             variable_def(os, "uint32_t *", "gp"+s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST);
         }
-        if (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+        else if (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
             os << "SparseProjection C" << s.first << ";" << std::endl;
 #ifndef CPU_ONLY
             os << "unsigned int *d_indInG" << s.first << ";" << std::endl;
@@ -1257,6 +1261,14 @@ void genRunner(const NNmodel &model,    //!< Model description
             }
 #endif
         }
+        else if(s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
+            // **TODO** other index types
+            os << "RaggedProjection<unsigned int> C" << s.first << ";" << std::endl;
+#ifndef CPU_ONLY
+            os << "DeviceRaggedProjection<unsigned int> DC" << s.first << ";" << std::endl;
+#endif  // CPU_ONLY
+        }
+
         if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) { // not needed for GLOBALG, INDIVIDUALID
             for(const auto &v : wu->getVars()) {
                 variable_def(os, v.second + " *", v.first + s.first, s.second.getWUVarMode(v.first));
@@ -1484,6 +1496,27 @@ void genRunner(const NNmodel &model,    //!< Model description
             if (s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
                 const size_t gpSize = (s.second.getSrcNeuronGroup()->getNumNeurons() * s.second.getTrgNeuronGroup()->getNumNeurons()) / 32 + 1;
                 mem += allocate_variable(os, "uint32_t", "gp" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST, gpSize);
+            }
+            else if(s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
+                const size_t size = s.second.getSrcNeuronGroup()->getNumNeurons() * s.second.getMaxConnections();
+
+                // Allocate row lengths
+                allocate_host_variable(os, "unsigned int", "C" + s.first + ".rowLength", VarMode::LOC_HOST_DEVICE_INIT_HOST,
+                                    s.second.getSrcNeuronGroup()->getNumNeurons());
+                allocate_device_variable(os, "unsigned int", "rowLength" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST,
+                                        s.second.getSrcNeuronGroup()->getNumNeurons());
+
+                // Allocate target indices
+                const std::string postIndexType = "unsigned int";
+                allocate_host_variable(os, postIndexType, "C" + s.first + ".trgInd", VarMode::LOC_HOST_DEVICE_INIT_HOST,
+                                       size);
+                allocate_device_variable(os, postIndexType, "trgInd" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST,
+                                         size);
+
+                for(const auto &v : wu->getVars()) {
+                    mem += allocate_variable(os, v.second, v.first + s.first, s.second.getWUVarMode(v.first), size);
+                }
+
             }
             // Otherwise, if matrix connectivity is defined using a dense matrix, allocate user-defined weight model variables
             // **NOTE** if matrix is sparse, allocate later in the allocatesparsearrays function when we know the size of the network

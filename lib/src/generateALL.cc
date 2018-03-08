@@ -166,9 +166,11 @@ void chooseDevice(NNmodel &model,       //!< the nn model we are generating code
             const unsigned int maxConnections = s.second.getMaxConnections();
             const unsigned int numSrcNeurons = s.second.getSrcNeuronGroup()->getNumNeurons();
             const unsigned int numTrgNeurons = s.second.getTrgNeuronGroup()->getNumNeurons();
+            const bool sparseOrRagged = (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE)
+                || (s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED);
 
             // **TODO** presynaptic parallelism?
-            if ((s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && maxConnections > 0) {
+            if (sparseOrRagged) {
                 groupSize[KernelCalcSynapses].push_back(maxConnections);
             }
             else {
@@ -181,7 +183,7 @@ void chooseDevice(NNmodel &model,       //!< the nn model we are generating code
             }
 
             if (model.isSynapseGroupDynamicsRequired(s.first)) {
-                if ((s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && maxConnections > 0) {
+                if (sparseOrRagged) {
                     groupSize[KernelCalcSynapseDynamics].push_back(numSrcNeurons * maxConnections);
                 }
                 else {
@@ -195,13 +197,8 @@ void chooseDevice(NNmodel &model,       //!< the nn model we are generating code
                 if(s.second.getMatrixType() & SynapseMatrixConnectivity::DENSE) {
                     groupSize[KernelInit].push_back(numSrcNeurons * numTrgNeurons);
                 }
-                else if(s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                    if(maxConnections > 0) {
-                        groupSize[KernelInitSparse].push_back(numSrcNeurons * maxConnections);
-                    }
-                    else {
-                        groupSize[KernelInitSparse].push_back(numSrcNeurons * numTrgNeurons);
-                    }
+                else if(sparseOrRagged) {
+                    groupSize[KernelInitSparse].push_back(numSrcNeurons * maxConnections);
                 }
             }
         }

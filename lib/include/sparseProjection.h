@@ -10,9 +10,7 @@
    initial version: 2015-08-19
    
 --------------------------------------------------------------------------*/
-
-#ifndef SPARSE_PROJECTION
-#define SPARSE_PROJECTION
+#pragma once
 
 //! \brief class (struct) for defining a spars connectivity projection
 struct SparseProjection{
@@ -22,7 +20,22 @@ struct SparseProjection{
     unsigned int *revIndInG;
     unsigned int *revInd;
     unsigned int *remap;
-    unsigned int connN; 
+    unsigned int connN;
 };
 
-#endif
+//! Row-major ordered sparse matrix structure in 'ragged' format
+template<typename PostIndexType>
+struct RaggedProjection {
+    //! Length of each row of matrix
+    unsigned int *rowLength;
+
+    //! Indices of target neurons
+    PostIndexType *trgInd;
+
+    //unsigned int *preInd;
+    //unsigned int *revIndInG;
+    //unsigned int *revInd;
+    //unsigned int *remap;
+};
+
+#endif  // CPU_ONLY
