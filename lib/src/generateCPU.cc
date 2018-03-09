@@ -86,7 +86,7 @@ void generate_process_presynaptic_events_code_CPU(
                 if(sparse) {
                     os << "ipost = C" << sgName << ".ind[C" << sgName << ".indInG[ipre] + j];" << std::endl;
                 }
-                else if(ragged)
+                else if(ragged) {
                     // **TODO** seperate stride from max connections
                     os << "ipost = C" << sgName << ".trgInd[(ipre * " << sg.getMaxConnections() << ") + j];" << std::endl;
                 }
@@ -142,7 +142,7 @@ void generate_process_presynaptic_events_code_CPU(
                     else if(ragged) {
                         // **TODO** seperate stride from max connections
                         name_substitutions(wCode, "", wuVars.nameBegin, wuVars.nameEnd,
-                                           sgName + "[(ipre * " << sg.getMaxConnections() << ") + j]");
+                                           sgName + "[(ipre * " + to_string(sg.getMaxConnections()) + ") + j]");
                     }
                     else { // DENSE
                         name_substitutions(wCode, "", wuVars.nameBegin, wuVars.nameEnd,
@@ -514,10 +514,10 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
                                     if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
                                         // name substitute synapse var names in synapseDynamics code
                                         // **TODO** seperate stride from max connections
-                                        name_substitutions(SDcode, "", wuVars.nameBegin, wuVars.nameEnd, s.first + "[(ipre * " + std::to_string(sg.getMaxConnections()) + ") + j]");
+                                        name_substitutions(SDcode, "", wuVars.nameBegin, wuVars.nameEnd, s.first + "[(ipre * " + std::to_string(sg->getMaxConnections()) + ") + j]");
                                     }
 
-                                    const std::string postIdx = "C" + s.first + ".trgInd[(i * " + to_string(sg.getMaxConnections()) + ") + j";
+                                    const std::string postIdx = "C" + s.first + ".trgInd[(i * " + to_string(sg->getMaxConnections()) + ") + j";
 
                                     substitute(SDcode, "$(inSyn)", "inSyn" + s.first + "[" + postIdx + "]");
 
@@ -538,7 +538,7 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
                                     // substitute initial values as constants for synapse var names in synapseDynamics code
                                     if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
                                         name_substitutions(SDcode, "", wuVars.nameBegin, wuVars.nameEnd,
-                                                        s.first + "[i*" + to_string(sg->getTrgNeuronGroup()->getNumNeurons()) + "+j]");
+                                                        s.first + "[(i * " + to_string(sg->getTrgNeuronGroup()->getNumNeurons()) + ") + j]");
                                     }
 
                                     substitute(SDcode, "$(inSyn)", "inSyn" + s.first + "[j]");

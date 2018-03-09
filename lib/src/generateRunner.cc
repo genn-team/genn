@@ -1265,7 +1265,10 @@ void genRunner(const NNmodel &model,    //!< Model description
             // **TODO** other index types
             os << "RaggedProjection<unsigned int> C" << s.first << ";" << std::endl;
 #ifndef CPU_ONLY
-            os << "DeviceRaggedProjection<unsigned int> DC" << s.first << ";" << std::endl;
+            os << "unsigned int *d_rowLength" << s.first << ";" << std::endl;
+            os << "__device__ unsigned int *dd_rowLength" << s.first << ";" << std::endl;
+            os << "unsigned int *d_rowLength" << s.first << ";" << std::endl;
+            os << "__device__ unsigned int *dd_rowLength" << s.first << ";" << std::endl;
 #endif  // CPU_ONLY
         }
 
@@ -1513,8 +1516,10 @@ void genRunner(const NNmodel &model,    //!< Model description
                 allocate_device_variable(os, postIndexType, "trgInd" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST,
                                          size);
 
-                for(const auto &v : wu->getVars()) {
-                    mem += allocate_variable(os, v.second, v.first + s.first, s.second.getWUVarMode(v.first), size);
+                if(s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
+                    for(const auto &v : wu->getVars()) {
+                        mem += allocate_variable(os, v.second, v.first + s.first, s.second.getWUVarMode(v.first), size);
+                    }
                 }
 
             }
@@ -1698,6 +1703,13 @@ void genRunner(const NNmodel &model,    //!< Model description
                     free_host_variable(os, "C" + s.first + ".preInd", VarMode::LOC_HOST_DEVICE_INIT_HOST);
                     free_device_variable(os, "preInd" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST);
                 }
+            }
+            else if(s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
+                free_host_variable(os, "C" + s.first + ".rowLength", VarMode::LOC_HOST_DEVICE_INIT_HOST);
+                free_device_variable(os, "rowLength" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST);
+
+                free_host_variable(os, "C" + s.first + ".rowLength", VarMode::LOC_HOST_DEVICE_INIT_HOST);
+                free_device_variable(os, "rowLength" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST);
             }
             if (s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
                 free_variable(os, "gp" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST);
@@ -2043,6 +2055,9 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
                 if (s.second.getMatrixType() & SynapseMatrixConnectivity::DENSE) {
                     os << "const size_t size = " << numSrcNeurons * numTrgNeurons << ";" << std::endl;
                 }
+                else if(s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
+                    os << "const size_t size = " << numSrcNeurons * s.second.getMaxConnections() << ";" << std::endl;
+                }
                 else {
                     os << "const size_t size = C" << s.first << ".connN;" << std::endl;
                 }
@@ -2209,6 +2224,9 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
             if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) { // INDIVIDUALG
                 if (s.second.getMatrixType() & SynapseMatrixConnectivity::DENSE) {
                     os << "size_t size = " << numSrcNeurons * numTrgNeurons << ";" << std::endl;
+                }
+                else if(s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
+                    os << "size_t size = " << numSrcNeurons * s.second.getMaxConnections() << ";" << std::endl;
                 }
                 else {
                     os << "size_t size = C" << s.first << ".connN;" << std::endl;

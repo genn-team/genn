@@ -83,7 +83,7 @@ void SynapseGroup::setPSVarMode(const std::string &varName, VarMode mode)
 
 void SynapseGroup::setMaxConnections(unsigned int maxConnections)
 {
-     if (getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+     if((getMatrixType() & SynapseMatrixConnectivity::SPARSE) || (getMatrixType() & SynapseMatrixConnectivity::RAGGED)) {
         m_MaxConnections = maxConnections;
     }
     else {

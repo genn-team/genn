@@ -37,5 +37,3 @@ struct RaggedProjection {
     //unsigned int *revInd;
     //unsigned int *remap;
 };
-
-#endif  // CPU_ONLY

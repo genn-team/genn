@@ -860,13 +860,17 @@ void genInit(const NNmodel &model,      //!< Model description
         }
         bool anySparse = false;
         for(const auto &s : model.getLocalSynapseGroups()) {
-            if (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+            const bool sparse = s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE;
+            const bool ragged = s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED;
+            const unsigned int numSrcNeurons = s.second.getSrcNeuronGroup()->getNumNeurons();
+            const unsigned int numTrgNeurons = s.second.getTrgNeuronGroup()->getNumNeurons();
+            if (sparse || ragged) {
                 anySparse = true;
                 if (model.isSynapseGroupDynamicsRequired(s.first)) {
-                    os << "createPreIndices(" << s.second.getSrcNeuronGroup()->getNumNeurons() << ", " << s.second.getTrgNeuronGroup()->getNumNeurons() << ", &C" << s.first << ");" << std::endl;
+                    os << "createPreIndices(" << numSrcNeurons << ", " << numTrgNeurons << ", &C" << s.first << ");" << std::endl;
                 }
                 if (model.isSynapseGroupPostLearningRequired(s.first)) {
-                    os << "createPosttoPreArray(" << s.second.getSrcNeuronGroup()->getNumNeurons() << ", " << s.second.getTrgNeuronGroup()->getNumNeurons() << ", &C" << s.first << ");" << std::endl;
+                    os << "createPosttoPreArray(" << numSrcNeurons << ", " << numTrgNeurons << ", &C" << s.first << ");" << std::endl;
                 }
 
                 // If synapses in this population have individual variables
@@ -879,11 +883,26 @@ void genInit(const NNmodel &model,      //!< Model description
                         // If this variable should be initialised on the host and has any initialisation code
                         if(shouldInitOnHost(varMode) && !varInit.getSnippet()->getCode().empty()) {
                             CodeStream::Scope b(os);
-                            os << "for (int i = 0; i < C" << s.first << ".connN; i++)";
-                            {
-                                CodeStream::Scope b(os);
-                                os << StandardSubstitutions::initVariable(varInit, wuVars[k].first + s.first + "[i]",
-                                                                          cpuFunctions, model.getPrecision(), "rng") << std::endl;
+                            if(sparse) {
+                                os << "for (int i = 0; i < C" << s.first << ".connN; i++)";
+                                {
+                                    CodeStream::Scope b(os);
+                                    os << StandardSubstitutions::initVariable(varInit, wuVars[k].first + s.first + "[i]",
+                                                                              cpuFunctions, model.getPrecision(), "rng") << std::endl;
+                                }
+                            }
+                            else {
+                                os << "for (int i = 0; i < " << numSrcNeurons << "; i++)";
+                                {
+                                    CodeStream::Scope b(os);
+                                    os << "for (int j = 0; j < rowLength" << s.first << "[i]; j++)";
+                                    {
+                                        CodeStream::Scope b(os);
+                                        const std::string index = "[(i * " + std::to_string(s.second.getMaxConnections()) + ") + j]";
+                                        os << StandardSubstitutions::initVariable(varInit, wuVars[k].first + s.first + "[" + index + "]",
+                                                                                  cpuFunctions, model.getPrecision(), "rng") << std::endl;
+                                    }
+                                }
                             }
                         }
                     }
