@@ -174,7 +174,7 @@ void initializeSparseArray(const SparseProjection &C,  unsigned int *dInd, unsig
 template<typename PostIndexType>
 void initializeRaggedArray(const RaggedProjection<PostIndexType> &C,  unsigned int *dInd, unsigned int *dRowLength, unsigned int preN)
 {
-	CHECK_CUDA_ERRORS(cudaMemcpy(dInd, C.ind, C.maxRowLength * preN * sizeof(unsigned int), cudaMemcpyHostToDevice));
+    CHECK_CUDA_ERRORS(cudaMemcpy(dInd, C.ind, C.maxRowLength * preN * sizeof(unsigned int), cudaMemcpyHostToDevice));
     CHECK_CUDA_ERRORS(cudaMemcpy(dRowLength, C.rowLength, preN * sizeof(unsigned int), cudaMemcpyHostToDevice));
 }
 
