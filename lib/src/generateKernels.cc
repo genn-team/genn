@@ -245,17 +245,20 @@ void generatePostParallelisedCode(
                     os << "if (B(dd_gp" << sg.getName() << "[gid / 32], gid & 31))" << CodeStream::OB(135);
                 }
 
-                if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                    os << "prePos = dd_indInG" << sg.getName() << "[shSpk" << postfix << "[j]];" << std::endl;
-                    os << "npost = dd_indInG" << sg.getName() << "[shSpk" << postfix << "[j] + 1] - prePos;" << std::endl;
+
+                if(sparseOrRagged) {
+                    if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                        os << "prePos = dd_indInG" << sg.getName() << "[shSpk" << postfix << "[j]];" << std::endl;
+                        os << "npost = dd_indInG" << sg.getName() << "[shSpk" << postfix << "[j] + 1] - prePos;" << std::endl;
+                    }
+                    else {
+                        os << "prePos = shSpk" << postfix << "[j] * " << to_string(sg.getMaxConnections()) << ";" << std::endl;
+                        os << "npost = dd_rowLength" << sg.getName() << "[shSpk" << postfix << "[j]];" << std::endl;
+                    }
+
                     os << "if (" << localID << " < npost)" << CodeStream::OB(140);
                     os << "prePos += " << localID << ";" << std::endl;
                     os << "ipost = dd_ind" << sg.getName() << "[prePos];" << std::endl;
-                }
-                else if(sg.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
-                    os << "npost = dd_rowLength" << sg.getName() << "[shSpk" << postfix << "[j]];" << std::endl;
-                    os << "if (" << localID << " < npost)" << CodeStream::OB(140);
-                    os << "ipost = dd_trgInd" << sg.getName() << "[localID];" << std::endl;
                 }
                 else { // DENSE
                     os << "ipost = " << localID << ";" << std::endl;
@@ -902,7 +905,8 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
         // we need ipost in any case, and we need npost if there are any SPARSE connections
         os << "unsigned int ipost;" << std::endl;
         for(const auto &s : model.getLocalSynapseGroups()) {
-            if (s.second.getMatrixType()  & SynapseMatrixConnectivity::SPARSE) {
+            if ((s.second.getMatrixType()  & SynapseMatrixConnectivity::SPARSE)
+                || (s.second.getMatrixType()  & SynapseMatrixConnectivity::RAGGED)){
                 os << "unsigned int prePos; " << std::endl;
                 os << "unsigned int npost; " << std::endl;
                 break;

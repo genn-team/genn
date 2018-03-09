@@ -1263,12 +1263,12 @@ void genRunner(const NNmodel &model,    //!< Model description
         }
         else if(s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
             // **TODO** other index types
-            os << "RaggedProjection<unsigned int> C" << s.first << ";" << std::endl;
+            os << "RaggedProjection<unsigned int> C" << s.first << "(" << s.second.getMaxConnections() << ");" << std::endl;
 #ifndef CPU_ONLY
             os << "unsigned int *d_rowLength" << s.first << ";" << std::endl;
             os << "__device__ unsigned int *dd_rowLength" << s.first << ";" << std::endl;
-            os << "unsigned int *d_rowLength" << s.first << ";" << std::endl;
-            os << "__device__ unsigned int *dd_rowLength" << s.first << ";" << std::endl;
+            os << "unsigned int *d_ind" << s.first << ";" << std::endl;
+            os << "__device__ unsigned int *dd_ind" << s.first << ";" << std::endl;
 #endif  // CPU_ONLY
         }
 
@@ -1511,9 +1511,9 @@ void genRunner(const NNmodel &model,    //!< Model description
 
                 // Allocate target indices
                 const std::string postIndexType = "unsigned int";
-                allocate_host_variable(os, postIndexType, "C" + s.first + ".trgInd", VarMode::LOC_HOST_DEVICE_INIT_HOST,
+                allocate_host_variable(os, postIndexType, "C" + s.first + ".ind", VarMode::LOC_HOST_DEVICE_INIT_HOST,
                                        size);
-                allocate_device_variable(os, postIndexType, "trgInd" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST,
+                allocate_device_variable(os, postIndexType, "ind" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST,
                                          size);
 
                 if(s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {

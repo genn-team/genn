@@ -212,7 +212,9 @@ VarMode SynapseGroup::getPSVarMode(const std::string &var) const
 
 bool SynapseGroup::isPSAtomicAddRequired(unsigned int blockSize) const
 {
-    if (getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+    if ((getMatrixType() & SynapseMatrixConnectivity::SPARSE)
+        || (getMatrixType() & SynapseMatrixConnectivity::RAGGED))
+    {
         if (getSpanType() == SpanType::POSTSYNAPTIC && getTrgNeuronGroup()->getNumNeurons() > blockSize) {
             return true;
         }

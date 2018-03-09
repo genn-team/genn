@@ -26,11 +26,15 @@ struct SparseProjection{
 //! Row-major ordered sparse matrix structure in 'ragged' format
 template<typename PostIndexType>
 struct RaggedProjection {
+    RaggedProjection(unsigned int max) : maxRowLength(max){}
+
+    const unsigned int maxRowLength;
+
     //! Length of each row of matrix
     unsigned int *rowLength;
 
     //! Indices of target neurons
-    PostIndexType *trgInd;
+    PostIndexType *ind;
 
     //unsigned int *preInd;
     //unsigned int *revIndInG;
