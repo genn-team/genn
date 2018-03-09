@@ -50,6 +50,17 @@ string getFloatAtomicAdd(const string &ftype)
         return "atomicAdd";
     }
 }
+
+bool shouldAccumulateInLinSyn(const SynapseGroup &sg)
+{
+    // We should accumulate each postsynaptic neuron's input in a register if either
+    // 1) Matrix type is dense or bitfield (where each thread represents an individual neuron)
+    // 2) Or the synapse projection doesn't require atomic add i.e. is small enough to used shared memory
+    return ((sg.getMatrixType() & SynapseMatrixConnectivity::DENSE) 
+        || (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) 
+        || !sg.isPSAtomicAddRequired(synapseBlkSz));
+}
+
 // parallelisation along pre-synaptic spikes, looped over post-synaptic neurons
 void generatePreParallelisedSparseCode(
     CodeStream &os, //!< output stream for code
@@ -200,7 +211,7 @@ void generatePostParallelisedCode(
             os << "shSpk" << postfix << "[threadIdx.x] = dd_glbSpk" << postfix << sg.getSrcNeuronGroup()->getName() << "[" << sg.getOffsetPre() << "(r * BLOCKSZ_SYN) + threadIdx.x];" << std::endl;
         }
 
-        if ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && !sg.isPSAtomicAddRequired(synapseBlkSz)) {
+        if (sparseOrRagged && !sg.isPSAtomicAddRequired(synapseBlkSz)) {
             // set shLg to 0 for all postsynaptic neurons; is ok as model.neuronN[model.synapseTarget[i]] <= synapseBlkSz
             os << "if (threadIdx.x < " << sg.getTrgNeuronGroup()->getNumNeurons() << ") shLg[threadIdx.x] = 0;" << std::endl;
         }
@@ -897,7 +908,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
 
         // case-dependent variables
         for(const auto &s : model.getLocalSynapseGroups()) {
-            if (!(s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) || !s.second.isPSAtomicAddRequired(synapseBlkSz)){
+            if (shouldAccumulateInLinSyn(s.second)) {
                 os << model.getPrecision() << " linSyn;" << std::endl;
                 break;
             }
@@ -952,7 +963,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                     os << ") % " << s->second.getSrcNeuronGroup()->getNumDelaySlots() << ";" << std::endl;
                 }
 
-                if (!(s->second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) || !s->second.isPSAtomicAddRequired(synapseBlkSz)){
+                if (shouldAccumulateInLinSyn(s->second)) {
                     os << "// only do this for existing neurons" << std::endl;
                     os << "if (" << localID << " < " << s->second.getTrgNeuronGroup()->getNumNeurons() << ")";
                     {
@@ -994,7 +1005,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                 }
                 os << std::endl;
 
-                if (!(s->second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) || !s->second.isPSAtomicAddRequired(synapseBlkSz)) {
+                if (shouldAccumulateInLinSyn(s->second)) {
                     os << "// only do this for existing neurons" << std::endl;
                     os << "if (" << localID << " < " << s->second.getTrgNeuronGroup()->getNumNeurons() << ")";
                     {

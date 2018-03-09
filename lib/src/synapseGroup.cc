@@ -83,7 +83,9 @@ void SynapseGroup::setPSVarMode(const std::string &varName, VarMode mode)
 
 void SynapseGroup::setMaxConnections(unsigned int maxConnections)
 {
-     if((getMatrixType() & SynapseMatrixConnectivity::SPARSE) || (getMatrixType() & SynapseMatrixConnectivity::RAGGED)) {
+     if((getMatrixType() & SynapseMatrixConnectivity::SPARSE) 
+         || (getMatrixType() & SynapseMatrixConnectivity::RAGGED)) 
+    {
         m_MaxConnections = maxConnections;
     }
     else {
@@ -135,7 +137,9 @@ void SynapseGroup::calcKernelSizes(unsigned int blockSize, unsigned int &paddedK
 {
     m_PaddedKernelIDRange.first = paddedKernelIDStart;
 
-    if (getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+    if((getMatrixType() & SynapseMatrixConnectivity::SPARSE) 
+        || (getMatrixType() & SynapseMatrixConnectivity::RAGGED)) 
+    {
         if (getSpanType() == SpanType::PRESYNAPTIC) {
             // paddedSize is the lowest multiple of blockSize >= neuronN[synapseSource[i]
             paddedKernelIDStart += ceil((double) getSrcNeuronGroup()->getNumNeurons() / (double) blockSize) * (double) blockSize;
@@ -156,7 +160,9 @@ void SynapseGroup::calcKernelSizes(unsigned int blockSize, unsigned int &paddedK
 
 unsigned int SynapseGroup::getPaddedDynKernelSize(unsigned int blockSize) const
 {
-    if (getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+    if((getMatrixType() & SynapseMatrixConnectivity::SPARSE) 
+        || (getMatrixType() & SynapseMatrixConnectivity::RAGGED)) 
+    {
         // paddedSize is the lowest multiple of synDynBlkSz >= neuronN[synapseSource[i]] * maxConn[i]
         return ceil((double) getSrcNeuronGroup()->getNumNeurons() * getMaxConnections() / (double) blockSize) * (double) blockSize;
     }
