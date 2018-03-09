@@ -810,11 +810,15 @@ void genInit(const NNmodel &model,      //!< Model description
     {
         CodeStream::Scope b(os);
         for(const auto &s : model.getLocalSynapseGroups()) {
-            if (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE){
+			const bool sparse = (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE);
+			const bool ragged = (s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED);
+			
+            if (sparse){
                 os << "initializeSparseArray(C" << s.first << ", ";
                 os << "d_ind" << s.first << ", ";
                 os << "d_indInG" << s.first << ", ";
                 os << s.second.getSrcNeuronGroup()->getNumNeurons() <<");" << std::endl;
+				
                 if (model.isSynapseGroupDynamicsRequired(s.first)) {
                     os << "initializeSparseArrayPreInd(C" << s.first << ", ";
                     os << "d_preInd" << s.first << ");" << std::endl;
@@ -824,10 +828,27 @@ void genInit(const NNmodel &model,      //!< Model description
                     os << "d_revInd" << s.first << ",";
                     os << "d_revIndInG" << s.first << ",";
                     os << "d_remap" << s.first << ",";
-                    os << s.second.getTrgNeuronGroup()->getNumNeurons() <<");" << std::endl;
+                    os << s.second.getTrgNeuronGroup()->getNumNeurons() << ");" << std::endl;
                 }
-
+			}
+			else if(ragged) {
+				os << "initializeRaggedArray(C" << s.first << ", ";
+                os << "d_ind" << s.first << ", ";
+                os << "d_rowLength" << s.first << ", ";
+                os << s.second.getSrcNeuronGroup()->getNumNeurons() << ");" << std::endl;
+				
+				// **TODO**
+				assert(!model.isSynapseGroupDynamicsRequired(s.first));
+				assert(!model.isSynapseGroupPostLearningRequired(s.first));
+			}
+			
+			if(sparse || ragged) {
                 if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
+                    // Get number of per-synapse variables to copy (as a string)
+					const std::string count = sparse
+					    ? "C" + s.first + ".connN"
+					    : to_string(s.second.getMaxConnections() * s.second.getSrcNeuronGroup()->getNumNeurons());
+					
                     for(const auto &v : s.second.getWUModel()->getVars()) {
                         const VarMode varMode = s.second.getWUVarMode(v.first);
 
@@ -838,7 +859,7 @@ void genInit(const NNmodel &model,      //!< Model description
                         {
                             os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << v.first << s.first << ", ";
                             os << v.first << s.first << ", ";
-                            os << "sizeof(" << v.second << ") * C" << s.first << ".connN , cudaMemcpyHostToDevice));" << std::endl;
+                            os << "sizeof(" << v.second << ") * " << count << " , cudaMemcpyHostToDevice));" << std::endl;
                         }
                     }
                 }

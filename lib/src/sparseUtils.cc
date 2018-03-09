@@ -64,7 +64,7 @@ void createPreIndices(unsigned int preN, unsigned int postN, SparseProjection * 
  */
 //--------------------------------------------------------------------------
 
-void initializeSparseArray(SparseProjection C,  unsigned int * dInd, unsigned int * dIndInG, unsigned int preN)
+void initializeSparseArray(const SparseProjection &C,  unsigned int * dInd, unsigned int * dIndInG, unsigned int preN)
 {
     CHECK_CUDA_ERRORS(cudaMemcpy(dInd, C.ind, C.connN*sizeof(unsigned int), cudaMemcpyHostToDevice));
     CHECK_CUDA_ERRORS(cudaMemcpy(dIndInG, C.indInG, (preN+1)*sizeof(unsigned int), cudaMemcpyHostToDevice));
@@ -77,7 +77,7 @@ void initializeSparseArray(SparseProjection C,  unsigned int * dInd, unsigned in
  */
 //--------------------------------------------------------------------------
 
-void initializeSparseArrayRev(SparseProjection C,  unsigned int * dRevInd, unsigned int * dRevIndInG, unsigned int * dRemap, unsigned int postN)
+void initializeSparseArrayRev(const SparseProjection &C,  unsigned int * dRevInd, unsigned int * dRevIndInG, unsigned int * dRemap, unsigned int postN)
 {
     CHECK_CUDA_ERRORS(cudaMemcpy(dRevInd, C.revInd, C.connN*sizeof(unsigned int), cudaMemcpyHostToDevice));
     CHECK_CUDA_ERRORS(cudaMemcpy(dRevIndInG, C.revIndInG, (postN+1)*sizeof(unsigned int), cudaMemcpyHostToDevice));
@@ -91,7 +91,7 @@ void initializeSparseArrayRev(SparseProjection C,  unsigned int * dRevInd, unsig
  */
 //--------------------------------------------------------------------------
 
-void initializeSparseArrayPreInd(SparseProjection C,  unsigned int * dPreInd)
+void initializeSparseArrayPreInd(const SparseProjection &C,  unsigned int * dPreInd)
 {
     CHECK_CUDA_ERRORS(cudaMemcpy(dPreInd, C.preInd, C.connN*sizeof(unsigned int), cudaMemcpyHostToDevice));
 }

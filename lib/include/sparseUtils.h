@@ -163,8 +163,20 @@ void createPreIndices(unsigned int preN, unsigned int postN, SparseProjection *C
  */
 //--------------------------------------------------------------------------
 
-void initializeSparseArray(SparseProjection C,  unsigned int *dInd, unsigned int *dIndInG, unsigned int preN);
+void initializeSparseArray(const SparseProjection &C,  unsigned int *dInd, unsigned int *dIndInG, unsigned int preN);
 
+
+//--------------------------------------------------------------------------
+/*! \brief Function for initializing conductance array indices for sparse matrices on the GPU
+(by copying the values from the host)
+ */
+//--------------------------------------------------------------------------
+template<typename PostIndexType>
+void initializeRaggedArray(const RaggedProjection<PostIndexType> &C,  unsigned int *dInd, unsigned int *dRowLength, unsigned int preN)
+{
+	CHECK_CUDA_ERRORS(cudaMemcpy(dInd, C.ind, C.maxRowLength * preN * sizeof(unsigned int), cudaMemcpyHostToDevice));
+    CHECK_CUDA_ERRORS(cudaMemcpy(dRowLength, C.rowLength, preN * sizeof(unsigned int), cudaMemcpyHostToDevice));
+}
 
 //--------------------------------------------------------------------------
 /*! \brief Function for initializing reversed conductance array indices for sparse matrices on the GPU
@@ -172,7 +184,7 @@ void initializeSparseArray(SparseProjection C,  unsigned int *dInd, unsigned int
  */
 //--------------------------------------------------------------------------
 
-void initializeSparseArrayRev(SparseProjection C,  unsigned int *dRevInd, unsigned int *dRevIndInG, unsigned int *dRemap, unsigned int postN);
+void initializeSparseArrayRev(const SparseProjection &C,  unsigned int *dRevInd, unsigned int *dRevIndInG, unsigned int *dRemap, unsigned int postN);
 
 
 //--------------------------------------------------------------------------
@@ -181,7 +193,7 @@ void initializeSparseArrayRev(SparseProjection C,  unsigned int *dRevInd, unsign
  */
 //--------------------------------------------------------------------------
 
-void initializeSparseArrayPreInd(SparseProjection C,  unsigned int *dPreInd);
+void initializeSparseArrayPreInd(const SparseProjection &C,  unsigned int *dPreInd);
 #endif
 
 #endif
