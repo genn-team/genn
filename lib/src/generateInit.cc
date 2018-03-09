@@ -372,8 +372,9 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
         for(const auto &s : model.getLocalSynapseGroups()) {
             // If this group has dense connectivity with individual synapse variables
             // and it's weight update has variables that require initialising on GPU
-            if((s.second.getMatrixType() & SynapseMatrixConnectivity::DENSE) && (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) &&
-                s.second.isWUDeviceVarInitRequired())
+            if((s.second.getMatrixType() & SynapseMatrixConnectivity::DENSE) 
+                && (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) 
+                && s.second.isWUDeviceVarInitRequired())
             {
                 // Get padded size of group and hence it's end thread
                 const unsigned int numSynapses = s.second.getSrcNeuronGroup()->getNumNeurons() * s.second.getTrgNeuronGroup()->getNumNeurons();
