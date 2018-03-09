@@ -917,11 +917,11 @@ void genInit(const NNmodel &model,      //!< Model description
                                 os << "for (int i = 0; i < " << numSrcNeurons << "; i++)";
                                 {
                                     CodeStream::Scope b(os);
-                                    os << "for (int j = 0; j < rowLength" << s.first << "[i]; j++)";
+                                    os << "for (int j = 0; j < C" << s.first << ".rowLength[i]; j++)";
                                     {
                                         CodeStream::Scope b(os);
-                                        const std::string index = "[(i * " + std::to_string(s.second.getMaxConnections()) + ") + j]";
-                                        os << StandardSubstitutions::initVariable(varInit, wuVars[k].first + s.first + "[" + index + "]",
+                                        os << StandardSubstitutions::initVariable(varInit,
+                                                                                  wuVars[k].first + s.first + "[(i * " + std::to_string(s.second.getMaxConnections()) + ") + j]",
                                                                                   cpuFunctions, model.getPrecision(), "rng") << std::endl;
                                     }
                                 }
