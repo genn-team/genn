@@ -15,8 +15,8 @@ enum class SynapseMatrixConnectivity : unsigned int
 //!< Flags defining different types of synaptic matrix connectivity
 enum class SynapseMatrixWeight : unsigned int
 {
-    GLOBAL      = (1 << 3),
-    INDIVIDUAL  = (1 << 4),
+    GLOBAL      = (1 << 4),
+    INDIVIDUAL  = (1 << 5),
 };
 
 //!< Supported combinations of SynapticMatrixConnectivity and SynapticMatrixWeight
