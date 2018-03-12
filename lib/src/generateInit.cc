@@ -433,144 +433,105 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
     return std::max<unsigned int>(1, startThread);
 }
 //----------------------------------------------------------------------------
-void genInitializeSparseDeviceKernel(const std::vector<const SynapseGroup*> &sparseSynapseGroups, const std::vector<const SynapseGroup*> &raggedSynapseGroups,
-                                     unsigned int numStaticInitThreads, CodeStream &os, const NNmodel &model)
+unsigned int genInitializeSparseDeviceKernel(unsigned int numStaticInitThreads, CodeStream &os, const NNmodel &model)
 {
     // init kernel header
-    os << "extern \"C\" __global__ void initializeSparseDevice(";
-    for(auto s = sparseSynapseGroups.cbegin(); s != sparseSynapseGroups.cend(); ++s) {
-        os << "unsigned int endThread" << (*s)->getName() << ", unsigned int numSynapses" << (*s)->getName();
-        if(std::next(s) != sparseSynapseGroups.cend()) {
-            os << ", ";
-        }
-    }
-    os << ")";
-
+    os << "extern \"C\" __global__ void initializeSparseDevice()";
+    
     // initialization kernel code
+    unsigned int startThread = 0;
     {
         CodeStream::Scope b(os);
 
         // common variables for all cases
         os << "const unsigned int id = " << initSparseBlkSz << " * blockIdx.x + threadIdx.x;" << std::endl;
 
-        unsigned int startThread = 0;
-        for(const auto &s : raggedSynapseGroups) {
-            // Get padded size of group and hence it's end thread
-            const unsigned int paddedSize = (unsigned int)(ceil((double)s->getSrcNeuronGroup()->getNumNeurons() / (double)initSparseBlkSz) * (double)initSparseBlkSz);
-            const unsigned int endThread = startThread + paddedSize;
-
-            os << "// ragged synapse group " << s->getName() << std::endl;
-            if(startThread == 0) {
-                os << "if (id < " << endThread << ")";
-            }
-            else {
-                os << "if ((id >= " << startThread << ") && (id < " << endThread <<  "))";
-            }
+        // Loop through local synapse groups
+        for(const auto &s : model.getLocalSynapseGroups()) {
+            const bool sparse = (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE);
+            const bool ragged = (s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED);
+            
+            // If this group has sparse or ragged connectivity with individual synapse variables
+            // and it's weight update has variables that require initialising on GPU
+            if((sparse || ragged) 
+                && (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) 
+                && s.second.isWUDeviceVarInitRequired())
             {
-                CodeStream::Scope b(os);
+                // Get padded size of group and hence it's end thread
+                const unsigned int paddedSize = (unsigned int)(ceil((double)s.second.getSrcNeuronGroup()->getNumNeurons() / (double)initSparseBlkSz) * (double)initSparseBlkSz);
+                const unsigned int endThread = startThread + paddedSize;
+
+                os << "// ragged synapse group " << s.first << std::endl;
                 if(startThread == 0) {
-                    os << "const unsigned int lid = id;" << std::endl;
+                    os << "if (id < " << endThread << ")";
                 }
                 else {
-                    os << "const unsigned int lid = id - " << startThread << ";" << std::endl;
+                    os << "if ((id >= " << startThread << ") && (id < " << endThread <<  "))";
                 }
-
-                // Convert local thread id into i and j
-                os << "if(lid < " << s->getSrcNeuronGroup()->getNumNeurons() << ")";
                 {
                     CodeStream::Scope b(os);
-                    
-                    // If this weight update requires an RNG for initialisation,
-                    // make copy of global phillox RNG and skip ahead by thread id
-                    if(s->isWUInitRNGRequired(VarInit::DEVICE)) {
-                        os << "curandStatePhilox4_32_10_t initRNG = dd_rng[0];" << std::endl;
-                        os << "skipahead_sequence((unsigned long long)" << numStaticInitThreads << " + id, &initRNG);" << std::endl;
+                    if(startThread == 0) {
+                        os << "const unsigned int lid = id;" << std::endl;
                     }
-                    os << "const unsigned int rowLength = dd_rowLength" << s->getName() << "[lid];" << std::endl;
-                    os << "for(unsigned int j = 0; j < rowLength; j++)";
+                    else {
+                        os << "const unsigned int lid = id - " << startThread << ";" << std::endl;
+                    }
+
+                    // Convert local thread id into i and j
+                    os << "if(lid < " << s.second.getSrcNeuronGroup()->getNumNeurons() << ")";
                     {
                         CodeStream::Scope b(os);
+                        
+                        // If this weight update requires an RNG for initialisation,
+                        // make copy of global phillox RNG and skip ahead by thread id
+                        if(s.second.isWUInitRNGRequired(VarInit::DEVICE)) {
+                            os << "curandStatePhilox4_32_10_t initRNG = dd_rng[0];" << std::endl;
+                            os << "skipahead_sequence((unsigned long long)" << numStaticInitThreads << " + id, &initRNG);" << std::endl;
+                        }
+                        
+                        // Read row length
+                        // **NOTE** these will be nicely coalesced and used by all synapses in postsynaptic loop
+                        if(ragged) {
+                            os << "const unsigned int rowLength = dd_rowLength" << s.first << "[lid];" << std::endl;
+                            os << "for(unsigned int j = 0; j < rowLength; j++)";
+                        }
+                        else {
+                            os << "for(unsigned int idx = dd_indInG" << s.first << "[lid]; idx < dd_indInG" << s.first << "[lid + 1]; idx++)";
+                        }
+                        {
+                            CodeStream::Scope b(os);
 
-                        // Calculate index into padded array that can be used for all variables
-                        os << "const unsigned int idx = (lid * " << s->getMaxConnections() << ") + j;" << std::endl;
+                            // Calculate index into padded array that can be used for all variables
+                            if(ragged) {
+                                os << "const unsigned int idx = (lid * " << s.second.getMaxConnections() << ") + j;" << std::endl;
+                            }
+                            
+                            // Loop through variables
+                            auto wuVars = s.second.getWUModel()->getVars();
+                            for (size_t k= 0, l= wuVars.size(); k < l; k++) {
+                                const auto &varInit = s.second.getWUVarInitialisers()[k];
+                                const VarMode varMode = s.second.getWUVarMode(k);
 
-                        // Loop through variables
-                        auto wuVars = s->getWUModel()->getVars();
-                        for (size_t k= 0, l= wuVars.size(); k < l; k++) {
-                            const auto &varInit = s->getWUVarInitialisers()[k];
-                            const VarMode varMode = s->getWUVarMode(k);
-
-                            // If this variable should be initialised on the device and has any initialisation code
-                            if((varMode & VarInit::DEVICE) && !varInit.getSnippet()->getCode().empty()) {
-                                CodeStream::Scope b(os);
-                                os << StandardSubstitutions::initVariable(varInit, "dd_" + wuVars[k].first + s->getName() + "[idx]",
-                                                                          cudaFunctions, model.getPrecision(), "&initRNG") << std::endl;
+                                // If this variable should be initialised on the device and has any initialisation code
+                                if((varMode & VarInit::DEVICE) && !varInit.getSnippet()->getCode().empty()) {
+                                    CodeStream::Scope b(os);
+                                    os << StandardSubstitutions::initVariable(varInit, "dd_" + wuVars[k].first + s.first + "[idx]",
+                                                                              cudaFunctions, model.getPrecision(), "&initRNG") << std::endl;
+                                }
                             }
                         }
-                    }
 
-                }
-            }
-
-            // Update start thread
-            startThread = endThread;
-        }
-
-        std::string lastEndThreadName;
-        for(const auto &s : sparseSynapseGroups) {
-            // Write if block to determine if this thread should be used for this neuron group
-            os << "// sparse synapse group " << s->getName() << std::endl;
-            if(lastEndThreadName.empty()) {
-                if(startThread == 0) {
-                    os << "if (id < endThread" << s->getName() << ")";
-                }
-                else {
-                    os << "if ((id >= " << startThread << ") && (id < endThread" << s->getName() << "))";
-                }
-            }
-            else {
-                os << "if ((id >= endThread" << lastEndThreadName << ") && (id < endThread" << s->getName() << "))";
-            }
-            {
-                CodeStream::Scope b(os);
-                if(lastEndThreadName.empty()) {
-                    os << "const unsigned int lid = id - " << startThread << ";" << std::endl;
-                }
-                else {
-                    os << "const unsigned int lid = id - endThread" << lastEndThreadName << ";" << std::endl;
-                }
-                lastEndThreadName = s->getName();
-
-
-                os << "// only do this for existing synapses" << std::endl;
-                os << "if (lid < numSynapses" << s->getName() << ")";
-                {
-                    CodeStream::Scope b(os);
-
-                    // If this weight update requires an RNG for initialisation,
-                    // make copy of global phillox RNG and skip ahead by thread id
-                    if(s->isWUInitRNGRequired(VarInit::DEVICE)) {
-                        os << "curandStatePhilox4_32_10_t initRNG = dd_rng[0];" << std::endl;
-                        os << "skipahead_sequence((unsigned long long)" << numStaticInitThreads << " + id, &initRNG);" << std::endl;
-                    }
-                    // Loop through variables
-                    auto wuVars = s->getWUModel()->getVars();
-                    for (size_t k= 0, l= wuVars.size(); k < l; k++) {
-                        const auto &varInit = s->getWUVarInitialisers()[k];
-                        const VarMode varMode = s->getWUVarMode(k);
-
-                        // If this variable should be initialised on the device and has any initialisation code
-                        if((varMode & VarInit::DEVICE) && !varInit.getSnippet()->getCode().empty()) {
-                            CodeStream::Scope b(os);
-                            os << StandardSubstitutions::initVariable(varInit, "dd_" + wuVars[k].first + s->getName() + "[lid]",
-                                                                    cudaFunctions, model.getPrecision(), "&initRNG") << std::endl;
-                        }
                     }
                 }
+                
+                // Update start thread
+                startThread = endThread;
             }
         }
     }
-    os << std::endl;
+    
+    // Return number of threads used
+    return startThread;
 }
 #endif  // CPU_ONLY
 }   // Anonymous namespace
@@ -593,32 +554,9 @@ void genInit(const NNmodel &model,      //!< Model description
     // If required, insert kernel to initialize neurons and dense matrices
     const unsigned int numInitThreads = model.isDeviceInitRequired(localHostID) ? genInitializeDeviceKernel(os, model, localHostID) : 0;
 
-    // If the variables associated with sparse projections should be automatically initialised
-    std::vector<const SynapseGroup*> sparseDeviceSynapseGroups;
-    std::vector<const SynapseGroup*> raggedDeviceSynapseGroups;
-    if(GENN_PREFERENCES::autoInitSparseVars) {
-        // Loop through synapse groups
-        for(const auto &s : model.getLocalSynapseGroups()) {
-            // If synapse group has individual synapse variables and requires on device initialisation
-            if((s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) &&
-                s.second.isWUDeviceVarInitRequired())
-            {
-                // If synapse group is sparse, add to vector of sparse groups
-                if(s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                    sparseDeviceSynapseGroups.push_back(&s.second);
-                }
-                // Otherwise, if synapse group is ragged, add to vector of ragged groups
-                else if(s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
-                    raggedDeviceSynapseGroups.push_back(&s.second);
-                }
-            }
-        }
-
-        // If there are any sparse synapse groups, generate kernel to initialise them
-        if(!sparseDeviceSynapseGroups.empty() || !raggedDeviceSynapseGroups.empty()) {
-            genInitializeSparseDeviceKernel(sparseDeviceSynapseGroups, raggedDeviceSynapseGroups, numInitThreads, os, model);
-        }
-    }
+    // If required, insert kernel to initialize sparse matrices i.e. those that need structure creating between calls to initialize() and init_MODEL()
+    const unsigned int numSparseInitThreads = model.isDeviceSparseInitRequired() ? genInitializeSparseDeviceKernel(numInitThreads, os, model) : 0;
+    
 #endif  // CPU_ONLY
 
     // ------------------------------------------------------------------------
@@ -1025,60 +963,16 @@ void genInit(const NNmodel &model,      //!< Model description
             os << "initializeAllSparseArrays();" << std::endl;
         }
 
-        // If there are any sparse synapse or ragged groups that need to be initialised on device
-        if(!sparseDeviceSynapseGroups.empty() || !raggedDeviceSynapseGroups.empty()) {
-            CodeStream::Scope b(os);
+        // If there are any sparse initialisation 
+        if(numSparseInitThreads > 0) {
             if (model.isTimingEnabled()) {
                 os << "cudaEventRecord(sparseInitDeviceStart);" << std::endl;
             }
-
-            os << "// Calculate block sizes based on number of connections in sparse projection" << std::endl;
-
-            // Calculate padded sizes of ragged synapse groups (we can do this at compile time)
-            unsigned int endRaggedThread = 0;
-            for(const auto r : raggedDeviceSynapseGroups) {
-                endRaggedThread += (unsigned int)(ceil((double)r->getSrcNeuronGroup()->getNumNeurons() / (double)initSparseBlkSz) * (double)initSparseBlkSz);
-            }
-
-            // Loop through sparse synapse groups
-            std::string lastSynapseGroupName;
-            for(const auto s : sparseDeviceSynapseGroups) {
-                // Calculate end thread of this synapse group by calculating it's size (padded to size of blocks)
-                os << "const unsigned int endThread" << s->getName() << " = ";
-                os << "(unsigned int)(ceil((double)C" << s->getName() << ".connN / (double)" << initSparseBlkSz << ") * (double)" << initSparseBlkSz << ")";
-
-                // If this is the first sparse group, add the number of threads required to initialise ragged matrices
-                if(lastSynapseGroupName.empty()) {
-                    os << " + " << endRaggedThread;
-                }
-                // Otherwise, add previous sparse synapse group's end thread to this
-                else {
-                    os << " + endThread" + lastSynapseGroupName;
-                }
-                os << ";" << std::endl;
-
-                // Update name of last synapse group
-                lastSynapseGroupName = s->getName();
-            }
-
-            const std::string gridSize = sparseDeviceSynapseGroups.empty()
-                ? std::to_string(endRaggedThread)
-                : "endThread" + lastSynapseGroupName + " / " + std::to_string(initSparseBlkSz);
-
+            
             os << "// perform on-device sparse init" << std::endl;
             os << "dim3 iThreads(" << initSparseBlkSz << ", 1);" << std::endl;
-            os << "dim3 iGrid(" << gridSize << ", 1);" << std::endl;
-
-
-            // Loop through sparse synapse groups again to insert parameters to kernel launch
-            os << "initializeSparseDevice <<<iGrid, iThreads>>>(";
-            for(auto s = sparseDeviceSynapseGroups.cbegin(); s != sparseDeviceSynapseGroups.cend(); ++s) {
-                os << "endThread" << (*s)->getName() << ", C" << (*s)->getName() << ".connN";
-                if(std::next(s) != sparseDeviceSynapseGroups.cend()) {
-                    os << ", ";
-                }
-            }
-            os << ");" << std::endl;
+            os << "dim3 iGrid(" << numSparseInitThreads / initSparseBlkSz << ", 1);" << std::endl;
+            os << "initializeSparseDevice <<<iGrid, iThreads>>>();" << std::endl;
 
             if (model.isTimingEnabled()) {
                 os << "cudaEventRecord(sparseInitDeviceStop);" << std::endl;

@@ -198,7 +198,7 @@ void chooseDevice(NNmodel &model,       //!< the nn model we are generating code
                     groupSize[KernelInit].push_back(numSrcNeurons * numTrgNeurons);
                 }
                 else if(sparseOrRagged) {
-                    groupSize[KernelInitSparse].push_back(numSrcNeurons * maxConnections);
+                    groupSize[KernelInitSparse].push_back(numSrcNeurons);
                 }
             }
         }
