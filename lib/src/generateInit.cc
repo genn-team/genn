@@ -523,7 +523,12 @@ void genInitializeSparseDeviceKernel(const std::vector<const SynapseGroup*> &spa
             // Write if block to determine if this thread should be used for this neuron group
             os << "// sparse synapse group " << s->getName() << std::endl;
             if(lastEndThreadName.empty()) {
-                os << "if ((id >= " << startThread << ") && (id < endThread" << s->getName() << "))";
+                if(startThread == 0) {
+                    os << "if (id < endThread" << s->getName() << ")";
+                }
+                else {
+                    os << "if ((id >= " << startThread << ") && (id < endThread" << s->getName() << "))";
+                }
             }
             else {
                 os << "if ((id >= endThread" << lastEndThreadName << ") && (id < endThread" << s->getName() << "))";
@@ -1031,14 +1036,10 @@ void genInit(const NNmodel &model,      //!< Model description
 
             os << "// Calculate block sizes based on number of connections in sparse projection" << std::endl;
 
-            // When dry run compiling this code the sparse block size won't have been
-            // calculated so use 32 (arbitrarily) to avoid divide by zero warnings
-            const unsigned int safeBlkSize = (initSparseBlkSz == 0) ? 32 : initSparseBlkSz;
-
             // Calculate padded sizes of ragged synapse groups (we can do this at compile time)
             unsigned int endRaggedThread = 0;
             for(const auto r : raggedDeviceSynapseGroups) {
-                endRaggedThread += (unsigned int)(ceil((double)(r->getSrcNeuronGroup()->getNumNeurons() * r->getMaxConnections()) / (double)safeBlkSize) * (double)safeBlkSize);
+                endRaggedThread += (unsigned int)(ceil((double)(r->getSrcNeuronGroup()->getNumNeurons() * r->getMaxConnections()) / (double)initSparseBlkSz) * (double)initSparseBlkSz);
             }
 
             // Loop through sparse synapse groups
@@ -1046,7 +1047,7 @@ void genInit(const NNmodel &model,      //!< Model description
             for(const auto s : sparseDeviceSynapseGroups) {
                 // Calculate end thread of this synapse group by calculating it's size (padded to size of blocks)
                 os << "const unsigned int endThread" << s->getName() << " = ";
-                os << "(unsigned int)(ceil((double)C" << s->getName() << ".connN / (double)" << safeBlkSize << ") * (double)" << safeBlkSize << ")";
+                os << "(unsigned int)(ceil((double)C" << s->getName() << ".connN / (double)" << initSparseBlkSz << ") * (double)" << initSparseBlkSz << ")";
 
                 // If this is the first sparse group, add the number of threads required to initialise ragged matrices
                 if(lastSynapseGroupName.empty()) {
@@ -1064,10 +1065,10 @@ void genInit(const NNmodel &model,      //!< Model description
 
             const std::string gridSize = sparseDeviceSynapseGroups.empty()
                 ? std::to_string(endRaggedThread)
-                : "endThread" + lastSynapseGroupName + " / " + std::to_string(safeBlkSize);
+                : "endThread" + lastSynapseGroupName + " / " + std::to_string(initSparseBlkSz);
 
             os << "// perform on-device sparse init" << std::endl;
-            os << "dim3 iThreads(" << safeBlkSize << ", 1);" << std::endl;
+            os << "dim3 iThreads(" << initSparseBlkSz << ", 1);" << std::endl;
             os << "dim3 iGrid(" << gridSize << ", 1);" << std::endl;
 
 

@@ -326,6 +326,7 @@ void chooseDevice(NNmodel &model,       //!< the nn model we are generating code
                 synDynBlkSz= warpSize*(rep+1);
                 neuronBlkSz = warpSize*(rep+1);
                 initBlkSz = warpSize*(rep+1);
+                initSparseBlkSz = warpSize*(rep+1);
 
                 model.setPopulationSums();
                 generate_model_runner(model, path, localHostID);
