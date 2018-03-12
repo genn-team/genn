@@ -456,8 +456,7 @@ void genInitializeSparseDeviceKernel(const std::vector<const SynapseGroup*> &spa
         unsigned int startThread = 0;
         for(const auto &s : raggedSynapseGroups) {
             // Get padded size of group and hence it's end thread
-            const unsigned int numSynapses = s->getSrcNeuronGroup()->getNumNeurons() * s->getMaxConnections();
-            const unsigned int paddedSize = (unsigned int)(ceil((double)numSynapses / (double)initSparseBlkSz) * (double)initSparseBlkSz);
+            const unsigned int paddedSize = (unsigned int)(ceil((double)s->getSrcNeuronGroup()->getNumNeurons() / (double)initSparseBlkSz) * (double)initSparseBlkSz);
             const unsigned int endThread = startThread + paddedSize;
 
             os << "// ragged synapse group " << s->getName() << std::endl;
@@ -477,24 +476,23 @@ void genInitializeSparseDeviceKernel(const std::vector<const SynapseGroup*> &spa
                 }
 
                 // Convert local thread id into i and j
-                os << "const unsigned int i = lid / " << s->getMaxConnections() << ";" << std::endl;
-                os << "if(i < " << s->getSrcNeuronGroup()->getNumNeurons() << ")";
+                os << "if(lid < " << s->getSrcNeuronGroup()->getNumNeurons() << ")";
                 {
                     CodeStream::Scope b(os);
-                    os << "const unsigned int j = lid % " << s->getMaxConnections() << ";" << std::endl;
-                    os << "if(j < dd_rowLength" << s->getName() << "[i])";
+                    
+                    // If this weight update requires an RNG for initialisation,
+                    // make copy of global phillox RNG and skip ahead by thread id
+                    if(s->isWUInitRNGRequired(VarInit::DEVICE)) {
+                        os << "curandStatePhilox4_32_10_t initRNG = dd_rng[0];" << std::endl;
+                        os << "skipahead_sequence((unsigned long long)" << numStaticInitThreads << " + id, &initRNG);" << std::endl;
+                    }
+                    os << "const unsigned int rowLength = dd_rowLength" << s->getName() << "[lid];" << std::endl;
+                    os << "for(unsigned int j = 0; j < rowLength; j++)";
                     {
                         CodeStream::Scope b(os);
 
-                        // If this weight update requires an RNG for initialisation,
-                        // make copy of global phillox RNG and skip ahead by thread id
-                        if(s->isWUInitRNGRequired(VarInit::DEVICE)) {
-                            os << "curandStatePhilox4_32_10_t initRNG = dd_rng[0];" << std::endl;
-                            os << "skipahead_sequence((unsigned long long)" << numStaticInitThreads << " + id, &initRNG);" << std::endl;
-                        }
-
                         // Calculate index into padded array that can be used for all variables
-                        os << "const unsigned int idx = (i * " << s->getMaxConnections() << ") + j;" << std::endl;
+                        os << "const unsigned int idx = (lid * " << s->getMaxConnections() << ") + j;" << std::endl;
 
                         // Loop through variables
                         auto wuVars = s->getWUModel()->getVars();
@@ -1039,7 +1037,7 @@ void genInit(const NNmodel &model,      //!< Model description
             // Calculate padded sizes of ragged synapse groups (we can do this at compile time)
             unsigned int endRaggedThread = 0;
             for(const auto r : raggedDeviceSynapseGroups) {
-                endRaggedThread += (unsigned int)(ceil((double)(r->getSrcNeuronGroup()->getNumNeurons() * r->getMaxConnections()) / (double)initSparseBlkSz) * (double)initSparseBlkSz);
+                endRaggedThread += (unsigned int)(ceil((double)r->getSrcNeuronGroup()->getNumNeurons() / (double)initSparseBlkSz) * (double)initSparseBlkSz);
             }
 
             // Loop through sparse synapse groups
