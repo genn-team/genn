@@ -289,14 +289,8 @@ void generatePostParallelisedCode(
                     }
 
                     if (sg.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
-                        if(sg.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
-                            name_substitutions(wCode, "dd_", wuVars.nameBegin, wuVars.nameEnd,
-                                               sg.getName() + "[(shSpk" + postfix + "[j] * " + to_string(sg.getMaxConnections()) + ") + " + localID + "]");
-                        }
-                        else {
-                            name_substitutions(wCode, "dd_", wuVars.nameBegin, wuVars.nameEnd,
+                        name_substitutions(wCode, "dd_", wuVars.nameBegin, wuVars.nameEnd,
                                                sg.getName() + "[prePos]");
-                        }
                     }
                 }
                 else { // DENSE
