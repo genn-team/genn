@@ -52,8 +52,6 @@ void generate_process_presynaptic_events_code_CPU(
 
     if ((evnt && sg.isSpikeEventRequired()) || (!evnt && sg.isTrueSpikeRequired())) {
         const auto *wu = sg.getWUModel();
-        const bool sparse = sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE;
-        const bool ragged = sg.getMatrixType() & SynapseMatrixConnectivity::RAGGED;
 
         // Detect spike events or spikes and do the update
         os << "// process presynaptic events: " << (evnt ? "Spike type events" : "True Spikes") << std::endl;
@@ -68,8 +66,8 @@ void generate_process_presynaptic_events_code_CPU(
 
             os << "const unsigned int ipre = glbSpk" << postfix << sg.getSrcNeuronGroup()->getName() << "[" << sg.getOffsetPre() << "i];" << std::endl;
 
-            if (sparse || ragged) {
-                if(sparse) {
+            if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                if(sg.getMatrixType() & SynapseMatrixConnectivity::YALE) {
                     os << "const unsigned int npost = C" << sgName << ".indInG[ipre + 1] - C" << sgName << ".indInG[ipre];" << std::endl;
                 }
                 else {
@@ -83,10 +81,10 @@ void generate_process_presynaptic_events_code_CPU(
             }
             {
                 CodeStream::Scope b(os);
-                if(sparse) {
+                if(sg.getMatrixType() & SynapseMatrixConnectivity::YALE) {
                     os << "const unsigned int ipost = C" << sgName << ".ind[C" << sgName << ".indInG[ipre] + j];" << std::endl;
                 }
-                else if(ragged) {
+                else if(sg.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
                     // **TODO** seperate stride from max connections
                     os << "const unsigned int ipost = C" << sgName << ".ind[(ipre * " << sg.getMaxConnections() << ") + j];" << std::endl;
                 }
@@ -137,16 +135,16 @@ void generate_process_presynaptic_events_code_CPU(
                 substitute(wCode, "$(updatelinsyn)", "$(inSyn) += $(addtoinSyn)");
                 substitute(wCode, "$(t)", "t");
                 if (sg.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
-                    if (sparse) { // SPARSE
+                    if (sg.getMatrixType() & SynapseMatrixConnectivity::YALE) {
                         name_substitutions(wCode, "", wuVars.nameBegin, wuVars.nameEnd,
                                            sgName + "[C" + sgName + ".indInG[ipre] + j]");
                     }
-                    else if(ragged) {
+                    else if(sg.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
                         // **TODO** seperate stride from max connections
                         name_substitutions(wCode, "", wuVars.nameBegin, wuVars.nameEnd,
                                            sgName + "[(ipre * " + to_string(sg.getMaxConnections()) + ") + j]");
                     }
-                    else { // DENSE
+                    else {
                         name_substitutions(wCode, "", wuVars.nameBegin, wuVars.nameEnd,
                                            sgName + "[ipre * " + to_string(sg.getTrgNeuronGroup()->getNumNeurons()) + " + ipost]");
                     }
@@ -484,7 +482,7 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
                         substitute(SDcode, "$(t)", "t");
                         substitute(SDcode, "$(updatelinsyn)", "$(inSyn) += $(addtoinSyn)");
 
-                        if (sg->getMatrixType() & SynapseMatrixConnectivity::SPARSE) { // SPARSE
+                        if (sg->getMatrixType() & SynapseMatrixConnectivity::YALE) {
                             os << "for (int n= 0; n < C" << s.first << ".connN; n++)";
                             {
                                 CodeStream::Scope b(os);
@@ -525,7 +523,7 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
                                 }
                             }
                         }
-                        else { // DENSE
+                        else {
                             os << "for (int i = 0; i < " <<  sg->getSrcNeuronGroup()->getNumNeurons() << "; i++)";
                             {
                                 CodeStream::Scope b(os);
@@ -615,7 +613,6 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
                 const SynapseGroup *sg = model.findSynapseGroup(s.first);
                 const auto *wu = sg->getWUModel();
                 const bool sparse = sg->getMatrixType() & SynapseMatrixConnectivity::SPARSE;
-                const bool ragged = sg->getMatrixType() & SynapseMatrixConnectivity::RAGGED;
 
                 // Create iteration context to iterate over the variables; derived and extra global parameters
                 DerivedParamNameIterCtx wuDerivedParams(wu->getDerivedParams());
@@ -650,27 +647,26 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
                         string offsetTrueSpkPost = sg->getTrgNeuronGroup()->isTrueSpikeRequired() ? sg->getOffsetPost("") : "";
                         os << "lSpk = glbSpk" << sg->getTrgNeuronGroup()->getName() << "[" << offsetTrueSpkPost << "ipost];" << std::endl;
 
-                        if (sparse) { // SPARSE
-                            // TODO: THIS NEEDS CHECKING AND FUNCTIONAL C.POST* ARRAYS
+                        if (sparse) {
+                            assert(sg->getMatrixType() & SynapseMatrixConnectivity::YALE);
                             os << "npre = C" << s.first << ".revIndInG[lSpk + 1] - C" << s.first << ".revIndInG[lSpk];" << std::endl;
                             os << "for (int l = 0; l < npre; l++)";
                         }
-                        else if(ragged) {
-                            assert(false);
-                        }
-                        else { // DENSE
+                        else {
                             os << "for (ipre = 0; ipre < " << sg->getSrcNeuronGroup()->getNumNeurons() << "; ipre++)";
                         }
                         {
                             CodeStream::Scope b(os);
                             if(sparse) {
+                                assert(sg->getMatrixType() & SynapseMatrixConnectivity::YALE);
                                 os << "ipre = C" << s.first << ".revIndInG[lSpk] + l;" << std::endl;
                             }
 
                             string code = wu->getLearnPostCode();
                             substitute(code, "$(t)", "t");
                             // Code substitutions ----------------------------------------------------------------------------------
-                            if (sparse) { // SPARSE
+                            if (sparse) {
+                                assert(sg->getMatrixType() & SynapseMatrixConnectivity::YALE);
                                 name_substitutions(code, "", wuVars.nameBegin, wuVars.nameEnd,
                                                 s.first + "[C" + s.first + ".remap[ipre]]");
                             }

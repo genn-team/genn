@@ -666,7 +666,7 @@ void genDefinitions(const NNmodel &model,   //!< Model description
         if (s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
             extern_variable_def(os, "uint32_t *", "gp" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST);
         }
-        else if (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+        else if (s.second.getMatrixType() & SynapseMatrixConnectivity::YALE) {
             os << varExportPrefix << " SparseProjection C" << s.first << ";" << std::endl;
         }
         else if(s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
@@ -834,7 +834,7 @@ void genDefinitions(const NNmodel &model,   //!< Model description
     os << std::endl;
 
     for(const auto &s : model.getLocalSynapseGroups()) {
-        if (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+        if (s.second.getMatrixType() & SynapseMatrixConnectivity::YALE) {
             os << funcExportPrefix << "void allocate" << s.first << "(unsigned int connN);" << std::endl;
             os << std::endl;
         }
@@ -1239,7 +1239,7 @@ void genRunner(const NNmodel &model,    //!< Model description
         if (s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
             variable_def(os, "uint32_t *", "gp"+s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST);
         }
-        else if (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+        else if (s.second.getMatrixType() & SynapseMatrixConnectivity::YALE) {
             os << "SparseProjection C" << s.first << ";" << std::endl;
 #ifndef CPU_ONLY
             os << "unsigned int *d_indInG" << s.first << ";" << std::endl;
@@ -1269,6 +1269,9 @@ void genRunner(const NNmodel &model,    //!< Model description
             os << "__device__ unsigned int *dd_rowLength" << s.first << ";" << std::endl;
             os << "unsigned int *d_ind" << s.first << ";" << std::endl;
             os << "__device__ unsigned int *dd_ind" << s.first << ";" << std::endl;
+
+            assert(!model.isSynapseGroupDynamicsRequired(s.first));
+            assert(!model.isSynapseGroupPostLearningRequired(s.first));
 #endif  // CPU_ONLY
         }
 
@@ -1549,7 +1552,7 @@ void genRunner(const NNmodel &model,    //!< Model description
     // allocating conductance arrays for sparse matrices
 
     for(const auto &s : model.getLocalSynapseGroups()) {
-        if (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+        if (s.second.getMatrixType() & SynapseMatrixConnectivity::YALE) {
             os << "void allocate" << s.first << "(unsigned int connN)";
             {
                 CodeStream::Scope b(os);
@@ -1679,7 +1682,7 @@ void genRunner(const NNmodel &model,    //!< Model description
         for(const auto &s : model.getLocalSynapseGroups()) {
             free_variable(os, "inSyn" + s.first, s.second.getInSynVarMode());
 
-            if (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+            if (s.second.getMatrixType() & SynapseMatrixConnectivity::YALE) {
                 os << "C" << s.first << ".connN= 0;" << std::endl;
 
                 free_host_variable(os, "C" + s.first + ".indInG", VarMode::LOC_HOST_DEVICE_INIT_HOST);
@@ -1710,10 +1713,14 @@ void genRunner(const NNmodel &model,    //!< Model description
 
                 free_host_variable(os, "C" + s.first + ".ind", VarMode::LOC_HOST_DEVICE_INIT_HOST);
                 free_device_variable(os, "ind" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST);
+
+                assert(!model.isSynapseGroupPostLearningRequired(s.first));
+                assert(!model.isSynapseGroupDynamicsRequired(s.first));
             }
-            if (s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
+            else if (s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
                 free_variable(os, "gp" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST);
             }
+
             if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
                 for(const auto &v : s.second.getWUModel()->getVars()) {
                     free_variable(os, v.first + s.first, s.second.getWUVarMode(v.first));

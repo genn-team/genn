@@ -455,9 +455,9 @@ unsigned int genInitializeSparseDeviceKernel(unsigned int numStaticInitThreads, 
         // Shared memory array so row lengths don't have to be read by EVERY postsynaptic thread
         os << "__shared__ unsigned int shRowLength[" << initSparseBlkSz << "];" << std::endl;
 
-        // If any of the synapse groups have sparse connectivity we also need a shared memory array to containt the row start indices
+        // If any of the synapse groups have yale format connectivity we also need a shared memory array to containt the row start indices
         if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
-            [](const NNmodel::SynapseGroupValueType &s){ return (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE); }))
+            [](const NNmodel::SynapseGroupValueType &s){ return (s.second.getMatrixType() & SynapseMatrixConnectivity::YALE); }))
         {
             os << "__shared__ unsigned int shRowStart[" << initSparseBlkSz << "];" << std::endl;
         }
@@ -467,13 +467,10 @@ unsigned int genInitializeSparseDeviceKernel(unsigned int numStaticInitThreads, 
 
         // Loop through local synapse groups
         for(const auto &s : model.getLocalSynapseGroups()) {
-            const bool sparse = (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE);
-            const bool ragged = (s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED);
-            
             // If this group has sparse or ragged connectivity with individual synapse variables
             // and it's weight update has variables that require initialising on GPU
-            if((sparse || ragged) 
-                && (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) 
+            if(s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE
+                && (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL)
                 && s.second.isWUDeviceVarInitRequired())
             {
                 // Get padded size of group and hence it's end thread
@@ -481,11 +478,11 @@ unsigned int genInitializeSparseDeviceKernel(unsigned int numStaticInitThreads, 
                 const unsigned int paddedSize = (unsigned int)(ceil((double)s.second.getMaxConnections() / (double)initSparseBlkSz) * (double)initSparseBlkSz);
                 const unsigned int endThread = startThread + paddedSize;
 
-                if(ragged) {
+                if(s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
                     os << "// ragged synapse group " << s.first << std::endl;
                 }
                 else {
-                    os << "// sparse synapse group " << s.first << std::endl;
+                    os << "// yale-format synapse group " << s.first << std::endl;
                 }
                 if(startThread == 0) {
                     os << "if (id < " << endThread << ")";
@@ -509,7 +506,7 @@ unsigned int genInitializeSparseDeviceKernel(unsigned int numStaticInitThreads, 
                         os << "skipahead_sequence((unsigned long long)" << numStaticInitThreads << " + id, &initRNG);" << std::endl;
                     }
 
-                    if(ragged) {
+                    if(s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
                         os << "unsigned int idx = lid;" << std::endl;
                     }
 
@@ -531,7 +528,7 @@ unsigned int genInitializeSparseDeviceKernel(unsigned int numStaticInitThreads, 
                         os << "if (threadIdx.x < numRowsInBlock)";
                         {
                             CodeStream::Scope b(os);
-                            if(sparse) {
+                            if(s.second.getMatrixType() & SynapseMatrixConnectivity::YALE) {
                                 os << "const unsigned int rowStart = dd_indInG" << s.first << "[(r * " << initSparseBlkSz << ") + threadIdx.x];" << std::endl;
                                 os << "shRowStart[threadIdx.x] = rowStart;" << std::endl;
                                 os << "shRowLength[threadIdx.x] = dd_indInG" << s.first << "[(r * " << initSparseBlkSz << ") + threadIdx.x + 1] - rowStart;" << std::endl;
@@ -553,7 +550,7 @@ unsigned int genInitializeSparseDeviceKernel(unsigned int numStaticInitThreads, 
                                 CodeStream::Scope b(os);
 
                                 // If this matrix is sparse calculate index from start index of row and thread id
-                                if(sparse) {
+                                if(s.second.getMatrixType() & SynapseMatrixConnectivity::YALE) {
                                     os << "const unsigned idx = shRowStart[i] + lid;" << std::endl;
                                 }
 
@@ -573,7 +570,7 @@ unsigned int genInitializeSparseDeviceKernel(unsigned int numStaticInitThreads, 
                             }
 
                             // If matrix is ragged, advance index to next row by adding stride
-                            if(ragged) {
+                            if(s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
                                 os << "idx += " << s.second.getMaxConnections() << ";" << std::endl;
                             }
                         }
@@ -880,42 +877,39 @@ void genInit(const NNmodel &model,      //!< Model description
     {
         CodeStream::Scope b(os);
         for(const auto &s : model.getLocalSynapseGroups()) {
-            const bool sparse = (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE);
-            const bool ragged = (s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED);
+            if(s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                if (s.second.getMatrixType() & SynapseMatrixConnectivity::YALE){
+                    os << "initializeSparseArray(C" << s.first << ", ";
+                    os << "d_ind" << s.first << ", ";
+                    os << "d_indInG" << s.first << ", ";
+                    os << s.second.getSrcNeuronGroup()->getNumNeurons() <<");" << std::endl;
 
-            if (sparse){
-                os << "initializeSparseArray(C" << s.first << ", ";
-                os << "d_ind" << s.first << ", ";
-                os << "d_indInG" << s.first << ", ";
-                os << s.second.getSrcNeuronGroup()->getNumNeurons() <<");" << std::endl;
-
-                if (model.isSynapseGroupDynamicsRequired(s.first)) {
-                    os << "initializeSparseArrayPreInd(C" << s.first << ", ";
-                    os << "d_preInd" << s.first << ");" << std::endl;
+                    if (model.isSynapseGroupDynamicsRequired(s.first)) {
+                        os << "initializeSparseArrayPreInd(C" << s.first << ", ";
+                        os << "d_preInd" << s.first << ");" << std::endl;
+                    }
+                    if (model.isSynapseGroupPostLearningRequired(s.first)) {
+                        os << "initializeSparseArrayRev(C" << s.first << ", ";
+                        os << "d_revInd" << s.first << ",";
+                        os << "d_revIndInG" << s.first << ",";
+                        os << "d_remap" << s.first << ",";
+                        os << s.second.getTrgNeuronGroup()->getNumNeurons() << ");" << std::endl;
+                    }
                 }
-                if (model.isSynapseGroupPostLearningRequired(s.first)) {
-                    os << "initializeSparseArrayRev(C" << s.first << ", ";
-                    os << "d_revInd" << s.first << ",";
-                    os << "d_revIndInG" << s.first << ",";
-                    os << "d_remap" << s.first << ",";
-                    os << s.second.getTrgNeuronGroup()->getNumNeurons() << ");" << std::endl;
-                }
-            }
-            else if(ragged) {
-                os << "initializeRaggedArray(C" << s.first << ", ";
-                os << "d_ind" << s.first << ", ";
-                os << "d_rowLength" << s.first << ", ";
-                os << s.second.getSrcNeuronGroup()->getNumNeurons() << ");" << std::endl;
+                else if(s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
+                    os << "initializeRaggedArray(C" << s.first << ", ";
+                    os << "d_ind" << s.first << ", ";
+                    os << "d_rowLength" << s.first << ", ";
+                    os << s.second.getSrcNeuronGroup()->getNumNeurons() << ");" << std::endl;
 
-                // **TODO**
-                assert(!model.isSynapseGroupDynamicsRequired(s.first));
-                assert(!model.isSynapseGroupPostLearningRequired(s.first));
-            }
-            
-            if(sparse || ragged) {
+                    // **TODO**
+                    assert(!model.isSynapseGroupDynamicsRequired(s.first));
+                    assert(!model.isSynapseGroupPostLearningRequired(s.first));
+                }
+
                 if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
                     // Get number of per-synapse variables to copy (as a string)
-                    const std::string count = sparse
+                    const std::string count = (s.second.getMatrixType() & SynapseMatrixConnectivity::YALE)
                         ? "C" + s.first + ".connN"
                         : to_string(s.second.getMaxConnections() * s.second.getSrcNeuronGroup()->getNumNeurons());
 
@@ -951,11 +945,9 @@ void genInit(const NNmodel &model,      //!< Model description
         }
         bool anySparse = false;
         for(const auto &s : model.getLocalSynapseGroups()) {
-            const bool sparse = s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE;
-            const bool ragged = s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED;
             const unsigned int numSrcNeurons = s.second.getSrcNeuronGroup()->getNumNeurons();
             const unsigned int numTrgNeurons = s.second.getTrgNeuronGroup()->getNumNeurons();
-            if (sparse || ragged) {
+            if (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                 anySparse = true;
                 if (model.isSynapseGroupDynamicsRequired(s.first)) {
                     os << "createPreIndices(" << numSrcNeurons << ", " << numTrgNeurons << ", &C" << s.first << ");" << std::endl;
@@ -974,7 +966,7 @@ void genInit(const NNmodel &model,      //!< Model description
                         // If this variable should be initialised on the host and has any initialisation code
                         if(shouldInitOnHost(varMode) && !varInit.getSnippet()->getCode().empty()) {
                             CodeStream::Scope b(os);
-                            if(sparse) {
+                            if(s.second.getMatrixType() & SynapseMatrixConnectivity::YALE) {
                                 os << "for (int i = 0; i < C" << s.first << ".connN; i++)";
                                 {
                                     CodeStream::Scope b(os);

@@ -166,11 +166,9 @@ void chooseDevice(NNmodel &model,       //!< the nn model we are generating code
             const unsigned int maxConnections = s.second.getMaxConnections();
             const unsigned int numSrcNeurons = s.second.getSrcNeuronGroup()->getNumNeurons();
             const unsigned int numTrgNeurons = s.second.getTrgNeuronGroup()->getNumNeurons();
-            const bool sparseOrRagged = (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE)
-                || (s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED);
 
             // **TODO** presynaptic parallelism?
-            if (sparseOrRagged) {
+            if (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                 groupSize[KernelCalcSynapses].push_back(maxConnections);
             }
             else {
@@ -183,7 +181,7 @@ void chooseDevice(NNmodel &model,       //!< the nn model we are generating code
             }
 
             if (model.isSynapseGroupDynamicsRequired(s.first)) {
-                if (sparseOrRagged) {
+                if (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                     groupSize[KernelCalcSynapseDynamics].push_back(numSrcNeurons * maxConnections);
                 }
                 else {
@@ -193,12 +191,11 @@ void chooseDevice(NNmodel &model,       //!< the nn model we are generating code
 
             // If synapse group has individual weights and needs device initialisation
             if((s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) && s.second.isWUDeviceVarInitRequired()) {
-                // If matrix is dense
-                if(s.second.getMatrixType() & SynapseMatrixConnectivity::DENSE) {
-                    groupSize[KernelInit].push_back(numSrcNeurons * numTrgNeurons);
-                }
-                else if(sparseOrRagged) {
+                if(s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                     groupSize[KernelInitSparse].push_back(numSrcNeurons);
+                }
+                else {
+                    groupSize[KernelInit].push_back(numSrcNeurons * numTrgNeurons);
                 }
             }
         }

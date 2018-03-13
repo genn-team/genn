@@ -195,9 +195,6 @@ void generatePostParallelisedCode(
     ExtraGlobalParamNameIterCtx wuExtraGlobalParams(wu->getExtraGlobalParams());
     VarNameIterCtx wuVars(wu->getVars());
 
-    const bool sparseOrRagged = (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE)
-        || (sg.getMatrixType() & SynapseMatrixConnectivity::RAGGED);
-
     os << "// process presynaptic events: " << (evnt ? "Spike type events" : "True Spikes") << std::endl;
     os << "for (r = 0; r < numSpikeSubsets" << postfix << "; r++)";
     {
@@ -211,7 +208,7 @@ void generatePostParallelisedCode(
             os << "shSpk" << postfix << "[threadIdx.x] = dd_glbSpk" << postfix << sg.getSrcNeuronGroup()->getName() << "[" << sg.getOffsetPre() << "(r * BLOCKSZ_SYN) + threadIdx.x];" << std::endl;
         }
 
-        if (sparseOrRagged && !sg.isPSAtomicAddRequired(synapseBlkSz)) {
+        if ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && !sg.isPSAtomicAddRequired(synapseBlkSz)) {
             // set shLg to 0 for all postsynaptic neurons; is ok as model.neuronN[model.synapseTarget[i]] <= synapseBlkSz
             os << "if (threadIdx.x < " << sg.getTrgNeuronGroup()->getNumNeurons() << ") shLg[threadIdx.x] = 0;" << std::endl;
         }
@@ -257,8 +254,8 @@ void generatePostParallelisedCode(
                 }
 
 
-                if(sparseOrRagged) {
-                    if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                if(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                    if (sg.getMatrixType() & SynapseMatrixConnectivity::YALE) {
                         os << "prePos = dd_indInG" << sg.getName() << "[shSpk" << postfix << "[j]];" << std::endl;
                         os << "npost = dd_indInG" << sg.getName() << "[shSpk" << postfix << "[j] + 1] - prePos;" << std::endl;
                     }
@@ -278,7 +275,7 @@ void generatePostParallelisedCode(
                 // Code substitutions ----------------------------------------------------------------------------------
                 string wCode = (evnt ? wu->getEventCode() : wu->getSimCode());
                 substitute(wCode, "$(t)", "t");
-                if (sparseOrRagged) {
+                if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                     if (sg.isPSAtomicAddRequired(synapseBlkSz)) { // SPARSE using atomicAdd
                         substitute(wCode, "$(updatelinsyn)", getFloatAtomicAdd(ftype) + "(&$(inSyn), $(addtoinSyn))");
                         substitute(wCode, "$(inSyn)", "dd_inSyn" + sg.getName() + "[ipost]");
@@ -293,7 +290,7 @@ void generatePostParallelisedCode(
                                                sg.getName() + "[prePos]");
                     }
                 }
-                else { // DENSE
+                else {
                     substitute(wCode, "$(updatelinsyn)", "$(inSyn) += $(addtoinSyn)");
                     substitute(wCode, "$(inSyn)", "linSyn");
                     if (sg.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
@@ -308,7 +305,7 @@ void generatePostParallelisedCode(
                 // end Code substitutions -------------------------------------------------------------------------
                 os << wCode << std::endl;
 
-                if (sparseOrRagged) {
+                if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                     os << CodeStream::CB(140); // end if (id < npost)
                 }
 
@@ -320,7 +317,7 @@ void generatePostParallelisedCode(
                 }
             }
 
-            if (sparseOrRagged && !sg.isPSAtomicAddRequired(synapseBlkSz)) {
+            if ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && !sg.isPSAtomicAddRequired(synapseBlkSz)) {
                 os << "__syncthreads();" << std::endl;
                 os << "if (threadIdx.x < " << sg.getTrgNeuronGroup()->getNumNeurons() << ")";
                 {
@@ -352,7 +349,7 @@ void generate_process_presynaptic_events_code(
      if ((evnt && sg.isSpikeEventRequired()) || (!evnt && sg.isTrueSpikeRequired())) {
         // parallelisation along pre-synaptic spikes, looped over post-synaptic neurons
         if(sg.getSpanType() == SynapseGroup::SpanType::PRESYNAPTIC) {
-            assert(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE);
+            assert(sg.getMatrixType() & SynapseMatrixConnectivity::YALE);
             generatePreParallelisedSparseCode(os, sg, localID, postfix, ftype);
         }
         // classical parallelisation of post-synaptic neurons in parallel and spikes in a loop
@@ -910,8 +907,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
         // we need ipost in any case, and we need npost if there are any SPARSE connections
         os << "unsigned int ipost;" << std::endl;
         for(const auto &s : model.getLocalSynapseGroups()) {
-            if ((s.second.getMatrixType()  & SynapseMatrixConnectivity::SPARSE)
-                || (s.second.getMatrixType()  & SynapseMatrixConnectivity::RAGGED)){
+            if (s.second.getMatrixType()  & SynapseMatrixConnectivity::SPARSE){
                 os << "unsigned int prePos; " << std::endl;
                 os << "unsigned int npost; " << std::endl;
                 break;
