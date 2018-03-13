@@ -452,6 +452,16 @@ unsigned int genInitializeSparseDeviceKernel(unsigned int numStaticInitThreads, 
     {
         CodeStream::Scope b(os);
 
+        // Shared memory array so row lengths don't have to be read by EVERY postsynaptic thread
+        os << "__shared__ unsigned int shRowLengths[" << initSparseBlkSz << "];" << std::endl;
+
+        // If any of the synapse groups have sparse connectivity we also need a shared memory array to containt the row start indices
+        if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
+            [](const NNmodel::SynapseGroupValueType &s){ return (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE); }))
+        {
+            os << "__shared__ unsigned int shRowStart[" << initSparseBlkSz << "];" << std::endl;
+        }
+
         // common variables for all cases
         os << "const unsigned int id = " << initSparseBlkSz << " * blockIdx.x + threadIdx.x;" << std::endl;
 
@@ -467,10 +477,16 @@ unsigned int genInitializeSparseDeviceKernel(unsigned int numStaticInitThreads, 
                 && s.second.isWUDeviceVarInitRequired())
             {
                 // Get padded size of group and hence it's end thread
-                const unsigned int paddedSize = (unsigned int)(ceil((double)s.second.getSrcNeuronGroup()->getNumNeurons() / (double)initSparseBlkSz) * (double)initSparseBlkSz);
+                const unsigned int numSrcNeurons = s.second.getSrcNeuronGroup()->getNumNeurons();
+                const unsigned int paddedSize = (unsigned int)(ceil((double)s.second.getMaxConnections() / (double)initSparseBlkSz) * (double)initSparseBlkSz);
                 const unsigned int endThread = startThread + paddedSize;
 
-                os << "// ragged synapse group " << s.first << std::endl;
+                if(ragged) {
+                    os << "// ragged synapse group " << s.first << std::endl;
+                }
+                else {
+                    os << "// sparse synapse group " << s.first << std::endl;
+                }
                 if(startThread == 0) {
                     os << "if (id < " << endThread << ")";
                 }
@@ -486,8 +502,8 @@ unsigned int genInitializeSparseDeviceKernel(unsigned int numStaticInitThreads, 
                         os << "const unsigned int lid = id - " << startThread << ";" << std::endl;
                     }
 
-                    // Convert local thread id into i and j
-                    os << "if(lid < " << s.second.getSrcNeuronGroup()->getNumNeurons() << ")";
+                    // Only for existing connections
+                    os << "if(lid < " << s.second.getMaxConnections() << ")";
                     {
                         CodeStream::Scope b(os);
                         
@@ -498,34 +514,73 @@ unsigned int genInitializeSparseDeviceKernel(unsigned int numStaticInitThreads, 
                             os << "skipahead_sequence((unsigned long long)" << numStaticInitThreads << " + id, &initRNG);" << std::endl;
                         }
                         
-                        // Read row length
-                        // **NOTE** these will be nicely coalesced and used by all synapses in postsynaptic loop
                         if(ragged) {
-                            os << "const unsigned int rowLength = dd_rowLength" << s.first << "[lid];" << std::endl;
-                            os << "for(unsigned int j = 0; j < rowLength; j++)";
+                            os << "unsigned int idx = lid;" << std::endl;
                         }
-                        else {
-                            os << "for(unsigned int idx = dd_indInG" << s.first << "[lid]; idx < dd_indInG" << s.first << "[lid + 1]; idx++)";
-                        }
+
+                        // Calculate how many blocks rows need to be processed in (in order to store row lengths in shared memory)
+                        os << "const unsigned int numRowBlocks = (" << numSrcNeurons << " + " << initSparseBlkSz << " - 1) / " << initSparseBlkSz << ";" << std::endl;
+
+                        // Loop through blocks
+                        os << "for(unsigned int r = 0; r < numRowBlocks; r++)";
                         {
                             CodeStream::Scope b(os);
 
-                            // Calculate index into padded array that can be used for all variables
-                            if(ragged) {
-                                os << "const unsigned int idx = (lid * " << s.second.getMaxConnections() << ") + j;" << std::endl;
-                            }
-                            
-                            // Loop through variables
-                            auto wuVars = s.second.getWUModel()->getVars();
-                            for (size_t k= 0, l= wuVars.size(); k < l; k++) {
-                                const auto &varInit = s.second.getWUVarInitialisers()[k];
-                                const VarMode varMode = s.second.getWUVarMode(k);
+                            // Calculate number of rows to process in this block
+                            os << "const unsigned numRowsInBlock = (r == (numRowBlocks - 1))";
+                            os << " ? " << initSparseBlkSz;
+                            os << " : ((" << numSrcNeurons << " - 1) % " << initSparseBlkSz << ") + 1;" << std::endl;
 
-                                // If this variable should be initialised on the device and has any initialisation code
-                                if((varMode & VarInit::DEVICE) && !varInit.getSnippet()->getCode().empty()) {
+                            os << "__syncthreads();" << std::endl;
+                            os << "if (threadIdx.x < numRowsInBlock)";
+                            {
+                                CodeStream::Scope b(os);
+
+                                if(sparse) {
+                                    os << "const unsigned int rowStart = dd_indInG" << s.first << "[(r * " << initSparseBlkSz << ") + threadIdx.x];" << std::endl;
+                                    os << "shRowStart[threadIdx.x] = rowStart;" << std::endl;
+                                    os << "shRowLengths[threadIdx.x] = dd_indInG" << s.first << "[(r * " << initSparseBlkSz << ") + threadIdx.x + 1] - rowStart;" << std::endl;
+                                }
+                                else {
+                                    os << "shRowLengths[threadIdx.x] = dd_rowLength" << s.first << "[(r * " << initSparseBlkSz << ") + threadIdx.x];" << std::endl;
+                                }
+                            }
+
+                            os << "__syncthreads();" << std::endl;
+
+                            // Loop through rows
+                            os << "for(unsigned int i = 0; i < numRowsInBlock; i++)";
+                            {
+                                CodeStream::Scope b(os);
+
+                                // If there is a synapse for this thread to initialise
+                                os << "if(lid < shRowLengths[i])";
+                                {
                                     CodeStream::Scope b(os);
-                                    os << StandardSubstitutions::initVariable(varInit, "dd_" + wuVars[k].first + s.first + "[idx]",
-                                                                              cudaFunctions, model.getPrecision(), "&initRNG") << std::endl;
+
+                                    // If this matrix is sparse calculate index from start index of row and thread id
+                                    if(sparse) {
+                                        os << "const unsigned idx = shRowStart[i] + lid;" << std::endl;
+                                    }
+
+                                    // Loop through variables
+                                    auto wuVars = s.second.getWUModel()->getVars();
+                                    for (size_t k= 0, l= wuVars.size(); k < l; k++) {
+                                        const auto &varInit = s.second.getWUVarInitialisers()[k];
+                                        const VarMode varMode = s.second.getWUVarMode(k);
+
+                                        // If this variable should be initialised on the device and has any initialisation code
+                                        if((varMode & VarInit::DEVICE) && !varInit.getSnippet()->getCode().empty()) {
+                                            CodeStream::Scope b(os);
+                                            os << StandardSubstitutions::initVariable(varInit, "dd_" + wuVars[k].first + s.first + "[idx]",
+                                                                                    cudaFunctions, model.getPrecision(), "&initRNG") << std::endl;
+                                        }
+                                    }
+                                }
+
+                                // If matrix is ragged, advance index to next row by adding stride
+                                if(ragged) {
+                                    os << "idx += " << s.second.getMaxConnections() << ";" << std::endl;
                                 }
                             }
                         }
