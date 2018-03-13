@@ -1708,8 +1708,8 @@ void genRunner(const NNmodel &model,    //!< Model description
                 free_host_variable(os, "C" + s.first + ".rowLength", VarMode::LOC_HOST_DEVICE_INIT_HOST);
                 free_device_variable(os, "rowLength" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST);
 
-                free_host_variable(os, "C" + s.first + ".rowLength", VarMode::LOC_HOST_DEVICE_INIT_HOST);
-                free_device_variable(os, "rowLength" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST);
+                free_host_variable(os, "C" + s.first + ".ind", VarMode::LOC_HOST_DEVICE_INIT_HOST);
+                free_device_variable(os, "ind" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST);
             }
             if (s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
                 free_variable(os, "gp" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST);
