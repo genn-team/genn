@@ -38,14 +38,14 @@ public:
         for(unsigned int i = 0; i < 10000; i++) {
             CSparse.ind[i] = i;
         }
-        CSparse.indInG[10000] = 10000;
+        CSparse.indInG[1] = 10000;
 #ifndef CPU_ONLY
         allocateSparseGPU(10000);
         CSparseGPU.indInG[0] = 0;
         for(unsigned int i = 0; i < 10000; i++) {
             CSparseGPU.ind[i] = i;
         }
-        CSparseGPU.indInG[10000] = 10000;
+        CSparseGPU.indInG[1] = 10000;
 #endif
 
         // Call sparse initialisation function
