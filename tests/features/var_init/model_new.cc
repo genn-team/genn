@@ -134,6 +134,28 @@ void modelDefinition(NNmodel &model)
     sparseGPU->setWUVarMode("exponential", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
 #endif  // CPU_ONLY
 
+    // Ragged synapse populations
+    model.addSynapsePopulation<WeightUpdateModel, PostsynapticModel>(
+        "Ragged", SynapseMatrixType::RAGGED_INDIVIDUALG, NO_DELAY,
+        "SpikeSource", "Pop",
+        {}, weightUpdateInit,
+        {}, postsynapticInit);
+#ifndef CPU_ONLY
+    auto *raggedGPU = model.addSynapsePopulation<WeightUpdateModel, PostsynapticModel>(
+        "RaggedGPU", SynapseMatrixType::RAGGED_INDIVIDUALG, NO_DELAY,
+        "SpikeSource", "PopGPU",
+        {}, weightUpdateInit,
+        {}, postsynapticInit);
+    raggedGPU->setPSVarMode("pconstant", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
+    raggedGPU->setPSVarMode("puniform", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
+    raggedGPU->setPSVarMode("pnormal", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
+    raggedGPU->setPSVarMode("pexponential", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
+    raggedGPU->setWUVarMode("constant", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
+    raggedGPU->setWUVarMode("uniform", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
+    raggedGPU->setWUVarMode("normal", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
+    raggedGPU->setWUVarMode("exponential", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
+#endif  // CPU_ONLY
+
     model.setPrecision(GENN_FLOAT);
     model.finalize();
 }

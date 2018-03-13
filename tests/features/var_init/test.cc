@@ -32,7 +32,7 @@ public:
     //----------------------------------------------------------------------------
     virtual void Init()
     {
-        // Build sparse connector
+        // Build sparse connectors
         allocateSparse(10000);
         CSparse.indInG[0] = 0;
         for(unsigned int i = 0; i < 10000; i++) {
@@ -48,6 +48,17 @@ public:
         CSparseGPU.indInG[1] = 10000;
 #endif
 
+        // Build ragged connectors
+        CRagged.rowLength[0] = 10000;
+        for(unsigned int i = 0; i < 10000; i++) {
+            CRagged.ind[i] = i;
+        }
+#ifndef CPU_ONLY
+        CRaggedGPU.rowLength[0] = 10000;
+        for(unsigned int i = 0; i < 10000; i++) {
+            CRaggedGPU.ind[i] = i;
+        }
+#endif
         // Call sparse initialisation function
         initvar_init_new();
     }
@@ -70,26 +81,28 @@ double getProb(scalar *data, unsigned int size, F cdf)
 
 TEST_P(SimTest, Vars)
 {
-    const double p = 0.05;
+    const double p = 0.025;
 
     // Test host-generated vars
     PROB_TEST(, Pop, 10000)
     PROB_TEST(p, Dense, 10000)
     PROB_TEST(, Dense, 10000)
     PROB_TEST(, Sparse, 10000)
+    PROB_TEST(, Ragged, 10000)
 
 #ifndef CPU_ONLY
     // Pull device-generated vars back to host
     pullPopGPUStateFromDevice();
     pullDenseGPUStateFromDevice();
     pullSparseGPUStateFromDevice();
+    pullRaggedGPUStateFromDevice();
 
     // Test device-generated vars
     PROB_TEST(, PopGPU, 10000)
     PROB_TEST(p, DenseGPU, 10000)
     PROB_TEST(, DenseGPU, 10000)
     PROB_TEST(, SparseGPU, 10000)
-
+    PROB_TEST(, RaggedGPU, 10000)
 #endif
 }
 
