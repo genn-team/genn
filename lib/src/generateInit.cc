@@ -377,8 +377,7 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
                 && s.second.isWUDeviceVarInitRequired())
             {
                 // Get padded size of group and hence it's end thread
-                const unsigned int numSynapses = s.second.getSrcNeuronGroup()->getNumNeurons() * s.second.getTrgNeuronGroup()->getNumNeurons();
-                const unsigned int paddedSize = (unsigned int)(ceil((double)numSynapses / (double)initBlkSz) * (double)initBlkSz);
+                const unsigned int paddedSize = (unsigned int)(ceil((double)s.second.getTrgNeuronGroup()->getNumNeurons() / (double)initBlkSz) * (double)initBlkSz);
                 const unsigned int endThread = startThread + paddedSize;
 
                 // Write if block to determine if this thread should be used for this neuron group
@@ -394,7 +393,7 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
                     os << "const unsigned int lid = id - " << startThread << ";" << std::endl;
 
                     os << "// only do this for existing synapses" << std::endl;
-                    os << "if (lid < " << numSynapses << ")";
+                    os << "if (lid < " << s.second.getTrgNeuronGroup()->getNumNeurons() << ")";
                     {
                         CodeStream::Scope b(os);
 
@@ -405,18 +404,28 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
                             os << "skipahead_sequence((unsigned long long)id, &initRNG);" << std::endl;
                         }
 
-                        // Write loop through rows (presynaptic neurons)
-                        auto wuVars = s.second.getWUModel()->getVars();
-                        for (size_t k= 0, l= wuVars.size(); k < l; k++) {
-                            const auto &varInit = s.second.getWUVarInitialisers()[k];
-                            const VarMode varMode = s.second.getWUVarMode(k);
+                        // Loop through rows of matrix
+                        os << "unsigned int idx = lid;" << std::endl;
+                        os << "for(unsigned int i = 0; i < " << s.second.getSrcNeuronGroup()->getNumNeurons() << "; i++)";
+                        {
+                            CodeStream::Scope b(os);
 
-                            // If this variable should be initialised on the device and has any initialisation code
-                            if((varMode & VarInit::DEVICE) && !varInit.getSnippet()->getCode().empty()) {
-                                CodeStream::Scope b(os);
-                                os << StandardSubstitutions::initVariable(varInit, "dd_" + wuVars[k].first + s.first + "[lid]",
-                                                                        cudaFunctions, model.getPrecision(), "&initRNG") << std::endl;
+                            // Write loop through rows (presynaptic neurons)
+                            auto wuVars = s.second.getWUModel()->getVars();
+                            for (size_t k= 0, l= wuVars.size(); k < l; k++) {
+                                const auto &varInit = s.second.getWUVarInitialisers()[k];
+                                const VarMode varMode = s.second.getWUVarMode(k);
+
+                                // If this variable should be initialised on the device and has any initialisation code
+                                if((varMode & VarInit::DEVICE) && !varInit.getSnippet()->getCode().empty()) {
+                                    CodeStream::Scope b(os);
+                                    os << StandardSubstitutions::initVariable(varInit, "dd_" + wuVars[k].first + s.first + "[idx]",
+                                                                            cudaFunctions, model.getPrecision(), "&initRNG") << std::endl;
+                                }
                             }
+
+                            // Advance to next row
+                            os << "idx += " << s.second.getTrgNeuronGroup()->getNumNeurons() << ";" << std::endl;
                         }
                     }
                 }
