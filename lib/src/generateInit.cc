@@ -453,7 +453,7 @@ unsigned int genInitializeSparseDeviceKernel(unsigned int numStaticInitThreads, 
         CodeStream::Scope b(os);
 
         // Shared memory array so row lengths don't have to be read by EVERY postsynaptic thread
-        os << "__shared__ unsigned int shRowLengths[" << initSparseBlkSz << "];" << std::endl;
+        os << "__shared__ unsigned int shRowLength[" << initSparseBlkSz << "];" << std::endl;
 
         // If any of the synapse groups have sparse connectivity we also need a shared memory array to containt the row start indices
         if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
@@ -519,33 +519,32 @@ unsigned int genInitializeSparseDeviceKernel(unsigned int numStaticInitThreads, 
                         }
 
                         // Calculate how many blocks rows need to be processed in (in order to store row lengths in shared memory)
-                        os << "const unsigned int numRowBlocks = (" << numSrcNeurons << " + " << initSparseBlkSz << " - 1) / " << initSparseBlkSz << ";" << std::endl;
+                        const unsigned int numBlocks = (numSrcNeurons + initSparseBlkSz - 1) / initSparseBlkSz;
 
                         // Loop through blocks
-                        os << "for(unsigned int r = 0; r < numRowBlocks; r++)";
+                        os << "for(unsigned int r = 0; r < " << numBlocks << "; r++)";
                         {
                             CodeStream::Scope b(os);
 
                             // Calculate number of rows to process in this block
-                            os << "const unsigned numRowsInBlock = (r == (numRowBlocks - 1))";
-                            os << " ? " << initSparseBlkSz;
-                            os << " : ((" << numSrcNeurons << " - 1) % " << initSparseBlkSz << ") + 1;" << std::endl;
+                            os << "const unsigned numRowsInBlock = (r == " << numBlocks - 1 << ")";
+                            os << " ? " << ((numSrcNeurons - 1) % initSparseBlkSz) + 1;
+                            os << " : " << initSparseBlkSz << ";" << std::endl;
 
+                            // Use threads to copy block of sparse structure into shared memory
                             os << "__syncthreads();" << std::endl;
                             os << "if (threadIdx.x < numRowsInBlock)";
                             {
                                 CodeStream::Scope b(os);
-
                                 if(sparse) {
                                     os << "const unsigned int rowStart = dd_indInG" << s.first << "[(r * " << initSparseBlkSz << ") + threadIdx.x];" << std::endl;
                                     os << "shRowStart[threadIdx.x] = rowStart;" << std::endl;
-                                    os << "shRowLengths[threadIdx.x] = dd_indInG" << s.first << "[(r * " << initSparseBlkSz << ") + threadIdx.x + 1] - rowStart;" << std::endl;
+                                    os << "shRowLength[threadIdx.x] = dd_indInG" << s.first << "[(r * " << initSparseBlkSz << ") + threadIdx.x + 1] - rowStart;" << std::endl;
                                 }
                                 else {
-                                    os << "shRowLengths[threadIdx.x] = dd_rowLength" << s.first << "[(r * " << initSparseBlkSz << ") + threadIdx.x];" << std::endl;
+                                    os << "shRowLength[threadIdx.x] = dd_rowLength" << s.first << "[(r * " << initSparseBlkSz << ") + threadIdx.x];" << std::endl;
                                 }
                             }
-
                             os << "__syncthreads();" << std::endl;
 
                             // Loop through rows
@@ -554,7 +553,7 @@ unsigned int genInitializeSparseDeviceKernel(unsigned int numStaticInitThreads, 
                                 CodeStream::Scope b(os);
 
                                 // If there is a synapse for this thread to initialise
-                                os << "if(lid < shRowLengths[i])";
+                                os << "if(lid < shRowLength[i])";
                                 {
                                     CodeStream::Scope b(os);
 
@@ -584,7 +583,6 @@ unsigned int genInitializeSparseDeviceKernel(unsigned int numStaticInitThreads, 
                                 }
                             }
                         }
-
                     }
                 }
                 
