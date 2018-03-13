@@ -1,14 +1,16 @@
+#pragma once
 
-#ifndef SPARSE_UTILS_H
-#define SPARSE_UTILS_H
+// Standard C++ includes
+#include <string>
 
-#include "sparseProjection.h"
-#include "global.h"
-
+// Standard C includes
+#include <cmath>
 #include <cstdlib>
 #include <cstdio>
-#include <string>
-#include <cmath>
+
+// GeNN includes
+#include "global.h"
+#include "sparseProjection.h"
 
 using namespace std;
 
@@ -155,7 +157,6 @@ This is needed if SynapseDynamics accesses pre-synaptic variables.
 
 void createPreIndices(unsigned int preN, unsigned int postN, SparseProjection *C);
 
-
 #ifndef CPU_ONLY
 //--------------------------------------------------------------------------
 /*! \brief Function for initializing conductance array indices for sparse matrices on the GPU
@@ -194,6 +195,4 @@ void initializeSparseArrayRev(const SparseProjection &C,  unsigned int *dRevInd,
 //--------------------------------------------------------------------------
 
 void initializeSparseArrayPreInd(const SparseProjection &C,  unsigned int *dPreInd);
-#endif
-
 #endif
