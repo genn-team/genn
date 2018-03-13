@@ -16,13 +16,11 @@
 void createPosttoPreArray(unsigned int preN, unsigned int postN, SparseProjection * C) {
     vector<vector<unsigned int> > tempvectInd(postN); //temporary vector to keep indices
     vector<vector<unsigned int> > tempvectV(postN); //temporary vector to keep connectivity values
-    unsigned int glbcounter = 0;
-    
+
     for (unsigned int i = 0; i< preN; i++){ //i : index of presynaptic neuron
         for (unsigned int j = 0; j < (C->indInG[i+1]-C->indInG[i]); j++){ //for every postsynaptic neuron j
             tempvectInd[C->ind[C->indInG[i]+j]].push_back(i); //C->ind[C->indInG[i]+j]: index of postsynaptic neuron
             tempvectV[C->ind[C->indInG[i]+j]].push_back(C->indInG[i]+j); //this should give where we can find the value in the array
-            glbcounter++;
         }
     }
     unsigned int lcounter =0;
@@ -45,10 +43,9 @@ This is needed if SynapseDynamics accesses pre-synaptic variables.
  */
 //--------------------------------------------------------------------------
 
-void createPreIndices(unsigned int preN, unsigned int postN, SparseProjection * C) 
+void createPreIndices(unsigned int preN, unsigned int, SparseProjection * C)
 {
     // let's not assume anything and create from the minimum available data, i.e. indInG and ind
-    vector<vector<unsigned int> > tempvect(postN); //temporary vector to keep indices
     for (unsigned int i = 0; i< preN; i++){ //i : index of presynaptic neuron
         for (unsigned int j = 0; j < (C->indInG[i+1]-C->indInG[i]); j++){ //for every postsynaptic neuron j
             C->preInd[C->indInG[i]+j]= i; // simmple array of the presynaptic neuron index of each synapse
