@@ -1263,15 +1263,20 @@ void genRunner(const NNmodel &model,    //!< Model description
         }
         else if(s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
             // **TODO** other index types
-            os << "RaggedProjection<unsigned int> C" << s.first << "(" << s.second.getMaxConnections() << ");" << std::endl;
+            os << "RaggedProjection<unsigned int> C" << s.first << "(" << s.second.getMaxConnections() << "," << s.second.getMaxSourceConnections() << ");" << std::endl;
 #ifndef CPU_ONLY
             os << "unsigned int *d_rowLength" << s.first << ";" << std::endl;
             os << "__device__ unsigned int *dd_rowLength" << s.first << ";" << std::endl;
             os << "unsigned int *d_ind" << s.first << ";" << std::endl;
             os << "__device__ unsigned int *dd_ind" << s.first << ";" << std::endl;
 
+            if (model.isSynapseGroupPostLearningRequired(s.first)) {
+                os << "unsigned int *d_colLength" << s.first << ";" << std::endl;
+                os << "__device__ unsigned int *dd_colLength" << s.first << ";" << std::endl;
+                os << "unsigned int *d_remap" << s.first << ";" << std::endl;
+                os << "__device__ unsigned int *dd_remap" << s.first << ";" << std::endl;
+            }
             assert(!model.isSynapseGroupDynamicsRequired(s.first));
-            assert(!model.isSynapseGroupPostLearningRequired(s.first));
 #endif  // CPU_ONLY
         }
 
@@ -1519,6 +1524,22 @@ void genRunner(const NNmodel &model,    //!< Model description
                 allocate_device_variable(os, postIndexType, "ind" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST,
                                          size);
 
+                if(model.isSynapseGroupPostLearningRequired(s.first)) {
+                    const size_t postSize = s.second.getTrgNeuronGroup()->getNumNeurons() * s.second.getMaxSourceConnections();
+                    
+                    // Allocate column lengths
+                    allocate_host_variable(os,  "unsigned int", "C" + s.first + ".colLength", VarMode::LOC_HOST_DEVICE_INIT_HOST,
+                                           s.second.getTrgNeuronGroup()->getNumNeurons());
+                    allocate_device_variable(os,  "unsigned int", "colLength" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST,
+                                             s.second.getTrgNeuronGroup()->getNumNeurons());
+                    
+                    // Allocate remap
+                    allocate_host_variable(os,  "unsigned int", "C" + s.first + ".remap", VarMode::LOC_HOST_DEVICE_INIT_HOST,
+                                           postSize);
+                    allocate_device_variable(os,  "unsigned int", "remap" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST,
+                                             postSize);
+                }
+                
                 if(s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
                     for(const auto &v : wu->getVars()) {
                         mem += allocate_variable(os, v.second, v.first + s.first, s.second.getWUVarMode(v.first), size);
@@ -1714,8 +1735,15 @@ void genRunner(const NNmodel &model,    //!< Model description
                 free_host_variable(os, "C" + s.first + ".ind", VarMode::LOC_HOST_DEVICE_INIT_HOST);
                 free_device_variable(os, "ind" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST);
 
-                assert(!model.isSynapseGroupPostLearningRequired(s.first));
                 assert(!model.isSynapseGroupDynamicsRequired(s.first));
+                
+                if (model.isSynapseGroupPostLearningRequired(s.first)) {
+                    free_host_variable(os, "C" + s.first + ".colLength", VarMode::LOC_HOST_DEVICE_INIT_HOST);
+                    free_device_variable(os, "colLength" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST);
+
+                    free_host_variable(os, "C" + s.first + ".remap", VarMode::LOC_HOST_DEVICE_INIT_HOST);
+                    free_device_variable(os, "remap" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST);
+                }
             }
             else if (s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
                 free_variable(os, "gp" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST);

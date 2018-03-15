@@ -904,7 +904,13 @@ void genInit(const NNmodel &model,      //!< Model description
 
                     // **TODO**
                     assert(!model.isSynapseGroupDynamicsRequired(s.first));
-                    assert(!model.isSynapseGroupPostLearningRequired(s.first));
+                    
+                    if (model.isSynapseGroupPostLearningRequired(s.first)) {
+                        os << "initializeRaggedArrayRev(C" << s.first << ", ";
+                        os << "d_colLength" << s.first << ",";
+                        os << "d_remap" << s.first << ",";
+                        os << s.second.getTrgNeuronGroup()->getNumNeurons() << ");" << std::endl;
+                    }
                 }
 
                 if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {

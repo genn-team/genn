@@ -26,18 +26,23 @@ struct SparseProjection{
 //! Row-major ordered sparse matrix structure in 'ragged' format
 template<typename PostIndexType>
 struct RaggedProjection {
-    RaggedProjection(unsigned int max) : maxRowLength(max){}
+    RaggedProjection(unsigned int maxRow, unsigned int maxCol) 
+    : maxRowLength(maxRow), maxColLength(maxCol);
+    {}
 
+    //! Maximum dimensions of matrices (used for sizing of ind and remap)
     const unsigned int maxRowLength;
+    const unsigned int maxColLength;
 
     //! Length of each row of matrix
     unsigned int *rowLength;
 
-    //! Indices of target neurons
+    //! Ragged row-major matrix, padded to maxRowLength containing indices of target neurons
     PostIndexType *ind;
 
-    //unsigned int *preInd;
-    //unsigned int *revIndInG;
-    //unsigned int *revInd;
-    //unsigned int *remap;
+    //! Length of each column of matrix
+    unsigned int *colLength;
+    
+    //! Ragged column-major matrix, padded to maxColLength containing indices back into ind
+    unsigned int *remap;
 };

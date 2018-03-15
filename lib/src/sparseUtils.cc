@@ -36,7 +36,7 @@ void createPosttoPreArray(unsigned int preN, unsigned int postN, SparseProjectio
 
     // Loop through presynaptic neurons
     for (unsigned int i = 0; i < preN; i++) {
-        // Loop through synapses in corresponsing matrix row
+        // Loop through synapses in corresponding matrix row
         for(unsigned int s = C->indInG[i]; s < C->indInG[i + 1]; s++) {
             // Get index of postsynaptic target for synapse
             const unsigned int postIndex = C->ind[s];
