@@ -1111,7 +1111,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
 
                         os << "__syncthreads();" << std::endl;
                         os << "// only work on existing neurons" << std::endl;
-                        os << "if (" << localID << " < " << sg->getSrcNeuronGroup()->getNumNeurons() << ")";
+                        os << "if (" << localID << " < " << sg->getMaxSourceConnections() << ")";
                         {
                             CodeStream::Scope b(os);
                             os << "// loop through all incoming spikes for learning" << std::endl;
