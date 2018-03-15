@@ -155,20 +155,20 @@ template<typename PostIndexType>
 void createPosttoPreArray(unsigned int preN, unsigned int postN, RaggedProjection<PostIndexType> * C)
 {
     // Zero column lengths
-    std::fill_n(C->colLengths, postN, 0);
+    std::fill_n(C->colLength, postN, 0);
     
     // Loop through presynaptic neurons
     for (unsigned int i = 0; i < preN; i++) {
         // Loop through synapses in corresponding matrix row
-        for(unsigned int j = c->rowLength[i]; j++) {
+        for(unsigned int j = 0; j < C->rowLength[i]; j++) {
             // Calculate index of this synapse in the row-major matrix
             const unsigned int rowMajorIndex = (i * C->maxRowLength) + j;
             
             // Using this, lookup postsynaptic target
-            const unsigned int postIndex = rowIndices[rowMajorIndex]
+            const unsigned int postIndex = C->ind[rowMajorIndex];
 
             // Add remapping entry
-            C->remap[C->colLengths[postIndex]++] = rowMajorIndex;
+            C->remap[C->colLength[postIndex]++] = rowMajorIndex;
         }
     }
 }

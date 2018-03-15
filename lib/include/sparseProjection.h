@@ -27,7 +27,7 @@ struct SparseProjection{
 template<typename PostIndexType>
 struct RaggedProjection {
     RaggedProjection(unsigned int maxRow, unsigned int maxCol) 
-    : maxRowLength(maxRow), maxColLength(maxCol);
+    : maxRowLength(maxRow), maxColLength(maxCol)
     {}
 
     //! Maximum dimensions of matrices (used for sizing of ind and remap)

@@ -1119,8 +1119,14 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                             {
                                 CodeStream::Scope b(os);
                                 if (sparse) {
-                                    os << "unsigned int iprePos = dd_revIndInG" <<  s->first << "[shSpk[j]];" << std::endl;
-                                    os << "unsigned int npre = dd_revIndInG" << s->first << "[shSpk[j] + 1] - iprePos;" << std::endl;
+                                    if(sg->getMatrixType() & SynapseMatrixConnectivity::YALE) {
+                                        os << "unsigned int iprePos = dd_revIndInG" <<  s->first << "[shSpk[j]];" << std::endl;
+                                        os << "unsigned int npre = dd_revIndInG" << s->first << "[shSpk[j] + 1] - iprePos;" << std::endl;
+                                    }
+                                    else {
+                                        os << "unsigned int iprePos = shSpk[j] * " << to_string(sg->getMaxSourceConnections()) << ";" << std::endl;
+                                        os << "unsigned int npre = dd_colLength" << s->first << "[shSpk[j]];" << std::endl;
+                                    }
                                     os << "if (" << localID << " < npre)" << CodeStream::OB(1540);
                                     os << "iprePos += " << localID << ";" << std::endl;
                                     //Commenting out the next line as it is not used rather than deleting as I'm not sure if it may be used by different learning models
@@ -1139,15 +1145,23 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                                 string code = wu->getLearnPostCode();
                                 substitute(code, "$(t)", "t");
                                 // Code substitutions ----------------------------------------------------------------------------------
+                                std::string preIndex;
                                 if (sparse) { // SPARSE
                                     name_substitutions(code, "dd_", wuVars.nameBegin, wuVars.nameEnd, s->first + "[dd_remap" + s->first + "[iprePos]]");
+                                    
+                                    if(sg->getMatrixType() & SynapseMatrixConnectivity::YALE) {
+                                        preIndex = "dd_revInd" + s->first + "[iprePos]";
+                                    }
+                                    else {
+                                        preIndex = "(dd_remap" + s->first + "[iprePos] / " + to_string(sg->getMaxConnections()) + ")";
+                                    }
                                 }
                                 else { // DENSE
                                     name_substitutions(code, "dd_", wuVars.nameBegin, wuVars.nameEnd, s->first + "[" + localID + " * " + to_string(sg->getTrgNeuronGroup()->getNumNeurons()) + " + shSpk[j]]");
+                                    preIndex = localID;
                                 }
                                 StandardSubstitutions::weightUpdatePostLearn(code, sg, wuDerivedParams, wuExtraGlobalParams,
-                                                                            sparse ?  "dd_revInd" + s->first + "[iprePos]" : localID,
-                                                                            "shSpk[j]", "dd_", cudaFunctions, model.getPrecision());
+                                                                            preIndex, "shSpk[j]", "dd_", cudaFunctions, model.getPrecision());
                                 // end Code substitutions -------------------------------------------------------------------------
                                 os << code << std::endl;
                                 if (sparse) {

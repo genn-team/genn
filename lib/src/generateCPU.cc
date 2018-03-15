@@ -648,8 +648,12 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
                         os << "lSpk = glbSpk" << sg->getTrgNeuronGroup()->getName() << "[" << offsetTrueSpkPost << "ipost];" << std::endl;
 
                         if (sparse) {
-                            assert(sg->getMatrixType() & SynapseMatrixConnectivity::YALE);
-                            os << "npre = C" << s.first << ".revIndInG[lSpk + 1] - C" << s.first << ".revIndInG[lSpk];" << std::endl;
+                            if(sg->getMatrixType() & SynapseMatrixConnectivity::YALE) {
+                                os << "npre = C" << s.first << ".revIndInG[lSpk + 1] - C" << s.first << ".revIndInG[lSpk];" << std::endl;
+                            }
+                            else {
+                                os << "npre = C" << s.first << ".colLength[lSpk];" << std::endl;
+                            }
                             os << "for (int l = 0; l < npre; l++)";
                         }
                         else {
@@ -658,26 +662,38 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
                         {
                             CodeStream::Scope b(os);
                             if(sparse) {
-                                assert(sg->getMatrixType() & SynapseMatrixConnectivity::YALE);
-                                os << "ipre = C" << s.first << ".revIndInG[lSpk] + l;" << std::endl;
+                                if(sg->getMatrixType() & SynapseMatrixConnectivity::YALE) {
+                                    os << "ipre = C" << s.first << ".revIndInG[lSpk] + l;" << std::endl;
+                                }
+                                else {
+                                    os << "ipre = (lSpk * " << sg->getMaxSourceConnections() << ") + l;" << std::endl;
+                                }
                             }
 
                             string code = wu->getLearnPostCode();
                             substitute(code, "$(t)", "t");
                             // Code substitutions ----------------------------------------------------------------------------------
+                            std::string preIndex;
                             if (sparse) {
-                                assert(sg->getMatrixType() & SynapseMatrixConnectivity::YALE);
                                 name_substitutions(code, "", wuVars.nameBegin, wuVars.nameEnd,
-                                                s.first + "[C" + s.first + ".remap[ipre]]");
+                                                   s.first + "[C" + s.first + ".remap[ipre]]");
+                                if(sg->getMatrixType() & SynapseMatrixConnectivity::YALE) {
+                                    preIndex = "C" + s.first + ".revInd[ipre]";
+                                }
+                                else {
+                                    preIndex = "(C" + s.first + ".remap[ipre] / " + to_string(sg->getMaxConnections()) + ")";
+                                }
                             }
                             else { // DENSE
                                 name_substitutions(code, "", wuVars.nameBegin, wuVars.nameEnd,
                                                 s.first + "[lSpk + " + to_string(sg->getTrgNeuronGroup()->getNumNeurons()) + " * ipre]");
+                                
+                                preIndex = "ipre";
                             }
                             StandardSubstitutions::weightUpdatePostLearn(code, sg,
                                                                         wuDerivedParams, wuExtraGlobalParams,
-                                                                        sparse ?  "C" + s.first + ".revInd[ipre]" : "ipre",
-                                                                        "lSpk", "", cpuFunctions, model.getPrecision());
+                                                                        preIndex, "lSpk", "", cpuFunctions, model.getPrecision());
+
                             // end Code substitutions -------------------------------------------------------------------------
                             os << code << std::endl;
                         }
