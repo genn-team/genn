@@ -45,7 +45,8 @@ SynapseGroup::SynapseGroup(const std::string name, SynapseMatrixType matrixType,
                            const WeightUpdateModels::Base *wu, const std::vector<double> &wuParams, const std::vector<NewModels::VarInit> &wuVarInitialisers,
                            const PostsynapticModels::Base *ps, const std::vector<double> &psParams, const std::vector<NewModels::VarInit> &psVarInitialisers,
                            NeuronGroup *srcNeuronGroup, NeuronGroup *trgNeuronGroup)
-    :   m_PaddedKernelIDRange(0, 0), m_Name(name), m_SpanType(SpanType::POSTSYNAPTIC), m_DelaySteps(delaySteps), m_MaxConnections(trgNeuronGroup->getNumNeurons()), m_MatrixType(matrixType),
+    :   m_PaddedKernelIDRange(0, 0), m_Name(name), m_SpanType(SpanType::POSTSYNAPTIC), m_DelaySteps(delaySteps), 
+        m_MaxConnections(trgNeuronGroup->getNumNeurons()), m_MaxSourceConnections(srcNeuronGroup->getNumNeurons()), m_MatrixType(matrixType),
         m_SrcNeuronGroup(srcNeuronGroup), m_TrgNeuronGroup(trgNeuronGroup),
         m_TrueSpikeRequired(false), m_SpikeEventRequired(false), m_EventThresholdReTestRequired(false), m_InSynVarMode(GENN_PREFERENCES::defaultVarMode),
         m_WUModel(wu), m_WUParams(wuParams), m_WUVarInitialisers(wuVarInitialisers), m_PSModel(ps), m_PSParams(psParams), m_PSVarInitialisers(psVarInitialisers),
@@ -87,7 +88,17 @@ void SynapseGroup::setMaxConnections(unsigned int maxConnections)
         m_MaxConnections = maxConnections;
     }
     else {
-        gennError("setMaxConn: Synapse group is densely connected. Maxconn variable is not needed in this case.");
+        gennError("setMaxConnections: Synapse group is densely connected. Setting max connections is not required in this case.");
+    }
+}
+
+void SynapseGroup::setMaxSourceConnections(unsigned int maxConnections)
+{
+    if (getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+        m_MaxSourceConnections = maxConnections;
+    }
+    else {
+        gennError("setMaxSourceConnections: Synapse group is densely connected. Setting max connections is not required in this case.");
     }
 }
 
@@ -168,7 +179,12 @@ unsigned int SynapseGroup::getPaddedDynKernelSize(unsigned int blockSize) const
 
 unsigned int SynapseGroup::getPaddedPostLearnKernelSize(unsigned int blockSize) const
 {
-    return ceil((double) getSrcNeuronGroup()->getNumNeurons() / (double) blockSize) * (double) blockSize;
+    if (getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+        return ceil((double) getMaxSourceConnections() / (double) blockSize) * (double) blockSize;
+    }
+    else {
+        return ceil((double) getSrcNeuronGroup()->getNumNeurons() / (double) blockSize) * (double) blockSize;
+    }
 }
 
 const std::vector<double> SynapseGroup::getWUConstInitVals() const

@@ -164,6 +164,7 @@ void chooseDevice(NNmodel &model,       //!< the nn model we are generating code
         // Loop through synapse groups
         for(const auto &s : model.getLocalSynapseGroups()) {
             const unsigned int maxConnections = s.second.getMaxConnections();
+            const unsigned int maxSourceConnections = s.second.getMaxSourceConnections();
             const unsigned int numSrcNeurons = s.second.getSrcNeuronGroup()->getNumNeurons();
             const unsigned int numTrgNeurons = s.second.getTrgNeuronGroup()->getNumNeurons();
 
@@ -177,7 +178,12 @@ void chooseDevice(NNmodel &model,       //!< the nn model we are generating code
 
             // TODO: this needs updating where learning is detected properly!
             if (model.isSynapseGroupPostLearningRequired(s.first)) {
-                groupSize[KernelLearnSynapsesPost].push_back(numSrcNeurons);
+                if (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                    groupSize[KernelLearnSynapsesPost].push_back(maxSourceConnections);
+                }
+                else {
+                    groupSize[KernelLearnSynapsesPost].push_back(numSrcNeurons);
+                }
             }
 
             if (model.isSynapseGroupDynamicsRequired(s.first)) {
