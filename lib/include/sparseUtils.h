@@ -167,8 +167,14 @@ void createPosttoPreArray(unsigned int preN, unsigned int postN, RaggedProjectio
             // Using this, lookup postsynaptic target
             const unsigned int postIndex = C->ind[rowMajorIndex];
 
+            // From this calculate index of this synapse in the column-major matrix
+            const unsigned int colMajorIndex = (postIndex * C->maxColLength) + C->colLength[postIndex];
+            
+            // Increment column length corresponding to this postsynaptic neuron
+            C->colLength[postIndex]++;
+            
             // Add remapping entry
-            C->remap[C->colLength[postIndex]++] = rowMajorIndex;
+            C->remap[colMajorIndex] = rowMajorIndex;
         }
     }
 }
