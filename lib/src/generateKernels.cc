@@ -545,7 +545,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
 
                     os << "// pull inSyn values in a coalesced access" << std::endl;
                     os << model.getPrecision() << " linSyn" << sg->getName() << " = dd_inSyn" << sg->getName() << "[" << localID << "];" << std::endl;
-                    if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
+                    if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
                         for(const auto &v : psm->getVars()) {
                             os << v.second << " lps" << v.first << sg->getName();
                             os << " = dd_" <<  v.first << sg->getName() << "[" << localID << "];" << std::endl;

@@ -674,10 +674,13 @@ void genDefinitions(const NNmodel &model,   //!< Model description
             os << varExportPrefix << " RaggedProjection<unsigned int> C" << s.first << ";" << std::endl;
         }
 
-        if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) { // not needed for GLOBALG
+        if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
             for(const auto &v : s.second.getWUModel()->getVars()) {
                 extern_variable_def(os, v.second + " *", v.first + s.first, s.second.getWUVarMode(v.first));
             }
+        }
+        
+        if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
             for(const auto &v : s.second.getPSModel()->getVars()) {
                 extern_variable_def(os, v.second + " *", v.first + s.first, s.second.getPSVarMode(v.first));
             }
@@ -1280,10 +1283,15 @@ void genRunner(const NNmodel &model,    //!< Model description
 #endif  // CPU_ONLY
         }
 
-        if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) { // not needed for GLOBALG, INDIVIDUALID
+
+        // If weight update variables should be individual
+        if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
             for(const auto &v : wu->getVars()) {
                 variable_def(os, v.second + " *", v.first + s.first, s.second.getWUVarMode(v.first));
             }
+        }
+        // If postsynaptic model variables should be individual
+        if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
             for(const auto &v : psm->getVars()) {
                 variable_def(os, v.second+" *", v.first + s.first, s.second.getPSVarMode(v.first));
             }
@@ -1557,7 +1565,7 @@ void genRunner(const NNmodel &model,    //!< Model description
                 }
             }
 
-            if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) { // not needed for GLOBALG
+            if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
                 const size_t size = s.second.getTrgNeuronGroup()->getNumNeurons();
 
                 for(const auto &v : psm->getVars()) {
@@ -1753,6 +1761,8 @@ void genRunner(const NNmodel &model,    //!< Model description
                 for(const auto &v : s.second.getWUModel()->getVars()) {
                     free_variable(os, v.first + s.first, s.second.getWUVarMode(v.first));
                 }
+            }
+            if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
                 for(const auto &v : s.second.getPSModel()->getVars()) {
                     free_variable(os, v.first + s.first, s.second.getPSVarMode(v.first));
                 }
@@ -2116,7 +2126,9 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
                         }
                     }
                 }
-
+            }
+            
+            if(s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
                 for(const auto &v : psm->getVars()) {
                     const VarMode varMode = s.second.getPSVarMode(v.first);
                     // only copy non-pointers and non-zero-copied. Pointers don't transport between GPU and CPU
@@ -2136,7 +2148,8 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
                     }
                 }
             }
-            else if (s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
+            
+            if (s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
                 const size_t size = (numSrcNeurons * numTrgNeurons) / 32 + 1;
                 os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_gp" << s.first;
                 os << ", gp" << s.first;
@@ -2275,7 +2288,9 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
                         os << ", size * sizeof(" << v.second << "), cudaMemcpyDeviceToHost));" << std::endl;
                     }
                 }
-
+            }
+            
+            if(s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
                 for(const auto &v : psm->getVars()) {
                     // only copy non-pointers and non-zero-copied. Pointers don't transport between GPU and CPU
                     if (v.second.find("*") == string::npos && canPushPullVar(s.second.getPSVarMode(v.first))) {
@@ -2285,7 +2300,8 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
                     }
                 }
             }
-            else if (s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
+            
+            if (s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
                 size_t size = (numSrcNeurons * numTrgNeurons) / 32 + 1;
                 os << "CHECK_CUDA_ERRORS(cudaMemcpy(gp" << s.first;
                 os << ", d_gp" << s.first;

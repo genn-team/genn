@@ -344,18 +344,16 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
 
                             // If matrix has individual state variables
                             // **THINK** should this REALLY also apply to postsynaptic models
-                            if(s->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
-                                auto psmVars = s->getPSModel()->getVars();
-                                for(size_t j = 0; j < psmVars.size(); j++) {
-                                    const auto &varInit = s->getPSVarInitialisers()[j];
-                                    const VarMode varMode = s->getPSVarMode(j);
+                            auto psmVars = s->getPSModel()->getVars();
+                            for(size_t j = 0; j < psmVars.size(); j++) {
+                                const auto &varInit = s->getPSVarInitialisers()[j];
+                                const VarMode varMode = s->getPSVarMode(j);
 
-                                    // Initialise directly into device variable
-                                    if((varMode & VarInit::DEVICE) && !varInit.getSnippet()->getCode().empty()) {
-                                        CodeStream::Scope b(os);
-                                        os << StandardSubstitutions::initVariable(varInit, "dd_" + psmVars[j].first + s->getName() + "[lid]",
-                                                                                cudaFunctions, model.getPrecision(), "&initRNG") << std::endl;
-                                    }
+                                // Initialise directly into device variable
+                                if((varMode & VarInit::DEVICE) && !varInit.getSnippet()->getCode().empty()) {
+                                    CodeStream::Scope b(os);
+                                    os << StandardSubstitutions::initVariable(varInit, "dd_" + psmVars[j].first + s->getName() + "[lid]",
+                                                                            cudaFunctions, model.getPrecision(), "&initRNG") << std::endl;
                                 }
                             }
                         }
@@ -811,9 +809,8 @@ void genInit(const NNmodel &model,      //!< Model description
                 }
             }
 
-            // If matrix has individual state variables
-            // **THINK** should this REALLY also apply to postsynaptic models
-            if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
+            // If matrix has individual postsynaptic variables
+            if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
                 auto psmVars = psm->getVars();
                 for (size_t k= 0, l= psmVars.size(); k < l; k++) {
                     const auto &varInit = s.second.getPSVarInitialisers()[k];

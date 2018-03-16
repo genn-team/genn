@@ -16,20 +16,25 @@ enum class SynapseMatrixConnectivity : unsigned int
 //!< Flags defining different types of synaptic matrix connectivity
 enum class SynapseMatrixWeight : unsigned int
 {
-    GLOBAL      = (1 << 5),
-    INDIVIDUAL  = (1 << 6),
+    GLOBAL          = (1 << 5),
+    INDIVIDUAL      = (1 << 6),
+    INDIVIDUAL_PSM  = (1 << 7),
 };
 
 //!< Supported combinations of SynapticMatrixConnectivity and SynapticMatrixWeight
 enum class SynapseMatrixType : unsigned int
 {
-    SPARSE_GLOBALG      = static_cast<unsigned int>(SynapseMatrixConnectivity::SPARSE) | static_cast<unsigned int>(SynapseMatrixConnectivity::YALE) |static_cast<unsigned int>(SynapseMatrixWeight::GLOBAL),
-    SPARSE_INDIVIDUALG  = static_cast<unsigned int>(SynapseMatrixConnectivity::SPARSE) | static_cast<unsigned int>(SynapseMatrixConnectivity::YALE)| static_cast<unsigned int>(SynapseMatrixWeight::INDIVIDUAL),
-    DENSE_GLOBALG       = static_cast<unsigned int>(SynapseMatrixConnectivity::DENSE) | static_cast<unsigned int>(SynapseMatrixWeight::GLOBAL),
-    DENSE_INDIVIDUALG   = static_cast<unsigned int>(SynapseMatrixConnectivity::DENSE) | static_cast<unsigned int>(SynapseMatrixWeight::INDIVIDUAL),
-    BITMASK_GLOBALG     = static_cast<unsigned int>(SynapseMatrixConnectivity::BITMASK) | static_cast<unsigned int>(SynapseMatrixWeight::GLOBAL),
-    RAGGED_GLOBALG      = static_cast<unsigned int>(SynapseMatrixConnectivity::SPARSE) | static_cast<unsigned int>(SynapseMatrixConnectivity::RAGGED) | static_cast<unsigned int>(SynapseMatrixWeight::GLOBAL),
-    RAGGED_INDIVIDUALG  = static_cast<unsigned int>(SynapseMatrixConnectivity::SPARSE) | static_cast<unsigned int>(SynapseMatrixConnectivity::RAGGED) | static_cast<unsigned int>(SynapseMatrixWeight::INDIVIDUAL),
+    SPARSE_GLOBALG                  = static_cast<unsigned int>(SynapseMatrixConnectivity::SPARSE) | static_cast<unsigned int>(SynapseMatrixConnectivity::YALE) | static_cast<unsigned int>(SynapseMatrixWeight::GLOBAL),
+    SPARSE_GLOBALG_INDIVIDUAL_PSM   = static_cast<unsigned int>(SynapseMatrixConnectivity::SPARSE) | static_cast<unsigned int>(SynapseMatrixConnectivity::YALE) | static_cast<unsigned int>(SynapseMatrixWeight::GLOBAL) | static_cast<unsigned int>(SynapseMatrixWeight::INDIVIDUAL_PSM),
+    SPARSE_INDIVIDUALG              = static_cast<unsigned int>(SynapseMatrixConnectivity::SPARSE) | static_cast<unsigned int>(SynapseMatrixConnectivity::YALE) | static_cast<unsigned int>(SynapseMatrixWeight::INDIVIDUAL) | static_cast<unsigned int>(SynapseMatrixWeight::INDIVIDUAL_PSM),
+    DENSE_GLOBALG                   = static_cast<unsigned int>(SynapseMatrixConnectivity::DENSE) | static_cast<unsigned int>(SynapseMatrixWeight::GLOBAL),
+    DENSE_GLOBALG_INDIVIDUAL_PSM    = static_cast<unsigned int>(SynapseMatrixConnectivity::DENSE) | static_cast<unsigned int>(SynapseMatrixWeight::GLOBAL) | static_cast<unsigned int>(SynapseMatrixWeight::INDIVIDUAL_PSM),
+    DENSE_INDIVIDUALG               = static_cast<unsigned int>(SynapseMatrixConnectivity::DENSE) | static_cast<unsigned int>(SynapseMatrixWeight::INDIVIDUAL) | static_cast<unsigned int>(SynapseMatrixWeight::INDIVIDUAL_PSM),
+    BITMASK_GLOBALG                 = static_cast<unsigned int>(SynapseMatrixConnectivity::BITMASK) | static_cast<unsigned int>(SynapseMatrixWeight::GLOBAL),
+    BITMASK_GLOBALG_INDIVIDUAL_PSM  = static_cast<unsigned int>(SynapseMatrixConnectivity::BITMASK) | static_cast<unsigned int>(SynapseMatrixWeight::GLOBAL) | static_cast<unsigned int>(SynapseMatrixWeight::INDIVIDUAL_PSM),
+    RAGGED_GLOBALG                  = static_cast<unsigned int>(SynapseMatrixConnectivity::SPARSE) | static_cast<unsigned int>(SynapseMatrixConnectivity::RAGGED) | static_cast<unsigned int>(SynapseMatrixWeight::GLOBAL),
+    RAGGED_GLOBALG_INDIVIDUAL_PSM   = static_cast<unsigned int>(SynapseMatrixConnectivity::SPARSE) | static_cast<unsigned int>(SynapseMatrixConnectivity::RAGGED) | static_cast<unsigned int>(SynapseMatrixWeight::GLOBAL) | static_cast<unsigned int>(SynapseMatrixWeight::INDIVIDUAL_PSM),
+    RAGGED_INDIVIDUALG              = static_cast<unsigned int>(SynapseMatrixConnectivity::SPARSE) | static_cast<unsigned int>(SynapseMatrixConnectivity::RAGGED) | static_cast<unsigned int>(SynapseMatrixWeight::INDIVIDUAL) | static_cast<unsigned int>(SynapseMatrixWeight::INDIVIDUAL_PSM),
 };
 
 //----------------------------------------------------------------------------
