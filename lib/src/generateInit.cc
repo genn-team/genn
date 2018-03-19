@@ -910,7 +910,8 @@ void genInit(const NNmodel &model,      //!< Model description
                     }
                 }
 
-                if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
+                // **LEGACY** if sparse variables aren't automatically initialised - this code used to copy their state
+                if (!GENN_PREFERENCES::autoInitSparseVars && (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL)) {
                     // Get number of per-synapse variables to copy (as a string)
                     const std::string count = (s.second.getMatrixType() & SynapseMatrixConnectivity::YALE)
                         ? "C" + s.first + ".connN"
