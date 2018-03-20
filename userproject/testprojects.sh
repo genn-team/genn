@@ -67,94 +67,6 @@ cp -R ${testDir}_output/${testDir}.time $BmDir/MBody1/${testDir}_output/${testDi
 
 
 printf "\n\n*******************************************************************************\n"
-printf "\n\n*********************** Testing MBody_individualID *********************************\n"
-printf "\n\n*******************************************************************************\n"
-
-echo "Checking if MBody_individualID benchmarking directory exists..."
-if [ -d "$BmDir/MBody_individualID/after_v2.1/" ]; then
-  echo "benchmarking directory exists. Using input data from" $BmDir/MBody_individualID/after_v2.1/ 
-  printf "\n"
-  firstrun_MBI=false;
-else
-  echo "Benchmarking directory does not exist. Creating a new one at" $BmDir/MBody_individualID/after_v2.1/ " and running the test only once (first run for reference)."
-  mkdir -p $BmDir/MBody_individualID/after_v2.1/
-  printf "\n"
-  firstrun_MBI=true;
-fi 
-
-cd ../MBody_individualID_project
-make clean && make
-printf "\n\n####################### MBody_individualID GPU ######################\n"
-if [ -d ${testDir}_output ]; then
-  echo ${custommsg} >> ${testDir}_output/${testDir}.time
-  printf "With new setup... \n"  >> ${testDir}_output/${testDir}.time
-fi
-./generate_run 1 100 1000 20 100 0.0025 ${testDir} MBody_individualID 
- 
-cp ${testDir}_output/${testDir}.out.st ${testDir}_output/${testDir}.out.st.GPU
-printf "\n\n####################### MBody_individualID CPU ######################\n"
-./generate_run 0 100 1000 20 100 0.0025 ${testDir} MBody_individualID REUSE=1
- 
-cp ${testDir}_output/${testDir}.out.st ${testDir}_output/${testDir}.out.st.CPU 
-
-if [ "$firstrun_MBI" = true ]; then
-  printf "Benchmarking is run for the first time. Creating reference input files with the results of these runs. \nIf any error occurs please delete the benchmarking directory and run the script after the values are corrected.\nCopying reference files...\n"
-  cp -R ../MBody_individualID_project/${testDir}_output $BmDir/MBody_individualID/after_v2.1/
-fi
-
-#MBody1 reference files will be used in the other variants of the MBody project, except MBody_individalID.
-printf "\n\n*******************************************************************************\n"
-printf "\n\n*********************** Testing MBody_userdef *********************************\n"
-printf "\n\n*******************************************************************************\n"
-if [ ! -d "$BmDir/MBody_userdef" ]; then
-  echo "Benchmarking directory does not exist. Creating a new one at" $BmDir/MBody_userdef 
-  mkdir -p $BmDir/MBody_userdef
-  printf "\n"
-fi 
-
-cd ../MBody_userdef_project
-make clean && make
-if [ -d ${testDir}_output ]; then
-  echo ${custommsg} >> ${testDir}_output/${testDir}.time
-  printf "With new setup... \n"  >> ${testDir}_output/${testDir}.time
-fi
-printf "\n\n####################### MBody_userdef GPU ######################\n"
-./generate_run 1 100 1000 20 100 0.0025 ${testDir} MBody_userdef 
-
-cp ${testDir}_output/${testDir}.out.st ${testDir}_output/${testDir}.out.st.GPU
-printf "\n\n####################### MBody_userdef CPU ######################\n"
-./generate_run 0 100 1000 20 100 0.0025 ${testDir} MBody_userdef REUSE=1
-
-cp ${testDir}_output/${testDir}.out.st ${testDir}_output/${testDir}.out.st.CPU
-cp -R ${testDir}_output/${testDir}.time $BmDir/MBody_userdef/${testDir}.time
-
-printf "\n\n*******************************************************************************\n"
-printf "\n\n*********************** Testing MBody_delayedSyn *********************************\n"
-printf "\n\n*******************************************************************************\n"
-if [ ! -d "$BmDir/MBody_delayedSyn" ]; then
-  echo "Benchmarking directory does not exist. Creating a new one at" $BmDir/MBody_delayedSyn 
-  mkdir -p $BmDir/MBody_delayedSyn
-  printf "\n"
-fi 
-
-cd ../MBody_delayedSyn_project
-make clean && make
-if [ -d ${testDir}_output ]; then
-  echo ${custommsg} >> ${testDir}_output/${testDir}.time
-  printf "With new setup... \n"  >> ${testDir}_output/${testDir}.time
-fi
-printf "\n\n####################### MBody_delayedSyn GPU ######################\n"
-./generate_run 1 100 1000 20 100 0.0025 ${testDir} MBody_delayedSyn 
- 
-cp ${testDir}_output/${testDir}.out.st ${testDir}_output/${testDir}.out.st.GPU
-printf "\n\n####################### MBody_delayedSyn CPU ######################\n"
-./generate_run 0 100 1000 20 100 0.0025 ${testDir} MBody_delayedSyn REUSE=$reuse
-
-cp ${testDir}_output/${testDir}.out.st ${testDir}_output/${testDir}.out.st.CPU
-
-cp -R ${testDir}_output/${testDir}.time $BmDir/MBody_delayedSyn/${testDir}.time
-
-printf "\n\n*******************************************************************************\n"
 printf "\n\n*********************** Testing Izh_sparse 10K neurons****************************\n"
 printf "\n\n*******************************************************************************\n"
 if [ -d "$BmDir/Izh_sparse" ]; then
@@ -322,35 +234,6 @@ model/classol_sim ${testDir} 1
 printf "\n\n####################### MBody1 CPU TEST 2 ######################\n"
 model/classol_sim ${testDir} 0
 
-cd ../MBody_individualID_project
-cp -R $BmDir/MBody_individualID/after_v2.1/${testDir}_output/* ${testDir}_output/
-#cp -R $BmDir/MBody1/${testDir}_output/* ${testDir}_output/
-printf "With reference setup... (same as MBody1 as well)\n"  >> ${testDir}_output/${testDir}.time
-printf "\n\n####################### MBody_individualID GPU TEST 2 ######################\n"
-model/classol_sim ${testDir} 1
-printf "\n\n####################### MBody_individualID CPU TEST 2 ######################\n"
-model/classol_sim ${testDir} 0
-
-cd ../MBody_userdef_project
-cp -R $BmDir/MBody1/${testDir}_output/* ${testDir}_output/
-cp -R $BmDir/MBody_userdef/${testDir}.time ${testDir}_output/
-#cp -R $BmDir/MBody_userdef/* testing_output/
-printf "With reference setup (same as MBody1 as well)... \n"  >> ${testDir}_output/${testDir}.time
-printf "\n\n####################### MBody_userdef GPU TEST 2 ######################\n"
-model/classol_sim ${testDir} 1
-printf "\n\n####################### MBody_userdef CPU TEST 2 ######################\n"
-model/classol_sim ${testDir} 0
-
-cd ../MBody_delayedSyn_project
-cp -R $BmDir/MBody1/${testDir}_output/* ${testDir}_output/
-cp -R $BmDir/MBody_delayedSyn/${testDir}.time ${testDir}_output/
-#cp -R $BmDir/MBody_delayedSyn/* testing_output/
-printf "With reference setup (same as MBody1 as well)...\n"  >> ${testDir}_output/${testDir}.time
-printf "\n\n####################### MBody_delayedSyn GPU TEST 2 ######################\n"
-model/classol_sim ${testDir} 1
-printf "\n\n####################### MBody_delayedSyn CPU TEST 2 ######################\n"
-model/classol_sim ${testDir} 0
-
 cd ../Izh_sparse_project
 cp -R $BmDir/Izh_sparse/${testDir}_output/* ${testDir}_output/
 printf "With reference setup (input is still random, so the results are not expected to be identical)... \n"  >> ${testDir}_output/${testDir}.time
@@ -381,12 +264,6 @@ cd ..
 
 printf "\nMBody1 time tail\n"
 tail -n 28 MBody1_project/${testDir}_output/${testDir}.time
-printf "\nMBody_individualID time tail\n"
-tail -n 28 MBody_individualID_project/${testDir}_output/${testDir}.time
-printf "\nMBody_userdef time tail\n"
-tail -n 28 MBody_userdef_project/${testDir}_output/${testDir}.time
-printf "\nMBody_delayedSyn time tail\n"
-tail -n 28 MBody_delayedSyn_project/${testDir}_output/${testDir}.time
 printf "\nIzh_sparse time tail\n"
 tail -n 28 Izh_sparse_project/${testDir}_output/${testDir}.time
 printf "\nPoissonIzh time tail\n"

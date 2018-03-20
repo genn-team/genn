@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<SpineML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.shef.ac.uk/SpineMLComponentLayer" xsi:schemaLocation="http://www.shef.ac.uk/SpineMLComponentLayer SpineMLComponentLayer.xsd">
+ <ComponentClass name="LIN" type="neuron_body">
+  <Annotation>
+   <SpineCreator/>
+  </Annotation>
+  <Dynamics initial_regime="integration">
+   <Regime name="integration">
+    <TimeDerivative variable="a">
+     <MathInline>(-a+in)/tau</MathInline>
+    </TimeDerivative>
+    <OnCondition target_regime="integration">
+     <StateAssignment variable="a">
+      <MathInline>a=-c</MathInline>
+     </StateAssignment>
+     <Trigger>
+      <MathInline>a &lt; -c</MathInline>
+     </Trigger>
+    </OnCondition>
+   </Regime>
+   <Alias name="out" dimension="?">
+    <MathInline>m*a+c</MathInline>
+   </Alias>
+   <StateVariable name="a" dimension="V"/>
+  </Dynamics>
+  <AnalogSendPort name="out"/>
+  <AnalogReducePort name="in" reduce_op="+" dimension="?"/>
+  <Parameter name="tau" dimension="s"/>
+  <Parameter name="m" dimension="?"/>
+  <Parameter name="c" dimension="?"/>
+ </ComponentClass>
+</SpineML>

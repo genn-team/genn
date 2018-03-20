@@ -12,7 +12,7 @@
 ##--------------------------------------------------------------------------
 
 EXECUTABLE              :=classol_sim
-SOURCES                 :=$(EXECUTABLE).cc
+SOURCES                 :=$(EXECUTABLE).cc map_classol.cc
 OPTIMIZATIONFLAGS       :=-O3 -ffast-math
 NVCC_OPTIMIZATIONFLAGS  :=-use_fast_math -O3
 

@@ -1,0 +1,171 @@
+5/4/2017, 10:43
+Izh_sparse_sim, GPU simulation
+# DT 1.000000 
+# T_REPORT_TME 5000.000000 
+# TOTAL_TME 1000.000000 
+6400201 connections in gExc_Exc
+1599799 connections in gExc_Inh
+1600141 connections in gInh_Exc
+399859 connections in gInh_Inh
+10000 neurons in total
+56530 spikes in the excitatory population
+13985 spikes in the inhibitory population
+Elapsed time is 0.3251
+Last Vm value of the 1st neuron is -65.00
+Total time 1000.000000 at DT+1.000000 
+Total number of synapses in the model is 10000000, float precision
+
+#################
+18/4/2017, 14:54
+Izh_sparse_sim, GPU simulation
+# DT 1.000000 
+# T_REPORT_TME 5000.000000 
+# TOTAL_TME 1000.000000 
+6401705 connections in gExc_Exc
+1598295 connections in gExc_Inh
+1600311 connections in gInh_Exc
+399689 connections in gInh_Inh
+10000 neurons in total
+56156 spikes in the excitatory population
+14038 spikes in the inhibitory population
+Elapsed time is 0.3286
+Last Vm value of the 1st neuron is -65.00
+Total time 1000.000000 at DT+1.000000 
+Total number of synapses in the model is 10000000, float precision
+
+#################
+29/1/2018, 10:50
+Izh_sparse_sim, GPU simulation
+# DT 1.000000 
+# T_REPORT_TME 5000.000000 
+# TOTAL_TME 1000.000000 
+6399115 connections in gExc_Exc
+1600885 connections in gExc_Inh
+1600391 connections in gInh_Exc
+399609 connections in gInh_Inh
+29/1/2018, 11:11
+Izh_sparse_sim, GPU simulation
+# DT 1.000000 
+# T_REPORT_TME 5000.000000 
+# TOTAL_TME 1000.000000 
+6398702 connections in gExc_Exc
+1601298 connections in gExc_Inh
+1599236 connections in gInh_Exc
+400764 connections in gInh_Inh
+10000 neurons in total
+220380 spikes in the excitatory population
+53725 spikes in the inhibitory population
+Elapsed time is 0.7761
+Last Vm value of the 1st neuron is -65.00
+Total time 1000.000000 at DT+1.000000 
+Total number of synapses in the model is 10000000, 0 precision
+
+#################
+29/1/2018, 11:28
+Izh_sparse_sim, GPU simulation
+# DT 1.000000 
+# T_REPORT_TME 5000.000000 
+# TOTAL_TME 1000.000000 
+6399783 connections in gExc_Exc
+1600217 connections in gExc_Inh
+1600205 connections in gInh_Exc
+399795 connections in gInh_Inh
+10000 neurons in total
+56042 spikes in the excitatory population
+14096 spikes in the inhibitory population
+Elapsed time is 0.3260
+Last Vm value of the 1st neuron is -65.00
+Total time 1000.000000 at DT+1.000000 
+Total number of synapses in the model is 10000000, float precision
+
+#################
+29/1/2018, 12:54
+Izh_sparse_sim, GPU simulation
+# DT 1.000000 
+# T_REPORT_TME 5000.000000 
+# TOTAL_TME 1000.000000 
+6397817 connections in gExc_Exc
+1602183 connections in gExc_Inh
+1598780 connections in gInh_Exc
+401220 connections in gInh_Inh
+10000 neurons in total
+238021 spikes in the excitatory population
+58061 spikes in the inhibitory population
+Elapsed time is 0.8172
+Last Vm value of the 1st neuron is -65.00
+Total time 1000.000000 at DT+1.000000 
+Total number of synapses in the model is 10000000, 0 precision
+
+#################
+29/1/2018, 13:8
+Izh_sparse_sim, GPU simulation
+# DT 1.000000 
+# T_REPORT_TME 5000.000000 
+# TOTAL_TME 1000.000000 
+6398850 connections in gExc_Exc
+1601150 connections in gExc_Inh
+1600573 connections in gInh_Exc
+399427 connections in gInh_Inh
+10000 neurons in total
+55072 spikes in the excitatory population
+13941 spikes in the inhibitory population
+Elapsed time is 0.2807
+Last Vm value of the 1st neuron is -65.00
+Total time 1000.000000 at DT+1.000000 
+Total number of synapses in the model is 10000000, 0 precision
+
+#################
+29/1/2018, 13:10
+Izh_sparse_sim, GPU simulation
+# DT 1.000000 
+# T_REPORT_TME 5000.000000 
+# TOTAL_TME 1000.000000 
+6399335 connections in gExc_Exc
+1600665 connections in gExc_Inh
+1598997 connections in gInh_Exc
+401003 connections in gInh_Inh
+10000 neurons in total
+56210 spikes in the excitatory population
+13823 spikes in the inhibitory population
+Elapsed time is 0.2934
+Last Vm value of the 1st neuron is -65.00
+Total time 1000.000000 at DT+1.000000 
+Total number of synapses in the model is 10000000, 0 precision
+
+#################
+29/1/2018, 13:12
+Izh_sparse_sim, GPU simulation
+# DT 1.000000 
+# T_REPORT_TME 5000.000000 
+# TOTAL_TME 1000.000000 
+6399748 connections in gExc_Exc
+1600252 connections in gExc_Inh
+1600003 connections in gInh_Exc
+399997 connections in gInh_Inh
+10000 neurons in total
+56197 spikes in the excitatory population
+13916 spikes in the inhibitory population
+Elapsed time is 0.2859
+Last Vm value of the 1st neuron is 0.00
+Total time 1000.000000 at DT+1.000000 
+Total number of synapses in the model is 10000000, 0 precision
+
+#################
+29/1/2018, 13:20
+Izh_sparse_sim, GPU simulation
+# DT 1.000000 
+# T_REPORT_TME 5000.000000 
+# TOTAL_TME 1000.000000 
+6398147 connections in gExc_Exc
+1601853 connections in gExc_Inh
+1600290 connections in gInh_Exc
+399710 connections in gInh_Inh
+10000 neurons in total
+55842 spikes in the excitatory population
+13980 spikes in the inhibitory population
+Elapsed time is 0.2922
+Last Vm value of the 1st neuron is 0.00
+Total time 1000.000000 at DT+1.000000 
+Total number of synapses in the model is 10000000, 0 precision
+
+#################

@@ -19,9 +19,9 @@ pushd $GENN_PATH/lib
 make clean
 popd
 
-# Delete existing output
+# Delete existing output and library coverage data
 rm -f msg
-rm -rf *.gcno *.gcda
+rm -rf $GENN_PATH/lib/**/*.gcno $GENN_PATH/lib/**/*.gcda
 
 # Loop through feature tests
 LCOV_INPUTS="";
@@ -35,26 +35,29 @@ for f in features/*;
         # Loop through model suffixes
         for s in "" _new;
             do
-                # On OSX remove existing raw coverage files before running each test
-                # **NOTE** GCC can successfully combine gcno and gcda files itself but not LLVM
-                if [[ "$(uname)" = "Darwin" ]]; then
-                    rm -f *.gcno *.gcda
-                    rm -rf $GENN_PATH/lib/**/*.gcno $GENN_PATH/lib/**/*.gcda
-                fi
+                if [ -f "model$s.cc" ]; then
+                    # On OSX remove existing raw coverage files before running each test
+                    # **NOTE** GCC can successfully combine gcno and gcda files itself but not LLVM
+                    # **NOTE** only remove library coverage COUNTS as library itself and hence its .gcdo files don't get rebuilt
+                    if [[ "$(uname)" = "Darwin" ]]; then
+                        rm -f *.gcno *.gcda
+                        rm -rf $GENN_PATH/lib/**/*.gcda
+                    fi
 
-                # Clean
-                make clean 1>> ../../msg 2>> ../../msg
+                    # Clean
+                    make clean 1>> ../../msg 2>> ../../msg
 
-                # Build and generate model (measuring coverage)
-                genn-buildmodel.sh $BUILD_FLAGS -v model$s.cc  1>> ../../msg 2>>../../msg || exit $?
+                    # Build and generate model (measuring coverage)
+                    genn-buildmodel.sh $BUILD_FLAGS -v model$s.cc  1>> ../../msg 2>>../../msg || exit $?
 
-                # On OSX convert the coverage of each test to LCOV format
-                if [[ "$(uname)" = "Darwin" ]]; then
-                    # Capture GCOV output for this test
-                    lcov --directory $GENN_PATH --capture -rc lcov_branch_coverage=1 --output-file coverage$s.txt 1>> ../../msg 2>> ../../msg
+                    # On OSX convert the coverage of each test to LCOV format
+                    if [[ "$(uname)" = "Darwin" ]]; then
+                        # Capture GCOV output for this test
+                        lcov --directory $GENN_PATH --capture -rc lcov_branch_coverage=1 --output-file coverage$s.txt 1>> ../../msg 2>> ../../msg
 
-                    # Add this test's output to LCOV command line
-                    LCOV_INPUTS+=" --add-tracefile $PWD/coverage$s.txt"
+                        # Add this test's output to LCOV command line
+                        LCOV_INPUTS+=" --add-tracefile $PWD/coverage$s.txt"
+                    fi
                 fi
             done;
 
@@ -71,12 +74,6 @@ if [[ "$(uname)" = "Darwin" ]]; then
 else
     lcov --directory $GENN_PATH --capture -rc lcov_branch_coverage=1 --output-file coverage.txt  1>> ../../msg 2>> msg
 fi
-
-# Remove standard library stuff from coverage report
-lcov --remove coverage.txt "/usr*" --output-file coverage.txt
-
-# Remove coverage of tests themselves as this seems dumb
-lcov --remove coverage.txt "tests*" --output-file coverage.txt
 
 if [ $REPORT -eq 1 ]; then
   echo "Generating HTML coverage report..."

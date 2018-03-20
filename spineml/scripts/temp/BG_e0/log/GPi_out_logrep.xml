@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<LogReport>
+	<AnalogLog>
+		<LogFile>GPi_out_log.bin</LogFile>
+		<LogFileType>binary</LogFileType>
+		<LogEndTime>5000</LogEndTime>
+		<LogAll size="6" headings="out" dims="" type="float" />
+		<TimeStep dt="0.10000000000000001" />
+	</AnalogLog>
+</LogReport>

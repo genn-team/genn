@@ -6,59 +6,99 @@
 
 // GeNN includes
 #include "codeGenUtils.h"
+#include "global.h"
 #include "standardSubstitutions.h"
 #include "utils.h"
+
+//----------------------------------------------------------------------------
+// Anonymous namespace
+//----------------------------------------------------------------------------
+namespace
+{
+std::vector<double> getConstInitVals(const std::vector<NewModels::VarInit> &varInitialisers)
+{
+    // Reserve initial values to match initialisers
+    std::vector<double> initVals;
+    initVals.reserve(varInitialisers.size());
+
+    // Transform variable initialisers into a vector of doubles
+    std::transform(varInitialisers.cbegin(), varInitialisers.cend(), std::back_inserter(initVals),
+                   [](const NewModels::VarInit &v)
+                   {
+                       // Check
+                       if(dynamic_cast<const InitVarSnippet::Constant*>(v.getSnippet()) == nullptr) {
+                           throw std::runtime_error("Only 'Constant' variable initialisation snippets can be used to initialise state variables of synapse groups using GLOBALG");
+                       }
+
+                       // Return the first parameter (the value)
+                       return v.getParams()[0];
+                   });
+
+    return initVals;
+}
+}   // Anonymous namespace
 
 // ------------------------------------------------------------------------
 // SynapseGroup
 // ------------------------------------------------------------------------
-void SynapseGroup::setWUVarZeroCopyEnabled(const std::string &var, bool enabled)
+SynapseGroup::SynapseGroup(const std::string name, SynapseMatrixType matrixType, unsigned int delaySteps,
+                           const WeightUpdateModels::Base *wu, const std::vector<double> &wuParams, const std::vector<NewModels::VarInit> &wuVarInitialisers,
+                           const PostsynapticModels::Base *ps, const std::vector<double> &psParams, const std::vector<NewModels::VarInit> &psVarInitialisers,
+                           NeuronGroup *srcNeuronGroup, NeuronGroup *trgNeuronGroup)
+    :   m_PaddedKernelIDRange(0, 0), m_Name(name), m_SpanType(SpanType::POSTSYNAPTIC), m_DelaySteps(delaySteps), 
+        m_MaxConnections(trgNeuronGroup->getNumNeurons()), m_MaxSourceConnections(srcNeuronGroup->getNumNeurons()), m_MatrixType(matrixType),
+        m_SrcNeuronGroup(srcNeuronGroup), m_TrgNeuronGroup(trgNeuronGroup),
+        m_TrueSpikeRequired(false), m_SpikeEventRequired(false), m_EventThresholdReTestRequired(false), m_InSynVarMode(GENN_PREFERENCES::defaultVarMode),
+        m_WUModel(wu), m_WUParams(wuParams), m_WUVarInitialisers(wuVarInitialisers), m_PSModel(ps), m_PSParams(psParams), m_PSVarInitialisers(psVarInitialisers),
+        m_WUVarMode(wuVarInitialisers.size(), GENN_PREFERENCES::defaultVarMode), m_PSVarMode(psVarInitialisers.size(), GENN_PREFERENCES::defaultVarMode)
 {
-    // If named variable doesn't exist give error
-    VarNameIterCtx wuVars(getWUModel()->getVars());
-    if(find(wuVars.nameBegin, wuVars.nameEnd, var) == wuVars.nameEnd) {
-        gennError("Cannot find variable " + var);
+    // Check that the source neuron group supports the desired number of delay steps
+    srcNeuronGroup->checkNumDelaySlots(delaySteps);
+
+    // If the weight update model requires presynaptic
+    // spike times, set flag in source neuron group
+    if (getWUModel()->isPreSpikeTimeRequired()) {
+        srcNeuronGroup->setSpikeTimeRequired(true);
     }
-    // Otherwise add name of variable to set
-    else {
-        // If enabled, add variable to set
-        if(enabled) {
-            m_WUVarZeroCopyEnabled.insert(var);
-        }
-        // Otherwise, remove it
-        else {
-            m_WUVarZeroCopyEnabled.erase(var);
-        }
+
+    // If the weight update model requires postsynaptic
+    // spike times, set flag in target neuron group
+    if (getWUModel()->isPostSpikeTimeRequired()) {
+        trgNeuronGroup->setSpikeTimeRequired(true);
     }
+
+    // Add references to target and source neuron groups
+    trgNeuronGroup->addInSyn(this);
+    srcNeuronGroup->addOutSyn(this);
 }
 
-void SynapseGroup::setPSVarZeroCopyEnabled(const std::string &var, bool enabled)
+void SynapseGroup::setWUVarMode(const std::string &varName, VarMode mode)
 {
-    // If named variable doesn't exist give error
-    VarNameIterCtx psVars(getPSModel()->getVars());
-    if(find(psVars.nameBegin, psVars.nameEnd, var) == psVars.nameEnd) {
-        gennError("Cannot find variable " + var);
-    }
-    // Otherwise
-    else  {
-        // If enabled, add variable to set
-        if(enabled) {
-            m_PSVarZeroCopyEnabled.insert(var);
-        }
-        // Otherwise, remove it
-        else {
-            m_PSVarZeroCopyEnabled.erase(var);
-        }
-    }
+    m_WUVarMode[getWUModel()->getVarIndex(varName)] = mode;
+}
+
+void SynapseGroup::setPSVarMode(const std::string &varName, VarMode mode)
+{
+    m_PSVarMode[getPSModel()->getVarIndex(varName)] = mode;
 }
 
 void SynapseGroup::setMaxConnections(unsigned int maxConnections)
 {
-     if (getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+    if (getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
         m_MaxConnections = maxConnections;
     }
     else {
-        gennError("setMaxConn: Synapse group is densely connected. Maxconn variable is not needed in this case.");
+        gennError("setMaxConnections: Synapse group is densely connected. Setting max connections is not required in this case.");
+    }
+}
+
+void SynapseGroup::setMaxSourceConnections(unsigned int maxConnections)
+{
+    if (getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+        m_MaxSourceConnections = maxConnections;
+    }
+    else {
+        gennError("setMaxSourceConnections: Synapse group is densely connected. Setting max connections is not required in this case.");
     }
 }
 
@@ -81,14 +121,24 @@ void SynapseGroup::initDerivedParams(double dt)
     m_WUDerivedParams.reserve(wuDerivedParams.size());
     m_PSDerivedParams.reserve(psDerivedParams.size());
 
-    // Loop through derived parameters
+    // Loop through WU derived parameters
     for(const auto &d : wuDerivedParams) {
         m_WUDerivedParams.push_back(d.second(m_WUParams, dt));
     }
 
-    // Loop through derived parameters
+    // Loop through PSM derived parameters
     for(const auto &d : psDerivedParams) {
         m_PSDerivedParams.push_back(d.second(m_PSParams, dt));
+    }
+
+    // Initialise derived parameters for WU variable initialisers
+    for(auto &v : m_WUVarInitialisers) {
+        v.initDerivedParams(dt);
+    }
+
+    // Initialise derived parameters for PSM variable initialisers
+    for(auto &v : m_PSVarInitialisers) {
+        v.initDerivedParams(dt);
     }
 }
 
@@ -129,13 +179,36 @@ unsigned int SynapseGroup::getPaddedDynKernelSize(unsigned int blockSize) const
 
 unsigned int SynapseGroup::getPaddedPostLearnKernelSize(unsigned int blockSize) const
 {
-    return ceil((double) getSrcNeuronGroup()->getNumNeurons() / (double) blockSize) * (double) blockSize;
+    if (getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+        return ceil((double) getMaxSourceConnections() / (double) blockSize) * (double) blockSize;
+    }
+    else {
+        return ceil((double) getSrcNeuronGroup()->getNumNeurons() / (double) blockSize) * (double) blockSize;
+    }
+}
+
+const std::vector<double> SynapseGroup::getWUConstInitVals() const
+{
+    return getConstInitVals(m_WUVarInitialisers);
+}
+
+const std::vector<double> SynapseGroup::getPSConstInitVals() const
+{
+    return getConstInitVals(m_PSVarInitialisers);
 }
 
 bool SynapseGroup::isZeroCopyEnabled() const
 {
-    // If there are any variables return true
-    if(!m_WUVarZeroCopyEnabled.empty() || !m_PSVarZeroCopyEnabled.empty())
+    // If there are any postsynaptic variables implemented in zero-copy mode return true
+    if(any_of(m_PSVarMode.begin(), m_PSVarMode.end(),
+        [](VarMode mode){ return (mode & VarLocation::ZERO_COPY); }))
+    {
+        return true;
+    }
+
+    // If there are any weight update variables implemented in zero-copy mode return true
+    if(any_of(m_WUVarMode.begin(), m_WUVarMode.end(),
+        [](VarMode mode){ return (mode & VarLocation::ZERO_COPY); }))
     {
         return true;
     }
@@ -143,14 +216,14 @@ bool SynapseGroup::isZeroCopyEnabled() const
     return false;
 }
 
-bool SynapseGroup::isWUVarZeroCopyEnabled(const std::string &var) const
+VarMode SynapseGroup::getWUVarMode(const std::string &var) const
 {
-    return (m_WUVarZeroCopyEnabled.find(var) != std::end(m_WUVarZeroCopyEnabled));
+    return m_WUVarMode[getWUModel()->getVarIndex(var)];
 }
 
-bool SynapseGroup::isPSVarZeroCopyEnabled(const std::string &var) const
+VarMode SynapseGroup::getPSVarMode(const std::string &var) const
 {
-    return (m_PSVarZeroCopyEnabled.find(var) != std::end(m_PSVarZeroCopyEnabled));
+    return m_PSVarMode[getPSModel()->getVarIndex(var)];
 }
 
 bool SynapseGroup::isPSAtomicAddRequired(unsigned int blockSize) const
@@ -164,6 +237,21 @@ bool SynapseGroup::isPSAtomicAddRequired(unsigned int blockSize) const
         }
     }
     return false;
+}
+
+void SynapseGroup::addExtraGlobalNeuronParams(std::map<std::string, std::string> &kernelParameters) const
+{
+    // Loop through list of extra global weight update parameters
+    for(auto const &p : getWUModel()->getExtraGlobalParams()) {
+        // If it's not already in set
+        std::string pnamefull = p.first + getName();
+        if (kernelParameters.find(pnamefull) == kernelParameters.end()) {
+            // If the presynaptic neuron requires this parameter in it's spike event conditions, add it
+            if (getSrcNeuronGroup()->isParamRequiredBySpikeEventCondition(pnamefull)) {
+                kernelParameters.insert(pair<string, string>(pnamefull, p.second));
+            }
+        }
+    }
 }
 
 void SynapseGroup::addExtraGlobalSynapseParams(std::map<std::string, std::string> &kernelParameters) const
@@ -180,9 +268,11 @@ void SynapseGroup::addExtraGlobalSynapseParams(std::map<std::string, std::string
     // Finally add any weight update model extra global
     // parameters referenced in the sim to the map of kernel paramters
     addExtraGlobalSimParams(getName(), "", getWUModel()->getExtraGlobalParams(), kernelParameters);
+}
 
-    // Learn post
-    // -----------
+
+void SynapseGroup::addExtraGlobalPostLearnParams(std::map<string, string> &kernelParameters) const
+{
     // Add any of the pre or postsynaptic neuron group's extra global
     // parameters referenced in the sim code to the map of kernel parameters
     addExtraGlobalPostLearnParams(getSrcNeuronGroup()->getName(), "_pre", getSrcNeuronGroup()->getNeuronModel()->getExtraGlobalParams(),
@@ -194,8 +284,10 @@ void SynapseGroup::addExtraGlobalSynapseParams(std::map<std::string, std::string
     // parameters referenced in the sim to the map of kernel paramters
     addExtraGlobalPostLearnParams(getName(), "", getWUModel()->getExtraGlobalParams(), kernelParameters);
 
-    // Synapse dynamics
-    // ----------------
+}
+
+void SynapseGroup::addExtraGlobalSynapseDynamicsParams(std::map<string, string> &kernelParameters) const
+{
     // Add any of the pre or postsynaptic neuron group's extra global
     // parameters referenced in the sim code to the map of kernel parameters
     addExtraGlobalSynapseDynamicsParams(getSrcNeuronGroup()->getName(), "_pre", getSrcNeuronGroup()->getNeuronModel()->getExtraGlobalParams(),
@@ -208,19 +300,81 @@ void SynapseGroup::addExtraGlobalSynapseParams(std::map<std::string, std::string
     addExtraGlobalSynapseDynamicsParams(getName(), "", getWUModel()->getExtraGlobalParams(), kernelParameters);
 }
 
-void SynapseGroup::addExtraGlobalNeuronParams(std::map<std::string, std::string> &kernelParameters) const
+
+std::string SynapseGroup::getOffsetPre() const
 {
-    // Loop through list of extra global weight update parameters
-    for(auto const &p : getWUModel()->getExtraGlobalParams()) {
-        // If it's not already in set
-        std::string pnamefull = p.first + getName();
-        if (kernelParameters.find(pnamefull) == kernelParameters.end()) {
-            // If the presynaptic neuron requires this parameter in it's spike event conditions, add it
-            if (getSrcNeuronGroup()->isParamRequiredBySpikeEventCondition(pnamefull)) {
-                kernelParameters.insert(pair<string, string>(pnamefull, p.second));
-            }
-        }
+    return getSrcNeuronGroup()->isDelayRequired()
+        ? "(delaySlot * " + to_string(getSrcNeuronGroup()->getNumNeurons()) + ") + "
+        : "";
+}
+
+std::string SynapseGroup::getOffsetPost(const std::string &devPrefix) const
+{
+    return getTrgNeuronGroup()->getQueueOffset(devPrefix);
+}
+
+bool SynapseGroup::isPSInitRNGRequired(VarInit varInitMode) const
+{
+    // If initialising the postsynaptic variables require an RNG, return true
+    return isInitRNGRequired(m_PSVarInitialisers, m_PSVarMode, varInitMode);
+}
+
+bool SynapseGroup::isWUInitRNGRequired(VarInit varInitMode) const
+{
+    // If initialising the weight update variables require an RNG, return true
+    return isInitRNGRequired(m_WUVarInitialisers, m_WUVarMode, varInitMode);
+}
+
+bool SynapseGroup::isPSDeviceVarInitRequired() const
+{
+    // If this synapse group has per-synapse state variables,
+    // return true if any of the postsynapse variables are initialised on the device
+    if (getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
+        return std::any_of(m_PSVarMode.cbegin(), m_PSVarMode.cend(),
+                        [](const VarMode mode){ return (mode & VarInit::DEVICE); });
     }
+    else {
+        return false;
+    }
+}
+
+bool SynapseGroup::isWUDeviceVarInitRequired() const
+{
+    // If this synapse group has per-synapse state variables,
+    // return true if any of the weight update variables are initialised on the device
+    if (getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
+        return std::any_of(m_WUVarMode.cbegin(), m_WUVarMode.cend(),
+                        [](const VarMode mode){ return (mode & VarInit::DEVICE); });
+    }
+    else {
+        return false;
+    }
+}
+
+bool SynapseGroup::canRunOnCPU() const
+{
+#ifndef CPU_ONLY
+    // Return false if insyn variable isn't present on the host
+    if(!(getInSynVarMode() & VarLocation::HOST)) {
+        return false;
+    }
+
+    // Return false if any of the weight update variables aren't present on the host
+    if(std::any_of(m_WUVarMode.cbegin(), m_WUVarMode.cend(),
+                   [](const VarMode mode){ return !(mode & VarLocation::HOST); }))
+    {
+        return false;
+    }
+
+    // Return false if any of the postsynaptic variables aren't present on the host
+    if(std::any_of(m_PSVarMode.cbegin(), m_PSVarMode.cend(),
+                   [](const VarMode mode){ return !(mode & VarLocation::HOST); }))
+    {
+        return false;
+    }
+#endif
+
+    return true;
 }
 
 void SynapseGroup::addExtraGlobalSimParams(const std::string &prefix, const std::string &suffix, const NewModels::Base::StringPairVec &extraGlobalParameters,
@@ -268,16 +422,4 @@ void SynapseGroup::addExtraGlobalSynapseDynamicsParams(const std::string &prefix
             }
         }
     }
-}
-
-std::string SynapseGroup::getOffsetPre() const
-{
-    return getSrcNeuronGroup()->isDelayRequired()
-        ? "(delaySlot * " + to_string(getSrcNeuronGroup()->getNumNeurons()) + ") + "
-        : "";
-}
-
-std::string SynapseGroup::getOffsetPost(const std::string &devPrefix) const
-{
-    return getTrgNeuronGroup()->getQueueOffset(devPrefix);
 }

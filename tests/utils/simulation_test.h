@@ -19,50 +19,52 @@
 class SimulationTest : public ::testing::TestWithParam<bool>
 {
 protected:
-  //--------------------------------------------------------------------------
-  // test virtuals
-  //--------------------------------------------------------------------------
-  virtual void SetUp()
-  {
-    // Perform GeNN initialization
-    allocateMem();
-    initialize();
+    //--------------------------------------------------------------------------
+    // test virtuals
+    //--------------------------------------------------------------------------
+    virtual void SetUp()
+    {
+        // Perform GeNN initialization
+        allocateMem();
+        initialize();
 
-    Init();
+        Init();
 
 #ifndef CPU_ONLY
-    if(GetParam())
-    {
-      copyStateToDevice();
-    }
+        if(GetParam())
+        {
+            // Copy state, initialised on host to device
+            // **NOTE** this is done at the end of initialize/init_model_name function so is PROBABLY unnecessary
+            copyStateToDevice(true);
+        }
 #endif  // CPU_ONLY
-  }
+    }
 
-  virtual void TearDown()
-  {
-    freeMem();
-  }
+    virtual void TearDown()
+    {
+        freeMem();
+    }
 
-  //--------------------------------------------------------------------------
-  // Declared virtuals
-  //--------------------------------------------------------------------------
-  virtual void Init() = 0;
+    //--------------------------------------------------------------------------
+    // Declared virtuals
+    //--------------------------------------------------------------------------
+    virtual void Init() = 0;
 
-  //--------------------------------------------------------------------------
-  // Protected methods
-  //--------------------------------------------------------------------------
-  void StepGeNN()
-  {
+    //--------------------------------------------------------------------------
+    // Protected methods
+    //--------------------------------------------------------------------------
+    void StepGeNN()
+    {
 #ifndef CPU_ONLY
-    if(GetParam())
-    {
-      stepTimeGPU();
-      copyStateFromDevice();
-    }
-    else
+        if(GetParam())
+        {
+            stepTimeGPU();
+            copyStateFromDevice();
+        }
+        else
 #endif  // CPU_ONLY
-    {
-      stepTimeCPU();
+        {
+            stepTimeCPU();
+        }
     }
-  }
 };

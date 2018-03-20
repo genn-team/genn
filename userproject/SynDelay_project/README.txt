@@ -18,7 +18,7 @@ genn-buildmodel.bat SynDelay.cc
 
 then compile the project by typing:
 
-nmake /f WINmakefile
+msbuild SynDelay.vcxproj /p:Configuration=Release
 
 
 COMPILE (MAC AND LINUX)

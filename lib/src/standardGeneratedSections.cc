@@ -13,7 +13,11 @@ void StandardGeneratedSections::neuronOutputInit(
     const std::string &devPrefix)
 {
     if (ng.isDelayRequired()) { // with delay
-        os << devPrefix << "spkQuePtr" << ng.getName() << " = (" << devPrefix << "spkQuePtr" << ng.getName() << " + 1) % " << ng.getNumDelaySlots() << ";" << std::endl;
+        // **NOTE** only device spike queue pointers should be reset here
+        if(!devPrefix.empty()) {
+            os << devPrefix << "spkQuePtr" << ng.getName() << " = (" << devPrefix << "spkQuePtr" << ng.getName() << " + 1) % " << ng.getNumDelaySlots() << ";" << std::endl;
+        }
+
         if (ng.isSpikeEventRequired()) {
             os << devPrefix << "glbSpkCntEvnt" << ng.getName() << "[" << devPrefix << "spkQuePtr" << ng.getName() << "] = 0;" << std::endl;
         }
@@ -31,7 +35,7 @@ void StandardGeneratedSections::neuronOutputInit(
         os << devPrefix << "glbSpkCnt" << ng.getName() << "[0] = 0;" << std::endl;
     }
 }
-
+//----------------------------------------------------------------------------
 void StandardGeneratedSections::neuronLocalVarInit(
     CodeStream &os,
     const NeuronGroup &ng,
@@ -48,7 +52,7 @@ void StandardGeneratedSections::neuronLocalVarInit(
         os << localID << "];" << std::endl;
     }
 }
-
+//----------------------------------------------------------------------------
 void StandardGeneratedSections::neuronLocalVarWrite(
     CodeStream &os,
     const NeuronGroup &ng,
@@ -66,14 +70,16 @@ void StandardGeneratedSections::neuronLocalVarWrite(
         }
     }
 }
-
+//----------------------------------------------------------------------------
 void StandardGeneratedSections::neuronSpikeEventTest(
     CodeStream &os,
     const NeuronGroup &ng,
     const VarNameIterCtx &nmVars,
     const ExtraGlobalParamNameIterCtx &nmExtraGlobalParams,
     const std::string &,
-    const std::string &ftype)
+    const std::vector<FunctionTemplate> functions,
+    const std::string &ftype,
+    const std::string &rng)
 {
     // Create local variable
     os << "bool spikeLikeEvent = false;" << std::endl;
@@ -85,7 +91,8 @@ void StandardGeneratedSections::neuronSpikeEventTest(
 
         // code substitutions ----
         substitute(eCode, "$(id)", "n");
-        StandardSubstitutions::neuronSpikeEventCondition(eCode, ng, nmVars, nmExtraGlobalParams, ftype);
+        StandardSubstitutions::neuronSpikeEventCondition(eCode, ng, nmVars, nmExtraGlobalParams,
+                                                         functions, ftype, rng);
 
         // Open scope for spike-like event test
         os << CodeStream::OB(31);

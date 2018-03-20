@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<SpineML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.shef.ac.uk/SpineMLComponentLayer" xsi:schemaLocation="http://www.shef.ac.uk/SpineMLComponentLayer SpineMLComponentLayer.xsd">
+ <ComponentClass name="COBA exp" type="postsynapse">
+  <Annotation>
+   <SpineCreator/>
+  </Annotation>
+  <Dynamics initial_regime="decaying">
+   <Regime name="decaying">
+    <TimeDerivative variable="g">
+     <MathInline>- g / tau_syn</MathInline>
+    </TimeDerivative>
+    <OnImpulse target_regime="decaying" src_port="g_in">
+     <StateAssignment variable="g">
+      <MathInline>g+g_in</MathInline>
+     </StateAssignment>
+    </OnImpulse>
+   </Regime>
+   <Alias name="I_syn" dimension="?">
+    <MathInline>g*(E-v)</MathInline>
+   </Alias>
+   <StateVariable name="g" dimension="nS"/>
+  </Dynamics>
+  <AnalogSendPort name="I_syn"/>
+  <AnalogReceivePort name="v" dimension="mV"/>
+  <ImpulseReceivePort name="g_in" dimension="nS"/>
+  <Parameter name="tau_syn" dimension="ms"/>
+  <Parameter name="E" dimension="mV"/>
+ </ComponentClass>
+</SpineML>

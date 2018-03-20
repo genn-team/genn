@@ -15,7 +15,6 @@ while getopts "c" opt; do
 done
 
 # Clean GeNN library
-echo $GENN_PATH
 pushd $GENN_PATH/lib
 make clean
 popd
@@ -34,16 +33,20 @@ for f in features/*;
         # Loop through model suffixes
         for s in "" _new;
             do
-                # Clean
-                make clean 1>> ../../msg 2>> ../../msg
-
-                # Build and generate model
-                if genn-buildmodel.sh $BUILD_FLAGS model$s.cc 1>>../../msg 2>> ../../msg ; then
-                    # Determine where the sim code is located for this test and build
+                if [ -f "model$s.cc" ]; then
+                    # Determine where the sim code is located for this test
                     c=$(basename $f)$s"_CODE"
-                    if make $MAKE_FLAGS SIM_CODE=$c 1>>../../msg 2>>../../msg ; then
-                        # Run tests
-                        ./test --gtest_output="xml:test_results$s.xml"
+
+                    # Clean
+                    make $MAKE_FLAGS SIM_CODE=$c clean 1>> ../../msg 2>> ../../msg
+
+                    # Build and generate model
+                    if genn-buildmodel.sh $BUILD_FLAGS model$s.cc 1>>../../msg 2>> ../../msg ; then
+                        # Make
+                        if make $MAKE_FLAGS SIM_CODE=$c 1>>../../msg 2>>../../msg ; then
+                            # Run tests
+                            ./test --gtest_output="xml:test_results$s.xml"
+                        fi
                     fi
                 fi
             done;
@@ -52,8 +55,30 @@ for f in features/*;
         popd
     done;
 
-# Enter unit tests directory
+
+# Clean GeNN library
+pushd $GENN_PATH/lib
+make clean
+popd
+
+# Run unit tests
 pushd unit
+
+# Clean
+make clean 1>> ../msg 2>> ../msg
+
+# Build
+make $MAKE_FLAGS 1>>../msg 2>>../msg 
+
+# Run tests
+./test --gtest_output="xml:test_results_unit.xml"
+
+# Pop unit tests directory
+popd
+
+# Run SpineML tests
+pushd spineml
+pushd simulator
 
 # Clean
 make clean 1>> ../../msg 2>> ../../msg
@@ -61,9 +86,9 @@ make clean 1>> ../../msg 2>> ../../msg
 # Build
 make $MAKE_FLAGS 1>>../../msg 2>>../../msg 
 
-# Run tests
-./test --gtest_output="xml:test_results$s.xml"
+# Run SpineML simulator tests
+./test --gtest_output="xml:test_results_spineml.xml"
 
-# Pop unit tests directory
-popd
+popd    # simulator
+popd    # spineml
 

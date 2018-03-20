@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<LogReport>
+	<EventLog>
+		<LogFile>Excitatory_spike_log.csv</LogFile>
+		<LogFileType>csv</LogFileType>
+		<LogPort>spike</LogPort>
+		<LogEndTime>200</LogEndTime>
+		<LogAll size="3200" type="int" dims="" />
+		<LogCol heading="t" dims="ms" type="double" />
+		<LogCol heading="index" dims="" type="int" />
+		<TimeStep dt="0.10000000000000001" />
+	</EventLog>
+</LogReport>

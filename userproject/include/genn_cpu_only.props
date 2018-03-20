@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!-- Define project configurations - we support x64 and Win32, debug, release and CPU_ONLY mode -->
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Release_CPU_ONLY|x64">
+      <Configuration>Release_CPU_ONLY</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+   
+    <ProjectConfiguration Include="Debug_CPU_ONLY|x64">
+      <Configuration>Debug_CPU_ONLY</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+
+  <!-- Import builtin C++ properties -->
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.default.props" />
+  
+  <!-- Configure global properties to build application (rather than library) and to use default platform toolkit
+  **NOTE** Very important to set platform toolset BEFORE importing CUDA properties -->
+  <PropertyGroup>
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
+    <IntDir>obj\$(Platform)\$(Configuration)_CPU_ONLY\</IntDir>
+    <OutDir>.\</OutDir>
+  </PropertyGroup>  
+ 
+  <!-- Customise C++  compilation and linking tasks for CPU_ONLY mode -->
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(GENN_PATH)\lib\include;$(GENN_PATH)\userproject\include</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <DebugInformationFormat Condition=" '$(Configuration)' == 'Debug_CPU_ONLY' ">ProgramDatabase</DebugInformationFormat>
+      <PreprocessorDefinitions>CPU_ONLY=1</PreprocessorDefinitions>
+      <Optimization Condition=" '$(Configuration)' == 'Debug_CPU_ONLY' ">Disabled</Optimization>
+      <ExceptionHandling>Sync</ExceptionHandling>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies Condition=" '$(Configuration)' == 'Debug_CPU_ONLY' ">$(GENN_PATH)\lib\lib\genn_debug_CPU_ONLY.lib</AdditionalDependencies>
+      <AdditionalDependencies Condition=" '$(Configuration)' == 'Release_CPU_ONLY' ">$(GENN_PATH)\lib\lib\genn_CPU_ONLY.lib</AdditionalDependencies>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <GenerateDebugInformation Condition=" '$(Configuration)' == 'Debug_CPU_ONLY' ">true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  
+  <!-- Import builtin C++ properties -->
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+    
+  <!-- Reference libgenn so it gets built automatically if required -->
+  <ItemGroup>
+    <ProjectReference Include="$(GENN_PATH)\lib\lib_genn.vcxproj">
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+      <UseLibraryDependencyInputs>false</UseLibraryDependencyInputs>
+    </ProjectReference>
+  </ItemGroup> 
+  
+  <!-- Import builtin C++ targets -->
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Targets" />
+</Project>

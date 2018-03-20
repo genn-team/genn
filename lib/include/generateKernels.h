@@ -39,9 +39,9 @@ using namespace std;
 */
 //-------------------------------------------------------------------------
 
-void genNeuronKernel(const NNmodel &model, //!< Model description
-                     const string &path  //!< Path for code generation
-                     );
+void genNeuronKernel(const NNmodel &model,  //!< Model description
+                     const string &path);   //!< Path for code generation
+
 
 //-------------------------------------------------------------------------
 /*!
@@ -54,7 +54,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
 //-------------------------------------------------------------------------
 
 void genSynapseKernel(const NNmodel &model, //!< Model description
-                      const string &path //!< Path for code generation
-                      );
+                      const string &path,   //!< Path for code generation
+                      int localHostID);     //!< ID of local host
 
 #endif // CPU_ONLY

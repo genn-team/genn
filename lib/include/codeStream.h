@@ -9,8 +9,8 @@
 //----------------------------------------------------------------------------
 // CodeStream
 //----------------------------------------------------------------------------
-// Code-generation helper which automatically inserts brackets, indents etc
-// Based heavily on: https://stackoverflow.com/questions/15053753/writing-a-manipulator-for-a-custom-stream-class
+//! Helper class for generating code - automatically inserts brackets, indents etc
+/*! Based heavily on: https://stackoverflow.com/questions/15053753/writing-a-manipulator-for-a-custom-stream-class */
 class CodeStream : public std::ostream
 {
 private:
@@ -58,6 +58,9 @@ public:
     //------------------------------------------------------------------------
     // OB
     //------------------------------------------------------------------------
+    //! An open bracket marker
+    /*! Write to code stream ``os`` using:
+     * \code os << OB(16); \endcode */
     struct OB
     {
         OB(unsigned int level) : Level(level){}
@@ -68,6 +71,9 @@ public:
     //------------------------------------------------------------------------
     // CB
     //------------------------------------------------------------------------
+    //! A close bracket marker
+    /*! Write to code stream ``os`` using:
+     * \code os << CB(16); \endcode */
     struct CB
     {
         CB(unsigned int level) : Level(level){}
@@ -75,9 +81,47 @@ public:
         const unsigned int Level;
     };
 
-    CodeStream(std::ostream &stream): std::ostream(&m_Buffer) {
-        m_Buffer.setSink(stream.rdbuf());
+    //------------------------------------------------------------------------
+    // Scope
+    //------------------------------------------------------------------------
+    class Scope
+    {
+    public:
+        Scope(CodeStream &codeStream)
+        :   m_CodeStream(codeStream), m_Level(s_NextLevel++)
+        {
+            m_CodeStream << CodeStream::OB(m_Level);
+        }
+
+        ~Scope()
+        {
+            m_CodeStream << CodeStream::CB(m_Level);
+        }
+
+    private:
+        //------------------------------------------------------------------------
+        // Static members
+        //------------------------------------------------------------------------
+        static unsigned int s_NextLevel;
+
+        //------------------------------------------------------------------------
+        // Members
+        //------------------------------------------------------------------------
+        CodeStream &m_CodeStream;
+        const unsigned int m_Level;
+    };
+
+    CodeStream(): std::ostream(&m_Buffer) {
         m_Braces.push_back(0);
+    }
+
+    CodeStream(std::ostream &stream): CodeStream() {
+        setSink(stream);
+    }
+
+    void setSink(std::ostream &stream)
+    {
+        m_Buffer.setSink(stream.rdbuf());
     }
 
 private:

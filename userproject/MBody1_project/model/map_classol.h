@@ -12,8 +12,7 @@
 --------------------------------------------------------------------------*/
 
 
-#ifndef CLASSOL_H
-#define CLASSOL_H
+#pragma once
 
 #include <stdint.h>
 
@@ -28,55 +27,54 @@ T. Nowotny, R. Huerta, H. D. I. Abarbanel, and M. I. Rabinovich Self-organizatio
 */
 //--------------------------------------------------------------------------
 
-
 //--------------------------------------------------------------------------
 /*! \brief This class cpontains the methods for running the MBody1 example model.
  */
 //--------------------------------------------------------------------------
+#include "MBody1_CODE/definitions.h"
 
 class classol
 {
 private:
     void importArray(scalar *, double *, int);
     void exportArray(double *, scalar *, int);
+    const int m_PatSetTime;
+    const int m_PatFireTime;
  public:
-  NNmodel model;
-  unsigned int offset;
-  uint64_t *theRates;
-  scalar *p_pattern;  
-  uint64_t *pattern;
-  uint64_t *baserates;
-  //------------------------------------------------------------------------
-  // on the device:
-  uint64_t *d_pattern;
-  uint64_t *d_baserates;
-  //------------------------------------------------------------------------
-  unsigned int sumPN, sumKC, sumLHI, sumDN;
-  unsigned int size_g; //number of connections
-  // end of data fields 
+    unsigned int offset;
+    uint64_t *theRates;
+    scalar *p_pattern;
+    uint64_t *pattern;
+    uint64_t *baserates;
+    //------------------------------------------------------------------------
+    // on the device:
+    uint64_t *d_pattern;
+    uint64_t *d_baserates;
+    //------------------------------------------------------------------------
+    unsigned int sumPN, sumKC, sumLHI, sumDN;
+    unsigned int size_g; //number of connections
+    // end of data fields
 
-  classol();
-  ~classol();
-  void init(unsigned int); 
-  void allocate_device_mem_patterns();
-  void free_device_mem(); 
-  void read_pnkcsyns(FILE *);
-  void read_sparsesyns_par(const char*, struct SparseProjection, scalar *, FILE *,FILE *,FILE *);
-  void write_pnkcsyns(FILE *); 
-  void read_pnlhisyns(FILE *); 
-  void write_pnlhisyns(FILE *); 
-  void read_kcdnsyns(FILE *); 
-  void write_kcdnsyns(FILE *); 
-  void read_input_patterns(FILE *); 
-  void generate_baserates(); 
-  void runGPU(scalar); 
-  void runCPU(scalar); 
-  void output_state(FILE *, unsigned int); 
-  void getSpikesFromGPU(); 
-  void getSpikeNumbersFromGPU(); 
-  void output_spikes(FILE *, unsigned int); 
-  void sum_spikes(); 
-  void get_kcdnsyns(); 
+    classol(int patSetTime, int patFireTime);
+    ~classol();
+    void init(unsigned int);
+    void allocate_device_mem_patterns();
+    void free_device_mem();
+    void read_pnkcsyns(FILE *);
+    void read_sparsesyns_par(unsigned int, SparseProjection&, scalar *, FILE *,FILE *,FILE *);
+    void write_pnkcsyns(FILE *);
+    void read_pnlhisyns(FILE *);
+    void write_pnlhisyns(FILE *);
+    void read_kcdnsyns(FILE *);
+    void write_kcdnsyns(FILE *);
+    void read_input_patterns(FILE *);
+    void generate_baserates();
+    void runGPU(scalar);
+    void runCPU(scalar);
+    void output_state(FILE *, unsigned int);
+    void getSpikesFromGPU();
+    void getSpikeNumbersFromGPU();
+    void output_spikes(FILE *, unsigned int);
+    void sum_spikes();
+    void get_kcdnsyns();
 };
-
-#endif
