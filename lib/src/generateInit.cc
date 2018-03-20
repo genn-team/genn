@@ -50,6 +50,23 @@ void genHostInitVarCode(CodeStream &os, const NewModels::Base::StringPairVec &va
     }
 }
 // ------------------------------------------------------------------------
+template<typename I, typename M>
+void genDeviceInitVarCode(CodeStream &os, const NewModels::Base::StringPairVec &vars, const std::string &threadIndex, const std::string &popName, const std::string &ftype,
+                          I getVarInitialiser, M getVarMode)
+{
+    for(size_t j = 0; j < vars.size(); j++) {
+        const auto &varInit = getVarInitialiser(j);
+        const VarMode varMode = getVarMode(j);
+
+        // Initialise directly into device variable
+        if((varMode & VarInit::DEVICE) && !varInit.getSnippet()->getCode().empty()) {
+            CodeStream::Scope b(os);
+            os << StandardSubstitutions::initVariable(varInit, "dd_" + vars[j].first + popName + "[" + threadIndex + "]",
+                                                      cudaFunctions, ftype, "&initRNG") << std::endl;
+        }
+    }
+}
+// ------------------------------------------------------------------------
 void genHostInitSpikeCode(CodeStream &os, const NeuronGroup &ng, bool spikeEvent)
 {
     // Get variable mode
@@ -363,20 +380,9 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
                                 os << "dd_inSyn" << s->getName() << "[lid] = " << model.scalarExpr(0.0) << ";" << std::endl;
                             }
 
-                            // If matrix has individual state variables
-                            // **THINK** should this REALLY also apply to postsynaptic models
-                            auto psmVars = s->getPSModel()->getVars();
-                            for(size_t j = 0; j < psmVars.size(); j++) {
-                                const auto &varInit = s->getPSVarInitialisers()[j];
-                                const VarMode varMode = s->getPSVarMode(j);
-
-                                // Initialise directly into device variable
-                                if((varMode & VarInit::DEVICE) && !varInit.getSnippet()->getCode().empty()) {
-                                    CodeStream::Scope b(os);
-                                    os << StandardSubstitutions::initVariable(varInit, "dd_" + psmVars[j].first + s->getName() + "[lid]",
-                                                                            cudaFunctions, model.getPrecision(), "&initRNG") << std::endl;
-                                }
-                            }
+                            genDeviceInitVarCode(os, s->getPSModel()->getVars(), "lid", s->getName(), model.getPrecision(),
+                                [&s](size_t i){ return s->getPSVarInitialisers()[i]; },
+                                [&s](size_t i){ return s->getPSVarMode(i); });
                         }
                     }
                 }
@@ -429,19 +435,9 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
                         {
                             CodeStream::Scope b(os);
 
-                            // Write loop through rows (presynaptic neurons)
-                            auto wuVars = s.second.getWUModel()->getVars();
-                            for (size_t k= 0, l= wuVars.size(); k < l; k++) {
-                                const auto &varInit = s.second.getWUVarInitialisers()[k];
-                                const VarMode varMode = s.second.getWUVarMode(k);
-
-                                // If this variable should be initialised on the device and has any initialisation code
-                                if((varMode & VarInit::DEVICE) && !varInit.getSnippet()->getCode().empty()) {
-                                    CodeStream::Scope b(os);
-                                    os << StandardSubstitutions::initVariable(varInit, "dd_" + wuVars[k].first + s.first + "[idx]",
-                                                                            cudaFunctions, model.getPrecision(), "&initRNG") << std::endl;
-                                }
-                            }
+                            genDeviceInitVarCode(os, s.second.getWUModel()->getVars(), "idx", s.first, model.getPrecision(),
+                                [&s](size_t i){ return s.second.getWUVarInitialisers()[i]; },
+                                [&s](size_t i){ return s.second.getWUVarMode(i); });
 
                             // Advance to next row
                             os << "idx += " << s.second.getTrgNeuronGroup()->getNumNeurons() << ";" << std::endl;
@@ -573,19 +569,9 @@ unsigned int genInitializeSparseDeviceKernel(unsigned int numStaticInitThreads, 
                                     os << "const unsigned idx = shRowStart[i] + lid;" << std::endl;
                                 }
 
-                                // Loop through variables
-                                auto wuVars = s.second.getWUModel()->getVars();
-                                for (size_t k= 0, l= wuVars.size(); k < l; k++) {
-                                    const auto &varInit = s.second.getWUVarInitialisers()[k];
-                                    const VarMode varMode = s.second.getWUVarMode(k);
-
-                                    // If this variable should be initialised on the device and has any initialisation code
-                                    if((varMode & VarInit::DEVICE) && !varInit.getSnippet()->getCode().empty()) {
-                                        CodeStream::Scope b(os);
-                                        os << StandardSubstitutions::initVariable(varInit, "dd_" + wuVars[k].first + s.first + "[idx]",
-                                                                                cudaFunctions, model.getPrecision(), "&initRNG") << std::endl;
-                                    }
-                                }
+                                genDeviceInitVarCode(os, s.second.getWUModel()->getVars(), "idx", s.first, model.getPrecision(),
+                                    [&s](size_t i){ return s.second.getWUVarInitialisers()[i]; },
+                                    [&s](size_t i){ return s.second.getWUVarMode(i); });
                             }
 
                             // If matrix is ragged, advance index to next row by adding stride
