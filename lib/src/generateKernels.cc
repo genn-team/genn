@@ -99,17 +99,23 @@ void generatePreParallelisedSparseCode(
         }
 
         if (sg.getSrcNeuronGroup()->isDelayRequired()) {
-            os << "int preInd = dd_glbSpk"  << postfix << sg.getSrcNeuronGroup()->getName();
+            os << "const unsigned int preInd = dd_glbSpk"  << postfix << sg.getSrcNeuronGroup()->getName();
             os << "[(delaySlot * " << sg.getSrcNeuronGroup()->getNumNeurons() << ") + " << localID << "];" << std::endl;
         }
         else {
-            os << "int preInd = dd_glbSpk"  << postfix << sg.getSrcNeuronGroup()->getName();
+            os << "const unsigned int preInd = dd_glbSpk"  << postfix << sg.getSrcNeuronGroup()->getName();
             os << "[" << localID << "];" << std::endl;
         }
-        os << "prePos = dd_indInG" << sg.getName() << "[preInd];" << std::endl;
-        os << "npost = dd_indInG" << sg.getName() << "[preInd + 1] - prePos;" << std::endl;
 
-        if (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
+        if(sg.getMatrixType() & SynapseMatrixConnectivity::YALE) {
+            os << "prePos = dd_indInG" << sg.getName() << "[preInd];" << std::endl;
+            os << "npost = dd_indInG" << sg.getName() << "[preInd + 1] - prePos;" << std::endl;
+        }
+        else if(sg.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
+            os << "prePos = preInd * " << to_string(sg.getMaxConnections()) << ";" << std::endl;
+            os << "npost = dd_rowLength" << sg.getName() << "[preInd];" << std::endl;
+        }
+        else if (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
             os << "unsigned int gid = (dd_glbSpkCnt" << postfix << "[" << localID << "] * " << sg.getTrgNeuronGroup()->getNumNeurons() << " + i);" << std::endl;
         }
 
@@ -137,9 +143,10 @@ void generatePreParallelisedSparseCode(
             os << "if (B(dd_gp" << sg.getName() << "[gid / 32], gid & 31))" << CodeStream::OB(135);
         }
 
-        os << "for (int i = 0; i < npost; ++i)";
+        os << "for(unsigned int i = 0; i < npost; ++i)";
         {
             CodeStream::Scope b(os);
+
             // **TODO** pretty sure __ldg will boost performance here - basically will bring whole row into cache
             os << "ipost = dd_ind" <<  sg.getName() << "[prePos];" << std::endl;
 
@@ -349,7 +356,6 @@ void generate_process_presynaptic_events_code(
      if ((evnt && sg.isSpikeEventRequired()) || (!evnt && sg.isTrueSpikeRequired())) {
         // parallelisation along pre-synaptic spikes, looped over post-synaptic neurons
         if(sg.getSpanType() == SynapseGroup::SpanType::PRESYNAPTIC) {
-            assert(sg.getMatrixType() & SynapseMatrixConnectivity::YALE);
             generatePreParallelisedSparseCode(os, sg, localID, postfix, ftype);
         }
         // classical parallelisation of post-synaptic neurons in parallel and spikes in a loop
