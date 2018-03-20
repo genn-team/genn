@@ -183,6 +183,12 @@ public:
     //! Is device var init code required for any variables in this synapse group's weight update model
     bool isWUDeviceVarInitRequired() const;
 
+    //! Is device var init code required for any presynaptic variables in this synapse group's weight update model
+    bool isWUDevicePreVarInitRequired() const;
+
+    //! Is device var init code required for any postsynaptic variables in this synapse group's weight update model
+    bool isWUDevicePostVarInitRequired() const;
+
     //! Can this synapse group run on the CPU?
     /*! If we are running in CPU_ONLY mode this is always true,
         but some GPU functionality will prevent models being run on both CPU and GPU.*/

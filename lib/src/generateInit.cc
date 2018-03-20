@@ -381,8 +381,19 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
                             }
 
                             genDeviceInitVarCode(os, s->getPSModel()->getVars(), "lid", s->getName(), model.getPrecision(),
-                                [&s](size_t i){ return s->getPSVarInitialisers()[i]; },
-                                [&s](size_t i){ return s->getPSVarMode(i); });
+                                                 [&s](size_t i){ return s->getPSVarInitialisers()[i]; },
+                                                 [&s](size_t i){ return s->getPSVarMode(i); });
+
+                            genDeviceInitVarCode(os, s->getWUModel()->getPostVars(), "lid", s->getName(), model.getPrecision(),
+                                                 [&s](size_t i){ return s->getWUPostVarInitialisers()[i]; },
+                                                 [&s](size_t i){ return s->getWUPostVarMode(i); });
+                        }
+
+                        // Loop through outgoing synaptic populations
+                        for(const auto *s : n.second.getOutSyn()) {
+                            genDeviceInitVarCode(os, s->getWUModel()->getPreVars(), "lid", s->getName(), model.getPrecision(),
+                                                 [&s](size_t i){ return s->getWUPreVarInitialisers()[i]; },
+                                                 [&s](size_t i){ return s->getWUPreVarMode(i); });
                         }
                     }
                 }
@@ -436,8 +447,8 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
                             CodeStream::Scope b(os);
 
                             genDeviceInitVarCode(os, s.second.getWUModel()->getVars(), "idx", s.first, model.getPrecision(),
-                                [&s](size_t i){ return s.second.getWUVarInitialisers()[i]; },
-                                [&s](size_t i){ return s.second.getWUVarMode(i); });
+                                                 [&s](size_t i){ return s.second.getWUVarInitialisers()[i]; },
+                                                 [&s](size_t i){ return s.second.getWUVarMode(i); });
 
                             // Advance to next row
                             os << "idx += " << s.second.getTrgNeuronGroup()->getNumNeurons() << ";" << std::endl;
@@ -570,8 +581,8 @@ unsigned int genInitializeSparseDeviceKernel(unsigned int numStaticInitThreads, 
                                 }
 
                                 genDeviceInitVarCode(os, s.second.getWUModel()->getVars(), "idx", s.first, model.getPrecision(),
-                                    [&s](size_t i){ return s.second.getWUVarInitialisers()[i]; },
-                                    [&s](size_t i){ return s.second.getWUVarMode(i); });
+                                                     [&s](size_t i){ return s.second.getWUVarInitialisers()[i]; },
+                                                     [&s](size_t i){ return s.second.getWUVarMode(i); });
                             }
 
                             // If matrix is ragged, advance index to next row by adding stride
@@ -788,12 +799,12 @@ void genInit(const NNmodel &model,      //!< Model description
 
             // Generate code to initialise pre and postsynaptic weight update variables on host if necessary
             genHostInitVarCode(os, wu->getPreVars(), numSrcNeurons, s.first, model.getPrecision(),
-                                   [&s](size_t i){ return s.second.getWUPreVarInitialisers()[i]; },
-                                   [&s](size_t i){ return s.second.getWUPreVarMode(i); });
+                               [&s](size_t i){ return s.second.getWUPreVarInitialisers()[i]; },
+                               [&s](size_t i){ return s.second.getWUPreVarMode(i); });
 
             genHostInitVarCode(os, wu->getPostVars(), numTrgNeurons, s.first, model.getPrecision(),
-                                   [&s](size_t i){ return s.second.getWUPostVarInitialisers()[i]; },
-                                   [&s](size_t i){ return s.second.getWUPostVarMode(i); });
+                               [&s](size_t i){ return s.second.getWUPostVarInitialisers()[i]; },
+                               [&s](size_t i){ return s.second.getWUPostVarMode(i); });
 
 
             // If insyn variables should be initialised on the host

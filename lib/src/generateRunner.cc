@@ -2354,10 +2354,10 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
             }
             
             genPullVars(os, wu->getPreVars(), s.first, to_string(numSrcNeurons),
-                            [&s](const std::string &name){ return s.second.getWUPreVarMode(name); });
+                        [&s](const std::string &name){ return s.second.getWUPreVarMode(name); });
 
             genPullVars(os, wu->getPostVars(), s.first, to_string(numTrgNeurons),
-                            [&s](const std::string &name){ return s.second.getWUPostVarMode(name); });
+                        [&s](const std::string &name){ return s.second.getWUPostVarMode(name); });
         }
         os << std::endl;
     }

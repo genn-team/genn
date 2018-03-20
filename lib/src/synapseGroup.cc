@@ -363,6 +363,18 @@ bool SynapseGroup::isWUDeviceVarInitRequired() const
     }
 }
 
+bool SynapseGroup::isWUDevicePreVarInitRequired() const
+{
+    return std::any_of(m_WUPreVarMode.cbegin(), m_WUPreVarMode.cend(),
+                       [](const VarMode mode){ return (mode & VarInit::DEVICE); });
+}
+
+bool SynapseGroup::isWUDevicePostVarInitRequired() const
+{
+    return std::any_of(m_WUPostVarMode.cbegin(), m_WUPostVarMode.cend(),
+                       [](const VarMode mode){ return (mode & VarInit::DEVICE); });
+}
+
 bool SynapseGroup::canRunOnCPU() const
 {
 #ifndef CPU_ONLY
