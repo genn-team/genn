@@ -1,4 +1,0 @@
-#!/bin/bash
-export LD_BIND_NOW=1
-SCRIPT_PATH=$(dirname "$0")
-$SCRIPT_PATH/OneComp_sim_wrapper "$@"
