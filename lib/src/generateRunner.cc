@@ -344,6 +344,46 @@ void genPullCurrentSpikeFunctions(CodeStream &os, const NeuronGroup &ng, bool sp
     }
     os << std::endl;
 }
+
+template<typename M>
+void genPullVars(CodeStream &os, const NewModels::Base::StringPairVec &vars, const std::string &popName, const std::string &count,
+                 M getVarMode)
+{
+    for(const auto &v : vars) {
+        // only copy non-pointers and non-zero-copied. Pointers don't transport between GPU and CPU
+        if (v.second.find("*") == string::npos && canPushPullVar(getVarMode(v.first))) {
+            os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << v.first << popName;
+            os << ", d_"  << v.first << popName;
+            os << ", " << count << " * sizeof(" << v.second << "), cudaMemcpyDeviceToHost));" << std::endl;
+        }
+    }
+}
+
+template<typename M>
+void genPushVars(CodeStream &os, const NewModels::Base::StringPairVec &vars, const std::string &popName, const std::string &count,
+                 M getVarMode)
+{
+    for(const auto &v : vars) {
+        const VarMode varMode = getVarMode(v.first);
+
+        // only copy non-pointers and non-zero-copied. Pointers don't transport between GPU and CPU
+        if (v.second.find("*") == string::npos && canPushPullVar(varMode)) {
+            // If variable is initialised on device, only copy if hostInitialisedOnly isn't set
+            if(varMode & VarInit::DEVICE) {
+                os << "if(!hostInitialisedOnly)" << CodeStream::OB(1101);
+            }
+
+            os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << v.first << popName;
+            os << ", " << v.first << popName;
+            os << ", " << count << " * sizeof(" << v.second << "), cudaMemcpyHostToDevice));" << std::endl;
+
+            if(varMode & VarInit::DEVICE) {
+                os << CodeStream::CB(1101);
+            }
+        }
+    }
+}
+
 #endif  // CPU_ONLY
 }   // Anonymous namespace
 
@@ -687,11 +727,11 @@ void genDefinitions(const NNmodel &model,   //!< Model description
         }
 
         for(const auto &v : s.second.getWUModel()->getPreVars()) {
-            extern_variable_def(os, v.second + " *", v.first + s.first);
+            extern_variable_def(os, v.second + " *", v.first + s.first, s.second.getWUPreVarMode(v.first));
         }
 
         for(const auto &v : s.second.getWUModel()->getPostVars()) {
-            extern_variable_def(os, v.second + " *", v.first + s.first);
+            extern_variable_def(os, v.second + " *", v.first + s.first, s.second.getWUPostVarMode(v.first));
         }
 
         for(auto const &p : s.second.getWUModel()->getExtraGlobalParams()) {
@@ -1306,11 +1346,11 @@ void genRunner(const NNmodel &model,    //!< Model description
         }
 
         for(const auto &v : wu->getPreVars()) {
-            variable_def(os, v.second + " *", v.first + s.first);
+            variable_def(os, v.second + " *", v.first + s.first, s.second.getWUPreVarMode(v.first));
         }
 
         for(const auto &v : wu->getPostVars()) {
-            variable_def(os, v.second + " *", v.first + s.first);
+            variable_def(os, v.second + " *", v.first + s.first, s.second.getWUPostVarMode(v.first));
         }
 
         for(const auto &v : wu->getExtraGlobalParams()) {
@@ -1528,21 +1568,17 @@ void genRunner(const NNmodel &model,    //!< Model description
                                     s.second.getTrgNeuronGroup()->getNumNeurons());
 
             // Allocate presynaptic weight update variables
-	        // **NOTE** these are sized based on presynaptic population so there
-	        // is no need to defer this until number of connections is known etc
-	        const size_t preSize = s.second.getSrcNeuronGroup()->getNumNeurons();
-	        for(const auto &v : wu->getPreVars()) {
-	            mem += allocate_variable(os, v.second, v.first + s.first, s.second.isWUVarZeroCopyEnabled(v.first),
-	                                     preSize);
-	        }
+            const size_t preSize = s.second.getSrcNeuronGroup()->getNumNeurons();
+            for(const auto &v : wu->getPreVars()) {
+                mem += allocate_variable(os, v.second, v.first + s.first, s.second.getWUPreVarMode(v.first),
+                                         preSize);
+            }
 
-	        // Allocate postsynaptic weight update variables
-	        // **NOTE** these are sized based on postsynaptic population so there
-	        // is no need to defer this until number of connections is known etc
-	        const size_t postSize = s.second.getTrgNeuronGroup()->getNumNeurons();
-	        for(const auto &v : wu->getPostVars()) {
-	                 mem += allocate_variable(os, v.second, v.first + s.first, s.second.isWUVarZeroCopyEnabled(v.first),
-	                                          postSize);
+            // Allocate postsynaptic weight update variables
+            const size_t postSize = s.second.getTrgNeuronGroup()->getNumNeurons();
+            for(const auto &v : wu->getPostVars()) {
+                        mem += allocate_variable(os, v.second, v.first + s.first, s.second.getWUPostVarMode(v.first),
+                                                 postSize);
             }
         
             // If connectivity is defined using a bitmask, allocate memory for bitmask
@@ -1746,11 +1782,11 @@ void genRunner(const NNmodel &model,    //!< Model description
             free_variable(os, "inSyn" + s.first, s.second.getInSynVarMode());
 
             for(const auto &v : s.second.getWUModel()->getPreVars()) {
-                free_variable(os, v.first + s.first, s.second.isWUVarZeroCopyEnabled(v.first));
+                free_variable(os, v.first + s.first, s.second.getWUPreVarMode(v.first));
             }
 
-            for(const auto &v : s.second.getWUModel()->getPreVars()) {
-                free_variable(os, v.first + s.first, s.second.isWUVarZeroCopyEnabled(v.first));
+            for(const auto &v : s.second.getWUModel()->getPostVars()) {
+                free_variable(os, v.first + s.first, s.second.getWUPostVarMode(v.first));
             }
             
             if (s.second.getMatrixType() & SynapseMatrixConnectivity::YALE) {
@@ -2149,46 +2185,13 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
                     os << "const size_t size = C" << s.first << ".connN;" << std::endl;
                 }
 
-                for(const auto &v : wu->getVars()) {
-                    const VarMode varMode = s.second.getWUVarMode(v.first);
-
-                    // only copy non-pointers and non-zero-copied. Pointers don't transport between GPU and CPU
-                    if (v.second.find("*") == string::npos && canPushPullVar(varMode)) {
-                        // If variable is initialised on device, only copy if hostInitialisedOnly isn't set
-                        if(varMode & VarInit::DEVICE) {
-                            os << "if(!hostInitialisedOnly)" << CodeStream::OB(1101);
-                        }
-
-                        os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << v.first << s.first;
-                        os << ", " << v.first << s.first;
-                        os << ", size * sizeof(" << v.second << "), cudaMemcpyHostToDevice));" << std::endl;
-
-                        if(varMode & VarInit::DEVICE) {
-                            os << CodeStream::CB(1101);
-                        }
-                    }
-                }
+                genPushVars(os, wu->getVars(), s.first, "size",
+                            [&s](const std::string &name){ return s.second.getWUVarMode(name); });
             }
             
             if(s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
-                for(const auto &v : psm->getVars()) {
-                    const VarMode varMode = s.second.getPSVarMode(v.first);
-                    // only copy non-pointers and non-zero-copied. Pointers don't transport between GPU and CPU
-                    if (v.second.find("*") == string::npos && canPushPullVar(varMode)) {
-                        // If variable is initialised on device, only copy if hostInitialisedOnly isn't set
-                        if(varMode & VarInit::DEVICE) {
-                            os << "if(!hostInitialisedOnly)" << CodeStream::OB(1102);
-                        }
-
-                        os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << v.first << s.first;
-                        os << ", " << v.first << s.first;
-                        os << ", " << numTrgNeurons << " * sizeof(" << v.second << "), cudaMemcpyHostToDevice));" << std::endl;
-
-                        if(varMode & VarInit::DEVICE) {
-                            os << CodeStream::CB(1102);
-                        }
-                    }
-                }
+                genPushVars(os, psm->getVars(), s.first, to_string(numTrgNeurons),
+                            [&s](const std::string &name){ return s.second.getPSVarMode(name); });
             }
             
             if (s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
@@ -2213,24 +2216,10 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
                 }
             }
         
-
-            for(const auto &v : wu->getPreVars()) {
-                // only copy non-pointers and non-zero-copied. Pointers don't transport between GPU and CPU
-                if (v.second.find("*") == string::npos && !s.second.isWUVarZeroCopyEnabled(v.first)) {
-                    os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << v.first << s.first;
-                    os << ", " << v.first << s.first;
-                    os << ", " << numSrcNeurons << " * sizeof(" << v.second << "), cudaMemcpyHostToDevice));" << std::endl;
-                }
-            }
-
-            for(const auto &v : wu->getPostVars()) {
-                // only copy non-pointers and non-zero-copied. Pointers don't transport between GPU and CPU
-                if (v.second.find("*") == string::npos && !s.second.isWUVarZeroCopyEnabled(v.first)) {
-                    os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << v.first << s.first;
-                    os << ", " << v.first << s.first;
-                    os << ", " << numTrgNeurons << " * sizeof(" << v.second << "), cudaMemcpyHostToDevice));" << std::endl;
-                }
-            }
+            genPushVars(os, wu->getPreVars(), s.first, to_string(numSrcNeurons),
+                        [&s](const std::string &name){ return s.second.getWUPreVarMode(name); });
+            genPushVars(os, wu->getPostVars(), s.first, to_string(numTrgNeurons),
+                        [&s](const std::string &name){ return s.second.getWUPostVarMode(name); });
 
         }
         os << std::endl;
@@ -2342,27 +2331,15 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
                     os << "size_t size = C" << s.first << ".connN;" << std::endl;
                 }
 
-                for(const auto &v : wu->getVars()) {
-                    // only copy non-pointers and non-zero-copied. Pointers don't transport between GPU and CPU
-                    if (v.second.find("*") == string::npos && canPushPullVar(s.second.getWUVarMode(v.first))) {
-                        os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << v.first << s.first;
-                        os << ", d_"  << v.first << s.first;
-                        os << ", size * sizeof(" << v.second << "), cudaMemcpyDeviceToHost));" << std::endl;
-                    }
-                }
+                genPullVars(os, wu->getVars(), s.first, "size",
+                            [&s](const std::string &name){ return s.second.getWUVarMode(name); });
             }
-            
+
             if(s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
-                for(const auto &v : psm->getVars()) {
-                    // only copy non-pointers and non-zero-copied. Pointers don't transport between GPU and CPU
-                    if (v.second.find("*") == string::npos && canPushPullVar(s.second.getPSVarMode(v.first))) {
-                        os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << v.first << s.first;
-                        os << ", d_"  << v.first << s.first;
-                        os << ", " << numTrgNeurons << " * sizeof(" << v.second << "), cudaMemcpyDeviceToHost));" << std::endl;
-                    }
-                }
+                genPullVars(os, psm->getVars(), s.first, to_string(numTrgNeurons),
+                            [&s](const std::string &name){ return s.second.getPSVarMode(name); });
             }
-            
+
             if (s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
                 size_t size = (numSrcNeurons * numTrgNeurons) / 32 + 1;
                 os << "CHECK_CUDA_ERRORS(cudaMemcpy(gp" << s.first;
@@ -2376,23 +2353,11 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
                 os << ", " << numTrgNeurons << " * sizeof(" << model.getPrecision() << "), cudaMemcpyDeviceToHost));" << std::endl;
             }
             
-            for(const auto &v : wu->getPreVars()) {
-                // only copy non-pointers and non-zero-copied. Pointers don't transport between GPU and CPU
-                if (v.second.find("*") == string::npos && !s.second.isWUVarZeroCopyEnabled(v.first)) {
-                    os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << v.first << s.first;
-                    os << ", d_"  << v.first << s.first;
-                    os << ", " << numSrcNeurons << " * sizeof(" << v.second << "), cudaMemcpyDeviceToHost));" << std::endl;
-                }
-            }
+            genPullVars(os, wu->getPreVars(), s.first, to_string(numSrcNeurons),
+                            [&s](const std::string &name){ return s.second.getWUPreVarMode(name); });
 
-            for(const auto &v : wu->getPostVars()) {
-                // only copy non-pointers and non-zero-copied. Pointers don't transport between GPU and CPU
-                if (v.second.find("*") == string::npos && !s.second.isWUVarZeroCopyEnabled(v.first)) {
-                    os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << v.first << s.first;
-                    os << ", d_"  << v.first << s.first;
-                    os << ", " << numTrgNeurons << " * sizeof(" << v.second << "), cudaMemcpyDeviceToHost));" << std::endl;
-                }
-            }
+            genPullVars(os, wu->getPostVars(), s.first, to_string(numTrgNeurons),
+                            [&s](const std::string &name){ return s.second.getWUPostVarMode(name); });
         }
         os << std::endl;
     }

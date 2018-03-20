@@ -134,11 +134,23 @@ public:
     bool isWUVarZeroCopyEnabled(const std::string &var) const{ return (getWUVarMode(var) & VarLocation::ZERO_COPY); }
     bool isPSVarZeroCopyEnabled(const std::string &var) const{ return (getPSVarMode(var) & VarLocation::ZERO_COPY); }
 
-    //! Get variable mode used by weight update model state variable
+    //! Get variable mode used by weight update model per-synapse state variable
     VarMode getWUVarMode(const std::string &var) const;
 
-    //! Get variable mode used by weight update model state variable
+    //! Get variable mode used by weight update model per-synapse state variable
     VarMode getWUVarMode(size_t index) const{ return m_WUVarMode[index]; }
+
+    //! Get variable mode used by weight update model presynaptic state variable
+    VarMode getWUPreVarMode(const std::string &var) const;
+
+    //! Get variable mode used by weight update model presynaptic state variable
+    VarMode getWUPreVarMode(size_t index) const{ return m_WUPreVarMode[index]; }
+
+    //! Get variable mode used by weight update model postsynaptic state variable
+    VarMode getWUPostVarMode(const std::string &var) const;
+
+    //! Get variable mode used by weight update model postsynaptic state variable
+    VarMode getWUPostVarMode(size_t index) const{ return m_WUPostVarMode[index]; }
 
     //! Get variable mode used by postsynaptic model state variable
     VarMode getPSVarMode(const std::string &var) const;
@@ -259,8 +271,14 @@ private:
     //!< Initialisers for post synapse model variables
     std::vector<NewModels::VarInit> m_PSVarInitialisers;
 
-    //!< Whether indidividual state variables of weight update model should use zero-copied memory
+    //!< Whether individual per-synapse state variables of weight update model should use zero-copied memory
     std::vector<VarMode> m_WUVarMode;
+
+    //!< Whether individual presynaptic state variables of weight update model should use zero-copied memory
+    std::vector<VarMode> m_WUPreVarMode;
+
+    //!< Whether individual postsynaptic state variables of weight update model should use zero-copied memory
+    std::vector<VarMode> m_WUPostVarMode;
 
     //!< Whether indidividual state variables of post synapse should use zero-copied memory
     std::vector<VarMode> m_PSVarMode;

@@ -111,6 +111,22 @@ public:
 
     //! Whether postsynaptic spike times are needed or not
     virtual bool isPostSpikeTimeRequired() const{ return false; }
+
+    //------------------------------------------------------------------------
+    // Public methods
+    //------------------------------------------------------------------------
+    //! Find the index of a named presynaptic variable
+    size_t getPreVarIndex(const std::string &varName) const
+    {
+        return getVarIndex(varName, getPreVars());
+    }
+
+    //! Find the index of a named postsynaptic variable
+    size_t getPostVarIndex(const std::string &varName) const
+    {
+        return getVarIndex(varName, getPostVars());
+    }
+
 };
 
 //----------------------------------------------------------------------------

@@ -29,6 +29,27 @@ bool shouldInitOnHost(VarMode varMode)
 #endif
 }
 // ------------------------------------------------------------------------
+template<typename I, typename M>
+void genHostInitVarCode(CodeStream &os, const NewModels::Base::StringPairVec &vars, size_t count, const std::string &popName, const std::string &ftype,
+                        I getVarInitialiser, M getVarMode)
+{
+    for (size_t k= 0, l= vars.size(); k < l; k++) {
+        const auto &varInit = getVarInitialiser(k);
+        const VarMode varMode = getVarMode(k);
+
+        // If this variable should be initialised on the host and has any initialisation code
+        if(shouldInitOnHost(varMode) && !varInit.getSnippet()->getCode().empty()) {
+            CodeStream::Scope b(os);
+            os << "for (int i = 0; i < " << count << "; i++)";
+            {
+                CodeStream::Scope b(os);
+                os << StandardSubstitutions::initVariable(varInit, vars[k].first + popName + "[i]",
+                                                          cpuFunctions, ftype, "rng") << std::endl;
+            }
+        }
+    }
+}
+// ------------------------------------------------------------------------
 void genHostInitSpikeCode(CodeStream &os, const NeuronGroup &ng, bool spikeEvent)
 {
     // Get variable mode
@@ -779,29 +800,15 @@ void genInit(const NNmodel &model,      //!< Model description
             const unsigned int numSrcNeurons = s.second.getSrcNeuronGroup()->getNumNeurons();
             const unsigned int numTrgNeurons = s.second.getTrgNeuronGroup()->getNumNeurons();
 
-            auto wuPreVars = wu->getPreVars();
-            for(size_t k = 0; k < wuPreVars.size(); k++) {
-                os << "    " << oB << "for (int i = 0; i < " << numSrcNeurons << "; i++) {" << std::endl;
-                if (wuPreVars[k].second == model.getPrecision()) {
-                    os << "        " << wuPreVars[k].first << s.first << "[i] = " << model.scalarExpr(s.second.getWUInitPreVals()[k]) << ";" << std::endl;
-                }
-                else {
-                    os << "        " << wuPreVars[k].first << s.first << "[i] = " << s.second.getWUInitPreVals()[k] << ";" << std::endl;
-                }
-                os << "    }" << cB << std::endl;
-            }
+            // Generate code to initialise pre and postsynaptic weight update variables on host if necessary
+            genHostInitVarCode(os, wu->getPreVars(), numSrcNeurons, s.first, model.getPrecision(),
+                                   [&s](size_t i){ return s.second.getWUPreVarInitialisers()[i]; },
+                                   [&s](size_t i){ return s.second.getWUPreVarMode(i); });
 
-            auto wuPostVars = wu->getPostVars();
-            for(size_t k = 0; k < wuPostVars.size(); k++) {
-                os << "    " << oB << "for (int i = 0; i < " << numTrgNeurons << "; i++) {" << std::endl;
-                if (wuPostVars[k].second == model.getPrecision()) {
-                    os << "        " << wuPostVars[k].first << s.first << "[i] = " << model.scalarExpr(s.second.getWUInitPostVals()[k]) << ";" << std::endl;
-                }
-                else {
-                    os << "        " << wuPostVars[k].first << s.first << "[i] = " << s.second.getWUInitPostVals()[k] << ";" << std::endl;
-                }
-                os << "    }" << cB << std::endl;
-            }
+            genHostInitVarCode(os, wu->getPostVars(), numTrgNeurons, s.first, model.getPrecision(),
+                                   [&s](size_t i){ return s.second.getWUPostVarInitialisers()[i]; },
+                                   [&s](size_t i){ return s.second.getWUPostVarMode(i); });
+
 
             // If insyn variables should be initialised on the host
             if(shouldInitOnHost(s.second.getInSynVarMode())) {
@@ -815,43 +822,16 @@ void genInit(const NNmodel &model,      //!< Model description
 
             // If matrix is dense (i.e. can be initialised here) and each synapse has individual values (i.e. needs initialising at all)
             if ((s.second.getMatrixType() & SynapseMatrixConnectivity::DENSE) && (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL)) {
-                auto wuVars = wu->getVars();
-                for (size_t k= 0, l= wuVars.size(); k < l; k++) {
-                    const auto &varInit = s.second.getWUVarInitialisers()[k];
-                    const VarMode varMode = s.second.getWUVarMode(k);
-
-                    // If this variable should be initialised on the host and has any initialisation code
-                    if(shouldInitOnHost(varMode) && !varInit.getSnippet()->getCode().empty()) {
-                        CodeStream::Scope b(os);
-                        os << "for (int i = 0; i < " << numSrcNeurons * numTrgNeurons << "; i++)";
-                        {
-                            CodeStream::Scope b(os);
-                            os << StandardSubstitutions::initVariable(varInit, wuVars[k].first + s.first + "[i]",
-                                                                      cpuFunctions, model.getPrecision(), "rng") << std::endl;
-                        }
-                    }
-                }
+                genHostInitVarCode(os, wu->getVars(), numSrcNeurons * numTrgNeurons, s.first, model.getPrecision(),
+                                   [&s](size_t i){ return s.second.getWUVarInitialisers()[i]; },
+                                   [&s](size_t i){ return s.second.getWUVarMode(i); });
             }
 
             // If matrix has individual postsynaptic variables
             if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
-                auto psmVars = psm->getVars();
-                for (size_t k= 0, l= psmVars.size(); k < l; k++) {
-                    const auto &varInit = s.second.getPSVarInitialisers()[k];
-                    const VarMode varMode = s.second.getPSVarMode(k);
-
-                    // If this variable should be initialised on the host and has any initialisation code
-                    if(shouldInitOnHost(varMode) && !varInit.getSnippet()->getCode().empty()) {
-                        // Loop through postsynaptic neurons and substitute in initialisation code
-                        CodeStream::Scope b(os);
-                        os << "for (int i = 0; i < " << numTrgNeurons << "; i++)";
-                        {
-                            CodeStream::Scope b(os);
-                            os << StandardSubstitutions::initVariable(varInit, psmVars[k].first + s.first + "[i]",
-                                                                      cpuFunctions, model.getPrecision(), "rng") << std::endl;
-                        }
-                    }
-                }
+                genHostInitVarCode(os, psm->getVars(), numTrgNeurons, s.first, model.getPrecision(),
+                                   [&s](size_t i){ return s.second.getPSVarInitialisers()[i]; },
+                                   [&s](size_t i){ return s.second.getPSVarMode(i); });
             }
         }
 

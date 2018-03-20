@@ -352,13 +352,15 @@ public:
         \param wum weight update model to use for synapse group.
         \param weightParamValues parameters for weight update model wrapped in WeightUpdateModel::ParamValues object.
         \param weightVarInitialisers weight update model state variable initialiser snippets and parameters wrapped in WeightUpdateModel::VarValues object.
+        \param weightPreVarInitialisers weight update model presynaptic state variable initialiser snippets and parameters wrapped in WeightUpdateModel::VarValues object.
+        \param weightPostVarInitialisers weight update model postsynaptic state variable initialiser snippets and parameters wrapped in WeightUpdateModel::VarValues object.
         \param psm postsynaptic model to use for synapse group.
         \param postsynapticParamValues parameters for postsynaptic model wrapped in PostsynapticModel::ParamValues object.
         \param postsynapticVarInitialisers postsynaptic model state variable initialiser snippets and parameters wrapped in NeuronModel::VarValues object.
         \return pointer to newly created SynapseGroup */
     template<typename WeightUpdateModel, typename PostsynapticModel>
     SynapseGroup *addSynapsePopulation(const string &name, SynapseMatrixType mtype, unsigned int delaySteps, const string& src, const string& trg,
-                                       const WeightUpdateModel *wum, const typename WeightUpdateModel::ParamValues &weightParamValues, const typename WeightUpdateModel::VarValues &weightVarInitialisers, const typename WeightUpdateModel::PreVarValues &weightPreVarInitialisers, const typename WeightUpdateModel::PreVarValues &weightPostVarInitialisers,
+                                       const WeightUpdateModel *wum, const typename WeightUpdateModel::ParamValues &weightParamValues, const typename WeightUpdateModel::VarValues &weightVarInitialisers, const typename WeightUpdateModel::PreVarValues &weightPreVarInitialisers, const typename WeightUpdateModel::PostVarValues &weightPostVarInitialisers,
                                        const PostsynapticModel *psm, const typename PostsynapticModel::ParamValues &postsynapticParamValues, const typename PostsynapticModel::VarValues &postsynapticVarInitialisers)
     {
         if (!GeNNReady) {
@@ -422,7 +424,36 @@ public:
         \return pointer to newly created SynapseGroup */
     template<typename WeightUpdateModel, typename PostsynapticModel>
     SynapseGroup *addSynapsePopulation(const string &name, SynapseMatrixType mtype, unsigned int delaySteps, const string& src, const string& trg,
-                                       const typename WeightUpdateModel::ParamValues &weightParamValues, const typename WeightUpdateModel::VarValues &weightVarInitialisers, const typename WeightUpdateModel::PreVarValues &weightPreVarInitialisers, const typename WeightUpdateModel::PreVarValues &weightPostVarInitialisers,
+                                       const typename WeightUpdateModel::ParamValues &weightParamValues, const typename WeightUpdateModel::VarValues &weightVarInitialisers,
+                                       const typename PostsynapticModel::ParamValues &postsynapticParamValues, const typename PostsynapticModel::VarValues &postsynapticVarInitialisers)
+    {
+        // Create empty pre and postsynaptic weight update variable initialisers
+        typename WeightUpdateModel::PreVarValues weightPreVarInitialisers;
+        typename WeightUpdateModel::PostVarValues weightPostVarInitialisers;
+
+        return addSynapsePopulation(name, mtype, delaySteps, src, trg,
+                                    WeightUpdateModel::getInstance(), weightParamValues, weightVarInitialisers, weightPreVarInitialisers, weightPostVarInitialisers,
+                                    PostsynapticModel::getInstance(), postsynapticParamValues, postsynapticVarInitialisers);
+    }
+
+    //! Adds a synapse population to the model using singleton weight update and postsynaptic models created using standard DECLARE_MODEL and IMPLEMENT_MODEL macros
+    /*! \tparam WeightUpdateModel type of weight update model (derived from WeightUpdateModels::Base).
+        \tparam PostsynapticModel type of postsynaptic model (derived from PostsynapticModels::Base).
+        \param name string containing unique name of neuron population.
+        \param mtype how the synaptic matrix associated with this synapse population should be represented.
+        \param delaySteps integer specifying number of timesteps delay this synaptic connection should incur (or NO_DELAY for none)
+        \param src string specifying name of presynaptic (source) population
+        \param trg string specifying name of postsynaptic (target) population
+        \param weightParamValues parameters for weight update model wrapped in WeightUpdateModel::ParamValues object.
+        \param weightVarInitialisers weight update model per-synapse state variable initialiser snippets and parameters wrapped in WeightUpdateModel::VarValues object.
+        \param weightPreVarInitialisers weight update model presynaptic state variable initialiser snippets and parameters wrapped in WeightUpdateModel::VarValues object.
+        \param weightPostVarInitialisers weight update model postsynaptic state variable initialiser snippets and parameters wrapped in WeightUpdateModel::VarValues object.
+        \param postsynapticParamValues parameters for postsynaptic model wrapped in PostsynapticModel::ParamValues object.
+        \param postsynapticVarInitialisers postsynaptic model state variable initialiser snippets and parameters wrapped in NeuronModel::VarValues object.
+        \return pointer to newly created SynapseGroup */
+    template<typename WeightUpdateModel, typename PostsynapticModel>
+    SynapseGroup *addSynapsePopulation(const string &name, SynapseMatrixType mtype, unsigned int delaySteps, const string& src, const string& trg,
+                                       const typename WeightUpdateModel::ParamValues &weightParamValues, const typename WeightUpdateModel::VarValues &weightVarInitialisers, const typename WeightUpdateModel::PreVarValues &weightPreVarInitialisers, const typename WeightUpdateModel::PostVarValues &weightPostVarInitialisers,
                                        const typename PostsynapticModel::ParamValues &postsynapticParamValues, const typename PostsynapticModel::VarValues &postsynapticVarInitialisers)
     {
         return addSynapsePopulation(name, mtype, delaySteps, src, trg,
