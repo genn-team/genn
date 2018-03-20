@@ -296,6 +296,7 @@ void StandardSubstitutions::weightUpdatePreSpike(
     const SynapseGroup *sg,
     const string &preIdx, //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
     const string &devPrefix,
+    const std::vector<FunctionTemplate> functions,
     const std::string &ftype)
 {
     // Create iteration context to iterate over the weight update model
@@ -314,6 +315,7 @@ void StandardSubstitutions::weightUpdatePreSpike(
 
     preNeuronSubstitutionsInSynapticCode(code, sg, preIdx, devPrefix);
 
+    functionSubstitutions(code, ftype, functions);
     code = ensureFtype(code, ftype);
     checkUnreplacedVariables(code, sg->getName() + " : simCodePreSpike");
 }
@@ -323,6 +325,7 @@ void StandardSubstitutions::weightUpdatePostSpike(
     const SynapseGroup *sg,
     const string &postIdx, //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
     const string &devPrefix,
+    const std::vector<FunctionTemplate> functions,
     const std::string &ftype)
 {
     // Create iteration context to iterate over the weight update model
@@ -342,6 +345,7 @@ void StandardSubstitutions::weightUpdatePostSpike(
 
     postNeuronSubstitutionsInSynapticCode(code, sg, postIdx, devPrefix);
 
+    functionSubstitutions(code, ftype, functions);
     code = ensureFtype(code, ftype);
     checkUnreplacedVariables(code, sg->getName() + " : simLearnPostSpike");
 }

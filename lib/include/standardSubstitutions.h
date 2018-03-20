@@ -160,6 +160,7 @@ void weightUpdatePreSpike(
     const SynapseGroup *sg,
     const string &preIdx, //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
     const string &devPrefix,
+    const std::vector<FunctionTemplate> functions,
     const std::string &ftype);
 
 
@@ -168,6 +169,7 @@ void weightUpdatePostSpike(
     const SynapseGroup *sg,
     const string &postIdx, //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
     const string &devPrefix,
+    const std::vector<FunctionTemplate> functions,
     const std::string &ftype);
 
 std::string initVariable(

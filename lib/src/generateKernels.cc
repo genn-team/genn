@@ -725,8 +725,8 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
                             if(!sg->getWUModel()->getPreSpikeCode().empty()) {
                                 // Perform standard substitutions
                                 string pCode = sg->getWUModel()->getPreSpikeCode();
-                                StandardSubstitutions::weightUpdatePreSpike(pCode, sg,
-                                                                            "n", "dd_", model.getPrecision());
+                                StandardSubstitutions::weightUpdatePreSpike(
+                                    pCode, sg, "n", "dd_", cudaFunctions, model.getPrecision());
                                 os << "// perform presynaptic update required for " << sg->getName() << std::endl;
                                 {
                                     CodeStream::Scope b(os);
@@ -741,8 +741,8 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
                             if(!sg->getWUModel()->getPostSpikeCode().empty()) {
                                 // Perform standard substitutions
                                 string pCode = sg->getWUModel()->getPostSpikeCode();
-                                StandardSubstitutions::weightUpdatePostSpike(pCode, sg,
-                                                                            "n", "dd_", model.getPrecision());
+                                StandardSubstitutions::weightUpdatePostSpike(
+                                    pCode, sg, "n", "dd_", cudaFunctions, model.getPrecision());
                                 os << "// perform postsynaptic update required for " << sg->getName() << std::endl;
                                 {
                                     CodeStream::Scope b(os);
