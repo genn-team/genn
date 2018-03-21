@@ -66,13 +66,6 @@ void generatePreParallelisedSparseCode(
     ExtraGlobalParamNameIterCtx wuExtraGlobalParams(wu->getExtraGlobalParams());
     VarNameIterCtx wuVars(wu->getVars());
 
-    //int maxConnections;
-    if (sg.isPSAtomicAddRequired(synapseBlkSz)) {
-        if (sg.getMaxConnections() < 1) {
-            fprintf(stderr, "Model Generation warning: for every SPARSE synapse group used you must also supply (in your model) a max possible number of connections via the model.setMaxConn() function.\n");
-        }
-    }
-
     os << "if (" << localID << " < " ;
     if (sg.getSrcNeuronGroup()->isDelayRequired()) {
         os << "dd_glbSpkCnt" << postfix << sg.getSrcNeuronGroup()->getName() << "[delaySlot])";
@@ -202,19 +195,6 @@ void generatePostParallelisedCode(
         }
         os << "__syncthreads();" << std::endl;
 
-        int maxConnections;
-        if ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && sg.isPSAtomicAddRequired(synapseBlkSz)) {
-            if (sg.getMaxConnections() < 1) {
-                fprintf(stderr, "Model Generation warning: for every SPARSE synapse group used you must also supply (in your model) a max possible number of connections via the model.setMaxConn() function.\n");
-                maxConnections = sg.getTrgNeuronGroup()->getNumNeurons();
-            }
-            else {
-                maxConnections = sg.getMaxConnections();
-            }
-        }
-        else {
-            maxConnections = sg.getTrgNeuronGroup()->getNumNeurons();
-        }
         os << "// loop through all incoming spikes" << std::endl;
         os << "for (j = 0; j < lmax; j++)";
         {
