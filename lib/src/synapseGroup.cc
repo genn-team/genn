@@ -212,15 +212,14 @@ VarMode SynapseGroup::getPSVarMode(const std::string &var) const
 
 bool SynapseGroup::isPSAtomicAddRequired(unsigned int blockSize) const
 {
-    if (getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-        if (getSpanType() == SpanType::POSTSYNAPTIC && getTrgNeuronGroup()->getNumNeurons() > blockSize) {
-            return true;
-        }
-        if (getSpanType()  == SpanType::PRESYNAPTIC && getSrcNeuronGroup()->getNumNeurons() > blockSize) {
-            return true;
-        }
+    // Return true if this synapse group has sparse connectivity i.e. each postsynaptic thread can't just accumulate into a register
+    // and there are too many target neurons for their input to be accumulated in shared memory array
+    if ((getMatrixType() & SynapseMatrixConnectivity::SPARSE) && getTrgNeuronGroup()->getNumNeurons() > blockSize) {
+        return true;
     }
-    return false;
+    else {
+        return false;
+    }
 }
 
 void SynapseGroup::addExtraGlobalNeuronParams(std::map<std::string, std::string> &kernelParameters) const
