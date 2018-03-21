@@ -469,7 +469,23 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
                     }
                     // Otherwise, if synapse group has ragged connectivity
                     else if(s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
-                        assert(false);
+                        const std::string rowLength = "dd_rowLength" + s.first + "[lid]";
+                        const std::string ind = "dd_ind" + s.first;
+
+                        // Zero row length
+                        os << rowLength << " = 0;" << std::endl;
+
+                        // Build function template to increment row length and insert synapse into ind array
+                        const std::string addSynapseTemplate = ind + "[(lid * " + std::to_string(s.second.getMaxConnections()) + ") + (" + rowLength + "++)] = $(0)";
+
+                        // Loop through synapses in row
+                        os << "for(int prevJ = -1;;)";
+                        {
+                            CodeStream::Scope b(os);
+
+                            os << StandardSubstitutions::initSparseConnectivity(connectInit, addSynapseTemplate, numTrgNeurons,
+                                                                                cudaFunctions, model.getPrecision(), "&initRNG");
+                        }
                     }
                     // Otherwise, give an error
                     else {
@@ -1005,15 +1021,21 @@ void genInit(const NNmodel &model,      //!< Model description
                     }
                 }
                 else if(s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
-                    os << "initializeRaggedArray(C" << s.first << ", ";
-                    os << "d_ind" << s.first << ", ";
-                    os << "d_rowLength" << s.first << ", ";
-                    os << s.second.getSrcNeuronGroup()->getNumNeurons() << ");" << std::endl;
+                    // If sparse connectivity was initialised on device
+                    if(s.second.getSparseConnectivityVarMode() & VarInit::HOST) {
+                        os << "initializeRaggedArray(C" << s.first << ", ";
+                        os << "d_ind" << s.first << ", ";
+                        os << "d_rowLength" << s.first << ", ";
+                        os << s.second.getSrcNeuronGroup()->getNumNeurons() << ");" << std::endl;
+                    }
 
                     // **TODO**
                     assert(!model.isSynapseGroupDynamicsRequired(s.first));
 
                     if (model.isSynapseGroupPostLearningRequired(s.first)) {
+                        // **TODO** implement reverse array generation on device
+                        assert(s.second.getSparseConnectivityVarMode() & VarInit::HOST);
+
                         os << "initializeRaggedArrayRev(C" << s.first << ", ";
                         os << "d_colLength" << s.first << ",";
                         os << "d_remap" << s.first << ",";
