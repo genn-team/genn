@@ -467,9 +467,13 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
                                                                                 cudaFunctions, model.getPrecision(), "&initRNG");
                         }
                     }
-                    // Otherwise, assert
-                    else {
+                    // Otherwise, if synapse group has ragged connectivity
+                    else if(s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
                         assert(false);
+                    }
+                    // Otherwise, give an error
+                    else {
+                        gennError("Only BITMASK and RAGGED format connectivity can be generated using a connectivity initialiser");
                     }
                 }
             }
@@ -829,19 +833,13 @@ void genInit(const NNmodel &model,      //!< Model description
             {
                 CodeStream::Scope b(os);
 
-                // If matrix connectivity is sparse
-                if(s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                    assert(false);
-                    const std::string indInG = "C" + s.first + ".indInG";
+                // If matrix connectivity is ragged
+                if(s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
+                    const std::string rowLength = "C" + s.first + ".rowLength";
                     const std::string ind = "C" + s.first + ".ind";
 
-                    // Over allocate indices
-                    // **TODO** some connector types can tell exact number of synapses so this is unnecessary
-                    // **TODO** this is hack - maybe this should be done in allocateMem too
-                    os << "cudaHostAlloc(&" << ind << ", " << numSrcNeurons * s.second.getMaxConnections() << " * sizeof(unsigned int), cudaHostAllocPortable);" << std::endl;
-
-                    // Zero offset for first row
-                    os << indInG << "[0] = 0;" << std::endl;
+                    // Zero row lengths
+                    os << "memset(" << rowLength << ", 0, " << numSrcNeurons << " * sizeof(unsigned int));" << std::endl;
 
                     // Loop through source neurons
                     os << "for (int i = 0; i < " << numSrcNeurons << "; i++)";
@@ -849,10 +847,7 @@ void genInit(const NNmodel &model,      //!< Model description
                         CodeStream::Scope b(os);
 
                         // Build function template to increment row length and insert synapse into ind array
-                        const std::string addSynapseTemplate = ind + "[" + indInG + "[i] + (rowLength++)] = $(0)";
-
-                        // Zero counter of number of synapses in row
-                        os << "unsigned int rowLength = 0;" << std::endl;
+                        const std::string addSynapseTemplate = ind + "[(i * " + std::to_string(s.second.getMaxConnections()) + ") + (" + rowLength + "[i]++)] = $(0)";
 
                         // Loop through synapses in row
                         os << "for(int prevJ = -1;;)";
@@ -862,19 +857,13 @@ void genInit(const NNmodel &model,      //!< Model description
                             os << StandardSubstitutions::initSparseConnectivity(connectInit, addSynapseTemplate, numTrgNeurons,
                                                                                 cpuFunctions, model.getPrecision(), "rng");
                         }
-
-                        // Calculate the starting offset for the NEXT row by adding row length to starting offset of current row
-                        os << indInG << "[i + 1] = " << indInG << "[i] + rowLength;" << std::endl;
                     }
-
-                    // Finally set number of connections
-                    os << "C" << s.first << ".connN = " << indInG << "[" << numSrcNeurons << "];" << std::endl;
 
                 }
                 // Otherwise, if matrix connectivity is a bitmask
                 else if(s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
                     // Zero memory before setting sparse bits
-                    os << "memset(gp" << s.first << ", 0, " << (numSrcNeurons * numTrgNeurons) / 32 + 1 << ");" << std::endl;
+                    os << "memset(gp" << s.first << ", 0, " << (numSrcNeurons * numTrgNeurons) / 32 + 1 << " * sizeof(uint32_t));" << std::endl;
 
                     // Loop through source neurons
                     os << "for (int i = 0; i < " << numSrcNeurons << "; i++)";
@@ -895,6 +884,9 @@ void genInit(const NNmodel &model,      //!< Model description
                                                                                 cpuFunctions, model.getPrecision(), "rng");
                         }
                     }
+                }
+                else {
+                    gennError("Only BITMASK and RAGGED format connectivity can be generated using a connectivity initialiser");
                 }
             }
 
