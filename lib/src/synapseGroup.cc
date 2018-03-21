@@ -46,14 +46,14 @@ SynapseGroup::SynapseGroup(const std::string name, SynapseMatrixType matrixType,
                            const PostsynapticModels::Base *ps, const std::vector<double> &psParams, const std::vector<NewModels::VarInit> &psVarInitialisers,
                            NeuronGroup *srcNeuronGroup, NeuronGroup *trgNeuronGroup,
                            const InitSparseConnectivitySnippet::Init &connectivityInitialiser)
-    :   m_PaddedKernelIDRange(0, 0), m_Name(name), m_SpanType(SpanType::POSTSYNAPTIC), m_DelaySteps(delaySteps), m_MaxConnections(trgNeuronGroup->getNumNeurons()), m_MatrixType(matrixType),
+    :   m_PaddedKernelIDRange(0, 0), m_Name(name), m_SpanType(SpanType::POSTSYNAPTIC), m_DelaySteps(delaySteps),
+    	m_MaxConnections(trgNeuronGroup->getNumNeurons()), m_MaxSourceConnections(srcNeuronGroup->getNumNeurons()), m_MatrixType(matrixType),
         m_SrcNeuronGroup(srcNeuronGroup), m_TrgNeuronGroup(trgNeuronGroup),
         m_TrueSpikeRequired(false), m_SpikeEventRequired(false), m_EventThresholdReTestRequired(false), m_InSynVarMode(GENN_PREFERENCES::defaultVarMode),
         m_SparseConnectivityVarMode(GENN_PREFERENCES::defaultVarMode), m_WUModel(wu), m_WUParams(wuParams), m_WUVarInitialisers(wuVarInitialisers),
         m_PSModel(ps), m_PSParams(psParams), m_PSVarInitialisers(psVarInitialisers),
         m_WUVarMode(wuVarInitialisers.size(), GENN_PREFERENCES::defaultVarMode), m_PSVarMode(psVarInitialisers.size(), GENN_PREFERENCES::defaultVarMode),
         m_ConnectivityInitialiser(connectivityInitialiser)
-
 {
     // Check that the source neuron group supports the desired number of delay steps
     srcNeuronGroup->checkNumDelaySlots(delaySteps);
@@ -87,11 +87,21 @@ void SynapseGroup::setPSVarMode(const std::string &varName, VarMode mode)
 
 void SynapseGroup::setMaxConnections(unsigned int maxConnections)
 {
-     if (getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+    if (getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
         m_MaxConnections = maxConnections;
     }
     else {
-        gennError("setMaxConn: Synapse group is densely connected. Maxconn variable is not needed in this case.");
+        gennError("setMaxConnections: Synapse group is densely connected. Setting max connections is not required in this case.");
+    }
+}
+
+void SynapseGroup::setMaxSourceConnections(unsigned int maxConnections)
+{
+    if (getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+        m_MaxSourceConnections = maxConnections;
+    }
+    else {
+        gennError("setMaxSourceConnections: Synapse group is densely connected. Setting max connections is not required in this case.");
     }
 }
 
@@ -133,7 +143,7 @@ void SynapseGroup::initDerivedParams(double dt)
     for(auto &v : m_PSVarInitialisers) {
         v.initDerivedParams(dt);
     }
-    
+
     // Initialise any derived connectivity initialiser parameters
     m_ConnectivityInitialiser.initDerivedParams(dt);
 }
@@ -175,7 +185,12 @@ unsigned int SynapseGroup::getPaddedDynKernelSize(unsigned int blockSize) const
 
 unsigned int SynapseGroup::getPaddedPostLearnKernelSize(unsigned int blockSize) const
 {
-    return ceil((double) getSrcNeuronGroup()->getNumNeurons() / (double) blockSize) * (double) blockSize;
+    if (getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+        return ceil((double) getMaxSourceConnections() / (double) blockSize) * (double) blockSize;
+    }
+    else {
+        return ceil((double) getSrcNeuronGroup()->getNumNeurons() / (double) blockSize) * (double) blockSize;
+    }
 }
 
 const std::vector<double> SynapseGroup::getWUConstInitVals() const
@@ -215,19 +230,6 @@ VarMode SynapseGroup::getWUVarMode(const std::string &var) const
 VarMode SynapseGroup::getPSVarMode(const std::string &var) const
 {
     return m_PSVarMode[getPSModel()->getVarIndex(var)];
-}
-
-bool SynapseGroup::isPSAtomicAddRequired(unsigned int blockSize) const
-{
-    if (getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-        if (getSpanType() == SpanType::POSTSYNAPTIC && getTrgNeuronGroup()->getNumNeurons() > blockSize) {
-            return true;
-        }
-        if (getSpanType()  == SpanType::PRESYNAPTIC && getSrcNeuronGroup()->getNumNeurons() > blockSize) {
-            return true;
-        }
-    }
-    return false;
 }
 
 void SynapseGroup::addExtraGlobalNeuronParams(std::map<std::string, std::string> &kernelParameters) const
@@ -326,7 +328,7 @@ bool SynapseGroup::isPSDeviceVarInitRequired() const
 {
     // If this synapse group has per-synapse state variables,
     // return true if any of the postsynapse variables are initialised on the device
-    if (getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
+    if (getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
         return std::any_of(m_PSVarMode.cbegin(), m_PSVarMode.cend(),
                         [](const VarMode mode){ return (mode & VarInit::DEVICE); });
     }

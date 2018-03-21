@@ -30,7 +30,7 @@ void StandardSubstitutions::postSynapseApplyInput(
     value_substitutions(psCode, ng.getNeuronModel()->getParamNames(), ng.getParams());
     value_substitutions(psCode, nmDerivedParams.nameBegin, nmDerivedParams.nameEnd, ng.getDerivedParams());
 
-    if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
+    if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
         name_substitutions(psCode, "lps", psmVars.nameBegin, psmVars.nameEnd, sg->getName());
     }
     else {

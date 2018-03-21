@@ -4,6 +4,7 @@
 
 # Ignore test executables
 **/test
+**/test_wrapper
 **/test.exe
 
 # Ignore GCOV output
