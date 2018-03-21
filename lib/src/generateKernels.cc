@@ -189,9 +189,14 @@ void generatePostParallelisedCode(
             os << "shSpk" << postfix << "[threadIdx.x] = dd_glbSpk" << postfix << sg.getSrcNeuronGroup()->getName() << "[" << sg.getOffsetPre() << "(r * BLOCKSZ_SYN) + threadIdx.x];" << std::endl;
         }
 
+        // **THINK** why isn't this outside of outer loop?
         if ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && !sg.isPSAtomicAddRequired(synapseBlkSz)) {
-            // set shLg to 0 for all postsynaptic neurons; is ok as model.neuronN[model.synapseTarget[i]] <= synapseBlkSz
-            os << "if (threadIdx.x < " << sg.getTrgNeuronGroup()->getNumNeurons() << ") shLg[threadIdx.x] = 0;" << std::endl;
+            // set shLg to 0 for all postsynaptic neurons; is ok as number of target neurons <= synapseBlkSz
+            os << "if (threadIdx.x < " << sg.getTrgNeuronGroup()->getNumNeurons() << ")";
+            {
+                CodeStream::Scope b(os);
+                os << "shLg[threadIdx.x] = 0;" << std::endl;
+            }
         }
         os << "__syncthreads();" << std::endl;
 
@@ -289,13 +294,16 @@ void generatePostParallelisedCode(
                 }
             }
 
+            // **THINK** why isn't this outside of outer loop?
             if ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && !sg.isPSAtomicAddRequired(synapseBlkSz)) {
+                // update linSyn from shLg for all postsynaptic neurons; is ok as number of target neurons <= synapseBlkSz
                 os << "__syncthreads();" << std::endl;
-                os << "if (threadIdx.x < " << sg.getTrgNeuronGroup()->getNumNeurons() << ")" << CodeStream::OB(136); // need to write back results
-                os << "linSyn += shLg[" << localID << "];" << std::endl;
-                os << "shLg[" << localID << "] = 0;" << std::endl;
-                os << CodeStream::CB(136) << std::endl;
-
+                os << "if (threadIdx.x < " << sg.getTrgNeuronGroup()->getNumNeurons() << ")";
+                {
+                    CodeStream::Scope b(os);
+                    os << "linSyn += shLg[" << localID << "];" << std::endl;
+                    os << "shLg[" << localID << "] = 0;" << std::endl;
+                }
                 os << "__syncthreads();" << std::endl;
             }
         }
