@@ -144,10 +144,6 @@ public:
     //! Get variable mode used by postsynaptic model state variable
     VarMode getPSVarMode(size_t index) const{ return m_PSVarMode[index]; }
 
-    //! Is this synapse group too large to use shared memory for combining postsynaptic output
-    // **THINK** this is very cuda-specific
-    bool isPSAtomicAddRequired(unsigned int blockSize) const;
-
     void addExtraGlobalNeuronParams(std::map<string, string> &kernelParameters) const;
     void addExtraGlobalSynapseParams(std::map<string, string> &kernelParameters) const;
     void addExtraGlobalPostLearnParams(std::map<string, string> &kernelParameters) const;
