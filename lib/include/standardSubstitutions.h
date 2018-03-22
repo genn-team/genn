@@ -184,6 +184,7 @@ std::string initSparseConnectivity(
     const InitSparseConnectivitySnippet::Init &connectInit,
     const std::string &addSynapseFunctionTemplate,
     unsigned int numTrgNeurons,
+    const std::string &preIdx,
     const std::vector<FunctionTemplate> functions,
     const std::string &ftype,
     const std::string &rng);

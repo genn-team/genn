@@ -528,7 +528,7 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
                         {
                             CodeStream::Scope b(os);
 
-                            os << StandardSubstitutions::initSparseConnectivity(connectInit, addSynapseTemplate, numTrgNeurons,
+                            os << StandardSubstitutions::initSparseConnectivity(connectInit, addSynapseTemplate, numTrgNeurons, "lid",
                                                                                 cudaFunctions, model.getPrecision(), "&initRNG");
                         }
                     }
@@ -549,7 +549,7 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
                         {
                             CodeStream::Scope b(os);
 
-                            os << StandardSubstitutions::initSparseConnectivity(connectInit, addSynapseTemplate, numTrgNeurons,
+                            os << StandardSubstitutions::initSparseConnectivity(connectInit, addSynapseTemplate, numTrgNeurons, "lid",
                                                                                 cudaFunctions, model.getPrecision(), "&initRNG");
                         }
                     }
@@ -952,7 +952,7 @@ void genInit(const NNmodel &model,      //!< Model description
                         {
                             CodeStream::Scope b(os);
 
-                            os << StandardSubstitutions::initSparseConnectivity(connectInit, addSynapseTemplate, numTrgNeurons,
+                            os << StandardSubstitutions::initSparseConnectivity(connectInit, addSynapseTemplate, numTrgNeurons, "i",
                                                                                 cpuFunctions, model.getPrecision(), "rng");
                         }
                     }
@@ -978,7 +978,7 @@ void genInit(const NNmodel &model,      //!< Model description
                         {
                             CodeStream::Scope b(os);
 
-                            os << StandardSubstitutions::initSparseConnectivity(connectInit, addSynapseTemplate, numTrgNeurons,
+                            os << StandardSubstitutions::initSparseConnectivity(connectInit, addSynapseTemplate, numTrgNeurons, "i",
                                                                                 cpuFunctions, model.getPrecision(), "rng");
                         }
                     }
